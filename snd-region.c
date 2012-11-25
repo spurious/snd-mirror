@@ -819,7 +819,7 @@ static void deferred_region_to_temp_file(region *r)
   ss->deferred_regions--;
   drp = r->dr;
   len = drp->len;
-  val = MUS_SAMPLE_0; 
+  val = 0.0; 
   r->use_temp_file = REGION_FILE;
   r->filename = snd_tempnam();
   sp0 = drp->cps[0]->sound;
@@ -981,7 +981,7 @@ static void deferred_region_to_temp_file(region *r)
 			      max_position = j;
 			    }
 			}
-		      else data[i][k] = MUS_SAMPLE_0;
+		      else data[i][k] = 0.0;
 		    }
 		}
 	    }
@@ -989,7 +989,7 @@ static void deferred_region_to_temp_file(region *r)
 	    mus_file_write(ofd, 0, k - 1, r->chans, data);
 
 	  close_temp_file(r->filename, ofd, hdr->type, len * r->chans * datumb);
-	  r->maxamp = MUS_SAMPLE_TO_FLOAT(val);
+	  r->maxamp = val;
 	  r->maxamp_position = max_position;
 	  for (i = 0; i < r->chans; i++) free(data[i]);
 	  for (i = 0; i < r->chans; i++) free_snd_fd(sfs[i]);

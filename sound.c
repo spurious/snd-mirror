@@ -479,7 +479,7 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 	    {
 	      if (i > 1) fprintf(fp, ", ");
 	      fprintf(fp, " %.3f at %.3f ",
-		      MUS_SAMPLE_TO_FLOAT(sf->maxamps[i]),
+		      sf->maxamps[i],
 		      (sf->srate > 0) ? (float)((double)(sf->maxtimes[i]) / (double)(sf->srate)) : (float)(sf->maxtimes[i]));
 	    }
 	}

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Thu Jul  5 02:25:15 CEST 2012
+# Changed: Wed Nov 21 14:59:01 CET 2012
 
 # Commentary:
 # 
@@ -1290,54 +1290,6 @@ snd defaults to the currently selected sound.")
       end
     end
   end
-  # FIXME minibuffer removed in Snd
-  # add_help(:eval_over_selection,
-  #         "eval_over_selection(&func)  evaluates func on each sample in the current selection")
-  # def eval_over_selection(func1 = nil, &func2)
-  #   func = (block_given? ? func2 : func1)
-  #   if proc?(func) and selection?
-  #     beg = selection_position()
-  #     len = selection_frames()
-  #     all_chans_zipped.map do |snd, chn|
-  #       if selection_member?(snd, chn)
-  #         old_data = channel2vct(beg, len, snd, chn)
-  #         new_data = Vct.new(len) do |i| func.call(old_data[i]) end
-  #         vct2channel(new_data, beg, len, snd, chn)
-  #       end
-  #     end
-  #   end
-  # end
-=begin
-  # When the user types C-x x (without modifiers) and there is a current
-  # selection, the minibuffer prompts "selection eval:".  Eventually the
-  # user responds, hopefully with a function of one argument, the
-  # current selection sample the value returned by the function becomes
-  # the new selection value.
-
-  bind_key(?x, 0, lambda do | |
-             if selection?
-               prompt_in_minibuffer("selection eval:", &method(:eval_over_selection).to_proc)
-             else
-               report_in_minibuffer("no selection")
-             end
-           end, true, "C-x x: eval over selection")
-=end
-
-  # FIXME minibuffer removed in Snd
-  # def yes_or_no?(question, action_if_yes, action_if_no, snd = false)
-  #   clear_minibuffer(snd)
-  #   prompt_in_minibuffer(question,
-  #                        lambda do |response|
-  #                          clear_minibuffer(snd)
-  #                          if response == "yes" or response == "y"
-  #                            action_if_yes.call(snd)
-  #                          else
-  #                            action_if_no.call(snd)
-  #                          end
-  #                        end,
-  #                        snd,
-  #                        true)
-  # end
   
   add_help(:mix_channel,
            "mix_channel(file, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]) \

@@ -1022,7 +1022,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		  int i, last;
 		  last = beg + nints;
 		  for (i = total / siz; i < last; i++)
-		    bufs[0][i] = MUS_SAMPLE_0;
+		    bufs[0][i] = 0.0;
 		}
 	    }
 	  return(total / siz);
@@ -1087,7 +1087,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			memset((void *)(bufs[k]), 0, lim * sizeof(mus_float_t));
 		      else
 			for (j = loc; j < lim; j++) 
-			  bufs[k][j] = MUS_SAMPLE_0;
+			  bufs[k][j] = 0.0;
 		    }
 	      return(total_read);
 	    }
@@ -1746,42 +1746,42 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 
 	    case MUS_BFLOAT:    
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_big_endian_float(jchar, MUS_SAMPLE_TO_FLOAT(*bufnow++));
+		set_big_endian_float(jchar, *bufnow++);
 	      break;
 
 	    case MUS_LFLOAT:    
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_little_endian_float(jchar, MUS_SAMPLE_TO_FLOAT(*bufnow++));
+		set_little_endian_float(jchar, *bufnow++);
 	      break;
 
 	    case MUS_BDOUBLE:
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_big_endian_double(jchar, MUS_SAMPLE_TO_DOUBLE(*bufnow++));
+		set_big_endian_double(jchar, *bufnow++);
 	      break;
 
 	    case MUS_LDOUBLE:   
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_little_endian_double(jchar, MUS_SAMPLE_TO_DOUBLE(*bufnow++));
+		set_little_endian_double(jchar, *bufnow++);
 	      break;
 
 	    case MUS_BFLOAT_UNSCALED:    
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_big_endian_float(jchar, 32768.0 * MUS_SAMPLE_TO_FLOAT(*bufnow++));
+		set_big_endian_float(jchar, 32768.0 * (*bufnow++));
 	      break;
 
 	    case MUS_LFLOAT_UNSCALED:    
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_little_endian_float(jchar, 32768.0 * MUS_SAMPLE_TO_FLOAT(*bufnow++));
+		set_little_endian_float(jchar, 32768.0 * (*bufnow++));
 	      break;
 
 	    case MUS_BDOUBLE_UNSCALED:
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_big_endian_double(jchar, 32768.0 * MUS_SAMPLE_TO_DOUBLE(*bufnow++));
+		set_big_endian_double(jchar, 32768.0 * (*bufnow++));
 	      break;
 
 	    case MUS_LDOUBLE_UNSCALED:   
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_little_endian_double(jchar, 32768.0 * MUS_SAMPLE_TO_DOUBLE(*bufnow++));
+		set_little_endian_double(jchar, 32768.0 * (*bufnow++));
 	      break;
 
 	    case MUS_UBSHORT: 
@@ -2530,8 +2530,8 @@ static void min_max_mulaw(unsigned char *data, int bytes, int chan, int chans, m
       else if (val > cur_max) cur_max = val;
     }
 
-  (*min_samp) = MUS_SAMPLE_TO_FLOAT(cur_min);
-  (*max_samp) = MUS_SAMPLE_TO_FLOAT(cur_max);
+  (*min_samp) = cur_min;
+  (*max_samp) = cur_max;
 }
 
 
@@ -2551,8 +2551,8 @@ static void min_max_alaw(unsigned char *data, int bytes, int chan, int chans, mu
       else if (val > cur_max) cur_max = val;
     }
 
-  (*min_samp) = MUS_SAMPLE_TO_FLOAT(cur_min);
-  (*max_samp) = MUS_SAMPLE_TO_FLOAT(cur_max);
+  (*min_samp) = cur_min;
+  (*max_samp) = cur_max;
 }
 
 

@@ -674,14 +674,14 @@ static mus_float_t next_ramp_f(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
-  else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * (*(READER_RAMPF(sf)))(sf)));
+  else return(sf->data[sf->loc++] * (*(READER_RAMPF(sf)))(sf));
 }
 
 static mus_float_t previous_ramp_f(snd_fd *sf)
 {
   if (sf->loc < sf->first)
     return(previous_sound(sf)); 
-  else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * (*(READER_REV_RAMPF(sf)))(sf)));
+  else return(sf->data[sf->loc--] * (*(READER_REV_RAMPF(sf)))(sf));
 }
 
 
@@ -689,14 +689,14 @@ static mus_float_t next_ramp(snd_fd *sf)
 {
   if (sf->loc > sf->last)
     return(next_sound(sf)); 
-  else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp_value(sf)));
+  else return(sf->data[sf->loc++] * next_ramp_value(sf));
 }
 
 static mus_float_t previous_ramp(snd_fd *sf) 
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
-  else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp_value(sf)));
+  else return(sf->data[sf->loc--] * previous_ramp_value(sf));
 }
 
 
@@ -704,14 +704,14 @@ static mus_float_t next_xramp1(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
-  else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp1_value(sf)));
+  else return(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp1_value(sf));
 }
 
 static mus_float_t previous_xramp1(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
-  else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp1_value(sf)));
+  else return(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp1_value(sf));
 }
 
 
@@ -719,14 +719,14 @@ static mus_float_t next_xramp(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
-  else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp_value(sf)));
+  else return(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp_value(sf));
 }
 
 static mus_float_t previous_xramp(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
-  else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp_value(sf)));
+  else return(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp_value(sf));
 }
 
 
@@ -810,14 +810,14 @@ static mus_float_t next_mix_ramp1(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp1_value(sf))) + read_mix_list_samples(sf));
+  return((sf->data[sf->loc++] * next_ramp1_value(sf)) + read_mix_list_samples(sf));
 }
 
 static mus_float_t previous_mix_ramp1(snd_fd *sf)
 {
   if (sf->loc < sf->first)
     return(previous_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp1_value(sf))) + read_mix_list_samples(sf));
+  return((sf->data[sf->loc--] * previous_ramp1_value(sf)) + read_mix_list_samples(sf));
 }
 
 
@@ -825,14 +825,14 @@ static mus_float_t next_mix_ramp2(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp2_value(sf))) + read_mix_list_samples(sf));
+  return((sf->data[sf->loc++] * next_ramp2_value(sf)) + read_mix_list_samples(sf));
 }
 
 static mus_float_t previous_mix_ramp2(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp2_value(sf))) + read_mix_list_samples(sf));
+  return((sf->data[sf->loc--] * previous_ramp2_value(sf)) + read_mix_list_samples(sf));
 }
 
 
@@ -840,14 +840,14 @@ static mus_float_t next_mix_ramp(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp_value(sf))) + read_mix_list_samples(sf));
+  return((sf->data[sf->loc++] * next_ramp_value(sf)) + read_mix_list_samples(sf));
 }
 
 static mus_float_t previous_mix_ramp(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp_value(sf))) + read_mix_list_samples(sf));
+  return((sf->data[sf->loc--] * previous_ramp_value(sf)) + read_mix_list_samples(sf));
 }
 
 
@@ -855,14 +855,14 @@ static mus_float_t next_mix_xramp1(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp1_value(sf))) + read_mix_list_samples(sf));
+  return((sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp1_value(sf)) + read_mix_list_samples(sf));
 }
 
 static mus_float_t previous_mix_xramp1(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp1_value(sf))) + read_mix_list_samples(sf));
+  return((sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp1_value(sf)) + read_mix_list_samples(sf));
 }
 
 
@@ -870,14 +870,14 @@ static mus_float_t next_mix_xramp(snd_fd *sf)
 {
   if (sf->loc > sf->last)
     return(next_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp_value(sf))) + read_mix_list_samples(sf));
+  return((sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp_value(sf)) + read_mix_list_samples(sf));
 }
 
 static mus_float_t previous_mix_xramp(snd_fd *sf)
 {
   if (sf->loc < sf->first)
     return(previous_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp_value(sf))) + read_mix_list_samples(sf));
+  return((sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp_value(sf)) + read_mix_list_samples(sf));
 }
 
 
@@ -885,14 +885,14 @@ static mus_float_t next_mix_xramp_f_ramp_f(snd_fd *sf)
 {
   if (sf->loc > sf->last)
     return(next_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * (*(READER_RAMPF(sf)))(sf))) + read_mix_list_samples(sf));
+  return((sf->data[sf->loc++] * (*(READER_RAMPF(sf)))(sf)) + read_mix_list_samples(sf));
 }
 
 static mus_float_t previous_mix_xramp_f_ramp_f(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf));
-  return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * (*(READER_REV_RAMPF(sf)))(sf))) + read_mix_list_samples(sf));
+  return((sf->data[sf->loc--] * (*(READER_REV_RAMPF(sf)))(sf)) + read_mix_list_samples(sf));
 }
 
 
@@ -4704,7 +4704,7 @@ mus_float_t chn_sample(mus_long_t samp, chan_info *cp, int pos)
       snd_data *sd;
       sd = cp->sounds[0];
       if ((sd) && (sd->io) && (io_beg(sd->io) <= samp) && (io_end(sd->io) >= samp))
-	return(MUS_SAMPLE_TO_FLOAT(sd->buffered_data[samp - io_beg(sd->io)]));
+	return(sd->buffered_data[samp - io_beg(sd->io)]);
     }
 
   /* do it the hard way */
@@ -7081,7 +7081,7 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 	  
 	  for (j = start; j < end; j++)
 	    {
-	      mval = fabs(MUS_SAMPLE_TO_FLOAT(sd->buffered_data[j]));
+	      mval = fabs(sd->buffered_data[j]);
 	      if (mval > ymax) 
 		{
 		  ymax = mval;

@@ -1814,12 +1814,12 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
 	  pbuf = pbuffer[0];
 	  mus_file_read_any(filterc, 0, filter_chans, filtersize, fbuffer, fbuffer);
 	  for (i = 0; i < filtersize; i++) 
-	    rl1[i] = MUS_SAMPLE_TO_FLOAT(fbuffer[filter_chan][i]);
+	    rl1[i] = fbuffer[filter_chan][i];
 	  progress_report(gcp, .1);
 
 	  /* get the convolution data */
 	  mus_file_read_any(filec, 0, 1, data_size, pbuffer, pbuffer);
-	  for (i = 0; i < data_size; i++) rl0[i] = MUS_SAMPLE_TO_FLOAT(pbuf[i]);
+	  for (i = 0; i < data_size; i++) rl0[i] = pbuf[i];
 
 	  progress_report(gcp, .3);
 	  mus_fft(rl0, rl1, fftsize, 1);

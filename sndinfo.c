@@ -35,7 +35,7 @@ static char *display_maxamps(const char *filename, int chans)
   mus_sound_maxamps(filename, chans, vals, times);
   for (i = 0; i < chans; i++)
     {
-      snprintf(fstr, 16, "%.3f ", MUS_SAMPLE_TO_FLOAT(vals[i]));
+      snprintf(fstr, 16, "%.3f ", vals[i]);
       strcat(ampstr, fstr);
     }
   free(vals);

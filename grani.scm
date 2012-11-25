@@ -455,7 +455,9 @@
 	    (val1 0.0)
 	    (val2 0.0)
 	    (where-bins-len (if (vct? where-bins) (length where-bins) 0)))
-	
+	(if (<= where-bins-len 1)
+	    (set! where-bins #f))
+
 	(if reverse (set! (mus-increment in-file-reader) -1.0))
 	(do () ((not happy))
 	  (if (< gr-offset gr-samples)
@@ -563,9 +565,8 @@
 					 (= where-to grani-to-grain-random)
 					 (random 1.0))
 					(else grani-to-locsig)))
-		      (if (and (not (zero? where))
-			       (vct? where-bins)
-			       (> where-bins-len 1))
+		      (if (and where-bins
+			       (not (zero? where)))
 			  ;; set output scalers according to criteria
 			  (do ((chn 0 (+ 1 chn)))
 			      ((or (= chn out-chans)

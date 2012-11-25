@@ -7652,7 +7652,7 @@ mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
 
   if ((samp <= gen->data_end) &&
       (samp >= gen->data_start))
-    return((mus_float_t)MUS_SAMPLE_TO_FLOAT(gen->ibufs[chan][samp - gen->data_start]));
+    return((mus_float_t)(gen->ibufs[chan][samp - gen->data_start]));
 
   if ((samp >= 0) &&
       (samp < gen->file_end))
@@ -7705,7 +7705,7 @@ mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
 	  if (gen->data_end > gen->file_end) gen->data_end = gen->file_end;
 	}
       
-      return((mus_float_t)MUS_SAMPLE_TO_FLOAT(gen->ibufs[chan][samp - gen->data_start]));
+      return((mus_float_t)(gen->ibufs[chan][samp - gen->data_start]));
     }
   return(0.0);
 }
@@ -8163,7 +8163,7 @@ static void flush_buffers(rdout *gen)
 	     */
 	    addbufs[i] = (mus_float_t *)calloc(clm_file_buffer_size, sizeof(mus_float_t));
 	    if (addbufs[i])
-	      addbufs[i][0] = MUS_SAMPLE_0;
+	      addbufs[i][0] = 0.0;
 	    else
 	      {
 		allocation_failed = true;
@@ -11799,9 +11799,9 @@ void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp
       samps = (mus_float_t *)calloc(fftlen, sizeof(mus_float_t));
 
       mus_file_to_array(file1, 0, 0, file1_len, samps); 
-      for (i = 0; i < file1_len; i++) data1[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
+      for (i = 0; i < file1_len; i++) data1[i] = samps[i];
       mus_file_to_array(file2, 0, 0, file2_len, samps);
-      for (i = 0; i < file2_len; i++) data2[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
+      for (i = 0; i < file2_len; i++) data2[i] = samps[i];
 
       mus_convolution(data1, data2, fftlen);
 
@@ -11815,7 +11815,7 @@ void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp
 	  for (i = 0; i < outlen; i++) data1[i] *= maxval;
 	}
 
-      for (i = 0; i < outlen; i++) samps[i] = MUS_DOUBLE_TO_SAMPLE(data1[i]);
+      for (i = 0; i < outlen; i++) samps[i] = data1[i];
       errmsg = mus_array_to_file_with_error(output_file, samps, outlen, mus_sound_srate(file1), 1);
 
       free(samps);
@@ -11834,9 +11834,9 @@ void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp
 	  mus_long_t j, k;
 
 	  mus_file_to_array(file1, c1, 0, file1_len, samps);
-	  for (k = 0; k < file1_len; k++) data1[k] = MUS_SAMPLE_TO_DOUBLE(samps[k]);
+	  for (k = 0; k < file1_len; k++) data1[k] = samps[k];
 	  mus_file_to_array(file2, c2, 0, file2_len, samps);
-	  for (k = 0; k < file2_len; k++) data2[k] = MUS_SAMPLE_TO_DOUBLE(samps[k]);
+	  for (k = 0; k < file2_len; k++) data2[k] = samps[k];
 
 	  mus_convolution(data1, data2, fftlen);
 
@@ -11861,7 +11861,7 @@ void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp
 	}
 
       for (i = 0; i < totallen; i++) 
-	samps[i] = MUS_DOUBLE_TO_SAMPLE(outdat[i]);
+	samps[i] = outdat[i];
 
       errmsg = mus_array_to_file_with_error(output_file, samps, totallen, mus_sound_srate(file1), output_chans);
       free(samps);

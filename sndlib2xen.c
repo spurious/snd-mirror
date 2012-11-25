@@ -618,7 +618,7 @@ XEN g_mus_sound_maxamp(XEN file)
       if (rtn != MUS_ERROR)
 	for (i = chans - 1; i >= 0; i--)
 	  res = XEN_CONS(C_TO_XEN_LONG_LONG(times[i]),
-		  XEN_CONS(C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(vals[i])), res));
+		  XEN_CONS(C_TO_XEN_DOUBLE(vals[i]), res));
       free(vals);
       free(times);
       if (filename) free(filename);
@@ -665,7 +665,7 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
       for (i = 0, j = 0, lst = XEN_COPY_ARG(vals); i < len; i += 2, j++, lst = XEN_CDDR(lst))
 	{
 	  times[j] = XEN_TO_C_LONG_LONG_OR_ELSE(XEN_CAR(lst), 0);
-	  mvals[j] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(XEN_CADR(lst)));
+	  mvals[j] = XEN_TO_C_DOUBLE(XEN_CADR(lst));
 	}
 
       mus_sound_set_maxamps(filename, chans, mvals, times);

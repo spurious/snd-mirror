@@ -1214,7 +1214,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	{
 	  if (ioff <= ends[k]) 
 	    data[k][j] = read_sample_to_mus_sample(sfs[k]);
-	  else data[k][j] = MUS_SAMPLE_0;
+	  else data[k][j] = 0.0;
 	}
       j++;
       if (j == FILE_BUFFER_SIZE)

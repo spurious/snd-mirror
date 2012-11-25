@@ -3485,7 +3485,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	      cur_size *= 2;
 	      data = (mus_float_t *)realloc(data, cur_size * sizeof(mus_float_t));
 	    }
-	  data[data_pos++] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(res));
+	  data[data_pos++] = XEN_TO_C_DOUBLE(res);
 	}
       else
 	{
@@ -3506,7 +3506,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 			      cur_size *= 2;
 			      data = (mus_float_t *)realloc(data, cur_size * sizeof(mus_float_t));
 			    }
-			  data[data_pos++] = MUS_DOUBLE_TO_SAMPLE(v->data[i]);
+			  data[data_pos++] = v->data[i];
 			}
 		    }
 		  else
@@ -4023,7 +4023,7 @@ static void cut_and_smooth_1(chan_info *cp, mus_long_t beg, mus_long_t end, bool
       mus_float_t x, y;
       x = read_sample(sf);
       y = read_sample(sf_end);
-      splice[i] = MUS_DOUBLE_TO_SAMPLE((x * ramp) + (y * (1.0 - ramp)));
+      splice[i] = (x * ramp) + (y * (1.0 - ramp));
     }
   free_snd_fd(sf);
   free_snd_fd(sf_end);

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Wed Jul  4 16:45:19 CEST 2012
+# Changed: Sun Nov 18 17:06:41 CET 2012
 
 # module Examp (examp.scm)
 #  selection_rms
@@ -1155,8 +1155,9 @@ varies the sampling rate randomly, making a voice sound quavery: hello_dentist(4
                     i += dir
                     val
                   end)
-    vct2channel(vct_map!(out_data, lambda do | | src(rd, rand_interp(rn)) end),
-                0, len, snd, chn, false, format("%s(%s, %s", get_func_name, freq, amp))
+    vct2channel(out_data.map do |x| src(rd, rand_interp(rn)) end,
+                0, len, snd, chn, false,
+		format("%s(%s, %s", get_func_name, freq, amp))
   end
 
   # a very similar function uses oscil instead of rand-interp, giving

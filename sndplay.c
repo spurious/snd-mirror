@@ -30,10 +30,8 @@
 
 #if MUS_MAC_OSX
   #define OutSample float
-  #define MUS_CONVERT(samp) MUS_SAMPLE_TO_FLOAT(samp)
 #else
   #define OutSample short
-  #define MUS_CONVERT(samp) MUS_SAMPLE_TO_SHORT(samp)
 #endif
 
 
@@ -182,7 +180,7 @@ int main(int argc, char *argv[])
 	  if (chans == 1)
 	    {
 	      for (k = 0; k < curframes; k++) 
-		obuf[k] = MUS_CONVERT(bufs[0][k]);
+		obuf[k] = bufs[0][k];
 	    }
 	  else
 	    {
@@ -190,8 +188,8 @@ int main(int argc, char *argv[])
 		{
 		  for (k = 0, n = 0; k < curframes; k++, n += 2) 
 		    {
-		      obuf[n] = MUS_CONVERT(bufs[0][k]); 
-		      obuf[n + 1] = MUS_CONVERT(bufs[1][k]);
+		      obuf[n] = bufs[0][k]; 
+		      obuf[n + 1] = bufs[1][k];
 		    }
 		}
 	      else
@@ -199,7 +197,7 @@ int main(int argc, char *argv[])
 		  for (k = 0, j = 0; k < curframes; k++, j += chans)
 		    {
 		      for (n = 0; n < chans; n++) 
-			obuf[j + n] = MUS_CONVERT(bufs[n][k]);
+			obuf[j + n] = bufs[n][k];
 		    }
 		}
 	    }
