@@ -12,7 +12,7 @@ static bool mix_vct_untagged(vct *v, chan_info *cp, mus_long_t beg, const char *
 
   sf = init_sample_read(beg, cp, READ_FORWARD);
   for (i = 0; i < len; i++)
-    data[i] = read_sample_to_mus_sample(sf) + MUS_FLOAT_TO_SAMPLE(v->data[i]);
+    data[i] = read_sample_to_mus_sample(sf) + (v->data[i]);
   sf = free_snd_fd(sf);
 
   result = change_samples(beg, len, data, cp, origin, cp->edit_ctr); /* cp->edit_ctr since mix-vct has no edpos arg, similarly mix */
@@ -1185,19 +1185,19 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
       if (!src_gen)
 	{
 	  for (i = 0; i < len; i++)
-	    new_buffer[i] = MUS_FLOAT_TO_SAMPLE(mus_env(egen) * read_sample(mix_reader));
+	    new_buffer[i] = (mus_env(egen) * read_sample(mix_reader));
 	}
       else
 	{
 	  if (!egen)
 	    {
 	      for (i = 0; i < len; i++)
-		new_buffer[i] = MUS_FLOAT_TO_SAMPLE(mus_src(src_gen, 0.0, &src_input));
+		new_buffer[i] = (mus_src(src_gen, 0.0, &src_input));
 	    }
 	  else
 	    {
  	      for (i = 0; i < len; i++)
-		new_buffer[i] = MUS_FLOAT_TO_SAMPLE(mus_src(src_gen, 0.0, &src_input) * mus_env(egen));
+		new_buffer[i] = (mus_src(src_gen, 0.0, &src_input) * mus_env(egen));
 	    }
 	}
       cp->sounds[cp->sound_ctr] = make_snd_data_buffer(new_buffer, (int)len, cp->edit_ctr);
@@ -1225,7 +1225,7 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
 	{
 	  for (i = 0; i < len; i++)
 	    {
-	      new_buffer[j++] = MUS_FLOAT_TO_SAMPLE(read_sample(mix_reader) * mus_env(egen));
+	      new_buffer[j++] = (read_sample(mix_reader) * mus_env(egen));
 	      if (j == MAX_BUFFER_SIZE)
 		{
 		  err = mus_file_write(fd, 0, j - 1, 1, data);
@@ -1240,7 +1240,7 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
 	    {
 	      for (i = 0; i < len; i++)
 		{
-		  new_buffer[j++] = MUS_FLOAT_TO_SAMPLE(mus_src(src_gen, 0.0, &src_input));
+		  new_buffer[j++] = (mus_src(src_gen, 0.0, &src_input));
 		  if (j == MAX_BUFFER_SIZE)
 		    {
 		      err = mus_file_write(fd, 0, j - 1, 1, data);
@@ -1253,7 +1253,7 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
 	    {
 	      for (i = 0; i < len; i++)
 		{
-		  new_buffer[j++] = MUS_FLOAT_TO_SAMPLE(mus_src(src_gen, 0.0, &src_input) * mus_env(egen));
+		  new_buffer[j++] = (mus_src(src_gen, 0.0, &src_input) * mus_env(egen));
 		  if (j == MAX_BUFFER_SIZE)
 		    {
 		      err = mus_file_write(fd, 0, j - 1, 1, data);

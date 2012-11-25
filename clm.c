@@ -8322,7 +8322,7 @@ mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_flo
 
   if (gen->safety == 1)
     {
-      gen->obufs[chan][samp] += MUS_FLOAT_TO_SAMPLE(val);
+      gen->obufs[chan][samp] += val;
       if (samp > gen->out_end) 
 	gen->out_end = samp;
       return(val);
@@ -8330,7 +8330,7 @@ mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_flo
 
   if ((samp <= gen->data_end) &&
       (samp >= gen->data_start))
-    gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
+    gen->obufs[chan][samp - gen->data_start] += val;
   else
     {
       int j;
@@ -8339,7 +8339,7 @@ mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_flo
 	memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_float_t));
       gen->data_start = samp;
       gen->data_end = samp + clm_file_buffer_size - 1;
-      gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
+      gen->obufs[chan][samp - gen->data_start] += val;
       gen->out_end = samp; /* this resets the current notion of where in the buffer the new data ends */
     }
 
@@ -8361,7 +8361,7 @@ static mus_float_t mus_outa_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
 
   if (gen->safety == 1)
     {
-      gen->obuf0[samp] += MUS_FLOAT_TO_SAMPLE(val);
+      gen->obuf0[samp] += val;
       if (samp > gen->out_end) 
 	gen->out_end = samp;
       return(val);
@@ -8369,7 +8369,7 @@ static mus_float_t mus_outa_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
 
   if ((samp <= gen->data_end) &&
       (samp >= gen->data_start))
-    gen->obuf0[samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
+    gen->obuf0[samp - gen->data_start] += val;
   else
     {
       int j;
@@ -8378,7 +8378,7 @@ static mus_float_t mus_outa_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
 	memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_float_t));
       gen->data_start = samp;
       gen->data_end = samp + clm_file_buffer_size - 1;
-      gen->obuf0[samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
+      gen->obuf0[samp - gen->data_start] += val;
       gen->out_end = samp; /* this resets the current notion of where in the buffer the new data ends */
     }
 
@@ -8400,7 +8400,7 @@ static mus_float_t mus_outb_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
 
   if (gen->safety == 1)
     {
-      gen->obuf1[samp] += MUS_FLOAT_TO_SAMPLE(val);
+      gen->obuf1[samp] += val;
       if (samp > gen->out_end) 
 	gen->out_end = samp;
       return(val);
@@ -8408,7 +8408,7 @@ static mus_float_t mus_outb_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
 
   if ((samp <= gen->data_end) &&
       (samp >= gen->data_start))
-    gen->obuf1[samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
+    gen->obuf1[samp - gen->data_start] += val;
   else
     {
       int j;
@@ -8417,7 +8417,7 @@ static mus_float_t mus_outb_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
 	memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_float_t));
       gen->data_start = samp;
       gen->data_end = samp + clm_file_buffer_size - 1;
-      gen->obuf1[samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
+      gen->obuf1[samp - gen->data_start] += val;
       gen->out_end = samp; /* this resets the current notion of where in the buffer the new data ends */
     }
 
@@ -8557,7 +8557,7 @@ mus_float_t mus_out_any(mus_long_t samp, mus_float_t val, int chan, mus_any *IO)
 	  if ((gen->safety == 1) &&
 	      (IO->core->write_sample == mus_out_any_to_file))
 	    {
-	      gen->obufs[chan][samp] += MUS_FLOAT_TO_SAMPLE(val);
+	      gen->obufs[chan][samp] += val;
 	      if (samp > gen->out_end) 
 		gen->out_end = samp;
 	      return(val);
@@ -8577,7 +8577,7 @@ mus_float_t mus_safe_out_any_to_file(mus_long_t samp, mus_float_t val, int chan,
   rdout *gen = (rdout *)IO;
   if (gen->safety == 1)
     {
-      gen->obufs[chan][samp] += MUS_FLOAT_TO_SAMPLE(val);
+      gen->obufs[chan][samp] += val;
       if (samp > gen->out_end) 
 	gen->out_end = samp;
       return(val);
@@ -9110,7 +9110,7 @@ void mus_locsig_safe_mono_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t va
 {
   locs *gen = (locs *)ptr;
   rdout *writer = (rdout *)(gen->outn_writer);
-  writer->obufs[0][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[0]);   
+  writer->obufs[0][loc] += (val * gen->outn[0]);   
   if (loc > writer->out_end) 
     writer->out_end = loc;
 }
@@ -9120,9 +9120,9 @@ void mus_locsig_safe_mono(mus_any *ptr, mus_long_t loc, mus_float_t val)
 {
   locs *gen = (locs *)ptr;
   rdout *writer = (rdout *)(gen->outn_writer);
-  writer->obufs[0][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[0]); 
+  writer->obufs[0][loc] += (val * gen->outn[0]); 
   writer = (rdout *)(gen->revn_writer);
-  writer->obufs[0][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->revn[0]);   
+  writer->obufs[0][loc] += (val * gen->revn[0]);   
   if (loc > writer->out_end) 
     writer->out_end = loc;
 }
@@ -9132,8 +9132,8 @@ void mus_locsig_safe_stereo_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t 
 {
   locs *gen = (locs *)ptr;
   rdout *writer = (rdout *)(gen->outn_writer);
-  writer->obufs[0][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[0]);   
-  writer->obufs[1][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[1]);   
+  writer->obufs[0][loc] += (val * gen->outn[0]);   
+  writer->obufs[1][loc] += (val * gen->outn[1]);   
   if (loc > writer->out_end) 
     writer->out_end = loc;
 }
@@ -9142,10 +9142,10 @@ void mus_locsig_safe_stereo(mus_any *ptr, mus_long_t loc, mus_float_t val)
 {
   locs *gen = (locs *)ptr;
   rdout *writer = (rdout *)(gen->outn_writer);
-  writer->obufs[0][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[0]); 
-  writer->obufs[1][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[1]); 
+  writer->obufs[0][loc] += (val * gen->outn[0]); 
+  writer->obufs[1][loc] += (val * gen->outn[1]); 
   writer = (rdout *)(gen->revn_writer);
-  writer->obufs[0][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->revn[0]);   
+  writer->obufs[0][loc] += (val * gen->revn[0]);   
   if (loc > writer->out_end) 
     writer->out_end = loc;
 }
@@ -9208,7 +9208,7 @@ static void mus_locsig_safe_any(mus_any *ptr, mus_long_t loc, mus_float_t val)
     {
       rdout *writer = (rdout *)(gen->outn_writer);
       for (i = 0; i < gen->chans; i++)
-	writer->obufs[i][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[i]);   
+	writer->obufs[i][loc] += (val * gen->outn[i]);   
       if (loc > writer->out_end) 
 	writer->out_end = loc;
     }
@@ -9217,7 +9217,7 @@ static void mus_locsig_safe_any(mus_any *ptr, mus_long_t loc, mus_float_t val)
     {
       rdout *writer = (rdout *)(gen->revn_writer);
       for (i = 0; i < gen->rev_chans; i++)
-	writer->obufs[i][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->revn[i]);   
+	writer->obufs[i][loc] += (val * gen->revn[i]);   
       if (loc > writer->out_end) 
 	writer->out_end = loc;
     }
@@ -9231,7 +9231,7 @@ static void mus_locsig_safe_any_no_reverb(mus_any *ptr, mus_long_t loc, mus_floa
     {
       rdout *writer = (rdout *)(gen->outn_writer);
       for (i = 0; i < gen->chans; i++)
-	writer->obufs[i][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[i]);   
+	writer->obufs[i][loc] += (val * gen->outn[i]);   
       if (loc > writer->out_end) 
 	writer->out_end = loc;
     }

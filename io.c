@@ -69,6 +69,18 @@ unsigned int mus_char_to_ubint(const unsigned char *inp);
 unsigned int mus_char_to_ulint(const unsigned char *inp);
 /* ---------------------------------------- */
 
+#define MUS_BYTE_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 7)))
+#define MUS_SHORT_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 15)))
+#define MUS_INT_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 23)))
+#define MUS_INT24_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 23)))
+#define MUS_FLOAT_TO_SAMPLE(n) ((mus_float_t)(n))
+#define MUS_DOUBLE_TO_SAMPLE(n) ((mus_float_t)(n))
+#define MUS_SAMPLE_TO_FLOAT(n) ((mus_float_t)(n))
+#define MUS_SAMPLE_TO_DOUBLE(n) ((double)(n))
+#define MUS_SAMPLE_TO_INT(n) ((int)((n) * (1 << 23)))
+#define MUS_SAMPLE_TO_INT24(n) ((int)((n) * (1 << 23)))
+#define MUS_SAMPLE_TO_SHORT(n) ((short)((n) * (1 << 15)))
+#define MUS_SAMPLE_TO_BYTE(n) ((char)((n) * (1 << 7)))
 
 
 static mus_long_t mus_maximum_malloc = MUS_MAX_MALLOC_DEFAULT;
@@ -1028,9 +1040,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	  return(total / siz);
 	}
 
-      prescaling = (float)(fd->prescaler * MUS_FLOAT_TO_SAMPLE(1.0));
-      /* not MUS_FLOAT_TO_SAMPLE(fd->prescaler) here because there's a possible cast to int which can overflow */
-
+      prescaling = fd->prescaler;
       if (ur_charbuf == NULL) 
 	ur_charbuf = (char *)malloc(BUFLIM * sizeof(char)); 
       charbuf = ur_charbuf;
@@ -1039,7 +1049,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
     {
       charbuf = inbuf;
       siz = mus_bytes_per_sample(tfd);
-      prescaling = (float)(MUS_FLOAT_TO_SAMPLE(1.0));
+      prescaling = 1.0;
       format = tfd;
     }
 
@@ -1647,8 +1657,8 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 		  for (; bufnow <= bufend; bufnow++)
 		    {
 		      sample = (*bufnow);
-		      if ((sample > MUS_SAMPLE_MAX) ||
-			  (sample < MUS_SAMPLE_MIN))
+		      if ((sample > 0.99999) ||
+			  (sample < -1.0))
 			(*bufnow) = (*mus_clip_handler)(sample);
 		    }
 		}
@@ -1657,11 +1667,11 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 		  for (; bufnow <= bufend; bufnow++)
 		    {
 		      sample = (*bufnow);
-		      if (sample > MUS_SAMPLE_MAX)
-			(*bufnow) = MUS_SAMPLE_MAX;
+		      if (sample > 0.99999)
+			(*bufnow) = 0.99999;
 		      else
-			if (sample < MUS_SAMPLE_MIN)
-			  (*bufnow) = MUS_SAMPLE_MIN;
+			if (sample < -1.0)
+			  (*bufnow) = -1.0;
 		    }
 		}
 	    }

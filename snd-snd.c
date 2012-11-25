@@ -2272,8 +2272,6 @@ static XEN s7_xen_sound_fill(s7_scheme *sc, XEN obj, XEN val)
 	   */
 	  mus_long_t len = -1, j;
 	  mus_float_t *data = NULL;
-	  mus_float_t value;
-	  value = MUS_FLOAT_TO_SAMPLE(valf);	  
 	  
 	  for (i = 0; i < sp->nchans; i++)
 	    {
@@ -2284,7 +2282,7 @@ static XEN s7_xen_sound_fill(s7_scheme *sc, XEN obj, XEN val)
 		  if (data) free(data);
 		  data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
 		  for (j = 0; j < len; j++)
-		    data[j] = value;
+		    data[j] = valf;
 		}
 	      if (change_samples(0, len, data, cp, "fill! sound", cp->edit_ctr))
 		update_graph(cp);

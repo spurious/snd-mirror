@@ -85,23 +85,6 @@
 #endif
 
 
-#define MUS_BYTE_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 7)))
-#define MUS_SHORT_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 15)))
-#define MUS_INT_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 23)))
-#define MUS_INT24_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 23)))
-#define MUS_FLOAT_TO_SAMPLE(n) ((mus_float_t)(n))
-#define MUS_DOUBLE_TO_SAMPLE(n) ((mus_float_t)(n))
-#define MUS_SAMPLE_TO_FLOAT(n) ((mus_float_t)(n))
-#define MUS_SAMPLE_TO_DOUBLE(n) ((double)(n))
-#define MUS_SAMPLE_TO_INT(n) ((int)((n) * (1 << 23)))
-#define MUS_SAMPLE_TO_INT24(n) ((int)((n) * (1 << 23)))
-#define MUS_SAMPLE_TO_SHORT(n) ((short)((n) * (1 << 15)))
-#define MUS_SAMPLE_TO_BYTE(n) ((char)((n) * (1 << 7)))
-#define MUS_SAMPLE_MAX 0.99999
-#define MUS_SAMPLE_MIN (-1.0)
-#define mus_sample_abs(Sample) fabs(Sample)
-
-
 enum {MUS_UNSUPPORTED, MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RF64, MUS_BICSF, MUS_NIST, MUS_INRS, MUS_ESPS, MUS_SVX, MUS_VOC, 
       MUS_SNDT, MUS_RAW, MUS_SMP, MUS_AVR, MUS_IRCAM, MUS_SD1, MUS_SPPACK, MUS_MUS10, MUS_HCOM, MUS_PSION, MUS_MAUD,
       MUS_IEEE, MUS_MATLAB, MUS_ADC, MUS_MIDI, MUS_SOUNDFONT, MUS_GRAVIS, MUS_COMDISCO, MUS_GOLDWAVE, MUS_SRFS,

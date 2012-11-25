@@ -268,9 +268,9 @@ static mus_float_t run_clip_hook(mus_float_t val)
 	return(XEN_TO_C_DOUBLE(result));
     }
   /* otherwise mimic the built-in default in io.c */
-  if (val >= MUS_SAMPLE_MAX)
-    return(MUS_SAMPLE_MAX);
-  return(MUS_SAMPLE_MIN);
+  if (val >= 0.99999)
+    return(0.99999);
+  return(-1.0);
 }
 
  

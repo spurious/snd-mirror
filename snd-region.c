@@ -950,7 +950,7 @@ static void deferred_region_to_temp_file(region *r)
 		      if (err != MUS_NO_ERROR) break;
 		    }
 		  d[k] = read_sample_to_mus_sample(sf);
-		  curval = mus_sample_abs(d[k]);
+		  curval = fabs(d[k]);
 		  if (curval > val) 
 		    {
 		      val = curval;
@@ -974,7 +974,7 @@ static void deferred_region_to_temp_file(region *r)
 			{
 			  mus_float_t curval;
 			  data[i][k] = read_sample_to_mus_sample(sfs[i]);
-			  curval = mus_sample_abs(data[i][k]);
+			  curval = fabs(data[i][k]);
 			  if (curval > val) 
 			    {
 			      val = curval;

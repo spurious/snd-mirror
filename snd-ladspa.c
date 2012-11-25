@@ -827,7 +827,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
       /* Prepare the output data. */
       for (i = 0; i < outchans; i++)
 	for (lSampleIndex = 0; lSampleIndex < lBlockSize; lSampleIndex++)
-	  data[i][lSampleIndex] = MUS_FLOAT_TO_SAMPLE(pfOutputBuffer[i][lSampleIndex]);
+	  data[i][lSampleIndex] = (pfOutputBuffer[i][lSampleIndex]);
 
       /* Send the output data to the outside world. */
       err = mus_file_write(ofd,

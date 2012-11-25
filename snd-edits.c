@@ -7216,7 +7216,7 @@ static mus_float_t *g_floats_to_samples(XEN obj, int *size, const char *caller, 
 	num = (*size);
       vals = (mus_float_t *)malloc(num * sizeof(mus_float_t));
       for (i = 0, lst = XEN_COPY_ARG(obj); i < num; i++, lst = XEN_CDR(lst)) 
-	vals[i] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(XEN_CAR(lst)));
+	vals[i] = (XEN_TO_C_DOUBLE(XEN_CAR(lst)));
     }
   else
     {
@@ -7228,7 +7228,7 @@ static mus_float_t *g_floats_to_samples(XEN obj, int *size, const char *caller, 
 	    num = (*size);
 	  vals = (mus_float_t *)malloc(num * sizeof(mus_float_t));
 	  for (i = 0; i < num; i++) 
-	    vals[i] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(XEN_VECTOR_REF(obj, i)));
+	    vals[i] = (XEN_TO_C_DOUBLE(XEN_VECTOR_REF(obj, i)));
 	}
       else
 	{
@@ -7242,7 +7242,7 @@ static mus_float_t *g_floats_to_samples(XEN obj, int *size, const char *caller, 
 		num = (*size);
 	      vals = (mus_float_t *)malloc(num * sizeof(mus_float_t));
 	      for (i = 0; i < num; i++) 
-		vals[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
+		vals[i] = (v->data[i]);
 	    }
 	  else XEN_ASSERT_TYPE(0, obj, position, caller, "a vct, vector, or list");
 	}
@@ -7328,7 +7328,7 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd, XEN chn_n, XEN edpos)
   if ((fval == 1.0) && 
       (mus_bytes_per_sample(((cp->sound)->hdr)->format) == 2))
     fval = 32767.0 / 32768.0;
-  ival[0] = MUS_FLOAT_TO_SAMPLE(fval);
+  ival[0] = fval;
 
 #if HAVE_FORTH
   origin = mus_format("%lld %.4f %s drop", beg, fval, "set-sample");
@@ -7840,7 +7840,7 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd, XEN chn_n, XEN edpos)
   beg = beg_to_sample(samp_n, S_insert_sample);
   pos = to_c_edit_position(cp, edpos, S_insert_sample, 5);
   fval = XEN_TO_C_DOUBLE(val);
-  ival[0] = MUS_FLOAT_TO_SAMPLE(fval);
+  ival[0] = fval;
 #if HAVE_FORTH
   origin = mus_format("%lld %.4f %s drop", beg, fval, S_insert_sample);
 #else

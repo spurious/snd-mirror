@@ -260,7 +260,7 @@ static void reverb(rev_info *r, mus_float_t **rins, mus_float_t **outs, int ind)
     }
   nrev(r, r_ins, r_outs, chans); 
   for (i = 0; i < chans; i++)
-    outs[i][ind] += MUS_FLOAT_TO_SAMPLE(r_outs[i]);
+    outs[i][ind] += (r_outs[i]);
 }
 
 
@@ -1653,7 +1653,7 @@ static int fill_dac_buffers(int write_ok)
 		  if ((sr != 0.0) || (sincr != 0.0))
 		    {
 		      for (j = 0; j < frames; j++, amp += incr, sr += sincr) 
-			buf[j] += MUS_FLOAT_TO_SAMPLE(amp * speed(dp, sr));
+			buf[j] += (amp * speed(dp, sr));
 		    }
 		  dp->cur_srate = sr;
 		  dp->cur_amp = amp;
@@ -1711,7 +1711,7 @@ static int fill_dac_buffers(int write_ok)
 			  if (sp->contrast_control_p) fval = contrast(dp, amp, ind, fval); else fval *= amp;
 			  if (dp->filtering) fval = mus_fir_filter(dp->flt, fval);
 			  if (dp->reverbing) revin[j] += fval * rev;
-			  buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
+			  buf[j] += fval;
 			}
 		      dp->cur_exp = ex;
 		    }
@@ -1725,7 +1725,7 @@ static int fill_dac_buffers(int write_ok)
 			      if (sp->contrast_control_p) fval = contrast(dp, amp, ind, fval); else fval *= amp;
 			      fval = mus_fir_filter(dp->flt, fval);
 			      if (dp->reverbing) revin[j] += fval * rev;
-			      buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
+			      buf[j] += fval;
 			    }
 			}
 		      else
@@ -1736,7 +1736,7 @@ static int fill_dac_buffers(int write_ok)
 				{
 				  fval = contrast(dp, amp, ind, speed(dp, sr));
 				  if (dp->reverbing) revin[j] += fval * rev;
-				  buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
+				  buf[j] += fval;
 				}
 			    }
 			  else
@@ -1747,7 +1747,7 @@ static int fill_dac_buffers(int write_ok)
 				    {
 				      fval = amp * (*(dp->dac_sample))(dp);
 				      revin[j] += fval * rev;
-				      buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
+				      buf[j] += fval;
 				    }
 				}
 			      else
@@ -1756,7 +1756,7 @@ static int fill_dac_buffers(int write_ok)
 				    {
 				      fval = amp * speed(dp, sr);
 				      revin[j] += fval * rev;
-				      buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
+				      buf[j] += fval;
 				    }
 				}
 			    }

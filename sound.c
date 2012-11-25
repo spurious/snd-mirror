@@ -1217,7 +1217,7 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mu
 	    for (i = 0; i < curframes; i++) 
 	      {
 		mus_float_t abs_samp;
-		abs_samp = mus_sample_abs(buffer[i]);
+		abs_samp = fabs(buffer[i]);
 		if (abs_samp > samp[chn])
 		  {
 		    time[chn] = i + n; 

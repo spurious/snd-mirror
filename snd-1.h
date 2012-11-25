@@ -990,7 +990,7 @@ snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_d
 void read_sample_change_direction(snd_fd *sf, read_direction_t dir);
 bool unrampable(chan_info *cp, mus_long_t beg, mus_long_t dur, int pos, bool is_xramp);
 bool sound_fragments_in_use(chan_info *cp, int pos);
-#define read_sample_to_mus_sample(Sf) MUS_FLOAT_TO_SAMPLE((*((Sf)->runf))(Sf))
+#define read_sample_to_mus_sample(Sf) ((*((Sf)->runf))(Sf))
 #define read_sample(Sf) (*((Sf)->runf))(Sf)
 mus_float_t protected_next_sample(snd_fd *sf);
 mus_float_t protected_previous_sample(snd_fd *sf);

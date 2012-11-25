@@ -1841,7 +1841,7 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
 		}
 	      if (scl != 0.0) scl = amp / scl;
 	      for (i = 0; i < data_size; i++) 
-		pbuf[i] = MUS_FLOAT_TO_SAMPLE(scl * rl0[i]);
+		pbuf[i] = (scl * rl0[i]);
 	    }
 	  else 
 	    {

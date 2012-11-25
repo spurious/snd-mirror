@@ -2613,7 +2613,7 @@
 	(if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 		 (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	    (snd-display #__line__ ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
-	(if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "15-Oct-2006 04:34"))
+	(if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "23-Nov-2012 06:56"))
 	    (snd-display #__line__ ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
 	(play-sound-1 "oboe.snd")
 	(mus-sound-forget "oboe.snd")

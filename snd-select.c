@@ -1003,8 +1003,6 @@ static XEN s7_xen_selection_fill(s7_scheme *sc, XEN obj, XEN val)
   if (si)
     {
       int i;
-      mus_float_t value;
-      value = MUS_FLOAT_TO_SAMPLE(valf);
       for (i = 0; i < si->chans; i++)
 	{
 	  mus_long_t beg, end, len, j;
@@ -1014,7 +1012,7 @@ static XEN s7_xen_selection_fill(s7_scheme *sc, XEN obj, XEN val)
 	  len = end - beg + 1;
 	  data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
 	  for (j = 0; j < len; j++)
-	    data[j] = value;
+	    data[j] = valf;
 	  if (change_samples(beg, len, data, si->cps[i], "fill! selection", si->cps[i]->edit_ctr))
 	    update_graph(si->cps[i]);
 	  free(data);

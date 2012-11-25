@@ -904,8 +904,8 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 	  for (k = 0; sr->sample < dur; k++)
 	    {
 	      if (ratio == 2.0)
-		idata[j] = (MUS_FLOAT_TO_SAMPLE(mus_src_20(sr->gen, &src_input_as_needed)));
-	      else idata[j] = (MUS_FLOAT_TO_SAMPLE(mus_src_05(sr->gen, &src_input_as_needed)));
+		idata[j] = ((mus_src_20(sr->gen, &src_input_as_needed)));
+	      else idata[j] = ((mus_src_05(sr->gen, &src_input_as_needed)));
 	      j++;
 	      if (j == MAX_BUFFER_SIZE)
 		{
@@ -929,7 +929,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 	{
 	  for (k = 0; sr->sample < dur; k++) /* sr->sample tracks input location -- produce output until input exhausted */
 	    {
-	      idata[j] = (MUS_FLOAT_TO_SAMPLE(mus_src(sr->gen, 0.0, &src_input_as_needed)));
+	      idata[j] = ((mus_src(sr->gen, 0.0, &src_input_as_needed)));
 	      j++;
 	      if (j == MAX_BUFFER_SIZE)
 		{
@@ -999,7 +999,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
       next_pass = sr->sample;
       for (k = 0; sr->sample < dur; k++)
 	{
-	  idata[j] = (MUS_FLOAT_TO_SAMPLE(mus_src(sr->gen, env_val, &src_input_as_needed)));
+	  idata[j] = ((mus_src(sr->gen, env_val, &src_input_as_needed)));
 	  j++;
 	  if (j == MAX_BUFFER_SIZE)
 	    {
@@ -1304,7 +1304,7 @@ void src_file(const char *file, double ratio)
   for (k = 0, samp = 0; samp < new_samps; samp++)
     {
       for (chan = 0; chan < chans; chan++)
-	obufs[chan][k] = MUS_FLOAT_TO_SAMPLE(mus_src(srcs[chan], 0.0, &input_as_needed));
+	obufs[chan][k] = (mus_src(srcs[chan], 0.0, &input_as_needed));
       k++;
       if (k == buffer_size)
 	{
@@ -1460,7 +1460,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
       j = 0;
       for (k = 0; k < dur; k++)
 	{
-	  idata[j++] = MUS_FLOAT_TO_SAMPLE(mus_apply(gen, read_sample(sf), 0.0));
+	  idata[j++] = (mus_apply(gen, read_sample(sf), 0.0));
 	  if (j == MAX_BUFFER_SIZE)
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -1472,12 +1472,12 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
   else
     {
       for (k = 0; k < dur; k++)
-	idata[k] = MUS_FLOAT_TO_SAMPLE(mus_apply(gen, read_sample(sf), 0.0));
+	idata[k] = (mus_apply(gen, read_sample(sf), 0.0));
       j = (int)dur;
     }
   for (k = 0; k < overlap; k++)
     {
-      idata[j++] = MUS_FLOAT_TO_SAMPLE(mus_apply(gen, 0.0, 0.0) + read_sample(sf));
+      idata[j++] = (mus_apply(gen, 0.0, 0.0) + read_sample(sf));
       if ((temp_file) && (j == MAX_BUFFER_SIZE))
 	{
 	  err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -1593,7 +1593,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 
 	  x = mus_convolve(gen, convolve_next_sample);
 
-	  idata[j] = MUS_FLOAT_TO_SAMPLE(x);
+	  idata[j] = x;
 	  j++;
 	  if (j == MAX_BUFFER_SIZE)
 	    {
@@ -1759,7 +1759,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
       if (gen)
 	{
 	  for (j = 0; j < dur; j++)
-	    idata[j] = MUS_FLOAT_TO_SAMPLE(mus_apply(gen, read_sample(sf), 0.0));
+	    idata[j] = (mus_apply(gen, read_sample(sf), 0.0));
 	}
       else
 	{
@@ -1781,7 +1781,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 		  dprev = dp--;
 		  (*dprev) = (*dp);
 		}
-	      idata[j] = MUS_FLOAT_TO_SAMPLE(x);
+	      idata[j] = x;
 	    }
 	}
     }
@@ -1808,7 +1808,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 		  (*dprev) = (*dp);
 		}
 	    }
-	  idata[j] = MUS_FLOAT_TO_SAMPLE(x);
+	  idata[j] = x;
 	  j++;
 	  if (j == MAX_BUFFER_SIZE)
 	    {
@@ -1854,7 +1854,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 		  (*dprev) = (*dp);
 		}
 	    }
-	  idata[j] = MUS_FLOAT_TO_SAMPLE(x + read_sample(sfold));
+	  idata[j] = (x + read_sample(sfold));
 	  j++;
 	  if ((temp_file) && (j == MAX_BUFFER_SIZE))
 	    {
@@ -2557,7 +2557,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 		{
 		  egen_val = mus_env(egen);
 		  for (k = 0; k < si->chans; k++)
-		    data[k][j] = MUS_FLOAT_TO_SAMPLE(read_sample(sfs[k]) * egen_val);
+		    data[k][j] = (read_sample(sfs[k]) * egen_val);
 		  j++;
 		  if ((temp_file) && (j == MAX_BUFFER_SIZE))
 		    {
@@ -2583,7 +2583,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 		{
 		  egen_val = mus_env(egen);
 		  for (k = 0; k < si->chans; k++)
-		    data[k][j] = MUS_FLOAT_TO_SAMPLE(read_sample(sfs[k]) * egen_val);
+		    data[k][j] = (read_sample(sfs[k]) * egen_val);
 		}
 	    }
 	}
@@ -2596,7 +2596,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 	      ss->stopped_explicitly = false;
 	      for (ioff = 0; ioff < dur; ioff++)
 		{
-		  idata[j] = MUS_FLOAT_TO_SAMPLE(read_sample(sf) * mus_env(egen));
+		  idata[j] = (read_sample(sf) * mus_env(egen));
 		  j++;
 		  if ((temp_file) && (j == MAX_BUFFER_SIZE))
 		    {
@@ -2619,7 +2619,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 	  else
 	    {
 	      for (j = 0; j < dur; j++)
-		idata[j] = MUS_FLOAT_TO_SAMPLE(read_sample(sf) * mus_env(egen));
+		idata[j] = (read_sample(sf) * mus_env(egen));
 	    }
 	}
       if (temp_file)
@@ -2970,7 +2970,7 @@ static void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int ed
   scale = 0.5 * fabs(y0 - y1);
   data = (mus_float_t *)calloc(dur, sizeof(mus_float_t));
   for (k = 0; k < dur; k++, angle += incr) 
-    data[k] = MUS_FLOAT_TO_SAMPLE(off + scale * cos(angle));
+    data[k] = (off + scale * cos(angle));
 #if HAVE_FORTH
   origin = mus_format("%lld" PROC_SEP "%lld %s", beg, dur, S_smooth_channel);
 #else
@@ -3125,7 +3125,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 		if (fds[i][chan])
 		  sum += read_sample(fds[i][chan]);
 	      sum *= amp;
-	      data[chan][j] = MUS_FLOAT_TO_SAMPLE(sum);
+	      data[chan][j] = (sum);
 	    }
 	  j++;
 	  if (j == MAX_BUFFER_SIZE)
@@ -3142,7 +3142,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 	{
 	  if (e) amp = mus_env(e);
 	  for (chan = 0; chan < chans; chan++)
-	    data[chan][j] = MUS_FLOAT_TO_SAMPLE(amp * mus_src(sgens[chan], 0.0, &scale_and_src_input));
+	    data[chan][j] = (amp * mus_src(sgens[chan], 0.0, &scale_and_src_input));
 	  j++;
 	  if (j == MAX_BUFFER_SIZE)
 	    {
