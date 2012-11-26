@@ -9510,6 +9510,17 @@ static s7_pointer fm_violin_vibrato_fallback(s7_scheme *sc, s7_pointer args)
   return(s7_make_real(sc, mus_env(e) + mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r)));			
 }
 
+static s7_pointer fm_violin_vibrato_no_env_fallback(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *t = NULL, *r = NULL;
+  
+  GET_GENERATOR_CADR(car(args), triangle_wave, t);
+  args = cdr(args);
+  GET_GENERATOR_CADR(car(args), rand_interp, r);
+  
+  return(s7_make_real(sc, mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r)));			
+}
+
 static s7_pointer abs_rand_interp;
 static s7_pointer g_abs_rand_interp(s7_scheme *sc, s7_pointer args)
 {
@@ -9578,6 +9589,47 @@ static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
       XEN_ASSERT_TYPE((rang) && (mus_rand_interp_p(rang)), cadar(args), XEN_ARG_1, "rand-interp", "rand-interp generator");
     }
   return(s7_make_real(sc, mus_env(vibe) + mus_triangle_wave_unmodulated(trig) + mus_rand_interp_unmodulated(rang)));
+}
+
+static s7_pointer fm_violin_vibrato_no_env;
+static s7_pointer g_fm_violin_vibrato_no_env(s7_scheme *sc, s7_pointer args)
+{
+  static s7_pointer last_args = NULL;
+  static void **last_syms = NULL;
+  void **syms;
+
+  static mus_any *trig = NULL, *rang = NULL;
+
+  if (args == last_args)
+    syms = last_syms;
+  else
+    {
+      syms = s7_expression_data(sc, args);
+      last_args = args;
+      last_syms = syms;
+    }
+
+  if (!syms)
+    {
+      if (!in_safe_do) 
+	return(fm_violin_vibrato_no_env_fallback(sc, args));
+      syms = s7_expression_make_data(sc, args, 1); 
+      last_args = args;
+      last_syms = syms;
+    }
+
+  /* now check for start of a new note */
+  if (!syms[0])
+    {
+      trig = (mus_any *)get_generator(sc, cadar(args));
+      syms[0] = (void *)trig;
+      XEN_ASSERT_TYPE((trig) && (mus_triangle_wave_p(trig)), cadar(args), XEN_ARG_1, "triangle-wave", "triangle-wave generator");
+
+      args = cdr(args);
+      rang = (mus_any *)get_generator(sc, cadar(args));
+      XEN_ASSERT_TYPE((rang) && (mus_rand_interp_p(rang)), cadar(args), XEN_ARG_1, "rand-interp", "rand-interp generator");
+    }
+  return(s7_make_real(sc, mus_triangle_wave_unmodulated(trig) + mus_rand_interp_unmodulated(rang)));
 }
 
 static s7_pointer env_polywave;
@@ -10786,54 +10838,68 @@ static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, 
 
 static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_pair(caddr(expr))))
+  if (args == 2)
     {
-      if (s7_function_choice(sc, caddr(expr)) == g_env_polywave)
+      if ((s7_is_symbol(cadr(expr))) &&
+	  (s7_is_pair(caddr(expr))))
 	{
-	  s7_function_choice_set_direct(sc, expr);
-	  return(fm_violin_modulation);
-	}
-    }
-
-  if ((args == 2) &&
-      (s7_is_pair(caddr(expr))) &&
-      (car(caddr(expr)) != quote_symbol) &&
-      (s7_function_choice_is_direct(sc, caddr(expr))) &&
-      (s7_function_returns_temp(caddr(expr))))
-    {
-      if (s7_is_real(cadr(expr)))
-	{
-	  /* fprintf(stderr, "\nadd c direct: %s\n\n", DISPLAY_80(expr)); */
-	  s7_function_choice_set_direct(sc, expr);
-	  return(add_c_direct);
-	}
-
-      if ((s7_is_pair(cadr(expr))) &&
-	  (s7_function_choice_is_direct(sc, cadr(expr))) &&
-	  (s7_function_returns_temp(cadr(expr))))
-	{
-	  /* fprintf(stderr, "add 2 direct\n"); */
-	  s7_function_choice_set_direct(sc, expr);
-	  return(add_direct_2);
-	}
-      
-      if ((s7_is_pair(cadr(expr))) &&
-	  (s7_list_length(sc, cadr(expr)) == 3) &&
-	  (s7_is_real(cadr(cadr(expr)))) &&
-	  (s7_is_symbol(caddr(cadr(expr)))))
-	{
-	  if (caadr(expr) == multiply_symbol)
+	  if (s7_function_choice(sc, caddr(expr)) == g_env_polywave)
 	    {
 	      s7_function_choice_set_direct(sc, expr);
-	      return(add_cs_direct);
+	      return(fm_violin_modulation);
 	    }
-	  if ((caadr(expr) == subtract_symbol) &&
-	      (s7_number_to_real(sc, cadr(cadr(expr))) == 1.0))
+	}
+
+      if ((s7_is_pair(cadr(expr))) &&
+	  (cddr(cadr(expr)) == s7_nil(sc)) &&
+	  (car(cadr(expr)) == triangle_wave_symbol) &&
+	  (s7_is_symbol(cadr(cadr(expr)))) &&
+	  (s7_is_pair(caddr(expr))) &&
+	  (cddr(caddr(expr)) == s7_nil(sc)) &&
+	  (car(caddr(expr)) == rand_interp_symbol) &&
+	  (s7_is_symbol(cadr(caddr(expr)))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(fm_violin_vibrato_no_env);
+	}
+
+      if ((s7_is_pair(caddr(expr))) &&
+	  (car(caddr(expr)) != quote_symbol) &&
+	  (s7_function_choice_is_direct(sc, caddr(expr))) &&
+	  (s7_function_returns_temp(caddr(expr))))
+	{
+	  if (s7_is_real(cadr(expr)))
 	    {
+	      /* fprintf(stderr, "\nadd c direct: %s\n\n", DISPLAY_80(expr)); */
 	      s7_function_choice_set_direct(sc, expr);
-	      return(add_1s_direct);
+	      return(add_c_direct);
+	    }
+	  
+	  if ((s7_is_pair(cadr(expr))) &&
+	      (s7_function_choice_is_direct(sc, cadr(expr))) &&
+	      (s7_function_returns_temp(cadr(expr))))
+	    {
+	      /* fprintf(stderr, "add 2 direct\n"); */
+	      s7_function_choice_set_direct(sc, expr);
+	      return(add_direct_2);
+	    }
+	  
+	  if ((s7_is_pair(cadr(expr))) &&
+	      (s7_list_length(sc, cadr(expr)) == 3) &&
+	      (s7_is_real(cadr(cadr(expr)))) &&
+	      (s7_is_symbol(caddr(cadr(expr)))))
+	    {
+	      if (caadr(expr) == multiply_symbol)
+		{
+		  s7_function_choice_set_direct(sc, expr);
+		  return(add_cs_direct);
+		}
+	      if ((caadr(expr) == subtract_symbol) &&
+		  (s7_number_to_real(sc, cadr(cadr(expr))) == 1.0))
+		{
+		  s7_function_choice_set_direct(sc, expr);
+		  return(add_1s_direct);
+		}
 	    }
 	}
     }
@@ -12729,6 +12795,9 @@ static void init_choosers(s7_scheme *sc)
   fm_violin_vibrato = clm_make_function(sc, "+", g_fm_violin_vibrato, 3, 0, false, "fm-violin optimization", f,
 					NULL, NULL, NULL, NULL, NULL, NULL);
   s7_function_set_has_data(fm_violin_vibrato);
+  fm_violin_vibrato_no_env = clm_make_function(sc, "+", g_fm_violin_vibrato_no_env, 2, 0, false, "fm-violin optimization", f,
+					NULL, NULL, NULL, NULL, NULL, NULL);
+  s7_function_set_has_data(fm_violin_vibrato_no_env);
   fm_violin_modulation = clm_make_function(sc, "+", g_fm_violin_modulation, 2, 0, false, "fm-violin optimization", f,
 					   NULL, NULL, NULL, NULL, NULL, NULL);
   jc_reverb_combs = clm_make_function(sc, "+", g_jc_reverb_combs, 2, 0, false, "jc-reverb optimization", f,

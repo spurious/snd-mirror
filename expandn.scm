@@ -151,11 +151,15 @@
 				(set! next-samp (+ next-samp resa))
 				(if (> next-samp (+ ex-samp 1))
 				    (let ((samps (floor (- next-samp ex-samp))))
-				      (do ((k 0 (+ k 1)))
-					  ((= k samps))
-					(set! sample-0 sample-1)
-					(set! sample-1 (* vol (granulate ingen)))
-					(set! ex-samp (+ ex-samp 1)))))))
+				      (if (= samps 2)
+					  (begin
+					    (set! sample-0 (* vol (granulate ingen)))
+					    (set! sample-1 (* vol (granulate ingen))))
+					  (do ((k 0 (+ k 1)))
+					      ((= k samps))
+					    (set! sample-0 sample-1)
+					    (set! sample-1 (* vol (granulate ingen)))))
+				      (set! ex-samp (+ ex-samp samps))))))
 			  
 			  (if (= next-samp ex-samp)
 			      ;; output actual samples
@@ -222,8 +226,8 @@
 					    (set! sample-0-0 sample-1-0)
 					    (set! sample-1-0 (* vol (granulate ingen0)))
 					    (set! sample-0-1 sample-1-1)
-					    (set! sample-1-1 (* vol (granulate ingen1)))
-					    (set! ex-samp (+ ex-samp 1)))))))
+					    (set! sample-1-1 (* vol (granulate ingen1))))
+					  (set! ex-samp (+ ex-samp samps))))))
 			      
 			      (if (= next-samp ex-samp)
 				  ;; output actual samples
@@ -287,8 +291,8 @@
 						((= ix in-chans))
 					      (let ((gen (vector-ref ex-array ix)))
 						(vector-set! samples-0 ix (vector-ref samples-1 ix))
-						(vector-set! samples-1 ix (* vol (granulate gen)))))
-					    (set! ex-samp (+ ex-samp 1)))))))
+						(vector-set! samples-1 ix (* vol (granulate gen))))))
+					  (set! ex-samp (+ ex-samp samps))))))
 			      
 			      (if (= next-samp ex-samp)
 				  ;; output actual samples

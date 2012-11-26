@@ -450,7 +450,7 @@ is a physical model of a flute:
 			  :scaler flow 
 			  :duration (- dur decay)))
 	 (periodic-vibrato (make-oscil vib-rate))
-	 (random-vibrato (make-rand-interp :frequency ran-rate))
+	 (random-vibrato (make-rand-interp :frequency ran-rate :amplitude ran-amount))
 	 (breath (make-rand :frequency (/ (mus-srate) 2) :amplitude 1))
 	 (period-samples (floor (/ (mus-srate) freq)))
 	 (embouchure-samples (floor (* embouchure-size period-samples)))
@@ -463,7 +463,7 @@ is a physical model of a flute:
        (set! delay-sig (delay bore out-sig))
        (set! emb-sig (delay embouchure current-difference))
        (set! current-flow (+ (* vib-amount (oscil periodic-vibrato)) 
-			     (* ran-amount (rand-interp random-vibrato)) 
+			     (rand-interp random-vibrato)
 			     (env flowf)))
        (set! current-difference 
 	     (+ current-flow 
@@ -1056,7 +1056,7 @@ is a physical model of a flute:
      (do ((i beg (+ i 1)))
 	 ((= i end))
        (let* ((outsum 0.0)
-	      (vib (+ (triangle-wave pervib) (rand-interp ranvib) (env frqf)))
+	      (vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
 	      (modsig (oscil modulator vib)))
 	 (do ((k 0 (+ k 1)))
 	     ((= k numformants))

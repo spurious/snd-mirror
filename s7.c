@@ -42198,9 +42198,6 @@ static s7_pointer check_do(s7_scheme *sc)
 						  s7_pointer x;
 						  x = cddar(body);
 						  
-						  /* fprintf(stderr, "let safe: %s from %s\n", DISPLAY_80(x), DISPLAY(body)); */
-						  /* HOP_SAFE_C_S here also */
-						  
 						  if ((is_pair(car(x))) &&
 						      (is_optimized(car(x))) &&
 						      (is_null(cdr(x))) && /* one liner? */
@@ -42209,10 +42206,31 @@ static s7_pointer check_do(s7_scheme *sc)
 						      x = cadar(cadar(body));
 						      if ((is_pair(x)) &&
 							  (is_optimized(x)) &&
-							  (returns_temp(ecdr(x)) == 1) &&
+							  (returns_temp(ecdr(x))) &&
 							  (optimize_data(x) == HOP_SAFE_C_C))
 							set_syntax_op(sc->code, sc->SIMPLE_SAFE_DOTIMES);
+#if 0
+						      else		
+							{
+						    fprintf(stderr, "let un-1: %s\n    pair: %d, opt: %d, temp: %d, op: %s\n\n", DISPLAY(body),
+							       (is_pair(x)),
+							       (is_optimized(x)),
+							       (returns_temp(ecdr(x))),
+							       (is_optimized(x)) ? opt_names[optimize_data(x)] : "??");
+							}
+#endif
 						    }
+#if 0
+						  else 
+						    {
+						      /* c_sz is common here and c_xxz */
+						    fprintf(stderr, "let un: %s\n    pair: %d, one: %d, opt: %d, op: %s\n\n", DISPLAY(body),
+							    (is_pair(car(x))),
+							    (is_null(cdr(x))),
+							    (is_optimized(car(x))),
+							    (is_optimized(car(x))) ? opt_names[optimize_data(car(x))] : "??");
+						    }
+#endif
 						}
 					    }
 					}
@@ -62405,7 +62423,7 @@ s7_scheme *s7_init(void)
  * index    44300 4988 3935 3291 3005 2742 2362
  * s7test         1721 1430 1358 1297 1244 1233
  * t455            265  218   89   55   31   28
- * t502             90   72   43   39   36   35
+ * t502             90   72   43   39   36   34
  * lat             229        63   52   47   42
  * calls                     276  208  176  157
  *

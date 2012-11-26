@@ -170,10 +170,10 @@
 	      (formant-shift 1.0)
 	      (change-radii 0) 
 	      (delta 0.0) 
-	      (new-glot 1)
-	      (first-glot 1)
-	      (new-tract 1)
-	      (first-tract 1)
+	      (new-glot #t)
+	      (first-glot #t)
+	      (new-tract #t)
+	      (first-tract #t)
 	      (offset -1)
 	      (nd (floor (change-times (- (length change-times) 1))))
 	      (next-offset bg)
@@ -258,7 +258,7 @@
 			     (k new-sfd (+ k 1)))
 			    ((= j new-sfd))
 			  (if (> (abs (- (shape-data j) (shape-data k))) .001)
-			      (set! new-tract 1)))
+			      (set! new-tract #t)))
 			(set! last-sfd new-sfd)))
 		  (if (= last-gfd -1)
 		      (set! last-gfd 0)
@@ -266,13 +266,13 @@
 			(set! last-gfd new-gfd)))
 		  (set! next-offset (floor (change-times (+ offset 1))))))
 	    
-	    (if (not (= new-tract 0))
+	    (if new-tract
 		(begin
 		  (do ((j last-sfd (+ j 1))
 		       (k 0 (+ k 1)))
 		      ((= k tractlength+8))
 		    (set! (target-radii k) (shape-data j)))
-		  (if (= first-tract 1)
+		  (if first-tract
 		      (begin
 			(do ((k 0 (+ k 1)))
 			    ((= k tractlength+8))
@@ -284,9 +284,9 @@
 		    (if (> (abs (- (target-radii j) (radii j))) 0.001)
 			(set! change-radii 1)))))
 	    
-	    (if (or (= first-tract 1) (not (= change-radii 0)))
+	    (if (or first-tract (not (= change-radii 0)))
 		(begin
-		  (if (= new-tract 0)
+		  (if (not new-tract)
 		      (begin
 			(do ((j 0 (+ j 1)))
 			    ((= j tractlength+8))
@@ -344,15 +344,15 @@
 		      (set! alpha2 (* alpha2 temp1))
 		      (set! alpha3 (* alpha3 temp1))))))
 	    
-	    (if (not (= new-tract 0))
+	    (if new-tract
 		(begin
-		  (set! new-tract 0)
-		  (set! first-tract 0)
+		  (set! new-tract #f)
+		  (set! first-tract #f)
 		  (if (or (< s-noise 1.0) (< fnoiseamp 0.0001))
 		      (set! (target-radii tractlength+1) initial-noise-position))))
-	    (if (not (= new-glot 0))
+	    (if new-glot
 		(begin
-		  (if (= first-glot 0)
+		  (if (not first-glot)
 		      (begin
 			(do ((i 0 (+ i 1)))
 			    ((> i table-size))
@@ -406,13 +406,13 @@
 						    (* (sines k) (sin (* k x))))))))))
 		  (set! s-glot-mix 1.0)
 		  (set! delta (/ 1.0 (- next-offset i)))
-		  (if (not (= first-glot 0))
+		  (if first-glot
 		      (begin
 			(do ((i 0 (+ i 1)))
 			    ((> i table-size))
 			  (set! (glot-table2 i) (glot-table i)))
-			(set! first-glot 0)))
-		  (set! new-glot 0)))
+			(set! first-glot #f)))
+		  (set! new-glot #f)))
 	    
 	    (set! s-glot-mix (- s-glot-mix delta))
 	    (set! s-glot (env glot-env))

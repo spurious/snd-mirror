@@ -30,7 +30,7 @@
 
 #if MUS_MAC_OSX
   #define OutSample float
-#define MUS_CONVERT(samp) (float)(samp)
+  #define MUS_CONVERT(samp) (float)(samp)
 #else
   #define OutSample short
   #define MUS_SAMPLE_TO_SHORT(n) ((short)((n) * (1 << 15)))
