@@ -4017,7 +4017,7 @@ static XEN g_formant(XEN gen, XEN input, XEN freq)
 static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
 {
   #define H_formant_bank "(" S_formant_bank " scls gens inval): sum a bank of " S_formant "s: scls[i]*" S_formant "(gens[i], inval)"
-  mus_float_t outval = 0.0, inval;
+  mus_float_t outval = 0.0, inval = 0.0;
   int i, size;
   vct *scl, *invals = NULL;
 #if HAVE_SCHEME

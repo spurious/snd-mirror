@@ -36970,20 +36970,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		      if (is_h_optimized(body))
 			set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_S_Z);
 		      else set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_S_P);
-#if 0
-		      /* I think this works, but it happens very rarely */
-		      if ((is_optimized(body)) &&
-			  (!is_unsafe(body)) &&
-			  (optimize_data(body) == HOP_SAFE_C_S) &&
-			  (cadr(body) == car(closure_args(func))))
-			{
-			  set_optimized(car_x);
-			  set_optimize_data(car_x, HOP_SAFE_C_S);
-			  ecdr(car_x) = ecdr(body);
-			  fcdr(car_x) = fcdr(body);
-			  return(true);
-			}
-#endif
 		    }
 		}
 	      set_unsafely_optimized(car_x);
@@ -37113,15 +37099,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		      ecdr(car_x) = func;
 		      return(false); 
 		    }
-#if 0
-		  if (is_environment(func))
-		    {
-		      set_optimized(car_x);
-		      set_optimize_data(car_x, hop + OP_ENVIRONMENT_Q);
-		      ecdr(car_x) = func;
-		      return(true);
-		    }
-#endif
 		}
 	    }
 	  else    /* bad pair is not quoted */
@@ -42209,28 +42186,7 @@ static s7_pointer check_do(s7_scheme *sc)
 							  (returns_temp(ecdr(x))) &&
 							  (optimize_data(x) == HOP_SAFE_C_C))
 							set_syntax_op(sc->code, sc->SIMPLE_SAFE_DOTIMES);
-#if 0
-						      else		
-							{
-						    fprintf(stderr, "let un-1: %s\n    pair: %d, opt: %d, temp: %d, op: %s\n\n", DISPLAY(body),
-							       (is_pair(x)),
-							       (is_optimized(x)),
-							       (returns_temp(ecdr(x))),
-							       (is_optimized(x)) ? opt_names[optimize_data(x)] : "??");
-							}
-#endif
 						    }
-#if 0
-						  else 
-						    {
-						      /* c_sz is common here and c_xxz */
-						    fprintf(stderr, "let un: %s\n    pair: %d, one: %d, opt: %d, op: %s\n\n", DISPLAY(body),
-							    (is_pair(car(x))),
-							    (is_null(cdr(x))),
-							    (is_optimized(car(x))),
-							    (is_optimized(car(x))) ? opt_names[optimize_data(car(x))] : "??");
-						    }
-#endif
 						}
 					    }
 					}
@@ -62416,6 +62372,8 @@ s7_scheme *s7_init(void)
  *   also will need the reverse s7_double|complex_array_to_vector
  *   perhaps s7_vector_to_object_array? -- we're actually only saving the s7_real/s7_make_real calls
  * get rid of sound-data: mus-audio* mus-sound* use vct for now
+ *   sound-data as output: ws.scm, conversions: frame.scm, play: play.scm, snd-motif|gtk.scm, enved.scm
+ *   mus-sound|audio-write
  *
  * timing    12.0           13.0 13.1 13.2 13.3
  * bench    42736           8752 8051 7725 7741
@@ -62425,7 +62383,7 @@ s7_scheme *s7_init(void)
  * t455            265  218   89   55   31   28
  * t502             90   72   43   39   36   34
  * lat             229        63   52   47   42
- * calls                     276  208  176  157
+ * calls                     276  208  176  156
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.

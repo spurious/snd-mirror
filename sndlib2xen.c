@@ -1574,7 +1574,7 @@ static XEN g_sound_data_chans(XEN obj)
   static s7_pointer g_sound_data_methods;
 #endif
 
-sound_data *c_make_sound_data(int chans, mus_long_t frames)
+static sound_data *c_make_sound_data(int chans, mus_long_t frames)
 {
   int i;
   sound_data *sd;
@@ -1590,7 +1590,7 @@ sound_data *c_make_sound_data(int chans, mus_long_t frames)
 }
 
 
-XEN make_sound_data(int chans, mus_long_t frames)
+static XEN make_sound_data(int chans, mus_long_t frames)
 {
   #define H_make_sound_data "(" S_make_sound_data " chans frames): return a new sound-data object with 'chans' channels, each having 'frames' samples"
   sound_data *sd;
