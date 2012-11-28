@@ -4419,18 +4419,25 @@ mus_float_t mus_triangle_wave_unmodulated(mus_any *ptr)
   mus_float_t result;
 
   result = gen->current_value;
-
   gen->phase += gen->freq;
-  if (gen->phase >= TWO_PI)
-    gen->phase -= TWO_PI;
-
+ TRY_AGAIN:
   if (gen->phase < (M_PI / 2.0)) 
     gen->current_value = gen->base * gen->phase;
   else
-    if (gen->phase < (M_PI * 1.5)) 
-      gen->current_value = gen->base * (M_PI - gen->phase);
-    else gen->current_value = gen->base * (gen->phase - TWO_PI);
-
+    {
+      if (gen->phase < (M_PI * 1.5)) 
+	gen->current_value = gen->base * (M_PI - gen->phase);
+      else 
+	{
+	  if (gen->phase < TWO_PI)
+	    gen->current_value = gen->base * (gen->phase - TWO_PI);
+	  else
+	    {
+	      gen->phase -= TWO_PI;
+	      goto TRY_AGAIN;
+	    }
+	}
+    }
   return(result);
 }
 
