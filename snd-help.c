@@ -1445,7 +1445,7 @@ void key_help(void)
     #define bind_key_example "bind_key(\"End\", 0,\n       lambda do ||\n         set_x_bounds([0.0, frames.to_f / srate.to_f])\n       end)"
   #endif
   #if HAVE_FORTH
-    #define bind_key_example "\"End\" 0\n       lambda: <{ -- val }> doc\"view full sound\"\n         '( 0.0  #f #f #f frames  #f srate  f/ ) #f #f set-x-bounds ; bind-key"
+    #define bind_key_example "\"End\" 0\n       lambda: <{ -- val }> doc\" view full sound\"\n         '( 0.0  #f #f #f frames  #f srate  f/ ) #f #f undef set-x-bounds ; bind-key" 
   #endif
 
   int i;

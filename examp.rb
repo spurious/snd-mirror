@@ -1439,24 +1439,10 @@ convolves snd0 and snd1, scaling by amp, returns new max amp: cnvtest(0, 1, 0.1)
            "make_sound_interp(start, [snd=false, [chn=false]]) \
 an interpolating reader for snd's channel chn")
   def make_sound_interp(start, snd = false, chn = false)
-    bufsize = 2048
-    buf4size = 128
-    data = channel2vct(start, bufsize, snd, chn)
-    curbeg = start
-    curend = start + bufsize
+    data = channel2vct(0, false, snd, chn)
+    size = data.length
     lambda do |loc|
-      if loc < curbeg
-        curbeg = [buf4size + (loc - bufsize), 0].max
-        curend = curbeg + bufsize
-        data = channel2vct(curbeg, bufsize, snd, chn)
-      else
-        if loc > curend
-          curbeg = [loc - buf4size, 0].max
-          curend = curbeg + bufsize
-          data = channel2vct(curbeg, bufsize, snd, chn)
-        end
-      end
-      array_interp(data, loc - curbeg, bufsize)
+      array_interp(data, loc, size)
     end
   end
 

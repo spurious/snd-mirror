@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Sun Nov 25 02:46:57 CET 2012
+\ Changed: Sun Nov 25 22:55:57 CET 2012
 
 \ Commentary:
 \
@@ -98,8 +98,8 @@ instrument: jc-reverb-fs <{ :key
 0 1 440 0.2 <'> fm-violin :reverb <'> jc-reverb with-sound\n\
 0 1 440 0.2 <'> fm-violin\n\
 :reverb-data #( :low-pass #t ) :reverb <'> jc-reverb :channels 2 with-sound."
-	*output* mus-channels { chans }
-	*reverb* mus-channels { rev-chans }
+	*output* channels { chans }
+	*reverb* channels { rev-chans }
 	*reverb* reverb-dur { dur }
 	*verbose* if
 		get-func-name rev-chans chans reverb-info
@@ -1680,8 +1680,8 @@ instrument: nrev-fs <{ :key
     amp-env #( 0 1 1 1 ) -- }>
 	doc" NREV (the most popular Samson box reverb).\n\
 <'> fm-violin-test :reverb <'> nrev with-sound."
-	*output* mus-channels { chans }
-	*reverb* mus-channels { rev-chans }
+	*output* channels { chans }
+	*reverb* channels { rev-chans }
 	*reverb* reverb-dur { dur }
 	*verbose* if
 		get-func-name rev-chans chans reverb-info
@@ -1967,8 +1967,8 @@ instrument: cellon <{ start dur pitch0 amp ampfun
 
 \ JL-REVERB
 instrument: jl-reverb <{ -- }>
-	*output* mus-channels { chans }
-	*reverb* mus-channels { rev-chans }
+	*output* channels { chans }
+	*reverb* channels { rev-chans }
 	*reverb* reverb-dur { dur }
 	*verbose* if
 		get-func-name rev-chans chans reverb-info
@@ -3213,7 +3213,7 @@ instrument: clm-expsrc <{ start dur in-file exp-ratio src-ratio amp :optional
 	:file in-file :channel 0 :start stf make-readin { fdA }
 	:input fdA readin-cb :expansion exp-ratio make-granulate { exA }
 	:input exA clm-src-cb :srate src-ratio make-src { srcA }
-	in-file mus-sound-chans 2 = *output* mus-channels 2 = && { two-chans }
+	in-file channels 2 = *output* channels 2 = && { two-chans }
 	*reverb* rev && { revit }
 	revit if
 		two-chans if
@@ -3849,8 +3849,8 @@ instrument: fullmix <{ in-file :optional
 			1.0
 		then f/ to dur
 	then
-	in-file mus-sound-chans { in-chans }
-	*output* mus-channels { out-chans }
+	in-file channels { in-chans }
+	*output* channels { out-chans }
 	inbeg in-file mus-sound-srate f* fround->s { inloc }
 	matrix if
 		in-chans out-chans max make-mixer

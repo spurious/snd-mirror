@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Fri Nov 23 04:45:56 CET 2012
+\ Changed: Tue Nov 27 17:47:28 CET 2012
 
 \ Commentary:
 \
@@ -84,15 +84,65 @@
 'sndlib provided? [unless] dl-load sndlib Init_sndlib [then]
 
 'snd provided? [unless]
-	<'> noop alias sound?
-	<'> noop alias open-sound
-	<'> noop alias find-sound
-	<'> noop alias save-sound
 	<'> noop alias close-sound
+	<'> noop alias find-sound
+	<'> noop alias open-sound
 	<'> noop alias play
-	<'> noop alias maxamp
-	<'> noop alias frames
+	<'> noop alias save-sound
 	<'> noop alias scale-channel
+	<'> noop alias sound?
+
+	\ Some generic words for non-Snd use.
+	: channels <{ :optional obj #f -- n }>
+		obj string? if
+			obj mus-sound-chans
+		else
+			obj mus-generator?
+			obj sound-data? ||
+			obj vct? || if
+				obj mus-channels
+			else
+				obj object-length
+			then
+		then
+	;
+
+	: srate <{ :optional obj #f -- n }>
+		obj string? if
+			obj mus-sound-srate
+		else
+			mus-srate f>s
+		then
+	;
+
+	: frames <{ :optional snd #f chn #f edpos #f -- n }>
+		snd string? if
+			snd mus-sound-frames
+		else
+			snd mus-generator? if
+				snd mus-length
+			else
+				\ covers sound-data and vct too
+				snd object-length
+			then
+		then
+	;
+
+	: maxamp <{ :optional snd #f chn #f edpos #f -- r }>
+		snd string? if
+			snd mus-sound-maxamp
+		else
+			snd sound-data? if
+				snd sound-data-maxamp
+			else
+				snd vct? if
+					snd vct-peak
+				else
+					0.0
+				then
+			then
+		then
+	;
 [then]
 
 [ifundef] clm-print
@@ -253,7 +303,7 @@ set-current
 previous
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-"fth 23-Nov-2012" value *clm-version*
+"fth 27-Nov-2012" value *clm-version*
 #f 	      	  value *locsig*
 mus-lshort    	  value *clm-audio-format*
 #f            	  value *clm-comment*
@@ -271,6 +321,7 @@ mus-lshort    	  value *clm-audio-format*
 #f	      	  value *clm-verbose*
 #f            	  value *clm-debug*
 "CLM_SEARCH_PATH" getenv "." || ":" string-split value *clm-search-list*
+
 <'> *clm-search-list*
 "List of directories with sound files." help-set!
 #() value *clm-instruments*
@@ -283,7 +334,7 @@ Instruments using RUN or RUN-INSTRUMENT add entries to the list." help-set!
 	44100      constant default-output-srate
 	mus-next   constant default-output-header-type
 	mus-lfloat constant default-output-data-format
-	0          constant audio-output-device
+	mus-audio-default constant audio-output-device
 	512        constant dac-size
 [then]
 
@@ -859,11 +910,19 @@ hide
 	ws :decay-time           ws-ref to *clm-decay-time*
 	*clm-file-buffer-size*   set-mus-file-buffer-size   drop
 	*clm-array-print-length* set-mus-array-print-length drop
-	*clm-clipped* boolean? if
-		*clm-clipped*
+	ws :scaled-to ws-ref
+	ws :scaled-by ws-ref || if
+		#( mus-bfloat
+		   mus-lfloat
+		   mus-bdouble
+		   mus-ldouble ) ws :data-format ws-ref array-member? if
+			#f set-mus-clipping
+		else
+			*clm-clipped* set-mus-clipping
+		then
 	else
-		#f
-	then  set-mus-clipping drop
+		*clm-clipped* set-mus-clipping
+	then drop
 	ws :srate       ws-ref set-mus-srate   drop
 	ws :locsig-type ws-ref set-locsig-type drop
 ;
@@ -1135,6 +1194,7 @@ previous
 :locsig-type       *clm-locsig-type*      (mus-interp-linear)\n\
 :header-type       *clm-header-type*      (mus-next)\n\
 :data-format       *clm-data-format*      (mus-lfloat)\n\
+:clipped           *clm-clipped*          (#t)\n\
 :comment           *clm-comment*          (#f)\n\
 :notehook          *clm-notehook*         (#f)\n\
 :scaled-to                                (#f)\n\  
@@ -1147,9 +1207,9 @@ previous
 :player            *clm-player*           (#f)\n\
 :decay-time        *clm-decay-time*       (1.0)\n\
 Execute BODY-XT, a proc object or an xt, \
-and return assoc array with with-sound arguments.\n\
+and returns a ws-args object with with-sound arguments.\n\
 <'> resflt-test with-sound .$ cr\n\
-<'> resflt-test :play #t :channels 2 :srate 44100 with-sound drop"
+<'> resflt-test :play #t :channels 2 :srate 48000 with-sound drop"
 	*ws-args* empty? if
 		with-sound-default-args
 	else
@@ -1481,24 +1541,26 @@ event: inst-test ( -- )
 <'> sine-summation? <'> nrxysin? help-ref  help-set!
 
 'snd provided? [if]
-	instrument: arpeggio
-	<{ start dur freq amp :key ampenv #( 0 0 0.5 1 1 0 ) offset 1.0 -- }>
+	instrument: snd-arpeggio
+	  <{ start dur freq amp :key ampenv #( 0 0 0.5 1 1 0 ) offset 1.0 -- }>
 		start dur times->samples { end beg }
 		12 make-array map!
-			:frequency freq offset i 6 - 0.03 f* f* f+
-			    :partials #(  1 1.0
-					  5 0.7
-					  6 0.7
-					  7 0.7
-					  8 0.7
-					  9 0.7
-					 10 0.7 ) make-polyshape
+			:frequency i 6 - 0.03 f* offset f* freq f+
+			    :partials #( 1 1.0
+					 5 0.7
+					 6 0.7
+					 7 0.7
+					 8 0.7
+					 9 0.7
+					10 0.7 ) make-polyshape
 		end-map { waveshbank }
 		:envelope ampenv
-		    :scaler amp 0.1 f* :length end make-env { amp-env }
+		    :scaler amp 0.1 f*
+		    :length end make-env { amp-env }
 		end 0.0 make-vct map!
-			0.0 ( sum ) waveshbank each ( wv )
-				1.0 0.0 polyshape f+
+			0.0 ( sum )
+			waveshbank each ( wv )
+				1.0 0.0 polyshape f+ ( sum += ... )
 			end-each ( sum ) amp-env env f*
 		end-map ( vct-output )
 		#f channels 0 ?do
@@ -1506,17 +1568,50 @@ event: inst-test ( -- )
 		loop ( vct-output ) drop
 	;instrument
 
-	event: arpeggio-test ( -- snd )
+	event: snd-arpeggio-test ( -- snd )
+		mus-srate { old-sr }
+		48000 set-mus-srate drop
 		:file "arpeggio.snd"
 		    :header-type mus-next
-		    :data-format mus-lfloat
+		    :data-format mus-bdouble
 		    :channels 2
 		    :srate mus-srate f>s
 		    :comment make-default-comment new-sound { snd }
-		0 10 65 0.5 arpeggio
+		0 10 65 0.5 snd-arpeggio
 		snd save-sound drop
+		old-sr set-mus-srate drop
 		snd
 	;event
 [then]
+
+instrument: arpeggio <{ start dur freq amp :key
+    ampenv #( 0 0 0.5 1 1 0 )
+    offset 1.0 -- }>
+	start dur times->samples { end beg }
+	12 make-array map!
+		:frequency i 6 - 0.03 f* offset f* freq f+
+		    :partials #( 1 1.0
+				 5 0.7
+				 6 0.7
+				 7 0.7
+				 8 0.7
+				 9 0.7
+				10 0.7 ) make-polyshape
+	end-map { waveshbank }
+	:envelope ampenv
+	    :scaler amp 0.1 f*
+	    :length end make-env { amp-env }
+	start dur #{ :degree 90.0 random } run-instrument
+		0.0 ( sum )
+		waveshbank each ( wv )
+			1.0 0.0 polyshape f+ ( sum += ... )
+		end-each ( sum ) amp-env env f*
+	end-run
+;instrument
+
+\ <'> arpeggio-test :output "arpeggio.snd" with-sound
+event: arpeggio-test ( -- )
+	0 10 65 0.5 arpeggio
+;event
 
 \ clm.fs ends here

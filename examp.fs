@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Sat Nov 24 03:53:11 CET 2012
+\ Changed: Sun Nov 25 18:36:20 CET 2012
 
 \ Commentary:
 \
@@ -1806,39 +1806,11 @@ returns new max amp: 0 1 0.1 cnvtest."
 
 : make-sound-interp <{ start :optional snd #f chn #f -- prc; loc self -- val }>
 	doc" Return an interpolating reader for SND's channel CHN."
-	2048 { bufsize }
-	1 proc-create { prc }
-	start bufsize snd chn #f channel->vct ( data ) ,
-	start ( curbeg ) ,
-	start bufsize + ( curend ) ,
-	snd , chn ,
-	prc
+	0 #f snd chn #f channel->vct { data }
+	1 proc-create ( prc )
+	data , data vct-length ,
   does> { loc self -- val }
-	self           @ { data }
-	self   cell+   @ { curbeg }
-	self 2 cells + @ { curend }
-	self 3 cells + @ { snd }
-	self 4 cells + @ { chn }
-	2048 { bufsize }
-	128  { buf4size }
-	loc fround->s to loc
-	loc curbeg < if
-		\ get previous buffer
-		loc bufsize - buf4size + 0 max to curbeg
-		curbeg bufsize + to curend
-		curbeg bufsize snd chn #f channel->vct to data
-	else
-		loc curend > if
-			\ get next buffer
-			loc buf4size - 0 max to curbeg
-			curbeg bufsize + to curend
-			curbeg bufsize snd chn #f channel->vct to data
-		then
-	then
-	data self ! ( data )
-	curbeg self cell+ ! ( curbeg )
-	curend self 2 cells + ! ( curend )
-	data loc curbeg - bufsize array-interp
+	self @ ( data ) loc self cell+ @ ( size ) array-interp
 ;
 
 : sound-interp { func loc -- val }
