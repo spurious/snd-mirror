@@ -3375,9 +3375,9 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 static XEN g_make_table_lookup(XEN arglist)
 {
   #define H_make_table_lookup "(" S_make_table_lookup " (frequency *clm-default-frequency*) (initial-phase 0.0) (wave) (size clm-table-size) (type)): \
-return a new " S_table_lookup " generator.  This is known as an oscillator in other synthesis systems. \
+return a new " S_table_lookup " generator.  \
 The default table size is 512; use :size to set some other size, or pass your own vct as the 'wave'.\n\
-   (set! gen (" S_make_table_lookup " 440.0 :wave (" S_partials_to_wave " '(1 1.0)))\n\
+   (set! gen (" S_make_table_lookup " 440.0 :wave (" S_partials_to_wave " '(1 1.0))))\n\
 is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice which defaults to " S_mus_interp_linear "."
 
   mus_any *ge;
@@ -4331,7 +4331,7 @@ if outf is not given, a new frame is created. outf[i] = f1[i] * f2[i]."
 
 static XEN g_frame_ref(XEN uf1, XEN uchan)
 {
-  #define H_frame_ref "(" S_frame_ref " f chan): f[chan] (the chan-th sample in frame f"
+  #define H_frame_ref "(" S_frame_ref " f chan): f[chan] (the chan-th sample in frame f)"
   mus_any *g = NULL;
   int chan = 0
 ;  mus_xen *gn;
@@ -4689,7 +4689,7 @@ static XEN g_make_mixer_2(int len, XEN args)
 static XEN g_make_mixer_1(XEN arglist, bool check_size)
 {
   #if HAVE_SCHEME
-    #define make_mixer_example "(" S_make_mixer " 2 .5 .25 .125 1.0))"
+    #define make_mixer_example "(" S_make_mixer " 2 .5 .25 .125 1.0)"
   #endif
   #if HAVE_RUBY
     #define make_mixer_example "make_mixer(2, 0.5, 0.25, 0.125, 1.0)"

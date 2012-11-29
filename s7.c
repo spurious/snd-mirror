@@ -62374,11 +62374,12 @@ s7_scheme *s7_init(void)
  * get rid of sound-data: mus-audio* mus-sound* use vct for now
  *   sound-data as output: ws.scm, conversions: frame.scm, play: play.scm, snd-motif|gtk.scm, enved.scm
  *   mus-sound|audio-write
+ * TODO: what happened to hook documentation?
  *
  * timing    12.0           13.0 13.1 13.2 13.3
  * bench    42736           8752 8051 7725 7741
- * lint                     9328 8140 7887 7890
- * index    44300 4988 3935 3291 3005 2742 2362
+ * lint                     9328 8140 7887 7877
+ * index    44300 4988 3935 3291 3005 2742 2213
  * s7test         1721 1430 1358 1297 1244 1233
  * t455            265  218   89   55   31   28
  * t502             90   72   43   39   36   33

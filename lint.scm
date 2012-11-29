@@ -545,6 +545,20 @@
 			  (cons 'write-byte (list integer-between-0-and-255?))
 			  (cons 'zero? number?)))
 
+	  (numeric-ops (let ((h (make-hash-table)))
+			 (for-each
+			  (lambda (op)
+			    (set! (h op) #t))
+			  '(+ * - / 
+			      sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh 
+			      log exp expt sqrt make-polar make-rectangular
+			      imag-part real-part abs magnitude angle max min exact->inexact
+			      modulo remainder quotient lcd gcd
+			      rationalize inexact->exact
+			      logior lognot logxor logand numerator denominator 
+			      floor round truncate ceiling ash))
+			 h))
+
 	  (format-control-char (let ((chars (make-vector 256 #f)))
 				 (for-each
 				  (lambda (c)
@@ -1319,14 +1333,7 @@
       
       
       (define (numeric? op)
-	(memq op '(+ * - / 
-		     sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh 
-		     log exp expt sqrt make-polar make-rectangular
-		     imag-part real-part abs magnitude angle max min exact->inexact
-		     modulo remainder quotient lcd gcd
-		     rationalize inexact->exact
-		     logior lognot logxor logand numerator denominator 
-		     floor round truncate ceiling ash)))
+	(hash-table-ref numeric-ops op))
 
       
       (define (splice-if f lst)

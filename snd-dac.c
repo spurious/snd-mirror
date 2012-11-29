@@ -3182,7 +3182,7 @@ If a play-list is waiting, start it."
 
 static XEN g_stop_player(XEN player)
 {
-  #define H_stop_player "(" S_stop_player " player): stop player (remove its associated sound from the current DAC playlist)"
+  #define H_stop_player "(" S_stop_player " player): stop player and remove its associated sound from the current DAC playlist"
   snd_info *sp = NULL;
 
   XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, XEN_ONLY_ARG, S_stop_player, "a player");
@@ -3196,7 +3196,7 @@ static XEN g_stop_player(XEN player)
 
 static XEN g_free_player(XEN player)
 {
-  #define H_free_player "(" S_free_player " player): free all resources associated with 'player' and remove it from the current DAC playlist)"
+  #define H_free_player "(" S_free_player " player): free all resources associated with 'player' and remove it from the current DAC playlist"
   snd_info *sp = NULL;
 
   XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, XEN_ONLY_ARG, S_free_player, "a player");
@@ -3290,7 +3290,7 @@ static XEN g_set_playing(XEN on)
 
 static XEN g_pausing(void)
 {
-  #define H_pausing "(" S_pausing "): " PROC_TRUE " if sound output is currently pausing (settable."
+  #define H_pausing "(" S_pausing "): " PROC_TRUE " if sound output is currently pausing (this can be set)."
   return(C_TO_XEN_BOOLEAN(dac_pausing));
 }
 

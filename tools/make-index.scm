@@ -5,45 +5,54 @@
 (set! (hook-functions *unbound-variable-hook*) '())
 
 (define scheme-variable-names
-  (list "after-graph-hook" "lisp-graph-hook" "before-transform-hook" "mix-release-hook" "stop-playing-channel-hook" "save-hook" "mus-error-hook"
-	"mouse-enter-graph-hook" "mouse-leave-graph-hook" "open-raw-sound-hook" "select-channel-hook" "after-open-hook" "close-hook" "drop-hook" "update-hook"
-	"just-sounds-hook" "mark-click-hook" "mark-drag-hook" "name-click-hook" "open-hook" "help-hook"
-	"output-comment-hook" "play-hook" "snd-error-hook" "snd-warning-hook" "start-hook" "start-playing-hook" "stop-playing-hook"
-	"stop-playing-region-hook" "mouse-enter-listener-hook" "mouse-leave-listener-hook" "window-property-changed-hook" "select-sound-hook"
-	"print-hook" "exit-hook" "output-name-hook" "during-open-hook" "transform-hook" "mouse-enter-label-hook" "mouse-leave-label-hook" "initial-graph-hook"
-	"graph-hook" "key-press-hook" "mouse-drag-hook" "mouse-press-hook" "enved-hook" "read-hook" "mouse-click-hook" "new-widget-hook"
-	"mark-hook" "previous-files-select-hook" "dac-hook" "stop-dac-hook" "stop-playing-selection-hook" "after-apply-controls-hook"
-	"draw-mark-hook" "bad-header-hook" "save-state-hook" "new-sound-hook" "color-hook" "orientation-hook" "listener-click-hook"
-	"mix-click-hook" "after-save-state-hook" "mouse-enter-text-hook" "mouse-leave-text-hook" "mix-drag-hook"
-	"start-playing-selection-hook" "selection-changed-hook" "*current-sound*"
-	"before-save-state-hook" "after-save-as-hook" "after-transform-hook" "before-save-as-hook"))
-
+  (let ((h (make-hash-table)))
+    (for-each
+     (lambda (name)
+       (set! (h name) #t))
+     (list "after-graph-hook" "lisp-graph-hook" "before-transform-hook" "mix-release-hook" "stop-playing-channel-hook" "save-hook" "mus-error-hook"
+	   "mouse-enter-graph-hook" "mouse-leave-graph-hook" "open-raw-sound-hook" "select-channel-hook" "after-open-hook" "close-hook" "drop-hook" "update-hook"
+	   "just-sounds-hook" "mark-click-hook" "mark-drag-hook" "name-click-hook" "open-hook" "help-hook"
+	   "output-comment-hook" "play-hook" "snd-error-hook" "snd-warning-hook" "start-hook" "start-playing-hook" "stop-playing-hook"
+	   "stop-playing-region-hook" "mouse-enter-listener-hook" "mouse-leave-listener-hook" "window-property-changed-hook" "select-sound-hook"
+	   "print-hook" "exit-hook" "output-name-hook" "during-open-hook" "transform-hook" "mouse-enter-label-hook" "mouse-leave-label-hook" "initial-graph-hook"
+	   "graph-hook" "key-press-hook" "mouse-drag-hook" "mouse-press-hook" "enved-hook" "read-hook" "mouse-click-hook" "new-widget-hook"
+	   "mark-hook" "previous-files-select-hook" "dac-hook" "stop-dac-hook" "stop-playing-selection-hook" "after-apply-controls-hook"
+	   "draw-mark-hook" "bad-header-hook" "save-state-hook" "new-sound-hook" "color-hook" "orientation-hook" "listener-click-hook"
+	   "mix-click-hook" "after-save-state-hook" "mouse-enter-text-hook" "mouse-leave-text-hook" "mix-drag-hook"
+	   "start-playing-selection-hook" "selection-changed-hook" "*current-sound*"
+	   "before-save-state-hook" "after-save-as-hook" "after-transform-hook" "before-save-as-hook"))
+    h))
 
 (define scheme-constant-names
-  (list "mus-out-format" "mus-unsupported" "mus-next" "mus-aifc" "mus-riff" "mus-rf64" "mus-nist" "mus-raw" "mus-ircam" "mus-aiff" "mus-bicsf"
-	"mus-voc" "mus-svx" "mus-soundfont" "mus-unknown" "mus-bshort" "mus-lshort" "mus-mulaw" "mus-alaw" "mus-byte" "mus-ubyte"
-	"mus-bfloat" "mus-lfloat" "mus-bint" "mus-lint" "mus-bintn" "mus-lintn" "mus-b24int" "mus-l24int" "mus-bdouble" "mus-ldouble"
-	"mus-ubshort" "mus-ulshort" "mus-bdouble-unscaled" "mus-ldouble-unscaled" "mus-bfloat-unscaled" "mus-lfloat-unscaled"
-	"mus-audio-default"
-	"rectangular-window" "hann-window" "welch-window"
-	"parzen-window" "bartlett-window" "hamming-window" "blackman2-window" "blackman3-window" "blackman4-window" "exponential-window"
-	"riemann-window" "kaiser-window" "cauchy-window" "poisson-window" "gaussian-window" "tukey-window" "dolph-chebyshev-window"
-	"samaraki-window" "ultraspherical-window" "blackman5-window" "blackman6-window" "blackman7-window" "blackman8-window" 
-	"blackman9-window" "blackman10-window" "rv2-window" "rv3-window" "rv4-window"
-	"zoom-focus-left" "zoom-focus-right" "zoom-focus-active" "zoom-focus-middle" "graph-once"
-	"graph-as-wavogram" "graph-as-sonogram" "graph-as-spectrogram" "cursor-cross" "cursor-line" "graph-lines" "graph-dots"
-	"graph-filled" "graph-dots-and-lines" "graph-lollipops" "x-axis-in-seconds" "x-axis-in-samples" "x-axis-in-beats" "x-axis-in-measures"
-	"x-axis-as-percentage" "show-all-axes" "show-all-axes-unlabelled" "show-no-axes" "show-x-axis" "show-x-axis-unlabelled"
-	"cursor-in-view" "cursor-on-left" "cursor-on-right" "cursor-in-middle" "keyboard-no-action" "fourier-transform"
-	"wavelet-transform" "haar-transform" "cepstrum" "hadamard-transform" "walsh-transform" "autocorrelation" "dont-normalize"
-	"normalize-by-channel" "normalize-by-sound" "normalize-globally" "current-edit-position" "channels-separate"
-	"channels-combined" "channels-superimposed" "speed-control-as-float" "speed-control-as-ratio" "speed-control-as-semitone"
-	"enved-amplitude" "enved-spectrum" "enved-srate" "envelope-linear" "envelope-exponential" "enved-add-point"
-	"enved-delete-point" "enved-move-point" "time-graph" "transform-graph" "lisp-graph" "copy-context" "cursor-context"
-	"selection-context" "mark-context" "mus-interp-all-pass" "mus-interp-bezier" "mus-interp-hermite" "mus-interp-lagrange"
-	"mus-interp-linear" "mus-interp-none" "mus-interp-sinusoidal"
-	"sync-none" "sync-all" "sync-by-sound"
-	))	
+  (let ((h (make-hash-table)))
+    (for-each
+     (lambda (name)
+       (set! (h name) #t))
+     (list "mus-out-format" "mus-unsupported" "mus-next" "mus-aifc" "mus-riff" "mus-rf64" "mus-nist" "mus-raw" "mus-ircam" "mus-aiff" "mus-bicsf"
+	   "mus-voc" "mus-svx" "mus-soundfont" "mus-unknown" "mus-bshort" "mus-lshort" "mus-mulaw" "mus-alaw" "mus-byte" "mus-ubyte"
+	   "mus-bfloat" "mus-lfloat" "mus-bint" "mus-lint" "mus-bintn" "mus-lintn" "mus-b24int" "mus-l24int" "mus-bdouble" "mus-ldouble"
+	   "mus-ubshort" "mus-ulshort" "mus-bdouble-unscaled" "mus-ldouble-unscaled" "mus-bfloat-unscaled" "mus-lfloat-unscaled"
+	   "mus-audio-default"
+	   "rectangular-window" "hann-window" "welch-window"
+	   "parzen-window" "bartlett-window" "hamming-window" "blackman2-window" "blackman3-window" "blackman4-window" "exponential-window"
+	   "riemann-window" "kaiser-window" "cauchy-window" "poisson-window" "gaussian-window" "tukey-window" "dolph-chebyshev-window"
+	   "samaraki-window" "ultraspherical-window" "blackman5-window" "blackman6-window" "blackman7-window" "blackman8-window" 
+	   "blackman9-window" "blackman10-window" "rv2-window" "rv3-window" "rv4-window"
+	   "zoom-focus-left" "zoom-focus-right" "zoom-focus-active" "zoom-focus-middle" "graph-once"
+	   "graph-as-wavogram" "graph-as-sonogram" "graph-as-spectrogram" "cursor-cross" "cursor-line" "graph-lines" "graph-dots"
+	   "graph-filled" "graph-dots-and-lines" "graph-lollipops" "x-axis-in-seconds" "x-axis-in-samples" "x-axis-in-beats" "x-axis-in-measures"
+	   "x-axis-as-percentage" "show-all-axes" "show-all-axes-unlabelled" "show-no-axes" "show-x-axis" "show-x-axis-unlabelled"
+	   "cursor-in-view" "cursor-on-left" "cursor-on-right" "cursor-in-middle" "keyboard-no-action" "fourier-transform"
+	   "wavelet-transform" "haar-transform" "cepstrum" "hadamard-transform" "walsh-transform" "autocorrelation" "dont-normalize"
+	   "normalize-by-channel" "normalize-by-sound" "normalize-globally" "current-edit-position" "channels-separate"
+	   "channels-combined" "channels-superimposed" "speed-control-as-float" "speed-control-as-ratio" "speed-control-as-semitone"
+	   "enved-amplitude" "enved-spectrum" "enved-srate" "envelope-linear" "envelope-exponential" "enved-add-point"
+	   "enved-delete-point" "enved-move-point" "time-graph" "transform-graph" "lisp-graph" "copy-context" "cursor-context"
+	   "selection-context" "mark-context" "mus-interp-all-pass" "mus-interp-bezier" "mus-interp-hermite" "mus-interp-lagrange"
+	   "mus-interp-linear" "mus-interp-none" "mus-interp-sinusoidal"
+	   "sync-none" "sync-all" "sync-by-sound"
+	   ))
+    h))
 
 
 
@@ -81,7 +90,6 @@
 	((= i len) str)
       (set! (str i) (char-downcase (str i))))))
 
-
 (define* (make-ind name sortby topic file general indexed char)
   (vector name sortby topic file general indexed char))
 
@@ -114,16 +122,20 @@
 	  (do ((i 0 (+ i 1)))
 	      ((= i len))
 	    (if (or (>= changed num)
-		    (not (string-ci=? item (sequence i))))
+		    (not (eq? item (sequence i))))
 		(set! result (cons (sequence i) result))
 		(set! changed (+ changed 1))))
 	  (reverse result)))))
 
 
-(define (count str strs)
-  (do ((pos (string-ci-list-position str strs 0) (string-ci-list-position str strs (+ pos 1)))
-       (count 0 (+ count 1)))
-      ((not pos) count)))
+(define (count-table commands)
+  (let ((count 0))
+    (for-each
+     (lambda (c)
+       (if (memq c '(table TABLE))
+	   (set! count (+ count 1))))
+     commands)
+    count))
 
 
 (define (string</* a b)
@@ -250,7 +262,7 @@
 			      (if (string=? scheme-name "in")
 				  "call_in"
 				  (let* ((len (length scheme-name))
-					 (var-case (string-list-position scheme-name scheme-variable-names))
+					 (var-case (hash-table-ref scheme-variable-names scheme-name))
 					 (strlen (if var-case (+ 1 len) len))
 					 (rb-name (make-string strlen #\space))
 					 (i 0)
@@ -259,7 +271,7 @@
 					(begin
 					 (set! (rb-name 0) #\$)
 					 (set! j 1))
-					(if (string-list-position scheme-name scheme-constant-names)
+					(if (hash-table-ref scheme-constant-names scheme-name)
 					    (begin
 					     (set! (rb-name 0) (char-upcase (scheme-name 0)))
 					     (set! i 1)
@@ -1095,13 +1107,13 @@
 (define (html-check files)
   (let ((name 0)
 	(href 0)
-	(names (make-hash-table 2048))
-	(commands '()))
+	(names (make-hash-table 2048)))
     (for-each
      (lambda (file)
        (call-with-input-file file
 	 (lambda (f)
 	   (let ((linectr -1)
+		 (commands ())
 		 (comments 0)
 		 (openctr 0)
 		 (warned #f)
@@ -1229,153 +1241,137 @@
 				    (if start
 					(begin
 					  (if closing
-					      (let ((closer (checked-substring line (+ start 2) i)))
-						(if (or (string-ci=? closer "center")
-							(string-ci=? closer "big")
-							(string-ci=? closer "font"))
-						    (format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr closer line))
-						(if (string-ci=? closer "script")
-						    (set! scripting #f)
-						    (if (not scripting)
-							(if (not (string-ci-list-position closer commands))
-							    (format #t "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
-								    file linectr closer line (+ start 2) i commands)
+					      (let ((closer (string->symbol (checked-substring line (+ start 2) i))))
+						(if (memq closer '(center big font))
+						    (format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr closer line)
+						    (if (eq? closer 'script)
+							(set! scripting #f)
+							(if (not scripting)
+							    (if (not (memq closer commands))
+								(format #t "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
+									file linectr closer line (+ start 2) i commands)
 							    
-							    (if (string-ci-list-position closer
-											 (list "ul" "tr" "td" "table" "small" "big" "sub" "blockquote" "center" "p"
-											       "a" "i" "b" "title" "pre" "span" "h1" "h2" "h3" "code" "body" "html"
-											       "em" "head" "h4" "sup" "font" "map" "smaller" "bigger" "th" "tbody" "div"))
-								(begin
-								  (if (not (string-ci=? (car commands) closer))
-								      (format #t "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
+								(if (memq closer '(ul tr td table TABLE small sub blockquote p
+										      a A i b title pre span h1 h2 h3 code body html
+										      em head h4 sup map smaller bigger th tbody div))
+								    (begin
+								      (if (not (eq? (car commands) closer))
+									  (format #t "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
 								  
-								  (if (or (string-ci=? closer "p")
-									  (string-ci=? closer "td")
-									  (string-ci=? closer "pre"))
-								      (begin
-									(if (not (even? p-quotes))
-									    (format #t "~A[~D]: unmatched quote~%" file linectr))
-									(set! p-quotes 0)
-									(if (= p-curlys 1)
-									    (format #t "~A[~D]: extra '{'~%" file linectr)
-									    (if (= p-curlys -1)
-										(format #t "~A[~D]: extra '}'~%" file linectr)
-										(if (not (= p-curlys 0))
-										    (format #t "~A[~D]: curlys: ~D~%" file linectr p-curlys))))
-									(set! p-curlys 0)
-									(if (= p-parens 1)
-									    (format #t "~A[~D]: extra '('~%" file linectr)
-									    (if (= p-parens -1)
-										(format #t "~A[~D]: extra ')'~%" file linectr)
-										(if (not (= p-parens 0))
-										    (format #t "~A[~D]: parens: ~D~%" file linectr p-parens))))
-									(set! p-parens 0)))
-								  (set! commands (remove closer commands 1))
-								  (if (not warned)
-								      (begin
-									(if (and (string-ci=? closer "table")
-										 (not (string-ci-list-position "table" commands)))
-									    (begin
-									      (if (string-ci-list-position "tr" commands)
-										  (begin
-										    (set! warned #t)
-										    (set! commands (remove "tr" commands))
-										    (format #t "~A[~D]: unclosed tr at table~%" file linectr)))
-									      (if (string-ci-list-position "td" commands)
-										  (begin
-										    (set! warned #t)
-										    (set! commands (remove "td" commands))
-										    (format #t "~A[~D]: unclosed td at table~%" file linectr))))))))
-								(set! commands (remove closer commands))))))
+								      (if (memq closer '(p td pre))
+									  (begin
+									    (if (not (even? p-quotes))
+										(format #t "~A[~D]: unmatched quote~%" file linectr))
+									    (set! p-quotes 0)
+									    (if (= p-curlys 1)
+										(format #t "~A[~D]: extra '{'~%" file linectr)
+										(if (= p-curlys -1)
+										    (format #t "~A[~D]: extra '}'~%" file linectr)
+										    (if (not (= p-curlys 0))
+											(format #t "~A[~D]: curlys: ~D~%" file linectr p-curlys))))
+									    (set! p-curlys 0)
+									    (if (= p-parens 1)
+										(format #t "~A[~D]: extra '('~%" file linectr)
+										(if (= p-parens -1)
+										    (format #t "~A[~D]: extra ')'~%" file linectr)
+										    (if (not (= p-parens 0))
+											(format #t "~A[~D]: parens: ~D~%" file linectr p-parens))))
+									    (set! p-parens 0)))
+								      (set! commands (remove closer commands 1))
+								      (if (not warned)
+									  (begin
+									    (if (and (memq closer '(table TABLE))
+										     (not (memq 'table commands))
+										     (not (memq 'TABLE commands)))
+										(begin
+										  (if (memq 'tr commands)
+										      (begin
+											(set! warned #t)
+											(set! commands (remove 'tr commands))
+											(format #t "~A[~D]: unclosed tr at table (~A)~%" file linectr commands)))
+										  (if (memq 'td commands)
+										      (begin
+											(set! warned #t)
+											(set! commands (remove 'td commands))
+											(format #t "~A[~D]: unclosed td at table (~A)~%" file linectr commands))))))))
+								(set! commands (remove closer commands)))))))
 						(set! closing #f))
 						
 					      ;; not closing
 					      (if (not scripting)
-						  (let ((opener (checked-substring line (+ start 1) i)))
-						    (if (or (string-ci=? opener "center")
-							    (string-ci=? opener "big")
-							    (string-ci=? opener "font"))
-							(format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr opener line))
-						    
-						    (if (string-ci=? opener "script")
-							(set! scripting #t)
-							
-							(if (string-ci=? opener "img")
-							    (let* ((rest-line (checked-substring line (+ start 4)))
-								   (alt-pos (string-position "alt=" rest-line))
-								   (src-pos (string-position "src=" rest-line)))
-							      (if (not alt-pos)
-								  (format #t "~A[~D]: img but no alt: ~A~%" file linectr line))
-							      (if src-pos
-								  (let ((png-pos (string-position ".png" rest-line)))
-								    (if png-pos
-									(let ((file (checked-substring rest-line (+ src-pos 5) (+ png-pos 4))))
-									  (if (not (file-exists? file))
-									      (format #t "~A[~D]: src not found: ~S~%" file linectr file)))))))
-							    
-							    (if (not (string-ci-list-position opener (list "br" "spacer" "li" "img" "hr" "area")))
-								(if (and (string-ci-list-position opener commands)
-									 (= p-quotes 0)
-									 (not (string-ci-list-position opener (list "ul" "tr" "td" "table" 
-														    "small" "big" "sub" "blockquote"))))
+						  (let ((opener (string->symbol (checked-substring line (+ start 1) i))))
+
+						    (if (memq opener '(center big font))
+							(format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr opener line)
+
+							(if (eq? opener 'script)
+							    (set! scripting #t)
+
+							    (if (eq? opener 'img)
+								(let* ((rest-line (checked-substring line (+ start 4)))
+								       (alt-pos (string-position "alt=" rest-line))
+								       (src-pos (string-position "src=" rest-line)))
+								  (if (not alt-pos)
+								      (format #t "~A[~D]: img but no alt: ~A~%" file linectr line))
+								  (if src-pos
+								      (let ((png-pos (string-position ".png" rest-line)))
+									(if png-pos
+									    (let ((file (checked-substring rest-line (+ src-pos 5) (+ png-pos 4))))
+									      (if (not (file-exists? file))
+										  (format #t "~A[~D]: src not found: ~S~%" file linectr file)))))))
+								
+								(if (and (not (memq opener '(br spacer li hr area 
+												ul tr td table TABLE small sub blockquote)))
+									 (memq opener commands)
+									 (= p-quotes 0))
 								    (format #t "~A[~D]: nested ~A? ~A from: ~A~%" file linectr opener line commands)
 								    (begin
-								      (if (and (string-ci=? opener "td")
-									       (not (string-ci-list-position "tr" commands)))
-									  (format #t "~A[~D]: td without tr?~%" file linectr))
-								      
-								      (if (and (string-ci=? opener "td")
-									       (not (string-ci=? "tr" (car commands))))
-									  (format #t "~A[~D]: td without tr?~%" file linectr))
-								      (if (and (string-ci=? opener "tr")
-									       (not (string-ci=? "table" (car commands)))
-									       (not (string-ci=? "table" (cadr commands))))
-									  (format #t "~A[~D]: tr without table?~%" file linectr))
-								      (if (and (string-ci=? opener "p")
-									       (string-ci=? "table" (car commands)))
-									  (format #t "~A[~D]: unclosed table?~%" file linectr))
-								      
-								      (if (and (string-ci=? opener "tr")
-									       (not (string-ci-list-position "table" commands)))
-									  (format #t "~A[~D]: tr without table~%" file linectr))
-								      (if (and (string-ci-list-position opener (list "pre" "br" "table" "hr" "img" "ul"))
-									       (string-ci-list-position "p" commands))
-									  (format #t "~A[~D]: ~A within <p>?~%" file linectr opener))
-								      (if (and (string-ci=? opener "li")
-									       (not (string-ci-list-position "ul" commands)))
-									  (format #t "~A[~D]: li without ul~%" file linectr))
-								      
-								      (if (and (string-ci=? opener "small")
-									       (or (string-ci=? "pre" (car commands))
-										   (string-ci=? "code" (car commands))))
-									  (format #t "~A[~D]: small shouldn't follow ~A~%" file linectr (car commands)))
-								      
-								      (if (not warned)
-									  (begin
-									    (if (and (string-ci=? opener "tr")
-										     (string-ci-list-position "tr" commands)
-										     (< (count "table" commands) 2))
-										(begin
-										  (set! warned #t)
-										  (set! commands (remove "tr" commands 1))
-										  (format #t "~A[~D]: unclosed tr at table~%" file linectr)))
-									    (if (and (string-ci=? opener "td")
-										     (string-ci-list-position "td" commands)
-										     (< (count "table" commands) 2))
-										(begin
-										  (set! warned #t)
-										  (set! commands (remove "td" commands 1))
-										  (format #t "~A[~D]: unclosed td at table~%" file linectr)))))
-								      (if (string-ci=? opener "--")
-									  (format #t "~A[~D]: <-- missing !?~%" file linectr))
-								      (set! commands (push opener commands))))))))))
+								      (case opener
+									((td)
+									 (if (not (eq? 'tr (car commands)))
+									     (format #t "~A[~D]: td without tr?~%" file linectr))
+									 (if (and (not warned)
+										  (memq 'td commands)
+										  (< (count-table commands) 2))
+									     (begin
+									       (set! warned #t)
+									       (set! commands (remove 'td commands 1))
+									       (format #t "~A[~D]: unclosed td at table~%" file linectr))))
+									((tr)
+									 (if (and (not (memq (car commands) '(table TABLE)))
+										  (not (memq (cadr commands) '(table TABLE))))
+									     (format #t "~A[~D]: tr without table?~%" file linectr))
+									 (if (and (not warned)
+										  (memq 'tr commands)
+										  (< (count-table commands) 2))
+									     (begin
+									       (set! warned #t)
+									       (set! commands (remove 'tr commands 1))
+									       (format #t "~A[~D]: unclosed tr at table~%" file linectr))))
+									((p)
+									 (if (memq (car commands) '(table TABLE))
+									     (format #t "~A[~D]: unclosed table?~%" file linectr)))
+									
+									((pre br table TABLE hr img ul)
+									 (if (memq 'p commands)
+									     (format #t "~A[~D]: ~A within <p>?~%" file linectr opener)))
+									((li)
+									 (if (not (memq 'ul commands))
+									     (format #t "~A[~D]: li without ul~%" file linectr)))
+									((small)
+									 (if (memq (car commands) '(pre code))
+									     (format #t "~A[~D]: small shouldn't follow ~A~%" file linectr (car commands))))
+									((--)
+									 (format #t "~A[~D]: <-- missing !?~%" file linectr)))
+								      (if (not (memq opener '(br spacer li hr area)))
+									  (set! commands (push opener commands)))))))))))
 					  ;; end if closing
 					  (set! start #f)))))))
 			     ) ; if not in-comment...
 					  
 			 ;; search for name
 			 (let* ((dline line)
-				(pos-def1 (string-ci-position "<em class=def id=" dline))
+				(pos-def1 (string-position "<em class=def id=" dline))
 				(pos pos-def1) ;(or pos-def pos-def1))
 				(pos-len 18))
 
@@ -1401,7 +1397,7 @@
 
 				     (incf name)
 				     (set! dline (checked-substring dline epos))
-				     (set! pos-def1 (string-ci-position "<em class=def id=" dline))
+				     (set! pos-def1 (string-position "<em class=def id=" dline))
 				     (set! pos pos-def1)
 				     (set! pos-len 18))))))
 					  
@@ -1446,10 +1442,9 @@
 				     (set! dline (checked-substring dline epos))
 				     (set! pos (string-position " href=" dline))
 				     (set! pos-len 7))))))))
-		     (line-loop (read-line f))))))))
-
-	       (if (not (null? commands)) (format #t "open directives at end of ~A: ~A~%" file commands))
-	       (set! commands '()))
+		     (line-loop (read-line f)))))
+	     (if (not (null? commands)) 
+		 (format #t "open directives at end of ~A: ~A~%" file commands))))))
      files)
     ;; end file scan
     

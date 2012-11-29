@@ -2418,6 +2418,25 @@ static s7_pointer g_string_ci_list_position(s7_scheme *sc, s7_pointer args)
   return(g_string_list_position_1(sc, args, true, "string-ci-list-position"));
 }
 
+#if 0
+static s7_pointer g_string_downcase(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_downcase "(string-downcase str) returns str in all lower case (an in place change)."
+  int i, len;
+  char *str;
+  s7_pointer p;
+
+  p = s7_car(args);
+  if (!s7_is_string(p))
+    return(s7_wrong_type_arg_error(sc, "string-downcase", 1, p, "a string"));
+  len = s7_string_length(p);
+  str = (char *)s7_string(p);
+  for (i = 0; i < len; i++)
+    str[i] = tolower(str[i]);
+
+  return(p);
+}
+#endif
 
 /* list-in-vector|list, vector-in-list|vector, cobj-in-vector|list obj-in-cobj
  *   string-ci-in-vector? hash-table cases?
@@ -2676,6 +2695,7 @@ void g_xen_initialize(void)
   s7_define_safe_function(s7, "string-vector-position",  g_string_vector_position,  2, 1, false, H_string_vector_position);
   s7_define_safe_function(s7, "string-list-position",    g_string_list_position,    2, 1, false, H_string_list_position);
   s7_define_safe_function(s7, "string-ci-list-position", g_string_ci_list_position, 2, 1, false, H_string_ci_list_position);
+  /* s7_define_safe_function(s7, "string-downcase",         g_string_downcase,         1, 0, false, H_string_downcase); */
 #endif
 
   g_init_base();

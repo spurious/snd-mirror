@@ -13322,7 +13322,7 @@ static XEN gxm_XShapeQueryVersion(XEN dpy)
 static XEN gxm_XShapeQueryExtents(XEN dpy, XEN win)
 {
   #define H_XShapeQueryExtents "(XShapeQueryExtents dpy win): returns list of (status bounding_shaped x_bound y_bound w_bound \
-h_bound clip_shaped x_clip y_clip w_clip h_clip"
+h_bound clip_shaped x_clip y_clip w_clip h_clip)"
   Bool bounding_shaped;
   int x_bounding;
   int y_bounding;

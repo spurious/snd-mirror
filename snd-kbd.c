@@ -1664,8 +1664,8 @@ when typed with 'modifiers' (0:none, 4:control, 8:meta) (and C-x if extended) to
 zero or one arguments. If the function takes one argument, it is passed the preceding C-u number, if any. \
 The function should return one of the cursor choices (e.g. " S_keyboard_no_action ").  'origin' is \
 the name reported if an error occurs. The 'key' argument can be the X/Gtk name of the key (e.g. \"plus\" for \"+\" or \"Home\"), \
-the character on the key (#\a), or the integer corresponding to that character: (\"(char->integer #\a)\" in Scheme, \
-or \"?a\" in Ruby."
+the character on the key (#\\a), or the integer corresponding to that character: (char->integer #\a) in Scheme, \
+or ?a in Ruby."
   
   return(g_bind_key_1(key, state, code, cx_extended, origin, prefs_info, S_bind_key));
 }

@@ -7172,8 +7172,8 @@ The following substitutions can be made:
 <a href="#mix">mix</a> file beg filechn s c with-tags              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
 <a href="#redo">redo</a> edits s c                                  <a href="#redochannel">redo-channel</a> edits s c
 <a href="#reversesound">reverse-sound</a> s c e                             <a href="#reversechannel">reverse-channel</a> beg dur s c e
-<A href="#scaleby">scale-by</a> scls s c                               <a href="#scalechannel">scale-channel</a> scl beg dur s c e
-<A href="#scaleto">scale-to</a> scls s c                               <a href="#normalizechannel">normalize-channel</a> norm beg dur s c e
+<A href="#scaleby">scale-by</A> scls s c                               <a href="#scalechannel">scale-channel</a> scl beg dur s c e
+<A href="#scaleto">scale-to</A> scls s c                               <a href="#normalizechannel">normalize-channel</a> norm beg dur s c e
 <a href="#setsamples">set-samples</a> beg dur data s c trunc origin fchan <a href="#vcttochannel">vct-&gt;channel</a> vct beg dur s c e
 <a href="#smoothsound">smooth-sound</a> beg dur s c                        <a href="#smoothchannel">smooth-channel</a> beg dur s c e
 <a href="#srcsound">src-sound</a> num base s c e                        <a href="#srcchannel">src-channel</a> ratio-or-env beg dur s c e
@@ -8816,9 +8816,9 @@ is an example of this.
 
 <p>An esoteric aside: map-channel sets up the sampler before calling the procedure, so if that procedure edits
 the sound itself (independent of map-channel), the result will be all such edits after the current edit, then the map-channel result
-applied to the original (not the newly edited) data.  That is,<br>
+applied to the original (not the newly edited) data.  That is,
 </p>
-
+<br>
 <pre class="indented">
 (let ((first #t)) 
   (<em class=red>map-channel</em> (lambda (y) 
@@ -9630,8 +9630,8 @@ is taken from the sound being saved. save-sound-as returns the new file name.
 (save-sound-as "test.snd") (<a class=quiet href="#opensound" onmouseout="UnTip()" onmouseover="Tip(extsnd_opensound_tip)">open-sound</a> "test.snd")
 </pre>
 
-<p id="extractchannel">To define an explicit channel extraction function:<br>
-</p>
+<p id="extractchannel">To define an explicit channel extraction function:
+</p><br>
 
 <pre class="indented">
 Scheme:
@@ -9789,8 +9789,8 @@ current channel from sample 0 to the end looking for any sample greater than .1:
 4423
 </pre>
 
-<p>In this case, we found such a sample at position 4423.<br>
-</p>
+<p>In this case, we found such a sample at position 4423.
+</p><br>
 
 <pre class="indented">
 (define every-sample?
