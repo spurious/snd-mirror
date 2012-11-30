@@ -11224,6 +11224,9 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, x, sc->FLOOR, args);
       return(simple_wrong_type_argument(sc, sc->FLOOR, x, T_REAL));
     }
+  /* we can't assume things like floor return an integer because there might be methods in play,
+   *   or C-side extensions like + for string-append.
+   */
 }
 
 
@@ -18076,6 +18079,8 @@ end: (substring \"01234\" 1 2) -> \"1\""
 /* (set! (substring...) ...)? -- might require allocation
  *   to implement substring_uncopied we'd need to make sure the lack of a trailing null can't confuse anyone
  *   this is also the case for read-line.
+ *
+ * (string=? (substring...) str) or reverse is very common 
  */
 
 
@@ -18278,7 +18283,7 @@ static s7_pointer g_strings_are_leq(s7_scheme *sc, s7_pointer args)
 }	
 
 
-static s7_pointer string_equal_s_ic, string_equal_2, string_equal_vref_s;
+static s7_pointer string_equal_s_ic, string_equal_2;
 static s7_pointer g_string_equal_s_ic(s7_scheme *sc, s7_pointer args)
 {
   if (!s7_is_string(car(args)))
@@ -18287,41 +18292,6 @@ static s7_pointer g_string_equal_s_ic(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument(sc, sc->STRING_EQ, small_int(1), car(args), T_STRING));
     }
   return(make_boolean(sc, scheme_strings_are_equal(car(args), cadr(args))));
-}
-
-static s7_pointer g_string_equal_vref_s(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer p, vect, ind, vstr, target;
-  s7_Int index;
-
-  p = cdar(args);
-  vect = finder(sc, car(p));
-  if (!s7_is_vector(vect))
-    {
-      CHECK_METHOD(sc, vect, sc->VECTOR_REF, p);
-      return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vect, T_VECTOR));
-    }
-  ind = finder(sc, cadr(p));
-  if (!s7_is_integer(ind))
-    return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), ind, T_INTEGER));
-  index = s7_integer(ind);
-  if ((index < 0) ||
-      (index >= vector_length(vect)))
-    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), ind, "should non-negative and less than the vector length"));
-  
-  vstr = vector_element(vect, index);
-  if (!s7_is_string(vstr))
-    {
-      CHECK_METHOD(sc, vstr, sc->STRING_EQ, args);
-      return(wrong_type_argument(sc, sc->STRING_EQ, small_int(1), vstr, T_STRING));
-    }
-  target = finder(sc, cadr(args));
-  if (!s7_is_string(target))
-    {
-      CHECK_METHOD(sc, target, sc->STRING_EQ, cons(sc, vstr, cdr(args)));
-      return(wrong_type_argument(sc, sc->STRING_EQ, small_int(2), target, T_STRING));
-    }
-  return(make_boolean(sc, scheme_strings_are_equal(vstr, target)));
 }
 
 static s7_pointer g_string_equal_2(s7_scheme *sc, s7_pointer args)
@@ -35954,16 +35924,6 @@ static s7_pointer string_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	      (optimize_data(cadr(expr)) == HOP_SAFE_C_SS),
 	      (c_call(cadr(expr)) == g_vector_ref_2));
       */
-      if ((is_symbol(caddr(expr))) &&
-	  (is_pair(cadr(expr))) &&
-	  (is_optimized(cadr(expr))) &&
-	  (optimize_data(cadr(expr)) == HOP_SAFE_C_SS) &&
-	  (c_call(cadr(expr)) == g_vector_ref_2))
-	{
-	  fprintf(stderr, "choose string equal vref\n");
-	  set_optimize_data(expr, HOP_SAFE_C_C);
-	  return(string_equal_vref_s);
-	}
       return(string_equal_2);
     }
   return(f);
@@ -36434,8 +36394,6 @@ static void init_choosers(s7_scheme *sc)
 
   string_equal_s_ic = s7_make_function(sc, "string=?", g_string_equal_s_ic, 2, 0, false, "string=? optimization");
   s7_function_set_class(string_equal_s_ic, f);
-  string_equal_vref_s = s7_make_function(sc, "string=?", g_string_equal_vref_s, 2, 0, false, "string=? optimization");
-  s7_function_set_class(string_equal_vref_s, f);
   string_equal_2 = s7_make_function(sc, "string=?", g_string_equal_2, 2, 0, false, "string=? optimization");
   s7_function_set_class(string_equal_2, f);
 
@@ -62365,8 +62323,6 @@ s7_scheme *s7_init(void)
 /* TODO: use new generic_ff in methods opt case 
  * SOMEDAY: get the doc string out of the closure body
  * TODO: we need integer_length everywhere! These fixups are ignored by the optimized cases.
- * PERHAPS: extend op_case_simple[]_ss to safe_c_s
- * check vct->vector and osc/frm-bank
  * TODO: in mus_fft we load c_in_data -- this is just as easy with vectors if local, and if imag=0, loop can be simpler
  *   why not provide these here -- s7_vector_to_double_array|complex_array with no local allocation = vector->vct 
  *   also will need the reverse s7_double|complex_array_to_vector
@@ -62374,19 +62330,17 @@ s7_scheme *s7_init(void)
  * get rid of sound-data: mus-audio* mus-sound* use vct for now
  *   sound-data as output: ws.scm, conversions: frame.scm, play: play.scm, snd-motif|gtk.scm, enved.scm
  *   mus-sound|audio-write
- * TODO: what happened to hook documentation?
+ * TODO: what happened to hook documentation? hook is now an s7 constant (see xen.c xen_s7_define_hook)
+ *   but make-hook above could presumably put the docstring in the lambda* body
  *
  * timing    12.0           13.0 13.1 13.2 13.3
  * bench    42736           8752 8051 7725 7741
  * lint                     9328 8140 7887 7877
- * index    44300 4988 3935 3291 3005 2742 2213
+ * index    44300 4988 3935 3291 3005 2742 2206
  * s7test         1721 1430 1358 1297 1244 1233
  * t455            265  218   89   55   31   28
  * t502             90   72   43   39   36   33
  * lat             229        63   52   47   42
  * calls                     276  208  176  156
- *
- * we can't assume things like floor return an integer because there might be methods in play,
- *   or C-side extensions like + for string-append.
  */
 

@@ -23866,6 +23866,15 @@ who says the continuation has to restart the map from the top?
     (test (procedure-documentation p2) "pws doc")
     (test (apply p2 '(2)) 3)))
 
+(let ((func (eval '(lambda (a) "this is from eval" (+ a 1)))))
+  (test (func 3) 4)
+  (test (procedure-documentation func) "this is from eval"))
+(test (let ((e (environment '(x . 3)))) 
+	(let ((func (eval '(lambda (a) (+ a x)) e)))
+	  (func 2))) 
+      5)
+
+
 
 
 ;;; --------------------------------------------------------------------------------

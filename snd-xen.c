@@ -2227,8 +2227,9 @@ static void init_uppers(void)
     uppers[i] = toupper((unsigned char)i);
 }
 
-static s7_pointer g_string_position_1(s7_scheme *sc, s7_pointer args, bool ci, const char *name)
+static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
 {
+  #define H_string_position "(string-position str1 str2 (start 0)) returns the starting position of str1 in str2 or #f"
   const char *s1, *s2, *p2;
   int start = 0;
   s7_pointer s1p, s2p;
@@ -2237,20 +2238,20 @@ static s7_pointer g_string_position_1(s7_scheme *sc, s7_pointer args, bool ci, c
   s2p = s7_cadr(args);
 
   if (!s7_is_string(s1p))
-    return(s7_wrong_type_arg_error(sc, name, 1, s1p, "a string"));
+    return(s7_wrong_type_arg_error(sc, "string-position", 1, s1p, "a string"));
   if (!s7_is_string(s2p))
-    return(s7_wrong_type_arg_error(sc, name, 2, s2p, "a string"));
+    return(s7_wrong_type_arg_error(sc, "string-position", 2, s2p, "a string"));
 
   if (s7_is_pair(s7_cddr(args)))
     {
       s7_pointer arg;
       arg = s7_caddr(args);
       if (!s7_is_integer(arg))
-	return(s7_wrong_type_arg_error(sc, name, 3, arg, "an integer"));
+	return(s7_wrong_type_arg_error(sc, "string-position", 3, arg, "an integer"));
 
       start = s7_integer(arg);
       if (start < 0)
-	return(s7_wrong_type_arg_error(sc, name, 3, arg, "a non-negative integer"));
+	return(s7_wrong_type_arg_error(sc, "string-position", 3, arg, "a non-negative integer"));
     }
   
   s1 = s7_string(s1p);
@@ -2258,11 +2259,12 @@ static s7_pointer g_string_position_1(s7_scheme *sc, s7_pointer args, bool ci, c
   if (start >= (int)s7_string_length(s2p))
     return(s7_f(sc));
 
+  p2 = strstr((const char *)(s2 + start), s1);
+  if (!p2) return(s7_f(sc));
+  return(s7_make_integer(sc, p2 - s2));
+#if 0
   if (!ci)
     {
-      p2 = strstr((const char *)(s2 + start), s1);
-      if (!p2) return(s7_f(sc));
-      return(s7_make_integer(sc, p2 - s2));
     }
   else
     {
@@ -2282,161 +2284,10 @@ static s7_pointer g_string_position_1(s7_scheme *sc, s7_pointer args, bool ci, c
     }
 
   return(s7_f(sc));
-}
-
-
-static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
-{
-  #define H_string_position "(string-position str1 str2 (start 0)) returns the starting position of str1 in str2 or #f"
-  return(g_string_position_1(sc, args, false, "string-position"));
-}
-
-
-static s7_pointer g_string_ci_position(s7_scheme *sc, s7_pointer args)
-{
-  #define H_string_ci_position "(string-ci-position str1 str2 (start 0)) returns the starting position of str1 in str2 ignoring case, or #f"
-  return(g_string_position_1(sc, args, true, "string-ci-position"));
-}
-
-
-static s7_pointer g_string_vector_position(s7_scheme *sc, s7_pointer args)
-{
-  #define H_string_vector_position "(string-vector-position str vect (start 0)) returns the position of the first occurrence of str in vect starting from start, or #f"
-  const char *s1;
-  s7_pointer *strs;
-  int i, len, start = 0, slen;
-  s7_pointer s1p, s2p;
-
-  s1p = s7_car(args);
-  s2p = s7_cadr(args);
-
-  if (!s7_is_string(s1p))
-    return(s7_wrong_type_arg_error(sc, "string-vector-position", 1, s1p, "a string"));
-  if (!s7_is_vector(s2p))
-    return(s7_wrong_type_arg_error(sc, "string-vector-position", 2, s2p, "a vector"));
-
-  if (s7_is_pair(s7_cddr(args)))
-    {
-      s7_pointer arg;
-      arg = s7_caddr(args);
-      if (!s7_is_integer(arg))
-	return(s7_wrong_type_arg_error(sc, "string-vector-position", 3, arg, "an integer"));
-
-      start = s7_integer(arg);
-      if (start < 0)
-	return(s7_wrong_type_arg_error(sc, "string-vector-position", 3, arg, "a non-negative integer"));
-    }
-
-  s1 = s7_string(s1p);
-  slen = (int)s7_string_length(s1p);
-  strs = s7_vector_elements(s2p);
-  len = s7_vector_length(s2p);
-
-  for (i = start; i < len; i++)
-    if ((s1p == strs[i]) ||
-	((s7_is_string(strs[i])) &&
-	 (slen == (int)s7_string_length(strs[i])) &&
-	 ((slen == 0) ||
-	  (strcmp(s1, s7_string(strs[i])) == 0))))
-      return(s7_make_integer(sc, i));
-  
-  return(s7_f(sc));
-}
-
-
-static s7_pointer g_string_list_position_1(s7_scheme *sc, s7_pointer args, bool ci, const char *name)
-{
-  const char *s1;
-  s7_pointer p, str, s1p;
-  int i, start = 0;
-  unsigned int len;
-
-  s1p = s7_car(args);
-  if (!s7_is_string(s1p))
-    return(s7_wrong_type_arg_error(sc, name, 1, s1p, "a string"));
-
-  p = s7_cadr(args);
-  if (p == s7_nil(sc))
-    return(s7_f(sc));
-  if (!s7_is_pair(p))
-    return(s7_wrong_type_arg_error(sc, name, 2, p, "a list"));
-
-  if (s7_is_pair(s7_cddr(args)))
-    {
-      s7_pointer arg;
-      arg = s7_caddr(args);
-      if (!s7_is_integer(arg))
-	return(s7_wrong_type_arg_error(sc, "string-list-position", 3, arg, "an integer"));
-
-      start = s7_integer(arg);
-      if (start < 0)
-	return(s7_wrong_type_arg_error(sc, "string-list-position", 3, arg, "a non-negative integer"));
-    }
-  
-  s1 = s7_string(s1p);
-  len = s7_string_length(s1p);
-
-  if (start > 0)
-    for (i = 0; (i < start) && (s7_is_pair(p)); p = s7_cdr(p), i++);
-
-  if (!ci)
-    {
-      for (i = start; s7_is_pair(p); p = s7_cdr(p), i++)
-	{
-	  str = s7_car(p);
-	  if ((s7_is_string(str)) &&
-	      (len == s7_string_length(str)) &&
-	      (mus_strcmp(s1, s7_string(str))))
-	    return(s7_make_integer(sc, i));
-	}
-    }
-  else
-    {
-      for (i = start; s7_is_pair(p); p = s7_cdr(p), i++)
-	{
-	  str = s7_car(p);
-	  if ((s7_is_string(str)) &&
-	      (len == s7_string_length(str)) &&
-	      (strcasecmp(s1, s7_string(str)) == 0))
-	    return(s7_make_integer(sc, i));
-	}
-    }
-  return(s7_f(sc));
-}
-
-
-static s7_pointer g_string_list_position(s7_scheme *sc, s7_pointer args)
-{
-  #define H_string_list_position "(string-list-position str lst (start 0)) returns the position of the first occurrence of str in lst starting from start, or #f"
-  return(g_string_list_position_1(sc, args, false, "string-list-position"));
-}
-
-
-static s7_pointer g_string_ci_list_position(s7_scheme *sc, s7_pointer args)
-{
-  #define H_string_ci_list_position "(string-ci-list-position str lst (start 0)) returns the position of the first occurrence of str in lst starting from start, or #f"
-  return(g_string_list_position_1(sc, args, true, "string-ci-list-position"));
-}
-
-#if 0
-static s7_pointer g_string_downcase(s7_scheme *sc, s7_pointer args)
-{
-  #define H_string_downcase "(string-downcase str) returns str in all lower case (an in place change)."
-  int i, len;
-  char *str;
-  s7_pointer p;
-
-  p = s7_car(args);
-  if (!s7_is_string(p))
-    return(s7_wrong_type_arg_error(sc, "string-downcase", 1, p, "a string"));
-  len = s7_string_length(p);
-  str = (char *)s7_string(p);
-  for (i = 0; i < len; i++)
-    str[i] = tolower(str[i]);
-
-  return(p);
-}
 #endif
+}
+
+
 
 /* list-in-vector|list, vector-in-list|vector, cobj-in-vector|list obj-in-cobj
  *   string-ci-in-vector? hash-table cases?
@@ -2691,11 +2542,6 @@ void g_xen_initialize(void)
 #if HAVE_SCHEME
   s7_define_safe_function(s7, "char-position",           g_char_position,           2, 1, false, H_char_position);
   s7_define_safe_function(s7, "string-position",         g_string_position,         2, 1, false, H_string_position);
-  s7_define_safe_function(s7, "string-ci-position",      g_string_ci_position,      2, 1, false, H_string_ci_position);
-  s7_define_safe_function(s7, "string-vector-position",  g_string_vector_position,  2, 1, false, H_string_vector_position);
-  s7_define_safe_function(s7, "string-list-position",    g_string_list_position,    2, 1, false, H_string_list_position);
-  s7_define_safe_function(s7, "string-ci-list-position", g_string_ci_list_position, 2, 1, false, H_string_ci_list_position);
-  /* s7_define_safe_function(s7, "string-downcase",         g_string_downcase,         1, 0, false, H_string_downcase); */
 #endif
 
   g_init_base();

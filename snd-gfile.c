@@ -6240,12 +6240,19 @@ See also nb.scm."
 #if HAVE_RUBY
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
 The 'type' is 1 for view-files, and 2 for regions. The 'position' \
-is the scrolled list position of the label. The label itself is 'label'."
+is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.rb \
+to popup file info as follows: \n\
+$mouse_enter_label_hook.add_hook!(\"finfo\") do |type, position, name|\n\
+  if type != 2\n\
+    " S_info_dialog "(name, finfo(name))\n\
+  end\n\
+end\n\
+See also nb.rb."
 #endif
 #if HAVE_FORTH
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
 The 'type' is 1 for view-files, and 2 for regions. The 'position' \
-is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
+is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.fs \
 to popup file info as follows: \n\
 " S_mouse_enter_label_hook " lambda: <{ type position name }>\n\
   type 2 <> if\n\

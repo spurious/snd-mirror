@@ -311,17 +311,33 @@ If it returns true, Snd flushes the error (it assumes you've reported it via the
   end"
 
   #define H_snd_warning_hook S_snd_warning_hook " (warning-message): called upon snd_warning. \
-If it returns true, Snd flushes the warning (it assumes you've reported it via the hook)"
+If it returns true, Snd flushes the warning (it assumes you've reported it via the hook)\n\
+  def without_warning(&body)\n\
+    $snd_warning_hook.add_hook!(\"no_warning\") do |msg| true end\n\
+    ret = body.call\n\
+    $snd_warning_hook.remove_hook!(\"no_warning\")\n\
+    ret\n\
+  end\n\
+  # without_warning do " S_snd_warning "(\"not shown\") end"
 #endif
 #if HAVE_FORTH
   #define H_snd_error_hook S_snd_error_hook " (error-message): called upon snd_error. \
 If it returns " PROC_TRUE ", Snd flushes the error (it assumes you've reported it via the hook):\n\
 " S_snd_error_hook " lambda: <{ msg }>\n\
-  \"bong.snd\" " S_play "\n\
+  \"bong.snd\" " S_play " drop\n\
+  #f\n\
 ; add-hook!"
 
   #define H_snd_warning_hook S_snd_warning_hook " (warning-message): called upon snd_warning. \
-If it returns " PROC_TRUE ", Snd flushes the warning (it assumes you've reported it via the hook)"
+If it returns " PROC_TRUE ", Snd flushes the warning (it assumes you've reported it via the hook)\n\
+  : no-warning <{ msg -- f }> #t ;\n\
+  : without-warnings <{ xt -- }>\n\
+    " S_snd_warning_hook " <'> no-warning add-hook!\n\
+    xt execute\n\
+    " S_snd_warning_hook " <'> no-warning remove-hook! drop\n\
+  ;\n\
+  \\ lambda: ( -- ) \"not shown\" " S_snd_warning " ; without-warning\n\
+"
 #endif
 
   ss->snd_error_hook =   XEN_DEFINE_HOOK(S_snd_error_hook,   "(make-hook 'message)", 1, H_snd_error_hook);

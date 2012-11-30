@@ -1335,8 +1335,6 @@ var pvoc_doc_tip = "various versions of the Moore-Klingbeil-Trevisani-Edwards ph
 
 var rgb_doc_tip = "this translates the standard X11 color names into Snd color objects.";
 
-var rtio_doc_tip = "show graph of real-time input and so on";
-
 var rubber_doc_tip = "rubber-sound tries to stretch or contract a sound (in time);<br>" +
                      " it scans the sound looking for stable sections, then either <br>" +
                      " deletes periods or interpolates new ones to shorten or lengthen the sound";

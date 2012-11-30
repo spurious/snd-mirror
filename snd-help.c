@@ -3914,7 +3914,10 @@ If more than one hook function, each function gets the previous function's outpu
 #endif
 #if HAVE_RUBY
   #define H_output_comment_hook S_output_comment_hook " (str): called in Save-As dialog, passed current sound's comment, if any. \
-If more than one hook function, each function gets the previous function's output as its input."
+If more than one hook function, each function gets the previous function's output as its input.\n\
+$output_comment_hook.add_hook!(\"comment\") do |str|\n\
+  str + \": written \" + Time.new.localtime.strftime(\"%a %d-%b-%y %H:%M %Z\")\n\
+end" 
 #endif
 #if HAVE_FORTH
   #define H_output_comment_hook S_output_comment_hook " (str): called in Save-As dialog, passed current sound's comment, if any. \

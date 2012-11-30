@@ -2433,7 +2433,17 @@ of a moving mark:\n\
 
 #if HAVE_RUBY
   #define H_before_transform_hook S_before_transform_hook " (snd chn): called just before a transform is calculated.  If it returns \
-an integer, it is used as the starting point of the transform."
+an integer, it is used as the starting point of the transform.  The following \
+somewhat brute-force code shows a way to have the transform reflect the position \
+of a moving mark:\n\
+$transform_position = false\n\
+$before_transform_hook.add_hook!(\"snd-fft\") |snd, chn|\n\
+  $transform_position\n\
+end\n\
+$mark_drag_hook.add_hook!(\"snd-fft\") |id|\n\
+  $transform_position = " S_mark_sample "(id)\n\
+  " S_update_transform_graph "\n\
+end"
 #endif
 
 #if HAVE_FORTH

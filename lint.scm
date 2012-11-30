@@ -605,13 +605,10 @@
 	     (len (length str)))
 	(if (<= len 80)
 	    (format #f "~%        ~A" str)
-	    (call-with-exit
-	     (lambda (return)
-	       (do ((i 77 (- i 1)))
-		   ((= i 40)
-		    (format #f "~%        ~A..." (substring str 0 77)))
-		 (if (char-whitespace? (str i))
-		     (return (format #f "~%        ~A..." (substring str 0 i))))))))))
+	    (do ((i 77 (- i 1)))
+		((or (= i 40)
+		     (char-whitespace? (str i)))
+		 (format #f "~%        ~A..." (substring str 0 (if (<= i 40) 77 i))))))))
 
       (define (lint-format str name . args)
 	(if (and (positive? line-number)

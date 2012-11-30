@@ -6055,7 +6055,7 @@ but before data has been read. \n\
 This provides a way to set various sound-specific defaults. \n\
   $after_open_hook.add-hook!(\"set-channels-combined\") do |snd| \n\
     if (channels(snd) > 1) \n\
-      set_channel_style(snd, Channels_combined)\n\
+      set_channel_style(Channels_combined, snd)\n\
     end\n\
   end"
 #endif
@@ -6065,7 +6065,7 @@ This provides a way to set various sound-specific defaults. \n\
 but before data has been read. \n\
 " S_during_open_hook " lambda: <{ fd name reason }>\n\
   name " S_mus_sound_header_type " " S_mus_raw " = if\n\
-    500.0 fd set-" S_mus_file_prescaler "\n\
+    fd 500.0 set-" S_mus_file_prescaler "\n\
   else\n\
     #f\n\
   then\n\

@@ -1,5 +1,12 @@
 ;;; check procedure help strings
 
+(define escape (integer->char 27))
+(define bold-text (format #f "~C[1m" escape))       
+(define unbold-text (format #f "~C[22m" escape))  
+
+(define red-text (format #f "~C[31m" escape))
+(define normal-text (format #f "~C[0m" escape))
+
 (let ((names (snd-urls)))
   (for-each
    (lambda (biname)
@@ -8,7 +15,27 @@
 		(defined? name)
 		(procedure? (symbol->value name)))
 	   (let ((help (snd-help name))
-		 (arity (procedure-arity (symbol->value name))))
+		 (arity (procedure-arity (symbol->value name)))
+		 (doc (procedure-documentation (symbol->value name))))
+
+	     (if (string=? doc "")
+		 (if (and (not (string=? "-hook" (substring (symbol->string name) (- (length (symbol->string name)) 5))))
+			  (not (string=? "-hook*" (substring (symbol->string name) (- (length (symbol->string name)) 6)))))
+		     (format #t "~A~A~A: no docs~%" red-text name normal-text))
+		 (let ((parens 0)
+		       (dquotes 0)
+		       (len (length doc)))
+		   (do ((i 0 (+ i 1)))
+		       ((= i len))
+		     (case (string-ref doc i)
+		       ((#\() (set! parens (+ parens 1)))
+		       ((#\)) (set! parens (- parens 1)))
+		       ((#\") (set! dquotes (+ dquotes 1)))))
+		   (if (not (zero? parens))
+		       (format #t "~A parens: ~D~%" name parens))
+		   (if (not (zero? (modulo dquotes 2)))
+		       (format #t "~A dquotes: ~D~%" name dquotes))))
+
 	     (if (and (string? help)
 		      (char=? (string-ref help 0) #\()
 		      (not (caddr arity))) ; rest args
