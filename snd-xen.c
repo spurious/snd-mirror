@@ -183,177 +183,160 @@ void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data)
 static char *gl_print(XEN result);
 
 
-/* ---------------- RUBY error handler ---------------- */
 
-#if HAVE_RUBY
-static XEN snd_format_if_needed(XEN args)
-{
-  /* if car has formatting info, use next arg as arg list for it */
-  XEN format_args = XEN_EMPTY_LIST, cur_arg, result;
-  int i, start = 0, num_args, format_info_len, err_size = 8192;
-  bool got_tilde = false, was_formatted = false;
-  char *format_info = NULL, *errmsg = NULL;
+/* ---------------- RUBY error handler ---------------- */ 
 
-  num_args = XEN_LIST_LENGTH(args);
-  if (num_args == 1) return(XEN_CAR(args));
+#if HAVE_RUBY 
+static XEN snd_format_if_needed(XEN args) 
+{ 
+  /* if car has formatting info, use next arg as arg list for it */ 
+  XEN format_args = XEN_EMPTY_LIST, cur_arg, result; 
+  int i, start = 0, num_args, format_info_len, err_size = 8192; 
+  bool got_tilde = false, was_formatted = false; 
+  char *format_info = NULL, *errmsg = NULL; 
 
-  format_info = mus_strdup(XEN_TO_C_STRING(XEN_CAR(args)));
-  format_info_len = mus_strlen(format_info);
+  num_args = XEN_LIST_LENGTH(args); 
+  if (num_args == 1) return(XEN_CAR(args)); 
 
-  if (XEN_LIST_P(XEN_CADR(args)))
-    format_args = XEN_COPY_ARG(XEN_CADR(args)); /* protect Ruby case */
-  else format_args = XEN_CADR(args);
+  format_info = mus_strdup(XEN_TO_C_STRING(XEN_CAR(args))); 
+  format_info_len = mus_strlen(format_info); 
 
-  errmsg = (char *)calloc(err_size, sizeof(char));
+  if (XEN_CONS_P(XEN_CADR(args))) 
+    format_args = XEN_COPY_ARG(XEN_CADR(args)); /* protect Ruby case */ 
+  else format_args = XEN_CDR(args); 
 
-  for (i = 0; i < format_info_len; i++)
-    {
-      if (format_info[i] == '~')
-	{
-	  strncat(errmsg, (char *)(format_info + start), i - start);
-	  start = i + 2;
-	  got_tilde = true;
-	}
-      else
-	{
-	  if (got_tilde)
-	    {
-	      was_formatted = true;
-	      got_tilde = false;
-	      switch (format_info[i])
-		{
-		case '~': errmsg = mus_strcat(errmsg, "~", &err_size); break;
-		case '%': errmsg = mus_strcat(errmsg, "\n", &err_size); break;
-		case 'S': 
-		case 'A':
-		  if (XEN_NOT_NULL_P(format_args))
-		    {
-		      cur_arg = XEN_CAR(format_args);
-		      format_args = XEN_CDR(format_args);
-		      if (XEN_VECTOR_P(cur_arg))
-			{
-			  char *vstr;
-			  vstr = gl_print(cur_arg);
-			  errmsg = mus_strcat(errmsg, vstr, &err_size);
-			  free(vstr);
-			}
-		      else
-			{
-			  char *temp = NULL;
-			  errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(cur_arg), &err_size);
-			}
-		    }
-		  /* else ignore it */
-		  break;
-		default: start = i - 1; break;
-		}
-	    }
-	}
-    }
-  if (i > start)
-    strncat(errmsg, (char *)(format_info + start), i - start);
-  if (format_info) free(format_info);
-  if (!was_formatted)
-    {
-      char *temp = NULL;
-      errmsg = mus_strcat(errmsg, " ", &err_size);
-      errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(XEN_CADR(args)), &err_size);
-    }
-  if (num_args > 2)
-    {
-      if ((!was_formatted) || (!(XEN_FALSE_P(XEN_CADDR(args))))) start = 2; else start = 3;
-      for (i = start; i < num_args; i++)
-	{
-	  char *temp = NULL;
-	  errmsg = mus_strcat(errmsg, " ", &err_size);
-	  errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(XEN_LIST_REF(args, i)), &err_size);
-	}
-    }
-  result = C_TO_XEN_STRING(errmsg);
-  free(errmsg);
-  return(result);
-}
+  errmsg = (char *)calloc(err_size, sizeof(char)); 
 
+  for (i = 0; i < format_info_len; i++) 
+    { 
+      if (format_info[i] == '~') 
+    { 
+      strncat(errmsg, (char *)(format_info + start), i - start); 
+      start = i + 2; 
+      got_tilde = true; 
+    } 
+      else 
+    { 
+      if (got_tilde) 
+        { 
+          was_formatted = true; 
+          got_tilde = false; 
+          switch (format_info[i]) 
+         { 
+         case '~': errmsg = mus_strcat(errmsg, "~", &err_size); break; 
+         case '%': errmsg = mus_strcat(errmsg, "\n", &err_size); break; 
+         case 'S': 
+         case 'A': 
+           if (XEN_NOT_NULL_P(format_args)) 
+             { 
+               cur_arg = XEN_CAR(format_args); 
+               format_args = XEN_CDR(format_args); 
+               if (XEN_VECTOR_P(cur_arg)) 
+              { 
+                char *vstr; 
+                vstr = gl_print(cur_arg); 
+                errmsg = mus_strcat(errmsg, vstr, &err_size); 
+                free(vstr); 
+              } 
+               else 
+              { 
+                char *temp = NULL; 
+                errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(cur_arg), &err_size); 
+              } 
+             } 
+           /* else ignore it */ 
+           break; 
+         default: start = i - 1; break; 
+         } 
+        } 
+    } 
+    } 
+  if (i > start) 
+    strncat(errmsg, (char *)(format_info + start), i - start); 
+  if (format_info) free(format_info); 
+  if (!was_formatted) 
+    { 
+      char *temp = NULL; 
+      errmsg = mus_strcat(errmsg, " ", &err_size); 
+      errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(XEN_CADR(args)), &err_size); 
 
-void snd_rb_raise(XEN tag, XEN throw_args)
-{
-  static char *msg = NULL;
-  XEN err = rb_eStandardError, bt;
-  bool need_comma = false;
-  int size = 2048;
+      if (num_args > 2) 
+    { 
+      if (!XEN_FALSE_P(XEN_CADDR(args))) start = 2; else start = 3; 
+      for (i = start; i < num_args; i++) 
+        { 
+          char *temp = NULL; 
+          errmsg = mus_strcat(errmsg, " ", &err_size); 
+          errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(XEN_LIST_REF(args, i)), &err_size); 
+        } 
+    } 
+    } 
+  result = C_TO_XEN_STRING(errmsg); 
+  free(errmsg); 
+  return(result); 
+} 
 
-  if (strcmp(rb_id2name(tag), "Out_of_range") == 0) 
-    err = rb_eRangeError;
-  else
-    if (strcmp(rb_id2name(tag), "Wrong_type_arg") == 0) 
-      err = rb_eTypeError;
+void snd_rb_raise(XEN tag, XEN throw_args) 
+{ 
+  static char *msg = NULL; 
+  XEN err = rb_eStandardError, bt; 
+  bool need_comma = false; 
+  int size = 2048; 
+  char *idname; 
 
-  if (msg) free(msg);
-  msg = (char *)calloc(size, sizeof(char));
+  if (msg) free(msg); 
+  msg = (char *)calloc(size, sizeof(char)); 
 
-  if ((XEN_LIST_P(throw_args)) && 
-      (XEN_LIST_LENGTH(throw_args) > 0))
-    {
-      /* normally car is string name of calling func */
-      if (XEN_NOT_FALSE_P(XEN_CAR(throw_args)))
-	{
-	  snprintf(msg, size, "%s: %s", 
-		   XEN_AS_STRING(XEN_CAR(throw_args)), 
-		   rb_id2name(tag));
-	  need_comma = true;
-	}
+  idname = (char *)rb_id2name(tag); 
+  if (strcmp(idname, "Out_of_range") == 0) 
+    err = rb_eRangeError; 
+  else 
+    if (strcmp(idname, "Wrong_type_arg") == 0) 
+      err = rb_eTypeError; 
 
-      if (XEN_LIST_LENGTH(throw_args) > 1)
-	{
-	  /* here XEN_CADR can contain formatting info and XEN_CADDR is a list of args to fit in */
-	  /* or it may be a list of info vars etc */
-
-	  if (need_comma) 
-	    msg = mus_strcat(msg, ": ", &size); /* new size, if realloc, reported through size arg */
-
-	  if (XEN_STRING_P(XEN_CADR(throw_args)))
-	    msg = mus_strcat(msg, XEN_TO_C_STRING(snd_format_if_needed(XEN_CDR(throw_args))), &size);
-	  else msg = mus_strcat(msg, XEN_AS_STRING(XEN_CDR(throw_args)), &size);
-	}
-    }
+  msg = mus_strcat(msg, idname, &size); 
+  if (strcmp(idname, "Mus_error") == 0) 
+    msg = mus_strcat(msg, ": ", &size); 
+  else msg = mus_strcat(msg, " in ", &size); 
+  msg = mus_strcat(msg, XEN_TO_C_STRING(snd_format_if_needed(throw_args)), &size); 
 
   bt = rb_funcall(err, rb_intern("caller"), 0); 
 
-  if (XEN_VECTOR_P(bt) && XEN_VECTOR_LENGTH(bt) > 0) 
-    {
+  if (XEN_VECTOR_LENGTH(bt) > 0) 
+    { 
       int i; 
       msg = mus_strcat(msg, "\n", &size); 
       for (i = 0; i < XEN_VECTOR_LENGTH(bt); i++) 
-	{ 
-	  msg = mus_strcat(msg, XEN_TO_C_STRING(XEN_VECTOR_REF(bt, i)), &size); 
-	  msg = mus_strcat(msg, "\n", &size); 
-	} 
-    }
+    { 
+      msg = mus_strcat(msg, XEN_TO_C_STRING(XEN_VECTOR_REF(bt, i)), &size); 
+      msg = mus_strcat(msg, "\n", &size); 
+    } 
+    } 
 
-  if (strcmp(rb_id2name(tag), "Snd_error") != 0)
-    {
-      if (!(run_snd_error_hook(msg)))
-	{
-	  if (ss->xen_error_handler)
-	    {
-	      /* make sure it doesn't call itself recursively */
-	      void (*old_xen_error_handler)(const char *msg, void *data);
-	      void *old_xen_error_data;
-	      old_xen_error_handler = ss->xen_error_handler;
-	      old_xen_error_data = ss->xen_error_data;
-	      ss->xen_error_handler = NULL;
-	      ss->xen_error_data = NULL;
-	      (*(old_xen_error_handler))(msg, old_xen_error_data);
-	      ss->xen_error_handler = old_xen_error_handler;
-	      ss->xen_error_data = old_xen_error_data;
-	    }
-	}
-    }
+  if (strcmp(idname, "Snd_error") != 0) 
+    { 
+      if (!(run_snd_error_hook(msg))) 
+    { 
+      if (ss->xen_error_handler) 
+        { 
+          /* make sure it doesn't call itself recursively */ 
+          void (*old_xen_error_handler)(const char *msg, void *data); 
+          void *old_xen_error_data; 
+          old_xen_error_handler = ss->xen_error_handler; 
+          old_xen_error_data = ss->xen_error_data; 
+          ss->xen_error_handler = NULL; 
+          ss->xen_error_data = NULL; 
+          (*(old_xen_error_handler))(msg, old_xen_error_data); 
+          ss->xen_error_handler = old_xen_error_handler; 
+          ss->xen_error_data = old_xen_error_data; 
+        } 
+    } 
+    } 
 
-  rb_raise(err, "%s", msg);
-}
-#endif
-/* end HAVE_RUBY */
+  rb_raise(err, "%s", msg); 
+} 
+#endif 
+/* end HAVE_RUBY */ 
 
 
 

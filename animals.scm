@@ -2576,19 +2576,14 @@
 			      0.87 1.25 0.88 1 
 			      1 1) 
 			  :scaler (hz->radians 720) :duration dur))
-	  (gen1 (make-oscil pitch))
-	  (gen2 (make-oscil (* 2 pitch)))
-	  (gen3 (make-oscil (* 3 pitch)))
+	  (gen1 (make-polywave pitch :partials '(1 .9 2 .025 3 .075)))
 	  (rnd (make-rand-interp 30 .005)))
       (do ((i start (+ i 1)))
 	  ((= i stop))
-	(let ((frq (+ (env frqf)
-		      (mus-random 0.001)
-		      (rand-interp rnd))))
-	  (outa i (* (env ampf)
-		     (+ (* .9 (oscil gen1 frq))
-			(* .025 (oscil gen2 (* 2 frq)))
-			(* .075 (oscil gen3 (* 3 frq)))))))))))
+	(outa i (* (env ampf) 
+		   (polywave gen1 (+ (env frqf)
+				     (mus-random 0.001)
+				     (rand-interp rnd)))))))))
 
 ;; (with-sound (:play #t) (white-throated-sparrow 0 .25))
 
@@ -2648,18 +2643,12 @@
 				  0.869 0.485  0.877 0.567  0.907 0.541  0.918 0.459  0.942 0.513  0.977 0.366 
 				  1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-oscil))
-	  (gen2 (make-oscil))
-	  (gen3 (make-oscil))
+	  (gen1 (make-polywave :partials '(1 .905 2 .025 3 .025)))
 	  (frqf (make-env '(0 3370 .03 4300 .1 4600  .14 3400 0.15 4400 .16 3700 .18 4400 .24 4700 .3 4600 .34 3600 .4 3700 .6 3800 .8 4000 1.0 3900)
 			  :duration dur :base .1 :scaler (hz->radians 1.0))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
-	(let ((frq (env frqf)))
-	  (outa i (* (env ampf)
-		     (+ (* .905 (oscil gen1 frq))
-			(* .025 (oscil gen2 (* 2 frq)))
-			(* .025 (oscil gen3 (* 3 frq)))))))))))
+	(outa i (* (env ampf) (polywave gen1 (env frqf))))))))
 
 ;; (with-sound (:play #t) (eastern-wood-pewee-1 0 .25))
 
@@ -2768,14 +2757,10 @@
 				.38 3730  .42 3900  .45 3770  .46 2760 .53 2470  .55 2050  .58 2320 .6 2100
 				.75 3730  .79  3900  .83 3770  .84 2720 .91 2470  .94 2050  .96 2320 1.0 2100)
 			  :duration dur :base .1 :scaler (hz->radians 1.0)))
-	  (gen1 (make-oscil))
-	  (gen2 (make-oscil)))
+	  (gen1 (make-polywave :partials '(1 .99 2 .01))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
-	(let ((frq (env frqf)))
-	  (outa i (* (env ampf)
-		     (+ (* .99 (oscil gen1 frq))
-			(* .01 (oscil gen2 (* frq 2)))))))))))
+	(outa i (* (env ampf) (polywave gen1 (env frqf))))))))
 
 ;; (with-sound (:play #t) (tufted-titmouse 0 .3))
 
@@ -3063,17 +3048,13 @@
 	  (ampf (make-env '(0.000 0.000 0.102 0.301 0.221 0.705 0.287 0.332 0.357 0.801 0.406 0.385 0.45 0 0.55 0
 				  0.567 0.298 0.623 1.0 0.706 0.727 0.729 0.292 0.860 0.239 0.885 0.484 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-oscil))
-	  (gen2 (make-oscil))
+	  (gen1 (make-polywave :partials '(1 .95 2 .05)))
 	  (frqf (make-env '(0 2800 .075 3600 .11 4200 .22 4900 .28 3200 .35 5400 .45 4200 .47 4000
 			      .55 4900 .62 5000 .7 5500 .75 5200 .8 5500 .87 5400 1.0 2800)
 			  :duration dur :scaler (hz->radians 1.0) :base 32)))
       (do ((i start (+ i 1)))
 	  ((= i stop))
-	(let ((frq (env frqf)))
-	  (outa i (* (env ampf)
-		     (+ (* .95 (oscil gen1 frq))
-			(* .05 (oscil gen2 (* 2 frq)))))))))))
+	(outa i (* (env ampf) (polywave gen1 (env frqf))))))))
 
 ;; (with-sound (:play #t) (acadian-flycatcher 0 .25))
 

@@ -1185,18 +1185,18 @@
 			     
 			     ;; else c != < or >
 			     
-			     ((#\&)
+			     ((#\&) 
 			      (if (and (not in-comment)
-				       (not (string-ci=? "&gt;" (checked-substring line i (+ i 4))))
-				       (not (string-ci=? "&lt;" (checked-substring line i (+ i 4))))
-				       (not (string-ci=? "&amp;" (checked-substring line i (+ i 5))))
-				       (not (string-ci=? "&micro;" (checked-substring line i (+ i 7))))
-				       (not (string-ci=? "&quot;" (checked-substring line i (+ i 6))))
-				       (not (string-ci=? "&ouml;" (checked-substring line i (+ i 6))))
-				       (not (string-ci=? "&mdash;" (checked-substring line i (+ i 7))))
-				       (not (string-ci=? "&nbsp;" (checked-substring line i (+ i 6))))
-				       (not (string-ci=? "&&" (checked-substring line i (+ i 2))))
-				       (not (string-ci=? "& " (checked-substring line i (+ i 2))))) ; following char -- should skip this
+				       (not (string-ci=? "&gt;" (substring line i (min len (+ i 4)))))
+				       (not (string-ci=? "&lt;" (substring line i (min len (+ i 4)))))
+				       (not (string-ci=? "&amp;" (substring line i (min len (+ i 5)))))
+				       (not (string-ci=? "&micro;" (substring line i (min len (+ i 7)))))
+				       (not (string-ci=? "&quot;" (substring line i (min len (+ i 6)))))
+				       (not (string-ci=? "&ouml;" (substring line i (min len (+ i 6)))))
+				       (not (string-ci=? "&mdash;" (substring line i (min len (+ i 7)))))
+				       (not (string-ci=? "&nbsp;" (substring line i (min len (+ i 6)))))
+				       (not (string-ci=? "&&" (substring line i (min len (+ i 2)))))
+				       (not (string-ci=? "& " (substring line i (min len (+ i 2)))))) ; following char -- should skip this
 				  (format #t "~A[~D]: unknown escape sequence: ~A~%" file linectr line)))
 			     
 			     ((#\()

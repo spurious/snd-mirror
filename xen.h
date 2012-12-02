@@ -465,53 +465,43 @@
 #define XEN_ERROR_TYPE(Name)            xen_rb_intern(Name)
 
 
-#if USE_SND
+#if USE_SND 
 
-#define XEN_ERROR(Type, Info)           snd_rb_raise(Type, Info)
-
-#define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
-  do { \
-    if (!(Assertion)) \
-      snd_rb_raise(XEN_ERROR_TYPE("wrong-type-arg"),\
-	XEN_LIST_4(C_TO_XEN_STRING(xen_scheme_procedure_to_ruby(Caller)), \
-                   C_TO_XEN_INT(Position),\
-     	           Arg,\
-		   C_TO_XEN_STRING(Correct_Type))); \
-     } while (0)
+#define XEN_ERROR(Type, Info)           snd_rb_raise(Type, Info) 
 
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr) \
   snd_rb_raise(XEN_ERROR_TYPE("out-of-range"), \
-	       XEN_LIST_3(C_TO_XEN_STRING(xen_scheme_procedure_to_ruby(Caller)), \
-                          C_TO_XEN_STRING(Descr), \
-                          XEN_LIST_1(Arg)))
+           XEN_LIST_5(C_TO_XEN_STRING("~A: argument ~A, ~A, is out of range (~A)"), \
+                          C_TO_XEN_STRING(xen_scheme_procedure_to_ruby(Caller)), \
+                          C_TO_XEN_INT(ArgN), \
+                          Arg, \
+                          C_TO_XEN_STRING(Descr))) 
 
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
-  snd_rb_raise(XEN_ERROR_TYPE("wrong-type-arg"),\
-	XEN_LIST_4(C_TO_XEN_STRING(xen_scheme_procedure_to_ruby(Caller)), \
-                   C_TO_XEN_INT(ArgN),\
-     	           Arg,\
-		   C_TO_XEN_STRING(Descr)))
+  snd_rb_raise(XEN_ERROR_TYPE("wrong-type-arg"), \
+               XEN_LIST_5(C_TO_XEN_STRING("~A: argument ~A, ~A, should be ~A"), \
+                          C_TO_XEN_STRING(xen_scheme_procedure_to_ruby(Caller)), \
+                          C_TO_XEN_INT(ArgN), \
+                            Arg, \
+                          C_TO_XEN_STRING(Descr))) 
 
-#else
+#else 
 
-#define XEN_ERROR(Type, Info)           xen_rb_raise(Type, Info)
-
-#define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
-  do { \
-    if (!(Assertion)) \
-      rb_raise(rb_eTypeError, "%s: wrong type arg %d, %s, wanted %s\n", \
-               Caller, Position, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Correct_Type); \
-     } while (0)
+#define XEN_ERROR(Type, Info)           xen_rb_raise(Type, Info) 
 
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr) \
-  rb_raise(rb_eRangeError, "%s: arg %d, %s, out of range: %s\n", \
-	   Caller, (int)ArgN, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Descr)
+  rb_raise(rb_eRangeError, "%s: argument %d, %s, is out of range (%s)\n", \
+       Caller, (int)ArgN, XEN_AS_STRING(Arg), Descr) 
 
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
-  rb_raise(rb_eTypeError, "%s: wrong type arg %d, %s, wanted %s\n", \
-	   Caller, (int)ArgN, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Descr)
+  rb_raise(rb_eTypeError, "%s: argument %d, %s, should be %s\n", \
+       Caller, (int)ArgN, XEN_AS_STRING(Arg), Descr) 
 
-#endif
+#endif 
+
+#define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
+  if (!(Assertion)) \
+    XEN_WRONG_TYPE_ARG_ERROR(Caller, Position, Arg, Correct_Type) 
 
 #define XEN_THROW(Type, Info)           xen_rb_raise(Type, Info)
 

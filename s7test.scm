@@ -3778,6 +3778,11 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let* ((s1 "0123456789") (s2 (substring s1 1 3))) (string-set! s2 1 #\x) s1) "0123456789")
 (test (substring (substring "" 0 0) 0 0) "")
 (test (substring (format #f "") 0 0) "")
+(test (string=? (substring (substring (substring "01234567" 1) 1) 1) "34567") #t)
+(let ()
+  (define (hi) (string=? (substring (substring (substring "01234567" 1) 1) 1) "34567"))
+  (define (ho) (hi)) (ho)
+  (test (ho) #t))
 
 (test (substring "012" 3) "")
 (test (substring "012" 10) 'error)
@@ -13736,6 +13741,7 @@ this prints:
 (test (for-each 1 "hi" '()) 'error)
 (test (for-each 0 #() '()) 'error)
 (test (for-each #\a #(1 2) '(3 4) "") 'error)
+(test (for-each '2 ()) 'error)
 
 (let ()
   (define (hi)
@@ -70422,7 +70428,7 @@ etc
 			  (apply function (make-list (max 1 (car (arity function))) procs)))
 			(lambda args (apply format #f (cadr args))))))
 	     (if (not (eq? val p))
-		 (format #t ";(~A~A~A (~D)procs) -> ~A~%" bold-text p unbold-text (max 1 (car (arity function))) val))))))
+		 (format #t ";test-all-methods: (~A~A~A (~D)procs) -> ~A~%" bold-text p unbold-text (max 1 (car (arity function))) val))))))
      (list 
       '* '+ '- '/ '< '= '> 'call-with-output-file 'round 'keyword? '<= '>= 'cdaaar 'cdaadr 'cdadar 'cdaddr 'cddaar 'cddadr 'cdddar 'cddddr 'make-rectangular 'truncate 'string->number 'remainder 'char-downcase 'char->integer 'zero? 'char<? 'char=? 'char>? 'char-ci<? 'char-ci=? 'char-ci>? 'close-input-port 'infinite? 'magnitude 'open-input-file 'string->list 'write-char 'abs 'car 'procedure? 'cdr 'ash 'cos 'gcd 'list->vector 'exp 'symbol->keyword 'lcm 'max 'write-byte 'inexact? 'min 'log 'tan 'sin 'list-ref 'string 'integer-decode-float 'list->string 'symbol 'vector->list 'imag-part 'vector-length 'char-ready? 'random-state->list 'with-output-to-file 'char-alphabetic? 'char-numeric? 'integer-length 'peek-char 'keyword->symbol 'vector? 'ceiling 'real-part 'gensym 'make-hash-table 'negative? 'char<=? 'char>=? 'char-ci<=? 'char-ci>=? 'string-append 'port-line-number 'numerator 'make-hash-table-iterator 'string->symbol 'make-random-state 'string-ci<? 'string-ci=? 'string-ci>? 'make-keyword 'integer->char 'exact? 'string-copy 'string<? 'string=? 'string>? 'vector-ref 'acos 'caar 'with-input-from-file 'cadr 'cdar 'cddr 'string-set! 'rationalize 'atan 'asin 'assq 'assv 'cosh 'expt 'continuation? 'nan? 'memq 'memv 'odd? 'load 'hash-table-iterator? 'read 'tanh 'sinh 'number? 'sqrt 'set-car! 'set-cdr! 'pair-line-number 'string-ci<=? 'char-upcase 'string-ci>=? 'macro? 'list-set! 'list-tail 'reverse! 'symbol->value 'complex? 'symbol->string 'make-vector 'positive? 'string? 'make-polar 'member 'string-fill! 'number->string 'make-list 'reverse 'rational? 'open-input-string 'hash-table-set! 'hash-table-ref 'logand 'hash-table-size 'logior 'lognot 'logbit? 'integer? 'make-string 'exact->inexact 'logxor 'string<=? 'string>=? 'vector-set! 'modulo 'vector-fill! 'acosh 'call-with-output-string 'get-output-string 'caaar 'caadr 'cadar 'caddr 'cdaar 'cdadr 'cddar 'boolean? 'cdddr 'char-upper-case? 'angle 'char? 'inexact->exact 'string-length 'atanh 'symbol? 'denominator 'asinh 'with-output-to-string 'assoc 'input-port? 'call-with-input-file 'fill! 'port-closed? 'newline 'provided? 'char-whitespace? 'random 'floor 'read-char 'vector-dimensions 'even? 'defined? 'read-byte 'output-port? 'substring 'string-ref 'provide 'read-line 'eval-string 'port-filename 'list? 'open-output-file 'quotient 'pair? 'call-with-input-string 'random-state? 'with-input-from-string 'real? 'char-lower-case? 'null? 'eof-object? 'hash-table? 'caaaar 'caaadr 'caadar 'caaddr 'cadaar 'cadadr 'caddar 'cadddr 'close-output-port)))
   )

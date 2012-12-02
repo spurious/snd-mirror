@@ -2303,7 +2303,7 @@ static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
 static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
 static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, A_NORMAL_REAL, A_RATIONAL, A_CLOSURE;
 static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE;
-static s7_pointer REST_PAR_ERROR, BAD_BINDING;
+static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 
 
 #define WITH_COUNTS 0
@@ -17822,6 +17822,39 @@ s7_pointer s7_make_permanent_string(const char *str)
 }
 
 
+static s7_pointer make_temporary_string(s7_scheme *sc, const char *str, int len) 
+{
+  static s7_pointer tmp_str = NULL;
+  static int tmp_str_size = -1;
+  static char *tmp_str_chars = NULL;
+
+  if (!tmp_str)
+    {
+      tmp_str = alloc_pointer();
+      heap_location(tmp_str) = NOT_IN_HEAP;
+      set_type(tmp_str, T_STRING | T_SAFE_PROCEDURE);
+      string_hash(tmp_str) = 0;
+      string_needs_free(tmp_str) = false;
+    }
+  if (len >= tmp_str_size)
+    {
+      if (len == 0)
+	tmp_str_size = 8;
+      else tmp_str_size = 2 * len;
+      if (!tmp_str_chars)
+	tmp_str_chars = (char *)malloc(tmp_str_size * sizeof(char));
+      else tmp_str_chars = (char *)realloc(tmp_str_chars, tmp_str_size * sizeof(char));
+      string_value(tmp_str) = tmp_str_chars;
+    }
+
+  string_length(tmp_str) = len;
+  if (len > 0)
+    memmove((void *)tmp_str_chars, (void *)str, len); /* not memcpy because str might be a temp string (i.e. tmp_str_chars -> itself) */
+  tmp_str_chars[len] = 0;
+  return(tmp_str);
+}
+
+
 bool s7_is_string(s7_pointer p)
 {
   return((type(p) == T_STRING)); 
@@ -18028,13 +18061,49 @@ static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer substring_bounds(s7_scheme *sc, s7_pointer str, s7_pointer args, s7_Int *new_i0, s7_Int *new_i1)
+{
+  s7_pointer start, end;
+  s7_Int i0, i1;
+  
+  start = car(args);
+  if (!s7_is_integer(start))
+    return(wrong_type_argument(sc, sc->SUBSTRING, small_int(2), start, T_INTEGER));
+
+  i0 = s7_integer(start);
+  if (i0 < 0)
+    return(wrong_type_argument_with_type(sc, sc->SUBSTRING, small_int(2), start, make_protected_string(sc, "a non-negative integer")));
+  if (i0 > string_length(str))            /* (substring "012" 10) */
+    return(out_of_range(sc, sc->SUBSTRING, small_int(2), start, "start <= string length"));
+  /* this is how guile handles it: (substring "012" 3) -> "" */
+
+  if (is_not_null(cdr(args)))
+    {
+      end = cadr(args);
+      if (!s7_is_integer(end))
+	return(wrong_type_argument(sc, sc->SUBSTRING, small_int(3), end, T_INTEGER));
+
+      i1 = s7_integer(end);
+      if (i1 < i0)
+	return(wrong_type_argument_with_type(sc, sc->SUBSTRING, small_int(3), end, make_protected_string(sc, "an integer >= start")));
+      if (i1 > string_length(str))
+	return(out_of_range(sc, sc->SUBSTRING, small_int(3), end, "end <= string length"));
+    }
+  else i1 = string_length(str);
+
+  (*new_i0) = i0;
+  (*new_i1) = i1;
+  return(str);
+}
+
+
 static s7_pointer g_substring(s7_scheme *sc, s7_pointer args)
 {
   #define H_substring "(substring str start (end (length str))) returns the portion of the string str between start and \
 end: (substring \"01234\" 1 2) -> \"1\""
   
-  s7_pointer x, start, end, str;
-  s7_Int i0, i1;
+  s7_pointer x, str;
+  s7_Int i0 = 0, i1 = 0;
   int len;
   char *s;
   
@@ -18045,35 +18114,32 @@ end: (substring \"01234\" 1 2) -> \"1\""
       return(wrong_type_argument(sc, sc->SUBSTRING, small_int(1), str, T_STRING));
     }
 
-  start = cadr(args);
-  if (!s7_is_integer(start))
-    return(wrong_type_argument(sc, sc->SUBSTRING, small_int(2), start, T_INTEGER));
-  i0 = s7_integer(start);
-  if (i0 < 0)
-    return(wrong_type_argument_with_type(sc, sc->SUBSTRING, small_int(2), start, make_protected_string(sc, "a non-negative integer")));
-  if (i0 > string_length(str))            /* (substring "012" 10) */
-    return(out_of_range(sc, sc->SUBSTRING, small_int(2), start, "start <= string length"));
-  /* this is how guile handles it: (substring "012" 3) -> "" */
-
-  if (is_not_null(cddr(args)))
-    {
-      end = caddr(args);
-      if (!s7_is_integer(end))
-	return(wrong_type_argument(sc, sc->SUBSTRING, small_int(3), end, T_INTEGER));
-      i1 = s7_integer(end);
-      if (i1 < i0)
-	return(wrong_type_argument_with_type(sc, sc->SUBSTRING, small_int(3), end, make_protected_string(sc, "an integer >= start")));
-      if (i1 > string_length(str))
-	return(out_of_range(sc, sc->SUBSTRING, small_int(3), end, "end <= string length"));
-    }
-  else i1 = string_length(str);
-  
+  substring_bounds(sc, str, cdr(args), &i0, &i1);
   s = string_value(str);
-  len = i1 - i0;
+  len = (int)(i1 - i0);
   x = s7_make_string_with_length(sc, (char *)(s + i0), len);
   string_value(x)[len] = 0;
   return(x);
 }
+
+
+static s7_pointer substring_to_temp;
+static s7_pointer g_substring_to_temp(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer str;
+  s7_Int i0 = 0, i1 = 0;
+  
+  str = car(args);
+  if (!s7_is_string(str))
+    {
+      CHECK_METHOD(sc, str, sc->SUBSTRING, args);
+      return(wrong_type_argument(sc, sc->SUBSTRING, small_int(1), str, T_STRING));
+    }
+
+  substring_bounds(sc, str, cdr(args), &i0, &i1);
+  return(make_temporary_string(sc, (const char *)(string_value(str) + i0), (int)(i1 - i0)));
+}
+
 
 
 /* (set! (substring...) ...)? -- might require allocation
@@ -24457,7 +24523,7 @@ static void init_car_a_list(void)
   AN_OUTPUT_PORT = s7_make_permanent_string("an output port");
   A_THUNK = s7_make_permanent_string("a thunk");
   SOMETHING_APPLICABLE = s7_make_permanent_string("a procedure or something applicable");
-  REST_PAR_ERROR = s7_make_permanent_string("lambda* :rest parameter '~A is a constant");
+  CONSTANT_ARG_ERROR = s7_make_permanent_string("lambda* parameter '~A is a constant");
   BAD_BINDING = s7_make_permanent_string("~A: can't bind some variable to ~S");
 }
 
@@ -35910,20 +35976,33 @@ static s7_pointer char_ci_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
 }
 
 
+static void check_for_substring_temp(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((is_pair(cadr(expr))) &&
+      (is_symbol(caadr(expr))) &&
+      (c_call(cadr(expr)) == g_substring))
+    set_c_function(cadr(expr), substring_to_temp);
+  else
+    {
+      if ((args > 1) &&
+	  (is_pair(caddr(expr))) &&
+	  (is_symbol(caaddr(expr))) &&
+	  (c_call(caddr(expr)) == g_substring))
+	set_c_function(caddr(expr), substring_to_temp);
+    }
+}
+
+
 static s7_pointer string_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  /* TODO: extend substring_to_temp to other cases (like symbol_to_string_uncopied below?)
+   *     make the next block a function, add everywhere, but that seems brute-force
+   */
+  check_for_substring_temp(sc, f, args, expr);
   if (args == 2)
     {
       if (s7_is_string(caddr(expr)))
 	return(string_equal_s_ic); 
-      /*
-      fprintf(stderr, "streq: %s %d %d %d %d %d\n", DISPLAY(expr),
-	      (is_symbol(caddr(expr))),
-	      (is_pair(cadr(expr))),
-	      (is_optimized(cadr(expr))),
-	      (optimize_data(cadr(expr)) == HOP_SAFE_C_SS),
-	      (c_call(cadr(expr)) == g_vector_ref_2));
-      */
       return(string_equal_2);
     }
   return(f);
@@ -35931,6 +36010,7 @@ static s7_pointer string_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 
 static s7_pointer string_less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  check_for_substring_temp(sc, f, args, expr);
   if (args == 2)
     {
       if (s7_is_string(caddr(expr)))
@@ -35953,6 +36033,7 @@ static s7_pointer string_less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
 
 static s7_pointer string_greater_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  check_for_substring_temp(sc, f, args, expr);
   if (args == 2)
     {
       if (s7_is_string(caddr(expr)))
@@ -35964,6 +36045,7 @@ static s7_pointer string_greater_chooser(s7_scheme *sc, s7_pointer f, int args, 
 
 static s7_pointer string_geq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  check_for_substring_temp(sc, f, args, expr);
   if (args == 2)
     {
       if (s7_is_string(caddr(expr)))
@@ -35975,6 +36057,7 @@ static s7_pointer string_geq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 
 static s7_pointer string_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  check_for_substring_temp(sc, f, args, expr);
   if (args == 2)
     {
       if (s7_is_string(caddr(expr)))
@@ -35987,6 +36070,7 @@ static s7_pointer string_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 
 static s7_pointer string_ci_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  check_for_substring_temp(sc, f, args, expr);
   if (args == 2)
     {
       if (s7_is_string(caddr(expr)))
@@ -35998,6 +36082,7 @@ static s7_pointer string_ci_equal_chooser(s7_scheme *sc, s7_pointer f, int args,
 
 static s7_pointer string_ci_less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  check_for_substring_temp(sc, f, args, expr);
   if (args == 2)
     {
       if (s7_is_string(caddr(expr)))
@@ -36009,6 +36094,7 @@ static s7_pointer string_ci_less_chooser(s7_scheme *sc, s7_pointer f, int args, 
 
 static s7_pointer string_ci_greater_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  check_for_substring_temp(sc, f, args, expr);
   if (args == 2)
     {
       if (s7_is_string(caddr(expr)))
@@ -36020,6 +36106,7 @@ static s7_pointer string_ci_greater_chooser(s7_scheme *sc, s7_pointer f, int arg
 
 static s7_pointer string_ci_geq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  check_for_substring_temp(sc, f, args, expr);
   if (args == 2)
     {
       if (s7_is_string(caddr(expr)))
@@ -36031,6 +36118,7 @@ static s7_pointer string_ci_geq_chooser(s7_scheme *sc, s7_pointer f, int args, s
 
 static s7_pointer string_ci_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  check_for_substring_temp(sc, f, args, expr);
   if (args == 2)
     {
       if (s7_is_string(caddr(expr)))
@@ -36043,6 +36131,7 @@ static s7_pointer string_ci_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s
 
 static s7_pointer string_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  check_for_substring_temp(sc, f, args, expr);
   if ((is_pair(cadr(expr))) &&
       (is_optimized(cadr(expr))) &&
       (c_call(cadr(expr)) == g_symbol_to_string))
@@ -36052,6 +36141,7 @@ static s7_pointer string_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 
 static s7_pointer string_append_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  check_for_substring_temp(sc, f, args, expr);
   if ((is_pair(cadr(expr))) &&
       (is_optimized(cadr(expr))) &&
       (c_call(cadr(expr)) == g_symbol_to_string))
@@ -36396,6 +36486,11 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(string_equal_s_ic, f);
   string_equal_2 = s7_make_function(sc, "string=?", g_string_equal_2, 2, 0, false, "string=? optimization");
   s7_function_set_class(string_equal_2, f);
+
+
+  /* substring */
+  substring_to_temp = s7_make_function(sc, "substring", g_substring_to_temp, 2, 1, false, "substring optimization");
+  s7_function_set_class(substring_to_temp, slot_value(global_slot(sc->SUBSTRING)));
 
 
   /* string>? */
@@ -39577,7 +39672,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int *ar
       if (is_pair(car(w)))
 	{
 	  if (s7_is_constant(caar(w)))                            /* (lambda* ((:a 1)) ...) */
-	    return(eval_error(sc, "lambda* parameter '~A is a constant", caar(w)));
+	    return(eval_error_with_string(sc, CONSTANT_ARG_ERROR, caar(w)));
 	  if (symbol_is_in_arg_list(caar(w), cdr(w)))             /* (lambda* ((a 1) a) ...) */
 	    return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", caar(w)));
 	  
@@ -39617,7 +39712,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int *ar
 			    eval_error(sc, ":allow-other-keys should be the last parameter: ~A", args);
 			}
 		      else                                        /* (lambda* (pi) ...) */
-			return(eval_error(sc, "lambda* parameter '~A is a constant", car(w)));
+			return(eval_error_with_string(sc, CONSTANT_ARG_ERROR, car(w)));
 		    }
 		}
 	      if (symbol_is_in_arg_list(car(w), cdr(w)))          /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
@@ -39648,7 +39743,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int *ar
   if (is_not_null(w))
     {
       if (s7_is_constant(w))                             /* (lambda* (a . 0.0) a) or (lambda* (a . :b) a) */
-	return(eval_error_with_string(sc, REST_PAR_ERROR, w)); /* "lambda* :rest parameter '~A is a constant" */
+	return(eval_error(sc, "lambda* :rest parameter '~A is a constant", w));
       if (is_symbol(w))
 	set_local(w);
       i = -1;
@@ -62331,14 +62426,15 @@ s7_scheme *s7_init(void)
  *   sound-data as output: ws.scm, conversions: frame.scm, play: play.scm, snd-motif|gtk.scm, enved.scm
  *   mus-sound|audio-write
  * TODO: what happened to hook documentation? hook is now an s7 constant (see xen.c xen_s7_define_hook)
- *   but make-hook above could presumably put the docstring in the lambda* body
+ *   but make-hook above could presumably put the docstring in the lambda* body -can we find it there?
+ *   or in the let for that matter -- could this always work?
  *
  * timing    12.0           13.0 13.1 13.2 13.3
  * bench    42736           8752 8051 7725 7741
  * lint                     9328 8140 7887 7877
  * index    44300 4988 3935 3291 3005 2742 2206
  * s7test         1721 1430 1358 1297 1244 1233
- * t455            265  218   89   55   31   28
+ * t455            265  218   89   55   31   16
  * t502             90   72   43   39   36   33
  * lat             229        63   52   47   42
  * calls                     276  208  176  156
