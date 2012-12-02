@@ -2864,11 +2864,11 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
 	{
 	  start = mus_optkey_to_mus_long_t(keys[0], S_play, orig_arg[0], start);
 	  if (start < 0) 
-	    XEN_OUT_OF_RANGE_ERROR(S_play, orig_arg[0], keys[0], "start ~A is negative?");
+	    XEN_OUT_OF_RANGE_ERROR(S_play, orig_arg[0], keys[0], "start is negative?");
 
 	  end = mus_optkey_to_mus_long_t(keys[1], S_play, orig_arg[1], end);
 	  if (end < -1)
-	    XEN_OUT_OF_RANGE_ERROR(S_play, orig_arg[1], keys[1], "end ~A is negative?");
+	    XEN_OUT_OF_RANGE_ERROR(S_play, orig_arg[1], keys[1], "end is negative?");
 
 	  channel = mus_optkey_to_int(keys[2], S_play, orig_arg[2], channel);
 	  channel_argpos = orig_arg[2];
@@ -2887,11 +2887,11 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
 
 	  srate = mus_optkey_to_int(keys[8], S_play, orig_arg[8], srate);
 	  if (srate <= 0) 
-	    XEN_OUT_OF_RANGE_ERROR(S_play, orig_arg[8], keys[8], "srate ~A <= 0?");
+	    XEN_OUT_OF_RANGE_ERROR(S_play, orig_arg[8], keys[8], "srate <= 0?");
 
 	  channels = mus_optkey_to_int(keys[9], S_play, orig_arg[9], channels);
 	  if (channels <= 0)
-	    XEN_OUT_OF_RANGE_ERROR(S_play, orig_arg[9], keys[9], "channels ~A <= 0?");
+	    XEN_OUT_OF_RANGE_ERROR(S_play, orig_arg[9], keys[9], "channels <= 0?");
 	}
     }
 
@@ -2988,7 +2988,7 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
 	  pos = to_c_edit_position(cp, edit_position, S_play, edpos_argpos);
 	  play_channel_1(cp, start, end, background, pos, stop_func, out_channel);
 	}
-      else XEN_OUT_OF_RANGE_ERROR(S_play, channel_argpos, channel_arg, "channel ~A does not exist?");
+      else XEN_OUT_OF_RANGE_ERROR(S_play, channel_argpos, channel_arg, "channel does not exist?");
     }
 
   return(object);
@@ -3167,11 +3167,11 @@ If a play-list is waiting, start it."
 
   chans = XEN_TO_C_INT_OR_ELSE(Chans, 1);
   if ((chans <= 0) || (chans > 256))
-    XEN_OUT_OF_RANGE_ERROR(S_start_playing, 1, Chans, "chans ~A <= 0 or > 256?");
+    XEN_OUT_OF_RANGE_ERROR(S_start_playing, 1, Chans, "chans <= 0 or > 256?");
 
   srate = XEN_TO_C_INT_OR_ELSE(Srate, 44100);
   if (srate <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_start_playing, 2, Srate, "srate ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_start_playing, 2, Srate, "srate <= 0?");
 
   back = XEN_TO_C_BOOLEAN(In_Background);
 
@@ -3315,7 +3315,7 @@ static XEN g_set_cursor_update_interval(XEN val)
 
   ctime = XEN_TO_C_DOUBLE(val);
   if ((ctime < 0.0) || (ctime > (24 * 3600)))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_cursor_update_interval, 1, val, "~A: invalid time");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_cursor_update_interval, 1, val, "invalid time");
   set_cursor_update_interval(ctime);
 
   return(C_TO_XEN_DOUBLE(cursor_update_interval(ss)));

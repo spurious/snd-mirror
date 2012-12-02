@@ -6973,7 +6973,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
 	  curlen = CURRENT_SAMPLES(cp);
 	  newlen = XEN_TO_C_LONG_LONG_OR_ELSE(on, curlen);
 	  if (newlen < 0)
-	    XEN_OUT_OF_RANGE_ERROR(S_setB S_frames, 1, on, "frames (~A) < 0?");
+	    XEN_OUT_OF_RANGE_ERROR(S_setB S_frames, 1, on, "frames < 0?");
 	  if (curlen > newlen)
 	    {
 	      if (newlen > 0)
@@ -7024,7 +7024,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
 	  cp->lin_dB = pow(10.0, cp->min_dB * 0.05); 
 	  calculate_fft(cp); 
 	}
-      else XEN_OUT_OF_RANGE_ERROR(caller, 1, on, S_min_dB " (~A) must be < 0.0");
+      else XEN_OUT_OF_RANGE_ERROR(caller, 1, on, S_min_dB " should be < 0.0");
       break;
 
     case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_ANGLE); calculate_fft(cp); break;
@@ -7241,10 +7241,10 @@ static XEN g_set_cursor_style(XEN on, XEN snd, XEN chn_n)
       int choice;
       choice = XEN_TO_C_INT(on);
       if (choice < 0)
-	XEN_OUT_OF_RANGE_ERROR(S_setB S_cursor_style, 1, on, "~A, but must be >= 0");
+	XEN_OUT_OF_RANGE_ERROR(S_setB S_cursor_style, 1, on, S_cursor_style " should be " S_cursor_cross " or " S_cursor_line ", or a procedure");
       val = (cursor_style_t)choice;
       if (val > CURSOR_LINE)
-	XEN_OUT_OF_RANGE_ERROR(S_setB S_cursor_style, 1, on, "~A, but must be " S_cursor_cross " or " S_cursor_line ", or a procedure");
+	XEN_OUT_OF_RANGE_ERROR(S_setB S_cursor_style, 1, on, S_cursor_style " should be " S_cursor_cross " or " S_cursor_line ", or a procedure");
     }
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn_n, on, CP_CURSOR_STYLE, S_setB S_cursor_style));
@@ -7296,10 +7296,10 @@ static XEN g_set_tracking_cursor_style(XEN on, XEN snd, XEN chn_n)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_tracking_cursor_style, "an integer");
   in_val = XEN_TO_C_INT(on);
   if (in_val < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_tracking_cursor_style, 1, on, "~A, but must be >= 0");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_tracking_cursor_style, 1, on, S_tracking_cursor_style " should be " S_cursor_cross " or " S_cursor_line);
   val = (cursor_style_t)in_val;
   if (val > CURSOR_LINE)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_tracking_cursor_style, 1, on, "~A, but must be " S_cursor_cross " or " S_cursor_line);
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_tracking_cursor_style, 1, on, S_tracking_cursor_style " should be " S_cursor_cross " or " S_cursor_line);
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn_n, on, CP_TRACKING_CURSOR_STYLE, S_setB S_tracking_cursor_style));
   else set_tracking_cursor_style(val);
@@ -7820,7 +7820,7 @@ static XEN g_set_min_dB(XEN val, XEN snd, XEN chn)
 	  set_min_db(db);
 	  reflect_min_db_in_transform_dialog();
 	}
-      else XEN_OUT_OF_RANGE_ERROR(S_setB S_min_dB, 1, val, S_min_dB " (~A) must be < 0.0");
+      else XEN_OUT_OF_RANGE_ERROR(S_setB S_min_dB, 1, val, S_min_dB " should be < 0.0");
       return(C_TO_XEN_DOUBLE(min_dB(ss)));
     }
 }
@@ -7843,7 +7843,7 @@ static XEN g_set_fft_window_beta(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_fft_window_beta, "a number"); 
   beta = XEN_TO_C_DOUBLE(val);
   if ((beta < 0.0) || (beta > 1.0))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_fft_window_beta, 1, val, "~A, must be between 0.0 and 1.0");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_fft_window_beta, 1, val, S_fft_window_beta " should be between 0.0 and 1.0");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_FFT_WINDOW_BETA, S_setB S_fft_window_beta));
   set_fft_window_beta(beta);
@@ -7868,7 +7868,7 @@ static XEN g_set_fft_window_alpha(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_fft_window_alpha, "a number"); 
   alpha = XEN_TO_C_DOUBLE(val);
   if ((alpha < 0.0) || (alpha > 10.0))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_fft_window_alpha, 1, val, "~A, must be between 0.0 and 10.0");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_fft_window_alpha, 1, val, S_fft_window_alpha " should be between 0.0 and 10.0");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_FFT_WINDOW_ALPHA, S_setB S_fft_window_alpha));
   set_fft_window_alpha(alpha);
@@ -7893,7 +7893,7 @@ static XEN g_set_spectrum_end(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectrum_end, "a number"); 
   cutoff = XEN_TO_C_DOUBLE(val);
   if ((cutoff < 0.0) || (cutoff > 1.0))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_spectrum_end, 1, val, "~A, must be between 0.0 and 1.0");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_spectrum_end, 1, val, S_spectrum_end " should be between 0.0 and 1.0");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_SPECTRUM_END, S_setB S_spectrum_end));
   set_spectrum_end(cutoff);
@@ -7918,7 +7918,7 @@ static XEN g_set_spectrum_start(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectrum_start, "a number"); 
   start = XEN_TO_C_DOUBLE(val);
   if ((start < 0.0) || (start > 1.0))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_spectrum_start, 1, val, "~A, must be between 0.0 and 1.0");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_spectrum_start, 1, val, S_spectrum_start " should be between 0.0 and 1.0");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_SPECTRUM_START, S_setB S_spectrum_start));
   set_spectrum_start(start);
@@ -8165,7 +8165,7 @@ static XEN g_set_wavelet_type(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_wavelet_type, "an integer"); 
   wave = XEN_TO_C_INT(val);
   if ((wave < 0) || (wave >= NUM_WAVELETS))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_wavelet_type, 1, val, "~A, unknown wavelet type");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_wavelet_type, 1, val, "unknown wavelet type");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_WAVELET_TYPE, S_setB S_wavelet_type));
   set_wavelet_type(wave);
@@ -8309,7 +8309,7 @@ static XEN g_set_time_graph_type(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_time_graph_type, "an integer");
   on = (graph_type_t)XEN_TO_C_INT(val);
   if ((on != GRAPH_ONCE) && (on != GRAPH_AS_WAVOGRAM))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_time_graph_type, 1, val, "~A, must be " S_graph_once ", or " S_graph_as_wavogram);
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_time_graph_type, 1, val, S_time_graph_type " should be " S_graph_once ", or " S_graph_as_wavogram);
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TIME_GRAPH_TYPE, S_setB S_time_graph_type));
   set_time_graph_type(on);
@@ -8377,7 +8377,7 @@ static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_LONG_LONG_P(val), val, XEN_ARG_1, S_setB S_transform_size, "an integer"); 
   len = XEN_TO_C_LONG_LONG(val);
   if (len <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_size, 1, val, "size ~A, but must be > 0");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_size, 1, val, "size must be > 0");
   if (!(POWER_OF_2_P(len)))
     len = snd_mus_long_t_pow2((int)(log(len + 1) / log(2.0))); /* actually rounds down, despite appearances */
   if (len <= 0) return(XEN_FALSE);
@@ -8406,7 +8406,7 @@ static XEN g_set_transform_graph_type(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_transform_graph_type, "an integer"); 
   style = (graph_type_t)XEN_TO_C_INT(val);
   if (style > GRAPH_AS_SPECTROGRAM)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_graph_type, 1, val, "~A, but must be " S_graph_once ", " S_graph_as_sonogram ", or " S_graph_as_spectrogram);
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_graph_type, 1, val, S_transform_graph_type " should be " S_graph_once ", " S_graph_as_sonogram ", or " S_graph_as_spectrogram);
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_GRAPH_TYPE, S_setB S_transform_graph_type));
   set_transform_graph_type(style);
@@ -8440,7 +8440,7 @@ static XEN g_set_fft_window(XEN val, XEN snd, XEN chn)
 
   in_win = XEN_TO_C_INT(val);
   if (!(mus_fft_window_p(in_win)))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_fft_window, 1, val, "~A: unknown fft data window");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_fft_window, 1, val, "unknown fft data window");
 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_FFT_WINDOW, S_setB S_fft_window));
@@ -8470,7 +8470,7 @@ static XEN g_set_transform_type(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_TRANSFORM_P(val), val, XEN_ARG_1, S_setB S_transform_type, "a transform object"); 
   type = XEN_TRANSFORM_TO_C_INT(val);
   if (!(transform_p(type)))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_type, 1, val, "~A: unknown transform");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_type, 1, val, "unknown transform");
 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_TYPE, S_setB S_transform_type));
@@ -8502,7 +8502,7 @@ static XEN g_set_transform_normalization(XEN val, XEN snd, XEN chn)
   norm = (fft_normalize_t)XEN_TO_C_INT(val);
   if (norm >= NUM_TRANSFORM_NORMALIZATIONS)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_normalization, 1, val, 
-			   "~A, but must be " S_dont_normalize ", " S_normalize_by_channel ", " S_normalize_by_sound ", or " S_normalize_globally);
+			   S_transform_normalization " should be " S_dont_normalize ", " S_normalize_by_channel ", " S_normalize_by_sound ", or " S_normalize_globally);
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_NORMALIZATION, S_setB S_transform_normalization));
   set_transform_normalization(norm);
@@ -8576,7 +8576,7 @@ static XEN g_set_graph_style(XEN style, XEN snd, XEN chn)
 
   val = XEN_TO_C_INT(style);
   if (!(graph_style_p(val)))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_style, 1, style, "~A: unknown graph-style");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_style, 1, style, "unknown graph-style");
 
   if (XEN_BOUND_P(snd))
     {
@@ -8613,7 +8613,7 @@ static XEN g_set_time_graph_style(XEN style, XEN snd, XEN chn)
 
   val = XEN_TO_C_INT(style);
   if (!(graph_style_p(val)))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_time_graph_style, 1, style, "~A: unknown " S_time_graph_style);
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_time_graph_style, 1, style, "unknown " S_time_graph_style);
 
   return(channel_set(snd, chn, style, CP_TIME_GRAPH_STYLE, S_setB S_time_graph_style));
 }
@@ -8639,7 +8639,7 @@ static XEN g_set_lisp_graph_style(XEN style, XEN snd, XEN chn)
 
   val = XEN_TO_C_INT(style);
   if (!(graph_style_p(val)))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_lisp_graph_style, 1, style, "~A: unknown " S_lisp_graph_style);
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_lisp_graph_style, 1, style, "unknown " S_lisp_graph_style);
 
   return(channel_set(snd, chn, style, CP_LISP_GRAPH_STYLE, S_setB S_lisp_graph_style));
 }
@@ -8666,7 +8666,7 @@ static XEN g_set_transform_graph_style(XEN style, XEN snd, XEN chn)
   val = XEN_TO_C_INT(style);
 
   if (!(graph_style_p(val)))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_graph_style, 1, style, "~A: unknown " S_transform_graph_style);
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_graph_style, 1, style, "unknown " S_transform_graph_style);
 
   return(channel_set(snd, chn, style, CP_TRANSFORM_GRAPH_STYLE, S_setB S_transform_graph_style));
 }
@@ -8751,7 +8751,7 @@ static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)
 
   val = XEN_TO_C_INT(style);
   if (!(x_axis_style_p(val)))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_x_axis_style, 1, style, "~A is not an x-axis-style");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_x_axis_style, 1, style, "unknown " S_x_axis_style);
 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, style, CP_X_AXIS_STYLE, S_setB S_x_axis_style));
@@ -8806,7 +8806,7 @@ static XEN g_set_beats_per_measure(XEN beats, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(beats), beats, XEN_ARG_1, S_setB S_beats_per_measure, "an int"); 
   val = XEN_TO_C_INT(beats);
   if ((val <= 0) || (val > 1000))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_beats_per_measure, 1, beats, "must be between 1 and 1000");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_beats_per_measure, 1, beats, S_beats_per_measure " should be between 1 and 1000");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, beats, CP_BEATS_PER_MEASURE, S_setB S_beats_per_measure));
   set_beats_per_measure(val);
@@ -8836,7 +8836,7 @@ static XEN g_set_show_axes(XEN on, XEN snd, XEN chn)
 
   val = XEN_TO_C_INT(on);
   if (!(show_axes_p(val)))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "~A must be a show-axes choice");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "unknown " S_show_axes " choice");
 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_SHOW_AXES, S_setB S_show_axes));
@@ -9512,11 +9512,12 @@ be a function of 6 args (snd chan zx x0 x1 range) that returns the new window le
       zoom_focus_t choice;
       in_choice = XEN_TO_C_INT(focus);
       if (in_choice < 0)
-	XEN_OUT_OF_RANGE_ERROR(S_setB S_zoom_focus_style, 1, focus, "~A, but must be >= 0");
+	XEN_OUT_OF_RANGE_ERROR(S_setB S_zoom_focus_style, 1, focus,
+			       S_zoom_focus_style " should be " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle ", or " S_zoom_focus_active);
       choice = (zoom_focus_t)in_choice;
       if (choice > ZOOM_FOCUS_MIDDLE)
 	XEN_OUT_OF_RANGE_ERROR(S_setB S_zoom_focus_style, 1, focus, 
-			       "~A, but must be " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle ", or " S_zoom_focus_active);
+			       S_zoom_focus_style " should be " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle ", or " S_zoom_focus_active);
       set_zoom_focus_style(choice);
       return(C_TO_XEN_INT((int)zoom_focus_style(ss)));
     }

@@ -1905,10 +1905,9 @@ static XEN g_set_log_freq_start(XEN val)
 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_log_freq_start, "a number");
   base = XEN_TO_C_DOUBLE(val);
-  if (base < 0.0)
-    XEN_OUT_OF_RANGE_ERROR(S_log_freq_start, XEN_ONLY_ARG, val, "a number >= 0.0");
-  if (base > 100000.0)
-    XEN_OUT_OF_RANGE_ERROR(S_log_freq_start, XEN_ONLY_ARG, val, "a number < srate/2");
+  if ((base < 0.0) ||
+      (base > 100000.0))
+    XEN_OUT_OF_RANGE_ERROR(S_log_freq_start, XEN_ONLY_ARG, val, "base should be between 0 and srate/2");
 
   set_log_freq_start(base);
   reflect_log_freq_start_in_transform_dialog();
@@ -2259,7 +2258,7 @@ display.  'type' is a transform object such as " S_fourier_transform "; 'data' i
 
   trf = XEN_TRANSFORM_TO_C_INT(type);
   if ((trf < 0) || (trf > HAAR))
-    XEN_OUT_OF_RANGE_ERROR("snd-transform", 1, type, "~A: invalid transform choice");
+    XEN_OUT_OF_RANGE_ERROR("snd-transform", 1, type, "invalid transform choice");
 
   v = XEN_TO_VCT(data);
 

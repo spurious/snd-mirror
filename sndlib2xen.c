@@ -782,11 +782,11 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 					 chns, df, ht, com);
 	      if (str) free(str);
 	    }
-	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 3, chans, "chans ~A <= 0?");
+	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 3, chans, "chans <= 0?");
 	}
-      else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 5, header_type, "~A: invalid header type");
+      else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 5, header_type, "invalid header type");
     }
-  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 4, data_format, "~A: invalid data format");
+  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 4, data_format, "invalid data format");
   return(C_TO_XEN_INT(fd));
 }
 
@@ -861,9 +861,9 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 2, chans, "chans <= 0?");
 	}
-      else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 4, header_type, "~A: invalid header type");
+      else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 4, header_type, "invalid header type");
     }
-  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 3, data_format, "~A: invalid data format");
+  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 3, data_format, "invalid data format");
   return(C_TO_XEN_INT(fd));
 }
 
@@ -888,7 +888,7 @@ by " S_mus_sound_open_input "."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ONLY_ARG, S_mus_sound_close_input, "an integer");
   nfd = XEN_TO_C_INT(fd);
   if ((nfd < 0) || (nfd == STDIN_FILENO) || (nfd == STDOUT_FILENO) || (nfd == STDERR_FILENO))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_sound_close_input, 1, fd, "~A: invalid file number");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_sound_close_input, 1, fd, "invalid file number");
   return(C_TO_XEN_INT(mus_sound_close_input(XEN_TO_C_INT(fd))));
 }
 
@@ -903,7 +903,7 @@ that was opened by " S_mus_sound_open_output " after updating its header (if any
   XEN_ASSERT_TYPE(XEN_NUMBER_P(bytes), bytes, XEN_ARG_2, S_mus_sound_close_output, "a number");
   nfd = XEN_TO_C_INT(fd);
   if ((nfd < 0) || (nfd == STDIN_FILENO) || (nfd == STDOUT_FILENO) || (nfd == STDERR_FILENO))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_sound_close_output, 1, fd, "~A: invalid file number");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_sound_close_output, 1, fd, "invalid file number");
   return(C_TO_XEN_INT(mus_sound_close_output(XEN_TO_C_INT(fd),
 					     XEN_TO_C_LONG_LONG_OR_ELSE(bytes, 0))));
 }
@@ -1071,13 +1071,13 @@ return the audio line number:\n  " audio_open_example
   isize = XEN_TO_C_INT_OR_ELSE(size, 0);
 
   if (!(mus_data_format_p(ifmt)))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 4, format, "~A: invalid data format");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 4, format, "invalid data format");
   if (isize < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 5, size, "size ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 5, size, "size < 0?");
   if (israte <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 2, srate, "srate ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 2, srate, "srate <= 0?");
   if ((ichans <= 0) || (ichans > 256))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 3, chans, "chans ~A <= 0 or > 256?");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 3, chans, "chans <= 0 or > 256?");
 
   line = mus_audio_open_output(idev, israte, ichans, ifmt, isize);
   audio_io_set_write_format(line, ifmt);
@@ -1105,13 +1105,13 @@ open the audio device ready for input with the indicated attributes; return the 
   isize = XEN_TO_C_INT_OR_ELSE(size, 0);
 
   if (!(mus_data_format_p(ifmt)))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 4, format, "~A: invalid data format");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 4, format, "invalid data format");
   if (isize < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 5, size, "size ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 5, size, "size < 0?");
   if (israte <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 2, srate, "srate ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 2, srate, "srate <= 0?");
   if (ichans <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 3, chans, "chans ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 3, chans, "chans <= 0?");
 
   line = mus_audio_open_input(idev, israte, ichans, ifmt, isize);
   audio_io_set_read_format(line, ifmt);
@@ -1126,7 +1126,7 @@ static XEN g_mus_audio_close(XEN line)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line), line, XEN_ONLY_ARG, S_mus_audio_close, "an integer");
   res = (int)XEN_TO_C_INT(line);
   if (res < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_close, 1, line, "line ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_close, 1, line, "line < 0?");
   res = mus_audio_close(res);
   return(C_TO_XEN_INT(res));
 }
@@ -1153,7 +1153,7 @@ to the audio line from sound-data sdata."
   sd = XEN_TO_SOUND_DATA(sdata);
   frms = XEN_TO_C_LONG_LONG(frames);
   if (frms > sd->length)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_write, 3, frames, "frames ~A > sound-data buffer length");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_write, 3, frames, "frames > sound-data buffer length");
   if (XEN_BOUND_P(start))
     beg = XEN_TO_C_LONG_LONG(start);
 
@@ -1347,7 +1347,7 @@ srate and channels.  'len' samples are written."
   v = XEN_TO_VCT(data);
   samps = XEN_TO_C_LONG_LONG(len);
   if (samps <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_array_to_file, 3, len, "samples ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_array_to_file, 3, len, "samples <= 0?");
   if (samps > v->length)
     samps = v->length;
 
@@ -1388,7 +1388,7 @@ at frame 'start' and reading 'samples' samples altogether."
 
   samps = XEN_TO_C_LONG_LONG(samples);
   if (samps <= 0) 
-    XEN_OUT_OF_RANGE_ERROR(S_file_to_array, 4, samples, "samples ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_file_to_array, 4, samples, "samples <= 0?");
   if (samps > v->length)
     samps = v->length;
 
@@ -1645,16 +1645,16 @@ static XEN g_make_sound_data(XEN chans, XEN frames)
 
   chns = XEN_TO_C_INT(chans);
   if (chns <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 1, chans, "chans ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 1, chans, "chans <= 0?");
   if (chns > (1 << 26))
-    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 1, chans, "chans arg ~A too large");
+    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 1, chans, "chans arg too large");
 
   frms = XEN_TO_C_LONG_LONG(frames);
   if (frms <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames <= 0?");
   if ((frms > mus_max_malloc()) ||
       (((mus_long_t)(frms * sizeof(mus_float_t))) > mus_max_malloc()))
-    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames arg ~A too large (see mus-max-malloc)");
+    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames arg too large (see mus-max-malloc)");
 
   return(make_sound_data(chns, frms));
 			 
@@ -1676,7 +1676,7 @@ static XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
 
   chn = XEN_TO_C_INT(chan);
   if (chn < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 2, chan, "~A: invalid channel");
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 2, chan, "invalid channel");
   if (chn >= sd->chans)
     XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_ref ": chan: ~A >= sound-data chans, ~A"),
@@ -1685,7 +1685,7 @@ static XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
 
   loc = XEN_TO_C_LONG_LONG(frame_num);
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 3, frame_num, "~A: invalid frame");
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 3, frame_num, "invalid frame");
   if (loc >= sd->length)
     XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_ref ": frame: ~A >= sound-data length, ~A"),
@@ -1775,7 +1775,7 @@ static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
 
   chn = XEN_TO_C_INT(chan);
   if (chn < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 2, chan, "~A: invalid channel");
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 2, chan, "invalid channel");
   if (chn >= sd->chans)
     XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_setB ": chan: ~A >= sound-data chans, ~A"),
@@ -1784,7 +1784,7 @@ static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
 
   loc = XEN_TO_C_LONG_LONG(frame_num);
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 3, frame_num, "~A: invalid frame");
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 3, frame_num, "invalid frame");
   if (loc >= sd->length)
     XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_setB ": frame: ~A >= sound-data length, ~A"),
@@ -1814,7 +1814,7 @@ static XEN sound_data_apply(s7_scheme *sc, XEN obj, XEN args)
   chn = s7_integer(p);
 
   if (chn < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 2, p, "~A: invalid channel");
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 2, p, "invalid channel");
   if (chn >= sd->chans)
     XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_ref ": chan: ~A >= sound-data chans, ~A"),
@@ -1826,7 +1826,7 @@ static XEN sound_data_apply(s7_scheme *sc, XEN obj, XEN args)
   loc = s7_integer(p);
 
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 3, p, "~A: invalid frame");
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 3, p, "invalid frame");
   if (loc >= sd->length)
     XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_ref ": frame: ~A >= sound-data length, ~A"),
@@ -1852,7 +1852,7 @@ static XEN s7_sound_data_set(s7_scheme *sc, XEN obj, XEN args)
   chn = s7_integer(p);
 
   if (chn < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 2, p, "~A: invalid channel");
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 2, p, "invalid channel");
   if (chn >= sd->chans)
     XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_setB ": chan: ~A >= sound-data chans, ~A"),
@@ -1863,7 +1863,7 @@ static XEN s7_sound_data_set(s7_scheme *sc, XEN obj, XEN args)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(p), p, XEN_ARG_3, S_sound_data_setB, "an integer");
   loc = s7_integer(p);
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 3, p, "~A: invalid frame");
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 3, p, "invalid frame");
   if (loc >= sd->length)
     XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_setB ": frame: ~A >= sound-data length, ~A"),
@@ -2154,7 +2154,7 @@ static XEN g_sound_data_to_vct(XEN sdobj, XEN chan, XEN vobj)
   sd = XEN_TO_SOUND_DATA(sdobj);
   chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
   if (chn < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_to_vct, 2, chan, "~A: invalid channel");
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_to_vct, 2, chan, "invalid channel");
   if (chn >= sd->chans)
     XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_to_vct ": chan: ~A >= sound-data chans, ~A"),
@@ -2191,11 +2191,11 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
   v = XEN_TO_VCT(vobj);
   chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
   if (chn < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_to_sound_data, 3, chan, "~A: invalid channel");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_to_sound_data, 3, chan, "invalid channel");
   if (!(SOUND_DATA_P(sdobj)))
     {
       if (chn > 0)
-	XEN_OUT_OF_RANGE_ERROR(S_vct_to_sound_data, 3, chan, "~A: invalid channel");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_to_sound_data, 3, chan, "invalid channel");
       obj = make_sound_data(1, v->length);
       sd = XEN_TO_SOUND_DATA(obj);
     }

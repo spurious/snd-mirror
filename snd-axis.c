@@ -1863,7 +1863,7 @@ static XEN g_set_x_bounds(XEN bounds, XEN snd, XEN chn, XEN ax)
       x0 = XEN_TO_C_DOUBLE(XEN_CAR(bounds));
       x1 = XEN_TO_C_DOUBLE(XEN_CADR(bounds));
       if (x1 < x0)
-	XEN_OUT_OF_RANGE_ERROR(S_setB S_x_bounds, 1, bounds, "~A: x1 < x0?");
+	XEN_OUT_OF_RANGE_ERROR(S_setB S_x_bounds, 1, bounds, "x1 < x0?");
     }
 
   if (ap == cp->axis)

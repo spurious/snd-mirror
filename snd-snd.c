@@ -2774,7 +2774,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
 	{
 	  ival = XEN_TO_C_INT_OR_ELSE(val, 44100);
 	  if ((ival <= 0) || (ival > 100000000))
-	    XEN_OUT_OF_RANGE_ERROR(S_setB S_srate, 1, val, "~A: impossible srate");
+	    XEN_OUT_OF_RANGE_ERROR(S_setB S_srate, 1, val, "impossible srate");
 	  mus_sound_set_srate(sp->filename, ival);
 	  sp->hdr->srate = ival;
 	  /* if there are pending edits, we certainly don't want to flush them in this case! */
@@ -2795,7 +2795,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
 	{
 	  ival = XEN_TO_C_INT_OR_ELSE(val, 1);
 	  if ((ival <= 0) || (ival > 256))
-	    XEN_OUT_OF_RANGE_ERROR(S_setB S_channels, 1, val, "~A: highly unlikely number of channels");
+	    XEN_OUT_OF_RANGE_ERROR(S_setB S_channels, 1, val, "highly unlikely number of channels");
 	  mus_sound_set_chans(sp->filename, ival);
 	  sp->hdr->chans = ival;
 	  snd_update_within_xen(sp, caller); 
@@ -2827,7 +2827,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
 		}
 	      snd_update_within_xen(sp, caller);
 	    }
-	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_data_format, 1, val, "~A: unknown data format");
+	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_data_format, 1, val, "unknown data format");
 	}
       break;
 
@@ -2840,7 +2840,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
 	      mus_sound_set_header_type(sp->filename, ival);
 	      snd_update_within_xen(sp, caller); 
 	    }
-	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_header_type, 1, val, "~A: unknown header type");
+	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_header_type, 1, val, "unknown header type");
 	}
       break;
 
@@ -2854,7 +2854,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
 	      mus_sound_set_data_location(sp->filename, loc);
 	      snd_update_within_xen(sp, caller); 
 	    }
-	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_data_location, 1, val, "data location ~A < 0?");
+	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_data_location, 1, val, "data location < 0?");
 	}
       break;
 
@@ -2868,7 +2868,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
 	      mus_sound_set_samples(sp->filename, mus_bytes_to_samples(sp->hdr->format, size));
 	      snd_update_within_xen(sp, caller); 
 	    }
-	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_data_size, 1, val, "data size ~A < 0?");
+	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_data_size, 1, val, "data size < 0?");
 	}
       break;
 
@@ -3071,7 +3071,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
 		  (e->data[i * 2 + 1] < 0.0))
 		{
 		  free_env(e);
-		  XEN_OUT_OF_RANGE_ERROR(caller, 1, val, "y values ~A < 0.0 or > 1.0");
+		  XEN_OUT_OF_RANGE_ERROR(caller, 1, val, "y values < 0.0 or > 1.0");
 		}
 	    sp->filter_control_envelope = e;
 	    filter_env_changed(sp, sp->filter_control_envelope);
@@ -3488,10 +3488,9 @@ As a global (if the 'snd' arg is omitted), it is the default setting for each so
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_channel_style, "an integer"); 
   in_style = XEN_TO_C_INT(style);
-  if (in_style < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_channel_style, 1, style, "~A, but must be >= 0");
-  if (in_style >= NUM_CHANNEL_STYLES)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_channel_style, 1, style, "~A, but must be " S_channels_separate ", " S_channels_combined ", or " S_channels_superimposed);
+  if ((in_style < 0) ||
+      (in_style >= NUM_CHANNEL_STYLES))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_channel_style, 1, style, S_channel_style " should be " S_channels_separate ", " S_channels_combined ", or " S_channels_superimposed);
   new_style = (channel_style_t)in_style;
 
   if (XEN_NOT_BOUND_P(snd))
@@ -4303,10 +4302,10 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
     }
 
   if (!(mus_header_type_p(ht)))
-    XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[1], keys[1], "~A: invalid header type");
+    XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[1], keys[1], "invalid header type");
 
   if (!(mus_data_format_p(df)))
-    XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[2], keys[2], "~A: invalid data format");
+    XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[2], keys[2], "invalid data format");
 
   if (!(mus_header_writable(ht, df)))
     XEN_ERROR(BAD_HEADER,
@@ -4315,13 +4314,13 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
 			 keys[1]));
 
   if (sr <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[3], keys[3], "srate ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[3], keys[3], "srate <= 0?");
 
   if (ch <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[4], keys[4], "channels ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[4], keys[4], "channels <= 0?");
 
   if (len < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[6], keys[6], "size ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[6], keys[6], "size < 0?");
 
   if (file)
     {
@@ -4383,12 +4382,12 @@ static XEN g_set_speed_control_style(XEN speed, XEN snd)
 
   in_spd = XEN_TO_C_INT(speed);
   if (in_spd < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_speed_control_style, 1, speed, "~A, but must be >= 0");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_speed_control_style, 1, speed, "invalid " S_speed_control_style);
 
   spd = (speed_style_t)in_spd;
   if (spd >= NUM_SPEED_CONTROL_STYLES)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_speed_control_style, 1, speed, 
-			   "~A, but must be " S_speed_control_as_float ", " S_speed_control_as_ratio ", or " S_speed_control_as_semitone);
+			   S_speed_control_style " should be " S_speed_control_as_float ", " S_speed_control_as_ratio ", or " S_speed_control_as_semitone);
 
   return(sound_set_global(snd, speed, SP_SPEED_STYLE, S_setB S_speed_control_style));
 }
@@ -5045,7 +5044,7 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
       cur_choice = (snd_apply_t)XEN_TO_C_INT_OR_ELSE(choice, (int)APPLY_TO_SOUND);
 
       if (cur_choice > APPLY_TO_SELECTION)
-	XEN_OUT_OF_RANGE_ERROR(S_apply_controls, 2, choice, "~A, but must be 0=sound, 1=channel, or 2=selection");
+	XEN_OUT_OF_RANGE_ERROR(S_apply_controls, 2, choice, "choice must be 0=sound, 1=channel, or 2=selection");
       ss->apply_choice = cur_choice;
       sp->applying = true;
       ap = (apply_state *)make_apply_state(sp);

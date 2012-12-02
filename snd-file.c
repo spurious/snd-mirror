@@ -5476,7 +5476,7 @@ This value only matters if " S_auto_update " is " PROC_TRUE
 
   ctime = XEN_TO_C_DOUBLE(val);
   if ((ctime < 0.0) || (ctime > (24 * 3600)))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_auto_update_interval, 1, val, "~A: invalid time");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_auto_update_interval, 1, val, "invalid time");
 
   old_time = auto_update_interval(ss);
   set_auto_update_interval(ctime);
@@ -5527,7 +5527,7 @@ Other writable headers include " S_mus_aiff ", " S_mus_riff ", " S_mus_ircam ", 
   typ = XEN_TO_C_INT(val);
   if (mus_header_writable(typ, -2))
     set_default_output_header_type(typ); 
-  else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_header_type, 1, val, "~A: unwritable header type");
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_header_type, 1, val, "unwritable header type");
   return(C_TO_XEN_INT(default_output_header_type(ss)));
 }
 
@@ -5546,7 +5546,7 @@ are available, but not all are compatible with all header types"
   format = XEN_TO_C_INT(val);
   if (mus_data_format_p(format))
     set_default_output_data_format(format); 
-  else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_data_format, 1, val, "~A: unknown data format");
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_data_format, 1, val, "unknown data format");
   return(C_TO_XEN_INT(default_output_data_format(ss)));
 }
 

@@ -1279,7 +1279,7 @@ mus_float_t check_color_range(const char *caller, XEN val)
   mus_float_t rf;
   rf = XEN_TO_C_DOUBLE(val);
   if ((rf > 1.0) || (rf < 0.0))
-    XEN_OUT_OF_RANGE_ERROR(caller, 1, val, "value ~A must be between 0.0 and 1.0");
+    XEN_OUT_OF_RANGE_ERROR(caller, 1, val, "value must be between 0.0 and 1.0");
   return(rf);
 }
 

@@ -285,9 +285,9 @@ static XEN s7_mus_vct_apply(s7_scheme *sc, XEN obj, XEN args)
   loc = s7_integer(pos);
 
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index < 0?");
   if (loc >= v->length)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A too high?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index too high?");
 
   return(C_TO_XEN_DOUBLE(v->data[loc]));
 }
@@ -313,9 +313,9 @@ static XEN s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)
   loc = s7_integer(pos); /* this was number_to_integer? */
 
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index < 0?");
   if (loc >= v->length)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index ~A too high?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index too high?");
 
   val = XEN_CADR(args);
   /* XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_vct_setB, "a real"); */
@@ -334,9 +334,9 @@ static XEN s7_vct_ref_2(s7_scheme *sc, void *obj, s7_pointer index)
   loc = s7_integer(index);
 
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, index, "index ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, index, "index < 0?");
   if (loc >= v->length)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, index, "index ~A too high?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, index, "index too high?");
 
   return(C_TO_XEN_DOUBLE(v->data[loc]));
 }
@@ -345,9 +345,9 @@ static XEN s7_vct_ref_2i(s7_scheme *sc, void *obj, s7_Int loc)
 {
   vct *v = (vct *)obj;
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_make_integer(sc, loc), "index ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_make_integer(sc, loc), "index < 0?");
   if (loc >= v->length)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_make_integer(sc, loc), "index ~A too high?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_make_integer(sc, loc), "index too high?");
 
   return(C_TO_XEN_DOUBLE(v->data[loc]));
 }
@@ -361,9 +361,9 @@ static XEN s7_vct_set_3(s7_scheme *sc, void *obj, s7_pointer index, s7_pointer v
   loc = s7_integer(index); 
 
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, index, "index ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, index, "index < 0?");
   if (loc >= v->length)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, index, "index ~A too high?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, index, "index too high?");
 
   /* XEN_ASSERT_TYPE(XEN_NUMBER_P(value), value, XEN_ARG_3, S_vct_setB, "a real"); */
 
@@ -376,9 +376,9 @@ static void s7_vct_set_3if(s7_scheme *sc, void *obj, s7_Int loc, s7_Double value
   vct *v = (vct *)obj;
 
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_make_integer(sc, loc), "index ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_make_integer(sc, loc), "index < 0?");
   if (loc >= v->length)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_make_integer(sc, loc), "index ~A too high?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_make_integer(sc, loc), "index too high?");
 
   v->data[loc] = value;
 }
@@ -539,11 +539,11 @@ initial-element: \n  " vct_make_example
 
   size = XEN_TO_C_LONG_LONG(len);
   if (size < 0) 
-    XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "len ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "new vct size < 0?");
 
   if ((size > mus_max_malloc()) ||
       (((mus_long_t)(size * sizeof(mus_float_t))) > mus_max_malloc()))
-    XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "len ~A too large (see mus-max-malloc)");
+    XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "new vct size is too large (see mus-max-malloc)");
 
   if (XEN_NUMBER_P(filler))
     return(g_vct_fill(xen_make_vct(size, (mus_float_t *)calloc(size, sizeof(mus_float_t))), filler));
@@ -592,18 +592,18 @@ v[new--] = v[old--] if backwards is " PROC_FALSE "."
       (XEN_NOT_FALSE_P(backwards)))
     {
       if (ni >= v->length) 
-	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 2, newi, "new-index ~A too high");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 2, newi, "new-index too high");
       if (nj >= v->length)
-	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 3, oldi, "old-index ~A too high");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 3, oldi, "old-index too high");
       for (i = ni, j = nj; (j >= 0) && (i >= 0); i--, j--) 
 	v->data[i] = v->data[j];
     }
   else
     {
       if (ni < 0)
-	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 2, newi, "new-index ~A < 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 2, newi, "new-index < 0?");
       if (nj < 0)
-	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 3, oldi, "old-index ~A < 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 3, oldi, "old-index < 0?");
       for (i = ni, j = nj; (j < v->length) && (i < v->length); i++, j++) 
 	v->data[i] = v->data[j];
     }
@@ -634,9 +634,9 @@ static XEN g_vct_ref(XEN obj, XEN pos)
   loc = XEN_TO_C_LONG_LONG(pos);
 
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index < 0?");
   if (loc >= v->length)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A too high?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index too high?");
 
   return(C_TO_XEN_DOUBLE(v->data[loc]));
 }
@@ -694,7 +694,7 @@ static s7_pointer g_vct_ref_two(s7_scheme *sc, s7_pointer args)
       mus_long_t loc;
       loc = s7_number_to_integer(sc, s7_cadr(args));
       if ((loc < 0) || (loc>= v->length))
-	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_cadr(args), "index ~A out of range");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_cadr(args), "index out of range");
       return(s7_make_real(sc, v->data[loc]));
     }
   XEN_ASSERT_TYPE(false, s7_car(args), XEN_ARG_1, "vct-ref", "a vct");
@@ -711,7 +711,7 @@ static s7_pointer g_vct_ref_ss(s7_scheme *sc, s7_pointer args)
       mus_long_t loc;
       loc = s7_number_to_integer(sc, s7_cadr_value(sc, args));
       if ((loc < 0) || (loc>= v->length))
-	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_cadr(args), "index ~A out of range");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_cadr(args), "index out of range");
       return(s7_make_real(sc, v->data[loc]));
     }
   XEN_ASSERT_TYPE(false, s7_car(args), XEN_ARG_1, "vct-ref", "a vct");
@@ -752,9 +752,9 @@ static XEN g_vct_set(XEN obj, XEN pos, XEN val)
   loc = XEN_TO_C_LONG_LONG(pos);
 
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index ~A < 0?"); 
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index < 0?"); 
   if (loc >= v->length)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index ~A >= vct-length?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index >= vct-length?");
 
   v->data[loc] = x;
   return(val);
@@ -797,7 +797,7 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
     {
       j = XEN_TO_C_LONG_LONG(offs);
       if (j < 0) 
-	XEN_OUT_OF_RANGE_ERROR(S_vct_addB, 3, offs, "offset ~A < 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_addB, 3, offs, "offset < 0?");
 
       if ((j + lim) > v1->length)
 	lim = (v1->length - j);
@@ -968,7 +968,7 @@ static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
 
   istart = XEN_TO_C_LONG_LONG(start);
   if (istart < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_subseq, 2, start, "start ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_subseq, 2, start, "start < 0?");
 
   vold = XEN_TO_VCT(vobj);
   old_len = vold->length;
@@ -977,9 +977,9 @@ static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
     {
       iend = XEN_TO_C_LONG_LONG(end);
       if (iend < istart)
-	XEN_OUT_OF_RANGE_ERROR(S_vct_subseq, 3, end, "end ~A < start?");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_subseq, 3, end, "end < start?");
       if (iend > old_len)
-	XEN_OUT_OF_RANGE_ERROR(S_vct_subseq, 3, end, "end ~A > vct length?");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_subseq, 3, end, "end > vct length?");
       new_len = iend - istart + 1;
     }
   else new_len = old_len - istart;

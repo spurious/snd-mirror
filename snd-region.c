@@ -1609,7 +1609,7 @@ static XEN g_set_max_regions(XEN n)
 
   regs = XEN_TO_C_INT(n);
   if (regs < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_max_regions, 1, n, S_max_regions " ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_max_regions, 1, n, S_max_regions "negative?");
 
   set_max_regions(regs);
   return(C_TO_XEN_INT(max_regions(ss)));
@@ -1838,7 +1838,7 @@ selection is used."
 	      free(ends);
 	      ends = NULL;
 	      si = free_sync_info(si);
-	      XEN_OUT_OF_RANGE_ERROR(S_make_region, 1, end, "end ~A < beg?");
+	      XEN_OUT_OF_RANGE_ERROR(S_make_region, 1, end, "end < beg?");
 	    }
 	}
       if (ends)
@@ -2034,7 +2034,7 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
     {
       len = XEN_TO_C_LONG_LONG(num);
       if (len < 0)
-	XEN_OUT_OF_RANGE_ERROR(S_region_to_vct, 2, num, "length ~A < 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_region_to_vct, 2, num, "length < 0?");
     }
   if ((len == 0) || (len > region_len(reg)))
     len = region_len(reg);
@@ -2078,7 +2078,7 @@ and " S_graph_dots_and_lines "."
 
   style = XEN_TO_C_INT(val);
   if (!(graph_style_p(style)))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_region_graph_style, 1, val, "~A: unknown " S_lisp_graph_style);
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_region_graph_style, 1, val, "unknown " S_lisp_graph_style);
 
   set_region_graph_style((graph_style_t)style);
   reflect_region_graph_style();

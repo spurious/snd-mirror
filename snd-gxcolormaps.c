@@ -1062,7 +1062,7 @@ static XEN g_colormap_ref(XEN map, XEN pos)
 
   x = XEN_TO_C_DOUBLE(pos);
   if ((x < 0.0) || (x > 1.0))
-    XEN_OUT_OF_RANGE_ERROR(S_colormap_ref, 2, pos, "x must be between 0.0 and 1.0: ~A");
+    XEN_OUT_OF_RANGE_ERROR(S_colormap_ref, 2, pos, "x must be between 0.0 and 1.0");
 
   get_current_color(index, (int)(color_map_size(ss) * x + 0.5), &r, &g, &b);
   return(XEN_LIST_3(C_TO_XEN_DOUBLE(RGB_TO_FLOAT(r)),
@@ -1107,9 +1107,9 @@ static XEN g_set_colormap_size(XEN val)
 
   size = XEN_TO_C_INT(val);
   if (size < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_colormap_size, 1, val, "size ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_colormap_size, 1, val, "size < 0?");
   if (size > (1 << 26))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_colormap_size, 1, val, "size ~A too large");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_colormap_size, 1, val, "size too large");
 
   set_color_map_size(size);
   check_colormap_sizes(color_map_size(ss));

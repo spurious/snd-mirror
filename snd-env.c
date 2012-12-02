@@ -1678,7 +1678,7 @@ be " S_envelope_linear ", or " S_envelope_exponential
       set_enved_style((env_type_t)choice);
       reflect_enved_style();
     }
-  else XEN_OUT_OF_RANGE_ERROR(S_enved_style, XEN_ONLY_ARG, val, "must be " S_envelope_linear ", or " S_envelope_exponential);
+  else XEN_OUT_OF_RANGE_ERROR(S_enved_style, XEN_ONLY_ARG, val, S_enved_style " should be " S_envelope_linear ", or " S_envelope_exponential);
   return(val);
 }
 
@@ -1695,10 +1695,9 @@ choices are " S_enved_amplitude ", " S_enved_srate "(apply to speed), and " S_en
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_enved_target, "an integer"); 
   in_n = XEN_TO_C_INT(val);
-  if (in_n < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_enved_target, 1, val, "~A, but must be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
-  if (in_n > (int)ENVED_SRATE)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_enved_target, 1, val, "~A, but must be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
+  if ((in_n < 0) ||
+      (in_n > (int)ENVED_SRATE))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_enved_target, 1, val, S_enved_target " should be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
   n = (enved_target_t)in_n;
   set_enved_target(n); 
   return(C_TO_XEN_INT((int)enved_target(ss)));

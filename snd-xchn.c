@@ -1670,7 +1670,7 @@ static XEN g_set_graph_cursor(XEN curs)
       ss->Graph_Cursor = val;
       ss->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
     }
-  else XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_cursor, 1, curs, "~A: invalid cursor");
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_cursor, 1, curs, "invalid cursor");
   return(curs);
 }
 

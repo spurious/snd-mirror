@@ -4516,7 +4516,7 @@ static XEN g_apply_env_1(XEN edata, mus_long_t beg, mus_long_t dur, XEN ebase, c
 	      if (e->base < 0.0)
 		{
 		  free_env(e);
-		  XEN_OUT_OF_RANGE_ERROR(caller, 4, ebase, "base ~A < 0.0?");
+		  XEN_OUT_OF_RANGE_ERROR(caller, 4, ebase, "base < 0.0?");
 		}
 	    }
 	  apply_env(cp, e, beg, dur, over_selection, caller, NULL, edpos, 7);
@@ -4876,7 +4876,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   n = XEN_TO_C_INT_OR_ELSE(len, v->length);
   if (n > v->length) n = v->length;
   if (n <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 3, len, "length ~A <= 0 or vct length == 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 3, len, "length <= 0 or vct length == 0?");
 
   if (XEN_BOOLEAN_P(linear_or_dB)) linear = XEN_TO_C_BOOLEAN(linear_or_dB);
   if (XEN_BOOLEAN_P(in_place)) in_data = XEN_TO_C_BOOLEAN(in_place);
@@ -4884,7 +4884,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
 
   wtype = XEN_TO_C_INT_OR_ELSE(win, (int)MUS_RECTANGULAR_WINDOW);
   if (!(mus_fft_window_p(wtype)))
-    XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 2, win, "~A: unknown fft window");
+    XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 2, win, "unknown fft window");
 
   if (XEN_NUMBER_P(beta)) b = XEN_TO_C_DOUBLE(beta);
   if (b < 0.0) b = 0.0; else if (b > 1.0) b = 1.0;
@@ -5133,8 +5133,8 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 	    mus_free(egen); 
 
 	  if (error == SRC_ENV_HIT_ZERO)
-	    XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "~A: envelope hits 0.0");
-	  else XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "~A: envelope passes through 0.0");
+	    XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "envelope hits 0.0");
+	  else XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "envelope passes through 0.0");
 
 	  return(XEN_FALSE); /* just for clarity... */
 	}
@@ -5202,8 +5202,8 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
 	      data = mus_array_to_list(e->data, 0, e->pts * 2);
 	      if (e) {free_env(e); e = NULL;}
 	      if (error == SRC_ENV_HIT_ZERO)
-		XEN_OUT_OF_RANGE_ERROR(caller, 1, data, "~A: envelope hits 0.0");
-	      else XEN_OUT_OF_RANGE_ERROR(caller, 1, data, "~A: envelope passes through 0.0");
+		XEN_OUT_OF_RANGE_ERROR(caller, 1, data, "envelope hits 0.0");
+	      else XEN_OUT_OF_RANGE_ERROR(caller, 1, data, "envelope passes through 0.0");
 	    }
 	  else
 	    {
@@ -5224,8 +5224,8 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
 	      XEN data;
 	      data = mus_array_to_list(mus_data(egen), 0, mus_env_breakpoints(egen) * 2);
 	      if (error == SRC_ENV_HIT_ZERO)
-		XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "~A: envelope hits 0.0");
-	      else XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "~A: envelope passes through 0.0");
+		XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "envelope hits 0.0");
+	      else XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "envelope passes through 0.0");
 	    }
 	  else
 	    src_env_or_num(cp, NULL, 
@@ -5353,7 +5353,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
 	{
 	  len = XEN_TO_C_INT(order);
 	  if (len <= 0) 
-	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "> 0 (order = ~A)");
+	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order should be positive");
 	}
       if (MUS_VCT_P(e)) /* the filter coefficients direct */
 	{
@@ -5361,7 +5361,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
 	  char *new_origin = NULL, *estr = NULL;
 	  v = XEN_TO_VCT(e);
 	  if (len > v->length) 
-	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "<= length coeffs (order = ~A)");
+	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order > length coeffs");
 	  else
 	    {
 	      if (len == 0) len = v->length;
