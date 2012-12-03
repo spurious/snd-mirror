@@ -73,7 +73,6 @@
 #define S_vct_scaleB     "vct-scale!"
 #define S_vct_fillB      "vct-fill!"
 #define S_vct_setB       "vct-set!"
-#define S_vct_mapB       "vct-map!"
 #define S_vct_peak       "vct-peak"
 #define S_vct_p          "vct?"
 #define S_list_to_vct    "list->vct"

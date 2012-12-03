@@ -56,14 +56,6 @@
 
 
 
-(define* (checked-substring str start end)
-  (let ((len (length str)))
-    (if (>= start len)
-	""
-	(if end
-	    (substring str start (min end len))
-	    (substring str start)))))
-
 (define (without-dollar-sign str)
   (if (char=? (str 0) #\$)
       (substring str 1)
@@ -114,11 +106,11 @@
 
 (define* (remove item sequence count)
   (let* ((len (length sequence))
-	 (num (if (number? count) count len))
-	 (changed 0))
+	 (num (if (number? count) count len)))
     (if (not (positive? num))
 	sequence
-	(let ((result '()))
+	(let ((result '())
+	      (changed 0))     
 	  (do ((i 0 (+ i 1)))
 	      ((= i len))
 	    (if (or (>= changed num)
@@ -169,8 +161,8 @@
 	       ;(format #t "str: ~S, def-pos: ~A~%" str def-pos)
 	   (set! str (string-append "<a "
 				    (if (char=? (str (+ def-pos 10)) #\n)
-					(checked-substring str (+ def-pos 10))
-					(values "name=" (checked-substring str (+ def-pos 14))))))))
+					(substring str (+ def-pos 10))
+					(values "name=" (substring str (+ def-pos 14))))))))
        
        (let* ((line (string-append "<a href=\"" 
 				   (or file "") 
@@ -179,9 +171,9 @@
 	      (ipos (string-position "<em" line)))
 	 (when ipos
 	   (let ((ispos (string-position "</em>" line)))
-	     (set! line (string-append (checked-substring line 0 ipos) 
-				       (checked-substring line (+ ipos 14) ispos) 
-				       (checked-substring line (+ ispos 5))))
+	     (set! line (string-append (substring line 0 ipos) 
+				       (substring line (+ ipos 14) ispos) 
+				       (substring line (+ ispos 5))))
 	     (if (not line) 
 		 (format #t "<em...> but no </em> for ~A~%" str))))
 	 
@@ -198,9 +190,9 @@
 				     (string-position "</h1>" line start) 
 				     (string-position "</h3>" line start) 
 				     (string-position "</h4>" line start))))))
-	       (set! line (string-append (checked-substring line 0 hpos) 
-					 (checked-substring line (+ hpos 4) hspos) 
-					 (checked-substring line (+ hspos 5))))
+	       (set! line (string-append (substring line 0 hpos) 
+					 (substring line (+ hpos 4) hspos) 
+					 (substring line (+ hspos 5))))
 	       (if (not line) 
 		   (format #t "<hn> but no </hn> for ~A~%" str)))))
 	 
@@ -226,7 +218,7 @@
 	   (make-ind :name line 
 		     :topic topic 
 		     :file file 
-		     :sortby (string-downcase (checked-substring line (+ bpos 1) epos))))))))
+		     :sortby (string-downcase (substring line (+ bpos 1) epos))))))))
 
 
 (define (create-general str file)
@@ -234,14 +226,14 @@
     (make-ind :name (string-append "<a href=\"" 
 				   (or file "") 
 				   "#" 
-				   (checked-substring str 0 mid) 
+				   (substring str 0 mid) 
 				   "\"><b>" 
-				   (checked-substring str (+ mid 1)) 
+				   (substring str (+ mid 1)) 
 				   "</b></a>")
 	      :topic #f
 	      :file file
 	      :general #t
-	      :sortby (string-downcase (checked-substring str (+ mid 1))))))
+	      :sortby (string-downcase (substring str (+ mid 1))))))
 
 
 (define (scheme->ruby scheme-name)
@@ -302,17 +294,15 @@
 
 (define (clean-up-xref xref file)
   (let* ((len (length xref))
-	 (outstr (make-string (* len 2) #\space))
-	 (url-str "")
-	 (i 0)
-	 (j 0)
-	 (need-start #f)
-	 (in-bracket #f)
-	 (in-href #f)
-	 (in-name #f))
-    
-    (let ((loc 0))
-      (do ()
+	 (outstr (make-string (* len 2) #\space)))
+    (let ((url-str "")
+	  (i 0)
+	  (j 0)
+	  (need-start #f)
+	  (in-bracket #f)
+	  (in-href #f)
+	  (in-name #f))
+      (do ((loc 0))
 	  ((>= loc len))
 	(let* ((leof (or (char-position #\newline xref loc)
 			 len))
@@ -325,106 +315,106 @@
 	       (href-end (and href-start
 			      (< href-start leof)
 			      (char-position #\> xref (+ 1 href-start))))
-	       (href (and href-start href-end (checked-substring xref (+ href-start href-len) href-end))))
+	       (href (and href-start href-end (substring xref (+ href-start href-len) href-end))))
 	  (if href
 	      (if (char=? (href 1) #\#)
-		  (set! url-str (string-append url-str (string #\") file (checked-substring href 1) (format #f ",~%  ")))
+		  (set! url-str (string-append url-str (string #\") file (substring href 1) (format #f ",~%  ")))
 		  (set! url-str (string-append url-str href (format #f ",~%  "))))
 	      (set! url-str (string-append url-str (format #f "NULL,~%  "))))
 	  (set! loc (+ 1 leof))
 	  ))
-      )
-    (set! (outstr j) #\")
-    (incf j)
-    (do ()
-	((>= i len))
-      (let ((c (xref i)))
-	(if in-bracket
-	    (if (char=? c #\>)
-		(begin
-		 (set! in-bracket #f)
-		 (if in-href
-		     (set! in-name #t))
-		 (set! in-href #f)))
-	    (case c
-	      ((#\<)
-	       (if in-name
-		   (begin
-		     (set! (outstr j) #\})
-		     (incf j)
-		     (set! in-name #f)))
-	       (set! in-bracket #t)
-	       (if (or (and (< (+ i 7) len) 
-			    (string=? "<a href" (checked-substring xref i (+ i 7))))
-		       (and (< (+ i 17) len) 
-			    (string=? "<a class=def href" (checked-substring xref i (+ i 17))))
-		       (and (< (+ i 19) len) 
-			    (string=? "<a class=quiet href" (checked-substring xref i (+ i 19)))))
-		   (begin
-		     (if need-start
-			 (begin
-			   (set! (outstr j) #\,)
-			   (incf j)
-			   (set! (outstr j) #\newline)
-			   (incf j)
-			   (set! (outstr j) #\space)
-			   (incf j)	    
-			   (set! (outstr j) #\space)
-			   (incf j)	    
-			   (set! (outstr j) #\")
-			   (incf j)
-			   (set! need-start #f)))
-		     (set! in-href #t)
-		     (set! (outstr j) #\{)
-		     (incf j))))
 
-	      ((#\&)
-	       (if (and (< (+ i 4) len) 
-			(string=? (substring xref i (+ i 4)) "&gt;"))
-		   (begin
-		     (set! (outstr j) #\>)
-		     (incf j)
-		     (set! i (+ i 3))))) ; incf'd again below
-
-	      ((#\newline)
-	       (begin
-		 (set! (outstr j) #\")
-		 (incf j)
-		 (set! need-start #t)))
-
-	      ((#\")
-	       (begin
-		 (set! (outstr j) #\\)
-		 (incf j)
-		 (set! (outstr j) c)
-		 (incf j)))
-
-	      (else
-	       (begin
-		 (if need-start
+      (set! (outstr j) #\")
+      (incf j)
+      (do ()
+	  ((>= i len))
+	(let ((c (xref i)))
+	  (if in-bracket
+	      (if (char=? c #\>)
+		  (begin
+		    (set! in-bracket #f)
+		    (if in-href
+			(set! in-name #t))
+		    (set! in-href #f)))
+	      (case c
+		((#\<)
+		 (if in-name
 		     (begin
-		       (set! (outstr j) #\,)
+		       (set! (outstr j) #\})
 		       (incf j)
-		       (set! (outstr j) #\newline)
+		       (set! in-name #f)))
+		 (set! in-bracket #t)
+		 (if (or (and (< (+ i 7) len) 
+			      (string=? "<a href" (substring xref i (+ i 7))))
+			 (and (< (+ i 17) len) 
+			      (string=? "<a class=def href" (substring xref i (+ i 17))))
+			 (and (< (+ i 19) len) 
+			      (string=? "<a class=quiet href" (substring xref i (+ i 19)))))
+		     (begin
+		       (if need-start
+			   (begin
+			     (set! (outstr j) #\,)
+			     (incf j)
+			     (set! (outstr j) #\newline)
+			     (incf j)
+			     (set! (outstr j) #\space)
+			     (incf j)	    
+			     (set! (outstr j) #\space)
+			     (incf j)	    
+			     (set! (outstr j) #\")
+			     (incf j)
+			     (set! need-start #f)))
+		       (set! in-href #t)
+		       (set! (outstr j) #\{)
+		       (incf j))))
+		
+		((#\&)
+		 (if (and (< (+ i 4) len) 
+			  (string=? (substring xref i (+ i 4)) "&gt;"))
+		     (begin
+		       (set! (outstr j) #\>)
 		       (incf j)
-		       (set! (outstr j) #\space)
-		       (incf j)	    
-		       (set! (outstr j) #\space)
-		       (incf j)	    
-		       (set! (outstr j) #\")
-		       (incf j)
-		       (set! need-start #f)))
-		 (set! (outstr j) c)
-		 (incf j))))
-	    )
-	)
-      (incf i))
-    (list 
-     (checked-substring outstr 0 j)
-     url-str)))
-
-
-
+		       (set! i (+ i 3))))) ; incf'd again below
+		
+		((#\newline)
+		 (begin
+		   (set! (outstr j) #\")
+		   (incf j)
+		   (set! need-start #t)))
+		
+		((#\")
+		 (begin
+		   (set! (outstr j) #\\)
+		   (incf j)
+		   (set! (outstr j) c)
+		   (incf j)))
+		
+		(else
+		 (begin
+		   (if need-start
+		       (begin
+			 (set! (outstr j) #\,)
+			 (incf j)
+			 (set! (outstr j) #\newline)
+			 (incf j)
+			 (set! (outstr j) #\space)
+			 (incf j)	    
+			 (set! (outstr j) #\space)
+			 (incf j)	    
+			 (set! (outstr j) #\")
+			 (incf j)
+			 (set! need-start #f)))
+		   (set! (outstr j) c)
+		   (incf j))))
+	      )
+	  )
+	(incf i))
+      (list 
+       (substring outstr 0 j)
+       url-str))))
+  
+  
+  
 ;;; --------------------------------------------------------------------------------
 ;;; get indexer.data
 
@@ -752,8 +742,8 @@
 			  (set! xrefing #f))
 
 		      (if id-pos
-			  (let* ((start (char-position #\" (checked-substring dline id-pos)))
-				 (end (char-position #\" (checked-substring dline (+ id-pos start 2))))
+			  (let* ((start (char-position #\" (substring dline id-pos)))
+				 (end (char-position #\" (substring dline (+ id-pos start 2))))
 				 (name (substring dline (+ id-pos start 1) (+ id-pos start 2 end))))
 			    (let ((sym-name (string->symbol name)))
 			      (if (not (hash-table-ref ids sym-name))
@@ -768,7 +758,7 @@
 			  (let ((epos (string-position " -->" dline)))
 			    (if (not epos) 
 				(format #t "<!-- TOPIC but no --> for ~A~%" dline)
-				(set! topic (checked-substring dline (+ tpos 11) epos))))
+				(set! topic (substring dline (+ tpos 11) epos))))
 			  (if compos
 			      (let ((epos (string-position " -->" dline)))
 				(if (not epos) 
@@ -776,7 +766,7 @@
 				    (when (or (not no-bold)
 					      with-scm)
 				      (set! current-general g)
-				      (set! (generals g) (checked-substring dline (+ compos 11) epos))
+				      (set! (generals g) (substring dline (+ compos 11) epos))
 				      (set! (gfiles g) (car file))
 				      (set! (xrefs g) "")
 				      (incf g))))
@@ -786,25 +776,25 @@
 					(format #t "<!-- main-index but no --> for ~A~%" dline)
 					(when (or (not no-bold)
 						  with-scm)
-					  (set! (names n) (checked-substring dline (+ indpos 16) epos))
+					  (set! (names n) (substring dline (+ indpos 16) epos))
 					  (set! (files n) (car file))
 					  (incf n))))
 				  (if xpos
 				      (set! xrefing #t)
 				      (do ()
 					  ((not pos))
-					(set! dline (checked-substring dline pos))
+					(set! dline (substring dline pos))
 					(let ((epos (or (string-position "</a>" dline) 
 							(string-position "</em>" dline) 
 							(string-position "</A>" dline))))
 					  (if (not epos) 
 					      (format #t "<a> but no </a> for ~A~%" dline)
 					      (begin
-						(set! (names n) (string-append (checked-substring dline 0 epos) "</a>"))
+						(set! (names n) (string-append (substring dline 0 epos) "</a>"))
 						(set! (files n) (car file))
 						(set! (topics n) topic)
 						(incf n)
-						(set! dline (checked-substring dline (+ epos 4)))
+						(set! dline (substring dline (+ epos 4)))
 						(set! pos (string-position "<em class=def id=" dline))
 						))))))))
 		      (if (and xrefing
@@ -1004,16 +994,16 @@
 		     ((= i n))
 		   (if (and (tnames i)
 			    (ind-sortby (tnames i)))
-		       (let* ((line (checked-substring (ind-name (tnames i)) 8))
+		       (let* ((line (substring (ind-name (tnames i)) 8))
 			      (dpos (char-position #\> line))
-			      (url (checked-substring line 1 (- dpos 1)))
+			      (url (substring line 1 (- dpos 1)))
 			      (epos (char-position #\< line))
-			      (ind (checked-substring line (+ 1 dpos) epos))
+			      (ind (substring line (+ 1 dpos) epos))
 			      (gpos (string-position "&gt;" ind)))
 			 (if gpos 
-			     (set! ind (string-append (checked-substring ind 0 gpos) 
+			     (set! ind (string-append (substring ind 0 gpos) 
 						      ">" 
-						      (checked-substring ind (+ gpos 4)))))
+						      (substring ind (+ gpos 4)))))
 			 (when (and ind
 				    (string? ind)
 				    (positive? (length ind)))
@@ -1070,12 +1060,12 @@
 			  (format sfil "~%static const char *~A_xrefs[] = {~%  ~A,~%  NULL};~%"
 				  (let* ((str (generals i))
 					 (mid (char-position #\: str)))
-				    (make-vector-name (checked-substring str (+ 1 mid))))
+				    (make-vector-name (substring str (+ 1 mid))))
 				  (car vals))
 			  (format sfil "~%static const char *~A_urls[] = {~%  ~ANULL};~%"
 				  (let* ((str (generals i))
 					 (mid (char-position #\: str)))
-				    (make-vector-name (checked-substring str (+ 1 mid))))
+				    (make-vector-name (substring str (+ 1 mid))))
 				  (cadr vals))
 			  ))
 		    )
@@ -1241,7 +1231,7 @@
 				    (if start
 					(begin
 					  (if closing
-					      (let ((closer (string->symbol (checked-substring line (+ start 2) i))))
+					      (let ((closer (string->symbol (substring line (+ start 2) i))))
 						(if (memq closer '(center big font))
 						    (format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr closer line)
 						    (if (eq? closer 'script)
@@ -1299,7 +1289,7 @@
 						
 					      ;; not closing
 					      (if (not scripting)
-						  (let ((opener (string->symbol (checked-substring line (+ start 1) i))))
+						  (let ((opener (string->symbol (substring line (+ start 1) i))))
 
 						    (if (memq opener '(center big font))
 							(format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr opener line)
@@ -1308,7 +1298,7 @@
 							    (set! scripting #t)
 
 							    (if (eq? opener 'img)
-								(let* ((rest-line (checked-substring line (+ start 4)))
+								(let* ((rest-line (substring line (+ start 4)))
 								       (alt-pos (string-position "alt=" rest-line))
 								       (src-pos (string-position "src=" rest-line)))
 								  (if (not alt-pos)
@@ -1316,7 +1306,7 @@
 								  (if src-pos
 								      (let ((png-pos (string-position ".png" rest-line)))
 									(if png-pos
-									    (let ((file (checked-substring rest-line (+ src-pos 5) (+ png-pos 4))))
+									    (let ((file (substring rest-line (+ src-pos 5) (+ png-pos 4))))
 									      (if (not (file-exists? file))
 										  (format #t "~A[~D]: src not found: ~S~%" file linectr file)))))))
 								
@@ -1377,7 +1367,7 @@
 
 			   (do ()
 			       ((not pos))
-			     (set! dline (checked-substring dline (+ pos pos-len)))
+			     (set! dline (substring dline (+ pos pos-len)))
 			     (let ((epos (or (string-position "</a>" dline) 
 					     (string-position "</em>" dline) 
 					     (string-position "</A>" dline))))
@@ -1390,13 +1380,13 @@
 					      (< min-epos epos))
 					 (set! epos min-epos))
 
-				     (let ((new-name (string-append file "#" (checked-substring dline 0 (- epos 1)))))
+				     (let ((new-name (string-append file "#" (substring dline 0 (- epos 1)))))
 				       (if (hash-table-ref names new-name)
 					   (format #t "~A[~D]: ambiguous name: ~A~%" file linectr new-name))
 				       (hash-table-set! names new-name file))
 
 				     (incf name)
-				     (set! dline (checked-substring dline epos))
+				     (set! dline (substring dline epos))
 				     (set! pos-def1 (string-position "<em class=def id=" dline))
 				     (set! pos pos-def1)
 				     (set! pos-len 18))))))
@@ -1409,20 +1399,21 @@
 			       ((not pos))
 			     ;; (format #t "~A dline: ~A~%" pos dline)
 			     (if (zero? (length dline)) (exit))
-			     (set! dline (checked-substring dline (+ pos pos-len)))
+			     (set! dline (substring dline (+ pos pos-len)))
 			     (let ((epos (char-position #\> dline)))
 			       (if (not epos) 
 				   (format #t "~A[~D]: <a href but no </a> for ~A~%" file linectr dline)
 				   (let ((cur-href #f))
 				     (set! epos (char-position #\" dline 1))
 				     (if (char=? (dline 0) #\#)
-					 (set! cur-href (string-append file (checked-substring dline 0 epos)))
+					 (set! cur-href (string-append file (substring dline 0 epos)))
 					 (begin
-					   (set! cur-href (checked-substring dline 0 epos))
+					   (set! cur-href (substring dline 0 epos))
 					   (let ((pos (char-position #\# cur-href)))
 					     (if (and (not pos)
-						      (not (string-ci=? (checked-substring cur-href 0 4) "ftp:"))
-						      (not (string-ci=? (checked-substring cur-href 0 5) "http:"))
+						      (> epos 5)
+						      (not (string-ci=? (substring cur-href 0 4) "ftp:"))
+						      (not (string-ci=? (substring cur-href 0 5) "http:"))
 						      (not (file-exists? cur-href)))
 						 (format #t "~A[~D]: reference to missing file ~S~%" file linectr cur-href)))))
 
@@ -1439,7 +1430,7 @@
 					       (hash-table-set! ids name (+ data 1)))))
 				     
 				     (incf href)
-				     (set! dline (checked-substring dline epos))
+				     (set! dline (substring dline epos))
 				     (set! pos (string-position " href=" dline))
 				     (set! pos-len 7))))))))
 		     (line-loop (read-line f)))))

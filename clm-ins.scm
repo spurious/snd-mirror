@@ -1879,7 +1879,7 @@ is a physical model of a flute:
 	    ((= i max-oscils))
 	  (set! (resynth-oscils i) (make-oscil 0)))
 	(set! trigger outhop)
-	(vct-scale! window fftscale)
+	(set! window (vct->vector (vct-scale! window fftscale)))
 
 	(if splice-attack
 	    (let ((ramp (/ 1.0 attack-size))
@@ -1900,144 +1900,149 @@ is a physical model of a flute:
 	      (set! start cur-end)))
 
 	(if (< start end)
-	    (do ((i start (+ i 1)))
-		((= i end))
-	      (if (>= trigger outhop)
-		  (let ((peaks 0))
-		    ;; get next block of data and apply window to it
-		    (set! trigger 0)
-		    (do ((k 0 (+ k 1)))
-			((= k fftsize-1))
-		      (set! (fdr k) (* (window k) (file->sample fil filptr)))
-		      (set! filptr (+ 1 filptr)))
-		    (vct-fill! fdi 0.0)
-		    (set! filptr (- filptr (- fftsize-1 hop)))
-		    ;; get the fft 
-		    (mus-fft fdr fdi fftsize-1 1)
-		    ;; change to polar coordinates (ignoring phases)
-		    (rectangular->magnitudes fdr fdi)
-		    (vct-scale! fdr 2.0)
-		    (do ((k 0 (+ k 1)))
-			((= k max-oscils))
-		      (set! (last-peak-freqs k) (current-peak-freqs k))
-		      (set! (last-peak-amps k) (current-peak-amps k))
-		      (set! (current-peak-amps k) 0.0))
-		    (vector-fill! peak-amps 0.0)
-		    (let ((ra (fdr 0))
-			  (la 0.0)
-			  (ca 0.0))
-		      ;; search for current peaks following Xavier Serra's recommendations in
-		      ;; "A System for Sound Analysis/Transformation/Synthesis 
-		      ;;      Based on a Deterministic Plus Stochastic Decomposition"
-		      (do ((k 0 (+ k 1)))
-			  ((= k highest-bin-1))
-			(set! la ca)
-			(set! ca ra)
-			(set! ra (fdr k))
-			(if (and (> ca .001) ; lowest-magnitude
-				 (> ca ra)
-				 (> ca la)
-				 (not (zero? ra))
-				 (not (zero? la)))
-			    ;; found a local maximum above the current threshold (its bin number is k-1)
-			    (let* ((logla (log la 10.0))
-				   (logca (log ca 10.0))
-				   (logra (log ra 10.0))
-				   (offset (/ (* .5 (- logla logra)) (+ logla (* -2 logca) logra))) ; isn't logca always 0?
-				   (amp (expt 10.0 (- logca (* .25 (- logla logra) offset))))
-				   (freq (* fft-mag (+ k offset -1))))
-			      ;; (if (not (real? amp)) (format *stderr* "~A ~A ~A -> ~A ~A~%" la ca ra offset amp))
-			      (if (= peaks max-peaks-1)
-				  ;; gotta either flush this peak, or find current lowest and flush him
-				  (let ((minp 0)
-					(minpeak (peak-amps 0)))
-				    (do ((j 1 (+ j 1)))
-					((= j max-peaks-1))
-				      (if (< (peak-amps j) minpeak)
-					  (begin
-					    (set! minp j)
-					    (set! minpeak (peak-amps j)))))
-				    (if (> amp minpeak)
-					(begin
-					  (set! (peak-freqs minp) freq)
-					  (set! (peak-amps minp) amp))))
-				  (begin
-				    (set! (peak-freqs peaks) freq)
-				    (set! (peak-amps peaks) amp)
-				    (set! peaks (+ 1 peaks))))))))
-		    ;; now we have the current peaks -- match them to the previous set and do something interesting with the result
-		    ;; the end results are reflected in the updated values in the rates and sweeps arrays.
-		    ;; search for fits between last and current, set rates/sweeps for those found
-		    ;;   try to go by largest amp first 
-		    (do ((k 0 (+ k 1)))
-			((= k peaks))
-		      (let ((maxp 0)
-			    (maxpk (peak-amps 0)))
-			(do ((j 1 (+ j 1)))
-			    ((= j max-peaks-1))
-			  (if (> (peak-amps j) maxpk)
-			      (begin
-				(set! maxp j)
-				(set! maxpk (peak-amps j)))))
-			;; now maxp points to next largest unmatched peak
-			(if (> maxpk 0.0)
-			    (let* ((closestp -1)
-				   (closestamp 10.0)
-				   (current-freq (peak-freqs maxp))
-				   (icf (/ 1.0 current-freq)))
-			      (do ((j 0 (+ j 1)))
-				  ((= j max-peaks-1))
-				(if (> (last-peak-amps j) 0.0)
-				    (let ((closeness (* icf (abs (- (last-peak-freqs j) current-freq)))))
-				      (if (< closeness closestamp)
-					  (begin
-					    (set! closestamp closeness)
-					    (set! closestp j))))))
-			      (if (< closestamp furthest-away-accepted)
-				  (begin
-				    ;; peak-amp is transferred to appropriate current-amp and zeroed,
-				    (set! (current-peak-amps closestp) (peak-amps maxp))
-				    (set! (peak-amps maxp) 0.0)
-				    (set! (current-peak-freqs closestp) current-freq)))))))
-		    (do ((k 0 (+ k 1)))
-			((= k max-peaks-1))
-		      (if (> (peak-amps k) 0.0)
-			  ;; find a place for a new oscil and start it up
-			  (let ((new-place -1))
-			    (do ((j 0 (+ j 1)))
-				((or (not (= new-place -1))
-				     (= j max-oscils)))
-			      (if (and (= (last-peak-amps j) 0.0) 
-				       (= (current-peak-amps j) 0.0))
-				  (set! new-place j)))
-			    (set! (current-peak-amps new-place) (peak-amps k))
-			    (set! (peak-amps k) 0.0)
-			    (set! (current-peak-freqs new-place) (peak-freqs k))
-			    (set! (last-peak-freqs new-place) (peak-freqs k))
-			    (set! (mus-frequency (resynth-oscils new-place)) (* transposition (peak-freqs k))))))
-		    (set! cur-oscils 0)
-		    (do ((k 0 (+ k 1)))
-			((= k max-oscils))
-		      (set! (rates k) (* ifreq (- (current-peak-amps k) (last-peak-amps k))))
-		      (if (or (not (= (current-peak-amps k) 0.0))
-			      (not (= (last-peak-amps k) 0.0)))
-			  (set! cur-oscils k))
-		      (set! (sweeps k) (* ihifreq transposition (- (current-peak-freqs k) (last-peak-freqs k)))))
-		    (set! cur-oscils (+ 1 cur-oscils))
-		    ))
-	      ;; run oscils, update envelopes
-	      (set! trigger (+ 1 trigger))
-	      (if (= ramped 0)
-		  (set! sum 0.0)
-		  (begin
-		    (set! sum (ramped-attack ramp-ind))
-		    (set! ramp-ind (+ 1 ramp-ind))
-		    (if (= ramp-ind ramped) (set! ramped 0))))
-	      
-	      (set! sum (+ sum (oscil-bank cur-oscils resynth-oscils amps freqs rates sweeps)))
-	      (outa i (* amp sum))))))))
+	    (call-with-exit
+	     (lambda (all-done)
+	       (do ((i start (+ i 1)))
+		   ((= i end))
+		 (if (>= trigger outhop)
+		     (let ((peaks 0))
+		       ;; get next block of data and apply window to it
+		       (set! trigger 0)
+		       
+		       (if (> filptr (mus-length fil))
+			   (all-done))
+		       
+		       (do ((k 0 (+ k 1)))
+			   ((= k fftsize-1))
+			 (set! (fdr k) (* (window k) (file->sample fil (+ k filptr)))))
+		       (set! filptr (+ filptr hop))
+		       (vct-fill! fdi 0.0)
+		       ;; get the fft 
+		       (mus-fft fdr fdi fftsize-1 1)
+		       ;; change to polar coordinates (ignoring phases)
+		       (rectangular->magnitudes fdr fdi)
+		       (vct-scale! fdr 2.0)
+		       (do ((k 0 (+ k 1)))
+			   ((= k max-oscils))
+			 (set! (last-peak-freqs k) (current-peak-freqs k))
+			 (set! (last-peak-amps k) (current-peak-amps k))
+			 (set! (current-peak-amps k) 0.0))
+		       (vector-fill! peak-amps 0.0)
+		       (let ((ra (fdr 0))
+			     (la 0.0)
+			     (ca 0.0))
+			 ;; search for current peaks following Xavier Serra's recommendations in
+			 ;; "A System for Sound Analysis/Transformation/Synthesis 
+			 ;;      Based on a Deterministic Plus Stochastic Decomposition"
+			 (do ((k 0 (+ k 1)))
+			     ((= k highest-bin-1))
+			   (set! la ca)
+			   (set! ca ra)
+			   (set! ra (fdr k))
+			   (if (and (> ca .001) ; lowest-magnitude
+				    (> ca ra)
+				    (> ca la)
+				    (not (zero? ra))
+				    (not (zero? la)))
+			       ;; found a local maximum above the current threshold (its bin number is k-1)
+			       (let* ((logla (log la 10.0))
+				      (logca (log ca 10.0))
+				      (logra (log ra 10.0))
+				      (offset (/ (* .5 (- logla logra)) (+ logla (* -2 logca) logra))) ; isn't logca always 0?
+				      (amp (expt 10.0 (- logca (* .25 (- logla logra) offset))))
+				      (freq (* fft-mag (+ k offset -1))))
+				 ;; (if (not (real? amp)) (format *stderr* "~A ~A ~A -> ~A ~A~%" la ca ra offset amp))
+				 (if (= peaks max-peaks-1)
+				     ;; gotta either flush this peak, or find current lowest and flush him
+				     (let ((minp 0)
+					   (minpeak (peak-amps 0)))
+				       (do ((j 1 (+ j 1)))
+					   ((= j max-peaks-1))
+					 (if (< (peak-amps j) minpeak)
+					     (begin
+					       (set! minp j)
+					       (set! minpeak (peak-amps j)))))
+				       (if (> amp minpeak)
+					   (begin
+					     (set! (peak-freqs minp) freq)
+					     (set! (peak-amps minp) amp))))
+				     (begin
+				       (set! (peak-freqs peaks) freq)
+				       (set! (peak-amps peaks) amp)
+				       (set! peaks (+ 1 peaks))))))))
+		       ;; now we have the current peaks -- match them to the previous set and do something interesting with the result
+		       ;; the end results are reflected in the updated values in the rates and sweeps arrays.
+		       ;; search for fits between last and current, set rates/sweeps for those found
+		       ;;   try to go by largest amp first 
+		       (do ((k 0 (+ k 1)))
+			   ((= k peaks))
+			 (let ((maxp 0)
+			       (maxpk (peak-amps 0)))
+			   (do ((j 1 (+ j 1)))
+			       ((= j max-peaks-1))
+			     (if (> (peak-amps j) maxpk)
+				 (begin
+				   (set! maxp j)
+				   (set! maxpk (peak-amps j)))))
+			   ;; now maxp points to next largest unmatched peak
+			   (if (> maxpk 0.0)
+			       (let* ((closestp -1)
+				      (closestamp 10.0)
+				      (current-freq (peak-freqs maxp))
+				      (icf (/ 1.0 current-freq)))
+				 (do ((j 0 (+ j 1)))
+				     ((= j max-peaks-1))
+				   (if (> (last-peak-amps j) 0.0)
+				       (let ((closeness (* icf (abs (- (last-peak-freqs j) current-freq)))))
+					 (if (< closeness closestamp)
+					     (begin
+					       (set! closestamp closeness)
+					       (set! closestp j))))))
+				 (if (< closestamp furthest-away-accepted)
+				     (begin
+				       ;; peak-amp is transferred to appropriate current-amp and zeroed,
+				       (set! (current-peak-amps closestp) (peak-amps maxp))
+				       (set! (peak-amps maxp) 0.0)
+				       (set! (current-peak-freqs closestp) current-freq)))))))
+		       (do ((k 0 (+ k 1)))
+			   ((= k max-peaks-1))
+			 (if (> (peak-amps k) 0.0)
+			     ;; find a place for a new oscil and start it up
+			     (let ((new-place -1))
+			       (do ((j 0 (+ j 1)))
+				   ((or (not (= new-place -1))
+					(= j max-oscils)))
+				 (if (and (= (last-peak-amps j) 0.0) 
+					  (= (current-peak-amps j) 0.0))
+				     (set! new-place j)))
+			       (set! (current-peak-amps new-place) (peak-amps k))
+			       (set! (peak-amps k) 0.0)
+			       (set! (current-peak-freqs new-place) (peak-freqs k))
+			       (set! (last-peak-freqs new-place) (peak-freqs k))
+			       (set! (mus-frequency (resynth-oscils new-place)) (* transposition (peak-freqs k))))))
+		       (set! cur-oscils 0)
+		       (do ((k 0 (+ k 1)))
+			   ((= k max-oscils))
+			 (set! (rates k) (* ifreq (- (current-peak-amps k) (last-peak-amps k))))
+			 (if (or (not (= (current-peak-amps k) 0.0))
+				 (not (= (last-peak-amps k) 0.0)))
+			     (set! cur-oscils k))
+			 (set! (sweeps k) (* ihifreq transposition (- (current-peak-freqs k) (last-peak-freqs k)))))
+		       (set! cur-oscils (+ 1 cur-oscils))
+		       ))
+		 ;; run oscils, update envelopes
+		 (set! trigger (+ 1 trigger))
+		 (if (= ramped 0)
+		     (set! sum 0.0)
+		     (begin
+		       (set! sum (ramped-attack ramp-ind))
+		       (set! ramp-ind (+ 1 ramp-ind))
+		       (if (= ramp-ind ramped) (set! ramped 0))))
+		 
+		 (set! sum (+ sum (oscil-bank cur-oscils resynth-oscils amps freqs rates sweeps)))
+		 (outa i (* amp sum))))))))))
 
-;;(with-sound () (pins 0 3 "oboe.snd" 1.0 :max-peaks 8))
+;;(with-sound () (pins 0 2 "oboe.snd" 1.0 :max-peaks 8))
 
 
 (definstrument (zc time dur freq amp length1 length2 feedback)

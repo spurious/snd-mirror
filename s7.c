@@ -5529,6 +5529,12 @@ s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst)
 }
 
 
+s7_pointer s7_cadar_value(s7_scheme *sc, s7_pointer lst)
+{
+  return(finder(sc, cadar(lst)));
+}
+
+
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env)
 {
   s7_pointer x;
@@ -47951,11 +47957,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		c = find_symbol_or_bust(sc, car(code));
 		if (!is_c_object(c))
 		  break;
-
-#if WITH_COUNTS
-		add_expr(sc, code);
-#endif
-
 		ind = find_symbol_or_bust(sc, cadr(code));
 		if ((c_object_ref_2i(c)) &&
 		    (is_integer(ind)))
@@ -50211,6 +50212,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* -------------------------------------------------------------------------------- */
 	  
 	  /* trailers */
+#if WITH_COUNTS
+	  add_expr(sc, sc->code);
+#endif
+
 	  sc->cur_code = sc->code;
 	  
 	  {
@@ -62429,14 +62434,14 @@ s7_scheme *s7_init(void)
  *   but make-hook above could presumably put the docstring in the lambda* body -can we find it there?
  *   or in the let for that matter -- could this always work?
  *
- * timing    12.0           13.0 13.1 13.2 13.3
- * bench    42736           8752 8051 7725 7741
- * lint                     9328 8140 7887 7877
- * index    44300 4988 3935 3291 3005 2742 2206
- * s7test         1721 1430 1358 1297 1244 1233
- * t455            265  218   89   55   31   16
- * t502             90   72   43   39   36   33
- * lat             229        63   52   47   42
- * calls                     276  208  176  156
+ * timing    12.0      13.0 13.1 13.2 13.3
+ * bench    42736      8752 8051 7725 7741
+ * lint                9328 8140 7887 7877
+ * index    44300 4988 3291 3005 2742 2146
+ * s7test         1721 1358 1297 1244 1233
+ * t455            265   89   55   31   16
+ * t502             90   43   39   36   32
+ * lat             229   63   52   47   42
+ * calls                276  208  176  156
  */
 
