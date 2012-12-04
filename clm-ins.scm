@@ -572,7 +572,7 @@ is a physical model of a flute:
 ;;; Jan Mattox's fm drum:
 
 (definstrument (fm-drum start-time duration frequency amplitude index 
-			:optional (high #f) (degree 0.0) (distance 1.0) (reverb-amount 0.01))
+			(high #f) (degree 0.0) (distance 1.0) (reverb-amount 0.01))
   (let (;; many of the following variables were originally passed as arguments
 	(casrat (if high 8.525 3.515))
 	(fmrat (if high 3.414 1.414))

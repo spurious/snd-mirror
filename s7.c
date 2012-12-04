@@ -24371,21 +24371,6 @@ static s7_pointer g_list_set_ic(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer list_set_0c;
-static s7_pointer g_list_set_0c(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer lst;
-  lst = car(args);
-  if (!is_pair(lst))
-    {
-      CHECK_METHOD(sc, lst, sc->LIST_SET, args);
-      return(wrong_type_argument(sc, sc->LIST_SET, small_int(1), lst, T_PAIR));
-    }
-  car(lst) = caddr(args);
-  return(car(lst));
-}
-
-
 static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
 {
   #define H_list_tail "(list-tail lst i) returns the list from the i-th element on"
@@ -35368,11 +35353,7 @@ static s7_pointer list_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       (s7_is_integer(caddr(expr))) &&
       (s7_integer(caddr(expr)) >= 0) &&
       (s7_integer(caddr(expr)) < MAX_LIST_LENGTH))
-    {
-      if (s7_integer(caddr(expr)) == 0)
-	return(list_set_0c);
-      return(list_set_ic);
-    }
+    return(list_set_ic);
   return(f);
 }
 
@@ -36648,8 +36629,6 @@ static void init_choosers(s7_scheme *sc)
 
   list_set_ic = s7_make_function(sc, "list-set!", g_list_set_ic, 3, 0, false, "list-set! optimization");
   s7_function_set_class(list_set_ic, f);
-  list_set_0c = s7_make_function(sc, "list-set!", g_list_set_0c, 3, 0, false, "list-set! optimization");
-  s7_function_set_class(list_set_0c, f);
 
 
   /* hash-table-ref */
@@ -62437,7 +62416,7 @@ s7_scheme *s7_init(void)
  * timing    12.0      13.0 13.1 13.2 13.3
  * bench    42736      8752 8051 7725 7741
  * lint                9328 8140 7887 7877
- * index    44300 4988 3291 3005 2742 2146
+ * index    44300 4988 3291 3005 2742 2144
  * s7test         1721 1358 1297 1244 1233
  * t455            265   89   55   31   16
  * t502             90   43   39   36   32

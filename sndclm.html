@@ -1065,12 +1065,11 @@ are times when nothing but a ton of oscils will do:
        ((= i len))
      (set! (amps (peaks k)) (peaks (+ k 1))))
 
-   (run
       (do ((i 0 (+ 1 i)))
 	  ((= i samps))
 	(outa i (* (env ampf)
 		   (mus-chebyshev-t-sum angle amps)))
-	(set! angle (+ angle freq (rand-interp vib)))))))
+	(set! angle (+ angle freq (rand-interp vib))))))
 -->
 
 
@@ -1417,10 +1416,9 @@ ampenvspectrum.png:
 	 (samps (seconds->samples 15))
 	 (start (seconds->samples 7))
 	 (end (+ start samps)))
-    (run
        (do ((i 0 (+ 1 i)))
 	   ((= i end))
-	 (outa (+ i start) (* (env ampf) (oscil osc)))))))
+	 (outa (+ i start) (* (env ampf) (oscil osc))))))
 
 ;;; GL/ data cutoff .015 dark 78 jet invert blackman10 65536 db-100
 ;;; x 299 1.84 y 281 .082 z 342 1.25
@@ -1435,10 +1433,9 @@ frqenvspectrum.png:
 	 (samps (seconds->samples 40))
 	 (start (seconds->samples 0))
 	 (end (+ start samps)))
-    (run
        (do ((i 0 (+ 1 i)))
 	   ((= i end))
-	 (outa (+ i start) (oscil osc (env ampf)))))))
+	 (outa (+ i start) (oscil osc (env ampf))))))
 
 65536 GL blackman10 -100 dB 
 x 299 1.84 y 281 0.82 z 10 1.25

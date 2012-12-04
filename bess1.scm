@@ -54,7 +54,7 @@
 	(mus-audio-close *output*)
 	#t)))
 
-(define* (make-rt-violin dur freq amp :key
+(define* (make-rt-violin dur freq amp
 			       (fm-index 1.0)
 			       (amp-env '(0 0 25 1 75 1 100 0)))
   "(make-rt-violin dur freq amp (fm-index 1.0) (amp-env '(0 0 25 1 75 1

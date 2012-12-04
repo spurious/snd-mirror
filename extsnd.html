@@ -3516,8 +3516,7 @@ implemented in frame.scm.
 <p>free-sampler
 releases the sampler 'obj'.  In most cases, you don't need to call this
 function because the garbage collector handles the sampler object, but it doesn't hurt anything (but don't try to use a sampler
-after you've freed it!).  If you're using zillions of samplers in an optimized (run-based) loop that
-doesn't trigger garbage collection, freeing the samplers explicitly can reduce
+after you've freed it!).  If you're using zillions of samplers, sometimes freeing the samplers explicitly can reduce
 demands on memory.
 </p>
 <div class="spacer"></div>
@@ -5908,10 +5907,9 @@ the second:
 		              (dloc (car vals))
 		              (beg (cadr vals))
 		              (end (caddr vals)))
-	                (run
 		         (do ((i beg (+ 1 i)))
 		             ((= i end))
-		           (<em class=red>dlocsig</em> dloc i (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> rd))))))))
+		           (<em class=red>dlocsig</em> dloc i (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> rd)))))))
 
          ;; now tmp-sound is the name of a temp sound file that moves 'file' in a spiral
 

@@ -1958,7 +1958,6 @@
 ;;; Rotate a path
 
 (define* (rotate-path path rotation
-		      :key
 		      rotation-center
 		      (rotation-axis '(0.0 0.0 1.0)))
   "rotate-path is a dlocsig function that rotates a dlocsig path"

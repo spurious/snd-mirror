@@ -1231,10 +1231,9 @@ but in the following example, I'll start -noinit, and load it explicitly.
    (let* ((o (make-oscil freq))
           (st (seconds-&gt;samples beg))
           (nd (+ st (seconds-&gt;samples dur))))
-     (run
-       (do ((i st (+ 1 i)))
-           ((= i nd))
-         (outa i (* amp (oscil o)))))))
+     (do ((i st (+ 1 i)))
+         ((= i nd))
+       (outa i (* amp (oscil o))))))
 #&lt;values ()&gt;
 </pre>
 

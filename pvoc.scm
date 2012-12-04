@@ -257,7 +257,7 @@
   (lambda* ((fftsize 512) (overlap 4) (time 1.0)
 	    (pitch 1.0) (gate 0.0) (hoffset 0.0)
 	    (snd 0) (chn 0))
-    "(pvoc :key fftsize overlap time pitch gate hoffset snd chn) applies the phase vocoder
+    "(pvoc fftsize overlap time pitch gate hoffset snd chn) applies the phase vocoder
   algorithm to the current sound (i.e. fft analysis, oscil bank resynthesis). 'pitch'
   specifies the pitch transposition ratio, 'time' - specifies the time dilation ratio,
   'gate' specifies a resynthesis gate in dB (partials with amplitudes lower than

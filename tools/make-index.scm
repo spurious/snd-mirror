@@ -643,7 +643,8 @@
 	      (call-with-exit
 	       (lambda (return)
 		 (do ((i 0 (+ i 1)))
-		     ((= i file-len) (format #t "oops! ~A~%" name) 0)
+		     ((= i file-len) 
+		      (format #t "oops! ~A~%" name) 0)
 		   (if (string=? name (list-ref places i))
 		       (return i))))))
 	    
@@ -742,8 +743,9 @@
 			  (set! xrefing #f))
 
 		      (if id-pos
-			  (let* ((start (char-position #\" (substring dline id-pos)))
-				 (end (char-position #\" (substring dline (+ id-pos start 2))))
+			  (let* ((start (- (char-position #\" dline id-pos) id-pos))           ; (substring dline id-pos)))
+				 (end-start (+ id-pos start 2))
+				 (end (- (char-position #\" dline end-start) end-start))       ; (substring dline (+ id-pos start 2))))
 				 (name (substring dline (+ id-pos start 1) (+ id-pos start 2 end))))
 			    (let ((sym-name (string->symbol name)))
 			      (if (not (hash-table-ref ids sym-name))

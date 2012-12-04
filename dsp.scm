@@ -1396,6 +1396,8 @@ the era when computers were human beings"
 	 (set! (average-data k) (+ (average-data k) 
 				   (* (rl k) (rl k)) 
 				   (* (im k) (im k))))))
+     ;; perhaps faster -- use vct-add! and vct-multiply!
+     ;; or add snd-spectrum results
     (graph (vct-scale! average-data (/ 1.0 (ceiling (/ len N)))))))
 
 
