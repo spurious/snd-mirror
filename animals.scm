@@ -5618,7 +5618,7 @@
 
 (defanimal (acorn-woodpecker beg1 amp1)
   
-  (define (acorn-woodpecker-1 beg dur amp ampf frqf ampf2 ampf4 rndf)
+  (define (acorn-woodpecker-1 beg dur ampf frqf ampf2 ampf4 rndf)
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
 	  (gen1 (make-polywave :partials (list 1 .2  2 1  3 .01  4 .005)))
@@ -5632,14 +5632,14 @@
 		      (* (env rndf) 
 			 (rand-interp rnd))))
 	      (amp2 (env ampf2)))
-	  (outa i (* amp (env ampf)
+	  (outa i (* (env ampf)
 		     (+ (polywave gen1 (* 2 frq))
 			(* amp2 (polywave gen2 frq))
 			(* (- 1.0 amp2) 2 (polywave gen3 (* 2 frq)))
 			(* (env ampf4) (oscil gen4 (* 6 frq))))))))))
   ;; note #1
   (let ((dur1 0.36))
-    (acorn-woodpecker-1 beg1 dur1 amp1
+    (acorn-woodpecker-1 beg1 dur1
 			(make-env '(0.000 0.000 0.046 0.257 0.248 0.331 0.371 0.745 0.564 1.000 0.738 0.970 0.909 0.442 1.000 0.000)
 				  :duration dur1 :scaler amp1)
 			(make-env '(0.000 0.430 0.054 0.526 0.171 0.534 0.244 0.591 0.284 0.603 0.317 0.630 0.378 0.639 0.414 0.658 
@@ -5651,7 +5651,7 @@
 			(make-env '(0 .03  .85 .03  1 1) :duration dur1)))
   ;; note #2
   (let ((dur1 0.35))
-    (acorn-woodpecker-1 (+ beg1 0.55) dur1 amp1
+    (acorn-woodpecker-1 (+ beg1 0.55) dur1
 			(make-env '(0 0 .2 .1 .9 1 1 0) :duration dur1 :scaler amp1)
 			(make-env '(0.000 0.466 0.088 0.497 0.202 0.513 0.319 0.585 0.386 0.596 0.747 0.632 
 					  0.835 0.671 0.882 0.661 1.000 0.350)
@@ -5661,7 +5661,7 @@
 			(make-env '(0 .3 .05 .03 .8 .03  1 .3) :duration dur1 :base 10)))
   ;; note #3
   (let ((dur1 0.34))
-    (acorn-woodpecker-1 (+ beg1 1.17) dur1 amp1
+    (acorn-woodpecker-1 (+ beg1 1.17) dur1
 			(make-env '(0 0 .2 .1 .8 1 .9 1 1 0) :duration dur1 :scaler amp1)
 			(make-env '(0.000 0.310 0.076 0.331 0.118 0.388 0.184 0.422 0.239 0.484 0.336 0.544 
 					  0.720 0.549 0.831 0.581 0.896 0.570 0.920 0.630 0.938 0.604 1.000 0.448)
@@ -5670,7 +5670,7 @@
 			(make-env '(0 1  .2 1  .25 0  .4 0 .6 1  .7 0 .8 1  .9 1  1 1) :duration dur1 :scaler .3)
 			(make-env '(0 .1 .05 .03 .8 .03  1 .5) :duration dur1 :base 10))))
 
-;; (with-sound (:play #t) (acorn-woodpecker 0 .5))
+;; (with-sound (:play #t) (acorn-woodpecker 0 .3))
 
 
 
@@ -5970,23 +5970,25 @@
 	    (frmf3 (make-env '(0 8200 .7 8400 .9 4000 1 4000) :duration dur))
 	    (frmaf (make-env '(0 0 .6 .3 .9 .8  1 .5) :duration dur))
 	    (frmf1 (make-env '(0 2460 .7 2400 .9 1400 1 1500) :duration dur)))
-	(do ((i start (+ i 1)))
-	    ((= i stop))
-	  (set! (mus-frequency frm2) (env frmf))
-	  (set! (mus-frequency frm3) (env frmf3))
-	  (set! (mus-frequency frm1) (env frmf1))
+
+	(let ((fb (vector frm1 frm2 frm3))
+	      (fs (make-vct 3)))
+	  (set! (fs 2) fr3)
+
+	  (do ((i start (+ i 1)))
+	      ((= i stop))
+	    (set! (mus-frequency frm2) (env frmf))
+	    (set! (mus-frequency frm3) (env frmf3))
+	    (set! (mus-frequency frm1) (env frmf1))
 	  
-	  (let* ((fintrp (env frmaf))
-		 (val1 (* (env ampf)
-			  (+ (polywave gen1 (env frqf1))
-			     (* (env ampf2)
-				(polywave gen2 (env frqf2))))))
-		 (val (* val1
-			 (rand-interp rnd))))
-	    (outa i (+ (* .75 val1)
-		       (* fr1 (- 1.0 fintrp) (formant frm1 val))
-		       (* fr2 fintrp (formant frm2 val))
-		       (* fr3 (formant frm3 val)))))))))
+	  (let ((fintrp (env frmaf))
+		(val1 (* (env ampf)
+			 (+ (polywave gen1 (env frqf1))
+			    (* (env ampf2)
+			       (polywave gen2 (env frqf2)))))))
+	    (set! (fs 0) (* fr1 (- 1.0 fintrp)))
+	    (set! (fs 1) (* fr2 fintrp))
+	    (outa i (+ (* 0.75 val1) (formant-bank fs fb (* val1 (rand-interp rnd)))))))))))
   
   (do ((beg beg1 (+ beg .15))
        (i 0 (+ i 1)))

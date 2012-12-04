@@ -40085,11 +40085,17 @@ static s7_pointer check_let(s7_scheme *sc)
 				    {
 				      lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
 				      if (c_call(cadr(binding)) == g_read_char)
-					set_syntax_op(sc->code, sc->LET_READ_CHAR_P);
+					{
+					  gcdr(sc->code) = caaar(sc->code);
+					  set_syntax_op(sc->code, sc->LET_READ_CHAR_P);
+					}
 				      else 
 					{
 					  if (c_call(cadr(binding)) == g_car)
-					    set_syntax_op(sc->code, sc->LET_CAR_P);
+					    {
+					      gcdr(sc->code) = caaar(sc->code);
+					      set_syntax_op(sc->code, sc->LET_CAR_P);
+					    }
 					}
 				    }
 				}
@@ -40129,7 +40135,9 @@ static s7_pointer check_let(s7_scheme *sc)
 		  else
 		    {
 		      fcdr(sc->code) = cadaar(sc->code);
-		      if (is_symbol(cadaar(sc->code)))
+		      gcdr(sc->code) = caaar(sc->code);
+		      /* should we make sure T_LINE_NUMBER is not set? -- it won't be cur_code in an error message */
+		      if (is_symbol(fcdr(sc->code)))
 			{
 			  if (is_one_liner(cdr(sc->code)))
 			    set_syntax_op(sc->code, sc->LET_S_P);
@@ -40341,11 +40349,17 @@ static s7_pointer check_let_star(s7_scheme *sc)
 				    {
 				      lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
 				      if (c_call(cadr(binding)) == g_read_char)
-					set_syntax_op(sc->code, sc->LET_READ_CHAR_P);
+					{
+					  gcdr(sc->code) = caaar(sc->code);
+					  set_syntax_op(sc->code, sc->LET_READ_CHAR_P);
+					}
 				      else 
 					{
 					  if (c_call(cadr(binding)) == g_car)
-					    set_syntax_op(sc->code, sc->LET_CAR_P);
+					    {
+					      gcdr(sc->code) = caaar(sc->code);
+					      set_syntax_op(sc->code, sc->LET_CAR_P);
+					    }
 					}
 				    }
 				}
@@ -53840,7 +53854,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET_C:
       /* one var, init is constant, incoming sc->code is '(((var val))...)!
        */
-      NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(sc->code), fcdr(sc->code));
+      NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, gcdr(sc->code), fcdr(sc->code));
       sc->code = cdr(sc->code);
       goto BEGIN;
       
@@ -53850,7 +53864,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* one var, init is constant, incoming sc->code is '(((var val))...)!
        *   body is one statement
        */
-      NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(sc->code), fcdr(sc->code));
+      NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, gcdr(sc->code), fcdr(sc->code));
       sc->code = cadr(sc->code);
       goto EVAL; 
       
@@ -53860,7 +53874,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* one var, init is constant, incoming sc->code is '(((var val))...)!
        *   body is one optimized statement
        */
-      NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(sc->code), fcdr(sc->code));
+      NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, gcdr(sc->code), fcdr(sc->code));
       sc->code = cadr(sc->code);
       goto OPT_EVAL;
       
@@ -53869,7 +53883,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET_S:
       /* one var, init is symbol, incoming sc->code is '(((var sym))...)
        */
-      NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(sc->code), finder(sc, fcdr(sc->code)));
+      NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, gcdr(sc->code), finder(sc, fcdr(sc->code)));
       sc->code = cdr(sc->code);
       goto BEGIN;
       
@@ -53878,7 +53892,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET_S_P:
       /* one var, init is symbol, incoming sc->code is '(((var sym))...)
        */
-      NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(sc->code), finder(sc, fcdr(sc->code)));
+      NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, gcdr(sc->code), finder(sc, fcdr(sc->code)));
       sc->code = cadr(sc->code);
       goto EVAL; 
       
@@ -53934,11 +53948,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (!is_pair(val)) 
 	  {
 	    val = g_car(sc, list_1(sc, val));
-	    NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(code), val);
+	    NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, gcdr(code), val);
 	  }
 	else 
 	  {
-	    NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(code), car(val));
+	    NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, gcdr(code), car(val));
 	  }
 	
 	code = cadr(code);
@@ -53973,7 +53987,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (!is_input_port(port))              /* (read-char 123)? */
 	  c = g_read_char(sc, list_1(sc, port));
 	else c = chars[port_read_character(port)(sc, port)];
-	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, fc = caaar(code), c);
+	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, fc = gcdr(code), c);
 	code = cadr(code);
 	
 	op = (opcode_t)lifted_op(code);
@@ -62402,10 +62416,6 @@ s7_scheme *s7_init(void)
 /* TODO: use new generic_ff in methods opt case 
  * SOMEDAY: get the doc string out of the closure body
  * TODO: we need integer_length everywhere! These fixups are ignored by the optimized cases.
- * TODO: in mus_fft we load c_in_data -- this is just as easy with vectors if local, and if imag=0, loop can be simpler
- *   why not provide these here -- s7_vector_to_double_array|complex_array with no local allocation = vector->vct 
- *   also will need the reverse s7_double|complex_array_to_vector
- *   perhaps s7_vector_to_object_array? -- we're actually only saving the s7_real/s7_make_real calls
  * get rid of sound-data: mus-audio* mus-sound* use vct for now
  *   sound-data as output: ws.scm, conversions: frame.scm, play: play.scm, snd-motif|gtk.scm, enved.scm
  *   mus-sound|audio-write

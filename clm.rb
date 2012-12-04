@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Oct 14 23:02:57 CEST 2009
-# Changed: Mon Oct 29 16:17:11 CET 2012
+# Changed: Tue Dec  4 21:41:20 CET 2012
 
 # Commentary:
 #
@@ -2493,7 +2493,8 @@ class Snd
       $DEBUG = false
       val = Kernel.catch(tag) do yield end
       # catch/throw part
-      if array?(val) and val.car == :snd_throw # [:snd_throw, tag, get_func_name(2), *rest]
+      # [:snd_throw, tag, get_func_name(2), *rest]
+      if array?(val) and val.car == :snd_throw
         if retval != :undefined
           if proc?(retval)
             retval.call(val.cdr)
@@ -2508,8 +2509,8 @@ class Snd
       end
       # ruby1.9/ChangeLog
       # Thu Feb  2 16:01:24 2006  Yukihiro Matsumoto  <matz@ruby-lang.org>
-      # 	* error.c (Init_Exception): change NameError to direct subclass of
-      # 	  Exception so that default rescue do not handle it silently.
+      # * error.c (Init_Exception): change NameError to direct subclass of
+      #   Exception so that default rescue do not handle it silently.
     rescue Interrupt, ScriptError, NameError, StandardError
       mus_tag = rb_error_to_mus_tag
       # raise part
@@ -2535,7 +2536,7 @@ class Snd
     end
 
     def raise(tag, *rest)
-      msg = format("%s: %s:", get_func_name(2), tag)
+      msg = format("%s in %s:", tag, get_func_name(2))
       rest.each do |s| msg += format(" %s,", s) end
       msg.chomp!(",")
       exception = case tag
@@ -2631,21 +2632,11 @@ Snd_error_tags = [# clm2xen.c
                   :no_such_resource]
 
 def rb_error_to_mus_tag
-  # to_s and string error-names intended here
+  # to_s and string error-names intentional here
   # otherwise e.g. NameError goes to case StandardError!
   case $!.class.to_s
-    # case 1
-    # No_such_file: file->array /baddy/hiho No such file or directory
-    # case 2
-    # insert_region: No_such_region: 1004
-    # case 3 (mus_error)
-    # mus_ycoeff__invalid_index_123__order___3?: Mus_error
-    # can't translate /usr/gnu/sound/sf1/oboe.g721 to /usr/gnu/sound/sf1/oboe.g721.snd:
-    #   : Mus_error>
   when "StandardError"
-    err = $!.message.split(/\n/).first.downcase.split(/:/).map do |e| e.strip.chomp(">") end
-    # err = $!.message.delete("\n").downcase.split(/:/).compact.map do |e| e.strip.chomp(">") end
-    Snd_error_tags.detect do |tag| err.member?(tag.to_s) end or :standard_error
+    $!.message.split(/[: ]/).first.downcase.intern
   when "RangeError"
     :out_of_range
   when "TypeError"
@@ -2654,36 +2645,14 @@ def rb_error_to_mus_tag
     :wrong_number_of_args
   else
     # converts ruby exceptions to symbols: NoMethodError --> :no_method_error
-    $!.class.to_s.gsub(/([A-Z])/) do |c| "_" + c.tr("A-Z", "a-z") end[1..-1].intern
+    $!.class.to_s.gsub(/([A-Z])/) do |c|
+      "_" + c.tr("A-Z", "a-z")
+    end[1..-1].intern
   end
 end
 
 def snd_error_to_message
-  err = $!.message.split(/:/).map do |e| e.strip.chomp("\n") end
-  str = err.join(": ")
-  if err.length > 1 and (len = str.scan(/~A/).length).positive?
-    str.gsub!(/~A/, "%s")
-    str = if $!.class == RangeError
-            format(str.strip, if string?(s = err.cadr.split(/,/)[1..-2].join(","))
-                                eval(s)
-                              else
-                                0
-                              end)
-          else
-            format(str.strip, if string?(s = str.slice!(str.index("[")..str.index("]")))
-                                eval(s)
-                              else
-                                [0] * len
-                              end)
-          end
-  end
-  str.gsub(/#{rb_error_to_mus_tag.to_s.capitalize + ": "}/, "")
-rescue Interrupt, ScriptError, NameError, StandardError
-  if $DEBUG
-    $stderr.printf("# Warning (%s)\n", get_func_name)
-    each_variables do |var, val| $stderr.printf("# %s = %s\n", var, val.inspect) end
-  end
-  str
+  $!.message.split(/\n/).first.sub(/^.*: /, "")
 end
 
 add_help(:snd_catch,

@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Thu Nov 15 17:28:23 CET 2012
+\ Changed: Sat Dec  1 19:09:08 CET 2012
 
 \ Commentary:
 \
@@ -11,7 +11,7 @@
 \ Tested with Snd 13.x
 \             Fth 1.3.x
 \             Motif 2.3.4 X11R6
-\             Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+\             (Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2)
 \
 \ This is an example of an object type written in Forth.
 \
@@ -39,6 +39,13 @@
 \ xenved-test           ( name -- xe )
 
 'snd-nogui provided? [if] skip-file [then]
+
+'snd-gtk provided? [if]
+	'gtk3 provided? not [if]
+		.( snd-gtk: gtk3 required -- skipping xm-enved.fs ) cr
+		skip-file
+	[then]
+[then]
 
 require enved
 require snd-xm

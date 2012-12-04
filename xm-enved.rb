@@ -1,15 +1,15 @@
-# xm-enved.rb -- Translation of xm-enved.scm and enved.scm -*- snd-ruby -*-
+# xm-enved.rb -- Translation of xm-enved.scm and enved.scm
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Mar 18 00:18:35 CET 2003
-# Changed: Sat Jul 30 18:26:23 CEST 2011
+# Changed: Tue Dec  4 21:51:37 CET 2012
 
 # Commentary:
 #
-# Tested with Snd 12.x
-#             Ruby 1.8.0/7, 1.9.2/4
-#             Motif 2.3.0 X11R6
-#             Gtk+ 3.0.11, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+# Tested with Snd 13.x
+#             Ruby 20.0
+#             Motif 2.3.4 X11R6
+#             Gtk+ 2.24.6, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 #
 # module Snd_enved
 #  channel_enved(snd, chn)
@@ -1041,12 +1041,33 @@ xe.help                             # this help
       end
     end
 
-    def draw_axes_cb
-      cairo = make_cairo(@drawer)
-      @px0, @py0, @px1, @py1 = draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1,
+    if $with_motif
+      # Motif's DRAW_AXES takes 3 required and 6 optional arguments.
+      # draw_axes(wid, gc, label,
+      #           x0=0.0, x1=1.0, y0=-1.0, y1=1.0,
+      #           style=X_axis_in_seconds,
+      #           axes=Show_all_axes)
+      def draw_axes_cb
+        @px0, @py0, @px1, @py1 = draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1,
+                                           X_axis_in_seconds, Show_all_axes)
+        redraw
+      end
+    end
+
+    if $with_gtk
+      # Gtk's DRAW_AXES takes 3 required and 7 optional arguments.
+      # draw_axes(wid, gc, label,
+      #           x0=0.0, x1=1.0, y0=-1.0, y1=1.0,
+      #           style=X_axis_in_seconds,
+      #           axes=Show_all_axes,
+      #           cairo)
+      def draw_axes_cb
+        cairo = make_cairo(@drawer)
+        @px0, @py0, @px1, @py1 = draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1,
                                          X_axis_in_seconds, Show_all_axes, cairo)
-      free_cairo(cairo)
-      redraw
+        free_cairo(cairo)
+        redraw
+      end
     end
 
     def ungrfx(x)

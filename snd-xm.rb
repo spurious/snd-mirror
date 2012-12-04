@@ -2,16 +2,16 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Sun Jun  3 23:59:04 CEST 2012
+# Changed: Sat Dec  1 18:36:34 CET 2012
 
 # Commentary:
 #
 # Requires --with-motif|gtk
 #
-# Tested with Snd 12.x
-#             Ruby 1.8-2.x
-#             Motif 2.3.3 X11R6
-#             Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+# Tested with Snd 13.x
+#             Ruby 2.0
+#             Motif 2.3.4 X11R6
+#             Gtk+ 2.24.6, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 #
 # module Snd_XM
 #  make_snd_menu(name, args) do ... end
@@ -169,12 +169,16 @@
 
 require "clm"
 
-unless provided?(:xm) or provided?(:xg)
-  Snd.raise(:runtime_error, __FILE__, "file requires --with-motif or --with-gtk")
+$with_motif = provided?(:snd_motif)
+$with_gtk   = provided?(:snd_gtk)
+
+unless $with_motif or $with_gtk
+  Snd.raise(:runtime_error, __FILE__, "--with-motif or --with-gtk required")
 end
 
-$with_motif = provided?(:xm)
-$with_gtk   = provided?(:xg)
+if $with_gtk and !provided?(:gtk3)
+  Snd.raise(:runtime_error, __FILE__, "gtk3 required")
+end
 
 #
 # --- functions working with Motif as well as with Gtk ---
@@ -818,7 +822,7 @@ module Snd_Gtk
       scl = Rgtk_scale_new(RGTK_ORIENTATION_HORIZONTAL, RGTK_ADJUSTMENT(@scale))
       sclscl = RGTK_SCALE(scl)
       tbltbl = RGTK_GRID(tbl)
-      unless provided?(:gtk3)
+      unless provided?(:GTK3)
         Rgtk_range_set_update_policy(RGTK_RANGE(sclscl), RGTK_UPDATE_CONTINUOUS)
       end
       Rgtk_scale_set_value_pos(sclscl, RGTK_POS_TOP)

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Sep 20 23:24:17 CEST 2003
-# Changed: Mon Nov 22 13:20:28 CET 2010
+# Changed: Tue Dec  4 21:42:01 CET 2012
 
 # Commentary:
 #
@@ -623,8 +623,8 @@ REFLECTED causes every other repetition to be in reverse.")
            [:len, 0],
            [:cutoff, -70],
            [:error, 0.01])
-    make_env(:envelope, db_envelope(env, cutoff, error), :scaler, scaler, :offset, offset,
-             :base, base, :duration, dur, :length, len)
+    make_env(:envelope, db_envelope(env, cutoff, error), :scaler, scaler,
+             :offset, offset, :base, base, :duration, duration, :length, len)
   end
 
   # ;;; Pitch envelopes (y units are semitone and octave intervals)

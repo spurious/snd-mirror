@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Sun Nov 18 17:06:41 CET 2012
+# Changed: Tue Dec  4 21:42:41 CET 2012
 
 # module Examp (examp.scm)
 #  selection_rms
@@ -239,7 +239,9 @@ $after_transform_hook.add_hook!(\"fft-peak\") do |snd, chn, scale|
 end")
   def fft_peak(snd, chn, scale)
     if transform_graph? and transform_graph_type == Graph_once
-      snd_print(((2.0 * vct_peak(transform2vct(snd, chn))) / transform_size).to_s, snd)
+      pk = (2.0 * vct_peak(transform2vct(snd, chn))) / transform_size
+      status_report(pk.to_s, snd)
+      pk
     else
       false
     end
@@ -1157,7 +1159,7 @@ varies the sampling rate randomly, making a voice sound quavery: hello_dentist(4
                   end)
     vct2channel(out_data.map do |x| src(rd, rand_interp(rn)) end,
                 0, len, snd, chn, false,
-		format("%s(%s, %s", get_func_name, freq, amp))
+                format("%s(%s, %s", get_func_name, freq, amp))
   end
 
   # a very similar function uses oscil instead of rand-interp, giving

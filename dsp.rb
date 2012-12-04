@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Tue Feb 28 15:57:01 CET 2012
+# Changed: Fri Nov 30 21:52:23 CET 2012
 
 # Commentary:
 #
@@ -692,13 +692,12 @@ calls fft, applies func to each phase, then un-ffts")
   class Asyfm < Musgen
     def initialize(*args)
       super()
-      frequency, ratio, r, index, freq, phase = nil
+      frequency, ratio, r, index, phase = nil
       optkey(args, binding,
              [:frequency, $clm_default_frequency],
              [:ratio, 1.0],
              [:r, 1.0],
              [:index, 1.0],
-             [:freq, 0.0],
              [:phase, 0.0])
       @frequency = frequency.to_f
       @ratio = ratio.to_f

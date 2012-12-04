@@ -2,16 +2,15 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Sun Jun  3 23:39:10 CEST 2012
+# Changed: Tue Dec  4 21:50:50 CET 2012
 
 # Commentary:
 #
-# Requires --with-motif|gtk
+# Requires --with-motif
 # 
-# Tested with Snd 12.x
-#             Ruby 1.8-2.x
-#             Motif 2.3.3 X11R6
-#             Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+# Tested with Snd 13.x
+#             Ruby 2.0
+#             Motif 2.3.4 X11R6
 #
 # $info_comment_hook: lambda do |file, info_string| ...; new_info_string; end
 # $edhist_save_hook:  lambda do |prc| ... end
@@ -103,6 +102,10 @@ require "hooks"
 require "snd-xm"
 include Snd_XM
 
+unless provided?(:snd_motif)
+  Snd.raise(:runtime_error, __FILE__, "--with-motif required")
+end
+
 $edhist_help_edits = false       # for prefs
 
 $info_comment_hook = Hook.new("$info_comment_hook", 2, "\
@@ -146,12 +149,8 @@ def make_snd_popup(name, *rest, &body)
   parent, target = nil
   optkey(rest, binding,
          [:parent, main_widgets[Main_pane_shell]],
-         [:target, :channels]) # Motif :channels, :edhist, :widget, :event, Gtk :channels
-  args = if provided? :xm
-           get_args(rest, :args, [RXmNbackground, highlight_color])
-         else
-           []
-         end
+         [:target, :channels]) # targets :channels, :edhist, :widget, :event
+  args = get_args(rest, :args, [RXmNbackground, highlight_color])
   Snd_popup_menu.new(name, parent, args, target, &body)
 end
 
@@ -184,34 +183,18 @@ If it returns non-nil or non-false, the menu will be posted.")
   
   def entry(name, *rest, &body)
     procedure = optkey(rest, :procedure)
-    if provided? :xm
-      args = get_args(rest, :args, @args)
-      child = RXtCreateManagedWidget(name, RxmPushButtonWidgetClass, @menu, args)
-      if block_given?
-        RXtAddCallback(child, RXmNactivateCallback,
-                       lambda do |w, c, i|
-                         chn = if snd = selected_sound
-                                 selected_channel
-                               else
-                                 false
-                               end
-                         body.call(snd, chn, w)
-                       end)
-      end
-    else
-      child = Rgtk_menu_item_new_with_label(name)
-      Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), child)
-      Rgtk_widget_show(child)
-      if block_given?
-        add_callback(child, "activate") do |w, d|
-          chn = if snd = selected_sound
-                  selected_channel
-                else
-                  false
-                end
-          body.call(snd, chn, w)
-        end
-      end
+    args = get_args(rest, :args, @args)
+    child = RXtCreateManagedWidget(name, RxmPushButtonWidgetClass, @menu, args)
+    if block_given?
+      RXtAddCallback(child, RXmNactivateCallback,
+                     lambda do |w, c, i|
+                       chn = if snd = selected_sound
+                               selected_channel
+                             else
+                               false
+                             end
+                       body.call(snd, chn, w)
+                     end)
     end
     @widget_names[child] = name
     proc?(procedure) and procedure.call(child)
@@ -241,11 +224,7 @@ If it returns non-nil or non-false, the menu will be posted.")
   
   private
   def create(&body)
-    @menu = if provided? :xm
-              RXmCreatePopupMenu(@parent, @label, [RXmNpopupEnabled, RXmPOPUP_AUTOMATIC] + @args)
-            else
-              Rgtk_menu_new()
-            end
+    @menu = RXmCreatePopupMenu(@parent, @label, [RXmNpopupEnabled, RXmPOPUP_AUTOMATIC] + @args)
     unless @label.empty?
       label(@label)
       separator
@@ -253,14 +232,12 @@ If it returns non-nil or non-false, the menu will be posted.")
     instance_eval(&body) if block_given?
     case @target
     when :channels, :edhist
-      if provided?(:xm)
-        Snd.sounds.each do |snd| set_channel_popup(snd) end
-        hook_name = format("%s-popup", (@label or "channels").downcase.tr(" ", "-"))
-        $after_open_hook.add_hook!(hook_name) do |snd| set_channel_popup(snd) end
-      else                      # gtk :channels
-        unless @target == :edhist
-          set_gtk_channel_popup
-        end
+      Snd.sounds.each do |snd|
+        set_channel_popup(snd)
+      end
+      hook_name = format("%s-popup", (@label or "channels").downcase.tr(" ", "-"))
+      $after_open_hook.add_hook!(hook_name) do |snd|
+        set_channel_popup(snd)
       end
     when :widget
       set_widget_popup
@@ -320,78 +297,38 @@ If it returns non-nil or non-false, the menu will be posted.")
       end
     end
   end
-
-  def set_gtk_channel_popup
-    $gtk_popup_hook.add_hook!("popup-rb-hook") do |widget, event, data, snd, chn|
-      if snd
-        e = RGDK_EVENT(event)
-        time = Rgdk_event_get_time(e)
-        if @before_popup_hook.empty?
-          Rgtk_widget_show(@menu)
-          Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, 2, time)
-        else
-          coords = Rgdk_event_get_coords(e)
-          x = coords[1]
-          y = coords[2]
-          if channel_style(snd) == Channels_combined
-            chn = if (cn = (0...channels(snd)).detect do |cc| y < axis_info(snd, cc)[14] end)
-                    cn - 1
-                  else
-                    channels(snd) - 1
-                  end
-          end
-          if @before_popup_hook.run_hook_bool(snd, chn, x)
-            Rgtk_widget_show(@menu)
-            Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, 2, time)
-          end
-        end
-        true
-      else
-        false
-      end
-    end
-  end
   
-  if provided? :xm
-    # e.g. on listener
-    def set_widget_popup
-      RXtAddCallback(@parent, RXmNpopupHandlerCallback,
-                     lambda do |w, c, i|
-                       if Rtype(Revent(i)) == RButtonPress
-                         @before_popup_hook.call(selected_sound, selected_channel, w)
-                         Rset_menuToPost(i, @menu)
-                       end
-                     end)
-    end
+  # e.g. on listener
+  def set_widget_popup
+    RXtAddCallback(@parent, RXmNpopupHandlerCallback,
+                   lambda do |w, c, i|
+                     if Rtype(Revent(i)) == RButtonPress
+                       @before_popup_hook.call(selected_sound, selected_channel, w)
+                       Rset_menuToPost(i, @menu)
+                     end
+                   end)
+  end
 
-    # see nb.rb for an example
-    def set_event_popup
-      RXtAddEventHandler(@parent, RButtonPressMask, false,
-                         lambda do |w, c, i, f|
-                           if Rbutton(i) == 3
-                             if @before_popup_hook.run_hook_bool(w, c, i)
-                               RXmMenuPosition(@menu, i)
-                               RXtManageChild(@menu)
-                             end
+  # see nb.rb for an example
+  def set_event_popup
+    RXtAddEventHandler(@parent, RButtonPressMask, false,
+                       lambda do |w, c, i, f|
+                         if Rbutton(i) == 3
+                           if @before_popup_hook.run_hook_bool(w, c, i)
+                             RXmMenuPosition(@menu, i)
+                             RXtManageChild(@menu)
                            end
-                         end)
-    end
+                         end
+                       end)
   end
   
   class Cascade < Snd_popup_menu
     def initialize(name, parent, args, target)
       super(name, parent, args, nil)
-      if provided? :xm
-        @menu = RXmCreatePulldownMenu(@parent, @label, @args)
-        @cascade = RXtCreateManagedWidget(@label, RxmCascadeButtonWidgetClass, @parent,
-                                          [RXmNsubMenuId, @menu] + @args)
-      else
-        @cascade = Rgtk_menu_item_new_with_label(@label)
-        Rgtk_menu_shell_append(RGTK_MENU_SHELL(@parent), @cascade)
-        Rgtk_widget_show(@cascade)
-        @menu = Rgtk_menu_new()
-        Rgtk_menu_item_set_submenu(RGTK_MENU_ITEM(@cascade), @menu)
-      end
+      @menu = RXmCreatePulldownMenu(@parent, @label, @args)
+      @cascade = RXtCreateManagedWidget(@label,
+          RxmCascadeButtonWidgetClass, @parent,
+          [RXmNsubMenuId, @menu] + @args)
       @children = []
       @target = target
     end
@@ -412,161 +349,88 @@ If it returns non-nil or non-false, the menu will be posted.")
     # listener: set_cb.arity == 0|-1, body.arity == 1 (snd)
     #   edhist: set_cb.arity == 0|-1, body.arity == 3 (snd, chn, index)
     def add_with_arity_1(no_widget, set_cb, &body)
-      if provided? :xm
-        if no_widget
-          widget = false
-        else
-          widget = RXtCreateManagedWidget(@label, RxmPushButtonWidgetClass, @parent, @args)
-          RXtAddCallback(widget, RXmNactivateCallback,
-                         lambda do |w, c, i| body.call(set_cb.call.first) end)
-        end
-        RXtAddCallback(@cascade, RXmNcascadingCallback,
-                       lambda do |w, c, i|
-                         @children.each do |child| RXtUnmanageChild(child) end
-                         snds = set_cb.call.reverse
-                         clen = @children.length
-                         slen = snds.length
-                         if clen < slen
-                           (clen...slen).each do |numb|
-                             child = RXtCreateManagedWidget(numb.to_s,
-                                                            RxmPushButtonWidgetClass,
-                                                            @menu, @args)
-                             RXtAddCallback(child, RXmNactivateCallback,
-                                            lambda do |ww, cc, ii|
-                                              if @target == :edhist
-                                                body.call(selected_sound,
-                                                          selected_channel,
-                                                          RXtVaGetValues(ww,[RXmNuserData, 0]).cadr)
-                                              else
-                                                body.call(find_sound(current_label(ww)))
-                                              end
-                                            end)
-                             RXtVaSetValues(child, [RXmNuserData, @children.length])
-                             @children.push(child)
-                           end
-                         end
-                         if slen.nonzero?
-                           if @target == :edhist
-                             @children.zip(snds) do |child, label|
-                               break unless label
-                               if string?(label)
-                                 change_label(child, label)
-                               else
-                                 change_label(child,
-                                              format("%s[%d]",
-                                                     short_file_name(label.car), label.cadr))
-                               end
-                               RXtManageChild(child)
-                             end
-                           else
-                             @children.zip(snds) do |child, snd|
-                               break unless snd
-                               change_label(child, short_file_name(snd))
-                               RXtManageChild(child)
-                             end
-                           end
-                         end
-                       end)
-      else                      # gtk
-        if no_widget
-          widget = false
-        else
-          widget = Rgtk_menu_item_new_with_label(@label)
-          Rgtk_menu_shell_append(RGTK_MENU_SHELL(@parent), widget)
-          Rgtk_widget_show(widget)
-          add_callback(widget, "activate") do |w, d|
-            body.call(body.call(set_cb.call.first))
-          end
-        end
-        add_callback(@cascade, "activate") do |w, c|
-          @children.each do |child| Rgtk_widget_hide(child) end
-          snds = set_cb.call.reverse
-          clen = @children.length
-          slen = snds.length
-          if clen < slen
-            (clen...slen).each do |numb|
-              child = Rgtk_menu_item_new_with_label(numb.to_s)
-              Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), child)
-              add_callback(child, "activate") do |ww, d|
-                if @target == :edhist
-                  body.call(selected_sound, selected_channel, clen) # @children.length before push
-                else
-                  body.call(find_sound(current_label(ww)))
-                end
-              end
-              @children.push(child)
-            end
-          end
-          if slen.nonzero?
-            if @target == :edhist
-              @children.zip(snds) do |child, label|
-                break unless label
-                if string?(label)
-                  change_label(child, label)
-                else
-                  change_label(child,
-                               format("%s[%d]",
-                                      short_file_name(label.car), label.cadr))
-                end
-                Rgtk_widget_show(child)
-              end
-            else
-              @children.zip(snds) do |child, snd|
-                break unless snd
-                change_label(child, short_file_name(snd))
-                Rgtk_widget_show(child)
-              end
-            end
-          end
-          false
-        end
+      if no_widget
+        widget = false
+      else
+        widget = RXtCreateManagedWidget(@label, RxmPushButtonWidgetClass, @parent, @args)
+        RXtAddCallback(widget, RXmNactivateCallback,
+                       lambda do |w, c, i| body.call(set_cb.call.first) end)
       end
+      RXtAddCallback(@cascade, RXmNcascadingCallback,
+                     lambda do |w, c, i|
+                       @children.each do |child| RXtUnmanageChild(child) end
+                       snds = set_cb.call.reverse
+                       clen = @children.length
+                       slen = snds.length
+                       if clen < slen
+                         (clen...slen).each do |numb|
+                           child = RXtCreateManagedWidget(numb.to_s,
+                             RxmPushButtonWidgetClass, @menu, @args)
+                           RXtAddCallback(child, RXmNactivateCallback,
+                             lambda do |ww, cc, ii|
+                               if @target == :edhist
+                                 body.call(selected_sound,
+                                   selected_channel,
+                                   RXtVaGetValues(ww,[RXmNuserData, 0]).cadr)
+                               else
+                                 body.call(find_sound(current_label(ww)))
+                               end
+                             end)
+                           RXtVaSetValues(child,
+                             [RXmNuserData, @children.length])
+                           @children.push(child)
+                         end
+                       end
+                       if slen.nonzero?
+                         if @target == :edhist
+                           @children.zip(snds) do |child, label|
+                             break unless label
+                             if string?(label)
+                               change_label(child, label)
+                             else
+                               change_label(child,
+                                 format("%s[%d]",
+                                   short_file_name(label.car), label.cadr))
+                             end
+                             RXtManageChild(child)
+                           end
+                         else
+                           @children.zip(snds) do |child, snd|
+                             break unless snd
+                             change_label(child, short_file_name(snd))
+                             RXtManageChild(child)
+                           end
+                         end
+                       end
+                     end)
       @values = [widget, @menu, @cascade, set_cb]
     end
     
     # transform: set_cb.arity and body.arity == 3 (snd, chn, val)
     def add_with_arity_3(list, set_cb, &body)
       list.each do |name, val|
-        if provided? :xm
-          wid = RXtCreateManagedWidget(name.to_s, RxmPushButtonWidgetClass, @menu, @args)
-          RXtAddCallback(wid, RXmNactivateCallback,
-                         lambda do |w, c, i|
-                           body.call(selected_sound, selected_channel, val)
-                         end)
-        else
-          wid = Rgtk_menu_item_new_with_label(name.to_s)
-          Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), wid)
-          Rgtk_widget_show(wid)
-          add_callback(wid, "activate") do |w, d|
-            body.call(selected_sound, selected_channel, val)
-          end
-        end
+        wid = RXtCreateManagedWidget(name.to_s,
+                                     RxmPushButtonWidgetClass, @menu, @args)
+        RXtAddCallback(wid, RXmNactivateCallback,
+                       lambda do |w, c, i|
+                         body.call(selected_sound, selected_channel, val)
+                       end)
         @values.push(val)
         @children.push(wid)
       end
-      if provided? :xm
-        RXtAddCallback(@cascade, RXmNcascadingCallback,
-                       lambda do |w, c, i|
-                         @children.each_with_index do |child, idx|
-                           RXtSetSensitive(child,
-                                           set_cb.call(selected_sound,
-                                                       selected_channel,
-                                                       @values[idx]))
-                         end
-                       end)
-      else
-        add_callback(@cascade, "activate") do |w, d|
-          @children.each_with_index do |child, idx|
-            set_sensitive(child, set_cb.call(selected_sound, selected_channel, @values[idx]))
-          end
-        end
-      end
+      RXtAddCallback(@cascade, RXmNcascadingCallback,
+                     lambda do |w, c, i|
+                       @children.each_with_index do |child, idx|
+                         RXtSetSensitive(child,
+                                         set_cb.call(selected_sound,
+                                                     selected_channel,
+                                                     @values[idx]))
+                       end
+                     end)
     end
   end
 end
 
-# Example menus; Selection, Graph, Transform, and Edhist popup work with Motif
-# as well as with Gtk, Listener popup works only with Motif.
 unless defined? $__private_popup_menu__ and $__private_popup_menu__
   #
   # Selection Popup
@@ -1093,7 +957,7 @@ all saved edit lists.",
   #
   # Listener Popup (only with Motif)
   #
-  if provided? :xm
+  if $with_motif
     make_snd_popup("Listener",
                    :target, :widget,
                    :parent, if widget?(ww = main_widgets[Listener_pane])

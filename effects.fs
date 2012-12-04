@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Sat Nov 24 01:41:57 CET 2012
+\ Changed: Sat Dec  1 19:08:53 CET 2012
 
 \ Commentary:
 \
@@ -743,6 +743,13 @@ set-current
 previous
 
 'snd-nogui provided? [if] skip-file [then]
+
+'snd-gtk provided? [if]
+	'gtk3 provided? not [if]
+		.( snd-gtk: gtk3 required -- skipping effects.fs ) cr
+		skip-file
+	[then]
+[then]
 
 require xm-enved
 require snd-xm

@@ -2,23 +2,18 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Thu Nov 22 04:47:22 CET 2012
+\ Changed: Sat Dec  1 19:08:39 CET 2012
 
 \ Commentary:
 
 \
-\ Motif and Gtk:
-\
 \ selection-popup-menu
 \ graph-popup-menu
 \ fft-popup-menu
-\
-\ add-popups			( -- )
-\
-\ Motif only:
-\
 \ edit-history-menu
 \ listener-popup-menu
+\
+\ add-popups			( -- )
 \
 \ edhist-help-edits		( w c i -- )
 \ change-menu-color		( menu new-color -- )
@@ -30,7 +25,7 @@
 
 \ Code:
 
-'snd-nogui provided? [if] skip-file [then]
+'snd-motif provided? [unless] skip-file [then]
 
 require snd-xm
 require extensions
@@ -56,272 +51,194 @@ currently saved edit lists -- any such list can be applied to any channel.  \
 hide
 #() value cascade-popup-cb-list
 
-'snd-gtk provided? [if]
-	#{} value popup-widget-names
-	: widget->name ( w -- s )
-		popup-widget-names swap hash-ref
-	;
+: widget->name ( w -- s )
+	FXtName
+;
 
-	: popup-post-it   { menu info -- }
-		menu Fgtk_widget_show drop
-		menu FGTK_MENU #f #f #f #f 2 info
-		    Fgdk_event_get_time Fgtk_menu_popup drop
-	;
+: popup-post-it   { menu info -- }
+	info menu Fset_menuToPost drop
+;
 
-	\ --- make-simple-popdown-menu for fft-popup-menu ---
-	\ cb: ( w d unused -- val )
-	\ so we can use existing motif callbacks
-	: popup-menu-cb ( cb -- prc; w d self -- val )
-		{ cb }
-		2 proc-create ( prc )
-		cb ,
-	  does> { w d self -- val }
-		self @ ( cb ) #( w d #f ) run-proc ( val )
-		d Fgtk_widget_hide drop
-	;
+\ --- make-simple-popdown-menu for fft-popup-menu ---
+: popup-cascade-cb { children cb -- prc; w c i self -- }
+	3 proc-create ( prc )
+	cb , children ,
+  does> { w c info self -- }
+	self       @ { cb }
+	self cell+ @ { children }
+	cb #( children ) run-proc drop
+;
 
-	: make-simple-popdown-menu { top popdown-labels cascade-cb -- }
-		Fgtk_menu_new { menu }
-		top FGTK_MENU_ITEM menu Fgtk_menu_item_set_submenu drop
-		#() { children }
-		\ popdown-labels #( #( name cb ) ... )
+: make-simple-popdown-menu { label popdown-labels parent cascade-cb -- }
+	parent label #( FXmNbackground highlight-color )
+	    undef FXmCreatePulldownMenu { top }
+	label FxmCascadeButtonWidgetClass parent
+	    #( FXmNbackground highlight-color FXmNsubMenuId top )
+	    undef FXtCreateManagedWidget { menu }
+	#() { children }
+	nil { c }
+	popdown-labels proc? if
+		\ edhist sends a proc to set TOP to edhist-widgets
+		popdown-labels #( top ) run-proc drop
+	else
+	\ else arrays of #( name proc ) lists
 		popdown-labels each { poplab }
-			poplab 0 array-ref Fgtk_menu_item_new_with_label { c }
-			menu FGTK_MENU_SHELL child Fgtk_menu_shell_append drop
-			c Fgtk_widget_show drop
-			c "activate" poplab 1 array-ref popup-menu-cb menu
-			    Fg_signal_connect drop
+			poplab 0 array-ref FxmPushButtonWidgetClass top
+			    #( FXmNbackground highlight-color )
+			    undef FXtCreateManagedWidget to c
+			c FXmNactivateCallback poplab 1 array-ref
+			    undef FXtAddCallback drop
 			children c array-push drop
 		end-each
-		cascade-popup-cb-list #( cascade-cb children ) array-push drop
-	;
-
-	\ general entries:
-	\ entries: #( #( name type cb func ) ... )
-	: make-popup-menu ( name parent entries -- menu )
-		{ name parent entries }
-		Fgtk_menu_new { menu }
-		entries each { entry }
-			\ label: string
-			entry 0 array-ref { label }
-			\ type: 'label|'separator|'cascade|#f
-			entry 1 array-ref { typ }
-			typ 'separator = if
-				Fgtk_menu_item_new
-			else
-				label Fgtk_menu_item_new_with_label
-			then { wid }
-			menu FGTK_MENU_SHELL wid Fgtk_menu_shell_append drop
-			typ 'cascade = if		\ fft menu
-				\ entry: #( label type labels cascade-cb )
-				wid entry 2 array-ref entry 3 array-ref
-				    make-simple-popdown-menu
-			else
-				\ cb: proc of 3 args or #f
-				entry 2 array-ref ?dup-if
-					wid "activate" rot popup-menu-cb menu
-					    Fg_signal_connect drop
-				then
-				\ func: proc of 1 arg or #f
-				entry 3 array-ref ?dup-if
-					#( wid ) run-proc drop
-				then
-			then
-			wid Fgtk_widget_show drop
-			popup-widget-names wid label hash-set!
-		end-each
-		menu
-	;
-[else]				\ HAVE_MOTIF
-	: widget->name ( w -- s )
-		FXtName
-	;
-
-	: popup-post-it   { menu info -- }
-		info menu Fset_menuToPost drop
-	;
-
-	\ --- make-simple-popdown-menu for fft-popup-menu ---
-	: popup-cascade-cb { children cb -- prc; w c i self -- }
-		3 proc-create ( prc )
-		cb , children ,
-	  does> { w c info self -- }
-		self       @ { cb }
-		self cell+ @ { children }
-		cb #( children ) run-proc drop
-	;
-
-	: make-simple-popdown-menu { label popdown-labels parent cascade-cb -- }
-		parent label #( FXmNbackground highlight-color )
-		    undef FXmCreatePulldownMenu { top }
-		label FxmCascadeButtonWidgetClass parent
-		    #( FXmNbackground highlight-color FXmNsubMenuId top )
-		    undef FXtCreateManagedWidget { menu }
-		#() { children }
-		nil { c }
-		popdown-labels proc? if
-			\ edhist sends a proc to set TOP to edhist-widgets
-			popdown-labels #( top ) run-proc drop
-		else
-		\ else arrays of #(name proc) lists
-			popdown-labels each { poplab }
-				poplab 0 array-ref FxmPushButtonWidgetClass top
-				    #( FXmNbackground highlight-color )
-				    undef FXtCreateManagedWidget to c
-				c FXmNactivateCallback poplab 1 array-ref
-				    undef FXtAddCallback drop
-				children c array-push drop
-			end-each
-		then
-		cascade-cb if
-			menu FXmNcascadingCallback
-			    children cascade-cb popup-cascade-cb
-			    undef FXtAddCallback drop
-		then
-	;
-
-	\ --- make-popdown-entry for listener-popup-menu ---
-	#() value listener-values
-
-	: collector-cb { func collector -- prc; w c i self -- val }
-		3 proc-create ( prc )
-		func , collector ,
-	  does> { w c info self -- val }
-		self       @ { func }
-		self cell+ @ { collector }
-		collector #( sounds ) run-proc ( lst )
-		    0 array-ref 1 >array func swap run-proc
-	;
-
-	: cas-cb ( func -- prc; w c i self -- val )
-		{ func }
-		3 proc-create ( prc )
-		func ,
-	  does> { w c info self -- val }
-		self @ ( func ) #( w current-label 0 find-sound ) run-proc
-	;
-
-	: popdown-cascade-cb { func coll menu children -- prc; w c i self -- }
-		3 proc-create ( prc )
-		func , coll , menu , children ,
-	  does> { w c info self -- }
-		self           @ { func }
-		self   cell+   @ { collector }
-		self 2 cells + @ { menu }
-		self 3 cells + @ { children }
-		children each ( child )
-			FXtUnmanageChild drop
-		end-each
-		collector #( sounds ) run-proc { snds }
-		children length { clen }
-		snds length { slen }
-		clen slen < if
-			slen clen ?do
-				"" FxmPushButtonWidgetClass menu
-				    #( FXmNbackground highlight-color )
-				    undef FXtCreateManagedWidget { c }
-				c FXmNactivateCallback
-				    func cas-cb
-				    undef FXtAddCallback drop
-				children c array-push drop
-			loop
-		then
-		slen if
-			children each { child }
-				snds i array-ref { snd }
-				child snd short-file-name change-label
-				child FXtManageChild drop
-			end-each
-		then
-	;
-
-	: make-popdown-entry { label parent func collector with-one -- values }
-		#f { widget }
-		#() { children }
-		with-one if
-			label FxmPushButtonWidgetClass parent
-			    #( FXmNbackground highlight-color )
-			    undef FXtCreateManagedWidget to widget
-			widget FXmNactivateCallback
-			    func collector collector-cb
-			    undef FXtAddCallback drop
-		then
-		parent label #( FXmNbackground highlight-color )
-		    undef FXmCreatePulldownMenu { menu }
-		label FxmCascadeButtonWidgetClass parent
-		    #( FXmNbackground highlight-color
-		       FXmNsubMenuId menu )
-		    undef FXtCreateManagedWidget { cas-wid }
-		cas-wid FXmNcascadingCallback
-		    func collector menu children popdown-cascade-cb
+	then
+	cascade-cb if
+		menu FXmNcascadingCallback
+		    children cascade-cb popup-cascade-cb
 		    undef FXtAddCallback drop
-		listener-values #( widget menu cas-wid collector )
-		    array-push drop
-	;
+	then
+;
 
-	\ --- make-popup-menu for graph-, fft-, and listener-menu ---
-	\
-	\ general entries:
-	\ entries: #( #( name type cb func ) ... )
-	\
-	\ simple popdown (fft-menu)
-	\ entries: #( #( name type labels-array cb ) ... )
-	\
-	\ special popdown (listener)
-	\ entries: #( #( name type func collector with-one ) ... )
-	: make-popup-menu ( name parent entries -- menu )
-		{ name parent entries }
-		parent name
-		    #( FXmNpopupEnabled FXmPOPUP_AUTOMATIC
-		       FXmNbackground   highlight-color )
-		    undef FXmCreatePopupMenu { menu }
-		entries each { entry }
-			#f { casc }
-			\ string
-			entry 0 array-ref { label }
-			\ 'label|'separator|'cascade|#f
-			entry 1 array-ref { typ }
-			typ 'label = if
-				FxmLabelWidgetClass
-			else
-				typ 'separator = if
-					FxmSeparatorWidgetClass
-				else
-					FxmPushButtonWidgetClass
-				then
-			then { class }
-			typ 'cascade = if
-				entry length 4 = if	\ fft menu
-					label
-					    entry 2 array-ref ( labels )
-					    menu
-					    entry 3 array-ref ( prc )
-					    make-simple-popdown-menu
-				else			\ listener menu
-					label
-					    menu
-					    entry 2 array-ref ( func )
-					    entry 3 array-ref ( collector )
-					    entry 4 array-ref ( with-one )
-					    make-popdown-entry
-				then
-			else
-				label class menu
-				    #( FXmNbackground highlight-color )
-				    undef FXtCreateManagedWidget { wid }
-				entry 2 array-ref if	\ cb: 3 args or #f
-					wid FXmNactivateCallback
-					    entry 2 array-ref
-					    undef FXtAddCallback drop
-				then
-				entry 3 array-ref if	\ func: 1 arg or #f
-					entry 3 array-ref #( wid ) run-proc drop
-				then
-			then
+\ --- make-popdown-entry for listener-popup-menu ---
+#() value listener-values
+
+: collector-cb { func collector -- prc; w c i self -- val }
+	3 proc-create ( prc )
+	func , collector ,
+  does> { w c info self -- val }
+	self       @ { func }
+	self cell+ @ { collector }
+	collector #( sounds ) run-proc ( lst )
+	    0 array-ref 1 >array func swap run-proc
+;
+
+: cas-cb ( func -- prc; w c i self -- val )
+	{ func }
+	3 proc-create ( prc )
+	func ,
+  does> { w c info self -- val }
+	self @ ( func ) #( w current-label 0 find-sound ) run-proc
+;
+
+: popdown-cascade-cb { func coll menu children -- prc; w c i self -- }
+	3 proc-create ( prc )
+	func , coll , menu , children ,
+  does> { w c info self -- }
+	self           @ { func }
+	self   cell+   @ { collector }
+	self 2 cells + @ { menu }
+	self 3 cells + @ { children }
+	children each ( child )
+		FXtUnmanageChild drop
+	end-each
+	collector #( sounds ) run-proc { snds }
+	children length { clen }
+	snds length { slen }
+	clen slen < if
+		slen clen ?do
+			"" FxmPushButtonWidgetClass menu
+			    #( FXmNbackground highlight-color )
+			    undef FXtCreateManagedWidget { c }
+			c FXmNactivateCallback
+			    func cas-cb
+			    undef FXtAddCallback drop
+			children c array-push drop
+		loop
+	then
+	slen if
+		children each { child }
+			snds i array-ref { snd }
+			child snd short-file-name change-label
+			child FXtManageChild drop
 		end-each
-		menu
-	;
-[then]
+	then
+;
+
+: make-popdown-entry { label parent func collector with-one -- values }
+	#f { widget }
+	#() { children }
+	with-one if
+		label FxmPushButtonWidgetClass parent
+		    #( FXmNbackground highlight-color )
+		    undef FXtCreateManagedWidget to widget
+		widget FXmNactivateCallback
+		    func collector collector-cb
+		    undef FXtAddCallback drop
+	then
+	parent label #( FXmNbackground highlight-color )
+	    undef FXmCreatePulldownMenu { menu }
+	label FxmCascadeButtonWidgetClass parent
+	    #( FXmNbackground highlight-color
+	       FXmNsubMenuId menu )
+	    undef FXtCreateManagedWidget { cas-wid }
+	cas-wid FXmNcascadingCallback
+	    func collector menu children popdown-cascade-cb
+	    undef FXtAddCallback drop
+	listener-values #( widget menu cas-wid collector )
+	    array-push drop
+;
+
+\ --- make-popup-menu for graph-, fft-, and listener-menu ---
+\
+\ general entries:
+\ entries: #( #( name type cb func ) ... )
+\
+\ simple popdown (fft-menu)
+\ entries: #( #( name type labels-array cb ) ... )
+\
+\ special popdown (listener)
+\ entries: #( #( name type func collector with-one ) ... )
+: make-popup-menu ( name parent entries -- menu )
+	{ name parent entries }
+	parent name
+	    #( FXmNpopupEnabled FXmPOPUP_AUTOMATIC
+	       FXmNbackground   highlight-color )
+	    undef FXmCreatePopupMenu { menu }
+	entries each { entry }
+		#f { casc }
+		\ string
+		entry 0 array-ref { label }
+		\ 'label|'separator|'cascade|#f
+		entry 1 array-ref { typ }
+		typ 'label = if
+			FxmLabelWidgetClass
+		else
+			typ 'separator = if
+				FxmSeparatorWidgetClass
+			else
+				FxmPushButtonWidgetClass
+			then
+		then { class }
+		typ 'cascade = if
+			entry length 4 = if	\ fft menu
+				label
+				    entry 2 array-ref ( labels )
+				    menu
+				    entry 3 array-ref ( prc )
+				    make-simple-popdown-menu
+			else			\ listener menu
+				label
+				    menu
+				    entry 2 array-ref ( func )
+				    entry 3 array-ref ( collector )
+				    entry 4 array-ref ( with-one )
+				    make-popdown-entry
+			then
+		else
+			label class menu
+			    #( FXmNbackground highlight-color )
+			    undef FXtCreateManagedWidget { wid }
+			entry 2 array-ref if	\ cb: 3 args or #f
+				wid FXmNactivateCallback
+				    entry 2 array-ref
+				    undef FXtAddCallback drop
+			then
+			entry 3 array-ref if	\ func: 1 arg or #f
+				entry 3 array-ref #( wid ) run-proc drop
+			then
+		then
+	end-each
+	menu
+;
 
 \ --- selection popup ---
 : sel-stop-play-cb { vars -- prc; self -- val }
@@ -1255,412 +1172,389 @@ let: ( -- menu )
 	then
 ;
 
-'snd-gtk provided? [if]
-	: add-popup <{ widget event data snd chn -- f }>
-		event FGDK_EVENT         { ev }
-		ev Fgdk_event_get_coords { coords }
-		coords 1 array-ref f>s   { xe }
-		coords 2 array-ref f>s   { ye }
-		snd if
-			snd chn xe ye ev popup-install
-			#t
+\ --- edit history popup ---
+#() value edhist-funcs
+#() value edhist-widgets
+#f  value edhist-snd
+#f  value edhist-chn
+
+: edhist-clear-edits <{ w c info -- #f }>
+	#() to edhist-funcs
+	#f
+;
+
+: edhist-save-edits <{ w c info -- val }>
+	edhist-funcs #( edhist-snd edhist-chn )
+	    array-assoc-ref { old-proc }
+	edhist-snd edhist-chn edits { cur-edits }
+	edhist-snd edhist-chn cur-edits 0 array-ref
+	    1+ 0 cur-edits each
+		+
+	end-each edit-list->function { proc }
+	edhist-save-hook #( proc ) run-hook drop
+	old-proc proc? if
+		edhist-funcs
+		    #( edhist-snd edhist-chn )
+		    proc
+		    array-assoc-set!
+	else
+		edhist-funcs
+		    #( #( edhist-snd edhist-chn ) proc )
+		    array-push
+	then to edhist-funcs
+;
+
+: edhist-reapply-edits <{ w c info -- val }>
+	edhist-funcs #( edhist-snd edhist-chn ) array-assoc-ref
+	    #( edhist-snd edhist-chn ) run-proc
+;
+
+: edhist-set-wid <{ widget -- }>
+	edhist-widgets widget array-push to edhist-widgets
+;
+
+: edhist-apply <{ w c info -- }>
+	edhist-funcs c range? if
+		edhist-funcs c array-ref 1 array-ref ( proc )
+		    #( edhist-snd edhist-chn ) run-proc drop
+	then
+;
+
+: edhist-apply-edits <{ lst -- }>
+	edhist-widgets 0 array-ref { parent }
+	edhist-widgets 1 nil array-subarray { wids }
+	edhist-funcs each 0 array-ref { label }
+		nil { button }
+		wids nil? if
+			"wid" FxmPushButtonWidgetClass parent
+			    #( FXmNbackground highlight-color )
+			    undef FXtCreateManagedWidget to button
+			edhist-widgets #( button )
+			    array-append to edhist-widgets
+			button FXmNactivateCallback
+			    <'> edhist-apply i FXtAddCallback drop
 		else
-			#f
+			wids 0 array-ref to button
+			wids 1 nil array-subarray to wids
+			button FXtManageChild drop
 		then
-	;
-	set-current
+		label array? if
+			\ label: #(snd chn)
+			button  "%s[%s]"
+			    #( label 0 array-ref short-file-name
+			       label 1 array-ref )
+			    string-format change-label
+		else
+			\ label: "file-name[chn]"
+			button label change-label
+		then
+		button #( FXmNuserData i ) FXtVaSetValues drop
+	end-each
+	wids each ( w )
+		FXtUnmanageChild drop
+	end-each
+;
 
-	: add-popups
-		gtk-popup-hook <'> add-popup add-hook!
-	;
-[else]
-	\ --- edit history popup ---
-	#() value edhist-funcs
-	#() value edhist-widgets
-	#f  value edhist-snd
-	#f  value edhist-chn
+: edhist-close-hook-cb <{ snd -- }>
+	snd channels 0 ?do
+		edhist-funcs #( snd i ) array-assoc { old-val }
+		old-val array? if
+			old-val 0 "%s[%d]"
+			    #( snd short-file-name i ) string-format array-set!
+		then
+	loop
+;
 
-	: edhist-clear-edits <{ w c info -- #f }>
-		#() to edhist-funcs
+let: ( -- menu )
+	close-hook <'> edhist-close-hook-cb add-hook!
+	"edhist-popup" main-widgets 2 array-ref
+	#( #( "Edits"   'label     #f                       #f )
+	   #( "sep"     'separator #f                       #f )
+	   #( "Save"    #f         <'> edhist-save-edits    #f )
+	   #( "Reapply" #f         <'> edhist-reapply-edits #f )
+	   #( "Apply" 'cascade     <'> edhist-set-wid <'> edhist-apply-edits )
+	   #( "Clear"   #f         <'> edhist-clear-edits   #f )
+	   #( "sep"     'separator #f                       #f )
+	   #( "Help"    #f         <'> edhist-help-edits    #f )
+	) make-popup-menu
+;let constant edit-history-menu
+
+: edhist-popup-cb { snd chn -- prc; w self -- val }
+	1 proc-create ( prc )
+	chn , snd ,
+  does> { w self -- val }
+	self       @ { chn }
+	self cell+ @ { snd }
+	w FXtName    { name }
+	name "Clear" string=
+	name "Apply" string= || if
+		w edhist-funcs empty? not set-sensitive
 		#f
-	;
-
-	: edhist-save-edits <{ w c info -- val }>
-		edhist-funcs #( edhist-snd edhist-chn )
-		    array-assoc-ref { old-proc }
-		edhist-snd edhist-chn edits { cur-edits }
-		edhist-snd edhist-chn cur-edits 0 array-ref
-		    1+ 0 cur-edits each
+		exit
+	then
+	name "Save" string= if
+		w 0 snd chn edits each ( eds )
 			+
-		end-each edit-list->function { proc }
-		edhist-save-hook #( proc ) run-hook drop
-		old-proc proc? if
-			edhist-funcs
-			    #( edhist-snd edhist-chn )
-			    proc
-			    array-assoc-set!
-		else
-			edhist-funcs
-			    #( #( edhist-snd edhist-chn ) proc )
-			    array-push
-		then to edhist-funcs
-	;
+		end-each 0> set-sensitive
+		#f
+		exit
+	then
+	name "Reapply" string= if
+		w edhist-funcs #( snd chn )
+		    array-assoc-ref set-sensitive
+	then
+	#f
+;
 
-	: edhist-reapply-edits <{ w c info -- val }>
-		edhist-funcs #( edhist-snd edhist-chn ) array-assoc-ref
-		    #( edhist-snd edhist-chn ) run-proc
-	;
+: edhist-popup-handler-cb { snd chn -- prc; w c i self -- val }
+	3 proc-create ( prc )
+	chn , snd ,
+  does> { w c info self -- val }
+	self @ { chn }
+	self cell+ @ { snd }
+	info Fevent { ev }
+	FButtonPress ev Ftype = if
+		snd to edhist-snd
+		chn to edhist-chn
+		edit-history-menu snd chn edhist-popup-cb for-each-child
+		edit-history-menu info popup-post-it
+	then
+	#f
+;  
 
-	: edhist-set-wid <{ widget -- }>
-		edhist-widgets widget array-push to edhist-widgets
-	;
+: popup-handler-cb { snd chn -- prc; w c i self -- val }
+	3 proc-create ( prc )
+	chn , snd ,
+  does> { w c info self -- val }
+	self       @ { chn }
+	self cell+ @ { snd }
+	info Fevent  { ev }
+	ev Fx_root w 0 0 FXtTranslateCoords 0 array-ref - { xe }
+	ev Fy        { ye }
+	FButtonPress ev Ftype = if
+		snd chn xe ye info popup-install
+	then
+	#f
+;
 
-	: edhist-apply <{ w c info -- }>
-		edhist-funcs c range? if
-			edhist-funcs c array-ref 1 array-ref ( proc )
-			    #( edhist-snd edhist-chn ) run-proc drop
-		then
-	;
+\ --- listener popup ---
+: identity-cb <{ snds -- lst }>
+	snds
+;
 
-	: edhist-apply-edits <{ lst -- }>
-		edhist-widgets 0 array-ref { parent }
-		edhist-widgets 1 nil array-subarray { wids }
-		edhist-funcs each 0 array-ref { label }
-			nil { button }
-			wids nil? if
-				"wid" FxmPushButtonWidgetClass parent
-				    #( FXmNbackground highlight-color )
-				    undef FXtCreateManagedWidget to button
-				edhist-widgets #( button )
-				    array-append to edhist-widgets
-				button FXmNactivateCallback
-				    <'> edhist-apply i FXtAddCallback drop
-			else
-				wids 0 array-ref to button
-				wids 1 nil array-subarray to wids
-				button FXtManageChild drop
-			then
-			label array? if
-				\ label: #(snd chn)
-				button  "%s[%s]"
-				    #( label 0 array-ref short-file-name
-				       label 1 array-ref )
-				    string-format change-label
-			else
-				\ label: "file-name[chn]"
-				button label change-label
-			then
-			button #( FXmNuserData i ) FXtVaSetValues drop
-		end-each
-		wids each ( w )
-			FXtUnmanageChild drop
-		end-each
-	;
-
-	: edhist-close-hook-cb <{ snd -- }>
+: edited-cb <{ snds -- lst }>
+	snds each { snd }
 		snd channels 0 ?do
-			edhist-funcs #( snd i ) array-assoc { old-val }
-			old-val array? if
-				old-val 0 "%s[%d]"
-				    #( snd short-file-name i )
-				    string-format array-set!
+			snd i edits 0 array-ref 0= if
+				snds snd array-delete-key drop
 			then
 		loop
-	;
+	end-each
+	snds
+;
 
-	let: ( -- menu )
-		close-hook <'> edhist-close-hook-cb add-hook!
-		"edhist-popup" main-widgets 2 array-ref
-		#( #( "Edits"   'label     #f                       #f )
-		   #( "sep"     'separator #f                       #f )
-		   #( "Save"    #f         <'> edhist-save-edits    #f )
-		   #( "Reapply" #f         <'> edhist-reapply-edits #f )
-		   #( "Apply" 'cascade
-		      <'> edhist-set-wid <'> edhist-apply-edits )
-		   #( "Clear"   #f         <'> edhist-clear-edits   #f )
-		   #( "sep"     'separator #f                       #f )
-		   #( "Help"    #f         <'> edhist-help-edits    #f )
-		) make-popup-menu
-	;let constant edit-history-menu
-
-	: edhist-popup-cb { snd chn -- prc; w self -- val }
-		1 proc-create ( prc )
-		chn , snd ,
-	  does> { w self -- val }
-		self       @ { chn }
-		self cell+ @ { snd }
-		w FXtName    { name }
-		name "Clear" string=
-		name "Apply" string= || if
-			w edhist-funcs empty? not set-sensitive
-			#f
-			exit
-		then
-		name "Save" string= if
-			w 0 snd chn edits each ( eds )
-				+
-			end-each 0> set-sensitive
-			#f
-			exit
-		then
-		name "Reapply" string= if
-			w edhist-funcs #( snd chn )
-			    array-assoc-ref set-sensitive
-		then
-		#f
-	;
-
-	: edhist-popup-handler-cb { snd chn -- prc; w c i self -- val }
-		3 proc-create ( prc )
-		chn , snd ,
-	  does> { w c info self -- val }
-		self @ { chn }
-		self cell+ @ { snd }
-		info Fevent { ev }
-		FButtonPress ev Ftype = if
-			snd to edhist-snd
-			chn to edhist-chn
-			edit-history-menu snd chn edhist-popup-cb for-each-child
-			edit-history-menu info popup-post-it
-		then
-		#f
-	;  
-
-	: popup-handler-cb { snd chn -- prc; w c i self -- val }
-		3 proc-create ( prc )
-		chn , snd ,
-	  does> { w c info self -- val }
-		self       @ { chn }
-		self cell+ @ { snd }
-		info Fevent  { ev }
-		ev Fx_root w 0 0 FXtTranslateCoords 0 array-ref - { xe }
-		ev Fy        { ye }
-		FButtonPress ev Ftype = if
-			snd chn xe ye info popup-install
-		then
-		#f
-	;
-
-	\ --- listener popup ---
-	: identity-cb <{ snds -- lst }>
+: focused-cb <{ snds -- lst }>
+	snds length 1 > if
 		snds
-	;
+	else
+		#()
+	then
+;
 
-	: edited-cb <{ snds -- lst }>
-		snds each { snd }
-			snd channels 0 ?do
-				snd i edits 0 array-ref 0= if
-					snds snd array-delete-key drop
-				then
-			loop
+: list-play-cb <{ snd -- val }>
+	snd play
+;
+
+: list-focus-cb <{ us -- val }>
+	\ 5 == notebook-outer-pane
+	main-widgets 5 array-ref FWidget? if
+		us set-selected-sound
+	else
+		us sound-widgets 0 array-ref { pane }
+		main-widgets 1 array-ref #( FXmNallowShellResize #f )
+		    FXtVaSetValues drop
+		sounds each ( them )
+			sound-widgets 0 array-ref FXtUnmanageChild drop
 		end-each
-		snds
-	;
+		pane FXtManageChild drop
+		main-widgets 1 array-ref
+		    #( FXmNallowShellResize auto-resize )
+		    FXtVaSetValues
+	then
+;
 
-	: focused-cb <{ snds -- lst }>
-		snds length 1 > if
-			snds
+: list-help-cb <{ w c info -- val }>
+	listener-selection { selected }
+	selected if
+		selected undef snd-help { help }
+		help if
+			selected help undef undef help-dialog
+		then
+	then
+;
+
+: list-clear-cb <{ w c info -- val }>
+	clear-listener
+;
+
+: listener-edit <{ w -- }>
+	w FXtName "Help" string= if
+		listener-selection ?dup-if
+			1 >list w "Help on %S" rot
+			    string-format change-label
+			w FXtManageChild
 		else
-			#()
-		then
-	;
+			w FXtUnmanageChild
+		then drop
+	then
+;
 
-	: list-play-cb <{ snd -- val }>
-		snd play
-	;
-
-	: list-focus-cb <{ us -- val }>
-		\ 5 == notebook-outer-pane
-		main-widgets 5 array-ref FWidget? if
-			us set-selected-sound
-		else
-			us sound-widgets 0 array-ref { pane }
-			main-widgets 1 array-ref #( FXmNallowShellResize #f )
-			    FXtVaSetValues drop
-			sounds each ( them )
-				sound-widgets 0 array-ref FXtUnmanageChild drop
-			end-each
-			pane FXtManageChild drop
-			main-widgets 1 array-ref
-			    #( FXmNallowShellResize auto-resize )
-			    FXtVaSetValues
-		then
-	;
-
-	: list-help-cb <{ w c info -- val }>
-		listener-selection { selected }
-		selected if
-			selected undef snd-help { help }
-			help if
-				selected help undef undef help-dialog
-			then
-		then
-	;
-
-	: list-clear-cb <{ w c info -- val }>
-		clear-listener
-	;
-
-	: listener-edit <{ w -- }>
-		w FXtName "Help" string= if
-			listener-selection ?dup-if
-				1 >list w "Help on %S" rot
-				    string-format change-label
-				w FXtManageChild
-			else
-				w FXtUnmanageChild
-			then drop
-		then
-	;
-
-	: listener-popup-cb <{ w c info -- }>
-		c { menu }
-		FButtonPress info Fevent Ftype = if
-			listener-values each { vals }
-				vals array? if
-					vals 0 array-ref { top-one }
-					vals 1 array-ref { top-two }
-					vals 2 array-ref { top-two-cascade }
-					vals 3 array-ref #( sounds )
-					    run-proc length { len }
-					top-two FXtUnmanageChild drop
-					top-two-cascade FXtUnmanageChild drop
-					top-one if
-						top-one FXtUnmanageChild drop
-					then
-					len 1 > if
-						top-two-cascade
-						    FXtManageChild drop
-						top-two FXtManageChild drop
-					then
-					top-one FWidget?
-					len 1 = && if
-						top-one FXtManageChild drop
-					then
+: listener-popup-cb <{ w c info -- }>
+	c { menu }
+	FButtonPress info Fevent Ftype = if
+		listener-values each { vals }
+			vals array? if
+				vals 0 array-ref { top-one }
+				vals 1 array-ref { top-two }
+				vals 2 array-ref { top-two-cascade }
+				vals 3 array-ref #( sounds )
+				    run-proc length { len }
+				top-two FXtUnmanageChild drop
+				top-two-cascade FXtUnmanageChild drop
+				top-one if
+					top-one FXtUnmanageChild drop
 				then
-			end-each
-			menu <'> listener-edit for-each-child
-			info menu Fset_menuToPost drop
-		then
-	;
-
-	let: ( -- menu )
-		main-widgets 4 array-ref ?dup-if
-			( parent )
-		else
-			#t set-show-listener drop
-			#f set-show-listener drop
-			main-widgets 4 array-ref
-		then { parent }
-		"listener-popup" parent
-		#( #( "Listener" 'label   #f  #f )
-		   #( "sep"    'separator #f  #f )
-		   #( "Play"   'cascade   <'> list-play-cb <'> identity-cb #t )
-		   #( "Help"   #f         <'> list-help-cb #f )
-		   #( "Open"   #f         <'> popen-cb #f )
-		   #( "Clear listener" #f <'> list-clear-cb #f )
-		   #( "Close"  'cascade
-		      <'> close-sound-extend <'> identity-cb #t )
-		   #( "Save"   'cascade   <'> save-sound <'> edited-cb #t )
-		   #( "Revert" 'cascade   <'> revert-sound <'> edited-cb #t )
-		   #( "Focus"  'cascade   <'> list-focus-cb <'> focused-cb  #f )
-		   #( "sep"    'separator #f #f )
-		   #( "Exit"   #f         <'> exit-cb #f )
-		) make-popup-menu { menu }
-		parent FXmNpopupHandlerCallback <'> listener-popup-cb menu
-		FXtAddCallback drop
-		menu
-	;let constant listener-popup-menu
-
-	#() constant popups
-	: add-popup <{ snd -- }>
-		snd channels 0 ?do
-			popups #( snd i ) array-member? unless
-				popups #( snd i ) array-push drop
-				snd i channel-widgets 7 array-ref ( chn-edhist )
-				    FXmNpopupHandlerCallback
-				    snd i edhist-popup-handler-cb
-				    undef FXtAddCallback drop
-				snd i channel-widgets 0 array-ref ( chn-grf )
-				FXmNpopupHandlerCallback snd i popup-handler-cb
-				    undef FXtAddCallback drop
+				len 1 > if
+					top-two-cascade
+					    FXtManageChild drop
+					top-two FXtManageChild drop
+				then
+				top-one FWidget?
+				len 1 = && if
+					top-one FXtManageChild drop
+				then
 			then
-		loop
-	;
+		end-each
+		menu <'> listener-edit for-each-child
+		info menu Fset_menuToPost drop
+	then
+;
 
-	: change-color-col-cb { col -- prc; w self -- val }
-		1 proc-create ( prc )
-		col , 
-	  does> { w self -- val }
-		w self @ ( col ) FXmChangeColor
-	;
-	set-current
+let: ( -- menu )
+	main-widgets 4 array-ref ?dup-if
+		( parent )
+	else
+		#t set-show-listener drop
+		#f set-show-listener drop
+		main-widgets 4 array-ref
+	then { parent }
+	"listener-popup" parent
+	#( #( "Listener" 'label   #f  #f )
+	   #( "sep"    'separator #f  #f )
+	   #( "Play"   'cascade   <'> list-play-cb <'> identity-cb #t )
+	   #( "Help"   #f         <'> list-help-cb #f )
+	   #( "Open"   #f         <'> popen-cb #f )
+	   #( "Clear listener" #f <'> list-clear-cb #f )
+	   #( "Close"  'cascade   <'> close-sound-extend <'> identity-cb #t )
+	   #( "Save"   'cascade   <'> save-sound <'> edited-cb #t )
+	   #( "Revert" 'cascade   <'> revert-sound <'> edited-cb #t )
+	   #( "Focus"  'cascade   <'> list-focus-cb <'> focused-cb  #f )
+	   #( "sep"    'separator #f #f )
+	   #( "Exit"   #f         <'> exit-cb #f )
+	) make-popup-menu { menu }
+	parent FXmNpopupHandlerCallback <'> listener-popup-cb menu
+	    FXtAddCallback drop
+	menu
+;let constant listener-popup-menu
 
-	: change-menu-color ( menu new-color -- )
-		doc" Change the color of MENU to NEW-COLOR.  \
+#() constant popups
+: add-popup <{ snd -- }>
+	snd channels 0 ?do
+		popups #( snd i ) array-member? unless
+			popups #( snd i ) array-push drop
+			snd i channel-widgets 7 array-ref ( chn-edhist )
+			    FXmNpopupHandlerCallback
+			    snd i edhist-popup-handler-cb
+			    undef FXtAddCallback drop
+			snd i channel-widgets 0 array-ref ( chn-grf )
+			FXmNpopupHandlerCallback snd i popup-handler-cb
+			    undef FXtAddCallback drop
+		then
+	loop
+;
+
+: change-color-col-cb { col -- prc; w self -- val }
+	1 proc-create ( prc )
+	col , 
+  does> { w self -- val }
+	w self @ ( col ) FXmChangeColor
+;
+set-current
+
+: change-menu-color ( menu new-color -- )
+	doc" Change the color of MENU to NEW-COLOR.  \
 NEW-COLOR can be the color name, an xm Pixel, a snd color, \
 or a list of rgb values (as in Snd's make-color)."
-		{ menu new-color }
-		new-color string? if	\ assuming X11 color names here
-			main-widgets 1 array-ref { shell }
-			shell FXtDisplay { dpy }
-			dpy FDefaultScreen { scr }
-			dpy scr FDefaultColormap { cmap }
-			FXColor { col }
-			dpy cmap new-color col col FXAllocNamedColor 0= if
-				"can't allocate %S"
-				    #( new-color ) string-format snd-error
-			else
-				col Fpixel
-			then
+	{ menu new-color }
+	new-color string? if	\ assuming X11 color names here
+		main-widgets 1 array-ref { shell }
+		shell FXtDisplay { dpy }
+		dpy FDefaultScreen { scr }
+		dpy scr FDefaultColormap { cmap }
+		FXColor { col }
+		dpy cmap new-color col col FXAllocNamedColor 0= if
+			"can't allocate %S"
+			    #( new-color ) string-format snd-error
 		else
-			new-color color? if
-				new-color
-			else
-				new-color each
-					( vals-to-stack )
-				end-each make-color
-			then
-		then ( color-pixel ) menu swap
-		    change-color-col-cb for-each-child
-	;
+			col Fpixel
+		then
+	else
+		new-color color? if
+			new-color
+		else
+			new-color each
+				( vals-to-stack )
+			end-each make-color
+		then
+	then ( color-pixel ) menu swap
+	    change-color-col-cb for-each-child
+;
 
-	: change-selection-popup-color ( new-color -- )
-		doc" Change the selection popup menu's color: \
+: change-selection-popup-color ( new-color -- )
+	doc" Change the selection popup menu's color: \
 \"red\" change-selection-popup-color."
-		selection-popup-menu swap change-menu-color
-	;
+	selection-popup-menu swap change-menu-color
+;
 
-	: change-graph-popup-color ( new-color -- )
-		doc" Change the time-domain popup menu's color: \
+: change-graph-popup-color ( new-color -- )
+	doc" Change the time-domain popup menu's color: \
 basic-color change-graph-popup-color."
-		selection-popup-menu swap change-menu-color
-	;
+	selection-popup-menu swap change-menu-color
+;
 
-	: change-fft-popup-color ( new-color -- )
-		doc" Change the fft popup menu's color: \
+: change-fft-popup-color ( new-color -- )
+	doc" Change the fft popup menu's color: \
 #(0.5 0.5 0.5) change-fft-popup-color."
-		fft-popup-menu swap change-menu-color
-	;
+	fft-popup-menu swap change-menu-color
+;
 
-	: change-edhist-popup-color ( new-color -- )
-		doc" Change the time-domain popup menu's color: \
+: change-edhist-popup-color ( new-color -- )
+	doc" Change the time-domain popup menu's color: \
 basic-color change-graph-popup-color."
-		edit-history-menu swap change-menu-color
-	;
+	edit-history-menu swap change-menu-color
+;
 
-	: change-listener-popup-color ( new-color -- )
-		doc" Change the listener popup menu's color."
-		listener-popup-menu swap change-menu-color
-	;
+: change-listener-popup-color ( new-color -- )
+	doc" Change the listener popup menu's color."
+	listener-popup-menu swap change-menu-color
+;
 
-	: add-popups ( -- )
-		after-open-hook <'> add-popup add-hook!
-		sounds each ( snd )
-			add-popup
-		end-each
-	;
-[then]
+: add-popups ( -- )
+	after-open-hook <'> add-popup add-hook!
+	sounds each ( snd )
+		add-popup
+	end-each
+;
 previous
 
 \ install all popups

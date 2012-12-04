@@ -2,42 +2,44 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Wed Nov 28 22:23:40 CET 2012
+\ Changed: Tue Dec  4 01:27:14 CET 2012
 
 \ Commentary:
-\
+\ 
 \ Tags:  FIXME - something is wrong
 \        XXX   - info marker
-\
+\ 
 \ Tested with:
-\   Snd version 13.x
-\   FTH 1.3.x
-\
+\   Snd 13.x
+\   Fth 1.3.x
+\ 
+\ The most Gtk tests will be skipped if not gtk3.
+\ 
 \ Reads init file ./.sndtest.fs or ~/.sndtest.fs for global variables,
 \ hooks, etc.
-\
-\ Example:
-\
-\ cat ./.sndtest.fs
-\ "TMPDIR" getenv set-save-dir       to original-save-dir
-\ save-dir        set-temp-dir       to original-temp-dir
 \ 
-\ #t                                 to with-big-file
+\ Example:
+\ 
+\ cat ./.sndtest.fs
+\ "TMPDIR" getenv set-save-dir to original-save-dir
+\ save-dir set-temp-dir to original-temp-dir
+\ 
+\ #t to with-big-file
 \ "/usr/opt/sound/SFiles/bigger.snd" to bigger-snd
-\ "/usr/opt/sound/sf1/"              to sf-dir
-\ \ #t                      	   to all-args
-\ \ #t                      	   to *snd-test-verbose*
-\ \ #t                      	   to *snd-test-ws-play*
-\ \ #t                      	   to *snd-test-ws-statistics*
-\ \ #t                      	   to *snd-test-ws-verbose*
+\ "/usr/opt/sound/sf1/" to sf-dir
+\ \ #t to all-args
+\ \ #t to *snd-test-verbose*
+\ \ #t to *snd-test-ws-play*
+\ \ #t to *snd-test-ws-statistics*
+\ \ #t to *snd-test-ws-verbose*
 
-\
+\ 
 \ Start tests:
-\
+\ 
 \ snd -noinit -load snd-test.fs          \ all tests
 \ snd -noinit -load snd-test.fs 10 15 19 \ test 10 15 19
 \ snd -noinit -load snd-test.fs -23      \ all tests except 23
-\
+\ 
 \ test 00: constants
 \ test 01: defaults
 \ test 02: headers
@@ -51,16 +53,17 @@
 \ test 27: general ( will be replaced in the future )
 \ test 28: errors
 
-'snd-nogui  provided? constant *with-test-nogui*
-*with-test-nogui* not constant *with-test-gui*
-'snd-motif  provided? constant *with-test-motif*
-'snd-gtk    provided? constant *with-test-gtk*
-'snd-ladspa provided? constant *with-test-ladspa*
+'alsa       provided? constant *with-test-alsa*
+'complex    provided? constant *with-test-complex*
 'gl         provided? constant *with-test-gl*
 'gl2ps      provided? constant *with-test-gl2ps*
 'gsl        provided? constant *with-test-gsl*
-'alsa       provided? constant *with-test-alsa*
-'complex    provided? constant *with-test-complex*
+'gtk3       provided? constant *with-test-gtk3*
+'snd-gtk    provided? constant *with-test-gtk*
+'snd-ladspa provided? constant *with-test-ladspa*
+'snd-motif  provided? constant *with-test-motif*
+'snd-nogui  provided? constant *with-test-nogui*
+*with-test-nogui* not constant *with-test-gui*
 
 24 set-object-print-length
 
@@ -104,17 +107,18 @@
 ;
 
 : snd-display ( fmt args -- )
-  postpone *lineno* postpone (snd-display)
+  postpone *lineno*
+  postpone (snd-display)
 ; immediate
 
 \ *SND-TEST-VERBOSE*: progress information in long tests
-\
+\ 
 \ test 19-save/restore: function names
 \ test       28-errors: prints proc-array length and progress information
 #f value *snd-test-verbose*
 
 \ WITH-SOUND control
-\
+\ 
 \ test   23-with-sound: :play
 \ test   23-with-sound: :statistics
 \ test   23-with-sound: :verbose (event (bird) and instrument names)
@@ -129,24 +133,24 @@
 #f value my-snd-error-hook
 #f value my-mus-error-hook
 
-"HOME" getenv          		  value *home*
-save-dir *home* "/zap/snd" $+ ||  value original-save-dir
-temp-dir *home* "/zap/tmp" $+ ||  value original-temp-dir
-sound-file-extensions             value original-sound-file-extensions
-listener-prompt        		  value original-prompt
-65536               		  value default-file-buffer-size
-8                                 value *info-array-print-length*
+"HOME" getenv value *home*
+save-dir *home* "/zap/snd" $+ || value original-save-dir
+temp-dir *home* "/zap/tmp" $+ || value original-temp-dir
+sound-file-extensions value original-sound-file-extensions
+listener-prompt value original-prompt
+65536 value default-file-buffer-size
+8 value *info-array-print-length*
 
-"/home/bil/sf1/"       		  value sf-dir
+"/home/bil/sf1/" value sf-dir
 "/home/bil/zap/sounds/bigger.snd" value bigger-snd
-#f                                value with-big-file
-#f                     		  value all-args
+#f value with-big-file
+#f value all-args
 
 \ Global variables may be overridden in `pwd`/.sndtest.fs or ~/.sndtest.fs.
 ".sndtest.fs" load-init-file
 
 \ default 1, can be reset in .sndtest.fs
-*tests* integer? [if]
+*tests* integer?  [if]
   *tests* 0> [if]
     *tests*
   [else]
@@ -283,18 +287,19 @@ require effects
 require bird.fsm
 
 *clm-search-list* file-pwd array-push to *clm-search-list*
-
 reset-all-hooks
 
 *with-test-motif* [if]
   lambda: <{ dpy e -- }>
+    \ XGetErrorText's return code is '( id string )
     dpy e Ferror_code   nil 1024 FXGetErrorText { res }
     "Xlib error_code[%s]: %s"   res fth-warning
     dpy e Frequest_code nil 1024 FXGetErrorText to res
     "Xlib request_code[%s]: %s" res fth-warning
     dpy e Fminor_code   nil 1024 FXGetErrorText to res
-    "Xlib minor_code[%s]: %s"   res fth-warning
+    "Xlib minor_code[%s]: %s" res fth-warning
   ; FXSetErrorHandler drop
+
   lambda: <{ dpy -- }>
     "Xlib IO Error dpy: %S" #( dpy ) fth-error
   ; FXSetIOErrorHandler drop
@@ -322,7 +327,8 @@ reset-all-hooks
   { obj }
   obj vct? if
     obj
-  else obj array? if
+  else
+    obj array? if
       obj vector->vct
     else
       #f
@@ -335,7 +341,7 @@ reset-all-hooks
   val0 any->vct { v0 }
   val1 any->vct { v1 }
   v0
-  v1                    &&
+  v1 &&
   v0 length v1 length = && if
     v0 vct-copy v1 vct-subtract! vct-peak err f<=
   else
@@ -355,9 +361,13 @@ reset-all-hooks
 : feql-err ( obj0 obj1 err -- f )
   { obj0 obj1 err }
   obj0 object-length obj1 object-length = if
-    #t ( f ) obj0 each ( r0 )
-      obj1 i object-ref ( r1 ) err fneq-err if not leave then
-    end-each
+    #t ( flag )
+    obj0 each ( r0 )
+      obj1 i object-ref ( r1 ) err fneq-err if
+        not ( toggle flag )
+        leave
+      then
+    end-each ( flag )
   else
     #f
   then
@@ -369,8 +379,12 @@ reset-all-hooks
 
 : fveql  ( v1 v2 idx -- f)
   { v1 v2 idx }
-  #t v1 length v2 length min idx ?do
-    v1 i object-ref v2 i object-ref fneq if not leave then
+  #t ( flag )
+  v1 length v2 length min idx ?do
+    v1 i object-ref v2 i object-ref fneq if
+      not ( toggle flag )
+      leave
+    then
   loop
 ;
 
@@ -380,8 +394,8 @@ reset-all-hooks
     #t ( flag )
     obj1 each ( entry )
       obj2 i list-ref object-equal? unless
-	not ( toggle flag )
-	leave
+        not ( toggle flag )
+        leave
       then
     end-each
   else
@@ -389,16 +403,19 @@ reset-all-hooks
   then
 ;
 
+\ arity: #( req opt rest )
 : arity-ok <{ proc args -- f }>
   proc proc? if
-    \ draw-axes 0/0/#t but it means 3/6/#f
-    proc proc-name "draw-axes" string= if
-      args 3 >=
-      args 9 <= &&
+    proc proc-arity { args-lst }
+    args-lst 0 array-ref { req }  \ int
+    args-lst 1 array-ref { opt }  \ int
+    args-lst 2 array-ref { rest } \ bool
+    opt 0> if
+      args req >=
+      args req opt + <= &&
     else
-      proc proc-arity { args-lst }
-      args args-lst 0 array-ref >=
-      args args-lst 0 array-ref args-lst 1 array-ref + <= &&
+      args req =
+      rest ||
     then
   else
     #f
@@ -499,37 +516,50 @@ reset-all-hooks
 ;
 
 : snd-test-neq ( res req fmt args -- )
-  postpone *lineno* postpone (snd-test-neq)
+  postpone *lineno*
+  postpone (snd-test-neq)
 ; immediate
 
 : snd-test-eq  ( res req fmt args -- )
-  postpone *lineno* postpone (snd-test-eq)
+  postpone *lineno*
+  postpone (snd-test-eq)
 ; immediate
 
-\ res req <'> ffequal? "more info" #() snd-test-any-neq
+\ res req <'> ffeql "more info" #() snd-test-any-neq
 : snd-test-any-neq ( res req func fmt args -- )
-  postpone *lineno* postpone (snd-test-any-neq)
+  postpone *lineno*
+  postpone (snd-test-any-neq)
 ; immediate
 
-\ res req <'> ffequal? "more info" #() snd-test-any-eq
+\ res req <'> ffeql "more info" #() snd-test-any-eq
 : snd-test-any-eq  ( res req func fmt args -- )
-  postpone *lineno* postpone (snd-test-any-eq)
+  postpone *lineno*
+  postpone (snd-test-any-eq)
 ; immediate
 
 : check-file-name { name -- fsnd }
-  name file-exists? if name else sf-dir name $+ then
+  name file-exists? if
+    name
+  else
+    sf-dir name $+
+  then
 ;
 
 : make-color-with-catch ( c1 c2 c3 -- color )
   <'> make-color 'no-such-color #t fth-catch if
-    stack-reset 1 0 0 make-color
+    stack-reset
+    1 0 0 make-color
   then
 ;
 
 : reset-almost-all-hooks ( -- )
   reset-all-hooks
-  my-snd-error-hook proc? if snd-error-hook my-snd-error-hook add-hook! then
-  my-mus-error-hook proc? if mus-error-hook my-mus-error-hook add-hook! then
+  my-snd-error-hook proc? if
+    snd-error-hook my-snd-error-hook add-hook!
+  then
+  my-mus-error-hook proc? if
+    mus-error-hook my-mus-error-hook add-hook!
+  then
 ;
 
 *with-test-nogui* [if]
@@ -539,22 +569,27 @@ reset-all-hooks
     nil nil { dialog d }
     dialog-widgets each to dialog
       dialog if
-	dialog 0 array-ref symbol? if
-	  dialog is-managed? if dialog hide-widget drop then
-	else
-	  dialog each to d
-	    d 0 array-ref symbol? if
-	      d is-managed? if d hide-widget drop then
-	    then
-	  end-each
-	then
-      then
+        dialog 0 array-ref symbol? if
+          dialog is-managed? if
+            dialog hide-widget drop
+          then
+        else                    \ not widget?
+          dialog each to d
+            d 0 array-ref symbol? if
+              d is-managed? if
+                d hide-widget drop
+              then
+            then
+          end-each
+        then                    \ widget? 
+      then                      \ dialog
     end-each
   ;
 [then]
 
 #f  value overall-start-time
 #() value test-numbers
+
 : run-fth-test ( xt -- )
   { xt }
   xt xt->name { name }
@@ -568,7 +603,9 @@ reset-all-hooks
     stack-reset
     sounds if
       "open sounds: %s" #( #t short-file-name ) snd-test-message
-      sounds each ( snd ) close-sound drop end-each
+      sounds each ( snd )
+        close-sound drop
+      end-each
     then
     #f set-ask-about-unsaved-edits drop
     #f set-remember-sound-state drop
@@ -584,15 +621,17 @@ reset-all-hooks
       "gtk"
     else
       *with-test-nogui* if
-	#t set-with-mix-tags drop
-	"nogui"
+        #t set-with-mix-tags drop
+        "nogui"
       else
-	"unknown"
+        "unknown"
       then
     then
   then { kind }
   stack-reset
-  "test.snd" file-exists? if "test.snd" 0o644 file-chmod then
+  "test.snd" file-exists? if
+    "test.snd" 0o644 file-chmod
+  then
   "=== Snd version: %s (snd-%s)" #( snd-version kind ) snd-test-message
   "=== Fth version: %s"          #( fth-version )      snd-test-message
   ""   #f snd-test-message
@@ -600,12 +639,11 @@ reset-all-hooks
   ""   #f snd-test-message
   default-file-buffer-size set-mus-file-buffer-size to *clm-file-buffer-size*
   #f  set-with-background-processes drop
-  600 set-window-x       	    drop
-  10  set-window-y       	    drop
-  #t  set-show-listener      	    drop
+  600 set-window-x drop
+  10  set-window-y drop
+  #t  set-show-listener drop
   reset-almost-all-hooks
-  \ set-mus-srate returns old srate
-  22050 dup set-mus-srate drop to *clm-srate*
+  22050 set-mus-srate f>s to *clm-srate*
   stack-reset
   make-timer to overall-start-time
 ;
@@ -614,10 +652,14 @@ reset-all-hooks
   overall-start-time stop-timer
   .stack
   stack-reset
-  regions each ( r ) forget-region drop end-each
+  regions each ( r )
+    forget-region drop
+  end-each
   0 set-view-files-sort drop
   clear-sincs drop
-  sounds if stop-playing drop then
+  sounds if
+    stop-playing drop
+  then
   reset-almost-all-hooks
   #f set-ask-about-unsaved-edits drop
   #f set-remember-sound-state drop
@@ -628,17 +670,19 @@ reset-all-hooks
   #( original-save-dir original-temp-dir "/tmp" ) each to path
     path file-directory? if
       path file-dir each to file
-	/snd_/ file regexp-match if
-	  file file-delete
-	  1 +to file-count
-	then
+        /snd_/ file regexp-match if
+          file file-delete
+          1 +to file-count
+        then
       end-each
     then
   end-each
   "" #f snd-test-message
   "%d files deleted" #( file-count ) snd-test-message
   "" #f snd-test-message
-  "test.snd" file-exists? if "test.snd" 0o644 file-chmod then
+  "test.snd" file-exists? if
+    "test.snd" 0o644 file-chmod
+  then
   #( "aaa.eps"
      "envs.save"
      "fmv.snd"
@@ -678,7 +722,9 @@ reset-all-hooks
      "with-mix.snd"
      "1"
      "gtk-errors"
-     "accelmap" ) each ( file ) file-delete end-each
+     "accelmap" ) each ( file )
+       file-delete
+     end-each
   #( "mus10.snd.snd"
      "ieee-text-16.snd.snd"
      "trumps22.adp.snd"
@@ -751,7 +797,7 @@ SIGINT lambda: { sig -- }
     "start up sounds: %s, mixes: %s, marks: %s, regions: %s?"
       #( snds mxs mks rgns ) snd-display
   then
-  \
+  \ 
   nil nil nil nil { vals sym req res }
   #( #( <'> enved-amplitude 0 )
      #( <'> bartlett-window 4 )
@@ -906,7 +952,7 @@ SIGINT lambda: { sig -- }
     vals 1 array-ref to req
     sym execute ( res ) req "%s" #( sym ) snd-test-neq
   end-each
-  \
+  \ 
   temp-dir { old-dir }
   #f set-temp-dir drop
   #( #( <'> region-graph-style graph-lines )
@@ -1038,7 +1084,7 @@ SIGINT lambda: { sig -- }
       snd-test-neq
   end-each
   old-dir set-temp-dir drop
-  \
+  \ 
   -123 set-max-transform-peaks drop
   -123 set-zero-pad drop
   max-transform-peaks set-max-transform-peaks 100 "set-max-transform-peaks" #()
@@ -1072,21 +1118,21 @@ black-and-white-colormap constant *better-colormap*
     *good-colormap* colormap? unless
       #f to *good-colormap*
       21 1 do
-	i integer->colormap to res
-	res colormap? if
-	  res to *good-colormap*
-	  leave
-	then
+        i integer->colormap to res
+        res colormap? if
+          res to *good-colormap*
+          leave
+        then
       loop
     then
     *better-colormap* colormap? unless
       #f to *better-colormap*
       21 *good-colormap* colormap->integer do
-	i integer->colormap to res
-	res colormap? if
-	  res to *better-colormap*
-	  leave
-	then
+        i integer->colormap to res
+        res colormap? if
+          res to *better-colormap*
+          leave
+        then
       loop
     then
   then
@@ -1307,7 +1353,7 @@ black-and-white-colormap constant *better-colormap*
     ffrm mus-unknown <>
     ftyp 27 <> && if
       flen 1+ fsize < if
-	flen 1+ fsize lno name "length" test-header-check
+        flen 1+ fsize lno name "length" test-header-check
       then
     then
     fframes fsr f/ fdur lno name "frames" test-header-check
@@ -1320,29 +1366,34 @@ black-and-white-colormap constant *better-colormap*
     file mus-sound-loop-info { lst }
     loop-start if
       lst nil? if
-	"[%d] %s loop info empty?" #( lno name ) snd-test-message
+        "[%d] %s loop info empty?" #( lno name ) snd-test-message
       else
-	lst car  loop-start lno name "loop-start" test-header-check
-	lst cadr loop-end   lno name "loop-end"   test-header-check
+        lst car  loop-start lno name "loop-start" test-header-check
+        lst cadr loop-end   lno name "loop-end"   test-header-check
       then
     else
       lst empty? unless
-	"[%d] %s thinks it has loop info: %s?" #( lno name lst )
-	  snd-test-message
+        "[%d] %s thinks it has loop info: %s?"
+          #( lno name lst ) snd-test-message
       then
     then
-  else
+  else                          \ not file-exists?
     *fth-debug* if
       "[%d] %s missing?" #( lno file ) snd-test-message
     then
-  then
+  then                          \ file-exists?
 ;
 
 : test-headers-with-loop ( name chns sr dur typ frm loop-start loop-end -- )
-  postpone *lineno* postpone (test-headers-with-loop)
+  postpone *lineno*
+  postpone (test-headers-with-loop)
 ; immediate
+
 : test-headers ( name chns sr dur typ frm -- )
-  postpone #f postpone #f postpone *lineno* postpone (test-headers-with-loop)
+  postpone #f
+  postpone #f
+  postpone *lineno*
+  postpone (test-headers-with-loop)
 ; immediate
 
 : 02-headers ( -- )
@@ -1774,7 +1825,7 @@ black-and-white-colormap constant *better-colormap*
       "%d: %s?" #( i h ) snd-display
     then
   end-each
-  \
+  \ 
   *with-test-gui* if
     show-controls { old-ctrl }
     #t set-show-controls drop
@@ -1787,7 +1838,7 @@ black-and-white-colormap constant *better-colormap*
     enved-envelope req "set-enved-envelope to self" #() snd-test-neq
     old-ctrl set-show-controls drop
   then
-  \
+  \ 
   #( #( <'> color-cutoff 0.003 0.01 )
      #( <'> color-inverted #t #f )
      #( <'> color-scale 1.0 0.5 )
@@ -1945,7 +1996,7 @@ black-and-white-colormap constant *better-colormap*
       initval sym set-execute drop
     loop
   end-each
-  \
+  \ 
   #( *with-test-gui* if
        #( <'> amp-control 1.0 '( -1.0 123.123 ) )
      then
@@ -2015,7 +2066,7 @@ black-and-white-colormap constant *better-colormap*
       initval sym set-execute drop
     end-each
   end-each
-  \
+  \ 
   *with-test-gui* if
     sync-none set-sync-style drop
     300 set-window-width drop
@@ -2027,7 +2078,7 @@ black-and-white-colormap constant *better-colormap*
     color-scale 100.0 "color-scale" #() snd-test-neq
     old-val set-color-scale drop
   then
-  \
+  \ 
   search-procedure proc? if
     "global search procedure: %s?" #( search-procedure ) snd-display
   then
@@ -2055,7 +2106,7 @@ black-and-white-colormap constant *better-colormap*
     "set global search procedure: %s?" #( search-procedure ) snd-display
   then
   #f set-search-procedure drop
-  \
+  \ 
   *with-test-gui* if
     enved-filter-order { old-val }
     5 set-enved-filter-order drop
@@ -2071,15 +2122,15 @@ black-and-white-colormap constant *better-colormap*
   dismiss-all-dialogs
   #() { undefined }
   \ XXX: changes from original snd-test.scm list [ms]:
-  \
+  \ 
   \ removed (Scheme specific):
   \   'add-clm-field (run.c)
   \   'run           (macro in run.c)
   \   'file->string  (snd-utils.c)
-  \
+  \ 
   \ removed (Forth specific):
   \   'abort         (forth word)
-  \
+  \ 
   \ added:
   \   'snd-exit      (xen.c; in Forth exit is already in use)
   #( '*snd-opened-sound* 'add-colormap 'add-directory-to-view-files-list
@@ -2526,11 +2577,11 @@ black-and-white-colormap constant *better-colormap*
     vals 1 array-ref to siz
     frm mus-bytes-per-sample siz "mus-bytes-per-sample" #() snd-test-neq
   end-each
-  mus-bshort mus-data-format->string "mus-bshort" "mus-data-format->string" #()
-    snd-test-neq
-  mus-aifc   mus-header-type->string "mus-aifc"   "mus-header-type->string" #()
-    snd-test-neq
-  \
+  mus-bshort mus-data-format->string "mus-bshort"
+    "mus-data-format->string" #() snd-test-neq
+  mus-aifc mus-header-type->string "mus-aifc"
+    "mus-header-type->string" #() snd-test-neq
+  \ 
   "hiho.tmp" { hiho }
   hiho mus-sound-report-cache drop
   hiho readlines { res }
@@ -2556,12 +2607,12 @@ black-and-white-colormap constant *better-colormap*
   *clmtest* 0= if
     mus-header-raw-defaults to res
     res length 3 = if
-      res 0 array-ref ( sr )   44100 "mus-header-raw-defaults srate"  #()
-        snd-test-neq
-      res 1 array-ref ( chns ) 2     "mus-header-raw-defaults chans"  #()
-        snd-test-neq
-      res 2 array-ref ( frm )  mus-bshort "mus-header-raw-defaults format" #()
-        snd-test-neq
+      res 0 array-ref ( sr ) 44100 "mus-header-raw-defaults srate"
+        #() snd-test-neq
+      res 1 array-ref ( chns ) 2 "mus-header-raw-defaults chans"
+        #() snd-test-neq
+      res 2 array-ref ( frm ) mus-bshort "mus-header-raw-defaults format"
+        #() snd-test-neq
     else
       res object-length 3 "mus-header-raw-defaults %s" #( res ) snd-test-neq
     then
@@ -2569,17 +2620,17 @@ black-and-white-colormap constant *better-colormap*
   '( 12345 3 mus-bdouble-unscaled ) set-mus-header-raw-defaults drop
   mus-header-raw-defaults to res
   res length 3 = if
-    res 0 array-ref ( sr )   12345 "set-mus-header-raw-defaults srate"  #()
-      snd-test-neq
-    res 1 array-ref ( chns ) 3     "set-mus-header-raw-defaults chans"  #()
-      snd-test-neq
-    res 2 array-ref ( frm )  mus-bdouble-unscaled
+    res 0 array-ref ( sr ) 12345 "set-mus-header-raw-defaults srate"
+      #() snd-test-neq
+    res 1 array-ref ( chns ) 3 "set-mus-header-raw-defaults chans"
+      #() snd-test-neq
+    res 2 array-ref ( frm ) mus-bdouble-unscaled
       "set-mus-header-raw-defaults format" #() snd-test-neq
   else
     res object-length 3 "set-mus-header-raw-defaults %s" #( res ) snd-test-neq
   then
   '( 44100 2 mus-bshort ) set-mus-header-raw-defaults drop
-  \
+  \ 
   "%d-%b %H:%M" oboe-snd mus-sound-write-date strftime
   "15-Oct 04:34"
   "mus-sound-write-date oboe.snd" #() snd-test-neq
@@ -2625,21 +2676,21 @@ black-and-white-colormap constant *better-colormap*
   ind close-sound drop
   long-file-name mus-sound-forget drop
   long-file-name file-delete
-  \
+  \ 
   "forest.aiff" check-file-name { fsnd }
   fsnd file-exists? if
     fsnd "fmv.snd" file-copy
     "fmv.snd" open-sound to ind
     ind sound-loop-info  fsnd mus-sound-loop-info  "loop-info" #() snd-test-neq
     ind '( 12000 14000 1 2 3 4 ) set-sound-loop-info drop
-    ind sound-loop-info  '( 12000 14000 1 2 3 4 1 1 )  "set-loop-info" #()
-      snd-test-neq
+    ind sound-loop-info  '( 12000 14000 1 2 3 4 1 1 )  "set-loop-info"
+      #() snd-test-neq
     "fmv1.snd" ind mus-aifc save-sound-as drop
     ind close-sound drop
     "fmv1.snd" mus-sound-loop-info  '( 12000 14000 1 2 3 4 1 1 )
       "saved-loop-info" #() snd-test-neq
   then
-  \
+  \ 
   oboe-snd open-sound to ind
   "fmv.snd" ind mus-aifc save-sound-as drop
   ind close-sound drop
@@ -2660,7 +2711,7 @@ black-and-white-colormap constant *better-colormap*
   ind close-sound drop
   "fmv1.snd" mus-sound-loop-info '( 1200 1400 0 0 2 1 1 0 )
     "saved null loop-info (no mode1)" #() snd-test-neq
-  \
+  \ 
   com empty? unless
     "oboe: mus-sound-comment %S?" #( com ) snd-display
   then
@@ -2691,7 +2742,7 @@ black-and-white-colormap constant *better-colormap*
       "mus-sound-comment %s" #( fsnd ) snd-test-neq
     then
   end-each
-  \
+  \ 
   "traffic.aiff" check-file-name to fsnd
   fsnd file-exists? if
     fsnd mus-sound-comment to res
@@ -2699,17 +2750,17 @@ black-and-white-colormap constant *better-colormap*
       "mus-sound-comment traffic: %s?" #( res ) snd-display
     then
   then
-  \
+  \ 
   *clmtest* 0= if
     mal cadr 0.14724 "oboe: mus-sound-maxamp" #() snd-test-neq
     mal car 24971 "oboe: mus-sound-maxamp at" #() snd-test-neq
   then
-  \
+  \ 
   oboe-snd '( 1234 0.5 ) set-mus-sound-maxamp drop
   oboe-snd mus-sound-maxamp to mal
   mal cadr 0.5 "oboe: set-mus-sound-maxamp" #() snd-test-neq
   mal car 1234 "oboe: set-mus-sound-maxamp at" #() snd-test-neq
-  \
+  \ 
   "4.aiff" mus-sound-maxamp to mal
   *clmtest* 0= if
     mal
@@ -2736,7 +2787,7 @@ black-and-white-colormap constant *better-colormap*
   "oboe: file-write-date" #() snd-test-neq
   oboe-snd play-sound-1
   oboe-snd mus-sound-forget drop
-  \
+  \ 
   0 { lasth }
   begin
     lasth 1+ to lasth
@@ -2759,10 +2810,10 @@ black-and-white-colormap constant *better-colormap*
      'normalize-by-channel ) each symbol-name to name
     name string-eval to req
     req set-transform-normalization drop
-    transform-normalization req "set-transform-normalization %s" #( name )
-      snd-test-neq
+    transform-normalization req
+      "set-transform-normalization %s" #( name ) snd-test-neq
   end-each
-  \
+  \ 
   "fmv.snd" mus-next mus-bshort 22050 1 "set-samples test" 100 new-sound to ind
   10 3 3 0.1 make-vct set-samples drop
   0 20 ind 0 channel->vct
@@ -2832,7 +2883,7 @@ black-and-white-colormap constant *better-colormap*
   -10 10 "fmv1.snd" <'> set-samples snd-test-catch to res
   res car 'no-such-sample "set-samples (beg -10)" #() snd-test-neq
   ind close-sound drop
-  \
+  \ 
   100 { len }
   #( #( mus-bshort  2 -15 f** )
      #( mus-lshort  2 -15 f** )
@@ -2872,7 +2923,7 @@ black-and-white-colormap constant *better-colormap*
       1.9999 random to val
       val 2.0 f>
       val 0.0 f< || if
-	"random 2.0 -> %s?" #( val ) snd-display
+        "random 2.0 -> %s?" #( val ) snd-display
       then
       v i 1.0 val f- vct-set! drop
     loop
@@ -2884,20 +2935,21 @@ black-and-white-colormap constant *better-colormap*
     len 0 do
       v i vct-ref v1 i vct-ref f- fabs to diff
       diff maxdiff f> if
-	diff to maxdiff
-	i to maxpos
+        diff to maxdiff
+        i to maxpos
       then
     loop
     maxdiff allowed-diff f> if
-      "%s: %s at %d (%s %s)?" #(
-	 typ mus-data-format-name
-	 maxdiff maxpos
-	 v maxpos vct-ref
-	 v1 maxpos vct-ref ) snd-display
+      "%s: %s at %d (%s %s)?"
+        #( typ mus-data-format-name
+           maxdiff
+           maxpos
+           v maxpos vct-ref
+           v1 maxpos vct-ref ) snd-display
     then
     ind close-sound drop
   end-each
-  \
+  \ 
   oboe-snd view-sound { ob }
   1000 ob sample { samp }
   oboe-snd mus-sound-comment { old-comment }
@@ -2915,17 +2967,17 @@ black-and-white-colormap constant *better-colormap*
   oboe-snd mus-sound-comment old-comment "set-comment overwrote current" #()
     snd-test-neq
   #f set-filter-control-in-hz drop
-  \
+  \ 
   "test.snd" ob mus-raw save-sound-as drop
   "test.snd" 1 22050 mus-bshort open-raw-sound to ab
   ab mus-raw mus-bshort samp sndlib-check-it
   ab close-sound drop
-  \
+  \ 
   "test.snd" ob mus-nist mus-bint save-sound-as drop
   "test.snd" open-sound to ab
   ab mus-nist mus-bint samp sndlib-check-it
   ab close-sound drop
-  \
+  \ 
   output-comment-hook reset-hook!
   output-comment-hook <'> sndlib-check-string add-hook!
   :file "test.snd" :sound ob :header-type mus-riff :data-format mus-lfloat
@@ -2981,12 +3033,12 @@ black-and-white-colormap constant *better-colormap*
   "test.snd" find-sound to ab
   ab srate 12345 "set-srate" #() snd-test-neq
   ab close-sound drop
-  \
+  \ 
   "test.snd" ob mus-next mus-bfloat save-sound-as drop
   "test.snd" open-sound to ab
   ab mus-next mus-bfloat samp sndlib-check-it
   ab close-sound drop
-  \
+  \ 
   "test.snd" ob mus-next mus-bshort save-sound-as drop
   ob close-sound drop
   "test.snd" open-sound to ab
@@ -3006,7 +3058,7 @@ black-and-white-colormap constant *better-colormap*
   "test.snd" find-sound to ab
   srate 12345 "set-srate" #() snd-test-neq
   ab close-sound drop
-  \
+  \ 
   "2a.snd" open-sound to ind
   "test.snd" :data-format mus-l24int :header-type mus-riff :channel 0
     save-sound-as drop
@@ -3022,7 +3074,7 @@ black-and-white-colormap constant *better-colormap*
   ind0 maxamp ind 0 undef maxamp "save-sound-as :channel 0 maxamps" #()
     snd-test-neq
   ind0 close-sound drop
-  \
+  \ 
   "test.snd" :data-format mus-bfloat :header-type mus-aifc :channel 1
     :srate 12345 save-sound-as drop
   "test.snd" open-sound to ind0
@@ -3037,7 +3089,7 @@ black-and-white-colormap constant *better-colormap*
   ind0 maxamp ind 1 undef maxamp "save-sound-as :channel 1 maxamps" #()
     snd-test-neq
   ind0 close-sound drop
-  \
+  \ 
   "test.snd" :channel 1 :comment "this is a test" save-sound-as drop
   "test.snd" open-sound to ind0
   ind0 channels 1 "save-sound-as :channel 1 (1) chans" #() snd-test-neq
@@ -3054,7 +3106,7 @@ black-and-white-colormap constant *better-colormap*
     "save-sound-as :channel 1 (1) comment" #() snd-test-neq
   ind0 close-sound drop
   ind close-sound drop
-  \
+  \ 
   "t15.aiff" check-file-name to fsnd
   fsnd file-exists? if
     fsnd open-sound to ind
@@ -3069,7 +3121,7 @@ black-and-white-colormap constant *better-colormap*
     8000 ind 1 sample 0.021 "aifc fl64 trouble (1)" #() snd-test-neq
     ind close-sound drop
   then
-  \
+  \ 
   #( #( "bad_chans.snd"       0 22050 0 )
      #( "bad_srate.snd"       1 0 0 )
      #( "bad_data_format.snd" 1 22050 4411 )
@@ -3089,49 +3141,49 @@ black-and-white-colormap constant *better-colormap*
     vals 3 array-ref to fr
     fsnd file-exists? if
       fsnd <'> mus-sound-chans #t nil fth-catch ?dup-if
-	car 'mus-error <> if
-	  "%s: chans %d (%s)" #( fsnd fc res ) snd-display
-	then
+        car 'mus-error <> if
+          "%s: chans %d (%s)" #( fsnd fc res ) snd-display
+        then
       else
-	fc <> if
-	  "%s: chans %d (%s)" #( fsnd fc res ) snd-display
-	then
-	stack-reset
+        fc <> if
+          "%s: chans %d (%s)" #( fsnd fc res ) snd-display
+        then
+        stack-reset
       then
       \ 
       fsnd <'> mus-sound-srate #t nil fth-catch ?dup-if
-	car 'mus-error <> if
-	  "%s: srate %d (%s)" #( fsnd fs res ) snd-display
-	then
-	stack-reset
+        car 'mus-error <> if
+          "%s: srate %d (%s)" #( fsnd fs res ) snd-display
+        then
+        stack-reset
       else
-	fs <> if
-	  "%s: srate %d (%s)" #( fsnd fs res ) snd-display
-	then
+        fs <> if
+          "%s: srate %d (%s)" #( fsnd fs res ) snd-display
+        then
       then
       \ 
       fsnd <'> mus-sound-frames #t nil fth-catch ?dup-if
-	car 'mus-error <> if
-	  "%s: frames %d (%s)" #( fsnd fr res ) snd-display
-	then
-	stack-reset
+        car 'mus-error <> if
+          "%s: frames %d (%s)" #( fsnd fr res ) snd-display
+        then
+        stack-reset
       else
-	fr <> if
-	  "%s: frames %d (%s)" #( fsnd fr res ) snd-display
-	then
+        fr <> if
+          "%s: frames %d (%s)" #( fsnd fr res ) snd-display
+        then
       then
-    then
+    then                        \ file-exists?
   end-each
-  \
-  "/usr/include/sys/" file-pwd $+ "/oboe.snd" $+ <'> open-sound
-    #t nil fth-catch ?dup-if
+  \ 
+  "/usr/include/sys/" file-pwd $+ "/oboe.snd" $+
+    <'> open-sound #t nil fth-catch ?dup-if
     1 >list "open-sound with slashes: %s" swap snd-display
     stack-reset
-  else
+  else                          \ open-sound with slashes
     to ind
     ind sound? if
       ind short-file-name "oboe.snd" string<> if
-	"open-sound with slashes: %s" #( ind short-file-name ) snd-display
+        "open-sound with slashes: %s" #( ind short-file-name ) snd-display
       then
     else
       "open-sound with slashes: %s" #( ind ) snd-display
@@ -3150,16 +3202,18 @@ black-and-white-colormap constant *better-colormap*
        "bad_srate.nist"
        "bad_length.nist" ) each check-file-name to fsnd
       fsnd file-exists? if
-	fsnd <'> insert-sound          snd-test-catch drop
-	fsnd <'> convolve-with         snd-test-catch drop
-	fsnd <'> mix                   snd-test-catch drop
-	fsnd <'> sndlib-check-bad-file snd-test-catch drop
+        fsnd <'> insert-sound snd-test-catch drop
+        fsnd <'> convolve-with snd-test-catch drop
+        fsnd <'> mix snd-test-catch drop
+        fsnd <'> sndlib-check-bad-file snd-test-catch drop
       then
     end-each
     ind close-sound drop
-  then
-  sounds each ( snd ) close-sound end-each
-  \
+  then                          \ open-sound with slashes
+  sounds each ( snd )
+    close-sound
+  end-each
+  \ 
   "oboe.snd" open-sound { ob }
   channel->vct vct->sound-data { sd }
   sd sound-data-maxamp { mx }
@@ -3206,7 +3260,7 @@ black-and-white-colormap constant *better-colormap*
     then
     fil close-sound drop
   then
-  \
+  \ 
   "fmv5.snd" file-delete
   "fmv5.snd" 22050 1 mus-bshort mus-aiff "no comment"
     mus-sound-open-output { fd }
@@ -3273,7 +3327,7 @@ black-and-white-colormap constant *better-colormap*
   fd 0 10 1 sdata mus-sound-read drop
   sdata 0 0 sound-data-ref 0.2 "2 mus-sound-seek" #() snd-test-neq
   fd mus-sound-close-input drop
-  \
+  \ 
   2 10 make-sound-data to sd
   10 0.25 make-vct sd 0 vct->sound-data drop
   10 0.50 make-vct sd 1 vct->sound-data drop
@@ -3282,14 +3336,14 @@ black-and-white-colormap constant *better-colormap*
     snd-test-neq
   sd 1 sound-data->vct 10 1.0 make-vct "sound-data-scale! chan 1" #()
     snd-test-neq
-  \
+  \ 
   2 10 make-sound-data to sd
   sd 2.0 sound-data-fill! drop
   sd 0 sound-data->vct 10 2.0 make-vct "sound-data-fill! chan 0" #()
     snd-test-neq
   sd 1 sound-data->vct 10 2.0 make-vct "sound-data-fill! chan 1" #()
     snd-test-neq
-  \
+  \ 
   "fmv.snd" 22050 -1 mus-bshort mus-aiff "no comment"
     <'> mus-sound-open-output snd-test-catch to res
   res car 'out-of-range "mus-sound-open-output bad chans" #() snd-test-neq
@@ -3299,7 +3353,7 @@ black-and-white-colormap constant *better-colormap*
   "fmv.snd" 22050 1 mus-bshort -1 "no comment"
     <'> mus-sound-open-output snd-test-catch to res
   res car 'out-of-range "mus-sound-open-output bad type" #() snd-test-neq
-  \
+  \ 
   "fmv.snd" -1 mus-bshort mus-aiff #f
     <'> mus-sound-reopen-output snd-test-catch to res
   res car 'out-of-range "mus-sound-reopen-output bad chans" #() snd-test-neq
@@ -3309,12 +3363,12 @@ black-and-white-colormap constant *better-colormap*
   "fmv.snd" 1 mus-bshort -1 #f
     <'> mus-sound-reopen-output snd-test-catch to res
   res car 'out-of-range "mus-sound-reopen-output bad type" #() snd-test-neq
-  \
+  \ 
   2 10 make-sound-data to sd
   \ XXX: S7 fill! tests skipped
   sd object-copy { sd1 }
   sd sd1 "object-copy sd" #() snd-test-neq
-  \
+  \ 
   #( "trunc.snd"
      "trunc.aiff"
      "trunc.wav"
@@ -3341,7 +3395,7 @@ black-and-white-colormap constant *better-colormap*
     ind close-sound drop
   then
   open-raw-sound-hook reset-hook!
-  \
+  \ 
   1 32 make-sound-data to sd1
   2 64 make-sound-data { sd2 }
   32 0 do
@@ -3365,14 +3419,14 @@ black-and-white-colormap constant *better-colormap*
   res  2 "sound-data->sound-data wrap around" #() snd-test-neq
   sdi sdo 10 32 32 sound-data->sound-data to res
   res 10 "sound-data->sound-data wrap around" #() snd-test-neq
-  \
+  \ 
   sdi sdo -1 10 10 <'> sound-data->sound-data snd-test-catch to res
   res car 'out-of-range "sound-data->sound-data start" #() snd-test-neq
   sdi sdo 0 -1 10 <'> sound-data->sound-data snd-test-catch to res
   res car 'out-of-range "sound-data->sound-data frames" #() snd-test-neq
   sdi sdo 0 128 10 <'> sound-data->sound-data snd-test-catch to res
   res car 'out-of-range "sound-data->sound-data frames" #() snd-test-neq
-  \
+  \ 
   1 1 make-sound-data to sd
   sd 0 0 sound-data-ref 0.0 "sound-data ref" #() snd-test-neq
   sd 0 0 1.0 sound-data-set! drop
@@ -3380,7 +3434,7 @@ black-and-white-colormap constant *better-colormap*
   1 1 make-sound-data to sd1
   sd1 0 0 1.0 sound-data-set! drop
   sd sd1 "sound-data set not equal" #() snd-test-neq
-  \
+  \ 
   2 3 make-sound-data to sd
   sd 0 0 sound-data-ref 0.0 "sound-data ref (1)" #() snd-test-neq
   sd 1 0 1.0 sound-data-set! drop
@@ -3391,7 +3445,7 @@ black-and-white-colormap constant *better-colormap*
   sd1 1 0 1.0 sound-data-set! drop
   sd1 1 2 2.0 sound-data-set! drop
   sd sd1 "sound-data set (3) not equal" #() snd-test-neq
-  \
+  \ 
   #( #( mus-bshort mus-next )
      #( mus-bfloat mus-aifc )
      #( mus-lshort mus-aifc )
@@ -3418,22 +3472,22 @@ black-and-white-colormap constant *better-colormap*
       vals 0 array-ref to df
       vals 1 array-ref to ht
       chns 1 = if
-	100000
+        100000
       else
-	chns 2 = if
-	  50000
-	else
-	  1000
-	then
+        chns 2 = if
+          50000
+        else
+          1000
+        then
       then to samps
       "fmv5.snd" file-delete
       "fmv5.snd" 22050 chns df ht "no comment" mus-sound-open-output to fd
       chns samps make-sound-data to sdata
       chns samps make-sound-data to ndata
       chns 0 do
-	samps 0 do
-	  sdata j ( chn ) i ( samp ) 2.0 random 1.0 f- sound-data-set! drop
-	loop
+        samps 0 do
+          sdata j ( chn ) i ( samp ) 2.0 random 1.0 f- sound-data-set! drop
+        loop
       loop
       fd 0 samps 1- chns sdata mus-sound-write drop
       fd samps chns * df mus-bytes-per-sample * mus-sound-close-output drop
@@ -3447,43 +3501,21 @@ black-and-white-colormap constant *better-colormap*
       fd mus-sound-close-input drop
       #f ( flag )
       chns 0 do
-	samps 0 do
-	  sdata j ( chn ) i ( samp ) sound-data-ref to sda
-	  ndata j ( chn ) i ( samp ) sound-data-ref to nda
-	  sda nda fneq if
-	    sda nda "read-write trouble: format %s header %s "
-	      #( df mus-data-format-name
-	         ht mus-header-type-name ) snd-test-neq
-	    not ( toggle flag )
-	    leave
-	  then
-	loop
-	dup ( check flag ) ?leave
-      loop
-      ( flag ) drop
+        samps 0 do
+          sdata j ( chn ) i ( samp ) sound-data-ref to sda
+          ndata j ( chn ) i ( samp ) sound-data-ref to nda
+          sda nda fneq if
+            sda nda "read-write trouble: format %s header %s "
+              #( df mus-data-format-name
+                 ht mus-header-type-name ) snd-test-neq
+            not ( toggle flag )
+            leave
+          then
+        loop dup ( check flag ) ?leave
+      loop ( flag ) drop
     end-each
   end-each
-  \
-  "oboe.snd" open-sound to ind
-  0 22050 1 little-endian? if mus-lshort else mus-bshort then 512
-    mus-audio-open-input to fd
-  1 256 make-sound-data to sdata
-  256 make-vct to v
-  fd -1 = if
-    "can't open audio input port!" #() snd-display
-  else
-    10 0 do
-      fd sdata 256 mus-audio-read drop
-      *with-test-gtk* unless
-	\ FIXME: graph (gtk segfault)
-        \ screws up with gtk
-	sdata 0 v sound-data->vct graph drop
-      then
-    loop
-    fd mus-audio-close drop
-  then
-  ind close-sound drop
-  \
+  \ 
   "fmv.snd" 22050 1 mus-bshort mus-next "no comment"
     mus-sound-open-output to fd
   1 10 make-sound-data to sdata
@@ -3553,7 +3585,7 @@ black-and-white-colormap constant *better-colormap*
   #f set-clipping drop
   ind close-sound drop
   "fmv.snd" file-delete
-  \
+  \ 
   #f set-clipping drop
   "test.snd" :data-format mus-lshort new-sound { snd }
   0 10 pad-channel drop
@@ -3574,7 +3606,7 @@ black-and-white-colormap constant *better-colormap*
   "unclipped 1" #() snd-test-neq
   snd close-sound drop
   "test.snd" mus-sound-forget drop
-  \
+  \ 
   #t set-clipping drop
   "test.snd" :data-format mus-lshort new-sound to snd
   0 10 pad-channel drop
@@ -3594,7 +3626,7 @@ black-and-white-colormap constant *better-colormap*
   vct( 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000 )
   "clipped" #() snd-test-neq
   snd close-sound drop
-  \
+  \ 
   vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
   data vct->sound-data to sdata
   "test.snd" 22050 1 mus-lshort mus-riff "a comment"
@@ -3628,7 +3660,7 @@ black-and-white-colormap constant *better-colormap*
   "clipped 1" #() snd-test-neq
   snd close-sound drop
   "test.snd" mus-sound-forget drop
-  \
+  \ 
   #f set-mus-clipping drop
   vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) to data
   data vct->sound-data to sdata
@@ -3656,7 +3688,7 @@ black-and-white-colormap constant *better-colormap*
   "clipped 2" #() snd-test-neq
   snd close-sound drop
   "test.snd" mus-sound-forget drop
-  \
+  \ 
   #t set-mus-clipping drop
   vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) to data
   data vct->sound-data to sdata
@@ -3669,9 +3701,9 @@ black-and-white-colormap constant *better-colormap*
   snd 0 mus-sound-close-output drop
   "test.snd" file-delete
   "test.snd" mus-sound-forget drop
-  #f set-mus-clipping drop 		\ ; this is the default
+  #f set-mus-clipping drop    \ ; this is the default
   #f set-clipping drop
-  \
+  \ 
   "this is a comment which we'll repeat enough times to trigger an internal loop" { com }
   3 0 do
     com com $+ to com
@@ -3719,14 +3751,14 @@ black-and-white-colormap constant *better-colormap*
     then
   loop
   fd mus-sound-close-input drop
-  \
+  \ 
   "32bit.sf" check-file-name to fsnd
   fsnd file-exists? if
     fsnd open-sound to ind
     ind 0 maxamp 0.228 "32bit max" #() snd-test-neq
     ind close-sound drop
   then
-  \
+  \ 
   #( #( "next-dbl.snd" 10 10
         vct( 0.475 0.491 0.499 0.499 0.492 0.476 0.453 0.423 0.387 0.344 ) )
      #( "oboe.ldbl" 1000 10 
@@ -3815,7 +3847,7 @@ black-and-white-colormap constant *better-colormap*
       ind close-sound drop
     then
   end-each
-  \
+  \ 
   #( "no error"
      "no frequency method"
      "no phase method"
@@ -3884,7 +3916,7 @@ black-and-white-colormap constant *better-colormap*
     ( err ) i mus-error-type->string "mus-error-type->string[%d]" #( i )
       snd-test-neq
   end-each
-  \
+  \ 
   "oboe.snd" mus-sound-srate { cur-srate }
   "oboe.snd" mus-sound-chans { cur-chans }
   "oboe.snd" mus-sound-data-format { cur-format }
@@ -3915,13 +3947,13 @@ black-and-white-colormap constant *better-colormap*
   "oboe.snd" cur-loc    set-mus-sound-data-location drop
   "oboe.snd" cur-type   set-mus-sound-header-type drop
   "oboe.snd" cur-format set-mus-sound-data-format drop
-  \
+  \ 
   "oboe.snd" open-sound to ind
   "test.wave" ind mus-riff save-sound-as drop
   "test.rf64" ind mus-rf64 save-sound-as drop
   "test.aifc" ind mus-aifc save-sound-as drop
   ind close-sound drop
-  \
+  \ 
   #( "test.wave" "test.rf64" "test.aifc" ) each to file
     file mus-sound-srate to cur-srate
     file mus-sound-chans to cur-chans
@@ -3966,7 +3998,7 @@ black-and-white-colormap constant *better-colormap*
     ind srate cur-srate 2* "%s set-srate" #( ind file-name ) snd-test-neq
     cur-samps 2* ind set-frames drop
     ind frames cur-samps 2* "%s set-frames" #( ind file-name ) snd-test-neq
-    ind cur-chans 2* set-chans drop	\ ; this can change the index
+    ind cur-chans 2* set-chans drop  \ ; this can change the index
     file find-sound to ind
     ind chans cur-chans 2* "%s set-chans" #( ind file-name ) snd-test-neq
     ind cur-loc 2* set-data-location drop
@@ -3991,37 +4023,37 @@ black-and-white-colormap constant *better-colormap*
     bigger-snd file-exists? if
       \ ; silence as last .9 secs, so it probably wasn't written
       44100 71999.1 f* floor f>d { probable-frames }
-      3175160310 make-ulong-long { our-frames }
-      \ 6350320648 make-ulong-long { our-length }
-      3175160324 make-ulong-long 2 d* { our-length }
+      3175160310 { our-frames }
+      6350320648 { our-length }
       bigger-snd mus-sound-samples our-frames "bigger samples" #() snd-test-neq
       bigger-snd mus-sound-frames our-frames "bigger frames" #() snd-test-neq
-      bigger-snd mus-sound-frames probable-frames
-        "bigger frames (probable)" #() snd-test-neq
+      bigger-snd mus-sound-frames probable-frames <'> d=
+        "bigger frames (probable)" #() snd-test-any-neq
       bigger-snd mus-sound-length our-length "bigger bytes" #() snd-test-neq
       bigger-snd mus-sound-duration 71999.1015 "bigger dur" #() snd-test-neq
       bigger-snd open-sound to ind
       ind frames our-frames "bigger frames" #() snd-test-neq
       ind frames to big-file-frames
-      ind frames probable-frames "bigger frames (probable)" #() snd-test-neq
-      ind 0 0 frames big-file-frames "bigger edpos-frames" #() snd-test-neq
+      big-file-frames probable-frames <'> d= "bigger frames (probable)"
+        #() snd-test-any-neq
+      big-file-frames ind 0 0 frames "bigger edpos-frames" #() snd-test-neq
       44100 50000 d* ind add-mark to m1
       m1 mark-sample 44100 50000 d* "bigger mark at" #() snd-test-neq
       m1 44100 66000 d* set-mark-sample drop
       m1 mark-sample 44100 66000 d* "bigger mark to" #() snd-test-neq
       "oboe.snd" 44100 60000 d* mix-sound car to mx
       mx mix? if
-	mx mix-position 44100 60000 d* "bigger mix at" #() snd-test-neq
-	mx 44100 61000 d* set-mix-position drop
-	mx mix-position 44100 61000 d* "bigger mix to" #() snd-test-neq
+        mx mix-position 44100 60000 d* "bigger mix at" #() snd-test-neq
+        mx 44100 61000 d* set-mix-position drop
+        mx mix-position 44100 61000 d* "bigger mix to" #() snd-test-neq
       else
-	"no mix tag from mix-sound" #() snd-display
+        "no mix tag from mix-sound" #() snd-display
       then
       2 undo drop
       <'> f0<> 1 make-proc find-channel to res
       res false?
       res 100 > || if
-	"bigger find not 0.0: %s" #( res ) snd-display
+        "bigger find not 0.0: %s" #( res ) snd-display
       then
       selection-creates-region { old-select }
       #f set-selection-creates-region drop
@@ -4045,11 +4077,11 @@ black-and-white-colormap constant *better-colormap*
       44123 51234 d* ind set-cursor drop
       ind cursor 44123 51234 d* "bigger cursor 123" #() snd-test-neq
       ind close-sound drop
-    else
+    else                        \ bigger-snd not file-exists?
       "no such bigger file %s" #( bigger-snd ) snd-display
-    then
-  then
-  \
+    then                        \ bigger-snd file-exists?
+  then                          \ with-big-file
+  \ 
   "tmp.snd" mus-riff mus-l24int 22050 1 :size 100000 new-sound to ind
   selection-creates-region { old-selection-creates-region }
   #t set-selection-creates-region drop
@@ -4080,7 +4112,7 @@ black-and-white-colormap constant *better-colormap*
   ind close-sound drop
   "tmp.snd" file-delete
   old-selection-creates-region set-selection-creates-region drop
-  \
+  \ 
   "tmp.snd" mus-next mus-bfloat 22050 1 :size 10 :comment #f new-sound to ind
   <'> sndlib-test-map-set-1.0 map-channel drop
   '( 0 0 0.1 0.1 0.2 0.2 0.3 0.3 0.4 0.4 0.5 0.5
@@ -4109,8 +4141,8 @@ black-and-white-colormap constant *better-colormap*
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write			\ compression
-  io 0o016 port-putc			\ pascal string len
+  io "NONE" port-write      \ compression
+  io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
   io "AUTH" port-write
@@ -4171,10 +4203,10 @@ black-and-white-colormap constant *better-colormap*
     else
       to res
       res number? if
-	res sound? if
-	  "open-sound garbage: %s %s" #( magic res ) snd-display
-	  res close-sound drop
-	then
+        res sound? if
+          "open-sound garbage: %s %s" #( magic res ) snd-display
+          res close-sound drop
+        then
       then
     then
     "test.snd" file-delete
@@ -4191,10 +4223,10 @@ black-and-white-colormap constant *better-colormap*
     else
       to res
       res number? if
-	res sound? if
-	  "open-sound plausible garbage: %s %s" #( magic res ) snd-display
-	  res close-sound drop
-	then
+        res sound? if
+          "open-sound plausible garbage: %s %s" #( magic res ) snd-display
+          res close-sound drop
+        then
       then
     then
     "test.snd" file-delete
@@ -4203,11 +4235,12 @@ black-and-white-colormap constant *better-colormap*
     "test.snd" make-file-output-port to io
     io magic port-write
     12 1 do
-      io
-      magic-words
-      j ( ctr ) i + len < if j i + else i then
-      array-ref
-      port-write
+      io magic-words
+        j ( ctr ) i + len < if
+          j i +
+        else
+          i
+        then array-ref port-write
     loop
     io port-close
     "test.snd" <'> open-sound #t nil fth-catch if
@@ -4215,16 +4248,16 @@ black-and-white-colormap constant *better-colormap*
     else
       to res
       res number? if
-	res sound? if
-	  "open-sound very plausible garbage: %s %s" #( magic res ) snd-display
-	  res close-sound drop
-	then
+        res sound? if
+          "open-sound very plausible garbage: %s %s" #( magic res ) snd-display
+          res close-sound drop
+        then
       then
     then
-  end-each
+  end-each                      \ magic-words
   "test.snd" file-delete
   "test.snd" mus-sound-forget drop
-  \
+  \ 
   "test.snd" make-file-output-port to io
   io ".snd" port-write
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o034 port-putc \ location
@@ -4238,7 +4271,7 @@ black-and-white-colormap constant *better-colormap*
   "test.snd" mus-sound-data-format mus-bshort "next 18" #() snd-test-neq
   "test.snd" file-delete
   "test.snd" mus-sound-forget drop
-  \
+  \ 
   "test.snd" make-file-output-port to io
   io ".snd" port-write
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o004 port-putc \ location
@@ -4255,15 +4288,15 @@ black-and-white-colormap constant *better-colormap*
     to res
     res number? if
       res sound? if
-	"open-sound next bad location %d: %s" #( res data-location res )
-	  snd-display
-	res close-sound drop
+        "open-sound next bad location %d: %s"
+          #( res data-location res ) snd-display
+        res close-sound drop
       then
     then
   then
   "test.snd" file-delete
   "test.snd" mus-sound-forget drop
-  \
+  \ 
   "test.snd" make-file-output-port to io
   io ".snd" port-write
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o034 port-putc \ location
@@ -4278,12 +4311,9 @@ black-and-white-colormap constant *better-colormap*
     stack-reset
   else
     to res
-    res number? if
-      res sound? if
-	"open-sound next bad format %s: %s" #( res data-format res )
-	  snd-display
-	res close-sound drop
-      then
+    res sound? if
+      "open-sound next bad format %s: %s" #( res data-format res ) snd-display
+      res close-sound drop
     then
   then
   "test.snd" file-delete
@@ -4303,12 +4333,10 @@ black-and-white-colormap constant *better-colormap*
     stack-reset
   else
     to res
-    res number? if
-      res sound? if
-	"open-sound aifc no ssnd chunk %d: %s" #( res data-location res )
-	  snd-display
-	res close-sound drop
-      then
+    res sound? if
+      "open-sound aifc no ssnd chunk %d: %s"
+        #( res data-location res ) snd-display
+      res close-sound drop
     then
   then
   "test.aif" file-delete
@@ -4319,12 +4347,10 @@ black-and-white-colormap constant *better-colormap*
     stack-reset
   else
     to res
-    res number? if
-      res sound? if
-	"open-sound aifc 0-len auth chunk %d: %s" #( res data-location res )
-	  snd-display
-	res close-sound drop
-      then
+    res sound? if
+      "open-sound aifc 0-len auth chunk %d: %s"
+        #( res data-location res ) snd-display
+      res close-sound drop
     then
   then
   "test.aif" file-delete
@@ -4335,11 +4361,9 @@ black-and-white-colormap constant *better-colormap*
     stack-reset
   else
     to res
-    res number? if
-      res sound? if
-	"open-sound bits 80 %s: %s" #( res data-format res ) snd-display
-	res close-sound drop
-      then
+    res sound? if
+      "open-sound bits 80 %s: %s" #( res data-format res ) snd-display
+      res close-sound drop
     then
   then
   "test.aif" file-delete
@@ -4359,8 +4383,8 @@ black-and-white-colormap constant *better-colormap*
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write			\ compression
-  io 0o016 port-putc			\ pascal string len
+  io "NONE" port-write      \ compression
+  io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
   io "AUTH" port-write
@@ -4402,8 +4426,8 @@ black-and-white-colormap constant *better-colormap*
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write			\ compression
-  io 0o016 port-putc			\ pascal string len
+  io "NONE" port-write      \ compression
+  io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
   io "COMT" port-write
@@ -4444,8 +4468,8 @@ black-and-white-colormap constant *better-colormap*
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write			\ compression
-  io 0o016 port-putc			\ pascal string len
+  io "NONE" port-write      \ compression
+  io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
   io "COMT" port-write
@@ -4487,8 +4511,8 @@ black-and-white-colormap constant *better-colormap*
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write			\ compression
-  io 0o016 port-putc			\ pascal string len
+  io "NONE" port-write      \ compression
+  io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
   io "SSND" port-write
@@ -4501,12 +4525,10 @@ black-and-white-colormap constant *better-colormap*
     stack-reset
   else
     to res
-    res number? if
-      res sound? if
-	"open-sound aifc 2 ssnd chunks %d: %s" #( res data-location res )
-	  snd-display
-	res close-sound drop
-      then
+    res sound? if
+      "open-sound aifc 2 ssnd chunks %d: %s"
+        #( res data-location res ) snd-display
+      res close-sound drop
     then
   then
   "test.aif" file-delete
@@ -4524,7 +4546,9 @@ black-and-white-colormap constant *better-colormap*
   io port-close
   "test.aif" <'> open-sound snd-test-catch to res
   res car 'mus-error "open-sound aifc no comm chunk: %s" #( res ) snd-test-neq
-  sounds each close-sound drop end-each
+  sounds each ( snd )
+    close-sound drop
+  end-each
   "test.aif" file-delete
   "test.aif" mus-sound-forget drop
   \ 
@@ -4543,8 +4567,8 @@ black-and-white-colormap constant *better-colormap*
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write			\ compression
-  io 0o016 port-putc			\ pascal string len
+  io "NONE" port-write      \ compression
+  io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
   io "SSND" port-write
@@ -4601,8 +4625,8 @@ black-and-white-colormap constant *better-colormap*
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write			\ compression
-  io 0o016 port-putc			\ pascal string len
+  io "NONE" port-write      \ compression
+  io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
   io "APPL" port-write
@@ -4647,8 +4671,8 @@ black-and-white-colormap constant *better-colormap*
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write			\ compression
-  io 0o016 port-putc			\ pascal string len
+  io "NONE" port-write      \ compression
+  io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
   io "APPL" port-write
@@ -4674,7 +4698,7 @@ black-and-white-colormap constant *better-colormap*
   ind close-sound drop
   "test.aif" file-delete
   "test.aif" mus-sound-forget drop
-  \
+  \ 
   file-pwd sound-files-in-directory { files }
   files empty? if
     "no sound files in %s?" #( file-pwd ) snd-display
@@ -4685,11 +4709,13 @@ black-and-white-colormap constant *better-colormap*
   "." sound-files-in-directory { files2 }
   files1 files2 "sound-files-in-directory dot" #() snd-test-neq
   files  files2 "sound-files-in-directory dot" #() snd-test-neq
-  \
+  \ 
   bad-header-hook reset-hook!
   open-raw-sound-hook reset-hook!
-  sounds each ( snd ) close-sound drop end-each
-  \
+  sounds each ( snd )
+    close-sound drop
+  end-each
+  \ 
   :size 0 new-sound to ind
   ind frames 0 "new-sound :size 0 frames" #() snd-test-neq
   0 sample 0.0 "new-sound :size 0 sample 0" #() snd-test-neq
@@ -4704,7 +4730,7 @@ black-and-white-colormap constant *better-colormap*
   new-file-name file-delete
   :size -1 <'> new-sound snd-test-catch to res
   res car 'out-of-range "new-sound :size -1: %s" #( res ) snd-test-neq
-  \
+  \ 
   "caruso.asc" check-file-name { fsnd }
   fsnd file-exists? if
     fsnd read-ascii to ind
@@ -4722,7 +4748,7 @@ black-and-white-colormap constant *better-colormap*
       "read-ascii can't find %s?" #( fsnd ) snd-display
     then
   then
-  \
+  \ 
   "oboe.snd" open-sound to ind
   "test space.snd" save-sound-as drop
   ind close-sound drop
@@ -4731,7 +4757,7 @@ black-and-white-colormap constant *better-colormap*
   ind frames "test space.snd" mus-sound-frames "spaced filename frames" #()
     snd-test-neq
   1234 ind 0 add-mark drop
-  ind save-marks drop			\ ; should write "test space.marks"
+  ind save-marks drop      \ ; should write "test space.marks"
   ind close-sound drop
   "test space.snd" open-sound to ind
   file-pwd "/" $+ "test space.marks" $+ file-eval
@@ -4796,9 +4822,11 @@ half-pi fnegate constant -half-pi
 ;
 
 : cosine-channel <{ :optional beg 0 dur #f snd #f chn #f edpos #f -- }>
-  pi  dur if dur else snd chn undef frames then  f/ ( incr ) cc-01-cb
-  beg dur snd chn edpos
-  map-channel drop
+  pi dur if
+      dur
+    else
+      snd chn undef frames
+    then  f/ ( incr ) cc-01-cb beg dur snd chn edpos map-channel drop
 ;
 
 : (05-simple-check-01) ( -- )
@@ -5008,7 +5036,7 @@ half-pi fnegate constant -half-pi
     "src no-test: %s" #( vals ) snd-display
   then
   ind close-sound drop
-  \
+  \ 
   dolph-test
   \ env.fs
   \ envelope-interp
@@ -5039,8 +5067,8 @@ half-pi fnegate constant -half-pi
     1 >array "window-envelope: %s?" swap snd-display
   then
   \ multiply-envelopes
-  #( 0 0 1 1 ) #( 0 0 1 1 2 0 ) multiply-envelopes dup #( 0 0 0.5 0.5 1 0 )
-    feql if
+  #( 0 0 1 1 ) #( 0 0 1 1 2 0 ) multiply-envelopes dup
+  #( 0 0 0.5 0.5 1 0 ) feql if
     drop
   else
     1 >array "multiply-envelopes: %s?" swap snd-display
@@ -5464,7 +5492,9 @@ half-pi fnegate constant -half-pi
     vals 0 array-ref to func1
     vals 1 array-ref to descr
     vals 2 array-ref to name
-    *snd-test-verbose* if name #f snd-test-message then
+    *snd-test-verbose* if
+      name #f snd-test-message
+    then
     func1 #() run-proc drop
     ind #f undef undef edit-list->function to func
     func proc-source-ref descr string<> if
@@ -5561,7 +5591,7 @@ half-pi fnegate constant -half-pi
 
 : sndclm-nrxycos-test ( -- )
   440.0 :n 10 make-nrxycos { gen }
-  44100 0 ?do
+  44100 0 do
     i  gen 0 nrxycos  f2/ *output* outa drop
   loop
 ;
@@ -5569,7 +5599,7 @@ half-pi fnegate constant -half-pi
 : sndclm-ssb-am-test ( -- )
   440.0 20 make-ssb-am { shifter }
   440.0 make-oscil { osc }
-  44100 0 ?do
+  44100 0 do
     i  shifter  osc 0 0 oscil  0 ssb-am f2/ *output* outa drop
   loop
 ;
@@ -5577,7 +5607,9 @@ half-pi fnegate constant -half-pi
 : sndclm-wave-train-test ( -- )
   400 10 make-ncos { g }
   g -0.5 pi f* set-mus-phase drop
-  64 make-vct map! g 0 ncos end-map { v }
+  64 make-vct map!
+    g 0 ncos
+  end-map { v }
   440.0 :wave v make-wave-train { gen }
   44100 0 do
     i  gen 0 wave-train  f2/ *output* outa drop
@@ -5662,11 +5694,11 @@ half-pi fnegate constant -half-pi
   440.0 make-oscil { osc }
   44100 4410 - { stop }
   0.0 { val }
-  stop 0 do
+  stop 0 ?do
     osc 0 0 oscil to val
     i  avg val fabs moving-average  val f* *output* outa drop
   loop
-  44100 stop do
+  44100 stop ?do
     i  avg 0.0 moving-average  osc 0 0 oscil f*  *output* outa drop
   loop
 ;
@@ -5674,7 +5706,7 @@ half-pi fnegate constant -half-pi
 : sndclm-src1-test ( -- )
   "oboe.snd" make-readin { rd }
   rd 0.5 make-src { sr }
-  "oboe.snd" mus-sound-frames 2* ( len ) 0 do
+  "oboe.snd" mus-sound-frames 2* ( len ) 0 ?do
     i  sr 0 #f src  *output* outa drop
   loop
 ;
@@ -5705,7 +5737,7 @@ half-pi fnegate constant -half-pi
 : sndclm-convolve2-test ( -- )
   "oboe.snd" "pistol.snd" 0.5 "convolved.snd" convolve-files { tempfile }
   tempfile make-readin { reader }
-  tempfile mus-sound-frames ( len ) 0 do
+  tempfile mus-sound-frames ( len ) 0 ?do
     i  reader readin  *output* outa drop
   loop
   tempfile file-delete
@@ -5743,7 +5775,7 @@ half-pi fnegate constant -half-pi
 
 : sndclm-phase-vocoder2-test ( -- )
   "oboe.snd" make-readin :interp 256 make-phase-vocoder { pv }
-  "oboe.snd" mus-sound-frames 2* ( samps ) 0 do
+  "oboe.snd" mus-sound-frames 2* ( samps ) 0 ?do
     i  pv #f #f #f #f phase-vocoder  *output* outa drop
   loop
 ;
@@ -5758,7 +5790,7 @@ half-pi fnegate constant -half-pi
 : sndclm-file->frame->file-test ( -- )
   "stereo.snd" make-file->frame { input }
   2 make-frame { frm }
-  "stereo.snd" mus-sound-frames ( len ) 0 do
+  "stereo.snd" mus-sound-frames ( len ) 0 ?do
     input i frm file->frame ( frm ) 1 frame-ref ( val1 )
     frm 0 frame-ref ( val0 ) frm 1 rot frame-set! drop
     ( val1 ) frm 0 rot frame-set! drop
@@ -5805,7 +5837,7 @@ half-pi fnegate constant -half-pi
     i 2 mod if
       val 1.1 f> if
         "%s (%s)[%d]: maxamp chn %d > 1.0: %.3f (at %d)"
-	  '( name fname lno i 1- 2/ val amps i object-ref ) snd-display
+          '( name fname lno i 1- 2/ val amps i object-ref ) snd-display
       then
     then
   end-each
@@ -5821,7 +5853,8 @@ half-pi fnegate constant -half-pi
 ;
 
 : ws-close-sound ( ws -- )
-  postpone *lineno* postpone (ws-close-sound)
+  postpone *lineno*
+  postpone (ws-close-sound)
 ; immediate
 
 : 23-with-sound ( -- )
@@ -5838,12 +5871,20 @@ half-pi fnegate constant -half-pi
   \ from clm-ins.fs
   0.0 0.3 <'> clm-ins-test
   :comment  over object->string
-  :notehook *snd-test-ws-verbose* if <'> test23-notehook else #f then
+  :notehook *snd-test-ws-verbose* if
+    <'> test23-notehook
+  else
+    #f
+  then
   :channels 2 with-sound ws-close-sound
   <'> test23-balance
   :comment  over object->string
   :channels 3 with-sound ws-output 0 find-sound { ind }
-  ind sound? if ind close-sound drop else "with-sound balance?" snd-display then
+  ind sound? if
+    ind close-sound drop
+  else
+    "with-sound balance?" snd-display
+  then
   "test.snd" "test23-balance" *lineno* check-maxamp
   "tmp.snd" mus-next mus-bfloat 22050 1 new-sound to ind
   0 1000 ind 0 pad-channel drop
@@ -5995,10 +6036,10 @@ half-pi fnegate constant -half-pi
   \ g0 g2 <> at start
   g0 { g3 }
   2 make-frame { gad }
-  g0 g3 object-equal? unless 
+  g0 g3 object-equal? unless
     "let %s: %s equal? %s?" #( g0 mus-name g0 g3 ) snd-display 
   then
-  g0 g1 object-equal? unless 
+  g0 g1 object-equal? unless
     "%s: %s equal? %s?" #( g0 mus-name g0 g1 ) snd-display
   then
   g0 g2 object-equal? if
@@ -6010,13 +6051,13 @@ half-pi fnegate constant -half-pi
   g0 0.0 0.0 mus-apply drop
   g3 #( 0.0 0.0 ) object-apply drop
   g3 0.0 0.0 mus-apply drop
-  g0 g3 object-equal? unless 
+  g0 g3 object-equal? unless
     "run let %s: %s equal? %s?" #( g0 mus-name g0 g3 ) snd-display
   then
-  g0 g1 object-equal? if 
+  g0 g1 object-equal? if
     "run %s: %s equal? %s?" #( g0 mus-name g0 g1 ) snd-display
   then
-  g0 g2 object-equal? if 
+  g0 g2 object-equal? if
     "run %s: %s equal? %s?" #( g0 mus-name g0 g2 ) snd-display
   then
 ;
@@ -6078,8 +6119,12 @@ half-pi fnegate constant -half-pi
   "c" 4 #t key-binding { old-prc }
   "c" 4 prc #t bind-key { prc1 }
   "c" 4 #t key-binding { prc2 }
-  prc prc1 = unless "bind-key: %s %s?" #( prc prc1 ) snd-display then
-  prc prc2 = unless "key-binding: %s %s?" #( prc prc2 ) snd-display then
+  prc prc1 <> if
+    "bind-key: %s %s?" #( prc prc1 ) snd-display
+  then
+  prc prc2 <> if
+    "key-binding: %s %s?" #( prc prc2 ) snd-display
+  then
   old-prc proc? if
     "c" 4 old-prc #t bind-key drop
   else
@@ -6137,7 +6182,7 @@ half-pi fnegate constant -half-pi
     then
     "hiho5" ind 0 lisp-graph set-y-axis-label drop
     ind 0 lisp-graph y-axis-label to res
-    res "hiho5" string<> if 
+    res "hiho5" string<> if
       "set lisp y-axis-label: %s?" #( res ) snd-display
     then
     #f set-y-axis-label drop
@@ -6148,7 +6193,7 @@ half-pi fnegate constant -half-pi
     then
     #f set-y-axis-label drop
     ind close-sound drop
-  then
+  then                          \ *with-test-gui*
   \ edot-product (test008)
   complex-test
   \ delay (test008)
@@ -6157,9 +6202,15 @@ half-pi fnegate constant -half-pi
   4 :initial-contents #( 1.0 0.5 0.25 0.0 ) make-delay { gen1 }
   4 :initial-contents vct( 1.0 0.5 0.25 0.0 ) make-delay { gen3 }
   gen "delay" "delay line[3, step]: [0.000 0.000 0.000]" print-and-check
-  10 0.0 make-vct map gen i 0.0 delay end-map { v0 }
   10 0.0 make-vct map
-    gen2 delay? if gen2 i 0.0 delay else -1.0 then
+    gen i 0.0 delay
+  end-map { v0 }
+  10 0.0 make-vct map
+    gen2 delay? if
+      gen2 i 0.0 delay
+    else
+      -1.0
+    then
   end-map { v1 }
   v0 v1 vequal? unless
     "map delay: %s %s?" #( v0 v1 ) snd-display
@@ -6224,9 +6275,13 @@ half-pi fnegate constant -half-pi
     "hiho.wave" mus-next mus-bshort 22050 1 new-sound { new-index }
     new-index select-sound drop
     0 new-index 0 find-mix to res
-    res if "found non-existent mix: %s?" #( res ) snd-display then
+    res if
+      "found non-existent mix: %s?" #( res ) snd-display
+    then
     "pistol.snd" 100 mix car { mix-id }
-    mix-id mix? unless "%s not mix?" #( mix-id ) snd-display then
+    mix-id mix? unless
+      "%s not mix?" #( mix-id ) snd-display
+    then
     view-mixes-dialog drop
     mix-id mix-position  { pos }
     mix-id mix-length    { len }
@@ -6236,13 +6291,21 @@ half-pi fnegate constant -half-pi
     home-lst 1 array-ref { chn }
     mix-id mix-amp       { amp }
     mix-id make-mix-sampler { mr }
-    mr mix-sampler? unless "%s is not mix-sampler?"  #( mr ) snd-display then
-    mr region-sampler?  if "mix-sampler: region %s?" #( mr ) snd-display then
+    mr mix-sampler? unless
+      "%s is not mix-sampler?" #( mr ) snd-display
+    then
+    mr region-sampler?  if
+      "mix-sampler: region %s?" #( mr ) snd-display
+    then
     mr sampler-position to res
-    res 0<> if "mix sampler-position: %d?" #( res ) snd-display then
-    mr sampler-at-end? if "mix sampler-at-end: %s?" #( mr ) snd-display then
+    res 0<> if
+      "mix sampler-position: %d?" #( res ) snd-display
+    then
+    mr sampler-at-end? if
+      "mix sampler-at-end: %s?" #( mr ) snd-display
+    then
     mr sampler-home to res
-    mix-id res object-equal? unless 
+    mix-id res object-equal? unless
       "mix sampler-home: %d %s?" #( res mr ) snd-display
     then
     mr object->string 0 16 string-substring to res
@@ -6263,43 +6326,58 @@ half-pi fnegate constant -half-pi
     then
     0.0 0.0 { mx sx }
     99 0 do
-      i odd? if mr read-mix-sample else mr read-mix-sample then to mx
+      \ XXX: i odd? if mr read-mix-sample else mr read-mix-sample then to mx
+      mr read-mix-sample to mx
       100 i + sample to sx
-      mx sx fneq if "read-mix-sample: %s %s?" #( mx sx ) snd-display then
+      mx sx fneq if
+        "read-mix-sample: %s %s?" #( mx sx ) snd-display
+      then
     loop
     \ Scheme: (mr)
     \ Ruby:   mr.call
     \ Forth:  mr #() apply
     mr #() object-apply to mx
     199 sample to sx
-    mx sx fneq if "read-mix-sample 100: %s %s?" #( mx sx ) snd-display then
+    mx sx fneq if
+      "read-mix-sample 100: %s %s?" #( mx sx ) snd-display
+    then
     mr free-sampler drop
-    \
-    100 pos <>   if "mix-position: %d?" #( pos ) snd-display then
-    41623 len <> if "mix-length: %d?" #( len ) snd-display then
+    \ 
+    100 pos <> if
+      "mix-position: %d?" #( pos ) snd-display
+    then
+    41623 len <> if
+      "mix-length: %d?" #( len ) snd-display
+    then
     snd new-index object-equal? unless
       "snd mix-home: %s?" #( snd ) snd-display
     then
-    chn      0<> if "chn mix-home: %d?" #( chn ) snd-display then
-    amp 1.0 fneq if "mix-amp: %s?" #( amp ) snd-display then
-    spd 1.0 fneq if "mix-speed: %s?" #( spd ) snd-display then
+    chn 0<> if
+      "chn mix-home: %d?" #( chn ) snd-display
+    then
+    amp 1.0 fneq if
+      "mix-amp: %s?" #( amp ) snd-display
+    then
+    spd 1.0 fneq if
+      "mix-speed: %s?" #( spd ) snd-display
+    then
     .stack
     mix-id <'> play #t nil fth-catch if
-      drop				\ on stack: mix-id
+      drop                      \ on stack: mix-id
       "cannot play mix" #() snd-display
     else
-      drop				\ on stack: play's return value
+      drop                      \ on stack: play's return value
     then
     stack-reset
     mix-id :start 1000 <'> play #t nil fth-catch if
-      stack-reset				\ on stack: mix-id :start 1000
+      stack-reset               \ on stack: mix-id :start 1000
       "cannot play mix from 1000" #() snd-display
     else
-      drop				\ on stack: play's return value
+      drop                      \ on stack: play's return value
       stack-reset
     then
     .stack
-    \
+    \ 
     mix-id 200 set-mix-position drop
     mix-id 0.5 set-mix-amp drop
     mix-id 2.0 set-mix-speed drop
@@ -6307,7 +6385,7 @@ half-pi fnegate constant -half-pi
     mix-id mix-amp-env to res
     mix-id res set-mix-amp-env drop
     mix-id mix-amp-env { res1 }
-    res res1 vequal? unless 
+    res res1 vequal? unless
       "set-mix-amp-env to self: %s %s?" #( res res1 ) snd-display
     then
     mix-id 20 set-mix-tag-y drop
@@ -6315,22 +6393,32 @@ half-pi fnegate constant -half-pi
     mix-id mix-speed    to spd
     mix-id mix-amp      to amp
     mix-id mix-tag-y    { my }
-    200 pos <>   if "set-mix-position: %d?" #( pos ) snd-display then
-    spd 2.0 fneq if "set-mix-speed: %s?"    #( spd ) snd-display then
-    my  20    <> if "set-mix-tag-y: %d?"    #( my )  snd-display then
-    amp 0.5 fneq if "set-mix-amp: %s?"      #( amp ) snd-display then
+    200 pos <> if
+      "set-mix-position: %d?" #( pos ) snd-display
+    then
+    spd 2.0 fneq if
+      "set-mix-speed: %s?" #( spd ) snd-display
+    then
+    my 20 <> if
+      "set-mix-tag-y: %d?" #( my ) snd-display
+    then
+    amp 0.5 fneq if
+      "set-mix-amp: %s?" #( amp ) snd-display
+    then
     mix-id mix-amp-env to res
     res #( 0.0 0.0 1.0 1.0 ) array= unless
       "set-mix-amp-env: %s?" #( res ) snd-display
     then
-    \
+    \ 
     3 0.1 make-vct 100 #f #f #t "" mix-vct drop
     0 set-cursor drop
     100 #f #f find-mix { nid }
     nid mix? false? unless
       nid mix-position 100 <> if
-	new-index 0 mixes map *key* mix-position end-map { mx-pos }
-	"100 find-mix: %s %s %s?" #( nid dup mix-position mx-pos ) snd-display
+        new-index 0 mixes map
+          *key* mix-position
+        end-map { mx-pos }
+        "100 find-mix: %s %s %s?" #( nid dup mix-position mx-pos ) snd-display
       then
     else
       "100 find-mix: not a mix %s?" #( nid ) snd-display
@@ -6338,25 +6426,31 @@ half-pi fnegate constant -half-pi
     200 #f #f find-mix to nid
     nid mix? false? unless
       nid mix-position 200 <> if
-	new-index 0 mixes map *key* mix-position end-map { mx-pos }
-	"200 find-mix: %s %s %s?" #( nid dup mix-position mx-pos ) snd-display
+        new-index 0 mixes map
+          *key* mix-position
+        end-map { mx-pos }
+        "200 find-mix: %s %s %s?" #( nid dup mix-position mx-pos ) snd-display
       then
     else
       "200 find-mix: not a mix %s?" #( nid ) snd-display
     then
-    \
+    \ 
     "oboe.snd" 100 mix car to mix-id
     40 set-mix-waveform-height drop
     'hiho mix-id 123 set-mix-property
     'hiho mix-id mix-property to res
-    res 123 <> if "mix-property: %s?" #( res ) snd-display then
+    res 123 <> if
+      "mix-property: %s?" #( res ) snd-display
+    then
     'not-here mix-id mix-property to res
-    res if "mix-property not-here: %s?" #( res ) snd-display then
+    res if
+      "mix-property not-here: %s?" #( res ) snd-display
+    then
     #f #f update-time-graph drop
     20 set-mix-waveform-height drop
     new-index revert-sound drop
     new-index close-sound drop
-  then
+  then                          \ !*with-test-gtk*
   \ envelopes (lists, vcts, arrays) (test015)
   1.0 vct( 0.0 0.0 2.0 1.0 ) 1.0 envelope-interp dup 0.5 fneq if
     "envelope-interp 0.5: %s?" swap snd-display
@@ -6549,10 +6643,10 @@ half-pi fnegate constant -half-pi
 
 : check-error-tag { xt expected-tag -- }
   xt snd-test-catch { tag }
-  tag if				\ we ignore #f
+  tag if                        \ we ignore #f
     tag car expected-tag <> if
       "%s: expected %s from %s, got %s?"
-	#( get-func-name expected-tag xt tag ) snd-display
+          #( get-func-name expected-tag xt tag ) snd-display
     then
   then
 ;
@@ -6572,9 +6666,9 @@ half-pi fnegate constant -half-pi
        <'> hide-widget <'> show-widget <'> focus-widget ) each to prc
       '( 'Widget 0 ) prc snd-test-catch to tag
       tag if
-	tag car 'no-such-widget <> if
-	  "%s of null widget -> %s" #( prc tag ) snd-display
-	then
+        tag car 'no-such-widget <> if
+          "%s of null widget -> %s" #( prc tag ) snd-display
+        then
       then
     end-each
   ;
@@ -6600,7 +6694,9 @@ half-pi fnegate constant -half-pi
   chans 256 < if
     chans make-mixer to mx
     mx mixer? if
-      chans 0 do mx i i 1.0 mixer-set! drop loop 
+      chans 0 ?do
+        mx i i 1.0 mixer-set! drop
+      loop 
     else
       #f to mx
     then
@@ -6948,7 +7044,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   1 proc-create "oboe.snd" open-sound , ( prc )
  does> { y self -- val }
   self @ { ind }
-  ind sound? if ind close-sound drop then
+  ind sound? if
+    ind close-sound drop
+  then
   0.0
 ;
 
@@ -6980,7 +7078,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   1 proc-create "oboe.snd" open-sound , ( prc )
  does> { y self -- f }
   self @ { ind }
-  ind sound? if ind close-sound drop then
+  ind sound? if
+    ind close-sound drop
+  then
   #f
 ;
 
@@ -7005,7 +7105,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 : mc-2-cb { ind -- prc; y self -- val }
   1 proc-create ind , ( prc )
  does> { y self -- val }
-  y 0.4 f> if 1 self @ ( ind ) 0 set-frames drop then
+  y 0.4 f> if
+    1 self @ ( ind ) 0 set-frames drop
+  then
   y
 ;
 
@@ -7028,7 +7130,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 ;
 
 : check-args-progress-info { msg -- }
-  *snd-test-verbose* if msg #f snd-test-message then
+  *snd-test-verbose* if
+    msg #f snd-test-message
+  then
 ;
 
 : 28-errors ( -- )
@@ -7062,7 +7166,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     123 integer->sound prc snd-test-catch to tag
     tag if
       tag car 'no-such-sound <> if
-	"snd no-such-sound %s: %s" #( prc tag ) snd-display
+        "snd no-such-sound %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7074,10 +7178,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
        <'> close-sound <'> sound-properties ) array-append each to prc
       arg prc snd-test-catch to tag
       tag if
-	tag car 'wrong-type-arg <>
-	tag car 'mus-error      <> && if
-	  "snd wrong-type-arg %s: %s (%s)" #( prc tag arg ) snd-display
-	then
+        tag car 'wrong-type-arg <>
+        tag car 'mus-error      <> && if
+          "snd wrong-type-arg %s: %s (%s)" #( prc tag arg ) snd-display
+        then
       then
     end-each
   end-each
@@ -7101,11 +7205,11 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
         0 arg
       then prc set-xt snd-test-catch to tag
       tag if
-	tag car 'wrong-type-arg <>
-	tag car 'syntax-error   <> &&
-	tag car 'error          <> && if
-	  "snd set wrong-type-arg set-%s [%s]: %s" #( prc arg tag ) snd-display
-	then
+        tag car 'wrong-type-arg <>
+        tag car 'syntax-error   <> &&
+        tag car 'error          <> && if
+          "snd set wrong-type-arg set-%s [%s]: %s" #( prc arg tag ) snd-display
+        then
       then
     end-each
   end-each
@@ -7127,10 +7231,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     prcs-2 each to prc
       arg ind prc set-xt snd-test-catch to tag
       tag if
-	tag car 'wrong-type-arg <> if
-	  "snd safe set wrong-type-arg set-%s [%s]: %s"
-	    #( prc arg tag ) snd-display
-	then
+        tag car 'wrong-type-arg <> if
+          "snd safe set wrong-type-arg set-%s [%s]: %s"
+            #( prc arg tag ) snd-display
+        then
       then
     end-each
   end-each
@@ -7140,9 +7244,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
        <'> vct->list <'> vct-peak ) each to prc
       arg prc snd-test-catch to tag
       tag if
-	tag car 'wrong-type-arg <> if
-	  "vct 0 wrong-type-arg %s [%s]: %s" #( prc arg tag ) snd-display
-	then
+        tag car 'wrong-type-arg <> if
+          "vct 0 wrong-type-arg %s [%s]: %s" #( prc arg tag ) snd-display
+        then
       then
     end-each
   end-each
@@ -7152,15 +7256,15 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   args-1 each to arg1
     args-1 each to arg2
       vct-prcs-2 each to prc
-	arg1 arg2 prc snd-test-catch to tag
-	tag if
-	  tag car 'wrong-type-arg       <>
-	  tag car 'wrong-number-of-args <> &&
-	  tag car 'mus-error            <> && if
-	    "vct 1 wrong-whatever %s [%s %s]: %s" #( prc arg1 arg2 tag )
-	      snd-display
-	  then
-	then
+        arg1 arg2 prc snd-test-catch to tag
+        tag if
+          tag car 'wrong-type-arg       <>
+          tag car 'wrong-number-of-args <> &&
+          tag car 'mus-error            <> && if
+            "vct 1 wrong-whatever %s [%s %s]: %s"
+              #( prc arg1 arg2 tag ) snd-display
+          then
+        then
       end-each
     end-each
   end-each
@@ -7168,9 +7272,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     vct-prcs-2 each to prc
       arg vct-3 prc snd-test-catch to tag
       tag if
-	tag car 'wrong-type-arg <> if
-	  "vct 2 wrong-whatever %s [%s]: %s" #( prc arg tag ) snd-display
-	then
+        tag car 'wrong-type-arg <> if
+          "vct 2 wrong-whatever %s [%s]: %s" #( prc arg tag ) snd-display
+        then
       then
     end-each
   end-each
@@ -7199,9 +7303,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     ?prcs each to prc
       arg prc snd-test-catch to tag
       tag if
-	tag car 'wrong-type-arg <> if
-	  "?proc %s [%s]: %s" #( prc arg tag ) snd-display
-	then
+        tag car 'wrong-type-arg <> if
+          "?proc %s [%s]: %s" #( prc arg tag ) snd-display
+        then
       then
     end-each
   end-each
@@ -7218,7 +7322,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     prc snd-test-catch to tag
     tag if
       tag car 'no-active-selection <> if
-	"0 selection %s: %s" #( prc tag ) snd-display
+        "0 selection %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7226,7 +7330,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     0.0 prc snd-test-catch to tag
     tag if
       tag car 'no-active-selection <> if
-	"1 selection %s: %s" #( prc tag ) snd-display
+        "1 selection %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7263,14 +7367,14 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     clm-prcs-1 each to prc
       arg prc snd-test-catch to tag
       tag if
-	tag car 'wrong-type-arg <>
-	tag car 'no-data        <> &&
-	tag car 'no-such-method <> &&
-	tag car 'bad-type       <> &&
-	tag car 'error          <> &&
-	tag car 'arg-error      <> && if
-	  "clm %s [%s]: %s" #( prc arg tag ) snd-display
-	then
+        tag car 'wrong-type-arg <>
+        tag car 'no-data        <> &&
+        tag car 'no-such-method <> &&
+        tag car 'bad-type       <> &&
+        tag car 'error          <> &&
+        tag car 'arg-error      <> && if
+          "clm %s [%s]: %s" #( prc arg tag ) snd-display
+        then
       then
     end-each
   end-each
@@ -7307,7 +7411,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       tag car 'bad-arity      <> &&
       tag car 'error          <> &&
       tag car 'mus-error      <> && if
-	"clm-1 %s [make-oscil]: %s" #( prc tag ) snd-display
+        "clm-1 %s [make-oscil]: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7321,7 +7425,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       tag car 'wrong-type-arg <>
       tag car 'syntax-error   <> &&
       tag car 'error          <> && if
-	"mus-gen %s [make-oscil]: %s" #( prc tag ) snd-display
+        "mus-gen %s [make-oscil]: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7339,7 +7443,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     vct-5 prc snd-test-catch to tag
     tag if
       tag car 'wrong-type-arg <> if
-	"mus-sound %s: %s" #( prc tag ) snd-display
+        "mus-sound %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7348,7 +7452,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     tag if
       tag car 'wrong-number-of-args <>
       tag car 'error                <> && if
-	"no arg mus-sound %s: %s" #( prc tag ) snd-display
+        "no arg mus-sound %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7362,7 +7466,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     "/bad/baddy" prc snd-test-catch to tag
     tag if
       tag car 'mus-error <> if
-	"bad file mus-sound %s: %s" #( prc tag ) snd-display
+        "bad file mus-sound %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7401,7 +7505,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       tag car 'wrong-type-arg <>
       tag car 'error          <> &&
       tag car 'no-such-sound  <> && if
-	"chn (no snd) procs %s: %s" #( prc tag ) snd-display
+        "chn (no snd) procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7409,7 +7513,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     0 vct-5 prc snd-test-catch to tag
     tag if
       tag car 'wrong-type-arg <> if
-	"chn (no chn) procs %s: %s" #( prc tag ) snd-display
+        "chn (no chn) procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7440,7 +7544,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     1234 integer->sound prc snd-test-catch to tag
     tag if
       tag car 'no-such-sound <> if
-	"chn procs %s: %s" #( prc tag ) snd-display
+        "chn procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7452,7 +7556,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     0 1234 prc snd-test-catch to tag
     tag if
       tag car 'no-such-sound <> if
-	"snd(1) chn procs %s: %s" #( prc tag ) snd-display
+        "snd(1) chn procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7463,9 +7567,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     prc proc-name "x-axis-label" string<> if
       0 ind 1234 prc snd-test-catch to tag
       tag if
-	tag car 'no-such-channel <> if
-	  "snd(1 1234) chn procs %s: %s" #( prc tag ) snd-display
-	then
+        tag car 'no-such-channel <> if
+          "snd(1 1234) chn procs %s: %s" #( prc tag ) snd-display
+        then
       then
     then
   end-each
@@ -7500,7 +7604,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     tag if
       tag car 'no-such-channel <>
       tag car 'no-such-sound   <> && if
-	"chn (2) procs %s: %s" #( prc tag ) snd-display
+        "chn (2) procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7535,7 +7639,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       tag car 'wrong-type-arg <>
       tag car 'syntax-error   <> &&
       tag car 'error          <> && if
-	"set chn procs %s: %s" #( prc tag ) snd-display
+        "set chn procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7551,7 +7655,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       tag car 'wrong-type-arg <>
       tag car 'syntax-error   <> &&
       tag car 'error          <> && if
-	"[0] mix procs %s: %s" #( prc tag ) snd-display
+        "[0] mix procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7559,7 +7663,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     1234 integer->mix prc snd-test-catch to tag
     tag if
       tag car 'no-such-mix <> if
-	"[1] mix procs %s: %s" #( prc tag ) snd-display
+        "[1] mix procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7572,7 +7676,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       tag car 'syntax-error   <> &&
       tag car 'error          <> &&
       tag car 'no-such-mix    <> && if
-	"[2] set mix procs %s: %s" #( prc tag ) snd-display
+        "[2] set mix procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7584,7 +7688,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       tag car 'wrong-type-arg <>
       tag car 'syntax-error   <> &&
       tag car 'error          <> && if
-	"[3] set mix procs %s: %s" #( prc tag ) snd-display
+        "[3] set mix procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7597,7 +7701,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     vct-5 prc snd-test-catch to tag
     tag if
       tag car 'wrong-type-arg <> if
-	"mark procs %s: %s" #( prc tag ) snd-display
+        "mark procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7606,7 +7710,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     1234 integer->mark prc snd-test-catch to tag
     tag if
       tag car 'no-such-mark <> if
-	"no mark procs %s: %s" #( prc tag ) snd-display
+       "no mark procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7616,7 +7720,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     id vct-5 prc set-xt snd-test-catch to tag
     tag if
       tag car 'wrong-type-arg <> if
-	"set mark procs %s: %s" #( prc tag ) snd-display
+        "set mark procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7631,10 +7735,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     reg-prcs-1 #( <'> region-sample <'> region->vct ) array-append each to prc
       arg prc snd-test-catch to tag
       tag if
-	tag car 'wrong-type-arg       <>
-	tag car 'wrong-number-of-args <> && if
-	  "region procs %s [%s]: %s" #( prc arg tag ) snd-display
-	then
+        tag car 'wrong-type-arg       <>
+        tag car 'wrong-number-of-args <> && if
+          "region procs %s [%s]: %s" #( prc arg tag ) snd-display
+        then
       then
     end-each
   end-each
@@ -7643,7 +7747,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     stack-reset
     tag if
       tag car 'no-such-region <> if
-	"(no) region procs %s: %s" #( prc tag ) snd-display
+        "(no) region procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7688,7 +7792,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       tag car 'wrong-type-arg <>
       tag car 'syntax-error   <> &&
       tag car 'error          <> && if
-	"misc procs %s: %s" #( prc tag ) snd-display
+        "misc procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -7699,7 +7803,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       \ XXX: FTH special 'bad-arity (add-hook!) [ms]
       tag car 'bad-arity      <>
       tag car 'wrong-type-arg <> && if
-	"[0] hooks %s: %s" #( hook hook-name tag ) snd-display
+        "[0] hooks %s: %s" #( hook hook-name tag ) snd-display
       then
     then
   end-each
@@ -7713,7 +7817,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       \ XXX: FTH special 'bad-arity (add-hook!) [ms]
       tag car 'bad-arity      <>
       tag car 'wrong-type-arg <> && if
-	"[1] hooks %s: %s" #( hook hook-name tag ) snd-display
+        "[1] hooks %s: %s" #( hook hook-name tag ) snd-display
       then
     then
   end-each
@@ -7923,7 +8027,16 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   1234 integer->mix <'> make-mix-sampler 'no-such-mix check-error-tag
   0 12 1234 #t <'> make-region 'no-such-sound check-error-tag
   #t ind set-read-only drop
-  ind '( 0 0 1 1 ) <'> set-sound-loop-info 'cannot-save check-error-tag
+  \ XXX: snd-nogui and set-read-only
+  \ Snd-nogui has no widget and therefore the sound will not be
+  \ write-protected according to snd-snd.c.
+  ind read-only if
+    ind '( 0 0 1 1 ) <'> set-sound-loop-info 'cannot-save check-error-tag
+  else
+    *with-test-nogui* unless
+      "%s is not read-only?" #( ind ) snd-display
+    then
+  then
   0 ind 0 123 <'> make-sampler 'no-such-direction check-error-tag
   0 ind 0 0 <'> make-sampler 'no-such-direction check-error-tag
   0 ind 0 -2 <'> make-sampler 'no-such-direction check-error-tag
@@ -8148,7 +8261,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   then
   "test.snd" 0o644 file-chmod
   "test.snd" file-delete
-  ind sound? if ind close-sound drop then
+  ind sound? if
+    ind close-sound drop
+  then
   \ 
   "oboe.snd" "test.snd" file-copy
   "test.snd" 0o400 file-chmod
@@ -8180,7 +8295,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "oboe.snd" open-sound to ind
   0 make-sampler { rd }
   ind close-sound drop
-  10 0 do rd read-sample drop loop
+  10 0 do
+    rd read-sample drop
+  loop
   rd sampler-home { home }
   home array-length 0> if
     home 0 array-ref sound? if
@@ -8188,55 +8305,78 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   then
   rd sampler-position { loc }
-  loc 0<> if "closed reader position: %s?" #( loc ) snd-display then
+  loc 0<> if
+    "closed reader position: %s?" #( loc ) snd-display
+  then
   rd sampler-at-end? { at-end }
-  at-end false? if "closed sampler at end: %s?" #( at-end ) snd-display then
+  at-end false? if
+    "closed sampler at end: %s?" #( at-end ) snd-display
+  then
   \ 
   "oboe.snd" open-sound to ind
   vct( 0.1 0.2 0.3 ) mix-vct { mx }
   mx make-mix-sampler to rd
   ind close-sound drop
-  10 0 do rd read-mix-sample drop loop
-  \
+  10 0 do
+    rd read-mix-sample drop
+  loop
+  \ 
   8 max-regions max set-max-regions drop
   "oboe.snd" open-sound to ind
   0 100 ind 0 make-region { reg }
   reg 0 make-region-sampler to rd
   ind close-sound drop
   reg forget-region drop
-  10 0 do rd read-sample drop loop
-  \
+  10 0 do
+    rd read-sample drop
+  loop
+  \ 
   "oboe.snd" open-sound to ind
   1.0 { scl }
   100 0.5 ind 0 set-sample drop
   scl mc-1-cb map-channel drop
   100 ind 0 sample { s100 }
-  s100 1.0 fneq if "scan + map 100: %s" #( s100 ) snd-display then
+  s100 1.0 fneq if
+    "scan + map 100: %s" #( s100 ) snd-display
+  then
   ind revert-sound drop
   \ 
   100 0.5 ind 0 set-sample drop
   ind mc-2-cb map-channel drop
   100 ind 0 sample to s100
-  s100 0.5 fneq if "map + reset frames: %s" #( s100 ) snd-display then
+  s100 0.5 fneq if
+    "map + reset frames: %s" #( s100 ) snd-display
+  then
   ind 0 frames { frms }
-  frms 50828 <> if "map + reset frames, frames: %s" #( frms ) snd-display then
+  frms 50828 <> if
+    "map + reset frames, frames: %s" #( frms ) snd-display
+  then
   1 ind 0 undo drop
   ind 0 frames to frms
-  frms 1 <> if "map + reset frames, undo frames: %s" #( frms ) snd-display then
+  frms 1 <> if
+    "map + reset frames, undo frames: %s" #( frms ) snd-display
+  then
   ind revert-sound drop
   \ 
   100 0.5 ind 0 set-sample drop
-  \ XXX: too much values on stack, 'wrong-number-of-args doesn't work
-  \ Doesn't work like expected with FTH.  If more values on stack
-  \ than needed, no exception can be raised.  No one knows who will
-  \ take and need them.  So we have 'no-such-channel as first
-  \ exception.
-  \ frames ( snd chn edpos -- frms )
-  \ set-frames ( frms snd chn -- val )
-  1 ind 0 <'> set-frames #t nil fth-catch to tag
+  \ XXX: 'wrong-type-arg instead of 'wrong-number-of-args
+  \ 
+  \ (set! (frames ind 0 1) 1) => too many arguments
+  \ 1 ind 0 1 set-frames => wrong type arg 1 (<sound 0>)
+  \ 
+  \ With Fth this doesn't work as expected.  If stack has more values than
+  \ needed by the next word, no 'wrong-number-of-args exception can be
+  \ raised because no one knows who will take the other values.  That's
+  \ why the first exception is 'wrong-type-arg because sound IND is not
+  \ a number.
+  \ 
+  \ frames ( snd chn edpos -- frms ) /* g_frames(snd, chn, edpos) */
+  \ set-frames ( on snd chn -- val ) /* g_set_frames(on, snd, chn) */
+  1 ind 0 1 <'> set-frames #t nil fth-catch to tag
   stack-reset
   tag if
-    tag car 'wrong-number-of-args <> if
+    tag car 'wrong-number-of-args <>
+    tag car 'wrong-type-arg       <> && if
       "set frames + edpos: %s" #( tag ) snd-display
     then
   then
@@ -8251,10 +8391,14 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   then
   0 make-sampler to rd
-  10 0 do rd #() apply drop loop
+  10 0 do
+    rd #() apply drop
+  loop
   rd copy-sampler { crd }
   ind close-sound drop
-  10 0 do crd read-sample drop loop
+  10 0 do
+    crd read-sample drop
+  loop
   crd sampler-home to home
   home array-length 0> if
     home 0 array-ref sound? if
@@ -8262,12 +8406,14 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   then
   crd sampler-position to loc
-  loc 0<> if "closed copy reader position: %s?" #( loc ) snd-display then
+  loc 0<> if
+    "closed copy reader position: %s?" #( loc ) snd-display
+  then
   crd sampler-at-end? to at-end
   at-end false? if
     "closed copy sampler at end: %s?" #( at-end ) snd-display 
   then
-  \
+  \ 
   ind <'> revert-sound #t nil fth-catch to tag
   stack-reset
   tag if
@@ -8275,7 +8421,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       "revert-sound of closed sound: %s" #( tag ) snd-display
     then
   then
-  \
+  \ 
   "oboe.snd" open-sound to ind
   100 0.5 ind 0 set-sample drop
   0.5 0 100 ind 0 ind edpos-1-cb <'> scale-channel #t nil fth-catch to tag
@@ -8285,7 +8431,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       "edpos proc bad args: %s" #( tag ) snd-display
     then
   then
-  ind sound? unless 
+  ind sound? unless
     "edpos bad arity proc clobbers chan??: %s" #( ind ) snd-display
   then
   \ 
@@ -8296,7 +8442,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       "edpos clobbers channel: %s" #( tag ) snd-display
     then
   then
-  ind sound? if "edpos proc clobbers chan??: %s" #( ind ) snd-display then
+  ind sound? if
+    "edpos proc clobbers chan??: %s" #( ind ) snd-display
+  then
   set-procs04 length 2 = if
     "(%s %s)" set-procs04
   else
@@ -8314,26 +8462,38 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     "procs01: %3d/%3d" #( procs01 length set-procs01 length ) snd-test-message
     "procs02: %3d/%3d" #( procs02 length set-procs02 length ) snd-test-message
     "procs03: %3d/%3d" #( procs03 length set-procs03 length ) snd-test-message
-    "procs04: %3d/%3d %s" #( procs04 length set-procs04 length set04fncs )
-      snd-test-message
-    "procs05: %3d"     #( procs05 length )                    snd-test-message
-    "procs06: %3d"     #( procs06 length )                    snd-test-message
-    "procs07: %3d"     #( procs07 length )                    snd-test-message
-    "procs08: %3d"     #( procs08 length )                    snd-test-message
-    "procs10: %3d %s"  #( procs10 length 10fncs )             snd-test-message
+    set-procs04 length 10 <= if
+      "procs04: %3d/%3d %s"
+        #( procs04 length set-procs04 length set04fncs ) snd-test-message
+    else
+      "procs04: %3d/%3d" #( procs04 length set-procs04 length ) snd-test-message
+    then
+    "procs05: %3d" #( procs05 length ) snd-test-message
+    "procs06: %3d" #( procs06 length ) snd-test-message
+    "procs07: %3d" #( procs07 length ) snd-test-message
+    "procs08: %3d" #( procs08 length ) snd-test-message
+    procs10 length 10 <= if
+      "procs10: %3d %s"  #( procs10 length 10fncs ) snd-test-message
+    else
+      "procs10: %3d"  #( procs10 length ) snd-test-message
+    then
   then
-  #( 1.5 #( 0 1 ) 1234 #t )                     { random-args }
+  #( 1.5 #( 0 1 ) 1234 #t ) { random-args }
   #( 1.5 #( 0 1 ) 1234 vct-3 color-95 0+i delay-32 :feedback #f ) { main-args }
   #( 1.5 #( 0 1 ) 1234 0+i delay-32 #t ) { few-args }
-  #( 1.5 vct-3 0+i )                     { fewer-args }
-  all-args if main-args else few-args then      { less-args }
+  #( 1.5 vct-3 0+i ) { fewer-args }
+  all-args if
+    main-args
+  else
+    few-args
+  then { less-args }
   nil nil nil nil nil nil nil { arg1 arg2 arg3 arg4 tm prc tag }
   gc-run
   "keyargs-2-args" check-args-progress-info
   keyargs each to arg1
     random-args each to arg2
       make-procs each to prc
-	arg1 arg2 prc #t nil fth-catch stack-reset
+        arg1 arg2 prc #t nil fth-catch stack-reset
       end-each
     end-each
   end-each
@@ -8343,11 +8503,11 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     "keyargs-3-args" check-args-progress-info
     random-args each to arg1
       keyargs each to arg2
-	random-args each to arg3
-	  make-procs each to prc
-	    arg1 arg2 arg3 prc #t nil fth-catch stack-reset
-	  end-each
-	end-each
+        random-args each to arg3
+          make-procs each to prc
+            arg1 arg2 arg3 prc #t nil fth-catch stack-reset
+          end-each
+        end-each
       end-each
     end-each
     dismiss-all-dialogs
@@ -8355,13 +8515,13 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     "keyargs-4-args" check-args-progress-info
     keyargs each to arg1
       random-args each to arg2
-	keyargs each to arg3
-	  random-args each to arg4
-	    make-procs each to prc
-	      arg1 arg2 arg3 arg4 prc #t nil fth-catch stack-reset
-	    end-each
-	  end-each
-	end-each
+        keyargs each to arg3
+          random-args each to arg4
+            make-procs each to prc
+              arg1 arg2 arg3 arg4 prc #t nil fth-catch stack-reset
+            end-each
+          end-each
+        end-each
       end-each
     end-each
     dismiss-all-dialogs
@@ -8383,7 +8543,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       arg prc set-xt #t nil fth-catch to tag
       stack-reset
       tag car 'wrong-number-of-args = if
-	"set-procs00: (%s) %s %s" #( arg prc tag ) snd-display
+        "set-procs00: (%s) %s %s" #( arg prc tag ) snd-display
       then
     end-each
   end-each
@@ -8396,7 +8556,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       arg prc #t nil fth-catch to tag
       stack-reset
       tag car 'wrong-number-of-args = if
-	"procs01 wna: (%s) %s %s" #( arg prc tag ) snd-display
+        "procs01 wna: (%s) %s %s" #( arg prc tag ) snd-display
       then
     end-each
   end-each
@@ -8406,13 +8566,13 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   main-args each to arg1
     main-args each to arg2
       set-procs01 each to prc
-	prc proc-name "widget-size" string<> if
-	  arg1 arg2 prc set-xt #t nil fth-catch to tag
-	  stack-reset
-	  tag car 'wrong-number-of-args = if
-	    "set-procs01: (%s %s) %s %s" #( arg1 arg2 prc tag ) snd-display
-	  then
-	then
+        prc proc-name "widget-size" string<> if
+          arg1 arg2 prc set-xt #t nil fth-catch to tag
+          stack-reset
+          tag car 'wrong-number-of-args = if
+            "set-procs01: (%s %s) %s %s" #( arg1 arg2 prc tag ) snd-display
+          then
+        then
       end-each
     end-each
   end-each
@@ -8422,11 +8582,11 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   main-args each to arg1
     main-args each to arg2
       procs02 each to prc
-	arg1 arg2 prc #t nil fth-catch to tag
-	stack-reset
-	tag car 'wrong-number-of-args = if
-	  "procs02: (%s %s) %s %s" #( arg1 arg2 prc tag ) snd-display
-	then
+        arg1 arg2 prc #t nil fth-catch to tag
+        stack-reset
+        tag car 'wrong-number-of-args = if
+          "procs02: (%s %s) %s %s" #( arg1 arg2 prc tag ) snd-display
+        then
       end-each
     end-each
   end-each
@@ -8436,14 +8596,14 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   less-args each to arg1
     less-args each to arg2
       less-args each to arg3
-	set-procs02 each to prc
-	  arg1 arg2 arg3 prc set-xt #t nil fth-catch to tag
-	  stack-reset
-	  tag car 'wrong-number-of-args = if
-	    "set-procs02: (%s %s %s) %s %s" #( arg1 arg2 arg3 prc tag )
-	      snd-display
-	  then
-	end-each
+        set-procs02 each to prc
+          arg1 arg2 arg3 prc set-xt #t nil fth-catch to tag
+          stack-reset
+          tag car 'wrong-number-of-args = if
+            "set-procs02: (%s %s %s) %s %s"
+              #( arg1 arg2 arg3 prc tag ) snd-display
+          then
+        end-each
       end-each
     end-each
   end-each
@@ -8454,13 +8614,13 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   less-args each to arg1
     less-args each to arg2
       less-args each to arg3
-	procs03 each to prc
-	  arg1 arg2 arg3 prc #t nil fth-catch to tag
-	  stack-reset
-	  tag car 'wrong-number-of-args = if
-	    "procs03: (%s %s %s) %s %s" #( arg1 arg2 arg3 prc tag ) snd-display
-	  then
-	end-each
+        procs03 each to prc
+          arg1 arg2 arg3 prc #t nil fth-catch to tag
+          stack-reset
+          tag car 'wrong-number-of-args = if
+            "procs03: (%s %s %s) %s %s" #( arg1 arg2 arg3 prc tag ) snd-display
+          then
+        end-each
       end-each
     end-each
   end-each
@@ -8470,16 +8630,16 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   less-args each to arg1
     less-args each to arg2
       less-args each to arg3
-	less-args each to arg4
-	  set-procs03 each to prc
-	    arg1 arg2 arg3 arg4 prc #t nil fth-catch to tag
-	    stack-reset
-	    tag car 'wrong-number-of-args = if
-	      "set-procs03: (%s %s %s %s) %s %s"
-	        #( arg1 arg2 arg3 arg4 prc tag ) snd-display
-	    then
-	  end-each
-	end-each
+        less-args each to arg4
+          set-procs03 each to prc
+            arg1 arg2 arg3 arg4 prc #t nil fth-catch to tag
+            stack-reset
+            tag car 'wrong-number-of-args = if
+              "set-procs03: (%s %s %s %s) %s %s"
+                #( arg1 arg2 arg3 arg4 prc tag ) snd-display
+            then
+          end-each
+        end-each
       end-each
     end-each
   end-each
@@ -8489,16 +8649,16 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   few-args each to arg1
     few-args each to arg2
       few-args each to arg3
-	few-args each to arg4
-	  procs04 each to prc
-	    arg1 arg2 arg3 arg4 prc #t nil fth-catch to tag
-	    stack-reset
-	    tag car 'wrong-number-of-args = if
-	      "procs04: (%s %s %s %s) %s %s"
-	        #( arg1 arg2 arg3 arg4 prc tag ) snd-display
-	    then
-	  end-each
-	end-each
+        few-args each to arg4
+          procs04 each to prc
+            arg1 arg2 arg3 arg4 prc #t nil fth-catch to tag
+            stack-reset
+            tag car 'wrong-number-of-args = if
+              "procs04: (%s %s %s %s) %s %s"
+                #( arg1 arg2 arg3 arg4 prc tag ) snd-display
+            then
+          end-each
+        end-each
       end-each
     end-each
   end-each
@@ -8508,18 +8668,18 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   few-args each to arg1
     few-args each to arg2
       few-args each to arg3
-	few-args each to arg4
-	  few-args each to arg5
-	    set-procs04 each to prc
-	      arg1 arg2 arg3 arg4 arg5 prc #t nil fth-catch to tag
-	      stack-reset
-	      tag car 'wrong-number-of-args = if
-		"set-procs04: (%s %s %s %s %s) %s %s"
-		  #( arg1 arg2 arg3 arg4 arg5 prc tag ) snd-display
-	      then
-	    end-each
-	  end-each
-	end-each
+        few-args each to arg4
+          few-args each to arg5
+            set-procs04 each to prc
+              arg1 arg2 arg3 arg4 arg5 prc #t nil fth-catch to tag
+              stack-reset
+              tag car 'wrong-number-of-args = if
+                "set-procs04: (%s %s %s %s %s) %s %s"
+                  #( arg1 arg2 arg3 arg4 arg5 prc tag ) snd-display
+              then
+            end-each
+          end-each
+        end-each
       end-each
     end-each
   end-each
@@ -8531,18 +8691,18 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   fewer-args each to arg1
     fewer-args each to arg2
       fewer-args each to arg3
-	fewer-args each to arg4
-	  fewer-args each to arg5
-	    procs05 each to prc
-	      arg1 arg2 arg3 arg4 arg5 prc #t nil fth-catch to tag
-	      stack-reset
-	      tag car 'wrong-number-of-args = if
-		"procs05: (%s %s %s %s %s) %s %s"
-		  #( arg1 arg2 arg3 arg4 arg5 prc tag ) snd-display
-	      then
-	    end-each
-	  end-each
-	end-each
+        fewer-args each to arg4
+          fewer-args each to arg5
+            procs05 each to prc
+              arg1 arg2 arg3 arg4 arg5 prc #t nil fth-catch to tag
+              stack-reset
+              tag car 'wrong-number-of-args = if
+                "procs05: (%s %s %s %s %s) %s %s"
+                  #( arg1 arg2 arg3 arg4 arg5 prc tag ) snd-display
+              then
+            end-each
+          end-each
+        end-each
       end-each
     end-each
   end-each
@@ -8553,20 +8713,20 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   fewer-args each to arg1
     fewer-args each to arg2
       fewer-args each to arg3
-	fewer-args each to arg4
-	  fewer-args each to arg5
-	    fewer-args each to arg6
-	      procs06 each to prc
-		arg1 arg2 arg3 arg4 arg5 arg6 prc #t nil fth-catch to tag
-		stack-reset
-		tag car 'wrong-number-of-args = if
-		  "procs06: (%s %s %s %s %s %s) %s %s"
-		    #( arg1 arg2 arg3 arg4 arg5 arg6 prc tag ) snd-display
-		then
-	      end-each
-	    end-each
-	  end-each
-	end-each
+        fewer-args each to arg4
+          fewer-args each to arg5
+            fewer-args each to arg6
+                procs06 each to prc
+                  arg1 arg2 arg3 arg4 arg5 arg6 prc #t nil fth-catch to tag
+                  stack-reset
+                  tag car 'wrong-number-of-args = if
+                    "procs06: (%s %s %s %s %s %s) %s %s"
+                      #( arg1 arg2 arg3 arg4 arg5 arg6 prc tag ) snd-display
+                  then
+              end-each
+            end-each
+          end-each
+        end-each
       end-each
     end-each
   end-each
@@ -8576,26 +8736,26 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   fewer-args each to arg1
     fewer-args each to arg2
       fewer-args each to arg3
-	fewer-args each to arg4
-	  fewer-args each to arg5
-	    fewer-args each to arg6
-	      fewer-args each to arg7
-		fewer-args each to arg8
-		  procs08 each to prc
-		    arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 prc #t nil
-		      fth-catch to tag
-		    stack-reset
-		    tag car 'wrong-number-of-args = if
-		      "procs08: (%s %s %s %s %s %s %s %s) %s %s"
-		        #( arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 prc tag )
-		        snd-display
-		    then
-		  end-each
-		end-each
-	      end-each
-	    end-each
-	  end-each
-	end-each
+        fewer-args each to arg4
+          fewer-args each to arg5
+            fewer-args each to arg6
+              fewer-args each to arg7
+                fewer-args each to arg8
+                  procs08 each to prc
+                    arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 prc #t nil
+                      fth-catch to tag
+                    stack-reset
+                    tag car 'wrong-number-of-args = if
+                      "procs08: (%s %s %s %s %s %s %s %s) %s %s"
+                        #( arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 prc tag )
+                        snd-display
+                    then
+                  end-each
+                end-each
+              end-each
+            end-each
+          end-each
+        end-each
       end-each
     end-each
   end-each
@@ -8605,31 +8765,31 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   fewer-args each to arg1
     fewer-args each to arg2
       fewer-args each to arg3
-	fewer-args each to arg4
-	  fewer-args each to arg5
-	    fewer-args each to arg6
-	      fewer-args each to arg7
-		fewer-args each to arg8
-		  fewer-args each to arg9
-		    fewer-args each to arg0
-		      procs10 each to prc
-			arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0
-			  prc #t nil fth-catch
-			to tag
-			stack-reset
-			tag car 'wrong-number-of-args = if
-			  "procs10: (%s %s %s %s %s %s %s %s %s %s) %s %s"
-			  #( arg1 arg2 arg3 arg4 arg5 arg6 arg7 
-			     arg8 arg9 arg0 prc tag ) snd-display
-			then
-		      end-each
-		    end-each
-		  end-each
-		end-each
-	      end-each
-	    end-each
-	  end-each
-	end-each
+        fewer-args each to arg4
+          fewer-args each to arg5
+            fewer-args each to arg6
+              fewer-args each to arg7
+                fewer-args each to arg8
+                  fewer-args each to arg9
+                    fewer-args each to arg0
+                      procs10 each to prc
+                        arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0
+                          prc #t nil fth-catch
+                        to tag
+                        stack-reset
+                        tag car 'wrong-number-of-args = if
+                          "procs10: (%s %s %s %s %s %s %s %s %s %s) %s %s"
+                          #( arg1 arg2 arg3 arg4 arg5 arg6 arg7 
+                             arg8 arg9 arg0 prc tag ) snd-display
+                        then
+                      end-each
+                    end-each
+                  end-each
+                end-each
+              end-each
+            end-each
+          end-each
+        end-each
       end-each
     end-each
   end-each
@@ -8644,7 +8804,11 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   <'> test23-balance
   :comment  over object->string
   :channels 3 with-sound ws-output 0 find-sound { ind }
-  ind sound? if ind close-sound drop else "with-sound balance?" snd-display then
+  ind sound? if
+    ind close-sound drop
+  else
+    "with-sound balance?" snd-display
+  then
   "test.snd" "test23-balance" *lineno* check-maxamp
   \ 0.0 0.3 <'> clm-ins-test
   \ :comment  over object->string
@@ -8659,17 +8823,19 @@ let: ( -- )
       script-args i list-ref string->number { n }
       script-arg 1+ set-script-arg drop
       n 0< if
-	numbs n array-push to numbs \ negative number means exclude this test
+        numbs n array-push to numbs \ negative number means exclude this test
       else
-	test-numbers n array-push to test-numbers
+        test-numbers n array-push to test-numbers
       then
     loop
   then
   test-numbers empty? if
-    29 -1 do test-numbers i array-push to test-numbers loop
+    29 -1 do
+      test-numbers i array-push to test-numbers
+    loop
   then
-  numbs each 
-    abs { n } test-numbers test-numbers n array-index array-delete! drop
+  numbs each abs { n }
+    test-numbers test-numbers n array-index array-delete! drop
   end-each
   .stack
   start-snd-test
@@ -8686,7 +8852,7 @@ let: ( -- )
   <'> 23-with-sound      run-fth-test
   <'> 27-sel-from-snd    run-fth-test
   <'> 28-errors          run-fth-test
-  <'> 30-test            run-fth-test	\ local fragment test
+  <'> 30-test            run-fth-test  \ local fragment test
   finish-snd-test
   0 snd-exit drop
 ;let
