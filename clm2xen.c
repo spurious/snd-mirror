@@ -4918,6 +4918,7 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
   return(XEN_FALSE);
 }
 
+/* TODO: doc/test these new banks */
 
 #define S_oscil_bank "oscil-bank"
 static int oscil_bank_size = 0;
@@ -5076,6 +5077,68 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
     }
   
   return(C_TO_XEN_DOUBLE(sum));
+}
+
+
+#define S_comb_bank "comb-bank"
+static XEN g_comb_bank(XEN gens, XEN inval)
+{
+  int i, size;
+  double x = 0.0, sum = 0.0;
+#if defined(XEN_VECTOR_ELEMENTS)
+  XEN *gs;
+#endif
+
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_1, S_comb_bank, "a vector of comb filters");
+  size = XEN_VECTOR_LENGTH(gens);
+#if defined(XEN_VECTOR_ELEMENTS)
+  gs = XEN_VECTOR_ELEMENTS(gens);
+#endif
+
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(inval), inval, XEN_ARG_2, S_comb_bank, "a number");
+  x = XEN_TO_C_DOUBLE(inval);
+  
+  for (i = 0; i < size; i++)
+    {
+#if defined(XEN_VECTOR_ELEMENTS)
+      sum += mus_comb_unmodulated_noz(XEN_TO_MUS_ANY(gs[i]), x);
+#else
+      sum += mus_comb_unmodulated_noz(XEN_TO_MUS_ANY(xen_vector_ref(gens, i)), x);
+#endif      
+    }
+
+  return(C_TO_XEN_DOUBLE(sum));
+}
+
+
+#define S_all_pass_bank "all-pass-bank"
+static XEN g_all_pass_bank(XEN gens, XEN inval)
+{
+  int i, size;
+  double x = 0.0;
+#if defined(XEN_VECTOR_ELEMENTS)
+  XEN *gs;
+#endif
+
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_1, S_all_pass_bank, "a vector of " S_all_pass " filters");
+  size = XEN_VECTOR_LENGTH(gens);
+#if defined(XEN_VECTOR_ELEMENTS)
+  gs = XEN_VECTOR_ELEMENTS(gens);
+#endif
+
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(inval), inval, XEN_ARG_2, S_all_pass_bank, "a number");
+  x = XEN_TO_C_DOUBLE(inval);
+  
+  for (i = 0; i < size; i++)
+    {
+#if defined(XEN_VECTOR_ELEMENTS)
+      x = mus_all_pass_unmodulated_noz(XEN_TO_MUS_ANY(gs[i]), x);
+#else
+      x = mus_all_pass_unmodulated_noz(XEN_TO_MUS_ANY(xen_vector_ref(gens, i)), x);
+#endif      
+    }
+
+  return(C_TO_XEN_DOUBLE(x));
 }
 
 
@@ -13694,6 +13757,8 @@ XEN_ARGIFY_8(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
 
 XEN_ARGIFY_10(g_mus_mix_with_envs_w, g_mus_mix_with_envs)
 XEN_ARGIFY_6(g_oscil_bank_w, g_oscil_bank)
+XEN_NARGIFY_2(g_comb_bank_w, g_comb_bank)
+XEN_NARGIFY_2(g_all_pass_bank_w, g_all_pass_bank)
 
 #else
 #define g_mus_srate_w g_mus_srate
@@ -14001,6 +14066,8 @@ XEN_ARGIFY_6(g_oscil_bank_w, g_oscil_bank)
 
 #define g_mus_mix_with_envs_w g_mus_mix_with_envs
 #define g_oscil_bank_w g_oscil_bank
+#define g_comb_bank_w g_comb_bank
+#define g_all_pass_bank_w g_all_pass_bank
 #endif
 
 #if HAVE_SCHEME
@@ -14234,6 +14301,9 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_filtered_comb_p, g_filtered_comb_p_w, 1, 0, 0, H_filtered_comb_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_all_pass_p,      g_all_pass_p_w,      1, 0, 0, H_all_pass_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_moving_average_p, g_moving_average_p_w, 1, 0, 0, H_moving_average_p);
+
+  XEN_DEFINE_REAL_PROCEDURE(S_comb_bank, g_comb_bank_w, 2, 0, 0, "an experiment");
+  XEN_DEFINE_REAL_PROCEDURE(S_all_pass_bank, g_all_pass_bank_w, 2, 0, 0, "an experiment");
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedback, g_mus_feedback_w, H_mus_feedback, S_setB S_mus_feedback, g_mus_set_feedback_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedforward, g_mus_feedforward_w, H_mus_feedforward, S_setB S_mus_feedforward, g_mus_set_feedforward_w,  1, 0, 2, 0);

@@ -2308,8 +2308,8 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 0
 #if 1
+#if 0
 #define NUM_COUNTS 1024
 static int counts[NUM_COUNTS];
 static void clear_counts(void) {int i; for (i = 0; i < NUM_COUNTS; i++) counts[i] = 0;}
@@ -2351,7 +2351,7 @@ static void report_counts(s7_scheme *sc)
 {
   int i, mx, mxi;
   bool happy = true;
-
+  fprintf(stderr, "\n");
   while (happy)
     {
       mx = 0;
@@ -5460,11 +5460,7 @@ bool s7_slot_value_is_integer(s7_pointer slot)
 
 s7_Double s7_slot_value_to_real(s7_scheme *sc, s7_pointer slot)
 {
-  s7_pointer val;
-  val = slot_value(slot);
-  if (type(val) == T_REAL)
-    return(real(val));
-  return((s7_Double)(integer(val)));
+  return(real(slot_value(slot)));
 }
 
 
@@ -43958,7 +43954,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	code = sc->code;
 
 	step = caddr(caar(code)); 
-	if (is_symbol(cadr(step)))
+	if (is_symbol(cadr(step))) /* bench 2006888 2006888 */
 	  {
 	    car(sc->T2_1) = slot_value(ctr);
 	    car(sc->T2_2) = caddr(step);
@@ -48480,7 +48476,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (!c_function_is_ok(sc, cadddr(code)))
 		break;
 	      
-	    case HOP_SAFE_C_XXZ:
+	    case HOP_SAFE_C_XXZ: /* calls is_symbol 31384452 30864316 */
 	      push_stack(sc, OP_SAFE_C_XXZ_1, (is_symbol(cadr(code))) ? finder(sc, cadr(code)) : cadr(code), code);
 	      sc->code = cadddr(code);
 	      goto OPT_EVAL;
@@ -48508,7 +48504,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (!c_function_is_ok(sc, cadddr(code)))
 		break;
 	      
-	    case HOP_SAFE_C_ZXZ:
+	    case HOP_SAFE_C_ZXZ: /* calls is_symbol 23578805 23420089 */
 	      push_stack(sc, OP_SAFE_C_ZXZ_1, (is_symbol(caddr(code))) ? finder(sc, caddr(code)) : caddr(code), code);
 	      sc->code = cadr(code);
 	      goto OPT_EVAL;
@@ -50205,10 +50201,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* -------------------------------------------------------------------------------- */
 	  
 	  /* trailers */
-#if WITH_COUNTS
-	  add_expr(sc, sc->code);
-#endif
-
 	  sc->cur_code = sc->code;
 	  
 	  {
@@ -50523,7 +50515,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
       /* --------------- */
-    case OP_SAFE_C_XXZ_1:
+    case OP_SAFE_C_XXZ_1: /* calls is_symbol 31384452 31150231 */
       car(sc->T3_2) = (is_symbol(caddr(sc->code))) ? finder(sc, caddr(sc->code)) : caddr(sc->code);
       car(sc->T3_3) = sc->value;
       car(sc->T3_1) = sc->args;
@@ -51595,6 +51587,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* -------------------------------- SET! -------------------------------- */
       
     case OP_SET_PAIR_P:
+      /* ([set!] (car a) (cadr a)) */
       /* here the pair can't generate multiple values, or if it does, it's an error (caught below) 
        *  splice_in_values will notice the OP_SET_PAIR_P_1 and complain.
        * (let () (define (hi) (let ((str "123")) (set! (str 0) (values #\a)) str)) (hi) (hi)) is "a23"
@@ -51610,6 +51603,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_SET_PAIR_C_P:
+      /* ([set!] (name (+ i 1)) (if (eq? (car a) 'car) #\a #\d)) */
       push_stack_no_args(sc, OP_SET_PAIR_C_P_1, sc->code);
       sc->code = cadr(sc->code);
       goto EVAL;
@@ -51629,6 +51623,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	
 	/* --------------- */
       case OP_SET_PAIR_C:
+	/* ([set!] (name (+ len 1)) #\r) */
 	value = cadr(sc->code);
 	if (is_symbol(value))
 	  value = finder(sc, value);
@@ -51638,8 +51633,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	
 	/* --------------- */
       case OP_SET_PAIR:
+	/* ([set!] (procedure-setter g) s) or ([set!] (str 0) #\a) */
 	sc->value = cadr(sc->code);
-	if (is_symbol(sc->value))
+	if (is_symbol(sc->value)) /* all 3584650 2540032 */
 	  sc->value = finder(sc, sc->value);
 	/* fall through */
 	
@@ -51653,7 +51649,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	value = sc->value;
 	
 	arg = cadar(sc->code);
-	if (is_symbol(arg))
+	if (is_symbol(arg)) /* all 6033739 3043607, index 75010 73171 calls 54668778 49666857 */
 	  arg = finder(sc, arg);
 	else
 	  {
@@ -51663,7 +51659,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	
       SET_PAIR_P_2:
 	obj = caar(sc->code);
-	if (is_symbol(obj))
+	if (is_symbol(obj)) /* all 6298338 6298338, index 75010 75010 calls 54867702 54867702 */
 	  {
 	    obj = find_symbol(sc, obj);
 	    if (is_slot(obj))
@@ -51812,6 +51808,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
     case OP_SET_PWS:
       {
+	/* ([set!] (save-dir) "/home/bil/zap/snd") */
 	s7_pointer obj;
 	
 	obj = caar(sc->code);
@@ -51842,6 +51839,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* --------------- */
     case OP_INCREMENT_1:
       {
+	/* ([set!] ctr (+ ctr 1)) */
 	s7_pointer y;
 	y = find_symbol(sc, car(sc->code));
 	if (is_slot(y))
@@ -51877,6 +51875,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* --------------- */
     case OP_DECREMENT_1:
       {
+	/* ([set!] ctr (- ctr 1)) */
 	s7_pointer y;
 	y = find_symbol(sc, car(sc->code));
 	if (is_slot(y))
@@ -51908,6 +51907,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* --------------- */
     case OP_SET_CDR:
       {
+	/* ([set!] nvals (cdr nvals)) */
 	s7_pointer y;
 	y = find_symbol(sc, car(sc->code));
 	if (is_slot(y))
@@ -51930,6 +51930,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* --------------- */
     case OP_SET_CONS:
       /* it's safe if hop_safe_c_ss, so if op_safe_c_ss we check? */
+      /* ([set!] bindings (cons v bindings)) */
       {
 	s7_pointer y;
 	y = find_symbol(sc, car(sc->code)); 
@@ -51948,6 +51949,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_SET_SYMBOL_SAFE_C:
+      /* ([set!] ctr (- ctr 11)) */
       sc->value = c_call(cadr(sc->code))(sc, fcdr(sc->code));
       sc->y = find_symbol(sc, car(sc->code));
       if (is_slot(sc->y)) 
@@ -52017,6 +52019,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_INCREMENT_SS:
+      /* ([set!] x (+ x i)) */
       sc->y = find_symbol(sc, car(sc->code));
       if (is_slot(sc->y)) 
 	{
@@ -52073,6 +52076,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* --------------- */
     case OP_SET_SYMBOL_C:
+      /* ([set!] x 3) */
       sc->value = cadr(sc->code);
       sc->code = car(sc->code);
       goto SET_SAFE;
@@ -52080,6 +52084,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_SET_SYMBOL_Q:
+      /* ([set!] incr '+) */
       sc->value = cadr(cadr(sc->code));
       sc->code = car(sc->code);
       goto SET_SAFE;
@@ -52087,6 +52092,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_SET_SYMBOL_P:
+      /* ([set!] f (lambda () 1)) */
       push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
       sc->code = cadr(sc->code);
       goto EVAL; 
@@ -52097,6 +52103,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_SET_SYMBOL_Z:
+      /* ([set!] sum (+ sum n)) */
       push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
       sc->code = cadr(sc->code);
       /* t502: 
@@ -53195,7 +53202,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL; 
 	}
       sc->value = cadr(sc->code);
-      if (is_symbol(sc->value))
+      if (is_symbol(sc->value)) /* lat 2592129 2592129 */
 	sc->value = finder(sc, sc->value);
       goto START;
       
@@ -62429,7 +62436,7 @@ s7_scheme *s7_init(void)
  * index    44300 4988 3291 3005 2742 2144
  * s7test         1721 1358 1297 1244 1233
  * t455            265   89   55   31   16
- * t502             90   43   39   36   32
+ * t502             90   43   39   36   31
  * lat             229   63   52   47   42
  * calls                276  208  176  156
  */

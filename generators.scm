@@ -765,12 +765,23 @@
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       (set! (g 'n) (+ 1 (g 'n)))
 			       (set! (g 'r) (generator-clamp-r (g 'r)))
+			       (set! (g 'rr) (* (g 'r) (g 'r)))
+			       (set! (g 'e1) (expt (g 'r) (g 'n)))
+			       (set! (g 'e2) (expt (g 'r) (+ (g 'n) 1)))
+			       (set! (g 'norm) (- (/ (- (expt (abs (g 'r)) (g 'n)) 1) (- (abs (g 'r)) 1)) 1.0)) ; n+1??
+			       (set! (g 'trouble) (or (= (g 'n) 1) (< (abs (g 'r)) nearly-zero)))
 			       g)
 	       :methods (list
 			 (cons 'mus-order
 			       (make-procedure-with-setter
 				(lambda (g) (- (g 'n) 1))
-				(lambda (g val) (set! (g 'n) (+ 1 val)) val)))
+				(lambda (g val) 
+				  (set! (g 'n) (+ 1 val))
+				  (set! (g 'e1) (expt (g 'r) (g 'n)))
+				  (set! (g 'e2) (expt (g 'r) (+ (g 'n) 1)))
+				  (set! (g 'norm) (- (/ (- (expt (abs (g 'r)) (g 'n)) 1) (- (abs (g 'r)) 1)) 1.0))
+				  (set! (g 'trouble) (or (= (g 'n) 1) (< (abs (g 'r)) nearly-zero)))
+				  val)))
 			 (cons 'mus-frequency
 			       (make-procedure-with-setter
 				(lambda (g) (radians->hz (g 'frequency)))
@@ -779,8 +790,12 @@
 			       (make-procedure-with-setter
 				(lambda (g) (g 'r))
 				(lambda (g val)
-				  (set! (g 'r) (generator-clamp-r val)))))))
-  (frequency *clm-default-frequency*) (n 1) (r 0.5) (angle 0.0) fm)
+				  (set! (g 'r) (generator-clamp-r val))
+				  (set! (g 'rr) (* (g 'r) (g 'r)))
+				  (set! (g 'norm) (- (/ (- (expt (abs (g 'r)) (g 'n)) 1) (- (abs (g 'r)) 1)) 1.0))
+				  (set! (g 'trouble) (or (= (g 'n) 1) (< (abs (g 'r)) nearly-zero)))
+				  val)))))
+  (frequency *clm-default-frequency*) (n 1) (r 0.5) (angle 0.0) fm rr e1 e2 norm trouble)
 
 
 (define* (nrcos gen (fm 0.0))
@@ -792,14 +807,13 @@
   (with-environment gen
     (let ((x angle))
       (set! angle (+ fm x frequency))
-      (if (or (= n 1)
-	      (< (abs r) nearly-zero))
+      (if trouble
 	  0.0
-	  (let ((norm (- (/ (- (expt (abs r) n) 1) (- (abs r) 1)) 1.0))) ; n+1??
-	    (/ (+ (- (* r (cos x)) 
-		     (* (expt r n) (cos (* n x))) (* r r)) 
-		  (* (expt r (+ n 1)) (cos (* (- n 1) x))))
-	       (* norm (+ 1.0 (* -2.0 r (cos x)) (* r r)))))))))
+	  (/ (+ (- (* r (cos x)) 
+		   (* e1 (cos (* n x)))
+		   rr)
+		(* e2 (cos (* (- n 1) x))))
+	     (* norm (+ 1.0 (* -2.0 r (cos x)) rr)))))))
 
 ;;; formula changed to start at k=1 and n increased so we get 1 to n
 
@@ -2272,13 +2286,14 @@
 (defgenerator (rk!cos
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'norm) (/ 1.0 (- (exp (abs r)) 1.0)))
 			       g)
 	       :methods (list
 			 (cons 'mus-phase 
 			       (make-procedure-with-setter
 				(lambda (g) (g 'angle))
 				(lambda (g val) (set! (g 'angle) val))))))
-  (frequency *clm-default-frequency*) (r 0.5) (angle 0.0) fm)
+  (frequency *clm-default-frequency*) (r 0.5) (angle 0.0) fm norm)
 
 
 (define* (rk!cos gen (fm 0.0))
@@ -2290,10 +2305,10 @@
   (with-environment gen
     (let ((x angle))
       (set! angle (+ fm x frequency))
-      (/ (- (* (exp (* r (cos x)))
+      (* (- (* (exp (* r (cos x)))
 	       (cos (* r (sin x))))
 	    1.0) ; omit DC
-	 (- (exp (abs r)) 1.0))))) ; normalization
+	 norm))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -2474,8 +2489,9 @@
 (defgenerator (rxyk!cos
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'ar) (/ 1.0 (exp (abs (g 'r)))))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm ar)
 
 
 (define* (rxyk!cos gen (fm 0.0))
@@ -2488,9 +2504,9 @@
     (let* ((x angle)
 	   (y (* x ratio)))
       (set! angle (+ x fm frequency))
-      (/ (* (exp (* r (cos y)))
-	    (cos (+ x (* r (sin y)))))
-	 (exp (abs r))))))
+      (* (exp (* r (cos y)))
+	 (cos (+ x (* r (sin y))))
+	 ar))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)

@@ -8517,13 +8517,11 @@
 
 
 ;;; 3.7.2
-+ typedef enum {
-+   GTK_SIZE_GROUP_NONE,
-+   GTK_SIZE_GROUP_HORIZONTAL,
-+   GTK_SIZE_GROUP_VERTICAL,
-+   GTK_SIZE_GROUP_BOTH
-+ } GtkSizeGroupMode;
-+ gboolean              gtk_widget_is_visible             (GtkWidget    *widget);
+(CINT "GTK_SIZE_GROUP_NONE" "GtkSizeGroupMode")
+(CINT "GTK_SIZE_GROUP_HORIZONTAL" "GtkSizeGroupMode")
+(CINT "GTK_SIZE_GROUP_VERTICAL" "GtkSizeGroupMode")
+(CINT "GTK_SIZE_GROUP_BOTH" "GtkSizeGroupMode")
+(CFNC "gboolean gtk_widget_is_visible GtkWidget* widget")
 
 |#
 
