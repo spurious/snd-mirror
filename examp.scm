@@ -1968,7 +1968,6 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
      (do ((k start (+ 1 k)))
 	 ((= k end))
        (let ((val 0.0))
-	 ;; using do and vector here for the run macro's benefit
 	 (do ((i 0 (+ i 1)))
 	     ((= i len))
 	   (let ((gen (dsp-chain i)))

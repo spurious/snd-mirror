@@ -18710,7 +18710,6 @@ EDITS: 2
 	     (if (or (< val 0.0)
 		     (> val 1.0))
 		 (format #t ";locsig, chans: ~D, degree: ~F, chan ~D is ~F, ~A~%" chans x chan val data))
-	     ;; not snd-display here -- we're in run
 	     (let ((diff (abs (- val (last chan)))))
 	       (vector-set! last chan val)
 	       (if (> diff .2)
@@ -38639,9 +38638,9 @@ EDITS: 1
 
     (let ((ind (find-sound "test.snd")))
       (if (not (= (frames ind) 144100))
-	  (snd-display #__line__ ";with-sound make-oscil in run frames: ~A" (frames)))
+	  (snd-display #__line__ ";with-sound make-oscil frames: ~A" (frames)))
       (if (fneq (maxamp ind) .1)
-	  (snd-display #__line__ ";with-sound make-oscil in run maxamp: ~A" (maxamp ind)))
+	  (snd-display #__line__ ";with-sound make-oscil maxamp: ~A" (maxamp ind)))
       (close-sound ind))
     
     

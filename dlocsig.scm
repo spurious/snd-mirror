@@ -2952,7 +2952,7 @@
 
     ;; end of the run according to the duration of the note
     ;; (set! end (time->samples duration))
-    ;; start and end of the run loop in samples
+    ;; start and end of the loop in samples
     (set! run-beg (time->samples start-time))
     (set! run-end (floor (- (+ (time->samples (+ start-time (max duration real-dur)))
 			       (dist->samples last-dist)

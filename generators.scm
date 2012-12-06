@@ -816,6 +816,20 @@
 	     (* norm (+ 1.0 (* -2.0 r (cos x)) rr)))))))
 
 ;;; formula changed to start at k=1 and n increased so we get 1 to n
+;;; here is the preoptimization form:
+#|
+  (with-environment gen
+    (let ((x angle))
+      (set! angle (+ fm x frequency))
+      (if (or (= n 1)
+	      (< (abs r) nearly-zero))
+	  0.0
+	  (let ((norm (- (/ (- (expt (abs r) n) 1) (- (abs r) 1)) 1.0))) ; n+1??
+	    (/ (+ (- (* r (cos x)) 
+		     (* (expt r n) (cos (* n x))) (* r r)) 
+		  (* (expt r (+ n 1)) (cos (* (- n 1) x))))
+	       (* norm (+ 1.0 (* -2.0 r (cos x)) (* r r))))))))
+|#
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -5255,8 +5269,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (with-environment gen
     (sqrt (max 0.0 ;; this is tricky -- due to floating point inaccuracy, we can get negative output
 	       ;;   from moving-rms even if all the inputs are positive!  The sqrt then returns
-	       ;;   a complex number and all hell breaks loose (in run, you'll get a complaint
-	       ;;   about an integer > 32 bits).
+	       ;;   a complex number and all hell breaks loose
 	       (moving-average gen (* y y))))))
 
 

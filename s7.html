@@ -702,6 +702,41 @@ is used, only keyword argument pairs can follow.
 </p>
 </div>
 
+
+<div class="indented">
+<p>A natural companion of lambda* is named let*.  In named let, the implicit function's
+arguments have initial values, but thereafter, each call requires the full set of arguments.
+Why not treat the initial values as default values? 
+</p>
+
+<pre class="indented">
+&gt; (let* func ((i 1) (j 2)) 
+    (+ i j (if (&gt; i 0) (func (- i 1)) 0)))
+5
+&gt; (letrec ((func (lambda* ((i 1) (j 2)) 
+                   (+ i j (if (&gt; i 0) (func (- i 1)) 0)))))
+    (func))
+5
+</pre>
+
+<p>This is consistent with the lambda* arguments because their defaults are
+already set in left-to-right order, and as each parameter is set to its default value,
+the binding is added to the default value expression environment (just as if it were a let*).
+</p>
+
+<pre class="indented">
+(define* (f1 (a 1) (b 2) (c (+ b 1))) ; b in (+ b 1) is the argument b = 2
+  (+ a b c
+     (let ()
+       (set! b -123)
+       (if (&gt; a 0) (f1 (- a 1)) 0))))
+&gt; (f1)
+11
+</pre>
+
+</div>
+
+
 <div class="indented">
 
 <p>If you want a version of define* that insists
@@ -846,39 +881,6 @@ f
 </pre>
 </div>
 
-
-<div class="indented">
-<p>A natural companion of lambda* is named let*.  In named let, the implicit function's
-arguments have initial values, but thereafter, each call requires the full set of arguments.
-Why not treat the initial values as default values? 
-</p>
-
-<pre class="indented">
-&gt; (let* func ((i 1) (j 2)) 
-    (+ i j (if (&gt; i 0) (func (- i 1)) 0)))
-5
-&gt; (letrec ((func (lambda* ((i 1) (j 2)) 
-                   (+ i j (if (&gt; i 0) (func (- i 1)) 0)))))
-    (func))
-5
-</pre>
-
-<p>This is consistent with the lambda* arguments because their defaults are
-already set in left-to-right order, and as each parameter is set to its default value,
-the binding is added to the default value expression environment (just as if it were a let*).
-</p>
-
-<pre class="indented">
-(define* (f1 (a 1) (b 2) (c (+ b 1))) ; b in (+ b 1) is the argument b = 2
-  (+ a b c
-     (let ()
-       (set! b -123)
-       (if (&gt; a 0) (f1 (- a 1)) 0))))
-&gt; (f1)
-11
-</pre>
-
-</div>
 
 </blockquote>
 

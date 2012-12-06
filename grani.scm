@@ -429,7 +429,6 @@
 			      :distance 1.0
 			      :channels out-chans))
 	    
-	    ;; variables used and initialized inside the run loop
 	    (in-samples 0)
 	    (gr-start-sample beg)
 	    (gr-from-beg 0)

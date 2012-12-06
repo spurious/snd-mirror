@@ -2028,7 +2028,8 @@ void mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
 #if HAVE_VSNPRINTF
   vsnprintf(buffer, buffer_len, format, ap);
 #else
-  vsprintf(buffer, format, ap);
+  if (vsprintf(buffer, format, ap) >= buffer_len) 
+    buffer[buffer_len - 1] = '\0'; 
 #endif
   va_end(ap);
 }
