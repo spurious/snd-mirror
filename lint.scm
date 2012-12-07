@@ -559,6 +559,16 @@
 			      floor round truncate ceiling ash))
 			 h))
 
+	  (syntaces (let ((h (make-hash-table)))
+		      (for-each
+		       (lambda (op)
+			 (set! (h op) #t))
+		       '(quote if begin let let* letrec cond case or and do set! 
+			       with-environment lambda lambda* define defvar define-envelope
+			       define* defmacro defmacro* define-macro define-macro* 
+			       define-bacro define-bacro* define-constant))
+		      h))
+
 	  (format-control-char (let ((chars (make-vector 256 #f)))
 				 (for-each
 				  (lambda (c)
@@ -669,7 +679,8 @@
 	;; can we probably evaluate form given just built-in stuff?
 	(or (lint-constant? form)
 	    (and (pair? form)
-		 (or (and (hash-table-ref no-side-effect-functions (car form))
+		 (or (and (symbol? (car form))
+			  (hash-table-ref no-side-effect-functions (car form))
 			  (not (env-member (car form) env))) ; e.g. exp declared locally as a list
 		     (lint-constant? (car form)))
 		 (just-constants? (cdr form) env))))
@@ -1217,6 +1228,7 @@
 			     (if (or (and (not (symbol? arg))
 					  (not (pair? arg)))
 				     (and (pair? arg)
+					  (symbol? (car arg))
 					  (not (env-member (car arg) env))
 					  (not (member (hash-table-ref function-types (car arg)) '(#f #t list-or-f number-or-f)))))
 				 #f
@@ -2130,7 +2142,7 @@
 				   )))))))))))
       
       
-      (define (get-generator form name head env) ; defgenerator funcs
+      (define (get-generator form name head) ; defgenerator funcs
 	(let ((name (if (pair? (cadr form))
 			(car (cadr form))
 			(cadr form))))
@@ -2139,8 +2151,7 @@
 		(name? (string->symbol (string-append (symbol->string name) "?"))))
 	    
 	    (hash-table-set! globals make-name (list make-name #f #f))
-	    (hash-table-set! globals name? (list name? #f #f)))
-	  env))
+	    (hash-table-set! globals name? (list name? #f #f)))))
       
       
       (define (load-walk form)
@@ -2162,7 +2173,7 @@
 		 (hash-table-set! globals (cadr form) (list (cadr form) #f #f))))
 	    
 	    ((defgenerator)
-	     (get-generator form 'defgenerator head #f))
+	     (get-generator form 'defgenerator head))
 	    
 	    ((if)
 	     (if (pair? (cddr form))
@@ -2273,10 +2284,7 @@
 	      (unused ()))
 	  (for-each 
 	   (lambda (arg)
-	     (if (memq (car arg) '(quote if begin let let* letrec cond case or and do set! 
-					 with-environment lambda lambda* define defvar define-envelope
-					 define* defmacro defmacro* define-macro define-macro* 
-					 define-bacro define-bacro* define-constant))
+	     (if (hash-table-ref syntaces (car arg))
 		 (lint-format "~A ~A named ~A is asking for trouble" name head type (car arg))
 		 (if (not (symbol? (car arg)))
 		     (lint-format "bad ~A ~A name: ~S" name head type (car arg))))
@@ -2544,7 +2552,7 @@
 		    
 		    ;; ---------------- defgenerator ----------------
 		    ((defgenerator)
-		     (get-generator form name head env)
+		     (get-generator form name head)
 		     env)
 		    
 		    ;; ---------------- lambda ----------------		  
@@ -3022,33 +3030,34 @@
 					(truncated-list->string form))
 			   env)
 			 (begin
-			   (check-call name head form env)
-			   (if (not (env-member head env))
-			       (check-special-cases name head form env))
-			   
-			   (if (and *report-minor-stuff*
-				    (not (= line-number last-simplify-numeric-line-number))
-				    (not (env-member head env))
-				    (numeric? head)
-				    (not (null? (cdr form))))
-			       (let ((val (simplify-numerics form env)))
-				 (if (not (equal? form val))
-				     (begin
-				       (set! last-simplify-numeric-line-number line-number)
-				       (lint-format "possible simplification:~A"
-						    name 
-						    (lists->string form val))))))
-			   
-			   ;; walk everything looking for undefined vars (saved until we finish the file).
-			   ;;
-			   ;;   if we loaded this file first, and f (head) is defined (e.g. scan above),
-			   ;;   and it is used before it is defined, but not thereafter, the usage stuff 
-			   ;;   can get confused, so other-identifiers is trying to track those.
-			   
-			   (if (and (symbol? head)
-				    (not (hash-table-ref other-identifiers head))
-				    (not (defined? head start-up-environment)))
-			       (hash-table-set! other-identifiers head #t))
+			   (if (symbol? head)
+			       (begin
+				 (check-call name head form env)
+				 (if (not (env-member head env))
+				     (check-special-cases name head form env))
+				 
+				 (if (and *report-minor-stuff*
+					  (not (= line-number last-simplify-numeric-line-number))
+					  (not (env-member head env))
+					  (numeric? head)
+					  (not (null? (cdr form))))
+				     (let ((val (simplify-numerics form env)))
+				       (if (not (equal? form val))
+					   (begin
+					     (set! last-simplify-numeric-line-number line-number)
+					     (lint-format "possible simplification:~A"
+							  name 
+							  (lists->string form val))))))
+				 
+				 ;; walk everything looking for undefined vars (saved until we finish the file).
+				 ;;
+				 ;;   if we loaded this file first, and f (head) is defined (e.g. scan above),
+				 ;;   and it is used before it is defined, but not thereafter, the usage stuff 
+				 ;;   can get confused, so other-identifiers is trying to track those.
+				 
+				 (if (and (not (hash-table-ref other-identifiers head))
+					  (not (defined? head start-up-environment)))
+				     (hash-table-set! other-identifiers head #t))))
 
 			   (let ((vars env))
 			     (for-each

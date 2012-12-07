@@ -137,9 +137,9 @@
 
 (define (scale-log->linear lo val hi)
   "(scale-log->linear lo val hi) given user-relative low..val..hi returns val as scale-relative (0..log-scale-ticks)"
-  (let* ((log-lo (log (max lo 1.0) 2))
-	 (log-hi (log hi 2))
-	 (log-val (log val 2)))
+  (let ((log-lo (log (max lo 1.0) 2))
+	(log-hi (log hi 2))
+	(log-val (log val 2)))
     (floor (* log-scale-ticks (/ (- log-val log-lo) (- log-hi log-lo))))))
   
 (define (scale-linear->log lo val hi)

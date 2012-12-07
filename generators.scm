@@ -766,6 +766,7 @@
 			       (set! (g 'n) (+ 1 (g 'n)))
 			       (set! (g 'r) (generator-clamp-r (g 'r)))
 			       (set! (g 'rr) (* (g 'r) (g 'r)))
+			       (set! (g 'r1) (+ 1.0 (g 'rr)))
 			       (set! (g 'e1) (expt (g 'r) (g 'n)))
 			       (set! (g 'e2) (expt (g 'r) (+ (g 'n) 1)))
 			       (set! (g 'norm) (- (/ (- (expt (abs (g 'r)) (g 'n)) 1) (- (abs (g 'r)) 1)) 1.0)) ; n+1??
@@ -792,10 +793,11 @@
 				(lambda (g val)
 				  (set! (g 'r) (generator-clamp-r val))
 				  (set! (g 'rr) (* (g 'r) (g 'r)))
+				  (set! (g 'r1) (+ 1.0 (g 'rr)))
 				  (set! (g 'norm) (- (/ (- (expt (abs (g 'r)) (g 'n)) 1) (- (abs (g 'r)) 1)) 1.0))
 				  (set! (g 'trouble) (or (= (g 'n) 1) (< (abs (g 'r)) nearly-zero)))
 				  val)))))
-  (frequency *clm-default-frequency*) (n 1) (r 0.5) (angle 0.0) fm rr e1 e2 norm trouble)
+  (frequency *clm-default-frequency*) (n 1) (r 0.5) (angle 0.0) fm rr r1 e1 e2 norm trouble)
 
 
 (define* (nrcos gen (fm 0.0))
@@ -813,7 +815,7 @@
 		   (* e1 (cos (* n x)))
 		   rr)
 		(* e2 (cos (* (- n 1) x))))
-	     (* norm (+ 1.0 (* -2.0 r (cos x)) rr)))))))
+	     (* norm (+ r1 (* -2.0 r (cos x)))))))))
 
 ;;; formula changed to start at k=1 and n increased so we get 1 to n
 ;;; here is the preoptimization form:
@@ -1390,22 +1392,65 @@
 	       :make-wrapper (lambda (g)
 			       (set! (g 'osc) (make-oscil (g 'frequency) (* 0.5 pi)))
 			       (set! (g 'r) (generator-clamp-r (g 'r)))
+			       (set! (g 'rr) (* (g 'r) (g 'r)))
+			       (let ((absr (abs (g 'r))))
+				 (set! (g 'norm) (/ (- 1.0 absr) (* 2.0 absr)))
+				 (set! (g 'trouble) (< absr nearly-zero)))
 			       g)
 	       :methods (list
 			 (cons 'mus-frequency
 			       (make-procedure-with-setter
 				(lambda (g) (mus-frequency (g 'osc)))
 				(lambda (g val) (set! (mus-frequency (g 'osc)) val))))
+
 			 (cons 'mus-scaler
 			       (make-procedure-with-setter
 				(lambda (g) (g 'r))
-				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))
+				(lambda (g val) 
+				  (set! (g 'r) (generator-clamp-r val))
+				  (set! (g 'rr) (* (g 'r) (g 'r)))
+				  (let ((absr (abs (g 'r))))
+				    (set! (g 'norm) (/ (- 1.0 absr) (* 2.0 absr)))
+				    (set! (g 'trouble) (< absr nearly-zero))))))
+				  
 			 (cons 'mus-phase
 			       (make-procedure-with-setter
 				(lambda (g) (mus-phase (g 'osc)))
 				(lambda (g val) (set! (mus-phase (g 'osc)) val))))))
   (frequency *clm-default-frequency*) (r 0.5) fm
-  (osc #f))
+  (osc #f) rr norm trouble)
+
+(define* (rcos gen (fm 0.0))
+  
+  "(make-rcos frequency (r 0.5)) creates an rcos generator.\n\
+   (rcos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude r^k."
+  
+  ;; from Andrews, Askey, Roy "Special Functions" 5.1.16, p243. r^k cos sum
+  ;; a variant of the G&R 2nd col 4th row
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (if trouble
+	0.0                       ; 1.0 from the formula, but we're subtracting out DC
+	(* (- (/ (- 1.0 rr)
+		 (- (+ 1.0 rr)
+		    (* 2.0 r (oscil osc fm))))
+	      1.0)
+	     norm))))
+
+
+#|
+  (with-environment gen
+    (let ((absr (abs r))
+	  (rr (* r r)))
+      (if (< absr nearly-zero)
+	  0.0                       ; 1.0 from the formula, but we're subtracting out DC
+	  (* (- (/ (- 1.0 rr)
+		   (- (+ 1.0 rr)
+		      (* 2.0 r (oscil osc fm))))
+		1.0)
+	     (/ (- 1.0 absr) (* 2.0 absr))))))) ; normalization
+|#
 
 #|
 ;;; G&R form:
@@ -1421,26 +1466,6 @@
 	    1.0)
 	 (/ (- 1.0 absr) absr))))) ; normalization
 |#
-
-(define* (rcos gen (fm 0.0))
-  
-  "(make-rcos frequency (r 0.5)) creates an rcos generator.\n\
-   (rcos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude r^k."
-  
-  ;; from Andrews, Askey, Roy "Special Functions" 5.1.16, p243. r^k cos sum
-  ;; a variant of the G&R 2nd col 4th row
-  
-  (set! (gen 'fm) fm)
-  (with-environment gen
-    (let ((absr (abs r))
-	  (rr (* r r)))
-      (if (< absr nearly-zero)
-	  0.0                       ; 1.0 from the formula, but we're subtracting out DC
-	  (* (- (/ (- 1.0 rr)
-		   (- (+ 1.0 rr)
-		      (* 2.0 r (oscil osc fm))))
-		1.0)
-	     (/ (- 1.0 absr) (* 2.0 absr))))))) ; normalization
 
 ;;; if r>0 we get the spike at multiples of 2pi, since the k*pi case is flipping -1 1 -1 etc
 ;;; if r<0, we get the spike at multiples of (2k-1)pi since the r sign now counteracts the cos k*pi sign
@@ -1723,13 +1748,18 @@
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       (set! (g 'r) (generator-clamp-r (g 'r)))
+			       (set! (g 'rr) (* (g 'r) (g 'r)))
+			       (set! (g 'norm) (- 1.0 (abs (g 'r)))) ; abs for negative r
 			       g)
 	       :methods (list
 			 (cons 'mus-scaler
 			       (make-procedure-with-setter
 				(lambda (g) (g 'r))
-				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
+				(lambda (g val) 
+				  (set! (g 'r) (generator-clamp-r val))
+				  (set! (g 'rr) (* (g 'r) (g 'r)))
+				  (set! (g 'norm) (- 1.0 (abs (g 'r)))))))))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm norm rr)
 
 
 (define* (rxycos gen (fm 0.0))
@@ -1744,10 +1774,9 @@
       (set! angle (+ x fm frequency))
       (* (/ (- (cos x)
 	       (* r (cos (- x y))))
-	    (+ 1.0 
-	       (* -2.0 r (cos y))
-	       (* r r)))
-	 (- 1.0 (abs r)))))) ; norm, abs for negative r
+	    (+ 1.0 rr
+	       (* -2.0 r (cos y))))
+	 norm))))
 
 #|
 (with-sound (:clipped #f :statistics #t)
