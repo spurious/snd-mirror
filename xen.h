@@ -1212,7 +1212,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 
 #define XEN_ARITY(Func)                                               s7_procedure_arity(s7, Func)
 #define XEN_REQUIRED_ARGS(Func)                                       XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func)))
-#define XEN_REQUIRED_ARGS_OK(Func, Args)                              (XEN_REQUIRED_ARGS(Func) == Args)
+#define XEN_REQUIRED_ARGS_OK(Func, Args)                              s7_is_aritable(s7, Func, Args) /* (XEN_REQUIRED_ARGS(Func) == Args) */
 
 #define XEN_CALL_0(Func, Caller)                                      s7_call_with_location(s7, Func, XEN_EMPTY_LIST, Caller, __FILE__, __LINE__) /* these need a catch */
 #define XEN_CALL_1(Func, Arg1, Caller)                                s7_call_with_location(s7, Func, XEN_LIST_1(Arg1), Caller, __FILE__, __LINE__)

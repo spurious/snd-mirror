@@ -1341,10 +1341,6 @@
 		   ))))))
       
       
-      (define (numeric? op)
-	(hash-table-ref numeric-ops op))
-
-      
       (define (splice-if f lst)
 	(cond ((null? lst) ())
 	      ((pair? lst)
@@ -3039,7 +3035,7 @@
 				 (if (and *report-minor-stuff*
 					  (not (= line-number last-simplify-numeric-line-number))
 					  (not (env-member head env))
-					  (numeric? head)
+					  (hash-table-ref numeric-ops head)
 					  (not (null? (cdr form))))
 				     (let ((val (simplify-numerics form env)))
 				       (if (not (equal? form val))

@@ -1089,9 +1089,9 @@ static int quan(int val, short *table, int size)
 
 static int fmult(int an, int srn)
 {
-  short	anmag, anexp, anmant;
-  short	wanexp, wanmant;
-  short	retval;
+  short anmag, anexp, anmant;
+  short wanexp, wanmant;
+  short retval;
   anmag = (an > 0) ? an : ((-an) & 0x1FFF);
   anexp = quan(anmag, power2, 15) - 6;
   anmant = (anmag == 0) ? 32 : (anexp >= 0) ? anmag >> anexp : anmag << -anexp;

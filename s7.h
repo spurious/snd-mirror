@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.15"
-#define S7_DATE "20-Nov-12"
+#define S7_VERSION "2.16"
+#define S7_DATE "8-Dec-12"
 
 
 typedef long long int s7_Int;
@@ -444,6 +444,7 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);                /* (
 s7_pointer s7_procedure_environment(s7_pointer p);                          /* (procedure-environment x) */
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);        /* (procedure-documentation x) if any (don't free the string) */
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);                 /* (procedure-arity x) -- returns a list (required optional rest?) */
+bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args);                 /* (aritable? x args) */
 const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc);              /* (procedure-name x) -- don't free the string! */
 
 const char *s7_help(s7_scheme *sc, s7_pointer obj);                         /* (help obj) */
@@ -586,6 +587,7 @@ s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr);
 s7_pointer s7_value(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_car_value(s7_scheme *sc, s7_pointer lst);
 s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst);
+s7_pointer s7_cadar_value(s7_scheme *sc, s7_pointer lst);
   /* these are for experimental optimization choices */
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);

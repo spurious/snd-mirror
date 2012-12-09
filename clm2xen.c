@@ -4022,6 +4022,7 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
   vct *scl, *invals = NULL;
 #if HAVE_SCHEME
   s7_pointer *elements;
+  mus_float_t *amp_data, *in_data;
 #endif
 
   XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_2, S_formant_bank, "a vector of formant generators");
@@ -4038,6 +4039,8 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
 
 #if HAVE_SCHEME
   elements = s7_vector_elements(gens);
+  amp_data = scl->data;
+  if (invals) in_data = invals->data;
 #endif
 
   if (invals)
@@ -4049,7 +4052,7 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
 	  gn = (mus_xen *)imported_s7_object_value_checked(elements[i], mus_xen_tag);
 	  if ((gn) &&
 	      (gn->type == FORMANT_TAG))
-	    outval += (scl->data[i] * mus_formant(gn->gen, invals->data[i]));
+	    outval += (amp_data[i] * mus_formant(gn->gen, in_data[i]));
 #else
 	  XEN g;
 	  g = XEN_VECTOR_REF(gens, i);
@@ -4072,7 +4075,7 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
 	  gn = (mus_xen *)imported_s7_object_value_checked(elements[i], mus_xen_tag);
 	  if ((gn) &&
 	      (gn->type == FORMANT_TAG))
-	    outval += (scl->data[i] * mus_formant(gn->gen, inval));
+	    outval += (amp_data[i] * mus_formant(gn->gen, inval));
 #else
 	  XEN g;
 	  g = XEN_VECTOR_REF(gens, i);

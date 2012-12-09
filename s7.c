@@ -405,7 +405,7 @@ enum {OP_NO_OP,
       OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_Z,
       OP_SET_SYMBOL_SAFE_S, OP_SET_SYMBOL_SAFE_C, 
       OP_SET_SYMBOL_SAFE_SS, OP_SET_SYMBOL_SAFE_SSS, OP_SET_SYMBOL_SAFE_opSSq_S,
-      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_P, OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, 
+      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_P, OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, 
       OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE,
       OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_COND_UNCHECKED,
       OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, OP_DEFINE_FUNCHECKED,
@@ -494,7 +494,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "member", "assoc", "member", "assoc",
    
    "quote", "lambda", "let", "case", 
-   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", 
+   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "let*", "letrec", "cond",
    "lambda*", "do", "define", "define*", "define",
@@ -580,7 +580,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SET_UNCHECKED", "OP_SET_SYMBOL_C", "OP_SET_SYMBOL_S", "OP_SET_SYMBOL_Q", "OP_SET_SYMBOL_P", "OP_SET_SYMBOL_Z", 
   "OP_SET_SYMBOL_SAFE_S", "OP_SET_SYMBOL_SAFE_C", 
   "OP_SET_SYMBOL_SAFE_SS", "OP_SET_SYMBOL_SAFE_SSS", "OP_SET_SYMBOL_SAFE_opSSq_S",
-  "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_P", "OP_SET_PAIR_P_1", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", 
+  "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_Z", "OP_SET_PAIR_P", "OP_SET_PAIR_P_1", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", 
   "OP_SET_PAIR_C", "OP_SET_PAIR_C_P", "OP_SET_PAIR_C_P_1", "OP_SET_SAFE",
   "OP_LET_STAR_UNCHECKED", "OP_LETREC_UNCHECKED", "OP_COND_UNCHECKED",
   "OP_LAMBDA_STAR_UNCHECKED", "OP_DO_UNCHECKED", "OP_DEFINE_UNCHECKED", "OP_DEFINE_STAR_UNCHECKED", "OP_DEFINE_FUNCHECKED",
@@ -660,7 +660,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       
       OP_THUNK, HOP_THUNK, 
       OP_CLOSURE_S, HOP_CLOSURE_S, OP_CLOSURE_Sp, HOP_CLOSURE_Sp, OP_CLOSURE_C, HOP_CLOSURE_C, OP_CLOSURE_Q, HOP_CLOSURE_Q, 
-      OP_CLOSURE_SS, HOP_CLOSURE_SS, OP_CLOSURE_SSp, HOP_CLOSURE_SSp, 
+      OP_CLOSURE_SS, HOP_CLOSURE_SS, OP_CLOSURE_SSp, HOP_CLOSURE_SSp, OP_CLOSURE_SSb, HOP_CLOSURE_SSb, 
       OP_CLOSURE_SC, HOP_CLOSURE_SC, OP_CLOSURE_CS, HOP_CLOSURE_CS, 
       OP_CLOSURE_opSq, HOP_CLOSURE_opSq, OP_CLOSURE_opCq, HOP_CLOSURE_opCq, OP_CLOSURE_opCqp, HOP_CLOSURE_opCqp, 
       OP_CLOSURE_opSq_S, HOP_CLOSURE_opSq_S, OP_CLOSURE_opSq_opSq, HOP_CLOSURE_opSq_opSq, 
@@ -771,7 +771,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       
       "thunk", "h_thunk", 
       "closure_s", "h_closure_s", "closure_sp", "h_closure_sp", "closure_c", "h_closure_c", "closure_q", "h_closure_q", 
-      "closure_ss", "h_closure_ss", "closure_ssp", "h_closure_ssp", 
+      "closure_ss", "h_closure_ss", "closure_ssp", "h_closure_ssp", "closure_ssb", "h_closure_ssb", 
       "closure_sc", "h_closure_sc", "closure_cs", "h_closure_cs", 
       "closure_opsq", "h_closure_opsq", "closure_opcq", "h_closure_opcq", "closure_opcqp", "h_closure_opcqp", 
       "closure_opsq_s", "h_closure_opsq_s", "closure_opsq_opsq", "h_closure_opsq_opsq", 
@@ -1305,7 +1305,7 @@ struct s7_scheme {
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z;
   s7_pointer SET_SYMBOL_SAFE_S, SET_SYMBOL_SAFE_SS, SET_SYMBOL_SAFE_SSS, SET_SYMBOL_SAFE_opSSq_S;
   s7_pointer SET_SYMBOL_SAFE_C;
-  s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_P, SET_PWS, SET_PAIR_C, SET_PAIR_C_P;
+  s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_P, SET_PWS, SET_PAIR_C, SET_PAIR_C_P;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED;
   s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLER_1, CASE_SIMPLER_SS;
   s7_pointer CASE_SIMPLEST, CASE_SIMPLEST_1, CASE_SIMPLEST_SS, CASE_SIMPLEST_ELSE, CASE_SIMPLEST_ELSE_C, CASE_INT;
@@ -2256,7 +2256,6 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
 static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static void pop_input_port(s7_scheme *sc);
-static bool is_aritable(s7_scheme *sc, s7_pointer x, int args);
 static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
 static token_t token(s7_scheme *sc);
 static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indices);
@@ -6411,7 +6410,7 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, p, sc->CALL_CC, args);
       return(simple_wrong_type_argument_with_type(sc, sc->CALL_CC, p, A_PROCEDURE));
     }
-  if (!is_aritable(sc, p, 1))
+  if (!s7_is_aritable(sc, p, 1))
     return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 		    list_2(sc, make_protected_string(sc, "call/cc procedure, ~A, should take one argument"), p)));
 
@@ -25159,7 +25158,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
       if (!is_procedure(eq_func))
 	return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(3), eq_func, A_CLOSURE));
 
-      if (!is_aritable(sc, eq_func, 2))
+      if (!s7_is_aritable(sc, eq_func, 2))
 	return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(3), eq_func, 
 					     make_protected_string(sc, "a procedure that can take 2 arguments")));
       /* now maybe there's a simple case */
@@ -25596,7 +25595,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
       if (!is_procedure(eq_func))
 	return(wrong_type_argument_with_type(sc, sc->MEMBER, small_int(3), eq_func, A_CLOSURE));
 
-      if (!is_aritable(sc, eq_func, 2))
+      if (!s7_is_aritable(sc, eq_func, 2))
 	return(wrong_type_argument_with_type(sc, sc->MEMBER, small_int(3), eq_func, 
 					     make_protected_string(sc, "a procedure that can take 2 arguments")));
       /* now maybe there's a simple case */
@@ -26993,7 +26992,7 @@ If its first argument is a list, the list is copied (despite the '!')."
        */
       lessp = cadr(args);
       if ((!is_procedure(lessp)) ||
-	  (!is_aritable(sc, lessp, 2)))
+	  (!s7_is_aritable(sc, lessp, 2)))
 	return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, 
 					     make_protected_string(sc, "a function of 2 arguments")));
       return(sc->NIL);
@@ -27014,7 +27013,7 @@ If its first argument is a list, the list is copied (despite the '!')."
   if ((is_continuation(lessp)) || is_goto(lessp))
     return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, 
 					 make_protected_string(sc, "a normal procedure (not a continuation)")));
-  if (!is_aritable(sc, lessp, 2))
+  if (!s7_is_aritable(sc, lessp, 2))
     return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, 
 					 make_protected_string(sc, "a procedure that can take 2 arguments")));
 
@@ -29479,7 +29478,7 @@ static bool closure_star_is_aritable(s7_scheme *sc, s7_pointer x, s7_pointer x_a
 }
 
 
-static bool is_aritable(s7_scheme *sc, s7_pointer x, int args)
+bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
 {
   switch (type(x))
     {
@@ -29590,14 +29589,14 @@ static s7_pointer g_is_aritable(s7_scheme *sc, s7_pointer args)
     return(out_of_range(sc, sc->ARITABLEP, small_int(2), n, "should be a non-negative integer"));
   if (num > MAX_ARITY) num = MAX_ARITY;
 
-  return(make_boolean(sc, is_aritable(sc, car(args), (int)num)));
+  return(make_boolean(sc, s7_is_aritable(sc, car(args), (int)num)));
 }
 
 
 static s7_pointer is_aritable_ic;
 static s7_pointer g_is_aritable_ic(s7_scheme *sc, s7_pointer args)
 {
-  return(make_boolean(sc, is_aritable(sc, car(args), (int)integer(cadr(args)))));
+  return(make_boolean(sc, s7_is_aritable(sc, car(args), (int)integer(cadr(args)))));
 }
 
 static s7_pointer is_aritable_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -29721,9 +29720,9 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
       if ((!is_pair(funcs)) ||
 	  (s7_list_length(sc, funcs) < 3))
 	return(s7_wrong_type_arg_error(sc, "set! symbol-access", 2, funcs, "a list of 3 or more items"));	
-      if ((is_procedure(cadr(funcs))) && (!is_aritable(sc, cadr(funcs), 2)))
+      if ((is_procedure(cadr(funcs))) && (!s7_is_aritable(sc, cadr(funcs), 2)))
 	return(s7_wrong_type_arg_error(sc, "set! symbol-access set function", 2, cadr(funcs), "a procedure of 2 arguments"));	
-      if ((is_procedure(caddr(funcs))) && (!is_aritable(sc, caddr(funcs), 2)))
+      if ((is_procedure(caddr(funcs))) && (!s7_is_aritable(sc, caddr(funcs), 2)))
 	return(s7_wrong_type_arg_error(sc, "set! symbol-access bind function", 2, caddr(funcs), "a procedure of 2 arguments"));	
     }
   return(s7_symbol_set_access(sc, sym, funcs));
@@ -31691,7 +31690,7 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 		 */
 		
 		if ((is_pair(closure_args(sc->code))) &&
-		    (!is_aritable(sc, sc->code, 2)))
+		    (!s7_is_aritable(sc, sc->code, 2)))
 		  {
 		    s7_wrong_number_of_args_error(sc, "catch error handler has wrong number of args: ~S", sc->args);
 		    return(false);
@@ -32293,7 +32292,7 @@ static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 	      if (((s7_is_eq(caar(p), s7_make_symbol(sc, "if"))) &&
 		   (len > 4)) ||
 		  ((s7_is_procedure(SYMBOL_TO_VALUE(sc, caar(p)))) &&
-		   (!is_aritable(sc, SYMBOL_TO_VALUE(sc, caar(p)), len))) ||
+		   (!s7_is_aritable(sc, SYMBOL_TO_VALUE(sc, caar(p)), len))) ||
 		  ((s7_is_eq(caar(p), s7_make_symbol(sc, "define"))) &&
 		   (is_pair(cdr(p))) &&
 		   (is_symbol(cadr(p))) &&
@@ -32907,7 +32906,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 
 	  if ((is_safe_procedure(sc->code)) &&
 	      (is_c_function(sc->code)) &&
-	      (is_aritable(sc, sc->code, 1)))
+	      (s7_is_aritable(sc, sc->code, 1)))
 	    {
 	      s7_function func;
 	      s7_pointer p;
@@ -33257,7 +33256,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
 	  if ((is_safe_procedure(sc->code)) &&
 	      (is_c_function(sc->code)) &&
-	      (is_aritable(sc, sc->code, 1)))
+	      (s7_is_aritable(sc, sc->code, 1)))
 	    {
 	      s7_pointer p;
 	      s7_function func;
@@ -37321,9 +37320,8 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		  safe_case = is_safe_closure(func);
 		  set_optimize_data(car_x, hop + ((safe_case) ? OP_SAFE_CLOSURE_SS : OP_CLOSURE_SS));
 		  if ((!safe_case) &&
-		      (is_one_liner(closure_body(func))) &&
 		      (!arglist_has_accessed_symbol(closure_args(func))))
-		    set_optimize_data(car_x, hop + OP_CLOSURE_SSp);
+		    set_optimize_data(car_x, hop + ((is_one_liner(closure_body(func))) ? OP_CLOSURE_SSp : OP_CLOSURE_SSb));
 		}
 	      else
 		{
@@ -38344,7 +38342,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
     }
 
   if ((is_null(p)) &&                 /* if not null, dotted list of args? */
-      (is_aritable(sc, func, args)))  /* we have a legit call, at least syntactically */
+      (s7_is_aritable(sc, func, args)))  /* we have a legit call, at least syntactically */
     {
       switch (args)
 	{
@@ -41346,7 +41344,7 @@ static s7_pointer check_set(s7_scheme *sc)
 			  else 
 			    {
 			      /* splice_in_values protects us here from values */
-			      set_syntax_op(sc->code, sc->SET_PAIR_P);
+			      set_syntax_op(sc->code, (is_h_optimized(value)) ? sc->SET_PAIR_Z : sc->SET_PAIR_P);
 			    }
 			}
 		      else
@@ -45966,6 +45964,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 
 
+	    case OP_CLOSURE_SSb:
+	      if (!one_line_closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 2))
+		{
+		  set_optimize_data(code, OP_UNKNOWN_SS);
+		  goto OPT_EVAL;
+		}
+	      
+	    case HOP_CLOSURE_SSb:
+	      {
+		s7_pointer p;
+		if (sc->stack_end >= sc->stack_resize_trigger)
+		  increase_stack_size(sc);
+		sc->value = find_symbol_or_bust(sc, cadr(code));
+		sc->z = find_symbol_or_bust(sc, fcdr(code));
+		code = ecdr(code);
+		p = closure_args(code);
+		NEW_FRAME_WITH_TWO_SLOTS(sc, closure_environment(code), sc->envir, car(p), sc->value, cadr(p), sc->z);
+		sc->code = closure_body(code);
+		goto BEGIN;  
+	      }
+
+
 	    case OP_CLOSURE_SS:
 	      if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 2))
 		{
@@ -45976,28 +45996,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_CLOSURE_SS:
 	      car(sc->T2_1) = find_symbol_or_bust(sc, cadr(code));
 	      car(sc->T2_2) = find_symbol_or_bust(sc, fcdr(code));
-	      /* goto UNSAFE_CLOSURE_TWO; */
-	      
-	      
-	    UNSAFE_CLOSURE_TWO:
-	      {
-		s7_pointer args;
-		if (sc->stack_end >= sc->stack_resize_trigger)
-		  increase_stack_size(sc);
-		code = ecdr(sc->code);
-		args = closure_args(code);
-
-		NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_environment(code), sc->envir, car(args), car(sc->T2_1));
-		ADD_CHECKED_SLOT(sc->envir, cadr(args), car(sc->T2_2));
-
-		sc->code = closure_body(code);
-		if (is_one_liner(sc->code))
-		  {
-		    sc->code = car(sc->code);
-		    goto EVAL;  
-		  }
-		goto BEGIN;
-	      }
+	      goto UNSAFE_CLOSURE_TWO;
 	      
 	      
 	    case OP_CLOSURE_SC:
@@ -46358,7 +46357,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		args = caddr(code);
 		car(sc->T1_1) = find_symbol_or_bust(sc, cadr(args));
 		car(sc->T2_2) = c_call(args)(sc, sc->T1_1);
-		goto UNSAFE_CLOSURE_TWO;
+		/* goto UNSAFE_CLOSURE_TWO; */
+	      }
+	      
+
+	    UNSAFE_CLOSURE_TWO:
+	      {
+		s7_pointer args;
+		if (sc->stack_end >= sc->stack_resize_trigger)
+		  increase_stack_size(sc);
+		code = ecdr(sc->code);
+		args = closure_args(code);
+
+		NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_environment(code), sc->envir, car(args), car(sc->T2_1));
+		ADD_CHECKED_SLOT(sc->envir, cadr(args), car(sc->T2_2));
+
+		sc->code = closure_body(code);
+		if (is_one_liner(sc->code))
+		  {
+		    sc->code = car(sc->code);
+		    goto EVAL;  
+		  }
+		goto BEGIN;
 	      }
 	      
 	      
@@ -46698,7 +46718,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		switch (type(f))
 		  {
 		  case T_C_OBJECT:
-		    if (is_aritable(sc, f, 0))
+		    if (s7_is_aritable(sc, f, 0))
 		      set_opt_and_goto_opt_eval(code, f, OP_C_OBJECT);
 		    break;
 
@@ -46821,7 +46841,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    break;
 		    
 		  case T_C_OBJECT:
-		    if (is_aritable(sc, f, 1))
+		    if (s7_is_aritable(sc, f, 1))
 		      set_opt_and_goto_opt_eval(code, f, OP_C_OBJECT_S);
 		    break;
 		    
@@ -46851,7 +46871,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer f;
 		f = find_symbol_or_bust(sc, car(code));
 		
-		if (is_aritable(sc, f, 1)) 
+		if (s7_is_aritable(sc, f, 1)) 
 		  {
 		    switch (type(f))
 		      {
@@ -46911,7 +46931,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer f;
 		f = find_symbol_or_bust(sc, car(code));
-		if (is_aritable(sc, f, 2))
+		if (s7_is_aritable(sc, f, 2))
 		  {
 		    switch (type(f))
 		      {
@@ -46924,9 +46944,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    else 
 			      {
 				set_optimize_data(code, OP_CLOSURE_SS);
-				if ((is_one_liner(closure_body(f))) &&
-				    (!arglist_has_accessed_symbol(closure_args(f))))
-				  set_optimize_data(code, OP_CLOSURE_SSp);
+				if (!arglist_has_accessed_symbol(closure_args(f)))
+				  set_optimize_data(code, ((is_one_liner(closure_body(f))) ? OP_CLOSURE_SSp : OP_CLOSURE_SSb));
 			      }
 			    if (is_global(car(code)))
 			      set_hopping(code);
@@ -46973,7 +46992,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer f;
 		f = find_symbol_or_bust(sc, car(code));
 
-		if (is_aritable(sc, f, 2))
+		if (s7_is_aritable(sc, f, 2))
 		  {
 		    switch (type(f))
 		      {
@@ -47015,7 +47034,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer f;
 		f = find_symbol_or_bust(sc, car(code));
 
-		if (is_aritable(sc, f, 2))
+		if (s7_is_aritable(sc, f, 2))
 		  {
 		    switch (type(f))
 		      {
@@ -47050,7 +47069,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		f = find_symbol_or_bust(sc, car(code));
 
 		if ((is_c_function(f)) &&
-		    (is_aritable(sc, f, 2)) &&
+		    (s7_is_aritable(sc, f, 2)) &&
 		    (is_safe_procedure(f)))
 		  {
 		    set_optimize_data(code, OP_SAFE_C_C);
@@ -47067,7 +47086,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer f;
 		f = find_symbol_or_bust(sc, car(code));
 
-		if (is_aritable(sc, f, 3))
+		if (s7_is_aritable(sc, f, 3))
 		  {
 		    switch (type(f))
 		      {
@@ -47129,7 +47148,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		f = find_symbol_or_bust(sc, car(code));
 
 		num_args = integer(fcdr(cdr(code)));
-		if (is_aritable(sc, f, num_args))
+		if (s7_is_aritable(sc, f, num_args))
 		  {
 		    switch (type(f))
 		      {
@@ -47162,7 +47181,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		f = find_symbol_or_bust(sc, car(code));
 
 		num_args = integer(fcdr(cdr(code)));
-		if (is_aritable(sc, f, num_args))
+		if (s7_is_aritable(sc, f, num_args))
 		  {
 		    switch (type(f))
 		      {
@@ -47224,7 +47243,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer f;
 		f = find_symbol_or_bust(sc, car(code));
 		
-		if (is_aritable(sc, f, 1))
+		if (s7_is_aritable(sc, f, 1))
 		  {
 		    switch (type(f))
 		      {
@@ -47296,7 +47315,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer f;
 		f = find_symbol_or_bust(sc, car(code));
 
-		if (is_aritable(sc, f, 1))
+		if (s7_is_aritable(sc, f, 1))
 		  {
 		    switch (type(f))
 		      {
@@ -47353,7 +47372,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer f;
 		f = find_symbol_or_bust(sc, car(code));
 
-		if (is_aritable(sc, f, 2))
+		if (s7_is_aritable(sc, f, 2))
 		  {
 		    switch (type(f))
 		      {
@@ -47407,7 +47426,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer f;
 		f = find_symbol_or_bust(sc, car(code));
 		
-		if (is_aritable(sc, f, 2))
+		if (s7_is_aritable(sc, f, 2))
 		  {
 		    switch (type(f))
 		      {
@@ -47448,7 +47467,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer f;
 		f = find_symbol_or_bust(sc, car(code));
 		
-		if (is_aritable(sc, f, 2))
+		if (s7_is_aritable(sc, f, 2))
 		  {
 		    switch (type(f))
 		      {
@@ -47501,7 +47520,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer f;
 		f = find_symbol_or_bust(sc, car(code));
 		
-		if (is_aritable(sc, f, 2))
+		if (s7_is_aritable(sc, f, 2))
 		  {
 		    switch (type(f))
 		      {
@@ -47551,7 +47570,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer f;
 		f = find_symbol_or_bust(sc, car(code));
 
-		if (is_aritable(sc, f, 2))
+		if (s7_is_aritable(sc, f, 2))
 		  {
 		    switch (type(f))
 		      {
@@ -51598,9 +51617,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       push_stack_no_args(sc, OP_SET_PAIR_P_1, sc->code);
       sc->code = cadr(sc->code);
-      if (is_optimized(sc->code))
-	goto OPT_EVAL;
       goto EVAL;
+
+
+    case OP_SET_PAIR_Z:
+      push_stack_no_args(sc, OP_SET_PAIR_P_1, sc->code);
+      sc->code = cadr(sc->code);
+      goto OPT_EVAL;
 
 
       /* --------------- */
@@ -51620,7 +51643,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 */
 	value = sc->value;
 	arg = c_call(cadar(sc->code))(sc, cdadar(sc->code));
-	goto SET_PAIR_P_2;
+	obj = find_symbol(sc, caar(sc->code));
+	if (is_slot(obj))
+	  obj = slot_value(obj);
+	else eval_error(sc, "no generalized set for ~A", caar(sc->code));
+	goto SET_PAIR_P_3;
 	
 	
 	/* --------------- */
@@ -51630,16 +51657,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_symbol(value))
 	  value = finder(sc, value);
 	arg = c_call(cadar(sc->code))(sc, cdadar(sc->code));
-	goto SET_PAIR_P_2;
-	
-	
-	/* --------------- */
-      case OP_SET_PAIR:
-	/* ([set!] (procedure-setter g) s) or ([set!] (str 0) #\a) */
-	sc->value = cadr(sc->code);
-	if (is_symbol(sc->value)) /* all 3584650 2540032 */
-	  sc->value = finder(sc, sc->value);
-	/* fall through */
+	obj = find_symbol(sc, caar(sc->code));
+	if (is_slot(obj))
+	  obj = slot_value(obj);
+	else eval_error(sc, "no generalized set for ~A", caar(sc->code));
+	goto SET_PAIR_P_3;
 	
 	
 	/* --------------- */
@@ -51658,10 +51680,32 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_pair(arg))
 	      arg = cadr(arg); /* can only be (quote ...) in this case */
 	  }
+	obj = find_symbol(sc, caar(sc->code));
+	if (is_slot(obj))
+	  obj = slot_value(obj);
+	else eval_error(sc, "no generalized set for ~A", caar(sc->code));
+	goto SET_PAIR_P_3;
 	
-      SET_PAIR_P_2:
+	
+
+	/* --------------- */
+      case OP_SET_PAIR:
+	/* ([set!] (procedure-setter g) s) or ([set!] (str 0) #\a) */
+	value = cadr(sc->code);
+	if (is_symbol(value)) /* all 3584650 2540032 */
+	  value = finder(sc, value);
+	
+	arg = cadar(sc->code);
+	if (is_symbol(arg)) 
+	  arg = finder(sc, arg);
+	else
+	  {
+	    if (is_pair(arg))
+	      arg = cadr(arg); /* can only be (quote ...) in this case */
+	  }
+
 	obj = caar(sc->code);
-	if (is_symbol(obj)) /* all 6298338 6298338, index 75010 75010 calls 54867702 54867702 */
+	if (is_symbol(obj))
 	  {
 	    obj = find_symbol(sc, obj);
 	    if (is_slot(obj))
@@ -51669,6 +51713,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    else eval_error(sc, "no generalized set for ~A", caar(sc->code));
 	  }
 	
+	
+      SET_PAIR_P_3:
 	switch (type(obj))
 	  {
 	  case T_C_OBJECT:
@@ -61473,6 +61519,7 @@ s7_scheme *s7_init(void)
   sc->SET_PWS =               assign_internal_syntax(sc, "set!",    OP_SET_PWS);
   sc->SET_PAIR =              assign_internal_syntax(sc, "set!",    OP_SET_PAIR);
   sc->SET_PAIR_P =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_P);
+  sc->SET_PAIR_Z =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_Z);
   sc->SET_PAIR_C =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_C);
   sc->SET_PAIR_C_P =          assign_internal_syntax(sc, "set!",    OP_SET_PAIR_C_P);
   sc->AND_UNCHECKED =         assign_internal_syntax(sc, "and",     OP_AND_UNCHECKED);
@@ -62434,12 +62481,12 @@ s7_scheme *s7_init(void)
  *
  * timing    12.0      13.0 13.1 13.2 13.3
  * bench    42736      8752 8051 7725 7741
- * lint                9328 8140 7887 7807
+ * lint                9328 8140 7887 7793
  * index    44300 4988 3291 3005 2742 2144
  * s7test         1721 1358 1297 1244 1233
  * t455            265   89   55   31   16
- * t502             90   43   39   36   31
+ * t502             90   43   39   36   30
  * lat             229   63   52   47   42
- * calls                276  208  176  154
+ * calls                276  208  176  152
  */
 

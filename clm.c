@@ -3209,32 +3209,49 @@ static mus_float_t mus_wave_train_any(mus_any *ptr, mus_float_t fm)
 {
   wt *gen = (wt *)ptr;
   mus_float_t result = 0.0;
+
   if (gen->out_pos < gen->out_data_size)
     result = gen->out_data[gen->out_pos];
   gen->out_pos++;
   if (gen->out_pos >= gen->next_wave_time)
     {
       mus_long_t i;
+      mus_float_t *wave, *out_data; 
+      mus_long_t wave_size;
+      wave = gen->wave;
+      wave_size = gen->wave_size;
+      out_data = gen->out_data;
+
       if (gen->out_pos < gen->out_data_size)
 	{
 	  mus_long_t good_samps;
 	  good_samps = gen->out_data_size - gen->out_pos;
-	  memmove((void *)(gen->out_data), (void *)(gen->out_data + gen->out_pos), good_samps * sizeof(mus_float_t));
-	  memset((void *)(gen->out_data + good_samps), 0, gen->out_pos * sizeof(mus_float_t));
+	  memmove((void *)out_data, (void *)(out_data + gen->out_pos), good_samps * sizeof(mus_float_t));
+	  memset((void *)(out_data + good_samps), 0, gen->out_pos * sizeof(mus_float_t));
 	}
-      else mus_clear_array(gen->out_data, gen->out_data_size);
-      for (i = 0; i < gen->wave_size; i++)
+      else mus_clear_array(out_data, gen->out_data_size);
+      if (gen->interp_type == MUS_INTERP_LINEAR)
 	{
-	  gen->yn1 = mus_interpolate(gen->interp_type, gen->phase + i, gen->wave, gen->wave_size, gen->yn1);
-	  gen->out_data[i] += gen->yn1;
+	  for (i = 0; i < wave_size; i++)
+	    {
+	      out_data[i] += mus_array_interp(wave, gen->phase + i, wave_size);
+	    }
+	}
+      else
+	{
+	  for (i = 0; i < wave_size; i++)
+	    {
+	      gen->yn1 = mus_interpolate(gen->interp_type, gen->phase + i, wave, wave_size, gen->yn1);
+	      out_data[i] += gen->yn1;
+	    }
 	}
       if (gen->first_time)
 	{
 	  gen->first_time = false;
 	  gen->out_pos = (mus_long_t)(gen->phase); /* initial phase, but as an integer in terms of wave table size (gad...) */
-	  if (gen->out_pos >= gen->wave_size)
-	    gen->out_pos = gen->out_pos % gen->wave_size;
-	  result = gen->out_data[gen->out_pos++];
+	  if (gen->out_pos >= wave_size)
+	    gen->out_pos = gen->out_pos % wave_size;
+	  result = out_data[gen->out_pos++];
 	  gen->next_wave_time = ((mus_float_t)sampling_rate / (gen->freq + fm));
 	}
       else 

@@ -57,7 +57,7 @@
 
 
 (define (without-dollar-sign str)
-  (if (char=? (str 0) #\$)
+  (if (char=? (string-ref str 0) #\$)
       (substring str 1)
       str))
 
@@ -80,7 +80,7 @@
   (let ((len (length str)))
     (do ((i 0 (+ i 1)))
 	((= i len) str)
-      (set! (str i) (char-downcase (str i))))))
+      (string-set! str i (char-downcase (string-ref str i))))))
 
 (define* (make-ind name sortby topic file general indexed char)
   (vector name sortby topic file general indexed char))
@@ -687,13 +687,12 @@
 ;;; make-index 
 
 
-
 (define (make-vector-name str)
   (let ((len (length str)))
     (do ((i 0 (+ i 1)))
 	((= i len) str)
-      (if (char=? (str i) #\space)
-	  (set! (str i) #\_)))))
+      (if (char=? (string-ref str i) #\space)
+	  (string-set! str i #\_)))))
 
 (define ids (make-hash-table))
 (define n-array-length 2048)
