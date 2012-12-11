@@ -2768,6 +2768,17 @@ static mus_float_t mus_chebyshev_u_sum_with_index(mus_float_t x, mus_float_t ind
 }
 
 
+static mus_float_t polyw_first_1(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  mus_float_t x;
+
+  x = gen->phase;
+  gen->phase += (gen->freq + fm);
+  return(gen->index * cos(x));
+}
+
+
 static mus_float_t polyw_first_4(mus_any *ptr, mus_float_t fm)
 {
   pw *gen = (pw *)ptr;
@@ -3007,17 +3018,26 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
   gen->cheby_choice = cheby_choice;
   if (cheby_choice != MUS_CHEBYSHEV_SECOND_KIND)
     {
-      if (n == 4)
-	gen->polyw = polyw_first_4;
+      if ((n == 2) &&
+	  (coeffs[0] == 0.0))
+	{
+	  gen->polyw = polyw_first_1;
+	  gen->index = coeffs[1];
+	}
       else
 	{
-	  if (n == 5)
-	    gen->polyw = polyw_first_5;
+	  if (n == 4)
+	    gen->polyw = polyw_first_4;
 	  else
 	    {
-	      if (n == 6)
-		gen->polyw = polyw_first_6;
-	      else gen->polyw = polyw_first;
+	      if (n == 5)
+		gen->polyw = polyw_first_5;
+	      else
+		{
+		  if (n == 6)
+		    gen->polyw = polyw_first_6;
+		  else gen->polyw = polyw_first;
+		}
 	    }
 	}
     }

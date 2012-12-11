@@ -1868,7 +1868,6 @@ is a physical model of a flute:
 	    (furthest-away-accepted .1)
 	    (filptr 0)
 	    (trigger 0)
-	    (sum 0.0)
 	    (cur-oscils max-oscils)
 	    (ramped (or attack 0))
 	    (splice-attack (number? attack))
@@ -2023,7 +2022,7 @@ is a physical model of a flute:
 		       (set! cur-oscils 0)
 		       (do ((k 0 (+ k 1)))
 			   ((= k max-oscils))
-			 (set! (rates k) (* ifreq (- (current-peak-amps k) (last-peak-amps k))))
+			 (set! (rates k) (* amp ifreq (- (current-peak-amps k) (last-peak-amps k))))
 			 (if (or (not (= (current-peak-amps k) 0.0))
 				 (not (= (last-peak-amps k) 0.0)))
 			     (set! cur-oscils k))
@@ -2033,16 +2032,14 @@ is a physical model of a flute:
 		 ;; run oscils, update envelopes
 		 (set! trigger (+ 1 trigger))
 		 (if (= ramped 0)
-		     (set! sum 0.0)
+		     (outa i (oscil-bank cur-oscils resynth-oscils amps freqs rates sweeps)) ; amps = amps+rates on each sample internally
 		     (begin
-		       (set! sum (ramped-attack ramp-ind))
+		       (outa i (+ (ramped-attack ramp-ind)
+				  (oscil-bank cur-oscils resynth-oscils amps freqs rates sweeps)))
 		       (set! ramp-ind (+ 1 ramp-ind))
-		       (if (= ramp-ind ramped) (set! ramped 0))))
-		 
-		 (set! sum (+ sum (oscil-bank cur-oscils resynth-oscils amps freqs rates sweeps)))
-		 (outa i (* amp sum))))))))))
+		       (if (= ramp-ind ramped) (set! ramped 0))))))))))))
 
-;;(with-sound () (pins 0 2 "oboe.snd" 1.0 :max-peaks 8))
+;; (with-sound () (pins 0 2 "oboe.snd" 1.0 :max-peaks 8))
 
 
 (definstrument (zc time dur freq amp length1 length2 feedback)

@@ -525,7 +525,7 @@
 	(set! last-beg beg)))))
 |#
 
-;;; (with-sound () (oak-toad 0 .25))
+;;; (with-sound (:play #t) (oak-toad 0 .25))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -552,7 +552,7 @@
 		     (+ (* (env f1) (oscil gen1 fm1))
 			(* (env f2) (oscil gen2 (* 2 fm1)))))))))))
 
-;; (with-sound () (southern-cricket-frog 0 0.5))
+;; (with-sound (:play #t) (southern-cricket-frog 0 0.5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -577,7 +577,7 @@
 	  (gen4f (make-env '(0 0 8 0 10 .02) :duration dur))
 	  (gen5f (make-env '(0 0 5 0 10 -1) :duration dur :scaler (hz->radians 200)))
 	  (pulf (make-env (list 0.0 (/ 1.0 14.0)  2.0 (/ 1.0 11.0)  10.0  (/ 1.0 11.0)) :duration dur))
-	  (gen6 (make-oscil 170))
+	  (gen6 (make-polywave 170 '(1 .075)))
 	  (pulse-samps (seconds->samples 0.013)))
 
       (let ((pulse-sep (seconds->samples (env pulf))))
@@ -608,7 +608,7 @@
 			   (+ (* gen1trp (oscil gen2 gen5trp))
 			      (* (- 1.0 gen1trp) (+ (* (- 1.0 gen4trp) (oscil gen1 gen2trp))
 						    (* gen4trp (oscil gen3 (+ gen3trp
-									      (* .075 (oscil gen6))))))))))))
+									      (polywave gen6)))))))))))
 	    (mus-reset pulsef1)
 	    (mus-reset pulsef2)
 	    (mus-reset gen1)
@@ -718,8 +718,8 @@
 	  (gen2770 (make-oscil (* 10 pitch) (* 0.5 pi)))
 	  (mod277 (make-oscil pitch (* 0.5 pi)))
 	  (gen7479 (make-oscil (* pitch 27)))
-	  (poly (make-polywave pitch (list 3 .3  8 .2  9 .2  10 .9  11 1.0  12 .5)))
-	  (poly2 (make-polywave 860 (list  1 .4  2 .1  3 .03  4 .3  5 .03)))
+	  (poly (make-polywave pitch (list 3 (* .78 .3)  8 (* .78 .2)  9 (* .78 .2)  10 (* .78 .9)  11 0.78  12 (* .78 .5))))
+	  (poly2 (make-polywave 860 (list  1 (* .25 .4)  2 (* .25 .1)  3 (* .25 .03)  4 (* .25 .3)  5 (* .25 .03))))
 	  (index (hz->radians 277))
 	  (frqf (make-env '(0 -.3  1 .3  2 0  5 0  6 -1) :duration dur :scaler (hz->radians 70)))
 	  (pulsef (make-pulsed-env '(0 .2 1 1 3 .7 5 .2) (/ 1.0 pitch) pitch)))
@@ -729,12 +729,12 @@
 	      (frq (env frqf)))
 	  (outa i (* (env ampf)
 		     (pulsed-env pulsef frq)
-		     (+ (* .78 (polywave poly frq))
+		     (+ (polywave poly frq)
 			(* .2 (oscil gen2770 (* 10 (+ frq md))))
 			(* .02 (oscil gen7479 (* 27 (+ frq md))))
-			(* .25 (polywave poly2 (* 3 frq)))))))))))
+			(polywave poly2 (* 3 frq))))))))))
 
-;; (with-sound () (green-tree-frog 0 .5))
+;; (with-sound (:play #t) (green-tree-frog 0 .5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -754,44 +754,37 @@
 	  (gen3 (make-oscil (* pitch 18) (* 0.5 pi)))
 	  (gen4 (make-oscil (* pitch 28) (* 0.5 pi)))
 	  
-	  (pulse-ctr 0)
-	  (next-pulse (seconds->samples pulse-dur))
-	  (pulse-beg start)
+	  (pulse-samps (seconds->samples pulse-dur))
+	  (pulse-sep (seconds->samples 0.078))
 	  
 	  (rnd (make-rand-interp (* 10 pitch) (hz->radians (* 3 pitch))))) ; not sure this actually helps
-      (do ((i start (+ i 1)))
-	  ((= i stop))
+      (do ((i start (+ i pulse-sep)))
+	  ((>= i stop))
+	(do ((pulse 0 (+ pulse 1))
+	     (pulse-start i (+ pulse-start pulse-samps)))
+	    ((= pulse pulses))
+	  (let ((pulse-amp (pulse-amps pulse))
+		(pulse-stop (+ pulse-start pulse-samps)))
+		  
+	    (if (< pulse 3)
+		(set! (mus-frequency gen1) (* pitch 10))
+		(set! (mus-frequency gen1) (* pitch 11)))
+
+	    (do ((k pulse-start (+ k 1)))
+		((= k pulse-stop))
+	      (let ((noise (rand-interp rnd)))
+		(outa k (* pulse-amp
+			   (env pulsef)
+			   (+ (* .9 (oscil gen1 (* .1 noise)))
+			      (* .08 (oscil gen3 (* .18 noise)))
+			      (* .02 (oscil gen4 (* .28 noise))))))))
+	    
+	    (mus-reset pulsef)
+	    (set! (mus-phase gen1) (* 0.5 pi))
+	    (set! (mus-phase gen3) (* 0.5 pi))
+	    (set! (mus-phase gen4) (* 0.5 pi))))
 	
-	(if (<= next-pulse 0)
-	    (begin
-	      
-	      (if (< pulse-ctr 3)
-		  (set! (mus-frequency gen1) (* pitch 10))
-		  (set! (mus-frequency gen1) (* pitch 11)))
-	      
-	      (set! pulse-ctr (+ 1 pulse-ctr))
-	      (if (>= pulse-ctr pulses)
-		  (begin
-		    (set! pulse-ctr 0)
-		    (if (> (random 1.0) .6) 
-			(set! pulses 5)
-			(set! pulses 4))
-		    (set! pulse-beg (+ pulse-beg (seconds->samples .078)))
-		    (set! next-pulse (- pulse-beg i)))
-		  (set! next-pulse (seconds->samples pulse-dur)))
-	      
-	      (mus-reset pulsef)
-	      (set! (mus-phase gen1) (* 0.5 pi))
-	      (set! (mus-phase gen3) (* 0.5 pi))
-	      (set! (mus-phase gen4) (* 0.5 pi))))
-	
-	(let ((noise (rand-interp rnd)))
-	  (outa i (* (env pulsef)
-		     (pulse-amps pulse-ctr)
-		     (+ (* .9 (oscil gen1 (* .1 noise)))
-			(* .08 (oscil gen3 (* .18 noise)))
-			(* .02 (oscil gen4 (* .28 noise)))))))
-	(set! next-pulse (- next-pulse 1))))))
+	(set! pulses (if (> (random 1.0) .6) 5 4))))))
 
 ;; (with-sound (:play #t) (pinewoods-tree-frog 0 1 .5))
 
@@ -809,8 +802,7 @@
 	  (gen1 (make-blackman pitch 4))
 	  (gen2 (make-oscil (* 10 pitch)))
 	  (gen3 (make-oscil (* 24 pitch)))
-	  (gen4 (make-oscil pitch))
-	  (index (hz->radians .1))
+	  (gen4 (make-polywave pitch (list 1 (hz->radians .1))))
 	  (gen5 (make-oscil (* 14 pitch)))
 	  (gen6 (make-oscil (* 6 pitch)))
 	  
@@ -827,7 +819,7 @@
 	  (do ((k i (+ k 1)))
 	      ((= k reset-stop))
 	    (let ((ind (+ (env frqf)
-			  (* index (oscil gen4))
+			  (polywave gen4)
 			  (rand-interp rnd)))
 		  (intrp (env indf)))
 	      (outa k (* (env pulsef)
@@ -910,7 +902,7 @@
 	      (outa i (* (env ampf2)
 			 (oscil gen3 (+ frq (* index (oscil gen4 (* 0.5 frq))))))))))))))
 
-;; (with-sound () (spring-peeper 0 .5))
+;; (with-sound (:play #t) (spring-peeper 0 .5))
 
 
 ;;;--------------------------------------------------------------------------------
@@ -943,7 +935,7 @@
 		  (wha (env intrp)))
 	      (outa k (* pulse-amp
 			 (env pulsef)
-			 (+ (* .5 (oscil gen1 (+ frq (* index (oscil fmd (/ frq 15))))))
+			 (+ (* .5 (oscil gen1 (+ frq (* index (oscil fmd (* frq .067))))))
 			    (* wha (polywave poly1 frq))
 			    (* (- 0.2 wha) (polywave poly2 frq)))))))
 	  (mus-reset pulsef)
@@ -968,7 +960,7 @@
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
 	  (ampf (make-env '(0 0 2 1  7 .9  10 0) :scaler amp :duration dur :base .1))
-	  (pulsef (make-env '(0 .1 3 .1 3.1 1 4 1 6 .1 9 .1) :duration (/ 1.0 pulse-pitch)))
+	  (pulsef #f)
 	  (pulse-samps (seconds->samples (/ 1.0 pulse-pitch)))
 	  (frqf (make-env '(0 .1 .2 -.02 .5 0 .65 0 1 1) :scaler (hz->radians mid-pitch-change) :duration dur))
 	  (vib (make-rand-interp 100 (hz->radians 10.0)))
@@ -982,20 +974,19 @@
 	(set! (mus-location ampf) (- i start))
 	(let ((reset-stop (min stop (+ i pulse-samps)))
 	      (pulse-amp (env ampf)))
+	  (set! pulsef (make-env '(0 .1 3 .1 3.1 1 4 1 6 .1 9 .1) :scaler pulse-amp :duration (/ 1.0 pulse-pitch)))
 	  (do ((k i (+ k 1)))
 	      ((= k reset-stop))
 	    (let ((frq (+ (env frqf)
 			  (rand-interp vib)
 			  (* index (oscil fm))))
 		  (intrp (env interpf)))
-	      (outa k (* pulse-amp
-			 (env pulsef)
+	      (outa k (* (env pulsef)
 			 (+ (* (- 1.0 intrp) (polywave poly1 frq))
-			    (* intrp (polywave poly2 frq)))))))
-	  (mus-reset pulsef))))))
+			    (* intrp (polywave poly2 frq))))))))))))
 
 ;;; pulsed-env here was basically the same speed as using the nested do loop
-;;;   so pulsed-env doesn't buy us anything if there's no run-time modulation
+;;;   pulsed-env doesn't buy us anything if there's no run-time modulation
 
 ;; (with-sound (:play #t) (river-frog 0 .5))
 
@@ -1343,7 +1334,8 @@
 	      (pulser (make-pulse-train 100))
 	      (pulse-ampf (make-env '(0.000 0.000 0.227 0.057 0.319 0.164 0.407 0.946 0.554 0.706 0.707 0.036 0.839 0.031 
 					    0.930 0.097 1.000 0.000) :duration .008))
-	      (rnd (make-rand-interp 20 (hz->radians 3))))
+	      (rnd (make-rand-interp 20 (hz->radians 3)))
+	      (pulse-amp amp))
 	  (do ((i attack-stop (+ i 1)))
 	      ((= i stop))
 	    (let ((frq2 (+ (env frqf2)
@@ -1351,8 +1343,10 @@
 	      (if (> (pulse-train pulser frq2) 0.1)
 		  (begin
 		    (mus-reset pulse-ampf)
+		    (set! (mus-location ampf) (- i attack-stop))
+		    (set! pulse-amp (env ampf))
 		    (set! (mus-phase gen1) (* pi .75))))
-	      (outa i (* (env ampf)
+	      (outa i (* pulse-amp
 			 (env pulse-ampf)
 			 (+ (* (env low-ampf)
 			       (+ (oscil gen3 (* 9 frq2))
@@ -1553,17 +1547,19 @@
 	      (set! pulse-samps (seconds->samples (+ pulse-dur (random 0.005))))
 	      (set! next-pulse (+ next-pulse pulse-samps))))
 	(set! (mus-location ampf) (- i start))
+	(set! (mus-location frqf) (- i start))
 	(let ((pulse-end (+ i pulse-samps))
-	      (pulse-amp (env ampf)))
+	      (pulse-amp (env ampf))
+	      (pulse-frq (env frqf)))
 	  (do ((k i (+ k 1)))
-	    ((= k pulse-end))
-	  (let ((frq (+ (env frqf)
-			(rand-interp rnd))))
-	    (outa k (* pulse-amp
-		       (env pulse-ampf)
-		       (+ (* .7 (oscil gen1 frq))
-			  (* (env ampf2) (oscil gen2 (* 2 frq)))
-			  (* (env ampf3) (polywave gen3 frq))))))))))))
+	      ((= k pulse-end))
+	    (let ((frq (+ pulse-frq
+			  (rand-interp rnd))))
+	      (outa k (* pulse-amp
+			 (env pulse-ampf)
+			 (+ (* .7 (oscil gen1 frq))
+			    (* (env ampf2) (oscil gen2 (* 2 frq)))
+			    (* (env ampf3) (polywave gen3 frq))))))))))))
 
 ;; (with-sound (:play #t) (sonoran-desert-toad 0 .8 .5))
 
@@ -1640,28 +1636,26 @@
 	(dur 1.5))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
-	  (gen1 (make-oscil (* 2 pitch))) 
-	  (gen4 (make-oscil pitch))
-	  (gen2 (make-oscil (* 8 pitch))) 
-	  (gen3 (make-oscil pitch))
+	  (gen1 (make-polywave (* 2 pitch) '(1 .9)))
+	  (gen4 (make-polywave pitch '(1 .125)))
+	  (gen2 (make-polywave (* 8 pitch) '(1 .1)))
+	  (gen3 (make-polywave pitch '(1 .2)))
 	  (ampf (make-env '(0.0 0.0  0.05 0.4  0.1 0.65  0.2 0.5  0.27 1.0  0.4 0.43  0.43 0.53 
 				0.5 0.5  0.53 0.36  0.6 1.0  0.64 0.99  0.69 0.6  0.7 0.3  0.77 0.15 
 				0.8 0.04  1.0 0.0) :duration dur :scaler amp))
 	  (frqf (make-env '(0 1  2 0  6 0 7 3 9 3) :scaler (hz->radians 60) :duration dur))
-	  (vib (make-oscil 2))
-	  (scl (hz->radians 10)))
+	  (vib (make-polywave 2 (list 1 (hz->radians 10)))))
+
       (do ((i start (+ i 1)))
 	  ((= i stop))
-	(let* ((frq (+ (env frqf)
-		       (* scl (oscil vib))))
-	       (md (+ (* 2 frq)
-		      (* .125 (oscil gen4 frq)))))
+	(let ((frq (+ (env frqf) (polywave vib))))
 	  (outa i (* (env ampf)
-		     (+ (* .9 (oscil gen1 md))
-			(* .1 (oscil gen2 (+ (* 8 frq) 
-					     (* .2 (oscil gen3 frq)))))))))))))
+		     (+ (polywave gen1 (+ (* 2.0 frq)
+					  (polywave gen4 frq)))
+			(polywave gen2 (+ (* 8.0 frq) 
+					  (polywave gen3 frq)))))))))))
 
-;; (with-sound () (indri 0 .5))
+;; (with-sound (:play #t) (indri 0 .5))
 
 
 ;;; ================ Insects ================
@@ -1675,10 +1669,10 @@
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(carrier (make-oscil freq))
-	(modulator1 (make-oscil (* freq 2))) ; or 1 (but leave lower mult at 2??)
-	(modulator3 (make-oscil (* freq 3)))
-	(modulator2 (make-oscil (* freq 8))) ; or 9
-	(ampf (make-env '(0 0 .2 .5 1 .5 2 .5 3 1 4 .5 5 .5) :scaler amp :duration dur :base 32))
+	(modulator1 (make-polywave (* freq 2) '(1 .6))) ; or 1 (but leave lower mult at 2??)
+	(modulator3 (make-polywave (* freq 3) '(1 .3)))
+	(modulator2 (make-polywave (* freq 8) '(1 .1))) ; or 9
+	(ampf (make-env '(0 0 .2 .5 1 .5 2 .5 3 1 4 .5 5 .5 5.1 0) :scaler amp :duration dur :base 32))
 	(frqf (make-env '(0 0  1 0  1.01 0.1  1.03 -0.1  1.05 0.0  3 0 3.02 .05 3.03 -0.1 3.1 0 5 0.0) :duration dur :scaler (hz->radians freq)))
 	(vib (make-rand-interp 10.0 (hz->radians 10)))
 	(indf (make-rand-interp 1 .5))
@@ -1690,9 +1684,9 @@
       (let ((frq (+ (env frqf) (rand-interp vib))))
 	(let ((pitch (oscil carrier frq)))
 	  (outa i (* (env ampf)
-		     (+ (* 0.6 (oscil modulator1 (+ (* 2 frq) (* hfreq (+ 1.0 (rand-interp indf)) pitch))))
-			(* 0.3 (oscil modulator3 (+ (* 3 frq) (* index3 pitch))))
-			(* 0.1 (oscil modulator2 (+ (* 8 frq) (* index2 pitch))))))))))))
+		     (+ (polywave modulator1 (+ (* 2 frq) (* hfreq (+ 1.0 (rand-interp indf)) pitch)))
+			(polywave modulator3 (+ (* 3 frq) (* index3 pitch)))
+			(polywave modulator2 (+ (* 8 frq) (* index2 pitch)))))))))))
 
 ;; (with-sound (:play #t) (mosquito 0 5 560 .2) (mosquito 1 3 880 .05))
 
@@ -1707,21 +1701,21 @@
 	(gen1 (make-oscil 2700))
 	(gen2 (make-oscil (* 2700 2.4)))
 	(gen3 (make-oscil 60))
-	(gen5 (make-oscil 360))
+	(gen5 (make-polywave 360 '(1 .015)))
 	(gen4 (make-oscil (* 2700 3.2)))
 	(gargle (make-rand-interp 360 (hz->radians (* .25 360)))))
     (do ((i start (+ i 1)))
 	((= i stop))
       (let ((pval (oscil gen3))
 	    (noise (rand-interp gargle)))
-	(outa i (* amp (+ (* (+ .035 (* .015 (oscil gen5)))
-			     (max (- 1.0 pval) 0.0)
+	(outa i (* amp (+ (* (+ .035 (polywave gen5))
+			     (- 1.0 pval)
 			     (oscil gen2 (* 2.4 noise)))
 			  (* (max pval 0.0)
 			     (+ (* .95 (oscil gen1 noise))
 				(* .05 (oscil gen4 noise)))))))))))
 
-;; (with-sound () (southern-mole-cricket 0 3 .5))
+;; (with-sound (:play #t) (southern-mole-cricket 0 3 .5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1733,12 +1727,11 @@
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
 	  (gp (make-polywave freq '(1 .7 2 .05 3 .04)))
-	  (base3 (make-oscil (* 4 freq)))
-	  (base4 (make-oscil (* 5 freq)))
+	  (gb (make-polywave freq '(4 .02 5 .02)))
 	  (ampmod (make-triangle-wave 155 :amplitude .07))
 	  (ampf (make-env '(0 0 8 1 20 1 21 0) :duration dur :scaler amp))
 	  (frqf (make-env '(0 1  1 -1  2 -1) :duration .06 :base 10.0 :scaler (hz->radians 40.0)))
-	  (pulsef (make-env '(0 0 1 .1 6 .2 7 0 8 .3 10 1 18 .9 21 .1 23 .3 28 .1 30 0) :duration .06 :base .1))
+	  (pulsef #f)
 	  (pulse-samps (seconds->samples .06))
 	  (indf (make-env '(0 0 10 0 18 1 23 1 26 0 30 0) :duration .06))
 	  (noise (make-rand-interp 1000 .005)))
@@ -1747,16 +1740,15 @@
 	(set! (mus-location ampf) (- i start))
 	(let ((reset-stop (min stop (+ i pulse-samps)))
 	      (pulse-amp (env ampf)))
+	  (set! pulsef (make-env '(0 0 1 .1 6 .2 7 0 8 .3 10 1 18 .9 21 .1 23 .3 28 .1 30 0) :scaler pulse-amp :duration .06 :base .1))
 	  (do ((k i (+ k 1)))
 	      ((= k reset-stop))
 	    (let ((buzz (+ (env frqf) (rand-interp noise))))
-	      (outa k (* pulse-amp
-			 (env pulsef)
+	      (outa k (* (env pulsef)
 			 (+ .93 (triangle-wave ampmod))
 			 (+ (polywave gp buzz)
 			    (* (env indf)
-			       (+ (* .02 (oscil base3 (* 4 buzz)))
-				  (* .02 (oscil base4 (* 5 buzz))))))))))
+			       (polywave gb buzz)))))))
 	  (mus-reset pulsef)
 	  (mus-reset frqf)
 	  (mus-reset indf))))))
@@ -1825,7 +1817,7 @@
     (let ((num (length freqs)))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
-	    (amps (let* ((v (make-vector num))
+	    (amps (let* ((v (make-vector num)) ; for oscil-bank, scaler is .354, need oscil-bank because freqs are not harmonically related
 			 (lst (list 1.0  1.0  .25  .17  .2   .1   .1))
 			 (scl (apply + lst)))
 		    (do ((i 0 (+ i 1)))
@@ -1837,37 +1829,34 @@
 			((= i num))
 		      (set! (v i) (make-oscil (freqs i))))
 		    v))
-	    (pulse-length (seconds->samples pulse-dur))
 	    (pulsef (make-env '(0.0 0.0  0.05 1.0  0.13 1.0  0.4 0.1  1.0 0.0) :scaler amp :duration pulse-dur))
-	    (pulse-count 0)
+	    (pulse-samps (seconds->samples pulse-dur))
+	    (pulse-sep (seconds->samples pulse-dur))
 	    (pulses 0))
-	(do ((i start (+ i 1)))
-	    ((= i stop))
-	  (set! pulse-count (+ 1 pulse-count))
-	  (if (>= pulse-count pulse-length)
-	      (let ((dont-click
-		     ;; count pulses in current group -- at least 2, at most 4, if 2 or 3, possibly and if 4 definitely insert a space
-		     (or (= pulses 4)
-			 (and (= pulses 2)
-			      (> (random 1.0) 0.6))
-			 (and (= pulses 3)
-			      (> (random 1.0) 0.3)))))
-		(set! pulse-count 0)
-		(if dont-click
-		    (begin
-		      (set! pulses 0)
-		      (set! pulse-length (seconds->samples (+ .015 (random .005)))))
-		    (begin
-		      (set! pulses (+ 1 pulses))
-		      (set! pulse-length (seconds->samples pulse-dur))
-		      (mus-reset pulsef)
-		      (do ((k 0 (+ k 1)))
-			  ((= k num))
-			(mus-reset (gens k)))))))
-	  (outa i (* (env pulsef)
-		     (oscil-bank num gens amps))))))))
+	(do ((i start (+ i pulse-sep)))
+	    ((>= i stop))
+	  (let ((pulse-stop (+ i pulse-samps)))
+	    (do ((k i (+ k 1)))
+		((= k pulse-stop))
+	      (outa k (* (env pulsef)
+			 (oscil-bank num gens amps)))))
+	  (set! pulses (+ pulses 1))
+	  ;; count pulses in current group -- at least 2, at most 4, if 2 or 3, possibly and if 4 definitely insert a space
+	  (if (or (= pulses 4)
+		  (and (= pulses 2)
+		       (> (random 1.0) 0.6))
+		  (and (= pulses 3)
+		       (> (random 1.0) 0.3)))
+	      (begin
+		(set! pulse-sep (+ pulse-samps (seconds->samples (+ .015 (random .005)))))
+		(set! pulses 0))
+	      (set! pulse-sep pulse-samps))
+	  (mus-reset pulsef)
+	  (do ((k 0 (+ k 1)))
+	      ((= k num))
+	    (mus-reset (gens k))))))))
 
-;; (with-sound () (handsome-trig 0 2 .5))
+;; (with-sound (:play #t) (handsome-trig 0 2 .5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1902,7 +1891,7 @@
 				 (* .2 (oscil md1)))))))
 	  (mus-reset pulsef))))))
 
-;; (with-sound () (fast-calling-tree-cricket 0 2 .25))
+;; (with-sound (:play #t) (fast-calling-tree-cricket 0 2 .25))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1917,7 +1906,7 @@
 			      0.91 0.24  0.93 0.02  1.0 0.0)
 			:duration dur :scaler (* 0.5 amp)))
 	(gen1 (make-oscil 7500))
-	(gen2 (make-oscil 200))
+	(gen2 (make-polywave 200 '(1 .15)))
 	(rnd (make-rand-interp 200))
 	(rndf (make-env '(0 .3  .7 .3  .8 1  1 0) :scaler (hz->radians 120)))
 	(frqf (make-env '(0 -.5  .2 0  .85 0  1 -1) :scaler (hz->radians 400) :duration dur))
@@ -1927,10 +1916,10 @@
       (outa i (* (env ampf)
 		 (+ (oscil gen1 (+ (env frqf)
 				   (* (env rndf) (rand-interp rnd))
-				   (* .15 (oscil gen2))))
+				   (polywave gen2)))
 		    (rxyk!cos rx)))))))
 
-;; (with-sound () (dog-day-cicada 0 2 .5))
+;; (with-sound (:play #t) (dog-day-cicada 0 2 .5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1942,9 +1931,9 @@
 	(stop (seconds->samples (+ beg dur)))
 	(ampf (make-env '(0 0 1 .8 10 1 11 0) :duration dur :scaler amp))
 	(frqf (make-env '(0 0  3 .02 6 0 8 .03 9.8 0  10.6 -1 11 -1) :scaler (hz->radians 450) :duration dur :base 32))
-	(gen2 (make-oscil 1100))
-	(gen3 (make-oscil 1460))
-	(gp (make-polywave 1280 '(1 .8 2 .02 3 .02)))
+	(gp1 (make-polywave 1280 '(1 .8 2 .02 3 .02)))
+	(gp2 (make-polywave 1100 (list 1 .15)))
+	(gp3 (make-polywave 1460 (list 1 .07)))
 	(rnd (make-rand-interp 1280 .014))
 	(saw (make-sawtooth-wave 180 .5)))
     (do ((i start (+ i 1)))
@@ -1954,11 +1943,11 @@
 	(let ((md (+ frq (rand-interp rnd))))
 	  (outa i (* (env ampf)
 		     (+ .75 (* sw sw))
-		     (+ (polywave gp md)
-			(* .15 (oscil gen2 (* 0.8593 md)))          ;(/ 1100 1280)
-			(* .07 (oscil gen3 (* 1.1406 md)))))))))))  ;(/ 1460 1280)
+		     (+ (polywave gp1 md)
+			(polywave gp2 (* 0.8593 md))          ;(/ 1100 1280)
+			(polywave gp3 (* 1.1406 md))))))))))  ;(/ 1460 1280)
 
-;; (with-sound () (linnaeus-cicada 0 2 .5))
+;; (with-sound (:play #t) (linnaeus-cicada 0 2 .5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1982,17 +1971,17 @@
 				  1.0 0)
 			    .02 50.0))
 	  (gen1 (make-oscil (* p0 16)))
-	  (gen2 (make-oscil p0))
+	  (gen2 (make-polywave p0 '(1 .15)))
 	  (rnd (make-rand-interp p0 (hz->radians 800)))
 	  (ampf (make-env '(0 0 1 1 10 1 11 0) :duration dur :scaler amp))) 
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
 		   (pulsed-env pulsef)
-		   (oscil gen1 (+ (* .15 (oscil gen2))
+		   (oscil gen1 (+ (polywave gen2)
 				  (rand-interp rnd)))))))))
 
-;; (with-sound () (lyric-cicada 0 2 .5))
+;; (with-sound (:play #t) (lyric-cicada 0 2 .5))
 
 
 
@@ -2004,10 +1993,10 @@
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(gen1 (make-oscil 5700))
-	(gen2 (make-oscil 5700))
+	(gen2 (make-polywave 5700 '(1 .01)))
 	(rnd (make-rand-interp 600 (hz->radians 166)))
 	(songf (make-env '(0.0 0.0  0.02 0.5  0.18 0.5  0.24 0.28  0.28 0.27  0.45 0.8  0.65 1.0 0.93 0.94  1.0 0.0) :duration .4))
-	(pulsef (make-env '(0.0 0.0  0.16 0.0  0.23 0.57  0.36  0.57  0.42 0.83  0.56 1.0  0.64 0.81  0.75 0.2  0.86 0.02 1.0 0.0) :scaler amp :duration .01))
+	(pulsef #f)
 	(pulse-samps (seconds->samples .01))
 	(song-samps (seconds->samples .4)))
     (do ((i start (+ i (seconds->samples (+ .5 (random .2))))))
@@ -2018,13 +2007,13 @@
 	  (set! (mus-location songf) (- k i))
 	  (let ((pstop (+ k pulse-samps))
 		(pulse-amp (env songf)))
+	    (set! pulsef (make-env '(0.0 0.0  0.16 0.0  0.23 0.57  0.36  0.57  0.42 0.83  0.56 1.0  0.64 0.81  0.75 0.2  0.86 0.02 1.0 0.0) 
+				   :scaler (* pulse-amp amp) :duration .01))
 	    (do ((j k (+ j 1)))
 		((= j pstop))
-	      (outa j (* pulse-amp
-			 (env pulsef)
-			 (oscil gen1 (+ (* .01 (oscil gen2))
-					(rand-interp rnd))))))
-	    (mus-reset pulsef)))
+	      (outa j (* (env pulsef)
+			 (oscil gen1 (+ (polywave gen2)
+					(rand-interp rnd))))))))
 	(mus-reset songf)))))
 
 ;; (with-sound (:play #t) (confused-ground-cricket 0 3 .3))
@@ -2041,7 +2030,7 @@
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(gen1 (make-oscil 7200))
-	(gen2 (make-oscil 80))
+	(gp (make-polywave 80 '(1 .01)))
 	(pulser (make-env '(0.0 0.0  0.07 0.5  0.28 0.86  0.42 0.97  0.55 1.0  0.63 0.88  0.71 0.6  0.85 0.14  0.9 0.1 0.94 0.02 1.0 0.0) 
 			  :scaler amp :duration .03))
 	(pulse-samps (seconds->samples .15))
@@ -2052,7 +2041,7 @@
 	  (do ((k i (+ k 1)))
 	      ((= k reset-stop))
 	    (outa k (* (env pulser)
-		       (oscil gen1 (* .01 (oscil gen2))))))
+		       (oscil gen1 (polywave gp)))))
 	  (mus-reset pulser)))))
 
 ;; (with-sound (:play #t) (tinkling-ground-cricket 0 3 .3))
@@ -2084,14 +2073,14 @@
 	(set! (mus-location ampf) (- i start))
 	(let ((reset-stop (min stop (+ i pulse-out)))
 	      (pulse-amp (env ampf)))
-	  (do ((k i (+ k 1)))
-	      ((= k reset-stop))
-	    (let ((this-val (* pulse-amp
-			       (env pulsef)
-			       (- 1.0 (random 2.0)))))
-	      (outa k (- last-val this-val))
-	      (set! last-val this-val)))
-	  (mus-reset pulsef))))))
+	  (let ((pulse-amp2 (* 2.0 pulse-amp)))
+	    (do ((k i (+ k 1)))
+		((= k reset-stop))
+	      (let ((this-val (* (env pulsef)
+				 (mus-random pulse-amp))))
+		(outa k (- last-val this-val))
+		(set! last-val this-val)))
+	    (mus-reset pulsef)))))))
 
 ;; (with-sound (:play #t) (marsh-meadow-grasshopper 0 .3))
 
@@ -2148,6 +2137,7 @@
 	(gen3 (make-oscil 6600))
 	(gen4 (make-oscil 66 (* 0.5 (+ pi (hz->radians 66)))))
 	(pulsef (make-env '(0.000 0.000  0.041 0.466  0.144 0.775  0.359 1.0  0.484 0.858  1.000 0.000) :scaler amp :duration .012))
+	(pulsef1 (make-env '(0.000 0.000  0.041 0.466  0.144 0.775  0.359 1.0  0.484 0.858  1.000 0.000) :scaler (* 0.5 amp) :duration .012))
 	(pulse-samps (seconds->samples 0.012))
 	(pulse-sep (seconds->samples 0.015))
 	(long-pulse-samps (seconds->samples .54))
@@ -2161,12 +2151,12 @@
 	    (pulses (+ 8 (random 3))))
 	(do ((j i (+ j 1)))
 	    ((= j pstop))
-	  (outa j (* 0.5
-		     (env pulsef)
+	  (outa j (* (env pulsef1)
 		     (+ (* .2 (oscil gen1 (* .075 (oscil gen2))))
 			(* .8 (oscil gen3 (+ (* .0125 (oscil gen4))
 					     (rand-interp rnd))))))))
-	(mus-reset pulsef)
+	(mus-reset pulsef1)
+
 	;; now the remaining pulses
 	(do ((k 1 (+ k 1)))
 	    ((= k pulses))
@@ -2312,8 +2302,9 @@
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(gen1 (make-oscil 11000))
-	(gen2 (make-oscil 5500))
-	(gen3 (make-oscil 1100))
+	;(gen2 (make-oscil 5500))
+	;(gen3 (make-oscil 1100))
+	(gp (make-polywave 1100 '(1 .1 5 .05)))
 	(rnd1 (make-rand-interp 1100 .05))
 	(rnd2 (make-rand-interp 1100 .4))
 	(pulse-samps (seconds->samples .36))
@@ -2328,15 +2319,12 @@
     (do ((i start (+ i pulse-samps)))
 	((>= i stop))
       (let ((reset-stop (min stop (+ i pulse-out))))
-	  (do ((k i (+ k 1)))
-	      ((= k reset-stop))
-	    (let ((rn (rand-interp rnd1)))
-	      (outa k (* (env pulsef)
-			 (+ .6 (rand-interp rnd2))
-			 (oscil gen1 
-				(+ (* .05 (oscil gen2 (* 5 rn)))
-				   (* .1 (oscil gen3 rn))))))))
-	  (mus-reset pulsef)))))
+	(do ((k i (+ k 1)))
+	    ((= k reset-stop))
+	  (outa k (* (env pulsef)
+		     (+ .6 (rand-interp rnd2))
+		     (oscil gen1 (polywave gp (rand-interp rnd1))))))
+	(mus-reset pulsef)))))
 
 ;; (with-sound (:play #t) (slightly-musical-conehead 0 2 .4))
 
@@ -2353,8 +2341,7 @@
 	  (pulsef (make-env '(0.000 0.000 0.027 0.196 0.104 0.448 0.236 0.773 0.341 0.910 0.416 0.975 0.532 1.0
 				    0.671 0.868 0.751 0.711 0.833 0.504 0.926 0.160 1.000 0.000)
 			    :scaler amp :duration pulse-dur))
-	  (gen1 (make-oscil 3580))
-	  (gen2 (make-oscil (* 3 3580)))
+	  (gp (make-polywave 3580 (list 1 .97 3 .03)))
 	  (frqf (make-env '(0 1 1 0) :scaler (hz->radians 100) :duration pulse-dur))
 	  (pulse-samps (seconds->samples .022))
 	  (pulse-out (seconds->samples pulse-dur))
@@ -2364,10 +2351,8 @@
 	(let ((reset-stop (min stop (+ i pulse-out))))
 	  (do ((k i (+ k 1)))
 	      ((= k reset-stop))
-	    (let ((noise (+ (env frqf) (rand-interp rnd))))
-	      (outa k (* (env pulsef)
-			 (+ (* .97 (oscil gen1 noise))
-			    (* .03 (oscil gen2 (* 3 noise))))))))
+	    (outa k (* (env pulsef)
+		       (polywave gp (+ (env frqf) (rand-interp rnd))))))
 	  (mus-reset frqf)
 	  (mus-reset pulsef))))))
 
@@ -2389,18 +2374,15 @@
 	  (pulsef (make-env '(0.000 0.000 0.079 0.395 0.245 0.925 0.410 1.000 0.470 0.874 
 				    0.554 0.549 0.614 0.312 0.728 0.170 1.000 0.000)
 			    :scaler amp :duration pulse-dur))
-	  (gen1 (make-oscil pitch))
-	  (gen2 (make-oscil (* 2 pitch)))
+	  (gp (make-polywave pitch (list 1 .93 2 .07)))
 	  (rnd (make-rand-interp 150 .004)))
       (do ((i start (+ i pulse-samps)))
 	  ((>= i stop))
 	(let ((reset-stop (min stop (+ i pulse-out))))
 	  (do ((k i (+ k 1)))
 	      ((= k reset-stop))
-	    (let ((noise (rand-interp rnd)))
-	      (outa k (* (env pulsef)
-			 (+ (* .93 (oscil gen1 noise))
-			    (* .07 (oscil gen2 (* 2 noise))))))))
+	    (outa k (* (env pulsef)
+		       (polywave gp (rand-interp rnd)))))
 	  (mus-reset pulsef))))))
 
 ;; (with-sound (:play #t) (davis-tree-cricket 0 2 .25))
@@ -3009,7 +2991,7 @@
 				.32 5300 .4 4300  .5 4800
 				.6 5600 0.8 6400 1.0 5400)
 			    :duration dur :base 32 :scaler (hz->radians 1.0)))
-	    (gen1 (make-oscil))
+	    (gen1 #f)
 	    (pulse-samps (seconds->samples .068))
 	    (pulse-out (seconds->samples dur)) ; pulsef and frqf dur
 	    (rnd (make-rand-interp 100 .02)))
@@ -3018,11 +3000,11 @@
 	  (set! (mus-location ampf) (- i start))
 	  (let ((reset-stop (min stop (+ i pulse-out)))
 		(pulse-amp (env ampf)))
+	    (set! gen1 (make-polywave 0.0 (list 1 pulse-amp)))
 	    (do ((k i (+ k 1)))
 		((= k reset-stop))
-	      (outa k (* pulse-amp
-			 (env pulsef)
-			 (oscil gen1 (+ (env frqf) (rand-interp rnd))))))
+	      (outa k (* (env pulsef)
+			 (polywave gen1 (+ (env frqf) (rand-interp rnd))))))
 	    (mus-reset pulsef)
 	    (mus-reset frqf)))))))
 
@@ -4266,14 +4248,14 @@
 	  (stop (seconds->samples (+ beg dur)))
 	  (ampf (make-env '(0.000 0.100 0.123 0.388 0.454 0.884 0.649 0.995 0.754 0.776 1.000 0.100) :duration dur :scaler amp))
 	  (frqf (make-env '(0 .6  1 .75  2 1  3 .40) :duration dur :scaler (hz->radians 90)))
-	  (gen1 (make-polywave :partials (list 1 .25  2 .6  3 .2  4 .01 5 .01)))
+	  (gen1 #f)
 	  (rnd (make-rand-interp 200 (hz->radians 40)))
 	  
 	  (pulse-samps (seconds->samples .13))
 	  (pulse-out (seconds->samples pulse-dur))
 	  (pulse-ampf (make-env '(0.000 0.000 0.119 0.698 0.258 1.000 0.355 0.310 0.564 0.1  0.7 0.070  1.3 0) :duration pulse-dur))
 	  (pulse-frqf (make-env '(0 150 .3 300 1 250 2 200 3 200 3.5 150 4 230) :duration pulse-dur :scaler (hz->radians 1.0)))
-	  (pulse-rnd (make-rand-interp 4000 .2)))
+	  (pulse-rnd #f))
 
       (do ((i start (+ i pulse-samps)))
 	  ((>= i stop))
@@ -4281,10 +4263,12 @@
 	(let ((reset-stop (min stop (+ i pulse-out)))
 	      (pulse-amp (env ampf)))
 	  (set! (mus-location frqf) (- i start))
+	  (set! gen1 (make-polywave :partials (list 1 (* pulse-amp .25)  2 (* pulse-amp .6)  3 (* pulse-amp .2)
+						    4 (* pulse-amp .01) 5 (* pulse-amp .01))))
+	  (set! pulse-rnd (make-rand-interp 4000 (* pulse-amp .2))) 
 	  (do ((k i (+ k 1)))
 	      ((= k reset-stop))
-	    (outa k (* pulse-amp
-		       (env pulse-ampf)
+	    (outa k (* (env pulse-ampf)
 		       (+ (polywave gen1 (+ (env frqf)
 					    (env pulse-frqf)
 					    (rand-interp rnd)))
@@ -4612,7 +4596,7 @@
 	(start (seconds->samples beg)))
     (let ((stop (+ start (seconds->samples 3.26)))
 	  (call 0)
-	  (next-call (+ start (seconds->samples 0.35)))
+	  (next-call 0)
 	  (gen1 (make-polywave :partials (normalize-partials (list 1 1  2 .08  3 .01  4 .05  5 .005  6 .01))))
 	  
 	  (call1-ampf (make-env '(0.000 0.000 0.174 0.333 0.243 0.273 0.332 0.446 0.391 0.373 0.446 0.488 
@@ -4632,25 +4616,31 @@
 					0.659 0.218 0.750 0.250 0.794 0.244 0.832 0.618  0.843 0.518   
 					0.876 0.352 0.909 0.335 0.954 0.323 1.000 0.311)
 				:duration call2-dur :scaler (hz->radians 10000.0))))
-      (do ((i start (+ i 1)))
-	  ((= i stop))
-	(if (>= i next-call)
-	    (begin
-	      (set! call (+ call 1))
+      (let ((call-ampf call1-ampf)
+	    (call-frqf call1-frqf)
+	    (call-samps (seconds->samples call1-dur)))
+
+	(do ((i start next-call))
+	    ((>= i stop))
+
+	  (let ((call-stop (min stop (+ i call-samps))))
+	    (do ((k i (+ k 1)))
+		((= k call-stop))
+	      (outa k (* (env call-ampf)
+			 (polywave gen1 (env call-frqf))))))
+	  
+	  (mus-reset call-ampf)
+	  (mus-reset call-frqf)
+	  (if (= call 0)
+	      (set! next-call (+ start (seconds->samples 0.35)))
 	      (if (= call 1)
 		  (begin
-		    (set! next-call (+ start (seconds->samples 0.63)))
-		    (mus-reset call1-ampf)
-		    (mus-reset call1-frqf))
-		  (begin
-		    (set! next-call (+ next-call (seconds->samples 0.24)))
-		    (mus-reset call2-ampf)
-		    (mus-reset call2-frqf)))))
-	(outa i (if (< call 2)
-		    (* (env call1-ampf)
-		       (polywave gen1 (env call1-frqf)))
-		    (* (env call2-ampf)
-		       (polywave gen1 (env call2-frqf)))))))))
+		    (set! next-call (+ next-call (seconds->samples (- 0.63 0.35))))
+		    (set! call-samps (seconds->samples call2-dur))
+		    (set! call-ampf call2-ampf)
+		    (set! call-frqf call2-frqf))
+		  (set! next-call (+ next-call (seconds->samples 0.24)))))
+	  (set! call (+ call 1)))))))
 
 ;; (with-sound (:play #t) (cardinal 0 .5))
 
@@ -9316,7 +9306,7 @@
 				  0.807 0.348 0.841 0.333 0.875 0.314 0.905 0.314 0.925 0.340 0.957 0.344 0.972 0.325 
 				  0.983 0.302 1.000 0.237)
 			  :duration dur :scaler (hz->radians (* 0.5 8150.0))))
-	  (gen1 (make-polywave :partials (normalize-partials (list 1 .25  2 .25  3 .05  4 .2  5 .01  7 .003))))
+	  (gen1 (make-polywave :partials (list 1 (* .5 0.328) 2 (* .5 0.328) 3 (* .5 0.066) 4 (* .5 0.262) 5 (* .5 0.013) 7 (* .5 0.004))))
 	  (gen2 (make-oscil))
 	  (gen3 (make-polywave :partials (normalize-partials (list 3 .2  5 .1  7 .1  9 .05  11 .05  13 .01))))
 	  
@@ -9339,7 +9329,7 @@
 		(frq2 (+ (* 2 frq) (* 0.5 noise)))
 		(frq3 (+ (* 0.5 frq) (* 2 noise))))
 	    (outa i (* (env ampf)
-		       (+ (* .5 (polywave gen1 frq1))
+		       (+ (polywave gen1 frq1)
 			  (* (env ampf2) (oscil gen2 frq2))
 			  (* (env ampf3) (polywave gen3 frq3)))))))))))
 
@@ -10030,14 +10020,14 @@
 				      0.311 0.154 0.332 0.176 0.365 0.151 0.415 0.151 0.477 0.164 0.526 0.171 0.636 0.199 
 				      0.730 0.204 0.855 0.221 0.962 0.218 1.000 0.199)
 			      :duration dur :scaler (hz->radians (* 22000.0 (env call-frqf)))))
-	      (gen1 (make-oscil))
+	      (gen1 (make-polywave 0.0 '(1 .97)))
 	      (gen2 (make-polywave :partials (list 2 .005  3 .03  4 .003)))
 	      (ampf2 (make-env '(0 0 .3 0 .4 1 1 1) :duration dur)))
 	  (do ((i start (+ i 1)))
 	      ((= i stop))
 	    (let ((frq (env frqf)))
 	      (outa i (* (env ampf)
-			 (+ (* .97 (oscil gen1 frq))
+			 (+ (polywave gen1 frq)
 			    (* (env ampf2)
 			       (polywave gen2 frq))))))))))))
 

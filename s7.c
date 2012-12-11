@@ -435,7 +435,7 @@ enum {OP_NO_OP,
       OP_SAFE_IF_CSQ_P, OP_SAFE_IF_CSQ_P_P, OP_SAFE_IF_CSS_P, OP_SAFE_IF_CSS_P_P, OP_SAFE_IF_CSC_P, OP_SAFE_IF_CSC_P_P, 
       OP_SAFE_IF_IS_PAIR_P, OP_SAFE_IF_IS_PAIR_P_X, OP_SAFE_IF_IS_PAIR_P_P, OP_SAFE_IF_C_SS_P, OP_SAFE_IF_C_C_P,
       OP_SAFE_IF_IS_SYMBOL_P, OP_SAFE_IF_IS_SYMBOL_P_X, OP_SAFE_IF_IS_SYMBOL_P_P, 
-      OP_SAFE_IF_IS_EOF_P_P, OP_IF_Z_P, OP_IF_Z_P_P, OP_SAFE_IF_AND_ALL_X_P, OP_SAFE_IF_OR_ALL_X_P, OP_IF_ORCEQ_P, OP_IF_ORCEQ_P_P,
+      OP_SAFE_IF_IS_EOF_P_P, OP_IF_Z_P, OP_IF_Z_P_P, OP_SAFE_IF_AND_ALL_X_P, OP_SAFE_IF_OR_ALL_X_P,
       OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_2, OP_SAFE_C_PP_3, OP_SAFE_C_PP_4, OP_SAFE_C_PP_5, OP_SAFE_C_PP_6, 
       OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_1_MV, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_2_MV, 
       OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_3_MV, OP_EVAL_ARGS_P_4_MV, 
@@ -526,7 +526,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "if", "if", "if", "if", "if", "if", "if",
    "if", "if", "if", "if", "if",
    "if", "if", "if", 
-   "if", "if", "if", "if", "if", "if", "if", 
+   "if", "if", "if", "if", "if", 
    "c_p_1", "c_pp_1", "c_pp_2", "c_pp_3", "c_pp_4", "c_pp_5", "c_pp_6", 
    "eval_args_p_1", "eval_args_p_1_mv", "eval_args_p_2", "eval_args_p_2_mv", 
    "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv", 
@@ -610,7 +610,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_IF_CSQ_P", "OP_SAFE_IF_CSQ_P_P", "OP_SAFE_IF_CSS_P", "OP_SAFE_IF_CSS_P_P", "OP_SAFE_IF_CSC_P", "OP_SAFE_IF_CSC_P_P", 
   "OP_SAFE_IF_IS_PAIR_P", "OP_SAFE_IF_IS_PAIR_P_X", "OP_SAFE_IF_IS_PAIR_P_P", "OP_SAFE_IF_C_SS_P", "OP_SAFE_IF_C_C_P",
   "OP_SAFE_IF_IS_SYMBOL_P", "OP_SAFE_IF_IS_SYMBOL_P_X", "OP_SAFE_IF_IS_SYMBOL_P_P", 
-  "OP_SAFE_IF_IS_EOF_P_P", "OP_IF_Z_P", "OP_IF_Z_P_P", "SAFE_IF_AND_ALL_X_P", "SAFE_IF_OR_ALL_X_P", "OP_IF_ORCEQ_P", "OP_IF_ORCEQ_P_P",
+  "OP_SAFE_IF_IS_EOF_P_P", "OP_IF_Z_P", "OP_IF_Z_P_P", "SAFE_IF_AND_ALL_X_P", "SAFE_IF_OR_ALL_X_P",
   "OP_SAFE_C_P_1", "OP_SAFE_C_PP_1", "OP_SAFE_C_PP_2", "OP_SAFE_C_PP_3", "OP_SAFE_C_PP_4", "OP_SAFE_C_PP_5", "OP_SAFE_C_PP_6", 
   "OP_EVAL_ARGS_P_1", "OP_EVAL_ARGS_P_1_MV", "OP_EVAL_ARGS_P_2", "OP_EVAL_ARGS_P_2_MV", 
   "OP_EVAL_ARGS_P_3", "OP_EVAL_ARGS_P_4", "OP_EVAL_ARGS_P_3_MV", "OP_EVAL_ARGS_P_4_MV", 
@@ -1325,7 +1325,7 @@ struct s7_scheme {
   s7_pointer LET_R, LET_O, LET_ALL_R, LET_C_D, LET_O_P, LET_Z_P, LET_O_O, LET_Z_O, LET_R_P, LET_READ_CHAR_P, LET_CAR_P;
   s7_pointer SIMPLE_DO, SAFE_DOTIMES, SIMPLE_SAFE_DOTIMES, SAFE_DOTIMES_C_C, SAFE_DOTIMES_C_S, SAFE_DO;
   s7_pointer SIMPLE_DO_P, SAFE_SIMPLE_DO, SIMPLE_DO_FOREVER, DOTIMES_P, SIMPLE_DO_A;
-  s7_pointer DOX, IF_ORCEQ_P, IF_ORCEQ_P_P;
+  s7_pointer DOX;
   int safe_do_level, safe_do_ids_size;
   long long int *safe_do_ids;
   void (*safe_do_notifier)(int level);
@@ -2839,6 +2839,7 @@ static void sweep(s7_scheme *sc)
 		    {
 		      free(port_string(a));
 		      port_string(a) = NULL;
+		      port_string_length(a) = 0;
 		    }
 		  port_needs_free(a) = false;
 		}
@@ -19164,6 +19165,7 @@ void s7_close_input_port(s7_scheme *sc, s7_pointer p)
 	{
 	  free(port_string(p));
 	  port_string(p) = NULL;
+	  port_string_length(p) = 0;
 	}
       port_needs_free(p) = false;
     }
@@ -19228,6 +19230,7 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
 	{
 	  free(port_string(p));
 	  port_string(p) = NULL;
+	  port_string_length(p) = 0;
 	  port_needs_free(p) = false;
 	}
     }
@@ -19272,8 +19275,7 @@ static int function_read_char(s7_scheme *sc, s7_pointer port)
 
 static int string_read_char(s7_scheme *sc, s7_pointer port)
 {
-  if ((!(port_string(port))) ||
-      (port_string_length(port) <= port_string_point(port)))
+  if (port_string_length(port) <= port_string_point(port)) /* port_string_length is 0 if no port string */
     return(EOF);
   return((unsigned char)port_string(port)[port_string_point(port)++]);
 }
@@ -20331,8 +20333,7 @@ static int inchar(s7_pointer pt)
     c = fgetc(port_file(pt)); /* not unsigned char! -- could be EOF */
   else 
     {
-      if ((!(port_string(pt))) ||
-	  (port_string_length(pt) <= port_string_point(pt)))
+      if (port_string_length(pt) <= port_string_point(pt))
 	return(EOF);
       c = (unsigned char)port_string(pt)[port_string_point(pt)++];
     }
@@ -33950,8 +33951,7 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 	  }
 	else 
 	  {
-	    if ((!(port_string(pt))) ||
-		(port_string_length(pt) <= port_string_point(pt)))
+	    if (port_string_length(pt) <= port_string_point(pt))
 	      c = EOF;
 	    else
 	      {
@@ -40798,17 +40798,6 @@ static s7_pointer check_if(s7_scheme *sc)
 				      
 				  if (new_op == OP_OR_P)
 				    set_syntax_op(sc->code, sc->IF_ORP_P_P);
-				  else
-				    {
-				      if (new_op == OP_SAFER_OR_CEQ)
-					{
-					  s7_pointer p;
-					  set_syntax_op(sc->code, sc->IF_ORCEQ_P_P);
-					  fcdr(sc->code) = caddr(sc->code);
-					  for (p = cdar(sc->code); is_pair(p); p = cdr(p))
-					    fcdr(p) = caddar(p);
-					}
-				    }
 				}
 			    }
 			}
@@ -40932,17 +40921,6 @@ static s7_pointer check_if(s7_scheme *sc)
 					{
 					  if (new_op == OP_OR_P)
 					    set_syntax_op(sc->code, sc->IF_ORP_P);
-					  else
-					    {
-					      if (new_op == OP_SAFER_OR_CEQ)
-						{
-						  s7_pointer p;
-						  set_syntax_op(sc->code, sc->IF_ORCEQ_P);
-						  fcdr(sc->code) = cdar(sc->code);
-						  for (p = cdar(sc->code); is_pair(p); p = cdr(p))
-						    fcdr(p) = caddar(p);
-						}
-					    }
 					}
 				    }
 				}
@@ -52924,47 +52902,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
       /* --------------- */
-    case OP_IF_ORCEQ_P_P:
-      {
-	s7_pointer sym, code;
-	/* (define (hi c) (if (or (char=? c #\a) (char=? c #\b)) (string c) (string #\y)))
-	 * sc->code: ((or (char=? c #\a) (char=? c #\b)) (string c) (string #\y))
-	 */
-	code = cdar(sc->code);           /* the sequence of char=? in the or */
-	sym = finder(sc, cadar(code));   /* the symbol */
-	do {
-	  if (sym == fcdr(code))
-	    {
-	      sc->code = cadr(sc->code);
-	      goto EVAL; 
-	    }
-	  code = cdr(code);
-	} while (is_pair(code));
-	
-	if (!s7_is_character(sym))
-	  {
-	    s7_pointer char_func;
-	    if ((has_methods(sym)) &&
-		(char_func = find_method(sc, find_environment(sc, sym), sc->CHAR_EQ)))
-	      {
-		do {
-		  if (is_true(sc, s7_apply_function(sc, char_func, list_2(sc, sym, fcdr(code)))))
-		    {
-		      sc->code = cadr(sc->code);
-		      goto EVAL; 
-		    }
-		  code = cdr(code);
-		} while (is_pair(code));
-	      }
-	    else wrong_type_argument(sc, sc->CHAR_EQ, small_int(1), cadar(code), T_CHARACTER);
-	  }
-	
-	sc->code = fcdr(sc->code);  /* caddr */
-	goto EVAL;  
-      }
-      
-      
-      /* --------------- */
     case OP_IF_PPP:
       if (is_true(sc, sc->value))
 	sc->code = car(sc->code);
@@ -53185,44 +53122,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack_no_args(sc, OP_IF_PP, cadr(sc->code));
       sc->code = cdar(sc->code);
       goto OR_P;
-      
-      
-      /* --------------- */
-    case OP_IF_ORCEQ_P:
-      {
-	s7_pointer code, sym;
-	code = fcdr(sc->code);  /* cdar */
-	sym = finder(sc, cadar(code));
-	
-	do {
-	  if (sym == fcdr(code))
-	    {
-	      sc->code = cadr(sc->code);
-	      goto EVAL; 
-	    }
-	  code = cdr(code);
-	} while (is_pair(code));
-	
-	if (!s7_is_character(sym))
-	  {
-	    s7_pointer char_func;
-	    if ((has_methods(sym)) &&
-		(char_func = find_method(sc, find_environment(sc, sym), sc->CHAR_EQ)))
-	      {
-		do {
-		  if (is_true(sc, s7_apply_function(sc, char_func, list_2(sc, sym, fcdr(code)))))
-		    {
-		      sc->code = cadr(sc->code);
-		      goto EVAL; 
-		    }
-		  code = cdr(code);
-		} while (is_pair(code));
-	      }
-	    else wrong_type_argument(sc, sc->CHAR_EQ, small_int(1), cadar(code), T_CHARACTER);
-	  }
-	sc->value = sc->UNSPECIFIED;
-	goto START;
-      }
       
       
       /* --------------- */
@@ -61561,8 +61460,6 @@ s7_scheme *s7_init(void)
   sc->SAFE_IF_OR_ALL_X_P =    assign_internal_syntax(sc, "if",      OP_SAFE_IF_OR_ALL_X_P);
   sc->SAFE_IF_CC_X_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CC_X_P);  
   sc->SAFE_IF_CC_P =          assign_internal_syntax(sc, "if",      OP_SAFE_IF_CC_P);  
-  sc->IF_ORCEQ_P =            assign_internal_syntax(sc, "if",      OP_IF_ORCEQ_P);
-  sc->IF_ORCEQ_P_P =          assign_internal_syntax(sc, "if",      OP_IF_ORCEQ_P_P);
   sc->SAFE_IF_CC_P_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CC_P_P);  
   sc->SAFE_IF_CS_P =          assign_internal_syntax(sc, "if",      OP_SAFE_IF_CS_P);  
   sc->SAFE_IF_CS_P_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CS_P_P);  
@@ -62480,9 +62377,9 @@ s7_scheme *s7_init(void)
  *   or in the let for that matter -- could this always work?
  *
  * timing    12.0      13.0 13.1 13.2 13.3
- * bench    42736      8752 8051 7725 7741
- * lint                9328 8140 7887 7793
- * index    44300 4988 3291 3005 2742 2144
+ * bench    42736      8752 8051 7725 6890
+ * lint                9328 8140 7887 7769
+ * index    44300 4988 3291 3005 2742 2142
  * s7test         1721 1358 1297 1244 1233
  * t455            265   89   55   31   16
  * t502             90   43   39   36   29
