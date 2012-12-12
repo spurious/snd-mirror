@@ -7266,6 +7266,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
 'start' in channel 'channel' and reading forward if 'direction' is not -1"
 
   /* optkey file channel start direction size */
+
   mus_any *ge;
   const char *file = NULL;
   XEN args[MAX_ARGLIST_LEN]; 

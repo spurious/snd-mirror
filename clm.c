@@ -2629,7 +2629,7 @@ static int pw_choice(mus_any *ptr) {return(((pw *)ptr)->cheby_choice);}
 
 mus_float_t mus_chebyshev_tu_sum(mus_float_t x, int n, mus_float_t *tn, mus_float_t *un)
 {
-  /* the Clenshaw algorithm */
+  /* the Clenshaw algorithm -- beware of -cos(nx) where you'd expect cos(nx) */
   double x2, tb, tb1 = 0.0, tb2, cx, ub, ub1 = 0.0, ub2;
   mus_float_t *tp, *up;
 
@@ -2779,34 +2779,53 @@ static mus_float_t polyw_first_1(mus_any *ptr, mus_float_t fm)
 }
 
 
-static mus_float_t polyw_first_4(mus_any *ptr, mus_float_t fm)
+static mus_float_t polyw_first_3(mus_any *ptr, mus_float_t fm)
 {
   pw *gen = (pw *)ptr;
-  mus_float_t x;
+  mus_float_t x, cx;
   mus_float_t *tn;
 
   x = gen->phase;
   tn = gen->coeffs;
   gen->phase += (gen->freq + fm);
 
-  {
-    double x2, b, b1 = 0.0, b2 = 0.0, cx;
-  
-    cx = gen->index * cos(x);
-    x2 = 2.0 * cx;
-    b = tn[3];
-    b2 = b1;
-    b1 = b;
-    b = x2 * b1 - b2 + tn[2];
-    b2 = b1;
-    b1 = b;
-    b = x2 * b1 - b2 + tn[1];
-    b2 = b1;
-    b1 = b;
-    b = x2 * b1 - b2 + tn[0];
+  cx = cos(x);
+  return((2.0 * cx * tn[2] + tn[1]) * cx - tn[2]);
 
-    return((mus_float_t)(b - b1 * cx));
-  }
+  /* b = x2 * b1 - b2;, then return(b - b1 *cx)
+   *   but x2 = 2 * cx, so b1*(x2 - cx) -> b1 * cx
+   *   and the final recursion unrolls.  The old code
+   *   (which thought tn[0] might not be 0.0) was:
+   * cx = cos(x);
+   * x2 = 2.0 * cx;
+   * b = tn[2];
+   * b2 = b1; -- but b1 is 0
+   * b1 = b;  -- b not used so this is tn[2]
+   * b = x2 * b1 - b2 + tn[1]; -- b2 is 0.0
+   * b2 = b1;
+   * b1 = b;
+   * b = x2 * b1 - b2 + tn[0];
+   * return(b - b1 * cx);
+   */
+}
+
+/* (with-sound () (let ((p (make-polywave 100 (list 1 .5 2 .25)))) (do ((i 0 (+ i 1))) ((= i 30000)) (outa i (polywave p))))) */
+
+
+static mus_float_t polyw_first_4(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  mus_float_t x, x2, b, cx;
+  mus_float_t *tn;
+
+  x = gen->phase;
+  tn = gen->coeffs;
+  gen->phase += (gen->freq + fm);
+
+  cx = cos(x);
+  x2 = 2.0 * cx;
+  b = x2 * tn[3] - tn[2];
+  return((x2 * b - tn[3] + tn[1]) * cx - b);
 }
 
 
@@ -2821,25 +2840,17 @@ static mus_float_t polyw_first_5(mus_any *ptr, mus_float_t fm)
   gen->phase += (gen->freq + fm);
 
   {
-    double x2, b, b1 = 0.0, b2 = 0.0, cx;
+    double x2, b, b1, b2, cx;
   
-    cx = gen->index * cos(x);
+    cx = cos(x);
     x2 = 2.0 * cx;
-    b = tn[4];
-    b2 = b1;
-    b1 = b;
-    b = x2 * b1 - b2 + tn[3];
+    b1 = tn[4];
+    b = x2 * b1 + tn[3];
     b2 = b1;
     b1 = b;
     b = x2 * b1 - b2 + tn[2];
-    b2 = b1;
-    b1 = b;
-    b = x2 * b1 - b2 + tn[1];
-    b2 = b1;
-    b1 = b;
-    b = x2 * b1 - b2 + tn[0];
 
-    return((mus_float_t)(b - b1 * cx));
+    return((x2 * b - b1 + tn[1]) * cx - b);
   }
 }
 
@@ -2855,28 +2866,20 @@ static mus_float_t polyw_first_6(mus_any *ptr, mus_float_t fm)
   gen->phase += (gen->freq + fm);
 
   {
-    double x2, b, b1 = 0.0, b2 = 0.0, cx;
+    double x2, b, b1, b2, cx;
   
-    cx = gen->index * cos(x);
+    cx = cos(x);
     x2 = 2.0 * cx;
-    b = tn[5];
-    b2 = b1;
-    b1 = b;
-    b = x2 * b1 - b2 + tn[4];
+    b1 = tn[5];
+    b = x2 * b1 + tn[4];
     b2 = b1;
     b1 = b;
     b = x2 * b1 - b2 + tn[3];
     b2 = b1;
     b1 = b;
     b = x2 * b1 - b2 + tn[2];
-    b2 = b1;
-    b1 = b;
-    b = x2 * b1 - b2 + tn[1];
-    b2 = b1;
-    b1 = b;
-    b = x2 * b1 - b2 + tn[0];
 
-    return((mus_float_t)(b - b1 * cx));
+    return((x2 * b - b1 + tn[1]) * cx - b);
   }
 }
 
@@ -2913,28 +2916,19 @@ static mus_float_t polyw_second_5(mus_any *ptr, mus_float_t fm)
   un = gen->coeffs;
 
   {
-    double x2, b, b1 = 0.0, b2 = 0.0, cx;
+    double x2, b, b1, b2, cx;
 
     /* this is a candidate for sincos, but gcc is already using it here! */
 
     cx = gen->index * cos(x);
     x2 = 2.0 * cx;
-    b = un[4];
-    b2 = b1;
-    b1 = b;
-    b = x2 * b1 - b2 + un[3];
+    b1 = un[4];
+    b = x2 * b1 + un[3];
     b2 = b1;
     b1 = b;
     b = x2 * b1 - b2 + un[2];
-    b2 = b1;
-    b1 = b;
-    b = x2 * b1 - b2 + un[1];
 
-#if 0
-    if (fabs(sin(x)*b - mus_chebyshev_u_sum_with_index(x, gen->index, gen->n, gen->coeffs)) > 1e-12)
-      fprintf(stderr, "%f %f\n", sin(x)*b, mus_chebyshev_u_sum_with_index(x, gen->index, gen->n, gen->coeffs));
-#endif
-    return((mus_float_t)(sin(x) * b));
+    return(sin(x) * (x2 * b - b1 + un[1]));
   }
 }
 
@@ -2975,6 +2969,16 @@ static char *describe_polywave(mus_any *ptr)
 }
 
 
+static mus_float_t pw_set_index_and_func(mus_any *ptr, mus_float_t val) 
+{
+  pw *gen = (pw *)ptr;
+  gen->index = val; 
+  if (gen->cheby_choice == MUS_CHEBYSHEV_FIRST_KIND)
+    gen->polyw = polyw_first;
+  return(val);
+}
+
+
 static mus_any_class POLYWAVE_CLASS = {
   MUS_POLYWAVE,
   (char *)S_polywave,
@@ -2990,7 +2994,7 @@ static mus_any_class POLYWAVE_CLASS = {
   &pw_phase,
   &pw_set_phase,
   &pw_index, 
-  &pw_set_index,
+  &pw_set_index_and_func,
   &pw_increment,
   &pw_set_increment,
   &run_polywave,
@@ -3018,28 +3022,42 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
   gen->cheby_choice = cheby_choice;
   if (cheby_choice != MUS_CHEBYSHEV_SECOND_KIND)
     {
-      if ((n == 2) &&
-	  (coeffs[0] == 0.0))
+      if (coeffs[0] == 0.0)
 	{
-	  gen->polyw = polyw_first_1;
-	  gen->index = coeffs[1];
-	}
-      else
-	{
-	  if (n == 4)
-	    gen->polyw = polyw_first_4;
+	  /* these also ignore gen->index (assumed to be 1.0) (leaving aside the first_1 case)
+	   *   pw_set_index_and_func protects against that case
+	   */
+	  if (n == 2)
+	    {
+	      gen->polyw = polyw_first_1;
+	      gen->index = coeffs[1];
+	    }
 	  else
 	    {
-	      if (n == 5)
-		gen->polyw = polyw_first_5;
+	      if (n == 3)
+		gen->polyw = polyw_first_3;
 	      else
 		{
-		  if (n == 6)
-		    gen->polyw = polyw_first_6;
-		  else gen->polyw = polyw_first;
+		  if (n == 4)
+		    gen->polyw = polyw_first_4;
+		  else
+		    {
+		      if (n == 5)
+			gen->polyw = polyw_first_5;
+		      else
+			{
+			  if (n == 6)
+			    gen->polyw = polyw_first_6;
+			  else 
+			    {
+			      gen->polyw = polyw_first;
+			    }
+			}
+		    }
 		}
 	    }
 	}
+      else gen->polyw = polyw_first;
     }
   else 
     {
@@ -7706,7 +7724,7 @@ mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
       mus_long_t newloc;
       /* read in first buffer start either at samp (dir > 0) or samp-bufsize (dir < 0) */
       
-      if (gen->dir >= 0) 
+      if (samp >= gen->data_start) /* gen dir is irrelevant here (see grev in clm23.scm) */
 	newloc = samp; 
       else newloc = (mus_long_t)(samp - (gen->file_buffer_size * .75));
       /* The .75 in the backwards read is trying to avoid reading the full buffer on 
@@ -7724,6 +7742,12 @@ mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
       else
 	{ 
 	  int i;
+	  /*
+	  fprintf(stderr, "read %s len: %lld, samp: %lld, beg/end: %lld %lld  (%p, %p)\n",
+		  gen->file_name,
+		  gen->file_end, samp, gen->data_start, gen->data_end, 
+		  gen, gen->ibufs);
+	  */
 	  if (gen->ibufs == NULL) 
 	    {
 	      gen->ibufs = (mus_float_t **)malloc(gen->chans * sizeof(mus_float_t *));
@@ -7731,7 +7755,7 @@ mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
 		gen->ibufs[i] = (mus_float_t *)calloc(gen->file_buffer_size, sizeof(mus_float_t));
 	    }
 	  mus_file_seek_frame(fd, gen->data_start);
-	  
+
 	  if ((gen->data_start + gen->file_buffer_size) >= gen->file_end)
 	    mus_file_read_chans(fd, 0, gen->file_end - gen->data_start - 1, gen->chans, gen->ibufs, gen->ibufs);
 	  else mus_file_read_chans(fd, 0, gen->file_buffer_size - 1, gen->chans, gen->ibufs, gen->ibufs);

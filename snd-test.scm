@@ -17544,10 +17544,10 @@ EDITS: 2
 	       (snd-display #__line__ ";polyshape 2nd run ~A: ~A" n max-dist))))
        (list 1 3 25))
       
-      (let ((gen (make-polywave 100.0 (list 1 .9 3 .1))))
+      (let ((gen (make-polywave 100.0 (list 1 .9 3 .1 4 0.0))))
 	(let ((vals (mus-data gen)))
 	  (if (or (not (vct? vals))
-		  (not (vequal vals (vct 0.000 0.900 0.000 0.100))))
+		  (not (vequal vals (vct 0.000 0.900 0.000 0.100 0.00))))
 	      (snd-display #__line__ ";polywave mus-data: ~A" vals)
 	      (begin
 		(vct-set! (mus-data gen) 2 .1)
@@ -47356,20 +47356,20 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-8-Dec-12:
-152,446,602,244
-31,938,635,861  s7.c:eval [/home/bil/snd-13/snd]
-12,419,226,224  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 8,904,477,889  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
- 8,570,707,851  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 8,281,445,129  ???:sin [/lib64/libm-2.12.so]
- 6,356,337,051  s7.c:eval'2 [/home/bil/snd-13/snd]
- 4,643,721,262  s7.c:gc [/home/bil/snd-13/snd]
+12-Dec-12:
+145,341,858,060
+31,287,348,303  s7.c:eval [/home/bil/snd-13/snd]
+12,057,377,638  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 8,903,733,951  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
+ 7,655,528,678  ???:sin [/lib64/libm-2.12.so]
+ 6,472,581,755  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 4,519,979,270  s7.c:gc [/home/bil/snd-13/snd]
+ 2,977,861,279  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,875,856,785  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,678,793,875  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,469,625,558  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 2,464,944,872  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 1,954,803,264  ???:cos [/lib64/libm-2.12.so]
- 1,933,617,470  s7.c:g_add_ss_1ss [/home/bil/snd-13/snd]
+ 2,934,083,893  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 2,688,123,456  ???:cos [/lib64/libm-2.12.so]
+ 2,648,298,825  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,346,068,443  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
+ 2,241,540,920  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,935,542,894  s7.c:g_add_ss_1ss [/home/bil/snd-13/snd]
 |#

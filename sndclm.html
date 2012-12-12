@@ -1908,7 +1908,7 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 <table class="method">
 <tr><td colspan=2 class="methodtitle">polywave methods</td></tr>
 <tr><td class="inner"><em class=gen>mus-frequency</em></td><td class="inner">frequency in Hz</td></tr>
-<tr><td class="inner"><em class=gen>mus-scaler</em></td><td class="inner">index (polywave only)</td></tr>
+<tr><td class="inner"><em class=gen>mus-scaler</em></td><td class="inner">index</td></tr>
 <tr><td class="inner"><em class=gen>mus-phase</em></td><td class="inner">phase in radians</td></tr>
 <tr><td class="inner"><em class=gen>mus-data</em></td><td class="inner">polynomial coeffs</td></tr>
 <tr><td class="inner"><em class=gen>mus-length</em></td><td class="inner">number of partials</td></tr>
@@ -2176,6 +2176,8 @@ is scaled to be -1..1, so that adds another layer of confusion). There's a longe
 <a href="#ncosdoc">ncos</a>.
 </p>
 
+<!-- actually you get either cos(nx) or +/-cos(nx) depending on which algorithm is actually chosen
+-->
 <!--
 (define* (fmsin beg dur freq amp mc-ratio index type)
   (let* ((start (seconds->samples beg))
