@@ -1895,7 +1895,7 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 #define symbol_accessor(p)            (p)->object.sym.ext.accessor 
 #define symbol_has_accessor(p)        (symbol_accessor(p) != -1)
 #define symbol_id(p)                  (p)->object.sym.id
-/* we need 64-bits here, I think, since we don't want this thing to wrap around, and frames are created at a great rate 
+/* we need 64-bits here, since we don't want this thing to wrap around, and frames are created at a great rate 
  *    callgrind says this is faster than an unsigned int!
  */
 #define global_slot(p)                (p)->object.sym.global_slot
@@ -1904,6 +1904,14 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 #define keyword_symbol(p)             (p)->object.sym.ext.ksym
 
 #define symbol_set_local(Symbol, Id, Slot) do {symbol_id(Symbol) = Id; local_slot(Symbol) = Slot;} while (0)
+/* I think symbol_id is set only here 
+   symbol_accessor can be moved to the name(string) cell (negligible cost, say 10 at most)
+   this leaves s7_pointer e alongside ksym.
+   If set in parallel in symbol_set_local (say 40 as probable cost in calls, maybe 80),
+   it could be checked first in find_symbol_or_bust, so we just check pointers not fields thereof
+   could this speed up the lookup? (if direct is twice as fast, this saves about 500)
+   this could be done step by step...
+ */
 
 #define is_slot(p)                    (type(p) == T_SLOT)
 #define slot_value(p)                 (p)->object.slt.val
@@ -62377,13 +62385,13 @@ s7_scheme *s7_init(void)
  *   or in the let for that matter -- could this always work?
  *
  * timing    12.0      13.0 13.1 13.2 13.3
- * bench    42736      8752 8051 7725 6890
+ * bench    42736      8752 8051 7725 6518
  * lint                9328 8140 7887 7769
  * index    44300 4988 3291 3005 2742 2142
  * s7test         1721 1358 1297 1244 1233
  * t455            265   89   55   31   16
  * t502             90   43   39   36   29
  * lat             229   63   52   47   42
- * calls                276  208  176  145
+ * calls                276  208  176  143
  */
 

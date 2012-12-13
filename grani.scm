@@ -458,7 +458,8 @@
 	    (set! where-bins #f))
 
 	(if reverse (set! (mus-increment in-file-reader) -1.0))
-	(do () ((not happy))
+	(do () 
+	    ((not happy))
 	  (if (< gr-offset gr-samples)
 	      ;;
 	      ;; send sample to output

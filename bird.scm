@@ -1,12 +1,11 @@
 ;;; bird songs -- (load "bird.scm") then (make-birds)
-;;;   writes "test.snd" unless you give it a file name as in (make-birds "hiho.snd")
 ;;;
-;;; some of the bird names date this work to 1980 using a bird guide published in 1966
-
+;;; some of the bird names come from a 1966 bird guide
+;;;
 ;;; see animals.scm for later versions of some of these songs
 ;;;
-;;; 3-Nov-08: I changed some of the instrument names to avoid collisions with animals.scm (prepended "b-")
-
+;;; 3-Nov-08:  changed some of the function names to avoid collisions with animals.scm (prepended "b-")
+;;; 13-Dec-12: minor optimizations
 
 (provide 'snd-bird.scm)
 
@@ -22,25 +21,23 @@
 	(os (make-polywave frequency :partials (normalize-partials partials)))
 	(amp-env (make-env amp-envelope amplitude dur))
 	(beg (seconds->samples start))
-	(len (seconds->samples dur)))
-    (let ((end (+ beg len)))
-      (do ((i beg (+ i 1)))
-	  ((= i end))
-	(outa i (* (env amp-env)
-		   (polywave os (env gls-env))))))))
+	(end (seconds->samples (+ start dur))))
+    (do ((i beg (+ i 1)))
+	((= i end))
+      (outa i (* (env amp-env)
+		 (polywave os (env gls-env)))))))
 
 (definstrument (bird start dur frequency freqskew amplitude freq-envelope amp-envelope)
   "(bird start dur frequency freqskew amplitude freq-envelope amp-envelope)"
   (let ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
 	(os (make-oscil frequency))
 	(amp-env (make-env amp-envelope amplitude dur))
-	(len (seconds->samples dur))
+	(end (seconds->samples (+ start dur)))
 	(beg (seconds->samples start)))
-    (let ((end (+ beg len)))
-      (do ((i beg (+ i 1)))
-	  ((= i end))
-	(outa i (* (env amp-env)
-		   (oscil os (env gls-env))))))))
+    (do ((i beg (+ i 1)))
+	((= i end))
+      (outa i (* (env amp-env)
+		 (oscil os (env gls-env)))))))
   
 (define main-amp '(.00 .00 .25 1.00 .60 .70 .75 1.00 1.00 .0))
 (define bird-tap '(.00 .00 .01 1.00 .99 1.00 1.00 .0))
@@ -1031,7 +1028,7 @@
 
 (define (make-birds)
   "(make-birds) calls all the birds in bird.scm"
-  (with-sound (:output "test.snd")
+  (with-sound (:output "test.snd" :clipped #f)
     (b-orchard-oriole 0)
     (b-cassins-kingbird 3)
     (b-chipping-sparrow 6)

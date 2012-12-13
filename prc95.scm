@@ -139,16 +139,16 @@
 	      (set! veldiff (* veldiff (bowtable bowtab veldiff)))
 	      (set! neckout (delayl neckdelay (+ bridgerefl veldiff)))
 	      (set! bridgeout (delayl bridgedelay (+ nutrefl veldiff)))
-	      (let ((result (* amplitude 10.0 filt-output)))
-		(if (= ctr release)
-		    (begin
-		      (set! bowing #f)
-		      (set! attackrate .0005)))
-		(set! ctr (+ ctr 1))
-		(outa i result)))))))))
+	      (outa i (* amplitude 10.0 filt-output))
+	      (if (= ctr release)
+		  (begin
+		    (set! bowing #f)
+		    (set! attackrate .0005)))
+	      (set! ctr (+ ctr 1)))))))))
 
 
 (definstrument (brass beg dur freq amplitude maxa)
+  ;; does this work at all?
   (let* ((lowestfreq 100.0)
 	 (len (+ 1 (floor (/ (mus-srate) lowestfreq)))))
     (let ((blowing #t)
@@ -177,13 +177,12 @@
 						 (lip lipfilter
 						      (* 0.3 breathpressure)
 						      (* 0.9 dout)))))
-	  (let ((result (* amplitude dout)))
-	    (if (= ctr release) 
-		(begin
-		  (set! blowing #f)
-		  (set! attackrate .0005)))
-	    (set! ctr (+ ctr 1))
-	    (outa i result)))))))
+	  (outa i (* amplitude dout))
+	  (if (= ctr release) 
+	      (begin
+		(set! blowing #f)
+		(set! attackrate .0005)))
+	  (set! ctr (+ ctr 1)))))))
 
 
 (definstrument (clarinet beg dur freq amplitude maxa)
@@ -219,13 +218,12 @@
 				 (+ breathpressure 
 				    (* pressurediff 
 				       (reedtable rtable pressurediff)))))
-	    (let ((result (* amplitude dlyout)))
-	      (if (= ctr release)
-		  (begin
-		    (set! blowing #f)
-		    (set! attackrate .0005)))
-	      (set! ctr (+ ctr 1))
-	      (outa i result))))))))
+	    (outa i (* amplitude dlyout))
+	    (if (= ctr release)
+		(begin
+		  (set! blowing #f)
+		  (set! attackrate .0005)))
+	    (set! ctr (+ ctr 1))))))))
 
 
 (definstrument (flute beg dur freq amplitude maxa)
@@ -276,13 +274,12 @@
 					      (- randpressure (* jetrefl temp))))) 
 				  (* endrefl temp)))
 	    (set! boreout (delayl boredelay pressurediff))
-	    (let ((result (* 0.3 amplitude boreout)))
-	      (if (= ctr release)
-		  (begin
-		    (set! blowing #f)
-		    (set! attackrate .0005)))
-	      (set! ctr (+ ctr 1))
-	      (outa i result))))))))
+	    (outa i (* 0.3 amplitude boreout))
+	    (if (= ctr release)
+		(begin
+		  (set! blowing #f)
+		  (set! attackrate .0005)))
+	    (set! ctr (+ ctr 1))))))))
 
 #|
 (with-sound ()

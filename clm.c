@@ -2330,7 +2330,9 @@ mus_float_t *mus_phase_partials_to_wave(mus_float_t *partial_data, int partials,
 mus_float_t mus_table_lookup(mus_any *ptr, mus_float_t fm)
 {
   tbl *gen = (tbl *)ptr;
-  gen->yn1 = mus_interpolate(gen->type, gen->phase, gen->table, gen->table_size, gen->yn1);
+  if (gen->type == MUS_INTERP_LINEAR)
+    gen->yn1 = mus_array_interp(gen->table, gen->phase, gen->table_size);
+  else gen->yn1 = mus_interpolate(gen->type, gen->phase, gen->table, gen->table_size, gen->yn1);
   gen->phase += (gen->freq + (fm * gen->internal_mag));
   if ((gen->phase >= gen->table_size) || 
       (gen->phase < 0.0))
@@ -2346,7 +2348,9 @@ mus_float_t mus_table_lookup(mus_any *ptr, mus_float_t fm)
 mus_float_t mus_table_lookup_unmodulated(mus_any *ptr)
 {
   tbl *gen = (tbl *)ptr;
-  gen->yn1 = mus_interpolate(gen->type, gen->phase, gen->table, gen->table_size, gen->yn1);
+  if (gen->type == MUS_INTERP_LINEAR)
+    gen->yn1 = mus_array_interp(gen->table, gen->phase, gen->table_size);
+  else gen->yn1 = mus_interpolate(gen->type, gen->phase, gen->table, gen->table_size, gen->yn1);
   gen->phase += gen->freq;
   if ((gen->phase >= gen->table_size) || 
       (gen->phase < 0.0))
@@ -8383,7 +8387,7 @@ mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_flo
   rdout *gen = (rdout *)ptr;
   if (!ptr) return(val);
   
-  if ((chan >= gen->chans) || 
+  if ((chan >= gen->chans) ||  /* checking for (val == 0.0) here appears to make no difference overall */
       (!(gen->obufs)) ||
       (samp < 0))
     return(val);
@@ -9142,14 +9146,14 @@ static void mus_locsig_fill(mus_float_t *arr, int chans, mus_float_t degree, mus
 }
 
 
-void mus_locsig_mono_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val)
+static void mus_locsig_mono_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val)
 {
   locs *gen = (locs *)ptr;
   mus_outa_to_file(gen->outn_writer, loc, val * gen->outn[0]);
 }
 
 
-void mus_locsig_mono(mus_any *ptr, mus_long_t loc, mus_float_t val)
+static void mus_locsig_mono(mus_any *ptr, mus_long_t loc, mus_float_t val)
 {
   locs *gen = (locs *)ptr;
   mus_outa_to_file(gen->outn_writer, loc, val * gen->outn[0]);
@@ -9157,7 +9161,7 @@ void mus_locsig_mono(mus_any *ptr, mus_long_t loc, mus_float_t val)
 }
 
 
-void mus_locsig_stereo_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val)
+static void mus_locsig_stereo_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val)
 {
   locs *gen = (locs *)ptr;
   mus_outa_to_file(gen->outn_writer, loc, val * gen->outn[0]);
@@ -9165,7 +9169,7 @@ void mus_locsig_stereo_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val)
 }
 
 
-void mus_locsig_stereo(mus_any *ptr, mus_long_t loc, mus_float_t val) /* but mono rev */
+static void mus_locsig_stereo(mus_any *ptr, mus_long_t loc, mus_float_t val) /* but mono rev */
 {
   locs *gen = (locs *)ptr;
   mus_outa_to_file(gen->outn_writer, loc, val * gen->outn[0]);
@@ -9174,7 +9178,7 @@ void mus_locsig_stereo(mus_any *ptr, mus_long_t loc, mus_float_t val) /* but mon
 }
 
 
-void mus_locsig_safe_mono_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val)
+static void mus_locsig_safe_mono_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val)
 {
   locs *gen = (locs *)ptr;
   rdout *writer = (rdout *)(gen->outn_writer);
@@ -9184,7 +9188,7 @@ void mus_locsig_safe_mono_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t va
 }
 
 
-void mus_locsig_safe_mono(mus_any *ptr, mus_long_t loc, mus_float_t val)
+static void mus_locsig_safe_mono(mus_any *ptr, mus_long_t loc, mus_float_t val)
 {
   locs *gen = (locs *)ptr;
   rdout *writer = (rdout *)(gen->outn_writer);
@@ -9196,7 +9200,7 @@ void mus_locsig_safe_mono(mus_any *ptr, mus_long_t loc, mus_float_t val)
 }
 
 
-void mus_locsig_safe_stereo_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val)
+static void mus_locsig_safe_stereo_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val)
 {
   locs *gen = (locs *)ptr;
   rdout *writer = (rdout *)(gen->outn_writer);
@@ -9206,7 +9210,7 @@ void mus_locsig_safe_stereo_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t 
     writer->out_end = loc;
 }
 
-void mus_locsig_safe_stereo(mus_any *ptr, mus_long_t loc, mus_float_t val)
+static void mus_locsig_safe_stereo(mus_any *ptr, mus_long_t loc, mus_float_t val)
 {
   locs *gen = (locs *)ptr;
   rdout *writer = (rdout *)(gen->outn_writer);

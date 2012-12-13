@@ -38178,36 +38178,36 @@ EDITS: 1
   
   (definstrument (green3 start dur freq amp amp-env noise-freq noise-width noise-max-step)
     ;; brownian noise on amp env
-    (let* ((grn (make-green-noise-interp :frequency noise-freq :amplitude noise-max-step :high (* 0.5 noise-width) :low (* -0.5 noise-width)))
-	   (osc (make-oscil freq))
-	   (e (make-env amp-env :scaler amp :duration dur))
-	   (beg (floor (* start (mus-srate))))
-	   (end (+ beg (floor (* dur (mus-srate))))))
-	 (do ((i beg (+ i 1)))
-	     ((= i end))
-	   (outa i (* (env e) 
-		      (+ 1.0 (green-noise-interp grn 0.0))
-		      (oscil osc))))))
+    (let ((grn (make-green-noise-interp :frequency noise-freq :amplitude noise-max-step :high (* 0.5 noise-width) :low (* -0.5 noise-width)))
+	  (osc (make-oscil freq))
+	  (e (make-env amp-env :scaler amp :duration dur))
+	  (beg (floor (* start (mus-srate))))
+	  (end (floor (* (+ start dur) (mus-srate)))))
+      (do ((i beg (+ i 1)))
+	  ((= i end))
+	(outa i (* (env e) 
+		   (+ 1.0 (green-noise-interp grn 0.0))
+		   (oscil osc))))))
   
 					;(with-sound () (green3 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 100 .2 .02))
   
   (definstrument (green4 start dur freq amp freq-env gliss noise-freq noise-width noise-max-step)
     ;; same but on freq env
-    (let* ((grn (make-green-noise-interp :frequency noise-freq :amplitude noise-max-step :high (* 0.5 noise-width) :low (* -0.5 noise-width)))
-	   (osc (make-oscil freq))
-	   (e (make-env freq-env :scaler gliss :duration dur))
-	   (beg (floor (* start (mus-srate))))
-	   (end (+ beg (floor (* dur (mus-srate))))))
-	 (do ((i beg (+ i 1)))
-	     ((= i end))
-	   (outa i (* amp (oscil osc (hz->radians (+ (env e) (green-noise-interp grn 0.0)))))))))
+    (let ((grn (make-green-noise-interp :frequency noise-freq :amplitude noise-max-step :high (* 0.5 noise-width) :low (* -0.5 noise-width)))
+	  (osc (make-oscil freq))
+	  (e (make-env freq-env :scaler gliss :duration dur))
+	  (beg (floor (* start (mus-srate))))
+	  (end (floor (* (+ start dur) (mus-srate)))))
+      (do ((i beg (+ i 1)))
+	  ((= i end))
+	(outa i (* amp (oscil osc (hz->radians (+ (env e) (green-noise-interp grn 0.0)))))))))
 					;(with-sound () (green4 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 440 100 100 10))
   
   (define (ws-sine freq)
     (let ((o (make-oscil freq)))
-       (do ((i 0 (+ i 1)))
-	   ((= i 100))
-	 (outa i (oscil o)))))
+      (do ((i 0 (+ i 1)))
+	  ((= i 100))
+	(outa i (oscil o)))))
   
   (define (step-src)
     (let* ((rd (make-sampler 0))
@@ -38215,13 +38215,13 @@ EDITS: 1
 	   (s (make-src :srate 0.0))
 	   (incr (+ 2.0 (oscil o)))	  
 	   (tempfile (with-sound (:output (snd-tempnam) :srate (srate) :to-snd #f :comment "step-src")
-				  (do ((samp 0 (+ 1 samp)))
-				      ((sampler-at-end? rd))
-				    (out-any samp 
-					     (src s incr (lambda (dir) (read-sample rd)))
-					     0)
-				    (if (= (modulo samp 2205) 0)
-					(set! incr (+ 2.0 (oscil o)))))))
+		       (do ((samp 0 (+ 1 samp)))
+			   ((sampler-at-end? rd))
+			 (out-any samp 
+				  (src s incr (lambda (dir) (read-sample rd)))
+				  0)
+			 (if (= (modulo samp 2205) 0)
+			     (set! incr (+ 2.0 (oscil o)))))))
 	   (len (mus-sound-frames tempfile)))
       (set-samples 0 (- len 1) tempfile #f #f #t "step-src" 0 #f #t)))
   
@@ -38256,14 +38256,14 @@ EDITS: 1
   (define* (optkey-4 (a 1) (b 2) (c 3) d) (list a b c d))
   
   (define (fir+comb beg dur freq amp size)
-    (let* ((start (floor (* (mus-srate) beg)))
-	   (end (+ start (floor (* (mus-srate) dur))))
-	   (dly (make-comb :scaler .9 :size size)) 
-	   (flt (make-fir-filter :order size :xcoeffs (mus-data dly))) 
-	   (r (make-rand freq)))
-       (do ((i start (+ i 1))) 
-	   ((= i end)) 
-	 (outa i (* amp (fir-filter flt (comb dly (rand r))))))))
+    (let ((dly (make-comb :scaler .9 :size size)))
+      (let ((start (floor (* (mus-srate) beg)))
+	    (end (floor (* (mus-srate) (+ beg dur))))
+	    (flt (make-fir-filter :order size :xcoeffs (mus-data dly))) 
+	    (r (make-rand freq)))
+	(do ((i start (+ i 1))) 
+	    ((= i end)) 
+	  (outa i (* amp (fir-filter flt (comb dly (rand r)))))))))
   
   (definstrument (dloc-sinewave start-time duration freq amp 
 				(amp-env '(0 1 1 1))
@@ -38322,62 +38322,59 @@ EDITS: 1
   
   
   (definstrument (jcrev2)
-    (let* (
-	   (allpass11 (make-all-pass -0.700 0.700 1051))
-	   (allpass21 (make-all-pass -0.700 0.700  337))
-	   (allpass31 (make-all-pass -0.700 0.700  113))
-	   (comb11 (make-comb 0.742 4799))
-	   (comb21 (make-comb 0.733 4999))
-	   (comb31 (make-comb 0.715 5399))
-	   (comb41 (make-comb 0.697 5801))
-	   (outdel11 (make-delay (seconds->samples .01)))
-	   
-	   (allpass12 (make-all-pass -0.700 0.700 1051))
-	   (allpass22 (make-all-pass -0.700 0.700  337))
-	   (allpass32 (make-all-pass -0.700 0.700  113))
-	   (comb12 (make-comb 0.742 4799))
-	   (comb22 (make-comb 0.733 4999))
-	   (comb32 (make-comb 0.715 5399))
-	   (comb42 (make-comb 0.697 5801))
-	   (outdel12 (make-delay (seconds->samples .01)))
-	   
-	   (file-dur (frames *reverb*))
-	   (decay-dur (mus-srate))
-	   (len (floor (+ decay-dur file-dur))))
+    (let ((allpass11 (make-all-pass -0.700 0.700 1051))
+	  (allpass21 (make-all-pass -0.700 0.700  337))
+	  (allpass31 (make-all-pass -0.700 0.700  113))
+	  (comb11 (make-comb 0.742 4799))
+	  (comb21 (make-comb 0.733 4999))
+	  (comb31 (make-comb 0.715 5399))
+	  (comb41 (make-comb 0.697 5801))
+	  (outdel11 (make-delay (seconds->samples .01)))
+	  
+	  (allpass12 (make-all-pass -0.700 0.700 1051))
+	  (allpass22 (make-all-pass -0.700 0.700  337))
+	  (allpass32 (make-all-pass -0.700 0.700  113))
+	  (comb12 (make-comb 0.742 4799))
+	  (comb22 (make-comb 0.733 4999))
+	  (comb32 (make-comb 0.715 5399))
+	  (comb42 (make-comb 0.697 5801))
+	  (outdel12 (make-delay (seconds->samples .01)))
+	  
+	  (len (floor (+ (frames *reverb*) (mus-srate)))))
       
-	 (do ((i 0 (+ i 1)))
-	     ((= i len))
-	   
-	   (let* ((allpass-sum (all-pass allpass31 
-					 (all-pass allpass21 
-						   (all-pass allpass11 
-							     (ina i *reverb*)))))
-		  (comb-sum (+ (comb comb11 allpass-sum)
-			       (comb comb21 allpass-sum)
-			       (comb comb31 allpass-sum)
-			       (comb comb41 allpass-sum))))
-	     (outa i (delay outdel11 comb-sum)))
-	   
-	   (let* ((allpass-sum (all-pass allpass32 
-					 (all-pass allpass22 
-						   (all-pass allpass12 
-							     (inb i *reverb*)))))
-		  (comb-sum (+ (comb comb12 allpass-sum)
-			       (comb comb22 allpass-sum)
-			       (comb comb32 allpass-sum)
-			       (comb comb42 allpass-sum))))
-	     (outb i (delay outdel12 comb-sum)))
-	   )))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	
+	(let* ((allpass-sum (all-pass allpass31 
+				      (all-pass allpass21 
+						(all-pass allpass11 
+							  (ina i *reverb*)))))
+	       (comb-sum (+ (comb comb11 allpass-sum)
+			    (comb comb21 allpass-sum)
+			    (comb comb31 allpass-sum)
+			    (comb comb41 allpass-sum))))
+	  (outa i (delay outdel11 comb-sum)))
+	
+	(let* ((allpass-sum (all-pass allpass32 
+				      (all-pass allpass22 
+						(all-pass allpass12 
+							  (inb i *reverb*)))))
+	       (comb-sum (+ (comb comb12 allpass-sum)
+			    (comb comb22 allpass-sum)
+			    (comb comb32 allpass-sum)
+			    (comb comb42 allpass-sum))))
+	  (outb i (delay outdel12 comb-sum)))
+	)))
   
   
   (definstrument (floc-simp beg dur (amp 0.5) (freq 440.0) (ramp 2.0) (rfreq 1.0) offset)
-    (let* ((os (make-pulse-train freq))
+    (let ((os (make-pulse-train freq))
 	   (floc (make-flocsig :reverb-amount 0.1
 			       :frequency rfreq
 			       :amplitude ramp
 			       :offset offset))
 	   (start (seconds->samples beg))
-	   (end (+ start (seconds->samples dur))))
+	   (end (seconds->samples (+ beg dur))))
 	 (do ((i start (+ i 1))) 
 	     ((= i end))
 	   (flocsig floc i (* amp (pulse-train os))))))
@@ -38933,11 +38930,11 @@ EDITS: 1
 			'(0 0 25 1 75 1 100 0) .75 1.0 0 0 0 0 1 0 0 220 
 			'(0 0 25 1 75 1 100 0) 0 0 0 0 
 			'(0 0 100 0) 0 0 0 0 '(0 0 100 0))
-		(clm-expsrc 14.75 4 "oboe.snd" 2.0 1.0 1.0)
+		(clm-expsrc 14.75 2.5 "oboe.snd" 2.0 1.0 1.0)
 		(scratch 15.0 "now.snd" 1.5 '(0.0 .5 .25 1.0))
 		(two-tab 15 1 440 .1)
-		(exp-snd "fyow.snd" 15 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.05)
-		(exp-snd "oboe.snd" 16 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.2)
+		(exp-snd "fyow.snd" 15 1.5 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.05)
+		(exp-snd "oboe.snd" 16 1 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.2)
 		(gran-synth 15.5 1 300 .0189 .03 .4)
 		(spectra 16 1 440.0 .1 '(1.0 .4 2.0 .2 3.0 .2 4.0 .1 6.0 .1) '(0.0 0.0 1.0 1.0 5.0 0.9 12.0 0.5 25.0 0.25 100.0 0.0))
 		(lbj-piano 16.5 1 440.0 .2)
@@ -39242,54 +39239,55 @@ EDITS: 1
   (if (not (null? *clm-reverb-data*)) (snd-display #__line__ ";*clm-reverb-data*: ~A?" *clm-reverb-data*))
   (if *clm-delete-reverb* (snd-display #__line__ ";*clm-delete-reverb*: ~A" *clm-delete-reverb*))
   
-  (set! *clm-channels* 2)
-  (set! *clm-srate* 44100)
-  (set! *clm-file-name* "test.wav")
-  (set! *clm-verbose* #t)
-  (set! *clm-statistics* #t)
-  (set! *clm-play* #t)
-  (set! *clm-data-format* mus-mulaw)
-  (set! *clm-header-type* mus-riff)
-  (set! *clm-delete-reverb* #t)
-  (set! *clm-reverb* jc-reverb)
-  (set! *clm-reverb-data* (list #t 2.0 (list 0 1 3.0 1 4.0 0)))
-  
-  (with-sound () (fm-violin 0 1 440 .1 :reverb-amount .1))
-  
-  (let ((ind (find-sound "test.wav")))
-    (if (not (sound? ind))
-	(snd-display #__line__ ";default output in ws: ~A" (map file-name (sounds)))
-	(begin
-	  (if (not (= (srate ind) 44100)) (snd-display #__line__ ";default srate in ws: ~A ~A" (srate ind) *clm-srate*))
-	  (if (not (= (channels ind) 2)) (snd-display #__line__ ";default chans in ws: ~A ~A" (channels ind) *clm-channels*))
-	  (if (not (= (data-format ind) mus-mulaw)) (snd-display #__line__ ";default format in ws: ~A ~A" (data-format ind) *clm-data-format*))
-	  (if (not (= (header-type ind) mus-riff)) (snd-display #__line__ ";default type in ws: ~A ~A" (header-type ind) *clm-header-type*))
-	  (if (not (= (frames ind) 88200)) (snd-display #__line__ ";reverb+1 sec out in ws: ~A" (frames ind)))
-	  (if (file-exists? "test.rev") (snd-display #__line__ ";perhaps reverb not deleted in ws?"))
-	  (close-sound ind))))
-  
-  (let ((val 0)
-	(old-hook *clm-notehook*))
-    (set! *clm-notehook* (lambda args (set! val 1)))
-    (with-sound () (fm-violin 0 .1 440 .1))
-    (if (not (= val 1)) (snd-display #__line__ ";*clm-notehook*: ~A ~A" val *clm-notehook*))
-    (with-sound (:notehook (lambda args (set! val 2))) (fm-violin 0 .1 440 .1))
-    (if (not (= val 2)) (snd-display #__line__ ";:notehook: ~A" val))
-    (with-sound () (fm-violin 0 .1 440 .1))
-    (if (not (= val 1)) (snd-display #__line__ ";*clm-notehook* (1): ~A ~A" val *clm-notehook*))
-    (set! *clm-notehook* old-hook))
-  
-  (set! *clm-channels* 1)
-  (set! *clm-srate* 22050)
-  (set! *clm-file-name* "test.snd")
-  (set! *clm-verbose* #f)
-  (set! *clm-statistics* #f)
-  (set! *clm-play* #f)
-  (set! *clm-data-format* mus-bshort)
-  (set! *clm-header-type* mus-next)
-  (set! *clm-delete-reverb* #f)
-  (set! *clm-reverb* #f)
-  (set! *clm-reverb-data* ())
+  (let ((old-stats *clm-statistics*))
+    (set! *clm-channels* 2)
+    (set! *clm-srate* 44100)
+    (set! *clm-file-name* "test.wav")
+    (set! *clm-verbose* #t)
+    (set! *clm-statistics* #t)
+    (set! *clm-play* #t)
+    (set! *clm-data-format* mus-mulaw)
+    (set! *clm-header-type* mus-riff)
+    (set! *clm-delete-reverb* #t)
+    (set! *clm-reverb* jc-reverb)
+    (set! *clm-reverb-data* (list #t 2.0 (list 0 1 3.0 1 4.0 0)))
+    
+    (with-sound () (fm-violin 0 1 440 .1 :reverb-amount .1))
+    
+    (let ((ind (find-sound "test.wav")))
+      (if (not (sound? ind))
+	  (snd-display #__line__ ";default output in ws: ~A" (map file-name (sounds)))
+	  (begin
+	    (if (not (= (srate ind) 44100)) (snd-display #__line__ ";default srate in ws: ~A ~A" (srate ind) *clm-srate*))
+	    (if (not (= (channels ind) 2)) (snd-display #__line__ ";default chans in ws: ~A ~A" (channels ind) *clm-channels*))
+	    (if (not (= (data-format ind) mus-mulaw)) (snd-display #__line__ ";default format in ws: ~A ~A" (data-format ind) *clm-data-format*))
+	    (if (not (= (header-type ind) mus-riff)) (snd-display #__line__ ";default type in ws: ~A ~A" (header-type ind) *clm-header-type*))
+	    (if (not (= (frames ind) 88200)) (snd-display #__line__ ";reverb+1 sec out in ws: ~A" (frames ind)))
+	    (if (file-exists? "test.rev") (snd-display #__line__ ";perhaps reverb not deleted in ws?"))
+	    (close-sound ind))))
+    
+    (let ((val 0)
+	  (old-hook *clm-notehook*))
+      (set! *clm-notehook* (lambda args (set! val 1)))
+      (with-sound () (fm-violin 0 .1 440 .1))
+      (if (not (= val 1)) (snd-display #__line__ ";*clm-notehook*: ~A ~A" val *clm-notehook*))
+      (with-sound (:notehook (lambda args (set! val 2))) (fm-violin 0 .1 440 .1))
+      (if (not (= val 2)) (snd-display #__line__ ";:notehook: ~A" val))
+      (with-sound () (fm-violin 0 .1 440 .1))
+      (if (not (= val 1)) (snd-display #__line__ ";*clm-notehook* (1): ~A ~A" val *clm-notehook*))
+      (set! *clm-notehook* old-hook))
+    
+    (set! *clm-channels* 1)
+    (set! *clm-srate* 22050)
+    (set! *clm-file-name* "test.snd")
+    (set! *clm-verbose* #f)
+    (set! *clm-statistics* old-stats)
+    (set! *clm-play* #f)
+    (set! *clm-data-format* mus-bshort)
+    (set! *clm-header-type* mus-next)
+    (set! *clm-delete-reverb* #f)
+    (set! *clm-reverb* #f)
+    (set! *clm-reverb-data* ()))
   
   (with-sound (:reverb jl-reverb)
 	      (attract 0 1 0.1 2.0)
@@ -47356,20 +47354,20 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-12-Dec-12:
-145,341,858,060
-31,287,348,303  s7.c:eval [/home/bil/snd-13/snd]
-12,057,377,638  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 8,903,733,951  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
- 7,655,528,678  ???:sin [/lib64/libm-2.12.so]
- 6,472,581,755  s7.c:eval'2 [/home/bil/snd-13/snd]
- 4,519,979,270  s7.c:gc [/home/bil/snd-13/snd]
- 2,977,861,279  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+13-Dec-12:
+143,246,629,070
+30,863,921,557  s7.c:eval [/home/bil/snd-13/snd]
+11,258,932,698  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 8,912,322,193  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
+ 7,653,601,777  ???:sin [/lib64/libm-2.12.so]
+ 6,565,082,491  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 4,478,956,486  s7.c:gc [/home/bil/snd-13/snd]
+ 2,990,127,955  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,966,196,696  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,934,083,893  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 2,688,123,456  ???:cos [/lib64/libm-2.12.so]
- 2,648,298,825  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,906,692,401  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,688,405,857  ???:cos [/lib64/libm-2.12.so]
  2,346,068,443  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 2,241,540,920  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,935,542,894  s7.c:g_add_ss_1ss [/home/bil/snd-13/snd]
+ 2,235,698,150  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,933,588,094  s7.c:g_add_ss_1ss [/home/bil/snd-13/snd]
 |#
