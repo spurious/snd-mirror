@@ -39071,7 +39071,7 @@ EDITS: 1
 	    (snd-display #__line__ ";notch 60 Hz: ~A to ~A" mx (maxamp)))
 	(undo)
 	(notch-sound (let ((freqs ())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
-	(if (ffneq (maxamp) .004)
+	(if (ffneq (maxamp) .011)
 	    (snd-display #__line__ ";notch-sound 60 hz 2: ~A" (maxamp)))
 	(undo)
 	(notch-channel (let ((freqs ())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f #f #f ind 0 #f #f 10)
@@ -39081,7 +39081,7 @@ EDITS: 1
 	
 					;	  (select-all)
 	(make-selection 10000 11000)
-	(notch-selection (let ((freqs ())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f)
+	(notch-selection (let ((freqs ())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f 10)
 					;	  (if (ffneq (maxamp) .066)
 					;	      (snd-display #__line__ ";notch-selection 60 hz 2: ~A" (maxamp)))
 	(close-sound ind)))
@@ -39089,7 +39089,7 @@ EDITS: 1
     (with-sound (:srate 44100 :play #f) (bigbird 0 60 60 0 .5 '(0 0 1 1) '(0 0 1 1 2 1 3 0) '(1 1 2 1 3 1 4 1 5 1 6 1 7 1 8 1 9 1 10 1)))
     (let ((ind (find-sound "test.snd")))
       (notch-sound (let ((freqs ())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
-      (if (ffneq (maxamp) .036)
+      (if (ffneq (maxamp) .011)
 	  (snd-display #__line__ ";notch-sound 60 hz 2 60: ~A" (maxamp)))
       (close-sound ind))
     
@@ -39861,7 +39861,7 @@ EDITS: 1
 	(with-sound (:output v1 :revfile v2 :reverb jc-reverb)
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
-	(if (< (car (sound-data-maxamp v1)) .54) 
+	(if (< (car (sound-data-maxamp v1)) .5) 
 	    (snd-display #__line__ ";2 with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
 
     (let ((v1 (with-sound (:output (make-sound-data 1 44100) :revfile (make-sound-data 1 44100) :reverb jc-reverb) 
@@ -47354,20 +47354,19 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-13-Dec-12:
-143,246,629,070
-30,863,921,557  s7.c:eval [/home/bil/snd-13/snd]
-11,258,932,698  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 8,912,322,193  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
- 7,653,601,777  ???:sin [/lib64/libm-2.12.so]
- 6,565,082,491  s7.c:eval'2 [/home/bil/snd-13/snd]
- 4,478,956,486  s7.c:gc [/home/bil/snd-13/snd]
- 2,990,127,955  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,966,196,696  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+14-Dec-12:
+134,692,661,577
+30,880,154,135  s7.c:eval [/home/bil/snd-13/snd]
+11,221,541,243  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 7,657,063,584  ???:sin [/lib64/libm-2.12.so]
+ 6,382,888,437  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 4,459,935,804  s7.c:gc [/home/bil/snd-13/snd]
+ 3,032,415,241  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,964,689,583  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,906,692,401  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,688,405,857  ???:cos [/lib64/libm-2.12.so]
+ 2,840,601,791  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 2,714,773,904  ???:cos [/lib64/libm-2.12.so]
  2,346,068,443  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 2,235,698,150  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,933,588,094  s7.c:g_add_ss_1ss [/home/bil/snd-13/snd]
+ 2,226,056,918  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,936,484,484  s7.c:g_add_ss_1ss [/home/bil/snd-13/snd]
 |#

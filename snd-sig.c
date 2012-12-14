@@ -1698,7 +1698,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
   mus_float_t *idata;
   char *ofile = NULL;
   io_error_t io_err = IO_NO_ERROR;
-
+  
   if (!(editable_p(cp))) return(NULL);
   sp = cp->sound;
   if ((!over_selection) || (!truncate))

@@ -1839,12 +1839,12 @@
   
   (set! (gen 'fm) fm)
   (with-environment gen
-    (let* ((gen (current-environment)) ; !
+    (let (;(gen (current-environment)) ; !
 	   (x angle)
-	   (y (* x ratio)))
+	   (y (* angle ratio)))
       (set! angle (+ x fm frequency))
       (if (not (= fm 0.0))
-	  (set! r (clamp-rxycos-r gen fm)))
+	  (set! r (clamp-rxycos-r (current-environment) fm)))
       (* (/ (- (cos x)
 	       (* r (cos (- x y))))
 	    (+ 1.0 

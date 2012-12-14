@@ -2447,7 +2447,8 @@ static void report_counts(s7_scheme *sc)
   qsort((void *)data, loc, sizeof(datum *), sort_data);
   if (loc > 200) loc = 200;
   for (i = 0; i < loc; i++)
-    fprintf(stderr, "%lld: %s\n", data[i]->count, DISPLAY(data[i]->expr));
+    if (data[i]->count > 10)
+      fprintf(stderr, "%lld: %s\n", data[i]->count, DISPLAY(data[i]->expr));
 }
 #endif
 #endif
@@ -40088,6 +40089,7 @@ static s7_pointer check_let(s7_scheme *sc)
 				      lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
 				      if (c_call(cadr(binding)) == g_read_char)
 					{
+					  #define let_read_char_p_variable gcdr
 					  gcdr(sc->code) = caaar(sc->code);
 					  set_syntax_op(sc->code, sc->LET_READ_CHAR_P);
 					}
@@ -40352,7 +40354,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 				      lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
 				      if (c_call(cadr(binding)) == g_read_char)
 					{
-					  gcdr(sc->code) = caaar(sc->code);
+					  let_read_char_p_variable(sc->code) = caaar(sc->code);
 					  set_syntax_op(sc->code, sc->LET_READ_CHAR_P);
 					}
 				      else 
@@ -53949,7 +53951,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (!is_input_port(port))              /* (read-char 123)? */
 	  c = g_read_char(sc, list_1(sc, port));
 	else c = chars[port_read_character(port)(sc, port)];
-	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, fc = gcdr(code), c);
+	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, fc = let_read_char_p_variable(code), c);
 	code = cadr(code);
 	
 	op = (opcode_t)lifted_op(code);
@@ -62383,6 +62385,7 @@ s7_scheme *s7_init(void)
  * TODO: what happened to hook documentation? hook is now an s7 constant (see xen.c xen_s7_define_hook)
  *   but make-hook above could presumably put the docstring in the lambda* body -can we find it there?
  *   or in the let for that matter -- could this always work?
+ * TODO: if defines can be anywhere and yet global, give each e|f|gcdr ref a unique name
  *
  * timing    12.0      13.0 13.1 13.2 13.3
  * bench    42736      8752 8051 7725 6518
@@ -62392,6 +62395,6 @@ s7_scheme *s7_init(void)
  * t455            265   89   55   31   16
  * t502             90   43   39   36   29
  * lat             229   63   52   47   42
- * calls                276  208  176  143
+ * calls                276  208  176  135
  */
 
