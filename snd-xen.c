@@ -2196,9 +2196,15 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
   if ((!porig) || (start >= (int)s7_string_length(s7_cadr(args))))
     return(s7_f(sc));
 
+#if 0
   for (p = (const char *)(porig + start); (*p); p++)
     if ((*p) == c)
       return(s7_make_integer(sc, p - porig));
+#else
+  p = strchr((const char *)(porig + start), (int)c);
+  if (p)
+    return(s7_make_integer(sc, p - porig));
+#endif
   return(s7_f(sc));
 }
 

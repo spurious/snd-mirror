@@ -20213,7 +20213,10 @@ static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
 
 
 #define STRING_PORT_INITIAL_LENGTH 128
-/* the large majority (> 99% in my tests) of the output strings have less than 128 chars when the port is finally closed */
+/* the large majority (> 99% in my tests) of the output strings have less than 128 chars when the port is finally closed 
+ *   256 is slightly slower (the calloc time below dominates the realloc time in string_write_string)
+ *   64 is much slower (realloc dominates)
+ */
 
 s7_pointer s7_open_output_string(s7_scheme *sc)
 {
@@ -22698,7 +22701,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 
   for (i = 0; i < str_len; i++)
     {
-      if (str[i] == '~')
+      if (str[i] == '~') /* strchr here was slower! */
 	{
 	  if (i == str_len - 1)
 	    return(format_error(sc, "control string ends in tilde", str, args, fdat));
@@ -62390,7 +62393,7 @@ s7_scheme *s7_init(void)
  * timing    12.0      13.0 13.1 13.2 13.3
  * bench    42736      8752 8051 7725 6518
  * lint                9328 8140 7887 7769
- * index    44300 4988 3291 3005 2742 2142
+ * index    44300 4988 3291 3005 2742 2121
  * s7test         1721 1358 1297 1244 1233
  * t455            265   89   55   31   16
  * t502             90   43   39   36   29

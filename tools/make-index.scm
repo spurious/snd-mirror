@@ -85,13 +85,13 @@
 (define* (make-ind name sortby topic file general indexed char)
   (vector name sortby topic file general indexed char))
 
-(define ind-name    (make-procedure-with-setter (lambda (obj) (obj 0)) (lambda (obj val) (set! (obj 0) val))))
-(define ind-sortby  (make-procedure-with-setter (lambda (obj) (obj 1)) (lambda (obj val) (set! (obj 1) val))))
-(define ind-topic   (make-procedure-with-setter (lambda (obj) (obj 2)) (lambda (obj val) (set! (obj 2) val))))
-(define ind-file    (make-procedure-with-setter (lambda (obj) (obj 3)) (lambda (obj val) (set! (obj 3) val))))
-(define ind-general (make-procedure-with-setter (lambda (obj) (obj 4)) (lambda (obj val) (set! (obj 4) val))))
-(define ind-indexed (make-procedure-with-setter (lambda (obj) (obj 5)) (lambda (obj val) (set! (obj 5) val))))
-(define ind-char    (make-procedure-with-setter (lambda (obj) (obj 6)) (lambda (obj val) (set! (obj 6) val))))
+(define (ind-name obj)    (vector-ref obj 0))
+(define (ind-sortby obj)  (vector-ref obj 1))
+(define (ind-topic obj)   (vector-ref obj 2))
+(define (ind-file obj)    (vector-ref obj 3))
+(define (ind-general obj) (vector-ref obj 4))
+(define ind-indexed       (make-procedure-with-setter (lambda (obj) (vector-ref obj 5)) (lambda (obj val) (vector-set! obj 5 val))))
+(define (ind-char obj)    (vector-ref obj 6))
 
 
 (define (write-line line file)
@@ -639,45 +639,41 @@
 	(call-with-output-file "indexer.data"
 	  (lambda (p)
 	    
-	    (define (find-file name)
-	      (call-with-exit
-	       (lambda (return)
-		 (do ((i 0 (+ i 1)))
-		     ((= i file-len) 
-		      (format #t "oops! ~A~%" name) 0)
-		   (if (string=? name (list-ref places i))
-		       (return i))))))
-	    
-	    (format p "#define AUTOLOAD_FILES ~D~%~%" file-len)
-	    (format p "static const char *autoload_files[AUTOLOAD_FILES] = {~%  ")
-	    (do ((i 0 (+ i 1)))
-		((= i fl-1))
-	      (if (and (positive? i)
-		       (= (modulo i 6) 0))
-		  (format p "~S, ~%  " (places i))
-		  (format p "~S, " (places i))))
-	    (format p "~S};~%~%" (places fl-1))
-	    
-	    (format p "#define AUTOLOAD_NAMES ~D~%~%" name-len)
-	    (format p "static const char *autoload_names[AUTOLOAD_NAMES] = {~%  ")
-	    (do ((i 0 (+ i 1))
-		 (cur-name names (cdr cur-name)))
-		((= i nl-1))
-	      (if (and (positive? i)
-		       (= (modulo i 4) 0))
-		  (format p "~S, ~%  " (symbol->string (caar cur-name)))
-		  (format p "~S, " (symbol->string (caar cur-name)))))
-	    (format p "~S};~%~%" (symbol->string (car (names nl-1))))
-	    
-	    (format p "static int autoload_indices[AUTOLOAD_NAMES] = {~%  ")
-	    (do ((i 0 (+ i 1))
-		 (cur-name names (cdr cur-name)))
-		((= i nl-1))
-	      (if (and (positive? i)
-		       (= (modulo i 24) 0))
-		  (format p "~D, ~%  " (find-file (cdar cur-name)))
-		  (format p "~D, " (find-file (cdar cur-name)))))
-	    (format p "~D};~%~%" (find-file (cdr (names nl-1)))))))))
+	    (let ((hashed-places (make-hash-table)))
+	      (do ((i 0 (+ i 1)))
+		  ((= i file-len)) 
+		(set! (hashed-places (list-ref places i)) i))
+
+	      (format p "#define AUTOLOAD_FILES ~D~%~%" file-len)
+	      (format p "static const char *autoload_files[AUTOLOAD_FILES] = {~%  ")
+	      (format p "~S, " (places 0))
+	      (do ((i 1 (+ i 1)))
+		  ((= i fl-1))
+		(if (= (modulo i 6) 0)
+		    (format p "~S, ~%  " (places i))
+		    (format p "~S, " (places i))))
+	      (format p "~S};~%~%" (places fl-1))
+	      
+	      (format p "#define AUTOLOAD_NAMES ~D~%~%" name-len)
+	      (format p "static const char *autoload_names[AUTOLOAD_NAMES] = {~%  ")
+	      (format p "~S, " (symbol->string (caar names)))
+	      (do ((i 1 (+ i 1))
+		   (cur-name (cdr names) (cdr cur-name)))
+		  ((= i nl-1))
+		(if (= (modulo i 4) 0)
+		    (format p "~S, ~%  " (symbol->string (caar cur-name)))
+		    (format p "~S, " (symbol->string (caar cur-name)))))
+	      (format p "~S};~%~%" (symbol->string (car (names nl-1))))
+	      
+	      (format p "static int autoload_indices[AUTOLOAD_NAMES] = {~%  ")
+	      (format p "~D, " (or (hashed-places (cdar names)) 0))
+	      (do ((i 1 (+ i 1))
+		   (cur-name (cdr names) (cdr cur-name)))
+		  ((= i nl-1))
+		(if (= (modulo i 24) 0)
+		    (format p "~D, ~%  " (or (hashed-places (cdar cur-name)) 0))
+		    (format p "~D, " (or (hashed-places (cdar cur-name)) 0))))
+	      (format p "~D};~%~%" (or (hashed-places (cdr (names nl-1))) 0))))))))
   
   (report-places))
 
@@ -752,8 +748,6 @@
 				  (if (memq sym-name local-ids)
 				      (format #t "~S: id ~S is set twice~%" file sym-name)))
 			      (set! local-ids (cons sym-name local-ids)))))
-
-		      ;; (format #t "~A ~D ~D ~D: id: ~S~%" dline id-pos start end name)))
 
 		      (if tpos
 			  (let ((epos (string-position " -->" dline)))
@@ -856,7 +850,7 @@
 	      (if (and name
 		       (ind-sortby name))
 		  (let ((this-char ((ind-sortby name) 0)))
-		    (if (char-ci=? this-char #\*)
+		    (if (char=? this-char #\*)
 			(set! this-char ((ind-sortby name) 1)))
 		    (if (and last-char
 			     (not (char-ci=? last-char this-char)))
@@ -938,11 +932,9 @@
 			      (if (ind-char name)
 				  "<div class=\"centered\">"
 				  "<em class=tab>")
-			      (if (ind-char name)
-				  (ind-char name)
-				  (if (ind-name name)
-				      (ind-name name)
-				      "    "))
+			      (or (ind-char name)
+				  (ind-name name)
+				  "    ")
 ;			      (if (and (not (ind-char name))
 ;				       (string? (ind-file name))
 ;				       (string=? (ind-file name) "s7.html"))
@@ -1178,16 +1170,18 @@
 			     
 			     ((#\&) 
 			      (if (and (not in-comment)
-				       (not (string-ci=? "&gt;" (substring line i (min len (+ i 4)))))
-				       (not (string-ci=? "&lt;" (substring line i (min len (+ i 4)))))
-				       (not (string-ci=? "&amp;" (substring line i (min len (+ i 5)))))
-				       (not (string-ci=? "&micro;" (substring line i (min len (+ i 7)))))
-				       (not (string-ci=? "&quot;" (substring line i (min len (+ i 6)))))
-				       (not (string-ci=? "&ouml;" (substring line i (min len (+ i 6)))))
-				       (not (string-ci=? "&mdash;" (substring line i (min len (+ i 7)))))
-				       (not (string-ci=? "&nbsp;" (substring line i (min len (+ i 6)))))
-				       (not (string-ci=? "&&" (substring line i (min len (+ i 2)))))
-				       (not (string-ci=? "& " (substring line i (min len (+ i 2)))))) ; following char -- should skip this
+				       (case (string-ref line (+ i 1))
+					 ((#\g) (not (string=? "&gt;" (substring line i (min len (+ i 4))))))
+					 ((#\l) (not (string=? "&lt;" (substring line i (min len (+ i 4))))))
+					 ((#\a) (not (string=? "&amp;" (substring line i (min len (+ i 5))))))
+					 ((#\q) (not (string=? "&quot;" (substring line i (min len (+ i 6))))))
+					 ((#\o) (not (string=? "&ouml;" (substring line i (min len (+ i 6))))))
+					 ((#\m) (and (not (string=? "&mdash;" (substring line i (min len (+ i 7)))))
+						     (not (string=? "&micro;" (substring line i (min len (+ i 7)))))))
+					 ((#\n) (not (string=? "&nbsp;" (substring line i (min len (+ i 6))))))
+					 ((#\&) (not (string=? "&&" (substring line i (min len (+ i 2))))))
+					 ((#\space) (not (string=? "& " (substring line i (min len (+ i 2)))))) ; following char -- should skip this
+					 (else #t)))
 				  (format #t "~A[~D]: unknown escape sequence: ~A~%" file linectr line)))
 			     
 			     ((#\()
@@ -1362,8 +1356,7 @@
 					  
 			 ;; search for name
 			 (let* ((dline line)
-				(pos-def1 (string-position "<em class=def id=" dline))
-				(pos pos-def1) ;(or pos-def pos-def1))
+				(pos (string-position "<em class=def id=" dline))
 				(pos-len 18))
 
 			   (do ()
@@ -1388,8 +1381,7 @@
 
 				     (incf name)
 				     (set! dline (substring dline epos))
-				     (set! pos-def1 (string-position "<em class=def id=" dline))
-				     (set! pos pos-def1)
+				     (set! pos (string-position "<em class=def id=" dline))
 				     (set! pos-len 18))))))
 					  
 			 ;; search for href
@@ -1413,9 +1405,9 @@
 					   (let ((pos (char-position #\# cur-href)))
 					     (if (and (not pos)
 						      (> epos 5)
-						      (not (string-ci=? (substring cur-href 0 4) "ftp:"))
-						      (not (string-ci=? (substring cur-href 0 5) "http:"))
-						      (not (file-exists? cur-href)))
+						      (not (file-exists? cur-href))
+						      (not (string=? (substring cur-href 0 4) "ftp:"))
+						      (not (string=? (substring cur-href 0 5) "http:")))
 						 (format #t "~A[~D]: reference to missing file ~S~%" file linectr cur-href)))))
 
 				     ;; cur-href here is the full link: sndclm.html#make-filetosample for example
