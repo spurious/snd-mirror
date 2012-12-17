@@ -246,18 +246,17 @@
 			 'error))))
      (number-ok? (list ,proc ,val1 ,val2) result ,expected)))
 
-(define-macro (reinvert n op1 op2 arg)
-  (let ((body `(,op2 (,op1 ,arg))))
+(define (reinvert n op1 op2 arg)
+  (let ((body (op2 (op1 arg))))
     (do ((i 1 (+ i 1)))
-	((= i n))
-      (set! body `(,op2 (,op1 ,body))))
-    body))
-
-(define-macro (recompose n op arg)
+	((= i n) body)
+      (set! body (op2 (op1 body))))))
+    
+(define (recompose n op arg)
   (define (recompose-1 n)
     (if (= n 1)
-	`(,op ,arg)
-	`(,op ,(recompose-1 (- n 1)))))
+	(op arg)
+	(op (recompose-1 (- n 1)))))
   (recompose-1 n))
 
 
@@ -6168,6 +6167,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (memq #(1) odd) #f)
   (test (memq #(1) even) #f))
 
+;;; but (memq pi (list 1 pi 2)) -> '(3.1415926535898 2)
+
 (test (memq (values #\a '(#\A 97 a))) #f)
 (test (memq (values #\a '(#\A 97 #\a))) '(#\a))
 (test (memq #\a (values #\a '(#\A 97 #\a))) 'error)
@@ -8543,7 +8544,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (object->string (list x y z w v)) "((6 . #3=(2 8)) (7 . #1=(5)) #2=(1 . #1#) (4 5 . #2#) (#3# . #1#))"))
 ;; guile gets this result, but prints it as: ((6 2 8) (7 5) (1 5) (4 5 1 5) ((2 8) 5))
 
-
+#|
 (define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
   "(for-each-permutation func vals) applies func to every permutation of vals"
   ;;   (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))
@@ -8562,6 +8563,33 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
     (pinner '() vals len)
     (set-cdr! (list-tail vals (- len 1)) '())))   ; restore its original shape
+|#
+
+;; a slightly faster version (avoids consing primarily)
+(define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
+  "(for-each-permutation func vals) applies func to every permutation of vals"
+  ;;   (for-each-permutation (lambda args (format #t "~A~%" args)) '(1 2 3))
+  (let ((cur (make-list (length vals))))
+
+    (define (pinner nvals len)
+      (if (= len 1)
+	  (begin
+	    (list-set! cur 0 (car nvals))
+	    (apply func cur)) 
+	(do ((i 0 (+ i 1)))                       ; I suppose a named let would be more Schemish
+	    ((= i len))
+	  (let ((start nvals))
+	    (set! nvals (cdr nvals))
+	    (list-set! cur (- len 1) (car nvals)) 
+	    (set! (cdr start) (cdr nvals))        ; splice out that element and 
+	    (pinner (cdr start) (- len 1))        ;   pass a smaller circle on down
+	    (set! (cdr start) nvals)))))          ; restore original circle
+
+  (let ((len (length vals)))
+    (set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
+    (pinner vals len)
+    (set-cdr! (list-tail vals (- len 1)) '()))))  ; restore its original shape
+
 
   ;; t224 applies this to +/*
 
@@ -25104,19 +25132,6 @@ func
 	(hi 1))	  
       2)
 
-(test (let ()
-	(define-clean-macro (hi a) `(+ ,a 1))
-	(let ((+ *)
-	      (a 12))
-	  (hi a)))
-      13)
-
-(test (let ()
-	(define-immaculo (hi a) `(+ ,a 1))
-	(let ((+ *)
-	      (a 12))
-	  (hi a)))
-      13)
 
 ;; define-clean-macro is making no-longer-correct assumptions about quasiquote -- I think I'll just put these aside
 					;  (test (let ()
@@ -25129,19 +25144,6 @@ func
 	(hi 2))
       25)
 
-					;  (test (let ()
-					;	  (define-clean-macro (hi a) `(let ((b 23)) (+ b ,a)))
-					;	  (let ((+ *)
-					;		(b 12))
-					;	    (hi b)))
-					;	35)
-
-(test (let ()
-	(define-immaculo (hi a) `(let ((b 23)) (+ b ,a)))
-	(let ((+ *)
-	      (b 12))
-	  (hi b)))
-      35)
 
 					;  (test (let ()
 					;	  (define-clean-macro (mac a b) `(let ((c (+ ,a ,b))) (let ((d 12)) (* ,a ,b c d))))
@@ -25174,32 +25176,6 @@ func
       9)
 
 (test (let ()
-	(define-clean-macro (mac a . body)
-	  `(+ ,a ,@body))
-	(let ((a 2)
-	      (+ *))
-	  (mac a (- 5 a) (* a 2))))
-      9)
-
-(test (let () 
-	(define-macro (mac b) 
-	  `(let ((a 12)) 
-	     (,+ a ,b)))
-	(let ((a 1) 
-	      (+ *))
-	  (mac a)))
-      24)
-
-(test (let () 
-	(define-macro (mac b) 
-	  `(let ((a 12)) 
-	     (+ a ,b)))
-	(let ((a 1) 
-	      (+ *))
-	  (mac a)))
-      144)
-
-(test (let ()
 	(define-clean-macro (mac) (let ((a 1)) `(+ ,a 1)))
 	(mac))
       2)
@@ -25213,11 +25189,6 @@ func
 	(define-immaculo (hi a) `(list 'a ,a))
 	(hi 1))
       (list 'a 1))
-
-(test (let ()
-	(define-immaculo (mac c d) `(let ((a 12) (b 3)) (+ a b ,c ,d)))
-	(let ((a 21) (b 10) (+ *)) (mac a b)))
-      46)
 
 					;  (test (let ((values 32)) (define-macro (hi a) `(+ 1 ,@a)) (hi (2 3))) 6)
 					;  (test (let ((list 32)) (define-macro (hi a) `(+ 1 ,@a)) (hi (2 3))) 6)
@@ -26262,12 +26233,6 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (define #_+ 3) 'error)
 (test (set! #_+ 3) 'error)
 
-(let ()
-  (define-macro (pure-let bindings . body)
-    `(with-environment (initial-environment)
-       (let ,bindings ,@body)))
-  (test (let ((+ *) (lambda abs)) (pure-let ((x 2)) ((lambda (y) (+ x y)) 3))) 5))
-
 (test (let ()
 	(with-environment (current-environment) (define hiho 43))
 	hiho)
@@ -26572,7 +26537,6 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
    (test (augment-environment! (current-environment) arg) 'error))
  (list -1 #\a #(1 2 3) 3.14 3/4 1.0+1.0i 'hi "hi" abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 
-(test (with-environment (augment-environment (current-environment) (cons '+ (lambda args (apply * args)))) (+ 1 2 3 4)) 24)
 (test (with-environment (current-environment) (let ((x 1)) x)) 1)
 
 (let ((old-safety *safety*))
@@ -26698,13 +26662,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
           (cons 'y 123))
 	(+ x y))
       126)
-
+#|
 (test (let ()
 	(define (hiho a) (+ a b))
 	(augment-environment! (procedure-environment hiho) (cons 'b 21)) ; hmmm...
 	(hiho 1))
       22)
-
+|#
 (test (let ()
 	(define hiho (let ((x 32)) (lambda (a) (+ a x b))))
 	(augment-environment! (procedure-environment hiho) (cons 'b 10) (cons 'x 100))
@@ -61703,15 +61667,15 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (* 9221/92233720 -9221/92233720 92233720/9221 -92233720/9221) 1)
 
 (for-each-permutation 
- (lambda (a b c d)
-   (if (not (< (magnitude (- (* a b c d) 0.25+0.25i)) 1e-15))
-       (format #t "~A: (* ~A ~A ~A ~A) -> ~A?~%" (port-line-number) a b c d (* a b c d))))
+ (lambda args
+   (if (not (< (magnitude (- (apply * args) 0.25+0.25i)) 1e-15))
+       (format #t "~A: (* ~{~A~^ ~}) -> ~A?~%" (port-line-number) args (apply * args))))
  '(1 1/2 0.5 1+i))
 
 (for-each-permutation 
- (lambda (a b c d e f g h)
-   (if (not (< (magnitude (- (* a b c d e f g h) 1.0)) 1e-15))
-       (format #t "~A: (* ~A ~A ~A ~A ~A ~A ~A ~A) -> ~A?~%" (port-line-number) a b c d e f g h (* a b c d e f g h))))
+ (lambda args
+   (if (not (< (magnitude (- (apply * args) 1.0)) 1e-15))
+       (format #t "~A: (* ~{~A~^ ~}) -> ~A?~%" (port-line-number) args (apply * args))))
  '(5 1/3 0.5 1+i 1/5 3 2.0 0.5-0.5i))
 
 (num-test (* 7/1000 1000/999 999/7 most-positive-fixnum) most-positive-fixnum)
@@ -63081,16 +63045,17 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (+ 362880/1234) 362880/1234)
 
 (for-each-permutation 
- (lambda (a b c d)
-   (if (not (= (+ a b c d) 3+i))
-       (format #t "~A: (+ ~A ~A ~A ~A) -> ~A?~%" (port-line-number) a b c d (+ a b c d))))
+ (lambda args
+   (if (not (= (apply + args) 3+i))
+       (format #t "~A: (+ ~{~A~^ ~}) -> ~A?~%" (port-line-number) args (apply + args))))
  '(1 1/2 0.5 1+i))
 
 (for-each-permutation 
- (lambda (a b c d e f g h)
-   (if (not (zero? (+ a b c d e f g h)))
-       (format #t "~A: (+ ~A ~A ~A ~A ~A ~A ~A ~A) -> ~A?~%" (port-line-number) a b c d e f g h (+ a b c d e f g h))))
+ (lambda args
+   (if (not (zero? (apply + args)))
+       (format #t "~A: (+ ~{~A~^ ~}) -> ~A?~%" (port-line-number) args (apply + args))))
  '(1 1/2 0.5 1+i -1/2 -1 -0.5 -1-i))
+
 
 (test (integer? (+ 1/100 99/100 (- most-positive-fixnum 2))) #t)
 (test (integer? (+ 1/1000 999/1000 (- most-positive-fixnum 9223372036854775807))) #t)
@@ -63321,9 +63286,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (num-test (+ 8589934592/4294967295 -1 2147483648) 2147483649.0)
       (num-test (+ -1 8589934592/4294967295 2147483648) 2147483649.0)
 
-      (num-test (+ 4611686018427387904 4611686018427387904) 9.223372036854775808e18)
-      (num-test (+ most-positive-fixnum most-positive-fixnum) 1.8446744073709551614e19)
-      (num-test (+ most-negative-fixnum most-negative-fixnum) -1.8446744073709551616e19)
+;      (num-test (+ 4611686018427387904 4611686018427387904) 9.223372036854775808e18)
+;      (num-test (+ most-positive-fixnum most-positive-fixnum) 1.8446744073709551614e19)
+;      (num-test (+ most-negative-fixnum most-negative-fixnum) -1.8446744073709551616e19)
       ))
 
 (num-test (+ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99) 4950)
@@ -64594,15 +64559,15 @@ but it's the printout that is at fault:
 (num-test (- 3) -3 )
 
 (for-each-permutation 
- (lambda (a b c d)
-   (if (not (= (- a b c d) (- a (+ b c d))))
-       (format #t "~A: ~A != ~A?~%" (port-line-number) (- a b c d) (- a (+ b c d)))))
+ (lambda args
+   (if (not (= (apply - args) (- (car args) (apply + (cdr args)))))
+       (format #t "~A: ~A != ~A?~%" (port-line-number) (apply - args) (- (car args) (apply + (cdr args))))))
  '(1 1/2 0.5 1+i))
 
 (for-each-permutation 
- (lambda (a b c d e f g h)
-   (if (not (= (- a b c d e f g h) (+ a (- (+ b c d e f g h)))))
-       (format #t "~A: (- ~A ~A ~A ~A ~A ~A ~A ~A) -> ~A?~%" (port-line-number) a b c d e f g h (- a b c d e f g h))))
+ (lambda args
+   (if (not (= (apply - args) (+ (car args) (- (apply + (cdr args))))))
+       (format #t "~A: (- ~{~A~^ ~}) -> ~A?~%" (port-line-number) args (apply - args))))
  '(1 1/2 0.5 1+i -1/2 -1 -0.5 -1-i))
 
 (num-test (- -1.797693134862315699999999999999999999998E308 -9223372036854775808) -1.797693134862315699999999999999999999998E308)
@@ -65662,9 +65627,9 @@ but it's the printout that is at fault:
       ))
 
 (for-each-permutation 
- (lambda (a b c d)
-   (if (not (= (/ a b c d) (/ a (* b c d))))
-       (format #t "~A: ~A != ~A?~%" (port-line-number) (/ a b c d) (/ a (* b c d)))))
+ (lambda args
+   (if (not (= (apply / args) (/ (car args) (apply * (cdr args)))))
+       (format #t "~A: ~A != ~A?~%" (port-line-number) (apply / args) (/ (car args) (apply * (cdr args))))))
  '(1 1/2 0.5 1+i))
 
 (num-test (/ -9223372036854775808 5.551115123125783999999999999999999999984E-17) -1.661534994731144452653560599947843044136E35)
@@ -69946,6 +69911,64 @@ etc
 ;(define (hi) (do ((i 0 (+ i 1))) ((= i 200000) i) (abs i)))
 ;(test (hi) 200000)
 
+(test (let ()
+	(define-immaculo (hi a) `(let ((b 23)) (+ b ,a)))
+	(let ((+ *)
+	      (b 12))
+	  (hi b)))
+      35)
+
+(test (let ()
+	(define-clean-macro (hi a) `(+ ,a 1))
+	(let ((+ *)
+	      (a 12))
+	  (hi a)))
+      13)
+
+(test (let ()
+	(define-immaculo (hi a) `(+ ,a 1))
+	(let ((+ *)
+	      (a 12))
+	  (hi a)))
+      13)
+
+(test (let ()
+	(define-clean-macro (mac a . body)
+	  `(+ ,a ,@body))
+	(let ((a 2)
+	      (+ *))
+	  (mac a (- 5 a) (* a 2))))
+      9)
+
+(test (let () 
+	(define-macro (mac b) 
+	  `(let ((a 12)) 
+	     (,+ a ,b)))
+	(let ((a 1) 
+	      (+ *))
+	  (mac a)))
+      24)
+
+(test (let () 
+	(define-macro (mac b) 
+	  `(let ((a 12)) 
+	     (+ a ,b)))
+	(let ((a 1) 
+	      (+ *))
+	  (mac a)))
+      144)
+
+(test (let ()
+	(define-immaculo (mac c d) `(let ((a 12) (b 3)) (+ a b ,c ,d)))
+	(let ((a 21) (b 10) (+ *)) (mac a b)))
+      46)
+
+(let ()
+  (define-macro (pure-let bindings . body)
+    `(with-environment (initial-environment)
+       (let ,bindings ,@body)))
+  (test (let ((+ *) (lambda abs)) (pure-let ((x 2)) ((lambda (y) (+ x y)) 3))) 5))
+
 (test (let ((name '+))
 	(let ((+ *))	
 	  (eval (list name 2 3))))
@@ -69960,6 +69983,8 @@ etc
 		       (let ((c (call/cc x))) c))))
 	(call/cc (lambda (r) (r 1))))
       1)
+
+(test (with-environment (augment-environment (current-environment) (cons '+ (lambda args (apply * args)))) (+ 1 2 3 4)) 24)
 
 (let ()
   (define-constant [begin] begin)

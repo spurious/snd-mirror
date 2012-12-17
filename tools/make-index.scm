@@ -104,20 +104,23 @@
       (length str)))
 
 
-(define* (remove item sequence count)
-  (let* ((len (length sequence))
-	 (num (if (number? count) count len)))
-    (if (not (positive? num))
-	sequence
-	(let ((result '())
-	      (changed 0))     
-	  (do ((i 0 (+ i 1)))
-	      ((= i len))
-	    (if (or (>= changed num)
-		    (not (eq? item (sequence i))))
-		(set! result (cons (sequence i) result))
-		(set! changed (+ changed 1))))
-	  (reverse result)))))
+(define (remove-all item sequence)
+  (map (lambda (x)
+	 (if (eq? x item)
+	     (values)
+	     x))
+       sequence))
+
+(define (remove-one item sequence)
+  (let ((got-it #f))
+    (map (lambda (x)
+	   (if (and (not got-it)
+		    (eq? x item))
+	       (begin
+		 (set! got-it #t)
+		 (values))
+	       x))
+	 sequence)))
 
 
 (define (count-table commands)
@@ -134,8 +137,13 @@
   (and (not (= (length b) 0))
        (or (= (length a) 0)
 	   (string=? a b)
-	   (string<? (if (char=? (string-ref a 0) #\*) (substring a 1) a)
-		     (if (char=? (string-ref b 0) #\*) (substring b 1) b)))))
+	   (if (char=? (string-ref a 0) #\*)
+	       (if (char=? (string-ref b 0) #\*)
+		   (string<? a b)                ; both start with *
+		   (string<? (substring a 1) b))
+	       (if (char=? (string-ref b 0) #\*)
+		   (string<? a (substring b 1))
+		   (string<? a b))))))           ; neither starts with *
 
 
 (define (clean-and-downcase-first-char str caps topic file)
@@ -1262,7 +1270,7 @@
 										    (if (not (= p-parens 0))
 											(format #t "~A[~D]: parens: ~D~%" file linectr p-parens))))
 									    (set! p-parens 0)))
-								      (set! commands (remove closer commands 1))
+								      (set! commands (remove-one closer commands))
 								      (if (not warned)
 									  (begin
 									    (if (and (memq closer '(table TABLE))
@@ -1272,14 +1280,14 @@
 										  (if (memq 'tr commands)
 										      (begin
 											(set! warned #t)
-											(set! commands (remove 'tr commands))
+											(set! commands (remove-all 'tr commands))
 											(format #t "~A[~D]: unclosed tr at table (~A)~%" file linectr commands)))
 										  (if (memq 'td commands)
 										      (begin
 											(set! warned #t)
-											(set! commands (remove 'td commands))
+											(set! commands (remove-all 'td commands))
 											(format #t "~A[~D]: unclosed td at table (~A)~%" file linectr commands))))))))
-								(set! commands (remove closer commands)))))))
+								(set! commands (remove-all closer commands)))))))
 						(set! closing #f))
 						
 					      ;; not closing
@@ -1320,7 +1328,7 @@
 										  (< (count-table commands) 2))
 									     (begin
 									       (set! warned #t)
-									       (set! commands (remove 'td commands 1))
+									       (set! commands (remove-one 'td commands))
 									       (format #t "~A[~D]: unclosed td at table~%" file linectr))))
 									((tr)
 									 (if (and (not (memq (car commands) '(table TABLE)))
@@ -1331,7 +1339,7 @@
 										  (< (count-table commands) 2))
 									     (begin
 									       (set! warned #t)
-									       (set! commands (remove 'tr commands 1))
+									       (set! commands (remove-one 'tr commands))
 									       (format #t "~A[~D]: unclosed tr at table~%" file linectr))))
 									((p)
 									 (if (memq (car commands) '(table TABLE))

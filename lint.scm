@@ -731,7 +731,7 @@
 	  (and (pair? lst)
 	       (or (and (or (not (pair? (car lst)))
 			    (not (side-effect? (car lst) env)))
-			(or (memq (list 'not (car lst)) (cdr lst))
+			(or (member (list 'not (car lst)) (cdr lst))
 			    (and (pair? (car lst))
 				 (eq? (caar lst) 'not)
 				 (= (length (car lst)) 2)
@@ -903,18 +903,24 @@
 			     #f)))
 		     (eq? sym (cdr tree))))))
       
+
+      (define (remove item sequence)
+	(let ((got-it #f))
+	  (map (lambda (x)
+		 (if (and (not got-it)
+			  (eqv? x item))
+		     (begin
+		       (set! got-it #t)
+		       (values))
+		     x))
+	       sequence)))
       
-      (define (remove x lst)
-	(cond ((null? lst) ()) 
-	      ((eqv? (car lst) x) (cdr lst)) ; x might be a number so eq? is not safe
-	      (else (cons (car lst) 
-			  (remove x (cdr lst))))))
-      
-      
-      (define (remove-all x lst) 
-	(cond ((null? lst) ()) 
-	      ((equal? (car lst) x) (remove-all x (cdr lst)))
-	      (else (cons (car lst) (remove-all x (cdr lst))))))
+      (define (remove-all item sequence)
+	(map (lambda (x)
+	       (if (equal? x item)
+		   (values)
+		   x))
+	     sequence))
       
       
       (define (simplify-boolean in-form true false env)
@@ -1730,9 +1736,12 @@
 	  ((memq assq)
 	   (if (= (length form) 3)
 	       (if (or (and (number? (cadr form))
-			    (not (rational? (cadr form))))
+			    (not (integer? (cadr form))))
 		       (string? (cadr form))
-		       (vector? (cadr form)))
+		       (vector? (cadr form))
+		       (and (pair? (cadr form))
+			    (memq (caadr form) '(list vector string hash-table cons lambda lambda* 
+						      string-append append reverse))))
 		   (lint-format "this is always #f:~A"
 				name 
 				(truncated-list->string form)))))
@@ -2064,7 +2073,7 @@
 			     
 			     (check-for-repeated-args name head form env)
 			     (check-for-repeated-args-with-not name form env))
-			    
+
 			    ((eqv?) 
 			     (if (< (length form) 3)
 				 (lint-format "eqv? needs 2 arguments:~A"
@@ -3157,3 +3166,4 @@
 
 ;;; currently *report-undefined-variables* is confused by with-environment -- the field names
 ;;;   are wrongly reported as undefined.
+

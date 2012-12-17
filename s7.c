@@ -11626,6 +11626,29 @@ static s7_pointer g_mod_si(s7_scheme *sc, s7_pointer args)
   CHECK_METHOD(sc, x, sc->MODULO, args);
   return(wrong_type_argument(sc, sc->MODULO, small_int(1), x, T_REAL));
 }
+
+static s7_pointer mod_si_is_zero;
+static s7_pointer g_mod_si_is_zero(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x;
+  s7_Int y;
+
+  /* car is (modulo symbol integer), cadr is 0 or not present (if zero?) */
+  x = finder(sc, cadar(args));
+  y = integer(caddar(args));
+
+  if (is_integer(x))
+    return(make_boolean(sc, (integer(x) % y) == 0));
+  
+  if (is_real(x))
+    return(make_boolean(sc, (fmod(real(x), (s7_Double)y) == 0.0)));
+
+  if (s7_is_ratio(x))
+    return(sc->F);
+
+  CHECK_METHOD(sc, x, sc->MODULO, args);
+  return(wrong_type_argument(sc, sc->MODULO, small_int(1), x, T_REAL));
+}
 #endif
 /* !WITH_GMP */
 
@@ -22637,6 +22660,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
   int i = 0, str_len = 0;
   format_data *fdat = NULL;
   s7_pointer deferred_port = sc->F;
+  bool port_is_string;
 
   if ((!with_result) &&
       (port == sc->F))
@@ -22684,7 +22708,6 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
   fdat->col = 0;
   fdat->args = args;
 
-
   /* choose whether to write to a temporary string port, or simply use the in-coming port
    *   if with_result, returned string is wanted.
    *   if port is sc->F, no non-string result is wanted.
@@ -22697,7 +22720,9 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
       deferred_port = port;
       port = s7_open_output_string(sc);
       fdat->gc_loc = s7_gc_protect(sc, port);
+      port_is_string = true;
     }
+  else port_is_string = is_string_port(port);
 
   for (i = 0; i < str_len; i++)
     {
@@ -22710,7 +22735,14 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	    {
 	    case '%':                           /* -------- newline -------- */
 	      /* sbcl apparently accepts numeric args here (including 0) */
-	      format_append_newline(sc, fdat, port);
+
+	      if ((port_is_string) &&
+		  (port_string_point(port) < port_string_length(port)))
+		{
+		  port_string(port)[port_string_point(port)++] = '\n';
+		  fdat->col = 0;
+		}
+	      else format_append_newline(sc, fdat, port);
 	      i++;
 	      break;
 	      
@@ -23066,7 +23098,16 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	      return(format_error(sc, "unimplemented format directive", str, args, fdat));
 	    }
 	}
-      else format_append_char(sc, fdat, str[i], port);
+      else 
+	{
+	  if ((port_is_string) &&
+	      (port_string_point(port) < port_string_length(port)))
+	    {
+	      port_string(port)[port_string_point(port)++] = str[i];
+	      fdat->col++;
+	    }
+	  else format_append_char(sc, fdat, str[i], port);
+	}
     }
 
  ALL_DONE:
@@ -24326,7 +24367,7 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
   index = s7_integer(ind);
   if (index < 0)
     return(out_of_range(sc, sc->LIST_SET, small_int(arg_num), ind, "index should be non-negative"));
-
+  
   if (index > MAX_LIST_LENGTH)
     return(out_of_range(sc, sc->LIST_SET, small_int(arg_num), ind, "should be a reasonable integer"));
   
@@ -24341,6 +24382,7 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
   if (is_null(cddr(args)))
     car(p) = cadr(args);
   else return(g_list_set_1(sc, car(p), cdr(args), arg_num + 1));
+
   return(cadr(args));
 }
 
@@ -35717,6 +35759,21 @@ static s7_pointer min_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 }
 
 
+static s7_pointer is_zero_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+#if (!WITH_GMP)
+  if ((args == 1) &&
+      (is_optimized(cadr(expr))) &&
+      (c_call(cadr(expr)) == g_mod_si))
+    {
+      set_optimize_data(expr, HOP_SAFE_C_C);
+      return(mod_si_is_zero);
+    }
+#endif
+  return(f);
+}
+
+
 static s7_pointer equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
 #if (!WITH_GMP)
@@ -35735,6 +35792,12 @@ static s7_pointer equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 		      set_optimize_data(expr, HOP_SAFE_C_C);
 		      return(equal_length_ic);
 		    }
+		}
+	      if ((f == g_mod_si) &&
+		  (integer(caddr(expr)) == 0))
+		{
+		  set_optimize_data(expr, HOP_SAFE_C_C);
+		  return(mod_si_is_zero);
 		}
 	    }
 	  if (is_symbol(cadr(expr)))
@@ -36285,6 +36348,11 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(min_f2, f);
 
 
+  /* zero? */
+  f = slot_value(global_slot(sc->ZEROP));
+  c_function_chooser(f) = is_zero_chooser;
+
+
   /* = */
   f = slot_value(global_slot(sc->EQ));
   equal_class = c_function_class(f);
@@ -36296,6 +36364,8 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(equal_length_ic, f);
   equal_2 = s7_make_function(sc, "=", g_equal_2, 2, 0, false, "= optimization");
   s7_function_set_class(equal_2, f);
+  mod_si_is_zero = s7_make_function(sc, "=", g_mod_si_is_zero, 2, 0, false, "= optimization");
+  s7_function_set_class(mod_si_is_zero, f);
 
 
 #if (!WITH_GMP)
@@ -62388,16 +62458,17 @@ s7_scheme *s7_init(void)
  * TODO: what happened to hook documentation? hook is now an s7 constant (see xen.c xen_s7_define_hook)
  *   but make-hook above could presumably put the docstring in the lambda* body -can we find it there?
  *   or in the let for that matter -- could this always work?
- * TODO: if defines can be anywhere and yet global, give each e|f|gcdr ref a unique name
+ * TODO: give each e|f|gcdr ref a unique name
+ * the substr->temp business could be used in other cases like (> x (- i 1)) or (zero? (modulo...))
  *
  * timing    12.0      13.0 13.1 13.2 13.3
  * bench    42736      8752 8051 7725 6518
- * lint                9328 8140 7887 7769
- * index    44300 4988 3291 3005 2742 2121
- * s7test         1721 1358 1297 1244 1233
- * t455            265   89   55   31   16
+ * lint                9328 8140 7887 7762
+ * index    44300 4988 3291 3005 2742 2078
+ * s7test         1721 1358 1297 1244 1181
+ * t455            265   89   55   31   14
  * t502             90   43   39   36   29
  * lat             229   63   52   47   42
- * calls                276  208  176  135
+ * calls                276  208  176  134
  */
 
