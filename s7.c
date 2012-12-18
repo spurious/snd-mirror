@@ -12287,7 +12287,12 @@ static s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args)
 			   (r1 * r2 - i1 * i2) + (rs1 * r3 - is1 * i3),
 			   (r1 * i2 + r2 * i1) + (rs1 * i3 + r3 * is1)));
   }
-  /* (let () (define (hi a b c) (+ (* a b) (* (- 1.0 a) c))) (define (hi1 a b c) (+ (* b a) (* c (- 1 a)))) (define (ho a b c) (list (hi a b c) (hi1 a b c))) (ho 1.4 2.5+i 3.1)) */
+  /* (let () 
+   *   (define (hi a b c) (+ (* a b) (* (- 1.0 a) c))) 
+   *   (define (hi1 a b c) (+ (* b a) (* c (- 1 a)))) 
+   *   (define (ho a b c) (list (hi a b c) (hi1 a b c)))
+   *   (ho 1.4 2.5+i 3.1)) 
+   */
 }
 
 
@@ -50282,9 +50287,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  /* trailers */
 	  sc->cur_code = sc->code;
-#if WITH_COUNTS
-	  add_expr(sc, sc->code);
-#endif
 	  {
 	    s7_pointer carc;
 	    carc = car(sc->code);
@@ -62459,16 +62461,22 @@ s7_scheme *s7_init(void)
  *   but make-hook above could presumably put the docstring in the lambda* body -can we find it there?
  *   or in the let for that matter -- could this always work?
  * TODO: give each e|f|gcdr ref a unique name
- * the substr->temp business could be used in other cases like (> x (- i 1)) or (zero? (modulo...))
+ * the substr->temp business could be used in other cases 
+ * perhaps define-expansion should be define-reader-macro
+ *
+ * make-cell and cell: a mutable s7 cell that can contain anything.
+ *   then that cell can be a member of any number of lists, for example, and
+ *   we get permutations for free!  assignment to cell = clobber innards --
+ *   this requires checks for free (string etc).
  *
  * timing    12.0      13.0 13.1 13.2 13.3
  * bench    42736      8752 8051 7725 6518
  * lint                9328 8140 7887 7762
  * index    44300 4988 3291 3005 2742 2078
- * s7test         1721 1358 1297 1244 1181
+ * s7test         1721 1358 1297 1244  985
  * t455            265   89   55   31   14
  * t502             90   43   39   36   29
  * lat             229   63   52   47   42
- * calls                276  208  176  134
+ * calls                275  207  175  129
  */
 

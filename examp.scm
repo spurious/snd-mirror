@@ -2100,7 +2100,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	    (if (not (eq? in-silence now-silent))
 		(set! edges (cons samp edges)))
 	    (set! in-silence now-silent)
-	    (set! samp (+ 1 samp))
+	    (set! samp (+ samp 1))
 	    #f)))
        (set! edges (append (reverse edges) (list (frames))))
        (let* ((len (length edges))
@@ -2351,7 +2351,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 		     (if marked
 			 (set! marked (or (> (abs y) 0.9999)
 					  (> last-y 0.9999)))))
-		 (set! samp (+ 1 samp))
+		 (set! samp (+ samp 1))
 		 #f)))
 	    (update-time-graph snd chn))))))
 

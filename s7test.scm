@@ -8565,17 +8565,75 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (set-cdr! (list-tail vals (- len 1)) '())))   ; restore its original shape
 |#
 
-;; a slightly faster version (avoids consing primarily)
+#|
+;; a slightly faster version (avoids consing and some recursion)
 (define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
   "(for-each-permutation func vals) applies func to every permutation of vals"
   ;;   (for-each-permutation (lambda args (format #t "~A~%" args)) '(1 2 3))
   (let ((cur (make-list (length vals))))
 
     (define (pinner nvals len)
-      (if (= len 1)
+      (if (= len 2)
 	  (begin
-	    (list-set! cur 0 (car nvals))
-	    (apply func cur)) 
+	    (set! (cur 0) (car nvals))
+	    (set! (cur 1) (cadr nvals))
+	    (apply func cur)
+	    (set! (cur 1) (car nvals))
+	    (set! (cur 0) (cadr nvals))
+	    (apply func cur))
+		
+	(do ((i 0 (+ i 1)))                       ; I suppose a named let would be more Schemish
+	    ((= i len))
+	  (let ((start nvals))
+	    (set! nvals (cdr nvals))
+	    (set! (cur (- len 1)) (car nvals)) 
+	    (set! (cdr start) (cdr nvals))        ; splice out that element and 
+	    (pinner (cdr start) (- len 1))        ;   pass a smaller circle on down
+	    (set! (cdr start) nvals)))))          ; restore original circle
+
+  (let ((len (length vals)))
+    (set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
+    (pinner vals len)
+    (set-cdr! (list-tail vals (- len 1)) '()))))  ; restore its original shape
+|#
+
+;; and continuing down that line... (assume len>2 for this context)
+(define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
+  "(for-each-permutation func vals) applies func to every permutation of vals"
+  ;;   (for-each-permutation (lambda args (format #t "~A~%" args)) '(1 2 3))
+  (let ((cur (make-list (length vals))))
+
+    (define (pinner nvals len)
+      (if (= len 3)
+	  (let ((a0 (car nvals))
+		(a1 (cadr nvals))
+		(a2 (caddr nvals)))
+	    (set! (cur 0) a2)
+	    (set! (cur 1) a0)
+	    (set! (cur 2) a1)
+	    (apply func cur)
+	    (set! (cur 0) a0)
+	    (set! (cur 1) a2)
+	    ;(set! (cur 2) a1)
+	    (apply func cur)
+	    ;(set! (cur 0) a0)
+	    (set! (cur 1) a1)
+	    (set! (cur 2) a2)
+	    (apply func cur)
+	    (set! (cur 0) a1)
+	    (set! (cur 1) a0)
+	    ;(set! (cur 2) a2)
+	    (apply func cur)
+	    ;(set! (cur 0) a1)
+	    (set! (cur 1) a2)
+	    (set! (cur 2) a0)
+	    (apply func cur)
+	    (set! (cur 0) a2)
+	    (set! (cur 1) a1)
+	    ;(set! (cur 2) a0)
+	    (apply func cur)
+	    )
+		
 	(do ((i 0 (+ i 1)))                       ; I suppose a named let would be more Schemish
 	    ((= i len))
 	  (let ((start nvals))
@@ -8589,6 +8647,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
     (pinner vals len)
     (set-cdr! (list-tail vals (- len 1)) '()))))  ; restore its original shape
+
+
 
 
   ;; t224 applies this to +/*

@@ -1087,6 +1087,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
       (filter-selection (make-notch-frequency-response (* 1.0 (selection-srate)) freqs notch-width)
 			(or filter-order (min (selection-frames) (expt 2 (floor (log (/ (selection-srate) notch-width) 2))))))))
 ;; apparently I'm using powers of 2 here so that mus_make_fir_coeffs, called from get_filter_coeffs, can use an fft
+;;   the others use the fft internally for the fir filter, but not filter-selection
 
 
 ;;; -------- fractional Fourier Transform, z transform
@@ -1822,7 +1823,7 @@ and replaces it with the spectrum given in coeffs"
 	 (intrp 0.0)
 	 (tempfile 
 	  (with-sound (:output (snd-tempnam) :srate (srate snd) :to-snd #f)
-	     (do ((samp 0 (+ 1 samp)))
+	     (do ((samp 0 (+ samp 1)))
 		 ((sampler-at-end? rd))
 	       (out-any samp
 			(let ((pos intrp))
@@ -2188,7 +2189,7 @@ is assumed to be outside -1.0 to 1.0."
 			   (set! (clip-data cur-clip) clip-beg)
 			   (set! (clip-data (+ 1 cur-clip)) (- samp 1))
 			   (set! cur-clip (+ cur-clip 2))))))
-	       (set! samp (+ 1 samp))
+	       (set! samp (+ samp 1))
 	       #f)))
 	  
 	  ;; try to restore clipped portions

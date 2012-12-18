@@ -7470,7 +7470,7 @@ EDITS: 5
 		      (scan-chan (lambda (n3) 
 				   (or (> n3 .1) 
 				       (begin 
-					 (set! samp (+ 1 samp)) 
+					 (set! samp (+ samp 1)) 
 					 #f)))
 				 0 (frames snd chn) snd chn edpos)
 		      samp))
@@ -7556,7 +7556,7 @@ EDITS: 5
 		   (max-diff 0.0)
 		   (happy #t))
 	      (do ((e-bin 0)
-		   (samp 0 (+ 1 samp))
+		   (samp 0 (+ samp 1))
 		   (mx -10.0)
 		   (mn 10.0))
 		  ((or (not happy) (= e-bin e-size))
@@ -20035,7 +20035,7 @@ EDITS: 2
 						   (>= y .1))
 					      (set! pts (cons samp pts)))
 					  (set! lasty y)
-					  (set! samp (+ 1 samp))
+					  (set! samp (+ samp 1))
 					  #f)) 
 			  (reverse pts)))))
 	(let ((gen (make-granulate :jitter 0.0 :hop .01 :length .001 :ramp .5 :scaler 1.0 :expansion 0.5)))
@@ -38215,7 +38215,7 @@ EDITS: 1
 	   (s (make-src :srate 0.0))
 	   (incr (+ 2.0 (oscil o)))	  
 	   (tempfile (with-sound (:output (snd-tempnam) :srate (srate) :to-snd #f :comment "step-src")
-		       (do ((samp 0 (+ 1 samp)))
+		       (do ((samp 0 (+ samp 1)))
 			   ((sampler-at-end? rd))
 			 (out-any samp 
 				  (src s incr (lambda (dir) (read-sample rd)))
@@ -39086,7 +39086,7 @@ EDITS: 1
 					;	      (snd-display #__line__ ";notch-selection 60 hz 2: ~A" (maxamp)))
 	(close-sound ind)))
     
-    (with-sound (:srate 44100 :play #f) (bigbird 0 60 60 0 .5 '(0 0 1 1) '(0 0 1 1 2 1 3 0) '(1 1 2 1 3 1 4 1 5 1 6 1 7 1 8 1 9 1 10 1)))
+    (with-sound (:srate 44100 :play #f) (bigbird 0 30 60 0 .5 '(0 0 1 1) '(0 0 1 1 2 1 3 0) '(1 1 2 1 3 1 4 1 5 1 6 1 7 1 8 1 9 1 10 1)))
     (let ((ind (find-sound "test.snd")))
       (notch-sound (let ((freqs ())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
       (if (ffneq (maxamp) .011)
@@ -47354,19 +47354,19 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-14-Dec-12:
-134,692,661,577
-30,880,154,135  s7.c:eval [/home/bil/snd-13/snd]
-11,221,541,243  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 7,657,063,584  ???:sin [/lib64/libm-2.12.so]
- 6,382,888,437  s7.c:eval'2 [/home/bil/snd-13/snd]
- 4,459,935,804  s7.c:gc [/home/bil/snd-13/snd]
- 3,032,415,241  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,964,689,583  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+18-Dec-12:
+129,419,655,033
+29,289,291,540  s7.c:eval [/home/bil/snd-13/snd]
+10,720,301,957  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 7,660,203,855  ???:sin [/lib64/libm-2.12.so]
+ 6,377,043,066  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 4,095,929,145  s7.c:gc [/home/bil/snd-13/snd]
+ 3,032,884,192  clm.c:mus_src [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,840,601,791  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 2,714,773,904  ???:cos [/lib64/libm-2.12.so]
+ 2,893,543,355  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,839,516,750  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 2,556,095,482  ???:cos [/lib64/libm-2.12.so]
  2,346,068,443  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 2,226,056,918  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,936,484,484  s7.c:g_add_ss_1ss [/home/bil/snd-13/snd]
+ 2,224,967,668  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,609,153,036  s7.c:g_add_ss_1ss [/home/bil/snd-13/snd]
 |#

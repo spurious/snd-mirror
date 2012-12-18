@@ -35,57 +35,83 @@
 	  (outa i (* amp (read-sample fil1))))
 
 	(let ((bank2-end (+ bank2-start bank-samps))
-	      (val 0.0)
 	      (ramp 0.0)
 	      (bank1 0.0)
 	      (bank2 1.0)
+	      (outval 0.0)
 	      (inputs (make-vct fs 0.0))
-	      (amps (make-vct fs 1.0)))
+	      (amps (make-vct fs 1.0))
+	      (ifs (/ 1.0 fs))
+	      (mid 0))
 
 	  (do ((i bank1-start (+ i 1)))
 	      ((= i bank2-end))
 	    (if (< i ramp-start)
 		;; in bank1 section -- fire up the resonators
-		(let ((inval (read-sample fil1))
-		      (outval 0.0))
+		(let ((inval (read-sample fil1)))
 		  (set! bank1 (+ bank1 bank-incr))
 		  (set! outval (formant-bank amps fs1 inval))
-		  (set! val (+ (* bank1 outval) (* (- 1.0 bank1) inval))))
+		  (outa i (* amp (+ (* bank1 outval) (* (- 1.0 bank1) inval)))))
 		
 		(if (> i ramp-end)
 		    ;; in bank2 section -- ramp out resonators
-		    (let ((inval (read-sample fil2))
-			  (outval 0.0))
+		    (let ((inval (read-sample fil2)))
 		      (set! bank2 (- bank2 bank-incr))
 		      (set! outval (formant-bank amps fs1 inval))
-		      (set! val (+ (* bank2 outval) (* (- 1.0 bank2) inval))))
+		      (outa i (* amp (+ (* bank2 outval) (* (- 1.0 bank2) inval)))))
 		    
 		    ;; in the fade section
 		    (let ((inval1 (read-sample fil1))
-			  (inval2 (read-sample fil2))
-			  (ifs (/ 1.0 fs)))
+			  (inval2 (read-sample fil2)))
 		      ;; now the choice of spectral fade -- we should end with all bank1 0.0 and all bank2 1.0
 		      (set! ramp (+ ramp ramp-incr))
 		      
 		      (case ramp-type
 			((0)
-			 (let ((r2 (* 2 ramp)))
-			   ;; sweep up so low freqs go first
-			   (do ((k 1 (+ k 1))
-				(ks r2 (- ks ifs)))
-			       ((= k fs))
-			     (let ((rfs (max 0.0 (min 1.0 ks))))
-			       (set! (inputs k) (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))
-			   (set! val (formant-bank amps fs1 inputs))))		   
+			 ;; low freqs go first
+			 (if (>= ramp 0.5)
+			     (begin
+			       (set! mid (min fs (floor (/ (- (* 2.0 ramp) 1.0) ifs))))
+			       (do ((k 0 (+ k 1)))
+				   ((= k mid))
+				 (set! (inputs k) inval2))
+			       (do ((k mid (+ k 1))
+				    (ks 1.0 (- ks ifs)))
+				   ((= k fs))
+				 (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1)))))
+			     (begin
+			       (set! mid (min fs (floor (/ (* 2.0 ramp) ifs))))
+			       (do ((k 0 (+ k 1))
+				    (ks (* 2.0 ramp) (- ks ifs)))
+				   ((= k mid))
+				 (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1))))
+			       (do ((k mid (+ k 1)))
+				   ((= k fs))
+				 (set! (inputs k) inval1))))
+			 (outa i (* amp (formant-bank amps fs1 inputs))))
 			
 			((1)
-			 (let ((r2 (* 2 ramp)))
-			   ;; sweep up so high freqs go first
-			   (do ((k 1 (+ k 1)))
-			       ((= k fs))
-			     (let ((rfs (max 0.0 (min 1.0 (- r2 (* (- fs k -1) ifs))))))
-			       (set! (inputs k) (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))
-			   (set! val (formant-bank amps fs1 inputs))))			   
+			 ;; high freqs go first
+			 (if (>= ramp 0.5)
+			     (let ((r2 (- (* 2.0 ramp) 1.0)))
+			       (set! mid (min fs (ceiling (/ (* 2.0 (- 1.0 ramp)) ifs))))
+			       (do ((k 0 (+ k 1))
+				    (ks r2 (+ ks ifs)))
+				   ((= k mid))
+				 (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1))))
+			       (do ((k mid (+ k 1)))
+				   ((= k fs))
+				 (set! (inputs k) inval2)))
+			     (begin
+			       (set! mid (min fs (ceiling (/ (- 1.0 (* 2 ramp)) ifs))))
+			       (do ((k 0 (+ k 1)))
+				   ((= k mid))
+				 (set! (inputs k) inval1))
+			       (do ((k mid (+ k 1))
+				    (ks 0.0 (+ ks ifs)))
+				   ((= k fs))
+				 (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
+			 (outa i (* amp (formant-bank amps fs1 inputs))))
 			
 			;; sweep from midpoint out
 			(else
@@ -99,8 +125,7 @@
 			       ((= k (- half-fs 1)))
 			     (let ((rfs (max 0.0 (min 1.0 (- r2 (/ k half-fs))))))
 			       (set! (inputs (+ k 1 half-fs)) (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))
-			   (set! val (formant-bank amps fs1 inputs))))))))		   
-	    (outa i (* amp val)))
+			   (outa i (* amp (formant-bank amps fs1 inputs))))))))))
 
 	  (do ((i bank2-end (+ i 1)))
 	      ((= i end))
@@ -112,6 +137,7 @@
 
 ;;; (vct->channel (with-sound (:output (make-vct 22050)) (cross-fade 0 .1 1 0 1 .01 .01 0 .1 256 2)))
 ;;; (vct->channel (with-sound (:output (make-vct 44100)) (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2)))
+;;; (with-sound (:statistics #t) (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2))
 ;;; (with-sound () (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2))
 ;;; these fades seem more successful to me when done relatively quickly (the opposite of the dissolve below
 ;;; which is best if done as slowly as possible).  I like the sweep up best -- a sort of "evaporation" effect.

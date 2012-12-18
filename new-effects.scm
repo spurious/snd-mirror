@@ -434,7 +434,7 @@
 	(samp 0)
 	(input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
-		   (set! samp (+ 1 samp))
+		   (set! samp (+ samp 1))
 		   (+ inval
 		      (delay del
 			     (* echo-amount (+ (tap del) (if (<= samp input-samps) inval 0.0))))))
@@ -448,7 +448,7 @@
 	(samp 0)
 	(input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
-		   (set! samp (+ 1 samp))
+		   (set! samp (+ samp 1))
 		   (+ inval 
 		      (delay del 
 			     (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))))))
@@ -463,7 +463,7 @@
 	 (samp 0)
 	 (input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
-		   (set! samp (+ 1 samp))
+		   (set! samp (+ samp 1))
 		   (+ inval 
 		      (delay del 
 			     (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))
@@ -505,7 +505,7 @@
 			(let ((del (make-delay (round (* delay-time (srate)))))
 			      (samp 0))
 			  (lambda (inval)
-			    (set! samp (+ 1 samp))
+			    (set! samp (+ samp 1))
 			    (+ inval
 			       (delay del
 				      (* echo-amount (+ (tap del) (if (<= samp input-samps) inval 0.0))))))))
@@ -576,7 +576,7 @@
 	      (del (make-delay (round (* secs (srate)))))
 	      (samp 0))
 	  (lambda (inval)
-	    (set! samp (+ 1 samp))
+	    (set! samp (+ samp 1))
 	    (+ inval 
 	       (delay del 
 		      (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0))))))))))
@@ -666,7 +666,7 @@
 	       (del (make-delay len :max-size (round (+ len amp 1))))
 	       (samp 0))
 	  (lambda (inval)
-	    (set! samp (+ 1 samp))
+	    (set! samp (+ samp 1))
 	    (+ inval 
 	       (delay del 
 		      (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))
@@ -1993,7 +1993,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 				   (all-pass allpass2 
 					     (all-pass allpass1 
 						       (if (< samp input-samps) inval 0.0))))))
-	(set! samp (+ 1 samp))
+	(set! samp (+ samp 1))
 	(set! comb-sum 
 	      (+ (comb comb1 allpass-sum)
 		 (comb comb2 allpass-sum)
