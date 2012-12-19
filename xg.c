@@ -876,10 +876,6 @@ XM_TYPE_PTR_1(GdkScreen__, GdkScreen**)
 
 #if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT
 XM_TYPE_PTR_1(GtkWidgetPath_, GtkWidgetPath*)
-XM_TYPE_PTR(GtkGradient_, GtkGradient*)
-XM_TYPE_PTR_1(GtkSymbolicColor_, GtkSymbolicColor*)
-XM_TYPE_PTR_1(GtkStyleProperties_, GtkStyleProperties*)
-XM_TYPE_PTR_1(cairo_pattern_t__, cairo_pattern_t**)
 XM_TYPE_PTR_1(GtkOverlay_, GtkOverlay*)
 #endif
 
@@ -29822,17 +29818,6 @@ static XEN gxg_gtk_widget_override_font(XEN widget, XEN font_desc)
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_widget_override_symbolic_color(XEN widget, XEN name, XEN color)
-{
-  #define H_gtk_widget_override_symbolic_color "void gtk_widget_override_symbolic_color(GtkWidget* widget, \
-gchar* name, GdkRGBA* color)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_override_symbolic_color", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(name), name, 2, "gtk_widget_override_symbolic_color", "gchar*");
-  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(color), color, 3, "gtk_widget_override_symbolic_color", "GdkRGBA*");
-  gtk_widget_override_symbolic_color(XEN_TO_C_GtkWidget_(widget), (const gchar*)XEN_TO_C_gchar_(name), XEN_TO_C_GdkRGBA_(color));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_widget_override_cursor(XEN widget, XEN cursor, XEN secondary_cursor)
 {
   #define H_gtk_widget_override_cursor "void gtk_widget_override_cursor(GtkWidget* widget, GdkRGBA* cursor, \
@@ -29946,82 +29931,6 @@ gchar* active_id)"
   XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_set_active_id", "GtkComboBox*");
   XEN_ASSERT_TYPE(XEN_gchar__P(active_id), active_id, 2, "gtk_combo_box_set_active_id", "gchar*");
   return(C_TO_XEN_gboolean(gtk_combo_box_set_active_id(XEN_TO_C_GtkComboBox_(combo_box), (const gchar*)XEN_TO_C_gchar_(active_id))));
-}
-
-static XEN gxg_gtk_gradient_new_linear(XEN x0, XEN y0, XEN x1, XEN y1)
-{
-  #define H_gtk_gradient_new_linear "GtkGradient* gtk_gradient_new_linear(gdouble x0, gdouble y0, gdouble x1, \
-gdouble y1)"
-  XEN_ASSERT_TYPE(XEN_gdouble_P(x0), x0, 1, "gtk_gradient_new_linear", "gdouble");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(y0), y0, 2, "gtk_gradient_new_linear", "gdouble");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(x1), x1, 3, "gtk_gradient_new_linear", "gdouble");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(y1), y1, 4, "gtk_gradient_new_linear", "gdouble");
-  return(C_TO_XEN_GtkGradient_(gtk_gradient_new_linear(XEN_TO_C_gdouble(x0), XEN_TO_C_gdouble(y0), XEN_TO_C_gdouble(x1), 
-                                                       XEN_TO_C_gdouble(y1))));
-}
-
-static XEN gxg_gtk_gradient_new_radial(XEN x0, XEN y0, XEN radius0, XEN x1, XEN y1, XEN radius1)
-{
-  #define H_gtk_gradient_new_radial "GtkGradient* gtk_gradient_new_radial(gdouble x0, gdouble y0, gdouble radius0, \
-gdouble x1, gdouble y1, gdouble radius1)"
-  XEN_ASSERT_TYPE(XEN_gdouble_P(x0), x0, 1, "gtk_gradient_new_radial", "gdouble");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(y0), y0, 2, "gtk_gradient_new_radial", "gdouble");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(radius0), radius0, 3, "gtk_gradient_new_radial", "gdouble");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(x1), x1, 4, "gtk_gradient_new_radial", "gdouble");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(y1), y1, 5, "gtk_gradient_new_radial", "gdouble");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(radius1), radius1, 6, "gtk_gradient_new_radial", "gdouble");
-  return(C_TO_XEN_GtkGradient_(gtk_gradient_new_radial(XEN_TO_C_gdouble(x0), XEN_TO_C_gdouble(y0), XEN_TO_C_gdouble(radius0), 
-                                                       XEN_TO_C_gdouble(x1), XEN_TO_C_gdouble(y1), XEN_TO_C_gdouble(radius1))));
-}
-
-static XEN gxg_gtk_gradient_add_color_stop(XEN gradient, XEN offset, XEN color)
-{
-  #define H_gtk_gradient_add_color_stop "void gtk_gradient_add_color_stop(GtkGradient* gradient, gdouble offset, \
-GtkSymbolicColor* color)"
-  XEN_ASSERT_TYPE(XEN_GtkGradient__P(gradient), gradient, 1, "gtk_gradient_add_color_stop", "GtkGradient*");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(offset), offset, 2, "gtk_gradient_add_color_stop", "gdouble");
-  XEN_ASSERT_TYPE(XEN_GtkSymbolicColor__P(color), color, 3, "gtk_gradient_add_color_stop", "GtkSymbolicColor*");
-  gtk_gradient_add_color_stop(XEN_TO_C_GtkGradient_(gradient), XEN_TO_C_gdouble(offset), XEN_TO_C_GtkSymbolicColor_(color));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_gradient_ref(XEN gradient)
-{
-  #define H_gtk_gradient_ref "GtkGradient* gtk_gradient_ref(GtkGradient* gradient)"
-  XEN_ASSERT_TYPE(XEN_GtkGradient__P(gradient), gradient, 1, "gtk_gradient_ref", "GtkGradient*");
-  return(C_TO_XEN_GtkGradient_(gtk_gradient_ref(XEN_TO_C_GtkGradient_(gradient))));
-}
-
-static XEN gxg_gtk_gradient_unref(XEN gradient)
-{
-  #define H_gtk_gradient_unref "void gtk_gradient_unref(GtkGradient* gradient)"
-  XEN_ASSERT_TYPE(XEN_GtkGradient__P(gradient), gradient, 1, "gtk_gradient_unref", "GtkGradient*");
-  gtk_gradient_unref(XEN_TO_C_GtkGradient_(gradient));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_gradient_resolve(XEN gradient, XEN props, XEN resolved_gradient)
-{
-  #define H_gtk_gradient_resolve "gboolean gtk_gradient_resolve(GtkGradient* gradient, GtkStyleProperties* props, \
-cairo_pattern_t** resolved_gradient)"
-  XEN_ASSERT_TYPE(XEN_GtkGradient__P(gradient), gradient, 1, "gtk_gradient_resolve", "GtkGradient*");
-  XEN_ASSERT_TYPE(XEN_GtkStyleProperties__P(props), props, 2, "gtk_gradient_resolve", "GtkStyleProperties*");
-  XEN_ASSERT_TYPE(XEN_cairo_pattern_t___P(resolved_gradient), resolved_gradient, 3, "gtk_gradient_resolve", "cairo_pattern_t**");
-  return(C_TO_XEN_gboolean(gtk_gradient_resolve(XEN_TO_C_GtkGradient_(gradient), XEN_TO_C_GtkStyleProperties_(props), XEN_TO_C_cairo_pattern_t__(resolved_gradient))));
-}
-
-static XEN gxg_gtk_gradient_to_string(XEN gradient)
-{
-  #define H_gtk_gradient_to_string "char* gtk_gradient_to_string(GtkGradient* gradient)"
-  XEN_ASSERT_TYPE(XEN_GtkGradient__P(gradient), gradient, 1, "gtk_gradient_to_string", "GtkGradient*");
-  return(C_TO_XEN_char_(gtk_gradient_to_string(XEN_TO_C_GtkGradient_(gradient))));
-}
-
-static XEN gxg_gtk_symbolic_color_to_string(XEN color)
-{
-  #define H_gtk_symbolic_color_to_string "char* gtk_symbolic_color_to_string(GtkSymbolicColor* color)"
-  XEN_ASSERT_TYPE(XEN_GtkSymbolicColor__P(color), color, 1, "gtk_symbolic_color_to_string", "GtkSymbolicColor*");
-  return(C_TO_XEN_char_(gtk_symbolic_color_to_string(XEN_TO_C_GtkSymbolicColor_(color))));
 }
 
 static XEN gxg_gtk_tree_view_column_get_x_offset(XEN tree_column)
@@ -38436,7 +38345,6 @@ XEN_NARGIFY_1(gxg_gtk_widget_get_state_flags_w, gxg_gtk_widget_get_state_flags)
 XEN_NARGIFY_3(gxg_gtk_widget_override_color_w, gxg_gtk_widget_override_color)
 XEN_NARGIFY_3(gxg_gtk_widget_override_background_color_w, gxg_gtk_widget_override_background_color)
 XEN_NARGIFY_2(gxg_gtk_widget_override_font_w, gxg_gtk_widget_override_font)
-XEN_NARGIFY_3(gxg_gtk_widget_override_symbolic_color_w, gxg_gtk_widget_override_symbolic_color)
 XEN_NARGIFY_3(gxg_gtk_widget_override_cursor_w, gxg_gtk_widget_override_cursor)
 #endif
 
@@ -38452,14 +38360,6 @@ XEN_NARGIFY_3(gxg_gtk_container_child_notify_w, gxg_gtk_container_child_notify)
 XEN_NARGIFY_2(gxg_gtk_drag_source_set_icon_gicon_w, gxg_gtk_drag_source_set_icon_gicon)
 XEN_NARGIFY_4(gxg_gtk_drag_set_icon_gicon_w, gxg_gtk_drag_set_icon_gicon)
 XEN_NARGIFY_2(gxg_gtk_combo_box_set_active_id_w, gxg_gtk_combo_box_set_active_id)
-XEN_NARGIFY_4(gxg_gtk_gradient_new_linear_w, gxg_gtk_gradient_new_linear)
-XEN_NARGIFY_6(gxg_gtk_gradient_new_radial_w, gxg_gtk_gradient_new_radial)
-XEN_NARGIFY_3(gxg_gtk_gradient_add_color_stop_w, gxg_gtk_gradient_add_color_stop)
-XEN_NARGIFY_1(gxg_gtk_gradient_ref_w, gxg_gtk_gradient_ref)
-XEN_NARGIFY_1(gxg_gtk_gradient_unref_w, gxg_gtk_gradient_unref)
-XEN_NARGIFY_3(gxg_gtk_gradient_resolve_w, gxg_gtk_gradient_resolve)
-XEN_NARGIFY_1(gxg_gtk_gradient_to_string_w, gxg_gtk_gradient_to_string)
-XEN_NARGIFY_1(gxg_gtk_symbolic_color_to_string_w, gxg_gtk_symbolic_color_to_string)
 XEN_NARGIFY_1(gxg_gtk_tree_view_column_get_x_offset_w, gxg_gtk_tree_view_column_get_x_offset)
 XEN_NARGIFY_0(gxg_gtk_overlay_new_w, gxg_gtk_overlay_new)
 XEN_NARGIFY_2(gxg_gtk_overlay_add_overlay_w, gxg_gtk_overlay_add_overlay)
@@ -42511,7 +42411,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_widget_override_color_w gxg_gtk_widget_override_color
 #define gxg_gtk_widget_override_background_color_w gxg_gtk_widget_override_background_color
 #define gxg_gtk_widget_override_font_w gxg_gtk_widget_override_font
-#define gxg_gtk_widget_override_symbolic_color_w gxg_gtk_widget_override_symbolic_color
 #define gxg_gtk_widget_override_cursor_w gxg_gtk_widget_override_cursor
 #endif
 
@@ -42527,14 +42426,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_drag_source_set_icon_gicon_w gxg_gtk_drag_source_set_icon_gicon
 #define gxg_gtk_drag_set_icon_gicon_w gxg_gtk_drag_set_icon_gicon
 #define gxg_gtk_combo_box_set_active_id_w gxg_gtk_combo_box_set_active_id
-#define gxg_gtk_gradient_new_linear_w gxg_gtk_gradient_new_linear
-#define gxg_gtk_gradient_new_radial_w gxg_gtk_gradient_new_radial
-#define gxg_gtk_gradient_add_color_stop_w gxg_gtk_gradient_add_color_stop
-#define gxg_gtk_gradient_ref_w gxg_gtk_gradient_ref
-#define gxg_gtk_gradient_unref_w gxg_gtk_gradient_unref
-#define gxg_gtk_gradient_resolve_w gxg_gtk_gradient_resolve
-#define gxg_gtk_gradient_to_string_w gxg_gtk_gradient_to_string
-#define gxg_gtk_symbolic_color_to_string_w gxg_gtk_symbolic_color_to_string
 #define gxg_gtk_tree_view_column_get_x_offset_w gxg_gtk_tree_view_column_get_x_offset
 #define gxg_gtk_overlay_new_w gxg_gtk_overlay_new
 #define gxg_gtk_overlay_add_overlay_w gxg_gtk_overlay_add_overlay
@@ -46593,7 +46484,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_override_color, gxg_gtk_widget_override_color_w, 3, 0, 0, H_gtk_widget_override_color);
   XG_DEFINE_PROCEDURE(gtk_widget_override_background_color, gxg_gtk_widget_override_background_color_w, 3, 0, 0, H_gtk_widget_override_background_color);
   XG_DEFINE_PROCEDURE(gtk_widget_override_font, gxg_gtk_widget_override_font_w, 2, 0, 0, H_gtk_widget_override_font);
-  XG_DEFINE_PROCEDURE(gtk_widget_override_symbolic_color, gxg_gtk_widget_override_symbolic_color_w, 3, 0, 0, H_gtk_widget_override_symbolic_color);
   XG_DEFINE_PROCEDURE(gtk_widget_override_cursor, gxg_gtk_widget_override_cursor_w, 3, 0, 0, H_gtk_widget_override_cursor);
 #endif
 
@@ -46609,14 +46499,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_drag_source_set_icon_gicon, gxg_gtk_drag_source_set_icon_gicon_w, 2, 0, 0, H_gtk_drag_source_set_icon_gicon);
   XG_DEFINE_PROCEDURE(gtk_drag_set_icon_gicon, gxg_gtk_drag_set_icon_gicon_w, 4, 0, 0, H_gtk_drag_set_icon_gicon);
   XG_DEFINE_PROCEDURE(gtk_combo_box_set_active_id, gxg_gtk_combo_box_set_active_id_w, 2, 0, 0, H_gtk_combo_box_set_active_id);
-  XG_DEFINE_PROCEDURE(gtk_gradient_new_linear, gxg_gtk_gradient_new_linear_w, 4, 0, 0, H_gtk_gradient_new_linear);
-  XG_DEFINE_PROCEDURE(gtk_gradient_new_radial, gxg_gtk_gradient_new_radial_w, 6, 0, 0, H_gtk_gradient_new_radial);
-  XG_DEFINE_PROCEDURE(gtk_gradient_add_color_stop, gxg_gtk_gradient_add_color_stop_w, 3, 0, 0, H_gtk_gradient_add_color_stop);
-  XG_DEFINE_PROCEDURE(gtk_gradient_ref, gxg_gtk_gradient_ref_w, 1, 0, 0, H_gtk_gradient_ref);
-  XG_DEFINE_PROCEDURE(gtk_gradient_unref, gxg_gtk_gradient_unref_w, 1, 0, 0, H_gtk_gradient_unref);
-  XG_DEFINE_PROCEDURE(gtk_gradient_resolve, gxg_gtk_gradient_resolve_w, 3, 0, 0, H_gtk_gradient_resolve);
-  XG_DEFINE_PROCEDURE(gtk_gradient_to_string, gxg_gtk_gradient_to_string_w, 1, 0, 0, H_gtk_gradient_to_string);
-  XG_DEFINE_PROCEDURE(gtk_symbolic_color_to_string, gxg_gtk_symbolic_color_to_string_w, 1, 0, 0, H_gtk_symbolic_color_to_string);
   XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_x_offset, gxg_gtk_tree_view_column_get_x_offset_w, 1, 0, 0, H_gtk_tree_view_column_get_x_offset);
   XG_DEFINE_PROCEDURE(gtk_overlay_new, gxg_gtk_overlay_new_w, 0, 0, 0, H_gtk_overlay_new);
   XG_DEFINE_PROCEDURE(gtk_overlay_add_overlay, gxg_gtk_overlay_add_overlay_w, 2, 0, 0, H_gtk_overlay_add_overlay);
@@ -49363,7 +49245,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("24-Oct-12"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("19-Dec-12"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

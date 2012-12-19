@@ -1962,7 +1962,7 @@
 	(let ((fdata (env-member head env)))
 	  (if (pair? fdata)
 	      ;; a local var
-	      (let ()
+	      (begin
 		(if (and (>= (length fdata) 4)
 			 (not (null? (list-ref fdata 3))))
 		    (let ((type (car (list-ref fdata 3)))

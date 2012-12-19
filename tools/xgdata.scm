@@ -8178,7 +8178,7 @@
 (CFNC-300 "void gtk_widget_override_color GtkWidget* widget GtkStateFlags state GdkRGBA* color" 'const)
 (CFNC-300 "void gtk_widget_override_background_color GtkWidget* widget GtkStateFlags state GdkRGBA* color" 'const)
 (CFNC-300 "void gtk_widget_override_font GtkWidget* widget PangoFontDescription* font_desc" 'const)
-(CFNC-300 "void gtk_widget_override_symbolic_color GtkWidget* widget gchar* name GdkRGBA* color" 'const)
+;;; 3.7.4 (CFNC-300 "void gtk_widget_override_symbolic_color GtkWidget* widget gchar* name GdkRGBA* color" 'const)
 (CFNC-300 "void gtk_widget_override_cursor GtkWidget* widget GdkRGBA* cursor GdkRGBA* secondary_cursor" 'const)
 
 
@@ -8209,15 +8209,15 @@
 ;;; 3.1.6
 ;(CFNC-310 "char* gtk_css_provider_to_string GtkCssProvider* provider")
 
-(CFNC-310 "GtkGradient* gtk_gradient_new_linear gdouble x0 gdouble y0 gdouble x1 gdouble y1")
-(CFNC-310 "GtkGradient* gtk_gradient_new_radial gdouble x0 gdouble y0 gdouble radius0 gdouble x1 gdouble y1 gdouble radius1")
-(CFNC-310 "void gtk_gradient_add_color_stop GtkGradient* gradient gdouble offset GtkSymbolicColor* color")
-(CFNC-310 "GtkGradient* gtk_gradient_ref GtkGradient* gradient")
-(CFNC-310 "void gtk_gradient_unref GtkGradient* gradient")
-(CFNC-310 "gboolean gtk_gradient_resolve GtkGradient* gradient GtkStyleProperties* props cairo_pattern_t** resolved_gradient")
+;;; 3.7.4 (CFNC-310 "GtkGradient* gtk_gradient_new_linear gdouble x0 gdouble y0 gdouble x1 gdouble y1")
+;;; 3.7.4 (CFNC-310 "GtkGradient* gtk_gradient_new_radial gdouble x0 gdouble y0 gdouble radius0 gdouble x1 gdouble y1 gdouble radius1")
+;;; 3.7.4 (CFNC-310 "void gtk_gradient_add_color_stop GtkGradient* gradient gdouble offset GtkSymbolicColor* color")
+;;; 3.7.4 (CFNC-310 "GtkGradient* gtk_gradient_ref GtkGradient* gradient")
+;;; 3.7.4 (CFNC-310 "void gtk_gradient_unref GtkGradient* gradient")
+;;; 3.7.4 (CFNC-310 "gboolean gtk_gradient_resolve GtkGradient* gradient GtkStyleProperties* props cairo_pattern_t** resolved_gradient")
 
-(CFNC-310 "char* gtk_gradient_to_string GtkGradient* gradient")
-(CFNC-310 "char* gtk_symbolic_color_to_string GtkSymbolicColor* color")
+;;; 3.7.4 (CFNC-310 "char* gtk_gradient_to_string GtkGradient* gradient")
+;;; 3.7.4 (CFNC-310 "char* gtk_symbolic_color_to_string GtkSymbolicColor* color")
 
 (CFNC-310 "gint gtk_tree_view_column_get_x_offset GtkTreeViewColumn* tree_column")
 ;(CFNC-310 void gtk_render_icon GtkStyleContext* context cairo_t* cr GdkPixbuf* pixbuf gdouble x gdouble y")
@@ -8523,6 +8523,11 @@
 (CINT "GTK_SIZE_GROUP_BOTH" "GtkSizeGroupMode")
 (CFNC "gboolean gtk_widget_is_visible GtkWidget* widget")
 
+
+;;; 3.7.4
+;;; gtk-gradient is deprecated? and symboliccolor
+
+
 |#
 
  
@@ -8561,9 +8566,9 @@
 (CINT-300 "GTK_STYLE_PROVIDER_PRIORITY_SETTINGS")
 (CINT-300 "GTK_STYLE_PROVIDER_PRIORITY_APPLICATION")
 (CINT-300 "GTK_STYLE_PROVIDER_PRIORITY_USER")
-(CFNC-300 "GtkStyleProperties* gtk_style_provider_get_style GtkStyleProvider* provider GtkWidgetPath* path")
+;;; 3.7.4 (CFNC-300 "GtkStyleProperties* gtk_style_provider_get_style GtkStyleProvider* provider GtkWidgetPath* path")
 (CFNC-300 "gboolean gtk_style_provider_get_style_property GtkStyleProvider* provider GtkWidgetPath* path GtkStateFlags state GParamSpec* pspec GValue* [value]")
-(CFNC-300 "GtkIconFactory* gtk_style_provider_get_icon_factory GtkStyleProvider* provider GtkWidgetPath* path")
+;;; 3.7.4 (CFNC-300 "GtkIconFactory* gtk_style_provider_get_icon_factory GtkStyleProvider* provider GtkWidgetPath* path")
 
 (CSTR-300 "GTK_STYLE_PROPERTY_BACKGROUND_COLOR")
 (CSTR-300 "GTK_STYLE_PROPERTY_COLOR")
@@ -8719,11 +8724,11 @@
 ;;; 3.6 (CFNC-300 "void gtk_style_context_cancel_animations GtkStyleContext* context gpointer region_id")
 ;;; 3.6 (CFNC-300 "void gtk_style_context_scroll_animations GtkStyleContext* context GdkWindow* window gint dx gint dy")
 
-(CFNC-300 "void gtk_style_properties_register_property GtkStylePropertyParser parse_func GParamSpec* pspec")
-(CFNC-300 "gboolean gtk_style_properties_lookup_property gchar* property_name GtkStylePropertyParser* parse_func GParamSpec** pspec" 'const)
+;;; 3.7.4 (CFNC-300 "void gtk_style_properties_register_property GtkStylePropertyParser parse_func GParamSpec* pspec")
+;;; 3.7.4 (CFNC-300 "gboolean gtk_style_properties_lookup_property gchar* property_name GtkStylePropertyParser* parse_func GParamSpec** pspec" 'const)
 (CFNC-300 "GtkStyleProperties* gtk_style_properties_new void")
-(CFNC-300 "void gtk_style_properties_map_color GtkStyleProperties* props gchar* name GtkSymbolicColor* color" 'const)
-(CFNC-300 "GtkSymbolicColor* gtk_style_properties_lookup_color GtkStyleProperties* props gchar* name" 'const)
+;;; 3.7.4 (CFNC-300 "void gtk_style_properties_map_color GtkStyleProperties* props gchar* name GtkSymbolicColor* color" 'const)
+;;; 3.7.4 (CFNC-300 "GtkSymbolicColor* gtk_style_properties_lookup_color GtkStyleProperties* props gchar* name" 'const)
 (CFNC-300 "void gtk_style_properties_set_property GtkStyleProperties* props gchar* property GtkStateFlags state GValue* value" 'const)
 ;(CFNC-300 "void gtk_style_properties_set_valist GtkStyleProperties* props GtkStateFlags state va_list args")void gtk_style_properties_set GtkStyleProperties* props GtkStateFlags state ...)
 (CFNC-300 "gboolean gtk_style_properties_get_property GtkStyleProperties* props gchar* property GtkStateFlags state GValue* value" 'const)
@@ -8732,14 +8737,14 @@
 (CFNC-300 "void gtk_style_properties_unset_property GtkStyleProperties* props gchar* property GtkStateFlags state" 'const)
 (CFNC-300 "void gtk_style_properties_clear GtkStyleProperties* props")
 (CFNC-300 "void gtk_style_properties_merge GtkStyleProperties* props GtkStyleProperties* props_to_merge gboolean replace" 'const)
-(CFNC-300 "GtkSymbolicColor* gtk_symbolic_color_new_literal GdkRGBA* color" 'const)
-(CFNC-300 "GtkSymbolicColor* gtk_symbolic_color_new_name gchar* name" 'const)
-(CFNC-300 "GtkSymbolicColor* gtk_symbolic_color_new_shade GtkSymbolicColor* color gdouble factor")
-(CFNC-300 "GtkSymbolicColor* gtk_symbolic_color_new_alpha GtkSymbolicColor* color gdouble factor")
-(CFNC-300 "GtkSymbolicColor* gtk_symbolic_color_new_mix GtkSymbolicColor* color1 GtkSymbolicColor* color2 gdouble factor")
-(CFNC-300 "GtkSymbolicColor* gtk_symbolic_color_ref GtkSymbolicColor* color")
-(CFNC-300 "void gtk_symbolic_color_unref GtkSymbolicColor* color")
-(CFNC-300 "gboolean gtk_symbolic_color_resolve GtkSymbolicColor* color GtkStyleProperties* props GdkRGBA* resolved_color")
+;;; 3.7.4 (CFNC-300 "GtkSymbolicColor* gtk_symbolic_color_new_literal GdkRGBA* color" 'const)
+;;; 3.7.4 (CFNC-300 "GtkSymbolicColor* gtk_symbolic_color_new_name gchar* name" 'const)
+;;; 3.7.4 (CFNC-300 "GtkSymbolicColor* gtk_symbolic_color_new_shade GtkSymbolicColor* color gdouble factor")
+;;; 3.7.4 (CFNC-300 "GtkSymbolicColor* gtk_symbolic_color_new_alpha GtkSymbolicColor* color gdouble factor")
+;;; 3.7.4 (CFNC-300 "GtkSymbolicColor* gtk_symbolic_color_new_mix GtkSymbolicColor* color1 GtkSymbolicColor* color2 gdouble factor")
+;;; 3.7.4 (CFNC-300 "GtkSymbolicColor* gtk_symbolic_color_ref GtkSymbolicColor* color")
+;;; 3.7.4 (CFNC-300 "void gtk_symbolic_color_unref GtkSymbolicColor* color")
+;;; 3.7.4 (CFNC-300 "gboolean gtk_symbolic_color_resolve GtkSymbolicColor* color GtkStyleProperties* props GdkRGBA* resolved_color")
 
 (CFNC-300 "GtkStyleContext* gtk_widget_get_style_context GtkWidget* widget")
 
@@ -8844,7 +8849,7 @@
 (CFNC-300 "void gtk_cell_renderer_get_aligned_area GtkCellRenderer* cell GtkWidget* widget GtkCellRendererState flags GdkRectangle* cell_area GdkRectangle* aligned_area" 'const)
 (CFNC-300 "gboolean gtk_cell_renderer_is_activatable GtkCellRenderer* cell")
 (CFNC-300 "GtkEntryCompletion* gtk_entry_completion_new_with_area GtkCellArea* area")
-(CFNC-300 "const PangoFontDescription* gtk_style_context_get_font GtkStyleContext* context GtkStateFlags state")
+;;; 3.7.4 (CFNC-300 "const PangoFontDescription* gtk_style_context_get_font GtkStyleContext* context GtkStateFlags state")
 (CFNC-300 "GtkTreeViewColumn* gtk_tree_view_column_new_with_area GtkCellArea* area")
 
 

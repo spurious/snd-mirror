@@ -8597,7 +8597,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (set-cdr! (list-tail vals (- len 1)) '()))))  ; restore its original shape
 |#
 
-;; and continuing down that line... (assume len>2 for this context)
+;; and continuing down that line...
 (define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
   "(for-each-permutation func vals) applies func to every permutation of vals"
   ;;   (for-each-permutation (lambda args (format #t "~A~%" args)) '(1 2 3))
@@ -8634,7 +8634,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	    (apply func cur)
 	    )
 		
-	(do ((i 0 (+ i 1)))                       ; I suppose a named let would be more Schemish
+	(do ((i 0 (+ i 1)))                       
 	    ((= i len))
 	  (let ((start nvals))
 	    (set! nvals (cdr nvals))
@@ -8644,9 +8644,20 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	    (set! (cdr start) nvals)))))          ; restore original circle
 
   (let ((len (length vals)))
-    (set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
-    (pinner vals len)
-    (set-cdr! (list-tail vals (- len 1)) '()))))  ; restore its original shape
+    (if (< len 2)
+	(apply func vals)
+	(if (= len 2)
+	    (begin
+	      (set! (cur 0) (car vals))
+	      (set! (cur 1) (cadr vals))
+	      (apply func cur)
+	      (set! (cur 1) (car vals))
+	      (set! (cur 0) (cadr vals))
+	      (apply func cur))
+	    (begin
+	      (set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
+	      (pinner vals len)
+	      (set-cdr! (list-tail vals (- len 1)) '())))))))  ; restore its original shape
 
 
 

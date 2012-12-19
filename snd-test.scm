@@ -38804,6 +38804,9 @@ EDITS: 1
 			5 .98 6 .53 7 .16 8 .33 9 .62 10 .12 12 .14 14 .86
 			16 .12 23 .14 24 .17))
 	  (tenordr '(.3 .04 1 .81 2 .27 3 .2 4 .21 5 .18 6 .35 7 .03 8 .07 9 .02 10 .025 11 .035)))
+      ;; a partial of .3 makes a click (or a buzz in this case) -- can this be right?
+      ;;   we currently get away with it because it is normalized out of existence
+      ;;   the .5 business in the bassdr2 works because it is like adding abs(sin)
       (with-sound (:reverb nrev :play #f)
 		  (drone  .000  4.000  115.000  (* .25 .500) solid bassdr2  .100  .500
 			  .030  45.000 1  .010 10)

@@ -92,13 +92,14 @@
     (set! currentValue (+ currentValue (* (- targetValue currentValue) r)))))
     ;; (bil) this is slightly different (getting clicks)
 
-
+#|
 (define (make-one-pole-swept)
   (vector 0.0))
 
 (define (one-pole-swept gen input coef)
   ;; signal controlled one-pole lowpass filter
-  (set! (gen 0) (- (* (+ 1 coef) input) (* coef (gen 0)))))
+  (set! (gen 0) (- (* (+ 1.0 coef) input) (* coef (gen 0)))))
+|#
 
 #|
 (define (make-pnoise)
@@ -333,10 +334,10 @@
 	(stiffnessFactor (if (null? stiffnessFactor-table) (envelope-interp keyNum stiffnessFactor-table) stiffnessFactor))
 	
 	(dryTap-one-pole-one-zero-pair (make-one-pole-one-zero 1.0 0.0 0.0))
-	(dryTap-one-pole-swept (make-one-pole-swept))	 
+	(dryTap-one-pole-swept 0.0)
 	(dryTap-amp-expseg (make-expseg :currentValue 1.0 :targetValue 0.0))
 	(wetTap-coef-expseg (make-expseg :currentValue 0.0 :targetValue -.5))
-	(wetTap-one-pole-swept (make-one-pole-swept))
+	(wetTap-one-pole-swept 0.0)
 	
 	(beg (seconds->samples start))
 	(dur (seconds->samples duration))
@@ -487,14 +488,16 @@
 		      (set! noi (pnoise amp-1))
 		      (set! temp1 (one-pole-one-zero dryTap0 dryTap1 noi))
 		      (set! temp2 (expseg dryTap-coef-expseg drycoefrate))
-		      (set! dryTap (* (expseg dryTap-amp-expseg dryamprate)
-				      (one-pole-swept dryTap-one-pole-swept temp1 temp2)))
+		      (set! dryTap-one-pole-swept (- (* (+ 1.0 temp2) temp1) (* temp2 dryTap-one-pole-swept)))
+		      (set! dryTap (* (expseg dryTap-amp-expseg dryamprate) dryTap-one-pole-swept))
+				      
 						      
 		      (set! noi (pnoise amp-1))
 		      (set! temp1 (one-pole-one-zero wetTap0 wetTap1 noi))
 		      (set! temp2 (expseg wetTap-coef-expseg wetcoefrate))
-		      (set! openStrings (* (expseg wetTap-amp-expseg wetamprate)
-					   (one-pole-swept wetTap-one-pole-swept temp1 temp2)))
+		      (set! wetTap-one-pole-swept (- (* (+ 1.0 temp2) temp1) (* temp2 wetTap-one-pole-swept)))
+		      (set! openStrings (* (expseg wetTap-amp-expseg wetamprate) wetTap-one-pole-swept))
+
 							   
 		      (set! totalTap (+ dryTap openStrings))
 		      

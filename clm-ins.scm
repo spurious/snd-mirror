@@ -694,6 +694,12 @@ is a physical model of a flute:
   ;; phase-quadrature waveshaping used to create asymmetric (i.e. single side-band) spectra.
   ;; The basic idea here is a variant of sin x sin y - cos x cos y = cos (x + y)
 
+  (define (clip-env e)
+    (do ((x e (cddr x)))
+	((null? x) e)
+      (if (> (cadr x) 1.0)
+	  (list-set! x 1 1.0))))
+
   (let ((normalized-partials (normalize-partials partials))
 	 (spacing-cos (make-oscil spacing-freq :initial-phase (/ pi 2.0)))
 	 (spacing-sin (make-oscil spacing-freq))
@@ -702,7 +708,7 @@ is a physical model of a flute:
     (let ((sin-coeffs (partials->polynomial normalized-partials mus-chebyshev-second-kind))
 	  (cos-coeffs (partials->polynomial normalized-partials mus-chebyshev-first-kind))
 	  (amp-env (make-env ampfun :scaler amplitude :duration dur))
-	  (ind-env (make-env indexfun :duration dur))
+	  (ind-env (make-env (clip-env indexfun) :duration dur))
 	  (loc (make-locsig degree distance reverb-amount))
 	  (r (/ carrier-freq spacing-freq))
 	  (tr (make-triangle-wave :frequency 5 :amplitude (hz->radians (* .005 spacing-freq))))
@@ -712,7 +718,7 @@ is a physical model of a flute:
       (do ((i beg (+ i 1)))
 	  ((= i end))
 	(let* ((vib (+ (triangle-wave tr) (rand-interp rn)))
-	       (ax (* (min 1.0 (env ind-env)) (oscil spacing-cos vib)))
+	       (ax (* (env ind-env) (oscil spacing-cos vib)))
 	       (fax (polynomial cos-coeffs ax))
 	       (yfax (* (oscil spacing-sin vib) (polynomial sin-coeffs ax))))
 	  (locsig loc i (* (env amp-env)
