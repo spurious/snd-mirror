@@ -1047,7 +1047,7 @@ static XEN g_clear_array(XEN arr)
   XEN_ASSERT_TYPE(MUS_VCT_P(arr), arr, XEN_ONLY_ARG, S_clear_array, "a vct");
   v = XEN_TO_VCT(arr);
   if (v->length > 0)
-    mus_clear_array(v->data, v->length);
+    memset((void *)(v->data), 0, v->length * sizeof(mus_float_t));
   return(arr);
 }
 

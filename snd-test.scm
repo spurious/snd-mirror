@@ -38,7 +38,6 @@
 (define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
-					;(set! (hook-functions *load-hook*) (list (lambda (name) (format #t "load ~S~%" name))))
 (if (<= tests 0) (set! tests 1))
 ;(set! *gc-stats* #t)
 
@@ -38628,10 +38627,12 @@ EDITS: 1
 		 (do ((i 0 (+ i 1)))
 		     ((= i 3))
 		   (let ((gen (make-oscil 440.0))
-			 (e (make-env (vct 0.0 0.0 1.0 1.0 2.0 0.0) 0.1 1.0)))
-		     (do ((k 0 (+ k 1)))
-			 ((= k 44100))
-		       (outa (+ k (* i 50000)) (* (env e) (oscil gen)))))))
+			 (e (make-env (vct 0.0 0.0 1.0 1.0 2.0 0.0) 0.1 1.0))
+			 (beg (* i 50000))
+			 (end (+ 44100 (* i 50000))))
+		     (do ((k beg (+ k 1)))
+			 ((= k end))
+		       (outa k (* (env e) (oscil gen)))))))
 
     (let ((ind (find-sound "test.snd")))
       (if (not (= (frames ind) 144100))
@@ -47100,6 +47101,7 @@ EDITS: 1
 #|
 (let ((best-times (vector 59 58 114 95 2244 5373 613 134 11680 2892 609 743 868 976 815 1288 3020 197 168 2952 758 1925 4997 6567 846  183 0 242 6696 0))) ; 571
 ;; this runs 4x faster on the i7 930 nogui/no-audio 
+;; 19-Dec-12:            #(1 1  2   2  69   240  6   1   583   1    23   1   1  17  70   1   233   1   1   271  89  119  1   1877  0   0   0  1   1   73)  ;  37
 
   (do ((i 0 (+ i 1)))
       ((= i (vector-length timings)))
@@ -47357,19 +47359,24 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-18-Dec-12:
-129,419,655,033
-29,289,291,540  s7.c:eval [/home/bil/snd-13/snd]
-10,720,301,957  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 7,660,203,855  ???:sin [/lib64/libm-2.12.so]
- 6,377,043,066  s7.c:eval'2 [/home/bil/snd-13/snd]
- 4,095,929,145  s7.c:gc [/home/bil/snd-13/snd]
- 3,032,884,192  clm.c:mus_src [/home/bil/snd-13/snd]
+20-Dec-12:
+118,800,692,007
+23,384,276,430  s7.c:eval [/home/bil/snd-13/snd]
+ 9,094,799,957  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 7,658,541,453  ???:sin [/lib64/libm-2.12.so]
+ 6,332,077,460  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 3,906,750,696  s7.c:gc [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,893,543,355  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,839,516,750  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 2,556,095,482  ???:cos [/lib64/libm-2.12.so]
+ 2,928,341,950  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,785,690,651  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 2,669,725,086  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,554,204,373  ???:cos [/lib64/libm-2.12.so]
  2,346,068,443  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 2,224,967,668  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,609,153,036  s7.c:g_add_ss_1ss [/home/bil/snd-13/snd]
+ 2,221,901,874  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,592,316,356  clm.c:mus_formant [/home/bil/snd-13/snd]
+ 1,314,750,865  clm.c:mus_out_any_to_file [/home/bil/snd-13/snd]
+ 1,286,916,248  io.c:mus_write_1 [/home/bil/snd-13/snd]
+ 1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 1,129,623,660  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
+ 1,053,510,656  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
 |#

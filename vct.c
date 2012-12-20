@@ -850,7 +850,7 @@ static XEN g_vct_scale(XEN obj1, XEN obj2)
 
   scl = XEN_TO_C_DOUBLE(obj2);
   if (scl == 0.0)
-    mus_clear_array(v1->data, v1->length);
+    memset((void *)(v1->data), 0, v1->length * sizeof(mus_float_t));
   else
     {
       if (scl != 1.0)
@@ -895,7 +895,7 @@ static XEN g_vct_fill(XEN obj1, XEN obj2)
 
   scl = XEN_TO_C_DOUBLE(obj2);
   if (scl == 0.0)
-    mus_clear_array(v1->data, v1->length);
+    memset((void *)(v1->data), 0, v1->length * sizeof(mus_float_t));
   else for (i = 0; i < v1->length; i++) v1->data[i] = scl;
   return(obj1);
 }

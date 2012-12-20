@@ -233,14 +233,44 @@ const char *region_file_name(int n)
 }
 
 
+static void get_region_maxamp(region *r)
+{
+  /* it exists as r->filename, so just use sndlib... */
+  mus_float_t *vals;
+  mus_long_t *times;
+  int i;
+  mus_long_t maxpos;
+  mus_float_t maxsamp;
+  vals = (mus_float_t *)calloc(r->chans, sizeof(mus_float_t));
+  times = (mus_long_t *)calloc(r->chans, sizeof(mus_long_t));
+  mus_sound_maxamps(r->filename, r->chans, vals, times);
+  maxpos = times[0];
+  maxsamp = vals[0];
+  for (i = 1; i < r->chans; i++)
+    if (vals[i] > maxsamp)
+      {
+	maxsamp = vals[i];
+	maxpos = times[i];
+      }
+  free(vals);
+  free(times);
+  r->maxamp = maxsamp;
+  r->maxamp_position = maxpos;
+}
+
+
 mus_float_t region_maxamp(int n) 
 {
   region *r;
   r = id_to_region(n);
   if (r)
     {
-      if ((r->maxamp < 0.0) && (r->use_temp_file == REGION_DEFERRED))
-	deferred_region_to_temp_file(r);
+      if (r->maxamp < 0.0)
+	{
+	  if (r->use_temp_file == REGION_DEFERRED)
+	    deferred_region_to_temp_file(r);
+	  get_region_maxamp(r);
+	}
       return(r->maxamp); 
     }
   return(0.0);
@@ -253,30 +283,11 @@ static mus_long_t region_maxamp_position(int n)
   r = id_to_region(n);
   if (r)
     {
-      if ((r->maxamp < 0.0) && (r->use_temp_file == REGION_DEFERRED))
-	deferred_region_to_temp_file(r);
-      if ((r->maxamp_position == -1) && (r->filename)) /* not picked up elsewhere */
+      if (r->maxamp < 0.0)
 	{
-	  /* it exists as r->filename, so just use sndlib... */
-	  mus_float_t *vals;
-	  mus_long_t *times;
-	  int i;
-	  mus_long_t maxpos;
-	  mus_float_t maxsamp;
-	  vals = (mus_float_t *)calloc(r->chans, sizeof(mus_float_t));
-	  times = (mus_long_t *)calloc(r->chans, sizeof(mus_long_t));
-	  mus_sound_maxamps(r->filename, r->chans, vals, times);
-	  maxpos = times[0];
-	  maxsamp = vals[0];
-	  for (i = 1; i < r->chans; i++)
-	    if (vals[i] > maxsamp)
-	      {
-		maxsamp = vals[i];
-		maxpos = times[i];
-	      }
-	  free(vals);
-	  free(times);
-	  r->maxamp_position = maxpos;
+	  if (r->use_temp_file == REGION_DEFERRED)
+	    deferred_region_to_temp_file(r);
+	  get_region_maxamp(r);
 	}
       return(r->maxamp_position);
     }
@@ -850,8 +861,6 @@ static void deferred_region_to_temp_file(region *r)
       mus_long_t bytes, err;
       int fdi, fdo;
       char *buffer;
-      mus_float_t ymax = 0.0;
-      peak_env_info *ep;
 
       datumb = mus_bytes_per_sample(sp0->hdr->format);
       err = mus_write_header(r->filename, MUS_NEXT, r->srate, r->chans, drp->len * r->chans, sp0->hdr->format, "region deferred temp");
@@ -895,23 +904,12 @@ static void deferred_region_to_temp_file(region *r)
 		}
 	      free(buffer);
 	      snd_close(fdi, sp0->filename);
-	      for (i = 0; i < r->chans; i++)
-		{
-		  ep = r->peak_envs[i];
-		  if (ymax < ep->fmax) 
-		    ymax = ep->fmax;
-		  if (ymax < -ep->fmin)
-		    ymax = -ep->fmin;
-		}
-	      r->maxamp = ymax;
-	      r->maxamp_position = -1; /* not tracked in amp-env stuff */
 	    }
 	  snd_close(fdo, r->filename);
 	}
     }
   else
     {
-      mus_long_t max_position = 0;
       io_error_t io_err = IO_NO_ERROR;
       hdr = make_temp_header(r->filename, r->srate, r->chans, 0, (char *)c__FUNCTION__);
       ofd = open_temp_file(r->filename, r->chans, hdr, &io_err);
@@ -942,7 +940,6 @@ static void deferred_region_to_temp_file(region *r)
 	      d = data[0];
 	      for (j = 0, k = 0; j < len; j++, k++) 
 		{
-		  mus_float_t curval;
 		  if (k == MAX_BUFFER_SIZE)
 		    {
 		      err = mus_file_write(ofd, 0, k - 1, 1, data);
@@ -950,38 +947,52 @@ static void deferred_region_to_temp_file(region *r)
 		      if (err != MUS_NO_ERROR) break;
 		    }
 		  d[k] = read_sample_to_mus_sample(sf);
-		  curval = fabs(d[k]);
-		  if (curval > val) 
-		    {
-		      val = curval;
-		      max_position = j;
-		    }
 		}
 	    }
 	  else
 	    {
-	      for (j = 0, k = 0; j < len; j++, k++) 
+	      bool same_lens = true;
+	      mus_long_t len0;
+
+	      len0 = r->lens[0];
+	      for (i = 1; i < r->chans; i++)
+		if (r->lens[i] != len0)
+		  {
+		    same_lens = false;
+		    break;
+		  }
+	      if (same_lens)
 		{
-		  if (k == MAX_BUFFER_SIZE)
+		  if (len > len0)
+		    len = len0 + 1;
+		  for (j = 0, k = 0; j < len; j++, k++) 
 		    {
-		      err = mus_file_write(ofd, 0, k - 1, r->chans, data);
-		      k = 0;
-		      if (err != MUS_NO_ERROR) break;
-		    }
-		  for (i = 0; i < r->chans; i++)
-		    {
-		      if (j <= r->lens[i])
+		      if (k == MAX_BUFFER_SIZE)
 			{
-			  mus_float_t curval;
-			  data[i][k] = read_sample_to_mus_sample(sfs[i]);
-			  curval = fabs(data[i][k]);
-			  if (curval > val) 
-			    {
-			      val = curval;
-			      max_position = j;
-			    }
+			  err = mus_file_write(ofd, 0, k - 1, r->chans, data);
+			  k = 0;
+			  if (err != MUS_NO_ERROR) break;
 			}
-		      else data[i][k] = 0.0;
+		      for (i = 0; i < r->chans; i++)
+			data[i][k] = read_sample_to_mus_sample(sfs[i]);
+		    }
+		}
+	      else
+		{
+		  for (j = 0, k = 0; j < len; j++, k++) 
+		    {
+		      if (k == MAX_BUFFER_SIZE)
+			{
+			  err = mus_file_write(ofd, 0, k - 1, r->chans, data);
+			  k = 0;
+			  if (err != MUS_NO_ERROR) break;
+			}
+		      for (i = 0; i < r->chans; i++)
+			{
+			  if (j <= r->lens[i])
+			    data[i][k] = read_sample_to_mus_sample(sfs[i]);
+			  else data[i][k] = 0.0;
+			}
 		    }
 		}
 	    }
@@ -989,8 +1000,6 @@ static void deferred_region_to_temp_file(region *r)
 	    mus_file_write(ofd, 0, k - 1, r->chans, data);
 
 	  close_temp_file(r->filename, ofd, hdr->type, len * r->chans * datumb);
-	  r->maxamp = val;
-	  r->maxamp_position = max_position;
 	  for (i = 0; i < r->chans; i++) free(data[i]);
 	  for (i = 0; i < r->chans; i++) free_snd_fd(sfs[i]);
 	  free(sfs);

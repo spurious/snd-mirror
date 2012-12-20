@@ -62464,11 +62464,6 @@ s7_scheme *s7_init(void)
  * the substr->temp business could be used in other cases 
  * perhaps define-expansion should be define-reader-macro
  *
- * make-cell and cell: a mutable s7 cell that can contain anything.
- *   then that cell can be a member of any number of lists, for example, and
- *   we get permutations for free!  assignment to cell = clobber innards --
- *   this requires checks for free (string etc).
- *
  * timing    12.0      13.0 13.1 13.2 13.3
  * bench    42736      8752 8051 7725 6518
  * lint                9328 8140 7887 7749
@@ -62477,6 +62472,6 @@ s7_scheme *s7_init(void)
  * t455            265   89   55   31   14
  * t502             90   43   39   36   29
  * lat             229   63   52   47   42
- * calls                275  207  175  129
+ * calls                275  207  175  119
  */
 

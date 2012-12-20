@@ -1868,9 +1868,7 @@ is a physical model of a flute:
 	    (filptr 0)
 	    (trigger 0)
 	    (cur-oscils max-oscils)
-	    (ramped (or attack 0))
 	    (splice-attack (number? attack))
-	    (ramp-ind 0)
 	    (ramped-attack (make-vector attack-size 0.0)))
 	
 	(do ((i 0 (+ i 1)))
@@ -1920,12 +1918,14 @@ is a physical model of a flute:
 		       ;; change to polar coordinates (ignoring phases)
 		       (rectangular->magnitudes fdr fdi)
 		       (vct-scale! fdr 2.0)
+
 		       (do ((k 0 (+ k 1)))
 			   ((= k max-oscils))
 			 (set! (last-peak-freqs k) (current-peak-freqs k))
-			 (set! (last-peak-amps k) (current-peak-amps k))
-			 (set! (current-peak-amps k) 0.0))
+			 (set! (last-peak-amps k) (current-peak-amps k)))
+		       (vector-fill! current-peak-amps 0.0)
 		       (vector-fill! peak-amps 0.0)
+
 		       (let ((ra (fdr 0))
 			     (la 0.0)
 			     (ca 0.0))
@@ -2030,13 +2030,7 @@ is a physical model of a flute:
 		       ))
 		 ;; run oscils, update envelopes
 		 (set! trigger (+ 1 trigger))
-		 (if (= ramped 0)
-		     (outa i (oscil-bank cur-oscils resynth-oscils amps freqs rates sweeps)) ; amps = amps+rates on each sample internally
-		     (begin
-		       (outa i (+ (ramped-attack ramp-ind)
-				  (oscil-bank cur-oscils resynth-oscils amps freqs rates sweeps)))
-		       (set! ramp-ind (+ 1 ramp-ind))
-		       (if (= ramp-ind ramped) (set! ramped 0))))))))))))
+		 (outa i (oscil-bank cur-oscils resynth-oscils amps freqs rates sweeps)))))))))) ; amps = amps+rates on each sample internally
 
 ;; (with-sound () (pins 0 2 "oboe.snd" 1.0 :max-peaks 8))
 

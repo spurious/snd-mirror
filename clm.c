@@ -10571,7 +10571,8 @@ static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
 
 void mus_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
 {
-  /* simple timing tests indicate fftw is slightly less than 4 times faster than mus_fft in this context */
+  /* simple timing tests indicate fftw is slightly faster than mus_fft in this context
+   */
   if (n < (1 << 30))
     mus_fftw_with_imag(rl, im, n, is);
   else mus_big_fft(rl, im, n, is);
@@ -11773,19 +11774,18 @@ mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direc
       mus_long_t i, j;
       mus_float_t (*conv_input)(void *arg, int direction) = input;
       if (conv_input == NULL) conv_input = gen->feeder;
+
+      mus_clear_array(gen->rl2, gen->fftsize);
       for (i = 0, j = gen->fftsize2; i < gen->fftsize2; i++, j++) 
 	{
 	  gen->buf[i] = gen->buf[j]; 
 	  gen->buf[j] = 0.0;
 	  gen->rl1[i] = (*conv_input)(gen->closure, 1);
 	  gen->rl1[j] = 0.0;
-	  gen->rl2[i] = 0.0;
-	  gen->rl2[j] = 0.0;
 	}
       memcpy((void *)(gen->rl2), (void *)(gen->filter), gen->filtersize * sizeof(mus_float_t));
 
       mus_convolution(gen->rl1, gen->rl2, gen->fftsize);
-
       for (i = 0, j = gen->fftsize2; i < gen->fftsize2; i++, j++) 
 	{
 	  gen->buf[i] += gen->rl1[i];
