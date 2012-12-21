@@ -972,8 +972,13 @@ int mus_sound_open_input(const char *arg)
       if (sf) 
 	{
 	  fd = mus_file_open_read(arg);
-	  mus_file_open_descriptors(fd, arg, sf->data_format, sf->datum_size, sf->data_location, sf->chans, sf->header_type);
-	  lseek(fd, sf->data_location, SEEK_SET);
+	  if (fd == -1)
+	    mus_error(MUS_CANT_OPEN_FILE, S_mus_sound_open_input " can't open %s: %s", arg, STRERROR(errno));
+	  else
+	    {
+	      mus_file_open_descriptors(fd, arg, sf->data_format, sf->datum_size, sf->data_location, sf->chans, sf->header_type);
+	      lseek(fd, sf->data_location, SEEK_SET);
+	    }
 	}
     }
   return(fd);

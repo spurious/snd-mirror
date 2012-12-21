@@ -413,7 +413,7 @@ enum {OP_NO_OP,
       OP_LET_NO_VARS, OP_NAMED_LET, OP_NAMED_LET_NO_VARS, OP_NAMED_LET_STAR,
       OP_CASE_SIMPLE, OP_CASE_SIMPLER, OP_CASE_SIMPLER_1, OP_CASE_SIMPLER_SS,
       OP_CASE_SIMPLEST, OP_CASE_SIMPLEST_1, OP_CASE_SIMPLEST_SS, OP_CASE_SIMPLEST_ELSE, OP_CASE_SIMPLEST_ELSE_C, OP_CASE_INT,
-      OP_LET_C, OP_LET_S, OP_LET_Q, OP_LET_ALL_C, OP_LET_ALL_S, OP_LET_ALL_Q, OP_LET_ALL_X, OP_LET_STAR_ALL_X, 
+      OP_LET_C, OP_LET_S, OP_LET_Q, OP_LET_ALL_C, OP_LET_ALL_S, OP_LET_ALL_Q, OP_LET_ALL_X, OP_LET_STAR_ALL_X, OP_LET_opCq, OP_LET_opSSq,
       OP_LET_C_P, OP_LET_S_P, 
       OP_IF_P_P_P, OP_IF_P_P, OP_IF_P_P_X, OP_IF_P_X_P, OP_IF_P_X, OP_IF_P_X_X, 
       OP_IF_B_P, OP_IF_B_P_P, OP_IF_ANDP_P, OP_IF_ANDP_P_P, OP_IF_ORP_P, OP_IF_ORP_P_P, 
@@ -502,7 +502,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "let", "let", "let", "let*",
    "case", "case", "case", "case",
    "case", "case", "case", "case", "case", "case",
-   "let", "let", "let", "let", "let", "let", "let", "let*",
+   "let", "let", "let", "let", "let", "let", "let", "let*", "let", "let",
    "let", "let",
 
    "if", "if", "if", "if", "if", "if", 
@@ -588,7 +588,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_LET_NO_VARS", "OP_NAMED_LET", "OP_NAMED_LET_NO_VARS", "OP_NAMED_LET_STAR",
   "OP_CASE_SIMPLE", "OP_CASE_SIMPLER", "OP_CASE_SIMPLER_1", "OP_CASE_SIMPLER_SS",
   "OP_CASE_SIMPLEST", "OP_CASE_SIMPLEST_1", "OP_CASE_SIMPLEST_SS", "OP_CASE_SIMPLEST_ELSE", "OP_CASE_SIMPLEST_ELSE_C", "OP_CASE_INT",
-  "OP_LET_C", "OP_LET_S", "OP_LET_Q", "OP_LET_ALL_C", "OP_LET_ALL_S", "OP_LET_ALL_Q", "OP_LET_ALL_X", "OP_LET_STAR_ALL_X", 
+  "OP_LET_C", "OP_LET_S", "OP_LET_Q", "OP_LET_ALL_C", "OP_LET_ALL_S", "OP_LET_ALL_Q", "OP_LET_ALL_X", "OP_LET_STAR_ALL_X", "OP_LET_opCq", "OP_LET_opSSq",
   "OP_LET_C_P", "OP_LET_S_P", 
   "OP_IF_P_P_P", "OP_IF_P_P", "OP_IF_P_P_X", "OP_IF_P_X_P", "OP_IF_P_X", "OP_IF_P_X_X", 
   "OP_IF_B_P", "OP_IF_B_P_P", "OP_IF_ANDP_P", "OP_IF_ANDP_P_P", "OP_IF_ORP_P", "OP_IF_ORP_P_P", 
@@ -1309,7 +1309,7 @@ struct s7_scheme {
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED;
   s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLER_1, CASE_SIMPLER_SS;
   s7_pointer CASE_SIMPLEST, CASE_SIMPLEST_1, CASE_SIMPLEST_SS, CASE_SIMPLEST_ELSE, CASE_SIMPLEST_ELSE_C, CASE_INT;
-  s7_pointer LET_C, LET_S, LET_Q, LET_ALL_C, LET_ALL_S, LET_ALL_Q, LET_ALL_X, LET_STAR_ALL_X, LET_C_P, LET_S_P;
+  s7_pointer LET_C, LET_S, LET_Q, LET_ALL_C, LET_ALL_S, LET_ALL_Q, LET_ALL_X, LET_STAR_ALL_X, LET_opCq, LET_opSSq, LET_C_P, LET_S_P;
   s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, NAMED_LET_STAR, LET_STAR2, AND_UNCHECKED, AND_P, OR_UNCHECKED, OR_P;
   s7_pointer IF_P_P_P, IF_P_P, IF_B_P, IF_B_P_P, IF_P_P_X, IF_P_X_P, IF_P_X, IF_P_X_X, IF_S_P_P, IF_S_P, IF_S_P_X, IF_S_X_P, IF_S_X, IF_S_X_X;
   s7_pointer IF_Z_P, IF_Z_P_P, SAFE_IF_AND_ALL_X_P, SAFE_IF_OR_ALL_X_P, IF_ANDP_P, IF_ANDP_P_P, IF_ORP_P, IF_ORP_P_P;
@@ -1928,7 +1928,7 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 #define lifted_op(P)                  (P)->object.cons.dat.op
 static void set_syntax_op(s7_pointer p, s7_pointer op) {car(ecdr(p)) = op; lifted_op(ecdr(p)) = syntax_opcode(op);}
 
-#define frame_id(p)                   (p)->object.envr.id
+#define environment_id(p)                   (p)->object.envr.id
 #define is_environment(p)             (type(p) == T_ENVIRONMENT)
 #define environment_slots(p)          (p)->object.envr.slots
 #define next_environment(p)           (p)->object.envr.nxt
@@ -4472,7 +4472,7 @@ static unsigned long long int frame_number = 0;
   do {                                   \
       s7_pointer _x_;                      \
       NEW_CELL(Sc, _x_);                   \
-      frame_id(_x_) = ++frame_number; \
+      environment_id(_x_) = ++frame_number; \
       environment_slots(_x_) = Sc->NIL;                  \
       next_environment(_x_) = Old_Env;		         \
       set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
@@ -4485,7 +4485,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
   /* return(cons(sc, sc->NIL, old_env)); */
   s7_pointer x;
   NEW_CELL(sc, x);
-  frame_id(x) = ++frame_number;
+  environment_id(x) = ++frame_number;
   environment_slots(x) = sc->NIL;
   next_environment(x) = old_env;
   set_type(x, T_ENVIRONMENT | T_IMMUTABLE);
@@ -4493,11 +4493,11 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 } 
 
 
-static s7_pointer make_simple_frame(s7_scheme *sc)
+static s7_pointer make_simple_environment(s7_scheme *sc)
 {
   s7_pointer frame;
   NEW_CELL(sc, frame);
-  frame_id(frame) = frame_number + 1;
+  environment_id(frame) = frame_number + 1;
   environment_slots(frame) = sc->NIL;
   next_environment(frame) = sc->envir;
   set_type(frame, T_ENVIRONMENT | T_IMMUTABLE);
@@ -4515,7 +4515,7 @@ static s7_pointer make_simple_frame(s7_scheme *sc)
     NEW_CELL_NO_CHECK(sc, _slot_);\
     slot_symbol(_slot_) = _sym_;\
     slot_set_value(_slot_, Value);	\
-    symbol_set_local(_sym_, frame_id(Frame), _slot_); \
+    symbol_set_local(_sym_, environment_id(Frame), _slot_); \
     set_type(_slot_, T_SLOT | T_IMMUTABLE);\
     next_slot(_slot_) = environment_slots(Frame);\
     environment_slots(Frame) = _slot_;\
@@ -4530,7 +4530,7 @@ static s7_pointer make_simple_frame(s7_scheme *sc)
       s7_pointer _x_, _slot_, _sym_;		   \
       _sym_ = Symbol; \
       NEW_CELL(Sc, _x_);                   \
-      frame_id(_x_) = ++frame_number; \
+      environment_id(_x_) = ++frame_number; \
       next_environment(_x_) = Old_Env;		         \
       set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
       New_Env = _x_;		   \
@@ -4548,7 +4548,7 @@ static s7_pointer make_simple_frame(s7_scheme *sc)
   do {                                   \
       s7_pointer _x_, _slot_, _sym_;		   \
       NEW_CELL(Sc, _x_);                   \
-      frame_id(_x_) = ++frame_number; \
+      environment_id(_x_) = ++frame_number; \
       next_environment(_x_) = Old_Env;		         \
       set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
       New_Env = _x_;		   \
@@ -4575,7 +4575,7 @@ static s7_pointer make_simple_frame(s7_scheme *sc)
       s7_pointer _x_, _slot_, _sym_;		   \
       _sym_ = Symbol; \
       NEW_CELL(Sc, _x_);                   \
-      frame_id(_x_) = ++frame_number; \
+      environment_id(_x_) = ++frame_number; \
       next_environment(_x_) = Old_Env;		         \
       set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
       New_Env = _x_;		   \
@@ -4600,7 +4600,7 @@ static s7_pointer make_simple_frame(s7_scheme *sc)
     if (symbol_has_accessor(_sym_)) \
       slot_set_value(_slot_, call_symbol_bind(sc, _sym_, Value)); \
     else slot_set_value(_slot_, Value);		\
-    symbol_set_local(_sym_, frame_id(Frame), _slot_); \
+    symbol_set_local(_sym_, environment_id(Frame), _slot_); \
     set_type(_slot_, T_SLOT | T_IMMUTABLE);\
     next_slot(_slot_) = environment_slots(Frame);\
     environment_slots(Frame) = _slot_;\
@@ -4612,7 +4612,7 @@ static s7_pointer old_frame_in_env(s7_scheme *sc, s7_pointer frame, s7_pointer n
   environment_slots(frame) = sc->NIL;                  
   next_environment(frame) = next_frame;
   set_type(frame, T_ENVIRONMENT | T_IMMUTABLE); 
-  frame_id(frame) = ++frame_number; 
+  environment_id(frame) = ++frame_number; 
   return(frame);
 }
 
@@ -4623,7 +4623,7 @@ static s7_pointer old_frame_with_slot(s7_scheme *sc, s7_pointer env, s7_pointer 
   unsigned long long int id;
 
   id = ++frame_number;
-  frame_id(env) = id;
+  environment_id(env) = id;
   x = environment_slots(env);
   slot_set_value(x, val);
   sym = slot_symbol(x);
@@ -4760,11 +4760,11 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
       set_type(slot, T_SLOT | T_IMMUTABLE);
       next_slot(slot) = environment_slots(env);
       environment_slots(env) = slot;
-      /* this is called by augment-environment! so we have to be careful about the resultant frame_id
+      /* this is called by augment-environment! so we have to be careful about the resultant environment_id
        *   check for greater to ensure shadowing stays in effect, and equal to do updates (set! in effect)
        */
-      if (frame_id(env) >= symbol_id(symbol))
-	symbol_set_local(symbol, frame_id(env), slot);
+      if (environment_id(env) >= symbol_id(symbol))
+	symbol_set_local(symbol, environment_id(env), slot);
     }
 
   /* there are about the same number of frames as local variables -- this
@@ -4787,7 +4787,7 @@ static s7_pointer add_slot(s7_scheme *sc, s7_pointer variable, s7_pointer value)
   next_slot(y) = environment_slots(sc->envir);
   environment_slots(sc->envir) = y;
   set_local(variable);
-  symbol_set_local(variable, frame_id(sc->envir), y);
+  symbol_set_local(variable, environment_id(sc->envir), y);
   return(y);
 } 
 
@@ -5423,12 +5423,12 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer hdl)
 { 
   s7_pointer x;	
 
-  if (frame_id(sc->envir) == symbol_id(hdl))
+  if (environment_id(sc->envir) == symbol_id(hdl))
     return(local_slot(hdl));	
 
-  for (x = sc->envir; symbol_id(hdl) < frame_id(x); x = next_environment(x));
+  for (x = sc->envir; symbol_id(hdl) < environment_id(x); x = next_environment(x));
 
-  if (frame_id(x) == symbol_id(hdl))
+  if (environment_id(x) == symbol_id(hdl))
     return(local_slot(hdl));	
 
   for (; is_environment(x); x = next_environment(x))
@@ -5612,20 +5612,20 @@ s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 /* an experiment */
 static s7_pointer find_dynamic_value(s7_scheme *sc, s7_pointer x, s7_pointer sym, long long int *id)
 { 
-  for (; symbol_id(sym) < frame_id(x); x = next_environment(x));
+  for (; symbol_id(sym) < environment_id(x); x = next_environment(x));
 
-  if (frame_id(x) == symbol_id(sym))
+  if (environment_id(x) == symbol_id(sym))
     {
-      (*id) = frame_id(x);
+      (*id) = environment_id(x);
       return(slot_value(local_slot(sym)));
     }
-  for (; (is_environment(x)) && (frame_id(x) > (*id)); x = next_environment(x))
+  for (; (is_environment(x)) && (environment_id(x) > (*id)); x = next_environment(x))
     {
       s7_pointer y; 
       for (y = environment_slots(x); is_slot(y); y = next_slot(y))	
 	if (slot_symbol(y) == sym)
 	  {
-	    (*id) = frame_id(x);
+	    (*id) = environment_id(x);
 	    return(slot_value(y));
 	  }
     }
@@ -5649,7 +5649,7 @@ static s7_pointer g_symbol_to_dynamic_value(s7_scheme *sc, s7_pointer args)
   if (is_global(sym))
     return(slot_value(global_slot(sym)));
 
-  if (frame_id(sc->envir) == symbol_id(sym))
+  if (environment_id(sc->envir) == symbol_id(sym))
     return(slot_value(local_slot(sym)));	
 
   top_id = -1;
@@ -34870,13 +34870,13 @@ static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl)
 {
   s7_pointer x;
 
-  if (frame_id(sc->envir) == symbol_id(hdl))
+  if (environment_id(sc->envir) == symbol_id(hdl))
     return(slot_value(local_slot(hdl)));
 
-  for (x = sc->envir; symbol_id(hdl) < frame_id(x); x = next_environment(x));
+  for (x = sc->envir; symbol_id(hdl) < environment_id(x); x = next_environment(x));
 
   /* this looks redundant, but every attempt to improve it is much slower! */
-  if (frame_id(x) == symbol_id(hdl))
+  if (environment_id(x) == symbol_id(hdl))
     return(slot_value(local_slot(hdl)));
 
   for (; is_environment(x); x = next_environment(x))
@@ -34901,6 +34901,7 @@ static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl)
 
 #define is_h_safe_c_s(P) ((is_optimized(P)) && (optimize_data(P) == HOP_SAFE_C_S))
 #define is_safe_c_s(P)   ((is_optimized(P)) && (op_no_hop(P) == OP_SAFE_C_S))
+#define is_h_safe_c_c(P) ((is_optimized(P)) && (optimize_data(P) == HOP_SAFE_C_C))
 
 static bool is_h_optimized(s7_pointer p)
 {
@@ -38588,11 +38589,11 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer hdl, s7_po
     return(global_slot(hdl));
 
   id = symbol_id(hdl);
-  for (x = sc->envir; id < frame_id(x); x = next_environment(x));
+  for (x = sc->envir; id < environment_id(x); x = next_environment(x));
   for (; is_environment(x); x = next_environment(x))
     {
       s7_pointer y;
-      if (frame_id(x) == id)
+      if (environment_id(x) == id)
 	return(local_slot(hdl));
 
       for (y = environment_slots(x); is_slot(y); y = next_slot(y))
@@ -40188,7 +40189,16 @@ static s7_pointer check_let(s7_scheme *sc)
 			    {
 			      fcdr(sc->code) = cadr(binding);
 			      if (is_all_x_safe(cadr(binding)))
-				set_syntax_op(sc->code, sc->LET_ALL_X);
+				{
+				  if (optimize_data(cadr(binding)) == HOP_SAFE_C_SS)
+				    set_syntax_op(sc->code, sc->LET_opSSq);
+				  else
+				    {
+				      if (optimize_data(cadr(binding)) == HOP_SAFE_C_C)
+					set_syntax_op(sc->code, sc->LET_opCq);
+				      else set_syntax_op(sc->code, sc->LET_ALL_X);
+				    }
+				}
 			      else
 				{
 				  fcdr(cdr(sc->code)) = car(binding);
@@ -41619,7 +41629,7 @@ static void initialize_safe_do(s7_scheme *sc, s7_pointer tree)
       (has_methods(tree)))
     initialize_safe_do_1(sc, tree);
   set_safe_do_level(sc, sc->safe_do_level + 1);
-  safe_do_set_id(sc, frame_id(sc->envir));
+  safe_do_set_id(sc, environment_id(sc->envir));
 }
 
 
@@ -42531,12 +42541,12 @@ static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
   /* like finder, but no unbound-variable error */
   s7_pointer x;	
 
-  if (frame_id(sc->envir) == symbol_id(hdl))
+  if (environment_id(sc->envir) == symbol_id(hdl))
     return(slot_value(local_slot(hdl)));
 
-  for (x = sc->envir; symbol_id(hdl) < frame_id(x); x = next_environment(x));
+  for (x = sc->envir; symbol_id(hdl) < environment_id(x); x = next_environment(x));
 
-  if (frame_id(x) == symbol_id(hdl))
+  if (environment_id(x) == symbol_id(hdl))
     return(slot_value(local_slot(hdl)));	
 
   for (; is_environment(x); x = next_environment(x))
@@ -42563,9 +42573,9 @@ static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
   /* like finder, but no unbound-variable error */
   s7_pointer x;	
 
-  for (x = sc->envir; symbol_id(hdl) < frame_id(x); x = next_environment(x));
+  for (x = sc->envir; symbol_id(hdl) < environment_id(x); x = next_environment(x));
 
-  if (frame_id(x) == symbol_id(hdl))
+  if (environment_id(x) == symbol_id(hdl))
     return(slot_value(local_slot(hdl)));	
 
   for (; is_environment(x); x = next_environment(x))
@@ -43260,7 +43270,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		p = counter_result(counter);
 		environment_slots(p) = sc->NIL;                  
-		frame_id(p) = ++frame_number; 
+		environment_id(p) = ++frame_number; 
 		next_environment(p) = sc->envir;
 	      }
 	    sc->envir = p;
@@ -44470,7 +44480,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    environment_slots(frame) = slot;
 	  }
 	sc->envir = frame;
-	id = frame_id(frame);
+	id = environment_id(frame);
 	for (slot = environment_slots(frame); is_slot(slot); slot = next_slot(slot))
 	  symbol_set_local(slot_symbol(slot), id, slot);
 	end = fcdr(sc->code);
@@ -44837,7 +44847,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    set_type(y, T_SLOT | T_IMMUTABLE);
 	    next_slot(y) = environment_slots(sc->envir);
 	    environment_slots(sc->envir) = y;
-	    symbol_set_local(sym, frame_id(sc->envir), y);
+	    symbol_set_local(sym, environment_id(sc->envir), y);
 
 	    if (is_not_null(cddar(x)))                /* else no incr expr, so ignore it henceforth */
 	      {
@@ -45079,7 +45089,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      
 	    case HOP_SAFE_CLOSURE_S:
-	      /* since a tail call is safe, we can't change the current env's frame_id until
+	      /* since a tail call is safe, we can't change the current env's environment_id until
 	       *   after we do the lookup -- it might be the current func's arg, and we're
 	       *   about to call the same func.
 	       */
@@ -45234,7 +45244,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 		id = ++frame_number;
 		env = closure_environment(sc->code);
-		frame_id(env) = id;
+		environment_id(env) = id;
 		
 		x = environment_slots(env);
 		slot_set_value(x, car(sc->T2_1));
@@ -45339,7 +45349,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 		id = ++frame_number;
 		env = closure_environment(sc->code);
-		frame_id(env) = id;
+		environment_id(env) = id;
 		
 		for (x = environment_slots(env), z = sc->args; is_slot(x); x = next_slot(x), z = cdr(z))
 		  {
@@ -45587,11 +45597,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		x = next_slot(environment_slots(closure_environment(ecdr(code))));
 		slot_set_value(x, val2); 
-		symbol_set_local(slot_symbol(x), frame_id(sc->envir), x);
+		symbol_set_local(slot_symbol(x), environment_id(sc->envir), x);
 
 		x = next_slot(x);
 		slot_set_value(x, val3); 
-		symbol_set_local(slot_symbol(x), frame_id(sc->envir), x);
+		symbol_set_local(slot_symbol(x), environment_id(sc->envir), x);
 		
 		sc->code = closure_body(ecdr(code));
 		if (is_one_liner(sc->code))
@@ -45620,7 +45630,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		x = next_slot(environment_slots(closure_environment(ecdr(code))));
 		slot_set_value(x, val2); 
-		symbol_set_local(slot_symbol(x), frame_id(sc->envir), x);
+		symbol_set_local(slot_symbol(x), environment_id(sc->envir), x);
 
 		car(sc->T2_1) = next_slot(x);
 		car(sc->T2_2) = cddr(closure_args(ecdr(code)));
@@ -45642,7 +45652,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		x = next_slot(environment_slots(closure_environment(ecdr(code))));
 		slot_set_value(x, caddr(code));
-		symbol_set_local(slot_symbol(x), frame_id(sc->envir), x);
+		symbol_set_local(slot_symbol(x), environment_id(sc->envir), x);
 
 		car(sc->T2_1) = next_slot(x);
 		car(sc->T2_2) = cddr(closure_args(ecdr(code)));
@@ -45761,11 +45771,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 		/* we have to put off the actual environment update in case this is a tail recursive call */
-		frame_id(e) = ++frame_number;
+		environment_id(e) = ++frame_number;
 		for (p = environment_slots(e); is_slot(p); p = next_slot(p))
 		  {
 		    slot_set_value(p, slot_pending_value(p));
-		    symbol_set_local(slot_symbol(p), frame_id(e), p);
+		    symbol_set_local(slot_symbol(p), environment_id(e), p);
 		  }
 		
 		sc->envir = e;
@@ -45789,7 +45799,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_SAFE_CLOSURE_STAR:
 	      /* (let () (define* (hi (a 100)) (random a)) (define (ho) (hi)) (ho)) */
 	      sc->envir = closure_environment(ecdr(code));
-	      frame_id(sc->envir) = ++frame_number;
+	      environment_id(sc->envir) = ++frame_number;
 	      car(sc->T2_1) = environment_slots(closure_environment(ecdr(code)));
 	      car(sc->T2_2) = closure_args(ecdr(code));
 	      goto FILL_SAFE_CLOSURE_STAR;
@@ -45825,7 +45835,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  else slot_set_value(x, defval);
 			}
 		      else slot_set_value(x, sc->F);
-		      symbol_set_local(slot_symbol(x), frame_id(sc->envir), x);
+		      symbol_set_local(slot_symbol(x), environment_id(sc->envir), x);
 		    }
 		  }
 		sc->code = closure_body(ecdr(code));
@@ -46205,7 +46215,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		unsigned long long int id;
 		
 		e = sc->envir;
-		id = frame_id(e);
+		id = environment_id(e);
 		
 		for (x = closure_args(sc->code), z = sc->args; is_pair(x); x = cdr(x))
 		  {
@@ -46738,7 +46748,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		unsigned long long int id;
 		
 		e = sc->envir;
-		id = frame_id(e);
+		id = environment_id(e);
 		
 		for (x = closure_args(sc->code), z = sc->args; is_pair(x); x = cdr(x))
 		  {
@@ -51104,7 +51114,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer x, z, e;
 	    unsigned long long int id;
 	    e = sc->envir;
-	    id = frame_id(e);
+	    id = environment_id(e);
 	    
 	    for (x = closure_args(sc->code), z = sc->args; is_pair(x); x = cdr(x))
 	      {
@@ -51463,7 +51473,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    set_safe_closure(new_func);
 
 	    NEW_CELL_NO_CHECK(sc, new_env);
-	    frame_id(new_env) = ++frame_number;
+	    environment_id(new_env) = ++frame_number;
 	    environment_slots(new_env) = sc->NIL;
 	    next_environment(new_env) = sc->envir;
 	    set_type(new_env, T_ENVIRONMENT | T_IMMUTABLE | T_FUNCTION_ENV);
@@ -51605,7 +51615,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 
 	  NEW_CELL_NO_CHECK(sc, new_env);                   
-	  frame_id(new_env) = ++frame_number; 
+	  environment_id(new_env) = ++frame_number; 
 	  next_environment(new_env) = closure_environment(new_func);
 	  closure_environment(new_func) = new_env;		   
 	  environment_slots(new_env) = sc->NIL;
@@ -53977,6 +53987,39 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
       /* --------------- */
+    case OP_LET_opCq:
+      /* one var, init is safe_c_c
+       */
+      {
+	s7_pointer binding;
+	binding = caar(sc->code);
+	/* fprintf(stderr, "%s: %s\n", DISPLAY(sc->code), DISPLAY(binding)); */
+	sc->value = c_call(cadr(binding))(sc, cdadr(binding));
+	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), sc->value);
+	sc->code = cdr(sc->code);
+	goto BEGIN;
+      }
+      
+
+      /* --------------- */
+    case OP_LET_opSSq:
+      /* one var, init is safe_c_ss
+       */
+      {
+	s7_pointer binding, largs, in_val;
+	binding = caar(sc->code);
+	largs = cadr(binding);
+	in_val = finder(sc, cadr(largs));
+	car(sc->T2_2) = finder(sc, caddr(largs));
+	car(sc->T2_1) = in_val;
+	sc->value = c_call(largs)(sc, sc->T2_1);
+	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), sc->value);
+	sc->code = cdr(sc->code);
+	goto BEGIN;
+      }
+      
+
+      /* --------------- */
     case OP_LET_CAR_P:
       {
 	s7_pointer val, code;
@@ -54144,7 +54187,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       {
 	s7_pointer p, frame;
-	frame = make_simple_frame(sc);
+	frame = make_simple_environment(sc);
 	sc->args = frame;
 	for (p = car(sc->code); is_pair(p); p = cdr(p))
 	  ADD_SLOT(frame, caar(p), finder(sc, cadar(p)));
@@ -54159,7 +54202,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET_ALL_R:
       {
 	s7_pointer p, frame;
-	frame = make_simple_frame(sc);   	
+	frame = make_simple_environment(sc);   	
 	sc->args = frame;
 	for (p = car(sc->code); is_pair(p); p = cdr(p))
 	  {
@@ -54179,7 +54222,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET_ALL_X:
       {
 	s7_pointer p, frame;
-	frame = make_simple_frame(sc);   		
+	frame = make_simple_environment(sc);   		
 	sc->args = frame; 
 	for (p = car(sc->code); is_pair(p); p = cdr(p))
 	  {
@@ -54428,7 +54471,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  set_type(y, T_SLOT | T_IMMUTABLE);
 		  next_slot(y) = environment_slots(sc->envir);
 		  environment_slots(sc->envir) = y;
-		  symbol_set_local(sym, frame_id(sc->envir), y);
+		  symbol_set_local(sym, environment_id(sc->envir), y);
 		  
 		  y = args;
 		}
@@ -54440,7 +54483,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      unsigned long long int id;
 	      
 	      e = sc->envir;
-	      id = frame_id(e);
+	      id = environment_id(e);
 	      
 	      for (x = car(sc->code); is_not_null(y); x = cdr(x)) 
 		{
@@ -56153,7 +56196,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer p;
 	    if (!is_environment(e))
 	      eval_error(sc, "with-environment takes an environment argument: ~A", e);
-	    frame_id(e) = ++frame_number;
+	    environment_id(e) = ++frame_number;
 	    sc->envir = e;
 	    for (p = environment_slots(e); is_slot(p); p = next_slot(p))
 	      {
@@ -56214,7 +56257,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else 
 	{
 	  s7_pointer p;
-	  frame_id(sc->value) = ++frame_number;
+	  environment_id(sc->value) = ++frame_number;
 	  sc->envir = sc->value;
 	  for (p = environment_slots(sc->value); is_slot(p); p = next_slot(p))
 	    symbol_set_local(slot_symbol(p), frame_number, p);
@@ -61139,11 +61182,11 @@ s7_scheme *s7_init(void)
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
   /* this is mixing two different s7_cell structs, cons and envr, but luckily
    *    envr has two initial s7_pointer fields, equivalent to car and cdr, so
-   *    frame_id which is the same as ecdr is unaffected.  To get the names
+   *    environment_id which is the same as ecdr is unaffected.  To get the names
    *    built-in, I'll append unique_name and unique_name_length fields to
    *    the envr struct.
    */
-  frame_id(sc->NIL) = -1;
+  environment_id(sc->NIL) = -1;
 
 
   sc->temp_cell = alloc_pointer();
@@ -61463,6 +61506,8 @@ s7_scheme *s7_init(void)
   sc->LET_ALL_Q =             assign_internal_syntax(sc, "let",     OP_LET_ALL_Q);  
   sc->LET_ALL_X =             assign_internal_syntax(sc, "let",     OP_LET_ALL_X);  
   sc->LET_STAR_ALL_X =        assign_internal_syntax(sc, "let",     OP_LET_STAR_ALL_X);  
+  sc->LET_opCq =              assign_internal_syntax(sc, "let",     OP_LET_opCq);  
+  sc->LET_opSSq =             assign_internal_syntax(sc, "let",     OP_LET_opSSq);  
   sc->NAMED_LET_NO_VARS =     assign_internal_syntax(sc, "let",     OP_NAMED_LET_NO_VARS); 
   sc->NAMED_LET =             assign_internal_syntax(sc, "let",     OP_NAMED_LET);  
   sc->NAMED_LET_STAR =        assign_internal_syntax(sc, "let*",    OP_NAMED_LET_STAR);  
@@ -62463,15 +62508,17 @@ s7_scheme *s7_init(void)
  * TODO: give each e|f|gcdr ref a unique name
  * the substr->temp business could be used in other cases 
  * perhaps define-expansion should be define-reader-macro
+ * replace "frame" with "environment" if possible (frame collides with clm)
+ * f|gcdr in let_op*q
  *
  * timing    12.0      13.0 13.1 13.2 13.3
- * bench    42736      8752 8051 7725 6518
- * lint                9328 8140 7887 7749
+ * bench    42736      8752 8051 7725 6515
+ * lint                9328 8140 7887 7736
  * index    44300 4988 3291 3005 2742 2078
- * s7test         1721 1358 1297 1244  985
+ * s7test         1721 1358 1297 1244  977
  * t455            265   89   55   31   14
- * t502             90   43   39   36   29
+ * t502             90   43   39   36   28
  * lat             229   63   52   47   42
- * calls                275  207  175  119
+ * calls                275  207  175  118
  */
 

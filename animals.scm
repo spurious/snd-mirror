@@ -2073,16 +2073,15 @@
 	(set! (mus-location ampf) (- i start))
 	(let ((reset-stop (min stop (+ i pulse-out)))
 	      (pulse-amp (env ampf)))
-	  (let ((pulse-amp2 (* 2.0 pulse-amp)))
-	    (do ((k i (+ k 1)))
-		((= k reset-stop))
-	      (let ((this-val (* (env pulsef)
-				 (mus-random pulse-amp))))
-		(outa k (- last-val this-val))
-		(set! last-val this-val)))
-	    (mus-reset pulsef)))))))
+	  (do ((k i (+ k 1)))
+	      ((= k reset-stop))
+	    (let ((this-val (* (env pulsef)
+			       (mus-random pulse-amp))))
+	      (outa k (- last-val this-val))
+	      (set! last-val this-val)))
+	  (mus-reset pulsef))))))
 
-;; (with-sound (:play #t) (marsh-meadow-grasshopper 0 .3))
+;; (with-sound (:play #t :statistics #t) (marsh-meadow-grasshopper 0 .3))
 
 
 

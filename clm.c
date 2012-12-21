@@ -7712,8 +7712,7 @@ mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
    */
   rdin *gen = (rdin *)ptr;
 
-  if ((chan >= gen->chans) ||
-      (samp < 0))
+  if (chan >= gen->chans)
     return(0.0);
 
   if ((samp <= gen->data_end) &&
@@ -7932,6 +7931,9 @@ bool mus_readin_p(mus_any *ptr)
 mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, mus_long_t start, int direction, mus_long_t buffer_size)
 {
   rdin *gen;
+  if (chan >= mus_sound_chans(filename))
+    mus_error(MUS_NO_SUCH_CHANNEL, "make-readin %s, chan: %d, but chans: %d", filename, chan, mus_sound_chans(filename));
+
   gen = (rdin *)mus_make_file_to_sample(filename);
   if (gen)
     {
@@ -7953,7 +7955,12 @@ mus_float_t mus_readin(mus_any *ptr)
 {
   mus_float_t res;
   rdin *rd = (rdin *)ptr;
-  res = mus_in_any_from_file(ptr, rd->loc, rd->chan);
+
+  if ((rd->loc <= rd->data_end) &&
+      (rd->loc >= rd->data_start))
+    res = rd->ibufs[rd->chan][rd->loc - rd->data_start];
+  else res = mus_in_any_from_file(ptr, rd->loc, rd->chan);
+
   rd->loc += rd->dir;
   return(res);
 }
@@ -8070,13 +8077,28 @@ mus_any *mus_file_to_frame(mus_any *ptr, mus_long_t samp, mus_any *uf)
   mus_frame *f;
   rdin *gen = (rdin *)ptr;
   int i;
+
   if (uf == NULL) 
     f = (mus_frame *)mus_make_empty_frame(gen->chans); 
   else f = (mus_frame *)uf;
-  for (i = 0; i < gen->chans; i++) 
-    f->vals[i] = mus_in_any_from_file(ptr, samp, i);
+
+  if ((samp <= gen->data_end) &&
+      (samp >= gen->data_start) &&
+      (gen->chans == f->chans))
+    {
+      mus_long_t pos;
+      pos = samp - gen->data_start;
+      for (i = 0; i < gen->chans; i++) 
+	f->vals[i] = gen->ibufs[i][pos];
+    }
+  else
+    {
+      for (i = 0; i < gen->chans; i++) 
+	f->vals[i] = mus_in_any_from_file(ptr, samp, i);
+    }
   return((mus_any *)f);
 }
+
 
 
 
@@ -8213,68 +8235,68 @@ static void flush_buffers(rdout *gen)
   else
     {
       /* get existing samples, add new output, write back to output */
-      mus_float_t **addbufs;
+      mus_float_t **addbufs = NULL;
       int i, j, data_format;
       mus_long_t current_file_frames, frames_to_add;
-
+      
       data_format = mus_sound_data_format(gen->file_name);
       current_file_frames = mus_sound_frames(gen->file_name);
-
-      addbufs = (mus_float_t **)calloc(gen->chans, sizeof(mus_float_t *));
-
-      {
-	bool allocation_failed = false;
-
-	for (i = 0; i < gen->chans; i++) 
-	  {
-	    /* clm_file_buffer_size may be too large, but it's very hard to tell that
-	     *   in advance.  In Linux, malloc returns a non-null pointer even when
-	     *   there's no memory available, so you have to touch the memory to force
-	     *   the OS to deal with it, then the next allocation returns null.
-	     *   So, here we go...
-	     */
-	    addbufs[i] = (mus_float_t *)calloc(clm_file_buffer_size, sizeof(mus_float_t));
-	    if (addbufs[i])
-	      addbufs[i][0] = 0.0;
-	    else
-	      {
-		allocation_failed = true;
-		break;
-	      }
-	  }
-
-	if (allocation_failed)
-	  {
-	    mus_long_t old_file_buffer_size = 0;
-
-	    /* first clean up the mess we made */
-	    for (i = 0; i < gen->chans; i++) 
+      /* this is often 0 (brand-new file) */
+      
+      if (current_file_frames > gen->data_start)
+	{
+	  bool allocation_failed = false;
+	  addbufs = (mus_float_t **)calloc(gen->chans, sizeof(mus_float_t *));
+	  
+	  for (i = 0; i < gen->chans; i++) 
+	    {
+	      /* clm_file_buffer_size may be too large, but it's very hard to tell that
+	       *   in advance.  In Linux, malloc returns a non-null pointer even when
+	       *   there's no memory available, so you have to touch the memory to force
+	       *   the OS to deal with it, then the next allocation returns null.
+	       *   So, here we go...
+	       */
+	      addbufs[i] = (mus_float_t *)calloc(clm_file_buffer_size, sizeof(mus_float_t));
 	      if (addbufs[i])
+		addbufs[i][0] = 0.0;
+	      else
 		{
-		  free(addbufs[i]);
-		  addbufs[i] = NULL;
+		  allocation_failed = true;
+		  break;
 		}
-	    free(addbufs);
-
-	    /* it would take a lot of screwing around to find the biggest clm_file_buffer_size we could handle,
-	     *   and it might fail on the next call (if more chans), so we'll throw an error.  We could get
-	     *   say 1024 samps per chan, then run through a loop outputting the current buffer, but geez...
-	     */
-	    /* but... if we hit this in with-sound, mus_error calls (eventually) s7_error which sees the
-	     *   dynamic-wind and tries to call mus-close, which tries to flush the buffers and we have
-	     *   an infinite loop.  So, we need to clean up right now.
-	     */
-	    mus_sound_close_input(fd);
-	    old_file_buffer_size = clm_file_buffer_size;
-	    clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, S_mus_file_buffer_size " (%lld) is too large: we can't allocate the output buffers!", old_file_buffer_size);
-	    return;
-	  }
-      }
-
-      mus_file_seek_frame(fd, gen->data_start);
+	    }
+	  
+	  if (allocation_failed)
+	    {
+	      mus_long_t old_file_buffer_size = 0;
+	      
+	      /* first clean up the mess we made */
+	      for (i = 0; i < gen->chans; i++) 
+		if (addbufs[i])
+		  {
+		    free(addbufs[i]);
+		    addbufs[i] = NULL;
+		  }
+	      free(addbufs);
+	      
+	      /* it would take a lot of screwing around to find the biggest clm_file_buffer_size we could handle,
+	       *   and it might fail on the next call (if more chans), so we'll throw an error.  We could get
+	       *   say 1024 samps per chan, then run through a loop outputting the current buffer, but geez...
+	       */
+	      /* but... if we hit this in with-sound, mus_error calls (eventually) s7_error which sees the
+	       *   dynamic-wind and tries to call mus-close, which tries to flush the buffers and we have
+	       *   an infinite loop.  So, we need to clean up right now.
+	       */
+	      mus_sound_close_input(fd);
+	      old_file_buffer_size = clm_file_buffer_size;
+	      clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
+	      mus_error(MUS_MEMORY_ALLOCATION_FAILED, S_mus_file_buffer_size " (%lld) is too large: we can't allocate the output buffers!", old_file_buffer_size);
+	      return;
+	    }
+	}
+      
       frames_to_add = gen->out_end - gen->data_start;
-
+      
       /* if the caller reset clm_file_buffer_size during a run, frames_to_add might be greater than the assumed buffer size,
        *   so we need to complain and fix up the limits.  In CLM, the size is set in sound.lisp, begin-with-sound.
        *   In Snd via mus_set_file_buffer_size in clm2xen.c.  The initial default is set in mus_initialize
@@ -8284,20 +8306,23 @@ static void flush_buffers(rdout *gen)
 	{
 	  mus_print("clm-file-buffer-size changed? %lld <= %lld (start: %lld, end: %lld, %lld)",
 		    clm_file_buffer_size, frames_to_add, gen->data_start, gen->data_end, gen->out_end);
-
+	  
 	  frames_to_add = clm_file_buffer_size - 1;
 	  /* this means we drop samples -- the other choice (short of throwing an error) would
 	   *   be to read/allocate the bigger size.
 	   */
 	}
-
-      mus_file_read(fd, 0, frames_to_add, gen->chans, addbufs);
-      mus_sound_close_input(fd);
+      if (addbufs)
+	{
+	  mus_file_seek_frame(fd, gen->data_start);
+	  mus_file_read(fd, 0, frames_to_add, gen->chans, addbufs);
+	}
+      mus_sound_close_input(fd); /* close previous mus_sound_open_input */
 
       fd = mus_sound_reopen_output(gen->file_name, gen->chans, data_format,
 				   mus_sound_header_type(gen->file_name),
 				   mus_sound_data_location(gen->file_name));
-
+      
       if ((current_file_frames < gen->data_start) &&
 	  (data_format_zero[data_format] != 0))
 	{
@@ -8317,38 +8342,73 @@ static void flush_buffers(rdout *gen)
 	   *  won't be data format 0.  data_format_zero[format] != 0 signals we have such a
 	   *  case, and returns the nominal zero value.  For unsigned shorts, we also need to
 	   *  take endianess into account.
-	   *
-	   * Since addbufs is empty here, and is of type mus_float_t, I'll take the slightly
-	   *  slower but simpler path of calling mus_file_write to handle all the translations.
 	   */
+	  
+	  mus_long_t filler, current_samps, bytes, bps;
+	  unsigned char *zeros;
+	  #define MAX_ZERO_SAMPLES 65536
 
-	  mus_long_t filler, current_samps;
+	  bps = mus_bytes_per_sample(data_format);
 	  filler = gen->data_start - current_file_frames; 
 	  mus_file_seek_frame(fd, current_file_frames);
+
+	  if (filler > MAX_ZERO_SAMPLES)
+	    bytes = MAX_ZERO_SAMPLES * bps * gen->chans;
+	  else bytes = filler * bps * gen->chans;
+
+	  zeros = (unsigned char *)malloc(bytes);
+	  if (bps == 1)
+	    memset((void *)zeros, data_format_zero[data_format], bytes);
+	  else /* it has to be a short */
+	    {
+	      int df, i, b1, b2;
+	      df = data_format_zero[data_format];
+	      b1 = df >> 8;
+	      b2 = df & 0xff;
+	      for (i = 0; i < bytes; i += 2)
+		{
+		  zeros[i] = b2;
+		  zeros[i + 1] = b1;
+		}
+	    }
+	  /* (with-sound (:data-format mus-ulshort) (fm-violin 10 1 440 .1)) */
 	  while (filler > 0)
 	    {
-	      if (filler > clm_file_buffer_size)
-		current_samps = clm_file_buffer_size;
-	      else current_samps = filler;
-	      mus_file_write(fd, 0, current_samps - 1, gen->chans, addbufs);
+	      if (filler > MAX_ZERO_SAMPLES)
+		current_samps = MAX_ZERO_SAMPLES;
+	      else 
+		{
+		  current_samps = filler;
+		  bytes = current_samps * bps * gen->chans;
+		}
+	      write(fd, zeros, bytes);
 	      filler -= current_samps;
 	    }
 	}
-
-      /* fill/write output buffers with current data added to saved data (if any) */
-      for (j = 0; j < gen->chans; j++)
-	for (i = 0; i <= frames_to_add; i++)
-	  addbufs[j][i] += gen->obufs[j][i];
-
-      mus_file_seek_frame(fd, gen->data_start);
-      mus_file_write(fd, 0, frames_to_add, gen->chans, addbufs);
-      if (current_file_frames <= gen->out_end) current_file_frames = gen->out_end + 1;
-
+      
+      if (addbufs)
+	{
+	  /* fill/write output buffers with current data added to saved data */
+	  for (j = 0; j < gen->chans; j++)
+	    for (i = 0; i <= frames_to_add; i++)
+	      addbufs[j][i] += gen->obufs[j][i];
+	  
+	  mus_file_seek_frame(fd, gen->data_start);
+	  mus_file_write(fd, 0, frames_to_add, gen->chans, addbufs);
+	  for (i = 0; i < gen->chans; i++) 
+	    free(addbufs[i]);  /* used calloc above to make sure we can check for unsuccessful allocation */
+	  free(addbufs);
+	}
+      else
+	{
+	  /* output currently empty, so just flush out the gen->obufs */
+	  mus_file_seek_frame(fd, gen->data_start);
+	  mus_file_write(fd, 0, frames_to_add, gen->chans, gen->obufs);
+	}
+      
+      if (current_file_frames <= gen->out_end) 
+	current_file_frames = gen->out_end + 1;
       mus_sound_close_output(fd, current_file_frames * gen->chans * mus_bytes_per_sample(data_format));
-
-      for (i = 0; i < gen->chans; i++) 
-	free(addbufs[i]);  /* used calloc above to make sure we can check for unsuccessful allocation */
-      free(addbufs);
     }
 }
 
@@ -8388,8 +8448,7 @@ mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_flo
   if (!ptr) return(val);
   
   if ((chan >= gen->chans) ||  /* checking for (val == 0.0) here appears to make no difference overall */
-      (!(gen->obufs)) ||
-      (samp < 0))
+      (!(gen->obufs)))
     return(val);
 
   if (gen->safety == 1)
@@ -8406,6 +8465,7 @@ mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_flo
   else
     {
       int j;
+      if (samp < 0) return(val);
       flush_buffers(gen);
       for (j = 0; j < gen->chans; j++)
 	memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_float_t));
@@ -8427,8 +8487,7 @@ static mus_float_t mus_outa_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
   if (!ptr) return(val);
   
   if ((!(gen->obuf0)) || 
-      (!(gen->obufs)) ||
-      (samp < 0))
+      (!(gen->obufs)))
     return(val);
 
   if (gen->safety == 1)
@@ -8445,6 +8504,7 @@ static mus_float_t mus_outa_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
   else
     {
       int j;
+      if (samp < 0) return(val);
       flush_buffers(gen);
       for (j = 0; j < gen->chans; j++)
 	memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_float_t));
@@ -8466,8 +8526,7 @@ static mus_float_t mus_outb_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
   if (!ptr) return(val);
   
   if ((!(gen->obuf1)) ||
-      (!(gen->obufs)) ||
-      (samp < 0))
+      (!(gen->obufs)))
     return(val);
 
   if (gen->safety == 1)
@@ -8484,6 +8543,7 @@ static mus_float_t mus_outb_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
   else
     {
       int j;
+      if (samp < 0) return(val);
       flush_buffers(gen);
       for (j = 0; j < gen->chans; j++)
 	memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_float_t));
@@ -8652,16 +8712,44 @@ mus_float_t mus_safe_out_any_to_file(mus_long_t samp, mus_float_t val, int chan,
       gen->obufs[chan][samp] += val;
       if (samp > gen->out_end) 
 	gen->out_end = samp;
-      return(val);
     }
-  return(((*(IO->core)->write_sample))(IO, samp, chan, val));
+  else
+    {
+      if (chan >= gen->chans)  /* checking for (val == 0.0) here appears to make no difference overall */
+	return(val);
+      /* does this need to check obufs? */
+      
+      if ((samp <= gen->data_end) &&
+	  (samp >= gen->data_start))
+	{
+	  gen->obufs[chan][samp - gen->data_start] += val;
+	  if (samp > gen->out_end) 
+	    gen->out_end = samp;
+	}
+      else
+	{
+	  int j;
+	  if (samp < 0) return(val);
+	  flush_buffers(gen);
+	  for (j = 0; j < gen->chans; j++)
+	    memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_float_t));
+	  gen->data_start = samp;
+	  gen->data_end = samp + clm_file_buffer_size - 1;
+	  gen->obufs[chan][samp - gen->data_start] += val;
+	  gen->out_end = samp; /* this resets the current notion of where in the buffer the new data ends */
+	}
+    }
+  return(val);
+  
 }
 
 
 bool mus_out_any_is_safe(mus_any *IO)
 {
   rdout *gen = (rdout *)IO;
-  return((gen) && (gen->core->write_sample == mus_out_any_to_file));
+  return((gen) && 
+	 (gen->obufs) &&
+	 (gen->core->write_sample == mus_out_any_to_file));
 }
 
 

@@ -641,6 +641,27 @@
       (test (eqv? 1+i (bignum "1+i")) #t)
       ))
 
+;; from M Weaver:
+(test (list (eqv? +0.0 -0.0)
+	    (eqv? (make-rectangular +0.0  1.0)
+		  (make-rectangular -0.0  1.0))
+	    (eqv? (make-rectangular  1.0 +0.0)
+		  (make-rectangular  1.0 -0.0)))
+      '(#t #t #t))
+(test (list (eq? +0.0 -0.0)
+        (eq? (make-rectangular  +0.0  1.0)
+              (make-rectangular -0.0  1.0))
+        (eq? (make-rectangular   1.0 +0.0)
+              (make-rectangular  1.0 -0.0)))
+      '(#t #f #f))
+(test (list (eq? +0 -0)
+        (eq? (make-rectangular  +0  1)
+              (make-rectangular -0  1))
+        (eq? (make-rectangular   1 +0)
+              (make-rectangular  1 -0)))
+      '(#t #f #t))
+
+
 
 
 ;;; --------------------------------------------------------------------------------

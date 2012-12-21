@@ -449,7 +449,6 @@
 	    (dist 0.0)
 	    (dist-scl 0.0)
 	    (dist-rscl 0.0)
-	    (pos 0)
 	    (val 0.0)
 	    (val1 0.0)
 	    (val2 0.0)
@@ -465,18 +464,18 @@
 	      ;; send sample to output
 	      ;;
 	      (begin
-		(if interp-gr-envs (set! gr-where (env gr-int-env)))
-		(set! pos (+ gr-start-sample gr-offset))
 		(set! val1 (table-lookup gr-env))
 		(set! val (* (env amp-env) (src in-file-reader)))
-		(if interp-gr-envs
+		(if interp-gr-envs 
 		    (begin
+		      (set! gr-where (env gr-int-env))
 		      (set! val2 (table-lookup gr-env-end))
 		      (set! val1 (+ (* gr-where val2) (* (- 1.0 gr-where) val1)))))
-		(set! val (* val val1))
-		(locsig loc pos val)
+		(locsig loc 
+			(+ gr-start-sample gr-offset)
+			(* val val1))
 		;; increment pointer in grain
-		(set! gr-offset (+ 1 gr-offset)))
+		(set! gr-offset (+ gr-offset 1)))
 	      (begin
 		;;
 		;; start of a new grain
@@ -568,18 +567,18 @@
 		      (if (and where-bins
 			       (not (zero? where)))
 			  ;; set output scalers according to criteria
-			  (do ((chn 0 (+ 1 chn)))
+			  (do ((chn 0 (+ chn 1)))
 			      ((or (= chn out-chans)
 				   (= chn where-bins-len)))
 			    (locsig-set! loc chn (if (< (where-bins chn)
 							where
-							(where-bins (+ 1 chn)))
+							(where-bins (+ chn 1)))
 						     1.0
 						     0.0)))
 			  ;; if not "where" see if the user wants to send to all channels
 			  (if (= where-to grani-to-grain-allchans)
 			      ;; send the grain to all channels
-			      (do ((chn 0 (+ 1 chn)))
+			      (do ((chn 0 (+ chn 1)))
 				  ((= chn out-chans))
 				(locsig-set! loc chn 1.0))
 			      ;; "where" is zero or unknown: use normal n-channel locsig, 
