@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [575]
-;;;  test 1: defaults                           [1161]
-;;;  test 2: headers                            [1375]
-;;;  test 3: variables                          [1690]
-;;;  test 4: sndlib                             [2268]
-;;;  test 5: simple overall checks              [4769]
-;;;  test 6: vcts                               [9543]
-;;;  test 7: colors                             [9863]
-;;;  test 8: clm                                [10383]
-;;;  test 9: mix                                [21726]
-;;;  test 10: marks                             [23513]
-;;;  test 11: dialogs                           [24480]
-;;;  test 12: extensions                        [24673]
-;;;  test 13: menus, edit lists, hooks, etc     [24939]
-;;;  test 14: all together now                  [26316]
-;;;  test 15: chan-local vars                   [27203]
-;;;  test 16: regularized funcs                 [28989]
-;;;  test 17: dialogs and graphics              [32214]
-;;;  test 18: enved                             [32313]
-;;;  test 19: save and restore                  [32332]
-;;;  test 20: transforms                        [33954]
-;;;  test 21: new stuff                         [36106]
-;;;  test 22: (run)                             [38128]
-;;;  test 23: with-sound                        [38134]
-;;;  test 25: X/Xt/Xm                           [41107]
-;;;  test 26:                                   [44789]
-;;;  test 27: GL                                [44795]
-;;;  test 28: errors                            [44919]
-;;;  test 29: s7                                [47041]
-;;;  test all done                              [47113]
-;;;  test the end                               [47293]
+;;;  test 0: constants                          [574]
+;;;  test 1: defaults                           [1160]
+;;;  test 2: headers                            [1374]
+;;;  test 3: variables                          [1689]
+;;;  test 4: sndlib                             [2267]
+;;;  test 5: simple overall checks              [4733]
+;;;  test 6: vcts                               [9507]
+;;;  test 7: colors                             [9827]
+;;;  test 8: clm                                [10347]
+;;;  test 9: mix                                [21683]
+;;;  test 10: marks                             [23470]
+;;;  test 11: dialogs                           [24437]
+;;;  test 12: extensions                        [24630]
+;;;  test 13: menus, edit lists, hooks, etc     [24896]
+;;;  test 14: all together now                  [26273]
+;;;  test 15: chan-local vars                   [27160]
+;;;  test 16: regularized funcs                 [28946]
+;;;  test 17: dialogs and graphics              [32171]
+;;;  test 18: enved                             [32270]
+;;;  test 19: save and restore                  [32289]
+;;;  test 20: transforms                        [33911]
+;;;  test 21: new stuff                         [36063]
+;;;  test 22: (run)                             [38085]
+;;;  test 23: with-sound                        [38091]
+;;;  test 25: X/Xt/Xm                           [41068]
+;;;  test 26:                                   [44750]
+;;;  test 27: GL                                [44756]
+;;;  test 28: errors                            [44880]
+;;;  test 29: s7                                [47002]
+;;;  test all done                              [47074]
+;;;  test the end                               [47242]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -18583,10 +18583,10 @@ EDITS: 2
     
     (let ((v1 (lambda (n)
 		(let ((hits (make-vector 10 0))
-		      (gen (make-rand 22050.0)))
+		      (gen (make-rand 22050.0 5)))
 		  (do ((i 0 (+ 1 i )))
 		      ((= i n))
-		    (let ((y (floor (+ 5 (* 5 (rand gen 0.0))))))
+		    (let ((y (floor (+ 5 (rand gen 0.0)))))
 		      (set! (hits y) (+ 1 (vector-ref hits y)))))
 		  (let ((sum 0.0)
 			(p (/ n 10.0)))
@@ -38367,7 +38367,7 @@ EDITS: 1
   
   
   (definstrument (floc-simp beg dur (amp 0.5) (freq 440.0) (ramp 2.0) (rfreq 1.0) offset)
-    (let ((os (make-pulse-train freq))
+    (let ((os (make-pulse-train freq amp))
 	   (floc (make-flocsig :reverb-amount 0.1
 			       :frequency rfreq
 			       :amplitude ramp
@@ -38376,7 +38376,7 @@ EDITS: 1
 	   (end (seconds->samples (+ beg dur))))
 	 (do ((i start (+ i 1))) 
 	     ((= i end))
-	   (flocsig floc i (* amp (pulse-train os))))))
+	   (flocsig floc i (pulse-train os)))))
   
   
   (define (test-ws-errors)
@@ -39104,57 +39104,55 @@ EDITS: 1
 		(grani 0 1 .5 "oboe.snd" :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0))
 		(grani 0 4 1 "oboe.snd")
 
-		    (begin
-		      (grani 0 4 1 "oboe.snd" :grains 10)
-		      (grani 0 4 1 "oboe.snd" 
-			     :grain-start 0.11 
-			     :amp-envelope '(0 1 1 1) :grain-density 8
-			     :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0)
-			     :grain-envelope-end '(0 0 0.01 1 0.99 1 1 0)
-			     :grain-envelope-transition '(0 0 0.4 1 0.8 0 1 0))
-		      (grani 0 3 1 "oboe.snd" 
-			     :grain-start 0.1 
-			     :amp-envelope '(0 1 1 1) :grain-density 20
-			     :grain-duration '(0 0.003 0.2 0.01 1 0.3))
-		      (grani 0 3 1 "oboe.snd" 
-			     :grain-start 0.1 
-			     :amp-envelope '(0 1 1 1) :grain-density 20
-			     :grain-duration '(0 0.003 0.2 0.01 1 0.3)
-			     :grain-duration-limit 0.02)
-		      (grani 0 2 1 "oboe.snd" 
-			     :amp-envelope '(0 1 1 1) :grain-density 40
-			     :grain-start '(0 0.1 0.3 0.1 1 0.6))
-		      (grani 0 2 1 "oboe.snd" 
-			     :amp-envelope '(0 1 1 1) :grain-density 40
-			     :grain-start '(0 0.1 0.3 0.1 1 0.6)
-			     :grain-start-spread 0.01)
-		      (grani 0 2.6 1 "oboe.snd" 
-			     :grain-start 0.1 :grain-start-spread 0.01
-			     :amp-envelope '(0 1 1 1) :grain-density 40
-			     :srate '(0 0 0.2 0 0.6 5 1 5))
-		      (grani 0 2.6 1 "oboe.snd" 
-			     :grain-start 0.1 :grain-start-spread 0.01
-			     :amp-envelope '(0 1 1 1) :grain-density 40
-			     :srate-base 2
-			     :srate '(0 0 0.2 0 0.6 -1 1 -1))
-		      (grani 0 2.6 1 "oboe.snd" 
-			     :grain-start 0.1 :grain-start-spread 0.01
-			     :amp-envelope '(0 1 1 1) :grain-density 40
-			     :srate-linear #t
-			     :srate (list 0 1 0.2 1 0.6 (expt 2 (/ 5 12)) 1 (expt 2 (/ 5 12))))
-		      (grani 0 2 1 "oboe.snd" 
-			     :grain-start 0.1 :grain-start-spread 0.01
-			     :amp-envelope '(0 1 1 1) :grain-density 40
-			     :grain-duration '(0 0.02 1 0.1) 
-			     :grain-duration-spread '(0 0 0.5 0.1 1 0)
-			     :where-to grani-to-grain-duration ; from grani.scm
-			     :where-bins (vct 0 0.05 1))
-		      (grani 0 2 1 "oboe.snd" 
-			     :grain-start 0.1 :grain-start-spread 0.01
-			     :amp-envelope '(0 1 1 1) :grain-density 40
-			     :grain-degree '(0 0 1 90)
-			     :grain-degree-spread 10)
-		      ))
+		(grani 0 4 1 "oboe.snd" :grains 10)
+		(grani 0 4 1 "oboe.snd" 
+		       :grain-start 0.11 
+		       :amp-envelope '(0 1 1 1) :grain-density 8
+		       :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0)
+		       :grain-envelope-end '(0 0 0.01 1 0.99 1 1 0)
+		       :grain-envelope-transition '(0 0 0.4 1 0.8 0 1 0))
+		(grani 0 3 1 "oboe.snd" 
+		       :grain-start 0.1 
+		       :amp-envelope '(0 1 1 1) :grain-density 20
+		       :grain-duration '(0 0.003 0.2 0.01 1 0.3))
+		(grani 0 3 1 "oboe.snd" 
+		       :grain-start 0.1 
+		       :amp-envelope '(0 1 1 1) :grain-density 20
+		       :grain-duration '(0 0.003 0.2 0.01 1 0.3)
+		       :grain-duration-limit 0.02)
+		(grani 0 2 1 "oboe.snd" 
+		       :amp-envelope '(0 1 1 1) :grain-density 40
+		       :grain-start '(0 0.1 0.3 0.1 1 0.6))
+		(grani 0 2 1 "oboe.snd" 
+		       :amp-envelope '(0 1 1 1) :grain-density 40
+		       :grain-start '(0 0.1 0.3 0.1 1 0.6)
+		       :grain-start-spread 0.01)
+		(grani 0 2.6 1 "oboe.snd" 
+		       :grain-start 0.1 :grain-start-spread 0.01
+		       :amp-envelope '(0 1 1 1) :grain-density 40
+		       :srate '(0 0 0.2 0 0.6 5 1 5))
+		(grani 0 2.6 1 "oboe.snd" 
+		       :grain-start 0.1 :grain-start-spread 0.01
+		       :amp-envelope '(0 1 1 1) :grain-density 40
+		       :srate-base 2
+		       :srate '(0 0 0.2 0 0.6 -1 1 -1))
+		(grani 0 2.6 1 "oboe.snd" 
+		       :grain-start 0.1 :grain-start-spread 0.01
+		       :amp-envelope '(0 1 1 1) :grain-density 40
+		       :srate-linear #t
+		       :srate (list 0 1 0.2 1 0.6 (expt 2 (/ 5 12)) 1 (expt 2 (/ 5 12))))
+		(grani 0 2 1 "oboe.snd" 
+		       :grain-start 0.1 :grain-start-spread 0.01
+		       :amp-envelope '(0 1 1 1) :grain-density 40
+		       :grain-duration '(0 0.02 1 0.1) 
+		       :grain-duration-spread '(0 0 0.5 0.1 1 0)
+		       :where-to grani-to-grain-duration ; from grani.scm
+		       :where-bins (vct 0 0.05 1))
+		(grani 0 2 1 "oboe.snd" 
+		       :grain-start 0.1 :grain-start-spread 0.01
+		       :amp-envelope '(0 1 1 1) :grain-density 40
+		       :grain-degree '(0 0 1 90)
+		       :grain-degree-spread 10))
     
     (let ((ind (open-sound "oboe.snd")))
       (with-sound (:output "test1.snd" :to-snd #f) (fm-violin 0 .1 440 .1))
@@ -39782,15 +39780,15 @@ EDITS: 1
 	  (v4 (with-sound (:output (make-vct 44100)) 
 			  (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
       (if (vequal v1 v4) (snd-display #__line__ ";reverb output not written to vct?"))
-      (if (< (vct-peak v1) .29)
+      (if (< (vct-peak v1) .28)
 	  (snd-display #__line__ ";rev with-sound -> vct fm-violin maxamp (opt): ~A" (vct-peak v1)))
       (let ((v2 (with-sound (:output (make-vct 44100) :reverb jc-reverb) (fm-violin 0 .1 440 .1 :reverb-amount 0.9))))
-	(if (< (vct-peak v2) .29) 
+	(if (< (vct-peak v2) .28) 
 	    (snd-display #__line__ ";rev with-sound -> vct fm-violin maxamp: ~A" (vct-peak v2)))
 	(with-sound (:output v1 :channels 1 :reverb jc-reverb)
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
-	(if (< (vct-peak v1) .29) 
+	(if (< (vct-peak v1) .28) 
 	    (snd-display #__line__ ";rev with-sound -> vct fm-violin maxamp (opt 2): ~A" (vct-peak v1)))))
   
     (let ((v1 (with-sound (:output (make-sound-data 1 44100) :reverb jc-reverb) 
@@ -40843,9 +40841,10 @@ EDITS: 1
 	(set! (lisp-graph?) #t)
 	(do ((i 0 (+ i 1)))
 	    ((= i 10000))
-	  (moving-fft ft)
-	  (vct-subseq (mus-xcoeffs ft) 0 255 data)
-	  (graph data "fft" 0.0 11025.0 0.0 0.1 snd 0 #t))
+	  (if (moving-fft ft)
+	      (begin
+		(vct-subseq (mus-xcoeffs ft) 0 255 data)
+		(graph data "fft" 0.0 11025.0 0.0 0.1 snd 0 #t))))
 	(close-sound snd)))
   
   (test-sv)
@@ -47098,25 +47097,12 @@ EDITS: 1
 (set! (print-length) 64)
 (display (format #f "~%;times: ~A~%;total: ~A~%" timings (round (- (real-time) overall-start-time))))
 
-#|
-(let ((best-times (vector 59 58 114 95 2244 5373 613 134 11680 2892 609 743 868 976 815 1288 3020 197 168 2952 758 1925 4997 6567 846  183 0 242 6696 0))) ; 571
-;; this runs 4x faster on the i7 930 nogui/no-audio 
-;; 19-Dec-12:            #(1 1  2   2  69   240  6   1   583   1    23   1   1  17  70   1   233   1   1   271  89  119  1   1877  0   0   0  1   1   73)  ;  37
 
-  (do ((i 0 (+ i 1)))
-      ((= i (vector-length timings)))
-    (if (and (> (vector-ref timings i) 0)
-	     (> (vector-ref best-times i) 0))
-	(set! (best-times i) (exact->inexact (/ (vector-ref timings i) (vector-ref best-times i))))
-	(set! (best-times i) 0.0)))
-  (display (format #f ";ratios: ("))
-  (do ((i 0 (+ i 1)))
-      ((= i (vector-length timings)))
-    (if (< (vector-ref best-times i) 10.0)
-	(display (format #f "~1,1F " (vector-ref best-times i)))
-	(display (format #f "(test ~D:) ~1,1F " i (vector-ref best-times i)))))
-  (display (format #f ")~%~%")))
-|#
+;; #(59 58 114 95 2244 5373 613 134 11680 2892 609 743 868 976 815 1288 3020 197 168 2952 758 1925 4997 6567 846  183 0 242 6696 0))) ; 571
+;; 
+;; 19-Dec-12: #(1 1 2 2 69 240 6 1 583 1 23 1 1 17 70 1 233 1 1 271 89 119 1 1877 0 0 0 1 1 73)  ;  37
+;; 23-Dec-12: #(1 1 2 1 67 243 7 1 586 1 16 1 2 18 63 1 223 1 1 270 92 115 1 1821 0 0 0 1 1 80)  ;  36
+
 
 ;;; -------- cleanup temp files
 
@@ -47359,22 +47345,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-20-Dec-12:
-117,524,948,787
-23,184,120,954  s7.c:eval [/home/bil/snd-13/snd]
- 9,036,755,857  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 7,614,931,829  ???:sin [/lib64/libm-2.12.so]
- 6,326,863,041  s7.c:eval'2 [/home/bil/snd-13/snd]
- 3,868,883,113  s7.c:gc [/home/bil/snd-13/snd]
- 3,062,248,749  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+22-Dec-12:
+115,228,491,014
+22,059,726,301  s7.c:eval [/home/bil/snd-13/snd]
+ 8,773,281,627  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 7,619,233,589  ???:sin [/lib64/libm-2.12.so]
+ 6,435,155,285  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 3,852,614,909  s7.c:gc [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,812,579,854  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 2,636,855,755  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,555,195,641  ???:cos [/lib64/libm-2.12.so]
+ 2,895,649,119  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 2,866,413,143  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,707,307,941  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,559,888,138  ???:cos [/lib64/libm-2.12.so]
  2,346,068,443  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 2,219,255,496  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 2,195,392,454  s7.c:s7_make_real [/home/bil/snd-13/snd]
  1,592,316,356  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,320,858,946  clm.c:mus_out_any_to_file [/home/bil/snd-13/snd]
- 1,152,088,801  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 1,240,281,465  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
+ 1,152,081,150  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,129,623,660  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
 |#

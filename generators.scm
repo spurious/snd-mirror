@@ -4500,24 +4500,6 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 ;;; --------------------------------------------------------------------------------
-#|
-;;; this has been moved to clm2xen.c
-(defgenerator plsenv (pulse #f) (ampf #f))
-
-(define* (make-pulsed-env envelope duration frequency)
-  (make-plsenv (make-pulse-train frequency)
-	       (make-env envelope :duration duration)))
-
-(define* (pulsed-env gen (fm 0.0))
-  (if (> (pulse-train (gen 'pulse) fm) 0.1)
-      (mus-reset (gen 'ampf)))
-  (env (gen 'ampf)))
-
-(define pulsed-env? plsenv?)
-|#
-
-
-;;; --------------------------------------------------------------------------------
 
 (defgenerator (adjustable-square-wave 
 	       :make-wrapper 
@@ -5976,21 +5958,17 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 		(begin
 		  (do ((i 0 (+ i 1)))
 		      ((= i n))
-		    (set! (data i) (readin input))))
-		(begin
-		  (do ((i 0 (+ i 1))
-		       (j hop (+ j 1)))
-		      ((= j n))
-		    (set! (data i) (data j)))
-		  (do ((i (- n hop) (+ i 1)))
+		    (vct-set! data i (readin input))))
+		(let ((mid (- n hop)))
+		  (vct-move! data 0 hop)
+		  (do ((i mid (+ i 1)))
 		      ((= i n))
-		    (set! (data i) (readin input)))))
+		    (vct-set! data i (readin input)))))
 	    (set! outctr 0)
 	    (set! new-data #t)
-	    (clear-array im)
-	    (do ((i 0 (+ i 1)))
-		((= i n))
-	      (set! (rl i) (* (fft-window i) (data i))))
+	    (vct-fill! im 0.0)
+	    (vct-subseq data 0 n rl)
+	    (vct-multiply! rl fft-window)
 	    (mus-fft rl im n 1)
 	    (rectangular->polar rl im)))
       (set! outctr (+ outctr 1))
@@ -6005,9 +5983,10 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
   (set! (lisp-graph?) #t)
   (do ((i 0 (+ i 1)))
       ((= i 10000))
-    (moving-fft ft)
-    (vct-subseq (mus-xcoeffs ft) 0 255 data)
-    (graph data "fft" 0.0 11025.0 0.0 0.1 0 0 #t))
+    (if (moving-fft ft)
+	(begin
+	  (vct-subseq (mus-xcoeffs ft) 0 255 data)
+	  (graph data "fft" 0.0 11025.0 0.0 0.1 snd 0 #t))))
   (close-sound snd))
 |#
 
@@ -6047,10 +6026,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 		      ((= i n))
 		    (set! (data i) (readin input))))
 		(begin
-		  (do ((i 0 (+ i 1))
-		       (j hop (+ j 1)))
-		      ((= j n))
-		    (set! (data i) (data j)))
+		  (vct-move! data 0 hop)
 		  (do ((i (- n hop) (+ i 1)))
 		      ((= i n))
 		    (set! (data i) (readin input)))))
@@ -6058,14 +6034,13 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 	    (set! outctr 0) ; -1??
 	    (set! dataloc (modulo dataloc n))
 	    
-	    (clear-array new-freq-incs)
+	    (vct-fill! new-freq-incs 0.0)
 	    (do ((i 0 (+ i 1))
 		 (j dataloc (+ j 1)))
 		((= i n))
 	      (if (= j n) (set! j 0))
 	      (set! (amp-incs j) (* (fft-window i)
 				    (data i))))
-	    
 	    (set! dataloc (+ dataloc hop))
 	    
 	    (mus-fft amp-incs new-freq-incs n 1)
@@ -6256,10 +6231,7 @@ taking input from the readin generator 'reader'.  The output data is available v
 		      ((= i n))
 		    (set! (data i) (readin input))))
 		(begin
-		  (do ((i 0 (+ i 1))
-		       (j hop (+ j 1)))
-		      ((= j n))
-		    (set! (data i) (data j)))
+		  (vct-move! data 0 hop)
 		  (do ((i (- n hop) (+ i 1)))
 		      ((= i n))
 		    (set! (data i) (readin input)))))
@@ -6542,7 +6514,7 @@ taking input from the readin generator 'reader'.  The output data is available v
 
 
 (definstrument (simp beg dur (amp 0.5) (freq 440.0) (ramp 2.0) (rfreq 1.0) offset)
-  (let* ((os (make-pulse-train freq))
+  (let* ((os (make-pulse-train freq amp))
 	 (floc (make-flocsig :reverb-amount 0.1
 			     :frequency rfreq
 			     :amplitude ramp
@@ -6551,7 +6523,7 @@ taking input from the readin generator 'reader'.  The output data is available v
 	 (end (+ start (seconds->samples dur))))
     (do ((i start (+ i 1))) 
 	((= i end))
-      (flocsig floc i (* amp (pulse-train os))))))
+      (flocsig floc i (pulse-train os)))))
 
 (with-sound (:channels 2 :reverb-channels 2 :reverb jcrev2) (simp 0 1))
 |#

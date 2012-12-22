@@ -41,6 +41,7 @@
 	      (outval 0.0)
 	      (inputs (make-vct fs 0.0))
 	      (amps (make-vct fs 1.0))
+	      (amps-scaled (make-vct fs amp))
 	      (ifs (/ 1.0 fs))
 	      (mid 0))
 
@@ -84,7 +85,7 @@
 				    (ks (* 2.0 ramp) (- ks ifs)))
 				   ((= k mid))
 				 (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
-			 (outa i (* amp (formant-bank amps fs1 inputs))))
+			 (outa i (formant-bank amps-scaled fs1 inputs)))
 			
 			((1)
 			 ;; high freqs go first
@@ -103,7 +104,7 @@
 				    (ks 0.0 (+ ks ifs)))
 				   ((= k fs))
 				 (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
-			 (outa i (* amp (formant-bank amps fs1 inputs))))
+			 (outa i (formant-bank amps-scaled fs1 inputs)))
 			
 			;; sweep from midpoint out
 			(else
@@ -117,7 +118,7 @@
 			       ((= k (- half-fs 1)))
 			     (let ((rfs (max 0.0 (min 1.0 (- r2 (/ k half-fs))))))
 			       (set! (inputs (+ k 1 half-fs)) (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))
-			   (outa i (* amp (formant-bank amps fs1 inputs))))))))))
+			   (outa i (formant-bank amps-scaled fs1 inputs)))))))))
 
 	  (do ((i bank2-end (+ i 1)))
 	      ((= i end))

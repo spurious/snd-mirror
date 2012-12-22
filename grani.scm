@@ -435,23 +435,16 @@
 	    (in-start 0)
 	    (in-start-value 0.0)
 	    (gr-duration 0.0)
-	    (gr-offset (+ 1 gr-samples))
 	    (gr-dens 0.0)
 	    (gr-dens-spread 0.0)
 	    (gr-srate 0.0)
 	    (grain-counter 0)
-	    (samples 0)
 	    (first-grain #t)
-	    (gr-where 0.0)
-	    (where 0.0)
-	    (deg 0.0)
-	    (happy #t)
-	    (dist 0.0)
-	    (dist-scl 0.0)
-	    (dist-rscl 0.0)
-	    (val 0.0)
 	    (val1 0.0)
 	    (val2 0.0)
+	    (gr-where 0.0)
+	    (where 0.0)
+	    (happy #t)
 	    (where-bins-len (if (vct? where-bins) (length where-bins) 0)))
 	(if (<= where-bins-len 1)
 	    (set! where-bins #f))
@@ -459,192 +452,198 @@
 	(if reverse (set! (mus-increment in-file-reader) -1.0))
 	(do () 
 	    ((not happy))
-	  (if (< gr-offset gr-samples)
-	      ;;
-	      ;; send sample to output
-	      ;;
+	  ;;
+	  ;; start of a new grain
+	  ;;
+	  (if first-grain
+	      ;; first grain always starts at 0
 	      (begin
-		(set! val1 (table-lookup gr-env))
-		(set! val (* (env amp-env) (src in-file-reader)))
-		(if interp-gr-envs 
-		    (begin
-		      (set! gr-where (env gr-int-env))
-		      (set! val2 (table-lookup gr-env-end))
-		      (set! val1 (+ (* gr-where val2) (* (- 1.0 gr-where) val1)))))
-		(locsig loc 
-			(+ gr-start-sample gr-offset)
-			(* val val1))
-		;; increment pointer in grain
-		(set! gr-offset (+ gr-offset 1)))
+		(set! first-grain #f)
+		(set! gr-start-sample beg))
 	      (begin
-		;;
-		;; start of a new grain
-		;;
-		(if first-grain
-		    ;; first grain always starts at 0
-		    (begin
-		      (set! first-grain #f)
-		      (set! gr-start-sample beg))
-		    (begin
-		      ;; start grain in output file using
-		      ;; increments from previous grain
-		      (set! gr-start-sample (+ gr-start-sample
-					       (floor 
-						(* (/ (+ gr-dens gr-dens-spread)) (mus-srate)))))
-		      ;; finish if start of grain falls outside of note
-		      ;; bounds or number of grains exceeded
-		      (if (or (> gr-start-sample end)
-			      (if (not (zero? grains))
-				  (>= grain-counter grains)
-				  #f))
-			  (set! happy #f))))
-		(if happy
-		    (begin
-		      ;; back to the beginning of the grain
-		      (set! gr-offset 0)
-		      ;; start of grain in samples from beginning of note
-		      (set! gr-from-beg (floor (- gr-start-sample beg)))
-		      ;; reset out-time dependent envelopes to current time
-		      (set! (mus-location amp-env) gr-from-beg)
-		      (set! (mus-location gr-dur) gr-from-beg)
-		      (set! (mus-location gr-dur-spread) gr-from-beg)
-		      (set! (mus-location sr-env) gr-from-beg)
-		      (set! (mus-location sr-spread-env) gr-from-beg)
-		      (set! (mus-location gr-start) gr-from-beg)
-		      (set! (mus-location gr-start-spread) gr-from-beg)
-		      (set! (mus-location gr-dens-env) gr-from-beg)
-		      (set! (mus-location gr-dens-spread-env) gr-from-beg)
-		      ;; start of grain in input file
-		      (set! in-start-value (+ (* (env gr-start) gr-start-scaler)
-					      (mus-random (* 0.5 (env gr-start-spread)
-							     gr-start-scaler))))
-		      (set! in-start (floor (* in-start-value in-file-sr)))
-		      ;; duration in seconds of the grain
-		      (set! gr-duration (max grain-duration-limit
-					     (+ (env gr-dur)
-						(mus-random (* 0.5 (env gr-dur-spread))))))
-		      ;; number of samples in the grain
-		      (set! gr-samples (floor (* gr-duration (mus-srate))))
-		      ;; new sample rate for grain
-		      (set! gr-srate (if srate-linear
-					 (+ (env sr-env)
-					    (mus-random (* 0.5 (env sr-spread-env))))
-					 (* (env sr-env)
-					    (expt srate-base
-						  (mus-random (* 0.5 (env sr-spread-env)))))))
-		      ;; set new sampling rate conversion factor
-		      (set! (mus-increment in-file-reader) gr-srate)
-		      ;; number of samples in input
-		      (set! in-samples (floor (* gr-samples srate-ratio)))
-		      ;; restart grain envelopes
-		      (set! (mus-phase gr-env) 0.0)
-		      (set! (mus-phase gr-env-end) 0.0)
-		      ;; reset grain envelope durations
-		      (set! (mus-frequency gr-env) (/ gr-duration))
-		      (set! (mus-frequency gr-env-end) (/ gr-duration))
-		      ;;
-		      ;; move position in output file for next grain
-		      ;;
-		      (set! gr-dens (env gr-dens-env))
-		      ;; increment spread in output file for next grain
-		      (set! gr-dens-spread (mus-random (* 0.5 (env gr-dens-spread-env))))
-		      ;; gather some statistics
-		      (set! samples (+ samples gr-samples))
-		      (set! grain-counter (+ grain-counter 1))
-		      (set! where (cond (;; use duration of grains as delimiter
-					 (= where-to grani-to-grain-duration)
-					 gr-duration)
-					(;; use start in input file as delimiter
-					 (= where-to grani-to-grain-start)
-					 in-start-value)
-					(;; use sampling rate as delimiter
-					 (= where-to grani-to-grain-sample-rate)
-					 gr-srate)
-					(;; use a random number as delimiter
-					 (= where-to grani-to-grain-random)
-					 (random 1.0))
-					(else grani-to-locsig)))
-		      (if (and where-bins
-			       (not (zero? where)))
-			  ;; set output scalers according to criteria
-			  (do ((chn 0 (+ chn 1)))
-			      ((or (= chn out-chans)
-				   (= chn where-bins-len)))
-			    (locsig-set! loc chn (if (< (where-bins chn)
-							where
-							(where-bins (+ chn 1)))
-						     1.0
-						     0.0)))
-			  ;; if not "where" see if the user wants to send to all channels
-			  (if (= where-to grani-to-grain-allchans)
-			      ;; send the grain to all channels
-			      (do ((chn 0 (+ chn 1)))
-				  ((= chn out-chans))
-				(locsig-set! loc chn 1.0))
-			      ;; "where" is zero or unknown: use normal n-channel locsig, 
-			      ;; only understands mono reverb and 1, 2 or 4 channel output
-			      (begin
-				(set! (mus-location gr-dist) gr-from-beg)
-				(set! (mus-location gr-dist-spread) gr-from-beg)
-				(set! (mus-location gr-degree) gr-from-beg)
-				(set! (mus-location gr-degree-spread) gr-from-beg)
-				;; set locsig parameters, for now only understands stereo
-				(set! deg (+ (env gr-degree)
-					     (mus-random (* 0.5 (env gr-degree-spread)))))
-				(set! dist (+ (env gr-dist)
-					      (mus-random (* 0.5 (env gr-dist-spread)))))
-				(set! dist-scl (/ 1.0 (max dist 1.0)))
-				(set! dist-rscl (/ 1.0 (sqrt (max dist 1.0))))
-				(if *reverb*
-				    (locsig-reverb-set! loc 0 (* reverb-amount dist-rscl)))
-				(if (= out-chans 1)
-				    (locsig-set! loc 0 dist-scl)
-				    (if (= out-chans 2)
-					(let ((frac (/ (min 90.0 (max 0.0 deg)) 90.0))) 
-					  (locsig-set! loc 0 (* dist-scl (- 1.0 frac)))
-					  (locsig-set! loc 1 (* dist-scl frac)))
-					(if (> out-chans 2)
-					    (begin
-					      (locsig-set! loc 0
-							   (if (<= 0 deg 90)
-							       (* dist-scl
-								  (/ (- 90 deg) 90.0))
-							       (if (<= 270 deg 360)
-								   (* dist-scl
-								      (/ (- deg 270) 90)) 
-								   0.0)))
-					      (locsig-set! loc 1
-							   (if (<= 90 deg 180)
-							       (* dist-scl
-								  (/ (- 180 deg) 90.0))
-							       (if (<= 0 deg 90)
-								   (* dist-scl
-								      (/ deg 90)) 
-								   0.0)))
-					      (locsig-set! loc 2
-							   (if (<= 180 deg 270)
-							       (* dist-scl
-								  (/ (- 270 deg) 90.0))
-							       (if (<= 90 deg 180)
-								   (* dist-scl
-								      (/ (- deg 90) 90)) 
-								   0.0)))
-					      (if (> out-chans 3)
-						  (locsig-set! loc 3
-							       (if (<= 270 deg 360)
-								   (* dist-scl
-								      (/ (- 360 deg) 90.0))
-								   (if (<= 180 deg 270)
-								       (* dist-scl
-									  (/ (- deg 180) 90))
-								       0.0)))))))))))))
+		;; start grain in output file using
+		;; increments from previous grain
+		(set! gr-start-sample (+ gr-start-sample
+					 (floor 
+					  (* (/ (+ gr-dens gr-dens-spread)) (mus-srate)))))
+		;; finish if start of grain falls outside of note
+		;; bounds or number of grains exceeded
+		(if (or (> gr-start-sample end)
+			(and (not (zero? grains))
+			     (>= grain-counter grains)))
+		    (set! happy #f))))
+	  (if happy
+	      (begin
+		;; back to the beginning of the grain
+		;(set! gr-offset 0)
+		;; start of grain in samples from beginning of note
+		(set! gr-from-beg (floor (- gr-start-sample beg)))
+		;; reset out-time dependent envelopes to current time
+		(set! (mus-location amp-env) gr-from-beg)
+		(set! (mus-location gr-dur) gr-from-beg)
+		(set! (mus-location gr-dur-spread) gr-from-beg)
+		(set! (mus-location sr-env) gr-from-beg)
+		(set! (mus-location sr-spread-env) gr-from-beg)
+		(set! (mus-location gr-start) gr-from-beg)
+		(set! (mus-location gr-start-spread) gr-from-beg)
+		(set! (mus-location gr-dens-env) gr-from-beg)
+		(set! (mus-location gr-dens-spread-env) gr-from-beg)
+		;; start of grain in input file
+		(set! in-start-value (+ (* (env gr-start) gr-start-scaler)
+					(mus-random (* 0.5 (env gr-start-spread)
+						       gr-start-scaler))))
+		(set! in-start (floor (* in-start-value in-file-sr)))
+		;; duration in seconds of the grain
+		(set! gr-duration (max grain-duration-limit
+				       (+ (env gr-dur)
+					  (mus-random (* 0.5 (env gr-dur-spread))))))
+		;; number of samples in the grain
+		(set! gr-samples (floor (* gr-duration (mus-srate))))
+		;; new sample rate for grain
+		(set! gr-srate (if srate-linear
+				   (+ (env sr-env)
+				      (mus-random (* 0.5 (env sr-spread-env))))
+				   (* (env sr-env)
+				      (expt srate-base
+					    (mus-random (* 0.5 (env sr-spread-env)))))))
+		;; set new sampling rate conversion factor
+		(set! (mus-increment in-file-reader) gr-srate)
+		;; number of samples in input
+		(set! in-samples (floor (* gr-samples srate-ratio)))
+		
 		;; check for out of bounds condition in in-file pointers
 		(if (> (+ in-start in-samples) last-in-sample)
 		    (set! in-start (- last-in-sample in-samples))
 		    (if (< in-start 0)
 			(set! in-start 0)))
 		;; reset position of input file reader
-		(set! (mus-location rd) in-start))))))))
+		(set! (mus-location rd) in-start)
+		
+		;; restart grain envelopes
+		(set! (mus-phase gr-env) 0.0)
+		(set! (mus-phase gr-env-end) 0.0)
+		;; reset grain envelope durations
+		(set! (mus-frequency gr-env) (/ gr-duration))
+		(set! (mus-frequency gr-env-end) (/ gr-duration))
+		;;
+		;; move position in output file for next grain
+		;;
+		(set! gr-dens (env gr-dens-env))
+		;; increment spread in output file for next grain
+		(set! gr-dens-spread (mus-random (* 0.5 (env gr-dens-spread-env))))
+		(set! grain-counter (+ grain-counter 1))
+		(set! where (cond (;; use duration of grains as delimiter
+				   (= where-to grani-to-grain-duration)
+				   gr-duration)
+				  (;; use start in input file as delimiter
+				   (= where-to grani-to-grain-start)
+				   in-start-value)
+				  (;; use sampling rate as delimiter
+				   (= where-to grani-to-grain-sample-rate)
+				   gr-srate)
+				  (;; use a random number as delimiter
+				   (= where-to grani-to-grain-random)
+				   (random 1.0))
+				  (else grani-to-locsig)))
+		(if (and where-bins
+			 (not (zero? where)))
+		    ;; set output scalers according to criteria
+		    (do ((chn 0 (+ chn 1)))
+			((or (= chn out-chans)
+			     (= chn where-bins-len)))
+		      (locsig-set! loc chn (if (< (where-bins chn)
+						  where
+						  (where-bins (+ chn 1)))
+					       1.0
+					       0.0)))
+		    ;; if not "where" see if the user wants to send to all channels
+		    (if (= where-to grani-to-grain-allchans)
+			;; send the grain to all channels
+			(do ((chn 0 (+ chn 1)))
+			    ((= chn out-chans))
+			  (locsig-set! loc chn 1.0))
+			;; "where" is zero or unknown: use normal n-channel locsig, 
+			;; only understands mono reverb and 1, 2 or 4 channel output
+			(begin
+			  (set! (mus-location gr-dist) gr-from-beg)
+			  (set! (mus-location gr-dist-spread) gr-from-beg)
+			  (set! (mus-location gr-degree) gr-from-beg)
+			  (set! (mus-location gr-degree-spread) gr-from-beg)
+			  ;; set locsig parameters, for now only understands stereo
+			  (move-locsig loc
+				       (+ (env gr-degree)
+					  (mus-random (* 0.5 (env gr-degree-spread))))
+				       (+ (env gr-dist)
+					  (mus-random (* 0.5 (env gr-dist-spread))))))))
+
+		(let ((grend (+ gr-start-sample gr-samples)))
+		  (if interp-gr-envs
+		      (do ((gr-offset gr-start-sample (+ gr-offset 1)))
+			  ((= gr-offset grend))
+			(set! gr-where (env gr-int-env))
+			(locsig loc gr-offset (* (env amp-env) 
+						 (src in-file-reader)
+						 (+ (* gr-where (table-lookup gr-env-end))
+						    (* (- 1.0 gr-where) (table-lookup gr-env))))))
+
+		      (do ((gr-offset gr-start-sample (+ gr-offset 1)))
+			  ((= gr-offset grend))
+			(locsig loc gr-offset (* (table-lookup gr-env) (env amp-env) (src in-file-reader)))))))))))))
+
 
 ;; (with-sound (:channels 2 :reverb jc-reverb :reverb-channels 1) (let ((file "oboe.snd")) (grani 0 2 5 file :grain-envelope (raised-cosine))))
 ;; (with-sound (:channels 2) (let ((file "oboe.snd")) (grani 0 2 5 file :grain-envelope (raised-cosine))))
+
+(define (test-grani)
+  (with-sound (:channels 2 :reverb jc-reverb :reverb-channels 1 :statistics #t)
+    (grani 0 1 .5 "oboe.snd" :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0))
+    (grani 0 4 1 "oboe.snd")
+    (grani 0 4 1 "oboe.snd" :grains 10)
+    (grani 0 4 1 "oboe.snd" 
+	   :grain-start 0.11 
+	   :amp-envelope '(0 1 1 1) :grain-density 8
+	   :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0)
+	   :grain-envelope-end '(0 0 0.01 1 0.99 1 1 0)
+	   :grain-envelope-transition '(0 0 0.4 1 0.8 0 1 0))
+    (grani 0 3 1 "oboe.snd" 
+	   :grain-start 0.1 
+	   :amp-envelope '(0 1 1 1) :grain-density 20
+	   :grain-duration '(0 0.003 0.2 0.01 1 0.3))
+    (grani 0 3 1 "oboe.snd" 
+	   :grain-start 0.1 
+	   :amp-envelope '(0 1 1 1) :grain-density 20
+	   :grain-duration '(0 0.003 0.2 0.01 1 0.3)
+	   :grain-duration-limit 0.02)
+    (grani 0 2 1 "oboe.snd" 
+	   :amp-envelope '(0 1 1 1) :grain-density 40
+	   :grain-start '(0 0.1 0.3 0.1 1 0.6))
+    (grani 0 2 1 "oboe.snd" 
+	   :amp-envelope '(0 1 1 1) :grain-density 40
+	   :grain-start '(0 0.1 0.3 0.1 1 0.6)
+	   :grain-start-spread 0.01)
+    (grani 0 2.6 1 "oboe.snd" 
+	   :grain-start 0.1 :grain-start-spread 0.01
+	   :amp-envelope '(0 1 1 1) :grain-density 40
+	   :srate '(0 0 0.2 0 0.6 5 1 5))
+    (grani 0 2.6 1 "oboe.snd" 
+	   :grain-start 0.1 :grain-start-spread 0.01
+	   :amp-envelope '(0 1 1 1) :grain-density 40
+	   :srate-base 2
+	   :srate '(0 0 0.2 0 0.6 -1 1 -1))
+    (grani 0 2.6 1 "oboe.snd" 
+	   :grain-start 0.1 :grain-start-spread 0.01
+	   :amp-envelope '(0 1 1 1) :grain-density 40
+	   :srate-linear #t
+	   :srate (list 0 1 0.2 1 0.6 (expt 2 (/ 5 12)) 1 (expt 2 (/ 5 12))))
+    (grani 0 2 1 "oboe.snd" 
+	   :grain-start 0.1 :grain-start-spread 0.01
+	   :amp-envelope '(0 1 1 1) :grain-density 40
+	   :grain-duration '(0 0.02 1 0.1) 
+	   :grain-duration-spread '(0 0 0.5 0.1 1 0)
+	   :where-to grani-to-grain-duration ; from grani.scm
+	   :where-bins (vct 0 0.05 1))
+    (grani 0 2 1 "oboe.snd" 
+	   :grain-start 0.1 :grain-start-spread 0.01
+	   :amp-envelope '(0 1 1 1) :grain-density 40
+	   :grain-degree '(0 0 1 90)
+	   :grain-degree-spread 10)))

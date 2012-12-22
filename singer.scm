@@ -168,7 +168,7 @@
 	      (s-noise 0.0)
 	      (initial-noise-position 0.0)
 	      (formant-shift 1.0)
-	      (change-radii 0) 
+	      (change-radii #f) 
 	      (delta 0.0) 
 	      (new-glot #t)
 	      (first-glot #t)
@@ -277,14 +277,15 @@
 			(do ((k 0 (+ k 1)))
 			    ((= k tractlength+8))
 			  (set! (radii k) (target-radii k)))))
-		  (set! change-radii 0)
+		  (set! change-radii #f)
 		  (set! initial-noise-position (radii tractlength+1))
 		  (do ((j 0 (+ j 1)))
-		      ((= j tractlength+8))
+		      ((or (= j tractlength+8)
+			   change-radii))
 		    (if (> (abs (- (target-radii j) (radii j))) 0.001)
-			(set! change-radii 1)))))
+			(set! change-radii #t)))))
 	    
-	    (if (or first-tract (not (= change-radii 0)))
+	    (if (or first-tract change-radii)
 		(begin
 		  (if (not new-tract)
 		      (begin

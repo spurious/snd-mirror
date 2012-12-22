@@ -4178,9 +4178,7 @@ mus_float_t mus_filtered_comb_unmodulated(mus_any *ptr, mus_float_t input)
   dly *fc = (dly *)ptr;
   return(mus_delay_unmodulated(ptr,
 			       input + (fc->yscl * 
-					mus_run(fc->filt, 
-						fc->line[fc->loc], 
-						0.0))));
+					((*(fc->filt->core->run))(fc->filt, fc->line[fc->loc], 0.0)))));
 }
 
 
@@ -8084,7 +8082,7 @@ mus_any *mus_file_to_frame(mus_any *ptr, mus_long_t samp, mus_any *uf)
 
   if ((samp <= gen->data_end) &&
       (samp >= gen->data_start) &&
-      (gen->chans == f->chans))
+      (gen->chans <= f->chans))
     {
       mus_long_t pos;
       pos = samp - gen->data_start;
@@ -10050,6 +10048,7 @@ mus_any *mus_make_src(mus_float_t (*input)(void *arg, int direction), mus_float_
 	  srp->len = wid * SRC_SINC_DENSITY;
 	  srp->data = (mus_float_t *)calloc(srp->lim + 1, sizeof(mus_float_t));
 	  srp->sinc_table = init_sinc_table(wid);
+
 	  if (input)
 	    {
 	      int i, dir = 1;
