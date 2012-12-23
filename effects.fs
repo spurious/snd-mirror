@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Sat Dec  1 19:08:53 CET 2012
+\ Changed: Tue Dec 11 02:04:53 CET 2012
 
 \ Commentary:
 \
@@ -43,7 +43,7 @@
 \ Tested with Snd 13.x
 \             Fth 1.3.x
 \             Motif 2.3.4 X11R6
-\             (Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2)
+\             Gtk+ 3.0.12, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 \
 \ make-menu			( name parent -- gen )
 \ menu-entry			( gen prc disp-prc -- )
@@ -1105,7 +1105,7 @@ set-current
 		c FXtUnmanageChild
 	;
 
-	[ifundef] F_XEditResCheckMessages
+	[undefined] F_XEditResCheckMessages [if]
 		: F_XEditResCheckMessages <{ w c i f -- x }> #f ;
 	[then]
 
@@ -4784,7 +4784,7 @@ previous
 \ === Effects Menu ===
 "Effects" value effects-menu-label
 
-[ifundef] effects-menu-exists?
+[undefined] effects-menu-exists? [if]
 	#t value effects-menu-exists?
 	effects-menu-label init-effects-menu
 	#f effects-noop  add-to-effects-menu	\ separator

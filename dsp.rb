@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Fri Nov 30 21:52:23 CET 2012
+# Changed: Thu Dec 20 23:12:50 CET 2012
 
 # Commentary:
 #
@@ -1417,8 +1417,9 @@ snd=false, chn=false, edpos=false, trunc=true, notch_width=2)  \
                     edpos = false,
                     truncate = true,
                     notch_width = 2)
-    filter_channel(make_notch_frequency_response(srate(snd).to_f, freqs, notch_width),
-                   (filter_order or (2 ** (log(srate(snd).to_f / notch_width) / log(2.0)).ceil)),
+    sr = srate(snd).to_f
+    filter_channel(make_notch_frequency_response(sr, freqs, notch_width),
+                   (filter_order or [frames(snd, chn), 2 ** (log(sr / notch_width) / log(2.0)).floor].min),
                    beg, dur, snd, chn, edpos, truncate,
                    format("%s(%s, %s, %s, %s",
                           get_func_name, freqs.inspect, filter_order, beg, dur))
@@ -1428,8 +1429,9 @@ snd=false, chn=false, edpos=false, trunc=true, notch_width=2)  \
            "notch_sound(freqs, order=false, snd=false, chn=false, notch_width=2)  \
 -> notch filter removing freqs")
   def notch_sound(freqs, filter_order = false, snd = false, chn = false, notch_width = 2)
-    filter_sound(make_notch_frequency_response(srate(snd).to_f, freqs, notch_width),
-                 (filter_order or (2 ** (log(srate(snd).to_f / notch_width) / log(2.0)).ceil)),
+    sr = srate(snd).to_f
+    filter_sound(make_notch_frequency_response(sr, freqs, notch_width),
+                 (filter_order or [frames(snd, chn), 2 ** (log(sr / notch_width) / log(2.0)).floor].min),
                  snd, chn, false,
                  format("%s(%s, %s, 0, false", get_func_name, freqs.inspect, filter_order))
   end
@@ -1441,7 +1443,7 @@ snd=false, chn=false, edpos=false, trunc=true, notch_width=2)  \
     if selection?
       filter_selection(make_notch_frequency_response(selection_srate.to_f, freqs, notch_width),
                        (filter_order or
-                        (2 ** (log(selection_srate.to_f / notch_width) / log(2.0)).ceil)))
+                        [selection_frames(), 2 ** (log(selection_srate.to_f / notch_width) / log(2.0)).floor].min))
     end
   end
 

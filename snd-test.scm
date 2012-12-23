@@ -2235,7 +2235,7 @@
 		       'update-sound 'update-time-graph 'update-transform-graph 'variable-graph? 'vct
 		       'vct* 'vct+ 'vct->channel 'vct->list 'vct->sound-data
 		       'vct->string 'vct->vector 'vct-add! 'vct-copy
-		       'vct-fill! 'vct-length 'fill-vct 'vct-move!
+		       'vct-fill! 'vct-length 'vct-move!
 		       'vct-multiply! 'vct-offset! 'vct-peak 'vct-ref 'vct-reverse!
 		       'vct-scale! 'vct-set! 'vct-subseq 'vct-subtract! 'vct?
 		       'vector->vct 'view-files-amp 'view-files-amp-env
@@ -3718,7 +3718,7 @@
 			  "no channels method" "no hop method" "no width method" "no file-name method" "no ramp method" "no run method"
 			  "no increment method" "no offset method"
 			  "no xcoeff method" "no ycoeff method" "no xcoeffs method" "no ycoeffs method" "no reset" "bad size" "can't convert"
-			  "read error" "no safety method"
+			  "read error"
 			  "can't translate"
 			  )))
 	  (let ((happy #t)
@@ -19154,8 +19154,7 @@ EDITS: 2
 	  (snd-display #__line__ ";locsig(4)->sd chan 2 (0.5): ~A" (sound-data->vct outp 2)))
       (if (not (vequal (sound-data->vct outp 3) (make-vct 10 0.0)))
 	  (snd-display #__line__ ";locsig(4)->sd chan 3 (0.5): ~A" (sound-data->vct outp 3))))
-    
-    
+
     (set! (mus-array-print-length) 8)
     (let* ((outf1 (make-frame->file "fmv.snd" 1 mus-bshort mus-next))
 	   (outf4 (make-frame->file "fmv1.snd" 4 mus-bshort mus-next))

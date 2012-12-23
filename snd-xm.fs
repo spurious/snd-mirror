@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Sat Dec  1 19:08:21 CET 2012
+\ Changed: Tue Dec 11 01:55:54 CET 2012
 
 \ Commentary:
 \
@@ -11,7 +11,7 @@
 \ Tested with Snd 13.x
 \             Fth 1.3.x
 \             Motif 2.3.4 X11R6
-\             (Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2)
+\             Gtk+ 3.0.12, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 \ 
 \ Motif and Gtk:
 \
@@ -134,7 +134,7 @@ previous
 	hide
 	: for-each-cb ( cb -- prc; w d self -- val )
 		{ cb }
-		2 proc-creates ( prc )
+		2 proc-create ( prc )
 		cb ,
 	  does> { w d self -- val }
 		self @ ( cb ) #( w ) run-proc

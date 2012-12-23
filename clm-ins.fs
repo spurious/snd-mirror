@@ -2,10 +2,10 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Sun Nov 25 22:55:57 CET 2012
+\ Changed: Sun Dec 23 01:09:16 CET 2012
 
 \ Commentary:
-\
+\ 
 \ jc-reverb	( keyword-args -- )
 \ violin	( start dur freq amp keyword-args -- )
 \ fm-violin	( start dur freq amp keyword-args -- )
@@ -480,7 +480,7 @@ hide
 set-current
 
 \ PLUCK
-\
+\ 
 \ The Karplus-Strong algorithm as extended by David Jaffe and Julius
 \ Smith -- see Jaffe and Smith, "Extensions of the Karplus-Strong
 \ Plucked-String Algorithm" CMJ vol 7 no 2 Summer 1983, reprinted in
@@ -685,7 +685,7 @@ instrument: vox <{ start dur freq amp ampfun freqfun freqscl voxfun index
 ;
 
 \ FOF example
-\
+\ 
 \ snd/sndclm.html, section wave-train
 instrument: fofins <{ start dur freq amp vib f0 a0 f1 a1 f2 a2 :optional
     ae #( 0 0 25 1 75 1 100 0 )
@@ -723,7 +723,7 @@ instrument: fofins <{ start dur freq amp vib f0 a0 f1 a1 f2 a2 :optional
 ;
 
 \ FM TRUMPET
-\
+\ 
 \ Dexter Morrill's FM-trumpet: from CMJ feb 77 p51
 instrument: fm-trumpet <{ start dur :key
     frq1 250
@@ -820,7 +820,7 @@ instrument: fm-trumpet <{ start dur :key
    "pqw-amps" ) create-struct make-pqw-vox-struct
 
 \ PQWVOX
-\
+\ 
 \ translation of CLM pqwvox.ins (itself translated from MUS10 of MLB's
 \ waveshaping voice instrument (using phase quadrature waveshaping))
 instrument: pqw-vox <{ start dur
@@ -1117,7 +1117,7 @@ instrument: fm-insect <{ start dur freq
 ;
 
 \ FM-DRUM
-\
+\ 
 \ Jan Mattox's fm drum:
 instrument: fm-drum <{ start dur freq amp index :optional
     high #f
@@ -1202,7 +1202,7 @@ instrument: fm-drum <{ start dur freq amp index :optional
 ;
 
 \ FM-GONG
-\
+\ 
 \ Paul Weineke's gong.
 instrument: gong <{ start dur freq amp :key
     degree 0.0
@@ -1256,7 +1256,7 @@ instrument: gong <{ start dur freq amp :key
 ;
 
 \ ATTRACT
-\
+\ 
 \ by James McCartney, from CMJ vol 21 no 3 p 6
 instrument: attract <{ start dur amp c -- }>
 	0.2 0.2 { a b }
@@ -1280,7 +1280,7 @@ instrument: attract <{ start dur amp c -- }>
 ;
 
 \ PQW
-\
+\ 
 \ phase-quadrature waveshaping used to create asymmetric (i.e. single
 \ side-band) spectra.  The basic idea here is a variant of sin x sin y
 \ - cos x cos y = cos (x + y)
@@ -1328,7 +1328,7 @@ instrument: pqw <{ start dur sfreq cfreq amp ampfun indexfun parts :key
 \ in a bit of a hurry and may not have made slavishly accurate
 \ translations.  Please let me (bil@ccrma.stanford.edu) know of any
 \ serious (non-envelope) errors.
-\
+\ 
 \ from Perry Cook's TubeBell.cpp
 instrument: tubebell <{ start dur freq amp :optional base 32.0 -- }>
 	:frequency freq 0.995 f* make-oscil { osc0 }
@@ -1664,12 +1664,12 @@ instrument: canter <{ start dur pitch amp
 ;
 
 \ NREV (the most popular Samson box reverb)
-\
+\ 
 \ REVERB-FACTOR controls the length of the decay -- it should not
 \ exceed (/ 1.0 .823), LP-COEFF controls the strength of the low pass
 \ filter inserted in the feedback loop, VOLUME can be used to boost the
 \ reverb output.
-\
+\ 
 \ clm/nrev.ins
 instrument: nrev-fs <{ :key
     reverb-factor 1.09
@@ -2069,7 +2069,7 @@ instrument: touch-tone <{ numbers :key start 0.0 -- }>
 : touch-tone-test <{ :optional start 0.0 dur 1.0 -- }>
   start now!
   #( 4 8 3 4 6 2 1 ) :start now@ touch-tone
-  dur 7 ( numbers ) f* 0.2 f+ step
+  dur 7 ( digits ) f* 0.2 f+ step
 ;
 
 \ SPECTRA
@@ -2106,7 +2106,7 @@ instrument: spectra <{ start dur freq amp :optional
 ;
 
 \ TWO-TAB
-\
+\ 
 \ interpolate between two waveforms (this could be extended to
 \ implement all the various wavetable-based synthesis techniques).
 instrument: two-tab <{ start dur freq amp :optional
@@ -2631,7 +2631,7 @@ instrument: two-tab <{ start dur freq amp :optional
 \ rotten--they just don't sparkle; I have a feeling that this is due
 \ to the low amplitude of the original data, and the lack of
 \ mechanical noise.
-\
+\ 
 \ The only thing you can do to alter the sound of a piano note is to
 \ set the pfreq parameter.  Pfreq is used to look up the partials.  By
 \ default, it's set to the requested frequency.  Setting it to a
@@ -2838,7 +2838,7 @@ previous
 ;
 
 \ PINS
-\
+\ 
 \ spectral modeling (SMS)
 instrument: pins <{ start dur file amp :key
     transposition 1.0
@@ -3143,7 +3143,7 @@ instrument: zc <{ start dur freq amp len1 len2 feedback -- }>
 ;
 
 \ ZN
-\
+\ 
 \ notches are spaced at srate/len, feedforward sets depth thereof so
 \ sweep of len from 20 to 100 sweeps the notches down from 1000 Hz to
 \ ca 200 Hz so we hear our downward glissando beneath the pulses.
@@ -3215,26 +3215,18 @@ instrument: clm-expsrc <{ start dur in-file exp-ratio src-ratio amp :optional
 	:input exA clm-src-cb :srate src-ratio make-src { srcA }
 	in-file channels 2 = *output* channels 2 = && { two-chans }
 	*reverb* rev && { revit }
-	revit if
-		two-chans if
-			rev f2/
-		else
-			rev
-		then
-	else
-		0.0
-	then { rev-amp }
 	two-chans if
 		:file in-file :channel 1 :start stf make-readin { fdB }
 		:input fdB readin-cb :expansion exp-ratio make-granulate { exB }
 		:input exB clm-src-cb :srate src-ratio make-src { srcB }
 		revit if
+			rev f2/ to rev
 			start dur run
 				srcA 0.0 undef src amp f* { valA }
 				srcB 0.0 undef src amp f* { valB }
 				i valA *output* outa drop
 				i valB *output* outb drop
-				i valA valB f+ rev-amp f* *reverb* outa drop
+				i valA valB f+ rev f* *reverb* outa drop
 			loop
 		else
 			start dur run
@@ -3247,7 +3239,7 @@ instrument: clm-expsrc <{ start dur in-file exp-ratio src-ratio amp :optional
 			start dur run
 				srcA 0.0 undef src amp f* { valA }
 				i valA *output* outa drop
-				i valA rev-amp f* *reverb* outa drop
+				i valA rev f* *reverb* outa drop
 			loop
 		else
 			start dur run
@@ -3583,7 +3575,7 @@ instrument: expfil <{ start dur hopsecs rampsecs steadysecs file1 file2 -- }>
 ;
 
 \ GRAPH-EQ
-\
+\ 
 \ From: Marco Trevisani <marco@ccrma.Stanford.EDU>
 \ 
 \ This should work like a Graphic Equalizer....

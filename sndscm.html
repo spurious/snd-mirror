@@ -12321,7 +12321,6 @@ with-sound returns its :output argument.
 	  (scaled-to #f)                         ; if a number, scale the output to peak at that amp
 	  (play *clm-play*)                      ; if #t, play the sound automatically
 	  (to-snd *to-snd*)                      ; if #t, open the output file in Snd
-	  (output-safety *clm-output-safety*)
 </pre>
 
 
@@ -12436,7 +12435,6 @@ snd&gt; 0.0 1.0 330.0 0.5 ' simp :play #f :channels 2 with-sound
 (define *reverb*                 #f)
 (define *output*                 #f)
 (define *clm-delete-reverb*      #f)
-(define *clm-output-safety*      0)
 </pre>
 
 

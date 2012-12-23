@@ -94,7 +94,7 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 
 #if HAVE_SCHEME
 #if 1
-/* an experiment -- dangerous! */
+/* an experiment -- dangerous! -- now obsolete */
 typedef struct imported_s7_cell {
   union {
     unsigned int flag;
@@ -1840,40 +1840,6 @@ static XEN g_mus_type(XEN gen)
 {
   #define H_mus_type "(" S_mus_type " gen): gen's type"
   MUS_INT_GENERIC(S_mus_type, mus_type);
-}
-
-
-static XEN g_mus_safety(XEN gen) 
-{
-  #define H_mus_safety "(" S_mus_safety " gen): gen's safety setting, if any."
-  MUS_INT_GENERIC(S_mus_safety, mus_safety);
-}
-
-static XEN g_mus_set_safety(XEN gen, XEN val) 
-{
-  mus_xen *ms;
-  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
-  if (ms)
-    {
-      int n = 0;
-      XEN_TO_C_INTEGER_OR_ERROR(val, n, S_setB S_mus_safety, XEN_ARG_2);
-      mus_set_safety(MUS_XEN_TO_MUS_ANY(ms), n);
-      return(val);
-    }
-#if HAVE_SCHEME
-  else
-    {
-      if (s7_is_open_environment(gen)) 
-	{ 
-	  s7_pointer func; 
-	  func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-safety"), gen); 
-	  if ((func != XEN_UNDEFINED) && (s7_procedure_setter(s7, func)))		      
-	    return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, val)));
-	}
-    }
-#endif
-  XEN_ASSERT_TYPE(false, gen, XEN_ARG_1, S_setB S_mus_safety, "a generator");
-  return(val);
 }
 
 
@@ -9411,11 +9377,6 @@ MUS_PHASE_VOCODER,
 ;(set! (mus-location ...) ...)?
 */
 
-/* for the noz part, run seems to be checking that safety==0 -- this is zdly!
- *   that the gen arg is correct, but we check that too.
- * perhaps size must be > 0?  -- make this choice at init time (how?)
- */
-
 static s7_pointer env_1_1;
 static s7_pointer g_env_1_1(s7_scheme *sc, s7_pointer args)
 {
@@ -13501,8 +13462,6 @@ XEN_NARGIFY_1(g_mus_width_w, g_mus_width)
 XEN_NARGIFY_2(g_mus_set_width_w, g_mus_set_width)
 XEN_NARGIFY_1(g_mus_scaler_w, g_mus_scaler)
 XEN_NARGIFY_2(g_mus_set_scaler_w, g_mus_set_scaler)
-XEN_NARGIFY_1(g_mus_safety_w, g_mus_safety)
-XEN_NARGIFY_2(g_mus_set_safety_w, g_mus_set_safety)
 XEN_NARGIFY_1(g_mus_feedforward_w, g_mus_feedforward)
 XEN_NARGIFY_2(g_mus_set_feedforward_w, g_mus_set_feedforward)
 XEN_NARGIFY_1(g_mus_reset_w, g_mus_reset)
@@ -13808,8 +13767,6 @@ XEN_NARGIFY_2(g_all_pass_bank_w, g_all_pass_bank)
 #define g_mus_set_phase_w g_mus_set_phase
 #define g_mus_scaler_w g_mus_scaler
 #define g_mus_set_scaler_w g_mus_set_scaler
-#define g_mus_safety_w g_mus_safety
-#define g_mus_set_safety_w g_mus_set_safety
 #define g_mus_feedforward_w g_mus_feedforward
 #define g_mus_set_feedforward_w g_mus_set_feedforward
 #define g_mus_width_w g_mus_width
@@ -14268,7 +14225,6 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_name,      g_mus_name_w,      H_mus_name,      S_setB S_mus_name,      g_mus_set_name_w,       1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_phase,     g_mus_phase_w,     H_mus_phase,     S_setB S_mus_phase,     g_mus_set_phase_w,      1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_scaler,    g_mus_scaler_w,    H_mus_scaler,    S_setB S_mus_scaler,    g_mus_set_scaler_w,     1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_safety,    g_mus_safety_w,    H_mus_safety,    S_setB S_mus_safety,    g_mus_set_safety_w,     1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_width,     g_mus_width_w,     H_mus_width,     S_setB S_mus_width,     g_mus_set_width_w,      1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_frequency, g_mus_frequency_w, H_mus_frequency, S_setB S_mus_frequency, g_mus_set_frequency_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_length,    g_mus_length_w,    H_mus_length,    S_setB S_mus_length,    g_mus_set_length_w,     1, 0, 2, 0);

@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Apr 05 00:17:04 CEST 2005
-# Changed: Sat Mar 12 01:41:32 CET 2011
+# Changed: Fri Dec  7 00:50:21 CET 2012
 
 # Commentary:
 #
@@ -25,8 +25,10 @@ require "extensions"
 
 module Draw
   add_help(:display_colored_samples,
-           "display_colored_samples(color, beg, dur, [snd=false, [chn=false]])  \
-displays samples from beg for dur in color whenever they\'re in the current view.")
+           "display_colored_samples(color, beg, dur, \
+[snd=false, [chn=false]])  \
+displays samples from beg for dur in color \
+whenever they're in the current view.")
   def display_colored_samples(color, beg, dur, snd = false, chn = false)
     unless array?(color) and number?(beg) and number?(dur)
       return
@@ -43,7 +45,10 @@ displays samples from beg for dur in color whenever they\'re in the current view
         new_data = data.subseq(offset, offset + samps)
         set_foreground_color(color, snd, chn)
         graph_data(new_data,
-                   snd, chn, Copy_context, [beg, left].max, [len, right].min, Graph_lines, cr)
+                   snd, chn,
+                   Copy_context,
+                   [beg, left].max,
+                   [len, right].min, Graph_lines, cr)
         set_foreground_color(old_color, snd, chn)
       else
         low_data, high_data = data[0, 2]
@@ -70,7 +75,8 @@ displays samples from beg for dur in color whenever they\'re in the current view
   end
 
   add_help(:color_samples,
-           "color_samples(color, [beg=0, [dur=false, [snd=false, [chn=false]]]])  \
+           "color_samples(color, [beg=0, [dur=false, [snd=false, \
+[chn=false]]]])  \
 causes samples from beg to beg+dur to be displayed in color")
   def color_samples(color, beg = 0, dur = false, snd = Snd.snd, chn = Snd.chn)
     unless $after_graph_hook.member?("display-samples-in-color")
@@ -84,7 +90,8 @@ causes samples from beg to beg+dur to be displayed in color")
   end
 
   add_help(:uncolor_samples,
-           "uncolor_samples([snd=false, [chn=false]]) cancels sample coloring in the given channel")
+           "uncolor_samples([snd=false, [chn=false]])  \
+cancels sample coloring in the given channel")
   def uncolor_samples(snd = Snd.snd, chn = Snd.chn)
     set_channel_property(:colored_samples, [], snd, chn)
     update_time_graph(snd, chn)
@@ -92,7 +99,8 @@ causes samples from beg to beg+dur to be displayed in color")
 
   add_help(:display_previous_edits,
            "display_previous_edits(snd, chn)  \
-displays all edits of the current sound, with older versions gradually fading away")
+displays all edits of the current sound, \
+with older versions gradually fading away")
   def display_previous_edits(snd, chn)
     edits = edit_position(snd, chn)
     if edits > 0
@@ -111,7 +119,9 @@ displays all edits of the current sound, with older versions gradually fading aw
       0.upto(edits) do |pos|
         data = make_graph_data(snd, chn, pos)
         set_foreground_color(make_color(re, ge, be), snd, chn)
-        graph_data(data, snd, chn, Copy_context, false, false, time_graph_style(snd, chn), cr)
+        graph_data(data,
+                   snd, chn, Copy_context,
+                   false, false, time_graph_style(snd, chn), cr)
         re -= rinc
         ge -= ginc
         be -= binc
@@ -123,7 +133,8 @@ displays all edits of the current sound, with older versions gradually fading aw
 
   add_help(:overlay_sounds,
            "overlay_sounds(*rest)  \
-overlays onto its first argument all subsequent arguments: overlay_sounds(1, 0, 3)")
+overlays onto its first argument all \
+subsequent arguments: overlay_sounds(1, 0, 3)")
   def overlay_sounds(*rest)
     base = rest.shift
     if integer?(base)
@@ -133,7 +144,8 @@ overlays onto its first argument all subsequent arguments: overlay_sounds(1, 0, 
       if snd == base
         cr = make_cairo(channel_widgets(snd, chn)[0])
         rest.each do |s|
-          graph_data(make_graph_data(s, chn), base, chn, Copy_context, false, false, Graph_dots, cr)
+          graph_data(make_graph_data(s, chn),
+                     base, chn, Copy_context, false, false, Graph_dots, cr)
         end
         free_cairo(cr)
       end
@@ -142,10 +154,10 @@ overlays onto its first argument all subsequent arguments: overlay_sounds(1, 0, 
 
   add_help(:samples_via_colormap,
            "samples_via_colormap(snd, chn)  \
-displays time domain graph using current colormap (just an example of colormap_ref)")
+displays time domain graph using current \
+colormap (just an example of colormap_ref)")
   def samples_via_colormap(snd, chn)
     left = left_sample(snd, chn)
-    right = right_sample(snd, chn)
     old_color = foreground_color(snd, chn)
     if data = make_graph_data(snd, chn)
       cr = make_cairo(channel_widgets(snd, chn)[0])
@@ -184,9 +196,12 @@ displays time domain graph using current colormap (just an example of colormap_r
     time = Time.now.to_f
     if time - $last_click_time < 0.2
       $last_click_time = 0.0
-      if string?(text = widget_text(main_widgets[4]))
-        if string?(subject = text.slice(text.rindex(/\b/m, pos)...text.index(/\b/m, pos)))
-          if string?(help = snd_help(subject, false))
+      text = widget_text(main_widgets[4])
+      if string?(text)
+        subject = text.slice(text.rindex(/\b/m, pos)...text.index(/\b/m, pos))
+        if string?(subject)
+          help = snd_help(subject, false)
+          if string?(help)
             help_dialog(subject, help)
           end
         end
@@ -195,7 +210,8 @@ displays time domain graph using current colormap (just an example of colormap_r
       $last_click_time = time
     end
   end
-  # $listener_click_hook.add_hook!("listener-help", &method(:click_for_listener_help).to_proc)
+  # $listener_click_hook.add_hook!("listener-help",
+  #   &method(:click_for_listener_help).to_proc)
 end
 
 include Draw

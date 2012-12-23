@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 5
-#define MUS_DATE "14-Dec-12"
+#define MUS_REVISION 6
+#define MUS_DATE "22-Dec-12"
 
 /* isn't mus_env_interp backwards? */
 
@@ -104,7 +104,6 @@ MUS_EXPORT void mus_generator_set_ycoeffs(mus_any_class *p, mus_float_t *(*ycoef
 MUS_EXPORT void mus_generator_set_reset(mus_any_class *p, void (*reset)(mus_any *ptr));
 MUS_EXPORT void mus_generator_set_set_closure(mus_any_class *p, void *(*set_closure)(mus_any *gen, void *e));
 MUS_EXPORT void mus_generator_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type);
-MUS_EXPORT void mus_generator_set_set_safety(mus_any_class *p, int (*set_safety)(mus_any *ptr, int val));
 
 
 MUS_EXPORT mus_float_t mus_radians_to_hz(mus_float_t radians);
@@ -196,8 +195,6 @@ MUS_EXPORT mus_float_t mus_feedforward(mus_any *gen);
 MUS_EXPORT mus_float_t mus_set_feedforward(mus_any *gen, mus_float_t val);
 MUS_EXPORT mus_float_t mus_feedback(mus_any *rd);
 MUS_EXPORT mus_float_t mus_set_feedback(mus_any *rd, mus_float_t dir);
-MUS_EXPORT int mus_safety(mus_any *gen);
-MUS_EXPORT int mus_set_safety(mus_any *gen, int val);
 
 
 /* -------- generators -------- */
@@ -477,7 +474,6 @@ MUS_EXPORT void mus_locsig_set_detour(mus_any *ptr, void (*detour)(mus_any *ptr,
 
 MUS_EXPORT int mus_locsig_channels(mus_any *ptr);
 MUS_EXPORT int mus_locsig_reverb_channels(mus_any *ptr);
-MUS_EXPORT int mus_locsig_safety(mus_any *ptr);
 
 MUS_EXPORT bool mus_move_sound_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_move_sound(mus_any *ptr, mus_long_t loc, mus_float_t val);
@@ -576,6 +572,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 22-Dec:     removed all the safety settings.
  * 15-Nov:     removed mus_env_t, mus_env_type, and other recently deprecated stuff.
  * 15-Jul:     more changes for clm2xen.
  * 4-July-12:  moved various struct definitions to clm.c

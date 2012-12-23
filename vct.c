@@ -370,19 +370,6 @@ static XEN s7_vct_set_3(s7_scheme *sc, void *obj, s7_pointer index, s7_pointer v
   return(value);
 }
 
-static void s7_vct_set_3if(s7_scheme *sc, void *obj, s7_Int loc, s7_Double value)
-{
-  vct *v = (vct *)obj;
-
-  if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_make_integer(sc, loc), "index < 0?");
-  if (loc >= v->length)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_make_integer(sc, loc), "index too high?");
-
-  v->data[loc] = value;
-}
-
-
 static XEN s7_mus_vct_length(s7_scheme *sc, XEN obj)
 {
   return(g_vct_length(obj));
@@ -1493,7 +1480,7 @@ void mus_vct_init(void)
   s7_set_object_ref_2(vct_tag, s7_vct_ref_2);
   s7_set_object_ref_2i(vct_tag, s7_vct_ref_2i);
   s7_set_object_set_3(vct_tag, s7_vct_set_3);
-  s7_set_object_set_3if(vct_tag, s7_vct_set_3if);
+  s7_set_object_set_array_info(vct_tag, offsetof(vct, length), offsetof(vct, data));
   s7_set_object_ref_arity(vct_tag, 1, 1);
 #else
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));

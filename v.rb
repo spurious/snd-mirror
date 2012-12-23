@@ -1,11 +1,12 @@
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Nov 20 02:24:34 CET 2002
-# Changed: Sat Jul 21 05:35:45 CEST 2012
+# Changed: Sat Dec 22 01:51:53 CET 2012
 
 # Comment:
 #
 # class Instrument
 #   fm_violin_rb(start, dur, freq, amp, *args)
+#   violin(start, dur, freq, amp, *args)
 #   jc_reverb_rb(*args)
 #
 # make_fm_violin(start, dur, freq, amp, *args)
@@ -249,9 +250,7 @@ end
 add_help(:make_fm_violin, "make_fm_violin(start, dur, freq, amp, *args) \
 returns a proc with one arg for map_channel()
 *args are like fm_violin's
-
 ins = new_sound(:file, \"fmv.snd\", :srate, 22050, :channels, 2)
-
 # proc with one arg
 fmv1 = make_fm_violin(0, 1, 440, 0.5)
 map_channel(fmv1, 0, 22050, ins, 1)")
@@ -261,8 +260,7 @@ def make_fm_violin(start, dur, freq, amp, *args)
     ind_noise_freq, ind_noise_amount, amp_noise_freq, amp_noise_amount = nil
     gliss_env, gliss_amount = nil
     fm1_env, fm2_env, fm3_env, fm1_rat, fm2_rat, fm3_rat = nil
-    fm1_index, fm2_index, fm3_index = nil
-    base, index_type, reverb_amount, degree, distance = nil
+    fm1_index, fm2_index, fm3_index, base = nil
     optkey(args, binding,
            [:fm_index, 1.0],
            [:amp_env, [0, 0, 25, 1, 75, 1, 100, 0]],
@@ -287,11 +285,7 @@ def make_fm_violin(start, dur, freq, amp, *args)
            [:fm1_index, false],
            [:fm2_index, false],
            [:fm3_index, false],
-           [:base, 1.0],
-           [:index_type, :violin],
-           [:reverb_amount, 0.01],
-           [:degree, kernel_rand(90.0)],
-           [:distance, 1.0])
+           [:base, 1.0])
   frq_scl = hz2radians(freq)
   modulate = fm_index.nonzero?
   maxdev = frq_scl * fm_index

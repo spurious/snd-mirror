@@ -926,8 +926,9 @@ typedef struct c_object_t {
   s7_pointer (*ref_2)(s7_scheme *sc, void *val, s7_pointer index);
   s7_pointer (*ref_2i)(s7_scheme *sc, void *val, s7_Int index);
   s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value);
-  void (*set_3if)(s7_scheme *sc, void *val, s7_Int index, s7_Double value);
   unsigned int min_args, max_args;
+  size_t length_loc, data_loc;
+  bool has_array;
 } c_object_t;
 
 
@@ -1092,6 +1093,8 @@ typedef struct s7_cell {
       int type;
       void *value;         /*  the value the caller associates with the object */
       s7_pointer e;        /*   the method list, if any (open environment) */
+      s7_Int array_length;
+      s7_Double *array;
     } c_obj;
     
     struct {
@@ -2070,6 +2073,8 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define c_object_value(p)             (p)->object.c_obj.value
 #define c_object_type(p)              (p)->object.c_obj.type
 #define c_object_environment(p)       (p)->object.c_obj.e
+#define c_object_array(p)             (p)->object.c_obj.array
+#define c_object_array_length(p)      (p)->object.c_obj.array_length
 
 #define c_object_info(p)              object_types[c_object_type(p)]
 #define c_object_ref(p)               c_object_info(p)->ref
@@ -2077,7 +2082,9 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define c_object_ref_2(p)             c_object_info(p)->ref_2
 #define c_object_ref_2i(p)            c_object_info(p)->ref_2i
 #define c_object_set_3(p)             c_object_info(p)->set_3
-#define c_object_set_3if(p)           c_object_info(p)->set_3if
+#define c_object_data_length(p)       (s7_Int)(*((s7_Int *)(c_object_value(p) + c_object_info(p)->length_loc)))
+#define c_object_data(p)              ((s7_Double *)(*((s7_Double **)(c_object_value(p) + c_object_info(p)->data_loc))))
+#define c_object_has_array(p)         ((typeflag(p) & T_GENSYM) != 0)
 #define c_object_print(p)             c_object_info(p)->print
 #define c_object_length(p)            c_object_info(p)->length
 #define c_object_equal(p)             c_object_info(p)->equal
@@ -28738,13 +28745,17 @@ static s7_pointer g_internal_object_set_3(s7_scheme *sc, s7_pointer args)
   obj = car(args);
   index = cadr(args);
   value = caddr(args);
-  if ((c_object_set_3if(obj)) &&
+
+  if ((c_object_has_array(obj)) &&
       (is_integer(index)) &&
-      (type(value) == T_REAL))
+      (integer(index) >= 0) &&
+      (type(value) == T_REAL) &&
+      (integer(index) < c_object_array_length(obj)))
     {
-      (*(c_object_set_3if(obj)))(sc, c_object_value(obj), integer(index), real(value));
+      c_object_array(obj)[integer(index)] = real(value);
       return(value);
     }
+
   return((*(c_object_set_3(obj)))(sc, c_object_value(obj), index, value));
 }
 
@@ -28908,9 +28919,11 @@ void s7_set_object_set_3(int type, s7_pointer (*set_3)(s7_scheme *sc, void *val,
 }
 
 
-void s7_set_object_set_3if(int type, void (*set_3if)(s7_scheme *sc, void *val, s7_Int index, s7_Double value))
+void s7_set_object_set_array_info(int type, size_t length_loc, size_t data_loc)
 {
-  object_types[type]->set_3if = set_3if;
+  object_types[type]->length_loc = length_loc;
+  object_types[type]->data_loc = data_loc;
+  object_types[type]->has_array = true;
 }
 
 
@@ -28942,9 +28955,21 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
   c_object_type(x) = type;
   c_object_value(x) = value;
   c_object_environment(x) = sc->NIL;
-  if ((c_object_ref(x)) && (c_object_ref(x) != fallback_ref))
-    set_type(x, T_C_OBJECT | T_PROCEDURE | T_SAFE_PROCEDURE);
-  else set_type(x, T_C_OBJECT); 
+  if (object_types[type]->has_array)
+    {
+      if ((c_object_ref(x)) && (c_object_ref(x) != fallback_ref))
+	set_type(x, T_C_OBJECT | T_PROCEDURE | T_SAFE_PROCEDURE | T_GENSYM);
+      else set_type(x, T_C_OBJECT | T_GENSYM); 
+      c_object_array(x) = c_object_data(x);
+      c_object_array_length(x) = c_object_data_length(x);
+    }
+  else
+    {
+      if ((c_object_ref(x)) && (c_object_ref(x) != fallback_ref))
+	set_type(x, T_C_OBJECT | T_PROCEDURE | T_SAFE_PROCEDURE);
+      else set_type(x, T_C_OBJECT); 
+    }
+
   add_c_object(sc, x);
 
   return(x);
@@ -28977,6 +29002,9 @@ static s7_pointer g_object_environment(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer object_length(s7_scheme *sc, s7_pointer obj)
 {
+  if (c_object_has_array(obj))
+    return(make_integer(sc, c_object_array_length(obj)));
+
   if (c_object_length(obj))
     return((*(c_object_length(obj)))(sc, obj));
   return(eval_error(sc, "attempt to get length of ~S?", obj));
@@ -47995,15 +48023,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  break;
 
 		ind = cadr(code);
-		if ((c_object_ref_2i(c)) &&
-		    (is_integer(ind)))
-		  sc->value = (*(c_object_ref_2i(c)))(sc, c_object_value(c), integer(ind));
-		else
+		if (is_integer(ind))
 		  {
-		    if (c_object_ref_2(c))
-		      sc->value = (*(c_object_ref_2(c)))(sc, c_object_value(c), ind);
-		    else sc->value = (*(c_object_ref(c)))(sc, c, cdr(code));
+		    if ((c_object_has_array(c)) &&
+			(integer(ind) >= 0) &&
+			(integer(ind) < c_object_array_length(c)))
+		      {
+			sc->value = make_real(sc, c_object_array(c)[integer(ind)]);
+			goto START;
+		      }
+		    if (c_object_ref_2i(c))
+		      {
+			sc->value = (*(c_object_ref_2i(c)))(sc, c_object_value(c), integer(ind));
+			goto START;
+		      }
 		  }
+
+		if (c_object_ref_2(c))
+		  sc->value = (*(c_object_ref_2(c)))(sc, c_object_value(c), ind);
+		else sc->value = (*(c_object_ref(c)))(sc, c, cdr(code));
 		goto START;
 	      }
 	      
@@ -48018,18 +48056,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  break;
 
 		ind = c_call(cadr(code))(sc, cdadr(code));
-		if ((c_object_ref_2i(c)) &&
-		    (is_integer(ind)))
-		  sc->value = (*(c_object_ref_2i(c)))(sc, c_object_value(c), integer(ind));
+		if (is_integer(ind))
+		  {
+		    if ((c_object_has_array(c)) &&
+			(integer(ind) >= 0) &&
+			(integer(ind) < c_object_array_length(c)))
+		      {
+			sc->value = make_real(sc, c_object_array(c)[integer(ind)]);
+			goto START;
+		      }
+		    if (c_object_ref_2i(c))
+		      {
+			sc->value = (*(c_object_ref_2i(c)))(sc, c_object_value(c), integer(ind));
+			goto START;
+		      }
+		  }
+
+		if (c_object_ref_2(c))
+		  sc->value = (*(c_object_ref_2(c)))(sc, c_object_value(c), ind);
 		else
 		  {
-		    if (c_object_ref_2(c))
-		      sc->value = (*(c_object_ref_2(c)))(sc, c_object_value(c), ind);
-		    else
-		      {
-			car(sc->T1_1) = ind;
-			sc->value = (*(c_object_ref(c)))(sc, c, sc->T1_1);
-		      }
+		    car(sc->T1_1) = ind;
+		    sc->value = (*(c_object_ref(c)))(sc, c, sc->T1_1);
 		  }
 		goto START;
 	      }
@@ -48042,18 +48090,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (!is_c_object(c))
 		  break;
 		ind = find_symbol_or_bust(sc, cadr(code));
-		if ((c_object_ref_2i(c)) &&
-		    (is_integer(ind)))
-		  sc->value = (*(c_object_ref_2i(c)))(sc, c_object_value(c), integer(ind));
+
+		if (is_integer(ind))
+		  {
+		    if ((c_object_has_array(c)) &&
+			(integer(ind) >= 0) &&
+			(integer(ind) < c_object_array_length(c)))
+		      {
+			sc->value = make_real(sc, c_object_array(c)[integer(ind)]);
+			goto START;
+		      }
+		    if (c_object_ref_2i(c))
+		      {
+			sc->value = (*(c_object_ref_2i(c)))(sc, c_object_value(c), integer(ind));
+			goto START;
+		      }
+		  }
+		if (c_object_ref_2(c))
+		  sc->value = (*(c_object_ref_2(c)))(sc, c_object_value(c), ind);
 		else
 		  {
-		    if (c_object_ref_2(c))
-		      sc->value = (*(c_object_ref_2(c)))(sc, c_object_value(c), ind);
-		    else
-		      {
-			car(sc->T1_1) = ind;
-			sc->value = (*(c_object_ref(c)))(sc, c, sc->T1_1);
-		      }
+		    car(sc->T1_1) = ind;
+		    sc->value = (*(c_object_ref(c)))(sc, c, sc->T1_1);
 		  }
 		goto START;
 	      }
@@ -51286,20 +51344,30 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer (*ref_2)(s7_scheme *sc, void *val, s7_pointer index);
 		s7_pointer (*ref_2i)(s7_scheme *sc, void *val, s7_Int index);
+		s7_pointer index;
+		index = car(args);
 
-		if (is_integer(car(args)))
+		if (is_integer(index))
 		  {
+		    if ((c_object_has_array(obj)) &&
+			(integer(index) >= 0) &&
+			(integer(index) < c_object_array_length(obj)))
+		      {
+			sc->value = make_real(sc, c_object_array(obj)[integer(index)]);
+			goto START;
+		      }
+			
 		    ref_2i = c_object_ref_2i(obj);
 		    if (ref_2i)
 		      {
-			sc->value = (*(ref_2i))(sc, c_object_value(obj), integer(car(args)));
+			sc->value = (*(ref_2i))(sc, c_object_value(obj), integer(index));
 			goto START;
 		      }
 		  }
 		ref_2 = c_object_ref_2(obj);
 		if (ref_2)
 		  {
-		    sc->value = (*(ref_2))(sc, c_object_value(obj), car(args));
+		    sc->value = (*(ref_2))(sc, c_object_value(obj), index);
 		    goto START;
 		  }
 	      }
@@ -51793,19 +51861,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  case T_C_OBJECT:
 	    {
 	      s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value);
-	      void (*set_3if)(s7_scheme *sc, void *val, s7_Int index, s7_Double value);
-	      
-	      if ((is_integer(arg)) &&
-		  (type(value) == T_REAL))
+
+	      if ((c_object_has_array(obj)) &&
+		  (is_integer(arg)) &&
+		  (integer(arg) >= 0) &&
+		  (type(value) == T_REAL) &&
+		  (integer(arg) < c_object_array_length(obj)))
 		{
-		  set_3if = c_object_set_3if(obj);
-		  if (set_3if)
-		    {
-		      (*(set_3if))(sc, c_object_value(obj), integer(arg), real(value));
-		      sc->value = value;
-		      break;
-		    }
+		  c_object_array(obj)[integer(arg)] = real(value);
+		  sc->value = value;
+		  break;
 		}
+	      /* TODO: implement type checks, object|real|integer direct access/conversion -> xen.h
+	       * TODO: replace imported_s7_object_value_checked
+	       * TODO: can ref_2i be deleted?
+	       * TODO: can vct-set|ref|length be locally optimized?
+	       * p326 in ref c
+	       * s7_object_type|number|string|vector|boolean_offset
+	       * s7_real|integer|string|vector|boolean_type
+	       * frames/mixers, perhaps sd objs
+	       * s7_is_real -> xen_object_type(obj) == xen_s7_real_type
+	       */
+
 	      set_3 = c_object_set_3(obj);
 	      if (set_3)
 		sc->value = (*(set_3))(sc, c_object_value(obj), arg, value);
@@ -52455,22 +52532,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (!is_pair(val))
 		      {
 			s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value);
-			void (*set_3if)(s7_scheme *sc, void *val, s7_Int index, s7_Double value);
-	      
+			s7_pointer obj;
+			obj = sc->x;
+
 			if (is_symbol(val))
 			  val = finder(sc, val);
 
-			if ((s7_is_integer(index)) &&
-			    (type(val) == T_REAL))
+			if ((c_object_has_array(obj)) &&
+			    (is_integer(index)) &&
+			    (integer(index) >= 0) &&
+			    (type(val) == T_REAL) &&
+			    (integer(index) < c_object_array_length(obj)))
 			  {
-			    set_3if = c_object_set_3if(sc->x);
-			    if (set_3if)
-			      {
-				(*(set_3if))(sc, c_object_value(sc->x), s7_integer(index), real(val));
-				sc->value = val;
-				goto START;
-			      }
+			    c_object_array(obj)[integer(index)] = real(val);
+			    sc->value = val;
+			    goto START;
 			  }
+
 			set_3 = c_object_set_3(sc->x);
 			if (set_3)
 			  sc->value = (*(set_3))(sc, c_object_value(sc->x), index, val);
@@ -52482,10 +52560,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			goto START;
 		      }
-
-		    if ((c_object_set_3(sc->x)) &&
-			(c_object_set_3if(sc->x)))
-		      push_op_stack(sc, sc->Object_Set_3);
+		    if ((c_object_has_array(sc->x)) ||
+			(c_object_set_3(sc->x)))
+			push_op_stack(sc, sc->Object_Set_3); /* calls to g_internal_object_set_3 */
 		    else push_op_stack(sc, sc->Object_Set);
 		    sc->args = list_2(sc, index, sc->x);
 		    sc->code = cdr(sc->code);
@@ -52494,8 +52571,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		else
 		  {
 		    push_stack(sc, OP_EVAL_ARGS1, list_1(sc, sc->x), cdr(sc->code));
-		    if ((c_object_set_3(sc->x)) &&
-			(c_object_set_3if(sc->x)))
+		    if ((c_object_has_array(sc->x)) ||
+			(c_object_set_3(sc->x)))
 		      push_op_stack(sc, sc->Object_Set_3);
 		    else push_op_stack(sc, sc->Object_Set);
 		    sc->code = cadr(settee);
@@ -62468,7 +62545,7 @@ s7_scheme *s7_init(void)
   s7_define_constant(sc, "*error-hook*", sc->error_hook);
   
   /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
-  /* 64 bit machine: size: 48 72, max op: 296 */
+  /* 64 bit machine: size: 48 72, max op: 328 */
 
 #if DEBUGGING
   if (strcmp(op_names[OP_DEFINE_BACRO_STAR], "define-bacro*") != 0)
