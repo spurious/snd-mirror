@@ -2083,8 +2083,9 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define c_object_ref_2(p)             c_object_info(p)->ref_2
 #define c_object_ref_2i(p)            c_object_info(p)->ref_2i
 #define c_object_set_3(p)             c_object_info(p)->set_3
-#define c_object_data_length(p)       (s7_Int)(*((s7_Int *)(c_object_value(p) + c_object_info(p)->length_loc)))
-#define c_object_data(p)              ((s7_Double *)(*((s7_Double **)(c_object_value(p) + c_object_info(p)->data_loc))))
+#define c_object_data_length(p)       (s7_Int)(*((s7_Int *)(((unsigned char *)(c_object_value(p))) + c_object_info(p)->length_loc)))
+#define c_object_data(p)              ((s7_Double *)(*((s7_Double **)(((unsigned char *)(c_object_value(p))) + c_object_info(p)->data_loc))))
+/* the pointless unsigned char* cast is needed in g++ and clang */
 #define c_object_has_array(p)         ((typeflag(p) & T_GENSYM) != 0)
 #define c_object_print(p)             c_object_info(p)->print
 #define c_object_length(p)            c_object_info(p)->length

@@ -636,9 +636,9 @@ static int c_object_built_in_type;
 
 static void *imported_s7_object_value_checked(s7_pointer obj, int type)
 {
-  #define imported_is_c_object(p) ((unsigned char)(*((unsigned char *)((void *)(p) + cell_type_location))) == c_object_built_in_type)
-  #define imported_is_c_object_type(p, type) ((int)(*((int *)((void *)(p) + c_object_type_location))) == type)
-  #define imported_c_object_value(p) ((void *)(*((void **)((void *)(p) + c_object_value_location))))
+  #define imported_is_c_object(p) ((unsigned char)(*((unsigned char *)((unsigned char *)(p) + cell_type_location))) == c_object_built_in_type)
+  #define imported_is_c_object_type(p, type) ((int)(*((int *)((unsigned char *)(p) + c_object_type_location))) == type)
+  #define imported_c_object_value(p) ((void *)(*((void **)((unsigned char *)(p) + c_object_value_location))))
 
   if ((imported_is_c_object(obj)) &&
       (imported_is_c_object_type(obj, type)))
