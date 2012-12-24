@@ -5795,6 +5795,8 @@ typedef struct {
 
 #define S_fpsap "fpsap"
 
+static mus_float_t overall_min = 0.0;
+
 static XEN g_fpsap(XEN x_choice, XEN x_n, XEN start_phases, XEN x_size, XEN x_increment)
 {
   #define H_fpsap "(" S_fpsap " choice n phases (size 6000) (increment 0.06)) searches \
@@ -5808,13 +5810,13 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   #define INIT_TRIES 5000
 
   int choice, n, size, counts = 0, day_counter = 0, free_top = 0, fft_size = 0;
-  mus_float_t increment = INCR_MAX, orig_incr, local_best = 1000.0, incr_mult = INCR_DOWN, overall_min;
+  mus_float_t increment = INCR_MAX, orig_incr, local_best = 1000.0, incr_mult = INCR_DOWN;
   mus_float_t *min_phases = NULL, *temp_phases = NULL, *diff_phases = NULL, *initial_phases = NULL;
   char *choice_name[4] = {"all", "odd", "even", "prime"};
   pk_data **choices = NULL, **free_choices = NULL;
   mus_float_t *rl, *im;
   const char *file = NULL;
-  bool just_best = false;
+  bool just_best = true;
 
   auto mus_float_t saved_min(int ch, int nn);
   auto mus_float_t get_peak(mus_float_t *phases);
@@ -6075,7 +6077,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   orig_incr = increment;
   incr_mult = INCR_DOWN;
   file = "test.data";
-  just_best = false;
+  just_best = true;
 
   if (XEN_VECTOR_P(start_phases))
     {
@@ -6087,8 +6089,11 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
   min_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
 
-  overall_min = saved_min(choice, n) + .2;
-  if (overall_min < sqrt((double)n)) overall_min = sqrt((double)n) + .1;
+  if (overall_min == 0.0)
+    {
+      overall_min = saved_min(choice, n) + 1.0;
+      if (overall_min < sqrt((double)n)) overall_min = sqrt((double)n) + 1.0;
+    }
 
   temp_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
   diff_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));

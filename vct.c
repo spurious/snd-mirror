@@ -630,44 +630,26 @@ static XEN g_vct_ref(XEN obj, XEN pos)
 
 #if HAVE_SCHEME
 
-
-/* ---------------- #if HAVE_SCHEME */
 #if 1
-/* an experiment -- dangerous! */
-typedef struct imported_s7_cell {
-  union {
-    unsigned int flag;
-    unsigned char type_field;
-    unsigned short sflag;
-  } tf;
-  int hloc;
-  union {
-    struct {               /* additional object types (C) */
-      int type;
-      void *value;         /*  the value the caller associates with the object */
-      s7_pointer e;        /*   the method list, if any (open environment) */
-    } c_obj;
-  } object;
-} imported_s7_cell;
+static size_t c_object_value_location, c_object_type_location, cell_type_location;
+static int c_object_built_in_type;
 
-#define imported_T_C_OBJECT            23
-#define imported_type(p)               ((p)->tf.type_field)
-
-#define imported_is_c_object(p)        (imported_type(p) == imported_T_C_OBJECT)
-#define imported_c_object_value(p)     (p)->object.c_obj.value
-#define imported_c_object_type(p)      (p)->object.c_obj.type
-
-static void *imported_s7_object_value_checked(s7_pointer ur_obj, int type)
+static void *imported_s7_object_value_checked(s7_pointer obj, int type)
 {
-  imported_s7_cell *obj = (imported_s7_cell *)ur_obj;
+  #define imported_is_c_object(p) ((unsigned char)(*((unsigned char *)((void *)(p) + cell_type_location))) == c_object_built_in_type)
+  #define imported_is_c_object_type(p, type) ((int)(*((int *)((void *)(p) + c_object_type_location))) == type)
+  #define imported_c_object_value(p) ((void *)(*((void **)((void *)(p) + c_object_value_location))))
+
   if ((imported_is_c_object(obj)) &&
-      (imported_c_object_type(obj) == type))
+      (imported_is_c_object_type(obj, type)))
     return(imported_c_object_value(obj));
   return(NULL);
 }
+
 #else
 #define imported_s7_object_value_checked(Obj, Typ) s7_object_value_checked(Obj, Typ)
 #endif
+
 /* ---------------- #endif */
 
 static s7_pointer vct_ref_two;
@@ -1480,7 +1462,7 @@ void mus_vct_init(void)
   s7_set_object_ref_2(vct_tag, s7_vct_ref_2);
   s7_set_object_ref_2i(vct_tag, s7_vct_ref_2i);
   s7_set_object_set_3(vct_tag, s7_vct_set_3);
-  s7_set_object_set_array_info(vct_tag, offsetof(vct, length), offsetof(vct, data));
+  s7_set_object_array_info(vct_tag, offsetof(vct, length), offsetof(vct, data));
   s7_set_object_ref_arity(vct_tag, 1, 1);
 #else
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));
@@ -1605,5 +1587,10 @@ void mus_vct_init(void)
     s7_function_set_class(vct_ref_ss, f);
     s7_function_set_returns_temp(vct_ref_ss);
   }
+
+  c_object_value_location = s7_c_object_value_offset(s7);
+  c_object_type_location = s7_c_object_type_offset(s7);
+  cell_type_location = s7_type_offset(s7);
+  c_object_built_in_type = s7_c_object_built_in_type(s7);
 #endif
 }

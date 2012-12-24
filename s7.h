@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.16"
-#define S7_DATE "8-Dec-12"
+#define S7_VERSION "2.17"
+#define S7_DATE "24-Dec-12"
 
 
 typedef long long int s7_Int;
@@ -588,6 +588,13 @@ s7_pointer s7_value(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_car_value(s7_scheme *sc, s7_pointer lst);
 s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst);
 s7_pointer s7_cadar_value(s7_scheme *sc, s7_pointer lst);
+size_t s7_number_offset(s7_scheme *sc);
+
+  int s7_c_object_built_in_type(s7_scheme *sc);
+  size_t s7_c_object_value_offset(s7_scheme *sc);
+  size_t s7_c_object_type_offset(s7_scheme *sc);
+  size_t s7_type_offset(s7_scheme *sc);
+
   /* these are for experimental optimization choices */
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
@@ -716,7 +723,7 @@ s7_pointer s7_object_set_environment(s7_pointer obj, s7_pointer e);
 void s7_set_object_ref_2(int type, s7_pointer (*ref_2)(s7_scheme *sc, void *val, s7_pointer index));
 void s7_set_object_ref_2i(int type, s7_pointer (*ref_2i)(s7_scheme *sc, void *val, s7_Int index));
 void s7_set_object_set_3(int type, s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value));
-void s7_set_object_set_array_info(int type, size_t length_loc, size_t data_loc);
+void s7_set_object_array_info(int type, size_t length_loc, size_t data_loc);
 void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_args);
 
   /* These functions create a new Scheme object type.  There is a simple example in s7.html.
@@ -858,6 +865,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 24-Dec:    s7_set_object_array_info and other such changes.
  * 20-Nov:    removed s7_set_error_exiter and s7_error_and_exit which I think have never been used.
  * 22-Oct:    changed args to s7_function_class and s7_function_set_class.
  * 22-Aug:    symbol->dynamic-value.

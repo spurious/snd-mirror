@@ -1010,6 +1010,7 @@ extern s7_scheme *s7;  /* s7 is a pointer to the current scheme */
 #define XEN_COMMENT_STRING                         ";"
 
 extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
+extern size_t xen_s7_number_location;
 
 #define XEN_FALSE                                  xen_false
 #define XEN_TRUE                                   xen_true

@@ -94,38 +94,21 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 
 #if HAVE_SCHEME
 #if 1
-/* an experiment -- dangerous! -- now obsolete */
-typedef struct imported_s7_cell {
-  union {
-    unsigned int flag;
-    unsigned char type_field;
-    unsigned short sflag;
-  } tf;
-  int hloc;
-  union {
-    struct {               /* additional object types (C) */
-      int type;
-      void *value;         /*  the value the caller associates with the object */
-      s7_pointer e;        /*   the method list, if any (open environment) */
-    } c_obj;
-  } object;
-} imported_s7_cell;
+static size_t c_object_value_location, c_object_type_location, cell_type_location;
+static int c_object_built_in_type;
 
-#define imported_T_C_OBJECT            23
-#define imported_type(p)               ((p)->tf.type_field)
-
-#define imported_is_c_object(p)        (imported_type(p) == imported_T_C_OBJECT)
-#define imported_c_object_value(p)     (p)->object.c_obj.value
-#define imported_c_object_type(p)      (p)->object.c_obj.type
-
-static void *imported_s7_object_value_checked(s7_pointer ur_obj, int type)
+static void *imported_s7_object_value_checked(s7_pointer obj, int type)
 {
-  imported_s7_cell *obj = (imported_s7_cell *)ur_obj;
+  #define imported_is_c_object(p) ((unsigned char)(*((unsigned char *)((void *)(p) + cell_type_location))) == c_object_built_in_type)
+  #define imported_is_c_object_type(p, type) ((int)(*((int *)((void *)(p) + c_object_type_location))) == type)
+  #define imported_c_object_value(p) ((void *)(*((void **)((void *)(p) + c_object_value_location))))
+
   if ((imported_is_c_object(obj)) &&
-      (imported_c_object_type(obj) == type))
+      (imported_is_c_object_type(obj, type)))
     return(imported_c_object_value(obj));
   return(NULL);
 }
+
 #else
 #define imported_s7_object_value_checked(Obj, Typ) s7_object_value_checked(Obj, Typ)
 #endif
@@ -9162,7 +9145,12 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
 
 #define GET_NUMBER(Obj, Caller, Val) Val = s7_car_value(s7, Obj)
 #define GET_REAL(Obj, Caller, Val) Val = s7_number_to_real(sc, s7_car_value(s7, Obj))
-#define GET_INTEGER(Obj, Caller, Val) Val = s7_integer(s7_car_value(s7, Obj))
+#if WITH_GMP
+  #define GET_INTEGER(Obj, Caller, Val) Val = s7_integer(s7_car_value(s7, Obj))
+#else
+  #define s7_cell_integer(p) (s7_Int)(*((s7_Int *)((void *)(p) + xen_s7_number_location)))
+  #define GET_INTEGER(Obj, Caller, Val) Val = s7_cell_integer(s7_car_value(s7, Obj))
+#endif
 
 #define GET_NUMBER_CADR(Obj, Caller, Val) Val = s7_cadr_value(s7, Obj)
 #define GET_REAL_CADR(Obj, Caller, Val) Val = s7_number_to_real(sc, s7_cadr_value(s7, Obj))
@@ -14654,6 +14642,12 @@ void Init_sndlib(void)
   mus_sndlib_xen_initialize();
   mus_vct_init();
   mus_xen_init();
+#if HAVE_SCHEME
+  c_object_value_location = s7_c_object_value_offset(s7);
+  c_object_type_location = s7_c_object_type_offset(s7);
+  cell_type_location = s7_type_offset(s7);
+  c_object_built_in_type = s7_c_object_built_in_type(s7);
+#endif
 }
 
 /* opts: frame_set/mixer_set with 0 or 1 as chan

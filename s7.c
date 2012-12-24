@@ -339,6 +339,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <stdarg.h>
+#include <stddef.h>
 
 #if __cplusplus
   #include <cmath>
@@ -5538,6 +5539,36 @@ s7_pointer s7_car_value(s7_scheme *sc, s7_pointer lst)
 s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst)
 {
   return(finder(sc, cadr(lst)));
+}
+
+
+size_t s7_number_offset(s7_scheme *sc)
+{
+  return(offsetof(s7_cell, object.number.real_value));
+}
+
+
+size_t s7_type_offset(s7_scheme *sc)
+{
+  return(offsetof(s7_cell, tf.type_field));
+}
+
+
+size_t s7_c_object_type_offset(s7_scheme *sc)
+{
+  return(offsetof(s7_cell, object.c_obj.type));
+}
+
+
+size_t s7_c_object_value_offset(s7_scheme *sc)
+{
+  return(offsetof(s7_cell, object.c_obj.value));
+}
+
+
+int s7_c_object_built_in_type(s7_scheme *sc)
+{
+  return(T_C_OBJECT);
 }
 
 
@@ -28919,7 +28950,7 @@ void s7_set_object_set_3(int type, s7_pointer (*set_3)(s7_scheme *sc, void *val,
 }
 
 
-void s7_set_object_set_array_info(int type, size_t length_loc, size_t data_loc)
+void s7_set_object_array_info(int type, size_t length_loc, size_t data_loc)
 {
   object_types[type]->length_loc = length_loc;
   object_types[type]->data_loc = data_loc;
@@ -51879,7 +51910,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       * p326 in ref c
 	       * s7_object_type|number|string|vector|boolean_offset
 	       * s7_real|integer|string|vector|boolean_type
-	       * frames/mixers, perhaps sd objs
+	       * frames/mixers, perhaps sd objs, but frames are mus_xen objects!?!
 	       * s7_is_real -> xen_object_type(obj) == xen_s7_real_type
 	       */
 
@@ -62594,7 +62625,7 @@ s7_scheme *s7_init(void)
  * index    44300 4988 3291 3005 2742 2078
  * s7test         1721 1358 1297 1244  977
  * t455            265   89   55   31   14
- * t502             90   43   39   36   28
+ * t502             90   43   39   36   29
  * lat             229   63   52   47   42
  * calls                275  207  175  115
  */
