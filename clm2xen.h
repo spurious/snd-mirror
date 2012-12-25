@@ -36,10 +36,6 @@ MUS_EXPORT mus_xen *mus_any_to_mus_xen(mus_any *ge);
 MUS_EXPORT mus_xen *mus_any_to_mus_xen_with_vct(mus_any *ge, XEN v);
 MUS_EXPORT mus_xen *mus_any_to_mus_xen_with_two_vcts(mus_any *ge, XEN v1, XEN v2);
 
-MUS_EXPORT mus_float_t *mus_vct_to_partials(vct *v, int *npartials, int *error_code);
-MUS_EXPORT XEN mus_clm_output(void);
-MUS_EXPORT XEN mus_clm_reverb(void);
-
 MUS_EXPORT XEN g_mus_channels(XEN obj);
 MUS_EXPORT XEN g_mus_length(XEN gen);
 MUS_EXPORT XEN g_mus_file_name(XEN gen);

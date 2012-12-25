@@ -34961,7 +34961,6 @@ static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl)
 
 #define is_h_safe_c_s(P) ((is_optimized(P)) && (optimize_data(P) == HOP_SAFE_C_S))
 #define is_safe_c_s(P)   ((is_optimized(P)) && (op_no_hop(P) == OP_SAFE_C_S))
-#define is_h_safe_c_c(P) ((is_optimized(P)) && (optimize_data(P) == HOP_SAFE_C_C))
 
 static bool is_h_optimized(s7_pointer p)
 {
@@ -62621,14 +62620,14 @@ s7_scheme *s7_init(void)
  * replace "frame" with "environment" if possible (frame collides with clm)
  * f|gcdr in let_op*q
  *
- * timing    12.0      13.0 13.1 13.2 13.3
- * bench    42736      8752 8051 7725 6515
- * lint                9328 8140 7887 7736
- * index    44300 4988 3291 3005 2742 2078
- * s7test         1721 1358 1297 1244  977
- * t455            265   89   55   31   14
- * t502             90   43   39   36   29
- * lat             229   63   52   47   42
- * calls                275  207  175  115
+ * timing    12.x 13.0 13.1 13.2 13.3 13.4
+ * bench    42736 8752 8051 7725 6515
+ * lint           9328 8140 7887 7736
+ * index    44300 3291 3005 2742 2078
+ * s7test    1721 1358 1297 1244  977
+ * t455       265   89   55   31   14
+ * t502        90   43   39   36   29
+ * lat        229   63   52   47   42
+ * calls           275  207  175  115
  */
 

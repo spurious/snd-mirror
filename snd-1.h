@@ -1664,7 +1664,6 @@ XEN g_mix_length(XEN n);
 XEN g_mix_sync(XEN n);
 XEN g_set_mix_sync(XEN n, XEN val);
 XEN g_mix_maxamp(XEN mix_id);
-double mix_maxamp(int mix_id);
  
 mus_long_t mix_position_from_id(int id);
 mus_long_t mix_length_from_id(int id);

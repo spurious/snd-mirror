@@ -22,10 +22,8 @@
 (define *clm-notehook* #f)
 (define *clm-with-sound-depth* 0) ; for CM, not otherwise used
 (define *clm-default-frequency* 0.0)
-(define *clm-safety* 0)
 (define *clm-delete-reverb* #f)   ; should with-sound clean up reverb stream
 (define *clm-threads* 4)          ; obsolete, unused
-(define *clm-output-safety* 0)    ; if 1, assume output buffers will not need to be flushed except at the very end
 
 
 (define (times->samples beg dur) 
@@ -90,8 +88,7 @@
 			    (play *clm-play*)
 			    (clipped 'unset)
 			    (notehook *clm-notehook*)               ; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
-			    (ignore-output #f)
-			    (output-safety *clm-output-safety*))
+			    (ignore-output #f))
   "with-sound-helper is the business portion of the with-sound macro"
   (let* ((old-srate (mus-srate))
 	 (old-*output* *output*)
@@ -139,9 +136,7 @@
 		 (begin
 		   (if (file-exists? output-1) 
 		       (delete-file output-1))
-		   (set! *output* (make-sample->file output-1 channels data-format header-type comment))))
-	     (if *output*
-		 (set! (mus-safety *output*) output-safety)))
+		   (set! *output* (make-sample->file output-1 channels data-format header-type comment)))))
 	   (begin
 	     (if (not continue-old-file)
 		 (if (vct? output-1)
@@ -158,9 +153,7 @@
 		     (begin
 		       (if (file-exists? reverb-1) 
 			   (delete-file reverb-1))
-		       (set! *reverb* (make-sample->file reverb-1 reverb-channels data-format header-type))))
-		 (if *reverb*
-		     (set! (mus-safety *reverb*) output-safety)))
+		       (set! *reverb* (make-sample->file reverb-1 reverb-channels data-format header-type)))))
 	       (begin
 		 (if (not continue-old-file)
 		     (if (vct? reverb-1)

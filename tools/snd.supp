@@ -1750,11 +1750,27 @@
 }
 
 {
-   s71aa
+   s71ab
    Memcheck:Leak
    fun:calloc
-   fun:make_permanent_integer
+   fun:alloc_pointer
    fun:*
+}
+
+{
+   s71ac
+   Memcheck:Leak
+   fun:malloc
+   fun:alloc_pointer
+   fun:*
+}
+
+{ 
+  s71aa 
+  Memcheck:Leak 
+  fun:calloc 
+  fun:make_permanent_integer
+  fun:*
 }
 
 {

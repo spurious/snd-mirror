@@ -50,7 +50,6 @@
 #define S_before_transform_hook         "before-transform-hook"
 #define S_bind_key                      "bind-key"  
 #define S_bold_peaks_font               "bold-peaks-font"
-#define S_bomb                          "bomb"
 #if (!HAVE_SCHEME)
 #define S_c_g                           "c-g?"
 #endif

@@ -4728,6 +4728,8 @@ static XEN g_mixer(XEN args)
 }
 
 
+static XEN mus_clm_output(void);
+static XEN mus_clm_reverb(void);
 #define S_mus_mix_with_envs "mus-mix-with-envs"
 
 static XEN g_mus_mix_with_envs(XEN file, XEN beg, XEN dur, XEN mx, XEN revmx, XEN envs, XEN srcs, XEN srcenv, XEN outstream, XEN revstream)
@@ -5287,7 +5289,7 @@ static mus_float_t *list_to_partials(XEN harms, int *npartials, int *error_code)
 }
 
 
-mus_float_t *mus_vct_to_partials(vct *v, int *npartials, int *error_code)
+static mus_float_t *mus_vct_to_partials(vct *v, int *npartials, int *error_code)
 {
   int len, i, maxpartial, curpartial;
   mus_float_t *partials = NULL;
@@ -6497,8 +6499,8 @@ static XEN clm_output_slot = NULL, clm_reverb_slot = NULL;
 
 #endif
 
-XEN mus_clm_output(void) {return(CLM_OUTPUT);}
-XEN mus_clm_reverb(void) {return(CLM_REVERB);}
+static XEN mus_clm_output(void) {return(CLM_OUTPUT);}
+static XEN mus_clm_reverb(void) {return(CLM_REVERB);}
 
 
 static XEN g_input_p(XEN obj) 

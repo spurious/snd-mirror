@@ -3046,7 +3046,7 @@ void color_mixes(color_t color)
 }
 
 
-double mix_maxamp(int mix_id)
+static double mix_maxamp(int mix_id)
 {
   mix_info *md;
   mix_state *ms;
