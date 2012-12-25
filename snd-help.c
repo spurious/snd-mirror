@@ -726,7 +726,7 @@ about it!  If possible, run Snd in gdb and send me the stack trace: \n\n\
 See README.Snd for more about C-level troubles.  For CLM-based instruments, " vardpy_reference " might \
 help.  For debugging your own Scheme/Ruby/Forth \
 code (or Snd's for that matter), see the \"Errors and Debugging\" section of \
-extsnd.html, or snd-debug.  For notelist debugging, see ws-backtrace.",
+extsnd.html.  For notelist debugging, see ws-backtrace.",
 #else
 "If you hit a segfault in Snd, please tell me \
 about it!  If possible, run Snd in gdb and send me the stack trace: \n\n\

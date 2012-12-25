@@ -90,9 +90,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --enable-snd-debug g++                                ----  '
+echo ' ----                 g++                                ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --enable-snd-debug CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib" 
+./configure --quiet CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib" 
 make
 ./snd --version
 ./snd -noinit --features "'clm"
@@ -104,9 +104,9 @@ rm -f config.cache
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --enable-snd-debug clang                                ----  '
+echo ' ----                 clang                                ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --enable-snd-debug CC=/home/bil/test/llvm-3.1.src/build/Release+Asserts/bin/clang CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib" 
+./configure --quiet CC=/home/bil/test/llvm-3.1.src/build/Release+Asserts/bin/clang CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib" 
 make
 ./snd --version
 ./snd -noinit --features "'clm"
@@ -249,9 +249,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-forth --enable-snd-debug  --with-editres --with-gl ---- '
+echo ' -----                --with-forth  --with-editres --with-gl ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-forth --enable-snd-debug  --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet --with-forth  --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-forth 'xm 'gl"
@@ -355,9 +355,9 @@ rm -f sndinfo
 rm -f config.cache
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                --enable-snd-debug --with-gsl                           ---- '
+echo ' ----                --with-gsl                           ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --enable-snd-debug --with-gsl
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-gsl
 make
 echo ' '
 echo ' '
@@ -457,9 +457,9 @@ make
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-ruby  --with-gl --enable-snd-debug --with-alsa '
+echo ' -----                --with-ruby  --with-gl --with-alsa '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby  --with-gl --enable-snd-debug --with-alsa
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby  --with-gl --with-alsa
 make
 echo ' '
 echo ' '
@@ -493,9 +493,9 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --with-ruby  --with-gtk --enable-snd-debug --without-gsl '
+echo ' ----                 --with-ruby  --with-gtk --without-gsl '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby  --with-gtk --enable-snd-debug --without-gsl
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby  --with-gtk --without-gsl
 make
 echo ' '
 echo ' '
@@ -529,9 +529,9 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-ruby --with-no-gui --enable-snd-debug           ---- '
+echo ' -----                --with-ruby --with-no-gui           ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby --with-no-gui --enable-snd-debug
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby --with-no-gui 
 make
 echo ' '
 echo ' '
@@ -540,9 +540,9 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                g++ --with-ruby --with-no-gui --enable-snd-debug        ---- '
+echo ' ----                g++ --with-ruby --with-no-gui        ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby --with-no-gui --enable-snd-debug
+./configure --quiet CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby --with-no-gui 
 make
 echo ' '
 echo ' '

@@ -111,8 +111,8 @@ make allclean
 rm -f snd
 rm -f sndinfo
 rm -f config.cache
-echo ' CFLAGS="-Wall -I/usr/X11R6/include" --enable-snd-debug --with-gsl '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --enable-snd-debug --with-gsl LDFLAGS="-L/usr/X11R6/lib"
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-gsl '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-gsl LDFLAGS="-L/usr/X11R6/lib"
 make
 echo ' '
 echo ' '
@@ -151,8 +151,8 @@ echo ' -------------------------------- gtk test -------------------------------
 make allclean
 rm -f snd
 rm -f config.cache
-echo ' CFLAGS="-Wall" --enable-snd-debug --with-gtk --with-gsl '
-./configure --quiet CFLAGS="-Wall" --enable-snd-debug --with-gtk --with-gsl
+echo ' CFLAGS="-Wall" --with-gtk --with-gsl '
+./configure --quiet CFLAGS="-Wall" --with-gtk --with-gsl
 make
 echo ' '
 echo ' '
@@ -198,8 +198,8 @@ make
 echo ' '
 echo ' '
 make allclean
-echo ' CFLAGS="-Wall" --with-ruby --with-gtk --enable-snd-debug --without-gsl '
-./configure --quiet CFLAGS="-Wall" --with-ruby --with-gtk --enable-snd-debug --without-gsl
+echo ' CFLAGS="-Wall" --with-ruby --with-gtk --without-gsl '
+./configure --quiet CFLAGS="-Wall" --with-ruby --with-gtk --without-gsl
 make
 echo ' '
 echo ' '
@@ -220,15 +220,15 @@ echo ' '
 echo ' '
 ./snd --version
 make allclean
-echo ' CFLAGS="-Wall" --with-ruby --with-no-gui --enable-snd-debug '
-./configure --quiet CFLAGS="-Wall" --with-ruby --with-no-gui --enable-snd-debug
+echo ' CFLAGS="-Wall" --with-ruby --with-no-gui '
+./configure --quiet CFLAGS="-Wall" --with-ruby --with-no-gui 
 make
 echo ' '
 echo ' '
 ./snd --version
 make allclean
-echo ' CC=g++ CFLAGS="-Wall" --with-ruby --with-no-gui --enable-snd-debug '
-./configure --quiet CC=g++ CFLAGS="-Wall" --with-ruby --with-no-gui --enable-snd-debug
+echo ' CC=g++ CFLAGS="-Wall" --with-ruby --with-no-gui '
+./configure --quiet CC=g++ CFLAGS="-Wall" --with-ruby --with-no-gui 
 make
 
 echo ' '

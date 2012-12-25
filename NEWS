@@ -1,11 +1,10 @@
 Snd 13.3
 
 Adam Sampson added DESTDIR support to the makefile.
-
 removed rtio.scm.   
 removed all the clm safety stuff (*clm-ouput-safety*, mus-safety etc).
+as always, Mike Scholz and I have made a bazillion incremental improvements!
 
 Checked: sbcl 1.1.1|2, cmucl 20d, gtk 3.7.2|4, fftw 3.3.3
 
-Thanks!: Mike, Adam Sampson.
 

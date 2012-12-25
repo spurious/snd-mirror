@@ -1698,20 +1698,6 @@ if test $statvfs_ok = 0 ; then
 fi
 
 
-#--------------------------------------------------------------------------------
-# debugging flag
-#--------------------------------------------------------------------------------
-
-AC_ARG_ENABLE(snd-debug,
-  [  --enable-snd-debug      include internal Snd debugging functions],
-  if test "$enable_snd_debug" = yes ; then
-    AC_DEFINE(MUS_DEBUGGING)
-    RANDOM_FEATURES="$RANDOM_FEATURES debugging"
-    VL_PROG_CC_WARNINGS()
-  fi)
-
-
-
 
 #--------------------------------------------------------------------------------
 # sigsetjmp special case
@@ -1746,6 +1732,7 @@ AC_ARG_ENABLE(deprecated,
     AC_DEFINE(XEN_DISABLE_DEPRECATED)
     AC_DEFINE(S7_DISABLE_DEPRECATED)
     AC_DEFINE(SND_DISABLE_DEPRECATED)
+    VL_PROG_CC_WARNINGS()
   fi)
 
 if test "$enable_snd_debug" = yes ; then

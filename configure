@@ -780,7 +780,6 @@ enable_readline
 with_ruby_prefix
 with_ruby
 with_forth
-enable_snd_debug
 enable_deprecated
 '
       ac_precious_vars='build_alias
@@ -1413,7 +1412,6 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-largefile     omit support for large files
   --enable-readline      include readline (the default)
-  --enable-snd-debug      include internal Snd debugging functions
   --disable-deprecated	  do not include any deprecated stuff from gtk, s7, motif, clm, snd, or sndlib
 
 Optional Packages:
@@ -10716,16 +10714,62 @@ $as_echo "no" >&6; }
 fi
 
 
+
 #--------------------------------------------------------------------------------
-# debugging flag
+# sigsetjmp special case
 #--------------------------------------------------------------------------------
 
-# Check whether --enable-snd-debug was given.
-if test "${enable_snd_debug+set}" = set; then :
-  enableval=$enable_snd_debug; if test "$enable_snd_debug" = yes ; then
-    $as_echo "#define MUS_DEBUGGING 1" >>confdefs.h
+# look for sigsetjmp for segfault trap
+if test "$enable_snd_debug" != yes ; then
+  trap_segfault=no
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sigsetjmp" >&5
+$as_echo_n "checking for sigsetjmp... " >&6; }
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <setjmp.h>
+int
+main ()
+{
+sigjmp_buf hi; sigsetjmp(hi,1)
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  trap_segfault=yes
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+  if test $trap_segfault = yes; then
+    $as_echo "#define MUS_TRAP_SEGFAULT 1" >>confdefs.h
 
-    RANDOM_FEATURES="$RANDOM_FEATURES debugging"
+  fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $trap_segfault" >&5
+$as_echo "$trap_segfault" >&6; }
+fi
+
+
+
+#--------------------------------------------------------------------------------
+# debugging stuff
+#--------------------------------------------------------------------------------
+
+# Check whether --enable-deprecated was given.
+if test "${enable_deprecated+set}" = set; then :
+  enableval=$enable_deprecated; if test "$enable_deprecated" = no ; then
+    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED -DGSEAL_ENABLE -DGTK_DISABLE_SINGLE_INCLUDES -Wall $CFLAGS"
+    $as_echo "#define XM_DISABLE_DEPRECATED 1" >>confdefs.h
+
+    $as_echo "#define CLM_DISABLE_DEPRECATED 1" >>confdefs.h
+
+    $as_echo "#define SNDLIB_DISABLE_DEPRECATED 1" >>confdefs.h
+
+    $as_echo "#define XEN_DISABLE_DEPRECATED 1" >>confdefs.h
+
+    $as_echo "#define S7_DISABLE_DEPRECATED 1" >>confdefs.h
+
+    $as_echo "#define SND_DISABLE_DEPRECATED 1" >>confdefs.h
+
 
   ansi=
   if test -z "$ansi"; then
@@ -10827,68 +10871,6 @@ EOF
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $vl_cv_prog_cc_warnings" >&5
 $as_echo "$vl_cv_prog_cc_warnings" >&6; }
-
-  fi
-fi
-
-
-
-
-
-#--------------------------------------------------------------------------------
-# sigsetjmp special case
-#--------------------------------------------------------------------------------
-
-# look for sigsetjmp for segfault trap
-if test "$enable_snd_debug" != yes ; then
-  trap_segfault=no
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sigsetjmp" >&5
-$as_echo_n "checking for sigsetjmp... " >&6; }
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <setjmp.h>
-int
-main ()
-{
-sigjmp_buf hi; sigsetjmp(hi,1)
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  trap_segfault=yes
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  if test $trap_segfault = yes; then
-    $as_echo "#define MUS_TRAP_SEGFAULT 1" >>confdefs.h
-
-  fi
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $trap_segfault" >&5
-$as_echo "$trap_segfault" >&6; }
-fi
-
-
-
-#--------------------------------------------------------------------------------
-# debugging stuff
-#--------------------------------------------------------------------------------
-
-# Check whether --enable-deprecated was given.
-if test "${enable_deprecated+set}" = set; then :
-  enableval=$enable_deprecated; if test "$enable_deprecated" = no ; then
-    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED -DGSEAL_ENABLE -DGTK_DISABLE_SINGLE_INCLUDES -Wall $CFLAGS"
-    $as_echo "#define XM_DISABLE_DEPRECATED 1" >>confdefs.h
-
-    $as_echo "#define CLM_DISABLE_DEPRECATED 1" >>confdefs.h
-
-    $as_echo "#define SNDLIB_DISABLE_DEPRECATED 1" >>confdefs.h
-
-    $as_echo "#define XEN_DISABLE_DEPRECATED 1" >>confdefs.h
-
-    $as_echo "#define S7_DISABLE_DEPRECATED 1" >>confdefs.h
-
-    $as_echo "#define SND_DISABLE_DEPRECATED 1" >>confdefs.h
 
   fi
 fi

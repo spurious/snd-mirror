@@ -35727,7 +35727,6 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 
       return(multiply_2);
     }
-#endif
 
   if (args == 3)
     {
@@ -35759,6 +35758,7 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
     }
 
   /* fprintf(stderr, "m%d: %s\n", args, DISPLAY_80(expr)); */
+#endif
   return(f);
 }
 
@@ -36430,9 +36430,10 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(equal_length_ic, f);
   equal_2 = s7_make_function(sc, "=", g_equal_2, 2, 0, false, "= optimization");
   s7_function_set_class(equal_2, f);
+#if (!WITH_GMP)
   mod_si_is_zero = s7_make_function(sc, "=", g_mod_si_is_zero, 2, 0, false, "= optimization");
   s7_function_set_class(mod_si_is_zero, f);
-
+#endif
 
 #if (!WITH_GMP)
   /* negative? */

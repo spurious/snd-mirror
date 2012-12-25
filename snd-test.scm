@@ -21250,48 +21250,53 @@ EDITS: 2
 	  (begin
 	    (for-each
 	     (lambda (make runp)
-	       (let ((gen (make)))
-		 ;; run args
-		 (for-each 
-		  (lambda (arg1)
-		    (catch #t (lambda () (runp gen arg1)) (lambda args (car args)))
-		    (for-each
-		     (lambda (arg2)
-		       (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
-		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
-			   (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
-			   () '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-			   )))
-		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
-			(lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
-			() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-			))
-		 ;; generic args
-		 (for-each
-		  (lambda (func name)
-		    (catch #t
-			   (lambda ()
-			     (let ((default-value (func gen)))
-			       (for-each
-				(lambda (arg1)
+	       (catch #t 
+		 (lambda ()
+		   (let ((gen (make)))
+		     ;; run args
+		     (for-each 
+		      (lambda (arg1)
+			;; how did this ever work??
+			(catch #t (lambda () (runp gen arg1)) (lambda args (car args)))
+			(for-each
+			 (lambda (arg2)
+			   (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
+			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
+			       (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
+			       () '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
+			       )))
+		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
+			    (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
+			    () '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
+			    ))
+		     
+		     ;; generic args
+		     (for-each
+		      (lambda (func name)
+			(catch #t
+			  (lambda ()
+			    (let ((default-value (func gen)))
+			      (for-each
+			       (lambda (arg1)
+				 (catch #t
+				   (lambda ()
+				     (begin
+				       (func gen)
+				       (set! (func gen) arg1)))
+				   (lambda args #f)))
+			       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) 3/4 'mus-error 0+i
+				     (lambda () #t) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
+				     () '3 4 64 -64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
+				     (lambda (a) a)))
+			      (if (not (equal? (func gen) default-value))
 				  (catch #t
-					 (lambda ()
-					   (begin
-					     (func gen)
-					     (set! (func gen) arg1)))
-					 (lambda args #f)))
-				(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) 3/4 'mus-error 0+i
-				      (lambda () #t) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
-				      () '3 4 64 -64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-				      (lambda (a) a)))
-			       (if (not (equal? (func gen) default-value))
-				   (catch #t
-					  (lambda ()
-					    (set! (func gen) default-value))
-					  (lambda args #f)))))
-			   (lambda args #f)))
-		  generic-procs generic-names)
-		 (mus-reset gen)))
+				    (lambda ()
+				      (set! (func gen) default-value))
+				    (lambda args #f)))))
+			  (lambda args #f)))
+		      generic-procs generic-names)
+		     (mus-reset gen)))
+		 (lambda args (car args))))
 	     make-procs gen-procs)
 	    
 	    (let ((new-wave (make-vct 1)))
@@ -28483,15 +28488,7 @@ EDITS: 2
 			(snd-display #__line__ ";mix-selection mix-home: ~A (~A 0 #f 0)?" (mix-home sel-mix-id) ind))
 		    (insert-selection 3000 ind 0)
 		    (insert-selection 3000 ind)
-		    (if (and (provided? 'xm) (provided? 'snd-debug))
-			(begin
-			  (set! (cursor ind 0) 3000)
-			  (XtCallCallbacks (menu-option "Insert selection") XmNactivateCallback (snd-global-state))))
 		    (mix-selection 3000 ind)
-		    (if (and (provided? 'xm) (provided? 'snd-debug))
-			(begin
-			  (XtCallCallbacks (menu-option "Mix selection") XmNactivateCallback (snd-global-state))
-			  (XtCallCallbacks (menu-option "Play selection") XmNactivateCallback (snd-global-state))))
 		    (delete-selection)
 		    (revert-sound ind))))
 	      (close-sound ind))

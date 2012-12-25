@@ -1742,6 +1742,30 @@
 }
 
 {
+   s71a
+   Memcheck:Leak
+   fun:alloc_pointer
+   fun:s7_make_permanent_string
+   fun:*
+}
+
+{
+   s71aa
+   Memcheck:Leak
+   fun:calloc
+   fun:make_permanent_integer
+   fun:*
+}
+
+{
+   s71b
+   Memcheck:Leak
+   fun:alloc_pointer
+   fun:s7_remove_from_heap
+   fun:*
+}
+
+{
    s71
    Memcheck:Leak
    fun:calloc
@@ -1839,6 +1863,14 @@
    Memcheck:Leak
    fun:malloc
    fun:make_walker
+}
+
+{
+   run-1a
+   Memcheck:Leak
+   fun:calloc
+   fun:clm_make_function
+   fun:*
 }
 
 {

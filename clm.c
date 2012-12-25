@@ -8346,6 +8346,7 @@ static void flush_buffers(rdout *gen)
 	      write(fd, zeros, bytes);
 	      filler -= current_samps;
 	    }
+	  free(zeros);
 	}
       
       if (addbufs)

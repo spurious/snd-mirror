@@ -820,7 +820,6 @@ static void deferred_region_to_temp_file(region *r)
   int i, k, ofd = 0, datumb = 0, err = 0;
   bool copy_ok;
   mus_long_t j, len = 0;
-  mus_float_t val;
   snd_fd **sfs = NULL;
   snd_info *sp0;
   file_info *hdr = NULL;
@@ -830,7 +829,6 @@ static void deferred_region_to_temp_file(region *r)
   ss->deferred_regions--;
   drp = r->dr;
   len = drp->len;
-  val = 0.0; 
   r->use_temp_file = REGION_FILE;
   r->filename = snd_tempnam();
   sp0 = drp->cps[0]->sound;

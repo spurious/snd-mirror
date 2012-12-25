@@ -4571,6 +4571,9 @@ int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int si
   return(MUS_NO_ERROR);
 }
  
+
+#define MUS_BYTE_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 7)))
+
 static int sndjack_from_byte(int ch,int chs,char *buf,float *out,int bytes){
   int i;
   int len=bytes/chs;
@@ -5583,6 +5586,10 @@ int mus_audio_device_format(int dev) /* snd-dac */
 
   /* we return the new format, so mixer_vals is just a local collector of possible formats */
   mixer_vals[0] = 0;
+
+#if (!WITH_AUDIO)
+  return(MUS_AUDIO_COMPATIBLE_FORMAT);
+#endif
 
 #if HAVE_OSS
   if (api == MUS_OSS_API) 

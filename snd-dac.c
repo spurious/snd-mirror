@@ -1914,6 +1914,7 @@ static void unset_dac_print(void)
 }
 
 
+#if WITH_AUDIO
 static const char *describe_dac(void)
 {
   /* this is only called in dac_error and only then upon a failed mus_audio_open_output */
@@ -1930,14 +1931,17 @@ static const char *describe_dac(void)
     return((const char *)(ptr->sp->short_filename));
   return("");
 }
+#endif
 
 
 static void dac_error(void)
 {
   stop_playing_all_sounds_without_hook(PLAY_ERROR);
+#if WITH_AUDIO
   snd_error("can't play %s: %s",
 	    describe_dac(),
 	    (last_print) ? last_print : "reason not known");
+#endif
 }
 
 

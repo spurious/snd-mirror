@@ -130,7 +130,6 @@
 #undef MUS_DEFAULT_DOC_DIR
 #undef MUS_TRAP_SEGFAULT
 #undef SND_AS_WIDGET
-#undef MUS_DEBUGGING
 #undef HAVE_LADSPA
 
 #undef USE_GTK
