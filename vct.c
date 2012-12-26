@@ -49,6 +49,7 @@
   #include "snd.h"
 #endif
 
+#include <stddef.h>
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>

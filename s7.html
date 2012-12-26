@@ -6049,6 +6049,7 @@ customized indefinitely.  See, for example, snd-inf.el in the Snd package.
 something like this:
 </p>
 
+<blockquote>
 <div class="indented">
 <pre>
 static gboolean read_stdin(GIOChannel *source, GIOCondition condition, gpointer data)
@@ -6067,7 +6068,53 @@ stdin_id = g_io_add_watch_full(channel,         /* and call read_stdin above if 
 			       <em class=red>read_stdin</em>, NULL, NULL);
 g_io_channel_unref(channel);
 </pre></div>
+</blockquote>
 
+<p>Here's a version that uses libtecla for the line editor:
+</p>
+
+<blockquote>
+<div class="indented">
+<pre>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;libtecla.h&gt;
+#include "s7.h"
+
+static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  char *buffer;
+  char response[1024];
+  GetLine *gl;            /* The tecla line editor */
+
+  gl = new_GetLine(500, 5000);
+  s7 = s7_init();  
+  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
+
+  while (1) 
+    {
+      buffer = gl_get_line(gl, "&gt; ", NULL, 0);
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) &gt; 1))
+	{                            
+	  sprintf(response, "(write %s)", buffer);
+	  s7_eval_c_string(s7, response);
+	  fprintf(stdout, "\n");
+	}
+    }
+  gl = del_GetLine(gl);
+}
+
+/* 
+ *   gcc -c s7.c -I. -O2 -g3
+ *   gcc -o ex1 ex1.c s7.o -lm -I. -ltecla -ldl
+ */
+</pre></div>
+</blockquote>
 
 <p>If we accidentally get into an infinite loop in our REPL, we have to exit the program.
 See <a href="#signal">signal handling</a> and <a href="#replrescue">begin_hook to the rescue!</a> below for two ways to fix this.

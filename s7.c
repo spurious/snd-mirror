@@ -51905,10 +51905,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  break;
 		}
 	      /* TODO: implement type checks, object|real|integer direct access/conversion -> xen.h
-	       * TODO: replace imported_s7_object_value_checked
 	       * TODO: can ref_2i be deleted?
 	       * TODO: can vct-set|ref|length be locally optimized?
-	       * p326 in ref c
 	       * s7_object_type|number|string|vector|boolean_offset
 	       * s7_real|integer|string|vector|boolean_type
 	       * frames/mixers, perhaps sd objs, but frames are mus_xen objects!?!

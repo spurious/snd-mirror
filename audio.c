@@ -7,12 +7,6 @@
  *   each times it needs a bufferfull, calls fill_func: bool fill(caller_data, void *buf, buf_size_in_samples, buf_data_type)
  *     perhaps returns false to signal normal quit?
  *   at end (either via fill or some interrupt), calls end(caller_data, ...)?
- * but ...
- *
- * 30-Apr: remove mus_audio_systems (always 1 except OSS)
- * 1-May:  remove mus_audio_describe, audinfo.c, mus_audio_read|write_buffers, ESD support
- * 2-May:  if ALSA default is pulse, async doesn't work.  We already are at an impasse!
- *            alsa conf: /etc/asound.conf /etc/alsa/<all>.conf /usr/share/alsa/alsa.conf ~/.asoundrc
  */
 
 /*
@@ -2285,7 +2279,7 @@ static int alsa_formats(int ur_dev, int chan, int *val)
 
 
 
-/* -------------------------------- SUN -------------------------------- */
+/* -------------------------------- SUN/OPENBSD -------------------------------- */
 /*
  * Thanks to Seppo Ingalsuo for several bugfixes.
  * record case improved after perusal of Snack 1.6/src/jkAudio_sun.c
@@ -2314,6 +2308,7 @@ static int alsa_formats(int ur_dev, int chan, int *val)
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 
 #ifdef MUS_OPENBSD
+  #include <sys/ioctl.h>
   #define DAC_NAME "/dev/sound"
 #else
   #define DAC_NAME "/dev/audio"
