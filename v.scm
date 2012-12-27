@@ -50,13 +50,11 @@
    (fm3-index #f) (degree #f) (distance 1.0) 
    (reverb-amount 0.01) (base 1.0)) 
 
-This version of the fm-violin assumes it is running within with-sound (where *output* and *reverb* are defined).
   (with-sound () (fm-violin 0 1 440 .1))"
 
     (let ((beg (seconds->samples startime))
 	  (end (seconds->samples (+ startime dur)))
 	  (frq-scl (hz->radians frequency))
-	  (modulate (not (zero? fm-index)))
 	  (logfreq (log frequency))
 	  (sqrtfreq (sqrt frequency))
 	  (maxdev (* (hz->radians frequency) fm-index)))
@@ -71,67 +69,58 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 			    (= fm3-rat (floor fm3-rat))
 			    (integer? (rationalize (/ fm2-rat fm1-rat))) ; might be 2=2 but 1=3 or whatever
 			    (integer? (rationalize (/ fm3-rat fm1-rat))))))
-	(let ((norm (or (and easy-case modulate 1.0) index1)))
-	  (let ((fmosc1  (if modulate 
-			     (if easy-case 
-				 (make-polywave (* fm1-rat frequency) 
-						(list (floor fm1-rat) index1
-						      (floor (/ fm2-rat fm1-rat)) index2
-						      (floor (/ fm3-rat fm1-rat)) index3)
-						mus-chebyshev-second-kind)
-				 (make-oscil (* fm1-rat frequency)))
-			     #f))
-		(indf1 (and modulate (make-env (or fm1-env default-index-env) norm :duration dur)))
-		(indf2 (and modulate (or easy-case (make-env (or fm2-env default-index-env) index2 :duration dur))))
-		(indf3 (and modulate (or easy-case (make-env (or fm3-env default-index-env) index3 :duration dur))))
+	(let ((norm (if easy-case 1.0 index1)))
+	  (let ((fmosc1  (if easy-case 
+			     (make-polywave (* fm1-rat frequency) 
+					    (list (floor fm1-rat) index1
+						  (floor (/ fm2-rat fm1-rat)) index2
+						  (floor (/ fm3-rat fm1-rat)) index3)
+					    mus-chebyshev-second-kind)
+			     (make-oscil (* fm1-rat frequency))))
+		(indf1 (make-env (or fm1-env default-index-env) norm :duration dur))
+		(indf2 (or easy-case (make-env (or fm2-env default-index-env) index2 :duration dur)))
+		(indf3 (or easy-case (make-env (or fm3-env default-index-env) index3 :duration dur)))
 		(frqf (make-env gliss-env (* glissando-amount frq-scl) :duration dur))
 		(pervib (make-triangle-wave periodic-vibrato-rate (* periodic-vibrato-amplitude frq-scl)))
 		(ranvib (make-rand-interp random-vibrato-rate (* random-vibrato-amplitude frq-scl)))
 		(fm-noi (if (not (= 0.0 noise-amount))
 			    (make-rand noise-freq (* pi noise-amount))
 			    #f))
-		(ind-noi (if (and (not (= 0.0 ind-noise-amount)) (not (= 0.0 ind-noise-freq)))
+		(ind-noi (if (and (not (zero? ind-noise-amount))
+				  (not (zero? ind-noise-freq)))
 			     (make-rand-interp ind-noise-freq ind-noise-amount)
 			     #f))
-		(amp-noi (if (and (not (= 0.0 amp-noise-amount)) (not (= 0.0 amp-noise-freq)))
+		(amp-noi (if (and (not (zero? amp-noise-amount))
+				  (not (zero? amp-noise-freq)))
 			     (make-rand-interp amp-noise-freq amp-noise-amount)
 			     #f))
 		(carrier (make-oscil frequency))
-		(fmosc2  (and modulate (or easy-case (make-oscil (* fm2-rat frequency)))))
-		(fmosc3  (and modulate (or easy-case (make-oscil (* fm3-rat frequency)))))
+		(fmosc2  (if (not easy-case) (make-oscil (* fm2-rat frequency))))
+		(fmosc3  (if (not easy-case) (make-oscil (* fm3-rat frequency))))
 		(ampf  (make-env (or amp-env default-amp-env) :scaler amplitude :base base :duration dur))
 		(locs (make-locsig (or degree (random 90.0)) distance reverb-amount)))
 	  
 	    (if (or (not easy-case) 
 		    ind-noi 
 		    amp-noi
-		    (> noise-amount 0.0) 
-		    (not modulate))
-		
-		(let ((modulation 0.0)
-		      (fuzz 0.0)
-		      (ind-fuzz 1.0)
-		      (amp-fuzz 1.0)
-		      (vib 0.0))
+		    (positive? noise-amount))
+		(let ((fuzz 0.0)
+		      (vib 0.0)
+		      (with-fuzz (not (zero? noise-amount))))
 		  (do ((i beg (+ i 1)))
 		      ((= i end))
-		    (if (not (= 0.0 noise-amount))
-			(set! fuzz (rand fm-noi)))
+		    (if with-fuzz (set! fuzz (rand fm-noi)))
 		    (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-		    (if ind-noi (set! ind-fuzz (+ 1.0 (rand-interp ind-noi))))
-		    (if amp-noi (set! amp-fuzz (+ 1.0 (rand-interp amp-noi))))
-		    (if modulate
-			(if easy-case
-			    (set! modulation
-				  (* (env indf1) 
-				     (polywave fmosc1 vib)))
-			    (set! modulation
-				  (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-				     (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-				     (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
-		    (locsig locs i (* (env ampf) amp-fuzz
-				      (oscil carrier (+ vib (* ind-fuzz modulation)))))))
-		
+		    (locsig locs i (* (env ampf) 
+				      (if amp-noi (+ 1.0 (rand-interp amp-noi)) 1.0)
+				      (oscil carrier 
+					     (+ vib (* (if ind-noi (+ 1.0 (rand-interp ind-noi)) 1.0)
+						       (if easy-case
+							   (* (env indf1) 
+							      (polywave fmosc1 vib))
+							   (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+							      (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+							      (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz))))))))))))
 		(if (= (mus-scaler frqf) 0.0)
 		    (do ((i beg (+ i 1)))
 			((= i end))

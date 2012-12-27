@@ -32300,7 +32300,8 @@ EDITS: 1
 	   (len (expt 2 (ceiling (/ (log size) (log 2.0)))))
 	   (rl (make-vct len))
 	   (im (make-vct len))
-	   (rd (make-sampler 0 snd chn)))
+	   (rd (make-sampler 0 snd chn))
+	   (pi2 (* 0.5 pi)))
       (do ((i 0 (+ i 1)))
 	  ((= i size))
 	(set! (rl i) (rd)))
@@ -32311,8 +32312,8 @@ EDITS: 1
 	       (ph (angle c))
 	       (mag (magnitude c)))
 	  (if (< i (/ len 2))
-	      (set! ph (+ ph (* 0.5 pi)))
-	      (set! ph (- ph (* 0.5 pi))))
+	      (set! ph (+ ph pi2))
+	      (set! ph (- ph pi2)))
 	  (set! c (make-polar mag ph))
 	  (set! (rl i) (real-part c))
 	  (set! (im i) (imag-part c))))
@@ -39321,7 +39322,7 @@ EDITS: 1
   
   (for-each close-sound (sounds))
   
-  (with-sound (:play #f)
+  (with-sound (:play #f :srate 22050)
 	      (simple-ssb 0 .2 440 .1)
 	      (simple-nsin .6 .2 .1)
 	      (simple-ncos 0.7 .2 440 .1)
@@ -39400,9 +39401,9 @@ EDITS: 1
 	      (simple-multiarr 23.5 .5 440 .1))
   
   
-  (with-sound (:channels 4 :play #f) (simple-dloc-4 0 2 440 .5))
+  (with-sound (:channels 4 :play #f :srate 22050) (simple-dloc-4 0 2 440 .5))
   
-  (with-sound (:play #f)
+  (with-sound (:play #f :srate 22050)
 	      (or1) (or2) (or3) (or4)
 	      (sample-desc 0 .2 440 .1)
 	      (sample-mdat .25 .2 440 .1)
@@ -47098,6 +47099,7 @@ EDITS: 1
 ;; 
 ;; 19-Dec-12: #(1 1 2 2 69 240 6 1 583 1 23 1 1 17 70 1 233 1 1 271 89 119 1 1877 0 0 0 1 1 73)  ;  37
 ;; 23-Dec-12: #(1 1 2 1 67 243 7 1 586 1 16 1 2 18 63 1 223 1 1 270 92 115 1 1821 0 0 0 1 1 80)  ;  36
+;; 26-Dec-12: #(1 1 2 1 65 199 6 1 556 1 15 1 1 12 26 1 229 1 1 276 52 108 1 1777 0 0 0 1 2 75)  ;  34
 
 
 ;;; -------- cleanup temp files
@@ -47341,22 +47343,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-22-Dec-12:
-115,228,491,014
-22,059,726,301  s7.c:eval [/home/bil/snd-13/snd]
- 8,773,281,627  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 7,619,233,589  ???:sin [/lib64/libm-2.12.so]
- 6,435,155,285  s7.c:eval'2 [/home/bil/snd-13/snd]
- 3,852,614,909  s7.c:gc [/home/bil/snd-13/snd]
+26-Dec-12:
+114,443,392,722
+21,770,903,803  s7.c:eval [/home/bil/snd-13/snd]
+ 8,722,316,998  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 7,614,887,726  ???:sin [/lib64/libm-2.12.so]
+ 6,360,977,102  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 3,778,585,364  s7.c:gc [/home/bil/snd-13/snd]
+ 3,049,897,275  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 2,992,422,677  clm.c:mus_src [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,895,649,119  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 2,866,413,143  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,707,307,941  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,559,888,138  ???:cos [/lib64/libm-2.12.so]
- 2,346,068,443  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 2,195,392,454  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 2,908,529,344  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,720,009,099  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
+ 2,563,787,774  ???:cos [/lib64/libm-2.12.so]
+ 2,085,130,352  s7.c:s7_make_real [/home/bil/snd-13/snd]
  1,592,316,356  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,240,281,465  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
- 1,152,081,150  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,129,623,660  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
+ 1,088,564,205  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
 |#

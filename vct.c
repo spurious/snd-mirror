@@ -341,17 +341,6 @@ static XEN s7_vct_ref_2(s7_scheme *sc, void *obj, s7_pointer index)
   return(C_TO_XEN_DOUBLE(v->data[loc]));
 }
 
-static XEN s7_vct_ref_2i(s7_scheme *sc, void *obj, s7_Int loc)
-{
-  vct *v = (vct *)obj;
-  if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_make_integer(sc, loc), "index < 0?");
-  if (loc >= v->length)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_make_integer(sc, loc), "index too high?");
-
-  return(C_TO_XEN_DOUBLE(v->data[loc]));
-}
-
 static XEN s7_vct_set_3(s7_scheme *sc, void *obj, s7_pointer index, s7_pointer value)
 {
   vct *v = (vct *)obj;
@@ -700,6 +689,38 @@ static s7_pointer vct_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	}
       return(vct_ref_two);
     }
+  return(f);
+}
+
+
+static s7_pointer vct_set_three;
+static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
+{
+  vct *v;
+  v = (vct *)imported_s7_object_value_checked(s7_car(args), vct_tag);
+  if (v)
+    {
+      mus_long_t loc;
+      s7_pointer val;
+
+      loc = s7_number_to_integer(sc, s7_cadr(args));
+      if ((loc < 0) || (loc>= v->length))
+	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_cadr(args), "index out of range");
+
+      val = s7_caddr(args);
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_vct_setB, "a real number");
+      
+      v->data[loc] = XEN_TO_C_DOUBLE(val);
+      return(val);
+    }
+  XEN_ASSERT_TYPE(false, s7_car(args), XEN_ARG_1, "vct-set!", "a vct");
+  return(s7_f(sc));
+}
+
+static s7_pointer vct_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 3)
+    return(vct_set_three);
   return(f);
 }
 #endif
@@ -1461,7 +1482,6 @@ void mus_vct_init(void)
 				 s7_mus_vct_apply, s7_mus_vct_set, s7_mus_vct_length, 
 				 s7_mus_vct_copy, s7_mus_vct_reverse, s7_mus_vct_fill);
   s7_set_object_ref_2(vct_tag, s7_vct_ref_2);
-  s7_set_object_ref_2i(vct_tag, s7_vct_ref_2i);
   s7_set_object_set_3(vct_tag, s7_vct_set_3);
   s7_set_object_array_info(vct_tag, offsetof(vct, length), offsetof(vct, data));
   s7_set_object_ref_arity(vct_tag, 1, 1);
@@ -1587,6 +1607,14 @@ void mus_vct_init(void)
     vct_ref_ss = s7_make_function(s7, "vct-ref", g_vct_ref_ss, 2, 0, false, "vct-ref optimization");
     s7_function_set_class(vct_ref_ss, f);
     s7_function_set_returns_temp(vct_ref_ss);
+
+
+    /* vct-set! */
+    f = s7_name_to_value(s7, "vct-set!");
+    s7_function_set_chooser(s7, f, vct_set_chooser);
+
+    vct_set_three = s7_make_function(s7, "vct-set!", g_vct_set_three, 3, 0, false, "vct-set! optimization");
+    s7_function_set_class(vct_set_three, f);
   }
 
   c_object_value_location = s7_c_object_value_offset(s7);

@@ -1872,7 +1872,7 @@ is a physical model of a flute:
 	(do ((i 0 (+ i 1)))
 	    ((= i max-oscils))
 	  (set! (resynth-oscils i) (make-oscil 0)))
-	(set! window (vct->vector (vct-scale! window fftscale)))
+	(vct-scale! window fftscale)
 
 	(if splice-attack
 	    (let ((ramp (/ 1.0 attack-size))
@@ -1900,7 +1900,8 @@ is a physical model of a flute:
 		    ;; get next block of data and apply window to it
 		    (do ((k 0 (+ k 1)))
 			((= k fftsize-1))
-		      (set! (fdr k) (* (window k) (file->sample fil (+ k filptr)))))
+		      (set! (fdr k) (file->sample fil (+ k filptr))))
+		    (vct-multiply! fdr window)
 		    (set! filptr (+ filptr hop))
 		    (vct-fill! fdi 0.0)
 		    ;; get the fft 
@@ -2074,10 +2075,8 @@ is a physical model of a flute:
 	(two-chans (and (= (channels input-file) 2) (= (channels *output*) 2)))
 	(revit (and *reverb* rev)))
     (let ((st (seconds->samples beg))
-	  (fdA (make-readin input-file :channel 0 :start stf))
-	  (exA (make-granulate :expansion exp-ratio))
-	  (fdB (and two-chans (make-readin input-file :channel 1 :start stf)))
-	  (exB (and two-chans (make-granulate :expansion exp-ratio)))
+	  (exA (make-granulate (make-readin input-file :channel 0 :start stf) :expansion exp-ratio))
+	  (exB (and two-chans (make-granulate (make-readin input-file :channel 1 :start stf) :expansion exp-ratio)))
 	  (srcA (make-src :srate src-ratio))
 	  (srcB (and two-chans (make-src :srate src-ratio)))
 	  (rev-amp (if revit (if two-chans (* rev .5) rev) 0.0))
@@ -2087,14 +2086,14 @@ is a physical model of a flute:
       (if two-chans
 	  (do ((i st (+ i 1))) 
 	      ((= i nd))
-	    (set! valA (* amp (src srcA 0.0 (lambda (dir) (granulate exA (lambda (dir) (readin fdA)))))))
-	    (set! valB (* amp (src srcB 0.0 (lambda (dir) (granulate exB (lambda (dir) (readin fdB)))))))
+	    (set! valA (* amp (src srcA 0.0 (lambda (dir) (granulate exA)))))
+	    (set! valB (* amp (src srcB 0.0 (lambda (dir) (granulate exB)))))
 	    (outa i valA)
 	    (outb i valB)
 	    (if revit (outa i (* rev-amp (+ valA valB)) *reverb*)))
 	  (do ((i st (+ i 1))) 
 	      ((= i nd))
-	    (set! valA (* amp (src srcA 0.0 (lambda (dir) (granulate exA (lambda (dir) (readin fdA)))))))
+	    (set! valA (* amp (src srcA 0.0 (lambda (dir) (granulate exA)))))
 	    (outa i valA)
 	    (if revit (outa i (* rev-amp valA) *reverb*)))))))
 
@@ -2354,7 +2353,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	  (if-list-in-gain (list? (car gain-list)))
 	  (frm-size (make-vector (length freq-list)))
 	  (gains (make-vct (length freq-list) 1.0)))
-      
+
       (do ((k 0 (+ k 1)))
 	  ((= k half-list))
 	(let ((gval (gain-list k))
@@ -2362,7 +2361,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	  (if (list? gval)
 	      (begin
 		(set! (env-size k) (make-env gval
-					     :scaler filt-gain-scale
+					     :scaler (* filt-gain-scale (- 1.0 a1))
 					     :duration durata :base filt-gain-base))
 		(set! (frm-size k) (make-formant fval a1)))
 	      (begin
@@ -2376,7 +2375,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	      ((= i nd))
 	    (do ((k 0 (+ k 1)))
 		((= k half-list))
-	      (set! (gains k) (* (env (env-size k)) (- 1.0 a1))))
+	      (set! (gains k) (env (env-size k))))
 	    (outa i (* (env ampenv) (formant-bank gains frm-size (readin RdA)))))
 	  (do ((i st (+ i 1)))
 	      ((= i nd))
@@ -2404,7 +2403,8 @@ nil doesnt print anything, which will speed up a bit the process.
 	  (radius (- 1.0 (/ r fftsize)))
 	  (bin (/ (mus-srate) fftsize))
 	  (fs (make-vector freq-inc))
-	  (samp 0))
+	  (samp 0)
+	  (fdrc 0.0))
       (do ((ctr 0 (+ ctr 1)))
 	  ((= ctr freq-inc))
 	(set! (fs ctr) (make-formant (* ctr bin) radius)))
@@ -2422,12 +2422,12 @@ nil doesnt print anything, which will speed up a bit the process.
 		(spectrum fdr fdi win 1)
 		(do ((ctr 0 (+ ctr 1)))
 		    ((= ctr freq-inc))
-		  (set! (spectr ctr) (+ (* .9 (spectr ctr)) (* .1 (fdr ctr))))
-		  (if (>= (spectr ctr) (fdr ctr)) 
+		  (set! fdrc (fdr ctr))
+		  (set! (spectr ctr) (+ (* .9 (spectr ctr)) (* .1 fdrc)))
+		  (if (>= (spectr ctr) fdrc) 
 		      (set! (diffs ctr) (/ (scales ctr) (- fftsize)))
 		      (set! (diffs ctr)
-			    (/ (- (/ (- (fdr ctr) (spectr ctr)) 
-				     (fdr ctr)) 
+			    (/ (- (/ (- fdrc (spectr ctr)) fdrc)
 				  (scales ctr))
 			       fftsize))))))
 	  (outa i (* amp (formant-bank scales fs inval)))

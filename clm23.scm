@@ -211,8 +211,7 @@
       (set! (amps i) (/ amp (+ i 2))))
     (do ((i start (+ i 1))) 
 	((= i end))
-      (vct-add! phases freqs)
-      (outa i (clm23-sine-bank amps phases 3)))))
+      (outa i (clm23-sine-bank amps (vct-add! phases freqs) 3)))))
 
 (define (simple-oz beg dur freq amp)
   "(simple-oz beg dur freq amp) test instrument for one-zero"
@@ -520,13 +519,12 @@
   "(simple-cnf beg dur amp file) test instrument for convolve"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
-	(rd (make-readin file))
 	(filt (make-vct 8)))
     (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) 0.0))
     (set! (filt 4) 1.0)
-    (let ((ff (make-convolve :filter filt)))
+    (let ((ff (make-convolve (make-readin file) :filter filt)))
       (do ((i start (+ i 1))) ((= i end))
-	(outa i (* amp (convolve ff (lambda (dir) (readin rd)))))))))
+	(outa i (* amp (convolve ff)))))))
 
 (define (simple-lrg beg dur amp file)
   "(simple-lrg beg dur amp file) test instrument for convolve"
@@ -778,21 +776,24 @@
 
 (define (sample-xts beg dur freq amp)
   "(sample-xts beg dur freq amp) test instrument for generics"
-  (let ((start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur)))
-	(flt (make-filter 8 :xcoeffs (make-vct 8) :ycoeffs (make-vct 8)))
-	(os (make-oscil freq)))
-    (do ((i 0 (+ i 1)))
-	((= i 8))
-      (set! ((mus-xcoeffs flt) i) (/ i 16.0))
-      (set! ((mus-ycoeffs flt) i) (- 0.5 (/ i 16.0))))
-    (do ((i start (+ i 1))) ((= i end))
-      (vct-set! (mus-xcoeffs flt) 0 .5)
-      (vct-set! (mus-ycoeffs flt) 0 .5)       
+  (let ((vx (make-vct 8))
+	(vy (make-vct 8)))
+    (let ((start (seconds->samples beg))
+	  (end (seconds->samples (+ beg dur)))
+	  (flt (make-filter 8 :xcoeffs vx :ycoeffs vy))
+	  (os (make-oscil freq)))
+      (do ((i 0 (+ i 1)))
+	  ((= i 8))
+	(set! ((mus-xcoeffs flt) i) (/ i 16.0))
+	(set! ((mus-ycoeffs flt) i) (- 0.5 (/ i 16.0))))
+      (do ((i start (+ i 1))) 
+	  ((= i end))
+      (vct-set! vx 0 .5)
+      (vct-set! vy 0 .5)       
       (outa i (* amp
-		 (+ ((mus-xcoeffs flt) 0)
+		 (+ (vx 0)
 		    (mus-ycoeff flt 0))
-		 (filter flt (oscil os)))))))
+		 (filter flt (oscil os))))))))
 
 (define (sample-srl2 beg dur amp speed freq)
   "(sample-srl2 beg dur amp speed freq) test instrument for src"
@@ -853,28 +854,22 @@
   "(sample-grn3 beg dur amp speed file) test instrument for granulate"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
-	(rd (make-readin file))
-	(sr (make-src :srate speed))
+	(sr (make-src (make-readin file) :srate speed))
 	(gr (make-granulate :expansion speed)))
     (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (granulate gr (lambda (dir)
-				     (src sr 0.0 (lambda (dir)
-						   (readin rd))))))))))
+      (outa i (* amp (granulate gr (lambda (dir) (src sr))))))))
 
 (define (sample-cnv beg dur amp speed file)
   "(sample-cnv beg dur amp speed file) test instrument for convolve"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
-	(rd (make-readin file))
-	(sr (make-src :srate speed))	 
+	(sr (make-src (make-readin file) :srate speed))	 
 	(filt (make-vct 8)))
     (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) 0.0))
     (set! (filt 4) 1.0)
     (let ((ff (make-convolve :filter filt)))
       (do ((i start (+ i 1))) ((= i end))
-	(outa i (* amp (convolve ff (lambda (dir)
-				      (src sr 0.0 (lambda (dir)
-						    (readin rd)))))))))))
+	(outa i (* amp (convolve ff (lambda (dir) (src sr)))))))))
 
 (define (sample-cnv1 beg dur amp speed file)
   "(sample-cnv1 beg dur amp speed file) test instrument for convolve"
@@ -893,23 +888,18 @@
   "(sample-pvoc1 beg dur amp size file) test instrument for phase-vocoder"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
-	(fil (make-readin file))
-	(sr (make-phase-vocoder :fft-size size)))
+	(sr (make-phase-vocoder (make-readin file) :fft-size size)))
     (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (phase-vocoder sr
-				    (lambda (dir)
-				      (readin fil))))))))
+      (outa i (* amp (phase-vocoder sr))))))
 
 (define (sample-pvoc2 beg dur amp size file)
   "(sample-pvoc2 beg dur amp size file) test instrument for phase-vocoder"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
-	(fil (make-readin file))
-	(sr (make-phase-vocoder :fft-size size)))
+	(sr (make-phase-vocoder (make-readin file) :fft-size size)))
     (do ((i start (+ i 1))) ((= i end))
       (outa i (* amp (phase-vocoder sr
-				    (lambda (dir)
-				      (readin fil))
+				    #f
 				    #f
 				    (lambda (closure)
 				      (if (not (= (mus-location sr) 0))
@@ -923,30 +913,23 @@
 	(end (seconds->samples (+ beg dur)))
 	(k 0)
 	(N2 (/ size 2))
-	(fil (make-readin file))
-	(sr (make-phase-vocoder :fft-size size)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i 
-	    (* amp (phase-vocoder sr
-				  (lambda (dir)
-				    (readin fil))
+	(sr (make-phase-vocoder (make-readin file) :fft-size size)))
+    (let ((amps (phase-vocoder-amps sr))
+	  (paincrs (phase-vocoder-amp-increments sr))
+	  (ppincrs (phase-vocoder-phase-increments sr))
+	  (phases (phase-vocoder-phases sr))
+	  (freqs (phase-vocoder-freqs sr)))
+      (do ((i start (+ i 1))) 
+	  ((= i end))
+	(outa i (* amp (phase-vocoder sr
+				      #f
 				  #f
 				  #f
 				  (lambda (closure)
-				    (set! k 0)
-				    (do ()
-					((= k N2))
-				      (vct-set! (phase-vocoder-amps sr) k
-						(+ ((phase-vocoder-amps sr) k) 
-						   ((phase-vocoder-amp-increments sr) k)))
-				      (vct-set! (phase-vocoder-phase-increments sr) k
-						(+ ((phase-vocoder-phase-increments sr) k) 
-						   ((phase-vocoder-freqs sr) k)))
-				      (vct-set! (phase-vocoder-phases sr) k
-						(+ ((phase-vocoder-phases sr) k)
-						   ((phase-vocoder-phase-increments sr) k)))
-				      (set! k (+ k 1)))
-				    (clm23-sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2))))))))
+				    (vct-add! amps paincrs)
+				    (vct-add! ppincrs freqs)
+				    (vct-add! phases ppincrs)
+				    (clm23-sine-bank amps phases N2)))))))))
 
 (define (sample-mxf beg dur freq amp)
   "(sample-mxf beg dur freq amp) test instrument for frames"
@@ -1301,13 +1284,11 @@
   "(sample-pvoc5 beg dur amp size file freq) test instrument for phase-vocoder"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
-	(fil (make-readin file))
-	(sr (make-phase-vocoder :fft-size size))
+	(sr (make-phase-vocoder (make-readin file) :fft-size size))
 	(os (make-oscil freq)))
     (do ((i start (+ i 1))) ((= i end))
       (outa i (* amp (phase-vocoder sr
-				    (lambda (dir)
-				      (readin fil))
+				    #f
 				    #f
 				    #f
 				    (lambda (closure)
@@ -1417,10 +1398,9 @@
   "(pvoc-b beg dur amp size file) test instrument for phase-vocoder"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
-	(rd (make-readin file))
-	(sr (make-phase-vocoder :fft-size size :interp (/ size 4) :overlap 4)))
+	(sr (make-phase-vocoder (make-readin file) :fft-size size :interp (/ size 4) :overlap 4)))
     (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (phase-vocoder sr (lambda (dir) (readin rd))))))))
+      (outa i (* amp (phase-vocoder sr))))))
 
 #|
 (let ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-b 0 2.3 -1 256 "oboe.snd")))
@@ -1433,27 +1413,27 @@
   "(pvoc-c beg dur amp size file) test instrument for phase-vocoder"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
-	(rd (make-readin file))
-	(sr (make-phase-vocoder :fft-size size :interp (/ size 4) :overlap 4)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i 
-	    (* amp
-	       (phase-vocoder sr 
-			      (lambda (dir) (readin rd))
+	(sr (make-phase-vocoder (make-readin file) :fft-size size :interp (/ size 4) :overlap 4))
+	(N2 (floor (/ size 2))))
+    (let ((amps (phase-vocoder-amps sr))
+	  (paincrs (phase-vocoder-amp-increments sr))
+	  (ppincrs (phase-vocoder-phase-increments sr))
+	  (phases (phase-vocoder-phases sr))
+	  (freqs (phase-vocoder-freqs sr)))
+      (do ((i start (+ i 1))) 
+	  ((= i end))
+	(outa i 
+	      (* amp
+		 (phase-vocoder sr 
+				#f
 			      #f
 			      #f
 			      (lambda (closure)
-				(let ((N2 (floor (/ size 2))))
-				  (do ((k 0 (+ k 1)))
-				      ((= k N2))
-				    (vct-set! (phase-vocoder-amps sr) k (+ ((phase-vocoder-amps sr) k) 
-									   ((phase-vocoder-amp-increments sr) k)))
-				    (vct-set! (phase-vocoder-phase-increments sr) k (+ ((phase-vocoder-phase-increments sr) k) 
-										       ((phase-vocoder-freqs sr) k)))
-				    (vct-set! (phase-vocoder-phases sr) k (+ ((phase-vocoder-phases sr) k)
-									     ((phase-vocoder-phase-increments sr) k))))
-				  (clm23-sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2)))
-			      ))))))
+				(vct-add! amps paincrs)
+				(vct-add! ppincrs freqs)
+				(vct-add! phases ppincrs)
+				(clm23-sine-bank amps phases N2))
+			      )))))))
 
 #|
 (let ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-c 0 2.3 -1 256 "oboe.snd")))
@@ -1468,15 +1448,20 @@
   (let ((N2 (floor (/ size 2))))
     (let ((start (seconds->samples beg))
 	  (end (seconds->samples (+ beg dur)))
-	  (rd (make-readin file))
-	  (sr (make-phase-vocoder :fft-size size :interp (/ size 4) :overlap 4))
+	  (sr (make-phase-vocoder (make-readin file) :fft-size size :interp (/ size 4) :overlap 4))
 	  (lastphases (make-vct N2))
 	  (two-pi (* 2 pi)))
-      (do ((i start (+ i 1))) ((= i end))
+    (let ((amps (phase-vocoder-amps sr))
+	  (paincrs (phase-vocoder-amp-increments sr))
+	  (ppincrs (phase-vocoder-phase-increments sr))
+	  (phases (phase-vocoder-phases sr))
+	  (freqs (phase-vocoder-freqs sr)))
+      (do ((i start (+ i 1))) 
+	  ((= i end))
 	(outa i 
 	      (* amp
 		 (phase-vocoder sr 
-				(lambda (dir) (readin rd))
+				#f
 				#f
 				(lambda (closure)
 				  (let* ((D (floor (/ size 4))) ; overlap = 4
@@ -1493,16 +1478,11 @@
 					(set! ((phase-vocoder-freqs sr) k) (+ (* diff  pscl) ks))))
 				    #f))
 				(lambda (closure)
-				  (do ((k 0 (+ k 1)))
-				      ((= k N2))
-				    (vct-set! (phase-vocoder-amps sr) k (+ ((phase-vocoder-amps sr) k) 
-									   ((phase-vocoder-amp-increments sr) k)))
-				    (vct-set! (phase-vocoder-phase-increments sr) k (+ ((phase-vocoder-phase-increments sr) k) 
-										       ((phase-vocoder-freqs sr) k)))
-				    (vct-set! (phase-vocoder-phases sr) k (+ ((phase-vocoder-phases sr) k)
-									     ((phase-vocoder-phase-increments sr) k))))
-				  (clm23-sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2))
-				)))))))
+				  (vct-add! amps paincrs)
+				  (vct-add! ppincrs freqs)
+				  (vct-add! phases ppincrs)
+				  (clm23-sine-bank amps phases N2))
+				))))))))
 
 #|
 (let ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-d 0 2.3 -1 256 "oboe.snd")))
@@ -1516,20 +1496,25 @@
   (let ((N2 (floor (/ size 2))))
     (let ((start (seconds->samples beg))
 	  (end (seconds->samples (+ beg dur)))
-	  (rd (make-readin file))
-	  (sr (make-phase-vocoder :fft-size size :interp (/ size 4) :overlap 4))
+	  (sr (make-phase-vocoder (make-readin file) :fft-size size :interp (/ size 4) :overlap 4))
 	  (lastphases (make-vct N2))
 	  (in-data (make-vct size))
 	  (two-pi (* 2 pi))
 	  (filptr 0)
 	  (window (make-fft-window hamming-window size 0.0))
 	  (D (floor (/ size 4)))) ; overlap = 4
+    (let ((amps (phase-vocoder-amps sr))
+	  (paincrs (phase-vocoder-amp-increments sr))
+	  (ppincrs (phase-vocoder-phase-increments sr))
+	  (phases (phase-vocoder-phases sr))
+	  (freqs (phase-vocoder-freqs sr)))
       (vct-scale! window (/ 2.0 (* 0.54 size)))
-      (do ((i start (+ i 1))) ((= i end))
+      (do ((i start (+ i 1))) 
+	  ((= i end))
 	(outa i 
 	      (* amp
 		 (phase-vocoder sr 
-				(lambda (dir) (readin rd))
+				#f
 				
 				(lambda (closure input)
 				  (let ((buf (modulo filptr size)))
@@ -1571,16 +1556,11 @@
 				    #f))
 				
 				(lambda (closure)
-				  (do ((k 0 (+ k 1)))
-				      ((= k N2))
-				    (vct-set! (phase-vocoder-amps sr) k (+ ((phase-vocoder-amps sr) k) 
-									   ((phase-vocoder-amp-increments sr) k)))
-				    (vct-set! (phase-vocoder-phase-increments sr) k (+ ((phase-vocoder-phase-increments sr) k) 
-										       ((phase-vocoder-freqs sr) k)))
-				    (vct-set! (phase-vocoder-phases sr) k (+ ((phase-vocoder-phases sr) k)
-									     ((phase-vocoder-phase-increments sr) k))))
-				  (clm23-sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2))
-				)))))))
+				  (vct-add! amps paincrs)
+				  (vct-add! ppincrs freqs)
+				  (vct-add! phases ppincrs)
+				  (clm23-sine-bank amps phases N2))
+				))))))))
 
 #|
 (let ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-e 0 2.3 -1 256 "oboe.snd")))
@@ -2686,8 +2666,8 @@
   (with-sound () ; 1.2
     (fmdoc-vox 0 1.0 220.0 0.5)
     (fmdoc-vox 1.5 1.0 110 .5 '(0.02 0.01 0.02) '(.9 .09 .01)))
-  (with-sound (:play #t) (sndclmdoc-simp 0 22050 330 .1))
   (with-sound (:srate 44100) 
+    (sndclmdoc-simp 0 22050 330 .1)
     (sndclmdoc-simp-1 0 1.0 440.0 0.1)
     (sndclmdoc-telephone 1.0 '(7 2 3 4 9 7 1))
     (sndclmdoc-simp-4 2 2 440 .1 '(0 0  0.1 1.0  1.0 0.0)))
@@ -2712,15 +2692,15 @@
 		       '(.00 .00 .40 1.00 .60 1.00 1.00 .0)         ; freq env
 		       '(.00 .00 .25 1.00 .60 .70 .75 1.00 1.00 .0) ; amp env
 		       '(1 .5 2 1 3 .5 4 .1 5 .01)))                ; bird song spectrum
-  (with-sound () (sndclmdoc-pqw 0 1 200.0 1000.0 '(2 .2  3 .3  6 .5)))
   (with-sound (:srate 44100) 
+    (sndclmdoc-pqw 0 1 200.0 1000.0 '(2 .2  3 .3  6 .5))
     (sndclmdoc-tritri 0 1 1000.0 0.5 0.1 0.01) ; sci-fi laser gun
     (sndclmdoc-tritri 1 1 4000.0 0.7 0.1 0.01)) ; a sparrow?
-  (with-sound () (sndclmdoc-shift-pitch 0 3 "oboe.snd" 1108.0)) ; 1.7
-  (let* ((sound "oboe.snd")
+  (with-sound (:srate 22050) (sndclmdoc-shift-pitch 0 3 "oboe.snd" 1108.0)) ; 1.7
+  (let* ((sound "oboe.snd") ; 1.8
 	 (mx (maxamp sound))
 	 (dur (mus-sound-duration sound)))
-    (with-sound (:scaled-to mx) 
+    (with-sound (:scaled-to mx :srate 22050) 
       (sndclmdoc-repitch 0 dur sound 554 1000)))
   (with-sound () (sndclmdoc-fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)) ; "Ahh"
   (with-sound () ; one of JC's favorite demos
@@ -2734,12 +2714,12 @@
   (with-sound () 
     (sndclmdoc-zc 0 3 100 .1 20 100 .5) 
     (sndclmdoc-zc 3.5 3 100 .1 90 100 .95))
-  (with-sound () ; .93
+  (with-sound (:srate 22050) ; .93
     (sndclmdoc-fir+comb 0 2 10000 .001 200)
     (sndclmdoc-fir+comb 2 2 1000 .0005 400)
     (sndclmdoc-fir+comb 4 2 3000 .001 300)
     (sndclmdoc-fir+comb 6 2 3000 .0005 1000))
-  (with-sound () ; 1.3
+  (with-sound (:srate 22050) ; 1.3
     (sndclmdoc-simple-src 0 4 1.0 0.5 '(0 1 1 2) "oboe.snd")
     (sndclmdoc-srcer 1 2 1.0   1 .3 20 "fyow.snd")
     (sndclmdoc-srcer 2 25 10.0   .01 1 10 "fyow.snd")

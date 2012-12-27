@@ -892,7 +892,7 @@ typedef struct c_proc_t {
   int name_length;
   char *doc;
   unsigned int id;
-  s7_pointer generic_ff;
+  s7_pointer generic_ff, looped_ff;
   s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
   void *chooser_data;
 } c_proc_t;
@@ -925,7 +925,6 @@ typedef struct c_object_t {
   s7_pointer (*reverse)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
   s7_pointer (*ref_2)(s7_scheme *sc, void *val, s7_pointer index);
-  s7_pointer (*ref_2i)(s7_scheme *sc, void *val, s7_Int index);
   s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value);
   unsigned int min_args, max_args;
   size_t length_loc, data_loc;
@@ -2007,6 +2006,7 @@ static void set_syntax_op(s7_pointer p, s7_pointer op) {car(ecdr(p)) = op; lifte
 #define c_function_chooser(f)         c_function_data(f)->chooser
 #define c_function_chooser_data(f)    c_function_data(f)->chooser_data
 #define c_function_base(f)            c_function_data(f)->generic_ff
+#define c_function_looped(f)          c_function_data(f)->looped_ff
 
 void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
 bool s7_function_returns_temp(s7_pointer f) {return((is_pair(f)) && (is_optimized(f)) && (ecdr(f)) && (returns_temp(ecdr(f))));}
@@ -2081,7 +2081,6 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define c_object_ref(p)               c_object_info(p)->ref
 #define c_object_set(p)               c_object_info(p)->set
 #define c_object_ref_2(p)             c_object_info(p)->ref_2
-#define c_object_ref_2i(p)            c_object_info(p)->ref_2i
 #define c_object_set_3(p)             c_object_info(p)->set_3
 #define c_object_data_length(p)       (s7_Int)(*((s7_Int *)(((unsigned char *)(c_object_value(p))) + c_object_info(p)->length_loc)))
 #define c_object_data(p)              ((s7_Double *)(*((s7_Double **)(((unsigned char *)(c_object_value(p))) + c_object_info(p)->data_loc))))
@@ -4475,13 +4474,13 @@ static s7_pointer g_symbol(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- environments -------------------------------- */
 
-static unsigned long long int frame_number = 0;
+static unsigned long long int environment_number = 0;
 
 #define NEW_FRAME(Sc, Old_Env, New_Env)  \
   do {                                   \
       s7_pointer _x_;                      \
       NEW_CELL(Sc, _x_);                   \
-      environment_id(_x_) = ++frame_number; \
+      environment_id(_x_) = ++environment_number; \
       environment_slots(_x_) = Sc->NIL;                  \
       next_environment(_x_) = Old_Env;		         \
       set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
@@ -4494,7 +4493,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
   /* return(cons(sc, sc->NIL, old_env)); */
   s7_pointer x;
   NEW_CELL(sc, x);
-  environment_id(x) = ++frame_number;
+  environment_id(x) = ++environment_number;
   environment_slots(x) = sc->NIL;
   next_environment(x) = old_env;
   set_type(x, T_ENVIRONMENT | T_IMMUTABLE);
@@ -4506,7 +4505,7 @@ static s7_pointer make_simple_environment(s7_scheme *sc)
 {
   s7_pointer frame;
   NEW_CELL(sc, frame);
-  environment_id(frame) = frame_number + 1;
+  environment_id(frame) = environment_number + 1;
   environment_slots(frame) = sc->NIL;
   next_environment(frame) = sc->envir;
   set_type(frame, T_ENVIRONMENT | T_IMMUTABLE);
@@ -4539,14 +4538,14 @@ static s7_pointer make_simple_environment(s7_scheme *sc)
       s7_pointer _x_, _slot_, _sym_;		   \
       _sym_ = Symbol; \
       NEW_CELL(Sc, _x_);                   \
-      environment_id(_x_) = ++frame_number; \
+      environment_id(_x_) = ++environment_number; \
       next_environment(_x_) = Old_Env;		         \
       set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
       New_Env = _x_;		   \
       NEW_CELL_NO_CHECK(Sc, _slot_);\
       slot_symbol(_slot_) = _sym_;\
       slot_set_value(_slot_, Value);	\
-      symbol_set_local(_sym_, frame_number, _slot_); \
+      symbol_set_local(_sym_, environment_number, _slot_); \
       set_type(_slot_, T_SLOT | T_IMMUTABLE);\
       next_slot(_slot_) = sc->NIL;\
       environment_slots(_x_) = _slot_;\
@@ -4557,7 +4556,7 @@ static s7_pointer make_simple_environment(s7_scheme *sc)
   do {                                   \
       s7_pointer _x_, _slot_, _sym_;		   \
       NEW_CELL(Sc, _x_);                   \
-      environment_id(_x_) = ++frame_number; \
+      environment_id(_x_) = ++environment_number; \
       next_environment(_x_) = Old_Env;		         \
       set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
       New_Env = _x_;		   \
@@ -4565,14 +4564,14 @@ static s7_pointer make_simple_environment(s7_scheme *sc)
       _sym_ = Symbol1; \
       slot_symbol(_slot_) = _sym_;\
       slot_set_value(_slot_, Value1);	\
-      symbol_set_local(_sym_, frame_number, _slot_); \
+      symbol_set_local(_sym_, environment_number, _slot_); \
       set_type(_slot_, T_SLOT | T_IMMUTABLE);\
       environment_slots(_x_) = _slot_;\
       NEW_CELL_NO_CHECK(Sc, _x_);\
       _sym_ = Symbol2; \
       slot_symbol(_x_) = _sym_;\
       slot_set_value(_x_, Value2);	\
-      symbol_set_local(_sym_, frame_number, _x_); \
+      symbol_set_local(_sym_, environment_number, _x_); \
       set_type(_x_, T_SLOT | T_IMMUTABLE);\
       next_slot(_x_) = sc->NIL;\
       next_slot(_slot_) = _x_;\
@@ -4584,7 +4583,7 @@ static s7_pointer make_simple_environment(s7_scheme *sc)
       s7_pointer _x_, _slot_, _sym_;		   \
       _sym_ = Symbol; \
       NEW_CELL(Sc, _x_);                   \
-      environment_id(_x_) = ++frame_number; \
+      environment_id(_x_) = ++environment_number; \
       next_environment(_x_) = Old_Env;		         \
       set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
       New_Env = _x_;		   \
@@ -4593,7 +4592,7 @@ static s7_pointer make_simple_environment(s7_scheme *sc)
       if (symbol_has_accessor(_sym_)) \
         slot_set_value(_slot_, call_symbol_bind(Sc, _sym_, Value)); \
       else slot_set_value(_slot_, Value);		\
-      symbol_set_local(_sym_, frame_number, _slot_); \
+      symbol_set_local(_sym_, environment_number, _slot_); \
       set_type(_slot_, T_SLOT | T_IMMUTABLE);\
       next_slot(_slot_) = sc->NIL;\
       environment_slots(_x_) = _slot_;\
@@ -4621,7 +4620,7 @@ static s7_pointer old_frame_in_env(s7_scheme *sc, s7_pointer frame, s7_pointer n
   environment_slots(frame) = sc->NIL;                  
   next_environment(frame) = next_frame;
   set_type(frame, T_ENVIRONMENT | T_IMMUTABLE); 
-  environment_id(frame) = ++frame_number; 
+  environment_id(frame) = ++environment_number; 
   return(frame);
 }
 
@@ -4631,7 +4630,7 @@ static s7_pointer old_frame_with_slot(s7_scheme *sc, s7_pointer env, s7_pointer 
   s7_pointer x, sym;
   unsigned long long int id;
 
-  id = ++frame_number;
+  id = ++environment_number;
   environment_id(env) = id;
   x = environment_slots(env);
   slot_set_value(x, val);
@@ -26784,6 +26783,7 @@ static s7_pointer g_vector_set_ssc(s7_scheme *sc, s7_pointer args)
   return(val);
 }
 
+
 /* other standard cases (fft-related): (+|- (vector-ref ...) s) -- actually (vector-set! v i (+|- (vector-ref v i) s))
  *                                     (+|- (* s (vector-ref ...)) (* s (vector-ref ...)))
  * (vset v i s)
@@ -28073,6 +28073,12 @@ void s7_function_set_class(s7_pointer f, s7_pointer base_f)
 }
 
 
+void s7_function_set_looped(s7_pointer f, s7_pointer c)
+{
+  c_function_looped(f) = c;
+}
+
+
 s7_pointer (*s7_function_chooser(s7_scheme *sc, s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   return(c_function_chooser(fnc));
@@ -28254,6 +28260,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   c_function_class(x) = ++f_class;
   c_function_chooser(x) = fallback_chooser;
   c_function_chooser_data(x) = NULL;
+  c_function_looped(x) = NULL;
 
   return(x);
 }
@@ -28939,12 +28946,6 @@ void s7_set_object_ref_2(int type, s7_pointer (*ref_2)(s7_scheme *sc, void *val,
 }
 
 
-void s7_set_object_ref_2i(int type, s7_pointer (*ref_2i)(s7_scheme *sc, void *val, s7_Int index))
-{
-  object_types[type]->ref_2i = ref_2i;
-}
-
-
 void s7_set_object_set_3(int type, s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value))
 {
   object_types[type]->set_3 = set_3;
@@ -28981,7 +28982,7 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
   
   /* c_object_info(x) = &(object_types[type]); */
   /* that won't work because object_types can move when it is realloc'd and the old stuff is freed by realloc
-   *   and since we're checking (for example) ref_2i existence as not null, we can't use a table of c_object_t's!
+   *   and since we're checking (for example) ref_2 existence as not null, we can't use a table of c_object_t's!
    */
 
   c_object_type(x) = type;
@@ -43330,7 +43331,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		p = counter_result(counter);
 		environment_slots(p) = sc->NIL;                  
-		environment_id(p) = ++frame_number; 
+		environment_id(p) = ++environment_number; 
 		next_environment(p) = sc->envir;
 	      }
 	    sc->envir = p;
@@ -43614,9 +43615,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		func = caddr(sc->code);
 		body = cdr(caddr(sc->code));
 		stepper = slot_value(sc->args);
+
+		if (c_function_looped(ecdr(func)))
+		  {
+		    s7_function f;
+		    s7_pointer result;
+		    f = (s7_function)c_function_call(c_function_looped(ecdr(func)));
+		    result = f(sc, cons(sc, stepper, body));
+		    if (result)
+		      {
+			sc->code = cdr(cadr(sc->code));
+			finalize_safe_do(sc);
+			goto BEGIN;
+		      }
+		    /* else fall into the ordinary loop */
+		  }
 		
 	      SAFE_DOTIMES_C_C_LOOP:
-		/* eval body  (cddr(sc->code)) */
+		/* eval body (cddr(sc->code)) */
 		c_call(func)(sc, body);
 		numerator(stepper)++;
 		if (numerator(stepper) == denominator(stepper))
@@ -45302,7 +45318,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer env, x;
 		unsigned long long int id;
 		
-		id = ++frame_number;
+		id = ++environment_number;
 		env = closure_environment(sc->code);
 		environment_id(env) = id;
 		
@@ -45407,7 +45423,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer env, x, z;
 		unsigned long long int id;
 		
-		id = ++frame_number;
+		id = ++environment_number;
 		env = closure_environment(sc->code);
 		environment_id(env) = id;
 		
@@ -45831,7 +45847,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 		/* we have to put off the actual environment update in case this is a tail recursive call */
-		environment_id(e) = ++frame_number;
+		environment_id(e) = ++environment_number;
 		for (p = environment_slots(e); is_slot(p); p = next_slot(p))
 		  {
 		    slot_set_value(p, slot_pending_value(p));
@@ -45859,7 +45875,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_SAFE_CLOSURE_STAR:
 	      /* (let () (define* (hi (a 100)) (random a)) (define (ho) (hi)) (ho)) */
 	      sc->envir = closure_environment(ecdr(code));
-	      environment_id(sc->envir) = ++frame_number;
+	      environment_id(sc->envir) = ++environment_number;
 	      car(sc->T2_1) = environment_slots(closure_environment(ecdr(code)));
 	      car(sc->T2_2) = closure_args(ecdr(code));
 	      goto FILL_SAFE_CLOSURE_STAR;
@@ -48064,11 +48080,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			sc->value = make_real(sc, c_object_array(c)[integer(ind)]);
 			goto START;
 		      }
-		    if (c_object_ref_2i(c))
-		      {
-			sc->value = (*(c_object_ref_2i(c)))(sc, c_object_value(c), integer(ind));
-			goto START;
-		      }
 		  }
 
 		if (c_object_ref_2(c))
@@ -48095,11 +48106,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			(integer(ind) < c_object_array_length(c)))
 		      {
 			sc->value = make_real(sc, c_object_array(c)[integer(ind)]);
-			goto START;
-		      }
-		    if (c_object_ref_2i(c))
-		      {
-			sc->value = (*(c_object_ref_2i(c)))(sc, c_object_value(c), integer(ind));
 			goto START;
 		      }
 		  }
@@ -48132,11 +48138,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			sc->value = make_real(sc, c_object_array(c)[integer(ind)]);
 			goto START;
 		      }
-		    if (c_object_ref_2i(c))
-		      {
-			sc->value = (*(c_object_ref_2i(c)))(sc, c_object_value(c), integer(ind));
-			goto START;
-		      }
 		  }
 		if (c_object_ref_2(c))
 		  sc->value = (*(c_object_ref_2(c)))(sc, c_object_value(c), ind);
@@ -48152,6 +48153,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case OP_C_OBJECT_SS:
 	    case HOP_C_OBJECT_SS:
 	      {
+		/* perhaps also c_object_ref_2 and direct case? */
 		s7_pointer c, ind;
 		c = find_symbol_or_bust(sc, car(code));
 		if (!is_c_object(c))
@@ -51375,7 +51377,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		(is_null(cdr(args))))
 	      {
 		s7_pointer (*ref_2)(s7_scheme *sc, void *val, s7_pointer index);
-		s7_pointer (*ref_2i)(s7_scheme *sc, void *val, s7_Int index);
 		s7_pointer index;
 		index = car(args);
 
@@ -51386,13 +51387,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			(integer(index) < c_object_array_length(obj)))
 		      {
 			sc->value = make_real(sc, c_object_array(obj)[integer(index)]);
-			goto START;
-		      }
-			
-		    ref_2i = c_object_ref_2i(obj);
-		    if (ref_2i)
-		      {
-			sc->value = (*(ref_2i))(sc, c_object_value(obj), integer(index));
 			goto START;
 		      }
 		  }
@@ -51573,7 +51567,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    set_safe_closure(new_func);
 
 	    NEW_CELL_NO_CHECK(sc, new_env);
-	    environment_id(new_env) = ++frame_number;
+	    environment_id(new_env) = ++environment_number;
 	    environment_slots(new_env) = sc->NIL;
 	    next_environment(new_env) = sc->envir;
 	    set_type(new_env, T_ENVIRONMENT | T_IMMUTABLE | T_FUNCTION_ENV);
@@ -51715,7 +51709,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 
 	  NEW_CELL_NO_CHECK(sc, new_env);                   
-	  environment_id(new_env) = ++frame_number; 
+	  environment_id(new_env) = ++environment_number; 
 	  next_environment(new_env) = closure_environment(new_func);
 	  closure_environment(new_func) = new_env;		   
 	  environment_slots(new_env) = sc->NIL;
@@ -51905,7 +51899,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  break;
 		}
 	      /* TODO: implement type checks, object|real|integer direct access/conversion -> xen.h
-	       * TODO: can ref_2i be deleted?
 	       * TODO: can vct-set|ref|length be locally optimized?
 	       * s7_object_type|number|string|vector|boolean_offset
 	       * s7_real|integer|string|vector|boolean_type
@@ -54298,7 +54291,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->args = frame;
 	for (p = car(sc->code); is_pair(p); p = cdr(p))
 	  ADD_SLOT(frame, caar(p), finder(sc, cadar(p)));
-	frame_number++;
+	environment_number++;
 	sc->envir = frame;
 	sc->code = cdr(sc->code);
 	goto BEGIN;
@@ -54318,7 +54311,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    car(sc->T1_1) = finder(sc, cadr(cp));
 	    ADD_SLOT(frame, caar(p), c_call(cp)(sc, sc->T1_1)); 
 	  }
-	frame_number++;
+	environment_number++;
 	sc->envir = frame;
 	sc->code = cdr(sc->code);
 	goto BEGIN;
@@ -54414,7 +54407,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    ADD_SLOT(frame, caar(p), val);
 	  }
-	frame_number++;
+	environment_number++;
 	sc->envir = frame;
 	sc->code = cdr(sc->code);
 	if (is_one_liner(sc->code))
@@ -56303,13 +56296,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer p;
 	    if (!is_environment(e))
 	      eval_error(sc, "with-environment takes an environment argument: ~A", e);
-	    environment_id(e) = ++frame_number;
+	    environment_id(e) = ++environment_number;
 	    sc->envir = e;
 	    for (p = environment_slots(e); is_slot(p); p = next_slot(p))
 	      {
 		s7_pointer sym;
 		sym = slot_symbol(p);
-		symbol_set_local(sym, frame_number, p);
+		symbol_set_local(sym, environment_number, p);
 	      }
 	  }
 	if (is_one_liner(sc->code))
@@ -56364,10 +56357,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else 
 	{
 	  s7_pointer p;
-	  environment_id(sc->value) = ++frame_number;
+	  environment_id(sc->value) = ++environment_number;
 	  sc->envir = sc->value;
 	  for (p = environment_slots(sc->value); is_slot(p); p = next_slot(p))
-	    symbol_set_local(slot_symbol(p), frame_number, p);
+	    symbol_set_local(slot_symbol(p), environment_number, p);
 	}
 
       /* body is implicit in stack -- sc->code is ready to go */
@@ -61145,69 +61138,69 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 
 static void s7_gmp_init(s7_scheme *sc)
 {
-  sc->ADD = s7_define_function(sc,              "+",                   big_add,              0, 0, true,  H_add);
-  sc->MINUS = s7_define_function(sc,            "-",                   big_subtract,         1, 0, true,  H_subtract);
-  sc->MULTIPLY = s7_define_function(sc,         "*",                   big_multiply,         0, 0, true,  H_multiply);
-  sc->DIVIDE = s7_define_function(sc,           "/",                   big_divide,           1, 0, true,  H_divide);
+  sc->ADD =              s7_define_function(sc, "+",                   big_add,              0, 0, true,  H_add);
+  sc->MINUS =            s7_define_function(sc, "-",                   big_subtract,         1, 0, true,  H_subtract);
+  sc->MULTIPLY =         s7_define_function(sc, "*",                   big_multiply,         0, 0, true,  H_multiply);
+  sc->DIVIDE =           s7_define_function(sc, "/",                   big_divide,           1, 0, true,  H_divide);
 
-  sc->MAX = s7_define_function(sc,              "max",                 big_max,              1, 0, true,  H_max);
-  sc->MIN = s7_define_function(sc,              "min",                 big_min,              1, 0, true,  H_min);
-  sc->LT = s7_define_function(sc,               "<",                   big_less,             2, 0, true,  H_less);
-  sc->LEQ = s7_define_function(sc,              "<=",                  big_less_or_equal,    2, 0, true,  H_less_or_equal);
-  sc->GT = s7_define_function(sc,               ">",                   big_greater,          2, 0, true,  H_greater);
-  sc->GEQ = s7_define_function(sc,              ">=",                  big_greater_or_equal, 2, 0, true,  H_greater_or_equal);
-  sc->EQ = s7_define_function(sc,               "=",                   big_equal,            2, 0, true,  H_equal);
+  sc->MAX =              s7_define_function(sc, "max",                 big_max,              1, 0, true,  H_max);
+  sc->MIN =              s7_define_function(sc, "min",                 big_min,              1, 0, true,  H_min);
+  sc->LT =               s7_define_function(sc, "<",                   big_less,             2, 0, true,  H_less);
+  sc->LEQ =              s7_define_function(sc, "<=",                  big_less_or_equal,    2, 0, true,  H_less_or_equal);
+  sc->GT =               s7_define_function(sc, ">",                   big_greater,          2, 0, true,  H_greater);
+  sc->GEQ =              s7_define_function(sc, ">=",                  big_greater_or_equal, 2, 0, true,  H_greater_or_equal);
+  sc->EQ =               s7_define_function(sc, "=",                   big_equal,            2, 0, true,  H_equal);
 
-  sc->RATIONALIZE = s7_define_function(sc,      "rationalize",         big_rationalize,      1, 1, false, H_rationalize);
+  sc->RATIONALIZE =      s7_define_function(sc, "rationalize",         big_rationalize,      1, 1, false, H_rationalize);
   sc->EXACT_TO_INEXACT = s7_define_function(sc, "exact->inexact",      big_exact_to_inexact, 1, 0, false, H_exact_to_inexact);
   sc->INEXACT_TO_EXACT = s7_define_function(sc, "inexact->exact",      big_inexact_to_exact, 1, 0, false, H_inexact_to_exact);
-  sc->FLOOR = s7_define_function(sc,            "floor",               big_floor,            1, 0, false, H_floor);
-  sc->CEILING = s7_define_function(sc,          "ceiling",             big_ceiling,          1, 0, false, H_ceiling);
-  sc->TRUNCATE = s7_define_function(sc,         "truncate",            big_truncate,         1, 0, false, H_truncate);
-  sc->ROUND = s7_define_function(sc,            "round",               big_round,            1, 0, false, H_round);
-  sc->QUOTIENT = s7_define_function(sc,         "quotient",            big_quotient,         2, 0, false, H_quotient);
-  sc->REMAINDER = s7_define_function(sc,        "remainder",           big_remainder,        2, 0, false, H_remainder);
-  sc->MODULO = s7_define_function(sc,           "modulo",              big_modulo,           2, 0, false, H_modulo);
-  sc->GCD = s7_define_function(sc,              "gcd",                 big_gcd,              0, 0, true,  H_gcd);
-  sc->LCM = s7_define_function(sc,              "lcm",                 big_lcm,              0, 0, true,  H_lcm);
+  sc->FLOOR =            s7_define_function(sc, "floor",               big_floor,            1, 0, false, H_floor);
+  sc->CEILING =          s7_define_function(sc, "ceiling",             big_ceiling,          1, 0, false, H_ceiling);
+  sc->TRUNCATE =         s7_define_function(sc, "truncate",            big_truncate,         1, 0, false, H_truncate);
+  sc->ROUND =            s7_define_function(sc, "round",               big_round,            1, 0, false, H_round);
+  sc->QUOTIENT =         s7_define_function(sc, "quotient",            big_quotient,         2, 0, false, H_quotient);
+  sc->REMAINDER =        s7_define_function(sc, "remainder",           big_remainder,        2, 0, false, H_remainder);
+  sc->MODULO =           s7_define_function(sc, "modulo",              big_modulo,           2, 0, false, H_modulo);
+  sc->GCD =              s7_define_function(sc, "gcd",                 big_gcd,              0, 0, true,  H_gcd);
+  sc->LCM =              s7_define_function(sc, "lcm",                 big_lcm,              0, 0, true,  H_lcm);
 
   sc->MAKE_RECTANGULAR = s7_define_function(sc, "make-rectangular",    big_make_rectangular, 2, 0, false, H_make_rectangular);
-  sc->MAKE_POLAR = s7_define_function(sc,       "make-polar",          big_make_polar,       2, 0, false, H_make_polar);
-  sc->ANGLE = s7_define_function(sc,            "angle",               big_angle,            1, 0, false, H_angle);
-  sc->MAGNITUDE = s7_define_function(sc,        "magnitude",           big_magnitude,        1, 0, false, H_magnitude);
-  sc->ABS = s7_define_function(sc,              "abs",                 big_abs,              1, 0, false, H_abs);
+  sc->MAKE_POLAR =       s7_define_function(sc, "make-polar",          big_make_polar,       2, 0, false, H_make_polar);
+  sc->ANGLE =            s7_define_function(sc, "angle",               big_angle,            1, 0, false, H_angle);
+  sc->MAGNITUDE =        s7_define_function(sc, "magnitude",           big_magnitude,        1, 0, false, H_magnitude);
+  sc->ABS =              s7_define_function(sc, "abs",                 big_abs,              1, 0, false, H_abs);
 
-  sc->LOGNOT = s7_define_function(sc,           "lognot",              big_lognot,           1, 0, false, H_lognot);
-  sc->LOGIOR = s7_define_function(sc,           "logior",              big_logior,           0, 0, true,  H_logior);
-  sc->LOGXOR = s7_define_function(sc,           "logxor",              big_logxor,           0, 0, true,  H_logxor);
-  sc->LOGAND = s7_define_function(sc,           "logand",              big_logand,           0, 0, true,  H_logand);
-  sc->ASH = s7_define_function(sc,              "ash",                 big_ash,              2, 0, false, H_ash);
-  sc->INTEGER_LENGTH = s7_define_function(sc,   "integer-length",      big_integer_length,   1, 0, false, H_integer_length);
+  sc->LOGNOT =           s7_define_function(sc, "lognot",              big_lognot,           1, 0, false, H_lognot);
+  sc->LOGIOR =           s7_define_function(sc, "logior",              big_logior,           0, 0, true,  H_logior);
+  sc->LOGXOR =           s7_define_function(sc, "logxor",              big_logxor,           0, 0, true,  H_logxor);
+  sc->LOGAND =           s7_define_function(sc, "logand",              big_logand,           0, 0, true,  H_logand);
+  sc->ASH =              s7_define_function(sc, "ash",                 big_ash,              2, 0, false, H_ash);
+  sc->INTEGER_LENGTH =   s7_define_function(sc, "integer-length",      big_integer_length,   1, 0, false, H_integer_length);
   
-  sc->EXP = s7_define_function(sc,              "exp",                 big_exp,              1, 0, false, H_exp);
-  sc->EXPT = s7_define_function(sc,             "expt",                big_expt,             2, 0, false, H_expt);
-  sc->LOG = s7_define_function(sc,              "log",                 big_log,              1, 1, false, H_log);
-  sc->SQRT = s7_define_function(sc,             "sqrt",                big_sqrt,             1, 0, false, H_sqrt);
-  sc->SIN = s7_define_function(sc,              "sin",                 big_sin,              1, 0, false, H_sin);
-  sc->COS = s7_define_function(sc,              "cos",                 big_cos,              1, 0, false, H_cos);
-  sc->TAN = s7_define_function(sc,              "tan",                 big_tan,              1, 0, false, H_tan);
-  sc->ASIN = s7_define_function(sc,             "asin",                big_asin,             1, 0, false, H_asin);
-  sc->ACOS = s7_define_function(sc,             "acos",                big_acos,             1, 0, false, H_acos);
-  sc->ATAN = s7_define_function(sc,             "atan",                big_atan,             1, 1, false, H_atan);
-  sc->SINH = s7_define_function(sc,             "sinh",                big_sinh,             1, 0, false, H_sinh);
-  sc->COSH = s7_define_function(sc,             "cosh",                big_cosh,             1, 0, false, H_cosh);
-  sc->TANH = s7_define_function(sc,             "tanh",                big_tanh,             1, 0, false, H_tanh);
-  sc->ASINH = s7_define_function(sc,            "asinh",               big_asinh,            1, 0, false, H_asinh);
-  sc->ACOSH = s7_define_function(sc,            "acosh",               big_acosh,            1, 0, false, H_acosh);
-  sc->ATANH = s7_define_function(sc,            "atanh",               big_atanh,            1, 0, false, H_atanh);
+  sc->EXP =              s7_define_function(sc, "exp",                 big_exp,              1, 0, false, H_exp);
+  sc->EXPT =             s7_define_function(sc, "expt",                big_expt,             2, 0, false, H_expt);
+  sc->LOG =              s7_define_function(sc, "log",                 big_log,              1, 1, false, H_log);
+  sc->SQRT =             s7_define_function(sc, "sqrt",                big_sqrt,             1, 0, false, H_sqrt);
+  sc->SIN =              s7_define_function(sc, "sin",                 big_sin,              1, 0, false, H_sin);
+  sc->COS =              s7_define_function(sc, "cos",                 big_cos,              1, 0, false, H_cos);
+  sc->TAN =              s7_define_function(sc, "tan",                 big_tan,              1, 0, false, H_tan);
+  sc->ASIN =             s7_define_function(sc, "asin",                big_asin,             1, 0, false, H_asin);
+  sc->ACOS =             s7_define_function(sc, "acos",                big_acos,             1, 0, false, H_acos);
+  sc->ATAN =             s7_define_function(sc, "atan",                big_atan,             1, 1, false, H_atan);
+  sc->SINH =             s7_define_function(sc, "sinh",                big_sinh,             1, 0, false, H_sinh);
+  sc->COSH =             s7_define_function(sc, "cosh",                big_cosh,             1, 0, false, H_cosh);
+  sc->TANH =             s7_define_function(sc, "tanh",                big_tanh,             1, 0, false, H_tanh);
+  sc->ASINH =            s7_define_function(sc, "asinh",               big_asinh,            1, 0, false, H_asinh);
+  sc->ACOSH =            s7_define_function(sc, "acosh",               big_acosh,            1, 0, false, H_acosh);
+  sc->ATANH =            s7_define_function(sc, "atanh",               big_atanh,            1, 0, false, H_atanh);
 
   big_rng_tag = s7_new_type("<big-random-number-generator>", print_big_rng, free_big_rng, equal_big_rng, NULL, NULL, NULL);
-  sc->RANDOM = s7_define_function(sc,           "random",              big_random,           1, 1, false, H_random);
-  sc->MAKE_RANDOM_STATE = s7_define_function(sc, "make-random-state",  make_big_random_state,1, 1, false, H_make_random_state);
+  sc->RANDOM =          s7_define_function(sc,  "random",              big_random,           1, 1, false, H_random);
+  sc->MAKE_RANDOM_STATE = s7_define_function(sc,"make-random-state",  make_big_random_state,1, 1, false, H_make_random_state);
 
-  sc->BIGNUM = s7_define_function(sc,           "bignum",              g_bignum,             1, 1, false, H_bignum);
-  s7_define_function(sc,                        "bignum?",             g_is_bignum,          1, 0, false, H_is_bignum);
-  s7_define_function_with_setter(sc,            "bignum-precision",    g_bignum_precision, g_set_bignum_precision, 0, 0, H_bignum_precision);
+  sc->BIGNUM =          s7_define_function(sc, "bignum",              g_bignum,             1, 1, false, H_bignum);
+  s7_define_function(sc,                       "bignum?",             g_is_bignum,          1, 0, false, H_is_bignum);
+  s7_define_function_with_setter(sc,           "bignum-precision",    g_bignum_precision, g_set_bignum_precision, 0, 0, H_bignum_precision);
 
   sc->BIGNUM_PRECISION = make_symbol(sc, "set-bignum-precision");
   add_max = (1 << (s7_int_bits - 1));
@@ -61848,239 +61841,239 @@ s7_scheme *s7_init(void)
 
   sc->gc_off = false;
 
-  sc->GENSYM = s7_define_safe_function(sc,            "gensym",                    g_gensym,                   0, 1, false, H_gensym);
-  s7_define_safe_function(sc,                         "symbol-table",              g_symbol_table,             0, 0, false, H_symbol_table);
-  sc->SYMBOLP = s7_define_safe_function(sc,           "symbol?",                   g_is_symbol,                1, 0, false, H_is_symbol);
-  sc->SYMBOL_TO_STRING = s7_define_safe_function(sc,  "symbol->string",            g_symbol_to_string,         1, 0, false, H_symbol_to_string);
-  sc->STRING_TO_SYMBOL = s7_define_safe_function(sc,  "string->symbol",            g_string_to_symbol,         1, 0, false, H_string_to_symbol);
-  sc->SYMBOL = s7_define_safe_function(sc,            "symbol",                    g_symbol,                   1, 0, false, H_symbol);
-  sc->SYMBOL_TO_VALUE = s7_define_safe_function(sc,   "symbol->value",             g_symbol_to_value,          1, 1, false, H_symbol_to_value);
-  sc->SYMBOL_TO_DYNAMIC_VALUE = s7_define_safe_function(sc, "symbol->dynamic-value", g_symbol_to_dynamic_value, 1, 0, false, H_symbol_to_dynamic_value);
-  s7_define_function_with_setter(sc,                  "symbol-access",             g_symbol_get_access, g_symbol_set_access, 1, 0, H_symbol_access);
+  sc->GENSYM =                s7_define_safe_function(sc, "gensym",                  g_gensym,                 0, 1, false, H_gensym);
+                              s7_define_safe_function(sc, "symbol-table",            g_symbol_table,           0, 0, false, H_symbol_table);
+  sc->SYMBOLP =               s7_define_safe_function(sc, "symbol?",                 g_is_symbol,              1, 0, false, H_is_symbol);
+  sc->SYMBOL_TO_STRING =      s7_define_safe_function(sc, "symbol->string",          g_symbol_to_string,       1, 0, false, H_symbol_to_string);
+  sc->STRING_TO_SYMBOL =      s7_define_safe_function(sc, "string->symbol",          g_string_to_symbol,       1, 0, false, H_string_to_symbol);
+  sc->SYMBOL =                s7_define_safe_function(sc, "symbol",                  g_symbol,                 1, 0, false, H_symbol);
+  sc->SYMBOL_TO_VALUE =       s7_define_safe_function(sc, "symbol->value",           g_symbol_to_value,        1, 1, false, H_symbol_to_value);
+  sc->SYMBOL_TO_DYNAMIC_VALUE = s7_define_safe_function(sc, "symbol->dynamic-value", g_symbol_to_dynamic_value,1, 0, false, H_symbol_to_dynamic_value);
+  s7_define_function_with_setter(sc,                      "symbol-access",           g_symbol_get_access, g_symbol_set_access, 1, 0, H_symbol_access);
   sc->SYMBOL_ACCESS = make_symbol(sc, "symbol-access");
   
-  sc->OUTER_ENVIRONMENT = s7_define_safe_function(sc, "outer-environment",         g_outer_environment,        1, 0, false, H_outer_environment);
-  s7_define_safe_function(sc,                         "global-environment",        g_global_environment,       0, 0, false, H_global_environment);
-  s7_define_function(sc,                              "current-environment",       g_current_environment,      0, 0, false, H_current_environment);
-  s7_define_constant_function(sc,                     "initial-environment",       g_initial_environment,      0, 0, false, H_initial_environment);
-  sc->AUGMENT_ENVIRONMENT =  s7_define_function(sc,   "augment-environment",       g_augment_environment,      1, 0, true,  H_augment_environment);
-  sc->AUGMENT_ENVIRONMENTB = s7_define_function(sc,   "augment-environment!",      g_augment_environment_direct, 1, 0, true, H_augment_environment_direct);
-  sc->ENVIRONMENT = s7_define_safe_function(sc,       "environment",               g_environment,              0, 0, true,  H_environment);
-  sc->ENVIRONMENTP = s7_define_safe_function(sc,      "environment?",              g_is_environment,           1, 0, false, H_is_environment);
-  sc->ENVIRONMENT_TO_LIST = s7_define_safe_function(sc, "environment->list",       g_environment_to_list,      1, 0, false, H_environment_to_list);
-  s7_define_safe_function(sc,                         "error-environment",         g_error_environment,        0, 0, false, H_error_environment);
-  sc->OPEN_ENVIRONMENT = s7_define_safe_function(sc,  "open-environment",          g_open_environment,         1, 0, false, H_open_environment);
-  sc->OPEN_ENVIRONMENTP = s7_define_safe_function(sc, "open-environment?",         g_is_open_environment,      1, 0, false, H_is_open_environment);
-  sc->OBJECT_ENVIRONMENT = s7_define_safe_function(sc,"object-environment",        g_object_environment,       1, 0, false, H_object_environment);
+  sc->OUTER_ENVIRONMENT =     s7_define_safe_function(sc, "outer-environment",       g_outer_environment,      1, 0, false, H_outer_environment);
+                              s7_define_safe_function(sc, "global-environment",      g_global_environment,     0, 0, false, H_global_environment);
+                              s7_define_function(sc,      "current-environment",     g_current_environment,    0, 0, false, H_current_environment);
+                              s7_define_constant_function(sc, "initial-environment", g_initial_environment,    0, 0, false, H_initial_environment);
+  sc->AUGMENT_ENVIRONMENT =   s7_define_function(sc,      "augment-environment",     g_augment_environment,    1, 0, true,  H_augment_environment);
+  sc->AUGMENT_ENVIRONMENTB =  s7_define_function(sc,      "augment-environment!",    g_augment_environment_direct, 1, 0, true, H_augment_environment_direct);
+  sc->ENVIRONMENT =           s7_define_safe_function(sc, "environment",             g_environment,            0, 0, true,  H_environment);
+  sc->ENVIRONMENTP =          s7_define_safe_function(sc, "environment?",            g_is_environment,         1, 0, false, H_is_environment);
+  sc->ENVIRONMENT_TO_LIST =   s7_define_safe_function(sc, "environment->list",       g_environment_to_list,    1, 0, false, H_environment_to_list);
+                              s7_define_safe_function(sc, "error-environment",       g_error_environment,      0, 0, false, H_error_environment);
+  sc->OPEN_ENVIRONMENT =      s7_define_safe_function(sc, "open-environment",        g_open_environment,       1, 0, false, H_open_environment);
+  sc->OPEN_ENVIRONMENTP =     s7_define_safe_function(sc, "open-environment?",       g_is_open_environment,    1, 0, false, H_is_open_environment);
+  sc->OBJECT_ENVIRONMENT =    s7_define_safe_function(sc, "object-environment",      g_object_environment,     1, 0, false, H_object_environment);
 
-  sc->PROVIDEDP = s7_define_safe_function(sc,         "provided?",                 g_is_provided,              1, 0, false, H_is_provided);
-  sc->PROVIDE = s7_define_safe_function(sc,           "provide",                   g_provide,                  1, 0, false, H_provide);
-  sc->DEFINEDP = s7_define_safe_function(sc,          "defined?",                  g_is_defined,               1, 1, false, H_is_defined);
-  sc->CONSTANTP = s7_define_safe_function(sc,         "constant?",                 g_is_constant,              1, 0, false, H_is_constant);
-  sc->MACROP = s7_define_safe_function(sc,            "macro?",                    g_is_macro,                 1, 0, false, H_is_macro);
+  sc->PROVIDEDP =             s7_define_safe_function(sc, "provided?",               g_is_provided,            1, 0, false, H_is_provided);
+  sc->PROVIDE =               s7_define_safe_function(sc, "provide",                 g_provide,                1, 0, false, H_provide);
+  sc->DEFINEDP =              s7_define_safe_function(sc, "defined?",                g_is_defined,             1, 1, false, H_is_defined);
+  sc->CONSTANTP =             s7_define_safe_function(sc, "constant?",               g_is_constant,            1, 0, false, H_is_constant);
+  sc->MACROP =                s7_define_safe_function(sc, "macro?",                  g_is_macro,               1, 0, false, H_is_macro);
 
-  sc->KEYWORDP = s7_define_safe_function(sc,          "keyword?",                  g_is_keyword,               1, 0, false, H_is_keyword);
-  sc->MAKE_KEYWORD = s7_define_safe_function(sc,      "make-keyword",              g_make_keyword,             1, 0, false, H_make_keyword);
-  sc->SYMBOL_TO_KEYWORD = s7_define_safe_function(sc, "symbol->keyword",           g_symbol_to_keyword,        1, 0, false, H_symbol_to_keyword);
-  sc->KEYWORD_TO_SYMBOL = s7_define_safe_function(sc, "keyword->symbol",           g_keyword_to_symbol,        1, 0, false, H_keyword_to_symbol);
+  sc->KEYWORDP =              s7_define_safe_function(sc, "keyword?",                g_is_keyword,             1, 0, false, H_is_keyword);
+  sc->MAKE_KEYWORD =          s7_define_safe_function(sc, "make-keyword",            g_make_keyword,           1, 0, false, H_make_keyword);
+  sc->SYMBOL_TO_KEYWORD =     s7_define_safe_function(sc, "symbol->keyword",         g_symbol_to_keyword,      1, 0, false, H_symbol_to_keyword);
+  sc->KEYWORD_TO_SYMBOL =     s7_define_safe_function(sc, "keyword->symbol",         g_keyword_to_symbol,      1, 0, false, H_keyword_to_symbol);
   
 
-  sc->PORT_LINE_NUMBER = s7_define_safe_function(sc,  "port-line-number",          g_port_line_number,         0, 1, false, H_port_line_number);
-  sc->PORT_FILENAME = s7_define_safe_function(sc,     "port-filename",             g_port_filename,            0, 1, false, H_port_filename);
-  sc->PAIR_LINE_NUMBER = s7_define_safe_function(sc,  "pair-line-number",          g_pair_line_number,         1, 0, false, H_pair_line_number);
+  sc->PORT_LINE_NUMBER =      s7_define_safe_function(sc, "port-line-number",        g_port_line_number,       0, 1, false, H_port_line_number);
+  sc->PORT_FILENAME =         s7_define_safe_function(sc, "port-filename",           g_port_filename,          0, 1, false, H_port_filename);
+  sc->PAIR_LINE_NUMBER =      s7_define_safe_function(sc, "pair-line-number",        g_pair_line_number,       1, 0, false, H_pair_line_number);
   
-  sc->INPUT_PORTP = s7_define_safe_function(sc,       "input-port?",               g_is_input_port,            1, 0, false, H_is_input_port);
-  sc->OUTPUT_PORTP = s7_define_safe_function(sc,      "output-port?",              g_is_output_port,           1, 0, false, H_is_output_port);
-  sc->PORT_CLOSEDP = s7_define_safe_function(sc,      "port-closed?",              g_is_port_closed,           1, 0, false, H_is_port_closed);
-  sc->CHAR_READYP = s7_define_safe_function(sc,       "char-ready?",               g_is_char_ready,            0, 1, false, H_is_char_ready);
-  sc->EOF_OBJECTP = s7_define_safe_function(sc,       "eof-object?",               g_is_eof_object,            1, 0, false, H_is_eof_object);
+  sc->INPUT_PORTP =           s7_define_safe_function(sc, "input-port?",             g_is_input_port,          1, 0, false, H_is_input_port);
+  sc->OUTPUT_PORTP =          s7_define_safe_function(sc, "output-port?",            g_is_output_port,         1, 0, false, H_is_output_port);
+  sc->PORT_CLOSEDP =          s7_define_safe_function(sc, "port-closed?",            g_is_port_closed,         1, 0, false, H_is_port_closed);
+  sc->CHAR_READYP =           s7_define_safe_function(sc, "char-ready?",             g_is_char_ready,          0, 1, false, H_is_char_ready);
+  sc->EOF_OBJECTP =           s7_define_safe_function(sc, "eof-object?",             g_is_eof_object,          1, 0, false, H_is_eof_object);
   /* this should be named eof? (what isn't an object?) */
   
-  s7_define_safe_function(sc,                         "current-input-port",        g_current_input_port,       0, 0, false, H_current_input_port);
-  s7_define_safe_function(sc,                         "set-current-input-port",    g_set_current_input_port,   1, 0, false, H_set_current_input_port);
-  s7_define_safe_function(sc,                         "current-output-port",       g_current_output_port,      0, 0, false, H_current_output_port);
-  s7_define_safe_function(sc,                         "set-current-output-port",   g_set_current_output_port,  1, 0, false, H_set_current_output_port);
-  s7_define_safe_function(sc,                         "current-error-port",        g_current_error_port,       0, 0, false, H_current_error_port);
-  s7_define_safe_function(sc,                         "set-current-error-port",    g_set_current_error_port,   1, 0, false, H_set_current_error_port);
-  sc->CLOSE_INPUT_PORT = s7_define_safe_function(sc,  "close-input-port",          g_close_input_port,         1, 0, false, H_close_input_port);
-  sc->CLOSE_OUTPUT_PORT = s7_define_safe_function(sc, "close-output-port",         g_close_output_port,        1, 0, false, H_close_output_port);
-  sc->OPEN_INPUT_FILE = s7_define_safe_function(sc,   "open-input-file",           g_open_input_file,          1, 1, false, H_open_input_file);
-  sc->OPEN_OUTPUT_FILE = s7_define_safe_function(sc,  "open-output-file",          g_open_output_file,         1, 1, false, H_open_output_file);
-  sc->OPEN_INPUT_STRING = s7_define_safe_function(sc, "open-input-string",         g_open_input_string,        1, 0, false, H_open_input_string);
-  s7_define_safe_function(sc,                         "open-output-string",        g_open_output_string,       0, 0, false, H_open_output_string);
-  sc->GET_OUTPUT_STRING = s7_define_safe_function(sc, "get-output-string",         g_get_output_string,        1, 0, false, H_get_output_string);
+                              s7_define_safe_function(sc, "current-input-port",      g_current_input_port,     0, 0, false, H_current_input_port);
+                              s7_define_safe_function(sc, "set-current-input-port",  g_set_current_input_port, 1, 0, false, H_set_current_input_port);
+                              s7_define_safe_function(sc, "current-output-port",     g_current_output_port,    0, 0, false, H_current_output_port);
+                              s7_define_safe_function(sc, "set-current-output-port", g_set_current_output_port,1, 0, false, H_set_current_output_port);
+                              s7_define_safe_function(sc, "current-error-port",      g_current_error_port,     0, 0, false, H_current_error_port);
+                              s7_define_safe_function(sc, "set-current-error-port",  g_set_current_error_port, 1, 0, false, H_set_current_error_port);
+  sc->CLOSE_INPUT_PORT =      s7_define_safe_function(sc, "close-input-port",        g_close_input_port,       1, 0, false, H_close_input_port);
+  sc->CLOSE_OUTPUT_PORT =     s7_define_safe_function(sc, "close-output-port",       g_close_output_port,      1, 0, false, H_close_output_port);
+  sc->OPEN_INPUT_FILE =       s7_define_safe_function(sc, "open-input-file",         g_open_input_file,        1, 1, false, H_open_input_file);
+  sc->OPEN_OUTPUT_FILE =      s7_define_safe_function(sc, "open-output-file",        g_open_output_file,       1, 1, false, H_open_output_file);
+  sc->OPEN_INPUT_STRING =     s7_define_safe_function(sc, "open-input-string",       g_open_input_string,      1, 0, false, H_open_input_string);
+                              s7_define_safe_function(sc, "open-output-string",      g_open_output_string,     0, 0, false, H_open_output_string);
+  sc->GET_OUTPUT_STRING =     s7_define_safe_function(sc, "get-output-string",       g_get_output_string,      1, 0, false, H_get_output_string);
   
-  sc->NEWLINE = s7_define_safe_function(sc,           "newline",                   g_newline,                  0, 1, false, H_newline);
-  sc->WRITE = s7_define_safe_function(sc,             "write",                     g_write,                    1, 1, false, H_write);
-  sc->DISPLAY = s7_define_safe_function(sc,           "display",                   g_display,                  1, 1, false, H_display);
-  sc->READ_CHAR = s7_define_safe_function(sc,         "read-char",                 g_read_char,                0, 1, false, H_read_char);
-  sc->PEEK_CHAR = s7_define_safe_function(sc,         "peek-char",                 g_peek_char,                0, 1, false, H_peek_char);
-  sc->WRITE_CHAR = s7_define_safe_function(sc,        "write-char",                g_write_char,               1, 1, false, H_write_char);
-  sc->READ_BYTE = s7_define_safe_function(sc,         "read-byte",                 g_read_byte,                0, 1, false, H_read_byte);
-  sc->WRITE_BYTE = s7_define_safe_function(sc,        "write-byte",                g_write_byte,               1, 1, false, H_write_byte);
-  sc->READ_LINE = s7_define_safe_function(sc,         "read-line",                 g_read_line,                0, 2, false, H_read_line);
-  sc->READ = s7_define_function(sc,                   "read",                      g_read,                     0, 1, false, H_read);
+  sc->NEWLINE =               s7_define_safe_function(sc, "newline",                 g_newline,                0, 1, false, H_newline);
+  sc->WRITE =                 s7_define_safe_function(sc, "write",                   g_write,                  1, 1, false, H_write);
+  sc->DISPLAY =               s7_define_safe_function(sc, "display",                 g_display,                1, 1, false, H_display);
+  sc->READ_CHAR =             s7_define_safe_function(sc, "read-char",               g_read_char,              0, 1, false, H_read_char);
+  sc->PEEK_CHAR =             s7_define_safe_function(sc, "peek-char",               g_peek_char,              0, 1, false, H_peek_char);
+  sc->WRITE_CHAR =            s7_define_safe_function(sc, "write-char",              g_write_char,             1, 1, false, H_write_char);
+  sc->READ_BYTE =             s7_define_safe_function(sc, "read-byte",               g_read_byte,              0, 1, false, H_read_byte);
+  sc->WRITE_BYTE =            s7_define_safe_function(sc, "write-byte",              g_write_byte,             1, 1, false, H_write_byte);
+  sc->READ_LINE =             s7_define_safe_function(sc, "read-line",               g_read_line,              0, 2, false, H_read_line);
+  sc->READ =                  s7_define_function(sc,      "read",                    g_read,                   0, 1, false, H_read);
   /* read can't be safe because it messes with the stack, expecting to be all by itself in the call sequence (not embedded in OP_SAFE_C_opSq for example)
    */
   
-  sc->CALL_WITH_INPUT_STRING = s7_define_function(sc, "call-with-input-string",    g_call_with_input_string,   2, 0, false, H_call_with_input_string);
-  sc->CALL_WITH_INPUT_FILE = s7_define_function(sc,   "call-with-input-file",      g_call_with_input_file,     2, 0, false, H_call_with_input_file);
-  sc->WITH_INPUT_FROM_STRING = s7_define_function(sc, "with-input-from-string",    g_with_input_from_string,   2, 0, false, H_with_input_from_string);
-  sc->WITH_INPUT_FROM_FILE = s7_define_function(sc,   "with-input-from-file",      g_with_input_from_file,     2, 0, false, H_with_input_from_file);
+  sc->CALL_WITH_INPUT_STRING = s7_define_function(sc,     "call-with-input-string",  g_call_with_input_string, 2, 0, false, H_call_with_input_string);
+  sc->CALL_WITH_INPUT_FILE =  s7_define_function(sc,      "call-with-input-file",    g_call_with_input_file,   2, 0, false, H_call_with_input_file);
+  sc->WITH_INPUT_FROM_STRING = s7_define_function(sc,     "with-input-from-string",  g_with_input_from_string, 2, 0, false, H_with_input_from_string);
+  sc->WITH_INPUT_FROM_FILE =  s7_define_function(sc,      "with-input-from-file",    g_with_input_from_file,   2, 0, false, H_with_input_from_file);
   
-  sc->CALL_WITH_OUTPUT_STRING = s7_define_function(sc, "call-with-output-string",  g_call_with_output_string,  1, 0, false, H_call_with_output_string);
-  sc->CALL_WITH_OUTPUT_FILE = s7_define_function(sc,  "call-with-output-file",     g_call_with_output_file,    2, 0, false, H_call_with_output_file);
-  sc->WITH_OUTPUT_TO_STRING = s7_define_function(sc,  "with-output-to-string",     g_with_output_to_string,    1, 0, false, H_with_output_to_string);
-  sc->WITH_OUTPUT_TO_FILE = s7_define_function(sc,    "with-output-to-file",       g_with_output_to_file,      2, 0, false, H_with_output_to_file);
+  sc->CALL_WITH_OUTPUT_STRING = s7_define_function(sc,    "call-with-output-string", g_call_with_output_string,1, 0, false, H_call_with_output_string);
+  sc->CALL_WITH_OUTPUT_FILE = s7_define_function(sc,      "call-with-output-file",   g_call_with_output_file,  2, 0, false, H_call_with_output_file);
+  sc->WITH_OUTPUT_TO_STRING = s7_define_function(sc,      "with-output-to-string",   g_with_output_to_string,  1, 0, false, H_with_output_to_string);
+  sc->WITH_OUTPUT_TO_FILE =   s7_define_function(sc,      "with-output-to-file",     g_with_output_to_file,    2, 0, false, H_with_output_to_file);
   
 #if WITH_SYSTEM_EXTRAS
-  sc->DIRECTORYP = s7_define_safe_function(sc,        "directory?",                g_is_directory,             1, 0, false, H_is_directory);
-  sc->FILE_EXISTSP = s7_define_safe_function(sc,      "file-exists?",              g_file_exists,              1, 0, false, H_file_exists);
-  sc->DELETE_FILE = s7_define_safe_function(sc,       "delete-file",               g_delete_file,              1, 0, false, H_delete_file);
-  sc->GETENV = s7_define_safe_function(sc,            "getenv",                    g_getenv_1,                 1, 0, false, H_getenv);
-  sc->SYSTEM = s7_define_safe_function(sc,            "system",                    g_system,                   1, 0, false, H_system);
+  sc->DIRECTORYP =            s7_define_safe_function(sc, "directory?",              g_is_directory,           1, 0, false, H_is_directory);
+  sc->FILE_EXISTSP =          s7_define_safe_function(sc, "file-exists?",            g_file_exists,            1, 0, false, H_file_exists);
+  sc->DELETE_FILE =           s7_define_safe_function(sc, "delete-file",             g_delete_file,            1, 0, false, H_delete_file);
+  sc->GETENV =                s7_define_safe_function(sc, "getenv",                  g_getenv_1,               1, 0, false, H_getenv);
+  sc->SYSTEM =                s7_define_safe_function(sc, "system",                  g_system,                 1, 0, false, H_system);
 #if HAVE_DIRENT_H
-  sc->DIRECTORY_TO_LIST = s7_define_safe_function(sc, "directory->list",           g_directory_to_list,        1, 0, false, H_directory_to_list);
+  sc->DIRECTORY_TO_LIST =     s7_define_safe_function(sc, "directory->list",         g_directory_to_list,      1, 0, false, H_directory_to_list);
 #endif
 #endif
   
-  sc->REAL_PART = s7_define_safe_function(sc,         "real-part",                 g_real_part,                1, 0, false, H_real_part);
-  sc->IMAG_PART = s7_define_safe_function(sc,         "imag-part",                 g_imag_part,                1, 0, false, H_imag_part);
-  sc->NUMERATOR = s7_define_safe_function(sc,         "numerator",                 g_numerator,                1, 0, false, H_numerator);
-  sc->DENOMINATOR = s7_define_safe_function(sc,       "denominator",               g_denominator,              1, 0, false, H_denominator);
-  sc->EVENP = s7_define_safe_function(sc,             "even?",                     g_is_even,                  1, 0, false, H_is_even);
-  sc->ODDP = s7_define_safe_function(sc,              "odd?",                      g_is_odd,                   1, 0, false, H_is_odd);
-  sc->ZEROP = s7_define_safe_function(sc,             "zero?",                     g_is_zero,                  1, 0, false, H_is_zero);
-  sc->POSITIVEP = s7_define_safe_function(sc,         "positive?",                 g_is_positive,              1, 0, false, H_is_positive);
-  sc->NEGATIVEP = s7_define_safe_function(sc,         "negative?",                 g_is_negative,              1, 0, false, H_is_negative);
-  sc->INFINITEP = s7_define_safe_function(sc,         "infinite?",                 g_is_infinite,              1, 0, false, H_is_infinite);
-  sc->NANP = s7_define_safe_function(sc,              "nan?",                      g_is_nan,                   1, 0, false, H_is_nan);
+  sc->REAL_PART =             s7_define_safe_function(sc, "real-part",               g_real_part,              1, 0, false, H_real_part);
+  sc->IMAG_PART =             s7_define_safe_function(sc, "imag-part",               g_imag_part,              1, 0, false, H_imag_part);
+  sc->NUMERATOR =             s7_define_safe_function(sc, "numerator",               g_numerator,              1, 0, false, H_numerator);
+  sc->DENOMINATOR =           s7_define_safe_function(sc, "denominator",             g_denominator,            1, 0, false, H_denominator);
+  sc->EVENP =                 s7_define_safe_function(sc, "even?",                   g_is_even,                1, 0, false, H_is_even);
+  sc->ODDP =                  s7_define_safe_function(sc, "odd?",                    g_is_odd,                 1, 0, false, H_is_odd);
+  sc->ZEROP =                 s7_define_safe_function(sc, "zero?",                   g_is_zero,                1, 0, false, H_is_zero);
+  sc->POSITIVEP =             s7_define_safe_function(sc, "positive?",               g_is_positive,            1, 0, false, H_is_positive);
+  sc->NEGATIVEP =             s7_define_safe_function(sc, "negative?",               g_is_negative,            1, 0, false, H_is_negative);
+  sc->INFINITEP =             s7_define_safe_function(sc, "infinite?",               g_is_infinite,            1, 0, false, H_is_infinite);
+  sc->NANP =                  s7_define_safe_function(sc, "nan?",                    g_is_nan,                 1, 0, false, H_is_nan);
 
 #if (!WITH_GMP)
-  sc->MAKE_POLAR = s7_define_safe_function(sc,        "make-polar",                g_make_polar,               2, 0, false, H_make_polar);
-  sc->MAKE_RECTANGULAR = s7_define_safe_function(sc,  "make-rectangular",          g_make_rectangular,         2, 0, false, H_make_rectangular);
-  sc->MAGNITUDE = s7_define_safe_function(sc,         "magnitude",                 g_magnitude,                1, 0, false, H_magnitude);
-  sc->ANGLE = s7_define_safe_function(sc,             "angle",                     g_angle,                    1, 0, false, H_angle);
-  sc->RATIONALIZE = s7_define_safe_function(sc,       "rationalize",               g_rationalize,              1, 1, false, H_rationalize);
-  sc->ABS = s7_define_safe_function(sc,               "abs",                       g_abs,                      1, 0, false, H_abs);
-  sc->EXP = s7_define_safe_function(sc,               "exp",                       g_exp,                      1, 0, false, H_exp);
-  sc->LOG = s7_define_safe_function(sc,               "log",                       g_log,                      1, 1, false, H_log);
-  sc->SIN = s7_define_safe_function(sc,               "sin",                       g_sin,                      1, 0, false, H_sin);
-  sc->COS = s7_define_safe_function(sc,               "cos",                       g_cos,                      1, 0, false, H_cos);
-  sc->TAN = s7_define_safe_function(sc,               "tan",                       g_tan,                      1, 0, false, H_tan);
-  sc->ASIN = s7_define_safe_function(sc,              "asin",                      g_asin,                     1, 0, false, H_asin);
-  sc->ACOS = s7_define_safe_function(sc,              "acos",                      g_acos,                     1, 0, false, H_acos);
-  sc->ATAN = s7_define_safe_function(sc,              "atan",                      g_atan,                     1, 1, false, H_atan);
-  sc->SINH = s7_define_safe_function(sc,              "sinh",                      g_sinh,                     1, 0, false, H_sinh);
-  sc->COSH = s7_define_safe_function(sc,              "cosh",                      g_cosh,                     1, 0, false, H_cosh);
-  sc->TANH = s7_define_safe_function(sc,              "tanh",                      g_tanh,                     1, 0, false, H_tanh);
-  sc->ASINH = s7_define_safe_function(sc,             "asinh",                     g_asinh,                    1, 0, false, H_asinh);
-  sc->ACOSH = s7_define_safe_function(sc,             "acosh",                     g_acosh,                    1, 0, false, H_acosh);
-  sc->ATANH = s7_define_safe_function(sc,             "atanh",                     g_atanh,                    1, 0, false, H_atanh);
-  sc->SQRT = s7_define_safe_function(sc,              "sqrt",                      g_sqrt,                     1, 0, false, H_sqrt);
-  sc->EXPT = s7_define_safe_function(sc,              "expt",                      g_expt,                     2, 0, false, H_expt);
-  sc->FLOOR = s7_define_safe_function(sc,             "floor",                     g_floor,                    1, 0, false, H_floor);
-  sc->CEILING = s7_define_safe_function(sc,           "ceiling",                   g_ceiling,                  1, 0, false, H_ceiling);
-  sc->TRUNCATE = s7_define_safe_function(sc,          "truncate",                  g_truncate,                 1, 0, false, H_truncate);
-  sc->ROUND = s7_define_safe_function(sc,             "round",                     g_round,                    1, 0, false, H_round);
-  sc->LCM = s7_define_safe_function(sc,               "lcm",                       g_lcm,                      0, 0, true,  H_lcm);
-  sc->GCD = s7_define_safe_function(sc,               "gcd",                       g_gcd,                      0, 0, true,  H_gcd);
-  sc->ADD = s7_define_safe_function(sc,               "+",                         g_add,                      0, 0, true,  H_add);
-  sc->MINUS = s7_define_safe_function(sc,             "-",                         g_subtract,                 1, 0, true,  H_subtract);
-  sc->MULTIPLY = s7_define_safe_function(sc,          "*",                         g_multiply,                 0, 0, true,  H_multiply);
-  sc->DIVIDE = s7_define_safe_function(sc,            "/",                         g_divide,                   1, 0, true,  H_divide);
-  sc->MAX = s7_define_safe_function(sc,               "max",                       g_max,                      1, 0, true,  H_max);
-  sc->MIN = s7_define_safe_function(sc,               "min",                       g_min,                      1, 0, true,  H_min);
-  sc->QUOTIENT = s7_define_safe_function(sc,          "quotient",                  g_quotient,                 2, 0, false, H_quotient);
-  sc->REMAINDER = s7_define_safe_function(sc,         "remainder",                 g_remainder,                2, 0, false, H_remainder);
-  sc->MODULO = s7_define_safe_function(sc,            "modulo",                    g_modulo,                   2, 0, false, H_modulo);
-  sc->EQ = s7_define_safe_function(sc,                "=",                         g_equal,                    2, 0, true,  H_equal);
-  sc->LT = s7_define_safe_function(sc,                "<",                         g_less,                     2, 0, true,  H_less);
-  sc->GT = s7_define_safe_function(sc,                ">",                         g_greater,                  2, 0, true,  H_greater);
-  sc->LEQ = s7_define_safe_function(sc,               "<=",                        g_less_or_equal,            2, 0, true,  H_less_or_equal);
-  sc->GEQ = s7_define_safe_function(sc,               ">=",                        g_greater_or_equal,         2, 0, true,  H_greater_or_equal);
+  sc->MAKE_POLAR =            s7_define_safe_function(sc, "make-polar",              g_make_polar,             2, 0, false, H_make_polar);
+  sc->MAKE_RECTANGULAR =      s7_define_safe_function(sc, "make-rectangular",        g_make_rectangular,       2, 0, false, H_make_rectangular);
+  sc->MAGNITUDE =             s7_define_safe_function(sc, "magnitude",               g_magnitude,              1, 0, false, H_magnitude);
+  sc->ANGLE =                 s7_define_safe_function(sc, "angle",                   g_angle,                  1, 0, false, H_angle);
+  sc->RATIONALIZE =           s7_define_safe_function(sc, "rationalize",             g_rationalize,            1, 1, false, H_rationalize);
+  sc->ABS =                   s7_define_safe_function(sc, "abs",                     g_abs,                    1, 0, false, H_abs);
+  sc->EXP =                   s7_define_safe_function(sc, "exp",                     g_exp,                    1, 0, false, H_exp);
+  sc->LOG =                   s7_define_safe_function(sc, "log",                     g_log,                    1, 1, false, H_log);
+  sc->SIN =                   s7_define_safe_function(sc, "sin",                     g_sin,                    1, 0, false, H_sin);
+  sc->COS =                   s7_define_safe_function(sc, "cos",                     g_cos,                    1, 0, false, H_cos);
+  sc->TAN =                   s7_define_safe_function(sc, "tan",                     g_tan,                    1, 0, false, H_tan);
+  sc->ASIN =                  s7_define_safe_function(sc, "asin",                    g_asin,                   1, 0, false, H_asin);
+  sc->ACOS =                  s7_define_safe_function(sc, "acos",                    g_acos,                   1, 0, false, H_acos);
+  sc->ATAN =                  s7_define_safe_function(sc, "atan",                    g_atan,                   1, 1, false, H_atan);
+  sc->SINH =                  s7_define_safe_function(sc, "sinh",                    g_sinh,                   1, 0, false, H_sinh);
+  sc->COSH =                  s7_define_safe_function(sc, "cosh",                    g_cosh,                   1, 0, false, H_cosh);
+  sc->TANH =                  s7_define_safe_function(sc, "tanh",                    g_tanh,                   1, 0, false, H_tanh);
+  sc->ASINH =                 s7_define_safe_function(sc, "asinh",                   g_asinh,                  1, 0, false, H_asinh);
+  sc->ACOSH =                 s7_define_safe_function(sc, "acosh",                   g_acosh,                  1, 0, false, H_acosh);
+  sc->ATANH =                 s7_define_safe_function(sc, "atanh",                   g_atanh,                  1, 0, false, H_atanh);
+  sc->SQRT =                  s7_define_safe_function(sc, "sqrt",                    g_sqrt,                   1, 0, false, H_sqrt);
+  sc->EXPT =                  s7_define_safe_function(sc, "expt",                    g_expt,                   2, 0, false, H_expt);
+  sc->FLOOR =                 s7_define_safe_function(sc, "floor",                   g_floor,                  1, 0, false, H_floor);
+  sc->CEILING =               s7_define_safe_function(sc, "ceiling",                 g_ceiling,                1, 0, false, H_ceiling);
+  sc->TRUNCATE =              s7_define_safe_function(sc, "truncate",                g_truncate,               1, 0, false, H_truncate);
+  sc->ROUND =                 s7_define_safe_function(sc, "round",                   g_round,                  1, 0, false, H_round);
+  sc->LCM =                   s7_define_safe_function(sc, "lcm",                     g_lcm,                    0, 0, true,  H_lcm);
+  sc->GCD =                   s7_define_safe_function(sc, "gcd",                     g_gcd,                    0, 0, true,  H_gcd);
+  sc->ADD =                   s7_define_safe_function(sc, "+",                       g_add,                    0, 0, true,  H_add);
+  sc->MINUS =                 s7_define_safe_function(sc, "-",                       g_subtract,               1, 0, true,  H_subtract);
+  sc->MULTIPLY =              s7_define_safe_function(sc, "*",                       g_multiply,               0, 0, true,  H_multiply);
+  sc->DIVIDE =                s7_define_safe_function(sc, "/",                       g_divide,                 1, 0, true,  H_divide);
+  sc->MAX =                   s7_define_safe_function(sc, "max",                     g_max,                    1, 0, true,  H_max);
+  sc->MIN =                   s7_define_safe_function(sc, "min",                     g_min,                    1, 0, true,  H_min);
+  sc->QUOTIENT =              s7_define_safe_function(sc, "quotient",                g_quotient,               2, 0, false, H_quotient);
+  sc->REMAINDER =             s7_define_safe_function(sc, "remainder",               g_remainder,              2, 0, false, H_remainder);
+  sc->MODULO =                s7_define_safe_function(sc, "modulo",                  g_modulo,                 2, 0, false, H_modulo);
+  sc->EQ =                    s7_define_safe_function(sc, "=",                       g_equal,                  2, 0, true,  H_equal);
+  sc->LT =                    s7_define_safe_function(sc, "<",                       g_less,                   2, 0, true,  H_less);
+  sc->GT =                    s7_define_safe_function(sc, ">",                       g_greater,                2, 0, true,  H_greater);
+  sc->LEQ =                   s7_define_safe_function(sc, "<=",                      g_less_or_equal,          2, 0, true,  H_less_or_equal);
+  sc->GEQ =                   s7_define_safe_function(sc, ">=",                      g_greater_or_equal,       2, 0, true,  H_greater_or_equal);
 
-  sc->INEXACT_TO_EXACT = s7_define_safe_function(sc,  "inexact->exact",            g_inexact_to_exact,         1, 0, false, H_inexact_to_exact);
-  sc->EXACT_TO_INEXACT = s7_define_safe_function(sc,  "exact->inexact",            g_exact_to_inexact,         1, 0, false, H_exact_to_inexact);
+  sc->INEXACT_TO_EXACT =      s7_define_safe_function(sc, "inexact->exact",          g_inexact_to_exact,       1, 0, false, H_inexact_to_exact);
+  sc->EXACT_TO_INEXACT =      s7_define_safe_function(sc, "exact->inexact",          g_exact_to_inexact,       1, 0, false, H_exact_to_inexact);
 
-  sc->RANDOM = s7_define_safe_function(sc,            "random",                    g_random,                   1, 1, false, H_random);
-  sc->MAKE_RANDOM_STATE = s7_define_safe_function(sc, "make-random-state",         s7_make_random_state,       1, 1, false, H_make_random_state);
+  sc->RANDOM =                s7_define_safe_function(sc, "random",                  g_random,                 1, 1, false, H_random);
+  sc->MAKE_RANDOM_STATE =     s7_define_safe_function(sc, "make-random-state",       s7_make_random_state,     1, 1, false, H_make_random_state);
 
-  sc->INTEGER_LENGTH = s7_define_safe_function(sc,    "integer-length",            g_integer_length,           1, 0, false, H_integer_length);
-  sc->LOGIOR = s7_define_safe_function(sc,            "logior",                    g_logior,                   0, 0, true,  H_logior);
-  sc->LOGXOR = s7_define_safe_function(sc,            "logxor",                    g_logxor,                   0, 0, true,  H_logxor);
-  sc->LOGAND = s7_define_safe_function(sc,            "logand",                    g_logand,                   0, 0, true,  H_logand);
-  sc->LOGNOT = s7_define_safe_function(sc,            "lognot",                    g_lognot,                   1, 0, false, H_lognot);
-  sc->ASH = s7_define_safe_function(sc,               "ash",                       g_ash,                      2, 0, false, H_ash);
+  sc->INTEGER_LENGTH =        s7_define_safe_function(sc, "integer-length",          g_integer_length,         1, 0, false, H_integer_length);
+  sc->LOGIOR =                s7_define_safe_function(sc, "logior",                  g_logior,                 0, 0, true,  H_logior);
+  sc->LOGXOR =                s7_define_safe_function(sc, "logxor",                  g_logxor,                 0, 0, true,  H_logxor);
+  sc->LOGAND =                s7_define_safe_function(sc, "logand",                  g_logand,                 0, 0, true,  H_logand);
+  sc->LOGNOT =                s7_define_safe_function(sc, "lognot",                  g_lognot,                 1, 0, false, H_lognot);
+  sc->ASH =                   s7_define_safe_function(sc, "ash",                     g_ash,                    2, 0, false, H_ash);
 #endif
-  sc->LOGBITP = s7_define_safe_function(sc,           "logbit?",                   g_logbit,                   2, 0, false, H_logbit);
-  sc->INTEGER_DECODE_FLOAT = s7_define_safe_function(sc, "integer-decode-float",   g_integer_decode_float,     1, 0, false, H_integer_decode_float);
+  sc->LOGBITP =               s7_define_safe_function(sc, "logbit?",                 g_logbit,                 2, 0, false, H_logbit);
+  sc->INTEGER_DECODE_FLOAT =  s7_define_safe_function(sc, "integer-decode-float",    g_integer_decode_float,   1, 0, false, H_integer_decode_float);
 
   rng_tag = s7_new_type_x("<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL, NULL, copy_random_state, NULL, NULL);
-  sc->RANDOM_STATEP = s7_define_function(sc,          "random-state?",             g_is_random_state,          1, 0, false, H_is_random_state);
-  sc->RANDOM_STATE_TO_LIST = s7_define_safe_function(sc, "random-state->list",     s7_random_state_to_list,    0, 1, false, H_random_state_to_list);
+  sc->RANDOM_STATEP =         s7_define_function(sc,      "random-state?",           g_is_random_state,        1, 0, false, H_is_random_state);
+  sc->RANDOM_STATE_TO_LIST =  s7_define_safe_function(sc, "random-state->list",      s7_random_state_to_list,  0, 1, false, H_random_state_to_list);
 
-  sc->NUMBERP = s7_define_safe_function(sc,           "number?",                   g_is_number,                1, 0, false, H_is_number);
-  sc->INTEGERP = s7_define_safe_function(sc,          "integer?",                  g_is_integer,               1, 0, false, H_is_integer);
-  sc->REALP = s7_define_safe_function(sc,             "real?",                     g_is_real,                  1, 0, false, H_is_real);
-  sc->COMPLEXP = s7_define_safe_function(sc,          "complex?",                  g_is_complex,               1, 0, false, H_is_complex);
-  sc->RATIONALP = s7_define_safe_function(sc,         "rational?",                 g_is_rational,              1, 0, false, H_is_rational);
-  sc->EXACTP = s7_define_safe_function(sc,            "exact?",                    g_is_exact,                 1, 0, false, H_is_exact);
-  sc->INEXACTP = s7_define_safe_function(sc,          "inexact?",                  g_is_inexact,               1, 0, false, H_is_inexact);
+  sc->NUMBERP =               s7_define_safe_function(sc, "number?",                 g_is_number,              1, 0, false, H_is_number);
+  sc->INTEGERP =              s7_define_safe_function(sc, "integer?",                g_is_integer,             1, 0, false, H_is_integer);
+  sc->REALP =                 s7_define_safe_function(sc, "real?",                   g_is_real,                1, 0, false, H_is_real);
+  sc->COMPLEXP =              s7_define_safe_function(sc, "complex?",                g_is_complex,             1, 0, false, H_is_complex);
+  sc->RATIONALP =             s7_define_safe_function(sc, "rational?",               g_is_rational,            1, 0, false, H_is_rational);
+  sc->EXACTP =                s7_define_safe_function(sc, "exact?",                  g_is_exact,               1, 0, false, H_is_exact);
+  sc->INEXACTP =              s7_define_safe_function(sc, "inexact?",                g_is_inexact,             1, 0, false, H_is_inexact);
 
-  sc->NUMBER_TO_STRING = s7_define_safe_function(sc,  "number->string",            g_number_to_string,         1, 1, false, H_number_to_string);
-  sc->STRING_TO_NUMBER = s7_define_safe_function(sc,  "string->number",            g_string_to_number,         1, 1, false, H_string_to_number);
+  sc->NUMBER_TO_STRING =      s7_define_safe_function(sc, "number->string",          g_number_to_string,       1, 1, false, H_number_to_string);
+  sc->STRING_TO_NUMBER =      s7_define_safe_function(sc, "string->number",          g_string_to_number,       1, 1, false, H_string_to_number);
 
   
-  sc->CHAR_UPCASE = s7_define_safe_function(sc,       "char-upcase",               g_char_upcase,              1, 0, false, H_char_upcase);
-  sc->CHAR_DOWNCASE = s7_define_safe_function(sc,     "char-downcase",             g_char_downcase,            1, 0, false, H_char_downcase);
-  sc->CHAR_TO_INTEGER = s7_define_safe_function(sc,   "char->integer",             g_char_to_integer,          1, 0, false, H_char_to_integer);
-  sc->INTEGER_TO_CHAR = s7_define_safe_function(sc,   "integer->char",             g_integer_to_char,          1, 0, false, H_integer_to_char);
+  sc->CHAR_UPCASE =           s7_define_safe_function(sc, "char-upcase",             g_char_upcase,            1, 0, false, H_char_upcase);
+  sc->CHAR_DOWNCASE =         s7_define_safe_function(sc, "char-downcase",           g_char_downcase,          1, 0, false, H_char_downcase);
+  sc->CHAR_TO_INTEGER =       s7_define_safe_function(sc, "char->integer",           g_char_to_integer,        1, 0, false, H_char_to_integer);
+  sc->INTEGER_TO_CHAR =       s7_define_safe_function(sc, "integer->char",           g_integer_to_char,        1, 0, false, H_integer_to_char);
   
-  sc->CHAR_UPPER_CASEP = s7_define_safe_function(sc,  "char-upper-case?",          g_is_char_upper_case,       1, 0, false, H_is_char_upper_case);
-  sc->CHAR_LOWER_CASEP = s7_define_safe_function(sc,  "char-lower-case?",          g_is_char_lower_case,       1, 0, false, H_is_char_lower_case);
-  sc->CHAR_ALPHABETICP = s7_define_safe_function(sc,  "char-alphabetic?",          g_is_char_alphabetic,       1, 0, false, H_is_char_alphabetic);
-  sc->CHAR_NUMERICP = s7_define_safe_function(sc,     "char-numeric?",             g_is_char_numeric,          1, 0, false, H_is_char_numeric);
-  sc->CHAR_WHITESPACEP = s7_define_safe_function(sc,  "char-whitespace?",          g_is_char_whitespace,       1, 0, false, H_is_char_whitespace);
-  sc->CHARP = s7_define_safe_function(sc,             "char?",                     g_is_char,                  1, 0, false, H_is_char);
+  sc->CHAR_UPPER_CASEP =      s7_define_safe_function(sc, "char-upper-case?",        g_is_char_upper_case,     1, 0, false, H_is_char_upper_case);
+  sc->CHAR_LOWER_CASEP =      s7_define_safe_function(sc, "char-lower-case?",        g_is_char_lower_case,     1, 0, false, H_is_char_lower_case);
+  sc->CHAR_ALPHABETICP =      s7_define_safe_function(sc, "char-alphabetic?",        g_is_char_alphabetic,     1, 0, false, H_is_char_alphabetic);
+  sc->CHAR_NUMERICP =         s7_define_safe_function(sc, "char-numeric?",           g_is_char_numeric,        1, 0, false, H_is_char_numeric);
+  sc->CHAR_WHITESPACEP =      s7_define_safe_function(sc, "char-whitespace?",        g_is_char_whitespace,     1, 0, false, H_is_char_whitespace);
+  sc->CHARP =                 s7_define_safe_function(sc, "char?",                   g_is_char,                1, 0, false, H_is_char);
   
-  sc->CHAR_EQ = s7_define_safe_function(sc,           "char=?",                    g_chars_are_equal,          2, 0, true,  H_chars_are_equal);
-  sc->CHAR_LT = s7_define_safe_function(sc,           "char<?",                    g_chars_are_less,           2, 0, true,  H_chars_are_less);
-  sc->CHAR_GT = s7_define_safe_function(sc,           "char>?",                    g_chars_are_greater,        2, 0, true,  H_chars_are_greater);
-  sc->CHAR_LEQ = s7_define_safe_function(sc,          "char<=?",                   g_chars_are_leq,            2, 0, true,  H_chars_are_leq);
-  sc->CHAR_GEQ = s7_define_safe_function(sc,          "char>=?",                   g_chars_are_geq,            2, 0, true,  H_chars_are_geq);
-  sc->CHAR_CI_EQ = s7_define_safe_function(sc,        "char-ci=?",                 g_chars_are_ci_equal,       2, 0, true,  H_chars_are_ci_equal);
-  sc->CHAR_CI_LT = s7_define_safe_function(sc,        "char-ci<?",                 g_chars_are_ci_less,        2, 0, true,  H_chars_are_ci_less);
-  sc->CHAR_CI_GT = s7_define_safe_function(sc,        "char-ci>?",                 g_chars_are_ci_greater,     2, 0, true,  H_chars_are_ci_greater);
-  sc->CHAR_CI_LEQ = s7_define_safe_function(sc,       "char-ci<=?",                g_chars_are_ci_leq,         2, 0, true,  H_chars_are_ci_leq);
-  sc->CHAR_CI_GEQ = s7_define_safe_function(sc,       "char-ci>=?",                g_chars_are_ci_geq,         2, 0, true,  H_chars_are_ci_geq);
+  sc->CHAR_EQ =               s7_define_safe_function(sc, "char=?",                  g_chars_are_equal,        2, 0, true,  H_chars_are_equal);
+  sc->CHAR_LT =               s7_define_safe_function(sc, "char<?",                  g_chars_are_less,         2, 0, true,  H_chars_are_less);
+  sc->CHAR_GT =               s7_define_safe_function(sc, "char>?",                  g_chars_are_greater,      2, 0, true,  H_chars_are_greater);
+  sc->CHAR_LEQ =              s7_define_safe_function(sc, "char<=?",                 g_chars_are_leq,          2, 0, true,  H_chars_are_leq);
+  sc->CHAR_GEQ =              s7_define_safe_function(sc, "char>=?",                 g_chars_are_geq,          2, 0, true,  H_chars_are_geq);
+  sc->CHAR_CI_EQ =            s7_define_safe_function(sc, "char-ci=?",               g_chars_are_ci_equal,     2, 0, true,  H_chars_are_ci_equal);
+  sc->CHAR_CI_LT =            s7_define_safe_function(sc, "char-ci<?",               g_chars_are_ci_less,      2, 0, true,  H_chars_are_ci_less);
+  sc->CHAR_CI_GT =            s7_define_safe_function(sc, "char-ci>?",               g_chars_are_ci_greater,   2, 0, true,  H_chars_are_ci_greater);
+  sc->CHAR_CI_LEQ =           s7_define_safe_function(sc, "char-ci<=?",              g_chars_are_ci_leq,       2, 0, true,  H_chars_are_ci_leq);
+  sc->CHAR_CI_GEQ =           s7_define_safe_function(sc, "char-ci>=?",              g_chars_are_ci_geq,       2, 0, true,  H_chars_are_ci_geq);
   
   
-  sc->STRINGP = s7_define_safe_function(sc,           "string?",                   g_is_string,                1, 0, false, H_is_string);
-  sc->MAKE_STRING = s7_define_safe_function(sc,       "make-string",               g_make_string,              1, 1, false, H_make_string);
-  sc->STRING_LENGTH = s7_define_safe_function(sc,     "string-length",             g_string_length,            1, 0, false, H_string_length);
-  sc->STRING_REF = s7_define_safe_function(sc,        "string-ref",                g_string_ref,               2, 0, false, H_string_ref);
-  sc->STRING_SET = s7_define_safe_function(sc,        "string-set!",               g_string_set,               3, 0, false, H_string_set);
-  sc->STRING_EQ = s7_define_safe_function(sc,         "string=?",                  g_strings_are_equal,        2, 0, true,  H_strings_are_equal);
-  sc->STRING_LT = s7_define_safe_function(sc,         "string<?",                  g_strings_are_less,         2, 0, true,  H_strings_are_less);
-  sc->STRING_GT = s7_define_safe_function(sc,         "string>?",                  g_strings_are_greater,      2, 0, true,  H_strings_are_greater);
-  sc->STRING_LEQ = s7_define_safe_function(sc,        "string<=?",                 g_strings_are_leq,          2, 0, true,  H_strings_are_leq);
-  sc->STRING_GEQ = s7_define_safe_function(sc,        "string>=?",                 g_strings_are_geq,          2, 0, true,  H_strings_are_geq);
-  sc->STRING_CI_EQ = s7_define_safe_function(sc,      "string-ci=?",               g_strings_are_ci_equal,     2, 0, true,  H_strings_are_ci_equal);
-  sc->STRING_CI_LT = s7_define_safe_function(sc,      "string-ci<?",               g_strings_are_ci_less,      2, 0, true,  H_strings_are_ci_less);
-  sc->STRING_CI_GT = s7_define_safe_function(sc,      "string-ci>?",               g_strings_are_ci_greater,   2, 0, true,  H_strings_are_ci_greater);
-  sc->STRING_CI_LEQ = s7_define_safe_function(sc,     "string-ci<=?",              g_strings_are_ci_leq,       2, 0, true,  H_strings_are_ci_leq);
-  sc->STRING_CI_GEQ = s7_define_safe_function(sc,     "string-ci>=?",              g_strings_are_ci_geq,       2, 0, true,  H_strings_are_ci_geq);
+  sc->STRINGP =               s7_define_safe_function(sc, "string?",                 g_is_string,              1, 0, false, H_is_string);
+  sc->MAKE_STRING =           s7_define_safe_function(sc, "make-string",             g_make_string,            1, 1, false, H_make_string);
+  sc->STRING_LENGTH =         s7_define_safe_function(sc, "string-length",           g_string_length,          1, 0, false, H_string_length);
+  sc->STRING_REF =            s7_define_safe_function(sc, "string-ref",              g_string_ref,             2, 0, false, H_string_ref);
+  sc->STRING_SET =            s7_define_safe_function(sc, "string-set!",             g_string_set,             3, 0, false, H_string_set);
+  sc->STRING_EQ =             s7_define_safe_function(sc, "string=?",                g_strings_are_equal,      2, 0, true,  H_strings_are_equal);
+  sc->STRING_LT =             s7_define_safe_function(sc, "string<?",                g_strings_are_less,       2, 0, true,  H_strings_are_less);
+  sc->STRING_GT =             s7_define_safe_function(sc, "string>?",                g_strings_are_greater,    2, 0, true,  H_strings_are_greater);
+  sc->STRING_LEQ =            s7_define_safe_function(sc, "string<=?",               g_strings_are_leq,        2, 0, true,  H_strings_are_leq);
+  sc->STRING_GEQ =            s7_define_safe_function(sc, "string>=?",               g_strings_are_geq,        2, 0, true,  H_strings_are_geq);
+  sc->STRING_CI_EQ =          s7_define_safe_function(sc, "string-ci=?",             g_strings_are_ci_equal,   2, 0, true,  H_strings_are_ci_equal);
+  sc->STRING_CI_LT =          s7_define_safe_function(sc, "string-ci<?",             g_strings_are_ci_less,    2, 0, true,  H_strings_are_ci_less);
+  sc->STRING_CI_GT =          s7_define_safe_function(sc, "string-ci>?",             g_strings_are_ci_greater, 2, 0, true,  H_strings_are_ci_greater);
+  sc->STRING_CI_LEQ =         s7_define_safe_function(sc, "string-ci<=?",            g_strings_are_ci_leq,     2, 0, true,  H_strings_are_ci_leq);
+  sc->STRING_CI_GEQ =         s7_define_safe_function(sc, "string-ci>=?",            g_strings_are_ci_geq,     2, 0, true,  H_strings_are_ci_geq);
   
-  sc->STRING_APPEND = s7_define_safe_function(sc,     "string-append",             g_string_append,            0, 0, true,  H_string_append);
-  sc->STRING_FILL = s7_define_safe_function(sc,       "string-fill!",              g_string_fill,              2, 0, false, H_string_fill);
-  sc->STRING_COPY = s7_define_safe_function(sc,       "string-copy",               g_string_copy,              1, 0, false, H_string_copy);
-  sc->SUBSTRING = s7_define_safe_function(sc,         "substring",                 g_substring,                2, 1, false, H_substring);
-  sc->STRING = s7_define_safe_function(sc,            "string",                    g_string,                   0, 0, true,  H_string);
-  sc->LIST_TO_STRING = s7_define_safe_function(sc,    "list->string",              g_list_to_string,           1, 0, false, H_list_to_string);
-  sc->STRING_TO_LIST = s7_define_safe_function(sc,    "string->list",              g_string_to_list,           1, 0, false, H_string_to_list);
-  sc->OBJECT_TO_STRING = s7_define_safe_function(sc,  "object->string",            g_object_to_string,         1, 1, false, H_object_to_string);
-  sc->FORMAT = s7_define_function(sc,                 "format",                    g_format,                   1, 0, true,  H_format);
+  sc->STRING_APPEND =         s7_define_safe_function(sc, "string-append",           g_string_append,          0, 0, true,  H_string_append);
+  sc->STRING_FILL =           s7_define_safe_function(sc, "string-fill!",            g_string_fill,            2, 0, false, H_string_fill);
+  sc->STRING_COPY =           s7_define_safe_function(sc, "string-copy",             g_string_copy,            1, 0, false, H_string_copy);
+  sc->SUBSTRING =             s7_define_safe_function(sc, "substring",               g_substring,              2, 1, false, H_substring);
+  sc->STRING =                s7_define_safe_function(sc, "string",                  g_string,                 0, 0, true,  H_string);
+  sc->LIST_TO_STRING =        s7_define_safe_function(sc, "list->string",            g_list_to_string,         1, 0, false, H_list_to_string);
+  sc->STRING_TO_LIST =        s7_define_safe_function(sc, "string->list",            g_string_to_list,         1, 0, false, H_string_to_list);
+  sc->OBJECT_TO_STRING =      s7_define_safe_function(sc, "object->string",          g_object_to_string,       1, 1, false, H_object_to_string);
+  sc->FORMAT =                s7_define_function(sc,      "format",                  g_format,                 1, 0, true,  H_format);
   /* as format runs through the saved args, "~A" can call object->string; it can call format, and 
    *    sc->temp_cell_2 can be stepped on in the arg evaluation of the recursive format call,
    *    so format isn't safe if we've seen open_env + object->string.  This isn't called
@@ -62089,110 +62082,111 @@ s7_scheme *s7_init(void)
    *    in play long enough for s7_call should also be unsafe.
    */
 
-  sc->NULLP = s7_define_safe_function(sc,             "null?",                     g_is_null,                  1, 0, false, H_is_null);
-  sc->LISTP = s7_define_safe_function(sc,             "list?",                     g_is_list,                  1, 0, false, H_is_list);
-  sc->PAIRP = s7_define_safe_function(sc,             "pair?",                     g_is_pair,                  1, 0, false, H_is_pair);
-  sc->CONS = s7_define_safe_function(sc,              "cons",                      g_cons,                     2, 0, false, H_cons);
 
-  sc->CAR = s7_define_safe_function(sc,               "car",                       g_car,                      1, 0, false, H_car);
-  sc->CDR = s7_define_safe_function(sc,               "cdr",                       g_cdr,                      1, 0, false, H_cdr);
-  sc->SET_CARB = s7_define_function(sc,               "set-car!",                  g_set_car,                  2, 0, false, H_set_car); /* ??: list-set! is safe */
-  sc->SET_CDRB = s7_define_function(sc,               "set-cdr!",                  g_set_cdr,                  2, 0, false, H_set_cdr);
-  sc->CAAR = s7_define_safe_function(sc,              "caar",                      g_caar,                     1, 0, false, H_caar);
-  sc->CADR = s7_define_safe_function(sc,              "cadr",                      g_cadr,                     1, 0, false, H_cadr);
-  sc->CDAR = s7_define_safe_function(sc,              "cdar",                      g_cdar,                     1, 0, false, H_cdar);
-  sc->CDDR = s7_define_safe_function(sc,              "cddr",                      g_cddr,                     1, 0, false, H_cddr);
-  sc->CAAAR = s7_define_safe_function(sc,             "caaar",                     g_caaar,                    1, 0, false, H_caaar);
-  sc->CAADR = s7_define_safe_function(sc,             "caadr",                     g_caadr,                    1, 0, false, H_caadr);
-  sc->CADAR = s7_define_safe_function(sc,             "cadar",                     g_cadar,                    1, 0, false, H_cadar);
-  sc->CDAAR = s7_define_safe_function(sc,             "cdaar",                     g_cdaar,                    1, 0, false, H_cdaar);
-  sc->CADDR = s7_define_safe_function(sc,             "caddr",                     g_caddr,                    1, 0, false, H_caddr);
-  sc->CDDDR = s7_define_safe_function(sc,             "cdddr",                     g_cdddr,                    1, 0, false, H_cdddr);
-  sc->CDADR = s7_define_safe_function(sc,             "cdadr",                     g_cdadr,                    1, 0, false, H_cdadr);
-  sc->CDDAR = s7_define_safe_function(sc,             "cddar",                     g_cddar,                    1, 0, false, H_cddar);
-  sc->CAAAAR = s7_define_safe_function(sc,            "caaaar",                    g_caaaar,                   1, 0, false, H_caaaar);
-  sc->CAAADR = s7_define_safe_function(sc,            "caaadr",                    g_caaadr,                   1, 0, false, H_caaadr);
-  sc->CAADAR = s7_define_safe_function(sc,            "caadar",                    g_caadar,                   1, 0, false, H_caadar);
-  sc->CADAAR = s7_define_safe_function(sc,            "cadaar",                    g_cadaar,                   1, 0, false, H_cadaar);
-  sc->CAADDR = s7_define_safe_function(sc,            "caaddr",                    g_caaddr,                   1, 0, false, H_caaddr);
-  sc->CADDDR = s7_define_safe_function(sc,            "cadddr",                    g_cadddr,                   1, 0, false, H_cadddr);
-  sc->CADADR = s7_define_safe_function(sc,            "cadadr",                    g_cadadr,                   1, 0, false, H_cadadr);
-  sc->CADDAR = s7_define_safe_function(sc,            "caddar",                    g_caddar,                   1, 0, false, H_caddar);
-  sc->CDAAAR = s7_define_safe_function(sc,            "cdaaar",                    g_cdaaar,                   1, 0, false, H_cdaaar);
-  sc->CDAADR = s7_define_safe_function(sc,            "cdaadr",                    g_cdaadr,                   1, 0, false, H_cdaadr);
-  sc->CDADAR = s7_define_safe_function(sc,            "cdadar",                    g_cdadar,                   1, 0, false, H_cdadar);
-  sc->CDDAAR = s7_define_safe_function(sc,            "cddaar",                    g_cddaar,                   1, 0, false, H_cddaar);
-  sc->CDADDR = s7_define_safe_function(sc,            "cdaddr",                    g_cdaddr,                   1, 0, false, H_cdaddr);
-  sc->CDDDDR = s7_define_safe_function(sc,            "cddddr",                    g_cddddr,                   1, 0, false, H_cddddr);
-  sc->CDDADR = s7_define_safe_function(sc,            "cddadr",                    g_cddadr,                   1, 0, false, H_cddadr);
-  sc->CDDDAR = s7_define_safe_function(sc,            "cdddar",                    g_cdddar,                   1, 0, false, H_cdddar);
+  sc->NULLP =                 s7_define_safe_function(sc, "null?",                   g_is_null,                1, 0, false, H_is_null);
+  sc->LISTP =                 s7_define_safe_function(sc, "list?",                   g_is_list,                1, 0, false, H_is_list);
+  sc->PAIRP =                 s7_define_safe_function(sc, "pair?",                   g_is_pair,                1, 0, false, H_is_pair);
+  sc->CONS =                  s7_define_safe_function(sc, "cons",                    g_cons,                   2, 0, false, H_cons);
 
-  sc->ASSQ = s7_define_safe_function(sc,              "assq",                      g_assq,                     2, 0, false, H_assq);
-  sc->ASSV = s7_define_safe_function(sc,              "assv",                      g_assv,                     2, 0, false, H_assv);
-  sc->ASSOC = s7_define_function(sc,                  "assoc",                     g_assoc,                    2, 1, false, H_assoc);
-  sc->MEMQ = s7_define_safe_function(sc,              "memq",                      g_memq,                     2, 0, false, H_memq);
-  sc->MEMV = s7_define_safe_function(sc,              "memv",                      g_memv,                     2, 0, false, H_memv);
-  sc->MEMBER = s7_define_function(sc,                 "member",                    g_member,                   2, 1, false, H_member);
+  sc->CAR =                   s7_define_safe_function(sc, "car",                     g_car,                    1, 0, false, H_car);
+  sc->CDR =                   s7_define_safe_function(sc, "cdr",                     g_cdr,                    1, 0, false, H_cdr);
+  sc->SET_CARB =              s7_define_function(sc,      "set-car!",                g_set_car,                2, 0, false, H_set_car); /* ??: list-set! is safe */
+  sc->SET_CDRB =              s7_define_function(sc,      "set-cdr!",                g_set_cdr,                2, 0, false, H_set_cdr);
+  sc->CAAR =                  s7_define_safe_function(sc, "caar",                    g_caar,                   1, 0, false, H_caar);
+  sc->CADR =                  s7_define_safe_function(sc, "cadr",                    g_cadr,                   1, 0, false, H_cadr);
+  sc->CDAR =                  s7_define_safe_function(sc, "cdar",                    g_cdar,                   1, 0, false, H_cdar);
+  sc->CDDR =                  s7_define_safe_function(sc, "cddr",                    g_cddr,                   1, 0, false, H_cddr);
+  sc->CAAAR =                 s7_define_safe_function(sc, "caaar",                   g_caaar,                  1, 0, false, H_caaar);
+  sc->CAADR =                 s7_define_safe_function(sc, "caadr",                   g_caadr,                  1, 0, false, H_caadr);
+  sc->CADAR =                 s7_define_safe_function(sc, "cadar",                   g_cadar,                  1, 0, false, H_cadar);
+  sc->CDAAR =                 s7_define_safe_function(sc, "cdaar",                   g_cdaar,                  1, 0, false, H_cdaar);
+  sc->CADDR =                 s7_define_safe_function(sc, "caddr",                   g_caddr,                  1, 0, false, H_caddr);
+  sc->CDDDR =                 s7_define_safe_function(sc, "cdddr",                   g_cdddr,                  1, 0, false, H_cdddr);
+  sc->CDADR =                 s7_define_safe_function(sc, "cdadr",                   g_cdadr,                  1, 0, false, H_cdadr);
+  sc->CDDAR =                 s7_define_safe_function(sc, "cddar",                   g_cddar,                  1, 0, false, H_cddar);
+  sc->CAAAAR =                s7_define_safe_function(sc, "caaaar",                  g_caaaar,                 1, 0, false, H_caaaar);
+  sc->CAAADR =                s7_define_safe_function(sc, "caaadr",                  g_caaadr,                 1, 0, false, H_caaadr);
+  sc->CAADAR =                s7_define_safe_function(sc, "caadar",                  g_caadar,                 1, 0, false, H_caadar);
+  sc->CADAAR =                s7_define_safe_function(sc, "cadaar",                  g_cadaar,                 1, 0, false, H_cadaar);
+  sc->CAADDR =                s7_define_safe_function(sc, "caaddr",                  g_caaddr,                 1, 0, false, H_caaddr);
+  sc->CADDDR =                s7_define_safe_function(sc, "cadddr",                  g_cadddr,                 1, 0, false, H_cadddr);
+  sc->CADADR =                s7_define_safe_function(sc, "cadadr",                  g_cadadr,                 1, 0, false, H_cadadr);
+  sc->CADDAR =                s7_define_safe_function(sc, "caddar",                  g_caddar,                 1, 0, false, H_caddar);
+  sc->CDAAAR =                s7_define_safe_function(sc, "cdaaar",                  g_cdaaar,                 1, 0, false, H_cdaaar);
+  sc->CDAADR =                s7_define_safe_function(sc, "cdaadr",                  g_cdaadr,                 1, 0, false, H_cdaadr);
+  sc->CDADAR =                s7_define_safe_function(sc, "cdadar",                  g_cdadar,                 1, 0, false, H_cdadar);
+  sc->CDDAAR =                s7_define_safe_function(sc, "cddaar",                  g_cddaar,                 1, 0, false, H_cddaar);
+  sc->CDADDR =                s7_define_safe_function(sc, "cdaddr",                  g_cdaddr,                 1, 0, false, H_cdaddr);
+  sc->CDDDDR =                s7_define_safe_function(sc, "cddddr",                  g_cddddr,                 1, 0, false, H_cddddr);
+  sc->CDDADR =                s7_define_safe_function(sc, "cddadr",                  g_cddadr,                 1, 0, false, H_cddadr);
+  sc->CDDDAR =                s7_define_safe_function(sc, "cdddar",                  g_cdddar,                 1, 0, false, H_cdddar);
 
-  sc->APPEND = s7_define_safe_function(sc,            "append",                    g_append,                   0, 0, true,  H_append);
-  sc->LIST = s7_define_function(sc,                   "list",                      g_list,                     0, 0, true,  H_list);
+  sc->ASSQ =                  s7_define_safe_function(sc, "assq",                    g_assq,                   2, 0, false, H_assq);
+  sc->ASSV =                  s7_define_safe_function(sc, "assv",                    g_assv,                   2, 0, false, H_assv);
+  sc->ASSOC =                 s7_define_function(sc,      "assoc",                   g_assoc,                  2, 1, false, H_assoc);
+  sc->MEMQ =                  s7_define_safe_function(sc, "memq",                    g_memq,                   2, 0, false, H_memq);
+  sc->MEMV =                  s7_define_safe_function(sc, "memv",                    g_memv,                   2, 0, false, H_memv);
+  sc->MEMBER =                s7_define_function(sc,      "member",                  g_member,                 2, 1, false, H_member);
+
+  sc->APPEND =                s7_define_safe_function(sc, "append",                  g_append,                 0, 0, true,  H_append);
+  sc->LIST =                  s7_define_function(sc,      "list",                    g_list,                   0, 0, true,  H_list);
   {
     s7_pointer p;
     p = s7_symbol_value(sc, sc->LIST);
     set_copy_args(p);
   }
-  sc->LIST_REF = s7_define_safe_function(sc,          "list-ref",                  g_list_ref,                 2, 0, true,  H_list_ref);
-  sc->LIST_SET = s7_define_safe_function(sc,          "list-set!",                 g_list_set,                 3, 0, true,  H_list_set);
-  sc->LIST_TAIL = s7_define_function(sc,              "list-tail",                 g_list_tail,                2, 0, false, H_list_tail);
-  sc->MAKE_LIST = s7_define_safe_function(sc,         "make-list",                 g_make_list,                1, 1, false, H_make_list);
+  sc->LIST_REF =              s7_define_safe_function(sc, "list-ref",                g_list_ref,               2, 0, true,  H_list_ref);
+  sc->LIST_SET =              s7_define_safe_function(sc, "list-set!",               g_list_set,               3, 0, true,  H_list_set);
+  sc->LIST_TAIL =             s7_define_function(sc,      "list-tail",               g_list_tail,              2, 0, false, H_list_tail);
+  sc->MAKE_LIST =             s7_define_safe_function(sc, "make-list",               g_make_list,              1, 1, false, H_make_list);
 
 
-  sc->LENGTH = s7_define_safe_function(sc,            "length",                    g_length,                   1, 0, false, H_length);
-  sc->COPY = s7_define_safe_function(sc,              "copy",                      g_copy,                     1, 0, false, H_copy);
-  sc->FILL = s7_define_function(sc,                   "fill!",                     g_fill,                     2, 0, false, H_fill);
-  sc->REVERSE = s7_define_safe_function(sc,           "reverse",                   g_reverse,                  1, 0, false, H_reverse);
-  sc->REVERSEB = s7_define_function(sc,               "reverse!",                  g_reverse_in_place,         1, 0, false, H_reverse_in_place); /* used by Snd code */
-  sc->SORT = s7_define_function(sc,                   "sort!",                     g_sort,                     2, 0, false, H_sort);
+  sc->LENGTH =                s7_define_safe_function(sc, "length",                  g_length,                 1, 0, false, H_length);
+  sc->COPY =                  s7_define_safe_function(sc, "copy",                    g_copy,                   1, 0, false, H_copy);
+  sc->FILL =                  s7_define_function(sc,      "fill!",                   g_fill,                   2, 0, false, H_fill);
+  sc->REVERSE =               s7_define_safe_function(sc, "reverse",                 g_reverse,                1, 0, false, H_reverse);
+  sc->REVERSEB =              s7_define_function(sc,      "reverse!",                g_reverse_in_place,       1, 0, false, H_reverse_in_place); /* used by Snd code */
+  sc->SORT =                  s7_define_function(sc,      "sort!",                   g_sort,                   2, 0, false, H_sort);
   
 
-  sc->LIST_TO_VECTOR = s7_define_safe_function(sc,    "list->vector",              g_list_to_vector,           1, 0, false, H_list_to_vector);
-  sc->VECTOR_TO_LIST = s7_define_safe_function(sc,    "vector->list",              g_vector_to_list,           1, 0, false, H_vector_to_list);
-  sc->VECTORP = s7_define_safe_function(sc,           "vector?",                   g_is_vector,                1, 0, false, H_is_vector);
-  sc->VECTOR_FILL = s7_define_safe_function(sc,       "vector-fill!",              g_vector_fill,              2, 0, false, H_vector_fill);
-  sc->VECTOR_LENGTH = s7_define_safe_function(sc,     "vector-length",             g_vector_length,            1, 0, false, H_vector_length);
-  sc->VECTOR_REF = s7_define_safe_function(sc,        "vector-ref",                g_vector_ref,               2, 0, true,  H_vector_ref);
-  sc->VECTOR_SET = s7_define_safe_function(sc,        "vector-set!",               g_vector_set,               3, 0, true,  H_vector_set);
-  sc->VECTOR_DIMENSIONS = s7_define_safe_function(sc, "vector-dimensions",         g_vector_dimensions,        1, 0, false, H_vector_dimensions);
-  sc->MAKE_VECTOR = s7_define_safe_function(sc,       "make-vector",               g_make_vector,              1, 1, false, H_make_vector);
-  sc->VECTOR = s7_define_safe_function(sc,            "vector",                    g_vector,                   0, 0, true,  H_vector);
+  sc->LIST_TO_VECTOR =        s7_define_safe_function(sc, "list->vector",            g_list_to_vector,         1, 0, false, H_list_to_vector);
+  sc->VECTOR_TO_LIST =        s7_define_safe_function(sc, "vector->list",            g_vector_to_list,         1, 0, false, H_vector_to_list);
+  sc->VECTORP =               s7_define_safe_function(sc, "vector?",                 g_is_vector,              1, 0, false, H_is_vector);
+  sc->VECTOR_FILL =           s7_define_safe_function(sc, "vector-fill!",            g_vector_fill,            2, 0, false, H_vector_fill);
+  sc->VECTOR_LENGTH =         s7_define_safe_function(sc, "vector-length",           g_vector_length,          1, 0, false, H_vector_length);
+  sc->VECTOR_REF =            s7_define_safe_function(sc, "vector-ref",              g_vector_ref,             2, 0, true,  H_vector_ref);
+  sc->VECTOR_SET =            s7_define_safe_function(sc, "vector-set!",             g_vector_set,             3, 0, true,  H_vector_set);
+  sc->VECTOR_DIMENSIONS =     s7_define_safe_function(sc, "vector-dimensions",       g_vector_dimensions,      1, 0, false, H_vector_dimensions);
+  sc->MAKE_VECTOR =           s7_define_safe_function(sc, "make-vector",             g_make_vector,            1, 1, false, H_make_vector);
+  sc->VECTOR =                s7_define_safe_function(sc, "vector",                  g_vector,                 0, 0, true,  H_vector);
   set_setter(sc->VECTOR); /* ?? */
   sc->Vector = s7_symbol_value(sc, sc->VECTOR);
   set_setter(sc->Vector);
 
 
-  sc->HASH_TABLE = s7_define_safe_function(sc,        "hash-table",                g_hash_table,               0, 0, true,  H_hash_table);
-  sc->HASH_TABLEP = s7_define_safe_function(sc,       "hash-table?",               g_is_hash_table,            1, 0, false, H_is_hash_table);
-  sc->MAKE_HASH_TABLE = s7_define_safe_function(sc,   "make-hash-table",           g_make_hash_table,          0, 1, false, H_make_hash_table);
-  sc->HASH_TABLE_REF = s7_define_safe_function(sc,    "hash-table-ref",            g_hash_table_ref,           2, 0, true,  H_hash_table_ref);
-  sc->HASH_TABLE_SET = s7_define_safe_function(sc,    "hash-table-set!",           g_hash_table_set,           3, 0, false, H_hash_table_set);
-  sc->HASH_TABLE_SIZE = s7_define_safe_function(sc,   "hash-table-size",           g_hash_table_size,          1, 0, false, H_hash_table_size);
+  sc->HASH_TABLE =            s7_define_safe_function(sc, "hash-table",              g_hash_table,             0, 0, true,  H_hash_table);
+  sc->HASH_TABLEP =           s7_define_safe_function(sc, "hash-table?",             g_is_hash_table,          1, 0, false, H_is_hash_table);
+  sc->MAKE_HASH_TABLE =       s7_define_safe_function(sc, "make-hash-table",         g_make_hash_table,        0, 1, false, H_make_hash_table);
+  sc->HASH_TABLE_REF =        s7_define_safe_function(sc, "hash-table-ref",          g_hash_table_ref,         2, 0, true,  H_hash_table_ref);
+  sc->HASH_TABLE_SET =        s7_define_safe_function(sc, "hash-table-set!",         g_hash_table_set,         3, 0, false, H_hash_table_set);
+  sc->HASH_TABLE_SIZE =       s7_define_safe_function(sc, "hash-table-size",         g_hash_table_size,        1, 0, false, H_hash_table_size);
   
   /* s7_define_safe_function(sc, "hash-table-entries", g_hash_table_entries, 1, 0, false, "an experiment"); */
 
   ht_iter_tag = s7_new_type_x("hash-table-iterator", print_ht_iter, free_ht_iter, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
   sc->MAKE_HASH_TABLE_ITERATOR = s7_define_safe_function(sc, "make-hash-table-iterator", g_make_hash_table_iterator, 1, 0, false, H_make_hash_table_iterator);
-  sc->HASH_TABLE_ITERATORP = s7_define_safe_function(sc, "hash-table-iterator?",   g_is_hash_table_iterator,   1, 0, false, H_is_hash_table_iterator);
+  sc->HASH_TABLE_ITERATORP =    s7_define_safe_function(sc, "hash-table-iterator?",  g_is_hash_table_iterator, 1, 0, false, H_is_hash_table_iterator);
 
 
-  sc->CALL_CC = s7_define_function(sc,                "call/cc",                   g_call_cc,                  1, 0, false, H_call_cc);
-  s7_define_function(sc,                              "call-with-current-continuation", g_call_cc,             1, 0, false, H_call_cc);
-  sc->CONTINUATIONP = s7_define_safe_function(sc,     "continuation?",             g_is_continuation,          1, 0, false, H_is_continuation);
-  sc->CALL_WITH_EXIT = s7_define_function(sc,         "call-with-exit",            g_call_with_exit,           1, 0, false, H_call_with_exit);
+  sc->CALL_CC =               s7_define_function(sc,      "call/cc",                 g_call_cc,                1, 0, false, H_call_cc);
+                              s7_define_function(sc,      "call-with-current-continuation", g_call_cc,         1, 0, false, H_call_cc);
+  sc->CONTINUATIONP =         s7_define_safe_function(sc, "continuation?",           g_is_continuation,        1, 0, false, H_is_continuation);
+  sc->CALL_WITH_EXIT =        s7_define_function(sc,      "call-with-exit",          g_call_with_exit,         1, 0, false, H_call_with_exit);
 
-  sc->LOAD = s7_define_function(sc,                   "load",                      g_load,                     1, 1, false, H_load);
-  sc->EVAL = s7_define_function(sc,                   "eval",                      g_eval,                     1, 1, false, H_eval);
-  sc->EVAL_STRING = s7_define_function(sc,            "eval-string",               g_eval_string,              1, 1, false, H_eval_string);
-  sc->APPLY = s7_define_function(sc,                  "apply",                     g_apply,                    1, 0, true,  H_apply);
+  sc->LOAD =                  s7_define_function(sc,      "load",                    g_load,                   1, 1, false, H_load);
+  sc->EVAL =                  s7_define_function(sc,      "eval",                    g_eval,                   1, 1, false, H_eval);
+  sc->EVAL_STRING =           s7_define_function(sc,      "eval-string",             g_eval_string,            1, 1, false, H_eval_string);
+  sc->APPLY =                 s7_define_function(sc,      "apply",                   g_apply,                  1, 0, true,  H_apply);
   sc->Apply = s7_symbol_value(sc, sc->APPLY);
   set_type(sc->Apply, type(sc->Apply) | T_COPY_ARGS);
   /* (let ((x '((1 2) 3 4))) 
@@ -62201,51 +62195,51 @@ s7_scheme *s7_init(void)
    * should not mess up x!
    */
 
-  sc->FOR_EACH = s7_define_function(sc,               "for-each",                  g_for_each,                 2, 0, true,  H_for_each);
-  sc->MAP = s7_define_function(sc,                    "map",                       g_map,                      2, 0, true,  H_map);
+  sc->FOR_EACH =              s7_define_function(sc,      "for-each",                g_for_each,               2, 0, true,  H_for_each);
+  sc->MAP =                   s7_define_function(sc,      "map",                     g_map,                    2, 0, true,  H_map);
 
-  sc->VALUES = s7_define_function(sc,                 "values",                    g_values,                   0, 0, true,  H_values);
-  sc->DYNAMIC_WIND = s7_define_function(sc,           "dynamic-wind",              g_dynamic_wind,             3, 0, false, H_dynamic_wind);
-  sc->CATCH = s7_define_function(sc,                  "catch",                     g_catch,                    3, 0, false, H_catch);
-  sc->THROW = s7_define_function(sc,                  "throw",                     g_throw,                    1, 0, true,  H_throw);
-  sc->ERROR = s7_define_function(sc,                  "error",                     g_error,                    0, 0, true,  H_error);
+  sc->VALUES =                s7_define_function(sc,      "values",                  g_values,                 0, 0, true,  H_values);
+  sc->DYNAMIC_WIND =          s7_define_function(sc,      "dynamic-wind",            g_dynamic_wind,           3, 0, false, H_dynamic_wind);
+  sc->CATCH =                 s7_define_function(sc,      "catch",                   g_catch,                  3, 0, false, H_catch);
+  sc->THROW =                 s7_define_function(sc,      "throw",                   g_throw,                  1, 0, true,  H_throw);
+  sc->ERROR =                 s7_define_function(sc,      "error",                   g_error,                  0, 0, true,  H_error);
 
   /* these are internal for quasiquote's use -- they are values, not symbols */
-                        s7_define_constant_function(sc, "{values}",                g_qq_values,                0, 0, true,  H_qq_values);
-  sc->QQ_Apply_Values = s7_define_constant_function(sc, "{apply} {values}",        g_apply_values,             0, 0, true,  H_apply_values);
-  sc->QQ_Append =       s7_define_constant_function(sc, "{append}",                g_append,                   0, 0, true,  H_append);
-  sc->Multivector =     s7_define_constant_function(sc, "{multivector}",           g_qq_multivector,           1, 0, true,  H_qq_multivector);
-  sc->QQ_List =         s7_define_constant_function(sc, "{list}",                  g_qq_list,                  0, 0, true,  H_qq_list);
+                              s7_define_constant_function(sc, "{values}",            g_qq_values,              0, 0, true,  H_qq_values);
+  sc->QQ_Apply_Values =       s7_define_constant_function(sc, "{apply} {values}",    g_apply_values,           0, 0, true,  H_apply_values);
+  sc->QQ_Append =             s7_define_constant_function(sc, "{append}",            g_append,                 0, 0, true,  H_append);
+  sc->Multivector =           s7_define_constant_function(sc, "{multivector}",       g_qq_multivector,         1, 0, true,  H_qq_multivector);
+  sc->QQ_List =               s7_define_constant_function(sc, "{list}",              g_qq_list,                0, 0, true,  H_qq_list);
   set_type(sc->QQ_List, (T_C_LST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS));
 
-  sc->GC = s7_define_safe_function(sc,                "gc",                        g_gc,                       0, 1, false, H_gc);
+  sc->GC =                    s7_define_safe_function(sc, "gc",                      g_gc,                     0, 1, false, H_gc);
 
-  sc->PROCEDUREP = s7_define_safe_function(sc,        "procedure?",                g_is_procedure,             1, 0, false, H_is_procedure);
+  sc->PROCEDUREP =            s7_define_safe_function(sc, "procedure?",              g_is_procedure,           1, 0, false, H_is_procedure);
   sc->PROCEDURE_DOCUMENTATION = s7_define_safe_function(sc, "procedure-documentation", g_procedure_documentation, 1, 0, false, H_procedure_documentation);
-  sc->HELP = s7_define_safe_function(sc,              "help",                      g_help,                     1, 0, false, H_help);
-  sc->PROCEDURE_ARITY = s7_define_safe_function(sc,   "procedure-arity",           g_procedure_arity,          1, 0, false, H_procedure_arity);
-  sc->PROCEDURE_SOURCE = s7_define_safe_function(sc,  "procedure-source",          g_procedure_source,         1, 0, false, H_procedure_source);
-  sc->PROCEDURE_ENVIRONMENT = s7_define_safe_function(sc, "procedure-environment", g_procedure_environment,    1, 0, false, H_procedure_environment);
-  sc->UNOPTIMIZE = s7_define_safe_function(sc,        "unoptimize",                g_unoptimize,               1, 0, false, H_unoptimize);
-  sc->PROCEDURE_NAME = s7_define_safe_function(sc,    "procedure-name",            g_procedure_name,           1, 0, false, H_procedure_name);
-  s7_make_procedure_with_setter(sc,                   "procedure-setter",   
+  sc->HELP =                  s7_define_safe_function(sc, "help",                    g_help,                   1, 0, false, H_help);
+  sc->PROCEDURE_ARITY =       s7_define_safe_function(sc, "procedure-arity",         g_procedure_arity,        1, 0, false, H_procedure_arity);
+  sc->PROCEDURE_SOURCE =      s7_define_safe_function(sc, "procedure-source",        g_procedure_source,       1, 0, false, H_procedure_source);
+  sc->PROCEDURE_ENVIRONMENT = s7_define_safe_function(sc, "procedure-environment",   g_procedure_environment,  1, 0, false, H_procedure_environment);
+  sc->UNOPTIMIZE =            s7_define_safe_function(sc, "unoptimize",              g_unoptimize,             1, 0, false, H_unoptimize);
+  sc->PROCEDURE_NAME =        s7_define_safe_function(sc, "procedure-name",          g_procedure_name,         1, 0, false, H_procedure_name);
+  s7_make_procedure_with_setter(sc,                       "procedure-setter",   
 				g_procedure_setter, 1, 0,
 				g_procedure_set_setter, 2, 0,
 				H_procedure_setter);
 
-  sc->ARITY = s7_define_safe_function(sc,             "arity",                     g_arity,                    1, 0, false, H_arity);
-  sc->ARITABLEP = s7_define_safe_function(sc,         "aritable?",                 g_is_aritable,              2, 0, false, H_is_aritable);
+  sc->ARITY =                 s7_define_safe_function(sc, "arity",                   g_arity,                  1, 0, false, H_arity);
+  sc->ARITABLEP =             s7_define_safe_function(sc, "aritable?",               g_is_aritable,            2, 0, false, H_is_aritable);
   
-  sc->NOT = s7_define_safe_function(sc,               "not",                       g_not,                      1, 0, false, H_not);
-  sc->BOOLEANP = s7_define_safe_function(sc,          "boolean?",                  g_is_boolean,               1, 0, false, H_is_boolean);
-  sc->EQP = s7_define_safe_function(sc,               "eq?",                       g_is_eq,                    2, 0, false, H_is_eq);
-  sc->EQVP = s7_define_safe_function(sc,              "eqv?",                      g_is_eqv,                   2, 0, false, H_is_eqv);
-  sc->EQUALP = s7_define_safe_function(sc,            "equal?",                    g_is_equal,                 2, 0, false, H_is_equal);
-  sc->MORALLY_EQUALP = s7_define_safe_function(sc,    "morally-equal?",            g_is_morally_equal,         2, 0, false, H_is_morally_equal);
+  sc->NOT =                   s7_define_safe_function(sc, "not",                     g_not,                    1, 0, false, H_not);
+  sc->BOOLEANP =              s7_define_safe_function(sc, "boolean?",                g_is_boolean,             1, 0, false, H_is_boolean);
+  sc->EQP =                   s7_define_safe_function(sc, "eq?",                     g_is_eq,                  2, 0, false, H_is_eq);
+  sc->EQVP =                  s7_define_safe_function(sc, "eqv?",                    g_is_eqv,                 2, 0, false, H_is_eqv);
+  sc->EQUALP =                s7_define_safe_function(sc, "equal?",                  g_is_equal,               2, 0, false, H_is_equal);
+  sc->MORALLY_EQUALP =        s7_define_safe_function(sc, "morally-equal?",          g_is_morally_equal,       2, 0, false, H_is_morally_equal);
   
-  s7_define_safe_function(sc,                         "s7-version",                g_s7_version,               0, 0, false, H_s7_version);
+  s7_define_safe_function(sc,                               "s7-version",              g_s7_version,             0, 0, false, H_s7_version);
 #if DEBUGGING
-  s7_define_function(sc,                              "abort",                     g_abort,                    0, 0, false, "drop into gdb I hope");
+  s7_define_function(sc,                                    "abort",                   g_abort,                  0, 0, false, "drop into gdb I hope");
 #endif
 
   {
@@ -62626,6 +62620,6 @@ s7_scheme *s7_init(void)
  * t455       265   89   55   31   14
  * t502        90   43   39   36   29
  * lat        229   63   52   47   42
- * calls           275  207  175  115
+ * calls           275  207  175  115  114
  */
 

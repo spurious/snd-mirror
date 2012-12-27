@@ -721,10 +721,10 @@ void s7_mark_object(s7_pointer p);
 s7_pointer s7_object_environment(s7_pointer obj);
 s7_pointer s7_object_set_environment(s7_pointer obj, s7_pointer e);
 void s7_set_object_ref_2(int type, s7_pointer (*ref_2)(s7_scheme *sc, void *val, s7_pointer index));
-void s7_set_object_ref_2i(int type, s7_pointer (*ref_2i)(s7_scheme *sc, void *val, s7_Int index));
 void s7_set_object_set_3(int type, s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value));
 void s7_set_object_array_info(int type, size_t length_loc, size_t data_loc);
 void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_args);
+void s7_function_set_looped(s7_pointer f, s7_pointer c);
 
   /* These functions create a new Scheme object type.  There is a simple example in s7.html.
    *
