@@ -892,7 +892,7 @@ typedef struct c_proc_t {
   int name_length;
   char *doc;
   unsigned int id;
-  s7_pointer generic_ff, looped_ff;
+  s7_pointer generic_ff, looped_ff, let_looped_ff;
   s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
   void *chooser_data;
 } c_proc_t;
@@ -1329,9 +1329,6 @@ struct s7_scheme {
   s7_pointer SIMPLE_DO, SAFE_DOTIMES, SIMPLE_SAFE_DOTIMES, SAFE_DOTIMES_C_C, SAFE_DOTIMES_C_S, SAFE_DO;
   s7_pointer SIMPLE_DO_P, SAFE_SIMPLE_DO, SIMPLE_DO_FOREVER, DOTIMES_P, SIMPLE_DO_A;
   s7_pointer DOX;
-  int safe_do_level, safe_do_ids_size;
-  long long int *safe_do_ids;
-  void (*safe_do_notifier)(int level);
 
   s7_pointer *safe_lists;
 };
@@ -2007,6 +2004,7 @@ static void set_syntax_op(s7_pointer p, s7_pointer op) {car(ecdr(p)) = op; lifte
 #define c_function_chooser_data(f)    c_function_data(f)->chooser_data
 #define c_function_base(f)            c_function_data(f)->generic_ff
 #define c_function_looped(f)          c_function_data(f)->looped_ff
+#define c_function_let_looped(f)      c_function_data(f)->let_looped_ff
 
 void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
 bool s7_function_returns_temp(s7_pointer f) {return((is_pair(f)) && (is_optimized(f)) && (ecdr(f)) && (returns_temp(ecdr(f))));}
@@ -13386,7 +13384,7 @@ static s7_pointer g_m_s_t(s7_scheme *sc, s7_pointer arg1, s7_pointer arg2, s7_po
 }
 
 
-static s7_pointer g_multiply_s_direct(s7_scheme *sc, s7_pointer args)
+s7_pointer g_multiply_s_direct(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer arg1, arg2;
 
@@ -25436,8 +25434,6 @@ static s7_pointer g_memq_4(s7_scheme *sc, s7_pointer args)
   s7_pointer x, obj;
   x = cadr(args);
   obj = car(args);
-  /* using expression_data here for cadr(args) and doing a linear search is slower!
-   */
   while (true)
     {
       if (obj == car(x)) return(x);
@@ -26757,29 +26753,40 @@ static s7_pointer g_vector_set_3(s7_scheme *sc, s7_pointer args)
 static s7_pointer vector_set_ssc;
 static s7_pointer g_vector_set_ssc(s7_scheme *sc, s7_pointer args)
 {
+  /* this is just a placeholder */
+  return(g_vector_set(sc, list_3(sc, finder(sc, car(args)), finder(sc, cadr(args)), caddr(args))));
+}
+
+
+static s7_pointer vector_set_ssc_looped;
+static s7_pointer g_vector_set_ssc_looped(s7_scheme *sc, s7_pointer args)
+{
   s7_pointer vec, ind, val;
-  s7_Int index;
+  s7_Int pos, end;
+  s7_pointer stepper;
 
-  vec = finder(sc, car(args));
-  if (!s7_is_vector(vec))
-    {
-      CHECK_METHOD(sc, vec, sc->VECTOR_SET, list_3(sc, vec, finder(sc, cadr(args)), caddr(args)));
-      return(wrong_type_argument(sc, sc->VECTOR_SET, small_int(1), vec, T_VECTOR));
-    }
-  if (vector_is_multidimensional(vec))
-    return(g_vector_set(sc, list_3(sc, vec, finder(sc, cadr(args)), caddr(args))));
+  /* incoming args: (0 vect i #f) */
+  vec = finder(sc, cadr(args));
+  if ((!s7_is_vector(vec)) ||
+      (vector_is_multidimensional(vec)))
+    return(NULL);
 
-  ind = finder(sc, cadr(args));
-  if (!s7_is_integer(ind))
-    return(wrong_type_argument(sc, sc->VECTOR_SET, small_int(2), ind, T_INTEGER));
-  index = s7_integer(ind);
-  if (index < 0)
-    return(out_of_range(sc, sc->VECTOR_SET, small_int(2), ind, "should not be negative"));
-  if (index >= vector_length(vec))
-    return(out_of_range(sc, sc->VECTOR_SET, small_int(2), ind, "should be less than vector length"));
+  stepper = car(args);
+  ind = s7_slot(sc, caddr(args));
+  if (s7_slot_value(sc, ind) != stepper)
+    return(NULL);
 
-  val = caddr(args);
-  vector_element(vec, index) = val;
+  pos = numerator(stepper);
+  end = denominator(stepper);
+  if ((pos < 0) ||
+      (end > vector_length(vec)))
+    return(out_of_range(sc, sc->VECTOR_SET, small_int(2), ind, "should be less than the vector length"));
+
+  val = cadddr(args);
+  for (; pos < end; pos++)
+    vector_element(vec, pos) = val;
+  numerator(stepper) = end;
+
   return(val);
 }
 
@@ -28079,6 +28086,12 @@ void s7_function_set_looped(s7_pointer f, s7_pointer c)
 }
 
 
+void s7_function_set_let_looped(s7_pointer f, s7_pointer c)
+{
+  c_function_let_looped(f) = c;
+}
+
+
 s7_pointer (*s7_function_chooser(s7_scheme *sc, s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   return(c_function_chooser(fnc));
@@ -28157,59 +28170,6 @@ s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr)
 }
 
 
-static unsigned short table_top = 1, tables_size = 0;
-static void ***tables = NULL;
-static int *table_sizes = NULL;
-
-static void clear_table(s7_pointer expr)
-{
-  int loc;
-  loc = optimize_data_index(expr);
-  if (tables[loc])
-    memset((void *)(tables[loc]), 0, table_sizes[loc] * sizeof(void **));
-}
-
-
-void **s7_expression_make_data(s7_scheme *sc, s7_pointer expr, int size)
-{
-  if (tables == NULL)
-    {
-      tables_size = 8;
-      tables = (void ***)calloc(tables_size, sizeof(void **));
-      table_sizes = (int *)calloc(tables_size, sizeof(int));
-    }
-  else
-    {
-      if (table_top == tables_size)
-	{
-	  int i;
-	  tables_size += 8;
-	  tables = (void ***)realloc(tables, tables_size * sizeof(void **));
-	  table_sizes = (int *)realloc(table_sizes, tables_size * sizeof(int));
-	  for (i = table_top; i < tables_size; i++) {tables[i] = NULL; table_sizes[i] = 0;}
-	}
-    }
-  tables[table_top] = (void **)calloc(size, sizeof(void *));
-  table_sizes[table_top] = size;
-  optimize_data_index(expr) = table_top++;
-  set_has_table(expr);
-  return(tables[optimize_data_index(expr)]);
-}
-
-
-void **s7_expression_data(s7_scheme *sc, s7_pointer expr)
-{
-  /* the has_table check should protect against leftover garbage in the optimize_data_index field */
-  if (has_table(expr))
-    return(tables[optimize_data_index(expr)]);
-  return(NULL);
-}
-
-
-void s7_function_set_has_data(s7_pointer f)
-{
-  set_has_table(f);
-}
 
 
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
@@ -28261,6 +28221,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   c_function_chooser(x) = fallback_chooser;
   c_function_chooser_data(x) = NULL;
   c_function_looped(x) = NULL;
+  c_function_let_looped(x) = NULL;
 
   return(x);
 }
@@ -29916,41 +29877,14 @@ static s7_pointer bind_accessed_symbol(s7_scheme *sc, opcode_t op, s7_pointer sy
   return(new_value);
 }
 
-
-
 static s7_pointer find_safe_do_symbol_or_bust(s7_scheme *sc, s7_pointer sym);
 
 static void set_safe_do_level(s7_scheme *sc, int new_val)
 {
-  sc->safe_do_level = new_val;
   if (new_val < -10)
     finder = find_safe_do_symbol_or_bust; 
   /* this never happens of course, but by including this crazy code, we get about 10% speed up overall in gcc 4.4 and 4.7 */
   else finder = find_symbol_or_bust;
-  if (sc->safe_do_notifier)
-    (*(sc->safe_do_notifier))(sc->safe_do_level);
-}
-
-
-void s7_safe_do_set_notifier(s7_scheme *sc, void (*notifier)(int level))
-{
-  sc->safe_do_notifier = notifier;
-}
-
-
-static void safe_do_set_id(s7_scheme *sc, long long int id)
-{
-  if (sc->safe_do_level >= sc->safe_do_ids_size)
-    {
-      sc->safe_do_ids_size = sc->safe_do_level * 2;
-      sc->safe_do_ids = (long long int *)realloc(sc->safe_do_ids, sc->safe_do_ids_size * sizeof(long long int));
-    }
-  sc->safe_do_ids[sc->safe_do_level] = id;
-}
-
-bool s7_is_do_local_or_global(s7_scheme *sc, s7_pointer symbol)
-{
-  return(sc->safe_do_ids[sc->safe_do_level] >= symbol_id(symbol));
 }
 
 
@@ -31934,8 +31868,6 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
   /* sc->s7_call_name = NULL; */
   sc->no_values = 0; 
   format_depth = -1;
-  if (sc->safe_do_level != 0)
-    set_safe_do_level(sc, 0); 
   s7_gc_on(sc, true);  /* this is in case we were triggered from the sort function -- clumsy! */
 
   slot_set_value(sc->error_type, type);
@@ -32947,8 +32879,6 @@ static s7_pointer make_simple_counter(s7_scheme *sc, s7_pointer lst)
   return(x);
 }
 
-
-static void initialize_safe_do(s7_scheme *sc, s7_pointer tree);
 
 static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 {
@@ -36765,6 +36695,9 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(vector_set_ssc, f);
   vector_set_3 = s7_make_function(sc, "vector-set!", g_vector_set_3, 3, 0, false, "vector-set! optimization");
   s7_function_set_class(vector_set_3, f);
+  vector_set_ssc_looped = s7_make_function(sc, "vector-set!", g_vector_set_ssc_looped, 3, 0, false, "vector-set! optimization");
+  s7_function_set_class(vector_set_ssc_looped, f);
+  s7_function_set_looped(vector_set_ssc, vector_set_ssc_looped);
 
 
   /* list-set! */
@@ -39521,6 +39454,8 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	  break;
 	  
 	case OP_DO:
+	  set_safe_do_level(sc, 0); /* TODO: figure out how to minimize this ridiculous thing */
+
 	  /* (do (...) (...) ...) */
 	  if (!is_pair(cddr(x)))
 	    return(false);
@@ -41674,36 +41609,6 @@ static s7_pointer check_set(s7_scheme *sc)
 }
 
 
-static void initialize_safe_do_1(s7_scheme *sc, s7_pointer tree)
-{
-  if (has_table(tree))
-    clear_table(tree);
-
-  if (is_pair(car(tree))) initialize_safe_do_1(sc, car(tree));
-  if (is_pair(cdr(tree))) initialize_safe_do_1(sc, cdr(tree));
-}
-
-
-static void initialize_safe_do(s7_scheme *sc, s7_pointer tree)
-{
-  if ((tables_size > 0) &&
-      (has_methods(tree)))
-    initialize_safe_do_1(sc, tree);
-  set_safe_do_level(sc, sc->safe_do_level + 1);
-  safe_do_set_id(sc, environment_id(sc->envir));
-}
-
-
-static void finalize_safe_do(s7_scheme *sc)
-{
-  set_safe_do_level(sc, sc->safe_do_level - 1);
-}
-
-
-/* to back out of a safe do, clear all tables, set safe do level to 0
- *   add a <0 check wherever we currently safe_do_level--;
- *   finish current non-safe call somehow -- clearing tables will mess this up.
- */
 
 
 static bool safe_stepper(s7_scheme *sc, s7_pointer expr, s7_pointer vars)
@@ -43502,7 +43407,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto BEGIN;
 		  }
 		denominator(slot_value(sc->args)) = s7_integer(end_val);
-		initialize_safe_do(sc, sc->code);
 
 		/* add the let vars but not initialized yet 
 		 */
@@ -43533,7 +43437,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (numerator(stepper) == denominator(stepper))
 		      {
 			sc->code = cdr(cadr(sc->code));
-			finalize_safe_do(sc);
 			goto BEGIN;
 		      }
 		    goto SIMPLE_SAFE_DOTIMES_LET_LOOP;
@@ -43542,10 +43445,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer temp_val;
 		    bool free_safe;
+		    
+		    if (c_function_let_looped(ecdr(func)))
+		      {
+			s7_function f;
+			s7_pointer result;
+
+			f = (s7_function)c_function_call(c_function_let_looped(ecdr(func)));
+			result = f(sc, sc->args = cons(sc, stepper, cdaddr(sc->code)));
+
+			if (result)
+			  {
+			    sc->code = cdr(cadr(sc->code));
+			    goto BEGIN;
+			  }
+			/* else fall into the ordinary loop */
+		      }
+		
 		    p = environment_slots(sc->envir);
 		    let_var = cdadar(lets);
 		    lets = cadar(lets);
-		    
 		    free_safe = (returns_temp(ecdr(lets)));
 		    
 		  SIMPLE_SAFE_DOTIMES_LOOP:
@@ -43562,7 +43481,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (numerator(stepper) == denominator(stepper))
 		      {
 			sc->code = cdr(cadr(sc->code));
-			finalize_safe_do(sc);
 			goto BEGIN;
 		      }
 		    goto SIMPLE_SAFE_DOTIMES_LOOP;
@@ -43609,7 +43527,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 		denominator(slot_value(sc->args)) = s7_integer(end_val);
-		initialize_safe_do(sc, sc->code);
 
 		/* func = ecdr(caddr(sc->code)); */
 		func = caddr(sc->code);
@@ -43621,11 +43538,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_function f;
 		    s7_pointer result;
 		    f = (s7_function)c_function_call(c_function_looped(ecdr(func)));
-		    result = f(sc, cons(sc, stepper, body));
+		    result = f(sc, sc->args = cons(sc, stepper, body));
 		    if (result)
 		      {
 			sc->code = cdr(cadr(sc->code));
-			finalize_safe_do(sc);
 			goto BEGIN;
 		      }
 		    /* else fall into the ordinary loop */
@@ -43638,7 +43554,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (numerator(stepper) == denominator(stepper))
 		  {
 		    sc->code = cdr(cadr(sc->code));
-		    finalize_safe_do(sc);
 		    goto BEGIN;
 		  }
 		goto SAFE_DOTIMES_C_C_LOOP;
@@ -43685,7 +43600,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 		denominator(slot_value(sc->args)) = s7_integer(end_val);
-		initialize_safe_do(sc, sc->code);
 
 		/* func = ecdr(caddr(sc->code)); */
 		func = caddr(sc->code);
@@ -43699,7 +43613,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (numerator(stepper) == denominator(stepper))
 		  {
 		    sc->code = cdr(cadr(sc->code));
-		    finalize_safe_do(sc);
 		    goto BEGIN;
 		  }
 		goto SAFE_DOTIMES_C_S_LOOP;
@@ -43746,8 +43659,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->code = cdr(cadr(code));
 		    goto BEGIN;
 		  }
-
-		initialize_safe_do(sc, code);
 
 		if (is_one_liner(sc->code))
 		  {
@@ -43803,7 +43714,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (numerator(arg) == denominator(arg))
 	  {
 	    sc->code = cdr(cadr(sc->code));
-	    finalize_safe_do(sc);
 	    goto BEGIN;
 	  }
 	push_stack(sc, OP_SAFE_DOTIMES_STEP_P, sc->args, sc->code);
@@ -43823,7 +43733,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (numerator(arg) == denominator(arg))
 	  {
 	    sc->code = cdr(cadr(sc->code));
-	    finalize_safe_do(sc);
 	    goto BEGIN;
 	  }
 	push_stack(sc, OP_SAFE_DOTIMES_STEP_O, sc->args, sc->code);
@@ -43846,7 +43755,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (numerator(arg) == denominator(arg))
 	  {
 	    sc->code = cdr(cadr(sc->code));
-	    finalize_safe_do(sc);
 	    goto BEGIN;
 	  }
 
@@ -43865,7 +43773,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (numerator(arg) == denominator(arg))
 	  {
 	    sc->code = cdr(cadr(sc->code));
-	    finalize_safe_do(sc);
 	    goto BEGIN;
 	  }
 	push_stack(sc, OP_SAFE_DOTIMES_STEP, sc->args, sc->code);
@@ -43917,7 +43824,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	else sc->args = make_slot(sc, end, end); /* here and elsewhere sc->args is used for GC protection */
 	environment_dox2(sc->envir) = sc->args;
 
-	initialize_safe_do(sc, code);
 	sc->code = cddr(code);
 
 	if (is_one_liner(sc->code))
@@ -43970,7 +43876,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     (ecdr(car(cadr(sc->code))) == geq_2)))
 #endif	      
 	  {
-	    finalize_safe_do(sc);
 	    sc->code = cdr(cadr(sc->code));
 	    goto BEGIN;
 	  }
@@ -44000,7 +43905,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     (ecdr(car(cadr(sc->code))) == geq_2)))
 #endif	      
 	  {
-	    finalize_safe_do(sc);
 	    sc->code = cdr(cadr(sc->code));
 	    goto BEGIN;
 	  }
@@ -44031,7 +43935,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     (ecdr(caadr(code)) == geq_2)))
 #endif	      
 	  {
-	    finalize_safe_do(sc);
 	    sc->code = cdadr(code);
 	    goto BEGIN;
 	  }
@@ -44250,14 +44153,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    set_type(s2, T_SLOT | T_IMMUTABLE);
 	    s1 = add_slot(sc, caaar(sc->code), sc->value);
 	  }
-	initialize_safe_do(sc, sc->code);
 
       SAFE_SIMPLE_DO_END:
 	car(sc->T2_1) = slot_value(s1);
 	car(sc->T2_2) = slot_value(s2);
 	if (is_true(sc, c_call(end_test)(sc, sc->T2_1)))
 	  {
-	    finalize_safe_do(sc);
 	    sc->code = cdr(cadr(sc->code));
 	    goto BEGIN;
 	  }
@@ -61746,10 +61647,6 @@ s7_scheme *s7_init(void)
   sc->SIMPLE_SAFE_DOTIMES =   assign_internal_syntax(sc, "do",      OP_SIMPLE_SAFE_DOTIMES);
   sc->SAFE_DO =               assign_internal_syntax(sc, "do",      OP_SAFE_DO);
   sc->DOX =                   assign_internal_syntax(sc, "do",      OP_DOX);
-  set_safe_do_level(sc, 0);
-  sc->safe_do_notifier = NULL;
-  sc->safe_do_ids_size = 8;
-  sc->safe_do_ids = (long long int *)calloc(sc->safe_do_ids_size, sizeof(long long int));
 
   sc->LAMBDA =      make_symbol(sc, "lambda");
   sc->LAMBDA_STAR = make_symbol(sc, "lambda*");
@@ -62614,11 +62511,11 @@ s7_scheme *s7_init(void)
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
  * bench    42736 8752 8051 7725 6515
- * lint           9328 8140 7887 7736
+ * lint           9328 8140 7887 7736 7729
  * index    44300 3291 3005 2742 2078
  * s7test    1721 1358 1297 1244  977
  * t455       265   89   55   31   14
- * t502        90   43   39   36   29
+ * t502        90   43   39   36   29   27
  * lat        229   63   52   47   42
  * calls           275  207  175  115  114
  */

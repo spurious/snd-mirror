@@ -6842,6 +6842,36 @@ static s7_pointer g_clm_reverb_set(s7_scheme *sc, s7_pointer args)
 #endif
 
 
+#define S_out_bank "out-bank"
+static XEN g_out_bank(XEN loc, XEN gens, XEN inval)
+{
+  mus_long_t pos;
+  int i, size;
+  double x = 0.0;
+
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(loc), loc, XEN_ARG_1, S_out_bank, "an integer");
+  pos = XEN_TO_C_LONG_LONG(loc);
+  if (pos < 0) 
+    XEN_OUT_OF_RANGE_ERROR(S_out_bank, XEN_ARG_1, loc, "must be >= 0");    
+
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_2, S_out_bank, "a vector of generators");
+  size = XEN_VECTOR_LENGTH(gens);
+
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(inval), inval, XEN_ARG_3, S_out_bank, "a number");
+  x = XEN_TO_C_DOUBLE(inval);
+
+#if HAVE_SCHEME  
+  for (i = 0; i < size; i++)
+    out_any_2(pos, mus_apply(XEN_TO_MUS_ANY(XEN_VECTOR_REF(gens, i)), x, 0.0), i, "out-bank");
+#else
+  for (i = 0; i < size; i++)
+    out_any_2(CLM_OUTPUT, pos, mus_apply(XEN_TO_MUS_ANY(XEN_VECTOR_REF(gens, i)), x, 0.0), i, "out-bank");
+#endif
+
+  return(inval);
+}
+
+
 static XEN g_out_any_1(const char *caller, XEN frame, int chn, XEN val, XEN outp)
 {
   mus_long_t pos = 0;
@@ -9050,25 +9080,6 @@ static mus_float_t mus_granulate_simple(mus_any *p) {return(mus_granulate_with_e
 static mus_float_t mus_convolve_simple(mus_any *p) {return(mus_convolve(p, NULL));}
 static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocoder(p, NULL));}
 
-static bool in_safe_do = false;
-static void clm_safe_do_notifier(int level)
-{
-  in_safe_do = (level > 0);
-}
-
-
-static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
-{
-  s7_pointer g;
-  mus_xen *gn;
-  g = s7_value(sc, sym);
-  gn = (mus_xen *)imported_s7_object_value_checked(g, mus_xen_tag);
-  if (gn)
-    return(gn->gen);
-  return(NULL);
-}
-
-
 #if 0
 #define GET_GENERATOR(Obj, Type, Val) Val = get_generator(s7, Obj)
 #endif
@@ -9555,7 +9566,8 @@ static s7_pointer g_polywave_mul_c_s(s7_scheme *sc, s7_pointer args)
 }
 
 /* (with-sound () (fm-violin 0 .0001 440 .1)) */
-static s7_pointer fm_violin_vibrato_fallback(s7_scheme *sc, s7_pointer args)
+static s7_pointer fm_violin_vibrato;
+static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
 {
   mus_any *e = NULL, *t = NULL, *r = NULL;
   
@@ -9568,7 +9580,8 @@ static s7_pointer fm_violin_vibrato_fallback(s7_scheme *sc, s7_pointer args)
   return(s7_make_real(sc, mus_env(e) + mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r)));			
 }
 
-static s7_pointer fm_violin_vibrato_no_env_fallback(s7_scheme *sc, s7_pointer args)
+static s7_pointer fm_violin_vibrato_no_env;
+static s7_pointer g_fm_violin_vibrato_no_env(s7_scheme *sc, s7_pointer args)
 {
   mus_any *t = NULL, *r = NULL;
   
@@ -9603,92 +9616,6 @@ static s7_pointer g_abs_triangle_wave(s7_scheme *sc, s7_pointer args)
   return(s7_make_real(sc, fabs(mus_triangle_wave_unmodulated(o))));
 }
 
-
-static s7_pointer fm_violin_vibrato;
-static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
-{
-  static s7_pointer last_args = NULL;
-  static void **last_syms = NULL;
-  void **syms;
-
-  static mus_any *vibe = NULL, *trig = NULL, *rang = NULL;
-
-  if (args == last_args)
-    syms = last_syms;
-  else
-    {
-      syms = s7_expression_data(sc, args);
-      last_args = args;
-      last_syms = syms;
-    }
-
-  if (!syms)
-    {
-      if (!in_safe_do) 
-	return(fm_violin_vibrato_fallback(sc, args));
-      syms = s7_expression_make_data(sc, args, 1); 
-      last_args = args;
-      last_syms = syms;
-    }
-
-  /* now check for start of a new note */
-  if (!syms[0])
-    {
-      vibe = (mus_any *)get_generator(sc, cadar(args));
-      XEN_ASSERT_TYPE((vibe) && (mus_env_p(vibe)), cadar(args), XEN_ONLY_ARG, "env", "env generator");
-      syms[0] = (void *)vibe;
-
-      args = cdr(args);
-      trig = (mus_any *)get_generator(sc, cadar(args));
-      XEN_ASSERT_TYPE((trig) && (mus_triangle_wave_p(trig)), cadar(args), XEN_ARG_1, "triangle-wave", "triangle-wave generator");
-
-      args = cdr(args);
-      rang = (mus_any *)get_generator(sc, cadar(args));
-      XEN_ASSERT_TYPE((rang) && (mus_rand_interp_p(rang)), cadar(args), XEN_ARG_1, "rand-interp", "rand-interp generator");
-    }
-  return(s7_make_real(sc, mus_env(vibe) + mus_triangle_wave_unmodulated(trig) + mus_rand_interp_unmodulated(rang)));
-}
-
-static s7_pointer fm_violin_vibrato_no_env;
-static s7_pointer g_fm_violin_vibrato_no_env(s7_scheme *sc, s7_pointer args)
-{
-  static s7_pointer last_args = NULL;
-  static void **last_syms = NULL;
-  void **syms;
-
-  static mus_any *trig = NULL, *rang = NULL;
-
-  if (args == last_args)
-    syms = last_syms;
-  else
-    {
-      syms = s7_expression_data(sc, args);
-      last_args = args;
-      last_syms = syms;
-    }
-
-  if (!syms)
-    {
-      if (!in_safe_do) 
-	return(fm_violin_vibrato_no_env_fallback(sc, args));
-      syms = s7_expression_make_data(sc, args, 1); 
-      last_args = args;
-      last_syms = syms;
-    }
-
-  /* now check for start of a new note */
-  if (!syms[0])
-    {
-      trig = (mus_any *)get_generator(sc, cadar(args));
-      syms[0] = (void *)trig;
-      XEN_ASSERT_TYPE((trig) && (mus_triangle_wave_p(trig)), cadar(args), XEN_ARG_1, "triangle-wave", "triangle-wave generator");
-
-      args = cdr(args);
-      rang = (mus_any *)get_generator(sc, cadar(args));
-      XEN_ASSERT_TYPE((rang) && (mus_rand_interp_p(rang)), cadar(args), XEN_ARG_1, "rand-interp", "rand-interp generator");
-    }
-  return(s7_make_real(sc, mus_triangle_wave_unmodulated(trig) + mus_rand_interp_unmodulated(rang)));
-}
 
 static s7_pointer env_polywave;
 static s7_pointer g_env_polywave(s7_scheme *sc, s7_pointer args)
@@ -9754,7 +9681,8 @@ static s7_pointer g_fm_violin_1(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer fm_violin_2_fallback(s7_scheme *sc, s7_pointer args)
+static s7_pointer fm_violin_2;
+static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer vargs;
   double vibrato;
@@ -9777,104 +9705,85 @@ static s7_pointer fm_violin_2_fallback(s7_scheme *sc, s7_pointer args)
   return(C_TO_XEN_DOUBLE(0.0)); /* just return something! */
 }
 
-static s7_pointer fm_violin_2;
-static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
+
+#if (!WITH_GMP)
+static s7_pointer fm_violin_2_looped;
+static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer args)
 {
-  static s7_pointer last_args = NULL;
-  static void **last_syms = NULL;
-  double vibrato, val;
-  mus_long_t pos;
-  void **syms;
+  s7_Int pos, end;
+  s7_pointer stepper, callee, vib, loc, vargs;
+  s7_function vibf;
+  s7_Int *step, *stop;
+  mus_any *e, *t, *m, *r, *o, *a, *lc, *f;
+  s7_Double vibrato;
 
-  static mus_any *ampe = NULL, *carg = NULL, *mode = NULL, *modg = NULL, *locg = NULL;
-  static s7_pointer posp = NULL, vibp = NULL;
-  static bool pos_is_slot = false, vib_is_slot = false;
+  /* incoming args: 
+     (0 
+      ((vib (+ (triangle-wave pervib) (rand-interp ranvib)))) 
+      (locsig locs i (* (env ampf) (oscil carrier (+ vib (* (env indf1) (polywave fmosc1 vib))))))) 
+  */
 
-  if (args == last_args)
-    syms = last_syms;
+  vib = cadr(caadr(args)); /* (+ ...) */
+  vibf = s7_function_choice(sc, vib);
+  if ((vibf != g_fm_violin_vibrato) &&
+      (vibf != g_fm_violin_vibrato_no_env))
+    return(NULL);
+
+  stepper = car(args);
+  loc = cdaddr(args);      /* (locs i ...) */
+
+  callee = s7_slot(sc, cadr(loc));
+  if (s7_slot_value(sc, callee) != stepper)
+    return(NULL);
+
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int)));
+  pos = (*step);
+  end = (*stop);
+
+  GET_GENERATOR(loc, locsig, lc);
+  vargs = s7_cdaddr(loc);
+  GET_GENERATOR_CADAR(vargs, env, a);
+  vargs = cadr(vargs);
+  GET_GENERATOR_CADR(vargs, oscil, o);
+  vargs = s7_cdaddr(s7_caddr(vargs));
+  GET_GENERATOR_CADAR(vargs, env, e);
+  vargs = cdadr(vargs);
+  GET_GENERATOR(vargs, polywave, m);
+
+  if (vibf == g_fm_violin_vibrato_no_env)
+    {
+      vargs = cdr(vib);
+      GET_GENERATOR_CADAR(vargs, triangle_wave, t);
+      vargs = cdr(vargs);
+      GET_GENERATOR_CADAR(vargs, rand_interp, r);
+      
+      for (; pos < end; pos++)
+	{
+	  vibrato = mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);
+	  mus_locsig(lc, pos, mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato))));	  
+	}
+    }
   else
-    {
-      syms = s7_expression_data(sc, args);
-      last_args = args;
-      last_syms = syms;
-    }
-  if (!syms)
-    {
-      if (!in_safe_do) 
-	return(fm_violin_2_fallback(sc, args));
-      syms = s7_expression_make_data(sc, args, 1); 
-      last_args = args;
-      last_syms = syms;
-    }
-
-  /* initialize_safe_do calls clear_table on all expression_data tables, which sets all the syms to NULL
-   */
-  if (!syms[0])
-    {
-      s7_pointer vargs;
-      syms[0] = get_generator(sc, car(args));
-      XEN_ASSERT_TYPE((syms[0]) && (mus_locsig_p((mus_any *)syms[0])), car(args), XEN_ARG_1, "locsig", "locsig generator");
-      locg = (mus_any *)(syms[0]);
-      
-      posp = cadr(args);
-      if (s7_is_do_local_or_global(sc, posp))
+    {                               /* gliss case */
+      vargs = cdr(vib);
+      GET_GENERATOR_CADAR(vargs, env, f);
+      vargs = cdr(vargs);
+      GET_GENERATOR_CADAR(vargs, triangle_wave, t);
+      vargs = cdr(vargs);
+      GET_GENERATOR_CADAR(vargs, rand_interp, r);
+  
+      for (; pos < end; pos++)
 	{
-	  posp = s7_slot(sc, posp);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_integer(posp), cadr(args), XEN_ARG_2, "locsig", "an integer");
-	  pos_is_slot = true;
+	  vibrato = mus_env(f) + mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);			
+      	  mus_locsig(lc, pos, mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(m, vibrato))));	  
 	}
-      else pos_is_slot = false;
-      
-      vargs = s7_cdaddr(args);
-      ampe = (mus_any *)get_generator(sc, cadar(vargs));
-      XEN_ASSERT_TYPE((ampe) && (mus_env_p(ampe)), cadar(vargs), XEN_ONLY_ARG, "env", "env generator");
-      
-      vargs = cadr(vargs);
-      carg = (mus_any *)get_generator(sc, cadr(vargs));
-      XEN_ASSERT_TYPE((carg) && (mus_oscil_p(carg)), cadr(vargs), XEN_ARG_1, "oscil", "oscil generator");
-      
-      vargs = s7_cdaddr(s7_caddr(vargs));
-      mode = (mus_any *)get_generator(sc, cadar(vargs));
-      XEN_ASSERT_TYPE((mode) && (mus_env_p(mode)), cadar(vargs), XEN_ONLY_ARG, "env", "env generator");
-      
-      vargs = cdadr(vargs);
-      modg = (mus_any *)get_generator(sc, car(vargs));
-      XEN_ASSERT_TYPE((modg) && (mus_polywave_p(modg)), car(vargs), XEN_ARG_1, "polywave", "polywave generator");
-      
-      vibp = cadr(vargs);
-      if (s7_is_do_local_or_global(sc, vibp))
-	{
-	  vibp = s7_slot(sc, vibp);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_real(vibp), cadr(vargs), XEN_ARG_2, "polywave", "a real");
-	  vib_is_slot = true;
-	}
-      else vib_is_slot = false;
-      /* choosing the env/locsig/real funcs ahead of time just breaks even??
-       */
     }
-
-  if (!pos_is_slot)
-    {
-      s7_pointer x;
-      x = s7_value(sc, posp);
-      XEN_ASSERT_TYPE(s7_is_integer(x), posp, XEN_ARG_2, "locsig", "an integer");
-      pos = s7_cell_integer(x);
-    }
-  else pos = s7_slot_value_to_integer(s7, posp);
-
-  if (!vib_is_slot)
-    {
-      s7_pointer x;
-      x = s7_value(sc, vibp);
-      XEN_ASSERT_TYPE(s7_is_real(x), vibp, XEN_ARG_2, "polywave", "a real");
-      vibrato = s7_number_to_real(sc, x);
-    }
-  else vibrato = s7_slot_value_to_real(s7, vibp);
-
-  val = mus_env(ampe) * mus_oscil_fm(carg, vibrato + (mus_env(mode) * mus_polywave(modg, vibrato)));
-  mus_locsig(locg, pos, val);
-  return(XEN_ZERO);
+  (*step) = end;
+  return(args);
 }
+#endif
+
 
 
 static s7_pointer env_polywave_env;
@@ -9893,7 +9802,8 @@ static s7_pointer g_env_polywave_env(s7_scheme *sc, s7_pointer args)
 
 
 /* (with-sound (:reverb jc-reverb) (outa 0 .1 *reverb*)) */
-static s7_pointer jc_reverb_combs_fallback(s7_scheme *sc, s7_pointer args)
+static s7_pointer jc_reverb_combs;
+static s7_pointer g_jc_reverb_combs(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer vargs;
   mus_any *c1 = NULL, *c2, *c3, *c4;
@@ -9916,158 +9826,22 @@ static s7_pointer jc_reverb_combs_fallback(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer jc_reverb_combs;
-static s7_pointer g_jc_reverb_combs(s7_scheme *sc, s7_pointer args)
-{
-  static s7_pointer last_args = NULL;
-  static void **last_syms = NULL;
-  double fm;
-  void **syms;
-
-  static s7_pointer fmp = NULL;
-  static mus_any *c1 = NULL, *c2 = NULL, *c3 = NULL, *c4 = NULL;
-  static bool fm_is_slot = false;
-
-  if (args == last_args)
-    syms = last_syms;
-  else
-    {
-      syms = s7_expression_data(sc, args);
-      last_args = args;
-      last_syms = syms;
-    }
-
-  if (!syms)
-    {
-      if (!in_safe_do) 
-	return(jc_reverb_combs_fallback(sc, args));
-      syms = s7_expression_make_data(sc, args, 1);
-      last_args = args;
-      last_syms = syms;
-    }
-
-  if (!syms[0])
-    {
-      s7_pointer vargs;
-      c1 = (mus_any *)get_generator(sc, s7_cadar(args));
-      syms[0] = (void *)c1;
-      XEN_ASSERT_TYPE((c1) && (mus_comb_p(c1)), cadar(args), XEN_ARG_1, "comb", "comb generator");
-
-      vargs = cdr(args);
-      c2 = (mus_any *)get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((c2) && (mus_comb_p(c2)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
-
-      vargs = cdr(vargs);
-      c3 = (mus_any *)get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((c3) && (mus_comb_p(c3)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
-
-      vargs = cdr(vargs);
-      c4 = (mus_any *)get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((c4) && (mus_comb_p(c4)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
-
-      fmp = caddar(args);
-      if (s7_is_do_local_or_global(sc, fmp))
-	{
-	  fmp = s7_slot(sc, fmp);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_real(fmp), caddar(args), XEN_ARG_2, "comb", "a real");
-	  fm_is_slot = true;
-	}
-      else fm_is_slot = false;
-    }
-  
-  if (!fm_is_slot)
-    {
-      s7_pointer x;
-      x = s7_value(sc, fmp);
-      XEN_ASSERT_TYPE(s7_is_real(x), fmp, XEN_ARG_2, "comb", "a real");
-      fm = s7_number_to_real(sc, x);
-    }
-  else fm = s7_slot_value_to_real(s7, fmp);
-
-  return(s7_make_real(sc, mus_comb_unmodulated_noz(c1, fm) + 
-		          mus_comb_unmodulated_noz(c2, fm) + 
-		          mus_comb_unmodulated_noz(c3, fm) + 
-		          mus_comb_unmodulated_noz(c4, fm)));
-}
-
-
 static s7_pointer jc_reverb_all_passes;
 static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
 {
   /* (with-sound (:reverb jc-reverb) (outa 0 .1 *reverb*)) */
 
-  static s7_pointer last_args = NULL;
-  static void **last_syms = NULL;
   s7_pointer vargs;
-  void **syms;
   s7_Int pos;
+  mus_any *a1 = NULL, *a2 = NULL, *a3 = NULL;
 
-  static mus_any *a1 = NULL, *a2 = NULL, *a3 = NULL;
-  static s7_pointer locp = NULL;
-  static bool locp_is_slot = false;
-
-  if (args == last_args)
-    syms = last_syms;
-  else
-    {
-      syms = s7_expression_data(sc, args);
-      last_args = args;
-      last_syms = syms;
-    }
-
-  if (!syms)
-    {
-      if (!in_safe_do) 
-	{
-	  GET_GENERATOR(args, all_pass, a1);
-	  vargs = s7_cdr(args);
-	  GET_GENERATOR_CADAR(vargs, all_pass, a2);
-	  vargs = s7_cddar(vargs);
-	  GET_GENERATOR_CADAR(vargs, all_pass, a3);
-	  vargs = caddar(vargs);
-	  GET_INTEGER_CADR(vargs, ina, pos);
-
-	  return(s7_make_real(sc, mus_all_pass_unmodulated_noz(a1, mus_all_pass_unmodulated_noz(a2, mus_all_pass_unmodulated_noz(a3, in_any_2(pos, 0))))));
-	}
-	
-      syms = s7_expression_make_data(sc, args, 1);
-      last_args = args;
-      last_syms = syms;
-    }
-
-  if (!(syms[0])) 
-    {
-      a1 = (mus_any *)get_generator(sc, car(args));
-      syms[0] = (void *)a1;
-      XEN_ASSERT_TYPE((a1) && (mus_all_pass_p(a1)), car(args), XEN_ARG_1, "all-pass", "all-pass generator");
-
-      vargs = s7_cdr(args);
-      a2 = (mus_any *)get_generator(sc, cadar(vargs));
-      XEN_ASSERT_TYPE((a2) && (mus_all_pass_p(a2)), cadar(vargs), XEN_ARG_1, "all-pass", "all-pass generator");
-      
-      vargs = s7_cddar(vargs);
-      a3 = (mus_any *)get_generator(sc, cadar(vargs));
-      XEN_ASSERT_TYPE((a3) && (mus_all_pass_p(a3)), cadar(vargs), XEN_ARG_1, "all-pass", "all-pass generator");
-
-      vargs = caddar(vargs);
-      locp = cadr(vargs);
-      if (s7_is_do_local_or_global(sc, locp))
-	{
-	  locp = s7_slot(sc, locp);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_integer(locp), cadr(vargs), XEN_ARG_1, "ina", "an integer");
-	  locp_is_slot = true;
-	}
-      else locp_is_slot = false;
-    }
-
-  if (!locp_is_slot)
-    {
-      s7_pointer x;
-      x = s7_value(sc, locp);
-      XEN_ASSERT_TYPE(s7_is_integer(x), locp, XEN_ARG_1, "ina", "an integer");
-      pos = s7_cell_integer(x);
-    }
-  else pos = s7_slot_value_to_integer(s7, locp);
+  GET_GENERATOR(args, all_pass, a1);
+  vargs = s7_cdr(args);
+  GET_GENERATOR_CADAR(vargs, all_pass, a2);
+  vargs = s7_cddar(vargs);
+  GET_GENERATOR_CADAR(vargs, all_pass, a3);
+  vargs = caddar(vargs);
+  GET_INTEGER_CADR(vargs, ina, pos);
 
   return(s7_make_real(sc, mus_all_pass_unmodulated_noz(a1, mus_all_pass_unmodulated_noz(a2, mus_all_pass_unmodulated_noz(a3, in_any_2(pos, 0))))));
 }
@@ -10078,81 +9852,26 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
 static s7_pointer nrev_all_passes;
 static s7_pointer g_nrev_all_passes(s7_scheme *sc, s7_pointer args)
 {
-  static s7_pointer last_args = NULL;
-  static void **last_syms = NULL;
   s7_pointer vargs;
-  void **syms;
+  mus_any *a1 = NULL, *a2 = NULL, *a3 = NULL, *a4 = NULL, *lp = NULL;
 
-  static mus_any *a1 = NULL, *a2 = NULL, *a3 = NULL, *a4 = NULL, *lp = NULL;
-  static s7_pointer combs = NULL;
+  GET_GENERATOR(args, all_pass, a1);
+  vargs = s7_cdr(args);
+  GET_GENERATOR_CADAR(vargs, one_pole, lp);
+  vargs = s7_cddar(vargs);
+  GET_GENERATOR_CADAR(vargs, all_pass, a2);
+  vargs = s7_cddar(vargs);
+  GET_GENERATOR_CADAR(vargs, all_pass, a3);
+  vargs = s7_cddar(vargs);
+  GET_GENERATOR_CADAR(vargs, all_pass, a4);
+  vargs = caddar(vargs);
 
-  if (args == last_args)
-    syms = last_syms;
-  else
-    {
-      syms = s7_expression_data(sc, args);
-      last_args = args;
-      last_syms = syms;
-    }
-
-  if (!syms)
-    {
-      if (!in_safe_do) 
-	{
-	  GET_GENERATOR(args, all_pass, a1);
-	  vargs = s7_cdr(args);
-	  GET_GENERATOR_CADAR(vargs, one_pole, lp);
-	  vargs = s7_cddar(vargs);
-	  GET_GENERATOR_CADAR(vargs, all_pass, a2);
-	  vargs = s7_cddar(vargs);
-	  GET_GENERATOR_CADAR(vargs, all_pass, a3);
-	  vargs = s7_cddar(vargs);
-	  GET_GENERATOR_CADAR(vargs, all_pass, a4);
-	  vargs = caddar(vargs);
-
-	  return(s7_make_real(sc, mus_all_pass_unmodulated_noz(a1, 
- 			            mus_one_pole(lp,							       
-				      mus_all_pass_unmodulated_noz(a2, 
-                                        mus_all_pass_unmodulated_noz(a3, 
-                                          mus_all_pass_unmodulated_noz(a4, 
-					    s7_cell_real(s7_call_direct(sc, vargs)))))))));
-	}
-	
-      syms = s7_expression_make_data(sc, args, 1);
-      last_args = args;
-      last_syms = syms;
-    }
-
-  if (!(syms[0])) 
-    {
-      a1 = (mus_any *)get_generator(sc, car(args));
-      syms[0] = (void *)a1;
-      XEN_ASSERT_TYPE((a1) && (mus_all_pass_p(a1)), car(args), XEN_ARG_1, "all-pass", "all-pass generator");
-
-      vargs = s7_cdr(args);
-      lp = (mus_any *)get_generator(sc, cadar(vargs));
-      XEN_ASSERT_TYPE((lp) && (mus_one_pole_p(lp)), cadar(vargs), XEN_ARG_1, "one-pole", "one-pole generator");
-      
-      vargs = s7_cddar(vargs);
-      a2 = (mus_any *)get_generator(sc, cadar(vargs));
-      XEN_ASSERT_TYPE((a2) && (mus_all_pass_p(a2)), cadar(vargs), XEN_ARG_1, "all-pass", "all-pass generator");
-
-      vargs = s7_cddar(vargs);
-      a3 = (mus_any *)get_generator(sc, cadar(vargs));
-      XEN_ASSERT_TYPE((a3) && (mus_all_pass_p(a3)), cadar(vargs), XEN_ARG_1, "all-pass", "all-pass generator");
-
-      vargs = s7_cddar(vargs);
-      a4 = (mus_any *)get_generator(sc, cadar(vargs));
-      XEN_ASSERT_TYPE((a4) && (mus_all_pass_p(a4)), cadar(vargs), XEN_ARG_1, "all-pass", "all-pass generator");
-
-      combs = caddar(vargs);
-    }
   return(s7_make_real(sc, mus_all_pass_unmodulated_noz(a1, 
-			    mus_one_pole(lp,							       
+		            mus_one_pole(lp,							       
 			      mus_all_pass_unmodulated_noz(a2, 
                                 mus_all_pass_unmodulated_noz(a3, 
                                   mus_all_pass_unmodulated_noz(a4, 
-				    s7_call_direct_to_real_and_free(sc, combs))))))));
+				    s7_cell_real(s7_call_direct(sc, vargs)))))))));
 }
 
 /* (with-sound (:reverb jc-reverb) (outa 0 .1 *reverb*)) */
@@ -10160,7 +9879,8 @@ static s7_pointer g_nrev_all_passes(s7_scheme *sc, s7_pointer args)
 
 
 /* (with-sound (:reverb nrev) (outa 0 .1 *reverb*)) */
-static s7_pointer nrev_combs_fallback(s7_scheme *sc, s7_pointer args)
+static s7_pointer nrev_combs;
+static s7_pointer g_nrev_combs(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer vargs;
   mus_any *c1 = NULL, *c2, *c3, *c4, *c5, *c6;
@@ -10179,91 +9899,6 @@ static s7_pointer nrev_combs_fallback(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR_CADAR(vargs, comb, c6);
   
   fm = s7_number_to_real(sc, s7_value(sc, caddar(args)));
-
-  return(s7_make_real(sc, mus_comb_unmodulated_noz(c1, fm) + 
-		          mus_comb_unmodulated_noz(c2, fm) + 
-		          mus_comb_unmodulated_noz(c3, fm) + 
-		          mus_comb_unmodulated_noz(c4, fm) +
-		          mus_comb_unmodulated_noz(c5, fm) +
-		          mus_comb_unmodulated_noz(c6, fm)));
-}
-
-
-static s7_pointer nrev_combs;
-static s7_pointer g_nrev_combs(s7_scheme *sc, s7_pointer args)
-{
-  static s7_pointer last_args = NULL;
-  static void **last_syms = NULL;
-  void **syms;
-  double fm;
-
-  static mus_any *c1 = NULL, *c2 = NULL, *c3 = NULL, *c4 = NULL, *c5 = NULL, *c6 = NULL;
-  static bool fmp_is_slot = false;
-  static s7_pointer fmp = NULL;
-
-  if (args == last_args)
-    syms = last_syms;
-  else
-    {
-      syms = s7_expression_data(sc, args);
-      last_args = args;
-      last_syms = syms;
-    }
-
-  if (!syms)
-    {
-      if (!in_safe_do) 
-	return(nrev_combs_fallback(sc, args));
-      syms = s7_expression_make_data(sc, args, 1);
-      last_args = args;
-      last_syms = syms;
-    }
-
-  if (!syms[0])
-    {
-      s7_pointer vargs;
-      c1 = (mus_any *)get_generator(sc, s7_cadar(args));
-      syms[0] = (void *)c1;
-      XEN_ASSERT_TYPE((c1) && (mus_comb_p(c1)), cadar(args), XEN_ARG_1, "comb", "comb generator");
-
-      vargs = cdr(args);
-      c2 = (mus_any *)get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((c2) && (mus_comb_p(c2)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
-
-      vargs = cdr(vargs);
-      c3 = (mus_any *)get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((c3) && (mus_comb_p(c3)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
-
-      vargs = cdr(vargs);
-      c4 = (mus_any *)get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((c4) && (mus_comb_p(c4)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
-
-      vargs = cdr(vargs);
-      c5 = (mus_any *)get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((c5) && (mus_comb_p(c5)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
-
-      vargs = cdr(vargs);
-      c6 = (mus_any *)get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((c6) && (mus_comb_p(c6)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
-
-      fmp = caddar(args);
-      if (s7_is_do_local_or_global(sc, fmp))
-	{
-	  fmp = s7_slot(sc, fmp);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_real(fmp), caddar(args), XEN_ARG_2, "comb", "a real");
-	  fmp_is_slot = true;
-	}
-      else fmp_is_slot = false;
-    }
-  
-  if (!fmp_is_slot)
-    {
-      s7_pointer x;
-      x = s7_value(sc, fmp);
-      XEN_ASSERT_TYPE(s7_is_real(x), fmp, XEN_ARG_2, "comb", "a real");
-      fm = s7_number_to_real(sc, x);
-    }
-  else fm = s7_slot_value_to_real(s7, fmp);
 
   return(s7_make_real(sc, mus_comb_unmodulated_noz(c1, fm) + 
 		          mus_comb_unmodulated_noz(c2, fm) + 
@@ -10313,6 +9948,176 @@ static s7_pointer g_indirect_locsig_3(s7_scheme *sc, s7_pointer args)
 }
 
 
+
+static s7_pointer indirect_out_bank_ssz;
+static s7_pointer g_indirect_out_bank_ssz(s7_scheme *sc, s7_pointer args)
+{
+  int i, size;
+  s7_Int pos;
+  s7_pointer fs;
+  s7_Double x;
+
+  GET_INTEGER(args, out-bank, pos);
+  x = s7_number_to_real(sc, s7_call_direct(sc, caddr(args)));
+  fs = s7_cadr_value(sc, args);
+  size = XEN_VECTOR_LENGTH(fs);
+
+#if HAVE_SCHEME  
+  for (i = 0; i < size; i++)
+    out_any_2(pos, mus_apply(XEN_TO_MUS_ANY(XEN_VECTOR_REF(fs, i)), x, 0.0), i, "out-bank");
+#else
+  for (i = 0; i < size; i++)
+    out_any_2(CLM_OUTPUT, pos, mus_apply(XEN_TO_MUS_ANY(XEN_VECTOR_REF(fs, i)), x, 0.0), i, "out-bank");
+#endif
+
+  return(args);
+}
+/* (with-sound (:channels 2 :reverb jc-reverb) (outa 0 .5 *reverb*))
+ */
+
+s7_pointer g_multiply_s_direct(s7_scheme *sc, s7_pointer args);
+
+static s7_pointer indirect_out_bank_ssz_looped;
+static s7_pointer g_indirect_out_bank_ssz_looped(s7_scheme *sc, s7_pointer args)
+{
+  int i, size;
+  s7_pointer fs, allsum, loc;
+  s7_Double x;
+  s7_Int pos, end;
+  s7_pointer stepper, callee, combs, allx, letp;
+  s7_Int *step, *stop;
+
+
+  /* incoming args: 
+     (0 
+      ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 (ina i *reverb*))))))
+      (out-bank i filts (* volume (+ (comb comb1 allpass-sum) (comb comb2 allpass-sum) (comb comb3 allpass-sum) (comb comb4 allpass-sum)))))
+      
+      cadr(caadr(args)) = (all-pass allpass3...) h_safe_c_c, ecdr: jc_reverb_all_passes, fcdr: g_jc_reverb_all_passes
+      caddr(args) = (out-bank...)
+      cadddr(caddr(args)) = (* volume ...) h_safe_c_c, ecdr: multiply_s_direct
+      caddr(cadddr(caddr(args))) = (+ (comb...)) h_safe_c_c, ecdr: jc_reverb_combs
+  */
+
+  stepper = car(args);
+  loc = cdaddr(args);              /* (i filts ...) */
+  callee = s7_slot(sc, car(loc));
+  if (s7_slot_value(sc, callee) != stepper)
+    return(NULL);
+
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int)));
+  pos = (*step);
+  end = (*stop);
+
+  fs = s7_cadr_value(sc, loc);
+  size = XEN_VECTOR_LENGTH(fs);
+
+  combs = caddr(loc);
+  allsum = cadr(caadr(args)); 
+  allx = s7_slot(sc, car(caadr(args)));
+
+  letp = cadr(caadr(args));
+
+  /* look for jc-reverb... */
+  if (s7_function_choice(sc, letp) == g_jc_reverb_all_passes)
+    {
+      s7_pointer mulp, cmbp;
+      mulp = cadddr(caddr(args));
+      if (s7_function_choice(sc, mulp) == g_multiply_s_direct)
+	{
+	  cmbp = caddr(mulp);
+	  if (s7_function_choice(sc, cmbp) == g_jc_reverb_combs)
+	    {
+	      /* this is jc-reverb... */
+	      s7_pointer vargs;
+	      mus_any *a1, *a2, *a3;
+	      mus_any *c1, *c2, *c3, *c4;
+	      mus_any *d1;
+
+	      vargs = cdr(letp);
+	      GET_GENERATOR(vargs, all_pass, a1);
+	      vargs = cdadr(vargs);
+	      GET_GENERATOR(vargs, all_pass, a2);
+	      vargs = cdadr(vargs);
+	      GET_GENERATOR(vargs, all_pass, a3);
+
+	      vargs = cdr(cmbp);
+	      GET_GENERATOR_CADAR(vargs, comb, c1);
+	      vargs = cdr(vargs);
+	      GET_GENERATOR_CADAR(vargs, comb, c2);
+	      vargs = cdr(vargs);
+	      GET_GENERATOR_CADAR(vargs, comb, c3);
+	      vargs = cdr(vargs);
+	      GET_GENERATOR_CADAR(vargs, comb, c4);
+
+	      if (size == 1)
+		{
+		  d1 = XEN_TO_MUS_ANY(XEN_VECTOR_REF(fs, 0));
+		  for (; pos < end; pos++)
+		    {
+		      x = mus_all_pass_unmodulated_noz(a1, mus_all_pass_unmodulated_noz(a2, mus_all_pass_unmodulated_noz(a3, in_any_2(pos, 0))));
+		      x = mus_comb_unmodulated_noz(c1, x) + mus_comb_unmodulated_noz(c2, x) + mus_comb_unmodulated_noz(c3, x) + mus_comb_unmodulated_noz(c4, x);
+#if HAVE_SCHEME  
+		      out_any_2(pos, mus_delay_unmodulated_noz(d1, x), 0, "out-bank");
+#else
+		      out_any_2(CLM_OUTPUT, pos, mus_delay_unmodulated_noz(d1, x), 0, "out-bank");
+#endif
+		    }
+		}
+	      else
+		{
+		  mus_any **ds;
+		  ds = (mus_any **)malloc(size * sizeof(mus_any *));
+		  for (i = 0; i < size; i++)
+		    ds[i] = XEN_TO_MUS_ANY(XEN_VECTOR_REF(fs, i));
+		  
+		  for (; pos < end; pos++)
+		    {
+		      x = mus_all_pass_unmodulated_noz(a1, mus_all_pass_unmodulated_noz(a2, mus_all_pass_unmodulated_noz(a3, in_any_2(pos, 0))));
+		      x = mus_comb_unmodulated_noz(c1, x) + mus_comb_unmodulated_noz(c2, x) + mus_comb_unmodulated_noz(c3, x) + mus_comb_unmodulated_noz(c4, x);
+#if HAVE_SCHEME  
+		      for (i = 0; i < size; i++)
+			out_any_2(pos, mus_delay_unmodulated_noz(ds[i], x), i, "out-bank");
+#else
+		      for (i = 0; i < size; i++)
+			out_any_2(CLM_OUTPUT, pos, mus_delay_unmodulated_noz(ds[i], x), i, "out-bank");
+#endif
+		    }
+		}
+	      (*step) = pos;
+	      return(args);
+	    }
+	}
+    }
+
+  /* look for nrev... */
+  
+
+  /* TODO: does this know about vct output? | out_bank built-in in clm.c | 1 chan opt'd | nrev opt'd | file out opt'd | mus_apply opt'd via passed func
+   *         n-chan opt'd via parallel obufs | direct slot set? | other out-bank uses? | 2 chan opt'd?
+   */
+  for (; pos < end; pos++)
+    {
+      (*step) = pos;
+      s7_slot_set_value(sc, allx, s7_call_direct(sc, allsum));
+      x = s7_real(s7_call_direct(sc, combs));
+#if HAVE_SCHEME  
+      for (i = 0; i < size; i++)
+	out_any_2(pos, mus_apply(XEN_TO_MUS_ANY(XEN_VECTOR_REF(fs, i)), x, 0.0), i, "out-bank");
+#else
+      for (i = 0; i < size; i++)
+	out_any_2(CLM_OUTPUT, pos, mus_apply(XEN_TO_MUS_ANY(XEN_VECTOR_REF(fs, i)), x, 0.0), i, "out-bank");
+#endif
+    }
+  (*step) = end;
+
+  return(args);
+}
+/* (with-sound (:channels 2 :reverb jc-reverb) (outa 0 .5 *reverb*))
+ */
+
+
 static s7_pointer indirect_outa_2;
 static s7_pointer g_indirect_outa_2(s7_scheme *sc, s7_pointer args)
 {
@@ -10334,6 +10139,8 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 }
 
 #if (!WITH_GMP)
+/* TODO: let_looped case here and indirect_outa_2_env */
+
 static s7_pointer indirect_outa_2_temp_looped;
 static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 {
@@ -10366,7 +10173,6 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 static s7_pointer indirect_outa_2_env;
 static s7_pointer g_indirect_outa_2_env(s7_scheme *sc, s7_pointer args)
 {
-  /* using expression_data and safe_do here was only marginally faster */
   s7_Int pos;
   s7_Double x;
   mus_any *e = NULL;
@@ -10468,110 +10274,23 @@ static s7_pointer g_outa_or_b_mul_s_delay(s7_scheme *sc, s7_pointer args, const 
 {
   /* (outa|b i (* scl (delay outdel1 comb-sum))) 
    */
-  static s7_pointer last_args = NULL;
-  static void **last_syms = NULL;
-  void **syms;
   double scl, inval;
   s7_Int pos;
+  mus_any *d;
 
-  static mus_any *d = NULL;
-  static s7_pointer posp = NULL, sclp = NULL, invalp = NULL;
-  static bool posp_is_slot = false, sclp_is_slot = false, invalp_is_slot = false;
-
-  if (args == last_args)
-    syms = last_syms;
-  else
-    {
-      syms = s7_expression_data(sc, args);
-      last_args = args;
-      last_syms = syms;
-    }
-
-  if (!syms)
-    {
-      if (!in_safe_do) 
-	{
-	  if (chan == 0)
-	    GET_INTEGER(args, outa, pos);
-	  else GET_INTEGER(args, outb, pos);
-	  args = cadr(args);
-	  if (chan == 0)
-	    GET_REAL_CADR(args, outa, scl);
-	  else GET_REAL_CADR(args, outb, scl);
-	  args = caddr(args);
-	  GET_GENERATOR_CADR(args, delay, d);
-	  GET_REAL_CADR(cdr(args), delay, inval);
-	  return(out_any_2(pos, scl * mus_delay_unmodulated_noz(d, inval), chan, caller));
-	}
-      syms = s7_expression_make_data(sc, args, 1);
-      last_args = args;
-      last_syms = syms;
-    }
-
-  if (!syms[0])
-    {
-      posp = car(args);
-      syms[0] = (void *)posp;
-      if (s7_is_do_local_or_global(sc, posp))
-	{
-	  posp = s7_slot(sc, posp);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_integer(posp), car(args), XEN_ARG_1, caller, "an integer");
-	  posp_is_slot = true;
-	}
-      else posp_is_slot = false;
-
-      args = cadr(args);
-      sclp = cadr(args);
-      if (s7_is_do_local_or_global(sc, sclp))
-	{
-	  sclp = s7_slot(sc, sclp);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_real(sclp), cadr(args), XEN_ARG_1, "*", "a real");
-	  sclp_is_slot = true;
-	}
-      else sclp_is_slot = false;
-
-      args = caddr(args);
-      d = (mus_any *)get_generator(sc, cadr(args));
-      XEN_ASSERT_TYPE((d) && (mus_delay_p(d)), cadr(args), XEN_ARG_1, "delay", "delay generator");
-
-      invalp = caddr(args);
-      if (s7_is_do_local_or_global(sc, invalp))
-	{
-	  invalp = s7_slot(sc, invalp);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_real(invalp), caddr(args), XEN_ARG_2, "delay", "a real");
-	  invalp_is_slot = true;
-	}
-      else invalp_is_slot = false;
-    }
-  
-  if (!posp_is_slot)
-    {
-      s7_pointer x;
-      x = s7_value(sc, posp);
-      XEN_ASSERT_TYPE(s7_is_integer(x), posp, XEN_ARG_1, caller, "an integer");
-      pos = s7_cell_integer(x);
-    }
-  else pos = s7_slot_value_to_integer(s7, posp);
-
-  if (!sclp_is_slot)
-    {
-      s7_pointer x;
-      x = s7_value(sc, sclp);
-      XEN_ASSERT_TYPE(s7_is_real(x), sclp, XEN_ARG_2, "*", "a real");
-      scl = s7_number_to_real(sc, x);
-    }
-  else scl = s7_slot_value_to_real(s7, sclp);
-
-  if (!invalp_is_slot)
-    {
-      s7_pointer x;
-      x = s7_value(sc, invalp);
-      XEN_ASSERT_TYPE(s7_is_real(x), invalp, XEN_ARG_2, "delay", "a real");
-      inval = s7_number_to_real(sc, x);
-    }
-  else inval = s7_slot_value_to_real(s7, invalp);
-
+  if (chan == 0)
+    GET_INTEGER(args, outa, pos);
+  else GET_INTEGER(args, outb, pos);
+  args = cadr(args);
+  if (chan == 0)
+    GET_REAL_CADR(args, outa, scl);
+  else GET_REAL_CADR(args, outb, scl);
+  args = caddr(args);
+  GET_GENERATOR_CADR(args, delay, d);
+  GET_REAL_CADR(cdr(args), delay, inval);
   return(out_any_2(pos, scl * mus_delay_unmodulated_noz(d, inval), chan, caller));
+
+  /* (with-sound (:channels 2 :reverb jc-reverb :output "test1.snd") (outa 0 0.5 *reverb*)) */
 }
 
 static s7_pointer g_outa_mul_s_delay(s7_scheme *sc, s7_pointer args)
@@ -12465,6 +12184,31 @@ static s7_pointer locsig_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 }
 
 
+static s7_pointer out_bank_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 3)
+    {
+      /* fprintf(stderr, "out %s\n", DISPLAY(expr)); */
+      /* jcrev:
+	 (out-bank i filts (* volume (+ (comb comb1 allpass-sum) (comb comb2 allpass-sum) (comb comb3 allpass-sum) (comb comb4 allpass-sum))))
+      */
+      /*
+	cadddr(expr): (* volume (+ (comb comb1 allpass-sum) (comb comb2 allpass-sum) (comb comb3 allpass-sum) (comb comb4 allpass-sum)))
+	is opt: h_safe_c_c
+      */
+      if ((s7_is_symbol(cadr(expr))) &&
+	  (s7_is_symbol(caddr(expr))) &&
+	  (s7_is_pair(cadddr(expr))) &&
+	  (s7_function_choice_is_direct(sc, cadddr(expr))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(indirect_out_bank_ssz);
+	}
+    }
+  return(f);
+}
+
+
 static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 2)
@@ -12842,18 +12586,14 @@ static void init_choosers(s7_scheme *sc)
 
   fm_violin_vibrato = clm_make_function(sc, "+", g_fm_violin_vibrato, 3, 0, false, "fm-violin optimization", f,
 					NULL, NULL, NULL, NULL, NULL, NULL);
-  s7_function_set_has_data(fm_violin_vibrato);
   fm_violin_vibrato_no_env = clm_make_function(sc, "+", g_fm_violin_vibrato_no_env, 2, 0, false, "fm-violin optimization", f,
 					NULL, NULL, NULL, NULL, NULL, NULL);
-  s7_function_set_has_data(fm_violin_vibrato_no_env);
   fm_violin_modulation = clm_make_function(sc, "+", g_fm_violin_modulation, 2, 0, false, "fm-violin optimization", f,
 					   NULL, NULL, NULL, NULL, NULL, NULL);
   jc_reverb_combs = clm_make_function(sc, "+", g_jc_reverb_combs, 2, 0, false, "jc-reverb optimization", f,
 				      NULL, NULL, NULL, NULL, NULL, NULL);
-  s7_function_set_has_data(jc_reverb_combs);
   nrev_combs = clm_make_function(sc, "+", g_nrev_combs, 2, 0, false, "nrev optimization", f,
 				 NULL, NULL, NULL, NULL, NULL, NULL);
-  s7_function_set_has_data(nrev_combs);
   add_direct_2 = clm_make_function(sc, "+", g_add_direct_2, 2, 0, false, "+ optimization", f,
 				   NULL, NULL, NULL, NULL, NULL, NULL);
   add_direct_s2 = clm_make_function(sc, "+", g_add_direct_s2, 3, 0, false, "+ optimization", f,
@@ -13273,10 +13013,8 @@ static void init_choosers(s7_scheme *sc)
 					NULL, NULL, NULL, NULL, NULL, NULL);
   jc_reverb_all_passes = clm_make_function(sc, "all-pass", g_jc_reverb_all_passes, 2, 0, false, "all-pass optimization", f,
 					   NULL, NULL, NULL, NULL, NULL, NULL);
-  s7_function_set_has_data(jc_reverb_all_passes);
   nrev_all_passes = clm_make_function(sc, "all-pass", g_nrev_all_passes, 2, 0, false, "all-pass optimization", f,
 					   NULL, NULL, NULL, NULL, NULL, NULL);
-  s7_function_set_has_data(nrev_all_passes);
 
 
   f = s7_name_to_value(sc, "delay");
@@ -13348,17 +13086,30 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_chooser(sc, f, locsig_chooser);
 
   fm_violin_2 = clm_make_function_no_choice(sc, "locsig", g_fm_violin_2, 3, 0, false, "fm-violin optimization", f);
-  s7_function_set_has_data(fm_violin_2);
   indirect_locsig_3 = clm_make_function_not_temp(sc, "locsig", g_indirect_locsig_3, 2, 0, false, "locsig optimization", f);
+
+#if (!WITH_GMP)
+  fm_violin_2_looped = clm_make_function_not_temp(sc, "locsig", g_fm_violin_2_looped, 3, 0, false, "fm-violin optimization", f);
+  s7_function_set_let_looped(fm_violin_2, fm_violin_2_looped);
+#endif
+
+
+  f = s7_name_to_value(sc, "out-bank");
+  s7_function_set_chooser(sc, f, out_bank_chooser);
+  indirect_out_bank_ssz = clm_make_function_not_temp(sc, "out-bank", g_indirect_out_bank_ssz, 3, 0, false, "out-bank optimization", f);
+#if (!WITH_GMP)
+  indirect_out_bank_ssz_looped = clm_make_function_not_temp(sc, "out-bank", g_indirect_out_bank_ssz_looped, 3, 0, false, "out-bank optimization", f);
+  s7_function_set_let_looped(indirect_out_bank_ssz, indirect_out_bank_ssz_looped);
+#endif
 
 
   f = s7_name_to_value(sc, "outa");
   s7_function_set_chooser(sc, f, outa_chooser);
 
   outa_mul_s_delay = clm_make_function_not_temp(sc, "outa", g_outa_mul_s_delay, 2, 0, false, "outa optimization", f);
-  s7_function_set_has_data(outa_mul_s_delay);
   outa_mul_s_env = clm_make_function_not_temp(sc, "outa", g_outa_mul_s_env, 2, 0, false, "outa optimization", f);
   outa_env_polywave_env = clm_make_function_not_temp(sc, "outa", g_outa_env_polywave_env, 2, 0, false, "outa optimization", f);
+
   indirect_outa_2 = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2, 2, 0, false, "outa optimization", f);
   indirect_outa_2_temp = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_temp, 2, 0, false, "outa optimization", f);
   indirect_outa_2_env = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_env, 2, 0, false, "outa optimization", f);
@@ -13382,7 +13133,6 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_chooser(sc, f, outb_chooser);
 
   outb_mul_s_delay = clm_make_function_not_temp(sc, "outb", g_outb_mul_s_delay, 2, 0, false, "outb optimization", f);
-  s7_function_set_has_data(outb_mul_s_delay);
   outb_two = clm_make_function_not_temp(sc, "outb", g_outb_two, 2, 0, false, "outb optimization", f);
 
 
@@ -13714,6 +13464,7 @@ XEN_ARGIFY_10(g_mus_mix_with_envs_w, g_mus_mix_with_envs)
 XEN_ARGIFY_6(g_oscil_bank_w, g_oscil_bank)
 XEN_NARGIFY_2(g_comb_bank_w, g_comb_bank)
 XEN_NARGIFY_2(g_all_pass_bank_w, g_all_pass_bank)
+XEN_NARGIFY_3(g_out_bank_w, g_out_bank)
 
 #else
 #define g_mus_srate_w g_mus_srate
@@ -14021,6 +13772,7 @@ XEN_NARGIFY_2(g_all_pass_bank_w, g_all_pass_bank)
 #define g_oscil_bank_w g_oscil_bank
 #define g_comb_bank_w g_comb_bank
 #define g_all_pass_bank_w g_all_pass_bank
+#define g_out_bank_w g_out_bank
 #endif
 
 #if HAVE_SCHEME
@@ -14256,6 +14008,8 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_REAL_PROCEDURE(S_comb_bank, g_comb_bank_w, 2, 0, 0, "an experiment");
   XEN_DEFINE_REAL_PROCEDURE(S_all_pass_bank, g_all_pass_bank_w, 2, 0, 0, "an experiment");
+
+  XEN_DEFINE_REAL_PROCEDURE(S_out_bank, g_out_bank_w, 3, 0, 0, "an experiment"); /* TODO: help string */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedback, g_mus_feedback_w, H_mus_feedback, S_setB S_mus_feedback, g_mus_set_feedback_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedforward, g_mus_feedforward_w, H_mus_feedforward, S_setB S_mus_feedforward, g_mus_set_feedforward_w,  1, 0, 2, 0);
@@ -14542,8 +14296,6 @@ static void mus_xen_init(void)
 
     clm_reverb_accessor = s7_make_function(s7, "(set " S_reverb ")", g_clm_reverb_set, 2, 0, false, "called if " S_reverb " is set");
     s7_symbol_set_access(s7, s7_make_symbol(s7, S_reverb), s7_list(s7, 3, XEN_FALSE, clm_reverb_accessor, XEN_FALSE));
-
-    s7_safe_do_set_notifier(s7, clm_safe_do_notifier);
   }
 #endif
 

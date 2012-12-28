@@ -574,15 +574,9 @@ bool s7_function_choice_is_direct(s7_scheme *sc, s7_pointer expr);
 void s7_function_choice_set_direct(s7_scheme *sc, s7_pointer expr);
 s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr);
 
-void **s7_expression_data(s7_scheme *sc, s7_pointer expr);
-void **s7_expression_make_data(s7_scheme *sc, s7_pointer expr, int size);
-void s7_function_set_has_data(s7_pointer f);
-
 s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
 void s7_function_set_returns_temp(s7_pointer f);
 bool s7_function_returns_temp(s7_pointer f);
-bool s7_is_do_local_or_global(s7_scheme *sc, s7_pointer symbol);
-void s7_safe_do_set_notifier(s7_scheme *sc, void (*notifier)(int level));
 s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr);
 s7_pointer s7_value(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_car_value(s7_scheme *sc, s7_pointer lst);
@@ -590,10 +584,10 @@ s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst);
 s7_pointer s7_cadar_value(s7_scheme *sc, s7_pointer lst);
 size_t s7_number_offset(s7_scheme *sc);
 
-  int s7_c_object_built_in_type(s7_scheme *sc);
-  size_t s7_c_object_value_offset(s7_scheme *sc);
-  size_t s7_c_object_type_offset(s7_scheme *sc);
-  size_t s7_type_offset(s7_scheme *sc);
+int s7_c_object_built_in_type(s7_scheme *sc);
+size_t s7_c_object_value_offset(s7_scheme *sc);
+size_t s7_c_object_type_offset(s7_scheme *sc);
+size_t s7_type_offset(s7_scheme *sc);
 
   /* these are for experimental optimization choices */
 
@@ -725,6 +719,7 @@ void s7_set_object_set_3(int type, s7_pointer (*set_3)(s7_scheme *sc, void *val,
 void s7_set_object_array_info(int type, size_t length_loc, size_t data_loc);
 void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_args);
 void s7_function_set_looped(s7_pointer f, s7_pointer c);
+void s7_function_set_let_looped(s7_pointer f, s7_pointer c);
 
   /* These functions create a new Scheme object type.  There is a simple example in s7.html.
    *
