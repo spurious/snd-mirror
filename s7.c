@@ -43466,7 +43466,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    let_var = cdadar(lets);
 		    lets = cadar(lets);
 		    free_safe = (returns_temp(ecdr(lets)));
-		    
+
 		  SIMPLE_SAFE_DOTIMES_LOOP:
 		    slot_set_value(p, temp_val = c_call(lets)(sc, let_var));
 		    c_call(func)(sc, body);
@@ -62515,8 +62515,8 @@ s7_scheme *s7_init(void)
  * index    44300 3291 3005 2742 2078
  * s7test    1721 1358 1297 1244  977
  * t455       265   89   55   31   14
- * t502        90   43   39   36   29   27
+ * t502        90   43   39   36   29   26
  * lat        229   63   52   47   42
- * calls           275  207  175  115  114
+ * calls           275  207  175  115  113
  */
 

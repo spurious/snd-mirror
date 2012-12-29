@@ -1731,7 +1731,7 @@
 	      (fm-val (* amp (sin carrier-phase))))
 	  (set! carrier-phase (+ carrier-phase modulation carrier-phase-incr))
 	  (set! modulator-phase (+ modulator-phase modulator-phase-incr))
-	  (outb i fm-val))))))
+	  (outa i fm-val))))))
 
 (define* (fmdoc-fm-1 beg dur freq amp mc-ratio index (index-env '(0 1 100 1)))
   (let ((fm-index (hz->radians (* index mc-ratio freq))))

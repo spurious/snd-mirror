@@ -9080,12 +9080,7 @@ static mus_float_t mus_granulate_simple(mus_any *p) {return(mus_granulate_with_e
 static mus_float_t mus_convolve_simple(mus_any *p) {return(mus_convolve(p, NULL));}
 static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocoder(p, NULL));}
 
-#if 0
-#define GET_GENERATOR(Obj, Type, Val) Val = get_generator(s7, Obj)
-#endif
-#if 0
-/* this saves lookups, but not enough to make up for the env check and so on
- * here's a tricky case:
+/*
 (define (hi)
   (let ((o1 (make-oscil 440.0))
 	(o2 (make-oscil 100.0))
@@ -9096,32 +9091,7 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
       (outa i (* .1 (oscil o)))
       (if (= i 22050) (set! o o2)))))
  */
-#define GET_GENERATOR(O_Obj, Type, Val) \
-  do { \
-    static s7_pointer saved_g = NULL, saved_o = NULL, saved_e = NULL, saved_slot = NULL; \
-  static mus_any *gg = NULL; \
-  s7_pointer gp, ep, Obj;	     \
-  mus_xen *gn; Obj = O_Obj;						\
-  if (((ep = s7_current_environment(s7)) != saved_e) || (Obj != saved_o)) \
-    { \
-      saved_o = Obj; \
-      saved_e = ep; \
-      saved_slot = s7_slot(s7, s7_car(Obj));		\
-    } \
-  gp = s7_slot_value(s7, saved_slot);		\
-      if (gp != saved_g) \
-        { \
-          gn = (mus_xen *)imported_s7_object_value_checked(gp, mus_xen_tag); \
-          if (gn) \
-            { \
-              saved_g = gp; \
-              gg = gn->gen; \
-            } \
-          else XEN_ASSERT_TYPE(false, gp, XEN_ARG_1, "gen-lookup", "a generator"); \
-        } \
-      Val = gg; \
-  } while (0)
-#else
+
 #define GET_GENERATOR(Obj, Type, Val) \
   do { \
   s7_pointer gp; \
@@ -9154,7 +9124,7 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
     Val = gn->gen;							\
   else {Val = NULL; XEN_ASSERT_TYPE(false, gp, XEN_ARG_1, "gen-lookup", "a generator");} \
   } while (0)
-#endif
+
 
 #define GET_NUMBER(Obj, Caller, Val) Val = s7_car_value(s7, Obj)
 #define GET_REAL(Obj, Caller, Val) Val = s7_number_to_real(sc, s7_car_value(s7, Obj))
@@ -9380,30 +9350,6 @@ MUS_PHASE_VOCODER,
 
 ;(set! (mus-location ...) ...)?
 */
-
-static s7_pointer env_1_1;
-static s7_pointer g_env_1_1(s7_scheme *sc, s7_pointer args)
-{
-  mus_any *_o_;
-  GET_GENERATOR(args, env, _o_);
-  return(s7_make_real(sc, mus_env(_o_))); 
-}
-
-static s7_pointer env_1_2;
-static s7_pointer g_env_1_2(s7_scheme *sc, s7_pointer args)
-{
-  mus_any *_o_;
-  GET_GENERATOR(args, env, _o_);
-  return(s7_make_real(sc, mus_env(_o_))); 
-}
-
-static s7_pointer env_1_3;
-static s7_pointer g_env_1_3(s7_scheme *sc, s7_pointer args)
-{
-  mus_any *_o_;
-  GET_GENERATOR(args, env, _o_);
-  return(s7_make_real(sc, mus_env(_o_))); 
-}
 
 
 
@@ -9972,8 +9918,7 @@ static s7_pointer g_indirect_out_bank_ssz(s7_scheme *sc, s7_pointer args)
 
   return(args);
 }
-/* (with-sound (:channels 2 :reverb jc-reverb) (outa 0 .5 *reverb*))
- */
+
 
 s7_pointer g_multiply_s_direct(s7_scheme *sc, s7_pointer args);
 
@@ -9987,9 +9932,10 @@ static s7_pointer g_indirect_out_bank_ssz_looped(s7_scheme *sc, s7_pointer args)
   s7_pointer stepper, callee, combs, allx, letp;
   s7_Int *step, *stop;
 
+  /* (with-sound (:channels 2 :reverb jc-reverb) (outa 0 .5 *reverb*))
 
-  /* incoming args: 
-     (0 
+     incoming args: 
+      (0 
       ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 (ina i *reverb*))))))
       (out-bank i filts (* volume (+ (comb comb1 allpass-sum) (comb comb2 allpass-sum) (comb comb3 allpass-sum) (comb comb4 allpass-sum)))))
       
@@ -10084,6 +10030,7 @@ static s7_pointer g_indirect_out_bank_ssz_looped(s7_scheme *sc, s7_pointer args)
 			out_any_2(CLM_OUTPUT, pos, mus_delay_unmodulated_noz(ds[i], x), i, "out-bank");
 #endif
 		    }
+		  free(ds);
 		}
 	      (*step) = pos;
 	      return(args);
@@ -10091,11 +10038,121 @@ static s7_pointer g_indirect_out_bank_ssz_looped(s7_scheme *sc, s7_pointer args)
 	}
     }
 
-  /* look for nrev... */
-  
+  /* look for nrev... 
+     (with-sound (:reverb nrev) (outa 0 .5 *reverb*))
+     incoming args:
+     (0 
+     ((rev (* volume (ina i *reverb*)))) 
+     (out-bank i filts (all-pass allpass4 (one-pole low (all-pass allpass3 (all-pass allpass2 (all-pass allpass1
+        (+ (comb comb1 rev) (comb comb2 rev) (comb comb3 rev) (comb comb4 rev) (comb comb5 rev) (comb comb6 rev)))))))))
+   */
 
-  /* TODO: does this know about vct output? | out_bank built-in in clm.c | 1 chan opt'd | nrev opt'd | file out opt'd | mus_apply opt'd via passed func
+  if (s7_function_choice(sc, letp) == g_mul_s_ina_reverb_2)
+    {
+      s7_pointer allp, cmbp;
+      allp = cadddr(caddr(args));                            /* (allpass allpass4 ...) */
+      if (s7_function_choice(sc, allp) == g_nrev_all_passes)
+	{
+	  cmbp = caddr(caddr(caddr(caddr(caddr(allp)))));    /* (+ (comb...)) */
+	  if (s7_function_choice(sc, cmbp) == g_nrev_combs)
+	    {
+	      /* it is nrev */
+	      s7_pointer vargs;
+	      s7_Double volume;
+	      mus_any *a1 = NULL, *a2 = NULL, *a3 = NULL, *a4 = NULL, *lp = NULL;
+	      mus_any *c1 = NULL, *c2, *c3, *c4, *c5, *c6;
+
+	      GET_REAL(cdr(letp), "nrev", volume);
+
+	      vargs = cdr(allp);
+	      GET_GENERATOR(vargs, all_pass, a1);
+	      vargs = cdadr(vargs);
+	      GET_GENERATOR(vargs, one_pole, lp);
+	      vargs = cdadr(vargs);
+	      GET_GENERATOR(vargs, all_pass, a2);
+	      vargs = cdadr(vargs);
+	      GET_GENERATOR(vargs, all_pass, a3);
+	      vargs = cdadr(vargs);
+	      GET_GENERATOR(vargs, all_pass, a4);
+
+	      vargs = cdr(cmbp);
+	      GET_GENERATOR_CADAR(vargs, comb, c1);
+	      vargs = cdr(vargs);
+	      GET_GENERATOR_CADAR(vargs, comb, c2);
+	      vargs = cdr(vargs);
+	      GET_GENERATOR_CADAR(vargs, comb, c3);
+	      vargs = cdr(vargs);
+	      GET_GENERATOR_CADAR(vargs, comb, c4);
+	      vargs = cdr(vargs);
+	      GET_GENERATOR_CADAR(vargs, comb, c5);
+	      vargs = cdr(vargs);
+	      GET_GENERATOR_CADAR(vargs, comb, c6);
+
+	      if (size == 1)
+		{
+		  mus_any *d1;
+		  d1 = XEN_TO_MUS_ANY(XEN_VECTOR_REF(fs, 0));
+		  for (; pos < end; pos++)
+		    {
+		      x = volume * in_any_2(pos, 0);
+		      x = mus_all_pass_unmodulated_noz(a1, 
+		            mus_one_pole(lp,							       
+			      mus_all_pass_unmodulated_noz(a2, 
+                                mus_all_pass_unmodulated_noz(a3, 
+                                  mus_all_pass_unmodulated_noz(a4, 
+							       mus_comb_unmodulated_noz(c1, x) + 
+							       mus_comb_unmodulated_noz(c2, x) + 
+							       mus_comb_unmodulated_noz(c3, x) + 
+							       mus_comb_unmodulated_noz(c4, x) +
+							       mus_comb_unmodulated_noz(c5, x) +
+							       mus_comb_unmodulated_noz(c6, x))))));
+#if HAVE_SCHEME  
+		      out_any_2(pos, mus_all_pass_unmodulated_noz(d1, x), 0, "out-bank");
+#else
+		      out_any_2(CLM_OUTPUT, pos, mus_all_pass_unmodulated_noz(d1, x), 0, "out-bank");
+#endif
+		    }
+		}
+	      else
+		{
+		  mus_any **ds;
+		  ds = (mus_any **)malloc(size * sizeof(mus_any *));
+		  for (i = 0; i < size; i++)
+		    ds[i] = XEN_TO_MUS_ANY(XEN_VECTOR_REF(fs, i));
+		  
+		  for (; pos < end; pos++)
+		    {
+		      x = volume * in_any_2(pos, 0);
+		      x = mus_all_pass_unmodulated_noz(a1, 
+		            mus_one_pole(lp,							       
+			      mus_all_pass_unmodulated_noz(a2, 
+                                mus_all_pass_unmodulated_noz(a3, 
+                                  mus_all_pass_unmodulated_noz(a4, 
+							       mus_comb_unmodulated_noz(c1, x) + 
+							       mus_comb_unmodulated_noz(c2, x) + 
+							       mus_comb_unmodulated_noz(c3, x) + 
+							       mus_comb_unmodulated_noz(c4, x) +
+							       mus_comb_unmodulated_noz(c5, x) +
+							       mus_comb_unmodulated_noz(c6, x))))));
+#if HAVE_SCHEME  
+		      for (i = 0; i < size; i++)
+			out_any_2(pos, mus_all_pass_unmodulated_noz(ds[i], x), i, "out-bank");
+#else
+		      for (i = 0; i < size; i++)
+			out_any_2(CLM_OUTPUT, pos, mus_all_pass_unmodulated_noz(ds[i], x), i, "out-bank");
+#endif
+		    }
+		  free(ds);
+		}
+	      (*step) = pos;
+	      return(args);
+	    }
+	}
+    }
+
+  /* TODO: does this know about vct output? | out_bank built-in in clm.c | file out opt'd | mus_apply opt'd via passed func
    *         n-chan opt'd via parallel obufs | direct slot set? | other out-bank uses? | 2 chan opt'd?
+   * TODO: doc/test out-bank
    */
   for (; pos < end; pos++)
     {
@@ -10114,8 +10171,6 @@ static s7_pointer g_indirect_out_bank_ssz_looped(s7_scheme *sc, s7_pointer args)
 
   return(args);
 }
-/* (with-sound (:channels 2 :reverb jc-reverb) (outa 0 .5 *reverb*))
- */
 
 
 static s7_pointer indirect_outa_2;
@@ -10139,8 +10194,6 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 }
 
 #if (!WITH_GMP)
-/* TODO: let_looped case here and indirect_outa_2_env */
-
 static s7_pointer indirect_outa_2_temp_looped;
 static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 {
@@ -10163,6 +10216,43 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
   for (; pos < end; pos++)
     {
       (*step) = pos;
+      x = s7_call_direct_to_real_and_free(sc, callee); 
+      out_any_2(pos, x, 0, "outa");
+    }
+  return(args);
+}
+
+/* this gives almost no gain */
+static s7_pointer indirect_outa_2_temp_let_looped;
+static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer args)
+{
+  s7_Int pos, end;
+  s7_Double x;
+  s7_pointer stepper, callee, loc, letp, lets;
+  s7_Int *step, *stop;
+  s7_function letf;
+
+  stepper = car(args);
+  loc = cdaddr(args); 
+  callee = s7_slot(sc, car(loc));
+  if (s7_slot_value(sc, callee) != stepper)
+    return(NULL);
+
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int)));
+  pos = (*step);
+  end = (*stop);
+
+  letp = cadr(caadr(args));
+  lets = s7_slot(sc, car(caadr(args)));
+  callee = caddr(caddr(args));
+
+  letf = s7_function_choice(sc, letp);
+  letp = cdr(letp);
+  for (; pos < end; pos++)
+    {
+      (*step) = pos;
+      s7_slot_set_value(sc, lets, letf(sc, letp));
       x = s7_call_direct_to_real_and_free(sc, callee); 
       out_any_2(pos, x, 0, "outa");
     }
@@ -10211,6 +10301,70 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
     {
       (*step) = pos;
       x = s7_call_direct_to_real_and_free(sc, callee); /* g_mul_env_direct from chooser, so it's a temp -- the free might be slower */
+      out_any_2(pos, mus_env(e) * x, 0, "outa");
+    }
+  return(args);
+}
+
+
+static s7_pointer indirect_outa_2_env_let_looped;
+static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer args)
+{
+  s7_Int pos, end;
+  s7_Double x;
+  mus_any *e = NULL;
+  s7_pointer stepper, callee, loc, letp, lets;
+  s7_Int *step, *stop;
+  s7_function letf;
+
+  /* args: (0 ((frq (env frqf))) (outa i (* (env ampf) (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 frq))))))
+   */
+  stepper = car(args);
+  loc = cdaddr(args);              /* (i (* (env ...)) */
+  callee = s7_slot(sc, car(loc));
+  if (s7_slot_value(sc, callee) != stepper)
+    return(NULL);
+
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int)));
+  pos = (*step);
+  end = (*stop);
+
+  letp = cadr(caadr(args));
+  lets = s7_slot(sc, car(caadr(args)));
+  
+  args = cdar(cddr(caddr(args)));
+  callee = cadr(args);
+  GET_GENERATOR_CADAR(args, env, e);
+  letf = s7_function_choice(sc, letp);
+
+  if (letf == g_env_1)
+    {
+      s7_pointer mut;
+      s7_Double *letr;
+      mus_any *lete;
+
+      mut = s7_make_real(sc, 1.5);
+      letr = ((s7_Double *)((unsigned char *)(mut) + xen_s7_number_location));
+      s7_slot_set_value(sc, lets, mut);
+      GET_GENERATOR_CADR(letp, env, lete);
+      
+      for (; pos < end; pos++)
+	{
+	  (*step) = pos;
+	  (*letr) = mus_env(lete);
+	  x = s7_call_direct_to_real_and_free(sc, callee);
+	  out_any_2(pos, mus_env(e) * x, 0, "outa");
+	}
+      return(args);
+    }
+
+  letp = cdr(letp);
+  for (; pos < end; pos++)
+    {
+      (*step) = pos;
+      s7_slot_set_value(sc, lets, letf(sc, letp));
+      x = s7_call_direct_to_real_and_free(sc, callee);
       out_any_2(pos, mus_env(e) * x, 0, "outa");
     }
   return(args);
@@ -11505,22 +11659,13 @@ static s7_pointer nrxycos_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 }
 
 
-static int env_choice = -1;
 static s7_pointer env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 1) &&
       (s7_is_symbol(cadr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      env_choice++;
-      if (env_choice == 0)
-	return(env_1);
-      if (env_choice == 1)
-	return(env_1_1);
-      if (env_choice == 2)
-	return(env_1_2);
-      env_choice = -1;
-      return(env_1_3);
+      return(env_1);
     }
   return(f);
 }
@@ -12789,9 +12934,6 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "env");
   s7_function_set_chooser(sc, f, env_chooser);
   env_1 = clm_make_function(sc, "env", g_env_1, 1, 0, false, "env optimization", f, NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
-  env_1_1 = clm_make_function(sc, "env", g_env_1_1, 1, 0, false, "env optimization", f, NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
-  env_1_2 = clm_make_function(sc, "env", g_env_1_2, 1, 0, false, "env optimization", f, NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
-  env_1_3 = clm_make_function(sc, "env", g_env_1_3, 1, 0, false, "env optimization", f, NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
 
 
   f = s7_name_to_value(sc, "readin");
@@ -13116,9 +13258,13 @@ static void init_choosers(s7_scheme *sc)
 #if (!WITH_GMP)
   indirect_outa_2_env_looped = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_env_looped, 2, 0, false, "outa optimization", f);
   s7_function_set_looped(indirect_outa_2_env, indirect_outa_2_env_looped);
+  indirect_outa_2_env_let_looped = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_env_let_looped, 3, 0, false, "outa optimization", f);
+  s7_function_set_let_looped(indirect_outa_2_env, indirect_outa_2_env_let_looped);
 
   indirect_outa_2_temp_looped = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_temp_looped, 2, 0, false, "outa optimization", f);
   s7_function_set_looped(indirect_outa_2_temp, indirect_outa_2_temp_looped);
+  indirect_outa_2_temp_let_looped = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_temp_let_looped, 2, 0, false, "outa optimization", f);
+  s7_function_set_let_looped(indirect_outa_2_temp, indirect_outa_2_temp_let_looped);
 
   outa_env_polywave_env_looped = clm_make_function_not_temp(sc, "outa", g_outa_env_polywave_env_looped, 2, 0, false, "outa optimization", f);
   s7_function_set_looped(outa_env_polywave_env, outa_env_polywave_env_looped);
