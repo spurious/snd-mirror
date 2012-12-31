@@ -155,9 +155,9 @@
   (let ((str (if (null? (cdr args))
 		 (car args)
 		 (apply format #f args))))
-    (format #t "~%~A: ~8T~A" line str)
+    (format *stderr* "~%~A: ~8T~A" line str)
     (if (not (provided? 'snd-nogui))
-	(snd-print (format #f "~%~A: ~A" line str)))))
+	(snd-print (format *stderr* "~%~A: ~A" line str)))))
 
 (define with-big-file #f)
 (define big-file-name "/home/bil/zap/sounds/bigger.snd")
@@ -31130,7 +31130,7 @@ EDITS: 2
 				0.000 0.020 -0.000 -0.033 0.000 0.054 -0.000 -0.100 -0.000 0.316
 				0.500 0.316 -0.000 -0.100 -0.000 0.054 0.000 -0.033 -0.000 0.020
 				0.000 -0.012 -0.000 0.007 0.000 -0.003 -0.000 0.001 0.000 -0.000)))
-	      (snd-display #__line__ ";scr-channel 0.5 -> ~A" (channel->vct 180 40 ind 0)))
+	      (snd-display #__line__ ";src-channel 0.5 -> ~A" (channel->vct 180 40 ind 0)))
 	  (undo 1 ind 0)
 	  (src-channel 0.25)
 	  (let ((mx (maxamp ind 0)))
@@ -31145,7 +31145,7 @@ EDITS: 2
 				0.054 0.034 0.000 -0.026 -0.033 -0.021 -0.000 0.016 0.020 0.013
 				0.000 -0.010 -0.012 -0.008 -0.000 0.006 0.007 0.004 0.000 -0.003
 				-0.003 -0.002 -0.000 0.001 0.001 0.000 0.000 -0.000 -0.000 -0.000)))
-	      (snd-display #__line__ ";scr-channel 0.25 -> ~A" (channel->vct 360 80 ind 0)))
+	      (snd-display #__line__ ";src-channel 0.25 -> ~A" (channel->vct 360 80 ind 0)))
 	  (undo 2 ind 0)
 	  (map-channel (let ((i 0)) (lambda (y) (let ((val (sin (* i (/ pi 100))))) (set! i (+ i 1)) (* .5 val)))))
 	  (for-each
@@ -47343,22 +47343,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-28-Dec-12:
-113,302,078,042
-21,402,647,693  s7.c:eval [/home/bil/snd-13/snd]
- 8,675,177,214  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 7,634,109,327  ???:sin [/lib64/libm-2.12.so]
- 6,336,299,294  s7.c:eval'2 [/home/bil/snd-13/snd]
- 3,751,216,320  s7.c:gc [/home/bil/snd-13/snd]
+31-Dec-12:
+111,862,073,940
+21,304,448,859  s7.c:eval [/home/bil/snd-13/snd]
+ 8,673,335,627  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 7,632,679,495  ???:sin [/lib64/libm-2.12.so]
+ 6,324,116,992  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 3,754,812,827  s7.c:gc [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,950,863,267  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 2,800,067,155  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,790,320,562  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,792,445,754  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,776,011,931  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
  2,720,009,099  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 2,561,932,129  ???:cos [/lib64/libm-2.12.so]
- 2,024,437,388  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 2,641,095,813  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 2,564,937,176  ???:cos [/lib64/libm-2.12.so]
+ 1,978,840,870  s7.c:s7_make_real [/home/bil/snd-13/snd]
  1,592,316,356  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,152,082,677  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 1,214,712,956  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
+ 1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,129,623,660  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
- 1,020,388,472  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
 |#

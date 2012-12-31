@@ -453,6 +453,12 @@ MUS_EXPORT mus_float_t mus_out_any(mus_long_t frame, mus_float_t val, int chan, 
 MUS_EXPORT mus_float_t mus_safe_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO);
 MUS_EXPORT bool mus_out_any_is_safe(mus_any *IO);
 MUS_EXPORT mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_float_t val);
+MUS_EXPORT mus_long_t mus_out_any_data_start(mus_any *IO);
+MUS_EXPORT mus_long_t mus_out_any_data_end(mus_any *IO);
+MUS_EXPORT int mus_out_any_channels(mus_any *IO);
+MUS_EXPORT mus_float_t **mus_out_any_buffers(mus_any *IO);
+MUS_EXPORT void mus_out_any_set_end(mus_any *IO, mus_long_t end);
+
 MUS_EXPORT bool mus_frame_to_file_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_frame_to_file(mus_any *ptr, mus_long_t samp, mus_any *data);
 MUS_EXPORT mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment);
@@ -471,9 +477,11 @@ MUS_EXPORT mus_any *mus_locsig_outf(mus_any *ptr);
 MUS_EXPORT mus_any *mus_locsig_revf(mus_any *ptr);
 MUS_EXPORT void *mus_locsig_closure(mus_any *ptr);
 MUS_EXPORT void mus_locsig_set_detour(mus_any *ptr, void (*detour)(mus_any *ptr, mus_long_t val));
-
+MUS_EXPORT bool mus_locsig_output_is_safe(mus_any *ptr);
 MUS_EXPORT int mus_locsig_channels(mus_any *ptr);
 MUS_EXPORT int mus_locsig_reverb_channels(mus_any *ptr);
+MUS_EXPORT mus_any *mus_locsig_out_writer(mus_any *ptr);
+MUS_EXPORT mus_any *mus_locsig_rev_writer(mus_any *ptr);
 
 MUS_EXPORT bool mus_move_sound_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_move_sound(mus_any *ptr, mus_long_t loc, mus_float_t val);

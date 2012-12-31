@@ -8617,6 +8617,38 @@ int mus_close_file(mus_any *ptr)
 
 /* ---------------- out-any ---------------- */
 
+
+mus_long_t mus_out_any_data_start(mus_any *IO)
+{
+  rdout *gen = (rdout *)IO;
+  return(gen->data_start);
+}
+
+mus_long_t mus_out_any_data_end(mus_any *IO)
+{
+  rdout *gen = (rdout *)IO;
+  return(gen->data_end);
+}
+
+int mus_out_any_channels(mus_any *IO)
+{
+  rdout *gen = (rdout *)IO;
+  return(gen->chans);
+}
+
+mus_float_t **mus_out_any_buffers(mus_any *IO)
+{
+  rdout *gen = (rdout *)IO;
+  return(gen->obufs);
+}
+
+void mus_out_any_set_end(mus_any *IO, mus_long_t end)
+{
+  rdout *gen = (rdout *)IO;
+  if (gen->out_end < end)
+    gen->out_end = end;
+}
+
 mus_float_t mus_out_any(mus_long_t samp, mus_float_t val, int chan, mus_any *IO)
 {
   if ((IO) && 
@@ -8792,6 +8824,7 @@ typedef struct {
   int chans, rev_chans;
   mus_interp_t type;
   mus_float_t reverb;
+  bool safe_output;
   void *closure;
   void (*locsig_func)(mus_any *ptr, mus_long_t loc, mus_float_t val);
   void (*detour)(mus_any *ptr, mus_long_t loc);
@@ -8910,6 +8943,9 @@ static mus_float_t *locsig_xcoeffs(mus_any *ptr) {return(((locs *)ptr)->revn);}
 
 mus_any *mus_locsig_outf(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->outf));}  /* clm2xen.c */
 mus_any *mus_locsig_revf(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->revf));}
+
+mus_any *mus_locsig_out_writer(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->outn_writer));}
+mus_any *mus_locsig_rev_writer(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->revn_writer));}
 
 void *mus_locsig_closure(mus_any *ptr) {return(((locs *)ptr)->closure);}            /* run.c */
 static void *locsig_set_closure(mus_any *ptr, void *e) {((locs *)ptr)->closure = e; return(e);}
@@ -9410,6 +9446,7 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
 
   gen->type = type;
   gen->reverb = reverb;
+  gen->safe_output = false;
   if (distance > 1.0)
     dist = 1.0 / distance;
   else dist = 1.0;
@@ -9449,6 +9486,7 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
 		  (mus_out_any_is_safe(revput)) &&
 		  (mus_channels(revput) == 1))
 		{
+		  gen->safe_output = true;
 		  switch (chans)
 		    {
 		    case 1:  gen->locsig_func = mus_locsig_safe_mono;   break;
@@ -9459,6 +9497,7 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
 	    }
 	  else
 	    {
+	      gen->safe_output = true;
 	      switch (chans)
 		{
 		case 1:  gen->locsig_func = mus_locsig_safe_mono_no_reverb;   break;
@@ -9501,6 +9540,11 @@ void mus_locsig(mus_any *ptr, mus_long_t loc, mus_float_t val)
   (*(gen->locsig_func))(ptr, loc, val);
 }
 
+
+bool mus_locsig_output_is_safe(mus_any *ptr)
+{
+  return(((locs *)ptr)->safe_output);
+}
 
 int mus_locsig_channels(mus_any *ptr)
 {

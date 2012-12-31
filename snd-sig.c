@@ -852,6 +852,8 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
   io_error_t io_err = IO_NO_ERROR;
   src_state *sr;
 
+  /* fprintf(stderr, "src: %lld %f\n", dur, ratio); */
+
   if ((egen == NULL) && (sf->edit_ctr == cp->edit_ctr))
     {
       if (ratio == 1.0) 

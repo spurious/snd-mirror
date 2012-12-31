@@ -4734,14 +4734,10 @@ void show_cursor_info(chan_info *cp)
 	      ncp = sp->chans[i];
 	      y = chn_sample(samp, ncp, ncp->edit_ctr);
 	      absy = fabs(y);
-	      if (absy < .0001) 
-		digits = 4;
-	      else 
-		{
-		  if (absy < .001) 
-		    digits = 3;
-		  else digits = 2;
-		}
+	      if (absy < .0001) digits = 5;
+	      else if (absy<.01) digits = 4;
+	      else if (absy<1.0) digits = 3;
+	      else digits = 2;
 	      s2 = prettyf(y, digits);
 	      expr_str = mus_strcat(expr_str, s2, &len);
 	    }

@@ -28115,6 +28115,11 @@ void *s7_function_chooser_data(s7_scheme *sc, s7_pointer expr)
   return(NULL);
 }
 
+void *s7_function_chooser_data_direct(s7_pointer f)
+{
+  return(c_function_chooser_data(f));
+}
+
 void s7_function_chooser_set_data(s7_scheme *sc, s7_pointer f, void *data)
 {
   c_function_chooser_data(f) = data;
@@ -62515,8 +62520,8 @@ s7_scheme *s7_init(void)
  * index    44300 3291 3005 2742 2078
  * s7test    1721 1358 1297 1244  977
  * t455       265   89   55   31   14
- * t502        90   43   39   36   29   26
+ * t502        90   43   39   36   29   25
  * lat        229   63   52   47   42
- * calls           275  207  175  115  113
+ * calls           275  207  175  115  112
  */
 
