@@ -129,14 +129,14 @@
 
 	  (if (pvoc-edit pv)
 	      ((pvoc-edit pv) pv)
-	      (begin
+	      (let ((lp (pvoc-lastphase pv)))
 		;; if no editing func:
 		(do ((k 0 (+ k 1))
 		     (pscl (/ 1.0 D))
 		     (kscl (/ pi2 N)))
 		    ((= k (floor (/ N 2))))
-		  (let ((phasediff (- (freqs k) ((pvoc-lastphase pv) k))))
-		    (vct-set! (pvoc-lastphase pv) k (freqs k))
+		  (let ((phasediff (- (freqs k) (lp k))))
+		    (vct-set! lp k (freqs k))
 		    (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
 		    (if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))
 		    (set! (freqs k) (+ (* pscl phasediff) (* k kscl)))))))

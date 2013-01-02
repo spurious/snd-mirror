@@ -717,10 +717,198 @@ static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
   return(s7_f(sc));
 }
 
+#if (!WITH_GMP)
+static s7_pointer vct_set_vector_ref;
+static s7_pointer g_vct_set_vector_ref(s7_scheme *sc, s7_pointer args)
+{
+  vct *v;
+  v = (vct *)imported_s7_object_value_checked(s7_car_value(sc, args), vct_tag);
+  if (v)
+    {
+      mus_long_t loc;
+      s7_pointer val, vect, vect_index;
+
+      val = s7_cdadr(args);
+      vect = s7_car_value(sc, val);
+      vect_index = s7_cadr_value(sc, val);
+      loc = s7_number_to_integer(sc, s7_vector_ref(sc, vect, s7_integer(vect_index)));
+      if ((loc < 0) || (loc>= v->length))
+	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_cadr(args), "index out of range");
+
+      v->data[loc] = s7_number_to_real(sc, val = s7_car_value(sc, s7_cddr(args)));
+      return(val);
+    }
+  XEN_ASSERT_TYPE(false, s7_car(args), XEN_ARG_1, "vct-set!", "a vct");
+  return(s7_f(sc));
+}
+
+static int vct_number_location;
+static s7_pointer vct_set_vector_ref_looped;
+static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
+{
+  #define s7_cell_integer(p) (s7_Int)(*((s7_Int *)((unsigned char *)(p) + vct_number_location)))
+  s7_Int pos, end;
+  s7_pointer stepper, vc, vec, vecind, val, callee;
+  s7_pointer *vec_el;
+  s7_Int *step, *stop;
+  s7_Double x;
+  vct *v;
+  
+  vc = s7_car_value(sc, s7_cdr(args));                      /* (0 v (vector-ref vect i) val) */
+  v = (vct *)imported_s7_object_value_checked(vc, vct_tag);
+  if (v)
+    {
+      val = s7_car_value(sc, s7_cdddr(args));
+      x = s7_number_to_real(sc, val);
+
+      stepper = s7_car(args);
+      vecind = s7_caddr(s7_caddr(args));
+      callee = s7_slot(sc, vecind);
+      if (s7_slot_value(sc, callee) != stepper)
+	return(NULL);
+      
+      step = ((s7_Int *)((unsigned char *)(stepper) + vct_number_location));
+      stop = ((s7_Int *)((unsigned char *)(stepper) + vct_number_location + sizeof(s7_Int)));
+      pos = (*step);
+      end = (*stop);
+      
+      vec = s7_car_value(sc, s7_cdr(s7_caddr(args)));
+      XEN_ASSERT_TYPE(s7_is_vector(vec), vec, XEN_ARG_1, "vector-ref", "a vector");
+      if ((pos < 0) ||
+	  (end > s7_vector_length(vec)))
+	XEN_OUT_OF_RANGE_ERROR("vector-ref", 2, s7_caddr(s7_caddr(args)), "index out of range");   
+      vec_el = s7_vector_elements(vec);
+
+      for (; pos < end; pos++)
+	v->data[s7_cell_integer(vec_el[pos])] = x;
+      
+      (*step) = end;
+      return(args);
+    }
+  XEN_ASSERT_TYPE(false, s7_cadr(args), XEN_ARG_1, "vct-set!", "a vct");
+  return(s7_f(sc));
+}
+
+
+static s7_pointer vct_set_direct;
+static s7_pointer g_vct_set_direct(s7_scheme *sc, s7_pointer args)
+{
+  vct *v;
+  v = (vct *)imported_s7_object_value_checked(s7_car_value(sc, args), vct_tag);
+  if (v)
+    {
+      mus_long_t loc;
+      s7_pointer val;
+
+      loc = s7_number_to_integer(sc, s7_cadr_value(sc, args));
+      if ((loc < 0) || (loc>= v->length))
+	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_cadr(args), "index out of range");
+
+      val = s7_call_direct(sc, s7_caddr(args));
+      v->data[loc] = s7_real(val);
+      /* if not returning val: v->data[loc] = s7_call_direct_to_real_and_free(sc, s7_caddr(args)); */
+      return(val);
+    }
+  XEN_ASSERT_TYPE(false, s7_car(args), XEN_ARG_1, "vct-set!", "a vct");
+  return(s7_f(sc));
+}
+
+static s7_pointer vct_set_direct_looped;
+static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
+{
+  s7_Int pos, end;
+  s7_pointer stepper, vc, val, callee;
+  s7_Int *step, *stop;
+  vct *v;
+  
+  vc = s7_car_value(sc, s7_cdr(args));                      /* (0 v i (...)) */
+  v = (vct *)imported_s7_object_value_checked(vc, vct_tag);
+  if (v)
+    {
+      val = s7_cadddr(args);
+
+      stepper = s7_car(args);
+      callee = s7_slot(sc, s7_caddr(args));
+      if (s7_slot_value(sc, callee) != stepper)
+	return(NULL);
+      
+      step = ((s7_Int *)((unsigned char *)(stepper) + vct_number_location));
+      stop = ((s7_Int *)((unsigned char *)(stepper) + vct_number_location + sizeof(s7_Int)));
+      pos = (*step);
+      end = (*stop);
+
+      if ((pos < 0) ||
+	  (end > v->length))
+	XEN_OUT_OF_RANGE_ERROR("vct-set!", 2, s7_caddr(args), "index out of range");   
+
+      for (; pos < end; pos++)
+	v->data[pos] = s7_call_direct_to_real_and_free(sc, val);
+      
+      (*step) = end;
+      return(args);
+    }
+  XEN_ASSERT_TYPE(false, s7_cadr(args), XEN_ARG_1, "vct-set!", "a vct");
+  return(s7_f(sc));
+}
+
+#endif
+/* (!WITH_GMP) */
+
+/*
+  (define (hi val)
+   (let ((vect #(0 1 2 3 4)))
+      (let ((v (make-vct 5)))
+         (do ((i 0 (+ i 1)))
+	     ((= i 5))
+           (vct-set! v (vector-ref vect i) val))
+         v)))
+
+  (define (hi)
+    (let ((fdr (make-vct 100))
+          (fftsize 100)
+	  (rd (make-readin "oboe.snd" 0 10000)))
+      (do ((j 0 (+ j 1)))
+	  ((= j fftsize))
+	(vct-set! fdr j (readin rd)))
+      fdr))
+  (-0.115 -0.081 -0.037 -0.001 0.022 0.039 ...)
+*/
+
 static s7_pointer vct_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  /* fprintf(stderr, "expr: %s\n", DISPLAY(expr)); */
   if (args == 3)
-    return(vct_set_three);
+    {
+#if (!WITH_GMP)
+      s7_pointer arg1, arg2, arg3;
+      arg1 = s7_cadr(expr);
+      arg2 = s7_caddr(expr);
+      arg3 = s7_cadddr(expr);
+
+      if ((s7_is_symbol(arg1)) &&
+	  (s7_is_symbol(arg3)) &&
+	  (s7_is_pair(arg2)) &&
+	  (s7_is_symbol(s7_car(arg2))) &&
+	  (s7_car(arg2) == s7_make_symbol(sc, "vector-ref")) &&
+	  (s7_is_symbol(s7_cadr(arg2))) &&
+	  (s7_is_symbol(s7_caddr(arg2))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(vct_set_vector_ref);
+	}
+      
+      if ((s7_is_symbol(arg1)) &&
+	  (s7_is_symbol(arg2)) &&
+	  (s7_is_pair(arg3)) &&
+	  (s7_function_choice_is_direct(sc, arg3)) &&
+	  (s7_function_returns_temp(arg3)))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(vct_set_direct);
+	}
+#endif
+      return(vct_set_three);
+    }
   return(f);
 }
 #endif
@@ -1595,6 +1783,7 @@ void mus_vct_init(void)
 #if HAVE_SCHEME
   {
     s7_pointer f;
+    vct_number_location = s7_number_offset(s7);
 
     /* vct-ref */
     f = s7_name_to_value(s7, "vct-ref");
@@ -1615,6 +1804,19 @@ void mus_vct_init(void)
 
     vct_set_three = s7_make_function(s7, "vct-set!", g_vct_set_three, 3, 0, false, "vct-set! optimization");
     s7_function_set_class(vct_set_three, f);
+#if (!WITH_GMP)
+    vct_set_vector_ref = s7_make_function(s7, "vct-set!", g_vct_set_vector_ref, 3, 0, false, "vct-set! optimization");
+    s7_function_set_class(vct_set_vector_ref, f);
+    vct_set_vector_ref_looped = s7_make_function(s7, "vct-set!", g_vct_set_vector_ref_looped, 3, 0, false, "vct-set! optimization");
+    s7_function_set_class(vct_set_vector_ref_looped, f);
+    s7_function_set_looped(vct_set_vector_ref, vct_set_vector_ref_looped);
+
+    vct_set_direct = s7_make_function(s7, "vct-set!", g_vct_set_direct, 3, 0, false, "vct-set! optimization");
+    s7_function_set_class(vct_set_direct, f);
+    vct_set_direct_looped = s7_make_function(s7, "vct-set!", g_vct_set_direct_looped, 3, 0, false, "vct-set! optimization");
+    s7_function_set_class(vct_set_direct_looped, f);
+    s7_function_set_looped(vct_set_direct, vct_set_direct_looped);
+#endif
   }
 
   c_object_value_location = s7_c_object_value_offset(s7);

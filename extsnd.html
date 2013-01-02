@@ -9788,7 +9788,7 @@ current channel from sample 0 to the end looking for any sample greater than .1:
 </pre>
 
 <p>In this case, we found such a sample at position 4423.
-</p><br>
+</p>
 
 <pre class="indented">
 (define every-sample?
@@ -9801,6 +9801,21 @@ current channel from sample 0 to the end looking for any sample greater than .1:
 &gt; (every-sample? (lambda (y) (&lt; y .5)))
 #t
 </pre>
+
+<p>scan-channel in s7 is:
+</p>
+
+<pre class="indented">
+(define* (scan-channel f (beg 0) dur snd chn edpos)
+  (let ((end (min (+ beg dur) (frames snd chn)))
+	(rd (make-sampler beg snd chn 1 edpos)))
+    (do ((pos beg (+ pos 1)))
+        ((or (&gt;= pos end)
+	     (f (next-sample rd)))
+         (and (&lt; pos end)
+	      pos)))))
+</pre>
+
 
 <p>To scan all the channels of a multichannel sound in parallel, see
 <a href="sndscm.html#scansound">scan-sound</a>.

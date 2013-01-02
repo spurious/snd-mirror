@@ -1824,7 +1824,7 @@ is a physical model of a flute:
 	   (max-oscils (* 2 max-peaks-1)))
       
       (let ((end (+ start (seconds->samples dur)))
-	    (fil (make-file->sample file))
+	    (fil (make-readin file))
 	    (fdr (make-vct fftsize-1))
 	    (fdi (make-vct fftsize-1))
 	    (window (make-fft-window blackman2-window fftsize-1))
@@ -1865,12 +1865,12 @@ is a physical model of a flute:
 	      ;; of samples to include bodily.
 	      (do ((i start (+ i 1)))
 		  ((= i cur-end))
-		(outa i (* amp (file->sample fil filptr)))
-		(set! filptr (+ 1 filptr)))
+		(outa i (* amp (readin fil))))
+	      (set! filptr attack_size)
 	      (let ((mult 1.0))
 		(do ((k 0 (+ k 1)))
 		    ((= k attack-size))
-		  (set! (ramped-attack k) (* mult (file->sample fil (+ filptr k))))
+		  (set! (ramped-attack k) (* mult (readin fil)))
 		  (set! mult (- mult ramp))))
 	      (set! start cur-end)))
 
@@ -1880,9 +1880,10 @@ is a physical model of a flute:
 	      (if (<= filptr filend)
 		  (let ((peaks 0))
 		    ;; get next block of data and apply window to it
+		    (set! (mus-location fil) filptr)
 		    (do ((k 0 (+ k 1)))
 			((= k fftsize-1))
-		      (set! (fdr k) (file->sample fil (+ k filptr))))
+		      (vct-set! fdr k (readin fil)))
 		    (vct-multiply! fdr window)
 		    (set! filptr (+ filptr hop))
 		    (vct-fill! fdi 0.0)
@@ -2007,7 +2008,7 @@ is a physical model of a flute:
 			;; run oscils, update envelopes
 			(outa k (oscil-bank cur-oscils resynth-oscils amps freqs rates sweeps)))))))))))) ; amps = amps+rates on each sample internally
 
-;; (with-sound () (pins 0 2 "oboe.snd" 1.0 :max-peaks 8))
+;; (with-sound (:statistics #t) (pins 0 2 "oboe.snd" 1.0 :max-peaks 8))
 
 
 (definstrument (zc time dur freq amp length1 length2 feedback)

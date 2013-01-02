@@ -484,6 +484,7 @@ bool s7_slot_value_is_integer(s7_pointer slot);
 
 s7_pointer s7_global_environment(s7_scheme *sc);                            /* (global-environment) */
 s7_pointer s7_current_environment(s7_scheme *sc);                           /* (current-environment) */
+s7_pointer s7_set_current_environment(s7_scheme *sc, s7_pointer e);         /* returns previous current-environment */
 s7_pointer s7_outer_environment(s7_pointer e);                              /* (outer-environment e) */
 s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer env, s7_pointer bindings);
 s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env);           /* (environment->list env) */
@@ -574,6 +575,8 @@ s7_function s7_function_choice(s7_scheme *sc, s7_pointer expr);
 bool s7_function_choice_is_direct(s7_scheme *sc, s7_pointer expr);
 void s7_function_choice_set_direct(s7_scheme *sc, s7_pointer expr);
 s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr);
+bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree);
+void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_Double value);
 
 s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
 void s7_function_set_returns_temp(s7_pointer f);

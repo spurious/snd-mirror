@@ -269,11 +269,13 @@
 
 	   (if (or scaled-to scaled-by)
 	       (if output-to-file
-		   (let ((scale-output (or snd-output (open-sound output-1))))
+		   (let* ((scale-output (or snd-output (open-sound output-1)))
+			  (old-sync (sync scale-output)))
+		     (set! (sync scale-output) 0)          ; make sure scaling doesn't follow sync
 		     (if scaled-to
 			 (scale-to scaled-to scale-output)
-			 (if scaled-by
-			     (scale-by scaled-by scale-output)))
+			 (scale-by scaled-by scale-output))
+		     (set! (sync scale-output) old-sync)
 		     (save-sound scale-output)
 		     (if (not to-snd) 
 			 (close-sound scale-output)))

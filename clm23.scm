@@ -1493,10 +1493,11 @@
 
 (define (pvoc-e beg dur amp size file)
   "(pvoc-e beg dur amp size file) test instrument for phase-vocoder"
-  (let ((N2 (floor (/ size 2))))
+  (let ((N2 (floor (/ size 2)))
+	(rd (make-readin file)))
     (let ((start (seconds->samples beg))
 	  (end (seconds->samples (+ beg dur)))
-	  (sr (make-phase-vocoder (make-readin file) :fft-size size :interp (/ size 4) :overlap 4))
+	  (sr (make-phase-vocoder rd :fft-size size :interp (/ size 4) :overlap 4))
 	  (lastphases (make-vct N2))
 	  (in-data (make-vct size))
 	  (two-pi (* 2 pi))
@@ -1518,7 +1519,7 @@
 				
 				(lambda (closure input)
 				  (let ((buf (modulo filptr size)))
-				    (clear-array (phase-vocoder-freqs sr))
+				    (clear-array freqs)
 				    (if (= filptr 0)
 					(do ((k 0 (+ k 1)))
 					    ((= k size))
@@ -1533,12 +1534,12 @@
 					    (set! (in-data k) (readin rd)))))
 				    (do ((k 0 (+ k 1)))
 					((= k size))
-				      (vct-set! (phase-vocoder-amp-increments sr) buf (* (in-data k) (window k)))
+				      (vct-set! paincrs buf (* (in-data k) (window k)))
 				      (set! buf (+ 1 buf))
 				      (if (>= buf size) (set! buf 0)))
 				    (set! filptr (+ filptr D))
-				    (mus-fft (phase-vocoder-amp-increments sr) (phase-vocoder-freqs sr) size 1)
-				    (rectangular->polar (phase-vocoder-amp-increments sr) (phase-vocoder-freqs sr))
+				    (mus-fft paincrs freqs size 1)
+				    (rectangular->polar paincrs freqs)
 				    #f))
 				
 				(lambda (closure)
@@ -1547,12 +1548,12 @@
 				    (do ((k 0 (+ k 1))
 					 (ks 0.0 (+ ks kscl)))
 					((= k N2))
-				      (let* ((freq ((phase-vocoder-freqs sr) k))
+				      (let* ((freq (freqs k))
 					     (diff (- freq (lastphases k))))
 					(set! (lastphases k) freq)
 					(if (> diff pi) (set! diff (- diff two-pi)))
 					(if (< diff (- pi)) (set! diff (+ diff two-pi)))
-					(vct-set! (phase-vocoder-freqs sr) k (+ (* diff  pscl) ks))))
+					(vct-set! freqs k (+ (* diff  pscl) ks))))
 				    #f))
 				
 				(lambda (closure)
@@ -2466,6 +2467,7 @@
 	    (cmbs1 (make-vector num-combs1))
 	    (osc (make-oscil frequency))
 	    (rd (make-readin file)))
+
 	(do ((k 0 (+ k 1)))
 	    ((= k num-combs0))
 	  (set! (cmbs0 k)
@@ -2476,21 +2478,13 @@
 	  (set! (cmbs1 k)
 		(make-comb scaler 
 			   (floor (* comb-len (combs1 k))))))
+
 	(do ((i beg (+ i 1)))
 	    ((= i end))
 	  (let ((interp (oscil osc))
-		(sum0 0.0)
-		(sum1 0.0)
 		(x (readin rd)))
-	    (do ((k 0 (+ k 1)))
-		((= k num-combs0))
-	      (set! sum0 (+ sum0 (comb (cmbs0 k) x))))
-	    (do ((k 0 (+ k 1)))
-		((= k num-combs1))
-	      (set! sum1 (+ sum1 (comb (cmbs1 k) x))))
-	    (outa i (+ (* interp sum0) (* (- 1.0 interp) sum1)))))))))
-
-
+	    (outa i (+ (* interp (comb-bank cmbs0 x))
+		       (* (- 1.0 interp) (comb-bank cmbs1 x))))))))))
 
 
 

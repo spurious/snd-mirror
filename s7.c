@@ -2321,8 +2321,8 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 0
-#if 0
+#if 1
+#if 1
 #define NUM_COUNTS 1024
 static int counts[NUM_COUNTS];
 static void clear_counts(void) {int i; for (i = 0; i < NUM_COUNTS; i++) counts[i] = 0;}
@@ -5401,6 +5401,15 @@ s7_pointer s7_current_environment(s7_scheme *sc)
 }
 
 
+s7_pointer s7_set_current_environment(s7_scheme *sc, s7_pointer e) 
+{
+  s7_pointer old_e;
+  old_e = sc->envir;
+  sc->envir = e;
+  return(old_e);
+}
+
+
 s7_pointer s7_outer_environment(s7_pointer e)
 {
   return(next_environment(e));
@@ -5489,6 +5498,12 @@ s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value)
 {
   slot_set_value(slot, value);
   return(value);
+}
+
+
+void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_Double value)
+{
+  real(slot_value(slot)) = value;
 }
 
 
@@ -32579,6 +32594,24 @@ s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
 
 s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form, s7_pointer e)
 {
+  /* 3313649: (* y 2)
+     3308488: (> y 1.0)
+     2252668: (read-sample reader)
+     659539: (* n 2)
+     508491: 1.0 [now dealt with in map-channel]
+     508280: (> n1 0.1)
+
+     h_safe_c_c: 5532246 (24.689348)
+     safe_c_sc: 4256179 (18.994507)
+     safe_c_s: 2252676 (10.053259)
+  */
+#if WITH_COUNTS
+  /* add_expr(sc, form); */
+  if (is_optimized(form))
+    tick(optimize_data(form));
+  else tick(0);
+#endif
+  /* fprintf(stderr, "form: %s, %d %s\n", DISPLAY(form), is_optimized(form), (is_optimized(form) ? opt_names[optimize_data(form)] : "")); */
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
   sc->code = form;
   sc->envir = e;
@@ -34559,19 +34592,20 @@ static bool direct_memq(s7_pointer symbol, s7_pointer symbols)
   return(false);
 }
 
-#if 0
-static bool tree_memq(s7_scheme *sc, s7_pointer tree, s7_pointer symbols)
+
+bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree)
 {
   if (is_null(tree))
     return(false);
-  if (is_symbol(tree))
-    return(direct_memq(tree, symbols));
+  if (symbol == tree)
+    return(true);
   if (is_pair(tree))
-    return((tree_memq(sc, car(tree), symbols)) ||
-	   (tree_memq(sc, cdr(tree), symbols)));
+    return((s7_tree_memq(sc, symbol, car(tree))) ||
+	   (s7_tree_memq(sc, symbol, cdr(tree))));
   return(false);
 }
 
+#if 0
 static s7_pointer remq(s7_scheme *sc, s7_pointer a, s7_pointer obj) 
 {
   s7_pointer p;
@@ -62515,13 +62549,13 @@ s7_scheme *s7_init(void)
  * f|gcdr in let_op*q
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
- * bench    42736 8752 8051 7725 6515
- * lint           9328 8140 7887 7736 7729
+ * bench    42736 8752 8051 7725 6515 6513
+ * lint           9328 8140 7887 7736 7728
  * index    44300 3291 3005 2742 2078
- * s7test    1721 1358 1297 1244  977
+ * s7test    1721 1358 1297 1244  977  975
  * t455       265   89   55   31   14
  * t502        90   43   39   36   29   25
  * lat        229   63   52   47   42
- * calls           275  207  175  115  112
+ * calls           275  207  175  115  104
  */
 

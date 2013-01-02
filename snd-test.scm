@@ -157,7 +157,7 @@
 		 (apply format #f args))))
     (format *stderr* "~%~A: ~8T~A" line str)
     (if (not (provided? 'snd-nogui))
-	(snd-print (format *stderr* "~%~A: ~A" line str)))))
+	(snd-print (format #f "~%~A: ~A" line str)))))
 
 (define with-big-file #f)
 (define big-file-name "/home/bil/zap/sounds/bigger.snd")
@@ -38575,7 +38575,7 @@ EDITS: 1
 		(fm-violin 0 .1 440 .1 :degree 45.0))
     (let ((ind (find-sound "test1.snd")))
       (if (not ind) (snd-display #__line__ ";with-sound (2): ~A" (map file-name (sounds)))
-	  (if (not (= (frames ind) (+ 22050 2205))) (snd-display #__line__ ";with-sound reverbed frames (2): ~A" (frames ind))))
+	  (if (> (- (frames ind) (+ 22050 2205)) 1) (snd-display #__line__ ";with-sound reverbed frames (2): ~A" (frames ind))))
       (close-sound ind))
     
     (with-sound (:srate 22050 :comment "Snd+Run!" :scaled-to .5) (fm-violin 0 .1 440 .1))
@@ -38715,7 +38715,7 @@ EDITS: 1
 	  (snd-display #__line__ ";with-sound returns: ~A" outer))
       (let ((ind (find-sound outer)))
 	(if (or (not (sound? ind))
-		(not (= (frames ind) (floor (* (mus-srate) .1)))))
+		(> (- (frames ind) (floor (* (mus-srate) .1))) 1))
 	    (snd-display #__line__ ";sound-let: ~A ~A" (frames ind) (floor (* (mus-srate) .1))))
 	(close-sound ind)))
     
@@ -38730,7 +38730,7 @@ EDITS: 1
 	  (snd-display #__line__ ";with-sound (2) returns: ~A" outer))
       (let ((ind (find-sound outer)))
 	(if (or (not (sound? ind))
-		(not (= (frames ind) (+ 100 (floor (* (mus-srate) .1))))))
+		(> (- (frames ind) (+ 100 (floor (* (mus-srate) .1)))) 1))
 	    (snd-display #__line__ ";sound-let (2): ~A ~A" (frames ind) (+ 100 (floor (* (mus-srate) .1)))))
 	(if (file-exists? "temp.snd")
 	    (snd-display #__line__ ";sound-let explicit output exists?"))
@@ -47100,7 +47100,7 @@ EDITS: 1
 ;; 19-Dec-12: #(1 1 2 2 69 240 6 1 583 1 23 1 1 17 70 1 233 1 1 271 89 119 1 1877 0 0 0 1 1 73)  ;  37
 ;; 23-Dec-12: #(1 1 2 1 67 243 7 1 586 1 16 1 2 18 63 1 223 1 1 270 92 115 1 1821 0 0 0 1 1 80)  ;  36
 ;; 26-Dec-12: #(1 1 2 1 65 199 6 1 556 1 15 1 1 12 26 1 229 1 1 276 52 108 1 1777 0 0 0 1 2 75)  ;  34
-
+;; 1-Jan-13:  #(1 1 2 2 64 200 7 1 575 1 17 1 2 12 84 1 246 1 1 215 45 111 1 1552 0 0 0 1 2 77)  ;  32
 
 ;;; -------- cleanup temp files
 
@@ -47343,22 +47343,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-31-Dec-12:
-111,862,073,940
-21,304,448,859  s7.c:eval [/home/bil/snd-13/snd]
- 8,673,335,627  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 7,632,679,495  ???:sin [/lib64/libm-2.12.so]
- 6,324,116,992  s7.c:eval'2 [/home/bil/snd-13/snd]
- 3,754,812,827  s7.c:gc [/home/bil/snd-13/snd]
+2-Jan-13:
+104,462,010,946
+17,802,425,291  s7.c:eval [/home/bil/snd-13/snd]
+ 7,630,452,027  ???:sin [/lib64/libm-2.12.so]
+ 6,683,496,806  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 5,967,012,931  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 3,451,126,343  s7.c:gc [/home/bil/snd-13/snd]
+ 3,339,408,354  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 3,032,540,144  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,991,125,539  clm.c:mus_src [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,792,445,754  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,776,011,931  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,720,009,099  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 2,641,095,813  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 2,564,937,176  ???:cos [/lib64/libm-2.12.so]
- 1,978,840,870  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 2,720,009,350  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
+ 2,563,650,401  ???:cos [/lib64/libm-2.12.so]
+ 1,728,444,558  s7.c:s7_make_real [/home/bil/snd-13/snd]
  1,592,316,356  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,214,712,956  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
  1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,129,623,660  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
+ 1,110,163,440  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
 |#

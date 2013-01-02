@@ -5065,6 +5065,37 @@ static XEN g_comb_bank(XEN gens, XEN inval)
 }
 
 
+#define S_filtered_comb_bank "filtered-comb-bank"
+static XEN g_filtered_comb_bank(XEN gens, XEN inval)
+{
+  int i, size;
+  double x = 0.0, sum = 0.0;
+#if defined(XEN_VECTOR_ELEMENTS)
+  XEN *gs;
+#endif
+
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_1, S_filtered_comb_bank, "a vector of filtered-comb generators");
+  size = XEN_VECTOR_LENGTH(gens);
+#if defined(XEN_VECTOR_ELEMENTS)
+  gs = XEN_VECTOR_ELEMENTS(gens);
+#endif
+
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(inval), inval, XEN_ARG_2, S_filtered_comb_bank, "a number");
+  x = XEN_TO_C_DOUBLE(inval);
+  
+  for (i = 0; i < size; i++)
+    {
+#if defined(XEN_VECTOR_ELEMENTS)
+      sum += mus_filtered_comb_unmodulated(XEN_TO_MUS_ANY(gs[i]), x);
+#else
+      sum += mus_filtered_comb_unmodulated(XEN_TO_MUS_ANY(xen_vector_ref(gens, i)), x);
+#endif      
+    }
+
+  return(C_TO_XEN_DOUBLE(sum));
+}
+
+
 #define S_all_pass_bank "all-pass-bank"
 static XEN g_all_pass_bank(XEN gens, XEN inval)
 {
@@ -10352,6 +10383,19 @@ static s7_pointer g_indirect_out_bank_ssz_looped(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer outa_ss;
+static s7_pointer g_outa_ss(s7_scheme *sc, s7_pointer args)
+{
+  s7_Int pos;
+  s7_Double x, y;
+  s7_pointer vargs;
+  GET_INTEGER(args, outa, pos);
+  vargs = cdadr(args);
+  GET_REAL(vargs, outa, x);
+  GET_REAL(cdr(vargs), outa, y);
+  return(out_any_2(pos, x * y, 0, "outa"));
+}
+
 static s7_pointer indirect_outa_2;
 static s7_pointer g_indirect_outa_2(s7_scheme *sc, s7_pointer args)
 {
@@ -10391,9 +10435,8 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
   end = (*stop);
 
   callee = caddr(args);
-  /* fprintf(stderr, "%lld: %s\n", end - pos, DISPLAY(callee)); */
-  /* we're getting (* (env ampf) (polywave gen1)) here!
-   */
+
+  /* fprintf(stderr, "temp: %lld: %s\n", end - pos, DISPLAY(callee)); */
 
   if (mus_out_any_is_safe(clm_output_gen))
     {
@@ -10514,12 +10557,7 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
       buf = ob[0];
       dlen = mus_file_buffer_size();
 
-
-      /* fprintf(stderr, "%lld: %s\n", end - pos, DISPLAY(callee));  */
-
-      /* 50: (oscil gen1 (env frqf)) -> env_oscil_env
-       * many: (polywave gen ...) and (oscil gen ...) add_direct_2 in both cases
-       */
+      /* fprintf(stderr, "env: %lld: %s\n", end - pos, DISPLAY(callee)); */
 
       for (; pos < end;)
 	{
@@ -13122,12 +13160,20 @@ static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 	      return(outa_env_polywave_env_ri);
 	    }
 
+	  if ((car(caddr(expr)) == multiply_symbol) &&
+	      (s7_list_length(sc, caddr(expr)) == 3) &&
+	      (s7_is_symbol(cadr(caddr(expr)))) &&
+	      (s7_is_symbol(caddr(caddr(expr)))))
+	    {
+	      s7_function_choice_set_direct(sc, expr);
+	      return(outa_ss);
+	    }
+
 	  if (s7_function_choice_is_direct(sc, caddr(expr)))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
 	      if (s7_function_choice(sc, caddr(expr)) == g_mul_env_direct)
 		return(indirect_outa_2_env);
-
 
 	      if (s7_function_returns_temp(caddr(expr)))
 		{
@@ -13209,7 +13255,11 @@ static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 	  return(indirect_outa_add_2);
 	}
       /* fprintf(stderr, "\nouta two: %s\n", DISPLAY(expr));  */
-      /* temp case + s, and opssq + s (s=i)
+      /* (* s1 s2) 
+       * (* (env e) (safe-lambda* gen)) 
+       * (safe-lambda* gen)
+       * (delay s1 s2) (frame->sample frm smp)
+       * (* amp (in-any i 0 fil))
        */
       return(outa_two);
     }
@@ -14055,6 +14105,7 @@ static void init_choosers(s7_scheme *sc)
   outa_env_polywave_env_ri = clm_make_function_not_temp(sc, "outa", g_outa_env_polywave_env_ri, 2, 0, false, "outa optimization", f);
   outa_env_oscil_env = clm_make_function_not_temp(sc, "outa", g_outa_env_oscil_env, 2, 0, false, "outa optimization", f);
 
+  outa_ss = clm_make_function_not_temp(sc, "outa", g_outa_ss, 2, 0, false, "outa optimization", f);
   indirect_outa_2 = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2, 2, 0, false, "outa optimization", f);
   indirect_outa_2_temp = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_temp, 2, 0, false, "outa optimization", f);
   indirect_outa_2_env = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_env, 2, 0, false, "outa optimization", f);
@@ -14426,6 +14477,7 @@ XEN_ARGIFY_8(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
 XEN_ARGIFY_10(g_mus_mix_with_envs_w, g_mus_mix_with_envs)
 XEN_ARGIFY_6(g_oscil_bank_w, g_oscil_bank)
 XEN_NARGIFY_2(g_comb_bank_w, g_comb_bank)
+XEN_NARGIFY_2(g_filtered_comb_bank_w, g_filtered_comb_bank)
 XEN_NARGIFY_2(g_all_pass_bank_w, g_all_pass_bank)
 XEN_NARGIFY_3(g_out_bank_w, g_out_bank)
 
@@ -14734,6 +14786,7 @@ XEN_NARGIFY_3(g_out_bank_w, g_out_bank)
 #define g_mus_mix_with_envs_w g_mus_mix_with_envs
 #define g_oscil_bank_w g_oscil_bank
 #define g_comb_bank_w g_comb_bank
+#define g_filtered_comb_bank_w g_filtered_comb_bank
 #define g_all_pass_bank_w g_all_pass_bank
 #define g_out_bank_w g_out_bank
 #endif
@@ -14970,6 +15023,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_moving_average_p, g_moving_average_p_w, 1, 0, 0, H_moving_average_p);
 
   XEN_DEFINE_REAL_PROCEDURE(S_comb_bank, g_comb_bank_w, 2, 0, 0, "an experiment");
+  XEN_DEFINE_REAL_PROCEDURE(S_filtered_comb_bank, g_filtered_comb_bank_w, 2, 0, 0, "an experiment");
   XEN_DEFINE_REAL_PROCEDURE(S_all_pass_bank, g_all_pass_bank_w, 2, 0, 0, "an experiment");
 
   XEN_DEFINE_REAL_PROCEDURE(S_out_bank, g_out_bank_w, 3, 0, 0, "an experiment"); /* TODO: help string */

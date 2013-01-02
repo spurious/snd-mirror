@@ -3223,7 +3223,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
   else
     {
       int err = MUS_NO_ERROR;
-      mus_float_t **data;
+      mus_float_t **data = NULL;
       
 #if HAVE_SCHEME
 
@@ -3237,6 +3237,48 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
       if (s7_is_pair(source))
 	{
 	  body = s7_cddar(source);
+
+	  if (s7_is_null(s7, s7_cdr(body)))
+	    {
+	      res = s7_car(body);
+	      if (s7_is_boolean(res))
+		{
+		  /* #f = delete all samples in the range, #t = no-op */
+		  close_temp_file(filename, ofd, hdr->type, 0);
+		  free_file_info(hdr);
+		  sf = free_snd_fd(sf);
+		  if (res == s7_f(s7))
+		    delete_samples(beg, num, cp, pos);		    
+		  snd_remove(filename, REMOVE_FROM_CACHE);
+		  free(filename);
+		  return(res);
+		}
+	      if (s7_is_number(res))
+		{
+		  s7_Double x;
+		  x = s7_number_to_real(s7, res);
+		  
+		  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
+		  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
+		  for (kp = 0; kp < MAX_BUFFER_SIZE; kp++)
+		    data[0][kp] = x;
+		  /* since we're not calling eval or the event checker, the channel can't be closed during the loop (??) */
+		  
+		  for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
+		    {
+		      mus_long_t local_samps;
+		      local_samps = num - kp;
+		      if (local_samps > MAX_BUFFER_SIZE)
+			j = MAX_BUFFER_SIZE;
+		      else j = (int)local_samps;
+		      err = mus_file_write(ofd, 0, j - 1, 1, data);
+		      if (err != MUS_NO_ERROR) break;
+		    }
+		  samps = num;
+		  goto DO_EDIT;
+		}
+	    }
+
 	  arg = s7_caadar(source);
 	  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
 	  gc_loc = s7_gc_protect(s7, e);
@@ -3364,12 +3406,12 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 #endif
       if (j > 0) 
 	mus_file_write(ofd, 0, j - 1, 1, data);
+
+    DO_EDIT:
       close_temp_file(filename, ofd, hdr->type, samps * datumb);
-      
       free_file_info(hdr);
       free(data[0]);
       free(data);
-      
       sf = free_snd_fd(sf);
       
       if (reporting) finish_progress_report(cp);
@@ -3435,6 +3477,106 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
   if (s7_is_pair(source))
     {
       body = s7_cddar(source);
+
+      if (s7_is_null(s7, s7_cdr(body)))
+	{
+	  res = s7_car(body);
+	  if (s7_is_boolean(res))
+	    {
+	      /* #f = delete all samples in the range, #t = no-op */
+	      sf = free_snd_fd(sf);
+	      if (res == s7_f(s7))
+		delete_samples(beg, num, cp, pos);
+	      return(res);
+	    }
+	  if (s7_is_number(res))
+	    {
+	      s7_Double x;
+	      x = s7_number_to_real(s7, res);
+	      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
+	      for (kp = 0; kp < num; kp++)
+		data[kp] = x;
+	      /* since we're not calling eval or the event checker, the channel can't be closed during the loop (??) */
+	      change_samples(beg, num, data, cp, caller, pos);
+	      free(data);
+	      return(res);
+	    }
+	  if (s7_is_pair(res))
+	    {
+	      s7_function f;
+	      f = s7_function_choice(s7, res);
+	      if (f)
+		{
+		  /* it is optimized and f can be applied f(s7, args) */
+		  /* now is lambda arg used at all?
+		   * is it direct? can other symbols all be looked up in advance?
+		   * can we assume only real as return val?
+		   */
+		  arg = s7_caadar(source);
+#if 0
+		  fprintf(stderr, "arg: %s, res: %s, in res: %d\n",
+			  s7_object_to_c_string(s7, arg),
+			  s7_object_to_c_string(s7, res),
+			  s7_tree_memq(s7, arg, res));
+#endif
+		  if (s7_tree_memq(s7, arg, res))
+		    {
+		      if (s7_function_choice_is_direct(s7, res))
+			{
+			  if (s7_function_returns_temp(res))
+			    {
+			      s7_pointer old_e;
+			      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
+			      old_e = s7_set_current_environment(s7, e);
+			      slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 1.5)); /* make sure it is mutable */
+			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
+			      for (kp = 0; kp < num; kp++)
+				{
+				  s7_slot_set_real_value(s7, slot, read_sample(sf));
+				  data[kp] = s7_call_direct_to_real_and_free(s7, res);
+				}
+			      change_samples(beg, num, data, cp, caller, pos);
+			      free(data);
+			      s7_set_current_environment(s7, old_e);
+			      return(res);
+			    }
+			}
+		    }
+		  else
+		    {
+		      /* lambda arg can be ignored */
+		      if (s7_function_choice_is_direct(s7, res))
+			{
+			  if (s7_function_returns_temp(res))
+			    {
+			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
+			      for (kp = 0; kp < num; kp++)
+				data[kp] = s7_call_direct_to_real_and_free(s7, res);
+			      change_samples(beg, num, data, cp, caller, pos);
+			      free(data);
+			      return(res);
+			    }
+			}
+		    }
+#if 0
+(with-sound () (fm-violin 0 1 440 .1))
+(let ((rd (make-readin "oboe.snd"))) (map-channel (lambda (y) (readin rd))))
+(let ((g (make-oscil 440.0))) (map-channel (lambda (y) (oscil g y))))
+		  fprintf(stderr, "map: %s, temp: %d, direct: %d, len: %d\n", s7_object_to_c_string(s7, res), 
+			  s7_function_returns_temp(res), s7_function_choice_is_direct(s7, res),
+			  s7_list_length(s7, res));
+		  int len;
+		  len = s7_list_length(s7, res);
+		  if (len == 1)
+		    {
+		      
+		    }
+#endif
+		}
+	    }
+	      
+	}
+	  
       arg = s7_caadar(source);
       e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
       gc_loc = s7_gc_protect(s7, e);
@@ -3531,6 +3673,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 #if HAVE_SCHEME
   s7_gc_unprotect_at(s7, gc_loc);
 #endif
+
   if (cp->active < CHANNEL_HAS_EDIT_LIST)
     {
       if (data) {free(data); data = NULL;} 
@@ -3719,6 +3862,74 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
     {
       body = s7_cddar(source);
       arg = s7_caadar(source);
+#if (!WITH_GMP)
+      if (s7_is_null(s7, s7_cdr(body)))
+	{
+	  s7_pointer res;
+	  res = s7_car(body);
+	  if (s7_is_pair(res))
+	    {
+	      s7_function f;
+	      f = s7_function_choice(s7, res);
+	      if (f)
+		{
+		  int len;
+		  /* this basically is never direct */
+		  len = s7_list_length(s7, res);
+		  if ((s7_cadr(res) == arg) &&
+		      (!s7_function_choice_is_direct(s7, res)) &&
+		      ((len == 2) || 
+		       ((len == 3) &&
+			(s7_caddr(res) != arg) &&
+			(!s7_is_pair(s7_caddr(res))))))
+		    {
+		      /* not direct, so we're making the arg list, so no env is needed */
+		      s7_pointer y, args, val;
+		      s7_Double *ry;
+		      y = s7_make_real(s7, 1.5);
+		      ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
+		      if (len == 2)
+			args = s7_cons(s7, y, s7_nil(s7));
+		      else
+			{
+			  s7_pointer z;
+			  z = s7_caddr(res);
+			  if (s7_is_symbol(z))
+			    {
+			      /* (scan-channel (let ((x .1)) (lambda (y) (> y x))))
+			       *  -- the search needs the closure's env
+			       */
+			      s7_pointer old_e;
+			      old_e = s7_set_current_environment(s7, s7_cdr(source));
+			      z = s7_symbol_value(s7, z);
+			      s7_set_current_environment(s7, old_e);
+			    }
+			  args = s7_cons(s7, y, s7_cons(s7, z, s7_nil(s7)));
+			}
+		      gc_loc = s7_gc_protect(s7, args);
+		      for (kp = 0; kp < num; kp++)
+			{
+			  (*ry) = read_sample(sf);
+			  val = f(s7, args);
+			  if (val != xen_false)
+			    {
+			      if ((counting) && (val == xen_true))
+				counts++;
+			      else break;
+			    }
+			}
+		      sf = free_snd_fd(sf);
+		      s7_gc_unprotect_at(s7, gc_loc);			  
+		      if (counting)
+			return(s7_make_integer(s7, counts));
+		      if (kp < num)
+			return(s7_make_integer(s7, kp + beg));
+		      return(xen_false);
+		    }
+		}
+	    }
+	}
+#endif
       e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
       gc_loc = s7_gc_protect(s7, e);
       slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
@@ -3736,6 +3947,8 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       gc_loc = s7_gc_protect(s7, arg_list);
       use_apply = true;
     }
+
+  /* fprintf(stderr, "body: %s, %d %d\n", s7_object_to_c_string(s7, body), s7_function_choice_is_direct(s7, body), s7_function_choice_is_indirect(s7, body)); */
 
   for (kp = 0; kp < num; kp++)
     {
