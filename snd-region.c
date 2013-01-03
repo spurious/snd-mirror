@@ -424,18 +424,19 @@ static void make_region_readable(region *r)
 
   for (i = 0; i < r->chans; i++)
     {
-      chan_info *cp;
-      cp = make_chan_info(NULL, i, regsp);
-      cp->editable = false;
-      regsp->chans[i] = cp;
-      add_channel_data_1(cp, r->srate, r->frames, WITHOUT_GRAPH);
-      cp->hookable = WITHOUT_HOOK;
-
       hdr = make_file_info(r->filename, FILE_READ_ONLY, FILE_NOT_SELECTED);
       if (hdr)
 	{
 	  snd_io *io;
 	  int fd;
+	  chan_info *cp;
+
+	  cp = make_chan_info(NULL, i, regsp);
+	  cp->editable = false;
+	  regsp->chans[i] = cp;
+	  add_channel_data_1(cp, r->srate, r->frames, WITHOUT_GRAPH);
+	  cp->hookable = WITHOUT_HOOK;
+
 	  fd = snd_open_read(r->filename);
 	  snd_file_open_descriptors(fd,
 				    r->filename,

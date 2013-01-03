@@ -3213,6 +3213,8 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
   
   filename = snd_tempnam();
   hdr = make_temp_header(filename, SND_SRATE(cp->sound), 1, 0, S_map_channel);
+  datumb = mus_bytes_per_sample(hdr->format);
+
   ofd = open_temp_file(filename, 1, hdr, &io_err);
   if (ofd == -1)
     snd_error("%s: %s (temp file) %s: %s", 
@@ -3232,6 +3234,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
       bool use_apply;
       s7_pointer source, arg, body, e, slot;
       s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
+      mus_long_t local_samps;
       
       source = s7_procedure_source(s7, proc);
       if (s7_is_pair(source))
@@ -3241,9 +3244,12 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 	  if (s7_is_null(s7, s7_cdr(body)))
 	    {
 	      res = s7_car(body);
-	      if (s7_is_boolean(res))
+	      arg = s7_caadar(source);
+
+	      if ((s7_is_boolean(res)) ||
+		  (res == arg))
 		{
-		  /* #f = delete all samples in the range, #t = no-op */
+		  /* #f = delete all samples in the range, #t = no-op, (lambda (y) y) also a no-op */
 		  close_temp_file(filename, ofd, hdr->type, 0);
 		  free_file_info(hdr);
 		  sf = free_snd_fd(sf);
@@ -3253,6 +3259,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 		  free(filename);
 		  return(res);
 		}
+
 	      if (s7_is_number(res))
 		{
 		  s7_Double x;
@@ -3266,7 +3273,6 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 		  
 		  for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
 		    {
-		      mus_long_t local_samps;
 		      local_samps = num - kp;
 		      if (local_samps > MAX_BUFFER_SIZE)
 			j = MAX_BUFFER_SIZE;
@@ -3276,6 +3282,176 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 		    }
 		  samps = num;
 		  goto DO_EDIT;
+		}
+
+	      if (s7_is_pair(res))
+		{
+		  int len;
+		  s7_function f;
+		  f = s7_function_choice(s7, res);
+		  if (f)
+		    {
+		      /* it is optimized and f can be applied f(s7, args) */
+		      /* now is lambda arg used at all?
+		       * is it direct? can other symbols all be looked up in advance?
+		       * can we assume only real as return val?
+		       */
+		      
+		      if (s7_tree_memq(s7, arg, res))
+			{
+			  if (s7_function_choice_is_direct(s7, res))
+			    {
+			      if (s7_function_returns_temp(res))
+				{
+				  s7_pointer old_e, y;
+				  s7_Double *ry;
+
+				  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
+				  old_e = s7_set_current_environment(s7, e);
+				  y = s7_make_real(s7, 1.5);
+				  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
+				  slot = s7_make_slot(s7, e, arg, y); 
+				  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
+				  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
+
+				  for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
+				    {
+				      local_samps = num - kp;
+				      if (local_samps > MAX_BUFFER_SIZE)
+					local_samps = MAX_BUFFER_SIZE;
+
+				      for (j = 0; j < local_samps; j++)
+					{
+					  (*ry) = read_sample(sf);
+					  data[0][j] = s7_call_direct_to_real_and_free(s7, res);
+					}
+				      err = mus_file_write(ofd, 0, j - 1, 1, data);
+				      if (err != MUS_NO_ERROR) break;
+				    }
+
+				  s7_set_current_environment(s7, old_e);
+				  samps = num;
+				  goto DO_EDIT;
+				}
+
+			      /* here it's direct but not known to be always real */
+			      len = s7_list_length(s7, res);
+			      if ((len == 3) &&
+				  (s7_cadr(res) == arg) &&      /* tree_memq but perhaps (* (abs y) 2.0) ? */
+				  (s7_is_real(s7_caddr(res))))  /* avoid complex here */
+				{
+				  /* (map-channel (lambda (y) (* y 2.0))) */
+				  s7_pointer y, z, args;
+				  s7_Double *ry;
+				  s7_pointer old_e;
+				  
+				  z = s7_caddr(res);
+				  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
+				  old_e = s7_set_current_environment(s7, e);
+				  y = s7_make_real(s7, 1.5);
+				  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
+				  slot = s7_make_slot(s7, e, arg, y);
+				  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
+				  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
+			      
+				  args = s7_cons(s7, y, s7_cons(s7, z, s7_nil(s7)));
+				  gc_loc = s7_gc_protect(s7, args);
+				  
+				  for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
+				    {
+				      local_samps = num - kp;
+				      if (local_samps > MAX_BUFFER_SIZE)
+					local_samps = MAX_BUFFER_SIZE;
+				      
+				      for (j = 0; j < local_samps; j++)
+					{
+					  (*ry) = read_sample(sf);
+					  data[0][j] = s7_call_direct_to_real_and_free(s7, res);
+					}
+				      err = mus_file_write(ofd, 0, j - 1, 1, data);
+				      if (err != MUS_NO_ERROR) break;
+				    }
+
+				  s7_set_current_environment(s7, old_e);
+				  samps = num;
+				  goto DO_EDIT;
+				}
+			    }
+			}
+		      else
+			{
+			  /* lambda arg can be ignored */
+			  
+			  if (s7_function_choice_is_direct(s7, res))
+			    {
+			      if (s7_function_returns_temp(res))
+				{
+				  s7_pointer old_e;
+				  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
+				  old_e = s7_set_current_environment(s7, e);
+				  /* the function closure might be needed even if the arg isn't */
+
+				  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
+				  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
+
+				  for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
+				    {
+				      local_samps = num - kp;
+				      if (local_samps > MAX_BUFFER_SIZE)
+					local_samps = MAX_BUFFER_SIZE;
+				      for (j = 0; j < local_samps; j++)
+					data[0][j] = s7_call_direct_to_real_and_free(s7, res);
+				      err = mus_file_write(ofd, 0, j - 1, 1, data);
+				      if (err != MUS_NO_ERROR) break;
+				    }
+
+				  s7_set_current_environment(s7, old_e);
+				  samps = num;
+				  goto DO_EDIT;
+				}
+			    }
+			  else
+			    {
+			      /* not direct but possibly temp:
+			       * (let ((reader (make-sampler 0 0 0))) (map-channel (lambda (y) (read-sample reader))))
+			       */
+			      len = s7_list_length(s7, res);
+			      if ((s7_function_returns_temp(res)) &&
+				  (len == 2) &&
+				  (s7_is_symbol(s7_cadr(res))))
+				{
+				  s7_pointer old_e, z, args;
+
+				  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
+				  old_e = s7_set_current_environment(s7, e);
+				  /* the function closure might be needed even if the arg isn't */
+
+				  z = s7_symbol_value(s7, s7_cadr(res));
+				  args = s7_cons(s7, z, s7_nil(s7));
+				  gc_loc = s7_gc_protect(s7, args);
+
+				  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
+				  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
+
+				  for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
+				    {
+				      local_samps = num - kp;
+				      if (local_samps > MAX_BUFFER_SIZE)
+					local_samps = MAX_BUFFER_SIZE;
+				      for (j = 0; j < local_samps; j++)
+					data[0][j] = s7_real(f(s7, args));
+				      err = mus_file_write(ofd, 0, j - 1, 1, data);
+				      if (err != MUS_NO_ERROR) break;
+				    }
+
+				  s7_gc_unprotect_at(s7, gc_loc);
+				  s7_set_current_environment(s7, old_e);
+				  samps = num;
+				  goto DO_EDIT;
+				}
+			    }
+			}
+		    }
 		}
 	    }
 
@@ -3302,7 +3478,6 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
       
       data = (mus_float_t **)calloc(1, sizeof(mus_float_t *));
       data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t));
-      datumb = mus_bytes_per_sample(hdr->format);
       ss->stopped_explicitly = false;
       
       for (kp = 0; kp < num; kp++)
@@ -3481,14 +3656,18 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
       if (s7_is_null(s7, s7_cdr(body)))
 	{
 	  res = s7_car(body);
-	  if (s7_is_boolean(res))
+	  arg = s7_caadar(source);
+
+	  if ((s7_is_boolean(res)) ||
+	      (res == arg))
 	    {
-	      /* #f = delete all samples in the range, #t = no-op */
+	      /* #f = delete all samples in the range, #t = no-op, (lambda (y) y) a no-op */
 	      sf = free_snd_fd(sf);
 	      if (res == s7_f(s7))
 		delete_samples(beg, num, cp, pos);
 	      return(res);
 	    }
+
 	  if (s7_is_number(res))
 	    {
 	      s7_Double x;
@@ -3499,10 +3678,13 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	      /* since we're not calling eval or the event checker, the channel can't be closed during the loop (??) */
 	      change_samples(beg, num, data, cp, caller, pos);
 	      free(data);
+	      sf = free_snd_fd(sf);
 	      return(res);
 	    }
+
 	  if (s7_is_pair(res))
 	    {
+	      int len;
 	      s7_function f;
 	      f = s7_function_choice(s7, res);
 	      if (f)
@@ -3512,29 +3694,68 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 		   * is it direct? can other symbols all be looked up in advance?
 		   * can we assume only real as return val?
 		   */
-		  arg = s7_caadar(source);
-#if 0
-		  fprintf(stderr, "arg: %s, res: %s, in res: %d\n",
-			  s7_object_to_c_string(s7, arg),
-			  s7_object_to_c_string(s7, res),
-			  s7_tree_memq(s7, arg, res));
-#endif
 		  if (s7_tree_memq(s7, arg, res))
 		    {
 		      if (s7_function_choice_is_direct(s7, res))
 			{
 			  if (s7_function_returns_temp(res))
 			    {
-			      s7_pointer old_e;
+			      s7_pointer y, old_e;
+			      s7_Double *ry;
+
 			      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
 			      old_e = s7_set_current_environment(s7, e);
-			      slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 1.5)); /* make sure it is mutable */
+			      y = s7_make_real(s7, 1.5);
+			      ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
+			      slot = s7_make_slot(s7, e, arg, y); /* make sure it is mutable */
 			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
 			      for (kp = 0; kp < num; kp++)
 				{
-				  s7_slot_set_real_value(s7, slot, read_sample(sf));
+				  (*ry) = read_sample(sf);
 				  data[kp] = s7_call_direct_to_real_and_free(s7, res);
 				}
+			      sf = free_snd_fd(sf);
+			      change_samples(beg, num, data, cp, caller, pos);
+			      free(data);
+			      s7_set_current_environment(s7, old_e);
+			      return(res);
+			    }
+			  /* here it's direct but not known to be always real */
+
+			  /* here and parallel elsewhere: direct (requires that we set up a slot for arg in this branch)
+			   *   other choices: safe_s, and safe_cs|sc
+			   *   if s != arg, do we have to look it up every time?
+			   *   can this ever return a vct?
+			   */
+			  len = s7_list_length(s7, res);
+			  if ((len == 3) &&
+			      (s7_cadr(res) == arg) &&      /* tree_memq but perhaps (* (abs y) 2.0) ? */
+			      (s7_is_real(s7_caddr(res))))  /* avoid complex here */
+			    {
+			      /* (map-channel (lambda (y) (* y 2.0))) */
+			      s7_pointer y, z, args;
+			      s7_Double *ry;
+			      s7_pointer old_e;
+			      
+			      z = s7_caddr(res);
+			      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
+			      old_e = s7_set_current_environment(s7, e);
+			      y = s7_make_real(s7, 1.5);
+			      ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
+			      slot = s7_make_slot(s7, e, arg, y); 
+			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
+			      
+			      args = s7_cons(s7, y, s7_cons(s7, z, s7_nil(s7)));
+			      gc_loc = s7_gc_protect(s7, args);
+			      
+			      for (kp = 0; kp < num; kp++)
+				{
+				  (*ry) = read_sample(sf);
+				  data[kp] = s7_call_direct_to_real_and_free(s7, res);
+				}
+
+			      sf = free_snd_fd(sf);
+			      s7_gc_unprotect_at(s7, gc_loc);			  
 			      change_samples(beg, num, data, cp, caller, pos);
 			      free(data);
 			      s7_set_current_environment(s7, old_e);
@@ -3545,15 +3766,58 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 		  else
 		    {
 		      /* lambda arg can be ignored */
+		      /*
+		      fprintf(stderr, "no arg: %s %d %d\n", DISPLAY(res), 
+			      s7_function_choice_is_direct(s7, res),
+			      s7_function_returns_temp(res));
+		      */
 		      if (s7_function_choice_is_direct(s7, res))
 			{
 			  if (s7_function_returns_temp(res))
 			    {
+			      s7_pointer old_e;
+			      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
+			      old_e = s7_set_current_environment(s7, e);
+			      /* the function closure might be needed even if the arg isn't */
 			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
 			      for (kp = 0; kp < num; kp++)
 				data[kp] = s7_call_direct_to_real_and_free(s7, res);
 			      change_samples(beg, num, data, cp, caller, pos);
 			      free(data);
+			      sf = free_snd_fd(sf);
+			      s7_set_current_environment(s7, old_e);
+			      return(res);
+			    }
+			}
+		      else
+			{
+			  /* not direct but possibly temp:
+			   * (let ((reader (make-sampler 0 0 0))) (map-channel (lambda (y) (read-sample reader))))
+			   */
+			  len = s7_list_length(s7, res);
+			  if ((s7_function_returns_temp(res)) &&
+			      (len == 2) &&
+			      (s7_is_symbol(s7_cadr(res))))
+			    {
+			      s7_pointer old_e, z, args;
+			      
+			      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
+			      old_e = s7_set_current_environment(s7, e);
+			      /* the function closure might be needed even if the arg isn't */
+			      
+			      z = s7_symbol_value(s7, s7_cadr(res));
+			      args = s7_cons(s7, z, s7_nil(s7));
+			      gc_loc = s7_gc_protect(s7, args);
+			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
+			      
+			      for (kp = 0; kp < num; kp++)
+				data[kp] = s7_real(f(s7, args));
+
+			      change_samples(beg, num, data, cp, caller, pos);
+			      free(data);
+			      sf = free_snd_fd(sf);
+			      s7_gc_unprotect_at(s7, gc_loc);
+			      s7_set_current_environment(s7, old_e);
 			      return(res);
 			    }
 			}
@@ -3565,16 +3829,9 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 		  fprintf(stderr, "map: %s, temp: %d, direct: %d, len: %d\n", s7_object_to_c_string(s7, res), 
 			  s7_function_returns_temp(res), s7_function_choice_is_direct(s7, res),
 			  s7_list_length(s7, res));
-		  int len;
-		  len = s7_list_length(s7, res);
-		  if (len == 1)
-		    {
-		      
-		    }
 #endif
 		}
 	    }
-	      
 	}
 	  
       arg = s7_caadar(source);
@@ -3866,70 +4123,75 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       if (s7_is_null(s7, s7_cdr(body)))
 	{
 	  s7_pointer res;
+	  s7_function f;
+
 	  res = s7_car(body);
-	  if (s7_is_pair(res))
+	  if (res == xen_false)
+	    return(xen_false);
+	  if (!s7_is_pair(res))
+	    return(s_beg);
+
+	  f = s7_function_choice(s7, res);
+	  if (f)
 	    {
-	      s7_function f;
-	      f = s7_function_choice(s7, res);
-	      if (f)
+	      int len;
+	      /* this basically is never direct */
+	      len = s7_list_length(s7, res);
+	      if ((s7_cadr(res) == arg) &&
+		  (!s7_function_choice_is_direct(s7, res)) &&
+		  ((len == 2) || 
+		   ((len == 3) &&
+		    (s7_caddr(res) != arg) &&
+		    (!s7_is_pair(s7_caddr(res))))))
 		{
-		  int len;
-		  /* this basically is never direct */
-		  len = s7_list_length(s7, res);
-		  if ((s7_cadr(res) == arg) &&
-		      (!s7_function_choice_is_direct(s7, res)) &&
-		      ((len == 2) || 
-		       ((len == 3) &&
-			(s7_caddr(res) != arg) &&
-			(!s7_is_pair(s7_caddr(res))))))
+		  /* not direct, so we're making the arg list, so no env is needed */
+		  s7_pointer y, args, val;
+		  s7_Double *ry;
+		  y = s7_make_real(s7, 1.5);
+		  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
+		  if (len == 2)
+		    args = s7_cons(s7, y, s7_nil(s7));
+		  else
 		    {
-		      /* not direct, so we're making the arg list, so no env is needed */
-		      s7_pointer y, args, val;
-		      s7_Double *ry;
-		      y = s7_make_real(s7, 1.5);
-		      ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
-		      if (len == 2)
-			args = s7_cons(s7, y, s7_nil(s7));
-		      else
+		      s7_pointer z;
+		      z = s7_caddr(res);
+		      if (s7_is_symbol(z))
 			{
-			  s7_pointer z;
-			  z = s7_caddr(res);
-			  if (s7_is_symbol(z))
-			    {
-			      /* (scan-channel (let ((x .1)) (lambda (y) (> y x))))
-			       *  -- the search needs the closure's env
-			       */
-			      s7_pointer old_e;
-			      old_e = s7_set_current_environment(s7, s7_cdr(source));
-			      z = s7_symbol_value(s7, z);
-			      s7_set_current_environment(s7, old_e);
-			    }
-			  args = s7_cons(s7, y, s7_cons(s7, z, s7_nil(s7)));
+			  /* (scan-channel (let ((x .1)) (lambda (y) (> y x))))
+			   *  -- the search needs the closure's env
+			   */
+			  s7_pointer old_e;
+			  old_e = s7_set_current_environment(s7, s7_cdr(source));
+			  z = s7_symbol_value(s7, z);
+			  s7_set_current_environment(s7, old_e);
 			}
-		      gc_loc = s7_gc_protect(s7, args);
-		      for (kp = 0; kp < num; kp++)
-			{
-			  (*ry) = read_sample(sf);
-			  val = f(s7, args);
-			  if (val != xen_false)
-			    {
-			      if ((counting) && (val == xen_true))
-				counts++;
-			      else break;
-			    }
-			}
-		      sf = free_snd_fd(sf);
-		      s7_gc_unprotect_at(s7, gc_loc);			  
-		      if (counting)
-			return(s7_make_integer(s7, counts));
-		      if (kp < num)
-			return(s7_make_integer(s7, kp + beg));
-		      return(xen_false);
+		      args = s7_cons(s7, y, s7_cons(s7, z, s7_nil(s7)));
 		    }
+		  gc_loc = s7_gc_protect(s7, args);
+		  for (kp = 0; kp < num; kp++)
+		    {
+		      (*ry) = read_sample(sf);
+		      val = f(s7, args);
+		      if (val != xen_false)
+			{
+			  if ((counting) && (val == xen_true))
+			    counts++;
+			  else break;
+			}
+		    }
+		  sf = free_snd_fd(sf);
+		  s7_gc_unprotect_at(s7, gc_loc);			  
+		  if (counting)
+		    return(s7_make_integer(s7, counts));
+		  if (kp < num)
+		    return(s7_make_integer(s7, kp + beg));
+		  return(xen_false);
 		}
 	    }
 	}
 #endif
+      /* (> (abs y) .1) (fneq y 1.0)
+       */
       e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
       gc_loc = s7_gc_protect(s7, e);
       slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));

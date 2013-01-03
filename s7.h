@@ -576,7 +576,6 @@ bool s7_function_choice_is_direct(s7_scheme *sc, s7_pointer expr);
 void s7_function_choice_set_direct(s7_scheme *sc, s7_pointer expr);
 s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr);
 bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree);
-void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_Double value);
 
 s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
 void s7_function_set_returns_temp(s7_pointer f);

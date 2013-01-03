@@ -2321,7 +2321,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 1
+#if 0
 #if 1
 #define NUM_COUNTS 1024
 static int counts[NUM_COUNTS];
@@ -2399,8 +2399,9 @@ static void add_expr(s7_scheme *sc, s7_pointer expr)
   val = s7_hash_table_ref(sc, hashes, expr);
   if (val == sc->F)
     {
-      /* fprintf(stderr, "unopt: %s\n", DISPLAY_80(expr)); */
-      s7_hash_table_set(sc, hashes, expr, s7_make_integer(sc, 1));
+      if ((!is_closure(expr)) &&
+	  (!is_closure_star(expr)))
+	s7_hash_table_set(sc, hashes, expr, s7_make_integer(sc, 1));
     }
   else
     {
@@ -5498,12 +5499,6 @@ s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value)
 {
   slot_set_value(slot, value);
   return(value);
-}
-
-
-void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_Double value)
-{
-  real(slot_value(slot)) = value;
 }
 
 
@@ -27305,7 +27300,7 @@ static int hash_loc(s7_scheme *sc, s7_pointer key)
       return(symbol_hash(key));
 
     case T_SYNTAX:
-      return(syntax_opcode(key));
+      return(symbol_hash(slot_symbol(global_slot(key))));
 
     case T_CHARACTER:
       return(character(key));
@@ -27471,6 +27466,8 @@ static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
    *   they were placed there.  But I think the key 1 should not match the key 1.0+epsilon,
    *   and similarly for ratios, yet NaN should definitely match NaN (else it's a nutty no-op
    *   to use such a key). 
+   *
+   * yet another problem: hashing a closure can't work.  A closure is not necessarily equal to itself.
    */
   s7_pointer x;
   unsigned int hash_len, loc;
@@ -27486,10 +27483,19 @@ static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
     case T_COMPLEX:
       return(hash_complex_1(sc, table, loc, key));
 
+    case T_SYNTAX:
+      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
+	if (slot_symbol(global_slot(fcdr(x))) == slot_symbol(global_slot(key)))
+	  return(car(x));
+      break;
+
     case T_HASH_TABLE:
+    case T_SYMBOL:
+    case T_CHARACTER:
       for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
 	if (fcdr(x) == key)
 	  return(car(x));
+      break;
       
     default:
       /* we can get into an infinite loop here, but it requires 2 hash tables that are members of each other
@@ -30189,6 +30195,9 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
     case T_COMPLEX:
       return(numbers_are_eqv(x, y));
 
+    case T_SYNTAX:
+      return(slot_symbol(global_slot(x)) == slot_symbol(global_slot(y)));
+
     case T_ENVIRONMENT:
       if (has_methods(x))
 	{
@@ -32604,13 +32613,13 @@ s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form, s7_pointer e)
      h_safe_c_c: 5532246 (24.689348)
      safe_c_sc: 4256179 (18.994507)
      safe_c_s: 2252676 (10.053259)
+
+     --------------------
+
+     2252668: (read-sample reader)
+     104743: #f
+     101912: (+ y dc)
   */
-#if WITH_COUNTS
-  /* add_expr(sc, form); */
-  if (is_optimized(form))
-    tick(optimize_data(form));
-  else tick(0);
-#endif
   /* fprintf(stderr, "form: %s, %d %s\n", DISPLAY(form), is_optimized(form), (is_optimized(form) ? opt_names[optimize_data(form)] : "")); */
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
   sc->code = form;
@@ -42716,6 +42725,9 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op) 
 {
+#if WITH_COUNTS
+  add_expr(sc, sc->code); 
+#endif
   sc->cur_code = sc->F;
   sc->op = first_op;
   
