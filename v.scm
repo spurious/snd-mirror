@@ -83,7 +83,7 @@
 		(frqf (make-env gliss-env (* glissando-amount frq-scl) :duration dur))
 		(pervib (make-triangle-wave periodic-vibrato-rate (* periodic-vibrato-amplitude frq-scl)))
 		(ranvib (make-rand-interp random-vibrato-rate (* random-vibrato-amplitude frq-scl)))
-		(fm-noi (if (not (= 0.0 noise-amount))
+		(fm-noi (if (not (zero? noise-amount))
 			    (make-rand noise-freq (* pi noise-amount))
 			    #f))
 		(ind-noi (if (and (not (zero? ind-noise-amount))
@@ -95,32 +95,47 @@
 			     (make-rand-interp amp-noise-freq amp-noise-amount)
 			     #f))
 		(carrier (make-oscil frequency))
-		(fmosc2  (if (not easy-case) (make-oscil (* fm2-rat frequency))))
-		(fmosc3  (if (not easy-case) (make-oscil (* fm3-rat frequency))))
-		(ampf  (make-env (or amp-env default-amp-env) :scaler amplitude :base base :duration dur))
+		(fmosc2 (if (not easy-case) (make-oscil (* fm2-rat frequency))))
+		(fmosc3 (if (not easy-case) (make-oscil (* fm3-rat frequency))))
+		(ampf (make-env (or amp-env default-amp-env) :scaler amplitude :base base :duration dur))
 		(locs (make-locsig (or degree (random 90.0)) distance reverb-amount)))
 	  
 	    (if (or (not easy-case) 
 		    ind-noi 
 		    amp-noi
-		    (positive? noise-amount))
+		    fm-noi)
 		(let ((fuzz 0.0)
 		      (vib 0.0)
-		      (with-fuzz (not (zero? noise-amount))))
-		  (do ((i beg (+ i 1)))
-		      ((= i end))
-		    (if with-fuzz (set! fuzz (rand fm-noi)))
-		    (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-		    (locsig locs i (* (env ampf) 
-				      (if amp-noi (+ 1.0 (rand-interp amp-noi)) 1.0)
-				      (oscil carrier 
-					     (+ vib (* (if ind-noi (+ 1.0 (rand-interp ind-noi)) 1.0)
-						       (if easy-case
-							   (* (env indf1) 
-							      (polywave fmosc1 vib))
-							   (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-							      (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-							      (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz))))))))))))
+		      (anoi 1.0)
+		      (inoi 1.0)
+		      (modf 0.0))
+		  (if easy-case ; no fm-noi here
+		      (do ((i beg (+ i 1)))
+			  ((= i end))
+			(if amp-noi 
+			    (set! anoi (* (env ampf) (+ 1.0 (rand-interp amp-noi))))
+			    (set! anoi (env ampf)))
+			(if ind-noi 
+			    (set! inoi (+ 1.0 (rand-interp ind-noi))))
+			(set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
+			(set! modf (+ vib (* inoi (env indf1) (polywave fmosc1 vib))))
+			(locsig locs i (* anoi (oscil carrier modf))))
+
+		      (do ((i beg (+ i 1)))
+			  ((= i end))
+			(if fm-noi (set! fuzz (rand fm-noi)))
+			(if amp-noi 
+			    (set! anoi (* (env ampf) (+ 1.0 (rand-interp amp-noi))))
+			    (set! anoi (env ampf)))
+			(if ind-noi (set! inoi (+ 1.0 (rand-interp ind-noi))))
+			(set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
+			(set! modf (+ vib
+				      (* inoi
+					 (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+					    (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+					    (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
+			(locsig locs i (* anoi (oscil carrier modf))))))
+		
 		(if (= (mus-scaler frqf) 0.0)
 		    (do ((i beg (+ i 1)))
 			((= i end))
@@ -136,4 +151,6 @@
 								   (polywave fmosc1 vib)))))))))))))))
 
 
-;; (fm-violin 0 1 440 .1 :fm-index 2.0)
+;; (with-sound (:statistics #t) (fm-violin 0 10 440 .1 :fm-index 2.0))
+;; (with-sound (:statistics #t) (fm-violin 0 10 440 .1 :noise-amount .01))
+;; (with-sound (:statistics #t) (fm-violin 0 10 440 .1 :ind-noise-amount .01))

@@ -17292,11 +17292,12 @@ EDITS: 2
 	     ((or (not happy) (= i 100)))
 	   (let ((sum (camps 0))
 		 (cval (mus-chebyshev-tu-sum angle camps samps)))
-	     (do ((k 1 (+ k 1)))
+	     (do ((k 1 (+ k 1))
+		  (ka angle (+ ka angle)))
 		 ((= k n))
 	       (set! sum (+ sum
-			    (* (samps k) (sin (* k angle)))
-			    (* (camps k) (cos (* k angle))))))
+			    (* (samps k) (sin ka))
+			    (* (camps k) (cos ka)))))
 	     (set! angle (+ angle incr))
 	     (if (fneq cval sum)
 		 (begin
@@ -30420,15 +30421,35 @@ EDITS: 2
 		  (v (vct-fill! (make-vct dur) 1.0)))
 	     (define (check-env name r e)
 	       (let ((happy #t))
-		 (do ((i 0 (+ i 1)))
-		     ((or (not happy) (= i dur))
-		      happy)
-		   (let ((rv (r))
-			 (ev (e)))
-		     (if (fneq rv ev) 
-			 (begin
-			   (snd-display #__line__ ";~A env check [~A]: ~A ~A" name i rv ev)
-			   (set! happy #f)))))))
+		 (if (env? e)
+		     (do ((i 0 (+ i 1)))
+			 ((or (not happy) (= i dur))
+			  happy)
+		       (let ((rv (read-sample r))
+			     (ev (env e)))
+			 (if (fneq rv ev) 
+			     (begin
+			       (snd-display #__line__ ";~A env check [~A]: ~A ~A" name i rv ev)
+			       (set! happy #f)))))
+		     (if (sampler? e)
+			 (do ((i 0 (+ i 1)))
+			     ((or (not happy) (= i dur))
+			      happy)
+			   (let ((rv (read-sample r))
+				 (ev (read-sample e)))
+			     (if (fneq rv ev) 
+				 (begin
+				   (snd-display #__line__ ";~A env check [~A]: ~A ~A" name i rv ev)
+				   (set! happy #f)))))
+			 (do ((i 0 (+ i 1)))
+			     ((or (not happy) (= i dur))
+			      happy)
+			   (let ((rv (read-sample r))
+				 (ev (apply e ())))
+			     (if (fneq rv ev) 
+				 (begin
+				   (snd-display #__line__ ";~A env check [~A]: ~A ~A" name i rv ev)
+				   (set! happy #f)))))))))
 	     (vct->channel v)
 	     (env-sound '(0 0 1 1))
 	     (check-env 'ramp (make-sampler 0) (make-env '(0 0 1 1) :length dur))
@@ -31820,13 +31841,6 @@ EDITS: 1
 		(if (and diff (> (car diff) .0001)) (snd-display #__line__ ";1 edpos src 1 diff: ~A" diff)))
 	      (if (> (abs (- (frames ind 0) len)) 2)
 		  (snd-display #__line__ ";src len edpos: ~A ~A" len (frames ind 0)))
-	      (undo)
-	      
-	      (map-channel (lambda (y) y) 0 #f ind 0 edpos)
-	      (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
-		(if diff (snd-display #__line__ ";1 edpos map 1 diff: ~A" diff)))
-	      (if (not (= (frames ind 0) len))
-		  (snd-display #__line__ ";map len edpos: ~A ~A" len (frames ind 0)))
 	      (undo)
 	      
 	      (smooth-channel 0 len ind 0 edpos)
@@ -38162,12 +38176,14 @@ EDITS: 1
 							    (mus-frequency g) 
 							    (mus-phase g))))))
   freq phase (n 1)
-  (incr 1.0))
+  (incr 1.0) fm)
 
 (define (osc329 gen fm)
-  (let ((result (sin (gen 'phase))))
-    (set! (gen 'phase) (+ (gen 'phase) (gen 'freq) fm))
-    result))
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((result (sin phase)))
+      (set! phase (+ phase freq fm))
+      result)))
 
 
 (define (snd_test_23)
@@ -47344,22 +47360,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-2-Jan-13:
-104,462,010,946
-17,802,425,291  s7.c:eval [/home/bil/snd-13/snd]
- 7,630,452,027  ???:sin [/lib64/libm-2.12.so]
- 6,683,496,806  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 5,967,012,931  s7.c:eval'2 [/home/bil/snd-13/snd]
- 3,451,126,343  s7.c:gc [/home/bil/snd-13/snd]
- 3,339,408,354  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 3,032,540,144  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,991,125,539  clm.c:mus_src [/home/bil/snd-13/snd]
+3-Jan-13:
+102,054,919,101
+17,783,354,098  s7.c:eval [/home/bil/snd-13/snd]
+ 7,627,333,103  ???:sin [/lib64/libm-2.12.so]
+ 6,671,539,368  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 5,735,237,281  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 3,392,369,341  s7.c:gc [/home/bil/snd-13/snd]
+ 2,984,840,001  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
+ 2,861,207,575  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
  2,720,009,350  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 2,563,650,401  ???:cos [/lib64/libm-2.12.so]
- 1,728,444,558  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 2,637,656,437  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,560,518,952  ???:cos [/lib64/libm-2.12.so]
+ 1,647,517,766  s7.c:s7_make_real [/home/bil/snd-13/snd]
  1,592,316,356  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 1,177,985,095  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
+ 1,152,088,801  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,129,623,660  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
- 1,110,163,440  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
 |#

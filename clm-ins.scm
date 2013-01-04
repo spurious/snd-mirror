@@ -2466,7 +2466,8 @@ mjkoskin@sci.fi
 (defgenerator sbfm 
   (am0 #f) (am1 #f) 
   (car0 #f) (car1 #f)
-  (mod0 #f) (mod1 #f))
+  (mod0 #f) (mod1 #f)
+  modsig)
 
 (define (make-ssb-fm freq)
   "(make-ssb-fm freq) makes an ssb-fm generator"
@@ -2479,10 +2480,12 @@ mjkoskin@sci.fi
 
 (define (ssb-fm gen modsig)
   "(ssb-fm gen modsig) runs an ssb-fm generator"
-  (+ (* (oscil (gen 'am0)) 
-	(oscil (gen 'car0) (hilbert-transform (gen 'mod0) modsig)))
-     (* (oscil (gen 'am1)) 
-	(oscil (gen 'car1) (delay (gen 'mod1) modsig)))))
+  (set! (gen 'modsig) modsig)
+  (with-environment gen
+    (+ (* (oscil am0) 
+	  (oscil car0 (hilbert-transform mod0 modsig)))
+       (* (oscil am1) 
+	  (oscil car1 (delay mod1 modsig))))))
 
 
 ;;; if all we want are asymmetric fm-generated spectra, we can just add 2 fm oscil pairs:
@@ -2511,7 +2514,8 @@ mjkoskin@sci.fi
   (q 0.0)
   (r 0.0)
   (avg 0.0)
-  (avgc 0))
+  (avgc 0)
+  sig rmsval)
 
 (define* (make-rmsgain (hp 10.0))
   "(make-rmsgain (hp 10.0)) makes an RMS gain generator"
@@ -2522,21 +2526,24 @@ mjkoskin@sci.fi
 
 (define (rms gen sig)
   "(rms gen sig) runs an RMS gain generator"
-  (set! (gen 'q) (+ (* (gen 'c1) sig sig)
-			(* (gen 'c2) (gen 'q))))
-  (sqrt (gen 'q)))
+  (set! (gen 'sig) sig)
+  (with-environment gen
+    (set! q (+ (* c1 sig sig) (* c2 q)))
+    (sqrt q)))
 
 
 (define (gain gen sig rmsval)
   "(gain gen sig rmsval) returns the current RMS gain"
-  (set! (gen 'r) (+ (* (gen 'c1) sig sig)
-			(* (gen 'c2) (gen 'r))))
-  (let ((this-gain (if (zero? (gen 'r))
-		       rmsval
-		       (/ rmsval (sqrt (gen 'r))))))
-    (set! (gen 'avg) (+ (gen 'avg) this-gain))
-    (set! (gen 'avgc) (+ (gen 'avgc) 1))
-    (* sig this-gain)))
+  (set! (gen 'sig) sig)
+  (set! (gen 'rmsval) rmsval)
+  (with-environment gen
+    (set! r (+ (* c1 sig sig) (* c2 r)))
+    (let ((this-gain (if (zero? r)
+			 rmsval
+			 (/ rmsval (sqrt r)))))
+      (set! avg (+ avg this-gain))
+      (set! avgc (+ avgc 1))
+      (* sig this-gain))))
 
 (define (balance gen signal compare)
   "(balance gen signal compare) scales a signal based on a RMS gain"

@@ -2490,12 +2490,14 @@
 
 ;;; ---------------- sndscm-osc ----------------
 
-(defgenerator sndscm-osc freq phase)
+(defgenerator sndscm-osc freq phase fm)
 
 (define (sndscm-osc gen fm)
-  (let ((result (sin (gen 'phase))))
-    (set! (gen 'phase) (+ (gen 'phase) (gen 'freq) fm))
-    result))
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((result (sin phase)))
+      (set! phase (+ phase freq fm))
+      result)))
 
 (definstrument (sndscm-osc-fm beg dur freq amp mc-ratio fm-index)
   (let ((start (seconds->samples beg))
@@ -2516,12 +2518,14 @@
   (sndscm-osc1 :make-wrapper (lambda (gen)
 			       (set! (gen 'freq) (hz->radians (gen 'freq)))
 			       gen))
-  freq phase)
+  freq phase fm)
 
 (define* (sndscm-osc1 gen fm)
-  (let ((result (sin (gen 'phase))))
-    (set! (gen 'phase) (+ (gen 'phase) (gen 'freq) fm))
-    result))
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((result (sin phase)))
+      (set! phase (+ phase freq fm))
+      result)))
 
 (definstrument (sndscm-osc1-fm beg dur freq amp mc-ratio (fm-index 1.0))
   (let ((start (seconds->samples beg))
@@ -2556,12 +2560,14 @@
 					   (lambda (g) (format #f "sndscm-osc2 freq: ~A, phase: ~A" 
 							       (mus-frequency g) 
 							       (mus-phase g))))))
-  freq phase)
+  freq phase fm)
 
 (define* (sndscm-osc2 gen fm)
-  (let ((result (sin (gen 'phase))))
-    (set! (gen 'phase) (+ (gen 'phase) (gen 'freq) fm))
-    result))
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((result (sin phase)))
+      (set! phase (+ phase freq fm))
+      result)))
 
 (definstrument (sndscm-osc2-fm beg dur freq amp mc-ratio (fm-index 1.0))
   (let ((start (seconds->samples beg))
