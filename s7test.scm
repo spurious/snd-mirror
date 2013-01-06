@@ -15712,6 +15712,7 @@ in s7:
 (test (symbol? (cond (else else))) #f)
 (test (equal? else (cond (else else))) #t)
 (test (cond (#f 2) ((cond (else else)) 1)) 1)
+(test (let ((x #f) (y #t)) (cond (x 1) (y 2))) 2)
 
 (for-each
  (lambda (arg)
