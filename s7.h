@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.17"
-#define S7_DATE "24-Dec-12"
+#define S7_VERSION "2.18"
+#define S7_DATE "9-Jan-13"
 
 
 typedef long long int s7_Int;
@@ -345,6 +345,10 @@ s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b);        /* r
 s7_Double s7_real_part(s7_pointer z);                                       /* (real-part z) */
 s7_Double s7_imag_part(s7_pointer z);                                       /* (imag-part z) */
 char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix);        /* (number->string obj radix) */
+
+s7_pointer s7_sin(s7_scheme *sc, s7_pointer z);                             /* (sin z) */
+s7_pointer s7_cos(s7_scheme *sc, s7_pointer z);                             /* (cos z) */
+s7_pointer s7_multiply_2(s7_scheme *sc, s7_pointer x, s7_pointer y);        /* (* x y) */
 
 
 bool s7_is_vector(s7_pointer p);                                            /* (vector? p) */
@@ -839,14 +843,14 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  *    call-with-output-file call-with-output-string catch ceiling char->integer char-alphabetic? 
  *    char-ci<=? char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? 
  *    char-numeric? char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<? 
- *    char=? char>=? char>? cos cosh dynamic-wind environment? eof-object? eval even? 
+ *    char=? char>=? char>? cosh dynamic-wind environment? eof-object? eval even? 
  *    exact->inexact exp expt fill! floor for-each gcd hash-table hash-table-size 
  *    hook inexact->exact infinite? initial-environment integer->char integer-decode-float 
  *    integer-length keyword->symbol lcm length list->string list->vector list-tail log logand 
  *    logior lognot logxor logbit? magnitude make-hash-table-iterator make-list make-polar
  *    make-rectangular map max memv min modulo nan? negative? not odd? port-closed? 
  *    port-line-number positive? provided? quotient read-byte read-line remainder round s7-version 
- *    sin sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 
+ *    sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 
  *    string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-ref 
  *    string-set! string<=? string<? string=? string>=? string>? substring symbol symbol->keyword 
  *    symbol-table tan tanh truncate vector vector->list with-input-from-file 
@@ -863,6 +867,8 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 9-Jan:     s7_cos, s7_sin, other optimization changes.
+ * --------
  * 24-Dec:    s7_set_object_array_info and other such changes.
  * 20-Nov:    removed s7_set_error_exiter and s7_error_and_exit which I think have never been used.
  * 22-Oct:    changed args to s7_function_class and s7_function_set_class.

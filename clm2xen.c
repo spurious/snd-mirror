@@ -11411,6 +11411,33 @@ static s7_pointer g_mul_1s_direct(s7_scheme *sc, s7_pointer args)
   return(s7_make_complex(sc, (1.0 - s7_real_part(mul)) * xval, -s7_imag_part(mul) * xval));
 }
 
+
+static s7_pointer mul_s_sin_s, mul_s_cos_s;
+static s7_pointer g_mul_s_sin_s(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x, y;
+  x = s7_symbol_value(sc, car(args));
+  y = s7_symbol_value(sc, cadr(cadr(args)));
+
+  if ((s7_is_real(x)) && (s7_is_real(y)))
+    return(s7_make_real(sc, s7_number_to_real(sc, x) * sin(s7_number_to_real(sc, y))));
+
+  return(s7_multiply_2(sc, x, s7_sin(sc, y)));
+}
+
+static s7_pointer g_mul_s_cos_s(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x, y;
+  x = s7_symbol_value(sc, car(args));
+  y = s7_symbol_value(sc, cadr(cadr(args)));
+
+  if ((s7_is_real(x)) && (s7_is_real(y)))
+    return(s7_make_real(sc, s7_number_to_real(sc, x) * cos(s7_number_to_real(sc, y))));
+
+  return(s7_multiply_2(sc, x, s7_cos(sc, y)));
+}
+
+
 static s7_pointer add_1s_direct;
 static s7_pointer g_add_1s_direct(s7_scheme *sc, s7_pointer args)
 {
@@ -11492,7 +11519,7 @@ static s7_pointer g_oscil_bank_6(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer env_symbol, all_pass_symbol, ina_symbol, comb_symbol, polywave_symbol, triangle_wave_symbol;
 static s7_pointer rand_interp_symbol, oscil_symbol, add_symbol, subtract_symbol, reverb_symbol, output_symbol;
-static s7_pointer multiply_symbol, vector_ref_symbol, quote_symbol;
+static s7_pointer multiply_symbol, vector_ref_symbol, quote_symbol, sin_symbol, cos_symbol;
 
 static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
 
@@ -11725,7 +11752,6 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	  if (s7_function_choice(sc, caddr(expr)) == g_fm_violin_with_modulation)
 	    {
 	      s7_function_choice_set_direct(sc, expr);
-	      /* fprintf(stderr, "fm_violin_1\n"); */
 	      return(fm_violin_1);
 	    }
 	  
@@ -11774,19 +11800,13 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 		  return(env_oscil_env);
 		}
 	    }
-
-#if 0
-	      (s7_is_pair(caddr(caddr(expr)))) &&
-	      (s7_function_choice(sc, caddr(caddr(expr))) == g_add_direct_2))
-	    fprintf(stderr, "o case: %s\n", DISPLAY(expr));
-#endif
-	  /* nearly always add_direct_2 is (+ (env s) ...)
-	   *  (* (env ampf) (oscil gen1 (+ (env frqf) (rand-interp rnd))))
-	   * outa chooser then adds the outs part
-	   */
-
 	}
-
+      /* nearly always add_direct_2 is (+ (env s) ...)
+       *  (* (env ampf) (oscil gen1 (+ (env frqf) (rand-interp rnd))))
+       * outa chooser then adds the outs part
+       */
+	 
+      /* args == 2 here */
       if (s7_is_pair(caddr(expr)))
 	{
 	  if (s7_is_real(cadr(expr)))
@@ -11845,6 +11865,22 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	    }
 	}
 	  
+      if ((s7_is_symbol(cadr(expr))) &&
+	  (s7_is_pair(caddr(expr))) &&
+	  (s7_is_symbol(cadr(caddr(expr)))))
+	{
+	  if (car(caddr(expr)) == sin_symbol)
+	    {
+	      s7_function_choice_set_direct(sc, expr);
+	      return(mul_s_sin_s);
+	    }
+	  if (car(caddr(expr)) == cos_symbol)
+	    {
+	      s7_function_choice_set_direct(sc, expr);
+	      return(mul_s_cos_s);
+	    }
+	}
+
       if (s7_is_pair(cadr(expr)))
 	{
 	  if (caadr(expr) == env_symbol)
@@ -13454,6 +13490,8 @@ static void init_choosers(s7_scheme *sc)
   reverb_symbol = s7_make_symbol(sc, "*reverb*");
   output_symbol = s7_make_symbol(sc, "*output*");
   quote_symbol = s7_make_symbol(sc, "quote");
+  sin_symbol = s7_make_symbol(sc, "sin");
+  cos_symbol = s7_make_symbol(sc, "cos");
 
   f = s7_name_to_value(sc, "*");
   initial_multiply_chooser = s7_function_chooser(sc, f);
@@ -13465,6 +13503,8 @@ static void init_choosers(s7_scheme *sc)
   mul_direct_any = clm_make_function(sc, "*", g_mul_direct_any, 3, 0, true, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_direct = clm_make_function(sc, "*", g_mul_c_direct, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_1s_direct = clm_make_function_no_choice(sc, "*", g_mul_1s_direct, 2, 0, false, "* optimization", f);
+  mul_s_sin_s = clm_make_function_no_choice(sc, "*", g_mul_s_sin_s, 2, 0, false, "* optimization", f);
+  mul_s_cos_s = clm_make_function_no_choice(sc, "*", g_mul_s_cos_s, 2, 0, false, "* optimization", f);
   mul_env_direct = clm_make_function(sc, "*", g_mul_env_direct, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_direct_s2 = clm_make_function(sc, "*", g_mul_direct_s2, 3, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   env_oscil_env = clm_make_function(sc, "*", g_env_oscil_env, 2, 0, false, "animals optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);

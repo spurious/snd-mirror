@@ -436,7 +436,7 @@ enum {OP_NO_OP,
       OP_SAFE_IF_CSQ_P, OP_SAFE_IF_CSQ_P_P, OP_SAFE_IF_CSS_P, OP_SAFE_IF_CSS_P_P, OP_SAFE_IF_CSC_P, OP_SAFE_IF_CSC_P_P, 
       OP_SAFE_IF_IS_PAIR_P, OP_SAFE_IF_IS_PAIR_P_X, OP_SAFE_IF_IS_PAIR_P_P, OP_SAFE_IF_C_SS_P, OP_SAFE_IF_C_C_P,
       OP_SAFE_IF_IS_SYMBOL_P, OP_SAFE_IF_IS_SYMBOL_P_X, OP_SAFE_IF_IS_SYMBOL_P_P, 
-      OP_SAFE_IF_IS_EOF_P_P, OP_IF_Z_P, OP_IF_Z_P_P, OP_SAFE_IF_AND_ALL_X_P, OP_SAFE_IF_OR_ALL_X_P,
+      OP_IF_Z_P, OP_IF_Z_P_P, OP_SAFE_IF_AND_ALL_X_P, OP_SAFE_IF_OR_ALL_X_P,
       OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_2, OP_SAFE_C_PP_3, OP_SAFE_C_PP_4, OP_SAFE_C_PP_5, OP_SAFE_C_PP_6, 
       OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_1_MV, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_2_MV, 
       OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_3_MV, OP_EVAL_ARGS_P_4_MV, 
@@ -444,11 +444,11 @@ enum {OP_NO_OP,
       OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CDR, OP_SET_CONS, 
       OP_INCREMENT_SS, OP_INCREMENT_S_opCq, OP_INCREMENT_SZ, OP_INCREMENT_C_TEMP,
       OP_LET_O, OP_LET_O1, OP_LET_R, OP_LET_ALL_R, OP_LET_C_D, OP_LET_O_P, OP_LET_Z_P, OP_LET_O2, OP_LET_O_O, OP_LET_Z_O, OP_LET_O3, 
-      OP_LET_R_P, OP_LET_READ_CHAR_P, OP_LET_CAR_P,
+      OP_LET_R_P, OP_LET_CAR_P,
 
       OP_SAFE_CAR_1,
 
-      OP_SAFE_C_ZZ_1, OP_SAFE_C_ZZ_2, OP_SAFE_C_SZ_1, OP_SAFE_C_ZS_1, OP_INCREMENT_SZ_1,
+      OP_SAFE_C_ZZ_1, OP_SAFE_C_ZZ_2, OP_SAFE_C_SZ_1, OP_SAFE_C_ZS_1, OP_SAFE_C_ZA_1, OP_INCREMENT_SZ_1,
       OP_SAFE_C_ZXX_1, OP_SAFE_C_XZX_1, OP_SAFE_C_XXZ_1, 
       OP_SAFE_C_ZZX_1, OP_SAFE_C_ZZX_2, OP_SAFE_C_ZXZ_1, OP_SAFE_C_ZXZ_2, OP_SAFE_C_XZZ_1, OP_SAFE_C_XZZ_2, 
       OP_SAFE_C_ZZZ_1, OP_SAFE_C_ZZZ_2, OP_SAFE_C_ZZZ_3, 
@@ -529,7 +529,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "if", "if", "if", "if", "if", "if", "if",
    "if", "if", "if", "if", "if",
    "if", "if", "if", 
-   "if", "if", "if", "if", "if", 
+   "if", "if", "if", "if", 
    "c_p_1", "c_pp_1", "c_pp_2", "c_pp_3", "c_pp_4", "c_pp_5", "c_pp_6", 
    "eval_args_p_1", "eval_args_p_1_mv", "eval_args_p_2", "eval_args_p_2_mv", 
    "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv", 
@@ -541,7 +541,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
 
    "car",
 
-   "c_zz_1", "c_zz_2", "c_sz_1", "c_zs_1", "increment_sz_1",
+   "c_zz_1", "c_zz_2", "c_sz_1", "c_zs_1", "c_za_1", "increment_sz_1",
    "c_zxx_1", "c_xzx_1", "c_xxz_1", 
    "c_zzx_1", "c_zzx_2", "c_zxz_1", "c_zxz_2", "c_xzz_1", "c_xzz_2", 
    "c_zzz_1", "c_zzz_2", "c_zzz_3", 
@@ -615,7 +615,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_IF_CSQ_P", "OP_SAFE_IF_CSQ_P_P", "OP_SAFE_IF_CSS_P", "OP_SAFE_IF_CSS_P_P", "OP_SAFE_IF_CSC_P", "OP_SAFE_IF_CSC_P_P", 
   "OP_SAFE_IF_IS_PAIR_P", "OP_SAFE_IF_IS_PAIR_P_X", "OP_SAFE_IF_IS_PAIR_P_P", "OP_SAFE_IF_C_SS_P", "OP_SAFE_IF_C_C_P",
   "OP_SAFE_IF_IS_SYMBOL_P", "OP_SAFE_IF_IS_SYMBOL_P_X", "OP_SAFE_IF_IS_SYMBOL_P_P", 
-  "OP_SAFE_IF_IS_EOF_P_P", "OP_IF_Z_P", "OP_IF_Z_P_P", "SAFE_IF_AND_ALL_X_P", "SAFE_IF_OR_ALL_X_P",
+  "OP_IF_Z_P", "OP_IF_Z_P_P", "SAFE_IF_AND_ALL_X_P", "SAFE_IF_OR_ALL_X_P",
   "OP_SAFE_C_P_1", "OP_SAFE_C_PP_1", "OP_SAFE_C_PP_2", "OP_SAFE_C_PP_3", "OP_SAFE_C_PP_4", "OP_SAFE_C_PP_5", "OP_SAFE_C_PP_6", 
   "OP_EVAL_ARGS_P_1", "OP_EVAL_ARGS_P_1_MV", "OP_EVAL_ARGS_P_2", "OP_EVAL_ARGS_P_2_MV", 
   "OP_EVAL_ARGS_P_3", "OP_EVAL_ARGS_P_4", "OP_EVAL_ARGS_P_3_MV", "OP_EVAL_ARGS_P_4_MV", 
@@ -623,11 +623,11 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_INCREMENT_1", "OP_DECREMENT_1", "OP_SET_CDR", "OP_SET_CONS", 
   "OP_INCREMENT_SS", "OP_INCREMENT_S_opCq", "OP_INCREMENT_SZ", "OP_INCREMENT_C_TEMP",
   "OP_LET_O", "OP_LET_O1", "OP_LET_R", "OP_LET_ALL_R", "OP_LET_C_D", "OP_LET_O_P", "OP_LET_Z_P", "OP_LET_O2", "OP_LET_O_O", "OP_LET_Z_O", "OP_LET_O3", 
-  "OP_LET_R_P", "OP_LET_READ_CHAR_P", "OP_LET_CAR_P",
+  "OP_LET_R_P", "OP_LET_CAR_P",
 
   "OP_SAFE_CAR_1",
 
-  "OP_SAFE_C_ZZ_1", "OP_SAFE_C_ZZ_2", "OP_SAFE_C_SZ_1", "OP_SAFE_C_ZS_1", "OP_INCREMENT_SZ_1",
+  "OP_SAFE_C_ZZ_1", "OP_SAFE_C_ZZ_2", "OP_SAFE_C_SZ_1", "OP_SAFE_C_ZS_1", "OP_SAFE_C_ZA_1", "OP_INCREMENT_SZ_1",
   "OP_SAFE_C_ZXX_1", "OP_SAFE_C_XZX_1", "OP_SAFE_C_XXZ_1", 
   "OP_SAFE_C_ZZX_1", "OP_SAFE_C_ZZX_2", "OP_SAFE_C_ZXZ_1", "OP_SAFE_C_ZXZ_2", "OP_SAFE_C_XZZ_1", "OP_SAFE_C_XZZ_2", 
   "OP_SAFE_C_ZZZ_1", "OP_SAFE_C_ZZZ_2", "OP_SAFE_C_ZZZ_3", 
@@ -646,6 +646,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_SSS, HOP_SAFE_C_SSS, OP_SAFE_C_SCS, HOP_SAFE_C_SCS,
       OP_SAFE_C_ALL_S, HOP_SAFE_C_ALL_S, OP_SAFE_C_ALL_X, HOP_SAFE_C_ALL_X, 
       OP_SAFE_C_A, HOP_SAFE_C_A, OP_SAFE_C_AA, HOP_SAFE_C_AA, OP_SAFE_C_AAA, HOP_SAFE_C_AAA, 
+      OP_SAFE_C_AZ, HOP_SAFE_C_AZ, OP_SAFE_C_ZA, HOP_SAFE_C_ZA, 
 
       OP_SAFE_CAR_Q, HOP_SAFE_CAR_Q, OP_SAFE_CAR_S, HOP_SAFE_CAR_S, OP_SAFE_CAR_OPT, HOP_SAFE_CAR_OPT, OP_SAFE_CAR_P, HOP_SAFE_CAR_P, 
       OP_SAFE_CDR_S, HOP_SAFE_CDR_S, OP_SAFE_NULL_S, HOP_SAFE_NULL_S, 
@@ -754,6 +755,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_sss", "h_safe_c_sss", "safe_c_scs", "h_safe_c_scs",
       "safe_c_all_s", "h_safe_c_all_s", "safe_c_all_x", "h_safe_c_all_x", 
       "safe_c_a", "h_safe_c_a", "safe_c_aa", "h_safe_c_aa", "safe_c_aaa", "h_safe_c_aaa", 
+      "safe_c_az", "h_safe_c_az", "safe_c_za", "h_safe_c_za",
 
       "safe_car_q", "h_safe_car_q", "safe_car_s", "h_safe_car_s", "safe_car_opt", "h_safe_car_opt", "safe_car_p", "h_safe_car_p", 
       "safe_cdr_s", "h_safe_cdr_s", "safe_null_s", "h_safe_null_s", 
@@ -1326,9 +1328,9 @@ struct s7_scheme {
   s7_pointer SAFE_IF_CSS_X_P, SAFE_IF_CSC_X_P, SAFE_IF_CSC_X_O_A;
   s7_pointer SAFE_IF_CSQ_P, SAFE_IF_CSQ_P_P, SAFE_IF_CSS_P, SAFE_IF_CSS_P_P, SAFE_IF_CSC_P, SAFE_IF_CSC_P_P;
   s7_pointer SAFE_IF_IS_PAIR_P, SAFE_IF_IS_PAIR_P_X, SAFE_IF_IS_PAIR_P_P, SAFE_IF_C_SS_P, SAFE_IF_C_C_P;
-  s7_pointer SAFE_IF_IS_SYMBOL_P, SAFE_IF_IS_SYMBOL_P_X, SAFE_IF_IS_SYMBOL_P_P, SAFE_IF_IS_EOF_P_P;
+  s7_pointer SAFE_IF_IS_SYMBOL_P, SAFE_IF_IS_SYMBOL_P_X, SAFE_IF_IS_SYMBOL_P_P;
   s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS, INCREMENT_SS, INCREMENT_S_opCq, INCREMENT_SZ, INCREMENT_C_TEMP;
-  s7_pointer LET_R, LET_O, LET_ALL_R, LET_C_D, LET_O_P, LET_Z_P, LET_O_O, LET_Z_O, LET_R_P, LET_READ_CHAR_P, LET_CAR_P;
+  s7_pointer LET_R, LET_O, LET_ALL_R, LET_C_D, LET_O_P, LET_Z_P, LET_O_O, LET_Z_O, LET_R_P, LET_CAR_P;
   s7_pointer SIMPLE_DO, SAFE_DOTIMES, SIMPLE_SAFE_DOTIMES, SAFE_DOTIMES_C_C, SAFE_DOTIMES_C_S, SAFE_DO;
   s7_pointer SIMPLE_DO_P, SAFE_SIMPLE_DO, SIMPLE_DO_FOREVER, DOTIMES_P, SIMPLE_DO_A;
   s7_pointer DOX;
@@ -2325,7 +2327,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 1
+#if 0
 #if 1
 #define NUM_COUNTS 1024
 static int counts[NUM_COUNTS];
@@ -3514,6 +3516,12 @@ static int gc(s7_scheme *sc)
   S7_MARK(car(sc->T3_1));
   S7_MARK(car(sc->T3_2));
   S7_MARK(car(sc->T3_3));
+  S7_MARK(car(sc->A1_1));
+  S7_MARK(car(sc->A2_1));
+  S7_MARK(car(sc->A2_2));
+  S7_MARK(car(sc->A3_1));
+  S7_MARK(car(sc->A3_2));
+  S7_MARK(car(sc->A3_3));
   {
     int i;
     s7_pointer p;
@@ -10105,6 +10113,29 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
    */
 }
 
+s7_pointer s7_sin(s7_scheme *sc, s7_pointer x)
+{
+  switch (type(x))
+    {
+    case T_REAL:
+      return(make_real(sc, sin(real(x))));
+
+    case T_INTEGER:
+      return(make_real(sc, sin((s7_Double)integer(x))));
+      
+    case T_RATIO:
+      return(make_real(sc, sin((s7_Double)(fraction(x)))));
+
+    case T_COMPLEX:
+#if WITH_COMPLEX
+      return(s7_from_c_complex(sc, csin(as_c_complex(x))));
+#endif
+
+    default:
+      return(simple_wrong_type_argument_with_type(sc, sc->SIN, x, A_NUMBER));
+    }
+}
+
 
 static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
 {
@@ -10131,6 +10162,29 @@ static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
 
     default:
       CHECK_METHOD(sc, x, sc->COS, args);
+      return(simple_wrong_type_argument_with_type(sc, sc->COS, x, A_NUMBER));
+    }
+}
+
+s7_pointer s7_cos(s7_scheme *sc, s7_pointer x)
+{
+  switch (type(x))
+    {
+    case T_REAL:
+      return(make_real(sc, cos(real(x))));
+
+    case T_INTEGER:
+      return(make_real(sc, cos((s7_Double)integer(x))));
+      
+    case T_RATIO:
+      return(make_real(sc, cos((s7_Double)(fraction(x)))));
+
+    case T_COMPLEX:
+#if WITH_COMPLEX
+      return(s7_from_c_complex(sc, ccos(as_c_complex(x))));
+#endif
+
+    default:
       return(simple_wrong_type_argument_with_type(sc, sc->COS, x, A_NUMBER));
     }
 }
@@ -12883,6 +12937,7 @@ static s7_pointer g_subtract_ran(s7_scheme *sc, s7_pointer args)
 
 
 
+
 /* ---------------------------------------- multiply ---------------------------------------- */
 
 static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
@@ -13276,6 +13331,13 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), x, A_NUMBER));      
     }
   return(x);
+}
+
+s7_pointer s7_multiply_2(s7_scheme *sc, s7_pointer x, s7_pointer y)
+{
+  car(sc->T2_1) = x;
+  car(sc->T2_2) = y;
+  return(g_multiply_2(sc, sc->T2_1));
 }
 
 
@@ -35753,9 +35815,9 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	return(multiply_temp_s);
 
 
-      /* m4 case all temp? or 2 s+temp or maybe m3_ss_temp and m3_temp_ss where s is anything (similarly m4)
+      /* (* c c)
+       * (* s (sin|cos s))
        */
-
       return(multiply_2);
     }
 
@@ -36350,7 +36412,7 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(add_fs, f);
   add_ss_1ss = s7_make_function(sc, "+", g_add_ss_1ss, 2, 0, false, "+ optimization");
   s7_function_set_class(add_ss_1ss, f);
-  
+
 
   /* - */
   f = slot_value(global_slot(sc->MINUS));
@@ -36368,7 +36430,7 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(subtract_csn, f);
   subtract_ran = s7_make_function(sc, "-", g_subtract_ran, 2, 0, false, "- optimization");
   s7_function_set_class(subtract_ran, f);
-  
+  s7_function_set_returns_temp(subtract_ran);    
 
   /* * */
   f = slot_value(global_slot(sc->MULTIPLY));
@@ -36963,7 +37025,6 @@ static void init_choosers(s7_scheme *sc)
 
 
 static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer e);
-static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointer e2);
 
 static s7_pointer collect_collisions(s7_scheme *sc, s7_pointer lst, s7_pointer e)
 {
@@ -36999,6 +37060,8 @@ static bool is_all_x_op(int op)
 	 (op == HOP_SAFE_C_opSq) ||
 	 (op == HOP_SAFE_C_opSSq) ||
 	 (op == HOP_SAFE_C_opSSq_S) ||
+	 (op == HOP_SAFE_C_S_opSq) ||
+	 (op == HOP_SAFE_C_opSq_S) ||
 	 (op == HOP_SAFE_C_S_opSSq) ||
 	 (op == HOP_SAFE_C_opSq_opSq));
 }
@@ -37152,6 +37215,16 @@ static s7_pointer all_x_c_opssq_s(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T2_1));
 }
 		    
+static s7_pointer all_x_c_opsq_s(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = cadr(arg);
+  car(sc->T1_1) = finder(sc, cadr(largs));
+  car(sc->T2_1) = c_call(largs)(sc, sc->T1_1);
+  car(sc->T2_2) = finder(sc, caddr(arg));
+  return(c_call(arg)(sc, sc->T2_1));
+}
+		    
 static s7_pointer all_x_c_s_opssq(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer largs;
@@ -37159,6 +37232,16 @@ static s7_pointer all_x_c_s_opssq(s7_scheme *sc, s7_pointer arg)
   car(sc->T2_1) = finder(sc, cadr(largs));
   car(sc->T2_2) = finder(sc, caddr(largs));
   car(sc->T2_2) = c_call(largs)(sc, sc->T2_1);
+  car(sc->T2_1) = finder(sc, cadr(arg));
+  return(c_call(arg)(sc, sc->T2_1));
+}
+		    
+static s7_pointer all_x_c_s_opsq(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = caddr(arg);
+  car(sc->T1_1) = finder(sc, cadr(largs));
+  car(sc->T2_2) = c_call(largs)(sc, sc->T1_1);
   car(sc->T2_1) = finder(sc, cadr(arg));
   return(c_call(arg)(sc, sc->T2_1));
 }
@@ -37201,6 +37284,8 @@ static s7_function all_x_eval(s7_pointer arg)
 	    case HOP_SAFE_C_opCq:      return(all_x_c_opcq);
 	    case HOP_SAFE_C_opSq:      return(all_x_c_opsq);
 	    case HOP_SAFE_C_opSSq:     return(all_x_c_opssq);
+	    case HOP_SAFE_C_opSq_S:    return(all_x_c_opsq_s);
+	    case HOP_SAFE_C_S_opSq:    return(all_x_c_s_opsq);
 	    case HOP_SAFE_C_opSSq_S:   return(all_x_c_opssq_s);
 	    case HOP_SAFE_C_S_opSSq:   return(all_x_c_s_opssq);
 	    case HOP_SAFE_C_opSq_opSq: return(all_x_c_opsq_opsq);
@@ -37316,6 +37401,191 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer car_x, s7_pointer func, int
 }
 
 
+static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointer e2)
+{
+  int op2;
+  op2 = op_no_hop(e2);
+  /*
+  if (!is_hopping(e2))
+    fprintf(stderr, "%s %s\n", opt_names[optimize_data(e2)], DISPLAY_80(e2));
+  */
+  switch (op1)
+    {
+    case E_C_P:
+      switch (op2)
+	{
+	case OP_SAFE_C_C: 
+	  return(OP_SAFE_C_opCq); /* this includes the multi-arg C_C cases */
+
+	case OP_SAFE_C_S: 
+	  return(OP_SAFE_C_opSq);
+
+	case OP_SAFE_C_Q: 
+	  return(OP_SAFE_C_opQq);
+
+	case OP_SAFE_C_SS: 
+	  return(OP_SAFE_C_opSSq);
+
+	case OP_SAFE_C_SQ: 
+	  return(OP_SAFE_C_opSQq);
+
+	case OP_SAFE_C_SC: 
+	  return(OP_SAFE_C_opSCq);
+
+	case OP_SAFE_C_CS: 
+	  return(OP_SAFE_C_opCSq);
+	}
+      return(OP_SAFE_C_Z); /* this splits out to A in optimize_func_one_arg */
+      break;
+      
+
+    case E_C_SP:
+      switch (op2)
+	{
+	case OP_SAFE_C_S:
+	  ecdr(cdr(e1)) = cadr(e2);
+	  return(OP_SAFE_C_S_opSq);
+
+	case OP_SAFE_C_C:
+	  ecdr(cdr(e1)) = cdr(e2);
+	  return(OP_SAFE_C_S_opCq);
+
+	case OP_SAFE_C_SC:
+	  ecdr(cdr(e1)) = cadr(e2);
+	  fcdr(cdr(e1)) = caddr(e2);
+	  return(OP_SAFE_C_S_opSCq);
+	  
+	case OP_SAFE_C_CS:
+	  /* (* a (- 1 b)), e1 is the full expr, e2 is (- 1 b) */
+	  ecdr(cdr(e1)) = cadr(e2);
+	  fcdr(cdr(e1)) = caddr(e2);
+	  return(OP_SAFE_C_S_opCSq);
+
+	case OP_SAFE_C_SS:
+	  /* (* a (- b c)) */
+	  ecdr(cdr(e1)) = cadr(e2);
+	  fcdr(cdr(e1)) = caddr(e2);
+	  return(OP_SAFE_C_S_opSSq);
+
+	case OP_SAFE_C_opSSq_S:
+	  return(OP_SAFE_C_S_op_opSSq_Sq);
+
+	case OP_SAFE_C_S_opSSq:
+	  return(OP_SAFE_C_S_op_S_opSSqq);
+	}
+      return(OP_SAFE_C_SZ);
+      break;
+
+
+    case E_C_PS:
+      switch (op2)
+	{
+	case OP_SAFE_C_C:
+	  return(OP_SAFE_C_opCq_S);
+
+	case OP_SAFE_C_S:
+	  return(OP_SAFE_C_opSq_S);
+	  
+	case OP_SAFE_C_CS:
+	  return(OP_SAFE_C_opCSq_S);
+
+	case OP_SAFE_C_SC:
+	  return(OP_SAFE_C_opSCq_S);
+
+	case OP_SAFE_C_SS:
+	  return(OP_SAFE_C_opSSq_S);
+	}
+      return(OP_SAFE_C_ZS);
+      break;
+
+
+    case E_C_PC:
+      switch (op2)
+	{
+	case OP_SAFE_C_C:
+	  return(OP_SAFE_C_opCq_C);
+
+	case OP_SAFE_C_S:
+	  return(OP_SAFE_C_opSq_C);
+
+	case OP_SAFE_C_CS:
+	  return(OP_SAFE_C_opCSq_C);
+
+	case OP_SAFE_C_SS:
+	  return(OP_SAFE_C_opSSq_C);
+
+	case OP_SAFE_C_SC:
+	  return(OP_SAFE_C_opSCq_C);
+	}
+      return(OP_SAFE_C_ZC);
+      break;
+
+
+    case E_C_CP:
+      switch (op2)
+	{
+	case OP_SAFE_C_C:
+	  ecdr(cdr(e1)) = cdr(e2);
+	  return(OP_SAFE_C_C_opCq);
+
+	case OP_SAFE_C_S:
+	  ecdr(cdr(e1)) = cadr(e2);
+	  return(OP_SAFE_C_C_opSq);
+
+	case OP_SAFE_C_CS:
+	  ecdr(cdr(e1)) = cadr(e2);
+	  fcdr(cdr(e1)) = caddr(e2);
+	  return(OP_SAFE_C_C_opCSq);
+
+	case OP_SAFE_C_SC:
+	  ecdr(cdr(e1)) = cadr(e2);
+	  fcdr(cdr(e1)) = caddr(e2);
+	  return(OP_SAFE_C_C_opSCq);
+	  
+	case OP_SAFE_C_SS:
+	  ecdr(cdr(e1)) = cadr(e2);
+	  fcdr(cdr(e1)) = caddr(e2);
+	  return(OP_SAFE_C_C_opSSq);
+	}
+      return(OP_SAFE_C_CZ);
+      break;
+
+
+    case E_C_PP:
+      switch (op2)
+	{
+	case OP_SAFE_C_S:
+	  if (optimize_data_match(e1, OP_SAFE_C_S))
+	    return(OP_SAFE_C_opSq_opSq);
+	  break;
+
+	case OP_SAFE_C_C:
+	  if (optimize_data_match(e1, OP_SAFE_C_C))
+	    return(OP_SAFE_C_opCq_opCq);
+	  if (optimize_data_match(e1, OP_SAFE_C_SS))
+	    return(OP_SAFE_C_opSSq_opCq);
+	  break;
+
+	case OP_SAFE_C_SC:
+	  if (optimize_data_match(e1, OP_SAFE_C_SC))
+	    return(OP_SAFE_C_opSCq_opSCq);
+	  break;
+
+	case OP_SAFE_C_SS:
+	  if (optimize_data_match(e1, OP_SAFE_C_SS))
+	    return(OP_SAFE_C_opSSq_opSSq);
+	  break;
+	}
+      return(OP_SAFE_C_ZZ);
+      break;
+
+    default:
+      break;
+    }
+  return(OP_NO_OP);
+}
+
+
 #define arglist_length(P) gcdr(cdr(P))
 
 static void annotate_args(s7_scheme *sc, s7_pointer args)
@@ -37323,6 +37593,11 @@ static void annotate_args(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
   for (p = args; is_pair(p); p = cdr(p))
     fcdr(p) = (s7_pointer)all_x_eval(car(p));
+}
+
+static void annotate_arg(s7_scheme *sc, s7_pointer arg)
+{
+  fcdr(arg) = (s7_pointer)all_x_eval(car(arg));
 }
 
 
@@ -37373,7 +37648,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 	      if (symbols == 0)
 		{
 		  set_optimize_data(car_x, hop + OP_C_A);
-		  annotate_args(sc, cdr(car_x));
+		  annotate_arg(sc, cdr(car_x));
 		  arglist_length(car_x) = small_int(1);
 		}
 	      else 
@@ -37468,18 +37743,17 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		{
 		  int op;
 		  op = combine_ops(sc, E_C_P, car_x, cadar_x);
-		  if (op != OP_NO_OP)
+		  /* fallback is Z */
+
+		  set_optimized(car_x);
+		  set_optimize_data(car_x, hop + op);
+		  if ((op == OP_SAFE_C_Z) &&
+		      (is_all_x_op(optimize_data(cadar_x))))
 		    {
-		      set_optimized(car_x);
-		      set_optimize_data(car_x, hop + op);
-		      if ((op == OP_SAFE_C_Z) &&
-			  (is_all_x_op(optimize_data(cadar_x))))
-			{
-			  set_optimize_data(car_x, hop + OP_SAFE_C_A);
-			  annotate_args(sc, cdr(car_x));
-			}
-		      choose_c_function(sc, car_x, func, 1);
+		      set_optimize_data(car_x, hop + OP_SAFE_C_A);
+		      annotate_arg(sc, cdr(car_x));
 		    }
+		  choose_c_function(sc, car_x, func, 1);
 		}
 	      else
 		{
@@ -37487,7 +37761,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		    {
 		      set_unsafely_optimized(car_x);
 		      set_optimize_data(car_x, hop + OP_C_A);
-		      annotate_args(sc, cdr(car_x));
+		      annotate_arg(sc, cdr(car_x));
 		      arglist_length(car_x) = small_int(1);
 		      choose_c_function(sc, car_x, func, 1);
 		      return(false); 
@@ -37551,8 +37825,8 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		  else
 		    {
 		      set_unsafely_optimized(car_x);
-		      set_optimize_data(car_x, hop + OP_C_ALL_X); /* TODO A */
-		      annotate_args(sc, cdr(car_x));
+		      set_optimize_data(car_x, hop + OP_C_A);
+		      annotate_arg(sc, cdr(car_x));
 		      arglist_length(car_x) = small_int(1);
 		      choose_c_function(sc, car_x, func, 1);
 		      return(false); 
@@ -37630,7 +37904,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		  if (is_all_x_safe(cadar_x))
 		    {
 		      set_optimize_data(car_x, hop + OP_SAFE_C_A);
-		      annotate_args(sc, cdr(car_x));
+		      annotate_arg(sc, cdr(car_x));
 		    }
 		  else set_optimize_data(car_x, hop + OP_SAFE_C_Z); 
 		  choose_c_function(sc, car_x, func, 1);
@@ -37671,7 +37945,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 	  if (func_is_closure)
 	    set_optimize_data(car_x, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_ALL_X : OP_CLOSURE_ALL_X)));
 	  else set_optimize_data(car_x, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X))); /* TODO A */
-	  annotate_args(sc, cdr(car_x));
+	  annotate_arg(sc, cdr(car_x));
 	  ecdr(car_x) = func;
 	  arglist_length(car_x) = small_int(1);
 	  return(false);
@@ -37797,6 +38071,8 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
     {
       if (bad_pairs == 0)
 	{
+	  /* using safe_c_aa here whenever possible was much slower */
+	  
 	  if (pairs == 2)
 	    {
 	      if (func_is_c_function)
@@ -37807,16 +38083,16 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		    {
 		      int op;
 		      op = combine_ops(sc, E_C_PP, cadar_x, caddar_x);
-		      if (op != OP_NO_OP)
+		      /* fallback here is ZZ */
+
+		      set_optimized(car_x);
+		      set_optimize_data(car_x, hop + op);
+		      
+		      if (op == OP_SAFE_C_ZZ)
 			{
-			  set_optimized(car_x);
-			  set_optimize_data(car_x, hop + op);
-			  choose_c_function(sc, car_x, func, 2);
-			  
-			  if (op == OP_SAFE_C_ZZ)
+			  if (is_all_x_safe(cadar_x))
 			    {
-			      if ((is_all_x_safe(cadar_x)) &&
-				  (is_all_x_safe(caddar_x)))
+			      if (is_all_x_safe(caddar_x))
 				{
 				  set_optimize_data(car_x, hop + OP_SAFE_C_AA);
 				  annotate_args(sc, cdr(car_x));
@@ -37826,27 +38102,25 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 				{
 				  if (optimize_data(cadar_x) == HOP_SAFE_C_C)
 				    set_optimize_data(car_x, hop + OP_SAFE_C_opCq_Z);
+				  else 
+				    {
+				      set_optimize_data(car_x, hop + OP_SAFE_C_AZ);
+				      annotate_arg(sc, cdr(car_x));
+				      arglist_length(car_x) = small_int(2);
+				    }
+				}
+			    }
+			  else
+			    {
+			      if (is_all_x_safe(caddar_x))
+				{
+				  set_optimize_data(car_x, hop + OP_SAFE_C_ZA);
+				  annotate_arg(sc, cddr(car_x));
+				  arglist_length(car_x) = small_int(2);
 				}
 			    }
 			}
-		      else
-			{
-			  set_optimized(car_x);
-			  if ((is_all_x_safe(cadar_x)) &&
-			      (is_all_x_safe(caddar_x)))
-			    {
-			      set_optimize_data(car_x, hop + OP_SAFE_C_AA);
-			      annotate_args(sc, cdr(car_x));
-			      arglist_length(car_x) = small_int(2); 
-			    }
-			  else 
-			    {
-			      set_optimize_data(car_x, hop + OP_SAFE_C_ZZ);
-			      if (optimize_data(cadar_x) == HOP_SAFE_C_C)
-				set_optimize_data(car_x, hop + OP_SAFE_C_opCq_Z);
-			    }
-			  choose_c_function(sc, car_x, func, 2);
-			}
+		      choose_c_function(sc, car_x, func, 2); /* this might change the op to safe_c_c, so it has to be last */
 		    }
 		}
 	      else
@@ -37911,12 +38185,9 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 			  op = combine_ops(sc, orig_op, car_x, caddar_x);
 			}
 		      
-		      if (op != OP_NO_OP)
-			{
-			  set_optimized(car_x);
-			  set_optimize_data(car_x, hop + op);
-			  choose_c_function(sc, car_x, func, 2);
-			}
+		      set_optimized(car_x);
+		      set_optimize_data(car_x, hop + op);
+		      choose_c_function(sc, car_x, func, 2);
 		    }
 		  else
 		    {
@@ -38043,7 +38314,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 			{
 			  set_optimized(car_x);
 			  set_optimize_data(car_x, hop + OP_SAFE_C_QQ);
-			  choose_c_function(sc, car_x, func, 2);
+ 			  choose_c_function(sc, car_x, func, 2);
 			}
 		      else
 			{
@@ -38392,14 +38663,21 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
       if ((!is_pair(cadar_x)) ||
 	  (is_all_x_op(optimize_data(cadar_x))))
 	{
+	  annotate_arg(sc, cdr(car_x));
 	  if ((!is_pair(caddar_x)) ||
 	      (is_all_x_op(optimize_data(caddar_x))))
-	    set_optimize_data(car_x, hop + OP_SAFE_C_XXZ); /* here last can't be X because we checked for that above */
+	    {
+	      set_optimize_data(car_x, hop + OP_SAFE_C_XXZ); /* here last can't be X because we checked for that above */
+	      annotate_arg(sc, cddr(car_x));
+	    }
 	  else
 	    {
 	      if ((!is_pair(cadddar_x)) ||
 		  (is_all_x_op(optimize_data(cadddar_x))))
-		set_optimize_data(car_x, hop + OP_SAFE_C_XZX); 
+		{
+		  set_optimize_data(car_x, hop + OP_SAFE_C_XZX); 
+		  annotate_arg(sc, cdddr(car_x));
+		}
 	      else set_optimize_data(car_x, hop + OP_SAFE_C_XZZ); 
 	    }
 	}
@@ -38408,22 +38686,28 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
 	  if ((!is_pair(caddar_x)) ||
 	      (is_all_x_op(optimize_data(caddar_x))))
 	    {
+	      annotate_arg(sc, cddr(car_x));
 	      if ((!is_pair(cadddar_x)) ||
 		  (is_all_x_op(optimize_data(cadddar_x))))
-		set_optimize_data(car_x, hop + OP_SAFE_C_ZXX); 
+		{
+		  set_optimize_data(car_x, hop + OP_SAFE_C_ZXX); 
+		  annotate_arg(sc, cdddr(car_x));
+		}
 	      else set_optimize_data(car_x, hop + OP_SAFE_C_ZXZ); 
 	    }
 	  else
 	    {
 	      if ((!is_pair(cadddar_x)) ||
 		  (is_all_x_op(optimize_data(cadddar_x))))
-		set_optimize_data(car_x, hop + OP_SAFE_C_ZZX); 
+		{
+		  set_optimize_data(car_x, hop + OP_SAFE_C_ZZX); 
+		  annotate_arg(sc, cdddr(car_x));
+		}
 	      else set_optimize_data(car_x, hop + OP_SAFE_C_ZZZ); 
 	    }
 	}
       set_optimized(car_x);		  
       choose_c_function(sc, car_x, func, 3);
-      annotate_args(sc, cdr(car_x));
       arglist_length(car_x) = small_int(3);
     }
 
@@ -39227,210 +39511,6 @@ static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
 }
 
 
-static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointer e2)
-{
-  int op2;
-  op2 = op_no_hop(e2);
-  /*
-  if (!is_hopping(e2))
-    fprintf(stderr, "%s %s\n", opt_names[optimize_data(e2)], DISPLAY_80(e2));
-  */
-  switch (op1)
-    {
-    case E_C_P:
-      switch (op2)
-	{
-	case OP_SAFE_C_C: 
-	  return(OP_SAFE_C_opCq); /* this includes the multi-arg C_C cases */
-
-	case OP_SAFE_C_S: 
-	  return(OP_SAFE_C_opSq);
-
-	case OP_SAFE_C_Q: 
-	  return(OP_SAFE_C_opQq);
-
-	case OP_SAFE_C_SS: 
-	  return(OP_SAFE_C_opSSq);
-
-	case OP_SAFE_C_SQ: 
-	  return(OP_SAFE_C_opSQq);
-
-	case OP_SAFE_C_SC: 
-	  return(OP_SAFE_C_opSCq);
-
-	case OP_SAFE_C_CS: 
-	  return(OP_SAFE_C_opCSq);
-
-	default:
-	  return(OP_SAFE_C_Z); /* this splits out to A in optimize_func_one_arg */
-	  break;
-	}
-      break;
-      
-
-    case E_C_SP:
-      switch (op2)
-	{
-	case OP_SAFE_C_S:
-	  ecdr(cdr(e1)) = cadr(e2);
-	  return(OP_SAFE_C_S_opSq);
-
-	case OP_SAFE_C_C:
-	  ecdr(cdr(e1)) = cdr(e2);
-	  return(OP_SAFE_C_S_opCq);
-
-	case OP_SAFE_C_SC:
-	  ecdr(cdr(e1)) = cadr(e2);
-	  fcdr(cdr(e1)) = caddr(e2);
-	  return(OP_SAFE_C_S_opSCq);
-	  
-	case OP_SAFE_C_CS:
-	  /* (* a (- 1 b)), e1 is the full expr, e2 is (- 1 b) */
-	  ecdr(cdr(e1)) = cadr(e2);
-	  fcdr(cdr(e1)) = caddr(e2);
-	  return(OP_SAFE_C_S_opCSq);
-
-	case OP_SAFE_C_SS:
-	  /* (* a (- b c)) */
-	  ecdr(cdr(e1)) = cadr(e2);
-	  fcdr(cdr(e1)) = caddr(e2);
-	  return(OP_SAFE_C_S_opSSq);
-
-	case OP_SAFE_C_opSSq_S:
-	  return(OP_SAFE_C_S_op_opSSq_Sq);
-
-	case OP_SAFE_C_S_opSSq:
-	  return(OP_SAFE_C_S_op_S_opSSqq);
-
-	default:
-	  return(OP_SAFE_C_SZ);
-	  break;
-	}
-      break;
-
-
-    case E_C_PS:
-      switch (op2)
-	{
-	case OP_SAFE_C_C:
-	  return(OP_SAFE_C_opCq_S);
-
-	case OP_SAFE_C_S:
-	  return(OP_SAFE_C_opSq_S);
-	  
-	case OP_SAFE_C_CS:
-	  return(OP_SAFE_C_opCSq_S);
-
-	case OP_SAFE_C_SC:
-	  return(OP_SAFE_C_opSCq_S);
-
-	case OP_SAFE_C_SS:
-	  return(OP_SAFE_C_opSSq_S);
-
-	default:
-	  return(OP_SAFE_C_ZS);
-	  break;
-	}
-      break;
-
-
-    case E_C_PC:
-      switch (op2)
-	{
-	case OP_SAFE_C_C:
-	  return(OP_SAFE_C_opCq_C);
-
-	case OP_SAFE_C_S:
-	  return(OP_SAFE_C_opSq_C);
-
-	case OP_SAFE_C_CS:
-	  return(OP_SAFE_C_opCSq_C);
-
-	case OP_SAFE_C_SS:
-	  return(OP_SAFE_C_opSSq_C);
-
-	case OP_SAFE_C_SC:
-	  return(OP_SAFE_C_opSCq_C);
-
-	default:
-	  return(OP_SAFE_C_ZC);
-	  break;
-	}
-      break;
-
-
-    case E_C_CP:
-      switch (op2)
-	{
-	case OP_SAFE_C_C:
-	  ecdr(cdr(e1)) = cdr(e2);
-	  return(OP_SAFE_C_C_opCq);
-
-	case OP_SAFE_C_S:
-	  ecdr(cdr(e1)) = cadr(e2);
-	  return(OP_SAFE_C_C_opSq);
-
-	case OP_SAFE_C_CS:
-	  ecdr(cdr(e1)) = cadr(e2);
-	  fcdr(cdr(e1)) = caddr(e2);
-	  return(OP_SAFE_C_C_opCSq);
-
-	case OP_SAFE_C_SC:
-	  ecdr(cdr(e1)) = cadr(e2);
-	  fcdr(cdr(e1)) = caddr(e2);
-	  return(OP_SAFE_C_C_opSCq);
-	  
-	case OP_SAFE_C_SS:
-	  ecdr(cdr(e1)) = cadr(e2);
-	  fcdr(cdr(e1)) = caddr(e2);
-	  return(OP_SAFE_C_C_opSSq);
-
-	default:
-	  return(OP_SAFE_C_CZ);
-	  break;
-	}
-      break;
-
-
-    case E_C_PP:
-      switch (op2)
-	{
-	case OP_SAFE_C_S:
-	  if (optimize_data_match(e1, OP_SAFE_C_S))
-	    return(OP_SAFE_C_opSq_opSq);
-	  break;
-
-	case OP_SAFE_C_C:
-	  if (optimize_data_match(e1, OP_SAFE_C_C))
-	    return(OP_SAFE_C_opCq_opCq);
-	  if (optimize_data_match(e1, OP_SAFE_C_SS))
-	    return(OP_SAFE_C_opSSq_opCq);
-	  break;
-
-	case OP_SAFE_C_SC:
-	  if (optimize_data_match(e1, OP_SAFE_C_SC))
-	    return(OP_SAFE_C_opSCq_opSCq);
-	  break;
-
-	case OP_SAFE_C_SS:
-	  if (optimize_data_match(e1, OP_SAFE_C_SS))
-	    return(OP_SAFE_C_opSSq_opSSq);
-	  break;
-
-	default:
-	  return(OP_SAFE_C_ZZ);
-	  break;
-	}
-      break;
-
-
-    default:
-      break;
-    }
-  return(OP_NO_OP);
-}
-
-
 #if WITH_GCC
 
 #define c_function_is_ok(Sc, X) ({ s7_pointer _p_, _X_; \
@@ -39535,6 +39615,7 @@ static bool sequence_is_safe_for_opteval(s7_scheme *sc, s7_pointer body)
 	    case OP_SAFE_C_opSSq_S:
 	    case OP_SAFE_C_Z:
 	    case OP_SAFE_C_ZS:
+	    case OP_SAFE_C_ZA:
 	    case OP_SAFE_C_ZC:
 	    case OP_SAFE_C_ZQ:
 	    case OP_SAFE_C_ZXX:
@@ -39556,6 +39637,7 @@ static bool sequence_is_safe_for_opteval(s7_scheme *sc, s7_pointer body)
 	    case OP_SAFE_C_S_op_opSSq_Sq:
 	    case OP_SAFE_C_S_op_S_opSSqq:
 	    case OP_SAFE_C_SZ:
+	    case OP_SAFE_C_AZ:
 	    case OP_SAFE_C_CZ:
 	    case OP_SAFE_C_QZ:
 	    case OP_SAFE_C_XZX:
@@ -40485,19 +40567,10 @@ static s7_pointer check_let(s7_scheme *sc)
 				  if (is_syntactic(caadr(sc->code)))
 				    {
 				      lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
-				      if (c_call(cadr(binding)) == g_read_char)
+				      if (c_call(cadr(binding)) == g_car)
 					{
-					  #define let_read_char_p_variable gcdr
 					  gcdr(sc->code) = caaar(sc->code);
-					  set_syntax_op(sc->code, sc->LET_READ_CHAR_P);
-					}
-				      else 
-					{
-					  if (c_call(cadr(binding)) == g_car)
-					    {
-					      gcdr(sc->code) = caaar(sc->code);
-					      set_syntax_op(sc->code, sc->LET_CAR_P);
-					    }
+					  set_syntax_op(sc->code, sc->LET_CAR_P);
 					}
 				    }
 				}
@@ -40765,18 +40838,10 @@ static s7_pointer check_let_star(s7_scheme *sc)
 				  if (is_syntactic(caadr(sc->code)))
 				    {
 				      lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
-				      if (c_call(cadr(binding)) == g_read_char)
+				      if (c_call(cadr(binding)) == g_car)
 					{
-					  let_read_char_p_variable(sc->code) = caaar(sc->code);
-					  set_syntax_op(sc->code, sc->LET_READ_CHAR_P);
-					}
-				      else 
-					{
-					  if (c_call(cadr(binding)) == g_car)
-					    {
-					      gcdr(sc->code) = caaar(sc->code);
-					      set_syntax_op(sc->code, sc->LET_CAR_P);
-					    }
+					  gcdr(sc->code) = caaar(sc->code);
+					  set_syntax_op(sc->code, sc->LET_CAR_P);
 					}
 				    }
 				}
@@ -41175,16 +41240,7 @@ static s7_pointer check_if(s7_scheme *sc)
 				    {
 				      if (car(test) == sc->SYMBOLP)
 					set_syntax_op(sc->code, sc->SAFE_IF_IS_SYMBOL_P_P);
-				      else
-					{
-					  if ((c_call(test) == g_is_eof_object) &&
-					      (is_syntactic(car(f))))
-					    {
-					      lifted_op(f) = syntax_opcode(car(f));
-					      set_syntax_op(sc->code, sc->SAFE_IF_IS_EOF_P_P);
-					    }
-					  else set_syntax_op(sc->code, sc->SAFE_IF_CS_P_P);
-					}
+				      else set_syntax_op(sc->code, sc->SAFE_IF_CS_P_P);
 				      fcdr(sc->code) = cadr(test);
 				    }
 				}
@@ -42205,6 +42261,12 @@ static s7_pointer step_dox_c_s(s7_scheme *sc, s7_pointer code, s7_pointer slot)
   return(c_call(code)(sc, sc->T1_1));
 }
 
+static s7_pointer step_dox_c_s_indirect(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+{
+  car(sc->T1_1) = slot_value(slot_pending_value(slot));
+  return(c_call(code)(sc, sc->T1_1));
+}
+
 static s7_pointer step_dox_c_s_direct(s7_scheme *sc, s7_pointer code, s7_pointer slot)
 {
   car(sc->T1_1) = slot_value(slot);
@@ -42255,8 +42317,8 @@ static s7_pointer step_dox_c_ss(s7_scheme *sc, s7_pointer code, s7_pointer slot)
 
 static s7_pointer step_dox_c_ss_direct(s7_scheme *sc, s7_pointer code, s7_pointer slot)
 {
-  car(sc->T2_2) = finder(sc, caddr(code));
   car(sc->T2_1) = slot_value(slot);
+  car(sc->T2_2) = slot_value(slot_pending_value(slot));
   return(c_call(code)(sc, sc->T2_1));
 }
 
@@ -42315,6 +42377,26 @@ static s7_pointer dox_add_t1(s7_scheme *sc, s7_pointer args, s7_pointer slot)
   return(x);
 }
 
+static s7_pointer dox_sub_t1(s7_scheme *sc, s7_pointer args, s7_pointer slot)
+{
+  s7_pointer x;
+  x = slot_value(slot);
+  if (is_integer(x))
+    return(make_integer(sc, integer(x) - 1));
+
+  switch (type(x))
+    {
+    case T_INTEGER: return(make_integer(sc, integer(x) - 1));
+    case T_RATIO:   return(subtract_ratios(sc, x, small_int(1)));
+    case T_REAL:    return(make_real(sc, real(x) - 1.0));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - 1.0, imag_part(x)));
+    default:        
+      CHECK_METHOD(sc, x, sc->ADD, cdr(args));
+      return(wrong_type_argument_with_type(sc, sc->MINUS, small_int(1), x, A_NUMBER));
+    }
+  return(x);
+}
+
 static s7_pointer dox_add_ti(s7_scheme *sc, s7_pointer args, s7_pointer slot)
 {
   s7_pointer x;
@@ -42338,6 +42420,11 @@ static s7_pointer dox_add_ti(s7_scheme *sc, s7_pointer args, s7_pointer slot)
   return(x);
 }
 
+static s7_pointer dox_cdr_s(s7_scheme *sc, s7_pointer arg, s7_pointer slot)
+{
+  return((is_pair(slot_value(slot))) ? cdr(slot_value(slot)) : g_cdr(sc, list_1(sc, slot_value(slot))));
+}
+		    
 
 static dox_function step_dox_eval(s7_scheme *sc, s7_pointer code, s7_pointer var)
 {
@@ -42348,20 +42435,33 @@ static dox_function step_dox_eval(s7_scheme *sc, s7_pointer code, s7_pointer var
 	{
       if (fcdr(code) == (s7_pointer)g_add_cs1)
 	return(dox_add_t1);
+      if (fcdr(code) == (s7_pointer)g_subtract_cs1)
+	return(dox_sub_t1);
 
       if (fcdr(code) == (s7_pointer)g_add_si)
 	return(dox_add_ti);
+
+      /* (+ i c) (- i c)?
+       * (+ 1 i) -> cs
+       */
 #if 0
-      /* these two are used a lot in snd-test */
       if (fcdr(code) == (s7_pointer)g_add_sf)
 	return(dox_add_tf);
-      if (fcdr(code) == (s7_pointer)g_subtract_cs1)
-	return(dox_subtract_t1);
 #endif
 	}
       return(step_dox_c_c);
 
-    case HOP_SAFE_C_S:       return((var == cadr(code)) ? step_dox_c_s_direct : step_dox_c_s);
+    case HOP_SAFE_C_S:       
+      if (var == cadr(code))
+	{
+	  if (fcdr(code) == (s7_pointer)g_cdr)
+	    return(dox_cdr_s);
+	  return(step_dox_c_s_direct);
+	}
+      if (var)
+	return(step_dox_c_s_indirect);
+      return(step_dox_c_s);
+
     case HOP_SAFE_C_SC:      return((var == cadr(code)) ? step_dox_c_sc_direct : step_dox_c_sc);
     case HOP_SAFE_C_CS:      return((var == caddr(code)) ? step_dox_c_cs_direct : step_dox_c_cs);
     case HOP_SAFE_C_SS:      return((var == cadr(code)) ? step_dox_c_ss_direct : step_dox_c_ss);
@@ -42371,7 +42471,54 @@ static dox_function step_dox_eval(s7_scheme *sc, s7_pointer code, s7_pointer var
   return(NULL);
 }
 
+/* snd-test:
+7027619: ((+ k 1))
+5644800: ((- ks ifs))
+1810157: ((+ i 1))
+1234800: ((+ a phase))
+1234800: ((+ k3 3))
+426965: ((- j 1))
+264600: ((+ phase incr))
+220500: ((+ j 1))
+203312: ((+ curfrq frq))
+110200: ((+ ka angle))
+80128: ((+ ks kscl))
+65785: ()
+64048: ((+ x 0.1))
+26460: ((* n 2))
+24614: ((+ samp 1))
+22072: ((+ x x-incr))
+16088: ((+ 1 j))
 
+t502:
+10074: ((+ k 1))
+10010: ((+ kx x))
+2068: ((+ i outhop))
+
+bench:
+4460056: ((read-char port))
+4460056: ((+ nc 1))
+82256: ((- j 1))
+43410: ((cons '() a))
+38761: ((cdr a))
+24677: ((+ i 1))
+22275: ((cdr row))
+22275: ((cdr first))
+
+lg:
+18691: ((cdr rst))
+18691: ((cdr cur))
+18486: ((cdr exprs))
+10276: ((cdr b))
+9328: ((cdr bindings))
+
+index:
+6502: ((+ i 1))
+4896: ((cdr lname))
+4896: ((+ ctr 1))
+2854: ((cdr cur-name))
+
+*/
 
 static s7_pointer end_dox_c_c(s7_scheme *sc, s7_pointer code, s7_pointer slot)
 {
@@ -42768,7 +42915,7 @@ static s7_pointer check_do(s7_scheme *sc)
       /* vars can be nil (no steppers) */
       if (is_pair(vars))
 	{
-	  s7_pointer p;
+	  s7_pointer p, rp;
 	  for (p = vars; is_pair(p); p = cdr(p))
 	    {
 	      s7_pointer var;
@@ -42779,6 +42926,15 @@ static s7_pointer check_do(s7_scheme *sc)
 	      if ((is_pair(cddr(var))) &&
 		  (!is_step_dox_safe(sc, caddr(var))))
 		return(sc->code);
+
+	      /* we want to use the pending_value slot for other purposes, so make sure
+	       *   the current val is not referred to in any trailing step exprs.  The inits
+	       *   are ok because at init-time, the new frame is not connected.
+	       */
+	      var = car(var);
+	      for (rp = cdr(p); is_pair(rp); rp = cdr(rp))
+		if (s7_tree_memq(sc, var, cddar(rp)))
+		  return(sc->code);
 	    }
 	}
       
@@ -43181,28 +43337,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
    *   setting throughout this switch statement.  Lots of branches fall through to the next and there
    *   are many internal goto's to branches, so the code becomes a mess.  sc->op is even worse because
    *   we use it in several cases for error information or choice of next op, etc.
-   */
-
-  /* if one op were dominant here, we could skip the switch, but it appears that they are well mixed:
-   *   s7test: OP_EVAL_ARGS4: 5%, OP_SET_PAIR: 8%, OP_LET_O: 8%
-   *              OP_LET_O -> OP_LET_O1: 218570 (4), also OP_QUOTE -> OP_EVAL_ARGS4: 127238 (2) OP_DOTIMES_[STEP]_P -> OP_LET_S: 121049 (2)
-   *   lg:     OP_IF_PP: 6%, OP_SAFE_OR_ALL_X: 4%, OP_OR_P: 3%
-   *              OP_IF_B_P -> OP_AND_UNCHECKED: 788180 (3) also OP_DEFINE_FUNCHECKED -> OP_DEFINE_FUNCHECKED: 317047 (1)
-   *   t502:   OP_SET_SAFE: 8%, OP_SET_SYMBOL_Z: 8%, OP_SET_SYMBOL_SAFE_C: 5%
-   *              OP_SET_SYMBOL_Z -> OP_SET_SAFE: 7886719 (6), also OP_SAFE_DO_STEP[_p] -> OP_SET_SYMBOL_SAFE_C: 2797492 (2) and -> OP_LET_ALL_X
-   *   index:  OP_DOTIMES_STEP_P: 20%, OP_LET_UNKNOWN_S: 20%, OP_CASE_SIMPLEST: 10%, OP_CASE_SIMPLER_1: 10%
-   *              OP_DOTIMES_STEP_P -> OP_LET_UNKNOWN_S_P: 4483377 (18) then -> OP_CASE_SIMPLEST[_R_1] 9
-   *   bench:  OP_LET_READ_CHAR_P: 14%, OP_INCREMENT_1: 10%
-   *              OP_INCREMENT_1 -> OP_SAFE_IF_CC_P: 4460055 (7) also OP_SIMPLE_DO_STEP -> OP_SIMPLE_DO_STEP: 2006543 (3) OP_SAFE_DO_STEP_P -> OP_INCREMENT_1: 999999 (1)
-   *   lat:    cases 15%, OP_LET_Z_P: 24%
-   *              OP_SAFE_IF_IS_NULL_Q_P -> OP_LET_Z_P: 39355761 (8) -> case
-   *   t455:   OP_LET_Z_P: 40%, OP_FOR_EACH_SIMPLER: 40%
-   *              OP_FOR_EACH_SIMPLER -> OP_LET_Z_P: 16652251 (42) and back another 40
-   *   calls:  OP_SET_SYMBOL_SAFE_C: 7%, OP_SAFE_C_ZZ*: 11%, OP_SET_SAFE: 5%
-   *              OP_SAFE_C_ZZ_1 -> OP_SAFE_C_ZZ_2: 78930734 (5) OP_IF_S_P -> OP_BEGIN1: 49027182 (3) and right back again?
-   *                the z's here are mostly embedded z's, top non-z c_ss->c_opssq (5)[502]
-   *              OP_SET_SYMBOL_Z -> OP_SAFE_C_SZ_1: 27585831 (2) OP_SAFE_DO_STEP -> OP_SET_SYMBOL_SAFE_C: 25174540 (2)
-   *              OP_SET_SYMBOL_SAFE_C -> OP_SET_SYMBOL_SAFE_C: 24770911 (2), also OP_SAFE_DO_STEP -> OP_IF_Z_P: 23405592 (1)
    */
 
  START_WITHOUT_POP_STACK:
@@ -44952,6 +45086,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	id = environment_id(frame);
 	for (slot = environment_slots(frame); is_slot(slot); slot = next_slot(slot))
 	  symbol_set_local(slot_symbol(slot), id, slot);
+
+	for (slot = environment_slots(frame); is_slot(slot); slot = next_slot(slot))
+	  if (is_pair(slot_expression(slot)))
+	    {
+	      dox_function df;
+	      df = (dox_function)fcdr(slot_expression(slot));
+	      if (df == step_dox_c_ss_direct)
+		slot_pending_value(slot) = find_symbol(sc, caddar(slot_expression(slot)));
+	      if (df == step_dox_c_s_indirect)
+		slot_pending_value(slot) = find_symbol(sc, cadar(slot_expression(slot)));
+	    }
+
 	end = fcdr(sc->code);
 
 	switch (optimize_data(end))
@@ -45031,14 +45177,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       case OP_DOX_STEP:
 	{
 	  s7_pointer slot;
+
 	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
-	    {
-	      if (is_pair(slot_expression(slot)))
-		slot_pending_value(slot) = ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot);
-	      else slot_pending_value(slot) = slot_value(slot);
-	    }
-	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
-	    slot_set_value(slot, slot_pending_value(slot));
+	    if (is_pair(slot_expression(slot)))
+	      slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
 
 	  if (is_true(sc, ((s7_function)fcdr(cdr(sc->code)))(sc, fcdr(sc->code))))
 	    {
@@ -45054,13 +45196,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  s7_pointer slot;
 	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
-	    {
-	      if (is_pair(slot_expression(slot)))
-		slot_pending_value(slot) = ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot);
-	      else slot_pending_value(slot) = slot_value(slot);
-	    }
-	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
-	    slot_set_value(slot, slot_pending_value(slot));
+	    if (is_pair(slot_expression(slot)))
+	      slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
 
 	  if (is_true(sc, ((s7_function)fcdr(cdr(sc->code)))(sc, fcdr(sc->code))))
 	    {
@@ -48636,7 +48773,34 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = cadr(code);
 	      goto OPT_EVAL;
 	      
+
 	      
+	    case OP_SAFE_C_AZ:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      if (!c_function_is_ok(sc, caddr(code)))
+		break;
+	      
+	    case HOP_SAFE_C_AZ:
+	      push_stack(sc, OP_SAFE_C_SZ_1, ((s7_function)fcdr(cdr(code)))(sc, cadr(code)), code);
+	      sc->code = caddr(code);
+	      goto OPT_EVAL;
+	      
+	      
+	    case OP_SAFE_C_ZA:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      if (!c_function_is_ok(sc, cadr(code)))
+		break;
+	      
+	    case HOP_SAFE_C_ZA:
+	      /* here we can't use ZS order because we sometimes assume left->right arg evaluation (binary-io.scm for example) */
+	      push_stack(sc, OP_SAFE_C_ZA_1, sc->NIL, code);
+	      sc->code = cadr(code);
+	      goto OPT_EVAL;
+	      
+	      
+
 	    case OP_SAFE_C_ZZ:
 	      if (!c_function_is_ok(sc, code))
 		break;
@@ -48674,7 +48838,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_ZXX:
-	      push_stack(sc, OP_SAFE_C_ZXX_1, ((s7_function)fcdr(cddr(code)))(sc, caddr(code)), code);
+	      push_stack(sc, OP_SAFE_C_ZXX_1, sc->NIL, code);
 	      sc->code = cadr(code);
 	      goto OPT_EVAL;
 	      
@@ -48698,7 +48862,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_XXZ:
-	      push_stack(sc, OP_SAFE_C_XXZ_1, ((s7_function)fcdr(cdr(code)))(sc, cadr(code)), code);
+	      push_op_stack(sc, ((s7_function)fcdr(cdr(code)))(sc, cadr(code)));
+	      push_stack(sc, OP_SAFE_C_XXZ_1, ((s7_function)fcdr(cddr(code)))(sc, caddr(code)), code);
 	      sc->code = cadddr(code);
 	      goto OPT_EVAL;
 	      
@@ -48712,7 +48877,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_ZZX:
-	      push_stack(sc, OP_SAFE_C_ZZX_1, ((s7_function)fcdr(cdddr(code)))(sc, cadddr(code)), code);
+	      push_stack(sc, OP_SAFE_C_ZZX_1, sc->NIL, code);
 	      sc->code = cadr(code);
 	      goto OPT_EVAL;
 	      
@@ -48726,7 +48891,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_ZXZ:
-	      push_stack(sc, OP_SAFE_C_ZXZ_1, ((s7_function)fcdr(cddr(code)))(sc, caddr(code)), code);
+	      push_stack(sc, OP_SAFE_C_ZXZ_1, sc->NIL, code);
 	      sc->code = cadr(code);
 	      goto OPT_EVAL;
 	      
@@ -50414,6 +50579,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
       /* --------------- */
+    case OP_SAFE_C_ZA_1:
+      car(sc->T2_2) = ((s7_function)fcdr(cddr(sc->code)))(sc, caddr(sc->code));
+      car(sc->T2_1) = sc->value;
+      sc->value = c_call(sc->code)(sc, sc->T2_1);
+      goto START;
+      
+
+      /* --------------- */
     case OP_SAFE_C_ZZ_1:
       push_stack(sc, OP_SAFE_C_ZZ_2, sc->value, sc->code);
       sc->code = caddr(sc->code);
@@ -50430,10 +50603,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_SAFE_C_ZXX_1:
-      car(sc->T3_3) = ((s7_function)fcdr(cdddr(sc->code)))(sc, cadddr(sc->code));
-      car(sc->T3_1) = sc->value;
-      car(sc->T3_2) = sc->args;
-      sc->value = c_call(sc->code)(sc, sc->T3_1);
+      car(sc->A3_1) = sc->value;
+      car(sc->A3_2) = ((s7_function)fcdr(cddr(sc->code)))(sc, caddr(sc->code));
+      car(sc->A3_3) = ((s7_function)fcdr(cdddr(sc->code)))(sc, cadddr(sc->code));
+      sc->value = c_call(sc->code)(sc, sc->A3_1);
       goto START;
       
 
@@ -50447,10 +50620,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
       /* --------------- */
-    case OP_SAFE_C_XXZ_1: /* calls is_symbol 31384452 31150231 */
-      car(sc->T3_2) = ((s7_function)fcdr(cddr(sc->code)))(sc, caddr(sc->code));
+    case OP_SAFE_C_XXZ_1:
+      car(sc->T3_1) = pop_op_stack(sc);
+      car(sc->T3_2) = sc->args;
       car(sc->T3_3) = sc->value;
-      car(sc->T3_1) = sc->args;
       sc->value = c_call(sc->code)(sc, sc->T3_1);
       goto START;
       
@@ -50465,17 +50638,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_SAFE_C_ZZX_2:
-      car(sc->T3_1) = pop_op_stack(sc);
-      car(sc->T3_2) = sc->value;
-      car(sc->T3_3) = sc->args;
-      sc->value = c_call(sc->code)(sc, sc->T3_1);
+      car(sc->A3_1) = pop_op_stack(sc);
+      car(sc->A3_2) = sc->value;
+      car(sc->A3_3) = ((s7_function)fcdr(cdddr(sc->code)))(sc, cadddr(sc->code));
+      sc->value = c_call(sc->code)(sc, sc->A3_1);
       goto START;
       
 
       /* --------------- */
     case OP_SAFE_C_ZXZ_1:
       push_op_stack(sc, sc->value);
-      push_stack(sc, OP_SAFE_C_ZXZ_2, sc->args, sc->code);
+      push_stack(sc, OP_SAFE_C_ZXZ_2, ((s7_function)fcdr(cddr(sc->code)))(sc, caddr(sc->code)),  sc->code);
       sc->code = cadddr(sc->code);
       goto OPT_EVAL;
       
@@ -53302,23 +53475,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
       /* --------------- */
-    case OP_SAFE_IF_IS_EOF_P_P:
-      {
-	s7_pointer code;
-	code = sc->code;
-	if (finder(sc, fcdr(code)) == sc->EOF_OBJECT)
-	  {
-	    sc->code = cadr(code);
-	    goto EVAL; 
-	  }
-	code = caddr(code);
-	sc->op = (opcode_t)lifted_op(code);
-	sc->code = cdr(code);
-	goto START_WITHOUT_POP_STACK;
-      }
-      
-
-      /* --------------- */
     case OP_SAFE_IF_IS_NULL_Q_P:
       {
 	s7_pointer code;
@@ -53784,45 +53940,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
 
-      /* --------------- */
-    case OP_LET_READ_CHAR_P:
-      {
-	s7_pointer port, code, fc, c;
-	opcode_t op;
-	
-	code = sc->code;
-	port = finder(sc, fcdr(code));
-	if (!is_input_port(port))              /* (read-char 123)? */
-	  c = g_read_char(sc, list_1(sc, port));
-	else c = chars[port_read_character(port)(sc, port)];
-	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, fc = let_read_char_p_variable(code), c);
-	code = cadr(code);
-	
-	op = (opcode_t)lifted_op(code);
-	if (op == OP_SAFE_IF_IS_EOF_P_P)
-	  {
-	    code = cdr(code);
-	    if (fcdr(code) != fc)
-	      c = finder(sc, fcdr(code));
-	    if (c == sc->EOF_OBJECT)
-	      {
-		sc->code = cadr(code);
-		goto EVAL; 
-	      }
-	    code = caddr(code);
-	    sc->code = cdr(code);
-	    op = (opcode_t)lifted_op(code);
-	    if (op == OP_BEGIN)
-	      goto BEGIN;
-	    sc->op = op;
-	    goto START_WITHOUT_POP_STACK;
-	  }
-	sc->op = op;
-	sc->code = cdr(code);
-	goto START_WITHOUT_POP_STACK;
-      }
-      
-      
       /* --------------- */
     case OP_LET_O:
       push_stack(sc, OP_LET_O1, fcdr(cdr(sc->code)), cdr(sc->code));
@@ -60902,11 +61019,9 @@ s7_scheme *s7_init(void)
   sc->SAFE_IF_IS_SYMBOL_P =   assign_internal_syntax(sc, "if",      OP_SAFE_IF_IS_SYMBOL_P);  
   sc->SAFE_IF_IS_SYMBOL_P_X = assign_internal_syntax(sc, "if",      OP_SAFE_IF_IS_SYMBOL_P_X);  
   sc->SAFE_IF_IS_SYMBOL_P_P = assign_internal_syntax(sc, "if",      OP_SAFE_IF_IS_SYMBOL_P_P);  
-  sc->SAFE_IF_IS_EOF_P_P =    assign_internal_syntax(sc, "if",      OP_SAFE_IF_IS_EOF_P_P);  
   sc->LET_R =                 assign_internal_syntax(sc, "let",     OP_LET_R);  
   sc->LET_R_P =               assign_internal_syntax(sc, "let",     OP_LET_R_P);  
   sc->LET_CAR_P =             assign_internal_syntax(sc, "let",     OP_LET_CAR_P);  
-  sc->LET_READ_CHAR_P =       assign_internal_syntax(sc, "let",     OP_LET_READ_CHAR_P);  
   sc->LET_ALL_R =             assign_internal_syntax(sc, "let",     OP_LET_ALL_R);  
   sc->LET_O =                 assign_internal_syntax(sc, "let",     OP_LET_O);  
   sc->LET_O_P =               assign_internal_syntax(sc, "let",     OP_LET_O_P);  
@@ -61801,33 +61916,8 @@ s7_scheme *s7_init(void)
  *   in set pair, object set et al need not use eval_args/apply if all args are all_x ops
  * so set[increment]/let/2-arg Z's and check many-arg case
  *
- * in current z's:
- *     snd-test:
- *       h_safe_c_sz: 29941092 (13.040220) -- what is z here
- *       h_safe_c_opssq: 3685341
- *     bench:
- *       h_safe_c_zc: 810400 (26.271692) h_safe_c_zz: 400109 (12.970805) h_safe_c_z: 400000 (12.967272) h_safe_c_zs: 400000 (12.967272)
- *       h_safe_c_ss: 400050 (12.968892)
- *       h_safe_c_opssq_c: 400000 (12.967272)
- *       h_safe_c_c_opssq: 166564 (5.399702)
- *       h_safe_c_opsq_s: 31672 (1.026749)
- *     lint:
- *       h_safe_c_opscq: 62469 (39.645992)
- *       h_safe_c_opsq: 11492 (7.293405)
- *       h_safe_c_s_opsq: 11103 (7.046526)
- *       h_safe_c_opssq_c: 10946 (6.946886)
- *     t502:
- *       same z's as above and 
- *       h_safe_c_s_opsq: 828524 (6.766448)
- *       h_safe_c_opcq_c: 661506 (5.402434)
- *       h_safe_c_opcq_s: 462572 (3.777766)
- *       h_safe_c_c_opcq: 341799 (2.791428)
- *     index:
- *       h_safe_c_s_opcq: 10219 (10.425636)
- *
- *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
- * bench    42736 8752 8051 7725 6515 6294
+ * bench    42736 8752 8051 7725 6515 6114
  * lint           9328 8140 7887 7736 7687
  * index    44300 3291 3005 2742 2078 2074
  * s7test    1721 1358 1297 1244  977  975

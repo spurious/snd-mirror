@@ -10873,6 +10873,54 @@ zzy" (lambda (p) (eval (read p))))) 32)
       
       ))
       
+(let ()
+  (define (args2)
+    (with-output-to-file "test.data"
+      (lambda ()
+	(write-byte 1)
+	(write-byte 2)
+	(write-byte 1)
+	(write-byte 2)))
+    
+    (let ((v (with-input-from-file "test.data"
+	       (lambda ()
+		 (vector (+ (read-byte) (ash (read-byte) 8))
+			 (+ 1 (ash 2 8))
+			 (+ (ash (read-byte) 8) (read-byte))
+			 (+ (ash 1 8) 2))))))
+      (if (not (equal? v #(513 513 258 258)))
+	  (format *stderr* ";2 arg order check: ~A~%" v))))
+  
+  
+  (args2)
+  
+  (define (args3)
+    (with-output-to-file "test.data"
+      (lambda ()
+	(do ((i 0 (+ i 1)))
+	    ((= i 8))
+	  (write-byte 1)
+	  (write-byte 2)
+	  (write-byte 3))))
+    
+    (let ((v (with-input-from-file "test.data"
+	       (lambda ()
+		 (vector (+ (read-byte) (ash (read-byte) 8) (ash (read-byte) 16))
+			 (+ 1 (ash 2 8) (ash 3 16))
+			 (+ (read-byte) (read-byte) (ash (read-byte) 8))
+			 (+ 1 2 (ash 3 8))
+			 (+ (read-byte) (ash (read-byte) 8) (read-byte))
+			 (+ 1 (ash 2 8) 3)
+			 (+ (ash (read-byte) 8) (read-byte) (read-byte))
+			 (+ (ash 1 8) 2 3)
+			 (+ (ash (read-byte) 8) (ash (read-byte) 16) (read-byte))
+			 (+ (ash 1 8) (ash 2 16) 3)
+			 (+ (ash (read-byte) 8) (read-byte) (ash (read-byte) 16))
+			 (+ (ash 1 8) 2 (ash 3 16)))))))
+      (if (not (equal? v #(197121 197121 771 771 516 516 261 261 131331 131331 196866 196866)))
+	  (format *stderr* ";3 arg order check: ~A~%" v))))
+  
+  (args3))
 
 
 (for-each

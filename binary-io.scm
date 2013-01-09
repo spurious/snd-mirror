@@ -37,7 +37,7 @@
 ;;; -------- 16-bit ints
 
 (define (read-bint16)
-  (let ((int (+ (ash (read-byte) 8) (read-byte))))
+  (let ((int (+ (ash (read-byte) 8) (read-byte)))) ; this depends on arg evaluation left->right
     (if (> int 32767)
 	(- int 65536)
 	int)))
