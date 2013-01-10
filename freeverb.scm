@@ -195,6 +195,6 @@
 ;; freeverb.scm ends here
 
 ;;; (with-sound (:statistics #t :reverb freeverb :reverb-data '(:output-gain 3.0)) (outa 0 .5 *reverb*))
-;;; (with-sound (:channels 2 :reverb-channels 2 :statistics #t :reverb freeverb :reverb-data '(:output-gain 3.0)) (outa 0 .5 *reverb*) (outa 0 .1 *reverb*))
+;;; (with-sound (:channels 2 :reverb-channels 2 :statistics #t :reverb freeverb :reverb-data '(:output-gain 3.0)) (outa 0 .5 *reverb*) (outb 0 .1 *reverb*))
 
 

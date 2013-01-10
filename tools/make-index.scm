@@ -1116,11 +1116,13 @@
 	       (if (not (eof-object? line))
 		   (begin
 		     (incf linectr)
-		     (let ((len (length line)))
-		       (when (and line 
-				  (positive? len))
+		     (let* ((len (length line))
+			    (opos (and line 
+				       (positive? len)
+				       (any-char-position line "<>\"(){}&"))))
+		       (when opos
 			 ;; open/close html entities
-			 (do ((i 0 (+ i 1)))
+			 (do ((i opos (+ i 1)))
 			     ((>= i len))
 			   (case (string-ref line i)
 			     ((#\<)
@@ -1148,7 +1150,6 @@
 			     ;; else c != <
 			     
 			     ((#\>)
-			      
 			      (decf openctr)
 			      (if (and (>= i 2)
 				       (char=? (line (- i 1)) #\-)
@@ -1211,154 +1212,156 @@
 			 ;; end line scan
 			 (if (not in-comment)
 			     (let ((start #f)
-				   (closing #f))
-			       (do ((i 0 (+ i 1)))
-				   ((>= i len))
-				 (case (string-ref line i)
-				   ((#\<)
-				    (if start
-					(if (and (not scripting)
-						 (not (positive? p-quotes)))
-					    (format #t "~A[~D]: nested < ~A~%" file linectr line))
-					(set! start i)))
-				   ((#\/)
-				    (if (and start (= start (- i 1)))
-					(set! closing #t)))
-				   
-				   ((#\!)
-				    (if (and start (= start (- i 1)))
-					(set! start #f)))
-				   
-				   ((#\space #\>)
-				    (if start
-					(begin
-					  (if closing
-					      (let ((closer (string->symbol (substring line (+ start 2) i))))
-						(if (memq closer '(center big font))
-						    (format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr closer line)
-						    (if (eq? closer 'script)
-							(set! scripting #f)
-							(if (not scripting)
-							    (if (not (memq closer commands))
-								(format #t "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
-									file linectr closer line (+ start 2) i commands)
+				   (closing #f)
+				   (pos (char-position #\< line)))
+			       (if pos
+				   (do ((i pos (+ i 1)))
+				       ((>= i len))
+				     (case (string-ref line i)
+				       ((#\<)
+					(if start
+					    (if (and (not scripting)
+						     (not (positive? p-quotes)))
+						(format #t "~A[~D]: nested < ~A~%" file linectr line))
+					    (set! start i)))
+				       ((#\/)
+					(if (and start (= start (- i 1)))
+					    (set! closing #t)))
+				       
+				       ((#\!)
+					(if (and start (= start (- i 1)))
+					    (set! start #f)))
+				       
+				       ((#\space #\>)
+					(if start
+					    (begin
+					      (if closing
+						  (let ((closer (string->symbol (substring line (+ start 2) i))))
+						    (if (memq closer '(center big font))
+							(format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr closer line)
+							(if (eq? closer 'script)
+							    (set! scripting #f)
+							    (if (not scripting)
+								(if (not (memq closer commands))
+								    (format #t "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
+									    file linectr closer line (+ start 2) i commands)
+								    
+								    (if (memq closer '(ul tr td table TABLE small sub blockquote p
+											  a A i b title pre span h1 h2 h3 code body html
+											  em head h4 sup map smaller bigger th tbody div))
+									(begin
+									  (if (not (eq? (car commands) closer))
+									      (format #t "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
+									  
+									  (if (memq closer '(p td pre))
+									      (begin
+										(if (not (even? p-quotes))
+										    (format #t "~A[~D]: unmatched quote~%" file linectr))
+										(set! p-quotes 0)
+										(if (= p-curlys 1)
+										    (format #t "~A[~D]: extra '{'~%" file linectr)
+										    (if (= p-curlys -1)
+											(format #t "~A[~D]: extra '}'~%" file linectr)
+											(if (not (= p-curlys 0))
+											    (format #t "~A[~D]: curlys: ~D~%" file linectr p-curlys))))
+										(set! p-curlys 0)
+										(if (= p-parens 1)
+										    (format #t "~A[~D]: extra '('~%" file linectr)
+										    (if (= p-parens -1)
+											(format #t "~A[~D]: extra ')'~%" file linectr)
+											(if (not (= p-parens 0))
+											    (format #t "~A[~D]: parens: ~D~%" file linectr p-parens))))
+										(set! p-parens 0)))
+									  (set! commands (remove-one closer commands))
+									  (if (not warned)
+									      (begin
+										(if (and (memq closer '(table TABLE))
+											 (not (memq 'table commands))
+											 (not (memq 'TABLE commands)))
+										    (begin
+										      (if (memq 'tr commands)
+											  (begin
+											    (set! warned #t)
+											    (set! commands (remove-all 'tr commands))
+											    (format #t "~A[~D]: unclosed tr at table (~A)~%" file linectr commands)))
+										      (if (memq 'td commands)
+											  (begin
+											    (set! warned #t)
+											    (set! commands (remove-all 'td commands))
+											    (format #t "~A[~D]: unclosed td at table (~A)~%" file linectr commands))))))))
+									(set! commands (remove-all closer commands)))))))
+						    (set! closing #f))
+						  
+						  ;; not closing
+						  (if (not scripting)
+						      (let ((opener (string->symbol (substring line (+ start 1) i))))
+							
+							(if (memq opener '(center big font))
+							    (format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr opener line)
 							    
-								(if (memq closer '(ul tr td table TABLE small sub blockquote p
-										      a A i b title pre span h1 h2 h3 code body html
-										      em head h4 sup map smaller bigger th tbody div))
-								    (begin
-								      (if (not (eq? (car commands) closer))
-									  (format #t "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
-								  
-								      (if (memq closer '(p td pre))
-									  (begin
-									    (if (not (even? p-quotes))
-										(format #t "~A[~D]: unmatched quote~%" file linectr))
-									    (set! p-quotes 0)
-									    (if (= p-curlys 1)
-										(format #t "~A[~D]: extra '{'~%" file linectr)
-										(if (= p-curlys -1)
-										    (format #t "~A[~D]: extra '}'~%" file linectr)
-										    (if (not (= p-curlys 0))
-											(format #t "~A[~D]: curlys: ~D~%" file linectr p-curlys))))
-									    (set! p-curlys 0)
-									    (if (= p-parens 1)
-										(format #t "~A[~D]: extra '('~%" file linectr)
-										(if (= p-parens -1)
-										    (format #t "~A[~D]: extra ')'~%" file linectr)
-										    (if (not (= p-parens 0))
-											(format #t "~A[~D]: parens: ~D~%" file linectr p-parens))))
-									    (set! p-parens 0)))
-								      (set! commands (remove-one closer commands))
-								      (if (not warned)
-									  (begin
-									    (if (and (memq closer '(table TABLE))
-										     (not (memq 'table commands))
-										     (not (memq 'TABLE commands)))
-										(begin
-										  (if (memq 'tr commands)
-										      (begin
-											(set! warned #t)
-											(set! commands (remove-all 'tr commands))
-											(format #t "~A[~D]: unclosed tr at table (~A)~%" file linectr commands)))
-										  (if (memq 'td commands)
-										      (begin
-											(set! warned #t)
-											(set! commands (remove-all 'td commands))
-											(format #t "~A[~D]: unclosed td at table (~A)~%" file linectr commands))))))))
-								(set! commands (remove-all closer commands)))))))
-						(set! closing #f))
-						
-					      ;; not closing
-					      (if (not scripting)
-						  (let ((opener (string->symbol (substring line (+ start 1) i))))
-
-						    (if (memq opener '(center big font))
-							(format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr opener line)
-
-							(if (eq? opener 'script)
-							    (set! scripting #t)
-
-							    (if (eq? opener 'img)
-								(let* ((rest-line (substring line (+ start 4)))
-								       (alt-pos (string-position "alt=" rest-line))
-								       (src-pos (string-position "src=" rest-line)))
-								  (if (not alt-pos)
-								      (format #t "~A[~D]: img but no alt: ~A~%" file linectr line))
-								  (if src-pos
-								      (let ((png-pos (string-position ".png" rest-line)))
-									(if png-pos
-									    (let ((file (substring rest-line (+ src-pos 5) (+ png-pos 4))))
-									      (if (not (file-exists? file))
-										  (format #t "~A[~D]: src not found: ~S~%" file linectr file)))))))
+							    (if (eq? opener 'script)
+								(set! scripting #t)
 								
-								(if (and (not (memq opener '(br spacer li hr area 
-												ul tr td table TABLE small sub blockquote)))
-									 (memq opener commands)
-									 (= p-quotes 0))
-								    (format #t "~A[~D]: nested ~A? ~A from: ~A~%" file linectr opener line commands)
-								    (begin
-								      (case opener
-									((td)
-									 (if (not (eq? 'tr (car commands)))
-									     (format #t "~A[~D]: td without tr?~%" file linectr))
-									 (if (and (not warned)
-										  (memq 'td commands)
-										  (< (count-table commands) 2))
-									     (begin
-									       (set! warned #t)
-									       (set! commands (remove-one 'td commands))
-									       (format #t "~A[~D]: unclosed td at table~%" file linectr))))
-									((tr)
-									 (if (and (not (memq (car commands) '(table TABLE)))
-										  (not (memq (cadr commands) '(table TABLE))))
-									     (format #t "~A[~D]: tr without table?~%" file linectr))
-									 (if (and (not warned)
-										  (memq 'tr commands)
-										  (< (count-table commands) 2))
-									     (begin
-									       (set! warned #t)
-									       (set! commands (remove-one 'tr commands))
-									       (format #t "~A[~D]: unclosed tr at table~%" file linectr))))
-									((p)
-									 (if (memq (car commands) '(table TABLE))
-									     (format #t "~A[~D]: unclosed table?~%" file linectr)))
-									
-									((pre br table TABLE hr img ul)
-									 (if (memq 'p commands)
-									     (format #t "~A[~D]: ~A within <p>?~%" file linectr opener)))
-									((li)
-									 (if (not (memq 'ul commands))
-									     (format #t "~A[~D]: li without ul~%" file linectr)))
-									((small)
-									 (if (memq (car commands) '(pre code))
-									     (format #t "~A[~D]: small shouldn't follow ~A~%" file linectr (car commands))))
-									((--)
-									 (format #t "~A[~D]: <-- missing !?~%" file linectr)))
-								      (if (not (memq opener '(br spacer li hr area)))
-									  (set! commands (push opener commands)))))))))))
-					  ;; end if closing
-					  (set! start #f)))))))
+								(if (eq? opener 'img)
+								    (let* ((rest-line (substring line (+ start 4)))
+									   (alt-pos (string-position "alt=" rest-line))
+									   (src-pos (string-position "src=" rest-line)))
+								      (if (not alt-pos)
+									  (format #t "~A[~D]: img but no alt: ~A~%" file linectr line))
+								      (if src-pos
+									  (let ((png-pos (string-position ".png" rest-line)))
+									    (if png-pos
+										(let ((file (substring rest-line (+ src-pos 5) (+ png-pos 4))))
+										  (if (not (file-exists? file))
+										      (format #t "~A[~D]: src not found: ~S~%" file linectr file)))))))
+								    
+								    (if (and (not (memq opener '(br spacer li hr area 
+												    ul tr td table TABLE small sub blockquote)))
+									     (memq opener commands)
+									     (= p-quotes 0))
+									(format #t "~A[~D]: nested ~A? ~A from: ~A~%" file linectr opener line commands)
+									(begin
+									  (case opener
+									    ((td)
+									     (if (not (eq? 'tr (car commands)))
+										 (format #t "~A[~D]: td without tr?~%" file linectr))
+									     (if (and (not warned)
+										      (memq 'td commands)
+										      (< (count-table commands) 2))
+										 (begin
+										   (set! warned #t)
+										   (set! commands (remove-one 'td commands))
+										   (format #t "~A[~D]: unclosed td at table~%" file linectr))))
+									    ((tr)
+									     (if (and (not (memq (car commands) '(table TABLE)))
+										      (not (memq (cadr commands) '(table TABLE))))
+										 (format #t "~A[~D]: tr without table?~%" file linectr))
+									     (if (and (not warned)
+										      (memq 'tr commands)
+										      (< (count-table commands) 2))
+										 (begin
+										   (set! warned #t)
+										   (set! commands (remove-one 'tr commands))
+										   (format #t "~A[~D]: unclosed tr at table~%" file linectr))))
+									    ((p)
+									     (if (memq (car commands) '(table TABLE))
+										 (format #t "~A[~D]: unclosed table?~%" file linectr)))
+									    
+									    ((pre br table TABLE hr img ul)
+									     (if (memq 'p commands)
+										 (format #t "~A[~D]: ~A within <p>?~%" file linectr opener)))
+									    ((li)
+									     (if (not (memq 'ul commands))
+										 (format #t "~A[~D]: li without ul~%" file linectr)))
+									    ((small)
+									     (if (memq (car commands) '(pre code))
+										 (format #t "~A[~D]: small shouldn't follow ~A~%" file linectr (car commands))))
+									    ((--)
+									     (format #t "~A[~D]: <-- missing !?~%" file linectr)))
+									  (if (not (memq opener '(br spacer li hr area)))
+									      (set! commands (push opener commands)))))))))))
+					      ;; end if closing
+					      (set! start #f))))))))
 			     ) ; if not in-comment...
 					  
 			 ;; search for name

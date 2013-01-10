@@ -10094,6 +10094,37 @@ static s7_pointer g_indirect_locsig_3(s7_scheme *sc, s7_pointer args)
   return(XEN_ZERO);
 }
 
+static s7_pointer indirect_locsig_3_looped;
+static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
+{
+  s7_Int pos, end;
+  s7_pointer stepper, callee;
+  s7_Int *step, *stop;
+  mus_any *locs = NULL;
+
+  /* args: (4410 loc gr-offset (* (* (env amp-env) (table-lookup gr-env)) (src in-file-reader)))
+   */
+  stepper = car(args);
+  callee = s7_slot(sc, caddr(args));
+  if (s7_slot_value(sc, callee) != stepper)
+    return(NULL);
+
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int)));
+  pos = (*step);
+  end = (*stop);
+
+  GET_GENERATOR_CADR(args, locsig, locs);
+  callee = cadddr(args);
+
+  for (; pos < end; pos++)
+    mus_locsig(locs, pos, s7_number_to_real(sc, s7_call_direct(sc, callee)));
+
+  (*step) = end;
+  return(args);
+}
+
+
 
 
 static s7_pointer indirect_out_bank_ssz;
@@ -10409,20 +10440,36 @@ static s7_pointer g_indirect_out_bank_ssz_looped(s7_scheme *sc, s7_pointer args)
    *        2 chan opt'd?
    * TODO: doc/test out-bank
    */
-  for (; pos < end; pos++)
-    {
-      (*step) = pos;
-      s7_slot_set_value(sc, allx, s7_call_direct(sc, allsum));
-      x = s7_real(s7_call_direct(sc, combs));
+
+  {
 #if HAVE_SCHEME  
-      for (i = 0; i < size; i++)
-	out_any_2(pos, mus_apply(XEN_TO_MUS_ANY(XEN_VECTOR_REF(fs, i)), x, 0.0), i, "out-bank");
-#else
-      for (i = 0; i < size; i++)
-	out_any_2(CLM_OUTPUT, pos, mus_apply(XEN_TO_MUS_ANY(XEN_VECTOR_REF(fs, i)), x, 0.0), i, "out-bank");
+    s7_pointer *gens;
+    mus_any **mgs = NULL;
+    gens = s7_vector_elements(fs);
+    mgs = (mus_any **)calloc(size, sizeof(mus_any *));
+    for (i = 0; i < size; i++)
+      mgs[i] = XEN_TO_MUS_ANY(gens[i]);
 #endif
-    }
-  (*step) = end;
+
+    for (; pos < end; pos++)
+      {
+	(*step) = pos;
+	s7_slot_set_value(sc, allx, s7_call_direct(sc, allsum));
+	x = s7_real(s7_call_direct(sc, combs));
+#if HAVE_SCHEME  
+	for (i = 0; i < size; i++)
+	  out_any_2(pos, mus_apply(mgs[i], x, 0.0), i, "out-bank");
+#else
+	for (i = 0; i < size; i++)
+	  out_any_2(CLM_OUTPUT, pos, mus_apply(XEN_TO_MUS_ANY(XEN_VECTOR_REF(fs, i)), x, 0.0), i, "out-bank");
+#endif
+      }
+    (*step) = end;
+
+#if HAVE_SCHEME
+    free(mgs);
+#endif
+  }
   
   return(args);
 }
@@ -14193,6 +14240,9 @@ static void init_choosers(s7_scheme *sc)
   indirect_locsig_3 = clm_make_function_not_temp(sc, "locsig", g_indirect_locsig_3, 2, 0, false, "locsig optimization", f);
 
 #if (!WITH_GMP)
+  indirect_locsig_3_looped = clm_make_function_not_temp(sc, "locsig", g_indirect_locsig_3_looped, 3, 0, false, "locsig optimization", f);
+  s7_function_set_looped(indirect_locsig_3, indirect_locsig_3_looped);
+
   fm_violin_2_looped = clm_make_function_not_temp(sc, "locsig", g_fm_violin_2_looped, 3, 0, false, "fm-violin optimization", f);
   s7_function_set_let_looped(fm_violin_2, fm_violin_2_looped);
 #endif

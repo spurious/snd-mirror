@@ -12421,9 +12421,10 @@ EDITS: 2
     
     ;; check phase-quadrature cancellations
     (let ((cos-coeffs (partials->polynomial '(1 1 2 1) mus-chebyshev-first-kind))
-	  (sin-coeffs (partials->polynomial (vct 1 1 2 1) mus-chebyshev-second-kind)))
+	  (sin-coeffs (partials->polynomial (vct 1 1 2 1) mus-chebyshev-second-kind))
+	  (incr (/ (* 2 pi 440.0) 22050.0)))
       (do ((i 0 (+ i 1))
-	   (a 0.0 (+ a (/ (* 2 pi 440.0) 22050.0))))
+	   (a 0.0 (+ a incr)))
 	  ((= i 1100))
 	(let* ((x (cos a))
 	       (y (sin a))
@@ -14087,9 +14088,10 @@ EDITS: 2
 	  (if (fneq val1 val2)
 	      (snd-display #__line__ ";oscil: ~A: ~A ~A" i val1 val2)))))
     
-    (let ((gen (make-oscil 440.0 :initial-phase (* pi 0.5))))
+    (let ((gen (make-oscil 440.0 :initial-phase (* pi 0.5)))
+	  (incr (/ (* 2 pi 440.0) 22050.0)))
       (do ((i 0 (+ i 1))
-	   (a 0.0 (+ a (/ (* 2 pi 440.0) 22050.0))))
+	   (a 0.0 (+ a incr)))
 	  ((= i 900))
 	(let ((val1 (cos a))
 	      (val2 (gen 0.0)))
@@ -14097,9 +14099,10 @@ EDITS: 2
 	      (snd-display #__line__ ";oscil (cos): ~A: ~A ~A" i val1 val2)))))
     
     (let ((gen (make-oscil 0.0))
-	  (gen1 (make-oscil 40.0)))
+	  (gen1 (make-oscil 40.0))
+	  (incr (/ (* 2 pi 40.0) 22050.0)))
       (do ((i 0 (+ i 1))
-	   (a 0.0 (+ a (/ (* 2 pi 40.0) 22050.0))))
+	   (a 0.0 (+ a incr)))
 	  ((= i 1100))
 	(let ((val1 (sin (sin a)))
 	      (val2 (oscil gen 0.0 (oscil gen1 0.0))))
@@ -14108,9 +14111,10 @@ EDITS: 2
     
     (let ((gen (make-oscil 0.0))
 	  (gen1 (make-oscil 40.0))
+	  (incr (/ (* 2 pi 40.0) 22050.0))
 	  (a1 0.0))
       (do ((i 0 (+ i 1))
-	   (a 0.0 (+ a (/ (* 2 pi 40.0) 22050.0))))
+	   (a 0.0 (+ a incr)))
 	  ((= i 100))
 	(let ((fm (sin a))
 	      (val1 (sin a1))
@@ -14118,7 +14122,7 @@ EDITS: 2
 	  (set! a1 (+ a1 fm))
 	  (if (fneq val1 val2)
 	      (snd-display #__line__ ";oscil fm: ~A: ~A ~A" i val1 val2)))))
-
+    
     (let ()
       (define (oscil-1-1)
 	(let ((osc (make-oscil 440.0)))
@@ -14154,7 +14158,7 @@ EDITS: 2
 	    (ho-1 o1 v1 i))
 	  (if (not (equal? v1 v2))
 	      (snd-display #__line__ ";oscil-1 shadowing test2: ~A ~A" v1 v2))))
-
+      
       (define (oscil-1-3)
 	(define (ho)
 	  (let ((osc (make-oscil 440.0)))
@@ -14174,11 +14178,11 @@ EDITS: 2
 	    (set! (v1 i) (o1)))
 	  (if (not (equal? v1 v2))
 	      (snd-display #__line__ ";oscil-1 shadowing test3: ~A ~A" v1 v2))))
-
+      
       (oscil-1-1)
       (oscil-1-2)
       (oscil-1-3))
-
+    
     
     (let ((var (catch #t (lambda () (mus-location (make-oscil))) (lambda args args))))
       (if (not (eq? (car var) 'mus-error))
@@ -14235,7 +14239,7 @@ EDITS: 2
 	    (set! (mus-float-equal-fudge-factor) old-fudge)
 	    (if (not result)
 		(snd-display #__line__ ";outa to vector: ~A" v)))))
-
+      
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(let ((ratio (+ 1 (random 4)))
@@ -14358,10 +14362,10 @@ EDITS: 2
     
     (let ((v1 (make-vct 10)))
       (with-sound (:output v1 :srate 44100)
-		  (let ((gen (make-nrxysin 1000 :n 10 :r .99)))
-		    (do ((i 0 (+ i 1)))
-			((= i 10))
-		      (outa i (nrxysin gen)))))
+	(let ((gen (make-nrxysin 1000 :n 10 :r .99)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (outa i (nrxysin gen)))))
       (if (not (vequal v1 (vct 0.000 0.671 0.637 0.186 0.017 0.169 0.202 0.048 0.007 0.105)))
 	  (snd-display #__line__ ";ws nrxysin output: ~A" v1)))
     
@@ -14476,9 +14480,10 @@ EDITS: 2
 		(set! happy #f))))))
     
     (let ((gen (make-asymmetric-fm 40.0 0.0 1.0 0.1))
-	  (gen1 (make-asyfm :frequency 40.0 :ratio .1 :index 2.0)))
+	  (gen1 (make-asyfm :frequency 40.0 :ratio .1 :index 2.0))
+	  (incr (/ (* 2 pi 40.0) (mus-srate))))
       (do ((i 0 (+ i 1))
-	   (a 0.0 (+ a (/ (* 2 pi 40.0) (mus-srate))))) ;22050.0))))
+	   (a 0.0 (+ a incr)))
 	  ((= i 1100))
 	(let* ((val1 (asymmetric-fm gen 2.0)) ; 1.0=index
 	       (val3 (asyfm-J gen1 0.0))
@@ -14506,9 +14511,9 @@ EDITS: 2
 	(set! (vct0 i) (asymmetric-fm gen3 2.0 0.0))
 	(set! (vct1 i) (asymmetric-fm gen4 2.0 0.0)))
       (let ((spectr1 (snd-spectrum vct0 rectangular-window 2048 #t))
-	     (spectr2 (snd-spectrum vct1 rectangular-window 2048 #t))
-	     (s1-loc 0)
-	     (s2-loc 0))
+	    (spectr2 (snd-spectrum vct1 rectangular-window 2048 #t))
+	    (s1-loc 0)
+	    (s2-loc 0))
 	(do ((i 1 (+ i 1)))
 	    ((= i 256))
 	  (if (< (abs (- 1.0 (spectr1 i))) .01) (set! s1-loc i))
@@ -16098,10 +16103,11 @@ EDITS: 2
 	     (func (caddr window-data))
 	     (name (cadr window-data)))
 	 (let ((v1 (make-fft-window window 16))
-	       (v2 (make-vct 16)))
+	       (v2 (make-vct 16))
+	       (incr (/ (* 2 pi) 16.0)))
 	   (do ((i 0 (+ i 1))
 		(j 15 (- j 1))
-		(ang 0.0 (+ ang (/ (* 2 pi) 16.0))))
+		(ang 0.0 (+ ang incr)))
 	       ((> i 8)) ; yikes -- even size + smallness = questionable code...
 	     (let ((val (func ang)))
 	       (set! (v2 i) val)
@@ -17021,27 +17027,30 @@ EDITS: 2
     (let ((tag (catch #t (lambda () (make-table-lookup :size 0)) (lambda args (car args)))))
       (if (not (eq? tag 'out-of-range)) (snd-display #__line__ ";table-lookup size 0: ~A" tag)))
     
-    (let ((gen (make-table-lookup 440.0 :wave (partials->wave '(1 1)))))
+    (let ((gen (make-table-lookup 440.0 :wave (partials->wave '(1 1))))
+	  (incr (/ (* 2 pi 440.0) 22050.0)))
       (do ((i 0 (+ i 1))
-	   (a 0.0 (+ a (/ (* 2 pi 440.0) 22050.0))))
+	   (a 0.0 (+ a incr)))
 	  ((= i 1100))
 	(let ((val1 (sin a))
 	      (val2 (gen 0.0)))
 	  (if (fneq val1 val2)
 	      (snd-display #__line__ ";table lookup (1 1): ~A: ~A ~A" i val1 val2)))))
     
-    (let ((gen (make-table-lookup 4.0 :wave (partials->wave '(1 1)))))
+    (let ((gen (make-table-lookup 4.0 :wave (partials->wave '(1 1))))
+	  (incr (/ (* 2 pi 4.0) 22050.0)))
       (do ((i 0 (+ i 1))
-	   (a 0.0 (+ a (/ (* 2 pi 4.0) 22050.0))))
+	   (a 0.0 (+ a incr)))
 	  ((= i 1100))
 	(let ((val1 (sin a))
 	      (val2 (gen 0.0)))
 	  (if (fneq val1 val2)
 	      (snd-display #__line__ ";table lookup (1 1) 4: ~A: ~A ~A" i val1 val2)))))
     
-    (let ((gen (make-table-lookup 440.0 :wave (partials->wave '(1 .75 3 .25)))))
+    (let ((gen (make-table-lookup 440.0 :wave (partials->wave '(1 .75 3 .25))))
+	  (incr (/ (* 2 pi 440.0) 22050.0)))
       (do ((i 0 (+ i 1))
-	   (a 0.0 (+ a (/ (* 2 pi 440.0) 22050.0))))
+	   (a 0.0 (+ a incr)))
 	  ((= i 1100))
 	(let ((val1 (+ (* .75 (sin a)) (* .25 (sin (* 3 a)))))
 	      (val2 (gen 0.0)))
@@ -17050,9 +17059,10 @@ EDITS: 2
     
     (let ((gen (make-table-lookup 0.0 :wave (partials->wave '(1 1))))
 	  (gen1 (make-table-lookup 40.0 :wave (partials->wave '(1 1))))
+	  (incr (/ (* 2 pi 40.0) 22050.0))
 	  (a1 0.0))
       (do ((i 0 (+ i 1))
-	   (a 0.0 (+ a (/ (* 2 pi 40.0) 22050.0))))
+	   (a 0.0 (+ a incr)))
 	  ((= i 100))
 	(let ((fm (sin a))
 	      (val1 (sin a1))
@@ -17215,9 +17225,10 @@ EDITS: 2
     (let ((gen (make-polyshape 0.0 :coeffs (partials->polynomial '(1 1))))
 	  (gen1 (make-polyshape 40.0 :coeffs (partials->polynomial '(1 1))))
 	  (a1 0.0)
+	  (incr (/ (* 2 pi 40.0) 22050.0))
 	  (happy #t))
       (do ((i 0 (+ i 1))
-	   (a 0.0 (+ a (/ (* 2 pi 40.0) 22050.0))))
+	   (a 0.0 (+ a incr)))
 	  ((or (not happy) (= i 400)))
 	(let ((fm (cos a))
 	       (val1 (cos a1))
@@ -47118,6 +47129,7 @@ EDITS: 1
 ;; 26-Dec-12: #(1 1 2 1 65 199 6 1 556 1 15 1 1 12 26 1 229 1 1 276 52 108 1 1777 0 0 0 1 2 75)  ;  34
 ;; 1-Jan-13:  #(1 1 2 2 64 200 7 1 575 1 17 1 2 12 84 1 246 1 1 215 45 111 1 1552 0 0 0 1 2 77)  ;  32
 ;; 3-Jan-13:  #(1 1 2 1 65 185 6 1 564 1 20 1 2 11 26 1 202 1 1 213 45 109 1 1545 0 0 0 1 1 80)  ;  31
+;; 9-Jan-13:  #(1 1 2 1 63 181 7 1 540 1 19 1 2 11 22 1 201 1 1 207 44 107 1 1504 0 0 0 1 1 79)  ;  30
 
 ;;; -------- cleanup temp files
 
@@ -47360,22 +47372,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-3-Jan-13:
-102,054,919,101
-17,783,354,098  s7.c:eval [/home/bil/snd-13/snd]
- 7,627,333,103  ???:sin [/lib64/libm-2.12.so]
- 6,671,539,368  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 5,735,237,281  s7.c:eval'2 [/home/bil/snd-13/snd]
- 3,392,369,341  s7.c:gc [/home/bil/snd-13/snd]
- 2,984,840,001  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+9-Jan-13:
+100,464,189,055
+15,756,148,545  s7.c:eval [/home/bil/snd-13/snd]
+ 7,640,864,781  ???:sin [/lib64/libm-2.12.so]
+ 6,398,912,686  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 5,503,711,919  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 3,281,261,031  s7.c:gc [/home/bil/snd-13/snd]
+ 3,097,550,130  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,861,207,575  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,933,242,342  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
  2,720,009,350  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 2,637,656,437  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,560,518,952  ???:cos [/lib64/libm-2.12.so]
- 1,647,517,766  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 2,637,748,046  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,565,935,747  ???:cos [/lib64/libm-2.12.so]
+ 1,646,256,712  s7.c:s7_make_real [/home/bil/snd-13/snd]
  1,592,316,356  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,177,985,095  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
- 1,152,088,801  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 1,494,039,610  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
+ 1,152,088,820  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,129,623,660  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
 |#

@@ -2208,6 +2208,44 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
   return(s7_f(sc));
 }
 
+static s7_pointer g_any_char_position(s7_scheme *sc, s7_pointer args)
+{
+  #define H_any_char_position "(any-char-position str1 str2 (start 0)) returns the position of the first occurrence of any char in str1 in str2, or #f"
+  const char *porig, *pset;
+  int start = 0, pos, len;
+
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(sc, "any-char-position", 1, s7_car(args), "a string"));
+  if (!s7_is_string(s7_cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "any-char-position", 2, s7_cadr(args), "a string"));
+
+  if (s7_is_pair(s7_cddr(args)))
+    {
+      s7_pointer arg;
+      arg = s7_cadr(s7_cdr(args));
+      if (!s7_is_integer(arg))
+	return(s7_wrong_type_arg_error(sc, "any-char-position", 3, arg, "an integer"));
+
+      start = s7_integer(arg);
+      if (start < 0)
+	return(s7_wrong_type_arg_error(sc, "any-char-position", 3, arg, "a non-negative integer"));
+    }
+
+  pset = s7_string(s7_cadr(args));
+  porig = s7_string(s7_car(args));
+  len = (int)s7_string_length(s7_car(args));
+
+  if ((!porig) || (start >= len))
+    return(s7_f(sc));
+
+  pos = strcspn((const char *)(porig + start), (const char *)pset);
+  if (pos < len)
+    return(s7_make_integer(sc, pos));
+
+  return(s7_f(sc));
+}
+
+
 static unsigned char uppers[256];
 static void init_uppers(void)
 {
@@ -2530,6 +2568,7 @@ void g_xen_initialize(void)
 
 #if HAVE_SCHEME
   s7_define_safe_function(s7, "char-position",           g_char_position,           2, 1, false, H_char_position);
+  s7_define_safe_function(s7, "any-char-position",       g_any_char_position,       2, 1, false, H_any_char_position);
   s7_define_safe_function(s7, "string-position",         g_string_position,         2, 1, false, H_string_position);
 #endif
 
