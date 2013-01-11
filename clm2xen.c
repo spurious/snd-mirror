@@ -9438,6 +9438,31 @@ static s7_pointer g_polyshape_three(s7_scheme *sc, s7_pointer args)
   return(s7_f(sc));
 }
 
+static s7_pointer polynomial_temp;
+static s7_pointer g_polynomial_temp(s7_scheme *sc, s7_pointer args)
+{
+  vct *v;
+  s7_pointer vc;
+  vc = s7_car_value(sc, args);
+  v = xen_to_vct(vc);
+  if (v)
+    return(s7_make_real(sc, mus_polynomial(v->data, s7_call_direct_to_real_and_free(sc, cadr(args)), v->length)));
+  return(g_polynomial(vc, s7_call_direct(sc, cadr(args))));
+}
+
+static s7_pointer polynomial_cos;
+static s7_pointer g_polynomial_cos(s7_scheme *sc, s7_pointer args)
+{
+  vct *v;
+  s7_pointer vc, cs;
+  vc = s7_car_value(sc, args);
+  cs = s7_cadr_value(sc, cadr(args));
+  v = xen_to_vct(vc);
+  if (v)
+    return(s7_make_real(sc, mus_polynomial(v->data, cos(s7_number_to_real(sc, cs)), v->length)));
+  return(g_polynomial(vc, s7_cos(sc, cs)));
+}
+
 static s7_pointer formant_two;
 static s7_pointer g_formant_two(s7_scheme *sc, s7_pointer args)
 {
@@ -9498,7 +9523,7 @@ static s7_pointer g_oscil_pm_direct(s7_scheme *sc, s7_pointer args)
 
   GET_GENERATOR(args, oscil, o);
   x = s7_call_direct(sc, caddr(args));
-  return(s7_remake_real(sc, x, mus_oscil_pm(o, s7_cell_real(x))));
+  return(s7_make_real(sc, mus_oscil_pm(o, s7_cell_real(x))));
 }
 
 static s7_pointer oscil_mul_c_s;
@@ -12179,8 +12204,7 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
       if ((s7_is_real(caddr(expr))) &&
 	  (s7_number_to_real(sc, caddr(expr)) == 0.0) &&
 	  (s7_is_pair(cadddr(expr))) &&
-	  (s7_function_choice_is_direct(sc, cadddr(expr))) &&
-	  (s7_function_returns_temp(cadddr(expr))))
+	  (s7_function_choice_is_direct(sc, cadddr(expr))))
 	{
 	  s7_function_choice_set_direct(sc, expr);
 	  return(oscil_pm_direct);
@@ -13079,6 +13103,30 @@ static s7_pointer rand_interp_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
       s7_function_choice_set_direct(sc, expr);
       if (s7_function_returns_temp(caddr(expr))) return(direct_rand_interp_2);
       return(indirect_rand_interp_2);
+    }
+  return(f);
+}
+
+static s7_pointer polynomial_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if ((s7_is_symbol(cadr(expr))) &&
+	  (s7_is_pair(caddr(expr))))
+	{
+	  if ((s7_function_choice_is_direct(sc, caddr(expr))) &&
+	      (s7_function_returns_temp(caddr(expr))))
+	    {
+	      s7_function_choice_set_direct(sc, expr);
+	      return(polynomial_temp);
+	    }
+	  if ((car(caddr(expr)) == cos_symbol) &&
+	      (s7_is_symbol(cadr(caddr(expr)))))
+	    {
+	      s7_function_choice_set_direct(sc, expr);
+	      return(polynomial_cos);
+	    }
+	}
     }
   return(f);
 }
@@ -14164,6 +14212,13 @@ static void init_choosers(s7_scheme *sc)
 				     NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_delay_2 = clm_make_function(sc, "delay", g_indirect_delay_2, 2, 0, false, "delay optimization", f,
 				     NULL, NULL, NULL, NULL, NULL, NULL);
+
+
+  f = s7_name_to_value(sc, "polynomial");
+  s7_function_set_chooser(sc, f, polynomial_chooser);
+
+  polynomial_temp = clm_make_function_no_choice(sc, "polynomial", g_polynomial_temp, 2, 0, false, "polynomial optimization", f);
+  polynomial_cos = clm_make_function_no_choice(sc, "polynomial", g_polynomial_cos, 2, 0, false, "polynomial optimization", f);
 
 
   f = s7_name_to_value(sc, "polyshape");

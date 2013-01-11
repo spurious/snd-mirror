@@ -19470,7 +19470,7 @@ static s7_pointer stdin_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
 {
   if (sc->read_line_buf == NULL)
     {
-      sc->read_line_buf_size = 256;
+      sc->read_line_buf_size = 1024;
       sc->read_line_buf = (char *)malloc(sc->read_line_buf_size * sizeof(char));
     }
 
@@ -19482,35 +19482,45 @@ static s7_pointer stdin_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
 
 static s7_pointer file_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
 {
-  unsigned int i;
+  char *buf;
+  int read_size, previous_size = 0;
+
   if (sc->read_line_buf == NULL)
     {
-      sc->read_line_buf_size = 256;
+      sc->read_line_buf_size = 1024;
       sc->read_line_buf = (char *)malloc(sc->read_line_buf_size * sizeof(char));
     }
+  
+  buf = sc->read_line_buf;
+  read_size = sc->read_line_buf_size;
 
-  for (i = 0; ; i++)
+  while (true)
     {
-      int c;
-      if (i >= sc->read_line_buf_size)
-	{
-	  sc->read_line_buf_size *= 2;
-	  sc->read_line_buf = (char *)realloc(sc->read_line_buf, sc->read_line_buf_size * sizeof(char));
-	}
-      c = fgetc(port_file(port)); /* not unsigned char! -- could be EOF */
-      if (c == EOF)
-	{
-	  if (i == 0)
-	    return(sc->EOF_OBJECT);
-	  return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i));
-	}
-      sc->read_line_buf[i] = (char)c;
-      if (c == '\n')
+      char *p, *rtn;
+      size_t len;
+
+      p = fgets(buf, read_size, port_file(port));
+      if (!p)
+	return(sc->EOF_OBJECT);
+
+      rtn = strchr(buf, (int)'\n');
+      if (rtn)
 	{
 	  port_line_number(port)++;
-	  if (!with_eol) i--;
-	  return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i + 1));
+	  return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, (with_eol) ? (previous_size + rtn - p + 1) : (previous_size + rtn - p)));
 	}
+      /* if no newline, then either at eof or need bigger buffer */
+      len = strlen(sc->read_line_buf);
+
+      if ((len + 1) < sc->read_line_buf_size)
+	return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, len));
+      
+      previous_size = sc->read_line_buf_size;
+      sc->read_line_buf_size *= 2;
+      sc->read_line_buf = (char *)realloc(sc->read_line_buf, sc->read_line_buf_size * sizeof(char));
+      read_size = previous_size;
+      previous_size -= 1;
+      buf = (char *)(sc->read_line_buf + previous_size);
     }
   return(sc->EOF_OBJECT);
 }
@@ -19518,8 +19528,8 @@ static s7_pointer file_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
 
 static s7_pointer string_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
 {
-  unsigned int i, port_len, port_start;
-  char *port_str, *cur, *end, *start;
+  unsigned int i, port_start;
+  char *port_str, *cur, *start;
 
   /* this string can be left uncopied if port_needs_free(port), then the sc->strings
    *   array checked when the port is closed, and any held strings copied.  But 
@@ -19529,22 +19539,20 @@ static s7_pointer string_read_line(s7_scheme *sc, s7_pointer port, bool with_eol
    *   but this fails because FFI code (snd-xen.c) assumes strings end in null.  This will mess up uncopied substring too...
    */
 
-  port_len = port_string_length(port);
   port_start = port_string_point(port);
   port_str = port_string(port);
-  end = (char *)(port_str + port_len);
   start = (char *)(port_str + port_start);
 
-  for (cur = start; cur < end; cur++)
-    if (*cur == '\n')
+  cur = strchr(start, (int)'\n');
+  if (cur)
       {
 	port_line_number(port)++;
 	i = cur - port_str;
 	port_string_point(port) = i + 1;
 	return(s7_make_terminated_string_with_length(sc, start, ((with_eol) ? i + 1 : i) - port_start));
       }
-  i = cur - port_str;
-  port_string_point(port) = port_len;
+  i = port_string_length(port);
+  port_string_point(port) = i;
   if (i == port_start)
     return(sc->EOF_OBJECT);
 
@@ -19852,6 +19860,18 @@ static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt, bool at
   
   while (char_ok_in_a_name[(unsigned char)(*str)]) {str++;}
   k = str - orig_str;
+
+  /* this is equivalent to:
+   *    str = strpbrk(str, "(); \"\t\r\n");
+   *    if (!str) 
+   *      {
+   *        k = strlen(orig_str);
+   *        str = (char *)(orig_str + k);
+   *      }
+   *    else k = str - orig_str;
+   * but slightly faster.
+   */
+
   port_string_point(pt) += k;
   
   if ((!atom_case) &&             /* there's a bizarre special case here \ with the next char #\null: (eval-string "(list \\\x00 1)") */
@@ -42283,6 +42303,17 @@ static s7_pointer step_dox_c_s_direct(s7_scheme *sc, s7_pointer code, s7_pointer
   return(c_call(code)(sc, sc->T1_1));
 }
 
+static s7_pointer step_dox_read_char_s(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+{
+  s7_pointer port;
+  port = slot_value(slot_pending_value(slot));
+  if (is_input_port(port))
+    return(chars[port_read_character(port)(sc, port)]);
+
+  car(sc->T1_1) = port;
+  return(g_read_char_1(sc, sc->T1_1));
+}
+
 static s7_pointer step_dox_c_sc(s7_scheme *sc, s7_pointer code, s7_pointer slot)
 {
   s7_pointer args;
@@ -42422,20 +42453,20 @@ static dox_function step_dox_eval(s7_scheme *sc, s7_pointer code, s7_pointer var
     case HOP_SAFE_C_C: 
       if (var == cadr(code))
 	{
-      if (fcdr(code) == (s7_pointer)g_add_cs1)
-	return(dox_add_t1);
-      if (fcdr(code) == (s7_pointer)g_subtract_cs1)
-	return(dox_sub_t1);
+	  if (fcdr(code) == (s7_pointer)g_add_cs1)
+	    return(dox_add_t1);
+	  if (fcdr(code) == (s7_pointer)g_subtract_cs1)
+	    return(dox_sub_t1);
 
-      if (fcdr(code) == (s7_pointer)g_add_si)
-	return(dox_add_ti);
+	  if (fcdr(code) == (s7_pointer)g_add_si)
+	    return(dox_add_ti);
 
-      /* (+ i c) (- i c)?
-       * (+ 1 i) -> cs
-       */
+	  /* (+ i c) (- i c)?
+	   * (+ 1 i) -> cs
+	   */
 #if 0
-      if (fcdr(code) == (s7_pointer)g_add_sf)
-	return(dox_add_tf);
+	  if (fcdr(code) == (s7_pointer)g_add_sf)
+	    return(dox_add_tf);
 #endif
 	}
       return(step_dox_c_c);
@@ -42448,7 +42479,11 @@ static dox_function step_dox_eval(s7_scheme *sc, s7_pointer code, s7_pointer var
 	  return(step_dox_c_s_direct);
 	}
       if (var)
-	return(step_dox_c_s_indirect);
+	{
+	  if (fcdr(code) == (s7_pointer)g_read_char_1)
+	    return(step_dox_read_char_s);
+	  return(step_dox_c_s_indirect);
+	}
       return(step_dox_c_s);
 
     case HOP_SAFE_C_SC:      return((var == cadr(code)) ? step_dox_c_sc_direct : step_dox_c_sc);
@@ -42461,18 +42496,18 @@ static dox_function step_dox_eval(s7_scheme *sc, s7_pointer code, s7_pointer var
 }
 
 
-static s7_pointer end_dox_c_c(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+static s7_pointer end_dox_c_c(s7_scheme *sc, s7_pointer code)
 {
   return(c_call(code)(sc, cdr(code)));
 }
 
-static s7_pointer end_dox_c_s(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+static s7_pointer end_dox_c_s(s7_scheme *sc, s7_pointer code)
 {
   car(sc->T1_1) = slot_value(environment_dox1(sc->envir));
   return(c_call(code)(sc, sc->T1_1));
 }
 
-static s7_pointer end_dox_c_sc(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+static s7_pointer end_dox_c_sc(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer args;
   args = cdr(code);
@@ -42481,7 +42516,7 @@ static s7_pointer end_dox_c_sc(s7_scheme *sc, s7_pointer code, s7_pointer slot)
   return(c_call(code)(sc, sc->T2_1));
 }
 
-static s7_pointer end_dox_c_cs(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+static s7_pointer end_dox_c_cs(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer args;
   args = cdr(code);
@@ -42490,14 +42525,14 @@ static s7_pointer end_dox_c_cs(s7_scheme *sc, s7_pointer code, s7_pointer slot)
   return(c_call(code)(sc, sc->T2_1));
 }
 
-static s7_pointer end_dox_c_ss(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+static s7_pointer end_dox_c_ss(s7_scheme *sc, s7_pointer code)
 {
   car(sc->T2_1) = slot_value(environment_dox1(sc->envir));
   car(sc->T2_2) = slot_value(environment_dox2(sc->envir));
   return(c_call(code)(sc, sc->T2_1));
 }
 
-static s7_pointer end_dox_c_qs(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+static s7_pointer end_dox_c_qs(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer args;
   args = cdr(code);
@@ -42506,7 +42541,7 @@ static s7_pointer end_dox_c_qs(s7_scheme *sc, s7_pointer code, s7_pointer slot)
   return(c_call(code)(sc, sc->T2_1));
 }
 
-static s7_pointer end_dox_c_s_opcq(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+static s7_pointer end_dox_c_s_opcq(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer args;
   args = cdr(code);
@@ -42515,7 +42550,7 @@ static s7_pointer end_dox_c_s_opcq(s7_scheme *sc, s7_pointer code, s7_pointer sl
   return(c_call(code)(sc, sc->T2_1));
 }
 
-static s7_pointer end_dox_c_opsq_s(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+static s7_pointer end_dox_c_opsq_s(s7_scheme *sc, s7_pointer code)
 {
   car(sc->T1_1) = slot_value(environment_dox1(sc->envir));
   car(sc->T2_1) = c_call(cadr(code))(sc, sc->T1_1);
@@ -42523,7 +42558,7 @@ static s7_pointer end_dox_c_opsq_s(s7_scheme *sc, s7_pointer code, s7_pointer sl
   return(c_call(code)(sc, sc->T2_1));
 }
 
-static s7_pointer end_dox_c_s_opsq(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+static s7_pointer end_dox_c_s_opsq(s7_scheme *sc, s7_pointer code)
 {
   car(sc->T1_1) = slot_value(environment_dox2(sc->envir));
   car(sc->T2_2) = c_call(caddr(code))(sc, sc->T1_1);
@@ -42531,7 +42566,7 @@ static s7_pointer end_dox_c_s_opsq(s7_scheme *sc, s7_pointer code, s7_pointer sl
   return(c_call(code)(sc, sc->T2_1));
 }
 
-static s7_pointer end_dox_c_s_opscq(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+static s7_pointer end_dox_c_s_opscq(s7_scheme *sc, s7_pointer code)
 {
   car(sc->T2_1) = slot_value(environment_dox2(sc->envir));
   car(sc->T2_2) = caddr(caddr(code));
@@ -42540,7 +42575,7 @@ static s7_pointer end_dox_c_s_opscq(s7_scheme *sc, s7_pointer code, s7_pointer s
   return(c_call(code)(sc, sc->T2_1));
 }
 
-static s7_pointer end_dox_c_s_opssq(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+static s7_pointer end_dox_c_s_opssq(s7_scheme *sc, s7_pointer code)
 {
   car(sc->T2_1) = slot_value(environment_dox2(sc->envir));
   car(sc->T2_2) = finder(sc, caddr(caddr(code)));
@@ -42549,7 +42584,7 @@ static s7_pointer end_dox_c_s_opssq(s7_scheme *sc, s7_pointer code, s7_pointer s
   return(c_call(code)(sc, sc->T2_1));
 }
 
-static s7_pointer end_dox_or_c(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+static s7_pointer end_dox_or_c(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer p;
   for (p = cdr(code); is_pair(p); p = cdr(p))
@@ -42562,7 +42597,7 @@ static s7_pointer end_dox_or_c(s7_scheme *sc, s7_pointer code, s7_pointer slot)
   return(sc->value);
 }
 
-static s7_pointer end_dox_or_all_x(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+static s7_pointer end_dox_or_all_x(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer p;
   for (p = cdr(code); is_pair(p); p = cdr(p))
@@ -42572,15 +42607,42 @@ static s7_pointer end_dox_or_all_x(s7_scheme *sc, s7_pointer code, s7_pointer sl
 	return(sc->value);
     }
   sc->value = sc->F;
-  return(sc->value);
+  return(sc->F);
 }
 
-static dox_function end_dox_eval(s7_scheme *sc, s7_pointer code)
+static s7_pointer end_dox_is_eof(s7_scheme *sc, s7_pointer code)
+{
+  return(make_boolean(sc, slot_value(environment_dox1(sc->envir)) == sc->EOF_OBJECT));
+}
+
+static s7_pointer end_dox_equal_s_ic(s7_scheme *sc, s7_pointer code)
+{
+  s7_pointer x;
+  x = slot_value(environment_dox1(sc->envir));
+  if (is_integer(x))
+    return(make_boolean(sc, integer(x) == integer(caddr(code))));
+  if (is_real(x))
+    return(make_boolean(sc, real(x) == integer(caddr(code))));
+  return(sc->F);
+}
+
+static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code)
 {
   switch (optimize_data(code))
     {
-    case HOP_SAFE_C_C:       return(end_dox_c_c);
-    case HOP_SAFE_C_S:       return(end_dox_c_s);
+    case HOP_SAFE_C_C: 
+      if (fcdr(code) == (s7_pointer)g_equal_s_ic)
+	{
+	  set_optimize_data(code, HOP_SAFE_C_SC); /* so the dox init section will pass us the cadr slot */
+	  return(end_dox_equal_s_ic);
+	}
+      return(end_dox_c_c);
+
+    case HOP_SAFE_C_S:       
+      if (fcdr(code) == (s7_pointer)g_is_eof_object)
+	return(end_dox_is_eof);
+      return(end_dox_c_s);
+
     case HOP_SAFE_C_SC:      return(end_dox_c_sc);
     case HOP_SAFE_C_CS:      return(end_dox_c_cs);
     case HOP_SAFE_C_SS:      return(end_dox_c_ss);
@@ -45116,7 +45178,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      df = (dox_function)fcdr(slot_expression(slot));
 	      if (df == step_dox_c_ss_direct)
 		slot_pending_value(slot) = find_symbol(sc, caddar(slot_expression(slot)));
-	      if (df == step_dox_c_s_indirect)
+	      if ((df == step_dox_c_s_indirect) ||
+		  (df == step_dox_read_char_s))
 		slot_pending_value(slot) = find_symbol(sc, cadar(slot_expression(slot)));
 	    }
 
@@ -62036,9 +62099,9 @@ s7_scheme *s7_init(void)
  * so set[increment]/let/2-arg Z's and check many-arg case
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
- * bench    42736 8752 8051 7725 6515 6098
+ * bench    42736 8752 8051 7725 6515 5988
  * lint           9328 8140 7887 7736 7687
- * index    44300 3291 3005 2742 2078 1814
+ * index    44300 3291 3005 2742 2078 1797
  * s7test    1721 1358 1297 1244  977  969
  * t455|6     265   89   55   31   14   14
  * t502        90   43   39   36   29   25

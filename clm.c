@@ -12621,7 +12621,11 @@ static int mix_type(int out_chans, int in_chans, mus_any *umx, mus_any ***envs)
   if (envs)
     {
       if ((in_chans == 1) && (out_chans == 1)) 
-	return(ENVELOPED_MONO_MIX);
+	{
+	  if (envs[0][0])
+	    return(ENVELOPED_MONO_MIX);
+	  return(SCALED_MONO_MIX);
+	}
       else 
 	{
 	  if (mx)
@@ -12675,6 +12679,14 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_
   switch (mixtype)
     {
     case ENVELOPED_MONO_MIX:
+      for (offi = 0, inc = in_start, outc = out_start; offi < out_frames; offi++, inc++, outc++)
+	{
+	  mus_file_to_frame(inf, inc, (mus_any *)frin);
+	  frin->vals[0] *= mus_env(envs[0][0]);
+	  mus_frame_to_file(outf, outc, (mus_any *)frin);
+	}
+      break;
+
     case ENVELOPED_MIX:
       if (umx == NULL) 
 	mx = (mus_mixer *)mus_make_identity_mixer(mix_chans); /* fall through */

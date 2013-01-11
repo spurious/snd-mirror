@@ -2233,8 +2233,8 @@
 	      (outa k (* pulse-amp
 			 (env pulsef)
 			 (+ (* .8 (oscil gen1 0.0 rn))
-			    (* .1 (oscil gen2 0.0 (* 2 rn)))
-			    (* .1 (oscil gen3 0.0 (* 3 rn))))))))
+			    (* .1 (oscil gen2 0.0 (* 2.0 rn)))
+			    (* .1 (oscil gen3 0.0 (* 3.0 rn))))))))
 
 	  (mus-reset pulsef)
 	  (set! pulses (- pulses 1))
