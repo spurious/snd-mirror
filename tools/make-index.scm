@@ -65,11 +65,7 @@
   (strftime "%d-%b-%y %H:%M %Z" (localtime (current-time))))
 
 (define (alphanumeric? c) (or (char-alphabetic? c) (char-numeric? c)))
-(define-expansion (incf sym) `(set! ,sym (+ ,sym 1)))
-(define-expansion (decf sym) `(set! ,sym (- ,sym 1)))
 (define-expansion (when test . forms) `(if ,test (begin ,@forms)))
-(define-expansion (push val sym) `(set! ,sym (cons ,val ,sym)))
-(define-expansion (pop sym) (let ((v (gensym))) `(let ((,v (car ,sym))) (set! ,sym (cdr ,sym)) ,v)))
 
 (define (find-if pred l)
   (cond ((null? l) #f)
@@ -284,18 +280,18 @@
 						(char=? c #\!))
 					    (begin
 					     (set! (rb-name j) c)
-					     (incf i)
-					     (incf j))
+					     (set! i (+ i 1))
+					     (set! j (+ j 1)))
 					    (if (and (char=? c #\-)
 						     (char=? (scheme-name (+ i 1)) #\>))
 						(begin
 						 (set! (rb-name j) #\2)
-						 (incf j)
+						 (set! j (+ j 1))
 						 (set! i (+ i 2)))
 						(begin
 						 (set! (rb-name j) #\_)
-						 (incf i)
-						 (incf j))))))
+						 (set! i (+ i 1))
+						 (set! j (+ j 1)))))))
 				    (if (not (= j strlen))
 					(substring rb-name 0 j)
 					rb-name)))))))))))
@@ -333,7 +329,7 @@
 	  ))
 
       (set! (outstr j) #\")
-      (incf j)
+      (set! j (+ j 1))
       (do ()
 	  ((>= i len))
 	(let ((c (xref i)))
@@ -349,7 +345,7 @@
 		 (if in-name
 		     (begin
 		       (set! (outstr j) #\})
-		       (incf j)
+		       (set! j (+ j 1))
 		       (set! in-name #f)))
 		 (set! in-bracket #t)
 		 (if (or (and (< (+ i 7) len) 
@@ -362,61 +358,61 @@
 		       (if need-start
 			   (begin
 			     (set! (outstr j) #\,)
-			     (incf j)
+			     (set! j (+ j 1))
 			     (set! (outstr j) #\newline)
-			     (incf j)
+			     (set! j (+ j 1))
 			     (set! (outstr j) #\space)
-			     (incf j)	    
+			     (set! j (+ j 1))	    
 			     (set! (outstr j) #\space)
-			     (incf j)	    
+			     (set! j (+ j 1))	    
 			     (set! (outstr j) #\")
-			     (incf j)
+			     (set! j (+ j 1))
 			     (set! need-start #f)))
 		       (set! in-href #t)
 		       (set! (outstr j) #\{)
-		       (incf j))))
+		       (set! j (+ j 1)))))
 		
 		((#\&)
 		 (if (and (< (+ i 4) len) 
 			  (string=? (substring xref i (+ i 4)) "&gt;"))
 		     (begin
 		       (set! (outstr j) #\>)
-		       (incf j)
+		       (set! j (+ j 1))
 		       (set! i (+ i 3))))) ; incf'd again below
 		
 		((#\newline)
 		 (begin
 		   (set! (outstr j) #\")
-		   (incf j)
+		   (set! j (+ j 1))
 		   (set! need-start #t)))
 		
 		((#\")
 		 (begin
 		   (set! (outstr j) #\\)
-		   (incf j)
+		   (set! j (+ j 1))
 		   (set! (outstr j) c)
-		   (incf j)))
+		   (set! j (+ j 1))))
 		
 		(else
 		 (begin
 		   (if need-start
 		       (begin
 			 (set! (outstr j) #\,)
-			 (incf j)
+			 (set! j (+ j 1))
 			 (set! (outstr j) #\newline)
-			 (incf j)
+			 (set! j (+ j 1))
 			 (set! (outstr j) #\space)
-			 (incf j)	    
+			 (set! j (+ j 1))	    
 			 (set! (outstr j) #\space)
-			 (incf j)	    
+			 (set! j (+ j 1))	    
 			 (set! (outstr j) #\")
-			 (incf j)
+			 (set! j (+ j 1))
 			 (set! need-start #f)))
 		   (set! (outstr j) c)
-		   (incf j))))
+		   (set! j (+ j 1)))))
 	      )
 	  )
-	(incf i))
+	(set! i (+ i 1)))
       (list 
        (substring outstr 0 j)
        url-str))))
@@ -770,7 +766,7 @@
 				      (set! (generals g) (substring dline (+ compos 11) epos))
 				      (set! (gfiles g) (car file))
 				      (set! (xrefs g) "")
-				      (incf g))))
+				      (set! g (+ g 1)))))
 			      (if indpos
 				  (let ((epos (string-position " -->" dline)))
 				    (if (not epos) 
@@ -779,7 +775,7 @@
 						  with-scm)
 					  (set! (names n) (substring dline (+ indpos 16) epos))
 					  (set! (files n) (car file))
-					  (incf n))))
+					  (set! n (+ n 1)))))
 				  (if xpos
 				      (set! xrefing #t)
 				      (do ()
@@ -794,7 +790,7 @@
 						(set! (names n) (string-append (substring dline 0 epos) "</a>"))
 						(set! (files n) (car file))
 						(set! (topics n) topic)
-						(incf n)
+						(set! n (+ n 1))
 						(set! dline (substring dline (+ epos 4)))
 						(set! pos (string-position "<em class=def id=" dline))
 						)))))
@@ -820,7 +816,7 @@
         (set! (tnames ctr)
 	      (clean-and-downcase-first-char (names i) capitalized (topics i) (files i)))
 	(if (positive? (length (ind-sortby (tnames ctr))))
-	    (incf ctr)))
+	    (set! ctr (+ ctr 1))))
 
       (when (not (= ctr n))
         (set! n ctr)
@@ -957,13 +953,13 @@
 		      (set! (ind-indexed name) #t))
 		    (format ofil "~%")))
 
-	      (incf ctr)
+	      (set! ctr (+ ctr 1))
 	      (when (< ctr cols)
 	        (format ofil "<td></td>"))
 			  
 	      (when (= ctr cols)
 		(if got-tr (begin (format ofil "</tr>~%") (set! got-tr #f)))
-		(incf row)
+		(set! row (+ row 1))
 		(if (< i n) (begin (format ofil "  <tr>") (set! got-tr #t)))
 		(set! ctr 0))))
 	  (format ofil "~%</table>~%</body></html>~%")))
@@ -1007,8 +1003,8 @@
 			 (when (and ind
 				    (string? ind)
 				    (positive? (length ind)))
-			   (push ind help-names)
-			   (push url help-urls)))))
+			   (set! help-names (cons ind help-names))
+			   (set! help-urls (cons url help-urls))))))
 
 		 (set! help-names (reverse help-names))
 		 (set! help-urls (reverse help-urls))
@@ -1115,7 +1111,7 @@
 	     (let line-loop ((line (read-line f)))
 	       (if (not (eof-object? line))
 		   (begin
-		     (incf linectr)
+		     (set! linectr (+ linectr 1))
 		     (let* ((len (length line))
 			    (opos (and line 
 				       (positive? len)
@@ -1130,17 +1126,17 @@
 				       (not (positive? p-quotes)))
 				  (if (not in-comment) 
 				      (format #t "~A[~D]: ~A has unclosed <?~%" file linectr line)))
-			      (incf openctr)
+			      (set! openctr (+ openctr 1))
 			      (if (and (< i (- len 3))
 				       (char=? (line (+ i 1)) #\!)
 				       (char=? (line (+ i 2)) #\-)
 				       (char=? (line (+ i 3)) #\-))
 				  (begin
-				    (incf comments)
+				    (set! comments (+ comments 1))
 				    (if (> comments 1)
 					(begin 
 					  (format #t "~A[~D]: nested <!--?~%" file linectr)
-					  (decf comments)))
+					  (set! comments (- comments 1))))
 				    (set! in-comment #t)))
 			      (if (and (not in-comment)
 				       (< i (- len 1))
@@ -1150,13 +1146,13 @@
 			     ;; else c != <
 			     
 			     ((#\>)
-			      (decf openctr)
+			      (set! openctr (- openctr 1))
 			      (if (and (>= i 2)
 				       (char=? (line (- i 1)) #\-)
 				       (char=? (line (- i 2)) #\-))
 				  (begin
 				    (set! in-comment #f)
-				    (decf comments)
+				    (set! comments (- comments 1))
 				    (if (< comments 0)
 					(begin
 					  (format #t "~A[~D]: extra -->?~%" file linectr)
@@ -1193,21 +1189,21 @@
 				  (format #t "~A[~D]: unknown escape sequence: ~A~%" file linectr line)))
 			     
 			     ((#\()
-			      (incf p-parens))
+			      (set! p-parens (+ p-parens 1)))
 			     
 			     ((#\)) 
-			      (decf p-parens))
+			      (set! p-parens (- p-parens 1)))
 			     
 			     ((#\{) 
-			      (incf p-curlys))
+			      (set! p-curlys (+ p-curlys 1)))
 			     
 			     ((#\})
-			      (decf p-curlys))
+			      (set! p-curlys (- p-curlys 1)))
 			     
 			     ((#\")
 			      (if (or (= i 0)
 				      (not (char=? (line (- i 1)) #\\)))
-				  (incf p-quotes)))))
+				  (set! p-quotes (+ p-quotes 1))))))
 			 
 			 ;; end line scan
 			 (if (not in-comment)
@@ -1359,7 +1355,7 @@
 									    ((--)
 									     (format #t "~A[~D]: <-- missing !?~%" file linectr)))
 									  (if (not (memq opener '(br spacer li hr area)))
-									      (set! commands (push opener commands)))))))))))
+									      (set! commands (cons opener commands)))))))))))
 					      ;; end if closing
 					      (set! start #f))))))))
 			     ) ; if not in-comment...
@@ -1389,7 +1385,7 @@
 					   (format #t "~A[~D]: ambiguous name: ~A~%" file linectr new-name))
 				       (hash-table-set! names new-name file))
 
-				     (incf name)
+				     (set! name (+ name 1))
 				     (set! dline (substring dline epos))
 				     (set! pos (string-position "<em class=def id=" dline))
 				     (set! pos-len 18))))))
@@ -1432,7 +1428,7 @@
 					       (format #t ";can't find id ~A~%" name)
 					       (hash-table-set! ids name (+ data 1)))))
 				     
-				     (incf href)
+				     (set! href (+ href 1))
 				     (set! dline (substring dline epos))
 				     (set! pos (string-position " href=" dline))
 				     (set! pos-len 7))))))))

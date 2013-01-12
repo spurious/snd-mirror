@@ -232,7 +232,7 @@
 
 (set! *clm-default-frequency* 0.0)
 
-(defmacro defanimal (args . body)
+(define-macro (defanimal args . body)
   (let ((name (car args))
 	(targs (cdr args)))
   `(begin 

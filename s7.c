@@ -27461,6 +27461,12 @@ static int hash_loc(s7_scheme *sc, s7_pointer key)
   return(type(key));
 }
 
+/* TODO: doc/test hash-table-index (sxhash in CL) */
+static s7_pointer g_hash_table_index(s7_scheme *sc, s7_pointer args)
+{
+  return(make_integer(sc, hash_loc(sc, car(args))));
+}
+
 
 static s7_pointer hash_empty(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
@@ -37620,6 +37626,7 @@ static void annotate_arg(s7_scheme *sc, s7_pointer arg)
   fcdr(arg) = (s7_pointer)all_x_eval(car(arg));
 }
 
+static s7_pointer check_or(s7_scheme *sc);
 
 static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer func, int hop, int pairs, int symbols, int quotes, int bad_pairs)
 {
@@ -37689,11 +37696,15 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		{
 		  bool safe_case;
 		  safe_case = is_safe_closure(func);
-		  set_optimize_data(car_x, hop + ((safe_case) ? OP_SAFE_CLOSURE_S : OP_CLOSURE_S));
-		  if ((!safe_case) &&
-		      (is_one_liner(closure_body(func))) &&
-		      (!symbol_has_accessor(car(closure_args(func)))))
-		    set_optimize_data(car_x, hop + OP_CLOSURE_Sp);
+		  if (safe_case)
+		    set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_S);
+		  else
+		    {
+		      if ((is_one_liner(closure_body(func))) &&
+			  (!symbol_has_accessor(car(closure_args(func)))))
+			set_optimize_data(car_x, hop + OP_CLOSURE_Sp);
+		      else set_optimize_data(car_x, hop + OP_CLOSURE_S);
+		    }
 		}
 	      else set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_C : OP_CLOSURE_C));
 	      ecdr(car_x) = func;
@@ -38055,10 +38066,14 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		{
 		  bool safe_case;
 		  safe_case = is_safe_closure(func);
-		  set_optimize_data(car_x, hop + ((safe_case) ? OP_SAFE_CLOSURE_SS : OP_CLOSURE_SS));
-		  if ((!safe_case) &&
-		      (!arglist_has_accessed_symbol(closure_args(func))))
-		    set_optimize_data(car_x, hop + ((is_one_liner(closure_body(func))) ? OP_CLOSURE_SSp : OP_CLOSURE_SSb));
+		  if (safe_case)
+		    set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_SS);
+		  else
+		    {
+		      if (!arglist_has_accessed_symbol(closure_args(func)))
+			set_optimize_data(car_x, hop + ((is_one_liner(closure_body(func))) ? OP_CLOSURE_SSp : OP_CLOSURE_SSb));
+		      else set_optimize_data(car_x, hop + OP_CLOSURE_SS);
+		    }
 		}
 	      else
 		{
@@ -54879,7 +54894,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
       /* --------------- */
-      /* TODO: symbols and constants are ok here now and quoted stuff */
 
     case OP_SAFE_AND_ALL_X:
       {
@@ -55006,7 +55020,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
       /* --------------- */
-      /* TODO: symbols and constants are ok here now and quoted stuff */
 
     case OP_SAFE_OR_ALL_X:
       {
@@ -61652,7 +61665,7 @@ s7_scheme *s7_init(void)
   sc->HASH_TABLE_SET =        s7_define_safe_function(sc, "hash-table-set!",         g_hash_table_set,         3, 0, false, H_hash_table_set);
   sc->HASH_TABLE_SIZE =       s7_define_safe_function(sc, "hash-table-size",         g_hash_table_size,        1, 0, false, H_hash_table_size);
   
-  /* s7_define_safe_function(sc, "hash-table-entries", g_hash_table_entries, 1, 0, false, "an experiment"); */
+  s7_define_safe_function(sc, "hash-table-index", g_hash_table_index, 1, 0, false, "an experiment");
 
   ht_iter_tag = s7_new_type_x("hash-table-iterator", print_ht_iter, free_ht_iter, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
   sc->MAKE_HASH_TABLE_ITERATOR = s7_define_safe_function(sc, "make-hash-table-iterator", g_make_hash_table_iterator, 1, 0, false, H_make_hash_table_iterator);
@@ -62092,16 +62105,12 @@ s7_scheme *s7_init(void)
  * perhaps define-expansion should be define-reader-macro
  * replace "frame" with "environment" if possible (frame collides with clm)
  * f|gcdr in let_op*q -- can let_r -> let_all_x? (or let_d similarly?)
- * the op Z and D cases can be split to Z|A or A either separate or all_x
- * check set_symbol_z and friends [if_z_z][let_c_d]
- *   xxz -> aaz etc and sz->sa|sz etc
  *   in set pair, object set et al need not use eval_args/apply if all args are all_x ops
- * so set[increment]/let/2-arg Z's and check many-arg case
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
  * bench    42736 8752 8051 7725 6515 5988
- * lint           9328 8140 7887 7736 7687
- * index    44300 3291 3005 2742 2078 1797
+ * lint           9328 8140 7887 7736 7410
+ * index    44300 3291 3005 2742 2078 1795
  * s7test    1721 1358 1297 1244  977  969
  * t455|6     265   89   55   31   14   14
  * t502        90   43   39   36   29   25
