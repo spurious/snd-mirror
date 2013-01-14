@@ -5979,16 +5979,18 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_selected_files, g_view_files_selected_files_w, H_view_files_selected_files,
 				   S_setB S_view_files_selected_files, g_view_files_set_selected_files_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE(S_add_sound_file_extension, g_add_sound_file_extension_w, 1, 0, 0, H_add_sound_file_extension);
+  XEN_DEFINE_SAFE_PROCEDURE(S_add_sound_file_extension, g_add_sound_file_extension_w, 1, 0, 0, H_add_sound_file_extension);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_file_extensions, g_sound_file_extensions_w, H_sound_file_extensions,
 				   S_setB S_sound_file_extensions, g_set_sound_file_extensions_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE(S_sound_file_p,                     g_sound_file_p_w,                     1, 0, 0, H_sound_file_p);
-  XEN_DEFINE_PROCEDURE(S_file_write_date,                  g_file_write_date_w,                  1, 0, 0, H_file_write_date);
-  XEN_DEFINE_PROCEDURE(S_soundfont_info,                   g_soundfont_info_w,                   0, 1, 0, H_soundfont_info);
-  XEN_DEFINE_PROCEDURE(S_add_directory_to_view_files_list, g_add_directory_to_view_files_list_w, 1, 1, 0, H_add_directory_to_view_files_list);
-  XEN_DEFINE_PROCEDURE(S_add_file_to_view_files_list,      g_add_file_to_view_files_list_w,      1, 1, 0, H_add_file_to_view_files_list);
-  XEN_DEFINE_PROCEDURE(S_sound_files_in_directory,         g_sound_files_in_directory_w,         0, 1, 0, H_sound_files_in_directory);
+  XEN_DEFINE_SAFE_PROCEDURE(S_sound_file_p,                     g_sound_file_p_w,                     1, 0, 0, H_sound_file_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_file_write_date,                  g_file_write_date_w,                  1, 0, 0, H_file_write_date);
+  XEN_DEFINE_SAFE_PROCEDURE(S_soundfont_info,                   g_soundfont_info_w,                   0, 1, 0, H_soundfont_info);
+  XEN_DEFINE_SAFE_PROCEDURE(S_add_directory_to_view_files_list, g_add_directory_to_view_files_list_w, 1, 1, 0, H_add_directory_to_view_files_list);
+  XEN_DEFINE_SAFE_PROCEDURE(S_add_file_to_view_files_list,      g_add_file_to_view_files_list_w,      1, 1, 0, H_add_file_to_view_files_list);
+  XEN_DEFINE_SAFE_PROCEDURE(S_sound_files_in_directory,         g_sound_files_in_directory_w,         0, 1, 0, H_sound_files_in_directory);
+  XEN_DEFINE_SAFE_PROCEDURE(S_disk_kspace,                      g_disk_kspace_w,                      1, 0, 0, H_disk_kspace);
+
   XEN_DEFINE_PROCEDURE(S_open_file_dialog,                 g_open_file_dialog_w,                 0, 1, 0, H_open_file_dialog);
   XEN_DEFINE_PROCEDURE(S_mix_file_dialog,                  g_mix_file_dialog_w,                  0, 1, 0, H_mix_file_dialog);
   XEN_DEFINE_PROCEDURE(S_insert_file_dialog,               g_insert_file_dialog_w,               0, 1, 0, H_insert_file_dialog);
@@ -5999,7 +6001,7 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE(S_save_sound_dialog,                g_save_sound_dialog_w,                0, 1, 0, H_save_sound_dialog);
   XEN_DEFINE_PROCEDURE(S_new_sound_dialog,                 g_new_sound_dialog_w,                 0, 1, 0, H_new_sound_dialog);
   XEN_DEFINE_PROCEDURE(S_info_dialog,                      g_info_dialog_w,                      2, 0, 0, H_info_dialog);
-  XEN_DEFINE_PROCEDURE(S_disk_kspace,                      g_disk_kspace_w,                      1, 0, 0, H_disk_kspace);
+
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_loop_info,      g_sound_loop_info_w, H_sound_loop_info,
 				   S_setB S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
 
@@ -6132,12 +6134,12 @@ files list of the View Files dialog.  If it returns " PROC_TRUE ", the default a
   XEN_PROTECT_FROM_GC(ss->file_filters);
   XEN_PROTECT_FROM_GC(ss->file_sorters);
 
-  XEN_DEFINE_PROCEDURE(S_add_file_filter,    g_add_file_filter_w,    2, 0, 0, H_add_file_filter);
-  XEN_DEFINE_PROCEDURE(S_delete_file_filter, g_delete_file_filter_w, 1, 0, 0, H_delete_file_filter);
+  XEN_DEFINE_SAFE_PROCEDURE(S_add_file_filter,    g_add_file_filter_w,    2, 0, 0, H_add_file_filter);
+  XEN_DEFINE_SAFE_PROCEDURE(S_delete_file_filter, g_delete_file_filter_w, 1, 0, 0, H_delete_file_filter);
 
-  XEN_DEFINE_PROCEDURE(S_add_file_sorter,    g_add_file_sorter_w,    2, 0, 0, H_add_file_sorter);
-  XEN_DEFINE_PROCEDURE(S_delete_file_sorter, g_delete_file_sorter_w, 1, 0, 0, H_delete_file_sorter);
-  XEN_DEFINE_PROCEDURE(S_snd_tempnam,        g_snd_tempnam_w,        0, 0, 0, H_snd_tempnam);
+  XEN_DEFINE_SAFE_PROCEDURE(S_add_file_sorter,    g_add_file_sorter_w,    2, 0, 0, H_add_file_sorter);
+  XEN_DEFINE_SAFE_PROCEDURE(S_delete_file_sorter, g_delete_file_sorter_w, 1, 0, 0, H_delete_file_sorter);
+  XEN_DEFINE_SAFE_PROCEDURE(S_snd_tempnam,        g_snd_tempnam_w,        0, 0, 0, H_snd_tempnam);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_auto_update, g_auto_update_w, H_auto_update,
 				   S_setB S_auto_update, g_set_auto_update_w,  0, 0, 1, 0);
