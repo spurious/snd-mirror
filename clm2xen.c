@@ -10674,7 +10674,76 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
       buf = ob[0];
       dlen = mus_file_buffer_size();
 
-      /* fprintf(stderr, "env: %lld: %s\n", end - pos, DISPLAY(callee)); */
+      if (s7_function_choice(sc, callee) == g_direct_polywave_2)
+	{
+	  mus_any *pw = NULL;
+	  GET_GENERATOR_CADR(callee, polywave, pw);
+	  callee = caddr(callee);
+	  
+	  for (; pos < end;)
+	    {
+	      mus_safe_out_any_to_file(pos++, mus_env(e) * mus_polywave(pw, s7_call_direct_to_real_and_free(sc, callee)), 0, clm_output_gen);
+	      dstart = mus_out_any_data_start(clm_output_gen);
+	      dend = mus_out_any_data_end(clm_output_gen);
+	      if (dend > end)
+		dlen = end - dstart;
+	      for (dpos = pos - dstart; dpos < dlen; dpos++)
+		{
+		  (*step) = pos++;
+		  buf[dpos] += (mus_env(e) * mus_polywave(pw, s7_call_direct_to_real_and_free(sc, callee)));
+		}
+	      mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
+	    }
+	  return(args);
+	}
+
+      if ((s7_function_choice(sc, callee) == g_direct_wave_train_2) &&
+	  (s7_function_choice(sc, caddr(callee)) == g_env_1))
+	{
+	  mus_any *wt = NULL, *wte = NULL;
+	  GET_GENERATOR_CADR(callee, wave-train, wt);
+	  callee = caddr(callee);
+	  GET_GENERATOR_CADR(callee, env, wte);
+	  
+	  for (; pos < end;)
+	    {
+	      mus_safe_out_any_to_file(pos++, mus_env(e) * mus_wave_train(wt, mus_env(wte)), 0, clm_output_gen);
+	      dstart = mus_out_any_data_start(clm_output_gen);
+	      dend = mus_out_any_data_end(clm_output_gen);
+	      if (dend > end)
+		dlen = end - dstart;
+	      for (dpos = pos - dstart; dpos < dlen; dpos++)
+		{
+		  (*step) = pos++;
+		  buf[dpos] += (mus_env(e) * mus_wave_train(wt, mus_env(wte)));
+		}
+	      mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
+	    }
+	  return(args);
+	}
+
+      if (s7_function_choice(sc, callee) == g_direct_oscil_2)
+	{
+	  mus_any *o = NULL;
+	  GET_GENERATOR_CADR(callee, oscil, o);
+	  callee = caddr(callee);
+	  
+	  for (; pos < end;)
+	    {
+	      mus_safe_out_any_to_file(pos++, mus_env(e) * mus_oscil_fm(o, s7_call_direct_to_real_and_free(sc, callee)), 0, clm_output_gen);
+	      dstart = mus_out_any_data_start(clm_output_gen);
+	      dend = mus_out_any_data_end(clm_output_gen);
+	      if (dend > end)
+		dlen = end - dstart;
+	      for (dpos = pos - dstart; dpos < dlen; dpos++)
+		{
+		  (*step) = pos++;
+		  buf[dpos] += (mus_env(e) * mus_oscil_fm(o, s7_call_direct_to_real_and_free(sc, callee)));
+		}
+	      mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
+	    }
+	  return(args);
+	}
 
       for (; pos < end;)
 	{

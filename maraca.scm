@@ -22,6 +22,7 @@
 	  (output (make-vct 2))
 	  (coeffs (make-vct 2))
 	  (j 0)
+	  (h20 (hz->radians 20.0))
 	  (sndamp (/ amp 16384.0))
 	  (srate4 (floor (/ (mus-srate) 4)))
 	  (gain (/ (* (log num-beans 4.0) 40) num-beans)))
@@ -34,7 +35,7 @@
 	(if (< temp two-pi)
 	    (begin
 	      ;; shake over 50msec and add shake energy
-	      (set! temp (+ temp (hz->radians 20)))
+	      (set! temp (+ temp h20))
 	      (set! shake-energy (+ shake-energy (- 1.0 (cos temp))))))
 	(if (= j srate4)		;shake 4 times/sec
 	    (begin
@@ -86,6 +87,7 @@
 	  (output (make-vct (* resn 2)))
 	  (coeffs (make-vct (* resn 2)))
 	  (basesf (make-vct resn))
+	  (h20 (hz->radians 20.0))
 	  (j 0)
 	  (sndamp (/ amp (* 16384.0 resn)))
 	  (srate4 (floor (/ (mus-srate) 4)))
@@ -102,7 +104,7 @@
 	(if (< temp two-pi)
 	    (begin
 	      ;; shake over 50msec and add shake energy
-	      (set! temp (+ temp (hz->radians 20.0)))
+	      (set! temp (+ temp h20))
 	      (set! shake-energy (+ shake-energy (- 1.0 (cos temp))))))
 	(if (= j srate4)		;shake 4 times/sec
 	    (begin

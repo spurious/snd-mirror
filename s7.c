@@ -19775,7 +19775,7 @@ static token_t string_read_semicolon(s7_scheme *sc, s7_pointer pt)
       port_string_point(pt) = port_string_length(pt);
       return(TOKEN_EOF);
     }
-  port_string_point(pt) += (orig_str - str);
+  port_string_point(pt) += (orig_str - str + 1); /* + 1 because strchr leaves orig_str pointing at the newline */
   port_line_number(pt)++;
   return(token(sc));
 }
@@ -44429,6 +44429,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if ((typesflag(sc->code) == SYNTACTIC_PAIR) ||
 		(typeflag(car(sc->code)) == SYNTACTIC_TYPE))
 	      {
+		/* (set! x (* i 2.0)) (set! (target-radii i) 1.0) (set! (v i) (env pulse-ampf))
+		 */
 		push_stack(sc, OP_SAFE_DO_STEP_P, sc->args, code);
 		if (typesflag(sc->code) == SYNTACTIC_PAIR)
 		  sc->op = (opcode_t)lifted_op(sc->code);
@@ -44586,6 +44588,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	fcdr(code) = cddr(code);
 
+	/* this code works but is almost never called 
+	 * (do ((i 0 (+ i 1))) ((= i 10)) (list-set! lst i i)) in s7test.scm for example
+	 * we need something much more general -- even all_x_op isn't called much here
+	 */
 	if ((is_one_liner(fcdr(code))) &&
 	    (is_optimized(car(fcdr(code)))) &&
 	    (is_all_x_op(optimize_data(car(fcdr(code))))) &&
@@ -44889,6 +44895,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     SIMPLE_DO_P:
     case OP_SIMPLE_DO_P:
       {
+	/* body is one line, syntactic */
 	s7_pointer init, end, code;
 	code = sc->code;
 	sc->envir = new_frame_in_env(sc, sc->envir);
@@ -44925,6 +44932,69 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->code = cdadr(code);
 	    goto BEGIN;
 	  }
+
+	/* (((i 0 (+ 1 i))) ((= i len)) (set! (v i) (read-mix-sample reader)))
+	 */
+#if 0
+	/* this code works but is not useful -- OP_SET_PAIR_Z might be more common
+	 */
+	if ((opcode_t)lifted_op(caddr(code)) == OP_SET)
+	  {
+	    sc->code = cdr(caddr(code));
+	    check_set(sc);
+	    if (((opcode_t)lifted_op(caddr(code)) == OP_INCREMENT_SS) &&
+		(is_symbol(cadr(caddr(caar(code))))))
+	      {
+		/* (define (hi n) (let ((x 1)) (do ((i 2 (+ i 1))) ((> i n)) (set! x (* x i))) x))
+		 */
+		s7_pointer s1, s2;
+		s1 = find_symbol(sc, car(sc->code));
+		s2 = find_symbol(sc, cadr(fcdr(sc->code)));
+		if ((is_slot(s1)) &&
+		    (is_slot(s2)))
+		  {
+		    s7_function f, stepf, endf;
+		    s7_pointer ctr, incr, lim;
+
+		    ctr = environment_dox1(sc->envir);
+		    lim = environment_dox2(sc->envir);
+		    incr = caddr(caddr(caar(code)));
+		    f = c_call(cadr(sc->code));
+		    stepf = c_call(caddr(caar(code)));
+		    endf = c_call(caadr(code));
+
+		    while (true)
+		      {
+			car(sc->T2_1) = slot_value(s1);
+			car(sc->T2_2) = slot_value(s2);
+			slot_set_value(s1, f(sc, sc->T2_1));
+
+			car(sc->T2_1) = slot_value(ctr);
+			car(sc->T2_2) = incr;
+			slot_set_value(ctr, stepf(sc, sc->T2_1));			
+			
+			car(sc->T2_1) = slot_value(ctr);
+			car(sc->T2_2) = slot_value(lim);
+			if (is_true(sc, endf(sc, sc->T2_1)))
+			  {
+			    sc->code = cdadr(code);
+			    goto BEGIN;
+			  }
+		      }
+		  }
+	      }
+	    /*
+	      p: OP_SET_PAIR ((r j) 0)
+	      p: OP_SET_PAIR_C_P ((pnew (- i 1)) (p1 i))
+	      p: OP_SET_PAIR_Z ((v i) (delay gen 0.5 i))
+	      p: OP_SET_SYMBOL_Z (sum (+ sum (expt k i) (expt (- k) i)))
+	      p: OP_INCREMENT_SS (x (* x i))
+	      p: OP_SET_PAIR_Z ((v i) (read-mix-sample reader))
+	      OP_SET_PAIR_P ((glot-table2 i) (glot-table i))
+	    */
+	  }
+#endif
+	    
 	push_stack(sc, OP_SIMPLE_DO_STEP_P, sc->args, code);
 	sc->code = caddr(code);
 	goto EVAL;
