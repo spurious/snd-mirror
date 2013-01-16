@@ -12397,27 +12397,6 @@ static s7_pointer src_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	}
       return(src_one);
     }
-#if 0
-  if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))))
-    {
-      if (s7_is_symbol(caddr(expr)))
-	{
-	  s7_function_choice_set_direct(sc, expr);
-	  return(wave_train_2);
-	}
-      if (s7_is_pair(caddr(expr)))
-	{
-	  if (s7_function_choice_is_direct(sc, caddr(expr)))
-	    {
-	      s7_function_choice_set_direct(sc, expr);
-	      if (s7_function_returns_temp(caddr(expr))) 
-		return(direct_wave_train_2);
-	      return(indirect_wave_train_2);
-	    }
-	}
-    }
-#endif
   return(f);
 }
 

@@ -493,12 +493,14 @@
        3/4 #\f (lambda (a) (+ a 1)) :hi (if #f #f) #<eof> #<undefined>))
 ;; this used to include 3.14 and 1+i but that means the (eq? x x) case differs from the (eq? 3.14 3.14) case
 
+(define comment-start (port-line-number))
 #|
 :'(1(1))
 (1 (1))
 :'(1#(1))
 (1# (1))
 |#
+(if (not (= (- (port-line-number) comment-start) 7)) (format *stderr* ";block comment newline counter: ~D ~D~%" comment-start (port-line-number)))
 
 
 

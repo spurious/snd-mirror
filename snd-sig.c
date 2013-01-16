@@ -903,11 +903,14 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
     {
       if ((ratio == 0.5) || (ratio == 2.0)) /* read forward is built-in in the mus_src_20 (7176) and mus_src_05 cases */
 	{
+	  mus_float_t (*srcf)(mus_any *srptr, mus_float_t (*input)(void *arg, int direction));
+	  if (ratio == 2.0)
+	    srcf = mus_src_20;
+	  else srcf = mus_src_05;
+
 	  for (k = 0; sr->sample < dur; k++)
 	    {
-	      if (ratio == 2.0)
-		idata[j] = ((mus_src_20(sr->gen, &src_input_as_needed)));
-	      else idata[j] = ((mus_src_05(sr->gen, &src_input_as_needed)));
+	      idata[j] = srcf(sr->gen, &src_input_as_needed);
 	      j++;
 	      if (j == MAX_BUFFER_SIZE)
 		{
@@ -6274,9 +6277,9 @@ typedef struct {
 
 static mus_float_t overall_min = 0.0;
 
-static XEN g_fpsap(XEN x_choice, XEN x_n, XEN start_phases, XEN x_size, XEN x_increment)
+static XEN g_fpsap(XEN x_choice, XEN x_n, XEN start_phases, XEN x_size, XEN x_increment, XEN dincr)
 {
-  #define H_fpsap "(" S_fpsap " choice n phases (size 6000) (increment 0.06)) searches \
+  #define H_fpsap "(" S_fpsap " choice n phases (size 6000) (increment 0.06) (dinc 0.001)) searches \
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm.  choice: 0=all, 1=odd, 2=even, 3=prime."
 
   #define INCR_DOWN 0.9
@@ -6286,8 +6289,10 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   #define RETRY_MULT 2
   #define INIT_TRIES 5000
 
+  /* (fpsap 0 17 (make-vector 17 0.0) 100 .01 .002) */
+
   int choice, n, size, counts = 0, day_counter = 0, free_top = 0, fft_size = 0;
-  mus_float_t increment = INCR_MAX, orig_incr, local_best = 1000.0, incr_mult = INCR_DOWN;
+  mus_float_t increment = INCR_MAX, dinc, orig_incr, local_best = 1000.0, incr_mult = INCR_DOWN;
   mus_float_t *min_phases = NULL, *temp_phases = NULL, *diff_phases = NULL, *initial_phases = NULL;
   char *choice_name[4] = {"all", "odd", "even", "prime"};
   pk_data **choices = NULL, **free_choices = NULL;
@@ -6550,6 +6555,10 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     increment = XEN_TO_C_DOUBLE(x_increment);
   else increment = 0.06; /* was .03 */
 
+  if (XEN_DOUBLE_P(dincr))
+    dinc = XEN_TO_C_DOUBLE(dincr);
+  else dinc = 0.001;
+
   counts = 50; /* 100? */
   orig_incr = increment;
   incr_mult = INCR_DOWN;
@@ -6604,63 +6613,73 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     local_best = (mus_float_t)n;
     increment = orig_incr;
 
-    /* here to stay focussed,
-     *     for (k = 0; k < n; k++) choices[0]->phases[k] = initial_phases[k];
-     *     choices[0]->pk = get_peak(initial_phases);
-     *     for (start = 1; start < size; start++)
-     *     etc
-     * but this is not an improvement
-     */
-    for (start = 0; start < size; start++)
+    while (true)
       {
-	mus_float_t pk, local_pk = 100000.0;
-	int k, init_try;
-	
-	for (init_try = 0;  init_try < INIT_TRIES; init_try++)
+	/* here to stay focussed,
+	 *     for (k = 0; k < n; k++) choices[0]->phases[k] = initial_phases[k];
+	 *     choices[0]->pk = get_peak(initial_phases);
+	 *     for (start = 1; start < size; start++)
+	 *     etc
+	 * but this is not an improvement
+	 */
+	for (start = 0; start < size; start++)
 	  {
-	    if (initial_phases)
-	      {
-		for (k = 1; k < n; k++) 
-		  temp_phases[k] = initial_phases[k] + local_random(increment) + local_random(increment);
-	      }
-	    else
-	      {
-		for (k = 1; k < n; k++) 
-		  temp_phases[k] = local_frandom(2.0);
-	      }
-	    pk = get_peak(temp_phases);
+	    mus_float_t pk, local_pk = 100000.0;
+	    int k, init_try;
 	    
-	    if (pk < local_best)
+	    for (init_try = 0;  init_try < INIT_TRIES; init_try++)
 	      {
-		local_best = pk;
-		if ((!just_best) ||
-		    (pk < overall_min))
+		if (initial_phases)
 		  {
-		    FILE *ofile;
-		    for (k = 1; k < n; k++) min_phases[k] = temp_phases[k];
-		    if (pk < overall_min)
+		    for (k = 1; k < n; k++) 
+		      temp_phases[k] = initial_phases[k] + local_random(increment);
+		  }
+		else
+		  {
+		    for (k = 1; k < n; k++) 
+		      temp_phases[k] = local_frandom(2.0);
+		  }
+		pk = get_peak(temp_phases);
+		
+		if (pk < local_best)
+		  {
+		    local_best = pk;
+		    if ((!just_best) ||
+			(pk < overall_min))
 		      {
-			if (file)
-			  ofile = fopen(file, "a");
-			else ofile = stderr;
-			fprintf(ofile, "%s, %d %f #(", choice_name[choice], n, pk);
-			for (k = 0; k < n - 1; k++) fprintf(ofile, "%f ", min_phases[k]);
-			fprintf(ofile, "%f)\n", min_phases[n - 1]);
-			if (file) fclose(ofile);
-			overall_min = pk;
+			FILE *ofile;
+			for (k = 1; k < n; k++) min_phases[k] = temp_phases[k];
+			if (pk < overall_min)
+			  {
+			    if (file)
+			      ofile = fopen(file, "a");
+			    else ofile = stderr;
+			    fprintf(ofile, "%s, %d %f #(", choice_name[choice], n, pk);
+			    for (k = 0; k < n - 1; k++) fprintf(ofile, "%f ", min_phases[k]);
+			    fprintf(ofile, "%f)\n", min_phases[n - 1]);
+			    if (file) fclose(ofile);
+			    overall_min = pk;
+			  }
 		      }
 		  }
-	      }
-	    
-	    if (pk < local_pk)
-	      {
-		for (k = 1; k < n; k++) choices[start]->phases[k] = temp_phases[k];
-		choices[start]->pk = pk;
-		local_pk = pk;
+		
+		if (pk < local_pk)
+		  {
+		    for (k = 1; k < n; k++) choices[start]->phases[k] = temp_phases[k];
+		    choices[start]->pk = pk;
+		    local_pk = pk;
+		  }
 	      }
 	  }
+	while (day()) {}
+	
+	{
+	  int i;
+	  for (i = 0; i < n; i++) initial_phases[i] = min_phases[i];
+	  increment += dinc;
+	  /* fprintf(stderr, "%f %f\n", increment, local_best); */
+	}
       }
-    while (day()) {}
   }
   
   free(temp_phases);
@@ -6805,7 +6824,7 @@ XEN_NARGIFY_0(g_sinc_width_w, g_sinc_width)
 XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
 #if HAVE_NESTED_FUNCTIONS
 XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
-XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
+XEN_ARGIFY_6(g_fpsap_w, g_fpsap)
 #endif
 #else
 #define g_scan_chan_w g_scan_chan
@@ -6902,7 +6921,7 @@ void g_init_sig(void)
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
 #if HAVE_NESTED_FUNCTIONS
   XEN_DEFINE_PROCEDURE(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
-  XEN_DEFINE_PROCEDURE(S_fpsap, g_fpsap_w, 3, 2, 0, H_fpsap);
+  XEN_DEFINE_PROCEDURE(S_fpsap, g_fpsap_w, 3, 3, 0, H_fpsap);
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("phases-get-peak", g_phases_get_peak, 3, 0, 0, "");
 #endif

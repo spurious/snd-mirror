@@ -9877,8 +9877,8 @@ typedef struct {
   mus_float_t x;
   mus_float_t incr, width_1;
   int width, lim, start;
-  int len, xs05_init, xs20_init;
-  mus_float_t *data, *sinc_table;
+  int len;
+  mus_float_t *data, *sinc_table, *coeffs;
   void *closure;
 } sr;
 
@@ -9978,6 +9978,7 @@ static int free_src_gen(mus_any *srptr)
   if (srp)
     {
       if (srp->data) free(srp->data);
+      if (srp->coeffs) free(srp->coeffs);
       free(srp);
     }
   return(0);
@@ -10023,6 +10024,7 @@ static void src_reset(mus_any *ptr)
       for (i = gen->width - 1; i < gen->lim; i++) 
 	gen->data[i] = (*(gen->feeder))(gen->closure, dir);
     }
+  gen->start = 0;
 }
 
 static mus_any_class SRC_CLASS = {
@@ -10079,10 +10081,9 @@ mus_any *mus_make_src(mus_float_t (*input)(void *arg, int direction), mus_float_
 	  srp->start = 0;
 	  srp->len = wid * SRC_SINC_DENSITY;
 	  srp->width_1 = 1.0 - wid;
-	  srp->xs20_init = (int)((SRC_SINC_DENSITY / 2) * (1 - wid));
-	  srp->xs05_init = (int)(SRC_SINC_DENSITY * (0.5 - wid)); 
 	  srp->data = (mus_float_t *)calloc(srp->lim + 1, sizeof(mus_float_t));
 	  srp->sinc_table = init_sinc_table(wid);
+	  srp->coeffs = NULL;
 
 	  if (input)
 	    {
@@ -10103,10 +10104,12 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
 {
   sr *srp = (sr *)srptr;
   mus_float_t sum = 0.0, x, zf, srx, factor;
-  int fsx, lim, i, loc, xi, xs, mid;
+  int lim, i, loc, xi, xs, mid, stop;
   bool int_ok = false;
 
   lim = srp->lim;
+  loc = srp->start;
+
   if (sr_change > MUS_MAX_CLM_SRC) 
     sr_change = MUS_MAX_CLM_SRC;
   else
@@ -10118,29 +10121,24 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
 
   if (srp->x >= 1.0)
     {
-      int dir = 1;
+      int fsx, dir = 1;
 
       mus_float_t (*sr_input)(void *arg, int direction) = input;
       if (sr_input == NULL) sr_input = srp->feeder;
+
       if (srx < 0.0) dir = -1;
       fsx = (int)(srp->x);
       srp->x -= fsx;
-      /* realign data, reset srp->x */
-      if (fsx > lim)
+
+      for (i = 0; i < fsx; i++)
 	{
-	  /* if sr_change is so extreme that the new index falls outside the data table, we need to
-	   *   read forward until we reach the new data bounds
-	   */
-	  for (i = lim; i < fsx; i++)
-	    (*sr_input)(srp->closure, dir);
-	  fsx = lim;
+	  srp->data[loc++] = (*sr_input)(srp->closure, dir);
+	  if (loc == lim) loc = 0;
 	}
-      loc = lim - fsx;
-      if (loc > 0)
-	memmove((void *)(srp->data), (void *)(srp->data + fsx), sizeof(mus_float_t) * loc);
-      for (i = loc; i < lim; i++) 
-	srp->data[i] = (*sr_input)(srp->closure, dir);
+      srp->start = loc; /* next time araound we start here */
     }
+
+  /* now loc = beginning of data */
 
   /* if (srx == 0.0) srx = 0.01; */ /* can't decide about this ... */
   if (srx < 0.0) srx = -srx;
@@ -10162,27 +10160,56 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
       int_ok = true;
     }
 
+  stop = loc;
   if (int_ok)
     {
       xs = (int)(zf * (srp->width_1 - srp->x));
-      mid = -xs / xi + 1;
-      /* fprintf(stderr, "int: %d %d %d ", xs, xi, mid); */
-      for (i = 0; i < mid; i++, xs += xi)
-	sum += (srp->data[i] * srp->sinc_table[-xs]);
-      /* fprintf(stderr, "%d\n", xs); */
-      for (; i < lim; i++, xs += xi)
-	sum += (srp->data[i] * srp->sinc_table[xs]);
+      mid = loc - (xs / xi) + 1;
+      if (mid > lim) mid -= lim;
+
+      if (loc > mid)
+	{
+	  for (; loc < lim; loc++, xs += xi)
+	    sum += (srp->data[loc] * srp->sinc_table[-xs]);
+	  for (loc = 0; loc < mid; loc++, xs += xi)
+	    sum += (srp->data[loc] * srp->sinc_table[-xs]);
+	  for (; loc < stop; loc++, xs += xi)
+	    sum += (srp->data[loc] * srp->sinc_table[xs]);
+	}
+      else
+	{
+	  for (; loc < mid; loc++, xs += xi)
+	    sum += (srp->data[loc] * srp->sinc_table[-xs]);
+	  for (; loc < lim; loc++, xs += xi)
+	    sum += (srp->data[loc] * srp->sinc_table[xs]);
+	  for (loc = 0; loc < stop; loc++, xs += xi)
+	    sum += (srp->data[loc] * srp->sinc_table[xs]);
+	}
     }
   else
     {
       x = zf * (srp->width_1 - srp->x);
-      mid = -x / zf + 1;
-      /* fprintf(stderr, "rl: %f %f %d ", x, zf, mid); */
-      for (i = 0; i < mid; i++, x += zf)
-	sum += (srp->data[i] * srp->sinc_table[(int)(-x)]);
-      /* fprintf(stderr, "%f\n", x); */
-      for (; i < lim; i++, x += zf)
-	sum += (srp->data[i] * srp->sinc_table[(int)x]);
+      mid = loc - (x / zf) + 1;
+      if (mid > lim) mid -= lim;
+
+      if (loc > mid)
+	{
+	  for (; loc < lim; loc++, x += zf)
+	    sum += (srp->data[loc] * srp->sinc_table[(int)(-x)]);
+	  for (loc = 0; loc < mid; loc++, x += zf)
+	    sum += (srp->data[loc] * srp->sinc_table[(int)(-x)]);
+	  for (; loc < stop; loc++, x += zf)
+	    sum += (srp->data[loc] * srp->sinc_table[(int)x]);
+	}
+      else
+	{
+	  for (; loc < mid; loc++, x += zf)
+	    sum += (srp->data[loc] * srp->sinc_table[(int)(-x)]);
+	  for (; loc < lim; loc++, x += zf)
+	    sum += (srp->data[loc] * srp->sinc_table[(int)x]);
+	  for (loc = 0; loc < stop; loc++, x += zf)
+	    sum += (srp->data[loc] * srp->sinc_table[(int)x]);
+	}
     }
 
   srp->x += srx;
@@ -10199,7 +10226,7 @@ mus_float_t mus_src_20(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
   sr *srp = (sr *)srptr;
   mus_float_t sum;
   int lim, i, loc;
-  int xi, xs, stop, mid;
+  int stop;
 
   lim = srp->lim; /* 2 * width so it's even */
   loc = srp->start;
@@ -10211,44 +10238,38 @@ mus_float_t mus_src_20(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
       srp->data[loc + 1] = (*sr_input)(srp->closure, 1);
       loc += 2; /* start of data */
       
-      srp->start += 2;
+      srp->start = loc;
       i = srp->start + srp->width - 1;
       if (i >= lim) i -= lim;
+      sum = srp->data[i];
+
       if (srp->start == lim)
 	srp->start = 0;
     }
   else
     {
+      /* first sample */
+      int xs, xi;
       /* fixup the "centering" at init time */
       srp->x = 2.0;
-      i = srp->width - 1;
-    }
+      sum = srp->data[srp->width - 1];
 
-  sum = srp->data[i];
-  xs = srp->xs20_init;
-  xi = SRC_SINC_DENSITY;
+      srp->coeffs = (mus_float_t *)malloc(lim * sizeof(mus_float_t));
+      xs = (int)((SRC_SINC_DENSITY / 2) * (1 - srp->width));
+      xi = SRC_SINC_DENSITY;
+      for (i = 0; i < lim; i++, xs += xi)
+	{
+	  if (xs < 0)
+	    srp->coeffs[i] = srp->sinc_table[-xs];
+	  else srp->coeffs[i] = srp->sinc_table[xs];
+	}
+    }
 
   stop = loc;
-  if (loc < srp->width)
-    {
-      mid = loc + srp->width;
-      for (; loc < mid; loc += 2, xs += xi)
-	sum += srp->data[loc] * srp->sinc_table[-xs];
-      for (; loc < lim; loc += 2, xs += xi)
-	sum += srp->data[loc] * srp->sinc_table[xs];
-      for (loc = 0; loc < stop; loc += 2, xs += xi)
-	sum += srp->data[loc] * srp->sinc_table[xs];
-    }
-  else
-    {
-      mid = loc - srp->width;
-      for (; loc < lim; loc += 2, xs += xi)
-	sum += srp->data[loc] * srp->sinc_table[-xs];
-      for (loc = 0; loc < mid; loc += 2, xs += xi)
-	sum += srp->data[loc] * srp->sinc_table[-xs];
-      for (; loc < stop; loc += 2, xs += xi)
-	sum += srp->data[loc] * srp->sinc_table[xs];
-    }
+  for (i = 0; loc < lim; loc += 2, i++)
+    sum += srp->data[loc] * srp->coeffs[i];
+  for (loc = 0; loc < stop; loc += 2, i++)
+    sum += srp->data[loc] * srp->coeffs[i];
 
   return(sum * 0.5);
 }
@@ -10258,7 +10279,7 @@ mus_float_t mus_src_05(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
 {
   sr *srp = (sr *)srptr;
   mus_float_t sum;
-  int lim, i, loc, stop, mid, xs;
+  int lim, i, loc, stop;
 
   lim = srp->lim; 
   loc = srp->start;
@@ -10281,37 +10302,30 @@ mus_float_t mus_src_05(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
     {
       if (srp->x == 0.0)
 	{
+	  /* first sample */
+	  int xs, xi;
+	  srp->coeffs = (mus_float_t *)malloc(lim * sizeof(mus_float_t));
+	  xs = (int)(SRC_SINC_DENSITY * (0.5 - srp->width)); 
+	  xi = SRC_SINC_DENSITY;
+	  for (i = 0; i < lim; i++, xs += xi)
+	    {
+	      if (xs < 0)
+		srp->coeffs[i] = srp->sinc_table[-xs];
+	      else srp->coeffs[i] = srp->sinc_table[xs];
+	    }
+	  
 	  srp->x = 0.5;
 	  return(srp->data[srp->width - 1]);
 	}
     }
 
-  xs = srp->xs05_init;
-  srp->x += 0.5;
-
   stop = loc;
-  sum = 0.0;
-  if (loc < srp->width)
-    {
-      mid = loc + srp->width;
-      for (; loc < mid; loc++, xs += SRC_SINC_DENSITY)
-	sum += (srp->data[loc] * srp->sinc_table[-xs]);
-      for (; loc < lim; loc++, xs += SRC_SINC_DENSITY)
-	sum += (srp->data[loc] * srp->sinc_table[xs]);
-      for (loc = 0; loc < stop; loc++, xs += SRC_SINC_DENSITY)
-	sum += (srp->data[loc] * srp->sinc_table[xs]);
-    }
-  else
-    {
-      mid = loc - srp->width;
-      for (; loc < lim; loc++, xs += SRC_SINC_DENSITY)
-	sum += (srp->data[loc] * srp->sinc_table[-xs]);
-      for (loc = 0; loc < mid; loc++, xs += SRC_SINC_DENSITY)
-	sum += (srp->data[loc] * srp->sinc_table[-xs]);
-      for (; loc < stop; loc++, xs += SRC_SINC_DENSITY)
-	sum += (srp->data[loc] * srp->sinc_table[xs]);
-    }
+  for (sum = 0.0, i = 0; loc < lim; loc++, i++)
+    sum += (srp->data[loc] * srp->coeffs[i]);
+  for (loc = 0; loc < stop; loc++, i++)
+    sum += (srp->data[loc] * srp->coeffs[i]);
 
+  srp->x += 0.5;
   return(sum);
 }
 

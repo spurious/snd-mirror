@@ -1031,10 +1031,9 @@
 				      (do ((ctr 0 (+ ctr 1)))
 					  ((= ctr vsize)
 					   (set! none-vars (cons var none-vars)))
-					(let ((bit (logbit? ctr pos)))
-					  (if (not bit)
-					      (if (not (equal? (vector-ref v ctr) (vector-ref v (logior ctr (ash 1 pos)))))
-						  (return #f))))))))
+					(if (not (logbit? ctr pos))
+					    (if (not (equal? (vector-ref v ctr) (vector-ref v (logior ctr (ash 1 pos)))))
+						(return #f)))))))
 				 vars)
 				
 				(if (not (null? none-vars))
@@ -1227,8 +1226,8 @@
 				     (and (pair? arg)
 					  (symbol? (car arg))
 					  (not (hash-table-ref globals (car arg)))
-					  (not (assq (car arg) env))
-					  (not (member (hash-table-ref function-types (car arg)) '(#f #t list-or-f number-or-f)))))
+					  (not (member (hash-table-ref function-types (car arg)) '(#f #t list-or-f number-or-f)))
+					  (not (assq (car arg) env))))
 				 #f
 				 (if (and (pair? arg)
 					  (pair? (cdr arg))
@@ -2248,8 +2247,8 @@
 			      (begin
 				(if (and *report-shadowed-variables*
 					 (not second-pass)
-					 (or (assq (car binding) env)
-					     (hash-table-ref globals (car binding))))
+					 (or (hash-table-ref globals (car binding))
+					     (assq (car binding) env)))
 				    (lint-format "~A variable ~A in ~S shadows an earlier declaration" 
 						 name head (car binding) binding))
 				#t))))))))
@@ -2710,7 +2709,8 @@
 					       (lambda (key)
 						 (if (or (vector? key)
 							 (string? key)
-							 (list? key)
+							 (pair? key)
+							 (null? key)
 							 (hash-table? key))
 						     (lint-format "case key ~S in ~S is unlikely to work (case uses eqv?)" 
 								  name key clause))
@@ -2748,7 +2748,10 @@
 			     
 			     ;; walk the init forms before adding the step vars to env
 			     (do ((bindings step-vars (cdr bindings)))
-				 ((null? bindings))
+				 ((not (pair? bindings))
+				  (if (not (null? bindings))
+				      (lint-format "do variable list is not a proper list? ~S" 
+						   name step-vars)))
 			       (if (binding-ok? name head (car bindings) env #f)
 				   (begin
 				     (lint-walk name (cadar bindings) env)
@@ -2756,7 +2759,7 @@
 			     
 			     ;; walk the step exprs
 			     (do ((bindings step-vars (cdr bindings)))
-				 ((null? bindings))
+				 ((not (pair? bindings)))
 			       (if (and (binding-ok? name head (car bindings) env #t)
 					(pair? (cddar bindings)))
 				   (lint-walk name (caddar bindings) (append vars env))))
@@ -2775,15 +2778,17 @@
 			 (let ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
 			   (let ((vars (if named-let (list (list named-let #f #f)) ())))
 			     (do ((bindings (if named-let (caddr form) (cadr form)) (cdr bindings)))
-				 ((or (not (list? bindings))
-				      (null? bindings)))
+				 ((not (pair? bindings))
+				  (if (not (null? bindings))
+				      (lint-format "let variable list is not a proper list? ~S" 
+						   name (if named-let (caddr form) (cadr form)))))
 			       (if (binding-ok? name head (car bindings) env #f)
 				   (begin
 				     (if (and (pair? (cadar bindings))
 					      (eq? 'lambda (car (cadar bindings)))
-					      (not (assq (caar bindings) env))
 					      (not (hash-table-ref globals (caar bindings)))
-					      (tree-car-member (caar bindings) (cadar bindings)))
+					      (tree-car-member (caar bindings) (cadar bindings))
+					      (not (assq (caar bindings) env)))
 					 (lint-format "let variable ~A is called in its binding?  Perhaps let should be letrec:~A"
 						      name (caar bindings) 
 						      (truncated-list->string bindings)))
@@ -2793,8 +2798,6 @@
 				     ;; need a function that turns a constant into a type indication,
 				     ;;   then append that as the 4th entry below (unused currently I think)
 				     ;;   then use that in arg checks if arg is a known var
-				     
-					; (format #t "~S: ~S~%" (car bindings) (->type (cadar bindings)))
 				     
 				     (set! vars (append (list (list (caar bindings) #f #f () (->type (cadar bindings)))) vars)))))
 			     ;; each var is (sym ref set opt-func-data opt-type-data)
@@ -2818,8 +2821,10 @@
 			 (let ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
 			   (let ((vars (if named-let (list (list named-let #f #f)) ())))
 			     (do ((bindings (if named-let (caddr form) (cadr form)) (cdr bindings)))
-				 ((or (not (list? bindings))
-				      (null? bindings)))
+				 ((not (pair? bindings))
+				  (if (not (null? bindings))
+				      (lint-format "let* variable list is not a proper list? ~S" 
+						   name (if named-let (caddr form) (cadr form)))))
 			       (if (binding-ok? name head (car bindings) env #f)
 				   (begin
 				     (lint-walk name (cadar bindings) (append vars env))
@@ -2860,14 +2865,15 @@
 					    name head 
 					    (truncated-list->string form)))
 			   (do ((bindings (cadr form) (cdr bindings)))
-			       ((or (not (list? bindings))
-				    (null? bindings)))
+			       ((not (pair? bindings))
+				(if (not (null? bindings))
+				    (lint-format "letrec variable list is not a proper list? ~S" 
+						 name (cadr form))))
 			     (if (binding-ok? name head (car bindings) env #f)
 				 (set! vars (append (list (list (caar bindings) #f #f () (->type (cadar bindings)))) vars))))
 			   (let ((new-env (append vars env)))
 			     (do ((bindings (cadr form) (cdr bindings)))
-				 ((or (not (list? bindings))
-				      (null? bindings)))
+				 ((not (pair? bindings)))
 			       (if (binding-ok? name head (car bindings) env #t)
 				   (lint-walk name (cadar bindings) new-env)))
 			     
@@ -3033,8 +3039,8 @@
 			   (if (symbol? head)
 			       (begin
 				 (check-call name head form env)
-				 (if (not (or (assq head env) 
-					      (hash-table-ref globals head)))
+				 (if (not (or (hash-table-ref globals head)
+					      (assq head env) ))
 				     (check-special-cases name head form env))
 				 
 				 (if (and *report-minor-stuff*

@@ -8528,6 +8528,11 @@
 ;;; gtk-gradient is deprecated? and symboliccolor
 
 
+;;; 3.7.6
+(CINT "GTK_STATE_FLAG_DIR_LTR" "GtkStateFlags")
+(CINT "GTK_STATE_FLAG_DIR_RTL" "GtkStateFlags")
+
+
 |#
 
  

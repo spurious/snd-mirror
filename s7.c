@@ -24503,6 +24503,32 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer list_ref_ic;
+static s7_pointer g_list_ref_ic(s7_scheme *sc, s7_pointer args)
+{
+  s7_Int i, index;
+  s7_pointer lst, p;
+
+  lst = car(args);
+  if (!is_pair(lst))
+    {
+      CHECK_METHOD(sc, lst, sc->LIST_REF, args);
+      return(wrong_type_argument(sc, sc->LIST_REF, small_int(1), lst, T_PAIR));
+    }
+  index = s7_integer(cadr(args));
+
+  for (i = 0, p = lst; (i < index) && is_pair(p); i++, p = cdr(p)) {}
+  
+  if (!is_pair(p))
+    {
+      if (is_null(p))
+	return(out_of_range(sc, sc->LIST_REF, small_int(2), cadr(args), "should be less than list length"));
+      return(wrong_type_argument_with_type(sc, sc->LIST_REF, small_int(1), lst, A_PROPER_LIST));
+    }
+  return(car(p));
+}
+
+
 static s7_pointer list_ref_1(s7_scheme *sc, s7_pointer lst, s7_pointer ind)
 {
   s7_Int i, index;
@@ -34215,8 +34241,12 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 	
 	if (is_file_port(pt))
 	  {
-	    while ((c = fgetc(port_file(pt))) != EOF)
+	    while (true)
 	      {
+		c = fgetc(port_file(pt));
+		if (c == EOF)
+		  s7_error(sc, sc->READ_ERROR,
+			   list_1(sc, make_protected_string(sc, "unexpected end of input while reading #|")));
 		if ((c == '#') &&
 		    (last_char == '|'))
 		  break;
@@ -34224,33 +34254,47 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 		if (c == '\n')
 		  port_line_number(pt)++;
 	      }
+	    return(token(sc));
 	  }
 	else 
 	  {
-	    if (port_string_length(pt) <= port_string_point(pt))
-	      c = EOF;
-	    else
+	    char *p, *str, *pend;
+	    const char *orig_str;
+
+	    orig_str = (const char *)(port_string(pt) + port_string_point(pt));
+	    pend = (char *)(port_string(pt) + port_string_length(pt));
+	    str = (char *)orig_str;
+
+	    while (true)
 	      {
-		while ((c = (unsigned char)port_string(pt)[port_string_point(pt)++]) != EOF)
+		p = strchr((const char *)str, (int)'|');
+		if ((!p) || (p >= pend))
 		  {
-		    if ((c == '#') &&
-			(last_char == '|'))
-		      break;
-		    last_char = c;
-		    if (c == '\n')
-		      port_line_number(pt)++;
-		    if (port_string_length(pt) <= port_string_point(pt))
-		      {
-			c = EOF;
-			break;
-		      }
+		    port_string_point(pt) = port_string_length(pt);
+		    s7_error(sc, sc->READ_ERROR,
+			     list_1(sc, make_protected_string(sc, "unexpected end of input while reading #|")));
 		  }
+		if (p[1] == '#')
+		  break;
+		str = (char *)(p + 1);
 	      }
+	    port_string_point(pt) += (p - orig_str + 2);
+
+	    /* now count newline inside the comment */
+	    str = (char *)orig_str;
+	    pend = p;
+	    while (true)
+	      {
+		p = strchr(str, (int)'\n');
+		if ((p) && (p < pend))
+		  {
+		    port_line_number(pt)++;
+		    str = (char *)(p + 1);
+		  }
+		else break;
+	      }
+	    return(token(sc));
 	  }
-	if (c == EOF)
-	  s7_error(sc, sc->READ_ERROR,
-		   list_1(sc, make_protected_string(sc, "unexpected end of input while reading #|")));
-	return(token(sc));
       }
     }
   
@@ -35608,6 +35652,7 @@ static s7_pointer vector_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 }
 
 
+
 static s7_pointer list_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 3) &&
@@ -35615,6 +35660,17 @@ static s7_pointer list_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       (s7_integer(caddr(expr)) >= 0) &&
       (s7_integer(caddr(expr)) < MAX_LIST_LENGTH))
     return(list_set_ic);
+  return(f);
+}
+
+
+static s7_pointer list_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_integer(caddr(expr))) &&
+      (s7_integer(caddr(expr)) >= 0) &&
+      (s7_integer(caddr(expr)) < MAX_LIST_LENGTH))
+    return(list_ref_ic);
   return(f);
 }
 
@@ -36803,6 +36859,12 @@ static void init_choosers(s7_scheme *sc)
   vector_set_ssc_looped = s7_make_function(sc, "vector-set!", g_vector_set_ssc_looped, 3, 0, false, "vector-set! optimization");
   s7_function_set_class(vector_set_ssc_looped, f);
   s7_function_set_looped(vector_set_ssc, vector_set_ssc_looped);
+
+
+  /* list-ref */
+  f = set_function_chooser(sc, sc->LIST_REF, list_ref_chooser);
+
+  list_ref_ic = make_function_with_class(sc, f, "list-ref", g_list_ref_ic, 3, 0, false, "list-ref optimization");
 
 
   /* list-set! */
@@ -62112,12 +62174,12 @@ s7_scheme *s7_init(void)
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
  * bench    42736 8752 8051 7725 6515 5826
- * lint           9328 8140 7887 7736 7410
+ * lint           9328 8140 7887 7736 7348
  * index    44300 3291 3005 2742 2078 1795
  * s7test    1721 1358 1297 1244  977  969
  * t455|6     265   89   55   31   14   14
  * t502        90   43   39   36   29   24
  * lat        229   63   52   47   42   40
- * calls           275  207  175  115   99
+ * calls           275  207  175  115   98
  */
 
