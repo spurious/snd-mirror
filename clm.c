@@ -44,6 +44,13 @@
   #define TWO_PI (2.0 * M_PI)
 #endif
 
+#if defined(__GNUC__) && defined(__linux__)
+  #define HAVE_SINCOS 1
+  void sincos(double x, double *sin, double *cos);
+#else
+  #define HAVE_SINCOS 0
+#endif
+
 #if (!HAVE_MEMMOVE)
 static void *memmove (char *dest, const char *source, unsigned int length)
 { /* from libit */
@@ -1034,10 +1041,17 @@ void mus_polar_to_rectangular(mus_float_t *rl, mus_float_t *im, mus_long_t size)
   mus_long_t i; 
   for (i = 0; i < size; i++)
     {
+#if HAVE_SINCOS
+      mus_float_t sx, cx;
+      sincos(-im[i], &sx, &cx);
+      im[i] = sx * rl[i];
+      rl[i] *= cx;
+#else
       mus_float_t temp;
       temp = rl[i] * sin(-im[i]); /* minus to match sense of rectangular->polar above */
       rl[i] *= cos(-im[i]);
       im[i] = temp;
+#endif
     }
 }
 
@@ -12444,7 +12458,12 @@ typedef struct {
   mus_any_class *core;
   bool shift_up;
   mus_float_t *coeffs;
-  mus_any *sin_osc, *cos_osc, *hilbert, *dly;
+  mus_any *hilbert, *dly;
+#if (!HAVE_SINCOS)
+  mus_any *sin_osc, *cos_osc;
+#else
+  mus_float_t phase, freq;
+#endif
 } ssbam;
 
 
@@ -12494,16 +12513,32 @@ static mus_float_t run_hilbert(flt *gen, mus_float_t insig)
 mus_float_t mus_ssb_am_unmodulated(mus_any *ptr, mus_float_t insig)
 {
   ssbam *gen = (ssbam *)ptr;
+#if (!HAVE_SINCOS)
   return((mus_oscil_unmodulated(gen->cos_osc) * mus_delay_unmodulated(gen->dly, insig)) +
 	 (mus_oscil_unmodulated(gen->sin_osc) * run_hilbert((flt *)(gen->hilbert), insig)));
+#else
+  mus_float_t cx, sx;
+  sincos(gen->phase, &sx, &cx);
+  gen->phase += gen->freq;
+  return((cx * mus_delay_unmodulated(gen->dly, insig)) +
+         (((gen->shift_up) ? -sx : sx) * run_hilbert((flt *)(gen->hilbert), insig)));
+#endif
 }
 
 
 mus_float_t mus_ssb_am(mus_any *ptr, mus_float_t insig, mus_float_t fm)
 {
   ssbam *gen = (ssbam *)ptr;
+#if (!HAVE_SINCOS)
   return((mus_oscil_fm(gen->cos_osc, fm) * mus_delay_unmodulated(gen->dly, insig)) +
 	 (mus_oscil_fm(gen->sin_osc, fm) * run_hilbert((flt *)(gen->hilbert), insig)));
+#else
+  mus_float_t cx, sx;
+  sincos(gen->phase, &sx, &cx);
+  gen->phase += (fm + gen->freq);
+  return((cx * mus_delay_unmodulated(gen->dly, insig)) +
+         (((gen->shift_up) ? -sx : sx) * run_hilbert((flt *)(gen->hilbert), insig)));
+#endif
 }
 
 
@@ -12514,8 +12549,10 @@ static int free_ssb_am(mus_any *ptr)
       ssbam *gen = (ssbam *)ptr;
       mus_free(gen->dly);
       mus_free(gen->hilbert);
+#if (!HAVE_SINCOS)
       mus_free(gen->cos_osc);
       mus_free(gen->sin_osc);
+#endif
       if (gen->coeffs) {free(gen->coeffs); gen->coeffs = NULL;}
       free(ptr); 
     }
@@ -12525,7 +12562,11 @@ static int free_ssb_am(mus_any *ptr)
 
 static mus_float_t ssb_am_freq(mus_any *ptr) 
 {
+#if (!HAVE_SINCOS)
   return(mus_radians_to_hz(((osc *)((ssbam *)ptr)->sin_osc)->freq));
+#else
+  return(mus_radians_to_hz(((ssbam *)ptr)->freq));
+#endif
 }
 
 
@@ -12534,40 +12575,60 @@ static mus_float_t ssb_am_set_freq(mus_any *ptr, mus_float_t val)
   ssbam *gen = (ssbam *)ptr;
   mus_float_t rads;
   rads = mus_hz_to_radians(val);
+#if (!HAVE_SINCOS)
   ((osc *)(gen->sin_osc))->freq = rads;
   ((osc *)(gen->cos_osc))->freq = rads;
+#else
+  gen->freq = rads;
+#endif
   return(val);
 }
 
 
 static mus_float_t ssb_am_increment(mus_any *ptr) 
 {
+#if (!HAVE_SINCOS)
   return(((osc *)((ssbam *)ptr)->sin_osc)->freq);
+#else
+  return(((ssbam *)ptr)->freq);
+#endif
 }
 
 
 static mus_float_t ssb_am_set_increment(mus_any *ptr, mus_float_t val) 
 {
   ssbam *gen = (ssbam *)ptr;
+#if (!HAVE_SINCOS)
   ((osc *)(gen->sin_osc))->freq = val;
   ((osc *)(gen->cos_osc))->freq = val;
+#else
+  gen->freq = val;
+#endif
   return(val);
 }
 
 
 static mus_float_t ssb_am_phase(mus_any *ptr) 
 {
+#if (!HAVE_SINCOS)
   return(fmod(((osc *)((ssbam *)ptr)->cos_osc)->phase - 0.5 * M_PI, TWO_PI));
+#else
+  return(fmod(((ssbam *)ptr)->phase, TWO_PI));
+#endif
 }
 
 
 static mus_float_t ssb_am_set_phase(mus_any *ptr, mus_float_t val) 
 {
   ssbam *gen = (ssbam *)ptr;
+#if (!HAVE_SINCOS)
   if (gen->shift_up)
     ((osc *)(gen->sin_osc))->phase = val + M_PI;
   else ((osc *)(gen->sin_osc))->phase = val; 
   ((osc *)(gen->cos_osc))->phase = val + 0.5 * M_PI;
+#else
+  gen->phase = val;
+#endif
   return(val);
 }
 
@@ -12590,8 +12651,13 @@ static bool ssb_am_equalp(mus_any *p1, mus_any *p2)
 	 ((mus_ssb_am_p((mus_any *)p1)) && 
 	  (mus_ssb_am_p((mus_any *)p2)) &&
 	  (((ssbam *)p1)->shift_up == ((ssbam *)p2)->shift_up) &&
+#if (!HAVE_SINCOS)
 	  (mus_equalp(((ssbam *)p1)->sin_osc, ((ssbam *)p2)->sin_osc)) &&
 	  (mus_equalp(((ssbam *)p1)->cos_osc, ((ssbam *)p2)->cos_osc)) &&
+#else
+	  (((ssbam *)p1)->freq == ((ssbam *)p2)->freq) &&
+	  (((ssbam *)p1)->phase == ((ssbam *)p2)->phase) &&
+#endif
 	  (mus_equalp(((ssbam *)p1)->dly, ((ssbam *)p2)->dly)) &&
 	  (mus_equalp(((ssbam *)p1)->hilbert, ((ssbam *)p2)->hilbert))));
 }
@@ -12663,8 +12729,13 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
   if (freq > 0)
     gen->shift_up = true;
   else gen->shift_up = false;
+#if (!HAVE_SINCOS)
   gen->sin_osc = mus_make_oscil(fabs(freq), (gen->shift_up) ? M_PI : 0.0);
   gen->cos_osc = mus_make_oscil(fabs(freq), M_PI * 0.5);
+#else
+  gen->freq = mus_hz_to_radians(fabs(freq));
+  gen->phase = 0.0;
+#endif
   gen->dly = mus_make_delay(order, NULL, order, MUS_INTERP_NONE);
 
   len = order * 2 + 1;
@@ -12682,6 +12753,8 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
 
   return((mus_any *)gen);
 }
+
+/* (define (hi) (let ((g (make-ssb-am 100.0))) (ssb-am g 1.0) (ssb-am g 0.0))) */
 
 
 

@@ -76,11 +76,11 @@
     
     (define (non-null-string? x)
       (and (string? x)
-	   (not (string=? x ""))))
+	   (> (string-length x) 0)))
     
     (define (non-null-vector? x)
       (and (vector? x)
-	   (not (equal? x #()))))
+	   (> (vector-length x) 0)))
     
     (define (port? p)
       (or (input-port? p)
@@ -114,43 +114,44 @@
 	  (null? obj)))
     
     (let ((no-side-effect-functions 
-	   (apply hash-table 
-		  (map 
-		   (lambda (op) 
-		     (cons op #t))
-		   '(* + - / < <= = > >= 
-		       abs acos acosh and angle append aritable? arity ash asin asinh assoc assq assv atan atanh 
-		       begin boolean? 
-		       caaaar caaadr caaar caadar caaddr caadr caar cadaar cadadr cadar caddar cadddr caddr cadr 
-		       call-with-exit car case catch cdaaar cdaadr cdaar cdadar cdaddr cdadr cdar cddaar cddadr 
-		       cddar cdddar cddddr cdddr cddr cdr ceiling char->integer char-alphabetic? char-ci<=? char-ci<? 
-		       char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? char-ready? char-upcase 
-		       char-upper-case? char-whitespace? char<=? char<? char=? char>=? char>? char? complex? cond 
-		       cons constant? continuation? copy cos cosh current-environment current-error-port current-input-port current-output-port 
-		       defined? denominator do dynamic-wind 
-		       environment environment? eof-object? eq? equal? eqv? error-environment even? exact->inexact exact? exp expt 
-		       floor for-each 
-		       gcd gensym global-environment 
-		       hash-table hash-table-ref hash-table-size hash-table? hash-table-iterator? hook-functions 
-		       if imag-part inexact->exact inexact? infinite? initial-environment input-port? integer->char integer-decode-float 
-		       integer-length integer? 
-		       keyword->symbol keyword? 
-		       lambda lcm length let let* letrec letrec* list list->string list->vector list-ref list-tail 
-		       list? log logand logbit? logior lognot logxor 
-		       macro? magnitude make-hash-table make-hash-table-iterator make-hook make-keyword make-list make-polar make-procedure-with-setter 
-		       make-random-state make-rectangular make-string make-vector map max member memq memv min modulo morally-equal?
-		       nan? negative? not null? number->string number? numerator 
-		       object-environment object->string odd? open-environment? or outer-environment output-port? 
-		       pair? pair-line-number port-closed? port-filename port-line-number positive? procedure-arity procedure-documentation procedure-environment 
-		       procedure-name procedure-setter procedure-source procedure-with-setter? procedure? provided? 
-		       quasiquote quote quotient 
-		       random random-state? rational? rationalize real-part real? remainder reverse round 
-		       s7-version sin sinh sqrt string string->list string->number string->symbol string-append string-ci<=? string-ci<? 
-		       string-ci=? string-ci>=? string-ci>? string-copy string-length string-ref string<=? string<? string=? string>=? 
-		       string>? string? substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol? 
-		       tan tanh truncate 
-		       vector vector->list vector-dimensions vector-length vector-ref vector? 
-		       zero?))))
+	   (let ((ht (make-hash-table)))
+	     (for-each
+	      (lambda (op) 
+		(hash-table-set! ht op #t))
+	      '(* + - / < <= = > >= 
+		  abs acos acosh and angle append aritable? arity ash asin asinh assoc assq assv atan atanh 
+		  begin boolean? 
+		  caaaar caaadr caaar caadar caaddr caadr caar cadaar cadadr cadar caddar cadddr caddr cadr 
+		  call-with-exit car case catch cdaaar cdaadr cdaar cdadar cdaddr cdadr cdar cddaar cddadr 
+		  cddar cdddar cddddr cdddr cddr cdr ceiling char->integer char-alphabetic? char-ci<=? char-ci<? 
+		  char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? char-ready? char-upcase 
+		  char-upper-case? char-whitespace? char<=? char<? char=? char>=? char>? char? complex? cond 
+		  cons constant? continuation? copy cos cosh current-environment current-error-port current-input-port current-output-port 
+		  defined? denominator do dynamic-wind 
+		  environment environment? eof-object? eq? equal? eqv? error-environment even? exact->inexact exact? exp expt 
+		  floor for-each 
+		  gcd gensym global-environment 
+		  hash-table hash-table-ref hash-table-size hash-table? hash-table-iterator? hook-functions 
+		  if imag-part inexact->exact inexact? infinite? initial-environment input-port? integer->char integer-decode-float 
+		  integer-length integer? 
+		  keyword->symbol keyword? 
+		  lambda lcm length let let* letrec letrec* list list->string list->vector list-ref list-tail 
+		  list? log logand logbit? logior lognot logxor 
+		  macro? magnitude make-hash-table make-hash-table-iterator make-hook make-keyword make-list make-polar make-procedure-with-setter 
+		  make-random-state make-rectangular make-string make-vector map max member memq memv min modulo morally-equal?
+		  nan? negative? not null? number->string number? numerator 
+		  object-environment object->string odd? open-environment? or outer-environment output-port? 
+		  pair? pair-line-number port-closed? port-filename port-line-number positive? procedure-arity procedure-documentation procedure-environment 
+		  procedure-name procedure-setter procedure-source procedure-with-setter? procedure? provided? 
+		  quasiquote quote quotient 
+		  random random-state? rational? rationalize real-part real? remainder reverse round 
+		  s7-version sin sinh sqrt string string->list string->number string->symbol string-append string-ci<=? string-ci<? 
+		  string-ci=? string-ci>=? string-ci>? string-copy string-length string-ref string<=? string<? string=? string>=? 
+		  string>? string? substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol? 
+		  tan tanh truncate 
+		  vector vector->list vector-dimensions vector-length vector-ref vector? 
+		  zero?))
+	     ht))
 	  
 	  (function-types (hash-table 
 			   (cons '* +number+)
@@ -1264,8 +1265,8 @@
 						  (not (symbol? val))))
 					 (begin
 					   (if (null? new-form)         ; (or x1 123) -> value of x1, so we can't throw it away here, unlike the and case
-					       (set! new-form `(,val))
-					       (set! new-form (append `(,val) new-form))) ; reversed when returned
+					       (set! new-form (list val))           ;was `(,val))
+					       (set! new-form (cons val new-form))) ;was (append `(,val) new-form))) ; reversed when returned
 					   (set! exprs '(#t)))
 					 
 					 ;; (or x1 x2 x1) -> (or x1 x2) is ok because if we get to x2, x1 is #f, so trailing x1 would still be #f
@@ -1308,7 +1309,7 @@
 				     ;;   so I'll not try to optimize that case.  But (and x x) is optimizable.
 				     
 				     (if (eq? val #t)
-					 (if (and (not (equal? e #t))
+					 (if (and (not (eq? e #t))
 						  (or (not (pair? e))
 						      (not (eq? (hash-table-ref function-types (car e)) #t))))
 					     (if (or (null? new-form)
@@ -1319,7 +1320,7 @@
 					       (if (or (null? new-form)   
 						       (just-symbols? new-form))
 						   (set! new-form '(#f))
-						   (set! new-form (append '(#f) new-form)))
+						   (set! new-form (cons #f new-form))) ;was (append '(#f) new-form)))
 					       (set! exprs '(#f)))
 					     (if (and (pair? e)       ; if (and ...) splice into current
 						      (eq? (car e) 'and))
@@ -1785,13 +1786,13 @@
 		     
 		     (if *report-minor-stuff*
 			 (let ((expr (simplify-boolean (cadr form) () () env)))
-			   (if (equal? expr #t)
+			   (if (eq? expr #t)
 			       (lint-format "possible simplification:~A"
 					    name
 					    (lists->string form (caddr form)))
-			       (if (equal? expr #f)
+			       (if (eq? expr #f)
 				   (if (null? (cdddr form))
-				       (if (not (equal? (caddr form) #f))
+				       (if (not (eq? (caddr form) #f))
 					   (lint-format "~S is never #t:~A"
 							name (cadr form)
 							(truncated-list->string form)))
@@ -1961,7 +1962,7 @@
 			  (args (cadr (list-ref fdata 3))))
 		      
 		      (let ((rst (or (not (pair? args))
-				     (negative? (length args))
+				     (not (list? args))
 				     (memq :rest args)))
 			    (pargs (if (pair? args) (proper-list args) ())))
 			
@@ -2308,8 +2309,7 @@
       (define (lint-walk-body name head body env)
 	;; walk a body (a list of forms, the value of the last of which might be returned)
 	
-	(if (or (not (list? body))
-		(negative? (length body)))
+	(if (not (list? body))
 	    (lint-format "stray dot? ~A" 
 			 name (truncated-list->string body))
 	    
@@ -2701,7 +2701,7 @@
 				    (let ((keys (car clause))
 					  (exprs (cdr clause)))
 				      (if (pair? keys)
-					  (if (negative? (length keys))
+					  (if (not (list? keys))
 					      (lint-format "stray dot in case case key list: ~A"
 							   name 
 							   (truncated-list->string clause))
@@ -2725,8 +2725,8 @@
 						  (lint-format "case else clause is not the last:~A"
 							       name 
 							       (truncated-list->string (cddr form))))))
-				      (set! all-keys (append (if (and (pair? keys)
-								      (not (negative? (length keys))))
+				      (set! all-keys (append (if (and (list? keys)
+								      (not (null? keys)))
 								 keys 
 								 (list keys))
 							     all-keys))
@@ -2889,7 +2889,7 @@
 		    
 		    ;; ---------------- begin ----------------
 		    ((begin)
-		     (if (negative? (length form))
+		     (if (not (list? form))
 			 (begin
 			   (lint-format "stray dot in begin? ~A"
 					name
@@ -3029,7 +3029,7 @@
 		    ;; ---------------- everything else ----------------		  
 		    (else
 		     
-		     (if (negative? (length form))
+		     (if (not (list? form))
 			 (begin
 			   (lint-format "stray dot? ~A" 
 					name 

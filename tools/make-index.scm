@@ -686,11 +686,15 @@
 
 
 (define (make-vector-name str)
-  (let ((len (length str)))
-    (do ((i 0 (+ i 1)))
-	((= i len) str)
-      (if (char=? (string-ref str i) #\space)
-	  (string-set! str i #\_)))))
+  (let ((pos (char-position #\space str)))
+    (if pos
+	(let ((len (length str)))
+	  (string-set! str pos #\_)
+	  (do ((i (+ pos 1) (+ i 1)))
+	      ((= i len) str)
+	    (if (char=? (string-ref str i) #\space)
+		(string-set! str i #\_))))
+	str)))
 
 (define ids (make-hash-table))
 (define n-array-length 2048)

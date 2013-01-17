@@ -20669,11 +20669,80 @@ static s7_pointer g_write_char_1(s7_scheme *sc, s7_pointer args)
   return(sc->UNSPECIFIED);
 }
 
+static s7_pointer write_char_a_s;
+static s7_pointer g_write_char_a_s(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer chr, port;
+  
+  chr = ((s7_function)fcdr(args))(sc, car(args));
+  if (!s7_is_character(chr))
+    {
+      CHECK_METHOD(sc, chr, sc->WRITE_CHAR, args);
+      return(wrong_type_argument(sc, sc->WRITE_CHAR, small_int(1), car(args), T_CHARACTER));
+    }
 
+  port = finder(sc, cadr(args));
+  if (!is_output_port(port))
+    return(wrong_type_argument_with_type(sc, sc->WRITE_CHAR, small_int(2), port, AN_OUTPUT_PORT));
+  
+  port_write_character(port)(sc, s7_character(chr), port);
+  return(sc->UNSPECIFIED);
+}
+
+static s7_pointer all_x_c_s(s7_scheme *sc, s7_pointer arg);
+static s7_pointer write_char_a_s_looped;
+static s7_pointer g_write_char_a_s_looped(s7_scheme *sc, s7_pointer args)
+{
+  /* args: ((read-char port) outport) */
+  if (fcdr(args) == (s7_pointer)all_x_c_s)
+    {
+      if (c_call(car(args)) == g_read_char_1)
+	{
+	  s7_pointer read_port, write_port;
+	  int (*read_ch)(s7_scheme *sc, s7_pointer port);
+	  void (*write_ch)(s7_scheme *sc, int c, s7_pointer port);
+
+	  write_port = finder(sc, cadr(args));
+	  if (!is_output_port(write_port))
+	    return(wrong_type_argument_with_type(sc, sc->WRITE_CHAR, small_int(2), write_port, AN_OUTPUT_PORT));
+	  write_ch = port_write_character(write_port);
+
+	  read_port = finder(sc, cadar(args));
+	  if (!is_input_port(read_port))
+	    return(simple_wrong_type_argument_with_type(sc, sc->READ_CHAR, read_port, AN_INPUT_PORT));
+	  read_ch = port_read_character(read_port);
+	  
+	  while (true)
+	    {
+	      int chr;
+	      chr = read_ch(sc, read_port);
+	      if (chr == EOF)
+		return(wrong_type_argument(sc, sc->WRITE_CHAR, small_int(1), sc->EOF_OBJECT, T_CHARACTER)); /* only normal way out! */
+	      write_ch(sc, chr, write_port);
+	    }
+	}
+    }
+  return(NULL);
+}
+
+
+static bool is_all_x_safe(s7_pointer p);
+static void annotate_args(s7_scheme *sc, s7_pointer args);
+static void annotate_arg(s7_scheme *sc, s7_pointer arg);
 static s7_pointer write_char_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 1)
     return(write_char_1);
+  if (args == 2)
+    {
+      if ((is_symbol(caddr(expr))) &&
+	  (is_all_x_safe(cadr(expr))))
+	{
+	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  annotate_arg(sc, cdr(expr));
+	  return(write_char_a_s);
+	}
+    }
   return(f);
 }
 
@@ -34451,17 +34520,32 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
       /* try the most common case first */
       char *s, *start, *end;
       start = (char *)(port_string(pt) + port_string_point(pt));
+      if (*start == '"')
+	{
+	  port_string_point(pt)++;
+	  return(make_empty_string(sc, 0, 0));
+	}
+
       end = (char *)(port_string(pt) + port_string_length(pt));
-      for (s = start; s < end; s++)
+      s = strpbrk(start, "\"\n\\");
+      if ((!s) || (s >= end))
+	return(sc->F);
+      if (*s == '"')
+	{
+	  int len;
+	  len = s - start;
+	  port_string_point(pt) += (len + 1);
+	  return(s7_make_terminated_string_with_length(sc, start, len));
+	}
+      
+      for (; s < end; s++)
 	{
 	  if (*s == '"')                         /* switch here no faster */
 	    {
-	      s7_pointer result;
 	      int len;
 	      len = s - start;
-	      result = s7_make_terminated_string_with_length(sc, start, len);
 	      port_string_point(pt) += (len + 1);
-	      return(result);
+	      return(s7_make_terminated_string_with_length(sc, start, len));
 	    }
 	  else
 	    {
@@ -36864,7 +36948,7 @@ static void init_choosers(s7_scheme *sc)
   /* list-ref */
   f = set_function_chooser(sc, sc->LIST_REF, list_ref_chooser);
 
-  list_ref_ic = make_function_with_class(sc, f, "list-ref", g_list_ref_ic, 3, 0, false, "list-ref optimization");
+  list_ref_ic = make_function_with_class(sc, f, "list-ref", g_list_ref_ic, 2, 0, false, "list-ref optimization");
 
 
   /* list-set! */
@@ -36972,6 +37056,11 @@ static void init_choosers(s7_scheme *sc)
   f = set_function_chooser(sc, sc->WRITE_CHAR, write_char_chooser);
   
   write_char_1 = make_function_with_class(sc, f, "write-char", g_write_char_1, 1, 0, false, "write-char optimization");
+  write_char_a_s = make_function_with_class(sc, f, "write-char", g_write_char_a_s, 2, 0, false, "write-char optimization");
+
+  write_char_a_s_looped = s7_make_function(sc, "write-char", g_write_char_a_s_looped, 2, 0, false, "write-char optimization");
+  s7_function_set_class(write_char_a_s_looped, f);
+  s7_function_set_looped(write_char_a_s, write_char_a_s_looped);
 }
 
 
@@ -42907,9 +42996,9 @@ static s7_pointer check_do(s7_scheme *sc)
       if ((is_null(vars)) && /* do () () one-line safe opt body */
 	  (is_null(end)) &&
 	  (one_line) &&
-	  (is_optimized(car(body))) &&
-	  (optimize_data(car(body)) == HOP_SAFE_C_opSq_S))
+	  (is_all_x_safe(car(body))))
 	{
+	  annotate_arg(sc, body);
 	  set_syntax_op(sc->code, sc->SIMPLE_DO_FOREVER);
 	  return(sc->NIL);
 	}
@@ -44929,27 +45018,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     SIMPLE_DO_FOREVER:
     case OP_SIMPLE_DO_FOREVER:
       {
-	s7_pointer body, args, car_args = sc->NIL, cadr_args = sc->NIL, caddr_args = sc->NIL;
+	s7_pointer body, args;
+	s7_function func;
 
-	sc->envir = new_frame_in_env(sc, sc->envir);
+	/* sc->envir = new_frame_in_env(sc, sc->envir); */
 	body = caddr(sc->code);
 	args = cdr(body);
-	
-	/* since there are no locals and no sets, I'm going to try a direct reference to the slots here
-	 */
-	/* only HOP_SAFE_C_opSq_S for now */
 
-	car_args = car(args);
-	cadr_args = find_symbol(sc, cadr(args));
-	caddr_args = find_symbol(sc, cadr(car_args));
-
-	while (true) 
+	if (c_function_looped(ecdr(body)))
 	  {
-	    car(sc->T1_1) = slot_value(caddr_args);
-	    car(sc->T2_1) = c_call(car_args)(sc, sc->T1_1);
-	    car(sc->T2_2) = slot_value(cadr_args);
-	    c_call(body)(sc, sc->T2_1);
+	    func = (s7_function)c_function_call(c_function_looped(ecdr(body))); /* body? */
+	    if (func(sc, args))
+	      goto START; /* won't happen? */
+	    /* else fall into the ordinary loop */
 	  }
+
+	func = (s7_function)fcdr(body);
+	while (true) {func(sc, args);}
       }
 
 
@@ -62173,13 +62258,13 @@ s7_scheme *s7_init(void)
  *   in set pair, object set et al need not use eval_args/apply if all args are all_x ops
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
- * bench    42736 8752 8051 7725 6515 5826
- * lint           9328 8140 7887 7736 7348
- * index    44300 3291 3005 2742 2078 1795
+ * bench    42736 8752 8051 7725 6515 5596
+ * lint           9328 8140 7887 7736 7340
+ * index    44300 3291 3005 2742 2078 1789
  * s7test    1721 1358 1297 1244  977  969
  * t455|6     265   89   55   31   14   14
  * t502        90   43   39   36   29   24
  * lat        229   63   52   47   42   40
- * calls           275  207  175  115   98
+ * calls           275  207  175  115   97
  */
 
