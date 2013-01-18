@@ -5023,7 +5023,7 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
   x_sweeps = XEN_VECTOR_ELEMENTS(sweeps);
 #endif
 
-  for (i = 0; i< size; i++)
+  for (i = 0; i < size; i++)
     {
       sum += ampls[i] * mus_oscil_fm(oscils[i], fms[i]);
       xen_vector_set(amps, i, C_TO_XEN_DOUBLE(ampls[i] + XEN_TO_C_DOUBLE(xen_vector_ref(rates, i))));
@@ -9092,6 +9092,7 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #define caddr(E)  s7_caddr(E)
 #define cadddr(E) s7_cadddr(E)
 #define cddr(E)   s7_cddr(E)
+#define cdddr(E)  s7_cdddr(E)
 #define cadar(E)  s7_cadar(E)
 #define cdar(E)   s7_cdar(E)
 #define cdaddr(E) s7_cdaddr(E)
@@ -10533,7 +10534,63 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
   return(out_any_2(pos, x, 0, "outa"));
 }
 
+
 #if (!WITH_GMP)
+static mus_float_t *vector_to_floats(s7_scheme *sc, s7_pointer sym, int arg)
+{
+  s7_pointer v;
+  s7_pointer *el;
+  mus_float_t *fs;
+  s7_Int i, size;
+
+  v = s7_value(sc, sym);
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(v), sym, arg, S_oscil_bank, "a vector");  
+  el = s7_vector_elements(v);
+  size = s7_vector_length(v);
+  fs = (mus_float_t *)malloc(size * sizeof(mus_float_t));
+  for (i = 0; i < size; i++)
+    fs[i] = s7_number_to_real(sc, el[i]);
+  return(fs);
+}
+
+static mus_any **vector_to_gens(s7_scheme *sc, s7_pointer sym, int arg)
+{
+  s7_pointer v;
+  s7_pointer *el;
+  mus_any **fs;
+  s7_Int i, size;
+
+  v = s7_value(sc, sym);
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(v), sym, arg, S_oscil_bank, "a vector");  
+  el = s7_vector_elements(v);
+  size = s7_vector_length(v);
+  fs = (mus_any **)malloc(size * sizeof(mus_any *));
+  for (i = 0; i < size; i++)
+    {
+      mus_xen *gn;
+      gn = (mus_xen *)imported_s7_object_value_checked(el[i], mus_xen_tag);
+      fs[i] = gn->gen;
+    }
+  return(fs);
+}
+
+static void floats_to_vector(s7_scheme *sc, mus_float_t *arr, s7_pointer sym)
+{
+  s7_pointer v;
+  s7_pointer *el;
+  s7_Int i, size;
+
+  v = s7_value(sc, sym);
+  el = s7_vector_elements(v);
+  size = s7_vector_length(v);
+  for (i = 0; i < size; i++)
+    el[i] = s7_make_real(sc, arr[i]);
+}
+
+
+static s7_pointer g_mul_direct_any(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_oscil_bank_6(s7_scheme *sc, s7_pointer args);
+
 static s7_pointer indirect_outa_2_temp_looped;
 static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 {
@@ -10553,8 +10610,6 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 
   callee = caddr(args);
 
-  /* fprintf(stderr, "temp: %lld: %s\n", end - pos, DISPLAY(callee)); */
-
   if (mus_out_any_is_safe(clm_output_gen))
     {
       mus_float_t **ob;
@@ -10563,6 +10618,97 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
       ob = mus_out_any_buffers(clm_output_gen);
       buf = ob[0];
       dlen = mus_file_buffer_size();
+
+      if ((s7_function_choice(sc, callee) == g_mul_direct_any) &&
+	  (s7_function_choice(sc, cadr(callee)) == g_env_1) &&
+	  (s7_list_length(sc, callee) == 4))
+	{
+	  s7_pointer arg1, arg2;
+	  mus_any *e;
+	  GET_GENERATOR_CADR(cadr(callee), env, e);
+	  callee = cddr(callee);
+	  arg1 = car(callee);
+	  arg2 = cadr(callee);
+
+	  if (s7_function_choice(sc, arg2) == g_direct_polywave_2)
+	    {
+	      mus_any *g;
+	      GET_GENERATOR_CADR(arg2, polywave, g);
+	      arg2 = caddr(arg2);
+
+	      for (; pos < end;)
+		{
+		  mus_safe_out_any_to_file(pos++, mus_env(e) * s7_call_direct_to_real_and_free(sc, arg1) * mus_polywave(g, s7_call_direct_to_real_and_free(sc, arg2)), 0, clm_output_gen);
+		  dstart = mus_out_any_data_start(clm_output_gen);
+		  dend = mus_out_any_data_end(clm_output_gen);
+		  if (dend > end)
+		    dlen = end - dstart;
+		  for (dpos = pos - dstart; dpos < dlen; dpos++)
+		    {
+		      (*step) = pos++;
+		      buf[dpos] += (mus_env(e) * s7_call_direct_to_real_and_free(sc, arg1) * mus_polywave(g, s7_call_direct_to_real_and_free(sc, arg2)));
+		    }
+		  mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
+		}
+	      return(args);
+	    }
+	  
+	  for (; pos < end;)
+	    {
+	      mus_safe_out_any_to_file(pos++, mus_env(e) * s7_call_direct_to_real_and_free(sc, arg1) * s7_call_direct_to_real_and_free(sc, arg2), 0, clm_output_gen);
+	      dstart = mus_out_any_data_start(clm_output_gen);
+	      dend = mus_out_any_data_end(clm_output_gen);
+	      if (dend > end)
+		dlen = end - dstart;
+	      for (dpos = pos - dstart; dpos < dlen; dpos++)
+		{
+		  (*step) = pos++;
+		  buf[dpos] += (mus_env(e) * s7_call_direct_to_real_and_free(sc, arg1) * s7_call_direct_to_real_and_free(sc, arg2));
+		}
+	      mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
+	    }
+	  return(args);
+	}
+      else
+	{
+	  if (s7_function_choice(sc, callee) == g_oscil_bank_6)
+	    {
+	      s7_pointer vamps, vfreqs;
+	      mus_any **oscs;
+	      int size;
+	      mus_float_t *amps, *freqs, *rates, *sweeps;
+	      size = s7_number_to_integer(sc, s7_cadr_value(sc, callee));
+	      oscs = vector_to_gens(sc, caddr(callee), 2);
+	      callee = cdddr(callee);
+	      amps = vector_to_floats(sc, vamps = car(callee), 3);
+	      freqs = vector_to_floats(sc, vfreqs = cadr(callee), 4);
+	      callee = cddr(callee);
+	      rates = vector_to_floats(sc, car(callee), 5);
+	      sweeps = vector_to_floats(sc, cadr(callee), 6);
+	      for (; pos < end; pos++)
+		{
+		  int i;
+		  s7_Double sum = 0.0;
+		  for (i = 0; i < size; i++)
+		    {
+		      sum += amps[i] * mus_oscil_fm(oscs[i], freqs[i]);
+		      amps[i] += rates[i];
+		      freqs[i] += sweeps[i];
+		    }
+		  out_any_2(pos, sum, 0, "outa");
+		}
+	      (*step) = end;
+	      floats_to_vector(sc, amps, vamps);
+	      floats_to_vector(sc, freqs, vfreqs);
+	      free(oscs); 
+	      free(amps); 
+	      free(freqs); 
+	      free(rates); 
+	      free(sweeps);
+	      return(args);
+	    }
+	}
+
       for (; pos < end;)
 	{
 	  mus_safe_out_any_to_file(pos, s7_call_direct_to_real_and_free(sc, callee), 0, clm_output_gen);
@@ -10627,6 +10773,8 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
   return(args);
 }
 #endif
+
+static s7_pointer g_oscil_bank_3(s7_scheme *sc, s7_pointer args);
 
 static s7_pointer indirect_outa_2_env;
 static s7_pointer g_indirect_outa_2_env(s7_scheme *sc, s7_pointer args)
@@ -10742,6 +10890,39 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
 		}
 	      mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
 	    }
+	  return(args);
+	}
+
+      if (s7_function_choice(sc, callee) == g_oscil_bank_3)
+	{
+	  /* since there is no frequency change here, there's not need to call mus_oscil */
+	  mus_any **oscs;
+	  int i, size;
+	  mus_float_t *amps, *freqs, *phases;
+
+	  size = s7_number_to_integer(sc, s7_cadr_value(sc, callee));
+	  oscs = vector_to_gens(sc, caddr(callee), 2);
+	  amps = vector_to_floats(sc, cadddr(callee), 3);
+	  freqs = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+	  phases = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+	  for (i = 0; i < size; i++)
+	    freqs[i] = mus_increment(oscs[i]);
+
+	  for (; pos < end; pos++)
+	    {
+	      s7_Double sum = 0.0;
+	      for (i = 0; i < size; i++)
+		{
+		  sum += amps[i] * sin(phases[i]);
+		  phases[i] += freqs[i];
+		}
+	      out_any_2(pos, mus_env(e) * sum, 0, "outa");
+	    }
+	  (*step) = end;
+	  free(oscs); 
+	  free(amps); 
+	  free(freqs); 
+	  free(phases);
 	  return(args);
 	}
 
@@ -13500,7 +13681,8 @@ static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 	  s7_function_choice_set_direct(sc, expr);
 	  return(indirect_outa_add_2);
 	}
-      /* fprintf(stderr, "\nouta two: %s\n", DISPLAY(expr));  */
+      /* fprintf(stderr, "outa two: %s\n", DISPLAY(expr)); */
+
       /* (* s1 s2) 
        * (* (env e) (safe-lambda* gen)) 
        * (safe-lambda* gen)

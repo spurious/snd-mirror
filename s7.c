@@ -18195,6 +18195,58 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   return(caddr(args));
 }
 
+static s7_pointer string_set_ssa;
+static s7_pointer g_string_set_ssa(s7_scheme *sc, s7_pointer args)
+{
+  /* a place-holder */
+  car(sc->T3_3) = ((s7_function)fcdr(cddr(args)))(sc, caddr(args));
+  car(sc->T3_1) = finder(sc, car(args));
+  car(sc->T3_2) = finder(sc, cadr(args));
+  return(g_string_set(sc, sc->T3_1));
+}
+
+static s7_pointer string_set_ssa_looped;
+static s7_pointer g_string_set_ssa_looped(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer str, ind, expr, chr;
+  s7_Int pos, end;
+  s7_pointer stepper;
+  s7_function func;
+  char *str_val;
+
+  /* incoming args: (0 str i (...)) */
+
+  str = finder(sc, cadr(args));
+  if (!s7_is_string(str))
+    return(NULL);
+
+  stepper = car(args);
+  ind = s7_slot(sc, caddr(args));
+  if (s7_slot_value(sc, ind) != stepper)
+    return(NULL);
+
+  pos = numerator(stepper);
+  end = denominator(stepper);
+  if ((pos < 0) ||
+      (end > string_length(str)))
+    return(out_of_range(sc, sc->STRING_SET, small_int(2), ind, "should be less than the string length"));
+
+  expr = cdddr(args);
+  func = (s7_function)fcdr(expr);
+  str_val = string_value(str);
+
+  for (; pos < end; pos++)
+    {
+      numerator(stepper) = pos;
+      chr = func(sc, car(expr));
+      if (!s7_is_character(chr))
+	return(wrong_type_argument(sc, sc->STRING_SET, small_int(3), chr, T_CHARACTER));
+      str_val[pos] = s7_character(chr);
+    }
+  numerator(stepper) = end;
+  return(args);
+}
+
 
 static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, s7_pointer sym)
 {
@@ -20693,7 +20745,8 @@ static s7_pointer all_x_c_s(s7_scheme *sc, s7_pointer arg);
 static s7_pointer write_char_a_s_looped;
 static s7_pointer g_write_char_a_s_looped(s7_scheme *sc, s7_pointer args)
 {
-  /* args: ((read-char port) outport) */
+  /* args: (0 (read-char port) outport) */
+  args = cdr(args); /* ignore the stepper -- here we only accept the case write(read) */
   if (fcdr(args) == (s7_pointer)all_x_c_s)
     {
       if (c_call(car(args)) == g_read_char_1)
@@ -36568,6 +36621,22 @@ static s7_pointer string_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
   return(f);
 }
 
+static s7_pointer string_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 3)
+    {
+      if ((is_symbol(cadr(expr))) &&
+	  (is_symbol(caddr(expr))) &&
+	  (is_all_x_safe(cadddr(expr))))
+	{
+	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  annotate_arg(sc, cdddr(expr));
+	  return(string_set_ssa);
+	}
+    }
+  return(f);
+}
+
 static s7_pointer string_append_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   check_for_substring_temp(sc, f, args, expr);
@@ -36905,6 +36974,14 @@ static void init_choosers(s7_scheme *sc)
   /* string-ref */
   f = set_function_chooser(sc, sc->STRING_REF, string_ref_chooser);
 
+  /* string-set! */
+  f = set_function_chooser(sc, sc->STRING_SET, string_set_chooser);
+  string_set_ssa = make_function_with_class(sc, f, "string-set!", g_string_set_ssa, 3, 0, false, "string-set! optimization");
+
+  string_set_ssa_looped = s7_make_function(sc, "string-set!", g_string_set_ssa_looped, 3, 0, false, "string-set! optimization");
+  s7_function_set_class(string_set_ssa_looped, f);
+  s7_function_set_looped(string_set_ssa, string_set_ssa_looped);
+
 
   /* string-append */
   f = set_function_chooser(sc, sc->STRING_APPEND, string_append_chooser);
@@ -36970,10 +37047,6 @@ static void init_choosers(s7_scheme *sc)
 
   /* cdr */
   f = set_function_chooser(sc, sc->CDR, cdr_chooser);
-
-
-  /* write-char */
-  f = set_function_chooser(sc, sc->WRITE_CHAR, write_char_chooser);
 
 
   /* format */
@@ -44596,6 +44669,44 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    else
 	      {
+		if ((is_optimized(sc->code)) &&
+		    (optimize_data(sc->code) == HOP_SAFE_C_C) &&
+		    (c_function_looped(ecdr(sc->code))) &&
+		    (ecdr(car(cadr(code))) != geq_2))
+		  {
+		    /* we can't get here if we're actually setting the step or end vars (pace check_do),
+		     *   so we can safely set up a dotimes_c_c lookalike loop.
+		     */
+		    s7_pointer func, body, stepper, result;
+		    s7_function f;
+
+		    slot_set_value(environment_dox1(sc->envir), make_mutable_integer(sc, s7_integer(init_val)));
+		    denominator(slot_value(environment_dox1(sc->envir))) = s7_integer(end_val);
+		    
+		    func = sc->code;
+		    body = cdr(sc->code);
+		    stepper = slot_value(environment_dox1(sc->envir));
+
+		    f = (s7_function)c_function_call(c_function_looped(ecdr(func)));
+		    result = f(sc, sc->args = cons(sc, stepper, body));
+		    if (result)
+		      {
+			sc->code = cdr(cadr(code));
+			goto BEGIN;
+		      }
+		    /* else fall into the ordinary loop */
+		    
+		    while (true)
+		      {
+			c_call(func)(sc, body);
+			numerator(stepper)++;
+			if (numerator(stepper) == denominator(stepper))
+			  {
+			    sc->code = cdr(cadr(sc->code));
+			    goto BEGIN;
+			  }
+		      }
+		  }
 		push_stack(sc, OP_SAFE_DO_STEP_A, sc->args, code);
 		goto NS_EVAL;
 	      }
@@ -45027,8 +45138,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	if (c_function_looped(ecdr(body)))
 	  {
-	    func = (s7_function)c_function_call(c_function_looped(ecdr(body))); /* body? */
-	    if (func(sc, args))
+	    func = (s7_function)c_function_call(c_function_looped(ecdr(body)));
+	    if (func(sc, sc->args = cons(sc, small_int(0), args))) /* make it compatible with the other looped calls */
 	      goto START; /* won't happen? */
 	    /* else fall into the ordinary loop */
 	  }
@@ -62260,8 +62371,8 @@ s7_scheme *s7_init(void)
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
  * bench    42736 8752 8051 7725 6515 5596
  * lint           9328 8140 7887 7736 7340
- * index    44300 3291 3005 2742 2078 1789
- * s7test    1721 1358 1297 1244  977  969
+ * index    44300 3291 3005 2742 2078 1675
+ * s7test    1721 1358 1297 1244  977  967
  * t455|6     265   89   55   31   14   14
  * t502        90   43   39   36   29   24
  * lat        229   63   52   47   42   40

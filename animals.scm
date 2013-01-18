@@ -433,8 +433,8 @@
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(base (make-oscil freq))
-	(modm (and fm-index (> fm-index 0.0) (make-oscil fm-freq)))
-	(frqf (and gliss-env (make-env gliss-env :duration dur :base 32 :scaler (hz->radians gliss))))
+	(modm (make-oscil fm-freq))
+	(frqf (make-env (or gliss-env '(0 0 1 0)) :duration dur :base 32 :scaler (hz->radians gliss)))
 	(pulse (make-pulsed-env pulse-env pulse-dur (/ 1.0 pulse-dur)))
 	(ampf (make-env amp-env :duration dur :scaler amp))
 	(index (hz->radians (* fm-freq fm-index))))
@@ -448,8 +448,7 @@
 	    ((= i stop))
 	  (outa i (* (env ampf)
 		     (pulsed-env pulse)
-		     (oscil base (+ (if frqf (env frqf) 0.0) 
-				    (if modm (* index (oscil modm)) 0.0)))))))))
+		     (oscil base (+ (env frqf) (* index (oscil modm))))))))))
 
 (define (knudsens-frog beg amp)
   (a-frog beg .25 480 amp '(0 0 1 1 3 1 4 0) 
@@ -1856,7 +1855,7 @@
 	      ((= k num))
 	    (mus-reset (gens k))))))))
 
-;; (with-sound (:play #t) (handsome-trig 0 2 .5))
+;; (with-sound (:play #t :statistics #t) (handsome-trig 0 2 .5))
 
 
 ;;; --------------------------------------------------------------------------------

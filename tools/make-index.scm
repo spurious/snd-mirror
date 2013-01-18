@@ -1122,7 +1122,7 @@
 				       (any-char-position line "<>\"(){}&"))))
 		       (when opos
 			 ;; open/close html entities
-			 (do ((i opos (+ i 1)))
+			 (do ((i opos (+ i 1 (or (any-char-position line "<>\"(){}&" (+ i 1)) len))))
 			     ((>= i len))
 			   (case (string-ref line i)
 			     ((#\<)
@@ -1215,7 +1215,7 @@
 				   (closing #f)
 				   (pos (char-position #\< line)))
 			       (if pos
-				   (do ((i pos (+ i 1)))
+				   (do ((i pos (+ i 1 (or (any-char-position line "</! >" (+ i 1)) len))))
 				       ((>= i len))
 				     (case (string-ref line i)
 				       ((#\<)
