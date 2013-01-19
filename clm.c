@@ -2325,7 +2325,18 @@ mus_float_t mus_table_lookup(mus_any *ptr, mus_float_t fm)
 {
   tbl *gen = (tbl *)ptr;
   if (gen->type == MUS_INTERP_LINEAR)
-    gen->yn1 = mus_array_interp(gen->table, gen->phase, gen->table_size);
+    {
+      /* we're checking already for out-of-range indices, so mus_array_interp is more than we need */
+      mus_long_t int_part;
+      mus_float_t frac_part, f1;
+      int_part = (mus_long_t)floor(gen->phase);
+      frac_part = gen->phase - int_part;
+      f1 = gen->table[int_part];
+      int_part++;
+      if (int_part == gen->table_size)
+	gen->yn1 = f1 + frac_part * (gen->table[0] - f1);
+      else gen->yn1 = f1 + frac_part * (gen->table[int_part] - f1);
+    }
   else gen->yn1 = mus_interpolate(gen->type, gen->phase, gen->table, gen->table_size, gen->yn1);
   gen->phase += (gen->freq + (fm * gen->internal_mag));
   if ((gen->phase >= gen->table_size) || 
@@ -2343,7 +2354,18 @@ mus_float_t mus_table_lookup_unmodulated(mus_any *ptr)
 {
   tbl *gen = (tbl *)ptr;
   if (gen->type == MUS_INTERP_LINEAR)
-    gen->yn1 = mus_array_interp(gen->table, gen->phase, gen->table_size);
+    {
+      /* see above */
+      mus_long_t int_part;
+      mus_float_t frac_part, f1;
+      int_part = (mus_long_t)floor(gen->phase);
+      frac_part = gen->phase - int_part;
+      f1 = gen->table[int_part];
+      int_part++;
+      if (int_part == gen->table_size)
+	gen->yn1 = f1 + frac_part * (gen->table[0] - f1);
+      else gen->yn1 = f1 + frac_part * (gen->table[int_part] - f1);
+    }
   else gen->yn1 = mus_interpolate(gen->type, gen->phase, gen->table, gen->table_size, gen->yn1);
   gen->phase += gen->freq;
   if ((gen->phase >= gen->table_size) || 
@@ -5453,12 +5475,13 @@ mus_float_t mus_formant(mus_any *ptr, mus_float_t input)
 static mus_float_t run_formant(mus_any *ptr, mus_float_t input, mus_float_t unused) {return(mus_formant(ptr, input));}
 
 
-mus_float_t mus_formant_bank(mus_float_t *amps, mus_any **formants, mus_float_t inval, int size)
+mus_float_t mus_formant_bank(int size, mus_float_t *amps, mus_any **formants, mus_float_t inval)
 {
   int i;
   mus_float_t sum = 0.0;
   for (i = 0; i < size; i++) 
-    sum += (amps[i] * mus_formant(formants[i], inval));
+    if (formants[i])
+      sum += (amps[i] * mus_formant(formants[i], inval));
   return(sum);
 }
 

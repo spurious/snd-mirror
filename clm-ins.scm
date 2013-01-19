@@ -1669,7 +1669,7 @@ is a physical model of a flute:
 	    (siz (floor (/ (length partials) 2))))
 	(let ((env1samples (+ beg (seconds->samples env1dur)))
 	      (oscils (make-vector siz))
-	      (alist (make-vector siz 0.0))
+	      (alist (make-vct siz 0.0))
 	      (locs (make-locsig degree distance reverb-amount))
 	      (ampfun1 (make-piano-ampfun env1dur)))
 	  (let ((ampenv1 (make-env ampfun1
@@ -1837,10 +1837,10 @@ is a physical model of a flute:
 	    (peak-amps (make-vector max-peaks-1 0.0))
 	    (peak-freqs (make-vector max-peaks-1 0.0))
 	    (resynth-oscils (make-vector max-oscils))
-	    (amps (make-vector max-oscils 0.0))	;run-time generated amplitude and frequency envelopes
-	    (rates (make-vector max-oscils 0.0))
-	    (freqs (make-vector max-oscils 0.0))
-	    (sweeps (make-vector max-oscils 0.0))
+	    (amps (make-vct max-oscils 0.0))	;run-time generated amplitude and frequency envelopes
+	    (rates (make-vct max-oscils 0.0))
+	    (freqs (make-vct max-oscils 0.0))
+	    (sweeps (make-vct max-oscils 0.0))
 	    ;; (lowest-magnitude .001)
 	    
 	    (ihifreq (hz->radians ifreq))
@@ -2288,7 +2288,7 @@ sndfile input, otherwise the duration in seconds.
 "gain-freq-list" is a list of gains and frequencies to
 filter --in this order gain and frequencies--. There is no limit to
 the size of the list. Gain can be a number or an
-envelope. Unfortunatelly in this version they cant alternate, one
+envelope. Unfortunatelly in this version they can't alternate, one
 should chose, all envelopes or all numbers i.e.: 
 case 1 -> '( .1 440.0 .3 1500.0 .2 330.0 ...etc) or 
 case 2 -> '((0 .1 1 .5) 440.0 (0 1 1 .01) 1500 (0 .3 1 .5) 330.0 ...etc) 
@@ -2309,7 +2309,7 @@ nil doesnt print anything, which will speed up a bit the process.
 
 (definstrument (graphEq file (beg 0) (dur 0) (or-beg 0) (amp 1) (amp-env '(0 1 .8 1 1 0)) (amp-base 1) 
 	(offset-gain 0)  
-	(gain-freq-list '((0 1 1 0) 440 (0 0 1 1) 660))      
+	(gain-freq-list '(.8 440 .2 660))      
 	(filt-gain-scale 1)                   
 	(filt-gain-base 1)                    
 	(a1 .99))

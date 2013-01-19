@@ -19819,9 +19819,9 @@ static token_t file_read_semicolon(s7_scheme *sc, s7_pointer pt)
 
 static token_t string_read_semicolon(s7_scheme *sc, s7_pointer pt)
 {
-  char *orig_str, *str;      
-  str = (char *)(port_string(pt) + port_string_point(pt));
-  orig_str = strchr((const char *)str, (int)'\n');
+  const char *orig_str, *str;      
+  str = (const char *)(port_string(pt) + port_string_point(pt));
+  orig_str = strchr(str, (int)'\n');
   if (!orig_str)
     {
       port_string_point(pt) = port_string_length(pt);
@@ -34380,16 +34380,15 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 	  }
 	else 
 	  {
-	    char *p, *str, *pend;
-	    const char *orig_str;
+	    const char *str, *orig_str, *p, *pend;
 
 	    orig_str = (const char *)(port_string(pt) + port_string_point(pt));
-	    pend = (char *)(port_string(pt) + port_string_length(pt));
-	    str = (char *)orig_str;
+	    pend = (const char *)(port_string(pt) + port_string_length(pt));
+	    str = orig_str;
 
 	    while (true)
 	      {
-		p = strchr((const char *)str, (int)'|');
+		p = strchr(str, (int)'|');
 		if ((!p) || (p >= pend))
 		  {
 		    port_string_point(pt) = port_string_length(pt);
@@ -34398,12 +34397,12 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 		  }
 		if (p[1] == '#')
 		  break;
-		str = (char *)(p + 1);
+		str = (const char *)(p + 1);
 	      }
 	    port_string_point(pt) += (p - orig_str + 2);
 
 	    /* now count newline inside the comment */
-	    str = (char *)orig_str;
+	    str = (const char *)orig_str;
 	    pend = p;
 	    while (true)
 	      {
@@ -49328,13 +49327,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				   77996: (oscil gen2 0.0 (* 2 rn))
 				     77996: (oscil gen3 0.0 (* 3 rn))
 				       47187: (* ind 0.1 (oscil gen2 (* 2 frq)))
-		   bench:
-		     11795: (vector-set! *puzzle* (+ j k) #t)
-		       11670: (vector-set! *puzzle* (+ j k) #f)
-		         6656: (vector-set! (vector-ref *p* i) m #f)
-			   2304: (vector-set! data j (- (vector-ref data i) tempr))
-			     2304: (vector-set! data i (+ (vector-ref data i) tempr))
-
 		   snd-test:
 445409: (+ (* frq 825.0) (rand-interp noise) (* 0.1 md))
 419248: (* (exp (* r (cos y))) (cos (+ x (* r (sin y)))) ar)
@@ -62376,6 +62368,6 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14
  * t502        90   43   39   36   29   24
  * lat        229   63   52   47   42   40
- * calls           275  207  175  115   97
+ * calls           275  207  175  115   96
  */
 

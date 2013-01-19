@@ -24,8 +24,6 @@
   ;;    Each imbedded list has the form: dur shape glot pitch glotamp noiseamps vibramt.
   ;;    See below for examples.
 
-  (define (make-real-vector len) (make-vector len 0.0))
-
   (let* ((setup (car data))
 	 (durs (map car data))
 	 (dur (apply + durs))
@@ -73,7 +71,7 @@
 			    data)
 		  init))
 	  (noiseamps (let* ((len (length data))
-			    (v (make-real-vector len)))
+			    (v (make-vector len 0.0)))
 		       (do ((i 0 (+ i 1)))
 			   ((= i len))
 			 (set! (v i) (exact->inexact ((data i) 5))))
@@ -87,8 +85,8 @@
 	    (noise-env (make-env nfun :duration dur))
 	    (ran-vib (make-rand-interp :frequency 10 :amplitude .02))
 	    
-	    (glot-datai (make-real-vector (* 2 (length glts))))
-	    (glot-datar (make-real-vector (* 2 (length glts))))
+	    (glot-datai (make-vector (* 2 (length glts)) 0.0))
+	    (glot-datar (make-vector (* 2 (length glts)) 0.0))
 	    
 	    (tractlength+8 (+ tractlength 8))
 	    (tractlength+1 (+ tractlength 1))
@@ -103,7 +101,7 @@
 	    (tong-hump-pole 0.998)
 	    (tong-tip-pole 0.998))
 
-	(let ((shape-data (make-real-vector (* (length shps) tractlength+8)))
+	(let ((shape-data (make-vector (* (length shps) tractlength+8) 0.0))
 	      
 	      (noselength-1 (- noselength 1))
 	      (noselength-2 (- noselength 2))
@@ -118,15 +116,15 @@
 	      (last-sfd -1)
 	      (last-gfd -1)
 
-	      (glot-table (make-real-vector (+ 1 table-size)))
-	      (glot-table2 (make-real-vector (+ 1 table-size)))
-	      (gn-table (make-real-vector (+ 1 table-size)))
+	      (glot-table (make-vector (+ 1 table-size) 0.0))
+	      (glot-table2 (make-vector (+ 1 table-size) 0.0))
+	      (gn-table (make-vector (+ 1 table-size) 0.0))
 	      (gn-gain 0.0)
 	      (gn-out 0.0)
-	      (gn-del (make-real-vector 4))
-	      (gn-coeffs (make-real-vector 4))
-	      (sines (make-real-vector 200))
-	      (cosines (make-real-vector 200))
+	      (gn-del (make-vector 4 0.0))
+	      (gn-coeffs (make-vector 4 0.0))
+	      (sines (make-vector 200 0.0))
+	      (cosines (make-vector 200 0.0))
 	      (table-increment 0.0)
 	      (glot-refl-gain 0.7)
 	      (pitch 400.0)
@@ -138,16 +136,16 @@
 	      (noise-gain 0.0)		;for vocal tract noise generator
 	      (noise-input 0.0)
 	      (noise-output 0.0)
-	      (noise-c (make-real-vector 4)) ; net coefficients on delayed outputs
+	      (noise-c (make-vector 4 0.0)) ; net coefficients on delayed outputs
 	      (noise-pos 0)
 	      (fnoiseamp 0.0)
 	      (inz1 0.0)
 	      (inz2 0.0)
-	      (outz (make-real-vector 4)) ; delayed versions of input and output
+	      (outz (make-vector 4 0.0)) ; delayed versions of input and output
 	      ;; nasal tract acoustic tube structure
-	      (nose-coeffs (make-real-vector noselength))
-	      (nose1 (make-real-vector noselength))
-	      (nose2 (make-real-vector noselength))
+	      (nose-coeffs (make-vector noselength 0.0))
+	      (nose1 (make-vector noselength 0.0))
+	      (nose2 (make-vector noselength 0.0))
 	      (velum-pos 0.0)
 	      (nose-last-minus-refl 0.0)
 	      (nose-last-plus-refl 0.0)
@@ -186,19 +184,19 @@
 	      (alpha3 0.0)
 	      (noseposition 3)
 
-	      (target-radii (make-real-vector tractlength+8))
-	      (radii-poles (make-real-vector tractlength+8))
-	      (radii-pole-gains (make-real-vector tractlength+8))
-	      (temp-arr (make-real-vector tractlength+1))
-	      (radii (make-real-vector tractlength+8))
+	      (target-radii (make-vector tractlength+8 0.0))
+	      (radii-poles (make-vector tractlength+8 0.0))
+	      (radii-pole-gains (make-vector tractlength+8 0.0))
+	      (temp-arr (make-vector tractlength+1 0.0))
+	      (radii (make-vector tractlength+8 0.0))
 					; the radii array contains the vocal tract section radii
 					; (tractlength-1 of them), then glottal reflection gain
 					; then lip reflection gain, then noise position, then noise gain,
 					; then noise pole angle, then noise pole radius, 
 					; then noise pole angle2, then noise pole radius2, then velum opening radius
-	      (coeffs (make-real-vector tractlength))
-	      (dline1 (make-real-vector tractlength))
-	      (dline2 (make-real-vector tractlength)))
+	      (coeffs (make-vector tractlength 0.0))
+	      (dline1 (make-vector tractlength 0.0))
+	      (dline2 (make-vector tractlength 0.0)))
       
 	  (do ((k 0 (+ k 1))
 	       (i 0 (+ i tractlength+8)))

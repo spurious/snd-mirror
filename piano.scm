@@ -242,9 +242,6 @@
   ;; converts t60 values to suitable :rate values for expseg
   (define (In-t60 t60) (- 1.0 (expt 0.001 (/ 1.0 t60 (mus-srate)))))
   
-  (define (one-pole-one-zero f0 f1 input)
-    (one-zero f0 (one-pole f1 input)))
-  
   (define (make-one-pole-one-zero a0 a1 b1)
     (list (make-one-zero a0 a1)
 	  (make-one-pole 1.0 b1)))
@@ -486,14 +483,14 @@
 				(set! wetamprate sb-cutoff-rate))))
 		      
 		      (set! noi (pnoise amp-1))
-		      (set! temp1 (one-pole-one-zero dryTap0 dryTap1 noi))
+		      (set! temp1 (one-zero dryTap0 (one-pole dryTap1 noi)))
 		      (set! temp2 (expseg dryTap-coef-expseg drycoefrate))
 		      (set! dryTap-one-pole-swept (- (* (+ 1.0 temp2) temp1) (* temp2 dryTap-one-pole-swept)))
 		      (set! dryTap (* (expseg dryTap-amp-expseg dryamprate) dryTap-one-pole-swept))
 				      
 						      
 		      (set! noi (pnoise amp-1))
-		      (set! temp1 (one-pole-one-zero wetTap0 wetTap1 noi))
+		      (set! temp1 (one-zero wetTap0 (one-pole wetTap1 noi)))
 		      (set! temp2 (expseg wetTap-coef-expseg wetcoefrate))
 		      (set! wetTap-one-pole-swept (- (* (+ 1.0 temp2) temp1) (* temp2 wetTap-one-pole-swept)))
 		      (set! openStrings (* (expseg wetTap-amp-expseg wetamprate) wetTap-one-pole-swept))
@@ -527,7 +524,7 @@
 								(one-pole-allpass string3-tuning-ap string3-junction-input)))))
 		      
 		      (set! couplingFilter-input (+ string1-junction-input string2-junction-input string3-junction-input))
-		      (set! couplingFilter-output (one-pole-one-zero cou0 cou1 couplingFilter-input))
+		      (set! couplingFilter-output (one-zero cou0 (one-pole cou1 couplingFilter-input)))
 		      
 		      (outa i couplingFilter-input))
 #|

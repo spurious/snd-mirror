@@ -1816,7 +1816,7 @@
     (let ((num (length freqs)))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
-	    (amps (let* ((v (make-vector num)) ; for oscil-bank, scaler is .354, need oscil-bank because freqs are not harmonically related
+	    (amps (let* ((v (make-vct num)) ; for oscil-bank, scaler is .354, need oscil-bank because freqs are not harmonically related
 			 (lst (list 1.0  1.0  .25  .17  .2   .1   .1))
 			 (scl (apply + lst)))
 		    (do ((i 0 (+ i 1)))
@@ -4541,8 +4541,7 @@
 	      (gen (gens k)))
 	  (do ((i start (+ i 1)))
 	      ((= i stop))
-	    (outa i (formant-bank fs fb (* (env ampf)
-					   (nrxysin gen (env frqf)))))))))))
+	    (outa i (* (env ampf) (formant-bank fs fb (nrxysin gen (env frqf)))))))))))
 
 ;; (with-sound (:play #t) (california-quail 0 .25))
 
@@ -4748,11 +4747,11 @@
 	    (set! (mus-frequency frm1) (+ 550 (* intrp 80)))
 	    (set! (mus-frequency frm2) (- 1500 (* intrp 400)))
 	    (set! (mus-frequency frm3) (+ 2300 (* intrp 150)))
-	    (outa i (formant-bank fs fb (* (env ampf) 
-					   (+ .9 (rand-interp rnd1))
-					   (nrcos gen1 (+ (env frqf)
-							  (* intrp (+ (* hz7 (oscil vib))
-								      (rand-interp rnd))))))))))))))
+	    (outa i (* (env ampf) 
+		       (formant-bank fs fb (* (+ .9 (rand-interp rnd1))
+					      (nrcos gen1 (+ (env frqf)
+							     (* intrp (+ (* hz7 (oscil vib))
+									 (rand-interp rnd)))))))))))))))
 
 ;; (with-sound (:play #t) (barred-owl-1 0 .5))
 
@@ -4981,10 +4980,10 @@
 			(rand-interp rnd2)
 			(* (env attf)
 			   (rand-interp rnd)))))
-	    (outa i (formant-bank fs fb (* (env ampf)
-					   (+ (rcos gen1 frq)
-					      (* (env intrpf)
-						 (rxycos gen2 frq))))))))))))
+	    (outa i (* (env ampf)
+		       (formant-bank fs fb (* (+ (rcos gen1 frq)
+						 (* (env intrpf)
+						    (rxycos gen2 frq)))))))))))))
 
 ;; (with-sound (:play #t) (common-gull 0 .5))
 
@@ -5443,11 +5442,11 @@
 	    (fs (vct fr1 fr2 fr3)))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
-	  (outa i (formant-bank fs fb (* (env ampf)
-					 (+ .85 (abs (rand-interp rnd1)))
-					 (nrcos gen (+ (env frqf)
-						       (rand-interp rnd)
-						       (* vib-index (blackman vib)))))))))))
+	  (outa i (* (env ampf)
+		     (formant-bank fs fb (* (+ .85 (abs (rand-interp rnd1)))
+					    (nrcos gen (+ (env frqf)
+							  (rand-interp rnd)
+							  (* vib-index (blackman vib))))))))))))
   
   (plain-chacalaca-1 beg1 0.17    (* .7 amp) 1700 (list 0 450  1 680))
   (plain-chacalaca-1 (+ beg1 0.20) 0.12 amp  1400 (list 0 500  1 680  2 660))
@@ -7281,15 +7280,15 @@
       (set! (ampfs 4) (make-env '(0.000 0.000 0.159 0.995 0.314 0.997 0.598 0.000 1.000 0.000)
 				:duration dur :scaler .01))
       
-      (let ((frqs (make-vector 5))
-	    (amps (make-vector 5)))
+      (let ((frqs (make-vct 5))
+	    (amps (make-vct 5)))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (let ((frq (env frqf)))
 	    (do ((k 0 (+ k 1)))
 		((= k 5))
-	      (vector-set! amps k (env (ampfs k)))
-	      (vector-set! frqs k (* (+ k 1) frq)))
+	      (vct-set! amps k (env (ampfs k)))
+	      (vct-set! frqs k (* (+ k 1) frq)))
 	    (outa i (* (env ampf) (oscil-bank 5 oscs amps frqs))))))))
   
   ;; part 2
@@ -7955,12 +7954,12 @@
 	    (fs (vct fr1 fr2 fr3 fr4 fr5)))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
-	  (outa i (formant-bank fs fb (* (env ampf)
-					 (+ .4 (abs (rand-interp trem)))
-					 (+ (* (env ampf1) 
-					       (polywave gen1 (* (env rndf) (rand-interp rnd))))
-					    (* (env ampf2)
-					       (polywave gen2 (env frqf2))))))))))))
+	  (outa i (* (env ampf)
+		     (formant-bank fs fb (* (+ .4 (abs (rand-interp trem)))
+					    (+ (* (env ampf1) 
+						  (polywave gen1 (* (env rndf) (rand-interp rnd))))
+					       (* (env ampf2)
+						  (polywave gen2 (env frqf2)))))))))))))
 
 ;; (with-sound (:play #t :statistics #t) (barn-owl 0 .5))
 

@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 6
-#define MUS_DATE "22-Dec-12"
+#define MUS_REVISION 7
+#define MUS_DATE "21-Jan-13"
 
 /* isn't mus_env_interp backwards? */
 
@@ -104,7 +104,6 @@ MUS_EXPORT void mus_generator_set_ycoeffs(mus_any_class *p, mus_float_t *(*ycoef
 MUS_EXPORT void mus_generator_set_reset(mus_any_class *p, void (*reset)(mus_any *ptr));
 MUS_EXPORT void mus_generator_set_set_closure(mus_any_class *p, void *(*set_closure)(mus_any *gen, void *e));
 MUS_EXPORT void mus_generator_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type);
-
 
 MUS_EXPORT mus_float_t mus_radians_to_hz(mus_float_t radians);
 MUS_EXPORT mus_float_t mus_hz_to_radians(mus_float_t hz);
@@ -326,7 +325,7 @@ MUS_EXPORT mus_any *mus_make_formant(mus_float_t frequency, mus_float_t radius);
 MUS_EXPORT bool mus_formant_p(mus_any *ptr);
 MUS_EXPORT void mus_set_formant_radius_and_frequency(mus_any *ptr, mus_float_t radius, mus_float_t frequency);
 MUS_EXPORT mus_float_t mus_formant_with_frequency(mus_any *ptr, mus_float_t input, mus_float_t freq_in_radians);
-MUS_EXPORT mus_float_t mus_formant_bank(mus_float_t *amps, mus_any **formants, mus_float_t inval, int size);
+MUS_EXPORT mus_float_t mus_formant_bank(int size, mus_float_t *amps, mus_any **formants, mus_float_t inval);
 
 MUS_EXPORT mus_float_t mus_firmant(mus_any *ptr, mus_float_t input);
 MUS_EXPORT mus_any *mus_make_firmant(mus_float_t frequency, mus_float_t radius);
@@ -580,6 +579,8 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 21-Jan-13:  changed mus_formant_bank parameters.
+ * --------
  * 22-Dec:     removed all the safety settings.
  * 15-Nov:     removed mus_env_t, mus_env_type, and other recently deprecated stuff.
  * 15-Jul:     more changes for clm2xen.
