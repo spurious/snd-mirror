@@ -10010,6 +10010,13 @@ static s7_pointer g_nrev_combs(s7_scheme *sc, s7_pointer args)
 
 
 
+static s7_pointer ina_ss;
+static s7_pointer g_ina_ss(s7_scheme *sc, s7_pointer args)
+{
+  return(g_in_any_1(S_ina, s7_car_value(sc, args), 0, s7_cadr_value(sc, args)));
+}
+
+
 static s7_pointer ina_reverb_2;
 static s7_pointer g_ina_reverb_2(s7_scheme *sc, s7_pointer args)
 {
@@ -13651,11 +13658,12 @@ static s7_pointer ina_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
   if (args == 2)
     {
       if ((s7_is_symbol(cadr(expr))) &&
-	  (s7_is_symbol(caddr(expr))) &&
-	  (caddr(expr) == reverb_symbol))
+	  (s7_is_symbol(caddr(expr))))
 	{
 	  s7_function_choice_set_direct(sc, expr);
-	  return(ina_reverb_2);
+	  if (caddr(expr) == reverb_symbol)
+	    return(ina_reverb_2);
+	  return(ina_ss);
 	}
     }
   return(f);
@@ -14468,6 +14476,7 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "ina");
   s7_function_set_chooser(sc, f, ina_chooser);
 
+  ina_ss = clm_make_function_no_choice(sc, "ina", g_ina_ss, 2, 0, false, "ina optimization", f);
   ina_reverb_2 = clm_make_function_no_choice(sc, "ina", g_ina_reverb_2, 2, 0, false, "ina optimization", f);
   mul_s_ina_reverb_2 = clm_make_function_no_choice(sc, "*", g_mul_s_ina_reverb_2, 2, 0, false, "* optimization", f);
   s7_function_chooser_set_data(sc, ina_reverb_2, (void *)make_choices(NULL, mul_s_ina_reverb_2, NULL, NULL, NULL, NULL));

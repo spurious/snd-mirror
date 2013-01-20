@@ -36,7 +36,6 @@
 
 	(let ((bank2-end (+ bank2-start bank-samps))
 	      (ramp 0.0)
-	      (bank1 0.0)
 	      (bank2 1.0)
 	      (outval 0.0)
 	      (inputs (make-vct fs 0.0))
@@ -45,11 +44,11 @@
 	      (ifs (/ 1.0 fs))
 	      (mid 0))
 
-	  (do ((i bank1-start (+ i 1)))
+	  (do ((i bank1-start (+ i 1))
+	       (bank1 0.0 (+ bank1 bank-incr)))
 	      ((= i ramp-start))
 	    ;; in bank1 section -- fire up the resonators
 	    (let ((inval (read-sample fil1)))
-	      (set! bank1 (+ bank1 bank-incr))
 	      (set! outval (formant-bank amps fs1 inval))
 	      (outa i (* amp (+ (* bank1 outval) (* (- 1.0 bank1) inval))))))
 		
@@ -66,66 +65,64 @@
 		 ;; low freqs go first
 		 (if (>= ramp 0.5)
 		     (begin
-		       (set! mid (min fs (floor (/ (- (* 2.0 ramp) 1.0) ifs))))
+		       (set! mid (floor (* (- (* 2.0 ramp) 1.0) fs)))
 		       (vct-fill! inputs inval2)
 		       (do ((k mid (+ k 1))
 			    (ks 1.0 (- ks ifs)))
-			   ((= k fs))
+			   ((>= k fs))
 			 (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1)))))
 		     (begin
-		       (set! mid (min fs (floor (/ (* 2.0 ramp) ifs))))
+		       (set! mid (min fs (floor (* 2.0 ramp fs))))
 		       (vct-fill! inputs inval1)
 		       (do ((k 0 (+ k 1))
 			    (ks (* 2.0 ramp) (- ks ifs)))
 			   ((= k mid))
 			 (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
 		 (outa i (formant-bank amps-scaled fs1 inputs)))))
-		
+
 	    ((1)
 	     (do ((i ramp-start (+ i 1)))
 		 ((= i ramp-end))
 	       (let ((inval1 (read-sample fil1))
 		     (inval2 (read-sample fil2)))
-		 ;; now the choice of spectral fade -- we should end with all bank1 0.0 and all bank2 1.0
 		 (set! ramp (+ ramp ramp-incr))
 		 
 		 ;; high freqs go first
 		 (if (>= ramp 0.5)
 		     (let ((r2 (- (* 2.0 ramp) 1.0)))
-		       (set! mid (min fs (ceiling (/ (* 2.0 (- 1.0 ramp)) ifs))))
+		       (set! mid (min fs (ceiling (* (- 1.0 r2) fs))))
 		       (vct-fill! inputs inval2)
 		       (do ((k 0 (+ k 1))
 			    (ks r2 (+ ks ifs)))
 			   ((= k mid))
 			 (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1)))))
 		     (begin
-		       (set! mid (min fs (ceiling (/ (- 1.0 (* 2 ramp)) ifs))))
+		       (set! mid (ceiling (* (- 1.0 (* 2.0 ramp)) fs)))
 		       (vct-fill! inputs inval1)
 		       (do ((k mid (+ k 1))
 			    (ks 0.0 (+ ks ifs)))
-			   ((= k fs))
+			   ((>= k fs))
 			 (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
 		 (outa i (formant-bank amps-scaled fs1 inputs)))))
 		
 	    (else
-	     (do ((i ramp-start (+ i 1)))
-		 ((= i ramp-end))
-	       (let ((inval1 (read-sample fil1))
-		     (inval2 (read-sample fil2)))
-		 ;; now the choice of spectral fade -- we should end with all bank1 0.0 and all bank2 1.0
-		 (set! ramp (+ ramp ramp-incr))
-		 ;; sweep from midpoint out
-		 
-		 (let ((r2 (* 2 ramp))
-		       (half-fs (/ fs 2)))
-		   (do ((k 0 (+ k 1)))
+	     (let ((half-fs (/ fs 2)))
+	       (do ((i ramp-start (+ i 1)))
+		   ((= i ramp-end))
+		 (let ((inval1 (read-sample fil1))
+		       (inval2 (read-sample fil2)))
+		   ;; now the choice of spectral fade -- we should end with all bank1 0.0 and all bank2 1.0
+		   (set! ramp (+ ramp ramp-incr))
+		   ;; sweep from midpoint out
+		   (vct-fill! inputs inval1)
+		   (set! mid (min half-fs (floor (* fs ramp))))
+		   (do ((k (- half-fs mid) (+ k 1))
+			(hk (+ half-fs mid -1) (- hk 1))
+			(ks (max 0.0 (- (* 2.0 ramp) 1.0)) (+ ks ifs)))
 		       ((= k half-fs))
-		     (let ((rfs (max 0.0 (min 1.0 (- (+ r2 0.5) (* (- fs k) ifs))))))
-		       (set! (inputs (+ k 1)) (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))
-		   (do ((k 0 (+ k 1)))
-		       ((= k (- half-fs 1)))
-		     (let ((rfs (max 0.0 (min 1.0 (- r2 (/ k half-fs))))))
-		       (set! (inputs (+ k 1 half-fs)) (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))
+		     (let ((rfs (min 1.0 ks)))
+		       (set! (inputs k) (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))
+		       (set! (inputs hk) (inputs k))))
 		   (outa i (formant-bank amps-scaled fs1 inputs)))))))
       
 	  (do ((i ramp-end (+ i 1)))
@@ -265,7 +262,7 @@
       (outa i (ncos g)))))
 
 (with-sound (:output "p2.snd") 
-  (let ((g (make-ncos 1234 10)))
+  (let ((g (make-ncos 123 100)))
     (do ((i 0 (+ i 1)))
 	((= i 100000))
       (outa i (ncos g)))))

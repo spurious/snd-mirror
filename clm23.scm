@@ -911,7 +911,6 @@
   "(sample-pvoc3 beg dur amp size file) test instrument for phase-vocoder"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
-	(k 0)
 	(N2 (/ size 2))
 	(sr (make-phase-vocoder (make-readin file) :fft-size size)))
     (let ((amps (phase-vocoder-amps sr))
@@ -2334,9 +2333,7 @@
 	(fil (make-file->sample file)))
     (do ((i start (+ i 1)))
 	((= i end))
-      (outa i 
-	    (* amp (in-any i 0 fil)) ; same as (ina i fil)
-	    ))))
+      (outa i (* amp (ina i fil))))))
 
 (definstrument (sndclmdoc-env-sound file beg (amp 1.0) (amp-env '(0 1 100 1)))
   (let ((st (seconds->samples beg))

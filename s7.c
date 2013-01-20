@@ -62361,13 +62361,13 @@ s7_scheme *s7_init(void)
  *   in set pair, object set et al need not use eval_args/apply if all args are all_x ops
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
- * bench    42736 8752 8051 7725 6515 5596
+ * bench    42736 8752 8051 7725 6515 5564
  * lint           9328 8140 7887 7736 7340
  * index    44300 3291 3005 2742 2078 1675
  * s7test    1721 1358 1297 1244  977  967
  * t455|6     265   89   55   31   14   14
  * t502        90   43   39   36   29   24
  * lat        229   63   52   47   42   40
- * calls           275  207  175  115   96
+ * calls           275  207  175  115   97
  */
 

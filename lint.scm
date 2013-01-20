@@ -1638,8 +1638,15 @@
 		       `(,(car form) ,@args)))
 		   `(,(car form) ,@args)))
 	      
-	      ((atan expt angle) ; (angle -1) and (* 4 (atan 1)) are common ways to get pi, so don't simplify these 
+	      ((expt angle) ; (angle -1) and (* 4 (atan 1)) are common ways to get pi, so don't simplify these 
 	       `(,(car form) ,@args))
+
+	      ((atan)
+	       (if (and (= len 1)
+			(pair? (car args))
+			(eq? (caar args) '/))
+		   `(atan ,@(cdar args))
+		   form))
 	      
 	      ((inexact->exact)
 	       (if (= len 1)
