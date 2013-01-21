@@ -2294,6 +2294,7 @@ but a function grabs all remaining indices.  Trickier than I expected!
 <li>(<em class=def id="hashtableset">hash-table-set!</em> ht key value)
 <li>(<em class=def id="hashtablep">hash-table?</em> obj)
 <li>(<em class=def id="hashtablesize">hash-table-size</em> ht)
+<li>(<em class=def id="hashtableindex">hash-table-index</em> obj)
 <li>(<em class=def id="hashtableiterator">make-hash-table-iterator</em> ht)
 <li>(<em class=def id="hashtableiteratorp">hash-table-iterator?</em> obj)
 </ul>
@@ -2313,6 +2314,7 @@ If you pass a table size that is not a power of 2, make-hash-table rounds it up 
 
 <p>hash-table (the function) parallels (the functions) vector, list, and string.  Its arguments are cons's containing key/value pairs.
 The result is a new hash-table with those values preinstalled: <code>(hash-table '("hi" . 32) '("ho" . 1))</code>.
+hash-table-index returns an integer suitable for use as a hash-table location, similar to CL's sxhash.
 make-hash-table-iterator returns a function of no arguments (a "thunk").  Each time you call this function, it
 returns the next entry in the hash table.  When it runs out of entries, it returns nil.  hash-table-iterator?
 returns #t if passed one of these iterators.

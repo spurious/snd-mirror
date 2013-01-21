@@ -590,6 +590,7 @@ s7_pointer s7_car_value(s7_scheme *sc, s7_pointer lst);
 s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst);
 s7_pointer s7_cadar_value(s7_scheme *sc, s7_pointer lst);
 size_t s7_number_offset(s7_scheme *sc);
+size_t s7_denominator_offset(s7_scheme *sc);
 
 int s7_c_object_built_in_type(s7_scheme *sc);
 size_t s7_c_object_value_offset(s7_scheme *sc);

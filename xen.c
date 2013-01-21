@@ -1421,7 +1421,7 @@ void xen_initialize(void)
 
 s7_scheme *s7;
 XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
-size_t xen_s7_number_location;
+size_t xen_s7_number_location, xen_s7_denominator_location;
 
 char *xen_version(void)
 {
@@ -1880,6 +1880,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   xen_zero = s7_make_integer(s7, 0);
   s7_gc_protect(s7, xen_zero);
   xen_s7_number_location = s7_number_offset(sc);
+  xen_s7_denominator_location = s7_denominator_offset(sc);
 
   XEN_DEFINE_SAFE_PROCEDURE("getpid",              g_getpid_w,             0, 0, 0, H_getpid);
 #if (!WITH_SYSTEM_EXTRAS)

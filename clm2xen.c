@@ -6791,6 +6791,9 @@ static s7_pointer g_clm_reverb_set(s7_scheme *sc, s7_pointer args)
 #define S_out_bank "out-bank"
 static XEN g_out_bank(XEN loc, XEN gens, XEN inval)
 {
+  #define H_out_bank "(out-bank location gens val) calls each generator in the gens vector, passing it the argument val, then \
+sends that output to the output channels in the vector order (the first generator writes to outa, the second to outb, etc)."
+
   mus_long_t pos;
   int i, size;
   double x = 0.0;
@@ -9713,7 +9716,7 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer args)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int)));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -10070,7 +10073,7 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int)));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -10144,7 +10147,7 @@ static s7_pointer g_indirect_out_bank_ssz_looped(s7_scheme *sc, s7_pointer args)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int)));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -10505,7 +10508,7 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int))); /* TODO: get this via offsetof */
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -10650,7 +10653,7 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int)));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -10702,7 +10705,7 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int))); /* TODO: get this via offsetof */
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location)); 
   pos = (*step);
   end = (*stop);
 
@@ -10892,7 +10895,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int)));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -11122,7 +11125,7 @@ static s7_pointer g_outa_env_polywave_env_looped(s7_scheme *sc, s7_pointer args)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int))); /* TODO: get this via offsetof */
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location)); 
   pos = (*step);
   end = (*stop);
 
@@ -11133,7 +11136,7 @@ static s7_pointer g_outa_env_polywave_env_looped(s7_scheme *sc, s7_pointer args)
   args = caddr(args);
   GET_GENERATOR_CADR(args, env, mode);
 
-  if (mus_out_any_is_safe(clm_output_gen)) /* TODO: extend this to other cases? */
+  if (mus_out_any_is_safe(clm_output_gen)) 
     {
       mus_float_t **ob;
       mus_float_t *buf;
@@ -11177,7 +11180,7 @@ static s7_pointer g_outa_env_polywave_env_ri_looped(s7_scheme *sc, s7_pointer ar
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int))); /* TODO: get this via offsetof */
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location)); 
   pos = (*step);
   end = (*stop);
 
@@ -11211,7 +11214,7 @@ static s7_pointer g_outa_env_oscil_env_looped(s7_scheme *sc, s7_pointer args)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int)));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -11359,7 +11362,7 @@ static s7_pointer g_outa_2_temp_simple_looped(s7_scheme *sc, s7_pointer args)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int)));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -11410,7 +11413,7 @@ static s7_pointer g_outa_2_temp_sg_looped(s7_scheme *sc, s7_pointer args)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int)));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -11457,7 +11460,7 @@ static s7_pointer g_outa_2_temp_eg_looped(s7_scheme *sc, s7_pointer args)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location + sizeof(s7_Int)));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -15350,7 +15353,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_REAL_PROCEDURE(S_filtered_comb_bank, g_filtered_comb_bank_w, 2, 0, 0, "an experiment");
   XEN_DEFINE_REAL_PROCEDURE(S_all_pass_bank, g_all_pass_bank_w, 2, 0, 0, "an experiment");
 
-  XEN_DEFINE_REAL_PROCEDURE(S_out_bank, g_out_bank_w, 3, 0, 0, "an experiment"); /* TODO: help string */
+  XEN_DEFINE_REAL_PROCEDURE(S_out_bank, g_out_bank_w, 3, 0, 0, H_out_bank);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedback, g_mus_feedback_w, H_mus_feedback, S_setB S_mus_feedback, g_mus_set_feedback_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedforward, g_mus_feedforward_w, H_mus_feedforward, S_setB S_mus_feedforward, g_mus_set_feedforward_w,  1, 0, 2, 0);
