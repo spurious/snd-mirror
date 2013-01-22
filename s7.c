@@ -2254,6 +2254,10 @@ static int safe_strcmp(const char *s1, const char *s2)
 
 
 static bool is_proper_list(s7_scheme *sc, s7_pointer lst);
+static s7_function all_x_eval(s7_pointer arg);
+static bool is_all_x_safe(s7_pointer p);
+static void annotate_args(s7_scheme *sc, s7_pointer args);
+static void annotate_arg(s7_scheme *sc, s7_pointer arg);
 static void mark_embedded_objects(s7_pointer a); /* called by gc, calls c_obj's mark func */
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op);
 static s7_pointer division_by_zero_error(s7_scheme *sc, s7_pointer caller, s7_pointer arg);
@@ -20785,9 +20789,6 @@ static s7_pointer g_write_char_a_s_looped(s7_scheme *sc, s7_pointer args)
 }
 
 
-static bool is_all_x_safe(s7_pointer p);
-static void annotate_args(s7_scheme *sc, s7_pointer args);
-static void annotate_arg(s7_scheme *sc, s7_pointer arg);
 static s7_pointer write_char_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 1)
@@ -27455,6 +27456,53 @@ static bool c_function_is_ok(s7_scheme *sc, s7_pointer x)
 
 #endif
 
+static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value);
+static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code);
+static bool arglist_has_accessed_symbol(s7_pointer args);
+/* TODO: reorganize this code! */
+
+static void initialize_dox_vars(s7_scheme *sc, s7_pointer end)
+{
+  switch (optimize_data(end))
+    {
+    case HOP_SAFE_C_C:
+      break;
+      
+    case HOP_SAFE_C_S:
+    case HOP_SAFE_C_SC:
+    case HOP_SAFE_C_S_opCq:
+      environment_dox1(sc->envir) = find_symbol(sc, cadr(end));
+      break;
+      
+    case HOP_SAFE_C_CS:
+    case HOP_SAFE_C_QS:
+      environment_dox1(sc->envir) = find_symbol(sc, caddr(end));
+      break;
+      
+    case HOP_SAFE_C_SS:
+      environment_dox1(sc->envir) = find_symbol(sc, cadr(end));
+      environment_dox2(sc->envir) = find_symbol(sc, caddr(end));
+      break;
+      
+    case HOP_SAFE_C_opSq_S:
+      environment_dox1(sc->envir) = find_symbol(sc, cadr(cadr(end)));
+      environment_dox2(sc->envir) = find_symbol(sc, caddr(end));
+      break;
+      
+    case HOP_SAFE_C_S_opSq:
+    case HOP_SAFE_C_S_opSCq:
+    case HOP_SAFE_C_S_opSSq:
+      environment_dox1(sc->envir) = find_symbol(sc, cadr(end));
+      environment_dox2(sc->envir) = find_symbol(sc, ecdr(cdr(end)));
+      break;
+
+    case HOP_SAFE_C_opSq_opSq:
+      environment_dox1(sc->envir) = find_symbol(sc, cadr(cadr(end)));
+      environment_dox2(sc->envir) = find_symbol(sc, cadr(caddr(end)));
+      break;
+    }
+}
+
 
 static s7_scheme *compare_sc;
 static s7_function compare_func;
@@ -27469,6 +27517,19 @@ static int vector_compare(const void *v1, const void *v2)
   return(1);
 }
 
+static int dox_compare(const void *v1, const void *v2)
+{
+  /* here v1 and v2 are the lambda args.  We need to place these in the current env slots,
+   *   then call compare_func with the expression as its argument. So compare_args in this
+   *   case is expr.
+   */
+  slot_set_value(environment_slots(compare_sc->envir), (*(s7_pointer *)v1));
+  slot_set_value(next_slot(environment_slots(compare_sc->envir)), (*(s7_pointer *)v2));
+  if (is_true(compare_sc, (*(compare_func))(compare_sc, compare_args)))
+    return(-1);
+  return(1);
+}
+
 
 static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 {
@@ -27477,7 +27538,9 @@ If its first argument is a list, the list is copied (despite the '!')."
 
   s7_pointer data, lessp;
   s7_Int len = 0, n, k;
+  int (*sort_func)(const void *v1, const void *v2);
 
+  sort_func = vector_compare;
   data = car(args);
   if (is_null(data)) 
     {
@@ -27510,27 +27573,57 @@ If its first argument is a list, the list is copied (despite the '!')."
     return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, 
 					 make_protected_string(sc, "a procedure that can take 2 arguments")));
 
+  compare_func = NULL;
+  compare_args = sc->T2_1;
+  compare_sc = sc;
+
   /* (define (hi a) (sort! a (lambda (x y) (< x y))))
    */
-#if 0
-  if (is_closure(lessp))
-  fprintf(stderr, "sort: %d %d %d %d %s %d %s\n",
-	  (is_closure(lessp)),
-	  (is_one_liner(closure_body(lessp))),
-	  (is_safe_closure(closure_body(lessp))),
-	  (is_all_x_safe(closure_body(lessp))),
-	  (is_optimized(car(closure_body(lessp)))) ? opt_names[optimize_data(car(closure_body(lessp)))] : "unopt",
-	  (is_optimized(car(closure_body(lessp)))) ? c_function_is_ok(sc, car(closure_body(lessp))) : 0,
-	  DISPLAY(closure_body(lessp)));
-
-  if ((is_closure(lessp)) &&
-      (is_one_liner(closure_body(lessp))) &&
-      (is_safe_closure(closure_body(lessp))) &&
-      (is_all_x_safe(car(closure_body(lessp)))))
+  if ((is_safe_procedure(lessp)) &&
+      (is_c_function(lessp)))
+    compare_func = c_function_call(lessp);
+  else
     {
-      fprintf(stderr, "safe sort: %s\n", DISPLAY(closure_body(lessp)));
+      /* an experiment. TODO: other similar cases are assoc member for-each map
+       */
+      if ((is_closure(lessp)) &&
+	  (is_one_liner(closure_body(lessp))) &&
+	  (is_optimized(car(closure_body(lessp)))))
+	{
+	  /* since (sort seq (lambda (a b) ...)) can't return a "safe closure" (the hop bit is off in
+	   *   optimize in this case, for some arcane reason), the optimized expression won't be hop_safe,
+	   *   but that is irrelevant at this point -- if c_function_is_ok, we're good to go.
+	   *   So, treat it as if it were a dox end expression, creating a frame and using dox1|2 for
+	   *   any symbols. This way we can handle slightly tricky cases like (lambda (a b) (< (car b) a))
+	   *   without any extra work up front.  compare_func needs to be a dox-like-version of c_call(expr)
+	   *   where the 2 args are placed in dox1|2 before calling the actual function.
+	   */
+	  s7_pointer expr, args;
+	  s7_function sort_f;
+	  expr = car(closure_body(lessp));
+	  args = closure_args(lessp);
+
+	  if ((is_pair(args)) &&
+	      (!arglist_has_accessed_symbol(args)) &&
+	      (((optimize_data(expr) & 1) != 0) ||
+	       (c_function_is_ok(sc, expr))))
+	    {
+	      int orig_data;
+	      orig_data = optimize_data(expr);
+	      optimize_data(expr) |= 1;
+	      sort_f = end_dox_eval(sc, expr);
+	      if (sort_f)
+		{
+		  NEW_FRAME_WITH_TWO_SLOTS(sc, closure_environment(lessp), sc->envir, car(args), sc->F, cadr(args), sc->F);
+		  initialize_dox_vars(sc, expr);
+		  compare_func = sort_f;
+		  sort_func = dox_compare;
+		  compare_args = expr;
+		}
+	      optimize_data(expr) = orig_data;
+	    }
+	}
     }
-#endif
 
   switch (type(data))
     {
@@ -27547,17 +27640,13 @@ If its first argument is a list, the list is copied (despite the '!')."
 	  return(sc->F);
 	}
 
-      if ((is_safe_procedure(lessp)) &&
-	  (is_c_function(lessp)))
+      if (compare_func)
 	{
 	  int gc_loc;
 	  s7_pointer vec;
 	  vec = g_vector(sc, data);
 	  gc_loc = s7_gc_protect(sc, vec);
-	  compare_sc = sc;
-	  compare_func = c_function_call(lessp);
-	  compare_args = sc->T2_1;
-	  qsort((void *)s7_vector_elements(vec), len, sizeof(s7_pointer), vector_compare);
+	  qsort((void *)s7_vector_elements(vec), len, sizeof(s7_pointer), sort_func);
 	  vec = s7_vector_to_list(sc, vec);
 	  s7_gc_unprotect_at(sc, gc_loc);
 	  return(vec);
@@ -27576,13 +27665,9 @@ If its first argument is a list, the list is copied (despite the '!')."
        */
       len = vector_length(data);
 
-      if ((is_safe_procedure(lessp)) &&
-	  (is_c_function(lessp)))
+      if (compare_func)
 	{
-	  compare_sc = sc;
-	  compare_func = c_function_call(lessp);
-	  compare_args = sc->T2_1;
-	  qsort((void *)s7_vector_elements(data), len, sizeof(s7_pointer), vector_compare);
+	  qsort((void *)s7_vector_elements(data), len, sizeof(s7_pointer), sort_func);
 	  return(data);
 	}
       break;
@@ -27720,7 +27805,7 @@ static int hash_loc(s7_scheme *sc, s7_pointer key)
   return(type(key));
 }
 
-/* TODO: s7test hash-table-index t597.scm */
+
 static s7_pointer g_hash_table_index(s7_scheme *sc, s7_pointer args)
 {
   return(make_integer(sc, hash_loc(sc, car(args))));
@@ -33397,9 +33482,6 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	      (!symbol_has_accessor(car(closure_args(sc->code)))))    /* not wrapped in an accessor */
 	    {
 	      /* one list arg -- special, but very common case
-	       *
-	       * checking for and (only rarely) using the safe_do machinery here was much slower.
-	       * one-liner here plus separate loop in eval was only slightly faster 
 	       */
 	      obj = make_simple_counter(sc, obj); /* counter_list(sc->args) => original list (cadr(args)) */
 	      push_stack(sc, OP_FOR_EACH_SIMPLE, obj, sc->code);
@@ -33617,7 +33699,6 @@ static s7_pointer for_each_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	      if ((is_pair(car(lbody))) &&
 		  (is_null(cdr(lbody))))
 		return(for_each_2);
-
 	      return(for_each_1); 
 	    }
 	}
@@ -35376,9 +35457,6 @@ static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl)
   return(unbound_variable(sc, hdl));
 }
 
-
-
-/* -------------------------------- optimizer stuff -------------------------------- */
 
 
 #define is_h_safe_c_s(P) ((is_optimized(P)) && (optimize_data(P) == HOP_SAFE_C_S))
@@ -38583,21 +38661,21 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 			  (!is_immutable(caadr(lambda_expr))))
 			{
 			  choose_c_function(sc, car_x, func, 2);
-			  if ((c_call(car_x) == g_for_each_1) || (c_call(car_x) == g_for_each_2))
+			  if ((c_call(car_x) == g_for_each_1) &&
+			      (is_symbol(caddar_x)))
 			    {
-			      if (is_symbol(caddar_x))
-				{
-				  set_unsafely_optimized(car_x);
-				  if (c_call(car_x) == g_for_each_1)
-				    set_optimize_data(car_x, hop + OP_C_FOR_EACH_LS);
-				  else set_optimize_data(car_x, hop + OP_C_FOR_EACH_LS_2);
-				  return(false);
-				}
-			      /* so it must be a safe_c_s case */
+			      set_unsafely_optimized(car_x);
+			      set_optimize_data(car_x, hop + OP_C_FOR_EACH_LS);
+			    }
+			  else
+			    {
 			      if (c_call(car_x) == g_for_each_2)
 				{
+				  /* args are safe, body is one-liner */
 				  set_unsafely_optimized(car_x);
-				  set_optimize_data(car_x, hop + OP_C_FOR_EACH_L_opSq);
+				  if (is_symbol(caddar_x))
+				    set_optimize_data(car_x, hop + OP_C_FOR_EACH_LS_2);
+				  else set_optimize_data(car_x, hop + OP_C_FOR_EACH_L_opSq);
 				  return(false);
 				}
 			    }
@@ -42489,6 +42567,7 @@ static bool is_end_dox_safe(s7_scheme *sc, s7_pointer p)
 	 (op == HOP_SAFE_C_S_opCq) ||
 	 (op == HOP_SAFE_C_opSq_S) ||
 	 (op == HOP_SAFE_C_S_opSq) ||
+	 (op == HOP_SAFE_C_opSq_opSq) ||
 	 (op == HOP_SAFE_C_S_opSCq) ||
 	 (op == HOP_SAFE_C_S_opSSq));
 }
@@ -42784,6 +42863,15 @@ static s7_pointer end_dox_c_s_opsq(s7_scheme *sc, s7_pointer code)
   return(c_call(code)(sc, sc->T2_1));
 }
 
+static s7_pointer end_dox_c_opsq_opsq(s7_scheme *sc, s7_pointer code)
+{
+  car(sc->T1_1) = slot_value(environment_dox1(sc->envir));
+  car(sc->T2_1) = c_call(cadr(code))(sc, sc->T1_1);
+  car(sc->T1_1) = slot_value(environment_dox2(sc->envir));
+  car(sc->T2_2) = c_call(caddr(code))(sc, sc->T1_1);
+  return(c_call(code)(sc, sc->T2_1));
+}
+
 static s7_pointer end_dox_c_s_opscq(s7_scheme *sc, s7_pointer code)
 {
   car(sc->T2_1) = slot_value(environment_dox2(sc->envir));
@@ -42861,18 +42949,19 @@ static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code)
 	return(end_dox_is_eof);
       return(end_dox_c_s);
 
-    case HOP_SAFE_C_SC:      return(end_dox_c_sc);
-    case HOP_SAFE_C_CS:      return(end_dox_c_cs);
-    case HOP_SAFE_C_SS:      return(end_dox_c_ss);
-    case HOP_SAFE_C_QS:      return(end_dox_c_qs);
-    case HOP_SAFE_C_S_opCq:  return(end_dox_c_s_opcq);
-    case HOP_SAFE_C_opSq_S:  return(end_dox_c_opsq_s);
-    case HOP_SAFE_C_S_opSq:  return(end_dox_c_s_opsq);
-    case HOP_SAFE_C_S_opSCq: return(end_dox_c_s_opscq);
-    case HOP_SAFE_C_S_opSSq: return(end_dox_c_s_opssq);
+    case HOP_SAFE_C_SC:        return(end_dox_c_sc);
+    case HOP_SAFE_C_CS:        return(end_dox_c_cs);
+    case HOP_SAFE_C_SS:        return(end_dox_c_ss);
+    case HOP_SAFE_C_QS:        return(end_dox_c_qs);
+    case HOP_SAFE_C_S_opCq:    return(end_dox_c_s_opcq);
+    case HOP_SAFE_C_opSq_S:    return(end_dox_c_opsq_s);
+    case HOP_SAFE_C_opSq_opSq: return(end_dox_c_opsq_opsq);
+    case HOP_SAFE_C_S_opSq:    return(end_dox_c_s_opsq);
+    case HOP_SAFE_C_S_opSCq:   return(end_dox_c_s_opscq);
+    case HOP_SAFE_C_S_opSSq:   return(end_dox_c_s_opssq);
 
-    case OP_NOT_AN_OP:       return(end_dox_or_all_x);
-    case HOP_NOT_AN_OP:      return(end_dox_or_c);
+    case OP_NOT_AN_OP:         return(end_dox_or_all_x);
+    case HOP_NOT_AN_OP:        return(end_dox_or_c);
     }
   return(NULL);
 }
@@ -44029,7 +44118,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     FOR_EACH_SIMPLE:
     case OP_FOR_EACH_SIMPLE:
       /* func = sc->code, func takes one arg, args = arglist 
-       * (for-each (lambda (x) (display x)) (list 1 2 3)) 
        */
       {
 	s7_pointer args;
@@ -45373,7 +45461,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       {
 	long long int id;
-	s7_pointer frame, vars, slot, end;
+	s7_pointer frame, vars, slot;
 
 	NEW_FRAME(sc, sc->envir, frame); /* new frame is not tied into the symbol lookup process yet */
 	for (vars = car(sc->code); is_pair(vars); vars = cdr(vars))
@@ -45417,42 +45505,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		slot_pending_value(slot) = find_symbol(sc, cadar(slot_expression(slot)));
 	    }
 
-	end = fcdr(sc->code);
-
-	switch (optimize_data(end))
-	  {
-	  case HOP_SAFE_C_C:
-	    break;
-	  
-	  case HOP_SAFE_C_S:
-	  case HOP_SAFE_C_SC:
-	  case HOP_SAFE_C_S_opCq:
-	    environment_dox1(sc->envir) = find_symbol(sc, cadr(end));
-	    break;
-
-	  case HOP_SAFE_C_CS:
-	  case HOP_SAFE_C_QS:
-	    environment_dox1(sc->envir) = find_symbol(sc, caddr(end));
-	    break;
-
-	  case HOP_SAFE_C_SS:
-	    environment_dox1(sc->envir) = find_symbol(sc, cadr(end));
-	    environment_dox2(sc->envir) = find_symbol(sc, caddr(end));
-	    break;
-
-	  case HOP_SAFE_C_opSq_S:
-	    environment_dox1(sc->envir) = find_symbol(sc, cadr(cadr(end)));
-	    environment_dox2(sc->envir) = find_symbol(sc, caddr(end));
-	    break;
-
-	  case HOP_SAFE_C_S_opSq:
-	  case HOP_SAFE_C_S_opSCq:
-	  case HOP_SAFE_C_S_opSSq:
-	    environment_dox1(sc->envir) = find_symbol(sc, cadr(end));
-	    environment_dox2(sc->envir) = find_symbol(sc, ecdr(cdr(end)));
-	    break;
-	  }
-	
+	initialize_dox_vars(sc, fcdr(sc->code));	
 	if (is_true(sc, ((s7_function)fcdr(cdr(sc->code)))(sc, fcdr(sc->code))))
 	  {
 	    /* if no end result exprs, we return nil, but others probably #<unspecified>
@@ -46657,7 +46710,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto START;
 	      
 
-	      
 	    case OP_CLOSURE_C:
 	      if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 1))
 		{
@@ -50523,17 +50575,63 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		 */
 		s7_pointer x, y, z;
 		
-		y = cdadr(code);
-		MAKE_CLOSURE_NO_CAPTURE(sc, x, car(y), cdr(y), sc->envir);
-		
 		z = find_symbol_or_bust(sc, caddr(code));
+		if (is_null(z))
+		  {
+		    sc->value = sc->UNSPECIFIED;
+		    goto START;
+		  }
+
+		y = cdadr(code);
+		MAKE_CLOSURE_NO_CAPTURE(sc, x, car(y), cdr(y), sc->envir); /* car=args, cdr=code */
+
 		if ((!is_pair(z)) ||
 		    (s7_list_length(sc, z) == 0))
 		  {
 		    sc->value = g_for_each(sc, list_2(sc, x, z));
 		    goto START;
 		  }
-
+#if 0
+		/* maybe not worth the code -- this almost never happens */
+		{
+		  s7_pointer body;
+		  body = cdr(y);
+		  
+		  if ((is_optimized(car(body))) &&
+		      (is_safe_c_op(optimize_data(car(body)))))
+		    {
+		      s7_pointer args, expr;
+		      expr = car(body);
+		      args = car(y);
+		      
+		      if (((optimize_data(expr) & 1) != 0) ||
+			  (c_function_is_ok(sc, expr)))
+			{
+			  int orig_data;
+			  orig_data = optimize_data(expr);
+			  optimize_data(expr) |= 1;
+			  if (is_all_x_safe(expr))
+			    {
+			      s7_function f;
+			      s7_pointer p, slot;
+			      f = all_x_eval(expr);
+			      optimize_data(expr) = orig_data;
+			      NEW_FRAME_WITH_SLOT(sc, closure_environment(y), sc->envir, car(args), sc->F);
+			      slot = environment_slots(sc->envir);
+			      for (p = z; is_pair(p); p = cdr(p))
+				{
+				  slot_set_value(slot, car(p));
+				  f(sc, expr);
+				}
+			      optimize_data(expr) = orig_data;
+			      sc->value = sc->UNSPECIFIED;
+			      goto START;
+			    }
+			  optimize_data(expr) = orig_data;
+			}
+		    }
+		}
+#endif
 		sc->code = x;
 		sc->args = make_simple_counter(sc, z);
 		/*
@@ -62340,7 +62438,7 @@ s7_scheme *s7_init(void)
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
  * bench    42736 8752 8051 7725 6515 5564
- * lint           9328 8140 7887 7736 7340
+ * lint           9328 8140 7887 7736 7324
  * index    44300 3291 3005 2742 2078 1675
  * s7test    1721 1358 1297 1244  977  967
  * t455|6     265   89   55   31   14   14

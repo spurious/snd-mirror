@@ -991,7 +991,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	     (Bk (* de2 (/ Dk dk1)))
 	     (Wk (real-part (+ Bk (sqrt (- (* Bk Bk) 1.0))))) ; fp inaccuracies causing tiny (presumably bogus) imaginary part here
 	     (thetajk (if (= j 1)
-			  (* 2 (atan (/ tn0 Wk)))
+			  (* 2 (atan tn0 Wk))
 			  (* 2 (atan (* tn0 Wk)))))
 	     (betajk (* 0.5 (/ (- 1.0 (* 0.5 dk1 (sin thetajk)))
 			       (+ 1.0 (* 0.5 dk1 (sin thetajk))))))
@@ -1031,7 +1031,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	     (Bk (* de2 (/ Dk dk1)))
 	     (Wk (real-part (+ Bk (sqrt (- (* Bk Bk) 1.0)))))
 	     (thetajk (if (= j 1)
-			  (* 2 (atan (/ tn0 Wk)))
+			  (* 2 (atan tn0 Wk))
 			  (* 2 (atan (* tn0 Wk)))))
 	     (betajk (* 0.5 (/ (- 1.0 (* 0.5 dk1 (sin thetajk)))
 			       (+ 1.0 (* 0.5 dk1 (sin thetajk))))))
