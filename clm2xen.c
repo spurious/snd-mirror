@@ -1169,7 +1169,7 @@ static XEN *make_vcts(int size)
 }
 
 
-enum {MUS_DATA_WRAPPER, MUS_INPUT_FUNCTION, MUS_ANALYZE_FUNCTION, MUS_EDIT_FUNCTION, MUS_SYNTHESIZE_FUNCTION, MUS_SELF_WRAPPER, MUS_MAX_VCTS};
+enum {MUS_DATA_WRAPPER, MUS_INPUT_FUNCTION, MUS_ANALYZE_FUNCTION, MUS_EDIT_FUNCTION, MUS_SYNTHESIZE_FUNCTION, MUS_SELF_WRAPPER, MUS_INPUT_DATA, MUS_MAX_VCTS};
 
 #if HAVE_SCHEME
 static XEN_MARK_OBJECT_TYPE mark_mus_xen(void *obj) 
@@ -1187,11 +1187,12 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
 #endif
   if (ms->vcts) 
     {
-      int i;
-      for (i = 0; i < ms->nvcts; i++) 
-	if ((i != MUS_SELF_WRAPPER) && 
-	    (XEN_BOUND_P(ms->vcts[i])))
-      xen_gc_mark(ms->vcts[i]);
+      int i, lim;
+      lim = MUS_SELF_WRAPPER;
+      if (ms->nvcts < lim) lim = ms->nvcts;
+      for (i = 0; i < lim; i++) 
+	if (XEN_BOUND_P(ms->vcts[i]))
+	  xen_gc_mark(ms->vcts[i]);
     }
 #if HAVE_RUBY
   return(NULL);
@@ -7857,7 +7858,39 @@ static XEN xen_one, xen_minus_one;
   static XEN as_needed_arglist;
 /* I guess these functions can be called recursively -- maybe we need a list of these?
  */
+
+#if 0
+typedef mus_float_t (*src_function_t)(s7_scheme *sc, int direction, s7_pointer original_function);
+
+
+static mus_float_t as_needed_src_input_func(void *ptr, int direction)
+{
+  mus_xen *gn = (mus_xen *)ptr;
+  if (gn)
+    {
+      if (gn->vcts[MUS_INPUT_DATA] != XEN_UNDEFINED)
+	return(((src_function_t)(gn->vcts[MUS_INPUT_DATA))(s7, direction, gn->vcts[MUS_INPUT_FUNCTION]));
+    }
+ 
+  if ((XEN_BOUND_P(gn->vcts[MUS_INPUT_FUNCTION])) && 
+      (XEN_PROCEDURE_P(gn->vcts[MUS_INPUT_FUNCTION]))) /* this is s7_is_procedure => is_applicable */
+    {
+      mus_float_t result;
+      s7_pointer body;
+
+      /* we need to call it once with full error handling */
+      s7_set_car(as_needed_arglist, (direction == 1) ? xen_one : xen_minus_one);
+      result = XEN_TO_C_DOUBLE(s7_call_with_location(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist, c__FUNCTION__, __FILE__, __LINE__));
+
+      
+      fprintf(stderr, "func: %s\n", DISPLAY(s7_procedure_source(s7, gn->vcts[MUS_INPUT_FUNCTION])));
+
+    }
+  return(0.0);
+}
 #endif
+#endif
+
 
 static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended for "as-needed" input funcs */
 {
@@ -7875,22 +7908,34 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
    *   it returns a float which we then return to C
    */
   mus_xen *gn = (mus_xen *)ptr;
-  if ((gn) && 
-      (gn->vcts) && 
-      (XEN_BOUND_P(gn->vcts[MUS_INPUT_FUNCTION])) && 
-      (XEN_PROCEDURE_P(gn->vcts[MUS_INPUT_FUNCTION])))
-#if HAVE_SCHEME
+  if (gn)
     {
-      s7_set_car(as_needed_arglist, (direction == 1) ? xen_one : xen_minus_one);
-      return(XEN_TO_C_DOUBLE(s7_call_with_location(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist, c__FUNCTION__, __FILE__, __LINE__)));
-    }
-#else
-    return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], (direction == 1) ? xen_one : xen_minus_one)));
+#if HAVE_SCHEME
+      if (XEN_BOUND_P(gn->vcts[MUS_INPUT_DATA]))
+	{
+	  s7_set_car(as_needed_arglist, (direction == 1) ? xen_one : xen_minus_one);
+	  return(s7_number_to_real(s7, s7_apply_function(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist)));
+	}
 #endif
+
+      if ((XEN_BOUND_P(gn->vcts[MUS_INPUT_FUNCTION])) && 
+	  (XEN_PROCEDURE_P(gn->vcts[MUS_INPUT_FUNCTION])))
+	{
+#if HAVE_SCHEME
+	  mus_float_t result;
+	  s7_set_car(as_needed_arglist, (direction == 1) ? xen_one : xen_minus_one);
+	  result = XEN_TO_C_DOUBLE(s7_call_with_location(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist, c__FUNCTION__, __FILE__, __LINE__));
+	  gn->vcts[MUS_INPUT_DATA] = XEN_TRUE;
+	  return(result);
+#else
+	  return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], (direction == 1) ? xen_one : xen_minus_one)));
+#endif
+	}
+    }
   /* the "or else" is crucial here -- this can be called unprotected in clm.c make_src during setup, and
    *   an uncaught error there clobbers our local error chain.
    */
-  else return(0.0);
+  return(0.0);
 }
 
 
@@ -7900,6 +7945,12 @@ static mus_float_t as_needed_input_generator(void *ptr, int direction) /* intend
   XEN v;
   v = x->vcts[MUS_INPUT_FUNCTION];
   return(mus_apply(XEN_TO_MUS_ANY(v), 0.0, 0.0));
+}
+
+
+static mus_float_t as_needed_input_readin(void *ptr, int direction) /* intended for "as-needed" input funcs */
+{
+  return(mus_readin((mus_any *)(((mus_xen *)ptr)->vcts[MUS_INPUT_DATA])));
 }
 
 
@@ -7994,7 +8045,18 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
-    ge = mus_make_src((MUS_XEN_P(in_obj)) ? as_needed_input_generator : as_needed_input_func, srate, wid, gn);
+    if (MUS_XEN_P(in_obj))
+      {
+	mus_any *p;
+	p = XEN_TO_MUS_ANY(in_obj);
+	if ((p) && (mus_readin_p(p)))
+	  {
+	    gn->vcts[MUS_INPUT_DATA] = (XEN)p;
+	    ge = mus_make_src(as_needed_input_readin, srate, wid, gn);
+	  }
+	else ge = mus_make_src(as_needed_input_generator, srate, wid, gn);
+      }
+    else ge = mus_make_src(as_needed_input_func, srate, wid, gn);
     mus_error_set_handler(old_error_handler);
   }
 

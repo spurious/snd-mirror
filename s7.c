@@ -702,11 +702,11 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       /* these can't be embedded, and have to be the last thing called */
       OP_APPLY_SS, HOP_APPLY_SS,
       OP_C_ALL_X, HOP_C_ALL_X, OP_CALL_WITH_EXIT, HOP_CALL_WITH_EXIT, OP_C_CATCH, HOP_C_CATCH, OP_C_CATCH_ALL, HOP_C_CATCH_ALL,
-      OP_C_S_opSq, HOP_C_S_opSq, OP_C_S_opCq, HOP_C_S_opCq,
+      OP_C_S_opSq, HOP_C_S_opSq, OP_C_S_opCq, HOP_C_S_opCq, OP_C_QQ_1, HOP_C_QQ_1,
       OP_C_FOR_EACH_LS, HOP_C_FOR_EACH_LS, OP_C_FOR_EACH_LS_2, HOP_C_FOR_EACH_LS_2, OP_C_FOR_EACH_L_opSq, HOP_C_FOR_EACH_L_opSq, 
       OP_C_S, HOP_C_S, OP_READ_S, HOP_READ_S, OP_C_P, HOP_C_P, OP_C_SP, HOP_C_SP, OP_C_A, HOP_C_A,
 
-      OP_GOTO, HOP_GOTO, OP_GOTO_C, HOP_GOTO_C,
+      OP_GOTO, HOP_GOTO, OP_GOTO_C, HOP_GOTO_C, 
       
       OP_VECTOR_C, HOP_VECTOR_C, OP_VECTOR_S, HOP_VECTOR_S, OP_VECTOR_opCq, HOP_VECTOR_opCq, 
       OP_STRING_C, HOP_STRING_C, OP_STRING_S, HOP_STRING_S, OP_STRING_opCq, HOP_STRING_opCq, 
@@ -810,11 +810,11 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       
       "apply_ss", "h_apply_ss",
       "c_all_x", "h_c_all_x", "call_with_exit", "h_call_with_exit", "c_catch", "h_c_catch", "c_catch_all", "h_c_catch_all",
-      "c_s_opsq", "h_c_s_opsq", "c_s_opcq", "h_c_s_opcq",
+      "c_s_opsq", "h_c_s_opsq", "c_s_opcq", "h_c_s_opcq", "c_qq_1", "h_c_qq_1",
       "c_for_each_ls", "h_c_for_each_ls", "c_for_each_ls_2", "h_c_for_each_ls_2", "c_for_each_l_opsq", "h_c_for_each_l_opsq", 
       "c_s", "h_c_s", "read_s", "h_read_s", "c_p", "h_c_p", "c_sp", "h_c_sp", "c_a", "h_c_a",
 
-      "goto", "h_goto", "goto_c", "h_goto_c",
+      "goto", "h_goto", "goto_c", "h_goto_c", 
       
       "vector_c", "h_vector_c", "vector_s", "h_vector_s", "vector_opcq", "h_vector_opcq", 
       "string_c", "h_string_c", "string_s", "h_string_s", "string_opcq", "h_string_opcq", 
@@ -27584,7 +27584,7 @@ If its first argument is a list, the list is copied (despite the '!')."
     compare_func = c_function_call(lessp);
   else
     {
-      /* an experiment. TODO: other similar cases are assoc member for-each map
+      /* an experiment. other similar cases are assoc/member (and for-each/map but they never happen in this context -- see op_for_each_ls_2 below)
        */
       if ((is_closure(lessp)) &&
 	  (is_one_liner(closure_body(lessp))) &&
@@ -34390,6 +34390,20 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
     bq = sc->w;
     sc->w = old_scw;
     s7_gc_unprotect_at(sc, loc);
+
+    if ((car(bq) == sc->QQ_List) &&
+	(s7_list_length(sc, bq) == 3) &&
+	(is_pair(cadr(bq))) &&
+	(caadr(bq) == sc->QUOTE) &&
+	(is_pair(caddr(bq))) &&
+	(caaddr(bq) == sc->QQ_Apply_Values) &&
+	(is_symbol(cadr(caddr(bq)))))
+      {
+	/* fprintf(stderr, "rtn: %s\n", DISPLAY(bq)); */
+	set_unsafely_optimized(bq);
+	set_optimize_data(bq, HOP_C_QQ_1);
+      }
+
     return(bq);
   }
 }
@@ -49379,13 +49393,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 79375: (oscil gen1 frq (* 0.03 (oscil gen2 (* 2 frq))))
 78549: (oscil gen2 0.0 (* 2 rn))
 78549: (oscil gen3 0.0 (* 3 rn))
-
-
 		 */
 		s7_pointer arg;
-#if WITH_COUNTS
-		add_expr(sc, code);
-#endif
 		arg = cdr(code);
 		car(sc->A3_1) = ((s7_function)fcdr(arg))(sc, car(arg));
 		arg = cdr(arg);
@@ -49444,6 +49453,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T1_1) = find_symbol_or_bust(sc, ecdr(args));
 		sc->args = list_2(sc, val, c_call(cadr(args))(sc, sc->T1_1));
 		sc->value = c_call(code)(sc, sc->args);
+		goto START;
+	      }
+
+	      
+	    case OP_C_QQ_1:
+	    case HOP_C_QQ_1:
+	      {
+		s7_pointer val;
+		val = finder(sc, cadr(caddr(code)));
+		if (!is_proper_list(sc, val))
+		  s7_error(sc, sc->WRONG_TYPE_ARG, 
+			   list_2(sc, 
+				  make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
+				  val));
+		sc->value = cons(sc, cadr(cadr(code)), val);
+		/* fprintf(stderr, "value: %s\n", DISPLAY(sc->value)); */
 		goto START;
 	      }
 	      
@@ -49585,8 +49610,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 		}
 	      goto APPLY;
-	      
-	      
+
+
 	    case OP_C_ALL_X:
 	      if (!c_function_is_ok(sc, code))
 		break;
@@ -50787,6 +50812,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   we get here over and over.  (let ((x (list (car y))))...) where list is redefined away.
 	   *   TODO: Perhaps current cases should use NS_EVAL? and OPT_EVAL only if is_h_optimized?
 	   */
+
+	  /* see sss_apply_s7 for code to catch (f x y) here and set up optimizer code for it --
+	   *   this cuts the trailer traffic in half in snd-test, but the savings is minimal (40).
+	   */
 	  clear_optimized(code);
 	  clear_optimize_data(code);
 	  ecdr(code) = sc->NIL;
@@ -50813,6 +50842,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* -------------------------------------------------------------------------------- */
 	  
 	  /* trailers */
+#if WITH_COUNTS
+	  add_expr(sc, sc->code);
+#endif
 	  sc->cur_code = sc->code;
 	  {
 	    s7_pointer carc;
@@ -62435,11 +62467,15 @@ s7_scheme *s7_init(void)
  * replace "frame" with "environment" if possible (frame collides with clm)
  * f|gcdr in let_op*q -- can let_r -> let_all_x? (or let_d similarly?)
  *   in set pair, object set et al need not use eval_args/apply if all args are all_x ops
+ * in (src s incr (lambda (dir) (read-sample rd))), are we making a closure on every call?
+ *   this can be optimized as safe_c_ss_? --how to establish the function once?
+ *   TODO: why not in scheme? docs too. what about input-as-needed (no s7-call)?
+ *   can snd find use the dox stuff as in sort?
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
  * bench    42736 8752 8051 7725 6515 5564
- * lint           9328 8140 7887 7736 7324
- * index    44300 3291 3005 2742 2078 1675
+ * lint           9328 8140 7887 7736 7320
+ * index    44300 3291 3005 2742 2078 1643
  * s7test    1721 1358 1297 1244  977  967
  * t455|6     265   89   55   31   14   14
  * t502        90   43   39   36   29   24

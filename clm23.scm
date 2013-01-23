@@ -27,7 +27,7 @@
 ;;; integerp -> integer? and others like it (null -> null? is the tricky one)
 ;;; sound-duration -> mus-sound-duration and similarly for others
 ;;; various array info procs like array-dimension
-;;; #'(lambda ...) to just (lambda...)
+;;; #'(lambda ...) to just (lambda...), and if possible move the lambda out of the args
 ;;; nth -> list-ref
 ;;; loop -> do
 
@@ -528,35 +528,42 @@
 
 (define (simple-lrg beg dur amp file)
   "(simple-lrg beg dur amp file) test instrument for convolve"
-  (let ((start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur)))
-	(rd (make-readin file))
-	(filt (make-vct 8)))
-    (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) 0.0))
-    (set! (filt 4) 1.0)
-    (let ((ff (make-convolve :filter filt)))
-      (do ((i start (+ i 1))) ((= i end))
-	(outa i (* amp (convolve ff (lambda (dir)
-				      (if (= dir 1)
-					  (readin rd)
-					  0.0)))))))))
+  (let ((rd (make-readin file)))
+    (let ((start (seconds->samples beg))
+	  (end (seconds->samples (+ beg dur)))
+	  (read-func (lambda (dir)
+		       (if (= dir 1)
+			   (readin rd)
+			   0.0)))
+	  (filt (make-vct 8)))
+      (do ((i 0 (+ i 1))) 
+	  ((= i 8)) 
+	(set! (filt i) 0.0))
+      (set! (filt 4) 1.0)
+      (let ((ff (make-convolve :filter filt)))
+	(do ((i start (+ i 1))) ((= i end))
+	  (outa i (* amp (convolve ff read-func))))))))
+
 
 (define (simple-cn2 beg dur amp file)
   "(simple-cn2 beg dur amp file) test instrument for convolve"
-  (let ((start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur)))
-	(rd (make-readin file))
-	(filt (make-vct 8)))
-    (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) 0.0))
-    (set! (filt 4) 1.0)
-    (let ((ff (make-convolve :filter filt))
-	  (ff1 (make-convolve :filter filt :input (make-readin file))))
-      (do ((i start (+ i 1))) ((= i end))
-	(outa i (* amp (+ (convolve ff (lambda (dir)
-					 (if (= dir 1)
-					     (readin rd)
-					     0.0)))
-			  (convolve ff1))))))))
+  (let ((rd (make-readin file)))
+    (let ((start (seconds->samples beg))
+	  (end (seconds->samples (+ beg dur)))
+	  (read-func (lambda (dir)
+		       (if (= dir 1)
+			   (readin rd)
+			   0.0)))
+	  (filt (make-vct 8)))
+      (do ((i 0 (+ i 1))) 
+	  ((= i 8)) 
+	(set! (filt i) 0.0))
+      (set! (filt 4) 1.0)
+      (let ((ff (make-convolve :filter filt))
+	    (ff1 (make-convolve :filter filt :input (make-readin file))))
+	(do ((i start (+ i 1))) ((= i end))
+	  (outa i (* amp (+ (convolve ff read-func)
+			    (convolve ff1)))))))))
 
 (define (simple-src beg dur amp speed file)
   "(simple-src beg dur amp speed file) test instrument for src"
@@ -576,12 +583,14 @@
 
 (define (simple-sr2 beg dur amp speed file)
   "(simple-sr2 beg dur amp speed file) test instrument for src"
-  (let ((start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur)))
-	(rd (make-readin file))
-	(sr (make-src :srate speed)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (src sr 0.0 (lambda (dir) (if (= dir 1) (readin rd)))))))))
+  (let ((rd (make-readin file)))
+    (let ((start (seconds->samples beg))
+	  (end (seconds->samples (+ beg dur)))
+	  (sr (make-src :srate speed))
+	  (src-func (lambda (dir) (if (= dir 1) (readin rd)))))
+      (do ((i start (+ i 1))) 
+	  ((= i end))
+	(outa i (* amp (src sr 0.0 src-func)))))))
 
 (define (simple-sr2a beg dur amp speed file)
   "(simple-sr2a beg dur amp speed file) test instrument for src"
@@ -593,22 +602,24 @@
 
 (define (simple-sro beg dur amp speed freq)
   "(simple-sro beg dur amp speed freq) test instrument for src"
-  (let ((start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur)))
-	(os (make-oscil freq))
-	(sr (make-src :srate speed)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (src sr 0.0 (lambda (dir)
-				   (oscil os))))))))
+  (let ((os (make-oscil freq)))
+    (let ((start (seconds->samples beg))
+	  (end (seconds->samples (+ beg dur)))
+	  (sr (make-src :srate speed))
+	  (sr-func (lambda (dir) (oscil os))))
+      (do ((i start (+ i 1)))
+	  ((= i end))
+	(outa i (* amp (src sr 0.0 sr-func)))))))
 
 (define (simple-grn beg dur amp speed freq)
   "(simple-grn beg dur amp speed freq) test instrument for granulate"
-  (let ((start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur)))
-	(os (make-oscil freq))
-	(sr (make-granulate :expansion speed)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (granulate sr (lambda (dir) (oscil os))))))))
+  (let ((os (make-oscil freq)))
+    (let ((start (seconds->samples beg))
+	  (end (seconds->samples (+ beg dur)))
+	  (sr (make-granulate :expansion speed))
+	  (gr-func (lambda (dir) (oscil os))))
+      (do ((i start (+ i 1))) ((= i end))
+	(outa i (* amp (granulate sr gr-func)))))))
 
 (define (simple-pvoc beg dur amp size file)
   "(simple-pvoc beg dur amp size file) test instrument for phase-vocoder"
@@ -800,12 +811,14 @@
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
 	(os1 (make-oscil freq))
-	(os2 (make-oscil (* freq 2)))
-	(sr1 (make-src :srate speed))
-	(sr2 (make-src :srate speed)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (+ (src sr1 0.0 (lambda (dir) (oscil os1)))
-			(src sr2 0.0 (lambda (dir) (oscil os2)))))))))
+	(os2 (make-oscil (* freq 2))))
+    (let ((sr1 (make-src :srate speed))
+	  (sr2 (make-src :srate speed))
+	  (sr1-func (lambda (dir) (oscil os1)))
+	  (sr2-func (lambda (dir) (oscil os2))))
+      (do ((i start (+ i 1))) ((= i end))
+	(outa i (* amp (+ (src sr1 0.0 sr1-func)
+			  (src sr2 0.0 sr2-func))))))))
 
 (define (sample-srll beg dur amp speed freq)
   "(sample-srll beg dur amp speed freq) test instrument for src"
@@ -843,12 +856,10 @@
 	(end (seconds->samples (+ beg dur)))
 	(os (make-oscil freq))
 	(sr (make-granulate :expansion speed)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (granulate sr
-				(lambda (dir) 
-				  (oscil os))
-				(lambda (g) 
-				  0)))))))
+    (let ((read-func (lambda (dir) (oscil os)))
+	  (edit-func (lambda (g) 0)))
+      (do ((i start (+ i 1))) ((= i end))
+	(outa i (* amp (granulate sr read-func edit-func)))))))
 
 (define (sample-grn3 beg dur amp speed file)
   "(sample-grn3 beg dur amp speed file) test instrument for granulate"
@@ -856,8 +867,9 @@
 	(end (seconds->samples (+ beg dur)))
 	(sr (make-src (make-readin file) :srate speed))
 	(gr (make-granulate :expansion speed)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (granulate gr (lambda (dir) (src sr))))))))
+    (let ((read-func (lambda (dir) (src sr))))
+      (do ((i start (+ i 1))) ((= i end))
+	(outa i (* amp (granulate gr read-func)))))))
 
 (define (sample-cnv beg dur amp speed file)
   "(sample-cnv beg dur amp speed file) test instrument for convolve"
@@ -867,9 +879,10 @@
 	(filt (make-vct 8)))
     (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) 0.0))
     (set! (filt 4) 1.0)
-    (let ((ff (make-convolve :filter filt)))
+    (let ((ff (make-convolve :filter filt))
+	  (read-func (lambda (dir) (src sr))))
       (do ((i start (+ i 1))) ((= i end))
-	(outa i (* amp (convolve ff (lambda (dir) (src sr)))))))))
+	(outa i (* amp (convolve ff read-func)))))))
 
 (define (sample-cnv1 beg dur amp speed file)
   "(sample-cnv1 beg dur amp speed file) test instrument for convolve"
@@ -879,10 +892,10 @@
 	(filt (make-vct 8)))
     (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) 0.0))
     (set! (filt 4) 1.0)
-    (let ((ff (make-convolve :filter filt)))
+    (let ((ff (make-convolve :filter filt))
+	  (read-func (lambda (dir) (src sr))))
       (do ((i start (+ i 1))) ((= i end))
-	(outa i (* amp (convolve ff (lambda (dir)
-				      (src sr)))))))))
+	(outa i (* amp (convolve ff read-func)))))))
 
 (define (sample-pvoc1 beg dur amp size file)
   "(sample-pvoc1 beg dur amp size file) test instrument for phase-vocoder"
@@ -1227,8 +1240,9 @@
 	(end (seconds->samples (+ beg dur)))
 	(os (make-oscil freq))
 	(sr (make-granulate :expansion speed)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (granulate sr (lambda (dir) (oscil os)) #f))))))
+    (let ((read-func (lambda (dir) (oscil os))))
+      (do ((i start (+ i 1))) ((= i end))
+	(outa i (* amp (granulate sr read-func #f)))))))
 
 					;(with-sound () (simple-grn-f1 0 1 .1 2 440))
 

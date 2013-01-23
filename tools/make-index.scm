@@ -152,12 +152,12 @@
 				  "#"
 				  (substring str 1 colonpos) 
 				  "\">" 
-				  (substring str (+ 1 colonpos)) 
+				  (substring str (+ colonpos 1)) 
 				  "</a>")))
 	(make-ind :name line 
 		  :topic topic 
 		  :file file 
-		  :sortby (string-downcase (substring str (+ 1 colonpos)))))
+		  :sortby (string-downcase (substring str (+ colonpos 1)))))
 
       (begin 
        (let ((def-pos (string-position " class=def" str)))
@@ -213,7 +213,7 @@
 	   (when (not (search-caps line))
 	     ;; now the hard part -- find the first character of the >name< business and downcase it
 	     (let ((bpos (char-position #\> line)))
-	       (set! (line (+ 1 bpos)) (char-downcase (line (+ 1 bpos)))))))
+	       (set! (line (+ bpos 1)) (char-downcase (line (+ bpos 1)))))))
 	 
 	 (let ((bpos (char-position #\> line))
 	       (epos (or (string-position "</a>" line) 
@@ -259,7 +259,7 @@
 				  "call_in"
 				  (let* ((len (length scheme-name))
 					 (var-case (hash-table-ref scheme-variable-names scheme-name))
-					 (strlen (if var-case (+ 1 len) len))
+					 (strlen (if var-case (+ len 1) len))
 					 (rb-name (make-string strlen #\space))
 					 (i 0)
 					 (j 0))
@@ -318,14 +318,14 @@
 	       (href-len (if href-normal-start 8 20))
 	       (href-end (and href-start
 			      (< href-start leof)
-			      (char-position #\> xref (+ 1 href-start))))
+			      (char-position #\> xref (+ href-start 1))))
 	       (href (and href-start href-end (substring xref (+ href-start href-len) href-end))))
 	  (if href
 	      (if (char=? (href 1) #\#)
 		  (set! url-str (string-append url-str (string #\") file (substring href 1) (format #f ",~%  ")))
 		  (set! url-str (string-append url-str href (format #f ",~%  "))))
 	      (set! url-str (string-append url-str (format #f "NULL,~%  "))))
-	  (set! loc (+ 1 leof))
+	  (set! loc (+ leof 1))
 	  ))
 
       (set! (outstr j) #\")
@@ -998,7 +998,7 @@
 			      (dpos (char-position #\> line))
 			      (url (substring line 1 (- dpos 1)))
 			      (epos (char-position #\< line))
-			      (ind (substring line (+ 1 dpos) epos))
+			      (ind (substring line (+ dpos 1) epos))
 			      (gpos (string-position "&gt;" ind)))
 			 (if gpos 
 			     (set! ind (string-append (substring ind 0 gpos) 
@@ -1060,12 +1060,12 @@
 			  (format sfil "~%static const char *~A_xrefs[] = {~%  ~A,~%  NULL};~%"
 				  (let* ((str (generals i))
 					 (mid (char-position #\: str)))
-				    (make-vector-name (substring str (+ 1 mid))))
+				    (make-vector-name (substring str (+ mid 1))))
 				  (car vals))
 			  (format sfil "~%static const char *~A_urls[] = {~%  ~ANULL};~%"
 				  (let* ((str (generals i))
 					 (mid (char-position #\: str)))
-				    (make-vector-name (substring str (+ 1 mid))))
+				    (make-vector-name (substring str (+ mid 1))))
 				  (cadr vals))
 			  ))
 		    )
@@ -1122,8 +1122,9 @@
 				       (any-char-position line "<>\"(){}&"))))
 		       (when opos
 			 ;; open/close html entities
-			 (do ((i opos (+ i 1 (or (any-char-position line "<>\"(){}&" (+ i 1)) len))))
+			 (do ((i opos (+ i 1 opos)))
 			     ((>= i len))
+			   (set! opos (or (any-char-position line "<>\"(){}&" (+ i 1)) len))
 			   (case (string-ref line i)
 			     ((#\<)
 			      (if (and (not (zero? openctr))
@@ -1215,8 +1216,9 @@
 				   (closing #f)
 				   (pos (char-position #\< line)))
 			       (if pos
-				   (do ((i pos (+ i 1 (or (any-char-position line "</! >" (+ i 1)) len))))
+				   (do ((i pos (+ i 1 pos)))
 				       ((>= i len))
+				     (set! pos (or (any-char-position line "</! >" (+ i 1)) len))
 				     (case (string-ref line i)
 				       ((#\<)
 					(if start
