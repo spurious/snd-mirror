@@ -12475,6 +12475,31 @@ mus_float_t mus_phase_vocoder(mus_any *ptr, mus_float_t (*input)(void *arg, int 
 
 
 
+void mus_generator_set_feeder(mus_any *g, mus_float_t (*feed)(void *arg, int direction))
+{
+  if (mus_src_p(g))
+    ((sr *)g)->feeder = feed;
+  else
+    {
+      if (mus_granulate_p(g))
+	((grn_info *)g)->rd = feed;
+      else
+	{
+	  if (mus_phase_vocoder_p(g))
+	    ((pv_info *)g)->input = feed;
+	  else
+	    {
+	      if (mus_convolve_p(g))
+		((conv *)g)->feeder = feed;
+	    }
+	}
+    }
+
+}
+
+
+
+
 /* ---------------- single sideband "suppressed carrier" amplitude modulation (ssb-am) ---------------- */
 
 typedef struct {

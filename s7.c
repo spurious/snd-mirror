@@ -33099,24 +33099,51 @@ s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
 
 s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form, s7_pointer e)
 {
-  /* 3313649: (* y 2)
-     3308488: (> y 1.0)
-     2252668: (read-sample reader)
-     659539: (* n 2)
-     508491: 1.0 [now dealt with in map-channel]
-     508280: (> n1 0.1)
-
-     h_safe_c_c: 5532246 (24.689348)
-     safe_c_sc: 4256179 (18.994507)
-     safe_c_s: 2252676 (10.053259)
-
-     --------------------
-
-     2252668: (read-sample reader)
-     104743: #f
-     101912: (+ y dc)
-  */
   /* fprintf(stderr, "form: %s, %d %s\n", DISPLAY(form), is_optimized(form), (is_optimized(form) ? opt_names[optimize_data(form)] : "")); */
+  /*
+203713: (let* ((cx (cos angle)) (val (* y (+ rmp0 (* (- rmp1 rmp0) (+ 0.084037 (* cx (+ -0.29145 (* cx (+ 0.375696 (* cx (+ -0.20762 (* cx 0.041194))))))))))))) (set! angle (+ angle incr)) val)
+203447: (let ((result (* y (+ rmp0 (* (- rmp1 rmp0) (+ 0.5 (* 0.5 (cos angle)))))))) (set! angle (+ angle incr)) result)
+193867: (+ val (next-sample reader))
+188939: (let ((old-y (buffer position))) (set! sum-of-squares (- (+ sum-of-squares (* y y)) (* old-y old-y))) (set! (buffer position) y) (set! position (+ 1 position)) (if (= position 128) (set! position 0)) (set! current-sample (+ 1 current-sample)) (if (> sum-of-squares 0.01) (if (= current-sample chan-samples) (let ((temp-buffer (make-vct 128 0.0))) (do ((i 0 (+ i 1))) ((= i 128) temp-buffer) (let ((final-y (buffer position))) (set! (temp-buffer i) (if (> sum-of-squares 0.01) final-y 0.0)) (set! sum-of-squares (- sum-of-squares (* final-y final-y))) (set! position (+ 1 position)) (if (= position 128) (set! position 0))))) old-y) #f))
+185902: (let ((sum 0.0) (gen #f) (inval 0.0)) (do ((i 0 (+ i 1))) ((= i pairs)) (set! gen (vector-ref ssbs i)) (set! inval (bandpass (vector-ref bands i) y)) (set! sum (+ sum (ssb-am gen inval)))) (set! nmx (max nmx (abs sum))) sum)
+166657: (amplitude-modulate 1.0 inval (oscil os))
+152484: (* mx (sin (* y brt)))
+139028: (if val (* 2.0 val) #f)
+139028: (if val (* 2.0 val) #f)
+101757: (sin (+ (* y 0.5 pi) (* index (sin (* y 2.0 pi)))))
+101756: (let ((env-val (env amp-env))) (set! (mus-xcoeff flt 0) env-val) (set! (mus-ycoeff flt 1) (- env-val 1.0)) (one-pole flt (* env-val val)))
+101756: (+ y (mus-random dither) (mus-random dither))
+101656: (moog-filter gen inval)
+101656: (let ((val (read-sample rd))) (if (< beg 10) (set! val (* val beg 0.1)) (if (> beg (- actual-block-len 10)) (set! val (* val (- actual-block-len beg) 0.1)))) (set! beg (+ 1 beg)) (if (= beg actual-block-len) (begin (set! ctr (+ 1 ctr)) (set! beg 0) (set! rd (make-sampler (max 0 (- len (* ctr actual-block-len))) snd chn)))) val)
+101656: (let ((sum 0.0) (ssb #f) (band #f) (e #f)) (do ((i 0 (+ i 1))) ((= i pairs)) (set! ssb (vector-ref ssbs i)) (set! band (bandpass (vector-ref bands i) y)) (set! e (env (vector-ref frenvs i))) (set! sum (+ sum (ssb-am ssb band e)))) (set! nmx (max nmx (abs sum))) sum)
+101656: (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 (if (< samp input-samps) inval 0.0)))))) (set! samp (+ samp 1)) (set! comb-sum (+ (comb comb1 allpass-sum) (comb comb2 allpass-sum) (comb comb3 allpass-sum) (comb comb4 allpass-sum))) (+ inval (* volume (delay outdel1 comb-sum))))
+101656: (let ((y (* uy scl))) (if (> y 1.0) 1.0 (if (< y -1.0) -1.0 y)))
+101656: (let ((y (* uy scl))) (if (> y 1.0) 1.0 (if (< y -1.0) -1.0 y)))
+101656: (let ((y (* uy (env e)))) (if (> y 1.0) 1.0 (if (< y -1.0) -1.0 y)))
+101656: (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)))
+101656: (* 0.75 (+ inval (delay del inval (rand-interp ri))))
+100000: (let ((val x)) (set! x (+ x incr)) val)
+100000: (+ (next-sample reader) y)
+94929: (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval))))) (set! comb-sum-2 comb-sum-1) (set! comb-sum-1 comb-sum) (set! comb-sum (+ (comb comb1 allpass-sum) (comb comb2 allpass-sum) (comb comb3 allpass-sum) (comb comb4 allpass-sum))) (if low-pass (set! all-sums (+ (* 0.25 (+ comb-sum comb-sum-2)) (* 0.5 comb-sum-1))) (set! all-sums comb-sum)) (+ inval (if envA (* (env envA) (delay outdel1 all-sums)) (* volume (delay outdel1 all-sums)))))
+94929: (let ((val (fir-filter flt x)) (xcof (mus-xcoeffs flt))) (do ((i 0 (+ i 1))) ((= i 8)) (set! (xcof i) (env (vector-ref es i)))) val)
+88200: (if val (* 0.5 val) #f)
+88200: (+ y (zipper zip read0 read1))
+65101: (+ inval (delay del (* scaler (+ (tap del) inval)) (* amp (oscil os))))
+60001: (+ inval (delay del (* scaler (+ (tap del) inval))))
+55332: (let ((result (and (>= (abs y) 0.9999) (>= (abs last-y) 0.9999)))) (set! last-y y) result)
+50828: (granulate grn (lambda (dir) (rd)) (lambda (g) (let ((grain (mus-data g)) (len (mus-length g))) (do ((i 0 (+ i 1))) ((= i len) len) (set! (grain i) (* 2 (grain i)))) 0)))
+50828: (granulate grn (lambda (dir) (rd)) (lambda (g) (let ((grain (mus-data g)) (len (mus-length g))) (do ((i 0 (+ i 1))) ((= i len) len) (set! (grain i) (* 4 (grain i)))) 0)))
+50828: (granulate grn (lambda (dir) (rd)))
+50828: (granulate grn (lambda (dir) (rd)))
+
+10000: (- 1.0 (random 2.0))
+6512: (> (abs n) 0.001)
+1100: (* y scl)
+*/
+#if WITH_COUNTS
+  add_expr(sc, form);
+#endif
+
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
   sc->code = form;
   sc->envir = e;
@@ -50842,9 +50869,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* -------------------------------------------------------------------------------- */
 	  
 	  /* trailers */
-#if WITH_COUNTS
-	  add_expr(sc, sc->code);
-#endif
 	  sc->cur_code = sc->code;
 	  {
 	    s7_pointer carc;
@@ -62471,6 +62495,9 @@ s7_scheme *s7_init(void)
  *   this can be optimized as safe_c_ss_? --how to establish the function once?
  *   TODO: why not in scheme? docs too. what about input-as-needed (no s7-call)?
  *   can snd find use the dox stuff as in sort?
+ *   TODO: get rid of all arg lambdas -- move them to the make function (*.html especially!)
+ * TODO: doc scan-chan faster as do-loop
+ * TODO: in lint complain about (display (format #f ...))
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
  * bench    42736 8752 8051 7725 6515 5564
@@ -62480,6 +62507,6 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14
  * t502        90   43   39   36   29   24
  * lat        229   63   52   47   42   40
- * calls           275  207  175  115   97
+ * calls           275  207  175  115   95
  */
 

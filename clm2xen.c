@@ -7859,37 +7859,47 @@ static XEN xen_one, xen_minus_one;
 /* I guess these functions can be called recursively -- maybe we need a list of these?
  */
 
-#if 0
-typedef mus_float_t (*src_function_t)(s7_scheme *sc, int direction, s7_pointer original_function);
+static s7_pointer env_symbol, all_pass_symbol, ina_symbol, comb_symbol, polywave_symbol, triangle_wave_symbol;
+static s7_pointer rand_interp_symbol, oscil_symbol, add_symbol, subtract_symbol, reverb_symbol, output_symbol;
+static s7_pointer multiply_symbol, vector_ref_symbol, quote_symbol, sin_symbol, cos_symbol, readin_symbol;
 
+#endif
 
-static mus_float_t as_needed_src_input_func(void *ptr, int direction)
+static mus_float_t as_needed_input_float(void *ptr, int direction)
 {
   mus_xen *gn = (mus_xen *)ptr;
-  if (gn)
-    {
-      if (gn->vcts[MUS_INPUT_DATA] != XEN_UNDEFINED)
-	return(((src_function_t)(gn->vcts[MUS_INPUT_DATA))(s7, direction, gn->vcts[MUS_INPUT_FUNCTION]));
-    }
- 
-  if ((XEN_BOUND_P(gn->vcts[MUS_INPUT_FUNCTION])) && 
-      (XEN_PROCEDURE_P(gn->vcts[MUS_INPUT_FUNCTION]))) /* this is s7_is_procedure => is_applicable */
-    {
-      mus_float_t result;
-      s7_pointer body;
-
-      /* we need to call it once with full error handling */
-      s7_set_car(as_needed_arglist, (direction == 1) ? xen_one : xen_minus_one);
-      result = XEN_TO_C_DOUBLE(s7_call_with_location(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist, c__FUNCTION__, __FILE__, __LINE__));
-
-      
-      fprintf(stderr, "func: %s\n", DISPLAY(s7_procedure_source(s7, gn->vcts[MUS_INPUT_FUNCTION])));
-
-    }
-  return(0.0);
+  return(s7_real(gn->vcts[MUS_INPUT_DATA]));
 }
-#endif
-#endif
+
+
+static mus_float_t as_needed_input_any(void *ptr, int direction)
+{
+  mus_xen *gn = (mus_xen *)ptr;
+  s7_set_car(as_needed_arglist, (direction == 1) ? xen_one : xen_minus_one);
+  return(s7_number_to_real(s7, s7_apply_function(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist)));
+}
+
+
+static mus_float_t as_needed_input_generator(void *ptr, int direction)
+{
+  mus_xen *x = (mus_xen *)ptr;
+  XEN v;
+  v = x->vcts[MUS_INPUT_FUNCTION]; /* TODO: do this as below */
+  return(mus_apply(XEN_TO_MUS_ANY(v), 0.0, 0.0));
+}
+
+
+static mus_float_t as_needed_input_readin(void *ptr, int direction)
+{
+  return(mus_readin((mus_any *)(((mus_xen *)ptr)->vcts[MUS_INPUT_DATA])));
+}
+
+
+static mus_float_t as_needed_input_cs(void *ptr, int direction)
+{
+  mus_xen *gn = (mus_xen *)ptr; /* this is an src gen (for example) */
+  return(s7_call_direct_to_real_and_free(s7, gn->vcts[MUS_INPUT_DATA]));
+}
 
 
 static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended for "as-needed" input funcs */
@@ -7910,22 +7920,72 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
   mus_xen *gn = (mus_xen *)ptr;
   if (gn)
     {
-#if HAVE_SCHEME
-      if (XEN_BOUND_P(gn->vcts[MUS_INPUT_DATA]))
-	{
-	  s7_set_car(as_needed_arglist, (direction == 1) ? xen_one : xen_minus_one);
-	  return(s7_number_to_real(s7, s7_apply_function(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist)));
-	}
-#endif
-
       if ((XEN_BOUND_P(gn->vcts[MUS_INPUT_FUNCTION])) && 
 	  (XEN_PROCEDURE_P(gn->vcts[MUS_INPUT_FUNCTION])))
 	{
 #if HAVE_SCHEME
 	  mus_float_t result;
+	  /* (lambda (dir) 0.1)
+	   * (lambda (dir) (next-sample reader))
+	   * (lambda (dir) (readin rd))
+	   * (lambda (dir) (rd))
+	   * (lambda (dir) (read-sample sf))
+	   * (lambda (dir) (oscil os2))
+	   */
+
 	  s7_set_car(as_needed_arglist, (direction == 1) ? xen_one : xen_minus_one);
 	  result = XEN_TO_C_DOUBLE(s7_call_with_location(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist, c__FUNCTION__, __FILE__, __LINE__));
+
 	  gn->vcts[MUS_INPUT_DATA] = XEN_TRUE;
+	  mus_generator_set_feeder(gn->gen, as_needed_input_any);
+
+	  if (MUS_XEN_P(gn->vcts[MUS_SELF_WRAPPER]))
+	    {
+	      s7_pointer source, arg, body, res;
+	      source = s7_procedure_source(s7, gn->vcts[MUS_INPUT_FUNCTION]);
+	      if (s7_is_pair(source))
+		{
+		  body = s7_cddar(source);
+		  if (s7_is_null(s7, s7_cdr(body)))
+		    {
+		      res = s7_car(body);
+		      if (s7_is_real(res))
+			{
+			  gn->vcts[MUS_INPUT_DATA] = res;
+			  mus_generator_set_feeder(gn->gen, as_needed_input_float);
+			}
+		      else
+			{
+			  arg = s7_caadar(source);
+			  if ((s7_is_pair(res)) &&
+			      (s7_is_null(s7, s7_cddr(res))) &&
+			      (s7_is_symbol(s7_cadr(res))) &&
+			      (s7_cadr(res) != arg))
+			    {
+			      if (s7_car(res) == readin_symbol)
+				{
+				  mus_xen *rd;
+				  rd = (mus_xen *)imported_s7_object_value_checked(s7_cadr_value(s7, res), mus_xen_tag);
+				  gn->vcts[MUS_INPUT_DATA] = (XEN)(rd->gen);
+				  mus_generator_set_feeder(gn->gen, as_needed_input_readin);
+				}
+			      else
+				{
+				  s7_function f;
+				  f = s7_function_choice(s7, res);
+				  if ((f) &&
+				      (s7_function_choice_is_direct(s7, res)) &&
+				      (s7_function_returns_temp(res)))
+				    {
+				      gn->vcts[MUS_INPUT_DATA] = res;
+				      mus_generator_set_feeder(gn->gen, as_needed_input_cs);
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
 	  return(result);
 #else
 	  return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], (direction == 1) ? xen_one : xen_minus_one)));
@@ -7938,20 +7998,6 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
   return(0.0);
 }
 
-
-static mus_float_t as_needed_input_generator(void *ptr, int direction) /* intended for "as-needed" input funcs */
-{
-  mus_xen *x = (mus_xen *)ptr;
-  XEN v;
-  v = x->vcts[MUS_INPUT_FUNCTION];
-  return(mus_apply(XEN_TO_MUS_ANY(v), 0.0, 0.0));
-}
-
-
-static mus_float_t as_needed_input_readin(void *ptr, int direction) /* intended for "as-needed" input funcs */
-{
-  return(mus_readin((mus_any *)(((mus_xen *)ptr)->vcts[MUS_INPUT_DATA])));
-}
 
 
 static XEN g_mus_clear_sincs(void)
@@ -7989,11 +8035,14 @@ included an 'input' argument, input-function is ignored."
   if ((pm1 > SRC_CHANGE_MAX) || (pm1 < -SRC_CHANGE_MAX))
     XEN_OUT_OF_RANGE_ERROR(S_src, XEN_ARG_2, pm, "src change too large");
 
-  if (XEN_PROCEDURE_P(func))
+  if (XEN_NOT_BOUND_P(gn->vcts[MUS_INPUT_DATA]))
     {
-      if (XEN_REQUIRED_ARGS_OK(func, 1))
-	gn->vcts[MUS_INPUT_FUNCTION] = func;
-      else XEN_BAD_ARITY_ERROR(S_src, 3, func, "src input function wants 1 arg");
+      if (XEN_PROCEDURE_P(func))
+	{
+	  if (XEN_REQUIRED_ARGS_OK(func, 1))
+	    gn->vcts[MUS_INPUT_FUNCTION] = func;
+	  else XEN_BAD_ARITY_ERROR(S_src, 3, func, "src input function wants 1 arg");
+	}
     }
   return(C_TO_XEN_DOUBLE(mus_src(g, pm1, NULL)));
 }
@@ -8062,8 +8111,11 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
 
   if (ge)
     {
+      XEN src_obj;
       gn->gen = ge;
-      return(mus_xen_to_object(gn));
+      src_obj = mus_xen_to_object(gn);
+      gn->vcts[MUS_SELF_WRAPPER] = src_obj;
+      return(src_obj);
     }
 
   free(gn->vcts);
@@ -8098,7 +8150,8 @@ static XEN g_granulate(XEN obj, XEN func, XEN edit_func)
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_granulate_p, S_granulate, "a granulate generator");
 
-  if (XEN_BOUND_P(func))
+  if ((XEN_BOUND_P(func)) &&
+      (XEN_NOT_BOUND_P(gn->vcts[MUS_INPUT_DATA])))
     {
       if (XEN_PROCEDURE_P(func))
 	{
@@ -8249,11 +8302,14 @@ static XEN g_convolve(XEN obj, XEN func)
 
   XEN_TO_C_GENERATOR(obj, gn, g, mus_convolve_p, S_convolve, "a convolve generator");
 
-  if (XEN_PROCEDURE_P(func))
+  if (XEN_NOT_BOUND_P(gn->vcts[MUS_INPUT_DATA]))
     {
-      if (XEN_REQUIRED_ARGS_OK(func, 1))
-	gn->vcts[MUS_INPUT_FUNCTION] = func;
-      else XEN_BAD_ARITY_ERROR(S_convolve, 2, func, "convolve input function wants 1 arg");
+      if (XEN_PROCEDURE_P(func))
+	{
+	  if (XEN_REQUIRED_ARGS_OK(func, 1))
+	    gn->vcts[MUS_INPUT_FUNCTION] = func;
+	  else XEN_BAD_ARITY_ERROR(S_convolve, 2, func, "convolve input function wants 1 arg");
+	}
     }
   return(C_TO_XEN_DOUBLE(mus_convolve(g, NULL)));
 }
@@ -8320,12 +8376,15 @@ return a new convolution generator which convolves its input with the impulse re
   }
   if (ge)
     {
+      XEN c_obj;
       gn->nvcts = MUS_MAX_VCTS;
       gn->vcts = make_vcts(gn->nvcts);
       gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
       gn->vcts[2] = filt; /* why is this here? GC protection? (might be a locally-allocated vct as from file->vct) */
       gn->gen = ge;
-      return(mus_xen_to_object(gn));
+      c_obj = mus_xen_to_object(gn);
+      gn->vcts[MUS_SELF_WRAPPER] = c_obj;
+      return(c_obj);
     }
   free(gn);
   return(clm_mus_error(local_error_type, local_error_msg));
@@ -8426,7 +8485,9 @@ static XEN g_phase_vocoder(XEN obj, XEN func, XEN analyze_func, XEN edit_func, X
       bool (*analyze)(void *arg, mus_float_t (*input)(void *arg1, int direction)) = NULL;
       int (*edit)(void *arg) = NULL;
       mus_float_t (*synthesize)(void *arg) = NULL;
-      if (XEN_PROCEDURE_P(func))
+
+      if ((XEN_PROCEDURE_P(func)) &&
+	  (XEN_NOT_BOUND_P(gn->vcts[MUS_INPUT_DATA])))
 	{
 	  if (XEN_REQUIRED_ARGS_OK(func, 1))
 	    gn->vcts[MUS_INPUT_FUNCTION] = func; /* as_needed_input_func set at make time will pick this up */
@@ -11823,10 +11884,6 @@ static s7_pointer g_oscil_bank_6(s7_scheme *sc, s7_pointer args)
 
 
 
-static s7_pointer env_symbol, all_pass_symbol, ina_symbol, comb_symbol, polywave_symbol, triangle_wave_symbol;
-static s7_pointer rand_interp_symbol, oscil_symbol, add_symbol, subtract_symbol, reverb_symbol, output_symbol;
-static s7_pointer multiply_symbol, vector_ref_symbol, quote_symbol, sin_symbol, cos_symbol;
-
 static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
 
 static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -13823,6 +13880,7 @@ static void init_choosers(s7_scheme *sc)
   quote_symbol = s7_make_symbol(sc, "quote");
   sin_symbol = s7_make_symbol(sc, "sin");
   cos_symbol = s7_make_symbol(sc, "cos");
+  readin_symbol = s7_make_symbol(sc, "readin");
 
   f = s7_name_to_value(sc, "*");
   initial_multiply_chooser = s7_function_chooser(sc, f);

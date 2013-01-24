@@ -376,29 +376,26 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   "(ramp-expt rmp0 rmp1 exponent (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^exponent curve"
   ;; vct: start incr off scl exponent
   ;; a^x = exp(x * log(a))
-  (let ((incr (/ 1.0 (if (number? dur)
-			  dur
-			  (- (frames snd chn) beg)))))
-    (if (and symmetric
+  (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
+	 (incr (/ 1.0 len))
+	 (data (make-vct len))
+	 (reader (make-sampler beg snd chn 1 edpos)))
+
+     (if (and symmetric
 	     (< rmp1 rmp0))
+	 (do ((i 0 (+ i 1))
+	      (angle 1.0 (- angle incr)))
+	     ((= i len))
+	   (vct-set! data i (* (next-sample reader) 
+			       (+ rmp1 (* (expt angle exponent) (- rmp0 rmp1))))))
+	 (do ((i 0 (+ i 1))
+	      (angle 0.0 (+ angle incr)))
+	     ((= i len))
+	   (vct-set! data i (* (next-sample reader) 
+			       (+ rmp0 (* (expt angle exponent) (- rmp1 rmp0)))))))
 
-	(map-channel
-	 (let ((angle 1.0))
-	   (lambda (y)
-	     (let ((val (* y (+ rmp1 (* (expt angle exponent) (- rmp0 rmp1))))))
-	       (set! angle (- angle incr))
-	       val)))
-	 beg dur snd chn edpos
-	 (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur))
-
-	(map-channel
-	 (let ((angle 0.0))
-	   (lambda (y)
-	     (let ((val (* y (+ rmp0 (* (expt angle exponent) (- rmp1 rmp0))))))
-	       (set! angle (+ angle incr))
-	       val)))
-	 beg dur snd chn edpos
-	 (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur)))))
+     (vct->channel data beg len snd chn current-edit-position
+		   (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur))))
 
 
 (define* (env-expt-channel e exponent (symmetric #t) (beg 0) dur snd chn edpos)
@@ -416,10 +413,13 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (offset-channel dc (beg 0) dur snd chn edpos)
   "(offset-channel amount (beg 0) dur snd chn edpos) adds amount to each sample"
-  (map-channel (lambda (y) 
-		 (+ y dc)) 
-	       beg dur snd chn edpos
-	       (format #f "offset-channel ~A ~A ~A" dc beg dur)))
+  (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
+	 (data (make-vct len))
+	 (reader (make-sampler beg snd chn 1 edpos)))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (vct-set! data i (+ (next-sample reader) dc)))
+    (vct->channel data beg len snd chn current-edit-position (format #f "offset-channel ~A ~A ~A" dc beg dur))))
 
 
 (define* (offset-sound off (beg 0) dur snd)
@@ -526,26 +526,27 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (channels=? snd1 chn1 snd2 chn2 (allowable-difference 0.0))
   "(channels=? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff) modulo trailing 0's"
-  (if (and (equal? snd1 snd2)
+  (or (and (equal? snd1 snd2)
 	   (= chn1 chn2))
-      #t
       (let ((mx1 (maxamp snd1 chn1))
 	    (mx2 (maxamp snd1 chn1)))
-	(if (> (abs (- mx1 mx2)) allowable-difference)
-	    #f
-	    (let* ((len1 (frames snd1 chn1))
-		   (len2 (frames snd2 chn2))
-		   (first-longer (>= len1 len2))
-		   (len (if first-longer len1 len2))
-		   (s1 (if first-longer snd1 snd2))
-		   (s2 (if first-longer snd2 snd1))
-		   (c1 (if first-longer chn1 chn2))
-		   (c2 (if first-longer chn2 chn1))
-		   (read2 (make-sampler 0 s2 c2)))
-	      (not (scan-channel (lambda (y)
-				   (let ((val (read-sample read2)))
-				     (> (abs (- val y)) allowable-difference)))
-				 0 len s1 c1)))))))
+	(and (<= (abs (- mx1 mx2)) allowable-difference)
+	     (let* ((len1 (frames snd1 chn1))
+		    (len2 (frames snd2 chn2))
+		    (first-longer (>= len1 len2)))
+	       (let ((len (if first-longer len1 len2))
+		     (s1 (if first-longer snd1 snd2))
+		     (s2 (if first-longer snd2 snd1))
+		     (c1 (if first-longer chn1 chn2))
+		     (c2 (if first-longer chn2 chn1)))
+		 (let ((read2 (make-sampler 0 s2 c2))
+		       (read1 (make-sampler 0 s1 c1)))
+		   (do ((i 0 (+ i 1))
+			(y (read-sample read1) (read-sample read1))
+			(val (read-sample read2) (read-sample read2)))
+		       ((or (= i len)
+			    (> (abs (- val y)) allowable-difference))
+			(= i len))))))))))
 
 
 (define* (channels-equal? snd1 chn1 snd2 chn2 (allowable-difference 0.0))

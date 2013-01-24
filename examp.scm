@@ -602,21 +602,26 @@ indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
 (define (every-sample? proc)
   "(every-sample func) -> #t if func is not #f for all samples in the current channel, 
 otherwise it moves the cursor to the first offending sample"
-  (let ((baddy (scan-channel 
-		(lambda (y) 
-		  (not (proc y))))))
-    (if baddy (set! (cursor) baddy))
-    (not baddy)))
+  (let ((reader (make-sampler))
+	(len (frames)))
+    (call-with-exit
+     (lambda (quit)
+       (do ((i 0 (+ i 1)))
+	   ((= i len) #t)
+	 (if (not (proc (next-sample reader)))
+	     (begin
+	       (set! (cursor) i)
+	       (quit #f))))))))
 
 (define (sort-samples nbins)
   "(sort-samples bins) provides a histogram in 'bins' bins"
-  (let ((bins (make-vector nbins 0)))
-    (scan-channel
-     (lambda (y)
-       (let ((bin (floor (* (abs y) nbins))))
-	 (set! (bins bin) (+ (bins bin) 1))
-	 #f)))
-    bins))
+  (let ((bins (make-vector nbins 0))
+	(reader (make-sampler))
+	(len (frames)))
+    (do ((i 0 (+ i 1)))
+	((= i len) bins)
+      (let ((bin (floor (* (abs (next-sample reader)) nbins))))
+	(set! (bins bin) (+ (bins bin) 1))))))
 
 
 
@@ -1178,8 +1183,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 (define (compand)
   "(compand) returns a compander: (map-channel (compand))"
   (lambda (inval)
-    (let ((index (+ 8.0 (* 8.0 inval))))
-      (array-interp compand-table index 17))))
+    (array-interp compand-table (+ 8.0 (* 8.0 inval)) 17)))
 
 
 ;;; -------- shift pitch keeping duration constant

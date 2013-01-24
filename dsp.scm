@@ -256,31 +256,36 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;; a more extreme effect is "saturation":
 ;;;   (map-channel (lambda (val) (if (< (abs val) .1) val (if (>= val 0.0) 0.25 -0.25))))
 
-(define* (adsat size beg dur snd chn)
+(define* (adsat size (beg 0) dur snd chn)
   "(adsat size beg dur snd chn) is an 'adaptive saturation' sound effect"
-  (let ((mn 0.0)
-	(mx 0.0)
-	(n 0)
-	(vals (make-vct size)))
-    (map-channel (lambda (val)
-		   (if (= n size)
-		       (begin
-			 (do ((i 0 (+ i 1)))
-			     ((= i size))
-			   (if (>= (vals i) 0.0)
-			       (set! (vals i) mx)
-			       (set! (vals i) mn)))
-			 (set! n 0)
-			 (set! mx 0.0)
-			 (set! mn 0.0)
-			 vals)
-		       (begin
-			 (set! (vals n) val)
-			 (if (> val mx) (set! mx val))
-			 (if (< val mn) (set! mn val))
-			 (set! n (+ 1 n))
-			 #f)))
-		 beg dur snd chn #f (format #f "adsat ~A ~A ~A" size beg dur))))
+  (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
+	 (data (make-vct len)))
+    (let ((reader (make-sampler beg snd chn))
+	  (mn 0.0)
+	  (mx 0.0)
+	  (n 0)
+	  (pos 0)
+	  (vals (make-vct size)))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(let ((val (next-sample reader)))
+	  (if (= n size)
+	      (begin
+		(do ((k 0 (+ k 1)))
+		    ((= k size))
+		  (if (>= (vals k) 0.0)
+		      (vct-set! data (+ pos k) mx)
+		      (vct-set! data (+ pos k) mn)))
+		(set! pos (+ pos size))
+		(set! n 0)
+		(set! mx 0.0)
+		(set! mn 0.0))
+	      (begin
+		(set! (vals n) val)
+		(if (> val mx) (set! mx val))
+		(if (< val mn) (set! mn val))
+		(set! n (+ 1 n))))))
+      (vct->channel data beg pos snd chn current-edit-position (format #f "adsat ~A ~A ~A" size beg dur)))))
 
 
 ;;; -------- spike
@@ -289,17 +294,20 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 (define* (spike snd chn)
   "(spike snd chn) multiplies successive samples together to make a sound more spikey"
-  (map-channel (let ((x1 0.0) 
-		     (x2 0.0) 
-		     (amp (maxamp snd chn))) ; keep resultant peak at maxamp
-		 (lambda (x0) 
-		   (let ((res (* (/ x0 (* amp amp)) 
-				 (abs x2) 
-				 (abs x1)))) 
-		     (set! x2 x1) 
-		     (set! x1 x0) 
-		     res)))
-	       0 #f snd chn #f "spike"))
+  (let* ((len (frames snd chn))
+	 (data (make-vct len))
+	 (amp (maxamp snd chn))) ; keep resultant peak at maxamp
+    (let ((reader (make-sampler 0 snd chn))
+	  (x1 0.0)
+	  (x2 0.0)
+	  (amp1 (/ 1.0 (* amp amp))))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(let ((x0 (next-sample reader)))
+	  (vct-set! data i (* x0 amp1 x2 x1))
+	  (set! x2 x1)
+	  (set! x1 (abs x0))))
+      (vct->channel data 0 len snd chn current-edit-position "spike"))))
 
 ;;; the more successive samples we include in the product, the more we
 ;;;   limit the output to pulses placed at (just after) wave peaks
@@ -457,18 +465,27 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (brighten-slightly amount snd chn)
   "(brighten-slightly amount snd chn) is a form of contrast-enhancement ('amount' between ca .1 and 1)"
   (let* ((mx (maxamp))
-	 (brt (/ (* 2 pi amount) mx)))
-    (map-channel (lambda (y)
-		   (* mx (sin (* y brt))))
-		 0 #f snd chn #f (format #f "brighten-slightly ~A" amount))))
+	 (brt (/ (* 2 pi amount) mx))
+	 (len (frames snd chn))
+	 (data (make-vct len))
+	 (reader (make-sampler 0 snd chn)))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (vct-set! data i (* mx (sin (* (next-sample reader) brt)))))
+    (vct->channel data 0 len snd chn current-edit-position (format #f "brighten-slightly ~A" amount))))
 
 (define (brighten-slightly-1 coeffs)
   "(brighten-slightly-1 coeffs) is a form of contrast-enhancement: (brighten-slightly-1 '(1 .5 3 1))"
   (let ((pcoeffs (partials->polynomial coeffs))
-	(mx (maxamp)))
-    (map-channel
-     (lambda (y)
-       (* mx (polynomial pcoeffs (/ y mx)))))))
+	(mx (maxamp))
+	(len (frames snd chn)))
+    (let ((data (make-vct len))
+	  (reader (make-sampler 0 snd chn)))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(vct-set! data i (* mx (polynomial pcoeffs (/ (next-sample reader) mx)))))
+      (vct->channel data))))
+       
 
 
 
@@ -2150,46 +2167,47 @@ is assumed to be outside -1.0 to 1.0."
   (let ((clips 0)                              ; number of clipped portions * 2
 	(unclipped-max 0.0))
 
-    ;; count clipped portions (this search split into two portions for the optimizer's benefit)
-    (let ((in-clip #f))
-      (scan-channel
-       (lambda (y)
-	 (let ((absy (abs y)))
-	   (if (> absy .9999)                    ; this sample is clipped
-	       (if (not in-clip)
-		   (set! in-clip #t))
-	       (begin                            ; not clipped
-		 (set! unclipped-max (max unclipped-max absy))
-		 (if in-clip
-		     (begin
-		       (set! in-clip #f)
-		       (set! clips (+ clips 2))))))
-	   #f))
-       0 (frames snd chn) snd chn))
+    ;; count clipped portions
+    (let ((in-clip #f)
+	  (len (frames snd chn))
+	  (reader (make-sampler 0 snd chn)))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(let ((absy (abs (next-sample reader))))
+	  (if (> absy .9999)                    ; this sample is clipped
+	      (if (not in-clip)
+		  (set! in-clip #t))
+	      (begin                            ; not clipped
+		(set! unclipped-max (max unclipped-max absy))
+		(if in-clip
+		    (begin
+		      (set! in-clip #f)
+		      (set! clips (+ clips 2)))))))))
 
     (if (> clips 0)                             ; we did find clipped portions
 	(let ((clip-data (make-vector clips 0))  ; clipped portion begin and end points
 	      (clip-beg 0)
 	      (in-clip #f)
 	      (cur-clip 0)
-	      (samp 0))
-	  (scan-channel
-	   (lambda (y)
-	     (let ((absy (abs y)))
-	       (if (> absy .9999)
-		   (if (not in-clip)
-		       (begin
-			 (set! in-clip #t)
-			 (set! clip-beg samp)))
-		   (begin                            ; not clipped
-		     (if in-clip                     ; if we were in a clipped portion
-			 (begin                      ;   save the bounds in clip-data
-			   (set! in-clip #f)
-			   (set! (clip-data cur-clip) clip-beg)
-			   (set! (clip-data (+ 1 cur-clip)) (- samp 1))
-			   (set! cur-clip (+ cur-clip 2))))))
-	       (set! samp (+ samp 1))
-	       #f)))
+	      (samp 0)
+	      (len (frames snd chn))
+	      (reader (make-sampler 0 snd chn)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i len))
+	    (let ((absy (abs (next-sample reader))))
+	      (if (> absy .9999)
+		  (if (not in-clip)
+		      (begin
+			(set! in-clip #t)
+			(set! clip-beg samp)))
+		  (begin                            ; not clipped
+		    (if in-clip                     ; if we were in a clipped portion
+			(begin                      ;   save the bounds in clip-data
+			  (set! in-clip #f)
+			  (set! (clip-data cur-clip) clip-beg)
+			  (set! (clip-data (+ 1 cur-clip)) (- samp 1))
+			  (set! cur-clip (+ cur-clip 2))))))
+	      (set! samp (+ samp 1))))
 	  
 	  ;; try to restore clipped portions
 	  
