@@ -1193,21 +1193,22 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; this is a faster version of find-sine using the "Goertzel algorithm" taken from R Lyons "Understanding DSP" p 529
 ;;; it returns the same result as find-sine above if you take (* 2 (/ (goertzel...) dur)) -- see snd-test.scm examples
 
-(define* (goertzel freq beg dur snd)
+(define* (goertzel freq (beg 0) dur snd)
   "(goertzel freq beg dur snd) returns the amplitude of the 'freq' spectral component"
   (let* ((sr (srate snd))
-	 (y2 0.0)
-	 (y1 0.0)
-	 (y0 0.0)
 	 (rfreq (/ (* 2.0 pi freq) sr))
 	 (cs (* 2.0 (cos rfreq))))
-    (scan-channel (lambda (y)
-		    (set! y2 y1)
-		    (set! y1 y0)
-		    (set! y0 (+ (- (* y1 cs) y2) y))
-		    #f)
-		  (or beg 0) (or dur (frames snd)) snd)
-    (magnitude (- y0 (* y1 (exp (make-rectangular 0.0 (- rfreq))))))))
+    (let ((y2 0.0)
+	  (y1 0.0)
+	  (y0 0.0)
+	  (reader (make-sampler beg snd 0))
+	  (len (if (number? dur) dur (- (frames snd 0) beg))))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(set! y2 y1)
+	(set! y1 y0)
+	(set! y0 (+ (- (* y1 cs) y2) (next-sample reader))))
+    (magnitude (- y0 (* y1 (exp (make-rectangular 0.0 (- rfreq)))))))))
 
 
 (define (make-spencer-filter)
@@ -1308,14 +1309,22 @@ the era when computers were human beings"
 (define* (channel-mean snd chn)            ; <f, 1> / n
   "(channel-mean snd chn) returns the average of the samples in the given channel: <f,1>/n"
   (let ((sum 0.0)
-	(N (frames snd chn)))
-    (scan-channel (lambda (y) (set! sum (+ sum y)) #f) 0 N snd chn)
+	(N (frames snd chn))
+	(reader (make-sampler 0 snd chn)))
+    (do ((i 0 (+ i 1)))
+	((= i N))
+      (set! sum (+ sum (next-sample reader))))
     (/ sum N)))
 
 (define* (channel-total-energy snd chn)    ; <f, f>
   "(channel-total-energy snd chn) returns the sum of the squares of all the samples in the given channel: <f,f>"
-  (let ((sum 0.0))
-    (scan-channel (lambda (y) (set! sum (+ sum (* y y))) #f) 0 (frames snd chn) snd chn)
+  (let ((sum 0.0)
+	(N (frames snd chn))
+	(reader (make-sampler 0 snd chn)))
+    (do ((i 0 (+ i 1)))
+	((= i N))
+      (let ((y (next-sample reader)))
+	(set! sum (+ sum (* y y)))))
     sum))
 
 (define* (channel-average-power snd chn)   ; <f, f> / n
@@ -1340,15 +1349,21 @@ the era when computers were human beings"
 (define* (channel-lp p snd chn)
   "(channel-lp p snd chn) returns the Lp norm of the samples in the given channel"
   (let ((sum 0.0)
-	(N (frames snd chn)))
-    (scan-channel (lambda (y) (set! sum (+ sum (expt (abs y) p))) #f) 0 N snd chn)
+	(N (frames snd chn))
+	(reader (make-sampler 0 snd chn)))
+    (do ((i 0 (+ i 1)))
+	((= i N))
+      (set! sum (+ sum (expt (abs (next-sample reader)) p))))
     (expt sum (/ 1.0 p))))
 
 (define* (channel-lp-inf snd chn)
   "(channel-lp-inf snd chn) returns the maxamp in the given channel (the name is just math jargon for maxamp)"
   (let ((mx 0.0)
-	(N (frames snd chn)))
-    (scan-channel (lambda (y) (set! mx (max mx (abs y))) #f) 0 N snd chn)
+	(N (frames snd chn))
+	(reader (make-sampler 0 snd chn)))
+    (do ((i 0 (+ i 1)))
+	((= i N))
+      (set! mx (max mx (abs (next-sample reader)))))
     mx))
 
 (define (channel2-inner-product s1 c1 s2 c2)         ; <f, g>

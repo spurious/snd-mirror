@@ -1913,6 +1913,13 @@
 		    (eq? (caadr form) 'object->string))
 	       (lint-format "~A could be ~A" 
 			    name form (cadr form))))
+
+	  ((display)
+	   (if (and (= (length form) 2)
+		    (eq? (car (cadr form)) 'format)
+		    (eq? (cadr (cadr form)) #f))
+	       (lint-format "~A could be ~A"
+			    name form `(format #t ,@(cddr (cadr form))))))
 	  
 	  ((reverse list->vector vector->list list->string string->list symbol->string string->symbol number->string)
 	   (let ((inverses '((reverse . reverse) 
@@ -1989,7 +1996,8 @@
 						 name head 
 						 (truncated-list->string form))))
 			    (if (memq type '(define* lambda*))
-				(if (not (memq :allow-other-keys pargs))
+				(if (and (not (memq :allow-other-keys pargs))
+					 (not (memq :rest pargs)))
 				    (for-each
 				     (lambda (arg)
 				       (if (and (keyword? arg)

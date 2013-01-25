@@ -3171,27 +3171,33 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	       (remove-click 0)))
 
 (define* (effects-remove-dc snd chn)
-  (map-channel
-   (let ((lastx 0.0)
-	 (lasty 0.0))
-     (lambda (inval)
-       (set! lasty (+ inval (- (* 0.999 lasty) lastx)))
-       (set! lastx inval)
-       lasty))
-   0 #f snd chn #f "effects-remove-dc"))
+  (let* ((len (frames snd chn))
+	 (data (make-vct len))
+	 (reader (make-sampler 0 snd chn)))
+    (let ((lastx 0.0)
+	  (lasty 0.0))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(let ((inval (next-sample reader)))
+	  (set! lasty (+ inval (- (* 0.999 lasty) lastx)))
+	  (set! lastx inval)
+	  (vct-set! data i lasty))))
+      (vct->channel data 0 len snd chn current-edit-position "effects-remove-dc")))
 
 (add-to-menu effects-menu "Remove DC" (lambda () (effects-remove-dc)))
 
 (add-to-menu effects-menu "Spiker" (lambda () (spike)))
 
 (define* (effects-compand snd chn)
-  (map-channel 
-   (let ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
-		    0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
-     (lambda (inval)
-       (let ((index (+ 8.0 (* 8.0 inval))))
-	 (array-interp tbl index 17))))
-   0 #f snd chn #f "effects-compand"))
+  (let ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
+		  0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
+    (let ((len (frames snd chn)))
+      (let ((reader (make-sampler 0 snd chn))
+	    (data (make-vct len)))
+	(do ((i 0 (+ i 1)))
+	    ((= i len))
+	  (vct-set! data i (array-interp tbl (+ 8.0 (* 8.0 (next-sample reader))) 17)))
+	(vct->channel data 0 len snd chn current-edit-position "effects-compand")))))
 
 (add-to-menu effects-menu "Compand" (lambda () (effects-compand)))
 

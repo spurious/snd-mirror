@@ -1040,7 +1040,7 @@
      'fnc)))
 
 (define (no-way str arg)
-  (display (format #f str arg)))
+  (format #t str arg))
 
 (define* (CFNC data spec spec-data) ; 'const -> const for arg cast, 'etc for ... args, 'free -> must free C val before return
   (let ((name (cadr-str data))
@@ -2779,7 +2779,7 @@
 				    (hey "XLT(")
 				    (if (string=? type "GType")
 					(hey "XLG(")
-					(display (format #f "unknown etc element type: ~A~%" type)))))))
+					(format #t "unknown etc element type: ~A~%" type))))))
 		      (hey "~A, ~D)" list-name j)
 		      (if (or with-null with-minus-one (< j (- i 1)))
 			  (hey ", "))))
@@ -3225,7 +3225,7 @@
 	  strs)))
      structs)
     (if (null? vals)
-	(display (format #f "(writer) ~A: not found" field))
+	(format #t "(writer) ~A: not found" field)
 	(begin
 	  (if (= (length vals) 1)
 	      (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr), ptr, XEN_ARG_1, ~S, ~S);~%" 
@@ -3757,13 +3757,13 @@
 (for-each
  (lambda (type)
    (if (not (assoc type direct-types))
-       (display (format #f ";not direct: ~A~%" type))))
+       (format #t ";not direct: ~A~%" type)))
  declared-types)
 
 (for-each
  (lambda (v)
    (if (not (member (car v) declared-types))
-       (display (format #f "~A " (car v)))))
+       (format #t "~A " (car v))))
  direct-types)
 |#
 

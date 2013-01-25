@@ -137,10 +137,12 @@ a list (file-name-or-sound-object [beg [channel]])."
 	(mix-vct (channel->vct input-beg input-len input-snd input-chn) output-beg output-snd output-chn #t)
 	(let* ((output-name (snd-tempnam))
 	       (output (new-sound output-name :size input-len))
-	       (reader (make-sampler input-beg input-snd input-chn)))
-	  (map-channel (lambda (val) 
-			 (next-sample reader)) 
-		       0 input-len output 0)
+	       (reader (make-sampler input-beg input-snd input-chn))
+	       (data (make-vct input-len)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i input-len))
+	    (vct-set! data i (next-sample reader)))
+	  (vct->channel data 0 input-len output 0)
 	  (save-sound output)
 	  (close-sound output)
 	  (mix output-name output-beg 0 output-snd output-chn #t #t))))
@@ -167,13 +169,16 @@ a list (file-name-or-sound-object [beg [channel]])."
 	    (if (not with-tag)
 
 		;; not a virtual mix
-		(let ((reader (make-sampler input-beg input input-channel)))
-		  (map-channel (lambda (val)
-				 (+ val (next-sample reader)))
-			       start len snd chn edpos
-			       (if (string? input-data)
-				   (format #f "mix-channel ~S ~A ~A" input-data beg dur)
-				   (format #f "mix-channel '~A ~A ~A" input-data beg dur))))
+		(let ((reader (make-sampler input-beg input input-channel))
+		      (read2 (make-sampler start snd chn 1 edpos))
+		      (data (make-vct len)))
+		  (do ((i 0 (+ i 1)))
+		      ((= i len))
+		    (vct-set! data i (+ (next-sample reader) (next-sample read2))))
+		  (vct->channel data start len snd chn current-edit-position
+				(if (string? input-data)
+				    (format #f "mix-channel ~S ~A ~A" input-data beg dur)
+				    (format #f "mix-channel '~A ~A ~A" input-data beg dur))))
 
 		;; a virtual mix -- use simplest method available
 		(if (sound? input)
@@ -191,8 +196,12 @@ a list (file-name-or-sound-object [beg [channel]])."
 			;; mixing part of file
 			(let* ((output-name (snd-tempnam))
 			       (output (new-sound output-name :size len))
-			       (reader (make-sampler input-beg input input-channel)))
-			  (map-channel (lambda (val) (next-sample reader)) 0 len output 0)
+			       (reader (make-sampler input-beg input input-channel))
+			       (data (make-vct len)))
+			  (do ((i 0 (+ i 1)))
+			      ((= i len))
+			    (vct-set! data i (next-sample reader)))
+			  (vct->channel data 0 len output 0)
 			  (save-sound output)
 			  (close-sound output)
 			  (mix output-name start 0 snd chn #t #t)))))))))
@@ -278,18 +287,18 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (sine-ramp rmp0 rmp1 (beg 0) dur snd chn edpos)
   "(sine-ramp rmp0 rmp1 (beg 0) dur snd chn edpos) produces a sinsusoidal connection from rmp0 to rmp1"
-  (map-channel
-   (let ((angle (- pi))
-	 (incr (/ pi (if (number? dur)
-			 dur
-			 (- (frames snd chn) beg)))))
-     (lambda (y)
-       (let ((result (* y (+ rmp0 (* (- rmp1 rmp0) 
+  (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
+	 (incr (/ pi len))
+	 (data (make-vct len))
+	 (reader (make-sampler beg snd chn 1 edpos)))
+    (do ((i 0 (+ i 1))
+	 (angle (- pi) (+ angle incr)))
+	((= i len))
+      (vct-set! data i (* (next-sample reader) 
+			  (+ rmp0 (* (- rmp1 rmp0) 
 				     (+ 0.5 (* 0.5 (cos angle))))))))
-	 (set! angle (+ angle incr))
-	 result)))
-   beg dur snd chn edpos
-   (format #f "sine-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
+     (vct->channel data beg len snd chn current-edit-position
+		   (format #f "sine-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur))))
 
 
 (define* (sine-env-channel e (beg 0) dur snd chn edpos)
@@ -307,20 +316,22 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define* (blackman4-ramp rmp0 rmp1 (beg 0) dur snd chn edpos)
   "(blackman4-ramp rmp0 rmp1 (beg 0) dur snd chn edpos) produces a blackman4-shaped envelope"
   ;; vct: angle incr off scl
-  (map-channel
-   (let ((angle 0.0)
-	 (incr (/ pi (if (number? dur)
-			 dur
-			 (- (frames snd chn) beg)))))
-     (lambda (y)
-       (let* ((cx (cos angle))
-	      (val (* y (+ rmp0
-			   (* (- rmp1 rmp0)
-			      (+ .084037 (* cx (+ -.29145 (* cx (+ .375696 (* cx (+ -.20762 (* cx .041194)))))))))))))
-	 (set! angle (+ angle incr))
-	 val)))
-   beg dur snd chn edpos
-   (format #f "blackman4-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
+  (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
+	 (incr (/ pi len))
+	 (data (make-vct len))
+	 (reader (make-sampler beg snd chn 1 edpos)))
+
+    (do ((i 0 (+ i 1))
+	 (angle 0.0 (+ angle incr)))
+	((= i len))
+      (let ((cx (cos angle)))
+	(vct-set! data i (* (next-sample reader) 
+			    (+ rmp0
+			       (* (- rmp1 rmp0)
+				  (+ .084037 (* cx (+ -.29145 (* cx (+ .375696 (* cx (+ -.20762 (* cx .041194))))))))))))))
+
+     (vct->channel data beg len snd chn current-edit-position
+		   (format #f "blackman4-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur))))
 
 
 (define* (blackman4-env-channel e (beg 0) dur snd chn edpos)
@@ -334,29 +345,27 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define* (ramp-squared rmp0 rmp1 (symmetric #t) (beg 0) dur snd chn edpos)
   "(ramp-squared rmp0 rmp1 (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^2 curve"
   ;; vct: start incr off scl
-  (let ((incr (/ 1.0 (if (number? dur)
-			 dur
-			 (- (frames snd chn) beg)))))
+  (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
+	 (incr (/ 1.0 len))
+	 (data (make-vct len))
+	 (reader (make-sampler beg snd chn 1 edpos)))
+
     (if (and symmetric
 	     (< rmp1 rmp0))
 
-	(map-channel
-	 (let ((angle 1.0))
-	   (lambda (y)
-	     (let ((val (* y (+ rmp1 (* angle angle (- rmp0 rmp1))))))
-	       (set! angle (- angle incr))
-	       val)))
-	 beg dur snd chn edpos
-	 (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur))
+	 (do ((i 0 (+ i 1))
+	      (angle 1.0 (- angle incr)))
+	     ((= i len))
+	   (vct-set! data i (* (next-sample reader) 
+			       (+ rmp1 (* angle angle (- rmp0 rmp1))))))
+	 (do ((i 0 (+ i 1))
+	      (angle 0.0 (+ angle incr)))
+	     ((= i len))
+	   (vct-set! data i (* (next-sample reader) 
+			       (+ rmp0 (* angle angle (- rmp1 rmp0)))))))
 
-	(map-channel
-	 (let ((angle 0.0))
-	   (lambda (y)
-	     (let ((val (* y (+ rmp0 (* angle angle (- rmp1 rmp0))))))
-	       (set! angle (+ angle incr))
-	       val)))
-	 beg dur snd chn edpos
-	 (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur)))))
+     (vct->channel data beg len snd chn current-edit-position
+		   (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur))))
 
 
 (define* (env-squared-channel e (symmetric #t) (beg 0) dur snd chn edpos)
@@ -454,8 +463,14 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define* (dither-channel (amount .00006) (beg 0) dur snd chn edpos)
   "(dither-channel (amount .00006) (beg 0) dur snd chn edpos) adds amount dither to each sample"
   (let ((dither (* .5 amount)))
-    (map-channel (lambda (y) (+ y (mus-random dither) (mus-random dither))) beg dur snd chn edpos
-		   (format #f "dither-channel ~,8F ~A ~A" amount beg dur))))
+    (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
+	   (data (make-vct len))
+	   (reader (make-sampler beg snd chn 1 edpos)))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(vct-set! data i (+ (next-sample reader) (mus-random dither) (mus-random dither))))
+      (vct->channel data beg len snd chn current-edit-position
+		    (format #f "dither-channel ~,8F ~A ~A" amount beg dur)))))
 
 
 (define* (dither-sound (amount .00006) (beg 0) dur snd)
@@ -473,12 +488,15 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (contrast-channel index (beg 0) dur snd chn edpos)
   "(contrast-channel index (beg 0) dur snd chn edpos) applies contrast enhancement to the sound"
-  (map-channel
-   (lambda (y)
-     (sin (+ (* y 0.5 pi) 
-	     (* index (sin (* y 2.0 pi))))))
-   beg dur snd chn edpos
-   (format #f "contrast-channel ~A ~A ~A" index beg dur)))
+  (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
+	 (data (make-vct len))
+	 (reader (make-sampler beg snd chn 1 edpos)))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (let ((y (next-sample reader)))
+	(vct-set! data i (sin (+ (* y 0.5 pi) (* index (sin (* y 2.0 pi))))))))
+    (vct->channel data beg len snd chn current-edit-position
+		  (format #f "contrast-channel ~A ~A ~A" index beg dur))))
 
 
 (define* (contrast-sound index (beg 0) dur snd)

@@ -113,7 +113,7 @@
       (if (or (not (string? name))
 	      (= (string-length name) 0))
 	  (set! name "<unnamed>"))
-      (display (format #f "~A~A~%" spaces name))
+      (format #t "~A~A~%" spaces name)
       (if (XtIsComposite w)
 	  (for-each 
 	   (lambda (n)
@@ -2311,7 +2311,7 @@
     (while happy
       (let ((name (XGetAtomName dpy (list 'Atom i))))
 	(if (string? name)
-	    (display (format #f "~D: ~A~%" i name))
+	    (format #t "~D: ~A~%" i name)
 	    (set! happy #f)))
       (set! i (+ i 1)))
     (XSetErrorHandler #f)))

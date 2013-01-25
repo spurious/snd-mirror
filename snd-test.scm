@@ -215,7 +215,7 @@
      (lambda (file)
        (if (not (file-exists? file))
 	   (begin
-	     (display (format #f "copying ~A~%" file))
+	     (format #t "copying ~A~%" file)
 	     (copy-file (string-append home-dir "/cl/" file) (string-append (getcwd) "/" file)))))
      (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd"
 	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd" "4a.snd" "zero.snd"
@@ -2194,7 +2194,7 @@
 		       'save-selection 'save-selection-dialog 'save-sound 'save-sound-as 'save-sound-dialog
 		       'save-state 'save-state-file 'save-state-hook 'sawtooth-wave 'sawtooth-wave?
 		       'scale-by 'scale-channel 'scale-selection-by 'scale-selection-to 'scale-to
-		       'scan-chan 'scan-channel 'script-arg 'script-args 'search-procedure
+		       'scan-channel 'script-arg 'script-args 'search-procedure
 		       'seconds->samples 'select-all 'select-channel 'select-channel-hook 'select-sound
 		       'select-sound-hook 'selected-channel 'selected-data-color 'selected-graph-color 'selected-sound
 		       'selection-chans 'selection-color 'selection-context 'selection-creates-region
@@ -4849,29 +4849,35 @@
 			   name pos (sample pos ind 0) maxpos (sample maxpos ind 0))))
       (let ((mx 0.0)
 	    (ctr 0)
-	    (mpos 0))
-	(scan-chan (lambda (y) 
-		     (if (> (abs y) mx)
-			 (begin
-			   (set! mpos ctr)
-			   (set! mx (abs y))))
-		     (set! ctr (+ 1 ctr))
-		     #f))
+	    (mpos 0)
+	    (len (frames ind))
+	    (reader (make-sampler 0 ind)))
+	(do ((i 0 (+ i 1)))
+	    ((= i len))
+	  (let ((y (next-sample reader)))
+	    (if (> (abs y) mx)
+		(begin
+		  (set! mpos i)
+		  (set! mx (abs y))))))
 	(if (not (= mpos maxpos))
-	    (snd-display #__line__ ";(~D) scan-chan and maxamp-position disagree: ~A ~A" caller-line mpos maxpos))
+	    (snd-display #__line__ ";(~D) scan and maxamp-position disagree: ~A ~A" caller-line mpos maxpos))
 	(if (fneq mx val) (snd-display #__line__ ";(~D) actual ~A max: ~A (correct: ~A)" caller-line name mx val)))))
   
   (define (check-env-vals name gen)
-    (let ((ctr -1))
-      (scan-chan (lambda (y)
-		   (let ((val (env gen)))
-		     (set! ctr (+ 1 ctr))
-		     (if (fneq val y)
-			 (begin
-			   (display (format #f "~%;check-env-vals ~A at ~D: ~A ~A" name ctr val y))
-			   #t)
-			 #f))))))
-  
+    (let ((ctr -1)
+	  (len (frames))
+	  (reader (make-sampler)))
+      (call-with-exit
+       (lambda (quit)
+	 (do ((i 0 (+ i 1)))
+	     ((= i len))
+	   (let ((val (env gen))
+		 (y (next-sample reader)))
+	     (if (fneq val y)
+		 (begin
+		   (format #t "~%;check-env-vals ~A at ~D: ~A ~A" name i val y)
+		   (quit)))))))))
+
   (define (our-x->position ind x) 
     (let ((ax (axis-info ind 0)))
       (list
@@ -5645,7 +5651,7 @@ EDITS: 5
 "))
 	      (snd-display #__line__ ";xramp 7: ~A" (safe-display-edits ind 0 3)))
 	  (set! ctr 0)
-	  (let ((baddy (scan-chan (lambda (y) (if (fneq y (* 0.5 (vals ctr))) #t (begin (set! ctr (+ 1 ctr)) #f))))))
+	  (let ((baddy (scan-channel (lambda (y) (if (fneq y (* 0.5 (vals ctr))) #t (begin (set! ctr (+ 1 ctr)) #f))))))
 	    (if baddy (snd-display #__line__ ";trouble in xramp 7: ~A" baddy)))
 	  (undo)
 	  (delete-sample 0)
@@ -5656,7 +5662,7 @@ EDITS: 5
 "))
 	      (snd-display #__line__ ";xramp 8: ~A" (safe-display-edits ind 0 3)))
 	  (set! ctr 1)
-	  (let ((baddy (scan-chan (lambda (y) (if (fneq y (vals ctr)) #t (begin (set! ctr (+ 1 ctr)) #f))))))
+	  (let ((baddy (scan-channel (lambda (y) (if (fneq y (vals ctr)) #t (begin (set! ctr (+ 1 ctr)) #f))))))
 	    (if baddy (snd-display #__line__ ";trouble in xramp 8: ~A" baddy)))
 	  (undo)
 	  (delete-samples 0 2)
@@ -5667,7 +5673,7 @@ EDITS: 5
 "))
 	      (snd-display #__line__ ";xramp 9: ~A" (safe-display-edits ind 0 3)))
 	  (set! ctr 2)
-	  (let ((baddy (scan-chan (lambda (y) (if (fneq y (vals ctr)) #t (begin (set! ctr (+ 1 ctr)) #f))))))
+	  (let ((baddy (scan-channel (lambda (y) (if (fneq y (vals ctr)) #t (begin (set! ctr (+ 1 ctr)) #f))))))
 	    (if baddy (snd-display #__line__ ";trouble in xramp 9: ~A" baddy)))
 	  (undo)
 	  (delete-sample 0)
@@ -5707,7 +5713,7 @@ EDITS: 5
 "))
 	      (snd-display #__line__ ";xramp 13: ~A" (safe-display-edits ind 0 3)))
 	  (set! ctr 0)
-	  (let ((baddy (scan-chan (lambda (y)
+	  (let ((baddy (scan-channel (lambda (y)
 				    (if (or (and (> ctr 5) (fneq y (vals ctr)))
 					    (and (< ctr 4) (fneq y (vals ctr)))
 					    (and (or (= ctr 4) (= ctr 5)) (fneq y (* 0.5 (vals ctr)))))
@@ -7370,31 +7376,31 @@ EDITS: 5
 	(let ((ind1 (open-sound "oboe.snd"))
 	      (ind2 (open-sound "2.snd")))
 	  (let ((ups1 (count-matches (lambda (n) (> n .1)) 0 ind1 0))
-		(ups2 (let ((count 0))
-			(scan-chan (lambda (n)
-				     (if (> n .1)
-					 (set! count (+ count 1)))
-				     #f)
-				   0 (frames ind1) ind1 0)
-			count)))
+		(ups2 (let ((count 0)
+			    (len (frames ind1))
+			    (reader (make-sampler 0 ind1)))
+			(do ((i 0 (+ i 1)))
+			    ((= i len) count)
+			  (if (> (next-sample reader) .1)
+			      (set! count (+ count 1)))))))
 	    (if (not (= ups1 ups2))
 		(snd-display #__line__ ";scan-chan: ~A ~A?" ups1 ups2))
 	    (set! ups1 (count-matches (lambda (n) (> n .03)) 0 ind2 0))
 	    (set! ups2 (count-matches (lambda (n) (> n .03)) 0 ind2 1))
-	    (let ((ups3 (let ((count 0))
-			  (scan-chan (lambda (n)
-				       (if (> n .03)
-					   (set! count (+ count 1)))
-				       #f)
-				     0 (frames ind2) ind2 0)
-			  count))
-		  (ups4 (let ((count 0))
-			  (scan-chan (lambda (n)
-				       (if (> n .03)
-					   (set! count (+ count 1)))
-				       #f)
-				     0 (frames ind2) ind2 1)
-			  count)))
+	    (let ((ups3 (let ((count 0)
+			      (len (frames ind2))
+			      (reader (make-sampler 0 ind2 0)))
+			  (do ((i 0 (+ i 1)))
+			      ((= i len) count)
+			    (if (> (next-sample reader) .03)
+				(set! count (+ count 1))))))
+		  (ups4 (let ((count 0)
+			      (len (frames ind2))
+			      (reader (make-sampler 0 ind2 1)))
+			  (do ((i 0 (+ i 1)))
+			      ((= i len) count)
+			    (if (> (next-sample reader) .03)
+				(set! count (+ count 1)))))))
 	      (if (not (= ups1 ups3))
 		  (snd-display #__line__ ";2[0] scan-chan: ~A ~A?" ups1 ups3))
 	      (if (not (= ups2 ups4))
@@ -7477,7 +7483,7 @@ EDITS: 5
 	  (test-edpos 
 	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) 
 		    (let ((samp 0)) 
-		      (scan-chan (lambda (n3) 
+		      (scan-channel (lambda (n3) 
 				   (or (> n3 .1) 
 				       (begin 
 					 (set! samp (+ samp 1)) 
@@ -8425,7 +8431,7 @@ EDITS: 5
 		  (if val 
 		      (list val (- (sampler-position reader) 1))
 		      (scan-again)))))
-	  (define* (my-scan-chan proc)
+	  (define* (my-scan-channel proc)
 	    (if proc 
 		(begin
 		  (set! last-proc proc)
@@ -8437,7 +8443,7 @@ EDITS: 5
 	      (set! (cursor ind 0) 1000)
 	      (if (fneq (sample) samp)
 		  (snd-display #__line__ ";sample no args: ~A ~A" (sample) samp)))
-	    (set! val (my-scan-chan (lambda (y) (> y .1))))
+	    (set! val (my-scan-channel (lambda (y) (> y .1))))
 	    (if (not (equal? val (list #t 4423)))
 		(snd-display #__line__ ";my-scan-chan: ~A" val))
 	    (set! val (scan-again))
@@ -8522,7 +8528,7 @@ EDITS: 5
 	  (env-channel (make-env '(0 -0.5 1 0 2 -1) :offset .5 :scaler 2.0 :length 1001))
 	  (check-maxamp #__line__ ind 1.5 "off+scl #2")
 	  (let ((mx -12.0))
-	    (scan-chan (lambda (y) 
+	    (scan-channel (lambda (y) 
 			 (if (> y mx) 
 			     (set! mx y))
 			 #f))
@@ -10888,7 +10894,15 @@ EDITS: 2
     
     (define (sweep->bins flt bins)
       (let ((ind (open-sound "sweep.snd")))
-	(map-channel flt)
+	(if (mus-generator? flt)
+	    (clm-channel flt)
+	    (let ((len (frames ind)))
+	      (let ((data (make-vct len))
+		    (reader (make-sampler 0 ind)))
+		(do ((i 0 (+ i 1)))
+		    ((= i len))
+		  (vct-set! data i (flt (next-sample reader))))
+		(vct->channel data 0 len ind 0))))
 	(let ((mx (maxamp))
 	      (resp (make-vct bins))
 	      (size (round (/ 22050 bins))))
@@ -23495,39 +23509,33 @@ EDITS: 2
 (define (snd_test_10)
   
   (define maxval 0.0)
-  (define data-max
-    (lambda (beg end)
-      (set! maxval 0.0)
-      (apply for-each 
-	     (lambda (snd chn)
-	       (scan-chan (lambda (n)
-			    (set! maxval (max maxval (abs n)))
-			    #f)
-			  0 #f snd chn))
-	     (all-chans))
-      maxval))
+  (define (data-max beg end)
+    (set! maxval 0.0)
+    (apply for-each 
+	   (lambda (snd chn)
+	     (let ((reader (make-sampler 0 snd chn)))
+	       (do ((i beg (+ i 1)))
+		   ((= i end))
+		 (set! maxval (max maxval (abs (next-sample reader)))))))
+	   (all-chans))
+    maxval)
   
-  (define data-max2
-    (lambda (beg end snd)
-      (set! maxval 0.0)
-      (do ((i 0 (+ i 1)))
-	  ((= i (chans snd)) maxval)
-	(scan-chan (lambda (n)
-		     (set! maxval (max maxval (abs n)))
-		     #f)
-		   0 #f snd i))))
+  (define (data-max2 beg end snd)
+    (set! maxval 0.0)
+    (do ((i 0 (+ i 1)))
+	((= i (chans snd)) maxval)
+      (let ((reader (make-sampler 0 snd i)))
+	(do ((k beg (+ k 1)))
+	    ((= k end))
+	  (set! maxval (max maxval (abs (next-sample reader))))))))
   
-  (define data-max1
-    (lambda (beg end snd chn)
-      (set! maxval 0.0)
-      (scan-chan 
-       (lambda (data)
-	 (let ((curval (abs data)))
-	   (if (> curval maxval) (set! maxval curval))
-	   #f))
-       beg end snd chn)
-      maxval))
-  
+  (define (data-max1 beg dur snd chn)
+    (set! maxval 0.0)
+    (let ((reader (make-sampler 0 snd chn))
+	  (end (+ beg dur)))
+      (do ((i beg (+ i 1)))
+	  ((= i end) maxval)
+	(set! maxval (max maxval (abs (next-sample reader)))))))
   
   ;; from marks.scm (commented out)
   
@@ -26967,7 +26975,7 @@ EDITS: 2
 	  
 	  (let ((maxval1 (+ (maxamp) .01)))
 	    (if (not (every-sample? (lambda (y) (< y maxval1)))) 
-		(let ((res (scan-chan (lambda (y) (>= y maxval1)))))
+		(let ((res (scan-channel (lambda (y) (>= y maxval1)))))
 		  (snd-display #__line__ ";~A, every-sample: ~A ~A [~A: ~A]?" (short-file-name) maxval1 res (cursor) (sample (cursor)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i (edit-position)))
@@ -27444,7 +27452,7 @@ EDITS: 2
 	      (let ((o1 (sample 1000 obi 0))
 		    (s1 (sample 1000 s2i 0))
 		    (s2 (sample 1000 s2i 1)))
-		(do-all-chans (lambda (val) (if val (* 2.0 val) #f)) "double all samples")
+		(do-all-chans (lambda (val) (* val 2.0)) "double all samples")
 		(let ((o11 (sample 1000 obi 0))
 		      (s11 (sample 1000 s2i 0))
 		      (s21 (sample 1000 s2i 1)))
@@ -27463,7 +27471,7 @@ EDITS: 2
 		    (snd-display #__line__ ";map maxamp all-chans: ~A ~A ~A ~A?" m1 m2 m3 mc))
 		(set! (sync obi) 1)
 		(set! (sync s2i) 1)
-		(do-chans (lambda (val) (if val (* 2.0 val) #f)) "*2")
+		(do-chans (lambda (val) (* val 2.0)) "*2")
 		(let ((mc1 (apply map maxamp (list (list obi s2i s2i) (list 0 0 1)))))
 		  (if (or (fneq (* 2.0 m1) (car mc1))
 			  (fneq (* 2.0 m2) (cadr mc1))
@@ -27472,9 +27480,7 @@ EDITS: 2
 		  (set! (sync obi) 0)
 		  (set! (sync s2i) 0)
 		  (select-sound s2i)
-		  (do-sound-chans (lambda (val) 
-				    (if val (* 0.5 val) #f))
-				  "/2")
+		  (do-sound-chans (lambda (val) (* val 0.5)) "/2")
 		  (let ((mc2 (apply map maxamp (list (list obi s2i s2i) (list 0 0 1)))))
 		    (if (or (fneq (* 2.0 m1) (car mc2))
 			    (fneq m2 (cadr mc2))
@@ -32426,7 +32432,7 @@ EDITS: 1
 		 (lambda (hook) 
 		   (with-output-to-file (hook 'name)
 		     (lambda ()
-		       (display (format #f ";this comment will be at the top of the saved state file.~%~%"))
+		       (format #t ";this comment will be at the top of the saved state file.~%~%")
 		       (set! (hook 'result) #t)))))
       (if (file-exists? (save-state-file)) (delete-file (save-state-file)))
       (save-state (save-state-file))
@@ -33661,7 +33667,6 @@ EDITS: 1
 		     (lambda (func1 descr)
 		       (func1)
 		       (let ((func (edit-list->function)))
-					;(display (format #f "~A: ~A~%" ctr (procedure-source func)))
 			 (if (not (equal? (procedure-source func) descr))
 			     (snd-display #__line__ ";edit-list->function 20[~D]:~%;  [~A]~%;  [~A]" ctr descr (procedure-source func)))
 			 (revert-sound ind)
@@ -37029,7 +37034,7 @@ EDITS: 1
 	  (scan-channel (lambda (y)
 			  (let* ((yy (file->sample ind2 ctr 0))
 				 (cd (abs (- y yy))))
-			    (if (> cd diff) (begin (set! diff cd) (display (format #f ";~A: ~A ~A ~A" ctr diff y yy))))
+			    (if (> cd diff) (begin (set! diff cd) (format #t ";~A: ~A ~A ~A" ctr diff y yy)))
 			    (set! ctr (+ 1 ctr))
 			    #f)))
 	  (if (fneq diff 0.0) (snd-display #__line__ ";file->sample->file overall max diff: ~A" diff))
@@ -38650,7 +38655,7 @@ EDITS: 1
 			(set! i (+ i 1))
 			(if (fneq y (sin (* 2 pi i (/ 1000.0 44100.0))))
 			    (begin
-			      (display (format #f "~%;with-sound sine: ~D ~A ~A" i y (sin (* 2 pi i (/ 1000.0 44100.0)))))
+			      (format #t "~%;with-sound sine: ~D ~A ~A" i y (sin (* 2 pi i (/ 1000.0 44100.0))))
 			      #t)
 			    #f))))
       (close-sound ind))
@@ -40070,7 +40075,8 @@ EDITS: 1
 	      (not (= (cadr (info 1)) 44100))
 	      (not (= (caddr (info 1)) 1)))
 	  (snd-display #__line__ ";with-mixed-sound info (2) 1: ~A" (info 1)))
-      (if (or (not (= (frames snd) 48510))
+      (if (or (and (not (= (frames snd) 48510))
+		   (not (= (frames snd) 48511)))
 	      (fneq (maxamp snd) .1))
 	  (snd-display #__line__ ";with-mixed-sound 0 (2): ~A ~A" (frames snd) (maxamp snd)))
       (close-sound snd)))
@@ -42154,7 +42160,7 @@ EDITS: 1
 	  (let ((hook-id (XtAppAddActionHook 
 			  (car (main-widgets))
 			  (lambda (w data name e p)
-			    (display (format #f "~A ~A ~A ~A ~A~%" w data name e p)))
+			    (format #t "~A ~A ~A ~A ~A~%" w data name e p))
 			  #f)))
 	    (XtRemoveActionHook hook-id))
 	  
@@ -45075,7 +45081,7 @@ EDITS: 1
 		     sash-color save-controls ladspa-dir peak-env-dir save-dir save-edit-history save-envelopes
 		     save-listener save-marks save-region save-selection save-sound save-sound-as
 		     save-state save-state-file scale-by scale-selection-by scale-selection-to scale-to
-		     scan-chan search-procedure select-all select-channel select-sound
+		     search-procedure select-all select-channel select-sound
 		     selected-channel selected-data-color selected-graph-color selected-sound
 		     selection-position selection-color selection-creates-region selection-frames selection-member? selection?
 		     short-file-name show-axes show-controls show-transform-peaks show-indices show-listener show-selection unselect-all
@@ -45695,7 +45701,7 @@ EDITS: 1
 			    time-graph-style lisp-graph-style transform-graph-style
 			    make-graph-data map-chan max-transform-peaks maxamp maxamp-position min-dB mix-region transform-normalization
 			    peaks play position->x position->y reverse-sound right-sample sample
-			    save-sound-as scan-chan show-axes show-transform-peaks show-marks
+			    save-sound-as show-axes show-transform-peaks show-marks
 			    show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
 			    spectrum-end spectro-hop spectrum-start spectro-x-angle
 			    spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
@@ -46151,7 +46157,7 @@ EDITS: 1
 		  (check-error-tag 'no-such-channel (lambda () (set! (selected-channel ind) 123)))
 		  (check-error-tag 'bad-arity (lambda () (set! (search-procedure) (lambda (a b c) #t))))
 		  (check-error-tag 'bad-arity (lambda () (map-chan (lambda (a b c) 1.0))))
-		  (check-error-tag 'bad-arity (lambda () (scan-chan (lambda (a b c) 1.0))))
+		  (check-error-tag 'bad-arity (lambda () (scan-channel (lambda (a b c) 1.0))))
 		  (check-error-tag 'bad-arity (lambda () (set! (cursor-style ind 0) (lambda (a) 32))))
 		  (check-error-tag 'bad-arity (lambda () (find-channel (lambda () 1.0))))
 		  (check-error-tag 'bad-arity (lambda () (count-matches (lambda () 1.0))))
@@ -46896,9 +46902,8 @@ EDITS: 1
 	(let ((ind (open-sound "oboe.snd")))
 	  (find-channel
 	   (lambda (y)
-	     (if (sound? ind)
-		 (close-sound ind))
-	     #f)))
+	     (and (sound? ind)
+		  (or (close-sound ind) #t)))))
 	(if (sound? (find-sound "oboe.snd"))
 	    (snd-display #__line__ ";oboe.snd is still open?"))
 	
@@ -47076,7 +47081,7 @@ EDITS: 1
 	  ((= i test-at-random))
 	(set! snd-test (random 24))
 	(if (> snd-test 23) (set! snd-test 23))
-	(display (format #f "~%~A: ~A" i snd-test))
+	(format #t "~%~A: ~A" i snd-test)
 	(before-test-hook snd-test)
 	((vector-ref test-funcs snd-test))
 	(after-test-hook snd-test)
@@ -47124,10 +47129,10 @@ EDITS: 1
 (clear-listener)
 (set! (show-listener) #t)
 
-(display (format #f "~%;all done!~%~A" original-prompt))
+(format #t "~%;all done!~%~A" original-prompt)
 
 (set! (print-length) 64)
-(display (format #f "~%;times: ~A~%;total: ~A~%" timings (round (- (real-time) overall-start-time))))
+(format #t "~%;times: ~A~%;total: ~A~%" timings (round (- (real-time) overall-start-time)))
 
 
 ;; #(59 58 114 95 2244 5373 613 134 11680 2892 609 743 868 976 815 1288 3020 197 168 2952 758 1925 4997 6567 846  183 0 242 6696 0))) ; 571
@@ -47147,19 +47152,19 @@ EDITS: 1
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (if (file-exists? original-save-dir)
     (begin
-      (display (format #f "ls ~A/snd_* | wc~%" original-save-dir))
+      (format #t "ls ~A/snd_* | wc~%" original-save-dir)
       (system (format #f "ls ~A/snd_* | wc" original-save-dir))
       (system (format #f "rm -f ~A/snd_*" original-save-dir))))
 
 (if (file-exists? original-temp-dir)
     (begin
-      (display (format #f "ls ~A/snd_* | wc~%" original-temp-dir))
+      (format #t "ls ~A/snd_* | wc~%" original-temp-dir)
       (system (format #f "ls ~A/snd_* | wc" original-temp-dir))
       (system (format #f "rm -f ~A/snd_*" original-temp-dir))))
 
 (if (file-exists? "/tmp")
     (begin
-      (display (format #f "ls /tmp/snd_* | wc~%"))
+      (format #t "ls /tmp/snd_* | wc~%")
       (system "ls /tmp/snd_* | wc")
       (system "rm -f /tmp/snd_*")
       (system "ls /tmp/file*.snd | wc")
@@ -47167,7 +47172,7 @@ EDITS: 1
 
 (if (file-exists? "/var/tmp")
     (begin
-      (display (format #f "ls /var/tmp/snd_* | wc~%"))
+      (format #t "ls /var/tmp/snd_* | wc~%")
       (system "ls /var/tmp/snd_* | wc")
       (system "rm -f /var/tmp/snd_*")
       (system "ls /var/tmp/file*.snd | wc")

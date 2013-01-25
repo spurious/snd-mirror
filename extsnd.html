@@ -7576,8 +7576,11 @@ Convolve-with in conjunction with mix can provide high-quality reverb:
 
 <!-- count-matches -->
 <pre class="indented">
-<em class=def id="countmatches">count-matches</em> proc sample snd chn edpos
+<em class=def>count-matches</em> proc sample snd chn edpos
 </pre>
+
+<p>count-matches is obsolete; use a do loop and a sampler.
+</p>
 
 <p>This returns how many samples satisfy the function 'proc'; 'proc' should
 take one argument (the current sample value), and return #t for a hit. 'sample' 
@@ -7590,18 +7593,6 @@ Ruby:   count_matches(lambda do |y| y &gt; 0.1 end)
 Forth:  lambda: &lt;{ y }&gt; y 0.1 f- f0&lt; ; count-matches
 </pre>
 
-<p>count-matches is modelled after Emacs. It could be defined along these lines:
-</p>
-
-<pre class="indented">
-(define (count-matches proc)
-  (let ((count 0))
-    (<a class=quiet href="#scanchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_scanchannel_tip)">scan-channel</a> 
-      (lambda (y)
-        (if (proc y) (set! count (+ count 1)))
-        #f))
-    count))
-</pre>
 <div class="separator"></div>
 
 
@@ -8187,8 +8178,11 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 
 <!-- find-channel -->
 <pre class="indented">
-<em class=def id="findchannel">find-channel</em> proc sample snd chn edpos
+<em class=def>find-channel</em> proc sample snd chn edpos
 </pre>
+
+<p>find-channel is obsolete; use a do-loop and a sampler.
+</p>
 
 <p id="findchannelinreverse">This function finds the sample that satisfies the function 'proc'. 'sample'
 determines where to start the search. 
@@ -8200,22 +8194,6 @@ determines where to start the search.
 
 &gt;lambda: &lt;{ y }&gt; 0.1 y f&lt; ; find-channel
 4423
-</pre>
-
-<p>I didn't bring out the search direction (find-channel is built on scan-channel which assumes it is
-scanning forwards), but it's not hard to write a function to find in reverse:
-</p>
-
-<pre class="indented">
-(define* (find-channel-in-reverse proc beg snd chn edpos)
-  (let* ((sample (or beg (- (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) 1))) ; or cursor?
-	 (reader (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> sample snd chn -1 edpos))
-	 (result #f))
-    (do ((i sample (- i 1)))
-	((or result (&lt; i 0)) 
-	 (and result
-	     (list result (+ 1 i))))
-      (set! result (proc (reader))))))
 </pre>
 
 
@@ -8234,7 +8212,6 @@ Default search procedure: <a href="extsnd.html#searchprocedure">search-procedure
 The Find dialog: <a href="snd.html#editoperations">Find</a> or <a href="extsnd.html#finddialog">find-dialog</a><br>
 find silence: <a href="extsnd.html#mapsilence">map-silence</a>, scramble-channel in examp.scm<br>
 find any difference between two chans: <a href="sndscm.html#channelsequal">channels-equal</a><br>
-see also <a href="extsnd.html#countmatches">count-matches</a> and <a href="extsnd.html#scanchannel">scan-channel</a><br>
 search a multichannel sound: <a href="sndscm.html#scansound">scan-sound</a><br>
 find a widget: find-child in snd-motif.scm<br>
 add C-s and C-r to the listener key bindings: add-find-to-listener in snd-motif.scm<br>
@@ -9758,20 +9735,24 @@ If all the sound's samples are 0.0, scale-to returns #f and does not perform any
 <div class="separator"></div>
 
 
-<!-- scan-chan -->
-<pre class="indented">
-<em class=def>scan-chan</em> func start end snd chn edpos
-</pre>
-
-<p>scan-chan applies 'func' to samples in the specified channel.
-It is the old ("irregular") version of <a href="#scanchannel">scan-channel</a>.
-</p>
-<div class="separator"></div>
-
 
 <!-- scan-channel -->
 <pre class="indented">
 <em class=def id="scanchannel">scan-channel</em> func beg dur snd chn edpos
+</pre>
+
+<p>scan-channel is obsolete; use a do loop with a sampler:
+</p>
+
+<pre class="indented">
+(define* (scan-channel func (beg 0) dur snd chn edpos)
+  (let ((end (min (+ beg dur) (frames snd chn)))
+	(rd (make-sampler beg snd chn 1 edpos)))
+    (do ((pos beg (+ pos 1)))
+        ((or (= pos end)
+	     (func (next-sample rd)))
+         (and (&lt; pos end)
+	      pos)))))
 </pre>
 
 <p>scan-channel "scans" the data in the specified channel between the given sample numbers (the default
@@ -9779,7 +9760,7 @@ is the entire sound) by applying 'func' to each sample.
 If 'func' returns something other than #f, the scan is halted, 
 and the current sample number is returned.
 The following call scans the
-current channel from sample 0 to the end looking for any sample greater than .1:
+current channel looking for any sample greater than .1:
 </p>
 
 <pre class="indented">
@@ -9787,74 +9768,6 @@ current channel from sample 0 to the end looking for any sample greater than .1:
 4423
 </pre>
 
-<p>In this case, we found such a sample at position 4423.
-</p>
-
-<pre class="indented">
-(define every-sample?
-  (lambda (proc)
-    (let ((baddy (<em class=red>scan-channel</em> (lambda (y) 
-			         (not (proc y))))))
-      (if baddy (set! (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) baddy))
-      (not baddy))))
-
-&gt; (every-sample? (lambda (y) (&lt; y .5)))
-#t
-</pre>
-
-<p>scan-channel in s7 is:
-</p>
-
-<pre class="indented">
-(define* (scan-channel f (beg 0) dur snd chn edpos)
-  (let ((end (min (+ beg dur) (frames snd chn)))
-	(rd (make-sampler beg snd chn 1 edpos)))
-    (do ((pos beg (+ pos 1)))
-        ((or (&gt;= pos end)
-	     (f (next-sample rd)))
-         (and (&lt; pos end)
-	      pos)))))
-</pre>
-
-
-<p>To scan all the channels of a multichannel sound in parallel, see
-<a href="sndscm.html#scansound">scan-sound</a>.
-In scan-channel, find, and count-matches (all the same underlying procedure), an attempt to jump back
-into a previous call will not work.  That is,
-</p>
-
-<pre class="indented">
-(let ((not-a-good-idea #f))
-  (<em class=red>scan-channel</em> (lambda (y)
-                  (call-with-current-continuation
-	            (lambda (call)
-		      (set! not-a-good-idea call)))
-		  (&gt; y .001)))
-  (not-a-good-idea))
-</pre>
-
-<p id="scanagain">will die with a segfault (this is fixable, with much effort and grumbling).  If you want a continuable search, use a sampler:
-</p>
-
-<pre class="indented">
-(define reader #f)
-(define last-proc #f)
-(define (scan-again)
-  (if (<a class=quiet href="#sampleratendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_sampleratendQ_tip)">sampler-at-end?</a> reader)
-      #f
-      (let ((val (last-proc (reader))))
-	(if val 
-	    (list val (- (<a class=quiet href="#samplerposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_samplerposition_tip)">sampler-position</a> reader) 1))
-	    (scan-again)))))
-(define (my-scan-chan proc)
-  (set! last-proc proc)
-  (set! reader (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0))
-  (scan-again))
-</pre>
-
-<p>Now <code>(my-scan-chan (lambda (y) (&gt; y .1)))</code> finds the first such sample, and
-subsequent (scan-again) calls continue the search where the last call left off.
-</p>
 <div class="separator"></div>
 
 

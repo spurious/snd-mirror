@@ -354,7 +354,7 @@
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
-	(display (format #f "~A CFNC~%" name))
+	(format #t "~A CFNC~%" name)
 	(let ((type (car-str data)))
 	  (if (not (member type types))
 	      (set! types (cons type types)))
@@ -366,7 +366,7 @@
 
 (define* (CINT name type)
   (if (assoc name names)
-      (display (format #f "~A CINT~%" name))
+      (format #t "~A CINT~%" name)
       (begin
 	(set! ints (cons name ints))
 	(set! names (cons (cons name 'int) names)))))
@@ -375,7 +375,7 @@
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
-	(display (format #f "~A CFNC-X~%" name))
+	(format #t "~A CFNC-X~%" name)
 	(let ((type (car-str data)))
 	  (if (not (member type x-types))
 	      (set! x-types (cons type x-types)))
@@ -387,7 +387,7 @@
 
 (define* (CINT-X name type)
   (if (assoc name names)
-      (display (format #f "~A CINT-X~%" name))
+      (format #t "~A CINT-X~%" name)
       (begin
 	(set! x-ints (cons name x-ints))
 	(set! names (cons (cons name 'int) names)))))

@@ -568,21 +568,21 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 (define* (do-all-chans func origin)
   "(do-all-chans func edhist) applies func to all active channels, using edhist as the edit history 
 indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
-  (apply map (lambda (snd chn)
-	       (map-channel func 0 #f snd chn #f origin))
+  (apply for-each (lambda (snd chn)
+		    (map-channel func 0 #f snd chn #f origin))
 	 (all-chans)))
 
 (define (update-graphs)
   "(update-graphs) updates (redraws) all graphs"
-  (apply map (lambda (snd chn)
-	       (update-time-graph snd chn))
+  (apply for-each (lambda (snd chn)
+		    (update-time-graph snd chn))
 	 (all-chans)))
 
 (define* (do-chans func origin)
   "(do-chans func edhist) applies func to all sync'd channels using edhist as the edit history indication"
   (let ((snc (sync)))
     (if (> snc 0)
-	(apply map
+	(apply for-each
 	       (lambda (snd chn)
 		 (if (= (sync snd) snc)
 		     (map-channel func 0 #f snd chn #f origin)))
@@ -1626,7 +1626,6 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 
 (define red-text (format #f "~C[31m" escape))
 (define normal-text (format #f "~C[0m" escape))
-;(display (format #f "~Athis is red!~Abut this is not" red-text normal-text))
 
 ;;; there are a bunch of these:
 
@@ -1644,8 +1643,6 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 (define bold-text (format #f "~C[1m" escape))       (define unbold-text (format #f "~C[22m" escape))  
 (define underline-text (format #f "~C[4m" escape))  (define ununderline-text (format #f "~C[24m" escape))  
 (define blink-text (format #f "~C[5m" escape))      (define unblink-text (format #f "~C[25m" escape))  
-
-;(display (format #f "~A~Ahiho~Ahiho" yellow-bg red-fg normal-text))
 |#
 
 
@@ -2088,7 +2085,6 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
   (let ((buffer (make-moving-average 128))
 	(silence (/ silence-1 128))
 	(edges ())
-	(samp 0)
 	(in-silence #t)
 	(old-max (max-regions))
 	(old-tags (with-mix-tags)))
@@ -2097,15 +2093,16 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
        (set! (max-regions) 1024)
        (set! (with-mix-tags) #f))
      (lambda ()
-       (scan-channel
-	(lambda (y)
-	  (let* ((sum-of-squares (moving-average buffer (* y y)))
-		 (now-silent (< sum-of-squares silence)))
-	    (if (not (eq? in-silence now-silent))
-		(set! edges (cons samp edges)))
-	    (set! in-silence now-silent)
-	    (set! samp (+ samp 1))
-	    #f)))
+       (let ((len (frames))
+	     (reader (make-sampler)))
+	 (do ((i 0 (+ i 1)))
+	     ((= i len))
+	   (let ((y (next-sample reader)))
+	     (let* ((sum-of-squares (moving-average buffer (* y y)))
+		    (now-silent (< sum-of-squares silence)))
+	       (if (not (eq? in-silence now-silent))
+		   (set! edges (cons i edges)))
+	       (set! in-silence now-silent)))))
        (set! edges (append (reverse edges) (list (frames))))
        (let* ((len (length edges))
 	      (pieces (make-vector len #f))
@@ -2322,45 +2319,18 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 
 (define* (channel-clipped? snd chn)
   "(channel-clipped? snd chn) returns the sample number if it finds clipping"
-  (let ((last-y 0.0))
-    (scan-channel 
-     (lambda (y)
-       (let ((result (and (>= (abs y) 0.9999)
-			  (>= (abs last-y) 0.9999))))
-	 (set! last-y y)
-	 result))
-     0 #f snd chn)))
-
-#|
-(define* (mark-clipping)
-  "(mark-clipping) adds a mark at a clipped portion"
-  (let ((snd (or (selected-sound) 
-		 (and (not (null? (sounds))) 
-		      (car (sounds))))))
-    (if (sound? snd)
-	(do ((chn 0 (+ 1 chn)))
-	    ((= chn (channels snd)))
-	  (let ((last-y 0.0)
-		(marked #f)
-		(samp 0))
-	    (scan-channel 
-	     (lambda (y)
-	       (let ((clipping (and (>= (abs y) 0.9999)
-				    (>= last-y 0.9999))))
-		 (set! last-y (abs y))
-		 (if (and clipping (not marked))
-		     (begin
-		       (add-mark (- samp 1) snd chn)
-		       (set! marked #t))
-		     (if marked
-			 (set! marked (or (> (abs y) 0.9999)
-					  (> last-y 0.9999)))))
-		 (set! samp (+ samp 1))
-		 #f)))
-	    (update-time-graph snd chn))))))
-
-(add-to-menu 2 "Show Clipping" (lambda () (mark-clipping)))
-|#
+  (let ((last-y 0.0)
+	(len (frames snd chn))
+	(reader (make-sampler 0 snd chn)))
+    (call-with-exit
+     (lambda (quit)
+       (do ((i 0 (+ i 1)))
+	   ((= i len) #f)
+	 (let ((y (next-sample reader)))
+	   (if (and (>= (abs y) 0.9999)
+		    (>= (abs last-y) 0.9999))
+	       (quit i)
+	       (set! last-y y))))))))
 
 
 ;;; -------- sync-everything

@@ -170,7 +170,7 @@
 	 (catch 'mus-error
 		thunk
 		(lambda args
-		  (display (format #f ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args)))
+		  (format #t ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args))
 		  (set! flush-reverb #t)))
 		  
 	 (if (and reverb 
@@ -193,31 +193,31 @@
 	 (if statistics 
 	     (begin
 	       (set! cycles (exact->inexact (/ (- (get-internal-real-time) start) internal-time-units-per-second)))
-	       (display (format #f "~%;~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
-				(if output-to-file
-				    (if (or scaled-to scaled-by)
-					(substring output-1 0 (- (string-length output-1) 5))
-					output-1)
-				    (if (vct? output-1) "vct" 
-					(if (sound-data? output-1) "sound-data"
-					    (if (procedure? output-1) "function" 
-						"flush"))))
-				(if (or scaled-to scaled-by) 
-				    " (before scaling)" 
-				    "")
-				(if output-to-file
-				    (let ((lst (mus-sound-maxamp output-1)))
-				      (do ((i 0 (+ i 2)))
-					  ((>= i (length lst)))
-					(list-set! lst i (/ (list-ref lst i) (mus-srate))))
-				      lst)
-				    (if (vct? output-1)
-					(list (vct-peak output-1))
-					(if (sound-data? output-1)
-					    (sound-data-maxamp output-1)
-					    0.0)))
-				(if revmax (format #f "  rev max: ~,4F~%" revmax) "")
-				cycles))))
+	       (format #t "~%;~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
+		       (if output-to-file
+			   (if (or scaled-to scaled-by)
+			       (substring output-1 0 (- (string-length output-1) 5))
+			       output-1)
+			   (if (vct? output-1) "vct" 
+			       (if (sound-data? output-1) "sound-data"
+				   (if (procedure? output-1) "function" 
+				       "flush"))))
+		       (if (or scaled-to scaled-by) 
+			   " (before scaling)" 
+			   "")
+		       (if output-to-file
+			   (let ((lst (mus-sound-maxamp output-1)))
+			     (do ((i 0 (+ i 2)))
+				 ((>= i (length lst)))
+			       (list-set! lst i (/ (list-ref lst i) (mus-srate))))
+			     lst)
+			   (if (vct? output-1)
+			       (list (vct-peak output-1))
+			       (if (sound-data? output-1)
+				   (sound-data-maxamp output-1)
+				   0.0)))
+		       (if revmax (format #f "  rev max: ~,4F~%" revmax) "")
+		       cycles)))
 
 	 (if (or scaled-to scaled-by)
 	     (if output-to-file

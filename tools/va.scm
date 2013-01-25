@@ -5,7 +5,6 @@
 (define (for-each-file func files)
   (if (not (null? files))
       (let ((count 1))
-	;(display (format #f "~%~A" (car files)))
 	(call-with-input-file 
 	    (car files)
 	  (lambda (file)
@@ -26,7 +25,7 @@
 	   ((= i len))
 	 (case (string-ref line i)
 	   ((#\return) 
-	    (display (format #f "~A has /r (~A)~%" file count)))
+	    (format #t "~A has /r (~A)~%" file count))
 	   ((#\X)
 	    (if (and (< i (- len 4))
 		     (string=? (substring line i (+ i 4)) "XtVa"))
@@ -40,7 +39,7 @@
 	    ((#\;)
 	     (if (eq? va-state 'within)
 		 (begin
-		   (display (format #f "~A[~A]: ~A~%" file count line))
+		   (format #t "~A[~A]: ~A~%" file count line)
 		   (set! va-state 'before)))))))))
  (list "snd-xutils.c" "snd-xhelp.c" "snd-xfind.c" "snd-xmenu.c" "snd-xdraw.c" "snd-xlistener.c" "snd-xchn.c" 
        "snd-xsnd.c" "snd-xregion.c" "snd-xdrop.c" "snd-xmain.c" "snd-xmix.c" "snd-xenv.c"
@@ -87,7 +86,7 @@
 	       (if (and ok
 			(not (= precount count 0))
 			(not (= count (- precount 1))))
-		   (display (format #f "calloc ~D->~D: ~A~%" precount count line)))
+		   (format #t "calloc ~D->~D: ~A~%" precount count line))
 	       (loop (read-line file #t))))))))
  (list "CALLOC" "MALLOC" "REALLOC" "calloc" "malloc" "realloc"))
 
@@ -146,7 +145,7 @@
 							      warned-list)))
 					   (begin
 					     (set! warned-list (cons name warned-list))
-					     (display (format #f ";can't find ~A in wz_data.js~%" name))))
+					     (format #t ";can't find ~A in wz_data.js~%" name)))
 				       (if (not (find-if (lambda (str)
 							   (string=? str name))
 							 new-tip-list))
@@ -163,7 +162,7 @@
      (if (not (find-if (lambda (str)
 			 (string=? str name))
 		       new-tip-list))
-	 (display (format #f ";defined in wz_data.js but not used: ~A~%" name))))
+	 (format #t ";defined in wz_data.js but not used: ~A~%" name)))
    tip-list))
 
 

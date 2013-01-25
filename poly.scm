@@ -257,7 +257,6 @@
   (if (< (length p1) (length p2))
       (vct 0.0)
       (let ((qr (map poly-reduce (poly/ p1 p2))))
-	;(display (format #f ";poly-gcd ~A ~A -> ~A~%" p1 p2 qr))
 	(if (= (length (cadr qr)) 1)
 	    (if (= (vct-ref (cadr qr) 0) 0.0)
 		p2
@@ -269,7 +268,6 @@
   (if (< (length p1) (length p2))
       (vector 0)
       (let ((qr (map poly-as-vector-reduce (poly-as-vector/ p1 p2))))
-	;(display (format #f ";poly-as-vector-gcd ~A ~A ->~A ~%" p1 p2 qr))
 	(if (= (length (cadr qr)) 1)
 	    (if (= ((cadr qr) 0) 0.0)
 		p2

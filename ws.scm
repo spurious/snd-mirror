@@ -186,7 +186,7 @@
 		  ;;   (with-sound () (fm-violin 0 1 440 .1 :amp-env '(0 0 1 1 1 2 3 0)))
 
 		  ;; user might have listener closed, or no listener so...
-		  (display (format #f ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args)))
+		  (format #t ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args))
 
 		  ;; now try to get something to listener, since there may be no stdout
 		  (snd-print (format #f ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args)))
@@ -479,22 +479,21 @@
 	(error 'no-such-mixed-sound (list "with-mixed-sound->notelist" outsnd))
 	(let ((cur-mixes (mixes outsnd 0)) ; for now assume each mix is multichannel
 	      (oput (open-output-file output-file)))
-	  (display (format #f "(with-sound (:channels ~D)~%" (channels snd)) oput)
+	  (format oput "(with-sound (:channels ~D)~%" (channels snd))
 	  (for-each
 	   (lambda (id)
 	     (let ((info (with-mixed-sound-mix-info id snd)))
 	       (if info
 		   (let ((call (cadddr info)))
 		     (if (not (= (cadr info) (mix-position id)))
-			 (display (format #f "  (~A ~,3F~{ ~A~})~%"
-					  (car call) 
-					  (/ (mix-position id) (* 1.0 (srate snd)))
-					  (cddr call))
-				  oput)
-			 (display (format #f "  ~A~%" call) oput)))
+			 (format oput "  (~A ~,3F~{ ~A~})~%"
+				 (car call) 
+				 (/ (mix-position id) (* 1.0 (srate snd)))
+				 (cddr call))
+			 (format oput "  ~A~%" call)))
 		   (status-report "can't find note associated with mix ~A" id))))
 	   cur-mixes)
-	  (display (format #f ")~%") oput)
+	  (format oput ")~%")
 	  (close-output-port oput)))))
 
 

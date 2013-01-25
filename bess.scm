@@ -230,7 +230,7 @@
 	   (proc #f)
 	   (port (mus-audio-open-output mus-audio-default srate chans mus-lshort (* bufsize 2))))
       (if (< port 0) 
-	  (display (format #f "can't open DAC!")))
+	  (format #t "can't open DAC!"))
 
       (XmAddWMProtocolCallback shell 
 			       (XmInternAtom dpy "WM_DELETE_WINDOW" #f)
