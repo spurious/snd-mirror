@@ -928,7 +928,7 @@ points, but these would be hard to find once the DC was removed.  A quick check:
 </p>
 
 <pre class="indented">
-(<a class=quiet href="extsnd.html#countmatches" onmouseout="UnTip()" onmouseover="Tip(extsnd_countmatches_tip)">count-matches</a> (lambda (y) (or (&gt; y .9999) (&lt; y -.9999))))
+(count-matches (lambda (y) (or (&gt; y .9999) (&lt; y -.9999))))
 </pre>
 
 <p>
@@ -939,7 +939,7 @@ those are just one sample clicks that can easily be smoothed over", so
 <pre class="indented">
 (define* (count-clips snd chn)
   (let ((y0 0.0))
-    (<a class=quiet href="extsnd.html#countmatches" onmouseout="UnTip()" onmouseover="Tip(extsnd_countmatches_tip)">count-matches</a> 
+    (count-matches
      (lambda (y) (let ((val (and (or (&gt; y0 .9999) (&lt; y0 -.9999))
 				 (or (&gt; y .9999) (&lt; y -.9999)))))
 		   (set! y0 y)

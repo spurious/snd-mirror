@@ -717,7 +717,12 @@ static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
   return(s7_f(sc));
 }
 
+static int vct_number_location;
+
 #if (!WITH_GMP)
+#define s7_cell_integer(p) (s7_Int)(*((s7_Int *)((unsigned char *)(p) + vct_number_location)))
+#define s7_cell_real(p) (s7_Double)(*((s7_Double *)((unsigned char *)(p) + vct_number_location)))
+
 static s7_pointer vct_set_vector_ref;
 static s7_pointer g_vct_set_vector_ref(s7_scheme *sc, s7_pointer args)
 {
@@ -742,11 +747,9 @@ static s7_pointer g_vct_set_vector_ref(s7_scheme *sc, s7_pointer args)
   return(s7_f(sc));
 }
 
-static int vct_number_location;
 static s7_pointer vct_set_vector_ref_looped;
 static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
 {
-  #define s7_cell_integer(p) (s7_Int)(*((s7_Int *)((unsigned char *)(p) + vct_number_location)))
   s7_Int pos, end;
   s7_pointer stepper, vc, vec, vecind, val, callee;
   s7_pointer *vec_el;
@@ -849,6 +852,72 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
     }
   XEN_ASSERT_TYPE(false, s7_cadr(args), XEN_ARG_1, "vct-set!", "a vct");
   return(s7_f(sc));
+}
+
+s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args);
+static s7_pointer vct_set_direct_dox_looped;
+static mus_float_t *vid_data;
+static s7_pointer vid_i_slot, vid_x_slot;
+static mus_float_t x1, x2;
+static mus_long_t vid_length;
+
+static s7_pointer g_vct_set_direct_dox(s7_scheme *sc, s7_pointer code)
+{
+  mus_long_t pos;
+  mus_float_t x;
+  pos = s7_cell_integer(s7_slot_value(sc, vid_i_slot));
+  if (pos < vid_length)
+    {
+      x = s7_cell_real(s7_slot_value(sc, vid_x_slot));
+      vid_data[pos] = (x * x1) + ((1.0 - x) * x2);
+    }
+  return(NULL);
+}
+
+static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
+{
+  /* for now just look for the main dox-looped case: (vct-set! v i (+ (* x x1) (* (- 1.0 x) x2)))
+   */
+  if (s7_function_choice(sc, s7_cadddr(code)) == g_add_ss_1ss)
+    {
+      vct *v;
+      v = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, code), vct_tag);
+      if ((v) &&
+	  (!s7_local_slot(sc, s7_cadr(code))))                                         /* v is a vct, and it is not a stepper */
+	{
+	  vid_data = v->data;
+	  vid_length = v->length;
+	  vid_i_slot = s7_local_slot(sc, s7_caddr(code));
+	  if ((vid_i_slot) && 
+	      (s7_is_integer(s7_slot_value(sc, vid_i_slot))))                          /* i is an integer */
+	    {
+	      s7_pointer add_expr;
+	      add_expr = s7_cadddr(code);
+	      vid_x_slot = s7_local_slot(sc, s7_cadr(s7_cadr(add_expr)));              /* x is real */
+	      if ((vid_x_slot) &&
+		  (s7_is_real(s7_slot_value(sc, vid_x_slot))))
+		{
+		  if ((!s7_local_slot(sc, s7_caddr(s7_cadr(add_expr)))) &&
+		      (!s7_local_slot(sc, s7_caddr(s7_caddr(add_expr)))))              /* x1 and x2 are not steppers */
+		    {
+		      s7_pointer xp;
+		      xp = s7_symbol_value(sc, s7_caddr(s7_cadr(add_expr)));
+		      if (s7_is_real(xp))
+			{
+			  x1 = s7_real(xp);
+			  xp = s7_symbol_value(sc, s7_caddr(s7_caddr(add_expr)));
+			  if (s7_is_real(xp))
+			    {
+			      x2 = s7_real(xp);                                        /* x1 and x2 are real */
+			      return((s7_pointer)g_vct_set_direct_dox);
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+  return(NULL);
 }
 
 #endif
@@ -1813,9 +1882,14 @@ void mus_vct_init(void)
 
     vct_set_direct = s7_make_function(s7, "vct-set!", g_vct_set_direct, 3, 0, false, "vct-set! optimization");
     s7_function_set_class(vct_set_direct, f);
+
     vct_set_direct_looped = s7_make_function(s7, "vct-set!", g_vct_set_direct_looped, 3, 0, false, "vct-set! optimization");
     s7_function_set_class(vct_set_direct_looped, f);
     s7_function_set_looped(vct_set_direct, vct_set_direct_looped);
+
+    vct_set_direct_dox_looped = s7_make_function(s7, "vct-set!", g_vct_set_direct_dox_looped, 2, 0, false, "vct-set! optimization");
+    s7_function_set_class(vct_set_direct_dox_looped, f);
+    s7_function_set_dox_looped(vct_set_direct, vct_set_direct_dox_looped);
 #endif
   }
 

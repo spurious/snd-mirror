@@ -892,9 +892,9 @@ typedef struct s7_port_t {
 typedef struct c_proc_t {
   const char *name;
   int name_length;
-  char *doc;
   unsigned int id;
-  s7_pointer generic_ff, looped_ff, let_looped_ff;
+  char *doc;
+  s7_pointer generic_ff, looped_ff, let_looped_ff, dox_looped_ff;
   s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
   void *chooser_data;
 } c_proc_t;
@@ -2011,6 +2011,7 @@ static void set_syntax_op(s7_pointer p, s7_pointer op) {syntax_op(p) = op; lifte
 #define c_function_base(f)            c_function_data(f)->generic_ff
 #define c_function_looped(f)          c_function_data(f)->looped_ff
 #define c_function_let_looped(f)      c_function_data(f)->let_looped_ff
+#define c_function_dox_looped(f)      c_function_data(f)->dox_looped_ff
 
 void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
 bool s7_function_returns_temp(s7_pointer f) {return((is_pair(f)) && (is_optimized(f)) && (ecdr(f)) && (returns_temp(ecdr(f))));}
@@ -5536,6 +5537,16 @@ static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hd
 } 
 
 
+s7_pointer s7_local_slot(s7_scheme *sc, s7_pointer symbol)
+{
+  s7_pointer y;
+  for (y = environment_slots(sc->envir); is_slot(y); y = next_slot(y))
+    if (slot_symbol(y) == symbol)
+      return(y);
+  return(NULL);
+}
+
+
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just the global environment? */
 {
   s7_pointer x;
@@ -6590,7 +6601,7 @@ static char *big_number_to_string_with_radix(s7_pointer p, int radix, int width,
 
 #define s7_Int_abs(x) ((x) >= 0 ? (x) : -(x))
 /* can't use abs even in gcc -- it doesn't work with long long ints! */
-#define s7_Double_abs(x) fabs(x)
+
 #define s7_fabsl(x) (((x) < 0.0) ? -(x) : (x))
 /* fabsl doesn't exist in netBSD! There is a __NetBSD__ flag I think
  */
@@ -6748,7 +6759,7 @@ static s7_Complex cexp(s7_Complex z)
 
 static s7_Complex clog(s7_Complex z) 
 { 
-  return(log(s7_Double_abs(cabs(z))) + carg(z) * _Complex_I); 
+  return(log(fabs(cabs(z))) + carg(z) * _Complex_I); 
 } 
 
 
@@ -8185,17 +8196,17 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
       if (is_real(x))
 	{
 	  s7_Double val;
-	  val = s7_Double_abs(s7_real(x));
+	  val = fabs(s7_real(x));
 	  if ((val < (S7_LONG_MAX / 4)) && (val > 1.0e-6))
 	    size = 14;
 	}
       else
 	{
 	  s7_Double rl, im;
-	  rl = s7_Double_abs(s7_real_part(x));
+	  rl = fabs(s7_real_part(x));
 	  if ((rl < (S7_LONG_MAX / 4)) && (rl > 1.0e-6))
 	    {
-	      im = s7_Double_abs(s7_imag_part(x));
+	      im = fabs(s7_imag_part(x));
 	      if ((im < (S7_LONG_MAX / 4)) && (im > 1.0e-6))
 		size = 14;
 	    }
@@ -9717,19 +9728,19 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 	if ((is_NaN(rat)) || (isinf(rat)))
 	  return(wrong_type_argument_with_type(sc, sc->RATIONALIZE, small_int(1), x, A_NORMAL_REAL));
 
-	if (err >= s7_Double_abs(rat)) 
+	if (err >= fabs(rat)) 
 	  return(small_int(0));
 
 	if ((rat > 9.2233720368548e+18) || (rat < -9.2233720368548e+18))
 	  return(out_of_range(sc, sc->RATIONALIZE, small_int(1), x, "a real between most-negative-fixnum and most-positive-fixnum"));
 
-	if ((s7_Double_abs(rat) + s7_Double_abs(err)) < 1.0e-18)
+	if ((fabs(rat) + fabs(err)) < 1.0e-18)
 	  err = 1.0e-18;
 	/* (/ 1.0 most-positive-fixnum) is 1.0842021e-19, so if we let err be less than that,
 	 * (rationalize 1e-19 1e-20) hangs, but this only affects the initial ceiling, I believe.
 	 */
 
-	if (s7_Double_abs(rat) < s7_Double_abs(err))
+	if (fabs(rat) < fabs(err))
 	  return(small_int(0));
 
 	if (c_rationalize(rat, err, &numer, &denom))
@@ -10248,7 +10259,7 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
 	s7_Double x, absx, recip;
 	s7_Complex result;
 	x = number_to_real(n);
-	absx = s7_Double_abs(x);
+	absx = fabs(x);
 	if (absx <= 1.0)
 	  return(make_real(sc, asin(x)));
       
@@ -10266,8 +10277,8 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
       /*   this code taken from sbcl's src/code/irrat.lisp */
       /* break is around x+70000000i */
 
-      if ((s7_Double_abs(real_part(n)) > 1.0e7) ||
-	  (s7_Double_abs(imag_part(n)) > 1.0e7))
+      if ((fabs(real_part(n)) > 1.0e7) ||
+	  (fabs(imag_part(n)) > 1.0e7))
 	{
 	  s7_Complex sq1mz, sq1pz, z;
 	  z = as_c_complex(n);
@@ -10304,7 +10315,7 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
 	s7_Double x, absx, recip;
 	s7_Complex result;
 	x = number_to_real(n);
-	absx = s7_Double_abs(x);
+	absx = fabs(x);
 	if (absx <= 1.0)
 	  return(make_real(sc, acos(x)));
       
@@ -10321,8 +10332,8 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
       /* if either real or imag part is very large, use explicit formula, not cacos */
       /*   this code taken from sbcl's src/code/irrat.lisp */
 
-      if ((s7_Double_abs(real_part(n)) > 1.0e7) ||
-	  (s7_Double_abs(imag_part(n)) > 1.0e7))
+      if ((fabs(real_part(n)) > 1.0e7) ||
+	  (fabs(imag_part(n)) > 1.0e7))
 	{
 	  s7_Complex sq1mz, sq1pz, z;
 	  z = as_c_complex(n);
@@ -10548,7 +10559,7 @@ static s7_pointer g_atanh(s7_scheme *sc, s7_pointer args)
 
     case T_REAL:
     case T_RATIO:
-      if (s7_Double_abs(number_to_real(x)) < 1.0)
+      if (fabs(number_to_real(x)) < 1.0)
 	return(make_real(sc, atanh(number_to_real(x))));
 
       /* if we can't distinguish x from 1.0 even with long doubles, we'll get inf.0:
@@ -12364,7 +12375,7 @@ static s7_pointer g_add_fs(s7_scheme *sc, s7_pointer args)
 
 
 static s7_pointer add_ss_1ss;
-static s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args)
+s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args)
 {
   /* (+ (* s1 s2) (* (- 1.0 s1) s3)) */
   s7_pointer s1, s2, s3;
@@ -17256,10 +17267,16 @@ static s7_pointer random_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
   if (args == 1)
     {
       if (s7_is_integer(cadr(expr)))
-	return(random_ic);
+	{
+	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  return(random_ic);
+	}
       if ((is_real(cadr(expr))) &&
 	  (!is_rational(cadr(expr))))
-	return(random_rc);
+	{
+	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  return(random_rc);
+	}
     }
   return(f);
 }
@@ -28603,6 +28620,12 @@ void s7_function_set_let_looped(s7_pointer f, s7_pointer c)
 }
 
 
+void s7_function_set_dox_looped(s7_pointer f, s7_pointer c)
+{
+  c_function_dox_looped(f) = c;
+}
+
+
 s7_pointer (*s7_function_chooser(s7_scheme *sc, s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   return(c_function_chooser(fnc));
@@ -28738,6 +28761,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   c_function_chooser_data(x) = NULL;
   c_function_looped(x) = NULL;
   c_function_let_looped(x) = NULL;
+  c_function_dox_looped(x) = NULL;
 
   return(x);
 }
@@ -36029,17 +36053,39 @@ static s7_pointer modulo_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 static s7_pointer abs_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   s7_pointer arg;
+  /* (abs (- v1 v2))
+   * (abs (- (car vals) 0.5))
+   * (abs (- nval (vector-ref vals i)))
+   */
+
   arg = cadr(expr);
   if ((is_pair(arg)) &&
-      (is_optimized(arg)) &&
-      (optimize_data(arg) == HOP_SAFE_C_C) &&
-      (s7_function_returns_temp(arg)))
+      (is_optimized(arg)))
     {
-      set_optimize_data(expr, HOP_SAFE_C_C);
-      return(abs_direct);
+      if ((optimize_data(arg) == HOP_SAFE_C_C) &&
+	  (s7_function_returns_temp(arg)))
+	{
+	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  return(abs_direct);
+	}
     }
   return(f);
 }
+
+#if 0
+static s7_pointer magnitude_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  s7_pointer arg;
+  /* (magnitude (- new 0.0))              h_safe_c_sc
+   * (magnitude (- val 3.0))
+   * (magnitude (- rval sval))            h_safe_c_ss
+   * (magnitude (- (mus-scaler gen) 0.1)) h_safe_c_opsq_c
+   * (magnitude (- (v0 1) 0.1)            h_safe_c_pc  
+   * (magnitude (- (maxamp) 0.107))       h_safe_c_opcq_c
+   */
+  return(f);
+}
+#endif
 #endif
 
 
@@ -36872,7 +36918,7 @@ static void init_choosers(s7_scheme *sc)
   add_is = make_function_with_class(sc, f, "+", g_add_is, 2, 0, false, "+ optimization");
   add_sf = make_function_with_class(sc, f, "+", g_add_sf, 2, 0, false, "+ optimization");
   add_fs = make_function_with_class(sc, f, "+", g_add_fs, 2, 0, false, "+ optimization");
-  add_ss_1ss = make_function_with_class(sc, f, "+", g_add_ss_1ss, 2, 0, false, "+ optimization");
+  add_ss_1ss = make_temp_function_with_class(sc, f, "+", g_add_ss_1ss, 2, 0, false, "+ optimization");
 
 
   /* - */
@@ -36910,25 +36956,21 @@ static void init_choosers(s7_scheme *sc)
 #if (!WITH_GMP)
   /* modulo */
   f = set_function_chooser(sc, sc->MODULO, modulo_chooser);
-
   mod_si = make_function_with_class(sc, f, "modulo", g_mod_si, 2, 0, false, "modulo optimization");
 
   /* abs */
   f = set_function_chooser(sc, sc->ABS, abs_chooser);
-
   abs_direct = make_temp_function_with_class(sc, f, "abs", g_abs_direct, 1, 0, false, "abs optimization");
 #endif
 
 
   /* max */
   f = set_function_chooser(sc, sc->MAX, max_chooser);
-
   max_f2 = make_function_with_class(sc, f, "max", g_max_f2, 2, 0, false, "max optimization");
 
 
   /* min */
   f = set_function_chooser(sc, sc->MIN, min_chooser);
-
   min_f2 = make_function_with_class(sc, f, "min", g_min_f2, 2, 0, false, "min optimization");
 
 
@@ -36950,7 +36992,6 @@ static void init_choosers(s7_scheme *sc)
 #if (!WITH_GMP)
   /* negative? */
   f = set_function_chooser(sc, sc->NEGATIVEP, is_negative_chooser);
-
   is_negative_length = make_function_with_class(sc, f, "negative?", g_is_negative_length, 1, 0, false, "negative? optimization");
 
 
@@ -36994,7 +37035,6 @@ static void init_choosers(s7_scheme *sc)
 
   /* aritable? */
   f = set_function_chooser(sc, sc->ARITABLEP, is_aritable_chooser);
-
   is_aritable_ic = make_function_with_class(sc, f, "aritable?", g_is_aritable_ic, 2, 0, false, "aritable? optimization");
 
 
@@ -37197,13 +37237,11 @@ static void init_choosers(s7_scheme *sc)
 
   /* list-ref */
   f = set_function_chooser(sc, sc->LIST_REF, list_ref_chooser);
-
   list_ref_ic = make_function_with_class(sc, f, "list-ref", g_list_ref_ic, 2, 0, false, "list-ref optimization");
 
 
   /* list-set! */
   f = set_function_chooser(sc, sc->LIST_SET, list_set_chooser);
-
   list_set_ic = make_function_with_class(sc, f, "list-set!", g_list_set_ic, 3, 0, false, "list-set! optimization");
 
 
@@ -37261,7 +37299,6 @@ static void init_choosers(s7_scheme *sc)
 
   /* null? */
   f = set_function_chooser(sc, sc->NULLP, is_null_chooser);
-
   is_null_cdr = make_function_with_class(sc, f, "null?", g_is_null_cdr, 1, 0, false, "null? optimization");
 
 
@@ -43673,10 +43710,6 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op) 
 {
-#if WITH_COUNTS
-  add_expr(sc, sc->code);
-#endif
-
   sc->cur_code = sc->F;
   sc->op = first_op;
   
@@ -44835,6 +44868,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    else
 	      {
+#if (!WITH_GMP)
 		if ((is_optimized(sc->code)) &&
 		    (optimize_data(sc->code) == HOP_SAFE_C_C) &&
 		    (c_function_looped(ecdr(sc->code))) &&
@@ -44873,6 +44907,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 		      }
 		  }
+#endif
 		push_stack(sc, OP_SAFE_DO_STEP_A, sc->args, code);
 		goto NS_EVAL;
 	      }
@@ -45162,6 +45197,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	push_stack(sc, OP_SIMPLE_DO_STEP_A, sc->args, code);
 	sc->code = fcdr(code);
+	/* 1817827: ((locsig loc gr-offset (* (* (env amp-env) (table-lookup gr-env)) (src in-file-reader))))
+	 * 948144: ((outa i (* amp (src src-gen (* fmamp (oscil os))))))
+	 * 408574: ((dlocsig dloc i (* (env aenv) (oscil osc))))
+	 * 88199: ((outa i (* amp (src src-gen (env senv)))))
+	 */
 	if (is_one_liner(sc->code))
 	  {
 	    sc->code = car(sc->code);
@@ -45539,15 +45579,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->code = cdr(code);
 		  goto START_WITHOUT_POP_STACK;
 		}
-
+	      
 	      if (is_all_x_safe(code))
 		{
-		  /* this doesn't happen often, but it's easy to do... */
 		  s7_function f, endf;
 		  s7_pointer slot, end;
+
 		  f = all_x_eval(code);
 		  endf = (s7_function)fcdr(cdr(sc->code));
 		  end = fcdr(sc->code);
+
+		  if (c_function_dox_looped(ecdr(code)))
+		    {
+		      s7_function nf;
+		      nf = (s7_function)(((s7_function)c_function_call(c_function_dox_looped(ecdr(code))))(sc, code));
+		      if (nf) f = nf;
+		    }
+
 		  while (true)
 		    {
 		      f(sc, code);
@@ -45602,6 +45650,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  push_stack_no_args(sc, OP_DOX_STEP_P, sc->code);
 	  sc->code = caddr(sc->code);
+	  /* 5600787: (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1)))
+	   */
 	  sc->op = (opcode_t)lifted_op(sc->code);
 	  sc->code = cdr(sc->code);
 	  goto START_WITHOUT_POP_STACK;
@@ -54418,7 +54468,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer binding;
 	binding = caar(sc->code);
-	/* fprintf(stderr, "%s: %s\n", DISPLAY(sc->code), DISPLAY(binding)); */
 	sc->value = c_call(cadr(binding))(sc, cdadr(binding));
 	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), sc->value);
 	sc->code = cdr(sc->code);
@@ -56358,11 +56407,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  (car(stack_args(sc->stack, loc)) != sc->QUOTE) &&          /* (quote (hi 1)) */
 		  (car(stack_args(sc->stack, loc)) != sc->MACROEXPAND))      /* (macroexpand (hi 1)) */
 		{
-		  s7_pointer x;
-		  x = slot_value(find_symbol(sc, car(sc->value)));
-		  sc->args = list_1(sc, sc->value); 
-		  sc->code = x;
 		  push_stack(sc, OP_EXPANSION, sc->NIL, sc->NIL);
+		  sc->code = slot_value(find_symbol(sc, car(sc->value)));
+		  sc->args = list_1(sc, sc->value); 
 		  goto APPLY;
 		}
 	    }
@@ -58894,11 +58941,22 @@ static s7_pointer big_sin(s7_scheme *sc, s7_pointer args)
   return(big_trig(sc, args, mpfr_sin, mpc_sin, TRIG_NO_CHECK, sc->SIN));
 }
 
+s7_pointer s7_sin(s7_scheme *sc, s7_pointer x)
+{
+  return(big_sin(sc, cons(sc, x, sc->NIL)));
+}
+
 
 static s7_pointer big_cos(s7_scheme *sc, s7_pointer args)
 {
   #define H_cos "(cos z) returns cos(z)"
   return(big_trig(sc, args, mpfr_cos, mpc_cos, TRIG_NO_CHECK, sc->COS));
+}
+
+
+s7_pointer s7_cos(s7_scheme *sc, s7_pointer x)
+{
+  return(big_cos(sc, cons(sc, x, sc->NIL)));
 }
 
 
@@ -62452,7 +62510,6 @@ s7_scheme *s7_init(void)
  *   in set pair, object set et al need not use eval_args/apply if all args are all_x ops
  *   can snd find use the dox stuff as in sort?
  *   TODO: get rid of all arg lambdas -- move them to the make function (*.html especially!)
- * TODO: doc scan-chan faster as do-loop, or get rid of scan-chan
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
  * bench    42736 8752 8051 7725 6515 5564

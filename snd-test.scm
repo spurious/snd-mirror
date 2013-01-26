@@ -5,32 +5,32 @@
 ;;;  test 2: headers                            [1374]
 ;;;  test 3: variables                          [1689]
 ;;;  test 4: sndlib                             [2267]
-;;;  test 5: simple overall checks              [4733]
-;;;  test 6: vcts                               [9507]
-;;;  test 7: colors                             [9827]
-;;;  test 8: clm                                [10347]
-;;;  test 9: mix                                [21683]
-;;;  test 10: marks                             [23470]
-;;;  test 11: dialogs                           [24437]
-;;;  test 12: extensions                        [24630]
-;;;  test 13: menus, edit lists, hooks, etc     [24896]
-;;;  test 14: all together now                  [26273]
-;;;  test 15: chan-local vars                   [27160]
-;;;  test 16: regularized funcs                 [28946]
-;;;  test 17: dialogs and graphics              [32171]
-;;;  test 18: enved                             [32270]
-;;;  test 19: save and restore                  [32289]
-;;;  test 20: transforms                        [33911]
-;;;  test 21: new stuff                         [36063]
-;;;  test 22: (run)                             [38085]
-;;;  test 23: with-sound                        [38091]
-;;;  test 25: X/Xt/Xm                           [41068]
-;;;  test 26:                                   [44750]
-;;;  test 27: GL                                [44756]
-;;;  test 28: errors                            [44880]
-;;;  test 29: s7                                [47002]
-;;;  test all done                              [47074]
-;;;  test the end                               [47242]
+;;;  test 5: simple overall checks              [4746]
+;;;  test 6: vcts                               [9527]
+;;;  test 7: colors                             [9847]
+;;;  test 8: clm                                [10367]
+;;;  test 9: mix                                [21709]
+;;;  test 10: marks                             [23496]
+;;;  test 11: dialogs                           [24457]
+;;;  test 12: extensions                        [24650]
+;;;  test 13: menus, edit lists, hooks, etc     [24916]
+;;;  test 14: all together now                  [26293]
+;;;  test 15: chan-local vars                   [27180]
+;;;  test 16: regularized funcs                 [28956]
+;;;  test 17: dialogs and graphics              [32194]
+;;;  test 18: enved                             [32293]
+;;;  test 19: save and restore                  [32312]
+;;;  test 20: transforms                        [33934]
+;;;  test 21: new stuff                         [36086]
+;;;  test 22: (run)                             [38111]
+;;;  test 23: with-sound                        [38117]
+;;;  test 25: X/Xt/Xm                           [41096]
+;;;  test 26:                                   [44778]
+;;;  test 27: GL                                [44784]
+;;;  test 28: errors                            [44908]
+;;;  test 29: s7                                [47016]
+;;;  test all done                              [47088]
+;;;  test the end                               [47259]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -50,11 +50,11 @@
 
 (define (copy-file src dest) (system (string-append "cp " src " " dest)))
 
-(define (fill-vct v p)
-  (let ((len (length v)))
-    (do ((i 0 (+ i 1)))
-	((= i len) v)
-      (set! (v i) (p)))))
+(define-expansion (fill-vct v body)
+  `(let ((len (length ,v)))
+     (do ((i 0 (+ i 1)))
+	 ((= i len) ,v)
+       (vct-set! ,v i ,body))))
 
 (define* (cfft! data n (dir 1))
   (if (not n) (set! n (length data)))
@@ -259,27 +259,20 @@
 (set! (window-y) 10)
 
 
-(define (fneq a b) 
-  "float equal within .001"
-  (or (not (real? a))
-      (not (real? b))
-      (> (abs (- a b)) .001)))
+(define-expansion (fneq a b) 
+  `(> (magnitude (- ,a ,b)) .001))
 
 (define (ffneq a b)
-  "float equal within .01"
   (> (abs (- a b)) .01))
 
 (define (fffneq a b) 
-  "float equal within .1"
   (> (abs (- a b)) .1))
 
 (define (cneq a b)
-  "complex equal within .001"
   (or (> (abs (- (real-part a) (real-part b))) .001)
       (> (abs (- (imag-part a) (imag-part b))) .001)))
 
 (define (feql a b)
-  "list equal with fneq"
   (if (null? a)
       (null? b)
       (if (null? b)
@@ -292,7 +285,6 @@
 		  (feql (cdr a) (cdr b)))))))
 
 (define (ffeql a b)
-  "list equal with fffneq"
   (if (null? a)
       (null? b)
       (if (null? b)
@@ -305,7 +297,6 @@
 		  (ffeql (cdr a) (cdr b)))))))
 
 (define (fveql a b i)
-  "vct equal with fneq"
   (if (null? b)
       #t
       (if (fneq (car b) (a i))
@@ -313,7 +304,6 @@
 	  (fveql a (cdr b) (+ i 1)))))
 
 (define (vequal v0 v1)
-  "general equal with .001"
   (let ((old-fudge (mus-float-equal-fudge-factor)))
     (set! (mus-float-equal-fudge-factor) .001)
     (let ((result (equal? v0 v1)))
@@ -321,7 +311,6 @@
       result)))
 
 (define (vequal1 v0 v1)
-  "general equal with .01"
   (let ((old-fudge (mus-float-equal-fudge-factor)))
     (set! (mus-float-equal-fudge-factor) .01)
     (let ((result (equal? v0 v1)))
@@ -329,7 +318,6 @@
       result)))
 
 (define (vvequal v0 v1)
-  "general equal with .00002"
   (let ((old-fudge (mus-float-equal-fudge-factor)))
     (set! (mus-float-equal-fudge-factor) .00002)
     (let ((result (equal? v0 v1)))
@@ -340,7 +328,6 @@
   (vct-peak (vct-subtract! (vct-copy v0) v1)))
 
 (define (sd-equal v0 v1)
-  "sound-data equal within .001"
   (let ((old-fudge (mus-float-equal-fudge-factor)))
     (set! (mus-float-equal-fudge-factor) .001)
     (let ((result (equal? v0 v1)))
@@ -348,11 +335,9 @@
       result)))
 
 (define* (my-substring str start end)
-  "substring with end"
   (substring str start (or end (string-length str))))
 
 (define (string-=? a b)
-  "string=? but ignore -0.0"
   (or (string=? a b)
       (let ((alen (string-length a))
 	    (blen (string-length b))
@@ -418,7 +403,6 @@
 	 (lambda args (snd-display #__line__ ";display-edits error: ~A" args))))
 
 (define (safe-divide a b)
-  "divide but check for 0 denom"
   (if (zero? b)
       a
       (/ a b)))
@@ -489,7 +473,6 @@
 
 
 (define (arity-ok func args)
-  "func accepts args"
   (let ((arity (procedure-arity func)))
     (and (pair? arity)
 	 (>= args (car arity))
@@ -498,7 +481,6 @@
 	     (<= args (+ (car arity) (cadr arity)))))))
 
 (define (set-arity-ok func args)
-  "set proc accepts args"
   (let ((arity (if (procedure-with-setter? func)
 		   (procedure-arity (procedure-setter func))
 		   (and (procedure? (procedure-setter func))
@@ -510,7 +492,6 @@
 	     (<= args (+ (car arity) (cadr arity)))))))
 
 (define* (scale-sound-by scl beg dur snd chn edpos)
-  "(scale-sound-by scl beg dur snd chn edpos) is an old form of scale-sound"
   (if (integer? chn)
       (scale-channel scl beg dur snd chn edpos)
       (do ((i 0 (+ i 1)))
@@ -518,7 +499,6 @@
 	(scale-channel scl beg dur snd i))))
 
 (define* (scale-sound-to norm beg dur snd chn)
-  "(scale-sound-to norm beg dur snd chn) is an old form of normalize-sound"
   (if (integer? chn)
       (let ((mx (maxamp snd chn)))
 	(if (and (not (= mx 0.0))
@@ -530,6 +510,27 @@
 	    (do ((i 0 (+ i 1)))
 		((= i (channels snd)))
 	      (scale-channel (/ norm mx) beg dur snd i))))))
+
+(define* (my-find-channel func (beg 0) snd chn edpos)
+  (let ((end (frames snd chn edpos)))
+    (call-with-exit
+     (lambda (return)
+       (let ((reader (make-sampler beg snd chn 1 edpos)))
+	 (do ((i beg (+ i 1)))
+	     ((= i end) #f)
+	   (if (func (next-sample reader))
+	       (return i))))))))
+
+(define* (my-count-matches func (beg 0) snd chn edpos)
+  (let ((end (frames snd chn edpos))
+	(matches 0)
+	(reader (make-sampler beg snd chn 1 edpos)))
+    (do ((i beg (+ i 1)))
+	((= i end) matches)
+      (if (func (next-sample reader))
+	  (set! matches (+ matches 1))))))
+
+
 
 (if (and (> (length (script-args)) 0)
 	 (> (script-arg) 0))
@@ -805,8 +806,8 @@
     (if (not (equal? (default-output-chans)  1 )) 
 	(snd-display #__line__ ";default-output-chans set def: ~A" (default-output-chans)))
     (set! (default-output-data-format) (default-output-data-format))
-    (if (and (not (equal? (default-output-data-format) mus-bfloat))
-	     (not (equal? (default-output-data-format) mus-lfloat)))
+    (if (and (not (equal? (default-output-data-format) mus-bdouble))
+	     (not (equal? (default-output-data-format) mus-ldouble)))
 	(snd-display #__line__ ";default-output-data-format set def: ~A" (default-output-data-format)))
     (set! (default-output-srate) (default-output-srate))
     (if (not (equal? (default-output-srate)  44100 )) 
@@ -886,7 +887,7 @@
     (if (not (equal? (fft-with-phases)  #f )) 
 	(snd-display #__line__ ";fft-with-phases set def: ~A" (fft-with-phases)))
     (set! (transform-size) (transform-size))
-    (if (not (equal? (transform-size)  512 )) 
+    (if (not (equal? (transform-size) 1024)) 
 	(snd-display #__line__ ";transform-size set def: ~A" (transform-size)))
     (set! (transform-graph-type) (transform-graph-type))
     (if (not (equal? (transform-graph-type) graph-once))
@@ -1227,7 +1228,7 @@
       'dac-combines-channels (dac-combines-channels) #t
       'dac-size (dac-size) 256 
       'default-output-chans (default-output-chans) 1 
-      'default-output-data-format (default-output-data-format) mus-lfloat
+      'default-output-data-format (default-output-data-format) mus-ldouble
       'default-output-header-type (default-output-header-type) mus-next
       'default-output-srate (default-output-srate) 44100
       'dot-size (dot-size) 1 
@@ -1340,7 +1341,7 @@
       'transform-graph-type (transform-graph-type) graph-once
       'transform-graph? (without-errors (transform-graph?)) 'no-such-sound
       'transform-normalization (transform-normalization) normalize-by-channel
-      'transform-size (transform-size) 512
+      'transform-size (transform-size) 1024
       'transform-type (transform-type) fourier-transform
       'view-files-sort (view-files-sort) 0
       'view-files-sort (view-files-sort) 0 
@@ -2042,7 +2043,7 @@
 		       'continue-frame->file 'continue-sample->file 'contrast-control 'contrast-control-amp 'contrast-control-bounds
 		       'contrast-control? 'contrast-enhancement 'controls->channel 'convolution 'convolve
 		       'convolve-files 'convolve-selection-with 'convolve-with 'convolve? 'copy-context
-		       'copy-sampler 'count-matches 'current-edit-position
+		       'copy-sampler 'current-edit-position
 		       'current-font 'cursor 'cursor-color 'cursor-context 'cursor-cross
 		       'cursor-in-middle 'cursor-in-view 'cursor-line 'cursor-location-offset 'cursor-on-left
 		       'cursor-on-right 'cursor-position 'cursor-size 'cursor-style 'cursor-update-interval
@@ -2072,7 +2073,7 @@
 		       'filtered-comb 'filtered-comb?
 		       'filter-channel 'filter-control-coeffs 'filter-control-envelope 'filter-control-in-dB 'filter-control-in-hz
 		       'filter-control-order 'filter-control-waveform-color 'filter-control? 'filter-selection 'filter-sound
-		       'filter? 'find-channel 'find-dialog 'find-mark 'find-sound
+		       'filter? 'find-dialog 'find-mark 'find-sound
 		       'finish-progress-report 'fir-filter 'fir-filter? 'flat-top-window 'focus-widget 'foreground-color
 		       'forget-region 'formant 'formant-bank 'formant? 'firmant 'firmant? 
 		       'fourier-transform
@@ -3444,7 +3445,7 @@
 	  ;; check clipping choices
 	  (let ((ind (view-sound "oboe.snd")))
 	    (set! (clipping) #f)
-	    (map-channel (lambda (y) (* y 10.0)) 0 (frames) ind 0)
+	    (scale-channel 10.0)
 	    (save-sound-as "test.snd" ind mus-next mus-bfloat)
 	    (undo 1 ind 0)
 	    (let ((ind1 (open-sound "test.snd")))
@@ -3879,7 +3880,7 @@
 			(if (not (= (mix-position mx) (* 44100 61000))) (snd-display #__line__ ";bigger mix to: ~A" (mix-position mx))))
 		      (snd-display #__line__ ";no mix tag from mix-sound"))
 		  (undo 2))
-		(let ((res (find-channel (lambda (y) (not (= y 0.0))))))
+		(let ((res (my-find-channel (lambda (y) (not (= y 0.0))))))
 		  (if (or (not res)
 			  (> (cadr res) 100))
 		      (snd-display #__line__ ";bigger find not 0.0: ~A" res)))
@@ -3909,12 +3910,14 @@
 	(let ((ind (new-sound "tmp.snd" mus-riff mus-l24int 22050 1 :size 100000))
 	      (old-selection-creates-region (selection-creates-region)))
 	  (set! (selection-creates-region) #t)
-	  (let ((x -0.5)
-		(incr (/ 1.0 (frames)))) 
-	    (map-channel (lambda (n) 
-			   (let ((val x)) 
-			     (set! x (+ x incr)) 
-			     val))))
+	  (let ((incr (/ 1.0 (frames)))
+		(len (frames))
+		(data (make-vct (frames))))
+	    (do ((i 0 (+ i 1))
+		 (x -0.5 (+ x incr)))
+		((= i len))
+	      (vct-set! data i x))
+	    (vct->channel data))
 	  (save-sound)
 	  (close-sound ind)
 	  (set! ind (open-sound "tmp.snd"))
@@ -4840,7 +4843,7 @@
 
   (define (check-maxamp caller-line ind val name)
     (if (fneq (maxamp ind 0) val) (snd-display #__line__ ";maxamp amp-env ~A: ~A should be ~A" name (maxamp ind) val))
-    (let ((pos (find-channel (lambda (y) (>= (abs y) (- val .0001)))))
+    (let ((pos (my-find-channel (lambda (y) (>= (abs y) (- val .0001)))))
 	  (maxpos (maxamp-position ind 0)))
       (if (not pos) 
 	  (snd-display #__line__ ";actual maxamp ~A vals not right" name)
@@ -6179,11 +6182,9 @@ EDITS: 5
 	(if (comment index) (snd-display #__line__ ";oboe: comment ~A?" (comment index)))
 	(if (not (= (string-length "asdf") 4)) (snd-display #__line__ ";string-length: ~A?" (string-length "asdf")))
 	(if (not (string=? (short-file-name index) "oboe.snd")) (snd-display #__line__ ";oboe short name: ~S?" (short-file-name index)))
-	(let ((matches (count-matches (lambda (a) (> a .125)))))
+	(let ((matches (my-count-matches (lambda (a) (> a .125)))))
 	  (if (not (= matches 1313)) (snd-display #__line__ ";count-matches: ~A?" matches)))
-	(let ((matches (count-matches (lambda (y) (let ((a (list .1 .2))) (> y (car a))))))) 
-	  (if (not (= matches 2851)) (snd-display #__line__ ";unopt count-matches: ~A?" matches)))
-	(let ((spot (find-channel (lambda (a) (> a .13)))))
+	(let ((spot (my-find-channel (lambda (a) (> a .13)))))
 	  (if (or (not spot) (not (= spot 8862))) (snd-display #__line__ ";find: ~A?" spot)))
 	(set! (right-sample) 3000) 
 	(let ((samp (right-sample)))
@@ -7375,7 +7376,7 @@ EDITS: 5
 	
 	(let ((ind1 (open-sound "oboe.snd"))
 	      (ind2 (open-sound "2.snd")))
-	  (let ((ups1 (count-matches (lambda (n) (> n .1)) 0 ind1 0))
+	  (let ((ups1 (my-count-matches (lambda (n) (> n .1)) 0 ind1 0))
 		(ups2 (let ((count 0)
 			    (len (frames ind1))
 			    (reader (make-sampler 0 ind1)))
@@ -7385,8 +7386,8 @@ EDITS: 5
 			      (set! count (+ count 1)))))))
 	    (if (not (= ups1 ups2))
 		(snd-display #__line__ ";scan-chan: ~A ~A?" ups1 ups2))
-	    (set! ups1 (count-matches (lambda (n) (> n .03)) 0 ind2 0))
-	    (set! ups2 (count-matches (lambda (n) (> n .03)) 0 ind2 1))
+	    (set! ups1 (my-count-matches (lambda (n) (> n .03)) 0 ind2 0))
+	    (set! ups2 (my-count-matches (lambda (n) (> n .03)) 0 ind2 1))
 	    (let ((ups3 (let ((count 0)
 			      (len (frames ind2))
 			      (reader (make-sampler 0 ind2 0)))
@@ -7471,12 +7472,12 @@ EDITS: 5
 	  (test-edpos maxamp 'maxamp (lambda () (scale-by 2.0 ind1 0)) ind1)
 	  (test-edpos frames 'frames (lambda () (src-sound 2.0 1.0 ind1 0)) ind1)
 	  (test-edpos 
-	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) (count-matches (lambda (n1) (> n1 .1)) 0 snd chn edpos)) 
-	   'count-matches
+	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) (my-count-matches (lambda (n1) (> n1 .1)) 0 snd chn edpos)) 
+	   'my-count-matches
 	   (lambda () (scale-by 2.0 ind1 0)) 
 	   ind1)
 	  (test-edpos 
-	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) (find-channel (lambda (n2) (> n2 .1)) 0 snd chn edpos))
+	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) (my-find-channel (lambda (n2) (> n2 .1)) 0 snd chn edpos))
 	   'find
 	   (lambda () (delete-samples 0 100 ind1 0))
 	   ind1)
@@ -7534,10 +7535,9 @@ EDITS: 5
 	  (let ((ind (new-sound "fmv.snd"))
 		(v (make-vct 2000))
 		(ctr 0))
-	    (fill-vct v (lambda ()
-			  (let ((val (sin (* ctr 2.0 (/ pi 10.0)))))
+	    (fill-vct v (let ((val (sin (* ctr 2.0 (/ pi 10.0)))))
 			    (set! ctr (+ 1 ctr))
-			    val)))
+			    val))
 	    (vct->channel v 0 2000 ind 0)
 	    (filter-sound '(0 0 .09 0 .1 1 .11 0 1 0) 1024)
 	    (if (> (maxamp) .025) (snd-display #__line__ ";filter-sound maxamp 1: ~A" (maxamp)))
@@ -9700,7 +9700,7 @@ EDITS: 2
 	    (let ((val (vct* (vct-copy v1) v2)))
 	      (if (not (vequal val (vct .02 .06 .02))) (snd-display #__line__ ";vct* v1 v2: ~A" val))))
 	  
-	  (fill-vct v0 (lambda () 1.0))
+	  (vct-fill! v0 1.0)
 	  (do ((i 0 (+ i 1)))
 	      ((= i 10))
 	    (if (fneq (v0 i) 1.0) (snd-display #__line__ ";map v0[~D] = ~F?" i (v0 i)))))
@@ -9774,13 +9774,6 @@ EDITS: 2
 	  (revert-sound)
 	  (close-sound ind))
 	
-	(let ((v1 (make-vct 32)))
-	  (fill-vct v1
-		    (lambda ()
-		      (let ((v2 (make-vct 3)))
-			(fill-vct v2 (lambda () .1))
-			(v2 0))))
-	  (if (fneq (v1 12) .1) (snd-display #__line__ ";fill-vct twice: ~A" (v1 12))))
 	(let ((hi (make-vct 3)))
 	  (let ((tag (catch #t
 			    (lambda () (vct-subseq hi 1 0))
@@ -9799,10 +9792,9 @@ EDITS: 2
 	      (snd-display #__line__ ";vct-add + offset: ~A" v0)))
 	
 	;; test local var gc protection in vct.h vct_to_vector
-	(let ((o (make-oscil 1)))
-	  (let ((v1 (fill-vct 
-		     (make-vct 44100 0.0) 
-		     (lambda () (o)))))
+	(let ((o (make-oscil 1))
+	      (v (make-vct 44100 0.0)))
+	  (let ((v1 (fill-vct v (o))))
 	    (vct->vector v1) 
 	    (vct->vector v1)
 	    (let ((vect (vct->vector v1)))
@@ -10841,10 +10833,7 @@ EDITS: 2
       (revert-sound ind)
       (mix "oboe.snd" 0 0 ind 0 #f)
       (mix "oboe.snd" 0 0 ind 1 #f)
-      (let ((scl (/ 1.01 (maxamp ind 0)))
-	    (dur (frames ind 0)))
-	(do ((i 0 (+ i 1))) ((= i 2))
-	  (map-channel (lambda (uy) (let ((y (* uy scl))) (if (> y 1.0) 1.0 (if (< y -1.0) -1.0 y)))) 0 dur ind i)))
+      (scale-sound (/ 1.01 (maxamp ind 0)))
       
       (let* ((vals (unclip-channel ind 1))
 	     (umax (vals 1))
@@ -10857,10 +10846,7 @@ EDITS: 2
       (revert-sound ind)
       (mix "oboe.snd" 0 0 ind 0 #f)
       (mix "oboe.snd" 0 0 ind 1 #f)
-      (let ((scl (/ 1.05 (maxamp ind 0)))
-	    (dur (frames ind 0)))
-	(do ((i 0 (+ i 1))) ((= i 2))
-	  (map-channel (lambda (uy) (let ((y (* uy scl))) (if (> y 1.0) 1.0 (if (< y -1.0) -1.0 y)))) 0 dur ind i)))
+      (scale-sound (/ 1.05 (maxamp ind 0)))
       
       (let* ((vals (unclip-channel ind 1))
 	     (umax (vals 1))
@@ -10873,11 +10859,8 @@ EDITS: 2
       (revert-sound ind)
       (mix "oboe.snd" 0 0 ind 0 #f)
       (mix "oboe.snd" 0 0 ind 1 #f)
-      (let ((scl (/ 1.2 (maxamp ind 0)))
-	    (dur (frames ind 0)))
-	(do ((i 0 (+ i 1))) ((= i 2))
-	  (let ((e (make-env (list 0 0 .48 (/ scl 2) .5 scl .52 (/ scl 2) 1.0 0) :length dur)))
-	    (map-channel (lambda (uy) (let ((y (* uy (env e)))) (if (> y 1.0) 1.0 (if (< y -1.0) -1.0 y)))) 0 dur ind i))))
+      (let ((scl (/ 1.2 (maxamp ind 0))))
+	(env-sound (make-env (list 0 0 .48 (/ scl 2) .5 scl .52 (/ scl 2) 1.0 0) :length (frames ind 0))))
       
       (let* ((vals (unclip-channel ind 1))
 	     (umax (vals 1))
@@ -12563,20 +12546,6 @@ EDITS: 2
 	      (fneq (v1 0) 1.0))
 	  (snd-display #__line__ ";polar->rectangular (1 1): ~A ~A?" (v0 0) (v1 0)))
       
-      (let ((v0 (make-vct 1))
-	    (v1 (make-vct 1))
-	    (v (make-vct 1))
-	    (val .123))
-	(set! (v0 0) 1.0)
-	(set! (v1 0) 1.0)
-	(fill-vct v (lambda ()
-		      (rectangular->polar v0 v1)
-		      (set! val (v0 0))
-		      (polar->rectangular v0 v1)
-		      (v1 0)))
-	(if (fneq (v 0) 1.0) (snd-display #__line__ ";run r->p not inverted: ~A" v))
-	(if (fneq val (sqrt 2.0)) (snd-display #__line__ ";r->p: ~A" val)))
-      
       (let ((ind (open-sound "oboe.snd"))
 	    (rl (channel->vct 1200 512))
 	    (im (make-vct 512)))
@@ -12917,7 +12886,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (delay gen i)))
-      (fill-vct v1 (let ((i 0)) (lambda () (let ((val (if (delay? gen2) (delay gen2 i) -1.0))) (set! i (+ i 1)) val))))
+      (let ((k 0)) (fill-vct v1 (let ((val (if (delay? gen2) (delay gen2 k) -1.0))) (set! k (+ k 1)) val)))
       (if (not (vequal v1 v0)) (snd-display #__line__ ";map delay: ~A ~A" v0 v1))
       (if (not (delay? gen)) (snd-display #__line__ ";~A not delay?" gen))
       (if (not (= (mus-length gen) 3)) (snd-display #__line__ ";delay length: ~D?" (mus-length gen)))
@@ -12997,30 +12966,27 @@ EDITS: 2
 	  (flt (make-one-zero .5 .4))
 	  (v (make-vct 20))
 	  (inval 1.0))
-      (fill-vct v (lambda ()
-		    (let ((res (delay dly (+ inval (* (one-zero flt (tap dly)) .6)))))
-		      (set! inval 0.0)
-		      res)))
+      (fill-vct v (let ((res (delay dly (+ inval (* (one-zero flt (tap dly)) .6)))))
+		    (set! inval 0.0)
+		    res))
       (if (not (vequal v (vct 0.0 0.0 0.0 1.0 0.0 0.0 0.300 0.240 0.0 0.090 0.144 0.058 0.027 0.065 0.052 0.022 0.026 0.031 0.019 0.013)))
 	  (snd-display #__line__ ";tap with low pass: ~A" v)))
     
     (let ((dly (make-delay 3))
 	  (v (make-vct 20))
 	  (inval 1.0))
-      (fill-vct v (lambda ()
-		    (let ((res (delay dly (+ inval (tap dly)))))
-		      (set! inval 0.0)
-		      res)))
+      (fill-vct v (let ((res (delay dly (+ inval (tap dly)))))
+		    (set! inval 0.0)
+		    res))
       (if (not (vequal v (vct 0.0 0.0 0.0 1.0 0.0 0.0 1.0 0.0 0.0 1.0 0.0 0.0 1.0 0.0 0.0 1.0 0.0 0.0 1.0 0.0)))
 	  (snd-display #__line__ ";simple tap: ~A" v)))
     
     (let ((dly (make-delay 6))
 	  (v (make-vct 20))
 	  (inval 1.0))
-      (fill-vct v (lambda ()
-		    (let ((res (delay dly (+ inval (tap dly -2.0)))))
-		      (set! inval 0.0)
-		      res)))
+      (fill-vct v (let ((res (delay dly (+ inval (tap dly -2.0)))))
+		    (set! inval 0.0)
+		    res))
       (set! (print-length) (max 20 (print-length)))
       (if (not (vequal v (vct 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 0.0)))
 	  (snd-display #__line__ ";tap back 2: ~A" v)))
@@ -13225,7 +13191,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (all-pass gen 1.0)))
-      (fill-vct v1 (lambda () (if (all-pass? gen1) (all-pass gen1 1.0) -1.0)))
+      (fill-vct v1 (if (all-pass? gen1) (all-pass gen1 1.0) -1.0))
       (if (not (vequal v1 v0)) (snd-display #__line__ ";map all-pass: ~A ~A" v0 v1))
       (if (not (all-pass? gen)) (snd-display #__line__ ";~A not all-pass?" gen))
       (if (not (= (mus-length gen) 3)) (snd-display #__line__ ";all-pass length: ~D?" (mus-length gen)))
@@ -13265,7 +13231,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (moving-average gen 1.0)))
-      (fill-vct v1 (lambda () (if (moving-average? gen1) (moving-average gen1 1.0) -1.0)))
+      (fill-vct v1 (if (moving-average? gen1) (moving-average gen1 1.0) -1.0))
       (if (not (vequal v1 v0)) (snd-display #__line__ ";map average: ~A ~A" v0 v1))
       (if (not (moving-average? gen)) (snd-display #__line__ ";~A not average?" gen))
       (if (not (= (mus-length gen) 4)) (snd-display #__line__ ";average length: ~D?" (mus-length gen)))
@@ -13324,7 +13290,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (comb gen 1.0)))
-      (fill-vct v1 (lambda () (if (comb? gen1) (comb gen1 1.0) -1.0)))
+      (fill-vct v1 (if (comb? gen1) (comb gen1 1.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map comb: ~A ~A" v0 v1))
       (if (not (comb? gen)) (snd-display #__line__ ";~A not comb?" gen))
       (if (not (= (mus-length gen) 3)) (snd-display #__line__ ";comb length: ~D?" (mus-length gen)))
@@ -13449,7 +13415,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (notch gen 1.0)))
-      (fill-vct v1 (lambda () (if (notch? gen1) (notch gen1 1.0) -1.0)))
+      (fill-vct v1 (if (notch? gen1) (notch gen1 1.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map notch: ~A ~A" v0 v1))
       (if (not (notch? gen)) (snd-display #__line__ ";~A not notch?" gen))
       (if (not (= (mus-length gen) 3)) (snd-display #__line__ ";notch length: ~D?" (mus-length gen)))
@@ -13872,7 +13838,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (one-pole gen 1.0)))
-      (fill-vct v1 (lambda () (if (one-pole? gen) (one-pole gen1 1.0) -1.0)))
+      (fill-vct v1 (if (one-pole? gen) (one-pole gen1 1.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map one-pole: ~A ~A" v0 v1))
       (if (not (one-pole? gen)) (snd-display #__line__ ";~A not one-pole?" gen))
       (if (not (= (mus-order gen) 1)) (snd-display #__line__ ";one-pole order: ~D?" (mus-order gen)))
@@ -13898,7 +13864,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (one-zero gen 1.0)))
-      (fill-vct v1 (lambda () (if (one-zero? gen) (one-zero gen1 1.0) -1.0)))
+      (fill-vct v1 (if (one-zero? gen) (one-zero gen1 1.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map one-zero: ~A ~A" v0 v1))
       (if (not (one-zero? gen)) (snd-display #__line__ ";~A not one-zero?" gen))
       (if (not (= (mus-order gen) 1)) (snd-display #__line__ ";one-zero order: ~D?" (mus-order gen)))
@@ -13919,7 +13885,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (two-zero gen 1.0)))
-      (fill-vct v1 (lambda () (if (two-zero? gen1) (two-zero gen1 1.0) -1.0)))
+      (fill-vct v1 (if (two-zero? gen1) (two-zero gen1 1.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map two-zero: ~A ~A" v0 v1))
       (if (not (two-zero? gen)) (snd-display #__line__ ";~A not two-zero?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";two-zero order: ~D?" (mus-order gen)))
@@ -13962,7 +13928,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (two-pole gen 1.0)))
-      (fill-vct v1 (lambda () (if (two-pole? gen1) (two-pole gen1 1.0) -1.0)))
+      (fill-vct v1 (if (two-pole? gen1) (two-pole gen1 1.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map two-pole: ~A ~A" v0 v1))
       (if (not (two-pole? gen)) (snd-display #__line__ ";~A not two-pole?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";two-pole order: ~D?" (mus-order gen)))
@@ -14024,7 +13990,7 @@ EDITS: 2
 	  ((= i 10))
 	(set! (v0 i) (oscil gen 0.0))
 	(set! (v1 i) (mus-apply gen1 0.0 0.0)))
-      (fill-vct v2 (lambda () (if (oscil? gen2) (oscil gen2 0.0) -1.0)))
+      (fill-vct v2 (if (oscil? gen2) (oscil gen2 0.0) -1.0))
       (if (not (vequal v0 v2)) (snd-display #__line__ ";map oscil: ~A ~A" v0 v2))
       (if (not (oscil? gen)) (snd-display #__line__ ";~A not oscil?" gen))
       (if (fneq (mus-phase gen) 1.253787) (snd-display #__line__ ";oscil phase: ~F?" (mus-phase gen)))
@@ -14291,7 +14257,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (ncos gen 0.0)))
-      (fill-vct v1 (lambda () (if (ncos? gen1) (ncos gen1 0.0) -1.0)))
+      (fill-vct v1 (if (ncos? gen1) (ncos gen1 0.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map ncos: ~A ~A" v0 v1))
       (if (not (ncos? gen)) (snd-display #__line__ ";~A not ncos?" gen))
       (if (fneq (mus-phase gen) 1.253787) (snd-display #__line__ ";ncos phase: ~F?" (mus-phase gen)))
@@ -14341,7 +14307,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (nsin gen 0.0)))
-      (fill-vct v1 (lambda () (if (nsin? gen1) (nsin gen1 0.0) -1.0)))
+      (fill-vct v1 (if (nsin? gen1) (nsin gen1 0.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map nsin: ~A ~A" v0 v1))
       (if (not (nsin? gen)) (snd-display #__line__ ";~A not nsin?" gen))
       (if (fneq (mus-phase gen) 1.253787) (snd-display #__line__ ";nsin phase: ~F?" (mus-phase gen)))
@@ -14377,7 +14343,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (nrxysin gen 0.0)))
-      (fill-vct v1 (lambda () (if (nrxysin? gen1) (nrxysin gen1 0.0) -1.0)))
+      (fill-vct v1 (if (nrxysin? gen1) (nrxysin gen1 0.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map nrxysin: ~A ~A" v0 v1))
       (if (not (nrxysin? gen)) (snd-display #__line__ ";~A not nrxysin?" gen))
       (if (fneq (mus-phase gen) 1.253787) (snd-display #__line__ ";nrxysin phase: ~F?" (mus-phase gen)))
@@ -14412,7 +14378,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (nrxycos gen 0.0)))
-      (fill-vct v1 (lambda () (if (nrxycos? gen1) (nrxycos gen1 0.0) -1.0)))
+      (fill-vct v1 (if (nrxycos? gen1) (nrxycos gen1 0.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map nrxycos: ~A ~A" v0 v1))
       (if (not (nrxycos? gen)) (snd-display #__line__ ";~A not nrxycos?" gen))
       (if (fneq (mus-phase gen) 1.253787) (snd-display #__line__ ";nrxycos phase: ~F?" (mus-phase gen)))
@@ -14445,7 +14411,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (asymmetric-fm gen 0.0)))
-      (fill-vct v1 (lambda () (if (asymmetric-fm? gen1) (asymmetric-fm gen1 0.0) -1.0)))
+      (fill-vct v1 (if (asymmetric-fm? gen1) (asymmetric-fm gen1 0.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map asymmetric-fm: ~A ~A" v0 v1))
       (if (not (asymmetric-fm? gen)) (snd-display #__line__ ";~A not asymmetric-fm?" gen))
       (if (fneq (mus-phase gen) 1.253787) (snd-display #__line__ ";asymmetric-fm phase: ~F?" (mus-phase gen)))
@@ -14586,11 +14552,10 @@ EDITS: 2
       (do ((i 1 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (fir-filter gen 0.0)))
-      (fill-vct v1 (let ((inp 1.0))
-		     (lambda () 
-		       (let ((val (if (fir-filter? gen1) (fir-filter gen1 inp) -1.0)))
-			 (set! inp 0.0)
-			 val))))
+      (let ((inp 1.0))
+	(fill-vct v1 (let ((val (if (fir-filter? gen1) (fir-filter gen1 inp) -1.0)))
+		       (set! inp 0.0)
+		       val)))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map fir-filter: ~A ~A" v0 v1))
       (if (not (fir-filter? gen)) (snd-display #__line__ ";~A not fir-filter?" gen))
       (if (not (= (mus-length gen) 3)) (snd-display #__line__ ";fir-filter length: ~D?" (mus-length gen)))
@@ -14691,11 +14656,10 @@ EDITS: 2
       (do ((i 1 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (iir-filter gen 0.0)))
-      (fill-vct v1 (let ((inp 1.0))
-		     (lambda ()
-		       (let ((val (if (iir-filter? gen1) (iir-filter gen1 inp) -1.0)))
-			 (set! inp 0.0)
-			 val))))
+      (let ((inp 1.0))
+	(fill-vct v1 (let ((val (if (iir-filter? gen1) (iir-filter gen1 inp) -1.0)))
+		       (set! inp 0.0)
+		       val)))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map iir-filter: ~A ~A" v0 v1))
       (if (not (iir-filter? gen)) (snd-display #__line__ ";~A not iir-filter?" gen))
       (if (not (= (mus-length gen) 3)) (snd-display #__line__ ";iir-filter length: ~D?" (mus-length gen)))
@@ -14729,11 +14693,10 @@ EDITS: 2
       (do ((i 1 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (filter gen 0.0)))
-      (fill-vct v1 (let ((inp 1.0))
-		     (lambda () 
-		       (let ((val (if (filter? gen1) (filter gen1 inp) -1.0)))
-			 (set! inp 0.0)
-			 val))))
+      (let ((inp 1.0))
+	(fill-vct v1 (let ((val (if (filter? gen1) (filter gen1 inp) -1.0)))
+		       (set! inp 0.0)
+		       val)))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map filter: ~A ~A" v0 v1))
       (if (not (filter? gen)) (snd-display #__line__ ";~A not filter?" gen))
       (if (not (= (mus-length gen) 3)) (snd-display #__line__ ";filter length: ~D?" (mus-length gen)))
@@ -14799,7 +14762,7 @@ EDITS: 2
       (let ((b (make-butter-high-pass 440.0))
 	    (v (make-vct 10))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (butter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (butter b inv))) (set! inv 0.0) val))
 	(if (not (vequal v (vct 0.915 -0.162 -0.146 -0.131 -0.117 -0.103 -0.090 -0.078 -0.066 -0.056)))
 	    (snd-display #__line__ ";butter high: ~A" v))
 	(set! b (make-butter-high-pass 1000.0))
@@ -14813,7 +14776,7 @@ EDITS: 2
       (let ((b (make-butter-low-pass 440.0))
 	    (v (make-vct 10))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (butter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (butter b inv))) (set! inv 0.0) val))
 	(if (not (vequal v (vct 0.004 0.014 0.026 0.035 0.043 0.049 0.053 0.055 0.057 0.057)))
 	    (snd-display #__line__ ";butter low: ~A" v))
 	(set! b (make-butter-low-pass 1000.0))
@@ -14826,7 +14789,7 @@ EDITS: 2
       (let ((b (make-butter-band-pass 440.0 50.0))
 	    (v (make-vct 10))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (butter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (butter b inv))) (set! inv 0.0) val))
 	(if (not (vequal v (vct 0.007 0.014 0.013 0.013 0.012 0.011 0.009 0.008 0.007 0.005)))
 	    (snd-display #__line__ ";butter bandpass: ~A" v))
 	(set! b (make-butter-band-pass 1000.0 500.0))
@@ -14839,7 +14802,7 @@ EDITS: 2
       (let ((b (make-butter-band-reject 440.0 50.0))
 	    (v (make-vct 10))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (butter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (butter b inv))) (set! inv 0.0) val))
 	(if (not (vequal v (vct 0.993 -0.014 -0.013 -0.013 -0.012 -0.011 -0.009 -0.008 -0.007 -0.005)))
 	    (snd-display #__line__ ";butter bandstop: ~A" v))
 	(set! b (make-butter-band-reject 1000.0 500.0))
@@ -14889,7 +14852,7 @@ EDITS: 2
       (let ((b (make-highpass (hz->radians 1000.0) 10))
 	    (v (make-vct 20))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (fir-filter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (fir-filter b inv))) (set! inv 0.0) val))
 	(if (not (vequal v (vct -0.001 -0.002 -0.005 -0.011 -0.021 -0.034 -0.049 -0.065 -0.078 -0.087 
 				0.909 -0.087 -0.078 -0.065 -0.049 -0.034 -0.021 -0.011 -0.005 -0.002)))
 	    (snd-display #__line__ ";dsp.scm high: ~A" v))
@@ -14904,7 +14867,7 @@ EDITS: 2
       (let ((b (make-lowpass (hz->radians 1000.0) 10))
 	    (v (make-vct 20))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (fir-filter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (fir-filter b inv))) (set! inv 0.0) val))
 	(if (not (vequal v (vct 0.001 0.002 0.005 0.011 0.021 0.034 0.049 0.065 0.078 0.087 0.091 0.087 0.078 0.065
 				0.049 0.034 0.021 0.011 0.005 0.002)))
 	    (snd-display #__line__ ";dsp.scm low: ~A" v))
@@ -14918,7 +14881,7 @@ EDITS: 2
       (let ((b (make-bandpass (hz->radians 1500.0) (hz->radians 2000.0) 10))
 	    (v (make-vct 20))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (fir-filter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (fir-filter b inv))) (set! inv 0.0) val))
 	(if (not (vequal v (vct 0.001 -0.001 -0.005 -0.011 -0.017 -0.019 -0.013 0.003 0.022 0.039 0.045
 				0.039 0.022 0.003 -0.013 -0.019 -0.017 -0.011 -0.005 -0.001)))
 	    (snd-display #__line__ ";dsp.scm bp: ~A" v))
@@ -14932,7 +14895,7 @@ EDITS: 2
       (let ((b (make-bandstop (hz->radians 1500.0) (hz->radians 2000.0) 10))
 	    (v (make-vct 20))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (fir-filter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (fir-filter b inv))) (set! inv 0.0) val))
 	(if (not (vequal v (vct -0.001 0.001 0.005 0.011 0.017 0.019 0.013 -0.003 -0.022 -0.039 0.955
 				-0.039 -0.022 -0.003 0.013 0.019 0.017 0.011 0.005 0.001)))
 	    (snd-display #__line__ ";dsp.scm bs: ~A" v))
@@ -14947,7 +14910,7 @@ EDITS: 2
       (let ((b (make-differentiator 10))
 	    (v (make-vct 20))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (fir-filter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (fir-filter b inv))) (set! inv 0.0) val))
 	(if (not (vequal v (vct -0.008 0.011 -0.021 0.039 -0.066 0.108 -0.171 0.270 -0.456 0.977
 				0.000 -0.977 0.456 -0.270 0.171 -0.108 0.066 -0.039 0.021 -0.011)))
 	    (snd-display #__line__ ";dsp.scm df: ~A" v))
@@ -14961,7 +14924,7 @@ EDITS: 2
       (let ((b (make-iir-high-pass-2 440.0))
 	    (v (make-vct 10))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (butter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (butter b inv))) (set! inv 0.0) val))
 	(if (not (vequal v (vct 0.915 -0.162 -0.146 -0.131 -0.117 -0.103 -0.090 -0.078 -0.066 -0.056)))
 	    (snd-display #__line__ ";iir-2 high: ~A" v))
 	(set! b (make-iir-high-pass-2 1000.0))
@@ -14975,7 +14938,7 @@ EDITS: 2
       (let ((b (make-iir-low-pass-2 440.0))
 	    (v (make-vct 10))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (butter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (butter b inv))) (set! inv 0.0) val))
 	(if (not (vequal v (vct 0.004 0.014 0.026 0.035 0.043 0.049 0.053 0.055 0.057 0.057)))
 	    (snd-display #__line__ ";iir-2 low: ~A" v))
 	(set! b (make-iir-low-pass-2 1000.0))
@@ -14988,7 +14951,7 @@ EDITS: 2
       (let ((b (make-iir-band-pass-2 440.0 490.0))
 	    (v (make-vct 10))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (filter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (filter b inv))) (set! inv 0.0) val))
 	(if (not (vequal v (vct 0.007 0.014 0.013 0.013 0.012 0.010 0.009 0.008 0.006 0.004)))
 	    (snd-display #__line__ ";iir bp-2 bandpass: ~A" v))
 	(set! b (make-iir-band-pass-2 1000.0 1500.0))
@@ -15001,7 +14964,7 @@ EDITS: 2
       (let ((b (make-iir-band-stop-2 440.0 500.0))
 	    (v (make-vct 10))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (filter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (filter b inv))) (set! inv 0.0) val))
 	(if (not (vequal v (vct 0.992 -0.017 -0.016 -0.015 -0.014 -0.012 -0.011 -0.009 -0.007 -0.005)))
 	    (snd-display #__line__ ";iir-2 bandstop: ~A" v))
 	(set! b (make-iir-band-stop-2 1000.0 1500.0))
@@ -15015,7 +14978,7 @@ EDITS: 2
       (let ((b (make-butter-hp 4 440.0))
 	    (v (make-vct 10))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (filter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (filter b inv))) (set! inv 0.0) val))
 	(if (and (not (vequal v (vct 0.725 -0.466 -0.315 -0.196 -0.104 -0.036 0.014 0.047 0.0685 0.0775)))
 		 (not (vequal v (vct 0.725 -0.466 -0.315 -0.196 -0.104 -0.035 0.015 0.049 0.070 0.081)))
 		 (not (vequal v (vct 0.725 -0.466 -0.315 -0.196 -0.104 -0.035 0.014 0.049 0.069 0.079))))
@@ -15034,7 +14997,7 @@ EDITS: 2
       (let ((b (make-butter-lp 4 440.0))
 	    (v (make-vct 10))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (filter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (filter b inv))) (set! inv 0.0) val))
 	(if (not (vequal v (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000))) ;; ???
 	    (snd-display #__line__ ";butter lp: ~A" v))
 	(set! b (make-butter-lp 4 1000.0))
@@ -15048,7 +15011,7 @@ EDITS: 2
       (let ((b (make-butter-bp 4 440.0 500.0))
 	    (v (make-vct 10))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (filter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (filter b inv))) (set! inv 0.0) val))
 	(if (not (vequal v (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
 	    (snd-display #__line__ ";butter bp: ~A" v))
 	(set! b (make-butter-bp 4 1000.0 1500.0))
@@ -15058,7 +15021,7 @@ EDITS: 2
       (let ((b (make-butter-bs 4 440.0 500.0))
 	    (v (make-vct 10))
 	    (inv 1.0))
-	(fill-vct v (lambda () (let ((val (filter b inv))) (set! inv 0.0) val)))
+	(fill-vct v (let ((val (filter b inv))) (set! inv 0.0) val))
 	(if (and (not (vequal v (vct 0.978 -0.043 -0.041 -0.038 -0.035 -0.031 -0.026 -0.0225 -0.015 -0.0085)))
 		 (not (vequal v (vct 0.978 -0.043 -0.041 -0.038 -0.035 -0.031 -0.027 -0.022 -0.017 -0.011)))
 		 (not (vequal v (vct 0.978 -0.043 -0.041 -0.038 -0.035 -0.031 -0.027 -0.021 -0.014 -0.011))))
@@ -15082,7 +15045,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (sawtooth-wave gen 0.0)))
-      (fill-vct v1 (lambda () (if (sawtooth-wave? gen1) (sawtooth-wave gen1 0.0) -1.0)))
+      (fill-vct v1 (if (sawtooth-wave? gen1) (sawtooth-wave gen1 0.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map sawtooth: ~A ~A" v0 v1))
       (if (not (sawtooth-wave? gen)) (snd-display #__line__ ";~A not sawtooth-wave?" gen))
       (if (fneq (mus-phase gen) 4.39538) (snd-display #__line__ ";sawtooth-wave phase: ~F?" (mus-phase gen))) ;starts at pi
@@ -15118,7 +15081,7 @@ EDITS: 2
 	  ((= i 10))
 	(set! (v0 i) (square-wave gen 0.0)))
       (let ((w 1.0))
-	(fill-vct v1 (lambda () 
+	(fill-vct v1 (begin
 		       (set! w (mus-width gen1))
 		       (if (square-wave? gen1) (square-wave gen1 0.0) -1.0)))
 	(if (fneq w 0.5) (snd-display #__line__ ";mus-width opt: ~A" w)))
@@ -15160,7 +15123,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (triangle-wave gen 0.0)))
-      (fill-vct v1 (lambda () (if (triangle-wave? gen2) (triangle-wave gen2 0.0) -1.0)))
+      (fill-vct v1 (if (triangle-wave? gen2) (triangle-wave gen2 0.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map triangle-wave: ~A ~A" v0 v1))
       (if (not (triangle-wave? gen)) (snd-display #__line__ ";~A not triangle-wave?" gen))
       (if (fneq (mus-phase gen) 1.253787) (snd-display #__line__ ";triangle-wave phase: ~F?" (mus-phase gen)))
@@ -15194,7 +15157,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (pulse-train gen 0.0)))
-      (fill-vct v1 (lambda () (if (pulse-train? gen1) (pulse-train gen1 0.0) -1.0)))
+      (fill-vct v1 (if (pulse-train? gen1) (pulse-train gen1 0.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map pulse-train: ~A ~A" v0 v1))
       (if (not (pulse-train? gen)) (snd-display #__line__ ";~A not pulse-train?" gen))
       (if (fneq (mus-phase gen) 1.253787) (snd-display #__line__ ";pulse-train phase: ~F?" (mus-phase gen)))
@@ -15267,11 +15230,10 @@ EDITS: 2
       (do ((i 1 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (formant gen 0.0)))
-      (fill-vct v1 (let ((inp 1.0))
-		     (lambda () 
-		       (let ((val (if (formant? gen1) (formant gen1 inp) -1.0)))
-			 (set! inp 0.0)
-			 val))))
+      (let ((inp 1.0))
+	(fill-vct v1 (let ((val (if (formant? gen1) (formant gen1 inp) -1.0)))
+		       (set! inp 0.0)
+		       val)))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map formant: ~A ~A" v0 v1))
       (if (not (formant? gen)) (snd-display #__line__ ";~A not formant?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";formant order: ~D?" (mus-order gen)))
@@ -15318,7 +15280,7 @@ EDITS: 2
       (set! (fs 1) (make-formant 100.0 .2))
       (set! (amps 0) 0.5)
       (set! (amps 1) 0.25)
-      (fill-vct v (lambda () (let ((res (formant-bank amps fs val))) (set! val 0.0) res)))
+      (fill-vct v (let ((res (formant-bank amps fs val))) (set! val 0.0) res))
       (if (not (vequal v (vct 0.368 0.095 -0.346 -0.091 -0.020))) (snd-display #__line__ ";run formant-bank: ~A" v)))
     
     (let ((ob (open-sound "oboe.snd")))
@@ -15346,11 +15308,10 @@ EDITS: 2
       (do ((i 1 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (firmant gen 0.0)))
-      (fill-vct v1 (let ((inp 1.0))
-		     (lambda () 
-		       (let ((val (if (firmant? gen1) (firmant gen1 inp) -1.0)))
-			 (set! inp 0.0)
-			 val))))
+      (let ((inp 1.0))
+	(fill-vct v1 (let ((val (if (firmant? gen1) (firmant gen1 inp) -1.0)))
+		       (set! inp 0.0)
+		       val)))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map firmant: ~A ~A" v0 v1))
       (if (not (firmant? gen)) (snd-display #__line__ ";~A not firmant?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";firmant order: ~D?" (mus-order gen)))
@@ -16433,7 +16394,7 @@ EDITS: 2
 	  ((= i 10))
 	(set! (v0 i) (env gen)))
       (let ((off 123.0))
-	(fill-vct v1 (lambda () 
+	(fill-vct v1 (begin
 		       (set! off (mus-offset gen1))
 		       (if (env? gen1) (env gen1) -1.0)))
 	(if (fneq off 0.0) (snd-display #__line__ ";mus-offset opt: ~A" off)))
@@ -16980,10 +16941,10 @@ EDITS: 2
 	  ((= i 10))
 	(set! (v0 i) (table-lookup gen 0.0))
 	(set! (v1 i) (mus-apply gen1 0.0)))
-      (fill-vct v2 (lambda () (if (table-lookup? gen4) (table-lookup gen4 0.0) -1.0)))
+      (fill-vct v2 (if (table-lookup? gen4) (table-lookup gen4 0.0) -1.0))
       (if (not (vequal v0 v2)) (snd-display #__line__ ";map table-lookup: ~A ~A" v0 v2))
       (set! gen4 (make-table-lookup 440.0 :wave (partials->wave (vct 1 1 2 1))))
-      (fill-vct v2 (lambda () (table-lookup gen4)))
+      (fill-vct v2 (table-lookup gen4))
       (if (not (vequal v0 v2)) (snd-display #__line__ ";map table-lookup (no fm): ~A ~A" v0 v2))
       (if (not (table-lookup? gen)) (snd-display #__line__ ";~A not table-lookup?" gen))
       (if (not (vct? (mus-data gen))) (snd-display #__line__ ";mus-data table-lookup: ~A" (mus-data gen)))
@@ -17182,10 +17143,10 @@ EDITS: 2
 	      (val (polyshape gen 1.0 0.0)))
 	  (if (fneq val val0) (snd-display #__line__ ";polyshape: ~A is not ~F?" val val0))
 	  (set! (v0 i) val)))
-      (fill-vct v1 (lambda () (if (polyshape? gen1) (polyshape gen1 1.0 0.0) -1.0)))
+      (fill-vct v1 (if (polyshape? gen1) (polyshape gen1 1.0 0.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map polyshape: ~A ~A" v0 v1))
       (set! gen1 (make-polyshape 440.0 :coeffs (partials->polynomial '(1 1))))
-      (fill-vct v1 (lambda () (polyshape gen1 1.0)))
+      (fill-vct v1 (polyshape gen1 1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";1 map polyshape: ~A ~A" v0 v1))
       (if (not (polyshape? gen)) (snd-display #__line__ ";~A not polyshape?" gen))
       (if (fneq (mus-phase gen) 1.253787) (snd-display #__line__ ";polyshape phase: ~F?" (mus-phase gen)))
@@ -17382,10 +17343,10 @@ EDITS: 2
 	      (val (polywave gen 0.0)))
 	  (if (fneq val val0) (snd-display #__line__ ";polywave: ~A is not ~F?" val val0))
 	  (set! (v0 i) val)))
-      (fill-vct v1 (lambda () (if (polywave? gen1) (polywave gen1 0.0) -1.0)))
+      (fill-vct v1 (if (polywave? gen1) (polywave gen1 0.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map polywave: ~A ~A" v0 v1))
       (set! gen1 (make-polywave 440.0 (vct 1 1)))
-      (fill-vct v1 (lambda () (polywave gen1)))
+      (fill-vct v1 (polywave gen1))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";1 map polywave: ~A ~A" v0 v1))
       (if (not (polywave? gen)) (snd-display #__line__ ";~A not polywave?" gen))
       (if (fneq (mus-phase gen) 1.253787) (snd-display #__line__ ";polywave phase: ~F?" (mus-phase gen)))
@@ -17629,7 +17590,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (wave-train gen 0.0)))
-      (fill-vct v1 (lambda () (if (wave-train? gen1) (wave-train gen1) -1.0)))
+      (fill-vct v1 (if (wave-train? gen1) (wave-train gen1) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map wave-train: ~A ~A" v0 v1))
       (if (not (wave-train? gen)) (snd-display #__line__ ";~A not wave-train?" gen))
       (if (fneq (mus-phase gen) 0.0) (snd-display #__line__ ";wave-train phase: ~F?" (mus-phase gen)))
@@ -17852,14 +17813,13 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (readin gen)))
-      (fill-vct v1 (lambda () 
-		     (if (readin? gen1) 
+      (fill-vct v1 (if (readin? gen1) 
 			 (if (= (mus-channel gen1) 0) 
 			     (readin gen1) 
 			     1.0) 
 			 (if (string=? (mus-file-name gen1) "oboe.snd")
 			     -1.0
-			     -1.0))))
+			     -1.0)))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map readin: ~A ~A" v0 v1))
       (if (not (readin? gen)) (snd-display #__line__ ";~A not readin?" gen))
       (if (not (mus-input? gen)) (snd-display #__line__ ";~A not input?" gen))
@@ -18619,10 +18579,10 @@ EDITS: 2
       
       ;;:(v 10000)
       ;;#(999 1017 1002 1024 1048 971 963 1000 980 996) 5.8
-      ;; if less than 4 complain
+      ;; if less than 3 complain
       
       (let ((vr (v 10000)))
-	(if (< vr 4.0)
+	(if (< vr 3.0)
 	    (snd-display #__line__ ";mus-random not so random? ~A (chi)" vr))))
     
     (let ((v1 (lambda (n)
@@ -19439,7 +19399,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (src gen 0.0 (lambda (dir) (readin rd)))))
-      (fill-vct v1 (lambda () (if (src? gen1) (src gen1 0.0 (lambda (dir) (readin rd1a))))))
+      (fill-vct v1 (if (src? gen1) (src gen1 0.0 (lambda (dir) (readin rd1a)))))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";run src: ~A ~A" v0 v1))
       (if (not (src? gen)) (snd-display #__line__ ";~A not scr?" gen))
       (if (or (fneq (v0 1) .001) (fneq (v0 7) .021)) (snd-display #__line__ ";src output: ~A" v0))
@@ -19513,7 +19473,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 1000))
 	(set! (v0 i) (granulate gen (lambda (dir) (readin rd)))))
-      (fill-vct v1 (lambda () (if (granulate? gen1) (granulate gen1 (lambda (dir) (readin rd1b))))))
+      (fill-vct v1 (if (granulate? gen1) (granulate gen1 (lambda (dir) (readin rd1b)))))
       (let ((worst (abs (- (vct-peak v0) (vct-peak v1)))))
 	(if (> worst .01) (snd-display #__line__ ";run granulate: ~A" worst)))
       (let ((genx gen1))
@@ -20180,7 +20140,7 @@ EDITS: 2
 				    :jitter 0.0))
 	  (clm-channel gen)
 	  (if (fneq (maxamp) .462) (snd-display #__line__ ";granulate ramped 4: ~A" (maxamp)))
-	  (let ((vals (count-matches (lambda (y) (not (= y 0.0))))))
+	  (let ((vals (my-count-matches (lambda (y) (not (= y 0.0))))))
 	    (if (> (abs (- vals 1104)) 10) (snd-display #__line__ ";granulate ramped 4 not 0.0: ~A" vals)))
 	  (if (or (not (vequal (channel->vct 2203 10)
 			       (vct 0.000 0.000 0.110 0.110 0.110 0.111 0.111 0.111 0.111 0.111)))
@@ -20357,7 +20317,7 @@ EDITS: 2
 	(do ((i 0 (+ i 1)))
 	    ((= i 128))
 	  (set! (v2 i) (convolve gen (lambda (dir) (set! n (+ n 1)) (v1 n)))))
-	(fill-vct v21 (lambda () (if (convolve? gen1) (convolve gen1 (lambda (dir) (set! n1 (+ n1 1)) (v11 n1))))))
+	(fill-vct v21 (if (convolve? gen1) (convolve gen1 (lambda (dir) (set! n1 (+ n1 1)) (v11 n1)))))
 	(if (not (vequal v2 v21)) (snd-display #__line__ ";run gran: ~A ~A" v2 v21))
 	(if (or (fneq (v2 0) 0.0)
 		(fneq (v2 1) 1.0)
@@ -20930,9 +20890,7 @@ EDITS: 2
 				   ))
       (let* ((len 1000)
 	     (data (make-vct len)))
-	(fill-vct data
-		  (lambda ()
-		    (phase-vocoder pv)))
+	(fill-vct data (phase-vocoder pv))
 	(set! (samples 0 len) data))
       (undo 1)
       (free-sampler reader)
@@ -20952,9 +20910,7 @@ EDITS: 2
 				     ))
 	(let* ((len 1000)
 	       (data (make-vct len)))
-	  (fill-vct data
-		    (lambda ()
-		      (phase-vocoder pv)))
+	  (fill-vct data (phase-vocoder pv))
 	  (set! (samples 0 len) data))
 	(undo 1)
 	(free-sampler reader)
@@ -21020,7 +20976,7 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (ssb-am gen 0.0)))
-      (fill-vct v1 (lambda () (if (ssb-am? gen1) (ssb-am gen1 0.0) -1.0)))
+      (fill-vct v1 (if (ssb-am? gen1) (ssb-am gen1 0.0) -1.0))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map ssb-am: ~A ~A" v0 v1))
       (if (not (ssb-am? gen)) (snd-display #__line__ ";~A not ssb-am?" gen))
       (if (fneq (mus-phase gen) 1.253787) (snd-display #__line__ ";ssb-am phase: ~F?" (mus-phase gen)))
@@ -26698,10 +26654,8 @@ EDITS: 2
 		   (lambda () (convolve-with "z.snd" 1.0))
 		   (lambda args args))
 	    (if (not (= (edit-position ind 0) 0)) (snd-display #__line__ ";convolve z: ~A" (edit-position ind 0)))
-	    (let ((tag (catch #t (lambda () (find-channel (lambda (y) (> y .1)))) (lambda args (car args)))))
-	      (if (and tag (not (eq? tag 'no-such-sample))) (snd-display #__line__ ";find z: ~A" tag)))
-	    (let ((tag (catch #t (lambda () (count-matches (lambda (y) (> y .1)))) (lambda args (car args)))))
-	      (if (and tag (not (eq? tag 'no-such-sample))) (snd-display #__line__ ";count z: ~A" tag)))
+	    (let ((matches (my-count-matches (lambda (y) (> y .1)))))
+	      (if (not (= matches 0)) (snd-display #__line__ ";count z: ~A" matches)))
 	    (let* ((reader (make-sampler 0))
 		   (val (next-sample reader))
 		   (str (format #f "~A" reader)))
@@ -28735,10 +28689,9 @@ EDITS: 2
 		  (old-type (transform-type))
 		  (old-norm (transform-normalization))
 		  (old-grf (transform-graph-type)))
-	      (fill-vct v (lambda ()
-			    (let ((val (sin (* ctr 2.0 (/ pi 10.0)))))
-			      (set! ctr (+ 1 ctr))
-			      val)))
+	      (fill-vct v (let ((val (sin (* ctr 2.0 (/ pi 10.0)))))
+			    (set! ctr (+ 1 ctr))
+			    val))
 	      (vct->channel v 0 2000 ind 0)
 	      (set! (transform-size) 256)
 	      (set! (transform-type) fourier-transform)
@@ -30641,7 +30594,7 @@ EDITS: 2
 	  (check-edit-tree '((0 1 0 9999 1.0 0.0 0.0 0) (10000 -2 0 0 0.0 0.0 0.0 0)) vals "envd set first samps to one")
 	  (env-sound '(0 0 1 1))
 	  (let ((e (make-env '(0 0 1 1) :length 10000)))
-	    (fill-vct vals (lambda () (env e))))
+	    (fill-vct vals (env e)))
 	  (check-edit-tree '((0 1 0 9999 1.0 0.0 1.00010001915507e-4 4) (10000 -2 0 0 0.0 0.0 0.0 0))
 			   vals "env frag '(0 0 1 1)")
 	  (delete-samples 1000 1000)
@@ -31271,20 +31224,13 @@ EDITS: 2
 		   (snd-display #__line__ ";scan-channel in scan-channel (opt ~A): ~A" n val)))
 	     (let ((hi (make-vct 3))
 		   (ho (make-vct 3)))
-	       (fill-vct hi (lambda () 
-			      (if (scan-channel (lambda (y)
-						  (> y .1))) 
-				  1.0 0.0)))
-	       (if (not (vequal hi (vct 1.0 1.0 1.0))) (snd-display #__line__ ";fill-vct with scan-channel (opt ~A): ~A" n hi))
-	       (vct-fill! ho .1)
-	       (fill-vct hi (lambda () 
-			      (fill-vct ho (lambda () 
-					     (+ (ho 0) .1))) 
-			      (ho 0)))
-	       (if (not (vequal hi (vct .2 .3 .4))) (snd-display #__line__ ";fill-vct with fill-vct (opt ~A): ~A ~A" n hi ho)))
-	     (let ((val (find-channel (lambda (y) (find-channel (lambda (n6) (> n6 .1)))))))
+	       (fill-vct hi (if (scan-channel (lambda (y)
+						(> y .1))) 
+				1.0 0.0))
+	       (if (not (vequal hi (vct 1.0 1.0 1.0))) (snd-display #__line__ ";fill-vct with scan-channel (opt ~A): ~A" n hi)))
+	     (let ((val (my-find-channel (lambda (y) (my-find-channel (lambda (n6) (> n6 .1)))))))
 	       (if (not (= val 0)) (snd-display #__line__ ";find with find: ~A" val)))
-	     (let ((val (find-channel (lambda (y) (scan-channel (lambda (n7) (> n7 .1)))))))
+	     (let ((val (my-find-channel (lambda (y) (scan-channel (lambda (n7) (> n7 .1)))))))
 	       (if (not (= val 0)) (snd-display #__line__ ";find with scan-channel: ~A" val)))
 	     (let ((mx (maxamp ind 0))
 		   (val (scan-channel (lambda (y) (map-channel (lambda (n) (* n 2))) #t))))
@@ -34814,7 +34760,7 @@ EDITS: 1
 	    (snd-display #__line__ ";mus-fft -2: ~A ~A?" d0 d1))
 	
 	(vct-fill! d1 0.0)
-	(fill-vct d0 (lambda () (random 1.0)))
+	(fill-vct d0 (random 1.0))
 	(set! fn (vct-copy d0))
 	(mus-fft d0 d1 8)
 	(mus-fft d0 d1 8 -1)
@@ -35329,7 +35275,7 @@ EDITS: 1
 	    (snd-display #__line__ ";walsh -3: ~A" d0))
 	
 	(set! d0 (make-vct 8))
-	(fill-vct d0 (lambda () (random 1.0)))
+	(fill-vct d0 (random 1.0))
 	(set! d1 (vct-copy d0))
 	(snd-transform walsh-transform d0)
 	(snd-transform walsh-transform d0)
@@ -35437,7 +35383,7 @@ EDITS: 1
 	       ((= i 9))
 	     (let ((d1 #f)
 		   (d2 (make-vct size)))
-	       (fill-vct d2 (lambda () (random 1.0)))
+	       (fill-vct d2 (random 1.0))
 	       (set! d1 (vct-copy d2))
 	       (snd-transform wavelet-transform d2 i)
 	       (wavelet d2 size -1 pwt (wts i))
@@ -35452,11 +35398,9 @@ EDITS: 1
 				      (let ((flt (make-fir-filter :order 8 
 								  :xcoeffs (let ((v1 (make-vct 8)))
 									     (vct-fill! v1 .0125)
-									     v1))))
-					(fill-vct 
-					 (make-vct len) 
-					 (lambda () 
-					   (fir-filter flt (read-sample fd)))))))))
+									     v1)))
+					    (v (make-vct len)))
+					(fill-vct v (fir-filter flt (read-sample fd))))))))
 	  (if (not (transform? ftype)) (snd-display #__line__ ";transform added: ~A?" ftype))
 	  (set! (transform-normalization) dont-normalize)
 	  (set! (transform-type ind 0) ftype)
@@ -35472,10 +35416,8 @@ EDITS: 1
 	(let ((ind (open-sound "oboe.snd"))
 	      (ftype (add-transform "abs-it" "absit" 0.0 1.0
 				    (lambda (len fd)
-				      (fill-vct 
-				       (make-vct len) 
-				       (lambda () 
-					 (read-sample fd)))))))
+				      (let ((v (make-vct len)))
+					(fill-vct v (read-sample fd)))))))
 	  (set! (transform-normalization) dont-normalize)
 	  (set! (transform-type ind 0) ftype)
 	  (set! (transform-size ind 0) 256)
@@ -35502,7 +35444,6 @@ EDITS: 1
 	  (if (not (equal? (transform-type ind 0) fourier-transform)) 
 	      (snd-display #__line__ ";after delete-transform ~A -> ~A" ftype (transform-type ind 0)))
 	  (close-sound ind))
-	
 	
 	(if (defined? 'bignum-fft)
 	    (let ()
@@ -45037,7 +44978,7 @@ EDITS: 1
 		     contrast-control? convolve-selection-with convolve-with channel-properties channel-property controls->channel
 		     amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 		     reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
-		     auto-update-interval count-matches current-font cursor cursor-color with-tracking-cursor cursor-size
+		     auto-update-interval current-font cursor cursor-color with-tracking-cursor cursor-size
 		     cursor-style tracking-cursor-style dac-combines-channels dac-size clipping data-color data-format data-location data-size
 		     default-output-chans default-output-data-format default-output-srate default-output-header-type define-envelope
 		     delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-and-smooth
@@ -45049,7 +44990,7 @@ EDITS: 1
 		     expand-control? fft fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size disk-kspace
 		     transform-graph-type fft-window transform-graph? view-files-dialog mix-file-dialog file-name fill-polygon
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
-		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control? find-channel
+		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control?
 		     find-mark find-sound finish-progress-report foreground-color insert-file-dialog file-write-date
 		     frames free-sampler graph transform? delete-transform
 		     graph-color graph-cursor graph-data graph->ps gl-graph->ps graph-style lisp-graph?  graphs-horizontal header-type
@@ -45665,10 +45606,10 @@ EDITS: 1
 				   (not (eq? tag 'no-such-sound)))
 			      (snd-display #__line__ ";~D: chn (no snd) procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
-		      (list channel-widgets count-matches cursor channel-properties channel-property 
+		      (list channel-widgets cursor channel-properties channel-property 
 			    cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size
 			    draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency
-			    fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window transform-graph? find-channel
+			    fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window transform-graph?
 			    graph graph-style lisp-graph? (lambda (a) (insert-region 0 a)) insert-sound
 			    time-graph-style lisp-graph-style transform-graph-style
 			    left-sample make-graph-data map-chan max-transform-peaks maxamp-position min-dB mix-region
@@ -45693,10 +45634,10 @@ EDITS: 1
 			  (if (not (eq? tag 'wrong-type-arg))
 			      (snd-display #__line__ ";~D: chn (no chn) procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
-		      (list channel-widgets count-matches cursor channel-properties channel-property combined-data-color
+		      (list channel-widgets cursor channel-properties channel-property combined-data-color
 			    cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size draw-dots draw-lines
 			    edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
-			    transform-size transform-graph-type fft-window transform-graph? find-channel
+			    transform-size transform-graph-type fft-window transform-graph?
 			    graph graph-style lisp-graph? insert-region insert-sound left-sample
 			    time-graph-style lisp-graph-style transform-graph-style
 			    make-graph-data map-chan max-transform-peaks maxamp maxamp-position min-dB mix-region transform-normalization
@@ -46159,8 +46100,6 @@ EDITS: 1
 		  (check-error-tag 'bad-arity (lambda () (map-chan (lambda (a b c) 1.0))))
 		  (check-error-tag 'bad-arity (lambda () (scan-channel (lambda (a b c) 1.0))))
 		  (check-error-tag 'bad-arity (lambda () (set! (cursor-style ind 0) (lambda (a) 32))))
-		  (check-error-tag 'bad-arity (lambda () (find-channel (lambda () 1.0))))
-		  (check-error-tag 'bad-arity (lambda () (count-matches (lambda () 1.0))))
 		  (check-error-tag 'no-such-graphics-context (lambda () (draw-line 0 0 1 1 ind 0 1234)))
 		  (check-error-tag 'no-such-graphics-context (lambda () (foreground-color ind 0 1234)))
 		  (check-error-tag 'no-such-graphics-context (lambda () (current-font ind 0 1234)))
@@ -46948,20 +46887,7 @@ EDITS: 1
 	(if (sound? (find-sound "oboe.snd"))
 	    (snd-display #__line__ ";oboe.snd is still open?"))
 	
-	(let ((ind (open-sound "oboe.snd"))
-	      (scl 1.0))
-	  (set! (sample 100 ind 0) .5)
-	  (map-channel (lambda (y)
-			 (if (> y .4)
-			     (let ((mx 0.0))
-			       (scan-channel (lambda (x)
-					       (set! mx (max mx (abs x)))
-					       #f))
-			       (set! scl (/ 1.0 mx))))
-			 (* scl y)))
-	  (if (fneq (sample 100 ind 0) 1.0) (snd-display #__line__ ";scan + map 100: ~A" (sample 100 ind 0)))
-	  (revert-sound ind)
-	  
+	(let ((ind (open-sound "oboe.snd")))
 	  (set! (sample 100 ind 0) .5)
 	  (map-channel (lambda (y)
 			 (if (> y .4)
@@ -47143,6 +47069,7 @@ EDITS: 1
 ;; 1-Jan-13:  #(1 1 2 2 64 200 7 1 575 1 17 1 2 12 84 1 246 1 1 215 45 111 1 1552 0 0 0 1 2 77)  ;  32
 ;; 3-Jan-13:  #(1 1 2 1 65 185 6 1 564 1 20 1 2 11 26 1 202 1 1 213 45 109 1 1545 0 0 0 1 1 80)  ;  31
 ;; 9-Jan-13:  #(1 1 2 1 63 181 7 1 540 1 19 1 2 11 22 1 201 1 1 207 44 107 1 1504 0 0 0 1 1 79)  ;  30
+;; 25-Jan-13: #(1 1 2 1 58 178 6 1 505 1 13 1 2 10 20 1 205 1 1 198 44 111 1 1487 0 0 0 1 1 75)  ;  29
 
 ;;; -------- cleanup temp files
 
@@ -47385,22 +47312,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-23-Jan-13:
-95,431,255,722
-15,963,077,859  s7.c:eval [/home/bil/snd-13/snd]
- 6,963,822,440  ???:sin [/lib64/libm-2.12.so]
- 6,258,255,212  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 4,466,391,557  s7.c:eval'2 [/home/bil/snd-13/snd]
- 3,139,261,293  s7.c:gc [/home/bil/snd-13/snd]
+25-Jan-13:
+95,026,991,590
+16,588,399,668  s7.c:eval [/home/bil/snd-13/snd]
+ 6,966,442,762  ???:sin [/lib64/libm-2.12.so]
+ 6,189,090,937  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 3,463,162,979  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 3,181,092,324  s7.c:gc [/home/bil/snd-13/snd]
+ 2,995,929,160  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,889,797,695  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,776,047,206  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,730,956,052  clm.c:mus_src [/home/bil/snd-13/snd]
  2,702,749,996  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 2,695,533,873  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,554,688,594  ???:cos [/lib64/libm-2.12.so]
- 2,359,212,723  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 1,591,119,430  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 2,553,958,307  ???:cos [/lib64/libm-2.12.so]
  1,586,168,833  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,152,087,192  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 1,572,038,428  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,152,081,157  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
- 1,097,072,992  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
+ 1,048,631,240  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
 |#

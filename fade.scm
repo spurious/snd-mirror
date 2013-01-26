@@ -8,6 +8,13 @@
 
 (definstrument (cross-fade beg dur amp file1 file2 ramp-beg ramp-dur ramp-type bank-dur fs fwidth)
   ;; ramp-type 0=sweep up, 1=sweep down, 2=split from middle
+
+  (if (> (+ (max bank-dur ramp-beg) ramp-dur bank-dur) dur)
+      (begin
+	(set! ramp-beg (* 0.25 dur))
+	(set! ramp-dur (* dur 0.49))
+	(set! bank-dur (* dur 0.24))))
+	
   (let ((fil1 (make-sampler 0 file1))
 	(fil2 (make-sampler 0 file2))
 	(start (seconds->samples beg))
@@ -70,14 +77,14 @@
 		       (do ((k mid (+ k 1))
 			    (ks 1.0 (- ks ifs)))
 			   ((>= k fs))
-			 (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1)))))
+			 (vct-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1)))))
 		     (begin
 		       (set! mid (min fs (floor (* 2.0 ramp fs))))
 		       (vct-fill! inputs inval1)
 		       (do ((k 0 (+ k 1))
 			    (ks (* 2.0 ramp) (- ks ifs)))
 			   ((= k mid))
-			 (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
+			 (vct-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
 		 (outa i (formant-bank amps-scaled fs1 inputs)))))
 
 	    ((1)
@@ -95,14 +102,14 @@
 		       (do ((k 0 (+ k 1))
 			    (ks r2 (+ ks ifs)))
 			   ((= k mid))
-			 (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1)))))
+			 (vct-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1)))))
 		     (begin
 		       (set! mid (ceiling (* (- 1.0 (* 2.0 ramp)) fs)))
 		       (vct-fill! inputs inval1)
 		       (do ((k mid (+ k 1))
 			    (ks 0.0 (+ ks ifs)))
 			   ((>= k fs))
-			 (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
+			 (vct-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
 		 (outa i (formant-bank amps-scaled fs1 inputs)))))
 		
 	    (else

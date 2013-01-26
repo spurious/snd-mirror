@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.18"
-#define S7_DATE "9-Jan-13"
+#define S7_VERSION "2.19"
+#define S7_DATE "26-Jan-13"
 
 
 typedef long long int s7_Int;
@@ -726,8 +726,13 @@ void s7_set_object_ref_2(int type, s7_pointer (*ref_2)(s7_scheme *sc, void *val,
 void s7_set_object_set_3(int type, s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value));
 void s7_set_object_array_info(int type, size_t length_loc, size_t data_loc);
 void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_args);
+
+  /* experiments */
 void s7_function_set_looped(s7_pointer f, s7_pointer c);
 void s7_function_set_let_looped(s7_pointer f, s7_pointer c);
+void s7_function_set_dox_looped(s7_pointer f, s7_pointer c);
+s7_pointer s7_local_slot(s7_scheme *sc, s7_pointer symbol);
+
 
   /* These functions create a new Scheme object type.  There is a simple example in s7.html.
    *
@@ -868,6 +873,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 26-Jan:    s7_function_set_dox_looped (loop optimization experiments).
  * 9-Jan:     s7_cos, s7_sin, other optimization changes.
  * --------
  * 24-Dec:    s7_set_object_array_info and other such changes.

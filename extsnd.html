@@ -7579,10 +7579,7 @@ Convolve-with in conjunction with mix can provide high-quality reverb:
 <em class=def>count-matches</em> proc sample snd chn edpos
 </pre>
 
-<p>count-matches is obsolete; use a do loop and a sampler.
-</p>
-
-<p>This returns how many samples satisfy the function 'proc'; 'proc' should
+<p>count-matches returns how many samples satisfy the function 'proc'; 'proc' should
 take one argument (the current sample value), and return #t for a hit. 'sample' 
 determines where to start the search.
 </p>
@@ -7591,6 +7588,20 @@ determines where to start the search.
 Scheme: (count-matches (lambda (y) (&gt; y .1)))
 Ruby:   count_matches(lambda do |y| y &gt; 0.1 end)
 Forth:  lambda: &lt;{ y }&gt; y 0.1 f- f0&lt; ; count-matches
+</pre>
+
+<p>count-matches is obsolete; use a do loop and a sampler:
+</p>
+
+<pre class="indented">
+(define* (count-matches func (beg 0) snd chn edpos)
+  (let ((end (frames snd chn edpos))
+	(matches 0)
+	(reader (make-sampler beg snd chn 1 edpos)))
+    (do ((i beg (+ i 1)))
+	((= i end) matches)
+      (if (func (next-sample reader))
+	  (set! matches (+ matches 1))))))
 </pre>
 
 <div class="separator"></div>
@@ -8181,9 +8192,6 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 <em class=def>find-channel</em> proc sample snd chn edpos
 </pre>
 
-<p>find-channel is obsolete; use a do-loop and a sampler.
-</p>
-
 <p id="findchannelinreverse">This function finds the sample that satisfies the function 'proc'. 'sample'
 determines where to start the search. 
 </p>
@@ -8196,6 +8204,22 @@ determines where to start the search.
 4423
 </pre>
 
+<p>find-channel is obsolete; use a do-loop and a sampler:
+</p>
+
+<pre class="indented">
+(define* (find-channel func (beg 0) snd chn edpos)
+  (let ((end (frames snd chn edpos)))
+    (call-with-exit
+     (lambda (return)
+       (let ((reader (make-sampler beg snd chn 1 edpos)))
+	 (do ((i beg (+ i 1)))
+	     ((= i end) #f)
+	   (if (func (next-sample reader))
+	       (return i))))))))
+</pre>
+
+
 
 <!-- INDEX searchexamples:Searching -->
 
@@ -8207,7 +8231,6 @@ find a mix: <a href="sndscm.html#findmix">find-mix</a><br>
 find a sound: <a href="extsnd.html#findsound">find-sound</a><br>
 Example find procedures: <a href="sndscm.html#searchforclick">search-for-click, zero+, next-peak, find-pitch</a><br>
 find in reverse: <a href="extsnd.html#findchannelinreverse">find-channel-in-reverse</a><br>
-Search via continuation: <a href="extsnd.html#scanagain">scan-again</a><br>
 Default search procedure: <a href="extsnd.html#searchprocedure">search-procedure</a><br>
 The Find dialog: <a href="snd.html#editoperations">Find</a> or <a href="extsnd.html#finddialog">find-dialog</a><br>
 find silence: <a href="extsnd.html#mapsilence">map-silence</a>, scramble-channel in examp.scm<br>
