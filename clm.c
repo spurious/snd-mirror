@@ -1087,9 +1087,12 @@ mus_float_t mus_array_interp(mus_float_t *wave, mus_float_t phase, mus_long_t si
       phase = fmod((double)phase, (double)size);
       if (phase < 0.0) phase += size;
     }
+
+#if (!HAVE_SINCOS) /* I guess if we have sincos, we probably have modf */
   int_part = (mus_long_t)floor(phase);
   frac_part = phase - int_part;
   if (int_part == size) int_part = 0;
+
   if (frac_part == 0.0) 
     return(wave[int_part]);
   else
@@ -1099,6 +1102,26 @@ mus_float_t mus_array_interp(mus_float_t *wave, mus_float_t phase, mus_long_t si
       if (inx >= size) inx = 0;
       return(wave[int_part] + (frac_part * (wave[inx] - wave[int_part])));
     }
+#else
+  {
+    mus_float_t n;
+    frac_part = modf(phase, &n);
+    if (frac_part == 0.0)
+      {
+	if (n >= size)
+	  return(wave[0]);
+	return(wave[(mus_long_t)n]);
+      }
+    else 
+      {
+	mus_long_t inx;
+	int_part = (mus_long_t)n;
+	inx = int_part + 1;
+	if (inx >= size) inx = 0;
+	return(wave[int_part] + (frac_part * (wave[inx] - wave[int_part])));
+      }
+  }
+#endif
 }
 
 

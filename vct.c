@@ -845,7 +845,10 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	XEN_OUT_OF_RANGE_ERROR("vct-set!", 2, s7_caddr(args), "index out of range");   
 
       for (; pos < end; pos++)
-	v->data[pos] = s7_call_direct_to_real_and_free(sc, val);
+	{
+	  (*step) = pos; /* in case val expr depends on the step var */
+	  v->data[pos] = s7_call_direct_to_real_and_free(sc, val);
+	}
       
       (*step) = end;
       return(args);

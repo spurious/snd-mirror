@@ -1916,6 +1916,7 @@
 
 	  ((display)
 	   (if (and (= (length form) 2)
+		    (pair? (cadr form))
 		    (eq? (car (cadr form)) 'format)
 		    (eq? (cadr (cadr form)) #f))
 	       (lint-format "~A could be ~A"
@@ -2791,8 +2792,9 @@
 				      name 
 				      (truncated-list->string form))
 			 (let ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
-			   (let ((vars (if named-let (list (list named-let #f #f)) ())))
-			     (do ((bindings (if named-let (caddr form) (cadr form)) (cdr bindings)))
+			   (let ((vars (if named-let (list (list named-let #f #f)) ()))
+				 (varlist (if named-let (caddr form) (cadr form))))
+			     (do ((bindings varlist (cdr bindings)))
 				 ((not (pair? bindings))
 				  (if (not (null? bindings))
 				      (lint-format "let variable list is not a proper list? ~S" 
@@ -2834,8 +2836,9 @@
 				      (truncated-list->string form))
 			 
 			 (let ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
-			   (let ((vars (if named-let (list (list named-let #f #f)) ())))
-			     (do ((bindings (if named-let (caddr form) (cadr form)) (cdr bindings)))
+			   (let ((vars (if named-let (list (list named-let #f #f)) ()))
+				 (varlist (if named-let (caddr form) (cadr form))))
+			     (do ((bindings varlist (cdr bindings)))
 				 ((not (pair? bindings))
 				  (if (not (null? bindings))
 				      (lint-format "let* variable list is not a proper list? ~S" 

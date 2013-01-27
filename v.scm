@@ -120,22 +120,31 @@
 			(set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
 			(set! modf (+ vib (* inoi (env indf1) (polywave fmosc1 vib))))
 			(locsig locs i (* anoi (oscil carrier modf))))
+		      
+		      (if (or ind-noi amp-noi fm-noi)
+			  (do ((i beg (+ i 1)))
+			      ((= i end))
+			    (if fm-noi (set! fuzz (rand fm-noi)))
+			    (if amp-noi 
+				(set! anoi (* (env ampf) (+ 1.0 (rand-interp amp-noi))))
+				(set! anoi (env ampf)))
+			    (if ind-noi (set! inoi (+ 1.0 (rand-interp ind-noi))))
+			    (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
+			    (set! modf (+ vib
+					  (* inoi
+					     (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+						(* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+						(* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
+			    (locsig locs i (* anoi (oscil carrier modf))))
 
-		      (do ((i beg (+ i 1)))
-			  ((= i end))
-			(if fm-noi (set! fuzz (rand fm-noi)))
-			(if amp-noi 
-			    (set! anoi (* (env ampf) (+ 1.0 (rand-interp amp-noi))))
-			    (set! anoi (env ampf)))
-			(if ind-noi (set! inoi (+ 1.0 (rand-interp ind-noi))))
-			(set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-			(set! modf (+ vib
-				      (* inoi
-					 (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-					    (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-					    (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
-			(locsig locs i (* anoi (oscil carrier modf))))))
-		
+			  (do ((i beg (+ i 1)))
+			      ((= i end))
+			    (let ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
+			      (locsig locs i (* (env ampf)
+						(oscil carrier (+ vib
+								  (* (env indf1) (oscil fmosc1 (* fm1-rat vib)))
+								  (* (env indf2) (oscil fmosc2 (* fm2-rat vib)))
+								  (* (env indf3) (oscil fmosc3 (* fm3-rat vib))))))))))))
 		(if (= (mus-scaler frqf) 0.0)
 		    (do ((i beg (+ i 1)))
 			((= i end))
@@ -154,3 +163,5 @@
 ;; (with-sound (:statistics #t) (fm-violin 0 10 440 .1 :fm-index 2.0))
 ;; (with-sound (:statistics #t) (fm-violin 0 10 440 .1 :noise-amount .01))
 ;; (with-sound (:statistics #t) (fm-violin 0 10 440 .1 :ind-noise-amount .01))
+;; (with-sound (:statistics #t) (fm-violin 0 10 440 .1 :fm1-rat 1.002))
+

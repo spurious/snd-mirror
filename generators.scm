@@ -5425,9 +5425,9 @@ index 10 (so 10/2 is the bes-jn arg):
 (define* (polyoid gen (fm 0.0))
   (set! (gen 'fm) fm)
   (with-environment gen
-    (let ((result (mus-chebyshev-tu-sum angle tn un)))
+    (let ((x angle))
       (set! angle (+ angle fm frequency))
-      result)))
+      (mus-chebyshev-tu-sum x tn un))))
 
 
 (define (polyoid-env gen fm amps phases)

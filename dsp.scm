@@ -927,12 +927,15 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
   (define (conv M h L x y)
     ;; x * h -> y
-    (do ((n 0 (+ 1 n)))
+    (do ((n 0 (+ n 1)))
 	((= n (+ L M)))
-      (set! (y n) 0.0)
-      (do ((m (max 0 (- n (+ 1 L))) (+ 1 m)))  ; m always starts at 0 here since the other expression is always <= 0
-	  ((> m (min n M)))
-	(set! (y n) (+ (y n) (* (h m) (x (- n m))))))))
+      (let ((sum 0.0)
+	    (start (max 0 (- n (+ L 1))))
+	    (end (min n M)))
+	(do ((m start (+ m 1)))
+	    ((> m end))
+	  (set! sum (+ sum (* (h m) (x (- n m))))))
+	(set! (y n) sum))))
 
   (let* ((K (length A))
 	 (d (make-vct (+ 1 (* 2 K))))
@@ -941,9 +944,10 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (do ((i 0 (+ i 1)))
 	((= i K))
       (conv 2 (A i) (+ 1 (* 2 i)) a1 d)
-      (do ((j 0 (+ j 1)))
-	  ((= j (+ 3 (* 2 i))))
-	(set! (a1 j) (d j))))
+      (let ((end (+ 3 (* 2 i))))
+	(do ((j 0 (+ j 1)))
+	    ((= j end))
+	  (vct-set! a1 j (vct-ref d j)))))
     a1))
 
 
@@ -2098,11 +2102,8 @@ and replaces it with the spectrum given in coeffs"
 
 ;;; -------- lpc-coeffs, lpc-predict
 
-(define (lpc-sqr x) (* x x))
-
 (define (lpc-coeffs data n m)
   ;; translated and changed to use 0-based arrays from memcof of NRinC
-  ;; not vcts except incoming data here because we need double precision
   
   "(lpc-coeffs data n m) returns 'm' LPC coeffients (in a vector) given 'n' data points in the vct 'data'"
   
@@ -2119,23 +2120,26 @@ and replaces it with the spectrum given in coeffs"
     (do ((k 0 (+ k 1)))
 	((= k m) d)
       (let ((num 0.0)
-	    (denom 0.0))
+	    (denom 0.0)
+	    (end (- n k 1)))
 	(do ((j 0 (+ j 1)))
-	    ((= j (- n k 1)))
-	  (set! num (+ num (* (vector-ref wk1 j) (vector-ref wk2 j))))
-	  (set! denom (+ denom (lpc-sqr (vector-ref wk1 j)) (lpc-sqr (vector-ref wk2 j)))))
+	    ((= j end))
+	  (let ((x1 (vector-ref wk1 j))
+		(x2 (vector-ref wk2 j)))
+	    (set! num (+ num (* x1 x2)))
+	    (set! denom (+ denom (* x1 x1) (* x2 x2)))))
 	(if (not (= denom 0.0))
 	    (set! (d k) (/ (* 2.0 num) denom)))
 	(do ((i 0 (+ i 1)))
 	    ((= i k)) ; 1st time is skipped presumably
 	  (set! (d i) (- (wkm i) (* (d k) (wkm (- k i 1))))))
 	(if (< k (- m 1))
-	    (begin
+	    (let ((end (- n k 2)))
 	      (do ((i 0 (+ i 1)))
 		  ((= i (+ k 1)))
-		(set! (wkm i) (d i)))
+		(vector-set! wkm i (vector-ref d i)))
 	      (do ((j 0 (+ j 1)))
-		  ((= j (- n k 2)))
+		  ((= j end))
 		(set! (wk1 j) (- (wk1 j) (* (wkm k) (wk2 j))))
 		(set! (wk2 j) (- (wk2 (+ j 1)) (* (wkm k) (wk1 (+ j 1))))))))))))
 

@@ -83,7 +83,7 @@
   (define (pvoc-edit pv) (pv 14))
   (define (pvoc-synthesize pv) (pv 15))
 
-  (let ((pi2 (* 2 pi)))
+  (let ((pi2 (* 2.0 pi)))
 
     (if (>= (pvoc-output pv) (pvoc-interp pv))
 	;; get next block of amp/phase info
@@ -129,16 +129,17 @@
 
 	  (if (pvoc-edit pv)
 	      ((pvoc-edit pv) pv)
-	      (let ((lp (pvoc-lastphase pv)))
+	      (let ((lp (pvoc-lastphase pv))
+		    (pscl (/ 1.0 D))
+		    (kscl (/ pi2 N))
+		    (lim (floor (/ N 2))))
 		;; if no editing func:
-		(do ((k 0 (+ k 1))
-		     (pscl (/ 1.0 D))
-		     (kscl (/ pi2 N)))
-		    ((= k (floor (/ N 2))))
-		  (let ((phasediff (- (freqs k) (lp k))))
+		(do ((k 0 (+ k 1)))
+		    ((= k lim))
+		  (let ((phasediff (remainder (- (freqs k) (lp k)) pi2)))
 		    (vct-set! lp k (freqs k))
-		    (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
-		    (if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))
+		    (if (> phasediff pi) (set! phasediff (- phasediff pi2))
+			(if (< phasediff (- pi)) (set! phasediff (+ phasediff pi2))))
 		    (set! (freqs k) (+ (* pscl phasediff) (* k kscl)))))))
 
 	  (let ((scl (/ 1.0 (pvoc-interp pv))))
@@ -161,11 +162,12 @@
 	  (sine-bank (pvoc-amps pv) (pvoc-phases pv))))
     ))
 
-;;;   (let* ((ind (open-sound "oboe.snd"))
-;;;	     (pv (make-pvocoder 256 4 64))
-;;;	     (rd (make-sampler 0)))
-;;;	(map-channel (lambda (y) (pvocoder pv (lambda () (rd)))))
-
+#|
+(let* ((ind (open-sound "oboe.snd"))
+       (pv (make-pvocoder 256 4 64))
+       (rd (make-sampler 0)))
+  (map-channel (lambda (y) (pvocoder pv (lambda () (rd))))))
+|#
 
 #|
 ;;; ---------------- same thing using phase-vocoder gen

@@ -736,6 +736,8 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_ZZX, HOP_SAFE_C_ZZX, OP_SAFE_C_ZXZ, HOP_SAFE_C_ZXZ, OP_SAFE_C_XZZ, HOP_SAFE_C_XZZ, 
       OP_SAFE_C_ZZZ, HOP_SAFE_C_ZZZ,
       OP_SAFE_C_SSP, HOP_SAFE_C_SSP,
+
+      OP_DOX_OR_ALL_X, OP_DOX_OR_C, OP_DOX_OR_NOT, OP_DOX_NONE,
       
       OPT_MAX_DEFINED
 };
@@ -844,6 +846,8 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_zzx", "h_safe_c_zzx", "safe_c_zxz", "h_safe_c_zxz", "safe_c_xzz", "h_safe_c_xzz", 
       "safe_c_zzz", "h_safe_c_zzz",
       "safe_c_ssp", "h_safe_c_ssp",
+
+      "dox_or_all_x", "dox_or_c", "dox_not", "dox_none",
       
       "opt_max_defined"
   };
@@ -27517,6 +27521,10 @@ static void initialize_dox_vars(s7_scheme *sc, s7_pointer end)
       environment_dox1(sc->envir) = find_symbol(sc, cadr(cadr(end)));
       environment_dox2(sc->envir) = find_symbol(sc, cadr(caddr(end)));
       break;
+
+    case OP_DOX_OR_NOT:
+      environment_dox1(sc->envir) = find_symbol(sc, cadar(end));
+      break;
     }
 }
 
@@ -28693,11 +28701,11 @@ s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr)
 {
   s7_Double val;
   s7_pointer temp;
-#if (!WITH_GMP)
+
   temp = c_function_call(ecdr(expr))(sc, cdr(expr));
+#if (!WITH_GMP)
   val = real(temp);
 #else
-  temp = c_function_call(ecdr(expr))(sc, cdr(expr));
   val = s7_real(temp);
 #endif
   if (is_simple_real(temp)) /* i.e. not immutable, not integer or something else unexpected */
@@ -42927,26 +42935,23 @@ static s7_pointer end_dox_or_c(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer p;
   for (p = cdr(code); is_pair(p); p = cdr(p))
-    {
-      sc->value = c_call(car(p))(sc, cdar(p));
-      if (is_true(sc, sc->value))
-	return(sc->value);
-    }
-  sc->value = sc->F;
-  return(sc->value);
+    if (is_true(sc, c_call(car(p))(sc, cdar(p))))
+      return(sc->T);
+  return(sc->F);
 }
 
 static s7_pointer end_dox_or_all_x(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer p;
   for (p = cdr(code); is_pair(p); p = cdr(p))
-    {
-      sc->value = ((s7_function)fcdr(p))(sc, car(p));
-      if (is_true(sc, sc->value))
-	return(sc->value);
-    }
-  sc->value = sc->F;
+    if (is_true(sc, ((s7_function)fcdr(p))(sc, car(p))))
+      return(sc->T);
   return(sc->F);
+}
+
+static s7_pointer end_dox_or_not(s7_scheme *sc, s7_pointer code)
+{
+  return((is_false(sc, slot_value(environment_dox1(sc->envir)))) ? sc->T : ((s7_function)fcdr(cddr(code)))(sc, caddr(code)));
 }
 
 static s7_pointer end_dox_is_eof(s7_scheme *sc, s7_pointer code)
@@ -42993,8 +42998,9 @@ static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code)
     case HOP_SAFE_C_S_opSCq:   return(end_dox_c_s_opscq);
     case HOP_SAFE_C_S_opSSq:   return(end_dox_c_s_opssq);
 
-    case OP_NOT_AN_OP:         return(end_dox_or_all_x);
-    case HOP_NOT_AN_OP:        return(end_dox_or_c);
+    case OP_DOX_OR_ALL_X:      return(end_dox_or_all_x);
+    case OP_DOX_OR_C:          return(end_dox_or_c);
+    case OP_DOX_OR_NOT:        return(end_dox_or_not);
     }
   return(NULL);
 }
@@ -43299,11 +43305,17 @@ static s7_pointer check_do(s7_scheme *sc)
 
 	      /* fprintf(stderr, "or: %s %s\n", DISPLAY(car(end)), real_op_names[(opcode_t)lifted_op(car(end))]); */
 	      if ((opcode_t)lifted_op(car(end)) == OP_SAFER_OR_C)
-		set_optimize_data(car(end), HOP_NOT_AN_OP);
+		set_optimize_data(car(end), OP_DOX_OR_C);
 	      else
 		{
 		  if ((opcode_t)lifted_op(car(end)) == OP_SAFE_OR_ALL_X)
-		    set_optimize_data(car(end), OP_NOT_AN_OP);
+		    {
+		      if ((s7_list_length(sc, car(end)) == 3) &&
+			  (optimize_data(cadar(end)) == HOP_SAFE_C_S) &&
+			  (caadar(end) == sc->NOT))
+			set_optimize_data(car(end), OP_DOX_OR_NOT);
+		      else set_optimize_data(car(end), OP_DOX_OR_ALL_X);
+		    }
 		  else return(sc->code);
 		}
 	    }
@@ -45785,6 +45797,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_DO_UNCHECKED:
+#if WITH_COUNTS
+      add_expr(sc, sc->code);
+#endif
+      /* fprintf(stderr, "do %s\n", DISPLAY(sc->code)); */
+
       if (is_null(car(sc->code)))                           /* (do () ...) -- (let ((i 0)) (do () ((= i 1)) (set! i 1))) */
 	{
 	  sc->envir = new_frame_in_env(sc, sc->envir); 
@@ -49397,39 +49414,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_SAFE_C_AAA:
 	      {
-		/* t502: 
-		     445409: (+ (* frq 825.0) (rand-interp noise) (* 0.1 md))
-		       352800: (* hfreq (+ 1.0 (rand-interp indf)) pitch)
-		         321048: (* (exp (* r (cos y))) (cos (+ x (* r (sin y)))) ar)
-			   132300: (* (+ 0.035 (polywave gen5)) (- 1.0 pval) (oscil gen2 (* 2.4 noise)))
-			     95917: (* -2.0 r (cos x))
-			       81050: (oscil gen1 (rand-interp rnd) (+ (* 0.1 (oscil md)) (* 0.2 (oscil md1))))
-			         79375: (oscil gen1 frq (* 0.03 (oscil gen2 (* 2 frq))))
-				   77996: (oscil gen2 0.0 (* 2 rn))
-				     77996: (oscil gen3 0.0 (* 3 rn))
-				       47187: (* ind 0.1 (oscil gen2 (* 2 frq)))
-		   snd-test:
-445409: (+ (* frq 825.0) (rand-interp noise) (* 0.1 md))
-419248: (* (exp (* r (cos y))) (cos (+ x (* r (sin y)))) ar)
-352800: (* hfreq (+ 1.0 (rand-interp indf)) pitch)
-204042: (* angle angle (- rmp1 rmp0))
-198967: (* -2.0 r (cos x))
-176400: (comb d0 (pulse-train s) (env zenv))
-166657: (amplitude-modulate 1.0 inval (oscil os))
-132300: (* (+ 0.035 (polywave gen5)) (- 1.0 pval) (oscil gen2 (* 2.4 noise)))
-101756: (+ y (mus-random dither) (mus-random dither))
-101656: (delay del inval (rand-interp ri))
-94929: (formant-bank spectr formants (ncos pulse))
-92610: (move-sound loc i (* amp (oscil os)))
-92050: (* 4 sx2 sx2)
-92008: (* 0.5 n (- n 1))
-88522: (* -2.0 r (cos y))
-88200: (+ 0.25 (abs (* (env bouncef) (oscil gen1))) (env rf))
-81050: (oscil gen1 (rand-interp rnd) (+ (* 0.1 (oscil md)) (* 0.2 (oscil md1))))
-79375: (oscil gen1 frq (* 0.03 (oscil gen2 (* 2 frq))))
-78549: (oscil gen2 0.0 (* 2 rn))
-78549: (oscil gen3 0.0 (* 3 rn))
-		 */
 		s7_pointer arg;
 		arg = cdr(code);
 		car(sc->A3_1) = ((s7_function)fcdr(arg))(sc, car(arg));
@@ -49451,6 +49435,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		int num_args;
 		s7_pointer args, p;
 		
+		/* 445409: (* md md nrx (pulsed-env peep frq))
+305028: (sound-data-set! data 0 data-ctr interp)
+254140: (sample->file rdout k 0 (readin rdin))
+220000: (* a r -2.0 (cos x))
+203312: (sound-data-set! data 0 data-ctr sum)
+77347: (sound-data-set! sd i pos (frame-ref fr i))
+23100: (* 0.5 index (+ r r1) (sin modphase))
+22100: (* 0.5 index (- r r1) (+ one (cos modphase)))
+22050: (+ vib (* (env indf1) (oscil fmosc1 vib)) (* (env indf2) (oscil fmosc2 (* 3.0 vib))) (* (env indf3) (oscil fmosc3 (* 4.0 vib))))
+22050: (* 0.5 pi zval zval zval)
+19954: (* tn tn n n 2)
+10000: (* r1 r1 r3 (sin x))
+		 */
 		num_args = integer(arglist_length(code));
 		if ((num_args != 0) &&
 		    (num_args < NUM_SAFE_LISTS) &&
@@ -62519,6 +62516,6 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14
  * t502        90   43   39   36   29   24
  * lat        229   63   52   47   42   40
- * calls           275  207  175  115   95
+ * calls           275  207  175  115   94
  */
 

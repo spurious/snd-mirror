@@ -7223,9 +7223,9 @@ EDITS: 5
 		     (lambda (snd) (env-channel '(0 1.0 1 0.5))) 'env-channel ind1)
 	  (test-orig (lambda (snd) (env-channel (make-env :envelope '(0 2 1 2 2 0.5 3 0.5) :base 0 :length (frames))))
 		     (lambda (snd) (env-channel (make-env :envelope '(0 0.5 1 0.5 2 2 3 2) :base 0 :length (frames)))) 'env-channel ind1)
-	  (test-orig (lambda (snd) (map-channel (lambda (n) (* n 2)))) (lambda (snd) (map-channel (lambda (n) (* n 0.5)))) 'map-channel ind1)
-	  (test-orig (lambda (snd) (map-channel (lambda (n) (* n 2)) 1234)) (lambda (snd) (map-channel (lambda (n) (* n 0.5)) 1234)) 'map-channel ind1)
-	  (test-orig (lambda (snd) (map-channel (lambda (n) (* n 2)) 12005 10)) (lambda (snd) (map-channel (lambda (n) (* n 0.5)) 12005 10)) 'map-channel ind1)
+	  (test-orig (lambda (snd) (map-channel (lambda (n) (* n 2.0)))) (lambda (snd) (map-channel (lambda (n) (* n 0.5)))) 'map-channel ind1)
+	  (test-orig (lambda (snd) (map-channel (lambda (n) (* n 2.0)) 1234)) (lambda (snd) (map-channel (lambda (n) (* n 0.5)) 1234)) 'map-channel ind1)
+	  (test-orig (lambda (snd) (map-channel (lambda (n) (* n 2.0)) 12005 10)) (lambda (snd) (map-channel (lambda (n) (* n 0.5)) 12005 10)) 'map-channel ind1)
 	  (test-orig (lambda (snd) (map-channel 
 				    (let ((vect (make-vct 2 0.0))) 
 				      (lambda (y) 
@@ -7240,7 +7240,7 @@ EDITS: 5
 					    (set! outp (* y 0.5)))
 					outp))))
 		     'map-channel ind1)
-	  (test-orig (lambda (snd) (map-chan (lambda (n) (* n 2)))) (lambda (snd) (map-chan (lambda (n) (* n 0.5)))) 'map-chan ind1)
+	  (test-orig (lambda (snd) (map-chan (lambda (n) (* n 2.0)))) (lambda (snd) (map-chan (lambda (n) (* n 0.5)))) 'map-chan ind1)
 	  (test-orig (lambda (snd) (pad-channel 1000 2000 ind1)) (lambda (snd) (delete-samples 1000 2000 ind1)) 'pad-channel ind1)
 	  (test-orig (lambda (snd) (clm-channel (make-one-zero :a0 2.0 :a1 0.0)))
 		     (lambda (snd) (clm-channel (make-one-zero :a0 0.5 :a1 0.0))) 'clm-channel ind1)
@@ -7564,18 +7564,19 @@ EDITS: 5
 	       (e0 (channel-amp-envs ind 0)))
 	  
 	  (define (peak-env-equal? name index e diff)
-	    (let* ((reader (make-sampler 0 index 0))
-		   (e-size (vct-length (car e)))
-		   (samps-per-bin (ceiling (/ (frames index) e-size)))
-		   (mins (car e))
-		   (maxs (cadr e))
-		   (max-diff 0.0)
-		   (happy #t))
-	      (do ((e-bin 0)
-		   (samp 0 (+ samp 1))
-		   (mx -10.0)
-		   (mn 10.0))
-		  ((or (not happy) (= e-bin e-size))
+	    (let ((reader (make-sampler 0 index 0))
+		  (e-size (vct-length (car e))))
+	      (let ((samps-per-bin (ceiling (/ (frames index) e-size)))
+		    (mins (car e))
+		    (maxs (cadr e))
+		    (max-diff 0.0)
+		    (happy #t)
+		    (e-bin 0)
+		    (mx -10.0)
+		    (mn 10.0))
+	      (do ((samp 0 (+ samp 1)))
+		  ((or (not happy) 
+		       (= e-bin e-size))
 		   happy)
 		(if (>= samp (floor samps-per-bin))
 		    (let ((mxdiff (abs (- mx (maxs e-bin))))
@@ -7601,7 +7602,7 @@ EDITS: 5
 		  (if (< val mn)
 		      (set! mn val))
 		  (if (> val mx)
-		      (set! mx val))))))
+		      (set! mx val)))))))
 	  
 	  (if (null? e0)
 	      (snd-display #__line__ ";no amp env data")
@@ -20867,10 +20868,10 @@ EDITS: 2
 					      (pscl (/ 1.0 D))
 					      (kscl (/ pi2 N)))
 					     ((= k (floor (/ N 2))))
-					   (let ((phasediff (- (freqs k) (lastphases k))))
+					   (let ((phasediff (remainder (- (freqs k) (lastphases k)) pi2)))
 					     (set! (lastphases k) (freqs k))
-					     (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
-					     (if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))
+					     (if (> phasediff pi) (set! phasediff (- phasediff pi2))
+						 (if (< phasediff (- pi)) (set! phasediff (+ phasediff pi2))))
 					     (set! (freqs k) 
 						   (* 0.5
 						      (+ (* pscl phasediff)
@@ -24436,7 +24437,9 @@ EDITS: 2
        (lambda (return)
 	 (do ((i 0)
 	      (j 0))
-	     ((= i len1) (begin (while (and (< j len1) (white-space? s2 j)) (set! j (+ j 1))) (= j len1)))
+	     ((= i len1) 
+	      (while (and (< j len1) (white-space? s2 j)) (set! j (+ j 1)))
+	      (= j len1))
 	   (if (char=? (s1 i) (s2 j))
 	       (begin
 		 (set! i (+ i 1))
@@ -29840,7 +29843,7 @@ EDITS: 2
 										    (selected-sound)))))
 						  args))))
 	  (funcs-equal? "map-chan"
-			(lambda args (map-chan (lambda (n) (* n 2)) 
+			(lambda args (map-chan (lambda (n) (* n 2.0)) 
 					       (if (> (length args) 0) (car args) 0)
 					       (if (and (> (length args) 1) 
 							(number? (cadr args)))
@@ -29850,7 +29853,7 @@ EDITS: 2
 					       (if (> (length args) 2)
 						   (caddr args)
 						   (selected-sound))))
-			(lambda args (map-channel (lambda (n) (* n 2))
+			(lambda args (map-channel (lambda (n) (* n 2.0))
 						  (if (> (length args) 0) (car args) 0)
 						  (if (and (> (length args) 1) 
 							   (number? (cadr args)))
@@ -30880,7 +30883,7 @@ EDITS: 2
 					   (list (lambda () (scale-channel 2.0))
 						 (lambda () (reverse-channel))
 						 (lambda () (env-channel '(0 0 1 1)))
-						 (lambda () (map-channel (lambda (y) (* y 2))))
+						 (lambda () (map-channel (lambda (y) (* y 2.0))))
 						 (lambda () (scan-channel (lambda (y) (> y 1.0))))
 						 (lambda () (pad-channel 0 2000))
 						 (lambda () (vct->channel (vct-fill! (make-vct 1000) .1) 0 1000))
@@ -31217,15 +31220,13 @@ EDITS: 2
 	  (for-each
 	   (lambda (n)
 	     (let ((val (scan-channel (lambda (y) 
-					(let ((bigger (scan-channel (lambda (n5) 
-								      (> n5 .1)))))
+					(let ((bigger (scan-channel (lambda (n5) (> n5 .1)))))
 					  bigger)))))
 	       (if (not (equal? val 0))
 		   (snd-display #__line__ ";scan-channel in scan-channel (opt ~A): ~A" n val)))
 	     (let ((hi (make-vct 3))
 		   (ho (make-vct 3)))
-	       (fill-vct hi (if (scan-channel (lambda (y)
-						(> y .1))) 
+	       (fill-vct hi (if (scan-channel (lambda (y) (> y .1)))
 				1.0 0.0))
 	       (if (not (vequal hi (vct 1.0 1.0 1.0))) (snd-display #__line__ ";fill-vct with scan-channel (opt ~A): ~A" n hi)))
 	     (let ((val (my-find-channel (lambda (y) (my-find-channel (lambda (n6) (> n6 .1)))))))
@@ -31233,15 +31234,14 @@ EDITS: 2
 	     (let ((val (my-find-channel (lambda (y) (scan-channel (lambda (n7) (> n7 .1)))))))
 	       (if (not (= val 0)) (snd-display #__line__ ";find with scan-channel: ~A" val)))
 	     (let ((mx (maxamp ind 0))
-		   (val (scan-channel (lambda (y) (map-channel (lambda (n) (* n 2))) #t))))
+		   (val (scan-channel (lambda (y) (map-channel (lambda (n) (* n 2.0))) #t))))
 	       (if (not (equal? val 0)) (snd-display #__line__ ";scan-channel with map-channel: ~A" val))
 	       (if (fneq mx (/ (maxamp ind 0) 2)) (snd-display #__line__ ";scan+map max: ~A ~A" mx (maxamp ind 0)))
 	       (if (not (= (edit-position ind 0) 1)) (snd-display #__line__ ";scan+map edit-pos: ~A" (edit-position ind 0)))
 	       (revert-sound ind)
 	       (map-channel (let ((ctr 0)) 
 			      (lambda (y) 
-				(if (= ctr 0) (map-channel (lambda (n) 
-							     (* n 2)))) 
+				(if (= ctr 0) (map-channel (lambda (n) (* n 2.0)))) 
 				(set! ctr 1) 
 				y)))
 	       (if (fneq mx (maxamp ind 0)) (snd-display #__line__ ";map+map max 2: ~A ~A" mx (maxamp ind 0)))
@@ -31323,7 +31323,7 @@ EDITS: 2
 		((6) (ramp-channel (random 1.0) (random 1.0) (random len) (random 1000)))
 		((7) (reverse-channel (random len) (random 1000)))
 		((8) (let ((dur (max 2 (floor (random 100))))) (vct->channel (make-vct dur) (random len) dur)))
-		((9) (map-channel (lambda (y) (* y 2)) (random (floor (/ (frames) 2))) (random 1000))))))
+		((9) (map-channel (lambda (y) (* y 2.0)) (random (floor (/ (frames) 2))) (random 1000))))))
 	  (close-sound ind))
 	
 	(let ((ind0 (open-sound "oboe.snd"))
@@ -47252,22 +47252,6 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,216,029,830  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
  2,051,926,172  s7.c:gc [/home/bil/snd-13/snd]
 
-26-May-12:
-154,970,007,703 
-15,972,773,163  ???:sin [/lib64/libm-2.12.so]
-15,712,899,734  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
-10,496,022,409  s7.c:eval [/home/bil/snd-13/snd]
- 9,462,200,622  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
- 8,729,495,812  run.c:eval_ptree [/home/bil/snd-13/snd]
- 7,224,197,275  io.c:mus_write_1 [/home/bil/snd-13/snd]
- 4,302,198,256  s7.c:eval'2 [/home/bil/snd-13/snd]
- 3,042,345,461  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,960,895,840  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,775,989,275  ???:cos [/lib64/libm-2.12.so]
- 2,765,493,217  clm.c:mus_out_any_to_file [/home/bil/snd-13/snd]
- 2,230,051,768  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-
 2-Jul-12:
 152,015,041,884
 15,958,491,763  ???:sin [/lib64/libm-2.12.so]
@@ -47312,22 +47296,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-25-Jan-13:
-95,026,991,590
-16,588,399,668  s7.c:eval [/home/bil/snd-13/snd]
- 6,966,442,762  ???:sin [/lib64/libm-2.12.so]
- 6,189,090,937  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 3,463,162,979  s7.c:eval'2 [/home/bil/snd-13/snd]
- 3,181,092,324  s7.c:gc [/home/bil/snd-13/snd]
- 2,995,929,160  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+26-Jan-13:
+93,680,790,267
+15,721,759,199  s7.c:eval [/home/bil/snd-13/snd]
+ 6,955,790,502  ???:sin [/lib64/libm-2.12.so]
+ 5,963,086,415  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 3,516,458,540  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 3,096,820,704  s7.c:gc [/home/bil/snd-13/snd]
+ 3,082,153,429  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 3,023,885,158  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,776,047,206  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,730,956,052  clm.c:mus_src [/home/bil/snd-13/snd]
  2,702,749,996  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 2,553,958,307  ???:cos [/lib64/libm-2.12.so]
+ 2,545,935,091  ???:cos [/lib64/libm-2.12.so]
+ 2,528,080,193  clm.c:mus_src [/home/bil/snd-13/snd]
  1,586,168,833  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,572,038,428  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,152,081,157  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 1,571,675,606  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,309,696,198  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
+ 1,152,084,071  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
- 1,048,631,240  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
 |#
