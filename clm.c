@@ -2352,8 +2352,13 @@ mus_float_t mus_table_lookup(mus_any *ptr, mus_float_t fm)
       /* we're checking already for out-of-range indices, so mus_array_interp is more than we need */
       mus_long_t int_part;
       mus_float_t frac_part, f1;
+#if (!HAVE_SINCOS)
       int_part = (mus_long_t)floor(gen->phase);
       frac_part = gen->phase - int_part;
+#else
+      frac_part = modf(gen->phase, &f1);
+      int_part = (mus_long_t)f1;
+#endif
       f1 = gen->table[int_part];
       int_part++;
       if (int_part == gen->table_size)
@@ -2381,8 +2386,13 @@ mus_float_t mus_table_lookup_unmodulated(mus_any *ptr)
       /* see above */
       mus_long_t int_part;
       mus_float_t frac_part, f1;
+#if (!HAVE_SINCOS)
       int_part = (mus_long_t)floor(gen->phase);
       frac_part = gen->phase - int_part;
+#else
+      frac_part = modf(gen->phase, &f1);
+      int_part = (mus_long_t)f1;
+#endif
       f1 = gen->table[int_part];
       int_part++;
       if (int_part == gen->table_size)

@@ -23,6 +23,7 @@
 ;;; http://www.york.ac.uk/inst/mustech/3d_audio/ambison.htm for more details...
 
 ;;; CHANGES:
+;;; 01/28/2012: third order ambisonics support (Nando).
 ;;; 04/18/2011: various small changes from lint.scm.
 ;;; 04/26/2010: add delay hack to remove artifacts in delay output, fix other bugs (Nando)
 ;;;             added proper doppler src conversion thanks to Bill's code in dsp.scm
@@ -594,11 +595,16 @@
 (define point707 (cos (/ (* pi 2) 8.0)))
 (define dlocsig-ambisonics-scaler point707)
 (define dlocsig-ambisonics-ho-rev-scaler 0.05)
+;; for 3rd order FuMa
+(define ambisonics-k1 (sqrt (/ (* 21 45) 224 8)))
+(define ambisonics-k2 (* (sqrt 3) 3 0.5))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Get number of channels needed by ambisonics
 
-(define (ambisonics-channels h-order v-order)
+(define* (ambisonics-channels 
+	  (h-order dlocsig-ambisonics-h-order)
+	  (v-order dlocsig-ambisonics-v-order))
   (let ((count 0))
     (if (>= h-order 0)
 	(begin
@@ -613,6 +619,12 @@
 	      (set! count (+ count 3)))
 	  (if (>= h-order 2)
 	      ;; U V
+	      (set! count (+ count 2)))
+	  (if (>= v-order 3)
+	      ;; K L M N O
+	      (set! count (+ count 5)))
+	  (if (>= h-order 3)
+	      ;; P Q
 	      (set! count (+ count 2)))
 	  count)
 	;; error: we need at least horizontal order 1!
@@ -2065,9 +2077,9 @@
   ;; check to see if we have the right number of channels for b-format ambisonics
   (if (= render-using ambisonics)
       (begin
-	(if (or (> ambisonics-h-order 2)
-		(> ambisonics-v-order 2))
-	    (error 'mus-error "ERROR: ambisonics encoding is currently limited to second order components~%"))
+	(if (or (> ambisonics-h-order 3)
+		(> ambisonics-v-order 3))
+	    (error 'mus-error "ERROR: ambisonics encoding is currently limited to third order components~%"))
 	(let ((channels (ambisonics-channels ambisonics-h-order ambisonics-v-order)))
 	  (if (< (or out-channels (mus-channels *output*)) channels)
 	      (error 'mus-error "ERROR: ambisonics number of channels is wrong, dlocsig needs ~A output channels for h:~A, v:~A order (current number is ~A)~%"
@@ -2077,7 +2089,7 @@
       (if *output*
 	  (set! out-channels (channels *output*))
 	  (begin
-	    (format #t "WARNING: no *output*?  Will set out-channels to 2~%~%")
+	    (format #t "WARNING: no *output*?  Will set out-channels to 2~%")
 	    (set! out-channels 2))))
   (if (not rev-channels)
       (set! rev-channels (if *reverb* (channels *reverb*) 0)))
@@ -2127,6 +2139,8 @@
 	 (min-dist-unity #f)
 	 (unity-gain 1.0)
 	 (unity-rev-gain 1.0)
+	 (amb-unity-gain 1.0)
+	 (amb-unity-rev-gain 1.0)
 	 (run-beg #f)
 	 (run-end #f)
 	 ;; channel offsets in output stream for ambisonics
@@ -2139,8 +2153,15 @@
 	 (s-offset #f)
 	 (t-offset #f)
 	 (u-offset #f)
-	 (v-offset #f))
-    
+	 (v-offset #f)
+	 (k-offset #f)
+	 (l-offset #f)
+	 (m-offset #f)
+	 (n-offset #f)
+	 (o-offset #f)
+	 (p-offset #f)
+	 (q-offset #f))
+
     (if (= render-using ambisonics)
 	;; calculate output channel offsets for ambisonics rendering
 	(let ((offset 3))
@@ -2162,8 +2183,23 @@
 		;; add U V
 		(set! u-offset offset)
 		(set! v-offset (+ offset 1))
-		(set! offset (+ offset 2))))))
-    
+		(set! offset (+ offset 2))))
+	  (if (>= ambisonics-v-order 3)
+	      (begin
+		;; add K L M N O 
+		(set! k-offset offset)
+		(set! l-offset (+ offset 1))
+		(set! m-offset (+ offset 2))
+		(set! n-offset (+ offset 3))
+		(set! o-offset (+ offset 4))
+		(set! offset (+ offset 5))))
+	  (if (>= ambisonics-h-order 3)
+	      (begin
+		;; add P Q
+		(set! p-offset offset)
+		(set! q-offset (+ offset 1)))
+		(set! offset (+ offset 2)))))
+
     (define (equalp-intersection l1 l2)
       (if (null? l2) 
 	  l2
@@ -2402,7 +2438,7 @@
 	    (if (not (= time prev-time))
 		(let ((speed (/ (- dist prev-dist) (- time prev-time))))
 		  (if (> speed speed-limit)
-		      (format #t "WARNING: supersonic radial movement at [~F,~F,~F, ~F], speed=~F~%~%" x y z time speed))))
+		      (format #t "WARNING: supersonic radial movement at [~F,~F,~F, ~F], speed=~F~%" x y z time speed))))
 	    (if inside
 		;; still in the same group
 		(begin
@@ -2497,11 +2533,11 @@
 										(group-vertices group))))
 					       (format #t "e1=~A; e2=~A~%~%" edge1 edge2))))
 				       (speaker-config-groups speakers))
-				      (format #t "WARNING: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%~%" prev-group group))
+				      (format #t "WARNING: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group))
 				    
 				    ;; groups don't share points... how did we get here?
 				    (if (= (length edge) 0)
-					(format #t "WARNING: crossing between groups with no common points, ~A~A to ~A~A~%~%"
+					(format #t "WARNING: crossing between groups with no common points, ~A~A to ~A~A~%"
 						(group-id prev-group) (group-speakers prev-group)
 						(group-id group) (group-speakers group))))))
 			
@@ -2543,6 +2579,15 @@
     ;; T     sin(A)sin(2E)        2yz
     ;; U     cos(2A)cos(E)cos(E)  xx-yy
     ;; V     sin(2A)cos(E)cos(E)  2xy
+    ;; K                          z(2.5zz-1.5)
+    ;; L                          K1(x(5zz-1)
+    ;;       K1=sqrt(21*45/(224*8))
+    ;; M                          K1(y(5zz-1))
+    ;; N                          K2(Uz)
+    ;;       K2=sqrt(3)*3/2
+    ;; O                          K2(Vz)
+    ;; P                          x(xx-3yy)
+    ;; Q                          y(3xx-yy)
     ;;
     ;; where:
     ;; A: counter-clockwise angle of rotation from the front center
@@ -2566,6 +2611,14 @@
     ;; U: (* signal (- (* x x 1/dist 1/dist) (* y y 1/dist 1/dist)))
     ;; V: (* signal 2 (- x) y 1/dist 1/dist)
     ;;
+    ;; K: (* signal z (- (* 2.5 z z 1/dist 1/dist) 1.5))
+    ;; L: (* signal K1 x 1/dist (- (* 5 z z 1/dist 1/dist) 1))
+    ;; M: (* signal K1 y 1/dist (- (* 5 z z 1/dist 1/dist) 1))
+    ;; N: (* signal K2 U z 1/dist)
+    ;; O: (* signal K2 V z 1/dist)
+    ;; P: (* signal x 1/dist (- (* x x 1/dist 1/dist) (* 3 y y 1/dist 1/dist)))
+    ;; Q: (* signal y 1/dist (- (* 3 x x 1/dist 1/dist) (* y y 1/dist 1/dist)))
+    ;;
     ;; see also: http://wiki.xiph.org/index.php/Ambisonics
     ;; for mixed order systems
     ;;
@@ -2581,7 +2634,12 @@
 		       (expt (/ dist inside-radius) (/ inside-reverb-power))))
 	     (rattW (if (> dist inside-radius)
 			(* point707 ratt)
-			(- 1 (* (- 1 point707) (expt (/ dist inside-radius) reverb-power))))))
+			(- 1 (* (- 1 point707) (expt (/ dist inside-radius) reverb-power)))))
+	     ;; storage for some intermediate calculations
+	     (u 0)
+	     (v 0)
+	     (lm 0)
+	     (no 0))
 	;; output encoding gains for point
 	;; W: 0.707
 	(set! (channel-gains w-offset) (cons time (channel-gains w-offset)))
@@ -2613,15 +2671,46 @@
 						   (channel-gains t-offset)))))
 	(if (>= ambisonics-h-order 2)
 	    (begin
+	      (set! u (* (if (zero? dist) 0 1) (- (* x x (if (zero? dist) 1 (/ 1 (* dist dist))))
+						  (* y y (if (zero? dist) 1 (/ 1 (* dist dist))))) att))
+	      (set! v (* (if (zero? dist) 0 2) (- x) y (if (zero? dist) 1 (/ 1 (* dist dist))) att))
 	      ;; U
 	      (set! (channel-gains u-offset) (cons time (channel-gains u-offset)))
-	      (set! (channel-gains u-offset) (cons (* (if (zero? dist) 0 1) (- (* x x (if (zero? dist) 1 (/ 1 (* dist dist))))
-									       (* y y (if (zero? dist) 1 (/ 1 (* dist dist))))) att)
-						   (channel-gains u-offset)))
+	      (set! (channel-gains u-offset) (cons u (channel-gains u-offset)))
 	      ;; V
 	      (set! (channel-gains v-offset) (cons time (channel-gains v-offset)))
-	      (set! (channel-gains v-offset) (cons (* (if (zero? dist) 0 2) (- x) y (if (zero? dist) 1 (/ 1 (* dist dist))) att)
-						   (channel-gains v-offset)))))
+	      (set! (channel-gains v-offset) (cons v (channel-gains v-offset)))))
+	(if (>= ambisonics-v-order 3)
+	    (begin
+	      (set! lm (* ambisonics-k1 (- (* 5 z z (if (zero? dist) 1 (/ 1 (* dist dist)))) 1) att))
+	      (set! no (* ambisonics-k2 z (if (zero? dist) 1 (/ dist)) att))
+	      ;; K
+	      (set! (channel-gains k-offset) (cons time (channel-gains k-offset)))
+	      (set! (channel-gains k-offset) (cons (* (if (zero? dist) 0 1) (- (* 2.5 z z (if (zero? dist) 1 (/ 1 (* dist dist)))) 1.5) att) (channel-gains k-offset)))
+	      ;; L
+	      (set! (channel-gains l-offset) (cons time (channel-gains l-offset)))
+	      (set! (channel-gains l-offset) (cons (* (if (zero? dist) 0 (/ x dist)) lm) (channel-gains l-offset)))
+	      ;; M
+	      (set! (channel-gains m-offset) (cons time (channel-gains m-offset)))
+	      (set! (channel-gains m-offset) (cons (* (if (zero? dist) 0 (/ y dist)) lm) (channel-gains m-offset)))
+	      ;; N
+	      (set! (channel-gains n-offset) (cons time (channel-gains n-offset)))
+	      (set! (channel-gains n-offset) (cons (* (if (zero? dist) 0 no) u) (channel-gains n-offset)))
+	      ;; O
+	      (set! (channel-gains o-offset) (cons time (channel-gains o-offset)))
+	      (set! (channel-gains o-offset) (cons (* (if (zero? dist) 0 no) v) (channel-gains o-offset)))))
+	(if (>= ambisonics-h-order 3)
+	    (begin
+	      ;; P
+	      (set! (channel-gains p-offset) (cons time (channel-gains p-offset)))
+	      (set! (channel-gains p-offset) (cons (* (if (zero? dist) 0 (/ att dist)) x 
+						      (- (* x x (if (zero? dist) 1 (/ 1 (* dist dist))))
+							 (* 3 y y (if (zero? dist) 1 (/ 1 (* dist dist)))))) (channel-gains p-offset)))
+	      ;; Q
+	      (set! (channel-gains q-offset) (cons time (channel-gains q-offset)))
+	      (set! (channel-gains q-offset) (cons (* (if (zero? dist) 0 (/ att dist)) y
+						      (- (* 3 x x (if (zero? dist) 1 (/ 1 (* dist dist))))
+							 (* y y (if (zero? dist) 1 (/ 1 (* dist dist)))))) (channel-gains q-offset)))))
 	;; push reverb gain into envelope
 	(if (= rev-channels 1)
 	    (begin
@@ -2674,7 +2763,40 @@
 		    ;; V
 		    (set! (channel-rev-gains v-offset) (cons time (channel-rev-gains v-offset)))
 		    (set! (channel-rev-gains v-offset) (cons (* (if (zero? dist) 0 2) (- x) y (if (zero? dist) 1 (/ 1 (* dist dist))) ho-ratt ratt)
-							     (channel-rev-gains v-offset)))))))))
+							     (channel-rev-gains v-offset)))))
+
+	      (if (>= ambisonics-v-order 3)
+		  (begin
+		    (set! lm (* ambisonics-k1 (- (* 5 z z (if (zero? dist) 1 (/ 1 (* dist dist)))) 1) ho-ratt ratt))
+		    (set! no (* ambisonics-k2 z (if (zero? dist) 1 (/ dist)) ratt))
+		    ;; K
+		    (set! (channel-rev-gains k-offset) (cons time (channel-rev-gains k-offset)))
+		    (set! (channel-rev-gains k-offset) (cons (* (if (zero? dist) 0 1) (- (* 2.5 z z (if (zero? dist) 1 (/ 1 (* dist dist)))) 1.5) ho-ratt ratt) (channel-rev-gains k-offset)))
+		    ;; L
+		    (set! (channel-rev-gains l-offset) (cons time (channel-rev-gains l-offset)))
+		    (set! (channel-rev-gains l-offset) (cons (* (if (zero? dist) 0 (/ x dist)) lm) (channel-rev-gains l-offset)))
+		    ;; M
+		    (set! (channel-rev-gains m-offset) (cons time (channel-rev-gains m-offset)))
+		    (set! (channel-rev-gains m-offset) (cons (* (if (zero? dist) 0 (/ y dist)) lm) (channel-rev-gains m-offset)))
+		    ;; N
+		    (set! (channel-rev-gains n-offset) (cons time (channel-rev-gains n-offset)))
+		    (set! (channel-rev-gains n-offset) (cons (* (if (zero? dist) 0 no) u) (channel-rev-gains n-offset)))
+		    ;; O
+		    (set! (channel-rev-gains o-offset) (cons time (channel-rev-gains o-offset)))
+		    (set! (channel-rev-gains o-offset) (cons (* (if (zero? dist) 0 no) v) (channel-rev-gains o-offset)))))
+	      (if (>= ambisonics-h-order 3)
+		  (begin
+		    ;; P
+		    (set! (channel-rev-gains p-offset) (cons time (channel-rev-gains p-offset)))
+		    (set! (channel-rev-gains p-offset) (cons (* (if (zero? dist) 0 (/ ratt dist)) ho-ratt x 
+								(- (* x x (if (zero? dist) 1 (/ 1 (* dist dist))))
+								   (* 3 y y (if (zero? dist) 1 (/ 1 (* dist dist)))))) (channel-rev-gains p-offset)))
+		    ;; Q
+		    (set! (channel-rev-gains q-offset) (cons time (channel-rev-gains q-offset)))
+		    (set! (channel-rev-gains q-offset) (cons (* (if (zero? dist) 0 (/ ratt dist)) ho-ratt y
+								(- (* 3 x x (if (zero? dist) 1 (/ 1 (* dist dist))))
+								   (* y y (if (zero? dist) 1 (/ 1 (* dist dist)))))) (channel-rev-gains q-offset)))))
+	      ))))
     
     ;; Render a trajectory breakpoint to a room for decoded ambisonics
     ;;
@@ -2900,12 +3022,12 @@
 		 (x1 (e (+ i 2)))
 		 (y0 (e (+ i 1))) ; 1/x x points
 		 (y1 (e (+ i 3)))
-		 (area (if (< (abs (- y0 y1)) .0001)
+		 (area (if (< (abs (real-part (- y0 y1))) .0001)
 			   (/ (- x1 x0) (* y0 all-x))
 			   (* (/ (- (log y1) (log y0)) 
 				 (- y1 y0)) 
 			      (/ (- x1 x0) all-x)))))
-	    (set! dur (+ dur (abs area)))))))
+	    (set! dur (+ dur (abs (real-part area))))))))
     
     ;; Loop for each pair of points in the position envelope and render them
     (if (= (length xpoints) 1)
@@ -2948,7 +3070,7 @@
     ;; run with zeroed samples at the end so it should be fine
     ; (format #t "doppler: ~S~%" doppler)
 
-    (set! real-dur (* duration (src-duration (reverse doppler)))) 
+    (set! real-dur (* duration (if (null? doppler) 1.0 (src-duration (reverse doppler)))))
 
     ;; end of the run according to the duration of the note
     ;; (set! end (time->samples duration))
@@ -2977,7 +3099,26 @@
 				(if (not unity-gain-dist) ; defaults to #f above
 				    (expt min-dist-unity reverb-power)
 				    1.0))))
-    
+    ;; unity-gain ambisonics gain scalers
+    (set! amb-unity-gain (* scaler 
+			    (if (number? unity-gain-dist)
+				(expt unity-gain-dist direct-power)
+				(if (not unity-gain-dist)
+				    (expt min-dist-unity direct-power)
+				    1.0))))
+    (set! amb-unity-rev-gain (* scaler
+				(if (number? unity-gain-dist)
+				    (expt unity-gain-dist reverb-power)
+				    (if (not unity-gain-dist) ; defaults to #f above
+					(expt min-dist-unity reverb-power)
+					1.0))))
+
+    ;;; XXX hack!! this should be intercepted in the calling code, no 0 duration please...
+    (if (<= real-dur 0.0)
+	(begin
+	  (format #t ";;; ERROR: reseting real duration to 0.1 (was ~A)~%" real-dur)
+	(set! real-dur 0.1)))
+
     (list 
      (make-move-sound
       (list
@@ -3007,7 +3148,7 @@
 	 (do ((i 0 (+ i 1)))
 	     ((= i out-channels))
 	   (set! (v i) (make-env (reverse (channel-gains i))
-				 :scaler (if (= render-using ambisonics) 1.0 unity-gain)
+				 :scaler (if (= render-using ambisonics) amb-unity-gain unity-gain)
 				 :duration real-dur)))
 	 v)
        ;; :rev-gains 
@@ -3016,7 +3157,7 @@
 	     (do ((i 0 (+ i 1)))
 		 ((= i rev-channels))
 	       (set! (v i) (make-env (reverse (channel-rev-gains i))
-				     :scaler (if (= render-using ambisonics) 1.0 unity-rev-gain)
+				     :scaler (if (= render-using ambisonics) amb-unity-rev-gain unity-rev-gain)
 				     :duration real-dur)))
 	     v)
 	   #f)

@@ -2707,7 +2707,7 @@ static s7_pointer g_sound_data_set_direct(s7_scheme *sc, s7_pointer args)
       sd->data[chan][loc] = s7_real(val);
       return(val);
     }
-  XEN_ASSERT_TYPE(false, s7_car(args), XEN_ARG_1, "sound-data-set!", "a sound-data object");
+  XEN_ASSERT_TYPE(false, s7_car_value(sc, args), XEN_ARG_1, "sound-data-set!", "a sound-data object");
   return(s7_f(sc));
 }
 
@@ -2753,7 +2753,7 @@ static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
       (*step) = end;
       return(args);
     }
-  XEN_ASSERT_TYPE(false, s7_cadr(args), XEN_ARG_1, "sound-data-set!", "a sound-data object");
+  XEN_ASSERT_TYPE(false, s7_cadr_value(sc, args), XEN_ARG_1, "sound-data-set!", "a sound-data object");
   return(s7_f(sc));
 }
 #endif

@@ -7863,8 +7863,6 @@ static s7_pointer env_symbol, all_pass_symbol, ina_symbol, comb_symbol, polywave
 static s7_pointer rand_interp_symbol, oscil_symbol, add_symbol, subtract_symbol, reverb_symbol, output_symbol;
 static s7_pointer multiply_symbol, vector_ref_symbol, quote_symbol, sin_symbol, cos_symbol, readin_symbol;
 
-#endif
-
 static mus_float_t as_needed_input_float(void *ptr, int direction)
 {
   mus_xen *gn = (mus_xen *)ptr;
@@ -7879,6 +7877,13 @@ static mus_float_t as_needed_input_any(void *ptr, int direction)
   return(s7_number_to_real(s7, s7_apply_function(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist)));
 }
 
+static mus_float_t as_needed_input_cs(void *ptr, int direction)
+{
+  mus_xen *gn = (mus_xen *)ptr; /* this is an src gen (for example) */
+  return(s7_call_direct_to_real_and_free(s7, gn->vcts[MUS_INPUT_DATA]));
+}
+#endif
+
 
 static mus_float_t as_needed_input_generator(void *ptr, int direction)
 {
@@ -7892,13 +7897,6 @@ static mus_float_t as_needed_input_generator(void *ptr, int direction)
 static mus_float_t as_needed_input_readin(void *ptr, int direction)
 {
   return(mus_readin((mus_any *)(((mus_xen *)ptr)->vcts[MUS_INPUT_DATA])));
-}
-
-
-static mus_float_t as_needed_input_cs(void *ptr, int direction)
-{
-  mus_xen *gn = (mus_xen *)ptr; /* this is an src gen (for example) */
-  return(s7_call_direct_to_real_and_free(s7, gn->vcts[MUS_INPUT_DATA]));
 }
 
 
@@ -10904,6 +10902,9 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 	    }
 	}
 
+      /* mostly 44100: (* amp (fir-filter flt (comb dly (rand r)))) + 130000
+       * and 66150: (ssb-am gen (readin rd))
+       */
       for (; pos < end;)
 	{
 	  mus_safe_out_any_to_file(pos, s7_call_direct_to_real_and_free(sc, callee), 0, clm_output_gen);
@@ -11041,6 +11042,35 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
 	}
 
       if ((s7_function_choice(sc, callee) == g_direct_wave_train_2) &&
+	  (s7_function_choice(sc, caddr(callee)) == g_env_oscil_1))
+	{
+	  /* fofins in clm-ins.scm */
+	  mus_any *wt = NULL, *wte = NULL, *wto = NULL;
+	  GET_GENERATOR_CADR(callee, wave-train, wt);
+	  callee = cdaddr(callee);
+	  GET_GENERATOR_CADAR(callee, env, wte);
+	  callee = cdr(callee);
+	  GET_GENERATOR_CADAR(callee, oscil, wto);
+
+	  for (; pos < end;)
+	    {
+	      mus_safe_out_any_to_file(pos++, mus_env(e) * mus_wave_train(wt, mus_env(wte) * mus_oscil_unmodulated(wto)), 0, clm_output_gen);
+	      dstart = mus_out_any_data_start(clm_output_gen);
+	      dend = mus_out_any_data_end(clm_output_gen);
+	      if (dend > end)
+		dlen = end - dstart;
+	      for (dpos = pos - dstart; dpos < dlen; dpos++)
+		{
+		  (*step) = pos++;
+		  buf[dpos] += (mus_env(e) * mus_wave_train(wt, mus_env(wte) * mus_oscil_unmodulated(wto)));
+		}
+	      mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
+	    }
+	  return(args);
+
+	}
+
+      if ((s7_function_choice(sc, callee) == g_direct_wave_train_2) &&
 	  (s7_function_choice(sc, caddr(callee)) == g_env_1))
 	{
 	  mus_any *wt = NULL, *wte = NULL;
@@ -11143,6 +11173,8 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
 	  return(args);
 	}
 
+      /* 180810: (+ (polywave gen1 (env frqf)) (* (env rndf) (oscil gen2 (rand-interp rnd))))
+       */
       for (; pos < end;)
 	{
 	  mus_safe_out_any_to_file(pos++, mus_env(e) * s7_call_direct_to_real_and_free(sc, callee), 0, clm_output_gen);

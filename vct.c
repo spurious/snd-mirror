@@ -655,7 +655,7 @@ static s7_pointer g_vct_ref_two(s7_scheme *sc, s7_pointer args)
 	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_cadr(args), "index out of range");
       return(s7_make_real(sc, v->data[loc]));
     }
-  XEN_ASSERT_TYPE(false, s7_car(args), XEN_ARG_1, "vct-ref", "a vct");
+  XEN_ASSERT_TYPE(false, s7_car_value(sc, args), XEN_ARG_1, "vct-ref", "a vct");
   return(s7_f(sc));
 }
 
@@ -672,7 +672,7 @@ static s7_pointer g_vct_ref_ss(s7_scheme *sc, s7_pointer args)
 	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_cadr(args), "index out of range");
       return(s7_make_real(sc, v->data[loc]));
     }
-  XEN_ASSERT_TYPE(false, s7_car(args), XEN_ARG_1, "vct-ref", "a vct");
+  XEN_ASSERT_TYPE(false, s7_car_value(sc, args), XEN_ARG_1, "vct-ref", "a vct");
   return(s7_f(sc));
 }
 
@@ -713,7 +713,7 @@ static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
       v->data[loc] = XEN_TO_C_DOUBLE(val);
       return(val);
     }
-  XEN_ASSERT_TYPE(false, s7_car(args), XEN_ARG_1, "vct-set!", "a vct");
+  XEN_ASSERT_TYPE(false, s7_car_value(sc, args), XEN_ARG_1, "vct-set!", "a vct");
   return(s7_f(sc));
 }
 
@@ -743,7 +743,7 @@ static s7_pointer g_vct_set_vector_ref(s7_scheme *sc, s7_pointer args)
       v->data[loc] = s7_number_to_real(sc, val = s7_car_value(sc, s7_cddr(args)));
       return(val);
     }
-  XEN_ASSERT_TYPE(false, s7_car(args), XEN_ARG_1, "vct-set!", "a vct");
+  XEN_ASSERT_TYPE(false, s7_car_value(sc, args), XEN_ARG_1, "vct-set!", "a vct");
   return(s7_f(sc));
 }
 
@@ -757,7 +757,7 @@ static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
   s7_Double x;
   vct *v;
   
-  vc = s7_car_value(sc, s7_cdr(args));                      /* (0 v (vector-ref vect i) val) */
+  vc = s7_cadr_value(sc, args);                      /* (0 v (vector-ref vect i) val) */
   v = (vct *)imported_s7_object_value_checked(vc, vct_tag);
   if (v)
     {
@@ -788,7 +788,7 @@ static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
       (*step) = end;
       return(args);
     }
-  XEN_ASSERT_TYPE(false, s7_cadr(args), XEN_ARG_1, "vct-set!", "a vct");
+  XEN_ASSERT_TYPE(false, s7_cadr_value(sc, args), XEN_ARG_1, "vct-set!", "a vct");
   return(s7_f(sc));
 }
 
@@ -812,7 +812,7 @@ static s7_pointer g_vct_set_direct(s7_scheme *sc, s7_pointer args)
       /* if not returning val: v->data[loc] = s7_call_direct_to_real_and_free(sc, s7_caddr(args)); */
       return(val);
     }
-  XEN_ASSERT_TYPE(false, s7_car(args), XEN_ARG_1, "vct-set!", "a vct");
+  XEN_ASSERT_TYPE(false, s7_car_value(sc, args), XEN_ARG_1, "vct-set!", "a vct");
   return(s7_f(sc));
 }
 
@@ -824,7 +824,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
   s7_Int *step, *stop;
   vct *v;
   
-  vc = s7_car_value(sc, s7_cdr(args));                      /* (0 v i (...)) */
+  vc = s7_cadr_value(sc, args);                      /* (0 v i (...)) */
   v = (vct *)imported_s7_object_value_checked(vc, vct_tag);
   if (v)
     {
@@ -853,7 +853,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
       (*step) = end;
       return(args);
     }
-  XEN_ASSERT_TYPE(false, s7_cadr(args), XEN_ARG_1, "vct-set!", "a vct");
+  XEN_ASSERT_TYPE(false, s7_cadr_value(sc, args), XEN_ARG_1, "vct-set!", "a vct");
   return(s7_f(sc));
 }
 

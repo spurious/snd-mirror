@@ -44708,6 +44708,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    lifted_op(sc->code) = sc->op;
 			    set_type(sc->code, SYNTACTIC_PAIR);
 			  }
+			
+			/* fprintf(stderr, "%s: %s\n", DISPLAY(sc->code), real_op_names[sc->op]); */
+			/* OP_SAFE_IF_CC_P (OP_IF on 1st try -- would need explicit check_if to optimize)
+			 * OP_LET_opCq OP_LET_ALL_X -- what follows?
+			 * OP_SAFE_DOTIMES_C_C
+			 * OP_LET_R_P
+			 * OP_LET_O_O
+			 */
 			sc->code = cdr(sc->code);
 			goto START_WITHOUT_POP_STACK;
 		      }
@@ -44875,6 +44883,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    lifted_op(sc->code) = sc->op;
 		    set_type(sc->code, SYNTACTIC_PAIR);
 		  }
+
+		/* fprintf(stderr, "%s: %s\n", DISPLAY(sc->code), real_op_names[sc->op]); */
+		/* OP_SET a lot OP_SET_PAIR_Z (set! x (* i 2.0))?
+		 * OP_LET_O OP_LET_R_P tons of these are actually vct-set directs
+		 * OP_LET_ALL_X OP_LET_opCq OP_SET_CONS
+		 */
 		sc->code = cdr(sc->code);
 		goto START_WITHOUT_POP_STACK;
 	      }
@@ -45113,6 +45127,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (sc->op == OP_SIMPLE_DO_A)
 	  push_stack(sc, OP_SIMPLE_DO_STEP_A, sc->args, code);
 	else push_stack(sc, OP_SIMPLE_DO_STEP, sc->args, code);
+
 	sc->code = fcdr(code);
 	goto BEGIN;
       }
@@ -45588,6 +45603,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      lifted_op(code) = sc->op;
 		      set_type(code, SYNTACTIC_PAIR);
 		    }
+
+		  /* fprintf(stderr, "%s: %s\n", DISPLAY(sc->code), real_op_names[sc->op]); */
+		  /* OP_INCREMENT_SZ
+		   * OP_SET_PAIR_P (set! (val i) (nv j))
+		   */
 		  sc->code = cdr(code);
 		  goto START_WITHOUT_POP_STACK;
 		}
@@ -45662,8 +45682,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  push_stack_no_args(sc, OP_DOX_STEP_P, sc->code);
 	  sc->code = caddr(sc->code);
-	  /* 5600787: (set! (inputs k) (+ (* ks inval2) (* (- 1.0 ks) inval1)))
-	   */
 	  sc->op = (opcode_t)lifted_op(sc->code);
 	  sc->code = cdr(sc->code);
 	  goto START_WITHOUT_POP_STACK;
@@ -62509,13 +62527,13 @@ s7_scheme *s7_init(void)
  *   TODO: get rid of all arg lambdas -- move them to the make function (*.html especially!)
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
- * bench    42736 8752 8051 7725 6515 5564
+ * bench    42736 8752 8051 7725 6515 5486
  * lint           9328 8140 7887 7736 7320
  * index    44300 3291 3005 2742 2078 1643
  * s7test    1721 1358 1297 1244  977  967
  * t455|6     265   89   55   31   14   14
  * t502        90   43   39   36   29   24
  * lat        229   63   52   47   42   40
- * calls           275  207  175  115   94
+ * calls           275  207  175  115   92
  */
 

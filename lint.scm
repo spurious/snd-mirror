@@ -1861,6 +1861,8 @@
 					    name head 
 					    (truncated-list->string form)))))))))
 	  
+	  ;; what about (* 2.0 (random 1.0)) and the like?
+
 	  ((/)
 	   (if (not (null? (cdr form)))
 	       (if (and (null? (cddr form))
