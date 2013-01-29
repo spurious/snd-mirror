@@ -852,6 +852,8 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "opt_max_defined"
   };
 
+#define opt_name(E) ((is_optimized(E)) ? opt_names[optimize_data(E)] : "unopt")
+
 
 #define NUM_CHARS 256
 
@@ -13664,8 +13666,9 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	   *   (* 0 0/0) is NaN, so (/ 1 0 0/0) should equal (/ 1 0/0) = NaN.  But the whole
 	   *   thing is ridiculous.
 	   */
-	  
-	  if (is_null(p)) return(s7_make_ratio(sc, num_a, integer(x)));
+	  if (is_null(p)) 
+	    return(s7_make_ratio(sc, num_a, integer(x)));
+
 	  den_a = integer(x);
 	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
 	    goto DIVIDE_INTEGERS;
@@ -13962,6 +13965,32 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument_with_type(sc, sc->DIVIDE, small_int(1), x, A_NUMBER));
     }
 }
+
+
+static s7_pointer divide_1;
+static s7_pointer g_divide_1(s7_scheme *sc, s7_pointer args)
+{
+  if (s7_is_zero(cadr(args)))
+    return(division_by_zero_error(sc, sc->DIVIDE, args));
+  return(s7_invert(sc, cadr(args)));
+}
+
+
+#if (!WITH_GMP)
+static s7_pointer divide_1r;
+static s7_pointer g_divide_1r(s7_scheme *sc, s7_pointer args)
+{
+  s7_Double rl;
+  if (s7_is_real(cadr(args)))
+    {
+      rl = s7_number_to_real(sc, cadr(args));
+      if (rl == 0.0)
+	return(division_by_zero_error(sc, sc->DIVIDE, args));
+      return(make_real(sc, 1.0 / rl));
+    }
+  return(g_divide(sc, args));
+}
+#endif
 
 
 
@@ -36395,6 +36424,22 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 }
 
 
+static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if (cadr(expr) == small_int(1))
+	return(divide_1);
+#if (!WITH_GMP)
+      if ((type(cadr(expr)) == T_REAL) &&
+	  (real(cadr(expr)) == 1.0))
+	return(divide_1r);
+#endif
+    }
+  return(f);
+}
+
+
 static s7_pointer max_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 2) &&
@@ -36960,6 +37005,15 @@ static void init_choosers(s7_scheme *sc)
   sqr_ss = make_function_with_class(sc, f, "*", g_sqr_ss, 2, 0, false, "* optimization");
   mul_1ss = make_function_with_class(sc, f, "*", g_mul_1ss, 2, 0, false, "* optimization");
 #endif
+
+
+  /* / */
+  f = set_function_chooser(sc, sc->DIVIDE, divide_chooser);
+  divide_1 = make_function_with_class(sc, f, "/", g_divide_1, 2, 0, false, "/ optimization");
+#if (!WITH_GMP)
+  divide_1r = make_function_with_class(sc, f, "/", g_divide_1r, 2, 0, false, "/ optimization");
+#endif
+
 
 #if (!WITH_GMP)
   /* modulo */
@@ -44712,9 +44766,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			/* fprintf(stderr, "%s: %s\n", DISPLAY(sc->code), real_op_names[sc->op]); */
 			/* OP_SAFE_IF_CC_P (OP_IF on 1st try -- would need explicit check_if to optimize)
 			 * OP_LET_opCq OP_LET_ALL_X -- what follows?
-			 * OP_SAFE_DOTIMES_C_C
-			 * OP_LET_R_P
-			 * OP_LET_O_O
+			 * OP_SAFE_DOTIMES_C_C OP_LET_R_P OP_LET_O_O
+			 * but none is an optimized one-liner
 			 */
 			sc->code = cdr(sc->code);
 			goto START_WITHOUT_POP_STACK;
@@ -44872,9 +44925,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if ((typesflag(sc->code) == SYNTACTIC_PAIR) ||
 		(typeflag(car(sc->code)) == SYNTACTIC_TYPE))
 	      {
-		/* (set! x (* i 2.0)) (set! (target-radii i) 1.0) (set! (v i) (env pulse-ampf))
-		 */
-		push_stack(sc, OP_SAFE_DO_STEP_P, sc->args, code);
 		if (typesflag(sc->code) == SYNTACTIC_PAIR)
 		  sc->op = (opcode_t)lifted_op(sc->code);
 		else
@@ -44884,11 +44934,36 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    set_type(sc->code, SYNTACTIC_PAIR);
 		  }
 
-		/* fprintf(stderr, "%s: %s\n", DISPLAY(sc->code), real_op_names[sc->op]); */
-		/* OP_SET a lot OP_SET_PAIR_Z (set! x (* i 2.0))?
-		 * OP_LET_O OP_LET_R_P tons of these are actually vct-set directs
-		 * OP_LET_ALL_X OP_LET_opCq OP_SET_CONS
-		 */
+		if ((sc->op == OP_SET) &&
+		    (is_symbol(cadr(sc->code))) &&
+		    (is_pair(caddr(sc->code))) &&
+		    (is_optimized(caddr(sc->code))) &&
+		    (optimize_data(caddr(sc->code)) == HOP_SAFE_C_C) &&
+		    (ecdr(car(cadr(code))) != geq_2))		    
+		  {
+		    s7_pointer callee, args, slot, step_slot, end_slot;
+		    slot = find_symbol(sc, cadr(sc->code));
+		    if (!is_slot(slot)) 
+		      eval_error(sc, "set! ~A: unbound variable", sc->code);
+		    callee = caddr(sc->code);
+		    args = cdr(callee);
+		    step_slot = environment_dox1(sc->envir);
+		    end_slot = environment_dox2(sc->envir);
+		    while (true)
+		      {
+			s7_Int step, end;
+			slot_set_value(slot, c_call(callee)(sc, args));
+			step = s7_integer(slot_value(step_slot)) + 1;
+			slot_set_value(step_slot, make_integer(sc, step));
+			end = s7_integer(slot_value(end_slot));
+			if (step == end)
+			  {
+			    sc->code = cdr(cadr(code));
+			    goto BEGIN;
+			  }
+		      }
+		  }
+		push_stack(sc, OP_SAFE_DO_STEP_P, sc->args, code);
 		sc->code = cdr(sc->code);
 		goto START_WITHOUT_POP_STACK;
 	      }
@@ -44969,6 +45044,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->code = fcdr(sc->code);
 	sc->op = (opcode_t)lifted_op(sc->code);
 	sc->code = cdr(sc->code);
+	/* primarily set cases here: (set! x (* (env e1) (oscil osc x))) etc
+	 */
 	goto START_WITHOUT_POP_STACK;
       }
 
@@ -45608,6 +45685,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* OP_INCREMENT_SZ
 		   * OP_SET_PAIR_P (set! (val i) (nv j))
 		   */
+
 		  sc->code = cdr(code);
 		  goto START_WITHOUT_POP_STACK;
 		}
@@ -45815,9 +45893,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_DO_UNCHECKED:
-#if WITH_COUNTS
-      add_expr(sc, sc->code);
-#endif
       /* fprintf(stderr, "do %s\n", DISPLAY(sc->code)); */
 
       if (is_null(car(sc->code)))                           /* (do () ...) -- (let ((i 0)) (do () ((= i 1)) (set! i 1))) */
@@ -62527,12 +62602,12 @@ s7_scheme *s7_init(void)
  *   TODO: get rid of all arg lambdas -- move them to the make function (*.html especially!)
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
- * bench    42736 8752 8051 7725 6515 5486
+ * bench    42736 8752 8051 7725 6515 5236
  * lint           9328 8140 7887 7736 7320
  * index    44300 3291 3005 2742 2078 1643
  * s7test    1721 1358 1297 1244  977  967
  * t455|6     265   89   55   31   14   14
- * t502        90   43   39   36   29   24
+ * t502        90   43   39   36   29   23
  * lat        229   63   52   47   42   40
  * calls           275  207  175  115   92
  */

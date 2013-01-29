@@ -285,7 +285,7 @@
 
 (define (simple-poly beg dur freq amp)
   "(simple-poly beg dur freq amp) test instrument for polyshape"
-  (let ((w1 (make-polyshape :frequency freq :partials '(1 1 2 1 3 1)))
+  (let ((w1 (make-polyshape freq :partials '(1 1 2 1 3 1)))
 	(start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur))))
     (do ((i start (+ i 1))) ((= i end))
@@ -293,7 +293,7 @@
 
 (define (simple-polyw beg dur freq amp)
   "(simple-poly beg dur freq amp) test instrument for polywave"
-  (let ((w1 (make-polywave :frequency freq :partials (list 1 amp 2 amp 3 amp)))
+  (let ((w1 (make-polywave freq :partials (list 1 amp 2 amp 3 amp)))
 	(start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur))))
     (do ((i start (+ i 1))) ((= i end))
@@ -466,7 +466,7 @@
 	  (frq0 (hz->radians f0))
 	  (frq1 (hz->radians f1))
 	  (frq2 (hz->radians f2))
-	  (vibr (make-oscil :frequency 6))
+	  (vibr (make-oscil 6))
 	  (vibenv (make-env :envelope (or ve (list 0 1 100 1)) :scaler vib :duration dur))
 	  (win-freq (/ two-pi foflen))
 	  (wt0 (make-wave-train :size foflen :frequency frq)))
@@ -2209,7 +2209,7 @@
 	    (frq0 (hz->radians f0))
 	    (frq1 (hz->radians f1))
 	    (frq2 (hz->radians f2))
-	    (vibr (make-oscil :frequency 6))
+	    (vibr (make-oscil 6))
 	    (vibenv (make-env :envelope (or ve (list 0 1 100 1)) :scaler vib :duration dur))
 	    (win-freq (/ (* 2 pi) foflen))
 	    (wt0 (make-wave-train :wave foftab :frequency frq)))
@@ -2249,7 +2249,7 @@
 (definstrument (sndclmdoc-zc time dur freq amp length1 length2 feedback)
   (let ((beg (seconds->samples time))
 	(end (seconds->samples (+ time dur)))
-	(s (make-pulse-train :frequency freq))  ; some raspy input so we can hear the effect easily
+	(s (make-pulse-train freq))  ; some raspy input so we can hear the effect easily
 	(d0 (make-comb :size length1 :max-size (max length1 length2) :scaler feedback))
 	(aenv (make-env '(0 0 .1 1 .9 1 1 0) :scaler amp :duration dur))
 	(zenv (make-env '(0 0 1 1) :scaler (- length2 length1) :base 12.0 :duration dur)))
@@ -2276,7 +2276,7 @@
       (outa i (* amp (src src-gen (env senv)))))))
 
 (definstrument (sndclmdoc-srcer start-time duration amp srt fmamp fmfreq filename)
-  (let ((os (make-oscil :frequency fmfreq))
+  (let ((os (make-oscil fmfreq))
 	(beg (seconds->samples start-time))
 	(end (seconds->samples (+ start-time duration)))
 	(src-gen (make-src :input (make-readin filename) :srate srt)))
@@ -2770,9 +2770,8 @@
 	  ((= i 360))
 	(do ((k 0 (+ k 1)))
 	    ((= k 1000))
-	  (let ((sig (* .5 (oscil osc))))
-	    (locsig loc j sig)
-	    (set! j (+ j 1))))
+	  (locsig loc j (* .5 (oscil osc)))
+	  (set! j (+ j 1)))
 	(move-locsig loc (* 1.0 i) 1.0))))
   (with-sound (:channels 4) (sndclmdoc-simple-dloc 0 2 440 .5))
   (with-sound () (when? 0 4 2.0 8.0 "1a.snd"))

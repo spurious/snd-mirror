@@ -126,6 +126,7 @@
   (let* ((len (frames snd chn))
 	 (pow2 (ceiling (log len 2)))
 	 (fftlen (floor (expt 2 pow2)))
+	 (fftlen2 (/ fftlen 2))
 	 (fftscale (/ 1.0 fftlen))
 	 (rl1 (channel->vct 0 fftlen snd chn))
 	 (im1 (make-vct fftlen)))
@@ -139,7 +140,7 @@
       (do ((i 1 (+ i 1)) ; lower half
 	   (k (- fftlen 1) (- k 1))
 	   (j (- (* n fftlen) 1) (- j 1)))
-	  ((= i (/ fftlen 2)))
+	  ((= i fftlen2))
 	(set! (rl2 i) (rl1 i))
 	(set! (rl2 j) (rl1 k))
 	(set! (im2 i) (im1 i))

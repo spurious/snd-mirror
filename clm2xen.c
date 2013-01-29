@@ -10986,6 +10986,7 @@ static s7_pointer g_indirect_outa_2_env(s7_scheme *sc, s7_pointer args)
 }
 
 #if (!WITH_GMP)
+static s7_pointer g_add_direct_2(s7_scheme *sc, s7_pointer args);
 static s7_pointer indirect_outa_2_env_looped;
 static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
 {
@@ -11023,7 +11024,42 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
 	  mus_any *pw = NULL;
 	  GET_GENERATOR_CADR(callee, polywave, pw);
 	  callee = caddr(callee);
+
+	  /* 151673: (+ (env frqf) (mus-random 0.001) (rand-interp rnd))
+	   * 762: (rand-interp rnd) [* n]
+	   * 45000: (+ (rand-interp rnd) (env frqf))
+	   * 84231: (+ (env frqf) (* (env noisef) (rand-interp noise)))
+	   * 72764: (+ (env frqf) (* (env buzzf) (oscil buzz))) etc
+	   * n: (* index (+ (polywave gen2) (rand-interp rnd)))
+	   *
+	   * fprintf(stderr, "%lld: %s\n", end - pos, DISPLAY(callee));
+	   */
 	  
+	  if ((s7_function_choice(sc, callee) == g_add_direct_2) &&
+	      (s7_function_choice(sc, cadr(callee)) == g_env_1))
+	    {
+	      mus_any *e1;
+	      callee = cdr(callee);
+	      GET_GENERATOR_CADAR(callee, env, e1);
+	      callee = cadr(callee);
+
+	      for (; pos < end;)
+		{
+		  mus_safe_out_any_to_file(pos++, mus_env(e) * mus_polywave(pw, mus_env(e1) + s7_call_direct_to_real_and_free(sc, callee)), 0, clm_output_gen);
+		  dstart = mus_out_any_data_start(clm_output_gen);
+		  dend = mus_out_any_data_end(clm_output_gen);
+		  if (dend > end)
+		    dlen = end - dstart;
+		  for (dpos = pos - dstart; dpos < dlen; dpos++)
+		    {
+		      (*step) = pos++;
+		      buf[dpos] += (mus_env(e) * mus_polywave(pw, mus_env(e1) + s7_call_direct_to_real_and_free(sc, callee)));
+		    }
+		  mus_out_any_set_end(clm_output_gen, (end > dend) ? dend : end);
+		}
+	      return(args);
+	    }
+
 	  for (; pos < end;)
 	    {
 	      mus_safe_out_any_to_file(pos++, mus_env(e) * mus_polywave(pw, s7_call_direct_to_real_and_free(sc, callee)), 0, clm_output_gen);

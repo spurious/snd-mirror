@@ -817,6 +817,8 @@
 		(* e2 (cos (* (- n 1) x))))
 	     (* norm (+ r1 (* -2.0 r (cos x)))))))))
 
+;; it's faster to use polywave here and nrcos->polywave for the partials list (animals.scm) if n is not enormous
+
 ;;; formula changed to start at k=1 and n increased so we get 1 to n
 ;;; here is the preoptimization form:
 #|
@@ -4072,6 +4074,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; blackman as a waveform -- all the other fft windows could be implemented
 ;;;   perhaps most useful as an amplitude envelope
 
+#|
 (defgenerator (blackman
 	       :make-wrapper (lambda (g)
 			       (let ((n (g 'n)))
@@ -4112,6 +4115,7 @@ index 10 (so 10/2 is the bes-jn arg):
     (let ((x angle))
       (set! angle (+ x fm frequency))
       (polynomial coeffs (cos x)))))
+|#
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -4120,6 +4124,31 @@ index 10 (so 10/2 is the bes-jn arg):
 	((= i 20000))
       (outa i (blackman black4 0.0)))))
 |#
+
+;;; but that is the same as polyshape/polywave!
+
+(define blackman polywave)
+(define blackman? polywave?)
+
+(define* (make-blackman (frequency 440.0) (n 4))
+  (make-polywave frequency 
+		 (case n
+		   ;; this data is from clm.c
+		   ((0) (list 0 0))
+		   ((1) (list 0 0.54 1 -0.46))
+		   ((2) (list 0 0.42323 1 -0.49755 2 0.078279))
+		   ((3) (list 0 0.35875 1 0.48829 2 0.14128 3 -0.01168))
+		   ((4) (list 0 0.287333 1 -0.44716 2 0.20844 3 -0.05190 4 0.005149))
+		   ((5) (list 0 .293557 1 -.451935 2 .201416 3 -.047926 4 .00502619 5 -.000137555))
+		   ((6) (list 0 .2712203 1 -.4334446 2 .2180041 3 -.0657853 4 .010761867 5 -.0007700127 6 .00001368088))
+		   ((7) (list 0 .2533176 1 -.4163269 2 .2288396 3 -.08157508 4 .017735924 5 -.0020967027 
+			      6 .00010677413 7 -.0000012807))
+		   ((8) (list 0 .2384331 1 -.4005545 2 .2358242 3 -.09527918 4 .025373955 5 -.0041524329 
+			      6 .00036856041 7 -.00001384355 8 .0000001161808))
+		   ((9) (list 0 .2257345 1 -.3860122 2 .2401294 3 -.1070542 4 .03325916 5 -.00687337 
+			      6 .0008751673 7 -.0000600859 8 .000001710716 9 -.00000001027272))
+		   ((10) (list 0 .2151527 1 -.3731348 2 .2424243 3 -.1166907 4 .04077422 5 -.01000904 
+			       6 .0016398069 7 -.0001651660 8 .000008884663 9 -.000000193817 10 .00000000084824)))))
 
 
 
