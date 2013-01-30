@@ -97,11 +97,18 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 static size_t c_object_value_location, c_object_type_location, cell_type_location;
 static int c_object_built_in_type;
 
+
+#define C_OBJECT_VALUE_LOCATION 16
+#define C_OBJECT_TYPE_LOCATION 8
+#define CELL_TYPE_LOCATION 0
+#define C_OBJECT_BUILT_IN_TYPE 23
+
+
 static void *imported_s7_object_value_checked(s7_pointer obj, int type)
 {
-  #define imported_is_c_object(p) ((unsigned char)(*((unsigned char *)((unsigned char *)(p) + cell_type_location))) == c_object_built_in_type)
-  #define imported_is_c_object_type(p, type) ((int)(*((int *)((unsigned char *)(p) + c_object_type_location))) == type)
-  #define imported_c_object_value(p) ((void *)(*((unsigned char **)((unsigned char *)(p) + c_object_value_location))))
+#define imported_is_c_object(p) ((unsigned char)(*((unsigned char *)((unsigned char *)(p) + CELL_TYPE_LOCATION))) == (unsigned char)C_OBJECT_BUILT_IN_TYPE)
+#define imported_is_c_object_type(p, type) ((int)(*((int *)((unsigned char *)(p) + C_OBJECT_TYPE_LOCATION))) == (int)type)
+  #define imported_c_object_value(p) ((void *)(*((unsigned char **)((unsigned char *)(p) + C_OBJECT_VALUE_LOCATION))))
 
   if ((imported_is_c_object(obj)) &&
       (imported_is_c_object_type(obj, type)))
@@ -9196,6 +9203,8 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
   else {Val = NULL; XEN_ASSERT_TYPE(false, gp, XEN_ARG_1, "gen-lookup", "a generator");} \
   } while (0)
 
+#define XEN_S7_NUMBER_LOCATION 8
+#define XEN_S7_DENOMINATOR_LOCATION 16
 
 #define GET_NUMBER(Obj, Caller, Val) Val = s7_car_value(s7, Obj)
 #define GET_REAL(Obj, Caller, Val) Val = s7_number_to_real(sc, s7_car_value(s7, Obj))
@@ -9204,8 +9213,8 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
   #define s7_cell_real s7_real
   #define GET_INTEGER(Obj, Caller, Val) Val = s7_integer(s7_car_value(s7, Obj))
 #else
-  #define s7_cell_integer(p) (s7_Int)(*((s7_Int *)((unsigned char *)(p) + xen_s7_number_location)))
-  #define s7_cell_real(p) (s7_Double)(*((s7_Double *)((unsigned char *)(p) + xen_s7_number_location)))
+  #define s7_cell_integer(p) (s7_Int)(*((s7_Int *)((unsigned char *)(p) + XEN_S7_NUMBER_LOCATION)))
+  #define s7_cell_real(p) (s7_Double)(*((s7_Double *)((unsigned char *)(p) + XEN_S7_NUMBER_LOCATION)))
   #define GET_INTEGER(Obj, Caller, Val) Val = s7_cell_integer(s7_car_value(s7, Obj))
 #endif
 
@@ -9334,7 +9343,41 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
     return(s7_make_real(sc, Func(_o_, _fm_)));		    \
   }
 
- 
+#if 0
+#define GEN_3(Type, Func) \
+  static s7_pointer Type ## _3; \
+  static s7_pointer g_ ## Type ## _3(s7_scheme *sc, s7_pointer args) \
+  { \
+    mus_any *_o_; \
+    double _a1_, _a2_; \
+   \
+    GET_GENERATOR(args, Type, _o_); \
+    GET_REAL_CADR(args, Type, _a1_);	       \
+    GET_REAL_CADR(cdr(args), Type, _a2_);      \
+    return(s7_make_real(sc, Func(_o_, _a1_, _a2_))); \
+  } \
+  static s7_pointer direct_ ## Type ## _3; \
+  static s7_pointer g_direct_ ## Type ## _3(s7_scheme *sc, s7_pointer args) \
+  { \
+    mus_any *_o_;	  \
+    double _a1_, _a2_;	  \
+    s7_pointer rl; \
+    _a1_ = s7_cell_real(rl = s7_call_direct(sc, cadr(args)));	\
+    _a2_ = s7_call_direct_to_real_and_free(sc, caddr(args));	\
+    GET_GENERATOR(args, Type, _o_); \
+    return(s7_remake_real(sc, rl, Func(_o_, _a1_, _a2_)));	\
+  } \
+  static s7_pointer indirect_ ## Type ## _3; \
+  static s7_pointer g_indirect_ ## Type ## _3(s7_scheme *sc, s7_pointer args) \
+  { \
+    mus_any *_o_;	  \
+    double _a1_, _a2_;							\
+    _a1_ = s7_number_to_real(sc, s7_call_direct(sc, cadr(args)));	\
+    _a2_ = s7_number_to_real(sc, s7_call_direct(sc, caddr(args)));	\
+    GET_GENERATOR(args, Type, _o_); \
+    return(s7_make_real(sc, Func(_o_, _a1_, _a2_)));	\
+  }
+ #endif
 
 GEN_1(oscil, mus_oscil_unmodulated)
 GEN_2(oscil, mus_oscil_fm)
@@ -9399,8 +9442,11 @@ GEN_1(src, mus_src_simple)
 GEN_1(convolve, mus_convolve_simple)
 GEN_1(phase_vocoder, mus_phase_vocoder_simple)
 
-
 /*
+GEN_3(notch, mus_notch)
+GEN_3(comb, mus_comb)
+GEN_3(all_pass, mus_all_pass)
+
 GEN3(ssb_am)         ;(ssb-am gen (insig 0.0) (fm 0.0)), mus_ssb_am_unmodulated
 GEN3(asymmetric_fm)  ;(asymmetric-fm gen (index 0.0) (fm 0.0)), mus_*_no_input(1), unmod(2)
 GEN3(polyshape)      ;(polyshape gen (index 1.0) (fm 0.0)), unmod(2), no_input(1)
@@ -9897,8 +9943,8 @@ static s7_pointer g_fm_violin_4_looped(s7_scheme *sc, s7_pointer args)
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
   pos = (*step);
   end = (*stop);
 
@@ -10008,8 +10054,8 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer args)
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
   pos = (*step);
   end = (*stop);
 
@@ -10365,8 +10411,8 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
   pos = (*step);
   end = (*stop);
 
@@ -10439,8 +10485,8 @@ static s7_pointer g_indirect_out_bank_ssz_looped(s7_scheme *sc, s7_pointer args)
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
   pos = (*step);
   end = (*stop);
 
@@ -10800,8 +10846,8 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
   pos = (*step);
   end = (*stop);
 
@@ -10948,8 +10994,8 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
   pos = (*step);
   end = (*stop);
 
@@ -11001,8 +11047,8 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location)); 
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION)); 
   pos = (*step);
   end = (*stop);
 
@@ -11257,8 +11303,8 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
   pos = (*step);
   end = (*stop);
 
@@ -11277,7 +11323,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
       mus_any *lete;
 
       mut = s7_make_real(sc, 1.5);
-      letr = ((s7_Double *)((unsigned char *)(mut) + xen_s7_number_location));
+      letr = ((s7_Double *)((unsigned char *)(mut) + XEN_S7_NUMBER_LOCATION));
       s7_slot_set_value(sc, lets, mut);
       GET_GENERATOR_CADR(letp, env, lete);
       
@@ -11487,8 +11533,8 @@ static s7_pointer g_outa_env_polywave_env_looped(s7_scheme *sc, s7_pointer args)
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location)); 
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION)); 
   pos = (*step);
   end = (*stop);
 
@@ -11542,8 +11588,8 @@ static s7_pointer g_outa_env_polywave_env_ri_looped(s7_scheme *sc, s7_pointer ar
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location)); 
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION)); 
   pos = (*step);
   end = (*stop);
 
@@ -11576,8 +11622,8 @@ static s7_pointer g_outa_env_oscil_env_looped(s7_scheme *sc, s7_pointer args)
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
   pos = (*step);
   end = (*stop);
 
@@ -11724,8 +11770,8 @@ static s7_pointer g_outa_2_temp_simple_looped(s7_scheme *sc, s7_pointer args)
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
   pos = (*step);
   end = (*stop);
 
@@ -11775,8 +11821,8 @@ static s7_pointer g_outa_2_temp_sg_looped(s7_scheme *sc, s7_pointer args)
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
   pos = (*step);
   end = (*stop);
 
@@ -11822,8 +11868,8 @@ static s7_pointer g_outa_2_temp_eg_looped(s7_scheme *sc, s7_pointer args)
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
   pos = (*step);
   end = (*stop);
 
@@ -13143,6 +13189,29 @@ static s7_pointer comb_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
       if (s7_function_returns_temp(caddr(expr))) return(direct_comb_2);
       return(indirect_comb_2);
     }
+#if 0
+  if ((args == 3) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))) &&
+      (s7_is_symbol(cadddr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(comb_3);
+    }
+  if ((args == 3) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(sc, caddr(expr))) &&
+      (s7_is_pair(cadddr(expr))) &&
+      (s7_function_choice_is_direct(sc, cadddr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      if ((s7_function_returns_temp(caddr(expr))) &&
+	  (s7_function_returns_temp(cadddr(expr))))
+	return(direct_comb_3);
+      return(indirect_comb_3);
+    }
+#endif
   return(f);
 }
 
@@ -13164,6 +13233,29 @@ static s7_pointer notch_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
       if (s7_function_returns_temp(caddr(expr))) return(direct_notch_2);
       return(indirect_notch_2);
     }
+#if 0
+  if ((args == 3) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))) &&
+      (s7_is_symbol(cadddr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(notch_3);
+    }
+  if ((args == 3) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(sc, caddr(expr))) &&
+      (s7_is_pair(cadddr(expr))) &&
+      (s7_function_choice_is_direct(sc, cadddr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      if ((s7_function_returns_temp(caddr(expr))) &&
+	  (s7_function_returns_temp(cadddr(expr))))
+	return(direct_notch_3);
+      return(indirect_notch_3);
+    }
+#endif
   return(f);
 }
 
@@ -13226,6 +13318,29 @@ static s7_pointer all_pass_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       if (s7_function_returns_temp(caddr(expr))) return(direct_all_pass_2);
       return(indirect_all_pass_2);
     }
+#if 0
+  if ((args == 3) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))) &&
+      (s7_is_symbol(cadddr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(all_pass_3);
+    }
+  if ((args == 3) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(sc, caddr(expr))) &&
+      (s7_is_pair(cadddr(expr))) &&
+      (s7_function_choice_is_direct(sc, cadddr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      if ((s7_function_returns_temp(caddr(expr))) &&
+	  (s7_function_returns_temp(cadddr(expr))))
+	return(direct_all_pass_3);
+      return(indirect_all_pass_3);
+    }
+#endif
   return(f);
 }
 
@@ -14019,10 +14134,10 @@ static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 	  s7_function_choice_set_direct(sc, expr);
 	  return(indirect_outa_add_2);
 	}
+
       /* fprintf(stderr, "outa two: %s\n", DISPLAY(expr)); */
 
-      /* (* s1 s2) 
-       * (* (env e) (safe-lambda* gen)) 
+      /* (* (env e) (safe-lambda* gen)) 
        * (safe-lambda* gen)
        * (delay s1 s2) (frame->sample frm smp)
        * (* amp (in-any i 0 fil))
@@ -14528,19 +14643,26 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "comb");
   s7_function_set_chooser(sc, f, comb_chooser);
 
-  comb_2 = clm_make_function(sc, "comb", g_comb_2, 2, 0, false, "comb optimization", f,
-			     mul_c_comb_2, mul_s_comb_2, env_comb_2, NULL, NULL, NULL);
+  comb_2 = clm_make_function(sc, "comb", g_comb_2, 2, 0, false, "comb optimization", f, mul_c_comb_2, mul_s_comb_2, env_comb_2, NULL, NULL, NULL);
   direct_comb_2 = clm_make_function(sc, "comb", g_direct_comb_2, 2, 0, false, "comb optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_comb_2 = clm_make_function(sc, "comb", g_indirect_comb_2, 2, 0, false, "comb optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+#if 0
+  comb_3 = clm_make_function(sc, "comb", g_comb_3, 3, 0, false, "comb optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_comb_3 = clm_make_function(sc, "comb", g_direct_comb_3, 3, 0, false, "comb optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  indirect_comb_3 = clm_make_function(sc, "comb", g_indirect_comb_3, 3, 0, false, "comb optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+#endif
 
   f = s7_name_to_value(sc, "notch");
   s7_function_set_chooser(sc, f, notch_chooser);
 
-  notch_2 = clm_make_function(sc, "notch", g_notch_2, 2, 0, false, "notch optimization", f,
-			      mul_c_notch_2, mul_s_notch_2, env_notch_2, NULL, NULL, NULL);
+  notch_2 = clm_make_function(sc, "notch", g_notch_2, 2, 0, false, "notch optimization", f, mul_c_notch_2, mul_s_notch_2, env_notch_2, NULL, NULL, NULL);
   direct_notch_2 = clm_make_function(sc, "notch", g_direct_notch_2, 2, 0, false, "notch optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_notch_2 = clm_make_function(sc, "notch", g_indirect_notch_2, 2, 0, false, "notch optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-
+#if 0
+  notch_3 = clm_make_function(sc, "notch", g_notch_3, 3, 0, false, "notch optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_notch_3 = clm_make_function(sc, "notch", g_direct_notch_3, 3, 0, false, "notch optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  indirect_notch_3 = clm_make_function(sc, "notch", g_indirect_notch_3, 3, 0, false, "notch optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+#endif
 
   f = s7_name_to_value(sc, "one-pole");
   s7_function_set_chooser(sc, f, one_pole_chooser);
@@ -14717,10 +14839,14 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "all-pass");
   s7_function_set_chooser(sc, f, all_pass_chooser);
 
-  all_pass_2 = clm_make_function(sc, "all-pass", g_all_pass_2, 2, 0, false, "all-pass optimization", f,
-				 mul_c_all_pass_2, mul_s_all_pass_2, env_all_pass_2, NULL, NULL, NULL);
+  all_pass_2 = clm_make_function(sc, "all-pass", g_all_pass_2, 2, 0, false, "all-pass optimization", f, mul_c_all_pass_2, mul_s_all_pass_2, env_all_pass_2, NULL, NULL, NULL);
   direct_all_pass_2 = clm_make_function(sc, "all-pass", g_direct_all_pass_2, 2, 0, false, "all-pass optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_all_pass_2 = clm_make_function(sc, "all-pass", g_indirect_all_pass_2, 2, 0, false, "all-pass optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+#if 0
+  all_pass_3 = clm_make_function(sc, "all-pass", g_all_pass_3, 3, 0, false, "all-pass optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  direct_all_pass_3 = clm_make_function(sc, "all-pass", g_direct_all_pass_3, 3, 0, false, "all-pass optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  indirect_all_pass_3 = clm_make_function(sc, "all-pass", g_indirect_all_pass_3, 3, 0, false, "all-pass optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+#endif
   jc_reverb_all_passes = clm_make_function(sc, "all-pass", g_jc_reverb_all_passes, 2, 0, false, "all-pass optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   nrev_all_passes = clm_make_function(sc, "all-pass", g_nrev_all_passes, 2, 0, false, "all-pass optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
@@ -16148,9 +16274,16 @@ void Init_sndlib(void)
   mus_xen_init();
 #if HAVE_SCHEME
   c_object_value_location = s7_c_object_value_offset(s7);
+  if (c_object_value_location != C_OBJECT_VALUE_LOCATION) fprintf(stderr, "value location: %ld %d\n", c_object_value_location, C_OBJECT_VALUE_LOCATION);
   c_object_type_location = s7_c_object_type_offset(s7);
+  if (c_object_type_location != C_OBJECT_TYPE_LOCATION) fprintf(stderr, "object type location: %ld %d\n", c_object_type_location, C_OBJECT_TYPE_LOCATION);
   cell_type_location = s7_type_offset(s7);
+  if (cell_type_location != CELL_TYPE_LOCATION) fprintf(stderr, "cell type location: %ld %d\n", cell_type_location, CELL_TYPE_LOCATION);
   c_object_built_in_type = s7_c_object_built_in_type(s7);
+  if (c_object_built_in_type != C_OBJECT_BUILT_IN_TYPE) fprintf(stderr, "object type: %d %d\n", c_object_built_in_type, C_OBJECT_BUILT_IN_TYPE);
+
+  if (xen_s7_number_location != XEN_S7_NUMBER_LOCATION) fprintf(stderr, "number location: %ld %d\n", xen_s7_number_location, XEN_S7_NUMBER_LOCATION);
+  if (xen_s7_denominator_location != XEN_S7_DENOMINATOR_LOCATION) fprintf(stderr, "denominator location: %ld %d\n", xen_s7_denominator_location, XEN_S7_DENOMINATOR_LOCATION);
 
   init_choices();
 #endif

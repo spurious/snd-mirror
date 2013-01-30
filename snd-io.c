@@ -184,14 +184,17 @@ io_error_t copy_file(const char *oldname, const char *newname)
 
 static void c_io_bufclr(snd_io *io, int beg)
 {
-  int k, end;
-  end = io->bufsize;
+  int k;
+  size_t bytes;
+
+  bytes = (io->bufsize - beg - 1) * sizeof(mus_float_t);
+
   for (k = 0; k < io->chans; k++)
     {
       mus_float_t *j;
       j = io->arrays[k];
       if (j)
-	memset((void *)(j + beg), 0, (end - beg) * sizeof(mus_float_t));
+	memset((void *)(j + beg), 0, bytes);
     }
 }
 
@@ -201,7 +204,8 @@ static void reposition_file_buffers_1(mus_long_t loc, snd_io *io)
   /* called when loc is outside the current in-core frame for the file pointed to by io */
   mus_long_t frames;
   /* local frames is buffer-local, not a sample number. */
-  frames = io->frames - loc;
+
+  frames = io->frames - loc;         /* io->frames is total samps in file */
   if (frames > io->bufsize) frames = io->bufsize;
   if (frames <= 0)                   /* tried to access beyond current end of file */
     {
@@ -217,7 +221,7 @@ static void reposition_file_buffers_1(mus_long_t loc, snd_io *io)
 			  io->chans,
 			  io->arrays,
 			  io->arrays);
-      if (frames < io->bufsize) 
+      if (frames < (io->bufsize - 1)) 
 	c_io_bufclr(io, frames);
     }
   io->end = io->beg + io->bufsize - 1;

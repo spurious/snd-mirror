@@ -262,15 +262,14 @@
 (define-expansion (fneq a b) 
   `(> (magnitude (- ,a ,b)) .001))
 
-(define (ffneq a b)
-  (> (abs (- a b)) .01))
+(define-expansion (ffneq a b)
+  `(> (abs (- ,a ,b)) .01))
 
-(define (fffneq a b) 
-  (> (abs (- a b)) .1))
+(define-expansion (fffneq a b) 
+  `(> (abs (- ,a ,b)) .1))
 
 (define (cneq a b)
-  (or (> (abs (- (real-part a) (real-part b))) .001)
-      (> (abs (- (imag-part a) (imag-part b))) .001)))
+  (> (magnitude (- a b)) .001))
 
 (define (feql a b)
   (if (null? a)
@@ -334,36 +333,35 @@
       (set! (mus-float-equal-fudge-factor) old-fudge)
       result)))
 
-(define* (my-substring str start end)
-  (substring str start (or end (string-length str))))
-
 (define (string-=? a b)
   (or (string=? a b)
-      (let ((alen (string-length a))
-	    (blen (string-length b))
-	    (j 0)
-	    (happy #t))
-	(do ((i 0 (+ i 1)))
-	    ((or (not happy) 
-		 (= i alen))
-	     (and happy 
-		  (= j blen)))
-	  (let ((ac (a i))
-		(bc (b j)))
-	    (if (char=? ac bc)
-		(set! j (+ j 1))
-		(if (not (and (char=? ac #\-)	
-			      (<= i (- alen 7))
-			      (string=? (substring a i (+ i 6)) "-0.000")))
-		    (if (and (char=? bc #\-)
-			     (<= j (- blen 7))
-			     (string=? (substring b j (+ j 6)) "-0.000"))
-			(begin
-			  (set! j (+ j 1))
-			  (if (not (char=? ac (b j)))
-			      (set! happy #f)
-			      (set! j (+ j 1))))
-			(set! happy #f)))))))))
+      (and (or (char-position #\- a) 
+	       (char-position #\- b))
+	   (let ((alen (string-length a))
+		 (blen (string-length b))
+		 (j 0)
+		 (happy #t))
+	     (do ((i 0 (+ i 1)))
+		 ((or (not happy) 
+		      (= i alen))
+		  (and happy 
+		       (= j blen)))
+	       (let ((ac (a i))
+		     (bc (b j)))
+		 (if (char=? ac bc)
+		     (set! j (+ j 1))
+		     (if (not (and (char=? ac #\-)	
+				   (<= i (- alen 7))
+				   (string=? (substring a i (+ i 6)) "-0.000")))
+			 (if (and (char=? bc #\-)
+				  (<= j (- blen 7))
+				  (string=? (substring b j (+ j 6)) "-0.000"))
+			     (begin
+			       (set! j (+ j 1))
+			       (if (not (char=? ac (b j)))
+				   (set! happy #f)
+				   (set! j (+ j 1))))
+			     (set! happy #f))))))))))
 
 (define (dismiss-all-dialogs)
   "(dismiss-all-dialogs) hides all dialogs"
@@ -471,14 +469,6 @@
 (if (not (provided? 'snd-hooks.scm)) (load "hooks.scm"))
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
-
-(define (arity-ok func args)
-  (let ((arity (procedure-arity func)))
-    (and (pair? arity)
-	 (>= args (car arity))
-	 (or (and (pair? (cddr arity))
-		  (caddr arity))
-	     (<= args (+ (car arity) (cadr arity)))))))
 
 (define (set-arity-ok func args)
   (let ((arity (if (procedure-with-setter? func)
@@ -6282,8 +6272,8 @@ EDITS: 5
 	  (if (not (= (sampler-position fd) 0)) (snd-display #__line__ ";sampler: position: ~A" fd))
 	  (free-sampler fd)
 	  (let ((str (format #f "~A" fd)))
-	    (if (not (string=? (my-substring str (- (string-length str) 16)) "at eof or freed>"))
-		(snd-display #__line__ ";freed sampler: ~A [~A]?" str (my-substring str (- (string-length str) 16))))))
+	    (if (not (string=? (substring str (- (string-length str) 16)) "at eof or freed>"))
+		(snd-display #__line__ ";freed sampler: ~A [~A]?" str (substring str (- (string-length str) 16))))))
 	(let* ((reg (car (regions)))
 	       (chns (region-chans reg))
 	       (var (catch #t (lambda () (make-region-sampler reg 0 (+ chns 1))) (lambda args args))))
@@ -11500,26 +11490,20 @@ EDITS: 2
   
   (define (test-polyoid n)
     (let* ((res (with-sound (:channels 2 :clipped #f)
-		  (let ((cur-phases (make-vct (* 3 n))))
+		  (let ((cur-phases (make-vct (* 3 n)))
+			(oscs (make-vector n))
+			(amps (make-vct n (/ 1.0 n))))
 		    (do ((i 0 (+ i 1))
 			 (j 0 (+ j 3)))
 			((= i n))
 		      (set! (cur-phases j) (+ i 1))
 		      (set! (cur-phases (+ j 1)) (/ 1.0 n))
-		      (set! (cur-phases (+ j 2)) (random (* 2 pi))))
-		    (let ((gen (make-polyoid 1.0 cur-phases))
-			  (incr (hz->radians 1.0))
-			  (sin-sum 0.0))
-		      (do ((i 0 (+ i 1))
-			   (phase 0.0 (+ phase incr)))
+		      (set! (cur-phases (+ j 2)) (random (* 2 pi)))
+		      (vector-set! oscs i (make-oscil (+ i 1.0) (cur-phases (+ j 2)))))
+		    (let ((gen (make-polyoid 1.0 cur-phases)))
+		      (do ((i 0 (+ i 1)))
 			  ((= i 88200))
-			(set! sin-sum 0.0)
-			(do ((k 0 (+ k 1))
-			     (k3 2 (+ k3 3))
-			     (a phase (+ a phase)))
-			    ((= k n))
-			  (set! sin-sum (+ sin-sum (sin (+ a (vct-ref cur-phases k3))))))
-			(outa i (/ sin-sum n))
+			(outa i (oscil-bank n oscs amps))
 			(outb i (polyoid gen 0.0)))))))
 	   (snd (find-sound res)))
       (channel-distance snd 0 snd 1)))
@@ -25451,8 +25435,8 @@ EDITS: 2
 		   (lambda (hook)
 		     (let ((file (hook 'name))
 			   (choice (hook 'state)))
-		       (if (not (string=? (my-substring file (- (string-length file) 8)) "test.snd"))
-			   (snd-display #__line__ ";open-raw-sound-hook file: ~A?" (my-substring file (- (string-length file) 8))))
+		       (if (not (string=? (substring file (- (string-length file) 8)) "test.snd"))
+			   (snd-display #__line__ ";open-raw-sound-hook file: ~A?" (substring file (- (string-length file) 8))))
 		       (if (not (eq? choice #f))
 			   (snd-display #__line__ ";open-raw-sound-hook choice: ~A?" choice))
 		       (set! (hook 'result) (list 2 44100 mus-mulaw)))))
@@ -39316,7 +39300,6 @@ EDITS: 1
 	      (simple-tri 1.75 .2 .1)
 	      (simple-pul 2.0 .2 .1)
 	      (simple-sqr 2.25 .2 .1)
-	      (if all-args (simple-sib 2.5 .2 440.0 .1))
 	      (simple-oz 2.75 .2 440.0 .1)
 	      (simple-op 3.0 .2 440.0 .1)
 	      (simple-tz 3.25 .2 440.0 .1)
@@ -40845,7 +40828,7 @@ EDITS: 1
     (set! (val 0) (make-nrcos 100))  
     (set! (val 1) (make-nrcos 200))  
     (set! (val 2) (make-nrcos 300))
-       (set! frq (mus-frequency (vector-ref val 1)))
+    (set! frq (mus-frequency (vector-ref val 1)))
     (if (fneq frq 200.0) (snd-display #__line__ ";defgen vect freq: ~A" frq)))
   
   (let ((val (make-vector 3))
@@ -40853,9 +40836,9 @@ EDITS: 1
     (set! (val 0) (make-nrcos 100))  
     (set! (val 1) (make-nrcos 200))  
     (set! (val 2) (make-nrcos 300))
-       (set! frq (+ (mus-frequency (vector-ref val 0))
-		    (mus-frequency (vector-ref val 1))
-		    (mus-frequency (vector-ref val 2))))
+    (set! frq (+ (mus-frequency (vector-ref val 0))
+		 (mus-frequency (vector-ref val 1))
+		 (mus-frequency (vector-ref val 2))))
     (if (fneq frq 600.0) (snd-display #__line__ ";defgen vect freq 1: ~A" frq)))
   
   (let ((val (make-vector 3))
@@ -40863,17 +40846,17 @@ EDITS: 1
     (set! (val 0) (make-nrcos 100))  
     (set! (val 1) (make-nrcos 200))  
     (set! (val 2) (make-nrcos 300))
-       (set! (mus-frequency (vector-ref val 1)) 500.0)
-       (set! frq (mus-frequency (vector-ref val 1)))
+    (set! (mus-frequency (vector-ref val 1)) 500.0)
+    (set! frq (mus-frequency (vector-ref val 1)))
     (if (fneq frq 500.0) (snd-display #__line__ ";defgen set freq: ~A ~A" frq (mus-frequency (vector-ref val 1)))))
   
   (let* ((res (with-sound (:clipped #f)
 			  (let ((v (make-vector 2 #f)))
 			    (set! (v 0) (make-nrcos 440 10 .5))    
 			    (set! (v 1) (make-nrcos 440 10 .5))    
-			       (do ((i 0 (+ i 1)))
-				   ((= i 1000))
-				 (outa i (nrcos (vector-ref v 0) 0.0))))))
+			    (do ((i 0 (+ i 1)))
+				((= i 1000))
+			      (outa i (nrcos (vector-ref v 0) 0.0))))))
 	 (snd (find-sound res)))
     (if (not (sound? snd)) (snd-display #__line__ ";vect nrcos ~A" snd))
     (if (fneq (maxamp snd) 1.0) (snd-display #__line__ ";vect nrcos max: ~A" (maxamp snd))))
@@ -40882,10 +40865,10 @@ EDITS: 1
 			  (let ((val (make-vector 2)))
 			    (set! (val 0) (make-nrcos 100 1 .1))  
 			    (set! (val 1) (make-nrcos 200 1 .1))  
-			       (do ((i 0 (+ i 1)))
-				   ((= i 2000))
-				 (outa i (* .5 (+ (nrcos (vector-ref val 0) 0.0)
-						  (nrcos (vector-ref val 1) 0.0))))))))
+			    (do ((i 0 (+ i 1)))
+				((= i 2000))
+			      (outa i (* .5 (+ (nrcos (vector-ref val 0) 0.0)
+					       (nrcos (vector-ref val 1) 0.0))))))))
 	 (snd (find-sound res)))
     (if (not (sound? snd)) (snd-display #__line__ ";vect 2 nrcos ~A" snd))
     (if (fneq (maxamp snd) 1.0) (snd-display #__line__ ";vect 2 nrcos max: ~A" (maxamp snd))))
@@ -40905,10 +40888,10 @@ EDITS: 1
 			  (let ((v (make-vector 2 #f)))
 			    (set! (v 0) (make-nrcos 440 10 .5))    
 			    (set! (v 1) (make-nrcos 440 10 .5))    
-			       (do ((i 0 (+ i 1))) 
-				   ((= i 2000))
-				 (let ((gen (vector-ref v 0)))
-				   (outa i (nrcos gen)))))))
+			    (do ((i 0 (+ i 1))) 
+				((= i 2000))
+			      (let ((gen (vector-ref v 0)))
+				(outa i (nrcos gen)))))))
 	 (snd (find-sound res)))
     (if (not (sound? snd)) (snd-display #__line__ ";vect let nrcos ~A" snd))
     (if (fneq (maxamp snd) 1.0) (snd-display #__line__ ";vect let nrcos max: ~A" (maxamp snd))))
@@ -41558,7 +41541,7 @@ EDITS: 1
 	    (XBell dpy 10)
 	    (let ((cmd (XGetCommand dpy win)))
 	      (if (or (not (> (length cmd) 0))
-		      (not (string=? (my-substring (car cmd) (- (string-length (car cmd)) 3)) "snd")))
+		      (not (string=? (substring (car cmd) (- (string-length (car cmd)) 3)) "snd")))
 		  (snd-display #__line__ ";XGetCommand: ~A" cmd)))
 	    (XSetCommand dpy win (list "hiho" "away") 2)
 	    (if (not (equal? (XGetCommand dpy win) (list "hiho" "away"))) 
@@ -43585,7 +43568,7 @@ EDITS: 1
 					  (do ((i (- (string-length filename) 1) (- i 1)))
 					      ((= i 0) filename)
 					    (if (char=? (filename i) #\/)
-						(return (my-substring filename (+ i 1))))))))
+						(return (substring filename (+ i 1))))))))
 				     (format #f "~~/peaks/~A-peaks-~D" 
 					     (snd-test-clean-string (mus-expand-filename file))
 					     chn))
@@ -44529,10 +44512,10 @@ EDITS: 1
 				      XpmReadPixmapFile XpmWriteFileFromPixmap XpmWritePixmapFile XpmCreatePixmapFromXpmImage
 				      XpmCreateXpmImageFromPixmap XpmAttributes? XpmImage? XpmColorSymbol?))
 			     xm-procs-1))
-	       (xm-procs0 (remove-if (lambda (n) (not (arity-ok n 0))) xm-procs))
-	       (xm-procs1 (remove-if (lambda (n) (not (arity-ok n 1))) xm-procs))
-	       (xm-procs2 (remove-if (lambda (n) (not (arity-ok n 2))) xm-procs))
-	       (xm-procs3 (remove-if (lambda (n) (not (arity-ok n 3))) xm-procs))
+	       (xm-procs0 (remove-if (lambda (n) (not (aritable? n 0))) xm-procs))
+	       (xm-procs1 (remove-if (lambda (n) (not (aritable? n 1))) xm-procs))
+	       (xm-procs2 (remove-if (lambda (n) (not (aritable? n 2))) xm-procs))
+	       (xm-procs3 (remove-if (lambda (n) (not (aritable? n 3))) xm-procs))
 	       )
 	  
 	  ;; ---------------- 0 Args
@@ -45188,21 +45171,21 @@ EDITS: 1
 	       :length :hop :ramp :jitter :type :format :comment :channels :filter :revout :width :edit 
 	       :synthesize :analyze :interp :overlap :pitch :distribution :sines :dur))
 	     
-	     (procs0 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 0)))) procs))
+	     (procs0 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 0)))) procs))
 	     (set-procs0 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 1)))) set-procs))
-	     (procs1 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 1)))) procs))
+	     (procs1 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 1)))) procs))
 	     (set-procs1 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 2)))) set-procs))
-	     (procs2 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 2)))) procs))
+	     (procs2 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 2)))) procs))
 	     (set-procs2 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 3)))) set-procs))
-	     (procs3 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 3)))) procs))
+	     (procs3 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 3)))) procs))
 	     (set-procs3 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 4)))) set-procs))
-	     (procs4 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 4)))) procs))
+	     (procs4 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 4)))) procs))
 	     (set-procs4 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 5)))) set-procs))
-	     (procs5 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 5)))) procs))
-	     (procs6 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 6)))) procs))
-	     (procs7 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 7)))) procs))
-	     (procs8 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 8)))) procs))
-	     (procs10 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 10)))) procs))
+	     (procs5 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 5)))) procs))
+	     (procs6 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 6)))) procs))
+	     (procs7 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 7)))) procs))
+	     (procs8 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 8)))) procs))
+	     (procs10 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 10)))) procs))
 	     )
 
 	(if all-args
@@ -47297,22 +47280,21 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-27-Jan-13:
-92,186,773,614
-15,681,461,368  s7.c:eval [/home/bil/snd-13/snd]
- 6,956,717,095  ???:sin [/lib64/libm-2.12.so]
- 5,865,967,755  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 3,271,206,224  s7.c:eval'2 [/home/bil/snd-13/snd]
- 3,085,837,903  s7.c:gc [/home/bil/snd-13/snd]
+30-Jan-13:
+90,833,949,434
+14,932,565,454  s7.c:eval [/home/bil/snd-13/snd]
+ 6,824,466,026  ???:sin [/lib64/libm-2.12.so]
+ 5,752,384,119  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 3,265,753,665  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 3,227,887,145  clm.c:mus_src [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,908,653,322  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,702,749,996  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 2,639,078,545  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 2,548,598,534  ???:cos [/lib64/libm-2.12.so]
- 2,400,057,832  clm.c:mus_src [/home/bil/snd-13/snd]
- 1,586,168,833  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,569,435,522  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,152,076,557  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 2,956,841,664  s7.c:gc [/home/bil/snd-13/snd]
+ 2,916,217,753  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,782,581,111  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 2,558,477,435  ???:cos [/lib64/libm-2.12.so]
+ 2,327,316,992  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
+ 1,585,066,774  clm.c:mus_formant [/home/bil/snd-13/snd]
+ 1,522,418,186  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
- 1,047,718,132  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
 |#

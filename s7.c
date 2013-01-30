@@ -1712,12 +1712,6 @@ static int t_optimized = T_OPTIMIZED;
 /* optimizer flag for a procedure that sets some variable (set-car! for example).
  */
 
-#define T_HAS_TABLE                   (1 << (TYPE_BITS + 18))
-#define set_has_table(p)              typeflag(p) |= T_HAS_TABLE
-#define has_table(p)                  ((typeflag(p) & T_HAS_TABLE) != 0)
-/* optimizer flag (external function using a function table for variable access)
- */
-
 #define T_ONE_LINER                   (1 << (TYPE_BITS + 19))
 #define set_one_liner(p)              typeflag(p) |= T_ONE_LINER
 #define is_one_liner(p)               ((typeflag(p) & T_ONE_LINER) != 0) 
@@ -1772,7 +1766,8 @@ static int t_optimized = T_OPTIMIZED;
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS                   0x00000000
+/* 18 currently unused I think */
+#define UNUSED_BITS                   0x4000000
 
 #if 0
 /* to find who is stomping on our symbols:
@@ -20286,6 +20281,27 @@ static s7_pointer open_input_file_1(s7_scheme *sc, const char *name, const char 
 #ifndef _MSC_VER
       if (errno == EINVAL)
 	return(file_error(sc, caller, "invalid mode", mode));
+
+#if WITH_GCC
+      /* catch one special case, "~/..." */
+      if ((name[0] == '~') &&
+	  (name[1] == '/'))
+	{
+	  char *home;
+	  home = getenv("HOME");
+	  if (home)
+	    {
+	      char *filename;
+	      filename = (char *)calloc(safe_strlen(name) + safe_strlen(home) + 1, sizeof(char));
+	      strcpy(filename, home);
+	      strcat(filename, (char *)(name + 1));
+	      fp = fopen(filename, "r");
+	      free(filename);
+	      if (fp)
+		return(make_input_file(sc, name, fp));
+	    }
+	}
+#endif
 #endif
       return(file_error(sc, caller, strerror(errno), name));
     }
@@ -21664,7 +21680,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 {
   char *buf;
   buf = (char *)calloc(512, sizeof(char));
-  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
+  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
 	   type(obj), 
 	   type_name(sc, obj, NO_ARTICLE),
 	   typeflag(obj),
@@ -21685,7 +21701,6 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   is_safe_closure(obj) ?       " safe-closure" : "",
 	   is_safe_procedure(obj) ?     " safe-procedure" : "",
 	   is_setter(obj) ?             " setter" : "",
-	   has_table(obj) ?             " function-table" : "",
 	   is_one_liner(obj) ?          " one-liner" : "",
 	   needs_copied_args(obj) ?     " copy-args" : "",
 	   is_gensym(obj) ?             " gensym" : "",
@@ -42478,7 +42493,7 @@ static bool safe_stepper(s7_scheme *sc, s7_pointer expr, s7_pointer vars)
  * (define (hi a) (do ((i 0 (+ i 1))) ((= i a)) (display i)))
  */
 
-static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_pointer var_list, bool *has_set, bool *has_data)
+static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_pointer var_list, bool *has_set)
 {
   /* here any (unsafe?) closure or jumping-op (call/cc) or shadowed variable is trouble
    */
@@ -42524,11 +42539,11 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 			  var_list = cons(sc, var, var_list);
 			  sc->x = var_list;
 			  if ((is_pair(cdar(vars))) &&
-			      (!do_is_safe(sc, cdar(vars), steppers, var_list, has_set, has_data)))
+			      (!do_is_safe(sc, cdar(vars), steppers, var_list, has_set)))
 			    return(false);
 			}
 
-		      if (!do_is_safe(sc, (op == OP_DO) ? cdddr(expr) : cddr(expr), steppers, var_list, has_set, has_data))
+		      if (!do_is_safe(sc, (op == OP_DO) ? cdddr(expr) : cddr(expr), steppers, var_list, has_set))
 			return(false);
 		      break;
 
@@ -42544,7 +42559,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 #endif
 			    (*has_set) = true;
 			}
-		      if (!do_is_safe(sc, cddr(expr), steppers, var_list, has_set, has_data))
+		      if (!do_is_safe(sc, cddr(expr), steppers, var_list, has_set))
 			return(false);
 		      if (!safe_stepper(sc, expr, steppers))
 			return(false);
@@ -42556,7 +42571,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		    case OP_AND:
 		    case OP_OR:
 		    case OP_BEGIN:
-		      if (!do_is_safe(sc, cdr(expr), steppers, var_list, has_set, has_data))
+		      if (!do_is_safe(sc, cdr(expr), steppers, var_list, has_set))
 			return(false);
 		      break;
 
@@ -42569,7 +42584,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		{
 		  if ((!is_optimized(expr)) ||
 		      (is_unsafe(expr)) ||
-		      (!do_is_safe(sc, cdr(expr), steppers, var_list, has_set, has_data)))
+		      (!do_is_safe(sc, cdr(expr), steppers, var_list, has_set)))
 		    /* this is unreasonably retrictive because optimize_expression returns "unsafe"
 		     *   even when everything is safe -- it's merely saying it could not find a
 		     *   special optimization case for the expression.  
@@ -42589,16 +42604,11 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 				  (is_pair(cadddr(expr))))
 				(*has_set) = true;
 			    }
-			  if (!do_is_safe(sc, cddr(expr), steppers, var_list, has_set, has_data))
+			  if (!do_is_safe(sc, cddr(expr), steppers, var_list, has_set))
 			    return(false);		      
 			  if (!safe_stepper(sc, expr, steppers))
 			    return(false);
 			}
-
-		      if ((is_safe_c_op(optimize_data(expr))) &&
-			  (is_c_function(ecdr(expr))) &&
-			  (has_table(ecdr(expr))))
-			(*has_data) = true;
 		    }
 		}
 	    }
@@ -43184,7 +43194,7 @@ static s7_pointer check_do(s7_scheme *sc)
 		      /* end var is (op var const|symbol) using same var as step 
 		       *   so at least we can use SIMPLE_DO
 		       */
-		      bool has_set = false, has_data = false;
+		      bool has_set = false;
 		      
 		      if (ecdr(step_expr) == add_cs1)
 			{
@@ -43229,10 +43239,8 @@ static s7_pointer check_do(s7_scheme *sc)
 #endif
 			}
 		      
-		      if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->NIL, &has_set, &has_data))
+		      if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->NIL, &has_set))
 			{
-			  if (has_data) set_has_methods(sc->code);
-			  
 			  /* now look for the very common dotimes case
 			   */
 			  if ((((s7_is_integer(caddr(step_expr))) &&
@@ -62602,13 +62610,13 @@ s7_scheme *s7_init(void)
  *   TODO: get rid of all arg lambdas -- move them to the make function (*.html especially!)
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
- * bench    42736 8752 8051 7725 6515 5236
+ * bench    42736 8752 8051 7725 6515 5233
  * lint           9328 8140 7887 7736 7320
  * index    44300 3291 3005 2742 2078 1643
  * s7test    1721 1358 1297 1244  977  967
  * t455|6     265   89   55   31   14   14
  * t502        90   43   39   36   29   23
  * lat        229   63   52   47   42   40
- * calls           275  207  175  115   92
+ * calls           275  207  175  115   91
  */
 

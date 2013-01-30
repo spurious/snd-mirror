@@ -624,11 +624,17 @@ static XEN g_vct_ref(XEN obj, XEN pos)
 static size_t c_object_value_location, c_object_type_location, cell_type_location;
 static int c_object_built_in_type;
 
+#define C_OBJECT_VALUE_LOCATION 16
+#define C_OBJECT_TYPE_LOCATION 8
+#define CELL_TYPE_LOCATION 0
+#define C_OBJECT_BUILT_IN_TYPE 23
+
+
 static void *imported_s7_object_value_checked(s7_pointer obj, int type)
 {
-  #define imported_is_c_object(p) ((unsigned char)(*((unsigned char *)((unsigned char *)(p) + cell_type_location))) == c_object_built_in_type)
-  #define imported_is_c_object_type(p, type) ((int)(*((int *)((unsigned char *)(p) + c_object_type_location))) == type)
-  #define imported_c_object_value(p) ((void *)(*((void **)((unsigned char *)(p) + c_object_value_location))))
+#define imported_is_c_object(p) ((unsigned char)(*((unsigned char *)((unsigned char *)(p) + CELL_TYPE_LOCATION))) == (unsigned char)C_OBJECT_BUILT_IN_TYPE)
+#define imported_is_c_object_type(p, type) ((int)(*((int *)((unsigned char *)(p) + C_OBJECT_TYPE_LOCATION))) == (int)type)
+  #define imported_c_object_value(p) ((void *)(*((unsigned char **)((unsigned char *)(p) + C_OBJECT_VALUE_LOCATION))))
 
   if ((imported_is_c_object(obj)) &&
       (imported_is_c_object_type(obj, type)))
@@ -719,9 +725,12 @@ static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
 
 static int vct_number_location;
 
+#define VCT_NUMBER_LOCATION 8
+
+
 #if (!WITH_GMP)
-#define s7_cell_integer(p) (s7_Int)(*((s7_Int *)((unsigned char *)(p) + vct_number_location)))
-#define s7_cell_real(p) (s7_Double)(*((s7_Double *)((unsigned char *)(p) + vct_number_location)))
+#define s7_cell_integer(p) (s7_Int)(*((s7_Int *)((unsigned char *)(p) + VCT_NUMBER_LOCATION)))
+#define s7_cell_real(p) (s7_Double)(*((s7_Double *)((unsigned char *)(p) + VCT_NUMBER_LOCATION)))
 
 static s7_pointer vct_set_vector_ref;
 static s7_pointer g_vct_set_vector_ref(s7_scheme *sc, s7_pointer args)
@@ -770,8 +779,8 @@ static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
       if (s7_slot_value(sc, callee) != stepper)
 	return(NULL);
       
-      step = ((s7_Int *)((unsigned char *)(stepper) + vct_number_location));
-      stop = ((s7_Int *)((unsigned char *)(stepper) + vct_number_location + sizeof(s7_Int)));
+      step = ((s7_Int *)((unsigned char *)(stepper) + VCT_NUMBER_LOCATION));
+      stop = ((s7_Int *)((unsigned char *)(stepper) + VCT_NUMBER_LOCATION + sizeof(s7_Int)));
       pos = (*step);
       end = (*stop);
       
@@ -835,8 +844,8 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
       if (s7_slot_value(sc, callee) != stepper)
 	return(NULL);
       
-      step = ((s7_Int *)((unsigned char *)(stepper) + vct_number_location));
-      stop = ((s7_Int *)((unsigned char *)(stepper) + vct_number_location + sizeof(s7_Int)));
+      step = ((s7_Int *)((unsigned char *)(stepper) + VCT_NUMBER_LOCATION));
+      stop = ((s7_Int *)((unsigned char *)(stepper) + VCT_NUMBER_LOCATION + sizeof(s7_Int)));
       pos = (*step);
       end = (*stop);
 
@@ -1856,6 +1865,7 @@ void mus_vct_init(void)
   {
     s7_pointer f;
     vct_number_location = s7_number_offset(s7);
+    if (vct_number_location != VCT_NUMBER_LOCATION) fprintf(stderr, "vct number location: %d %d\n", vct_number_location, VCT_NUMBER_LOCATION);
 
     /* vct-ref */
     f = s7_name_to_value(s7, "vct-ref");
@@ -1897,8 +1907,12 @@ void mus_vct_init(void)
   }
 
   c_object_value_location = s7_c_object_value_offset(s7);
+  if (c_object_value_location != C_OBJECT_VALUE_LOCATION) fprintf(stderr, "value location: %ld %d\n", c_object_value_location, C_OBJECT_VALUE_LOCATION);
   c_object_type_location = s7_c_object_type_offset(s7);
+  if (c_object_type_location != C_OBJECT_TYPE_LOCATION) fprintf(stderr, "object type location: %ld %d\n", c_object_type_location, C_OBJECT_TYPE_LOCATION);
   cell_type_location = s7_type_offset(s7);
+  if (cell_type_location != CELL_TYPE_LOCATION) fprintf(stderr, "cell type location: %ld %d\n", cell_type_location, CELL_TYPE_LOCATION);
   c_object_built_in_type = s7_c_object_built_in_type(s7);
+  if (c_object_built_in_type != C_OBJECT_BUILT_IN_TYPE) fprintf(stderr, "object type: %d %d\n", c_object_built_in_type, C_OBJECT_BUILT_IN_TYPE);
 #endif
 }

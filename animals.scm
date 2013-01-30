@@ -228,7 +228,7 @@
 (provide 'snd-animals.scm)
 
 (if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
-;;           rxyk!cos rk!cos blackman=polywave rcos rxycos
+;;     rxyk!cos rk!cos blackman=polywave rcos rxycos
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 (set! *clm-default-frequency* 0.0)
@@ -4749,8 +4749,8 @@
 	    (outa i (* (env ampf) 
 		       (formant-bank fs fb (* (+ .9 (rand-interp rnd1))
 					      (polywave gen1 (+ (env frqf)
-							     (* intrp (+ (* hz7 (oscil vib))
-									 (rand-interp rnd)))))))))))))))
+								(* intrp (+ (* hz7 (oscil vib))
+									    (rand-interp rnd)))))))))))))))
 
 ;; (with-sound (:play #t) (barred-owl-1 0 .5))
 
