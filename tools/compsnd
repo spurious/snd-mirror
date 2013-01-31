@@ -620,23 +620,10 @@ echo ' -------------------------------------------------------------------------
 make sndinfo
 sndinfo oboe.snd
 sndinfo test.snd
-
-echo ' '
-echo ' '
 make allclean
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                --with-shared-sndlib                                    ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-shared-sndlib
-make
-./snd --version
-./snd -noinit --features "'clm"
+echo ' '
+echo ' '
 
-echo ' '
-echo ' '
-echo ' -------------------------------- no-gui test -------------------------------- '
-make allclean
-rm -f snd
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --with-no-gui                                          ---- '
 echo ' -------------------------------------------------------------------------------- '

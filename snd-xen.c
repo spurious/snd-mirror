@@ -280,7 +280,6 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 { 
   static char *msg = NULL; 
   XEN err = rb_eStandardError, bt; 
-  bool need_comma = false; 
   int size = 2048; 
   char *idname; 
 
@@ -2210,7 +2209,7 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_any_char_position(s7_scheme *sc, s7_pointer args)
 {
-  #define H_any_char_position "(any-char-position str1 str2 (start 0)) returns the position of the first occurrence of any char in str1 in str2, or #f"
+  #define H_any_char_position "(any-char-position str1 str2 (start 0)) returns the position of the first occurrence of any char in str2 in str1, or #f"
   const char *porig, *pset;
   int start = 0, pos, len;
 

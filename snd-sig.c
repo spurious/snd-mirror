@@ -3585,7 +3585,9 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
       if (j > 0) 
 	mus_file_write(ofd, 0, j - 1, 1, data);
 
+#if HAVE_SCHEME
     DO_EDIT:
+#endif
       close_temp_file(filename, ofd, hdr->type, samps * datumb);
       free_file_info(hdr);
       free(data[0]);

@@ -113,11 +113,6 @@ var extsnd_closesound_tip = "<code>(close-sound snd)</code>: close snd";
 
 var extsnd_comment_tip = "<code>(comment snd)</code>: snd's comment (in its header)";
 
-var extsnd_countmatches_tip = "<code>(count-matches func (start-samp 0) snd chn edpos)</code>:<br>" +
-                              " return how many samples satisfy func (a function of one argument,<br>" +
-                              " the current sample, returning #t upon match):<br>" +
-                              " <code>(count-matches (lambda (y) (> y .1)))</code>";
-
 var extsnd_cursor_tip = "<code>(cursor snd chn edpos)</code>: current cursor location in snd's channel chn";
 
 var extsnd_cursorcontext_tip = "graphics context for the cursor";

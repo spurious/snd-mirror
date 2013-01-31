@@ -44946,8 +44946,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    (is_symbol(cadr(sc->code))) &&
 		    (is_pair(caddr(sc->code))) &&
 		    (is_optimized(caddr(sc->code))) &&
+#if (!WITH_GMP)
 		    (optimize_data(caddr(sc->code)) == HOP_SAFE_C_C) &&
 		    (ecdr(car(cadr(code))) != geq_2))		    
+#else
+		    (optimize_data(caddr(sc->code)) == HOP_SAFE_C_C))
+#endif
 		  {
 		    s7_pointer callee, args, slot, step_slot, end_slot;
 		    slot = find_symbol(sc, cadr(sc->code));
@@ -62615,8 +62619,8 @@ s7_scheme *s7_init(void)
  * index    44300 3291 3005 2742 2078 1643
  * s7test    1721 1358 1297 1244  977  967
  * t455|6     265   89   55   31   14   14
- * t502        90   43   39   36   29   23
  * lat        229   63   52   47   42   40
+ * t502        90   43   39   36   29   23
  * calls           275  207  175  115   91
  */
 
