@@ -4,7 +4,6 @@
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
-
 (defgenerator one-pole-allpass coeff input x1 y1)
 
 (define (one-pole-allpass gen input)
@@ -83,7 +82,6 @@
 (define make-one-pole-allpass-bank make_apb)
 |#
                               
-
 (defgenerator expseg currentValue targetValue r)
 
 (define (expseg gen r)
@@ -91,6 +89,7 @@
   (with-environment gen
     (set! currentValue (+ currentValue (* (- targetValue currentValue) r)))))
     ;; (bil) this is slightly different (getting clicks)
+
 
 #|
 (define (make-one-pole-swept)
@@ -427,10 +426,10 @@
 			(wetTap0 (car wetTap-one-pole-one-zero-pair))
 			(wetTap1 (cadr wetTap-one-pole-one-zero-pair))
 			
-			(op1 (make-one-pole (* 1.0 (- 1.0 hammerPole)) (- hammerPole)))
-			(op2 (make-one-pole (* 1.0 (- 1.0 hammerPole)) (- hammerPole)))
-			(op3 (make-one-pole (* 1.0 (- 1.0 hammerPole)) (- hammerPole)))
-			(op4 (make-one-pole (* 1.0 (- 1.0 hammerPole)) (- hammerPole)))
+			(op1 (make-one-pole (- 1.0 hammerPole) (- hammerPole)))
+			(op2 (make-one-pole (- 1.0 hammerPole) (- hammerPole)))
+			(op3 (make-one-pole (- 1.0 hammerPole) (- hammerPole)))
+			(op4 (make-one-pole (- 1.0 hammerPole) (- hammerPole)))
 			
 			(cou0 (car couplingFilter-pair))
 			(cou1 (cadr couplingFilter-pair))

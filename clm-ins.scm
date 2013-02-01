@@ -1230,6 +1230,7 @@ is a physical model of a flute:
 	  (s-2 (make-table-lookup :frequency frequency :wave waveform-2))
 	  (amp-env (make-env amp-envelope :scaler amplitude :duration duration))
 	  (interp-env (make-env interp-func :duration duration))
+	  (interp-env-1 (make-env interp-func :duration duration :offset 1.0 :scaler -1.0))
 	  (loc (make-locsig degree distance reverb-amount))
 	  (per-vib (make-triangle-wave :frequency vibrato-speed
 				       :amplitude (* vibrato-amplitude freq)))
@@ -1237,13 +1238,10 @@ is a physical model of a flute:
 				     :amplitude (* vibrato-amplitude freq))))
       (do ((i beg (+ i 1)))
 	  ((= i end))
-	(let ((vib (+ (triangle-wave per-vib) 
-		      (rand-interp ran-vib)))
-	      (intrp (env interp-env)))
+	(let ((vib (+ (triangle-wave per-vib) (rand-interp ran-vib))))
 	  (locsig loc i (* (env amp-env) 
-			   (+ (* intrp (table-lookup s-1 vib))
-			      (* (- 1.0 intrp) 
-				 (table-lookup s-2 vib))))))))))
+			   (+ (* (env interp-env) (table-lookup s-1 vib))
+			      (* (env interp-env-1) (table-lookup s-2 vib))))))))))
 
 
 

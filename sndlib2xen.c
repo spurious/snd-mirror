@@ -2770,6 +2770,39 @@ static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
 }
 #endif
 
+static s7_pointer sound_data_ref_three;
+static s7_pointer g_sound_data_ref_three(s7_scheme *sc, s7_pointer args)
+{
+  sound_data *sd;
+  sd = (sound_data *)imported_s7_object_value_checked(s7_car_value(sc, args), sound_data_tag);
+  if (sd)
+    {
+      mus_long_t chn, loc;
+      chn = s7_number_to_integer(sc, s7_cadr_value(sc, args));
+      if ((chn < 0) || (chn >= sd->chans))
+	XEN_OUT_OF_RANGE_ERROR("sound-data-ref", 2, s7_cadr_value(sc, args), "channel number out of range");   
+      loc = s7_number_to_integer(sc, s7_cadr_value(sc, s7_cdr(args)));
+      if ((loc < 0) || (loc > sd->length))
+	XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 2, s7_cadr_value(sc, s7_cdr(args)), "index out of range");
+      return(s7_make_real(sc, sd->data[chn][loc]));
+    }
+  XEN_ASSERT_TYPE(false, s7_car_value(sc, args), XEN_ARG_1, "sound-data-ref", "a sound-data object");
+  return(s7_f(sc));
+}
+
+static s7_pointer sound_data_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 3) &&
+      (s7_is_symbol(s7_cadr(expr))) &&
+      (s7_is_symbol(s7_caddr(expr))) &&
+      (s7_is_symbol(s7_cadddr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(sound_data_ref_three);
+    }
+  return(f);
+}
+
 static s7_pointer sound_data_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 4)
@@ -3044,6 +3077,16 @@ void mus_sndlib_xen_initialize(void)
     sound_data_set_direct_looped = s7_make_function(s7, "sound-data-set!", g_sound_data_set_direct_looped, 4, 0, false, "sound-data-set! optimization");
     s7_function_set_class(sound_data_set_direct_looped, f);
     s7_function_set_looped(sound_data_set_direct, sound_data_set_direct_looped);
+#endif
+
+    /* sound-data-set! */
+    f = s7_name_to_value(s7, "sound-data-ref");
+    s7_function_set_chooser(s7, f, sound_data_ref_chooser);
+
+#if (!WITH_GMP)
+    sound_data_ref_three = s7_make_function(s7, "sound-data-ref", g_sound_data_ref_three, 3, 0, false, "sound-data-ref optimization");
+    s7_function_set_class(sound_data_ref_three, f);
+    s7_function_set_returns_temp(sound_data_ref_three);
 #endif
   }
 

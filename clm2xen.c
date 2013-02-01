@@ -7871,7 +7871,7 @@ static XEN xen_one, xen_minus_one;
 
 static s7_pointer env_symbol, all_pass_symbol, ina_symbol, comb_symbol, polywave_symbol, triangle_wave_symbol;
 static s7_pointer rand_interp_symbol, oscil_symbol, add_symbol, subtract_symbol, reverb_symbol, output_symbol;
-static s7_pointer multiply_symbol, vector_ref_symbol, quote_symbol, sin_symbol, cos_symbol, readin_symbol;
+static s7_pointer multiply_symbol, vector_ref_symbol, quote_symbol, sin_symbol, cos_symbol, readin_symbol, abs_symbol;
 
 static mus_float_t as_needed_input_float(void *ptr, int direction)
 {
@@ -12138,6 +12138,34 @@ static s7_pointer g_add_c_direct(s7_scheme *sc, s7_pointer args)
   return(s7_remake_real(sc, x, s7_number_to_real(sc, car(args)) + s7_cell_real(x)));
 }
 
+static s7_pointer add_c_rand_interp;
+static s7_pointer g_add_c_rand_interp(s7_scheme *sc, s7_pointer args)
+{
+  /* (+ c (rand-interp g)) */
+  mus_any *r;
+  s7_Double x;
+
+  x = s7_number_to_real(sc, car(args));
+  args = cdr(args);
+  GET_GENERATOR_CADAR(args, rand-interp, r);
+
+  return(s7_make_real(sc, x + mus_rand_interp_unmodulated(r)));
+}
+
+static s7_pointer add_c_abs_rand_interp;
+static s7_pointer g_add_c_abs_rand_interp(s7_scheme *sc, s7_pointer args)
+{
+  /* (+ c (abs (rand-interp g))) */
+  mus_any *r;
+  s7_Double x;
+
+  x = s7_number_to_real(sc, car(args));
+  args = cdadr(args);
+  GET_GENERATOR_CADAR(args, rand-interp, r);
+
+  return(s7_make_real(sc, x + fabs(mus_rand_interp_unmodulated(r))));
+}
+
 static s7_pointer mul_1s_direct;
 static s7_pointer g_mul_1s_direct(s7_scheme *sc, s7_pointer args)
 {
@@ -12298,10 +12326,26 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	  if (s7_is_real(cadr(expr)))
 	    {
 	      /* fprintf(stderr, "%s\n", DISPLAY(expr)); */
-	      /* often (+ 0.9 (rand-interp rnd)) TODO: rand-interp
+	      /* often (+ 0.9 (rand-interp rnd))
 	       *       (+ 0.7 (abs (rand-interp rnd))) or triangle-wave
 	       */
+	      s7_pointer arg2;
+	      arg2 = caddr(expr);
 	      s7_function_choice_set_direct(sc, expr);
+	      
+	      if (car(arg2) == abs_symbol)
+		{
+		  arg2 = cadr(arg2);
+		  if ((cddr(arg2) == s7_nil(sc)) &&
+		      (car(arg2) == rand_interp_symbol) &&
+		      (s7_is_symbol(cadr(arg2))))
+		    return(add_c_abs_rand_interp);
+		}
+	      if ((cddr(arg2) == s7_nil(sc)) &&
+		  (car(arg2) == rand_interp_symbol) &&
+		  (s7_is_symbol(cadr(arg2))))
+		return(add_c_rand_interp);
+	      
 	      return(add_c_direct);
 	    }
 	  
@@ -14372,6 +14416,7 @@ static void init_choosers(s7_scheme *sc)
 {
   s7_pointer f;
 
+  abs_symbol = s7_make_symbol(sc, "abs");
   env_symbol = s7_make_symbol(sc, "env");
   vector_ref_symbol = s7_make_symbol(sc, "vector-ref");
   all_pass_symbol = s7_make_symbol(sc, "all-pass");
@@ -14588,6 +14633,8 @@ static void init_choosers(s7_scheme *sc)
   add_direct_any = clm_make_function(sc, "+", g_add_direct_any, 3, 0, true, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   add_env_direct_any = clm_make_function(sc, "+", g_add_env_direct_any, 3, 0, true, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   add_c_direct = clm_make_function(sc, "+", g_add_c_direct, 2, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  add_c_rand_interp = clm_make_function(sc, "+", g_add_c_rand_interp, 2, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  add_c_abs_rand_interp = clm_make_function(sc, "+", g_add_c_abs_rand_interp, 2, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   add_1s_direct = clm_make_function_no_choice(sc, "+", g_add_1s_direct, 2, 0, false, "+ optimization", f);
   add_cs_direct = clm_make_function_no_choice(sc, "+", g_add_cs_direct, 2, 0, false, "+ optimization", f);
 

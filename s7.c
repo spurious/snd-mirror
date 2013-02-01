@@ -1766,8 +1766,7 @@ static int t_optimized = T_OPTIMIZED;
 /* using bit 23 for this makes a big difference in the GC
  */
 
-/* 18 currently unused I think */
-#define UNUSED_BITS                   0x4000000
+#define UNUSED_BITS                   0x4000000 /* bit 18 */
 
 #if 0
 /* to find who is stomping on our symbols:
@@ -2292,6 +2291,7 @@ static s7_pointer find_method(s7_scheme *sc, s7_pointer env, s7_pointer symbol);
 static s7_pointer find_environment(s7_scheme *sc, s7_pointer obj);
 static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator);
 static s7_pointer g_make_hash_table_iterator(s7_scheme *sc, s7_pointer args);
+static bool call_begin_hook(s7_scheme *sc);
 
 static s7_pointer simple_wrong_type_arg_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg, s7_pointer typnam, s7_pointer descr);
 static s7_pointer wrong_type_arg_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg_n, s7_pointer arg, s7_pointer typnam, s7_pointer descr);
@@ -4106,6 +4106,13 @@ static void increase_stack_size(s7_scheme *sc)
   sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
   sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
 } 
+
+#define CHECK_STACK_SIZE(Sc) \
+  if (Sc->stack_end >= Sc->stack_resize_trigger) \
+    { \
+      if ((Sc->begin_hook) && (call_begin_hook(Sc))) return(Sc->F); \
+      increase_stack_size(Sc); \
+    }  
 
 
 static s7_pointer g_stack_size(s7_scheme *sc, s7_pointer args)
@@ -33087,6 +33094,30 @@ void s7_set_begin_hook(s7_scheme *sc, bool (*hook)(s7_scheme *sc))
 }
 
 
+static bool call_begin_hook(s7_scheme *sc)
+{
+  opcode_t op;
+  op = sc->op;
+  push_stack(sc, OP_BARRIER, sc->args, sc->code);
+  if ((*(sc->begin_hook))(sc))
+    {
+      /* set (error-environment) in case we were interrupted and need to see why something was hung */
+      slot_set_value(sc->error_type, sc->F);
+      slot_set_value(sc->error_data, sc->F);
+      slot_set_value(sc->error_code, sc->cur_code);
+      slot_set_value(sc->error_line, sc->F);
+      slot_set_value(sc->error_file, sc->F);
+      next_environment(sc->error_env) = sc->envir;
+      
+      s7_quit(sc);     /* don't call gc here -- perhaps at restart somehow? */
+      return(true);
+    }
+  pop_stack_no_op(sc);
+  sc->op = op;         /* for better error handling.  otherwise we get "barrier" as the offending function name in eval_error_with_name */
+  return(false);
+}
+
+
 void s7_quit(s7_scheme *sc)
 {
   sc->longjmp_ok = false;
@@ -34966,8 +34997,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  push_stack_no_code(sc, OP_READ_LIST, sc->NIL);
 	  /* here we need to clear args, but code is ignored */
 
-	  if (sc->stack_end >= sc->stack_resize_trigger)
-	    increase_stack_size(sc);
+	  CHECK_STACK_SIZE(sc);
 	  break;
 	  
 	case TOKEN_QUOTE:
@@ -43782,6 +43812,18 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 
 /* -------------------------------- eval -------------------------------- */
 
+/* an experiment */
+#if WITH_GCC
+#undef NEW_CELL
+#define NEW_CELL(Sc, Obj) \
+  do {						\
+    if (Sc->free_heap_top <= Sc->free_heap_trigger) {try_to_call_gc(Sc); if ((Sc->begin_hook) && (call_begin_hook(Sc))) return(Sc->F);} \
+    Obj = (*(--(Sc->free_heap_top))); \
+    } while (0)
+#endif
+
+
+
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op) 
 {
   sc->cur_code = sc->F;
@@ -44326,7 +44368,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->envir = p;
 	    push_stack_no_args(sc, OP_CATCH_ALL, code);
 	    sc->code = ecdr(cdr(code));                   /* the body of the first lambda */
-	    goto BEGIN;                                   /* removed one_liner check here -- rare */
+	    goto BEGIN;
 	  }
 	sc->value = sc->UNSPECIFIED;
 	goto START;
@@ -44746,12 +44788,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		denominator(slot_value(sc->args)) = s7_integer(end_val);
 		/* (define (hi) (do ((i 1 (+ 1 i))) ((= i 1) i))) -- we need the frame even if the loop is not evaluated
 		 */
+		if ((is_null(sc->code)) ||
+		    ((!is_pair(car(sc->code))) &&
+		     (is_null(cdr(sc->code)))))
+		  {
+		    numerator(slot_value(sc->args)) = s7_integer(end_val);
+		    sc->code = cdr(cadr(code));
+		    goto BEGIN;
+		  }
+
 		if (s7_integer(init_val) == s7_integer(end_val))
 		  {
 		    sc->code = cdr(cadr(code));
 		    goto BEGIN;
 		  }
-
 		if (is_one_liner(sc->code))
 		  {
 		    sc->code = car(sc->code);
@@ -44794,6 +44844,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto NS_EVAL;
 		      }
 		  }
+		/* here we know the body is not a one-liner, or something ridiculous */
 		fcdr(code) = sc->code;
 		push_stack(sc, OP_SAFE_DOTIMES_STEP, sc->args, code);		  
 		goto BEGIN;
@@ -44875,8 +44926,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto BEGIN;
 	  }
 	push_stack(sc, OP_SAFE_DOTIMES_STEP, sc->args, sc->code);
+
+	arg = fcdr(sc->code);
+	/* here we know this is not a one line body */
+	push_stack_no_args(sc, OP_BEGIN1, cdr(arg));
+	sc->code = car(arg);
+	goto EVAL;
+#if 0
 	sc->code = fcdr(sc->code);
 	goto BEGIN;
+#endif
       }
 
 
@@ -46108,29 +46167,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     BEGIN:
     case OP_BEGIN:
       /* sc->args is not used here */
-      if (sc->begin_hook)
-	{
-	  opcode_t op;
-	  op = sc->op;
-	  push_stack(sc, OP_BARRIER, sc->args, sc->code);
-	  if ((*(sc->begin_hook))(sc))
-	    {
-	      /* set (error-environment) in case we were interrupted and need to see why something was hung */
-	      slot_set_value(sc->error_type, sc->F);
-	      slot_set_value(sc->error_data, sc->F);
-	      slot_set_value(sc->error_code, sc->cur_code);
-	      slot_set_value(sc->error_line, sc->F);
-	      slot_set_value(sc->error_file, sc->F);
-	      next_environment(sc->error_env) = sc->envir;
-	      
-	      s7_quit(sc);
-	      /* don't call gc here -- perhaps at restart somehow? */
-	      return(sc->F);
-	    }
-	  pop_stack_no_op(sc);
-	  sc->op = op; /* for better error handling.  otherwise we get "barrier" as the offending function name in eval_error_with_name */
-	}
-      /* fall through */
+      if ((sc->begin_hook) && (call_begin_hook(sc))) return(sc->F);
 
       /* in gcc we can use computed gotos, setting begin_label to this position if
        *   begin_hook is not in use, thereby avoiding that check above.  This saves
@@ -46963,8 +47000,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* goto UNSAFE_CLOSURE_ONE; */
 	      
 	    UNSAFE_CLOSURE_ONE:
-	      if (sc->stack_end >= sc->stack_resize_trigger)
-		increase_stack_size(sc);
+	      CHECK_STACK_SIZE(sc);
 	      code = ecdr(sc->code);
 	      NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), sc->value);
 	      sc->code = closure_body(code);
@@ -46984,8 +47020,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      
 	    case HOP_CLOSURE_Sp:
-	      if (sc->stack_end >= sc->stack_resize_trigger)
-		increase_stack_size(sc);
+	      CHECK_STACK_SIZE(sc);
 	      sc->value = find_symbol_or_bust(sc, cadr(code));
 	      code = ecdr(code);
 	      NEW_FRAME_WITH_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), sc->value); 
@@ -47004,8 +47039,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_CLOSURE_opCqp:
 	      /* kinda dumb -- this is for fib.scm... */
-	      if (sc->stack_end >= sc->stack_resize_trigger)
-		increase_stack_size(sc);
+	      CHECK_STACK_SIZE(sc);
 	      sc->value = c_call(fcdr(code))(sc, cdr(fcdr(code)));
 	      code = ecdr(code);
 	      NEW_FRAME_WITH_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), sc->value);
@@ -47026,8 +47060,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_CLOSURE_SSp:
 	      {
 		s7_pointer p;
-		if (sc->stack_end >= sc->stack_resize_trigger)
-		  increase_stack_size(sc);
+		CHECK_STACK_SIZE(sc);
 		sc->value = find_symbol_or_bust(sc, cadr(code));
 		sc->z = find_symbol_or_bust(sc, fcdr(code));
 		code = ecdr(code);
@@ -47048,15 +47081,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_CLOSURE_SSb:
 	      {
 		s7_pointer p;
-		if (sc->stack_end >= sc->stack_resize_trigger)
-		  increase_stack_size(sc);
+		CHECK_STACK_SIZE(sc);
 		sc->value = find_symbol_or_bust(sc, cadr(code));
 		sc->z = find_symbol_or_bust(sc, fcdr(code));
 		code = ecdr(code);
 		p = closure_args(code);
 		NEW_FRAME_WITH_TWO_SLOTS(sc, closure_environment(code), sc->envir, car(p), sc->value, cadr(p), sc->z);
-		sc->code = closure_body(code);
-		goto BEGIN;  
+		code = closure_body(code);
+#if 1
+		sc->code = code;
+		goto BEGIN;
+#else
+		push_stack_no_args(sc, OP_BEGIN1, cdr(code));
+		sc->code = car(code);
+		goto EVAL;
+#endif
 	      }
 
 
@@ -47140,8 +47179,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (is_pair(p2))
 		  p2 = car(p2);
 		else p2 = g_car(sc, list_1(sc, p2));
-		if (sc->stack_end >= sc->stack_resize_trigger)
-		  increase_stack_size(sc);
+		CHECK_STACK_SIZE(sc);
 		code = ecdr(code);
 		p3 = closure_args(code);
 		NEW_FRAME_WITH_TWO_SLOTS(sc, closure_environment(code), sc->envir, car(p3), p1, cadr(p3), p2);
@@ -47170,8 +47208,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (is_pair(p2))
 		  p2 = cdr(p2);
 		else p2 = g_cdr(sc, list_1(sc, p2));
-		if (sc->stack_end >= sc->stack_resize_trigger)
-		  increase_stack_size(sc);
+		CHECK_STACK_SIZE(sc);
 		code = ecdr(code);
 		p3 = closure_args(code);
 		NEW_FRAME_WITH_TWO_SLOTS(sc, closure_environment(code), sc->envir, car(p3), p1, cadr(p3), p2);
@@ -47204,8 +47241,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    UNSAFE_CLOSURE:
-	      if (sc->stack_end >= sc->stack_resize_trigger)
-		increase_stack_size(sc);
+	      CHECK_STACK_SIZE(sc);
 	      
 	      NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
 	      {
@@ -47265,8 +47301,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* in this case, we have just lambda (not lambda*), and no dotted arglist,
 		 *   and no accessed symbols in the arglist, and we know the arglist matches the parameter list.
 		 */
-		if (sc->stack_end >= sc->stack_resize_trigger)
-		  increase_stack_size(sc);
+		CHECK_STACK_SIZE(sc);
 
 		func = ecdr(code);
 		/* we need to get the slot names from the current function, but the values from the calling environment
@@ -47295,8 +47330,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		/* here also, all the args are simple */
 		s7_pointer args, p, func, e;
-		if (sc->stack_end >= sc->stack_resize_trigger)
-		  increase_stack_size(sc);
+		CHECK_STACK_SIZE(sc);
 
 		func = ecdr(code);
 		NEW_FRAME(sc, closure_environment(func), e);
@@ -47363,8 +47397,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    UNSAFE_CLOSURE_TWO:
 	      {
 		s7_pointer args;
-		if (sc->stack_end >= sc->stack_resize_trigger)
-		  increase_stack_size(sc);
+		CHECK_STACK_SIZE(sc);
 		code = ecdr(sc->code);
 		args = closure_args(code);
 
@@ -51764,8 +51797,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 	  
 	case T_CLOSURE:                              /* -------- normal function (lambda), or macro -------- */
-	  if (sc->stack_end >= sc->stack_resize_trigger)
-	    increase_stack_size(sc);
+	  CHECK_STACK_SIZE(sc);
 	  
 	case T_MACRO:
 	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
@@ -51846,8 +51878,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	  
 	  sc->code = closure_body(sc->code);
-	  if ((is_one_liner(sc->code)) &&
-	      (!(sc->begin_hook))) /* perhaps this could be moved to the optimizer pass */
+	  if (is_one_liner(sc->code))
 	    {
 	      sc->code = car(sc->code);
 	      goto EVAL; 
@@ -51858,8 +51889,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_CLOSURE_STAR:	                  /* -------- define* (lambda*) -------- */
 	  { 
 	    s7_pointer z;
-	    if (sc->stack_end >= sc->stack_resize_trigger)
-	      increase_stack_size(sc);
+	    CHECK_STACK_SIZE(sc);
 	    
 	    sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); 
 #if 0
@@ -52771,10 +52801,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* --------------- */
     case OP_SET_SYMBOL_SAFE_C:
       /* ([set!] ctr (- ctr 11)) */
-      sc->value = c_call(cadr(sc->code))(sc, fcdr(sc->code));
       sc->y = find_symbol(sc, car(sc->code));
       if (is_slot(sc->y)) 
 	{
+	  sc->value = c_call(cadr(sc->code))(sc, fcdr(sc->code));
 	  slot_set_value(sc->y, sc->value); 
 	  IF_BEGIN_POP_STACK(sc);
 	}
@@ -56266,6 +56296,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		symbol_set_local(sym, environment_number, p);
 	      }
 	  }
+	if (!is_one_liner(sc->code))
+	  push_stack_no_args(sc, OP_BEGIN1, cddr(sc->code));
+	sc->code = cadr(sc->code);
+	goto EVAL;
+#if 0
 	if (is_one_liner(sc->code))
 	  {
 	    sc->code = cadr(sc->code);
@@ -56273,6 +56308,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	sc->code = cdr(sc->code);
 	goto BEGIN;
+#endif
       }
       
 
@@ -56369,8 +56405,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (sc->tok == TOKEN_ATOM)
 	      {
 		push_stack_no_code(sc, OP_READ_LIST, sc->args);
-		if (sc->stack_end >= sc->stack_resize_trigger)
-		  increase_stack_size(sc);
+		CHECK_STACK_SIZE(sc);
 		sc->value = port_read_name(sc->input_port)(sc, sc->input_port, NO_SHARP);
 		sc->args = sc->NIL;
 		goto READ_LIST;
@@ -56395,8 +56430,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(missing_close_paren_error(sc));
 	    
 	    push_stack_no_code(sc, OP_READ_LIST, sc->args);
-	    if (sc->stack_end >= sc->stack_resize_trigger)
-	      increase_stack_size(sc);
+	    CHECK_STACK_SIZE(sc);
 	    push_stack_no_code(sc, OP_READ_LIST, sc->NIL);
 	    sc->value = read_expression(sc);
 	    goto START;
@@ -56699,6 +56733,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
   return(sc->F);
 }
 
+#if WITH_GCC
+#undef NEW_CELL
+#define NEW_CELL(Sc, Obj) \
+  do {						\
+    if (Sc->free_heap_top <= Sc->free_heap_trigger) try_to_call_gc(Sc); \
+    Obj = (*(--(Sc->free_heap_top))); \
+    } while (0)
+#endif
 
 
 

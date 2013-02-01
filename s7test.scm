@@ -14930,6 +14930,11 @@ in s7:
 (test (let ((v (list 0 0 0))) (do ((i 0 (+ i 1))) ((= i 3) v) (set! (v i) i))) '(0 1 2))
 (test (let ((sum 0)) ((do ((i 0 (+ i 1))) ((> i 64) (lambda () sum)) (set! sum (+ sum i))))) 2080)
 (test (do ((lst '() (cons i lst)) (i 0 (+ i 1))) ((> i 6) (reverse lst))) '(0 1 2 3 4 5 6))
+(let ()
+  (define (d1) (do ((i 0 (+ i 1))) ((= i 10) i)))
+  (define (d2) (do ((i 0 (+ i 1))) ((= i 10) i) i))
+  (test (d1) 10)
+  (test (d1) (d2)))
 
 (test (let ((x (do ((i 0 (+ i 1))) (#t)))) x) '()) ; guile: #<unspecified>
 
@@ -26656,6 +26661,18 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (with-environment (augment-environment () (environment) '(a . 1)) a) 1)
 (test (with-environment (augment-environment () (environment '(b . 2)) '(a . 1)) (+ a b)) 3)
 (test (with-environment (augment-environment (environment '(b . 2) '(c . 3)) '(a . 1)) (+ a b c)) 6)
+
+(let ()
+  (define (e1) (let ((e (current-environment))) (with-environment e 0)))
+  (define (e2 a) (let ((e (current-environment))) (with-environment e a)))
+  (define (e3) (let ((e (current-environment))) (with-environment e 1 . 2)))
+  (define (e4) (let ((e (current-environment))) (with-environment e 0 1)))
+  (define (e5) (let ((e (current-environment))) (with-environment e (+ 1 2) (+ 2 3))))
+  (test (e2 10) 10) (e1)
+  (test (e1) (e2 0))
+  (test (e3) 'error) (e4)
+  (test (e4) 1) (e5)
+  (test (e5) 5))
 
 (let ()
   (define-constant _a_constant_ 32)

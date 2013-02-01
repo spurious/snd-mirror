@@ -661,7 +661,7 @@ static s7_pointer g_vct_ref_two(s7_scheme *sc, s7_pointer args)
     {
       mus_long_t loc;
       loc = s7_number_to_integer(sc, s7_cadr(args));
-      if ((loc < 0) || (loc>= v->length))
+      if ((loc < 0) || (loc >= v->length))
 	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_cadr(args), "index out of range");
       return(s7_make_real(sc, v->data[loc]));
     }

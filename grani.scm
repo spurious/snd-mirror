@@ -411,8 +411,8 @@
 								      grain-envelope-array-size))
 						     (make-vct 512))))
 	    ;; envelope for transition between grain envelopes
-	    (gr-int-env (make-env (envelope-or-number grain-envelope-transition)
-				  :duration duration))
+	    (gr-int-env (make-env (envelope-or-number grain-envelope-transition) :duration duration))
+	    (gr-int-env-1 (make-env (envelope-or-number grain-envelope-transition) :duration duration :offset 1.0 :scaler -1.0))
 	    (interp-gr-envs grain-envelope-end)
 	    ;; envelope for distance of grains (for using in locsig)
 	    (gr-dist (make-env (envelope-or-number grain-distance)
@@ -442,7 +442,6 @@
 	    (first-grain #t)
 	    (val1 0.0)
 	    (val2 0.0)
-	    (gr-where 0.0)
 	    (where 0.0)
 	    (happy #t)
 	    (where-bins-len (if (vct? where-bins) (length where-bins) 0)))
@@ -580,11 +579,10 @@
 		  (if interp-gr-envs
 		      (do ((gr-offset gr-start-sample (+ gr-offset 1)))
 			  ((= gr-offset grend))
-			(set! gr-where (env gr-int-env))
 			(locsig loc gr-offset (* (env amp-env) 
 						 (src in-file-reader)
-						 (+ (* gr-where (table-lookup gr-env-end))
-						    (* (- 1.0 gr-where) (table-lookup gr-env))))))
+						 (+ (* (env gr-int-env) (table-lookup gr-env-end))
+						    (* (env gr-int-env-1) (table-lookup gr-env))))))
 
 		      (do ((gr-offset gr-start-sample (+ gr-offset 1)))
 			  ((= gr-offset grend))
