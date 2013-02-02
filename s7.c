@@ -1600,7 +1600,6 @@ static int t_optimized = T_OPTIMIZED;
 /* optimizer flag for an expression that has optimization info
  */
 
-
 #define T_KEYWORD                     (1 << (TYPE_BITS + 4))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
 /* this bit distinguishes a symbol from a symbol that is also a keyword
@@ -1649,7 +1648,6 @@ static int t_optimized = T_OPTIMIZED;
  *   that have structure, whereas T_RETURNS_TEMP only affects functions.  We can't use a
  *   low bit (bit 7 for example), because collect_shared_info inspects the object's type.
  */
-
 
 #define T_MATCHED                     (1 << (TYPE_BITS + 7))
 #define is_matched(p)                 ((typeflag(p) & T_MATCHED) != 0)
@@ -1712,12 +1710,6 @@ static int t_optimized = T_OPTIMIZED;
 /* optimizer flag for a procedure that sets some variable (set-car! for example).
  */
 
-#define T_ONE_LINER                   (1 << (TYPE_BITS + 19))
-#define set_one_liner(p)              typeflag(p) |= T_ONE_LINER
-#define is_one_liner(p)               ((typeflag(p) & T_ONE_LINER) != 0) 
-/* implicit begin optimization -- I need to do this differently
- */
-
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define set_copy_args(p)              typeflag(p) |= T_COPY_ARGS
 #define needs_copied_args(p)          ((typeflag(p) & T_COPY_ARGS) != 0)
@@ -1766,7 +1758,7 @@ static int t_optimized = T_OPTIMIZED;
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS                   0x4000000 /* bit 18 */
+#define UNUSED_BITS   0x6000000 /* bits 18 and 19 */
 
 #if 0
 /* to find who is stomping on our symbols:
@@ -2333,9 +2325,9 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 0
 #if 1
-#define NUM_COUNTS 1024
+#if 1
+#define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
 static void clear_counts(void) {int i; for (i = 0; i < NUM_COUNTS; i++) counts[i] = 0;}
 static void tick(int this) {counts[this]++;}
@@ -2360,11 +2352,11 @@ static void report_counts(s7_scheme *sc)
 	}
       if (mx > 0)
 	{
+	  /*
 	  if (mx > total/100)
 	    fprintf(stderr, "%s: %d (%f)\n", opt_names[mxi], mx, 100.0*mx/(float)total);
-	  /*
-	  fprintf(stderr, "%d: %d\n", mxi, mx);
 	  */
+	  fprintf(stderr, "%d: %d\n", mxi, mx);
 	  counts[mxi] = 0;
 	}
       else happy = false;
@@ -21687,7 +21679,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 {
   char *buf;
   buf = (char *)calloc(512, sizeof(char));
-  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
+  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
 	   type(obj), 
 	   type_name(sc, obj, NO_ARTICLE),
 	   typeflag(obj),
@@ -21708,7 +21700,6 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   is_safe_closure(obj) ?       " safe-closure" : "",
 	   is_safe_procedure(obj) ?     " safe-procedure" : "",
 	   is_setter(obj) ?             " setter" : "",
-	   is_one_liner(obj) ?          " one-liner" : "",
 	   needs_copied_args(obj) ?     " copy-args" : "",
 	   is_gensym(obj) ?             " gensym" : "",
 	   has_methods(obj) ?           " has methods" : "",
@@ -27663,7 +27654,7 @@ If its first argument is a list, the list is copied (despite the '!')."
       /* an experiment. other similar cases are assoc/member (and for-each/map but they never happen in this context -- see op_for_each_ls_2 below)
        */
       if ((is_closure(lessp)) &&
-	  (is_one_liner(closure_body(lessp))) &&
+	  (is_null(cdr(closure_body(lessp)))) &&
 	  (is_optimized(car(closure_body(lessp)))))
 	{
 	  /* since (sort seq (lambda (a b) ...)) can't return a "safe closure" (the hop bit is off in
@@ -33926,9 +33917,6 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      (!is_immutable(car(closure_args(sc->code)))) &&         /* not a bad arg name! */
 	      (!symbol_has_accessor(car(closure_args(sc->code)))))    /* not wrapped in an accessor */
 	    {
-	      if ((is_pair(car(closure_body(sc->code)))) &&
-		  (is_null(cdr(closure_body(sc->code)))))
-		set_one_liner(closure_body(sc->code));
 	      push_stack(sc, OP_MAP_SIMPLE, make_counter(sc, sc->NIL, obj, len, 0), sc->code);
 	      return(sc->NO_VALUE);
 	    }
@@ -37812,7 +37800,7 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer car_x, s7_pointer func, int
        *   this is an experiment for later expansion I hope
        */
       if (/* (hop == 1) && */ /* I think if the body is hop_safe_c_c, the current hop setting is irrelevant (local func -> 1 etc) */
-	  (is_one_liner(closure_body(func))))
+	  (is_null(cdr(closure_body(func)))))
 	{
 	  s7_pointer body;
 	  body = car(closure_body(func));
@@ -38122,7 +38110,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		    set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_S);
 		  else
 		    {
-		      if ((is_one_liner(closure_body(func))) &&
+		      if ((is_null(cdr(closure_body(func)))) &&
 			  (!symbol_has_accessor(car(closure_args(func)))))
 			set_optimize_data(car_x, hop + OP_CLOSURE_Sp);
 		      else set_optimize_data(car_x, hop + OP_CLOSURE_S);
@@ -38133,7 +38121,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 	      fcdr(car_x) = cadar_x;
 	      
 	      if ((optimize_data_match(car_x, OP_SAFE_CLOSURE_S)) &&
-		  (is_one_liner(closure_body(func))))
+		  (is_null(cdr(closure_body(func)))))
 		{
 		  s7_pointer body;
 		  body = car(closure_body(func));
@@ -38251,7 +38239,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		      else
 			{
 			  set_optimize_data(car_x, hop + OP_CLOSURE_opCq);
-			  if ((is_one_liner(closure_body(func))) &&
+			  if ((is_null(cdr(closure_body(func)))) &&
 			      (typesflag(car(closure_body(func))) == SYNTACTIC_PAIR) && 
 			      (!symbol_has_accessor(car(closure_args(func)))))
 			    set_optimize_data(car_x, hop + OP_CLOSURE_opCqp);
@@ -38335,8 +38323,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 			      set_optimize_data(car_x, hop + OP_CALL_WITH_EXIT);
 			      choose_c_function(sc, car_x, func, 1);
 			      fcdr(car_x) = cdr(lambda_expr);
-			      if (is_null(cdddr(lambda_expr)))
-				set_one_liner(cddr(lambda_expr));
 			      return(false);
 			    }
 			}
@@ -38489,7 +38475,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		  else
 		    {
 		      if (!arglist_has_accessed_symbol(closure_args(func)))
-			set_optimize_data(car_x, hop + ((is_one_liner(closure_body(func))) ? OP_CLOSURE_SSp : OP_CLOSURE_SSb));
+			set_optimize_data(car_x, hop + ((!is_pair(cdr(closure_body(func)))) ? OP_CLOSURE_SSp : OP_CLOSURE_SSb));
 		      else set_optimize_data(car_x, hop + OP_CLOSURE_SS);
 		    }
 		}
@@ -38588,7 +38574,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		      else
 			{
 			  set_optimize_data(car_x, hop + OP_CLOSURE_opSq_opSq);
-			  if ((is_one_liner(closure_body(func))) &&
+			  if ((is_null(cdr(closure_body(func)))) &&
 			      (!arglist_has_accessed_symbol(closure_args(func))) &&
 			      (is_syntactic(car(closure_body(func)))))
 			    {
@@ -39222,15 +39208,11 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
 		    fcdr(car_x) = cadr(error_result);
 		  else fcdr(car_x) = error_result;
 		  ecdr(cdr(car_x)) = cddr(body_lambda);
- 		  if (is_null(cdr(ecdr(cdr(car_x)))))
- 		    set_one_liner(ecdr(cdr(car_x)));
 		}
 	      else 
 		{
 		  set_optimize_data(car_x, hop + OP_C_CATCH);
 		  choose_c_function(sc, car_x, func, 3);
-		  if (is_null(cddr(body_lambda)))
-		    set_one_liner(cddr(body_lambda));
 		}
 	      return(false);
 	    }
@@ -39951,7 +39933,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 }
 
 
-
 static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
 {
   s7_pointer x;
@@ -39966,33 +39947,11 @@ static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
 	    happy = false;
 	}
     }
+  if ((!is_null(x)) &&
+      (!is_pair(x)))
+    return(eval_error(sc, "stray dot in function body: ~S", code));
   return(happy);
 }
-
-#if 0
-#if WITH_GCC
-
-#define c_function_is_ok(Sc, X) ({ s7_pointer _p_, _X_; \
-                                   _X_ = X;  \
-                                    _p_ = SYMBOL_TO_VALUE(Sc, car(_X_));			 \
-				    ((_p_ == ecdr(_X_)) || \
-                                    ((is_c_function(_p_)) && (is_c_function(ecdr(_X_))) && \
-                                     (c_function_class(_p_) == c_function_class(ecdr(_X_))))); })
-
-#else
-
-static bool c_function_is_ok(s7_scheme *sc, s7_pointer x) 
-{
-  s7_pointer p;
-  p = SYMBOL_TO_VALUE(sc, car(x));
-  return((p == ecdr(x)) ||
-	 ((is_c_function(p)) &&
-	  (c_function_class(p) == c_function_class(ecdr(x)))));
-}
-
-#endif
-#endif
-
 
 
 #define indirect_c_function_is_ok(Sc, X) (((optimize_data(X) & 0x1) != 0) || (c_function_is_ok(Sc, X)))
@@ -41000,16 +40959,11 @@ static s7_pointer check_let(s7_scheme *sc)
 	  return(sc->code);
 	}
 
-      if ((is_pair(cdr(sc->code))) &&
-	  (is_pair(cadr(sc->code))) &&
-	  (is_null(cddr(sc->code))))
-	set_one_liner(cdr(sc->code));
-      
       if (is_null(car(sc->code)))
 	set_syntax_op(sc->code, sc->LET_NO_VARS);
       else 
 	{
-	  if (is_null(cdar(sc->code)))
+	  if (is_null(cdar(sc->code))) /* one binding */
 	    {
 	      s7_pointer binding;
 	      binding = caar(sc->code);
@@ -41025,7 +40979,8 @@ static s7_pointer check_let(s7_scheme *sc)
 			{
 			  if (is_h_safe_c_s(cadr(binding)))
 			    {
-			      if (is_one_liner(cdr(sc->code)))
+			      if ((is_null(cddr(sc->code))) &&
+				  (is_pair(cadr(sc->code))))
 				{
 				  set_syntax_op(sc->code, sc->LET_R_P);
 				  if (is_syntactic(caadr(sc->code)))
@@ -41058,7 +41013,8 @@ static s7_pointer check_let(s7_scheme *sc)
 			      else
 				{
 				  fcdr(cdr(sc->code)) = car(binding);
-				  if (is_one_liner(cdr(sc->code)))
+				  if ((is_null(cddr(sc->code))) &&
+				      (is_pair(cadr(sc->code))))
 				    {
 				      if (is_syntactic(caadr(sc->code)))
 					{
@@ -41087,13 +41043,14 @@ static s7_pointer check_let(s7_scheme *sc)
 		      /* should we make sure T_LINE_NUMBER is not set? -- it won't be cur_code in an error message */
 		      if (is_symbol(fcdr(sc->code)))
 			{
-			  if (is_one_liner(cdr(sc->code)))
+			  if (is_null(cddr(sc->code)))
 			    set_syntax_op(sc->code, sc->LET_S_P);
 			  else set_syntax_op(sc->code, sc->LET_S);
 			}
 		      else 
 			{
-			  if (is_one_liner(cdr(sc->code)))
+			  if ((is_null(cddr(sc->code))) &&
+			      (is_pair(cadr(sc->code))))
 			    {
 			      if (is_h_optimized(cadr(sc->code)))
 				set_syntax_op(sc->code, sc->LET_C_D);
@@ -41270,11 +41227,6 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	  return(sc->code);
 	}
 
-      if ((is_pair(cdr(sc->code))) &&
-	  (is_pair(cadr(sc->code))) &&
-	  (is_null(cddr(sc->code))))
-	set_one_liner(cdr(sc->code));
-      
       set_syntax_op(sc->code, sc->LET_STAR_UNCHECKED);
       if (is_null(car(sc->code)))
 	set_syntax_op(sc->code, sc->LET_NO_VARS); /* (let* () ...) */
@@ -41296,7 +41248,8 @@ static s7_pointer check_let_star(s7_scheme *sc)
 			{
 			  if (is_h_safe_c_s(cadr(binding)))
 			    {
-			      if (is_one_liner(cdr(sc->code)))
+			      if ((is_null(cddr(sc->code))) &&
+				  (is_pair(cadr(sc->code))))
 				{
 				  set_syntax_op(sc->code, sc->LET_R_P);
 				  if (is_syntactic(caadr(sc->code)))
@@ -41320,7 +41273,8 @@ static s7_pointer check_let_star(s7_scheme *sc)
 			      else
 				{
 				  fcdr(cdr(sc->code)) = car(binding);
-				  if (is_one_liner(cdr(sc->code)))
+				  if ((is_null(cddr(sc->code))) &&
+				      (is_pair(cadr(sc->code))))
 				    {
 				      if (is_syntactic(caadr(sc->code)))
 					{
@@ -41346,13 +41300,14 @@ static s7_pointer check_let_star(s7_scheme *sc)
 		      fcdr(sc->code) = cadaar(sc->code);
 		      if (is_symbol(cadaar(sc->code)))
 			{
-			  if (is_one_liner(cdr(sc->code)))
+			  if (is_null(cddr(sc->code)))
 			    set_syntax_op(sc->code, sc->LET_S_P);
 			  else set_syntax_op(sc->code, sc->LET_S);
 			}
 		      else 
 			{
-			  if (is_one_liner(cdr(sc->code)))
+			  if ((is_null(cddr(sc->code))) &&
+			      (is_pair(cadr(sc->code))))
 			    {
 			      if (is_h_optimized(cadr(sc->code)))
 				set_syntax_op(sc->code, sc->LET_C_D);
@@ -41436,13 +41391,7 @@ static s7_pointer check_letrec(s7_scheme *sc)
 
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
-    {
-      set_syntax_op(sc->code, sc->LETREC_UNCHECKED);
-
-      if ((is_pair(cdr(sc->code))) &&
-	  (is_null(cddr(sc->code))))
-	set_one_liner(cdr(sc->code));
-    }
+    set_syntax_op(sc->code, sc->LETREC_UNCHECKED);
 
   return(sc->code);
 }
@@ -42010,10 +41959,6 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
   if (len < 0)                                                               /* (define (hi) 1 . 2) */
     return(eval_error_with_name(sc, "~A: function body messed up, ~A", sc->code));
 
-  if ((len == 1) &&
-      (is_pair(car(body))))
-    set_one_liner(body);
-  
   if (len > 0)  /* i.e. not circular */
     {
       bool bad_set = false;
@@ -42154,6 +42099,9 @@ static s7_pointer check_with_env(s7_scheme *sc)
     return(eval_error(sc, "with-environment takes an environment argument: ~A", sc->code));
   if (!is_pair(cdr(sc->code)))                       /* (with-environment e) -> an error? */
     return(eval_error(sc, "with-environment body is messed up: ~A", sc->code));
+  if ((!is_pair(cddr(sc->code))) &&
+      (!is_null(cddr(sc->code))))
+    return(eval_error(sc, "with-environment body has stray dot? ~A", sc->code));
 
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
@@ -42162,8 +42110,6 @@ static s7_pointer check_with_env(s7_scheme *sc)
       if ((is_symbol(car(sc->code))) &&
 	  (is_pair(cadr(sc->code))))
 	set_syntax_op(sc->code, sc->WITH_ENV_S);
-      if (is_null(cddr(sc->code)))
-	set_one_liner(sc->code);
     }
   return(sc->code);
 }
@@ -43170,8 +43116,8 @@ static s7_pointer check_do(s7_scheme *sc)
       vars = car(sc->code);
       end = cadr(sc->code);
       body = cddr(sc->code);
-      one_line = ((is_pair(car(body))) && (safe_list_length(sc, body) == 1));
-      if (one_line) set_one_liner(body);
+      
+      one_line = ((safe_list_length(sc, body) == 1) && (is_pair(car(body))));
 
       set_syntax_op(sc->code, sc->DO_UNCHECKED);
 
@@ -43706,7 +43652,7 @@ static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
 #define one_line_closure_is_ok(Sc, Code, Type, Args)			\
       ({ s7_pointer _val_; _val_ = fs(Sc, car(Code)); \
        ((_val_ == ecdr(Code)) || \
-        ((typeflag(_val_) == Type) && (is_one_liner(closure_body(_val_))) && (closure_arity_to_int(Sc, _val_) == Args) && (ecdr(Code) = _val_))); })
+        ((typeflag(_val_) == Type) && (is_null(cdr(closure_body(_val_)))) && (closure_arity_to_int(Sc, _val_) == Args) && (ecdr(Code) = _val_))); })
 
 #define closure_star_is_ok(Sc, Code, Type, Args) \
   ({ s7_pointer _val_; _val_ = fs(Sc, car(Code));			\
@@ -44212,12 +44158,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		else sc->envir = old_frame_with_slot(sc, counter_environment(args), sc->x);
 		sc->code = closure_body(code);
-		if (is_one_liner(sc->code)) 
-		  {
-		    sc->code = car(sc->code);
-		    goto EVAL;
-		  }
-		goto BEGIN;
+		if (is_pair(cdr(sc->code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
 	      }
 	  }
 	sc->value = safe_reverse_in_place(sc, counter_result(args));
@@ -44802,7 +44746,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->code = cdr(cadr(code));
 		    goto BEGIN;
 		  }
-		if (is_one_liner(sc->code))
+		if ((is_null(cdr(sc->code))) &&
+		    (is_pair(car(sc->code))))
 		  {
 		    sc->code = car(sc->code);
 		    fcdr(code) = sc->code;
@@ -44928,14 +44873,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	push_stack(sc, OP_SAFE_DOTIMES_STEP, sc->args, sc->code);
 
 	arg = fcdr(sc->code);
-	/* here we know this is not a one line body */
+	/* here we know the body has more than one form */
 	push_stack_no_args(sc, OP_BEGIN1, cdr(arg));
 	sc->code = car(arg);
 	goto EVAL;
-#if 0
-	sc->code = fcdr(sc->code);
-	goto BEGIN;
-#endif
       }
 
 
@@ -44984,7 +44925,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	sc->code = cddr(code);
 
-	if (is_one_liner(sc->code))
+	if ((is_null(cdr(sc->code))) &&
+	    (is_pair(car(sc->code))))
 	  {
 	    sc->code = car(sc->code);
 	    fcdr(code) = sc->code;
@@ -45229,7 +45171,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 * (do ((i 0 (+ i 1))) ((= i 10)) (list-set! lst i i)) in s7test.scm for example
 	 * we need something much more general -- even all_x_op isn't called much here
 	 */
-	if ((is_one_liner(fcdr(code))) &&
+	if ((is_null(cdr(fcdr(code)))) &&
+	    (is_pair(car(fcdr(code)))) &&
 	    (is_optimized(car(fcdr(code)))) &&
 	    (is_all_x_op(optimize_data(car(fcdr(code))))) &&
 	    (is_symbol(cadr(caddr(caar(code))))))
@@ -45311,12 +45254,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	push_stack(sc, OP_SIMPLE_DO_STEP, sc->args, code);
 	sc->code = fcdr(code);
-	if (is_one_liner(sc->code))
-	  {
-	    sc->code = car(sc->code);
-	    goto EVAL; 
-	  }
-	goto BEGIN;
+	if (is_pair(cdr(sc->code)))
+	  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	sc->code = car(sc->code);
+	goto EVAL;
       }
 
 
@@ -45377,12 +45318,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 * 408574: ((dlocsig dloc i (* (env aenv) (oscil osc))))
 	 * 88199: ((outa i (* amp (src src-gen (env senv)))))
 	 */
-	if (is_one_liner(sc->code))
-	  {
-	    sc->code = car(sc->code);
-	    goto EVAL; 
-	  }
-	goto BEGIN;
+	if (is_pair(cdr(sc->code)))
+	  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	sc->code = car(sc->code);
+	goto EVAL;
       }
 
 
@@ -45627,9 +45566,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #else
 	        if (integer(now) == integer(end))
 #endif
-		  {
+		  { 
 		    sc->code = cdadr(code);
-		    goto BEGIN;
+		    if (is_null(sc->code)) /* TODO: extend */
+		      {
+			sc->value = sc->NIL;
+			goto START;
+		      }
+		    if (is_pair(cdr(sc->code)))
+		      push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		    sc->code = car(sc->code);
+		    goto EVAL;
 		  }
 	      }
 	    else
@@ -45734,7 +45681,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  s7_pointer code;
 	  code = cddr(sc->code);
 
-	  if (is_one_liner(code))
+	  if ((is_null(cdr(code))) &&
+	      (is_pair(car(code))))
 	    {
 	      code = car(code);
 
@@ -46267,13 +46215,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      sc->envir = closure_environment(ecdr(code));
 	      sc->code = closure_body(ecdr(code));
-	      if (is_one_liner(sc->code))
-		{
-		  sc->code = car(sc->code);
-		  goto EVAL;
-		}
-	      goto BEGIN;
-	      
+	      if (is_pair(cdr(sc->code)))
+		push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	      sc->code = car(sc->code);
+	      goto EVAL;
 
 	    case OP_SAFE_CLOSURE_S:
 	      if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1))
@@ -46287,16 +46232,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       *   after we do the lookup -- it might be the current func's arg, and we're
 	       *   about to call the same func.
 	       */
-	      {
-		sc->envir = old_frame_with_slot(sc, closure_environment(ecdr(code)), finder(sc, fcdr(code)));
-		sc->code = closure_body(ecdr(code));
-		if (is_one_liner(sc->code))
-		  {
-		    sc->code = car(sc->code);
-		    goto EVAL; 
-		  }
-		goto BEGIN;
-	      }
+	      sc->envir = old_frame_with_slot(sc, closure_environment(ecdr(code)), finder(sc, fcdr(code)));
+	      sc->code = closure_body(ecdr(code));
+	      if (is_pair(cdr(sc->code)))
+		push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	      sc->code = car(sc->code);
+	      goto EVAL;
 	      
 	      
 	    case OP_SAFE_CLOSURE_S_Z:
@@ -46450,13 +46391,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 		sc->envir = env;
 		sc->code = closure_body(sc->code);
-		
-		if (is_one_liner(sc->code))
-		  {
-		    sc->code = car(sc->code);
-		    goto EVAL;  
-		  }
-		goto BEGIN;
+		if (is_pair(cdr(sc->code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
 	      }
 	      
 	      
@@ -46553,14 +46491,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->envir = env;
 		sc->code = closure_body(sc->code);
 		
-		if (is_one_liner(sc->code))
+		if (is_pair(cdr(sc->code)))
+		  {
+		    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		    sc->code = car(sc->code);
+		  }
+		else
 		  {
 		    sc->code = car(sc->code);
 		    if (is_optimized(sc->code))
 		      goto OPT_EVAL;
-		    goto EVAL; 
 		  }
-		goto BEGIN;
+		goto EVAL;
 	      }
 	      
 	      
@@ -46719,12 +46661,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		symbol_set_local(slot_symbol(x), environment_id(sc->envir), x);
 		
 		sc->code = closure_body(ecdr(code));
-		if (is_one_liner(sc->code))
-		  {
-		    sc->code = car(sc->code);
-		    goto EVAL; 
-		  }
-		goto BEGIN;
+		if (is_pair(cdr(sc->code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
 	      }
 	      
 	      
@@ -46816,12 +46756,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 		sc->envir = e;
 		sc->code = closure_body(ecdr(code));
-		if (is_one_liner(sc->code))
-		  {
-		    sc->code = car(sc->code);
-		    goto EVAL; 
-		  }
-		goto BEGIN;
+		if (is_pair(cdr(sc->code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
 	      }
 
 
@@ -46875,12 +46813,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 		  }
 		sc->code = closure_body(ecdr(code));
-		if (is_one_liner(sc->code))
-		  {
-		    sc->code = car(sc->code);
-		    goto EVAL; 
-		  }
-		goto BEGIN;
+		if (is_pair(cdr(sc->code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
 	      
 	      
 	      /* -------------------------------------------------------------------------------- */
@@ -47004,12 +46940,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      code = ecdr(sc->code);
 	      NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), sc->value);
 	      sc->code = closure_body(code);
-	      if (is_one_liner(sc->code))
-		{
-		  sc->code = car(sc->code);
-		  goto EVAL;  
-		}
-	      goto BEGIN;
+	      if (is_pair(cdr(sc->code)))
+		push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	      sc->code = car(sc->code);
+	      goto EVAL;
 	      
 
 	    case OP_CLOSURE_Sp:
@@ -47088,14 +47022,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		p = closure_args(code);
 		NEW_FRAME_WITH_TWO_SLOTS(sc, closure_environment(code), sc->envir, car(p), sc->value, cadr(p), sc->z);
 		code = closure_body(code);
-#if 1
-		sc->code = code;
-		goto BEGIN;
-#else
 		push_stack_no_args(sc, OP_BEGIN1, cdr(code));
 		sc->code = car(code);
 		goto EVAL;
-#endif
 	      }
 
 
@@ -47268,13 +47197,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    z = args;
 		  }
 
-	      sc->code = closure_body(sc->code);
-	      if (is_one_liner(sc->code))
-		{
-		  sc->code = car(sc->code);
-		  goto EVAL; 
-		}
-	      goto BEGIN;
+		sc->code = closure_body(sc->code);
+		if (is_pair(cdr(sc->code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
 	      }
 
 	      
@@ -47313,12 +47240,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->envir = e;
 
 		sc->code = closure_body(func);
-		if (is_one_liner(sc->code))
-		  {
-		    sc->code = car(sc->code);
-		    goto EVAL; 
-		  }
-		goto BEGIN;
+		if (is_pair(cdr(sc->code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
 	      }
 
 	      
@@ -47345,12 +47270,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->envir = e;
 
 		sc->code = closure_body(func);
-		if (is_one_liner(sc->code))
-		  {
-		    sc->code = car(sc->code);
-		    goto EVAL; 
-		  }
-		goto BEGIN;
+		if (is_pair(cdr(sc->code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
 	      }
 	      
 	      
@@ -47405,12 +47328,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		ADD_CHECKED_SLOT(sc->envir, cadr(args), car(sc->T2_2));
 
 		sc->code = closure_body(code);
-		if (is_one_liner(sc->code))
-		  {
-		    sc->code = car(sc->code);
-		    goto EVAL;  
-		  }
-		goto BEGIN;
+		if (is_pair(cdr(sc->code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
 	      }
 	      
 	      
@@ -47507,12 +47428,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		ADD_CHECKED_SLOT(sc->envir, (is_pair(cadr(args))) ? caadr(args) : cadr(args), car(sc->T2_2));
 
 		sc->code = closure_body(code);
-		if (is_one_liner(sc->code))
-		  {
-		    sc->code = car(sc->code);
-		    goto EVAL;  
-		  }
-		goto BEGIN;
+		if (is_pair(cdr(sc->code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
 	      }
 	      
 
@@ -47647,12 +47566,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		
 		sc->code = closure_body(sc->code);
-		if (is_one_liner(sc->code))
-		  {
-		    sc->code = car(sc->code);
-		    goto EVAL; 
-		  }
-		goto BEGIN;
+		if (is_pair(cdr(sc->code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
 	      }
 
 
@@ -47760,7 +47677,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  {
 			    s7_pointer body;
 			    body = closure_body(f);
-			    if (is_one_liner(body))
+			    if (is_null(cdr(body)))
 			      {
 				if (is_h_optimized(car(body)))
 				  set_optimize_data(code, OP_SAFE_CLOSURE_S_Z);
@@ -47771,7 +47688,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			else 
 			  {
 			    set_optimize_data(code, OP_CLOSURE_S);
-			    if ((is_one_liner(closure_body(f))) &&
+			    if ((is_null(cdr(closure_body(f)))) &&
 				(!symbol_has_accessor(car(closure_args(f)))))
 			      set_optimize_data(code, OP_CLOSURE_Sp);
 			  }
@@ -47897,7 +47814,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      {
 				set_optimize_data(code, OP_CLOSURE_SS);
 				if (!arglist_has_accessed_symbol(closure_args(f)))
-				  set_optimize_data(code, ((is_one_liner(closure_body(f))) ? OP_CLOSURE_SSp : OP_CLOSURE_SSb));
+				  set_optimize_data(code, ((!is_pair(cdr(closure_body(f)))) ? OP_CLOSURE_SSp : OP_CLOSURE_SSb));
 			      }
 			    if (is_global(car(code)))
 			      set_hopping(code);
@@ -48071,7 +47988,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      set_optimize_data(code, OP_SAFE_CLOSURE_SSS);
 			    else 
 			      {
-				if ((is_one_liner(closure_body(f))) &&
+				if ((is_null(cdr(closure_body(f)))) &&
 				    (!arglist_has_accessed_symbol(closure_args(f))))
 				  {
 				    arglist_length(code) = small_int(3);
@@ -48281,7 +48198,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    else
 			      {
 				set_optimize_data(code, OP_CLOSURE_opCq);
-				if ((is_one_liner(closure_body(f))) &&
+				if ((is_null(cdr(closure_body(f)))) &&
 				    (typesflag(car(closure_body(f))) == SYNTACTIC_PAIR) &&
 				    (!symbol_has_accessor(car(closure_args(f)))))
 				  set_optimize_data(code, OP_CLOSURE_opCqp);
@@ -48582,7 +48499,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    else 
 			      {
 				set_optimize_data(code, OP_CLOSURE_opSq_opSq);
-				if ((is_one_liner(closure_body(f))) &&
+				if ((is_null(cdr(closure_body(f)))) &&
 				    (!arglist_has_accessed_symbol(closure_args(f))) &&
 				    (is_syntactic(car(closure_body(f)))))
 				  {
@@ -50723,12 +50640,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		push_stack(sc, OP_DEACTIVATE_GOTO, go, code); /* code arg is ignored, but perhaps this is safer in GC? */
 		NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caar(args), go);
 		sc->code = cdr(args);
-		if (is_one_liner(sc->code))
-		  {
-		    sc->code = car(sc->code);
-		    goto EVAL; 
-		  }
-		goto BEGIN;
+		if (is_pair(cdr(sc->code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
 	      } 
 	      
 	      
@@ -50936,12 +50851,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		push_stack(sc, OP_CATCH_1, code, p); /* code ignored here, except by GC */
 		NEW_FRAME(sc, e, sc->envir); 
 		sc->code = body;
- 		if (is_one_liner(sc->code))
- 		  {
- 		    sc->code = car(sc->code);
- 		    goto EVAL; 
- 		  }
-		goto BEGIN;
+		if (is_pair(cdr(sc->code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
 	      }
 
 
@@ -51878,47 +51791,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	  
 	  sc->code = closure_body(sc->code);
-	  if (is_one_liner(sc->code))
-	    {
-	      sc->code = car(sc->code);
-	      goto EVAL; 
-	    }
-	  goto BEGIN;
+	  if (is_pair(cdr(sc->code)))
+	    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	  sc->code = car(sc->code);
+	  goto EVAL;
 	  
 	  
 	case T_CLOSURE_STAR:	                  /* -------- define* (lambda*) -------- */
 	  { 
 	    s7_pointer z;
 	    CHECK_STACK_SIZE(sc);
-	    
 	    sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); 
-#if 0
-	    {
-	      bool has_keywords = false;
-	      int passed_args;
-	      for (z = sc->args, passed_args = 0; is_pair(z); z = cdr(z), passed_args++)
-		if (is_keyword(car(z)))
-		  {
-		    has_keywords = true;
-		    break;
-		  }
-	      if ((!has_keywords) &&
-		  (passed_args == closure_star_arity_to_int(sc, sc->code)))
-		{
-		  /* this currently happens very rarely, so it doesn't repay the scan above */
-		  s7_pointer arg;
-		  for (arg = sc->args, z = closure_args(sc->code); is_pair(arg); arg = cdr(arg), z = cdr(z))
-		    add_slot(sc, (is_pair(car(z))) ? caar(z) : car(z), car(arg));
-		  sc->code = closure_body(sc->code);            /* evaluate the function body */
-		  if (is_one_liner(sc->code))
-		    {
-		      sc->code = car(sc->code);
-		      goto EVAL; 
-		    }
-		  goto BEGIN;
-		}
-	    }
-#endif	    
 	    /* get default values, which may involve evaluation 
 	     */
 	    push_stack(sc, OP_LAMBDA_STAR_DEFAULT, sc->args, sc->code); /* op is just a placeholder (don't use OP_BARRIER here) */
@@ -51979,13 +51862,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    pop_stack_no_op(sc);                          /* get original args and code back */
 	    lambda_star_set_args(sc);                     /* load up current arg vals */
 	    sc->code = closure_body(sc->code);            /* evaluate the function body */
-	    
-	    if (is_one_liner(sc->code))
-	      {
-		sc->code = car(sc->code);
-		goto EVAL; 
-	      }
-	    goto BEGIN;
+	    if (is_pair(cdr(sc->code)))
+	      push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	    sc->code = car(sc->code);
+	    goto EVAL;
 	  }
 	  
 	case T_CONTINUATION:	                  /* -------- continuation ("call/cc") -------- */
@@ -54541,7 +54421,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, gcdr(sc->code), finder(sc, fcdr(sc->code)));
       sc->code = cdr(sc->code);
-      goto BEGIN;
+      push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL;
       
       
       /* --------------- */
@@ -54567,7 +54449,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* --------------- */
     case OP_LET_R:
-      /* one var, init is safe (op sym), incoming sc->code is '(((var (op sym)))...)
+      /* one var, init is safe (op sym), incoming sc->code is '(((var (op sym)))...), we know cddr(sc->code) is not null
        */
       {
 	s7_pointer binding;
@@ -54575,8 +54457,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	car(sc->T1_1) = finder(sc, fcdr(sc->code));
 	sc->value = c_call(cadr(binding))(sc, sc->T1_1);
 	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), sc->value);
-	sc->code = cdr(sc->code);
-	goto BEGIN;
+	push_stack_no_args(sc, OP_BEGIN1, cddr(sc->code));
+	sc->code = cadr(sc->code);
+	goto EVAL;
       }
       
 
@@ -54603,7 +54486,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->value = c_call(cadr(binding))(sc, cdadr(binding));
 	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), sc->value);
 	sc->code = cdr(sc->code);
-	goto BEGIN;
+	if (is_pair(cdr(sc->code)))
+	  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	sc->code = car(sc->code);
+	goto EVAL;
       }
       
 
@@ -54731,7 +54617,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	for (p = car(sc->code); is_pair(p); p = cdr(p))
 	  ADD_SLOT(sc->envir, caar(p), cadar(p)); 
 	sc->code = cdr(sc->code);
-	goto BEGIN;
+	if (is_pair(cdr(sc->code)))
+	  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	sc->code = car(sc->code);
+	goto EVAL;
       }
       
       
@@ -54800,12 +54689,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	environment_number++;
 	sc->envir = frame;
 	sc->code = cdr(sc->code);
-	if (is_one_liner(sc->code))
-	  {
-	    sc->code = car(sc->code);
-	    goto EVAL; 
-	  }
-	goto BEGIN;
+	if (is_pair(cdr(sc->code)))
+	  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	sc->code = car(sc->code);
+	goto EVAL;
       }
       
       
@@ -54998,12 +54885,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = cdr(sc->code);
 	    }
 	}
-	if (is_one_liner(sc->code))
-	  {
-	    sc->code = car(sc->code);
-	    goto EVAL; 
-	  }
-	goto BEGIN;
+	if (is_pair(cdr(sc->code)))
+	  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	sc->code = car(sc->code);
+	goto EVAL;
       }
       
       
@@ -55020,12 +54905,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caar(p), arg);
 	  }
 	sc->code = cdr(sc->code);
-	if (is_one_liner(sc->code))
-	  {
-	    sc->code = car(sc->code);
-	    goto EVAL; 
-	  }
-	goto BEGIN;
+	if (is_pair(cdr(sc->code)))
+	  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	sc->code = car(sc->code);
+	goto EVAL;
       }
 
 
@@ -55128,14 +55011,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cddr(sc->code);
 	}
       else sc->code = cdr(sc->code);
-
-      if (is_one_liner(sc->code))
-	{
-	  sc->code = car(sc->code);
-	  goto EVAL; 
-	}
-      goto BEGIN;
-
+      if (is_pair(cdr(sc->code)))
+	push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL;
 
 
       
@@ -55195,12 +55074,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      else slot_set_value(slot, slot_pending_value(slot));
 	    }
 	  sc->code = cdr(sc->code);
-	  if (is_one_liner(sc->code))
-	    {
-	      sc->code = car(sc->code);
-	      goto EVAL; 
-	    }
-	  goto BEGIN;
+	  if (is_pair(cdr(sc->code)))
+	    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	  sc->code = car(sc->code);
+	  goto EVAL;
 	}
 
       
@@ -55777,11 +55654,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  eval_error(sc, "lambda: no args or no body? ~A", code);
 	check_lambda_args(sc, car(code), NULL);
 	
-	if ((is_pair(body)) &&
-	    (is_pair(car(body))) &&
-	    (is_null(cdr(body))))
-	  set_one_liner(body);
-	
 	/* in many cases, this is a no-op -- we already checked at define */
 	/* optimize_lambda(sc, true, sc->F, car(code), body, 0); */ /* sc->F: anonymous lambda here, car(code): args, true: lambda, not lambda*, 0: hop off */
 	/* why can't we optimize hop=1 here? */
@@ -55804,19 +55676,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (!is_pair(cdr(sc->code))))                                          /* (lambda*) or (lambda* #f) */
 	eval_error(sc, "lambda*: no args or no body? ~A", sc->code);
       car(sc->code) = check_lambda_star_args(sc, car(sc->code), NULL);
-
-      if ((is_pair(cdr(sc->code))) &&
-	  (is_pair(cadr(sc->code))) &&
-	  (is_null(cddr(sc->code))))
-	set_one_liner(cdr(sc->code));
-
       optimize(sc, cdr(sc->code), 0, sc->NIL);
-
       if ((is_overlaid(sc->code)) &&
 	  (cdr(ecdr(sc->code)) == sc->code))
-	{
-	  set_syntax_op(sc->code, sc->LAMBDA_STAR_UNCHECKED);
-	}
+	set_syntax_op(sc->code, sc->LAMBDA_STAR_UNCHECKED);
+
 
       /* --------------- */
     case OP_LAMBDA_STAR_UNCHECKED:
@@ -55917,13 +55781,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (!is_pair(y)) /* else? */
 	      {
 		sc->code = cdar(x);
-		goto BEGIN;
+		if (is_pair(cdr(sc->code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
 	      }
 	    do {
 	      if (car(y) == selector)
 		{
 		  sc->code = cdar(x);
-		  goto BEGIN;
+		  if (is_pair(cdr(sc->code)))
+		    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		  sc->code = car(sc->code);
+		  goto EVAL;
 		}
 	      y = cdr(y);
 	    } while (is_pair(y));
@@ -55992,7 +55862,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (car(y) == selector)
 		{
 		  sc->code = cdar(x);
-		  goto BEGIN;
+		  if (is_pair(cdr(sc->code)))
+		    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		  sc->code = car(sc->code);
+		  goto EVAL;
 		}
 	      y = cdr(y);
 	    } while (is_pair(y));
@@ -56069,7 +55942,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (fcdr(x) == selector)
 	    {
 	      sc->code = cdar(x);
-	      goto BEGIN;
+	      if (is_pair(cdr(sc->code)))
+		push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	      sc->code = car(sc->code);
+	      goto EVAL;
 	    }
 	sc->value = sc->UNSPECIFIED;
 	goto START;
@@ -56087,7 +55963,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (fcdr(x) == selector)
 	    {
 	      sc->code = cdar(x);
-	      goto BEGIN;
+	      if (is_pair(cdr(sc->code)))
+		push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	      sc->code = car(sc->code);
+	      goto EVAL;
 	    }
 	sc->value = sc->UNSPECIFIED;
 	goto START;
@@ -56296,19 +56175,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		symbol_set_local(sym, environment_number, p);
 	      }
 	  }
-	if (!is_one_liner(sc->code))
-	  push_stack_no_args(sc, OP_BEGIN1, cddr(sc->code));
-	sc->code = cadr(sc->code);
+	e = cdr(sc->code);
+	if (is_pair(cdr(e)))
+	  push_stack_no_args(sc, OP_BEGIN1, cdr(e));
+	sc->code = car(e);
 	goto EVAL;
-#if 0
-	if (is_one_liner(sc->code))
-	  {
-	    sc->code = cadr(sc->code);
-	    goto EVAL;
-	  }
-	sc->code = cdr(sc->code);
-	goto BEGIN;
-#endif
       }
       
 
@@ -56347,21 +56218,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* --------------- */
     case OP_WITH_ENV1:
-      if (!is_environment(sc->value))                    /* (with-environment . "hi") */
-	eval_error(sc, "with-environment takes an environment argument: ~A", sc->value);
-      if (sc->value == sc->global_env)
-	sc->envir = sc->NIL;                             /* (with-environment (global-environment) ...) */
-      else 
-	{
-	  s7_pointer p;
-	  environment_id(sc->value) = ++environment_number;
-	  sc->envir = sc->value;
-	  for (p = environment_slots(sc->value); is_slot(p); p = next_slot(p))
-	    symbol_set_local(slot_symbol(p), environment_number, p);
-	}
-
-      /* body is implicit in stack -- sc->code is ready to go */
-      goto BEGIN;
+      {
+	s7_pointer e;
+	e = sc->value;
+	if (!is_environment(e))                    /* (with-environment . "hi") */
+	  eval_error(sc, "with-environment takes an environment argument: ~A", e);
+	if (e == sc->global_env)
+	  sc->envir = sc->NIL;                             /* (with-environment (global-environment) ...) */
+	else 
+	  {
+	    s7_pointer p;
+	    environment_id(e) = ++environment_number;
+	    sc->envir = e;
+	    for (p = environment_slots(e); is_slot(p); p = next_slot(p))
+	      symbol_set_local(slot_symbol(p), environment_number, p);
+	  }
+	if (is_pair(cdr(sc->code)))
+	  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	sc->code = car(sc->code);
+	goto EVAL;
+      }
 
 
       /* --------------- */
@@ -62656,13 +62532,13 @@ s7_scheme *s7_init(void)
  *   TODO: get rid of all arg lambdas -- move them to the make function (*.html especially!)
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4
- * bench    42736 8752 8051 7725 6515 5233
- * lint           9328 8140 7887 7736 7320
+ * bench    42736 8752 8051 7725 6515 5194
+ * lint           9328 8140 7887 7736 7300
  * index    44300 3291 3005 2742 2078 1643
- * s7test    1721 1358 1297 1244  977  967
+ * s7test    1721 1358 1297 1244  977  961
  * t455|6     265   89   55   31   14   14
  * lat        229   63   52   47   42   40
  * t502        90   43   39   36   29   23
- * calls           275  207  175  115   91
+ * calls           275  207  175  115   89
  */
 

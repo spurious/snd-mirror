@@ -2765,10 +2765,10 @@
 		(snd-display #__line__ ";saved-as aifc -> ~A?" (mus-header-type-name (mus-sound-header-type "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";aifc[1000] = ~A?" (sample 1000 ab)))
 	    (if (or (not (string? (mus-sound-comment "test.snd")))
-		    (not (string-=? (mus-sound-comment "test.snd") str)))
+		    (not (string=? (mus-sound-comment "test.snd") str)))
 		(snd-display #__line__ ";output-comment: ~A ~A" (mus-sound-comment "test.snd") str))
 	    (if (or (not (string? (comment ab)))
-		    (not (string-=? (comment ab) str)))
+		    (not (string=? (comment ab) str)))
 		(snd-display #__line__ ";output-comment (comment): ~A ~A" (comment ab) str))
 	    (close-sound ab))
 	  (if (not (equal? old-comment (mus-sound-comment "oboe.snd")))
@@ -2811,7 +2811,7 @@
 		(snd-display #__line__ ";saved-as float -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";riff[1000] = ~A?" (sample 1000 ab)))
 	    (if (or (not (string? (comment ab)))
-		    (not (string-=? (comment ab) 
+		    (not (string=? (comment ab) 
 				    (string-append "written " 
 						   (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time)))
 						   " [written by me]"))))
@@ -3716,7 +3716,7 @@
 		(len (length errs)))
 	    (do ((i 0 (+ i 1)))
 		((or (not happy) (= i len)))
-	      (if (not (string-=? (errs i) (mus-error-type->string i)))
+	      (if (not (string=? (errs i) (mus-error-type->string i)))
 		  (begin
 		    (snd-display #__line__ ";mus-error-type->string ~D: ~A ~A" i (errs i) (mus-error-type->string i))
 		    (set! happy #f))))))
@@ -47283,21 +47283,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-30-Jan-13:
-90,833,949,434
-14,932,565,454  s7.c:eval [/home/bil/snd-13/snd]
- 6,824,466,026  ???:sin [/lib64/libm-2.12.so]
- 5,752,384,119  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 3,265,753,665  s7.c:eval'2 [/home/bil/snd-13/snd]
- 3,227,887,145  clm.c:mus_src [/home/bil/snd-13/snd]
+1-Feb-13:
+89,123,032,564
+14,793,572,073  s7.c:eval [/home/bil/snd-13/snd]
+ 6,822,749,989  ???:sin [/lib64/libm-2.12.so]
+ 5,739,009,798  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 3,209,788,184  s7.c:eval'2 [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,956,841,664  s7.c:gc [/home/bil/snd-13/snd]
- 2,916,217,753  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,782,581,111  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 2,558,477,435  ???:cos [/lib64/libm-2.12.so]
+ 2,929,450,543  s7.c:gc [/home/bil/snd-13/snd]
+ 2,851,032,667  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,730,528,029  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,540,207,031  ???:cos [/lib64/libm-2.12.so]
+ 2,455,554,981  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
  2,327,316,992  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
  1,585,066,774  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,522,418,186  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 1,463,058,330  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,272,973,470  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
+ 1,152,080,422  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
 |#
