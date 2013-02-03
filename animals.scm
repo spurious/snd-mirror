@@ -1174,7 +1174,7 @@
 				  0.623 0.689 0.801 0.305 1.000 0.000)
 			  :duration dur :scaler amp))
 	  (frqf (make-env '(0 480  .3 430 1 425) :duration dur :scaler (hz->radians 1.0)))
-	  (gen1 (make-polywave :partials (normalize-partials (list 1 .9  2 .06  3 .25  4 .79  5 .18  6 .03  7 .02  8 .03  9 .01  10 .02  11 .005 12 .005))))
+	  (gen1 (make-polywave 0.0 (normalize-partials (list 1 .9  2 .06  3 .25  4 .79  5 .18  6 .03  7 .02  8 .03  9 .01  10 .02  11 .005 12 .005))))
 	  (rnd (make-rand-interp 1000 (hz->radians 10)))
 	  
 	  (gen2 (make-oscil))
@@ -1204,7 +1204,7 @@
 (defanimal (western-toad beg dur amp)
   (let ((start (seconds->samples beg)))
     (let ((stop (seconds->samples (+ beg dur)))
-	  (gen (make-polywave :partials (list 1 .95  2 .02  3 .03  4 .005)))
+	  (gen (make-polywave 0.0 (list 1 .95  2 .02  3 .03  4 .005)))
 	  (cur-start start)
 	  (cur-is-long #t))
       (do ()
@@ -1267,7 +1267,7 @@
 	      (pulse-amp (env ampf)))
 	  (set! (mus-location ampf) (- i start))
 	  (set! (mus-location frqf) (- i start))
-	  (set! gen1 (make-polywave :partials (list 1 (* pulse-amp .95)  2 (* pulse-amp .02)  3 (* pulse-amp .03))))
+	  (set! gen1 (make-polywave 0.0 (list 1 (* pulse-amp .95)  2 (* pulse-amp .02)  3 (* pulse-amp .03))))
 	  (do ((k i (+ k 1)))
 	      ((= k reset-stop))
 	    (outa k (* (env pulse-ampf)
@@ -1314,7 +1314,7 @@
 					 0.749 0.207 0.771 0.179 0.791 0.205 0.805 0.203 0.814 0.179 0.846 0.209 0.862 0.212 
 					 0.869 0.186 0.912 0.207 0.969 0.220 1.000 0.218)
 				 :duration attack-dur :scaler (hz->radians 8900.0)))
-	  (attack-gen1 (make-polywave :partials (list 1 .92 2 .05  3 .02  4 .01))))
+	  (attack-gen1 (make-polywave 0.0 (list 1 .92 2 .05  3 .02  4 .01))))
       (do ((i start (+ i 1)))
 	  ((= i attack-stop))
 	(outa i (* (env attack-ampf)
@@ -1324,7 +1324,7 @@
       (let ((dur (- dur1 attack-dur)))
 	(let ((ampf (make-env '(0 1 1 1 10 1 11 0) :duration dur :scaler amp))
 	      (frqf (make-env (list 0 2000  .9 2000 1 1700) :duration dur :scaler (hz->radians 1.0)))
-	      (gen1 (make-polywave :partials (list 1 .92 2 .05  3 .02  4 .01)))
+	      (gen1 (make-polywave 0.0 (list 1 .92 2 .05  3 .02  4 .01)))
 	      (frqf2 (make-env '(0 0  .1 25  4 20) :duration dur :scaler (hz->radians 1.0)))
 	      (gen3 (make-oscil 900))
 	      (gen4 (make-oscil 400))
@@ -1377,7 +1377,7 @@
 	  (frqf (make-env '(0.000 0.220 0.074 0.249 0.133 0.249 0.194 0.240 0.258 0.252 0.324 0.264 0.389 0.267 
 				  0.456 0.270 0.520 0.264 0.847 0.270 0.920 0.273 1.000 0.279)
 			  :duration dur :scaler (hz->radians (* 0.5 0.205 22050.0))))
-	  (gen1 (make-polywave :partials (list 2 .35  3 .1 4 .8  5 .01 6 .03  8 .005)))
+	  (gen1 (make-polywave 0.0 (list 2 .35  3 .1 4 .8  5 .01 6 .03  8 .005)))
 	  (rnd (make-rand-interp 600 (hz->radians 50))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
@@ -1410,7 +1410,7 @@
 	(set! (mus-location ampf) (- i start))
 	(let ((reset-stop (min stop (+ i pulse-out)))
 	      (pulse-amp (env ampf)))
-	  (set! gen1 (make-polywave :partials (list 1 (* pulse-amp .99)  3 (* pulse-amp .005))))
+	  (set! gen1 (make-polywave 0.0 (list 1 (* pulse-amp .99)  3 (* pulse-amp .005))))
 	  (set! (mus-location ampf) (- i start))
 	  (set! (mus-location frqf) (- i start))
 	  (do ((k i (+ k 1)))
@@ -1444,7 +1444,7 @@
 	  
 	  (pulse1 (make-wave-train 56.0 :wave pulse))
 	  (pulse2 (make-delay (seconds->samples .0078))) ; pulses come in pairs
-	  (gen1 (make-polywave :partials (list 1 .95  2 .04  3 .01)))
+	  (gen1 (make-polywave 0.0 (list 1 .95  2 .04  3 .01)))
 	  (rnd (make-rand-interp 100 (hz->radians 2.0)))
 	  (rnd1 (make-rand-interp 1000 (hz->radians 80))))
       (do ((i start (+ i 1)))
@@ -1474,7 +1474,7 @@
 			  :duration dur :scaler amp))
 	  (frqf (make-env '(0.000 0.289 0.534 0.302 0.793 0.299 1.000 0.307)
 			  :duration dur :scaler (hz->radians (* 0.5 21900.0))))
-	  (gen1 (make-polywave :partials (list 1 .005  2 .97  3 .02  4 .01))))
+	  (gen1 (make-polywave 0.0 (list 1 .005  2 .97  3 .02  4 .01))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -1494,7 +1494,7 @@
 					0.334 0.595 0.451 0.312 0.520 0.176 0.639 0.155 0.753 0.077 1.000 0.000)
 				:duration dur :scaler (* amp (amps call))))
 		(frq (hz->radians (* 0.5 (frqs call))))
-		(gen1 (make-polywave :partials (list 1 .005  2 .97  3 .02  4 .01))))
+		(gen1 (make-polywave 0.0 (list 1 .005  2 .97  3 .02  4 .01))))
 	    
 	    (do ((i start (+ i 1)))
 		((= i stop))
@@ -1521,7 +1521,7 @@
 	  (gen1 (make-oscil))
 	  (gen2 (make-oscil))
 	  (ampf2 (make-env (list 0 .1 .05 1 .2 .1 .3 .01 (- dur .1) .1 dur 1) :duration dur :scaler .2))
-	  (gen3 (make-polywave :partials (list 3 .5  4 .2 5 .1  6 .08  7 .05  9 .03)))
+	  (gen3 (make-polywave 0.0 (list 3 .5  4 .2 5 .1  6 .08  7 .05  9 .03)))
 	  (ampf3 (make-env (list 0 .2  .1 1 (- dur .2) 1  dur .5) :duration dur :scaler .1))
 	  (rnd (make-rand-interp 4000 (hz->radians 200)))
 	  
@@ -2651,7 +2651,7 @@
 				  0.869 0.485  0.877 0.567  0.907 0.541  0.918 0.459  0.942 0.513  0.977 0.366 
 				  1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials '(1 .905 2 .025 3 .025)))
+	  (gen1 (make-polywave 0.0 '(1 .905 2 .025 3 .025)))
 	  (frqf (make-env '(0 3370 .03 4300 .1 4600  .14 3400 0.15 4400 .16 3700 .18 4400 .24 4700 .3 4600 .34 3600 .4 3700 .6 3800 .8 4000 1.0 3900)
 			  :duration dur :base .1 :scaler (hz->radians 1.0))))
       (do ((i start (+ i 1)))
@@ -2762,7 +2762,7 @@
 				.38 3730  .42 3900  .45 3770  .46 2760 .53 2470  .55 2050  .58 2320 .6 2100
 				.75 3730  .79  3900  .83 3770  .84 2720 .91 2470  .94 2050  .96 2320 1.0 2100)
 			  :duration dur :base .1 :scaler (hz->radians 1.0)))
-	  (gen1 (make-polywave :partials '(1 .99 2 .01))))
+	  (gen1 (make-polywave 0.0 '(1 .99 2 .01))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf) (polywave gen1 (env frqf))))))))
@@ -3051,7 +3051,7 @@
 	  (ampf (make-env '(0.000 0.000 0.102 0.301 0.221 0.705 0.287 0.332 0.357 0.801 0.406 0.385 0.45 0 0.55 0
 				  0.567 0.298 0.623 1.0 0.706 0.727 0.729 0.292 0.860 0.239 0.885 0.484 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials '(1 .95 2 .05)))
+	  (gen1 (make-polywave 0.0 '(1 .95 2 .05)))
 	  (frqf (make-env '(0 2800 .075 3600 .11 4200 .22 4900 .28 3200 .35 5400 .45 4200 .47 4000
 			      .55 4900 .62 5000 .7 5500 .75 5200 .8 5500 .87 5400 1.0 2800)
 			  :duration dur :scaler (hz->radians 1.0) :base 32)))
@@ -3084,7 +3084,7 @@
 				  0.847 0.000 0.868 0.000 0.931 0.180 
 				  1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 0.96  2 0.01  3 0.02 4 0.001 5 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 0.96  2 0.01  3 0.02 4 0.001 5 .005)))
 	  (gen2 (make-oscil)) ; eschew aliasing
 	  (intrpf (make-env '(0 1 .7 1 .75 0 1 0) :duration dur))
 	  (intrpf-1 (make-env '(0 1 .7 1 .75 0 1 0) :duration dur :offset 1.0 :scaler -1.0))
@@ -3147,7 +3147,7 @@
 	(set! (mus-location ampf) (- i start))
 	(let ((reset-stop (min stop (+ i pulse-samps)))
 	      (pulse-amp (env ampf)))
-	  (set! gen1 (make-polywave :partials (list 1 (* pulse-amp .95)  2 (* pulse-amp .015)  3 (* pulse-amp .025) 3 (* pulse-amp .01))))
+	  (set! gen1 (make-polywave 0.0 (list 1 (* pulse-amp .95)  2 (* pulse-amp .015)  3 (* pulse-amp .025) 3 (* pulse-amp .01))))
 	  (do ((k i (+ k 1)))
 	      ((= k reset-stop))
 	    (outa k (* (env pulsef)
@@ -3169,7 +3169,7 @@
 	(start (seconds->samples beg)))
     (let ((stop1 (+ start (seconds->samples call1-dur)))
 	  (ampf1 (make-env '(0.000 0.000 0.684 0.978 0.863 1.0 0.962 0.773 1.000 0.000) :duration call1-dur :scaler (* .5 amp)))
-	  (gen1 (make-polywave :partials (list 1 .98 3 .02))) ; first section uses ampf1 for amp scaling (.5)
+	  (gen1 (make-polywave 0.0 (list 1 .98 3 .02))) ; first section uses ampf1 for amp scaling (.5)
 	  (frqf1 (make-env '(0 4970 1 4850) :duration call1-dur :scaler (hz->radians 1.0)))
 	  (pulse-samps (seconds->samples .184))
 	  (pulse-out (seconds->samples call2-dur))
@@ -3200,7 +3200,7 @@
 	(set! (mus-location ampf) (- i stop1))
 	(let ((reset-stop (min stop2 (+ i pulse-out)))
 	      (pulse-amp (env ampf)))
-	  (set! gen1 (make-polywave :partials (list 1 (* pulse-amp .98) 3 (* pulse-amp .02))))
+	  (set! gen1 (make-polywave 0.0 (list 1 (* pulse-amp .98) 3 (* pulse-amp .02))))
 	  (do ((k i (+ k 1)))
 	      ((= k reset-stop))
 	    (outa k (* (env ampf2)
@@ -3280,7 +3280,7 @@
 	 (durs (vector 0.34 0.25 0.16 0.39))
 	 (amps (vector 0.6 1.0 0.7 0.95))
 	 
-	 (gen1 (make-polywave :partials (list 1 .95  2 .03 3 .01 4 .01)))
+	 (gen1 (make-polywave 0.0 (list 1 .95  2 .03 3 .01 4 .01)))
 	 
 	 (amp-envs (vector 
 		    (list 0.000 0.000 0.085 0.847 0.117 0.555 0.125 0.731 0.137 0.505 0.158 0.635 0.178 0.595 
@@ -3357,7 +3357,7 @@
 	  (ampf (make-env '(0.000 0.000 0.049 0.134 0.122 0.131 0.174 0.070 0.178 0.244 
 				  0.522 0.954 0.649 0.922 0.736 1.0 0.860 0.962 0.957 0.839 .98 .5 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .85  2 .1  3 .02  4 .05  5 .01 7 .003 9 .001)))
+	  (gen1 (make-polywave 0.0 (list 1 .85  2 .1  3 .02  4 .05  5 .01 7 .003 9 .001)))
 	  (frqf (make-env '(0.000 0.330 0.030 0.388 0.087 0.395  0.155 0.509 0.158 0.609 0.204 0.633 0.346 0.685 
 				  0.35 0.852 0.469 0.882 0.585 0.886 0.780 0.888 0.896 0.878 0.961 0.869  .98 .8 1.000 0.76)
 			  :duration dur :scaler (hz->radians 1000.0))))
@@ -3381,7 +3381,7 @@
 				  0.674 0.099 0.687 0.163 0.707 0.489 0.720 0.631 0.731 0.624 0.765 0.339 0.778 0.170
 				  0.810 0.056 0.842 0.116 0.863 0.227 0.899 0.240 0.907 0.189 0.965 0.122 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .85  2 .02  3 .008 4 .01  5 .006)))
+	  (gen1 (make-polywave 0.0 (list 1 .85  2 .02  3 .008 4 .01  5 .006)))
 	  (frqf (make-env '(0.000 0.267 0.029 0.354 0.131 0.349 0.188 0.414 0.202 0.534 0.232 0.453 0.250 0.427 
 				  0.267 0.455 0.279 0.505 0.296 0.540 0.312 0.549 0.332 0.532 0.365 0.442 0.380 0.427 
 				  0.395 0.443 0.417 0.512 0.430 0.544 0.446 0.558 0.465 0.542 0.503 0.436 0.521 0.421 
@@ -3415,8 +3415,8 @@
 	 (durs (vector 0.34 0.35 0.56))
 	 (amps (vector 0.6 0.8 1.0))
 	 
-	 (gen1 (make-polywave :partials (list 1 (* .55 .95)  2 (* .55 .01) 3 (* .55 .03))))
-	 (gen2 (make-polywave :partials (list 1 (* .45 .95)  2 (* .45 .01) 3 (* .45 .03))))
+	 (gen1 (make-polywave 0.0 (list 1 (* .55 .95)  2 (* .55 .01) 3 (* .55 .03))))
+	 (gen2 (make-polywave 0.0 (list 1 (* .45 .95)  2 (* .45 .01) 3 (* .45 .03))))
 	 
 	 (amp-envs (vector 
 		    (list 0.000 0.000 0.117 0.054 0.301 0.269 0.518 0.605 0.608 0.620 0.703 0.783 0.779 0.900 
@@ -3519,7 +3519,7 @@
 				  0.832 1.000 0.844 0.699 0.857 0.903 0.867 0.405 0.883 0.398 0.895 0.853 0.907 0.853 
 				  0.921 0.297 0.953 0.294 0.981 0.140 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .97  3 .02  4 .01)))
+	  (gen1 (make-polywave 0.0 (list 1 .97  3 .02  4 .01)))
 	  (rnd (make-rand-interp 100 .25))
 	  (frqf (make-env '(0.000 0.702 0.014 0.637 0.023 0.478 0.048 0.343 0.298 0.385 0.335 0.389 0.353 0.459 
 				  0.362 0.546 0.371 0.687 0.376 0.715 0.383 0.687 0.388 0.635 0.391 0.565 0.398 0.474 
@@ -3635,7 +3635,7 @@
 	    
 	    (buzz-frqf (make-table-lookup buzz-frq0 :wave buzz-frq-table))
 	    (buzz-ampf (make-table-lookup buzz-frq0 :wave buzz-amp-table))
-	    (buzz-gen (make-polywave :partials (list 1 .98 2 .005 3 .01))))
+	    (buzz-gen (make-polywave 0.0 (list 1 .98 2 .005 3 .01))))
 	
 	(do ((i start (+ i 1)))
 	    ((= i initial-stop))
@@ -3663,7 +3663,7 @@
 	  (rnd (make-rand-interp 2000 (hz->radians 200.0)))
 	  (rndf (make-env '(0 1 2 .3 5 .3) :duration dur :scaler .1))
 	  (gen2 (make-oscil 620))
-	  (gen1 (make-polywave :partials (list 1 (* .95 .95) 2 (* .95 .05) 3 (* .95 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 (* .95 .95) 2 (* .95 .05) 3 (* .95 .005))))
 	  (ampf (make-env '(0.000 0.000 0.012 0.256 0.032 0.247 0.048 0.188 0.197 0.156 0.224 0.988 0.238 0.844 
 				  0.256 0.881 0.309 0.000 0.390 0.000 0.414 0.881 0.441 0.819 0.494 0.394 0.564 0.175 
 				  0.579 0.000 0.647 0.000 0.678 0.725 0.703 0.659 0.786 0.000 0.856 0.000 0.879 0.631 
@@ -3710,8 +3710,8 @@
 	  (call2-start (+ call1-start (seconds->samples call2-beg))))
       (let ((call2-stop (+ call2-start (seconds->samples call2-dur)))
 	    
-	    (call3-gen (make-polywave :partials (list 1 .95 2 .04 4 .01)))
-	    (call4-gen (make-polywave :partials (list 1 .05   2 .6  3 .2  4 .1  5 .01  6 .005)))
+	    (call3-gen (make-polywave 0.0 (list 1 .95 2 .04 4 .01)))
+	    (call4-gen (make-polywave 0.0 (list 1 .05   2 .6  3 .2  4 .1  5 .01  6 .005)))
 	    (call3-ampf (make-env '(0 0 .5 1  .75 .2  1 0) :duration call3-dur :scaler (* amp call3-amp)))
 	    (call3-frqf (make-env '(0.000 0.245 0.135 0.304 0.399 0.335 0.439 0.345 0.491 0.384 0.551 0.434 0.591 0.485
 					  0.65 0.65  .67 .5  1 .3)
@@ -3804,7 +3804,7 @@
 	((= call 4))
       (let ((start (seconds->samples (+ beg (begs call)))))
 	(let ((stop (+ start (seconds->samples (durs call))))
-	      (gen (make-polywave :partials (list 1 .9  2 .12  3 .007  7 .003)))
+	      (gen (make-polywave 0.0 (list 1 .9  2 .12  3 .007  7 .003)))
 	      (rnd (make-rand-interp 30 (hz->radians 5)))
 	      (ampf (make-env '(0 0 1 1 4 .9 5 0) :duration (durs call) :scaler (* amp (amps call))))
 	      (frqf (make-env '(0 1.25  .5 2  4.4 1.95  5 1) :base .1 :duration (durs call) :scaler (hz->radians (* 0.5 328)))))
@@ -3823,7 +3823,7 @@
 ;;; Western tanager
 
 (defanimal (western-tanager beg amp)
-  (let ((gen (make-polywave :partials '(1 .98 2 .02)))
+  (let ((gen (make-polywave 0.0 '(1 .98 2 .02)))
 	 (begs (vector 0.0  0.7  1.4  2.0))
 	 (durs (vector 0.27 0.32 0.25 0.24))
 	 (amps (vector 0.32 0.85 1.0  0.65)))
@@ -3941,7 +3941,7 @@
 				  0.890 0.964 
 				  0.914 0.117 0.919 0.377 0.926 0.233 0.931 0.324 0.949 0.244 0.977 0.377 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials '(1 .98  2 .01  3 .01)))
+	  (gen1 (make-polywave 0.0 '(1 .98  2 .01  3 .01)))
 	  (frqf (make-env '(0 1170  .093 1680  .2 1640
 			      .46 1170  .558 1170  .626 1450  .650 1530
 			      .66 1290  .707 1480  .750 1480  .765 1290
@@ -4005,7 +4005,7 @@
 			      .9 6600  .92 6500
 			      .96 6500  1 6520)
 			  :duration dur :scaler (hz->radians 1.0)))
-	  (gen1 (make-polywave :partials (list 1 .95  2 .005  3 .03))))
+	  (gen1 (make-polywave 0.0 (list 1 .95  2 .005  3 .03))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -4021,7 +4021,7 @@
 			      .14 4800  .37 5600
 			      .44 8600  .55 6600 .61 5300  1 3200)
 			  :duration dur :scaler (hz->radians 1.0)))
-	  (gen1 (make-polywave :partials (list 1 .95  2 .005  3 .03))))
+	  (gen1 (make-polywave 0.0 (list 1 .95  2 .005  3 .03))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -4033,7 +4033,7 @@
 	    (stop (seconds->samples (+ beg dur)))
 	    (ampf (make-env '(0 0 1 1 3 1 4 0) :duration dur :scaler amp))
 	    (frqf (make-env '(0 7580 .6 5100  1 5000) :duration dur :scaler (hz->radians 1.0)))
-	    (gen1 (make-polywave :partials (list 1 .95  2 .005  3 .03))))
+	    (gen1 (make-polywave 0.0 (list 1 .95  2 .005  3 .03))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -4049,7 +4049,7 @@
 	    (frqf (make-env '(0 3300 .195 4800  
 				.24 5500 .26 5500 .4 4500 .7 3460 1 3000)
 			    :duration dur :scaler (hz->radians 1.0)))
-	    (gen1 (make-polywave :partials (list 1 .96  2 .03  3 .005  4 .004))))
+	    (gen1 (make-polywave 0.0 (list 1 .96  2 .03  3 .005  4 .004))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -4146,7 +4146,7 @@
 	  (ampf (make-env '(0.000 0.000 .02 .1  0.124 0.146 0.142 0.370 0.251 1.000 0.277 0.373  .29 .1  0.393 0.326 0.419 0.731 
 				  0.568 0.407 0.713 0.286 0.885 0.351 0.947 0.311 0.967 0.123 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .98 3 .01  5 .004)))
+	  (gen1 (make-polywave 0.0 (list 1 .98 3 .01  5 .004)))
 	  (ampf1a (make-env '(0 .2  .15 .25 .2 .01 .24 .02 .25 .1 .32 .1 .34 .005 .37 .001 .4 .05 .6 .03  1 0) :duration dur))
 	  (gen1a (make-oscil))
 	  (frqf (make-env '(0.000 0.181 0.054 0.175 0.072 0.187 0.087 0.156 0.097 0.177 0.118 0.154 0.151 0.259 0.201 
@@ -4156,7 +4156,7 @@
 				  0.642 0.159 0.657 0.207 0.692 0.168 0.711 0.231 0.728 0.227 0.742 0.188 0.750 0.257 0.795 
 				  0.218 0.802 0.283 0.845 0.234 0.856 0.296 0.897 0.229 0.909 0.292 0.958 0.227 0.969 0.261 1.000 0.252)
 			  :duration dur :scaler (hz->radians 10000.0)))
-	  (gen2 (make-polywave :partials (list 1 .05 2 .1  3 .2  4 .3  5 .2  6 .1  7 .05)))
+	  (gen2 (make-polywave 0.0 (list 1 .05 2 .1  3 .2  4 .3  5 .2  6 .1  7 .05)))
 	  (ampf2 (make-env '(0 1  .15 0  1 0) :duration dur :scaler (* .5 amp)))
 	  (frqf2 (make-env '(0 850 1 700) :duration dur :scaler (hz->radians 1.0)))
 	  (rnd (make-rand-interp 1000 (hz->radians 50)))
@@ -4203,7 +4203,7 @@
 				  0.747 0.359 0.773 0.297 0.789 0.347 0.815 0.290 0.832 0.342 0.861 0.285 0.883 0.347 
 				  0.907 0.285 0.923 0.332 1.000 0.252)
 			  :duration dur :scaler (hz->radians 8100.0)))
-	  (gen1 (make-polywave :partials (list 1 .99  3 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .99  3 .005)))
 	  (gen2 (make-oscil))
 	  (gen3 (make-oscil))
 	  (ampf2 (make-env '(0 .2  .1 1   .13 0   1 0) :duration dur :scaler .5))
@@ -4250,7 +4250,7 @@
 	(let ((reset-stop (min stop (+ i pulse-out)))
 	      (pulse-amp (env ampf)))
 	  (set! (mus-location frqf) (- i start))
-	  (set! gen1 (make-polywave :partials (list 1 (* pulse-amp .25)  2 (* pulse-amp .6)  3 (* pulse-amp .2)
+	  (set! gen1 (make-polywave 0.0 (list 1 (* pulse-amp .25)  2 (* pulse-amp .6)  3 (* pulse-amp .2)
 						    4 (* pulse-amp .01) 5 (* pulse-amp .01))))
 	  (set! pulse-rnd (make-rand-interp 4000 (* pulse-amp .2))) 
 	  (do ((k i (+ k 1)))
@@ -4466,8 +4466,8 @@
 			   :duration pulse-dur :scaler (hz->radians 10500.0))))
       (let ((ampf1 (make-env '(0 1 .8 1 1 0) :duration pulse-dur))
 	    (ampf2 (make-env '(0 0 .6 0 .7 1 1 1) :duration pulse-dur))
-	    (gen1 (make-polywave :partials (list 1 .95 2 .04 3 .005)))
-	    (gen2 (make-polywave :partials (list 1 .5 2 .5 4 .01)))
+	    (gen1 (make-polywave 0.0 (list 1 .95 2 .04 3 .005)))
+	    (gen2 (make-polywave 0.0 (list 1 .5 2 .5 4 .01)))
 	    (pulse-frq (frqs 0))
 	    (pulse-ctr 1)
 	    (rnd (make-rand-interp 500 .02)))
@@ -4566,7 +4566,7 @@
 				  0.779 0.000 0.814 0.000 0.823 0.923 0.836 0.525 0.840 0.998 0.855 0.968 0.866 0.321 
 				  0.883 0.095 0.909 0.517 0.924 0.600 0.961 0.440 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .015  3 .006)))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .015  3 .006)))
 	  (frqf (make-env '(0.000 0.378 0.022 0.474 0.032 0.400 
 				  0.266 0.378 0.278 0.496 0.297 0.402 0.462 0.351 0.469 0.466 0.482 
 				  0.526 0.504 0.398 0.602 0.378 0.607 0.486 0.617 0.546 0.637 0.490 0.643 0.398 
@@ -4594,7 +4594,7 @@
     (let ((stop (+ start (seconds->samples 3.26)))
 	  (call 0)
 	  (next-call 0)
-	  (gen1 (make-polywave :partials (normalize-partials (list 1 1  2 .08  3 .01  4 .05  5 .005  6 .01))))
+	  (gen1 (make-polywave 0.0 (normalize-partials (list 1 1  2 .08  3 .01  4 .05  5 .005  6 .01))))
 	  
 	  (call1-ampf (make-env '(0.000 0.000 0.174 0.333 0.243 0.273 0.332 0.446 0.391 0.373 0.446 0.488 
 					0.496 0.363 0.545 0.064 0.606 0.048 0.632 0.614 0.676 0.783 0.732 0.655 
@@ -4656,7 +4656,7 @@
 				  0.458 0.739 0.479 0.300 0.507 0.636 0.532 0.558 0.555 0.380 
 				  0.588 0.535 0.807 0.325 0.926 0.181 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .9  2 .1  3 .006)))
+	  (gen1 (make-polywave 0.0 (list 1 .9  2 .1  3 .006)))
 	  (frqf (make-env '(0.000 0.167 0.066 0.212 0.077 0.234 0.104 0.231 0.132 0.187 
 				  0.148 0.181 0.166 0.153 0.231 0.146 0.289 0.101 0.298 0.196 
 				  0.319 0.229 0.339 0.222 0.349 0.240 0.357 0.219 0.377 0.159 
@@ -4771,7 +4771,7 @@
 				  0.145 0.000 0.192 0.000 0.214 0.639 0.232 0.507 0.324 0.981 0.415 0.402 
 				  0.496 0.413 0.610 0.317 0.771 0.287 0.970 0.179 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .07  3 .08  4 .01 5 .003)))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .07  3 .08  4 .01 5 .003)))
 	  (frqf (make-env '(0.000 0.221 0.022 0.305 0.032 0.318 0.040 0.297 0.054 0.225 0.106 0.229 
 				  0.111 0.250 0.130 0.240 0.139 0.215 0.196 0.238 0.205 0.274 0.223 0.322 
 				  0.249 0.337 0.295 0.333 0.324 0.310 0.356 0.293 0.584 0.265 0.781 0.261 
@@ -4811,7 +4811,7 @@
 				  0.875 0.000 0.901 0.000 0.913 0.430 0.931 0.517 0.941 0.000 0.948 0.000 0.965 0.454 
 				  0.971 0.169 0.975 0.120 0.987 0.225 0.993 0.045 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .99  2 .01 3 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .99  2 .01 3 .005)))
 	  (frqf (make-env '(0.000 0.371 0.017 0.571 0.030 0.491 0.035 0.397 0.037 0.321 0.043 0.466 0.047 0.438 
 				  0.052 0.387 0.087 0.344 0.095 0.417 0.102 0.290 0.106 0.458 0.108 0.507 0.117 0.542 
 				  0.122 0.513 0.131 0.446 0.135 0.384 0.136 0.323 0.145 0.446 0.150 0.407 0.151 0.356 
@@ -4881,7 +4881,7 @@
 				   0.9336 0.1737 0.9388 0.0000 0.9439 0.0859 0.9482 0.2431 0.9521 0.1024 0.9546 0.2761 
 				   0.9636 0.0000 0.9850 0.0000 0.9927 0.0402 1.0000 0.0000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .01  3 .005  4 .003)))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .01  3 .005  4 .003)))
 	  (rnd (make-rand-interp 800 (hz->radians 200)))
 	  (frqf (make-env '(0.0000 0.2374 0.0125 0.1869 0.0192 0.1616 0.0250 0.1835 0.0370 0.3316 0.0388 0.2407 
 				   0.0419 0.3013 0.0450 0.2003 0.0473 0.2694 0.0513 0.2155 0.0646 0.2003 0.0727 0.2761 
@@ -4930,7 +4930,7 @@
 	  (stop (seconds->samples (+ beg dur)))
 	  (ampf (make-env '(0.000 0.000 0.124 0.399 0.174 0.520 0.223 0.881 0.355 0.998 0.499 0.644 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .1  2 .8  3 .3  4 .05 5 .01 6 .005 7 .003)))
+	  (gen1 (make-polywave 0.0 (list 1 .1  2 .8  3 .3  4 .05 5 .01 6 .005 7 .003)))
 	  (frqf (make-env '(0.000 0.137  0.126 0.138  0.237 0.144  0.314 0.142  0.400 0.140  1.000 0.130)
 			  :duration dur :scaler (hz->radians 9040.0))))
       (do ((i start (+ i 1)))
@@ -5013,7 +5013,7 @@
 				  0.901 0.033 0.908 0.000 0.913 0.066 0.929 0.310 0.936 0.266 0.940 0.079 0.948 0.000 
 				  0.967 0.044 0.973 0.101 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .02  4 .01)))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .02  4 .01)))
 	  (frqf (make-env '(0.000 0.317 0.013 0.368 0.029 0.464 0.048 0.485 0.062 0.469 0.100 0.310 0.176 0.320 
 				  0.224 0.389 0.242 0.395 0.270 0.370 0.280 0.492 0.284 0.304 0.292 0.363 0.305 0.411 
 				  0.322 0.464 0.347 0.306 0.376 0.269 0.386 0.368 0.396 0.398 0.407 0.366 0.415 0.290 
@@ -5056,10 +5056,10 @@
 				   0.857 0.278 0.864 0.325 0.914 0.222 .95 .22)
 			   :duration dur :scaler (hz->radians (/ 22050.0 5.0))))
 	  
-	  (gen1 (make-polywave :partials (list 1 (* .8 .01) 2 (* .8 .1) 3 (* .8 .6)  4 (* .8 .02)  
+	  (gen1 (make-polywave 0.0 (list 1 (* .8 .01) 2 (* .8 .1) 3 (* .8 .6)  4 (* .8 .02)  
 					       6 (* .8 .4) 7 (* .8 .05) 9 (* .8 .1) 10 (* .8 .1) 
 					       12 (* .8 .01))))
-	  (gen2 (make-polywave :partials (list 5 (* .2 .9)   8 (* .2 .3)   11 (* .2 .1))))
+	  (gen2 (make-polywave 0.0 (list 5 (* .2 .9)   8 (* .2 .3)   11 (* .2 .1))))
 	  
 	  (rnd (make-sawtooth-wave 700 .01))
 	  (rndf (make-env '(0 0  .01 1 .08 .02 .25 .02 .3 1   .45 1 .47 .03 .64 .01 .65 1  .75 1 .77 .05 .92 .01 1 1)
@@ -5089,7 +5089,7 @@
 				  0.538 0.634 0.647 0.000 0.663 0.000 0.681 0.484 0.704 0.211 0.777 0.643 0.850 0.961 
 				  0.880 0.998 0.899 0.974 0.958 0.277 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .9 2 .1 3 .01)))
+	  (gen1 (make-polywave 0.0 (list 1 .9 2 .1 3 .01)))
 	  (frqf (make-env '(0.000 0.203 0.061 0.309 0.259 0.317 0.276 0.533 0.300 0.720 0.329 0.739 0.373 0.697 
 				  0.450 0.792 0.496 0.836 0.516 0.794 0.525 0.689 0.532 0.417 0.550 0.351 0.573 0.314 
 				  0.607 0.296 0.624 0.351 0.629 0.435 0.652 0.425 0.660 0.219 0.698 0.398 0.726 0.441 
@@ -5116,7 +5116,7 @@
 				  0.459 0.000 0.474 0.480 0.494 0.549 0.595 0.984 0.637 1.000 0.688 0.720 0.701 0.000 
 				  0.770 0.000 0.795 0.311 0.863 0.420 0.916 0.383 0.985 0.272 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .9 2 .01 3 .1)))
+	  (gen1 (make-polywave 0.0 (list 1 .9 2 .01 3 .1)))
 	  (frqf (make-env '(0.000 0.814 0.028 0.730 0.064 0.690 0.122 0.549 0.156 0.551 0.178 0.573 0.207 0.544 
 				  0.272 0.556 0.296 0.580 0.320 0.549 0.343 0.501 0.377 0.468 0.452 0.446 0.467 0.475 
 				  0.488 0.470 0.523 0.477 0.529 0.561 0.535 0.480 0.572 0.473 0.589 0.494 0.612 0.477 
@@ -5178,8 +5178,8 @@
 				   0.7721 0.4187 0.7895 0.3198 0.8343 0.3184 0.8616 0.2344 0.8634 0.3808 0.8697 0.2276 
 				   0.8804 0.3279 0.9149 0.3835 0.9472 0.4688 1.0000 0.8306)
 			  :duration dur :scaler (hz->radians 9130.0)))
-	  (gen1 (make-polywave :partials (list 1 .98 2 .01 3 .01)))
-	  (gen2 (make-polywave :partials (list 1 .98 2 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .98 2 .01 3 .01)))
+	  (gen2 (make-polywave 0.0 (list 1 .98 2 .005)))
 	  (buzz (make-oscil 0))
 	  (buzzsweep (make-nrxysin :n 5 :r .5))
 	  (bsweep (hz->radians 500))
@@ -5222,7 +5222,7 @@
 				  0.761 0.000 0.808 0.000 0.826 0.752 0.839 0.098 0.856 0.599 0.862 0.558 0.868 0.000 
 				  0.921 0.000 0.932 0.470 0.941 0.511 0.951 0.179 0.976 0.229 0.980 0.057 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .98 2 .01 3 .004)))
+	  (gen1 (make-polywave 0.0 (list 1 .98 2 .01 3 .004)))
 	  (frqf (make-env '(0.000 0.671 0.017 0.698 0.026 0.786 0.031 0.785 0.032 0.556 0.039 0.556 0.053 0.646 
 				  0.059 0.591 0.119 0.476 0.146 0.284 0.193 0.269 0.216 0.549 0.225 0.464 0.238 0.564 
 				  0.244 0.477 0.250 0.411 0.262 0.411 0.268 0.442 0.274 0.414 0.316 0.446 0.337 0.289 
@@ -5334,7 +5334,7 @@
 				  0.827 0.535 0.830 0.877 0.855 0.000 0.879 0.000 0.885 0.638 0.889 0.741 0.919 0.000 
 				  0.945 0.000 0.950 0.556 0.955 0.379 0.959 0.563 0.986 0.037 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .015  3 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .015  3 .005)))
 	  (frqf (make-env '(0.000 0.651 0.018 0.637 0.040 0.401 0.049 0.361 0.055 0.658 0.072 0.644 0.087 0.526 
 				  0.098 0.358 0.106 0.340 0.110 0.677 0.130 0.665 0.136 0.595 0.146 0.509 0.155 0.361 
 				  0.161 0.342 0.175 0.628 0.191 0.602 0.202 0.536 0.212 0.394 0.219 0.361 0.229 0.648 
@@ -5473,7 +5473,7 @@
 				  0.732 0.079 0.781 0.038 0.798 0.070 0.806 0.028 0.823 0.059 0.845 0.000 0.883 0.000 
 				  0.892 0.593 0.913 0.739 0.940 0.031 0.976 0.066 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .97  2 .005 3 .008  5 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .97  2 .005 3 .008  5 .005)))
 	  (rnd (make-rand-interp 400 (hz->radians 25)))
 	  (frqf (make-env '(0.000 0.568 0.057 0.568 0.078 0.399 0.203 0.315 0.218 0.632 0.252 0.557 0.314 0.553 
 				  0.340 0.350 0.410 0.337 0.426 0.667 0.469 0.557 0.528 0.559 0.548 0.381 0.616 0.352 
@@ -5578,8 +5578,8 @@
 	  (ampf (make-env '(0.000 0.000 0.012 0.106 0.044 0.151 0.072 0.267 0.129 0.766 0.221 0.889 0.372 1.000 
 				  0.455 0.837 0.534 0.553 0.632 0.660 0.762 0.540 0.912 0.105 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .1  2 .9  3 .3  4 .07  5 .05  6 .2  7 .01  8 .005  9 .004 10 .003)))
-	  (gen2 (make-polywave :partials (list  2 .5  3 .1  4 .05)))
+	  (gen1 (make-polywave 0.0 (list 1 .1  2 .9  3 .3  4 .07  5 .05  6 .2  7 .01  8 .005  9 .004 10 .003)))
+	  (gen2 (make-polywave 0.0 (list  2 .5  3 .1  4 .05)))
 	  (intrpf (make-env '(0 1 .5 1 .8 .6 1 0) :duration dur))
 	  (intrpf-1 (make-env '(0 1 .5 1 .8 .6 1 0) :duration dur :offset 1.0 :scaler -1.0))
 	  (frqf (make-env '(0.000 0.201 0.052 0.201 0.091 0.271 0.143 0.285 0.631 0.288 0.659 0.268 
@@ -5626,7 +5626,7 @@
 				  0.956 0.104 0.963 0.319 0.970 0.424 0.973 0.065 0.976 0.011 0.977 0.058 0.980 0.244 
 				  0.992 0.059 1.000 0.000)
 			  :duration dur :scaler amp))
-	  (gen1 (make-polywave :partials (list 1 .97  2 .03 3 .01 4 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .97  2 .03 3 .01 4 .005)))
 	  (frqf (make-env '(0.0000 0.5530 0.0090 0.5109 0.0278 0.3367 0.0521 0.5167 0.0589 0.7257 0.0718 0.5675 
 				   0.0756 0.4949 0.1252 0.4717 0.1282 0.5501 0.1354 0.3120 0.1418 0.4775 0.1495 0.3222 
 				   0.1568 0.4761 0.1649 0.3962 0.1717 0.4557 0.1743 0.3919 0.2174 0.3266 0.2213 0.3904 
@@ -5668,9 +5668,9 @@
   (define (acorn-woodpecker-1 beg dur ampf frqf ampf2 ampf4 rndf)
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
-	  (gen1 (make-polywave :partials (list 1 .2  2 1  3 .01  4 .005)))
-	  (gen2 (make-polywave :partials (list 3 .5  5 1  6 .05  7 .1)))
-	  (gen3 (make-polywave :partials (list   5 (* 2 .005) 6 (* 2 .01)  7 (* 2 .003)  8 (* 2 .005)  
+	  (gen1 (make-polywave 0.0 (list 1 .2  2 1  3 .01  4 .005)))
+	  (gen2 (make-polywave 0.0 (list 3 .5  5 1  6 .05  7 .1)))
+	  (gen3 (make-polywave 0.0 (list   5 (* 2 .005) 6 (* 2 .01)  7 (* 2 .003)  8 (* 2 .005)  
 						 9 (* 2 .002) 10 (* 2 .005) 11 (* 2 .001) 13 (* 2 .003) 15 (* 2 .001))))
 	  (gen4 (make-oscil))
 	  (rnd (make-rand-interp 1000 (hz->radians 200))))
@@ -5745,7 +5745,7 @@
 	      (pulse-amp (env ampf))
 	      (pulse-frq (env frqf)))
 	  (set! (mus-location frqf) (- i start))
-	  (set! gen1 (make-polywave :partials (list 1 (* pulse-amp .94)  3 (* pulse-amp .04)  4 (* pulse-amp .01))))
+	  (set! gen1 (make-polywave 0.0 (list 1 (* pulse-amp .94)  3 (* pulse-amp .04)  4 (* pulse-amp .01))))
 	  (do ((k i (+ k 1)))
 	      ((= k reset-stop))
 	    (outa k (* (env pulsef)
@@ -5776,7 +5776,7 @@
 				  0.612 0.235 0.691 0.213 0.702 0.313 0.725 0.380 0.743 0.397 0.765 0.354 0.794 0.328 
 				  0.844 0.299 0.876 0.277 0.975 0.254 1.000 0.198)
 			  :duration dur :scaler (hz->radians 10100.0)))
-	  (gen1 (make-polywave :partials (list 1 .95  2 .03  3 .01  4 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .95  2 .03  3 .01  4 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -5805,9 +5805,9 @@
 				  0.66 .114 .72 .116 .8 .112
 				  0.871 0.105 0.888 0.080 0.976 0.078 1.000 0.08)
 			  :base .1 :duration dur :scaler (hz->radians (* 0.5 9130.0))))
-	  (histuff (make-polywave :partials (list 1 .1  2 .75   3 .1  4 .1  5 .01  6 .01  7 .01  8 .02 9 .01 11 .005 )))
-	  (lostuff (make-polywave :partials (list 2 .1 3 .3  5 .03  7 .1   9 .01   13 .1  15 .1  17 .05  19 .03)))
-	  (midstuff (make-polywave :partials (list 1 .3 3 .7)))
+	  (histuff (make-polywave 0.0 (list 1 .1  2 .75   3 .1  4 .1  5 .01  6 .01  7 .01  8 .02 9 .01 11 .005 )))
+	  (lostuff (make-polywave 0.0 (list 2 .1 3 .3  5 .03  7 .1   9 .01   13 .1  15 .1  17 .05  19 .03)))
+	  (midstuff (make-polywave 0.0 (list 1 .3 3 .7)))
 	  (midf (make-env '(0 1 .3 1 .4 .1 1 0) :duration dur :scaler 1.0))
 	  (oddf (make-env '(0 1  .1 1  .12 .01 .45 .01 .55 .75 1 0) :duration dur :scaler 0.7 :base 10))
 	  (frm1 (make-formant 2300 .98))
@@ -5856,7 +5856,7 @@
 				    0.645 0.488 0.672 0.506 0.690 0.530 0.704 0.543 0.718 0.521 0.733 0.486 0.763 0.457 
 				    0.791 0.423 0.838 0.356 0.918 0.261 0.951 0.252 1.000 0.194)
 			    :duration dur :scaler (hz->radians 10150.0)))
-	    (gen1 (make-polywave :partials (list 1 .99  2 .01))))
+	    (gen1 (make-polywave 0.0 (list 1 .99  2 .01))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -5883,7 +5883,7 @@
 	(pulse-dur .0064)
 	(start (seconds->samples beg)))
     (let ((stop (seconds->samples (+ beg dur)))
-	  (gen1 (make-polywave :partials (list 1 .95 2 .05)))
+	  (gen1 (make-polywave 0.0 (list 1 .95 2 .05)))
 	  (ampf (make-env '(0.000 0.000 0.139 0.174 0.302 0.577 0.492 0.601 0.720 0.415 0.853 0.628 0.962 0.945 1.000 0.000) 
 			  :duration dur :scaler (* .3 amp)))
 	  (pulse-samps (seconds->samples pulse-dur))
@@ -5907,7 +5907,7 @@
 	(pulse-dur .022)
 	(start (seconds->samples (+ beg .2))))
     (let ((stop (+ start (seconds->samples dur)))
-	  (gen1 (make-polywave :partials (list 1 .95 2 .05)))
+	  (gen1 (make-polywave 0.0 (list 1 .95 2 .05)))
 	  (pulse-samps (seconds->samples pulse-dur))
 	  (pulse-frqf (make-env '(0 5400 1 6700) :duration pulse-dur :scaler (hz->radians 1.0)))
 	  (pulse-ampf (make-env '(0 0 .1 0 .7 1 1 0) :duration pulse-dur :base .1 :scaler (* .6 amp)))
@@ -5928,7 +5928,7 @@
 	(pulse-dur .051)
 	(start (seconds->samples (+ beg .425))))
     (let ((stop (+ start (seconds->samples dur)))
-	  (gen1 (make-polywave :partials (list 1 .98 2 .01  3 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .98 2 .01  3 .005)))
 	  (pulse-samps (seconds->samples 0.064))
 	  (pulse-frqf (make-env '(0 5300 .1 5200 .2 5300 .3 6000 1 6000) :duration pulse-dur :scaler (hz->radians 1.0)))
 	  (pulse-ampf (make-env '(0 0 .1 .5 .2 0 .3 1 .4 .9 .8 1 1 0) :duration pulse-dur :scaler amp))
@@ -5952,7 +5952,7 @@
   (let ((dur 0.74)
 	(start (seconds->samples (+ beg .95))))
     (let ((stop (+ start (seconds->samples dur)))
-	  (gen1 (make-polywave :partials (list 1 .99 2 .01)))
+	  (gen1 (make-polywave 0.0 (list 1 .99 2 .01)))
 	  (frqf (make-env '(0.000 0.446 0.014 0.403 0.054 0.385 0.121 0.376 0.248 0.374 0.274 0.367 0.290 0.198 
 				  0.308 0.166 0.339 0.159 0.418 0.162 0.545 0.162 0.674 0.162 0.714 0.164 0.718 0.458 
 				  0.735 0.451 0.743 0.415 0.761 0.403 0.847 0.387 1.000 0.387)
@@ -6005,8 +6005,8 @@
 	    (frqf2 (make-env '(0.000 0.405 0.213 0.405 0.277 0.311 0.391 0.290 0.497 0.275 0.558 0.242 0.635 0.242 
 				     0.729 0.190 0.868 0.205 1.000 0.160)
 			     :duration dur :scaler (hz->radians 6050.0)))
-	    (gen1 (make-polywave :partials (list 1 .95  2 .1  3 .1)))
-	    (gen2 (make-polywave :partials (list 1 .95  2 .03  3 .01)))
+	    (gen1 (make-polywave 0.0 (list 1 .95  2 .1  3 .1)))
+	    (gen2 (make-polywave 0.0 (list 1 .95  2 .03  3 .01)))
 	    (ampf2 (make-env '(0 0 1 1 2 0) :duration dur :scaler .3))
 	    (rnd (make-rand-interp 8000 ))
 	    
@@ -6066,7 +6066,7 @@
 	  (frqf (make-env '(0.000 0.484 0.028 0.458 0.210 0.456 0.296 0.444 0.324 0.404 0.700 0.461 0.728 0.453 
 				  0.916 0.453 1.000 0.390)
 			  :duration dur :scaler (hz->radians (* 0.5 8150.0))))
-	  (gen1 (make-polywave :partials (list 1 .09  2 1  3 .07  4 .003 5 .01  6 .03  7 .005  9 .003)))
+	  (gen1 (make-polywave 0.0 (list 1 .09  2 1  3 .07  4 .003 5 .01  6 .03  7 .005  9 .003)))
 	  (buzz (make-oscil 240))
 	  (buzz1 (make-oscil 240))
 	  (scl (hz->radians 20)))
@@ -6093,7 +6093,7 @@
 				  0.642 0.383 0.661 0.425 0.678 0.454 0.707 0.410 0.731 0.372 0.774 0.422 0.815 0.336 
 				  0.867 0.372 0.905 0.319 1.000 0.304)
 			  :duration dur :scaler (hz->radians (* 0.25 8040.0))))
-	  (gen1 (make-polywave :partials (list 1 .1  2 1  3 .4  4 .1   5 .03  6 .005 7 .005  10 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .1  2 1  3 .4  4 .1   5 .03  6 .005 7 .005  10 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -6118,7 +6118,7 @@
 	  (frqf (make-env '(0.000 0.100 0.075 0.163 0.130 0.185 0.192 0.207 0.327 0.245 0.385 0.256 0.558 0.200 
 				  0.724 0.207 0.806 0.209 0.875 0.180 0.944 0.138 1.000 0.134)
 			  :base .1 :duration dur :scaler (hz->radians (* 0.5 8160))))
-	  (gen1 (make-polywave :partials (list 1 .03  2 .8  3 .05  4 .01  5 .03  6 .075  7 .03  8 .008  9 .005  10 .005  11 .003)))
+	  (gen1 (make-polywave 0.0 (list 1 .03  2 .8  3 .05  4 .01  5 .03  6 .075  7 .03  8 .008  9 .005  10 .005  11 .003)))
 	  (gen2 (make-oscil 0.0 (* 0.5 pi)))
 	  (ampf2 (make-env '(0 .2  .1 .2 .2 0 .4 .05 .8 .02 .9 .2 1 0) :duration dur :scaler 3))
 	  (rnd (make-rand-interp 1000 (hz->radians 10))))
@@ -6150,7 +6150,7 @@
 	  (frqf (make-env '(0.000 0.358 0.103 0.332 0.209 0.327 0.328 0.341 0.572 0.363 0.771 0.429 0.893 0.458 
 				  0.965 0.462 1.000 0.448)
 			  :duration dur :scaler (hz->radians (* 0.5 6020))))
-	  (gen1 (make-polywave :partials (list 1 .05  2 .9  3 .05  4 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .05  2 .9  3 .05  4 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -6181,8 +6181,8 @@
 				  0.758 0.440 0.820 0.440 0.835 0.416 0.839 0.382 0.911 0.353 0.912 0.393 0.924 0.420 
 				  0.941 0.409 0.959 0.404 0.982 0.413 1.000 0.396)
 			  :duration dur :scaler (hz->radians (* 0.25 10170.0))))
-	  (gen1 (make-polywave :partials (list 1 .04  2 1  3 .07  4 .04  5 .005)))
-	  (gen2 (make-polywave :partials (list 1 .01  2 .05  3 .03  4 1  5 .12  6 .1  7 .01  8 .05  9 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .04  2 1  3 .07  4 .04  5 .005)))
+	  (gen2 (make-polywave 0.0 (list 1 .01  2 .05  3 .03  4 1  5 .12  6 .1  7 .01  8 .05  9 .005)))
 	  (ampf2 (make-env '(0 0 .53 0 .64 .7  .67 0  .73 .1 .9 0  .91 .07 .94 0 1 0) :duration dur)))
       (do ((i start (+ i 1)))
 	  ((= i stop))
@@ -6217,7 +6217,7 @@
 				    0.972 0.183 1.000 0.000)
 			    :duration dur :scaler amp))
 	    (frqf (make-env '(0 7200 1 5200) :duration dur :scaler (hz->radians 1.0)))
-	    (gen1 (make-polywave :partials (list 1 .97  2 .03)))
+	    (gen1 (make-polywave 0.0 (list 1 .97  2 .03)))
 	    (gen2 (make-oscil 63.5 (+ pi 1)))
 	    (vib-amp (hz->radians 1200)))
 	(do ((i start (+ i 1)))
@@ -6237,8 +6237,8 @@
 	    (frqf (make-env '(0.000 0.125  .04 .125  0.070 0.214  0.1 0.296 0.146 0.333 0.2 0.329 0.263 0.300 0.322 0.264 
 				    0.407 0.218 0.514 0.196 0.660 0.183 0.746 0.190 0.822 0.212 0.873 0.252 0.902 0.254 0.926 0.212 1.000 0.207)
 			    :duration dur :scaler (hz->radians 10230.0)))
-	    (gen1 (make-polywave :partials (list 1 .9  2 .05  3 .01  4 .01  5 .005)))
-	    (gen2 (make-polywave :partials (list 2 1  3 .5  4 .1)))
+	    (gen1 (make-polywave 0.0 (list 1 .9  2 .05  3 .01  4 .01  5 .005)))
+	    (gen2 (make-polywave 0.0 (list 2 1  3 .5  4 .1)))
 	    (ampf2 (make-env '(0 1 .1 0 .8 0 1 1) :duration dur :scaler .5)))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
@@ -6282,14 +6282,14 @@
 				     0.785 0.645 0.808 0.565 0.851 0.551 1.000 0.544)
 			     :duration dur :scaler (hz->radians 8830.0)))
 	    (ampf1 (make-env '(0 1 .35 1 .356 0 .49 0 .494 1 .73 1 .735 .25 .8 .25 .81 1 1 1) :duration dur))
-	    (gen1 (make-polywave :partials (list 1 .97  2 .02  3 .005)))
+	    (gen1 (make-polywave 0.0 (list 1 .97  2 .02  3 .005)))
 	    
 	    (frqf2 (make-env '(0.000 0.515 0.326 0.522 0.370 0.454 0.413 0.416 0.419 0.492 0.427 0.586 0.451 0.534 
 				     0.472 0.461 0.493 0.593 0.540 0.598 0.587 0.614 0.647 0.656 0.698 0.725 0.728 0.562 
 				     0.758 0.492 0.788 0.468 0.803 0.501 0.814 0.555 1.000 0.544)
 			     :duration dur :scaler (hz->radians 8830.0)))
 	    (ampf2 (make-env '(0 0 .324 0 .327 .5  .73 .5 .735 1 .8 1 .81 0 1 0) :duration dur))
-	    (gen2 (make-polywave :partials (list 1 .97  2 .02  3 .005)))
+	    (gen2 (make-polywave 0.0 (list 1 .97  2 .02  3 .005)))
 	    
 	    (rnd (make-rand-interp 6000 .1)))
 	(do ((i start (+ i 1)))
@@ -6317,14 +6317,14 @@
 				     0.750 0.258 0.778 0.272 0.804 0.312 0.826 0.345 0.852 0.352 0.891 0.317 0.934 0.286 1.000 0.2)
 			     :duration dur :scaler (hz->radians 9140.0)))
 	    (ampf1 (make-env '(0 1  .1 .4  .3 .1  .5 .2  .63 .2 .64 0 .71 0 .72 .1 .8 1 1 1) :duration dur))
-	    (gen1 (make-polywave :partials (list 1 .6  2 .4 3 .005)))
+	    (gen1 (make-polywave 0.0 (list 1 .6  2 .4 3 .005)))
 	    
 	    (frqf2 (make-env '(0.000 0.357 0.196 0.357 0.275 0.373 0.310 0.413 0.350 0.446 0.385 0.484 0.425 0.538 
 				     0.462 0.540 0.470 0.373 0.535 0.418 0.591 0.462 0.621 0.500 0.637 0.573 0.667 0.392 
 				     0.712 0.406 0.744 0.455 0.778 0.462 0.833 0.556 1.000 0.32)
 			     :duration dur :scaler (hz->radians 9140.0)))
 	    (ampf2 (make-env '(0 0 .19 0 .195 1  .45 .1 .46 0 .47 1  .63 1 .64 0 .67 0 .68 1 .82 1 .83 0 1 0) :duration dur))
-	    (gen2 (make-polywave :partials (list 1 .99  2 .01)))
+	    (gen2 (make-polywave 0.0 (list 1 .99  2 .01)))
 	    
 	    (rnd1 (make-rand-interp 600 (hz->radians 40)))
 	    (rnd (make-rand-interp 6000 .1)))
@@ -6398,7 +6398,7 @@
 				   0.7763 0.4563 0.7861 0.5558 0.7984 0.4612 0.8117 0.5680 0.8265 0.5231 0.9641 0.5095 
 				   0.9754 0.3944 0.9823 0.4); 1 .4)
 			  :duration dur :scaler (hz->radians 7500.0)))
-	  (gen1 (make-polywave :partials (list 1 .95  2 .03  3 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .95  2 .03  3 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -6464,7 +6464,7 @@
 				    0.757 0.310 0.759 0.166 0.773 0.400 0.777 0.350 0.791 0.347 0.803 0.303 0.829 0.303 
 				    0.840 0.206 0.872 0.208 0.894 0.146 0.918 0.161 0.930 0.102 0.964 0.134 1.000 0.146)
 			    :duration dur :scaler (hz->radians 7470.0)))
-	    (gen1 (make-polywave :partials (list 1 .99  2 .01))))
+	    (gen1 (make-polywave 0.0 (list 1 .99  2 .01))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -6507,7 +6507,7 @@
 				  0.663 0.426 0.669 0.456 0.682 0.429 0.786 0.415 0.795 0.407 0.801 0.345 0.856 0.372 
 				  0.861 0.420 0.865 0.450 0.875 0.431 0.982 0.407 0.990 0.361 1.000 0.278)
 			  :duration dur :scaler (hz->radians 9230.0)))
-	  (gen1 (make-polywave :partials (list 1 .95  2 .005 3 .02  4 .005  5 .003)))
+	  (gen1 (make-polywave 0.0 (list 1 .95  2 .005 3 .02  4 .005  5 .003)))
 	  (noise (make-rand-interp 8000))
 	  (noisef (make-env '(0 0 .011 1 .015 0 
 				.236 0 .24 1 .245 0
@@ -6558,7 +6558,7 @@
 				  0.864 0.435 0.867 0.576 0.873 0.565 0.879 0.600 0.887 0.576 0.896 0.596 0.903 0.654 
 				  0.924 0.420 0.940 0.395 0.973 0.359 1.000 0.353)
 			  :duration dur :scaler (hz->radians 5080.0)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .01  3 .003  4 .007))))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .01  3 .003  4 .007))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -6708,7 +6708,7 @@
 				  0.834 0.225 0.852 0.254 0.861 0.293 0.867 0.349 0.881 0.157 0.889 0.155 0.895 0.184 
 				  0.913 0.206 0.926 0.257 0.930 0.310 0.946 0.136 0.956 0.123 0.969 0.169 0.987 0.208 1.000 0.262)
 			  :duration dur :scaler (hz->radians 10800.0)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .005  3 .01 4 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .005  3 .01 4 .005)))
 	  (gen2 (make-oscil))
 	  (ampf2 (make-env '(0 0 .68 0 .9 1 1 1) :duration dur :scaler .2)))
       (do ((i start (+ i 1)))
@@ -6737,8 +6737,8 @@
 	  (frqf (make-env '(0.000 0.246 0.073 0.252 0.107 0.294 0.131 0.276 0.160 0.300 0.269 0.334 0.345 0.350 
 				  0.451 0.361 0.548 0.359 0.692 0.352 0.765 0.328 0.803 0.300 0.832 0.318 0.865 0.285 1.000 0.266)
 			  :duration dur :scaler (hz->radians (* 1/3 10100.0))))
-	  (gen1 (make-polywave :partials (normalize-partials (list 1 .05  2 .25  3 1  4 .5  5 .2  6 .01  8 .03  9 .03  10 .01  11 .005  12 .005))))
-	  (gen2 (make-polywave :partials (list 3 .03  5 .05  7 .1  9 .03  11 .04  13 .015  15 .01  17 .005  19 .005  21 .005  23 .005)))
+	  (gen1 (make-polywave 0.0 (normalize-partials (list 1 .05  2 .25  3 1  4 .5  5 .2  6 .01  8 .03  9 .03  10 .01  11 .005  12 .005))))
+	  (gen2 (make-polywave 0.0 (list 3 .03  5 .05  7 .1  9 .03  11 .04  13 .015  15 .01  17 .005  19 .005  21 .005  23 .005)))
 	  (ampf2 (make-env '(0 1  .2 .1  .3 1  .5 0 .7 0 1 .5) :duration dur))
 	  
 	  (rnd (make-rand-interp 4000 (hz->radians 500)))
@@ -6773,8 +6773,8 @@
 				  :duration pulse-dur :scaler amp))
 	    (pulse-frqf (make-env '(0.000 0.230 0.109 0.291 0.212 0.322 0.298 0.343 0.410 0.348 0.654 0.357 0.821 0.354 0.889 0.337 0.952 0.304 1.000 0.231)
 				  :duration pulse-dur :scaler (hz->radians 22050.0)))
-	    (gen1 (make-polywave :partials (list 1 .99  2 .01)))
-	    (gen2 (make-polywave :partials (list 5 .9  7 .07  8 .02  9 .01  11 .02)))
+	    (gen1 (make-polywave 0.0 (list 1 .99  2 .01)))
+	    (gen2 (make-polywave 0.0 (list 5 .9  7 .07  8 .02  9 .01  11 .02)))
 	    (pulse-ampf2 (make-env '(0 0 .65 0 .8 1 .9 1 1 0) 
 				   :duration pulse-dur :scaler .4))
 	    (pulse-frqf2 (make-env '(0 5400  .6 5400  .75 6300  1 5400) 
@@ -6822,7 +6822,7 @@
 			  :duration dur :scaler amp))
 	  (frqf (make-env '(0.000 0.257 0.029 0.306 0.061 0.322 0.101 0.318 0.965 0.361 1.000 0.316)
 			  :duration dur :scaler (hz->radians (* 0.2 7510.0))))
-	  (gen1 (make-polywave :partials (list 1 .95  2 .03  3 .03)))
+	  (gen1 (make-polywave 0.0 (list 1 .95  2 .03  3 .03)))
 	  (mod1 (make-oscil))
 	  (index (hz->radians (* 510 1.25)))
 	  (rnd (make-rand-interp 100 (hz->radians 6))))
@@ -6850,8 +6850,8 @@
 			  :duration dur :scaler amp))
 	  (frqf (make-env '(0.000 0.318 0.045 0.392 0.160 0.418 0.254 0.418 0.517 0.404 0.816 0.367 1.000 0.310)
 			  :duration dur :scaler (hz->radians (* 0.25 8900))))
-	  (gen1 (make-polywave :partials (list 1 .96  2 .02 3 .03)))
-	  (gen2 (make-polywave :partials (list 4 .005 5 .01)))
+	  (gen1 (make-polywave 0.0 (list 1 .96  2 .02 3 .03)))
+	  (gen2 (make-polywave 0.0 (list 4 .005 5 .01)))
 	  (ampf2 (make-env '(0 1 .65 1 .75 0 1 0) :duration dur))
 	  (mod1 (make-oscil))
 	  (index (hz->radians (* 800 0.4)))
@@ -6892,7 +6892,7 @@
 	  (frqf (make-env '(0.000 0.096 0.063 0.174 0.090 0.199 0.127 0.205 0.25 0.210 0.26 0.237 0.733 0.222 
 				  0.865 0.210 0.890 0.195 0.912 0.159 0.930 0.145 1.000 0.138)
 			  :duration dur :scaler (hz->radians 21500.0)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .005  3 .01))))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .005  3 .01))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -6913,7 +6913,7 @@
 	  (ampf (make-env '(0.000 0.000 0.146 0.603 0.286 0.858 0.455 0.992 0.629 0.983 0.789 0.819 0.907 0.473 0.946 0.445 1.000 0.000)
 			  :duration dur :scaler amp))
 	  (frqf (make-env '(0 340  .1 400  .15 410  .9 420  1 380) :duration dur :scaler (hz->radians 1.0)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .01  3 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .01  3 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -6936,8 +6936,8 @@
 	    (ampf (make-env '(0.000 0.000 0.106 0.826 0.190 0.996 0.418 0.818 0.688 0.458 0.897 0.447 0.962 0.348 1.000 0.000)
 			    :duration dur :scaler amp))
 	    (frqf (make-env '(0 4400 .4 4200 1 4300) :duration dur :scaler (hz->radians 1.0)))
-	    (gen-up (make-polywave :partials (vector 1 .95  2 .03  3 .02)))
-	    (gen-down (make-polywave :partials (vector 1 .95  2 .03  3 .02)))
+	    (gen-up (make-polywave 0.0 (vector 1 .95  2 .03  3 .02)))
+	    (gen-down (make-polywave 0.0 (vector 1 .95  2 .03  3 .02)))
 	    (mod-up (make-oscil 142.0))
 	    (mod-down (make-oscil 142.0))
 	    (pulse-samps (seconds->samples (/ 1.0 142.0)))
@@ -6979,7 +6979,7 @@
 			    :duration dur :scaler amp))
 	    (frqf (make-env '(0.000 0.203 0.043 0.253 0.118 0.276 0.446 0.263 0.575 0.251 0.707 0.226 0.883 0.187 1.000 0.153)
 			    :duration dur :scaler (hz->radians (* frq 22050.0))))
-	    (gen1 (make-polywave :partials (list 1 .98  2 .005  3 .01))))
+	    (gen1 (make-polywave 0.0 (list 1 .98  2 .005  3 .01))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -6996,7 +6996,7 @@
 				    0.187 0.420 0.242 0.428 0.289 0.418 0.348 0.390 0.465 0.381 0.531 0.360 0.571 0.338 
 				    0.609 0.306 0.668 0.246 0.75 0.223)
 			    :duration dur :scaler (hz->radians 22050.0)))
-	    (gen1 (make-polywave :partials (list 1 .95  2 .05))))
+	    (gen1 (make-polywave 0.0 (list 1 .95  2 .05))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -7013,7 +7013,7 @@
 	    (frqf (make-env '(0.000 0.210 0.170 0.232 0.187 0.164 0.453 0.212 0.462 0.159 0.668 0.201 0.699 0.147
 				    0.905 0.181 1.000 0.164)
 			    :duration dur :scaler (* .5 (hz->radians 22050.0))))
-	    (gen (make-polywave :partials (list 2 .92 3 .02 4 .01 5 .005)))
+	    (gen (make-polywave 0.0 (list 2 .92 3 .02 4 .01 5 .005)))
 	    (rnd (make-rand-interp 4000 (hz->radians 500))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
@@ -7047,7 +7047,7 @@
 				    0.886 0.130 0.911 0.337 0.932 0.147 0.949 0.224 0.965 0.082 1.000 0.000)
 			    :duration dur :scaler amp))
 	    (frqf (make-env '(0 9000 .08 7900  .164 7385 .2 7000 1 6960) :duration dur :scaler (hz->radians 1.0)))
-	    (gen1 (make-polywave :partials (list 1 .95  2 .05))))
+	    (gen1 (make-polywave 0.0 (list 1 .95  2 .05))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -7062,7 +7062,7 @@
 			    :duration dur :scaler amp))
 	    (frqf (make-env '(0 2260 .3 3000 .9 3100 1 3300)
 			    :duration dur :scaler (hz->radians 1.0)))
-	    (gen1 (make-polywave :partials (list 1 .98  2 .005  3 .01 4 .005))))
+	    (gen1 (make-polywave 0.0 (list 1 .98  2 .005  3 .01 4 .005))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -7080,7 +7080,7 @@
 			    :duration dur :scaler amp))
 	    (frqf (make-env '(0 3100  .4 3430  1 3140)
 			    :duration dur :offset (hz->radians 40) :scaler (hz->radians 0.5)))
-	    (gen1 (make-polywave :partials (list 1 .1 2 .5  3 .2  4 .1  6 .05  8 .03)))
+	    (gen1 (make-polywave 0.0 (list 1 .1 2 .5  3 .2  4 .1  6 .05  8 .03)))
 	    (vib (make-blackman 320 4))
 	    (scl (hz->radians 200)))
 	(do ((i start (+ i 1)))
@@ -7098,7 +7098,7 @@
 	    (ampf (make-env '(0 0 1 1 2 0) :duration dur :scaler amp))
 	    (frqf (make-env '(0 4800  .4 5500  .6 6060  .9 4200 1 4100)
 			    :duration dur :scaler (hz->radians 0.32)))
-	    (gen1 (make-polywave :partials (list 3 .7 4 .3  7 .01))))
+	    (gen1 (make-polywave 0.0 (list 3 .7 4 .3  7 .01))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -7145,8 +7145,8 @@
 				  0.424 0.046 0.446 0.110 0.468 0.133 0.75 .133 0.8 .129 0.936 0.127 0.973 0.104 1.000 0.035) 
 			  :duration dur :scaler (hz->radians 6800.0)))
 	  (rnd (make-rand-interp 200 (hz->radians 5)))
-	  (gen1 (make-polywave :partials (list 1 .92  2 .08)))
-	  (gen2 (make-polywave :partials (list 3 .01  4 .01  6 .005 7 .007 8 .002  9 .002  10 .002 12 .001)))
+	  (gen1 (make-polywave 0.0 (list 1 .92  2 .08)))
+	  (gen2 (make-polywave 0.0 (list 3 .01  4 .01  6 .005 7 .007 8 .002  9 .002  10 .002 12 .001)))
 	  (ampf2 (make-env '(0 0 .05 0 .09 1  .13 1 .2 0 .45 0 .5 1 .9 1 1 0) :duration dur))
 	  (gen3 (make-oscil))
 	  (ampf3 (make-env '(0 0  .08 0  .12 .4  .2 0  .46 0  .5 .5  .6 0  .65 0  .8 1  .9 1  1 0) :duration dur :scaler .015)))
@@ -7302,7 +7302,7 @@
 				  0.181 0.455 0.198 0.450 0.216 0.436 0.232 0.439 0.444 0.439 0.572 0.444 0.703 0.463 
 				  0.800 0.472 1.000 0.458)
 			  :duration dur :scaler (hz->radians 7300.0)))
-	  (gen1 (make-polywave :partials (list 1 .95  2 .01  3 .02 4 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .95  2 .01  3 .02 4 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -7326,9 +7326,9 @@
 				  0.398 0.431 0.414 0.504 0.485 0.493 0.563 0.458 0.621 0.431 0.697 0.423 0.814 0.409 
 				  1.000 0.420)
 			  :duration dur :scaler (hz->radians 6230.0)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .003  3 .007)))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .003  3 .007)))
 	  (ampf1 (make-env '(0 0 .22 0 .23 1 1 1) :duration dur))
-	  (gen2 (make-polywave :partials (list 1 .05  2 .9  3 .1  4 .07)))
+	  (gen2 (make-polywave 0.0 (list 1 .05  2 .9  3 .1  4 .07)))
 	  (ampf2 (make-env '(0 1 .2 1 .22 0 1 0) :duration dur)))
       (do ((i start (+ i 1)))
 	  ((= i stop))
@@ -7353,7 +7353,7 @@
 	  (frqf (make-env '(0.000 0.371 0.029 0.393 0.047 0.428 0.074 0.425 0.097 0.333 0.116 0.206 0.149 0.168 
 				  0.192 0.190 0.242 0.214 0.314 0.217 0.437 0.198 0.876 0.165 1.000 0.146)
 			  :duration dur :scaler (hz->radians 11150.0)))
-	  (gen1 (make-polywave :partials (list 1 .98 2 .01  4 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .98 2 .01  4 .005)))
 	  (ampf1 (make-env '(0 1 .09 1 .14 .1 .2 1 .6 .8 .9 .8 1 1) :duration dur))
 	  (gen2 (make-oscil))
 	  (ampf2 (make-env '(0 0 .09 0 .14 1 .18 1 .23 0 .6 0 .7 .4 1 0) :duration dur :scaler .5))
@@ -7402,8 +7402,8 @@
 	    (frqf2 (make-env '(0.000 0.541 0.050 0.543 0.130 0.555 0.202 0.559 0.271 0.568 0.413 0.534 0.522 0.543 
 				     0.586 0.559 0.638 0.582 0.706 0.566 0.791 0.539 0.852 0.516 0.922 0.466 0.962 0.400 1.000 0.309)
 			     :duration dur :scaler (hz->radians 10000.0)))
-	    (gen1 (make-polywave :partials (list 1 .98  3 .02)))
-	    (gen2 (make-polywave :partials (list 1 .95  2 .05)))
+	    (gen1 (make-polywave 0.0 (list 1 .98  3 .02)))
+	    (gen2 (make-polywave 0.0 (list 1 .95  2 .05)))
 	    (intrpf (make-env '(0 .9 .6 .9 .7 .5 1 .5) :duration dur))
 	    (intrpf-1 (make-env '(0 .9 .6 .9 .7 .5 1 .5) :duration dur :offset 1.0 :scaler -1.0))
 	    (rnd (make-rand-interp 2000 ))
@@ -7428,7 +7428,7 @@
 				    0.351 0.285 0.393 0.285 0.467 0.287 0.518 0.293 0.582 0.301 0.638 0.163 0.690 0.225 
 				    0.752 0.282 0.800 0.262 0.875 0.268 1.000 0.290)
 			    :duration dur :scaler (hz->radians 10100.0)))
-	    (gen1 (make-polywave :partials (list 1 .99  2 .01)))
+	    (gen1 (make-polywave 0.0 (list 1 .99  2 .01)))
 	    (rnd (make-rand-interp 2000))
 	    (rndf (make-env '(0 0 .16 0 .25 1 1 .5) :duration dur :offset (hz->radians 100) :scaler (hz->radians 500))))
 	(do ((i start (+ i 1)))
@@ -7450,8 +7450,8 @@
 	    (frqf (make-env '(0.000 0.449 0.076 0.410 0.122 0.325 0.150 0.195 0.190 0.195 0.255 0.198 0.371 0.198 
 				    0.436 0.198 0.465 0.215 0.521 0.203 0.745 0.198 1.000 0.195)
 			    :duration dur :scaler (hz->radians 14000.0)))
-	    (gen1 (make-polywave :partials (list 1 .99   3 .01)))
-	    (gen2 (make-polywave :partials (list 1 .9   2 .1)))
+	    (gen1 (make-polywave 0.0 (list 1 .99   3 .01)))
+	    (gen2 (make-polywave 0.0 (list 1 .9   2 .1)))
 	    (ampf2 (make-env '(0 0 .2 0 .25 1 .3 1 .35 0 .5 0 .55 1 .6 1 .65 0 .75 0 .8 .5 .9 0 1 0) :scaler .1 :duration dur))
 	    (rnd (make-rand-interp 2000 (hz->radians 200))))
 	(do ((i start (+ i 1)))
@@ -7475,7 +7475,7 @@
 	    (frqf (make-env '(0.000 0.215 0.035 0.243 0.060 0.285 0.086 0.268 0.121 0.198 0.135 0.137 0.154 0.167 
 				    0.218 0.186 0.880 0.181 1.000 0.192)
 			    :duration dur :scaler (hz->radians (* frqscl 13920))))
-	    (gen1 (make-polywave :partials (list 1 .96  2 .04   3 .007  4 .002)))
+	    (gen1 (make-polywave 0.0 (list 1 .96  2 .04   3 .007  4 .002)))
 	    (rnd (make-rand-interp 4000 (hz->radians 100))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
@@ -7516,7 +7516,7 @@
 				  0.576 0.231 0.579 0.725 0.588 0.710 0.594 0.635 0.606 0.596 0.644 0.509 0.724 0.439 
 				  0.756 0.397 0.800 0.297 0.825 0.264 0.851 0.271 0.870 0.275 0.892 0.214 0.925 0.194 1.000 0.197)
 			  :duration dur :scaler (hz->radians 10280.0)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .005  3 .01  4 .005  5 .002)))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .005  3 .01  4 .005  5 .002)))
 	  (buzz (make-oscil 350))
 	  (buzzf (make-env '(0 0 .59 0 .6 1 .61 1 .64 0 1 0) :duration dur :scaler (hz->radians 300))))
       (do ((i start (+ i 1)))
@@ -7554,7 +7554,7 @@
 				  0.738 0.454 0.793 0.464 0.843 0.464 0.890 0.477 0.923 0.490 0.955 0.494 0.978 0.475 
 				  1.000 0.433)
 			  :duration dur :scaler (hz->radians 10000.0)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .003  3 .02))))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .003  3 .02))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -7597,7 +7597,7 @@
 				  0.804 0.636 0.811 0.516 0.821 0.421 0.833 0.490 0.845 0.532 0.855 0.621 0.870 0.702 
 				  0.875 0.638 0.888 0.455 1.000 0.301)
 			  :duration dur :scaler (hz->radians 10000.0)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .005  3 .01))))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .005  3 .01))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -7626,8 +7626,8 @@
 	    (frqf (make-env '(0.000 0.103 0.049 0.138 0.119 0.200 0.198 0.229 0.251 0.234 0.317 0.247 0.422 0.250 
 				    0.540 0.250 0.643 0.235 0.722 0.229 0.902 0.217 0.936 0.207 0.970 0.150 1.000 0.136)
 			    :duration dur :scaler (hz->radians 10200.0)))
-	    (gen1 (make-polywave :partials (list 1 .8  2 .01 3 .05  4 .01  5 .005)))
-	    (gen2 (make-polywave :partials (list 1 .92  2 .01 3 .05  4 .01  5 .005)))
+	    (gen1 (make-polywave 0.0 (list 1 .8  2 .01 3 .05  4 .01  5 .005)))
+	    (gen2 (make-polywave 0.0 (list 1 .92  2 .01 3 .05  4 .01  5 .005)))
 	    (ampf2 (make-env '(0 1 .2 0 1 0) :duration dur))
 	    (rnd (make-nrxysin 200 :n 2 :r .5))
 	    (rndf (make-env '(0 0 .1 1 .25 0 .45 0 .5 1 .6 0 1 0) :duration dur :scaler (hz->radians 200)))
@@ -7654,8 +7654,8 @@
 				    0.554 0.237 0.604 0.206 0.643 0.175 0.673 0.184 0.707 0.206 0.743 0.220 0.791 0.201 
 				    0.832 0.167 0.856 0.198 0.879 0.212 0.918 0.234 0.942 0.209 0.960 0.186 1.000 0.158)
 			    :duration dur :scaler (hz->radians 10000.0)))
-	    (gen1 (make-polywave :partials (list 1 .8  2 .01 3 .05  4 .01  5 .005)))
-	    (gen2 (make-polywave :partials (list 2 .01 4 .7  5 .01 6 .01 7 .01 8 .05 9 .01  10 .01 11 .01  12 .005 13 .01 14 .10 15 .10 16 .01)))
+	    (gen1 (make-polywave 0.0 (list 1 .8  2 .01 3 .05  4 .01  5 .005)))
+	    (gen2 (make-polywave 0.0 (list 2 .01 4 .7  5 .01 6 .01 7 .01 8 .05 9 .01  10 .01 11 .01  12 .005 13 .01 14 .10 15 .10 16 .01)))
 	    (frqf2 (make-env '(0.000 0.345 0.052 0.393 0.098 0.345 0.271 0.311 0.443 0.305 0.506 0.319 0.559 0.339 
 				     0.613 0.322 0.661 0.294 0.705 0.314 0.738 0.353 0.769 0.364 0.797 0.356 0.818 0.316 
 				     0.845 0.285 0.882 0.339 0.905 0.362 0.928 0.364 0.960 0.319 1.000 0.209)
@@ -7696,7 +7696,7 @@
 				  0.674 0.174 0.697 0.167 0.709 0.140 0.733 0.137 0.766 0.130 0.793 0.174 0.820 0.169 
 				  0.868 0.162 0.879 0.133 1.000 0.089)
 			  :duration dur :scaler (hz->radians 3000.0)))
-	  (gen1 (make-polywave :partials (list 1 .95  2 .03  3 .01  4 .005  5 .005  7 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .95  2 .03  3 .01  4 .005  5 .005  7 .005)))
 	  (rnd (make-rand-interp 200 .3)))
       (do ((i start (+ i 1)))
 	  ((= i stop))
@@ -7728,7 +7728,7 @@
 				  0.124 0.371 0.134 0.390 0.146 0.325 0.158 0.371 0.181 0.386 0.203 0.397 0.227 0.449 
 				  0.262 0.451 0.283 0.437 0.465 0.388 0.599 0.374 0.701 0.350 0.834 0.327 1.000 0.243)
 			  :duration dur :scaler (hz->radians 10200.0)))
-	  (gen1 (make-polywave :partials (list 1 .97  2 .01  3 .015  4 .004)))
+	  (gen1 (make-polywave 0.0 (list 1 .97  2 .01  3 .015  4 .004)))
 	  (vib (make-oscil 300))
 	  (vibf (make-env '(0 0 .25 0 .3 1 1 1) :duration dur :scaler (hz->radians 200)))
 	  (emph (make-oscil))
@@ -7765,7 +7765,7 @@
 				    0.273 0.473 0.299 0.401 0.304 0.535 0.327 0.547 0.358 0.513 0.404 0.416 0.415 0.555 
 				    0.445 0.549 0.482 0.493 0.520 0.396 0.549 0.367 0.695 0.369 0.846 0.330 0.934 0.297 1.000 0.243)
 			    :duration dur :scaler (hz->radians 10050.0)))
-	    (gen1 (make-polywave :partials (list 1 .99 2 .01))))
+	    (gen1 (make-polywave 0.0 (list 1 .99 2 .01))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -7798,8 +7798,8 @@
 	  (frqf (make-env '(0.000 0.112   0.058 0.098  0.114 0.098  0.18 0.143  0.208 0.309 0.339 0.325 0.445 0.327 
 				  0.597 0.318 0.636 0.297 0.673 0.240 0.744 0.229 0.775 0.160 0.801 0.117 0.838 0.082 0.884 0.082 .95 0.059 )
 			  :duration dur :scaler (hz->radians 17100.0)))
-	  (gen1 (make-polywave :partials (list 1 .96  2 .04  3 .005)))
-	  (gen2 (make-polywave :partials (list 1 .1  2 .7  3 .1  4 .005  5 .005  6 .002)))
+	  (gen1 (make-polywave 0.0 (list 1 .96  2 .04  3 .005)))
+	  (gen2 (make-polywave 0.0 (list 1 .1  2 .7  3 .1  4 .005  5 .005  6 .002)))
 	  (ampf2 (make-env '(0 0 .025 1 .2 0 .7 0 .9 1 1 0) :duration dur))
 	  (rnd (make-rand-interp 400 (hz->radians 100))))
       (do ((i start (+ i 1)))
@@ -7863,7 +7863,7 @@
 	  (frqf (make-env '(0.000 0.168 0.175 0.190 0.328 0.225 0.399 0.237 0.472 0.310 0.504 0.342 0.539 0.345 
 				  0.572 0.326 0.594 0.294 0.644 0.275 0.731 0.259 0.797 0.244 0.832 0.231 0.868 0.212 1.000 0.155 )
 			  :duration dur :scaler (hz->radians 7700.0)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .005  3 .015)))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .005  3 .015)))
 	  (vib (make-oscil 120))
 	  (vibf (make-env '(0 0  .25 0  .4 .3  .5 .1  .6 1 1 0) :duration dur :scaler (hz->radians 100))))
       (do ((i start (+ i 1)))
@@ -7901,7 +7901,7 @@
 				  0.861 0.780 0.887 0.377 0.899 0.321 0.909 0.370 0.926 0.681 0.944 0.449 0.959 0.421 
 				  0.977 0.433 1.000 0.471)
 			  :duration dur :scaler (hz->radians 9000.0)))
-	  (gen1 (make-polywave :partials (list 1 .99  2 .01  3 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .99  2 .01  3 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -7928,7 +7928,7 @@
 	  
 	  (ampf2 (make-env '(0 0 19 0 20 .5 22 0) :base 10 :duration dur))
 	  (frqf2 (make-env '(0 1550 18 1550 19 1200  20 1700  22 1500) :scaler (hz->radians 1.0) :duration dur :base 10))
-	  (gen2 (make-polywave :partials (list 1 .2  2 .01 3 .8  4 .3  5 .1 6 .01)))
+	  (gen2 (make-polywave 0.0 (list 1 .2  2 .01 3 .8  4 .3  5 .1 6 .01)))
 	  
 	  (rnd (make-rand-interp 10000 (hz->radians 400)))
 	  (rndf (make-env '(0 1 19 1 20 .1 22 .01) :duration dur))
@@ -7973,7 +7973,7 @@
 			  :duration dur :scaler amp))
 	  (frqf (make-env '(0.000 0.276 0.185 0.328 0.273 0.338 0.462 0.343 0.735 0.340 0.894 0.337 0.938 0.305 1.000 0.231)
 			  :duration dur :scaler (hz->radians 980.0)))
-	  (gen1 (make-polywave :partials (list 1 1 2 .23 3 .034 4 .008 5 .005 7 .003))))
+	  (gen1 (make-polywave 0.0 (list 1 1 2 .23 3 .034 4 .008 5 .005 7 .003))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -7995,7 +7995,7 @@
 	  (stop (seconds->samples (+ beg dur)))
 	  (ampf (make-env ampl :duration dur :scaler amp))
 	  (frqf (make-env frql :duration dur :scaler (hz->radians frq)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .01  3 .006  4 .008  5 .004)))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .01  3 .006  4 .008  5 .004)))
 	  (rndf (make-env rndl :duration dur))
 	  (rnd (make-rand-interp 600)))
       (do ((i start (+ i 1)))
@@ -8125,9 +8125,9 @@
 	  (ampf2 (make-env '(0 0  .32 0  .48 1  .68 1  .75 0  1 0) :duration dur))
 	  (ampf3 (make-env '(0 0  .6 0  .65 1  1 1) :duration dur))
 	  
-	  (gen1 (make-polywave :partials (normalize-partials (list 1 .3  2 1  3 -.8  4 .25  5 .45  6 .22  7 .13  8 .05  9 .02  10 .005  11 .005))))
-	  (gen2 (make-polywave :partials (normalize-partials (list 1 .91  2 .17  3 -.77  4 .25  5 .2  6 .2  7 .18  8 .1  10 .01))))
-	  (gen3 (make-polywave :partials (normalize-partials (list 1 -1  2 .11  3 .45  4 .44  5 .62  6 .27  7 .02  8 .005))))
+	  (gen1 (make-polywave 0.0 (normalize-partials (list 1 .3  2 1  3 -.8  4 .25  5 .45  6 .22  7 .13  8 .05  9 .02  10 .005  11 .005))))
+	  (gen2 (make-polywave 0.0 (normalize-partials (list 1 .91  2 .17  3 -.77  4 .25  5 .2  6 .2  7 .18  8 .1  10 .01))))
+	  (gen3 (make-polywave 0.0 (normalize-partials (list 1 -1  2 .11  3 .45  4 .44  5 .62  6 .27  7 .02  8 .005))))
 	  
 	  (rnd (make-rand-interp 2000 (hz->radians 200)))
 	  (rndf1 (make-env '(0 1 .2 1 .3 0  .65 0  .7 1 .8 0  1 0) :duration dur))
@@ -8184,7 +8184,7 @@
 				  0.723 0.085 0.768 0.090 0.791 0.090 0.824 0.075 0.850 0.083 0.853 0.117 0.863 0.094 
 				  0.888 0.094 0.906 0.115 0.920 0.110 0.931 0.085 1.000 0.087 )
 			  :duration dur :scaler (hz->radians 8300.0)))
-	  (gen1 (make-polywave :partials (list 1 .6  2 -.1  3 .01  4 .05  5 .03  6 .01  7 .01  8 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .6  2 -.1  3 .01  4 .05  5 .03  6 .01  7 .01  8 .005)))
 	  (rnd (make-rand-interp 3000 (hz->radians 100))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
@@ -8219,7 +8219,7 @@
 				   0.307 0.419 0.330 0.400 0.344 0.369 0.357 0.395 0.382 0.397 0.396 0.365 0.416 0.398 
 				   0.442 0.402 0.460 0.354 0.480 0.397 0.504 0.384 0.526 0.329 0.550 0.294 1.000 0.288)
 			   :duration dur :scaler (hz->radians 13400.0)))
-	  (gen1 (make-polywave :partials (list 1 .99  2 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .99  2 .005)))
 	  (gen2 (make-oscil))
 	  (rnd (make-rand-interp 400 .5))
 	  (rnd1 (make-rand-interp 2000 (hz->radians 100))))
@@ -8374,7 +8374,7 @@
 				  0.854 0.515 0.865 0.323 0.871 0.522 0.881 0.314 0.886 0.398 0.889 0.531 0.904 0.304 
 				  0.909 0.494 0.920 0.311 0.925 0.499 0.942 0.284 0.943 0.428 0.957 0.371 0.958 0.513 1.000 0.508 )
 			  :duration dur :scaler (hz->radians 4300.0) :offset (hz->radians 1000)))
-	  (gen1 (make-polywave :partials (list 1 .99  2 .005  3 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .99  2 .005  3 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -8416,7 +8416,7 @@
 				  0.797 0.495 0.802 0.354 0.814 0.364 0.834 0.416 0.858 0.519 0.862 0.358 0.884 0.406 
 				  0.914 0.498 0.923 0.369 0.940 0.381 0.955 0.435 0.976 0.493 0.982 0.361 1.000 0.364)
 			  :duration dur :scaler (hz->radians 6100)))
-	  (gen1 (make-polywave :partials (list 1 .99  2 .01))))
+	  (gen1 (make-polywave 0.0 (list 1 .99  2 .01))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -8444,7 +8444,7 @@
 				  0.769 0.634 0.783 0.527 0.800 0.642 0.814 0.521 0.831 0.648 0.845 0.523 0.862 0.644 
 				  0.876 0.536 0.893 0.640 0.908 0.531 0.923 0.642 1.000 0.563)
 			  :duration dur :scaler (hz->radians 5950)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .01  3 .006  4 .004))))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .01  3 .006  4 .004))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -8460,7 +8460,7 @@
 			  :duration dur :scaler (* .6 amp)))
 	  (frqf (make-env '(0.000 0.313 0.164 0.305 0.379 0.289 0.421 0.292 0.432 0.411 0.642 0.398 1.000 0.401)
 			  :duration dur :scaler (hz->radians 7900)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .005  3 .01  4 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .005  3 .01  4 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -8500,7 +8500,7 @@
 				  0.786 0.540 0.791 0.602 0.797 0.537 0.832 0.537 0.836 0.605 0.843 0.532 0.859 0.587 
 				  0.891 0.491 0.901 0.594 1.000 0.545)
 			  :duration dur :scaler (hz->radians 5400)))
-	  (gen1 (make-polywave :partials (list 1 .99  2 .01))))
+	  (gen1 (make-polywave 0.0 (list 1 .99  2 .01))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -8527,8 +8527,8 @@
 				  0.288 0.506 0.390 0.524 0.509 0.530 0.637 0.537 0.732 0.530 0.770 0.503 0.808 0.503 
 				  0.826 0.427 0.848 0.366 0.889 0.345 0.913 0.232 1.000 0.198)
 			  :duration dur :scaler (hz->radians 10000.0)))
-	  (gen1 (make-polywave :partials (list 1 .9  2 .09  3 .01)))
-	  (gen2 (make-polywave :partials (list 1 .2  2 .1  3 .1  4 .1  5 .1  6 .05  7 .01)))
+	  (gen1 (make-polywave 0.0 (list 1 .9  2 .09  3 .01)))
+	  (gen2 (make-polywave 0.0 (list 1 .2  2 .1  3 .1  4 .1  5 .1  6 .05  7 .01)))
 	  (ampf2 (make-env '(0 1 .3 1 .4 0 .75 0 .8 1 1 1) :duration dur :scaler 1.0)))
       (do ((i start (+ i 1)))
 	  ((= i stop))
@@ -8561,7 +8561,7 @@
 				  0.397 0.726 0.406 0.671 0.433 0.443 0.455 0.318 0.491 0.250 0.532 0.451 0.547 0.486 
 				  0.565 0.503 0.678 0.520 0.753 0.539 0.818 0.570 0.951 0.661 1.000 0.672)
 			  :duration dur :scaler (hz->radians 10100.0)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .005  3 .01))))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .005  3 .01))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -8590,7 +8590,7 @@
 				  0.711 0.540 0.723 0.414 0.751 0.419 0.788 0.470 0.796 0.567 0.809 0.600 0.829 0.574 
 				  0.841 0.460 0.864 0.460 0.892 0.505 0.924 0.528 0.971 0.516 1.000 0.495)
 			  :duration dur :scaler (hz->radians 10100.0)))
-	  (gen1 (make-polywave :partials (list 1 .99  2 .01  3 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .99  2 .01  3 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -8617,7 +8617,7 @@
 				  0.419 0.287 0.435 0.254 0.683 0.237 0.696 0.285 0.715 0.323 0.748 0.321 0.781 0.306 
 				  0.830 0.300 0.875 0.277 0.922 0.264 1.000 0.208)
 			  :duration dur :scaler (hz->radians 2850.0)))
-	  (gen1 (make-polywave :partials (list 1 .99  3 .01)))
+	  (gen1 (make-polywave 0.0 (list 1 .99  3 .01)))
 	  (rndf (make-env '(0 0 .3 0 .4 1 .5 0 .65 0 .7 .1 .85 .1 1 1) :duration dur))
 	  (rnd (make-rand-interp 400 (hz->radians 100))))
       (do ((i start (+ i 1)))
@@ -8673,7 +8673,7 @@
 				       0.614 0.173 0.896 0.145 1.000 0.138)
 			       :duration dur3 :scaler (hz->radians pitch)))
 	      
-	      (gen1 (make-polywave :partials (list 1 .99  3 .01)))
+	      (gen1 (make-polywave 0.0 (list 1 .99  3 .01)))
 	      (rnd (make-rand-interp 300 (hz->radians 50))))
 	  (do ((i start1 (+ i 1)))
 	      ((= i stop1))
@@ -8717,9 +8717,9 @@
 				  0.489 0.436 0.500 0.399 0.527 0.418 0.561 0.420 0.647 0.359 0.711 0.317 0.736 0.313 
 				  .9 .2 .95 .15)
 			  :duration dur :scaler (hz->radians (* 0.5 8280.0))))
-	  (gen1 (make-polywave :partials (normalize-partials (list 1 .17  3 .1  4 .1  5 .14 6 .01))))
+	  (gen1 (make-polywave 0.0 (normalize-partials (list 1 .17  3 .1  4 .1  5 .14 6 .01))))
 	  (ampf1 (make-env '(0 .1 .3 1 .5 1 .8 0 1 0) :duration dur))
-	  (gen2 (make-polywave :partials (normalize-partials (list 2 .95  3 .04  4 .03)))))
+	  (gen2 (make-polywave 0.0 (normalize-partials (list 2 .95  3 .04  4 .03)))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(let ((frq (env frqf)))
@@ -8738,8 +8738,8 @@
 	  (frqf (make-env '(0.000 0.195 0.066 0.286 0.086 0.305 0.120 0.365 0.187 0.417 0.345 0.461 0.525 0.483 
 				  0.748 0.450 0.853 0.429 0.919 0.392 0.957 0.328 0.971 0.253 1.000 0.214)
 			  :duration dur :scaler (hz->radians (* 0.5 5500.0))))
-	  (gen1 (make-polywave :partials (normalize-partials (list 3 .01  4 .01  5 .01  6 .01))))
-	  (gen2 (make-polywave :partials (normalize-partials (list 1 .08  2 1.0  3 .06  5 .02  7 .007  8 .003  10 .001))))
+	  (gen1 (make-polywave 0.0 (normalize-partials (list 3 .01  4 .01  5 .01  6 .01))))
+	  (gen2 (make-polywave 0.0 (normalize-partials (list 1 .08  2 1.0  3 .06  5 .02  7 .007  8 .003  10 .001))))
 	  (ampf1 (make-env '(0 1 .07 1  .15 .1 .85 .1 .9 1 1 1) :duration dur))
 	  (ampf2 (make-env '(0 0 .3 1 .8 1 1 0) :duration dur)))
       (do ((i start (+ i 1)))
@@ -8778,7 +8778,7 @@
 				    0.396 0.353 0.421 0.339 0.458 0.336 0.490 0.306 0.516 0.303 0.534 0.287 0.598 0.267 
 				    0.689 0.245 0.806 0.223 1.000 0.212)
 			    :duration dur :scaler (hz->radians 22000.0)))
-	    (gen1 (make-polywave :partials (list 1 .99  2 .01))))
+	    (gen1 (make-polywave 0.0 (list 1 .99  2 .01))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -8801,7 +8801,7 @@
 				    0.688 0.218 0.715 0.223 0.733 0.240 0.750 0.281 0.794 0.303 0.844 0.314 0.894 0.320 
 				    0.945 0.336 1.000 0.325)
 			    :duration dur :scaler (hz->radians 22000.0)))
-	    (gen1 (make-polywave :partials (list 1 .98  2 .01 3 .005  4 .003))))
+	    (gen1 (make-polywave 0.0 (list 1 .98  2 .01 3 .005  4 .003))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -8823,7 +8823,7 @@
 				    0.334 0.245 0.497 0.198 0.579 0.179 0.628 0.176 0.675 0.171 0.731 0.160 0.841 0.152 
 				    1.000 0.118)
 			    :duration dur :scaler (hz->radians 22000.0)))
-	    (gen1 (make-polywave :partials (list 1 .98  2 .01)))) ; there are 3 to 5, but they alias at 44KHz
+	    (gen1 (make-polywave 0.0 (list 1 .98  2 .01)))) ; there are 3 to 5, but they alias at 44KHz
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -8885,7 +8885,7 @@
 				  0.815 0.421 0.821 0.434 0.824 0.419 0.831 0.372 0.841 0.359 0.851 0.357 0.854 0.388 
 				  0.856 0.515 0.864 0.568 0.871 0.555 0.883 0.436 0.914 0.421 0.930 0.385 1.000 0.368)
 			  :duration dur :scaler (hz->radians 10000.0)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .02  3 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .02  3 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -8908,7 +8908,7 @@
 	    (stop (seconds->samples (+ beg dur)))
 	    (ampf (make-env ampf :duration dur :scaler amp))
 	    (frqf1 (make-env frqf :duration dur :scaler (hz->radians frq)))
-	    (gen1 (make-polywave :partials (list 1 .99  2 .008 3 .003)))
+	    (gen1 (make-polywave 0.0 (list 1 .99  2 .008 3 .003)))
 	    (vib (make-oscil speed))
 	    (vibf (make-env '(0 1 .8 1 .9 0 1 0) :duration dur :scaler (hz->radians ind)))
 	    (rnd (make-rand-interp 800))
@@ -8973,7 +8973,7 @@
 				   0.740 0.501 1.000 0.416)
 			   :duration dur :scaler (hz->radians 7090.0)))
 	  (ampf1 (make-env '(0 1  .6 1  .65 .1 .7 .5  .75 0  1 0) :duration dur))
-	  (gen1 (make-polywave :partials (list 1 .92  2 .05  3 .01  4 .005  6 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .92  2 .05  3 .01  4 .005  6 .005)))
 	  
 	  (frqf2 (make-env '(0.000 0.407 0.256 0.439 0.492 0.434 0.566 0.447 0.595 0.430 0.609 0.309 0.626 0.266 
 				   0.646 0.297 0.661 0.396 0.673 0.430 0.681 0.474 0.695 0.412 0.702 0.325 0.719 0.320
@@ -8981,7 +8981,7 @@
 				   0.839 0.376 0.856 0.349 0.876 0.324 0.916 0.324 0.951 0.293 1.000 0.25)
 			   :duration dur :scaler (hz->radians 7090.0)))
 	  (ampf2 (make-env '(0 0 .5 0 .55 .2 .7 1  1 .5) :duration dur))
-	  (gen2 (make-polywave :partials (list 1 .95  2 .01  3 .01  4 .01 5 .005  6 .01)))
+	  (gen2 (make-polywave 0.0 (list 1 .95  2 .01  3 .01  4 .01 5 .005  6 .01)))
 	  (rnd (make-rand-interp 100 .7)))
       (do ((i start (+ i 1)))
 	  ((= i stop))
@@ -9061,9 +9061,9 @@
 	  (frqf (make-env '(0.000 0.080 0.029 0.091 0.079 0.131 0.103 0.136 0.165 0.148 0.219 0.164 0.341 0.176 
 				  0.469 0.173 0.714 0.162 0.819 0.157 0.902 0.150 0.949 0.138 1.000 0.141)
 			  :duration dur :scaler (hz->radians (* 0.5 10950))))
-	  (gen1 (make-polywave :partials (normalize-partials (list 1 .21  2 .83  3 .05))))
-	  (gen2 (make-polywave :partials (normalize-partials (list 4 .03  5 .02  6 .12))))
-	  (gen3 (make-polywave :partials (normalize-partials (list 7 .01  8 .02  9 .007  10 .003))))
+	  (gen1 (make-polywave 0.0 (normalize-partials (list 1 .21  2 .83  3 .05))))
+	  (gen2 (make-polywave 0.0 (normalize-partials (list 4 .03  5 .02  6 .12))))
+	  (gen3 (make-polywave 0.0 (normalize-partials (list 7 .01  8 .02  9 .007  10 .003))))
 	  (ampf2 (make-env '(0 0  .05 0  .1 .2  .15 0  .275 1 .6 1 .9 0 1 0) :duration dur :scaler .15))
 	  (ampf3 (make-env '(0 0  .18 0  .5 1  .7 1 .85 0 1 0) :duration dur :scaler .08)))
       (do ((i start (+ i 1)))
@@ -9099,9 +9099,9 @@
 	  (frqf (make-env '(0.000 0.157 0.051 0.204 0.075 0.267 0.142 0.281 0.196 0.267 0.268 0.191 0.353 0.171 1.000 0.175)
 			  :duration dur :scaler (hz->radians frqscl)))
 	  (gen1 (make-polywave 0.0 :partials '(1 2)))
-	  (gen2 (make-polywave :partials (list 2 (* 2 .3)  3 (* 2 .7))))
-	  (gen6 (make-polywave :partials (normalize-partials (list 4 .1  5 .05  6 .02))))
-	  (gen3 (make-polywave :partials (normalize-partials (list 9 .12  10 .02  11  .003  12 .006 15 .005 16 .004))))
+	  (gen2 (make-polywave 0.0 (list 2 (* 2 .3)  3 (* 2 .7))))
+	  (gen6 (make-polywave 0.0 (normalize-partials (list 4 .1  5 .05  6 .02))))
+	  (gen3 (make-polywave 0.0 (normalize-partials (list 9 .12  10 .02  11  .003  12 .006 15 .005 16 .004))))
 	  (gen4 (make-oscil))
 	  (gen5 (make-oscil))
 	  (ampf1 (make-env '(0 1 .6 1 .9 0 1 0) :duration dur :scaler .1))
@@ -9169,7 +9169,7 @@
 			  :duration dur :scaler amp))
 	  (frqf (make-env '(0.000 0.284 0.052 0.254 0.128 0.239 0.256 0.229 0.404 0.219 0.580 0.211 0.707 0.206 1.000 0.216)
 			  :duration dur :scaler (hz->radians 8700.0)))
-	  (gen1 (make-polywave :partials (list 1 .91  2 .008  3 .07  4 .003)))
+	  (gen1 (make-polywave 0.0 (list 1 .91  2 .008  3 .07  4 .003)))
 	  (vib (make-oscil 50))
 	  (vibf (make-env '(0 .1 .4 .6 .9 1 1 .4) :duration dur :scaler (hz->radians 100)))
 	  (vibr (make-rand-interp 200 .5))
@@ -9204,7 +9204,7 @@
 			  :duration dur :scaler (hz->radians 10000.0)))
 	  (gen1 (make-oscil))
 	  (ampf2 (make-env '(0 0 .1 0 .2 1 1 1) :duration dur))
-	  (gen2 (make-polywave :partials (list 2 .01  3 .005 4 .04  5 .003)))
+	  (gen2 (make-polywave 0.0 (list 2 .01  3 .005 4 .04  5 .003)))
 	  (rnd (make-rand-interp 4000 (hz->radians 500)))
 	  (rndf (make-env '(0 1 .2 .1 .9 .1 1 1) :duration dur)))
       (do ((i start (+ i 1)))
@@ -9231,7 +9231,7 @@
 	(frqs (vector (list 0.000 0.162 0.246 0.168 0.505 0.168 0.867 0.183 0.956 0.198 1.000 0.192)
 		      (list 0.000 0.162 0.246 0.168 0.867 0.183 0.897 0.186 0.926 0.204 1.000 0.192)
 		      (list 0.000 0.189 0.039 0.168 0.246 0.168 1.000 0.192)))
-	(gen1 (make-polywave :partials (list 1 .98  2 .015  3 .005))))
+	(gen1 (make-polywave 0.0 (list 1 .98  2 .015  3 .005))))
     (do ((call 0 (+ call 1)))
 	((= call 3))
       (let ((start (seconds->samples (+ beg (begs call))))
@@ -9266,7 +9266,7 @@
 			  :duration dur :scaler amp))
 	  (frqf (make-env '(0.000 0.172 0.137 0.170 0.175 0.165 0.340 0.172 0.451 0.160 0.544 0.165 .6 .160 1.000 0.170)
 			  :duration dur :scaler (hz->radians 2550.0)))
-	  (gen1 (make-polywave :partials (list 1 .94  2 .02  3 .05  4 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .94  2 .02  3 .05  4 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -9297,9 +9297,9 @@
 				  0.807 0.348 0.841 0.333 0.875 0.314 0.905 0.314 0.925 0.340 0.957 0.344 0.972 0.325 
 				  0.983 0.302 1.000 0.237)
 			  :duration dur :scaler (hz->radians (* 0.5 8150.0))))
-	  (gen1 (make-polywave :partials (list 1 (* .5 0.328) 2 (* .5 0.328) 3 (* .5 0.066) 4 (* .5 0.262) 5 (* .5 0.013) 7 (* .5 0.004))))
+	  (gen1 (make-polywave 0.0 (list 1 (* .5 0.328) 2 (* .5 0.328) 3 (* .5 0.066) 4 (* .5 0.262) 5 (* .5 0.013) 7 (* .5 0.004))))
 	  (gen2 (make-oscil))
-	  (gen3 (make-polywave :partials (normalize-partials (list 3 .2  5 .1  7 .1  9 .05  11 .05  13 .01))))
+	  (gen3 (make-polywave 0.0 (normalize-partials (list 3 .2  5 .1  7 .1  9 .05  11 .05  13 .01))))
 	  
 	  (ampf2 (make-env '(0 0 .05 0 .12 1 .18 1 .2 .6  .5 .8 .75 0 .8 .7 1 .7) :duration dur :scaler .5))
 	  (ampf3 (make-env '(0 0 .05 0 .12 1 .6 1 .75 0 1 0) :duration dur :scaler .3 :base 10))
@@ -9354,7 +9354,7 @@
 				  0.607 0.305 0.642 0.368 0.672 0.396 0.704 0.420 0.752 0.431 0.775 0.452 0.795 0.527 
 				  0.815 0.534 0.824 0.492 0.835 0.387 0.861 0.336 0.891 0.305 0.946 0.298 1.000 0.240)
 			  :duration dur :scaler (hz->radians 8100.0)))
-	  (gen1 (make-polywave :partials (list 1 .985  2 .005  3 .01))))
+	  (gen1 (make-polywave 0.0 (list 1 .985  2 .005  3 .01))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -9434,8 +9434,8 @@
 				    0.457 0.310 0.484 0.296 0.514 0.265 0.548 0.307 0.599 0.377 0.641 0.352 0.706 0.346 
 				    0.741 0.338 0.773 0.346 1.000 0.346)
 			    :duration dur :scaler (hz->radians (* 0.5 3140))))
-	    (gen2 (make-polywave :partials (vct 2 (* .6 .8) 3 (* .6 .2))))
-	    (gen2a (make-polywave :partials (normalize-partials (list  4 .35  5 .19  6 .12  7 .03  8 .02))))
+	    (gen2 (make-polywave 0.0 (vct 2 (* .6 .8) 3 (* .6 .2))))
+	    (gen2a (make-polywave 0.0 (normalize-partials (list  4 .35  5 .19  6 .12  7 .03  8 .02))))
 	    (ampf2a (make-env '(0 1 .6 1 1 0) :duration dur :scaler .4 :base 10))
 	    (gen3 (make-nrxysin :n 12 :r .85 :ratio 1/9))
 	    (ampf3 (make-env '(0 0 .1 0  .15 .5 .2 0 .4 0 .45 .7 .5 0 .55 1 .7 1 .8 0 .9 .1 1 0) :duration dur :scaler .02))
@@ -9463,8 +9463,8 @@
 	    (frqf (make-env '(0.000 0.085 0.189 0.079 0.222 0.113 0.251 0.123 0.278 0.105 0.312 0.121 0.349 0.125 
 				    0.377 0.133 0.412 0.127 0.510 0.123 0.691 0.129 0.778 0.125 0.830 0.127 1.000 0.129)
 			    :duration dur :scaler (hz->radians (* 0.5 8650.0))))
-	    (gen1 (make-polywave :partials (normalize-partials (list 1 .01 2 .98 3 .05 4 .02 5 .005 6 .005))))
-	    (gen2 (make-polywave :partials (normalize-partials (list 1 .44  2 1.0  3 .34  4 .31  5 .19  6 .075  7 .04  8 .03))))
+	    (gen1 (make-polywave 0.0 (normalize-partials (list 1 .01 2 .98 3 .05 4 .02 5 .005 6 .005))))
+	    (gen2 (make-polywave 0.0 (normalize-partials (list 1 .44  2 1.0  3 .34  4 .31  5 .19  6 .075  7 .04  8 .03))))
 	    (gen3 (make-nrxysin :n 12 :r .85 :ratio 1/9))
 	    (intrpf (make-env '(0 1 .19 1 .2 0 1 0) :duration dur))
 	    (intrpf-1 (make-env '(0 1 .19 1 .2 0 1 0) :duration dur :offset 1.0 :scaler -1.0)))
@@ -9498,7 +9498,7 @@
 	    (gen3 (make-nrxysin :n 12 :r .8 :ratio 1/8))
 	    (ampf3 (make-env '(0 0 .1 1 .6 1 .8 0 1 0) :duration dur :scaler .15))
 	    
-	    (gen4 (make-polywave :partials (normalize-partials (list 3 .4  4 .4  5 .2  6 .1  7 .05))))
+	    (gen4 (make-polywave 0.0 (normalize-partials (list 3 .4  4 .4  5 .2  6 .1  7 .05))))
 	    (ampf4 (make-env '(0 1 .8 1 1 0) :duration dur :scaler .5)))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
@@ -9561,7 +9561,7 @@
 	  (frqf (make-env '(0.000 0.262 0.112 0.288 0.197 0.304 0.275 0.319 0.508 0.313 0.634 0.281 0.743 0.281 
 				  0.811 0.249 0.869 0.256 1.000 0.240)
 			  :duration dur :scaler (hz->radians (* frqscl 5000.0))))
-	  (gen1 (make-polywave :partials (list 1 .005 2 .9 3 .005 4 .01 6 .03  7 .005 8 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .005 2 .9 3 .005 4 .01 6 .03  7 .005 8 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -9579,7 +9579,7 @@
 	  (frqf (make-env '(0.000 0.269 0.105 0.297 0.182 0.319 0.311 0.319 0.428 0.304 0.534 0.281 0.688 0.269 
 				  0.789 0.244 0.825 0.215 1 .21)
 			  :duration dur :scaler (hz->radians (* frqscl 5040.0))))
-	  (gen1 (make-polywave :partials (list 1 .005 3 .005 4 .01 6 .03  7 .005 8 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .005 3 .005 4 .01 6 .03  7 .005 8 .005)))
 	  (ampf1 (make-env '(0 1 .6 1 .7 0 1 0) :duration dur))
 	  (gen2 (make-oscil))
 	  (gen3 (make-oscil))
@@ -9651,7 +9651,7 @@
 				  0.855 0.397 0.870 0.409 0.877 0.442 0.898 0.442 0.913 0.468 0.921 0.519 0.927 0.580 
 				  0.938 0.650 0.948 0.697 0.954 0.684 0.958 0.705 0.967 0.680 0.983 0.666 0.991 0.593 1.000 0.452)
 			  :duration dur :scaler (hz->radians 7100.0)))
-	  (gen1 (make-polywave :partials (list 1 .99  2 .005  3 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .99  2 .005  3 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -9672,7 +9672,7 @@
 				  0.420 0.578 0.482 0.569 0.648 0.532 0.728 0.527 0.753 0.593 0.779 0.650 0.802 0.605 
 				  0.827 0.532 0.854 0.507 0.977 0.485 1.000 0.43)
 			  :duration dur :scaler (hz->radians 7300.0)))
-	  (gen1 (make-polywave :partials (list 1 .99  2 .005  3 .005)))
+	  (gen1 (make-polywave 0.0 (list 1 .99  2 .005  3 .005)))
 	  (vib (make-oscil 152))
 	  (index (hz->radians 500))
 	  (vibf (make-env '(0 0 .29 0 .38 1 .7 .5 .75 0 1 0) :duration dur))
@@ -9706,7 +9706,7 @@
 	  (frqf (make-env '(0.000 0.267 0.097 0.287 0.242 0.301 0.472 0.304 0.684 0.301 0.788 0.301 
 				  0.973 0.293 1.000 0.264)
 			  :duration dur :scaler (hz->radians 22000.0)))
-	  (gen1 (make-polywave :partials (list 1 .99 2 .006  3 .004))))
+	  (gen1 (make-polywave 0.0 (list 1 .99 2 .006  3 .004))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf) (polywave gen1 (env frqf))))))))
@@ -9735,7 +9735,7 @@
 				    0.233 0.342 0.261 0.376 0.282 0.358 0.306 0.285 0.358 0.272 0.427 0.308 0.490 0.360 
 				    0.584 0.376 0.813 0.360 1.000 0.342)
 			    :duration dur :scaler (hz->radians 8100.0)))
-	    (gen1 (make-polywave :partials (list 1 .995  2 .005))))
+	    (gen1 (make-polywave 0.0 (list 1 .995  2 .005))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -9752,7 +9752,7 @@
 	    (frqf (make-env '(0.000 0.395 0.077 0.351 0.121 0.293 0.169 0.225 0.218 0.196 0.286 0.163 0.345 0.185 
 				    0.407 0.221 1.000 0.36)
 			    :duration dur :scaler (hz->radians 13800.0)))
-	    (gen1 (make-polywave :partials (list 1 .98  2 .01  3 .005 4 .005))))
+	    (gen1 (make-polywave 0.0 (list 1 .98  2 .01  3 .005 4 .005))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -9777,7 +9777,7 @@
 				    0.654 0.619 0.672 0.590 0.711 0.519 0.732 0.510 0.734 0.702 0.758 0.632 0.797 0.508 
 				    0.813 0.671 0.828 0.662 0.840 0.608 0.882 0.560 0.922 0.525 1.000 0.475)
 			    :duration dur :scaler (hz->radians 6000.0)))
-	    (gen1 (make-polywave :partials (list 1 .99  2 .004  3 .006))))
+	    (gen1 (make-polywave 0.0 (list 1 .99  2 .004  3 .006))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -9800,7 +9800,7 @@
 				    0.707 0.475 0.729 0.514 0.759 0.551 0.774 0.521 0.779 0.449 0.797 0.386 0.833 0.414 
 				    0.873 0.451 0.905 0.492 0.941 0.547 0.959 0.545 0.970 0.423 1.000 0.322)
 			    :duration dur :scaler (hz->radians 6050.0)))
-	    (gen1 (make-polywave :partials (list 1 .99  2 .006  3 .004))))
+	    (gen1 (make-polywave 0.0 (list 1 .99  2 .006  3 .004))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -9812,7 +9812,7 @@
 	    (stop (seconds->samples (+ beg dur)))
 	    (ampf (make-env '(0 0 1 1 3 0) :duration dur :scaler amp))
 	    (frqf (make-env '(0 4600 1 3000) :duration dur :scaler (hz->radians 1.0)))
-	    (gen1 (make-polywave :partials (list 1 .99  2 .01))))
+	    (gen1 (make-polywave 0.0 (list 1 .99  2 .01))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -9855,7 +9855,7 @@
 	  (gen2 (make-oscil))
 	  (gen3 (make-oscil))
 	  (ampf3 (make-env '(0 .2 .4 .2 .5 1 .68 1 .7 .5 .9 .5 1 0) :duration dur :scaler .3))
-	  (gen4 (make-polywave :partials (list 4 .8 5 .2)))
+	  (gen4 (make-polywave 0.0 (list 4 .8 5 .2)))
 	  (ampf4 (make-env '(0 0 .4 .1 .5 1 .75 1 .9 0 1 0) :duration dur :scaler .05))
 	  (gen5 (make-nrxysin :n 12 :r .8 :ratio 1/6))
 	  (ampf5 (make-env '(0 0 .4 0 .5 1 .65 .1 .7 1  .9 0 1 0) :duration dur :scaler .2))
@@ -9903,7 +9903,7 @@
 	  (ampf2 (make-env '(0 .5  .55 .2  .6 1 .7 .2 1 1) :duration dur :scaler .5))
 	  (gen3 (make-oscil))
 	  (ampf3 (make-env '(0 .2  .6 .1 .65 1 .75 1 .9 0 1 0) :duration dur :scaler .3))
-	  (gen4 (make-polywave :partials (list 4 .8 5 .2)))
+	  (gen4 (make-polywave 0.0 (list 4 .8 5 .2)))
 	  (ampf4 (make-env '(0 0 .4 .1 .65 1 .75 1 .8 0 .85 1 .9 .5 1 .5) :duration dur :scaler .1))
 	  (gen5 (make-nrxysin :n 12 :r .8 :ratio 1/6))
 	  (ampf5 (make-env '(0 0 .5 0 .55 1 .6 0  .65  1 .7 1  .8 0 1 0) :duration dur :scaler .2))
@@ -9944,7 +9944,7 @@
 	  (gen2 (make-oscil))
 	  (gen3 (make-oscil))
 	  (ampf3 (make-env '(0 .1 .3 .2 .4 1 1 1) :duration dur :scaler .1))
-	  (gen4 (make-polywave :partials (list 4 .8 5 .2)))
+	  (gen4 (make-polywave 0.0 (list 4 .8 5 .2)))
 	  (ampf4 (make-env '(0 0 .3 0 .4 1 .9 1 1 0) :duration dur :scaler .05))
 	  (gen5 (make-nrxysin :n 12 :r .7 :ratio 1/6))
 	  (ampf5 (make-env '(0 0 .3 0 .4 1 .5 .1 .55 0 .6 .1 .63 1  .85 0 1 0) :duration dur :scaler .3))
@@ -10009,7 +10009,7 @@
 				      0.730 0.204 0.855 0.221 0.962 0.218 1.000 0.199)
 			      :duration dur :scaler (hz->radians (* 22000.0 (env call-frqf)))))
 	      (gen1 (make-polywave 0.0 '(1 .97)))
-	      (gen2 (make-polywave :partials (list 2 .005  3 .03  4 .003)))
+	      (gen2 (make-polywave 0.0 (list 2 .005  3 .03  4 .003)))
 	      (ampf2 (make-env '(0 0 .3 0 .4 1 1 1) :duration dur)))
 	  (do ((i start (+ i 1)))
 	      ((= i stop))
@@ -10040,7 +10040,7 @@
 	    (frqf (make-env '(0.000 0.301 0.059 0.288 0.090 0.281 0.123 0.286 0.149 0.299 0.189 0.303 0.250 0.299 
 				    0.341 0.292 0.568 0.296 0.746 0.299 1.000 0.296)
 			    :duration dur :scaler (hz->radians 22000.0)))
-	    (gen1 (make-polywave :partials (list 1 .99  2 .007  3 .003))))
+	    (gen1 (make-polywave 0.0 (list 1 .99  2 .007  3 .003))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -10060,7 +10060,7 @@
 				    0.504 0.117 0.518 0.093 0.543 0.117 0.562 0.093 0.579 0.117 0.599 0.093 0.615 0.113 
 				    0.635 0.090 0.656 0.115 0.671 0.088 0.689 0.111 0.705 0.088 0.809 0.172 0.835 0.176 1.000 0.176)
 			    :duration dur :scaler (hz->radians 22000.0)))
-	    (gen1 (make-polywave :partials (list 1 .99  2 .007  3 .003))))
+	    (gen1 (make-polywave 0.0 (list 1 .99  2 .007  3 .003))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -10083,7 +10083,7 @@
 				    0.618 0.245 0.640 0.238 0.664 0.247 0.690 0.240 0.721 0.240 0.748 0.233 0.782 0.243 
 				    0.809 0.238 0.832 0.243 0.858 0.233 0.880 0.245 0.903 0.233 0.923 0.245 0.944 0.238 1.000 0.240)
 			    :duration dur :scaler (hz->radians 22000.0)))
-	    (gen1 (make-polywave :partials (list 1 .99  2 .007  3 .003))))
+	    (gen1 (make-polywave 0.0 (list 1 .99  2 .007  3 .003))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -10168,7 +10168,7 @@
 	  (stop (seconds->samples (+ beg dur)))
 	  (ampf (make-env ampenv :duration dur :scaler ampscl))
 	  (frqf (make-env frqenv :duration dur :scaler (hz->radians frqscl)))
-	  (gen1 (make-polywave :partials (normalize-partials (list 1 1.0  2 .08  3 .1  4 .03  5 .05)))))
+	  (gen1 (make-polywave 0.0 (normalize-partials (list 1 1.0  2 .08  3 .1  4 .03  5 .05)))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -10283,7 +10283,7 @@
 	  
 	  (rnd1 (make-rand-interp 500 .1))
 	  
-	  (att (make-polywave :partials (list 3 .3 5 .5 7 .1 9 .1)))
+	  (att (make-polywave 0.0 (list 3 .3 5 .5 7 .1 9 .1)))
 	  (attf (make-env '(0 0 .05 1 .1 0 1 0) :duration dur :scaler .125)))
       (do ((i start (+ i 1)))
 	  ((= i stop))
@@ -10337,7 +10337,7 @@
 	  (frqf (make-env '(0.000 0.203 0.071 0.200 0.111 0.203 0.134 0.227 0.200 0.238 0.249 0.255 0.329 0.263 
 				  0.469 0.265 0.627 0.245 0.728 0.233 0.891 0.146 0.948 0.131 1.000 0.144)
 			  :duration dur :scaler (hz->radians (* 1/3 22000.0))))
-	  (gen1 (make-polywave :partials (normalize-partials (list  2 1  3 .05  4 .02  5 .005  6 .01  7 .005))))
+	  (gen1 (make-polywave 0.0 (normalize-partials (list  2 1  3 .05  4 .02  5 .005  6 .01  7 .005))))
 	  (gen2 (make-oscil))
 	  (ampf2 (make-env '(0 .5  .4 1  .7 1 .8 0 1 0) :duration dur :scaler .05))
 	  (gen3 (make-oscil))
@@ -10393,7 +10393,7 @@
 				  0.750 0.479 0.766 0.453 0.778 0.479 0.793 0.439 0.808 0.461 0.821 0.437 0.837 0.458 
 				  0.861 0.437 1.000 0.408)
 			  :duration dur :scaler (hz->radians 7800.0)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .01  3 .01  4 .005  5 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .01  3 .01  4 .005  5 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -10437,7 +10437,7 @@
 			  :duration dur :scaler (* .25 amp)))
 	  (frqf (make-env '(0.000 0.172 0.152 0.172 0.401 0.188 0.667 0.201 0.808 0.205 0.951 0.227 1.000 0.234)
 			  :duration dur :scaler (hz->radians (* 1/3 13000.0))))
-	  (gen1 (make-polywave :partials (normalize-partials (list 1 .03  2 .1  3 1  4 .6  5 .5  6 .4  7 .1  8 .04  9 .01  10 .01  11 .005)))))
+	  (gen1 (make-polywave 0.0 (normalize-partials (list 1 .03  2 .1  3 1  4 .6  5 .5  6 .4  7 .1  8 .04  9 .01  10 .01  11 .005)))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -10451,7 +10451,7 @@
 			  :duration dur :scaler amp))
 	  (frqf (make-env '(0.000 0.178 0.849 0.156 1.000 0.156)
 			  :duration dur :scaler (hz->radians (* 1/2 14900.0))))
-	  (gen1 (make-polywave :partials (normalize-partials (list 1 .07  2 1  3 .8  4 .47  5 .14  6 .04  7 .03  8 .01)))))
+	  (gen1 (make-polywave 0.0 (normalize-partials (list 1 .07  2 1  3 .8  4 .47  5 .14  6 .04  7 .03  8 .01)))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -10482,7 +10482,7 @@
 				  0.719 0.351 0.745 0.296 0.765 0.281 0.802 0.298 0.835 0.358 0.868 0.452 0.904 0.507 
 				  0.955 0.505 0.966 0.488 0.971 0.520 0.980 0.493 1.000 0.510)
 			  :duration dur :scaler (hz->radians 7400.0)))
-	  (gen1 (make-polywave :partials (list 1 .98  2 .015  3 .005))))
+	  (gen1 (make-polywave 0.0 (list 1 .98  2 .015  3 .005))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -10578,7 +10578,7 @@
 				    0.649 0.124 0.663 0.169 0.672 0.150 0.704 0.124 0.750 0.135 0.777 0.124 0.795 0.121 
 				    0.969 0.147 1.000 0.162)
 			    :duration dur :scaler (hz->radians 22500))) ; not a typo...
-	    (gen1 (make-polywave :partials (list 1 .96  2 .02  3 .02))))
+	    (gen1 (make-polywave 0.0 (list 1 .96  2 .02  3 .02))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -10598,7 +10598,7 @@
 				    0.518 0.324 0.542 0.213 0.580 0.223 0.715 0.242 0.759 0.293 0.813 0.308 0.828 0.320 
 				    0.843 0.341 0.857 0.337 0.877 0.276 0.896 0.252 1.000 0.230)
 			    :duration dur :scaler (hz->radians 10000)))
-	    (gen1 (make-polywave :partials (list 1 .98  2 .01  3 .01))))
+	    (gen1 (make-polywave 0.0 (list 1 .98  2 .01  3 .01))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -10645,7 +10645,7 @@
 				  0.846 0.474 0.854 0.574 0.873 0.604 0.877 0.476 0.892 0.476 0.901 0.592 0.917 0.563 
 				  0.923 0.458 0.939 0.462 0.955 0.431 0.976 0.431 1.000 0.351)
 			  :duration dur :scaler (hz->radians 4500)))
-	  (gen1 (make-polywave :partials (list 1 .9 2 .03 3 .05 4 .01 5 .01))))
+	  (gen1 (make-polywave 0.0 (list 1 .9 2 .03 3 .05 4 .01 5 .01))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)
@@ -10674,7 +10674,7 @@
 				  0.818 0.522 0.839 0.508 0.854 0.474 0.882 0.492 0.901 0.515 0.925 0.490 0.947 0.481 
 				  0.958 0.501 0.986 0.494 1.000 0.633)
 			  :duration dur :scaler (hz->radians 4100)))
-	  (gen1 (make-polywave :partials (list 1 .9 2 .02 3 .005 4 .02 5 .007 6 .01))))
+	  (gen1 (make-polywave 0.0 (list 1 .9 2 .02 3 .005 4 .02 5 .007 6 .01))))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(outa i (* (env ampf)

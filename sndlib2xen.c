@@ -3083,11 +3083,9 @@ void mus_sndlib_xen_initialize(void)
     f = s7_name_to_value(s7, "sound-data-ref");
     s7_function_set_chooser(s7, f, sound_data_ref_chooser);
 
-#if (!WITH_GMP)
     sound_data_ref_three = s7_make_function(s7, "sound-data-ref", g_sound_data_ref_three, 3, 0, false, "sound-data-ref optimization");
     s7_function_set_class(sound_data_ref_three, f);
     s7_function_set_returns_temp(sound_data_ref_three);
-#endif
   }
 
   sound_data_number_location = s7_number_offset(s7);

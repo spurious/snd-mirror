@@ -16003,7 +16003,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_mus_chebyshev_first_kind,  MUS_CHEBYSHEV_FIRST_KIND,  "Chebyshev polynomial of first kind, for " S_partials_to_polynomial);
   XEN_DEFINE_CONSTANT(S_mus_chebyshev_second_kind, MUS_CHEBYSHEV_SECOND_KIND, "Chebyshev polynomial of second kind, for " S_partials_to_polynomial);
 
-  XEN_DEFINE_PROCEDURE(S_mus_describe,       g_mus_describe_w,  1, 0, 0,  H_mus_describe);
+  XEN_DEFINE_SAFE_PROCEDURE(S_mus_describe,       g_mus_describe_w,  1, 0, 0,  H_mus_describe);
   /* not safe_procedure because mus_describe might call format recursively */
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_file_name, g_mus_file_name_w, 1, 0, 0,  H_mus_file_name);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_reset,     g_mus_reset_w,     1, 0, 0,  H_mus_reset);
@@ -16201,7 +16201,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_make_iir_filter, g_make_iir_filter_w, 0, 4, 0, H_make_iir_filter);
   XEN_DEFINE_REAL_PROCEDURE(S_iir_filter,      g_iir_filter_w,      2, 0, 0, H_iir_filter);
   XEN_DEFINE_SAFE_PROCEDURE(S_iir_filter_p,    g_iir_filter_p_w,    1, 0, 0, H_iir_filter_p);
-  XEN_DEFINE_PROCEDURE(S_mus_order,            g_mus_order_w,       1, 0, 0, H_mus_order);
+  XEN_DEFINE_SAFE_PROCEDURE(S_mus_order,            g_mus_order_w,       1, 0, 0, H_mus_order);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_type,        g_mus_type_w,        1, 0, 0, H_mus_type);
 
 
@@ -16216,7 +16216,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_locsig,       g_locsig_w,       3, 0, 0, H_locsig);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_locsig,  g_make_locsig_w,  0, 0, 1, H_make_locsig);
   XEN_DEFINE_SAFE_PROCEDURE(S_move_locsig,  g_move_locsig_w,  3, 0, 0, H_move_locsig);
-  XEN_DEFINE_PROCEDURE(S_mus_channels,      g_mus_channels_w, 1, 0, 0, H_mus_channels);
+  XEN_DEFINE_SAFE_PROCEDURE(S_mus_channels,      g_mus_channels_w, 1, 0, 0, H_mus_channels);
 
 #if HAVE_SCHEME || HAVE_FORTH
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_ref, g_locsig_ref_w, H_locsig_ref, S_setB S_locsig_ref, g_locsig_set_w,  2, 0, 3, 0);
@@ -16277,9 +16277,9 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_SAFE_PROCEDURE(S_readin_p,        g_readin_p_w,        1, 0, 0, H_readin_p);
   XEN_DEFINE_REAL_PROCEDURE(S_readin,          g_readin_w,          1, 0, 0, H_readin);
-  XEN_DEFINE_PROCEDURE(S_make_readin,          g_make_readin_w,     0, 0, 1, H_make_readin);
-  XEN_DEFINE_PROCEDURE(S_mus_channel,          g_mus_channel_w,     1, 0, 0, H_mus_channel);
-  XEN_DEFINE_PROCEDURE(S_mus_interp_type,      g_mus_interp_type_w, 1, 0, 0, H_mus_interp_type);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_readin,          g_make_readin_w,     0, 0, 1, H_make_readin);
+  XEN_DEFINE_SAFE_PROCEDURE(S_mus_channel,          g_mus_channel_w,     1, 0, 0, H_mus_channel);
+  XEN_DEFINE_SAFE_PROCEDURE(S_mus_interp_type,      g_mus_interp_type_w, 1, 0, 0, H_mus_interp_type);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_location, g_mus_location_w, H_mus_location, S_setB S_mus_location, g_mus_set_location_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_increment, g_mus_increment_w, H_mus_increment, S_setB S_mus_increment, g_mus_set_increment_w,  1, 0, 2, 0);
@@ -16299,7 +16299,7 @@ static void mus_xen_init(void)
 
 
   XEN_DEFINE_SAFE_PROCEDURE(S_convolve_p,     g_convolve_p_w,     1, 0, 0, H_convolve_p);
-  XEN_DEFINE_PROCEDURE(S_convolve,            g_convolve_w,       1, 1, 0, H_convolve_gen);
+  XEN_DEFINE_SAFE_PROCEDURE(S_convolve,            g_convolve_w,       1, 1, 0, H_convolve_gen);
   XEN_DEFINE_PROCEDURE(S_make_convolve,       g_make_convolve_w,  0, 0, 1, H_make_convolve);
   XEN_DEFINE_SAFE_PROCEDURE(S_convolve_files, g_convolve_files_w, 2, 2, 0, H_convolve_files);
 

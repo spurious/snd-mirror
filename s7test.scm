@@ -18258,6 +18258,7 @@ in s7:
 (test (let ((hi''' 3) (a'''b 2)) (+ hi''' a'''b)) 5)
 (test (let ((f (let func ((i 0)) (if (= i 0) func (if (> i 1) (+ i (func (- i 1))) 1))))) (map f '(1 2 3))) '(1 3 6))
 (test (let ((x 0)) (let ((f (lambda (a) (+ a x)))) (map (let () (set! x (+ x 1)) f) '(1 2 3)))) '(2 3 4))
+(test (let x ((x (lambda (y) y))) (x 2)) 2)
 
 (let ((enter 0)
       (exit 0)

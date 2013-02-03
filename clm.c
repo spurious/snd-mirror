@@ -10327,8 +10327,19 @@ mus_float_t mus_src_20(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
       srp->coeffs = (mus_float_t *)malloc(lim * sizeof(mus_float_t));
       xs = (int)((SRC_SINC_DENSITY / 2) * (1 - srp->width));
       xi = SRC_SINC_DENSITY;
-      for (i = 0; i < lim; i++, xs += xi)
+      for (i = 0; i < srp->width; i++, xs += xi)
 	{
+	  /* sinc_table is srp->width * SRC_SINC_DENSITY + 4 in length 
+	   */
+#if 0
+	  if ((xs >= (srp->width * SRC_SINC_DENSITY + 4)) ||
+	      ((-xs) >= (srp->width * SRC_SINC_DENSITY + 4)) ||
+	      (!(srp->sinc_table)))
+	    {
+	      fprintf(stderr, "xs: %d, len: %d, table:%p\n", xs, srp->width * SRC_SINC_DENSITY + 4, srp->sinc_table);
+	      abort();
+	    }
+#endif
 	  if (xs < 0)
 	    srp->coeffs[i] = srp->sinc_table[-xs];
 	  else srp->coeffs[i] = srp->sinc_table[xs];

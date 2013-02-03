@@ -2025,7 +2025,7 @@
 		       'cepstrum 'change-samples-with-origin 'channel->vct 'channel-amp-envs 'channel-data
 		       'channel-properties 'channel-property 'channel-style 'channel-widgets 'channels 'channels-combined
 		       'channels-separate 'channels-superimposed 'chans 'clear-array 'clear-listener
-		       'clear-sincs 'clip-hook 'clipping 'clm-channel 
+		       'clip-hook 'clipping 'clm-channel 
 		       'clm-table-size 'clm-default-frequency 'close-hook 'close-sound 'color->list
 		       'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted 'color-scale
 		       'color? 'colormap 'colormap-name 'colormap-ref 'colormap-size
@@ -10340,8 +10340,6 @@ EDITS: 2
 	  (set! (colormap-size) 512))
 	
 	(set! (hook-functions graph-hook) ())
-	(clear-sincs)
-	
 	)))
 
 
@@ -19409,7 +19407,6 @@ EDITS: 2
     (do ((i 0 (+ i 1)))
 	((= i 10))
       (make-src (lambda (y) 1.0) 1.5 :width (+ 5 (* i 10))))
-    (clear-sincs)
     
     (let ((ctr 0.0))
       (let ((gen (make-src :srate 2.0 :input (lambda (dir) (let ((val ctr)) (set! ctr (+ 1 ctr)) val))))
@@ -23520,7 +23517,6 @@ EDITS: 2
   (begin 
     (do ((test-ctr 0 (+ 1 test-ctr)))
 	((= test-ctr tests))
-      (clear-sincs)
       (log-mem test-ctr)
       
       (let ((ind0 (view-sound "oboe.snd"))
@@ -26371,7 +26367,6 @@ EDITS: 2
 			 (snd-display #__line__ ";revert ~A at ~A" (file-name snd) mxpos)
 			 (revert-sound snd)))))
 	       (sounds))))
-      (clear-sincs)      
       (log-mem test-ctr)
       
       (if (and (> test-ctr 0) (< test-ctr 10)) ; this creates too many leftover save-state sound files
@@ -35450,8 +35445,8 @@ EDITS: 1
 		       (arg args (cdr arg)))
 		      ((= i len) v)
 		    (if (bignum? (car arg))
-			(vct-set! v i (car arg))
-			(vct-set! v i (bignum (number->string (car arg))))))))
+			(vector-set! v i (car arg))
+			(vector-set! v i (bignum (number->string (car arg))))))))
 
 	      ;; -------- -1 -1 at 1
 	      (let ((rl (make-vector 8))
@@ -46545,7 +46540,6 @@ EDITS: 1
 		      fewer-args))
 		   fewer-args)
 		  
-		  (clear-sincs)
 		  (stop-playing)
 		  (snd-display #__line__ ";5 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 		  
@@ -46574,7 +46568,6 @@ EDITS: 1
 		      fewer-args))
 		   fewer-args)
 		  
-		  (clear-sincs)
 		  (snd-display #__line__ ";6 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 		  
 		  ;; ---------------- 6 Args
@@ -46641,7 +46634,6 @@ EDITS: 1
 		      (list #f #t -1 1234 vct-3 delay-32)))
 		   (list 1.5 -1 () 1234 "/hiho" delay-32))
 		  
-		  (clear-sincs)
 		  (snd-display #__line__ ";10 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 		  
 		  ;; ---------------- 10 Args
@@ -47029,7 +47021,6 @@ EDITS: 1
    regs))
 (set! (view-files-sort) 0)
 
-(clear-sincs)
 (stop-playing)
 (mus-oss-set-buffers 4 12)
 
