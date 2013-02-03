@@ -32120,7 +32120,40 @@ EDITS: 1
 	    (if (not (file-exists? name))
 		(snd-display #__line__ ";new-sound temp? ~A" name)
 		(delete-file name))))
+
+	(let ((ind (new-sound "test.snd" :size 40000)))
+	  (let ((gen (make-triangle-wave 10.0 0.5)))
+	    (clm-channel gen)
+	    (src-channel 2))
+	  
+	  (let ((ind1 (new-sound "test.snd" :size 40000)))
+	    (let ((gen (make-triangle-wave 10.0 0.5)))
+	      (clm-channel gen)
+	      (src-channel 2.00001))
+	    
+	    (let ((dist (channel-distance ind 0 ind1 0)))
+	      (if (> dist 0.5)
+		  (snd-display #__line__ ";src 2/2.0001: ~A" dist)))
+	    
+	    (close-sound ind)
+	    (close-sound ind1)))
 	
+	(let ((ind (new-sound "test.snd" :size 40000)))
+	  (let ((gen (make-triangle-wave 10.0 0.5)))
+	    (clm-channel gen)
+	    (src-channel 0.5))
+	  
+	  (let ((ind1 (new-sound "test.snd" :size 40000)))
+	    (let ((gen (make-triangle-wave 10.0 0.5)))
+	      (clm-channel gen)
+	      (src-channel 0.50001))
+	    
+	    (let ((dist (channel-distance ind 0 ind1 0)))
+	      (if (> dist 0.5)
+		  (snd-display #__line__ ";src 0.5/0.5001: ~A" dist)))
+	    
+	    (close-sound ind)
+	    (close-sound ind1)))
 	))
     ))
 

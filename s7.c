@@ -62499,7 +62499,7 @@ s7_scheme *s7_init(void)
  *   TODO: get rid of all arg lambdas -- move them to the make function (*.html especially!)
  * TODO: delete the one_line_closure stuff: closure_sp etc (there are apparently 9 cases)
  *
- * timing    12.x 13.0 13.1 13.2 13.3 13.4
+ * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5
  * bench    42736 8752 8051 7725 6515 5194
  * lint           9328 8140 7887 7736 7300
  * index    44300 3291 3005 2742 2078 1643

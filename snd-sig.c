@@ -4131,10 +4131,16 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	  s7_function f;
 
 	  res = s7_car(body);
-	  if (res == xen_false)
-	    return(xen_false);
+	  if (res == xen_false)		       
+	    {
+	      free_snd_fd(sf);
+	      return(xen_false);
+	    }
 	  if (!s7_is_pair(res))
-	    return(s_beg);
+	    {
+	      free_snd_fd(sf);
+	      return(s_beg);
+	    }
 
 	  f = s7_function_choice(s7, res);
 	  if (f)
@@ -6547,7 +6553,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
   if (XEN_INTEGER_P(x_size))
     size = XEN_TO_C_INT(x_size);
-  else size = 6000; /* was 3000 */
+  else size = 3000; 
 
   if (XEN_DOUBLE_P(x_increment))
     increment = XEN_TO_C_DOUBLE(x_increment);
@@ -6571,6 +6577,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
   overall_min = saved_min(choice, n);
   if (overall_min < sqrt((double)n)) overall_min = sqrt((double)n);
+  overall_min += .5;
 
   temp_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
   diff_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));

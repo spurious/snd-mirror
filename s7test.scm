@@ -19308,6 +19308,15 @@ in s7:
 		  32)))))
   (test (list val1 sum) '(4 4)))
 
+(let ()
+  (define c #f)
+  (define (yow f)
+    (call-with-exit
+     (lambda (return)
+       (set! c return)
+       (f))))
+  (test (yow (lambda () (c 32))) 32))
+
 (let ((x 1))
   (define y (call-with-exit (lambda (return) (set! x (return 32)))))
   (test (and (= x 1) (= y 32)) #t)
