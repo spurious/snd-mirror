@@ -2751,8 +2751,7 @@ static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	  (end > sd->length))
 	XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 3, s7_cadddr(args), "index out of range");   
 
-      /* TODO: check that it is an int */
-      chan = s7_integer(s7_cadr_value(sc, s7_cdr(args)));
+      chan = s7_number_to_integer(sc, s7_cadr_value(sc, s7_cdr(args)));
       if ((chan < 0) ||
 	  (chan >= sd->chans))
 	XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 2, s7_caddr(args), "channel number out of range");   

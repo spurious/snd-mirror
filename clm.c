@@ -2141,6 +2141,11 @@ mus_float_t mus_nrxysin(mus_any *ptr, mus_float_t fm)
 	  gen->r_to_n_plus_1 * (sin (x + (n + 1) * y) - 
 				r * sin(x + n * y))) / 
 	 divisor);
+
+  /* 3 sincos calls would give sin|cos(x|y|ny) => sx cx sy cy sny cny, then
+   * - rr*(- r*(cx*sny + sx*cny) - sx*sy*sny + cx*cy*sny + cx*sy*cny + sx*cy*cny) + r*(cx*sy - sx*cy) + sx
+   * which could be reduced further, but is it worth it?
+   */
 }
 
 

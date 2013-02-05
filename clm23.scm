@@ -2584,17 +2584,19 @@
 
 (defgenerator (dsp-asyfm :make-wrapper (lambda (gen)
 					 (set! (gen 'freq) (hz->radians (gen 'freq)))
+					 (set! (gen 'r1) (* 0.5 (gen 'index) (+ (gen 'r) (/ (gen 'r)))))
+					 (set! (gen 'r2) (* 0.5 (gen 'index) (- (gen 'r) (/ (gen 'r)))))
+					 (set! (gen 'r3) (* 0.5 (log (bes-i0 (* 2.0 (gen 'r1))))))
 					 gen))
-  freq phase (ratio 1.0) (r 1.0) (index 1.0) input)
+  freq phase (ratio 1.0) (r 1.0) (index 1.0) input r1 r2 r3)
 
 (define (dsp-asyfm-J gen input)
   "(dsp-asyfm-J gen input) is the same as the CLM asymmetric-fm generator, set r != 1.0 to get the asymmetric spectra"
   (set! (gen 'input) input)
   (with-environment gen
-    (let* ((r1 (/ 1.0 r))
-	   (modphase (* ratio phase))
-	   (result (* (exp (* 0.5 index (- r r1) (cos modphase)))
-		      (sin (+ phase (* 0.5 index (+ r r1) (sin modphase)))))))
+    (let* ((modphase (* ratio phase))
+	   (result (* (exp (* r2 (cos modphase)))
+		      (sin (+ phase (* r1 (sin modphase)))))))
     (set! phase (+ phase input freq))
     result)))
 
@@ -2602,11 +2604,9 @@
   "(dsp-asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"
   (set! (gen 'input) input)
   (with-environment gen
-    (let* ((r1 (/ 1.0 r))
-	   (modphase (* ratio phase))
-	   (result (* (exp (- (* 0.5 index (+ r r1) (cos modphase))
-			      (* 0.5 (log (bes-i0 (* index (+ r r1)))))))
-		      (sin (+ phase (* 0.5 index (- r r1) (sin modphase)))))))
+    (let* ((modphase (* ratio phase))
+	   (result (* (exp (- (* r1 (cos modphase)) r3))
+		      (sin (+ phase (* r2 (sin modphase)))))))
       (set! phase (+ phase input freq))
       result)))
 
@@ -2787,7 +2787,7 @@
     (let ((gen (make-dsp-asyfm :freq 2000 :ratio .1))) 
       (do ((i 1000 (+ i 1)))
 	  ((= i 2000))
-	(outa i (dsp-asyfm-I gen 0.0))))
+	(outa i (* 0.5 (dsp-asyfm-I gen 0.0)))))
     (let ((gen (make-sndclm-expcs :frequency 100 :et 1.0)))
       (do ((i 2000 (+ i 1)))
 	  ((= i 12000))

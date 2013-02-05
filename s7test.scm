@@ -17003,6 +17003,11 @@ in s7:
 (test (let () (define (hi) 1 . 2)) 'error)
 (test (let () (define (hi) (1) . "hi")) 'error)
 
+(let ()
+  (define (make-func) (define (a-func a) (+ a 1)))
+  (test (symbol? (make-func)) #t)
+  (test (symbol->value (make-func)) #<undefined>))
+
 (let () (test (if (and (define x 3) (define y 4)) (+ x y)) 7))
 (let () (test (if (not (and (define x 2) (define y 4))) (+ x y) (if (define x 3) x)) 3))
 (let () (test (if (and (define x 2) (not (define y 4))) (+ x y) (- x y)) -2))

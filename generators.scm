@@ -3266,9 +3266,7 @@
 
 
 (define* (asyfm-J gen (fm 0.0))
-  
   "(asyfm-J gen fm) is the same as the CLM asymmetric-fm generator (index=1.0), set r != 1.0 to get the asymmetric spectra"
-  
   (set! (gen 'fm) fm)
   (with-environment gen
     (let* ((r1 (/ r))
@@ -3321,9 +3319,7 @@
 |#
 
 (define* (asyfm-I gen (fm 0.0))
-  
-  "(dsp-asyfm-I gen fm) is the I0 case of the asymmetric-fm generator (dsp.scm)"
-  
+  "(asyfm-I gen fm) is the I0 case of the asymmetric-fm generator"
   (set! (gen 'fm) fm)
   (with-environment gen
     (let* ((r1 (/ r))

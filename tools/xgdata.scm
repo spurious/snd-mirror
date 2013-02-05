@@ -8533,6 +8533,16 @@
 (CINT "GTK_STATE_FLAG_DIR_RTL" "GtkStateFlags")
 
 
+;;; 3.7.8
+(CINT "GDK_FULLSCREEN_ON_CURRENT_MONITOR" "GdkFullscreenMode")
+(CINT "GDK_FULLSCREEN_ON_ALL_MONITORS" "GdkFullscreenMode")
+
+(CFNC "void gdk_window_set_fullscreen_mode GdkWindow* window GdkFullscreenMode mode")
+(CFNC "GdkFullscreenMode gdk_window_get_fullscreen_mode GdkWindow* window")
+(CFNC "void gtk_icon_view_set_activate_on_single_click GtkIconView* icon_view gboolean single")
+(CFNC "gboolean gtk_icon_view_get_activate_on_single_click GtkIconView* icon_view")
+(CFNC "gboolean gtk_tree_view_get_activate_on_single_click GtkTreeView* tree_view")
+(CFNC "void gtk_tree_view_set_activate_on_single_click GtkTreeView* tree_view gboolean single")
 |#
 
  
