@@ -728,7 +728,9 @@
 	  (let line-loop ((line (read-line f)))
 	    (if (not (eof-object? line))
 		(let ((len (length line)))
-		  (when (and line (positive? len))
+		  (when (and line 
+			     (positive? len) 
+			     (char-position #\< line))
 		    (let* ((dline line)
 			   (compos (string-position "<!-- INDEX" dline))
 			   (indpos (string-position "<!-- main-index" dline))
@@ -1123,7 +1125,7 @@
 				       (any-char-position line "<>\"(){}&"))))
 		       (when opos
 			 ;; open/close html entities
-			 (do ((i opos (+ i 1 opos)))
+			 (do ((i opos (+ i opos 1)))
 			     ((>= i len))
 			   (set! opos (or (any-char-position line "<>\"(){}&" (+ i 1)) len))
 			   (case (string-ref line i)
@@ -1217,7 +1219,7 @@
 				   (closing #f)
 				   (pos (char-position #\< line)))
 			       (if pos
-				   (do ((i pos (+ i 1 pos)))
+				   (do ((i pos (+ i pos 1)))
 				       ((>= i len))
 				     (set! pos (or (any-char-position line "</! >" (+ i 1)) len))
 				     (case (string-ref line i)

@@ -9167,16 +9167,13 @@ static mus_float_t mus_granulate_simple(mus_any *p) {return(mus_granulate_with_e
 static mus_float_t mus_convolve_simple(mus_any *p) {return(mus_convolve(p, NULL));}
 static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocoder(p, NULL));}
 
-/*
-(define (hi)
-  (let ((o1 (make-oscil 440.0))
-	(o2 (make-oscil 100.0))
-	(o #f))
-    (set! o o1)
-    (do ((i 0 (+ i 1)))
-	((= i 44100))
-      (outa i (* .1 (oscil o)))
-      (if (= i 22050) (set! o o2)))))
+/* we can't use symbol_id to catch symbol value changes (see snd-test.scm oscil-1 shadowing test, test 8):
+ *    id can stay at a higher value when we fallback to an outer env.  Also need both current_env and
+ *    symbol itself saved because in the same env we can call the same get_gen twice on different symbols
+ *    (+ (oscil o1) (oscil o2)), or call the same get_gen on the same symbol in nested envs.  Also need
+ *    the env id, not the env itself, because the latter can be reused so its equality means nothing.
+ *    All of which means that even if we use offsetof for all the accesses, we lose because the cost
+ *    of the extra static vars and the equality checks actually is greater than the symbol lookup!
  */
 
 #define GET_GENERATOR(Obj, Type, Val) \

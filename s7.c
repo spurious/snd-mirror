@@ -1930,7 +1930,7 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 #define syntax_op(P)                  car(ecdr(P))
 static void set_syntax_op(s7_pointer p, s7_pointer op) {syntax_op(p) = op; lifted_op(ecdr(p)) = syntax_opcode(op);}
 
-#define environment_id(p)                   (p)->object.envr.id
+#define environment_id(p)             (p)->object.envr.id
 #define is_environment(p)             (type(p) == T_ENVIRONMENT)
 #define environment_slots(p)          (p)->object.envr.slots
 #define next_environment(p)           (p)->object.envr.nxt
@@ -42632,6 +42632,7 @@ static bool is_dox_safe(int op)
 	 (op == HOP_SAFE_C_CS) ||
 	 (op == HOP_SAFE_C_SC) ||
 	 (op == HOP_SAFE_C_SS) ||
+	 (op == HOP_SAFE_C_SSC) ||
 	 (op == HOP_SAFE_C_QS) ||
 	 (op == HOP_SAFE_C_S_opCq));
 }
@@ -42764,6 +42765,25 @@ static s7_pointer step_dox_c_ss_direct(s7_scheme *sc, s7_pointer code, s7_pointe
   return(c_call(code)(sc, sc->T2_1));
 }
 
+static s7_pointer step_dox_c_ssc(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+{
+  s7_pointer args, val;
+  args = cdr(code);
+  val = finder(sc, car(args));
+  car(sc->T3_2) = finder(sc, cadr(args));
+  car(sc->T3_1) = val;
+  car(sc->T3_3) = caddr(args);
+  return(c_call(code)(sc, sc->T3_1));
+}
+
+static s7_pointer step_dox_c_ssc_direct(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+{
+  car(sc->T3_1) = slot_value(slot);
+  car(sc->T3_2) = slot_value(slot_pending_value(slot));
+  car(sc->T3_3) = cadddr(code);
+  return(c_call(code)(sc, sc->T3_1));
+}
+
 static s7_pointer step_dox_c_qs(s7_scheme *sc, s7_pointer code, s7_pointer slot)
 {
   s7_pointer args;
@@ -42890,6 +42910,7 @@ static dox_function step_dox_eval(s7_scheme *sc, s7_pointer code, s7_pointer var
     case HOP_SAFE_C_SC:      return((var == cadr(code)) ? step_dox_c_sc_direct : step_dox_c_sc);
     case HOP_SAFE_C_CS:      return((var == caddr(code)) ? step_dox_c_cs_direct : step_dox_c_cs);
     case HOP_SAFE_C_SS:      return((var == cadr(code)) ? step_dox_c_ss_direct : step_dox_c_ss);
+    case HOP_SAFE_C_SSC:     return((var == cadr(code)) ? step_dox_c_ssc_direct : step_dox_c_ssc);
     case HOP_SAFE_C_QS:      return((var == caddr(code)) ? step_dox_c_qs_direct : step_dox_c_qs);
     case HOP_SAFE_C_S_opCq:  return((var == cadr(code)) ? step_dox_c_s_opcq_direct : step_dox_c_s_opcq);
     }
@@ -43387,9 +43408,6 @@ static s7_pointer check_do(s7_scheme *sc)
 	    }
 	}
 
-      /* opcq_s s_opssq s_opscq
-       */
-
       /* vars can be nil (no steppers) */
       if (is_pair(vars))
 	{
@@ -43399,7 +43417,10 @@ static s7_pointer check_do(s7_scheme *sc)
 	      s7_pointer var;
 	      var = car(p);
 	      if (!is_init_dox_safe(sc, cadr(var)))
-		return(sc->code);
+		{
+		  /* fprintf(stderr, "init: %s %s\n", DISPLAY(cadr(var)), (is_optimized(cadr(var))) ? opt_names[optimize_data(cadr(var))] : ""); */
+		  return(sc->code);
+		}
 	      
 	      if ((is_pair(cddr(var))) &&
 		  (!is_step_dox_safe(sc, caddr(var))))
@@ -44984,6 +45005,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    (optimize_data(caddr(sc->code)) == HOP_SAFE_C_C))
 #endif
 		  {
+		    /* (set! x (* i 2.0))
+		     * (set! x (* (env e1) (oscil osc x)))
+		     * so these are ridiculous cases.
+		     */
 		    s7_pointer callee, args, slot, step_slot, end_slot;
 		    slot = find_symbol(sc, cadr(sc->code));
 		    if (!is_slot(slot)) 
@@ -45695,7 +45720,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      dox_function df;
 	      df = (dox_function)fcdr(slot_expression(slot));
-	      if (df == step_dox_c_ss_direct)
+	      if ((df == step_dox_c_ss_direct) ||
+		  (df == step_dox_c_ssc_direct))
 		slot_pending_value(slot) = find_symbol(sc, caddar(slot_expression(slot)));
 	      if ((df == step_dox_c_s_indirect) ||
 		  (df == step_dox_read_char_s))
@@ -62700,7 +62726,7 @@ s7_scheme *s7_init(void)
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5
  * bench    42736 8752 8051 7725 6515 5194 5174
  * lint           9328 8140 7887 7736 7300 7270
- * index    44300 3291 3005 2742 2078 1643 1637
+ * index    44300 3291 3005 2742 2078 1643 1488
  * s7test    1721 1358 1297 1244  977  961  959
  * t455|6     265   89   55   31   14   14   14
  * lat        229   63   52   47   42   40   40

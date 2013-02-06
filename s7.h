@@ -596,7 +596,6 @@ int s7_c_object_built_in_type(s7_scheme *sc);
 size_t s7_c_object_value_offset(s7_scheme *sc);
 size_t s7_c_object_type_offset(s7_scheme *sc);
 size_t s7_type_offset(s7_scheme *sc);
-
   /* these are for experimental optimization choices */
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);

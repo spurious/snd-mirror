@@ -25,7 +25,7 @@
 
 (define (create-initial-envelopes hook)
   (let ((snd (hook 'snd)))
-    (do ((i 0 (+ 1 i)))
+    (do ((i 0 (+ i 1)))
 	((= i (channels snd)))
       (set! (dot-size snd i) 8)
       (set! (channel-envelope snd i) (list 0.0 1.0 1.0 1.0)))))
