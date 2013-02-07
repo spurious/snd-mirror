@@ -2126,19 +2126,37 @@ mus_float_t mus_nrxysin(mus_any *ptr, mus_float_t fm)
   int n;
 
   x = gen->phase;
-  y = x * gen->y_over_x;
   n = gen->n;
   r = gen->r;
-
   gen->phase += (gen->freq + fm);
   
+
+  if (gen->y_over_x == 1.0)
+    {
+#if (!HAVE_SINCOS)
+      divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * cos(x)));
+      if (DIVISOR_NEAR_ZERO(divisor))
+	return(0.0);
+      return((sin(x) - gen->r_to_n_plus_1 * (sin(x * (n + 2)) - r * sin(x * (n + 1)))) / divisor);
+#else
+      double sx, cx, snx, cnx;
+      sincos(x, &sx, &cx);
+      divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * cx));
+      if (DIVISOR_NEAR_ZERO(divisor))
+	return(0.0);
+      sincos((n + 1) * x, &snx, &cnx);
+      return((sx - gen->r_to_n_plus_1 * (sx * cnx + (cx - r) * snx)) / divisor);
+#endif
+    }
+
+  y = x * gen->y_over_x;
   divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * cos(y)));
   if (DIVISOR_NEAR_ZERO(divisor))
     return(0.0);
 
   return((sin(x) - 
 	  r * sin(x - y) - 
-	  gen->r_to_n_plus_1 * (sin (x + (n + 1) * y) - 
+	  gen->r_to_n_plus_1 * (sin(x + (n + 1) * y) - 
 				r * sin(x + n * y))) / 
 	 divisor);
 

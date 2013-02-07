@@ -9635,13 +9635,11 @@ static s7_pointer g_oscil_mul_c_s(s7_scheme *sc, s7_pointer args)
 {
   /* (oscil g (* c s)), args is (g (* c s)) */
   mus_any *o;
-  double x;
   s7_pointer vargs;
 
   GET_GENERATOR(args, oscil, o);
-  vargs = cdadr(args);
-  GET_REAL_CADR(vargs, oscil, x);
-  return(s7_make_real(sc, mus_oscil_fm(o, s7_number_to_real(sc, car(vargs)) * x)));
+  vargs = cadr(args);
+  return(s7_make_real(sc, mus_oscil_fm(o, s7_number_to_real(sc, cadr(vargs)) * s7_cell_real(car(vargs)))));
 }
 
 static s7_pointer mul_c_oscil_mul_c_s;
@@ -9649,15 +9647,14 @@ static s7_pointer g_mul_c_oscil_mul_c_s(s7_scheme *sc, s7_pointer args)
 {
   /* (* c (oscil g (* c s))), args is (c (oscil g (* c s)) */
   mus_any *o;
-  double x1, x2;
+  double x1;
   s7_pointer vargs;
 
   x1 = s7_number_to_real(sc, car(args));
   vargs = cdadr(args);
   GET_GENERATOR(vargs, oscil, o);
-  vargs = cdadr(vargs);
-  GET_REAL_CADR(vargs, oscil, x2);
-  return(s7_make_real(sc, x1 * mus_oscil_fm(o, s7_number_to_real(sc, car(vargs)) * x2)));
+  vargs = cadr(vargs);
+  return(s7_make_real(sc, x1 * mus_oscil_fm(o, s7_number_to_real(sc, cadr(vargs)) * s7_cell_real(car(vargs)))));
 }
 
 static s7_pointer oscil_mul_s_c;
@@ -9751,6 +9748,19 @@ static s7_pointer g_env_oscil_mul_s_v(s7_scheme *sc, s7_pointer args)
   GET_REAL(vargs, oscil, y);
 
   return(s7_make_real(sc, mus_env(e) * mus_oscil_fm(o, (x * y) + z)));
+}
+
+static s7_pointer nrxysin_mul_c_s;
+static s7_pointer g_nrxysin_mul_c_s(s7_scheme *sc, s7_pointer args)
+{
+  /* (nrxysin g (* c s)), args is (g (* c s)) */
+  mus_any *o;
+  s7_pointer vargs;
+
+  GET_GENERATOR(args, nrxysin, o);
+  vargs = cadr(args);
+
+  return(s7_make_real(sc, mus_nrxysin(o, s7_number_to_real(sc, cadr(vargs)) * s7_cell_real(car(vargs)))));
 }
 
 static s7_pointer polywave_mul_c_s;
@@ -12642,11 +12652,11 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 		      /* fprintf(stderr, "mul_c_gen_1\n"); */
 		      return(choices[MUL_C_GEN_1]);
 		    }
-		  
+
 		  if ((s7_function_choice_is_direct(sc, arg2)) &&
 		      (s7_function_returns_temp(arg2)))
 		    {
-		      /* often (* 0.1 (oscil gen6 (* 6 ind)))
+		      /* often (* 0.1 (oscil gen6 (* 6.0 ind)))
 		       */
 		      s7_function_choice_set_direct(sc, expr);
 		      if (s7_function_choice(sc, arg2) == g_oscil_mul_c_s)
@@ -12910,7 +12920,7 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 	      
 	      if (s7_list_length(sc, caddr(expr)) == 3)
 		{
-		  if (s7_caaddr(expr) == s7_make_symbol(sc, "*"))
+		  if (s7_caaddr(expr) == multiply_symbol)
 		    {
 		      if ((s7_is_real(cadr(caddr(expr)))) &&
 			  (s7_is_symbol(caddr(caddr(expr)))))
@@ -12944,7 +12954,7 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 			  (s7_list_length(sc, cadr(p)) == 3))
 			{
 			  p = cadr(p);
-			  if ((car(p) == s7_make_symbol(sc, "*")) &&
+			  if ((car(p) == multiply_symbol) &&
 			      (s7_is_symbol(cadr(p))) &&
 			      (s7_is_symbol(caddr(p))))
 			    {
@@ -13002,7 +13012,7 @@ static s7_pointer polywave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       if (s7_is_pair(caddr(expr)))
 	{
 	  if ((s7_list_length(sc, caddr(expr)) == 3) &&
-	      (s7_caaddr(expr) == s7_make_symbol(sc, "*")) &&
+	      (s7_caaddr(expr) == multiply_symbol) &&
 	      (s7_is_real(cadr(caddr(expr)))) &&
 	      (s7_is_symbol(caddr(caddr(expr)))))
 	    {
@@ -13270,12 +13280,24 @@ static s7_pointer nrxysin_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
     }
   if ((args == 2) &&
       (s7_is_symbol(cadr(expr))) &&
-      (s7_is_pair(caddr(expr))) &&
-      (s7_function_choice_is_direct(sc, caddr(expr))))
+      (s7_is_pair(caddr(expr))))
     {
-      s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_nrxysin_2);
-      return(indirect_nrxysin_2);
+      s7_pointer arg2;
+      arg2 = caddr(expr);
+      if ((s7_list_length(sc, arg2) == 3) &&
+	  (car(arg2) == multiply_symbol) &&
+	  (s7_is_real(cadr(arg2))) && (!s7_is_rational(cadr(arg2))) &&
+	  (s7_is_symbol(caddr(arg2))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(nrxysin_mul_c_s);
+	}
+      if (s7_function_choice_is_direct(sc, arg2))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  if (s7_function_returns_temp(arg2)) return(direct_nrxysin_2);
+	  return(indirect_nrxysin_2);
+	}
     }
   return(f);
 }
@@ -14782,6 +14804,8 @@ static void init_choosers(s7_scheme *sc)
   indirect_nrxysin_2 = clm_make_function(sc, "nrxysin", g_indirect_nrxysin_2, 2, 0, false, "nrxysin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   nrxysin_1 = clm_make_function(sc, "nrxysin", g_nrxysin_1, 1, 0, false, "nrxysin optimization", f,
 				NULL, NULL, NULL, mul_c_nrxysin_1, mul_s_nrxysin_1, env_nrxysin_1);
+  nrxysin_mul_c_s = clm_make_function(sc, "nrxysin", g_nrxysin_mul_c_s, 2, 0, false, "nrxysin optimization", f,  
+				      NULL, NULL, NULL, NULL, NULL, NULL);
 
 
   f = s7_name_to_value(sc, "nrxycos");

@@ -729,7 +729,7 @@
 		     (+ (polywave poly frq)
 			(* .2 (oscil gen2770 (* 10 (+ frq md))))
 			(* .02 (oscil gen7479 (* 27 (+ frq md))))
-			(polywave poly2 (* 3 frq))))))))))
+			(polywave poly2 (* 3.0 frq))))))))))
 
 ;; (with-sound (:play #t) (green-tree-frog 0 .5))
 
@@ -823,8 +823,8 @@
 			 (blackman gen1)
 			 (+ (* (env indf) (oscil gen2 (* 10 ind)))
 			    (* (env indf-1) (oscil gen3 (* 24 ind)))
-			    (* .1 (oscil gen5 (* 14 ind)))
-			    (* .1 (oscil gen6 (* 6 ind))))))))
+			    (* .1 (oscil gen5 (* 14.0 ind)))
+			    (* .1 (oscil gen6 (* 6.0 ind))))))))
 	  (mus-reset frqf)
 	  (mus-reset pulsef)
 	  (mus-reset indf))))))
@@ -1556,7 +1556,7 @@
 	      (outa k (* pulse-amp
 			 (env pulse-ampf)
 			 (+ (* .7 (oscil gen1 frq))
-			    (* (env ampf2) (oscil gen2 (* 2 frq)))
+			    (* (env ampf2) (oscil gen2 (* 2.0 frq)))
 			    (* (env ampf3) (polywave gen3 frq))))))))))))
 
 ;; (with-sound (:play #t) (sonoran-desert-toad 0 .8 .5))
@@ -1771,6 +1771,32 @@
 	    (stop (seconds->samples (+ beg dur)))
 	    ;; looks like the same basic pulse throughout, almost same speed at start but every other one is squelched
 	    ;; slow startup pulse starts much faster (.06 mid-pulse duration, .0013 base pulse)
+	    (carrier (make-polywave 400 (list 33 .36 35 (* .36 .7) 37 (* .36 .49) 39 (* .36 .343) 41 (* .36 .242))))
+	    (modulator (make-oscil 1500 (* 0.5 pi)))
+	    (noise (make-rand-interp 5000 .003))
+	    (nrx 0.0)
+	    (peep (make-pulsed-env '(0 0 1 0 2 .2 3 0 5 .75 8 1 10 0 11 0) .06 (/ 1.0 .06)))
+	    (ampf (make-env (list 0 0 .5 .5 slow-start .4 soft-end .4 (+ soft-end .5) 1 (- dur 1) 1 dur 0.0) :duration dur :scaler amp))
+	    (pulsef (make-env (list 0 -1 slow-start -1 (+ slow-start .03) 0 dur 0) :duration dur :scaler (hz->radians 8))))
+	(do ((i start (+ i 1)))
+	    ((= i stop))
+	  (let ((frq (env pulsef))
+		(md (oscil modulator)))
+	    (set! nrx (polywave carrier (+ (* 24.75 frq)
+					   (rand-interp noise)
+					   (* .003 md))))
+	    (set! md (* md md nrx (pulsed-env peep frq)))
+	    (outa i (* md (env ampf)))))))))
+
+#|
+(defanimal (long-spurred-meadow-katydid beg amp)
+  (let ((dur 10.1) ; overall duration
+	(slow-start 2.2)) ; buzz at start
+    (let ((soft-end (+ slow-start 4.0))) ; softer section, rest is full vol
+      (let ((start (seconds->samples beg))
+	    (stop (seconds->samples (+ beg dur)))
+	    ;; looks like the same basic pulse throughout, almost same speed at start but every other one is squelched
+	    ;; slow startup pulse starts much faster (.06 mid-pulse duration, .0013 base pulse)
 	    (carrier (make-nrxysin 13200 (/ 800 13200) 4 .7)) 
 	    (modulator (make-oscil 1500 (* 0.5 pi)))
 	    (noise (make-rand-interp 5000 .1))
@@ -1778,16 +1804,16 @@
 	    (peep (make-pulsed-env '(0 0 1 0 2 .2 3 0 5 .75 8 1 10 0 11 0) .06 (/ 1.0 .06)))
 	    (ampf (make-env (list 0 0 .5 .5 slow-start .4 soft-end .4 (+ soft-end .5) 1 (- dur 1) 1 dur 0.0) :duration dur :scaler amp))
 	    (pulsef (make-env (list 0 -1 slow-start -1 (+ slow-start .03) 0 dur 0) :duration dur :scaler (hz->radians 8))))
-
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (let ((frq (env pulsef))
 		(md (oscil modulator)))
-	    (set! nrx (nrxysin carrier (+ (* frq 825.0) ; (/ 13200 16))
+	    (set! nrx (nrxysin carrier (+ (* 825.0 frq) ; (/ 13200 16))
 					  (rand-interp noise)
 					  (* .1 md))))
 	    (set! md (* md md nrx (pulsed-env peep frq)))
 	    (outa i (* md (env ampf)))))))))
+|#
 #|
 ;; this is slower!
 	(do ((i start (+ i 1)))
@@ -1795,7 +1821,7 @@
 	  (let ((frq (env pulsef))
 		(md (oscil modulator)))
 	    (outa i (* md md 
-		       (nrxysin carrier (+ (* frq 825.0) ; (/ 13200 16))
+		       (nrxysin carrier (+ (* 825.0 frq) ; (/ 13200 16))
 					   (rand-interp noise)
 					   (* .1 md)))
 		       (pulsed-env peep frq) (env ampf)))))))))
@@ -2541,7 +2567,7 @@
 	       (let ((frq (+ (env fe) (rand-interp rnd))))
 		 (outa k (* (env ae)
 			    (oscil gen1 frq 
-				   (* .03 (oscil gen2 (* 2 frq)))))))))
+				   (* .03 (oscil gen2 (* 2.0 frq)))))))))
 	   (set! peep (+ 1 peep))
 	   (if (>= peep 10) (done))
 	   (set! peep-start (+ start (seconds->samples (begs peep))))
@@ -2684,8 +2710,8 @@
 	(let ((frq (env frqf)))
 	  (outa i (* (env ampf)
 		     (+ (* .9 (oscil gen1 frq))
-			(* (env indf) (oscil gen2 (* 2 frq)))
-			(* (env indf-1) .075 (oscil gen3 (* 3 frq)))))))))))
+			(* (env indf) (oscil gen2 (* 2.0 frq)))
+			(* (env indf-1) .075 (oscil gen3 (* 3.0 frq)))))))))))
 
 ;; (with-sound (:play #t) (eastern-wood-pewee-2 0 .25))
 
@@ -3028,7 +3054,7 @@
 	  (let ((frq (env frqf1)))
 	    (outa i (* (env ampf1)
 		       (+ (* .9 (oscil gen1 frq))
-			  (* .1 (oscil gen11 (* 2 frq))))))))
+			  (* .1 (oscil gen11 (* 2.0 frq))))))))
 	(do ((i start2 (+ i 1)))
 	    ((= i stop2))
 	  (let ((noise (rand-interp gen22)))
@@ -4168,7 +4194,7 @@
 	  (outa i (* (env ampf)
 		     (+ (polywave gen1 frq)
 			(* (env ampf1a)
-			   (oscil gen1a (* 2 frq)))
+			   (oscil gen1a (* 2.0 frq)))
 			(* (env ampf2) 
 			   (polywave gen2 (+ (env frqf2)
 					     (rand-interp buzz))))))))))))
@@ -4218,7 +4244,7 @@
 			(* (env ampf2)
 			   (oscil gen2 (* 1.5 frq)))
 			(* (env ampf3)
-			   (oscil gen3 (* 2 frq)))))))))))
+			   (oscil gen3 (* 2.0 frq)))))))))))
 
 ;; (with-sound (:play #t) (plumbeous-vireo-2 0 .5))
 
@@ -5404,10 +5430,10 @@
 	(let ((frq (env frqf)))
 	  (outa i (* (env ampf)
 		     (+ (* (env f1) (oscil gen1 frq))
-			(* (env f2) (oscil gen2 (* 2 frq)))
-			(* (env f3) (oscil gen3 (* 3 frq)))
-			(* .005 (oscil gen4 (* 4 frq)))
-			(* .005 (oscil gen5 (* 5 frq)))))))))))
+			(* (env f2) (oscil gen2 (* 2.0 frq)))
+			(* (env f3) (oscil gen3 (* 3.0 frq)))
+			(* .005 (oscil gen4 (* 4.0 frq)))
+			(* .005 (oscil gen5 (* 5.0 frq)))))))))))
 
 ;;; formants sounded bad here, polywave worse
 
@@ -5515,10 +5541,10 @@
 	(let ((frq (env frqf)))
 	  (outa i (* (env ampf)
 		     (+ (* (env f1) (oscil gen1 frq))
-			(* (env f2) (oscil gen2 (* 2 frq)))
-			(* (env f3) (oscil gen3 (* 3 frq)))
-			(* (env f4) (oscil gen4 (* 4 frq)))
-			(* .005 (oscil gen5 (* 5 frq))))))))))
+			(* (env f2) (oscil gen2 (* 2.0 frq)))
+			(* (env f3) (oscil gen3 (* 3.0 frq)))
+			(* (env f4) (oscil gen4 (* 4.0 frq)))
+			(* .005 (oscil gen5 (* 5.0 frq))))))))))
   
   ;; note #2
   (let ((dur 0.085)
@@ -5534,7 +5560,7 @@
 	(let ((frq (env frqf)))
 	  (outa i (* (env ampf)
 		     (+ (* (env f1) (oscil gen1 frq))
-			(* .01 (oscil gen2 (* 2 frq))))))))))
+			(* .01 (oscil gen2 (* 2.0 frq))))))))))
   
   ;; note #3
   (let ((dur 0.02)
@@ -5557,9 +5583,9 @@
 	(let ((frq1 (+ (env frqf1)
 		       (rand-interp rnd))))
 	  (outa i (* (env ampf)
-		     (+ (* (env f1) (oscil gen1 (* 2 frq1)))
+		     (+ (* (env f1) (oscil gen1 (* 2.0 frq1)))
 			(* (env f2) (oscil gen2 frq1))
-			(* (env f3) (oscil gen3 (* 3 frq1)))
+			(* (env f3) (oscil gen3 (* 3.0 frq1)))
 			(* (env f4) (oscil gen4 (env frqf2)))))))))))
 
 
@@ -5681,10 +5707,10 @@
 			 (rand-interp rnd))))
 	      (amp2 (env ampf2)))
 	  (outa i (* (env ampf)
-		     (+ (polywave gen1 (* 2 frq))
+		     (+ (polywave gen1 (* 2.0 frq))
 			(* amp2 (polywave gen2 frq))
-			(* (- 1.0 amp2) (polywave gen3 (* 2 frq)))
-			(* (env ampf4) (oscil gen4 (* 6 frq))))))))))
+			(* (- 1.0 amp2) (polywave gen3 (* 2.0 frq)))
+			(* (env ampf4) (oscil gen4 (* 6.0 frq))))))))))
   ;; note #1
   (let ((dur1 0.36))
     (acorn-woodpecker-1 beg1 dur1
@@ -5826,9 +5852,9 @@
 	  (let* ((frq (+ (env frqf)
 			 (rand-interp rnd)))
 		 (val (* (env ampf)
-			 (+ (polywave histuff (* 2 frq))
+			 (+ (polywave histuff (* 2.0 frq))
 			    (* (env oddf) (polywave lostuff frq))
-			    (* (env midf) (polywave midstuff (* 2 frq)))))))
+			    (* (env midf) (polywave midstuff (* 2.0 frq)))))))
 	    (outa i (+ val (formant-bank fs fb val)))))))))
 
 ;; (with-sound (:play #t) (red-shouldered-hawk 0 .5))
@@ -6129,7 +6155,7 @@
 	  (outa i (* (env ampf)
 		     (+ (polywave gen1 frq)
 			(* (env ampf2)
-			   (oscil gen2 (* 3 frq)))))))))))
+			   (oscil gen2 (* 3.0 frq)))))))))))
 
 ;; (with-sound (:play #t) (pinyon-jay 0 .5))
 
@@ -6188,7 +6214,7 @@
 	  ((= i stop))
 	(let ((frq (env frqf)))
 	  (outa i (* (env ampf)
-		     (+ (polywave gen1 (* 2 frq))
+		     (+ (polywave gen1 (* 2.0 frq))
 			(* (env ampf2)
 			   (polywave gen2 frq))))))))))
 
@@ -6717,7 +6743,7 @@
 	  (outa i (* (env ampf)
 		     (+ (polywave gen1 frq)
 			(* (env ampf2)
-			   (oscil gen2 (* 2 frq)))))))))))
+			   (oscil gen2 (* 2.0 frq)))))))))))
 
 ;; (with-sound (:play #t) (willow-flycatcher 0 .5))
 
@@ -6831,7 +6857,7 @@
 	(let ((frq (+ (env frqf)
 		      (rand-interp rnd))))
 	  (outa i (* (env ampf)
-		     (polywave gen1 (+ (* 5 frq)
+		     (polywave gen1 (+ (* 5.0 frq)
 				       (* index (oscil mod1 frq)))))))))))
 
 ;; (with-sound (:play #t) (red-breasted-nuthatch 0 .5))
@@ -6864,7 +6890,7 @@
 	       (frq (+ (env frqf)
 		       (rand-interp rnd)
 		       (* vib-index vb)))
-	       (mfrq (+ (* 3 frq)
+	       (mfrq (+ (* 3.0 frq)
 			(* index (oscil mod1 frq)))))
 	  (outa i (* (env ampf)
 		     (+ .7 (* .3 (abs vb)))
@@ -7159,7 +7185,7 @@
 			(* (env ampf2)
 			   (polywave gen2 frq))
 			(* (env ampf3)
-			   (oscil gen3 (* 5 frq)))))))))))
+			   (oscil gen3 (* 5.0 frq)))))))))))
 
 ;; (with-sound (:play #t) (burrowing-owl 0 .5))
 
@@ -7197,7 +7223,7 @@
 	(let ((frq (env frqf)))
 	  (outa i (* (env ampf)
 		     (+ (* (env interpf) (oscil gen1 frq))
-			(* (env interpf-1) (oscil gen2 (* 2 frq)))))))))))
+			(* (env interpf-1) (oscil gen2 (* 2.0 frq)))))))))))
 
 ;; (with-sound (:play #t) (gray-vireo-1 0 .5))
 
@@ -7237,8 +7263,8 @@
 	  (outa i (* (env ampf)
 		     (+ (* (env interpf) (oscil gen1 frq))
 			(* 0.5 (env interpf-1)
-			   (+ (oscil gen2 (* 2 frq))
-			      (oscil gen3 (* 3 frq))))))))))))
+			   (+ (oscil gen2 (* 2.0 frq))
+			      (oscil gen3 (* 3.0 frq))))))))))))
 
 ;; (with-sound (:play #t) (gray-vireo-2 0 .5))
 
@@ -7461,7 +7487,7 @@
 	    (outa i (* (env ampf)
 		       (+ (polywave gen1 frq)
 			  (* (env ampf2)
-			     (polywave gen2 (* 2 frq)))))))))))
+			     (polywave gen2 (* 2.0 frq)))))))))))
   
   (defanimal (bald-eagle-4 beg frqscl amp)
     (let ((dur 0.056))
@@ -7741,7 +7767,7 @@
 	  (outa i (* (env ampf)
 		     (+ (polywave gen1 frq)
 			(* (env emphf)
-			   (oscil emph (* 2 frq)))))))))))
+			   (oscil emph (* 2.0 frq)))))))))))
 
 ;; (with-sound (:play #t) (evening-grosbeak 0 .5))
 
@@ -7839,9 +7865,9 @@
 		     (+ (* (env ampf1) 
 			   (oscil gen1 frq))
 			(* (env ampf2) 
-			   (oscil gen2 (* 2 frq)))
+			   (oscil gen2 (* 2.0 frq)))
 			(* (env ampf3) 
-			   (oscil gen3 (* 3 frq)))))))))))
+			   (oscil gen3 (* 3.0 frq)))))))))))
 
 ;; (with-sound (:play #t) (groove-billed-ani 0 .5))
 
@@ -9039,8 +9065,8 @@
 		     (+ (- 1.0 rf) 
 			(* rf (abs (rand-interp rnd1))))
 		     (+ (* (env ampf1) (oscil gen1 frq))
-			(* (env ampf2) (oscil gen2 (* 2 frq)))
-			(* (env ampf3) (oscil gen3 (* 3 frq)))))))))))
+			(* (env ampf2) (oscil gen2 (* 2.0 frq)))
+			(* (env ampf3) (oscil gen3 (* 3.0 frq)))))))))))
 
 ;; (with-sound (:play #t) (house-sparrow-1 0 .5))
 
@@ -9317,7 +9343,7 @@
 		      (* (env vibf)
 			 (triangle-wave vib)))))
 	  (let ((frq1 (+ frq (* 1.5 noise)))
-		(frq2 (+ (* 2 frq) (* 0.5 noise)))
+		(frq2 (+ (* 2.0 frq) (* 0.5 noise)))
 		(frq3 (+ (* 0.5 frq) (* 2 noise))))
 	    (outa i (* (env ampf)
 		       (+ (polywave gen1 frq1)
@@ -9450,7 +9476,7 @@
 		       (+ (polywave gen2 frq)
 			  (* (env ampf2a) (polywave gen2a frq))
 			  (* (env ampf1) (oscil gen1 frq))
-			  (* (env ampf3) (nrxysin gen3 (* frq 9)))))))))))
+			  (* (env ampf3) (nrxysin gen3 (* 9.0 frq)))))))))))
   
   (defanimal (trumpeter-swan-c beg amp)
     (let ((dur 0.11))
@@ -9475,7 +9501,7 @@
 	    (outa i (* (env ampf)
 		       (+ (* (env intrpf) (polywave gen1 frq))
 			  (* (env intrpf-1) (+ (polywave gen2 frq)
-					       (* .03 (nrxysin gen3 (* frq 9)))))))))))))
+					       (* .03 (nrxysin gen3 (* 9.0 frq)))))))))))))
   
   (defanimal (trumpeter-swan-d beg amp)
     (let ((dur 0.082))
@@ -9507,9 +9533,9 @@
 		       (+ (* (env ampf1)
 			     (oscil gen1 frq))
 			  (* (env ampf2)
-			     (oscil gen2 (* 2 frq)))
+			     (oscil gen2 (* 2.0 frq)))
 			  (* (env ampf3)
-			     (nrxysin gen3 (* 8 frq)))
+			     (nrxysin gen3 (* 8.0 frq)))
 			  (* (env ampf4)
 			     (polywave gen4 frq))))))))))
   
@@ -9590,9 +9616,9 @@
 	  (outa i (* (env ampf)
 		     (+ (* (env ampf1)
 			   (polywave gen1 frq))
-			(* .9 (oscil gen2 (* 2 frq)))
+			(* .9 (oscil gen2 (* 2.0 frq)))
 			(* (env ampf3)
-			   (oscil gen3 (* 3 frq))))))))))
+			   (oscil gen3 (* 3.0 frq))))))))))
   
   (wrentit-1 beg1 .041 (* amp1 0.6) 1.0)
   
@@ -9876,11 +9902,11 @@
 		     (+ (env tremf-1) 
 			(* (env tremf) (abs (triangle-wave trem))))
 		     (+ (* (env ampf1) (oscil gen1 frq))
-			(* .5 (oscil gen2 (* 2 frq)))
-			(* (env ampf3) (oscil gen3 (* 3 frq)))
+			(* .5 (oscil gen2 (* 2.0 frq)))
+			(* (env ampf3) (oscil gen3 (* 3.0 frq)))
 			(* (env ampf4) (polywave gen4 frq))
-			(* (env ampf5) (nrxysin gen5 (* 6 frq)))
-			(* (env ampf6) (nrxysin gen6 (* 3 frq)))
+			(* (env ampf5) (nrxysin gen5 (* 6.0 frq)))
+			(* (env ampf6) (nrxysin gen6 (* 3.0 frq)))
 			(* (env humf) (oscil hum (* .25 frq)))))))))))
 
 (defanimal (canada-goose-2 beg amp)
@@ -9919,11 +9945,11 @@
 		      (* (env rndf) (rand-interp rnd)))))
 	  (outa i (* (env ampf)
 		     (+ (* (env ampf1) (oscil gen1 frq))
-			(* (env ampf2) (oscil gen2 (* 2 frq)))
-			(* (env ampf3) (oscil gen3 (* 3 frq)))
+			(* (env ampf2) (oscil gen2 (* 2.0 frq)))
+			(* (env ampf3) (oscil gen3 (* 3.0 frq)))
 			(* (env ampf4) (polywave gen4 frq))
-			(* (env ampf5) (nrxysin gen5 (* 6 frq)))
-			(* (env ampf6) (nrxysin gen6 (* 3 frq)))
+			(* (env ampf5) (nrxysin gen5 (* 6.0 frq)))
+			(* (env ampf6) (nrxysin gen6 (* 3.0 frq)))
 			(* (env humf) (oscil hum (* .25 frq)))))))))))
 
 (defanimal (canada-goose-3 beg amp)
@@ -9965,10 +9991,10 @@
 		     (+ (env tremf-1) 
 			(* (env tremf) (abs (triangle-wave trem))))
 		     (+ (* (env ampf1) (oscil gen1 frq))
-			(* .5 (oscil gen2 (* 2 frq)))
-			(* (env ampf3) (oscil gen3 (* 3 frq)))
+			(* .5 (oscil gen2 (* 2.0 frq)))
+			(* (env ampf3) (oscil gen3 (* 3.0 frq)))
 			(* (env ampf4) (polywave gen4 frq))
-			(* (env ampf5) (nrxysin gen5 (* 6 frq)))
+			(* (env ampf5) (nrxysin gen5 (* 6.0 frq)))
 			(* (env humf) 
 			   (+ .25 (abs (triangle-wave tri1)))
 			   (oscil hum (env humfrq)))))))))))
@@ -10293,10 +10319,10 @@
 		     (+ .9 (abs (rand-interp rnd1)))
 		     (+ (* (env attf) (polywave att (* 0.5 frq)))
 			(* (env ampf1) (oscil gen1 frq))
-			(* (env ampf2) (oscil gen2 (* 2 frq)))
-			(* (env ampf3) (oscil gen3 (* 3 frq)))
-			(* (env ampf4) (+ (oscil gen4 (* 4 frq))
-					  (oscil gen5 (* 5 frq))))))))))))
+			(* (env ampf2) (oscil gen2 (* 2.0 frq)))
+			(* (env ampf3) (oscil gen3 (* 3.0 frq)))
+			(* (env ampf4) (+ (oscil gen4 (* 4.0 frq))
+					  (oscil gen5 (* 5.0 frq))))))))))))
 
 ;; (with-sound (:play #t) (wood-duck 0 .5))
 
@@ -10347,7 +10373,7 @@
 	(let ((frq (env frqf)))
 	  (outa i (* (env ampf)
 		     (+ (* (env ampf2) (oscil gen2 frq))
-			(* (env ampf3) (oscil gen3 (* 3 frq)))
+			(* (env ampf3) (oscil gen3 (* 3.0 frq)))
 			(polywave gen1 frq))))))))
   
   ;; note #3
@@ -10521,9 +10547,9 @@
 	  (set! (mus-scaler gens) (env rf)) ;scaler=r
 	  (outa i (* (env ampf)
 		     (+ .5 (abs (rand-interp rnd1)))
-		     (+ (oscil gen1 (* 2 frq))
+		     (+ (oscil gen1 (* 2.0 frq))
 			(polywave gens0 frq)
-			(nrxycos gens (* 6 frq))))))))))
+			(nrxycos gens (* 6.0 frq))))))))))
 
 ;; (with-sound (:play #t) (black-crowned-night-heron 0 .5))
 

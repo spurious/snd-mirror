@@ -1078,11 +1078,11 @@ struct g72x_state {long yl; short yu; short dms; short dml; short ap; short a[2]
 
 static short power2[15] = {1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80, 0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000};
 
-static int quan(int val, short *table, int size)
+static int quan(short val)
 {
   int i;
-  for (i = 0; i < size; i++)
-    if (val < *table++) break;
+  for (i = 0; i < 15; i++)
+    if (val < power2[i]) break;
   return(i);
 }
 
@@ -1093,7 +1093,7 @@ static int fmult(int an, int srn)
   short wanexp, wanmant;
   short retval;
   anmag = (an > 0) ? an : ((-an) & 0x1FFF);
-  anexp = quan(anmag, power2, 15) - 6;
+  anexp = quan(anmag) - 6;
   anmant = (anmag == 0) ? 32 : (anexp >= 0) ? anmag >> anexp : anmag << -anexp;
   wanexp = anexp + ((srn >> 6) & 0xF) - 13;
   wanmant = (anmant * (srn & 077) + 0x30) >> 4;
@@ -1170,7 +1170,7 @@ static int reconstruct(int sign, int dqln, int y)
 }
 
 
-static void update(int	code_size, int y, int wi, int fi, int dq, int sr, int dqsez, struct g72x_state *state_ptr)
+static void update(int code_size, int y, int wi, int fi, int dq, int sr, int dqsez, struct g72x_state *state_ptr)
 {
   int cnt;
   short	mag, exp, a2p = 0, a1ul, pks1, fa1, ylint, thr2, dqthr, ylfrac, thr1, pk0;
@@ -1224,7 +1224,7 @@ static void update(int	code_size, int y, int wi, int fi, int dq, int sr, int dqs
     } 
   else 
     {
-      exp = quan(mag, power2, 15);
+      exp = quan(mag);
       state_ptr->dq[0] = (dq >= 0) ?
 	(exp << 6) + ((mag << 6) >> exp) :
 	(exp << 6) + ((mag << 6) >> exp) - 0x400;
@@ -1237,14 +1237,14 @@ static void update(int	code_size, int y, int wi, int fi, int dq, int sr, int dqs
   else 
     if (sr > 0) 
       {
-	exp = quan(sr, power2, 15);
+	exp = quan(sr);
 	state_ptr->sr[0] = (exp << 6) + ((sr << 6) >> exp);
       } 
     else 
       if (sr > -32768) 
 	{
 	  mag = -sr;
-	  exp = quan(mag, power2, 15);
+	  exp = quan(mag);
 	  state_ptr->sr[0] =  (exp << 6) + ((mag << 6) >> exp) - 0x400;
 	} 
       else
