@@ -4125,6 +4125,8 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       body = s7_cddar(source);
       arg = s7_caadar(source);
 #if (!WITH_GMP)
+      /* (let () (define (hi) (scan-channel (lambda (y) (or (< y -0.001) (> y 0.001))))) (open-sound "1a.snd") (let ((val (hi))) (close-sound) val))
+       */
       if (s7_is_null(s7, s7_cdr(body)))
 	{
 	  s7_pointer res;
@@ -4145,40 +4147,21 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	  f = s7_function_choice(s7, res);
 	  if (f)
 	    {
+	      s7_pointer y, args, val;
+	      s7_Double *ry;
 	      int len;
-	      /* this basically is never direct */
-	      len = s7_list_length(s7, res);
-	      if ((s7_cadr(res) == arg) &&
-		  (!s7_function_choice_is_direct(s7, res)) &&
-		  ((len == 2) || 
-		   ((len == 3) &&
-		    (s7_caddr(res) != arg) &&
-		    (!s7_is_pair(s7_caddr(res))))))
+
+	      if (s7_function_choice_is_direct(s7, res))
 		{
-		  /* not direct, so we're making the arg list, so no env is needed */
-		  s7_pointer y, args, val;
-		  s7_Double *ry;
+		  s7_pointer olde;
+
+		  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
+		  olde = s7_set_current_environment(s7, e);
 		  y = s7_make_real(s7, 1.5);
+		  slot = s7_make_slot(s7, e, arg, y);
 		  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
-		  if (len == 2)
-		    args = s7_cons(s7, y, s7_nil(s7));
-		  else
-		    {
-		      s7_pointer z;
-		      z = s7_caddr(res);
-		      if (s7_is_symbol(z))
-			{
-			  /* (scan-channel (let ((x .1)) (lambda (y) (> y x))))
-			   *  -- the search needs the closure's env
-			   */
-			  s7_pointer old_e;
-			  old_e = s7_set_current_environment(s7, s7_cdr(source));
-			  z = s7_symbol_value(s7, z);
-			  s7_set_current_environment(s7, old_e);
-			}
-		      args = s7_cons(s7, y, s7_cons(s7, z, s7_nil(s7)));
-		    }
-		  gc_loc = s7_gc_protect(s7, args);
+		  args = s7_cdr(res);
+
 		  for (kp = 0; kp < num; kp++)
 		    {
 		      (*ry) = read_sample(sf);
@@ -4190,13 +4173,65 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 			  else break;
 			}
 		    }
+		  s7_set_current_environment(s7, olde);
 		  sf = free_snd_fd(sf);
-		  s7_gc_unprotect_at(s7, gc_loc);			  
 		  if (counting)
 		    return(s7_make_integer(s7, counts));
 		  if (kp < num)
 		    return(s7_make_integer(s7, kp + beg));
 		  return(xen_false);
+		}
+	      else
+		{
+		  len = s7_list_length(s7, res);
+		  if ((s7_cadr(res) == arg) &&
+		      ((len == 2) || 
+		       ((len == 3) &&
+			(s7_caddr(res) != arg) &&
+			(!s7_is_pair(s7_caddr(res))))))
+		    {
+		      /* not direct, so we're making the arg list, so no env is needed */
+
+		      y = s7_make_real(s7, 1.5);
+		      ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
+		      if (len == 2)
+			args = s7_cons(s7, y, s7_nil(s7));
+		      else
+			{
+			  s7_pointer z;
+			  z = s7_caddr(res);
+			  if (s7_is_symbol(z))
+			    {
+			      /* (scan-channel (let ((x .1)) (lambda (y) (> y x))))
+			       *  -- the search needs the closure's env
+			       */
+			      s7_pointer old_e;
+			      old_e = s7_set_current_environment(s7, s7_cdr(source));
+			      z = s7_symbol_value(s7, z);
+			      s7_set_current_environment(s7, old_e);
+			    }
+			  args = s7_cons(s7, y, s7_cons(s7, z, s7_nil(s7)));
+			}
+		      gc_loc = s7_gc_protect(s7, args);
+		      for (kp = 0; kp < num; kp++)
+			{
+			  (*ry) = read_sample(sf);
+			  val = f(s7, args);
+			  if (val != xen_false)
+			    {
+			      if ((counting) && (val == xen_true))
+				counts++;
+			      else break;
+			    }
+			}
+		      sf = free_snd_fd(sf);
+		      s7_gc_unprotect_at(s7, gc_loc);			  
+		      if (counting)
+			return(s7_make_integer(s7, counts));
+		      if (kp < num)
+			return(s7_make_integer(s7, kp + beg));
+		      return(xen_false);
+		    }
 		}
 	    }
 	}

@@ -2080,10 +2080,10 @@ is a physical model of a flute:
     (let ((st (seconds->samples beg))
 	  (exA (make-granulate (make-readin input-file :channel 0 :start stf) :expansion exp-ratio))
 	  (exB (and two-chans (make-granulate (make-readin input-file :channel 1 :start stf) :expansion exp-ratio))))
-      (let ((funcA (lambda (dir) (granulate exA)))
-	    (funcB (if exB (lambda (dir) (granulate exB))))
-	    (srcA (make-src :srate src-ratio))
-	    (srcB (and two-chans (make-src :srate src-ratio)))
+      (let ((srcA (make-src :srate src-ratio
+			    :input (lambda (dir) (granulate exA))))
+	    (srcB (and two-chans (make-src :srate src-ratio
+					   :input (lambda (dir) (granulate exB)))))
 	    (rev-amp (if revit (if two-chans (* rev .5) rev) 0.0))
 	    (nd (seconds->samples (+ beg dur)))
 	    (valA 0.0)
@@ -2091,14 +2091,14 @@ is a physical model of a flute:
 	(if two-chans
 	    (do ((i st (+ i 1))) 
 		((= i nd))
-	      (set! valA (* amp (src srcA 0.0 funcA)))
-	      (set! valB (* amp (src srcB 0.0 funcB)))
+	      (set! valA (* amp (src srcA)))
+	      (set! valB (* amp (src srcB)))
 	      (outa i valA)
 	      (outb i valB)
 	      (if revit (outa i (* rev-amp (+ valA valB)) *reverb*)))
 	    (do ((i st (+ i 1))) 
 		((= i nd))
-	      (set! valA (* amp (src srcA 0.0 funcA)))
+	      (set! valA (* amp (src srcA)))
 	      (outa i valA)
 	      (if revit (outa i (* rev-amp valA) *reverb*))))))))
 
