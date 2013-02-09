@@ -9266,6 +9266,13 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (hash-table-set! ht 'asd 1234)
   (test (hash-table-ref ht 'asd) 1234))
 
+(let ((ht (make-hash-table)))
+  (define (ht-add h)
+    (+ (h 1) (h 2)))
+  (hash-table-set! ht 1 2)
+  (hash-table-set! ht 2 3)
+  (test (ht-add ht) 5))
+
 (for-each
  (lambda (arg)
    (test (hash-table-ref arg 'key) 'error))
