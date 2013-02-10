@@ -2410,7 +2410,7 @@
 	      
 	      ;; in any case, skip the docstring during the walk
 	      (set! body (cdr body))))
-	
+
 	(lint-walk-body name head body env)
 	env)
       
@@ -2420,31 +2420,36 @@
 	
 	;; (format #t "walk function ~A ~A ~A ~A ~A~%" head name args val (if (pair? env) (car env) ""))
 	
-	;; first check for (define (hi...) (ho...)) where ho has no opt args
+	;; first check for (define (hi...) (ho...)) where ho has no opt args (and try to ignore possible string constant doc string)
 	(if (and *report-minor-stuff*
-		 (eq? head 'define)
-		 (pair? val)          ; not (define (hi a) . 1)!
-		 (pair? (car val))
-		 (null? (cdr val))
-		 (symbol? (caar val)) ; not (define (hi) ((if #f + abs) 0))
-		 (equal? args (cdar val))
-		 (or (and (procedure? (symbol->value (caar val)))
-			  (zero? (cadr (procedure-arity (symbol->value (caar val)))))
-			  (not (caddr (procedure-arity (symbol->value (caar val)))))) ; might be deliberately limiting args
-		     (let ((e (or (assq (caar val) env) (hash-table-ref globals (caar val)))))
-		       (and e
-			    (pair? e)
-			    (>= (length e) 4)
-			    (let ((def (list-ref e 3)))
-			      (and 
-			       (pair? def)
-			       (eq? (car def) 'define)
-			       (or (and (symbol? args)
-					(symbol? (cadr def)))
-				   (= (length args) (length (cadr def))))))))))
-	    (lint-format "~A could be (define ~A ~A)"
-			 name name
-			 name (caar val)))
+		 (eq? head 'define))
+	    (let ((bval (if (and (pair? val)
+				 (string? (car val)))
+			    (cdr val)
+			    val)))
+	      (if (and (pair? bval)          ; not (define (hi a) . 1)!
+		       (pair? (car bval))
+		       (null? (cdr bval))
+		       (symbol? (caar bval)) ; not (define (hi) ((if #f + abs) 0))
+		       (equal? args (cdar bval)))
+		  (let ((cval (caar bval)))
+		    if (or (and (procedure? (symbol->value cval))
+				(zero? (cadr (procedure-arity (symbol->value cval))))
+				(not (caddr (procedure-arity (symbol->value cval))))) ; might be deliberately limiting args
+			   (let ((e (or (assq cval env) (hash-table-ref globals cval))))
+			     (and e
+				  (pair? e)
+				  (>= (length e) 4)
+				  (let ((def (list-ref e 3)))
+				    (and 
+				     (pair? def)
+				     (eq? (car def) 'define)
+				     (or (and (symbol? args)
+					      (symbol? (cadr def)))
+					 (= (length args) (length (cadr def)))))))))
+		    (lint-format "~A could be (define ~A ~A)"
+				 name name
+				 name cval)))))
 	
 	(if (null? args)
 	    (begin

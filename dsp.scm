@@ -558,9 +558,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	     )))
     (make-fir-filter arrlen arr)))
 
-(define (hilbert-transform f in)
-  "(hilbert-transform f in) is the generator corresponding to make-hilbert-transform"
-  (fir-filter f in))
+(define hilbert-transform fir-filter)
 
 #|
   (let ((h (make-hilbert-transform 15)))
@@ -623,9 +621,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 			     (+ .54 (* .46 (cos (/ (* i pi) len)))))))))
     (make-fir-filter arrlen arr)))
 
-(define (highpass f in)
-  "(highpass f in) is the generator corresponding to make-highpass"
-  (fir-filter f in))
+(define highpass fir-filter)
 
 #|
   (let ((hp (make-highpass (* .1 pi))))
@@ -651,9 +647,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 			     (+ .54 (* .46 (cos (/ (* i pi) len)))))))))
     (make-fir-filter arrlen arr)))
 
-(define (lowpass f in)
-  "(lowpass f in) is the generator corresponding to make-lowpass"
-  (fir-filter f in))
+(define lowpass fir-filter)
 
 #|
   (let ((hp (make-lowpass (* .2 pi))))
@@ -678,9 +672,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 			     (+ .54 (* .46 (cos (/ (* i pi) len)))))))))
     (make-fir-filter arrlen arr)))
 
-(define (bandpass f in)
-  "(bandpass f in) is the generator corresponding to make-bandpass"
-  (fir-filter f in))
+(define bandpass fir-filter)
 
 #|
   (let ((hp (make-bandpass (* .1 pi) (* .2 pi))))
@@ -720,9 +712,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 			     (+ .54 (* .46 (cos (/ (* i pi) len)))))))))
     (make-fir-filter arrlen arr)))
 
-(define (bandstop f in)
-  "(bandstop f in) is the generator corresponding to make-bandstop"
-  (fir-filter f in))
+(define bandstop fir-filter)
 
 #|
   (let ((hp (make-bandstop (* .1 pi) (* .3 pi))))
@@ -745,9 +735,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 			     (+ .54 (* .46 (cos (/ (* i pi) len)))))))))
     (make-fir-filter arrlen arr)))
 
-(define (differentiator f in)
-  "(differentiator f in) is the generator corresponding to make-differentiator"
-  (fir-filter f in))
+(define differentiator fir-filter)
 
 #|
   (let ((hp (make-differentiator)))
@@ -768,9 +756,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;   who based his work on formulas from 
 ;;   Charles Dodge, Computer music: synthesis, composition, and performance.
 
-(define (butter b sig) ; kinda pointless, but defined as a function here for run's sake (not (define butter filter))
-  "(butter b sig) is the generator side for the various make-butter procedure"
-  (filter b sig))
+(define butter filter)
 
 (define (make-butter-high-pass fq)
   "(make-butter-high-pass freq) makes a Butterworth filter with high pass cutoff at 'freq'"

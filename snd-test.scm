@@ -58,40 +58,41 @@
 
 (define* (cfft! data n (dir 1))
   (if (not n) (set! n (length data)))
-  (do ((i 0 (+ i 1))
-       (j 0))
-      ((= i n))
-    (if (> j i)
-	(let ((temp (data j)))
-	  (set! (data j) (data i))
-	  (set! (data i) temp)))
-    (let ((m (/ n 2)))
-      (do () 
-	  ((or (< m 2) (< j m)))
-	(set! j (- j m))
-	(set! m (/ m 2)))
-      (set! j (+ j m))))
-  (let ((ipow (floor (log n 2)))
-	(prev 1))
-    (do ((lg 0 (+ lg 1))
-	 (mmax 2 (* mmax 2))
-	 (pow (/ n 2) (/ pow 2))
-	 (theta (make-rectangular 0.0 (* pi dir)) (* theta 0.5)))
-	((= lg ipow))
-      (let ((wpc (exp theta))
-	    (wc 1.0))
-	(do ((ii 0 (+ ii 1)))
-	    ((= ii prev))
-	  (do ((jj 0 (+ jj 1))
-	       (i ii (+ i mmax))
-	       (j (+ ii prev) (+ j mmax)))
-	      ((>= jj pow))
-	    (let ((tc (* wc (data j))))
-	      (set! (data j) (- (data i) tc))
-	      (set! (data i) (+ (data i) tc))))
-	  (set! wc (* wc wpc)))
-	(set! prev mmax))))
-  data)
+  (let ((t0 (make-rectangular 0.0 (* pi dir))))
+    (do ((i 0 (+ i 1))
+	 (j 0))
+	((= i n))
+      (if (> j i)
+	  (let ((temp (data j)))
+	    (set! (data j) (data i))
+	    (set! (data i) temp)))
+      (let ((m (/ n 2)))
+	(do () 
+	    ((or (< m 2) (< j m)))
+	  (set! j (- j m))
+	  (set! m (/ m 2)))
+	(set! j (+ j m))))
+    (let ((ipow (floor (log n 2)))
+	  (prev 1))
+      (do ((lg 0 (+ lg 1))
+	   (mmax 2 (* mmax 2))
+	   (pow (/ n 2) (/ pow 2))
+	   (theta t0 (* theta 0.5)))
+	  ((= lg ipow))
+	(let ((wpc (exp theta))
+	      (wc 1.0))
+	  (do ((ii 0 (+ ii 1)))
+	      ((= ii prev))
+	    (do ((jj 0 (+ jj 1))
+		 (i ii (+ i mmax))
+		 (j (+ ii prev) (+ j mmax)))
+		((>= jj pow))
+	      (let ((tc (* wc (data j))))
+		(set! (data j) (- (data i) tc))
+		(set! (data i) (+ (data i) tc))))
+	    (set! wc (* wc wpc)))
+	  (set! prev mmax))))
+    data))
 
 (define* (fft! rl im n (dir 1))
   (if (not im)
@@ -13756,7 +13757,7 @@ EDITS: 2
     (let ((gen (make-filtered-comb 0.5 5 :filter (make-one-zero .25 .75)))
 	  (v0 (make-vct 21))
 	  (in1 1.0))
-      (define (mus-filtered-comb g f) (filtered-comb g f))
+      (define mus-filtered-comb filtered-comb)
       (do ((i 0 (+ i 1)))
 	  ((= i 21))
 	(vct-set! v0 i (mus-filtered-comb gen in1))
@@ -41086,10 +41087,10 @@ EDITS: 1
   
   (define (tagged-p val sym)  (or (eq? val #f) (and (list? val) (not (null? val)) (eq? (car val) sym))))
   (define (array-p val type)  (and (list? val) (or (null? val) (type (car val)))))
-  (define (XM_INT val)  (integer? val))
+  (define XM_INT  integer?)
   (define (XM_ULONG val)  (and (integer? val) (>= val 0)))
   (define (XM_UCHAR val)  (or (char? val) (and (integer? val) (>= val 0) (< val 65536))))
-  (define (XM_FLOAT val)  (real? val))
+  (define XM_FLOAT  real?)
   (define (XM_STRING val)  (or (eq? val #f) (string? val) (and (number? val) (= val 0))))
   (define (XM_XMSTRING val)  (or (tagged-p val 'XmString) (and (number? val) (= val 0))))
   (define (XM_STRING_TABLE val)  (or (array-p val (lambda (n) (eq? (car n) 'XmString))) (and (number? val) (= val 0))))
@@ -47307,22 +47308,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-1-Feb-13:
-89,123,032,564
-14,793,572,073  s7.c:eval [/home/bil/snd-13/snd]
- 6,822,749,989  ???:sin [/lib64/libm-2.12.so]
- 5,739,009,798  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 3,209,788,184  s7.c:eval'2 [/home/bil/snd-13/snd]
+9-Feb-13:
+88,284,878,933
+14,178,960,544  s7.c:eval [/home/bil/snd-13/snd]
+ 6,316,916,314  ???:sin [/lib64/libm-2.12.so]
+ 5,751,092,937  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 3,187,696,757  s7.c:eval'2 [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,929,450,543  s7.c:gc [/home/bil/snd-13/snd]
- 2,851,032,667  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,730,528,029  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,540,207,031  ???:cos [/lib64/libm-2.12.so]
- 2,455,554,981  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 2,915,586,323  s7.c:gc [/home/bil/snd-13/snd]
+ 2,725,108,321  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,703,294,848  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,485,024,770  ???:cos [/lib64/libm-2.12.so]
+ 2,441,816,297  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
  2,327,316,992  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
  1,585,066,774  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,463,058,330  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,272,973,470  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
- 1,152,080,422  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 1,466,977,102  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,152,081,109  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
+   994,531,852  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
 |#

@@ -16,9 +16,7 @@
 	(set! (mx i j) (umx i j))))
     mx))
 
-(define (make-zero-mixer n) 
-  "(make-zero-mixer n) returns an empty mixer"
-  (make-mixer n))
+(define make-zero-mixer make-mixer)
 
 (define (mixer-diagonal? m)
   "(mixer-diagonal? m) returns #t if 'm' is a diagonal mixer"

@@ -4653,16 +4653,7 @@ rand-interp could be defined as (<a class=quiet href="#moving-average">moving-av
 averager has the same period (length) as the rand.  
 In both cases, the "envelope" argument or the "distribution" argument determines the random number distribution.
 mus-random returns a random number between -amplitude and amplitude.
-mus-rand-seed provides access to the seed for mus-random's random number generator.
-rand might be defined as:
 </p>
-
-<pre class="indented">
-  (if (&gt;= phase (* 2 pi))
-      (set! output (<em class=red>mus-random</em> amplitude)))
-  (set! phase (+ phase (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frequency) sweep))
-</pre>
-
 
 <table>
 <tr>
@@ -5031,6 +5022,31 @@ We can also get all the period doublings and so on from sin:
 <p>For an extended discussion of this case, complete with pictures of the
 period doublings, see Strogatz, "Nonlinear Dynamics and Chaos". 
 </p>
+
+<p>
+mus-rand-seed provides access to the seed for mus-random's random number generator:
+</p>
+<pre class="indented">
+&gt; (set! (mus-rand-seed) 1234)
+1234
+&gt; (mus-random 1.0)
+-0.7828369138846
+&gt; (mus-random 1.0)
+-0.880371093652
+&gt; (set! (mus-rand-seed) 1234) ; now start again with the same sequence of numbers
+1234
+&gt; (mus-random 1.0)
+-0.7828369138846
+&gt; (mus-random 1.0)
+-0.880371093652
+</pre>
+
+<p>The clm random functions discussed here are different from s7's random function.
+The latter has a random-state record to guide the sequence (and uses a different
+algorithm), whereas the clm functions just use an integer, mus-rand-seed.
+</p>
+
+
 
 <p>See also 
 <a href="sndscm.html#ditherchannel">dither-channel</a> (dithering),
