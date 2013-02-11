@@ -8409,7 +8409,7 @@ EDITS: 5
 		       ((= i len))
 		     (if (fneq old new)
 			 (begin
-			   (format #t "~%;trouble in reverse (~D) read at ~D ~A ~A" i old new)
+			   (format #t "~%;trouble in reverse read at ~D ~A ~A" i old new)
 			   (quit)))))))
 	      (set! (edit-position ind 0) edpos)))
 	  (close-sound ind))

@@ -2247,7 +2247,7 @@ static int safe_strcmp(const char *s1, const char *s2)
 
 static bool is_proper_list(s7_scheme *sc, s7_pointer lst);
 static s7_function all_x_eval(s7_pointer arg);
-static bool is_all_x_safe(s7_pointer p);
+static bool is_all_x_safe(s7_scheme *sc, s7_pointer p);
 static void annotate_args(s7_scheme *sc, s7_pointer args);
 static void annotate_arg(s7_scheme *sc, s7_pointer arg);
 static void mark_embedded_objects(s7_pointer a); /* called by gc, calls c_obj's mark func */
@@ -2325,7 +2325,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 #define WITH_COUNTS 0
 #if WITH_COUNTS
 #if 1
-#if 0
+#if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
 static void clear_counts(void) {int i; for (i = 0; i < NUM_COUNTS; i++) counts[i] = 0;}
@@ -2338,6 +2338,7 @@ static void report_counts(s7_scheme *sc)
   for (i = 0; i < NUM_COUNTS; i++)
     total += counts[i];
 
+  fprintf(stderr, "total: %d\n", total);
   while (happy)
     {
       mx = 0;
@@ -2351,11 +2352,12 @@ static void report_counts(s7_scheme *sc)
 	}
       if (mx > 0)
 	{
-	  /*
-	  if (mx > total/100)
+
+	  /* if (mx > total/100)
 	    fprintf(stderr, "%s: %d (%f)\n", opt_names[mxi], mx, 100.0*mx/(float)total);
 	  */
 	  fprintf(stderr, "%d: %d\n", mxi, mx);
+
 	  counts[mxi] = 0;
 	}
       else happy = false;
@@ -4353,6 +4355,8 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 } 
 
 
+/* should there be a built-in gensym? function?  I can't think of a use for it.
+ */
 static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args) 
 {
   #define H_gensym "(gensym (prefix \"gensym\")) returns a new, unused symbol"
@@ -5775,7 +5779,9 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
   closure_args(x) = args;
   closure_body(x) = code;
   closure_setter(x) = sc->F;
-  closure_arity(x) = CLOSURE_ARITY_NOT_SET;
+  if (is_null(args))
+    closure_arity(x) = 0;
+  else closure_arity(x) = CLOSURE_ARITY_NOT_SET;
   closure_environment(x) = sc->envir;
   if (is_safe_closure(code))
     {
@@ -5815,7 +5821,7 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
        closure_args(X) = Args;	\
        closure_body(X) = Code; \
        closure_setter(X) = sc->F; \
-       closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
+       if (is_null(Args)) closure_arity(X) = 0; else closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
        closure_environment(X) = Env; \
        if (is_safe_closure(closure_body(X))) \
           set_type(X, T_CLOSURE | T_PROCEDURE | T_SAFE_CLOSURE | T_COPY_ARGS); \
@@ -5831,7 +5837,7 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
        closure_args(X) = Args;	\
        closure_body(X) = Code; \
        closure_setter(X) = sc->F; \
-       closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
+       if (is_null(Args)) closure_arity(X) = 0; else closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
        closure_environment(X) = Env; \
        if (is_safe_closure(closure_body(X))) \
           set_type(X, T_CLOSURE | T_PROCEDURE | T_SAFE_CLOSURE | T_COPY_ARGS); \
@@ -20875,7 +20881,7 @@ static s7_pointer write_char_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
   if (args == 2)
     {
       if ((is_symbol(caddr(expr))) &&
-	  (is_all_x_safe(cadr(expr))))
+	  (is_all_x_safe(sc, cadr(expr))))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  annotate_arg(sc, cdr(expr));
@@ -36944,7 +36950,7 @@ static s7_pointer string_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
     {
       if ((is_symbol(cadr(expr))) &&
 	  (is_symbol(caddr(expr))) &&
-	  (is_all_x_safe(cadddr(expr))))
+	  (is_all_x_safe(sc, cadddr(expr))))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  annotate_arg(sc, cdddr(expr));
@@ -37108,6 +37114,9 @@ static s7_pointer g_if_s_direct(s7_scheme *sc, s7_pointer args)
     }
   return(c_call(car(p))(sc, sc->T1_1));
 }
+
+/* cond_all_x_all_x happens very rarely, similarly let_all_x_all_x and case_all_x
+ */
 
 
 
@@ -37657,16 +37666,17 @@ static bool is_all_x_op(int op)
 	 (op == HOP_SAFE_C_opCq_S) ||
 	 (op == HOP_SAFE_C_C_opSq) ||
 	 (op == HOP_SAFE_C_opSq_S) ||
+	 (op == HOP_SAFE_C_opSq_C) ||
 	 (op == HOP_SAFE_C_S_opSSq) ||
 	 (op == HOP_SAFE_C_opSq_opSq));
 }
 
-/* [s_opcq] [c_opsq] [opcq_s]
-   c_opscq
- */
 
-static bool is_all_x_safe(s7_pointer p)
+static bool is_all_x_safe(s7_scheme *sc, s7_pointer p)
 {
+  if ((!is_pair(p)) ||
+      (car(p) == sc->QUOTE))
+    return(true);
   if (!is_optimized(p))
     return(false);
   return(is_all_x_op(optimize_data(p)));
@@ -37858,6 +37868,16 @@ static s7_pointer all_x_c_opsq_s(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T2_1));
 }
 		    
+static s7_pointer all_x_c_opsq_c(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = cadr(arg);
+  car(sc->T1_1) = finder(sc, cadr(largs));
+  car(sc->T2_1) = c_call(largs)(sc, sc->T1_1);
+  car(sc->T2_2) = caddr(arg);
+  return(c_call(arg)(sc, sc->T2_1));
+}
+		    
 static s7_pointer all_x_c_s_opssq(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer largs;
@@ -37929,6 +37949,7 @@ static s7_function all_x_eval(s7_pointer arg)
 	    case HOP_SAFE_C_opSq:      return(all_x_c_opsq);
 	    case HOP_SAFE_C_opSSq:     return(all_x_c_opssq);
 	    case HOP_SAFE_C_opSq_S:    return(all_x_c_opsq_s);
+	    case HOP_SAFE_C_opSq_C:    return(all_x_c_opsq_c);
 	    case HOP_SAFE_C_S_opSq:    return(all_x_c_s_opsq);
 	    case HOP_SAFE_C_S_opCq:    return(all_x_c_s_opcq);
 	    case HOP_SAFE_C_opCq_S:    return(all_x_c_opcq_s);
@@ -38553,7 +38574,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 	      set_optimized(car_x);
 	      if (bad_pairs == 0)
 		{
-		  if (is_all_x_safe(cadar_x))
+		  if (is_all_x_safe(sc, cadar_x))
 		    {
 		      set_optimize_data(car_x, hop + OP_SAFE_C_A);
 		      annotate_arg(sc, cdr(car_x));
@@ -38742,9 +38763,9 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		      
 		      if (op == OP_SAFE_C_ZZ)
 			{
-			  if (is_all_x_safe(cadar_x))
+			  if (is_all_x_safe(sc, cadar_x))
 			    {
-			      if (is_all_x_safe(caddar_x))
+			      if (is_all_x_safe(sc, caddar_x))
 				{
 				  set_optimize_data(car_x, hop + OP_SAFE_C_AA);
 				  annotate_args(sc, cdr(car_x));
@@ -38764,7 +38785,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 			    }
 			  else
 			    {
-			      if (is_all_x_safe(caddar_x))
+			      if (is_all_x_safe(sc, caddar_x))
 				{
 				  set_optimize_data(car_x, hop + OP_SAFE_C_ZA);
 				  annotate_arg(sc, cddr(car_x));
@@ -39838,7 +39859,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 	  if ((op == OP_IF) || (op == OP_OR) || (op == OP_AND))
 	    {
 	      for (p = cdar(x); (happy) && (is_pair(p)); p = cdr(p))
-		happy = ((!is_pair(car(p))) || (is_all_x_safe(car(p))));
+		happy = is_all_x_safe(sc, car(p));
 
 	      if ((happy) &&
 		  (is_null(p)))    /* catch the syntax error later: (or #f . 2) etc */
@@ -40784,6 +40805,9 @@ static s7_pointer check_case(s7_scheme *sc)
   bool keys_simple = true, has_else = false, has_feed_to = false, keys_single = true, keys_int = true, bodies_simple = true, bodies_simplest = true;
   s7_pointer x, y;
 
+  /* (let () (define (hi a) (case a ((0) (+ a 1)) ((1 2) a))) (define (ho) (hi 1)) (ho))
+   */
+
   if (!is_pair(sc->code))                                            /* (case) or (case . 1) */
     return(eval_error(sc, "case has no selector:  ~A", sc->code));
   if (!is_pair(cdr(sc->code)))                                       /* (case 1) or (case 1 . 1) */
@@ -40801,6 +40825,7 @@ static s7_pointer check_case(s7_scheme *sc)
 
       if ((bodies_simple) && (!is_null(cddar(x))))
 	{
+	  /* fprintf(stderr, "not ok: %s\n", DISPLAY(cdar(x))); */
 	  bodies_simple = false;
 	  bodies_simplest = false;
 	}
@@ -40872,6 +40897,18 @@ static s7_pointer check_case(s7_scheme *sc)
 	    return(eval_error(sc, "case: '=>' has too many targets: ~A", y));
 	}
     }
+
+#if 0
+  if ((!has_feed_to) &&
+      (bodies_simple))
+    {
+      bool happy = true;
+      for (x = cdr(sc->code); (happy) && is_not_null(x); x = cdr(x))
+	happy = is_all_x_safe(sc, cadar(x));
+      if (happy)
+	fprintf(stderr, "case_direct: %s\n", DISPLAY_80(sc->code));
+    }
+#endif
 
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
@@ -40953,17 +40990,17 @@ static s7_pointer check_case(s7_scheme *sc)
 		}
 	    }
 	}
+#if (!WITH_GMP)
       else 
 	{
-#if (!WITH_GMP)
 	  /* OP_CASE_INT assumes non-gmp ints for the selector */
 	  if ((is_symbol(car(sc->code))) &&
 	      (!has_feed_to) &&
 	      (keys_int) &&
 	      (keys_single))
 	    set_syntax_op(sc->code, sc->CASE_INT);
-#endif
 	}
+#endif
     }
 
   return(sc->code);
@@ -41128,7 +41165,7 @@ static s7_pointer check_let(s7_scheme *sc)
 			  else 
 			    {
 			      fcdr(sc->code) = cadr(binding);
-			      if (is_all_x_safe(cadr(binding)))
+			      if (is_all_x_safe(sc, cadr(binding)))
 				{
 				  if (optimize_data(cadr(binding)) == HOP_SAFE_C_SS)
 				    set_syntax_op(sc->code, sc->LET_opSSq);
@@ -41219,7 +41256,7 @@ static s7_pointer check_let(s7_scheme *sc)
 				}
 			      else 
 				{
-				  if (is_all_x_safe(cadr(x)))
+				  if (is_all_x_safe(sc, cadr(x)))
 				    op = sc->LET_ALL_X;
 				  else 
 				    {
@@ -41397,7 +41434,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 			  else 
 			    {
 			      fcdr(sc->code) = cadr(binding);
-			      if (is_all_x_safe(cadr(binding)))
+			      if (is_all_x_safe(sc, cadr(binding)))
 				set_syntax_op(sc->code, sc->LET_ALL_X);
 			      else
 				{
@@ -41462,7 +41499,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 		    }
 		  if (is_pair(cadr(x)))
 		    {
-		      if ((!is_all_x_safe(cadr(x))) &&
+		      if ((!is_all_x_safe(sc, cadr(x))) &&
 			  (car(cadr(x)) != sc->QUOTE))
 			{
 			  op = sc->LET_STAR2;
@@ -43282,7 +43319,7 @@ static s7_pointer check_do(s7_scheme *sc)
       if ((is_null(vars)) && /* do () () one-line safe opt body */
 	  (is_null(end)) &&
 	  (one_line) &&
-	  (is_all_x_safe(car(body))))
+	  (is_all_x_safe(sc, car(body))))
 	{
 	  annotate_arg(sc, body);
 	  set_syntax_op(sc->code, sc->SIMPLE_DO_FOREVER);
@@ -43501,28 +43538,19 @@ static s7_pointer check_cond(s7_scheme *sc)
 	set_syntax_op(sc->code, sc->COND_UNCHECKED);
       else 
 	{
+	  s7_pointer p;
+	  bool xopt = true;
 	  set_syntax_op(sc->code, sc->COND_SIMPLE);
-	  {
-	    s7_pointer p, clause;
-	    bool xopt = true;
-	    for (p = sc->code; is_pair(p) && (xopt); p = cdr(p))
-	      {
-		clause = caar(p);
-		if ((is_pair(clause)) &&
-		    (!is_all_x_safe(clause)))
-		  xopt = false;
-	      }
-	    if (xopt)
-	      {
-		set_syntax_op(sc->code, sc->COND_ALL_X);
-		for (p = sc->code; is_pair(p); p = cdr(p))
-		  fcdr(car(p)) = (s7_pointer)cond_all_x_eval(sc, caar(p)); /* handle 'else' specially here */
-	      }
-	  }
-	  /* perhaps cond as if then else or 2 choices (ie no loop in cond) COND|CASE_2 and COND|CASE_3
-	   *   similarly in case if (say) 2 or 3 choices unroll the loop
-	   *   but these are rare and the current overhead is not huge.
-	   */
+	  
+	  for (p = sc->code; (xopt) && (is_pair(p)); p = cdr(p))
+	    xopt = is_all_x_safe(sc, caar(p));
+
+	  if (xopt)
+	    {
+	      set_syntax_op(sc->code, sc->COND_ALL_X);
+	      for (p = sc->code; is_pair(p); p = cdr(p))
+		fcdr(car(p)) = (s7_pointer)cond_all_x_eval(sc, caar(p)); /* handle 'else' specially here */
+	    }
 	}
     }
   return(sc->code);
@@ -45677,7 +45705,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto START_WITHOUT_POP_STACK;
 		}
 	      
-	      if (is_all_x_safe(code))
+	      if (is_all_x_safe(sc, code))
 		{
 		  s7_function f, endf;
 		  s7_pointer slot, end;
@@ -47195,7 +47223,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    case HOP_CLOSURE_ALL_X:
 	      {
-		/* here also, all the args are simple */
+		/* here also, all the args are simple, major case is 3 args but would closure_aaa be faster?
+		 */
 		s7_pointer args, p, func, e;
 		CHECK_STACK_SIZE(sc);
 
@@ -48112,7 +48141,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    set_c_function(code, f);
 			    goto OPT_EVAL;
 			  }
-			if (is_all_x_safe(cadr(code))) /* hop_safe_c_c here */
+			if (is_all_x_safe(sc, cadr(code))) /* hop_safe_c_c here */
 			  {
 			    set_optimize_data(code, OP_C_ALL_X);
 			    set_c_function(code, f);
@@ -48180,7 +48209,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    set_c_function(code, f);
 			    goto OPT_EVAL;
 			  }
-			if (is_all_x_safe(cadr(code)))
+			if (is_all_x_safe(sc, cadr(code)))
 			  {
 			    set_optimize_data(code, OP_C_ALL_X);
 			    set_c_function(code, f);
@@ -48238,7 +48267,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    set_c_function(code, f);
 			    goto OPT_EVAL;
 			  }
-			if (is_all_x_safe(cadr(code)))
+			if (is_all_x_safe(sc, cadr(code)))
 			  {
 			    set_optimize_data(code, OP_C_ALL_X);
 			    set_c_function(code, f);
@@ -48352,7 +48381,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    fcdr(cdr(code)) = caddr(caddr(code));
 			    goto OPT_EVAL;
 			  }
-			if (is_all_x_safe(caddr(code)))
+			if (is_all_x_safe(sc, caddr(code)))
 			  {
 			    set_optimize_data(code, OP_C_ALL_X);
 			    set_c_function(code, f);
@@ -48403,7 +48432,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    set_c_function(code, f);
 			    goto OPT_EVAL;
 			  }
-			if (is_all_x_safe(cadr(code)))
+			if (is_all_x_safe(sc, cadr(code)))
 			  {
 			    set_optimize_data(code, OP_C_ALL_X);
 			    set_c_function(code, f);
@@ -48476,8 +48505,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    set_c_function(code, f);
 			    goto OPT_EVAL;
 			  }
-			if ((is_all_x_safe(cadr(code))) &&
-			    (is_all_x_safe(caddr(code))))
+			if ((is_all_x_safe(sc, cadr(code))) &&
+			    (is_all_x_safe(sc, caddr(code))))
 			  {
 			    set_optimize_data(code, OP_C_ALL_X);
 			    set_c_function(code, f);
@@ -50721,7 +50750,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto START;
 		  }
 #if 0
-		/* maybe not worth the code -- this almost never happens */
+		/* maybe not worth the code -- this almost never happens (once in calls) */
 		{
 		  s7_pointer body;
 		  body = cdr(y);
@@ -50739,7 +50768,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  int orig_data;
 			  orig_data = optimize_data(expr);
 			  optimize_data(expr) |= 1;
-			  if (is_all_x_safe(expr))
+			  if (is_all_x_safe(sc, expr))
 			    {
 			      s7_function f;
 			      s7_pointer p, slot;
@@ -54515,8 +54544,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* --------------- */
     case OP_LET_Z_P:
-      /* sc->code here is the let form without "let": (((val binding)) ...) */
-      /* in lat it's closure_car_car */
+      /* sc->code here is the let form without "let": (((val binding)) ...)
+       *   in t456 it's all h_apply_ss, in t502 h_safe_c_sp
+       */
       push_stack(sc, OP_LET_O3, fcdr(cdr(sc->code)), cadr(sc->code));
       sc->code = fcdr(sc->code);
       goto OPT_EVAL;
@@ -55130,13 +55160,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       goto AND1;
 
-
       /* --------------- */
     case OP_AND1:
       if ((is_false(sc, sc->value)) ||
 	  (is_null(sc->code)))
 	goto START;
-
 
       /* --------------- */
     AND1:
@@ -55174,7 +55202,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto START; 
       /* fall through */
 
-
       /* --------------- */
     AND_P:
     case OP_AND_P:
@@ -55207,14 +55234,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	}
       goto OR1;
-      
 
       /* --------------- */
     case OP_OR1:
       if ((is_true(sc, sc->value)) ||
 	  (is_null(sc->code)))
 	goto START;
-
 
       /* --------------- */
     OR1:
@@ -55245,7 +55270,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (is_null(sc->code)))
 	goto START;
       /* fall through */
-
 
       /* --------------- */
     OR_P:
@@ -55463,6 +55487,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (sc->op == OP_DEFINE_EXPANSION)
 	    {
+	      /* perhaps define-expansion should be define-reader-macro but that collides with historical uses. 
+	       */
 	      set_type(sc->value, T_MACRO | T_EXPANSION | T_DONT_EVAL_ARGS | T_COPY_ARGS);
 	      set_type(sc->code, EXPANSION_TYPE);
 	    }
@@ -62324,7 +62350,6 @@ s7_scheme *s7_init(void)
 
 
 /* TODO: use new generic_ff in methods opt case 
- * SOMEDAY: get the doc string out of the closure body
  * TODO: we need integer_length everywhere! These fixups are ignored by the optimized cases.
  * get rid of sound-data: mus-audio* mus-sound* use vct for now
  *   sound-data as output: ws.scm, conversions: frame.scm, play: play.scm, snd-motif|gtk.scm, enved.scm
@@ -62333,17 +62358,19 @@ s7_scheme *s7_init(void)
  *   but make-hook above could presumably put the docstring in the lambda* body -can we find it there?
  *   or in the let for that matter -- could this always work?
  * TODO: give each e|f|gcdr ref a unique name
- * perhaps define-expansion should be define-reader-macro but this sort of collides with historical uses.
  * replace "frame" with "environment" if possible (frame collides with clm)
  * f|gcdr in let_op*q -- can let_r -> let_all_x? (or let_d similarly?)
  *   in set pair, object set et al need not use eval_args/apply if all args are all_x ops: i.e. set_pair_all_x or something
  *   TODO: get rid of all arg lambdas -- move them to the make function (*.html especially!)
- * look at the P in or|and|if for all_x additions
+ * closure_opssq_s is hardly used -- need a count of all these branches across all tests.
+ * can hop_goto be unsafe?  
+ * easy closure_arity done right away?  0/1 should not be expensive.
+ * callgrind the gmp version
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5
  * bench    42736 8752 8051 7725 6515 5194 5150
- * lint           9328 8140 7887 7736 7300 7160
- * index    44300 3291 3005 2742 2078 1643 1466
+ * lint           9328 8140 7887 7736 7300 7244
+ * index    44300 3291 3005 2742 2078 1643 1465
  * s7test    1721 1358 1297 1244  977  961  959
  * t455|6     265   89   55   31   14   14   14
  * lat        229   63   52   47   42   40   39

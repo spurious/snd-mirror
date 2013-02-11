@@ -914,7 +914,20 @@
 		   x))
 	     sequence))
       
-      
+      (define (remove-if p l)
+	(cond ((null? l) ())
+	      ((p (car l)) (remove-if p (cdr l)))
+	      (else (cons (car l) 
+			  (remove-if p (cdr l))))))
+
+      (define (checked-eval form)
+	(catch #t
+	  (lambda ()
+	    (eval form))
+	  (lambda args
+	    #t)))   ; just ignore errors in this context
+
+
       (define (simplify-boolean in-form true false env)
 	;; (or)->#f, (or x) -> x, (or x ... from here on we know x is #f), (or x #t...) -> (or x #t), any constant expr can be collapsed
 	;;   (or ... (or ...) ...) -> or of all, (or ... #f ...) toss the #f
@@ -1236,7 +1249,35 @@
 				     (cadr arg)
 				     (if (not (equal? val arg))
 					 `(not ,val)
-					 form)))))
+					 (if (and (pair? arg)
+						  (<= (length arg) 3)) ; avoid (<= 0 i 12) and such
+					     (case (car arg)
+					       ((<)            `(>= ,@(cdr arg)))   ; (not (< ...)) -> (>= ...)
+					       ((>)            `(<= ,@(cdr arg)))
+					       ((<=)           `(> ,@(cdr arg)))
+					       ((>=)           `(< ,@(cdr arg)))
+					       ((char<?)       `(char>=? ,@(cdr arg)))
+					       ((char>?)       `(char<=? ,@(cdr arg)))
+					       ((char<=?)      `(char>? ,@(cdr arg)))
+					       ((char>=?)      `(char<? ,@(cdr arg)))
+					       ((char-ci<?)    `(char-ci>=? ,@(cdr arg)))
+					       ((char-ci>?)    `(char-ci<=? ,@(cdr arg)))
+					       ((char-ci<=?)   `(char-ci>? ,@(cdr arg)))
+					       ((char-ci>=?)   `(char-ci<? ,@(cdr arg)))
+					       ((string<?)     `(string>=? ,@(cdr arg)))
+					       ((string>?)     `(string<=? ,@(cdr arg)))
+					       ((string<=?)    `(string>? ,@(cdr arg)))
+					       ((string>=?)    `(string<? ,@(cdr arg)))
+					       ((string-ci<?)  `(string-ci>=? ,@(cdr arg)))
+					       ((string-ci>?)  `(string-ci<=? ,@(cdr arg)))
+					       ((string-ci<=?) `(string-ci>? ,@(cdr arg)))
+					       ((string-ci>=?) `(string-ci<? ,@(cdr arg)))
+					       ((odd?)         `(even? ,@(cdr arg)))
+					       ((even?)        `(odd? ,@(cdr arg)))
+					       ((exact?)       `(inexact? ,@(cdr arg)))
+					       ((inexact?)     `(exact? ,@(cdr arg)))
+					       (else form))
+					     form))))))
 		       form))
 		  
 		  ((or)
@@ -1595,7 +1636,7 @@
 	      ((abs magnitude)
 	       (if (= len 1)
 		   (if (and (pair? (car args))
-			    (member (caar args) '(abs magnitude)))
+			    (memq (caar args) '(abs magnitude)))
 		       (car args)
 		       (if (rational? (car args))
 			   (abs (car args))
@@ -1731,7 +1772,17 @@
 		    (any-real? (cdr form)))
 	       (lint-format "~A can be troublesome with floats:~A"
 			    name head 
-			    (truncated-list->string form))))
+			    (truncated-list->string form)))
+	   (if (eq? head '=)
+	       (let ((cleared-form (cons (car form) ; keep operator
+					 (remove-if (lambda (x) 
+						      (not (number? x))) 
+						    (cdr form)))))
+		 (if (and (> (length cleared-form) 2)
+			  (not (checked-eval cleared-form)))
+		     (lint-format "this comparison can't be true:~A"
+				  name
+				  (truncated-list->string form))))))
 	  
 	  ((memq assq)
 	   (if (= (length form) 3)
@@ -1841,7 +1892,42 @@
 		     (lint-format "possible simplification:~A"
 				  name 
 				  (lists->string form val))))))
-	  
+
+	  ((< > <= >=) ; '= handled above
+	   (let ((cleared-form (cons (car form) ; keep operator
+				     (remove-if (lambda (x) 
+						  (not (number? x))) 
+						(cdr form)))))
+	     (if (and (> (length cleared-form) 2)
+		      (not (checked-eval cleared-form)))
+		 (lint-format "this comparison can't be true:~A"
+			      name
+			      (truncated-list->string form)))))
+	     
+	  ((char<? char>? char<=? char>=? char=? 
+	    char-ci-<? char-ci->? char-ci-<=? char-ci->=? char-ci-=?)
+	   (let ((cleared-form (cons (car form) ; keep operator
+				     (remove-if (lambda (x) 
+						  (not (char? x))) 
+						(cdr form)))))
+	     (if (and (> (length cleared-form) 2)
+		      (not (checked-eval cleared-form)))
+		 (lint-format "this comparison can't be true:~A"
+			      name
+			      (truncated-list->string form)))))
+	     
+	  ((string<? string>? string<=? string>=? string=? 
+	    string-ci-<? string-ci->? string-ci-<=? string-ci->=? string-ci-=?)
+	   (let ((cleared-form (cons (car form) ; keep operator
+				     (remove-if (lambda (x) 
+						  (not (string? x))) 
+						(cdr form)))))
+	     (if (and (> (length cleared-form) 2)
+		      (not (checked-eval cleared-form)))
+		 (lint-format "this comparison can't be true:~A"
+			      name
+			      (truncated-list->string form)))))
+	     
 	  ((call/cc call-with-current-continuation)
 	   (let ((continuation (and (pair? (cdr form))
 				    (pair? (cadr form))
@@ -2788,7 +2874,9 @@
 				   (lint-walk name (caddar bindings) (append vars env))))
 			     
 			     ;; walk the body and end stuff (it's too tricky to find infinite do loops)
-			     (lint-walk-body name head (cddr form) (append vars env))
+			     (if (pair? (caddr form))
+				 (lint-walk-body name head (cddr form) (append vars env))
+				 (lint-walk-body name head (cdddr form) (append vars env)))
 			     (report-usage name 'variable head vars)))
 		       env))
 		    
@@ -3197,3 +3285,8 @@
 ;;; currently *report-undefined-variables* is confused by with-environment -- the field names
 ;;;   are wrongly reported as undefined.
 
+;;; another case: (and (< x 0) (> x 0)) -- can we catch this in general?
+;;;   if it's just relationals/and/or/not/numeric constants and symbols, 
+;;;   try each combination of symbols:any current constant:same +|- 1
+;;;   until both #t and #f seen, if reach end, it can be replaced by val
+;;;   but what about possible other stuff interspersed?
