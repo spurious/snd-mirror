@@ -10371,28 +10371,38 @@ EDITS: 2
 	 (outdel1 (make-delay (round (* .013 (srate)))))
 	 (dur (+ decay-dur (/ (frames) (srate))))
 	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration dur) #f)))
-    (map-chan
-     (let ((comb-sum 0.0)
-	   (comb-sum-1 0.0)
-	   (comb-sum-2 0.0)
-	   (all-sums 0.0))
-       (lambda (inval)
-	 (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval)))))
-	   (set! comb-sum-2 comb-sum-1)
-	   (set! comb-sum-1 comb-sum)
-	   (set! comb-sum 
-		 (+ (comb comb1 allpass-sum)
-		    (comb comb2 allpass-sum)
-		    (comb comb3 allpass-sum)
-		    (comb comb4 allpass-sum)))
-	   (if low-pass
-	       (set! all-sums (+ (* .25 (+ comb-sum comb-sum-2)) (* .5 comb-sum-1)))
-	       (set! all-sums comb-sum))
-	   (+ inval
-	      (if envA
-		  (* (env envA) (delay outdel1 all-sums))
-		  (* volume (delay outdel1 all-sums)))))))
-     0 (round (* dur (srate))))))
+    (if (or low-pass amp-env)
+	(map-chan
+	 (let ((comb-sum 0.0)
+	       (comb-sum-1 0.0)
+	       (comb-sum-2 0.0)
+	       (all-sums 0.0))
+	   (lambda (inval)
+	     (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval)))))
+	       (set! comb-sum-2 comb-sum-1)
+	       (set! comb-sum-1 comb-sum)
+	       (set! comb-sum 
+		     (+ (comb comb1 allpass-sum)
+			(comb comb2 allpass-sum)
+			(comb comb3 allpass-sum)
+			(comb comb4 allpass-sum)))
+	       (if low-pass
+		   (set! all-sums (+ (* .25 (+ comb-sum comb-sum-2)) (* .5 comb-sum-1)))
+		   (set! all-sums comb-sum))
+	       (+ inval
+		  (if envA
+		      (* (env envA) (delay outdel1 all-sums))
+		      (* volume (delay outdel1 all-sums)))))))
+	 0 (round (* dur (srate))))
+	(map-chan
+	 (lambda (inval)
+	   (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval)))))
+	     (* volume (delay outdel1 (+ (comb comb1 allpass-sum)
+					 (comb comb2 allpass-sum)
+					 (comb comb3 allpass-sum)
+					 (comb comb4 allpass-sum))))))
+	 0 (round (* dur (srate)))))))
+
 
 ;;; -------- scissor-tailed flycatcher
 ;;;
@@ -32344,9 +32354,6 @@ EDITS: 1
 				 (bandpass (vector-ref bands i) 
 					   input)))))))
   
-  (define (fdelay gen input)
-    (gen input))	
-  
   (define (make-fdelay len pitch scaler)
     (let ((dly (make-delay len))
 	  (ssb (make-ssb-transposer 440.0 (* 440.0 pitch) 10)))
@@ -32354,8 +32361,7 @@ EDITS: 1
 	(delay dly (+ input (* scaler (ssb-transpose ssb (tap dly))))))))
   
   (define (transposed-echo pitch scaler secs)
-    (let ((del (make-fdelay (round (* secs (srate))) pitch scaler)))
-      (map-channel (lambda (y) (fdelay del y)))))
+    (map-channel (make-fdelay (round (* secs (srate))) pitch scaler)))
   
   (define (local-eq? a b)
     (if (number? a)
@@ -47082,6 +47088,7 @@ EDITS: 1
 ;; 3-Jan-13:  #(1 1 2 1 65 185 6 1 564 1 20 1 2 11 26 1 202 1 1 213 45 109 1 1545 0 0 0 1 1 80)  ;  31
 ;; 9-Jan-13:  #(1 1 2 1 63 181 7 1 540 1 19 1 2 11 22 1 201 1 1 207 44 107 1 1504 0 0 0 1 1 79)  ;  30
 ;; 25-Jan-13: #(1 1 2 1 58 178 6 1 505 1 13 1 2 10 20 1 205 1 1 198 44 111 1 1487 0 0 0 1 1 75)  ;  29
+;; 11-Feb-13: #(1 1 3 2 49 170 5 1 463 1 15 1 1 11 46 1 216 1 2 158 42 110 1 1456 0 0 0 1 1 80)  ;  28
 
 ;;; -------- cleanup temp files
 

@@ -3116,7 +3116,7 @@
     ;;; XXX hack!! this should be intercepted in the calling code, no 0 duration please...
     (if (<= real-dur 0.0)
 	(begin
-	  (format #t ";;; ERROR: reseting real duration to 0.1 (was ~A)~%" real-dur)
+	  (format #t ";;; ERROR: resetting real duration to 0.1 (was ~A)~%" real-dur)
 	(set! real-dur 0.1)))
 
     (list 
