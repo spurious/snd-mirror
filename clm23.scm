@@ -146,17 +146,14 @@
   "(simple-osc beg dur freq amp) test instrument for oscil"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
-	(arr (make-vector 20)))
+	(arr (make-vector 20))
+	(amps (make-vct 20 (* amp .05))))
     (do ((i 0 (+ i 1)))
 	((= i 20))
       (set! (arr i) (make-oscil (* (+ i 1) 100))))
-    (do ((i start (+ i 1))) ((= i end))
-      (let ((sum 0.0))
-	(do ((i 0 (+ i 1)))
-	    ((= i (length arr)))
-	  (if (oscil? (arr i))
-	      (set! sum (+ sum (oscil (arr i))))))
-	(outa i (* amp .05 sum))))))
+    (do ((i start (+ i 1))) 
+	((= i end))
+      (outa i (oscil-bank 20 arr amps)))))
 
 (define (simple-asy beg dur amp)
   "(simple-asy beg dur amp) test instrument for asymmetric-fm"
@@ -590,11 +587,10 @@
   (let ((os (make-oscil freq)))
     (let ((start (seconds->samples beg))
 	  (end (seconds->samples (+ beg dur)))
-	  (sr (make-src :srate speed))
-	  (sr-func (lambda (dir) (oscil os))))
+	  (sr (make-src :srate speed :input (lambda (dir) (oscil os)))))
       (do ((i start (+ i 1)))
 	  ((= i end))
-	(outa i (* amp (src sr 0.0 sr-func)))))))
+	(outa i (* amp (src sr)))))))
 
 (define (simple-grn beg dur amp speed freq)
   "(simple-grn beg dur amp speed freq) test instrument for granulate"
@@ -636,11 +632,11 @@
   "(simple-f2s beg dur amp file) test instrument for file->sample"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
-	(fil (make-file->sample file))
-	(ctr 0))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (file->sample fil ctr 0)))
-      (set! ctr (+ 1 ctr)))))
+	(fil (make-file->sample file)))
+    (do ((i start (+ i 1))
+	 (ctr 0 (+ ctr 1)))
+	((= i end))
+      (outa i (* amp (file->sample fil ctr 0))))))
 
 (define (simple-rdf beg dur amp file)
   "(simple-rdf beg dur amp file) test instrument for readin"
@@ -797,13 +793,10 @@
 	(end (seconds->samples (+ beg dur)))
 	(os1 (make-oscil freq))
 	(os2 (make-oscil (* freq 2))))
-    (let ((sr1 (make-src :srate speed))
-	  (sr2 (make-src :srate speed))
-	  (sr1-func (lambda (dir) (oscil os1)))
-	  (sr2-func (lambda (dir) (oscil os2))))
+    (let ((sr1 (make-src :srate speed :input (lambda (dir) (oscil os1))))
+	  (sr2 (make-src :srate speed :input (lambda (dir) (oscil os2)))))
       (do ((i start (+ i 1))) ((= i end))
-	(outa i (* amp (+ (src sr1 0.0 sr1-func)
-			  (src sr2 0.0 sr2-func))))))))
+	(outa i (* amp (+ (src sr1) (src sr2))))))))
 
 (define (sample-srll beg dur amp speed freq)
   "(sample-srll beg dur amp speed freq) test instrument for src"
@@ -2007,13 +2000,14 @@
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
 	(osc (make-oscil frq))
-	(zv (make-env en 1.0 dur)))
+	(zv (make-env en 1.0 dur))
+	(pi2 (* 0.5 pi)))
     (do ((i start (+ i 1)))
 	((= i end))
       (let ((zval (env zv))) 
 	(outa i 
 	      (* amp 
-		 (sin (* 0.5 pi zval zval zval)) 
+		 (sin (* pi2 zval zval zval)) 
 		 (oscil osc)))))))
 
 (definstrument (sndclmdoc-simple-table dur)

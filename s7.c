@@ -175,7 +175,7 @@
 #define INITIAL_HEAP_SIZE 128000
 /* the heap grows as needed, this is its initial size. 
  * If the initial heap is small, s7 can run in less than 2 Mbytes of memory. There are cases where a bigger heap is faster.
- * As of 5-May-2011, the heap size must be a multiple of 32.
+ * As of 5-May-2011, the heap size must be a multiple of 32.  Each object takes about 60 bytes (48 + 8?) so this represents 6 Mbytes?
  */
 #endif
 
@@ -435,7 +435,7 @@ enum {OP_NO_OP,
       OP_SAFE_IF_CSQ_P, OP_SAFE_IF_CSQ_P_P, OP_SAFE_IF_CSS_P, OP_SAFE_IF_CSS_P_P, OP_SAFE_IF_CSC_P, OP_SAFE_IF_CSC_P_P, 
       OP_SAFE_IF_IS_PAIR_P, OP_SAFE_IF_IS_PAIR_P_X, OP_SAFE_IF_IS_PAIR_P_P, OP_SAFE_IF_C_SS_P,
       OP_SAFE_IF_IS_SYMBOL_P, OP_SAFE_IF_IS_SYMBOL_P_P, 
-      OP_IF_Z_P, OP_IF_Z_P_P, OP_IF_A_P, OP_IF_A_P_P,
+      OP_IF_Z_P, OP_IF_Z_P_P, OP_IF_A_P, OP_IF_A_P_P, OP_IF_GT_P,
       OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_2, OP_SAFE_C_PP_3, OP_SAFE_C_PP_4, OP_SAFE_C_PP_5, OP_SAFE_C_PP_6, 
       OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_1_MV, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_2_MV, 
       OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_3_MV, OP_EVAL_ARGS_P_4_MV, 
@@ -526,8 +526,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "if", "if", "if",
    "if", "if", "if", "if", "if", "if", "if",
    "if", "if", "if", "if",
-   "if", "if", 
-   "if", "if",
+   "if", "if", "if", "if", "if",
    "c_p_1", "c_pp_1", "c_pp_2", "c_pp_3", "c_pp_4", "c_pp_5", "c_pp_6", 
    "eval_args_p_1", "eval_args_p_1_mv", "eval_args_p_2", "eval_args_p_2_mv", 
    "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv", 
@@ -612,7 +611,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_IF_CSQ_P", "OP_SAFE_IF_CSQ_P_P", "OP_SAFE_IF_CSS_P", "OP_SAFE_IF_CSS_P_P", "OP_SAFE_IF_CSC_P", "OP_SAFE_IF_CSC_P_P", 
   "OP_SAFE_IF_IS_PAIR_P", "OP_SAFE_IF_IS_PAIR_P_X", "OP_SAFE_IF_IS_PAIR_P_P", "OP_SAFE_IF_C_SS_P", 
   "OP_SAFE_IF_IS_SYMBOL_P", "OP_SAFE_IF_IS_SYMBOL_P_P", 
-  "OP_IF_Z_P", "OP_IF_Z_P_P", "OP_IF_A_P", "OP_IF_A_P_P",
+  "OP_IF_Z_P", "OP_IF_Z_P_P", "OP_IF_A_P", "OP_IF_A_P_P", "OP_IF_GT_P",
   "OP_SAFE_C_P_1", "OP_SAFE_C_PP_1", "OP_SAFE_C_PP_2", "OP_SAFE_C_PP_3", "OP_SAFE_C_PP_4", "OP_SAFE_C_PP_5", "OP_SAFE_C_PP_6", 
   "OP_EVAL_ARGS_P_1", "OP_EVAL_ARGS_P_1_MV", "OP_EVAL_ARGS_P_2", "OP_EVAL_ARGS_P_2_MV", 
   "OP_EVAL_ARGS_P_3", "OP_EVAL_ARGS_P_4", "OP_EVAL_ARGS_P_3_MV", "OP_EVAL_ARGS_P_4_MV", 
@@ -1316,7 +1315,7 @@ struct s7_scheme {
   s7_pointer LET_STAR_ALL_X, LET_opCq, LET_opSSq, LET_C_P, LET_S_P;
   s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, NAMED_LET_STAR, LET_STAR2, AND_UNCHECKED, AND_P, OR_UNCHECKED, OR_P;
   s7_pointer IF_P_P_P, IF_P_P, IF_B_P, IF_B_P_P, IF_P_P_X, IF_P_X_P, IF_P_X_X, IF_S_P_P, IF_S_P, IF_S_P_X, IF_S_X_P;
-  s7_pointer IF_Z_P, IF_Z_P_P, IF_A_P, IF_A_P_P, IF_ANDP_P, IF_ANDP_P_P, IF_ORP_P, IF_ORP_P_P;
+  s7_pointer IF_Z_P, IF_Z_P_P, IF_A_P, IF_A_P_P, IF_GT_P, IF_ANDP_P, IF_ANDP_P_P, IF_ORP_P, IF_ORP_P_P;
 
   s7_pointer COND_ALL_X;
   s7_pointer SAFE_IF_Z_Z, SAFE_IF_CC_X_P, SAFE_IF_CC_P_P;
@@ -41832,7 +41831,6 @@ static s7_pointer check_if(s7_scheme *sc)
 						{
 						  /* test is h_optimized here
 						   */
-
 						  if (is_all_x_safe(sc, test))
 						    {
 						      if (is_h_optimized(t))
@@ -41848,10 +41846,18 @@ static s7_pointer check_if(s7_scheme *sc)
 						    }
 						  else
 						    {
-						      fcdr(sc->code) = cadr(sc->code);
-						      if (is_h_optimized(t))
-							set_syntax_op(sc->code, sc->SAFE_IF_Z_Z);
-						      else set_syntax_op(sc->code, sc->IF_Z_P);
+						      if (optimize_data(test) == HOP_SAFE_C_op_opSSq_q_C)
+							{
+							  set_syntax_op(sc->code, sc->IF_GT_P);
+							  fcdr(sc->code) = cadr(cadr(test));
+							}
+						      else
+							{
+							  fcdr(sc->code) = cadr(sc->code);
+							  if (is_h_optimized(t))
+							    set_syntax_op(sc->code, sc->SAFE_IF_Z_Z);
+							  else set_syntax_op(sc->code, sc->IF_Z_P);
+							}
 						    }
 						}
 					    }
@@ -42348,7 +42354,10 @@ static s7_pointer check_set(s7_scheme *sc)
 						}
 					      else
 						{
-						  if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_S_op_S_opSSqq)
+						  if ((optimize_data(cadr(sc->code)) == HOP_SAFE_C_S_op_S_opSSqq) &&
+						      (c_call(cadr(sc->code)) == g_add_2) &&
+						      (c_call(caddr(cadr(sc->code))) == g_multiply_2) &&
+						      (c_call(caddr(caddr(cadr(sc->code)))) == g_subtract_2))
 						    {
 						      set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_S_op_S_opSSqq);
 						      fcdr(sc->code) = cdadr(sc->code);
@@ -52796,24 +52805,33 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_slot(sym))
 	  {
 	    /* (let () (define (hi a b c d) (let ((x 0)) (set! x (+ a (* d (- b c)))) x)) (define (ho) (hi 1 2 3 4)) (ho)) */
-	    s7_pointer args, val, val1;
+	    s7_pointer args, p, val1, val2, val3, val4;
 	    code = cadr(code);
-	    args = caddr(code);                            /* (* d (- b c)) */
-	    val1 = caddr(args);
-	    val = finder(sc, cadr(val1));                  /* b */
-	    if (caddr(val1) == car(sc->code))
-	      car(sc->T2_2) = slot_value(sym);
-	    else car(sc->T2_2) = finder(sc, caddr(val1));  /* c */
-	    car(sc->T2_1) = val;
-	    val = finder(sc, cadr(args));                  /* d */
-	    car(sc->T2_2) = c_call(val1)(sc, sc->T2_1);    /* (- b c) */
-	    car(sc->T2_1) = val;
-	    car(sc->T2_2) = c_call(args)(sc, sc->T2_1);    /* (* ...) */
-	    car(sc->T2_1) = finder(sc, cadr(code));        /* a */
-	    sc->value = c_call(code)(sc, sc->T2_1);        /* (+ ...) */
-	    slot_set_value(sym, sc->value); 
+	    args = caddr(code);                             /* (* d (- b c)) */
+	    p = caddr(args);                                /* (- b c) */
+	    val3 = finder(sc, cadr(p));                     /* b */
+	    if (caddr(p) == car(sc->code))
+	      val4 = slot_value(sym);
+	    else val4 = finder(sc, caddr(p));               /* c */
+	    val2 = finder(sc, cadr(args));                  /* d */
+	    val1 = finder(sc, cadr(code));                  /* a */
+	    if ((type(val1) == T_REAL) &&
+		(type(val2) == T_REAL) &&
+		(type(val3) == T_REAL) &&
+		(type(val4) == T_REAL))
+	      slot_set_value(sym, sc->value = make_real(sc, real(val1) + (real(val2) * (real(val3) - real(val4)))));
+	    else
+	      {
+		car(sc->T2_1) = val3;
+		car(sc->T2_2) = val4;
+		car(sc->T2_2) = g_subtract_2(sc, sc->T2_1);    /* (- b c) */
+		car(sc->T2_1) = val2;
+		car(sc->T2_2) = g_multiply_2(sc, sc->T2_1);    /* (* ...) */
+		car(sc->T2_1) = val1;
+		sc->value = g_add_2(sc, sc->T2_1);             /* (+ ...) */
+		slot_set_value(sym, sc->value); 
+	      }
 	    IF_BEGIN_POP_STACK(sc);
-	    /* combining ops here saves only the eval level is_syntactic checks and two finders, so it is not worth the complexity */
 	  }
 	eval_error(sc, "set! ~A: unbound variable", sc->code);
       }
@@ -53661,6 +53679,29 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack_no_args(sc, OP_IF_PP, fcdr(sc->code));
       sc->code = car(sc->code);
       goto OPT_EVAL;
+      
+      
+      /* --------------- */
+    case OP_IF_GT_P:
+      {
+	/* code: ((> (magnitude (- old new)) 0.001)...)
+	 */
+	s7_pointer arg;
+	arg = fcdr(sc->code);  /* cadr(cadr(test)) => (- old new) */
+	car(sc->T2_1) = finder(sc, cadr(arg));
+	car(sc->T2_2) = finder(sc, caddr(arg));
+	car(sc->T1_1) = c_call(arg)(sc, sc->T2_1);
+	arg = car(sc->code);
+	car(sc->T2_1) = c_call(cadr(arg))(sc, sc->T1_1);
+	car(sc->T2_2) = caddr(arg);
+	if (is_true(sc, c_call(arg)(sc, sc->T2_1)))
+	  {
+	    sc->code = cadr(sc->code);
+	    goto EVAL;
+	  }
+	sc->value = sc->UNSPECIFIED;
+	IF_BEGIN_POP_STACK(sc); 
+      }
       
       
       /* --------------- */
@@ -61404,6 +61445,7 @@ s7_scheme *s7_init(void)
   sc->SAFE_IF_Z_Z =           assign_internal_syntax(sc, "if",      OP_SAFE_IF_Z_Z);  
   sc->IF_Z_P_P =              assign_internal_syntax(sc, "if",      OP_IF_Z_P_P);
   sc->IF_Z_P =                assign_internal_syntax(sc, "if",      OP_IF_Z_P);
+  sc->IF_GT_P =               assign_internal_syntax(sc, "if",      OP_IF_GT_P);
   sc->IF_A_P_P =              assign_internal_syntax(sc, "if",      OP_IF_A_P_P);
   sc->IF_A_P =                assign_internal_syntax(sc, "if",      OP_IF_A_P);
   sc->SAFE_IF_CC_X_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CC_X_P);  

@@ -87,7 +87,8 @@
 (define (expseg gen r)
   (set! (gen 'r) r)
   (with-environment gen
-    (set! currentValue (+ currentValue (* (- targetValue currentValue) r)))))
+    (set! currentValue (+ (* r targetValue) (* (- 1.0 r) currentValue)))))
+    ;(set! currentValue (+ currentValue (* r (- targetValue currentValue))))))
     ;; (bil) this is slightly different (getting clicks)
 
 

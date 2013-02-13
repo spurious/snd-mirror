@@ -10216,6 +10216,8 @@ fi
 if test "$PATH_MPG321" != "no" ; then
   $as_echo "#define HAVE_MPEG 1" >>confdefs.h
 
+  $as_echo "#define HAVE_MPG321 1" >>confdefs.h
+
   cat >>confdefs.h <<_ACEOF
 #define PATH_MPG321 "${PATH_MPG321}"
 _ACEOF
