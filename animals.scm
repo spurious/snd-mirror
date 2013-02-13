@@ -1878,7 +1878,7 @@
 	  (mus-reset pulsef)
 	  (do ((k 0 (+ k 1)))
 	      ((= k num))
-	    (mus-reset (gens k))))))))
+	    (mus-reset (vector-ref gens k))))))))
 
 ;; (with-sound (:play #t :statistics #t) (handsome-trig 0 2 .5))
 

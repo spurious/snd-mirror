@@ -4479,9 +4479,9 @@ There is a break macro defined in Snd (snd-xen.c)
 which allows you to stop at some point, then evaluate arbitrary expressions in that context.
 </p>
 
-<p>
 <!-- INDEX autoload:autoload -->
-<em class=def id="autoload">If</em> s7 encounters an unbound variable, it calls
+<p id="autoload">
+If s7 encounters an unbound variable, it calls
 <em class=def id="unboundvariablehook">*unbound-variable-hook*</em> before signalling an error.
 The offending symbol is named 'variable in the hook environment.
 In Snd, *unbound-variable-hook* is used to implement autoloading (see snd-help.c).

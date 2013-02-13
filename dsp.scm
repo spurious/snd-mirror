@@ -1517,61 +1517,6 @@ shift the given channel in pitch without changing its length.  The higher 'order
      (format #f "ssb-bank-env ~A ~A '~A ~A ~A ~A ~A ~A" old-freq new-freq freq-env pairs order bw beg dur))))
 
 #|
-(define* (repitch-sound old-freq new-freq)
-  (ssb-bank old-freq new-freq 10))
-
-(define* (retime-sound new-time)
-  (let* ((old-time (/ (frames) (srate)))
-	 (factor (/ new-time old-time)))
-    (ssb-bank 557 (* 557 factor) 10)
-    (src-sound (/ 1.0 factor))))
-
-
-;; echoes with each echo at a new pitch via ssb-am etc
-
-(define* (make-transposer old-freq new-freq pairs (order 40) (bw 50.0))
-  (let* ((ssbs (make-vector pairs))
-	 (bands (make-vector pairs))
-	 (factor (/ (- new-freq old-freq) old-freq)))
-    (do ((i 1 (+ i 1)))
-	((> i pairs))
-      (let* ((aff (* i old-freq))
-	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
-	(set! (ssbs (- i 1)) (make-ssb-am (* i factor old-freq)))
-	(set! (bands (- i 1)) (make-bandpass (hz->radians (- aff bwf)) 
-					     (hz->radians (+ aff bwf)) 
-					     order))))
-    (list ssbs bands)))
-
-(define (transpose transposer input)
-  (let* ((sum 0.0)
-	 (ssbs (car transposer))
-	 (bands (cadr transposer))
-	 (pairs (length ssbs)))
-    (do ((i 0 (+ i 1)))
-	((= i pairs) sum)
-      (set! sum (+ sum (ssb-am (vector-ref ssbs i) 
-			       (bandpass (vector-ref bands i) 
-					 input)))))))
-
-(define (fdelay gen input)
-  (gen input))	
-
-(define (make-fdelay len pitch scaler)
-  (let ((dly (make-delay len))
-        (ssb (make-transposer 440.0 (* 440.0 pitch) 10)))
-    (lambda (input)
-      (delay dly (+ input (* scaler (transpose ssb (tap dly))))))))
-
-
-(define (transposed-echo pitch scaler secs)
-  (let ((del (make-fdelay (round (* secs (srate)))) pitch scaler))
-    (map-channel (lambda (y) (fdelay del y)))))
-
-|#
-
-
-#|
 ;;; a "bump function" (Stein and Shakarchi)
 (define (bumpy)
   (let* ((x 0.0) 

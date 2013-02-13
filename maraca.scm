@@ -41,7 +41,7 @@
 	    (begin
 	      (set! temp 0.0)
 	      (set! j 0)))
-	(set! j (+ 1 j))
+	(set! j (+ j 1))
 	(set! shake-energy (* shake-energy system-decay))
 	;; if collision, add energy
 	(if (< (random 1.0) probability)
@@ -110,7 +110,7 @@
 	    (begin
 	      (set! temp 0.0)
 	      (set! j 0)))
-	(set! j (+ 1 j))
+	(set! j (+ j 1))
 	(set! shake-energy (* shake-energy system-decay))
 	;; if collision, add energy
 	(if (< (random 1.0) probability)

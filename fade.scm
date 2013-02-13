@@ -43,7 +43,6 @@
 
 	(let ((bank2-end (+ bank2-start bank-samps))
 	      (ramp 0.0)
-	      (bank2 1.0)
 	      (outval 0.0)
 	      (inputs (make-vct fs 0.0))
 	      (amps (make-vct fs 1.0))
@@ -132,11 +131,11 @@
 		       (set! (inputs hk) (inputs k))))
 		   (outa i (formant-bank amps-scaled fs1 inputs)))))))
       
-	  (do ((i ramp-end (+ i 1)))
+	  (do ((i ramp-end (+ i 1))
+	       (bank2 1.0 (- bank2 bank-incr)))
 	      ((= i bank2-end))
 	    ;; in bank2 section -- ramp out resonators
 	    (let ((inval (read-sample fil2)))
-	      (set! bank2 (- bank2 bank-incr))
 	      (set! outval (formant-bank amps fs1 inval))
 	      (outa i (* amp (+ (* bank2 outval) (* (- 1.0 bank2) inval))))))
 

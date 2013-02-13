@@ -227,7 +227,7 @@
     (do ((i 100 (+ i 200)))
 	((>= i 3800))
       (let ((size (random 8)))
-	(do ((k 0 (+ 1 k)))
+	(do ((k 0 (+ k 1)))
 	    ((= k size))
 	  (set! (data (+ i k)) (- 1.0 (random 2.0))))))
     (vct->channel data)

@@ -9618,6 +9618,16 @@ static s7_pointer g_src_one(s7_scheme *sc, s7_pointer args)
  *                frame_set_3, sound_data_ref_three, src_one->src_two(??) src_chooser was never called?
  */
 
+static s7_pointer asymmetric_fm_3;
+static s7_pointer g_asymmetric_fm_3(s7_scheme *sc, s7_pointer args)
+{
+  /* (asymmetric-fm g c c) */
+  mus_any *o;
+
+  GET_GENERATOR(args, asymmetric-fm, o);
+  return(s7_make_real(sc, mus_asymmetric_fm(o, s7_number_to_real(sc, cadr(args)), s7_number_to_real(sc, caddr(args)))));
+}
+
 static s7_pointer oscil_pm_direct;
 static s7_pointer g_oscil_pm_direct(s7_scheme *sc, s7_pointer args)
 {
@@ -11958,8 +11968,8 @@ static s7_pointer g_frame_to_file_ff(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(ff_expr, frame_or_mixer, ff);
   GET_GENERATOR_CADR(ff_expr, frame_or_mixer, fmx);
   GET_GENERATOR_CADR(cdr(ff_expr), frame, fout);
-
   mus_frame_to_file(ogen, pos, mus_frame_to_frame(ff, fmx, fout));
+
   return(XEN_FALSE);
 }
 
@@ -14094,6 +14104,14 @@ static s7_pointer asymmetric_fm_chooser(s7_scheme *sc, s7_pointer f, int args, s
       if (s7_function_returns_temp(caddr(expr))) return(direct_asymmetric_fm_2);
       return(indirect_asymmetric_fm_2);
     }
+  if ((args == 3) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_real(caddr(expr))) &&
+      (s7_is_real(cadddr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(asymmetric_fm_3);
+    }
   return(f);
 }
 
@@ -15100,6 +15118,8 @@ static void init_choosers(s7_scheme *sc)
 				       NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_asymmetric_fm_2 = clm_make_function(sc, "asymmetric-fm", g_indirect_asymmetric_fm_2, 2, 0, false, "asymmetric-fm optimization", f,
 				       NULL, NULL, NULL, NULL, NULL, NULL);
+  asymmetric_fm_3 = clm_make_function(sc, "asymmetric-fm", g_asymmetric_fm_3, 3, 0, false, "asymmetric-fm optimization", f,
+				       NULL, NULL, NULL, NULL, NULL, NULL);
 
   f = s7_name_to_value(sc, "filtered-comb");
   s7_function_set_chooser(sc, f, filtered_comb_chooser);
@@ -16025,7 +16045,6 @@ static void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_mus_chebyshev_second_kind, MUS_CHEBYSHEV_SECOND_KIND, "Chebyshev polynomial of second kind, for " S_partials_to_polynomial);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_describe,       g_mus_describe_w,  1, 0, 0,  H_mus_describe);
-  /* not safe_procedure because mus_describe might call format recursively */
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_file_name, g_mus_file_name_w, 1, 0, 0,  H_mus_file_name);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_reset,     g_mus_reset_w,     1, 0, 0,  H_mus_reset);
   XEN_DEFINE_PROCEDURE(S_mus_run,            g_mus_run_w,       1, 2, 0,  H_mus_run);

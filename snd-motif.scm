@@ -598,7 +598,7 @@
 						(begin
 						  (set! running #f)
 						  (mus-audio-close audio-fd)))
-					     (do ((k 0 (+ 1 k)))
+					     (do ((k 0 (+ k 1)))
 						 ((= k frames))
 					       (sound-data-set! data 0 k (v)))
 					     (mus-audio-write audio-fd data frames)))))))))))))
@@ -952,7 +952,7 @@
 					(XmToggleButtonSetValue play-button 0 #f) ; don't send event
 					(mus-audio-close audio-fd)))
 				   (tick-synthesis work-proc)
-				   (do ((k 0 (+ 1 k)))
+				   (do ((k 0 (+ k 1)))
 				       ((= k frames))
 				     (sound-data-set! data 0 k (* amplitude (table-lookup tbl))))
 				   (mus-audio-write audio-fd data frames))
@@ -2620,7 +2620,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 
 (define wid2 (make-variable-display "a-loop" "k*2" 'meter))
 ;(define wid3 (make-variable-display "a-loop" "k" 'scale '(0 40)))
-(do ((k 0 (+ 1 k)))
+(do ((k 0 (+ k 1)))
     ((= k 11))
   (variable-display (* k .02) wid2))
 |#
@@ -2866,7 +2866,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 					    (set! running #f)
 					    (free-sampler reader)
 					    (mus-audio-close audio-fd)))
-				       (do ((k 0 (+ 1 k)))
+				       (do ((k 0 (+ k 1)))
 					   ((= k frames))
 					 (sound-data-set! data 0 k (ssb-expand)))
 				       (mus-audio-write audio-fd data frames)))))))))))))
@@ -2968,7 +2968,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 						(begin
 						  (set! running #f)
 						  (mus-audio-close audio-fd)))
-					     (do ((k 0 (+ 1 k)))
+					     (do ((k 0 (+ k 1)))
 						 ((= k frames))
 					       (sound-data-set! data 0 k (v)))
 					     (mus-audio-write audio-fd data frames)))))))))))))

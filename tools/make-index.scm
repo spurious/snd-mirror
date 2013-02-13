@@ -118,15 +118,23 @@
 	       x))
 	 sequence)))
 
+#|
+(define (count-table commands)
+  (do ((count 0 (+ count 1))
+       (c (memq 'table commands) (memq 'table (cdr c))))
+      ((not c) count)))
+;;; but sadly the for-each version below is faster.
+|#
 
 (define (count-table commands)
   (let ((count 0))
     (for-each
      (lambda (c)
-       (if (memq c '(table TABLE))
+       (if (eq? c 'table)
 	   (set! count (+ count 1))))
      commands)
     count))
+
 
 
 (define (string</* a b)
@@ -202,18 +210,15 @@
 	 
 	 (letrec ((search-caps ; caps is the list of names with upper case chars from the make-index-1 invocation ("AIFF" for example) 
 		   (lambda (ln)
-		     (call-with-exit
-		      (lambda (return)
-			(when caps
-			      (for-each
-			       (lambda (cap)
-				 (when (string-position cap ln)
-				       (return #t)))
-			       caps)))))))
-	   (when (not (search-caps line))
-	     ;; now the hard part -- find the first character of the >name< business and downcase it
-	     (let ((bpos (char-position #\> line)))
-	       (set! (line (+ bpos 1)) (char-downcase (line (+ bpos 1)))))))
+		     (and caps
+			  (do ((cap caps (cdr cap)))
+			      ((or (null? cap)
+				   (string-position (car cap) ln))
+			       (not (null? cap))))))))
+	   (if (not (search-caps line))
+	       ;; find the first character of the >name< business and downcase it
+	       (let ((bpos (char-position #\> line)))
+		 (set! (line (+ bpos 1)) (char-downcase (line (+ bpos 1)))))))
 	 
 	 (let ((bpos (char-position #\> line))
 	       (epos (or (string-position "</a>" line) 
@@ -1242,6 +1247,7 @@
 					    (begin
 					      (if closing
 						  (let ((closer (string->symbol (substring line (+ start 2) i))))
+						    (if (eq? closer 'TABLE) (set! closer 'table))
 						    (if (memq closer '(center big font))
 							(format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr closer line)
 							(if (eq? closer 'script)
@@ -1251,7 +1257,7 @@
 								    (format #t "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
 									    file linectr closer line (+ start 2) i commands)
 								    
-								    (if (memq closer '(ul tr td table TABLE small sub blockquote p
+								    (if (memq closer '(ul tr td table small sub blockquote p
 											  a A i b title pre span h1 h2 h3 code body html
 											  em head h4 sup map smaller bigger th tbody div))
 									(begin
@@ -1280,9 +1286,8 @@
 									  (set! commands (remove-one closer commands))
 									  (if (not warned)
 									      (begin
-										(if (and (memq closer '(table TABLE))
-											 (not (memq 'table commands))
-											 (not (memq 'TABLE commands)))
+										(if (and (eq? closer 'table)
+											 (not (memq 'table commands)))
 										    (begin
 										      (if (memq 'tr commands)
 											  (begin
@@ -1300,7 +1305,7 @@
 						  ;; not closing
 						  (if (not scripting)
 						      (let ((opener (string->symbol (substring line (+ start 1) i))))
-							
+							(if (eq? opener 'TABLE) (set! opener 'table))
 							(if (memq opener '(center big font))
 							    (format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr opener line)
 							    
@@ -1321,7 +1326,7 @@
 										      (format #t "~A[~D]: src not found: ~S~%" file linectr file)))))))
 								    
 								    (if (and (not (memq opener '(br spacer li hr area 
-												    ul tr td table TABLE small sub blockquote)))
+												    ul tr td table small sub blockquote)))
 									     (memq opener commands)
 									     (= p-quotes 0))
 									(format #t "~A[~D]: nested ~A? ~A from: ~A~%" file linectr opener line commands)
@@ -1338,8 +1343,8 @@
 										   (set! commands (remove-one 'td commands))
 										   (format #t "~A[~D]: unclosed td at table~%" file linectr))))
 									    ((tr)
-									     (if (and (not (memq (car commands) '(table TABLE)))
-										      (not (memq (cadr commands) '(table TABLE))))
+									     (if (and (not (eq? (car commands) 'table))
+										      (not (eq? (cadr commands) 'table)))
 										 (format #t "~A[~D]: tr without table?~%" file linectr))
 									     (if (and (not warned)
 										      (memq 'tr commands)
@@ -1349,10 +1354,10 @@
 										   (set! commands (remove-one 'tr commands))
 										   (format #t "~A[~D]: unclosed tr at table~%" file linectr))))
 									    ((p)
-									     (if (memq (car commands) '(table TABLE))
+									     (if (eq? (car commands) 'table)
 										 (format #t "~A[~D]: unclosed table?~%" file linectr)))
 									    
-									    ((pre br table TABLE hr img ul)
+									    ((pre br table hr img ul)
 									     (if (memq 'p commands)
 										 (format #t "~A[~D]: ~A within <p>?~%" file linectr opener)))
 									    ((li)

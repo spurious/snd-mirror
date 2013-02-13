@@ -2274,6 +2274,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
 static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym);
 static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl);
+static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value);
 static s7_pointer find_method(s7_scheme *sc, s7_pointer env, s7_pointer symbol);
 static s7_pointer find_environment(s7_scheme *sc, s7_pointer obj);
 static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator);
@@ -2320,7 +2321,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 1
+#if 0
 #if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -27535,10 +27536,30 @@ static bool c_function_is_ok(s7_scheme *sc, s7_pointer x)
 
 #endif
 
-static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value);
+
+static bool arglist_has_accessed_symbol(s7_pointer args)
+{
+  /* rest arg if any not checked */
+  s7_pointer p;
+  for (p = args; is_pair(p); p = cdr(p))
+    if (((is_symbol(car(p))) && (symbol_has_accessor(car(p)))) ||
+	((is_pair(car(p))) && (symbol_has_accessor(caar(p)))))
+      return(true);
+  return(false);
+}
+
+
+static bool arglist_has_keyword(s7_pointer args)
+{
+  s7_pointer p;
+  for (p = args; is_pair(p); p = cdr(p))
+    if (is_keyword(car(p)))
+      return(true);
+  return(false);
+}
+
+
 static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code);
-static bool arglist_has_accessed_symbol(s7_pointer args);
-/* TODO: reorganize this code! */
 
 static void initialize_dox_vars(s7_scheme *sc, s7_pointer end)
 {
@@ -33589,7 +33610,6 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	      /* if len is 1 can't we just call apply?
 	       */
 	    }
-	  /* TODO: here and in map if closure body is all_x, do it in place? */
 
 	  if ((is_safe_procedure(sc->code)) &&
 	      (is_c_function(sc->code)) &&
@@ -37981,28 +38001,6 @@ static s7_function cond_all_x_eval(s7_scheme *sc, s7_pointer arg)
 
 
 
-static bool arglist_has_accessed_symbol(s7_pointer args)
-{
-  /* rest arg if any not checked */
-  s7_pointer p;
-  for (p = args; is_pair(p); p = cdr(p))
-    if (((is_symbol(car(p))) && (symbol_has_accessor(car(p)))) ||
-	((is_pair(car(p))) && (symbol_has_accessor(caar(p)))))
-      return(true);
-  return(false);
-}
-
-
-static bool arglist_has_keyword(s7_pointer args)
-{
-  s7_pointer p;
-  for (p = args; is_pair(p); p = cdr(p))
-    if (is_keyword(car(p)))
-      return(true);
-  return(false);
-}
-
-
 static void choose_c_function(s7_scheme *sc, s7_pointer expr, s7_pointer func, int args)
 {
   set_c_function(expr, c_function_chooser(func)(sc, func, args, expr));
@@ -40416,7 +40414,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	  break;
 	  
 	case OP_DO:
-	  set_safe_do_level(sc, 0); /* TODO: figure out how to minimize this ridiculous thing */
+	  set_safe_do_level(sc, 0); /* someday figure out how to minimize this ridiculous thing */
 
 	  /* (do (...) (...) ...) */
 	  if (!is_pair(cddr(x)))
@@ -43396,8 +43394,6 @@ static s7_pointer check_do(s7_scheme *sc)
 					  else
 					    {
 					      /* fprintf(stderr, "perhaps safe: %s\n", DISPLAY(body)); */
-					      /* HOP_SAFE_C_SS also happens, HOP_SAFE_opSq_S
-					       */
 					      if ((is_syntactic(caar(body))) &&
 						  (syntax_opcode(caar(body)) == OP_LET) &&
 						  (!is_null(cadar(body))) && /* it has at least one let var */
@@ -43415,7 +43411,7 @@ static s7_pointer check_do(s7_scheme *sc)
 						      if ((is_pair(x)) &&
 							  (is_optimized(x)) &&
 							  (returns_temp(ecdr(x))) &&
-							  (optimize_data(x) == HOP_SAFE_C_C)) /* TODO: is c_c necessary? */
+							  (optimize_data(x) == HOP_SAFE_C_C)) /* all_x_safe doesn't happen much here */
 							set_syntax_op(sc->code, sc->SIMPLE_SAFE_DOTIMES);
 						    }
 						}
@@ -45045,7 +45041,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	fcdr(code) = sc->code;
 	push_stack(sc, OP_SAFE_DO_STEP, sc->args, code);
 	goto BEGIN;
-#endif
+#else
 
 	if ((is_null(cdr(sc->code))) &&
 	    (is_pair(car(sc->code))))
@@ -45073,9 +45069,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			(ecdr(car(cadr(code))) != geq_2))
 		      {
 			/* (set! j (+ j 1) and many of the form (set! (sym i [j]) (...))
-			 *   we could get the setter from sym, then use setter(sym_val, i, [j], val) in the loop
-			 * use slot_pending_value for the sym and index, do bounds/type checks ahead of the loop:
-			 *   in the equivalent of all_x_eval?  cases are in tmp/vct.c and below.
 			 */
 			s7_pointer step_slot, end_slot, callee;
 			step_slot = environment_dox1(sc->envir);
@@ -45104,45 +45097,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    else
 	      {
-		/* TODO: all_x here (and the set_op code in tmp could be combined in do_step_p) */
-		if ((is_optimized(sc->code)) &&
-		    (optimize_data(sc->code) == HOP_SAFE_C_C) &&
-		    (c_function_looped(ecdr(sc->code))) &&
-		    (ecdr(car(cadr(code))) != geq_2))
-		  {
-		    /* we can't get here if we're actually setting the step or end vars (pace check_do),
-		     *   so we can safely set up a dotimes_c_c lookalike loop.
-		     */
-		    s7_pointer func, body, stepper, result;
-		    s7_function f;
-
-		    slot_set_value(environment_dox1(sc->envir), make_mutable_integer(sc, s7_integer(init_val)));
-		    denominator(slot_value(environment_dox1(sc->envir))) = s7_integer(end_val);
-		    
-		    func = sc->code;
-		    body = cdr(sc->code);
-		    stepper = slot_value(environment_dox1(sc->envir));
-
-		    f = (s7_function)c_function_call(c_function_looped(ecdr(func)));
-		    result = f(sc, sc->args = cons(sc, stepper, body));
-		    if (result)
-		      {
-			sc->code = cdr(cadr(code));
-			goto BEGIN;
-		      }
-		    /* else fall into the ordinary loop */
-		    
-		    while (true)
-		      {
-			c_call(func)(sc, body);
-			numerator(stepper)++;
-			if (numerator(stepper) == denominator(stepper))
-			  {
-			    sc->code = cdr(cadr(sc->code));
-			    goto BEGIN;
-			  }
-		      }
-		  }
 		push_stack(sc, OP_SAFE_DO_STEP_A, sc->args, code);
 		goto NS_EVAL;
 	      }
@@ -45150,6 +45104,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	fcdr(code) = sc->code;
 	push_stack(sc, OP_SAFE_DO_STEP, sc->args, code);
 	goto BEGIN;
+#endif
       }
 
 
