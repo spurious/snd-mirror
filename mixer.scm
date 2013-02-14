@@ -5,6 +5,8 @@
 
 (provide 'snd-mixer.scm)
 
+(define make-zero-mixer make-mixer)
+
 (define (mixer-copy umx)
   "(mixer-copy umx) returns a copy of its argument (a mixer)"
   (let* ((size (length umx))
@@ -16,7 +18,6 @@
 	(set! (mx i j) (umx i j))))
     mx))
 
-(define make-zero-mixer make-mixer)
 
 (define (mixer-diagonal? m)
   "(mixer-diagonal? m) returns #t if 'm' is a diagonal mixer"

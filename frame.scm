@@ -50,6 +50,8 @@
 	  (set! (nfr i) (fr i)))
 	nfr)))
 
+;; TODO: does (copy fr) not return a frame?
+
 #|
 (define (frame-cross m1 m2)
   "(frame-cross fr1 fr2) returns the cross product (a frame) of frames fr1 and fr2"

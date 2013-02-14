@@ -259,7 +259,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 	  (frq-f (make-env (stretch-envelope '(0 0  25 1  75 1  100 0)
 					     25 (min 25 (* 100 (/ frqatt dur)))
 					     75 dec-01)
-			   :scaler frqskw :duration dur))
+			   :scaler frqskw :offset 1.0 :duration dur))
 	  (ampattpt1 (min 25 (* 100 (/ ampatt1 dur))))
 	  (ampdecpt1 (max 75 (* 100 (- 1.0 (/ ampdec1 dur)))))
 	  (ampattpt2 (min 25 (* 100 (/ ampatt2 dur))))
@@ -282,7 +282,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 	    ((= i end))
 	  (let ((frq-change (hz->radians (* (+ 1.0 (rand-interp ran-vib))
 					    (+ 1.0 (* (env per-vib-f) (oscil per-vib)))
-					    (+ 1.0 (env frq-f))))))
+					    (env frq-f)))))
 	    (locsig loc i (+ (* (env car1-f) 
 				(oscil car1 (* frq-change 
 					       (+ frq1 (* (env mod1-f) 
