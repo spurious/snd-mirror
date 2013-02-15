@@ -4849,7 +4849,7 @@ index 10 (so 10/2 is the bes-jn arg):
       (gen2 (make-oscil 440.0)))
   (do ((i 0 (+ i 1)))
       ((= i 1000))
-    (let* ((pm (- 1.0 (random 2.0)))
+    (let* ((pm (mus-random 1.0))
 	   (val1 (oscil gen1 0.0 pm))
 	   (val2 (run-with-fm-and-pm gen2 0.0 pm)))
       (if (fneq val1 val2)

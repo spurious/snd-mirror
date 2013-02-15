@@ -58,13 +58,13 @@
 	     (set! dy (- y oldy))
 	     (set! oldy y)
 	     ;;straight uniform distribution for y
-	     (set! ydev (round (* (- 1.0 (random 2.0)) .01 b ywig)))
+	     (set! ydev (round (mus-random (* .01 b ywig))))
 	     ;;gaussian distribution for x
 	     (set! xdev 
 		   (* xstep (round 
 			     (* xwig 
-				(sqrt (* -2.0 (log (- 1 (random 1.0)))))
-				(cos (* 6.283185307179586 (random 1.0)))))))
+				(sqrt (* -2.0 (log (- 1 (random 1.0))))) ; ??
+				(cos (random 6.283185307179586))))))
 	     (set! (xy-array (modulo m xy-array-l))
 		       ;;mirror stuff for x
 		       (cond ((or  (< (round xmax) (+ dx xdev))

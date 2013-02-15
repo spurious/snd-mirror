@@ -688,7 +688,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
     f1))
 
 (let ((ind (new-sound "test.snd")))
-  (map-channel (lambda (y) (- 1.0 (random 2.0))) 0 10000)
+  (map-channel (lambda (y) (mus-random 1.0)) 0 10000)
   (let ((f2 (make-bandpass-2 (* .12 pi) (* .15 pi) (* .22 pi) (* .25 pi) 100)))
     (map-channel (lambda (y) (fir-filter f2 y)))
     ))

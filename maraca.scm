@@ -44,7 +44,7 @@
 	  (if (< (random 1.0) probability)
 	      (set! snd-level (+ snd-level (* gain shake-energy))))
 	  ;; actual sound is random
-	  (set! input (* snd-level (- (random 2.0) 1.0)))
+	  (set! input (mus-random snd-level))
 	  ;; compute exponential sound decay
 	  (set! snd-level (* snd-level sound-decay))
 	  ;; gourd resonance filter calc
@@ -72,14 +72,13 @@
 	  (input 0.0)
 	  (sum 0.0)
 	  (last-sum 0.0)
-	  (basesf (make-vct resn))
 	  (tzs (make-vector resn))
 	  (h20 (hz->radians 20.0))
 	  (stop 0)
 	  (sndamp (/ amp (* 16384.0 resn)))
 	  (srate4 (floor (/ (mus-srate) 4)))
 	  (gain (/ (* (log num-beans 4) 40) num-beans))
-	  (oz (make-one-zero 1.0 1.0)))
+	  (oz (make-one-zero (/ amp (* resn 16384.0)) (/ amp (* resn 16384.0)))))
 
       ;; we need to fixup Perry's frequency dithering amount since we're going through our mus-frequency method
       (set! randiff (radians->hz randiff))
@@ -115,7 +114,7 @@
 		  (set! (mus-frequency (vector-ref tzs j)) (+ (shell-freqs j) (mus-random randiff))))))
 
 	  ;; actual sound is random
-	  (set! input (* snd-level (- (random 2.0) 1.0)))
+	  (set! input (mus-random snd-level))
 	  ;; compute exponential sound decay
 	  (set! snd-level (* snd-level sound-decay))
 
@@ -127,7 +126,7 @@
 	    (set! sum (+ sum (two-pole (vector-ref tzs j) input))))
 
 	  (if with-filters
-	      (outa k (* sndamp (one-zero oz (- sum last-sum))))
+	      (outa k (one-zero oz (- sum last-sum)))
 	      (outa k (* sndamp sum))))))))
 	  
 ;;; tambourine: (with-sound (:play #t :statistics #t) (big-maraca 0 1 .25 0.95 0.9985 .03125 '(2300 5600 8100) '(0.96 0.995 0.995) .01))

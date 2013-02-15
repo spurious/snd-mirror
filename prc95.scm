@@ -81,8 +81,7 @@
 	  (dout 0.0))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
-	(set! dout (delayl delayline (+ (* 0.99 dout)
-					(* maxa (- 1.0 (random 2.0)))))))
+	(set! dout (delayl delayline (+ (* 0.99 dout) (mus-random maxa)))))
       (do ((i start (+ i 1)))
 	  ((= i end))
 	(set! dout (delayl delayline (one-zero filter dout)))
@@ -254,7 +253,7 @@
 	(set-gain filter -1.0)
 	(do ((i st (+ i 1)))
 	    ((= i end))
-	  (let ((randpressure (* 0.1 breathpressure (random 1.0)))
+	  (let ((randpressure (random (* 0.1 breathpressure)))
 		(temp 0.0) 
 		(pressurediff 0.0))
 	    (set! sinphase (+ sinphase 0.0007))		;5 hz vibrato?

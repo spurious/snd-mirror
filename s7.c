@@ -41846,7 +41846,10 @@ static s7_pointer check_if(s7_scheme *sc)
 						    }
 						  else
 						    {
-						      if (optimize_data(test) == HOP_SAFE_C_op_opSSq_q_C)
+						      if ((optimize_data(test) == HOP_SAFE_C_op_opSSq_q_C) &&
+							  (c_call(test) == g_greater_s_fc) && /* this checks that caddr is T_REAL, and args == 2 */
+							  ((c_call(cadr(test)) == g_magnitude) || (c_call(cadr(test)) == g_abs)) &&
+							  (c_call(cadr(cadr(test))) == g_subtract_2))
 							{
 							  set_syntax_op(sc->code, sc->IF_GT_P);
 							  fcdr(sc->code) = cadr(cadr(test));
@@ -53686,15 +53689,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	/* code: ((> (magnitude (- old new)) 0.001)...)
 	 */
-	s7_pointer arg;
+	s7_pointer arg, val1, val2;
+	bool happy;
 	arg = fcdr(sc->code);  /* cadr(cadr(test)) => (- old new) */
-	car(sc->T2_1) = finder(sc, cadr(arg));
-	car(sc->T2_2) = finder(sc, caddr(arg));
-	car(sc->T1_1) = c_call(arg)(sc, sc->T2_1);
-	arg = car(sc->code);
-	car(sc->T2_1) = c_call(cadr(arg))(sc, sc->T1_1);
-	car(sc->T2_2) = caddr(arg);
-	if (is_true(sc, c_call(arg)(sc, sc->T2_1)))
+	val1 = finder(sc, cadr(arg));
+	val2 = finder(sc, caddr(arg));
+	if ((type(val1) == T_REAL) &&
+	    (type(val2) == T_REAL))
+	  happy = (fabs(real(val1) - real(val2)) > real(caddar(sc->code)));
+	else
+	  {
+	    s7_Double x;
+	    car(sc->T2_1) = val1;
+	    car(sc->T2_2) = val2;
+	    car(sc->T1_1) = g_subtract_2(sc, sc->T2_1);
+	    x = s7_number_to_real(sc, g_magnitude(sc, sc->T1_1)); /* or maybe c_call here to get abs? */
+	    happy = (x > real(caddar(sc->code)));
+	  }
+	if (happy)
 	  {
 	    sc->code = cadr(sc->code);
 	    goto EVAL;
@@ -62371,7 +62383,7 @@ s7_scheme *s7_init(void)
  * easy closure_arity done right away?  0/1 should not be expensive -- maybe just set it!
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5
- * bench    42736 8752 8051 7725 6515 5194 5150
+ * bench    42736 8752 8051 7725 6515 5194 4514
  * lint           9328 8140 7887 7736 7300 7244
  * index    44300 3291 3005 2742 2078 1643 1463
  * s7test    1721 1358 1297 1244  977  961  959

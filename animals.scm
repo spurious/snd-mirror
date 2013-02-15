@@ -1029,7 +1029,7 @@
 	    (set! (mus-frequency frm2) (+ 1000 (* intrp 200)))
 	    (outa i (formant-bank fs fb (* (env ampf)
 					   (+ .8 (rand-interp rnd))
-					   (+ (rxyk!cos f1 (* 2.0 frq))
+					   (+       (rxyk!cos f1 (* 2.0 frq))
 					      (* .5 (rxyk!cos f2 (* 2.3 frq)))
 					      (* .1 (rxyk!cos f3 (* 6.0 frq)))
 					      (* .1 (rxyk!cos f4 (* 6.3 frq)))))))))))))

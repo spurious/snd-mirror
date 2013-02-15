@@ -554,8 +554,9 @@
 	  (if (not (provided? 'snd-snd-gtk.scm)) (load "snd-gtk.scm")))))
 
 
-(define default-file-buffer-size 65536)
-(set! (mus-file-buffer-size) default-file-buffer-size)
+;(define default-file-buffer-size 65536)
+(define default-file-buffer-size (mus-file-buffer-size))
+;(set! (mus-file-buffer-size) default-file-buffer-size)
 
 (if (not (defined? 'pi)) 
     (snd-display #__line__ ";pi is not defined!")
@@ -3336,8 +3337,8 @@
 		       ((= k chans))
 		     (do ((i 0 (+ i 1)))
 			 ((= i samps))
-		       (sound-data-set! sdata k i (- (random 2.0) 1.0))))
-		  (mus-sound-write fd 0 (- samps 1) chans sdata)
+		       (sound-data-set! sdata k i (mus-random 1.0))))
+		   (mus-sound-write fd 0 (- samps 1) chans sdata)
 		  (mus-sound-close-output fd (* samps chans (mus-bytes-per-sample (car df-ht))))
 		  (set! fd (mus-sound-open-input "fmv5.snd"))
 		  (mus-sound-read fd 0 (- samps 1) chans ndata)
@@ -8601,7 +8602,7 @@ EDITS: 5
 	  (close-sound ind))
 	
 	(let ((ind (new-sound "test.snd")))
-	  (map-channel (lambda (y) (- 1.0 (random 2.0))) 0 10000)
+	  (map-channel (lambda (y) (mus-random 1.0)) 0 10000)
 	  (let ((f2 (make-bandpass-2 (* .12 pi) (* .15 pi) (* .22 pi) (* .25 pi) 100)))
 	    (map-channel (lambda (y) (fir-filter f2 y)))
 	    (let ((data (channel->vct)))
@@ -15766,7 +15767,7 @@ EDITS: 2
 					((= i size))
 				      (do ((j 0 (+ j 1)))
 					  ((= j size))
-					(set! (mx i j) (- 1.0 (random 2.0)))))
+					(set! (mx i j) (mus-random 1.0))))
 				    mx)))
 	     )
       (if (fneq (mixer-determinant (make-mixer 2 1 2 3 4)) -2.0)
@@ -21421,7 +21422,7 @@ EDITS: 2
       
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
-	(vct-set! data i (- 0.5 (random 1.0))))
+	(vct-set! data i (mus-random 0.5)))
       (set! g (make-moving-length 4))
       (do ((i 0 (+ i 1))) ((= i 12)) (set! (odata i) (moving-length g (data i))))
       (do ((i -3 (+ i 1))
@@ -21436,7 +21437,7 @@ EDITS: 2
       
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
-	(vct-set! data i (- 0.5 (random 1.0))))
+	(vct-set! data i (mus-random 0.5)))
       (set! g (make-moving-sum 4))
       (do ((i 0 (+ i 1))) ((= i 12)) (set! (odata i) (moving-sum g (data i))))
       (do ((i -3 (+ i 1))
@@ -21451,7 +21452,7 @@ EDITS: 2
       
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
-	(vct-set! data i (- 0.5 (random 1.0))))
+	(vct-set! data i (mus-random 0.5)))
       (set! g (make-moving-rms 4))
       (do ((i 0 (+ i 1))) ((= i 12)) (set! (odata i) (moving-rms g (data i))))
       (do ((i -3 (+ i 1))
@@ -24612,7 +24613,7 @@ EDITS: 2
   
   (define (spectral-difference snd1 snd2)
     (let* ((size (max (frames snd1) (frames snd2)))
-	   (pow2 (ceiling (/ (log size) (log 2))))
+	   (pow2 (ceiling (log size 2)))
 	   (fftlen (expt 2 pow2))
 	   (fdr1 (channel->vct 0 fftlen snd1 0))
 	   (fdr2 (channel->vct 0 fftlen snd2 0)))
@@ -26977,20 +26978,16 @@ EDITS: 2
 				    (setfnc #t index)
 				    (if (rational? minval)
 					(if (equal? name #t)
-					    (setfnc (floor (expt 2 (min 31 
-									(ceiling (/ (log (+ minval (floor (* (- maxval minval) (random 1.0)))))
-										    (log 2))))))
-						    index)
-					    (setfnc (+ minval (floor (* (- maxval minval) (random 1.0)))) index))
-					(setfnc (+ minval (* (- maxval minval) (random 1.0))) index)))
+					    (setfnc (floor (expt 2 (min 31 (ceiling (log (+ minval (floor (random (- maxval minval)))) 2))))) index)
+					    (setfnc (+ minval (floor (random (- maxval minval)))) index))
+					(setfnc (+ minval (random (- maxval minval))) index)))
 				(if (equal? minval #f)
 				    (setfnc-1 #t)
 				    (if (rational? minval)
 					(if (equal? name #t)
-					    (setfnc-1 (floor (expt 2 (min 31 (ceiling (/ (log (+ minval (floor (* (- maxval minval) (random 1.0)))))
-											 (log 2)))))))
-					    (setfnc-1 (+ minval (floor (* (- maxval minval) (random 1.0))))))
-					(setfnc-1 (+ minval (* (- maxval minval) (random 1.0)))))))
+					    (setfnc-1 (floor (expt 2 (min 31 (ceiling (log (+ minval (floor (random (- maxval minval)))) 2))))))
+					    (setfnc-1 (+ minval (floor (random (- maxval minval))))))
+					(setfnc-1 (+ minval (random (- maxval minval)))))))
 			    (reset-vars (cdr lst)))))))
 	    (reset-vars 
 	     (list
@@ -27235,9 +27232,9 @@ EDITS: 2
   (define (freq-peak beg ind size)
     (define (interpolated-peak-offset la ca ra)
       (let* ((pk (+ .001 (max la ca ra)))
-	     (logla (/ (log (/ (max la .0000001) pk)) (log 10)))
-	     (logca (/ (log (/ (max ca .0000001) pk)) (log 10)))
-	     (logra (/ (log (/ (max ra .0000001) pk)) (log 10))))
+	     (logla (log (/ (max la .0000001) pk) 10))
+	     (logca (log (/ (max ca .0000001) pk) 10))
+	     (logra (log (/ (max ra .0000001) pk) 10)))
 	(/ (* 0.5 (- logla logra))
 	   (- (+ logla logra)
 	      (* 2 logca)))))
@@ -29095,7 +29092,7 @@ EDITS: 2
 			      ((= i pts))
 			    (set! e1 (cons x e1))
 			    (if (> (random 3) 0)
-				(set! y (- (random 2.0) 1.0)))
+				(set! y (mus-random 1.0)))
 			    (set! e1 (cons y e1))
 			    (if (> (abs y) maxpt) (set! maxpt (abs y)))
 			    (set! x (+ x .01 (random 1.0))))
@@ -29133,7 +29130,7 @@ EDITS: 2
 			     ((= i pts))
 			   (set! e1 (cons x e1))
 			   (if (> (random 3) 0)
-			       (set! y (- (random 2.0) 1.0)))
+			       (set! y (mus-random 1.0)))
 			   (set! e1 (cons y e1))
 			   (if (> (abs y) maxpt) (set! maxpt (abs y)))
 			   (set! x (+ x .01 (random 1.0))))
@@ -29184,7 +29181,7 @@ EDITS: 2
 			     ((= i pts))
 			   (set! e1 (cons x e1))
 			   (if (> (random 3) 0)
-			       (set! y (- (random 2.0) 1.0)))
+			       (set! y (mus-random 1.0)))
 			   (set! e1 (cons y e1))
 			   (if (> (abs y) maxpt) (set! maxpt (abs y)))
 			   (set! x (+ x .01 (random 1.0))))
@@ -32303,7 +32300,7 @@ EDITS: 1
   (define* (hilbert-transform-via-fft snd chn)
     "same as FIR version but use FFT and change phases by hand"
     (let* ((size (frames snd chn))
-	   (len (expt 2 (ceiling (/ (log size) (log 2.0)))))
+	   (len (expt 2 (ceiling (log size 2.0))))
 	   (rl (make-vct len))
 	   (im (make-vct len))
 	   (rd (make-sampler 0 snd chn))
@@ -34530,7 +34527,7 @@ EDITS: 1
     (let* ((len0 (frames snd0 chn0))
 	   (len1 (frames snd1 chn1))
 	   (ilen (max len0 len1))
-	   (pow2 (ceiling (/ (log ilen) (log 2))))
+	   (pow2 (ceiling (log ilen 2)))
 	   (fftlen (expt 2 pow2))
 	   (fftscale (/ 1.0 fftlen))
 	   (rl1 (channel->vct 0 fftlen snd1 chn1))
@@ -34567,7 +34564,7 @@ EDITS: 1
   
   (define* (automorph a b c d snd chn)
     (let* ((len (frames snd chn))
-	   (pow2 (ceiling (/ (log len) (log 2))))
+	   (pow2 (ceiling (log len 2)))
 	   (fftlen (expt 2 pow2))
 	   (fftlen2 (/ fftlen 2))
 	   (fftscale (/ 1.0 fftlen))
@@ -35115,8 +35112,8 @@ EDITS: 1
 	      (v4 #f))
 	  (do ((i 0 (+ i 1)))
 	      ((= i 128))
-	    (vct-set! v1 i (- 5.0 (random 10.0)))
-	    (vct-set! v2 i (- 0.5 (random 1.0))))
+	    (vct-set! v1 i (mus-random 5.0))
+	    (vct-set! v2 i (mus-random 0.5)))
 	  (set! v3 (vct-copy v1))
 	  (set! v4 (vct-copy v2))
 	  (set! v1 (cross-correlate-3 v1 v2 128))
@@ -35704,7 +35701,7 @@ EDITS: 1
 	      (v0 (make-vct 8)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i 8))
-	    (vct-set! v i (- (random 2.0) 1.0))
+	    (vct-set! v i (mus-random 1.0))
 	    (vct-set! v0 i (vct-ref v i)))
 	  (set! v (vct-scale! (dht (dht v)) (/ 1.0 8.0)))
 	  (if (not (vvequal v v0))
@@ -35996,8 +35993,8 @@ EDITS: 1
 	     (v2 (make-vector len)))
 	(do ((k 0 (+ k 1)))
 	    ((= k len))
-	  (vct-set! v0 k (- (random 1.0) 0.5))
-	  (vct-set! v1 k (- (random 1.0) 0.5))
+	  (vct-set! v0 k (mus-random 0.5))
+	  (vct-set! v1 k (mus-random 0.5))
 	  (vector-set! v2 k (make-rectangular (v0 k) (v1 k))))
 	(let ((sum 0.0)
 	      (mx 0.0))
@@ -36031,8 +36028,8 @@ EDITS: 1
 	     (v3 (make-vct len)))
 	(do ((k 0 (+ k 1)))
 	    ((= k len))
-	  (vct-set! v0 k (- (random 1.0) 0.5))
-	  (vct-set! v1 k (- (random 1.0) 0.5))
+	  (vct-set! v0 k (mus-random 0.5))
+	  (vct-set! v1 k (mus-random 0.5))
 	  (set! (v2 k) (v0 k))
 	  (set! (v3 k) (v1 k)))
 	(let ()
@@ -37044,7 +37041,7 @@ EDITS: 1
 						   (read-sample sf)))))))))
 	  (list 'fft (lambda ()
 		       (let* ((len (frames))
-			      (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
+			      (fsize (expt 2 (ceiling (log len 2))))
 			      (rl (channel->vct 0 fsize))
 			      (im (make-vct fsize)))
 			 (mus-fft rl im fsize)
@@ -41011,7 +41008,7 @@ EDITS: 1
 	(gen2 (make-oscil 440.0)))
     (do ((i 0 (+ i 1)))
 	((= i 1000))
-      (let* ((pm (- 1.0 (random 2.0)))
+      (let* ((pm (mus-random 1.0))
 	     (val1 (oscil gen1 0.0 pm))
 	     (val2 (run-with-fm-and-pm gen2 0.0 pm))) ; generators.scm
 	(if (fneq val1 val2)
@@ -41023,7 +41020,7 @@ EDITS: 1
      (do ((i 0 (+ i 1)))
 	 ((or (not happy)
 	      (= i 1000)))
-       (let* ((pm (- 1.0 (random 2.0)))
+       (let* ((pm (mus-random 1.0))
 	      (val1 (oscil gen1 0.0 pm))
 	      (val2 (run-with-fm-and-pm gen2 0.0 pm)))
 	 (if (fneq val1 val2)
@@ -44918,7 +44915,7 @@ EDITS: 1
        ;; since the minimum band is 10 Hz here, 
        ;;   cur-srate/10 rounded up to next power of 2 seems a safe filter size
        ;;   filter-sound will actually use overlap-add convolution in this case
-       (expt 2 (ceiling (/ (log (/ cur-srate 10.0)) (log 2.0))))
+       (expt 2 (ceiling (log (/ cur-srate 10.0) 2.0)))
        snd chn)))
   
   (define* (reverse-channels snd)
@@ -47333,4 +47330,24 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  1,152,081,109  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
    994,531,852  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
+
+14-Feb:
+87,662,103,895
+13,614,630,038  s7.c:eval [/home/bil/snd-13/snd]
+ 6,314,829,888  ???:sin [/lib64/libm-2.12.so]
+ 5,642,085,092  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
+ 2,960,410,949  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 2,869,192,236  s7.c:gc [/home/bil/snd-13/snd]
+ 2,852,865,701  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,753,086,634  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 2,471,012,542  ???:cos [/lib64/libm-2.12.so]
+ 2,428,308,408  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,327,330,592  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
+ 1,585,066,774  clm.c:mus_formant [/home/bil/snd-13/snd]
+ 1,451,773,854  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
+   955,461,568  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
+
 |#

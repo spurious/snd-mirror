@@ -200,36 +200,36 @@
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
 	(os (make-oscil freq))
-	(oz (make-one-zero 0.4 0.6)))
+	(oz (make-one-zero (* amp 0.4) (* amp 0.6))))
     (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (one-zero oz (oscil os)))))))
+      (outa i (one-zero oz (oscil os))))))
 
 (define (simple-op beg dur freq amp)
   "(simple-op beg dur freq amp) test instrument for one-pole"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
 	(os (make-oscil freq))
-	(oz (make-one-pole 0.4 -0.6)))
+	(oz (make-one-pole (* amp 0.4) -0.6)))
     (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (one-pole oz (oscil os)))))))
+      (outa i (one-pole oz (oscil os))))))
 
 (define (simple-tz beg dur freq amp)
   "(simple-tz beg dur freq amp) test instrument for two-zero"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
 	(os (make-oscil freq))
-	(oz (make-two-zero 0.4 0.3 0.3)))
+	(oz (make-two-zero (* amp 0.4) (* amp 0.3) (* amp 0.3))))
     (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (two-zero oz (oscil os)))))))
+      (outa i (two-zero oz (oscil os))))))
 
 (define (simple-tp beg dur freq amp)
   "(simple-tp beg dur freq amp) test instrument for two-pole"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
 	(os (make-oscil freq))
-	(oz (make-two-pole 0.3 -0.6 0.1)))
+	(oz (make-two-pole (* amp 0.3) -0.6 0.1)))
     (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (two-pole oz (oscil os)))))))
+      (outa i (two-pole oz (oscil os))))))
 
 (define (simple-frm beg dur freq amp)
   "(simple-frm beg dur freq amp) test instrument for formant"

@@ -67,7 +67,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	  
 	  (do ((i 0 (+ i 1)))
 	      ((= i dlen))
-	    (set! (tab i) (- 1.0 (random 2.0))))
+	    (set! (tab i) (mus-random 1.0)))
 	  (do ((i beg (+ i 1)))
 	      ((= i end))
 	    (let ((val (tab ctr)))	;current output value
@@ -1742,18 +1742,26 @@ is a physical model of a flute:
 	  (cn (if (not with-noise)
 		  (make-ncos cosfreq0 cosnum)
 		  #f)))
-      (do ((i beg (+ i 1)))
-	  ((= i end))
-	(let ((input1 (if with-noise
-			  (* (env ampf) (rand rn))
-			  (* (env ampf) (ncos cn (env frqf))))))
-	  (locsig loc i (+ (two-pole f1 (* input1 g1))
-			   (two-pole f2 (* input1 g2))
-			   (two-pole f3 (* input1 g3)))))))))
+      (set! (mus-xcoeff f1 0) g1)
+      (set! (mus-xcoeff f2 0) g2)
+      (set! (mus-xcoeff f3 0) g3)
+      (if with-noise
+	  (do ((i beg (+ i 1)))
+	      ((= i end))
+	    (let ((input1 (* (env ampf) (rand rn))))
+	      (locsig loc i (+ (two-pole f1 input1)
+			       (two-pole f2 input1)
+			       (two-pole f3 input1)))))
+	  (do ((i beg (+ i 1)))
+	      ((= i end))
+	    (let ((input1 (* (env ampf) (ncos cn (env frqf)))))
+	      (locsig loc i (+ (two-pole f1 input1)
+			       (two-pole f2 input1)
+			       (two-pole f3 input1)))))))))
 
 
-;  (resflt 0 1.0 0 0 0 #f .1 200 230 10 '(0 0 50 1 100 0) '(0 0 100 1) 500 .995 .1 1000 .995 .1 2000 .995 .1)
-;  (resflt 0 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 #f #f 500 .995 .1 1000 .995 .1 2000 .995 .1)
+;  (with-sound () (resflt 0 1.0 0 0 0 #f .1 200 230 10 '(0 0 50 1 100 0) '(0 0 100 1) 500 .995 .1 1000 .995 .1 2000 .995 .1))
+;  (with-sound () (resflt 0 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 #f #f 500 .995 .1 1000 .995 .1 2000 .995 .1))
 
 
 (definstrument (scratch start file src-ratio turnaroundlist)
