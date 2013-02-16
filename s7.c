@@ -406,7 +406,7 @@ enum {OP_NO_OP,
       OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_Z,
       OP_SET_SYMBOL_SAFE_S, OP_SET_SYMBOL_SAFE_C, 
       OP_SET_SYMBOL_SAFE_SS, OP_SET_SYMBOL_SAFE_SSS, OP_SET_SYMBOL_SAFE_opSSq_S, OP_SET_SYMBOL_SAFE_S_op_S_opSSqq,
-      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_P, OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, 
+      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_P, OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_ENV_S, OP_SET_ENV_ALL_X,
       OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE,
       OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_COND_UNCHECKED,
       OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, OP_DEFINE_FUNCHECKED,
@@ -496,7 +496,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "member", "assoc", "member", "assoc",
    
    "quote", "lambda", "let", "case", 
-   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
+   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "let*", "letrec", "cond",
    "lambda*", "do", "define", "define*", "define",
@@ -582,7 +582,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SET_UNCHECKED", "OP_SET_SYMBOL_C", "OP_SET_SYMBOL_S", "OP_SET_SYMBOL_Q", "OP_SET_SYMBOL_P", "OP_SET_SYMBOL_Z", 
   "OP_SET_SYMBOL_SAFE_S", "OP_SET_SYMBOL_SAFE_C", 
   "OP_SET_SYMBOL_SAFE_SS", "OP_SET_SYMBOL_SAFE_SSS", "OP_SET_SYMBOL_SAFE_opSSq_S", "OP_SET_SYMBOL_SAFE_S_op_S_opSSqq",
-  "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_Z", "OP_SET_PAIR_P", "OP_SET_PAIR_P_1", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", 
+  "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_Z", "OP_SET_PAIR_P", "OP_SET_PAIR_P_1", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", "OP_SET_ENV_S", "OP_SET_ENV_ALL_X",
   "OP_SET_PAIR_C", "OP_SET_PAIR_C_P", "OP_SET_PAIR_C_P_1", "OP_SET_SAFE",
   "OP_LET_STAR_UNCHECKED", "OP_LETREC_UNCHECKED", "OP_COND_UNCHECKED",
   "OP_LAMBDA_STAR_UNCHECKED", "OP_DO_UNCHECKED", "OP_DEFINE_UNCHECKED", "OP_DEFINE_STAR_UNCHECKED", "OP_DEFINE_FUNCHECKED",
@@ -1307,7 +1307,7 @@ struct s7_scheme {
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z;
   s7_pointer SET_SYMBOL_SAFE_S, SET_SYMBOL_SAFE_SS, SET_SYMBOL_SAFE_SSS, SET_SYMBOL_SAFE_opSSq_S, SET_SYMBOL_SAFE_S_op_S_opSSqq;
   s7_pointer SET_SYMBOL_SAFE_C;
-  s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_P, SET_PWS, SET_PAIR_C, SET_PAIR_C_P;
+  s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_P, SET_PWS, SET_ENV_S, SET_ENV_ALL_X, SET_PAIR_C, SET_PAIR_C_P;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED;
   s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLER_1, CASE_SIMPLER_SS;
   s7_pointer CASE_SIMPLEST, CASE_SIMPLEST_SS, CASE_SIMPLEST_ELSE, CASE_SIMPLEST_ELSE_C, CASE_INT;
@@ -40654,7 +40654,14 @@ static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args, int *arity)
   for (i = 0, x = args; is_pair(x); i++, x = cdr(x))
     {
       if (s7_is_constant(car(x)))                      /* (lambda (pi) pi) */
-	return(eval_error(sc, "lambda parameter '~S is a constant", car(x)));
+	{
+	  if ((is_pair(car(x))) &&
+	      (is_symbol(caar(x))) &&
+	      (s7_is_constant(cadar(x))) &&
+	      (is_null(cddar(x))))
+	    return(eval_error(sc, "lambda parameter '~S is a constant (perhaps you want define* or lambda*?)", car(x)));
+	  return(eval_error(sc, "lambda parameter '~S is a constant", car(x)));
+	}
       
       if (symbol_is_in_arg_list(car(x), cdr(x)))       /* (lambda (a a) ...) or (lambda (a . a) ...) */
 	return(eval_error(sc, "lambda parameter '~S is used twice in the parameter list", car(x)));
@@ -42232,11 +42239,9 @@ static s7_pointer check_set(s7_scheme *sc)
 	      else
 		{
 		  if ((is_pair(cdr(inner))) &&
-		      (!is_pair(cddr(inner))) &&
-		      (!is_pair(cddr(sc->code))))
+		      (!is_pair(cddr(inner)))) /* we check cddr(sc->code) above */
 		    {
-		      if ((!is_pair(cadr(inner))) ||
-			  (car(cadr(inner)) == sc->QUOTE))
+		      if (!is_pair(cadr(inner)))
 			{
 			  if (!is_pair(value))
 			    set_syntax_op(sc->code, sc->SET_PAIR);
@@ -42248,15 +42253,30 @@ static s7_pointer check_set(s7_scheme *sc)
 			}
 		      else
 			{
-			  if ((is_optimized(cadr(inner))) &&
-			      (optimize_data(cadr(inner)) == HOP_SAFE_C_C))
+			  if ((car(cadr(inner)) == sc->QUOTE) &&
+			      (is_symbol(car(inner))) &&
+			      ((is_symbol(value)) || (is_all_x_safe(sc, value))))
 			    {
-			      if (!is_pair(value))
-				set_syntax_op(sc->code, sc->SET_PAIR_C);
+			      if (is_symbol(value))
+				set_syntax_op(sc->code, sc->SET_ENV_S);
 			      else 
 				{
-				  /* splice_in_values protects us here from values */
-				  set_syntax_op(sc->code, sc->SET_PAIR_C_P);
+				  set_syntax_op(sc->code, sc->SET_ENV_ALL_X);
+				  fcdr(cdr(sc->code)) = (s7_pointer)all_x_eval(value);
+				}
+			    }
+			  else
+			    {
+			      if ((is_optimized(cadr(inner))) &&
+				  (optimize_data(cadr(inner)) == HOP_SAFE_C_C))
+				{
+				  if (!is_pair(value))
+				    set_syntax_op(sc->code, sc->SET_PAIR_C);
+				  else 
+				    {
+				      /* splice_in_values protects us here from values */
+				      set_syntax_op(sc->code, sc->SET_PAIR_C_P);
+				    }
 				}
 			    }
 			}
@@ -52366,6 +52386,38 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto SET_PAIR_P_3;
 	
 	
+	/* ---------------- */
+      case OP_SET_ENV_S:
+	value = finder(sc, cadr(sc->code));
+	obj = find_symbol(sc, caar(sc->code));
+	if (is_slot(obj))
+	  obj = slot_value(obj);
+	else eval_error(sc, "no generalized set for ~A", caar(sc->code));
+	arg = cadr(cadar(sc->code));
+	if (is_environment(obj))
+	  {
+	    sc->value = s7_environment_set(sc, obj, arg, value);
+	    IF_BEGIN_POP_STACK(sc); 
+	  }
+	goto SET_PAIR_P_3;
+
+
+	/* ---------------- */
+      case OP_SET_ENV_ALL_X:
+	value = ((s7_function)fcdr(cdr(sc->code)))(sc, cadr(sc->code));
+	obj = find_symbol(sc, caar(sc->code));
+	if (is_slot(obj))
+	  obj = slot_value(obj);
+	else eval_error(sc, "no generalized set for ~A", caar(sc->code));
+	arg = cadr(cadar(sc->code));
+	if (is_environment(obj))
+	  {
+	    sc->value = s7_environment_set(sc, obj, arg, value);
+	    IF_BEGIN_POP_STACK(sc); 
+	  }
+	goto SET_PAIR_P_3;
+
+
 	/* --------------- */
       case OP_SET_PAIR_P_1:
 	/* car(sc->code) is a pair, caar(code) is the object with a setter, it has one (safe) argument, and one safe value to set
@@ -61430,6 +61482,8 @@ s7_scheme *s7_init(void)
   sc->SET_PAIR =              assign_internal_syntax(sc, "set!",    OP_SET_PAIR);
   sc->SET_PAIR_P =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_P);
   sc->SET_PAIR_Z =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_Z);
+  sc->SET_ENV_S =             assign_internal_syntax(sc, "set!",    OP_SET_ENV_S);
+  sc->SET_ENV_ALL_X =         assign_internal_syntax(sc, "set!",    OP_SET_ENV_ALL_X);
   sc->SET_PAIR_C =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_C);
   sc->SET_PAIR_C_P =          assign_internal_syntax(sc, "set!",    OP_SET_PAIR_C_P);
   sc->AND_UNCHECKED =         assign_internal_syntax(sc, "and",     OP_AND_UNCHECKED);
@@ -62376,7 +62430,6 @@ s7_scheme *s7_init(void)
  *   but make-hook above could presumably put the docstring in the lambda* body -can we find it there?
  *   or in the let for that matter -- could this always work?
  * TODO: give each e|f|gcdr ref a unique name
- * replace "frame" with "environment" if possible (frame collides with clm)
  * f|gcdr in let_op*q -- can let_r -> let_all_x? (or let_d similarly?)
  *   in set pair, object set et al need not use eval_args/apply if all args are all_x ops: i.e. set_pair_all_x or something
  *   TODO: get rid of all arg lambdas -- move them to the make function (*.html especially!)
@@ -62390,5 +62443,5 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14   14
  * lat        229   63   52   47   42   40   39
  * t502        90   43   39   36   29   23   21
- * calls           275  207  175  115   89   88
+ * calls           275  207  175  115   89   87
  */

@@ -38188,15 +38188,17 @@ EDITS: 1
   
   (definstrument (green4 start dur freq amp freq-env gliss noise-freq noise-width noise-max-step)
     ;; same but on freq env
-    (let ((grn (make-green-noise-interp :frequency noise-freq :amplitude noise-max-step :high (* 0.5 noise-width) :low (* -0.5 noise-width)))
+    (let ((grn (make-green-noise-interp :frequency noise-freq 
+					:amplitude (hz->radians noise-max-step)
+					:high (hz->radians (* 0.5 noise-width))
+					:low (hz->radians (* -0.5 noise-width))))
 	  (osc (make-oscil freq))
-	  (e (make-env freq-env :scaler gliss :duration dur))
-	  (beg (floor (* start (mus-srate))))
-	  (end (floor (* (+ start dur) (mus-srate)))))
+	  (e (make-env freq-env :scaler (hz->radians gliss) :duration dur))
+	  (beg (seconds->samples start))
+	  (end (seconds->samples (+ start dur))))
       (do ((i beg (+ i 1)))
 	  ((= i end))
-	(outa i (* amp (oscil osc (hz->radians (+ (env e) (green-noise-interp grn 0.0)))))))))
-					;(with-sound () (green4 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 440 100 100 10))
+	(outa i (* amp (oscil osc (+ (env e) (green-noise-interp grn 0.0))))))))
   
   (define (ws-sine freq)
     (let ((o (make-oscil freq)))
@@ -47086,6 +47088,7 @@ EDITS: 1
 ;; 9-Jan-13:  #(1 1 2 1 63 181 7 1 540 1 19 1 2 11 22 1 201 1 1 207 44 107 1 1504 0 0 0 1 1 79)  ;  30
 ;; 25-Jan-13: #(1 1 2 1 58 178 6 1 505 1 13 1 2 10 20 1 205 1 1 198 44 111 1 1487 0 0 0 1 1 75)  ;  29
 ;; 11-Feb-13: #(1 1 3 2 49 170 5 1 463 1 15 1 1 11 46 1 216 1 2 158 42 110 1 1456 0 0 0 1 1 80)  ;  28
+;; 15-Feb-13: #(1 1 2 2 42 160 5 1 450 1 18 1 1 10 21 1 196 1 1 158 42 107 1 1407 0 0 0 1 1 79)  ;  27
 
 ;;; -------- cleanup temp files
 
@@ -47312,42 +47315,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-9-Feb-13:
-88,284,878,933
-14,178,960,544  s7.c:eval [/home/bil/snd-13/snd]
- 6,316,916,314  ???:sin [/lib64/libm-2.12.so]
- 5,751,092,937  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 3,187,696,757  s7.c:eval'2 [/home/bil/snd-13/snd]
+15-Feb:
+87,301,581,742
+13,411,325,129  s7.c:eval [/home/bil/snd-13/snd]
+ 6,320,173,368  ???:sin [/lib64/libm-2.12.so]
+ 5,315,135,786  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,915,586,323  s7.c:gc [/home/bil/snd-13/snd]
- 2,725,108,321  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,703,294,848  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,485,024,770  ???:cos [/lib64/libm-2.12.so]
- 2,441,816,297  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 2,327,316,992  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 1,585,066,774  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,466,977,102  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,152,081,109  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
- 1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
-   994,531,852  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
-
-14-Feb:
-87,662,103,895
-13,614,630,038  s7.c:eval [/home/bil/snd-13/snd]
- 6,314,829,888  ???:sin [/lib64/libm-2.12.so]
- 5,642,085,092  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,960,410,949  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 2,869,192,236  s7.c:gc [/home/bil/snd-13/snd]
- 2,852,865,701  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,753,086,634  s7.c:eval'2 [/home/bil/snd-13/snd]
- 2,471,012,542  ???:cos [/lib64/libm-2.12.so]
- 2,428,308,408  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,918,662,501  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,854,647,399  s7.c:gc [/home/bil/snd-13/snd]
+ 2,814,176,060  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 2,760,323,799  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,669,878,248  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 2,487,362,142  ???:cos [/lib64/libm-2.12.so]
  2,327,330,592  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
  1,585,066,774  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,451,773,854  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,463,225,888  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,203,997,304  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
  1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
-   955,461,568  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
-
 |#

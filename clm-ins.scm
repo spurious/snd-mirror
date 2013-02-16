@@ -18,7 +18,7 @@
   "(pluck start dur freq amp weighting lossfact) implements the Jaffe-Smith plucked string physical model. 
 'weighting' is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5=shortest decay. 
 Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. 
-'lossfact' can be used to shorten decays.  Most useful values are between .8 and 1.0. (pluck 0 1 330 .3 .995 .995)"
+'lossfact' can be used to shorten decays.  Most useful values are between .8 and 1.0. (with-sound () (pluck 0 1 330 .3 .995 .995))"
 
   (define (getOptimumC S o p)
     (let* ((pa (* (/ 1.0 o) (atan (* S (sin o)) (+ (- 1.0 S) (* S (cos o))))))
@@ -32,19 +32,15 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
       (list tmpInt (/ (- (sin o) (sin (* o pc))) (sin (+ o (* o pc)))))))
   
   (define (tuneIt f s1)
-    (let* ((p (/ (mus-srate) f))	;period as float
-	   (s (if (= s1 0.0) 0.5 s1))
-	   (o (hz->radians f))
-	   (vals (getOptimumC s o p))
-	   (T1 (car vals))
-	   (C1 (cadr vals))
-	   (vals1 (getOptimumC (- 1.0 s) o p))
-	   (T2 (car vals1))
-	   (C2 (cadr vals1)))
-      (if (and (not (= s .5))
-	       (< (abs C1) (abs C2)))
-	  (list (- 1.0 s) C1 T1)
-	  (list s C2 T2))))
+    (let ((p (/ (mus-srate) f))	;period as float
+	  (s (if (= s1 0.0) 0.5 s1))
+	  (o (hz->radians f)))
+      (let ((vals (getOptimumC s o p))
+	    (vals1 (getOptimumC (- 1.0 s) o p)))
+	(if (and (not (= s .5))
+		 (< (abs (cadr vals)) (abs (cadr vals1))))
+	    (list (- 1.0 s) (cadr vals) (car vals))
+	    (list s (cadr vals1) (car vals1))))))
   
   (let ((vals (tuneIt freq weighting)))
     (let ((wt0 (car vals))
@@ -1051,6 +1047,8 @@ is a physical model of a flute:
 					(* (env (indfs k)) modsig)))))))
 	 (locsig loc i outsum)))))
 
+;; (reson 0 1.0 440 .1 2 '(0 0 100 1) '(0 0 100 1) .1 .1 .1 5 .01 5 .01 0 1.0 0.01 '(((0 0 100 1) 1200 .5 .1 .1 0 1.0 .1 .1) ((0 1 100 0) 2400 .5 .1 .1 0 1.0 .1 .1)))
+
 
 ;;; STK's feedback-fm instrument named CelloN in Sambox-land
 
@@ -1929,31 +1927,31 @@ is a physical model of a flute:
 				 (not (zero? ra))
 				 (not (zero? la)))
 			    ;; found a local maximum above the current threshold (its bin number is k-1)
-			    (let* ((logla (log la 10.0))
-				   (logca (log ca 10.0))
-				   (logra (log ra 10.0))
-				   (offset (/ (* .5 (- logla logra)) (+ logla (* -2 logca) logra))) ; isn't logca always 0?
-				   (amp (expt 10.0 (- logca (* .25 (- logla logra) offset))))
-				   (freq (* fft-mag (+ k offset -1))))
-			      ;; (if (not (real? amp)) (format *stderr* "~A ~A ~A -> ~A ~A~%" la ca ra offset amp))
-			      (if (= peaks max-peaks-1)
-				  ;; gotta either flush this peak, or find current lowest and flush him
-				  (let ((minp 0)
-					(minpeak (peak-amps 0)))
-				    (do ((j 1 (+ j 1)))
-					((= j max-peaks-1))
-				      (if (< (peak-amps j) minpeak)
+			    (let ((logla (log la 10.0))
+				  (logca (log ca 10.0))
+				  (logra (log ra 10.0)))
+			      (let* ((offset (/ (* .5 (- logla logra)) (+ logla (* -2 logca) logra))) ; isn't logca always 0?
+				     (amp (expt 10.0 (- logca (* .25 (- logla logra) offset))))
+				     (freq (* fft-mag (+ k offset -1))))
+				;; (if (not (real? amp)) (format *stderr* "~A ~A ~A -> ~A ~A~%" la ca ra offset amp))
+				(if (= peaks max-peaks-1)
+				    ;; gotta either flush this peak, or find current lowest and flush him
+				    (let ((minp 0)
+					  (minpeak (peak-amps 0)))
+				      (do ((j 1 (+ j 1)))
+					  ((= j max-peaks-1))
+					(if (< (peak-amps j) minpeak)
+					    (begin
+					      (set! minp j)
+					      (set! minpeak (peak-amps j)))))
+				      (if (> amp minpeak)
 					  (begin
-					    (set! minp j)
-					    (set! minpeak (peak-amps j)))))
-				    (if (> amp minpeak)
-					(begin
-					  (set! (peak-freqs minp) freq)
-					  (set! (peak-amps minp) amp))))
-				  (begin
-				    (set! (peak-freqs peaks) freq)
-				    (set! (peak-amps peaks) amp)
-				    (set! peaks (+ 1 peaks))))))))
+					    (set! (peak-freqs minp) freq)
+					    (set! (peak-amps minp) amp))))
+				    (begin
+				      (set! (peak-freqs peaks) freq)
+				      (set! (peak-amps peaks) amp)
+				      (set! peaks (+ 1 peaks)))))))))
 		    ;; now we have the current peaks -- match them to the previous set and do something interesting with the result
 		    ;; the end results are reflected in the updated values in the rates and sweeps arrays.
 		    ;; search for fits between last and current, set rates/sweeps for those found
@@ -1970,24 +1968,24 @@ is a physical model of a flute:
 				(set! maxpk (peak-amps j)))))
 			;; now maxp points to next largest unmatched peak
 			(if (> maxpk 0.0)
-			    (let* ((closestp -1)
-				   (closestamp 10.0)
-				   (current-freq (peak-freqs maxp))
-				   (icf (/ 1.0 current-freq)))
-			      (do ((j 0 (+ j 1)))
-				  ((= j max-peaks-1))
-				(if (> (last-peak-amps j) 0.0)
-				    (let ((closeness (* icf (abs (- (last-peak-freqs j) current-freq)))))
-				      (if (< closeness closestamp)
-					  (begin
-					    (set! closestamp closeness)
-					    (set! closestp j))))))
-			      (if (< closestamp furthest-away-accepted)
-				  (begin
-				    ;; peak-amp is transferred to appropriate current-amp and zeroed,
-				    (set! (current-peak-amps closestp) (peak-amps maxp))
-				    (set! (peak-amps maxp) 0.0)
-				    (set! (current-peak-freqs closestp) current-freq)))))))
+			    (let ((closestp -1)
+				  (closestamp 10.0)
+				  (current-freq (peak-freqs maxp)))
+			      (let ((icf (/ 1.0 current-freq)))
+				(do ((j 0 (+ j 1)))
+				    ((= j max-peaks-1))
+				  (if (> (last-peak-amps j) 0.0)
+				      (let ((closeness (* icf (abs (- (last-peak-freqs j) current-freq)))))
+					(if (< closeness closestamp)
+					    (begin
+					      (set! closestamp closeness)
+					      (set! closestp j))))))
+				(if (< closestamp furthest-away-accepted)
+				    (begin
+				      ;; peak-amp is transferred to appropriate current-amp and zeroed,
+				      (set! (current-peak-amps closestp) (peak-amps maxp))
+				      (set! (peak-amps maxp) 0.0)
+				      (set! (current-peak-freqs closestp) current-freq))))))))
 		    (do ((k 0 (+ k 1)))
 			((= k max-peaks-1))
 		      (if (> (peak-amps k) 0.0)
@@ -2122,7 +2120,7 @@ is a physical model of a flute:
 	      (lenenv (make-env (if (list? seglen) 
 				    (or seglen (list 0 .15 1 .15)) 
 				    (list 0 seglen 1 seglen))
-				:duration dur))
+				:scaler (mus-srate) :duration dur))
 	      (scaler-amp (if (> max-seg-len .15) (/ (* 0.6 .15) max-seg-len) 0.6))
 	      (srenv  (make-env (if (list? sr) 
 				    (or sr (list 0 1 1 1)) 
@@ -2149,14 +2147,14 @@ is a physical model of a flute:
 		  (vol 0.0)
 		  (valA0 0.0)
 		  (valA1 0.0))
-	      
+
 	      (set! vol (env ampe))
 	      (set! valA0 (* vol (granulate exA)))
 	      (set! valA1 (* vol (granulate exA)))
 	      
 	      (do ((i st (+ i 1)))
 		  ((= i nd))
-		(let ((sl (seconds->samples (env lenenv)))) ;current segment length
+		(let ((sl (env lenenv))) ;current segment length
 		  ;; now we set the granulate generator internal state to reflect all these envelopes
 		  (set! vol (env ampe))
 		  (set! (mus-length exA) sl)
@@ -2175,7 +2173,7 @@ is a physical model of a flute:
 		      (outa i valA0)
 		      (outa i (+ valA0 (* (- next-samp ex-samp) (- valA1 valA0)))))))))))))
 
-;;; (with-sound () (exp-snd "fyow.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.05))
+;;; (with-sound (:statistics #t) (exp-snd "fyow.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.05))
 ;;; (with-sound () (exp-snd "oboe.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.2))
 
 
@@ -2701,17 +2699,17 @@ mjkoskin@sci.fi
 			      (begin
 				(set! update-ctr (+ update-ctr 1))
 				(if (>= update-ctr update-rate)
-				    (let* ((expa (env expenv))                ;current expansion amount
-					   (segl (env lenenv))                ;current segment length
-					   (rmpl (env rampenv))               ;current ramp length (0 to .5)
-					   (hp (env hopenv))                  ;current hop size
-					   (sl (floor (* segl (mus-srate))))
-					   (rl (floor (* rmpl sl))))
-				      (set! update-ctr 0)
-				      (set! (mus-length ingen) sl)
-				      (set! (mus-ramp ingen) rl)
-				      (set! (mus-frequency ingen) hp)
-				      (set! (mus-increment ingen) expa)))))
+				    (let ((expa (env expenv))                ;current expansion amount
+					  (segl (env lenenv))                ;current segment length
+					  (rmpl (env rampenv))               ;current ramp length (0 to .5)
+					  (hp (env hopenv)))                  ;current hop size
+				      (let ((sl (floor (* segl (mus-srate))))
+					    (rl (floor (* rmpl sl))))
+					(set! update-ctr 0)
+					(set! (mus-length ingen) sl)
+					(set! (mus-ramp ingen) rl)
+					(set! (mus-frequency ingen) hp)
+					(set! (mus-increment ingen) expa))))))
 			  
 			  (if (negative? ex-samp)
 			      (begin
@@ -2758,21 +2756,21 @@ mjkoskin@sci.fi
 				  (begin
 				    (set! update-ctr (+ update-ctr 1))
 				    (if (>= update-ctr update-rate)
-					(let* ((expa (env expenv))                ;current expansion amount
-					       (segl (env lenenv))                ;current segment length
-					       (rmpl (env rampenv))               ;current ramp length (0 to .5)
-					       (hp (env hopenv))                  ;current hop size
-					       (sl (floor (* segl (mus-srate))))
-					       (rl (floor (* rmpl sl))))
-					  (set! update-ctr 0)
-					  (set! (mus-length ingen0) sl)
-					  (set! (mus-ramp ingen0) rl)
-					  (set! (mus-frequency ingen0) hp)
-					  (set! (mus-increment ingen0) expa)
-					  (set! (mus-length ingen1) sl)
-					  (set! (mus-ramp ingen1) rl)
-					  (set! (mus-frequency ingen1) hp)
-					  (set! (mus-increment ingen1) expa)))))
+					(let ((expa (env expenv))                ;current expansion amount
+					      (segl (env lenenv))                ;current segment length
+					      (rmpl (env rampenv))               ;current ramp length (0 to .5)
+					      (hp (env hopenv)))                  ;current hop size
+					  (let* ((sl (floor (* segl (mus-srate))))
+						 (rl (floor (* rmpl sl))))
+					    (set! update-ctr 0)
+					    (set! (mus-length ingen0) sl)
+					    (set! (mus-ramp ingen0) rl)
+					    (set! (mus-frequency ingen0) hp)
+					    (set! (mus-increment ingen0) expa)
+					    (set! (mus-length ingen1) sl)
+					    (set! (mus-ramp ingen1) rl)
+					    (set! (mus-frequency ingen1) hp)
+					    (set! (mus-increment ingen1) expa))))))
 			      
 			      (if (negative? ex-samp)
 				  (begin
@@ -2822,20 +2820,20 @@ mjkoskin@sci.fi
 				  (begin
 				    (set! update-ctr (+ update-ctr 1))
 				    (if (>= update-ctr update-rate)
-					(let* ((expa (env expenv))                ;current expansion amount
-					       (segl (env lenenv))                ;current segment length
-					       (rmpl (env rampenv))               ;current ramp length (0 to .5)
-					       (hp (env hopenv))                  ;current hop size
-					       (sl (floor (* segl (mus-srate))))
-					       (rl (floor (* rmpl sl))))
-					  (set! update-ctr 0)
-					  (do ((ix 0 (+ ix 1)))
-					      ((= ix in-chans))
-					    (let ((gen (vector-ref ex-array ix)))
-					      (set! (mus-length gen) sl)
-					      (set! (mus-ramp gen) rl)
-					      (set! (mus-frequency gen) hp)
-					      (set! (mus-increment gen) expa)))))))
+					(let ((expa (env expenv))                ;current expansion amount
+					      (segl (env lenenv))                ;current segment length
+					      (rmpl (env rampenv))               ;current ramp length (0 to .5)
+					      (hp (env hopenv)))                  ;current hop size
+					  (let* ((sl (floor (* segl (mus-srate))))
+						 (rl (floor (* rmpl sl))))
+					    (set! update-ctr 0)
+					    (do ((ix 0 (+ ix 1)))
+						((= ix in-chans))
+					      (let ((gen (vector-ref ex-array ix)))
+						(set! (mus-length gen) sl)
+						(set! (mus-ramp gen) rl)
+						(set! (mus-frequency gen) hp)
+						(set! (mus-increment gen) expa))))))))
 			      
 			      (if (negative? ex-samp)
 				  (begin
@@ -2892,23 +2890,23 @@ mjkoskin@sci.fi
     (if filter-chan1
 	(file->array impulse 1 0 filter-len filter-chan1)
 	(set! filter-chan1 filter-chan0))
-    (let* ((fd (make-readin file))
-	   (fd1 (and (= (mus-channels *output*) 2) 
-		     (> (mus-sound-chans file) 1)
-		     (make-readin file :channel 1)))
-	   (ff0 (make-convolve :input fd :filter filter-chan0))
-	   (ff1 (and (= (mus-channels *output*) 2) 
-		     (> (mus-sound-chans file) 1)
-		     (make-convolve :input fd1 :filter filter-chan1)))
-	   (end (+ file-len filter-len)))
-      (if ff1
-	  (do ((i 0 (+ i 1)))
-	      ((= i end))
-	    (outa i (* rev-amt (convolve ff0)))
-	    (outb i (* rev-amt (convolve ff1))))
-	  (do ((i 0 (+ i 1)))
-	      ((= i end))
-	    (outa i (* rev-amt (convolve ff0))))))))
+    (let ((fd (make-readin file))
+	  (fd1 (and (= (mus-channels *output*) 2) 
+		    (> (mus-sound-chans file) 1)
+		    (make-readin file :channel 1))))
+      (let ((ff0 (make-convolve :input fd :filter filter-chan0))
+	    (ff1 (and (= (mus-channels *output*) 2) 
+		      (> (mus-sound-chans file) 1)
+		      (make-convolve :input fd1 :filter filter-chan1)))
+	    (end (+ file-len filter-len)))
+	(if ff1
+	    (do ((i 0 (+ i 1)))
+		((= i end))
+	      (outa i (* rev-amt (convolve ff0)))
+	      (outb i (* rev-amt (convolve ff1))))
+	    (do ((i 0 (+ i 1)))
+		((= i end))
+	      (outa i (* rev-amt (convolve ff0)))))))))
 
 
 #|

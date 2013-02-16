@@ -42,6 +42,7 @@
 
 (define *definstrument-hook* #f) ; for CM
 
+
 (defmacro definstrument (args . body)
   (let* ((name (car args))
 	 (targs (cdr args))
@@ -62,7 +63,18 @@
      ,@(if *definstrument-hook*
            (list (*definstrument-hook* name targs))
            (list)))))
+#|
 
+(define-macro (definstrument args . body)
+  (let ((name (car args))
+	(targs (cdr args)))
+    `(define* (,name ,@targs)
+       (let ((_start_ (get-internal-real-time)))
+	 ,@body
+	 (format #t "~A: ~A~%" (- (get-internal-real-time) _start_) ,name)))))
+|#
+
+     
 
 ;;; -------- with-sound --------
 
