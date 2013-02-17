@@ -31,7 +31,7 @@
     (let* ((cx angle)
 	   (mx (* cx ratio))
 	   (den (sin (* 0.5 mx))))
-      (set! angle (+ fm cx frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs den) nearly-zero)
 	  -1.0
 	  (/ (- (* (sin cx) 
@@ -127,7 +127,7 @@
     (let* ((x angle)
 	   (y (* x ratio))
 	   (den (sin (* y 0.5))))
-      (set! angle (+ fm x frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs den) nearly-zero)
 	  0.0
 	  (/ (* (sin (+ x (* 0.5 (- n 1) y)))
@@ -204,7 +204,7 @@
     (let* ((x angle)
 	   (y (* x ratio))
 	   (den (sin (* y 0.5))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs den) nearly-zero)
 	  1.0
 	  (/ (* (cos (+ x (* 0.5 (- n 1) y)))
@@ -242,7 +242,7 @@
     (let* ((x angle)
 	   (y (* x ratio))
 	   (den (cos (* y 0.5))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs den) nearly-zero)
 	  -1.0
 	  (max -1.0
@@ -290,7 +290,7 @@
     (let* ((x angle)
 	   (y (* x ratio))
 	   (den (cos (* y 0.5))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (/ (* (sin (+ x (* 0.5 (- n 1) (+ y pi))))
 	    (sin (* 0.5 n (+ y pi))))
 	 (* n den)))))
@@ -353,10 +353,9 @@
   
   (set! (gen 'fm) fm)
   (with-environment gen
-    (let* ((x angle)
-	   (snx (sin (* n x)))
-	   (den (sin x)))
-      (set! angle (+ x fm frequency))
+    (let* ((snx (sin (* n angle)))
+	   (den (sin angle)))
+      (set! angle (+ angle fm frequency))
       (if (< (abs den) nearly-zero)
 	  0.0
 	  (/ (* norm snx snx) den)))))
@@ -395,7 +394,7 @@
   (with-environment gen
     (let ((cx angle)
 	  (den (* 2 n (sin angle)))) ; "n" here is normalization
-      (set! angle (+ cx fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs den) nearly-zero)
 	  (let ((fang (modulo (abs cx) (* 2 pi))))
 	    ;; hopefully this almost never happens...
@@ -436,7 +435,7 @@
 	   (x (- cx mx))
 	   (sinnx (sin (* n mx)))
 	   (den (* n (sin mx)))) ; "n" is normalization
-      (set! angle (+ cx fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs den) nearly-zero)
 	  (if (< (modulo (abs mx) (* 2 pi)) .1)
 	      -1.0
@@ -489,7 +488,7 @@
   (with-environment gen
     (let* ((x angle)
 	   (den (sin (* 0.5 x))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs den) nearly-zero)
 	  1.0
 	  (let ((val (/ (sin (* 0.5 (+ n 1) x)) 
@@ -591,7 +590,7 @@
   (with-environment gen
     (let* ((x angle)
 	   (den (tan (* 0.5 x))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs den) nearly-zero)
 	  1.0
 	  (/ (- (/ (sin (* n x))
@@ -649,7 +648,7 @@
   (with-environment gen
     (let* ((x angle)
 	   (den (tan (* 0.5 x))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs den) nearly-zero)
 	  0.0
 	  (/ (- 1.0 (cos (* n x)))
@@ -808,7 +807,7 @@
   (set! (gen 'fm) fm)
   (with-environment gen
     (let ((x angle))
-      (set! angle (+ fm x frequency))
+      (set! angle (+ angle fm frequency))
       (if trouble
 	  0.0
 	  (/ (+ (- (* r (cos x)) 
@@ -824,7 +823,7 @@
 #|
   (with-environment gen
     (let ((x angle))
-      (set! angle (+ fm x frequency))
+      (set! angle (+ angle fm frequency))
       (if (or (= n 1)
 	      (< (abs r) nearly-zero))
 	  0.0
@@ -922,7 +921,7 @@
 	   (n1mx (* (- n 1) mx))
 	   (norm (/ (- rn 1) (- r 1)))
 	   (den (* norm (+ 1.0 (* -2.0 r (cos mx)) (* r r)))))
-      (set! angle (+ cx fm frequency))
+      (set! angle (+ angle fm frequency))
       (/ (- (* (sin cx)
 	       (+ (* r (sin mx))
 		  (* rn (sin nmx))
@@ -952,7 +951,7 @@
 	   (n1mx (* (- n 1) mx))
 	   (norm (/ (- rn 1) (- r 1)))
 	   (den (* norm (+ 1.0 (* -2.0 r (cos mx)) (* r r)))))
-      (set! angle (+ cx fm frequency))
+      (set! angle (+ angle fm frequency))
       (/ (- (* interp 
 	       (sin cx)
 	       (+ (* r (sin mx))
@@ -1260,7 +1259,7 @@
     (let* ((x angle)
 	   (num (cos (* n2 x))))
       
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       
       (/ (* num num)
 	 (* norm (- (cos x) cosn))))))
@@ -1291,7 +1290,7 @@
   (with-environment gen
     (let* ((x angle)
 	   (tn (tan (* 0.5 x))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs tn) 1.0e-6)
 	  1.0
 	  (/ (- 1.0 (cos (* n x)))
@@ -1334,7 +1333,7 @@
 		   (* n (sin (/ (* (+ n 2) x) 2)))))
 	   (sx (sin (/ x 2)))
 	   (den (* 4 n (+ n 1) (+ n 2) sx sx sx sx)))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs den) nearly-zero)
 	  0.0
 	  (/ (* 3 num num)
@@ -1367,7 +1366,7 @@
     (let* ((x angle)
 	   (sx (sin (/ x 2)))
 	   (den (* (+ (* 4 n) 2) sx sx)))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs den) nearly-zero)
 	  (* 1.0 n)
 	  (/ (- 2 (cos (* n x)) (cos (* (+ n 1) x)))
@@ -1729,7 +1728,7 @@
   (with-environment gen
     (let* ((x angle)
 	   (y (* x ratio)))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (/ (- (sin x)
 	    (* r (sin (- x y))))
 	 (+ 1.0 
@@ -1772,7 +1771,7 @@
   (with-environment gen
     (let* ((x angle)
 	   (y (* x ratio)))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (* (/ (- (cos x)
 	       (* r (cos (- x y))))
 	    (+ 1.0 rr
@@ -1843,7 +1842,7 @@
     (let (;(gen (current-environment)) ; !
 	   (x angle)
 	   (y (* angle ratio)))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (not (= fm 0.0))
 	  (set! r (clamp-rxycos-r (current-environment) fm)))
       (* (/ (- (cos x)
@@ -1952,7 +1951,7 @@
 	   (mx (* cx ratio))
 	   (cxx (- cx mx))
 	   (ccmx (- (cosh r) (cos mx))))
-      (set! angle (+ cx fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs ccmx) nearly-zero)
 	  1.0
 	  (/ (- (* (cos cxx)
@@ -1998,7 +1997,7 @@
   (set! (gen 'fm) fm)
   (with-environment gen
     (let* ((x angle))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (* (sinh (* r (cos x)))
 	 (sin (* r (sin x)))))))
 
@@ -2030,7 +2029,7 @@
   (set! (gen 'fm) fm)
   (with-environment gen
     (let* ((x angle))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (/ (- (* (cosh (* r (cos x)))
 	       (cos (* r (sin x))))
 	    1.0)                   ; omit DC
@@ -2065,7 +2064,7 @@
 	   (a r)
 	   (asinx (* a (sin mx)))
 	   (acosx (* a (cos mx))))
-      (set! angle (+ fm cx frequency))
+      (set! angle (+ angle fm frequency))
       (/ (- (* (cos cx)
 	       (cosh acosx)
 	       (cos asinx))
@@ -2263,7 +2262,7 @@
   (set! (gen 'fm) fm)
   (with-environment gen
     (let ((x angle))
-      (set! angle (+ fm x frequency))
+      (set! angle (+ angle fm frequency))
       (/ (atan (/ (* r (sin x))
 		  (- 1.0 (* r (cos x)))))
 	 (atan (/ (* r (sin (acos r)))   ; normalization
@@ -2302,7 +2301,7 @@
 	   (mx (* cx ratio))
 	   (cxx (* (- 1.0 ratio) cx))
 	   (rcosmx (* r (cos mx))))
-      (set! angle (+ cx fm frequency))
+      (set! angle (+ angle fm frequency))
       (/ (- (* (cos cxx)
 	       -0.5 (log (+ 1.0 (* -2.0 rcosmx) (* r r))))
 	    (* (sin cxx)
@@ -2349,7 +2348,7 @@
   (set! (gen 'fm) fm)
   (with-environment gen
     (let ((x angle))
-      (set! angle (+ fm x frequency))
+      (set! angle (+ angle fm frequency))
       (* (- (* (exp (* r (cos x)))
 	       (cos (* r (sin x))))
 	    1.0) ; omit DC
@@ -2451,7 +2450,7 @@
 	   (mx (* cx ratio))
 	   (ercosmx (exp (* r (cos mx))))
 	   (rsinmx (* r (sin mx))))
-      (set! angle (+ fm cx frequency))
+      (set! angle (+ angle fm frequency))
       (/ (- (* (cos cx) ercosmx (cos rsinmx))
 	    (* (sin cx) ercosmx (sin rsinmx)))
 	 (exp (abs r)))))) ; normalization (keeping DC term here to get "carrier")
@@ -2515,7 +2514,7 @@
   (with-environment gen
     (let* ((x angle)
 	   (y (* x ratio)))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (/ (* (exp (* r (cos y)))
 	    (cos (+ x (* r (sin y)))))
 	 (exp (abs r))))))
@@ -2547,7 +2546,7 @@
   (with-environment gen
     (let* ((x angle)
 	   (y (* x ratio)))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (* (exp (* r (cos y)))
 	 (cos (+ x (* r (sin y))))
 	 ar))))
@@ -2733,7 +2732,7 @@
   (set! (gen 'fm) fm)
   (with-environment gen
     (let ((x angle))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (/ (* 3.0 (sin x)) ; 3 rather than 4 for normalization
 	 (- 5.0 (* 4.0 (cos x)))))))
 
@@ -2764,7 +2763,7 @@
   (set! (gen 'fm) fm)
   (with-environment gen
     (let ((x angle))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (* 0.5 (- (/ 3.0
 		   (- 5.0 (* 4.0 (cos x))))
 		1.0)))))
@@ -2795,7 +2794,7 @@
   (with-environment gen
     (let* ((cx angle)
 	   (mx (* cx ratio)))
-      (set! angle (+ fm cx frequency))
+      (set! angle (+ angle fm frequency))
       (/ (- (* 3 (cos cx))
 	    (* (sin cx) 4.0 (sin mx)))
 	 (* 3.0 (- 5.0 (* 4.0 (cos mx))))))))
@@ -2837,7 +2836,7 @@
   (set! (gen 'fm) fm)
   (with-environment gen
     (let ((x angle))
-      (set! angle (+ fm angle frequency))
+      (set! angle (+ angle fm frequency))
       (/ (* (+ 1 r) (sin (* 0.5 x)))
 	 (* (- 1 r) (+ 1.0 (* -2.0 r (cos x)) (* r r)))))))
 
@@ -2882,7 +2881,7 @@
     (let* ((cx angle)
 	   (mx (* cx ratio))
 	   (cxx (- cx mx)))
-      (set! angle (+ fm cx frequency))
+      (set! angle (+ angle fm frequency))
       (/ (- (* (cos cxx)
 	       0.5
 	       (log (/ (+ 1.0 (* 2.0 r (cos mx)) (* r r))
@@ -2963,7 +2962,7 @@
 	   (r2 (* r r))
 	   (r3 (if (> r .9) r1 1.0)) ; not right yet...
 	   (den (+ 1.0 (* -2.0 r (cos x)) r2)))
-      (set! angle (+ fm angle frequency))
+      (set! angle (+ angle fm frequency))
       (/ (* r1 r1 r3 (sin x))
 	 (* den den)))))
 
@@ -3098,7 +3097,7 @@
 						a)) 
 					b))) 
 			   1.0)))) ;; i.e. 1/(1-r) -1 because we start at k=1, r=the complicated a/b business
-      (set! angle (+ fm x frequency))
+      (set! angle (+ angle fm frequency))
       (* norm (- (/ (sqrt (- (* a a) (* b b)))
 		    (+ a (* b (cos x))))
 		 1.0)))))
@@ -3128,7 +3127,7 @@
   (set! (gen 'fm) fm)
   (with-environment gen
     (let ((x angle))
-      (set! angle (+ fm x frequency))
+      (set! angle (+ angle fm frequency))
       (/ (* (sin x) 
 	    (sqrt (- (* a a) (* b b))))
 	 (+ a (* b (cos x)))))))
@@ -3176,7 +3175,7 @@
 	  (a r))
       (if (> x (* 2 pi))
 	  (set! x (modulo x (* 2 pi))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (/ (- (* pi (/ (cosh (* a (- pi x)))
 		     (sinh (* a pi))))
 	    (/ a))
@@ -3227,7 +3226,7 @@
 	   (x angle)
 	   (incr frequency)
 	   (den (+ 1.0 (* -2.0 a (cos x)) (* a a))))
-      (set! angle (+ x fm incr))
+      (set! angle (+ angle fm incr))
       (if (< (abs den) nearly-zero)
 	  0.0
 	  (let* ((s1 (* (expt a (- N 1.0)) (sin (+ (* (- N 1.0) x) incr))))
@@ -3432,7 +3431,7 @@
       ;;
       ;; the resultant spectra are similar to FM (we can get sharper bumps, or low-passed bumps, etc)
       
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (/ (- (bes-j0 (* k (sqrt (+ (* r r) 
 				  (* a a)
 				  (* a r -2.0 (cos x))))))
@@ -3500,8 +3499,8 @@ which again matches
 (define* (jjsin gen (fm 0.0))
   (set! (gen 'fm) fm)
   (with-environment gen
-    (let* ((x angle))
-      (set! angle (+ x fm frequency))
+    (let ((x angle))
+      (set! angle (+ angle fm frequency))
       (* (sin x)
 	 (bes-j0 (* k (sqrt (+ (* r r) 
 			       (* a a)
@@ -3516,8 +3515,8 @@ which again matches
 (define* (jjesin gen (fm 0.0))
   (set! (gen 'fm) fm)
   (with-environment gen
-    (let* ((x angle))
-      (set! angle (+ x fm frequency))
+    (let ((x angle))
+      (set! angle (+ angle fm frequency))
       (* (exp (* r (- (cos x) 1.0))) ; -1 for norm , but there's huge DC offset
 	 (bes-j0 (* r (sin x)))))))
 
@@ -3554,7 +3553,7 @@ which again matches
 	   (z index)
 	   (j0 (bes-j0 (* 0.5 z)))
 	   (dc (* j0 j0)))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (= dc 1.0)
 	  1.0
 	  (/ (- (bes-j0 (* z (sin x)))
@@ -3678,7 +3677,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (with-environment gen
     (let* ((x angle)
 	   (rsinx2 (* 2.0 r (sin (* 0.5 x)))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs rsinx2) nearly-zero)
 	  1.0
 	  (/ (bes-jn n rsinx2)
@@ -3728,7 +3727,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	   (arg (+ (* r r) 
 		   (* a a)
 		   (* a r -2.0 (cos x)))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs arg) nearly-zero) ; r = a, darn it! This will produce a spike, but at least it's not a NaN
 	  1.0
 	  (sin (* k (sqrt arg)))))))
@@ -3800,7 +3799,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	   (arg (sqrt (+ (* r r) 
 			 (* a a)
 			 (* a r -2.0 (cos x))))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (< arg nearly-zero)
 	  1.0
 	  (/ (bes-jn n arg)
@@ -3839,7 +3838,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	   (j0 (bes-j0 (* 0.5 z)))
 	   (dc (* j0 j0))
 	   (arg (* z (cos x))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (/ (- (+ (bes-j0 arg)
 	       (bes-j1 arg))
 	    dc)        ; get rid of DC component
@@ -3935,7 +3934,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	   (b2c2 (+ (* b b) (* c c)))
 	   (dc (* (bes-y0 b) (bes-j0 c)))
 	   (norm (abs (- (bes-y0 (sqrt (+ b2c2 (* -2 b c)))) dc))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (/ (- (bes-y0 (sqrt (+ b2c2 (* -2.0 b c (cos x)))))
 	    dc)
 	 norm))))
@@ -3993,7 +3992,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	   (b r)
 	   (c a)
 	   (dc (* (bes-j0 b) (bes-j0 c))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (- (bes-jn n (* (+ n 1) (sqrt (+ (* b b) (* c c) (* -2.0 b c (cos x))))))
 	 dc))))
 
@@ -4024,7 +4023,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (set! (gen 'fm) fm)
   (with-environment gen
     (let* ((x angle))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (expt (* r (sin x)) (* 2 n)))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -4105,7 +4104,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (set! (gen 'fm) fm)
   (with-environment gen
     (let ((x angle))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (polynomial coeffs (cos x)))))
 |#
 
@@ -4169,7 +4168,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (with-environment gen
     (let* ((cx angle)
 	   (mx (* cx ratio)))
-      (set! angle (+ fm cx frequency))
+      (set! angle (+ angle fm frequency))
       (- (* (cos cx)
 	    (sin (* index (cos mx))))
 	 (* (sin cx)
@@ -4389,7 +4388,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (set! (gen 'fm) fm)
   (with-environment gen
     (let ((x angle))
-      (set! angle (modulo (+ x fm frequency) (* 2 pi)))
+      (set! angle (modulo (+ angle fm frequency) (* 2 pi)))
       (polynomial coeffs x))))
 
 #|
@@ -4433,7 +4432,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (set! (gen 'fm) fm)
   (with-environment gen
     (let ((x angle))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (if (< (abs norm) nearly-zero)
 	  1.0
 	  (/ (- (exp (* r (cos x)))
@@ -4872,7 +4871,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (with-environment gen
     (let* ((x angle)
 	   (y (* x ratio)))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (* (cos x)
 	 (expt (cos y) n)))))
 
@@ -5025,7 +5024,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	    (set! x (modulo x two-pi))
 	    (if (< x 0.0) (set! x (+ x two-pi)))
 	    (set! sum (+ sum (mus-random amplitude)))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       sum)))
 
 #|
@@ -5069,7 +5068,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	      (set! sum (+ sum val))
 	      (if (not (<= low sum high))
 		  (set! sum (- sum (* 2 val)))))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       sum)))
 
 #|
@@ -5117,7 +5116,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	      (if (not (<= low end high))
 		  (set! val (* -2 val)))
 	      (set! incr (/ (* val frequency) (* 2 pi))))))
-      (set! angle (+ x fm frequency))
+      (set! angle (+ angle fm frequency))
       (set! sum (+ sum incr)))))
 
 #|

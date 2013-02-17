@@ -3490,7 +3490,7 @@ mus_float_t mus_delay_tick(mus_any *ptr, mus_float_t input)
   dly *gen = (dly *)ptr;
   gen->line[gen->loc] = input;
   gen->loc++;
-  if (gen->zdly) /* splitting these choices out at make-delay time was not a big improvement */
+  if (gen->zdly)
     {
       if (gen->loc >= gen->zsize) gen->loc = 0;
       gen->zloc++;
@@ -3535,9 +3535,13 @@ mus_float_t mus_delay_unmodulated(mus_any *ptr, mus_float_t input)
     {
       if (gen->size == 0) return(input); /* no point in tick in this case */
       result = gen->line[gen->zloc];
+      mus_delay_tick(ptr, input);
     }
-  else result = gen->line[gen->loc];
-  mus_delay_tick(ptr, input);
+  else 
+    {
+      result = gen->line[gen->loc];
+      mus_delay_tick_noz(ptr, input);
+    }
   return(result);
 }
 
@@ -3779,7 +3783,7 @@ mus_float_t mus_comb(mus_any *ptr, mus_float_t input, mus_float_t pm)
      We're doing the outer-level interpolation in notch and all-pass.
      Should mus.lisp be changed?
   */
-  else return(mus_delay(ptr, input + (gen->line[gen->loc] * gen->yscl), 0.0));
+  else return(mus_delay_unmodulated(ptr, input + (gen->line[gen->loc] * gen->yscl)));
 }
 
 
@@ -4232,12 +4236,11 @@ mus_float_t mus_filtered_comb(mus_any *ptr, mus_float_t input, mus_float_t pm)
 				      mus_tap(ptr, pm), 
 				      0.0)), 
 		     pm)); 
-  else return(mus_delay(ptr,
-			input + (fc->yscl * 
-				 mus_run(fc->filt, 
-					 fc->line[fc->loc], 
-					 0.0)), 
-			0.0));
+  else return(mus_delay_unmodulated(ptr,
+				    input + (fc->yscl * 
+					     mus_run(fc->filt, 
+						     fc->line[fc->loc], 
+						     0.0))));
 }
 
 

@@ -2285,16 +2285,11 @@
 	(outa i (granulate exA))))))
 
 (definstrument (sndclmdoc-grev beg dur exp-amt file file-beg)
-  (let ((exA (make-granulate :expansion exp-amt))
-	(fil (make-file->sample file))
-	(ctr file-beg))
+  (let ((exA (make-granulate :expansion exp-amt
+			     :input (make-readin file 0 file-beg -1))))
     (do ((i beg (+ i 1)))
 	((= i (+ beg dur)))
-      (outa i (granulate exA
-			 (lambda (dir)
-			   (let ((inval (file->sample fil ctr 0)))
-			     (if (> ctr 0) (set! ctr (- ctr 1)))
-			     inval)))))))
+      (outa i (granulate exA)))))
 
 (definstrument (sndclmdoc-simple-pvoc beg dur amp size file)
   (let ((start (seconds->samples beg))
@@ -2353,19 +2348,16 @@
 	(dist-env (make-env distance-env :duration duration))
 	(amp-env (make-env amplitude-env :duration duration))
 	(deg-env (make-env degree-env :scaler (/ 1.0 90.0) :duration duration))
-	(dist-scaler 0.0))
+	(dist-scaler 0.0)
+	(stereo (> (channels *output*) 1)))
     (do ((i beg (+ i 1)))
 	((= i end))
-      (let ((rdval (* (readin rdA) (env amp-env)))
-	    (degval (env deg-env))
-	    (distval (env dist-env)))
-	(set! dist-scaler (/ 1.0 distval))
+      (let ((degval (env deg-env)))
+	(set! dist-scaler (/ 1.0 (env dist-env)))
 	(locsig-set! loc 0 (* (- 1.0 degval) dist-scaler))
-	(if (> (channels *output*) 1)
-	    (locsig-set! loc 1 (* degval dist-scaler)))
-	(if *reverb* 
-	    (locsig-reverb-set! loc 0 (* reverb-amount (sqrt dist-scaler))))
-	(locsig loc i rdval)))))
+	(if stereo (locsig-set! loc 1 (* degval dist-scaler)))
+	(if *reverb* (locsig-reverb-set! loc 0 (* reverb-amount (sqrt dist-scaler))))
+	(locsig loc i (* (env amp-env) (readin rdA)))))))
 
 (define (sndclmdoc-simple-dloc beg dur freq amp)
   "(simple-dloc-4 beg dur freq amp) test instrument for dlocsig"

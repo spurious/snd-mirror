@@ -574,3 +574,28 @@ effects processing modules. The Help texts for the LADSPA effects are courtesy
 Steve Harris, with edits and emendations from yours truly. You will need the 
 latest plugin sets from www.ladspa.org and plugin.org.uk to make full use of 
 the LADSPA effects in Snd."
+
+
+
+-------- FreeBSD 9.n --------
+
+If the Snd compilation fails with complaints about the complex trig functions (ccosh etc),
+here are some suggestions from Mike Scholz:
+
+
+FBSD has CFLAGS=-fno-strict-aliasing as a default for base and ports. With 
+GCC you can use: 
+
+  % ./configure CFLAGS=-fno-strict-aliasing 
+
+Or at least set -fno-builtin: 
+
+  % ./configure CFLAGS=-fno-builtin 
+
+Or use clang without the aforementioned flags: 
+
+  % ./configure CC=clang 
+
+There is also a port in /usr/ports/audio/snd with version 13.0 from August 
+2012. 
+

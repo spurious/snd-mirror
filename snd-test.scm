@@ -12340,7 +12340,7 @@ EDITS: 2
       (if (fneq secs 1.0) (snd-display #__line__ ";samples->seconds: ~A" secs)))
     (if (and (= clmtest 0)
 	     (not (= (mus-file-buffer-size) default-file-buffer-size)))
-	(snd-display #__line__ ";mus-file-buffer-size: ~D?" (mus-file-buffer-size)))
+	(snd-display #__line__ ";mus-file-buffer-size: ~D ~D?" (mus-file-buffer-size) default-file-buffer-size))
     (let ((var (catch #t (lambda () (set! (mus-file-buffer-size) #f)) (lambda args args))))
       (if (not (eq? (car var) 'wrong-type-arg))
 	  (snd-display #__line__ ";mus-file-buffer-size bad size: ~A" var)))
@@ -26729,19 +26729,21 @@ EDITS: 2
 		(let ((uval (random 3)))
 		  (set! (channel-style cfd) uval)
 		  (if (not (= uval (channel-style cfd))) (snd-display #__line__ ";channel-style: ~A ~A?" uval (channel-style cfd)))))
-	    (src-sound 2.5 1.0 cfd)
-	    (src-sound -2.5 1.0 cfd)
-	    (src-sound .5 1.0 cfd)
-	    (revert-sound cfd)
-	    (src-sound -.5 1.0 cfd)
-	    (src-sound '(0 .5 1 1.5) 1.0 cfd)
-	    (if (> (frames cfd) 0) (src-sound (make-env '(0 .5 1 1.5) :length (frames cfd)) 1.0 cfd))
-	    (revert-sound cfd)
-	    (filter-sound '(0 1 .2 0 .5 1 1 0) 20 cfd)
-	    (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048 cfd)
-	    (env-sound '(0 0 .5 1 1 0) 0 (frames cfd) 1.0 cfd)
-	    (insert-sample 1200 .1 cfd)
-	    (if (fneq (sample 1200 cfd) .1) (snd-display #__line__ ";insert-sample(looped): ~A?" (sample 1200 cfd)))
+	    (if (< (frames cfd) 200000)
+		(begin
+		  (src-sound 2.5 1.0 cfd)
+		  (src-sound -2.5 1.0 cfd)
+		  (src-sound .5 1.0 cfd)
+		  (revert-sound cfd)
+		  (src-sound -.5 1.0 cfd)
+		  (src-sound '(0 .5 1 1.5) 1.0 cfd)
+		  (if (> (frames cfd) 0) (src-sound (make-env '(0 .5 1 1.5) :length (frames cfd)) 1.0 cfd))
+		  (revert-sound cfd)
+		  (filter-sound '(0 1 .2 0 .5 1 1 0) 20 cfd)
+		  (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048 cfd)
+		  (env-sound '(0 0 .5 1 1 0) 0 (frames cfd) 1.0 cfd)
+		  (insert-sample 1200 .1 cfd)
+		  (if (fneq (sample 1200 cfd) .1) (snd-display #__line__ ";insert-sample(looped): ~A?" (sample 1200 cfd)))))
 	    (revert-sound cfd))
 	  
 	  (let ((cfd (open-sound "obtest.snd")))
@@ -47315,22 +47317,21 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-15-Feb:
-87,301,581,742
-13,411,325,129  s7.c:eval [/home/bil/snd-13/snd]
- 6,320,173,368  ???:sin [/lib64/libm-2.12.so]
- 5,315,135,786  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+16-Feb:
+86,411,092,482
+13,373,858,127  s7.c:eval [/home/bil/snd-13/snd]
+ 6,318,194,237  ???:sin [/lib64/libm-2.12.so]
+ 5,187,853,645  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,918,662,501  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,854,647,399  s7.c:gc [/home/bil/snd-13/snd]
- 2,814,176,060  s7.c:eval'2 [/home/bil/snd-13/snd]
- 2,760,323,799  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,669,878,248  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 2,487,362,142  ???:cos [/lib64/libm-2.12.so]
+ 2,839,634,385  s7.c:gc [/home/bil/snd-13/snd]
+ 2,773,755,699  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 2,725,285,648  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,664,980,079  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 2,556,600,611  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,477,915,901  ???:cos [/lib64/libm-2.12.so]
  2,327,330,592  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
  1,585,066,774  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,463,225,888  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,203,997,304  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
+ 1,461,370,110  s7.c:s7_make_real [/home/bil/snd-13/snd]
  1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
 |#

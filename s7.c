@@ -441,7 +441,7 @@ enum {OP_NO_OP,
       OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_3_MV, OP_EVAL_ARGS_P_4_MV, 
       OP_EVAL_ARGS_SSP_1, OP_EVAL_ARGS_SSP_MV, 
       OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CDR, OP_SET_CONS, 
-      OP_INCREMENT_SS, OP_INCREMENT_S_opCq, OP_INCREMENT_SZ, OP_INCREMENT_C_TEMP,
+      OP_INCREMENT_SS, OP_INCREMENT_SSS, OP_INCREMENT_S_opCq, OP_INCREMENT_SZ, OP_INCREMENT_C_TEMP,
       OP_LET_O, OP_LET_O1, OP_LET_R, OP_LET_ALL_R, OP_LET_C_D, OP_LET_O_P, OP_LET_Z_P, OP_LET_O2, OP_LET_O_O, OP_LET_Z_O, OP_LET_O3, 
       OP_LET_R_P, OP_LET_CAR_P,
 
@@ -532,7 +532,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv", 
    "eval_args_ssp_1", "eval_args_ssp_mv", 
    "increment_1", "decrement_1", "set_cdr", "set_cons", 
-   "increment_ss", "increment_s_opcq", "increment_sz", "increment_c_temp",
+   "increment_ss", "increment_sss", "increment_s_opcq", "increment_sz", "increment_c_temp",
    "let", "let", "let", "let", "let", "let", "let", "let", "let", "let", "let", 
    "let", "let", 
 
@@ -617,7 +617,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_EVAL_ARGS_P_3", "OP_EVAL_ARGS_P_4", "OP_EVAL_ARGS_P_3_MV", "OP_EVAL_ARGS_P_4_MV", 
   "OP_EVAL_ARGS_SSP_1", "OP_EVAL_ARGS_SSP_MV", 
   "OP_INCREMENT_1", "OP_DECREMENT_1", "OP_SET_CDR", "OP_SET_CONS", 
-  "OP_INCREMENT_SS", "OP_INCREMENT_S_opCq", "OP_INCREMENT_SZ", "OP_INCREMENT_C_TEMP",
+  "OP_INCREMENT_SS", "OP_INCREMENT_SSS", "OP_INCREMENT_S_opCq", "OP_INCREMENT_SZ", "OP_INCREMENT_C_TEMP",
   "OP_LET_O", "OP_LET_O1", "OP_LET_R", "OP_LET_ALL_R", "OP_LET_C_D", "OP_LET_O_P", "OP_LET_Z_P", "OP_LET_O2", "OP_LET_O_O", "OP_LET_Z_O", "OP_LET_O3", 
   "OP_LET_R_P", "OP_LET_CAR_P",
 
@@ -1324,7 +1324,7 @@ struct s7_scheme {
   s7_pointer SAFE_IF_CSQ_P, SAFE_IF_CSQ_P_P, SAFE_IF_CSS_P, SAFE_IF_CSS_P_P, SAFE_IF_CSC_P, SAFE_IF_CSC_P_P;
   s7_pointer SAFE_IF_IS_PAIR_P, SAFE_IF_IS_PAIR_P_X, SAFE_IF_IS_PAIR_P_P, SAFE_IF_C_SS_P;
   s7_pointer SAFE_IF_IS_SYMBOL_P, SAFE_IF_IS_SYMBOL_P_P;
-  s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS, INCREMENT_SS, INCREMENT_S_opCq, INCREMENT_SZ, INCREMENT_C_TEMP;
+  s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS, INCREMENT_SS, INCREMENT_SSS, INCREMENT_S_opCq, INCREMENT_SZ, INCREMENT_C_TEMP;
   s7_pointer LET_R, LET_O, LET_ALL_R, LET_C_D, LET_O_P, LET_Z_P, LET_O_O, LET_Z_O, LET_R_P, LET_CAR_P;
   s7_pointer SIMPLE_DO, SAFE_DOTIMES, SIMPLE_SAFE_DOTIMES, SAFE_DOTIMES_C_C, SAFE_DOTIMES_C_A, SAFE_DO;
   s7_pointer SIMPLE_DO_P, DOTIMES_P, SIMPLE_DO_FOREVER, SIMPLE_DO_A;
@@ -13599,6 +13599,26 @@ static s7_pointer g_mul_1ss(s7_scheme *sc, s7_pointer args)
       return(s7_make_complex(sc, r1 * r2 - i1 * i2, r1 * i2 + r2 * i1));
     }
 }
+
+static s7_pointer multiply_cs_cos;
+static s7_pointer g_multiply_cs_cos(s7_scheme *sc, s7_pointer args)
+{
+  /* ([*] -2.0 r (cos x)) */
+  s7_pointer r, x;
+  
+  r = finder(sc, cadr(args));
+  x = finder(sc, cadr(caddr(args)));
+
+  if ((type(r) == T_REAL) &&
+      (type(x) == T_REAL))
+    return(make_real(sc, real(car(args)) * real(r) * cos(real(x))));
+
+  if ((is_real(r)) &&
+      (is_real(x)))
+    return(make_real(sc, real(car(args)) * s7_number_to_real(sc, r) * cos(s7_number_to_real(sc, x))));
+  return(g_multiply(sc, list_3(sc, car(args), r, g_cos(sc, list_1(sc, x)))));
+}
+
 #endif
 
 
@@ -36312,6 +36332,7 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	return(add_3_temp);
     }
 
+  /* fprintf(stderr, "%d: %s\n", args, DISPLAY_80(expr)); */
 #endif
   return(f);
 }
@@ -36430,6 +36451,16 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  (s7_function_returns_temp(arg2)) &&
 	  (s7_function_returns_temp(arg3)))
 	return(multiply_3_temp);
+
+      if ((type(arg1) == T_REAL) &&
+	  (is_symbol(arg2)) &&
+	  (is_pair(arg3)) &&
+	  (car(arg3) == sc->COS) &&
+	  (is_symbol(cadr(arg3))))
+	{
+	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  return(multiply_cs_cos);
+	}
     }
 
   if (args > 2)
@@ -36487,7 +36518,7 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       return(subtract_2);
     }
 #endif
-  /* fprintf(stderr, "s%d: %s\n", args, DISPLAY_80(expr)); */
+  /* fprintf(stderr, "%d: %s\n", args, DISPLAY_80(expr)); */
   return(f);
 }
 
@@ -36504,6 +36535,7 @@ static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 	return(divide_1r);
 #endif
     }
+  /* fprintf(stderr, "%d: %s\n", args, DISPLAY_80(expr)); */
   return(f);
 }
 
@@ -37221,6 +37253,7 @@ static void init_choosers(s7_scheme *sc)
 #if (!WITH_GMP)
   sqr_ss = make_function_with_class(sc, f, "*", g_sqr_ss, 2, 0, false, "* optimization");
   mul_1ss = make_function_with_class(sc, f, "*", g_mul_1ss, 2, 0, false, "* optimization");
+  multiply_cs_cos = make_function_with_class(sc, f, "*", g_multiply_cs_cos, 3, 0, false, "* optimization");
 #endif
 
 
@@ -42365,7 +42398,10 @@ static s7_pointer check_set(s7_scheme *sc)
 					{
 					  if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_SSS)
 					    {
-					      set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_SSS);
+					      if ((car(sc->code) == cadr(cadr(sc->code))) &&
+						  (car(cadr(sc->code)) == sc->ADD))
+						set_syntax_op(sc->code, sc->INCREMENT_SSS);
+					      else set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_SSS);
 					      fcdr(sc->code) = cdr(cadr(sc->code));
 					    }
 					  else
@@ -52483,16 +52519,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  c_object_array(obj)[integer(arg)] = real(value);
 		  sc->value = value;
-		  break;
 		}
-	      set_3 = c_object_set_3(obj);
-	      if (set_3)
-		sc->value = (*(set_3))(sc, c_object_value(obj), arg, value);
 	      else
 		{
-		  car(sc->T2_1) = arg;
-		  car(sc->T2_2) = value;
-		  sc->value = (*(c_object_set(obj)))(sc, obj, sc->T2_1);
+		  set_3 = c_object_set_3(obj);
+		  if (set_3)
+		    sc->value = (*(set_3))(sc, c_object_value(obj), arg, value);
+		  else
+		    {
+		      car(sc->T2_1) = arg;
+		      car(sc->T2_2) = value;
+		      sc->value = (*(c_object_set(obj)))(sc, obj, sc->T2_1);
+		    }
 		}
 	    }
 	    break;
@@ -52825,9 +52863,46 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  car(sc->T2_1) = slot_value(sc->y);
 	  car(sc->T2_2) = finder(sc, cadr(fcdr(sc->code)));
-	  sc->value = c_call(cadr(sc->code))(sc, sc->T2_1);
-	  slot_set_value(sc->y, sc->value); 
+	  slot_set_value(sc->y, c_call(cadr(sc->code))(sc, sc->T2_1));
+	  if (IN_MEDIA_RES(sc))
+	    goto POP_BEGIN;
+	  else
+	    {
+	      sc->value = slot_value(sc->y);
+	      goto START;
+	    }
 	  IF_BEGIN_POP_STACK(sc); 
+	}
+      eval_error(sc, "set! ~A: unbound variable", sc->code);
+
+
+    case OP_INCREMENT_SSS:
+      /* ([set!] x (+ x y z)) -- nearly always involves reals */
+      sc->y = find_symbol(sc, car(sc->code));
+      if (is_slot(sc->y))
+	{
+	  s7_pointer x1, x2, x3;
+	  x1 = slot_value(sc->y);
+	  x2 = finder(sc, ecdr(fcdr(sc->code)));
+	  x3 = finder(sc, fcdr(fcdr(sc->code)));
+	  if ((type(x1) == T_REAL) &&
+	      (type(x2) == T_REAL) &&
+	      (type(x3) == T_REAL))
+	    slot_set_value(sc->y, make_real(sc, real(x1) + real(x2) + real(x3)));
+	  else
+	    {
+	      car(sc->T3_1) = x1;
+	      car(sc->T3_2) = x2;
+	      car(sc->T3_3) = x3;
+	      slot_set_value(sc->y, g_add(sc, sc->T3_1));
+	    }
+	  if (IN_MEDIA_RES(sc))
+	    goto POP_BEGIN;
+	  else
+	    {
+	      sc->value = slot_value(sc->y);
+	      goto START;
+	    }
 	}
       eval_error(sc, "set! ~A: unbound variable", sc->code);
 
@@ -61550,6 +61625,7 @@ s7_scheme *s7_init(void)
   sc->LET_C_D =               assign_internal_syntax(sc, "let",     OP_LET_C_D);  
   sc->INCREMENT_1 =           assign_internal_syntax(sc, "set!",    OP_INCREMENT_1);  
   sc->INCREMENT_SS =          assign_internal_syntax(sc, "set!",    OP_INCREMENT_SS);  
+  sc->INCREMENT_SSS =         assign_internal_syntax(sc, "set!",    OP_INCREMENT_SSS);  
   sc->INCREMENT_S_opCq =      assign_internal_syntax(sc, "set!",    OP_INCREMENT_S_opCq);  
   sc->INCREMENT_SZ =          assign_internal_syntax(sc, "set!",    OP_INCREMENT_SZ);  
   sc->INCREMENT_C_TEMP =      assign_internal_syntax(sc, "set!",    OP_INCREMENT_C_TEMP);  
@@ -62443,5 +62519,5 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14   14
  * lat        229   63   52   47   42   40   39
  * t502        90   43   39   36   29   23   21
- * calls           275  207  175  115   89   87
+ * calls           275  207  175  115   89   86
  */
