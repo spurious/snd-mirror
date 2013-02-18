@@ -380,7 +380,7 @@ repetition to be in reverse."
     (if (= current-pass 0)
       (if (< current-env (- total-envs 1))
 	  (begin
-	    (set! current-env (+ 1 current-env))
+	    (set! current-env (+ current-env 1))
 	    (set! current-pass (- (length (vector-ref envs current-env)) 1)))))
     val)))
 

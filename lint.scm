@@ -1685,6 +1685,7 @@
 	      ((atan)
 	       (if (and (= len 1)
 			(pair? (car args))
+			(= (length (car args)) 3)
 			(eq? (caar args) '/))
 		   `(atan ,@(cdar args))
 		   form))
@@ -2519,23 +2520,23 @@
 		       (symbol? (caar bval)) ; not (define (hi) ((if #f + abs) 0))
 		       (equal? args (cdar bval)))
 		  (let ((cval (caar bval)))
-		    if (or (and (procedure? (symbol->value cval))
-				(zero? (cadr (procedure-arity (symbol->value cval))))
-				(not (caddr (procedure-arity (symbol->value cval))))) ; might be deliberately limiting args
-			   (let ((e (or (assq cval env) (hash-table-ref globals cval))))
-			     (and e
-				  (pair? e)
-				  (>= (length e) 4)
-				  (let ((def (list-ref e 3)))
-				    (and 
-				     (pair? def)
-				     (eq? (car def) 'define)
-				     (or (and (symbol? args)
-					      (symbol? (cadr def)))
-					 (= (length args) (length (cadr def)))))))))
-		    (lint-format "~A could be (define ~A ~A)"
-				 name name
-				 name cval)))))
+		    (if (or (and (procedure? (symbol->value cval))
+				 (zero? (cadr (procedure-arity (symbol->value cval))))
+				 (not (caddr (procedure-arity (symbol->value cval))))) ; might be deliberately limiting args
+			    (let ((e (or (assq cval env) (hash-table-ref globals cval))))
+			      (and e
+				   (pair? e)
+				   (>= (length e) 4)
+				   (let ((def (list-ref e 3)))
+				     (and 
+				      (pair? def)
+				      (eq? (car def) 'define)
+				      (or (and (symbol? args)
+					       (symbol? (cadr def)))
+					  (= (length args) (length (cadr def)))))))))
+			(lint-format "~A could be (define ~A ~A)"
+				     name name
+				     name cval))))))
 	
 	(if (null? args)
 	    (begin
@@ -2691,6 +2692,18 @@
 			 
 			 (let ((settee (cadr form))
 			       (setval (caddr form)))
+
+			   (if (and (symbol? settee)
+				    (pair? setval)
+				    (> (length setval) 2) ; not (set! i (+))
+				    (eq? (car setval) '+)
+				    (not (eq? (cadr setval) settee))
+				    (or (not (equal? (cadr setval) 1)) (pair? (cdddr setval))) ; ignore (+ 1 i) -- it's handled ok
+				    (memq settee setval))
+			       (lint-format "possible optimization: ~A -> ~A"
+					    name form
+					    `(set! ,settee (+ ,settee ,(cadr setval) ,@(remove settee (cddr setval))))))
+
 			   (if (pair? settee)
 			       (begin
 				 (if (and *report-minor-stuff*
@@ -2709,11 +2722,13 @@
 						  (truncated-list->string form)))
 				 (set-set? settee env)))
 			   
-			   (if (and (symbol? (cadr form))
+			   (if (and (symbol? settee)
 				    (equal? (cadr form) (caddr form))) ; not settee and setval here!
 			       (lint-format "pointless set!~A" 
 					    name 
 					    (truncated-list->string form)))
+
+			   
 			   
 			   (lint-walk name setval env))))
 		    
@@ -3290,3 +3305,5 @@
 ;;;   try each combination of symbols:any current constant:same +|- 1
 ;;;   until both #t and #f seen, if reach end, it can be replaced by val
 ;;;   but what about possible other stuff interspersed?
+
+;;; big projects: reorder let* -> nested let, check do body for static exprs

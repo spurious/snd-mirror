@@ -22,8 +22,7 @@
 (if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
 (if (not (provided? 'snd-play.scm)) (load "play.scm"))
 
-(define (load-font name)
-  (pango_font_description_from_string name))
+(define load-font pango_font_description_from_string)
 
 (define (g-list-foreach glist func)
   (let ((len (g_list_length glist)))

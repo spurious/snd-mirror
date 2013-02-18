@@ -107,8 +107,7 @@
 
 ;;; -------- ring-modulate --------
 
-(define (big-ring-modulate in1 in2)
-  (* in1 in2))
+(define big-ring-modulate *)
 
 
 ;;; -------- amplitude-modulate --------

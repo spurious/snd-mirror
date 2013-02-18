@@ -347,7 +347,7 @@
 				   (if (selection-member? snd chn)
 				       (begin
 					 (set! (v ctr) (make-sampler (+ beg (selection-position snd chn)) snd chn))
-					 (set! ctr (+ 1 ctr))))))
+					 (set! ctr (+ ctr 1))))))
 			       (sounds))
 			      v)))))
 
@@ -528,7 +528,7 @@
 	      (if result 
 		  (begin
 		    (frame->file writer loc result)
-		    (set! loc (+ 1 loc))))))
+		    (set! loc (+ loc 1))))))
 	  (mus-close writer)
 	  (free-frame-reader reader)
 	  (do ((i 0 (+ i 1)))

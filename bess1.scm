@@ -110,8 +110,8 @@
       (if (> len 1)
 	  (set! len (- len 1))
 	  (begin
-	    (set! dur (* ctempo (vbegs (+ 1 cellctr))))
-	    (set! cellctr (+ 1 cellctr))
+	    (set! dur (* ctempo (vbegs (+ cellctr 1))))
+	    (set! cellctr (+ cellctr 1))
 	    (if (> cellctr (+ cellsiz cellbeg))
 		(begin
 		  (if (> (random 1.0) 0.5) (set! cellbeg (+ 1 cellbeg)))
@@ -209,7 +209,7 @@
 	    (set! freq (* cfreq 16.351 (tune (pits cellctr)) (expt 2 (octs cellctr))))
 	    (set! ampl (* camp 10 (max 0.003 (* (amps cellctr) 0.01))))
 	    (set! ind (* cindex (random 3.0)))
-	    (set! cellctr (+ 1 cellctr))
+	    (set! cellctr (+ cellctr 1))
 	    (if (> cellctr (+ cellsiz cellbeg))
 		(begin
 		  (set! cellbeg (+ 1 cellbeg))

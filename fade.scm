@@ -184,7 +184,7 @@
 	  ((= i end))
 
 	;; once a ramp is set in motion, it takes care of itself -- we need only choose which to trigger
-	(set! ctr (+ 1 ctr))
+	(set! ctr (+ ctr 1))
 	(if (> ctr trigger)
 	    (let ((next (floor (random freq-inc))))
 	      ;; find next randomly chosen resonator to flip

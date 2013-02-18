@@ -82,7 +82,7 @@
 			     (else (+ y ydev))))
 	     (set! m (+ m 2))
 	     (set! dt 0)))
-       (set! dt (+ 1 dt))
+       (set! dt (+ dt 1))
        (set! j (+ j (/ dy dx)));linear interpolation
        (set! output (/ j b));normalization -1 to 1
        (outa i (* amp output (env d-click))))))

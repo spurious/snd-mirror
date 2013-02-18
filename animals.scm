@@ -2570,7 +2570,7 @@
 		 (outa k (* (env ae)
 			    (oscil gen1 frq 
 				   (* .03 (oscil gen2 (* 2.0 frq)))))))))
-	   (set! peep (+ 1 peep))
+	   (set! peep (+ peep 1))
 	   (if (>= peep 10) (done))
 	   (set! peep-start (+ start (seconds->samples (begs peep))))
 	   (set! peep-dur (seconds->samples (durs peep)))))))))
@@ -3598,7 +3598,7 @@
 
 	(set! peep-amp (amps peep-ctr))
 	(set! gen1 (make-polywave (frqs peep-ctr) :partials (list 1 (* peep-amp .97)  2 (* peep-amp .02)  3 (* peep-amp .01))))
-	(set! peep-ctr (+ 1 peep-ctr))
+	(set! peep-ctr (+ peep-ctr 1))
 
 	(let ((reset-stop (min stop (+ i peep-samps))))
 	  (do ((k i (+ k 1)))

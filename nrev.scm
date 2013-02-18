@@ -37,7 +37,7 @@
 	  (do ((i 0 (+ i 1)))
 	      ((= i 15))
 	    (let ((val (floor (* srscale (dly-len i)))))
-	      (if (even? val) (set! val (+ 1 val)))
+	      (if (even? val) (set! val (+ val 1)))
 	      (set! (dly-len i) (next-prime val))))))
 
     (let ((len (+ (floor (mus-srate)) (frames *reverb*)))

@@ -151,45 +151,43 @@
 								(delay pdelay
 								       (ina i *reverb*))))))))
 	  
-	  (let ((sum 0.0)
-		(f-in-val 0.0))
-	    (let ((allp-c (make-vector out-chans))
-		  (fcmb-c (make-vector out-chans)))
-	      (do ((c 0 (+ c 1)))
-		  ((= c out-chans))
-		(set! (allp-c c) (make-vector numallpasses))
-		(set! (fcmb-c c) (make-vector numcombs)))
-	      (do ((c 0 (+ c 1)))
-		  ((= c out-chans))
-		(do ((j 0 (+ j 1)))
-		    ((= j numcombs))
-		  (set! ((fcmb-c c) j) (fcombs (+ j (* c numcombs)))))
-		(do ((j 0 (+ j 1)))
-		    ((= j numallpasses))
-		  (set! ((allp-c c) j) (allpasses (+ j (* c numallpasses))))))
-	      
-	      (do ((i beg (+ i 1)))
-		  ((= i end))
-		(file->frame *reverb* i f-in)
-		(if (> in-chans 1)
+	  (let ((allp-c (make-vector out-chans))
+		(fcmb-c (make-vector out-chans)))
+	    (do ((c 0 (+ c 1)))
+		((= c out-chans))
+	      (set! (allp-c c) (make-vector numallpasses))
+	      (set! (fcmb-c c) (make-vector numcombs)))
+	    (do ((c 0 (+ c 1)))
+		((= c out-chans))
+	      (do ((j 0 (+ j 1)))
+		  ((= j numcombs))
+		(set! ((fcmb-c c) j) (fcombs (+ j (* c numcombs)))))
+	      (do ((j 0 (+ j 1)))
+		  ((= j numallpasses))
+		(set! ((allp-c c) j) (allpasses (+ j (* c numallpasses))))))
+	    
+	    (do ((i beg (+ i 1)))
+		((= i end))
+	      (file->frame *reverb* i f-in)
+	      (if (> in-chans 1)
+		  (do ((c 0 (+ c 1)))
+		      ((= c out-chans))
+		    (frame-set! f-out c 
+				(filtered-comb-bank (vector-ref fcmb-c c)
+						    (delay (vector-ref predelays c) 
+							   (frame-ref f-in c)))))
+		  
+		  (let ((val (delay (vector-ref predelays 0) (frame-ref f-in 0))))
 		    (do ((c 0 (+ c 1)))
 			((= c out-chans))
 		      (frame-set! f-out c 
-				  (filtered-comb-bank (vector-ref fcmb-c c)
-						      (delay (vector-ref predelays c) 
-							     (frame-ref f-in c)))))
-		    
-		    (let ((val (delay (vector-ref predelays 0) (frame-ref f-in 0))))
-		      (do ((c 0 (+ c 1)))
-			  ((= c out-chans))
-			(frame-set! f-out c 
-				    (filtered-comb-bank (vector-ref fcmb-c c) val)))))
-		
-		(do ((c 0 (+ 1 c)))
-		    ((= c out-chans))
-		  (frame-set! f-out c (all-pass-bank (vector-ref allp-c c) (frame-ref f-out c))))
-		
-		(frame->file *output* i (frame->frame f-out out-mix out-buf)))))))))
+				  (filtered-comb-bank (vector-ref fcmb-c c) val)))))
+	      
+	      (do ((c 0 (+ 1 c)))
+		  ((= c out-chans))
+		(frame-set! f-out c (all-pass-bank (vector-ref allp-c c) (frame-ref f-out c))))
+	      
+	      (frame->file *output* i (frame->frame f-out out-mix out-buf))))))))
 
 ;; freeverb.scm ends here
 

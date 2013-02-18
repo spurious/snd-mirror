@@ -246,7 +246,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
     (map-channel (lambda (val)
 		   (if (= div 0)
 		       (set! curval val))
-		   (set! div (+ 1 div))
+		   (set! div (+ div 1))
 		   (if (= div n) (set! div 0))
 		   curval)
 		 0 #f snd chn #f (format #f "freqdiv ~A" n))))
@@ -286,7 +286,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 		(set! (vals n) val)
 		(if (> val mx) (set! mx val))
 		(if (< val mn) (set! mn val))
-		(set! n (+ 1 n))))))
+		(set! n (+ n 1))))))
       (vct->channel data beg pos snd chn current-edit-position (format #f "adsat ~A ~A ~A" size beg dur)))))
 
 
@@ -1999,7 +1999,7 @@ and replaces it with the spectrum given in coeffs"
       (define (choose-bark-ticks hook)
 	(if (= (hook 'axis) lisp-graph)
 	    (begin
-	      (set! bark-tick-function (+ 1 bark-tick-function))
+	      (set! bark-tick-function (+ bark-tick-function 1))
 	      (if (> bark-tick-function 2)
 		  (set! bark-tick-function 0))
 	      (update-lisp-graph (hook 'snd) (hook 'chn)))))
@@ -2299,7 +2299,7 @@ is assumed to be outside -1.0 to 1.0."
 
 (define* (make-savitzky-golay-filter size (order 2)) ;assuming symmetric filter (left = right)
   (if (even? size) 
-      (set! size (+ 1 size)))
+      (set! size (+ size 1)))
   (let ((n (/ (- size 1) 2))
 	(a (make-mixer (+ 1 order))))
     (do ((i 0 (+ i 1)))

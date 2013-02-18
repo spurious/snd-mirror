@@ -298,7 +298,7 @@
 	    (if (= i next-offset)
 		(begin
 		  ;; time to check for new tract shapes, glottal pulse shapes etc.
-		  (set! offset (+ 1 offset))
+		  (set! offset (+ offset 1))
 		  (set! fnoiseamp (noiseamps offset))
 		  (if (= last-sfd -1)
 		      (set! last-sfd 0)

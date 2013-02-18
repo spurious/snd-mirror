@@ -944,7 +944,7 @@ is a physical model of a flute:
     (do ((i 0 (+ i 1)))
 	((= i 15))
       (let ((val (floor (* srscale (dly-len i)))))
-	(if (even? val) (set! val (+ 1 val)))
+	(if (even? val) (set! val (+ val 1)))
 	(set! (dly-len i) (next-prime val))))
 
     (let ((len (+ (floor (mus-srate)) (frames *reverb*)))
@@ -1793,7 +1793,7 @@ is a physical model of a flute:
 		(if (or (and (<= last-val2 last-val) (>= last-val val))
 			(and (>= last-val2 last-val) (<= last-val val)))
 		    (begin
-		      (set! turn-i (+ 1 turn-i))
+		      (set! turn-i (+ turn-i 1))
 		      (if (< turn-i turns)
 			  (begin
 			    (set! turn-sample (seconds->samples (turntable turn-i)))
@@ -1951,7 +1951,7 @@ is a physical model of a flute:
 				    (begin
 				      (set! (peak-freqs peaks) freq)
 				      (set! (peak-amps peaks) amp)
-				      (set! peaks (+ 1 peaks)))))))))
+				      (set! peaks (+ peaks 1)))))))))
 		    ;; now we have the current peaks -- match them to the previous set and do something interesting with the result
 		    ;; the end results are reflected in the updated values in the rates and sweeps arrays.
 		    ;; search for fits between last and current, set rates/sweeps for those found
@@ -2010,7 +2010,7 @@ is a physical model of a flute:
 			      (not (= (last-peak-amps k) 0.0)))
 			  (set! cur-oscils k))
 		      (set! (sweeps k) (* ihifreq transposition (- (current-peak-freqs k) (last-peak-freqs k)))))
-		    (set! cur-oscils (+ 1 cur-oscils))
+		    (set! cur-oscils (+ cur-oscils 1))
 		
 		    (let ((stop (min end (+ i outhop))))
 		      (do ((k i (+ k 1)))
@@ -2168,7 +2168,7 @@ is a physical model of a flute:
 			    ((= k samps))
 			  (set! valA0 valA1)
 			  (set! valA1 (* vol (granulate exA)))
-			  (set! ex-samp (+ 1 ex-samp)))))
+			  (set! ex-samp (+ ex-samp 1)))))
 		  (if (= next-samp ex-samp)
 		      (outa i valA0)
 		      (outa i (+ valA0 (* (- next-samp ex-samp) (- valA1 valA0)))))))))))))
@@ -2208,26 +2208,26 @@ is a physical model of a flute:
 	      (begin
 		(set! val (with-environment grn1
 			    (let ((inval (ina loc file)))
-			      (set! loc (+ 1 loc))
+			      (set! loc (+ loc 1))
 			      (if (= whichseg 0)	;ramp-up
 				  (begin
 				    (set! inval (* inval rampval))
 				    (set! rampval (+ rampval rampinc))
-				    (set! segctr (+ 1 segctr))
+				    (set! segctr (+ segctr 1))
 				    (if (= segctr ramplen)
 					(begin
 					  (set! segctr 0)
-					  (set! whichseg (+ 1 whichseg)))))
+					  (set! whichseg (+ whichseg 1)))))
 				  (if (= whichseg 1)		;steady-state
 				      (begin
-					(set! segctr (+ 1 segctr))
+					(set! segctr (+ segctr 1))
 					(if (= segctr steadylen)
 					    (begin
 					      (set! segctr 0)
-					      (set! whichseg (+ 1 whichseg)))))
+					      (set! whichseg (+ whichseg 1)))))
 				      (begin				;ramp-down
 					(set! inval (* inval rampval))
-					(set! segctr (+ 1 segctr))
+					(set! segctr (+ segctr 1))
 					(set! rampval (- rampval rampinc))
 					(if (= segctr ramplen)
 					    (begin
@@ -2236,7 +2236,7 @@ is a physical model of a flute:
 					      (set! whichseg 0)
 					      (set! rampval 0.0))))))
 			      inval)))
-		(set! out1 (+ 1 out1))
+		(set! out1 (+ out1 1))
 		(if (= (grn1 'trigger) 1)
 		    (begin
 		      (set! (grn1 'trigger) 0)
@@ -2245,26 +2245,26 @@ is a physical model of a flute:
 	      (begin
 		(set! val (+ val (with-environment grn2
 				   (let ((inval (ina loc file)))
-				     (set! loc (+ 1 loc))
+				     (set! loc (+ loc 1))
 				     (if (= whichseg 0)	;ramp-up
 					 (begin
 					   (set! inval (* inval rampval))
 					   (set! rampval (+ rampval rampinc))
-					   (set! segctr (+ 1 segctr))
+					   (set! segctr (+ segctr 1))
 					   (if (= segctr ramplen)
 					       (begin
 						 (set! segctr 0)
-						 (set! whichseg (+ 1 whichseg)))))
+						 (set! whichseg (+ whichseg 1)))))
 					 (if (= whichseg 1)		;steady-state
 					     (begin
-					       (set! segctr (+ 1 segctr))
+					       (set! segctr (+ segctr 1))
 					       (if (= segctr steadylen)
 						   (begin
 						     (set! segctr 0)
-						     (set! whichseg (+ 1 whichseg)))))
+						     (set! whichseg (+ whichseg 1)))))
 					     (begin				;ramp-down
 					       (set! inval (* inval rampval))
-					       (set! segctr (+ 1 segctr))
+					       (set! segctr (+ segctr 1))
 					       (set! rampval (- rampval rampinc))
 					       (if (= segctr ramplen)
 						   (begin
@@ -2273,7 +2273,7 @@ is a physical model of a flute:
 						     (set! whichseg 0)
 						     (set! rampval 0.0))))))
 				     inval))))
-		(set! out2 (+ 1 out2))
+		(set! out2 (+ out2 1))
 		(if (= (grn2 'trigger) 1)
 		    (begin
 		      (set! (grn2 'trigger) 0)
@@ -2407,7 +2407,7 @@ nil doesnt print anything, which will speed up a bit the process.
       (do ((i beg (+ i 1)))
 	  ((= i end))
 	(let ((inval (file->sample file samp)))
-	  (set! samp (+ 1 samp))
+	  (set! samp (+ samp 1))
 	  (set! (fdr k) inval)
 	  (set! k (+ k 1))
 	  (if (< amp amp-scaler) (set! amp (+ amp incr)))

@@ -142,7 +142,7 @@
 	  (if (and (not mouse-new)
 		   (<= (- mouse-up mouse-down) click-time)
 		   (not (= mouse-pos 0))
-		   (not (>= mouse-pos (- (length cur-env) 2))))
+		   (< mouse-pos (- (length cur-env) 2)))
 	      (set! (channel-envelope snd chn)
 		    (remove-envelope-point mouse-pos cur-env)))
 	  (update-lisp-graph snd chn)

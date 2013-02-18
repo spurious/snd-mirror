@@ -172,11 +172,11 @@
 	   (set! (block block-ctr) ahead-samp)
 	   (if checking
 	       (begin
-		 (set! checked (+ 1 checked))
+		 (set! checked (+ checked 1))
 		 (if (or (>= checked (* 2 size))
 			 (< cur-avg check-val))
 		     (begin
-		       (set! fixed (+ 1 fixed))
+		       (set! fixed (+ fixed 1))
 		       (set! checking #f)
 		       (smooth-vct block (- check-start block-beg) (+ size checker))
 		       (set! block-changed #t)))
@@ -184,9 +184,9 @@
 		     (begin
 		       (set! moving-start (< cur-diff avg-behind))
 		       (if moving-start
-			   (set! check-start (+ 1 check-start)))))
+			   (set! check-start (+ check-start 1)))))
 		 (if (not moving-start)
-		     (set! checker (+ 1 checker))))
+		     (set! checker (+ checker 1))))
 	       (if (and (> (- ctr last-case) (* 2 size))
 			(> cur-avg (* 4 avg-ahead))
 			(> cur-avg (* 4 avg-behind)))
@@ -195,14 +195,14 @@
 		     (set! check-start (max 0 (- ctr (* 5 size))))
 		     (set! moving-start (< cur-diff avg-behind))
 		     (if moving-start
-			 (set! check-start (+ 1 check-start)))
+			 (set! check-start (+ check-start 1)))
 		     (set! checking #t)
 		     (set! check-val cur-avg)
 		     (set! checker 0)
 		     (set! checked 0)
 		     (set! last-case ctr))))
 	   
-	   (set! block-ctr (+ 1 block-ctr))
+	   (set! block-ctr (+ block-ctr 1))
 	   (if (>= (+ block-ctr pad) block-size)
 	       (begin
 		 (if block-changed
@@ -211,7 +211,7 @@
 		       (set! block-changed #f)))
 		 (set! block-beg (+ block-beg (- block-ctr pad)))
 		 (do ((i 0 (+ i 1))
-		      (j (- block-ctr pad) (+ 1 j)))
+		      (j (- block-ctr pad) (+ j 1)))
 		     ((= i pad))
 		   (set! (block i) (block j)))
 		 (set! block-ctr pad)))))
@@ -358,7 +358,7 @@
 ;	 (set! K .5)
 
 	 (set! (avg-data ctr) K)
-	 (set! ctr (+ 1 ctr))
+	 (set! ctr (+ ctr 1))
 
 	 (set! maxg (max maxg avg))
 	 (set! ming (min ming avg))
@@ -437,6 +437,6 @@
     (if (not (sound? index))
 	(error 'no-such-sound (list "clean-sound" snd))
 	(let ((chns (channels index)))
-	  (do ((chn 0 (+ 1 chn)))
+	  (do ((chn 0 (+ chn 1)))
 	      ((= chn chns))
 	    (clean-channel index chn))))))

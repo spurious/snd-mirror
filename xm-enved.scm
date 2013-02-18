@@ -150,7 +150,7 @@
       (if (and (not xe-mouse-new)
 	       (<= (- xe-mouse-up xe-mouse-down) xe-click-time)
 	       (not (= xe-mouse-pos 0))
-	       (not (>= xe-mouse-pos (- (length cur-env) 2))))
+	       (< xe-mouse-pos (- (length cur-env) 2)))
 	  (set! (xe-envelope drawer)
 		(xe-remove-envelope-point xe-mouse-pos cur-env)))
       (xe-redraw drawer)

@@ -447,7 +447,7 @@ read an ASCII sound file"
 	 (or (eof-object? val)
 	     (begin
 	       (set! (data loc) (* val short->float))
-	       (set! loc (+ 1 loc))
+	       (set! loc (+ loc 1))
 	       (if (= loc bufsize)
 		   (begin
 		     (vct->channel data frame bufsize out-fd 0)
@@ -790,7 +790,7 @@ then inverse ffts."
     (set! ctr (- fft-size 1))
     (map-channel (lambda (y)
 		   (set! (rl ctr) (read-ahead))
-		   (set! ctr (+ 1 ctr))
+		   (set! ctr (+ ctr 1))
 		   (if (= ctr fft-size)
 		       (begin
 			 (fft rl im 1)
@@ -1513,7 +1513,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	((= i newlen))
       (set! interp (reader (env read-env)))
       (sound-data-set! data 0 data-ctr interp)
-      (set! data-ctr (+ 1 data-ctr))
+      (set! data-ctr (+ data-ctr 1))
       (if (= bufsize data-ctr)
 	  (begin
 	    (mus-sound-write fil 0 (- bufsize 1) 1 data)
@@ -1563,7 +1563,7 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 	      (set! (readers next-reader)
 		    (make-sampler (max 0 (round (+ position-in-original (mus-random jitter)))) snd chn))
 	      (mus-reset (grain-envs next-reader)) ; restart grain env
-	      (set! next-reader (+ 1 next-reader))
+	      (set! next-reader (+ next-reader 1))
 	      (if (>= next-reader num-readers) (set! next-reader 0))
 	      (set! next-reader-starts-at (+ next-reader-starts-at hop-frames))))
 
@@ -1574,7 +1574,7 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 		(set! sum (+ sum (* (env (grain-envs i)) (next-sample (readers i)))))))
 	  (sound-data-set! data 0 data-ctr sum))
 
-	(set! data-ctr (+ 1 data-ctr))
+	(set! data-ctr (+ data-ctr 1))
 	(if (= bufsize data-ctr)
 	    (begin
 	      (mus-sound-write fil 0 (- bufsize 1) 1 data)
@@ -1743,7 +1743,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
 	(data-loc 0))
     (lambda (n)
       (set! (data data-loc) n)
-      (set! data-loc (+ 1 data-loc))
+      (set! data-loc (+ data-loc 1))
       (let ((rtn #f))
 	(if (= data-loc (transform-size))
 	    (begin
@@ -2108,7 +2108,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	 (for-each
 	  (lambda (end)
 	    (set! (pieces ctr) (make-region start end))
-	    (set! ctr (+ 1 ctr))
+	    (set! ctr (+ ctr 1))
 	    (set! start end))
 	  edges)
 	 (set! start 0)
@@ -2159,10 +2159,10 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 		    (set! val (* val beg .1))
 		    (if (> beg (- actual-block-len 10))
 			(set! val (* val (- actual-block-len beg) .1))))
-		(set! beg (+ 1 beg))
+		(set! beg (+ beg 1))
 		(if (= beg actual-block-len)
 		    (begin
-		      (set! ctr (+ 1 ctr))
+		      (set! ctr (+ ctr 1))
 		      (set! beg 0)
 		      (set! rd (make-sampler (max 0 (- len (* ctr actual-block-len))) snd chn))))
 		val))
@@ -2212,7 +2212,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	  (ctr 0)) ; try to avoid infinite loop in the broken cases
       (let loop ((entry (readdir dport))
 		 (files ()))
-	(set! ctr (+ 1 ctr))
+	(set! ctr (+ ctr 1))
 	(if (and (< ctr 2000)
 		 (not (eof-object? entry)))
 	    (loop (readdir dport) (cons entry files))
@@ -2251,12 +2251,12 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 		     (if (< lval low)
 			 (begin
 			   (set! (segments segctr) (+ possible-end 128))
-			   (set! segctr (+ 1 segctr))
+			   (set! segctr (+ segctr 1))
 			   (set! in-sound #f)))))
 	       (if (> val high)
 		   (begin
 		     (set! (segments segctr) (- i 128))
-		     (set! segctr (+ 1 segctr))
+		     (set! segctr (+ segctr 1))
 		     (set! in-sound #t))))))
       (free-sampler reader)
       (if in-sound

@@ -4080,6 +4080,7 @@ static void resize_op_stack(s7_scheme *sc)
 #define pop_main_stack(Sc)            Sc->stack_end -= 4
 
 #define IF_BEGIN_POP_STACK(Sc) do {if (main_stack_op(Sc) == OP_BEGIN1) goto POP_BEGIN; goto START;} while (0)
+#define IF_BEGIN_POP_STACK_ELSE_SET_VALUE(Sc, Sym) do {if (main_stack_op(Sc) == OP_BEGIN1) goto POP_BEGIN; sc->value = slot_value(Sym); goto START;} while (0)
 #define IN_MEDIA_RES(Sc) (main_stack_op(Sc) == OP_BEGIN1)
 
 
@@ -42414,6 +42415,7 @@ static s7_pointer check_set(s7_scheme *sc)
 					      else
 						{
 						  if ((optimize_data(cadr(sc->code)) == HOP_SAFE_C_S_op_S_opSSqq) &&
+						      (car(sc->code) == caddr(caddr(caddr(cadr(sc->code))))) &&
 						      (c_call(cadr(sc->code)) == g_add_2) &&
 						      (c_call(caddr(cadr(sc->code))) == g_multiply_2) &&
 						      (c_call(caddr(caddr(cadr(sc->code)))) == g_subtract_2))
@@ -42542,12 +42544,14 @@ static bool safe_stepper(s7_scheme *sc, s7_pointer expr, s7_pointer vars)
  * (define (hi a) (do ((i 0 (+ i 1))) ((= i a)) (display i)))
  */
 
+
 static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_pointer var_list, bool *has_set)
 {
   /* here any (unsafe?) closure or jumping-op (call/cc) or shadowed variable is trouble
    */
   s7_pointer p;
   /* if (s7_list_length(sc, body) <= 0) return(false); */
+  /* fprintf(stderr, "do is safe: %s %s %s\n", DISPLAY(body), DISPLAY(steppers), DISPLAY(var_list)); */
 
   for (p = body; is_pair(p); p = cdr(p))
     {
@@ -42597,20 +42601,11 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		      break;
 
 		    case OP_SET:
-		      if (!direct_memq(cadr(expr), var_list))
-			{
-#if 0
-			  if ((!is_pair(cddr(expr))) ||
-			      (!is_optimized(caddr(expr))) ||
-			      (is_unsafe(caddr(expr))) ||
-			      (direct_memq(cadr(expr), steppers)) ||
-			      (tree_memq(sc, caddr(expr), steppers)))
-#endif
-			    (*has_set) = true;
-			}
+		      if (!direct_memq(cadr(expr), var_list)) /* is some non-local variable being set? */
+			(*has_set) = true;
 		      if (!do_is_safe(sc, cddr(expr), steppers, var_list, has_set))
 			return(false);
-		      if (!safe_stepper(sc, expr, steppers))
+		      if (!safe_stepper(sc, expr, steppers))  /* is any stepper the value saved? */
 			return(false);
 		      break;
 		      
@@ -42623,6 +42618,9 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		      if (!do_is_safe(sc, cdr(expr), steppers, var_list, has_set))
 			return(false);
 		      break;
+
+		    case OP_WITH_ENV:
+		      return(true);
 
 		    default:
 		      return(false);
@@ -42643,13 +42641,13 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		    {
 		      if (is_setter(car(expr))) /* "setter" includes stuff like cons and vector */
 			{
-			  if (!direct_memq(cadr(expr), var_list))
+			  if (!direct_memq(cadr(expr), var_list))         /* non-local is being changed */
 			    {
-			      if ((direct_memq(cadr(expr), steppers)) ||
+			      if ((direct_memq(cadr(expr), steppers)) ||  /* stepper is being set? */
 				  (!is_pair(cddr(expr))) ||
 				  (!is_pair(cdddr(expr))) ||
 				  (is_pair(cddddr(expr))) ||
-				  (is_symbol(cadddr(expr))) ||
+				  (is_symbol(cadddr(expr))) || /* memq cadddr expr steppers? */
 				  (is_pair(cadddr(expr))))
 				(*has_set) = true;
 			    }
@@ -43126,6 +43124,14 @@ static s7_pointer set_s_all_x(s7_scheme *sc, s7_pointer args)
   return(slot_value(SET_SYMBOL_SLOT(sc)));
 }
 
+static s7_pointer increment_s_all_x(s7_scheme *sc, s7_pointer args)
+{
+  car(sc->T2_2) = ((s7_function)fcdr(args))(sc, caddar(args));
+  car(sc->T2_1) = slot_value(SET_SYMBOL_SLOT(sc));
+  slot_set_value(SET_SYMBOL_SLOT(sc), c_call(car(args))(sc, sc->T2_1));
+  return(slot_value(SET_SYMBOL_SLOT(sc)));
+}
+
 static s7_pointer set_vector_all_x(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer val;
@@ -43172,8 +43178,19 @@ static s7_function set_dox_eval(s7_scheme *sc, s7_pointer code)
 	    eval_error(sc, "set! ~A: unbound variable", sc->code);
 	  SET_SYMBOL_SLOT(sc) = slot;
 
-	  fcdr(cdr(code)) = (s7_pointer)all_x_eval(cadr(code));
-	  return(set_s_all_x);
+	  if ((is_pair(cadr(code))) &&
+	      (s7_list_length(sc, cadr(code)) == 3) &&
+	      (optimize_data(cadr(code)) != HOP_SAFE_C_C) && /* add_cs1 etc expects the s */
+	      (cadr(cadr(code)) == car(code)))
+	    {
+	      fcdr(cdr(code)) = (s7_pointer)all_x_eval(caddr(cadr(code)));
+	      return(increment_s_all_x);
+	    }
+	  else
+	    {
+	      fcdr(cdr(code)) = (s7_pointer)all_x_eval(cadr(code));
+	      return(set_s_all_x);
+	    }
 	}
       else
 	{
@@ -43595,6 +43612,11 @@ static s7_pointer check_do(s7_scheme *sc)
 		fcdr(cddr(var)) = (s7_pointer)step_dox_eval(sc, caddr(var), car(var)); /* step choice */
 	    }
 	}
+      /* step var is mutable if it does not occur in the body, or only occurs outside a setter/closure
+       *   or it's only an index in a setter, 
+       *   and there are no unexpanded macros or unknown ops (implicit indexing).
+       * We'd pass that as arg to step_dox_eval, then choose init/step funcs that do not allocate after the init
+       */
 
       /* if ((fcdr(cdr(sc->code)) == end_dox_c_ss) &&
 	     (fcdr(fcdr(sc->code)) == g_equal_2) &&
@@ -45064,9 +45086,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     SAFE_DO:
     case OP_SAFE_DO:
       {
-	/* body is safe, step = +1, end is =, but stepper and end might be set in the body
+	/* body is safe, step = +1, end is =, but stepper and end might be set (or at least indirectly exported) in the body:
+	 *    (let ((lst ())) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j (min i 100))) (set! lst (cons j lst)))) lst)
+	 *  however, we're very restrictive about this in check_do and do_is_safe; even this is considered trouble:
+	 *    (let ((x 0)) (do ((i i (+ i 1))) ((= i 7)) (set! x (+ x i))) x)
 	 */
 	s7_pointer end, init_val, end_val, code;
+
 	code = sc->code;
 	init_val = cadaar(code);
 	if (is_symbol(init_val))
@@ -45143,18 +45169,38 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			end_slot = environment_dox2(sc->envir);
 			callee = cddr(sc->code);
 
-			while (true)
+			if (!direct_memq(slot_symbol(step_slot), callee))
 			  {
-			    s7_Int step, end;
-			    /* we checked for step == end above */
-			    f(sc, callee);
-			    step = s7_integer(slot_value(step_slot)) + 1;
-			    slot_set_value(step_slot, make_integer(sc, step));
-			    end = s7_integer(slot_value(end_slot));
-			    if (step == end)
+			    s7_pointer i;
+			    slot_set_value(step_slot, i = make_mutable_integer(sc, integer(slot_value(step_slot))));
+			    while (true)
 			      {
-				sc->code = cdr(cadr(code));
-				goto BEGIN;
+				s7_Int end;
+				f(sc, callee);
+				integer(i)++;
+				end = integer(slot_value(end_slot));
+				if (integer(i) == end)
+				  {
+				    sc->code = cdr(cadr(code));
+				    goto BEGIN;
+				  }
+			      }
+			  }
+			else
+			  {
+			    while (true)
+			      {
+				s7_Int step, end;
+				/* we checked for step == end above */
+				f(sc, callee);
+				step = s7_integer(slot_value(step_slot)) + 1;
+				slot_set_value(step_slot, make_integer(sc, step));
+				end = s7_integer(slot_value(end_slot));
+				if (step == end)
+				  {
+				    sc->code = cdr(cadr(code));
+				    goto BEGIN;
+				  }
 			      }
 			  }
 		      }
@@ -45165,6 +45211,126 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    else
 	      {
+		/* one line non-syntactic -- so it must be optimized? */
+
+		if ((car(sc->code) == sc->VECTOR_SET) &&
+		    (integer(slot_value(environment_dox1(sc->envir))) >= 0) &&
+		    (is_symbol(cadr(sc->code))) &&
+		    (ecdr(car(cadr(code))) != geq_2) &&
+		    (caddr(sc->code) == slot_symbol(environment_dox1(sc->envir)))) /* step slot */
+		  {
+		    s7_pointer v;
+		    v = finder(sc, cadr(sc->code));
+		    if (s7_is_vector(v))
+		      {
+			s7_pointer step_slot, end_slot, callee;
+			s7_Int len;
+
+			len = vector_length(v);
+			step_slot = environment_dox1(sc->envir);
+			end_slot = environment_dox2(sc->envir);
+			callee = cadddr(sc->code);
+
+			if (is_all_x_safe(sc, callee))
+			  {
+			    s7_function f;
+			    f = all_x_eval(callee);
+			    while (true)
+			      {
+				s7_Int step, end;
+				step = s7_integer(slot_value(step_slot));
+				if (step >= len)
+				  eval_error(sc, "vector-set!: index must not be less than vector length: ~S", sc->code);
+				vector_element(v, step) = f(sc, callee);
+				step++;
+				slot_set_value(step_slot, make_integer(sc, step));
+				end = s7_integer(slot_value(end_slot));
+				if (step == end)
+				  {
+				    sc->code = cdr(cadr(code));
+				    goto BEGIN;
+				  }
+			      }
+			  }
+			if ((s7_list_length(sc, callee) < 4) &&
+			    (is_all_x_safe(sc, cadr(callee))) &&
+			    ((is_null(cddr(callee))) || (is_all_x_safe(sc, caddr(callee)))))
+			  {
+			    bool v1, v2 = false;
+			    s7_pointer a1, a2 = NULL;
+			    s7_function f1, f2 = NULL;
+
+			    a1 = cadr(callee);
+			    v1 = ((is_pair(a1)) &&
+				  (car(a1) == sc->VECTOR_REF) &&
+				  (cadr(a1) == cadr(sc->code)) &&
+				  (caddr(a1) == caddr(sc->code)));
+			    if (!v1) f1 = all_x_eval(a1);
+
+			    if (is_pair(cddr(callee)))
+			      {
+				a2 = caddr(callee);
+				v2 = ((is_pair(a2)) &&
+				      (car(a2) == sc->VECTOR_REF) &&
+				      (cadr(a2) == cadr(sc->code)) &&
+				      (caddr(a2) == caddr(sc->code)));
+				if (!v2) f2 = all_x_eval(a2);
+			      }
+
+			    if ((v1) && (v2))
+			      {
+				s7_pointer i;
+				s7_Int step, end;
+				end = integer(slot_value(end_slot));
+				slot_set_value(step_slot, i = make_mutable_integer(sc, integer(slot_value(step_slot))));
+				while (true)
+				  {
+				    step = integer(i);
+				    if (step >= len)
+				      eval_error(sc, "vector-set!: index must not be less than vector length: ~S", sc->code);
+				    car(sc->T2_1) = vector_element(v, step); 
+				    car(sc->T2_2) = vector_element(v, step); 
+				    vector_element(v, step) = c_call(callee)(sc, sc->T2_1);
+
+				    integer(i)++;
+				    if (integer(i) == end)
+				      {
+					sc->code = cdr(cadr(code));
+					goto BEGIN;
+				      }
+				  }
+			      }
+
+			    while (true)
+			      {
+				s7_Int step, end;
+				step = s7_integer(slot_value(step_slot));
+				if (step >= len)
+				  eval_error(sc, "vector-set!: index must not be less than vector length: ~S", sc->code);
+				if (a2)
+				  {
+				    if (v1) car(sc->T2_1) = vector_element(v, step); else car(sc->T2_1) = f1(sc, a1);
+				    if (v2) car(sc->T2_2) = vector_element(v, step); else car(sc->T2_2) = f2(sc, a2);
+				    vector_element(v, step) = c_call(callee)(sc, sc->T2_1);
+				  }
+				else
+				  {
+				    if (v1) car(sc->T1_1) = vector_element(v, step); else car(sc->T1_1) = f1(sc, a1);
+				    vector_element(v, step) = c_call(callee)(sc, sc->T1_1);
+				  }
+				step++;
+				slot_set_value(step_slot, make_integer(sc, step));
+				end = s7_integer(slot_value(end_slot));
+				if (step == end)
+				  {
+				    sc->code = cdr(cadr(code));
+				    goto BEGIN;
+				  }
+			      }
+			  }
+		      }
+		  }
+
 		push_stack(sc, OP_SAFE_DO_STEP_A, sc->args, code);
 		goto NS_EVAL;
 	      }
@@ -46216,7 +46382,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_main_stack(sc);                 
 	else main_stack_code(sc) = cdr(code); 
 	goto EVAL;
-	/* 46150: 21898512 */
       }
 
 
@@ -46256,7 +46421,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    if (is_pair(cdr(code)))
 	      push_stack_no_args(sc, OP_BEGIN1, cdr(code)); 
-	    /* we can't just skip over constants here because they might normally trigger an error (unbound variable, etc) */
+	    /* we can't just skip over symbols here because they might normally trigger an error (unbound variable, etc) */
 	    else eval_error_with_name(sc, "~A: unexpected dot or '() at end of body? ~A", code);
 	  }
 
@@ -52687,12 +52852,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    switch (type(val))
 	      {
 	      case T_INTEGER:
-		sc->value = make_integer(sc, integer(val) + 1);
-		slot_set_value(y, sc->value);
+		slot_set_value(y, make_integer(sc, integer(val) + 1));
 		/* this can't be optimized to treat y's value as a mutable integer 
 		 * also, we have to set sc->value, since s7.html says set! returns the value.
 		 */
-		IF_BEGIN_POP_STACK(sc);
+		IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, y);
 		
 	      case T_REAL:
 		sc->value = make_real(sc, real(val) + 1.0);
@@ -52758,7 +52922,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    slot_set_value(y, sc->value);
 	    IF_BEGIN_POP_STACK(sc);
 	  }
-
 	push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
 	sc->code = cadr(sc->code);
 	goto EVAL; 
@@ -52778,7 +52941,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    slot_set_value(y, sc->value);
 	    goto START;
 	  }
-
 	push_stack_no_args(sc, OP_SET2, car(sc->code)); 
 	sc->code = cadr(sc->code);
 	goto EVAL; 
@@ -52791,9 +52953,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->y = find_symbol(sc, car(sc->code));
       if (is_slot(sc->y)) 
 	{
-	  sc->value = c_call(cadr(sc->code))(sc, fcdr(sc->code));
-	  slot_set_value(sc->y, sc->value); 
-	  IF_BEGIN_POP_STACK(sc); 
+	  slot_set_value(sc->y, c_call(cadr(sc->code))(sc, fcdr(sc->code)));
+	  IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sc->y); 
 	}
       eval_error(sc, "set! ~A: unbound variable", sc->code);
 
@@ -52848,9 +53009,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    car(sc->T2_1) = finder(sc, car(fcdr(code)));
 	    car(sc->T2_2) = finder(sc, cadr(fcdr(code)));
-	    sc->value = c_call(cadr(code))(sc, sc->T2_1);
-	    slot_set_value(sym, sc->value);
-	    IF_BEGIN_POP_STACK(sc); 
+	    slot_set_value(sym, c_call(cadr(code))(sc, sc->T2_1));
+	    IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sym); 
 	  }
       }
       eval_error(sc, "set! ~A: unbound variable", sc->code);
@@ -52864,14 +53024,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  car(sc->T2_1) = slot_value(sc->y);
 	  car(sc->T2_2) = finder(sc, cadr(fcdr(sc->code)));
 	  slot_set_value(sc->y, c_call(cadr(sc->code))(sc, sc->T2_1));
-	  if (IN_MEDIA_RES(sc))
-	    goto POP_BEGIN;
-	  else
-	    {
-	      sc->value = slot_value(sc->y);
-	      goto START;
-	    }
-	  IF_BEGIN_POP_STACK(sc); 
+	  IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sc->y);
 	}
       eval_error(sc, "set! ~A: unbound variable", sc->code);
 
@@ -52896,13 +53049,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      car(sc->T3_3) = x3;
 	      slot_set_value(sc->y, g_add(sc, sc->T3_1));
 	    }
-	  if (IN_MEDIA_RES(sc))
-	    goto POP_BEGIN;
-	  else
-	    {
-	      sc->value = slot_value(sc->y);
-	      goto START;
-	    }
+	  IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sc->y);
 	}
       eval_error(sc, "set! ~A: unbound variable", sc->code);
 
@@ -52918,9 +53065,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    car(sc->T3_1) = finder(sc, car(fcdr(code))); /* checking car=car(fcdr) here is slightly slower */
 	    car(sc->T3_2) = finder(sc, ecdr(fcdr(code))); 
 	    car(sc->T3_3) = finder(sc, fcdr(fcdr(code)));
-	    sc->value = c_call(cadr(code))(sc, sc->T3_1);
-	    slot_set_value(sym, sc->value); 
-	    IF_BEGIN_POP_STACK(sc); 
+	    slot_set_value(sym, c_call(cadr(code))(sc, sc->T3_1));
+	    IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sym); 
 	  }
 	eval_error(sc, "set! ~A: unbound variable", sc->code);
       }
@@ -52934,22 +53080,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sym = find_symbol(sc, car(code));
 	if (is_slot(sym))
 	  {
-	    /* (let () (define (hi a b c d) (let ((x 0)) (set! x (+ a (* d (- b c)))) x)) (define (ho) (hi 1 2 3 4)) (ho)) */
+	    /* (let () (define (hi a b d) (let ((x 0)) (set! x (+ a (* d (- b x)))) x)) (define (ho) (hi 1 2 4)) (ho)) */
 	    s7_pointer args, p, val1, val2, val3, val4;
 	    code = cadr(code);
 	    args = caddr(code);                             /* (* d (- b c)) */
 	    p = caddr(args);                                /* (- b c) */
 	    val3 = finder(sc, cadr(p));                     /* b */
-	    if (caddr(p) == car(sc->code))
-	      val4 = slot_value(sym);
-	    else val4 = finder(sc, caddr(p));               /* c */
+	    val4 = slot_value(sym);
 	    val2 = finder(sc, cadr(args));                  /* d */
 	    val1 = finder(sc, cadr(code));                  /* a */
 	    if ((type(val1) == T_REAL) &&
 		(type(val2) == T_REAL) &&
 		(type(val3) == T_REAL) &&
 		(type(val4) == T_REAL))
-	      slot_set_value(sym, sc->value = make_real(sc, real(val1) + (real(val2) * (real(val3) - real(val4)))));
+	      slot_set_value(sym, make_real(sc, real(val1) + (real(val2) * (real(val3) - real(val4)))));
 	    else
 	      {
 		car(sc->T2_1) = val3;
@@ -52958,10 +53102,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T2_1) = val2;
 		car(sc->T2_2) = g_multiply_2(sc, sc->T2_1);    /* (* ...) */
 		car(sc->T2_1) = val1;
-		sc->value = g_add_2(sc, sc->T2_1);             /* (+ ...) */
-		slot_set_value(sym, sc->value); 
+		slot_set_value(sym, g_add_2(sc, sc->T2_1));    /* (+ ...) */
 	      }
-	    IF_BEGIN_POP_STACK(sc);
+	    IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sym);
 	  }
 	eval_error(sc, "set! ~A: unbound variable", sc->code);
       }
@@ -52982,8 +53125,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 *   becomes (set! (hook-functions *error-hook*) '())
 	 *   because open-sound is calling itself safe, but it can call all kinds of hooks and whatnot,
 	 *   and these can hit errors, setting *error-hook*, fallling into s7_call and so on.
-	 * (this is independent of c_function_call: it happens with optimization off, so set below
-	 * also needs to be protected, I guess).
 	 */
 	sc->code = sym;
 	goto SET_SAFE;
@@ -62512,7 +62653,7 @@ s7_scheme *s7_init(void)
  * easy closure_arity done right away?  0/1 should not be expensive -- maybe just set it!
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5
- * bench    42736 8752 8051 7725 6515 5194 4514
+ * bench    42736 8752 8051 7725 6515 5194 4512
  * lint           9328 8140 7887 7736 7300 7244
  * index    44300 3291 3005 2742 2078 1643 1463
  * s7test    1721 1358 1297 1244  977  961  959

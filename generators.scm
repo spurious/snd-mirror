@@ -353,8 +353,8 @@
   
   (set! (gen 'fm) fm)
   (with-environment gen
-    (let* ((snx (sin (* n angle)))
-	   (den (sin angle)))
+    (let ((snx (sin (* n angle)))
+	  (den (sin angle)))
       (set! angle (+ angle fm frequency))
       (if (< (abs den) nearly-zero)
 	  0.0
@@ -557,7 +557,7 @@
 					     (* p2n2 den))))
 				 (* val val))))
 			 (- (* 2 result2) result1)))))
-      (set! angle (+ fm angle frequency))
+      (set! angle (+ angle fm frequency))
       result)))
 
 #|
@@ -2128,8 +2128,8 @@
 	   (sinha (sinh a)))
       (if (zero? sinha)
 	  0.0 ; just a guess
-	  (/ (atan (/ (oscil osc fm) sinha))
-	     (atan (/ sinha))))))) ; normalization
+	  (/ (atan (oscil osc fm) sinha)
+	     (atan 1.0 sinha)))))) ; normalization
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -2263,10 +2263,10 @@
   (with-environment gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
-      (/ (atan (/ (* r (sin x))
-		  (- 1.0 (* r (cos x)))))
-	 (atan (/ (* r (sin (acos r)))   ; normalization
-		  (- 1.0 (* r r))))))))
+      (/ (atan (* r (sin x))
+	       (- 1.0 (* r (cos x))))
+	 (atan (* r (sin (acos r)))  ; normalization
+	       (- 1.0 (* r r)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -2305,8 +2305,8 @@
       (/ (- (* (cos cxx)
 	       -0.5 (log (+ 1.0 (* -2.0 rcosmx) (* r r))))
 	    (* (sin cxx)
-	       (atan (/ (* r (sin mx))
-			(- 1.0 rcosmx)))))
+	       (atan (* r (sin mx))
+		     (- 1.0 rcosmx))))
 	 (- (log (- 1.0 (abs r)))))))) ; normalization
 
 #|
@@ -2887,8 +2887,8 @@
 	       (log (/ (+ 1.0 (* 2.0 r (cos mx)) (* r r))
 		       (+ 1.0 (* -2.0 r (cos mx)) (* r r)))))
 	    (* (sin cxx)
-	       (atan (/ (* 2.0 r (sin mx))
-			(- 1.0 (* r r))))))
+	       (atan (* 2.0 r (sin mx))
+		     (- 1.0 (* r r)))))
 	 (- (log (+ 1 r))    ; normalization (r^k/k for odd k)
 	    (log (- 1 r)))))))
 
