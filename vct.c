@@ -61,6 +61,7 @@
 #include "xen.h"
 #include "clm.h"
 #include "sndlib2xen.h"
+#include "clm2xen.h"
 #include "vct.h"
 
 #define S_make_vct       "make-vct"
@@ -855,14 +856,74 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 
       if ((pos < 0) ||
 	  (end > v->length))
-	XEN_OUT_OF_RANGE_ERROR("vct-set!", 2, s7_caddr(args), "index out of range");   
+	XEN_OUT_OF_RANGE_ERROR("vct-set!", 2, s7_caddr(args), "index out of range");
+
+      if (s7_list_length(sc, val) == 2)
+	{
+	  if (s7_is_symbol(s7_cadr(val)))
+	    {
+	      s7_pointer obj;
+	      obj = s7_cadr_value(sc, val);
+	      if (mus_xen_p(obj))
+		{
+		  mus_any *g;
+		  g = XEN_TO_MUS_ANY(obj);
+		  if ((mus_env_p(g)) &&
+		      (s7_car(val) == s7_make_symbol(sc, "env")))
+		    {
+		      for (; pos < end; pos++) 
+			v->data[pos] = mus_env(g);
+		      (*step) = end;
+		      return(args);
+		    }
+		  if ((mus_readin_p(g)) &&
+		      (s7_car(val) == s7_make_symbol(sc, "readin")))
+		    {
+		      for (; pos < end; pos++) 
+			v->data[pos] = mus_readin(g);
+		      (*step) = end;
+		      return(args);
+		    }
+		}
+	    }
+	  else
+	    {
+	      if ((s7_is_real(s7_cadr(val))) &&
+		  (s7_car(val) == s7_make_symbol(sc, "mus-random")))
+		{
+		  s7_Double x;
+		  x = s7_number_to_real(sc, s7_cadr(val));
+		  for (; pos < end; pos++) 
+		    v->data[pos] = mus_random(x);
+		  (*step) = end;
+		  return(args);
+		}
+	    }
+	}
+
+      if ((s7_list_length(sc, val) == 3) &&
+	  (s7_caddr(args) == s7_caddr(val)) &&
+	  (s7_car(val) == s7_make_symbol(sc, "vct-ref")) &&
+	  (s7_is_symbol(s7_cadr(val))))
+	{
+	  vct *rv;
+	  rv = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, val), vct_tag);
+	  if (rv)
+	    {
+	      if (end > rv->length)
+		XEN_OUT_OF_RANGE_ERROR("vct-ref", 2, s7_caddr(args), "index out of range");
+	      for (; pos < end; pos++)
+		v->data[pos] = rv->data[pos];
+	      (*step) = end;
+	      return(args);
+	    }
+	}
 
       for (; pos < end; pos++)
 	{
 	  (*step) = pos; /* in case val expr depends on the step var */
 	  v->data[pos] = s7_call_direct_to_real_and_free(sc, val);
 	}
-      
       (*step) = end;
       return(args);
     }

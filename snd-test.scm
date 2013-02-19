@@ -554,7 +554,6 @@
 	  (if (not (provided? 'snd-snd-gtk.scm)) (load "snd-gtk.scm")))))
 
 
-;(define default-file-buffer-size 65536)
 (define default-file-buffer-size (mus-file-buffer-size))
 ;(set! (mus-file-buffer-size) default-file-buffer-size)
 
@@ -12338,9 +12337,7 @@ EDITS: 2
 	  (secs (samples->seconds 22050)))
       (if (not (= samps 22050)) (snd-display #__line__ ";seconds->samples: ~A" samps))
       (if (fneq secs 1.0) (snd-display #__line__ ";samples->seconds: ~A" secs)))
-    (if (and (= clmtest 0)
-	     (not (= (mus-file-buffer-size) default-file-buffer-size)))
-	(snd-display #__line__ ";mus-file-buffer-size: ~D ~D?" (mus-file-buffer-size) default-file-buffer-size))
+    (set! (mus-file-buffer-size) default-file-buffer-size)
     (let ((var (catch #t (lambda () (set! (mus-file-buffer-size) #f)) (lambda args args))))
       (if (not (eq? (car var) 'wrong-type-arg))
 	  (snd-display #__line__ ";mus-file-buffer-size bad size: ~A" var)))

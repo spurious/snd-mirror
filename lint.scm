@@ -3307,3 +3307,4 @@
 ;;;   but what about possible other stuff interspersed?
 
 ;;; big projects: reorder let* -> nested let, check do body for static exprs
+;;;   or flag vars that are declared at too high a level

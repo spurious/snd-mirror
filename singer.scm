@@ -106,8 +106,6 @@
 	      (noselength-1 (- noselength 1))
 	      (noselength-2 (- noselength 2))
 	      (nose-ring-time 1000)	; naso pharynx response decay time
-	      (one-over-two-pi  0.159154943)
-	      (two-pi-over-table-size (/ two-pi table-size))
 	      (table-size-over-sampling-rate (/ table-size (mus-srate)))
 	      (dgain (- 1.0 dpole))
 	      (tong-hump-gain (- 1.0 tong-hump-pole))
@@ -120,8 +118,6 @@
 	      (glot-table2 (make-vector (+ 1 table-size) 0.0))
 	      ;; (gn-table (make-vector (+ 1 table-size) 0.0)) ;(gn-gain 0.0) ;(gn-out 0.0) ;(gn-del (make-vector 4 0.0))
 	      ;; (gn-coeffs (make-vector 4 0.0)) ; in Perry's C code, these were set in setGlotNoiseFilter but it was never called!
-	      (sines (make-vector 200 0.0))
-	      (cosines (make-vector 200 0.0))
 	      (table-increment 0.0)
 	      (glot-refl-gain 0.7)
 	      (pitch 400.0)
@@ -242,6 +238,10 @@
 	  (let ((harms (floor (glot-datai 1)))
 		(temp1 0.0)
 		(temp 0.0)
+		(sines (make-vector 200 0.0))
+		(cosines (make-vector 200 0.0))
+		(one-over-two-pi  0.159154943)
+		(two-pi-over-table-size (/ two-pi table-size))
 		(a (glot-datar 0))
 		(b (glot-datar 1)))
 	    (let ((a2 (* two-pi a))

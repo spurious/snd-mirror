@@ -12976,6 +12976,50 @@ static s7_pointer g_subtract_ran(s7_scheme *sc, s7_pointer args)
   return(make_real(sc, (y * next_random(sc->default_rng)) - x));
 }
 
+static s7_pointer subtract_sf;
+static s7_pointer g_subtract_sf(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x;
+  s7_Double n;
+
+  x = finder(sc, car(args));
+  n = real(cadr(args));
+  switch (type(x))
+    {
+    case T_INTEGER: return(make_real(sc, integer(x) - n));
+    case T_RATIO:   return(make_real(sc, fraction(x) - n));
+    case T_REAL:    return(make_real(sc, real(x) - n));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - n, imag_part(x)));
+    default:        
+      CHECK_METHOD(sc, x, sc->MINUS, args);
+      return(wrong_type_argument_with_type(sc, sc->MINUS, small_int(1), x, A_NUMBER));
+    }
+  return(x);
+}
+
+static s7_pointer subtract_fs;
+static s7_pointer g_subtract_fs(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x;
+  s7_Double n;
+
+  x = finder(sc, cadr(args));
+  n = real(car(args));
+  switch (type(x))
+    {
+    case T_INTEGER: return(make_real(sc, n - integer(x)));
+    case T_RATIO:   return(make_real(sc, n - fraction(x)));
+    case T_REAL:    return(make_real(sc, n - real(x)));
+    case T_COMPLEX: return(s7_make_complex(sc, n - real_part(x), -imag_part(x)));
+    default:        
+      CHECK_METHOD(sc, x, sc->MINUS, args);
+      return(wrong_type_argument_with_type(sc, sc->MINUS, small_int(2), x, A_NUMBER));
+    }
+  return(x);
+}
+
+
+
 
 
 
@@ -36432,6 +36476,7 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       /* (* c c)
        * (* s (sin|cos s))
        */
+      /* fprintf(stderr, "m%d: %s\n", args, DISPLAY_80(expr)); */
       return(multiply_2);
     }
 
@@ -36490,32 +36535,54 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 
   if (args == 2)
     {
-      if (caddr(expr) == small_int(1))
+      s7_pointer arg1, arg2;
+      arg1 = cadr(expr);
+      arg2 = caddr(expr);
+
+      if (arg2 == small_int(1))
 	{
-	  if (is_symbol(cadr(expr)))
+	  if (is_symbol(arg1))
 	    {
 	      set_optimize_data(expr, HOP_SAFE_C_C);
 	      return(subtract_cs1);
 	    }
 	  return(subtract_s1);
 	}
-      if ((s7_is_integer(caddr(expr))) &&
-	  (is_symbol(cadr(expr))))
+
+      if ((type(arg2) == T_REAL) &&
+	  (is_symbol(arg1)))
+	{
+	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  return(subtract_sf);
+	}
+
+      if ((type(arg1) == T_REAL) &&
+	  (is_symbol(arg2)))
+	{
+	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  return(subtract_fs);
+	}
+
+      if ((s7_is_integer(arg2)) &&
+	  (is_symbol(arg1)))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(subtract_csn);
 	}
-      if ((type(caddr(expr)) == T_REAL) &&
-	  (is_pair(cadr(expr))) &&
-	  (is_optimized(cadr(expr))) &&
-	  (optimize_data(cadr(expr)) == HOP_SAFE_C_C) &&
-	  (car(cadr(expr)) == sc->RANDOM) &&
-	  (type(cadr(cadr(expr))) == T_REAL))
+      if ((type(arg2) == T_REAL) &&
+	  (is_pair(arg1)) &&
+	  (is_optimized(arg1)) &&
+	  (optimize_data(arg1) == HOP_SAFE_C_C) &&
+	  (car(arg1) == sc->RANDOM) &&
+	  (type(cadr(arg1)) == T_REAL))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(subtract_ran);
 	}
 
+      /* fs and sf
+       */
+      /* fprintf(stderr, "%d: %s\n", args, DISPLAY_80(expr)); */
       return(subtract_2);
     }
 #endif
@@ -37233,6 +37300,8 @@ static void init_choosers(s7_scheme *sc)
   subtract_cs1 = make_function_with_class(sc, f, "-", g_subtract_cs1, 2, 0, false, "- optimization");
   subtract_csn = make_function_with_class(sc, f, "-", g_subtract_csn, 2, 0, false, "- optimization");
   subtract_ran = make_temp_function_with_class(sc, f, "-", g_subtract_ran, 2, 0, false, "- optimization");
+  subtract_sf = make_function_with_class(sc, f, "-", g_subtract_sf, 2, 0, false, "- optimization");
+  subtract_fs = make_function_with_class(sc, f, "-", g_subtract_fs, 2, 0, false, "- optimization");
 
 
   /* * */
@@ -37713,10 +37782,11 @@ static bool is_all_x_op(int op)
 	 (op == HOP_SAFE_C_opSSq_S) ||
 	 (op == HOP_SAFE_C_S_opSq) ||
 	 (op == HOP_SAFE_C_S_opCq) ||
-	 (op == HOP_SAFE_C_opCq_S) ||
 	 (op == HOP_SAFE_C_C_opSq) ||
+	 (op == HOP_SAFE_C_opCq_S) ||
 	 (op == HOP_SAFE_C_opSq_S) ||
 	 (op == HOP_SAFE_C_opSq_C) ||
+	 (op == HOP_SAFE_C_opCq_C) ||
 	 (op == HOP_SAFE_C_S_opSSq) ||
 	 (op == HOP_SAFE_C_opSq_opSq));
 }
@@ -37878,6 +37948,15 @@ static s7_pointer all_x_c_opcq_s(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T2_1));
 }
 		    
+static s7_pointer all_x_c_opcq_c(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = cadr(arg);
+  car(sc->T2_1) = c_call(largs)(sc, cdr(largs));
+  car(sc->T2_2) = caddr(arg);
+  return(c_call(arg)(sc, sc->T2_1));
+}
+		    
 static s7_pointer all_x_c_opsq(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer largs;
@@ -38003,6 +38082,7 @@ static s7_function all_x_eval(s7_pointer arg)
 	    case HOP_SAFE_C_S_opSq:    return(all_x_c_s_opsq);
 	    case HOP_SAFE_C_S_opCq:    return(all_x_c_s_opcq);
 	    case HOP_SAFE_C_opCq_S:    return(all_x_c_opcq_s);
+	    case HOP_SAFE_C_opCq_C:    return(all_x_c_opcq_c);
 	    case HOP_SAFE_C_C_opSq:    return(all_x_c_c_opsq);
 	    case HOP_SAFE_C_opSSq_S:   return(all_x_c_opssq_s);
 	    case HOP_SAFE_C_S_opSSq:   return(all_x_c_s_opssq);
@@ -42879,6 +42959,23 @@ static s7_pointer dox_add_t1(s7_scheme *sc, s7_pointer args, s7_pointer slot)
   return(g_add_2(sc, sc->T2_1));
 }
 
+static s7_pointer dox_add_mutable_1(s7_scheme *sc, s7_pointer args, s7_pointer slot)
+{
+  s7_pointer x;
+  x = slot_value(slot);
+  if (is_integer(x))
+    {
+      integer(x)++;
+      return(x);
+    }
+  if (type(x) == T_REAL)
+    return(make_real(sc, real(x) + 1.0));
+
+  car(sc->T2_1) = x;
+  car(sc->T2_2) = small_int(1);
+  return(g_add_2(sc, sc->T2_1));
+}
+
 static s7_pointer dox_sub_t1(s7_scheme *sc, s7_pointer args, s7_pointer slot)
 {
   s7_pointer x;
@@ -42921,7 +43018,11 @@ static dox_function step_dox_eval(s7_scheme *sc, s7_pointer code, s7_pointer var
       if (var == cadr(code))
 	{
 	  if (fcdr(code) == (s7_pointer)g_add_cs1)
-	    return(dox_add_t1);
+	    {
+	      if (s7_tree_memq(sc, var, cddr(sc->code)))
+		return(dox_add_t1);
+	      return(dox_add_mutable_1);
+	    }
 	  if (fcdr(code) == (s7_pointer)g_subtract_cs1)
 	    return(dox_sub_t1);
 
@@ -45926,9 +46027,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if ((df == step_dox_c_ss_direct) ||
 		  (df == step_dox_c_ssc_direct))
 		slot_pending_value(slot) = find_symbol(sc, caddar(slot_expression(slot)));
-	      if ((df == step_dox_c_s_indirect) ||
-		  (df == step_dox_read_char_s))
-		slot_pending_value(slot) = find_symbol(sc, cadar(slot_expression(slot)));
+	      else
+		{
+		  if ((df == step_dox_c_s_indirect) ||
+		      (df == step_dox_read_char_s))
+		    slot_pending_value(slot) = find_symbol(sc, cadar(slot_expression(slot)));
+		  else
+		    {
+		      if ((df == dox_add_mutable_1) &&
+			  (is_integer(slot_value(slot))))
+			slot_set_value(slot, make_mutable_integer(sc, integer(slot_value(slot))));
+		    }
+		}
 	    }
 
 	initialize_dox_vars(sc, fcdr(sc->code));	
@@ -62653,7 +62763,7 @@ s7_scheme *s7_init(void)
  * easy closure_arity done right away?  0/1 should not be expensive -- maybe just set it!
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5
- * bench    42736 8752 8051 7725 6515 5194 4512
+ * bench    42736 8752 8051 7725 6515 5194 4412
  * lint           9328 8140 7887 7736 7300 7244
  * index    44300 3291 3005 2742 2078 1643 1463
  * s7test    1721 1358 1297 1244  977  961  959
