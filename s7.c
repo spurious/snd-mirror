@@ -668,7 +668,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_CLOSURE_S, HOP_CLOSURE_S, OP_CLOSURE_Sp, HOP_CLOSURE_Sp, OP_CLOSURE_C, HOP_CLOSURE_C, OP_CLOSURE_Q, HOP_CLOSURE_Q, 
       OP_CLOSURE_SS, HOP_CLOSURE_SS, OP_CLOSURE_SSb, HOP_CLOSURE_SSb, OP_CLOSURE_SSp, HOP_CLOSURE_SSp, 
       OP_CLOSURE_SC, HOP_CLOSURE_SC, OP_CLOSURE_CS, HOP_CLOSURE_CS, 
-      OP_CLOSURE_opSq, HOP_CLOSURE_opSq, OP_CLOSURE_opCq, HOP_CLOSURE_opCq, OP_CLOSURE_opCqp, HOP_CLOSURE_opCqp, 
+      OP_CLOSURE_opSq, HOP_CLOSURE_opSq, OP_CLOSURE_opCq, HOP_CLOSURE_opCq, 
       OP_CLOSURE_opSq_S, HOP_CLOSURE_opSq_S, OP_CLOSURE_opSq_opSq, HOP_CLOSURE_opSq_opSq, 
       OP_CLOSURE_CAR_CAR, HOP_CLOSURE_CAR_CAR, OP_CLOSURE_CDR_CDR, HOP_CLOSURE_CDR_CDR, 
       OP_CLOSURE_S_opSq, HOP_CLOSURE_S_opSq, OP_CLOSURE_S_opSSq, HOP_CLOSURE_S_opSSq, OP_CLOSURE_opSSq_S, HOP_CLOSURE_opSSq_S, 
@@ -776,7 +776,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "closure_s", "h_closure_s", "closure_sp", "h_closure_sp", "closure_c", "h_closure_c", "closure_q", "h_closure_q", 
       "closure_ss", "h_closure_ss", "closure_ssb", "h_closure_ssb", "closure_ssp", "h_closure_ssp", 
       "closure_sc", "h_closure_sc", "closure_cs", "h_closure_cs", 
-      "closure_opsq", "h_closure_opsq", "closure_opcq", "h_closure_opcq", "closure_opcqp", "h_closure_opcqp", 
+      "closure_opsq", "h_closure_opsq", "closure_opcq", "h_closure_opcq", 
       "closure_opsq_s", "h_closure_opsq_s", "closure_opsq_opsq", "h_closure_opsq_opsq", 
       "closure_car_car", "h_closure_car_car", "closure_cdr_cdr", "h_closure_cdr_cdr", 
       "closure_s_opsq", "h_closure_s_opsq", "closure_s_opssq", "h_closure_s_opssq", "closure_opssq_s", "h_closure_opssq_s", 
@@ -4174,7 +4174,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
   heap_location(x) = NOT_IN_HEAP;
   symbol_name_cell(x) = str;
   set_type(x, T_SYMBOL);
-  global_slot(x) = sc->NIL;
+  global_slot(x) = sc->UNDEFINED; /* was sc->NIL; */
   initial_slot(x) = sc->UNDEFINED;
   symbol_set_local(x, 0LL, sc->NIL);
   symbol_accessor(x) = -1;
@@ -4185,6 +4185,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
 	{
 	  typeflag(x) |= (T_IMMUTABLE | T_KEYWORD); 
 	  keyword_symbol(x) = make_symbol(sc, (char *)(name + 1));
+	  global_slot(x) = s7_make_slot(sc, sc->NIL, x, x);
 	}
       else
 	{
@@ -4198,6 +4199,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
 	      memcpy((void *)str, (void *)name, symbol_name_length(x) - 1);
 	      typeflag(x) |= (T_IMMUTABLE | T_KEYWORD); 
 	      keyword_symbol(x) = make_symbol(sc, str);
+	      global_slot(x) = s7_make_slot(sc, sc->NIL, x, x);
 	      free(str);
 	    }
 	}
@@ -5545,7 +5547,7 @@ static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hd
     if (slot_symbol(y) == hdl)
       return(y);
 
-  return(sc->NIL);
+  return(sc->UNDEFINED);
 } 
 
 
@@ -5566,9 +5568,6 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just 
   x = find_symbol(sc, sym);
   if (is_slot(x))
     return(slot_value(x));
-
-  if (is_keyword(sym)) /* this actually can happen */
-    return(sym);
 
   return(sc->UNDEFINED);
 }
@@ -5678,7 +5677,7 @@ symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
       if (local_env == sc->global_env)
 	{
 	  x = global_slot(sym);
-	  if (is_not_null(x))
+	  if (is_slot(x))
 	    return(slot_value(x));
 	  return(sc->UNDEFINED);
 	}
@@ -5870,6 +5869,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, sym, sc->DEFINEDP, args);
       return(wrong_type_argument(sc, sc->DEFINEDP, small_int(1), sym, T_SYMBOL));
     }
+
   if (is_not_null(cdr(args)))
     {
       s7_pointer e;
@@ -5879,14 +5879,29 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 	  CHECK_METHOD(sc, e, sc->DEFINEDP, args);
 	  return(wrong_type_argument_with_type(sc, sc->DEFINEDP, small_int(2), e, AN_ENVIRONMENT));
 	}
+
       if (e == sc->global_env)
-	{
-	  x = global_slot(sym);
-	  return(make_boolean(sc, (is_not_null(x)) && (x != sc->UNDEFINED)));
-	}
+	return(make_boolean(sc, global_slot(sym) != sc->UNDEFINED));
+
       x = find_local_symbol(sc, e, sym); 
       if (is_slot(x))
 	return(sc->T);
+      /* here we can't fall back on find_symbol:
+       *    (let ((b 2))
+       *      (let ((e (current-environment)))
+       *        (let ((a 1))
+       *          (if (defined? 'a e)
+       *              (format #t "a: ~A in ~{~A ~}" (symbol->value 'a e) e))))
+       *    "a: 1 in (b . 2)"
+       *
+       * but we also can't just return #f: 
+       *    (let ((b 2))
+       *      (let ((e (current-environment)))
+       *        (let ((a 1))
+       *          (format #t "~A: ~A" (defined? 'abs e) (eval '(abs -1) e)))))
+       *    "#f: 1"
+       */
+      return(make_boolean(sc, global_slot(sym) != sc->UNDEFINED));
     }
   else 
     {
@@ -5894,8 +5909,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 	return(sc->T);
     }
   
-  x = find_symbol(sc, sym); 
-  return(make_boolean(sc, is_slot(x)));
+  return(make_boolean(sc, is_slot(find_symbol(sc, sym))));
 }
 
 
@@ -29893,7 +29907,7 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc)
       {
 	s7_pointer slot; 
 	slot = find_symbol(sc, proc);           /* we don't want unbound-variable errors here */
-	if ((!is_null(slot)) &&
+	if ((is_slot(slot)) &&
 	    (proc != slot_value(slot)) &&       /* (procedure-name :hi) -> infinite loop */
 	    (is_procedure(slot_value(slot))))   /* a symbol -> symbol -> back to first?? */
 	  return(s7_procedure_name(sc, slot_value(slot)));
@@ -35166,11 +35180,8 @@ static s7_pointer read_expression(s7_scheme *sc)
 
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 {
-  /* this always occurs in a context where we're trying to find anything, so I'll move a couple of those checks here (keyword etc)
+  /* this always occurs in a context where we're trying to find anything, so I'll move a couple of those checks here
    */
-  if (is_keyword(sym))
-    return(sym);
-
   if (sym == sc->UNQUOTE)
     return(eval_error_no_arg(sc, "unquote (',') occurred outside quasiquote"));
 
@@ -35641,7 +35652,7 @@ static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl)
     }
 
   x = global_slot(hdl);
-  if (is_not_null(x)) 
+  if (is_slot(x)) 
     return(slot_value(x));
 
   return(unbound_variable(sc, hdl));
@@ -38578,14 +38589,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		      set_unsafely_optimized(car_x);
 		      if (is_safe_closure(func))
 			set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_opCq);
-		      else
-			{
-			  set_optimize_data(car_x, hop + OP_CLOSURE_opCq);
-			  if ((is_null(cdr(closure_body(func)))) &&
-			      (typesflag(car(closure_body(func))) == SYNTACTIC_PAIR) && 
-			      (!symbol_has_accessor(car(closure_args(func)))))
-			    set_optimize_data(car_x, hop + OP_CLOSURE_opCqp);
-			}
+		      else set_optimize_data(car_x, hop + OP_CLOSURE_opCq);
 		      fcdr(car_x) = cadar_x;
 		      ecdr(car_x) = func;
 		      return(false); 
@@ -42498,10 +42502,21 @@ static s7_pointer check_set(s7_scheme *sc)
 						      (car(sc->code) == caddr(caddr(caddr(cadr(sc->code))))) &&
 						      (c_call(cadr(sc->code)) == g_add_2) &&
 						      (c_call(caddr(cadr(sc->code))) == g_multiply_2) &&
-						      (c_call(caddr(caddr(cadr(sc->code)))) == g_subtract_2))
+						      (c_call(caddr(caddr(cadr(sc->code)))) == g_subtract_2) &&
+						      (main_stack_op(sc) == OP_BEGIN1))
 						    {
-						      set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_S_op_S_opSSqq);
-						      fcdr(sc->code) = cdadr(sc->code);
+						      s7_pointer next_up;
+						      next_up = car(main_stack_code(sc));
+						      if ((car(next_up) == sc->SET) &&
+							  (cadr(next_up) == cadr(cadr(sc->code))) &&
+							  (caddr(next_up) == cadr(caddr(caddr(cadr(sc->code))))))
+							{
+							  set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_S_op_S_opSSqq);
+							  fcdr(sc->code) = cdadr(sc->code);
+							  /* check_set is only called at OP_SET in the evaluator, so
+							   *   it should be safe to check the stack.
+							   */
+							}
 						    }
 						  else
 						    {
@@ -47293,33 +47308,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto EVAL;  
 
 
-	    case OP_CLOSURE_opCqp:
-	      if (!one_line_closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 1))
-		{
-		  set_optimize_data(code, OP_UNKNOWN_opCq);
-		  goto OPT_EVAL;
-		}
-	      if (!indirect_c_function_is_ok(sc, cadr(code)))
-		break;
-	      
-	    case HOP_CLOSURE_opCqp:
-	      /* kinda dumb -- this is for fib.scm... */
-	      CHECK_STACK_SIZE(sc);
-	      sc->value = c_call(fcdr(code))(sc, cdr(fcdr(code)));
-	      code = ecdr(code);
-	      NEW_FRAME_WITH_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), sc->value);
-	      /* we can't assume the "p" stuff is correct here */
-	      code = car(closure_body(code));
-	      if (typesflag(code) == SYNTACTIC_PAIR)
-		{
-		  sc->op = (opcode_t)lifted_op(code);
-		  sc->code = cdr(code);
-		  goto START_WITHOUT_POP_STACK;
-		}
-	      sc->code = code;
-	      goto NS_EVAL;
-
-	      
 	    case OP_CLOSURE_SSp:
 	      if (!one_line_closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 2))
 		{
@@ -48545,14 +48533,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  {
 			    if (is_safe_closure(f))
 			      set_optimize_data(code, OP_SAFE_CLOSURE_opCq);
-			    else
-			      {
-				set_optimize_data(code, OP_CLOSURE_opCq);
-				if ((is_null(cdr(closure_body(f)))) &&
-				    (typesflag(car(closure_body(f))) == SYNTACTIC_PAIR) &&
-				    (!symbol_has_accessor(car(closure_args(f)))))
-				  set_optimize_data(code, OP_CLOSURE_opCqp);
-			      }
+			    else set_optimize_data(code, OP_CLOSURE_opCq);
 			    if ((is_global(car(code))) &&
 				(is_hopping(cadr(code))))
 			      set_hopping(code);
@@ -49384,49 +49365,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      goto START;
 	      
-
 	      /* -------------------------------- */
-	      
-#if 0
-	      /*
-		 no overhead write-char? 
-		 *  -- needs 4 base points (8 case labels), (or + 2 if both symbols case)
-		 *           2 return points for eval
-		 *           2 eval labels
-		 * 1st arg can be C S X, 2nd X S N G [ignoring CG and SG that leaves 10 = 20 ops]
-		 *
-		 case OP_SAFE_WRITE_CHAR_X: also C S -- C case can be prechecked
-		   port = sc->current_output_port;
-		   goto SAFE_WRITE_CHAR;
-		 case OP_SAFE_WRITE_CHAR_XX: CX SX
-		   similarly if pair cadr, eval and return to OP_SAFE_WRITE_CHAR_2
-		 case OP_SAFE_WRITE_CHAR_XG: XS CS SS
-		   port = SYMBOL_TO_VALUE(sc, cadr(args));
-		   goto SAFE_WRITE_CHAR_2;
-		   similarly SS case here -- it's just for the op combiner
-		 case OP_SAFE_WRITE_CHAR_XS:
-		   port = finder(sc, cadr(args));
-		 case OP_SAFE_WRITE_CHAR_2:
-		 SAFE_WRITE_CHAR_2:
-		   check port type 
-		 SAFE_WRITE_CHAR:
-		   if (is_pair(car(args)))
-		     {
-		      push return to OP_SAFE_WRITE_CHAR_1;
-		      set up arg and goto eval pair
-		     }
-		   sc->value = car(args);
-		   if (is_symbol(sc->value))
-		   sc->value = finder(sc, sc->value);
-		 case OP_SAFE_WRITE_CHAR_1:
-		   if eval pair, we should get here with sc->value = chr?
-		   check sc->value type and possible method
-		   s7_write_char(sc, s7_character(chr), port); which is   port_write_character(pt)(sc, c, pt);
-		   check begin stack  
-		   goto START;
-	      */
-#endif
-	      /* -------------------------------------------------------------------------------- */
+
 	      
 	    case OP_SAFE_CONS_SS:
 	      if (!c_function_is_ok(sc, code))
@@ -49890,19 +49830,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		int num_args;
 		s7_pointer args, p;
 		
-		/* 445409: (* md md nrx (pulsed-env peep frq))
-305028: (sound-data-set! data 0 data-ctr interp)
-254140: (sample->file rdout k 0 (readin rdin))
-220000: (* a r -2.0 (cos x))
-203312: (sound-data-set! data 0 data-ctr sum)
-77347: (sound-data-set! sd i pos (frame-ref fr i))
-23100: (* 0.5 index (+ r r1) (sin modphase))
-22100: (* 0.5 index (- r r1) (+ one (cos modphase)))
-22050: (+ vib (* (env indf1) (oscil fmosc1 vib)) (* (env indf2) (oscil fmosc2 (* 3.0 vib))) (* (env indf3) (oscil fmosc3 (* 4.0 vib))))
-22050: (* 0.5 pi zval zval zval)
-19954: (* tn tn n n 2)
-10000: (* r1 r1 r3 (sin x))
-		 */
 		num_args = integer(arglist_length(code));
 		if ((num_args != 0) &&
 		    (num_args < NUM_SAFE_LISTS) &&
@@ -53190,15 +53117,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sym = find_symbol(sc, car(code));
 	if (is_slot(sym))
 	  {
-	    /* (let () (define (hi a b d) (let ((x 0)) (set! x (+ a (* d (- b x)))) x)) (define (ho) (hi 1 2 4)) (ho)) */
-	    s7_pointer args, p, val1, val2, val3, val4;
+	    s7_pointer args, p, a, val1, val2, val3, val4;
 	    code = cadr(code);
 	    args = caddr(code);                             /* (* d (- b c)) */
 	    p = caddr(args);                                /* (- b c) */
-	    val3 = finder(sc, cadr(p));                     /* b */
+	    /* val3 = finder(sc, cadr(p)); */               /* b */
+	    val3 = slot_value(find_symbol(sc, cadr(p)));
 	    val4 = slot_value(sym);
-	    val2 = finder(sc, cadr(args));                  /* d */
-	    val1 = finder(sc, cadr(code));                  /* a */
+	    /* find_symbol here seems to be faster, and the unbound_variable fallback can't help us in this context anyway.
+	     *   if cadr(args) is actually a typo, we'll get an error from the math op (#<unspecified> as value) -- hmmm...
+	     *   Perhaps we could argue that these are simple numbers (not functions or special identifiers like __func__,
+	     *   and that the unbound variable hook checks can't be used in any reasonable way with them.  So we'll expect
+	     *   an error in either case.  Perhaps slot_value(not_found_slot) => #<undefined>?  So global_slot(any_symbol)
+	     *   should be preset with #<undefined>?
+	     */
+	    /* val2 = finder(sc, cadr(args));  */           /* d */
+	    val2 = slot_value(find_symbol(sc, cadr(args))); 
+	    a = find_symbol(sc, cadr(code));
+	    val1 = slot_value(a);                           /* a */
 	    if ((type(val1) == T_REAL) &&
 		(type(val2) == T_REAL) &&
 		(type(val3) == T_REAL) &&
@@ -53208,13 +53144,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		car(sc->T2_1) = val3;
 		car(sc->T2_2) = val4;
-		car(sc->T2_2) = g_subtract_2(sc, sc->T2_1);    /* (- b c) */
+		car(sc->T2_2) = g_subtract_2(sc, sc->T2_1); /* (- b c) */
 		car(sc->T2_1) = val2;
-		car(sc->T2_2) = g_multiply_2(sc, sc->T2_1);    /* (* ...) */
+		car(sc->T2_2) = g_multiply_2(sc, sc->T2_1); /* (* ...) */
 		car(sc->T2_1) = val1;
-		slot_set_value(sym, g_add_2(sc, sc->T2_1));    /* (+ ...) */
+		slot_set_value(sym, g_add_2(sc, sc->T2_1)); /* (+ ...) */
 	      }
-	    IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sym);
+	    slot_set_value(a, val3);                        /* (set! a b) */
+	    main_stack_code(sc) = cdr(main_stack_code(sc));
+	    IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, a);
 	  }
 	eval_error(sc, "set! ~A: unbound variable", sc->code);
       }
@@ -53237,8 +53175,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 *   and these can hit errors, setting *error-hook*, fallling into s7_call and so on.
 	 */
 	sc->code = sym;
-	goto SET_SAFE;
+	/* goto SET_SAFE; */
       }
+
+
+      /* --------------- */
+    SET_SAFE:
+    case OP_SET_SAFE:  
+      sc->y = find_symbol(sc, sc->code);
+      if (is_slot(sc->y)) 
+	{
+	  slot_set_value(sc->y, sc->value); 
+	  IF_BEGIN_POP_STACK(sc); 
+	}
+      eval_error(sc, "set! ~A: unbound variable", sc->code);
 
       
       /* --------------- */
@@ -53319,25 +53269,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* --------------- */
     case OP_SET_SYMBOL_S:
       {
-	s7_pointer settee;
-	settee = car(sc->code);
-	sc->value = finder(sc, cadr(sc->code));
-	sc->code = settee;
-	/* goto SET_SAFE; */
+	s7_pointer sym;
+	sym = find_symbol(sc, car(sc->code));
+	if (is_slot(sym))
+	  {
+	    slot_set_value(sym, finder(sc, cadr(sc->code)));
+	    IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sym);
+	  }
+	eval_error(sc, "set! ~A: unbound variable", sc->code);
       }
       
-
-      /* --------------- */
-    SET_SAFE:
-    case OP_SET_SAFE:  
-      sc->y = find_symbol(sc, sc->code);
-      if (is_slot(sc->y)) 
-	{
-	  slot_set_value(sc->y, sc->value); 
-	  IF_BEGIN_POP_STACK(sc); 
-	}
-      eval_error(sc, "set! ~A: unbound variable", sc->code);
-
 
       /* --------------- */
     case OP_SET2:
@@ -61412,7 +61353,10 @@ s7_scheme *s7_init(void)
    *    the envr struct.
    */
   environment_id(sc->NIL) = -1;
-
+  
+  cdr(sc->UNDEFINED) = sc->UNDEFINED;
+  /* an experiment -- this way find_symbol of an undefined symbol returns #<undefined> not #<unspecified>
+   */
 
   sc->temp_cell = alloc_pointer();
   set_type(sc->temp_cell, T_PAIR | T_GC_MARK | T_IMMUTABLE);

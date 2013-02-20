@@ -611,6 +611,8 @@
     (do ((i start (+ i 1))) ((= i end))
       (outa i (* amp (phase-vocoder sr))))))
 
+;;; (with-sound (:statistics #t) (simple-pvoc 0 2.0 .4 256 "oboe.snd"))
+
 (define (simple-ina beg dur amp file)
   "(simple-ina beg dur amp file) test instrument for ina"
   (let ((start (seconds->samples beg))
@@ -2327,11 +2329,11 @@
 
 (definstrument (sndclmdoc-env-sound file beg (amp 1.0) (amp-env '(0 1 100 1)))
   (let ((st (seconds->samples beg))
-	(dur (mus-sound-duration file))
+	(dur (mus-sound-frames file))
 	(rev-amount .01)
 	(rdA (make-readin file)))
-    (let ((ampf (make-env amp-env amp dur))
-	  (nd (+ st (seconds->samples dur))))
+    (let ((ampf (make-env amp-env amp :length dur))
+	  (nd (+ st dur)))
       (do ((i st (+ i 1)))
 	  ((= i nd))
 	(let ((outval (* (env ampf) (readin rdA))))
@@ -2385,7 +2387,7 @@
 	(end (seconds->samples (+ start-time duration)))
 	(frqf (make-env '(0 0 1 1) :scaler (hz->radians (- end-freq start-freq)) :duration duration))
 	(click-track (make-pulse-train start-freq))
-	(grain-size (seconds->samples (mus-sound-duration grain-file))))
+	(grain-size (mus-sound-frames grain-file)))
     (let ((grains (make-wave-train :size grain-size :frequency start-freq))
 	  (ampf (make-env '(0 1 1 0) :scaler .7 :offset .3 :duration duration :base 3.0))
 	  (grain #f))

@@ -9787,6 +9787,25 @@ static s7_pointer g_polywave_mul_c_s(s7_scheme *sc, s7_pointer args)
   return(s7_make_real(sc, mus_polywave(o, s7_number_to_real(sc, car(vargs)) * x)));
 }
 
+static s7_pointer polywave_add_cs_ss;
+static s7_pointer g_polywave_add_cs_ss(s7_scheme *sc, s7_pointer args)
+{
+  /* (polywave g (+ (* c s) (* s s))), args is (g (+ ...)) */
+  mus_any *o;
+  double x1, x2, x3, x4;
+  s7_pointer vargs, p;
+
+  GET_GENERATOR(args, polywave, o);
+  vargs = cdadr(args);   /* ((* c s) (* s s)) */
+  p = cdar(vargs);       /* (c s) */
+  x1 = s7_number_to_real(sc, car(p));
+  GET_REAL_CADR(p, *, x2);
+  p = cdadr(vargs);
+  GET_REAL(p, *, x3);
+  GET_REAL_CADR(p, *, x4);
+  return(s7_make_real(sc, mus_polywave(o, (x1 * x2) + (x3 * x4))));
+}
+
 /* (with-sound () (fm-violin 0 .0001 440 .1)) */
 static s7_pointer fm_violin_vibrato;
 static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
@@ -13016,29 +13035,48 @@ static s7_pointer polywave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
     }
 
   if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))))
+      (s7_is_symbol(cadr(expr)))) /* the polywave gen */
     {
-      if (s7_is_symbol(caddr(expr)))
+      s7_pointer arg2;
+      arg2 = caddr(expr);
+
+      if (s7_is_symbol(arg2))
 	{
 	  s7_function_choice_set_direct(sc, expr);
 	  return(polywave_2);
 	}
 
-      if (s7_is_pair(caddr(expr)))
+      if (s7_is_pair(arg2))
 	{
-	  if ((s7_list_length(sc, caddr(expr)) == 3) &&
-	      (s7_caaddr(expr) == multiply_symbol) &&
-	      (s7_is_real(cadr(caddr(expr)))) &&
-	      (s7_is_symbol(caddr(caddr(expr)))))
+	  if (s7_list_length(sc, arg2) == 3)
 	    {
-	      s7_function_choice_set_direct(sc, expr);
-	      return(polywave_mul_c_s);
+	      if ((s7_car(arg2) == multiply_symbol) &&
+		  (s7_is_real(cadr(arg2))) &&
+		  (s7_is_symbol(caddr(arg2))))
+		{
+		  s7_function_choice_set_direct(sc, expr);
+		  return(polywave_mul_c_s);
+		}
+	      
+	      if ((car(arg2) == add_symbol) &&
+		  (s7_is_pair(cadr(arg2))) &&
+		  (s7_is_pair(caddr(arg2))) &&
+		  (car(cadr(arg2)) == multiply_symbol) &&
+		  (car(caddr(arg2)) == multiply_symbol) &&
+		  (s7_is_real(cadr(cadr(arg2)))) &&
+		  (s7_is_symbol(caddr(cadr(arg2)))) &&
+		  (s7_is_symbol(cadr(caddr(arg2)))) &&
+		  (s7_is_symbol(caddr(caddr(arg2)))))
+		{
+		  s7_function_choice_set_direct(sc, expr);
+		  return(polywave_add_cs_ss);
+		}
 	    }
 	      
-	  if (s7_function_choice_is_direct(sc, caddr(expr)))
+	  if (s7_function_choice_is_direct(sc, arg2))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
-	      if (s7_function_returns_temp(caddr(expr))) 
+	      if (s7_function_returns_temp(arg2)) 
 		return(direct_polywave_2);
 	      return(indirect_polywave_2);
 	    }
@@ -14755,6 +14793,7 @@ static void init_choosers(s7_scheme *sc)
   direct_polywave_2 = clm_make_function(sc, "polywave", g_direct_polywave_2, 2, 0, false, "polywave optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_polywave_2 = clm_make_function(sc, "polywave", g_indirect_polywave_2, 2, 0, false, "polywave optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   polywave_mul_c_s = clm_make_function(sc, "polywave", g_polywave_mul_c_s, 2, 0, false, "polywave optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  polywave_add_cs_ss = clm_make_function(sc, "polywave", g_polywave_add_cs_ss, 2, 0, false, "polywave optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
 
   /* table-lookup */

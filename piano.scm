@@ -463,12 +463,10 @@
 			(string3-junction-input 0.0)
 			(couplingFilter-input 0.0)
 			(couplingFilter-output 0.0)
-			(noi 0.0)
 			(temp1 0.0)
 			(temp2 0.0)
-			(amp-1 amp)
+			(noi 0.0)
 			)
-			;(noi (make-pnoise))
 		    (set! pn-gen 16383)
 
 		    (do ((i beg (+ i 1)))
@@ -482,14 +480,14 @@
 				(set! dryamprate sb-cutoff-rate)
 				(set! wetamprate sb-cutoff-rate))))
 		      
-		      (set! noi (pnoise amp-1))
+		      (set! noi (pnoise amp))
 		      (set! temp1 (one-zero dryTap0 (one-pole dryTap1 noi)))
 		      (set! temp2 (expseg dryTap-coef-expseg drycoefrate))
 		      (set! dryTap-one-pole-swept (- (* (+ 1.0 temp2) temp1) (* temp2 dryTap-one-pole-swept)))
 		      (set! dryTap (* (expseg dryTap-amp-expseg dryamprate) dryTap-one-pole-swept))
 				      
 						      
-		      (set! noi (pnoise amp-1))
+		      (set! noi (pnoise amp))
 		      (set! temp1 (one-zero wetTap0 (one-pole wetTap1 noi)))
 		      (set! temp2 (expseg wetTap-coef-expseg wetcoefrate))
 		      (set! wetTap-one-pole-swept (- (* (+ 1.0 temp2) temp1) (* temp2 wetTap-one-pole-swept)))
