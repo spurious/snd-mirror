@@ -102,7 +102,7 @@
 	(set! A (min (max -0.95 (+ A (* fc (- A st)))) 0.95))
 	(vct-set! s cell A)
 	(set! A (min (max -0.95 (+ A st)) 0.95)))
-      (set! y (* A Q (array-interp moog-gaintable (+ 99 (* fc 99.0)))))
+      (set! y (* A Q (array-interp moog-gaintable (+ 99.0 (* fc 99.0)))))
       A)))
 
 ;;; (define gen (make-moog-filter 500.0 .1))

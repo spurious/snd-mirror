@@ -115,8 +115,8 @@
 (define pn-gen 16383)
 (define (pnoise x)
   ;; very special noise generator
-  (set! pn-gen (logand (floor (+ (* pn-gen 1103515245) 12345)) #xffffffff))
-  ;; (bil) added the logand -- otherwise we get an overflow somewhere
+  (set! pn-gen (logand (+ (* pn-gen 1103515245) 12345) #xffffffff))
+  ;; (bil) added the logand -- otherwise we get an overflow somewhere, also removed floor
   (* x (- (* pn-gen 4.6566128730774e-10) 1.0)))
 
 
@@ -485,14 +485,12 @@
 		      (set! temp2 (expseg dryTap-coef-expseg drycoefrate))
 		      (set! dryTap-one-pole-swept (- (* (+ 1.0 temp2) temp1) (* temp2 dryTap-one-pole-swept)))
 		      (set! dryTap (* (expseg dryTap-amp-expseg dryamprate) dryTap-one-pole-swept))
-				      
 						      
 		      (set! noi (pnoise amp))
 		      (set! temp1 (one-zero wetTap0 (one-pole wetTap1 noi)))
 		      (set! temp2 (expseg wetTap-coef-expseg wetcoefrate))
 		      (set! wetTap-one-pole-swept (- (* (+ 1.0 temp2) temp1) (* temp2 wetTap-one-pole-swept)))
 		      (set! openStrings (* (expseg wetTap-amp-expseg wetamprate) wetTap-one-pole-swept))
-
 							   
 		      (set! totalTap (+ dryTap openStrings))
 		      
@@ -511,8 +509,9 @@
 		      (set! string2-junction-input (+ string2-junction-input couplingFilter-output))
 		      (set! string2-junction-input (one-pole-allpass-bank string2-stiffness-ap string2-junction-input))
 		      (set! string2-junction-input (+ combedExcitationSignal
-						      (* loop-gain (delay string2-delay
-									  (one-pole-allpass string2-tuning-ap string2-junction-input)))))
+						      (* loop-gain 
+							 (delay string2-delay
+								(one-pole-allpass string2-tuning-ap string2-junction-input)))))
 		      
 		      (set! string3-junction-input (+ string3-junction-input couplingFilter-output))
 		      (set! string3-junction-input (one-pole-allpass-bank string3-stiffness-ap string3-junction-input))

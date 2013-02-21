@@ -5062,8 +5062,8 @@
 (CFNC "gboolean gtk_icon_theme_rescan_if_needed GtkIconTheme* icon_theme") 
 (CFNC "void gtk_icon_theme_add_builtin_icon gchar* icon_name gint size GdkPixbuf* pixbuf") 
 ;;;;(CFNC "GType gtk_icon_info_get_type void") 
-(CFNC "GtkIconInfo* gtk_icon_info_copy GtkIconInfo* icon_info") 
-(CFNC "void gtk_icon_info_free GtkIconInfo* icon_info") 
+;;; 3.7.10 (CFNC "GtkIconInfo* gtk_icon_info_copy GtkIconInfo* icon_info") 
+;;; 3.7.10 (CFNC "void gtk_icon_info_free GtkIconInfo* icon_info") 
 (CFNC "gint gtk_icon_info_get_base_size GtkIconInfo* icon_info") 
 (CFNC "gchar* gtk_icon_info_get_filename GtkIconInfo* icon_info") 
 (CFNC "GdkPixbuf* gtk_icon_info_get_builtin_pixbuf GtkIconInfo* icon_info") 
@@ -5220,8 +5220,8 @@
 ;;; out 2.17.2 (CFNC "GList* gtk_cell_view_get_cell_renderers GtkCellView* cellview") ; FREE (g_list_free)
 
 ;;; changed return type 2.90.1 (CFNC "void gdk_window_set_focus_on_map GdkWindow* window gboolean focus_on_map")
-(CFNC "void gdk_window_enable_synchronized_configure GdkWindow* window")
-(CFNC "void gdk_window_configure_finished GdkWindow* window")
+;;; 3.7.10 (CFNC "void gdk_window_enable_synchronized_configure GdkWindow* window")
+;;; 3.7.10 (CFNC "void gdk_window_configure_finished GdkWindow* window")
 ;;;(CFNC "gchar* gtk_action_group_translate_string GtkActionGroup* action_group gchar* string") -- out 2.5.2
 
 (CFNC "gint gtk_combo_box_get_wrap_width GtkComboBox* combo_box")
@@ -6818,8 +6818,8 @@
 (CFNC "GtkWindow* gtk_widget_get_tooltip_window GtkWidget* widget")
 (CFNC "void gtk_widget_trigger_tooltip_query GtkWidget* widget")
 (CFNC "void gtk_window_set_startup_id GtkWindow* window gchar* startup_id")
-(CFNC "void gtk_window_set_opacity GtkWindow* window gdouble opacity")
-(CFNC "gdouble gtk_window_get_opacity GtkWindow* window")
+;;; 3.7.10 (CFNC "void gtk_window_set_opacity GtkWindow* window gdouble opacity")
+;;; 3.7.10 (CFNC "gdouble gtk_window_get_opacity GtkWindow* window")
 
 
 ;;; for 2.11.1:
@@ -8543,6 +8543,50 @@
 (CFNC "gboolean gtk_icon_view_get_activate_on_single_click GtkIconView* icon_view")
 (CFNC "gboolean gtk_tree_view_get_activate_on_single_click GtkTreeView* tree_view")
 (CFNC "void gtk_tree_view_set_activate_on_single_click GtkTreeView* tree_view gboolean single")
+
+
+;;; 3.7.10
++ void                  gtk_icon_info_load_icon_async   (GtkIconInfo          *icon_info,
++ 						       GCancellable         *cancellable,
++ 						       GAsyncReadyCallback   callback,
++ 						       gpointer              user_data);
++ GdkPixbuf *           gtk_icon_info_load_icon_finish  (GtkIconInfo          *icon_info,
++ 						       GAsyncResult         *res,
++ 						       GError              **error);
++ void                  gtk_icon_info_load_symbolic_async (GtkIconInfo   *icon_info,
++ 							 const GdkRGBA *fg,
++ 							 const GdkRGBA *success_color,
++ 							 const GdkRGBA *warning_color,
++ 							 const GdkRGBA *error_color,
++ 							 GCancellable         *cancellable,
++ 							 GAsyncReadyCallback   callback,
++ 							 gpointer              user_data);
++ GdkPixbuf *           gtk_icon_info_load_symbolic_finish (GtkIconInfo   *icon_info,
++ 							  GAsyncResult         *res,
++ 							  gboolean      *was_symbolic,
++ 							  GError       **error);
++ void                  gtk_icon_info_load_symbolic_for_context_async (GtkIconInfo      *icon_info,
++ 								     GtkStyleContext  *context,
++ 								     GCancellable     *cancellable,
++ 								     GAsyncReadyCallback callback,
++ 								     gpointer          user_data);
++ GdkPixbuf *           gtk_icon_info_load_symbolic_for_context_finish (GtkIconInfo      *icon_info,
++ 								      GAsyncResult     *res,
++ 								      gboolean         *was_symbolic,
++ 								      GError          **error);
++ void           gtk_style_context_set_frame_clock (GtkStyleContext *context,
++                                                   GdkFrameClock   *frame_clock);
++ GdkFrameClock *gtk_style_context_get_frame_clock (GtkStyleContext *context);
++ void                  gtk_widget_register_window        (GtkWidget    *widget,
++                                                          GdkWindow    *window);
++ void                  gtk_widget_unregister_window      (GtkWidget    *widget,
++                                                          GdkWindow    *window);
++ void	   gtk_widget_set_opacity	  (GtkWidget	       *widget,
++ 					   double		opacity);
++ double	   gtk_widget_get_opacity	  (GtkWidget	       *widget);
+  
+new headers: frameclock frametimings (gdk)
+
 |#
 
  

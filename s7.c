@@ -1279,7 +1279,7 @@ struct s7_scheme {
   s7_pointer TAN, TANH, THROW, TRUNCATE, UNOPTIMIZE, VALUES, VECTOR;
   s7_pointer VECTORP, VECTOR_TO_LIST, VECTOR_DIMENSIONS, VECTOR_FILL, VECTOR_LENGTH, VECTOR_REF, VECTOR_SET, WITH_INPUT_FROM_FILE;
   s7_pointer WITH_INPUT_FROM_STRING, WITH_OUTPUT_TO_FILE, WITH_OUTPUT_TO_STRING, WRITE, WRITE_BYTE, WRITE_CHAR, ZEROP;
-  s7_pointer S7_FEATURES, GC_STATS, LOAD_PATH;
+  s7_pointer S7_FEATURES, GC_STATS, LOAD_PATH, PI;
 
 #if WITH_GMP
   s7_pointer BIGNUM, BIGNUM_PRECISION;
@@ -12404,6 +12404,59 @@ static s7_pointer g_add_fs(s7_scheme *sc, s7_pointer args)
   return(x);
 }
 
+static s7_pointer add_f_sf;
+static s7_pointer g_add_f_sf(s7_scheme *sc, s7_pointer args)
+{
+  /* (+ x (* s y)) */
+  s7_pointer vargs, s;
+  s7_Double x, y;
+
+  x = real(car(args));
+  vargs = cdadr(args);
+  s = finder(sc, car(vargs));
+  y = real(cadr(vargs));
+
+  if (type(s) == T_REAL)
+    return(make_real(sc, x + (real(s) * y)));
+
+  switch (type(s))
+    {
+    case T_INTEGER: return(make_real(sc, x + (integer(s) * y)));
+    case T_RATIO:   return(make_real(sc, x + (fraction(s) * y)));
+    case T_REAL:    return(make_real(sc, x + real(s) * y));
+    case T_COMPLEX: return(s7_make_complex(sc, x + (real_part(s) * y), imag_part(s) * y));
+    default:        
+      CHECK_METHOD(sc, s, sc->MULTIPLY, args);
+      return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), s, A_NUMBER));
+    }
+  return(s);
+}
+
+
+static s7_pointer add_f_sqr;
+static s7_pointer g_add_f_sqr(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x;
+  s7_Double y;
+
+  y = real(car(args));
+  x = finder(sc, cadr(cadr(args)));
+  if (type(x) == T_REAL)
+    return(make_real(sc, y + (real(x) * real(x))));
+
+  switch (type(x))
+    {
+    case T_INTEGER: return(make_real(sc, y + (integer(x) * integer(x))));
+    case T_RATIO:   return(s7_make_real(sc, y + (fraction(x) * fraction(x))));
+    case T_REAL:    return(make_real(sc, y + (real(x) * real(x))));
+    case T_COMPLEX: return(s7_make_complex(sc, y + real_part(x) * real_part(x) - imag_part(x) * imag_part(x), 2.0 * real_part(x) * imag_part(x)));
+    default:        
+      CHECK_METHOD(sc, x, sc->MULTIPLY, list_2(sc, x, x));
+      return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), x, A_NUMBER));
+    }
+  return(x);
+}
+
 
 static s7_pointer add_ss_1ss;
 s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args)
@@ -13032,6 +13085,33 @@ static s7_pointer g_subtract_fs(s7_scheme *sc, s7_pointer args)
   return(x);
 }
 
+static s7_pointer subtract_sf_f;
+static s7_pointer g_subtract_sf_f(s7_scheme *sc, s7_pointer args)
+{
+  /* (- (* s y) x) */
+  s7_pointer vargs, s;
+  s7_Double x, y;
+
+  x = real(cadr(args));
+  vargs = cdar(args);
+  s = finder(sc, car(vargs));
+  y = real(cadr(vargs));
+
+  if (type(s) == T_REAL)
+    return(make_real(sc, (real(s) * y) - x));
+
+  switch (type(s))
+    {
+    case T_INTEGER: return(make_real(sc, (integer(s) * y) - x));
+    case T_RATIO:   return(make_real(sc, (fraction(s) * y) - x));
+    case T_REAL:    return(make_real(sc, (real(s) * y) - x));
+    case T_COMPLEX: return(s7_make_complex(sc, (real_part(s) * y) - x, imag_part(s) * y));
+    default:        
+      CHECK_METHOD(sc, s, sc->MULTIPLY, args);
+      return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), s, A_NUMBER));
+    }
+  return(s);
+}
 
 
 
@@ -13677,7 +13757,6 @@ static s7_pointer g_multiply_cs_cos(s7_scheme *sc, s7_pointer args)
     return(make_real(sc, real(car(args)) * s7_number_to_real(sc, r) * cos(s7_number_to_real(sc, x))));
   return(g_multiply(sc, list_3(sc, car(args), r, g_cos(sc, list_1(sc, x)))));
 }
-
 #endif
 
 
@@ -36317,11 +36396,23 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	  return(add_sf);
 	}
 
-      if ((type(arg1) == T_REAL) &&
-	  (is_symbol(arg2)))
+      if (type(arg1) == T_REAL)
 	{
-	  set_optimize_data(expr, HOP_SAFE_C_C);
-	  return(add_fs);
+	  if (is_symbol(arg2))
+	    {
+	      set_optimize_data(expr, HOP_SAFE_C_C);
+	      return(add_fs);
+	    }
+	  if (fcdr(arg2) == (s7_pointer)g_multiply_sf)
+	    {
+	      set_optimize_data(expr, HOP_SAFE_C_C);
+	      return(add_f_sf);
+	    }
+	  if (fcdr(arg2) == (s7_pointer)g_sqr_ss)
+	    {
+	      set_optimize_data(expr, HOP_SAFE_C_C);
+	      return(add_f_sqr);
+	    }
 	}
 
       if ((is_symbol(arg1)) &&
@@ -36483,7 +36574,6 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  (s7_function_returns_temp(arg1)))
 	return(multiply_temp_s);
 
-
       /* (* c c)
        * (* s (sin|cos s))
        */
@@ -36560,11 +36650,20 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  return(subtract_s1);
 	}
 
-      if ((type(arg2) == T_REAL) &&
-	  (is_symbol(arg1)))
+      if (type(arg2) == T_REAL)
 	{
-	  set_optimize_data(expr, HOP_SAFE_C_C);
-	  return(subtract_sf);
+	  if (is_symbol(arg1))
+	    {
+	      set_optimize_data(expr, HOP_SAFE_C_C);
+	      return(subtract_sf);
+	    }
+	  if ((is_pair(arg1)) &&
+	      (is_optimized(arg1)) &&
+	      (c_call(arg1) == g_multiply_sf))
+	    {
+	      set_optimize_data(expr, HOP_SAFE_C_C);
+	      return(subtract_sf_f);
+	    }
 	}
 
       if ((type(arg1) == T_REAL) &&
@@ -36591,7 +36690,7 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  return(subtract_ran);
 	}
 
-      /* fs and sf
+      /* 330750: (- (* pn-gen 4.6566128730774e-10) 1.0)
        */
       /* fprintf(stderr, "%d: %s\n", args, DISPLAY_80(expr)); */
       return(subtract_2);
@@ -37300,6 +37399,8 @@ static void init_choosers(s7_scheme *sc)
   add_sf = make_function_with_class(sc, f, "+", g_add_sf, 2, 0, false, "+ optimization");
   add_fs = make_function_with_class(sc, f, "+", g_add_fs, 2, 0, false, "+ optimization");
   add_ss_1ss = make_temp_function_with_class(sc, f, "+", g_add_ss_1ss, 2, 0, false, "+ optimization");
+  add_f_sf = make_function_with_class(sc, f, "+", g_add_f_sf, 2, 0, false, "+ optimization");
+  add_f_sqr = make_function_with_class(sc, f, "+", g_add_f_sqr, 2, 0, false, "+ optimization");
 
 
   /* - */
@@ -37313,6 +37414,7 @@ static void init_choosers(s7_scheme *sc)
   subtract_ran = make_temp_function_with_class(sc, f, "-", g_subtract_ran, 2, 0, false, "- optimization");
   subtract_sf = make_function_with_class(sc, f, "-", g_subtract_sf, 2, 0, false, "- optimization");
   subtract_fs = make_function_with_class(sc, f, "-", g_subtract_fs, 2, 0, false, "- optimization");
+  subtract_sf_f = make_function_with_class(sc, f, "-", g_subtract_sf_f, 2, 0, false, "- optimization");
 
 
   /* * */
@@ -41971,6 +42073,7 @@ static s7_pointer check_if(s7_scheme *sc)
 						    }
 						  else
 						    {
+#if (!WITH_GMP)
 						      if ((optimize_data(test) == HOP_SAFE_C_op_opSSq_q_C) &&
 							  (c_call(test) == g_greater_s_fc) && /* this checks that caddr is T_REAL, and args == 2 */
 							  ((c_call(cadr(test)) == g_magnitude) || (c_call(cadr(test)) == g_abs)) &&
@@ -41980,6 +42083,7 @@ static s7_pointer check_if(s7_scheme *sc)
 							  fcdr(sc->code) = cadr(cadr(test));
 							}
 						      else
+#endif
 							{
 							  fcdr(sc->code) = cadr(sc->code);
 							  if (is_h_optimized(t))
@@ -54003,6 +54107,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto OPT_EVAL;
       
       
+#if (!WITH_GMP)
       /* --------------- */
     case OP_IF_GT_P:
       {
@@ -54033,6 +54138,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->value = sc->UNSPECIFIED;
 	IF_BEGIN_POP_STACK(sc); 
       }
+#endif
       
       
       /* --------------- */
@@ -60968,7 +61074,7 @@ static s7_pointer g_set_bignum_precision(s7_scheme *sc, s7_pointer args)
   bits = (mp_prec_t)precision;
   mpfr_set_default_prec(bits);
   mpc_set_default_precision(bits);
-  s7_symbol_set_value(sc, make_symbol(sc, "pi"), big_pi(sc));
+  s7_symbol_set_value(sc, sc->PI, big_pi(sc));
   return(car(args));
 }
 
@@ -61273,7 +61379,7 @@ static void s7_gmp_init(s7_scheme *sc)
   mpfr_set_default_prec((mp_prec_t)DEFAULT_BIGNUM_PRECISION); 
   mpc_set_default_precision((mp_prec_t)DEFAULT_BIGNUM_PRECISION);
 
-  s7_symbol_set_value(sc, make_symbol(sc, "pi"), big_pi(sc));
+  s7_symbol_set_value(sc, sc->PI, big_pi(sc));
 
   /* if these fixnum limits were read as strings, they'd be bignums in the gmp case, 
    *   so for consistency make the symbolic versions bignums as well.
@@ -62499,6 +62605,7 @@ s7_scheme *s7_init(void)
 
     if (top == 4) default_rationalize_error = 1.0e-6;
     s7_define_constant(sc, "pi", real_pi);
+    sc->PI = s7_make_symbol(sc, "pi");
 
     sc->default_rng = (s7_rng_t *)calloc(1, sizeof(s7_rng_t));
     sc->default_rng->ran_seed = (unsigned int)time(NULL);
@@ -62713,6 +62820,6 @@ s7_scheme *s7_init(void)
  * s7test    1721 1358 1297 1244  977  961  959
  * t455|6     265   89   55   31   14   14   14
  * lat        229   63   52   47   42   40   39
- * t502        90   43   39   36   29   23   21
+ * t502        90   43   39   36   29   23   20
  * calls           275  207  175  115   89   86
  */

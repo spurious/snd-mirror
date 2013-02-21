@@ -26371,8 +26371,8 @@ func
 (test (defined? 'lambda) #t)
 (test (defined? 'dynamic-wind) #t)
 (test (defined? 'asdaf) #f)
-(test (defined? ':asdaf) #f)
-(test (defined? :asdaf) #f)
+;(test (defined? ':asdaf) #f) ; keywords are defined in the sense that they evaluate to themselves
+;(test (defined? :asdaf) #f)
 (test (defined? 'ok?) #t)
 (test (defined? 'test-t) #t)
 (test (defined? 'quasiquote) #t)
@@ -26382,6 +26382,19 @@ func
 (test (defined? 'if) #t)
 (test (defined? if) 'error)
 (test (defined? quote) 'error)
+
+(test (let ((b 2))
+	(let ((e (current-environment)))
+	  (let ((a 1))
+	    (if (defined? 'a e)
+		(format #f "a: ~A in ~{~A ~}" (symbol->value 'a e) e)))))
+      #<unspecified>) ; not "a: 1 in (b . 2)")
+
+(test (let ((b 2))
+	(let ((e (current-environment)))
+	  (let ((a 1))
+	    (format #f "~A: ~A" (defined? 'abs e) (eval '(abs -1) e)))))
+      "#t: 1")
 
 
 

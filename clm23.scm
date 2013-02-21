@@ -1270,10 +1270,10 @@
 					(len (length g))) ; current grain length
 				    (do ((i 0 (+ i 1)))
 					((= i len) len)       ; grain length unchanged in this case
-				      (set! (grain i) (* 2 (grain i)))))
+				      (set! (grain i) (* 2.0 (grain i)))))
 				  0)))))))
 
-					;(with-sound () (simple-grn-f5 0 1 1 2 "oboe.snd"))
+					;(with-sound (:statistics #t) (simple-grn-f5 0 1 1 2 "oboe.snd"))
 
 (define (sample-pvoc5 beg dur amp size file freq)
   "(sample-pvoc5 beg dur amp size file freq) test instrument for phase-vocoder"

@@ -493,8 +493,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	 (reader (make-sampler beg snd chn 1 edpos)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (let ((y (next-sample reader)))
-	(vct-set! data i (sin (+ (* y 0.5 pi) (* index (sin (* y 2.0 pi))))))))
+      (vct-set! data i (contrast-enhancement (next-sample reader) index))) ; (sin (+ (* 0.5 pi y) (* index (sin (* 2.0 pi y))))))))
     (vct->channel data beg len snd chn current-edit-position
 		  (format #f "contrast-channel ~A ~A ~A" index beg dur))))
 

@@ -17928,21 +17928,6 @@ GdkPixbuf* pixbuf)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_icon_info_copy(XEN icon_info)
-{
-  #define H_gtk_icon_info_copy "GtkIconInfo* gtk_icon_info_copy(GtkIconInfo* icon_info)"
-  XEN_ASSERT_TYPE(XEN_GtkIconInfo__P(icon_info), icon_info, 1, "gtk_icon_info_copy", "GtkIconInfo*");
-  return(C_TO_XEN_GtkIconInfo_(gtk_icon_info_copy(XEN_TO_C_GtkIconInfo_(icon_info))));
-}
-
-static XEN gxg_gtk_icon_info_free(XEN icon_info)
-{
-  #define H_gtk_icon_info_free "void gtk_icon_info_free(GtkIconInfo* icon_info)"
-  XEN_ASSERT_TYPE(XEN_GtkIconInfo__P(icon_info), icon_info, 1, "gtk_icon_info_free", "GtkIconInfo*");
-  gtk_icon_info_free(XEN_TO_C_GtkIconInfo_(icon_info));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_icon_info_get_base_size(XEN icon_info)
 {
   #define H_gtk_icon_info_get_base_size "gint gtk_icon_info_get_base_size(GtkIconInfo* icon_info)"
@@ -18737,22 +18722,6 @@ static XEN gxg_gtk_cell_view_get_displayed_row(XEN cell_view)
   #define H_gtk_cell_view_get_displayed_row "GtkTreePath* gtk_cell_view_get_displayed_row(GtkCellView* cell_view)"
   XEN_ASSERT_TYPE(XEN_GtkCellView__P(cell_view), cell_view, 1, "gtk_cell_view_get_displayed_row", "GtkCellView*");
   return(C_TO_XEN_GtkTreePath_(gtk_cell_view_get_displayed_row(XEN_TO_C_GtkCellView_(cell_view))));
-}
-
-static XEN gxg_gdk_window_enable_synchronized_configure(XEN window)
-{
-  #define H_gdk_window_enable_synchronized_configure "void gdk_window_enable_synchronized_configure(GdkWindow* window)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_enable_synchronized_configure", "GdkWindow*");
-  gdk_window_enable_synchronized_configure(XEN_TO_C_GdkWindow_(window));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_configure_finished(XEN window)
-{
-  #define H_gdk_window_configure_finished "void gdk_window_configure_finished(GdkWindow* window)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_configure_finished", "GdkWindow*");
-  gdk_window_configure_finished(XEN_TO_C_GdkWindow_(window));
-  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_combo_box_get_wrap_width(XEN combo_box)
@@ -24153,22 +24122,6 @@ static XEN gxg_gtk_window_set_startup_id(XEN window, XEN startup_id)
   XEN_ASSERT_TYPE(XEN_gchar__P(startup_id), startup_id, 2, "gtk_window_set_startup_id", "gchar*");
   gtk_window_set_startup_id(XEN_TO_C_GtkWindow_(window), XEN_TO_C_gchar_(startup_id));
   return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_window_set_opacity(XEN window, XEN opacity)
-{
-  #define H_gtk_window_set_opacity "void gtk_window_set_opacity(GtkWindow* window, gdouble opacity)"
-  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_set_opacity", "GtkWindow*");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(opacity), opacity, 2, "gtk_window_set_opacity", "gdouble");
-  gtk_window_set_opacity(XEN_TO_C_GtkWindow_(window), XEN_TO_C_gdouble(opacity));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_window_get_opacity(XEN window)
-{
-  #define H_gtk_window_get_opacity "gdouble gtk_window_get_opacity(GtkWindow* window)"
-  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_get_opacity", "GtkWindow*");
-  return(C_TO_XEN_gdouble(gtk_window_get_opacity(XEN_TO_C_GtkWindow_(window))));
 }
 
 static XEN gxg_gdk_display_supports_composite(XEN display)
@@ -36992,8 +36945,6 @@ XEN_NARGIFY_2(gxg_gtk_icon_theme_list_icons_w, gxg_gtk_icon_theme_list_icons)
 XEN_NARGIFY_1(gxg_gtk_icon_theme_get_example_icon_name_w, gxg_gtk_icon_theme_get_example_icon_name)
 XEN_NARGIFY_1(gxg_gtk_icon_theme_rescan_if_needed_w, gxg_gtk_icon_theme_rescan_if_needed)
 XEN_NARGIFY_3(gxg_gtk_icon_theme_add_builtin_icon_w, gxg_gtk_icon_theme_add_builtin_icon)
-XEN_NARGIFY_1(gxg_gtk_icon_info_copy_w, gxg_gtk_icon_info_copy)
-XEN_NARGIFY_1(gxg_gtk_icon_info_free_w, gxg_gtk_icon_info_free)
 XEN_NARGIFY_1(gxg_gtk_icon_info_get_base_size_w, gxg_gtk_icon_info_get_base_size)
 XEN_NARGIFY_1(gxg_gtk_icon_info_get_filename_w, gxg_gtk_icon_info_get_filename)
 XEN_NARGIFY_1(gxg_gtk_icon_info_get_builtin_pixbuf_w, gxg_gtk_icon_info_get_builtin_pixbuf)
@@ -37088,8 +37039,6 @@ XEN_NARGIFY_1(gxg_gtk_cell_view_new_with_pixbuf_w, gxg_gtk_cell_view_new_with_pi
 XEN_NARGIFY_2(gxg_gtk_cell_view_set_model_w, gxg_gtk_cell_view_set_model)
 XEN_NARGIFY_2(gxg_gtk_cell_view_set_displayed_row_w, gxg_gtk_cell_view_set_displayed_row)
 XEN_NARGIFY_1(gxg_gtk_cell_view_get_displayed_row_w, gxg_gtk_cell_view_get_displayed_row)
-XEN_NARGIFY_1(gxg_gdk_window_enable_synchronized_configure_w, gxg_gdk_window_enable_synchronized_configure)
-XEN_NARGIFY_1(gxg_gdk_window_configure_finished_w, gxg_gdk_window_configure_finished)
 XEN_NARGIFY_1(gxg_gtk_combo_box_get_wrap_width_w, gxg_gtk_combo_box_get_wrap_width)
 XEN_NARGIFY_1(gxg_gtk_combo_box_get_row_span_column_w, gxg_gtk_combo_box_get_row_span_column)
 XEN_NARGIFY_1(gxg_gtk_combo_box_get_column_span_column_w, gxg_gtk_combo_box_get_column_span_column)
@@ -37685,8 +37634,6 @@ XEN_NARGIFY_2(gxg_gtk_widget_set_tooltip_window_w, gxg_gtk_widget_set_tooltip_wi
 XEN_NARGIFY_1(gxg_gtk_widget_get_tooltip_window_w, gxg_gtk_widget_get_tooltip_window)
 XEN_NARGIFY_1(gxg_gtk_widget_trigger_tooltip_query_w, gxg_gtk_widget_trigger_tooltip_query)
 XEN_NARGIFY_2(gxg_gtk_window_set_startup_id_w, gxg_gtk_window_set_startup_id)
-XEN_NARGIFY_2(gxg_gtk_window_set_opacity_w, gxg_gtk_window_set_opacity)
-XEN_NARGIFY_1(gxg_gtk_window_get_opacity_w, gxg_gtk_window_get_opacity)
 XEN_NARGIFY_1(gxg_gdk_display_supports_composite_w, gxg_gdk_display_supports_composite)
 XEN_NARGIFY_2(gxg_gdk_window_set_composited_w, gxg_gdk_window_set_composited)
 XEN_NARGIFY_3(gxg_gtk_text_buffer_add_mark_w, gxg_gtk_text_buffer_add_mark)
@@ -41058,8 +41005,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_icon_theme_get_example_icon_name_w gxg_gtk_icon_theme_get_example_icon_name
 #define gxg_gtk_icon_theme_rescan_if_needed_w gxg_gtk_icon_theme_rescan_if_needed
 #define gxg_gtk_icon_theme_add_builtin_icon_w gxg_gtk_icon_theme_add_builtin_icon
-#define gxg_gtk_icon_info_copy_w gxg_gtk_icon_info_copy
-#define gxg_gtk_icon_info_free_w gxg_gtk_icon_info_free
 #define gxg_gtk_icon_info_get_base_size_w gxg_gtk_icon_info_get_base_size
 #define gxg_gtk_icon_info_get_filename_w gxg_gtk_icon_info_get_filename
 #define gxg_gtk_icon_info_get_builtin_pixbuf_w gxg_gtk_icon_info_get_builtin_pixbuf
@@ -41154,8 +41099,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_cell_view_set_model_w gxg_gtk_cell_view_set_model
 #define gxg_gtk_cell_view_set_displayed_row_w gxg_gtk_cell_view_set_displayed_row
 #define gxg_gtk_cell_view_get_displayed_row_w gxg_gtk_cell_view_get_displayed_row
-#define gxg_gdk_window_enable_synchronized_configure_w gxg_gdk_window_enable_synchronized_configure
-#define gxg_gdk_window_configure_finished_w gxg_gdk_window_configure_finished
 #define gxg_gtk_combo_box_get_wrap_width_w gxg_gtk_combo_box_get_wrap_width
 #define gxg_gtk_combo_box_get_row_span_column_w gxg_gtk_combo_box_get_row_span_column
 #define gxg_gtk_combo_box_get_column_span_column_w gxg_gtk_combo_box_get_column_span_column
@@ -41751,8 +41694,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_widget_get_tooltip_window_w gxg_gtk_widget_get_tooltip_window
 #define gxg_gtk_widget_trigger_tooltip_query_w gxg_gtk_widget_trigger_tooltip_query
 #define gxg_gtk_window_set_startup_id_w gxg_gtk_window_set_startup_id
-#define gxg_gtk_window_set_opacity_w gxg_gtk_window_set_opacity
-#define gxg_gtk_window_get_opacity_w gxg_gtk_window_get_opacity
 #define gxg_gdk_display_supports_composite_w gxg_gdk_display_supports_composite
 #define gxg_gdk_window_set_composited_w gxg_gdk_window_set_composited
 #define gxg_gtk_text_buffer_add_mark_w gxg_gtk_text_buffer_add_mark
@@ -45131,8 +45072,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_icon_theme_get_example_icon_name, gxg_gtk_icon_theme_get_example_icon_name_w, 1, 0, 0, H_gtk_icon_theme_get_example_icon_name);
   XG_DEFINE_PROCEDURE(gtk_icon_theme_rescan_if_needed, gxg_gtk_icon_theme_rescan_if_needed_w, 1, 0, 0, H_gtk_icon_theme_rescan_if_needed);
   XG_DEFINE_PROCEDURE(gtk_icon_theme_add_builtin_icon, gxg_gtk_icon_theme_add_builtin_icon_w, 3, 0, 0, H_gtk_icon_theme_add_builtin_icon);
-  XG_DEFINE_PROCEDURE(gtk_icon_info_copy, gxg_gtk_icon_info_copy_w, 1, 0, 0, H_gtk_icon_info_copy);
-  XG_DEFINE_PROCEDURE(gtk_icon_info_free, gxg_gtk_icon_info_free_w, 1, 0, 0, H_gtk_icon_info_free);
   XG_DEFINE_PROCEDURE(gtk_icon_info_get_base_size, gxg_gtk_icon_info_get_base_size_w, 1, 0, 0, H_gtk_icon_info_get_base_size);
   XG_DEFINE_PROCEDURE(gtk_icon_info_get_filename, gxg_gtk_icon_info_get_filename_w, 1, 0, 0, H_gtk_icon_info_get_filename);
   XG_DEFINE_PROCEDURE(gtk_icon_info_get_builtin_pixbuf, gxg_gtk_icon_info_get_builtin_pixbuf_w, 1, 0, 0, H_gtk_icon_info_get_builtin_pixbuf);
@@ -45227,8 +45166,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_cell_view_set_model, gxg_gtk_cell_view_set_model_w, 2, 0, 0, H_gtk_cell_view_set_model);
   XG_DEFINE_PROCEDURE(gtk_cell_view_set_displayed_row, gxg_gtk_cell_view_set_displayed_row_w, 2, 0, 0, H_gtk_cell_view_set_displayed_row);
   XG_DEFINE_PROCEDURE(gtk_cell_view_get_displayed_row, gxg_gtk_cell_view_get_displayed_row_w, 1, 0, 0, H_gtk_cell_view_get_displayed_row);
-  XG_DEFINE_PROCEDURE(gdk_window_enable_synchronized_configure, gxg_gdk_window_enable_synchronized_configure_w, 1, 0, 0, H_gdk_window_enable_synchronized_configure);
-  XG_DEFINE_PROCEDURE(gdk_window_configure_finished, gxg_gdk_window_configure_finished_w, 1, 0, 0, H_gdk_window_configure_finished);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_wrap_width, gxg_gtk_combo_box_get_wrap_width_w, 1, 0, 0, H_gtk_combo_box_get_wrap_width);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_row_span_column, gxg_gtk_combo_box_get_row_span_column_w, 1, 0, 0, H_gtk_combo_box_get_row_span_column);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_column_span_column, gxg_gtk_combo_box_get_column_span_column_w, 1, 0, 0, H_gtk_combo_box_get_column_span_column);
@@ -45824,8 +45761,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_get_tooltip_window, gxg_gtk_widget_get_tooltip_window_w, 1, 0, 0, H_gtk_widget_get_tooltip_window);
   XG_DEFINE_PROCEDURE(gtk_widget_trigger_tooltip_query, gxg_gtk_widget_trigger_tooltip_query_w, 1, 0, 0, H_gtk_widget_trigger_tooltip_query);
   XG_DEFINE_PROCEDURE(gtk_window_set_startup_id, gxg_gtk_window_set_startup_id_w, 2, 0, 0, H_gtk_window_set_startup_id);
-  XG_DEFINE_PROCEDURE(gtk_window_set_opacity, gxg_gtk_window_set_opacity_w, 2, 0, 0, H_gtk_window_set_opacity);
-  XG_DEFINE_PROCEDURE(gtk_window_get_opacity, gxg_gtk_window_get_opacity_w, 1, 0, 0, H_gtk_window_get_opacity);
   XG_DEFINE_PROCEDURE(gdk_display_supports_composite, gxg_gdk_display_supports_composite_w, 1, 0, 0, H_gdk_display_supports_composite);
   XG_DEFINE_PROCEDURE(gdk_window_set_composited, gxg_gdk_window_set_composited_w, 2, 0, 0, H_gdk_window_set_composited);
   XG_DEFINE_PROCEDURE(gtk_text_buffer_add_mark, gxg_gtk_text_buffer_add_mark_w, 3, 0, 0, H_gtk_text_buffer_add_mark);
@@ -49245,7 +49180,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("19-Dec-12"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("19-Feb-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

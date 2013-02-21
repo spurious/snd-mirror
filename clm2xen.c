@@ -9071,6 +9071,25 @@ static s7_pointer g_pulsed_env_1(s7_scheme *sc, s7_pointer args)
   return(C_TO_XEN_DOUBLE(mus_env(e)));
 }
 
+static s7_pointer pulsed_env_2;
+static s7_pointer g_pulsed_env_2(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *p, *e;
+  s7_pointer g;
+  mus_float_t fm1 = 0.0;
+
+  g = s7_car_value(sc, args);
+  XEN_ASSERT_TYPE((XEN_VECTOR_P(g)) && (XEN_VECTOR_LENGTH(g) == 4), g, XEN_ARG_1, S_pulsed_env, "a vector from make-pulsed-env");
+
+  p = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 2));
+  e = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 3));
+  fm1 = s7_number_to_real(sc, s7_cadr_value(sc, args));
+
+  if (mus_pulse_train(p, fm1) > 0.1)
+    mus_reset(e);
+  return(C_TO_XEN_DOUBLE(mus_env(e)));
+}
+
 #else
 
 static XEN g_make_pulsed_env(XEN e, XEN dur, XEN frq)
@@ -12546,11 +12565,6 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	{
 	  s7_function_choice_set_direct(sc, expr);
 	  {
-	    /* fprintf(stderr, "%s\n", DISPLAY(expr)); */
-	    /* lots are (+ (env e) (env e1) ...)  TODO: 2 env case?
-	     *   or     (+ (env e) ...)
-	     *   or     (+ (polywave gen frq) ...)
-	     */
 	    if (caadr(expr) == env_symbol)
 	      return(add_env_direct_any);
 	    return(add_direct_any);
@@ -13951,12 +13965,19 @@ static s7_pointer pulsed_env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
       return(pulsed_env_1);
     }
   if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_real(caddr(expr))) &&
-      (s7_cell_real(caddr(expr)) == 0.0))
+      (s7_is_symbol(cadr(expr))))
     {
-      s7_function_choice_set_direct(sc, expr);
-      return(pulsed_env_1);
+      if ((s7_is_real(caddr(expr))) &&
+	  (s7_cell_real(caddr(expr)) == 0.0))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(pulsed_env_1);
+	}
+      if (s7_is_symbol(caddr(expr)))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(pulsed_env_2);
+	}
     }
   return(f);
 }
@@ -15158,6 +15179,7 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "pulsed-env");
   s7_function_set_chooser(sc, f, pulsed_env_chooser);
   pulsed_env_1 = clm_make_function_no_choice(sc, "pulsed-env", g_pulsed_env_1, 1, 0, false, "pulsed-env optimization", f);
+  pulsed_env_2 = clm_make_function_no_choice(sc, "pulsed-env", g_pulsed_env_2, 2, 0, false, "pulsed-env optimization", f);
   /* this includes the returns_temp bit */
 
 
