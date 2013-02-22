@@ -1258,9 +1258,7 @@
   (with-environment gen
     (let* ((x angle)
 	   (num (cos (* n2 x))))
-      
       (set! angle (+ angle fm frequency))
-      
       (/ (* num num)
 	 (* norm (- (cos x) cosn))))))
 
@@ -3434,7 +3432,7 @@
       (set! angle (+ angle fm frequency))
       (/ (- (bes-j0 (* k (sqrt (+ (* r r) 
 				  (* a a)
-				  (* a r -2.0 (cos x))))))
+				  (* a (* -2.0 r (cos x)))))))
 	    dc)             ; get rid of DC component
 	 norm))))
 
@@ -3504,7 +3502,7 @@ which again matches
       (* (sin x)
 	 (bes-j0 (* k (sqrt (+ (* r r) 
 			       (* a a)
-			       (* a r -2.0 (cos x))))))))))
+			       (* a (* -2.0 r (cos x)))))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-jjcos 100.0 :a 1.0 :r 1.0 :k 1)))
@@ -3726,7 +3724,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	   ;;   and in this context, we get -1..1 peak amps from the sin anyway.
 	   (arg (+ (* r r) 
 		   (* a a)
-		   (* a r -2.0 (cos x)))))
+		   (* a (* -2.0 r (cos x))))))
       (set! angle (+ angle fm frequency))
       (if (< (abs arg) nearly-zero) ; r = a, darn it! This will produce a spike, but at least it's not a NaN
 	  1.0
@@ -3795,10 +3793,9 @@ index 10 (so 10/2 is the bes-jn arg):
   
   (set! (gen 'fm) fm)
   (with-environment gen
-    (let* ((x angle)
-	   (arg (sqrt (+ (* r r) 
-			 (* a a)
-			 (* a r -2.0 (cos x))))))
+    (let ((arg (sqrt (+ (* r r) 
+			(* a a)
+			(* a (* -2.0 r (cos angle)))))))
       (set! angle (+ angle fm frequency))
       (if (< arg nearly-zero)
 	  1.0

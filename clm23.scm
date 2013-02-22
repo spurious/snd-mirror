@@ -2266,10 +2266,12 @@
 	((= i end))
       (outa i (* amp (src src-gen (* fmamp (oscil os))))))))
 
-(definstrument (sndclmdoc-convins beg dur filter file (size 128))
+;;; (with-sound () (sndclmdoc-srcer 0 2 1.0 0.5 1.0 300 "oboe.snd"))
+
+(definstrument (sndclmdoc-convins beg dur filt file (size 128))
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
-	(ff (make-convolve :input (make-readin file) :fft-size size :filter filter)))
+	(ff (make-convolve :input (make-readin file) :fft-size size :filter filt)))
     (do ((i start (+ i 1)))
 	((= i end))
       (outa i (convolve ff)))))

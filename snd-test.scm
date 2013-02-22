@@ -48,7 +48,7 @@
 			    #f)))
             *#readers*))
 
-(define (copy-file src dest) (system (string-append "cp " src " " dest)))
+(define (copy-file source dest) (system (string-append "cp " source " " dest)))
 
 (define-expansion (fill-vct v body)
   `(let ((len (length ,v)))
@@ -472,15 +472,15 @@
 
 
 (define (set-arity-ok func args)
-  (let ((arity (if (procedure-with-setter? func)
+  (let ((arit (if (procedure-with-setter? func)
 		   (procedure-arity (procedure-setter func))
 		   (and (procedure? (procedure-setter func))
 			(procedure-arity (procedure-setter func))))))
-    (and (pair? arity)
-	 (>= args (car arity))
-	 (or (and (pair? (cddr arity))
-		  (caddr arity))
-	     (<= args (+ (car arity) (cadr arity)))))))
+    (and (pair? arit)
+	 (>= args (car arit))
+	 (or (and (pair? (cddr arit))
+		  (caddr arit))
+	     (<= args (+ (car arit) (cadr arit)))))))
 
 (define* (scale-sound-by scl beg dur snd chn edpos)
   (if (integer? chn)
@@ -2270,7 +2270,7 @@
   "play test func"
   (let* ((sound-fd (mus-sound-open-input file))
 	 (chans (mus-sound-chans file))
-	 (frames (mus-sound-frames file))
+	 (len (mus-sound-frames file))
 	 (bufsize 256)
 	 (data (make-sound-data chans bufsize))
 	 (bytes (* bufsize chans 2)))
@@ -2286,7 +2286,7 @@
 		     (catch #t
 			    (lambda ()
 			      (do ((i 0 (+ i bufsize)))
-				  ((>= i frames))
+				  ((>= i len))
 				(mus-audio-write audio-fd data bufsize)
 				(mus-sound-read sound-fd 0 (- bufsize 1) chans data)))
 			    (lambda args (snd-display #__line__ ";play-sound-1: can play audio: ~A" args)))
@@ -2308,11 +2308,11 @@
 
 (define (snd_test_4)
   
-  (define (frame->byte file frame)
+  (define (frame->byte file fr)
     (+ (mus-sound-data-location file)
        (* (mus-sound-chans file)
 	  (mus-sound-datum-size file)
-	  frame)))
+	  fr)))
   
   (begin
     
@@ -2421,8 +2421,8 @@
 	  (close-sound index)
 	  (set! index (open-sound long-file-name))
 	  (if (not (sound? index)) (snd-display #__line__ ";can't find test...snd"))
-	  (if (or (not (>= (string-length (file-name index)) (string-length long-file-name)))
-		  (not (>= (string-length (short-file-name index)) (string-length long-file-name))))
+	  (if (or (< (string-length (file-name index)) (string-length long-file-name))
+		  (< (string-length (short-file-name index)) (string-length long-file-name)))
 	      (snd-display #__line__ ";file-name lengths: ~A ~A ~A"
 			   (string-length (file-name index))
 			   (string-length (short-file-name index))
@@ -4120,7 +4120,7 @@
     (mus-sound-forget "test.snd")
     
     (letrec ((make-aifc-file 
-	      (lambda (frames auth-lo bits)
+	      (lambda (len auth-lo bits)
 		(with-output-to-file "test.aif"
 		  (lambda ()
 		    (display "FORM")
@@ -4131,7 +4131,7 @@
 		    (display "COMM")
 		    (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o046) ; COMM chunk size
 		    (write-byte #o000) (write-byte #o001) ; 1 chan
-		    (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte frames) ; frames
+		    (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte len) ; frames
 		    (write-byte #o000) (write-byte bits) ; bits
 		    (write-byte #o100) (write-byte #o016) (write-byte #o254) (write-byte #o104) (write-byte #o000) 
 		    (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ;
@@ -4858,8 +4858,7 @@
 	(if (fneq mx val) (snd-display #__line__ ";(~D) actual ~A max: ~A (correct: ~A)" caller-line name mx val)))))
   
   (define (check-env-vals name gen)
-    (let ((ctr -1)
-	  (len (frames))
+    (let ((len (frames))
 	  (reader (make-sampler)))
       (call-with-exit
        (lambda (quit)
@@ -6146,7 +6145,7 @@ EDITS: 5
 	      (if (not (= (channel-style index) channels-separate)) (snd-display #__line__ ";channel-style[0]->~D: ~A?" channels-separate (channel-style index)))))
 	(set! (sync index) 32)
 	(if (not (= (sync index) 32)) (snd-display #__line__ ";sync->32: ~A?" (sync index)))
-	(if (not (>= (sync-max) 32)) (snd-display #__line__ ";sync-max 32: ~A" (sync-max)))
+	(if (< (sync-max) 32) (snd-display #__line__ ";sync-max 32: ~A" (sync-max)))
 	(set! (sync index) 0)
 	(set! (channel-sync index 0) 12)
 	(if (not (= (channel-sync index 0) 12)) (snd-display #__line__ ";sync-chn->12: ~A?" (channel-sync index 0)))
@@ -6712,7 +6711,7 @@ EDITS: 5
 	    (apply-controls obind)
 	    (let ((newdur (frames obind)))
 	      (set! (speed-control obind) 1.0)
-	      (if (not (< (- newdur (* 2.0 dur)) 256)) (snd-display #__line__ ";apply speed: ~A -> ~A?" dur newdur))
+	      (if (>= (- newdur (* 2.0 dur)) 256) (snd-display #__line__ ";apply speed: ~A -> ~A?" dur newdur))
 	      ;; within 256 which is apply's buffer size (it always flushes full buffers) 
 	      (set! (contrast-control? obind) #t)
 	      (set! (contrast-control-bounds obind) (list 0.5 2.5))
@@ -6738,7 +6737,7 @@ EDITS: 5
 		(let ((revamp (maxamp obind))
 		      (revdur (frames obind)))
 		  (if (ffneq revamp .214) (snd-display #__line__ ";apply reverb scale: ~A?" revamp))
-		  (if (not (< (- revdur (+ 50828 (round (* (reverb-control-decay) 22050)))) 256)) 
+		  (if (>= (- revdur (+ 50828 (round (* (reverb-control-decay) 22050)))) 256) 
 		      (snd-display #__line__ ";apply reverb length: ~A?" revdur))
 		  (undo 1 obind)
 		  (set! (expand-control? obind) #t)
@@ -6749,7 +6748,7 @@ EDITS: 5
 		  (let ((expamp (maxamp obind))
 			(expdur (frames obind)))
 		    (if (> (abs (- expamp .152)) .05) (snd-display #__line__ ";apply expand-control scale: ~A?" expamp))
-		    (if (not (> expdur (* 1.25 50828))) (snd-display #__line__ ";apply expand-control length: ~A?" expdur))
+		    (if (<= expdur (* 1.25 50828)) (snd-display #__line__ ";apply expand-control length: ~A?" expdur))
 		    (set! (expand-control-bounds obind) (list 0.001 20.0))
 		    (undo 1 obind)
 		    (set! (filter-control? obind) #t)
@@ -10360,48 +10359,35 @@ EDITS: 2
 (defgenerator sa1 freq (coscar #f) (sincar #f) (dly #f) (hlb #f))
 
 (define (snd-test-jc-reverb decay-dur low-pass volume amp-env)
-  "(jc-reverb decay-dur low-pass volume amp-env) is the old Chowning reverberator: (jc-reverb 2.0 #f .1 #f)"
-  (let* ((allpass1 (make-all-pass -0.700 0.700 1051))
-	 (allpass2 (make-all-pass -0.700 0.700  337))
-	 (allpass3 (make-all-pass -0.700 0.700  113))
-	 (comb1 (make-comb 0.742 4799))
-	 (comb2 (make-comb 0.733 4999))
-	 (comb3 (make-comb 0.715 5399))
-	 (comb4 (make-comb 0.697 5801))
-	 (outdel1 (make-delay (round (* .013 (srate)))))
-	 (dur (+ decay-dur (/ (frames) (srate))))
-	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration dur) #f)))
-    (if (or low-pass amp-env)
-	(map-chan
-	 (let ((comb-sum 0.0)
-	       (comb-sum-1 0.0)
-	       (comb-sum-2 0.0)
-	       (all-sums 0.0))
+  (let ((allpass1 (make-all-pass -0.700 0.700 1051))
+	(allpass2 (make-all-pass -0.700 0.700  337))
+	(allpass3 (make-all-pass -0.700 0.700  113))
+	(comb1 (make-comb 0.742 4799))
+	(comb2 (make-comb 0.733 4999))
+	(comb3 (make-comb 0.715 5399))
+	(comb4 (make-comb 0.697 5801))
+	(dur (+ decay-dur (/ (frames) (srate))))
+	(outdel (make-delay (seconds->samples .013))))
+    (let ((combs (vector comb1 comb2 comb3 comb4))
+	  (allpasses (vector allpass1 allpass2 allpass3)))
+      (if (or amp-env low-pass)
+	  (let ((flt (if low-pass (make-fir-filter 3 (vct 0.25 0.5 0.25)) #f))
+		(envA (make-env :envelope (or amp-env '(0 1 1 1)) :scaler volume :duration dur)))
+	    (if low-pass
+		(map-channel
+		 (lambda (inval)
+		   (+ inval (delay outdel (* (env envA) (fir-filter flt (comb-bank combs (all-pass-bank allpasses inval)))))))
+		 0 (round (* dur (srate))))
+		(map-channel
+		 (lambda (inval)
+		   (+ inval (delay outdel (* (env envA) (comb-bank combs (all-pass-bank allpasses inval))))))
+		 0 (round (* dur (srate))))))
+	  (map-channel
 	   (lambda (inval)
-	     (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval)))))
-	       (set! comb-sum-2 comb-sum-1)
-	       (set! comb-sum-1 comb-sum)
-	       (set! comb-sum 
-		     (+ (comb comb1 allpass-sum)
-			(comb comb2 allpass-sum)
-			(comb comb3 allpass-sum)
-			(comb comb4 allpass-sum)))
-	       (if low-pass
-		   (set! all-sums (+ (* .25 (+ comb-sum comb-sum-2)) (* .5 comb-sum-1)))
-		   (set! all-sums comb-sum))
-	       (+ inval
-		  (if envA
-		      (* (env envA) (delay outdel1 all-sums))
-		      (* volume (delay outdel1 all-sums)))))))
-	 0 (round (* dur (srate))))
-	(map-chan
-	 (lambda (inval)
-	   (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval)))))
-	     (* volume (delay outdel1 (+ (comb comb1 allpass-sum)
-					 (comb comb2 allpass-sum)
-					 (comb comb3 allpass-sum)
-					 (comb comb4 allpass-sum))))))
-	 0 (round (* dur (srate)))))))
+	     (+ inval (delay outdel (* volume (comb-bank combs (all-pass-bank allpasses inval))))))
+	   0 (round (* dur (srate))))))))
+
+
 
 
 ;;; -------- scissor-tailed flycatcher
@@ -20019,7 +20005,7 @@ EDITS: 2
 			      (samp 0)
 			      (lasty 0.0))
 			  (scan-channel (lambda (y) 
-					  (if (and (not (>= lasty 0.1))
+					  (if (and (< lasty 0.1)
 						   (>= y .1))
 					      (set! pts (cons samp pts)))
 					  (set! lasty y)
@@ -20539,18 +20525,8 @@ EDITS: 2
 			    (if (or (= i 0) (= i 2))
 				name
 				(make-file->frame name)))))
-      (define* (mus-mix-1 outf inf outloc frames inloc mixer envs)
-	(if envs
-	    (mus-mix outf inf outloc frames inloc mixer envs)
-	    (if mixer
-		(mus-mix outf inf outloc frames inloc mixer)
-		(if inloc
-		    (mus-mix outf inf outloc frames inloc)
-		    (if frames
-			(mus-mix outf inf outloc frames)
-			(if outloc
-			    (mus-mix outf inf outloc)
-			    (mus-mix outf inf))))))
+      (define (mus-mix-1 outf . args)
+	(apply mus-mix outf args)	
 	(if (not (string? outf))
 	    (mus-close outf)))
       
@@ -24735,7 +24711,7 @@ EDITS: 2
 		    (if (not (sampler? hi)) (snd-display #__line__ ";dangling reader? ~A" hi))
 		    (let ((name (format #f "~A" hi)))
 		      (if (not (string? name)) (snd-display #__line__ ";dangling reader format: ~A" name)))
-		    (let* ((val (hi))
+		    (let ((val (hi))
 			   (val1 (next-sample hi))
 			   (val2 (previous-sample hi))
 			   (val3 (read-sample hi)))
@@ -24754,7 +24730,7 @@ EDITS: 2
 		    (if (not (sampler? hi)) (snd-display #__line__ ";pruned dangling reader? ~A" hi))
 		    (let ((name (format #f "~A" hi)))
 		      (if (not (string? name)) (snd-display #__line__ ";pruned dangling reader format: ~A" name)))
-		    (let* ((val (hi))
+		    (let ((val (hi))
 			   (val1 (next-sample hi))
 			   (val2 (previous-sample hi))
 			   (val3 (read-sample hi)))
@@ -25087,7 +25063,7 @@ EDITS: 2
 	     (begin
 	       (if (fneq (transform-sample 0 0 fd 0) (vals 0))
 		   (snd-display #__line__ ";transform-sample ~A ~A -> ~A ~A" dpy-type fft-type (vals 0) (transform-sample 0 0 fd 0)))
-	       (if (not (>= (vct-length vals) 256))
+	       (if (< (vct-length vals) 256)
 		   (snd-display #__line__ ";transform-> vct size: ~A" (vct-length vals)))))))
      (list graph-once graph-as-sonogram graph-as-spectrogram
 	   graph-once graph-as-sonogram graph-as-spectrogram)
@@ -26077,9 +26053,9 @@ EDITS: 2
 	 (let ((func (cadr func-and-name))
 	       (name (car func-and-name)))
 	   (func)
-	   (if (not (> (edit-position ind 0) 0)) (snd-display #__line__ ";~A: unblocked edit: ~A" name (edit-position ind 0)))
-	   (if (not (> edit-hook-ctr 0)) (snd-display #__line__ ";~A: unblocked edit hook calls: ~A" name edit-hook-ctr))
-	   (if (not (> after-edit-hook-ctr 0)) (snd-display #__line__ ";~A: unblocked after edit hook calls: ~A" name after-edit-hook-ctr))
+	   (if (<= (edit-position ind 0) 0) (snd-display #__line__ ";~A: unblocked edit: ~A" name (edit-position ind 0)))
+	   (if (<= edit-hook-ctr 0) (snd-display #__line__ ";~A: unblocked edit hook calls: ~A" name edit-hook-ctr))
+	   (if (<= after-edit-hook-ctr 0) (snd-display #__line__ ";~A: unblocked after edit hook calls: ~A" name after-edit-hook-ctr))
 	   (set! edit-hook-ctr 0)
 	   (set! after-edit-hook-ctr 0)
 	   (revert-sound ind)))
@@ -26439,7 +26415,7 @@ EDITS: 2
 	    (if (>= curloc (frames curfd 0)) (set! curloc 0))
 	    (let ((id (catch #t (lambda () (add-mark curloc curfd)) (lambda args -1))))
 	      (if (and (number? id) (not (= id -1)))
-		  (let* ((cl (mark-sample id))
+		  (let ((cl (mark-sample id))
 			 (new-marks (length (marks curfd 0))))
 		    (if (not (= cl curloc)) (snd-display #__line__ ";mark ~A is not ~A?" cl curloc))
 		    (if (not (= new-marks (+ 1 old-marks))) (snd-display #__line__ ";marks ~A ~A?" new-marks old-marks))
@@ -38322,32 +38298,16 @@ EDITS: 1
 	  (comb32 (make-comb 0.715 5399))
 	  (comb42 (make-comb 0.697 5801))
 	  (outdel12 (make-delay (seconds->samples .01)))
-	  
 	  (len (floor (+ (frames *reverb*) (mus-srate)))))
-      
-      (do ((i 0 (+ i 1)))
-	  ((= i len))
-	
-	(let* ((allpass-sum (all-pass allpass31 
-				      (all-pass allpass21 
-						(all-pass allpass11 
-							  (ina i *reverb*)))))
-	       (comb-sum (+ (comb comb11 allpass-sum)
-			    (comb comb21 allpass-sum)
-			    (comb comb31 allpass-sum)
-			    (comb comb41 allpass-sum))))
-	  (outa i (delay outdel11 comb-sum)))
-	
-	(let* ((allpass-sum (all-pass allpass32 
-				      (all-pass allpass22 
-						(all-pass allpass12 
-							  (inb i *reverb*)))))
-	       (comb-sum (+ (comb comb12 allpass-sum)
-			    (comb comb22 allpass-sum)
-			    (comb comb32 allpass-sum)
-			    (comb comb42 allpass-sum))))
-	  (outb i (delay outdel12 comb-sum)))
-	)))
+
+      (let ((combs1 (vector comb11 comb21 comb31 comb41))
+	    (combs2 (vector comb12 comb22 comb32 comb42))
+	    (allpasses1 (vector allpass11 allpass21 allpass31))
+	    (allpasses2 (vector allpass12 allpass22 allpass32)))
+	(do ((i 0 (+ i 1)))
+	    ((= i len))
+	  (outa i (delay outdel11 (comb-bank combs1 (all-pass-bank allpasses1 (ina i *reverb*)))))
+	  (outb i (delay outdel12 (comb-bank combs2 (all-pass-bank allpasses2 (inb i *reverb*)))))))))
   
   
   (definstrument (floc-simp beg dur (amp 0.5) (freq 440.0) (ramp 2.0) (rfreq 1.0) offset)
@@ -38754,14 +38714,14 @@ EDITS: 1
     (with-sound (:output "test1.snd" :reverb freeverb :reverb-data '(:output-gain 3.0)) (fm-violin 0 .1 440 .1 :reverb-amount .1))
     (let ((ind (find-sound "test1.snd")))
       (if (not ind) (snd-display #__line__ ";with-sound (freeverb): ~A" (map file-name (sounds))))
-      (if (not (> (maxamp ind) .1)) (snd-display #__line__ ";freeverb 3.0: ~A" (maxamp ind)))
+      (if (<= (maxamp ind) .1) (snd-display #__line__ ";freeverb 3.0: ~A" (maxamp ind)))
       (close-sound ind)
       (delete-file "test1.snd"))
     
     (with-sound (:output "test1.snd" :reverb freeverb :reverb-data '(:output-gain 3.0 :global 0.5)) (fm-violin 0 .1 440 .1 :reverb-amount .1))
     (let ((ind (find-sound "test1.snd")))
       (if (not ind) (snd-display #__line__ ";with-sound (freeverb): ~A" (map file-name (sounds))))
-      (if (not (> (maxamp ind) .16)) (snd-display #__line__ ";freeverb 3.0 global 0.5: ~A" (maxamp ind)))
+      (if (<= (maxamp ind) .16) (snd-display #__line__ ";freeverb 3.0 global 0.5: ~A" (maxamp ind)))
       (close-sound ind)
       (delete-file "test1.snd"))
 
@@ -39491,7 +39451,7 @@ EDITS: 1
     (set! mx (maxamp ind))
     (set! file (with-sound (:reverb jc-reverb :reverb-data '(#f 12.0 (0 0 1 1 20 1 21 0))) (fm-violin 0 .1 440 .1 :reverb-amount .1)))
     (set! ind (find-sound file))
-    (if (not (> (maxamp ind) mx)) (snd-display #__line__ ";reverb-data: ~A ~A" mx (maxamp ind)))
+    (if (<= (maxamp ind) mx) (snd-display #__line__ ";reverb-data: ~A ~A" mx (maxamp ind)))
     (close-sound ind))
   
   (let ((ind (open-sound "oboe.snd")))
@@ -47075,6 +47035,7 @@ EDITS: 1
 ;; 25-Jan-13: #(1 1 2 1 58 178 6 1 505 1 13 1 2 10 20 1 205 1 1 198 44 111 1 1487 0 0 0 1 1 75)  ;  29
 ;; 11-Feb-13: #(1 1 3 2 49 170 5 1 463 1 15 1 1 11 46 1 216 1 2 158 42 110 1 1456 0 0 0 1 1 80)  ;  28
 ;; 15-Feb-13: #(1 1 2 2 42 160 5 1 450 1 18 1 1 10 21 1 196 1 1 158 42 107 1 1407 0 0 0 1 1 79)  ;  27
+;; 21-Feb-13: #(1 1 2 2 43 159 6 1 448 1 12 1 2 10 20 1 189 1 2 156 41 106 1 1331 0 0 0 1 1 76)  ;  26
 
 ;;; -------- cleanup temp files
 
@@ -47301,21 +47262,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-16-Feb:
-86,411,092,482
-13,373,858,127  s7.c:eval [/home/bil/snd-13/snd]
- 6,318,194,237  ???:sin [/lib64/libm-2.12.so]
- 5,187,853,645  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,839,634,385  s7.c:gc [/home/bil/snd-13/snd]
- 2,773,755,699  s7.c:eval'2 [/home/bil/snd-13/snd]
- 2,725,285,648  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,664,980,079  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 2,556,600,611  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,477,915,901  ???:cos [/lib64/libm-2.12.so]
- 2,327,330,592  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 1,585,066,774  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,461,370,110  s7.c:s7_make_real [/home/bil/snd-13/snd]
+21-Feb:
+85,004,251,781
+12,242,389,018  s7.c:eval [/home/bil/snd-13/snd]
+ 6,320,623,421  ???:sin [/lib64/libm-2.12.so]
+ 4,743,017,552  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 2,970,010,915  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
+ 2,894,585,243  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,832,041,501  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 2,774,411,421  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 2,759,964,484  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,611,545,372  s7.c:gc [/home/bil/snd-13/snd]
+ 2,492,339,928  ???:cos [/lib64/libm-2.12.so]
+ 2,327,317,731  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
+ 1,585,058,070  clm.c:mus_formant [/home/bil/snd-13/snd]
+ 1,420,890,132  s7.c:s7_make_real [/home/bil/snd-13/snd]
  1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
+ 1,095,998,225  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
 |#

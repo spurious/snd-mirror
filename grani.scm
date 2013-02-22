@@ -231,26 +231,26 @@
 
 ;;; create a vct from an envelope
 
-(define* (make-gr-env env1 (length 512))
-  (let ((env-vct (make-vct length))
-	(length-1 (exact->inexact (- length 1))))
+(define* (make-gr-env env1 (len 512))
+  (let ((env-vct (make-vct len))
+	(length-1 (exact->inexact (- len 1))))
     (do ((i 0 (+ 1 i)))
-	((= i length) env-vct)
+	((= i len) env-vct)
       (set! (env-vct i) (envelope-interp (/ i length-1) env1)))))
 
 ;;;-----------------------------------------------------------------------------
 ;;; Grain envelopes
 
 (define* (raised-cosine	(duty-cycle 100)
-			(length 128))
-  (let* ((v (make-vct length))
-	 (active (* length duty-cycle 0.01))
+			(len 128))
+  (let* ((v (make-vct len))
+	 (active (* len duty-cycle 0.01))
 	 (incr (/ pi (- active 1)))
-	 (start (/ (- length active) 2))
-	 (end (/ (+ length active) 2))
+	 (start (/ (- len active) 2))
+	 (end (/ (+ len active) 2))
 	 (s 0))
     (do ((i 0 (+ 1 i)))
-	((= i length) v)
+	((= i len) v)
       (if (and (>= i start) (< i end))
 	  (let ((sine (sin (* s incr))))
 	    (set! s (+ 1 s))

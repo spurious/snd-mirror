@@ -815,7 +815,7 @@
 
 ;;; --------------------------------------------------------------------------------
 
-(define* (sin-nx-peak n (error 1e-12))
+(define* (sin-nx-peak n (err 1e-12))
   ;; return the min peak amp and its location for sin(x)+sin(nx+a)
   (let* ((size (* n 100))
 	 (incr (/ (* 2 pi) size))
@@ -833,7 +833,7 @@
     ;; now narrow it by zigzagging around the peak
     (let ((x location))
       (do ((zig-size (* incr 2) (/ zig-size 2)))
-	  ((< zig-size error))
+	  ((< zig-size err))
 	(let ((cur (abs (+ (sin x) (sin (+ offset (* n x))))))
 	      (left (abs (+ (sin (- x zig-size)) (sin (+ (* n (- x zig-size)) offset))))))
 	  (if (< left cur)

@@ -43,7 +43,6 @@
  *        keywords, hash tables, block comments
  *        format
  *        error handling using error and catch
- *        in sndlib, the run macro works giving s7 a (somewhat limited) byte compiler
  *        no invidious distinction between built-in and "foreign"
  *          (this makes it easy to extend built-in operators like "+" -- see s7.html for a simple example)
  *        lists, strings, vectors, hash-tables, and environments are (set-)applicable objects
@@ -1757,9 +1756,11 @@ static int t_optimized = T_OPTIMIZED;
 #if 0
 /* to find who is stomping on our symbols:
  */
+static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
+
 static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int line) 
 {
-  if (is_global(symbol)) fprintf(stderr, "%s[%d]: make %s local\n", func, line, DISPLAY(symbol));
+  if (is_global(symbol)) fprintf(stderr, "\n%s%s%s in %s\n", BOLD_TEXT, DISPLAY(symbol), UNBOLD_TEXT, DISPLAY_80(sc->cur_code));
   typeflag(symbol) = (typeflag(symbol) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC));
 }
 #define set_local(Symbol) set_local_1(sc, Symbol, __func__, __LINE__)
@@ -7253,9 +7254,11 @@ static s7_pointer make_permanent_real(s7_Double n)
 s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n) 
 {
   if (is_simple_real(rl))
-    real(rl) = n;
-  else rl = make_real(sc, n);
-  return(rl);
+    {
+      real(rl) = n;
+      return(rl);
+    }
+  return(make_real(sc, n));
 }
 
 
@@ -23817,7 +23820,7 @@ spacing (and spacing character) and precision.  ~{ starts an embedded format dir
 
 const char *s7_format(s7_scheme *sc, s7_pointer args)
 {
-  return(s7_string(g_format_1(sc, args, true))); /* for the run macro in run.c */
+  return(s7_string(g_format_1(sc, args, true)));
 }
 
 
@@ -62821,5 +62824,5 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14   14
  * lat        229   63   52   47   42   40   39
  * t502        90   43   39   36   29   23   20
- * calls           275  207  175  115   89   86
+ * calls           275  207  175  115   89   85
  */

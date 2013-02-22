@@ -47,14 +47,14 @@
         (mixes)))))
 
 
-(define* (find-mix sample snd chn)
+(define* (find-mix samp snd chn)
   "(find-mix sample snd chn) returns the mix at the given sample, or #f"
   (let ((mix-list (mixes (or snd (selected-sound) (car (sounds))) (or chn (selected-channel snd) 0))))
     (call-with-exit
      (lambda (found-it)
        (for-each
 	(lambda (n)
-	  (if (= (mix-position n) sample)
+	  (if (= (mix-position n) samp)
 	      (found-it n)))
 	mix-list)
        #f))))

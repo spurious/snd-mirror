@@ -588,8 +588,8 @@
 				   (let* ((audio-info (open-play-output 1 44100 #f 128))
 					  (audio-fd (car audio-info))
 					  (outchans (cadr audio-info))
-					  (frames (caddr audio-info))
-					  (data (make-sound-data outchans frames)))
+					  (len (caddr audio-info))
+					  (data (make-sound-data outchans len)))
 				     (if (not (= audio-fd -1))
 					 (begin
 					   (set! running #t)
@@ -599,9 +599,9 @@
 						  (set! running #f)
 						  (mus-audio-close audio-fd)))
 					     (do ((k 0 (+ k 1)))
-						 ((= k frames))
+						 ((= k len))
 					       (sound-data-set! data 0 k (v)))
-					     (mus-audio-write audio-fd data frames)))))))))))))
+					     (mus-audio-write audio-fd data len)))))))))))))
   (XtManageChild fmv-dialog))
 
 
@@ -941,8 +941,8 @@
 			   (let* ((audio-info (open-play-output 1 22050 #f 128))
 				  (audio-fd (car audio-info))
 				  (outchans (cadr audio-info))
-				  (frames (caddr audio-info))
-				  (data (make-sound-data outchans frames)))
+				  (len (caddr audio-info))
+				  (data (make-sound-data outchans len)))
 			     (set! playing #t)
 			     (if (not (= audio-fd -1))
 				 (do ()
@@ -953,9 +953,9 @@
 					(mus-audio-close audio-fd)))
 				   (tick-synthesis work-proc)
 				   (do ((k 0 (+ k 1)))
-				       ((= k frames))
+				       ((= k len))
 				     (sound-data-set! data 0 k (* amplitude (table-lookup tbl))))
-				   (mus-audio-write audio-fd data frames))
+				   (mus-audio-write audio-fd data len))
 				 (set! playing #f)))))))
     
     (XtAddCallback scan-pane XmNresizeCallback (lambda (w context info) (redraw-graph)))
@@ -1398,10 +1398,10 @@
 	    icon)))
 
       ;; now the actual sound-box maker
-      (lambda (name parent select-func peak-func sounds args)
+      (lambda (name parent select-func peak-func snds args)
 	;; select-func called when sound selected and passed sound file name
 	;; peak-func (if any) tells icon where to find peak-env-info-file (if any)
-	;; sounds is list of sound file names
+	;; snds is list of sound file names
 	;; args is list of resource settings for each icon
 	"(make-sound-box name parent select-func peak-func sounds args) makes a box of sound icons"
 	(let ((container (XtCreateManagedWidget name xmContainerWidgetClass parent
@@ -1425,7 +1425,7 @@
 			      gc
 			      96 64
 			      args))
-	   sounds)
+	   snds)
 	  container)))))
 
 (define* (show-sounds-in-directory (dir "."))
@@ -1467,14 +1467,14 @@
     (define (smpte-label samp sr)
       (define (round-down val) (truncate val))
       (let* ((seconds (/ samp sr))
-	     (frames (* seconds smpte-frames-per-second))
+	     (len (* seconds smpte-frames-per-second))
 	     (minutes (round-down (/ seconds 60)))
 	     (hours (round-down (/ minutes 60))))
 	(format #f "~2,'0D:~2,'0D:~2,'0D:~2,'0D"
 		hours
 		(- minutes (* hours 60))
 		(round-down (- seconds (* minutes 60)))
-		(round-down (- frames (* (round-down seconds) smpte-frames-per-second))))))
+		(round-down (- len (* (round-down seconds) smpte-frames-per-second))))))
 	    
     (lambda (hook)
       "(draw-smpte-label snd chn) draws a SMPTE time stamp in a box on a graph"
@@ -2581,12 +2581,12 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	      ;; graph/spectrum -- does this need an explicit update?
 	      (let* ((snd (car widget))
 		     (data (cadr widget))
-		     (frames (length data))
+		     (len (length data))
 		     (loc (cursor snd 0)))
 		(sound-data-set! data 0 loc var)
 		(if (time-graph? snd) (update-time-graph snd))
 		(if (transform-graph? snd) (update-transform-graph snd))
-		(if (= (+ loc 1) frames)
+		(if (= (+ loc 1) len)
 		    (set! (cursor snd 0) 0)
 		    (set! (cursor snd 0) (+ loc 1))))
 	      (if (XmIsDrawingArea (car widget))
@@ -2604,10 +2604,10 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	  ;; graph/spectrum
 	  (let* ((snd (car widget))
 		 (data (cadr widget))
-		 (frames (length data)))
+		 (len (length data)))
 	    (set! (cursor snd 0) 0)
 	    (do ((i 0 (+ i 1)))
-		((= i frames))
+		((= i len))
 	      (sound-data-set! data 0 i 0.0))))))
 
 
@@ -2844,8 +2844,8 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 			     (let* ((audio-info (open-play-output 1 44100 #f 128))
 				    (audio-fd (car audio-info))
 				    (outchans (cadr audio-info))
-				    (frames (caddr audio-info))
-				    (data (make-sound-data outchans frames)))
+				    (len (caddr audio-info))
+				    (data (make-sound-data outchans len)))
 			       (if (not (= audio-fd -1))
 				   (begin
 				     (do ((i 1 (+ i 1)))
@@ -2867,9 +2867,9 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 					    (free-sampler reader)
 					    (mus-audio-close audio-fd)))
 				       (do ((k 0 (+ k 1)))
-					   ((= k frames))
+					   ((= k len))
 					 (sound-data-set! data 0 k (ssb-expand)))
-				       (mus-audio-write audio-fd data frames)))))))))))))
+				       (mus-audio-write audio-fd data len)))))))))))))
   (XtManageChild ssb-dialog))
 
 
@@ -2958,8 +2958,8 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 				   (let* ((audio-info (open-play-output 1 44100 #f 256))
 					  (audio-fd (car audio-info))
 					  (outchans (cadr audio-info))
-					  (frames (caddr audio-info))
-					  (data (make-sound-data outchans frames)))
+					  (len (caddr audio-info))
+					  (data (make-sound-data outchans len)))
 				     (if (not (= audio-fd -1))
 					 (begin
 					   (set! running #t)
@@ -2969,9 +2969,9 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 						  (set! running #f)
 						  (mus-audio-close audio-fd)))
 					     (do ((k 0 (+ k 1)))
-						 ((= k frames))
+						 ((= k len))
 					       (sound-data-set! data 0 k (v)))
-					     (mus-audio-write audio-fd data frames)))))))))))))
+					     (mus-audio-write audio-fd data len)))))))))))))
   (XtManageChild audit-dialog))
 
 

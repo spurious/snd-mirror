@@ -9043,7 +9043,7 @@ mus_any *mus_locsig_revf(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->revf))
 mus_any *mus_locsig_out_writer(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->outn_writer));}
 mus_any *mus_locsig_rev_writer(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->revn_writer));}
 
-void *mus_locsig_closure(mus_any *ptr) {return(((locs *)ptr)->closure);}            /* run.c */
+void *mus_locsig_closure(mus_any *ptr) {return(((locs *)ptr)->closure);} 
 static void *locsig_set_closure(mus_any *ptr, void *e) {((locs *)ptr)->closure = e; return(e);}
 
 void mus_locsig_set_detour(mus_any *ptr, void (*detour)(mus_any *ptr, mus_long_t val))

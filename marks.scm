@@ -40,11 +40,11 @@
 
 ;;; -------- move-syncd-marks moves all syncd marks together
 
-(define (move-syncd-marks sync diff)
+(define (move-syncd-marks synch diff)
   "(move-syncd-marks sync diff) moves all marks sharing sync by diff samples"
   (for-each (lambda (m)
 	      (set! (mark-sample m) (+ (mark-sample m) diff)))
-	    (syncd-marks sync)))
+	    (syncd-marks synch)))
 
 
 ;;; -------- describe-mark shows mark history
@@ -170,7 +170,7 @@
 
 ;;; -------- play-syncd-marks
 
-(define (play-syncd-marks sync)
+(define (play-syncd-marks synch)
   "(play-syncd-marks sync) starts playing from all marks sharing sync"
   (let ((chans 1)
 	(rate 22050))
@@ -182,7 +182,7 @@
 	 (add-player new-player (mark-sample m))
 	 (set! chans (max chans (+ 1 channel)))
 	 (set! rate (max rate (srate sound)))))
-     (syncd-marks sync))
+     (syncd-marks synch))
     (start-playing chans rate)))
 
 (define play-between-marks

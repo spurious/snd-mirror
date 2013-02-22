@@ -332,8 +332,8 @@
   
   (if (not (null? delays))
       (for-each
-       (lambda (delay)
-	 (if (< delay 0.0) (error 'mus-error "ERROR: delays must be all positive, ~A is negative~%" delay)))
+       (lambda (dly)
+	 (if (< dly 0.0) (error 'mus-error "ERROR: delays must be all positive, ~A is negative~%" dly)))
        delays))
   
   (if (not (null? distances))
@@ -344,8 +344,8 @@
   
   (if (not (null? distances))
       (for-each
-       (lambda (delay)
-	 (if (< delay 0.0) (error 'mus-error "ERROR: distances must be all positive, ~A is negative~%" delay)))
+       (lambda (dly)
+	 (if (< dly 0.0) (error 'mus-error "ERROR: distances must be all positive, ~A is negative~%" dly)))
        distances))
   
   (if (not (null? channel-map))
@@ -388,8 +388,8 @@
 		  (do ((i 0 (+ i 1)))
 		      ((= i (length speakers)))
 		    (set! (v i) (let ((distance (and (not (null? distances)) (distances i)))
-					(delay (and (not (null? delays)) (delays i))))
-				    (or delay
+				      (dly (and (not (null? delays)) (delays i))))
+				    (or dly
 					(and distance 
 					     (/ (- distance min-dist) dlocsig-speed-of-sound))
 					0.0))))
@@ -2119,7 +2119,7 @@
 			 duration))
 	 (start 0)
 					;(end 0)
-	 (delay ())
+	 (dly ())
 	 (doppler ())
 	 (real-dur 0)
 	 (prev-time #f)
@@ -2880,11 +2880,11 @@
 	(if (or (not max-dist) (> dist max-dist))
 	    (set! max-dist dist))
 	;; push delay for current point (for doppler)
-	(if (or (null? delay)
-		(> time (cadr delay)))
+	(if (or (null? dly)
+		(> time (cadr dly)))
 	    (begin
-	      (set! delay (cons time delay))
-	      (set! delay (cons (dist->samples dist) delay))
+	      (set! dly (cons time dly))
+	      (set! dly (cons (dist->samples dist) dly))
 	      ;; doppler should be easy, yeah right. We use "relativistic" correction
 	      ;; as the sound object can be travelling close to the speed of sound. 
 	      ;; http://www.mathpages.com/rr/s2-04/2-04.htm, 
@@ -3133,7 +3133,7 @@
        ;; :path 
        (make-delay delay-hack :max-size (max 1 (+ (ceiling (dist->samples max-dist)) delay-hack)))
        ;; :delay 
-       (make-env (reverse delay)
+       (make-env (reverse dly)
 		 :offset (if initial-delay 0.0 (- min-delay))
 		 :duration real-dur)
        ;; :rev 

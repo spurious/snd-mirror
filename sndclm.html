@@ -702,6 +702,7 @@ end
 <em class=def id="make-oscil">make-oscil</em> (frequency *clm-default-frequency*) (initial-phase 0.0)
 <em class=def id="oscil">oscil</em> os (fm-input 0.0) (pm-input 0.0)
 <em class=def id="oscil?">oscil?</em> os
+<em class=def id="oscilbank">oscil-bank</em> n oscs amps freqs rates sweeps
 </pre>
 
 <table class="method">
@@ -5263,6 +5264,7 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
       radius      ; resonance width, indirectly
 <em class=def id="formant">formant</em> f input center-frequency-in-radians
 <em class=def id="formant?">formant?</em> f
+<em class=def id="formantbank">formant-bank</em> amps filters input
 
 <em class=def id="make-firmant">make-firmant</em> frequency radius
 <em class=def id="firmant">firmant</em> f input center-frequency-in-radians
@@ -5825,10 +5827,12 @@ and is the basis for about a dozen extensions (comb and friends below).
 <em class=def id="make-comb">make-comb</em> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
 <em class=def id="comb">comb</em> cflt input (pm 0.0)
 <em class=def id="comb?">comb?</em> cflt
+<em class=def id="combbank">comb-bank</em> combs input
 
 <em class=def id="make-filtered-comb">make-filtered-comb</em> (scaler 1.0) size initial-contents (initial-element 0.0) max-size filter
 <em class=def id="filtered-comb">filtered-comb</em> cflt input (pm 0.0)
 <em class=def id="filtered-comb?">filtered-comb?</em> cflt
+<em class=def id="filteredcombbank">filtered-comb-bank</em> filtered-combs input
 
 <em class=def id="make-notch">make-notch</em> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
 <em class=def id="notch">notch</em> cflt input (pm 0.0)
@@ -6053,6 +6057,7 @@ in the feedback loop:
 
 <em class=def id="all-pass">all-pass</em> f input (pm 0.0)
 <em class=def id="all-pass?">all-pass?</em> f
+<em class=def id="allpassbank">all-pass-bank</em> all-passes input
 </pre>
 
 <table class="method">
@@ -7721,6 +7726,7 @@ readin and <a href="#env">env</a>:
 <em class=emdef>outb</em> loc data (output *output*)
 <em class=emdef>outc</em> loc data (output *output*)
 <em class=emdef>outd</em> loc data (output *output*)
+<em class=def id="outbank">out-bank</em> loc gens input
 
 <em class=def id="in-any">in-any</em> loc channel input
 <em class=def id="ina">ina</em> loc input

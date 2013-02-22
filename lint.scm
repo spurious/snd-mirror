@@ -3308,3 +3308,6 @@
 
 ;;; big projects: reorder let* -> nested let, check do body for static exprs
 ;;;   or flag vars that are declared at too high a level
+
+;;; if function arg or local var collides with built-in, warn?
+;;; simplifications currently don't notice pi in many cases (and lots of similar cases)

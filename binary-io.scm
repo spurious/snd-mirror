@@ -247,11 +247,11 @@
 		  (data-size (read-bint32))
 		  (data-format (read-bint32))
 		  (srate (read-bint32))
-		  (chans (read-bint32))
+		  (chns (read-bint32))
 		  (comment (read-string)))
-	      (list magic data-location data-size data-format srate chans comment)))))))
+	      (list magic data-location data-size data-format srate chns comment)))))))
 
-(define (write-au-header file chans srate data-size data-format comment) ; data-size in bytes
+(define (write-au-header file chns srate data-size data-format comment) ; data-size in bytes
   ;; common data-formats: 1 mulaw, 2 linear_8, 3 linear_16, 4 linear_24, 5 linear_32, 6 float, 5 double, 27 alaw
   (with-output-to-file file
     (lambda ()
@@ -263,7 +263,7 @@
 	(write-bint32 data-size)
 	(write-bint32 data-format)
 	(write-bint32 srate)
-	(write-bint32 chans)
+	(write-bint32 chns)
 	(if (> comlen 0)
 	    (begin
 	      (write-string comment)
@@ -278,7 +278,7 @@
 	(data-size 0)
 	(data-format 0)
 	(srate 0)
-	(chans 0)
+	(chns 0)
 	(current-location 0))
     (with-input-from-file file
       (lambda ()
@@ -302,16 +302,16 @@
 			       (begin
 				 (set! data-location (+ 16 current-location (read-bint32)))
 				 (if (> srate 0)
-				     (return (list magic data-location data-size data-format srate chans))))
+				     (return (list magic data-location data-size data-format srate chns))))
 			       (if (string=? chunk "COMM")
 				   (let ((frames 0))
-				     (set! chans (read-bint16))
+				     (set! chns (read-bint16))
 				     (set! frames (read-bint32))
 				     (set! data-format (read-bint16))
 				     (set! srate (read-bfloat80->int))
-				     (set! data-size (* frames chans data-format 1/8))
+				     (set! data-size (* frames chns data-format 1/8))
 				     (if (> data-location 0)
-					 (return (list magic data-location data-size data-format srate chans))))
+					 (return (list magic data-location data-size data-format srate chns))))
 				   (do ((i 0 (+ i 1))) ; here we really need built-in file IO stuff!
 				       ((= i chunk-size))
 				     (if (eof-object? (read-byte))

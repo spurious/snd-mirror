@@ -1061,7 +1061,7 @@ is a physical model of a flute:
 	(nd (seconds->samples (+ beg dur)))
 	(pit1 (if (zero? pitch1) pitch0 pitch1))
 	(loc (make-locsig deg dis pcrev))
-	(car (make-oscil pitch0))
+	(carrier (make-oscil pitch0))
 	(low (make-one-zero .5 -.5))
 	(fm 0.0)
 	(fmosc (make-oscil pitch0))
@@ -1091,7 +1091,7 @@ is a physical model of a flute:
 		      (env glisenv))))
 	  (set! fm (one-zero low (* (env betaenv) (oscil fmosc (+ fm vib)))))
 	  (locsig loc i (* (env amplenv) 
-			   (oscil car (+ fm vib)))))))))
+			   (oscil carrier (+ fm vib)))))))))
 
 
 (definstrument (jl-reverb (decay 3.0) (volume 1.0))
@@ -1105,14 +1105,12 @@ is a physical model of a flute:
 	(outdel1 (make-delay (seconds->samples .013)))
 	(outdel2 (make-delay (seconds->samples .011)))
 	(len (floor (+ (* decay (mus-srate)) (length *reverb*)))))
-    (let ((filts (vector outdel1 outdel2)))
+    (let ((filts (vector outdel1 outdel2))
+	  (combs (vector comb1 comb2 comb3 comb4))
+	  (allpasses (vector allpass1 allpass2 allpass3)))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
-	(let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 (ina i *reverb*))))))
-	  (out-bank i filts (* volume (+ (comb comb1 allpass-sum)
-					 (comb comb2 allpass-sum)
-					 (comb comb3 allpass-sum)
-					 (comb comb4 allpass-sum)))))))))
+	(out-bank i filts (* volume (comb-bank combs (all-pass-bank allpasses (ina i *reverb*)))))))))
 
 
 (definstrument (gran-synth start-time duration audio-freq grain-dur grain-interval amp)

@@ -8,17 +8,17 @@
 (define* (make-reed (offset 0.6) (slope -0.8))
   (vct offset slope))
 
-(define (reedtable r sample)
-  (min 1.0 (+ (r 0) (* (r 1) sample))))
+(define (reedtable r samp)
+  (min 1.0 (+ (r 0) (* (r 1) samp))))
 
 (define* (make-bowtable (offset 0.0) (slope 1.0))
   (vct offset slope))
 
-(define (bowtable b sample)
-  (max 0.0 (- 1.0 (abs (* (b 1) (+ sample (b 0)))))))
+(define (bowtable b samp)
+  (max 0.0 (- 1.0 (abs (* (b 1) (+ samp (b 0)))))))
 
-(define (jettable sample) 
-  (max -1.0 (min 1.0 (* sample (- (* sample sample) 1.0)))))
+(define (jettable samp) 
+  (max -1.0 (min 1.0 (* samp (- (* samp samp) 1.0)))))
 
 (define* (make-onezero (gain 0.5) (zerocoeff 1.0))
   (make-one-zero gain (* gain zerocoeff)))
@@ -46,9 +46,9 @@
 (define (make-dc-block)
   (vct 0.0 0.0))
 
-(define (dc-block b sample)
-  (set! (b 1) (+ sample (- (* 0.99 (b 1)) (b 0))))
-  (set! (b 0) sample)
+(define (dc-block b samp)
+  (set! (b 1) (+ samp (- (* 0.99 (b 1)) (b 0))))
+  (set! (b 0) samp)
   (b 1))
 ;; we could also use a filter generator here: (make-filter 2 (vct 1 -1) (vct 0 -0.99))
 
@@ -61,8 +61,8 @@
   (make-dlya :input (make-delay len :max-size (ceiling (+ len lag 1)))
 	     :outp (- lag len)))
 
-(define (delayl d sample)
-  (delay-tick (d 'input) sample)
+(define (delayl d samp)
+  (delay-tick (d 'input) samp)
   (tap (d 'input) (d 'outp)))
 
 
@@ -75,7 +75,7 @@
   (let* ((lowestfreq 100.0)
 	 (len (+ 1 (floor (/ (mus-srate) lowestfreq)))))
     (let ((delayline (make-delayl len (- (/ (mus-srate) freq) 0.5)))
-	  (filter (make-onezero))
+	  (filt (make-onezero))
 	  (start (seconds->samples beg))
 	  (end (seconds->samples (+ beg dur)))
 	  (dout 0.0))
@@ -84,7 +84,7 @@
 	(set! dout (delayl delayline (+ (* 0.99 dout) (mus-random maxa)))))
       (do ((i start (+ i 1)))
 	  ((= i end))
-	(set! dout (delayl delayline (one-zero filter dout)))
+	(set! dout (delayl delayline (one-zero filt dout)))
 	(outa i (* amplitude dout))))))
 
 
@@ -194,7 +194,7 @@
 	  (rate .001))
       (let ((delayline (make-delayl len (- (* 0.5 (/ (mus-srate) freq)) 1.0)))
 	    (rtable (make-reed :offset 0.7 :slope -0.3))
-	    (filter (make-onezero))
+	    (filt (make-onezero))
 	    (maxpressure maxa)
 	    (attackrate rate)
 	    (st (seconds->samples beg))
@@ -212,7 +212,7 @@
 			(set! breathpressure (- breathpressure attackrate))))
 		(if (> breathpressure 0.0)
 		    (set! breathpressure (- breathpressure attackrate))))
-	    (set! pressurediff (- (one-zero filter (* -0.95 dlyout)) breathpressure))
+	    (set! pressurediff (- (one-zero filt (* -0.95 dlyout)) breathpressure))
 	    (set! dlyout (delayl delayline 
 				 (+ breathpressure 
 				    (* pressurediff 
@@ -240,7 +240,7 @@
 	  (temp (- (/ (mus-srate) freq) 5.0)))
       (let ((jetdelay (make-delayl (floor (/ len 2)) (* temp (- 1.0 ratio))))
 	    (boredelay (make-delayl len (* ratio temp)))
-	    (filter (make-onep))
+	    (filt (make-onep))
 	    (dcblocker (make-dc-block))
 	    (maxpressure maxa)
 	    (attackrate rate)
@@ -249,8 +249,8 @@
 	    (ctr 0)
 	    (release (seconds->samples (* .8 dur)))
 	    (boreout 0.0))
-	(set-pole filter 0.8)
-	(set-gain filter -1.0)
+	(set-pole filt 0.8)
+	(set-gain filt -1.0)
 	(do ((i st (+ i 1)))
 	    ((= i end))
 	  (let ((randpressure (random (* 0.1 breathpressure)))
@@ -266,7 +266,7 @@
 			(set! breathpressure (- breathpressure attackrate))))
 		(if (> breathpressure 0.0) 
 		    (set! breathpressure (- breathpressure attackrate))))
-	    (set! temp (dc-block dcblocker (one-pole filter boreout)))
+	    (set! temp (dc-block dcblocker (one-pole filt boreout)))
 	    (set! pressurediff (+ (jettable 
 				   (delayl jetdelay 
 					   (+ breathpressure 
