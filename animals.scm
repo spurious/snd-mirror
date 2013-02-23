@@ -1772,21 +1772,22 @@
 	    ;; looks like the same basic pulse throughout, almost same speed at start but every other one is squelched
 	    ;; slow startup pulse starts much faster (.06 mid-pulse duration, .0013 base pulse)
 	    (carrier (make-polywave 400 (list 33 .36 35 (* .36 .7) 37 (* .36 .49) 39 (* .36 .343) 41 (* .36 .242))))
-	    (modulator (make-oscil 1500 (* 0.5 pi)))
+	    (modulator (make-polywave 1500 '(1 .003))) ; cos^2 = 1/2(cos 2x + 1), but polywave has constant term via partial 0
+	    (modulator1 (make-polywave 3000 '(0 .5 1 .5)))
 	    (noise (make-rand-interp 5000 .003))
 	    (nrx 0.0)
 	    (peep (make-pulsed-env '(0 0 1 0 2 .2 3 0 5 .75 8 1 10 0 11 0) .06 (/ 1.0 .06)))
 	    (ampf (make-env (list 0 0 .5 .5 slow-start .4 soft-end .4 (+ soft-end .5) 1 (- dur 1) 1 dur 0.0) :duration dur :scaler amp))
-	    (pulsef (make-env (list 0 -1 slow-start -1 (+ slow-start .03) 0 dur 0) :duration dur :scaler (hz->radians 8))))
+	    (pulsef (make-env (list 0 -1 slow-start -1 (+ slow-start .03) 0 dur 0) :duration dur :scaler (hz->radians 8)))
+	    (pulsef1 (make-env (list 0 -1 slow-start -1 (+ slow-start .03) 0 dur 0) :duration dur :scaler (hz->radians (* 24.75 8)))))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
-	  (let ((frq (env pulsef))
-		(md (oscil modulator)))
-	    (set! nrx (polywave carrier (+ (* 24.75 frq)
-					   (rand-interp noise)
-					   (* .003 md))))
-	    (set! md (* md md nrx (pulsed-env peep frq)))
-	    (outa i (* md (env ampf)))))))))
+	  (outa i (* (env ampf) 
+		     (polywave modulator1) 
+		     (pulsed-env peep (env pulsef))
+		     (polywave carrier (+ (env pulsef1)
+					  (rand-interp noise)
+					  (polywave modulator))))))))))
 
 #|
 (defanimal (long-spurred-meadow-katydid beg amp)
@@ -5098,7 +5099,7 @@
 			(sawtooth-wave rnd))))
 	  (outa i (* (env ampf)
 		     (+ (polywave gen1 (+ (env frqf1) noise))
-			(polywave gen2 (+ (env frqf2) (* 10 noise)))))))))))
+			(polywave gen2 (+ (env frqf2) (* 10.0 noise)))))))))))
 
 ;; (with-sound (:play #t) (white-headed-woodpecker 0 .5))
 
@@ -7442,7 +7443,7 @@
 	  (let ((noise (* (env rndf) (rand-interp rnd))))
 	    (outa i (* (env ampf)
 		       (+ (* (env intrpf) (polywave gen1 (+ (env frqf1) noise)))
-			  (* (env intrpf-1) (polywave gen2 (+ (env frqf2) (* 2 noise))))))))))))
+			  (* (env intrpf-1) (polywave gen2 (+ (env frqf2) (* 2.0 noise))))))))))))
   
   (defanimal (bald-eagle-2 beg amp)
     (let ((dur 0.074))

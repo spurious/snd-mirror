@@ -121,7 +121,6 @@
 	      (table-increment 0.0)
 	      (glot-refl-gain 0.7)
 	      (pitch 400.0)
-	      (vibr-amt 0.0)
 	      (last-lip-in 0.0)		;for lip reflection/transmission filter
 	      (last-lip-out 0.0)
 	      (last-lip-refl 0.0)
@@ -153,7 +152,6 @@
 	      (lp (make-one-pole 0.05 (* -0.05 .9995)))
 
 	      (lip-radius   0.0)
-	      (s-glot 0.0)
 	      (s-glot-mix 0.0)
 	      (s-noise 0.0)
 	      (initial-noise-position 0.0)
@@ -405,11 +403,9 @@
 		      (set! (target-radii tractlength+1) initial-noise-position))))
 
 	    (set! s-glot-mix (- s-glot-mix delta))
-	    (set! s-glot (env glot-env))
 	    (set! s-noise (env noise-env))
 	    (set! pitch (env frq-env))
-	    (set! vibr-amt (env vib-env))
-	    (set! table-increment (* pitch (+ 1.0 (* vibr-amt (oscil vib-osc)) (rand-interp ran-vib)) table-size-over-sampling-rate))
+	    (set! table-increment (* pitch (+ 1.0 (* (env vib-env) (oscil vib-osc)) (rand-interp ran-vib)) table-size-over-sampling-rate))
 	    (set! last-lip-out (+ last-lip-in last-tract-plus))
 	    (set! last-lip-refl (* (+ last-lip-in last-tract-plus) lip-refl-gain))
 	    (set! last-lip-in last-tract-plus)
@@ -422,7 +418,7 @@
 		      (set! table-location (- table-location table-size)))
 		  (let ((int-loc (floor table-location)))
 		    (let ((table1 (glot-table int-loc)))
-		      (set! glotsamp (+ glotsamp (* s-glot (+ table1 (* s-glot-mix (- (glot-table2 int-loc) table1))))))))))
+		      (set! glotsamp (+ glotsamp (* (env glot-env) (+ table1 (* s-glot-mix (- (glot-table2 int-loc) table1))))))))))
 	    
 	    ;; next tract tick
 	    (let ((j 0)

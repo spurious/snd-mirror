@@ -12135,7 +12135,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 
 
 
-static s7_pointer add_1, add_2, add_1s, add_s1, add_cs1, add_si, add_is, add_sf, add_fs, add_2_temp, add_s_temp, add_temp_s, add_s_direct;
+static s7_pointer add_1, add_2, add_1s, add_s1, add_cs1, add_si, add_si_i, add_is, add_sf, add_fs, add_2_temp, add_s_temp, add_temp_s, add_s_direct;
 
 static s7_pointer add_ratios(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
@@ -12573,6 +12573,28 @@ static s7_pointer g_add_temp_s(s7_scheme *sc, s7_pointer args)
     return(s7_remake_real(sc, arg1, real(arg1) + real(arg2)));
   
   return(g_a_s_t(sc, arg2, arg1, args));
+}
+
+static s7_pointer g_add_si_i(s7_scheme *sc, s7_pointer args)
+{
+  /* (+ (* x n) k) */
+  s7_pointer x;
+  s7_Int k, n;
+
+  x = finder(sc, cadar(args));
+  n = integer(caddar(args));
+  k = integer(cadr(args));
+  if (is_integer(x)) return(make_integer(sc, k + integer(x) * n));
+
+  switch (type(x))
+    {
+    case T_INTEGER: return(make_integer(sc, k + integer(x) * n));
+    case T_RATIO:   return(s7_make_ratio(sc, k * denominator(x) + numerator(x) * n, denominator(x)));
+    case T_REAL:    return(make_real(sc, k + real(x) * n));
+    case T_COMPLEX: return(s7_make_complex(sc, k + real_part(x) * n, imag_part(x) * n));
+    default:        return(wrong_type_argument_with_type(sc, sc->ADD, small_int(1), x, A_NUMBER));
+    }
+  return(x);
 }
 
 
@@ -36378,11 +36400,20 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	  return(add_s1);
 	}
 
-      if ((s7_is_integer(arg2)) &&
-	  (is_symbol(arg1)))
+      if (s7_is_integer(arg2))
 	{
-	  set_optimize_data(expr, HOP_SAFE_C_C);
-	  return(add_si);
+	  if (is_symbol(arg1))
+	    {
+	      set_optimize_data(expr, HOP_SAFE_C_C);
+	      return(add_si);
+	    }
+	  if ((is_pair(arg1)) &&
+	      (is_optimized(arg1)) &&
+	      (c_call(arg1) == g_multiply_si))
+	    {
+	      set_optimize_data(expr, HOP_SAFE_C_C);
+	      return(add_si_i);
+	    }
 	}
 
       if ((s7_is_integer(arg1)) &&
@@ -37397,6 +37428,7 @@ static void init_choosers(s7_scheme *sc)
   add_1s = make_function_with_class(sc, f, "+", g_add_1s, 2, 0, false, "+ optimization");
   add_s1 = make_function_with_class(sc, f, "+", g_add_s1, 2, 0, false, "+ optimization");
   add_cs1 = make_function_with_class(sc, f, "+", g_add_cs1, 2, 0, false, "+ optimization");
+  add_si_i = make_function_with_class(sc, f, "+", g_add_si_i, 2, 0, false, "+ optimization");
   add_si = make_function_with_class(sc, f, "+", g_add_si, 2, 0, false, "+ optimization");
   add_is = make_function_with_class(sc, f, "+", g_add_is, 2, 0, false, "+ optimization");
   add_sf = make_function_with_class(sc, f, "+", g_add_sf, 2, 0, false, "+ optimization");
@@ -46687,6 +46719,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  s7_pointer code;
 	  
 	OPT_EVAL:
+#if WITH_COUNTS
+	  if ((c_call(sc->code) == g_add_2) ||
+	      (c_call(sc->code) == g_add))
+	    add_expr(sc, sc->code);
+#endif
 	  code = sc->code;
 	  sc->cur_code = code;
 	  /* fprintf(stderr, "opt eval: %s %s %s\n", opt_names[optimize_op(code)], DISPLAY_80(code), describe_type_bits(sc, car(code))); */
@@ -48992,6 +49029,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      break;
 
 
+	      /* -------------------------------------------------------------------------------- */
 	    case OP_VECTOR_C:
 	    case HOP_VECTOR_C:
 	      {
@@ -49372,6 +49410,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      
 	      
+	      /* -------------------------------------------------------------------------------- */
 	    case OP_SAFE_C_C:
 	      if (!c_function_is_ok(sc, code))
 		break;
@@ -49959,195 +49998,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		 */
 		goto START;
 	      }
-	      
-	      
-	    case OP_C_S_opSq:
-	      if (!c_function_is_ok(sc, code))
-		break;
-	      if (!indirect_c_function_is_ok(sc, caddr(code)))
-		break;
-	      
-	    case HOP_C_S_opSq:
-	      {
-		s7_pointer args, val;
-		args = cdr(code);
-		val = find_symbol_or_bust(sc, car(args));
-		car(sc->T1_1) = find_symbol_or_bust(sc, ecdr(args));
-		sc->args = list_2(sc, val, c_call(cadr(args))(sc, sc->T1_1));
-		sc->value = c_call(code)(sc, sc->args);
-		goto START;
-	      }
 
-	      
-	    case OP_C_QQ_1:
-	    case HOP_C_QQ_1:
-	      {
-		s7_pointer val;
-		val = finder(sc, cadr(caddr(code)));
-		if (!is_proper_list(sc, val))
-		  s7_error(sc, sc->WRONG_TYPE_ARG, 
-			   list_2(sc, 
-				  make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
-				  val));
-		sc->value = cons(sc, cadr(cadr(code)), val);
-		/* fprintf(stderr, "value: %s\n", DISPLAY(sc->value)); */
-		goto START;
-	      }
-	      
-	      
-	    case OP_C_S_opCq:
-	      if (!c_function_is_ok(sc, code))
-		break;
-	      if (!indirect_c_function_is_ok(sc, caddr(code)))
-		break;
-	      
-	    case HOP_C_S_opCq:
-	      {
-		s7_pointer args, val;
-		args = cdr(code);
-		sc->temp4 = find_symbol_or_bust(sc, car(args));
-		val = c_call(cadr(args))(sc, ecdr(args));
-		sc->args = list_2(sc, sc->temp4, val);
-		sc->value = c_call(code)(sc, sc->args);
-		goto START;
-	      }
-	      
-	      
-	    case OP_C_S:
-	      if (!c_function_is_ok(sc, code))
-		break;
-	      
-	    case HOP_C_S:
-	      sc->args = list_1(sc, find_symbol_or_bust(sc, cadr(code)));
-	      sc->value = c_call(code)(sc, sc->args);
-	      goto START;
-	      
-	      
-	    case OP_READ_S:
-	      if (!c_function_is_ok(sc, code))
-		break;
-	      
-	    case HOP_READ_S:
-	      {
-		s7_pointer port;
-		port = find_symbol_or_bust(sc, cadr(code));
-		
-		if (!is_input_port(port)) /* was also not stdin */
-		  {
-		    sc->value = g_read(sc, list_1(sc, port));
-		    goto START;
-		  }
-		/* I guess this port_is_closed check is needed because we're going down a level below */
-		if (port_is_closed(port))
-		  simple_wrong_type_argument_with_type(sc, sc->READ, port, make_protected_string(sc, "an open input port"));
-		
-		if (is_function_port(port))
-		  sc->value = (*(port_input_function(port)))(sc, S7_READ, port);
-		else
-		  {
-		    if ((is_string_port(port)) &&
-			(port_string_length(port) <= port_string_point(port)))
-		      sc->value = sc->EOF_OBJECT;
-		    else
-		      {
-			push_input_port(sc, port);
-			push_stack(sc, OP_READ_DONE, sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
-			sc->tok = token(sc);
-			switch (sc->tok)
-			  {
-			  case TOKEN_EOF:
-			    goto START;
-			    
-			  case TOKEN_RIGHT_PAREN:
-			    read_error(sc, "unexpected close paren");
-			    
-			  case TOKEN_COMMA:
-			    read_error(sc, "unexpected comma");
-			    
-			  default:
-			    sc->value = read_expression(sc);
-			    sc->current_line = port_line_number(sc->input_port);  /* this info is used to track down missing close parens */
-			    sc->current_file = port_filename(sc->input_port);
-			  }
-		      }
-		  }
-		goto START;
-	      }
-	      
-	      
-	    case OP_C_A:
-	      if (!c_function_is_ok(sc, code))
-		break;
-	      
-	    case HOP_C_A:
-	      sc->args = list_1(sc, ((s7_function)fcdr(cdr(code)))(sc, cadr(code)));
-	      sc->value = c_call(code)(sc, sc->args);
-	      goto START;
-	      
-	      
-	    case OP_C_P:
-	      if (!c_function_is_ok(sc, code))
-		break;
-	      
-	    case HOP_C_P:
-	      push_stack(sc, OP_C_P_1, sc->NIL, code);
-	      sc->code = cadr(code);
-	      if (is_optimized(sc->code))
-		goto OPT_EVAL;
-	      goto EVAL; 
-	      
-	      
-	    case OP_C_SP:
-	      if (!c_function_is_ok(sc, code))
-		break;
-	      
-	    case HOP_C_SP:
-	      push_stack(sc, OP_C_SP_1, finder(sc, cadr(code)), code);
-	      sc->code = caddr(code);
-	      if (is_optimized(sc->code))
-		goto OPT_EVAL;
-	      goto EVAL; 
-	      
-	      
-	    case OP_APPLY_SS:
-	      if (!c_function_is_ok(sc, code))
-		break;
-	      
-	    case HOP_APPLY_SS:
-	      sc->code = finder(sc, cadr(code)); /* global search here was slower */
-	      sc->args = finder(sc, fcdr(code));
-	      if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
-		return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				list_2(sc, 
-				       make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
-				       sc->args)));
-	      if (needs_copied_args(sc->code))
-		{
-		  if (!is_null(sc->args))
-		    sc->args = copy_list(sc, sc->args);
-		  if (is_any_macro(sc->code))                   /* (apply mac '(3)) -> (apply mac '((mac 3))) */
-		    {                                           /* these always copy args (except c_macros, sigh) */
-		      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
-		      sc->args = list_1(sc, cons(sc, sc->code, sc->args));
-		    }
-		}
-	      goto APPLY;
-
-
-	    case OP_C_ALL_X:
-	      if (!c_function_is_ok(sc, code))
-		break;
-	      
-	    case HOP_C_ALL_X:
-	      {
-		s7_pointer args, p;
-		sc->args = make_list(sc, integer(arglist_length(code)), sc->NIL);
-		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
-		  car(p) = ((s7_function)fcdr(args))(sc, car(args));
-		sc->value = c_call(code)(sc, sc->args);
-		goto START;
-	      }
-	      
 	      
 	    case OP_SAFE_C_SCS:
 	      if (!c_function_is_ok(sc, code))
@@ -51039,6 +50890,195 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T2_1) = c_call(arg1)(sc, sc->T2_1);
 		car(sc->T2_2) = c_call(arg2)(sc, cdr(arg2));
 		sc->value = c_call(code)(sc, sc->T2_1);
+		goto START;
+	      }
+	      
+	      
+	      /* -------------------------------------------------------------------------------- */
+	    case OP_C_S_opSq:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      if (!indirect_c_function_is_ok(sc, caddr(code)))
+		break;
+	      
+	    case HOP_C_S_opSq:
+	      {
+		s7_pointer args, val;
+		args = cdr(code);
+		val = find_symbol_or_bust(sc, car(args));
+		car(sc->T1_1) = find_symbol_or_bust(sc, ecdr(args));
+		sc->args = list_2(sc, val, c_call(cadr(args))(sc, sc->T1_1));
+		sc->value = c_call(code)(sc, sc->args);
+		goto START;
+	      }
+
+	      
+	    case OP_C_QQ_1:
+	    case HOP_C_QQ_1:
+	      {
+		s7_pointer val;
+		val = finder(sc, cadr(caddr(code)));
+		if (!is_proper_list(sc, val))
+		  s7_error(sc, sc->WRONG_TYPE_ARG, 
+			   list_2(sc, 
+				  make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
+				  val));
+		sc->value = cons(sc, cadr(cadr(code)), val);
+		/* fprintf(stderr, "value: %s\n", DISPLAY(sc->value)); */
+		goto START;
+	      }
+	      
+	      
+	    case OP_C_S_opCq:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      if (!indirect_c_function_is_ok(sc, caddr(code)))
+		break;
+	      
+	    case HOP_C_S_opCq:
+	      {
+		s7_pointer args, val;
+		args = cdr(code);
+		sc->temp4 = find_symbol_or_bust(sc, car(args));
+		val = c_call(cadr(args))(sc, ecdr(args));
+		sc->args = list_2(sc, sc->temp4, val);
+		sc->value = c_call(code)(sc, sc->args);
+		goto START;
+	      }
+	      
+	      
+	    case OP_C_S:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      
+	    case HOP_C_S:
+	      sc->args = list_1(sc, find_symbol_or_bust(sc, cadr(code)));
+	      sc->value = c_call(code)(sc, sc->args);
+	      goto START;
+	      
+	      
+	    case OP_READ_S:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      
+	    case HOP_READ_S:
+	      {
+		s7_pointer port;
+		port = find_symbol_or_bust(sc, cadr(code));
+		
+		if (!is_input_port(port)) /* was also not stdin */
+		  {
+		    sc->value = g_read(sc, list_1(sc, port));
+		    goto START;
+		  }
+		/* I guess this port_is_closed check is needed because we're going down a level below */
+		if (port_is_closed(port))
+		  simple_wrong_type_argument_with_type(sc, sc->READ, port, make_protected_string(sc, "an open input port"));
+		
+		if (is_function_port(port))
+		  sc->value = (*(port_input_function(port)))(sc, S7_READ, port);
+		else
+		  {
+		    if ((is_string_port(port)) &&
+			(port_string_length(port) <= port_string_point(port)))
+		      sc->value = sc->EOF_OBJECT;
+		    else
+		      {
+			push_input_port(sc, port);
+			push_stack(sc, OP_READ_DONE, sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
+			sc->tok = token(sc);
+			switch (sc->tok)
+			  {
+			  case TOKEN_EOF:
+			    goto START;
+			    
+			  case TOKEN_RIGHT_PAREN:
+			    read_error(sc, "unexpected close paren");
+			    
+			  case TOKEN_COMMA:
+			    read_error(sc, "unexpected comma");
+			    
+			  default:
+			    sc->value = read_expression(sc);
+			    sc->current_line = port_line_number(sc->input_port);  /* this info is used to track down missing close parens */
+			    sc->current_file = port_filename(sc->input_port);
+			  }
+		      }
+		  }
+		goto START;
+	      }
+	      
+	      
+	    case OP_C_A:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      
+	    case HOP_C_A:
+	      sc->args = list_1(sc, ((s7_function)fcdr(cdr(code)))(sc, cadr(code)));
+	      sc->value = c_call(code)(sc, sc->args);
+	      goto START;
+	      
+	      
+	    case OP_C_P:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      
+	    case HOP_C_P:
+	      push_stack(sc, OP_C_P_1, sc->NIL, code);
+	      sc->code = cadr(code);
+	      if (is_optimized(sc->code))
+		goto OPT_EVAL;
+	      goto EVAL; 
+	      
+	      
+	    case OP_C_SP:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      
+	    case HOP_C_SP:
+	      push_stack(sc, OP_C_SP_1, finder(sc, cadr(code)), code);
+	      sc->code = caddr(code);
+	      if (is_optimized(sc->code))
+		goto OPT_EVAL;
+	      goto EVAL; 
+	      
+	      
+	    case OP_APPLY_SS:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      
+	    case HOP_APPLY_SS:
+	      sc->code = finder(sc, cadr(code)); /* global search here was slower */
+	      sc->args = finder(sc, fcdr(code));
+	      if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
+		return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				list_2(sc, 
+				       make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
+				       sc->args)));
+	      if (needs_copied_args(sc->code))
+		{
+		  if (!is_null(sc->args))
+		    sc->args = copy_list(sc, sc->args);
+		  if (is_any_macro(sc->code))                   /* (apply mac '(3)) -> (apply mac '((mac 3))) */
+		    {                                           /* these always copy args (except c_macros, sigh) */
+		      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
+		      sc->args = list_1(sc, cons(sc, sc->code, sc->args));
+		    }
+		}
+	      goto APPLY;
+
+
+	    case OP_C_ALL_X:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      
+	    case HOP_C_ALL_X:
+	      {
+		s7_pointer args, p;
+		sc->args = make_list(sc, integer(arglist_length(code)), sc->NIL);
+		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
+		  car(p) = ((s7_function)fcdr(args))(sc, car(args));
+		sc->value = c_call(code)(sc, sc->args);
 		goto START;
 	      }
 	      
@@ -62824,5 +62864,5 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14   14
  * lat        229   63   52   47   42   40   39
  * t502        90   43   39   36   29   23   20
- * calls           275  207  175  115   89   85
+ * calls           275  207  175  115   89   84
  */

@@ -58,40 +58,17 @@
 ;;;
 ;;; this mainly involves keeping track of the current sound/channel
 
-(define (selection-rms-1)
-  "(selection-rms-1) -> rms of selection data using samplers"
+(define (selection-rms)
+  "(selection-rms) -> rms of selection data using samplers"
   (if (selection?)
       (let ((reader (make-sampler (selection-position)))
 	    (len (selection-frames))
 	    (sum 0.0))
 	(do ((i 0 (+ i 1))) 
-	    ((= i len) 
-	     (begin 
-	       (free-sampler reader) 
-	       (sqrt (/ sum len))))
+	    ((= i len) (sqrt (/ sum len)))
 	  (let ((val (next-sample reader)))
 	    (set! sum (+ sum (* val val))))))
       (error 'no-active-selection (list "selection-rms-1"))))
-
-
-;;; if you'd rather use recursion:
-(define (selection-rms)
-  "(selection-rms) -> rms of selection data using samplers and recursion"
-  ;; this is actually slightly faster than selection-rms-1
-  ;; all the DO loops in this file could be re-written in this form, but I find loops easier to read
-  (if (selection?)
-      (let ((reader (make-sampler (selection-position)))
-	    (len (selection-frames)))
-	(define rsum 
-	  (lambda (leng sum)
-	    (if (= leng 0)
-		(sqrt (/ sum len))
-		(let ((val (next-sample reader)))
-		  (rsum (- leng 1) (+ sum (* val val)))))))
-	(let ((val (rsum len 0.0)))
-	  (free-sampler reader)
-	  val))
-      (error 'no-active-selection (list "selection-rms"))))
 
 
 (define (region-rms reg)
@@ -921,10 +898,7 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is 
        (let ((sum 0.0))
 	 (do ((i 0 (+ i 1)))
 	     ((= i 8) sum)
-	   (set! sum (+ sum (read-sample (mixers i))))))))
-    (do ((i 0 (+ i 1)))
-	((= i 8))
-      (free-sampler (mixers i))))
+	   (set! sum (+ sum (read-sample (mixers i)))))))))
   (scale-to mx))
 |#
 
@@ -1167,9 +1141,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 	 (out-data (make-vct len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (set! (out-data i) 
-	    (src s (* osamp (oscil os)))))
-    (free-sampler sf)
+      (set! (out-data i) (src s (* osamp (oscil os)))))
     (vct->channel out-data 0 len snd chn #f (format #f "fp ~A ~A ~A" sr osamp osfrq))))
 	    
 
@@ -1225,19 +1197,19 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
   (let* ((dur (/ (* (/ (frames snd chn) (srate snd)) 
 		    (integrate-envelope gr-env)) ; in env.scm
 		 (envelope-last-x gr-env)))
-	 (gr (make-granulate :expansion (cadr gr-env) :jitter 0))
+	 (gr (make-granulate :expansion (cadr gr-env) 
+			     :jitter 0
+			     :input (make-sampler 0 snd chn)))
 	 (ge (make-env gr-env :duration dur))
 	 (sound-len (round (* (srate snd) dur)))
 	 (len (max sound-len (frames snd chn)))
-	 (out-data (make-vct len))
-	 (sf (make-sampler 0 snd chn)))
+	 (out-data (make-vct len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
       (set! (out-data i) 
-	    (let ((val (granulate gr (lambda (dir) (next-sample sf)))))
+	    (let ((val (granulate gr)))
 	      (set! (mus-increment gr) (env ge))
 	      val)))
-    (free-sampler sf)
     (vct->channel out-data 0 len snd chn #f (format #f "expsnd '~A" gr-env))))
 
 
@@ -1381,13 +1353,12 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
   "(cnvtest snd0 snd1 amp) convolves snd0 and snd1, scaling by amp, returns new max amp: (cnvtest 0 1 .1)"
   (let* ((flt-len (frames snd0))
 	 (total-len (+ flt-len (frames snd1)))
-	 (cnv (make-convolve :filter (channel->vct 0 flt-len snd0)))
-	 (sf (make-sampler 0 snd1))
+	 (cnv (make-convolve :filter (channel->vct 0 flt-len snd0)
+			     :input (make-sampler 0 snd1)))
 	 (out-data (make-vct total-len)))
     (do ((i 0 (+ i 1)))
 	((= i total-len))
-      (set! (out-data i) (convolve cnv (lambda (dir) (next-sample sf)))))
-    (free-sampler sf)
+      (set! (out-data i) (convolve cnv)))
     (vct-scale! out-data amp)
     (let ((max-samp (vct-peak out-data)))
       (vct->channel out-data 0 total-len snd1)
@@ -1438,10 +1409,8 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	 (val1 (abs (next-sample sf)) (abs (next-sample sf))))
 	((or (sampler-at-end? sf)
 	     (< (+ val0 val1) limit))
-	 (begin
-	   (free-sampler sf)
-	   (set! (cursor) n)
-	   n)))))
+	 (set! (cursor) n)
+	 n))))
 
 
 ;;; -------- sound interp
@@ -1784,7 +1753,6 @@ In most cases, this will be slightly offset from the true beginning of the note"
     (do ((i 0 (+ i 1)))
 	((= i len))
       (set! (data i) (next-sample reader)))
-    (free-sampler reader)
     data))
 
 
@@ -2226,7 +2194,6 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
        (do ((i 0 (+ i 1)))
 	   ((= i dur))
 	 (set! mx (max mx (abs (next-sample rd)))))
-      (free-sampler rd)
       mx))
 
   (define (segment-sound name high low)
@@ -2258,7 +2225,6 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 		     (set! (segments segctr) (- i 128))
 		     (set! segctr (+ segctr 1))
 		     (set! in-sound #t))))))
-      (free-sampler reader)
       (if in-sound
 	  (begin
 	    (set! (segments segctr) end)

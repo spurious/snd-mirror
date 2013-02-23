@@ -852,7 +852,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
   io_error_t io_err = IO_NO_ERROR;
   src_state *sr;
 
-  /* fprintf(stderr, "src: %lld %f\n", dur, ratio); */
+  /* fprintf(stderr, "src: %lld %f %s\n", dur, ratio, origin); */
 
   if ((egen == NULL) && (sf->edit_ctr == cp->edit_ctr))
     {
@@ -3295,6 +3295,24 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 		  if (f)
 		    {
 		      /* it is optimized and f can be applied f(s7, args) */
+
+		      /* look first for the common scaling case */
+		      if ((s7_list_length(s7, res) == 3) &&
+			  (s7_car(res) == s7_make_symbol(s7, "*")) &&
+			  (((s7_cadr(res) == arg) && (s7_is_real(s7_caddr(res)))) ||
+			   ((s7_caddr(res) == arg) && (s7_is_real(s7_cadr(res))))))
+			{
+			  scale_channel(cp, s7_number_to_real(s7, (s7_is_real(s7_caddr(res))) ? s7_caddr(res) : s7_cadr(res)),
+					beg, num, pos, NOT_IN_AS_ONE_EDIT);
+			  close_temp_file(filename, ofd, hdr->type, 0);
+			  free_file_info(hdr);
+			  sf = free_snd_fd(sf);
+			  snd_remove(filename, REMOVE_FROM_CACHE);
+			  free(filename);
+			  if (reporting) finish_progress_report(cp);
+			  return(res);
+			}
+
 		      /* now is lambda arg used at all?
 		       * is it direct? can other symbols all be looked up in advance?
 		       * can we assume only real as return val?
@@ -3691,6 +3709,20 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	    {
 	      int len;
 	      s7_function f;
+
+	      /* look first for the common scaling case */
+	      if ((s7_list_length(s7, res) == 3) &&
+		  (s7_car(res) == s7_make_symbol(s7, "*")) &&
+		  (((s7_cadr(res) == arg) && (s7_is_real(s7_caddr(res)))) ||
+		   ((s7_caddr(res) == arg) && (s7_is_real(s7_cadr(res))))))
+		{
+		  scale_channel(cp, s7_number_to_real(s7, (s7_is_real(s7_caddr(res))) ? s7_caddr(res) : s7_cadr(res)),
+				beg, num, pos, NOT_IN_AS_ONE_EDIT);
+
+		  sf = free_snd_fd(sf);
+		  return(res);
+		}
+
 	      f = s7_function_choice(s7, res);
 	      if (f)
 		{
@@ -3714,6 +3746,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 			      ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
 			      slot = s7_make_slot(s7, e, arg, y); /* make sure it is mutable */
 			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
+
 			      for (kp = 0; kp < num; kp++)
 				{
 				  (*ry) = read_sample(sf);
@@ -3785,6 +3818,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 			      old_e = s7_set_current_environment(s7, e);
 			      /* the function closure might be needed even if the arg isn't */
 			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
+
 			      for (kp = 0; kp < num; kp++)
 				data[kp] = s7_call_direct_to_real_and_free(s7, res);
 			      change_samples(beg, num, data, cp, caller, pos);

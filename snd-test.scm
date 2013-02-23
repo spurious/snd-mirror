@@ -19436,9 +19436,8 @@ EDITS: 2
 	      (if (not (= x1 x2 x3))
 		  (format #t "~D ~A ~A ~A~%" i x1 x2 x3)))))))
 
-    (let ((gen (make-granulate :expansion 2.0))
+    (let ((gen (make-granulate :expansion 2.0 :input (make-readin "oboe.snd" 0 4000 1 2048)))
 	  (v0 (make-vct 1000))
-	  (rd (make-readin "oboe.snd" 0 4000 1 2048))
 	  (gen1 (make-granulate :expansion 2.0))
 	  (v1 (make-vct 1000))
 	  (rd1b (make-readin :file "oboe.snd" :channel 0 :start 4000 :direction 1 :size (mus-file-buffer-size))))
@@ -19447,7 +19446,7 @@ EDITS: 2
 		       "granulate expansion: 2.000 (551/1102), scaler: 0.600, length: 0.150 secs (3308 samps), ramp: 0.060")
       (do ((i 0 (+ i 1)))
 	  ((= i 1000))
-	(vct-set! v0 i (granulate gen (lambda (dir) (readin rd)))))
+	(vct-set! v0 i (granulate gen)))
       (fill-vct v1 (if (granulate? gen1) (granulate gen1 (lambda (dir) (readin rd1b)))))
       (let ((worst (abs (- (vct-peak v0) (vct-peak v1)))))
 	(if (> worst .01) (snd-display #__line__ ";run granulate: ~A" worst)))
@@ -19534,11 +19533,9 @@ EDITS: 2
 	  (if (or (< (/ (maxamp) mx) 2.9) (> (/ mx (maxamp)) 6.0))
 	      (snd-display #__line__ ";gran edit 4* (1): ~A ~A" mx (maxamp)))
 	  (revert-sound ind)))
-      (let ((grn (make-granulate :expansion 2.0))
-	    (rd (make-sampler 0)))
+      (let ((grn (make-granulate :expansion 2.0 :input (make-sampler 0))))
 	(map-channel (lambda (y) (granulate grn 
-					    (lambda (dir) 
-					      (rd))
+					    #f
 					    (lambda (g)
 					      (let ((grain (mus-data g))  ; current grain
 						    (len (mus-length g))) ; current grain length
@@ -19848,12 +19845,12 @@ EDITS: 2
 	    (snd-display #__line__ ";gran 14 data 100: ~A" (channel->vct 100 30)))
 	(undo))
       
-      (let* ((gen (make-granulate :jitter 0.0 :hop .004 :length .001 :ramp 0.0))
+      (let* ((gen (make-granulate :jitter 0.0 :hop .004 :length .001 :ramp 0.0 :input (lambda (dir) .1)))
 	     (e (make-env '(0 0 1 .5) :length 1001))
 	     (base-ramp-len (mus-length gen)))
 	(map-channel 
 	 (lambda (y) 
-	   (let ((result (granulate gen (lambda (dir) .1))))
+	   (let ((result (granulate gen)))
 	     (set! (mus-ramp gen) (round (* base-ramp-len (env e))))
 	     result)))
 	(let ((mx (maxamp)))
@@ -19875,12 +19872,12 @@ EDITS: 2
 	(undo))
       
       
-      (let* ((gen (make-granulate :jitter 0.0 :hop .004 :length .001 :ramp 0.0))
+      (let* ((gen (make-granulate :jitter 0.0 :hop .004 :length .001 :ramp 0.0 :input (lambda (dir) .1)))
 	     (e (make-env '(0 1 1 .25) :length 1001))
 	     (base-hop-len (mus-hop gen)))
 	(map-channel 
 	 (lambda (y) 
-	   (let ((result (granulate gen (lambda (dir) .1))))
+	   (let ((result (granulate gen)))
 	     (set! (mus-hop gen) (round (* base-hop-len (env e))))
 	     result)))
 	(let ((mx (maxamp)))
@@ -19897,12 +19894,12 @@ EDITS: 2
 	    (snd-display #__line__ ";granf 1 data 900: ~A" (channel->vct 900 30)))
 	(undo))
       
-      (let* ((gen (make-granulate :jitter 0.0 :hop .004 :length .001 :ramp 0.0))
+      (let* ((gen (make-granulate :jitter 0.0 :hop .004 :length .001 :ramp 0.0 :input  (lambda (dir) .1)))
 	     (e (make-env '(0 1 1 .25) :length 1001))
 	     (base-freq (mus-frequency gen)))
 	(map-channel 
 	 (lambda (y) 
-	   (let ((result (granulate gen (lambda (dir) .1))))
+	   (let ((result (granulate gen)))
 	     (set! (mus-frequency gen) (* base-freq (env e)))
 	     result)))
 	(let ((mx (maxamp)))
@@ -19952,12 +19949,12 @@ EDITS: 2
 	    (snd-display #__line__ ";granf 4 data 900: ~A" (channel->vct 900 30)))
 	(undo))
       
-      (let* ((gen (make-granulate :jitter 0.0 :hop .006 :length .001 :ramp 0.0 :max-size 2200))
+      (let* ((gen (make-granulate :jitter 0.0 :hop .006 :length .001 :ramp 0.0 :max-size 2200 :input  (lambda (dir) .1)))
 	     (e (make-env '(0 1 1 5) :length 1001))
 	     (base-len (mus-length gen)))
 	(map-channel 
 	 (lambda (y) 
-	   (let ((result (granulate gen (lambda (dir) .1))))
+	   (let ((result (granulate gen)))
 	     (set! (mus-length gen) (round (* base-len (env e))))
 	     result)))
 	(let ((mx (maxamp)))
@@ -26459,12 +26456,9 @@ EDITS: 2
 	       (if (and (region? reg) 
 			(selection?))
 		   (let ((r1 (region-rms (car (regions))))
-			 (r2 (selection-rms))
-			 (r3 (selection-rms-1)))
+			 (r2 (selection-rms)))
 		     (if (fneq r1 r2)
-			 (snd-display #__line__ ";region rms: ~A?" r1))
-		     (if (fneq r2 r3)
-			 (snd-display #__line__ ";selection rms: ~A ~A?" r2 r3))))))
+			 (snd-display #__line__ ";region rms: ~A?" r1))))))
 	    (set! (selection-creates-region) old-setting))
 	  
 	  (without-errors (if (region? (cadr (regions))) (play (cadr (regions)) :wait #t)))
@@ -47262,22 +47256,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-21-Feb:
-85,004,251,781
-12,242,389,018  s7.c:eval [/home/bil/snd-13/snd]
- 6,320,623,421  ???:sin [/lib64/libm-2.12.so]
- 4,743,017,552  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+22-Feb:
+84,138,847,904
+12,270,034,058  s7.c:eval [/home/bil/snd-13/snd]
+ 6,309,437,108  ???:sin [/lib64/libm-2.12.so]
+ 4,680,948,448  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
  2,970,010,915  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,894,585,243  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,832,041,501  s7.c:eval'2 [/home/bil/snd-13/snd]
- 2,774,411,421  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 2,759,964,484  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,611,545,372  s7.c:gc [/home/bil/snd-13/snd]
- 2,492,339,928  ???:cos [/lib64/libm-2.12.so]
+ 2,838,738,624  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 2,817,002,654  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 2,761,535,524  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,689,214,627  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,634,385,865  s7.c:gc [/home/bil/snd-13/snd]
+ 2,482,520,252  ???:cos [/lib64/libm-2.12.so]
  2,327,317,731  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
  1,585,058,070  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,420,890,132  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 1,420,918,982  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,152,081,150  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
- 1,095,998,225  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
+ 1,091,872,604  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
 |#
