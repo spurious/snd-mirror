@@ -803,6 +803,16 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
 	  during_open(fd, filename, SND_OPEN_CHANNEL);
 	  io = make_file_state(fd, chdr, chn, 0, FILE_BUFFER_SIZE);
 	  cp->sounds[0] = make_snd_data_file(filename, io, chdr, DONT_DELETE_ME, cp->edit_ctr, chn);
+
+	  /* if sound tables have the saved maxamp data, grab it */
+	  if (mus_sound_channel_maxamp_exists(filename, cp->chan))
+	    {
+	      mus_long_t pos;
+	      /* fprintf(stderr, "reading max for %s %d\n", filename, cp->chan); */
+	      set_ed_maxamp(cp, 0, mus_sound_channel_maxamp(filename, cp->chan, &pos));
+	      set_ed_maxamp_position(cp, 0, pos);
+	    }
+	  /* else fprintf(stderr, "can't read max for %s %d\n", filename, chn); */
 	}
     }
 
@@ -7493,7 +7503,7 @@ static XEN g_maxamp(XEN snd, XEN chn_n, XEN edpos)
   
   if ((XEN_BOUND_P(chn_n)) ||
       (XEN_TRUE_P(snd)))
-    return(channel_get(snd, chn_n, CP_MAXAMP, S_maxamp));
+    return(channel_get(snd, chn_n, CP_MAXAMP, S_maxamp)); /* calls channel_maxamp */
 
   ASSERT_SOUND(S_maxamp, snd, 0);
   {
@@ -7503,9 +7513,40 @@ static XEN g_maxamp(XEN snd, XEN chn_n, XEN edpos)
       {
 	int i;
 	mus_float_t mx = 0.0;
+	mus_float_t *vals = NULL;
+	mus_long_t *times = NULL;
+	bool save_maxamp = true;
+
+	for (i = 0; i < sp->nchans; i++)
+	  if (sp->chans[i]->edit_ctr != 0)
+	    {
+	      save_maxamp = false;
+	      break;
+	    }
+	if (save_maxamp)
+	  {
+	    /* fprintf(stderr, "save g_maxamp for %s (%d)\n", sp->filename, mus_sound_maxamp_exists(sp->filename)); */
+	    vals = (mus_float_t *)calloc(sp->nchans, sizeof(mus_float_t));
+	    times = (mus_long_t *)calloc(sp->nchans, sizeof(mus_long_t));
+	    for (i = 0; i < sp->nchans; i++)
+	      {
+		chan_info *ncp;
+		mus_long_t pos = 0;
+		ncp = sp->chans[i];
+		vals[i] = channel_maxamp_and_position(ncp, 0, &pos);
+		if (vals[i] > mx) mx = vals[i];
+		times[i] = pos;
+	      }
+	    mus_sound_set_maxamps(sp->filename, sp->nchans, vals, times);
+	    free(vals);
+	    free(times);
+	    return(C_TO_XEN_DOUBLE(mx));
+	  }
+
 	for (i = 0; i < sp->nchans; i++)
 	  {
 	    mus_float_t cur_mx;
+	    
 	    cur_mx = channel_maxamp(sp->chans[i], sp->chans[i]->edit_ctr);
 	    if (cur_mx > mx)
 	      mx = cur_mx;

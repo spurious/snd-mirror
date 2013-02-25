@@ -947,6 +947,9 @@ void g_init_data(void);
 
 /* -------- snd-edits.c -------- */
 
+mus_float_t channel_maxamp(chan_info *cp, int edpos);
+mus_long_t channel_maxamp_position(chan_info *cp, int edpos);
+mus_float_t channel_maxamp_and_position(chan_info *cp, int edpos, mus_long_t *maxpos);
 ed_list *initial_ed_list(mus_long_t beg, mus_long_t end);
 snd_info *sound_is_silence(snd_info *sp);
 mus_long_t edit_changes_begin_at(chan_info *cp, int edpos);
@@ -1777,8 +1780,6 @@ void g_init_kbd(void);
 
 void scale_by(chan_info *cp, mus_float_t *scalers, int len, bool selection);
 bool scale_to(snd_info *sp, chan_info *cp, mus_float_t *scalers, int len, bool selection);
-mus_float_t channel_maxamp(chan_info *cp, int edpos);
-mus_long_t channel_maxamp_position(chan_info *cp, int edpos);
 void src_env_or_num(chan_info *cp, env *e, mus_float_t ratio, bool just_num, 
 		    const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos);
 void apply_filter(chan_info *ncp, int order, env *e, const char *caller, const char *origin, 

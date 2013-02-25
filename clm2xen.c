@@ -1331,7 +1331,15 @@ static XEN s7_mus_copy(s7_scheme *sc, XEN obj)
   g = XEN_TO_MUS_ANY(obj);
 
   if (mus_frame_p(g))
-    return(mus_xen_to_object(mus_any_to_mus_xen(mus_frame_copy(g))));
+    {
+      mus_xen *gn;
+      gn = mus_any_to_mus_xen(mus_frame_copy(g));
+      gn->type = FRAME_TAG;
+      /* (let ((fr (frame 1 2 3))) (let ((nfr (copy fr))) (frame-set! nfr 0 21) nfr))
+       */
+      return(mus_xen_to_object(gn));
+      /* return(mus_xen_to_object(mus_any_to_mus_xen(mus_frame_copy(g)))); */
+    }
   if (mus_mixer_p(g))
     return(mus_xen_to_object(mus_any_to_mus_xen(mus_mixer_copy(g))));
 
@@ -10820,11 +10828,6 @@ static s7_pointer g_indirect_out_bank_ssz_looped(s7_scheme *sc, s7_pointer args)
 	}
     }
       
-  /* TODO: does this know about vct output? | out_bank built-in in clm.c | mus_apply opt'd via passed func
-   *        2 chan opt'd?
-   * TODO: doc/test out-bank
-   */
-
   {
 #if HAVE_SCHEME  
     s7_pointer *gens;

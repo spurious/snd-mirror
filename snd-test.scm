@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [574]
-;;;  test 1: defaults                           [1160]
-;;;  test 2: headers                            [1374]
-;;;  test 3: variables                          [1689]
-;;;  test 4: sndlib                             [2267]
-;;;  test 5: simple overall checks              [4746]
-;;;  test 6: vcts                               [9527]
-;;;  test 7: colors                             [9847]
-;;;  test 8: clm                                [10367]
-;;;  test 9: mix                                [21709]
-;;;  test 10: marks                             [23496]
-;;;  test 11: dialogs                           [24457]
-;;;  test 12: extensions                        [24650]
-;;;  test 13: menus, edit lists, hooks, etc     [24916]
-;;;  test 14: all together now                  [26293]
-;;;  test 15: chan-local vars                   [27180]
-;;;  test 16: regularized funcs                 [28956]
-;;;  test 17: dialogs and graphics              [32194]
-;;;  test 18: enved                             [32293]
-;;;  test 19: save and restore                  [32312]
-;;;  test 20: transforms                        [33934]
-;;;  test 21: new stuff                         [36086]
-;;;  test 22: (run)                             [38111]
-;;;  test 23: with-sound                        [38117]
-;;;  test 25: X/Xt/Xm                           [41096]
-;;;  test 26:                                   [44778]
-;;;  test 27: GL                                [44784]
-;;;  test 28: errors                            [44908]
-;;;  test 29: s7                                [47016]
-;;;  test all done                              [47088]
-;;;  test the end                               [47259]
+;;;  test 0: constants                          [566]
+;;;  test 1: defaults                           [1152]
+;;;  test 2: headers                            [1366]
+;;;  test 3: variables                          [1681]
+;;;  test 4: sndlib                             [2259]
+;;;  test 5: simple overall checks              [4723]
+;;;  test 6: vcts                               [9502]
+;;;  test 7: colors                             [9814]
+;;;  test 8: clm                                [10332]
+;;;  test 9: mix                                [21622]
+;;;  test 10: marks                             [23409]
+;;;  test 11: dialogs                           [24369]
+;;;  test 12: extensions                        [24564]
+;;;  test 13: menus, edit lists, hooks, etc     [24830]
+;;;  test 14: all together now                  [26207]
+;;;  test 15: chan-local vars                   [27086]
+;;;  test 16: regularized funcs                 [28861]
+;;;  test 17: dialogs and graphics              [32123]
+;;;  test 18: enved                             [32222]
+;;;  test 19: save and restore                  [32241]
+;;;  test 20: transforms                        [33859]
+;;;  test 21: new stuff                         [36007]
+;;;  test 22: (run)                             [38020]
+;;;  test 23: with-sound                        [38026]
+;;;  test 25: X/Xt/Xm                           [40992]
+;;;  test 26:                                   [44674]
+;;;  test 27: GL                                [44680]
+;;;  test 28: errors                            [44804]
+;;;  test 29: s7                                [46906]
+;;;  test all done                              [46978]
+;;;  test the end                               [47152]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -2586,28 +2586,13 @@
 	    (begin
 	      (if (fneq (cadr mal) .14724) (snd-display #__line__ ";oboe: mus-sound-maxamp ~F?" (cadr mal)))
 	      (if (not (= (car mal) 24971)) (snd-display #__line__ ";oboe: mus-sound-maxamp at ~D?" (car mal)))))
-	(set! (mus-sound-maxamp "oboe.snd") (list 1234 .5))
-	(set! mal (mus-sound-maxamp "oboe.snd"))
-	(if (fneq (cadr mal) .5) (snd-display #__line__ ";oboe: set! mus-sound-maxamp ~F?" (cadr mal)))
-	(if (not (= (car mal) 1234)) (snd-display #__line__ ";oboe: set! mus-sound-maxamp at ~D?" (car mal)))
-	(set! mal (mus-sound-maxamp "4.aiff"))
-	(if (= clmtest 0)
-	    (if (not (feql mal (list 810071 0.245 810071 0.490 810071 0.735 810071 0.980)))
-		(snd-display #__line__ ";mus-sound-maxamp 4.aiff: ~A?" mal)))
-	(set! (mus-sound-maxamp "4.aiff") (list 12345 .5 54321 .2 0 .1 9999 .01))
-	(set! mal (mus-sound-maxamp "4.aiff"))
-	(if (not (feql mal (list 12345 .5 54321 .2 0 .1 9999 .01)))
-	    (snd-display #__line__ ";set! mus-sound-maxamp 4.aiff: ~A?" mal))
-	(let ((var (catch #t (lambda () (set! (mus-sound-maxamp "oboe.snd") (list 1234))) (lambda args args))))
-	  (if (not (eq? (car var) 'wrong-type-arg))
-	      (snd-display #__line__ ";set! mus-sound-maxamp bad arg: ~A" var)))
 	(if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 		 (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	    (snd-display #__line__ ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
 	(if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "23-Nov-2012 06:56"))
 	    (snd-display #__line__ ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
 	(play-sound-1 "oboe.snd")
-	(mus-sound-forget "oboe.snd")
+;	(mus-sound-forget "oboe.snd")
 	
 	(let ((lasth (do ((i 1 (+ i 1)))
 			 ((string-=? (mus-header-type-name i) "unsupported") i))))
@@ -14455,26 +14440,23 @@ EDITS: 2
     
     (let ((gen (make-asymmetric-fm 40.0 0.0 1.0 0.1))
 	  (gen1 (make-asyfm :frequency 40.0 :ratio .1 :index 2.0))
-	  (incr (/ (* 2 pi 40.0) (mus-srate))))
-      (do ((i 0 (+ i 1))
-	   (a 0.0 (+ a incr)))
-	  ((= i 1100))
-	(let* ((val1 (asymmetric-fm gen 2.0)) ; 1.0=index
-	       (val3 (asyfm-J gen1 0.0))
-	       (r 1.0)
-	       (ratio 0.1)
-	       (index 2.0)
-	       ;; (freq (hz->radians 40.0))
-	       ;; (phase a)
-	       (cr (* 0.5 (- r (/ 1.0 r))))
-	       (sr (* 0.5 (+ r (/ 1.0 r))))
-	       (th a)
-	       (mth (* ratio th))
-	       (val2 (* (exp (* index cr (+ 1.0 (cos mth))))
-			(cos (+ th (* index sr (sin mth)))))))
-	  (if (or (fneq val1 val2)
-		  (fneq val1 val3))
-	      (snd-display #__line__ ";asyfm by hand: ~A: ~A ~A ~A" i val1 val2 val3)))))
+	  (incr (/ (* 2 pi 40.0) (mus-srate)))
+	  (r 1.0)
+	  (ratio 0.1)
+	  (index 2.0))
+      (let ((cr (* 0.5 (- r (/ 1.0 r))))
+	    (sr (* 0.5 (+ r (/ 1.0 r)))))
+	(do ((i 0 (+ i 1))
+	     (a 0.0 (+ a incr)))
+	    ((= i 1100))
+	  (let ((val1 (asymmetric-fm gen 2.0)) ; 1.0=index
+		(val3 (asyfm-J gen1 0.0))
+		(mth (* ratio a)))
+	    (let ((val2 (* (exp (* index cr (+ 1.0 (cos mth))))
+			   (cos (+ a (* index sr (sin mth)))))))
+	      (if (or (fneq val1 val2)
+		      (fneq val1 val3))
+		  (snd-display #__line__ ";asyfm by hand: ~A: ~A ~A ~A" i val1 val2 val3)))))))
     
     (let ((vct0 (make-vct 2048))
 	  (vct1 (make-vct 2048))
@@ -28903,7 +28885,7 @@ EDITS: 2
 	   (cur-amp (maxamp cursnd curchn))
 	   (cur-edit (edit-position cursnd curchn))
 	   (cur-frame (frames cursnd curchn)))
-      
+
       (case choice
 	;; scale-channel
 	((0) (let* ((scaler (if (< (maxamp cursnd curchn) 1.0) (+ 1.0 (random 1.0)) (+ 0.5 (random 0.5))))
@@ -28998,7 +28980,8 @@ EDITS: 2
 	
 	((5) (let ((pos (edit-position cursnd curchn)))
 	       (if (> pos 0)
-		   (undo (random pos) cursnd curchn))))
+		   (let ((r (random pos)))
+		     (undo r cursnd curchn)))))
 	
 	((6) (let ((len (frames cursnd curchn)))
 	       (if (> len 10000)
@@ -37816,7 +37799,7 @@ EDITS: 1
 	
 	(close-sound ind))
       
-      (mus-sound-forget "oboe.snd")
+;      (mus-sound-forget "oboe.snd")
       (let ((ind (open-sound "oboe.snd")))
 	(let ((val (scan-sound 
 		    (lambda (fr)
@@ -37832,7 +37815,7 @@ EDITS: 1
 	  (if (not (= (edit-position ind 0) 1)) (snd-display #__line__ ";map-sound edpos: ~A" (edit-position ind 0))))
 	(close-sound ind))
       
-      (mus-sound-forget "4.aiff")
+;      (mus-sound-forget "4.aiff")
       (let ((ind (open-sound "4.aiff")))
 	(if (not (= (chans ind) 4)) (snd-display #__line__ ";chans 4.aiff: ~A" (chans ind)))
 	(let ((val (scan-sound 
@@ -45932,7 +45915,6 @@ EDITS: 1
 		(check-error-tag 'no-such-file (lambda () (set! (save-dir) "/hiho")))
 		(check-error-tag 'out-of-range (lambda () (snd-transform (integer->transform 20) (make-vct 4))))
 		(check-error-tag 'bad-header (lambda () (mus-sound-maxamp (string-append sf-dir "bad_chans.snd"))))
-		(check-error-tag 'bad-header (lambda () (set! (mus-sound-maxamp (string-append sf-dir "bad_chans.snd")) '(0.0 0.0))))
 		(check-error-tag 'mus-error (lambda () (make-iir-filter :order 32 :ycoeffs (make-vct 4))))
 		(check-error-tag 'mus-error (lambda () (make-iir-filter :coeffs (make-vct 4) :ycoeffs (make-vct 4))))
 		(check-error-tag 'mus-error (lambda () (make-fir-filter :coeffs (make-vct 4) :xcoeffs (make-vct 4))))
@@ -47256,22 +47238,21 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-22-Feb:
-84,138,847,904
-12,270,034,058  s7.c:eval [/home/bil/snd-13/snd]
- 6,309,437,108  ???:sin [/lib64/libm-2.12.so]
- 4,680,948,448  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+23-Feb:
+81,694,701,603
+12,073,523,429  s7.c:eval [/home/bil/snd-13/snd]
+ 6,254,507,616  ???:sin [/lib64/libm-2.12.so]
+ 4,648,651,806  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 3,255,895,663  clm.c:mus_src [/home/bil/snd-13/snd]
  2,970,010,915  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,838,738,624  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 2,817,002,654  s7.c:eval'2 [/home/bil/snd-13/snd]
- 2,761,535,524  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,689,214,627  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,634,385,865  s7.c:gc [/home/bil/snd-13/snd]
- 2,482,520,252  ???:cos [/lib64/libm-2.12.so]
+ 2,849,633,501  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 2,617,258,767  ???:cos [/lib64/libm-2.12.so]
+ 2,578,445,778  s7.c:gc [/home/bil/snd-13/snd]
  2,327,317,731  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
+ 1,925,057,216  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 1,760,336,936  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
  1,585,058,070  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,420,918,982  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,152,081,150  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 1,425,491,660  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
- 1,091,872,604  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
 |#

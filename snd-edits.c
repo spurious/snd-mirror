@@ -3222,6 +3222,9 @@ static bool insert_zeros(chan_info *cp, mus_long_t beg, mus_long_t num, int edpo
   ed->edit_type = ZERO_EDIT;
   ed->sound_location = 0;
   ed->maxamp = old_ed->maxamp;
+  ed->maxamp_position = old_ed->maxamp_position;
+  if (ed->maxamp_position >= beg)
+    ed->maxamp_position += num;
   cp->edits[cp->edit_ctr] = ed;
   peak_env_insert_zeros(cp, beg, num, edpos);
 
@@ -3381,10 +3384,11 @@ bool insert_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info
 {
   mus_long_t len;
   ed_fragment *cb;
-  ed_list *ed;
+  ed_list *ed, *old_ed;
   int backup = 0;
 
   if (num <= 0) return(true);
+  old_ed = cp->edits[edpos];
   len = cp->edits[edpos]->samples;
   if (beg > len)
     {
@@ -3414,6 +3418,35 @@ bool insert_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info
   cp->sounds[cp->sound_ctr] = make_snd_data_buffer(vals, (int)num, cp->edit_ctr);
   ED_SOUND(cb) = cp->sound_ctr;
   ed->sound_location = ED_SOUND(cb);
+
+  if ((ed->maxamp_position != -1) &&
+      (num < 1000))
+    {
+      mus_float_t mx, temp;
+      int i, pos = 0;
+      mx = fabs(vals[0]);
+      for (i = 1; i < num; i++)
+	{
+	  temp = fabs(vals[i]);
+	  if (temp > mx)
+	    {
+	      mx = temp;
+	      pos = i;
+	    }
+	}
+      if (mx > old_ed->maxamp)
+	{
+	  ed->maxamp = mx;
+	  ed->maxamp_position = beg + pos;
+	}
+      else
+	{
+	  ed->maxamp = old_ed->maxamp;
+	  ed->maxamp_position = old_ed->maxamp_position;
+	  if (ed->maxamp_position >= beg)
+	    ed->maxamp_position += num;
+	}
+    }
 
   ripple_all(cp, beg, num);
   ripple_selection(ed, beg, num);
@@ -3603,6 +3636,14 @@ bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos)
 	  ed->selection_beg = old_state->selection_beg;
 	  ed->selection_end = old_state->selection_end;
 	  ed->cursor = old_state->cursor;
+	  if (((old_state->maxamp_position >= 0) && (old_state->maxamp_position < beg)) ||
+	      (old_state->maxamp_position > (beg + num)))
+	    {
+	      ed->maxamp = old_state->maxamp;
+	      ed->maxamp_position = old_state->maxamp_position;
+	      if (old_state->maxamp_position > (beg + num))
+		ed->maxamp_position -= num;
+	    }
 	}
       ed->edpos = edpos;
       ed->samples = len - num;
@@ -3809,11 +3850,12 @@ bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info
 {
   mus_long_t prev_len, new_len;
   ed_fragment *cb;
-  ed_list *ed;
+  ed_list *ed, *old_ed;
   int backup = 0;
 
   if (num <= 0) return(true);
-  prev_len = cp->edits[edpos]->samples;
+  old_ed = cp->edits[edpos];
+  prev_len = old_ed->samples;
   if (beg > prev_len)
     {
       if (!(extend_with_zeros(cp, prev_len, beg - prev_len, edpos, origin))) 
@@ -3842,6 +3884,35 @@ bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info
   cp->sounds[cp->sound_ctr] = make_snd_data_buffer(vals, (int)num, cp->edit_ctr);
   ED_SOUND(cb) = cp->sound_ctr;
   ed->sound_location = ED_SOUND(cb);
+
+  if ((num < 1000) &&
+      (old_ed->maxamp_position >= 0) &&
+      ((old_ed->maxamp_position < beg) ||
+       (old_ed->maxamp_position > (beg + num))))
+    {
+      mus_float_t mx, temp;
+      int i, pos = 0;
+      mx = fabs(vals[0]);
+      for (i = 1; i < num; i++)
+	{
+	  temp = fabs(vals[i]);
+	  if (temp > mx)
+	    {
+	      mx = temp;
+	      pos = i;
+	    }
+	}
+      if (mx > old_ed->maxamp)
+	{
+	  ed->maxamp = mx;
+	  ed->maxamp_position = beg + pos;
+	}
+      else
+	{
+	  ed->maxamp = old_ed->maxamp;
+	  ed->maxamp_position = old_ed->maxamp_position;
+	}
+    }
 
   ripple_all(cp, 0, 0);
   if (new_len > prev_len) reflect_sample_change_in_axis(cp);
@@ -4160,6 +4231,11 @@ bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, m
       new_ed->samples = len;
       cp->edits[cp->edit_ctr] = new_ed;
       peak_env_scale_by(cp, scl, pos); /* this seems wasteful if this is an intermediate (in_as_one_edit etc) */
+      if (old_ed->maxamp_position != -1)
+	{
+	  new_ed->maxamp = old_ed->maxamp * scl;
+	  new_ed->maxamp_position = old_ed->maxamp_position;
+	}
     }
   else 
     {
@@ -4190,6 +4266,14 @@ bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, m
 	    }
 	}
       peak_env_scale_selection_by(cp, scl, beg, num, pos);
+      if ((old_ed->maxamp_position >= 0) &&
+	  ((old_ed->maxamp_position < beg) ||
+	   (old_ed->maxamp_position > (beg + num))) &&
+	  (fabs(scl) <= 1.0))
+	{
+	  new_ed->maxamp = old_ed->maxamp;
+	  new_ed->maxamp_position = old_ed->maxamp_position;
+	}
     }
   new_ed->cursor = old_ed->cursor;
   new_ed->edit_type = SCALED_EDIT;
@@ -4378,6 +4462,20 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
 	      else start *= exp(log(incr) * FRAGMENT_LENGTH(new_ed, i));
 	    }
 	}
+      if ((old_ed->maxamp_position >= 0) &&
+	  ((old_ed->maxamp_position < beg) ||
+	   (old_ed->maxamp_position > (beg + num))) &&
+	  (fabs(rstart) <= 1.0))
+	{
+	  if (((!is_xramp) &&
+	       (fabs(rstart + incr * num) <= 1.0)) ||
+	      ((is_xramp) &&
+	       (fabs(rstart * exp(log(incr) * num)) <= 1.0)))
+	    {
+	      new_ed->maxamp = old_ed->maxamp;
+	      new_ed->maxamp_position = old_ed->maxamp_position;
+	    }
+	}
     }
   new_ed->samples = len;
   new_ed->cursor = old_ed->cursor;
@@ -4387,7 +4485,7 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
     {
       mus_float_t rmp0, rmp1;
       rmp0 = rstart;
-      rmp1 = rstart + incr * (num -1); /* want end point */
+      rmp1 = rstart + incr * (num - 1); /* want end point */
 #if HAVE_FORTH
       if (num == len)
 	new_ed->origin = mus_format("%.3f %.3f %lld" PROC_SEP PROC_FALSE " %s", rmp0, rmp1, beg, origin);
@@ -5023,40 +5121,70 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   axes_data *sa;
   file_info *sphdr = NULL;
   io_error_t io_err = IO_NO_ERROR;
+  snd_fd **sf;
+  mus_float_t *vals = NULL;
+  mus_long_t *times = NULL;
+  bool have_maxamps = true;
 
   if (dont_save(sp, NULL)) return(IO_SAVE_HOOK_CANCELLATION);
   ofile = snd_tempnam(); 
   /* this will use user's TMPDIR if temp_dir(ss) is not set, else stdio.h's P_tmpdir else /tmp */
 
-  {
-    snd_fd **sf;
-    sf = (snd_fd **)calloc(sp->nchans, sizeof(snd_fd *));
-    for (i = 0; i < sp->nchans; i++)
-      {
-	sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
-	if (sf[i] == NULL)
-	  {
-	    int j;
-	    for (j = 0; j < i; j++) free_snd_fd(sf[j]);
-	    free(sf);
-	    return(IO_BAD_CHANNEL);
-	  }
-	if (samples < CURRENT_SAMPLES(sp->chans[i]))
-	  samples = CURRENT_SAMPLES(sp->chans[i]);
-      }
-
-    /* write the new file */
-    io_err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples, true);
-    for (i = 0; i < sp->nchans; i++) free_snd_fd(sf[i]);
-    free(sf);
-    sf = NULL;
-    if (io_err != IO_NO_ERROR)
-      {
-	if (ofile) free(ofile);
-	return(io_err);
-      }
-  }
-
+  for (i = 0; i < sp->nchans; i++)
+    {
+      chan_info *ncp;
+      ncp = sp->chans[i];
+      if ((ed_maxamp(ncp, ncp->edit_ctr) < 0.0) ||
+	  (ed_maxamp_position(ncp, ncp->edit_ctr) < 0))
+	{
+	  have_maxamps = false;
+	  break;
+	}
+    }
+  if (have_maxamps)
+    {
+      chan_info *ncp;
+      vals = (mus_float_t *)calloc(sp->nchans, sizeof(mus_float_t));
+      times = (mus_long_t *)calloc(sp->nchans, sizeof(mus_long_t));
+      for (i = 0; i < sp->nchans; i++)
+	{
+	  ncp = sp->chans[i];
+	  vals[i] = ed_maxamp(ncp, ncp->edit_ctr);
+	  times[i] = ed_maxamp_position(ncp, ncp->edit_ctr);
+	}
+    }
+  
+  sf = (snd_fd **)calloc(sp->nchans, sizeof(snd_fd *));
+  for (i = 0; i < sp->nchans; i++)
+    {
+      sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
+      if (sf[i] == NULL)
+	{
+	  int j;
+	  for (j = 0; j < i; j++) free_snd_fd(sf[j]);
+	  free(sf);
+	  return(IO_BAD_CHANNEL);
+	}
+      if (samples < CURRENT_SAMPLES(sp->chans[i]))
+	samples = CURRENT_SAMPLES(sp->chans[i]);
+    }
+  
+  /* write the new file */
+  io_err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples, true);
+  for (i = 0; i < sp->nchans; i++) free_snd_fd(sf[i]);
+  free(sf);
+  sf = NULL;
+  if (io_err != IO_NO_ERROR)
+    {
+      if (ofile) free(ofile);
+      if (vals)
+	{
+	  free(vals);
+	  free(times);
+	}
+      return(io_err);
+    }
+  
   sa = make_axes_data(sp);
   sphdr = sp->hdr;
   sphdr->samples = samples * sp->nchans;
@@ -5079,10 +5207,15 @@ io_error_t save_edits_and_update_display(snd_info *sp)
       sa = free_axes_data(sa);
       if (ofile) free(ofile);
       if (old_cursors) free(old_cursors);
+      if (vals)
+	{
+	  free(vals);
+	  free(times);
+	}
       return(IO_WRITE_PROTECTED);
     }
 #endif
-
+  
   mus_sound_forget(sp->filename);
   sp->writing = true;
   io_err = move_file(ofile, sp->filename); /* should we cancel and restart a monitor? */
@@ -5091,9 +5224,20 @@ io_error_t save_edits_and_update_display(snd_info *sp)
     {
       if (ofile) free(ofile);
       if (old_cursors) free(old_cursors);
+      if (vals)
+	{
+	  free(vals);
+	  free(times);
+	}
       return(io_err);
     }
 
+  if (vals)
+    {
+      mus_sound_set_maxamps(sp->filename, sp->nchans, vals, times);
+      free(vals);
+      free(times);
+    }
   sp->write_date = file_write_date(sp->filename);
   add_sound_data(sp->filename, sp, WITHOUT_INITIAL_GRAPH_HOOK);
   restore_axes_data(sp, sa, mus_sound_duration(sp->filename), true);
@@ -5125,6 +5269,9 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int ty
   int i;
   file_info *ohdr;
   io_error_t err = IO_NO_ERROR;
+  mus_float_t *vals = NULL;
+  mus_long_t *times = NULL;
+  bool have_maxamps = true;
 
   if (dont_save(sp, new_name)) 
     return(IO_SAVE_HOOK_CANCELLATION);
@@ -5138,6 +5285,30 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int ty
     hdr->comment = mus_strdup(comment); 
   else hdr->comment = NULL;
   hdr->data_location = 0; /* in case comment changes it */
+
+  for (i = 0; i < sp->nchans; i++)
+    {
+      chan_info *ncp;
+      ncp = sp->chans[i];
+      if ((ed_maxamp(ncp, ncp->edit_ctr) < 0.0) ||
+	  (ed_maxamp_position(ncp, ncp->edit_ctr) < 0))
+	{
+	  have_maxamps = false;
+	  break;
+	}
+    }
+  if (have_maxamps)
+    {
+      chan_info *ncp;
+      vals = (mus_float_t *)calloc(sp->nchans, sizeof(mus_float_t));
+      times = (mus_long_t *)calloc(sp->nchans, sizeof(mus_long_t));
+      for (i = 0; i < sp->nchans; i++)
+	{
+	  ncp = sp->chans[i];
+	  vals[i] = ed_maxamp(ncp, ncp->edit_ctr);
+	  times[i] = ed_maxamp_position(ncp, ncp->edit_ctr);
+	}
+    }
 
   sf = (snd_fd **)malloc(sp->nchans * sizeof(snd_fd *));
   for (i = 0; i < sp->nchans; i++) 
@@ -5157,11 +5328,23 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int ty
 	  free(sf);
 	  sf = NULL;
 	  hdr = free_file_info(hdr);
+	  if (vals)
+	    {
+	      free(vals);
+	      free(times);
+	    }
 	  return(err);
 	}
     }
 
   err = snd_make_file(new_name, sp->nchans, hdr, sf, frames, true);
+  if (vals)
+    {
+      if (err == IO_NO_ERROR)
+	mus_sound_set_maxamps(new_name, sp->nchans, vals, times);
+      free(vals);
+      free(times);
+    }
 
   for (i = 0; i < sp->nchans; i++) 
     free_snd_fd(sf[i]);
@@ -7017,11 +7200,12 @@ scale samples in the given sound/channel between beg and beg + num to norm."
 }			  
 
 
-static mus_float_t channel_maxamp_and_position(chan_info *cp, int edpos, mus_long_t *maxpos)
+mus_float_t channel_maxamp_and_position(chan_info *cp, int edpos, mus_long_t *maxpos)
 {
   /* maxamp position is not tracked in peak env because it gloms up the code, and cannot easily be saved/restored in the peak env files */
   mus_float_t val;
   int pos;
+  mus_long_t locpos;
 
   if (edpos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr; else pos = edpos;
 
@@ -7029,14 +7213,16 @@ static mus_float_t channel_maxamp_and_position(chan_info *cp, int edpos, mus_lon
     return(peak_env_maxamp(cp, pos));
 
   val = ed_maxamp(cp, pos);
-  if (maxpos) (*maxpos) = ed_maxamp_position(cp, pos);
+  locpos = ed_maxamp_position(cp, pos);
+  if (maxpos) (*maxpos) = locpos;
   if ((val >= 0.0) &&                          /* defaults to -1.0! */
-      ((!maxpos) || ((*maxpos) >= 0)))
+      ((!maxpos) || (locpos >= 0)))
     return(val);
 
-  val = channel_local_maxamp(cp, 0, cp->edits[pos]->samples, pos, maxpos);
+  val = channel_local_maxamp(cp, 0, cp->edits[pos]->samples, pos, &locpos);
   set_ed_maxamp(cp, pos, val);
-  if (maxpos) set_ed_maxamp_position(cp, pos, (*maxpos));
+  set_ed_maxamp_position(cp, pos, locpos);
+  if (maxpos) (*maxpos) = locpos;
 
   return(val);
 }
@@ -7056,6 +7242,8 @@ mus_long_t channel_maxamp_position(chan_info *cp, int edpos)
 }
 
 
+/* static int total_calcs = 0; */
+
 mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, int edpos, mus_long_t *maxpos)
 {
   snd_fd *sf;
@@ -7066,6 +7254,21 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
   if (edpos == 0)
     {
       snd_data *sd;
+      
+      if (mus_sound_channel_maxamp_exists(cp->sound->filename, cp->chan))
+	{
+	  ymax = mus_sound_channel_maxamp(cp->sound->filename, cp->chan, &mpos);
+	  if ((mpos >= beg) &&
+	      (mpos < beg + num))
+	    {
+	      if (maxpos) (*maxpos) = mpos - beg;
+	      /* fprintf(stderr, "perhaps use saved %f %lld (%lld)\n", ymax, mpos - beg, beg); */
+	      return(ymax);
+	    }
+	  ymax = 0.0;
+	  mpos = -1;
+	}
+	  
       sd = cp->sounds[0];
       if ((sd) && 
 	  (sd->io) && 
@@ -7078,6 +7281,8 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 	  start = beg - io_beg(sd->io);
 	  jpos = start;
 	  end = beg + num - io_beg(sd->io);
+
+	  /* fprintf(stderr, "%d to %d\n", start, end); */
 	  
 	  for (j = start; j < end; j++)
 	    {
@@ -7089,10 +7294,20 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 		}
 	    }
 
+	  if ((edpos == 0) &&
+	      (beg == 0) &&
+	      (num = cp->edits[0]->samples))
+	    {
+	      mus_sound_channel_set_maxamp(cp->sound->filename, cp->chan, ymax, jpos - start);
+	    }
+
+	  /* fprintf(stderr, "actually use %f %d\n", ymax, jpos - start); */
 	  if (maxpos) (*maxpos) = jpos - start;
 	  return(ymax);
 	}
     }
+
+  /* fprintf(stderr, "max edpos %d: %lld %lld %s %d\n", edpos, beg, num, cp->sound->filename, cp->chan); */
 
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL) return(0.0);
@@ -7196,6 +7411,15 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
       mpos = (mus_long_t)jpos;
 
     }
+
+  /* fprintf(stderr, "use %f %lld\n", ymax, mpos); */
+  if ((edpos == 0) &&
+      (beg == 0) &&
+      (num = cp->edits[0]->samples))
+    {
+      mus_sound_channel_set_maxamp(cp->sound->filename, cp->chan, ymax, mpos);
+    }
+
   if (maxpos) (*maxpos) = mpos;
   free_snd_fd(sf);
 

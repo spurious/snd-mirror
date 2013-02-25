@@ -419,14 +419,17 @@ static sound_file *find_sound_file(const char *name)
   len = strlen(name);
 
   for (i = 0; i < sound_table_size; i++)
-    if ((sound_table[i]) &&
-	(sound_table[i]->file_name_length == len) &&
-	(strcmp(name, sound_table[i]->file_name) == 0))
-      {
-	check_write_date(name, sound_table[i]);
-	return(sound_table[i]);
-      }
-
+    {
+      sound_file *sf;
+      sf = sound_table[i];
+      if ((sf) &&
+	  (sf->file_name_length == len) &&
+	  (strcmp(name, sf->file_name) == 0))
+	{
+	  check_write_date(name, sf);
+	  return(sf);
+	}
+    }
   return(NULL);
 }
 
@@ -1150,12 +1153,16 @@ int mus_sound_override_header(const char *arg, int srate, int chans, int format,
 bool mus_sound_maxamp_exists(const char *ifile)
 {
   sound_file *sf; 
-  bool val = false;
-
   sf = get_sf(ifile); 
-  val = ((sf) && (sf->maxamps));
-
-  return(val);
+  if ((sf) && (sf->maxtimes))
+    {
+      int i;
+      for (i = 0; i < sf->chans; i++)
+	if (sf->maxtimes[i] == -1)
+	  return(false);
+      return(true);
+    }
+  return(false);
 }
 
 
@@ -1241,7 +1248,6 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mu
 	times[chn] = time[chn];
 	vals[chn] = samp[chn];
       }
-
     free(time);
     free(samp);
     for (j = 0; j < ichans; j++) free(ibufs[j]);
@@ -1260,6 +1266,7 @@ int mus_sound_set_maxamps(const char *ifile, int chans, mus_float_t *vals, mus_l
   if (sf)
     {
       int i, ichans = 0;
+
       if (sf->maxamps)
 	{
 	  if (chans > sf->chans) 
@@ -1285,7 +1292,7 @@ int mus_sound_set_maxamps(const char *ifile, int chans, mus_float_t *vals, mus_l
 	      sf->maxamps = (mus_float_t *)calloc(max_chans, sizeof(mus_float_t));
 	      sf->maxtimes = (mus_long_t *)calloc(max_chans, sizeof(mus_long_t));
 	    }
-
+	  
 	  if (ichans > chans) 
 	    ichans = chans;
 	  for (i = 0; i < ichans; i++)
@@ -1297,6 +1304,50 @@ int mus_sound_set_maxamps(const char *ifile, int chans, mus_float_t *vals, mus_l
     }
   else result = MUS_ERROR;
   return(result);
+}
+
+
+bool mus_sound_channel_maxamp_exists(const char *file, int chan)
+{
+  sound_file *sf; 
+  sf = get_sf(file); 
+  return((sf) && 
+	 (sf->maxtimes) && 
+	 (sf->chans > chan) && 
+	 (sf->maxtimes[chan] != -1));
+}
+
+
+mus_float_t mus_sound_channel_maxamp(const char *file, int chan, mus_long_t *pos)
+{
+  sound_file *sf; 
+  sf = get_sf(file); 
+  (*pos) = sf->maxtimes[chan];
+  return(sf->maxamps[chan]);
+}
+
+
+void mus_sound_channel_set_maxamp(const char *file, int chan, mus_float_t mx, mus_long_t pos)
+{
+  sound_file *sf; 
+  sf = get_sf(file); 
+  if ((sf) &&
+      (sf->chans > chan))
+    {
+      if (!(sf->maxamps))
+	{
+	  int i;
+	  sf->maxamps = (mus_float_t *)malloc(sf->chans * sizeof(mus_float_t));
+	  sf->maxtimes = (mus_long_t *)malloc(sf->chans * sizeof(mus_long_t));
+	  for (i = 0; i < sf->chans; i++)
+	    {
+	      sf->maxamps[i] = -1.0;
+	      sf->maxtimes[i] = -1;
+	    }
+	}
+      sf->maxamps[chan] = mx;
+      sf->maxtimes[chan] = pos;
+    }
 }
 
 

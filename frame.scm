@@ -43,14 +43,16 @@
   "(frame-copy fr) returns a copy of frame fr"
   (if (not (frame? fr))
       (error 'wrong-type-arg "frame-copy: ~A" fr)
+      (copy fr)))
+#|
       (let* ((len (channels fr))
 	     (nfr (make-frame len)))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
 	  (set! (nfr i) (fr i)))
 	nfr)))
+|#
 
-;; TODO: does (copy fr) not return a frame?
 
 #|
 (define (frame-cross m1 m2)

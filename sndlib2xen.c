@@ -59,6 +59,11 @@ mus_long_t mus_sound_data_length(sound_data *sd)
   return(sd->length);
 }
 
+mus_float_t **mus_sound_data_data(sound_data *sd)
+{
+  return(sd->data);
+}
+
 mus_float_t mus_sound_data_ref(sound_data *sd, int chan, mus_long_t pos)
 {
   if ((sd) &&
