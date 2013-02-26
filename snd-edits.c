@@ -1599,13 +1599,18 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
       cp = sfs[0]->cp;
       start_progress_report(cp);
     }
+
   if (chans == 1)
     {
+      mus_float_t *buf;
+      snd_fd *sf;
+      buf = obufs[0];
+      sf = sfs[0];
       if (length > FILE_BUFFER_SIZE)
 	{
 	  for (len = 0; len < length; len++)
 	    {
-	      obufs[0][j] = read_sample_to_mus_sample(sfs[0]);
+	      buf[j] = read_sample_to_mus_sample(sf);
 	      j++;
 	      if (j == FILE_BUFFER_SIZE)
 		{
@@ -1617,17 +1622,13 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 		      total += FILE_BUFFER_SIZE;
 		      progress_report(cp, (mus_float_t)((double)total / (double)length));
 		    }
-		  /* this is a dangerous time to check for an event -- if in lock_affected_mixes,
-		   *   the current edit is in progress, so any attempt to display will segfault.
-		   * is this still the case?  I think in s7 it is ok.
-		   */
 		}
 	    }
 	}
       else
 	{
 	  for (len = 0; len < length; len++)
-	    obufs[0][len] = read_sample_to_mus_sample(sfs[0]);
+	    buf[len] = read_sample_to_mus_sample(sf);
 	  j = (int)length;
 	}
     }
@@ -3313,10 +3314,11 @@ bool file_insert_samples(mus_long_t beg, mus_long_t num, const char *inserted_fi
   mus_long_t len;
   ed_fragment *cb;
   file_info *hdr;
-  ed_list *ed;
+  ed_list *ed, *old_ed;
   int backup = 0;
 
-  len = cp->edits[edpos]->samples;
+  old_ed = cp->edits[edpos];
+  len = old_ed->samples;
   if (beg > len)
     {
       if (!(extend_with_zeros(cp, len, beg - len, edpos, origin)))
@@ -3339,6 +3341,26 @@ bool file_insert_samples(mus_long_t beg, mus_long_t num, const char *inserted_fi
   ed->samples = len + num;
   ed->edit_type = INSERTION_EDIT;
   cp->edits[cp->edit_ctr] = ed;
+
+  if ((old_ed->maxamp_position != -1) &&
+      (mus_sound_channel_maxamp_exists(inserted_file, chan)))
+    {
+      mus_float_t mx;
+      mus_long_t pos;
+      mx = mus_sound_channel_maxamp(inserted_file, chan, &pos);
+      if (mx > old_ed->maxamp)
+	{
+	  ed->maxamp = mx;
+	  ed->maxamp_position = beg + pos;
+	}
+      else
+	{
+	  ed->maxamp = old_ed->maxamp;
+	  ed->maxamp_position = old_ed->maxamp_position;
+	  if (ed->maxamp_position >= beg)
+	    ed->maxamp_position += num;
+	}
+    }
 
   hdr = make_file_info(inserted_file, FILE_READ_ONLY, FILE_NOT_SELECTED);
   if (hdr)
@@ -3380,6 +3402,8 @@ bool file_insert_samples(mus_long_t beg, mus_long_t num, const char *inserted_fi
 }
 
 
+#define MAXAMP_CHECK_SIZE 10000
+
 bool insert_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info *cp, const char *origin, int edpos)
 {
   mus_long_t len;
@@ -3389,7 +3413,7 @@ bool insert_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info
 
   if (num <= 0) return(true);
   old_ed = cp->edits[edpos];
-  len = cp->edits[edpos]->samples;
+  len = old_ed->samples;
   if (beg > len)
     {
       if (!(extend_with_zeros(cp, len, beg - len, edpos, origin)))
@@ -3419,8 +3443,8 @@ bool insert_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info
   ED_SOUND(cb) = cp->sound_ctr;
   ed->sound_location = ED_SOUND(cb);
 
-  if ((ed->maxamp_position != -1) &&
-      (num < 1000))
+  if ((old_ed->maxamp_position != -1) &&
+      (num < MAXAMP_CHECK_SIZE))
     {
       mus_float_t mx, temp;
       int i, pos = 0;
@@ -3636,6 +3660,7 @@ bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos)
 	  ed->selection_beg = old_state->selection_beg;
 	  ed->selection_end = old_state->selection_end;
 	  ed->cursor = old_state->cursor;
+
 	  if (((old_state->maxamp_position >= 0) && (old_state->maxamp_position < beg)) ||
 	      (old_state->maxamp_position > (beg + num)))
 	    {
@@ -3643,6 +3668,14 @@ bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos)
 	      ed->maxamp_position = old_state->maxamp_position;
 	      if (old_state->maxamp_position > (beg + num))
 		ed->maxamp_position -= num;
+	    }
+	  else
+	    {
+	      if ((beg == 0) && (num == len))
+		{
+		  ed->maxamp = 0.0;
+		  ed->maxamp_position = 0;
+		}
 	    }
 	}
       ed->edpos = edpos;
@@ -3716,13 +3749,14 @@ bool file_change_samples(mus_long_t beg, mus_long_t num, const char *tempfile, c
   hdr = make_file_info(tempfile, FILE_READ_ONLY, FILE_NOT_SELECTED);
   if (hdr)
     {
-      ed_list *ed;
+      ed_list *ed, *old_ed;
       mus_long_t prev_len, new_len;
       ed_fragment *cb;
       int fd;
       int backup = 0;
 
-      prev_len = cp->edits[edpos]->samples;
+      old_ed = cp->edits[edpos];
+      prev_len = old_ed->samples;
       if (beg > prev_len)
 	{
 	  if (!(extend_with_zeros(cp, prev_len, beg - prev_len, edpos, origin)))
@@ -3754,6 +3788,29 @@ bool file_change_samples(mus_long_t beg, mus_long_t num, const char *tempfile, c
       if (cp->edit_ctr > 0) ed->cursor = cp->edits[cp->edit_ctr - 1]->cursor;
       cp->edits[cp->edit_ctr] = ed;
       
+      if ((old_ed->maxamp_position >= 0) &&
+	  (mus_sound_channel_maxamp_exists(tempfile, chan)))
+	{
+	  mus_float_t mx;
+	  mus_long_t pos;
+	  mx = mus_sound_channel_maxamp(tempfile, chan, &pos);
+	  if (mx > old_ed->maxamp)
+	    {
+	      ed->maxamp = mx;
+	      ed->maxamp_position = beg + pos;
+	    }
+	  else
+	    {
+	      /* make sure old max info is still relevant */
+	      if ((old_ed->maxamp_position < beg) ||
+		  (old_ed->maxamp_position > (beg + num)))
+		{
+		  ed->maxamp = old_ed->maxamp;
+		  ed->maxamp_position = old_ed->maxamp_position;
+		}
+	    }
+	}
+
       fd = snd_open_read(tempfile);
       snd_file_open_descriptors(fd,
 				tempfile,
@@ -3825,6 +3882,13 @@ bool file_override_samples(mus_long_t num, const char *tempfile, chan_info *cp, 
       if (cp->edit_ctr > 0) e->cursor = cp->edits[cp->edit_ctr - 1]->cursor;
       cp->edits[cp->edit_ctr] = e;
 
+      if (mus_sound_channel_maxamp_exists(tempfile, chan))
+	{
+	  mus_long_t pos;
+	  e->maxamp = mus_sound_channel_maxamp(tempfile, chan, &pos);
+	  e->maxamp_position = pos;
+	}
+
       FRAGMENT_SOUND(e, 0) = add_sound_file_to_edit_list(cp, tempfile, 
 							 make_file_state(fd, hdr, chan, 0, FILE_BUFFER_SIZE),
 							 hdr, auto_delete, chan);
@@ -3885,10 +3949,8 @@ bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info
   ED_SOUND(cb) = cp->sound_ctr;
   ed->sound_location = ED_SOUND(cb);
 
-  if ((num < 1000) &&
-      (old_ed->maxamp_position >= 0) &&
-      ((old_ed->maxamp_position < beg) ||
-       (old_ed->maxamp_position > (beg + num))))
+  if ((num < MAXAMP_CHECK_SIZE) &&
+      (old_ed->maxamp_position >= 0))
     {
       mus_float_t mx, temp;
       int i, pos = 0;
@@ -3909,8 +3971,12 @@ bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info
 	}
       else
 	{
-	  ed->maxamp = old_ed->maxamp;
-	  ed->maxamp_position = old_ed->maxamp_position;
+	  if ((old_ed->maxamp_position < beg) ||
+	      (old_ed->maxamp_position > (beg + num)))
+	    {
+	      ed->maxamp = old_ed->maxamp;
+	      ed->maxamp_position = old_ed->maxamp_position;
+	    }
 	}
     }
 
@@ -4189,7 +4255,7 @@ bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, m
 {
   /* copy current ed-list and reset scalers */
   mus_long_t len = 0;
-  int i;
+  int i, old_pos;
   ed_list *new_ed, *old_ed;
   bool backup = false;
 
@@ -4201,6 +4267,7 @@ bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, m
       (section_is_zero(cp, beg, num, pos)))
     return(false); 
 
+  old_pos = pos;
   len = old_ed->samples;
   if (!(prepare_edit_list(cp, pos, S_scale_channel))) 
     return(false);
@@ -4227,15 +4294,15 @@ bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, m
 	      copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
 	      FRAGMENT_SCALER(new_ed, i) *= scl;
 	    }
+	  if (old_ed->maxamp_position != -1)
+	    {
+	      new_ed->maxamp = old_ed->maxamp * fabs(scl);
+	      new_ed->maxamp_position = old_ed->maxamp_position;
+	    }
 	}
       new_ed->samples = len;
       cp->edits[cp->edit_ctr] = new_ed;
       peak_env_scale_by(cp, scl, pos); /* this seems wasteful if this is an intermediate (in_as_one_edit etc) */
-      if (old_ed->maxamp_position != -1)
-	{
-	  new_ed->maxamp = old_ed->maxamp * scl;
-	  new_ed->maxamp_position = old_ed->maxamp_position;
-	}
     }
   else 
     {
@@ -4266,13 +4333,59 @@ bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, m
 	    }
 	}
       peak_env_scale_selection_by(cp, scl, beg, num, pos);
-      if ((old_ed->maxamp_position >= 0) &&
-	  ((old_ed->maxamp_position < beg) ||
-	   (old_ed->maxamp_position > (beg + num))) &&
-	  (fabs(scl) <= 1.0))
+
+      if (old_ed->maxamp_position >= 0)
 	{
-	  new_ed->maxamp = old_ed->maxamp;
-	  new_ed->maxamp_position = old_ed->maxamp_position;
+	  if ((old_ed->maxamp_position < beg) ||
+	       (old_ed->maxamp_position > (beg + num)))
+	    {
+	      if (fabs(scl) <= 1.0)
+		{
+		  new_ed->maxamp = old_ed->maxamp;
+		  new_ed->maxamp_position = old_ed->maxamp_position;
+		}
+	      else
+		{
+		  /* perhaps this costs more than it saves */
+		  if (num < MAXAMP_CHECK_SIZE)
+		    {
+		      mus_float_t mx, temp;
+		      int i, loc = 0;
+		      snd_fd *sf;
+		      sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, old_pos, num + 1);
+		      mx = fabs(read_sample(sf));
+		      for (i = 1; i < num; i++)
+			{
+			  temp = fabs(read_sample(sf));
+			  if (temp > mx)
+			    {
+			      mx = temp;
+			      loc = i;
+			    }
+			}
+		      free_snd_fd(sf);
+		      mx *= fabs(scl);
+		      if (mx > old_ed->maxamp)
+			{
+			  new_ed->maxamp = mx;
+			  new_ed->maxamp_position = beg + loc;
+			}
+		      else
+			{
+			  new_ed->maxamp = old_ed->maxamp;
+			  new_ed->maxamp_position = old_ed->maxamp_position;
+			}
+		    }
+		}
+	    }
+	  else
+	    {
+	      if (fabs(scl) >= 1.0)
+		{
+		  new_ed->maxamp = old_ed->maxamp * fabs(scl);
+		  new_ed->maxamp_position = old_ed->maxamp_position;
+		}
+	    }
 	}
     }
   new_ed->cursor = old_ed->cursor;

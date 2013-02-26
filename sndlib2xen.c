@@ -1723,11 +1723,9 @@ XEN g_sound_data_maxamp(XEN obj)
       buf = sd->data[i];
       for (j = 0; j < len; j++)
 	{
-	  if (buf[j] > mx)
-	    mx = buf[j];
-	  else
-	    if (-buf[j] > mx)
-	      mx = -buf[j];
+	  mus_float_t x;
+	  x = fabs(buf[j]);
+	  if (x > mx) mx = x;
 	}
       lst = XEN_CONS(C_TO_XEN_DOUBLE(mx), lst);
     }

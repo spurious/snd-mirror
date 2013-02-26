@@ -747,10 +747,10 @@
 	  (pulses (if (> (random 1.0) .6) 5 4))
 	  (pulse-amps (list->vector (map (lambda (x) (* amp x)) (list .7 .9 1.0 .9 .6))))
 	  
-	  (gen1 (make-oscil (* 10 pitch) (* 0.5 pi)))
+	  (gen1 (make-oscil (* pitch 10) (* 0.5 pi)))
 	  (gen3 (make-oscil (* pitch 18) (* 0.5 pi)))
 	  (gen4 (make-oscil (* pitch 28) (* 0.5 pi)))
-	  
+
 	  (pulse-samps (seconds->samples pulse-dur))
 	  (pulse-sep (seconds->samples 0.078))
 	  
@@ -775,7 +775,6 @@
 			   (+ (* .9 (oscil gen1 (* .1 noise)))
 			      (* .08 (oscil gen3 (* .18 noise)))
 			      (* .02 (oscil gen4 (* .28 noise))))))))
-	    
 	    (mus-reset pulsef)
 	    (set! (mus-phase gen1) (* 0.5 pi))
 	    (set! (mus-phase gen3) (* 0.5 pi))
@@ -1326,8 +1325,7 @@
 	      (frqf (make-env (list 0 2000  .9 2000 1 1700) :duration dur :scaler (hz->radians 1.0)))
 	      (gen1 (make-polywave 0.0 (list 1 .92 2 .05  3 .02  4 .01)))
 	      (frqf2 (make-env '(0 0  .1 25  4 20) :duration dur :scaler (hz->radians 1.0)))
-	      (gen3 (make-oscil 900))
-	      (gen4 (make-oscil 400))
+	      (gp (make-polywave 100 '(4 1 9 1)))
 	      (low-ampf (make-env (list 0 0 .2 1 dur 1) :duration dur :scaler .15))
 	      (pulser (make-pulse-train 100))
 	      (pulse-ampf (make-env '(0.000 0.000 0.227 0.057 0.319 0.164 0.407 0.946 0.554 0.706 0.707 0.036 0.839 0.031 
@@ -1346,12 +1344,12 @@
 		    (set! (mus-phase gen1) (* pi .75))))
 	      (outa i (* pulse-amp
 			 (env pulse-ampf)
-			 (+ (* (env low-ampf)
-			       (+ (oscil gen3 (* 9 frq2))
-				  (oscil gen4 (* 4 frq2))))
+			 (+ (* (env low-ampf) 
+			       (polywave gp frq2))
 			    (polywave gen1 (env frqf))))))))))))
 
 ;; (with-sound (:play #t) (great-plains-narrow-mouthed-toad 0 2 .25))
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1699,14 +1697,14 @@
 	(gen1 (make-oscil 2700))
 	(gen2 (make-oscil (* 2700 2.4)))
 	(gen3 (make-oscil 60))
-	(gen5 (make-polywave 360 '(1 .015)))
+	(gen5 (make-polywave 360 '(0 .035 1 .015)))
 	(gen4 (make-oscil (* 2700 3.2)))
 	(gargle (make-rand-interp 360 (hz->radians (* .25 360)))))
     (do ((i start (+ i 1)))
 	((= i stop))
       (let ((pval (oscil gen3))
 	    (noise (rand-interp gargle)))
-	(outa i (* amp (+ (* (+ .035 (polywave gen5))
+	(outa i (* amp (+ (* (polywave gen5)
 			     (- 1.0 pval)
 			     (oscil gen2 (* 2.4 noise)))
 			  (* (max pval 0.0)
@@ -7259,13 +7257,13 @@
 	  (gen2 (make-oscil))
 	  (gen3 (make-oscil))
 	  (interpf (make-env '(0 .1  .2 .1  .3 .99  1 .99) :duration dur))
-	  (interpf-1 (make-env '(0 .1  .2 .1  .3 .99  1 .99) :duration dur :offset 1.0 :scaler -1.0)))
+	  (interpf-1 (make-env '(0 .1  .2 .1  .3 .99  1 .99) :duration dur :offset 1.0 :scaler -0.5)))
       (do ((i start (+ i 1)))
 	  ((= i stop))
 	(let ((frq (env frqf)))
 	  (outa i (* (env ampf)
 		     (+ (* (env interpf) (oscil gen1 frq))
-			(* 0.5 (env interpf-1)
+			(* (env interpf-1)
 			   (+ (oscil gen2 (* 2.0 frq))
 			      (oscil gen3 (* 3.0 frq))))))))))))
 

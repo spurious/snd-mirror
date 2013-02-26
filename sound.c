@@ -385,27 +385,25 @@ static sound_file *check_write_date(const char *name, sound_file *sf)
 
       if (date == sf->write_date)
 	return(sf);
-      else 
+
+      if ((sf->header_type == MUS_RAW) && (mus_header_no_header(name)))
 	{
-	  if ((sf->header_type == MUS_RAW) && (mus_header_no_header(name)))
-	    {
-	      int chan;
-	      mus_long_t data_size;
-	      /* sound has changed since we last read it, but it has no header, so
-	       * the only sensible thing to check is the new length (i.e. caller
-	       * has set other fields by hand)
-	       */
-	      sf->write_date = date;
-	      chan = mus_file_open_read(name);
-	      data_size = lseek(chan, 0L, SEEK_END);
-	      sf->true_file_length = data_size;
-	      sf->samples = mus_bytes_to_samples(sf->data_format, data_size);
-	      CLOSE(chan, name);  
-	      return(sf);
-	    }
-	  /* otherwise our data base is out-of-date, so clear it out */
-	  free_sound_file(sf);
+	  int chan;
+	  mus_long_t data_size;
+	  /* sound has changed since we last read it, but it has no header, so
+	   * the only sensible thing to check is the new length (i.e. caller
+	   * has set other fields by hand)
+	   */
+	  sf->write_date = date;
+	  chan = mus_file_open_read(name);
+	  data_size = lseek(chan, 0L, SEEK_END);
+	  sf->true_file_length = data_size;
+	  sf->samples = mus_bytes_to_samples(sf->data_format, data_size);
+	  CLOSE(chan, name);  
+	  return(sf);
 	}
+      /* otherwise our data base is out-of-date, so clear it out */
+      free_sound_file(sf);
     }
   return(NULL);
 }
@@ -425,10 +423,7 @@ static sound_file *find_sound_file(const char *name)
       if ((sf) &&
 	  (sf->file_name_length == len) &&
 	  (strcmp(name, sf->file_name) == 0))
-	{
-	  check_write_date(name, sf);
-	  return(sf);
-	}
+	return(check_write_date(name, sf));
     }
   return(NULL);
 }
@@ -1322,8 +1317,12 @@ mus_float_t mus_sound_channel_maxamp(const char *file, int chan, mus_long_t *pos
 {
   sound_file *sf; 
   sf = get_sf(file); 
-  (*pos) = sf->maxtimes[chan];
-  return(sf->maxamps[chan]);
+  if (chan < sf->chans)
+    {
+      (*pos) = sf->maxtimes[chan];
+      return(sf->maxamps[chan]);
+    }
+  return(-1.0);
 }
 
 

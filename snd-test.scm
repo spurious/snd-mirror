@@ -9,28 +9,28 @@
 ;;;  test 6: vcts                               [9502]
 ;;;  test 7: colors                             [9814]
 ;;;  test 8: clm                                [10332]
-;;;  test 9: mix                                [21622]
-;;;  test 10: marks                             [23409]
-;;;  test 11: dialogs                           [24369]
-;;;  test 12: extensions                        [24564]
-;;;  test 13: menus, edit lists, hooks, etc     [24830]
-;;;  test 14: all together now                  [26207]
-;;;  test 15: chan-local vars                   [27086]
-;;;  test 16: regularized funcs                 [28861]
-;;;  test 17: dialogs and graphics              [32123]
-;;;  test 18: enved                             [32222]
-;;;  test 19: save and restore                  [32241]
-;;;  test 20: transforms                        [33859]
-;;;  test 21: new stuff                         [36007]
-;;;  test 22: (run)                             [38020]
-;;;  test 23: with-sound                        [38026]
-;;;  test 25: X/Xt/Xm                           [40992]
-;;;  test 26:                                   [44674]
-;;;  test 27: GL                                [44680]
-;;;  test 28: errors                            [44804]
-;;;  test 29: s7                                [46906]
-;;;  test all done                              [46978]
-;;;  test the end                               [47152]
+;;;  test 9: mix                                [21619]
+;;;  test 10: marks                             [23406]
+;;;  test 11: dialogs                           [24366]
+;;;  test 12: extensions                        [24561]
+;;;  test 13: menus, edit lists, hooks, etc     [24827]
+;;;  test 14: all together now                  [26204]
+;;;  test 15: chan-local vars                   [27083]
+;;;  test 16: regularized funcs                 [28858]
+;;;  test 17: dialogs and graphics              [32461]
+;;;  test 18: enved                             [32560]
+;;;  test 19: save and restore                  [32579]
+;;;  test 20: transforms                        [34197]
+;;;  test 21: new stuff                         [36345]
+;;;  test 22: (run)                             [38358]
+;;;  test 23: with-sound                        [38364]
+;;;  test 25: X/Xt/Xm                           [41330]
+;;;  test 26:                                   [45012]
+;;;  test 27: GL                                [45018]
+;;;  test 28: errors                            [45142]
+;;;  test 29: s7                                [47244]
+;;;  test all done                              [47316]
+;;;  test the end                               [47490]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -31265,6 +31265,346 @@ EDITS: 2
 		((9) (map-channel (lambda (y) (* y 2.0)) (random (floor (/ (frames) 2))) (random 1000))))))
 	  (close-sound ind))
 	
+	(let ((ind (open-sound "oboe.snd")))
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  ;; insert zeros
+	  (pad-channel 0 100)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe pad 0 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 25071))
+	      (snd-display #__line__ ";oboe pad 0 100 max pos: ~A (should be ~A)~%" (maxamp-position) 25071))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (pad-channel 25000 100)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe pad 25000 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe pad 25000 100 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (pad-channel 24971 100)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe pad 24971 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 25071))
+	      (snd-display #__line__ ";oboe pad 24971 100 max pos: ~A (should be ~A)~%" (maxamp-position) 25071))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (pad-channel 24972 100)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe pad 24972 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe pad 24972 100 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (pad-channel 65000 100)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe pad 65000 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe pad 65000 100 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  ;; set sample
+	  (revert-sound)
+	  (set-sample 100 .1)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe set 100 .1 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe set 100 .1 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (set-sample 100 .2)
+	  (if (fneq (maxamp) 0.2)
+	      (snd-display #__line__ ";oboe set 100 .2 max: ~A (should be ~A)~%" (maxamp) 0.2))
+	  (if (not (= (maxamp-position) 100))
+	      (snd-display #__line__ ";oboe set 100 .2 max pos: ~A (should be ~A)~%" (maxamp-position) 100))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (set-sample 25000 .1)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe set 25000 .1 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe set 25000 .1 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (set-sample 25000 .2)
+	  (if (fneq (maxamp) 0.2)
+	      (snd-display #__line__ ";oboe set 25000 .2 max: ~A (should be ~A)~%" (maxamp) 0.2))
+	  (if (not (= (maxamp-position) 25000))
+	      (snd-display #__line__ ";oboe set 25000 .2 max pos: ~A (should be ~A)~%" (maxamp-position) 25000))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (set-sample 24971 .1)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe set 24971 .1 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 25368))
+	      (snd-display #__line__ ";oboe set 24971 .1 max pos: ~A (should be ~A)~%" (maxamp-position) 25368))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (set-sample 24971 .2)
+	  (if (fneq (maxamp) 0.2)
+	      (snd-display #__line__ ";oboe set 24971 .2 max: ~A (should be ~A)~%" (maxamp) 0.2))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe set 24971 .2 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (set-sample 24971 -.2)
+	  (if (fneq (maxamp) 0.2)
+	      (snd-display #__line__ ";oboe set 24971 -.2 max: ~A (should be ~A)~%" (maxamp) 0.2))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe set 24971 .2 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  ;; delete-samples
+	  (revert-sound)
+	  (delete-samples 0 100)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe delete 0 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 24871))
+	      (snd-display #__line__ ";oboe delete 0 100 max pos: ~A (should be ~A)~%" (maxamp-position) 24871))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (delete-samples 25000 100)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe delete 25000 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe delete 25000 100 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (delete-samples 24900 100)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe delete 24900 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 25268))
+	      (snd-display #__line__ ";oboe delete 24900 100 max pos: ~A (should be ~A)~%" (maxamp-position) 25268))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  ;; insert samples
+	  (revert-sound)
+	  (insert-samples 0 100 (make-vct 100 0.1))
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe insert 0 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 25071))
+	      (snd-display #__line__ ";oboe insert 0 100 max pos: ~A (should be ~A)~%" (maxamp-position) 25071))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (insert-samples 25000 100 (make-vct 100 0.1))
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe insert 25000 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe insert 25000 100 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (insert-samples 24971 100 (make-vct 100 0.1))
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe insert 24971 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 25071))
+	      (snd-display #__line__ ";oboe insert 24971 100 max pos: ~A (should be ~A)~%" (maxamp-position) 25971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (insert-samples 0 100 (make-vct 100 0.2))
+	  (if (fneq (maxamp) 0.2)
+	      (snd-display #__line__ ";oboe insert 0 100 .2 max: ~A (should be ~A)~%" (maxamp) 0.2))
+	  (if (not (= (maxamp-position) 0))
+	      (snd-display #__line__ ";oboe insert 0 100 .2 max pos: ~A (should be ~A)~%" (maxamp-position) 0))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (insert-samples 25000 100 (make-vct 100 0.2))
+	  (if (fneq (maxamp) 0.2)
+	      (snd-display #__line__ ";oboe insert 25000 100 .2 max: ~A (should be ~A)~%" (maxamp) 0.2))
+	  (if (not (= (maxamp-position) 25000))
+	      (snd-display #__line__ ";oboe insert 25000 100 .2 max pos: ~A (should be ~A)~%" (maxamp-position) 25000))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  ;; set samples
+	  (revert-sound)
+	  (set-samples 0 100 (make-vct 100 0.1))
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe change 0 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe change 0 100 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (set-samples 25000 100 (make-vct 100 0.1))
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe change 25000 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe change 25000 100 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (set-samples 24900 100 (make-vct 100 0.1))
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe change 24900 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 25368))
+	      (snd-display #__line__ ";oboe change 24900 100 max pos: ~A (should be ~A)~%" (maxamp-position) 25368))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (set-samples 0 100 (make-vct 100 0.2))
+	  (if (fneq (maxamp) 0.2)
+	      (snd-display #__line__ ";oboe change 0 100 .2 max: ~A (should be ~A)~%" (maxamp) 0.2))
+	  (if (not (= (maxamp-position) 0))
+	      (snd-display #__line__ ";oboe change 0 100 .2 max pos: ~A (should be ~A)~%" (maxamp-position) 0))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (set-samples 25000 100 (make-vct 100 0.2))
+	  (if (fneq (maxamp) 0.2)
+	      (snd-display #__line__ ";oboe change 25000 100 .2 max: ~A (should be ~A)~%" (maxamp) 0.2))
+	  (if (not (= (maxamp-position) 25000))
+	      (snd-display #__line__ ";oboe change 25000 100 .2 max pos: ~A (should be ~A)~%" (maxamp-position) 25000))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  ;; scale samples
+	  (revert-sound)
+	  (scale-channel 2.0)
+	  (if (fneq (maxamp) 0.29449462890625)
+	      (snd-display #__line__ ";oboe scale 2 0 max: ~A (should be ~A)~%" (maxamp) 0.29449462890625))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe scale 2 0 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (scale-channel 0.0)
+	  (if (fneq (maxamp) 0.0)
+	      (snd-display #__line__ ";oboe scale 0 0 max: ~A (should be ~A)~%" (maxamp) 0.0))
+	  (if (not (= (maxamp-position) 0))
+	      (snd-display #__line__ ";oboe scale 0 0 max pos: ~A (should be ~A)~%" (maxamp-position) 0))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (scale-channel 0.1 0 100)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe scale .1 0 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe scale .1 0 100 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (scale-channel -0.9 0 100)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe scale -.9 0 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe scale -.9 0 100 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (scale-channel 0.1 25000 100)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe scale .1 25000 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe scale .1 25000 100 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (scale-channel -2.0 24900 100)
+	  (if (fneq (maxamp) 0.29449462890625)
+	      (snd-display #__line__ ";oboe scale -2 24900 100 max: ~A (should be ~A)~%" (maxamp) 0.29449462890625))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe scale -2 24900 100 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (scale-channel 0.1 24900 100)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe scale 0.1 24900 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 25368))
+	      (snd-display #__line__ ";oboe scale 0.1 24900 100 max pos: ~A (should be ~A)~%" (maxamp-position) 25368))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  ;; ramp/xramp samples
+	  (revert-sound)
+	  (ramp-channel 0.0 1.0)
+	  (if (fneq (maxamp) 0.091239139496063)
+	      (snd-display #__line__ ";oboe ramp 0 1 max: ~A (should be ~A)~%" (maxamp) 0.091239139496063))
+	  (if (not (= (maxamp-position) 35062))
+	      (snd-display #__line__ ";oboe ramp 0 1 max pos: ~A (should be ~A)~%" (maxamp-position) 35062))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (xramp-channel 0.0 1.0 3.0)
+	  (if (fneq (maxamp) 0.074973157321056)
+	      (snd-display #__line__ ";oboe xramp 0 1 max: ~A (should be ~A)~%" (maxamp) 0.074973157321056))
+	  (if (not (= (maxamp-position) 35062))
+	      (snd-display #__line__ ";oboe xramp 0 1 max pos: ~A (should be ~A)~%" (maxamp-position) 35062))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (ramp-channel 0.0 -1.0 0 100)
+	  (if (fneq (maxamp) 0.14724731445312)
+	      (snd-display #__line__ ";oboe ramp 0 -1 0 100 max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
+	  (if (not (= (maxamp-position) 24971))
+	      (snd-display #__line__ ";oboe ramp 0 -1 0 100 max pos: ~A (should be ~A)~%" (maxamp-position) 24971))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (revert-sound)
+	  (ramp-channel 1.0 9.0 10000 100)
+	  (if (fneq (maxamp) 1.057239571003)
+	      (snd-display #__line__ ";oboe ramp 1 9 10000 100 max: ~A (should be ~A)~%" (maxamp) 1.057239571003))
+	  (if (not (= (maxamp-position) 10089))
+	      (snd-display #__line__ ";oboe ramp 1 9 10000 100 max pos: ~A (should be ~A)~%" (maxamp-position) 10089))
+	  (if (fneq (abs (sample (maxamp-position))) (maxamp))
+	      (snd-display #__line__ ";oboe maxes: ~A ~A~%" (maxamp) (abs (sample (maxamp-position)))))
+	  
+	  (close-sound ind))
+
 	(let ((ind0 (open-sound "oboe.snd"))
 	      (ind1 (open-sound "2.snd"))
 	      (ind2 (open-sound "4.aiff")))
@@ -47238,21 +47578,21 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-23-Feb:
-81,694,701,603
-12,073,523,429  s7.c:eval [/home/bil/snd-13/snd]
- 6,254,507,616  ???:sin [/lib64/libm-2.12.so]
- 4,648,651,806  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 3,255,895,663  clm.c:mus_src [/home/bil/snd-13/snd]
+25-Feb:
+79,104,397,775
+12,063,845,680  s7.c:eval [/home/bil/snd-13/snd]
+ 6,254,003,929  ???:sin [/lib64/libm-2.12.so]
+ 4,631,382,918  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
  2,970,010,915  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,849,633,501  s7.c:eval'2 [/home/bil/snd-13/snd]
- 2,617,258,767  ???:cos [/lib64/libm-2.12.so]
- 2,578,445,778  s7.c:gc [/home/bil/snd-13/snd]
+ 2,769,403,275  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 2,589,092,212  ???:cos [/lib64/libm-2.12.so]
+ 2,576,173,441  s7.c:gc [/home/bil/snd-13/snd]
+ 2,427,208,760  clm.c:mus_src [/home/bil/snd-13/snd]
  2,327,317,731  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 1,925,057,216  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 1,760,336,936  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
  1,585,058,070  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,425,491,660  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,576,915,733  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 1,422,643,886  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,307,556,425  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
  1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
 |#

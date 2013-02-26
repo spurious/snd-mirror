@@ -3443,16 +3443,36 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 				{
 				  s7_pointer old_e, z, args;
 
+				  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
+				  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
+
+				  z = s7_symbol_value(s7, s7_cadr(res));
+				  if ((s7_car(res) == s7_make_symbol(s7, "read-sample")) &&
+				      (sampler_p(z)))
+				    {
+				      snd_fd *sf;
+				      mus_float_t *buf;
+				      sf = (snd_fd *)XEN_OBJECT_REF(z);
+				      buf = data[0];
+				      for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
+					{
+					  local_samps = num - kp;
+					  if (local_samps > MAX_BUFFER_SIZE)
+					    local_samps = MAX_BUFFER_SIZE;
+					  for (j = 0; j < local_samps; j++)
+					    buf[j] = read_sample(sf);
+					  err = mus_file_write(ofd, 0, j - 1, 1, data);
+					  if (err != MUS_NO_ERROR) break;
+					}
+				      samps = num;
+				      goto DO_EDIT;
+				    }
+
 				  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
 				  old_e = s7_set_current_environment(s7, e);
 				  /* the function closure might be needed even if the arg isn't */
-
-				  z = s7_symbol_value(s7, s7_cadr(res));
 				  args = s7_cons(s7, z, s7_nil(s7));
 				  gc_loc = s7_gc_protect(s7, args);
-
-				  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
-				  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
 
 				  for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
 				    {

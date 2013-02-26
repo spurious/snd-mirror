@@ -45844,11 +45844,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	if (is_integer(val))
 	  {
-	    slot_set_value(ctr, make_integer(sc, s7_integer(val) + 1));
+	    slot_set_value(ctr, make_integer(sc, integer(val) + 1));
 	    val = slot_value(ctr);
 	    if (is_integer(end))
 	      {
-		if (s7_integer(val) == s7_integer(end))
+		if (integer(val) == integer(end))
 		  {
 		    sc->code = cdr(cadr(code));
 		    goto BEGIN;
@@ -46719,11 +46719,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  s7_pointer code;
 	  
 	OPT_EVAL:
-#if WITH_COUNTS
-	  if ((c_call(sc->code) == g_add_2) ||
-	      (c_call(sc->code) == g_add))
-	    add_expr(sc, sc->code);
-#endif
 	  code = sc->code;
 	  sc->cur_code = code;
 	  /* fprintf(stderr, "opt eval: %s %s %s\n", opt_names[optimize_op(code)], DISPLAY_80(code), describe_type_bits(sc, car(code))); */
@@ -50855,7 +50850,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer args, val3, val4;
 		args = cdr(code);
-		
 		val3 = finder(sc, caddr(car(args)));
 		val4 = finder(sc, caddr(cadr(args)));
 		
@@ -62858,11 +62852,11 @@ s7_scheme *s7_init(void)
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5
  * bench    42736 8752 8051 7725 6515 5194 4412
- * lint           9328 8140 7887 7736 7300 7244
+ * lint           9328 8140 7887 7736 7300 7287
  * index    44300 3291 3005 2742 2078 1643 1463
  * s7test    1721 1358 1297 1244  977  961  959
  * t455|6     265   89   55   31   14   14   14
  * lat        229   63   52   47   42   40   39
  * t502        90   43   39   36   29   23   20
- * calls           275  207  175  115   89   83
+ * calls           275  207  175  115   89   79
  */

@@ -6324,9 +6324,13 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 			      brkpts[i] = XEN_TO_C_DOUBLE(XEN_CAR(el));
 			      brkpts[i + 1] = XEN_TO_C_DOUBLE(XEN_CADR(el));
 			    }
-			  else XEN_ERROR(BAD_TYPE, 
-					 XEN_LIST_2(C_TO_XEN_STRING(S_make_env ": odd breakpoints list? ~A"), 
+			  else 
+			    {
+			      if (odata) free(odata);
+			      XEN_ERROR(BAD_TYPE, 
+					XEN_LIST_2(C_TO_XEN_STRING(S_make_env ": odd breakpoints list? ~A"), 
 						    keys[0]));
+			    }
 			}
 		    }
 		}
@@ -6336,8 +6340,11 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
     }
 
   if (brkpts == NULL) 
-    XEN_ERROR(NO_DATA,
-	      XEN_LIST_1(C_TO_XEN_STRING(S_make_env ": no envelope?"))); 
+    {
+      if (odata) free(odata);
+      XEN_ERROR(NO_DATA,
+		XEN_LIST_1(C_TO_XEN_STRING(S_make_env ": no envelope?"))); 
+    }
 
   if (dur > 0)
     {
@@ -10842,7 +10849,7 @@ static s7_pointer g_indirect_out_bank_ssz_looped(s7_scheme *sc, s7_pointer args)
       {
 	(*step) = pos;
 	s7_slot_set_value(sc, allx, s7_call_direct(sc, allsum));
-	x = s7_real(s7_call_direct(sc, combs));
+	x = s7_cell_real(s7_call_direct(sc, combs));
 #if HAVE_SCHEME  
 	for (i = 0; i < size; i++)
 	  out_any_2(pos, mus_apply(mgs[i], x, 0.0), i, "out-bank");
@@ -12004,7 +12011,7 @@ static s7_pointer g_outa_2_temp_sg_looped(s7_scheme *sc, s7_pointer args)
   pos = (*step);
   end = (*stop);
 
-  mult = s7_real(num);
+  mult = s7_cell_real(num);
   callee = caddr(caddr(args));
   choices = (s7_pointer *)s7_function_chooser_data(sc, callee);
   if (choices[GEN_1_C])
