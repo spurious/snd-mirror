@@ -6010,12 +6010,12 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 		(begin
 		  (do ((i 0 (+ i 1)))
 		      ((= i n))
-		    (set! (data i) (readin input))))
+		    (vct-set! data i (readin input))))
 		(begin
 		  (vct-move! data 0 hop)
 		  (do ((i (- n hop) (+ i 1)))
 		      ((= i n))
-		    (set! (data i) (readin input)))))
+		    (vct-set! data i (readin input)))))
 	    
 	    (set! outctr 0) ; -1??
 	    (set! dataloc (modulo dataloc n))

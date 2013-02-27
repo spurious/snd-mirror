@@ -8902,6 +8902,7 @@ keep track of which files are in a given saved state batch, and a way to rename 
     s7_function_set_class(next_sample_s, f);
     s7_function_set_returns_temp(next_sample_s);
     make_sampler_choices(s7, next_sample_s, next_sample_direct, sampler_p);
+    make_sampler_choices(s7, f, next_sample_direct, sampler_p);
 
     /* read-sample */
     f = s7_name_to_value(s7, "read-sample");
@@ -8911,6 +8912,7 @@ keep track of which files are in a given saved state batch, and a way to rename 
     s7_function_set_class(read_sample_s, f);
     s7_function_set_returns_temp(read_sample_s);
     make_sampler_choices(s7, read_sample_s, read_sample_direct, sampler_p);
+    make_sampler_choices(s7, f, read_sample_direct, sampler_p);
   }
 #endif
 

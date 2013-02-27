@@ -894,7 +894,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 		    }
 		}
 
-	      choices = s7_function_chooser_data(sc, val);
+	      choices = s7_function_chooser_data(sc, val); /* TODO: or go to generic?? */
 	      if (choices)
 		{
 		  if ((choices[GEN_DIRECT_1]) &&
@@ -903,9 +903,11 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 		      void *gen;
 		      mus_float_t (*sampler)(void *p);
 		      bool (*is_sampler)(s7_pointer p);
+
 		      sampler = (mus_float_t (*)(void *p))(choices[GEN_DIRECT_1]);
 		      is_sampler = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
 		      gen = s7_object_value(obj);
+
 		      if (is_sampler(obj))
 			{
 			  for (; pos < end; pos++) 

@@ -241,16 +241,17 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 (define* (freqdiv n snd chn)
   "(freqdiv n snd chn) repeats each nth sample n times (clobbering the intermediate samples): (freqdiv 8)"
-  (let ((div 0)
-	(curval 0.0))
-    (map-channel (lambda (val)
-		   (if (= div 0)
-		       (set! curval val))
-		   (set! div (+ div 1))
-		   (if (= div n) (set! div 0))
-		   curval)
-		 0 #f snd chn #f (format #f "freqdiv ~A" n))))
-
+  (let* ((data (channel->vct 0 #f snd chn))
+	 (len (length data)))
+    (if (> n 1)
+	(do ((i 0 (+ i n)))
+	    ((>= i len)
+	     (vct->channel data 0 len snd chn))
+	  (let ((val (data i))
+		(stop (min len (+ i n))))
+	    (do ((k (+ i 1) (+ k 1)))
+		((= k stop))
+	      (vct-set! data k val)))))))
 
 
 ;;; -------- "adaptive saturation" -- an effect from sed_sed@my-dejanews.com

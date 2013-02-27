@@ -9187,6 +9187,7 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #define cdadr(E)  s7_cdadr(E)
 #define caddar(E) s7_caddar(E)
 #define caadr(E)  s7_caadr(E)
+#define cddar(E)  s7_cddar(E)
 
 static mus_float_t mus_nsin_unmodulated(mus_any *p) {return(mus_nsin(p, 0.0));}
 static mus_float_t mus_ncos_unmodulated(mus_any *p) {return(mus_ncos(p, 0.0));}
@@ -9264,6 +9265,7 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
 #define GET_INTEGER_CADR(Obj, Caller, Val) Val = s7_cell_integer(s7_cadr_value(s7, Obj))
 
 #define GEN_1(Type, Func) \
+  static mus_float_t wrapped_ ## Type ## _1(mus_xen *p) {return(Func(p->gen));} \
   static s7_pointer Type ## _1; \
   static s7_pointer g_ ## Type ## _1(s7_scheme *sc, s7_pointer args) \
   { \
@@ -9305,6 +9307,12 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
     return(s7_make_real(sc, mus_env(_e_) * Func(_o_)));		\
   }
 
+static bool wrapped_env_p(s7_pointer obj) {return((MUS_XEN_P(obj)) && (mus_env_p(XEN_TO_MUS_ANY(obj))));}
+static bool wrapped_readin_p(s7_pointer obj) {return((MUS_XEN_P(obj)) && (mus_readin_p(XEN_TO_MUS_ANY(obj))));}
+static bool wrapped_granulate_p(s7_pointer obj) {return((MUS_XEN_P(obj)) && (mus_granulate_p(XEN_TO_MUS_ANY(obj))));}
+static bool wrapped_phase_vocoder_p(s7_pointer obj) {return((MUS_XEN_P(obj)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(obj))));}
+static bool wrapped_convolve_p(s7_pointer obj) {return((MUS_XEN_P(obj)) && (mus_convolve_p(XEN_TO_MUS_ANY(obj))));}
+
 /* (define (hi) (let ((o (make-oscil 440.0)) (scl 0+i)) (oscil o) (* scl (oscil o))))
  * (define (hi) (let ((o (make-oscil 440.0)) (scl 0+i) (val 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! val (* scl (oscil o)))) val))
  * (define (hi) (let ((o (make-oscil 440.0)) (fm 1.0) (scl 0+i) (val 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! val (* scl (oscil o fm)))) val))
@@ -9314,6 +9322,8 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
  */
 
 #define GEN_2(Type, Func) \
+  static mus_float_t wrapped_ ## Type ## _2(mus_xen *p, mus_float_t x) {return(Func(p->gen, x));} \
+  static bool wrapped_ ## Type ## _p(s7_pointer obj) {return((MUS_XEN_P(obj)) && (mus_ ## Type ## _p(XEN_TO_MUS_ANY(obj))));} \
   static s7_pointer Type ## _2; \
   static s7_pointer g_ ## Type ## _2(s7_scheme *sc, s7_pointer args) \
   { \
@@ -10493,7 +10503,27 @@ static s7_pointer g_indirect_locsig_3(s7_scheme *sc, s7_pointer args)
   return(XEN_ZERO);
 }
 
+
+static s7_pointer g_mul_env_direct(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_mul_env_direct_any(s7_scheme *sc, s7_pointer args);
+
+#define MUL_C_GEN 0
+#define MUL_S_GEN 1
+#define ENV_GEN 2
+
+#define MUL_C_GEN_1 3
+#define MUL_S_GEN_1 4
+#define ENV_GEN_1 5
+
+#define GEN_1_C 6
+#define GEN_2_C 7
+
+#define GEN_DIRECT_1 8
+#define GEN_DIRECT_2 9
+#define GEN_DIRECT_CHECKER 10
+
+#define NUM_CHOICES 11
+
 
 static s7_pointer indirect_locsig_3_looped;
 static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
@@ -10502,10 +10532,12 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
   s7_pointer stepper, callee;
   s7_Int *step, *stop;
   mus_any *locs = NULL;
+  s7_pointer *choices;
+  s7_function f;
 
-  /* args: (4410 loc gr-offset (* (* (env amp-env) (table-lookup gr-env)) (src in-file-reader)))
-                               (* (env amp-env) (table-lookup s (rand ran-vib)))
-                               (* (env amp-f) (oscil carrier (+ (env freq-f) (* (env dev-f) (rand modulator (env rfreq-f))))))
+  /* args: (4410 loc gr-offset (* (env amp-env) (table-lookup gr-env) (src in-file-reader)))
+                               [(* (env amp-env) (table-lookup s (rand ran-vib)))] -- except for the rand
+                               [?? (* (env amp-f) (oscil carrier (+ (env freq-f) (* (env dev-f) (rand modulator (env rfreq-f))))))]
                                (* (env amp-env) (src in-file-reader) (+ (* (env gr-int-env) (table-lookup gr-env-end)) (* (env gr-int-env-1) (table-lookup gr-env))))
    */
   stepper = car(args);
@@ -10521,20 +10553,136 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR_CADR(args, locsig, locs);
   callee = cadddr(args);
 
-#if 0
-  if (s7_function_choice(sc, callee) == g_mul_env_direct_any)
-    {
-      mus_any *e;
-      GET_GENERATOR_CADR(cadr(callee), env, e);
-      callee = cddr(callee);
+  f = s7_function_choice(sc, callee);
 
-      fprintf(stderr, "%lld: %s\n", end - pos, DISPLAY(callee));
-      /* this needs to loop through the args, or check in advance for len==3|4 etc */
+  if (((s7_pointer)f == (s7_pointer)g_mul_env_direct_any) ||
+      ((s7_pointer)f == (s7_pointer)g_mul_env_direct))
+    {
+      int len;
+      mus_any *e;
+      s7_pointer inner_callee;
+
+      GET_GENERATOR_CADR(cadr(callee), env, e);
+      inner_callee = cddr(callee);
+      len = s7_list_length(sc, inner_callee);
+
+      /* an experiment ... */
+      if ((len == 1) &&
+	  (s7_is_symbol(cadar(inner_callee))) &&
+	  (s7_is_pair(caddar(inner_callee))))
+	{
+	  /* if gen_1|2_direct, is symbol cadr, we can do it direct.  Similarly for caddr, if any.
+	   *   if s7 adds this to all builtins, we can handle anything!  Also remember sndlib2xen.c.
+	   */
+	  inner_callee = car(inner_callee);
+	  choices = s7_function_chooser_data_direct(s7_symbol_value(sc, car(inner_callee)));
+	  if (choices)
+	    {
+	      if ((choices[GEN_DIRECT_2]) &&
+		  (choices[GEN_DIRECT_CHECKER]))
+		{					
+		  void *gen;
+		  mus_float_t (*sampler)(void *p, mus_float_t x);
+		  bool (*is_sampler)(s7_pointer p);
+		  s7_pointer obj, arg;
+
+		  sampler = (mus_float_t (*)(void *p, mus_float_t x))(choices[GEN_DIRECT_2]);
+		  is_sampler = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+
+		  obj = s7_cadr_value(sc, inner_callee);
+
+		  if (is_sampler(obj))
+		    {
+		      gen = s7_object_value(obj);
+		      arg = caddr(inner_callee);
+		      for (; pos < end; pos++) 
+			mus_locsig(locs, pos, mus_env(e) * sampler(gen, s7_call_direct_to_real_and_free(sc, arg)));
+		      (*step) = end;
+		      return(args);
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  if ((len == 2) &&
+	      (s7_is_symbol(cadar(inner_callee))) &&
+	      (s7_is_null(sc, cddar(inner_callee))))
+	    {
+	      s7_pointer first_callee;
+	      first_callee = car(inner_callee);
+	      choices = s7_function_chooser_data_direct(s7_symbol_value(sc, car(first_callee)));
+	      if (choices)
+		{
+		  if ((choices[GEN_DIRECT_1]) &&
+		      (choices[GEN_DIRECT_CHECKER]))
+		    {					
+		      void *gen;
+		      mus_float_t (*sampler)(void *p);
+		      bool (*is_sampler)(s7_pointer p);
+		      s7_pointer obj;
+
+		      sampler = (mus_float_t (*)(void *p))(choices[GEN_DIRECT_1]);
+		      is_sampler = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+		      obj = s7_cadr_value(sc, first_callee);
+
+		      if (is_sampler(obj))
+			{
+			  s7_pointer second_callee;
+			  second_callee = cadr(inner_callee);
+
+			  gen = s7_object_value(obj);
+			  if ((s7_is_pair(second_callee)) &&
+			      (s7_is_symbol(cadr(second_callee))) &&
+			      (s7_is_null(sc, cddr(second_callee))))
+			    {
+			      choices = s7_function_chooser_data_direct(s7_symbol_value(sc, car(second_callee)));
+			      if (choices)
+				{
+				  if ((choices[GEN_DIRECT_1]) &&
+				      (choices[GEN_DIRECT_CHECKER]))
+				    {					
+				      void *gen1;
+				      mus_float_t (*sampler1)(void *p);
+				      bool (*is_sampler1)(s7_pointer p);
+				      s7_pointer obj1;
+
+				      sampler1 = (mus_float_t (*)(void *p))(choices[GEN_DIRECT_1]);
+				      is_sampler1 = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+				      obj1 = s7_cadr_value(sc, second_callee);
+
+				      if (is_sampler1(obj))
+					{
+					  gen1 = s7_object_value(obj1);
+					  for (; pos < end; pos++) 
+					    mus_locsig(locs, pos, mus_env(e) * sampler(gen) * sampler1(gen1));
+					  (*step) = end;
+					  return(args);
+					}
+				    }
+				}
+			    }
+			  for (; pos < end; pos++) 
+			    mus_locsig(locs, pos, mus_env(e) * sampler(gen) * s7_call_direct_to_real_and_free(sc, second_callee));
+			  (*step) = end;
+			  return(args);
+			}
+		    }
+		}
+	    }
+	}
+      callee = cddr(callee);
       for (; pos < end; pos++)
-	mus_locsig(locs, pos, mus_env(e) * s7_number_to_real(sc, s7_call_direct(sc, callee)));
+	{
+	  s7_pointer p;
+	  double product;
+	  product = mus_env(e);
+	  for (p = callee; s7_is_pair(p); p = cdr(p))
+	    product *= s7_call_direct_to_real_and_free(sc, car(p));
+	  mus_locsig(locs, pos, product);
+	}
     }
   else
-#endif
     {
       for (; pos < end; pos++)
 	mus_locsig(locs, pos, s7_number_to_real(sc, s7_call_direct(sc, callee)));
@@ -11871,23 +12019,6 @@ static s7_pointer g_outa_env_oscil_env_looped(s7_scheme *sc, s7_pointer args)
 #endif
 /* WITH_GMP */
 
-#define MUL_C_GEN 0
-#define MUL_S_GEN 1
-#define ENV_GEN 2
-
-#define MUL_C_GEN_1 3
-#define MUL_S_GEN_1 4
-#define ENV_GEN_1 5
-
-#define GEN_1_C 6
-#define GEN_2_C 7
-
-#define GEN_DIRECT_1 8
-#define GEN_DIRECT_2 9
-#define GEN_DIRECT_CHECKER 10
-
-#define NUM_CHOICES 11
-
 static s7_pointer *make_choices(s7_pointer mul_c, s7_pointer mul_s, s7_pointer e, s7_pointer mul_c1, s7_pointer mul_s1, s7_pointer e1)
 {
   s7_pointer *choices;
@@ -11901,6 +12032,20 @@ static s7_pointer *make_choices(s7_pointer mul_c, s7_pointer mul_s, s7_pointer e
   return(choices);
 }
 
+static void store_choices(s7_scheme *sc, s7_pointer base_f, s7_pointer g1, s7_pointer g2, s7_pointer isg)
+{
+  s7_pointer *choices;
+  choices = s7_function_chooser_data(sc, base_f);
+  if (!choices)
+    {
+      choices = (s7_pointer *)calloc(NUM_CHOICES, sizeof(s7_pointer));
+      s7_function_chooser_set_data(sc, base_f, (void *)choices);
+    }
+  choices[GEN_DIRECT_1] = g1;
+  choices[GEN_DIRECT_2] = g2;
+  choices[GEN_DIRECT_CHECKER] = isg;
+}
+
 static void init_choices(void)
 {
   s7_pointer * choices;
@@ -11909,8 +12054,8 @@ static void init_choices(void)
   {\
     choices = (s7_pointer *)s7_function_chooser_data_direct(Gen ## _1); \
     choices[GEN_1_C] = (s7_pointer)CFun; \
-    choices[GEN_DIRECT_1] = (s7_pointer)CFun; \
-    choices[GEN_DIRECT_CHECKER] = (s7_pointer)g_ ## Gen ## _p; \
+    choices[GEN_DIRECT_1] = (s7_pointer)wrapped_ ## Gen ## _1; \
+    choices[GEN_DIRECT_CHECKER] = (s7_pointer)wrapped_ ## Gen ## _p; \
   }
 
   SET_GEN_1(oscil, mus_oscil_unmodulated)
@@ -11938,7 +12083,7 @@ static void init_choices(void)
   {\
     choices = (s7_pointer *)s7_function_chooser_data_direct(Gen ## _2); \
     choices[GEN_2_C] = (s7_pointer)CFun; \
-    choices[GEN_DIRECT_2] = (s7_pointer)CFun; \
+    choices[GEN_DIRECT_2] = (s7_pointer)wrapped_ ## Gen ## _2; \
   }
 
   SET_GEN_2(polywave, mus_polywave)
@@ -14965,10 +15110,24 @@ static void init_choosers(s7_scheme *sc)
   abs_triangle_wave = clm_make_function(sc, "abs", g_abs_triangle_wave, 1, 0, false, "abs optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
 
+#define GEN_F(Name, Type)				\
+  f = s7_name_to_value(sc, Name);			\
+  s7_function_set_chooser(sc, f, Type ## _chooser);			\
+  store_choices(sc, f, (s7_pointer)wrapped_ ## Type ## _1, (s7_pointer)wrapped_ ## Type ## _2, (s7_pointer)wrapped_ ## Type ## _p);
+  
+#define GEN_F1(Name, Type)				\
+  f = s7_name_to_value(sc, Name);			\
+  s7_function_set_chooser(sc, f, Type ## _chooser);			\
+  store_choices(sc, f, (s7_pointer)wrapped_ ## Type ## _1, NULL, (s7_pointer)wrapped_ ## Type ## _p);
+  
+#define GEN_F2(Name, Type)				\
+  f = s7_name_to_value(sc, Name);			\
+  s7_function_set_chooser(sc, f, Type ## _chooser);			\
+  store_choices(sc, f, NULL, (s7_pointer)wrapped_ ## Type ## _2, (s7_pointer)wrapped_ ## Type ## _p);
+  
 
   /* oscil */
-  f = s7_name_to_value(sc, "oscil");
-  s7_function_set_chooser(sc, f, oscil_chooser);
+  GEN_F("oscil", oscil);
 
   oscil_1 = clm_make_function(sc, "oscil", g_oscil_1, 1, 0, false, "oscil optimization", f,  NULL, NULL, NULL, mul_c_oscil_1, mul_s_oscil_1, env_oscil_1);
   oscil_2 = clm_make_function(sc, "oscil", g_oscil_2, 2, 0, false, "oscil optimization", f, 
@@ -14991,8 +15150,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* polywave */
-  f = s7_name_to_value(sc, "polywave");
-  s7_function_set_chooser(sc, f, polywave_chooser);
+  GEN_F("polywave", polywave);
 
   polywave_1 = clm_make_function(sc, "polywave", g_polywave_1, 1, 0, false, "polywave optimization", f,
 				 NULL, NULL, NULL, mul_c_polywave_1, mul_s_polywave_1, env_polywave_1);
@@ -15006,8 +15164,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* table-lookup */
-  f = s7_name_to_value(sc, "table-lookup");
-  s7_function_set_chooser(sc, f, table_lookup_chooser);
+  GEN_F("table-lookup", table_lookup);
 
   table_lookup_1 = clm_make_function(sc, "table-lookup", g_table_lookup_1, 1, 0, false, "table-lookup optimization", f,
 				     NULL, NULL, NULL, mul_c_table_lookup_1, mul_s_table_lookup_1, env_table_lookup_1);
@@ -15020,8 +15177,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* wave-train */
-  f = s7_name_to_value(sc, "wave-train");
-  s7_function_set_chooser(sc, f, wave_train_chooser);
+  GEN_F("wave-train", wave_train);
 
   wave_train_1 = clm_make_function(sc, "wave-train", g_wave_train_1, 1, 0, false, "wave-train optimization", f,
 				   NULL, NULL, NULL, mul_c_wave_train_1, mul_s_wave_train_1, env_wave_train_1);
@@ -15034,8 +15190,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* src */
-  f = s7_name_to_value(sc, "src");
-  s7_function_set_chooser(sc, f, src_chooser);
+  GEN_F("src", src);
 
   src_1 = clm_make_function(sc, "src", g_src_1, 1, 0, false, "src optimization", f, NULL, NULL, NULL, mul_c_src_1, mul_s_src_1, env_src_1);
   src_one = clm_make_function(sc, "src", g_src_one, 1, 0, false, "src optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -15049,31 +15204,27 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* phase_vocoder */
-  f = s7_name_to_value(sc, "phase-vocoder");
-  s7_function_set_chooser(sc, f, phase_vocoder_chooser);
+  GEN_F1("phase-vocoder", phase_vocoder);
 
   phase_vocoder_1 = clm_make_function(sc, "phase-vocoder", g_phase_vocoder_1, 1, 0, false, "phase-vocoder optimization", f,
 				   NULL, NULL, NULL, mul_c_phase_vocoder_1, mul_s_phase_vocoder_1, env_phase_vocoder_1);
 
 
   /* convolve */
-  f = s7_name_to_value(sc, "convolve");
-  s7_function_set_chooser(sc, f, convolve_chooser);
+  GEN_F1("convolve", convolve);
 
   convolve_1 = clm_make_function(sc, "convolve", g_convolve_1, 1, 0, false, "convolve optimization", f,
 				   NULL, NULL, NULL, mul_c_convolve_1, mul_s_convolve_1, env_convolve_1);
 
 
   /* granulate */
-  f = s7_name_to_value(sc, "granulate");
-  s7_function_set_chooser(sc, f, granulate_chooser);
+  GEN_F1("granulate", granulate);
 
   granulate_1 = clm_make_function(sc, "granulate", g_granulate_1, 1, 0, false, "granulate optimization", f,
 				   NULL, NULL, NULL, mul_c_granulate_1, mul_s_granulate_1, env_granulate_1);
 
 
-  f = s7_name_to_value(sc, "nsin");
-  s7_function_set_chooser(sc, f, nsin_chooser);
+  GEN_F("nsin", nsin);
 
   nsin_2 = clm_make_function(sc, "nsin", g_nsin_2, 2, 0, false, "nsin optimization", f,
 			     mul_c_nsin_2, mul_s_nsin_2, env_nsin_2, NULL, NULL, NULL);
@@ -15083,8 +15234,7 @@ static void init_choosers(s7_scheme *sc)
   indirect_nsin_2 = clm_make_function(sc, "nsin", g_indirect_nsin_2, 2, 0, false, "nsin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
 
-  f = s7_name_to_value(sc, "ncos");
-  s7_function_set_chooser(sc, f, ncos_chooser);
+  GEN_F("ncos", ncos);
 
   ncos_2 = clm_make_function(sc, "ncos", g_ncos_2, 2, 0, false, "ncos optimization", f,
 			     mul_c_ncos_2, mul_s_ncos_2, env_ncos_2, NULL, NULL, NULL);
@@ -15094,8 +15244,7 @@ static void init_choosers(s7_scheme *sc)
 			     NULL, NULL, NULL, mul_c_ncos_1, mul_s_ncos_1, env_ncos_1);
 
 
-  f = s7_name_to_value(sc, "nrxysin");
-  s7_function_set_chooser(sc, f, nrxysin_chooser);
+  GEN_F("nrxysin", nrxysin);
 
   nrxysin_2 = clm_make_function(sc, "nrxysin", g_nrxysin_2, 2, 0, false, "nrxysin optimization", f,
 				mul_c_nrxysin_2, mul_s_nrxysin_2, env_nrxysin_2, NULL, NULL, NULL);
@@ -15107,8 +15256,7 @@ static void init_choosers(s7_scheme *sc)
 				      NULL, NULL, NULL, NULL, NULL, NULL);
 
 
-  f = s7_name_to_value(sc, "nrxycos");
-  s7_function_set_chooser(sc, f, nrxycos_chooser);
+  GEN_F("nrxycos", nrxycos);
 
   nrxycos_2 = clm_make_function(sc, "nrxycos", g_nrxycos_2, 2, 0, false, "nrxycos optimization", f,
 				mul_c_nrxycos_2, mul_s_nrxycos_2, env_nrxycos_2, NULL, NULL, NULL);
@@ -15118,20 +15266,18 @@ static void init_choosers(s7_scheme *sc)
 				NULL, NULL, NULL, mul_c_nrxycos_1, mul_s_nrxycos_1, env_nrxycos_1);
 
 
-  f = s7_name_to_value(sc, "env");
-  s7_function_set_chooser(sc, f, env_chooser);
+  GEN_F1("env", env);
+  store_choices(sc, f, (s7_pointer)wrapped_env_1, NULL, (s7_pointer)wrapped_env_p);
   env_1 = clm_make_function(sc, "env", g_env_1, 1, 0, false, "env optimization", f, NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
 
 
-  f = s7_name_to_value(sc, "readin");
-  s7_function_set_chooser(sc, f, readin_chooser);
-
+  GEN_F1("readin", readin);
+  store_choices(sc, f, (s7_pointer)wrapped_readin_1, NULL, (s7_pointer)wrapped_readin_p);
   readin_1 = clm_make_function(sc, "readin", g_readin_1, 1, 0, false, "readin optimization", f,
 			       NULL, NULL, NULL, mul_c_readin_1, mul_s_readin_1, env_readin_1);
 
 
-  f = s7_name_to_value(sc, "comb");
-  s7_function_set_chooser(sc, f, comb_chooser);
+  GEN_F2("comb", comb);
 
   comb_2 = clm_make_function(sc, "comb", g_comb_2, 2, 0, false, "comb optimization", f, mul_c_comb_2, mul_s_comb_2, env_comb_2, NULL, NULL, NULL);
   direct_comb_2 = clm_make_function(sc, "comb", g_direct_comb_2, 2, 0, false, "comb optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -15142,8 +15288,7 @@ static void init_choosers(s7_scheme *sc)
   indirect_comb_3 = clm_make_function(sc, "comb", g_indirect_comb_3, 3, 0, false, "comb optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 #endif
 
-  f = s7_name_to_value(sc, "notch");
-  s7_function_set_chooser(sc, f, notch_chooser);
+  GEN_F2("notch", notch);
 
   notch_2 = clm_make_function(sc, "notch", g_notch_2, 2, 0, false, "notch optimization", f, mul_c_notch_2, mul_s_notch_2, env_notch_2, NULL, NULL, NULL);
   direct_notch_2 = clm_make_function(sc, "notch", g_direct_notch_2, 2, 0, false, "notch optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -15154,8 +15299,7 @@ static void init_choosers(s7_scheme *sc)
   indirect_notch_3 = clm_make_function(sc, "notch", g_indirect_notch_3, 3, 0, false, "notch optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 #endif
 
-  f = s7_name_to_value(sc, "one-pole");
-  s7_function_set_chooser(sc, f, one_pole_chooser);
+  GEN_F2("one-pole", one_pole);
 
   one_pole_2 = clm_make_function(sc, "one-pole", g_one_pole_2, 2, 0, false, "one-pole optimization", f,
 				 mul_c_one_pole_2, mul_s_one_pole_2, env_one_pole_2, NULL, NULL, NULL);
@@ -15163,8 +15307,7 @@ static void init_choosers(s7_scheme *sc)
   indirect_one_pole_2 = clm_make_function(sc, "one-pole", g_indirect_one_pole_2, 2, 0, false, "one-pole optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
 
-  f = s7_name_to_value(sc, "two-pole");
-  s7_function_set_chooser(sc, f, two_pole_chooser);
+  GEN_F2("two-pole", two_pole);
 
   two_pole_2 = clm_make_function(sc, "two-pole", g_two_pole_2, 2, 0, false, "two-pole optimization", f,
 				 mul_c_two_pole_2, mul_s_two_pole_2, env_two_pole_2, NULL, NULL, NULL);
@@ -15172,8 +15315,7 @@ static void init_choosers(s7_scheme *sc)
   indirect_two_pole_2 = clm_make_function(sc, "two-pole", g_indirect_two_pole_2, 2, 0, false, "two-pole optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
 
-  f = s7_name_to_value(sc, "one-zero");
-  s7_function_set_chooser(sc, f, one_zero_chooser);
+  GEN_F2("one-zero", one_zero);
 
   one_zero_2 = clm_make_function(sc, "one-zero", g_one_zero_2, 2, 0, false, "one-zero optimization", f,
 				 mul_c_one_zero_2, mul_s_one_zero_2, env_one_zero_2, NULL, NULL, NULL);
@@ -15181,16 +15323,14 @@ static void init_choosers(s7_scheme *sc)
   indirect_one_zero_2 = clm_make_function(sc, "one-zero", g_indirect_one_zero_2, 2, 0, false, "one-zero optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
 
-  f = s7_name_to_value(sc, "two-zero");
-  s7_function_set_chooser(sc, f, two_zero_chooser);
+  GEN_F2("two-zero", two_zero);
 
   two_zero_2 = clm_make_function(sc, "two-zero", g_two_zero_2, 2, 0, false, "two-zero optimization", f,
 				 mul_c_two_zero_2, mul_s_two_zero_2, env_two_zero_2, NULL, NULL, NULL);
   direct_two_zero_2 = clm_make_function(sc, "two-zero", g_direct_two_zero_2, 2, 0, false, "two-zero optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_two_zero_2 = clm_make_function(sc, "two-zero", g_indirect_two_zero_2, 2, 0, false, "two-zero optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
-  f = s7_name_to_value(sc, "moving-average");
-  s7_function_set_chooser(sc, f, moving_average_chooser);
+  GEN_F2("moving-average", moving_average);
 
   moving_average_2 = clm_make_function(sc, "moving-average", g_moving_average_2, 2, 0, false, "moving-average optimization", f,
 				       mul_c_moving_average_2, mul_s_moving_average_2, env_moving_average_2, NULL, NULL, NULL);
@@ -15199,16 +15339,14 @@ static void init_choosers(s7_scheme *sc)
   indirect_moving_average_2 = clm_make_function(sc, "moving-average", g_indirect_moving_average_2, 2, 0, false, "moving-average optimization", f, 
 						NULL, NULL, NULL, NULL, NULL, NULL);
 
-  f = s7_name_to_value(sc, "filter");
-  s7_function_set_chooser(sc, f, filter_chooser);
+  GEN_F2("filter", filter);
 
   filter_2 = clm_make_function(sc, "filter", g_filter_2, 2, 0, false, "filter optimization", f,
 			       mul_c_filter_2, mul_s_filter_2, env_filter_2, NULL, NULL, NULL);
   direct_filter_2 = clm_make_function(sc, "filter", g_direct_filter_2, 2, 0, false, "filter optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_filter_2 = clm_make_function(sc, "filter", g_indirect_filter_2, 2, 0, false, "filter optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
-  f = s7_name_to_value(sc, "fir-filter");
-  s7_function_set_chooser(sc, f, fir_filter_chooser);
+  GEN_F2("fir-filter", fir_filter);
 
   fir_filter_2 = clm_make_function(sc, "fir-filter", g_fir_filter_2, 2, 0, false, "fir-filter optimization", f,
 				   mul_c_fir_filter_2, mul_s_fir_filter_2, env_fir_filter_2, NULL, NULL, NULL);
@@ -15217,8 +15355,7 @@ static void init_choosers(s7_scheme *sc)
   indirect_fir_filter_2 = clm_make_function(sc, "fir-filter", g_indirect_fir_filter_2, 2, 0, false, "fir-filter optimization", f,
 					  NULL, NULL, NULL, NULL, NULL, NULL);
 
-  f = s7_name_to_value(sc, "iir-filter");
-  s7_function_set_chooser(sc, f, iir_filter_chooser);
+  GEN_F2("iir-filter", iir_filter);
 
   iir_filter_2 = clm_make_function(sc, "iir-filter", g_iir_filter_2, 2, 0, false, "iir-filter optimization", f,
 				   mul_c_iir_filter_2, mul_s_iir_filter_2, env_iir_filter_2, NULL, NULL, NULL);
@@ -15227,8 +15364,7 @@ static void init_choosers(s7_scheme *sc)
   indirect_iir_filter_2 = clm_make_function(sc, "iir-filter", g_indirect_iir_filter_2, 2, 0, false, "iir-filter optimization", f,
 					  NULL, NULL, NULL, NULL, NULL, NULL);
 
-  f = s7_name_to_value(sc, "triangle-wave");
-  s7_function_set_chooser(sc, f, triangle_wave_chooser);
+  GEN_F("triangle-wave", triangle_wave);
 
   triangle_wave_2 = clm_make_function(sc, "triangle-wave", g_triangle_wave_2, 2, 0, false, "triangle-wave optimization", f,
 				      mul_c_triangle_wave_2, mul_s_triangle_wave_2, env_triangle_wave_2, NULL, NULL, NULL);
@@ -15239,8 +15375,7 @@ static void init_choosers(s7_scheme *sc)
   triangle_wave_1 = clm_make_function(sc, "triangle-wave", g_triangle_wave_1, 1, 0, false, "triangle-wave optimization", f,
 				      NULL, NULL, NULL, mul_c_triangle_wave_1, mul_s_triangle_wave_1, env_triangle_wave_1);
 
-  f = s7_name_to_value(sc, "sawtooth-wave");
-  s7_function_set_chooser(sc, f, sawtooth_wave_chooser);
+  GEN_F("sawtooth-wave", sawtooth_wave);
 
   sawtooth_wave_2 = clm_make_function(sc, "sawtooth-wave", g_sawtooth_wave_2, 2, 0, false, "sawtooth-wave optimization", f,
 				      mul_c_sawtooth_wave_2, mul_s_sawtooth_wave_2, env_sawtooth_wave_2, NULL, NULL, NULL);
@@ -15251,8 +15386,7 @@ static void init_choosers(s7_scheme *sc)
   sawtooth_wave_1 = clm_make_function(sc, "sawtooth-wave", g_sawtooth_wave_1, 1, 0, false, "sawtooth-wave optimization", f,
 				      NULL, NULL, NULL, mul_c_sawtooth_wave_1, mul_s_sawtooth_wave_1, env_sawtooth_wave_1);
 
-  f = s7_name_to_value(sc, "square-wave");
-  s7_function_set_chooser(sc, f, square_wave_chooser);
+  GEN_F("square-wave", square_wave);
 
   square_wave_2 = clm_make_function(sc, "square-wave", g_square_wave_2, 2, 0, false, "square-wave optimization", f,
 				    mul_c_square_wave_2, mul_s_square_wave_2, env_square_wave_2, NULL, NULL, NULL);
@@ -15263,8 +15397,7 @@ static void init_choosers(s7_scheme *sc)
   square_wave_1 = clm_make_function(sc, "square-wave", g_square_wave_1, 1, 0, false, "square-wave optimization", f,
 				    NULL, NULL, NULL, mul_c_square_wave_1, mul_s_square_wave_1, env_square_wave_1);
 
-  f = s7_name_to_value(sc, "pulse-train");
-  s7_function_set_chooser(sc, f, pulse_train_chooser);
+  GEN_F("pulse-train", pulse_train);
 
   pulse_train_2 = clm_make_function(sc, "pulse-train", g_pulse_train_2, 2, 0, false, "pulse-train optimization", f,
 				    mul_c_pulse_train_2, mul_s_pulse_train_2, env_pulse_train_2, NULL, NULL, NULL);
@@ -15281,8 +15414,7 @@ static void init_choosers(s7_scheme *sc)
   mus_random_c = clm_make_function(sc, "mus-random", g_mus_random_c, 1, 0, false, "mus-random optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
 
-  f = s7_name_to_value(sc, "rand");
-  s7_function_set_chooser(sc, f, rand_chooser);
+  GEN_F("rand", rand);
 
   rand_1 = clm_make_function(sc, "rand", g_rand_1, 1, 0, false, "rand optimization", f,
 			     NULL, NULL, NULL, mul_c_rand_1, mul_s_rand_1, env_rand_1);
@@ -15291,8 +15423,7 @@ static void init_choosers(s7_scheme *sc)
   direct_rand_2 = clm_make_function(sc, "rand", g_direct_rand_2, 2, 0, false, "rand optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_rand_2 = clm_make_function(sc, "rand", g_indirect_rand_2, 2, 0, false, "rand optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
-  f = s7_name_to_value(sc, "rand-interp");
-  s7_function_set_chooser(sc, f, rand_interp_chooser);
+  GEN_F("rand-interp", rand_interp);
 
   rand_interp_1 = clm_make_function(sc, "rand-interp", g_rand_interp_1, 1, 0, false, "rand-interp optimization", f,
 				    NULL, NULL, NULL, mul_c_rand_interp_1, mul_s_rand_interp_1, env_rand_interp_1);
@@ -15304,8 +15435,7 @@ static void init_choosers(s7_scheme *sc)
 					   NULL, NULL, NULL, NULL, NULL, NULL);
 
 
-  f = s7_name_to_value(sc, "formant");
-  s7_function_set_chooser(sc, f, formant_chooser);
+  GEN_F2("formant", formant);
 
   formant_2 = clm_make_function(sc, "formant", g_formant_2, 2, 0, false, "formant optimization", f,
 				mul_c_formant_2, mul_s_formant_2, env_formant_2, NULL, NULL, NULL);
@@ -15322,8 +15452,7 @@ static void init_choosers(s7_scheme *sc)
 
 
 
-  f = s7_name_to_value(sc, "firmant");
-  s7_function_set_chooser(sc, f, firmant_chooser);
+  GEN_F2("firmant", firmant);
 
   firmant_2 = clm_make_function(sc, "firmant", g_firmant_2, 2, 0, false, "firmant optimization", f,
 				mul_c_firmant_2, mul_s_firmant_2, env_firmant_2, NULL, NULL, NULL);
@@ -15331,8 +15460,7 @@ static void init_choosers(s7_scheme *sc)
   indirect_firmant_2 = clm_make_function(sc, "firmant", g_indirect_firmant_2, 2, 0, false, "firmant optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
 
-  f = s7_name_to_value(sc, "all-pass");
-  s7_function_set_chooser(sc, f, all_pass_chooser);
+  GEN_F2("all-pass", all_pass);
 
   all_pass_2 = clm_make_function(sc, "all-pass", g_all_pass_2, 2, 0, false, "all-pass optimization", f, mul_c_all_pass_2, mul_s_all_pass_2, env_all_pass_2, NULL, NULL, NULL);
   direct_all_pass_2 = clm_make_function(sc, "all-pass", g_direct_all_pass_2, 2, 0, false, "all-pass optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -15346,8 +15474,7 @@ static void init_choosers(s7_scheme *sc)
   nrev_all_passes = clm_make_function(sc, "all-pass", g_nrev_all_passes, 2, 0, false, "all-pass optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
 
-  f = s7_name_to_value(sc, "delay");
-  s7_function_set_chooser(sc, f, delay_chooser);
+  GEN_F2("delay", delay);
 
   delay_2 = clm_make_function(sc, "delay", g_delay_2, 2, 0, false, "delay optimization", f,
 			      mul_c_delay_2, mul_s_delay_2, env_delay_2, NULL, NULL, NULL);
@@ -15362,14 +15489,14 @@ static void init_choosers(s7_scheme *sc)
   polynomial_cos = clm_make_function_no_choice(sc, "polynomial", g_polynomial_cos, 2, 0, false, "polynomial optimization", f);
 
 
-  f = s7_name_to_value(sc, "polyshape");
-  s7_function_set_chooser(sc, f, polyshape_chooser);
+  GEN_F2("polyshape", polyshape);
 
   polyshape_2 = clm_make_function(sc, "polyshape", g_polyshape_2, 2, 0, false, "polyshape optimization", f,
 				mul_c_polyshape_2, mul_s_polyshape_2, env_polyshape_2, NULL, NULL, NULL);
   direct_polyshape_2 = clm_make_function(sc, "polyshape", g_direct_polyshape_2, 2, 0, false, "polyshape optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_polyshape_2 = clm_make_function(sc, "polyshape", g_indirect_polyshape_2, 2, 0, false, "polyshape optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   polyshape_three = clm_make_function(sc, "polyshape", g_polyshape_three, 3, 0, false, "polyshape optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
+
 
   f = s7_name_to_value(sc, "pulsed-env");
   s7_function_set_chooser(sc, f, pulsed_env_chooser);
@@ -15378,8 +15505,7 @@ static void init_choosers(s7_scheme *sc)
   /* this includes the returns_temp bit */
 
 
-  f = s7_name_to_value(sc, "ssb-am");
-  s7_function_set_chooser(sc, f, ssb_am_chooser);
+  GEN_F2("ssb-am", ssb_am);
 
   ssb_am_2 = clm_make_function(sc, "ssb-am", g_ssb_am_2, 2, 0, false, "ssb-am optimization", f,
 				mul_c_ssb_am_2, mul_s_ssb_am_2, env_ssb_am_2, NULL, NULL, NULL);
@@ -15396,8 +15522,7 @@ static void init_choosers(s7_scheme *sc)
 
 
 
-  f = s7_name_to_value(sc, "asymmetric-fm");
-  s7_function_set_chooser(sc, f, asymmetric_fm_chooser);
+  GEN_F2("asymmetric-fm", asymmetric_fm);
 
   asymmetric_fm_2 = clm_make_function(sc, "asymmetric-fm", g_asymmetric_fm_2, 2, 0, false, "asymmetric-fm optimization", f,
 				mul_c_asymmetric_fm_2, mul_s_asymmetric_fm_2, env_asymmetric_fm_2, NULL, NULL, NULL);
@@ -15408,8 +15533,7 @@ static void init_choosers(s7_scheme *sc)
   asymmetric_fm_3 = clm_make_function(sc, "asymmetric-fm", g_asymmetric_fm_3, 3, 0, false, "asymmetric-fm optimization", f,
 				       NULL, NULL, NULL, NULL, NULL, NULL);
 
-  f = s7_name_to_value(sc, "filtered-comb");
-  s7_function_set_chooser(sc, f, filtered_comb_chooser);
+  GEN_F2("filtered-comb", filtered_comb);
 
   filtered_comb_2 = clm_make_function(sc, "filtered-comb", g_filtered_comb_2, 2, 0, false, "filtered-comb optimization", f,
 				mul_c_filtered_comb_2, mul_s_filtered_comb_2, env_filtered_comb_2, NULL, NULL, NULL);

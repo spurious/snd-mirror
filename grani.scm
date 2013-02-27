@@ -586,7 +586,8 @@
 
 		      (do ((gr-offset gr-start-sample (+ gr-offset 1)))
 			  ((= gr-offset grend))
-			(locsig loc gr-offset (* (* (env amp-env) (table-lookup gr-env)) 
+			(locsig loc gr-offset (* (env amp-env) 
+						 (table-lookup gr-env)
 						 (src in-file-reader)))))))))))))
 
 
