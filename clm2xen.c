@@ -10493,6 +10493,8 @@ static s7_pointer g_indirect_locsig_3(s7_scheme *sc, s7_pointer args)
   return(XEN_ZERO);
 }
 
+static s7_pointer g_mul_env_direct_any(s7_scheme *sc, s7_pointer args);
+
 static s7_pointer indirect_locsig_3_looped;
 static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
 {
@@ -10502,6 +10504,9 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
   mus_any *locs = NULL;
 
   /* args: (4410 loc gr-offset (* (* (env amp-env) (table-lookup gr-env)) (src in-file-reader)))
+                               (* (env amp-env) (table-lookup s (rand ran-vib)))
+                               (* (env amp-f) (oscil carrier (+ (env freq-f) (* (env dev-f) (rand modulator (env rfreq-f))))))
+                               (* (env amp-env) (src in-file-reader) (+ (* (env gr-int-env) (table-lookup gr-env-end)) (* (env gr-int-env-1) (table-lookup gr-env))))
    */
   stepper = car(args);
   callee = s7_slot(sc, caddr(args));
@@ -10516,9 +10521,24 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR_CADR(args, locsig, locs);
   callee = cadddr(args);
 
-  for (; pos < end; pos++)
-    mus_locsig(locs, pos, s7_number_to_real(sc, s7_call_direct(sc, callee)));
+#if 0
+  if (s7_function_choice(sc, callee) == g_mul_env_direct_any)
+    {
+      mus_any *e;
+      GET_GENERATOR_CADR(cadr(callee), env, e);
+      callee = cddr(callee);
 
+      fprintf(stderr, "%lld: %s\n", end - pos, DISPLAY(callee));
+      /* this needs to loop through the args, or check in advance for len==3|4 etc */
+      for (; pos < end; pos++)
+	mus_locsig(locs, pos, mus_env(e) * s7_number_to_real(sc, s7_call_direct(sc, callee)));
+    }
+  else
+#endif
+    {
+      for (; pos < end; pos++)
+	mus_locsig(locs, pos, s7_number_to_real(sc, s7_call_direct(sc, callee)));
+    }
   (*step) = end;
   return(args);
 }
@@ -11862,7 +11882,11 @@ static s7_pointer g_outa_env_oscil_env_looped(s7_scheme *sc, s7_pointer args)
 #define GEN_1_C 6
 #define GEN_2_C 7
 
-#define NUM_CHOICES 8
+#define GEN_DIRECT_1 8
+#define GEN_DIRECT_2 9
+#define GEN_DIRECT_CHECKER 10
+
+#define NUM_CHOICES 11
 
 static s7_pointer *make_choices(s7_pointer mul_c, s7_pointer mul_s, s7_pointer e, s7_pointer mul_c1, s7_pointer mul_s1, s7_pointer e1)
 {
@@ -11881,7 +11905,14 @@ static void init_choices(void)
 {
   s7_pointer * choices;
 
-#define SET_GEN_1(Gen, CFun) choices = (s7_pointer *)s7_function_chooser_data_direct(Gen ## _1); choices[GEN_1_C] = (s7_pointer)CFun;
+#define SET_GEN_1(Gen, CFun) \
+  {\
+    choices = (s7_pointer *)s7_function_chooser_data_direct(Gen ## _1); \
+    choices[GEN_1_C] = (s7_pointer)CFun; \
+    choices[GEN_DIRECT_1] = (s7_pointer)CFun; \
+    choices[GEN_DIRECT_CHECKER] = (s7_pointer)g_ ## Gen ## _p; \
+  }
+
   SET_GEN_1(oscil, mus_oscil_unmodulated)
   SET_GEN_1(polywave, mus_polywave_unmodulated)
   SET_GEN_1(rand, mus_rand_unmodulated)
@@ -11903,7 +11934,13 @@ static void init_choices(void)
   SET_GEN_1(convolve, mus_convolve_simple)
   SET_GEN_1(phase_vocoder, mus_phase_vocoder_simple)
 
-#define SET_GEN_2(Gen, CFun) choices = (s7_pointer *)s7_function_chooser_data_direct(Gen ## _2); choices[GEN_2_C] = (s7_pointer)CFun;
+#define SET_GEN_2(Gen, CFun) \
+  {\
+    choices = (s7_pointer *)s7_function_chooser_data_direct(Gen ## _2); \
+    choices[GEN_2_C] = (s7_pointer)CFun; \
+    choices[GEN_DIRECT_2] = (s7_pointer)CFun; \
+  }
+
   SET_GEN_2(polywave, mus_polywave)
   SET_GEN_2(oscil, mus_oscil_fm)
   SET_GEN_2(comb, mus_comb_unmodulated_noz)

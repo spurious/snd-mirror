@@ -4827,17 +4827,17 @@
 	      (snd-display #__line__ ";~A: find and maxamp-position disagree: ~A (~A) ~A (~A)" 
 			   name pos (sample pos ind 0) maxpos (sample maxpos ind 0))))
       (let ((mx 0.0)
-	    (ctr 0)
+	    (data #f)
 	    (mpos 0)
 	    (len (frames ind))
 	    (reader (make-sampler 0 ind)))
+	(set! data (make-vct len))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
-	  (let ((y (next-sample reader)))
-	    (if (> (abs y) mx)
-		(begin
-		  (set! mpos i)
-		  (set! mx (abs y))))))
+	  (vct-set! data i (next-sample reader)))
+	(let ((info (vct-peak-and-location data)))
+	  (set! mpos (cadr info))
+	  (set! mx (car info)))
 	(if (not (= mpos maxpos))
 	    (snd-display #__line__ ";(~D) scan and maxamp-position disagree: ~A ~A" caller-line mpos maxpos))
 	(if (fneq mx val) (snd-display #__line__ ";(~D) actual ~A max: ~A (correct: ~A)" caller-line name mx val)))))
@@ -7536,29 +7536,28 @@ EDITS: 5
 	(let* ((ind (open-sound "oboe.snd"))
 	       (mx (maxamp ind 0))
 	       (e0 (channel-amp-envs ind 0)))
-	  
+
 	  (define (peak-env-equal? name index e diff)
 	    (let ((reader (make-sampler 0 index 0))
 		  (e-size (vct-length (car e))))
 	      (let ((samps-per-bin (ceiling (/ (frames index) e-size)))
 		    (mins (car e))
 		    (maxs (cadr e))
-		    (max-diff 0.0)
 		    (happy #t)
-		    (e-bin 0)
-		    (mx -10.0)
-		    (mn 10.0))
-	      (do ((samp 0 (+ samp 1)))
-		  ((or (not happy) 
-		       (= e-bin e-size))
-		   happy)
-		(if (>= samp (floor samps-per-bin))
+		    (data #f))
+		(set! data (make-vct samps-per-bin))
+		(do ((e-bin 0 (+ e-bin 1)))
+		    ((or (not happy) 
+			 (= e-bin e-size))
+		     happy)
+		  (do ((k 0 (+ k 1)))
+		      ((= k samps-per-bin))
+		    (vct-set! data k (next-sample reader)))
+		  
+		  (let ((mx (vct-max data))
+			(mn (vct-min data)))
 		    (let ((mxdiff (abs (- mx (maxs e-bin))))
 			  (mndiff (abs (- mn (mins e-bin)))))
-		      (if (> mxdiff max-diff)
-			  (set! max-diff mxdiff))
-		      (if (> mndiff max-diff)
-			  (set! max-diff mndiff))
 		      (if (or (> mxdiff diff)
 			      (> mndiff diff))
 			  (begin
@@ -7567,16 +7566,7 @@ EDITS: 5
 					 e-bin e-size
 					 mn mx
 					 (max mxdiff mndiff))
-			    (set! happy #f)))
-		      (set! samp 0)
-		      (set! mx -10.0)
-		      (set! mn 10.0)
-		      (set! e-bin (+ e-bin 1))))
-		(let ((val (next-sample reader)))
-		  (if (< val mn)
-		      (set! mn val))
-		  (if (> val mx)
-		      (set! mx val)))))))
+			    (set! happy #f)))))))))
 	  
 	  (if (null? e0)
 	      (snd-display #__line__ ";no amp env data")
@@ -27241,14 +27231,14 @@ EDITS: 2
     (set! (selection-position) beg)
     (set! (selection-frames) len)
     (scale-selection-to maxval)
-    (let* ((newmax 0.0)
-	   (new-reader (make-sampler beg ind 0)))
+    (let ((new-reader (make-sampler beg ind 0))
+	  (data (make-vct len)))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
-	(let ((nv (abs (next-sample new-reader))))
-	  (if (> nv newmax) (set! newmax nv))))
-      (if (fneq newmax maxval)
-	  (snd-display #__line__ ";scale-selection-to (~D ~D) ~A: ~A?" beg len maxval newmax))
+	(vct-set! data i (next-sample new-reader)))
+      (let ((newmax (vct-peak data)))
+	(if (fneq newmax maxval)
+	    (snd-display #__line__ ";scale-selection-to (~D ~D) ~A: ~A?" beg len maxval newmax)))
       (free-sampler new-reader)))
   
   (define play-with-amps
@@ -47352,6 +47342,7 @@ EDITS: 1
 ;; 11-Feb-13: #(1 1 3 2 49 170 5 1 463 1 15 1 1 11 46 1 216 1 2 158 42 110 1 1456 0 0 0 1 1 80)  ;  28
 ;; 15-Feb-13: #(1 1 2 2 42 160 5 1 450 1 18 1 1 10 21 1 196 1 1 158 42 107 1 1407 0 0 0 1 1 79)  ;  27
 ;; 21-Feb-13: #(1 1 2 2 43 159 6 1 448 1 12 1 2 10 20 1 189 1 2 156 41 106 1 1331 0 0 0 1 1 76)  ;  26
+;; 26-Feb-13: #(1 1 2 2 42 118 5 1 450 1 16 1 2 11 19 1  97 1 1 161 42 105 1 1323 0 0 0 1 2 74)  ;  25
 
 ;;; -------- cleanup temp files
 
@@ -47578,21 +47569,21 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-25-Feb:
-79,104,397,775
-12,063,845,680  s7.c:eval [/home/bil/snd-13/snd]
- 6,254,003,929  ???:sin [/lib64/libm-2.12.so]
- 4,631,382,918  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+26-Feb:
+77,481,320,948
+11,500,197,084  s7.c:eval [/home/bil/snd-13/snd]
+ 6,230,743,444  ???:sin [/lib64/libm-2.12.so]
+ 4,455,680,549  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
  2,970,010,915  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,769,403,275  s7.c:eval'2 [/home/bil/snd-13/snd]
- 2,589,092,212  ???:cos [/lib64/libm-2.12.so]
- 2,576,173,441  s7.c:gc [/home/bil/snd-13/snd]
- 2,427,208,760  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,812,960,021  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 2,611,924,949  ???:cos [/lib64/libm-2.12.so]
+ 2,497,189,350  s7.c:gc [/home/bil/snd-13/snd]
+ 2,428,764,956  clm.c:mus_src [/home/bil/snd-13/snd]
  2,327,317,731  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
  1,585,058,070  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,576,915,733  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 1,422,643,886  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,307,556,425  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 1,427,876,707  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 1,351,933,020  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,178,200,167  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 1,152,084,155  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
 |#

@@ -261,33 +261,24 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (adsat size (beg 0) dur snd chn)
   "(adsat size beg dur snd chn) is an 'adaptive saturation' sound effect"
   (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
-	 (data (make-vct len)))
+	 (data (make-vct (* size (ceiling (/ len size))))))
     (let ((reader (make-sampler beg snd chn))
 	  (mn 0.0)
 	  (mx 0.0)
-	  (n 0)
-	  (pos 0)
 	  (vals (make-vct size)))
-      (do ((i 0 (+ i 1)))
-	  ((= i len))
-	(let ((val (next-sample reader)))
-	  (if (= n size)
-	      (begin
-		(do ((k 0 (+ k 1)))
-		    ((= k size))
-		  (if (>= (vals k) 0.0)
-		      (vct-set! data (+ pos k) mx)
-		      (vct-set! data (+ pos k) mn)))
-		(set! pos (+ pos size))
-		(set! n 0)
-		(set! mx 0.0)
-		(set! mn 0.0))
-	      (begin
-		(set! (vals n) val)
-		(if (> val mx) (set! mx val))
-		(if (< val mn) (set! mn val))
-		(set! n (+ n 1))))))
-      (vct->channel data beg pos snd chn current-edit-position (format #f "adsat ~A ~A ~A" size beg dur)))))
+      (do ((i 0 (+ i size)))
+	  ((>= i len))
+	(do ((k 0 (+ k 1)))
+	    ((= k size))
+	  (vct-set! vals k (next-sample reader)))
+	(set! mn (vct-min vals))
+	(set! mx (vct-max vals))
+	(do ((k 0 (+ k 1)))
+	    ((= k size))
+	  (if (negative? (vct-ref vals k))
+	      (vct-set! data (+ i k) mn)
+	      (vct-set! data (+ i k) mx))))
+      (vct->channel data beg len snd chn current-edit-position (format #f "adsat ~A ~A ~A" size beg dur)))))
 
 
 ;;; -------- spike
@@ -1387,8 +1378,8 @@ the era when computers were human beings"
 
 ;;; -------- end of JOS stuff --------
 
-
-(define* (channel-distance (s1 0) (c1 0) (s2 0) (c2 1))    ; sqrt(<f - g, f - g>)
+#|
+(define* (channel-distance-1 (s1 0) (c1 0) (s2 0) (c2 1))    ; sqrt(<f - g, f - g>)
   "(channel-distance s1 c1 s2 c2) returns the euclidean distance between the two channels: sqrt(<f-g,f-g>)"
   (let ((r1 (make-sampler 0 s1 c1))
 	(r2 (make-sampler 0 s2 c2))
@@ -1400,6 +1391,26 @@ the era when computers were human beings"
        (set! diff (- (r1) (r2)))
        (set! sum (+ sum (* diff diff))))
     (sqrt sum)))
+|#
+(define* (channel-distance (s1 0) (c1 0) (s2 0) (c2 1))    ; sqrt(<f - g, f - g>)
+  "(channel-distance s1 c1 s2 c2) returns the euclidean distance between the two channels: sqrt(<f-g,f-g>)"
+  (let ((r1 (make-sampler 0 s1 c1))
+	(r2 (make-sampler 0 s2 c2))
+	(sum 0.0)
+	(N (min (frames s1 c1) (frames s2 c2)))
+	(diff 0.0)
+	(data1 #f)
+	(data2 #f))
+    (set! data1 (make-vct N))
+    (set! data2 (make-vct N))
+    (do ((i 0 (+ i 1)))
+	((= i N))
+      (vct-set! data1 i (next-sample r1)))
+    (do ((i 0 (+ i 1)))
+	((= i N))
+      (vct-set! data2 i (next-sample r2)))
+    (vct-subtract! data1 data2)
+    (sqrt (dot-product data1 data1))))
 
 
 (define (periodogram N)

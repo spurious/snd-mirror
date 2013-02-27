@@ -1475,25 +1475,22 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	 (fil (mus-sound-open-output tempfilename (srate snd) 1 #f mus-next "env-sound-interp temp file"))
 	 ;; #f as data-format -> format compatible with sndlib (so no data translation is needed)
 	 (bufsize 8192)
-	 (data (make-sound-data 1 bufsize))
-	 (data-ctr 0)
-	 (interp 0.0))
-    (do ((i 0 (+ i 1)))
-	((= i newlen))
-      (set! interp (reader (env read-env)))
-      (sound-data-set! data 0 data-ctr interp)
-      (set! data-ctr (+ data-ctr 1))
-      (if (= bufsize data-ctr)
-	  (begin
-	    (mus-sound-write fil 0 (- bufsize 1) 1 data)
-	    (set! data-ctr 0))))
-    (if (> data-ctr 0)
-	(mus-sound-write fil 0 (- data-ctr 1) 1 data))
+	 (data (make-sound-data 1 bufsize)))
+    (do ((i 0 (+ i bufsize)))
+	((>= i newlen))
+      (let ((stop (min (- newlen i) bufsize)))
+	(do ((k 0 (+ k 1)))
+	    ((= k stop))
+	  (sound-data-set! data 0 k (reader (env read-env))))
+	(mus-sound-write fil 0 (- stop 1) 1 data))) ; beg end as args, so end->len-1
     (mus-sound-close-output fil (* (mus-bytes-per-sample mus-out-format) newlen))
     ;; #t trunc arg to set samples shortens the sound as needed
     (set-samples 0 newlen tempfilename snd chn #t
 		 (format #f "env-sound-interp '~A ~A" envelope time-scale))
     (delete-file tempfilename)))
+
+;;; (env-sound-interp '(0 0 1 1 2 0) 2.0)
+
 
 
 ;;; here's a very similar function that uses granular synthesis to move at a varying tempo through a sound
@@ -1537,10 +1534,10 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 	      (set! next-reader-starts-at (+ next-reader-starts-at hop-frames))))
 
 	(let ((sum 0.0))
-	  (do ((i 0 (+ i 1)))
-	      ((= i num-readers))
-	    (if (sampler? (readers i))
-		(set! sum (+ sum (* (env (grain-envs i)) (next-sample (readers i)))))))
+	  (do ((k 0 (+ k 1)))
+	      ((= k num-readers))
+	    (if (sampler? (readers k))
+		(set! sum (+ sum (* (env (grain-envs k)) (next-sample (readers k)))))))
 	  (sound-data-set! data 0 data-ctr sum))
 
 	(set! data-ctr (+ data-ctr 1))

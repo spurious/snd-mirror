@@ -830,6 +830,12 @@ static s7_pointer g_vct_set_direct(s7_scheme *sc, s7_pointer args)
   return(s7_f(sc));
 }
 
+/* this needs to parallel clm2xen.c */
+#define GEN_DIRECT_1 8
+#define GEN_DIRECT_2 9
+#define GEN_DIRECT_CHECKER 10
+#define NUM_CHOICES 11
+
 static s7_pointer vct_set_direct_looped;
 static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 {
@@ -863,6 +869,8 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	  if (s7_is_symbol(s7_cadr(val)))
 	    {
 	      s7_pointer obj;
+	      s7_pointer *choices;
+
 	      obj = s7_cadr_value(sc, val);
 	      if (mus_xen_p(obj))
 		{
@@ -883,6 +891,28 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 			v->data[pos] = mus_readin(g);
 		      (*step) = end;
 		      return(args);
+		    }
+		}
+
+	      choices = s7_function_chooser_data(sc, val);
+	      if (choices)
+		{
+		  if ((choices[GEN_DIRECT_1]) &&
+		      (choices[GEN_DIRECT_CHECKER]))
+		    {					
+		      void *gen;
+		      mus_float_t (*sampler)(void *p);
+		      bool (*is_sampler)(s7_pointer p);
+		      sampler = (mus_float_t (*)(void *p))(choices[GEN_DIRECT_1]);
+		      is_sampler = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+		      gen = s7_object_value(obj);
+		      if (is_sampler(obj))
+			{
+			  for (; pos < end; pos++) 
+			    v->data[pos] = sampler(gen);
+			  (*step) = end;
+			  return(args);
+			}
 		    }
 		}
 	    }
@@ -1022,7 +1052,6 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 
 static s7_pointer vct_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  /* fprintf(stderr, "expr: %s\n", DISPLAY(expr)); */
   if (args == 3)
     {
 #if (!WITH_GMP)
@@ -1451,6 +1480,42 @@ static XEN g_vct_to_vector(XEN vobj)
   return(new_vect);
 }
 
+/* TODO: doc/test vct-min|max */
+#define S_vct_max "vct-max"
+static XEN g_vct_max(XEN vobj)
+{
+  #define H_vct_max "(" S_vct_max " vct): returns the maximum element of vct"
+  vct *v;
+  mus_long_t i, len;
+  mus_float_t mx;
+  XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_max, "a vct");
+  v = XEN_TO_VCT(vobj);
+  len = v->length;
+  mx = v->data[0];
+  for (i = 1; i < len; i++)
+    if (v->data[i] > mx)
+      mx = v->data[i];
+  return(C_TO_XEN_DOUBLE(mx));
+}
+
+
+#define S_vct_min "vct-min"
+static XEN g_vct_min(XEN vobj)
+{
+  #define H_vct_min "(" S_vct_min " vct): returns the minimum element of vct"
+  vct *v;
+  mus_long_t i, len;
+  mus_float_t mx;
+  XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_min, "a vct");
+  v = XEN_TO_VCT(vobj);
+  len = v->length;
+  mx = v->data[0];
+  for (i = 1; i < len; i++)
+    if (v->data[i] < mx)
+      mx = v->data[i];
+  return(C_TO_XEN_DOUBLE(mx));
+}
+
 
 static XEN g_vct_reverse(XEN vobj, XEN size)
 {
@@ -1531,6 +1596,8 @@ XEN_ARGIFY_2(g_vct_reverse_w, g_vct_reverse)
 XEN_NARGIFY_1(g_vct_to_readable_string_w, g_vct_to_readable_string)
 XEN_NARGIFY_2(g_vct_times_w, g_vct_times)
 XEN_NARGIFY_2(g_vct_plus_w, g_vct_plus)
+XEN_NARGIFY_1(g_vct_max_w, g_vct_max)
+XEN_NARGIFY_1(g_vct_min_w, g_vct_min)
 #else
 #define g_make_vct_w g_make_vct
 #define g_vct_copy_w g_vct_copy
@@ -1557,6 +1624,8 @@ XEN_NARGIFY_2(g_vct_plus_w, g_vct_plus)
 #define g_vct_to_readable_string_w g_vct_to_readable_string
 #define g_vct_times_w g_vct_times
 #define g_vct_plus_w g_vct_plus
+#define g_vct_max_w g_vct_max
+#define g_vct_min_w g_vct_min
 #endif
 
 
@@ -1912,6 +1981,8 @@ void mus_vct_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_setB,          g_vct_set_w,       3, 0, 0, H_vct_setB);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_times,         g_vct_times_w,     2, 0, 0, H_vct_times);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_plus,          g_vct_plus_w,      2, 0, 0, H_vct_plus);
+  XEN_DEFINE_SAFE_PROCEDURE(S_vct_max,           g_vct_max_w,       1, 0, 0, H_vct_max);
+  XEN_DEFINE_SAFE_PROCEDURE(S_vct_min,           g_vct_min_w,       1, 0, 0, H_vct_min);
 
 #if HAVE_SCHEME && 0
   g_vct_methods = s7_eval_c_string(s7, "(augment-environment ()                                        \n\

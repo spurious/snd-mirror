@@ -42967,6 +42967,12 @@ static s7_pointer step_dox_c_c(s7_scheme *sc, s7_pointer code, s7_pointer slot)
   return(c_call(code)(sc, cdr(code)));
 }
 
+static s7_pointer step_dox_c_c_s_indirect(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+{
+  car(sc->T1_1) = slot_value(slot_pending_value(slot));
+  return(((s7_function)c_function_call(c_function_base(ecdr(code))))(sc, sc->T1_1));
+}
+
 static s7_pointer step_dox_c_s(s7_scheme *sc, s7_pointer code, s7_pointer slot)
 {
   car(sc->T1_1) = finder(sc, cadr(code));
@@ -43191,6 +43197,10 @@ static dox_function step_dox_eval(s7_scheme *sc, s7_pointer code, s7_pointer var
 	    return(dox_add_tf);
 #endif
 	}
+      if ((var) &&
+	  (is_symbol(cadr(code))) &&
+	  (is_null(cddr(code))))
+	return(step_dox_c_c_s_indirect);
       return(step_dox_c_c);
 
     case HOP_SAFE_C_S:       
@@ -46184,6 +46194,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      else
 		{
 		  if ((df == step_dox_c_s_indirect) ||
+		      (df == step_dox_c_c_s_indirect) ||
 		      (df == step_dox_read_char_s))
 		    slot_pending_value(slot) = find_symbol(sc, cadar(slot_expression(slot)));
 		  else
@@ -50482,7 +50493,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case OP_SAFE_C_S_op_opSSq_Sq:
 	      if (!c_function_is_ok(sc, code))
 		break;
-	      if (!c_function_is_ok(sc, cadr(code)))
+	      if (!c_function_is_ok(sc, caddr(code)))
 		break;
 	      
 	    case HOP_SAFE_C_S_op_opSSq_Sq:
@@ -50512,7 +50523,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case OP_SAFE_C_S_op_S_opSSqq:
 	      if (!c_function_is_ok(sc, code))
 		break;
-	      if (!c_function_is_ok(sc, cadr(code)))
+	      if (!c_function_is_ok(sc, caddr(code)))
 		break;
 	      
 	    case HOP_SAFE_C_S_op_S_opSSqq:
@@ -54875,8 +54886,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* --------------- */
     case OP_LET_R:
-      /* one var, init is safe (op sym), incoming sc->code is '(((var (op sym)))...), we know cddr(sc->code) is not null
-       */
       {
 	s7_pointer binding;
 	binding = caar(sc->code);
@@ -62321,7 +62330,7 @@ s7_scheme *s7_init(void)
 
   sc->CAR =                   s7_define_safe_function(sc, "car",                     g_car,                    1, 0, false, H_car);
   sc->CDR =                   s7_define_safe_function(sc, "cdr",                     g_cdr,                    1, 0, false, H_cdr);
-  sc->SET_CARB =              s7_define_function(sc,      "set-car!",                g_set_car,                2, 0, false, H_set_car); /* ??: list-set! is safe */
+  sc->SET_CARB =              s7_define_safe_function(sc, "set-car!",                g_set_car,                2, 0, false, H_set_car); /* ?: list-set! is safe */
   sc->SET_CDRB =              s7_define_function(sc,      "set-cdr!",                g_set_cdr,                2, 0, false, H_set_cdr);
   sc->CAAR =                  s7_define_safe_function(sc, "caar",                    g_caar,                   1, 0, false, H_caar);
   sc->CADR =                  s7_define_safe_function(sc, "cadr",                    g_cadr,                   1, 0, false, H_cadr);
@@ -62365,6 +62374,10 @@ s7_scheme *s7_init(void)
     s7_pointer p;
     p = s7_symbol_value(sc, sc->LIST);
     set_copy_args(p);
+    /* currently list is not safe because this copy_args bit is being ignored in the safe func case? 
+     *  (i.e. OP_C_... as opposed to OP_SAFE_C...)
+     *  TODO: but list should not cause an otherwise safe closure to call itself unsafe -- does this happen?
+     */
   }
   sc->LIST_REF =              s7_define_safe_function(sc, "list-ref",                g_list_ref,               2, 0, true,  H_list_ref);
   sc->LIST_SET =              s7_define_safe_function(sc, "list-set!",               g_list_set,               3, 0, true,  H_list_set);
@@ -62598,6 +62611,15 @@ s7_scheme *s7_init(void)
   sc->String_Set = s7_symbol_value(sc, sc->STRING_SET);
   set_setter(sc->String_Set);
   set_setter(sc->STRING_SET);
+
+  set_setter(sc->SET_CARB);
+  set_setter(s7_symbol_value(sc, sc->SET_CARB));
+  set_setter(sc->SET_CDRB);
+  set_setter(s7_symbol_value(sc, sc->SET_CDRB));
+
+  set_setter(s7_make_symbol(sc, "set-current-input-port"));
+  set_setter(s7_make_symbol(sc, "set-current-output-port"));
+  set_setter(s7_make_symbol(sc, "set-current-error-port"));
 
   s7_function_set_setter(sc, "car",                 "set-car!");
   s7_function_set_setter(sc, "cdr",                 "set-cdr!");
@@ -62854,9 +62876,9 @@ s7_scheme *s7_init(void)
  * bench    42736 8752 8051 7725 6515 5194 4412
  * lint           9328 8140 7887 7736 7300 7287
  * index    44300 3291 3005 2742 2078 1643 1463
- * s7test    1721 1358 1297 1244  977  961  959
+ * s7test    1721 1358 1297 1244  977  961  957
  * t455|6     265   89   55   31   14   14   14
  * lat        229   63   52   47   42   40   39
  * t502        90   43   39   36   29   23   20
- * calls           275  207  175  115   89   79
+ * calls           275  207  175  115   89   77
  */

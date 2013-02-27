@@ -3403,7 +3403,8 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 			{
 			  /* lambda arg can be ignored */
 			  
-			  if (s7_function_choice_is_direct(s7, res))
+			  if ((s7_function_choice_is_direct(s7, res)) &&
+			      (s7_car(res) != s7_make_symbol(s7, "read-sample"))) /* handled directly below */			
 			    {
 			      if (s7_function_returns_temp(res))
 				{

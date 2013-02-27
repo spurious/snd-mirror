@@ -4495,13 +4495,14 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
 			     bool is_xramp, mus_any *e, int xramp_seg_loc)
 {
   mus_long_t len = 0;
-  int i;
+  int i, old_pos;
   ed_list *new_ed, *old_ed;
   bool backup = false;
   double rstart;
   /*
   fprintf(stderr,"ramp: %f %f %f %f %lld %lld\n", start, incr, scaler, offset, beg, num);
   */
+
   old_ed = cp->edits[pos];
   if ((beg < 0) || 
       (num <= 0) ||
@@ -4513,6 +4514,7 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
     return(scale_channel(cp, start, beg, num, pos, in_as_one_edit));
 
   len = old_ed->samples;
+  old_pos = pos;
 
   if (!(prepare_edit_list(cp, pos, origin))) 
     return(false);
@@ -4575,18 +4577,61 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
 	      else start *= exp(log(incr) * FRAGMENT_LENGTH(new_ed, i));
 	    }
 	}
-      if ((old_ed->maxamp_position >= 0) &&
-	  ((old_ed->maxamp_position < beg) ||
-	   (old_ed->maxamp_position > (beg + num))) &&
-	  (fabs(rstart) <= 1.0))
+      if (old_ed->maxamp_position >= 0)
 	{
-	  if (((!is_xramp) &&
-	       (fabs(rstart + incr * num) <= 1.0)) ||
-	      ((is_xramp) &&
-	       (fabs(rstart * exp(log(incr) * num)) <= 1.0)))
+	  /* we have maxamp data for the previous edit */
+	  if (((old_ed->maxamp_position < beg) ||
+	       (old_ed->maxamp_position > (beg + num))) &&
+	      (fabs(rstart) <= 1.0) &&
+	      (((!is_xramp) &&
+		(fabs(rstart + incr * num) <= 1.0)) ||
+	       ((is_xramp) &&
+		(fabs(rstart * exp(log(incr) * num)) <= 1.0))))
 	    {
+	      /* here the ramp does not hit the current maxamp and it stays within -1.0 to 1.0, so it can't affect the maxamp */
 	      new_ed->maxamp = old_ed->maxamp;
 	      new_ed->maxamp_position = old_ed->maxamp_position;
+	    }
+	  else
+	    {
+	      /* if ramped portion has a max > old max, we can use it in any case,
+	       *   but we need to do the ramp by hand here, I think.
+	       */
+	      if ((num < MAXAMP_CHECK_SIZE) &&
+		  (!is_xramp))
+		{
+		  mus_float_t mx, temp, x;
+		  int i, loc = 0;
+		  snd_fd *sf;
+		  x = rstart;
+		  sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, old_pos, num + 1);
+		  mx = fabs(x * read_sample(sf));
+		  for (i = 1; i < num; i++)
+		    {
+		      x += incr;
+		      temp = fabs(x * read_sample(sf));
+		      if (temp > mx)
+			{
+			  mx = temp;
+			  loc = i;
+			}
+		    }
+		  free_snd_fd(sf);
+		  if (mx > old_ed->maxamp)
+		    {
+		      new_ed->maxamp = mx;
+		      new_ed->maxamp_position = beg + loc;
+		    }
+		  else
+		    {
+		      if ((old_ed->maxamp_position < beg) ||
+			  (old_ed->maxamp_position > (beg + num)))
+			{
+			  new_ed->maxamp = old_ed->maxamp;
+			  new_ed->maxamp_position = old_ed->maxamp_position;
+			}
+		    }
+		}
 	    }
 	}
     }
@@ -6915,6 +6960,11 @@ static XEN g_copy_sampler(XEN obj)
 }
 
 
+static mus_float_t next_sample_direct(void *p)
+{
+  return(protected_next_sample((snd_fd *)p));
+}
+
 static XEN g_next_sample(XEN obj)
 {
   #define H_next_sample "(" S_next_sample " reader): next sample from reader"
@@ -6928,6 +6978,11 @@ static XEN g_next_sample(XEN obj)
   return(C_TO_XEN_DOUBLE(0.0));
 }
 
+
+static mus_float_t read_sample_direct(void *p)
+{
+  return(read_sample((snd_fd *)p));
+}
 
 static XEN g_read_sample(XEN obj)
 {
@@ -8567,6 +8622,75 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
   return(func);
 }
 
+#if HAVE_SCHEME
+/* this needs to parallel clm2xen.c */
+#define GEN_DIRECT_1 8
+#define GEN_DIRECT_2 9
+#define GEN_DIRECT_CHECKER 10
+#define NUM_CHOICES 11
+
+static void make_sampler_choices(s7_scheme *sc, s7_pointer f, mus_float_t (*sampler)(void *p), bool (*is_sampler)(s7_pointer p))
+{
+  s7_pointer *choices;
+  choices = (s7_pointer *)calloc(NUM_CHOICES, sizeof(s7_pointer));
+  choices[GEN_DIRECT_1] = (s7_pointer)sampler;
+  choices[GEN_DIRECT_CHECKER] = (s7_pointer)is_sampler;
+  s7_function_chooser_set_data(sc, f, (void *)choices);
+}
+
+
+static s7_pointer next_sample_s;
+static s7_pointer g_next_sample_s(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer obj;
+  obj = s7_car_value(s7, args);
+  if (SAMPLER_P(obj))
+    return(C_TO_XEN_DOUBLE(protected_next_sample((snd_fd *)XEN_OBJECT_REF(obj))));
+  if (mix_sampler_p(obj))
+    return(C_TO_XEN_DOUBLE(protected_next_sample(xen_mix_to_snd_fd(obj))));
+
+  XEN_ASSERT_TYPE(false, obj, XEN_ONLY_ARG, S_next_sample, "a sampler");
+  return(s7_f(sc));
+}
+
+static s7_pointer next_sample_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 1) &&
+      (s7_is_symbol(s7_cadr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(next_sample_s);
+    }
+  return(f);
+}
+
+static s7_pointer read_sample_s;
+static s7_pointer g_read_sample_s(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer obj;
+  obj = s7_car_value(s7, args);
+
+  if (SAMPLER_P(obj))
+    return(C_TO_XEN_DOUBLE(read_sample((snd_fd *)XEN_OBJECT_REF(obj))));
+  if (mix_sampler_p(obj))
+    return(C_TO_XEN_DOUBLE(read_sample(xen_mix_to_snd_fd(obj))));
+
+  XEN_ASSERT_TYPE(false, obj, XEN_ONLY_ARG, S_read_sample, "a sampler");
+  return(s7_f(sc));
+}
+
+static s7_pointer read_sample_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 1) &&
+      (s7_is_symbol(s7_cadr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(read_sample_s);
+    }
+  return(f);
+}
+#endif
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_5(g_make_sampler_w, g_make_sampler)
@@ -8765,6 +8889,30 @@ keep track of which files are in a given saved state batch, and a way to rename 
   mus_generator_set_location(snd_to_sample_class, snd_to_sample_location);
   mus_generator_set_extended_type(snd_to_sample_class, MUS_INPUT);
 
+
+#if HAVE_SCHEME
+  {
+    s7_pointer f;
+
+    /* next-sample */
+    f = s7_name_to_value(s7, "next-sample");
+    s7_function_set_chooser(s7, f, next_sample_chooser);
+
+    next_sample_s = s7_make_function(s7, "next-sample", g_next_sample_s, 1, 0, false, "next-sample optimization");
+    s7_function_set_class(next_sample_s, f);
+    s7_function_set_returns_temp(next_sample_s);
+    make_sampler_choices(s7, next_sample_s, next_sample_direct, sampler_p);
+
+    /* read-sample */
+    f = s7_name_to_value(s7, "read-sample");
+    s7_function_set_chooser(s7, f, read_sample_chooser);
+
+    read_sample_s = s7_make_function(s7, "read-sample", g_read_sample_s, 1, 0, false, "read-sample optimization");
+    s7_function_set_class(read_sample_s, f);
+    s7_function_set_returns_temp(read_sample_s);
+    make_sampler_choices(s7, read_sample_s, read_sample_direct, sampler_p);
+  }
+#endif
 
 #if DEBUG_EDIT_TABLES
   /* consistency checks for the accessor state table */
