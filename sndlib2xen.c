@@ -2759,6 +2759,17 @@ static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	  (chan >= sd->chans))
 	XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 2, s7_caddr(args), "channel number out of range");   
 
+      if ((s7_is_real(s7_cadr(val))) &&
+	  (s7_car(val) == s7_make_symbol(sc, "mus-random")))
+	{
+	  mus_float_t x;
+	  x = s7_number_to_real(sc, s7_cadr(val));
+	  for (; pos < end; pos++)
+	    sd->data[chan][pos] = mus_random(x);
+	  (*step) = end;
+	  return(args);
+	}
+
       for (; pos < end; pos++)
 	{
 	  (*step) = pos;

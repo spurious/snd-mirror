@@ -8626,8 +8626,9 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
 /* this needs to parallel clm2xen.c */
 #define GEN_DIRECT_1 8
 #define GEN_DIRECT_2 9
-#define GEN_DIRECT_CHECKER 10
-#define NUM_CHOICES 11
+#define GEN_DIRECT_3 10
+#define GEN_DIRECT_CHECKER 11
+#define NUM_CHOICES 12
 
 static void make_sampler_choices(s7_scheme *sc, s7_pointer f, mus_float_t (*sampler)(void *p), bool (*is_sampler)(s7_pointer p))
 {

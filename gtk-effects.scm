@@ -711,11 +711,12 @@ the modulation frequency, and the echo amplitude."))
 	result))))
 
 (define* (effects-comb-chord scaler size amp interval-one interval-two beg dur snd chn)
-  (let ((c1 (make-comb scaler size))
-	(c2 (make-comb scaler (* size interval-one)))
-	(c3 (make-comb scaler (* size interval-two))))
+  "(effects-comb-chord scaler size amp interval-one interval-two beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
+  (let ((cs (vector (make-comb scaler size)
+		    (make-comb scaler (* size interval-one))
+		    (make-comb scaler (* size interval-two)))))
     (map-channel (lambda (x)
-		   (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x))))
+		   (* amp (comb-bank cs x)))
 		 beg dur snd chn #f
 		 (format #f "effects-comb-chord ~A ~A ~A ~A ~A ~A ~A" scaler size amp interval-one interval-two beg dur))))
 
@@ -1103,11 +1104,11 @@ the modulation frequency, and the echo amplitude."))
     (define new-comb-chord
       (lambda (scaler size amp interval-one interval-two)
 	"Comb chord filter: create chords by using filters at harmonically related sizes."
-	(let ((c1 (make-comb scaler size))
-	      (c2 (make-comb scaler (* size interval-one)))
-	      (c3 (make-comb scaler (* size interval-two))))
+	(let ((cs (vector (make-comb scaler size)
+			  (make-comb scaler (* size interval-one))
+			  (make-comb scaler (* size interval-two)))))
 	  (lambda (x)
-	    (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x)))))))
+	    (* amp (comb-bank cs x))))))
     
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)

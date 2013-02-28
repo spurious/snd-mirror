@@ -833,8 +833,9 @@ static s7_pointer g_vct_set_direct(s7_scheme *sc, s7_pointer args)
 /* this needs to parallel clm2xen.c */
 #define GEN_DIRECT_1 8
 #define GEN_DIRECT_2 9
-#define GEN_DIRECT_CHECKER 10
-#define NUM_CHOICES 11
+#define GEN_DIRECT_3 10
+#define GEN_DIRECT_CHECKER 11
+#define NUM_CHOICES 12
 
 static s7_pointer vct_set_direct_looped;
 static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
@@ -894,7 +895,8 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 		    }
 		}
 
-	      choices = s7_function_chooser_data(sc, val); /* TODO: or go to generic?? */
+	      choices = s7_function_chooser_data_direct(s7_symbol_value(sc, s7_car(val)));
+	      /* choices = s7_function_chooser_data(sc, val); */
 	      if (choices)
 		{
 		  if ((choices[GEN_DIRECT_1]) &&
