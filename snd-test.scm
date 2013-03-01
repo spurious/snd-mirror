@@ -10333,6 +10333,28 @@ EDITS: 2
 
 (defgenerator sa1 freq (coscar #f) (sincar #f) (dly #f) (hlb #f))
 
+(define (osc-opt)
+  (let ((g1 (make-oscil 1000))
+	(g2 (make-oscil 1000))
+	(g3 (make-oscil 1000))
+	(g4 (make-oscil 1000))
+	(g5 (make-oscil 1000))
+	(g6 (make-oscil 1000))
+	(x1 1.0)
+	(x2 (hz->radians 100.0))
+	(x3 20.0)
+	(x4 (hz->radians 5.0)))
+    (do ((i 0 (+ i 1)))
+	((= i 50))
+      (let ((o1 (oscil g1 x2))
+	    (o2 (* 1.0 (oscil g2 x2)))
+	    (o3 (oscil g3 (* x4 20.0)))
+	    (o4 (oscil g4 (* 20.0 x4)))
+	    (o5 (oscil g5 (* x1 x2)))
+	    (o6 (* 1.0 (oscil g6 (* 20.0 x4)))))
+	(if (> (abs (- (+ o2 o3 o4 o5 o6) (* 5 o1))) 1e-6)
+	    (snd-display #__line__ "~A: ~1,4F ~1,4F ~1,4F ~1,4F ~1,4F ~1,4F" i o1 o2 o3 o4 o5 o6))))))
+
 (define (snd-test-jc-reverb decay-dur low-pass volume amp-env)
   (let ((allpass1 (make-all-pass -0.700 0.700 1051))
 	(allpass2 (make-all-pass -0.700 0.700  337))
@@ -13958,7 +13980,9 @@ EDITS: 2
 	    (snd-display #__line__ ";mus-apply oscil at ~D: ~A ~A?" i (v0 i) (v1 i))))
       (if (fneq (mus-apply) 0.0)
 	  (snd-display #__line__ ";(mus-apply): ~A" (mus-apply))))
-    
+
+    (osc-opt)
+
     (let ((gen1 (make-oscil 100.0))
 	  (gen2 (make-oscil -100.0))
 	  (mx 0.0))
@@ -47338,6 +47362,7 @@ EDITS: 1
 ;; 15-Feb-13: #(1 1 2 2 42 160 5 1 450 1 18 1 1 10 21 1 196 1 1 158 42 107 1 1407 0 0 0 1 1 79)  ;  27
 ;; 21-Feb-13: #(1 1 2 2 43 159 6 1 448 1 12 1 2 10 20 1 189 1 2 156 41 106 1 1331 0 0 0 1 1 76)  ;  26
 ;; 26-Feb-13: #(1 1 2 2 42 118 5 1 450 1 16 1 2 11 19 1  97 1 1 161 42 105 1 1323 0 0 0 1 2 74)  ;  25
+;; 1-Mar-13:  #(1 1 3 1 40 117 5 1 439 1 16 1 2 11 20 1 109 1 2 159 43 100 1 1263 0 0 0 1 2 78)  ;  24
 
 ;;; -------- cleanup temp files
 
@@ -47565,20 +47590,21 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
 26-Feb:
-77,481,320,948
-11,500,197,084  s7.c:eval [/home/bil/snd-13/snd]
- 6,230,743,444  ???:sin [/lib64/libm-2.12.so]
- 4,455,680,549  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+1-Mar-13:
+76,371,238,826
+11,397,391,698  s7.c:eval [/home/bil/snd-13/snd]
+ 6,334,722,371  ???:sin [/lib64/libm-2.12.so]
+ 4,265,489,210  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
  2,970,010,915  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,812,960,021  s7.c:eval'2 [/home/bil/snd-13/snd]
- 2,611,924,949  ???:cos [/lib64/libm-2.12.so]
- 2,497,189,350  s7.c:gc [/home/bil/snd-13/snd]
- 2,428,764,956  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,799,758,634  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 2,596,569,411  ???:cos [/lib64/libm-2.12.so]
+ 2,428,915,341  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,422,995,795  s7.c:gc [/home/bil/snd-13/snd]
  2,327,317,731  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
  1,585,058,070  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,427,876,707  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 1,351,933,020  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,178,200,167  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 1,152,084,155  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 1,448,108,364  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 1,249,490,324  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,176,050,839  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
 |#

@@ -3403,6 +3403,7 @@ bool file_insert_samples(mus_long_t beg, mus_long_t num, const char *inserted_fi
 
 
 #define MAXAMP_CHECK_SIZE 10000
+/* making this larger was slower, smaller no difference? */
 
 bool insert_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info *cp, const char *origin, int edpos)
 {

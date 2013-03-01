@@ -789,7 +789,7 @@
 ;;;
 ;;; Squirrel tree frog
 
-(defanimal (squirrel-tree-frog-1 beg dur amp)
+(defanimal (squirrel-tree-frog beg dur amp)
   (let ((pitch 120)
 	(pulse-dur 0.24))
     (let ((start (seconds->samples beg))
@@ -820,15 +820,17 @@
 			  (rand-interp rnd))))
 	      (outa k (* (env pulsef)
 			 (blackman gen1)
-			 (+ (* (env indf) (oscil gen2 (* 10 ind)))
-			    (* (env indf-1) (oscil gen3 (* 24 ind)))
+			 (+ (* (env indf) (oscil gen2 (* 10.0 ind)))
+			    (* (env indf-1) (oscil gen3 (* 24.0 ind)))
 			    (* .1 (oscil gen5 (* 14.0 ind)))
 			    (* .1 (oscil gen6 (* 6.0 ind))))))))
 	  (mus-reset frqf)
 	  (mus-reset pulsef)
+	  (mus-reset indf-1)
 	  (mus-reset indf))))))
 
-;; (with-sound (:play #t) (squirrel-tree-frog-1 0 1.0 .5))
+;;; (with-sound (:play #t) (squirrel-tree-frog 0 1.0 .5))
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -10723,7 +10725,7 @@
   (texas-toad              (+ beg 10) 2.0 0.125)       (set! beg (+ beg spacing))
   (bullfrog                (+ beg 12.5) 0.125)         (set! beg (+ beg spacing))
   (ornate-chorus-frog      (+ beg 14) 2 0.1)           (set! beg (+ beg spacing))
-  (squirrel-tree-frog-1    (+ beg 16.5) 1 0.1)         (set! beg (+ beg spacing))
+  (squirrel-tree-frog      (+ beg 16.5) 1 0.1)         (set! beg (+ beg spacing))
   (pinewoods-tree-frog     (+ beg 18) 1.5 0.15)        (set! beg (+ beg spacing))
   (great-plains-narrow-mouthed-toad (+ beg 20) 2 .25)  (set! beg (+ beg spacing))
   (northern-leopard-frog-2 (+ beg 22.5) 0.5)           (set! beg (+ beg spacing))

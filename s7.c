@@ -2416,7 +2416,8 @@ static void init_hashes(s7_scheme *sc) {}
 
 void clear_counts(void) {}
 static s7_pointer hashes;
-static void add_expr(s7_scheme *sc, s7_pointer expr)
+void add_expr(s7_scheme *sc, s7_pointer expr);
+void add_expr(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer val;
   val = s7_hash_table_ref(sc, hashes, expr);
@@ -62880,5 +62881,5 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14   14
  * lat        229   63   52   47   42   40   39
  * t502        90   43   39   36   29   23   20
- * calls           275  207  175  115   89   77
+ * calls           275  207  175  115   89   76
  */
