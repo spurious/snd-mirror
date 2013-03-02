@@ -37351,15 +37351,14 @@ static s7_pointer g_or_all_x(s7_scheme *sc, s7_pointer args)
 static s7_pointer and_all_x;
 static s7_pointer g_and_all_x(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer p, x;
+  s7_pointer p, x = sc->T;
   for (p = args; is_pair(p); p = cdr(p))
     {
       x = ((s7_function)fcdr(p))(sc, car(p));
       if (is_false(sc, x))
 	return(x);
-      return(x);
     }
-  return(sc->T);
+  return(x);
 }
 
 
@@ -37397,16 +37396,15 @@ static s7_pointer g_or_s_direct(s7_scheme *sc, s7_pointer args)
 static s7_pointer and_s_direct;
 static s7_pointer g_and_s_direct(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer p, x;
+  s7_pointer p, x = sc->T;
   car(sc->T1_1) = finder(sc, cadar(args));
   for (p = args; is_pair(p); p = cdr(p))
     {
       x = c_call(car(p))(sc, sc->T1_1);
       if (is_false(sc, x))
 	return(x);
-      return(x);
     }
-  return(sc->T);
+  return(x);
 }
 
 
@@ -63061,7 +63059,7 @@ s7_scheme *s7_init(void)
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5
  * bench    42736 8752 8051 7725 6515 5194 4412
- * lint           9328 8140 7887 7736 7300 7287
+ * lint           9328 8140 7887 7736 7300 7283
  * index    44300 3291 3005 2742 2078 1643 1463
  * s7test    1721 1358 1297 1244  977  961  957
  * t455|6     265   89   55   31   14   14   11
