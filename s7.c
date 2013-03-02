@@ -461,8 +461,10 @@ enum {OP_NO_OP,
 
 #if (((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4)) || ((defined(__SIZEOF_POINTER__)) && (__SIZEOF_POINTER__ == 4)))
   #define opcode_t unsigned int
+  #define PRINT_NAME_SIZE 10
 #else
   #define opcode_t unsigned long long int
+  #define PRINT_NAME_SIZE 22
 #endif
 
 
@@ -942,6 +944,11 @@ typedef struct s7_cell {
     union {
       s7_Int integer_value;
       s7_Double real_value;
+
+      struct {
+	s7_Int a, b;
+	char name[PRINT_NAME_SIZE + 2];	
+      } pval;
 
       struct {
 	s7_Int numerator;
@@ -1703,6 +1710,10 @@ static int t_optimized = T_OPTIMIZED;
 /* this comes and goes...
  */
 
+#define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
+#define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
+#define set_has_print_name(p)         typeflag(p) |= T_PRINT_NAME
+
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define set_copy_args(p)              typeflag(p) |= T_COPY_ARGS
 #define needs_copied_args(p)          ((typeflag(p) & T_COPY_ARGS) != 0)
@@ -1751,7 +1762,7 @@ static int t_optimized = T_OPTIMIZED;
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS   0x4000000 /* bit 19 */
+#define UNUSED_BITS  0 /* 0x4000000 */ /* bit 19 */
 
 #if 0
 /* to find who is stomping on our symbols:
@@ -2124,6 +2135,20 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define small_int_name(p)             p->object.number.small_value.name
 #define small_int_name_length(p)      p->object.number.small_value.length
 #define is_small(n)                   ((n & ~(NUM_SMALL_INTS - 1)) == 0)
+
+#define print_name(p)                 (char *)(p->object.number.pval.name + 1)
+#define print_name_length(p)          p->object.number.pval.name[0]
+
+static void set_print_name(s7_pointer p, const char *name, int len)
+{
+  if (len < PRINT_NAME_SIZE)
+    {
+      set_has_print_name(p);
+      print_name_length(p) = (unsigned char)(len & 0xff);
+      strcpy(print_name(p), name);
+    }
+}
+
 
 #if WITH_GCC
 
@@ -22574,14 +22599,35 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 	}
       break;
 
-    case T_RATIO:
     case T_REAL:
-    case T_COMPLEX:
       nlen = 0;
       str = number_to_string_base_10(obj, 0, 14, 'g', &nlen);
       if (nlen > 0)
 	port_write_string(port)(sc, str, nlen, port);
       else port_display(port)(sc, str, port);
+      break;
+
+    case T_RATIO:
+    case T_COMPLEX:
+      if (has_print_name(obj))
+	{
+	  port_write_string(port)(sc, print_name(obj), print_name_length(obj), port);
+	}
+      else
+	{
+	  nlen = 0;
+	  str = number_to_string_base_10(obj, 0, 14, 'g', &nlen);
+	  if (nlen > 0)
+	    {
+	      set_print_name(obj, str, nlen);
+	      port_write_string(port)(sc, str, nlen, port);
+	    }
+	  else 
+	    {
+	      set_print_name(obj, str, safe_strlen(str));
+	      port_display(port)(sc, str, port);
+	    }
+	}
       break;
 
 #if WITH_GMP
@@ -27743,6 +27789,8 @@ static bool arglist_has_keyword(s7_pointer args)
 
 
 static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code);
+static s7_pointer end_dox_or_not_ic(s7_scheme *sc, s7_pointer code);
+static s7_pointer end_dox_or_not_ss(s7_scheme *sc, s7_pointer code);
 
 static void initialize_dox_vars(s7_scheme *sc, s7_pointer end)
 {
@@ -37309,8 +37357,9 @@ static s7_pointer g_and_all_x(s7_scheme *sc, s7_pointer args)
       x = ((s7_function)fcdr(p))(sc, car(p));
       if (is_false(sc, x))
 	return(x);
+      return(x);
     }
-  return(x);
+  return(sc->T);
 }
 
 
@@ -37355,8 +37404,9 @@ static s7_pointer g_and_s_direct(s7_scheme *sc, s7_pointer args)
       x = c_call(car(p))(sc, sc->T1_1);
       if (is_false(sc, x))
 	return(x);
+      return(x);
     }
-  return(x);
+  return(sc->T);
 }
 
 
@@ -43232,6 +43282,25 @@ static dox_function step_dox_eval(s7_scheme *sc, s7_pointer code, s7_pointer var
 
 static s7_pointer end_dox_c_c(s7_scheme *sc, s7_pointer code)
 {
+  /*
+480400: (or (not happy) (= i dur))
+103723: (or (= i len) (= j out-len))
+65560: (or (= i len) (>= pos 0))
+55242: (or (not happy) (= i (frames s1)))
+52175: (or (not happy) (= i len))
+51027: (or (> diffs 10) (= i len))
+50835: (or (>= pos 0) (= i len))
+29511: (or (not happy) (= e-bin e-size))
+29109: (or happy (= j len4))
+26633: (or result (= i end))
+24024: (or (not happy) (= i 1000))
+22062: (or eow-flag (= k winsamps))
+19839: (or (not (= new-place -1)) (= j max-oscils))
+19680: (or (not happy) (= i chans))
+8330: (or (not happy) (= i len2))
+6606: (or (not happy) (= i 1100))
+4880: (or (not happy) (= i rev-chans))
+   */
   return(c_call(code)(sc, cdr(code)));
 }
 
@@ -43343,6 +43412,36 @@ static s7_pointer end_dox_equal_s_ic(s7_scheme *sc, s7_pointer code)
   return(sc->F);
 }
 
+static s7_pointer end_dox_or_not_ic(s7_scheme *sc, s7_pointer code)
+{
+  s7_pointer x;
+
+  x = slot_value(environment_dox1(sc->envir));
+  if (is_false(sc, x))
+    return(sc->T);
+
+  x = slot_value(environment_dox2(sc->envir));
+  if (is_integer(x))
+    return(make_boolean(sc, integer(x) == integer(caddr(caddr(code)))));
+  if (is_real(x))
+    return(make_boolean(sc, real(x) == integer(caddr(caddr(code)))));
+  return(sc->F);
+}
+
+static s7_pointer end_dox_or_not_ss(s7_scheme *sc, s7_pointer code)
+{
+  s7_pointer x;
+
+  x = slot_value(environment_dox1(sc->envir));
+  if (is_false(sc, x))
+    return(sc->T);
+
+  x = caddr(code);
+  car(sc->T2_1) = slot_value(environment_dox2(sc->envir));
+  car(sc->T2_2) = finder(sc, caddr(x));
+  return(c_call(x)(sc, sc->T2_1));
+}
+
 static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code)
 {
   switch (optimize_data(code))
@@ -43352,6 +43451,35 @@ static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code)
 	{
 	  set_optimize_data(code, HOP_SAFE_C_SC); /* so the dox init section will pass us the cadr slot */
 	  return(end_dox_equal_s_ic);
+	}					
+      if (fcdr(code) == (s7_pointer)g_or_all_x)
+	{
+	  /* code is the full expr: (or (not happy) (= i 512)) 
+	   */
+	  if (s7_list_length(sc, code) == 3)
+	    {
+	      s7_pointer arg1, arg2;
+	      arg1 = cadr(code);
+	      arg2 = caddr(code);
+	      if ((is_pair(arg1)) &&
+		  (is_pair(arg2)) &&
+		  (car(arg1) == sc->NOT) &&
+		  (s7_is_symbol(cadr(arg1))))
+		{
+		  if (fcdr(arg2) == (s7_pointer)g_equal_s_ic)
+		    {
+		      set_optimize_data(code, HOP_SAFE_C_opSq_opSq);
+		      return(end_dox_or_not_ic);
+		    }
+		  if ((fcdr(arg2) == (s7_pointer)g_equal_2) &&
+		      (s7_is_symbol(cadr(arg2))) &&
+		      (s7_is_symbol(caddr(arg2))))
+		    {
+		      set_optimize_data(code, HOP_SAFE_C_opSq_opSq);
+		      return(end_dox_or_not_ss);
+		    }
+		}
+	    }
 	}
       return(end_dox_c_c);
 
@@ -45437,11 +45565,69 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 			if (!direct_memq(slot_symbol(step_slot), callee))
 			  {
-			    s7_pointer i;
+			    s7_Int end;
+			    s7_pointer i, settee, setargs;
+
 			    slot_set_value(step_slot, i = make_mutable_integer(sc, integer(slot_value(step_slot))));
+			    
+			    if (f == set_c_object_array_all_x)
+			      {
+				/* apparently array bounds have already been checked */
+				double *data;
+				data = c_object_array(slot_value(slot_pending_value(environment_dox1(sc->envir))));
+				f = (s7_function)(fcdr(callee));
+				/* here if temp or has gen_direct we could avoid the make_real etc */
+				setargs = car(callee);
+				while (true)
+				  {
+				    data[integer(i)] = s7_number_to_real(sc, f(sc, setargs));
+				    integer(i)++;
+				    end = integer(slot_value(end_slot));
+				    if (integer(i) == end)
+				      {
+					sc->code = cdr(cadr(code));
+					goto BEGIN;
+				      }
+				  }
+			      }
+
+			    if (f == set_s_all_x)
+			      {
+				settee = slot_pending_value(environment_dox1(sc->envir));
+				f = (s7_function)(fcdr(callee));
+				setargs = car(callee);
+				while (true)
+				  {
+				    slot_set_value(settee, f(sc, setargs));
+				    integer(i)++;
+				    end = integer(slot_value(end_slot));
+				    if (integer(i) == end)
+				      {
+					sc->code = cdr(cadr(code));
+					goto BEGIN;
+				      }
+				  }
+			      }
+			    if (f == set_vector_all_x)
+			      {
+				settee = slot_value(slot_pending_value(environment_dox1(sc->envir)));
+				f = (s7_function)(fcdr(callee));
+				setargs = car(callee);
+				while (true)
+				  {
+				    vector_element(settee, integer(i)) = f(sc, setargs);
+				    integer(i)++;
+				    end = integer(slot_value(end_slot));
+				    if (integer(i) == end)
+				      {
+					sc->code = cdr(cadr(code));
+					goto BEGIN;
+				      }
+				  }
+			      }
+
 			    while (true)
 			      {
-				s7_Int end;
 				f(sc, callee);
 				integer(i)++;
 				end = integer(slot_value(end_slot));
@@ -45524,7 +45710,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  {
 			    bool v1, v2 = false;
 			    s7_pointer a1, a2 = NULL;
-			    s7_function f1, f2 = NULL;
+			    s7_function f1 = NULL, f2 = NULL;
 
 			    a1 = cadr(callee);
 			    v1 = ((is_pair(a1)) &&
@@ -62878,7 +63064,7 @@ s7_scheme *s7_init(void)
  * lint           9328 8140 7887 7736 7300 7287
  * index    44300 3291 3005 2742 2078 1643 1463
  * s7test    1721 1358 1297 1244  977  961  957
- * t455|6     265   89   55   31   14   14   14
+ * t455|6     265   89   55   31   14   14   11
  * lat        229   63   52   47   42   40   39
  * t502        90   43   39   36   29   23   20
  * calls           275  207  175  115   89   76

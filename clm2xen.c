@@ -9818,12 +9818,13 @@ static s7_pointer g_nrxysin_mul_c_s(s7_scheme *sc, s7_pointer args)
 {
   /* (nrxysin g (* c s)), args is (g (* c s)) */
   mus_any *o;
+  double x;
   s7_pointer vargs;
 
   GET_GENERATOR(args, nrxysin, o);
-  vargs = cadr(args);
-
-  return(s7_make_real(sc, mus_nrxysin(o, s7_number_to_real(sc, cadr(vargs)) * s7_cell_real(car(vargs)))));
+  vargs = cdadr(args);
+  GET_REAL(cdr(vargs), nrxysin, x);
+  return(s7_make_real(sc, mus_nrxysin(o, x * s7_number_to_real(sc, car(vargs)))));
 }
 
 static s7_pointer polywave_mul_c_s;
@@ -9837,7 +9838,7 @@ static s7_pointer g_polywave_mul_c_s(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, polywave, o);
   vargs = cdadr(args);
   GET_REAL_CADR(vargs, polywave, x);
-  return(s7_make_real(sc, mus_polywave(o, s7_number_to_real(sc, car(vargs)) * x)));
+  return(s7_make_real(sc, mus_polywave(o, x * s7_number_to_real(sc, car(vargs)))));
 }
 
 static s7_pointer polywave_add_cs_ss;
@@ -10580,7 +10581,7 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
 	   *   if s7 adds this to all builtins, we can handle anything!  Also remember sndlib2xen.c.
 	   */
 	  inner_callee = car(inner_callee);
-	  choices = s7_function_chooser_data_direct(s7_symbol_value(sc, car(inner_callee)));
+	  choices = (s7_pointer *)s7_function_chooser_data_direct(s7_symbol_value(sc, car(inner_callee)));
 	  if (choices)
 	    {
 	      if ((choices[GEN_DIRECT_2]) &&
@@ -10616,7 +10617,7 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
 	    {
 	      s7_pointer first_callee;
 	      first_callee = car(inner_callee);
-	      choices = s7_function_chooser_data_direct(s7_symbol_value(sc, car(first_callee)));
+	      choices = (s7_pointer *)s7_function_chooser_data_direct(s7_symbol_value(sc, car(first_callee)));
 	      if (choices)
 		{
 		  if ((choices[GEN_DIRECT_1]) &&
@@ -10641,7 +10642,7 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
 			      (s7_is_symbol(cadr(second_callee))) &&
 			      (s7_is_null(sc, cddr(second_callee))))
 			    {
-			      choices = s7_function_chooser_data_direct(s7_symbol_value(sc, car(second_callee)));
+			      choices = (s7_pointer *)s7_function_chooser_data_direct(s7_symbol_value(sc, car(second_callee)));
 			      if (choices)
 				{
 				  if ((choices[GEN_DIRECT_1]) &&
@@ -11207,8 +11208,8 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
   s7_pointer *choices;
   int outer_len;
   mus_float_t **ob;
-  mus_float_t *buf;
-  mus_long_t dstart, dend, dpos, dlen;
+  mus_float_t *buf = NULL;
+  mus_long_t dstart, dend, dpos, dlen = 0;
   void *gen;
   mus_float_t (*gen1)(void *p);
   mus_float_t (*gen2)(void *p, mus_float_t x);
@@ -11267,7 +11268,7 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
       if (outer_len == 1)
 	{
 	  callee = car(callee);
-	  choices = s7_function_chooser_data_direct(s7_car_value(sc, callee));
+	  choices = (s7_pointer *)s7_function_chooser_data_direct(s7_car_value(sc, callee));
 	  if ((choices) &&
 	      (s7_is_symbol(cadr(callee))) &&
 	      (choices[GEN_DIRECT_CHECKER]))
@@ -11386,7 +11387,7 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 		  mus_any *e;
 		  GET_GENERATOR_CADR(arg1, env, e);
 
-		  choices = s7_function_chooser_data_direct(s7_car_value(sc, arg2));
+		  choices = (s7_pointer *)s7_function_chooser_data_direct(s7_car_value(sc, arg2));
 		  if ((choices) &&
 		      (choices[GEN_DIRECT_CHECKER]) &&
 		      (s7_is_symbol(cadr(arg2))))
@@ -11459,7 +11460,7 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 			  mus_any *e2;
 			  GET_GENERATOR_CADR(arg2, env, e2);
 			  
-			  choices = s7_function_chooser_data_direct(s7_car_value(sc, arg3));
+			  choices = (s7_pointer *)s7_function_chooser_data_direct(s7_car_value(sc, arg3));
 			  if ((choices) &&
 			      (choices[GEN_DIRECT_CHECKER]) &&
 			      (s7_is_symbol(cadr(arg3))))
@@ -11508,9 +11509,30 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 			}
 		      else
 			{
-			  /* TODO: this needs split (arg3 is simpler)
-			   */
-			  /* fprintf(stderr, "    x*env(e)*callee*callee: %s\n", DISPLAY(args)); */
+			  if ((car(arg2) == add_symbol) &&
+			      (car(arg3) == polywave_symbol) &&
+			      (s7_is_symbol(cadr(arg3))) &&
+			      (s7_is_pair(caddr(arg3))) &&
+			      (car(caddr(arg3)) == env_symbol) &&
+			      (s7_is_symbol(cadr(caddr(arg3)))) &&
+			      (s7_is_real(cadr(arg2))) &&
+			      (s7_is_pair(caddr(arg2))) &&
+			      (car(caddr(arg2)) == abs_symbol) &&
+			      (s7_is_pair(cadr(caddr(arg2)))) &&
+			      (car(cadr(caddr(arg2))) == rand_interp_symbol) &&
+			      (s7_is_symbol(cadr(cadr(caddr(arg2))))))
+			    {
+			      /* this actually doesn't save much */
+			      mus_any *r, *p, *e2;
+			      mus_float_t c;
+			      GET_GENERATOR_CADR(arg3, polywave, p);
+			      GET_GENERATOR_CADR(caddr(arg3), env, e2);
+			      GET_GENERATOR_CADR(cadr(caddr(arg2)), rand-interp, r);
+			      c = s7_number_to_real(sc, cadr(arg2));
+			      OUTA_LOOP(x * mus_env(e1) * (c + fabs(mus_rand_interp_unmodulated(r))) * mus_polywave(p, mus_env(e2)));
+			      return(args);
+			    }
+			      
 			  OUTA_LOOP(x * mus_env(e1) * s7_call_direct_to_real_and_free(sc, arg2) * s7_call_direct_to_real_and_free(sc, arg3));
 			  return(args);
 			}
@@ -11525,6 +11547,7 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
   if (car(callee) == add_symbol)
     {
       /* really only one case here (+ (* (env e) ...) ...) */
+      /* fprintf(stderr, "%lld %s\n", end - pos, DISPLAY(callee));  */
       if (outer_len == 3)
 	{
 	  s7_pointer arg1, arg2;
@@ -11540,7 +11563,7 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 	}
     }
   
-  choices = s7_function_chooser_data_direct(s7_car_value(sc, callee));
+  choices = (s7_pointer *)s7_function_chooser_data_direct(s7_car_value(sc, callee));
   if (choices)
     {
       if ((outer_len == 3) &&
@@ -11892,7 +11915,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
   s7_Int pos, end;
   s7_Double x;
   mus_any *e = NULL;
-  s7_pointer stepper, callee, loc, letp, lets;
+  s7_pointer stepper, callee, loc, letp, lets, letsym;
   s7_Int *step, *stop;
   s7_function letf;
 
@@ -11910,34 +11933,51 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
   end = (*stop);
 
   letp = cadr(caadr(args));
-  lets = s7_slot(sc, car(caadr(args)));
+  letsym = car(caadr(args));
+  lets = s7_slot(sc, letsym);
   
   args = cdar(cddr(caddr(args)));
   callee = cadr(args);
+
   GET_GENERATOR_CADAR(args, env, e);
+
   letf = s7_function_choice(sc, letp);
 
-  if (letf == g_env_1)
+  if (((car(letp) == env_symbol) || (car(letp) == rand_interp_symbol)) &&
+      (s7_is_symbol(cadr(letp))) &&
+      (s7_is_null(sc, cddr(letp))))
     {
       s7_pointer mut;
       s7_Double *letr;
-      mus_any *lete;
+      mus_any *e1;
+      mus_float_t (*genf)(mus_any *p);
+
+      if (car(letp) == env_symbol)
+	{
+	  genf = mus_env;
+	  GET_GENERATOR_CADR(letp, env, e1);
+	}
+      else 
+	{
+	  genf = mus_rand_interp_unmodulated;
+	  GET_GENERATOR_CADR(letp, rand-interp, e1);
+	}
 
       mut = s7_make_real(sc, 1.5);
       letr = ((s7_Double *)((unsigned char *)(mut) + XEN_S7_NUMBER_LOCATION));
       s7_slot_set_value(sc, lets, mut);
-      GET_GENERATOR_CADR(letp, env, lete);
-      
+
       for (; pos < end; pos++)
 	{
 	  (*step) = pos;
-	  (*letr) = mus_env(lete);
+	  (*letr) = genf(e1);
 	  x = s7_call_direct_to_real_and_free(sc, callee);
 	  out_any_2(pos, mus_env(e) * x, 0, "outa");
 	}
       return(args);
     }
 
+  /* fprintf(stderr, "%lld: %s\n      %s\n", end - pos, DISPLAY_80(letp), DISPLAY_80(callee)); */
   letp = cdr(letp);
   for (; pos < end; pos++)
     {
@@ -12255,7 +12295,7 @@ static s7_pointer *make_choices(s7_pointer mul_c, s7_pointer mul_s, s7_pointer e
 static void store_choices(s7_scheme *sc, s7_pointer base_f, s7_pointer g1, s7_pointer g2, s7_pointer g3, s7_pointer isg)
 {
   s7_pointer *choices;
-  choices = s7_function_chooser_data(sc, base_f);
+  choices = (s7_pointer *)s7_function_chooser_data(sc, base_f);
   if (!choices)
     {
       choices = (s7_pointer *)calloc(NUM_CHOICES, sizeof(s7_pointer));

@@ -895,7 +895,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 		    }
 		}
 
-	      choices = s7_function_chooser_data_direct(s7_symbol_value(sc, s7_car(val)));
+	      choices = (s7_pointer *)s7_function_chooser_data_direct(s7_symbol_value(sc, s7_car(val)));
 	      /* choices = s7_function_chooser_data(sc, val); */
 	      if (choices)
 		{
