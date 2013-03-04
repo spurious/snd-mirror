@@ -2156,7 +2156,7 @@
 (hey "  #endif~%")
 (hey "#endif~%~%")
 
-(hey "/* -------------------------------- smob for GC -------------------------------- */~%")
+(hey "/* -------------------------------- GC -------------------------------- */~%")
 (hey "static XEN_OBJECT_TYPE xm_obj_tag;~%")
 (hey "#if HAVE_RUBY~%")
 (hey "static void *xm_obj_free(XEN obj)~%")

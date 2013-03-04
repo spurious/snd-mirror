@@ -348,9 +348,7 @@
  
 
 
-/* -------------------------------- smob for GC -------------------------------- */
-
-/* "smob" for locally created stuff (X graphics entities mainly) */
+/* -------------------------------- GC -------------------------------- */
 
 static XEN_OBJECT_TYPE xm_obj_tag;
 

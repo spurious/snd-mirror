@@ -8459,7 +8459,7 @@ file1 and file2 writing outfile after scaling the convolution result to maxamp."
  *   the mus_xen object that shadows the phase-vocoder generator, with two special
  *   pointers in the vcts field: vcts[MUS_EDIT_FUNCTION] is the (Scheme-side) function
  *   passed by the user, and vcts[MUS_SELF_WRAPPER] is a pointer to the (Scheme-relevant)
- *   smob that packages the mus_xen pointer for Scheme.  This way, the user's
+ *   object that packages the mus_xen pointer for Scheme.  This way, the user's
  *    (make-phase-vocoder ... (lambda (v) (mus-length v)) ...)
  *   treats v as the current pv gen, vcts[MUS_SELF_WRAPPER] = v, vcts[MUS_EDIT_FUNCTION] = 
  *   the lambda form, mus_xen obj->gen is the C-side pv struct pointer.  See above
@@ -10534,6 +10534,7 @@ static s7_pointer g_mul_env_direct_any(s7_scheme *sc, s7_pointer args);
 #define NUM_CHOICES 12
 
 
+#if (!WITH_GMP)
 static s7_pointer indirect_locsig_3_looped;
 static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
 {
@@ -10696,7 +10697,7 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
   (*step) = end;
   return(args);
 }
-
+#endif
 
 
 
@@ -10727,6 +10728,7 @@ static s7_pointer g_indirect_out_bank_ssz(s7_scheme *sc, s7_pointer args)
 
 s7_pointer g_multiply_s_direct(s7_scheme *sc, s7_pointer args);
 
+#if (!WITH_GMP)
 static s7_pointer indirect_out_bank_ssz_looped;
 static s7_pointer g_indirect_out_bank_ssz_looped(s7_scheme *sc, s7_pointer args)
 {
@@ -11092,6 +11094,7 @@ static s7_pointer g_indirect_out_bank_ssz_looped(s7_scheme *sc, s7_pointer args)
   
   return(args);
 }
+#endif
 
 
 static s7_pointer outa_ss;

@@ -2352,8 +2352,8 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 0
 #if 1
+#if 0
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
 static void clear_counts(void) {int i; for (i = 0; i < NUM_COUNTS; i++) counts[i] = 0;}
@@ -2392,7 +2392,7 @@ static void report_counts(s7_scheme *sc)
     }
 }
 #else
-#if 0
+#if 1
 #define NUM_COUNTS 64000
 static int counts[2][NUM_COUNTS];
 static void clear_counts(void) {int i; for (i = 0; i < NUM_COUNTS; i++) {counts[0][i] = 0; counts[1][i] = 0;}}
@@ -6576,7 +6576,7 @@ static void call_with_exit(s7_scheme *sc)
 
 static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 {
-  #define H_call_cc "(call-with-current-continuation func) needs more than a one sentence explanation"
+  #define H_call_cc "(call-with-current-continuation func) is always a mistake!"
   s7_pointer p;
 
   p = car(args);  /* this is the procedure passed to call/cc */
@@ -6596,6 +6596,11 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 
   return(sc->NIL);
 }
+
+/* we can't naively optimize call/cc to call-with-exit if the continuation is only
+ *   used as a function in the call/cc body because it might (for example) be wrapped
+ *   in a lambda form that is being exported.  See b-func in s7test for an example.
+ */
 
 
 static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
@@ -6645,6 +6650,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   
   return(sc->NIL);
 }
+
 
 
 
@@ -37413,6 +37419,15 @@ static s7_pointer g_if_all_x_qq(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer if_all_x_qa;
+static s7_pointer g_if_all_x_qa(s7_scheme *sc, s7_pointer args)
+{
+  if (is_true(sc, ((s7_function)fcdr(args))(sc, car(args))))
+    return(cadr(cadr(args)));
+  return(((s7_function)fcdr(cddr(args)))(sc, caddr(args)));
+}
+
+
 static s7_pointer or_s_direct;
 static s7_pointer g_or_s_direct(s7_scheme *sc, s7_pointer args)
 {
@@ -37825,7 +37840,7 @@ static void init_choosers(s7_scheme *sc)
   for_each_1 = make_function_with_class(sc, f, "for-each", g_for_each_1, 2, 0, false, "for-each optimization");
   for_each_2 = make_function_with_class(sc, f, "for-each", g_for_each_2, 2, 0, false, "for-each optimization");
 
-
+  
   /* vector-ref */
   f = set_function_chooser(sc, sc->VECTOR_REF, vector_ref_chooser);
 
@@ -37969,6 +37984,7 @@ static void init_choosers(s7_scheme *sc)
   and_all_x = s7_make_function(sc, "and", g_and_all_x, 0, 0, true, "and optimization");
   if_all_x = s7_make_function(sc, "if", g_if_all_x, 2, 1, false, "if optimization");
   if_all_x_qq = s7_make_function(sc, "if", g_if_all_x_qq, 3, 0, false, "if optimization");
+  if_all_x_qa = s7_make_function(sc, "if", g_if_all_x_qa, 3, 0, false, "if optimization");
 
   or_s_direct = s7_make_function(sc, "or", g_or_s_direct, 0, 0, true, "or optimization");
   and_s_direct = s7_make_function(sc, "and", g_and_s_direct, 0, 0, true, "and optimization");
@@ -39128,29 +39144,13 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 			  if ((c_call(cadar_x) == g_car) &&
 			      (c_call(caddar_x) == g_car) &&
 			      (symbol_id(sc->CAR) == 0))
-			    {
-			      if (is_safe_closure(func))
-				{
-				  set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_CAR_CAR);
-				  if (optimize_data(car(closure_body(func))) == HOP_SAFE_C_C)
-				    set_immediate(car(closure_body(func)));
-				}
-			      else set_optimize_data(car_x, hop + OP_CLOSURE_CAR_CAR);
-			    }
+			    set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_CAR_CAR : OP_CLOSURE_CAR_CAR));
 			  else
 			    {
 			      if ((c_call(cadar_x) == g_cdr) &&
 				  (c_call(caddar_x) == g_cdr) &&
 				  (symbol_id(sc->CDR) == 0))
-				{
-				  if (is_safe_closure(func))
-				    {
-				      set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_CDR_CDR);
-				      if (optimize_data(car(closure_body(func))) == HOP_SAFE_C_C)
-					set_immediate(car(closure_body(func)));
-				    }
-				  else set_optimize_data(car_x, hop + OP_CLOSURE_CDR_CDR);
-				}
+				set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_CDR_CDR : OP_CLOSURE_CDR_CDR));
 			    }
 			}
 		      ecdr(car_x) = func;
@@ -40108,8 +40108,9 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
     return(false);
 
   sc->w = e;
-  if (op == OP_LET)
+  switch (op)
     {
+    case OP_LET:
       if (is_symbol(cadr(p)))
 	{
 	  if (global_slot(cadr(p)) != sc->NIL)
@@ -40117,59 +40118,55 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 	  sc->w = collect_collisions(sc, caddr(p), sc->w);
 	}
       else sc->w = collect_collisions(sc, cadr(p), sc->w);
-    }
-  else
-    {
-      if ((op == OP_LET_STAR) ||
-	  (op == OP_LETREC))
-	sc->w = collect_collisions(sc, cadr(p), sc->w);
-      else
-	{
-	  if ((op == OP_DEFINE) || 
-	      (op == OP_DEFINE_STAR) ||
-	      (op == OP_LAMBDA) ||
-	      (op == OP_LAMBDA_STAR))
-	    {
-	      if (is_symbol(cadr(p))) /* (lambda args ...) */
-		{
-		  if (global_slot(cadr(p)) != sc->NIL)
-		    sc->w = cons(sc, cadr(p), sc->w);
-		}
-	      else sc->w = collect_collisions(sc, cadr(p), sc->w);
+      break;
+      
+    case OP_LET_STAR:
+    case OP_LETREC:
+      sc->w = collect_collisions(sc, cadr(p), sc->w);
+      break;
 
-	      if ((op == OP_DEFINE) &&
-		  (is_pair(cadr(p))))
-		sc->w = cons(sc, p, sc->w);
-	    }
-	  else
-	    {
-	      if (op == OP_SET)
-		{
-		  if ((is_symbol(cadr(p))) &&
-		      (global_slot(cadr(p)) != sc->NIL))
-		    sc->w = cons(sc, cadr(p), sc->w);
-		}
-	      else
-		{
-		  if (op == OP_DO)
-		    sc->w = collect_collisions(sc, cadr(p), sc->w);
-		  else
-		    {
-		      if ((op == OP_WITH_ENV) && (sc->safety != 0))
-			hop = 0;
-		      /* we can't trust anything here, so hop ought to be off.  For example,
-		       *
-		       *    (define (hi)
-		       *      (let ((e (augment-environment (current-environment)
-		       *                 (cons 'abs (lambda (a) (- a 1))))))
-		       *        (with-environment e (abs -1))))
-		       *
-		       * returns 1 if hop is 1, but -2 outside the function body.
-		       */
-		    }
-		}
-	    }
+    case OP_DEFINE:
+    case OP_DEFINE_STAR:
+    case OP_LAMBDA:
+    case OP_LAMBDA_STAR:
+      if (is_symbol(cadr(p))) /* (lambda args ...) */
+	{
+	  if (global_slot(cadr(p)) != sc->NIL)
+	    sc->w = cons(sc, cadr(p), sc->w);
 	}
+      else sc->w = collect_collisions(sc, cadr(p), sc->w);
+
+      if ((op == OP_DEFINE) &&
+	  (is_pair(cadr(p))))
+	sc->w = cons(sc, p, sc->w);
+      break;
+
+    case OP_SET:
+      if ((is_symbol(cadr(p))) &&
+	  (global_slot(cadr(p)) != sc->NIL))
+	sc->w = cons(sc, cadr(p), sc->w);
+      break;
+
+    case OP_DO:
+      sc->w = collect_collisions(sc, cadr(p), sc->w);
+      break;
+
+    case OP_WITH_ENV:
+      if (sc->safety != 0)
+	hop = 0;
+      /* we can't trust anything here, so hop ought to be off.  For example,
+       *
+       *    (define (hi)
+       *      (let ((e (augment-environment (current-environment)
+       *                 (cons 'abs (lambda (a) (- a 1))))))
+       *        (with-environment e (abs -1))))
+       *
+       * returns 1 if hop is 1, but -2 outside the function body.
+       */
+      break;
+
+    default:
+      break;
     }
   
   if (is_pair(cdar(x)))
@@ -40266,9 +40263,12 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 		      else 
 			{
 			  if ((fcdr(cddr(car_x)) == (s7_pointer)all_x_q) &&
-			      (is_pair(cdddr(car_x))) &&
-			      (fcdr(cdddr(car_x)) == (s7_pointer)all_x_q))
-			    set_c_function(car_x, if_all_x_qq);
+			      (is_pair(cdddr(car_x))))
+			    {
+			      if (fcdr(cdddr(car_x)) == (s7_pointer)all_x_q)
+				set_c_function(car_x, if_all_x_qq);
+			      else set_c_function(car_x, if_all_x_qa);
+			    }
 			  else set_c_function(car_x, if_all_x);
 			}
 		      /* fprintf(stderr, "  -> %s\n", opt_name(car_x)); */
@@ -43561,6 +43561,7 @@ static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code)
 }
 
 
+#if (!WITH_GMP)
 /* steppers parallel to all_x cases, dox1=step/init, dox2=end, dox1.pending=sym, dox2.pending=2nd ind?
  */
 
@@ -43706,6 +43707,7 @@ static s7_function set_dox_eval(s7_scheme *sc, s7_pointer code)
     }
   return(NULL);
 }
+#endif
 
 
 static s7_pointer check_do(s7_scheme *sc)
@@ -45634,8 +45636,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				double *data;
 				data = c_object_array(slot_value(slot_pending_value(environment_dox1(sc->envir))));
 				f = (s7_function)(fcdr(callee));
-				/* here if temp or has gen_direct we could avoid the make_real etc */
 				setargs = car(callee);
+
+				/* here if temp or has gen_direct we could avoid the make_real etc 
+				 *   at least if it's returning a temp, we could free it.
+				 *   handling it direct requires figuring out which direct function to call, type checks on arg(s) etc
+				 */
 				while (true)
 				  {
 				    data[integer(i)] = s7_number_to_real(sc, f(sc, setargs));
@@ -45652,8 +45658,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    if (f == set_s_all_x)
 			      {
 				settee = slot_pending_value(environment_dox1(sc->envir));
-				f = (s7_function)(fcdr(callee));
 				setargs = car(callee);
+				f = (s7_function)(fcdr(callee));
+
+				if (f == all_x_c_c)
+				  {
+				    f = c_call(setargs);
+				    setargs = cdr(setargs);
+				  }
 				while (true)
 				  {
 				    slot_set_value(settee, f(sc, setargs));
@@ -48758,7 +48770,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  {
 			    ecdr(code) = f;
 			    fcdr(code) = cadddr(code);
-			    
 			    if (is_safe_closure(f))
 			      set_optimize_data(code, OP_SAFE_CLOSURE_SSS);
 			    else 
@@ -49268,32 +49279,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    if ((is_null(cdr(closure_body(f)))) &&
 				(!arglist_has_accessed_symbol(closure_args(f))))
 			      {
+				if ((is_optimized(car(closure_body(f)))) &&
+				    (optimize_data(car(closure_body(f))) == HOP_SAFE_C_C))
+				  set_immediate(car(closure_body(f)));
+
 				if ((c_call(cadr(code)) == g_car) &&
 				    (c_call(caddr(code)) == g_car) &&
 				    (symbol_id(sc->CAR) == 0))
-				  {
-				    if (is_safe_closure(f))
-				      {
-					set_optimize_data(code, OP_SAFE_CLOSURE_CAR_CAR);
-					if (optimize_data(car(closure_body(f))) == HOP_SAFE_C_C)
-					  set_immediate(car(closure_body(f)));
-				      }
-				    else set_optimize_data(code, OP_CLOSURE_CAR_CAR);
-				  }
+				  set_optimize_data(code, ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_CAR_CAR : OP_CLOSURE_CAR_CAR));
 				else
 				  {
 				    if ((c_call(cadr(code)) == g_cdr) &&
 					(c_call(caddr(code)) == g_cdr) &&
 					(symbol_id(sc->CDR) == 0))
-				      {
-					if (is_safe_closure(f))
-					  {
-					    set_optimize_data(code, OP_SAFE_CLOSURE_CDR_CDR);
-					    if (optimize_data(car(closure_body(f))) == HOP_SAFE_C_C)
-					      set_immediate(car(closure_body(f)));
-					  }
-					else set_optimize_data(code, OP_CLOSURE_CDR_CDR);
-				      }
+				      set_optimize_data(code, ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_CDR_CDR : OP_CLOSURE_CDR_CDR));
 				  }
 			      }
 			    if ((is_global(car(code))) &&
@@ -63170,6 +63169,9 @@ s7_scheme *s7_init(void)
  *   in set pair, object set et al need not use eval_args/apply if all args are all_x ops: i.e. set_pair_all_x or something
  *   TODO: get rid of all arg lambdas -- move them to the make function (*.html especially!)
  * easy closure_arity done right away?  0/1 should not be expensive -- maybe just set it!
+ * direct (all_x) let/case/etc [map/for-each/sort and so on]
+ * safe do (or dox) where body is multiple all_x done directly
+ * 
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5
  * bench    42736 8752 8051 7725 6515 5194 4378

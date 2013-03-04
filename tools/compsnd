@@ -87,6 +87,17 @@ make sndinfo
 make sndplay
 make allclean
 
+./configure --quiet CFLAGS="-I/usr/X11R6/include -Wextra -Wdeclaration-after-statement -Wlogical-op" LDFLAGS="-L/usr/X11R6/lib"
+make allclean
+make
+echo ' '
+echo ' '
+
+make clmclean
+make sndinfo
+make sndplay
+make allclean
+
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '

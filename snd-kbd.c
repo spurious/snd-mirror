@@ -1770,12 +1770,12 @@ void g_init_kbd(void)
   XEN_DEFINE_CONSTANT(S_cursor_in_middle,        CURSOR_IN_MIDDLE,                    H_cursor_in_middle);
   XEN_DEFINE_CONSTANT(S_keyboard_no_action,      KEYBOARD_NO_ACTION,                  H_keyboard_no_action);
 
-  XEN_DEFINE_PROCEDURE(S_key_binding,            g_key_binding_w,            1, 2, 0, H_key_binding);
-  XEN_DEFINE_PROCEDURE(S_bind_key,               g_bind_key_w,               3, 3, 0, H_bind_key);
-  XEN_DEFINE_PROCEDURE(S_unbind_key,             g_unbind_key_w,             2, 1, 0, H_unbind_key);
-  XEN_DEFINE_PROCEDURE(S_key,                    g_key_w,                    2, 2, 0, H_key);
+  XEN_DEFINE_SAFE_PROCEDURE(S_key_binding,            g_key_binding_w,            1, 2, 0, H_key_binding);
+  XEN_DEFINE_SAFE_PROCEDURE(S_bind_key,               g_bind_key_w,               3, 3, 0, H_bind_key);
+  XEN_DEFINE_SAFE_PROCEDURE(S_unbind_key,             g_unbind_key_w,             2, 1, 0, H_unbind_key);
+  XEN_DEFINE_SAFE_PROCEDURE(S_key,                    g_key_w,                    2, 2, 0, H_key);
 
-  XEN_DEFINE_PROCEDURE(S_status_report,          g_status_report_w,          1, 1, 0, H_status_report);
+  XEN_DEFINE_SAFE_PROCEDURE(S_status_report,          g_status_report_w,          1, 1, 0, H_status_report);
 
   for (i = 0; i < NUM_BUILT_IN_KEYS; i++)
     built_in_keys[i].func = XEN_FALSE;

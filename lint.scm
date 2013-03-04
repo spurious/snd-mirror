@@ -874,28 +874,6 @@
 			  (cdr tree))
 			 #f))))))
       
-      
-      (define (tree-member-ignoring-car sym tree)
-	;; return #t if sym is in tree, but not treated as a function
-	;; this is a mess!
-	(or (eq? sym tree)
-	    (and (pair? tree)
-		 (or (and (pair? (car tree))
-			  (tree-member-ignoring-car sym (car tree)))
-		     (and (pair? (cdr tree))
-			  (call-with-exit
-			   (lambda (return)
-			     (for-each
-			      (lambda (l)
-				(if (or (eq? sym l)
-					(and (pair? l)
-					     (tree-member-ignoring-car sym l)))
-				    (return #t)))
-			      (cdr tree))
-			     #f)))
-		     (eq? sym (cdr tree))))))
-      
-      
       (define (remove item sequence)
 	(let ((got-it #f))
 	  (map (lambda (x)
@@ -1942,11 +1920,7 @@
 		       (if (not (tree-member continuation body))
 			   (lint-format "~A is not needed:~A"
 					name head 
-					(truncated-list->string form))
-			   (if (not (tree-member-ignoring-car continuation body))
-			       (lint-format "~A could be call-with-exit:~A"	
-					    name head 
-					    (truncated-list->string form)))))))))
+					(truncated-list->string form))))))))
 	  
 	  ;; what about (* 2.0 (random 1.0)) and the like?
 

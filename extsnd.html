@@ -3795,10 +3795,10 @@ If *reverb* is a snd-&gt;sample generator, for example,
 <div class="header" id="Vcts">Vcts</div>
 
 <p>
-Many of the Snd and CLM functions handle vectors (arrays) of data.
+Many of the Snd and CLM functions handle vectors (arrays) of floating-point data.
 By defining a new vector type, named vct, and providing a package
 of old-style array-processing calls upon that type, we can speed up many
-operations by a factor of 30 &mdash; enough of a difference to warrant
+operations by a factor of about 3 &mdash; enough of a difference to warrant
 the added complexity.  
 <a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> creates a new vct object.  It is freed by the
 garbage collector when it can't be referenced any further.  To get 

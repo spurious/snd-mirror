@@ -122,7 +122,7 @@
   #endif
 #endif
 
-/* -------------------------------- smob for GC -------------------------------- */
+/* -------------------------------- GC -------------------------------- */
 static XEN_OBJECT_TYPE xm_obj_tag;
 #if HAVE_RUBY
 static void *xm_obj_free(XEN obj)
@@ -49180,7 +49180,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("19-Feb-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("03-Mar-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

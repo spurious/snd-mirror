@@ -502,8 +502,6 @@ var extsnd_sample_tip = "<code>(sample samp snd chn edpos)</code>:<br>" +
 
 var extsnd_sampleratendQ_tip = "<code>(sampler-at-end? obj)</code>: #t if sampler has reached the end of its data";
 
-var extsnd_samplerposition_tip = "<code>(sampler-position obj)</code>: current (sample-wise) location of sampler";
-
 var extsnd_samples_tip = "<code>(samples (start-samp 0) (samps len) snd chn edpos)</code>:<br>" +
                          " return a vct containing snd channel chn's samples starting a start-samp for samps samples;<br>" +
                          " edpos is the edit history position to read (defaults to current position).";

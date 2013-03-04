@@ -6961,10 +6961,12 @@ static XEN g_copy_sampler(XEN obj)
 }
 
 
+#if HAVE_SCHEME
 static mus_float_t next_sample_direct(void *p)
 {
   return(protected_next_sample((snd_fd *)p));
 }
+#endif
 
 static XEN g_next_sample(XEN obj)
 {
@@ -6979,11 +6981,12 @@ static XEN g_next_sample(XEN obj)
   return(C_TO_XEN_DOUBLE(0.0));
 }
 
-
+#if HAVE_SCHEME
 static mus_float_t read_sample_direct(void *p)
 {
   return(read_sample((snd_fd *)p));
 }
+#endif
 
 static XEN g_read_sample(XEN obj)
 {
@@ -7954,10 +7957,10 @@ vct *run_samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos)
 {
   snd_fd *sf;
   int num_to_read = MIX_FILE_BUFFER_SIZE;
-  if (len < num_to_read) num_to_read = (int)len; /* we often want fewer than 2048 samps (MIX_FILE_BUFFER_SIZE) */
-                                                 /* but this has less effect than I thought -- affects only copy case */
   vct *v = NULL;
 
+  if (len < num_to_read) num_to_read = (int)len; /* we often want fewer than 2048 samps (MIX_FILE_BUFFER_SIZE) */
+                                                 /* but this has less effect than I thought -- affects only copy case */
   sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, num_to_read);
   if (sf)
     {
