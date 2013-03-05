@@ -663,21 +663,19 @@
 		       ))))) ; it is a local function
       
       
-      (define (lint-constant? arg)
-	(and (constant? arg)
-	     (not (pair? arg))
-	     (not (vector? arg))))
-      
-      
       (define (just-constants? form env)
 	;; can we probably evaluate form given just built-in stuff?
-	(or (lint-constant? form)
+	(or (and (constant? form)
+		 (not (pair? form))
+		 (not (vector? form)))
 	    (and (pair? form)
 		 (or (and (symbol? (car form))
 			  (hash-table-ref no-side-effect-functions (car form))
 			  (not (hash-table-ref globals (car form)))
 			  (not (assq (car form) env))) ; e.g. exp declared locally as a list
-		     (lint-constant? (car form)))
+		     (and (constant? (car form))
+			  (not (pair? (car form)))
+			  (not (vector? (car form)))))
 		 (just-constants? (cdr form) env))))
       
       

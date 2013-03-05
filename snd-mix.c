@@ -15,7 +15,7 @@ static bool mix_vct_untagged(vct *v, chan_info *cp, mus_long_t beg, const char *
     data[i] = read_sample_to_mus_sample(sf) + (v->data[i]);
   sf = free_snd_fd(sf);
 
-  result = change_samples(beg, len, data, cp, origin, cp->edit_ctr); /* cp->edit_ctr since mix-vct has no edpos arg, similarly mix */
+  result = change_samples(beg, len, data, cp, origin, cp->edit_ctr, -1.0); /* cp->edit_ctr since mix-vct has no edpos arg, similarly mix */
   if (result) update_graph(cp);
 
   free(data);

@@ -2358,7 +2358,7 @@ pattern + + - -:
 
 <p>but now the peak amplitude is hard to predict (it's .6242 in this example).  Perhaps <a href="sndscm.html#flattenpartials">flatten-partials</a>
 would be a better choice here.
-To follow an amplitude envelope despite a changing index, we can use a <a href="#moving-max">moving-max</a> generator (from generators.scm):
+To follow an amplitude envelope despite a changing index, we can use a <a href="#moving-max">moving-max</a> generator:
 </p>
 
 <pre class="indented">
@@ -6185,14 +6185,18 @@ old analog tapes &mdash; the reverb slightly precedes the direct signal:
 
 
 
-<!--  MOVING-AVERAGE  -->
+<!--  MOVING-AVERAGE. MOVING-MAX  -->
 
-<div class="innerheader" id="moving-averagedoc">moving-average</div>
+<div class="innerheader" id="moving-averagedoc">moving-average, moving-max</div>
 
 <pre class="indented">
 <em class=def id="make-moving-average">make-moving-average</em> size initial-contents (initial-element 0.0)
 <em class=def id="moving-average">moving-average</em> f input
 <em class=def id="moving-average?">moving-average?</em> f
+
+<em class=def id="make-moving-max">make-moving-max</em> size initial-contents (initial-element 0.0)
+<em class=def id="moving-max">moving-max</em> f input
+<em class=def id="moving-max?">moving-max?</em> f
 </pre>
 
 <table class="method">
@@ -6295,8 +6299,31 @@ that are squelched and those that are unchanged (to avoid clicks):
                  0 #f snd chn)))
 </pre>
 
-<p>See also generators.scm for several related functions:
-<a href="#moving-max">moving-max</a>,
+<p>
+moving-max is a specialization
+of the <a href="#delay">delay</a> generator; it produces an envelope that tracks the peak amplitude of the last 'n' samples.
+<code>(make-moving-max 256)</code> returns the generator (this one's window size is 256),
+and <code>(moving-max gen y)</code> then returns the envelope traced out by the signal 'y'.
+The <a href="sndscm.html#harmonicizer">harmonicizer</a> uses this generator to normalize an in-coming signal to 1.0
+so that the Chebyshev polynomials it is driving will produce a full spectrum at all times.
+Here is a similar, but simpler, example; we use the moving-max generator to track the
+current peak amplitude over a small window, use that value to drive a <a href="#contrast-enhancement">contrast-enhancement</a>
+generator (so that its output is always fully modulated), and rescale by the same value
+upon output (to track the original sound's amplitude envelope):
+</p>
+
+<pre class="indented">
+(define (intensify index)
+  (let* ((mx (<em class=red>make-moving-max</em>))
+         (flt (<a class=quiet href="sndscm.html#makelowpass" onmouseout="UnTip()" onmouseover="Tip(sndscm_makelowpass_tip)">make-lowpass</a> (* pi .1) 8))) ; smooth the maxamp signal
+    (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y)
+                   (let ((amp (max .1 (<a class=quiet href="#fir-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_fir_filter_tip)">fir-filter</a> flt (<em class=red>moving-max</em> mx y)))))
+                     (* amp (<a class=quiet href="#contrast-enhancement" onmouseout="UnTip()" onmouseover="Tip(sndclm_contrast_enhancement_tip)">contrast-enhancement</a> (/ y amp) index)))))))
+</pre>
+
+<p>
+This can also be used for automatic gain control &mdash; see generators.scm for the agc function.
+See generators.scm for several related functions:
 <a href="#moving-rms">moving-rms</a>, <a href="#moving-sum">moving-sum</a>, 
 <a href="#moving-length">moving-length</a>, <a href="#weighted-moving-average">weighted-moving-average</a>, and 
 <a href="#exponentially-weighted-moving-average">exponentially-weighted-moving-average</a>
@@ -8581,10 +8608,6 @@ the higher "n", the more low-passed the output.
 
 
 <pre class="indented">
-<A class=def>make-moving-max</A> (n 128)
-<em class=def id="moving-max">moving-max</em> gen y
-<A class=def>moving-max?</A> gen
-
 <A class=def>make-moving-sum</A> (n 128)
 <em class=def id="moving-sum">moving-sum</em> gen y
 <A class=def>moving-sum?</A> gen
@@ -8607,30 +8630,7 @@ the higher "n", the more low-passed the output.
 </pre>
 
 <p>
-moving-max is a specialization
-of the <a href="#delay">delay</a> generator; it produces an envelope that tracks the peak amplitude of the last 'n' samples.
-<code>(make-moving-max 256)</code> returns the generator (this one's window size is 256),
-and <code>(moving-max gen y)</code> then returns the envelope traced out by the signal 'y'.
-The <a href="sndscm.html#harmonicizer">harmonicizer</a> uses this generator to normalize an in-coming signal to 1.0
-so that the Chebyshev polynomials it is driving will produce a full spectrum at all times.
-Here is a similar, but simpler, example; we use the moving-max generator to track the
-current peak amplitude over a small window, use that value to drive a <a href="#contrast-enhancement">contrast-enhancement</a>
-generator (so that its output is always fully modulated), and rescale by the same value
-upon output (to track the original sound's amplitude envelope):
-</p>
-
-<pre class="indented">
-(define (intensify index)
-  (let* ((mx (<em class=red>make-moving-max</em>))
-         (flt (<a class=quiet href="sndscm.html#makelowpass" onmouseout="UnTip()" onmouseover="Tip(sndscm_makelowpass_tip)">make-lowpass</a> (* pi .1) 8))) ; smooth the maxamp signal
-    (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y)
-                   (let ((amp (max .1 (<a class=quiet href="#fir-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_fir_filter_tip)">fir-filter</a> flt (<em class=red>moving-max</em> mx y)))))
-                     (* amp (<a class=quiet href="#contrast-enhancement" onmouseout="UnTip()" onmouseover="Tip(sndclm_contrast_enhancement_tip)">contrast-enhancement</a> (/ y amp) index)))))))
-</pre>
-
-<p>
-This can also be used for automatic gain control &mdash; see generators.scm for the agc function.
-The other "moving" generators are specializations of the <a href="#moving-average">moving-average</a>
+The "moving" generators are specializations of the <a href="#moving-average">moving-average</a>
 generator.  moving-sum keeps the ongoing sum of absolute values, moving-length the square root of the sum
 of squares, and moving-rms the square root of the sum of squares divided by the size.
 moving-rms is used in <a href="sndscm.html#overlayrmsenv">overlay-rms-env</a> in draw.scm.

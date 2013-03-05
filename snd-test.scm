@@ -4,33 +4,33 @@
 ;;;  test 1: defaults                           [1152]
 ;;;  test 2: headers                            [1366]
 ;;;  test 3: variables                          [1681]
-;;;  test 4: sndlib                             [2259]
-;;;  test 5: simple overall checks              [4723]
-;;;  test 6: vcts                               [9502]
-;;;  test 7: colors                             [9814]
-;;;  test 8: clm                                [10332]
-;;;  test 9: mix                                [21619]
-;;;  test 10: marks                             [23406]
-;;;  test 11: dialogs                           [24366]
-;;;  test 12: extensions                        [24561]
-;;;  test 13: menus, edit lists, hooks, etc     [24827]
-;;;  test 14: all together now                  [26204]
-;;;  test 15: chan-local vars                   [27083]
-;;;  test 16: regularized funcs                 [28858]
-;;;  test 17: dialogs and graphics              [32461]
-;;;  test 18: enved                             [32560]
-;;;  test 19: save and restore                  [32579]
-;;;  test 20: transforms                        [34197]
-;;;  test 21: new stuff                         [36345]
-;;;  test 22: (run)                             [38358]
-;;;  test 23: with-sound                        [38364]
-;;;  test 25: X/Xt/Xm                           [41330]
-;;;  test 26:                                   [45012]
-;;;  test 27: GL                                [45018]
-;;;  test 28: errors                            [45142]
-;;;  test 29: s7                                [47244]
-;;;  test all done                              [47316]
-;;;  test the end                               [47490]
+;;;  test 4: sndlib                             [2260]
+;;;  test 5: simple overall checks              [4724]
+;;;  test 6: vcts                               [9495]
+;;;  test 7: colors                             [9807]
+;;;  test 8: clm                                [10325]
+;;;  test 9: mix                                [21747]
+;;;  test 10: marks                             [23534]
+;;;  test 11: dialogs                           [24494]
+;;;  test 12: extensions                        [24689]
+;;;  test 13: menus, edit lists, hooks, etc     [24955]
+;;;  test 14: all together now                  [26332]
+;;;  test 15: chan-local vars                   [27211]
+;;;  test 16: regularized funcs                 [28986]
+;;;  test 17: dialogs and graphics              [32601]
+;;;  test 18: enved                             [32700]
+;;;  test 19: save and restore                  [32719]
+;;;  test 20: transforms                        [34333]
+;;;  test 21: new stuff                         [36481]
+;;;  test 22: (run)                             [38494]
+;;;  test 23: with-sound                        [38500]
+;;;  test 25: X/Xt/Xm                           [41466]
+;;;  test 26:                                   [45148]
+;;;  test 27: GL                                [45154]
+;;;  test 28: errors                            [45278]
+;;;  test 29: s7                                [47381]
+;;;  test all done                              [47453]
+;;;  test the end                               [47629]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -2017,7 +2017,7 @@
 		       'apply-controls 'apply-ladspa 'array->file 'array-interp 'as-one-edit 'ask-about-unsaved-edits
 		       'ask-before-overwrite 'asymmetric-fm 'asymmetric-fm? 'audio-input-device 'audio-output-device
 		       'auto-resize 'auto-update 'auto-update-interval 'autocorrelate 'autocorrelation
-		       'moving-average 'moving-average? 'axis-color 'axis-info 'axis-label-font 'axis-numbers-font
+		       'axis-color 'axis-info 'axis-label-font 'axis-numbers-font
 		       'bad-header-hook 'bartlett-window 'bartlett-hann-window 'basic-color 'beats-per-measure 'beats-per-minute
 		       'before-close-hook 'before-exit-hook 'before-save-as-hook 'before-save-state-hook 'before-transform-hook
 		       'bind-key 'blackman2-window 'blackman3-window 'blackman4-window 
@@ -2092,7 +2092,7 @@
 		       'listener-prompt 'listener-selection 'listener-text-color 'little-endian? 'locsig
 		       'locsig-ref 'locsig-reverb-ref 'locsig-reverb-set! 'locsig-set! 'locsig-type
 		       'locsig? 'log-freq-start 'main-menu 'main-widgets 'make-all-pass
-		       'make-asymmetric-fm 'make-moving-average 'make-bezier 'make-color 'make-comb 'make-filtered-comb
+		       'make-asymmetric-fm 'make-moving-average 'make-moving-max 'make-bezier 'make-color 'make-comb 'make-filtered-comb
 		       'make-convolve 'make-delay 'make-env 'make-fft-window 'make-file->frame
 		       'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter 'make-formant 'make-firmant
 		       'make-frame 'make-frame->file 'make-granulate 'make-graph-data 'make-iir-filter
@@ -2118,7 +2118,8 @@
 		       'mixer+ 'mixer-ref 'mixer-set! 'mixer?
 		       'mixes 'mouse-click-hook 'mouse-drag-hook 'mouse-enter-graph-hook
 		       'mouse-enter-label-hook 'mouse-enter-listener-hook 'mouse-enter-text-hook 'mouse-leave-graph-hook 'mouse-leave-label-hook
-		       'mouse-leave-listener-hook 'mouse-leave-text-hook 'mouse-press-hook 'move-locsig 'move-sound 'move-sound? 'multiply-arrays
+		       'mouse-leave-listener-hook 'mouse-leave-text-hook 'mouse-press-hook 'move-locsig 'move-sound 'move-sound? 
+		       'moving-average 'moving-average? 'moving-max 'moving-max? 'multiply-arrays
 		       'mus-aifc 'mus-aiff 'mus-alaw 'mus-alsa-buffer-size 'mus-alsa-buffers
 		       'mus-alsa-capture-device 'mus-alsa-device 'mus-alsa-playback-device 'mus-alsa-squelch-warning 'mus-apply
 		       'mus-array-print-length 'mus-float-equal-fudge-factor 
@@ -13302,6 +13303,68 @@ EDITS: 2
       (if (not (eq? (car err) 'out-of-range))
 	  (snd-display #__line__ ";make-average bad size error message: ~A" err)))
     
+
+    (let ((gen (make-moving-max 4))
+	  (v0 (make-vct 10))
+	  (gen1 (make-moving-max 4))
+	  (v1 (make-vct 10)))
+      (print-and-check gen 
+		       "moving-max"
+		       "moving-max 0.000, line[4]:[0.000 0.000 0.000 0.000]")
+      (do ((i 0 (+ i 1)))
+	  ((= i 10))
+	(vct-set! v0 i (moving-max gen 1.0)))
+      (fill-vct v1 (if (moving-max? gen1) (moving-max gen1 1.0) -1.0))
+      (if (not (vequal v1 v0)) (snd-display #__line__ ";map max: ~A ~A" v0 v1))
+      (if (not (moving-max? gen)) (snd-display #__line__ ";~A not max?" gen))
+      (if (not (= (mus-length gen) 4)) (snd-display #__line__ ";max length: ~D?" (mus-length gen)))
+      (if (not (= (mus-order gen) 4)) (snd-display #__line__ ";max order: ~D?" (mus-order gen)))
+      (if (or (fneq (v0 1) 1.0) (fneq (v0 4) 1.0) (fneq (v0 8) 1.0))
+	  (snd-display #__line__ ";max output: ~A" v0)))
+    
+    (let* ((gen (make-moving-max 8))
+	   (val (moving-max gen)))
+      (if (fneq val 0.0) (snd-display #__line__ ";empty max: ~A" val))
+      (set! val (moving-max gen 1.0))
+      (if (fneq val 1.0) (snd-display #__line__ ";max 1: ~A" val))
+      (set! val (moving-max gen -0.5))
+      (if (fneq val 1.0) (snd-display #__line__ ";max 2: ~A" val))
+      (set! val (moving-max gen -1.5))
+      (if (fneq val 1.5) (snd-display #__line__ ";max 2: ~A" val))
+      (do ((i 0 (+ i 1))) ((= i 5)) (set! val (moving-max gen 0.0))) 
+      (if (fneq val 1.5) (snd-display #__line__ ";max 6: ~A" val))
+      (set! val (moving-max gen 0.0))
+      (if (fneq val 1.5) (snd-display #__line__ ";max 7: ~A" val))
+      (set! val (moving-max gen 0.0))
+      (if (fneq val 1.5) (snd-display #__line__ ";max 8: ~A" val))
+      (set! val (moving-max gen 0.0))
+      (if (fneq val 0.0) (snd-display #__line__ ";max 9: ~A" val))
+      )
+    (let* ((gen (make-moving-max 10 :initial-element .5))
+	   (val (moving-max gen 0.5)))
+      (if (fneq val 0.5) (snd-display #__line__ ";max initial-element: ~A" val)))
+    (let* ((gen (make-moving-max 3 :initial-contents '(1.0 1.0 1.0)))
+	   (val (moving-max gen 1.0)))
+      (if (fneq val 1.0) (snd-display #__line__ ";max initial-contents: ~A" val)))
+    
+    (test-gen-equal (let ((d1 (make-moving-max 3 :initial-contents '(0.7 0.5 3)))) (moving-max d1 1.0) d1)
+		    (let ((d2 (make-moving-max 3 :initial-contents (vct 0.7 0.5 3)))) (moving-max d2 1.0) d2) 
+		    (let ((d3 (make-moving-max 4 :initial-contents '(0.7 0.5 0.1 4)))) (moving-max d3 1.0) d3))
+    (test-gen-equal (make-moving-max 3 :initial-element 1.0) 
+		    (make-moving-max 3 :initial-element 1.0) 
+		    (make-moving-max 3 :initial-element 0.5))
+    (test-gen-equal (make-moving-max 3 :initial-element 1.0) 
+		    (make-moving-max 3 :initial-element 1.0) 
+		    (make-moving-max 4 :initial-element 1.0))
+    (test-gen-equal (make-moving-max 3 :initial-contents '(1.0 0.0 0.0)) 
+		    (make-moving-max 3 :initial-contents '(1.0 0.0 0.0)) 
+		    (make-moving-max 3 :initial-contents '(1.0 1.0 1.0)))
+    (let ((err (catch #t (lambda () (make-moving-max :size -1)) (lambda args args))))
+      (if (not (eq? (car err) 'out-of-range))
+	  (snd-display #__line__ ";make-max bad size error message: ~A" err)))
+    
+
+
     (let ((gen (make-comb .4 3))
 	  (v0 (make-vct 10))
 	  (gen1 (make-comb .4 3))
@@ -21075,7 +21138,7 @@ EDITS: 2
 	(free-sampler reader)))
     
     (let ((make-procs (list
-		       make-all-pass make-asymmetric-fm make-moving-average
+		       make-all-pass make-asymmetric-fm make-moving-average make-moving-max
 		       make-comb (lambda () (make-convolve :filter (vct 0 1 2))) make-delay (lambda () (make-env '(0 1 1 0)))
 		       (lambda () (make-filter :xcoeffs (vct 0 1 2))) (lambda () (make-fir-filter :xcoeffs (vct 0 1 2))) 
 		       (lambda () (make-filtered-comb :filter (make-one-zero .5 .5)))
@@ -21087,7 +21150,7 @@ EDITS: 2
 		       make-two-pole make-two-zero make-wave-train make-polyshape make-phase-vocoder make-ssb-am
 		       (lambda () (make-filter :ycoeffs (vct 0 1 2)))
 		       (lambda () (make-filter :xcoeffs (vct 1 2 3) :ycoeffs (vct 0 1 2)))))
-	  (gen-procs (list all-pass asymmetric-fm moving-average
+	  (gen-procs (list all-pass asymmetric-fm moving-average moving-max
 			   comb convolve delay env 
 			   filter fir-filter filtered-comb formant (lambda (gen ind) (gen ind)) granulate
 			   iir-filter (lambda (gen a) (locsig gen 0 a)) (lambda (gen a) (gen a 0)) notch one-pole one-zero oscil 
@@ -21095,7 +21158,7 @@ EDITS: 2
 			   square-wave (lambda (gen a) (src gen 0.0 a)) table-lookup triangle-wave
 			   two-pole two-zero wave-train polyshape phase-vocoder ssb-am
 			   filter filter))
-	  (ques-procs (list all-pass? asymmetric-fm? moving-average?
+	  (ques-procs (list all-pass? asymmetric-fm? moving-average? moving-max?
 			    comb? convolve? delay? env? 
 			    filter? fir-filter? filtered-comb? formant? frame? granulate?
 			    iir-filter? locsig? mixer? notch? one-pole? one-zero? oscil? 
@@ -21103,7 +21166,7 @@ EDITS: 2
 			    square-wave? src? table-lookup? triangle-wave?
 			    two-pole? two-zero? wave-train? polyshape? phase-vocoder? ssb-am?
 			    filter? filter?))
-	  (func-names (list 'all-pass 'asymmetric-fm 'moving-average
+	  (func-names (list 'all-pass 'asymmetric-fm 'moving-average 'moving-max
 			    'comb 'convolve 'delay 'env 
 			    'filter-x 'fir-filter 'filtered-comb 'formant 'frame 'granulate
 			    'iir-filter 'locsig 'mixer 'notch 'one-pole 'one-zero 'oscil
@@ -21111,7 +21174,7 @@ EDITS: 2
 			    'square-wave 'src 'table-lookup 'triangle-wave
 			    'two-pole 'two-zero 'wave-train 'polyshape 'phase-vocoder 'ssb-am
 			    'filter-y 'filter-xy))
-	  (gen-args (list 0.0 0.0 1.0
+	  (gen-args (list 0.0 0.0 1.0 1.0
 			  0.0 (lambda (dir) 0.0) 0.0 #f
 			  0.0 0.0 0.0 0.0 0 (lambda (dir) 0.0)
 			  0.0 0.0 0 0.0 0.0 0.0 0.0
@@ -21165,7 +21228,7 @@ EDITS: 2
        make-procs gen-procs ques-procs gen-args func-names)
       
       (let ((make-procs (list
-			 make-all-pass make-asymmetric-fm make-moving-average
+			 make-all-pass make-asymmetric-fm make-moving-average make-moving-max
 			 make-comb 
 			 (lambda () (make-filtered-comb :filter (make-one-zero .5 .5)))
 			 (lambda () (make-convolve :filter (vct 0 1 2) :input (lambda (dir) 1.0))) 
@@ -21192,7 +21255,7 @@ EDITS: 2
 			 make-ssb-am
 			 (lambda () (make-filter :ycoeffs (vct 0 1 2)))
 			 (lambda () (make-filter :xcoeffs (vct 1 2 3) :ycoeffs (vct 0 1 2)))))
-	    (gen-procs (list all-pass asymmetric-fm moving-average
+	    (gen-procs (list all-pass asymmetric-fm moving-average moving-max
 			     comb filtered-comb convolve delay 
 			     (lambda (gen ignored) (env gen))
 			     filter fir-filter formant 
@@ -21204,7 +21267,7 @@ EDITS: 2
 			     square-wave table-lookup triangle-wave
 			     two-pole two-zero polyshape phase-vocoder ssb-am
 			     filter filter))
-	    (func-names (list 'all-pass 'asymmetric-fm 'moving-average
+	    (func-names (list 'all-pass 'asymmetric-fm 'moving-average 'moving-max
 			      'comb 'filtered-comb 'convolve 'delay 'env 
 			      'filter-x 'fir-filter 'formant 'granulate
 			      'iir-filter 'locsig 'notch 'one-pole 'one-zero 'oscil 
@@ -21331,7 +21394,7 @@ EDITS: 2
 				1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .1 .2 .3)  #(0 1) 3/4 0+i (make-delay 32)
 				(lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 () 32 '(1 . 2)
 				))
-		  (gen-make-procs (list make-all-pass make-asymmetric-fm make-moving-average make-table-lookup make-triangle-wave
+		  (gen-make-procs (list make-all-pass make-asymmetric-fm make-moving-average make-moving-max make-table-lookup make-triangle-wave
 					make-comb ;make-convolve
 					make-delay make-env make-fft-window
 					make-filter make-filtered-comb make-fir-filter make-formant make-frame ;make-granulate
@@ -21497,10 +21560,10 @@ EDITS: 2
 			   (lambda args (car args)))))
 	   (if (not (eq? tag 'mus-error))
 	       (snd-display #__line__ ";long arglist to ~A: ~A" name tag))))
-       (list make-wave-train make-polyshape make-delay make-moving-average make-comb make-filtered-comb make-notch
+       (list make-wave-train make-polyshape make-delay make-moving-average make-moving-max make-comb make-filtered-comb make-notch
 	     make-rand make-rand-interp make-table-lookup make-env
 	     make-readin make-locsig make-granulate make-convolve make-phase-vocoder)
-       (list 'make-wave-train 'make-polyshape 'make-delay 'make-moving-average 'make-comb 'make-filtered-comb 'make-notch
+       (list 'make-wave-train 'make-polyshape 'make-delay 'make-moving-average 'make-moving-max 'make-comb 'make-filtered-comb 'make-notch
 	     'make-rand 'make-rand-interp 'make-table-lookup 'make-env
 	     'make-readin 'make-locsig 'make-granulate 'make-convolve 'make-phase-vocoder)))
     
@@ -45411,7 +45474,7 @@ EDITS: 1
 					;mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write
 					;mus-sound-seek-frame 
 		     mus-file-prescaler mus-prescaler mus-clipping mus-file-clipping mus-header-raw-defaults 
-		     moving-average moving-average? make-moving-average
+		     moving-average moving-average? make-moving-average moving-max moving-max? make-moving-max
 		     mus-expand-filename 
 		     make-sound-data sound-data-ref sound-data-set! sound-data-scale! sound-data-fill! sound-data? sound-data-length
 		     sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ sound-data-copy sound-data-reverse!
@@ -45524,7 +45587,7 @@ EDITS: 1
 			 ))
 	     
 	     (make-procs (list
-			  make-all-pass make-asymmetric-fm make-snd->sample make-moving-average
+			  make-all-pass make-asymmetric-fm make-snd->sample make-moving-average make-moving-max
 			  make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
 			  make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame make-frame->file make-granulate
 			  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil
@@ -45786,7 +45849,7 @@ EDITS: 1
 				      mus-output? notch? one-pole? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 				      sample->file? sawtooth-wave? nrxysin? nrxycos?
 				      square-wave? src? ncos? nsin? table-lookup? 
-				      triangle-wave? two-pole? two-zero? wave-train? color? mix-sampler? moving-average? ssb-am?
+				      triangle-wave? two-pole? two-zero? wave-train? color? mix-sampler? moving-average? moving-max? ssb-am?
 				      sampler? region-sampler? vct? )))
 		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) #(0 1)))
 	  
@@ -45804,7 +45867,7 @@ EDITS: 1
 			  mus-output? notch? one-pole? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 			  sample->file? sawtooth-wave? nrxysin? nrxycos?
 			  square-wave? src? ncos? nsin? table-lookup? 
-			  triangle-wave? two-pole? two-zero? wave-train? sound? color? mix-sampler? moving-average? ssb-am?
+			  triangle-wave? two-pole? two-zero? wave-train? sound? color? mix-sampler? moving-average? moving-max? ssb-am?
 			  sampler? region-sampler? vct?))
 	  
 	  (for-each (lambda (n)
@@ -45844,7 +45907,7 @@ EDITS: 1
 					       (not (eq? tag 'arg-error)))
 					  (snd-display #__line__ ";clm ~A: tag: ~A arg: ~A [~A]" n tag arg ctr))
 				      (set! ctr (+ 1 ctr))))
-				  (list all-pass asymmetric-fm clear-array comb filtered-comb convolve db->linear moving-average
+				  (list all-pass asymmetric-fm clear-array comb filtered-comb convolve db->linear moving-average moving-max
 					degrees->radians delay env formant firmant frame->list granulate hz->radians linear->db
 					make-all-pass make-asymmetric-fm make-comb make-filtered-comb make-convolve make-delay make-env
 					make-file->frame make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame
@@ -45856,7 +45919,8 @@ EDITS: 1
 					mus-channel mus-channels make-polyshape make-polywave
 					mus-data mus-feedback mus-feedforward mus-frequency mus-hop
 					mus-increment mus-length mus-file-name mus-location mus-name mus-order mus-phase mus-ramp mus-random mus-run
-					mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-moving-average seconds->samples samples->seconds
+					mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-moving-average make-moving-max 
+					seconds->samples samples->seconds
 					oscil partials->polynomial partials->wave phase-partials->wave
 					phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin
 					sawtooth-wave nrxysin nrxycos square-wave src 
@@ -45877,13 +45941,13 @@ EDITS: 1
 				     (eq? tag 'error)
 				     (eq? tag 'mus-error)))
 			    (snd-display #__line__ ";clm-1 ~A: ~A" n tag))))
-		    (list all-pass array-interp asymmetric-fm comb filtered-comb contrast-enhancement convolution convolve moving-average
+		    (list all-pass array-interp asymmetric-fm comb filtered-comb contrast-enhancement convolution convolve moving-average moving-max
 			  convolve-files delay dot-product env-interp file->frame file->sample snd->sample filter fir-filter formant firmant
 			  formant-bank frame* frame+ frame->frame frame-ref frame->sample granulate iir-filter ina
 			  inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-comb make-filtered-comb
 			  make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-firmant make-frame make-granulate
 			  make-iir-filter make-locsig make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder
-			  make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-moving-average
+			  make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-moving-average make-moving-max
 			  make-nrxysin make-nrxycos make-square-wave make-src make-ncos 
 			  make-nsin make-table-lookup make-triangle-wave
 			  make-two-pole make-two-zero make-wave-train mixer* mixer+ multiply-arrays

@@ -127,7 +127,7 @@ enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
       MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
-      MUS_MOVING_AVERAGE, MUS_NSIN, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
+      MUS_MOVING_AVERAGE, MUS_MOVING_MAX, MUS_NSIN, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
       MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS, MUS_POLYWAVE, MUS_FIRMANT,
       MUS_INITIAL_GEN_TAG};
 
@@ -4095,6 +4095,7 @@ mus_any *mus_make_all_pass(mus_float_t backward, mus_float_t forward, int size, 
 }
 
 
+/* moving-average */
 bool mus_moving_average_p(mus_any *ptr) 
 {
   return((ptr) && 
@@ -4183,6 +4184,111 @@ mus_any *mus_make_moving_average(int size, mus_float_t *line)
     }
   return(NULL);
 }
+
+
+/* moving-max */
+bool mus_moving_max_p(mus_any *ptr) 
+{
+  return((ptr) && 
+	 (ptr->core->type == MUS_MOVING_MAX));
+}
+
+
+mus_float_t mus_moving_max(mus_any *ptr, mus_float_t input)
+{
+  dly *gen = (dly *)ptr;
+  mus_float_t output, abs_input;
+
+  abs_input = fabs(input);
+  output = mus_delay_unmodulated_noz(ptr, abs_input);
+  if (abs_input >= gen->xscl)
+    gen->xscl = abs_input;
+  else
+    {
+      if (output >= gen->xscl)
+	{
+	  int i;
+	  for (i = 0; i < gen->size; i++)
+	    if (gen->line[i] > abs_input)
+	      abs_input = gen->line[i];
+	  gen->xscl = abs_input;
+	}
+    }
+  return(gen->xscl);
+}
+
+static mus_float_t run_mus_moving_max(mus_any *ptr, mus_float_t input, mus_float_t unused) {return(mus_moving_max(ptr, input));}
+
+
+static void moving_max_reset(mus_any *ptr)
+{
+  dly *gen = (dly *)ptr;
+  delay_reset(ptr);
+  gen->xscl = 0.0;
+}
+
+
+static char *describe_moving_max(mus_any *ptr)
+{
+  char *str = NULL;
+  dly *gen = (dly *)ptr;
+  char *describe_buffer;
+  describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %.3f, line[%d]:%s",
+	       mus_name(ptr),
+	       gen->xscl * gen->yscl, 
+	       gen->size, 
+	       str = float_array_to_string(gen->line, gen->size, gen->loc));
+  if (str) free(str);
+  return(describe_buffer);
+}
+
+
+static mus_any_class MOVING_MAX_CLASS = {
+  MUS_MOVING_MAX,
+  (char *)S_moving_max,
+  &free_delay,
+  &describe_moving_max,
+  &delay_equalp,
+  &delay_data,
+  &delay_set_data,
+  &delay_length,
+  &delay_set_length,
+  0, 0, 0, 0, /* freq phase */
+  &delay_scaler,
+  &delay_set_scaler,
+  &delay_fb,
+  &delay_set_fb,
+  &run_mus_moving_max,
+  MUS_DELAY_LINE,
+  NULL, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &delay_loc,
+  0, 0,
+  0, 0, 0, 0, 0,
+  &moving_max_reset,
+  0
+};
+
+
+mus_any *mus_make_moving_max(int size, mus_float_t *line)
+{
+  dly *gen;
+  gen = (dly *)mus_make_delay(size, line, size, MUS_INTERP_NONE);
+  if (gen)
+    {
+      int i;
+      gen->core = &MOVING_MAX_CLASS;
+      gen->xscl = 0.0;
+      for (i = 0; i < size; i++) 
+	if (fabs(gen->line[i]) > gen->xscl)
+	  gen->xscl = fabs(gen->line[i]);
+      return((mus_any *)gen);
+    }
+  return(NULL);
+}
+
 
 
 

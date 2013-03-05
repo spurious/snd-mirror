@@ -2284,7 +2284,7 @@ static XEN s7_xen_sound_fill(s7_scheme *sc, XEN obj, XEN val)
 		  for (j = 0; j < len; j++)
 		    data[j] = valf;
 		}
-	      if (change_samples(0, len, data, cp, "fill! sound", cp->edit_ctr))
+	      if (change_samples(0, len, data, cp, "fill! sound", cp->edit_ctr, fabs(valf)))
 		update_graph(cp);
 	    }
 	  free(data);

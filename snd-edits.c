@@ -3634,9 +3634,13 @@ static ed_list *delete_section_from_list(mus_long_t beg, mus_long_t num, ed_list
 bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos)
 {
   mus_long_t len;
-
+  int old_pos;
+  bool read_max = false;
+  
   if (num <= 0) return(true);
   len = cp->edits[edpos]->samples;
+  old_pos = edpos;
+
   if ((beg < len) && (beg >= 0))
     {
       ed_list *ed;
@@ -3672,11 +3676,12 @@ bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos)
 	    }
 	  else
 	    {
-	      if ((beg == 0) && (num == len))
+	      if ((beg == 0) && (num >= len))
 		{
 		  ed->maxamp = 0.0;
 		  ed->maxamp_position = 0;
 		}
+	      else read_max = ((len - num) < MAXAMP_CHECK_SIZE);
 	    }
 	}
       ed->edpos = edpos;
@@ -3692,12 +3697,38 @@ bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos)
 	  if (ed->cursor < beg) ed->cursor = beg;
 	}
 
+      if (read_max)
+	{
+	  mus_long_t new_len;
+	  mus_float_t mx, temp;
+	  int i, loc = 0;
+	  snd_fd *sf;
+	  new_len = ed->samples;
+	  
+	  sf = init_sample_read_any_with_bufsize(0, cp, READ_FORWARD, cp->edit_ctr, new_len + 1); /* read current samps */
+	  mx = fabs(read_sample(sf));
+	  for (i = 1; i < new_len; i++)
+	    {
+	      temp = fabs(read_sample(sf));
+	      if (temp > mx)
+		{
+		  mx = temp;
+		  loc = i;
+		}
+	    }
+	  free_snd_fd(sf);
+	  ed->maxamp = mx;
+	  ed->maxamp_position = loc;
+	}
+		
       reflect_sample_change_in_axis(cp);
       reflect_mix_change(ANY_MIX_ID);
       after_edit(cp);
 
       if (backup)
 	backup_edit_list(cp);
+
+	
 
       return(true);
     }
@@ -3789,13 +3820,15 @@ bool file_change_samples(mus_long_t beg, mus_long_t num, const char *tempfile, c
       if (cp->edit_ctr > 0) ed->cursor = cp->edits[cp->edit_ctr - 1]->cursor;
       cp->edits[cp->edit_ctr] = ed;
       
-      if ((old_ed->maxamp_position >= 0) &&
+      if (((old_ed->maxamp_position >= 0) ||
+	   ((beg == 0) && (num >= old_ed->samples))) &&
 	  (mus_sound_channel_maxamp_exists(tempfile, chan)))
 	{
 	  mus_float_t mx;
 	  mus_long_t pos;
 	  mx = mus_sound_channel_maxamp(tempfile, chan, &pos);
-	  if (mx > old_ed->maxamp)
+	  if ((mx > old_ed->maxamp) ||
+	      ((beg == 0) && (num >= old_ed->samples)))
 	    {
 	      ed->maxamp = mx;
 	      ed->maxamp_position = beg + pos;
@@ -3911,7 +3944,7 @@ bool file_override_samples(mus_long_t num, const char *tempfile, chan_info *cp, 
 }
 
 
-bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info *cp, const char *origin, int edpos)
+bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info *cp, const char *origin, int edpos, mus_float_t mx)
 {
   mus_long_t prev_len, new_len;
   ed_fragment *cb;
@@ -3950,37 +3983,46 @@ bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info
   ED_SOUND(cb) = cp->sound_ctr;
   ed->sound_location = ED_SOUND(cb);
 
-  if ((num < MAXAMP_CHECK_SIZE) &&
-      (old_ed->maxamp_position >= 0))
+  if ((old_ed->maxamp_position >= 0) ||
+      ((beg == 0) && (num >= old_ed->samples)))  /* perhaps old max is irrelevant */
     {
-      mus_float_t mx, temp;
-      int i, pos = 0;
-      mx = fabs(vals[0]);
-      for (i = 1; i < num; i++)
+      int pos = 0;
+      if ((mx < 0.0) &&
+	  (num < MAXAMP_CHECK_SIZE))
 	{
-	  temp = fabs(vals[i]);
-	  if (temp > mx)
+	  mus_float_t nmx, temp;
+	  int i;
+	  nmx = fabs(vals[0]);
+	  for (i = 1; i < num; i++)
 	    {
-	      mx = temp;
-	      pos = i;
+	      temp = fabs(vals[i]);
+	      if (temp > nmx)
+		{
+		  nmx = temp;
+		  pos = i;
+		}
 	    }
+	  mx = nmx;
 	}
-      if (mx > old_ed->maxamp)
+      if (mx >= 0.0)
 	{
-	  ed->maxamp = mx;
-	  ed->maxamp_position = beg + pos;
-	}
-      else
-	{
-	  if ((old_ed->maxamp_position < beg) ||
-	      (old_ed->maxamp_position > (beg + num)))
+	  if ((mx > old_ed->maxamp) ||
+	      ((beg == 0) && (num >= old_ed->samples)))
 	    {
-	      ed->maxamp = old_ed->maxamp;
-	      ed->maxamp_position = old_ed->maxamp_position;
+	      ed->maxamp = mx;
+	      ed->maxamp_position = beg + pos;
+	    }
+	  else
+	    {
+	      if ((old_ed->maxamp_position < beg) ||
+		  (old_ed->maxamp_position > (beg + num)))
+		{
+		  ed->maxamp = old_ed->maxamp;
+		  ed->maxamp_position = old_ed->maxamp_position;
+		}
 	    }
 	}
     }
-
   ripple_all(cp, 0, 0);
   if (new_len > prev_len) reflect_sample_change_in_axis(cp);
   reflect_mix_change(ANY_MIX_ID);
@@ -4578,10 +4620,11 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
 	      else start *= exp(log(incr) * FRAGMENT_LENGTH(new_ed, i));
 	    }
 	}
-      if (old_ed->maxamp_position >= 0)
+      if ((old_ed->maxamp_position >= 0) ||
+	  ((beg == 0) && (num >= old_ed->samples)))
 	{
-	  /* we have maxamp data for the previous edit */
-	  if (((old_ed->maxamp_position < beg) ||
+	  if ((old_ed->maxamp_position >= 0) &&
+	      ((old_ed->maxamp_position < beg) ||
 	       (old_ed->maxamp_position > (beg + num))) &&
 	      (fabs(rstart) <= 1.0) &&
 	      (((!is_xramp) &&
@@ -4589,7 +4632,10 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
 	       ((is_xramp) &&
 		(fabs(rstart * exp(log(incr) * num)) <= 1.0))))
 	    {
-	      /* here the ramp does not hit the current maxamp and it stays within -1.0 to 1.0, so it can't affect the maxamp */
+	      /* we have maxamp data for the previous edit and
+	       *   the ramp does not hit the current maxamp and it stays within -1.0 to 1.0, 
+	       *   so it can't affect the maxamp 
+	       */
 	      new_ed->maxamp = old_ed->maxamp;
 	      new_ed->maxamp_position = old_ed->maxamp_position;
 	    }
@@ -4618,7 +4664,8 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
 			}
 		    }
 		  free_snd_fd(sf);
-		  if (mx > old_ed->maxamp)
+		  if ((mx > old_ed->maxamp) ||
+		      ((beg == 0) && (num >= old_ed->samples)))
 		    {
 		      new_ed->maxamp = mx;
 		      new_ed->maxamp_position = beg + loc;
@@ -7731,7 +7778,7 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd, XEN chn_n, XEN edpos)
 #else
   origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP "%.4f", TO_PROC_NAME("set-sample"), beg, fval);
 #endif
-  if (change_samples(beg, 1, ival, cp, origin, pos))
+  if (change_samples(beg, 1, ival, cp, origin, pos, fabs(fval)))
     update_graph(cp);
   free(origin);
   return(val);
@@ -7856,7 +7903,7 @@ the new data's end."
 	  vct *v;
 	  v = XEN_TO_VCT(vect);
 	  if (len > v->length) len = v->length;
-	  change_samples(beg, len, v->data, cp, caller, pos);
+	  change_samples(beg, len, v->data, cp, caller, pos, -1.0);
 	}
       else
 	{
@@ -7866,7 +7913,7 @@ the new data's end."
 	  ivals = g_floats_to_samples(vect, &ilen, caller, 3);
 	  if (ivals)
 	    {
-	      change_samples(beg, (mus_long_t)ilen, ivals, cp, caller, pos);
+	      change_samples(beg, (mus_long_t)ilen, ivals, cp, caller, pos, -1.0);
 	      free(ivals);
 	    }
 	}
@@ -8100,14 +8147,18 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
   XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samps), samps, XEN_ARG_2, S_change_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_3, S_change_samples_with_origin, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(vect), vect, XEN_ARG_4, S_change_samples_with_origin, "a filename");
+
   ASSERT_CHANNEL(S_change_samples_with_origin, snd, chn_n, 5);
   cp = get_cp(snd, chn_n, S_change_samples_with_origin);
   if (!cp) return(XEN_FALSE);
+
   beg = beg_to_sample(samp_0, S_change_samples_with_origin);
   len = XEN_TO_C_LONG_LONG_OR_ELSE(samps, 0);
   if (len <= 0) return(XEN_FALSE);
+
   pos = to_c_edit_position(cp, edpos, S_change_samples_with_origin, 7);
   check_saved_temp_file("sound", vect, date);
+
   file_change_samples(beg, len,
 		      XEN_TO_C_STRING(vect),
 		      cp, 0, DONT_DELETE_ME,

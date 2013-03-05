@@ -970,7 +970,7 @@ bool file_insert_samples(mus_long_t beg, mus_long_t num, const char *tempfile, c
 bool insert_complete_file_at_cursor(snd_info *sp, const char *filename);
 bool insert_complete_file(snd_info *sp, const char *str, mus_long_t chan_beg, file_delete_t auto_delete);
 bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos);
-bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info *cp, const char *origin, int edpos);
+bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info *cp, const char *origin, int edpos, mus_float_t mx);
 bool file_change_samples(mus_long_t beg, mus_long_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos);
 bool file_override_samples(mus_long_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin);
 mus_float_t chn_sample(mus_long_t samp, chan_info *cp, int pos);

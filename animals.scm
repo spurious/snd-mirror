@@ -1017,7 +1017,7 @@
 	  (frm2f (* 2 14.0 (sin (hz->radians 1200))))
 	  (frm3f (* 2 4.0 (sin (hz->radians 5000))))
 	  
-	  (intrpf (make-env '(0 1 .6 0 1 1) :duration dur)))
+	  (intrpf (make-env '(0 1 .6 0 1 1) :offset 1000.0 :scaler 200.0 :duration dur)))
 
       (let ((fb (vector frm1 frm2 frm3))
 	    (fs (vct frm1f frm2f frm3f)))
@@ -1025,9 +1025,8 @@
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (let ((frq (+ (env frqf)
-			(rand-interp rnd1)))
-		(intrp (env intrpf)))
-	    (set! (mus-frequency frm2) (+ 1000.0 (* intrp 200.0)))
+			(rand-interp rnd1))))
+	    (set! (mus-frequency frm2) (env intrpf))
 	    (outa i (formant-bank fs fb (* (env ampf)
 					   (+ .8 (rand-interp rnd))
 					   (+       (rxyk!cos f1 (* 2.0 frq))
@@ -4742,7 +4741,8 @@
 ;;; Barred owl (the "hoo-aw" call, not the more complex one -- I haven't succeeded with the latter yet)
 
 (defanimal (barred-owl-1 beg amp)
-  (let ((dur 1.27))
+  (let ((dur 1.27)
+	(owl-env '(0 0 .53 0 .54 1 1 1)))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
 	  (ampf (make-env '(0.000 0.000 0.030 0.308 0.052 0.345 0.057 0.932 0.104 0.567 0.161 0.605 0.259 0.510 
@@ -4757,7 +4757,10 @@
 	  (gen1 (make-polywave 0.0 (nrcos->polywave 9 .5 1.0)))
 	  (vib (make-oscil 12))
 	  (rnd (make-rand-interp 300 (hz->radians 5)))
-	  (intrpf (make-env '(0 0 .53 0 .54 1 1 1) :duration dur))
+	  (intrpf (make-env owl-env :duration dur))
+	  (intrpf1 (make-env owl-env :offset 550.0 :scaler 80.0 :duration dur))
+	  (intrpf2 (make-env owl-env :offset 1500.0 :scaler -400.0 :duration dur))
+	  (intrpf3 (make-env owl-env :offset 2300.0 :scaler 150.0 :duration dur))
 	  (rnd1 (make-rand-interp 1000 .1))
 	  
 	  (frm1 (make-formant 730 .995))
@@ -4774,17 +4777,16 @@
       
 	(do ((i start (+ i 1)))
 	    ((= i stop))
-	  (let ((intrp (env intrpf)))
-	    (set! (mus-frequency frm1) (+ 550.0 (* intrp 80.0)))
-	    (set! (mus-frequency frm2) (+ 1500.0 (* intrp -400.0)))
-	    (set! (mus-frequency frm3) (+ 2300.0 (* intrp 150.0)))
-	    (outa i (* (env ampf) 
-		       (formant-bank fs fb (* (+ .9 (rand-interp rnd1))
-					      (polywave gen1 (+ (env frqf)
-								(* intrp (+ (* hz7 (oscil vib))
-									    (rand-interp rnd)))))))))))))))
+	  (set! (mus-frequency frm1) (env intrpf1))
+	  (set! (mus-frequency frm2) (env intrpf2))
+	  (set! (mus-frequency frm3) (env intrpf3))
+	  (outa i (* (env ampf) 
+		     (formant-bank fs fb (* (+ .9 (rand-interp rnd1))
+					    (polywave gen1 (+ (env frqf)
+							      (* (env intrpf) (+ (* hz7 (oscil vib))
+										 (rand-interp rnd))))))))))))))
 
-;; (with-sound (:play #t) (barred-owl-1 0 .5))
+;; (with-sound (:play #t :statistics #t) (barred-owl-1 0 .5))
 
 
 

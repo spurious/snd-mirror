@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 8
-#define MUS_DATE "23-Jan-13"
+#define MUS_REVISION 9
+#define MUS_DATE "4-Mar-13"
 
 /* isn't mus_env_interp backwards? */
 
@@ -255,6 +255,10 @@ MUS_EXPORT mus_float_t mus_all_pass_unmodulated_noz(mus_any *ptr, mus_float_t in
 MUS_EXPORT mus_any *mus_make_moving_average(int size, mus_float_t *line);
 MUS_EXPORT bool mus_moving_average_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_moving_average(mus_any *ptr, mus_float_t input);
+
+MUS_EXPORT mus_any *mus_make_moving_max(int size, mus_float_t *line);
+MUS_EXPORT bool mus_moving_max_p(mus_any *ptr);
+MUS_EXPORT mus_float_t mus_moving_max(mus_any *ptr, mus_float_t input);
 
 MUS_EXPORT mus_float_t mus_table_lookup(mus_any *gen, mus_float_t fm);
 MUS_EXPORT mus_float_t mus_table_lookup_unmodulated(mus_any *gen);
@@ -581,6 +585,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 4-Mar:      added moving_max generator.
  * 21-Jan-13:  changed mus_formant_bank parameters.
  * --------
  * 22-Dec:     removed all the safety settings.

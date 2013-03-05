@@ -5174,10 +5174,12 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 
-
+#|
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; moving-max
+;;;
+;;; this is now a built-in generator (4-Mar-13)
 
 (defgenerator (moving-max
 	       :make-wrapper (lambda (g)
@@ -5208,7 +5210,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	(if (>= mx (mus-scaler dly))
 	    (set! (mus-scaler dly) (vct-peak (mus-data dly)))))
     (mus-scaler dly)))
-
+|#
 
 
 

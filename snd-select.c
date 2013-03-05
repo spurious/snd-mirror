@@ -1013,7 +1013,7 @@ static XEN s7_xen_selection_fill(s7_scheme *sc, XEN obj, XEN val)
 	  data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
 	  for (j = 0; j < len; j++)
 	    data[j] = valf;
-	  if (change_samples(beg, len, data, si->cps[i], "fill! selection", si->cps[i]->edit_ctr))
+	  if (change_samples(beg, len, data, si->cps[i], "fill! selection", si->cps[i]->edit_ctr, fabs(valf)))
 	    update_graph(si->cps[i]);
 	  free(data);
 	}

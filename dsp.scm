@@ -2,7 +2,7 @@
 
 (provide 'snd-dsp.scm)
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-(if (not (provided? 'snd-generators.scm)) (load "generators.scm")) ; moving-*
+;; (if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
 (define (binomial n k)
@@ -70,7 +70,7 @@
 	((= i N))
       (let ((val (* den (cos (* N (acos (* alpha (cos phase))))))))
 	(set! (rl i) (real-part val))
-	(set! (im i) (imag-part val)))) ;this is actually always essentially 0.0
+	(set! (im i) (imag-part val)))) ;this is always essentially 0.0
     (fft rl im -1)            ;direction could also be 1
     (let ((pk (vct-peak rl)))
       (vct-scale! rl (/ 1.0 pk)))
@@ -1392,9 +1392,7 @@ the era when computers were human beings"
   "(channel-distance s1 c1 s2 c2) returns the euclidean distance between the two channels: sqrt(<f-g,f-g>)"
   (let ((r1 (make-sampler 0 s1 c1))
 	(r2 (make-sampler 0 s2 c2))
-	(sum 0.0)
 	(N (min (frames s1 c1) (frames s2 c2)))
-	(diff 0.0)
 	(data1 #f)
 	(data2 #f))
     (set! data1 (make-vct N))

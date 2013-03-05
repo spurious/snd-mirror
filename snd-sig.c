@@ -755,8 +755,8 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
 	  idata0[k] = read_sample_to_mus_sample(c1);
 	  idata1[k] = read_sample_to_mus_sample(c0);
 	}
-      change_samples(beg, dur, data0[0], cp0, S_swap_channels, cp0->edit_ctr);
-      change_samples(beg, dur, data1[0], cp1, S_swap_channels, cp1->edit_ctr);
+      change_samples(beg, dur, data0[0], cp0, S_swap_channels, cp0->edit_ctr, -1.0);
+      change_samples(beg, dur, data1[0], cp1, S_swap_channels, cp1->edit_ctr, -1.0);
     }
   swap_marks(cp0, cp1);
   update_graph(cp0);
@@ -1507,7 +1507,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
   else 
     {
       if (dur > 0) 
-	change_samples(beg, dur, idata, cp, origin, edpos);
+	change_samples(beg, dur, idata, cp, origin, edpos, -1.0);
     }
   update_graph(cp); 
   free(data[0]);
@@ -1930,7 +1930,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
       file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, new_origin, sf->edit_ctr);
       if (ofile) {free(ofile); ofile = NULL;}
     }
-  else change_samples(beg, dur, data[0], cp, new_origin, sf->edit_ctr);
+  else change_samples(beg, dur, data[0], cp, new_origin, sf->edit_ctr, -1.0);
   if (new_origin) free(new_origin);
 
   update_graph(cp); 
@@ -2226,7 +2226,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
     {
       for (k = 0; k < dur; k++)
 	idata[k] = read_sample_to_mus_sample(sf);
-      change_samples(beg, dur, idata, cp, origin, edpos);
+      change_samples(beg, dur, idata, cp, origin, edpos, -1.0);
     }
   if (ep) cp->edits[cp->edit_ctr]->peak_env = ep;
   reverse_marks(cp, (section) ? beg : -1, dur);
@@ -2664,7 +2664,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 		    }
 
 		}
-	      else change_samples(si->begs[i], dur, data[i], si->cps[i], new_origin, pos);
+	      else change_samples(si->begs[i], dur, data[i], si->cps[i], new_origin, pos, -1.0);
 	      free(new_origin);
 	      update_graph(si->cps[i]);
 	    }
@@ -2969,19 +2969,33 @@ static void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int ed
     }
   y0 = chn_sample(beg, cp, edpos);
   y1 = chn_sample(beg + dur, cp, edpos); /* one past end -- this is a debatable choice */
-  if (y1 > y0) angle = M_PI; else angle = 0.0;
-  incr = M_PI / (double)dur;
-  off = 0.5 * (y1 + y0);
-  scale = 0.5 * fabs(y0 - y1);
-  data = (mus_float_t *)calloc(dur, sizeof(mus_float_t));
-  for (k = 0; k < dur; k++, angle += incr) 
-    data[k] = (off + scale * cos(angle));
+
 #if HAVE_FORTH
   origin = mus_format("%lld" PROC_SEP "%lld %s", beg, dur, S_smooth_channel);
 #else
   origin = mus_format("%s" PROC_OPEN "%lld" PROC_SEP "%lld", TO_PROC_NAME(S_smooth_channel), beg, dur);
 #endif
-  change_samples(beg, dur, data, cp, origin, edpos);
+
+  data = (mus_float_t *)calloc(dur, sizeof(mus_float_t));
+  if (y0 == y1)
+    {
+      for (k = 0; k < dur; k++) 
+	data[k] = y0;
+      change_samples(beg, dur, data, cp, origin, edpos, fabs(y0));
+    }
+  else
+    {
+      if (y1 > y0) angle = M_PI; else angle = 0.0;
+      incr = M_PI / (double)dur;
+      off = 0.5 * (y1 + y0);
+      scale = 0.5 * fabs(y0 - y1);
+      /* if scale is very small, it might work here to just use linear interpolation, but that case appears to be very uncommon.
+       */
+      /* fprintf(stderr, "%lld %f %f\n", dur, scale, incr); */
+      for (k = 0; k < dur; k++, angle += incr) 
+	data[k] = (off + scale * cos(angle));
+      change_samples(beg, dur, data, cp, origin, edpos, ((y0 > y1) && (y1 >= 0.0)) ? y0 : -1.0);
+    }
   if (origin) free(origin);
   update_graph(cp);
   free(data);
@@ -3720,7 +3734,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	      for (kp = 0; kp < num; kp++)
 		data[kp] = x;
 	      /* since we're not calling eval or the event checker, the channel can't be closed during the loop (??) */
-	      change_samples(beg, num, data, cp, caller, pos);
+	      change_samples(beg, num, data, cp, caller, pos, fabs(x));
 	      free(data);
 	      sf = free_snd_fd(sf);
 	      return(res);
@@ -3774,7 +3788,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 				  data[kp] = s7_call_direct_to_real_and_free(s7, res);
 				}
 			      sf = free_snd_fd(sf);
-			      change_samples(beg, num, data, cp, caller, pos);
+			      change_samples(beg, num, data, cp, caller, pos, -1.0);
 			      free(data);
 			      s7_set_current_environment(s7, old_e);
 			      return(res);
@@ -3815,7 +3829,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 
 			      sf = free_snd_fd(sf);
 			      s7_gc_unprotect_at(s7, gc_loc);			  
-			      change_samples(beg, num, data, cp, caller, pos);
+			      change_samples(beg, num, data, cp, caller, pos, -1.0);
 			      free(data);
 			      s7_set_current_environment(s7, old_e);
 			      return(res);
@@ -3842,7 +3856,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 
 			      for (kp = 0; kp < num; kp++)
 				data[kp] = s7_call_direct_to_real_and_free(s7, res);
-			      change_samples(beg, num, data, cp, caller, pos);
+			      change_samples(beg, num, data, cp, caller, pos, -1.0);
 			      free(data);
 			      sf = free_snd_fd(sf);
 			      s7_set_current_environment(s7, old_e);
@@ -3873,7 +3887,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 			      for (kp = 0; kp < num; kp++)
 				data[kp] = s7_real(f(s7, args));
 
-			      change_samples(beg, num, data, cp, caller, pos);
+			      change_samples(beg, num, data, cp, caller, pos, -1.0);
 			      free(data);
 			      sf = free_snd_fd(sf);
 			      s7_gc_unprotect_at(s7, gc_loc);
@@ -3882,14 +3896,6 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 			    }
 			}
 		    }
-#if 0
-(with-sound () (fm-violin 0 1 440 .1))
-(let ((rd (make-readin "oboe.snd"))) (map-channel (lambda (y) (readin rd))))
-(let ((g (make-oscil 440.0))) (map-channel (lambda (y) (oscil g y))))
-		  fprintf(stderr, "map: %s, temp: %d, direct: %d, len: %d\n", s7_object_to_c_string(s7, res), 
-			  s7_function_returns_temp(res), s7_function_choice_is_direct(s7, res),
-			  s7_list_length(s7, res));
-#endif
 		}
 	    }
 	}
@@ -4000,7 +4006,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
       return(XEN_FALSE);
     }
   if (data_pos == num)
-    change_samples(beg, data_pos, data, cp, caller, pos);
+    change_samples(beg, data_pos, data, cp, caller, pos, -1.0);
   else
     {
       /* the version above truncates to the new length... */
@@ -4612,7 +4618,7 @@ static void cut_and_smooth_1(chan_info *cp, mus_long_t beg, mus_long_t end, bool
   
   change_samples(start, 2 * SPLICE_LEN, splice, cp, 
 		 (over_selection) ? S_delete_selection_and_smooth : S_delete_samples_and_smooth, 
-		 cp->edit_ctr);
+		 cp->edit_ctr, -1.0);
 }
 
 

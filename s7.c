@@ -405,7 +405,8 @@ enum {OP_NO_OP,
       OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_Z,
       OP_SET_SYMBOL_SAFE_S, OP_SET_SYMBOL_SAFE_C, 
       OP_SET_SYMBOL_SAFE_SS, OP_SET_SYMBOL_SAFE_SSS, OP_SET_SYMBOL_SAFE_opSSq_S, OP_SET_SYMBOL_SAFE_S_op_S_opSSqq,
-      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_P, OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_ENV_S, OP_SET_ENV_ALL_X,
+      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_A, OP_SET_PAIR_P, 
+      OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_ENV_S, OP_SET_ENV_ALL_X,
       OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE,
       OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_COND_UNCHECKED,
       OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, OP_DEFINE_FUNCHECKED,
@@ -497,7 +498,8 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "member", "assoc", "member", "assoc",
    
    "quote", "lambda", "let", "case", 
-   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
+   "set!", "set!", "set!", "set!", "set!", "set!", "set!", 
+   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "let*", "letrec", "cond",
    "lambda*", "do", "define", "define*", "define",
@@ -583,7 +585,8 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SET_UNCHECKED", "OP_SET_SYMBOL_C", "OP_SET_SYMBOL_S", "OP_SET_SYMBOL_Q", "OP_SET_SYMBOL_P", "OP_SET_SYMBOL_Z", 
   "OP_SET_SYMBOL_SAFE_S", "OP_SET_SYMBOL_SAFE_C", 
   "OP_SET_SYMBOL_SAFE_SS", "OP_SET_SYMBOL_SAFE_SSS", "OP_SET_SYMBOL_SAFE_opSSq_S", "OP_SET_SYMBOL_SAFE_S_op_S_opSSqq",
-  "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_Z", "OP_SET_PAIR_P", "OP_SET_PAIR_P_1", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", "OP_SET_ENV_S", "OP_SET_ENV_ALL_X",
+  "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_Z", "OP_SET_PAIR_A", "OP_SET_PAIR_P", 
+  "OP_SET_PAIR_P_1", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", "OP_SET_ENV_S", "OP_SET_ENV_ALL_X",
   "OP_SET_PAIR_C", "OP_SET_PAIR_C_P", "OP_SET_PAIR_C_P_1", "OP_SET_SAFE",
   "OP_LET_STAR_UNCHECKED", "OP_LETREC_UNCHECKED", "OP_COND_UNCHECKED",
   "OP_LAMBDA_STAR_UNCHECKED", "OP_DO_UNCHECKED", "OP_DEFINE_UNCHECKED", "OP_DEFINE_STAR_UNCHECKED", "OP_DEFINE_FUNCHECKED",
@@ -1315,7 +1318,7 @@ struct s7_scheme {
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z;
   s7_pointer SET_SYMBOL_SAFE_S, SET_SYMBOL_SAFE_SS, SET_SYMBOL_SAFE_SSS, SET_SYMBOL_SAFE_opSSq_S, SET_SYMBOL_SAFE_S_op_S_opSSqq;
   s7_pointer SET_SYMBOL_SAFE_C;
-  s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_P, SET_PWS, SET_ENV_S, SET_ENV_ALL_X, SET_PAIR_C, SET_PAIR_C_P;
+  s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_A, SET_PAIR_P, SET_PWS, SET_ENV_S, SET_ENV_ALL_X, SET_PAIR_C, SET_PAIR_C_P;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED;
   s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLER_1, CASE_SIMPLER_SS;
   s7_pointer CASE_SIMPLEST, CASE_SIMPLEST_SS, CASE_SIMPLEST_ELSE, CASE_SIMPLEST_ELSE_C, CASE_INT;
@@ -2352,7 +2355,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 1
+#if 0
 #if 0
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -42608,8 +42611,23 @@ static s7_pointer check_set(s7_scheme *sc)
 			    set_syntax_op(sc->code, sc->SET_PAIR);
 			  else 
 			    {
+			      set_syntax_op(sc->code, sc->SET_PAIR_P);
 			      /* splice_in_values protects us here from values */
-			      set_syntax_op(sc->code, (is_h_optimized(value)) ? sc->SET_PAIR_Z : sc->SET_PAIR_P);
+			      if (is_h_optimized(value))
+				{
+				  set_syntax_op(sc->code, sc->SET_PAIR_Z);
+				  if (is_all_x_safe(sc, value))
+				    {
+				      s7_pointer obj;
+				      obj = finder(sc, car(inner));
+				      if ((is_c_function(obj)) &&
+					  (is_c_function(c_function_setter(obj))))
+					{
+					  annotate_arg(sc, cdr(sc->code));
+					  set_syntax_op(sc->code, sc->SET_PAIR_A);
+					}
+				    }
+				}
 			    }
 			}
 		      else
@@ -49710,7 +49728,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T2_1) = ind;
 		sc->value = (*(c_object_ref(c)))(sc, c, sc->T2_1);
 		goto START;
-		/* 48949: 7655074 */
 	      }
 	      
 	      
@@ -49722,7 +49739,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_SAFE_C_C:
 	      sc->value = c_call(code)(sc, cdr(code)); /* this includes all safe calls where all args are constants */
 	      goto START;
-	      /* 17757511 : 17757499 */
 
 	      
 	    case OP_SAFE_C_Q:
@@ -53034,6 +53050,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack_no_args(sc, OP_SET_PAIR_P_1, sc->code);
       sc->code = cadr(sc->code);
       goto OPT_EVAL;
+
+
+    case OP_SET_PAIR_A:
+      {
+	s7_pointer obj, val;
+	obj = finder(sc, caar(sc->code));
+	val = ((s7_function)fcdr(cdr(sc->code)))(sc, cadr(sc->code)); /* this call can step on sc->Tx_x */
+	car(sc->T2_1) = finder(sc, cadar(sc->code));
+	car(sc->T2_2) = val;
+	sc->value = c_function_call(c_function_setter(obj))(sc, sc->T2_1);
+	IF_BEGIN_POP_STACK(sc);
+      }
 
 
       /* --------------- */
@@ -62202,6 +62230,7 @@ s7_scheme *s7_init(void)
   sc->SET_PAIR =              assign_internal_syntax(sc, "set!",    OP_SET_PAIR);
   sc->SET_PAIR_P =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_P);
   sc->SET_PAIR_Z =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_Z);
+  sc->SET_PAIR_A =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_A);
   sc->SET_ENV_S =             assign_internal_syntax(sc, "set!",    OP_SET_ENV_S);
   sc->SET_ENV_ALL_X =         assign_internal_syntax(sc, "set!",    OP_SET_ENV_ALL_X);
   sc->SET_PAIR_C =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_C);
@@ -63174,8 +63203,8 @@ s7_scheme *s7_init(void)
  * 
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5
- * bench    42736 8752 8051 7725 6515 5194 4378
- * lint           9328 8140 7887 7736 7300 7270
+ * bench    42736 8752 8051 7725 6515 5194 4369
+ * lint           9328 8140 7887 7736 7300 7264
  * index    44300 3291 3005 2742 2078 1643 1436
  * s7test    1721 1358 1297 1244  977  961  957
  * t455|6     265   89   55   31   14   14   11
