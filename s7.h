@@ -318,6 +318,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int num);                       /* 
 bool s7_is_real(s7_pointer p);                                               /* (real? p) */
 s7_Double s7_real(s7_pointer p);                                             /* Scheme real -> C double */
 s7_pointer s7_make_real(s7_scheme *sc, s7_Double num);                       /* C double -> Scheme real */
+s7_pointer s7_make_mutable_real(s7_scheme *sc, s7_Double n);
 s7_Double s7_number_to_real(s7_scheme *sc, s7_pointer x);                    /* x can be any kind of number */
 s7_Int s7_number_to_integer(s7_scheme *sc, s7_pointer x);
 

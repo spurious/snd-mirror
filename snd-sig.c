@@ -3343,7 +3343,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 
 				  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
 				  old_e = s7_set_current_environment(s7, e);
-				  y = s7_make_real(s7, 1.5);
+				  y = s7_make_mutable_real(s7, 1.5);
 				  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
 				  slot = s7_make_slot(s7, e, arg, y); 
 				  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
@@ -3383,7 +3383,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 				  z = s7_caddr(res);
 				  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
 				  old_e = s7_set_current_environment(s7, e);
-				  y = s7_make_real(s7, 1.5);
+				  y = s7_make_mutable_real(s7, 1.5);
 				  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
 				  slot = s7_make_slot(s7, e, arg, y);
 				  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
@@ -3777,7 +3777,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 
 			      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
 			      old_e = s7_set_current_environment(s7, e);
-			      y = s7_make_real(s7, 1.5);
+			      y = s7_make_mutable_real(s7, 1.5);
 			      ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
 			      slot = s7_make_slot(s7, e, arg, y); /* make sure it is mutable */
 			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
@@ -3813,7 +3813,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 			      z = s7_caddr(res);
 			      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
 			      old_e = s7_set_current_environment(s7, e);
-			      y = s7_make_real(s7, 1.5);
+			      y = s7_make_mutable_real(s7, 1.5);
 			      ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
 			      slot = s7_make_slot(s7, e, arg, y); 
 			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
@@ -4218,7 +4218,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 
 		  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
 		  olde = s7_set_current_environment(s7, e);
-		  y = s7_make_real(s7, 1.5);
+		  y = s7_make_mutable_real(s7, 1.5);
 		  slot = s7_make_slot(s7, e, arg, y);
 		  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
 		  args = s7_cdr(res);
@@ -4253,7 +4253,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 		    {
 		      /* not direct, so we're making the arg list, so no env is needed */
 
-		      y = s7_make_real(s7, 1.5);
+		      y = s7_make_mutable_real(s7, 1.5);
 		      ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
 		      if (len == 2)
 			args = s7_cons(s7, y, s7_nil(s7));

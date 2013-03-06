@@ -2228,7 +2228,7 @@
 		       'update-sound 'update-time-graph 'update-transform-graph 'variable-graph? 'vct
 		       'vct* 'vct+ 'vct->channel 'vct->list 'vct->sound-data
 		       'vct->string 'vct->vector 'vct-add! 'vct-copy
-		       'vct-fill! 'vct-length 'vct-move!
+		       'vct-fill! 'vct-length 'vct-max 'vct-min 'vct-move!
 		       'vct-multiply! 'vct-offset! 'vct-peak 'vct-ref 'vct-reverse!
 		       'vct-scale! 'vct-set! 'vct-subseq 'vct-subtract! 'vct?
 		       'vector->vct 'view-files-amp 'view-files-amp-env
@@ -9510,6 +9510,8 @@ EDITS: 2
 	(vct-fill! v1 0.5)
 	(if (equal? v0 v1) (snd-display #__line__ ";vct equal? ~A ~A" v0 v1))
 	(if (eq? v0 v1) (snd-display #__line__ ";vct eq? ~A ~A" v0 v1))
+	(if (fneq (vct-max v0) 1.0) (snd-display #__line__ ";vct max ~A" (vct-max v0)))
+	(if (fneq (vct-min v0) 1.0) (snd-display #__line__ ";vct min ~A" (vct-max v0)))
 	(let ((v2 v1)
 	      (v3 (make-vct 10))
 	      (v4 (make-vct 3)))
@@ -9649,6 +9651,19 @@ EDITS: 2
 	    (vct-subseq vn 1 8 vb)
 	    (if (fneq (vb 0) 1.0) (snd-display #__line__ ";vct-subseq[1:8->vb] ~A?" (vb 0)))
 	    (if (fneq (vb 8) 123.0) (snd-display #__line__ ";vct-subseq[1:8->vb][8] ~A?" (vb 8))))
+
+	  (let ((v (make-vct 20))
+		(mn 1.0)
+		(mx -1.0))
+	    (do ((i 0 (+ i 1)))
+		((= i 20))
+	      (let ((val (mus-random 1.0)))
+		(set! (v i) val)
+		(if (< val mn) (set! mn val))
+		(if (> val mx) (set! mx val))))
+	    (if (fneq (vct-min v) mn) (snd-display #__line__ ";vct-min ran: ~A ~A" (vct-min v) mn))
+	    (if (fneq (vct-max v) mx) (snd-display #__line__ ";vct-max ran: ~A ~A" (vct-max v) mx))
+	    (if (fneq (vct-peak v) (max (abs mn) (abs mx))) (snd-display #__line__ ";vct-peak ran: ~A ~A ~A" (vct-peak v) mn mx)))
 	  
 	  (let ((v1 (make-vct 3 .1))
 		(v2 (make-vct 4 .2)))
@@ -45507,7 +45522,7 @@ EDITS: 1
 		     spectrum square-wave square-wave? src src? ncos nsin ssb-am
 		     ncos? nsin? ssb-am? table-lookup table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero
 		     two-zero? wave-train wave-train?  make-vct vct-add! vct-subtract!  vct-copy
-		     vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! vct-peak
+		     vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! vct-peak vct-max vct-min
 		     vct? list->vct vct->list vector->vct vct->vector vct-move! vct-reverse! vct-subseq vct little-endian? vct->string
 		     clm-channel env-channel env-channel-with-base map-channel scan-channel
 		     reverse-channel seconds->samples samples->seconds
@@ -45787,7 +45802,7 @@ EDITS: 1
 						(lambda args (car args)))))
 				    (if (not (eq? tag 'wrong-type-arg))
 					(snd-display #__line__ ";vct 0 wrong-type-arg ~A: ~A ~A" n tag arg))))
-				(list make-vct vct-copy vct-length vct->list vct-peak)))
+				(list make-vct vct-copy vct-length vct->list vct-peak vct-max vct-min)))
 		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) #(0 1) delay-32))
 	  
 	  (for-each (lambda (arg1)
@@ -47717,21 +47732,21 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-1-Mar-13:
-76,371,238,826
-11,397,391,698  s7.c:eval [/home/bil/snd-13/snd]
- 6,334,722,371  ???:sin [/lib64/libm-2.12.so]
- 4,265,489,210  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+5-Mar-13:
+75,442,781,585
+11,243,890,230  s7.c:eval [/home/bil/snd-13/snd]
+ 6,375,343,290  ???:sin [/lib64/libm-2.12.so]
+ 4,170,443,939  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
  2,970,010,915  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,799,758,634  s7.c:eval'2 [/home/bil/snd-13/snd]
- 2,596,569,411  ???:cos [/lib64/libm-2.12.so]
- 2,428,915,341  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,422,995,795  s7.c:gc [/home/bil/snd-13/snd]
+ 2,725,718,681  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,573,242,664  ???:cos [/lib64/libm-2.12.so]
+ 2,351,333,510  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 2,334,293,070  s7.c:gc [/home/bil/snd-13/snd]
  2,327,317,731  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
  1,585,058,070  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,448,108,364  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 1,249,490,324  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,176,050,839  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 1,546,221,759  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 1,209,191,607  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 1,201,919,340  s7.c:s7_make_real [/home/bil/snd-13/snd]
  1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
 |#

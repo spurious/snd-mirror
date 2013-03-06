@@ -10546,6 +10546,21 @@ static s7_pointer g_indirect_locsig_3(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer indirect_move_sound_3;
+static s7_pointer g_indirect_move_sound_3(s7_scheme *sc, s7_pointer args)
+{
+  s7_Int pos;
+  s7_pointer x;
+  mus_any *locs;
+
+  GET_GENERATOR(args, move-sound, locs);
+  GET_INTEGER_CADR(args, outa, pos);
+  x = s7_call_direct(sc, caddr(args));
+  mus_move_sound(locs, pos, s7_number_to_real(sc, x));
+  return(XEN_ZERO);
+}
+
+
 static s7_pointer g_mul_env_direct(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_mul_env_direct_any(s7_scheme *sc, s7_pointer args);
 
@@ -10569,8 +10584,13 @@ static s7_pointer g_mul_env_direct_any(s7_scheme *sc, s7_pointer args);
 
 
 #if (!WITH_GMP)
-static s7_pointer indirect_locsig_3_looped;
-static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
+
+void local_move_sound(mus_any *ptr, mus_long_t loc, mus_float_t uval)
+{
+  mus_move_sound(ptr, loc, uval);
+}
+
+static s7_pointer g_indirect_placer_3_looped(s7_scheme *sc, s7_pointer args, void (*mover)(mus_any *ptr, mus_long_t loc, mus_float_t uval))
 {
   s7_Int pos, end;
   s7_pointer stepper, callee;
@@ -10597,7 +10617,8 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
   f = s7_function_choice(sc, callee);
 
   if (((s7_pointer)f == (s7_pointer)g_mul_env_direct_any) ||
-      ((s7_pointer)f == (s7_pointer)g_mul_env_direct))
+      ((s7_pointer)f == (s7_pointer)g_mul_env_direct) ||
+      ((s7_pointer)f == (s7_pointer)g_env_oscil_1))
     {
       int len;
       mus_any *e;
@@ -10609,37 +10630,68 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
 
       /* an experiment ... */
       if ((len == 1) &&
-	  (s7_is_symbol(cadar(inner_callee))) &&
-	  (s7_is_pair(caddar(inner_callee))))
+	  (s7_is_symbol(cadar(inner_callee))))
 	{
-	  /* if gen_1|2_direct, is symbol cadr, we can do it direct.  Similarly for caddr, if any.
-	   *   if s7 adds this to all builtins, we can handle anything!  Also remember sndlib2xen.c.
-	   */
-	  inner_callee = car(inner_callee);
-	  choices = (s7_pointer *)s7_function_chooser_data_direct(s7_symbol_value(sc, car(inner_callee)));
-	  if (choices)
+	  if (s7_is_null(sc, cddar(inner_callee)))
 	    {
-	      if ((choices[GEN_DIRECT_2]) &&
-		  (choices[GEN_DIRECT_CHECKER]))
-		{					
-		  void *gen;
-		  mus_float_t (*sampler)(void *p, mus_float_t x);
-		  bool (*is_sampler)(s7_pointer p);
-		  s7_pointer obj, arg;
-
-		  sampler = (mus_float_t (*)(void *p, mus_float_t x))(choices[GEN_DIRECT_2]);
-		  is_sampler = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
-
-		  obj = s7_cadr_value(sc, inner_callee);
-
-		  if (is_sampler(obj))
-		    {
-		      gen = s7_object_value(obj);
-		      arg = caddr(inner_callee);
-		      for (; pos < end; pos++) 
-			mus_locsig(locs, pos, mus_env(e) * sampler(gen, s7_call_direct_to_real_and_free(sc, arg)));
-		      (*step) = end;
-		      return(args);
+	      inner_callee = car(inner_callee);
+	      choices = (s7_pointer *)s7_function_chooser_data_direct(s7_symbol_value(sc, car(inner_callee)));
+	      if (choices)
+		{
+		  if ((choices[GEN_DIRECT_1]) &&
+		      (choices[GEN_DIRECT_CHECKER]))
+		    {					
+		      void *gen;
+		      mus_float_t (*sampler)(void *p);
+		      bool (*is_sampler)(s7_pointer p);
+		      s7_pointer obj;
+		      
+		      sampler = (mus_float_t (*)(void *p))(choices[GEN_DIRECT_1]);
+		      is_sampler = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+		      obj = s7_cadr_value(sc, inner_callee);
+		      if (is_sampler(obj))
+			{
+			  gen = s7_object_value(obj);
+			  for (; pos < end; pos++) 
+			    mover(locs, pos, mus_env(e) * sampler(gen));
+			  (*step) = end;
+			  return(args);
+			}
+		    }
+		}
+	    }
+	  
+	  if (s7_is_pair(caddar(inner_callee)))
+	    {
+	      /* if gen_1|2_direct, is symbol cadr, we can do it direct.  Similarly for caddr, if any.
+	       *   if s7 adds this to all builtins, we can handle anything!  Also remember sndlib2xen.c.
+	       */
+	      inner_callee = car(inner_callee);
+	      choices = (s7_pointer *)s7_function_chooser_data_direct(s7_symbol_value(sc, car(inner_callee)));
+	      if (choices)
+		{
+		  if ((choices[GEN_DIRECT_2]) &&
+		      (choices[GEN_DIRECT_CHECKER]))
+		    {					
+		      void *gen;
+		      mus_float_t (*sampler)(void *p, mus_float_t x);
+		      bool (*is_sampler)(s7_pointer p);
+		      s7_pointer obj, arg;
+		      
+		      sampler = (mus_float_t (*)(void *p, mus_float_t x))(choices[GEN_DIRECT_2]);
+		      is_sampler = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+		      
+		      obj = s7_cadr_value(sc, inner_callee);
+		      
+		      if (is_sampler(obj))
+			{
+			  gen = s7_object_value(obj);
+			  arg = caddr(inner_callee);
+			  for (; pos < end; pos++) 
+			    mover(locs, pos, mus_env(e) * sampler(gen, s7_call_direct_to_real_and_free(sc, arg)));
+			  (*step) = end;
+			  return(args);
+			}
 		    }
 		}
 	    }
@@ -10696,7 +10748,7 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
 					{
 					  gen1 = s7_object_value(obj1);
 					  for (; pos < end; pos++) 
-					    mus_locsig(locs, pos, mus_env(e) * sampler(gen) * sampler1(gen1));
+					    mover(locs, pos, mus_env(e) * sampler(gen) * sampler1(gen1));
 					  (*step) = end;
 					  return(args);
 					}
@@ -10704,7 +10756,7 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
 				}
 			    }
 			  for (; pos < end; pos++) 
-			    mus_locsig(locs, pos, mus_env(e) * sampler(gen) * s7_call_direct_to_real_and_free(sc, second_callee));
+			    mover(locs, pos, mus_env(e) * sampler(gen) * s7_call_direct_to_real_and_free(sc, second_callee));
 			  (*step) = end;
 			  return(args);
 			}
@@ -10720,17 +10772,30 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
 	  product = mus_env(e);
 	  for (p = callee; s7_is_pair(p); p = cdr(p))
 	    product *= s7_call_direct_to_real_and_free(sc, car(p));
-	  mus_locsig(locs, pos, product);
+	  mover(locs, pos, product);
 	}
     }
   else
     {
       for (; pos < end; pos++)
-	mus_locsig(locs, pos, s7_number_to_real(sc, s7_call_direct(sc, callee)));
+	mover(locs, pos, s7_number_to_real(sc, s7_call_direct(sc, callee)));
     }
   (*step) = end;
   return(args);
 }
+
+static s7_pointer indirect_move_sound_3_looped;
+static s7_pointer g_indirect_move_sound_3_looped(s7_scheme *sc, s7_pointer args)
+{
+  return(g_indirect_placer_3_looped(sc, args, local_move_sound));
+}
+
+static s7_pointer indirect_locsig_3_looped;
+static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
+{
+  return(g_indirect_placer_3_looped(sc, args, mus_locsig));
+}
+
 #endif
 
 
@@ -11711,7 +11776,7 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
       mus_float_t (*genf)(mus_any *p);
       s7_Double *ry;
       s7_pointer y;
-      y = s7_make_real(s7, 1.5);
+      y = s7_make_mutable_real(s7, 1.5);
       ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
       s7_slot_set_value(sc, lets, y);
 
@@ -12000,7 +12065,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
 	  GET_GENERATOR_CADR(letp, rand-interp, e1);
 	}
 
-      mut = s7_make_real(sc, 1.5);
+      mut = s7_make_mutable_real(sc, 1.5);
       letr = ((s7_Double *)((unsigned char *)(mut) + XEN_S7_NUMBER_LOCATION));
       s7_slot_set_value(sc, lets, mut);
 
@@ -14914,6 +14979,20 @@ static s7_pointer frame_to_frame_chooser(s7_scheme *sc, s7_pointer f, int args, 
 }
 
 
+static s7_pointer move_sound_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 3) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))) &&
+      (s7_is_pair(cadr(cddr(expr)))) &&
+      (s7_function_choice_is_direct(sc, cadr(cddr(expr)))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(indirect_move_sound_3);
+    }
+  return(f);
+}
+
 static s7_pointer locsig_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 3) &&
@@ -15921,12 +16000,21 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_chooser(sc, f, frame_to_frame_chooser);
 
 
+  f = s7_name_to_value(sc, "move-sound");
+  s7_function_set_chooser(sc, f, move_sound_chooser);
+  indirect_move_sound_3 = clm_make_function_not_temp(sc, "move-sound", g_indirect_move_sound_3, 3, 0, false, "move-sound optimization", f);
+#if (!WITH_GMP)
+  indirect_move_sound_3_looped = clm_make_function_not_temp(sc, "move-sound", g_indirect_move_sound_3_looped, 3, 0, false, "move-sound optimization", f);
+  s7_function_set_looped(indirect_move_sound_3, indirect_move_sound_3_looped);
+#endif
+
+
   f = s7_name_to_value(sc, "locsig");
   s7_function_set_chooser(sc, f, locsig_chooser);
 
   fm_violin_2 = clm_make_function_no_choice(sc, "locsig", g_fm_violin_2, 3, 0, false, "fm-violin optimization", f);
   fm_violin_4 = clm_make_function_no_choice(sc, "locsig", g_fm_violin_4, 3, 0, false, "fm-violin optimization", f);
-  indirect_locsig_3 = clm_make_function_not_temp(sc, "locsig", g_indirect_locsig_3, 2, 0, false, "locsig optimization", f);
+  indirect_locsig_3 = clm_make_function_not_temp(sc, "locsig", g_indirect_locsig_3, 3, 0, false, "locsig optimization", f);
 
 #if (!WITH_GMP)
   indirect_locsig_3_looped = clm_make_function_not_temp(sc, "locsig", g_indirect_locsig_3_looped, 3, 0, false, "locsig optimization", f);

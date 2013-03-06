@@ -822,7 +822,7 @@ static s7_pointer g_vct_set_direct(s7_scheme *sc, s7_pointer args)
 	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_cadr(args), "index out of range");
 
       val = s7_call_direct(sc, s7_caddr(args));
-      v->data[loc] = s7_real(val);
+      v->data[loc] = s7_cell_real(val);
       /* if not returning val: v->data[loc] = s7_call_direct_to_real_and_free(sc, s7_caddr(args)); */
       return(val);
     }
@@ -1015,11 +1015,11 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 		      xp = s7_symbol_value(sc, s7_caddr(s7_cadr(add_expr)));
 		      if (s7_is_real(xp))
 			{
-			  x1 = s7_real(xp);
+			  x1 = s7_cell_real(xp);
 			  xp = s7_symbol_value(sc, s7_caddr(s7_caddr(add_expr)));
 			  if (s7_is_real(xp))
 			    {
-			      x2 = s7_real(xp);                                        /* x1 and x2 are real */
+			      x2 = s7_cell_real(xp);                                        /* x1 and x2 are real */
 			      return((s7_pointer)g_vct_set_direct_dox);
 			    }
 			}
@@ -1484,21 +1484,24 @@ static XEN g_vct_to_vector(XEN vobj)
   return(new_vect);
 }
 
-/* TODO: doc/test vct-min|max */
+
 #define S_vct_max "vct-max"
 static XEN g_vct_max(XEN vobj)
 {
   #define H_vct_max "(" S_vct_max " vct): returns the maximum element of vct"
   vct *v;
   mus_long_t i, len;
-  mus_float_t mx;
+  mus_float_t mx = 0.0;
   XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_max, "a vct");
   v = XEN_TO_VCT(vobj);
   len = v->length;
-  mx = v->data[0];
-  for (i = 1; i < len; i++)
-    if (v->data[i] > mx)
-      mx = v->data[i];
+  if (len > 0)
+    {
+      mx = v->data[0];
+      for (i = 1; i < len; i++)
+	if (v->data[i] > mx)
+	  mx = v->data[i];
+    }
   return(C_TO_XEN_DOUBLE(mx));
 }
 
@@ -1509,14 +1512,17 @@ static XEN g_vct_min(XEN vobj)
   #define H_vct_min "(" S_vct_min " vct): returns the minimum element of vct"
   vct *v;
   mus_long_t i, len;
-  mus_float_t mx;
+  mus_float_t mx = 0.0;
   XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_min, "a vct");
   v = XEN_TO_VCT(vobj);
   len = v->length;
-  mx = v->data[0];
-  for (i = 1; i < len; i++)
-    if (v->data[i] < mx)
-      mx = v->data[i];
+  if (len > 0)
+    {
+      mx = v->data[0];
+      for (i = 1; i < len; i++)
+	if (v->data[i] < mx)
+	  mx = v->data[i];
+    }
   return(C_TO_XEN_DOUBLE(mx));
 }
 

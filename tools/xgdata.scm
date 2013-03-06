@@ -8587,6 +8587,11 @@
   
 new headers: frameclock frametimings (gdk)
 
+
+;;; 3.7.12:
++ void          pango_font_map_changed       (PangoFontMap                 *fontmap);
+
+
 |#
 
  

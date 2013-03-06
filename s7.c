@@ -459,14 +459,19 @@ enum {OP_NO_OP,
 #define OP_MAX_DEFINED (OP_MAX_DEFINED_1 + 1)
 #define is_internal_syntax_op(op) (op >= OP_QUOTE_UNCHECKED)
 
-
 #if (((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4)) || ((defined(__SIZEOF_POINTER__)) && (__SIZEOF_POINTER__ == 4)))
   #define opcode_t unsigned int
-  #define PRINT_NAME_SIZE 10
+  #define PRINT_NAME_PADDING 8
+  #define PRINT_NAME_SIZE (20 - PRINT_NAME_PADDING - 2)
 #else
   #define opcode_t unsigned long long int
-  #define PRINT_NAME_SIZE 22
+  #define PRINT_NAME_PADDING 16
+  #define PRINT_NAME_SIZE (40 - PRINT_NAME_PADDING - 2)
 #endif
+/* ideally we'd use (2 * max(sizeof(s7_Int), sizeof(s7_Double))) for the padding,
+ *   but I can't think of a way to do this short of a configuration script.
+ *   If someone defines s7_Double to be long long double, we're in trouble.
+ */
 
 
 /* these names are intended for error messages (eval_error_with_name) and debugging.  
@@ -951,7 +956,7 @@ typedef struct s7_cell {
       s7_Double real_value;
 
       struct {
-	s7_Int a, b;
+	char padding[PRINT_NAME_PADDING];
 	char name[PRINT_NAME_SIZE + 2];	
       } pval;
 
@@ -964,12 +969,6 @@ typedef struct s7_cell {
 	s7_Double rl;
 	s7_Double im;
       } complex_value;
-
-      struct {
-	s7_Int n;
-	const char *name;
-	int length;
-      } small_value;
 
       unsigned long ul_value; /* these two are not used by s7 in any way */
       unsigned long long ull_value;
@@ -1715,6 +1714,10 @@ static int t_optimized = T_OPTIMIZED;
 /* this comes and goes...
  */
 
+#define T_MUTABLE                     T_ONE_LINER
+#define is_mutable(p)                 ((typeflag(p) & T_MUTABLE) != 0)
+#define set_mutable(p)                typeflag(p) |= T_MUTABLE
+
 #define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
 #define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
 #define set_has_print_name(p)         typeflag(p) |= T_PRINT_NAME
@@ -1771,7 +1774,7 @@ static int t_optimized = T_OPTIMIZED;
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS  0 /* 0x4000000 */ /* bit 19 */
+#define UNUSED_BITS  0
 
 #if 0
 /* to find who is stomping on our symbols:
@@ -2141,8 +2144,6 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 
 #define NUM_SMALL_INTS 2048
 #define small_int(Val)                small_ints[Val]
-#define small_int_name(p)             p->object.number.small_value.name
-#define small_int_name_length(p)      p->object.number.small_value.length
 #define is_small(n)                   ((n & ~(NUM_SMALL_INTS - 1)) == 0)
 
 #define print_name(p)                 (char *)(p->object.number.pval.name + 1)
@@ -2150,7 +2151,8 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 
 static void set_print_name(s7_pointer p, const char *name, int len)
 {
-  if (len < PRINT_NAME_SIZE)
+  if ((len < PRINT_NAME_SIZE) &&
+      (!is_mutable(p)))
     {
       set_has_print_name(p);
       print_name_length(p) = (unsigned char)(len & 0xff);
@@ -2275,6 +2277,8 @@ static int safe_strcmp(const char *s1, const char *s2)
 }
 
 
+/* forward decls */
+static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen);
 static bool is_proper_list(s7_scheme *sc, s7_pointer lst);
 static s7_function all_x_eval(s7_pointer arg);
 static bool is_all_x_safe(s7_scheme *sc, s7_pointer p);
@@ -6661,7 +6665,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 /* -------------------------------- numbers -------------------------------- */
 
 #if WITH_GMP
-static char *big_number_to_string_with_radix(s7_pointer p, int radix, int width, int *nlen);
+  static char *big_number_to_string_with_radix(s7_pointer p, int radix, int width, int *nlen);
   static bool big_numbers_are_eqv(s7_pointer a, s7_pointer b);
   static s7_pointer string_to_either_integer(s7_scheme *sc, const char *str, int radix);
   static s7_pointer string_to_either_ratio(s7_scheme *sc, const char *nstr, const char *dstr, int radix);
@@ -7269,7 +7273,7 @@ static s7_pointer make_mutable_integer(s7_scheme *sc, s7_Int n)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_INTEGER);
+  set_type(x, T_INTEGER | T_MUTABLE);
   integer(x) = n;
   return(x);
 }
@@ -7301,13 +7305,30 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double n)
 }
 
 
+s7_pointer s7_make_mutable_real(s7_scheme *sc, s7_Double n) 
+{
+  s7_pointer x;
+  NEW_CELL(sc, x);
+  set_type(x, T_REAL | T_MUTABLE);
+  real(x) = n;
+  return(x);
+}
+
+
 static s7_pointer make_permanent_real(s7_Double n) 
 {
   s7_pointer x;
+  int nlen = 0;
+  char *str;
+
   x = (s7_pointer)calloc(1, sizeof(s7_cell));
   set_type(x, T_IMMUTABLE | T_REAL);
   heap_location(x) = NOT_IN_HEAP;
   real(x) = n;
+
+  str = number_to_string_base_10(x, 0, 14, 'g', &nlen);
+  set_print_name(x, str, nlen);
+
   return(x);
 }
 
@@ -7982,23 +8003,11 @@ static char *integer_to_string_base_10_no_width(s7_pointer obj, int *nlen) /* do
   #define INT_TO_STR_SIZE 64
   static char int_to_str[INT_TO_STR_SIZE];
 
-  if (is_small_int(obj))
+  if (has_print_name(obj))
     {
-      if (!small_int_name(obj))
-	{
-	  char *p;
-	  /* this works for small ints because they are permanent and immutable.  Other numbers
-	   *   might be changed, and do loops use integers as ratios (denominator=end etc).
-	   */
-	  p = (char *)malloc(32 * sizeof(char));
-	  (*nlen) = snprintf(p, 32, "%d", (int)integer(obj));
-	  small_int_name(obj) = p;
-	  small_int_name_length(obj) = (*nlen);
-	}
-      (*nlen) = small_int_name_length(obj);
-      return((char *)small_int_name(obj));
+      (*nlen) = print_name_length(obj);
+      return((char *)print_name(obj));
     }
-
   (*nlen) = snprintf(int_to_str, INT_TO_STR_SIZE, "%lld", (long long int)integer(obj));
   return(int_to_str);
 }
@@ -10830,7 +10839,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
   if (type(pw) == T_INTEGER)
     {
       s7_Int y;
-      y = s7_integer(pw);
+      y = integer(pw);
       if (y == 0)
 	{
 	  if (is_rational(n))                                 /* (expt 3 0) */
@@ -10906,7 +10915,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	   * (expt -1.0 (+ (expt 2 53) 1)) -> -1.0
 	   * (expt -1.0 (- 1 (expt 2 54))) -> -1.0
 	   */
-	  if (s7_real(n) == -1.0)
+	  if (real(n) == -1.0)
 	    {
 	      if (y == S7_LLONG_MIN)
 		return(real_one);
@@ -22621,33 +22630,26 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
       break;
 
     case T_INTEGER:
-      nlen = 0;
-      if ((is_small_int(obj)) &&
-	  (small_int_name(obj)))
-	port_write_string(port)(sc, small_int_name(obj), small_int_name_length(obj), port);
+      if (has_print_name(obj))
+	port_write_string(port)(sc, print_name(obj), print_name_length(obj), port);
       else
 	{
+	  nlen = 0;
 	  str = integer_to_string_base_10_no_width(obj, &nlen);
 	  if (nlen > 0)
-	    port_write_string(port)(sc, str, nlen, port);
+	    {
+	      set_print_name(obj, str, nlen);
+	      port_write_string(port)(sc, str, nlen, port);
+	    }
 	  else port_display(port)(sc, str, port);
 	}
       break;
 
     case T_REAL:
-      nlen = 0;
-      str = number_to_string_base_10(obj, 0, 14, 'g', &nlen);
-      if (nlen > 0)
-	port_write_string(port)(sc, str, nlen, port);
-      else port_display(port)(sc, str, port);
-      break;
-
     case T_RATIO:
     case T_COMPLEX:
       if (has_print_name(obj))
-	{
-	  port_write_string(port)(sc, print_name(obj), print_name_length(obj), port);
-	}
+	port_write_string(port)(sc, print_name(obj), print_name_length(obj), port);
       else
 	{
 	  nlen = 0;
@@ -62048,7 +62050,6 @@ s7_scheme *s7_init(void)
 	typeflag(p) = T_IMMUTABLE | T_INTEGER | T_SMALL_INT;
 	heap_location(p) = NOT_IN_HEAP;
 	integer(p) = i;
-	small_int_name(p) = NULL;
       }
   }
 
@@ -62988,7 +62989,7 @@ s7_scheme *s7_init(void)
 
     s7_define_constant(sc, "most-positive-fixnum", make_permanent_integer((top == 8) ? S7_LLONG_MAX : ((top == 4) ? S7_LONG_MAX : S7_SHORT_MAX)));
     s7_define_constant(sc, "most-negative-fixnum", make_permanent_integer((top == 8) ? S7_LLONG_MIN : ((top == 4) ? S7_LONG_MIN : S7_SHORT_MIN)));
-
+    
     if (top == 4) default_rationalize_error = 1.0e-6;
     s7_define_constant(sc, "pi", real_pi);
     sc->PI = s7_make_symbol(sc, "pi");
@@ -63150,7 +63151,7 @@ s7_scheme *s7_init(void)
   s7_define_constant(sc, "*error-hook*", sc->error_hook);
   
   /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
-  /* 64 bit machine: size: 48 72, max op: 328 */
+  /* 64 bit machine: size: 48 72, max op: 318 */
 
 #if DEBUGGING
   if (strcmp(op_names[OP_DEFINE_BACRO_STAR], "define-bacro*") != 0)
@@ -63195,20 +63196,34 @@ s7_scheme *s7_init(void)
  *   or in the let for that matter -- could this always work?
  * TODO: give each e|f|gcdr ref a unique name
  * f|gcdr in let_op*q -- can let_r -> let_all_x? (or let_d similarly?)
- *   in set pair, object set et al need not use eval_args/apply if all args are all_x ops: i.e. set_pair_all_x or something
- *   TODO: get rid of all arg lambdas -- move them to the make function (*.html especially!)
+ * TODO: get rid of all arg lambdas -- move them to the make function (*.html especially!)
  * easy closure_arity done right away?  0/1 should not be expensive -- maybe just set it!
+ *
  * direct (all_x) let/case/etc [map/for-each/sort and so on]
  * safe do (or dox) where body is multiple all_x done directly
- * 
+ *
+ * could safe let (and do-loop et al) be done with a "shadow" frame -- 
+ *   just incr env_id, update locally the symbols, call, then undo (or not) -- no frames or slots
+ *   if done direct (all_x_let), recursive call with shadowed var upon return -- have to make sure
+ *   sc->envir reverts (as if pop_stack).  But this means all symbols need lookup before we start.
+ *
+ * could all iterating bodies prelookup all symbols?
+ *   finder starts:
+ *      if (environment_id(sc->envir) == symbol_id(hdl))
+ *        return(slot_value(local_slot(hdl)));
+ *  with_env:
+ *      for (p = environment_slots(e); is_slot(p); p = next_slot(p))
+ *        symbol_set_local(slot_symbol(p), environment_number, p);
+ *  so walk do-loop body, if symbol where id != env_id (and not global), look it up and set_local using env_id -- no search!
+ *
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5
- * bench    42736 8752 8051 7725 6515 5194 4369
- * lint           9328 8140 7887 7736 7300 7264
+ * bench    42736 8752 8051 7725 6515 5194 4365
+ * lint           9328 8140 7887 7736 7300 7180
  * index    44300 3291 3005 2742 2078 1643 1436
  * s7test    1721 1358 1297 1244  977  961  957
- * t455|6     265   89   55   31   14   14   11
+ * t455|6     265   89   55   31   14   14    9
  * lat        229   63   52   47   42   40   34
  * t502        90   43   39   36   29   23   20
- * calls           275  207  175  115   89   76
+ * calls           275  207  175  115   89   75
  */
