@@ -122,20 +122,31 @@
 			(locsig locs i (* anoi (oscil carrier modf))))
 		      
 		      (if (or ind-noi amp-noi fm-noi)
-			  (do ((i beg (+ i 1)))
-			      ((= i end))
-			    (if fm-noi (set! fuzz (rand fm-noi)))
-			    (if amp-noi 
-				(set! anoi (* (env ampf) (+ 1.0 (rand-interp amp-noi))))
-				(set! anoi (env ampf)))
-			    (if ind-noi (set! inoi (+ 1.0 (rand-interp ind-noi))))
-			    (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-			    (set! modf (+ vib
-					  (* inoi
-					     (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-						(* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-						(* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
-			    (locsig locs i (* anoi (oscil carrier modf))))
+			  (if (not (or ind-noi amp-noi))
+			      (do ((i beg (+ i 1)))
+				  ((= i end))
+				(set! fuzz (rand fm-noi))
+				(set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
+				(set! modf (+ vib
+					      (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+					      (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+					      (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))
+				(locsig locs i (* (env ampf) (oscil carrier modf))))
+
+			      (do ((i beg (+ i 1)))
+				  ((= i end))
+				(if fm-noi (set! fuzz (rand fm-noi)))
+				(if amp-noi 
+				    (set! anoi (* (env ampf) (+ 1.0 (rand-interp amp-noi))))
+				    (set! anoi (env ampf)))
+				(if ind-noi (set! inoi (+ 1.0 (rand-interp ind-noi))))
+				(set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
+				(set! modf (+ vib
+					      (* inoi
+						 (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+						    (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+						    (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
+				(locsig locs i (* anoi (oscil carrier modf)))))
 
 			  (do ((i beg (+ i 1)))
 			      ((= i end))

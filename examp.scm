@@ -1536,7 +1536,7 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 	(let ((sum 0.0))
 	  (do ((k 0 (+ k 1)))
 	      ((= k num-readers))
-	    (if (sampler? (readers k))
+	    (if (readers k)
 		(set! sum (+ sum (* (env (grain-envs k)) (next-sample (readers k)))))))
 	  (sound-data-set! data 0 data-ctr sum))
 

@@ -9221,6 +9221,7 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #define caddar(E) s7_caddar(E)
 #define caadr(E)  s7_caadr(E)
 #define cddar(E)  s7_cddar(E)
+#define cadddr(E) s7_cadddr(E)
 
 static mus_float_t mus_nsin_unmodulated(mus_any *p) {return(mus_nsin(p, 0.0));}
 static mus_float_t mus_ncos_unmodulated(mus_any *p) {return(mus_ncos(p, 0.0));}
@@ -9660,6 +9661,17 @@ static s7_pointer g_formant_bank_ssz(s7_scheme *sc, s7_pointer args)
 {
   /* place-holder */
   return(g_formant_bank(s7_car_value(sc, args), s7_cadr_value(sc, args), s7_call_direct(sc, caddr(args))));
+}
+
+static s7_pointer indirect_ssb_am_3;					
+static s7_pointer g_indirect_ssb_am_3(s7_scheme *sc, s7_pointer args) 
+{ 
+  mus_any *_o_;	  
+  double _a1_, _a2_;							
+  _a1_ = s7_number_to_real(sc, s7_call_direct(sc, cadr(args)));	
+  _a2_ = s7_number_to_real(sc, s7_call_direct(sc, caddr(args)));	
+  GET_GENERATOR(args, ssb-am, _o_); 
+  return(s7_make_real(sc, mus_ssb_am(_o_, _a1_, _a2_)));	
 }
 
 static s7_pointer outa_two;
@@ -13041,6 +13053,23 @@ static s7_pointer g_oscil_bank_6(s7_scheme *sc, s7_pointer args)
 
 }
 
+static s7_pointer sample_to_file_four;
+static s7_pointer g_sample_to_file_four(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *_r_;
+  mus_long_t _loc_;
+  int chan;
+  s7_pointer val;
+
+  GET_GENERATOR(args, "sample->file", _r_); 
+  GET_INTEGER_CADR(args, "sample->file", _loc_);
+  chan = s7_cell_integer(caddr(args));
+  val = s7_call_direct(sc, cadddr(args));
+
+  mus_sample_to_file(_r_, _loc_, chan, s7_number_to_real(sc, val));
+  return(val);
+}
+
 
 
 
@@ -14149,6 +14178,21 @@ static s7_pointer readin_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
   return(f);
 }
 
+static s7_pointer sample_to_file_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 4) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))) &&
+      (s7_is_integer(cadddr(expr))) &&
+      (s7_is_pair(cadddr(cdr(expr)))) &&
+      (s7_function_choice_is_direct(sc, cadddr(cdr(expr)))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(sample_to_file_four);
+    }
+  return(f);
+}
+
 static s7_pointer comb_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 2) &&
@@ -14878,12 +14922,22 @@ static s7_pointer ssb_am_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 	}
     }
   if ((args == 3) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_symbol(caddr(expr))) &&
-      (s7_is_symbol(cadddr(expr))))
+      (s7_is_symbol(cadr(expr))))
     {
-      s7_function_choice_set_direct(sc, expr);
-      return(ssb_am_3);
+      if ((s7_is_symbol(caddr(expr))) &&
+	  (s7_is_symbol(cadddr(expr))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(ssb_am_3);
+	}
+      if ((s7_is_pair(caddr(expr))) &&
+	  (s7_function_choice_is_direct(sc, caddr(expr))) &&
+	  (s7_is_pair(cadddr(expr))) &&
+	  (s7_function_choice_is_direct(sc, cadddr(expr))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(indirect_ssb_am_3);
+	}
     }
 
   return(f);
@@ -15721,6 +15775,11 @@ static void init_choosers(s7_scheme *sc)
 			       NULL, NULL, NULL, mul_c_readin_1, mul_s_readin_1, env_readin_1);
 
 
+  f = s7_name_to_value(sc, "sample->file");
+  s7_function_set_chooser(sc, f, sample_to_file_chooser);
+  sample_to_file_four = clm_make_function(sc, "sample->file", g_sample_to_file_four, 4, 0, false, "sample->file optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+
+
   GEN_F2("comb", comb);
 
   comb_2 = clm_make_function(sc, "comb", g_comb_2, 2, 0, false, "comb optimization", f, mul_c_comb_2, mul_s_comb_2, env_comb_2, NULL, NULL, NULL);
@@ -15964,6 +16023,7 @@ static void init_choosers(s7_scheme *sc)
 				mul_c_ssb_am_2, mul_s_ssb_am_2, env_ssb_am_2, NULL, NULL, NULL);
   direct_ssb_am_2 = clm_make_function(sc, "ssb-am", g_direct_ssb_am_2, 2, 0, false, "ssb-am optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_ssb_am_2 = clm_make_function(sc, "ssb-am", g_indirect_ssb_am_2, 2, 0, false, "ssb-am optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  indirect_ssb_am_3 = clm_make_function(sc, "ssb-am", g_indirect_ssb_am_3, 3, 0, false, "ssb-am optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   ssb_am_3 = clm_make_function(sc, "ssb-am", g_ssb_am_3, 3, 0, false, "ssb-am optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
 

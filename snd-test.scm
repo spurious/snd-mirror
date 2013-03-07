@@ -3346,9 +3346,7 @@
 				  (set! v0 (sound-data-ref sdata k i))
 				  (set! v1 (sound-data-ref ndata k i))
 				  (if (fneq v0 v1)
-				      (begin
-					;(snd-display #__line__ ";v0: ~A, v1: ~A, diff: ~A, k: ~A, i: ~A" v0 v1 (- v1 v0) k i)
-					(throw 'read-write-error))))))
+				      (throw 'read-write-error)))))
 			   (lambda args 
 			     (begin 
 			       (snd-display #__line__ ";read-write trouble: ~A ~A (~A != ~A): ~A"
@@ -10926,13 +10924,7 @@ EDITS: 2
       (let ((ind (open-sound "sweep.snd")))
 	(if (mus-generator? flt)
 	    (clm-channel flt)
-	    (let ((len (frames ind)))
-	      (let ((data (make-vct len))
-		    (reader (make-sampler 0 ind)))
-		(do ((i 0 (+ i 1)))
-		    ((= i len))
-		  (vct-set! data i (flt (next-sample reader))))
-		(vct->channel data 0 len ind 0))))
+	    (map-channel flt))
 	(let ((mx (maxamp))
 	      (resp (make-vct bins))
 	      (size (round (/ 22050 bins))))
@@ -11766,18 +11758,21 @@ EDITS: 2
     "(fltit) returns a time-varying filter: (map-chan (fltit))"
     (let* ((coeffs (list .1 .2 .3 .4 .4 .3 .2 .1))
 	   (flt (make-fir-filter 8 (list->vct coeffs)))
+	   (xcof (mus-xcoeffs flt))
 	   (es (make-vector 8)))
       (do ((i 0 (+ i 1)))
 	  ((= i 8))
-	(set! (es i) (make-env (list 0 (coeffs i) 1 0) :length 101)))
+	(set! (es i) (make-env (list 0 (coeffs i) 1 0) :duration 0.5)))
       (set! (es 5) (make-env '(0 .4 1 1) :duration 1.0))
       (lambda (x)
-	(let ((val (fir-filter flt x))
-	      (xcof (mus-xcoeffs flt)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 8))
-	    (vct-set! xcof i (env (vector-ref es i))))
-	  val))))
+	(do ((i 0 (+ i 1)))
+	    ((= i 8))
+	  (vct-set! xcof i (env (vector-ref es i))))
+	(fir-filter flt x))))
+  
+;;; (with-sound (:output "test.snd") (let ((p (make-pulse-train 1000))) (do ((i 0 (+ i 1))) ((= i 44100)) (outa i (* .5 (pulse-train p))))))
+;;; (map-channel (fltit))
+
   
   ;; ----------------
   (define (freq-sweep dur)
@@ -14064,19 +14059,6 @@ EDITS: 2
 	(set! val (gen 1.0))
 	(if (fneq val 0.336) (snd-display #__line__ ";a0->out 2pole (0.336): ~A" val))))
     
-    (let ((var (catch #t (lambda () (make-two-pole :b1 3.0)) (lambda args args))))
-      (if (not (eq? (car var) 'mus-error))
-	  (snd-display #__line__ ";make-two-pole bad b1: ~A" var)))
-    (let ((var (catch #t (lambda () (make-two-pole :b2 2.0)) (lambda args args))))
-      (if (not (eq? (car var) 'mus-error))
-	  (snd-display #__line__ ";make-two-pole bad b2: ~A" var)))
-    (let ((var (catch #t (lambda () (make-two-pole :b2 2.0 :b1)) (lambda args args))))
-      (if (not (eq? (car var) 'mus-error))
-	  (snd-display #__line__ ";make-two-pole bad keys: ~A" var)))
-    (let ((var (catch #t (lambda () (make-two-pole :b2 2.0 3.0)) (lambda args args))))
-      (if (not (eq? (car var) 'mus-error))
-	  (snd-display #__line__ ";make-two-pole bad args: ~A" var)))
-    
     (let ((gen (make-oscil 440.0))
 	  (gen1 (make-oscil 440.0))
 	  (gen2 (make-oscil 440.0))
@@ -14679,6 +14661,7 @@ EDITS: 2
     
     (let* ((coeffs (list .1 .2 .3 .4 .4 .3 .2 .1))
 	   (flt (make-fir-filter 8 (list->vct coeffs)))
+	   (xcof (mus-xcoeffs flt))
 	   (es (make-vector 8)))
       (do ((i 0 (+ i 1)))
 	  ((= i 8))
@@ -14687,12 +14670,10 @@ EDITS: 2
       (let ((data (make-vct 100)))
 	(do ((k 0 (+ k 1)))
 	    ((= k 100))
-	  (let ((val (fir-filter flt (if (= (modulo k 12) 0) 1.0 0.0)))
-		(xcof (mus-xcoeffs flt)))
-	    (do ((i 0 (+ i 1)))
-		((= i 8))
-	      (vct-set! xcof i (env (vector-ref es i))))
-	    (set! (data k) val)))
+	  (set! (data k) (fir-filter flt (if (= (modulo k 12) 0) 1.0 0.0)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 8))
+	    (vct-set! xcof i (env (vector-ref es i)))))
 	(if (or (fneq (data 1) .2)
 		(fneq (data 10) 0.0)
 		(fneq (data 18) 0.166)
@@ -40942,7 +40923,7 @@ EDITS: 1
   (let* ((res (with-sound (:clipped #f)
 			  (let ((gen (make-jpcos 100.0 :a 1.0 :r 0.99 :k 1)))
 			     (do ((i 0 (+ i 1)))
-				 ((= i 210000))
+				 ((= i 10000))
 			       (outa i (jpcos gen))))))
 	 (snd (find-sound res)))
     (if (not (sound? snd)) (snd-display #__line__ ";jpcos ~A" snd))
@@ -41349,7 +41330,6 @@ EDITS: 1
   
   (with-sound (:play #t)
 	      (let* ((exp-amt 8.0)
-		     (gran (make-granulate :expansion exp-amt))
 		     (dur 2.0)
 		     (samps (seconds->samples dur))
 		     (ampf (make-env '(0.000 0.000 0.011 0.147 0.023 0.131 0.028 0.034 0.059 0.000 0.063 0.153 0.067 0.113 
@@ -41369,13 +41349,15 @@ EDITS: 1
 				     :duration 0.25 :scaler (hz->radians (* 0.5 0.205 22050.0))))
 		     (gen1 (make-polywave :partials (list 2 .35  3 .1 4 .8  5 .01 6 .03  8 .005)))
 		     (rnd (make-rand-interp 600 (hz->radians 50))))
-		   (do ((i 0 (+ i 1)))
-		       ((= i samps))
-		     (outa i (granulate gran
-					(lambda (dir)
-					  (* (env ampf)
-					     (polywave gen1 (+ (env frqf)
-							       (rand-interp rnd))))))))))
+		(let ((gran (make-granulate :expansion exp-amt
+					    :input (lambda (dir)
+						     (* (env ampf)
+							(polywave gen1 (+ (env frqf)
+									  (rand-interp rnd))))))))
+		  (do ((i 0 (+ i 1)))
+		      ((= i samps))
+		    (outa i (granulate gran))))))
+
   (calling-all-animals)
   (calling-all-generators)
   
@@ -47506,6 +47488,7 @@ EDITS: 1
 ;; 21-Feb-13: #(1 1 2 2 43 159 6 1 448 1 12 1 2 10 20 1 189 1 2 156 41 106 1 1331 0 0 0 1 1 76)  ;  26
 ;; 26-Feb-13: #(1 1 2 2 42 118 5 1 450 1 16 1 2 11 19 1  97 1 1 161 42 105 1 1323 0 0 0 1 2 74)  ;  25
 ;; 1-Mar-13:  #(1 1 3 1 40 117 5 1 439 1 16 1 2 11 20 1 109 1 2 159 43 100 1 1263 0 0 0 1 2 78)  ;  24
+;; 7-Mar-13:  #(1 1 2 2 41 119 6 1 396 1 16 1 2 10 23 1 103 1 1 144 41  85 1 1215 0 0 0 1 1 80)  ;  23
 
 ;;; -------- cleanup temp files
 
@@ -47732,21 +47715,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-5-Mar-13:
-75,442,781,585
-11,243,890,230  s7.c:eval [/home/bil/snd-13/snd]
- 6,375,343,290  ???:sin [/lib64/libm-2.12.so]
- 4,170,443,939  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+7-Mar-13:
+74,055,193,183
+10,692,495,518  s7.c:eval [/home/bil/snd-13/snd]
+ 6,361,543,458  ???:sin [/lib64/libm-2.12.so]
+ 4,007,947,300  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
  2,970,010,915  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,725,718,681  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,573,242,664  ???:cos [/lib64/libm-2.12.so]
- 2,351,333,510  s7.c:eval'2 [/home/bil/snd-13/snd]
- 2,334,293,070  s7.c:gc [/home/bil/snd-13/snd]
+ 2,550,827,645  ???:cos [/lib64/libm-2.12.so]
+ 2,455,530,090  clm.c:mus_src [/home/bil/snd-13/snd]
  2,327,317,731  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
+ 2,216,348,114  s7.c:gc [/home/bil/snd-13/snd]
+ 2,087,230,801  s7.c:eval'2 [/home/bil/snd-13/snd]
  1,585,058,070  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,546,221,759  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 1,209,191,607  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 1,201,919,340  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,431,563,434  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 1,178,605,140  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 1,176,118,060  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
  1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
  1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
+
 |#

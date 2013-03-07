@@ -586,6 +586,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 /* Change log.
  *
  * 4-Mar:      added moving_max generator.
+ *             removed the unstable filter check in make_two_pole.
  * 21-Jan-13:  changed mus_formant_bank parameters.
  * --------
  * 22-Dec:     removed all the safety settings.

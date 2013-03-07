@@ -5519,31 +5519,13 @@ static mus_any_class TWO_POLE_CLASS = {
 
 mus_any *mus_make_two_pole(mus_float_t a0, mus_float_t b1, mus_float_t b2)
 {
- if (fabs(b1) >= 2.0) 
-   mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, S_make_two_pole ": b1 = %.3f", b1);
- else
-   {
-     if (fabs(b2) >= 1.0) 
-       mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, S_make_two_pole ": b2 = %.3f", b2);
-     else
-       {
-	 if ( ((b1 * b1) - (b2 * 4.0) >= 0.0) &&
-	      ( ((b1 + b2) >= 1.0) || 
-		((b2 - b1) >= 1.0)))
-	   mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, S_make_two_pole ": b1 = %.3f, b2 = %.3f", b1, b2);
-	 else
-	   {
-	     smpflt *gen;
-	     gen = (smpflt *)calloc(1, sizeof(smpflt));
-	     gen->core = &TWO_POLE_CLASS;
-	     gen->xs[0] = a0;
-	     gen->ys[1] = b1;
-	     gen->ys[2] = b2;
-	     return((mus_any *)gen);
-	    }
-	}
-    }
-  return(NULL);
+  smpflt *gen;
+  gen = (smpflt *)calloc(1, sizeof(smpflt));
+  gen->core = &TWO_POLE_CLASS;
+  gen->xs[0] = a0;
+  gen->ys[1] = b1;
+  gen->ys[2] = b2;
+  return((mus_any *)gen);
 }
 
 

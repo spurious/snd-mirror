@@ -1788,6 +1788,9 @@
 					  (rand-interp noise)
 					  (polywave modulator))))))))))
 
+
+;; (with-sound (:statistics #t) (long-spurred-meadow-katydid 0 .5))
+
 #|
 (defanimal (long-spurred-meadow-katydid beg amp)
   (let ((dur 10.1) ; overall duration
@@ -1826,8 +1829,6 @@
 					   (* .1 md)))
 		       (pulsed-env peep frq) (env ampf)))))))))
 |#
-
-;; (with-sound (:statistics #t) (long-spurred-meadow-katydid 0 .5))
 
 
 
