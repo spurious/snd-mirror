@@ -5,32 +5,32 @@
 ;;;  test 2: headers                            [1366]
 ;;;  test 3: variables                          [1681]
 ;;;  test 4: sndlib                             [2260]
-;;;  test 5: simple overall checks              [4724]
-;;;  test 6: vcts                               [9495]
-;;;  test 7: colors                             [9807]
-;;;  test 8: clm                                [10325]
-;;;  test 9: mix                                [21747]
-;;;  test 10: marks                             [23534]
-;;;  test 11: dialogs                           [24494]
-;;;  test 12: extensions                        [24689]
-;;;  test 13: menus, edit lists, hooks, etc     [24955]
-;;;  test 14: all together now                  [26332]
-;;;  test 15: chan-local vars                   [27211]
-;;;  test 16: regularized funcs                 [28986]
-;;;  test 17: dialogs and graphics              [32601]
-;;;  test 18: enved                             [32700]
-;;;  test 19: save and restore                  [32719]
-;;;  test 20: transforms                        [34333]
-;;;  test 21: new stuff                         [36481]
-;;;  test 22: (run)                             [38494]
-;;;  test 23: with-sound                        [38500]
-;;;  test 25: X/Xt/Xm                           [41466]
-;;;  test 26:                                   [45148]
-;;;  test 27: GL                                [45154]
-;;;  test 28: errors                            [45278]
-;;;  test 29: s7                                [47381]
-;;;  test all done                              [47453]
-;;;  test the end                               [47629]
+;;;  test 5: simple overall checks              [4725]
+;;;  test 6: vcts                               [9496]
+;;;  test 7: colors                             [9823]
+;;;  test 8: clm                                [10341]
+;;;  test 9: mix                                [21718]
+;;;  test 10: marks                             [23505]
+;;;  test 11: dialogs                           [24465]
+;;;  test 12: extensions                        [24660]
+;;;  test 13: menus, edit lists, hooks, etc     [24926]
+;;;  test 14: all together now                  [26303]
+;;;  test 15: chan-local vars                   [27182]
+;;;  test 16: regularized funcs                 [28957]
+;;;  test 17: dialogs and graphics              [32563]
+;;;  test 18: enved                             [32662]
+;;;  test 19: save and restore                  [32681]
+;;;  test 20: transforms                        [34295]
+;;;  test 21: new stuff                         [36443]
+;;;  test 22: (run)                             [38456]
+;;;  test 23: with-sound                        [38462]
+;;;  test 25: X/Xt/Xm                           [41429]
+;;;  test 26:                                   [45111]
+;;;  test 27: GL                                [45117]
+;;;  test 28: errors                            [45241]
+;;;  test 29: s7                                [47344]
+;;;  test all done                              [47416]
+;;;  test the end                               [47593]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -3335,25 +3335,11 @@
 			(snd-display #__line__ ";mus-sound-seek-frame(100): ~A ~A (~A ~A ~A)?" 
 				     pos (frame->byte "fmv5.snd" 100) chans (mus-header-type-name (cadr df-ht)) (mus-data-format-name (car df-ht)))))
 		  (mus-sound-close-input fd)
-		  (let ((v0 0.0)
-			(v1 0.0))
-		    (catch 'read-write-error
-			   (lambda ()
-			      (do ((k 0 (+ k 1)))
-				  ((= k chans))
-				(do ((i 0 (+ i 1)))
-				    ((= i samps))
-				  (set! v0 (sound-data-ref sdata k i))
-				  (set! v1 (sound-data-ref ndata k i))
-				  (if (fneq v0 v1)
-				      (throw 'read-write-error)))))
-			   (lambda args 
-			     (begin 
-			       (snd-display #__line__ ";read-write trouble: ~A ~A (~A != ~A): ~A"
-					    (mus-data-format-name (car df-ht))
-					    (mus-header-type-name (cadr df-ht))
-					    v0 v1 args)
-			       (car args))))))))
+		  (if (not (vequal sdata ndata))
+		      (snd-display #__line__ ";read-write trouble: ~A ~A (~A != ~A)"
+				   (mus-data-format-name (car df-ht))
+				   (mus-header-type-name (cadr df-ht))
+				   sdata ndata)))))
 	    (list (list mus-bshort mus-next)
 		  (list mus-bfloat mus-aifc)
 		  (list mus-lshort mus-aifc)
@@ -3901,48 +3887,51 @@
 	    (let ((ind1 (open-sound "tmp1.snd")))
 	      (let ((incr (/ 1.0 (frames)))
 		    (reader (make-sampler 0 ind1)))
-		(call-with-exit
-		 (lambda (quit)
-		   (do ((i 0 (+ i 1))
-			(x -0.5 (+ x incr))
-			(n (read-sample reader) (read-sample reader)))
-		       ((= i 100000))
-		     (if (fneq x n)
-			 (begin
-			   (snd-display #__line__ ";l24 (next) selection not saved correctly? ~A" i)
-			   (quit)))))))
+		(let ((v0 (make-vct 100000))
+		      (v1 (make-vct 100000)))
+		  (do ((i 0 (+ i 1)))
+		      ((= i 100000))
+		    (vct-set! v0 i (read-sample reader)))
+		  (do ((i 0 (+ i 1))
+		       (x -0.5 (+ x incr)))
+		      ((= i 100000))
+		    (vct-set! v1 i x))
+		  (if (not (vequal v0 v1))
+		      (snd-display #__line__ ";l24 (next) selection not saved correctly? ~A" v0))))
 	      (close-sound ind1))
 
 	    (save-selection "tmp1.snd" mus-aifc mus-l24int)
 	    (let ((ind1 (open-sound "tmp1.snd")))
 	      (let ((incr (/ 1.0 (frames)))
 		    (reader (make-sampler 0 ind1)))
-		(call-with-exit
-		 (lambda (quit)
-		   (do ((i 0 (+ i 1))
-			(x -0.5 (+ x incr))
-			(n (read-sample reader) (read-sample reader)))
-		       ((= i 100000))
-		     (if (fneq x n)
-			 (begin
-			   (snd-display #__line__ ";l24 (aifc) selection not saved correctly? ~A" i)
-			   (quit)))))))
+		(let ((v0 (make-vct 100000))
+		      (v1 (make-vct 100000)))
+		  (do ((i 0 (+ i 1)))
+		      ((= i 100000))
+		    (vct-set! v0 i (read-sample reader)))
+		  (do ((i 0 (+ i 1))
+		       (x -0.5 (+ x incr)))
+		      ((= i 100000))
+		    (vct-set! v1 i x))
+		  (if (not (vequal v0 v1))
+		      (snd-display #__line__ ";l24 (aifc) selection not saved correctly? ~A" v0))))
 	      (close-sound ind1))
 
 	    (save-region reg "tmp1.snd" mus-next mus-l24int)
 	    (let ((ind1 (open-sound "tmp1.snd")))
 	      (let ((incr (/ 1.0 (frames)))
 		    (reader (make-sampler 0 ind1)))
-		(call-with-exit
-		 (lambda (quit)
-		   (do ((i 0 (+ i 1))
-			(x -0.5 (+ x incr))
-			(n (read-sample reader) (read-sample reader)))
-		       ((= i 100000))
-		     (if (fneq x n)
-			 (begin
-			   (snd-display #__line__ ";l24 (next) region not saved correctly? ~A" i)
-			   (quit)))))))
+		(let ((v0 (make-vct 100000))
+		      (v1 (make-vct 100000)))
+		  (do ((i 0 (+ i 1)))
+		      ((= i 100000))
+		    (vct-set! v0 i (read-sample reader)))
+		  (do ((i 0 (+ i 1))
+		       (x -0.5 (+ x incr)))
+		      ((= i 100000))
+		    (vct-set! v1 i x))
+		  (if (not (vequal v0 v1))
+		      (snd-display #__line__ ";l24 (next) region not saved correctly? ~A" v0))))
 	      (close-sound ind1))
 	    (delete-file "tmp1.snd")
 	    (close-sound ind)
@@ -8311,16 +8300,16 @@ EDITS: 5
 	     (let ((e (make-env '(0 0 1 1 2 0) :length (+ 1 dur)))
 		   (new-reader (make-sampler 0 ind 0))
 		   (len (frames)))
-	       (call-with-exit
-		(lambda (quit)
-		  (do ((old (env e) (env e))
-		       (new (read-sample new-reader) (read-sample new-reader))
-		       (i 0 (+ i 1)))
-		      ((= i len))
-		    (if (fneq old new)
-			(begin
-			  (format #t "~%;trouble in reverse read at ~D ~A ~A" i old new)
-			  (quit)))))))
+	       (let ((v0 (make-vct len))
+		     (v1 (make-vct len)))
+		 (do ((i 0 (+ i 1)))
+		     ((= i len))
+		   (vct-set! v0 i (env e)))
+		 (do ((i 0 (+ i 1)))
+		     ((= i len))
+		   (vct-set! v1 i (read-sample new-reader)))
+		 (if (not (vequal v0 v1))
+		     (snd-display #__line__ "~%;trouble in reverse read ~A ~A" v0 v1))))
 	     (revert-sound))
 	   (list 150 1500 150000))
 	  (close-sound ind))
@@ -8374,16 +8363,16 @@ EDITS: 5
 	      (let ((old-reader (make-sampler 0 ind 0 1 (- (edit-position ind 0) 2)))
 		    (new-reader (make-sampler 0 ind 0))
 		    (len (frames)))
-		(call-with-exit
-		 (lambda (quit)
-		   (do ((old (read-sample old-reader) (read-sample old-reader))
-			(new (read-sample new-reader) (read-sample new-reader))
-			(i 0 (+ i 1)))
-		       ((= i len))
-		     (if (fneq old new)
-			 (begin
-			   (format #t "~%;trouble in reverse read at ~D ~A ~A" i old new)
-			   (quit)))))))
+		(let ((v0 (make-vct len))
+		      (v1 (make-vct len)))
+		  (do ((i 0 (+ i 1)))
+		      ((= i len))
+		    (vct-set! v0 i (read-sample old-reader)))
+		  (do ((i 0 (+ i 1)))
+		      ((= i len))
+		    (vct-set! v1 i (read-sample new-reader)))
+		  (if (not (vequal v0 v1))
+		      (snd-display #__line__ "~%;trouble in reverse read ~A ~A" v0 v1))))
 	      (set! (edit-position ind 0) edpos)))
 	  (close-sound ind))
 	(let ((reader #f)
@@ -17490,28 +17479,24 @@ EDITS: 2
 		(snd-display #__line__ ";polywaver (1 1) .5 index ~A: ~A ~A" i val1 val2)
 		(set! happy #f))))))
     
-    (let ((old-srate (mus-srate)))
+    (let ((old-srate (mus-srate))
+	  (v0 (make-vct 44100))
+	  (v1 (make-vct 44100)))
       (set! (mus-srate) 44100)
       (for-each
        (lambda (k)
-	 (let ((gen (make-polywave 100.0 (list 1 0.5 k 0.5))))
-	   (let ((err 0.0)
-		 (err-max 0.0)
-		 (err-max-loc -1))
-	     (do ((i 0 (+ i 1)))
-		 ((>= i 44100))
-	       (let* ((ph (mus-phase gen))
-		      (gval (polywave gen))
-		      (sval (* 0.5 (+ (cos ph)
-				      (cos (* k ph)))))
-		      (err-local (abs (- sval gval))))
-		 (if (> err-local err-max)
-		     (begin
-		       (set! err-max-loc i)
-		       (set! err-max err-local)))
-		 (set! err (+ err err-local))))
-	     (if (> err-max 2.0e-3)
-		 (snd-display #__line__ ";polywave vs sin: ~D: ~A ~A ~A" k err err-max err-max-loc)))))
+	 (let ((gen (make-polywave 100.0 (list 1 0.5 k 0.5)))
+	       (incr (/ (* 2.0 pi 100.0) 44100)))
+	   (do ((i 0 (+ i 1)))
+	       ((= i 44100))
+	     (vct-set! v0 i (polywave gen)))
+	   (do ((i 0 (+ i 1))
+		(ph 0.0 (+ ph incr)))
+	       ((= i 44100))
+	     (vct-set! v1 i (+ (cos ph) (cos (* k ph)))))
+	   (vct-scale! v1 0.5)
+	   (if (not (vequal v0 v1))
+	       (snd-display #__line__ ";polywave vs cos: ~A" (vct-peak-and-location (vct-subtract! v0 v1))))))
        (list 2 19 20 29 30 39 40 60 100))
       
       (for-each
@@ -19589,12 +19574,8 @@ EDITS: 2
 	(let ((grn (make-granulate :expansion 2.0
 				   :input (lambda (dir) (rd))
 				   :edit (lambda (g)
-					   (let ((grain (mus-data g))  ; current grain
-						 (len (mus-length g))) ; current grain length
-					     (do ((i 0 (+ i 1)))
-						 ((= i len) len)       ; grain length unchanged in this case
-					       (set! (grain i) (* 2 (grain i))))
-					     0)))))
+					   (vct-scale! (mus-data g) 2.0)
+					   0))))
 	  (map-channel (lambda (y) (granulate grn)))
 	  (if (or (< (/ (maxamp) mx) 1.4) (> (/ mx (maxamp)) 2.5))
 	      (snd-display #__line__ ";gran edit 2* (0): ~A ~A" mx (maxamp)))
@@ -19603,24 +19584,16 @@ EDITS: 2
 	(let ((grn (make-granulate :expansion 2.0
 				   :input (lambda (dir) (rd))
 				   :edit (lambda (g)
-					   (let ((grain (mus-data g))  ; current grain
-						 (len (mus-length g))) ; current grain length
-					     (do ((i 0 (+ i 1)))
-						 ((= i len) len)       ; grain length unchanged in this case
-					       (set! (grain i) (* 4 (grain i))))
-					     0)))))
+					   (vct-scale! (mus-data g) 4.0)
+					   0))))
 	  (map-channel (lambda (y) (granulate grn)))
 	  (if (or (< (/ (maxamp) mx) 3.0) (> (/ mx (maxamp)) 6.0))
 	      (snd-display #__line__ ";gran edit 4* (0): ~A ~A" mx (maxamp)))
 	  (revert-sound ind)))
       (let ((grn (make-granulate :expansion 2.0
 				 :edit (lambda (g)
-					 (let ((grain (mus-data g))  ; current grain
-					       (len (mus-length g))) ; current grain length
-					   (do ((i 0 (+ i 1)))
-					       ((= i len) len)       ; grain length unchanged in this case
-					     (set! (grain i) (* 2 (grain i))))
-					   0))))
+					   (vct-scale! (mus-data g) 2.0)
+					   0)))
 	    (rd (make-sampler 0)))
 	(map-channel (lambda (y) (granulate grn (lambda (dir) (rd)))))
 	(if (or (< (/ (maxamp) mx) 1.4) (> (/ mx (maxamp)) 2.5))
@@ -19628,42 +19601,34 @@ EDITS: 2
 	(undo)
 	(let ((grn (make-granulate :expansion 2.0
 				   :edit (lambda (g)
-					   (let ((grain (mus-data g))  ; current grain
-						 (len (mus-length g))) ; current grain length
-					     (do ((i 0 (+ i 1)))
-						 ((= i len) len)       ; grain length unchanged in this case
-					       (set! (grain i) (* 4 (grain i))))
-					     0))))
+					   (vct-scale! (mus-data g) 4.0)
+					   0)))
 	      (rd (make-sampler 0)))
 	  (map-channel (lambda (y) (granulate grn (lambda (dir) (rd)))))
 	  (if (or (< (/ (maxamp) mx) 2.9) (> (/ mx (maxamp)) 6.0))
 	      (snd-display #__line__ ";gran edit 4* (1): ~A ~A" mx (maxamp)))
 	  (revert-sound ind)))
       (let ((grn (make-granulate :expansion 2.0 :input (make-sampler 0))))
-	(map-channel (lambda (y) (granulate grn 
-					    #f
-					    (lambda (g)
-					      (let ((grain (mus-data g))  ; current grain
-						    (len (mus-length g))) ; current grain length
-						(do ((i 0 (+ i 1)))
-						    ((= i len) len)       ; grain length unchanged in this case
-						  (set! (grain i) (* 2 (grain i))))
-						0)))))
+	(map-channel 
+	 (lambda (y) 
+	   (granulate grn 
+		      #f
+		      (lambda (g)
+			(vct-scale! (mus-data g) 2.0)
+			0))))
 	(if (or (< (/ (maxamp) mx) 1.4) (> (/ mx (maxamp)) 2.5))
 	    (snd-display #__line__ ";gran edit 2* (2): ~A ~A" mx (maxamp)))
 	(undo)
 	(let ((grn (make-granulate :expansion 2.0))
 	      (rd (make-sampler 0)))
-	  (map-channel (lambda (y) (granulate grn 
-					      (lambda (dir) 
-						(rd))
-					      (lambda (g)
-						(let ((grain (mus-data g))  ; current grain
-						      (len (mus-length g))) ; current grain length
-						  (do ((i 0 (+ i 1)))
-						      ((= i len) len)       ; grain length unchanged in this case
-						    (set! (grain i) (* 4 (grain i))))
-						  0)))))
+	  (map-channel 
+	   (lambda (y) 
+	     (granulate grn 
+			(lambda (dir) 
+			  (rd))
+			(lambda (g)
+			  (vct-scale! (mus-data g) 4.0)
+			  0))))
 	  (if (or (< (/ (maxamp) mx) 3.0) (> (/ mx (maxamp)) 6.0))
 	      (snd-display #__line__ ";gran edit 4* (2): ~A ~A" mx (maxamp)))))
       (close-sound ind))
@@ -19840,11 +19805,7 @@ EDITS: 2
 	(map-channel (lambda (y) (granulate gen 
 					    (lambda (dir) .1)
 					    (lambda (g)
-					      (let ((grain (mus-data g))  ; current grain
-						    (len (mus-length g))) ; current grain length
-						(do ((i 0 (+ i 1)))
-						    ((= i len) len)       ; grain length unchanged in this case
-						  (set! (grain i) (* 2 (grain i)))))
+					      (vct-scale! (mus-data g) 2.0)
 					      0))))
 	(let ((mx (maxamp)))
 	  (if (fneq mx (* 2 0.264)) (snd-display #__line__ ";gran 10 max: ~A" mx)))
@@ -19905,11 +19866,7 @@ EDITS: 2
       (let ((gen (make-granulate :jitter 0.0 :hop .001 :length .005 :ramp .5 :scaler 1.0
 				 :input (lambda (dir) .1)
 				 :edit (lambda (g)
-					 (let ((grain (mus-data g))  ; current grain
-					       (len (mus-length g))) ; current grain length
-					   (do ((i 0 (+ i 1)))
-					       ((= i len) len)       ; grain length unchanged in this case
-					     (set! (grain i) (* 2 (grain i)))))
+					 (vct-scale! (mus-data g) 2.0)
 					 0))))
 	(map-channel (lambda (y) (granulate gen)))
 	(let ((mx (maxamp)))
@@ -27589,7 +27546,7 @@ EDITS: 2
 	      (revert-sound obi)
 	      (granulated-sound-interp '(0 0 1 1) 2.0)
 	      (if (not (= (edit-position obi 0) 1)) (snd-display #__line__ ";granulated-sound-interp no-op 2?"))
-	      (if (< (maxamp obi 0) .15) (snd-display #__line__ ";granulated-sound-interp 2 maxamp: ~A" (maxamp obi 0)))
+	      (if (< (maxamp obi 0) .145) (snd-display #__line__ ";granulated-sound-interp 2 maxamp: ~A" (maxamp obi 0)))
 	      (if (> (abs (- (frames obi 0) 101656)) 1000) (snd-display #__line__ ";granulated-sound-interp 2 frames: ~A" (frames obi 0)))
 	      (revert-sound obi)
 	      (granulated-sound-interp '(0 0 1 .1 2 1) 1.0 0.2 '(0 0 1 1 2 0) 0.02)
@@ -29435,10 +29392,10 @@ EDITS: 2
 			   (split-vals (make-vct len)))
 		      (do ((i split-loc (+ i 1)))
 			  ((= i len))
-			(set! (split-vals i) (fread)))
+			(vct-set! split-vals i (fread)))
 		      (do ((i (- split-loc 1) (- i 1)))
 			  ((< i 0))
-			(set! (split-vals i) (bread)))
+			(vct-set! split-vals i (bread)))
 		      (if (and expected-vals (not (vequal split-vals expected-vals)))
 			  (let ((bad-data (vequal-at split-vals expected-vals)))
 			    (snd-display #__line__ ";checking ~A, split vals disagree (loc cur expect): ~A" name bad-data)
@@ -30103,14 +30060,16 @@ EDITS: 2
 		      (begin
 			(snd-display #__line__ ";clm-channel overlap delayed: ~A: ~A" i val)
 			(set! happy #f)))))
-	      (do ((i 0 (+ i 1)))
-		  ((or (not happy) (= i len)))
-		(let ((val0 (preader))
-		      (val1 (reader)))
-		  (if (fneq val0 val1)
-		      (begin
-			(snd-display #__line__ ";clm-channel overlap main: ~A: ~A ~A" (+ i 1000) val0 val1)
-			(set! happy #f)))))
+	      (let ((v0 (make-vct len))
+		    (v1 (make-vct len)))
+		(do ((i 0 (+ i 1)))
+		    ((= i len))
+		  (vct-set! v0 i (read-sample preader)))
+		(do ((i 0 (+ i 1)))
+		    ((= i len))
+		  (vct-set! v1 i (read-sample reader)))
+		(if (not (vequal v0 v1))
+		    (snd-display #__line__ ";clm-channel overlap main: ~A ~A" v0 v1)))
 	      (do ((i 0 (+ i 1)))
 		  ((or (not happy) (= i 1000)))
 		(if (fneq (reader) 0.0)
@@ -30473,36 +30432,25 @@ EDITS: 2
 	   (let* ((i1 (new-sound))
 		  (v (vct-fill! (make-vct dur) 1.0)))
 	     (define (check-env name r e)
-	       (let ((happy #t))
+	       (let ((v0 (make-vct dur))
+		     (v1 (make-vct dur)))
+		 (do ((i 0 (+ i 1)))
+		     ((= i dur))
+		   (vct-set! v0 i (read-sample r)))
 		 (if (env? e)
 		     (do ((i 0 (+ i 1)))
-			 ((or (not happy) (= i dur))
-			  happy)
-		       (let ((rv (read-sample r))
-			     (ev (env e)))
-			 (if (fneq rv ev) 
-			     (begin
-			       (snd-display #__line__ ";~A env check [~A]: ~A ~A" name i rv ev)
-			       (set! happy #f)))))
+			 ((= i dur))
+		       (vct-set! v1 i (env e)))
 		     (if (sampler? e)
 			 (do ((i 0 (+ i 1)))
-			     ((or (not happy) (= i dur))
-			      happy)
-			   (let ((rv (read-sample r))
-				 (ev (read-sample e)))
-			     (if (fneq rv ev) 
-				 (begin
-				   (snd-display #__line__ ";~A env check [~A]: ~A ~A" name i rv ev)
-				   (set! happy #f)))))
+			     ((= i dur))
+			   (vct-set! v1 i (read-sample e)))
 			 (do ((i 0 (+ i 1)))
-			     ((or (not happy) (= i dur))
-			      happy)
-			   (let ((rv (read-sample r))
-				 (ev (apply e ())))
-			     (if (fneq rv ev) 
-				 (begin
-				   (snd-display #__line__ ";~A env check [~A]: ~A ~A" name i rv ev)
-				   (set! happy #f)))))))))
+			     ((= i dur))
+			   (vct-set! v1 i (e)))))
+		 (if (not (vequal v0 v1))
+		     (snd-display #__line__ ";~A env check [~A]: ~A ~A" name rv ev))))
+			 
 	     (vct->channel v)
 	     (env-sound '(0 0 1 1))
 	     (check-env 'ramp (make-sampler 0) (make-env '(0 0 1 1) :length dur))
@@ -38620,14 +38568,12 @@ EDITS: 1
   (define (step-src)
     (let* ((rd (make-sampler 0))
 	   (o (make-oscil 2205.0))
-	   (s (make-src :srate 0.0))
+	   (s (make-src :srate 0.0 :input rd))
 	   (incr (+ 2.0 (oscil o)))	  
 	   (tempfile (with-sound (:output (snd-tempnam) :srate (srate) :to-snd #f :comment "step-src")
 		       (do ((samp 0 (+ samp 1)))
 			   ((sampler-at-end? rd))
-			 (out-any samp 
-				  (src s incr (lambda (dir) (read-sample rd)))
-				  0)
+			 (outa samp (src s incr))
 			 (if (= (modulo samp 2205) 0)
 			     (set! incr (+ 2.0 (oscil o)))))))
 	   (len (mus-sound-frames tempfile)))
@@ -47715,22 +47661,21 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-7-Mar-13:
-74,055,193,183
-10,692,495,518  s7.c:eval [/home/bil/snd-13/snd]
- 6,361,543,458  ???:sin [/lib64/libm-2.12.so]
- 4,007,947,300  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 2,970,010,915  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,550,827,645  ???:cos [/lib64/libm-2.12.so]
- 2,455,530,090  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,327,317,731  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 2,216,348,114  s7.c:gc [/home/bil/snd-13/snd]
- 2,087,230,801  s7.c:eval'2 [/home/bil/snd-13/snd]
- 1,585,058,070  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,431,563,434  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 1,178,605,140  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 1,176,118,060  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
- 1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
-
+8-Mar-13:
+72,843,440,151
+9,860,301,462  s7.c:eval [/home/bil/snd-13/snd]
+6,366,669,022  ???:sin [/lib64/libm-2.12.so]
+3,836,449,158  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+2,970,010,915  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
+2,562,746,759  ???:cos [/lib64/libm-2.12.so]
+2,559,281,492  clm.c:mus_src [/home/bil/snd-13/snd]
+2,327,317,731  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
+2,060,742,238  s7.c:gc [/home/bil/snd-13/snd]
+1,907,400,533  s7.c:eval'2 [/home/bil/snd-13/snd]
+1,585,058,070  clm.c:mus_formant [/home/bil/snd-13/snd]
+1,453,710,843  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+1,176,674,167  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+1,152,093,427  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
+1,085,716,240  s7.c:s7_make_real [/home/bil/snd-13/snd]
 |#

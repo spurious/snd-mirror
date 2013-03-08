@@ -38036,14 +38036,15 @@ static bool is_all_x_op(int op)
 	 (op == HOP_SAFE_C_opSq) ||
 	 (op == HOP_SAFE_C_opSSq) ||
 	 (op == HOP_SAFE_C_opSSq_S) ||
+	 (op == HOP_SAFE_C_S_opSSq) ||
 	 (op == HOP_SAFE_C_S_opSq) ||
 	 (op == HOP_SAFE_C_S_opCq) ||
 	 (op == HOP_SAFE_C_C_opSq) ||
+	 (op == HOP_SAFE_C_C_opCq) ||
 	 (op == HOP_SAFE_C_opCq_S) ||
 	 (op == HOP_SAFE_C_opSq_S) ||
 	 (op == HOP_SAFE_C_opSq_C) ||
 	 (op == HOP_SAFE_C_opCq_C) ||
-	 (op == HOP_SAFE_C_S_opSSq) ||
 	 (op == HOP_SAFE_C_opSq_opSq));
 }
 
@@ -38195,6 +38196,15 @@ static s7_pointer all_x_c_s_opcq(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T2_1));
 }
 		    
+static s7_pointer all_x_c_c_opcq(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = caddr(arg);
+  car(sc->T2_2) = c_call(largs)(sc, cdr(largs));
+  car(sc->T2_1) = cadr(arg);
+  return(c_call(arg)(sc, sc->T2_1));
+}
+		    
 static s7_pointer all_x_c_opcq_s(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer largs;
@@ -38340,6 +38350,7 @@ static s7_function all_x_eval(s7_pointer arg)
 	    case HOP_SAFE_C_opCq_S:    return(all_x_c_opcq_s);
 	    case HOP_SAFE_C_opCq_C:    return(all_x_c_opcq_c);
 	    case HOP_SAFE_C_C_opSq:    return(all_x_c_c_opsq);
+	    case HOP_SAFE_C_C_opCq:    return(all_x_c_c_opcq);
 	    case HOP_SAFE_C_opSSq_S:   return(all_x_c_opssq_s);
 	    case HOP_SAFE_C_S_opSSq:   return(all_x_c_s_opssq);
 	    case HOP_SAFE_C_opSq_opSq: return(all_x_c_opsq_opsq);
@@ -45440,7 +45451,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			(typeflag(car(sc->code)) == SYNTACTIC_TYPE))
 		      {
 			push_stack(sc, OP_SAFE_DOTIMES_STEP_P, sc->args, code);
-
 			if (typesflag(sc->code) == SYNTACTIC_PAIR)
 			  sc->op = (opcode_t)lifted_op(sc->code);
 			else
@@ -46242,7 +46252,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
 	sc->code = car(sc->code);
 	goto EVAL;
-	/* 45355: 11633523 */
       }
 
 
@@ -46479,7 +46488,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->op = (opcode_t)lifted_op(code);
 	sc->code = cdr(code);
 	goto START_WITHOUT_POP_STACK;
-	/* 45643: 1847313 */
       }
 
 
@@ -46673,11 +46681,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cdr(sc->code);
 	  goto START_WITHOUT_POP_STACK;
 	}
-
-	/* do case_simple
-	 * do if opt begin
-	 */
-
       
 
 	/* we could use slot_pending_value, slot_expression, not this extra list, but the list seems simpler.
@@ -47001,70 +47004,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto EVAL;
       }
 
-      /*
-445408: (* (env ampf) (polywave modulator1) (pulsed-env peep (env pulsef)) (polywave carrier (+ (env pulsef1) (rand-interp noise) (polywave modulator))))
-   this is the katydid in animals
-   it goes to safe_dotimes_step_a, calling g_outa_two there, then jumping to opt_eval for safe_c_all_x -> multiply
-   does all_x_c_all_x make sense?
-361608: (frame-set! f-out c (filtered-comb-bank (vector-ref fcmb-c c) (delay (vector-ref predelays c) (frame-ref f-in c))))
-361608: (frame-set! f-out c (all-pass-bank (vector-ref allp-c c) (frame-ref f-out c)))
-   frame-set _> xxz, z->xz
-305028: ((set! st (vct-ref s cell)) (set! A (min (max -0.95 (+ A (* fc (- A st)))) 0.95)) (vct-set! s cell A) (set! A (min (max -0.95 (+ A st)) 0.95)))
-304987: ((sound-data-set! data 0 k (reader (env read-env))))
-233726: (out-bank i filts (* (env envA) (fir-filter flt (comb-bank combs (all-pass-bank allpasses (ina i *reverb*))))))
-224000: ((set! val (data chan)) (if (or (< val 0.0) (> val 1.0)) (format #t ";locsig, chans: ~D, degree: ~F, chan ~D is ~F, ~A~%" chans x chan val data)) (let ((diff (abs (- val (last chan))))) (vector-set! last chan val) (if (> diff 0.2) (format #t ";locsig, increment ~F in chan ~D with deg ~F~%" diff chan x))))
-204242: ((vct-set! data i (* (next-sample reader) (+ rmp0 (* (expt angle exponent) (- rmp1 rmp0))))))
-204042: ((vct-set! data i (* (next-sample reader) (+ rmp0 (* (* angle angle) (- rmp1 rmp0))))))
-203447: ((vct-set! data i (* (next-sample reader) (+ rmp0 (* (- rmp1 rmp0) (+ 0.5 (* 0.5 (cos angle))))))))
-203312: (if (sampler? (readers k)) (set! sum (+ sum (* (env (grain-envs k)) (next-sample (readers k))))))
-197311: (vct-set! data i (array-interp tbl (+ 8.0 (* 8.0 (next-sample reader))) 17))
-184637: ((set! (wk1 j) (- (wk1 j) (* (wkm k) (wk2 j)))) (set! (wk2 j) (- (wk2 (+ j 1)) (* (wkm k) (wk1 (+ j 1))))))
-160256: ((if (= j n) (set! j 0)) (set! (amp-incs j) (* (fft-window i) (data i))))
-152481: (vct-set! data i (* mx (sin (* (next-sample reader) brt))))
-132298: (* (env aenv) (comb d0 (pulse-train s) (env zenv)))
-132294: ((if (> ampa 0.0) (outa i (* ampa (ina i *reverb*)))) (if (> ampb 0.0) (outb i (* ampb (inb i *reverb*)))))
-131131: ((set! (rl2 i) (rl1 i)) (set! (rl2 j) (rl1 k)) (set! (im2 i) (im1 i)) (set! (im2 j) (im1 k)))
-102553: ((set! (out-data j) (src rd (rand-interp rn))) (set! j (+ j 1)))
-101753: (vct-set! data i (+ (next-sample reader) (mus-random dither) (mus-random dither)))
-   dither-channel in extensions, vct_set_three add_3_temp via hop_safe_c_aaa because add_3_temp is not direct! -- nor are any paralle cases! (so we use all_x_c_s 3x)
-98301: ((set! (im i) (func (im i))) (set! (im j) (- (im i))))
-95641: (set! (frm i) (next-sample (samplers i)))
-95135: (set! (frm i) (read-sample (samplers i)))
-92120: ((set! rk (ramps k)) (set! sp (vector-ref spectr rk)) (set! (inputs k) (+ (* sp inval1) (* (- 1.0 sp) inval2))) (set! sp (- sp ramp-inc)) (if (> sp 0.0) (set! (spectr rk) sp) (begin (set! (in2s in2-ctr) rk) (set! in2-ctr (+ in2-ctr 1)) (set! fixup-ramps #t) (set! (ramps k) -1))))
-90400: ((file->frame *reverb* i f-in) (if (> in-chans 1) (do ((c 0 (+ c 1))) ((= c out-chans)) (frame-set! f-out c (filtered-comb-bank (vector-ref fcmb-c c) (delay (vector-ref predelays c) (frame-ref f-in c))))) (let ((val (delay (vector-ref predelays 0) (frame-ref f-in 0)))) (do ((c 0 (+ c 1))) ((= c out-chans)) (frame-set! f-out c (filtered-comb-bank (vector-ref fcmb-c c) val))))) (do ((c 0 (+ 1 c))) ((= c out-chans)) (frame-set! f-out c (all-pass-bank (vector-ref allp-c c) (frame-ref f-out c)))) (frame->file *output* i (frame->frame f-out out-mix out-buf)))
-88196: ((outa i (flt (oscil osc (env ramp))))) -- test-filter in clm23.scm
-80939: (* (env pulsef) (oscil gen1 (rand-interp rnd) (+ (* 0.1 (oscil md)) (* 0.2 (oscil md1)))))
-68471: ((frame->sound-data (read-frame reader) data i))
-68354: (out-bank i filts (* volume (comb-bank combs (all-pass-bank allpasses (ina i *reverb*)))))
-67428: ((vector-set! wkm i (vector-ref d i)))
-64000: ((move-locsig loc x 1.0) (do ((chan 0 (+ chan 1))) ((= chan chans)) (set! val (data chan)) (if (or (< val 0.0) (> val 1.0)) (format #t ";locsig, chans: ~D, degree: ~F, chan ~D is ~F, ~A~%" chans x chan val data)) (let ((diff (abs (- val (last chan))))) (vector-set! last chan val) (if (> diff 0.2) (format #t ";locsig, increment ~F in chan ~D with deg ~F~%" diff chan x)))))
-56006: ((set! (mus-frequency frm1) (env intrpf1)) (set! (mus-frequency frm2) (env intrpf2)) (set! (mus-frequency frm3) (env intrpf3)) (outa i (* (env ampf) (formant-bank fs fb (* (+ 0.9 (rand-interp rnd1)) (polywave gen1 (+ (env frqf) (* (env intrpf) (+ (* hz7 (oscil vib)) (rand-interp rnd))))))))))
-55124: ((set! valA (* amp (src srcA))) (outa i valA) (if revit (outa i (* rev-amp valA) *reverb*)))
-54490: ((set! (frame1 k) (read-sample input1)) (set! (frame2 k) (read-sample input2)))
-53646: ((set! (rdata i) 0.0) (set! (rdata j) 0.0) (set! (idata i) 0.0) (set! (idata j) 0.0))
-50827: (let ((sig (bandpass (vector-ref bands i) y)) (mx (moving-max (vector-ref peaks i) sig))) (let ((amp (moving-average (vector-ref avgs i) (if (> mx 0.0) (min 100.0 (/ 1.0 mx)) 0.0)))) (if (> amp 0.0) (set! sum (+ sum (* mx (polynomial pcoeffs (* amp sig))))))))
-48508: (* amp (all-pass-bank allpasses (filtered-comb-bank fcombs (delay pdelay (ina i *reverb*)))))
-44100: (set! val (+ val (rand (rands i))))
-44100: (set! sum (+ sum (* (fm-indices k) (oscil (modulators k)))))
-44099: ((outa i (delay outdel11 (comb-bank combs1 (all-pass-bank allpasses1 (ina i *reverb*))))) (outb i (delay outdel12 (comb-bank combs2 (all-pass-bank allpasses2 (inb i *reverb*))))))
-44099: (outa i (* (+ (* 0.007 (oscil ampmod)) 0.993) (+ (* (env ampenv1) (oscil osc0 (* 0.203 (oscil osc1)))) (* (env ampenv2) (oscil osc2 (* 0.144 (oscil osc3)))))))
-44098: (outa i (notch d0 (pulse-train s) (env zenv)))
-44098: (outa i (comb d0 (pulse-train s) (env zenv)))
-44098: (outa i (all-pass d0 (pulse-train s) (env zenv)))
-43650: (* (env ampf) (+ 0.25 (* 0.45 (abs (+ (rand-interp rnd) (* 0.7 (oscil trem)))))) (polywave gen1 (+ (env frqf1) (* (env vibf) (oscil vib)))))
-42330: ((file->frame current (+ current-loc i) on) (do ((k 0 (+ 1 k))) ((= k chans)) (sound-data-set! data k i (if (< k ons) (on k) 0.0))))
-29482: ((do ((k 0 (+ k 1))) ((= k samps-per-bin)) (vct-set! data k (next-sample reader))) (let ((mx (vct-max data)) (mn (vct-min data))) (let ((mxdiff (abs (- mx (maxs e-bin)))) (mndiff (abs (- mn (mins e-bin))))) (if (or (> mxdiff diff) (> mndiff diff)) (begin (snd-display 7565 ";~A: peak-env-equal? [bin ~D of ~D]: (~,4F to ~,4F), diff: ~,5F" name e-bin e-size mn mx (max mxdiff mndiff)) (set! happy #f))))))
-27001: ((outa k (* pulse-amp (env pulse-ampf) (+ 0.5 (* 0.5 (abs (oscil trem (rand-interp rnd1))))) (oscil gen1 (+ (env frqf) (env pulse-frqf) (rand-interp rnd))))))
-24603: ((out-any samp (src s incr (lambda (dir) (read-sample rd))) 0) (if (= (modulo samp 2205) 0) (set! incr (+ 2.0 (oscil o)))))
-24254: (out-bank i filts (* (env envA) (comb-bank combs (all-pass-bank allpasses (ina i *reverb*)))))
-23807: ((set! (mus-frequency frm2) (env frmf)) (set! (mus-frequency frm3) (env frmf3)) (set! (mus-frequency frm1) (env frmf1)) (let ((val1 (* (env ampf) (+ (polywave gen1 (env frqf1)) (* (env ampf2) (polywave gen2 (env frqf2))))))) (set! (fs 0) (* fr1 (env frmaf-1))) (set! (fs 1) (* fr2 (env frmaf))) (outa i (+ (* 0.75 val1) (formant-bank fs fb (* val1 (rand-interp rnd)))))))
-22050: ((set! y (+ x (* index (sin y)))) (outa i (* amp (sin y))))
-22050: (set! outsum (+ outsum (* (env (ampfs k)) (oscil (carriers k) (+ (* vib (c-rats k)) (* (env (indfs k)) modsig))))))
-22050: (let* ((frm (env (frmfs k))) (frm0 (/ frm frq)) (frm-int (floor frm0))) (if (even? frm-int) (begin (set! even-freq (* frm-int rfrq)) (set! odd-freq (* (+ frm-int 1) rfrq)) (set! odd-amp (- frm0 frm-int)) (set! even-amp (- 1.0 odd-amp))) (begin (set! odd-freq (* frm-int rfrq)) (set! even-freq (* (+ frm-int 1) rfrq)) (set! even-amp (- frm0 frm-int)) (set! odd-amp (- 1.0 even-amp)))) (let ((fax (polynomial (cos-coeffs k) carcos)) (yfax (* carsin (polynomial (sin-coeffs k) carcos)))) (set! sum (+ sum (* (amps k) (+ (* even-amp (- (* yfax (oscil (sin-evens k) even-freq)) (* fax (oscil (cos-evens k) even-freq)))) (* odd-amp (- (* yfax (oscil (sin-odds k) odd-freq)) (* fax (oscil (cos-odds k) odd-freq))))))))))
-22049: ((set! sample-0-0 sample-1-0) (set! sample-1-0 (* vol (granulate ingen0))) (set! sample-0-1 sample-1-1) (set! sample-1-1 (* vol (granulate ingen1))) (set! ex-samp (+ ex-samp 1)))
-22049: (set! sum (+ sum (* (amps i) (oscil (oscs i)))))
-
-       */
 
 
       /* -------------------------------- BEGIN -------------------------------- */
@@ -63360,5 +63299,5 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14    9
  * lat        229   63   52   47   42   40   34
  * t502        90   43   39   36   29   23   20
- * calls           275  207  175  115   89   74
+ * calls           275  207  175  115   89   73
  */

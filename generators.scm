@@ -4977,11 +4977,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (pink-noise gen) returns the next random value in the 1/f stream produced by gen."
   
   (with-environment gen
-    (let ((val 0.0))
-      (do ((i 0 (+ i 1)))
-	  ((= i n))
-	(set! val (+ val (rand (rands i)))))
-      (/ val (* 2.5 (sqrt n)))))) ; this normalization is not quite right
+    (/ (rand-bank rands) (* 2.5 (sqrt n))))) ; this normalization is not quite right
 
 #|
 (with-sound (:clipped #f :statistics #t)

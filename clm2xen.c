@@ -5095,6 +5095,34 @@ static XEN g_all_pass_bank(XEN gens, XEN inval)
 }
 
 
+#define S_rand_bank "rand-bank"
+static XEN g_rand_bank(XEN gens)
+{
+  int i, size;
+  double x = 0.0;
+#if defined(XEN_VECTOR_ELEMENTS)
+  XEN *gs;
+#endif
+
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_1, S_rand_bank, "a vector of " S_rand " generators");
+  size = XEN_VECTOR_LENGTH(gens);
+#if defined(XEN_VECTOR_ELEMENTS)
+  gs = XEN_VECTOR_ELEMENTS(gens);
+#endif
+
+  for (i = 0; i < size; i++)
+    {
+#if defined(XEN_VECTOR_ELEMENTS)
+      x += mus_rand_unmodulated(XEN_TO_MUS_ANY(gs[i]));
+#else
+      x += mus_rand_unmodulated(XEN_TO_MUS_ANY(XEN_VECTOR_REF(gens, i)));
+#endif      
+    }
+
+  return(C_TO_XEN_DOUBLE(x));
+}
+
+
 
 
 
@@ -9709,10 +9737,6 @@ static s7_pointer g_src_one(s7_scheme *sc, s7_pointer args)
   return(s7_f(sc));
 }
 
-
-/* other biggies: ->ssb_am_two, comb_two|three, src_three, all_pass_two, file_to_sample_two
- *                frame_set_3, sound_data_ref_three, src_one->src_two(??) src_chooser was never called?
- */
 
 static s7_pointer asymmetric_fm_3;
 static s7_pointer g_asymmetric_fm_3(s7_scheme *sc, s7_pointer args)
@@ -16483,6 +16507,7 @@ XEN_ARGIFY_6(g_oscil_bank_w, g_oscil_bank)
 XEN_NARGIFY_2(g_comb_bank_w, g_comb_bank)
 XEN_NARGIFY_2(g_filtered_comb_bank_w, g_filtered_comb_bank)
 XEN_NARGIFY_2(g_all_pass_bank_w, g_all_pass_bank)
+XEN_NARGIFY_1(g_rand_bank_w, g_rand_bank)
 XEN_NARGIFY_3(g_out_bank_w, g_out_bank)
 
 #else
@@ -16795,6 +16820,7 @@ XEN_NARGIFY_3(g_out_bank_w, g_out_bank)
 #define g_comb_bank_w g_comb_bank
 #define g_filtered_comb_bank_w g_filtered_comb_bank
 #define g_all_pass_bank_w g_all_pass_bank
+#define g_rand_bank_w g_rand_bank
 #define g_out_bank_w g_out_bank
 #endif
 
@@ -17034,6 +17060,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_REAL_PROCEDURE(S_comb_bank, g_comb_bank_w, 2, 0, 0, "an experiment");
   XEN_DEFINE_REAL_PROCEDURE(S_filtered_comb_bank, g_filtered_comb_bank_w, 2, 0, 0, "an experiment");
   XEN_DEFINE_REAL_PROCEDURE(S_all_pass_bank, g_all_pass_bank_w, 2, 0, 0, "an experiment");
+  XEN_DEFINE_REAL_PROCEDURE(S_rand_bank, g_rand_bank_w, 1, 0, 0, "an experiment");
 
   XEN_DEFINE_REAL_PROCEDURE(S_out_bank, g_out_bank_w, 3, 0, 0, H_out_bank);
 

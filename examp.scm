@@ -1122,7 +1122,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 				  val)))))
     (do ((i 0 (+ i 1)))
 	((= i out-len))
-      (set! (out-data i) (src rd (rand-interp rn))))
+      (vct-set! out-data i (src rd (rand-interp rn))))
     (vct->channel out-data 0 len snd chn #f (format #f "hello-dentist ~A ~A" frq amp))))
 
 
@@ -1141,7 +1141,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 	 (out-data (make-vct len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (set! (out-data i) (src s (* osamp (oscil os)))))
+      (vct-set! out-data i (src s (* osamp (oscil os)))))
     (vct->channel out-data 0 len snd chn #f (format #f "fp ~A ~A ~A" sr osamp osfrq))))
 	    
 
@@ -1467,27 +1467,21 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 (define* (env-sound-interp envelope (time-scale 1.0) snd chn)
   "(env-sound-interp env (time-scale 1.0) snd chn) reads snd's channel chn according to env and time-scale"
   ;; since the old/new sounds can be any length, we'll write a temp file rather than trying to use map-channel
+
   (let* ((len (frames snd chn))
-	 (newlen (floor (* time-scale len)))
-	 (reader (make-sound-interp 0 snd chn))
-	 (read-env (make-env envelope :length (+ 1 newlen) :scaler len))
-	 (tempfilename (snd-tempnam))
-	 (fil (mus-sound-open-output tempfilename (srate snd) 1 #f mus-next "env-sound-interp temp file"))
-	 ;; #f as data-format -> format compatible with sndlib (so no data translation is needed)
-	 (bufsize 8192)
-	 (data (make-sound-data 1 bufsize)))
-    (do ((i 0 (+ i bufsize)))
-	((>= i newlen))
-      (let ((stop (min (- newlen i) bufsize)))
-	(do ((k 0 (+ k 1)))
-	    ((= k stop))
-	  (sound-data-set! data 0 k (reader (env read-env))))
-	(mus-sound-write fil 0 (- stop 1) 1 data))) ; beg end as args, so end->len-1
-    (mus-sound-close-output fil (* (mus-bytes-per-sample mus-out-format) newlen))
-    ;; #t trunc arg to set samples shortens the sound as needed
-    (set-samples 0 newlen tempfilename snd chn #t
-		 (format #f "env-sound-interp '~A ~A" envelope time-scale))
-    (delete-file tempfilename)))
+	 (newlen (floor (* time-scale len))))
+    (let ((reader (make-sound-interp 0 snd chn))
+	  (read-env (make-env envelope :length (+ 1 newlen) :scaler len)))
+
+      (let ((new-snd (with-sound (:output (snd-tempnam) :to-snd #f :srate (srate snd))
+		       (do ((i 0 (+ i 1)))
+			   ((= i newlen))
+			 (outa i (reader (env read-env)))))))
+
+	(set-samples 0 newlen new-snd snd chn #t
+		     (format #f "env-sound-interp '~A ~A" envelope time-scale)
+		     0 current-edit-position #t)))))
+
 
 ;;; (env-sound-interp '(0 0 1 1 2 0) 2.0)
 
@@ -1496,64 +1490,50 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 ;;; here's a very similar function that uses granular synthesis to move at a varying tempo through a sound
 
 (define* (granulated-sound-interp envelope (time-scale 1.0) (grain-length 0.10) (grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05) snd chn)
+
   "(granulated-sound-interp envelope (time-scale 1.0) (grain-length 0.10) (grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05) snd chn) reads \
 the given channel following 'envelope' (as in env-sound-interp), using grains to create the re-tempo'd read"
+
   (let* ((len (frames snd chn))
-	 (newlen (floor (* time-scale len)))
-	 (read-env (make-env envelope :length newlen :scaler len))
-	 (tempfilename (snd-tempnam))
-	 (fil (mus-sound-open-output tempfilename (srate snd) 1 #f mus-next "env-sound-interp temp file"))
-	 ;; #f as data-format -> format compatible with sndlib (so no data translation is needed)
-	 (grain-frames (round (* grain-length (srate snd))))
-	 (hop-frames (round (* output-hop (srate snd))))
-	 (num-readers (+ 1 (round (/ grain-length output-hop))))
-	 (readers (make-vector num-readers #f))
-	 (grain-envs (make-vector num-readers #f))
-	 (next-reader-starts-at 0)
-	 (next-reader 0)
-	 (bufsize 8192)
-	 (data (make-sound-data 1 bufsize))
-	 (data-ctr 0)
-	 (jitter (* (srate snd) .005)))
+	 (newlen (floor (* time-scale len))))
+    (let ((read-env (make-env envelope :length newlen :scaler len))
+	  (grain-frames (round (* grain-length (srate snd))))
+	  (hop-frames (round (* output-hop (srate snd))))
+	  (num-readers (ceiling (/ grain-length output-hop)))
+	  (cur-readers 0)
+	  (next-reader 0)
+	  (jitter (* (srate snd) .005)))
 
-    (do ((i 0 (+ i 1)))
-	((= i num-readers))
-      (set! (grain-envs i) (make-env grain-envelope :length grain-frames)))
+      (let ((readers (make-vector num-readers #f))
+	    (grain-envs (make-vector num-readers #f)))
+	(do ((i 0 (+ i 1)))
+	    ((= i num-readers))
+	  (set! (grain-envs i) (make-env grain-envelope :length grain-frames)))
 
-    (do ((i 0 (+ i 1)))
-	((= i newlen))
-      (let ((position-in-original (env read-env)))     
+	(let ((new-snd (with-sound (:output (snd-tempnam) :to-snd #f :srate (srate snd))
 
-	(if (>= i next-reader-starts-at)
-	    (begin
-	      (set! (readers next-reader)
-		    (make-sampler (max 0 (round (+ position-in-original (mus-random jitter)))) snd chn))
-	      (mus-reset (grain-envs next-reader)) ; restart grain env
-	      (set! next-reader (+ next-reader 1))
-	      (if (>= next-reader num-readers) (set! next-reader 0))
-	      (set! next-reader-starts-at (+ next-reader-starts-at hop-frames))))
+			 (do ((i 0 (+ i hop-frames)))
+			     ((>= i newlen))
+			   (let ((start i)
+				 (stop (min newlen (+ i hop-frames))))
+	
+			     (set! (mus-location read-env) i)
+			     (let ((position-in-original (env read-env)))
+			       (set! (readers next-reader)
+				     (make-sampler (max 0 (round (+ position-in-original (mus-random jitter)))) snd chn))
+			       (mus-reset (grain-envs next-reader)) ; restart grain env
+			       (set! next-reader (modulo (+ next-reader 1) num-readers))
+			       (if (< cur-readers next-reader) (set! cur-readers next-reader)))
 
-	(let ((sum 0.0))
-	  (do ((k 0 (+ k 1)))
-	      ((= k num-readers))
-	    (if (readers k)
-		(set! sum (+ sum (* (env (grain-envs k)) (next-sample (readers k)))))))
-	  (sound-data-set! data 0 data-ctr sum))
+			     (do ((j start (+ j 1)))
+				 ((= j stop))
+			       (do ((k 0 (+ k 1)))
+				   ((= k cur-readers))
+				 (outa j (* (env (grain-envs k)) (next-sample (readers k)))))))))))
 
-	(set! data-ctr (+ data-ctr 1))
-	(if (= bufsize data-ctr)
-	    (begin
-	      (mus-sound-write fil 0 (- bufsize 1) 1 data)
-	      (set! data-ctr 0)))))
-
-    (if (> data-ctr 0)
-	(mus-sound-write fil 0 (- data-ctr 1) 1 data))
-    (mus-sound-close-output fil (* (mus-bytes-per-sample mus-out-format) newlen))
-    ;; #t trunc arg to set samples shortens the sound as needed
-    (set-samples 0 newlen tempfilename snd chn #t
-		 (format #f "granulated-sound-interp '~A ~A ~A ~A ~A" envelope time-scale grain-length grain-envelope output-hop))
-    (delete-file tempfilename)))
-
+	  (set-samples 0 newlen new-snd snd chn #t
+		       (format #f "granulated-sound-interp '~A ~A ~A ~A ~A" envelope time-scale grain-length grain-envelope output-hop)
+		       0 current-edit-position #t))))))
 
 ;;; (granulated-sound-interp '(0 0 1 .1 2 1) 1.0 0.2 '(0 0 1 1 2 0))
 ;;; (granulated-sound-interp '(0 0 1 1) 2.0)

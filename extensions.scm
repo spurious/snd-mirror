@@ -287,18 +287,19 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (sine-ramp rmp0 rmp1 (beg 0) dur snd chn edpos)
   "(sine-ramp rmp0 rmp1 (beg 0) dur snd chn edpos) produces a sinsusoidal connection from rmp0 to rmp1"
-  (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
-	 (incr (/ pi len))
-	 (data (make-vct len))
-	 (reader (make-sampler beg snd chn 1 edpos)))
-    (do ((i 0 (+ i 1))
-	 (angle (- pi) (+ angle incr)))
-	((= i len))
-      (vct-set! data i (* (next-sample reader) 
-			  (+ rmp0 (* (- rmp1 rmp0) 
-				     (+ 0.5 (* 0.5 (cos angle))))))))
-     (vct->channel data beg len snd chn current-edit-position
-		   (format #f "sine-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur))))
+  (let ((len (if (number? dur) dur (- (frames snd chn) beg))))
+    (let ((data (make-vct len))
+	  (incr (/ pi len))
+	  (reader (make-sampler beg snd chn 1 edpos))
+	  (scl (* 0.5 (- rmp1 rmp0))))
+      (let ((off (+ rmp0 scl)))
+	(do ((i 0 (+ i 1))
+	     (angle (- pi) (+ angle incr)))
+	    ((= i len))
+	  (vct-set! data i (* (next-sample reader) 
+			      (+ off (* scl (cos angle)))))))
+      (vct->channel data beg len snd chn current-edit-position
+		    (format #f "sine-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))))
 
 
 (define* (sine-env-channel e (beg 0) dur snd chn edpos)
@@ -316,22 +317,19 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define* (blackman4-ramp rmp0 rmp1 (beg 0) dur snd chn edpos)
   "(blackman4-ramp rmp0 rmp1 (beg 0) dur snd chn edpos) produces a blackman4-shaped envelope"
   ;; vct: angle incr off scl
-  (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
-	 (incr (/ pi len))
-	 (data (make-vct len))
-	 (reader (make-sampler beg snd chn 1 edpos)))
-
-    (do ((i 0 (+ i 1))
-	 (angle 0.0 (+ angle incr)))
-	((= i len))
-      (let ((cx (cos angle)))
+  (let ((len (if (number? dur) dur (- (frames snd chn) beg))))
+    (let ((incr (/ pi len))
+	  (data (make-vct len))
+	  (reader (make-sampler beg snd chn 1 edpos))
+	  (coeffs (vct-scale! (vct 0.084037 -.29145 .375696 -.20762 .041194) (- rmp1 rmp0))))
+      (vct-set! coeffs 0 (+ (vct-ref coeffs 0) rmp0))
+      (do ((i 0 (+ i 1))
+	   (angle 0.0 (+ angle incr)))
+	  ((= i len))
 	(vct-set! data i (* (next-sample reader) 
-			    (+ rmp0
-			       (* (- rmp1 rmp0)
-				  (+ .084037 (* cx (+ -.29145 (* cx (+ .375696 (* cx (+ -.20762 (* cx .041194))))))))))))))
-
-     (vct->channel data beg len snd chn current-edit-position
-		   (format #f "blackman4-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur))))
+			    (polynomial coeffs (cos angle)))))
+      (vct->channel data beg len snd chn current-edit-position
+		    (format #f "blackman4-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))))
 
 
 (define* (blackman4-env-channel e (beg 0) dur snd chn edpos)
@@ -345,27 +343,27 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define* (ramp-squared rmp0 rmp1 (symmetric #t) (beg 0) dur snd chn edpos)
   "(ramp-squared rmp0 rmp1 (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^2 curve"
   ;; vct: start incr off scl
-  (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
-	 (incr (/ 1.0 len))
-	 (data (make-vct len))
-	 (reader (make-sampler beg snd chn 1 edpos)))
-
-    (if (and symmetric
-	     (< rmp1 rmp0))
-
-	 (do ((i 0 (+ i 1))
-	      (angle 1.0 (- angle incr)))
-	     ((= i len))
-	   (vct-set! data i (* (next-sample reader) 
-			       (+ rmp1 (* (* angle angle) (- rmp0 rmp1))))))
-	 (do ((i 0 (+ i 1))
-	      (angle 0.0 (+ angle incr)))
-	     ((= i len))
-	   (vct-set! data i (* (next-sample reader) 
-			       (+ rmp0 (* (* angle angle) (- rmp1 rmp0)))))))
-
-     (vct->channel data beg len snd chn current-edit-position
-		   (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur))))
+  (let ((len (if (number? dur) dur (- (frames snd chn) beg))))
+    (let ((incr (/ 1.0 len))
+	  (data (make-vct len))
+	  (reader (make-sampler beg snd chn 1 edpos))
+	  (scl (- rmp1 rmp0)))
+      (if (and symmetric
+	       (< rmp1 rmp0))
+	  (begin
+	    (set! scl (- scl))
+	    (do ((i 0 (+ i 1))
+		 (angle 1.0 (- angle incr)))
+		((= i len))
+	      (vct-set! data i (* (next-sample reader) 
+				  (+ rmp1 (* angle angle scl))))))
+	  (do ((i 0 (+ i 1))
+	       (angle 0.0 (+ angle incr)))
+	      ((= i len))
+	    (vct-set! data i (* (next-sample reader) 
+				(+ rmp0 (* angle angle scl))))))
+      (vct->channel data beg len snd chn current-edit-position
+		    (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur)))))
 
 
 (define* (env-squared-channel e (symmetric #t) (beg 0) dur snd chn edpos)
@@ -385,26 +383,27 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   "(ramp-expt rmp0 rmp1 exponent (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^exponent curve"
   ;; vct: start incr off scl exponent
   ;; a^x = exp(x * log(a))
-  (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
-	 (incr (/ 1.0 len))
-	 (data (make-vct len))
-	 (reader (make-sampler beg snd chn 1 edpos)))
-
-     (if (and symmetric
-	     (< rmp1 rmp0))
-	 (do ((i 0 (+ i 1))
-	      (angle 1.0 (- angle incr)))
-	     ((= i len))
-	   (vct-set! data i (* (next-sample reader) 
-			       (+ rmp1 (* (expt angle exponent) (- rmp0 rmp1))))))
-	 (do ((i 0 (+ i 1))
-	      (angle 0.0 (+ angle incr)))
-	     ((= i len))
-	   (vct-set! data i (* (next-sample reader) 
-			       (+ rmp0 (* (expt angle exponent) (- rmp1 rmp0)))))))
-
+  (let ((len (if (number? dur) dur (- (frames snd chn) beg))))
+    (let ((incr (/ 1.0 len))
+	  (data (make-vct len))
+	  (reader (make-sampler beg snd chn 1 edpos))
+	  (scl (- rmp1 rmp0)))
+      (if (and symmetric
+	       (< rmp1 rmp0))
+	  (begin
+	    (set! scl (- scl))
+	    (do ((i 0 (+ i 1))
+		 (angle 1.0 (- angle incr)))
+		((= i len))
+	      (vct-set! data i (* (next-sample reader) 
+				  (+ rmp1 (* scl (expt angle exponent)))))))
+	  (do ((i 0 (+ i 1))
+	       (angle 0.0 (+ angle incr)))
+	      ((= i len))
+	    (vct-set! data i (* (next-sample reader) 
+				(+ rmp0 (* scl (expt angle exponent)))))))
      (vct->channel data beg len snd chn current-edit-position
-		   (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur))))
+		   (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur)))))
 
 
 (define* (env-expt-channel e exponent (symmetric #t) (beg 0) dur snd chn edpos)
