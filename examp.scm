@@ -732,7 +732,7 @@ then inverse ffts."
 ;;; same idea but used to distinguish vowels (steady-state) from consonants
 
 (define (ramp gen up)
-  "(ramp gen up) is a kind of CLM generator that produces a ramp of a given length, then sticks at 0.0 or 1.0 until the 'up' argument changes"
+;;  "(ramp gen up) is a kind of CLM generator that produces a ramp of a given length, then sticks at 0.0 or 1.0 until the 'up' argument changes"
   ;; gen is list: ctr size
   ;;  the idea here is that we want to ramp in or out a portion of a sound based on some
   ;;  factor of the sound data -- the ramp gen produces a ramp up when 'up' is #t, sticking

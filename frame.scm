@@ -110,7 +110,7 @@
 
 
 (define* (frame->sound-data fr sd (pos 0))
-  "(frame->sound-data fr sd pos) copies the contents of frame fr into the sound-data sd at position pos"
+;;  "(frame->sound-data fr sd pos) copies the contents of frame fr into the sound-data sd at position pos"
   (if (not (frame? fr))
       (error 'wrong-type-arg "frame->sound-data: ~A" fr)
       (if (not (sound-data? sd))
@@ -271,7 +271,7 @@
 			    (set! (v i) (copy-sampler (samplers i))))))))
 
 (define (next-frame fr)
-  "(next-frame fr) returns the next frame as read by frame-reader fr"
+;;  "(next-frame fr) returns the next frame as read by frame-reader fr"
   (with-environment fr
     (do ((i 0 (+ i 1)))
 	((= i chns) frm)
@@ -285,7 +285,7 @@
       (set! (frm i) (previous-sample (samplers i))))))
 
 (define (read-frame fr)
-  "(read-frame fr) returns the next frame read by frame-reader fr taking its current read direction into account"
+;;  "(read-frame fr) returns the next frame read by frame-reader fr taking its current read direction into account"
   (with-environment fr
     (do ((i 0 (+ i 1)))
 	((= i chns) frm)

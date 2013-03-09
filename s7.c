@@ -402,7 +402,7 @@ enum {OP_NO_OP,
       OP_MEMBER_IF, OP_ASSOC_IF, OP_MEMBER_IF1, OP_ASSOC_IF1,
       
       OP_QUOTE_UNCHECKED, OP_LAMBDA_UNCHECKED, OP_LET_UNCHECKED, OP_CASE_UNCHECKED, 
-      OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_Z,
+      OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_Z, OP_SET_SYMBOL_ALL_X,
       OP_SET_SYMBOL_SAFE_S, OP_SET_SYMBOL_SAFE_C, 
       OP_SET_SYMBOL_SAFE_SS, OP_SET_SYMBOL_SAFE_SSS, OP_SET_SYMBOL_SAFE_opSSq_S, OP_SET_SYMBOL_SAFE_S_op_S_opSSqq,
       OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_A, OP_SET_PAIR_P, 
@@ -503,7 +503,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "member", "assoc", "member", "assoc",
    
    "quote", "lambda", "let", "case", 
-   "set!", "set!", "set!", "set!", "set!", "set!", "set!", 
+   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "let*", "letrec", "cond",
@@ -587,7 +587,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_MEMBER_IF", "OP_ASSOC_IF", "OP_MEMBER_IF1", "OP_ASSOC_IF1",
   
   "OP_QUOTE_UNCHECKED", "OP_LAMBDA_UNCHECKED", "OP_LET_UNCHECKED", "OP_CASE_UNCHECKED", 
-  "OP_SET_UNCHECKED", "OP_SET_SYMBOL_C", "OP_SET_SYMBOL_S", "OP_SET_SYMBOL_Q", "OP_SET_SYMBOL_P", "OP_SET_SYMBOL_Z", 
+  "OP_SET_UNCHECKED", "OP_SET_SYMBOL_C", "OP_SET_SYMBOL_S", "OP_SET_SYMBOL_Q", "OP_SET_SYMBOL_P", "OP_SET_SYMBOL_Z", "OP_SET_SYMBOL_ALL_X",
   "OP_SET_SYMBOL_SAFE_S", "OP_SET_SYMBOL_SAFE_C", 
   "OP_SET_SYMBOL_SAFE_SS", "OP_SET_SYMBOL_SAFE_SSS", "OP_SET_SYMBOL_SAFE_opSSq_S", "OP_SET_SYMBOL_SAFE_S_op_S_opSSqq",
   "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_Z", "OP_SET_PAIR_A", "OP_SET_PAIR_P", 
@@ -1314,7 +1314,7 @@ struct s7_scheme {
   s7_pointer BODY;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_ENV_UNCHECKED, WITH_ENV_S;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
-  s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z;
+  s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_ALL_X;
   s7_pointer SET_SYMBOL_SAFE_S, SET_SYMBOL_SAFE_SS, SET_SYMBOL_SAFE_SSS, SET_SYMBOL_SAFE_opSSq_S, SET_SYMBOL_SAFE_S_op_S_opSSqq;
   s7_pointer SET_SYMBOL_SAFE_C;
   s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_A, SET_PAIR_P, SET_PWS, SET_ENV_S, SET_ENV_ALL_X, SET_PAIR_C, SET_PAIR_C_P;
@@ -12652,7 +12652,7 @@ static s7_pointer g_add_si_i(s7_scheme *sc, s7_pointer args)
   /* (+ (* x n) k) */
   s7_pointer x;
   s7_Int k, n;
-
+  
   x = finder(sc, cadar(args));
   n = integer(caddar(args));
   k = integer(cadr(args));
@@ -42714,7 +42714,7 @@ static s7_pointer check_set(s7_scheme *sc)
 			  /*
 			    if ((is_pair(cadr(sc->code))) &&
 			    (is_optimized(cadr(sc->code))))
-			    fprintf(stderr, "setp: %s\n", DISPLAY_80(cadr(sc->code)));
+			      fprintf(stderr, "setp: %s %s\n", DISPLAY_80(cadr(sc->code)), opt_name(cadr(sc->code)));
 			  */
 			  if (is_h_safe_c_s(cadr(sc->code)))
 			    {
@@ -42748,6 +42748,7 @@ static s7_pointer check_set(s7_scheme *sc)
 				    }
 				  else
 				    {
+				      /* most of these special cases probably don't matter -- should use the all_x case below instead */
 				      if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_SS)
 					{
 					  if (car(sc->code) == cadr(cadr(sc->code)))
@@ -42796,6 +42797,7 @@ static s7_pointer check_set(s7_scheme *sc)
 						    }
 						  else
 						    {
+						      /* look for increments */
 						      if (car(sc->code) == cadr(cadr(sc->code)))
 							{
 							  if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_S_opCq)
@@ -42811,6 +42813,14 @@ static s7_pointer check_set(s7_scheme *sc)
 								  set_syntax_op(sc->code, sc->INCREMENT_SZ);
 								  fcdr(sc->code) = caddr(cadr(sc->code));
 								}
+							    }
+							}
+						      else
+							{
+							  if (is_all_x_safe(sc, cadr(sc->code)))
+							    {
+							      set_syntax_op(sc->code, sc->SET_SYMBOL_ALL_X);
+							      annotate_arg(sc, cdr(sc->code));
 							    }
 							}
 						    }
@@ -45170,7 +45180,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (s7_integer(init_val) == s7_integer(end_val))
 		  {
 		    sc->code = cdr(cadr(sc->code));
-		    goto BEGIN;
+		    goto DO_BEGIN;
 		  }
 		denominator(slot_value(sc->args)) = s7_integer(end_val);
 
@@ -45203,7 +45213,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if (numerator(stepper) == denominator(stepper))
 			  {
 			    sc->code = cdr(cadr(sc->code));
-			    goto BEGIN;
+			    goto DO_BEGIN;
 			  }
 		      }
 		  }
@@ -45223,7 +45233,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if (result)
 			  {
 			    sc->code = cdr(cadr(sc->code));
-			    goto BEGIN;
+			    goto DO_BEGIN;
 			  }
 			/* else fall into the ordinary loop */
 		      }
@@ -45248,7 +45258,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if (numerator(stepper) == denominator(stepper))
 			  {
 			    sc->code = cdr(cadr(sc->code));
-			    goto BEGIN;
+			    goto DO_BEGIN;
 			  }
 		      }
 		  }
@@ -45290,7 +45300,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (s7_integer(init_val) == s7_integer(end_val))
 		  {
 		    sc->code = cdr(cadr(sc->code));
-		    goto BEGIN;
+		    goto DO_BEGIN;
 		  }
 
 		denominator(slot_value(sc->args)) = s7_integer(end_val);
@@ -45308,7 +45318,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (result)
 		      {
 			sc->code = cdr(cadr(sc->code));
-			goto BEGIN;
+			goto DO_BEGIN;
 		      }
 		    /* else fall into the ordinary loop */
 		  }
@@ -45321,7 +45331,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (numerator(stepper) == denominator(stepper))
 		      {
 			sc->code = cdr(cadr(sc->code));
-			goto BEGIN;
+			goto DO_BEGIN;
 		      }
 		  }
 	      }
@@ -45364,7 +45374,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (s7_integer(init_val) == s7_integer(end_val))
 		  {
 		    sc->code = cdr(cadr(sc->code));
-		    goto BEGIN;
+		    goto DO_BEGIN;
 		  }
 
 		denominator(slot_value(sc->args)) = s7_integer(end_val);
@@ -45386,7 +45396,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (numerator(stepper) == denominator(stepper))
 		      {
 			sc->code = cdr(cadr(sc->code));
-			goto BEGIN;
+			goto DO_BEGIN;
 		      }
 		  }
 	      }
@@ -45433,13 +45443,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    numerator(slot_value(sc->args)) = s7_integer(end_val);
 		    sc->code = cdr(cadr(code));
-		    goto BEGIN;
+		    goto DO_BEGIN;
 		  }
 
 		if (s7_integer(init_val) == s7_integer(end_val))
 		  {
 		    sc->code = cdr(cadr(code));
-		    goto BEGIN;
+		    goto DO_BEGIN;
 		  }
 		if ((is_null(cdr(sc->code))) &&
 		    (is_pair(car(sc->code))))
@@ -45506,7 +45516,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    if (numerator(step) == denominator(step))
 				      {
 					sc->code = end;
-					goto BEGIN;
+					goto DO_BEGIN;
 				      }
 				  }
 			      }
@@ -45536,7 +45546,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (numerator(arg) == denominator(arg))
 	  {
 	    sc->code = cdr(cadr(sc->code));
-	    goto BEGIN;
+	    goto DO_BEGIN;
 	  }
 	push_stack(sc, OP_SAFE_DOTIMES_STEP_P, sc->args, sc->code);
 	sc->code = fcdr(sc->code);
@@ -45555,7 +45565,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (numerator(arg) == denominator(arg))
 	  {
 	    sc->code = cdr(cadr(sc->code));
-	    goto BEGIN;
+	    goto DO_BEGIN;
 	  }
 	push_stack(sc, OP_SAFE_DOTIMES_STEP_O, sc->args, sc->code);
 	sc->code = fcdr(sc->code);
@@ -45577,7 +45587,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (numerator(arg) == denominator(arg))
 	  {
 	    sc->code = cdr(cadr(sc->code));
-	    goto BEGIN;
+	    goto DO_BEGIN;
 	  }
 
 	push_stack(sc, OP_SAFE_DOTIMES_STEP_A, sc->args, sc->code);
@@ -45595,7 +45605,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (numerator(arg) == denominator(arg))
 	  {
 	    sc->code = cdr(cadr(sc->code));
-	    goto BEGIN;
+	    goto DO_BEGIN;
 	  }
 	push_stack(sc, OP_SAFE_DOTIMES_STEP, sc->args, sc->code);
 
@@ -45647,7 +45657,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif
 	  {
 	    sc->code = cdr(cadr(code));
-	    goto BEGIN;
+	    goto DO_BEGIN;
 	  }
 	if (is_symbol(end))
 	  sc->args = find_symbol(sc, end);
@@ -45721,7 +45731,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    if (integer(i) == end)
 				      {
 					sc->code = cdr(cadr(code));
-					goto BEGIN;
+					goto DO_BEGIN;
 				      }
 				  }
 			      }
@@ -45749,7 +45759,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    if (integer(i) == end)
 				      {
 					sc->code = cdr(cadr(code));
-					goto BEGIN;
+					goto DO_BEGIN;
 				      }
 				  }
 			      }
@@ -45766,7 +45776,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    if (integer(i) == end)
 				      {
 					sc->code = cdr(cadr(code));
-					goto BEGIN;
+					goto DO_BEGIN;
 				      }
 				  }
 			      }
@@ -45779,7 +45789,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				if (integer(i) == end)
 				  {
 				    sc->code = cdr(cadr(code));
-				    goto BEGIN;
+				    goto DO_BEGIN;
 				  }
 			      }
 			  }
@@ -45796,7 +45806,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				if (step == end)
 				  {
 				    sc->code = cdr(cadr(code));
-				    goto BEGIN;
+				    goto DO_BEGIN;
 				  }
 			      }
 			  }
@@ -45826,7 +45836,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (result)
 		      {
 			sc->code = cdr(cadr(code));
-			goto BEGIN;
+			goto DO_BEGIN;
 		      }
 		  }
 
@@ -45865,7 +45875,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				if (step == end)
 				  {
 				    sc->code = cdr(cadr(code));
-				    goto BEGIN;
+				    goto DO_BEGIN;
 				  }
 			      }
 			  }
@@ -45913,7 +45923,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    if (integer(i) == end)
 				      {
 					sc->code = cdr(cadr(code));
-					goto BEGIN;
+					goto DO_BEGIN;
 				      }
 				  }
 			      }
@@ -45941,7 +45951,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				if (step == end)
 				  {
 				    sc->code = cdr(cadr(code));
-				    goto BEGIN;
+				    goto DO_BEGIN;
 				  }
 			      }
 			  }
@@ -45978,7 +45988,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif	      
 	  {
 	    sc->code = cdr(cadr(sc->code));
-	    goto BEGIN;
+	    goto DO_BEGIN;
 	  }
 	push_stack(sc, OP_SAFE_DO_STEP_P, sc->args, sc->code);
 	sc->code = fcdr(sc->code);
@@ -46009,7 +46019,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif	      
 	  {
 	    sc->code = cdr(cadr(sc->code));
-	    goto BEGIN;
+	    goto DO_BEGIN;
 	  }
 	push_stack(sc, OP_SAFE_DO_STEP_A, sc->args, sc->code);
 	sc->code = fcdr(sc->code);
@@ -46039,7 +46049,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif	      
 	  {
 	    sc->code = cdadr(code);
-	    goto BEGIN;
+	    goto DO_BEGIN;
 	  }
 	push_stack(sc, OP_SAFE_DO_STEP, sc->args, code);
 	code = fcdr(code);
@@ -46092,7 +46102,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_true(sc, c_call(caadr(code))(sc, sc->T2_1)))
 	  {
 	    sc->code = cdadr(code);
-	    goto BEGIN;
+	    goto DO_BEGIN;
 	  }
 
 	fcdr(code) = cddr(code);
@@ -46140,7 +46150,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (is_true(sc, endf(sc, sc->T2_1)))
 		  {
 		    sc->code = cdr(cadr(code));
-		    goto BEGIN;
+		    goto DO_BEGIN;
 		  }
 	      }
 	  }
@@ -46180,7 +46190,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_true(sc, c_call(caadr(code))(sc, sc->T2_1)))
 	  {
 	    sc->code = cdr(cadr(code));
-	    goto BEGIN;
+	    goto DO_BEGIN;
 	  }
 	push_stack(sc, OP_SIMPLE_DO_STEP, sc->args, code);
 	sc->code = fcdr(code);
@@ -46213,7 +46223,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (integer(val) == integer(end))
 		  {
 		    sc->code = cdr(cadr(code));
-		    goto BEGIN;
+		    goto DO_BEGIN;
 		  }
 	      }
 	    else
@@ -46223,7 +46233,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (is_true(sc, g_equal_2(sc, sc->T2_1)))
 		  {
 		    sc->code = cdr(cadr(code));
-		    goto BEGIN;
+		    goto DO_BEGIN;
 		  }
 	      }
 	  }
@@ -46238,16 +46248,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_true(sc, g_equal_2(sc, sc->T2_1)))
 	      {
 		sc->code = cdr(cadr(code));
-		goto BEGIN;
+		goto DO_BEGIN;
 	      }
 	  }
 	push_stack(sc, OP_SIMPLE_DO_STEP_A, sc->args, code);
 	sc->code = fcdr(code);
-	/* 1817827: ((locsig loc gr-offset (* (* (env amp-env) (table-lookup gr-env)) (src in-file-reader))))
-	 * 948144: ((outa i (* amp (src src-gen (* fmamp (oscil os))))))
-	 * 914904: (set! ssb (vector-ref ssbs i))
-	 * 639700: (set! v0 (sound-data-ref sdata k i))
-	 */
 	if (is_pair(cdr(sc->code)))
 	  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
 	sc->code = car(sc->code);
@@ -46318,7 +46323,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_true(sc, c_call(caadr(code))(sc, sc->T2_1)))
 	  {
 	    sc->code = cdadr(code);
-	    goto BEGIN;
+	    goto DO_BEGIN;
 	  }
 
 	/* (((i 0 (+ 1 i))) ((= i len)) (set! (v i) (read-mix-sample reader)))
@@ -46354,7 +46359,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_true(sc, c_call(caadr(code))(sc, sc->T2_1)))
 	  {
 	    sc->code = cdadr(code);
-	    goto BEGIN;
+	    goto DO_BEGIN;
 	  }
 	push_stack(sc, OP_SIMPLE_DO_STEP_P, sc->args, code);
 	code = caddr(code);
@@ -46404,7 +46409,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_true(sc, c_call(caadr(code))(sc, sc->T2_1)))
 	  {
 	    sc->code = cdadr(code);
-	    goto BEGIN;
+	    goto DO_BEGIN;
 	  }
 	push_stack(sc, OP_DOTIMES_STEP_P, sc->args, code);
 	sc->code = caddr(code);
@@ -46438,15 +46443,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif
 		  { 
 		    sc->code = cdadr(code);
-		    if (is_null(sc->code))
-		      {
-			sc->value = sc->NIL;
-			goto START;
-		      }
-		    if (is_pair(cdr(sc->code)))
-		      push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
-		    sc->code = car(sc->code);
-		    goto EVAL;
+		    goto DO_BEGIN;
 		  }
 	      }
 	    else
@@ -46456,15 +46453,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (is_true(sc, c_call(end_test)(sc, sc->T2_1)))
 		  {
 		    sc->code = cdadr(code);
-		    if (is_null(sc->code)) 
-		      {
-			sc->value = sc->NIL;
-			goto START;
-		      }
-		    if (is_pair(cdr(sc->code)))
-		      push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
-		    sc->code = car(sc->code);
-		    goto EVAL;
+		    goto DO_BEGIN;
 		  }
 	      }
 	  }
@@ -46479,7 +46468,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_true(sc, c_call(end_test)(sc, sc->T2_1)))
 	      {
 		sc->code = cdadr(code);
-		goto BEGIN;
+		goto DO_BEGIN;
 	      }
 	  }
 	push_stack(sc, OP_DOTIMES_STEP_P, sc->args, code);
@@ -46564,7 +46553,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     *    (let ((x (do ((i 0 (+ i 1))) (#t)))) x) -> '()
 	     */
 	    sc->code = cdadr(sc->code);
-	    goto BEGIN;
+	    goto DO_BEGIN;
 	  }
 
 	{
@@ -46618,7 +46607,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      if (is_true(sc, endf(sc, end)))
 			{
 			  sc->code = cdadr(sc->code);
-			  goto BEGIN;
+			  goto DO_BEGIN;
 			}
 		    }
 		}
@@ -46642,15 +46631,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_true(sc, ((s7_function)fcdr(cdr(sc->code)))(sc, fcdr(sc->code))))
 	    {
 	      sc->code = cdadr(sc->code);
-	      if (is_null(sc->code)) 
-		{
-		  sc->value = sc->NIL;
-		  goto START;
-		}
-	      if (is_pair(cdr(sc->code)))
-		push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
-	      sc->code = car(sc->code);
-	      goto EVAL;
+	      goto DO_BEGIN;
 	    }
 	  push_stack_no_args(sc, OP_DOX_STEP, sc->code);
 	  sc->code = cddr(sc->code);
@@ -46670,10 +46651,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_true(sc, ((s7_function)fcdr(cdr(sc->code)))(sc, fcdr(sc->code))))
 	    {
 	      sc->code = cdadr(sc->code);
-	      if (is_pair(cdr(sc->code)))
-		push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
-	      sc->code = car(sc->code);
-	      goto EVAL;
+	      goto DO_BEGIN;
 	    }
 	  push_stack_no_args(sc, OP_DOX_STEP_P, sc->code);
 	  sc->code = caddr(sc->code);
@@ -47004,6 +46982,29 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto EVAL;
       }
 
+      
+    DO_BEGIN:
+      {
+	/* I don't think this matters at all -- use BEGIN! */
+	if (is_null(sc->code)) 
+	  {
+	    sc->value = sc->NIL;
+	    goto START;
+	  }
+	if (is_pair(cdr(sc->code)))
+	  {
+	    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	    sc->code = car(sc->code);
+	    goto EVAL;
+	  }
+	sc->code = car(sc->code);
+	if (is_pair(sc->code))
+	  goto EVAL;
+	if (s7_is_symbol(sc->code))
+	  sc->value = finder(sc, sc->code);
+	else sc->value = sc->code;
+	goto START;
+      }
 
 
       /* -------------------------------- BEGIN -------------------------------- */
@@ -47064,7 +47065,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->op = (opcode_t)lifted_op(sc->code);
 	  sc->code = cdr(sc->code);
 	  goto START_WITHOUT_POP_STACK;
-	  /* 46211: 28978139 */
 	  /* it is only slightly faster to use labels as values (computed gotos) here
 	   */
 	}
@@ -53773,6 +53773,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto OPT_EVAL;
 
 
+      /* --------------- */
+    case OP_SET_SYMBOL_ALL_X:
+      sc->y = find_symbol(sc, car(sc->code));
+      if (is_slot(sc->y)) 
+	{
+	  slot_set_value(sc->y, ((s7_function)fcdr(cdr(sc->code)))(sc, cadr(sc->code)));
+	  IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sc->y); 
+	}
+      eval_error(sc, "set! ~A: unbound variable", sc->code);
+
+
+      /* --------------- */
     case OP_INCREMENT_S_opCq:
       {
 	s7_pointer sym;
@@ -54302,6 +54314,29 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* sc->code = cons(sc, c_function_setter(sc->x), s7_append(sc, cdar(sc->code), cdr(sc->code))); */
 		  if (is_pair(cdar(sc->code)))
 		    {
+		      if ((s7_is_symbol(cadr(sc->code))) &&
+			  (s7_is_symbol(cadar(sc->code))))
+			{
+			  if (is_null(cddar(sc->code)))
+			    {
+			      car(sc->T2_1) = finder(sc, cadar(sc->code));
+			      car(sc->T2_2) = finder(sc, cadr(sc->code));
+			      sc->args = sc->T2_1;
+			      sc->code = c_function_setter(sc->x);
+			      goto APPLY; /* check arg num etc */
+			    }
+			  if ((s7_is_symbol(caddar(sc->code))) &&
+			      (is_null(cdddar(sc->code))))
+			    {
+			      car(sc->T3_1) = finder(sc, cadar(sc->code));
+			      car(sc->T3_2) = finder(sc, caddar(sc->code));
+			      car(sc->T3_3) = finder(sc, cadr(sc->code));
+			      sc->args = sc->T3_1;
+			      sc->code = c_function_setter(sc->x);
+			      goto APPLY; /* check arg num etc */
+			    }
+			}
+
 		      push_op_stack(sc, c_function_setter(sc->x));
 		      push_stack(sc, OP_EVAL_ARGS1, sc->NIL, s7_append(sc, cddar(sc->code), cdr(sc->code)));
 		      sc->code = cadar(sc->code);
@@ -62296,6 +62331,7 @@ s7_scheme *s7_init(void)
   sc->SET_SYMBOL_SAFE_C =     assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_SAFE_C);  
   sc->SET_SYMBOL_P =          assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_P);  
   sc->SET_SYMBOL_Z =          assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_Z);  
+  sc->SET_SYMBOL_ALL_X =      assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_ALL_X);  
   sc->CASE_UNCHECKED =        assign_internal_syntax(sc, "case",    OP_CASE_UNCHECKED);  
   sc->CASE_INT =              assign_internal_syntax(sc, "case",    OP_CASE_INT);  
   sc->CASE_SIMPLE =           assign_internal_syntax(sc, "case",    OP_CASE_SIMPLE);  
@@ -63299,5 +63335,5 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14    9
  * lat        229   63   52   47   42   40   34
  * t502        90   43   39   36   29   23   20
- * calls           275  207  175  115   89   73
+ * calls           275  207  175  115   89   72
  */

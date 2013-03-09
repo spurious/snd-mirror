@@ -6309,7 +6309,7 @@ int main(int argc, char **argv)
   char response[1024];
 
   s7 = s7_init();                     /* initialize the interpreter */
-  xen_initialize();                   /* initialize the xen stuff (hooks and the xen s7 FFI used by sndlib) */
+  s7_xen_initialize(s7);              /* initialize the xen stuff (hooks and the xen s7 FFI used by sndlib) */
   Init_sndlib();                      /* initialize sndlib with all the functions linked into s7 */  
 
   mus_error_set_handler(mus_error_to_s7); /* catch low-level errors and pass them to s7-error */

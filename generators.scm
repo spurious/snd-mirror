@@ -800,9 +800,8 @@
 
 
 (define* (nrcos gen (fm 0.0))
-  
-  "(make-nrcos frequency (n 1) (r 0.5)) creates an nrcos generator.\n\
-   (nrcos gen (fm 0.0)) returns n cosines spaced by frequency with amplitudes scaled by r^k."
+;;  "(make-nrcos frequency (n 1) (r 0.5)) creates an nrcos generator.\n\
+;;   (nrcos gen (fm 0.0)) returns n cosines spaced by frequency with amplitudes scaled by r^k."
   
   (set! (gen 'fm) fm)
   (with-environment gen
@@ -1064,9 +1063,8 @@
 
 
 (define* (nkssb gen (fm 0.0))
-  
-  "(make-nkssb frequency (ratio 1.0) (n 1)) creates an nkssb generator.\n\
-   (nkssb gen (fm 0.0)) returns n sinusoids from frequency spaced by frequency * ratio with amplitude k."
+;;  "(make-nkssb frequency (ratio 1.0) (n 1)) creates an nkssb generator.\n\
+;;   (nkssb gen (fm 0.0)) returns n sinusoids from frequency spaced by frequency * ratio with amplitude k."
   
   (set! (gen 'fm) fm)
   (with-environment gen
@@ -1419,9 +1417,8 @@
   (osc #f) rr norm trouble)
 
 (define* (rcos gen (fm 0.0))
-  
-  "(make-rcos frequency (r 0.5)) creates an rcos generator.\n\
-   (rcos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude r^k."
+;;  "(make-rcos frequency (r 0.5)) creates an rcos generator.\n\
+;;   (rcos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude r^k."
   
   ;; from Andrews, Askey, Roy "Special Functions" 5.1.16, p243. r^k cos sum
   ;; a variant of the G&R 2nd col 4th row
@@ -1761,9 +1758,9 @@
 
 
 (define* (rxycos gen (fm 0.0))
-  
-  "(make-rxycos frequency (ratio 1.0) (r 0.5)) creates an rxycos generator.\n\
-   (rxycos gen (fm 0.0)) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k."
+;;  "(make-rxycos frequency (ratio 1.0) (r 0.5)) creates an rxycos generator.\n\
+;;   (rxycos gen (fm 0.0)) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k."
+;; I really need to figure out how to keep these dic strings out of the evaluator.
   
   (set! (gen 'fm) fm)
   (with-environment gen
@@ -1891,9 +1888,8 @@
 
 
 (define* (ercos gen (fm 0.0))
-  
-  "(make-ercos frequency (r 0.5)) creates an ercos generator (a special case of rcos).\n\
-   (ercos gen (fm 0.0)) returns many cosines from frequency with amplitude e^(-kr)."
+;;  "(make-ercos frequency (r 0.5)) creates an ercos generator (a special case of rcos).\n\
+;;   (ercos gen (fm 0.0)) returns many cosines from frequency with amplitude e^(-kr)."
   
   (set! (gen 'fm) fm)
   (with-environment gen
@@ -2339,9 +2335,8 @@
 
 
 (define* (rk!cos gen (fm 0.0))
-  
-  "(make-rk!cos frequency (r 0.5)) creates an rk!cos generator.\n\
-   (rk!cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude (r^k)/k!."
+;;  "(make-rk!cos frequency (r 0.5)) creates an rk!cos generator.\n\
+;;   (rk!cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude (r^k)/k!."
   
   (set! (gen 'fm) fm)
   (with-environment gen
@@ -2438,9 +2433,8 @@
 
 
 (define* (rk!ssb gen (fm 0.0))
-  
-  "(make-rk!ssb frequency (ratio 1.0) (r 0.5)) creates an rk!ssb generator.\n\
-   (rk!ssb gen (fm 0.0)) returns many sinusoids from frequency spaced by frequency * ratio with amplitude (r^k)/k!."
+;;  "(make-rk!ssb frequency (ratio 1.0) (r 0.5)) creates an rk!ssb generator.\n\
+;;   (rk!ssb gen (fm 0.0)) returns many sinusoids from frequency spaced by frequency * ratio with amplitude (r^k)/k!."
   
   (set! (gen 'fm) fm)
   (with-environment gen
@@ -2618,9 +2612,8 @@
 
 
 (define* (r2k!cos gen (fm 0.0))
-  
-  "(make-2rk!cos frequency (r 0.5) (k 0.0)) creates an r2k!cos generator.\n\
-   (r2k!cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude too messy to write down."
+;;  "(make-2rk!cos frequency (r 0.5) (k 0.0)) creates an r2k!cos generator.\n\
+;;   (r2k!cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude too messy to write down."
   
   (set! (gen 'fm) fm)
   (with-environment gen
@@ -3350,9 +3343,8 @@
   (frequency *clm-default-frequency*) (n 0) (angle 0.0) (norm 1.0) fm)
 
 (define* (bess gen (fm 0.0))
-  
-  "(make-bess frequency (n 0)) creates a bessel function (Jn) generator.\n\
-   (bess gen (fm 0.0)) returns Jn."
+;;  "(make-bess frequency (n 0)) creates a bessel function (Jn) generator.\n\
+;;   (bess gen (fm 0.0)) returns Jn."
   
   (set! (gen 'fm) fm)
   (with-environment gen
@@ -4958,6 +4950,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;;
 ;;; pink-noise (based on rand-bank idea of Orfanidis)
 
+#|
 (defgenerator (pink-noise
 	       :make-wrapper (lambda (g)
 			       (if (<= (g 'n) 0) (set! (g 'n) 1))
@@ -4978,7 +4971,18 @@ index 10 (so 10/2 is the bes-jn arg):
   
   (with-environment gen
     (/ (rand-bank rands) (* 2.5 (sqrt n))))) ; this normalization is not quite right
+|#
 
+(define pink-noise rand-bank)
+
+(define (make-pink-noise n)
+  (let ((v (make-vector n))
+	(amp (/ (* 2.5 (sqrt n))))) ; this normalization is not quite right
+    (do ((i 0 (+ i 1)))
+	((= i n) v)
+      (set! (v i) (make-rand (/ (mus-srate) (expt 2 i)) amp))
+      (set! (mus-phase (v i)) (random pi)))))
+    
 #|
 (with-sound (:clipped #f :statistics #t)
   (let* ((gen (make-pink-noise 12)))
@@ -4986,7 +4990,6 @@ index 10 (so 10/2 is the bes-jn arg):
 	((= i 44100))
       (outa i (pink-noise gen)))))
 |#
-
 
 
 
@@ -5044,9 +5047,8 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 (define* (green-noise gen (fm 0.0))
-  
-  "(make-green-noise frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new green-noise (bounded brownian noise) generator.\n\
-   (green-noise gen (fm 0.0)) returns the next sample in a sequence of bounded brownian noise samples."
+;;  "(make-green-noise frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new green-noise (bounded brownian noise) generator.\n\
+;;   (green-noise gen (fm 0.0)) returns the next sample in a sequence of bounded brownian noise samples."
   
   (set! (gen 'fm) fm)
   (with-environment gen
@@ -5091,9 +5093,8 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 (define* (green-noise-interp gen (fm 0.0))
-  
-  "(make-green-noise-interp frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new interpolating green noise (bounded brownian noise) generator.\n\
-   (green-noise-interp gen (fm 0.0)) returns the next sample in a sequence of interpolated bounded brownian noise samples."
+;;  "(make-green-noise-interp frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new interpolating green noise (bounded brownian noise) generator.\n\
+;;   (green-noise-interp gen (fm 0.0)) returns the next sample in a sequence of interpolated bounded brownian noise samples."
   
   (set! (gen 'fm) fm)
   (with-environment gen

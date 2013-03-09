@@ -29392,10 +29392,10 @@ EDITS: 2
 			   (split-vals (make-vct len)))
 		      (do ((i split-loc (+ i 1)))
 			  ((= i len))
-			(vct-set! split-vals i (fread)))
+			(vct-set! split-vals i (read-sample fread)))
 		      (do ((i (- split-loc 1) (- i 1)))
 			  ((< i 0))
-			(vct-set! split-vals i (bread)))
+			(vct-set! split-vals i (read-sample bread)))
 		      (if (and expected-vals (not (vequal split-vals expected-vals)))
 			  (let ((bad-data (vequal-at split-vals expected-vals)))
 			    (snd-display #__line__ ";checking ~A, split vals disagree (loc cur expect): ~A" name bad-data)
@@ -30819,17 +30819,16 @@ EDITS: 2
 		  (i2 (new-sound "fmv1.snd" mus-next mus-bfloat 44100 2))
 		  (v (vct-fill! (make-vct dur) 1.0)))
 	     (define (check-env name r e)
-	       (let ((happy #t))
+	       (let ((v0 (make-vct dur))
+		     (v1 (make-vct dur)))
 		 (do ((i 0 (+ i 1)))
-		     ((or (not happy) (= i dur))
-		      happy)
-		   (let ((rv (r))
-			 (ev (e)))
-		     (if (fneq rv ev) 
-			 (begin
-			   (snd-display #__line__ ";~A env check [~A]: ~A ~A" name i rv ev)
-			   (error 'uhoh2)
-			   (set! happy #f)))))))
+		     ((= i dur))
+		   (vct-set! v0 i (e)))
+		 (do ((i 0 (+ i 1)))
+		     ((= i dur))
+		   (vct-set! v1 i (r)))
+		 (if (not (vequal v0 v1))
+		     (snd-display #__line__ ";~A env check: ~A ~A" name v0 v1))))
 	     (define (check-envs name r-maker e-maker)
 	       (check-env (format #f "~A-1-0" name) (r-maker i1 0) (e-maker i1 0))
 	       (check-env (format #f "~A-2-0" name) (r-maker i2 0) (e-maker i2 0))
@@ -47435,6 +47434,7 @@ EDITS: 1
 ;; 26-Feb-13: #(1 1 2 2 42 118 5 1 450 1 16 1 2 11 19 1  97 1 1 161 42 105 1 1323 0 0 0 1 2 74)  ;  25
 ;; 1-Mar-13:  #(1 1 3 1 40 117 5 1 439 1 16 1 2 11 20 1 109 1 2 159 43 100 1 1263 0 0 0 1 2 78)  ;  24
 ;; 7-Mar-13:  #(1 1 2 2 41 119 6 1 396 1 16 1 2 10 23 1 103 1 1 144 41  85 1 1215 0 0 0 1 1 80)  ;  23
+;; 8-Mar-13:  #(1 1 3 2 32 102 5 1 363 1 15 1 2 10 21 1  90 1 1 144 41  87 1 1219 0 0 0 1 2 78)  ;  22
 
 ;;; -------- cleanup temp files
 
@@ -47662,20 +47662,20 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
 8-Mar-13:
-72,843,440,151
-9,860,301,462  s7.c:eval [/home/bil/snd-13/snd]
-6,366,669,022  ???:sin [/lib64/libm-2.12.so]
-3,836,449,158  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+71,940,618,265
+9,826,926,058  s7.c:eval [/home/bil/snd-13/snd]
+6,356,489,655  ???:sin [/lib64/libm-2.12.so]
+3,850,726,037  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
 2,970,010,915  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
-2,562,746,759  ???:cos [/lib64/libm-2.12.so]
-2,559,281,492  clm.c:mus_src [/home/bil/snd-13/snd]
+2,548,145,327  ???:cos [/lib64/libm-2.12.so]
+2,428,795,329  clm.c:mus_src [/home/bil/snd-13/snd]
 2,327,317,731  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
-2,060,742,238  s7.c:gc [/home/bil/snd-13/snd]
-1,907,400,533  s7.c:eval'2 [/home/bil/snd-13/snd]
+2,069,164,663  s7.c:gc [/home/bil/snd-13/snd]
+1,973,569,777  s7.c:eval'2 [/home/bil/snd-13/snd]
 1,585,058,070  clm.c:mus_formant [/home/bil/snd-13/snd]
-1,453,710,843  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
-1,176,674,167  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
-1,152,093,427  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+1,432,555,491  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
 1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
-1,085,716,240  s7.c:s7_make_real [/home/bil/snd-13/snd]
+1,138,582,932  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+1,087,786,276  s7.c:s7_make_real [/home/bil/snd-13/snd]
 |#

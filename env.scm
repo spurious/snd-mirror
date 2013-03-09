@@ -24,7 +24,7 @@
 ;;; -------- envelope-interp
 
 (define* (envelope-interp x e (base 1.0))   ;e is list of x y breakpoint pairs, interpolate at x returning y
-  "(envelope-interp x e (base 1.0)) -> value of e at x; base controls connecting segment type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
+;;  "(envelope-interp x e (base 1.0)) -> value of e at x; base controls connecting segment type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
   (cond ((null? e) 0.0)		        ;no data -- return 0.0
 	((or (<= x (car e))	        ;we're sitting on x val (or if < we blew it)
 	     (null? (cddr e)))	        ;or we're at the end of the list

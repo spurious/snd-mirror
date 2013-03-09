@@ -169,13 +169,14 @@ a list (file-name-or-sound-object [beg [channel]])."
 	    (if (not with-tag)
 
 		;; not a virtual mix
-		(let ((reader (make-sampler input-beg input input-channel))
-		      (read2 (make-sampler start snd chn 1 edpos))
-		      (data (make-vct len)))
+		(let ((d1 (make-vct len))
+		      (d2 (channel->vct start len snd chn edpos))
+		      (reader (make-sampler input-beg input input-channel)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i len))
-		    (vct-set! data i (+ (next-sample reader) (next-sample read2))))
-		  (vct->channel data start len snd chn current-edit-position
+		    (vct-set! d1 i (read-sample reader)))
+		  (vct-add! d1 d2)
+		  (vct->channel d1 start len snd chn current-edit-position
 				(if (string? input-data)
 				    (format #f "mix-channel ~S ~A ~A" input-data beg dur)
 				    (format #f "mix-channel '~A ~A ~A" input-data beg dur))))

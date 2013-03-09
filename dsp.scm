@@ -1760,39 +1760,63 @@ and replaces it with the spectrum given in coeffs"
 	(peaks (make-vector pairs))
 	(flt (make-filter 2 (vct 1 -1) (vct 0 -0.9)))
 	(old-mx (maxamp))
-	(new-mx 0.0)
-	(ctr 40))
-    (do ((i 1 (+ i 1)))
-	((> i pairs))
-      (let ((aff (* i freq))
-	    (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
-	(set! (peaks (- i 1)) (make-moving-max 128))
-	(set! (avgs (- i 1)) (make-moving-average 128))
-	(set! (bands (- i 1)) (make-bandpass (hz->2pi (- aff bwf)) 
-					     (hz->2pi (+ aff bwf)) 
-					     order))))
-    (as-one-edit
-     (lambda ()
-       (map-channel
-	(lambda (y)
-	  (let ((sum 0.0))
-	    (do ((i 0 (+ i 1)))
-		((= i pairs))
-	      (let* ((sig (bandpass (vector-ref bands i) y))
-		     (mx (moving-max (vector-ref peaks i) sig)))
-		(let ((amp (moving-average (vector-ref avgs i) (if (> mx 0.0) (min 100.0 (/ 1.0 mx)) 0.0))))
-		  (if (> amp 0.0)
-		      (set! sum (+ sum (* mx (polynomial pcoeffs (* amp sig)))))))))
-	    (let ((val (filter flt sum))) ; get rid of DC
-	      (set! new-mx (max new-mx (abs val)))
-	      (if (= ctr 0) ; flush filter initial junk
-		  val
-		  (begin
-		    (set! ctr (- ctr 1))
-		    0.0)))))
-	beg dur snd chn edpos)
-       (if (> new-mx 0.0)
-	   (scale-channel (/ old-mx new-mx) beg dur snd chn))))))
+	(startup 40)
+	(len (- (or dur (frames snd chn edpos)) beg)))
+    (let ((adder (make-vct len))
+	  (summer (make-vct len))
+	  (indata (channel->vct beg len snd chn edpos)))
+      
+      (do ((i 0 (+ i 1)))
+	  ((= i pairs))
+	(let ((aff (* (+ i 1) freq))
+	      (bwf (* bw (+ 1.0 (/ (+ i 1) (* 2 pairs))))))
+	  (set! (peaks i) (make-moving-max 128))
+	  (set! (avgs i) (make-moving-average 128))
+	  (set! (bands i) (make-bandpass (hz->2pi (- aff bwf)) 
+					 (hz->2pi (+ aff bwf)) 
+					 order))))
+      ;; ignore startup
+      (do ((k 0 (+ k 1)))
+	  ((= k startup))
+	(let ((sum 0.0))
+	  (do ((i 0 (+ i 1)))
+	      ((= i pairs))
+	    (let* ((sig (bandpass (vector-ref bands i) (vct-ref indata k)))
+		   (mx (moving-max (vector-ref peaks i) sig)))
+	      (let ((amp (moving-average (vector-ref avgs i) (if (> mx 0.0) (min 100.0 (/ 1.0 mx)) 0.0))))
+		(if (> amp 0.0)
+		    (set! sum (+ sum (* mx (polynomial pcoeffs (* amp sig)))))))))
+	  (filter flt sum)))
+
+      (do ((pair 0 (+ pair 1)))
+	  ((= pair pairs))
+	(let ((bp (vector-ref bands pair))
+	      (pk (vector-ref peaks pair))
+	      (avg (vector-ref avgs pair))
+	      (sig 0.0)
+	      (mx 0.0)
+	      (amp 0.0))
+	  (fill! adder 0.0)
+	  (do ((k startup (+ k 1)))
+	      ((= k len))
+	    (set! sig (bandpass bp (vct-ref indata k)))
+	    (set! mx (moving-max pk sig))
+	    (set! amp (moving-average avg (if (> mx 0.0) (min 100.0 (/ 1.0 mx)) 0.0)))
+	    (if (> amp 0.0)
+		(vct-set! adder k (* mx (polynomial pcoeffs (* amp sig))))))
+	  (vct-add! summer adder)))
+
+      (do ((k startup (+ k 1)))
+	  ((= k len))
+	(vct-set! summer k (filter flt (vct-ref summer k))))
+      
+      (let ((nmx (vct-peak summer)))
+	(if (> nmx 0.0)
+	    (vct-scale! summer (/ old-mx nmx))))
+      (vct->channel summer beg len snd chn))))
+
+;;; (harmonicizer 550.0 (list 1 .5 2 .3 3 .2) 10)
+
 
 
 ;;; ----------------
@@ -2301,11 +2325,8 @@ is assumed to be outside -1.0 to 1.0."
 		       (* K (- datum xhatminus))))
 	 (set! P (* (- 1.0 K) Pminus))))
     
-    (as-one-edit
-     (lambda ()
-       (vct->channel data)
-       (scale-to mx)))))
-
+     (vct-scale! data (/ mx (vct-peak data)))
+     (vct->channel data)))
 
 
 ;;; -------- Savitzky-Golay filter coefficients (FIR filter -- returns vct of coeffs centered at vct midpoint)
