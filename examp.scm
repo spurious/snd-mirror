@@ -1116,7 +1116,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 	 (rd (make-src :srate 1.0 
 		       :input (lambda (dir) 
 				(let ((val (if (and (>= i 0) (< i len)) 
-					       (in-data i) 
+					       (vct-ref in-data i) 
 					       0.0)))
 				  (set! i (+ i dir)) 
 				  val)))))
@@ -1515,7 +1515,9 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 			 (do ((i 0 (+ i hop-frames)))
 			     ((>= i newlen))
 			   (let ((start i)
-				 (stop (min newlen (+ i hop-frames))))
+				 (stop (min newlen (+ i hop-frames)))
+				 (e #f)
+				 (r #t))
 	
 			     (set! (mus-location read-env) i)
 			     (let ((position-in-original (env read-env)))
@@ -1525,11 +1527,13 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 			       (set! next-reader (modulo (+ next-reader 1) num-readers))
 			       (if (< cur-readers next-reader) (set! cur-readers next-reader)))
 
-			     (do ((j start (+ j 1)))
-				 ((= j stop))
-			       (do ((k 0 (+ k 1)))
-				   ((= k cur-readers))
-				 (outa j (* (env (grain-envs k)) (next-sample (readers k)))))))))))
+			     (do ((k 0 (+ k 1)))
+				 ((= k cur-readers))
+			       (set! e (grain-envs k))
+			       (set! r (readers k))
+			       (do ((j start (+ j 1)))
+				   ((= j stop))
+				 (outa j (* (env e) (next-sample r))))))))))
 
 	  (set-samples 0 newlen new-snd snd chn #t
 		       (format #f "granulated-sound-interp '~A ~A ~A ~A ~A" envelope time-scale grain-length grain-envelope output-hop)

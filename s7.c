@@ -667,7 +667,8 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_S_opCq, HOP_SAFE_C_S_opCq, OP_SAFE_C_opSSq_C, HOP_SAFE_C_opSSq_C, OP_SAFE_C_C_opSSq, HOP_SAFE_C_C_opSSq, 
       OP_SAFE_C_C_opCq, HOP_SAFE_C_C_opCq, OP_SAFE_C_opCq_S, HOP_SAFE_C_opCq_S, 
       OP_SAFE_C_opCq_opCq, HOP_SAFE_C_opCq_opCq, OP_SAFE_C_opCq_C, HOP_SAFE_C_opCq_C, 
-      OP_SAFE_C_opSCq_opSCq, HOP_SAFE_C_opSCq_opSCq, OP_SAFE_C_opSSq_opSSq, HOP_SAFE_C_opSSq_opSSq, OP_SAFE_C_opSSq_opCq, HOP_SAFE_C_opSSq_opCq,
+      OP_SAFE_C_opSCq_opSCq, HOP_SAFE_C_opSCq_opSCq, OP_SAFE_C_opSSq_opSSq, HOP_SAFE_C_opSSq_opSSq, 
+      OP_SAFE_C_opSSq_opCq, HOP_SAFE_C_opSSq_opCq, OP_SAFE_C_opSSq_opSq, HOP_SAFE_C_opSSq_opSq, OP_SAFE_C_opSq_opSSq, HOP_SAFE_C_opSq_opSSq,
       OP_SAFE_C_opSSq_S, HOP_SAFE_C_opSSq_S, OP_SAFE_C_opSCq_S, HOP_SAFE_C_opSCq_S, OP_SAFE_C_opCSq_S, HOP_SAFE_C_opCSq_S,
       OP_SAFE_C_opSCq_C, HOP_SAFE_C_opSCq_C, 
       OP_SAFE_C_S_op_opSSq_Sq, HOP_SAFE_C_S_op_opSSq_Sq, OP_SAFE_C_S_op_S_opSSqq, HOP_SAFE_C_S_op_S_opSSqq, 
@@ -776,7 +777,8 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_s_opcq", "h_safe_c_s_opcq", "safe_c_opssq_c", "h_safe_c_opssq_c", "safe_c_c_opssq", "h_safe_c_c_opssq", 
       "safe_c_c_opcq", "h_safe_c_c_opcq", "safe_c_opcq_s", "h_safe_c_opcq_s", 
       "safe_c_opcq_opcq", "h_safe_c_opcq_opcq", "safe_c_opcq_c", "h_safe_c_opcq_c", 
-      "safe_c_opscq_opscq", "h_safe_c_opscq_opscq", "safe_c_opssq_opssq", "h_safe_c_opssq_opssq", "safe_c_opssq_opcq", "h_safe_c_opssq_opcq",
+      "safe_c_opscq_opscq", "h_safe_c_opscq_opscq", "safe_c_opssq_opssq", "h_safe_c_opssq_opssq", 
+      "safe_c_opssq_opcq", "h_safe_c_opssq_opcq", "safe_c_opssq_opsq", "h_safe_c_opssq_opsq", "safe_c_opsq_opssq", "h_safe_c_opsq_opssq",
       "safe_c_opssq_s", "h_safe_c_opssq_s", "safe_c_opscq_s", "h_safe_c_opscq_s", "safe_c_opcsq_s", "h_safe_c_opcsq_s",
       "safe_c_opscq_c", "h_safe_c_opscq_c", 
       "safe_c_s_op_opssq_sq", "h_safe_c_s_op_opssq_sq", "safe_c_s_op_s_opssqq", "h_safe_c_s_op_s_opssqq", 
@@ -2362,7 +2364,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 #define WITH_COUNTS 0
 #if WITH_COUNTS
 #if 0
-#if 0
+#if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
 static void clear_counts(void) {int i; for (i = 0; i < NUM_COUNTS; i++) counts[i] = 0;}
@@ -38045,7 +38047,8 @@ static bool is_all_x_op(int op)
 	 (op == HOP_SAFE_C_opSq_S) ||
 	 (op == HOP_SAFE_C_opSq_C) ||
 	 (op == HOP_SAFE_C_opCq_C) ||
-	 (op == HOP_SAFE_C_opSq_opSq));
+	 (op == HOP_SAFE_C_opSq_opSq) ||
+	 (op == HOP_SAFE_C_opSSq_opSSq));
 }
 
 
@@ -38317,6 +38320,21 @@ static s7_pointer all_x_c_opsq_opsq(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T2_1));
 }
 
+static s7_pointer all_x_c_opssq_opssq(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = cdr(arg);
+  car(sc->T2_1) = finder(sc, cadr(car(largs)));
+  car(sc->T2_2) = finder(sc, caddr(car(largs)));
+  sc->temp4 = c_call(car(largs))(sc, sc->T2_1);
+  largs = cadr(largs);
+  car(sc->T2_1) = finder(sc, cadr(largs));
+  car(sc->T2_2) = finder(sc, caddr(largs));
+  car(sc->T2_2) = c_call(largs)(sc, sc->T2_1);
+  car(sc->T2_1) = sc->temp4;
+  return(c_call(arg)(sc, sc->T2_1));
+}
+
 static s7_function all_x_eval(s7_pointer arg)
 {
   if (is_pair(arg))
@@ -38354,6 +38372,7 @@ static s7_function all_x_eval(s7_pointer arg)
 	    case HOP_SAFE_C_opSSq_S:   return(all_x_c_opssq_s);
 	    case HOP_SAFE_C_S_opSSq:   return(all_x_c_s_opssq);
 	    case HOP_SAFE_C_opSq_opSq: return(all_x_c_opsq_opsq);
+	    case HOP_SAFE_C_opSSq_opSSq: return(all_x_c_opssq_opssq);
 	    }
 	}
       return(all_x_q);
@@ -38610,6 +38629,8 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_S:
 	  if (optimize_data_match(e1, OP_SAFE_C_S))
 	    return(OP_SAFE_C_opSq_opSq);
+	  if (optimize_data_match(e1, OP_SAFE_C_SS))
+	    return(OP_SAFE_C_opSSq_opSq);
 	  break;
 
 	case OP_SAFE_C_C:
@@ -38627,6 +38648,8 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_SS:
 	  if (optimize_data_match(e1, OP_SAFE_C_SS))
 	    return(OP_SAFE_C_opSSq_opSSq);
+	  if (optimize_data_match(e1, OP_SAFE_C_S))
+	    return(OP_SAFE_C_opSq_opSSq);
 	  break;
 	}
       return(OP_SAFE_C_ZZ);
@@ -42797,7 +42820,15 @@ static s7_pointer check_set(s7_scheme *sc)
 						    }
 						  else
 						    {
-						      /* look for increments */
+						      if (is_all_x_safe(sc, cadr(sc->code)))
+							{
+							  set_syntax_op(sc->code, sc->SET_SYMBOL_ALL_X);
+							  annotate_arg(sc, cdr(sc->code));
+							}
+
+						      /* look for increments.  The other two common cases are
+						       *   s_opssq and s_opsq: 210832: (+ num (* x1 x2)), 96774: (+ ampsum (abs samp0))
+						       */
 						      if (car(sc->code) == cadr(cadr(sc->code)))
 							{
 							  if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_S_opCq)
@@ -42813,14 +42844,6 @@ static s7_pointer check_set(s7_scheme *sc)
 								  set_syntax_op(sc->code, sc->INCREMENT_SZ);
 								  fcdr(sc->code) = caddr(cadr(sc->code));
 								}
-							    }
-							}
-						      else
-							{
-							  if (is_all_x_safe(sc, cadr(sc->code)))
-							    {
-							      set_syntax_op(sc->code, sc->SET_SYMBOL_ALL_X);
-							      annotate_arg(sc, cdr(sc->code));
 							    }
 							}
 						    }
@@ -51259,6 +51282,54 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      
 	      
+	    case OP_SAFE_C_opSSq_opSq:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      if (!c_function_is_ok(sc, cadr(code)))
+		break;
+	      if (!c_function_is_ok(sc, caddr(code)))
+		break;
+	      
+	    case HOP_SAFE_C_opSSq_opSq:
+	      {
+		s7_pointer args, val3;
+		args = cdr(code);
+		val3 = finder(sc, caddr(car(args)));
+		car(sc->T2_1) = finder(sc, cadr(car(args)));
+		car(sc->T2_2) = val3;
+		val3 = c_call(car(args))(sc, sc->T2_1);
+		car(sc->T1_1) = finder(sc, cadr(cadr(args)));
+		car(sc->T2_2) = c_call(cadr(args))(sc, sc->T1_1);
+		car(sc->T2_1) = val3;
+		sc->value = c_call(code)(sc, sc->T2_1);
+		goto START;
+	      }
+	      
+	      
+	    case OP_SAFE_C_opSq_opSSq:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      if (!c_function_is_ok(sc, cadr(code)))
+		break;
+	      if (!c_function_is_ok(sc, caddr(code)))
+		break;
+	      
+	    case HOP_SAFE_C_opSq_opSSq:
+	      {
+		s7_pointer args, val3;
+		args = cdr(code);
+		val3 = finder(sc, cadr(cadr(args)));
+		car(sc->T2_2) = finder(sc, caddr(cadr(args)));
+		car(sc->T2_1) = val3;
+		val3 = c_call(cadr(args))(sc, sc->T2_1);
+		car(sc->T1_1) = finder(sc, cadr(car(args)));
+		car(sc->T2_1) = c_call(car(args))(sc, sc->T1_1);
+		car(sc->T2_2) = val3;
+		sc->value = c_call(code)(sc, sc->T2_1);
+		goto START;
+	      }
+	      
+	      
 	    case OP_SAFE_C_opSSq_opCq:
 	      if (!c_function_is_ok(sc, code))
 		break;
@@ -53767,7 +53838,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_SET_SYMBOL_Z:
-      /* ([set!] sum (+ sum n)) */
+      /* ([set!] sum (+ sum n)) 
+330748: (pnoise amp)
+220498: (+ (dline1 k) (- (dline2 j) x))
+211687: (* (radii k) (radii k))
+165374: (one-pole-allpass agraffe-tuning-ap1 noi)
+etc
+507879: (moving-average avg (if (> mx 0.0) (min 100.0 (/ 1.0 mx)) 0.0))
+416229: (+ sum (ssb-am (vector-ref ssbs i) (bandpass (vector-ref bands i) input)))
+406703: (min (max -0.95 (+ A (* fc (- A st)))) 0.95)
+406703: (min (max -0.95 (+ A st)) 0.95)
+287999: (data chan)
+264598: (env (frmfs k))
+254139: (filter (gen i) val)
+210832: (+ denom (* x1 x1) (* x2 x2))
+but also
+210832: (+ num (* x1 x2))
+107315: (/ (* val frequency) (* 2 pi))
+88242: (+ sum (abs samp0))
+       */
       push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
       sc->code = cadr(sc->code);
       goto OPT_EVAL;

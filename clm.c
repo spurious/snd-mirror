@@ -4984,6 +4984,9 @@ static mus_float_t noi_set_freq(mus_any *ptr, mus_float_t val) {if (val < 0.0) v
 static mus_float_t noi_increment(mus_any *ptr) {return(((noi *)ptr)->freq);}
 static mus_float_t noi_set_increment(mus_any *ptr, mus_float_t val) {((noi *)ptr)->freq = val; return(val);}
 
+static mus_float_t noi_incr(mus_any *ptr) {return(((noi *)ptr)->incr);}
+static mus_float_t noi_set_incr(mus_any *ptr, mus_float_t val) {((noi *)ptr)->incr = val; return(val);}
+
 static mus_float_t noi_phase(mus_any *ptr) {return(fmod(((noi *)ptr)->phase, TWO_PI));}
 static mus_float_t noi_set_phase(mus_any *ptr, mus_float_t val) {((noi *)ptr)->phase = val; return(val);}
 
@@ -5058,12 +5061,13 @@ static mus_any_class RAND_INTERP_CLASS = {
   &noi_set_phase,
   &noi_scaler,
   &noi_set_scaler,
-  &noi_increment, /* (phase increment) */
+  &noi_increment, /* phase increment, not incr field */
   &noi_set_increment,
   &run_rand_interp,
   MUS_NOT_SPECIAL, 
   NULL, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  &noi_incr, &noi_set_incr,  /* incr field == mus_offset method */
+  0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &noi_reset,
@@ -5085,12 +5089,13 @@ static mus_any_class RAND_CLASS = {
   &noi_set_phase,
   &noi_scaler,
   &noi_set_scaler,
-  &noi_increment, /* (phase increment) */
+  &noi_increment, /* this is the phase increment, not the incr field */
   &noi_set_increment,
   &run_rand,
   MUS_NOT_SPECIAL, 
   NULL, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  &noi_incr, &noi_set_incr, 
+  0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &noi_reset,
