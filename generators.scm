@@ -795,15 +795,14 @@
   
   (set! (gen 'fm) fm)
   (with-environment gen
-    (let ((x angle))
+    (let ((x angle)
+	  (rcos (* r (cos angle))))
       (set! angle (+ angle fm frequency))
       (if trouble
 	  0.0
-	  (/ (+ (- (* r (cos x)) 
-		   (* e1 (cos (* n x)))
-		   rr)
+	  (/ (+ (- rcos (* e1 (cos (* n x))) rr)
 		(* e2 (cos (* (- n 1) x))))
-	     (* norm (+ r1 (* -2.0 r (cos x)))))))))
+	     (* norm (+ r1 (* -2.0 rcos))))))))
 
 ;; it's faster to use polywave here and nrcos->polywave for the partials list (animals.scm) if n is not enormous
 

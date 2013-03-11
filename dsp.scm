@@ -300,10 +300,10 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
       (do ((i 0 (+ i 1)))
 	  ((= i len))
 	(let ((x0 (next-sample reader)))
-	  (vct-set! data i (* x0 amp1 x2 x1))
+	  (vct-set! data i (* x0 x1 x2))
 	  (set! x2 x1)
 	  (set! x1 (abs x0))))
-      (vct->channel data 0 len snd chn current-edit-position "spike"))))
+      (vct->channel (vct-scale! data amp1) 0 len snd chn current-edit-position "spike"))))
 
 ;;; the more successive samples we include in the product, the more we
 ;;;   limit the output to pulses placed at (just after) wave peaks
@@ -1389,7 +1389,7 @@ the era when computers were human beings"
 ;;; -------- end of JOS stuff --------
 
 #|
-(define* (channel-distance-1 (s1 0) (c1 0) (s2 0) (c2 1))    ; sqrt(<f - g, f - g>)
+(define* (channel-distance-1 (s1 0) (c1 0) (s2 1) (c2 0))    ; sqrt(<f - g, f - g>)
   "(channel-distance s1 c1 s2 c2) returns the euclidean distance between the two channels: sqrt(<f-g,f-g>)"
   (let ((r1 (make-sampler 0 s1 c1))
 	(r2 (make-sampler 0 s2 c2))
@@ -1402,7 +1402,7 @@ the era when computers were human beings"
        (set! sum (+ sum (* diff diff))))
     (sqrt sum)))
 |#
-(define* (channel-distance (s1 0) (c1 0) (s2 0) (c2 1))    ; sqrt(<f - g, f - g>)
+(define* (channel-distance (s1 0) (c1 0) (s2 1) (c2 0))    ; sqrt(<f - g, f - g>)
   "(channel-distance s1 c1 s2 c2) returns the euclidean distance between the two channels: sqrt(<f-g,f-g>)"
   (let ((r1 (make-sampler 0 s1 c1))
 	(r2 (make-sampler 0 s2 c2))

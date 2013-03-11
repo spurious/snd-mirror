@@ -4207,7 +4207,7 @@ mus_float_t mus_moving_max(mus_any *ptr, mus_float_t input)
     {
       if (output >= gen->xscl)
 	{
-	  int i;
+	  unsigned int i;
 	  for (i = 0; i < gen->size; i++)
 	    if (gen->line[i] > abs_input)
 	      abs_input = gen->line[i];

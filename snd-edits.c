@@ -2402,7 +2402,7 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 
 #if HAVE_FORTH
   char *function = NULL, *old_function = NULL;
-  bool close_mix_let = false, first = true;
+  bool close_mix_let = false;
   int i, edits;
   ed_list *ed;
   edits = cp->edit_ctr;
@@ -2510,7 +2510,6 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	    }
 	  if (old_function) {free(old_function); old_function = NULL;}
 	}
-      first = false;
     }
   old_function = function;
   function = mus_format("%s ;", function);
@@ -3634,12 +3633,10 @@ static ed_list *delete_section_from_list(mus_long_t beg, mus_long_t num, ed_list
 bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos)
 {
   mus_long_t len;
-  int old_pos;
   bool read_max = false;
   
   if (num <= 0) return(true);
   len = cp->edits[edpos]->samples;
-  old_pos = edpos;
 
   if ((beg < len) && (beg >= 0))
     {

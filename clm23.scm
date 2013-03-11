@@ -628,9 +628,13 @@
   "(simple-in-rev beg dur ampa ampb) test instrument for in reverb"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur))))
-    (do ((i start (+ i 1))) ((= i end))
-      (if (> ampa 0.0) (outa i (* ampa (ina i *reverb*))))
-      (if (> ampb 0.0) (outb i (* ampb (inb i *reverb*)))))))
+    (if (or (> ampa 0.0) (> ampb 0.0))
+	(if (zero? ampb)
+	    (do ((i start (+ i 1))) ((= i end))
+	      (outa i (* ampa (ina i *reverb*))))
+	    (do ((i start (+ i 1))) ((= i end))
+	      (if (> ampa 0.0) (outa i (* ampa (ina i *reverb*))))
+	      (if (> ampb 0.0) (outb i (* ampb (inb i *reverb*)))))))))
 
 (define (simple-f2s beg dur amp file)
   "(simple-f2s beg dur amp file) test instrument for file->sample"

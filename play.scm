@@ -279,7 +279,7 @@ read, even if not playing.  'files' is a list of files to be played."
 			    (set! ctr 0)
 			    (if (>= file files)
 				(set! file 0)))
-			  (set! ctr (+ 1 ctr)))
+			  (set! ctr (+ ctr 1)))
 		      file))
 		  (list "oboe.snd" "pistol.snd") #t)
 |#

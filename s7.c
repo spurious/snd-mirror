@@ -45537,7 +45537,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    car(sc->A3_1) = slot_value(arg1);
 				    car(sc->A3_2) = slot_value(arg2);
 				    car(sc->A3_3) = ((s7_function)fcdr(arg3))(sc, car(arg3));
-				    c_call(code)(sc, sc->A3_1);
+				    f(sc, sc->A3_1);
 
 				    numerator(step)++;
 				    if (numerator(step) == denominator(step))
@@ -53201,7 +53201,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer obj, val;
 	obj = finder(sc, caar(sc->code));
 	val = ((s7_function)fcdr(cdr(sc->code)))(sc, cadr(sc->code)); /* this call can step on sc->Tx_x */
-	car(sc->T2_1) = finder(sc, cadar(sc->code));
+	car(sc->T2_1) = cadar(sc->code);  /* might be a constant: (set! (mus-sound-srate "oboe.snd") 12345) */
+	if (s7_is_symbol(car(sc->T2_1)))
+	  car(sc->T2_1) = finder(sc, cadar(sc->code));
 	car(sc->T2_2) = val;
 	sc->value = c_function_call(c_function_setter(obj))(sc, sc->T2_1);
 	IF_BEGIN_POP_STACK(sc);
@@ -63417,10 +63419,9 @@ s7_scheme *s7_init(void)
  * easy closure_arity done right away?  0/1 should not be expensive -- maybe just set it!
  *
  * direct (all_x) let/case/etc [map/for-each/sort and so on]
- * safe do (or dox) where body is multiple all_x done directly
  *
  *
- * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5
+ * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
  * bench    42736 8752 8051 7725 6515 5194 4364
  * lint           9328 8140 7887 7736 7300 7180
  * index    44300 3291 3005 2742 2078 1643 1435

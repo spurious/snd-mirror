@@ -8402,24 +8402,6 @@ so that the multiple evaluations can be interleaved, but those evaluations
 can still make calls into Gtk or Motif, and
 unfortunately, neither GUI toolkit is thread-safe. If two threads invoke
 a GUI function, you get a segfault or some other bizarre screwup.
-In Gtk, we have to wrap gdk_threads_enter 
-and gdk_threads_leave around any code that calls into Gtk.  We'd set it up by
-adding
-</p>
-
-<pre>
-  g_thread_init(NULL);
-  gdk_threads_init();
-  gdk_threads_enter();
-</pre>
-
-<p>at the very start of our program, and gdk_threads_leave() at the very end.
-Then whenever an s7 call might involve Gtk, we wrap it within gdk_threads_enter() and
-gdk_threads_leave().  We can't just wrap the outer s7_eval_c_string call above, because
-that locks out the keyboard, and the whole point was to catch C-C
-while in the s7 evaluation. But in Snd, where both normal functions and gtk callbacks can
-trigger arbitrary Scheme code, it would be completely unreasonable to wrap these thread handlers
-around every bit of code that might touch the user interface (consider the xg module!).
 So...
 </p>
 

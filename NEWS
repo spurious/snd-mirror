@@ -1,12 +1,9 @@
-Snd 13.4
+Snd 13.5
 
-Fernando added 3rd order ambisonics support in dlocsig.scm.
+moving-max is now built-in.
+added vct-min and vct-max.
 
-clm+s7 is finally up to speed -- I think it is as fast as
-  the old run macro version.  This took about twice as long
-  as I expected.
+checked: sbcl 1.1.5, ruby 2.0.0, gtk 3.7.12
 
-checked: gmp 5.1.0, sbcl 1.1.3|4, FC18 (gcc 4.7.2).
-
-
+Thanks!: Mike and Fernando.
 
