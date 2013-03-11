@@ -9,7 +9,9 @@
 ;; revised by Bill to suit the run macro
 
 (provide 'snd-strad.scm)
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 ;;; (if (not (provided? 'snd-jcrev.scm)) (load "jcrev.scm"))
 
 (define (make-biquad a0 a1 a2 b1 b2)

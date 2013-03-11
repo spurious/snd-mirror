@@ -50,7 +50,9 @@
 ;;; sync-everything
 
 (provide 'snd-examp.scm)
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 (if (not (provided? 'snd-env.scm)) (load "env.scm")) ; integrate-envelope
 
 
@@ -1919,9 +1921,9 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	     ((= i len))
 	   (let ((gen (dsp-chain i)))
 	     (if (env? gen)
-		 (set! val (* (gen) val))
+		 (set! val (* val (env gen)))
 		 (if (readin? gen)
-		     (set! val (+ val (gen)))
+		     (set! val (+ val (readin gen)))
 		     (set! val (gen val))))))
 	 (outa k val)))))
 

@@ -7,7 +7,9 @@
 
 
 (provide 'snd-zip.scm)
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 
 (define (safe-srate) (if (not (null? (sounds))) (srate) (mus-srate)))
 

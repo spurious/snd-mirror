@@ -214,7 +214,7 @@
     (if (negative? val) 
 	(begin
 	  (set! sign 1) 
-	  (set! val (abs val))))
+	  (set! val (- val))))
     (if (not (zero? val))
 	(begin
 	  (set! exp (round (+ (log val 2.0) 16383.0)))

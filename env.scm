@@ -358,7 +358,9 @@ repetition to be in reverse."
 ;;;
 ;;; (this could also be done using multi-expt-env (based on env-any) in generators.scm)
 
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 
 ;;; (define pe (make-power-env '(0 0 1 1 2 0) :duration 1.0))
 ;;; :(power-env pe)

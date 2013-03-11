@@ -23,7 +23,9 @@
 ;;; simultaneous-zero-crossing
 
 (provide 'snd-frame.scm)
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm")) ; for defgenerator
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm")) ; for defgenerator
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 
 
 (define (frame-reverse! fr)

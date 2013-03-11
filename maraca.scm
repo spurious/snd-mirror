@@ -2,7 +2,9 @@
 ;;;   translated from CLM's maraca.ins
 
 (provide 'snd-maraca.scm)
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 
 (define two-pi (* 2 pi))
 

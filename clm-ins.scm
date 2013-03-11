@@ -2,7 +2,9 @@
 
 (provide 'snd-clm-ins.scm)
 
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 (if (not (provided? 'snd-dsp.scm)) (load "dsp.scm")) ; hilbert-transform
 
@@ -1140,17 +1142,14 @@ is a physical model of a flute:
 	    (beg (seconds->samples (+ start (* i .4)))))
 	(let ((end (+ beg (seconds->samples .3)))
 	      (i (if (number? k)
-		     (if (not (= 0 k))
-			 k 
-			 11)
-		     (if (eq? k '*) 
-			 10
-			 12))))
+		     (if (not (= 0 k)) k 11)
+		     (if (eq? k '*) 10 12))))
 	  (let ((frq1 (make-oscil (touch-tab-1 i)))
 		(frq2 (make-oscil (touch-tab-2 i))))
 	    (do ((j beg (+ j 1)))
 		((= j end))
-	      (outa j (* 0.1 (+ (oscil frq1) (oscil frq2)))))))))))
+	      (outa j (* 0.1 (+ (oscil frq1) 
+				(oscil frq2)))))))))))
 
 ;;; (with-sound () (touch-tone 0.0 '(7 2 3 4 9 7 1)))
 ;;; I think the dial tone is 350 + 440

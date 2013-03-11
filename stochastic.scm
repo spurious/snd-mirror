@@ -6,7 +6,9 @@
 
 ;; revised slightly to accommodate the run macro, Bill 13-Jun-06
 
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
 (definstrument 

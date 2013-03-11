@@ -25,7 +25,9 @@
 
 (provide 'snd-grani.scm)
 
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
 (define grani-default-base (expt 2 1/12))

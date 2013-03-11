@@ -11,9 +11,9 @@
 
 ;;; translated (semi-automatically) from a Sambox note list to bird.clm, then bird.scm
 
-(if (and (not (provided? 'snd-ws.scm)) 
-	 (not (provided? 'sndlib-ws.scm)))
-    (load "ws.scm"))
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 
 (definstrument (bigbird start dur frequency freqskew amplitude freq-envelope amp-envelope partials)
   "(bigbird start dur frequency freqskew amplitude freq-envelope amp-envelope partials)"

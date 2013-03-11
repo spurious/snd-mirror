@@ -1,5 +1,7 @@
 (provide 'snd-generators.scm)
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 
 ;;; it is dangerous to use a method within a generator's definition of that method
 ;;;   if the gen is used as the environment in with-environment, the embedded call
@@ -1765,15 +1767,15 @@
   ;; in this case we need to track ratio, as well as r, since the
   ;;   highest frequency goes as x+ky (y=ratio*x); we want the value of k when
   ;;   we reach srate/3, then solve for the corresponding r.
-  (let* ((x (radians->hz (+ (gen 'frequency) fm)))
-	 (y (* x (gen 'ratio)))
-	 (r (gen 'r))
-	 (q (gen 'cutoff))
-	 (topk (/ 1.0 (floor (/ (- (/ (mus-srate) 3) x) y))))
-	 (maxr (expt q topk)))
-    (if (>= r 0.0)
-	(min r maxr)
-	(max r (- maxr)))))
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x (radians->hz (+ frequency fm))) ; undo the earlier hz->radians
+	   (y (* x ratio))
+	   (topk (/ 1.0 (floor (/ (- (/ (mus-srate) 3) x) y))))
+	   (maxr (expt cutoff topk)))
+      (if (>= r 0.0)
+	  (min r maxr)
+	  (max r (- maxr))))))
 
 (defgenerator (safe-rxycos
 	       :make-wrapper (lambda (g)

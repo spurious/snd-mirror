@@ -1,7 +1,9 @@
 ;;; a DSP-related grabbag
 
 (provide 'snd-dsp.scm)
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 ;; (if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
@@ -454,26 +456,26 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (brighten-slightly amount snd chn)
   "(brighten-slightly amount snd chn) is a form of contrast-enhancement ('amount' between ca .1 and 1)"
   (let* ((mx (maxamp))
-	 (brt (/ (* 2 pi amount) mx))
+	 (brt (* 2 pi amount))
 	 (len (frames snd chn))
 	 (data (make-vct len))
 	 (reader (make-sampler 0 snd chn)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (vct-set! data i (* mx (sin (* (next-sample reader) brt)))))
-    (vct->channel data 0 len snd chn current-edit-position (format #f "brighten-slightly ~A" amount))))
+      (vct-set! data i (sin (* (next-sample reader) brt))))
+    (vct->channel (vct-scale! data (/ mx (vct-peak data))) 0 len snd chn current-edit-position (format #f "brighten-slightly ~A" amount))))
 
 (define (brighten-slightly-1 coeffs)
   "(brighten-slightly-1 coeffs) is a form of contrast-enhancement: (brighten-slightly-1 '(1 .5 3 1))"
   (let ((pcoeffs (partials->polynomial coeffs))
 	(mx (maxamp))
-	(len (frames snd chn)))
+	(len (frames)))
     (let ((data (make-vct len))
-	  (reader (make-sampler 0 snd chn)))
+	  (reader (make-sampler 0)))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
-	(vct-set! data i (* mx (polynomial pcoeffs (/ (next-sample reader) mx)))))
-      (vct->channel data))))
+	(vct-set! data i (polynomial pcoeffs (next-sample reader))))
+      (vct->channel (vct-scale! data (/ mx (vct-peak data)))))))
        
 
 
@@ -875,7 +877,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   (let ((val x0))
     (do ((i 0 (+ i 1)))
 	((= i (length gen)))
-      (set! val (filter (gen i) val))) ; "cascade" n filters
+      (set! val (filter (vector-ref gen i) val))) ; "cascade" n filters
     val))
 
 ;;; (let ((hummer (make-eliminate-hum))) (map-channel (lambda (x) (eliminate-hum hummer x))))

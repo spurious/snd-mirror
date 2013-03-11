@@ -86,7 +86,7 @@
 (provide 'snd-dlocsig.scm)
 
 (define* (envelope-interp x e base)   ;e is list of x y breakpoint pairs, interpolate at x returning y
-  "(envelope-interp x e (base 1.0)) -> value of e at x; base controls connecting segment type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
+ ;; "(envelope-interp x e (base 1.0)) -> value of e at x; base controls connecting segment type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
   (cond ((null? e) 0.0)		        ;no data -- return 0.0
 	((or (<= x (car e))	        ;we're sitting on x val (or if < we blew it)
 	     (null? (cddr e)))	        ;or we're at the end of the list
@@ -3193,7 +3193,9 @@
 
 					;(define hi (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f :error 0.001))
 					;(make-dlocsig 0 1.0 :out-channels 2 :rev-channels 0 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f))
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 
 (define* (sinewave start-time duration freq amp 
 		   (amp-env '(0 1 1 1))

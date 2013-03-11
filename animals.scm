@@ -229,7 +229,9 @@
 
 (if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
 ;;     rxyk!cos rk!cos blackman=polywave rcos rxycos
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 
 (set! *clm-default-frequency* 0.0)
 
@@ -1708,7 +1710,7 @@
 	(outa i (* amp (+ (* (polywave gen5)
 			     (- 1.0 pval)
 			     (oscil gen2 (* 2.4 noise)))
-			  (* (max pval 0.0)
+			  (* (max 0.0 pval)
 			     (+ (* .95 (oscil gen1 noise))
 				(* .05 (oscil gen4 noise)))))))))))
 

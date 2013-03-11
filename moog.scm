@@ -70,16 +70,23 @@
 ;;;       I prefered to translate Hz into the internal parameter rather than controlling
 ;;;       the cutoff frequency in terms of a number that goes between -1 and 1. 
 
-(defgenerator moog freq Q s y fc sig)
+
+(defgenerator moog freq Q s y fc gain sig)
+
 
 (define (make-moog-filter frequency Q)
+
   "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz,
 'Q' sets the resonance: 0 = no resonance, 1: oscillates at 'frequency'"
-  (make-moog :freq frequency 
-	     :Q Q 
-	     :s (make-vct 4) 
-	     :y 0.0 
-	     :fc (envelope-interp (/ frequency (* (mus-srate) 0.5)) moog-freqtable)))
+
+  (let ((frq (envelope-interp (/ frequency (* (mus-srate) 0.5)) moog-freqtable)))
+    (make-moog :freq frequency 
+	       :Q Q 
+	       :s (make-vct 4) 
+	       :y 0.0 
+	       :fc frq
+	       :gain (* Q (array-interp moog-gaintable (+ 99.0 (* frq 99.0)))))))
+
 
 (define moog-frequency
   (make-procedure-with-setter
@@ -87,8 +94,11 @@
      "(moog-frequency gen) accesses the cutoff frequency of the Moog filter 'gen'"
      (gen 'freq))
    (lambda (gen frq)
-     (set! (gen 'freq) frq)
-     (set! (gen 'fc) (envelope-interp (/ frq (* (mus-srate) 0.5)) moog-freqtable)))))
+     (let ((fr (envelope-interp (/ frq (* (mus-srate) 0.5)) moog-freqtable)))
+       (set! (gen 'freq) frq)
+       (set! (gen 'fc) fr)
+       (set! (gen 'gain) (* (gen 'Q) (array-interp moog-gaintable (+ 99.0 (* fr 99.0)))))))))
+
 
 (define (moog-filter m sig)
   ;"(moog-filter m sig) is the generator associated with make-moog-filter"
@@ -99,11 +109,12 @@
       (do ((cell 0 (+ 1 cell)))
 	  ((= cell 4))
 	(set! st (vct-ref s cell))
-	(set! A (min (max -0.95 (+ A (* fc (- A st)))) 0.95))
+	(set! A (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
 	(vct-set! s cell A)
-	(set! A (min (max -0.95 (+ A st)) 0.95)))
-      (set! y (* A Q (array-interp moog-gaintable (+ 99.0 (* fc 99.0)))))
+	(set! A (min 0.95 (max -0.95 (+ A st)))))
+      (set! y (* A gain))
       A)))
+
 
 ;;; (define gen (make-moog-filter 500.0 .1))
 ;;; (map-channel (lambda (y) (moog-filter gen y)))

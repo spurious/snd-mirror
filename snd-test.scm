@@ -18763,27 +18763,22 @@ EDITS: 2
     (do ((chans 1 (+ chans 1)))
 	((> chans 8))
       (let* ((loc (make-locsig :channels chans))
-	     (last (make-vector chans 0.0))
-	     (data (vct->vector (mus-data loc)))
+	     (last (make-vct chans))
+	     (data (mus-data loc))
 	     (val 0.0))
 	;; do a full circle looking for jumps
 	(move-locsig loc -400.0 1.0)
-	(do ((chan 0 (+ chan 1)))
-	    ((= chan chans))
-	  (vector-set! last chan (data chan)))
-	 (do ((x -400.0 (+ x .1)))
-	     ((> x 400.0))
-	   (move-locsig loc x 1.0)
-	   (do ((chan 0 (+ chan 1)))
-	       ((= chan chans))
-	     (set! val (data chan))
-	     (if (or (< val 0.0)
-		     (> val 1.0))
-		 (format #t ";locsig, chans: ~D, degree: ~F, chan ~D is ~F, ~A~%" chans x chan val data))
-	     (let ((diff (abs (- val (last chan)))))
-	       (vector-set! last chan val)
-	       (if (> diff .2)
-		   (format #t ";locsig, increment ~F in chan ~D with deg ~F~%" diff chan x)))))))
+	(vct-subseq data 0 chans last)
+	(do ((x -400.0 (+ x .1)))
+	    ((> x 400.0))
+	  (move-locsig loc x 1.0)
+	  (if (or (< (vct-min data) 0.0)
+		  (> (vct-max data) 1.0))
+	      (format #t ";locsig, chans: ~D, degree: ~F, chan ~D is ~F, ~A~%" chans x chan val data))
+	  (let ((diff (vct-peak (vct-subtract! last data))))
+	    (vct-subseq data 0 chans last)
+	    (if (> diff .2)
+		(format #t ";locsig, increment ~F in chan ~D with deg ~F~%" diff chan x))))))
     
     (for-each 
      (lambda (chans)
@@ -30821,12 +30816,20 @@ EDITS: 2
 	     (define (check-env name r e)
 	       (let ((v0 (make-vct dur))
 		     (v1 (make-vct dur)))
-		 (do ((i 0 (+ i 1)))
-		     ((= i dur))
-		   (vct-set! v0 i (e)))
-		 (do ((i 0 (+ i 1)))
-		     ((= i dur))
-		   (vct-set! v1 i (r)))
+		 (if (env? e)
+		     (do ((i 0 (+ i 1)))
+			 ((= i dur))
+		       (vct-set! v0 i (env e)))
+		     (do ((i 0 (+ i 1)))
+			 ((= i dur))
+		       (vct-set! v0 i (e))))
+		 (if (sampler? r)
+		     (do ((i 0 (+ i 1)))
+			 ((= i dur))
+		       (vct-set! v1 i (read-sample r)))
+		     (do ((i 0 (+ i 1)))
+			 ((= i dur))
+		       (vct-set! v1 i (r))))
 		 (if (not (vequal v0 v1))
 		     (snd-display #__line__ ";~A env check: ~A ~A" name v0 v1))))
 	     (define (check-envs name r-maker e-maker)
@@ -47646,21 +47649,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-8-Mar-13:
-71,940,618,265
-9,826,926,058  s7.c:eval [/home/bil/snd-13/snd]
-6,356,489,655  ???:sin [/lib64/libm-2.12.so]
-3,850,726,037  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+10-Mar-13:
+71,023,439,028
+9,158,526,017  s7.c:eval [/home/bil/snd-13/snd]
+6,359,182,826  ???:sin [/lib64/libm-2.12.so]
+3,667,818,728  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
 2,970,010,915  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
-2,548,145,327  ???:cos [/lib64/libm-2.12.so]
-2,428,795,329  clm.c:mus_src [/home/bil/snd-13/snd]
+2,758,890,566  clm.c:mus_src [/home/bil/snd-13/snd]
+2,561,828,856  ???:cos [/lib64/libm-2.12.so]
 2,327,317,731  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
-2,069,164,663  s7.c:gc [/home/bil/snd-13/snd]
-1,973,569,777  s7.c:eval'2 [/home/bil/snd-13/snd]
+1,967,069,790  s7.c:gc [/home/bil/snd-13/snd]
 1,585,058,070  clm.c:mus_formant [/home/bil/snd-13/snd]
-1,432,555,491  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
-1,152,087,289  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+1,531,138,058  s7.c:eval'2 [/home/bil/snd-13/snd]
+1,451,762,432  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+1,202,874,486  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+1,152,085,753  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
 1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
-1,138,582,932  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
-1,087,786,276  s7.c:s7_make_real [/home/bil/snd-13/snd]
+1,053,724,226  s7.c:s7_make_real [/home/bil/snd-13/snd]
+
 |#

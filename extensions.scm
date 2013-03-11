@@ -541,7 +541,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- channels-equal
 
-(define* (channels=? snd1 chn1 snd2 chn2 (allowable-difference 0.0))
+(define* (channels=? snd1 (chn1 0) snd2 (chn2 0) (allowable-difference 0.0))
   "(channels=? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff) modulo trailing 0's"
   (or (and (equal? snd1 snd2)
 	   (= chn1 chn2))
@@ -556,14 +556,9 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		     (s2 (if first-longer snd2 snd1))
 		     (c1 (if first-longer chn1 chn2))
 		     (c2 (if first-longer chn2 chn1)))
-		 (let ((read2 (make-sampler 0 s2 c2))
-		       (read1 (make-sampler 0 s1 c1)))
-		   (do ((i 0 (+ i 1))
-			(y (read-sample read1) (read-sample read1))
-			(val (read-sample read2) (read-sample read2)))
-		       ((or (= i len)
-			    (> (abs (- val y)) allowable-difference))
-			(= i len))))))))))
+		 (let ((v0 (channel->vct 0 len s1 c1))
+		       (v1 (channel->vct 0 len s2 c2)))
+		   (<= (vct-peak (vct-subtract! v0 v1)) allowable-difference))))))))
 
 
 (define* (channels-equal? snd1 chn1 snd2 chn2 (allowable-difference 0.0))

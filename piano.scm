@@ -1,7 +1,9 @@
 ;;; CLM piano.ins (Scott Van Duyne) translated to Snd/Scheme
 
 (provide 'snd-piano.scm)
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
 (defgenerator one-pole-allpass coeff input x1 y1)

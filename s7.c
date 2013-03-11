@@ -22798,6 +22798,10 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
       port_write_string(port)(sc, "#<goto>", 7, port);
       break;
   
+    case T_CATCH:
+      port_write_string(port)(sc, "#<catch>", 8, port);
+      break;
+  
     case T_C_OBJECT: 
       str = object_print(sc, obj);
       port_display(port)(sc, str, port);
@@ -28347,7 +28351,8 @@ static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
 
     case T_SYNTAX:
       for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-	if (slot_symbol(global_slot(fcdr(x))) == slot_symbol(global_slot(key)))
+	if ((global_slot(fcdr(x))) && 
+	    (slot_symbol(global_slot(fcdr(x))) == slot_symbol(global_slot(key))))
 	  return(car(x));
       break;
 
@@ -44478,6 +44483,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 		
 
 
+
 /* -------------------------------- eval -------------------------------- */
 
 /* an experiment */
@@ -44489,8 +44495,6 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
     Obj = (*(--(Sc->free_heap_top))); \
     } while (0)
 #endif
-
-
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op) 
 {
@@ -63424,5 +63428,5 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14    9
  * lat        229   63   52   47   42   40   34
  * t502        90   43   39   36   29   23   20
- * calls           275  207  175  115   89   72
+ * calls           275  207  175  115   89   71
  */

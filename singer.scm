@@ -17,7 +17,9 @@
 ;;; translated from CLM singer.ins
 
 (provide 'snd-singer.scm)
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (provided? 'snd)
+    (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+    (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 
 (definstrument (singer beg amp data)
   ;; data is a list of lists very similar to the sequence of synthesize calls in Perry's original implementation.
