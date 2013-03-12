@@ -1718,7 +1718,8 @@ static int t_optimized = T_OPTIMIZED;
 
 #define T_MUTABLE                     T_ONE_LINER
 #define is_mutable(p)                 ((typeflag(p) & T_MUTABLE) != 0)
-#define set_mutable(p)                typeflag(p) |= T_MUTABLE
+/* #define set_mutable(p)                typeflag(p) |= T_MUTABLE 
+ */
 
 #define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
 #define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
@@ -1741,8 +1742,10 @@ static int t_optimized = T_OPTIMIZED;
  *   since this is only relevant to symbols, this bit is used below in several other non-intersecting ways
  */
 
+/* not currently used? */
 #define T_SMALL_INT                   T_GENSYM
-#define is_small_int(p)               ((typeflag(p) & T_SMALL_INT) != 0)
+/* #define is_small_int(p)               ((typeflag(p) & T_SMALL_INT) != 0)
+ */
 
 #define T_SIMPLE_ARGS                 T_GENSYM
 #define has_simple_args(p)            ((typeflag(p) & T_SIMPLE_ARGS) != 0)
