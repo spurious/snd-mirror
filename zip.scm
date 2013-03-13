@@ -44,8 +44,8 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 
 (define (zipper zp input1 input2)
 ;;  "(zipper zip in1 in2) creates the digital zipper sound effect using zipper generator 'zip' and the two samplers 'in1' and 'in2'"
-  (set! (zp 'input1) input1)
-  (set! (zp 'input2) input2)
+  (environment-set! zp 'input1 input1)
+  (environment-set! zp 'input2 input2)
   (with-environment zp
     (let* ((ramp-loc (env rampe))
 	   (frame-samples (floor (env fe)))

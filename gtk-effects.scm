@@ -372,16 +372,24 @@
 ;;;
 
 (define* (effects-echo input-samps-1 delay-time echo-amount beg dur snd chn)
-  (let ((del (make-delay (round (* delay-time (srate snd)))))
-	(samp 0)
-	(input-samps (or input-samps-1 dur (frames snd chn))))
-    (map-channel (lambda (inval)
-		   (set! samp (+ samp 1))
-		   (+ inval
-		      (delay del
-			     (* echo-amount (+ (tap del) (if (<= samp input-samps) inval 0.0))))))
-		 beg dur snd chn #f
-		 (format #f "effects-echo ~A ~A ~A ~A ~A" input-samps-1 delay-time echo-amount beg dur))))
+  "(effects-echo input-samps-1 delay-time echo-amount beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
+  (let* ((del (make-delay (round (* delay-time (srate snd)))))
+	 (len (or dur (frames snd chn)))
+	 (input-samps (or input-samps-1 len)))
+    (as-one-edit
+     (lambda ()
+       (map-channel
+	(lambda (inval)
+	  (+ inval
+	     (delay del (* echo-amount (+ (tap del) inval)))))
+	beg input-samps snd chn)
+       (if (> len input-samps)
+	   (map-channel
+	    (lambda (inval)
+	      (+ inval
+		 (delay del (* echo-amount (tap del)))))
+	    (+ beg input-samps) (- dur input-samps) snd chn)))
+     (format #f "effects-echo ~A ~A ~A ~A ~A" input-samps-1 delay-time echo-amount beg dur))))
 
 (define* (effects-flecho-1 scaler secs input-samps-1 beg dur snd chn)
   (let ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))

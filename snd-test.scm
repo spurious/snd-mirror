@@ -9761,17 +9761,6 @@ EDITS: 2
 	  (if (not (vequal v0 (vct .1 .1 .3 .3 .3)))
 	      (snd-display #__line__ ";vct-add + offset: ~A" v0)))
 	
-	;; test local var gc protection in vct.h vct_to_vector
-	(let ((o (make-oscil 1))
-	      (v (make-vct 44100 0.0)))
-	  (let ((v1 (fill-vct v (o))))
-	    (vct->vector v1) 
-	    (vct->vector v1)
-	    (let ((vect (vct->vector v1)))
-	      (vector->vct vect)
-	      (vector->vct vect)
-	      (set! v1 (vector->vct vect)))))
-
 	;; check s7 stuff with vcts
 	(let ((v (vct 1.0 2.0 3.0)))
 	  (if (not (string=? (format #f "~{~A~^-~}" v) "1.0-2.0-3.0"))
@@ -38491,7 +38480,7 @@ EDITS: 1
   (incr 1.0) fm)
 
 (define (osc329 gen fm)
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((result (sin phase)))
       (set! phase (+ phase freq fm))

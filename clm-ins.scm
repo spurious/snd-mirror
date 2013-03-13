@@ -2498,7 +2498,7 @@ mjkoskin@sci.fi
 
 (define (ssb-fm gen modsig)
   "(ssb-fm gen modsig) runs an ssb-fm generator"
-  (set! (gen 'modsig) modsig)
+  (environment-set! gen 'modsig modsig)
   (with-environment gen
     (+ (* (oscil am0) 
 	  (oscil car0 (hilbert-transform mod0 modsig)))
@@ -2544,7 +2544,7 @@ mjkoskin@sci.fi
 
 (define (rms gen sig)
   "(rms gen sig) runs an RMS gain generator"
-  (set! (gen 'sig) sig)
+  (environment-set! gen 'sig sig)
   (with-environment gen
     (set! q (+ (* c1 sig sig) (* c2 q)))
     (sqrt q)))
@@ -2552,8 +2552,8 @@ mjkoskin@sci.fi
 
 (define (gain gen sig rmsval)
   "(gain gen sig rmsval) returns the current RMS gain"
-  (set! (gen 'sig) sig)
-  (set! (gen 'rmsval) rmsval)
+  (environment-set! gen 'sig sig)
+  (environment-set! gen 'rmsval rmsval)
   (with-environment gen
     (set! r (+ (* c1 sig sig) (* c2 r)))
     (let ((this-gain (if (zero? r)

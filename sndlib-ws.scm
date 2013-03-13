@@ -40,27 +40,20 @@
 (defmacro definstrument (args . body)
   (let* ((name (car args))
 	 (targs (cdr args))
-	 (utargs (let ((arg-names '()))
+	 (utargs (let ((arg-names ()))
 		   (for-each
 		    (lambda (a)
-		      (if (not (keyword? a))
+		      (if (not (keyword? a)) ; redundant :optional or something
 			  (if (symbol? a)
 			      (set! arg-names (cons a arg-names))
 			      (set! arg-names (cons (car a) arg-names)))))
 		    targs)
-		   (reverse arg-names)))
-	 (doc (if (string? (car body))
-		  (let ((val (car body)))
-		    (set! body (cdr body))
-		    val)
-		  "no help")))
+		   (reverse arg-names))))
   `(begin 
      (define* (,name ,@targs)
-       ,doc
        (if *clm-notehook*
 	   (*clm-notehook* (symbol->string ',name) ,@utargs))
-       ((lambda () ; for inner defines, if any
-	  ,@body)))
+       ,@body)
      ,@(if *definstrument-hook*
            (list (*definstrument-hook* name targs))
            (list)))))
@@ -185,6 +178,9 @@
 			   (set! revmax (vct-peak reverb-1))
 			   (if (sound-data? reverb-1)
 			       (set! revmax (sound-data-peak reverb-1))))))
+	       (apply reverb reverb-data)                                   ; here is the reverb call(!)
+	       (if reverb-to-file
+		   (mus-close *reverb*))
 	       ))
 
 	 (if output-to-file

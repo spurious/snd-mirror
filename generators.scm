@@ -24,11 +24,10 @@
 
 
 (define* (nssb gen (fm 0.0))
+;;  "(make-nssb frequency (ratio 1.0) (n 1)) creates an nssb generator, similar to nxysin.\n\
+;;   (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced by frequency * ratio."
   
-  "(make-nssb frequency (ratio 1.0) (n 1)) creates an nssb generator, similar to nxysin.\n\
-   (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced by frequency * ratio."
-  
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
@@ -123,7 +122,7 @@
 ;;  "(make-nxysin frequency (ratio 1.0) (n 1)) creates an nxysin generator.\n\
 ;;   (nxysin gen (fm 0.0)) returns n sines from frequency spaced by frequency * ratio."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (y (* x ratio))
@@ -199,7 +198,7 @@
 ;;  "(make-nxycos frequency (ratio 1.0) (n 1)) creates an nxycos generator.\n\
 ;;   (nxycos gen (fm 0.0)) returns n cosines from frequency spaced by frequency * ratio."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (y (* x ratio))
@@ -236,7 +235,7 @@
 ;;  "(make-nxy1cos frequency (ratio 1.0) (n 1)) creates an nxy1cos generator.\n\
 ;;   (nxy1cos gen (fm 0.0)) returns 2n cosines from frequency spaced by frequency * ratio with every other cosine multiplied by -1."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (y (* x ratio))
@@ -283,7 +282,7 @@
 ;;  "(make-nxy1sin frequency (ratio 1.0) (n 1)) creates an nxy1sin generator.\n\
 ;;   (nxy1sin gen (fm 0.0)) returns n sines from frequency spaced by frequency * ratio with every other sine multiplied by -1."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (y (* x ratio))
@@ -348,7 +347,7 @@
 ;;  "(make-noddsin frequency (n 1)) creates an noddsin generator.\n\
 ;;   (noddsin gen (fm 0.0)) returns n odd-numbered sines spaced by frequency."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((snx (sin (* n angle)))
 	  (den (sin angle)))
@@ -386,7 +385,7 @@
 ;;  "(make-noddcos frequency (n 1)) creates an noddcos generator.\n\
 ;;   (noddcos gen (fm 0.0)) returns n odd-numbered cosines spaced by frequency."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((cx angle)
 	  (den (* 2 n (sin angle)))) ; "n" here is normalization
@@ -423,7 +422,7 @@
 ;;  "(make-noddssb frequency (ratio 1.0) (n 1)) creates an noddssb generator.\n\
 ;;   (noddssb gen (fm 0.0)) returns n sinusoids from frequency spaced by 2 * ratio * frequency."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
@@ -478,7 +477,7 @@
   ;;   scaling by an extra factor of 1/n+1 to make sure we always peak at 1.0 (I assume callers in this context are interested 
   ;;   in the pulse-train aspect and want easily predictable peak amp).  Harmonics go as (n-i)/n+1.
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (den (sin (* 0.5 x))))
@@ -533,7 +532,7 @@
 ;;  "(make-npcos frequency (n 1)) creates an npcos (Poussin kernel) generator.\n\
 ;;   (npcos gen (fm 0.0)) returns n*2+1 sinusoids spaced by frequency with amplitudes in a sort of tent shape."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((den (sin (* 0.5 angle)))
 	   (result (if (< (abs den) nearly-zero)
@@ -578,7 +577,7 @@
   
   ;; from "Chebyshev Polynomials", Mason and Handscomb, p87
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (den (tan (* 0.5 x))))
@@ -635,7 +634,7 @@
   
   ;; from "Chebyshev Polynomials", Mason and Handscomb, p100
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (den (tan (* 0.5 x))))
@@ -793,7 +792,7 @@
 ;;  "(make-nrcos frequency (n 1) (r 0.5)) creates an nrcos generator.\n\
 ;;   (nrcos gen (fm 0.0)) returns n cosines spaced by frequency with amplitudes scaled by r^k."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((x angle)
 	  (rcos (* r (cos angle))))
@@ -898,7 +897,7 @@
 ;;  "(make-nrssb frequency (ratio 1.0) (n 1) (r 0.5)) creates an nrssb generator.\n\
 ;;   (nrssb gen (fm 0.0)) returns n sinusoids from frequency spaced by frequency * ratio with amplitudes scaled by r^k."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
@@ -926,8 +925,8 @@
 ;;   (nrssb-interp gen fm interp) returns n sinusoids from frequency spaced by frequency * ratio with amplitudes scaled by r^k.\
 ;;   The 'interp' argument determines whether the sidebands are above (1.0) or below (-1.0) frequency."
   
-  (set! (gen 'fm) fm)
-  (set! (gen 'interp) interp)
+  (environment-set! gen 'fm fm)
+  (environment-set! gen 'interp interp)
   (with-environment gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
@@ -1053,7 +1052,7 @@
 ;;  "(make-nkssb frequency (ratio 1.0) (n 1)) creates an nkssb generator.\n\
 ;;   (nkssb gen (fm 0.0)) returns n sinusoids from frequency spaced by frequency * ratio with amplitude k."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x (* angle ratio))
 	   (cxx (- angle x))
@@ -1079,8 +1078,8 @@
 ;;   (nkssb-interp gen fm interp) returns n sinusoids from frequency spaced by frequency * ratio with amplitude k.\
 ;;   The 'interp' argument determines whether the sidebands are above (1.0) or below (-1.0) frequency."
   
-  (set! (gen 'fm) fm)
-  (set! (gen 'interp) interp)
+  (environment-set! gen 'fm fm)
+  (environment-set! gen 'interp interp)
   (with-environment gen
     (let ((x (* angle ratio)))
       (let ((cxx (- angle x))
@@ -1237,7 +1236,7 @@
 ;;  "(make-nsincos frequency (n 1)) creates an nsincos generator.\n\
 ;;   (nsincos gen (fm 0.0)) returns n cosines spaced by frequency with amplitude sin(k*pi/(n+1))/sin(pi/(n+1))"
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (num (cos (* n2 x))))
@@ -1267,7 +1266,7 @@
   (frequency *clm-default-frequency*) (n 1) (angle 0.0) fm)
 
 (define* (n1cos gen (fm 0.0))
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (tn (tan (* 0.5 x))))
@@ -1306,7 +1305,7 @@
 ;;  "(make-npos1cos frequency (n 1)) creates an npos1cos generator.\n\
 ;;   (npos1cos gen (fm 0.0)) returns n cosines spaced by frequency."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (num (- (* (+ n 2) (sin (/ (* n x) 2)))
@@ -1340,7 +1339,7 @@
 ;;  "(make-npos3cos frequency (n 1)) creates an npos3cos generator.\n\
 ;;   (npos3cos gen (fm 0.0)) returns n cosines spaced by frequency."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (sx (sin (/ x 2)))
@@ -1406,7 +1405,7 @@
   ;; from Andrews, Askey, Roy "Special Functions" 5.1.16, p243. r^k cos sum
   ;; a variant of the G&R 2nd col 4th row
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (if trouble
 	0.0                       ; 1.0 from the formula, but we're subtracting out DC
@@ -1433,7 +1432,7 @@
 #|
 ;;; G&R form:
 (define* (rcos gen (fm 0.0))
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((absr (abs r))
 	   (rcosx (* r (oscil osc fm))))
@@ -1514,7 +1513,7 @@
 ;;  "(make-rssb frequency (ratio 1.0) (r 0.5)) creates an rssb generator.\n\
 ;;   (rssb gen (fm 0.0)) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((angle1 angle)
 	   (angle2 (* angle1 ratio))
@@ -1534,8 +1533,8 @@
 ;;   (rssb-interp gen fm interp) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k.\
 ;;  The 'interp' argument determines whether the sidebands are above (1.0) or below (-1.0) frequency."
   
-  (set! (gen 'fm) fm)
-  (set! (gen 'interp) interp)
+  (environment-set! gen 'fm fm)
+  (environment-set! gen 'interp interp)
   (with-environment gen
     (let* ((angle1 angle)
 	   (angle2 (* angle1 ratio))
@@ -1699,7 +1698,7 @@
 ;;  "(make-rxysin frequency (ratio 1.0) (r 0.5)) creates an rxysin generator (similar to rssb).\n\
 ;;   (rxysin gen (fm 0.0)) returns many sines from frequency spaced by frequency * ratio with amplitude r^k."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (y (* x ratio)))
@@ -1742,7 +1741,7 @@
 ;;   (rxycos gen (fm 0.0)) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k."
 ;; I really need to figure out how to keep these dic strings out of the evaluator.
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (y (* x ratio)))
@@ -1766,7 +1765,7 @@
   ;; in this case we need to track ratio, as well as r, since the
   ;;   highest frequency goes as x+ky (y=ratio*x); we want the value of k when
   ;;   we reach srate/3, then solve for the corresponding r.
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x (radians->hz (+ frequency fm))) ; undo the earlier hz->radians
 	   (y (* x ratio))
@@ -1811,7 +1810,7 @@
 ;;  "(make-safe-rxycos frequency (ratio 1.0) (r 0.5)) creates a safe-rxycos generator.\n\
 ;;   (safe-rxycos gen (fm 0.0)) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k where 'r' is restricted to a safe value."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let (;(gen (current-environment)) ; !
 	   (x angle)
@@ -1870,7 +1869,7 @@
 ;;  "(make-ercos frequency (r 0.5)) creates an ercos generator (a special case of rcos).\n\
 ;;   (ercos gen (fm 0.0)) returns many cosines from frequency with amplitude e^(-kr)."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (- (/ scaler 
 	  (- cosh-t (oscil osc fm)))
@@ -1917,7 +1916,7 @@
 ;;  "(make-erssb frequency (ratio 1.0) (r 0.5)) creates an erssb generator (a special case of rssb).\n\
 ;;   (erssb gen (fm 0.0)) returns many sinusoids from frequency spaced by frequency * ratio with amplitude e^(-kr)."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
@@ -1965,7 +1964,7 @@
 ;;  "(make-r2sin frequency (r 0.5)) creates an r2sin generator.\n\
 ;;   (r2sin gen (fm 0.0)) returns many even-numbered sines from frequency with amplitude r^(2k)/(2k)!."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle))
       (set! angle (+ angle fm frequency))
@@ -1996,7 +1995,7 @@
 ;;  "(make-r2cos frequency (r 0.5)) creates an r2cos generator.\n\
 ;;   (r2cos gen (fm 0.0)) returns many even-numbered cosines from frequency with amplitude r^(2k)/(2k)!."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle))
       (set! angle (+ angle fm frequency))
@@ -2026,7 +2025,7 @@
 ;;  "(make-r2ssb frequency (ratio 1.0) (r 0.5)) creates an r2ssb generator.\n\
 ;;   (r2ssb gen (fm 0.0)) returns many even-numbered sinusoids from frequency spaced by frequency * ratio, if that makes any sense, with amplitude r^(2k)/(2k)!."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
@@ -2090,7 +2089,7 @@
 ;;  "(make-eoddcos frequency (r 0.5)) creates an eoddcos generator.\n\
 ;;   (eoddcos gen (fm 0.0)) returns many cosines from spaced by frequency with amplitude e^(-r)."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((a r)
 	   (sinha (sinh a)))
@@ -2191,7 +2190,7 @@
 ;;  "(make-rkcos frequency (r 0.5)) creates an rkcos generator.\n\
 ;;   (rkcos gen (fm 0.0)) returns many cosines from spaced by frequency with amplitude (r^k)/k."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((cs (oscil osc fm)))
       (/ (* 0.5 (log (+ 1.0 (* -2.0 r cs) (* r r))))
@@ -2224,7 +2223,7 @@
 ;;  "(make-rksin frequency (r 0.5)) creates an rksin generator.\n\
 ;;   (rksin gen (fm 0.0)) returns many sines from spaced by frequency with amplitude (r^k)/k."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
@@ -2259,7 +2258,7 @@
 ;;  "(make-rkssb frequency (ratio 1.0) (r 0.5)) creates an rkssb generator.\n\
 ;;   (rkssb gen (fm 0.0)) returns many sinusoids from frequency from spaced by frequency * ratio with amplitude (r^k)/k."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
@@ -2308,7 +2307,7 @@
 ;;  "(make-rk!cos frequency (r 0.5)) creates an rk!cos generator.\n\
 ;;   (rk!cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude (r^k)/k!."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
@@ -2406,7 +2405,7 @@
 ;;  "(make-rk!ssb frequency (ratio 1.0) (r 0.5)) creates an rk!ssb generator.\n\
 ;;   (rk!ssb gen (fm 0.0)) returns many sinusoids from frequency spaced by frequency * ratio with amplitude (r^k)/k!."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
@@ -2471,7 +2470,7 @@
 ;;  "(make-rxyk!sin frequency (ratio 1.0) (r 0.5)) creates an rxyk!sin generator.\n\
 ;;   (rxyk!sin gen (fm 0.0)) returns many sines from frequency spaced by frequency * ratio with amplitude r^k/k!."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (y (* x ratio)))
@@ -2502,7 +2501,7 @@
 ;;  "(make-rxyk!cos frequency (ratio 1.0) (r 0.5)) creates an rxyk!cos generator.\n\
 ;;   (rxyk!cos gen (fm 0.0)) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k/k!."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (y (* x ratio)))
@@ -2583,7 +2582,7 @@
 ;;  "(make-2rk!cos frequency (r 0.5) (k 0.0)) creates an r2k!cos generator.\n\
 ;;   (r2k!cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude too messy to write down."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((rr1 (+ 1.0 (* r r)))
 	  (r2 (* 2 (abs r)))) ; abs for negative r
@@ -2687,7 +2686,7 @@
 ;;  "(make-k2sin frequency) creates a k2sin generator.\n\
 ;;   (k2sin gen (fm 0.0)) returns many sines spaced by frequency with amplitude 1/(2^k)."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
@@ -2717,7 +2716,7 @@
 ;;  "(make-k2cos frequency) creates a k2cos generator.\n\
 ;;   (k2cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude 1/(2^k)."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
@@ -2746,7 +2745,7 @@
 ;;  "(make-k2ssb frequency (ratio 1.0)) creates a k2ssb generator.\n\
 ;;   (k2ssb gen (fm 0.0)) returns many sinusoids from frequency spaced by frequency * ratio with amplitude 1/(2^k)."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((cx angle)
 	   (mx (* cx ratio)))
@@ -2788,7 +2787,7 @@
 ;;  "(make-dblsum frequency (r 0.5)) creates a dblsum generator.\n\
 ;;   (dblsum gen (fm 0.0)) returns many sines from frequency spaced by frequency * (2k -1) with amplitude r^k (this is buggy)."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
@@ -2830,7 +2829,7 @@
 ;;  "(make-rkoddssb frequency (ratio 1.0) (r 0.5)) creates an rkoddssb generator.\n\
 ;;   (rkoddssb gen (fm 0.0)) returns many sinusoids from frequency spaced by frequency * 2 * ratio with amplitude (r^(2k-1))/(2k-1)."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((cx angle)
 	   (mx (* cx ratio))
@@ -2908,7 +2907,7 @@
 ;;  "(make-krksin frequency (r 0.5)) creates a krksin generator.\n\
 ;;   (krksin gen (fm 0.0)) returns many sines spaced by frequency with amplitude kr^k."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (r1 (- 1.0 r))
@@ -2991,7 +2990,7 @@
 ;;  "(make-abssin frequency) creates an abssin generator.\n\
 ;;   (abssin gen (fm 0.0)) returns (abs oscil)."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (/ (- (abs (oscil osc fm))
 	  (/ 2.0 pi))
@@ -3040,7 +3039,7 @@
 ;;  "(make-abcos frequency (a 0.5) (b 0.25)) creates an abcos generator.\n\
 ;;   (abcos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((x angle)
 	   (norm (/ 0.5 (- (/ 1.0 
@@ -3074,7 +3073,7 @@
 ;;  "(make-absin frequency (a 0.5) (b 0.25)) creates an absin generator.\n\
 ;;   (absin gen (fm 0.0)) returns many sines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
@@ -3118,7 +3117,7 @@
 ;;  "(make-r2k2cos frequency (r 1.0)) creates an r2k2cos generator.\n\
 ;;   (r2k2cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((x angle)
 	  (a r))
@@ -3167,7 +3166,7 @@
 ;;  "(make-blsaw frequency (n 1) (r 0.5)) creates a blsaw generator.\n\
 ;;   (blsaw gen (fm 0.0)) returns a band-limited sawtooth wave."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((a r)
 	   (N n)
@@ -3208,8 +3207,8 @@
 
 
 (define* (asyfm-J gen (fm 0.0))
-  "(asyfm-J gen fm) is the same as the CLM asymmetric-fm generator (index=1.0), set r != 1.0 to get the asymmetric spectra"
-  (set! (gen 'fm) fm)
+;;  "(asyfm-J gen fm) is the same as the CLM asymmetric-fm generator (index=1.0), set r != 1.0 to get the asymmetric spectra"
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((r1 (/ r))
 	   (one (if (or (> r 1.0) 
@@ -3261,8 +3260,8 @@
 |#
 
 (define* (asyfm-I gen (fm 0.0))
-  "(asyfm-I gen fm) is the I0 case of the asymmetric-fm generator"
-  (set! (gen 'fm) fm)
+;;  "(asyfm-I gen fm) is the I0 case of the asymmetric-fm generator"
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((r1 (/ r))
 	   (modphase (* ratio phase))
@@ -3303,7 +3302,7 @@
 ;;  "(make-bess frequency (n 0)) creates a bessel function (Jn) generator.\n\
 ;;   (bess gen (fm 0.0)) returns Jn."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((result (/ (bes-jn n angle) norm)))
       (set! angle (+ angle frequency fm))
@@ -3365,7 +3364,7 @@
 ;;  "(make-jjcos frequency (r 0.5) (a 1.0) (k 1)) creates a jjcos generator.\n\
 ;;   (jjcos gen (fm 0.0)) returns a sum of cosines scaled by a product of Bessel functions."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (dc (* (bes-j0 (* k a)) (bes-j0 (* k r))))
@@ -3443,7 +3442,7 @@ set k=10
 which again matches
 
 (define* (jjsin gen (fm 0.0))
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
@@ -3459,7 +3458,7 @@ which again matches
       (outa i (jjsin gen)))))
 
 (define* (jjesin gen (fm 0.0))
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
@@ -3492,7 +3491,7 @@ which again matches
 ;;  "(make-j0evencos frequency (index 1.0)) creates a j0evencos generator.\n\
 ;;   (j0evencos gen (fm 0.0)) returns a sum of cosines scaled Jk^2(index/2)."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (z index)
@@ -3617,7 +3616,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-j2cos frequency (r 0.5) (n 1)) creates a j2cos generator.\n\
 ;;   (j2cos gen (fm 0.0)) returns a sum of cosines scaled in a very complicated way."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (rsinx2 (* 2.0 r (sin (* 0.5 x)))))
@@ -3659,7 +3658,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-jpcos frequency (r 0.5) (a 0.0) (k 1)) creates a jpcos generator.\n\
 ;;   (jpcos gen (fm 0.0)) returns a sum of cosines scaled in a very complicated way."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   ;; (dc (/ (* (sin (* k a)) (sin (* k r))) (* k a r)))
@@ -3735,7 +3734,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-jncos frequency (r 0.5) (a 1.0) (n 0)) creates a jncos generator.\n\
 ;;   (jncos gen (fm 0.0)) returns a sum of cosines scaled in a very complicated way."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((arg (sqrt (+ (* r r) 
 			(* a a)
@@ -3771,7 +3770,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-j0j1cos frequency (index 1.0)) creates a j0j1cos generator.\n\
 ;;   (j0j1cos gen (fm 0.0)) returns a sum of cosines scaled in a very complicated way."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (z index)
@@ -3865,7 +3864,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-jycos frequency (r 1.0) (a 0.5)) creates a jycos generator.\n\
 ;;   (jycos gen (fm 0.0)) returns a sum of cosines scaled by Yn(r)*Jn(r)."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (b r)
@@ -3924,7 +3923,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-jcos frequency (n 0) (r 1.0) (a 0.5)) creates a jcos generator.\n\
 ;;   (jcos gen (fm 0.0)) returns a sum of cosines scaled in some complex manner."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (b r)
@@ -3957,7 +3956,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-sin2n frequency (n 0) (r 1.0)) creates a sin2n generator.\n\
 ;;   (sin2n gen (fm 0.0)) returns (r*sin)^(2n)"
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle))
       (set! angle (+ angle fm frequency))
@@ -4037,7 +4036,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-blackman frequency (n 4)) creates a blackman generator.\n\
 ;;   (blackman gen (fm 0.0)) returns the nth Blackman-Harris fft data window as a periodic waveform. (n <= 10)"
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
@@ -4099,7 +4098,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-fmssb frequency (ratio 1.0) (index 1.0)) creates an fmssb generator.\n\
 ;;   (fmssb gen (fm 0.0)) returns single-sideband FM."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((cx angle)
 	   (mx (* cx ratio)))
@@ -4320,7 +4319,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-k3sin frequency) creates a k3sin generator.\n\
 ;;   (k3sin gen (fm 0.0)) returns a sum of sines scaled by k^3."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((x angle))
       (if (not (<= 0.0 x two-pi))
@@ -4365,7 +4364,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-izcos frequency (r 1.0)) creates an izcos generator.\n\
 ;;   (izcos gen (fm 0.0)) returns a sum of sines scaled by In(r)."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
@@ -4491,11 +4490,10 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 (define* (adjustable-square-wave gen (fm 0.0))
+;;  "(make-adjustable-square-wave frequency (duty-factor 0.5) (amplitude 1.0)) creates an adjustable-square-wave generator.\n\
+;;   (adjustable-square-wave gen (fm 0.0)) returns a square-wave where the duty-factor sets the ratio of pulse duration to pulse period."
   
-  "  (make-adjustable-square-wave frequency (duty-factor 0.5) (amplitude 1.0)) creates an adjustable-square-wave generator.\n\
-   (adjustable-square-wave gen (fm 0.0)) returns a square-wave where the duty-factor sets the ratio of pulse duration to pulse period."
-  
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (set! sum (+ sum
 		 (pulse-train p1 fm)
@@ -4544,11 +4542,10 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 (define* (adjustable-triangle-wave gen (fm 0.0))
+;;  "(make-adjustable-triangle-wave frequency (duty-factor 0.5) (amplitude 1.0)) creates an adjustable-triangle-wave generator.\n\
+;;   (adjustable-triangle-wave gen (fm 0.0)) returns a triangle-wave where the duty-factor sets the ratio of pulse duration to pulse period."
   
-  "  (make-adjustable-triangle-wave frequency (duty-factor 0.5) (amplitude 1.0)) creates an adjustable-triangle-wave generator.\n\
-   (adjustable-triangle-wave gen (fm 0.0)) returns a triangle-wave where the duty-factor sets the ratio of pulse duration to pulse period."
-  
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((val (triangle-wave gen fm)))
       (* scl (- val (max (- top) (min top val)))))))
@@ -4596,11 +4593,10 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 (define* (adjustable-sawtooth-wave gen (fm 0.0))
+;;  "(make-adjustable-sawtooth-wave frequency (duty-factor 0.5) (amplitude 1.0)) creates an adjustable-sawtooth-wave generator.\n\
+;;   (adjustable-sawtooth-wave gen (fm 0.0)) returns a sawtooth-wave where the duty-factor sets the ratio of pulse duration to pulse period."
   
-  "  (make-adjustable-sawtooth-wave frequency (duty-factor 0.5) (amplitude 1.0)) creates an adjustable-sawtooth-wave generator.\n\
-   (adjustable-sawtooth-wave gen (fm 0.0)) returns a sawtooth-wave where the duty-factor sets the ratio of pulse duration to pulse period."
-  
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((val (sawtooth-wave gen fm)))
       (* scl (- val (max (- top) (min top val)))))))
@@ -4651,7 +4647,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-adjustable-oscil frequency (duty-factor 0.5)) creates an adjustable-oscil generator.\n\
 ;;   (adjustable-oscil gen (fm 0.0)) returns a sinusoid where the duty-factor sets the ratio of pulse duration to pulse period."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((val (oscil gen fm)))
       (* scl (- val (max (- top) (min top val)))))))
@@ -4714,7 +4710,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-round-interp frequency (n 1) (amplitude 1.0)) creates a round-interp generator.\n\
 ;;   (round-interp gen (fm 0.0)) returns a rand-interp sequence low-pass filtered by a moving-average generator of length n."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (moving-average flt (rand-interp rnd fm))))
 
@@ -4800,7 +4796,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-nchoosekcos frequency (ratio 1.0) (n 1)) creates an nchoosekcos generator.\n\
 ;;   (nchoosekcos gen (fm 0.0)) returns a sum of cosines scaled by the binomial coeffcients."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (y (* x ratio)))
@@ -4865,7 +4861,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-sinc-train frequency (n 1)) creates a sinc-train generator with n components.\n\
 ;;   (sinc-train gen (fm 0.0)) returns a sinc-train"
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x angle)
 	   (max-angle (* pi 0.5 n))
@@ -4958,7 +4954,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-brown-noise frequency (amplitude 1.0)) returns a generator that produces brownian noise.\n\
 ;;  (brown-noise gen (fm 0.0)) returns the next brownian noise sample."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((val (rand gr fm)))
     (if (not (= val prev))
@@ -5012,7 +5008,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-green-noise frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new green-noise (bounded brownian noise) generator.\n\
 ;;   (green-noise gen (fm 0.0)) returns the next sample in a sequence of bounded brownian noise samples."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((val (rand gr fm)))
     (if (not (= val prev))
@@ -5073,7 +5069,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-green-noise-interp frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new interpolating green noise (bounded brownian noise) generator.\n\
 ;;   (green-noise-interp gen (fm 0.0)) returns the next sample in a sequence of interpolated bounded brownian noise samples."
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (if (not (<= 0.0 angle two-pi))
 	(let ((val (mus-random amplitude)))
@@ -5226,7 +5222,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 (define (moving-variance gen y)
-  (set! (gen 'y) y)
+  (environment-set! gen 'y y)
   (with-environment gen
     (let ((x1 (moving-average gen1 y))
 	  (x2 (moving-average gen2 (* y y))))
@@ -5264,7 +5260,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-moving-rms (n 128) returns a moving-rms generator.\n\
 ;;  (moving-rms gen input) returns the rms of the values in a window over the last n inputs."
 
-  (set! (gen 'y) y)
+  (environment-set! gen 'y y)
   (with-environment gen
     (sqrt (max 0.0 ;; this is tricky -- due to floating point inaccuracy, we can get negative output
 	       ;;   from moving-rms even if all the inputs are positive!  The sqrt then returns
@@ -5290,10 +5286,20 @@ index 10 (so 10/2 is the bes-jn arg):
 (define (moving-length gen y)
 ;;  "(make-moving-length (n 128) returns a moving-length generator.\n\
 ;;  (moving-length gen input) returns the length of the values in a window over the last few inputs."
-  
-  (set! (gen 'y) y)
+
+  (environment-set! gen 'y y)
   (with-environment gen
     (sqrt (max 0.0 (moving-average gen (* y y))))))
+
+
+#|
+(let ((ml (make-moving-length 128))
+      (rd (make-readin "oboe.snd")))
+  (with-sound () 
+    (do ((i 0 (+ i 1)))
+	((= i 50828))
+      (outa i (moving-length ml (readin rd))))))
+|#
 
 #|
 ;; perhaps also use moving-rms gen to avoid amplifying noise-sections (or even squlech them)
@@ -5333,7 +5339,7 @@ index 10 (so 10/2 is the bes-jn arg):
   "  (make-weighted-moving-average (n 128) returns a weighted-moving-average generator.\n\
   (weighted-moving-average gen y) returns the sum of the last n inputs weighted by 1/n"
   
-  (set! (gen 'y) y)
+  (environment-set! gen 'y y)
   (with-environment gen
     (let* ((n (mus-order dly))
 	   (den (/ (* (+ 1 n) n) 2)))
@@ -5415,7 +5421,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 (define* (polyoid gen (fm 0.0))
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((x angle))
       (set! angle (+ angle fm frequency))
@@ -5873,7 +5879,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-tanhsin (frequency 0.0) (r 1.0) (initial-phase 0.0) returns a tanhsin generator.\n\
 ;;  (tanhsin gen (fm 0.0)) produces tanh(r*sin) which approaches a square wave as r increases."
 
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
   (tanh (* r (oscil osc fm)))))
 
@@ -6098,7 +6104,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (dly #f) (rms #f) x)
 
 (define* (moving-scentroid gen (x 0.0))
-  (set! (gen 'x) x)
+  (environment-set! gen 'x x)
   (with-environment gen
     
     (let ((rms (moving-rms rms x)))
@@ -6313,7 +6319,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;  "(make-circler (frequency 0.0) returns a circler generator.\n\
 ;;   (circler gen (fm 0.0)) produces a waveform made up of half circles"
   
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let* ((x (modulo angle (* 2 pi)))
 	   (xx (/ (* 4 x) (* 2 pi)))
@@ -6374,8 +6380,8 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define (flocsig gen samp input)
   ;; signal position and per-channel-delay depends on rand-interp
-  (set! (gen 'samp) samp)
-  (set! (gen 'input) input)
+  (environment-set! gen 'samp samp)
+  (environment-set! gen 'input input)
   (with-environment gen
     (let* ((rpos (rand-interp ri))
 	   (pos (min (max (+ rpos offset) (- amplitude)) amplitude))

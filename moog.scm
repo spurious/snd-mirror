@@ -102,7 +102,7 @@
 
 (define (moog-filter m sig)
   ;"(moog-filter m sig) is the generator associated with make-moog-filter"
-  (set! (m 'sig) sig)
+  (environment-set! m 'sig sig)
   (with-environment m
     (let ((A (* 0.25 (- sig y)))
 	  (st 0.0))

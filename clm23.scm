@@ -2487,7 +2487,7 @@
 (defgenerator sndscm-osc freq phase fm)
 
 (define (sndscm-osc gen fm)
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((result (sin phase)))
       (set! phase (+ phase freq fm))
@@ -2515,7 +2515,7 @@
   freq phase fm)
 
 (define* (sndscm-osc1 gen fm)
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((result (sin phase)))
       (set! phase (+ phase freq fm))
@@ -2557,7 +2557,7 @@
   freq phase fm)
 
 (define* (sndscm-osc2 gen fm)
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((result (sin phase)))
       (set! phase (+ phase freq fm))
@@ -2589,7 +2589,7 @@
 
 (define (dsp-asyfm-J gen input)
   "(dsp-asyfm-J gen input) is the same as the CLM asymmetric-fm generator, set r != 1.0 to get the asymmetric spectra"
-  (set! (gen 'input) input)
+  (environment-set! gen 'input input)
   (with-environment gen
     (let* ((modphase (* ratio phase))
 	   (result (* (exp (* r2 (cos modphase)))
@@ -2599,7 +2599,7 @@
 
 (define (dsp-asyfm-I gen input)
   "(dsp-asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"
-  (set! (gen 'input) input)
+  (environment-set! gen 'input input)
   (with-environment gen
     (let* ((modphase (* ratio phase))
 	   (result (* (exp (- (* r1 (cos modphase)) r3))
@@ -2619,7 +2619,7 @@
   frequency phase et sinht cosht fm)
 
 (define (sndclm-expcs gen fm)
-  (set! (gen 'fm) fm)
+  (environment-set! gen 'fm fm)
   (with-environment gen
     (let ((result (- (/ sinht (- cosht (cos phase))) 0.5)))
     (set! phase (+ phase frequency fm))

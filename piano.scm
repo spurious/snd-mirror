@@ -9,7 +9,7 @@
 (defgenerator one-pole-allpass coeff input x1 y1)
 
 (define (one-pole-allpass gen input)
-  (set! (gen 'input) input)
+  (environment-set! gen 'input input)
   (with-environment gen
     (set! y1 (+ x1 (* coeff (- input y1))))
     (set! x1 input)
@@ -19,7 +19,7 @@
 (defgenerator one-pole-allpass-bank coeff input x1 y1 x2 y2 x3 y3 x4 y4 x5 y5 x6 y6 x7 y7 x8 y8) 
 
 (define (one-pole-allpass-bank gen input)
-  (set! (gen 'input) input)
+  (environment-set! gen 'input input)
   (with-environment gen
     (set! y1 (+ x1 (* coeff (- input y1))))
     (set! x1 input)
@@ -87,7 +87,7 @@
 (defgenerator expseg currentValue targetValue r)
 
 (define (expseg gen r)
-  (set! (gen 'r) r)
+  (environment-set! gen 'r r)
   (with-environment gen
     (set! currentValue (+ (* r targetValue) (* (- 1.0 r) currentValue)))))
     ;(set! currentValue (+ currentValue (* r (- targetValue currentValue))))))
