@@ -1282,7 +1282,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
     (do ((i 0 (+ i 1)))
 	((= i freq-inc))
       (set! (formants i) (make-formant (* i bin) radius)))
-    (set! formants (make-formant-bank formants)
+    (set! formants (make-formant-bank formants))
 
     (do ((i 0 (+ i freq-inc)))
 	((>= i outlen))
