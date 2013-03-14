@@ -2260,6 +2260,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
     (do ((i 0 (+ 1 i)))
 	((= i freq-inc))
       (set! (formants i) (make-formant (* i bin) radius)))
+    (set! formants (make-formant-bank formants))
     (lambda (inval)
       (if (= ctr freq-inc)
 	  (begin

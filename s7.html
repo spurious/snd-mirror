@@ -2433,24 +2433,27 @@ Environments are first class (and applicable) objects in s7.
 </p>
 
 <pre class="indented">
-(<em class=def id="environmentp">environment?</em> obj)            #t if obj is an environment
-(<em class=def id="withenvironment">with-environment</em> env . body) evaluate body in the environment env 
-(<em class=def id="outerenvironment">outer-environment</em> env)       the environment that encloses the environment env
-(<em class=def id="environmenttolist">environment-&gt;list</em> env)       return the environment bindings as a list of (symbol . value) cons's
+(<em class=def id="environmentp">environment?</em> obj)              #t if obj is an environment
+(<em class=def id="withenvironment">with-environment</em> env . body)   evaluate body in the environment env 
+(<em class=def id="outerenvironment">outer-environment</em> env)         the environment that encloses the environment env
+(<em class=def id="environmenttolist">environment-&gt;list</em> env)         return the environment bindings as a list of (symbol . value) cons's
 
-(<em class=def id="globalenvironment">global-environment</em>)          the top-level environment
-(<em class=def id="currentenvironment">current-environment</em>)         the currently visible variables and their values
-(<em class=def id="procedureenvironment">procedure-environment</em> proc)  the environment at the time when proc was defined
-(error-environment)           the environment at the point of the last error
-(<em class=def id="initialenvironment">initial-environment</em>)         the current environment, but all built-in functions have their original values
+(<em class=def id="globalenvironment">global-environment</em>)            the top-level environment
+(<em class=def id="currentenvironment">current-environment</em>)           the currently visible variables and their values
+(<em class=def id="procedureenvironment">procedure-environment</em> proc)    the environment at the time when proc was defined
+(error-environment)             the environment at the point of the last error
+(<em class=def id="initialenvironment">initial-environment</em>)           the current environment, but all built-in functions have their original values
 
-(<em class=def id="environment">environment</em> . bindings)      make a new environment with the given bindings
+(<em class=def id="environment">environment</em> . bindings)        make a new environment with the given bindings
 (<em class=def id="augmentenvironment">augment-environment</em> env . bindings-or-envs)   add bindings to env
 (<em class=def id="augmentenvironment!">augment-environment!</em> env . bindings-or-env)
 
-(<em class=def id="openenvironment">open-environment</em> env)        mark env as open (see below)
+(<em class=def id="openenvironment">open-environment</em> env)          mark env as open (see below)
 (<em class=def id="openenvironmentp">open-environment?</em> env)
 (<em class=def id="objectenvironment">object-environment</em> env)
+
+(<em class=def id="environmentref">environment-ref</em> env sym)       these are the explicit forms to get and set an environment variable
+(<em class=def id="environmentset">environment-set!</em> env sym val)
 </pre>
 
 

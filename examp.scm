@@ -1028,16 +1028,17 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 	((= i len))
       (set! (frms i) (make-formant (bases i) radius))
       (set! (oscs i) (make-oscil (freqs i))))
-    (map-channel
-     (lambda (x)
-       (let ((val (formant-bank amps frms x)))
-	 (do ((i 0 (+ i 1)))
-	     ((= i len))
-	   (set! (mus-frequency (vector-ref frms i))
-		 (+ (bases i)
-		    (* (amounts i) 
-		       (oscil (oscs i))))))
-	 val)))))
+    (let ((frms1 (make-formant-bank frms)))
+      (map-channel
+       (lambda (x)
+	 (let ((val (formant-bank amps frms1 x)))
+	   (do ((i 0 (+ i 1)))
+	       ((= i len))
+	     (set! (mus-frequency (vector-ref frms i))
+		   (+ (bases i)
+		      (* (amounts i) 
+			 (oscil (oscs i))))))
+	   val))))))
 
 
 
@@ -1235,10 +1236,13 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
     (set! (mus-srate) (srate))
     ;; if mus-srate is 44.1k and srate is 48k, make-formant thinks we're trying to go past srate/2
     ;;    and in any case it's setting its formants incorrectly for the actual output srate
+
     (do ((i 0 (+ i 1)))
 	((= i freq-inc))
       (set! (formants i) (make-formant (* i bin) radius)))
+    (set! formants (make-formant-bank formants))
     (set! (mus-srate) old-srate)
+
     (lambda (inval)
       (if (= ctr freq-inc)
 	  (let ((fdtmp (channel->vct inctr fftsize cross-snd 0)))
@@ -1274,9 +1278,12 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	 (out-data (make-vct (max len outlen)))
 	 (formants (make-vector freq-inc))
 	 (old-peak-amp 0.0))
+
     (do ((i 0 (+ i 1)))
 	((= i freq-inc))
       (set! (formants i) (make-formant (* i bin) radius)))
+    (set! formants (make-formant-bank formants)
+
     (do ((i 0 (+ i freq-inc)))
 	((>= i outlen))
       (set! ctr (min (- outlen i) freq-inc))
@@ -1317,9 +1324,12 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	 (out-data (make-vct len))
 	 (formants (make-vector freq-inc))
 	 (old-peak-amp 0.0))
+
     (do ((i 0 (+ i 1)))
 	((= i freq-inc))
       (set! (formants i) (make-formant (* i bin) radius)))
+    (set! formants (make-formant-bank formants))
+
     (do ((i 0 (+ i freq-inc)))
 	((>= i len))
       (set! ctr (min (- len i) freq-inc))
@@ -1563,6 +1573,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	 (set! (mus-ycoeff flt 1) (- env-val 1.0))
 	 (one-pole flt (* env-val val))))
      0 #f snd chn #f (format #f "filtered-env '~A" e))))
+
 
 
 ;;; -------- multi-colored rxvt printout

@@ -874,6 +874,7 @@ static char TextTrans4[] =
 	Ctrl <Key>y:	    yank()\n\
 	Ctrl <Key>z:	    activate()\n\
         Ctrl <Key>?:        help-at-cursor()\n\
+        Mod1 <Key>.:        help-at-cursor()\n\
 	Mod1 <Key>[:	    backward-paragraph()\n\
 	Mod1 <Key>]:	    forward-paragraph()\n\
 	Mod1 <Key><:	    beginning-of-file()\n\

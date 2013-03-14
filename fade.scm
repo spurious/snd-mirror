@@ -27,7 +27,8 @@
       (do ((k 0 (+ k 1)))
 	  ((= k fs))
 	(set! (fs1 k) (make-formant (* k bin) radius))))
-	  
+    (set! fs1 (make-formant-bank fs1))
+    
     (let ((end (+ start (seconds->samples dur)))
 	  (bank-incr (/ 1.0 bank-samps))
 	  (ramp-incr (/ 1.0 ramp-samps))
@@ -35,29 +36,27 @@
       (let ((bank1-start (- ramp-start bank-samps))
 	    (ramp-end (+ ramp-start ramp-samps))
 	    (bank2-start (+ ramp-start ramp-samps)))
-
+	
 	(do ((i start (+ i 1)))
 	    ((= i bank1-start))
 	  ;; in first section -- just mix in file1
 	  (outa i (* amp (read-sample fil1))))
-
+	
 	(let ((bank2-end (+ bank2-start bank-samps))
 	      (ramp 0.0)
 	      (outval 0.0)
 	      (inputs (make-vct fs 0.0))
-	      (amps (make-vct fs 1.0))
-	      (amps-scaled (make-vct fs amp))
 	      (ifs (/ 1.0 fs))
 	      (mid 0))
-
+	  
 	  (do ((i bank1-start (+ i 1))
 	       (bank1 0.0 (+ bank1 bank-incr)))
 	      ((= i ramp-start))
 	    ;; in bank1 section -- fire up the resonators
 	    (let ((inval (read-sample fil1)))
-	      (set! outval (formant-bank amps fs1 inval))
+	      (set! outval (formant-bank #f fs1 inval))
 	      (outa i (* amp (+ (* bank1 outval) (* (- 1.0 bank1) inval))))))
-		
+	  
 	  ;; in the ramp
 	  (case ramp-type
 	    ((0)
@@ -84,8 +83,8 @@
 			    (ks (* 2.0 ramp) (- ks ifs)))
 			   ((= k mid))
 			 (vct-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
-		 (outa i (formant-bank amps-scaled fs1 inputs)))))
-
+		 (outa i (* amp (formant-bank #f fs1 inputs))))))
+	    
 	    ((1)
 	     (do ((i ramp-start (+ i 1)))
 		 ((= i ramp-end))
@@ -109,8 +108,8 @@
 			    (ks 0.0 (+ ks ifs)))
 			   ((>= k fs))
 			 (vct-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
-		 (outa i (formant-bank amps-scaled fs1 inputs)))))
-		
+		 (outa i (* amp (formant-bank #f fs1 inputs))))))
+	    
 	    (else
 	     (let ((half-fs (/ fs 2)))
 	       (do ((i ramp-start (+ i 1)))
@@ -129,16 +128,16 @@
 		     (let ((rfs (min 1.0 ks)))
 		       (set! (inputs k) (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))
 		       (set! (inputs hk) (inputs k))))
-		   (outa i (formant-bank amps-scaled fs1 inputs)))))))
-      
+		   (outa i (* amp (formant-bank #f fs1 inputs))))))))
+	  
 	  (do ((i ramp-end (+ i 1))
 	       (bank2 1.0 (- bank2 bank-incr)))
 	      ((= i bank2-end))
 	    ;; in bank2 section -- ramp out resonators
 	    (let ((inval (read-sample fil2)))
-	      (set! outval (formant-bank amps fs1 inval))
+	      (set! outval (formant-bank #f fs1 inval))
 	      (outa i (* amp (+ (* bank2 outval) (* (- 1.0 bank2) inval))))))
-
+	  
 	  (do ((i bank2-end (+ i 1)))
 	      ((= i end))
 	    ;; in last section -- just mix file2
@@ -179,6 +178,7 @@
 	(do ((k lo (+ k 1)))
 	    ((= k hi))
 	  (set! (fs k) (make-formant (* k bin) radius))))
+      (set! fs (make-formant-bank fs)) ; wrap it up...
 
       (do ((i start (+ i 1)))
 	  ((= i end))

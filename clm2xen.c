@@ -106,11 +106,10 @@ static int c_object_built_in_type;
 #define CELL_TYPE_LOCATION 0
 #define C_OBJECT_BUILT_IN_TYPE 23
 
-
 static void *imported_s7_object_value_checked(s7_pointer obj, int type)
 {
-#define imported_is_c_object(p) ((unsigned char)(*((unsigned char *)((unsigned char *)(p) + CELL_TYPE_LOCATION))) == (unsigned char)C_OBJECT_BUILT_IN_TYPE)
-#define imported_is_c_object_type(p, type) ((int)(*((int *)((unsigned char *)(p) + C_OBJECT_TYPE_LOCATION))) == (int)type)
+  #define imported_is_c_object(p) ((unsigned char)(*((unsigned char *)((unsigned char *)(p) + CELL_TYPE_LOCATION))) == (unsigned char)C_OBJECT_BUILT_IN_TYPE)
+  #define imported_is_c_object_type(p, type) ((int)(*((int *)((unsigned char *)(p) + C_OBJECT_TYPE_LOCATION))) == (int)type)
   #define imported_c_object_value(p) ((void *)(*((unsigned char **)((unsigned char *)(p) + C_OBJECT_VALUE_LOCATION))))
 
   if ((imported_is_c_object(obj)) &&
@@ -4015,77 +4014,98 @@ static XEN g_formant(XEN gen, XEN input, XEN freq)
 static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
 {
   #define H_formant_bank "(" S_formant_bank " scls gens inval): sum a bank of " S_formant "s: scls[i]*" S_formant "(gens[i], inval)"
-  mus_float_t outval = 0.0, inval = 0.0;
-  int i, size;
-  vct *scl, *invals = NULL;
-#if HAVE_SCHEME
-  s7_pointer *elements;
-  mus_float_t *amp_data, *in_data;
-#endif
+  mus_float_t outval = 0.0;
 
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_2, S_formant_bank, "a vector of formant generators");
-  XEN_ASSERT_TYPE(MUS_VCT_P(amps), amps, XEN_ARG_1, S_formant_bank, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(amps) || XEN_FALSE_P(amps), amps, XEN_ARG_1, S_formant_bank, "a vct or #f");
   XEN_ASSERT_TYPE((XEN_NUMBER_P(inp)) || (MUS_VCT_P(inp)), inp, XEN_ARG_3, S_formant_bank, "a number or a vct");
 
-  size = XEN_VECTOR_LENGTH(gens);
-  if (size == 0) return(C_TO_XEN_DOUBLE(0.0));
-  scl = XEN_TO_VCT(amps);
-
-  if (XEN_NUMBER_P(inp))
-    inval = XEN_TO_C_DOUBLE(inp);
-  else invals = XEN_TO_VCT(inp);
-
-#if HAVE_SCHEME
-  elements = s7_vector_elements(gens);
-  amp_data = scl->data;
-  if (invals) in_data = invals->data;
-#endif
-
-  if (invals)
+  if (XEN_VECTOR_P(gens))
     {
-      for (i = 0; i < size; i++)
-	{
+      mus_float_t inval = 0.0;
+      int i, size;
+      vct *scl, *invals = NULL;
 #if HAVE_SCHEME
-	  mus_xen *gn;
-	  gn = (mus_xen *)imported_s7_object_value_checked(elements[i], mus_xen_tag);
-	  if ((gn) &&
-	      (gn->type == FORMANT_TAG))
-	    outval += (amp_data[i] * mus_formant(gn->gen, in_data[i]));
-#else
-	  XEN g;
-	  g = XEN_VECTOR_REF(gens, i);
-	  if (MUS_XEN_P(g))
-	    {
-	      mus_any *fg;
-	      fg = XEN_TO_MUS_ANY(g);
-	      if (mus_formant_p(fg))
-		outval += (scl->data[i] * mus_formant(fg, invals->data[i]));
-	    }
+      s7_pointer *elements;
+      mus_float_t *amp_data, *in_data;
 #endif
+      
+      size = XEN_VECTOR_LENGTH(gens);
+      if (size == 0) return(C_TO_XEN_DOUBLE(0.0));
+      scl = XEN_TO_VCT(amps);
+      
+      if (XEN_NUMBER_P(inp))
+	inval = XEN_TO_C_DOUBLE(inp);
+      else invals = XEN_TO_VCT(inp);
+      
+#if HAVE_SCHEME
+      elements = s7_vector_elements(gens);
+      amp_data = scl->data;
+      if (invals) in_data = invals->data;
+#endif
+      
+      if (invals)
+	{
+	  for (i = 0; i < size; i++)
+	    {
+#if HAVE_SCHEME
+	      mus_xen *gn;
+	      gn = (mus_xen *)imported_s7_object_value_checked(elements[i], mus_xen_tag);
+	      if ((gn) &&
+		  (gn->type == FORMANT_TAG))
+		outval += (amp_data[i] * mus_formant(gn->gen, in_data[i]));
+#else
+	      XEN g;
+	      g = XEN_VECTOR_REF(gens, i);
+	      if (MUS_XEN_P(g))
+		{
+		  mus_any *fg;
+		  fg = XEN_TO_MUS_ANY(g);
+		  if (mus_formant_p(fg))
+		    outval += (scl->data[i] * mus_formant(fg, invals->data[i]));
+		}
+#endif
+	    }
+	}
+      else
+	{
+	  for (i = 0; i < size; i++)
+	    {
+#if HAVE_SCHEME
+	      mus_xen *gn;
+	      gn = (mus_xen *)imported_s7_object_value_checked(elements[i], mus_xen_tag);
+	      if ((gn) &&
+		  (gn->type == FORMANT_TAG))
+		outval += (amp_data[i] * mus_formant(gn->gen, inval));
+#else
+	      XEN g;
+	      g = XEN_VECTOR_REF(gens, i);
+	      if (MUS_XEN_P(g))
+		{
+		  mus_any *fg;
+		  fg = XEN_TO_MUS_ANY(g);
+		  if (mus_formant_p(fg))
+		    outval += (scl->data[i] * mus_formant(fg, inval));
+		}
+#endif
+	    }
 	}
     }
   else
     {
-      for (i = 0; i < size; i++)
+      /* maybe it's a shiny new formant-bank object */
+      mus_any *bank;
+
+      bank = XEN_TO_MUS_ANY(gens);
+      if (mus_formant_bank_p(bank))
 	{
-#if HAVE_SCHEME
-	  mus_xen *gn;
-	  gn = (mus_xen *)imported_s7_object_value_checked(elements[i], mus_xen_tag);
-	  if ((gn) &&
-	      (gn->type == FORMANT_TAG))
-	    outval += (amp_data[i] * mus_formant(gn->gen, inval));
-#else
-	  XEN g;
-	  g = XEN_VECTOR_REF(gens, i);
-	  if (MUS_XEN_P(g))
-	    {
-	      mus_any *fg;
-	      fg = XEN_TO_MUS_ANY(g);
-	      if (mus_formant_p(fg))
-		outval += (scl->data[i] * mus_formant(fg, inval));
-	    }
-#endif
+	  vct *scls = NULL;
+	  scls = XEN_TO_VCT(amps);
+
+	  if (XEN_NUMBER_P(inp))
+	    outval = mus_formant_bank_wrapped(bank, (scls) ? scls->data : NULL, XEN_TO_C_DOUBLE(inp));
+	  else outval = mus_formant_bank_wrapped_with_inputs(bank, (scls) ? scls->data : NULL, (XEN_TO_VCT(inp))->data);
 	}
+      else XEN_ASSERT_TYPE(false, gens, XEN_ARG_2, S_formant_bank, "a vector of formant generators or a formant-bank object");
     }
   return(C_TO_XEN_DOUBLE(outval));
 }
@@ -4124,6 +4144,52 @@ generator) gen's radius and frequency"
   mus_set_formant_radius_and_frequency(g, radius, frequency);
   return(rad);
 }
+
+
+static XEN g_make_formant_bank(XEN arg)
+{
+  #define H_make_formant_bank "(" S_make_formant_bank " gens): return a new formant-bank generator."
+
+  mus_any *ge = NULL;
+  mus_any **gens;
+  int i, j, size;
+
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(arg), arg, XEN_ARG_1, S_make_formant_bank, "a vector of formant generators");
+  /* need size and elements -> mus_any */
+
+  size = XEN_VECTOR_LENGTH(arg);
+  if (size == 0) return(XEN_FALSE);
+  gens = (mus_any **)calloc(size, sizeof(mus_any *));
+
+  for (i = 0, j = 0; i < size; i++)
+    {
+      XEN g;
+      g = XEN_VECTOR_REF(arg, i);
+      if (MUS_XEN_P(g))
+	{
+	  mus_any *fg;
+	  fg = XEN_TO_MUS_ANY(g);
+	  if (mus_formant_p(fg))
+	    gens[j++] = fg;
+	}
+    }
+  if (j > 0)
+    ge = mus_make_formant_bank(j, gens);
+  free(gens);
+
+  if (ge) 
+    return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(XEN_FALSE);
+}
+
+
+static XEN g_formant_bank_p(XEN os) 
+{
+  #define H_formant_bank_p "(" S_formant_bank_p " gen): " PROC_TRUE " if gen is a " S_formant_bank
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_formant_bank_p(XEN_TO_MUS_ANY(os)))));
+}
+
+
 
 
 /* ---------------- firmant ---------------- */
@@ -12012,21 +12078,39 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
 	{
 	  mus_any **frms;
 	  vct *v;
-	  s7_pointer gains, input_expr;
+	  s7_pointer gains, input_expr, bank;
 
 	  gains = s7_cadr_value(sc, callee);
-	  XEN_ASSERT_TYPE(MUS_VCT_P(gains), gains, 1, "formant-bank", "a vct");
+	  XEN_ASSERT_TYPE(MUS_VCT_P(gains) || XEN_FALSE_P(gains), gains, 1, "formant-bank", "a vct or #f");
 	  v = XEN_TO_VCT(gains);
-	  frms = s7_vector_to_gens(sc, s7_value(sc, caddr(callee)), 2, "formant-bank");
-	  input_expr = cadddr(callee);
 
-	  for (; pos < end; pos++)
+	  input_expr = cadddr(callee);
+	  
+	  bank = s7_value(sc, caddr(callee));
+	  if (XEN_VECTOR_P(bank))
 	    {
-	      (*step) = pos;
-	      out_any_2(pos, mus_env(e) * mus_formant_bank(v->length, v->data, frms, s7_call_direct_to_real_and_free(sc, input_expr)), 0, "outa");
+	      frms = s7_vector_to_gens(sc, s7_value(sc, caddr(callee)), 2, "formant-bank");
+	      for (; pos < end; pos++)
+		{
+		  (*step) = pos;
+		  out_any_2(pos, mus_env(e) * mus_formant_bank(v->length, v->data, frms, s7_call_direct_to_real_and_free(sc, input_expr)), 0, "outa");
+		}
+	      (*step) = end;
+	      free(frms); 
 	    }
-	  (*step) = end;
-	  free(frms); 
+	  else
+	    {
+	      mus_any *fbank;
+	      mus_float_t *amps = NULL;
+	      fbank = XEN_TO_MUS_ANY(bank);
+	      if (v) amps = v->data;
+	      for (; pos < end; pos++)
+		{
+		  (*step) = pos;
+		  out_any_2(pos, mus_env(e) * mus_formant_bank_wrapped(fbank, amps, s7_call_direct_to_real_and_free(sc, input_expr)), 0, "outa");
+		}
+	      (*step) = end;
+	    }
 	  return(args);
 	}
 
@@ -16340,6 +16424,9 @@ XEN_NARGIFY_1(g_formant_p_w, g_formant_p)
 XEN_ARGIFY_4(g_make_formant_w, g_make_formant)
 XEN_ARGIFY_3(g_formant_w, g_formant)
 
+XEN_NARGIFY_1(g_formant_bank_p_w, g_formant_bank_p)
+XEN_NARGIFY_1(g_make_formant_bank_w, g_make_formant_bank)
+
 XEN_NARGIFY_1(g_firmant_p_w, g_firmant_p)
 XEN_ARGIFY_4(g_make_firmant_w, g_make_firmant)
 XEN_ARGIFY_3(g_firmant_w, g_firmant)
@@ -16656,6 +16743,9 @@ XEN_NARGIFY_3(g_out_bank_w, g_out_bank)
 #define g_formant_p_w g_formant_p
 #define g_make_formant_w g_make_formant
 #define g_formant_w g_formant
+
+#define g_formant_bank_p_w g_formant_bank_p
+#define g_make_formant_bank_w g_make_formant_bank
 
 #define g_firmant_p_w g_firmant_p
 #define g_make_firmant_w g_make_firmant
@@ -17173,6 +17263,10 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_formant_p,    g_formant_p_w,    1, 0, 0, H_formant_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_formant, g_make_formant_w, 0, 4, 0, H_make_formant);
   XEN_DEFINE_REAL_PROCEDURE(S_formant,      g_formant_w,      1, 2, 0, H_formant);
+
+  XEN_DEFINE_SAFE_PROCEDURE(S_formant_bank_p,    g_formant_bank_p_w,    1, 0, 0, H_formant_bank_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_formant_bank, g_make_formant_bank_w, 1, 0, 0, H_make_formant_bank);
+
   XEN_DEFINE_SAFE_PROCEDURE(S_firmant_p,    g_firmant_p_w,    1, 0, 0, H_firmant_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_firmant, g_make_firmant_w, 0, 4, 0, H_make_firmant);
   XEN_DEFINE_REAL_PROCEDURE(S_firmant,      g_firmant_w,      1, 2, 0, H_firmant);

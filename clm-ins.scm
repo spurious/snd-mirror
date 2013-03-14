@@ -2370,6 +2370,7 @@ nil doesnt print anything, which will speed up a bit the process.
 		(set! (gains k) (if (< (+ offset-gain gval) 0) 
 				    0
 				    (+ offset-gain gval)))))))
+      (set! frm-size (make-formant-bank frm-size))
 
       (if if-list-in-gain
 	  (do ((i st (+ i 1)))
@@ -2406,9 +2407,12 @@ nil doesnt print anything, which will speed up a bit the process.
 	  (fs (make-vector freq-inc))
 	  (samp 0)
 	  (fdrc 0.0))
+
       (do ((ctr 0 (+ ctr 1)))
 	  ((= ctr freq-inc))
 	(set! (fs ctr) (make-formant (* ctr bin) radius)))
+      (set! fs (make-formant-bank fs))
+
       (set! (scales 0) 0.0)
       (do ((i beg (+ i 1)))
 	  ((= i end))

@@ -657,6 +657,7 @@
 
       (let ((fb (vector frm1 frm2 frm3 frm4))
 	    (fs (vct 0.0 0.0 ampfr3 0.0)))
+	(set! fb (make-formant-bank fb))
 
 	(do ((i start (+ i pulse-samps)))
 	    ((>= i stop))
@@ -1023,6 +1024,7 @@
 
       (let ((fb (vector frm1 frm2 frm3))
 	    (fs (vct frm1f frm2f frm3f)))
+	(set! fb (make-formant-bank fb))
 
 	(do ((i start (+ i 1)))
 	    ((= i stop))
@@ -4337,6 +4339,7 @@
 
       (let ((fb (vector frm1 frm2 frm3))
 	    (fs (vct fr1 fr2 fr3)))
+	(set! fb (make-formant-bank fb))
 
 	(do ((i start (+ i 1)))
 	    ((= i stop))
@@ -4547,6 +4550,7 @@
 
     (let ((fb (vector frm1 frm2 frm3))
 	  (fs (vct fr1 fr2 fr3)))
+      (set! fb (make-formant-bank fb))
     
       (do ((i 0 (+ i 1)))
 	  ((= i 3))
@@ -4777,6 +4781,7 @@
 
       (let ((fb (vector frm1 frm2 frm3))
 	    (fs (vct fr1 fr2 fr3)))
+	(set! fb (make-formant-bank fb))
       
 	(do ((i start (+ i 1)))
 	    ((= i stop))
@@ -5009,6 +5014,7 @@
 
       (let ((fb (vector frm1 frm2 frm3 frm4))
 	    (fs (vct fr1 fr2 fr3 fr4)))
+	(set! fb (make-formant-bank fb))
 
 	(do ((i start (+ i 1)))
 	    ((= i stop))
@@ -5476,6 +5482,7 @@
 	   (vib-index (hz->radians -100)))
       (let ((fb (vector frm1 frm2 frm3))
 	    (fs (vct fr1 fr2 fr3)))
+	(set! fb (make-formant-bank fb))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
@@ -5855,6 +5862,7 @@
 	  (rnd (make-rand-interp 400 (hz->radians 10))))
       (let ((fb (vector frm1 frm2 frm3 frm4))
 	    (fs (vct fr1 fr2 fr3 fr4)))
+	(set! fb (make-formant-bank fb))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (let* ((frq (+ (env frqf)
@@ -6059,6 +6067,7 @@
 	(let ((fb (vector frm1 frm2 frm3))
 	      (fs (make-vct 3)))
 	  (set! (fs 2) fr3)
+	  (set! fb (make-formant-bank fb))
 
 	  (do ((i start (+ i 1)))
 	      ((= i stop))
@@ -7981,6 +7990,7 @@
 	  (fr5 (* 2 (sin (hz->radians 7500)))))
       (let ((fb (vector frm1 frm2 frm3 frm4 frm5))
 	    (fs (vct fr1 fr2 fr3 fr4 fr5)))
+	(set! fb (make-formant-bank fb))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)

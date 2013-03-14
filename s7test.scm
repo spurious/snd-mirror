@@ -727,6 +727,7 @@
 (test (equal? '#(1.0+1.0i) (vector 1.0+1.0i)) #t)
 (test (equal? (list 1.0+1.0i) '(1.0+1.0i)) #t)
 (test (equal? '((())) (list (list (list)))) #t)
+(test (equal? '((())) (cons (cons () ()) ())) #t)
 (test (equal? car car) #t)
 (test (equal? car cdr) #f)
 (test (let ((x (lambda () 1))) (equal? x x)) #t)
@@ -1869,7 +1870,9 @@
   (define (f21) (set! (-s7-symbol-table-locked?) #f) (+ 1 2) 4) (f21) (test (f21) 4)
   (define (f21a) (set! (-s7-symbol-table-locked?) #f) (+ 1 2) 4) (test (f21a) 4) (test (let () (f21a)) 4)
   (define (f22) (begin (display ":") (display (object->string 2)) (display ":"))) (test (with-output-to-string (lambda () (f22))) ":2:")
-  (define (f23 a b) (list a b)) (define (f24 x y) (f23 (car x) (car y))) (define (f25 x y) (f23 (cdr x) (cdr y)))
+  (define (f23 a b) (list a b))
+  (define (f24 x y) (f23 (car x) (car y)))
+  (define (f25 x y) (f23 (cdr x) (cdr y)))
   (test (f24 '(1 2) '(3 4)) '(1 3)) (test (f25 '(1 2) '(3 4)) '((2) (4)))
   (define (f24a s1 s2 s3) (+ (* s1 s2) (* (- 1.0 s1) s3))) (test (f24a 2.0 3.0 4.0) 2.0)
   (let () (define (a b) (define c 1) (+ b c)) (define (tst) (a 2)) (tst) (test (tst) 3))
@@ -16763,6 +16766,8 @@ in s7:
 (test (apply append (apply map list-tail '(((1 2) (3 4))) '((1)))) '((3 4)))
 (test (apply append (apply map values '(((1)) ((2))) '(((1 2) (3 4))))) '((1) 1 2 (2) 3 4))
 (test (apply append (apply map values '((1 2) (3 4)) '(((1 2) (3 4))))) '(1 2 1 2 3 4 3 4))
+(test (apply append '((1) () (2 3 4) (5 6) ())) '(1 2 3 4 5 6))
+(test (apply append '((1) () (2 3 4) (5 6) 7)) '(1 2 3 4 5 6 . 7))
 
 (test (apply +) 0)
 (test (apply + #f) 'error)
@@ -26408,6 +26413,8 @@ func
 ;;; with-environment
 ;;; environment->list
 ;;; outer-environment
+;;; environment-ref
+;;; environment-set!
 
 (test (let () (length (current-environment))) 0)
 (test (let ((a 1) (b 2) (c 3)) (length (current-environment))) 3)
@@ -26542,6 +26549,25 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (arg)
    (test (open-environment arg) 'error))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i pi abs macroexpand '() #<eof> #<unspecified> #f '#(()) (list 1 2 3) '(1 . 2) "hi" '((a . 1))))
+
+(let ()
+  (let ((_xxx_ 0))
+    (let ((e (current-environment)))
+      (for-each
+       (lambda (arg)
+	 (environment-set! e '_xxx_ arg)
+	 (test (environment-ref e '_xxx_) arg))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i pi abs macroexpand '() #<eof> #<unspecified> #f '#(()) (list 1 2 3) '(1 . 2) "hi" '((a . 1)))))))
+
+(test (environment-ref) 'error)
+(test (environment-ref a b c) 'error)
+(test (environment-set!) 'error)
+(test (environment-set! a b) 'error)
+(for-each
+ (lambda (arg)
+   (test (environment-ref arg 'a) 'error)
+   (test (environment-set! arg 'a 1) 'error))
  (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i pi abs macroexpand '() #<eof> #<unspecified> #f '#(()) (list 1 2 3) '(1 . 2) "hi" '((a . 1))))
 
 (for-each

@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 9
-#define MUS_DATE "4-Mar-13"
+#define MUS_REVISION 10
+#define MUS_DATE "14-Mar-13"
 
 /* isn't mus_env_interp backwards? */
 
@@ -231,7 +231,6 @@ MUS_EXPORT mus_any *mus_make_delay(int size, mus_float_t *line, int line_size, m
 MUS_EXPORT bool mus_delay_p(mus_any *ptr);
 MUS_EXPORT bool mus_delay_line_p(mus_any *gen); /* added 2-Mar-03 for tap error checks */
 MUS_EXPORT mus_float_t mus_delay_tick(mus_any *ptr, mus_float_t input);
-MUS_EXPORT mus_float_t mus_delay_tick_noz(mus_any *ptr, mus_float_t input);
 MUS_EXPORT mus_float_t mus_delay_unmodulated_noz(mus_any *ptr, mus_float_t input);
 
 MUS_EXPORT mus_float_t mus_comb(mus_any *gen, mus_float_t input, mus_float_t pm);
@@ -332,6 +331,11 @@ MUS_EXPORT bool mus_formant_p(mus_any *ptr);
 MUS_EXPORT void mus_set_formant_radius_and_frequency(mus_any *ptr, mus_float_t radius, mus_float_t frequency);
 MUS_EXPORT mus_float_t mus_formant_with_frequency(mus_any *ptr, mus_float_t input, mus_float_t freq_in_radians);
 MUS_EXPORT mus_float_t mus_formant_bank(int size, mus_float_t *amps, mus_any **formants, mus_float_t inval);
+
+MUS_EXPORT mus_float_t mus_formant_bank_wrapped(mus_any *bank, mus_float_t *amps, mus_float_t inval);
+MUS_EXPORT mus_float_t mus_formant_bank_wrapped_with_inputs(mus_any *bank, mus_float_t *amps, mus_float_t *inval);
+MUS_EXPORT mus_any *mus_make_formant_bank(int size, mus_any **formants);
+MUS_EXPORT bool mus_formant_bank_p(mus_any *g);
 
 MUS_EXPORT mus_float_t mus_firmant(mus_any *ptr, mus_float_t input);
 MUS_EXPORT mus_any *mus_make_firmant(mus_float_t frequency, mus_float_t radius);
@@ -585,6 +589,8 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 14-Mar:     added formant-bank generator.
+ *             removed mus_delay_tick_noz.
  * 4-Mar:      added moving_max generator.
  *             removed the unstable filter check in make_two_pole.
  * 21-Jan-13:  changed mus_formant_bank parameters.

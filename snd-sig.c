@@ -4161,11 +4161,6 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   if (sf == NULL) return(XEN_TRUE);
 
-  reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
-  if (reporting) start_progress_report(cp);
-  rpt4 = MAX_BUFFER_SIZE / 4;
-  ss->stopped_explicitly = false;
-
 #if HAVE_SCHEME
   {
   s7_pointer arg_list;
@@ -4318,6 +4313,11 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
     }
 
   /* fprintf(stderr, "body: %s, %d %d\n", s7_object_to_c_string(s7, body), s7_function_choice_is_direct(s7, body), s7_function_choice_is_indirect(s7, body)); */
+
+  reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
+  if (reporting) start_progress_report(cp);
+  rpt4 = MAX_BUFFER_SIZE / 4;
+  ss->stopped_explicitly = false;
 
   for (kp = 0; kp < num; kp++)
     {

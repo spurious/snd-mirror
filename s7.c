@@ -1006,12 +1006,14 @@ typedef struct s7_cell {
     struct {
       s7_Int length;
       s7_pointer *elements;
+      /* in the normal vector case, the rest is unneeded, but is_multidimension checks whether dim_info is null
+       */
       union {
 	s7_vdims_t *dim_info;
 	unsigned int entries;          
       } vextra;
-      s7_pointer (*hash_func)(s7_scheme *sc, s7_pointer table, s7_pointer key);
-      unsigned int fill_ptr;
+      s7_pointer (*hash_func)(s7_scheme *sc, s7_pointer table, s7_pointer key); /* only used if vector is a hash-table */
+      unsigned int fill_ptr;                                                    /* used only in global env (a vector) */
     } vector;
     
     struct {
@@ -1743,11 +1745,6 @@ static int t_optimized = T_OPTIMIZED;
  *   since this is only relevant to symbols, this bit is used below in several other non-intersecting ways
  */
 
-/* not currently used? */
-#define T_SMALL_INT                   T_GENSYM
-/* #define is_small_int(p)               ((typeflag(p) & T_SMALL_INT) != 0)
- */
-
 #define T_SIMPLE_ARGS                 T_GENSYM
 #define has_simple_args(p)            ((typeflag(p) & T_SIMPLE_ARGS) != 0)
 #define set_simple_args(p)            typeflag(p) |= T_SIMPLE_ARGS
@@ -2369,7 +2366,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 0
+#if 1
 #if 0
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -5409,13 +5406,17 @@ s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, 
 static s7_pointer g_environment_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_environment_ref "(environment-ref! env sym) returns the value of the symbol sym in the environment env"
-  s7_pointer sym;
+  s7_pointer e, sym;
+
+  e = car(args);
+  if (!is_environment(e))
+    return(s7_wrong_type_arg_error(sc, "environment-ref", 1, e, "an environment"));
 
   sym = cadr(args);
   if (!is_symbol(sym))
-    return(s7_wrong_type_arg_error(sc, "environment ref", 2, sym, "a symbol"));
+    return(s7_wrong_type_arg_error(sc, "environment-ref", 2, sym, "a symbol"));
 
-  return(s7_environment_ref(sc, car(args), sym));
+  return(s7_environment_ref(sc, e, sym));
 }
 
 
@@ -5423,17 +5424,18 @@ static s7_pointer g_environment_set(s7_scheme *sc, s7_pointer args)
 {
   /* (let ((a 1)) (set! ((current-environment) 'a) 32) a) */
   #define H_environment_set "(environment-set! env sym val) sets the symbol sym's value in the environment env to val"
-  s7_pointer sym;
+  s7_pointer e, sym;
+
+  e = car(args);
+  if (!is_environment(e))
+    return(s7_wrong_type_arg_error(sc, "environment-set!", 1, e, "an environment"));
 
   sym = cadr(args);
   if (!is_symbol(sym))
     return(s7_wrong_type_arg_error(sc, "environment set!", 2, sym, "a symbol"));
 
-  return(s7_environment_set(sc, car(args), sym, caddr(args)));
+  return(s7_environment_set(sc, e, sym, caddr(args)));
 }
-
-/* TODO: doc/test environment-ref|set! 
- */
 
 
 static s7_pointer reverse_slots(s7_scheme *sc, s7_pointer list)
@@ -46255,6 +46257,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	else push_stack(sc, OP_SIMPLE_DO_STEP, sc->args, code);
 
 	sc->code = fcdr(code);
+	/*
+	if ((optimize_data(caddr(car(sc->code))) == HOP_SAFE_CLOSURE_STAR_S) ||
+	    (optimize_data(caddr(car(sc->code))) == HOP_SAFE_CLOSURE_STAR_SA))
+	  fprintf(stderr, "%s %s %s\n", opt_name(car(sc->code)), opt_name(caddr(car(sc->code))), DISPLAY_80(sc->code)); 
+	 -> lots of the form ((outa i (green-noise-interp gen)))
+	*/
+
 	goto BEGIN;
       }
 
@@ -47681,7 +47690,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      /* -------------------------------------------------------------------------------- */
 
-
+	      /* TODO: check these -- maybe the arity==2 case is common enough */
 	    case OP_SAFE_CLOSURE_STAR_SS:
 	      if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2))
 		{
@@ -50184,6 +50193,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_SAFE_C_CZ:
 	      push_stack(sc, OP_SAFE_C_SZ_1, cadr(code), code);
 	      sc->code = caddr(code);
+	      /*
+h_safe_c_c_opssq: 406777 (18.779755)
+h_safe_c_s_op_s_opssqq: 406704 (18.776385)
+h_safe_c_c_opcq: 210114 (9.700375)
+h_safe_c_s_opcq: 149775 (6.914692)
+h_safe_c_opssq_opssq: 101904 (4.704622)
+h_safe_c_c_opsq: 44073 (2.034727)
+h_safe_c_opssq: 21869 (1.009630)
+	      */
 	      goto OPT_EVAL;
 	      
 	      
@@ -50232,6 +50250,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_SAFE_C_SZ:
 	      push_stack(sc, OP_SAFE_C_SZ_1, finder(sc, cadr(code)), code);
 	      sc->code = caddr(code);
+	      /* 
+h_safe_c_opssq_opcq: 44999 (8.842145)
+h_safe_c_opcq_opcq: 33648 (6.611713)
+h_safe_c_s_opcsq: 21160 (4.157865)
+h_safe_c_opssq: 18522 (3.639508)
+h_safe_c_c_opssq: 17640 (3.466198)
+
+h_safe_c_opssq_opssq: 633361 (16.789138)
+h_safe_c_opcq_s: 508456 (13.478155)
+h_safe_c_sss: 208976 (5.539537)
+h_safe_c_s_opcq: 186320 (4.938972)
+h_safe_c_opssq: 184730 (4.896824)
+h_safe_c_opssq_opcq: 133199 (3.530840)
+h_safe_c_a: 93275 (2.472534)
+h_safe_c_opsq_s: 85116 (2.256256)
+h_safe_c_opcq_opcq: 84479 (2.239370)
+h_safe_c_aaaa: 45208 (1.198374)
+
+	       */
 	      goto OPT_EVAL;
 	      
 	      
@@ -50298,6 +50335,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_SAFE_C_ZS:
 	      push_stack(sc, OP_SAFE_C_ZS_1, finder(sc, caddr(code)), code);
 	      sc->code = cadr(code);
+	      /*
+h_safe_c_opcq_s: 185225 (13.405616)
+safe_c_opssq: 95658 (6.923226)
+h_safe_c_c_opsq: 92017 (6.659709)
+h_safe_c_opcq_c: 82054 (5.938639)
+h_safe_c_s_opsq: 46920 (3.395824)
+h_safe_c_aaa: 46055 (3.333220)
+h_safe_c_opcq: 42201 (3.054288)
+h_safe_c_sss: 37246 (2.695671)
+h_safe_c_a: 26495 (1.917569)
+	       */
 	      goto OPT_EVAL;
 	      
 
@@ -50356,9 +50404,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = caddr(code);
 	      goto OPT_EVAL;
 	      /*
-		h_safe_c_aaa: 752184 (34.597648)
-		h_safe_c_sz: 508302 (23.379989)
-		h_safe_c_zzz: 352800 (16.227479)
+h_safe_c_aaa: 383729 (17.802600)
+h_safe_c_s_op_s_opssqq: 270461 (12.547681)
+h_safe_c_xzx: 139356 (6.465238)
+h_safe_c_xxz: 47187 (2.189179)
+h_safe_c_zxz: 22050 (1.022981)
 	       */
 	      
 	      
@@ -52225,7 +52275,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       car(sc->T2_2) = sc->value;
       sc->value = c_call(sc->code)(sc, sc->T2_1);
       goto START;
-      /* 51323: 10948986 */
       
 
       /* --------------- */
@@ -62413,7 +62462,7 @@ s7_scheme *s7_init(void)
 	s7_pointer p;
 	small_ints[i] = &cells[i];
 	p = small_ints[i];
-	typeflag(p) = T_IMMUTABLE | T_INTEGER | T_SMALL_INT;
+	typeflag(p) = T_IMMUTABLE | T_INTEGER;
 	heap_location(p) = NOT_IN_HEAP;
 	integer(p) = i;
       }
@@ -63571,6 +63620,17 @@ s7_scheme *s7_init(void)
  *
  * direct (all_x) let/case/etc [map/for-each/sort and so on]
  *
+ * dox oneline opt -> outa i safe-closure_star_s|sa where all syms are not steppers:
+ *   get sym vals, on each step, push to return, set code/args, call body (s: 1.1 mil, sa: 434k, sc: 539k)
+ *
+ * opAq cases: opcq_a, ca, as, sa, opcq_opaaaq
+ *
+ * M. in listener -> code if its scheme, and maybe autohelp as in html?
+ *
+ * add formant-bank obj, make-formant-bank, use it as arg to formant-bank (keeping old vector code), also formant-bank?
+ *   maybe other banks as well.  (move frame/mixer out of mus-gen!) mus_formant_bank_with_inputs.
+ *   need to keep vector of gens, so bank is a wrapper with 6 arrays for the state (rotated via 3 assignments).
+ *   mus_formant_bank has mus_any** now -- will need to change.
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
  * bench    42736 8752 8051 7725 6515 5194 4364
@@ -63580,5 +63640,5 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14    9
  * lat        229   63   52   47   42   40   34
  * t502        90   43   39   36   29   23   20
- * calls           275  207  175  115   89   71  71
+ * calls           275  207  175  115   89   71   69
  */

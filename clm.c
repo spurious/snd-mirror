@@ -122,13 +122,13 @@ struct mus_any_class {
 
 enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_TABLE_LOOKUP, MUS_SQUARE_WAVE, MUS_SAWTOOTH_WAVE, MUS_TRIANGLE_WAVE, MUS_PULSE_TRAIN,
-      MUS_RAND, MUS_RAND_INTERP, MUS_ASYMMETRIC_FM, MUS_ONE_ZERO, MUS_ONE_POLE, MUS_TWO_ZERO, MUS_TWO_POLE, MUS_FORMANT,
+      MUS_RAND, MUS_RAND_INTERP, MUS_ASYMMETRIC_FM, MUS_ONE_ZERO, MUS_ONE_POLE, MUS_TWO_ZERO, MUS_TWO_POLE, MUS_FORMANT, 
       MUS_SRC, MUS_GRANULATE, MUS_WAVE_TRAIN, 
       MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
       MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
       MUS_MOVING_AVERAGE, MUS_MOVING_MAX, MUS_NSIN, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
-      MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS, MUS_POLYWAVE, MUS_FIRMANT,
+      MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS, MUS_POLYWAVE, MUS_FIRMANT, MUS_FORMANT_BANK,
       MUS_INITIAL_GEN_TAG};
 
 mus_any_class *mus_generator_class(mus_any *ptr) {return(ptr->core);}
@@ -3504,7 +3504,7 @@ mus_float_t mus_delay_tick(mus_any *ptr, mus_float_t input)
 }
 
 
-mus_float_t mus_delay_tick_noz(mus_any *ptr, mus_float_t input)
+static mus_float_t mus_delay_tick_noz(mus_any *ptr, mus_float_t input)
 {
   dly *gen = (dly *)ptr;
   gen->line[gen->loc] = input;
@@ -5627,17 +5627,6 @@ mus_float_t mus_formant(mus_any *ptr, mus_float_t input)
 static mus_float_t run_formant(mus_any *ptr, mus_float_t input, mus_float_t unused) {return(mus_formant(ptr, input));}
 
 
-mus_float_t mus_formant_bank(int size, mus_float_t *amps, mus_any **formants, mus_float_t inval)
-{
-  int i;
-  mus_float_t sum = 0.0;
-  for (i = 0; i < size; i++) 
-    if (formants[i])
-      sum += (amps[i] * mus_formant(formants[i], inval));
-  return(sum);
-}
-
-
 static void mus_set_formant_radius_and_frequency_in_radians(mus_any *ptr, mus_float_t radius, mus_float_t freq_in_radians)
 {
   frm *gen = (frm *)ptr;
@@ -5718,6 +5707,252 @@ mus_any *mus_make_formant(mus_float_t frequency, mus_float_t radius)
   gen->core = &FORMANT_CLASS;
   mus_set_formant_radius_and_frequency((mus_any *)gen, radius, frequency);
   return((mus_any *)gen);
+}
+
+
+/* ---------------- formant-bank ---------------- */
+
+mus_float_t mus_formant_bank(int size, mus_float_t *amps, mus_any **formants, mus_float_t inval)
+{
+  /* this is the old version that takes an array of mus_any pointers */
+  int i;
+  mus_float_t sum = 0.0;
+  for (i = 0; i < size; i++) 
+    if (formants[i])
+      sum += (amps[i] * mus_formant(formants[i], inval));
+  return(sum);
+}
+
+
+typedef struct {
+  mus_any_class *core;
+  int size;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2;
+  mus_any **gens;
+} frm_bank;
+
+
+static int free_formant_bank(mus_any *ptr) 
+{
+  if (ptr) 
+    {
+      frm_bank *f = (frm_bank *)ptr;
+      if (f->x0) {free(f->x0); f->x0 = NULL;}
+      if (f->x1) {free(f->x1); f->x1 = NULL;}
+      if (f->x2) {free(f->x2); f->x2 = NULL;}
+      if (f->y0) {free(f->y0); f->y0 = NULL;}
+      if (f->y1) {free(f->y1); f->y1 = NULL;}
+      if (f->y2) {free(f->y2); f->y2 = NULL;}
+      if (f->gens) {free(f->gens); f->gens = NULL;}
+      free(ptr); 
+    }
+  return(0);
+}
+
+
+static mus_float_t run_formant_bank(mus_any *ptr, mus_float_t input, mus_float_t unused) 
+{
+  return(mus_formant_bank_wrapped(ptr, NULL, input));
+}
+
+
+static mus_long_t formant_bank_length(mus_any *ptr)
+{
+  return(((frm_bank *)ptr)->size);
+}
+
+
+static void formant_bank_reset(mus_any *ptr)
+{
+  frm_bank *f = (frm_bank *)ptr;
+  int size;
+  size = f->size;
+  memset((void *)(f->x0), 0, size * sizeof(mus_float_t));
+  memset((void *)(f->x1), 0, size * sizeof(mus_float_t));
+  memset((void *)(f->x2), 0, size * sizeof(mus_float_t));
+  memset((void *)(f->y0), 0, size * sizeof(mus_float_t));
+  memset((void *)(f->y1), 0, size * sizeof(mus_float_t));
+  memset((void *)(f->y2), 0, size * sizeof(mus_float_t));
+}
+
+
+static bool formant_bank_equalp(mus_any *p1, mus_any *p2)
+{
+  frm_bank *f1 = (frm_bank *)p1;
+  frm_bank *f2 = (frm_bank *)p2;
+  int i, size;
+
+  if (f1 == f2) return(true);
+  if (f1->size != f2->size) return(false);
+  size = f1->size;
+
+  for (i = 0; i < size; i++)
+    if (!frm_equalp(f1->gens[i], f2->gens[i]))
+      return(false);
+  
+  /* now check the locals... */
+  return(true);
+}
+
+
+static char *describe_formant_bank(mus_any *ptr)
+{
+  frm_bank *gen = (frm_bank *)ptr;
+  char *describe_buffer;
+  describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s size: %d",
+	       mus_name(ptr),
+	       gen->size);
+  return(describe_buffer);
+}
+
+
+/* ideally we'd use the name mus_formant_bank for the main function, but it is already in use */
+
+mus_float_t mus_formant_bank_wrapped(mus_any *fbank, mus_float_t *amps, mus_float_t inval)
+{
+  frm_bank *bank = (frm_bank *)fbank;
+  int i;
+  mus_float_t sum = 0.0;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2;
+  frm **gens;
+
+  x0 = bank->x0;
+  x1 = bank->x1;
+  x2 = bank->x2;
+  y0 = bank->y0;
+  y1 = bank->y1;
+  y2 = bank->y2;
+  gens = (frm **)(bank->gens);
+
+  if (amps)
+    {
+      for (i = 0; i < bank->size; i++)
+	{
+	  x0[i] = gens[i]->gain * inval;
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	}
+    }
+  else
+    {
+      for (i = 0; i < bank->size; i++)
+	{
+	  x0[i] = gens[i]->gain * inval;
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += y0[i];
+	}
+    }
+
+  bank->x2 = x1;
+  bank->x1 = x0;
+  bank->x0 = x2;
+
+  bank->y2 = y1;
+  bank->y1 = y0;
+  bank->y0 = y2;
+
+  return(sum);
+}
+
+mus_float_t mus_formant_bank_wrapped_with_inputs(mus_any *fbank, mus_float_t *amps, mus_float_t *inval)
+{
+  frm_bank *bank = (frm_bank *)fbank;
+  int i;
+  mus_float_t sum = 0.0;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2;
+  frm **gens;
+
+  x0 = bank->x0;
+  x1 = bank->x1;
+  x2 = bank->x2;
+  y0 = bank->y0;
+  y1 = bank->y1;
+  y2 = bank->y2;
+  gens = (frm **)(bank->gens);
+
+  if (amps)
+    {
+      for (i = 0; i < bank->size; i++)
+	{
+	  x0[i] = gens[i]->gain * inval[i];
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	}
+    }
+  else
+    {
+      for (i = 0; i < bank->size; i++)
+	{
+	  x0[i] = gens[i]->gain * inval[i];
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += y0[i];
+	}
+    }
+
+  bank->x2 = x1;
+  bank->x1 = x0;
+  bank->x0 = x2;
+
+  bank->y2 = y1;
+  bank->y1 = y0;
+  bank->y0 = y2;
+
+  return(sum);
+}
+
+static mus_any_class FORMANT_BANK_CLASS = {
+  MUS_FORMANT_BANK,
+  (char *)S_formant_bank,
+  &free_formant_bank,
+  &describe_formant_bank,
+  &formant_bank_equalp,
+  0, 0,
+  &formant_bank_length, 0,
+  0, 0, 
+  0, 0,
+  0, 0,
+  0, 0,
+  &run_formant_bank,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  0, 0, 0, 0,
+  0, 0,
+  0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0,
+  &formant_bank_reset,
+  0
+};
+
+
+mus_any *mus_make_formant_bank(int size, mus_any **formants)
+{
+  frm_bank *gen;
+  int i;
+
+  gen = (frm_bank *)calloc(1, sizeof(frm_bank));
+  gen->core = &FORMANT_BANK_CLASS;
+  gen->size = size;
+
+  gen->gens = (mus_any **)malloc(size * sizeof(mus_any *));
+  for (i = 0; i < size; i++)
+    gen->gens[i] = formants[i];
+
+  gen->x0 = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+  gen->x1 = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+  gen->x2 = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+  gen->y0 = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+  gen->y1 = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+  gen->y2 = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+
+  return((mus_any *)gen);
+}
+
+bool mus_formant_bank_p(mus_any *ptr)
+{
+  return((ptr) && 
+	 (ptr->core->type == MUS_FORMANT_BANK));
 }
 
 

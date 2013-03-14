@@ -534,17 +534,19 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 (define srate mus-sound-srate)
 
-(define (channels obj)
-  (if (string? obj)
-      (mus-sound-chans obj)
-      (mus-channels obj)))
+(define (channels . args)
+  (let ((obj (car args)))
+    (if (string? obj)
+	(mus-sound-chans obj)
+	(mus-channels obj))))
 
 ;;; I think length is handled by s7 for all types
 
-(define (frames obj)
-  (if (string? obj)
-      (mus-sound-frames obj)
-      (length obj)))
+(define (frames . args)
+  (let ((obj (car args)))
+    (if (string? obj)
+	(mus-sound-frames obj)
+	(length obj))))
 
 
 (define snd-print display)

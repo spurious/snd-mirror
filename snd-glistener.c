@@ -630,7 +630,8 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 				}
 			      else 
 				{
-				  if ((key == snd_K_question) && (state & snd_ControlMask))
+				  if (((key == snd_K_question) && (state & snd_ControlMask)) ||
+				      ((key == snd_K_period) && (state & snd_MetaMask)))
 				    {
 				      text_at_cursor(listener_text);
 				    }

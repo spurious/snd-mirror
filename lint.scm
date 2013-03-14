@@ -2079,7 +2079,6 @@
 		  (let* ((head-value (symbol->value head)) ; head might be "arity"!
 			 (arity (procedure-arity head-value))
 			 (args (length (cdr form))))
-		    
 		    (if (pair? arity)
 			(if (< args (car arity))
 			    (lint-format "~A needs ~A~D argument~A:~A" 

@@ -502,26 +502,6 @@
 		((= i (channels snd)))
 	      (scale-channel (/ norm mx) beg dur snd i))))))
 
-(define* (my-find-channel func (beg 0) snd chn edpos)
-  (let ((end (frames snd chn edpos)))
-    (call-with-exit
-     (lambda (return)
-       (let ((reader (make-sampler beg snd chn 1 edpos)))
-	 (do ((i beg (+ i 1)))
-	     ((= i end) #f)
-	   (if (func (next-sample reader))
-	       (return i))))))))
-
-(define* (my-count-matches func (beg 0) snd chn edpos)
-  (let ((end (frames snd chn edpos))
-	(matches 0)
-	(reader (make-sampler beg snd chn 1 edpos)))
-    (do ((i beg (+ i 1)))
-	((= i end) matches)
-      (if (func (next-sample reader))
-	  (set! matches (+ matches 1))))))
-
-
 
 (if (and (> (length (script-args)) 0)
 	 (> (script-arg) 0))
@@ -3841,7 +3821,7 @@
 			(if (not (= (mix-position mx) (* 44100 61000))) (snd-display #__line__ ";bigger mix to: ~A" (mix-position mx))))
 		      (snd-display #__line__ ";no mix tag from mix-sound"))
 		  (undo 2))
-		(let ((res (my-find-channel (lambda (y) (not (= y 0.0))))))
+		(let ((res (find-channel (lambda (y) (not (= y 0.0))))))
 		  (if (or (not res)
 			  (> (cadr res) 100))
 		      (snd-display #__line__ ";bigger find not 0.0: ~A" res)))
@@ -4807,7 +4787,7 @@
 
   (define (check-maxamp caller-line ind val name)
     (if (fneq (maxamp ind 0) val) (snd-display #__line__ ";maxamp amp-env ~A: ~A should be ~A" name (maxamp ind) val))
-    (let ((pos (my-find-channel (lambda (y) (>= (abs y) (- val .0001)))))
+    (let ((pos (find-channel (lambda (y) (>= (abs y) (- val .0001)))))
 	  (maxpos (maxamp-position ind 0)))
       (if (not pos) 
 	  (snd-display #__line__ ";actual maxamp ~A vals not right" name)
@@ -6145,9 +6125,9 @@ EDITS: 5
 	(if (comment index) (snd-display #__line__ ";oboe: comment ~A?" (comment index)))
 	(if (not (= (string-length "asdf") 4)) (snd-display #__line__ ";string-length: ~A?" (string-length "asdf")))
 	(if (not (string=? (short-file-name index) "oboe.snd")) (snd-display #__line__ ";oboe short name: ~S?" (short-file-name index)))
-	(let ((matches (my-count-matches (lambda (a) (> a .125)))))
+	(let ((matches (count-matches (lambda (a) (> a .125)))))
 	  (if (not (= matches 1313)) (snd-display #__line__ ";count-matches: ~A?" matches)))
-	(let ((spot (my-find-channel (lambda (a) (> a .13)))))
+	(let ((spot (find-channel (lambda (a) (> a .13)))))
 	  (if (or (not spot) (not (= spot 8862))) (snd-display #__line__ ";find: ~A?" spot)))
 	(set! (right-sample) 3000) 
 	(let ((samp (right-sample)))
@@ -7338,7 +7318,7 @@ EDITS: 5
 	
 	(let ((ind1 (open-sound "oboe.snd"))
 	      (ind2 (open-sound "2.snd")))
-	  (let ((ups1 (my-count-matches (lambda (n) (> n .1)) 0 ind1 0))
+	  (let ((ups1 (count-matches (lambda (n) (> n .1)) 0 ind1 0))
 		(ups2 (let ((count 0)
 			    (len (frames ind1))
 			    (reader (make-sampler 0 ind1)))
@@ -7348,8 +7328,8 @@ EDITS: 5
 			      (set! count (+ count 1)))))))
 	    (if (not (= ups1 ups2))
 		(snd-display #__line__ ";scan-chan: ~A ~A?" ups1 ups2))
-	    (set! ups1 (my-count-matches (lambda (n) (> n .03)) 0 ind2 0))
-	    (set! ups2 (my-count-matches (lambda (n) (> n .03)) 0 ind2 1))
+	    (set! ups1 (count-matches (lambda (n) (> n .03)) 0 ind2 0))
+	    (set! ups2 (count-matches (lambda (n) (> n .03)) 0 ind2 1))
 	    (let ((ups3 (let ((count 0)
 			      (len (frames ind2))
 			      (reader (make-sampler 0 ind2 0)))
@@ -7434,12 +7414,12 @@ EDITS: 5
 	  (test-edpos maxamp 'maxamp (lambda () (scale-by 2.0 ind1 0)) ind1)
 	  (test-edpos frames 'frames (lambda () (src-sound 2.0 1.0 ind1 0)) ind1)
 	  (test-edpos 
-	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) (my-count-matches (lambda (n1) (> n1 .1)) 0 snd chn edpos)) 
-	   'my-count-matches
+	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) (count-matches (lambda (n1) (> n1 .1)) 0 snd chn edpos)) 
+	   'count-matches
 	   (lambda () (scale-by 2.0 ind1 0)) 
 	   ind1)
 	  (test-edpos 
-	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) (my-find-channel (lambda (n2) (> n2 .1)) 0 snd chn edpos))
+	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) (find-channel (lambda (n2) (> n2 .1)) 0 snd chn edpos))
 	   'find
 	   (lambda () (delete-samples 0 100 ind1 0))
 	   ind1)
@@ -20159,7 +20139,7 @@ EDITS: 2
 				    :jitter 0.0))
 	  (clm-channel gen)
 	  (if (fneq (maxamp) .462) (snd-display #__line__ ";granulate ramped 4: ~A" (maxamp)))
-	  (let ((vals (my-count-matches (lambda (y) (not (= y 0.0))))))
+	  (let ((vals (count-matches (lambda (y) (not (= y 0.0))))))
 	    (if (> (abs (- vals 1104)) 10) (snd-display #__line__ ";granulate ramped 4 not 0.0: ~A" vals)))
 	  (if (or (not (vequal (channel->vct 2203 10)
 			       (vct 0.000 0.000 0.110 0.110 0.110 0.111 0.111 0.111 0.111 0.111)))
@@ -26661,8 +26641,8 @@ EDITS: 2
 		   (lambda () (convolve-with "z.snd" 1.0))
 		   (lambda args args))
 	    (if (not (= (edit-position ind 0) 0)) (snd-display #__line__ ";convolve z: ~A" (edit-position ind 0)))
-	    (let ((matches (my-count-matches (lambda (y) (> y .1)))))
-	      (if (not (= matches 0)) (snd-display #__line__ ";count z: ~A" matches)))
+	    (let ((matches (count-matches (lambda (y) (> y .1)))))
+	      (if matches (snd-display #__line__ ";count z: ~A" matches)))
 	    (let* ((reader (make-sampler 0))
 		   (val (next-sample reader))
 		   (str (format #f "~A" reader)))
@@ -31226,9 +31206,9 @@ EDITS: 2
 	       (fill-vct hi (if (scan-channel (lambda (y) (> y .1)))
 				1.0 0.0))
 	       (if (not (vequal hi (vct 1.0 1.0 1.0))) (snd-display #__line__ ";fill-vct with scan-channel (opt ~A): ~A" n hi)))
-	     (let ((val (my-find-channel (lambda (y) (my-find-channel (lambda (n6) (> n6 .1)))))))
+	     (let ((val (find-channel (lambda (y) (find-channel (lambda (n6) (> n6 .1)))))))
 	       (if (not (= val 0)) (snd-display #__line__ ";find with find: ~A" val)))
-	     (let ((val (my-find-channel (lambda (y) (scan-channel (lambda (n7) (> n7 .1)))))))
+	     (let ((val (find-channel (lambda (y) (scan-channel (lambda (n7) (> n7 .1)))))))
 	       (if (not (= val 0)) (snd-display #__line__ ";find with scan-channel: ~A" val)))
 	     (let ((mx (maxamp ind 0))
 		   (val (scan-channel (lambda (y) (map-channel (lambda (n) (* n 2.0))) #t))))
@@ -31245,8 +31225,6 @@ EDITS: 2
 	       (if (not (= (edit-position ind 0) 2)) (snd-display #__line__ ";map+map edit-pos: ~A" (edit-position ind 0)))
 	       (if (fneq mx (/ (maxamp ind 0 1) 2)) (snd-display #__line__ ";map+map max 1: ~A ~A" mx (maxamp ind 0 1)))
 	       (revert-sound ind))
-	     
-	     
 	     )
 	   (list 0 5))
 	  (close-sound ind))
@@ -47353,6 +47331,7 @@ EDITS: 1
 ;; 1-Mar-13:  #(1 1 3 1 40 117 5 1 439 1 16 1 2 11 20 1 109 1 2 159 43 100 1 1263 0 0 0 1 2 78)  ;  24
 ;; 7-Mar-13:  #(1 1 2 2 41 119 6 1 396 1 16 1 2 10 23 1 103 1 1 144 41  85 1 1215 0 0 0 1 1 80)  ;  23
 ;; 8-Mar-13:  #(1 1 3 2 32 102 5 1 363 1 15 1 2 10 21 1  90 1 1 144 41  87 1 1219 0 0 0 1 2 78)  ;  22
+;; 14-Mar-13: #(1 1 2 1 31  98 5 1 353 1 17 1 2 10 16 1  89 1 1 120 41  81 1 1159 0 0 0 1 1 77)  ;  21
 
 ;;; -------- cleanup temp files
 
@@ -47579,22 +47558,21 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-10-Mar-13:
-71,023,439,028
-9,158,526,017  s7.c:eval [/home/bil/snd-13/snd]
-6,359,182,826  ???:sin [/lib64/libm-2.12.so]
-3,667,818,728  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+14-Mar-13:
+69,497,719,961
+8,699,013,905  s7.c:eval [/home/bil/snd-13/snd]
+6,356,608,402  ???:sin [/lib64/libm-2.12.so]
+3,668,482,351  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
 2,970,010,915  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
-2,758,890,566  clm.c:mus_src [/home/bil/snd-13/snd]
-2,561,828,856  ???:cos [/lib64/libm-2.12.so]
-2,327,317,731  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
-1,967,069,790  s7.c:gc [/home/bil/snd-13/snd]
-1,585,058,070  clm.c:mus_formant [/home/bil/snd-13/snd]
-1,531,138,058  s7.c:eval'2 [/home/bil/snd-13/snd]
-1,451,762,432  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
-1,202,874,486  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
-1,152,085,753  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+2,759,347,695  clm.c:mus_src [/home/bil/snd-13/snd]
+2,560,508,551  ???:cos [/lib64/libm-2.12.so]
+1,807,216,159  s7.c:gc [/home/bil/snd-13/snd]
+1,517,625,141  s7.c:eval'2 [/home/bil/snd-13/snd]
+1,481,491,716  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+1,435,489,374  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
+1,224,712,361  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+1,152,081,109  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
 1,148,979,082  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
-1,053,724,226  s7.c:s7_make_real [/home/bil/snd-13/snd]
-
+1,038,193,094  s7.c:s7_make_real [/home/bil/snd-13/snd]
+  958,202,654  clm.c:mus_formant [/home/bil/snd-13/snd]
 |#
