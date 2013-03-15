@@ -2367,11 +2367,11 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 #define WITH_COUNTS 0
 #if WITH_COUNTS
 #if 1
-#if 0
+#if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
 static void clear_counts(void) {int i; for (i = 0; i < NUM_COUNTS; i++) counts[i] = 0;}
-static void tick(int this) {counts[this]++;}
+void tick(int this) {counts[this]++;}
 static void report_counts(s7_scheme *sc)
 {
   int i, mx, mxi, total = 0;
@@ -2394,12 +2394,11 @@ static void report_counts(s7_scheme *sc)
 	}
       if (mx > 0)
 	{
-
+	  /*
 	  if (mx > total/100) 
 	    fprintf(stderr, "%s: %d (%f)\n", opt_names[mxi], mx, 100.0*mx/(float)total);
-	    /*
+	  */
 	  fprintf(stderr, "%d: %d\n", mxi, mx);
-	    */
 	  counts[mxi] = 0;
 	}
       else happy = false;
@@ -3246,8 +3245,31 @@ static void mark_vector_1(s7_pointer p, s7_Int top)
     }
   else
     {
-      while (tp < tend) 
-	S7_MARK(*tp++);
+      if ((top & 1) == 0)
+	{
+	  while (tp < tend) 
+	    {
+	      S7_MARK(*tp++);
+	      S7_MARK(*tp++);
+	    }
+	}
+      else
+	{
+	  if ((top % 3) == 0)
+	    {
+	      while (tp < tend) 
+		{
+		  S7_MARK(*tp++);
+		  S7_MARK(*tp++);
+		  S7_MARK(*tp++);
+		}
+	    }
+	  else
+	    {
+	      while (tp < tend) 
+		S7_MARK(*tp++);
+	    }
+	}
     }
 }
 
@@ -50193,15 +50215,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_SAFE_C_CZ:
 	      push_stack(sc, OP_SAFE_C_SZ_1, cadr(code), code);
 	      sc->code = caddr(code);
-	      /*
-h_safe_c_c_opssq: 406777 (18.779755)
-h_safe_c_s_op_s_opssqq: 406704 (18.776385)
-h_safe_c_c_opcq: 210114 (9.700375)
-h_safe_c_s_opcq: 149775 (6.914692)
-h_safe_c_opssq_opssq: 101904 (4.704622)
-h_safe_c_c_opsq: 44073 (2.034727)
-h_safe_c_opssq: 21869 (1.009630)
-	      */
 	      goto OPT_EVAL;
 	      
 	      
@@ -50250,25 +50263,7 @@ h_safe_c_opssq: 21869 (1.009630)
 	    case HOP_SAFE_C_SZ:
 	      push_stack(sc, OP_SAFE_C_SZ_1, finder(sc, cadr(code)), code);
 	      sc->code = caddr(code);
-	      /* 
-h_safe_c_opssq_opcq: 44999 (8.842145)
-h_safe_c_opcq_opcq: 33648 (6.611713)
-h_safe_c_s_opcsq: 21160 (4.157865)
-h_safe_c_opssq: 18522 (3.639508)
-h_safe_c_c_opssq: 17640 (3.466198)
-
-h_safe_c_opssq_opssq: 633361 (16.789138)
-h_safe_c_opcq_s: 508456 (13.478155)
-h_safe_c_sss: 208976 (5.539537)
-h_safe_c_s_opcq: 186320 (4.938972)
-h_safe_c_opssq: 184730 (4.896824)
-h_safe_c_opssq_opcq: 133199 (3.530840)
-h_safe_c_a: 93275 (2.472534)
-h_safe_c_opsq_s: 85116 (2.256256)
-h_safe_c_opcq_opcq: 84479 (2.239370)
-h_safe_c_aaaa: 45208 (1.198374)
-
-	       */
+	      /* splitting out the all_x cases here and elsewhere saves nothing */
 	      goto OPT_EVAL;
 	      
 	      
@@ -50335,19 +50330,7 @@ h_safe_c_aaaa: 45208 (1.198374)
 	    case HOP_SAFE_C_ZS:
 	      push_stack(sc, OP_SAFE_C_ZS_1, finder(sc, caddr(code)), code);
 	      sc->code = cadr(code);
-	      /*
-h_safe_c_opcq_s: 185225 (13.405616)
-safe_c_opssq: 95658 (6.923226)
-h_safe_c_c_opsq: 92017 (6.659709)
-h_safe_c_opcq_c: 82054 (5.938639)
-h_safe_c_s_opsq: 46920 (3.395824)
-h_safe_c_aaa: 46055 (3.333220)
-h_safe_c_opcq: 42201 (3.054288)
-h_safe_c_sss: 37246 (2.695671)
-h_safe_c_a: 26495 (1.917569)
-	       */
 	      goto OPT_EVAL;
-	      
 
 	      
 	    case OP_SAFE_C_AZ:
@@ -63623,14 +63606,8 @@ s7_scheme *s7_init(void)
  * dox oneline opt -> outa i safe-closure_star_s|sa where all syms are not steppers:
  *   get sym vals, on each step, push to return, set code/args, call body (s: 1.1 mil, sa: 434k, sc: 539k)
  *
- * opAq cases: opcq_a, ca, as, sa, opcq_opaaaq
- *
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
- *
- * add formant-bank obj, make-formant-bank, use it as arg to formant-bank (keeping old vector code), also formant-bank?
- *   maybe other banks as well.  (move frame/mixer out of mus-gen!) mus_formant_bank_with_inputs.
- *   need to keep vector of gens, so bank is a wrapper with 6 arrays for the state (rotated via 3 assignments).
- *   mus_formant_bank has mus_any** now -- will need to change.
+ * maybe other banks.
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
  * bench    42736 8752 8051 7725 6515 5194 4364
@@ -63640,5 +63617,5 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14    9
  * lat        229   63   52   47   42   40   34
  * t502        90   43   39   36   29   23   20
- * calls           275  207  175  115   89   71   69
+ * calls           275  207  175  115   89   71   66
  */

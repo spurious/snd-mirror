@@ -2807,6 +2807,17 @@ static mus_float_t mus_chebyshev_t_sum_with_index(mus_float_t x, mus_float_t ind
 {
   int i;
   double x2, b, b1 = 0.0, b2 = 0.0, cx;
+  /*
+11: 1653309
+8: 686829
+2: 578809
+42: 445409
+10: 404053
+7: 285366
+9: 165395
+13: 160698
+14: 124362
+   */
 
   cx = index * cos(x);
   x2 = 2.0 * cx;
@@ -2818,6 +2829,28 @@ static mus_float_t mus_chebyshev_t_sum_with_index(mus_float_t x, mus_float_t ind
       b2 = b1;
       b1 = b;
       b = x2 * b1 - b2 + tn[i];
+    }
+  return((mus_float_t)(b - b1 * cx));
+}
+
+
+static mus_float_t mus_chebyshev_t_sum_with_even_index(mus_float_t x, mus_float_t index, int n, mus_float_t *tn)
+{
+  int i;
+  double x2, b, b1 = 0.0, b2 = 0.0, cx;
+  cx = index * cos(x);
+  x2 = 2.0 * cx;
+
+  b = tn[n - 1];
+  for (i = n - 2; i >= 0;)
+    {
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i--];
+
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i--];
     }
   return((mus_float_t)(b - b1 * cx));
 }
@@ -2868,7 +2901,7 @@ static mus_float_t polyw_first_3(mus_any *ptr, mus_float_t fm)
   cx = cos(x);
   return((2.0 * cx * tn[2] + tn[1]) * cx - tn[2]);
 
-  /* b = x2 * b1 - b2;, then return(b - b1 *cx)
+  /* b = x2 * b1 - b2;, then return(b - b1 * cx)
    *   but x2 = 2 * cx, so b1*(x2 - cx) -> b1 * cx
    *   and the final recursion unrolls.  The old code
    *   (which thought tn[0] might not be 0.0) was:
@@ -2967,6 +3000,16 @@ static mus_float_t polyw_first(mus_any *ptr, mus_float_t fm)
   ph = gen->phase;
   gen->phase += (gen->freq + fm);
   return(mus_chebyshev_t_sum_with_index(ph, gen->index, gen->n, gen->coeffs));
+}
+
+
+static mus_float_t polyw_first_even(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  mus_float_t ph;
+  ph = gen->phase;
+  gen->phase += (gen->freq + fm);
+  return(mus_chebyshev_t_sum_with_even_index(ph, gen->index, gen->n, gen->coeffs));
 }
 
 
@@ -3126,14 +3169,21 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
 			    gen->polyw = polyw_first_6;
 			  else 
 			    {
-			      gen->polyw = polyw_first;
+			      if ((n & 1) == 0)
+				gen->polyw = polyw_first_even;
+			      else gen->polyw = polyw_first;
 			    }
 			}
 		    }
 		}
 	    }
 	}
-      else gen->polyw = polyw_first;
+      else 
+	{
+	  if ((n & 1) == 0)
+	    gen->polyw = polyw_first_even;
+	  else gen->polyw = polyw_first;
+	}
     }
   else 
     {
@@ -5827,11 +5877,28 @@ mus_float_t mus_formant_bank_wrapped(mus_any *fbank, mus_float_t *amps, mus_floa
 
   if (amps)
     {
-      for (i = 0; i < bank->size; i++)
+      if ((bank->size & 1) == 0)
 	{
-	  x0[i] = gens[i]->gain * inval;
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
-	  sum += amps[i] * y0[i];
+	  for (i = 0; i < bank->size; i++)
+	    {
+	      x0[i] = gens[i]->gain * inval;
+	      y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	      sum += amps[i] * y0[i];
+	      
+	      i++;
+	      x0[i] = gens[i]->gain * inval;
+	      y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	      sum += amps[i] * y0[i];
+	    }
+	}
+      else
+	{
+	  for (i = 0; i < bank->size; i++)
+	    {
+	      x0[i] = gens[i]->gain * inval;
+	      y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	      sum += amps[i] * y0[i];
+	    }
 	}
     }
   else
@@ -5873,11 +5940,28 @@ mus_float_t mus_formant_bank_wrapped_with_inputs(mus_any *fbank, mus_float_t *am
 
   if (amps)
     {
-      for (i = 0; i < bank->size; i++)
+      if ((bank->size & 1) == 0)
 	{
-	  x0[i] = gens[i]->gain * inval[i];
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
-	  sum += amps[i] * y0[i];
+	  for (i = 0; i < bank->size; i++)
+	    {
+	      x0[i] = gens[i]->gain * inval[i];
+	      y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	      sum += amps[i] * y0[i];
+
+	      i++;
+	      x0[i] = gens[i]->gain * inval[i];
+	      y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	      sum += amps[i] * y0[i];
+	    }
+	}
+      else
+	{
+	  for (i = 0; i < bank->size; i++)
+	    {
+	      x0[i] = gens[i]->gain * inval[i];
+	      y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	      sum += amps[i] * y0[i];
+	    }
 	}
     }
   else
@@ -5954,6 +6038,8 @@ bool mus_formant_bank_p(mus_any *ptr)
   return((ptr) && 
 	 (ptr->core->type == MUS_FORMANT_BANK));
 }
+
+/* TODO: doc/test make-formant-bank */
 
 
 
@@ -6092,6 +6178,7 @@ mus_float_t mus_filter(mus_any *ptr, mus_float_t input)
   d = gen->state;
 
   d[0] = input;
+  /* here the bit checks for special cases cost as much as we save -- lots of small odd-length filters? */
   while (dp > d)
     {
       xout += (*dp) * (*xp--);
@@ -6114,11 +6201,116 @@ mus_float_t mus_fir_filter(mus_any *ptr, mus_float_t input)
   d = gen->state;
 
   (*d) = input;
-  while (dp > d)
+  if ((gen->order & 1) != 0)
     {
-      xout += (*dp) * (*ap--);
-      dprev = dp--;
-      (*dprev) = (*dp);
+      if ((gen->order % 3) == 0) /* TODO: is there a fast /3=0 routine? */
+	{
+	  if ((gen->order % 9) == 0)
+	    {
+	      while (dp > d)
+		{
+		  xout += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+		  
+		  xout += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+		  
+		  xout += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+
+		  xout += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+		  
+		  xout += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+		  
+		  xout += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+
+		  xout += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+		  
+		  xout += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+		  
+		  xout += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+		}
+	    }
+	  else
+	    {
+	      while (dp > d)
+		{
+		  xout += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+		  
+		  xout += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+		  
+		  xout += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+		}
+	    }
+	}
+      else
+	{
+	  while (dp > d)
+	    {
+	      xout += (*dp) * (*ap--);
+	      dprev = dp--;
+	      (*dprev) = (*dp);
+	    }
+	}
+    }
+  else
+    {
+      /* order is even, so skip one bounds check */
+      if ((gen->order & 2) == 0)
+	{
+	  while (dp > d)
+	    {
+	      xout += (*dp) * (*ap--);
+	      dprev = dp--;
+	      (*dprev) = (*dp);
+	      
+	      xout += (*dp) * (*ap--);
+	      dprev = dp--;
+	      (*dprev) = (*dp);
+
+	      xout += (*dp) * (*ap--);
+	      dprev = dp--;
+	      (*dprev) = (*dp);
+	      
+	      xout += (*dp) * (*ap--);
+	      dprev = dp--;
+	      (*dprev) = (*dp);
+	    }
+	}
+      else
+	{
+	  while (dp > d)
+	    {
+	      xout += (*dp) * (*ap--);
+	      dprev = dp--;
+	      (*dprev) = (*dp);
+	      
+	      xout += (*dp) * (*ap--);
+	      dprev = dp--;
+	      (*dprev) = (*dp);
+	    }
+	}
     }
   return(xout + (input * (*ap)));
 }
@@ -10705,7 +10897,6 @@ mus_float_t mus_src_20(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
     sum += srp->data[loc] * srp->coeffs[i];
   for (loc = 0; loc < stop; loc += 2, i++)
     sum += srp->data[loc] * srp->coeffs[i];
-
   return(sum * 0.5);
 }
 
@@ -10759,7 +10950,6 @@ mus_float_t mus_src_05(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
     sum += (srp->data[loc] * srp->coeffs[i]);
   for (loc = 0; loc < stop; loc++, i++)
     sum += (srp->data[loc] * srp->coeffs[i]);
-
   srp->x += 0.5;
   return(sum);
 }
@@ -12854,13 +13044,69 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
   if (pv_synthesize) 
     return((*pv_synthesize)(pv->closure));
 
-  for (i = 0; i < N2; i++)
+  if ((N2 & 1) == 0)
     {
-      pv->phaseinc[i] += pv->freqs[i];
-      pv->phases[i] += pv->phaseinc[i];
-      pv->amps[i] += pv->ampinc[i];
-      if (pv->amps[i] != 0.0)
-	sum += (pv->amps[i] * sin(pv->phases[i])); 
+      if ((N2 & 2) == 0)
+	{
+	  for (i = 0; i < N2; i++)
+	    {
+	      pv->phaseinc[i] += pv->freqs[i];
+	      pv->phases[i] += pv->phaseinc[i];
+	      pv->amps[i] += pv->ampinc[i];
+	      if (pv->amps[i] != 0.0)
+		sum += (pv->amps[i] * sin(pv->phases[i])); 
+	      
+	      i++;
+	      pv->phaseinc[i] += pv->freqs[i];
+	      pv->phases[i] += pv->phaseinc[i];
+	      pv->amps[i] += pv->ampinc[i];
+	      if (pv->amps[i] != 0.0)
+		sum += (pv->amps[i] * sin(pv->phases[i])); 
+	      
+	      i++;
+	      pv->phaseinc[i] += pv->freqs[i];
+	      pv->phases[i] += pv->phaseinc[i];
+	      pv->amps[i] += pv->ampinc[i];
+	      if (pv->amps[i] != 0.0)
+		sum += (pv->amps[i] * sin(pv->phases[i])); 
+	      
+	      i++;
+	      pv->phaseinc[i] += pv->freqs[i];
+	      pv->phases[i] += pv->phaseinc[i];
+	      pv->amps[i] += pv->ampinc[i];
+	      if (pv->amps[i] != 0.0)
+		sum += (pv->amps[i] * sin(pv->phases[i])); 
+	    }
+	}
+      else
+	{
+	  for (i = 0; i < N2; i++)
+	    {
+	      pv->phaseinc[i] += pv->freqs[i];
+	      pv->phases[i] += pv->phaseinc[i];
+	      pv->amps[i] += pv->ampinc[i];
+	      if (pv->amps[i] != 0.0)
+		sum += (pv->amps[i] * sin(pv->phases[i])); 
+	      
+	      i++;
+	      pv->phaseinc[i] += pv->freqs[i];
+	      pv->phases[i] += pv->phaseinc[i];
+	      pv->amps[i] += pv->ampinc[i];
+	      if (pv->amps[i] != 0.0)
+		sum += (pv->amps[i] * sin(pv->phases[i])); 
+	    }
+	}
+    }
+  else
+    {
+      for (i = 0; i < N2; i++)
+	{
+	  pv->phaseinc[i] += pv->freqs[i];
+	  pv->phases[i] += pv->phaseinc[i];
+	  pv->amps[i] += pv->ampinc[i];
+	  if (pv->amps[i] != 0.0)
+	    sum += (pv->amps[i] * sin(pv->phases[i])); 
+	}
     }
   return(sum);
 }
@@ -12936,7 +13182,7 @@ static mus_float_t run_hilbert(flt *gen, mus_float_t insig)
       d2 = d1;
       d1 = (*dp);
       (*dp++) = d2;
-      if (dp == dend) break;
+      /* if (dp == dend) break; */ /* it appears to be faster to skip this check, and pad the state array below so the (*dp) at the end is not illegal */
       d2 = d1;
       d1 = (*dp);
       (*dp++) = d2;
@@ -12960,13 +13206,13 @@ mus_float_t mus_ssb_am_unmodulated(mus_any *ptr, mus_float_t insig)
 {
   ssbam *gen = (ssbam *)ptr;
 #if (!HAVE_SINCOS)
-  return((mus_oscil_unmodulated(gen->cos_osc) * mus_delay_unmodulated(gen->dly, insig)) +
+  return((mus_oscil_unmodulated(gen->cos_osc) * mus_delay_unmodulated_noz(gen->dly, insig)) +
 	 (mus_oscil_unmodulated(gen->sin_osc) * run_hilbert((flt *)(gen->hilbert), insig)));
 #else
   mus_float_t cx, sx;
   sincos(gen->phase, &sx, &cx);
   gen->phase += gen->freq;
-  return((cx * mus_delay_unmodulated(gen->dly, insig)) +
+  return((cx * mus_delay_unmodulated_noz(gen->dly, insig)) +
          (((gen->shift_up) ? -sx : sx) * run_hilbert((flt *)(gen->hilbert), insig)));
 #endif
 }
@@ -12976,13 +13222,13 @@ mus_float_t mus_ssb_am(mus_any *ptr, mus_float_t insig, mus_float_t fm)
 {
   ssbam *gen = (ssbam *)ptr;
 #if (!HAVE_SINCOS)
-  return((mus_oscil_fm(gen->cos_osc, fm) * mus_delay_unmodulated(gen->dly, insig)) +
+  return((mus_oscil_fm(gen->cos_osc, fm) * mus_delay_unmodulated_noz(gen->dly, insig)) +
 	 (mus_oscil_fm(gen->sin_osc, fm) * run_hilbert((flt *)(gen->hilbert), insig)));
 #else
   mus_float_t cx, sx;
   sincos(gen->phase, &sx, &cx);
   gen->phase += (fm + gen->freq);
-  return((cx * mus_delay_unmodulated(gen->dly, insig)) +
+  return((cx * mus_delay_unmodulated_noz(gen->dly, insig)) +
          (((gen->shift_up) ? -sx : sx) * run_hilbert((flt *)(gen->hilbert), insig)));
 #endif
 }
@@ -13185,7 +13431,7 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
   gen->dly = mus_make_delay(order, NULL, order, MUS_INTERP_NONE);
 
   len = order * 2 + 1;
-  gen->coeffs = (mus_float_t *)calloc(len, sizeof(mus_float_t));
+  gen->coeffs = (mus_float_t *)calloc(len + 1, sizeof(mus_float_t));
   for (i = -order, k = 0; i <= order; i++, k++)
     {
       mus_float_t denom, num;
@@ -13195,7 +13441,7 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
 	gen->coeffs[k] = 0.0;
       else gen->coeffs[k] = (num / denom) * (0.54 + (0.46 * cos(denom / order)));
     }
-  gen->hilbert = mus_make_fir_filter(len, gen->coeffs, NULL);
+  gen->hilbert = mus_make_fir_filter(len + 1, gen->coeffs, NULL);
 
   return((mus_any *)gen);
 }

@@ -1076,14 +1076,24 @@ static int read_12bit(const char *oldname, const char *newname, char *hdr)
 
 struct g72x_state {long yl; short yu; short dms; short dml; short ap; short a[2]; short b[6]; short pk[2]; short dq[6]; short sr[2]; char td;};
 
-static short power2[15] = {1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80, 0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000};
-
 static int quan(short val)
 {
-  int i;
-  for (i = 0; i < 15; i++)
-    if (val < power2[i]) break;
-  return(i);
+  if (val < 1) return(0);
+  if (val < 2) return(1);
+  if (val < 4) return(2);
+  if (val < 8) return(3);
+  if (val < 16) return(4);
+  if (val < 32) return(5);
+  if (val < 64) return(6);
+  if (val < 128) return(7);
+  if (val < 256) return(8);
+  if (val < 512) return(9);
+  if (val < 1024) return(10);
+  if (val < 2048) return(11);
+  if (val < 4096) return(12);
+  if (val < 8192) return(13);
+  if (val < 16384) return(14);
+  return(15);
 }
 
 

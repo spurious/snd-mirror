@@ -7572,20 +7572,37 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 
 	  if (sf->runf == next_sample_value_unscaled)
 	    {
-	      for (j = 0; j < jnum; j++)
+	      /* loc: 0 last: 22049 jnum: 22050 and the like */
+	      if ((loc == 0) &&
+		  (last == (jnum - 1)))
 		{
-		  if (loc > last) 
+		  for (j = 0; j < jnum; j++)
 		    {
-		      mval = fabs(next_sound(sf));          /* sets sf->loc and most other fields */
-		      loc = sf->loc;
-		      last = sf->last;
-		      dat = sf->data;
+		      mval = fabs(dat[j]);
+		      if (mval > ymax) 
+			{
+			  ymax = mval;
+			  jpos = j;
+			}
 		    }
-		  else mval = fabs(dat[loc++]);
-		  if (mval > ymax) 
+		}
+	      else
+		{
+		  for (j = 0; j < jnum; j++)
 		    {
-		      ymax = mval;
-		      jpos = j;
+		      if (loc > last) 
+			{
+			  mval = fabs(next_sound(sf));          /* sets sf->loc and most other fields */
+			  loc = sf->loc;
+			  last = sf->last;
+			  dat = sf->data;
+			}
+		      else mval = fabs(dat[loc++]);
+		      if (mval > ymax) 
+			{
+			  ymax = mval;
+			  jpos = j;
+			}
 		    }
 		}
 	    }

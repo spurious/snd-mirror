@@ -937,15 +937,23 @@ static void deferred_region_to_temp_file(region *r)
 
 	      sf = sfs[0];
 	      d = data[0];
-	      for (j = 0, k = 0; j < len; j++, k++) 
+	      if (len < MAX_BUFFER_SIZE)
 		{
-		  if (k == MAX_BUFFER_SIZE)
+		  for (k = 0; k < len; k++) 
+		    d[k] = read_sample_to_mus_sample(sf);
+		}
+	      else
+		{
+		  for (j = 0, k = 0; j < len; j++, k++) 
 		    {
-		      err = mus_file_write(ofd, 0, k - 1, 1, data);
-		      k = 0;
-		      if (err != MUS_NO_ERROR) break;
+		      if (k == MAX_BUFFER_SIZE)
+			{
+			  err = mus_file_write(ofd, 0, k - 1, 1, data);
+			  k = 0;
+			  if (err != MUS_NO_ERROR) break;
+			}
+		      d[k] = read_sample_to_mus_sample(sf);
 		    }
-		  d[k] = read_sample_to_mus_sample(sf);
 		}
 	    }
 	  else
@@ -960,20 +968,71 @@ static void deferred_region_to_temp_file(region *r)
 		    same_lens = false;
 		    break;
 		  }
+
 	      if (same_lens)
 		{
 		  if (len > len0)
 		    len = len0 + 1;
-		  for (j = 0, k = 0; j < len; j++, k++) 
+		  if (len < MAX_BUFFER_SIZE)
 		    {
-		      if (k == MAX_BUFFER_SIZE)
+		      if (r->chans == 2)
 			{
-			  err = mus_file_write(ofd, 0, k - 1, r->chans, data);
-			  k = 0;
-			  if (err != MUS_NO_ERROR) break;
+			  for (k = 0; k < len; k++) 
+			    {
+			      data[0][k] = read_sample_to_mus_sample(sfs[0]);
+			      data[1][k] = read_sample_to_mus_sample(sfs[1]);
+			    }
 			}
-		      for (i = 0; i < r->chans; i++)
-			data[i][k] = read_sample_to_mus_sample(sfs[i]);
+		      else
+			{
+			  for (k = 0; k < len; k++) 
+			    for (i = 0; i < r->chans; i++)
+			      data[i][k] = read_sample_to_mus_sample(sfs[i]);
+			}
+		    }
+		  else
+		    {
+		      for (j = 0; j < len; j += MAX_BUFFER_SIZE)
+			{
+			  int nlen;
+			  mus_float_t *buf;
+			  snd_fd *p;
+			  nlen = len - j;
+			  if (nlen >= MAX_BUFFER_SIZE)
+			    {
+			      for (i = 0; i < r->chans; i++)
+				{
+				  buf = data[i];
+				  p = sfs[i];
+				  for (k = 0; k < MAX_BUFFER_SIZE;) 
+				    {
+				      /* we're assuming MAX_BUFFER_SIZE is divisible by 8 */
+				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample_to_mus_sample(p);
+				  }
+				}
+			      err = mus_file_write(ofd, 0, k - 1, r->chans, data);
+			      k = 0;
+			      if (err != MUS_NO_ERROR) break;
+			    }
+			  else
+			    {
+			      for (i = 0; i < r->chans; i++)
+				{
+				  buf = data[i];
+				  p = sfs[i];
+				  for (k = 0; k < nlen; k++) 
+				    buf[k] = read_sample_to_mus_sample(p);
+				}
+			      k = nlen;
+			    }
+			}
 		    }
 		}
 	      else

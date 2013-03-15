@@ -775,6 +775,7 @@ static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
   v = (vct *)imported_s7_object_value_checked(vc, vct_tag);
   if (v)
     {
+      mus_long_t dist;
       val = s7_car_value(sc, s7_cdddr(args));
       x = s7_number_to_real(sc, val);
 
@@ -796,9 +797,21 @@ static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
 	XEN_OUT_OF_RANGE_ERROR("vector-ref", 2, s7_caddr(s7_caddr(args)), "index out of range");   
       vec_el = s7_vector_elements(vec);
 
-      for (; pos < end; pos++)
-	v->data[s7_cell_integer(vec_el[pos])] = x;
-      
+      dist = end - pos;
+      if ((dist & 1) == 0)
+	{
+	  for (; pos < end; pos++)
+	    {
+	      v->data[s7_cell_integer(vec_el[pos])] = x;
+	      pos++;
+	      v->data[s7_cell_integer(vec_el[pos])] = x;
+	    }
+	}
+      else
+	{
+	  for (; pos < end; pos++)
+	    v->data[s7_cell_integer(vec_el[pos])] = x;
+	}
       (*step) = end;
       return(args);
     }
@@ -912,8 +925,21 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 
 		      if (is_sampler(obj))
 			{
-			  for (; pos < end; pos++) 
-			    v->data[pos] = sampler(gen);
+			  mus_long_t dist;
+			  dist = end - pos;
+			  if ((dist & 1) == 0)
+			    {
+			      for (; pos < end;) 
+				{
+				  v->data[pos++] = sampler(gen);
+				  v->data[pos++] = sampler(gen);
+				}
+			    }
+			  else
+			    {
+			      for (; pos < end; pos++) 
+				v->data[pos] = sampler(gen);
+			    }
 			  (*step) = end;
 			  return(args);
 			}
@@ -1168,8 +1194,49 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
       d1 = v1->data;
       d2 = v2->data;
       dend = (mus_float_t *)(v1->data + lim);
-      while (d1 != dend) (*d1++) += (*d2++);  /* is this safe? or perhaps use (*d1++) = (*d1) + (*d2++)? */
-
+      if ((lim & 1) != 0)
+	{
+	  while (d1 != dend) 
+	    (*d1++) += (*d2++);  /* is this safe? or perhaps use (*d1++) = (*d1) + (*d2++)? */
+	}
+      else
+	{
+	  if ((lim & 2) != 0)
+	    {
+	      while (d1 != dend) 
+		{
+		  (*d1++) += (*d2++);
+		  (*d1++) += (*d2++);
+		}
+	    }
+	  else
+	    {
+	      if ((lim & 4) != 0)
+		{
+		  while (d1 != dend) 
+		    {
+		      (*d1++) += (*d2++);
+		      (*d1++) += (*d2++);
+		      (*d1++) += (*d2++);
+		      (*d1++) += (*d2++);
+		    }
+		}
+	      else
+		{
+		  while (d1 != dend) 
+		    {
+		      (*d1++) += (*d2++);
+		      (*d1++) += (*d2++);
+		      (*d1++) += (*d2++);
+		      (*d1++) += (*d2++);
+		      (*d1++) += (*d2++);
+		      (*d1++) += (*d2++);
+		      (*d1++) += (*d2++);
+		      (*d1++) += (*d2++);
+		    }
+		}
+	    }
+	}
       /* for (i = 0; i < lim; i++) v1->data[i] += v2->data[i]; */
     }
   return(obj1);
@@ -1188,7 +1255,20 @@ static XEN g_vct_subtract(XEN obj1, XEN obj2)
   v1 = XEN_TO_VCT(obj1);
   v2 = XEN_TO_VCT(obj2);
   lim = MIN(v1->length, v2->length);
-  for (i = 0; i < lim; i++) v1->data[i] -= v2->data[i];
+  if ((lim & 1) == 0)
+    {
+      for (i = 0; i < lim; i++) 
+	{
+	  v1->data[i] -= v2->data[i];
+	  i++;
+	  v1->data[i] -= v2->data[i];
+	}
+    }
+  else
+    {
+      for (i = 0; i < lim; i++) 
+	v1->data[i] -= v2->data[i];
+    }
   return(obj1);
 }
 
@@ -1212,7 +1292,21 @@ static XEN g_vct_scale(XEN obj1, XEN obj2)
   else
     {
       if (scl != 1.0)
-	for (i = 0; i < v1->length; i++) v1->data[i] *= scl;
+	{
+	  if ((v1->length & 1) == 0)
+	    {
+	      for (i = 0; i < v1->length;) 
+		{
+		  v1->data[i++] *= scl;
+		  v1->data[i++] *= scl;
+		}
+	    }
+	  else
+	    {
+	      for (i = 0; i < v1->length; i++) 
+		v1->data[i] *= scl;
+	    }
+	}
     }
   return(obj1);
 }
@@ -1254,7 +1348,35 @@ static XEN g_vct_fill(XEN obj1, XEN obj2)
   scl = XEN_TO_C_DOUBLE(obj2);
   if (scl == 0.0)
     memset((void *)(v1->data), 0, v1->length * sizeof(mus_float_t));
-  else for (i = 0; i < v1->length; i++) v1->data[i] = scl;
+  else 
+    {
+      if ((v1->length & 1) == 0)
+	{
+	  if ((v1->length & 2) == 0)
+	    {
+	      for (i = 0; i < v1->length;) 
+		{
+		  v1->data[i++] = scl;
+		  v1->data[i++] = scl;
+		  v1->data[i++] = scl;
+		  v1->data[i++] = scl;
+		}
+	    }
+	  else
+	    {
+	      for (i = 0; i < v1->length;) 
+		{
+		  v1->data[i++] = scl;
+		  v1->data[i++] = scl;
+		}
+	    }
+	}
+      else
+	{
+	  for (i = 0; i < v1->length; i++) 
+	    v1->data[i] = scl;
+	}
+    }
   return(obj1);
 }
 
