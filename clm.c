@@ -2808,27 +2808,92 @@ static mus_float_t mus_chebyshev_t_sum_with_index(mus_float_t x, mus_float_t ind
   int i;
   double x2, b, b1 = 0.0, b2 = 0.0, cx;
   /*
-11: 1653309
 8: 686829
 2: 578809
 42: 445409
-10: 404053
-7: 285366
-9: 165395
-13: 160698
 14: 124362
    */
+  cx = index * cos(x);
+  x2 = 2.0 * cx;
+
+  /* Tn calc */
+  b = tn[n - 1];
+  i = n - 2;
+  while (i >= 4)
+    {
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i--];
+
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i--];
+
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i--];
+
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i--];
+    }
+  for (; i >= 0; i--)
+    {
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i];
+    }
+  return((mus_float_t)(b - b1 * cx));
+}
+
+
+static mus_float_t mus_chebyshev_t_sum_with_index_2(mus_float_t x, mus_float_t index, int n, mus_float_t *tn)
+{
+  int i;
+  double x2, b, b1 = 0.0, b2 = 0.0, cx;
 
   cx = index * cos(x);
   x2 = 2.0 * cx;
 
   /* Tn calc */
   b = tn[n - 1];
-  for (i = n - 2; i >= 0; i--)
+  for (i = n - 2; i >= 0;)
     {
       b2 = b1;
       b1 = b;
-      b = x2 * b1 - b2 + tn[i];
+      b = x2 * b1 - b2 + tn[i--];
+
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i--];
+    }
+  return((mus_float_t)(b - b1 * cx));
+}
+
+
+static mus_float_t mus_chebyshev_t_sum_with_index_3(mus_float_t x, mus_float_t index, int n, mus_float_t *tn)
+{
+  int i;
+  double x2, b, b1 = 0.0, b2 = 0.0, cx;
+
+  cx = index * cos(x);
+  x2 = 2.0 * cx;
+
+  /* Tn calc */
+  b = tn[n - 1];
+  for (i = n - 2; i >= 0;)
+    {
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i--];
+
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i--];
+
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i--];
     }
   return((mus_float_t)(b - b1 * cx));
 }
@@ -2978,6 +3043,26 @@ static mus_float_t polyw_first(mus_any *ptr, mus_float_t fm)
   ph = gen->phase;
   gen->phase += (gen->freq + fm);
   return(mus_chebyshev_t_sum_with_index(ph, gen->index, gen->n, gen->coeffs));
+}
+
+
+static mus_float_t polyw_f2(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  mus_float_t ph;
+  ph = gen->phase;
+  gen->phase += (gen->freq + fm);
+  return(mus_chebyshev_t_sum_with_index_2(ph, gen->index, gen->n, gen->coeffs));
+}
+
+
+static mus_float_t polyw_f3(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  mus_float_t ph;
+  ph = gen->phase;
+  gen->phase += (gen->freq + fm);
+  return(mus_chebyshev_t_sum_with_index_3(ph, gen->index, gen->n, gen->coeffs));
 }
 
 
@@ -3137,7 +3222,14 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
 			    gen->polyw = polyw_first_6;
 			  else 
 			    {
-			      gen->polyw = polyw_first;
+			      if (((n - 1) % 3) == 0)
+				gen->polyw = polyw_f3;
+			      else
+				{
+				  if (((n - 1) % 2) == 0)
+				    gen->polyw = polyw_f2;
+				  else gen->polyw = polyw_first;
+				}
 			    }
 			}
 		    }
@@ -3146,7 +3238,14 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
 	}
       else 
 	{
-	  gen->polyw = polyw_first;
+	  if (((n - 1) % 3) == 0)
+	    gen->polyw = polyw_f3;
+	  else
+	    {
+	      if (((n - 1) % 2) == 0)
+		gen->polyw = polyw_f2;
+	      else gen->polyw = polyw_first;
+	    }
 	}
     }
   else 
@@ -5826,7 +5925,7 @@ static char *describe_formant_bank(mus_any *ptr)
 mus_float_t mus_formant_bank_wrapped(mus_any *fbank, mus_float_t *amps, mus_float_t inval)
 {
   frm_bank *bank = (frm_bank *)fbank;
-  int i;
+  int i, size4;
   mus_float_t sum = 0.0;
   mus_float_t *x0, *x1, *x2, *y0, *y1, *y2;
   frm **gens;
@@ -5838,36 +5937,65 @@ mus_float_t mus_formant_bank_wrapped(mus_any *fbank, mus_float_t *amps, mus_floa
   y1 = bank->y1;
   y2 = bank->y2;
   gens = (frm **)(bank->gens);
+  size4 = bank->size - 4;
+  i = 0;
 
   if (amps)
     {
-      if ((bank->size & 1) == 0)
+      while (i <= size4)
 	{
-	  for (i = 0; i < bank->size; i++)
-	    {
-	      x0[i] = gens[i]->gain * inval;
-	      y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
-	      sum += amps[i] * y0[i];
-	      
-	      i++;
-	      x0[i] = gens[i]->gain * inval;
-	      y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
-	      sum += amps[i] * y0[i];
-	    }
+	  x0[i] = gens[i]->gain * inval;
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
+
+	  x0[i] = gens[i]->gain * inval;
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
+
+	  x0[i] = gens[i]->gain * inval;
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
+
+	  x0[i] = gens[i]->gain * inval;
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
 	}
-      else
+      for (; i < bank->size; i++)
 	{
-	  for (i = 0; i < bank->size; i++)
-	    {
-	      x0[i] = gens[i]->gain * inval;
-	      y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
-	      sum += amps[i] * y0[i];
-	    }
+	  x0[i] = gens[i]->gain * inval;
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += amps[i] * y0[i];
 	}
     }
   else
     {
-      for (i = 0; i < bank->size; i++)
+      while (i <= size4)
+	{
+	  x0[i] = gens[i]->gain * inval;
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+
+	  x0[i] = gens[i]->gain * inval;
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+
+	  x0[i] = gens[i]->gain * inval;
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+
+	  x0[i] = gens[i]->gain * inval;
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+	}
+      for (; i < bank->size; i++)
 	{
 	  x0[i] = gens[i]->gain * inval;
 	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
@@ -5889,7 +6017,7 @@ mus_float_t mus_formant_bank_wrapped(mus_any *fbank, mus_float_t *amps, mus_floa
 mus_float_t mus_formant_bank_wrapped_with_inputs(mus_any *fbank, mus_float_t *amps, mus_float_t *inval)
 {
   frm_bank *bank = (frm_bank *)fbank;
-  int i;
+  int i, size4;
   mus_float_t sum = 0.0;
   mus_float_t *x0, *x1, *x2, *y0, *y1, *y2;
   frm **gens;
@@ -5900,37 +6028,66 @@ mus_float_t mus_formant_bank_wrapped_with_inputs(mus_any *fbank, mus_float_t *am
   y0 = bank->y0;
   y1 = bank->y1;
   y2 = bank->y2;
-  gens = (frm **)(bank->gens);
+  gens = (frm **)(bank->gens);			
+  size4 = bank->size - 4;
+  i = 0;
 
   if (amps)
     {
-      if ((bank->size & 1) == 0)
+      while (i <= size4)
 	{
-	  for (i = 0; i < bank->size; i++)
-	    {
-	      x0[i] = gens[i]->gain * inval[i];
-	      y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
-	      sum += amps[i] * y0[i];
+	  x0[i] = gens[i]->gain * inval[i];
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
 
-	      i++;
-	      x0[i] = gens[i]->gain * inval[i];
-	      y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
-	      sum += amps[i] * y0[i];
-	    }
+	  x0[i] = gens[i]->gain * inval[i];
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
+
+	  x0[i] = gens[i]->gain * inval[i];
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
+
+	  x0[i] = gens[i]->gain * inval[i];
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += amps[i] * y0[i];
+	  i++;
 	}
-      else
+      for (; i < bank->size; i++)
 	{
-	  for (i = 0; i < bank->size; i++)
-	    {
-	      x0[i] = gens[i]->gain * inval[i];
-	      y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
-	      sum += amps[i] * y0[i];
-	    }
+	  x0[i] = gens[i]->gain * inval[i];
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += amps[i] * y0[i];
 	}
     }
   else
     {
-      for (i = 0; i < bank->size; i++)
+      while (i <= size4)
+	{
+	  x0[i] = gens[i]->gain * inval[i];
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+
+	  x0[i] = gens[i]->gain * inval[i];
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+
+	  x0[i] = gens[i]->gain * inval[i];
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+
+	  x0[i] = gens[i]->gain * inval[i];
+	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  sum += y0[i];
+	  i++;
+	}
+      for (; i < bank->size; i++)
 	{
 	  x0[i] = gens[i]->gain * inval[i];
 	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
@@ -6129,22 +6286,15 @@ typedef struct {
 
 mus_float_t mus_filter(mus_any *ptr, mus_float_t input)
 {
+  return((((flt *)ptr)->filtw)(ptr, input));
+}
+
+
+static mus_float_t filter_eight(mus_any *ptr, mus_float_t input)
+{
   flt *gen = (flt *)ptr;
   mus_float_t xout = 0.0;
   mus_float_t *xp, *yp, *dp, *d, *dprev;
-
-  /*
-9: 928022
-3: 846273
-5: 469028
-13: 418950
-11: 364812
-7: 116228
-2: 54829
-8: 17639
-   */
-  if (!(gen->y)) return(mus_fir_filter(ptr, input));  
-  if (!(gen->x)) return(mus_iir_filter(ptr, input));
 
   xp = (mus_float_t *)(gen->x + gen->order - 1);
   yp = (mus_float_t *)(gen->y + gen->order - 1);
@@ -6152,7 +6302,127 @@ mus_float_t mus_filter(mus_any *ptr, mus_float_t input)
   d = gen->state;
 
   d[0] = input;
-  /* here the bit checks for special cases cost as much as we save -- lots of small odd-length filters? */
+
+  xout += (*dp) * (*xp--);
+  d[0] -= (*dp) * (*yp--);
+  dprev = dp--;
+  (*dprev) = (*dp);
+  
+  xout += (*dp) * (*xp--);
+  d[0] -= (*dp) * (*yp--);
+  dprev = dp--;
+  (*dprev) = (*dp);
+  
+  xout += (*dp) * (*xp--);
+  d[0] -= (*dp) * (*yp--);
+  dprev = dp--;
+  (*dprev) = (*dp);
+  
+  xout += (*dp) * (*xp--);
+  d[0] -= (*dp) * (*yp--);
+  dprev = dp--;
+  (*dprev) = (*dp);
+  
+  xout += (*dp) * (*xp--);
+  d[0] -= (*dp) * (*yp--);
+  dprev = dp--;
+  (*dprev) = (*dp);
+  
+  xout += (*dp) * (*xp--);
+  d[0] -= (*dp) * (*yp--);
+  dprev = dp--;
+  (*dprev) = (*dp);
+  
+  xout += (*dp) * (*xp--);
+  d[0] -= (*dp) * (*yp--);
+  dprev = dp--;
+  (*dprev) = (*dp);
+  
+  xout += (*dp) * (*xp--);
+  d[0] -= (*dp) * (*yp--);
+  dprev = dp--;
+  (*dprev) = (*dp);
+
+  return(xout + (d[0] * (*xp)));
+}
+
+
+static mus_float_t filter_four(mus_any *ptr, mus_float_t input)
+{
+  flt *gen = (flt *)ptr;
+  mus_float_t xout = 0.0;
+  mus_float_t *xp, *yp, *dp, *d, *dprev;
+
+  xp = (mus_float_t *)(gen->x + gen->order - 1);
+  yp = (mus_float_t *)(gen->y + gen->order - 1);
+  dp = (mus_float_t *)(gen->state + gen->order - 1);
+  d = gen->state;
+
+  d[0] = input;
+
+  xout += (*dp) * (*xp--);
+  d[0] -= (*dp) * (*yp--);
+  dprev = dp--;
+  (*dprev) = (*dp);
+  
+  xout += (*dp) * (*xp--);
+  d[0] -= (*dp) * (*yp--);
+  dprev = dp--;
+  (*dprev) = (*dp);
+  
+  xout += (*dp) * (*xp--);
+  d[0] -= (*dp) * (*yp--);
+  dprev = dp--;
+  (*dprev) = (*dp);
+  
+  xout += (*dp) * (*xp--);
+  d[0] -= (*dp) * (*yp--);
+  dprev = dp--;
+  (*dprev) = (*dp);
+  
+  return(xout + (d[0] * (*xp)));
+}
+
+
+static mus_float_t filter_two(mus_any *ptr, mus_float_t input)
+{
+  flt *gen = (flt *)ptr;
+  mus_float_t xout = 0.0;
+  mus_float_t *xp, *yp, *dp, *d, *dprev;
+
+  xp = (mus_float_t *)(gen->x + gen->order - 1);
+  yp = (mus_float_t *)(gen->y + gen->order - 1);
+  dp = (mus_float_t *)(gen->state + gen->order - 1);
+  d = gen->state;
+
+  d[0] = input;
+
+  xout += (*dp) * (*xp--);
+  d[0] -= (*dp) * (*yp--);
+  dprev = dp--;
+  (*dprev) = (*dp);
+  
+  xout += (*dp) * (*xp--);
+  d[0] -= (*dp) * (*yp--);
+  dprev = dp--;
+  (*dprev) = (*dp);
+
+  return(xout + (d[0] * (*xp)));
+}
+
+
+static mus_float_t filter_n(mus_any *ptr, mus_float_t input)
+{
+  flt *gen = (flt *)ptr;
+  mus_float_t xout = 0.0;
+  mus_float_t *xp, *yp, *dp, *d, *dprev;
+
+  xp = (mus_float_t *)(gen->x + gen->order - 1);
+  yp = (mus_float_t *)(gen->y + gen->order - 1);
+  dp = (mus_float_t *)(gen->state + gen->order - 1);
+  d = gen->state;
+
+  d[0] = input;
   while (dp > d)
     {
       xout += (*dp) * (*xp--);
@@ -6322,39 +6592,6 @@ static mus_float_t fir_8(mus_any *ptr, mus_float_t input)
 }
 
 
-static mus_float_t fir_4(mus_any *ptr, mus_float_t input)
-{
-  mus_float_t xout = 0.0;
-  flt *gen = (flt *)ptr;
-  mus_float_t *ap, *dp, *d, *dprev;
-
-  ap = (mus_float_t *)(gen->x + gen->order - 1);
-  dp = (mus_float_t *)(gen->state + gen->order - 1);
-  d = gen->state;
-
-  (*d) = input;
-  while (dp > d)
-    {
-      xout += (*dp) * (*ap--);
-      dprev = dp--;
-      (*dprev) = (*dp);
-      
-      xout += (*dp) * (*ap--);
-      dprev = dp--;
-      (*dprev) = (*dp);
-      
-      xout += (*dp) * (*ap--);
-      dprev = dp--;
-      (*dprev) = (*dp);
-      
-      xout += (*dp) * (*ap--);
-      dprev = dp--;
-      (*dprev) = (*dp);
-    }
-  return(xout + (input * (*ap)));
-}
-
-
 static mus_float_t fir_2(mus_any *ptr, mus_float_t input)
 {
   mus_float_t xout = 0.0;
@@ -6382,6 +6619,12 @@ static mus_float_t fir_2(mus_any *ptr, mus_float_t input)
 
 mus_float_t mus_iir_filter(mus_any *ptr, mus_float_t input)
 {
+  return((((flt *)ptr)->filtw)(ptr, input));
+}
+
+
+static mus_float_t iir_n(mus_any *ptr, mus_float_t input)
+{
   flt *gen = (flt *)ptr;
   mus_float_t *ap, *dp, *d, *dprev;
 
@@ -6398,6 +6641,7 @@ mus_float_t mus_iir_filter(mus_any *ptr, mus_float_t input)
     }
   return(*d);
 }
+
 
 static mus_float_t run_filter(mus_any *ptr, mus_float_t input, mus_float_t unused) {return(mus_filter(ptr, input));}
 static mus_float_t run_fir_filter(mus_any *ptr, mus_float_t input, mus_float_t unused) {return(mus_fir_filter(ptr, input));}
@@ -6711,11 +6955,70 @@ static mus_any *make_filter(mus_any_class *cls, const char *name, int order, mus
 	  gen->state = (mus_float_t *)calloc(order, sizeof(mus_float_t));
 	  gen->state_allocated = true;
 	}
+
+      if (cls == &FILTER_CLASS)
+	{
+	  if (!ycoeffs)
+	    cls = &FIR_FILTER_CLASS;
+	  else 
+	    {
+	      if (!xcoeffs)
+		cls = &IIR_FILTER_CLASS;
+	    }
+	}
       gen->core = cls;
       gen->order = order;
       gen->allocated_size = order;
       gen->x = xcoeffs;
       gen->y = ycoeffs;
+
+      order--;
+      if (cls == &FILTER_CLASS)
+	{
+	  if (order == 2)
+	    gen->filtw = filter_two;
+	  else
+	    {
+	      if (order == 8)
+		gen->filtw = filter_eight;
+	      else
+		{
+		  if (order == 4)
+		    gen->filtw = filter_four;
+		  else gen->filtw = filter_n;
+		}
+	    }
+	}
+      else
+	{
+	  if (cls == &FIR_FILTER_CLASS)
+	    {
+	      if ((order & 1) == 0)
+		{
+		  if ((order & 2) == 0)
+		    {
+		      if ((order & 4) == 0)
+			gen->filtw = fir_8;
+		      else gen->filtw = fir_2;
+		    }
+		  else gen->filtw = fir_2;
+		}
+	      else
+		{
+		  if ((order % 3) == 0)
+		    {
+		      if ((order % 9) == 0)
+			gen->filtw = fir_9;
+		      else gen->filtw = fir_3;
+		    }
+		  else gen->filtw = fir_n;
+		}
+	    }
+	  else
+	    {
+	      gen->filtw = iir_n;
+	    }
+	}
       return((mus_any *)gen);
     }
   return(NULL);
@@ -6730,31 +7033,7 @@ mus_any *mus_make_filter(int order, mus_float_t *xcoeffs, mus_float_t *ycoeffs, 
 
 mus_any *mus_make_fir_filter(int order, mus_float_t *xcoeffs, mus_float_t *state)
 {
-  mus_any *g;
-  flt *f;
-  g = make_filter(&FIR_FILTER_CLASS, S_make_fir_filter, order, xcoeffs, NULL, state);
-  f = (flt *)g;
-  if ((order & 1) == 0)
-    {
-      if ((order & 2) == 0)
-	{
-	  if ((order & 4) == 0)
-	    f->filtw = fir_8;
-	  else f->filtw = fir_4;
-	}
-      else f->filtw = fir_2;
-    }
-  else
-    {
-      if ((order % 3) == 0)
-	{
-	  if ((order % 9) == 0)
-	    f->filtw = fir_9;
-	  else f->filtw = fir_3;
-	}
-      else f->filtw = fir_n;
-    }
-  return(g);
+  return(make_filter(&FIR_FILTER_CLASS, S_make_fir_filter, order, xcoeffs, NULL, state));
 }
 
 
@@ -10803,7 +11082,6 @@ mus_any *mus_make_src(mus_float_t (*input)(void *arg, int direction), mus_float_
   return(NULL);
 }
 
-
 mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(void *arg, int direction))
 {
   sr *srp = (sr *)srptr;
@@ -11465,17 +11743,42 @@ static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
       c_i_plan = fftw_plan_dft_1d(n, c_in_data, c_out_data, FFTW_BACKWARD, FFTW_ESTIMATE);
       last_c_fft_size = n;
     }
-  for (i = 0; i < n; i++) 
-    c_in_data[i] = rl[i] + _Complex_I * im[i];
-
+  if ((n & 1) == 0)
+    {
+      for (i = 0; i < n; i++)
+	{
+	  c_in_data[i] = rl[i] + _Complex_I * im[i];
+	  i++;
+	  c_in_data[i] = rl[i] + _Complex_I * im[i];
+	}
+    }
+  else
+    {
+      for (i = 0; i < n; i++) 
+	c_in_data[i] = rl[i] + _Complex_I * im[i];
+    }
   if (dir == -1) 
     fftw_execute(c_r_plan);
   else fftw_execute(c_i_plan);
 
-  for (i = 0; i < n; i++) 
+  if ((n & 1) == 0)
     {
-      rl[i] = creal(c_out_data[i]);
-      im[i] = cimag(c_out_data[i]);
+      for (i = 0; i < n; i++) 
+	{
+	  rl[i] = creal(c_out_data[i]);
+	  im[i] = cimag(c_out_data[i]);
+	  i++;
+	  rl[i] = creal(c_out_data[i]);
+	  im[i] = cimag(c_out_data[i]);
+	}
+    }
+  else
+    {
+      for (i = 0; i < n; i++) 
+	{
+	  rl[i] = creal(c_out_data[i]);
+	  im[i] = cimag(c_out_data[i]);
+	}
     }
 }
 
@@ -13246,13 +13549,17 @@ typedef struct {
 #endif
 } ssbam;
 
+/*
+total: 3971173
+84: 3969073
+204: 2100
+*/
 
 bool mus_ssb_am_p(mus_any *ptr) 
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_SSB_AM));
 }
-
 
 static mus_float_t run_hilbert(flt *gen, mus_float_t insig)
 {
@@ -13270,12 +13577,23 @@ static mus_float_t run_hilbert(flt *gen, mus_float_t insig)
       d2 = d1;
       d1 = (*dp);
       (*dp++) = d2;
-      /* if (dp == dend) break; */ /* it appears to be faster to skip this check, and pad the state array below so the (*dp) at the end is not illegal */
+      
       d2 = d1;
       d1 = (*dp);
       (*dp++) = d2;
-      ap++;                  /* every odd-numbered entry in the coeffs array is 0 in this filter */
+      ap++; 
+      
+      xout += (*dp) * (*ap++);
+      d2 = d1;
+      d1 = (*dp);
+      (*dp++) = d2;
+      
+      d2 = d1;
+      d1 = (*dp);
+      (*dp++) = d2;
+      ap++;
     }
+
   return(xout);
 
 #if 0
@@ -13500,7 +13818,7 @@ static mus_any_class SSB_AM_CLASS = {
 mus_any *mus_make_ssb_am(mus_float_t freq, int order)
 {
   ssbam *gen;
-  int i, k, len;
+  int i, k, len, flen;
 
   if ((order & 1) == 0) order++; /* if order is even, the first Hilbert coeff is 0.0 */
   gen = (ssbam *)calloc(1, sizeof(ssbam));
@@ -13519,7 +13837,10 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
   gen->dly = mus_make_delay(order, NULL, order, MUS_INTERP_NONE);
 
   len = order * 2 + 1;
-  gen->coeffs = (mus_float_t *)calloc(len + 1, sizeof(mus_float_t));
+  flen = len + 1; /* even -- need 4 */
+  if ((flen & 2) != 0) flen += 2; 
+  
+  gen->coeffs = (mus_float_t *)calloc(flen, sizeof(mus_float_t));
   for (i = -order, k = 0; i <= order; i++, k++)
     {
       mus_float_t denom, num;
@@ -13529,7 +13850,7 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
 	gen->coeffs[k] = 0.0;
       else gen->coeffs[k] = (num / denom) * (0.54 + (0.46 * cos(denom / order)));
     }
-  gen->hilbert = mus_make_fir_filter(len + 1, gen->coeffs, NULL);
+  gen->hilbert = mus_make_fir_filter(flen, gen->coeffs, NULL);
 
   return((mus_any *)gen);
 }

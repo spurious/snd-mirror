@@ -3221,56 +3221,25 @@ static void init_gc_caches(s7_scheme *sc)
 
 static void mark_vector_1(s7_pointer p, s7_Int top)
 {
-  s7_pointer *tp, *tend;
+  s7_pointer *tp, *tend, *tend4;
 
   set_mark(p);
 
   tp = (s7_pointer *)(vector_elements(p));
   if (!tp) return;
   tend = (s7_pointer *)(tp + top);
-  
-  if ((top % 8) == 0)
+
+  tend4 = (s7_pointer *)(tend - 4);
+  while (tp <= tend4)
     {
-      while (tp < tend) 
-	{
-	  S7_MARK(*tp++);
-	  S7_MARK(*tp++);
-	  S7_MARK(*tp++);
-	  S7_MARK(*tp++);
-	  S7_MARK(*tp++);
-	  S7_MARK(*tp++);
-	  S7_MARK(*tp++);
-	  S7_MARK(*tp++);
-	}
+      S7_MARK(*tp++);
+      S7_MARK(*tp++);
+      S7_MARK(*tp++);
+      S7_MARK(*tp++);
     }
-  else
-    {
-      if ((top & 1) == 0)
-	{
-	  while (tp < tend) 
-	    {
-	      S7_MARK(*tp++);
-	      S7_MARK(*tp++);
-	    }
-	}
-      else
-	{
-	  if ((top % 3) == 0)
-	    {
-	      while (tp < tend) 
-		{
-		  S7_MARK(*tp++);
-		  S7_MARK(*tp++);
-		  S7_MARK(*tp++);
-		}
-	    }
-	  else
-	    {
-	      while (tp < tend) 
-		S7_MARK(*tp++);
-	    }
-	}
-    }
+
+  while (tp < tend) 
+    S7_MARK(*tp++);
 }
 
 
@@ -26202,7 +26171,7 @@ static s7_pointer g_memq_any(s7_scheme *sc, s7_pointer args)
     {
       if (obj == car(x)) return(x);
       x = cdr(x);
-      if (!is_pair(x)) return(sc->F);
+      if (!is_pair(x)) return(sc->F); /* every other pair check could be omitted */
 
       if (obj == car(x)) return(x);
       x = cdr(x);
@@ -35577,8 +35546,13 @@ static bool direct_memq(s7_pointer symbol, s7_pointer symbols)
 {
   s7_pointer x;
   for (x = symbols; is_pair(x); x = cdr(x))
-    if (car(x) == symbol)
-      return(true);
+    {
+      if (car(x) == symbol)
+	return(true);
+      x = cdr(x);
+      if (car(x) == symbol)
+	return(true);
+    }
   return(false);
 }
 
@@ -62235,7 +62209,8 @@ s7_scheme *s7_init(void)
    *    the envr struct.
    */
   environment_id(sc->NIL) = -1;
-  
+  cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED; 
+
   cdr(sc->UNDEFINED) = sc->UNDEFINED;
   /* an experiment -- this way find_symbol of an undefined symbol returns #<undefined> not #<unspecified>
    */
@@ -63617,5 +63592,18 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14    9
  * lat        229   63   52   47   42   40   34
  * t502        90   43   39   36   29   23   20
- * calls           275  207  175  115   89   71   66
+ * calls           275  207  175  115   89   71   64
  */
+
+
+#if 0
+/*
+fix these:
+clm2xen.c:      ((v->length & 1) == 0))
+clm.c:	      if ((order & 1) == 0)
+clm.c:  if ((n & 1) == 0)
+clm.c:  if ((n & 1) == 0)
+clm.c:  if ((N2 & 1) == 0)
+snd-edits.c:	  if ((jnum & 1) == 0)
+*/
+#endif

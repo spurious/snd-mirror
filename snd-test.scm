@@ -17465,7 +17465,7 @@ EDITS: 2
 	     (vct-set! v1 i (+ (cos ph) (cos (* k ph)))))
 	   (vct-scale! v1 0.5)
 	   (if (not (vequal v0 v1))
-	       (snd-display #__line__ ";polywave vs cos: ~A" (vct-peak-and-location (vct-subtract! v0 v1))))))
+	       (snd-display #__line__ ";polywave ~D vs cos: ~A" k (vct-peak-and-location (vct-subtract! v0 v1))))))
        (list 2 19 20 29 30 39 40 60 100))
       
       (for-each
@@ -47575,20 +47575,19 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 1,030,358,352  clm.c:mus_formant_bank_wrapped [/home/bil/snd-13/snd]
 1,025,972,510  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
 
-15-Mar-13:
-65,721,537,591
-8,690,682,792  s7.c:eval [/home/bil/snd-13/snd]
-6,354,305,446  ???:sin [/lib64/libm-2.12.so]
-3,661,312,579  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-2,726,021,419  clm.c:mus_src [/home/bil/snd-13/snd]
-2,551,469,325  ???:cos [/lib64/libm-2.12.so]
-1,989,828,234  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
-1,798,581,680  s7.c:gc [/home/bil/snd-13/snd]
-1,486,753,877  s7.c:eval'2 [/home/bil/snd-13/snd]
-1,276,110,309  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
-1,133,699,385  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
-1,068,270,336  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
-1,035,427,203  s7.c:s7_make_real [/home/bil/snd-13/snd]
-1,025,972,510  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
-  947,622,466  clm.c:mus_formant_bank_wrapped [/home/bil/snd-13/snd]
+16-Mar-13:
+64,050,177,255
+8,699,513,610  s7.c:eval [/home/bil/snd-13/snd]
+6,352,597,747  ???:sin [/lib64/libm-2.12.so]
+3,680,232,929  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+2,547,592,392  ???:cos [/lib64/libm-2.12.so]
+2,428,909,204  clm.c:mus_src [/home/bil/snd-13/snd]
+1,814,422,844  s7.c:gc [/home/bil/snd-13/snd]
+1,565,165,744  s7.c:eval'2 [/home/bil/snd-13/snd]
+1,134,295,997  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+1,131,826,830  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+1,040,893,146  s7.c:s7_make_real [/home/bil/snd-13/snd]
+  982,830,353  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+  943,099,655  clm.c:mus_formant_bank_wrapped [/home/bil/snd-13/snd]
+  911,248,552  clm.c:fir_8 [/home/bil/snd-13/snd]
 |#

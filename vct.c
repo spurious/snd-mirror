@@ -797,21 +797,21 @@ static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
 	XEN_OUT_OF_RANGE_ERROR("vector-ref", 2, s7_caddr(s7_caddr(args)), "index out of range");   
       vec_el = s7_vector_elements(vec);
 
-      dist = end - pos;
-      if ((dist & 1) == 0)
+      dist = end - 4;
+      while (pos < dist)
 	{
-	  for (; pos < end; pos++)
-	    {
-	      v->data[s7_cell_integer(vec_el[pos])] = x;
-	      pos++;
-	      v->data[s7_cell_integer(vec_el[pos])] = x;
-	    }
+	  v->data[s7_cell_integer(vec_el[pos])] = x;
+	  pos++;
+	  v->data[s7_cell_integer(vec_el[pos])] = x;
+	  pos++;
+	  v->data[s7_cell_integer(vec_el[pos])] = x;
+	  pos++;
+	  v->data[s7_cell_integer(vec_el[pos])] = x;
+	  pos++;
 	}
-      else
-	{
-	  for (; pos < end; pos++)
-	    v->data[s7_cell_integer(vec_el[pos])] = x;
-	}
+      for (; pos < end; pos++)
+	v->data[s7_cell_integer(vec_el[pos])] = x;
+
       (*step) = end;
       return(args);
     }
@@ -926,20 +926,18 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 		      if (is_sampler(obj))
 			{
 			  mus_long_t dist;
-			  dist = end - pos;
-			  if ((dist & 1) == 0)
+
+			  dist = end - 4;
+			  while (pos < dist)
 			    {
-			      for (; pos < end;) 
-				{
-				  v->data[pos++] = sampler(gen);
-				  v->data[pos++] = sampler(gen);
-				}
+			      v->data[pos++] = sampler(gen);
+			      v->data[pos++] = sampler(gen);
+			      v->data[pos++] = sampler(gen);
+			      v->data[pos++] = sampler(gen);
 			    }
-			  else
-			    {
-			      for (; pos < end; pos++) 
-				v->data[pos] = sampler(gen);
-			    }
+			  for (; pos < end; pos++) 
+			    v->data[pos] = sampler(gen);
+
 			  (*step) = end;
 			  return(args);
 			}
@@ -1190,53 +1188,24 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
     }
   else
     {
-      mus_float_t *d1, *d2, *dend;
+      mus_float_t *d1, *d2, *dend, *dstop;
       d1 = v1->data;
       d2 = v2->data;
       dend = (mus_float_t *)(v1->data + lim);
-      if ((lim & 1) != 0)
+      dstop = (mus_float_t *)(dend - 8);
+      while (d1 <= dstop)
 	{
-	  while (d1 != dend) 
-	    (*d1++) += (*d2++);  /* is this safe? or perhaps use (*d1++) = (*d1) + (*d2++)? */
+	  (*d1++) += (*d2++);
+	  (*d1++) += (*d2++);
+	  (*d1++) += (*d2++);
+	  (*d1++) += (*d2++);
+	  (*d1++) += (*d2++);
+	  (*d1++) += (*d2++);
+	  (*d1++) += (*d2++);
+	  (*d1++) += (*d2++);
 	}
-      else
-	{
-	  if ((lim & 2) != 0)
-	    {
-	      while (d1 != dend) 
-		{
-		  (*d1++) += (*d2++);
-		  (*d1++) += (*d2++);
-		}
-	    }
-	  else
-	    {
-	      if ((lim & 4) != 0)
-		{
-		  while (d1 != dend) 
-		    {
-		      (*d1++) += (*d2++);
-		      (*d1++) += (*d2++);
-		      (*d1++) += (*d2++);
-		      (*d1++) += (*d2++);
-		    }
-		}
-	      else
-		{
-		  while (d1 != dend) 
-		    {
-		      (*d1++) += (*d2++);
-		      (*d1++) += (*d2++);
-		      (*d1++) += (*d2++);
-		      (*d1++) += (*d2++);
-		      (*d1++) += (*d2++);
-		      (*d1++) += (*d2++);
-		      (*d1++) += (*d2++);
-		      (*d1++) += (*d2++);
-		    }
-		}
-	    }
-	}
+      while (d1 < dend) 
+	(*d1++) += (*d2++);
       /* for (i = 0; i < lim; i++) v1->data[i] += v2->data[i]; */
     }
   return(obj1);
@@ -1246,7 +1215,7 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
 static XEN g_vct_subtract(XEN obj1, XEN obj2)
 {
   #define H_vct_subtractB "(" S_vct_subtractB " v1 v2): element-wise subtract of vcts v1 and v2: v1[i] -= v2[i], returns v1"
-  mus_long_t i, lim;
+  mus_long_t i, lim, lim4;
   vct *v1, *v2;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_subtractB, "a vct");
@@ -1255,20 +1224,23 @@ static XEN g_vct_subtract(XEN obj1, XEN obj2)
   v1 = XEN_TO_VCT(obj1);
   v2 = XEN_TO_VCT(obj2);
   lim = MIN(v1->length, v2->length);
-  if ((lim & 1) == 0)
+  lim4 = lim - 4;
+
+  i = 0;
+  while (i <= lim4)
     {
-      for (i = 0; i < lim; i++) 
-	{
-	  v1->data[i] -= v2->data[i];
-	  i++;
-	  v1->data[i] -= v2->data[i];
-	}
+      v1->data[i] -= v2->data[i];
+      i++;
+      v1->data[i] -= v2->data[i];
+      i++;
+      v1->data[i] -= v2->data[i];
+      i++;
+      v1->data[i] -= v2->data[i];
+      i++;
     }
-  else
-    {
-      for (i = 0; i < lim; i++) 
-	v1->data[i] -= v2->data[i];
-    }
+  for (; i < lim; i++) 
+    v1->data[i] -= v2->data[i];
+
   return(obj1);
 }
 
@@ -1293,19 +1265,18 @@ static XEN g_vct_scale(XEN obj1, XEN obj2)
     {
       if (scl != 1.0)
 	{
-	  if ((v1->length & 1) == 0)
+	  mus_long_t lim4;
+	  lim4 = v1->length - 4;
+	  i = 0;
+	  while (i <= lim4)
 	    {
-	      for (i = 0; i < v1->length;) 
-		{
-		  v1->data[i++] *= scl;
-		  v1->data[i++] *= scl;
-		}
+	      v1->data[i++] *= scl;
+	      v1->data[i++] *= scl;
+	      v1->data[i++] *= scl;
+	      v1->data[i++] *= scl;
 	    }
-	  else
-	    {
-	      for (i = 0; i < v1->length; i++) 
-		v1->data[i] *= scl;
-	    }
+	  for (; i < v1->length; i++) 
+	    v1->data[i] *= scl;
 	}
     }
   return(obj1);
@@ -1350,32 +1321,20 @@ static XEN g_vct_fill(XEN obj1, XEN obj2)
     memset((void *)(v1->data), 0, v1->length * sizeof(mus_float_t));
   else 
     {
-      if ((v1->length & 1) == 0)
+      mus_long_t lim4;
+      mus_float_t *d;
+      d = v1->data;
+      lim4 = v1->length - 4;
+      i = 0;
+      while (i <= lim4)
 	{
-	  if ((v1->length & 2) == 0)
-	    {
-	      for (i = 0; i < v1->length;) 
-		{
-		  v1->data[i++] = scl;
-		  v1->data[i++] = scl;
-		  v1->data[i++] = scl;
-		  v1->data[i++] = scl;
-		}
-	    }
-	  else
-	    {
-	      for (i = 0; i < v1->length;) 
-		{
-		  v1->data[i++] = scl;
-		  v1->data[i++] = scl;
-		}
-	    }
+	  d[i++] = scl;
+	  d[i++] = scl;
+	  d[i++] = scl;
+	  d[i++] = scl;
 	}
-      else
-	{
-	  for (i = 0; i < v1->length; i++) 
-	    v1->data[i] = scl;
-	}
+      for (; i < v1->length; i++) 
+	v1->data[i] = scl;
     }
   return(obj1);
 }
@@ -1384,16 +1343,29 @@ static XEN g_vct_fill(XEN obj1, XEN obj2)
 double mus_vct_peak(vct *v)
 {
   mus_float_t val = 0.0, absv;
-  mus_float_t *d1, *dend;
+  mus_float_t *d;
+  mus_long_t i, lim4;
 
   if (v->length == 0) return(0.0);
-
-  val = fabs(v->data[0]);
-  d1 = (mus_float_t *)(v->data + 1);
-  dend = (mus_float_t *)(v->data + v->length);
-  while (d1 != dend)
+  lim4 = v->length - 4;
+  i = 1;
+  d = (mus_float_t *)(v->data);
+  val = fabs(d[0]);
+  
+  while (i <= lim4)
     {
-      absv = fabs(*d1++);
+      absv = fabs(d[i++]);
+      if (absv > val) val = absv;
+      absv = fabs(d[i++]);
+      if (absv > val) val = absv;
+      absv = fabs(d[i++]);
+      if (absv > val) val = absv;
+      absv = fabs(d[i++]);
+      if (absv > val) val = absv;
+    }
+  for (; i < v->length; i++)
+    {
+      absv = fabs(d[i]);
       if (absv > val) val = absv;
     }
 

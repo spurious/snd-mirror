@@ -3352,7 +3352,7 @@ static const char *doc_files[DOC_DIRECTORIES] = {
   "/usr/share/docs/snd-" SND_VERSION "/snd.html"
 };
   
-static char *html_directory(void)
+static const char *html_directory(void)
 {
   int i;
   if (mus_file_probe("snd.html"))
@@ -3368,16 +3368,16 @@ static char *html_directory(void)
       snprintf(hd, len, "%s/snd.html", html_dir(ss));
       happy = mus_file_probe(hd);
       free(hd);
-      if (happy) return(mus_strdup(html_dir(ss)));
+      if (happy) return(html_dir(ss));
     }
 
 #ifdef MUS_DEFAULT_DOC_DIR
   if (mus_file_probe(MUS_DEFAULT_DOC_DIR "/snd.html"))
-    return(mus_strdup(MUS_DEFAULT_DOC_DIR));
+    return(MUS_DEFAULT_DOC_DIR);
 #endif
 
   for (i = 0; i < DOC_DIRECTORIES; i++)
-    if (mus_file_probe(doc_files[i])) return(mus_strdup(doc_directories[i]));
+    if (mus_file_probe(doc_files[i])) return(doc_directories[i]);
 
   return(NULL);
 }
@@ -3385,7 +3385,7 @@ static char *html_directory(void)
 
 void url_to_html_viewer(const char *url)
 {
-  char *dir_path;
+  const char *dir_path;
   dir_path = html_directory();
 
   if (dir_path)
@@ -3404,7 +3404,6 @@ void url_to_html_viewer(const char *url)
 	    fprintf(stderr, "can't start %s?", program);
 	  free(path);
 	}
-      free(dir_path);
     }
 }
 

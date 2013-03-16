@@ -7588,21 +7588,40 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 		}
 	      else
 		{
-		  for (j = 0; j < jnum; j++)
+		  int k, nlen;
+		  j = 0;
+		  nlen = last - loc + 1;
+		  if (nlen > jnum) nlen = jnum;
+
+		  while (j < jnum)
 		    {
-		      if (loc > last) 
+		      /* fprintf(stderr, "j: %d, loc: %lld, last: %lld, nlen: %lld\n", j, loc, last, nlen); */
+
+		      /* we're going from loc to last in the current data buffer */
+		      for (k = loc; k <= last; k++)
 			{
-			  mval = fabs(next_sound(sf));          /* sets sf->loc and most other fields */
-			  loc = sf->loc;
-			  last = sf->last;
-			  dat = sf->data;
+			  mval = fabs(dat[k]);
+			  if (mval > ymax) 
+			    {
+			      ymax = mval;
+			      jpos = j + k - loc;
+			    }
 			}
-		      else mval = fabs(dat[loc++]);
+		      j += nlen;
+		      if (j >= jnum) break;
+		      mval = fabs(next_sound(sf));          /* sets sf->loc and most other fields */
+		      j++;
 		      if (mval > ymax) 
 			{
 			  ymax = mval;
 			  jpos = j;
 			}
+
+		      loc = sf->loc; 
+		      last = sf->last;
+		      dat = sf->data;
+		      nlen = last - loc + 1;
+		      if ((j + nlen) > jnum) nlen = (jnum - j);
 		    }
 		}
 	    }
@@ -7631,13 +7650,35 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 	}
       else
 	{
-	  for (j = 0; j < jnum; j++)
+	  if ((jnum & 1) == 0)
 	    {
-	      mval = fabs(read_sample(sf));
-	      if (mval > ymax) 
+	      for (j = 0; j < jnum; j++)
 		{
-		  ymax = mval;
-		  jpos = j;
+		  mval = fabs(read_sample(sf));
+		  if (mval > ymax) 
+		    {
+		      ymax = mval;
+		      jpos = j;
+		    }
+		  j++;
+		  mval = fabs(read_sample(sf));
+		  if (mval > ymax) 
+		    {
+		      ymax = mval;
+		      jpos = j;
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (j = 0; j < jnum; j++)
+		{
+		  mval = fabs(read_sample(sf));
+		  if (mval > ymax) 
+		    {
+		      ymax = mval;
+		      jpos = j;
+		    }
 		}
 	    }
 	}

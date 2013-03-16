@@ -1037,20 +1037,55 @@ static void deferred_region_to_temp_file(region *r)
 		}
 	      else
 		{
-		  for (j = 0, k = 0; j < len; j++, k++) 
+		  /* perverse stuff here:
+		   *   7: 22050 22050 844798 844798 844798 844798 50827
+		   *   5: 844798 844798 844798 844798 50827
+		   */
+		  for (j = 0; j < len; j += MAX_BUFFER_SIZE)
 		    {
-		      if (k == MAX_BUFFER_SIZE)
-			{
-			  err = mus_file_write(ofd, 0, k - 1, r->chans, data);
-			  k = 0;
-			  if (err != MUS_NO_ERROR) break;
-			}
+		      int nlen, klen = 0;
+		      mus_float_t *buf;
+		      snd_fd *p;
+		      
 		      for (i = 0; i < r->chans; i++)
 			{
-			  if (j <= r->lens[i])
-			    data[i][k] = read_sample_to_mus_sample(sfs[i]);
-			  else data[i][k] = 0.0;
+			  buf = data[i];
+			  p = sfs[i];
+			  if (j > r->lens[i])
+			    memset(buf, 0, MAX_BUFFER_SIZE * sizeof(mus_float_t));
+			  else
+			    {
+			      nlen = r->lens[i] - j;
+			      if (nlen > MAX_BUFFER_SIZE)
+				{
+				  klen = MAX_BUFFER_SIZE;
+				  for (k = 0; k < MAX_BUFFER_SIZE;) 
+				    {
+				      /* we're assuming MAX_BUFFER_SIZE is divisible by 8 */
+				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample_to_mus_sample(p);
+				      buf[k++] = read_sample_to_mus_sample(p);
+				    }
+				}
+			      else
+				{
+				  nlen++; /* weird.  drp->len == len is r->lens[max]+1? */
+				  if (klen < nlen) klen = nlen;
+				  for (k = 0; k < nlen; k++)
+				    buf[k] = read_sample_to_mus_sample(p);
+				  for (; k < MAX_BUFFER_SIZE; k++)
+				    buf[k] = 0.0;
+				}
+			    }
 			}
+		      err = mus_file_write(ofd, 0, klen - 1, r->chans, data);
+		      k = 0;
+		      if (err != MUS_NO_ERROR) break;
 		    }
 		}
 	    }

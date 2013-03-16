@@ -630,11 +630,10 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
   /* -------- current working directory -------- */
   if (open_file_dialog_directory(ss))
-    pwd = mus_strdup(open_file_dialog_directory(ss));
+    pwd = open_file_dialog_directory(ss);
   else pwd = mus_getcwd();
   cur_dir = (char *)calloc(strlen(pwd) + 2, sizeof(char));
   strcpy(cur_dir, pwd);
-  free(pwd);
   if ((cur_dir) && (cur_dir[strlen(cur_dir) - 1] != '/'))
     strcat(cur_dir, "/");
   fs->directory_name = cur_dir;

@@ -2636,7 +2636,6 @@ void g_xen_initialize(void)
     pwd = mus_getcwd(); 
     legal_pwd = legalize_path(pwd);
     XEN_ADD_TO_LOAD_PATH(legal_pwd); 
-    free(pwd); 
     free(legal_pwd); 
   } 
 
