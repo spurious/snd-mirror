@@ -5351,6 +5351,9 @@ s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
    * ((global-environment) 'abs) 
    */
 
+  if (environment_id(env) == symbol_id(symbol))
+    return(slot_value(local_slot(symbol)));
+
   if (env == sc->global_env)
     {
       y = global_slot(symbol);
@@ -5371,6 +5374,14 @@ s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
 {
   s7_pointer x, y;
+
+  /* this costs slightly more than it saves (ref case above gets many more hits)
+  if (environment_id(env) == symbol_id(symbol))
+    {
+      slot_set_value(local_slot(symbol), value);
+      return(value);
+    }
+  */
 
   if (env == sc->global_env)
     {
@@ -22037,12 +22048,24 @@ static int shared_ref(shared_info *ci, s7_pointer p)
 static int peek_shared_ref(shared_info *ci, s7_pointer p)
 {
   /* returns 0 if not found, otherwise the ref value for p */
-  int i;
+  int i, lim;
   s7_pointer *objs;
   objs = ci->objs;
-  for (i = 0; i < ci->top; i++)
-    if (objs[i] == p)
-      return(ci->refs[i]);
+  i = 0;
+  lim = ci->top - 4;
+  while (i <= lim)
+    {
+      if (objs[i] == p) return(ci->refs[i]);
+      i++;
+      if (objs[i] == p) return(ci->refs[i]);
+      i++;
+      if (objs[i] == p) return(ci->refs[i]);
+      i++;
+      if (objs[i] == p) return(ci->refs[i]);
+      i++;
+    }
+  for (; i < ci->top; i++)
+    if (objs[i] == p) return(ci->refs[i]);
   return(0);
 }
 
@@ -46684,30 +46707,45 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      if (is_all_x_safe(sc, code))
 		{
-		  s7_function f, endf;
-		  s7_pointer slot, end;
+		  s7_function f;
+		  int arg;
+		  s7_pointer p, slot1 = NULL, slot2 = NULL;
 
 		  f = all_x_eval(code);
-		  endf = (s7_function)fcdr(cdr(sc->code));
-		  end = fcdr(sc->code);
-
 		  if (c_function_dox_looped(ecdr(code)))
 		    {
 		      s7_function nf;
 		      nf = (s7_function)(((s7_function)c_function_call(c_function_dox_looped(ecdr(code))))(sc, code));
 		      if (nf) f = nf;
 		    }
+		  /* if we get here, either no looper or it gave up */
 
-		  while (true)
+		  for (arg = 0, p = environment_slots(sc->envir); is_slot(p); p = next_slot(p))
+		    if (is_pair(slot_expression(p)))
+		      {
+			arg++;
+			if (!slot1) slot1 = p; else slot2 = p;
+		      }
+		  if (arg < 3)
 		    {
-		      f(sc, code);
-		      for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
-			if (is_pair(slot_expression(slot)))
-			  slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
-		      if (is_true(sc, endf(sc, end)))
+		      s7_function endf;
+		      s7_pointer expr1, expr2, end;
+
+		      endf = (s7_function)fcdr(cdr(sc->code));
+		      end = fcdr(sc->code);
+		      if (slot1) expr1 = slot_expression(slot1);
+		      if (slot2) expr2 = slot_expression(slot2);
+
+		      while (true)
 			{
-			  sc->code = cdadr(sc->code);
-			  goto DO_BEGIN;
+			  f(sc, code);
+			  if (slot1) slot_set_value(slot1, ((dox_function)fcdr(expr1))(sc, car(expr1), slot1));
+			  if (slot2) slot_set_value(slot2, ((dox_function)fcdr(expr2))(sc, car(expr2), slot2));
+			  if (is_true(sc, endf(sc, end)))
+			    {
+			      sc->code = cdadr(sc->code);
+			      goto DO_BEGIN;
+			    }
 			}
 		    }
 		}
@@ -63583,6 +63621,8 @@ s7_scheme *s7_init(void)
  *
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
  * maybe other banks.
+ * outa loops unrolled?, poly7?
+ * can the sinc table be rearranged to get rid of the negative index? -- would allow those loops to be unrolled
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
  * bench    42736 8752 8051 7725 6515 5194 4364
@@ -63594,16 +63634,3 @@ s7_scheme *s7_init(void)
  * t502        90   43   39   36   29   23   20
  * calls           275  207  175  115   89   71   64
  */
-
-
-#if 0
-/*
-fix these:
-clm2xen.c:      ((v->length & 1) == 0))
-clm.c:	      if ((order & 1) == 0)
-clm.c:  if ((n & 1) == 0)
-clm.c:  if ((n & 1) == 0)
-clm.c:  if ((N2 & 1) == 0)
-snd-edits.c:	  if ((jnum & 1) == 0)
-*/
-#endif

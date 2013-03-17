@@ -2807,12 +2807,6 @@ static mus_float_t mus_chebyshev_t_sum_with_index(mus_float_t x, mus_float_t ind
 {
   int i;
   double x2, b, b1 = 0.0, b2 = 0.0, cx;
-  /*
-8: 686829
-2: 578809
-42: 445409
-14: 124362
-   */
   cx = index * cos(x);
   x2 = 2.0 * cx;
 
@@ -3046,6 +3040,16 @@ static mus_float_t polyw_first(mus_any *ptr, mus_float_t fm)
 }
 
 
+static mus_float_t polyw_f1(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  double cx;
+  cx = gen->index * cos(gen->phase);
+  gen->phase += (gen->freq + fm);
+  return(cx * gen->coeffs[1]  + gen->coeffs[0]);
+}
+
+
 static mus_float_t polyw_f2(mus_any *ptr, mus_float_t fm)
 {
   pw *gen = (pw *)ptr;
@@ -3238,13 +3242,18 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
 	}
       else 
 	{
-	  if (((n - 1) % 3) == 0)
-	    gen->polyw = polyw_f3;
+	  if (n == 2)
+	    gen->polyw = polyw_f1;
 	  else
 	    {
-	      if (((n - 1) % 2) == 0)
-		gen->polyw = polyw_f2;
-	      else gen->polyw = polyw_first;
+	      if (((n - 1) % 3) == 0)
+		gen->polyw = polyw_f3;
+	      else
+		{
+		  if (((n - 1) % 2) == 0)
+		    gen->polyw = polyw_f2;
+		  else gen->polyw = polyw_first;
+		}
 	    }
 	}
     }
@@ -11726,7 +11735,7 @@ static int last_c_fft_size = 0;
 
 static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
 {
-  int i;
+  int i, n4;
 
   if (n != last_c_fft_size)
     {
@@ -11743,42 +11752,47 @@ static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
       c_i_plan = fftw_plan_dft_1d(n, c_in_data, c_out_data, FFTW_BACKWARD, FFTW_ESTIMATE);
       last_c_fft_size = n;
     }
-  if ((n & 1) == 0)
+
+  n4 = n - 4;
+  i = 0;
+  while (i <= n4)
     {
-      for (i = 0; i < n; i++)
-	{
-	  c_in_data[i] = rl[i] + _Complex_I * im[i];
-	  i++;
-	  c_in_data[i] = rl[i] + _Complex_I * im[i];
-	}
+      c_in_data[i] = rl[i] + _Complex_I * im[i];
+      i++;
+      c_in_data[i] = rl[i] + _Complex_I * im[i];
+      i++;
+      c_in_data[i] = rl[i] + _Complex_I * im[i];
+      i++;
+      c_in_data[i] = rl[i] + _Complex_I * im[i];
+      i++;
     }
-  else
-    {
-      for (i = 0; i < n; i++) 
-	c_in_data[i] = rl[i] + _Complex_I * im[i];
-    }
+  for (; i < n; i++) 
+    c_in_data[i] = rl[i] + _Complex_I * im[i];
+
   if (dir == -1) 
     fftw_execute(c_r_plan);
   else fftw_execute(c_i_plan);
 
-  if ((n & 1) == 0)
+  i = 0;
+  while (i <= n4)
     {
-      for (i = 0; i < n; i++) 
-	{
-	  rl[i] = creal(c_out_data[i]);
-	  im[i] = cimag(c_out_data[i]);
-	  i++;
-	  rl[i] = creal(c_out_data[i]);
-	  im[i] = cimag(c_out_data[i]);
-	}
+      rl[i] = creal(c_out_data[i]);
+      im[i] = cimag(c_out_data[i]);
+      i++;
+      rl[i] = creal(c_out_data[i]);
+      im[i] = cimag(c_out_data[i]);
+      i++;
+      rl[i] = creal(c_out_data[i]);
+      im[i] = cimag(c_out_data[i]);
+      i++;
+      rl[i] = creal(c_out_data[i]);
+      im[i] = cimag(c_out_data[i]);
+      i++;
     }
-  else
+  for (; i < n; i++) 
     {
-      for (i = 0; i < n; i++) 
-	{
-	  rl[i] = creal(c_out_data[i]);
-	  im[i] = cimag(c_out_data[i]);
-	}
+      rl[i] = creal(c_out_data[i]);
+      im[i] = cimag(c_out_data[i]);
     }
 }
 
@@ -13353,7 +13367,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 				     mus_float_t (*synthesize)(void *arg))
 {
   pv_info *pv = (pv_info *)ptr;
-  int N2, i;
+  int N2, i, N4;
   mus_float_t sum = 0.0;
   mus_float_t (*pv_synthesize)(void *arg) = synthesize;
 
@@ -13435,69 +13449,45 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
   if (pv_synthesize) 
     return((*pv_synthesize)(pv->closure));
 
-  if ((N2 & 1) == 0)
+  N4 = N2 - 4;
+  i = 0;
+  while (i <= N4)
     {
-      if ((N2 & 2) == 0)
-	{
-	  for (i = 0; i < N2; i++)
-	    {
-	      pv->phaseinc[i] += pv->freqs[i];
-	      pv->phases[i] += pv->phaseinc[i];
-	      pv->amps[i] += pv->ampinc[i];
-	      if (pv->amps[i] != 0.0)
-		sum += (pv->amps[i] * sin(pv->phases[i])); 
-	      
-	      i++;
-	      pv->phaseinc[i] += pv->freqs[i];
-	      pv->phases[i] += pv->phaseinc[i];
-	      pv->amps[i] += pv->ampinc[i];
-	      if (pv->amps[i] != 0.0)
-		sum += (pv->amps[i] * sin(pv->phases[i])); 
-	      
-	      i++;
-	      pv->phaseinc[i] += pv->freqs[i];
-	      pv->phases[i] += pv->phaseinc[i];
-	      pv->amps[i] += pv->ampinc[i];
-	      if (pv->amps[i] != 0.0)
-		sum += (pv->amps[i] * sin(pv->phases[i])); 
-	      
-	      i++;
-	      pv->phaseinc[i] += pv->freqs[i];
-	      pv->phases[i] += pv->phaseinc[i];
-	      pv->amps[i] += pv->ampinc[i];
-	      if (pv->amps[i] != 0.0)
-		sum += (pv->amps[i] * sin(pv->phases[i])); 
-	    }
-	}
-      else
-	{
-	  for (i = 0; i < N2; i++)
-	    {
-	      pv->phaseinc[i] += pv->freqs[i];
-	      pv->phases[i] += pv->phaseinc[i];
-	      pv->amps[i] += pv->ampinc[i];
-	      if (pv->amps[i] != 0.0)
-		sum += (pv->amps[i] * sin(pv->phases[i])); 
-	      
-	      i++;
-	      pv->phaseinc[i] += pv->freqs[i];
-	      pv->phases[i] += pv->phaseinc[i];
-	      pv->amps[i] += pv->ampinc[i];
-	      if (pv->amps[i] != 0.0)
-		sum += (pv->amps[i] * sin(pv->phases[i])); 
-	    }
-	}
+      pv->phaseinc[i] += pv->freqs[i];
+      pv->phases[i] += pv->phaseinc[i];
+      pv->amps[i] += pv->ampinc[i];
+      if (pv->amps[i] != 0.0)
+	sum += (pv->amps[i] * sin(pv->phases[i])); 
+      i++;
+
+      pv->phaseinc[i] += pv->freqs[i];
+      pv->phases[i] += pv->phaseinc[i];
+      pv->amps[i] += pv->ampinc[i];
+      if (pv->amps[i] != 0.0)
+	sum += (pv->amps[i] * sin(pv->phases[i])); 
+      i++;
+
+      pv->phaseinc[i] += pv->freqs[i];
+      pv->phases[i] += pv->phaseinc[i];
+      pv->amps[i] += pv->ampinc[i];
+      if (pv->amps[i] != 0.0)
+	sum += (pv->amps[i] * sin(pv->phases[i])); 
+      i++;
+
+      pv->phaseinc[i] += pv->freqs[i];
+      pv->phases[i] += pv->phaseinc[i];
+      pv->amps[i] += pv->ampinc[i];
+      if (pv->amps[i] != 0.0)
+	sum += (pv->amps[i] * sin(pv->phases[i])); 
+      i++;
     }
-  else
+  for (; i < N2; i++)
     {
-      for (i = 0; i < N2; i++)
-	{
-	  pv->phaseinc[i] += pv->freqs[i];
-	  pv->phases[i] += pv->phaseinc[i];
-	  pv->amps[i] += pv->ampinc[i];
-	  if (pv->amps[i] != 0.0)
-	    sum += (pv->amps[i] * sin(pv->phases[i])); 
-	}
+      pv->phaseinc[i] += pv->freqs[i];
+      pv->phases[i] += pv->phaseinc[i];
+      pv->amps[i] += pv->ampinc[i];
+      if (pv->amps[i] != 0.0)
+	sum += (pv->amps[i] * sin(pv->phases[i])); 
     }
   return(sum);
 }

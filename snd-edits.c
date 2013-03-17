@@ -7556,8 +7556,9 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
     }
   else
     {
-      int jnum;
+      int jnum, jnum4;
       jnum = (int)num;
+      jnum4 = jnum - 4;
 
       if (((sf->runf == next_sample_value_unscaled) ||
 	   (sf->runf == next_sample_value)) &&
@@ -7588,7 +7589,7 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 		}
 	      else
 		{
-		  int k, nlen;
+		  int k, nlen, last4;
 		  j = 0;
 		  nlen = last - loc + 1;
 		  if (nlen > jnum) nlen = jnum;
@@ -7596,9 +7597,41 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 		  while (j < jnum)
 		    {
 		      /* fprintf(stderr, "j: %d, loc: %lld, last: %lld, nlen: %lld\n", j, loc, last, nlen); */
-
+		      last4 = last - 4;
+		      k = loc;
 		      /* we're going from loc to last in the current data buffer */
-		      for (k = loc; k <= last; k++)
+		      while (k <= last4)
+			{
+			  mval = fabs(dat[k]);
+			  if (mval > ymax) 
+			    {
+			      ymax = mval;
+			      jpos = j + k - loc;
+			    }
+			  k++;
+			  mval = fabs(dat[k]);
+			  if (mval > ymax) 
+			    {
+			      ymax = mval;
+			      jpos = j + k - loc;
+			    }
+			  k++;
+			  mval = fabs(dat[k]);
+			  if (mval > ymax) 
+			    {
+			      ymax = mval;
+			      jpos = j + k - loc;
+			    }
+			  k++;
+			  mval = fabs(dat[k]);
+			  if (mval > ymax) 
+			    {
+			      ymax = mval;
+			      jpos = j + k - loc;
+			    }
+			  k++;
+			}
+		      for (; k <= last; k++)
 			{
 			  mval = fabs(dat[k]);
 			  if (mval > ymax) 
@@ -7650,35 +7683,44 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 	}
       else
 	{
-	  if ((jnum & 1) == 0)
+	  while (j <= jnum4)
 	    {
-	      for (j = 0; j < jnum; j++)
+	      mval = fabs(read_sample(sf));
+	      if (mval > ymax) 
 		{
-		  mval = fabs(read_sample(sf));
-		  if (mval > ymax) 
-		    {
-		      ymax = mval;
-		      jpos = j;
-		    }
-		  j++;
-		  mval = fabs(read_sample(sf));
-		  if (mval > ymax) 
-		    {
-		      ymax = mval;
-		      jpos = j;
-		    }
+		  ymax = mval;
+		  jpos = j;
 		}
-	    }
-	  else
-	    {
-	      for (j = 0; j < jnum; j++)
+	      j++;
+	      mval = fabs(read_sample(sf));
+	      if (mval > ymax) 
 		{
-		  mval = fabs(read_sample(sf));
-		  if (mval > ymax) 
-		    {
-		      ymax = mval;
-		      jpos = j;
-		    }
+		  ymax = mval;
+		  jpos = j;
+		}
+	      j++;
+	      mval = fabs(read_sample(sf));
+	      if (mval > ymax) 
+		{
+		  ymax = mval;
+		  jpos = j;
+		}
+	      j++;
+	      mval = fabs(read_sample(sf));
+	      if (mval > ymax) 
+		{
+		  ymax = mval;
+		  jpos = j;
+		}
+	      j++;
+	    }
+	  for (; j < jnum; j++)
+	    {
+	      mval = fabs(read_sample(sf));
+	      if (mval > ymax) 
+		{
+		  ymax = mval;
+		  jpos = j;
 		}
 	    }
 	}

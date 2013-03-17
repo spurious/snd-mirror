@@ -259,7 +259,7 @@ typedef struct {
   mus_long_t *maxtimes;
 } sound_file;
 
-static int sound_table_size = 0;
+static int sound_table_size = 0, sound_table_size4 = 0;
 static sound_file **sound_table = NULL;
 
 static void free_sound_file(sound_file *sf)
@@ -296,8 +296,12 @@ static sound_file *add_to_sound_table(const char *name)
     {
       pos = sound_table_size;
       sound_table_size += 16;
+      sound_table_size4 += 16;
       if (sound_table == NULL)
-	sound_table = (sound_file **)calloc(sound_table_size, sizeof(sound_file *));
+	{
+	  sound_table_size4 -= 4;
+	  sound_table = (sound_file **)calloc(sound_table_size, sizeof(sound_file *));
+	}
       else 
 	{
 	  sound_table = (sound_file **)realloc(sound_table, sound_table_size * sizeof(sound_file *));
@@ -412,13 +416,46 @@ static sound_file *check_write_date(const char *name, sound_file *sf)
 static sound_file *find_sound_file(const char *name)
 {
   int i, len;
+  sound_file *sf;
 
-  if (!name) return(NULL);
+  if ((!name) ||
+      (sound_table_size == 0))
+    return(NULL);
+
   len = strlen(name);
-
-  for (i = 0; i < sound_table_size; i++)
+  i = 0;
+  while (i <= sound_table_size4)
     {
-      sound_file *sf;
+      sf = sound_table[i];
+      if ((sf) &&
+	  (sf->file_name_length == len) &&
+	  (strcmp(name, sf->file_name) == 0))
+	return(check_write_date(name, sf));
+      i++;
+
+      sf = sound_table[i];
+      if ((sf) &&
+	  (sf->file_name_length == len) &&
+	  (strcmp(name, sf->file_name) == 0))
+	return(check_write_date(name, sf));
+      i++;
+
+      sf = sound_table[i];
+      if ((sf) &&
+	  (sf->file_name_length == len) &&
+	  (strcmp(name, sf->file_name) == 0))
+	return(check_write_date(name, sf));
+      i++;
+
+      sf = sound_table[i];
+      if ((sf) &&
+	  (sf->file_name_length == len) &&
+	  (strcmp(name, sf->file_name) == 0))
+	return(check_write_date(name, sf));
+      i++;
+    }
+  for (; i < sound_table_size; i++)
+    {
       sf = sound_table[i];
       if ((sf) &&
 	  (sf->file_name_length == len) &&
@@ -1317,7 +1354,8 @@ mus_float_t mus_sound_channel_maxamp(const char *file, int chan, mus_long_t *pos
 {
   sound_file *sf; 
   sf = get_sf(file); 
-  if (chan < sf->chans)
+  if ((chan < sf->chans) &&
+      (sf->maxtimes))
     {
       (*pos) = sf->maxtimes[chan];
       return(sf->maxamps[chan]);
