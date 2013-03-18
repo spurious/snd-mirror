@@ -47575,19 +47575,19 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 1,030,358,352  clm.c:mus_formant_bank_wrapped [/home/bil/snd-13/snd]
 1,025,972,510  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
 
-16-Mar-13:
-64,050,177,255
-8,699,513,610  s7.c:eval [/home/bil/snd-13/snd]
-6,352,597,747  ???:sin [/lib64/libm-2.12.so]
-3,680,232,929  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-2,547,592,392  ???:cos [/lib64/libm-2.12.so]
-2,428,909,204  clm.c:mus_src [/home/bil/snd-13/snd]
-1,814,422,844  s7.c:gc [/home/bil/snd-13/snd]
-1,565,165,744  s7.c:eval'2 [/home/bil/snd-13/snd]
-1,134,295,997  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
-1,131,826,830  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
-1,040,893,146  s7.c:s7_make_real [/home/bil/snd-13/snd]
-  982,830,353  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+17-Mar-13:
+63,393,268,984
+8,637,800,826  s7.c:eval [/home/bil/snd-13/snd]
+6,365,281,959  ???:sin [/lib64/libm-2.12.so]
+3,686,728,755  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+2,552,962,467  ???:cos [/lib64/libm-2.12.so]
+2,439,838,765  clm.c:mus_src [/home/bil/snd-13/snd]
+1,785,603,009  s7.c:gc [/home/bil/snd-13/snd]
+1,560,439,991  s7.c:eval'2 [/home/bil/snd-13/snd]
+1,069,386,872  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+1,042,222,908  s7.c:s7_make_real [/home/bil/snd-13/snd]
+1,004,879,549  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
   943,099,655  clm.c:mus_formant_bank_wrapped [/home/bil/snd-13/snd]
   911,248,552  clm.c:fir_8 [/home/bil/snd-13/snd]
+
 |#

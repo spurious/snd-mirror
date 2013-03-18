@@ -1188,25 +1188,31 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
     }
   else
     {
-      mus_float_t *d1, *d2, *dend, *dstop;
-      d1 = v1->data;
-      d2 = v2->data;
-      dend = (mus_float_t *)(v1->data + lim);
-      dstop = (mus_float_t *)(dend - 8);
-      while (d1 <= dstop)
+      mus_long_t lim8;
+      lim8 = lim - 8;
+      i = 0;
+      /* this form (explicit v->data indexing) is faster than using *data++! */
+      while (i <= lim8)
 	{
-	  (*d1++) += (*d2++);
-	  (*d1++) += (*d2++);
-	  (*d1++) += (*d2++);
-	  (*d1++) += (*d2++);
-	  (*d1++) += (*d2++);
-	  (*d1++) += (*d2++);
-	  (*d1++) += (*d2++);
-	  (*d1++) += (*d2++);
+	  v1->data[i] += v2->data[i];
+	  i++;
+	  v1->data[i] += v2->data[i];
+	  i++;
+	  v1->data[i] += v2->data[i];
+	  i++;
+	  v1->data[i] += v2->data[i];
+	  i++;
+	  v1->data[i] += v2->data[i];
+	  i++;
+	  v1->data[i] += v2->data[i];
+	  i++;
+	  v1->data[i] += v2->data[i];
+	  i++;
+	  v1->data[i] += v2->data[i];
+	  i++;
 	}
-      while (d1 < dend) 
-	(*d1++) += (*d2++);
-      /* for (i = 0; i < lim; i++) v1->data[i] += v2->data[i]; */
+      for (; i < lim; i++) 
+	v1->data[i] += v2->data[i];
     }
   return(obj1);
 }
@@ -1321,13 +1327,17 @@ static XEN g_vct_fill(XEN obj1, XEN obj2)
     memset((void *)(v1->data), 0, v1->length * sizeof(mus_float_t));
   else 
     {
-      mus_long_t lim4;
+      mus_long_t lim8;
       mus_float_t *d;
       d = v1->data;
-      lim4 = v1->length - 4;
+      lim8 = v1->length - 8;
       i = 0;
-      while (i <= lim4)
+      while (i <= lim8)
 	{
+	  d[i++] = scl;
+	  d[i++] = scl;
+	  d[i++] = scl;
+	  d[i++] = scl;
 	  d[i++] = scl;
 	  d[i++] = scl;
 	  d[i++] = scl;
@@ -1351,7 +1361,7 @@ double mus_vct_peak(vct *v)
   i = 1;
   d = (mus_float_t *)(v->data);
   val = fabs(d[0]);
-  
+
   while (i <= lim4)
     {
       absv = fabs(d[i++]);

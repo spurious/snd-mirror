@@ -2816,9 +2816,32 @@ static void sweep(s7_scheme *sc)
   int i, j;
   if (sc->strings_loc > 0)
     {
-      for (i = 0, j = 0; i < sc->strings_loc; i++)
+      s7_pointer s1;
+      int s2;
+      s2 = sc->strings_loc - 2;
+      i = 0;
+      j = 0;
+      while (i <= s2)
 	{
-	  s7_pointer s1;
+	  s1 = sc->strings[i];
+	  if (type(s1) == 0)
+	    {
+	      if (string_needs_free(s1))
+		free(string_value(s1));
+	    }
+	  else sc->strings[j++] = s1;
+	  i++;
+	  s1 = sc->strings[i];
+	  if (type(s1) == 0)
+	    {
+	      if (string_needs_free(s1))
+		free(string_value(s1));
+	    }
+	  else sc->strings[j++] = s1;
+	  i++;
+	}
+      if (i < sc->strings_loc)
+	{
 	  s1 = sc->strings[i];
 	  if (type(s1) == 0)
 	    {
@@ -21150,6 +21173,22 @@ static s7_pointer g_write_char_a_s_looped(s7_scheme *sc, s7_pointer args)
 	    return(simple_wrong_type_argument_with_type(sc, sc->READ_CHAR, read_port, AN_INPUT_PORT));
 	  read_ch = port_read_character(read_port);
 	  
+	  if ((read_ch == string_read_char) &&
+	      (write_ch == file_write_char))    /* (do () () (write-char (read-char port) outport)) */
+	    {
+	      /* flush current write buffer */
+	      if (port_position(write_port) > 0)
+		fwrite((void *)(port_data(write_port)), 1, port_position(write_port), port_file(write_port));
+	      port_position(write_port) = 0;
+	      /* send out the entire string (only its EOF can stop us) */
+	      fwrite((void *)(port_string(read_port) + port_string_point(read_port)), 1, /* start point in string */
+		     port_string_length(read_port) - port_string_point(read_port),       /* length of remaining un-output string */
+		     port_file(write_port));
+	      port_string_point(read_port) = port_string_length(read_port);              /* make sure any subsequent read -> EOF */
+	      /* simulate hitting the string end */
+	      return(wrong_type_argument(sc, sc->WRITE_CHAR, small_int(1), sc->EOF_OBJECT, T_CHARACTER)); /* only normal way out! */
+	    }
+
 	  while (true)
 	    {
 	      int chr;
@@ -26830,8 +26869,8 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 #endif
 {
-  s7_Int len, i = 1, left;
-  s7_pointer *orig, *cur;
+  s7_Int len, i, left;
+  s7_pointer *orig;
 
   len = vector_length(vec);
   if (len == 0) return;
@@ -26839,6 +26878,8 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
   orig = vector_elements(vec);
   orig[0] = obj;
 
+#if 0
+  i = 1;
   while (i < len)
     {
       cur = (s7_pointer *)(orig + i);
@@ -26846,9 +26887,30 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
       if (left < i)
 	memcpy((void *)cur, (void *)orig, sizeof(s7_pointer) * left);
       else memcpy((void *)cur, (void *)orig, sizeof(s7_pointer) * i);
-      /* is there a faster way to do this? */
+      /* is there a faster way to do this?  This is twice as fast as
+       * the equivalent for loop: for (i = 0; i < len; i++) orig[i] = obj;
+       * and 3 times as fast as:  for (i = len - 1; i >= 0; i--) orig[i] = obj;
+       * but it's 1/3 slower than the unrolled loop below.
+       */
       i *= 2;
     }
+#else
+  left = len - 8;
+  i = 0;
+  while (i <= left)
+    {
+      orig[i++] = obj;
+      orig[i++] = obj;
+      orig[i++] = obj;
+      orig[i++] = obj;
+      orig[i++] = obj;
+      orig[i++] = obj;
+      orig[i++] = obj;
+      orig[i++] = obj;
+    }
+  for (; i< len; i++)
+    orig[i] = obj;
+#endif
 }
 
 
@@ -63622,15 +63684,14 @@ s7_scheme *s7_init(void)
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
  * maybe other banks.
  * outa loops unrolled?, poly7?
- * can the sinc table be rearranged to get rid of the negative index? -- would allow those loops to be unrolled
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
- * bench    42736 8752 8051 7725 6515 5194 4364
+ * bench    42736 8752 8051 7725 6515 5194 4364 4195
  * lint           9328 8140 7887 7736 7300 7180
  * index    44300 3291 3005 2742 2078 1643 1435
  * s7test    1721 1358 1297 1244  977  961  957
  * t455|6     265   89   55   31   14   14    9
  * lat        229   63   52   47   42   40   34
  * t502        90   43   39   36   29   23   20
- * calls           275  207  175  115   89   71   64
+ * calls           275  207  175  115   89   71   63
  */

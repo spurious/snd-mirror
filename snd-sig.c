@@ -3471,10 +3471,20 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 				      buf = data[0];
 				      for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
 					{
+					  int ls4;
 					  local_samps = num - kp;
 					  if (local_samps > MAX_BUFFER_SIZE)
 					    local_samps = MAX_BUFFER_SIZE;
-					  for (j = 0; j < local_samps; j++)
+					  ls4 = local_samps - 4;
+					  j = 0;
+					  while (j <= ls4)
+					    {
+					      buf[j++] = read_sample(sf);
+					      buf[j++] = read_sample(sf);
+					      buf[j++] = read_sample(sf);
+					      buf[j++] = read_sample(sf);
+					    }
+					  for (; j < local_samps; j++)
 					    buf[j] = read_sample(sf);
 					  err = mus_file_write(ofd, 0, j - 1, 1, data);
 					  if (err != MUS_NO_ERROR) break;

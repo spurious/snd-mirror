@@ -739,7 +739,7 @@ static mus_float_t read_mix_list_samples(snd_fd *sf)
   int i;
   mus_float_t sum = 0.0;
   m = (reader_mixes *)(sf->mixes);
-  for (i = 0; i < m->size; i++)
+  for (i = 0; i < m->size; i++) /* unrolled no faster */
     sum += read_sample(m->sfs[i]);
   return(sum);
 }

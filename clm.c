@@ -946,7 +946,25 @@ bool mus_arrays_are_equal(mus_float_t *arr1, mus_float_t *arr2, mus_float_t fudg
     }
   else
     {
-      for (i = 0; i < len; i++)
+      mus_long_t len4;
+      len4 = len - 4;
+      i = 0;
+      while (i <= len4)
+	{
+	  if (fabs(arr1[i] - arr2[i]) > fudge)
+	    return(false);
+	  i++;
+	  if (fabs(arr1[i] - arr2[i]) > fudge)
+	    return(false);
+	  i++;
+	  if (fabs(arr1[i] - arr2[i]) > fudge)
+	    return(false);
+	  i++;
+	  if (fabs(arr1[i] - arr2[i]) > fudge)
+	    return(false);
+	  i++;
+	}
+      for (; i < len; i++)
 	if (fabs(arr1[i] - arr2[i]) > fudge)
 	  return(false);
     }
@@ -962,9 +980,22 @@ static bool clm_arrays_are_equal(mus_float_t *arr1, mus_float_t *arr2, mus_long_
 
 mus_float_t mus_dot_product(mus_float_t *data1, mus_float_t *data2, mus_long_t size)
 {
-  mus_long_t i;
+  mus_long_t i, size4;
   mus_float_t sum = 0.0;
-  for (i = 0; i < size; i++) 
+  size4 = size - 4;
+  i = 0;
+  while (i <= size4)
+    {
+      sum += (data1[i] * data2[i]);
+      i++;
+      sum += (data1[i] * data2[i]);
+      i++;
+      sum += (data1[i] * data2[i]);
+      i++;
+      sum += (data1[i] * data2[i]);
+      i++;
+    }
+  for (; i < size; i++) 
     sum += (data1[i] * data2[i]);
   return(sum);
 }
@@ -993,6 +1024,7 @@ mus_float_t mus_polynomial(mus_float_t *coeffs, mus_float_t x, int ncoeffs)
   if (ncoeffs <= 0) return(0.0);
   if (ncoeffs == 1) return(coeffs[0]); /* just a constant term */
   sum = coeffs[ncoeffs - 1];
+  /* unrolled is slower */
   for (i = ncoeffs - 2; i >= 0; i--) 
     sum = (sum * x) + coeffs[i];
   return((mus_float_t)sum);
@@ -6535,13 +6567,32 @@ static mus_float_t fir_n(mus_any *ptr, mus_float_t input)
 {
   mus_float_t xout = 0.0;
   flt *gen = (flt *)ptr;
-  mus_float_t *ap, *dp, *d, *dprev;
+  mus_float_t *ap, *dp, *d, *dprev, *d4;
 
   ap = (mus_float_t *)(gen->x + gen->order - 1);
   dp = (mus_float_t *)(gen->state + gen->order - 1);
   d = gen->state;
+  d4 = (mus_float_t *)(d + 4);
 
   (*d) = input;
+  while (dp > d4)
+    {
+      xout += (*dp) * (*ap--);
+      dprev = dp--;
+      (*dprev) = (*dp);
+
+      xout += (*dp) * (*ap--);
+      dprev = dp--;
+      (*dprev) = (*dp);
+
+      xout += (*dp) * (*ap--);
+      dprev = dp--;
+      (*dprev) = (*dp);
+
+      xout += (*dp) * (*ap--);
+      dprev = dp--;
+      (*dprev) = (*dp);
+    }
   while (dp > d)
     {
       xout += (*dp) * (*ap--);
@@ -11154,6 +11205,8 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
   stop = loc;
   if (int_ok)
     {
+      /* unrolled is slower here */
+
       xs = (int)(zf * (srp->width_1 - srp->x));
       mid = loc - (xs / xi) + 1;
       if (mid > lim) mid -= lim;
@@ -11267,11 +11320,39 @@ mus_float_t mus_src_20(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
 	}
     }
 
+#if 0
   stop = loc;
   for (i = 0; loc < lim; loc += 2, i++)
     sum += srp->data[loc] * srp->coeffs[i];
   for (loc = 0; loc < stop; loc += 2, i++)
     sum += srp->data[loc] * srp->coeffs[i];
+#endif
+  {
+    int lim2;
+    stop = loc;
+    lim2 = lim - 4;
+    i = 0;
+    while (loc <= lim2)
+      {
+	sum += (srp->data[loc] * srp->coeffs[i++]);
+	loc += 2;
+	sum += (srp->data[loc] * srp->coeffs[i++]);
+	loc += 2;
+      }
+    if (loc < lim)
+      sum += (srp->data[loc] * srp->coeffs[i++]);
+    lim2 = stop - 4;
+    loc = 0;
+    while (loc <= lim2)
+      {
+	sum += (srp->data[loc] * srp->coeffs[i++]);
+	loc += 2;
+	sum += (srp->data[loc] * srp->coeffs[i++]);
+	loc += 2;
+      }
+    if (loc < stop)
+      sum += (srp->data[loc] * srp->coeffs[i]);
+  }
   return(sum * 0.5);
 }
 
@@ -11320,11 +11401,38 @@ mus_float_t mus_src_05(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
 	}
     }
 
+#if 0
   stop = loc;
   for (sum = 0.0, i = 0; loc < lim; loc++, i++)
     sum += (srp->data[loc] * srp->coeffs[i]);
   for (loc = 0; loc < stop; loc++, i++)
     sum += (srp->data[loc] * srp->coeffs[i]);
+#endif
+
+  {
+    int lim2;
+    stop = loc;
+    lim2 = lim - 2;
+    i = 0;
+    sum = 0.0;
+    while (loc <= lim2)
+      {
+	sum += (srp->data[loc++] * srp->coeffs[i++]);
+	sum += (srp->data[loc++] * srp->coeffs[i++]);
+      }
+    if (loc < lim)
+      sum += (srp->data[loc] * srp->coeffs[i++]);
+    lim2 = stop - 2;
+    loc = 0;
+    while (loc <= lim2)
+      {
+	sum += (srp->data[loc++] * srp->coeffs[i++]);
+	sum += (srp->data[loc++] * srp->coeffs[i++]);
+      }
+    if (loc < stop)
+      sum += (srp->data[loc] * srp->coeffs[i]);
+  }
+
   srp->x += 0.5;
   return(sum);
 }
