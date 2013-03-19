@@ -3115,29 +3115,20 @@ static mus_float_t polyw_second(mus_any *ptr, mus_float_t fm)
 static mus_float_t polyw_second_5(mus_any *ptr, mus_float_t fm)
 {
   pw *gen = (pw *)ptr;
-  mus_float_t x;
   mus_float_t *un;
+  double x, b, b1, cx;
 
   x = gen->phase;
   gen->phase += (gen->freq + fm);
   /* gen->n is 5 */
   un = gen->coeffs;
 
-  {
-    double x2, b, b1, b2, cx;
+  /* this is a candidate for sincos, but gcc is already using it here! */
+  cx = 2.0 * cos(x);
+  b1 = cx * un[4] + un[3]; 
+  b = cx * b1 + gen->index;
 
-    /* this is a candidate for sincos, but gcc is already using it here! */
-
-    cx = gen->index * cos(x);
-    x2 = 2.0 * cx;
-    b1 = un[4];
-    b = x2 * b1 + un[3];
-    b2 = b1;
-    b1 = b;
-    b = x2 * b1 - b2 + un[2];
-
-    return(sin(x) * (x2 * b - b1 + un[1]));
-  }
+  return(sin(x) * (cx * b - b1 + un[1]));
 }
 
 
@@ -3183,6 +3174,7 @@ static mus_float_t pw_set_index_and_func(mus_any *ptr, mus_float_t val)
   gen->index = val; 
   if (gen->cheby_choice == MUS_CHEBYSHEV_FIRST_KIND)
     gen->polyw = polyw_first;
+  else gen->polyw = polyw_second;
   return(val);
 }
 
@@ -3292,7 +3284,10 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
   else 
     {
       if (n == 5)
-	gen->polyw = polyw_second_5;
+	{
+	  gen->polyw = polyw_second_5;
+	  gen->index = coeffs[2] - coeffs[4];
+	}
       else gen->polyw = polyw_second;
     }
   return((mus_any *)gen);
@@ -6456,15 +6451,28 @@ static mus_float_t filter_n(mus_any *ptr, mus_float_t input)
 {
   flt *gen = (flt *)ptr;
   mus_float_t xout = 0.0;
-  mus_float_t *xp, *yp, *dp, *d, *dprev;
+  mus_float_t *xp, *yp, *dp, *d, *dprev, *d2;
 
   xp = (mus_float_t *)(gen->x + gen->order - 1);
   yp = (mus_float_t *)(gen->y + gen->order - 1);
   dp = (mus_float_t *)(gen->state + gen->order - 1);
   d = gen->state;
+  d2 = (mus_float_t *)(d + 2);
 
   d[0] = input;
-  while (dp > d)
+  while (dp >= d2)
+    {
+      xout += (*dp) * (*xp--);
+      d[0] -= (*dp) * (*yp--);
+      dprev = dp--;
+      (*dprev) = (*dp);
+
+      xout += (*dp) * (*xp--);
+      d[0] -= (*dp) * (*yp--);
+      dprev = dp--;
+      (*dprev) = (*dp);
+    }
+  if (dp > d)
     {
       xout += (*dp) * (*xp--);
       d[0] -= (*dp) * (*yp--);

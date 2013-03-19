@@ -20533,8 +20533,10 @@ EDITS: 2
       (close-sound nind))
     
     (if (and all-args (defined? 'edot-product))
-	(let* ((ind (open-sound "1a.snd"))
-	       (len (frames ind 0)))
+	(let ((ind (new-sound :size 100))
+	      (len 100))
+	  (set! (sample 10) 0.5)
+	  (set! (sample 30) -0.8)
 	  (stretch-sound-via-dft 2.0 ind 0)
 	  (let ((new-len (frames ind 0)))
 	    (if (> (abs (- (* 2 len) new-len)) 10)

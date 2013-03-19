@@ -695,7 +695,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_CLOSURE_opCq, HOP_SAFE_CLOSURE_opCq, OP_SAFE_CLOSURE_SA, HOP_SAFE_CLOSURE_SA, 
       OP_SAFE_CLOSURE_opSq, HOP_SAFE_CLOSURE_opSq, OP_SAFE_CLOSURE_opSq_S, HOP_SAFE_CLOSURE_opSq_S, OP_SAFE_CLOSURE_opSq_opSq, HOP_SAFE_CLOSURE_opSq_opSq, 
       OP_SAFE_CLOSURE_S_opSq, HOP_SAFE_CLOSURE_S_opSq, OP_SAFE_CLOSURE_S_opSSq, HOP_SAFE_CLOSURE_S_opSSq, OP_SAFE_CLOSURE_opSSq_S, HOP_SAFE_CLOSURE_opSSq_S, 
-      OP_SAFE_CLOSURE_SSS, HOP_SAFE_CLOSURE_SSS,
+      OP_SAFE_CLOSURE_SSS, HOP_SAFE_CLOSURE_SSS, OP_SAFE_CLOSURE_SAA, HOP_SAFE_CLOSURE_SAA,
       OP_SAFE_CLOSURE_CAR_CAR, HOP_SAFE_CLOSURE_CAR_CAR, OP_SAFE_CLOSURE_CDR_CDR, HOP_SAFE_CLOSURE_CDR_CDR, 
       OP_SAFE_CLOSURE_ALL_C, HOP_SAFE_CLOSURE_ALL_C, OP_SAFE_CLOSURE_ALL_X, HOP_SAFE_CLOSURE_ALL_X, 
       OP_SAFE_CLOSURE_S_Z, HOP_SAFE_CLOSURE_S_Z, OP_SAFE_CLOSURE_S_P, HOP_SAFE_CLOSURE_S_P,
@@ -805,7 +805,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_closure_opcq", "h_safe_closure_opcq", "safe_closure_sa", "h_safe_closure_sa", 
       "safe_closure_opsq", "h_safe_closure_opsq", "safe_closure_opsq_s", "h_safe_closure_opsq_s", "safe_closure_opsq_opsq", "h_safe_closure_opsq_opsq", 
       "safe_closure_s_opsq", "h_safe_closure_s_opsq", "safe_closure_s_opssq", "h_safe_closure_s_opssq", "safe_closure_opssq_s", "h_safe_closure_opssq_s", 
-      "safe_closure_sss", "h_safe_closure_sss",
+      "safe_closure_sss", "h_safe_closure_sss", "safe_closure_saa", "h_safe_closure_saa",
       "safe_closure_car_car", "h_safe_closure_car_car", "safe_closure_cdr_cdr", "h_safe_closure_cdr_cdr", 
       "safe_closure_all_c", "h_safe_closure_all_c", "safe_closure_all_x", "h_safe_closure_all_x", 
       "safe_closure_s_z", "h_safe_closure_s_z", "safe_closure_s_p", "h_safe_closure_s_p",
@@ -4747,6 +4747,33 @@ static s7_pointer old_frame_with_two_slots(s7_scheme *sc, s7_pointer env, s7_poi
   symbol_set_local(sym, id, x);
   x = next_slot(x);
   slot_set_value(x, val2);
+  sym = slot_symbol(x);
+  symbol_set_local(sym, id, x);
+
+  return(env);
+}
+
+
+static s7_pointer old_frame_with_three_slots(s7_scheme *sc, s7_pointer env, s7_pointer val1, s7_pointer val2, s7_pointer val3)
+{
+  s7_pointer x, sym;
+  unsigned long long int id;
+
+  id = ++environment_number;
+  environment_id(env) = id;
+  x = environment_slots(env);
+
+  slot_set_value(x, val1);
+  sym = slot_symbol(x);
+  symbol_set_local(sym, id, x);
+  x = next_slot(x);
+
+  slot_set_value(x, val2);
+  sym = slot_symbol(x);
+  symbol_set_local(sym, id, x);
+  x = next_slot(x);
+
+  slot_set_value(x, val3);
   sym = slot_symbol(x);
   symbol_set_local(sym, id, x);
 
@@ -39851,7 +39878,15 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
 	    {
 	      set_unsafely_optimized(car_x);
 	      if (func_is_closure)
-		set_optimize_data(car_x, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_ALL_X : OP_CLOSURE_ALL_X)));
+		{
+		  if (is_safe_closure(func))
+		    {
+		      if (is_symbol(cadar_x))
+			set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_SAA);
+		      else set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_ALL_X);
+		    }
+		  else set_optimize_data(car_x, hop + OP_CLOSURE_ALL_X);
+		}
 	      else set_optimize_data(car_x, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X)));
 	      annotate_args(sc, cdr(car_x));
 	      ecdr(car_x) = func;
@@ -47692,6 +47727,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 
 
+	    case OP_SAFE_CLOSURE_SAA:
+	      if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 3))
+		break;
+
+	    case HOP_SAFE_CLOSURE_SAA:
+	      {
+		s7_pointer args, y, z;
+		args = cddr(code);
+		y = ((s7_function)fcdr(args))(sc, car(args));
+		args = cdr(args);
+		z = ((s7_function)fcdr(args))(sc, car(args));
+		sc->envir = old_frame_with_three_slots(sc, closure_environment(ecdr(code)), finder(sc, cadr(code)), y, z);
+		code = closure_body(ecdr(code));
+		if (is_pair(cdr(code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(code));
+		sc->code = car(code);
+		goto EVAL;
+	      }
+
+
+	      /* this gets only a few calls */
 	    case OP_SAFE_CLOSURE_SSS:
 	      if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 3))
 		{
@@ -47701,47 +47757,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_SAFE_CLOSURE_SSS:
 	      {
-		s7_pointer x, y, z;
+		s7_pointer y, z;
 		z = finder(sc, fcdr(code)); 
 		y = finder(sc, caddr(code));
-		x = finder(sc, cadr(code));
-		car(sc->T3_1) = x;
-		car(sc->T3_2) = y;
-		car(sc->T3_3) = z;
-		sc->args = sc->T3_1;
-		sc->code = ecdr(code);
-		/* goto SAFE_CLOSURE; */
-	      }
-	      
-	      
-	    SAFE_CLOSURE:
-	      {
-		s7_pointer env, x, z;
-		unsigned long long int id;
-		
-		id = ++environment_number;
-		env = closure_environment(sc->code);
-		environment_id(env) = id;
-		
-		for (x = environment_slots(env), z = sc->args; is_slot(x); x = next_slot(x), z = cdr(z))
-		  {
-		    slot_set_value(x, car(z));
-		    symbol_set_local(slot_symbol(x), id, x);
-		  }
-		sc->envir = env;
-		sc->code = closure_body(sc->code);
-		
-		if (is_pair(cdr(sc->code)))
-		  {
-		    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
-		    sc->code = car(sc->code);
-		  }
-		else
-		  {
-		    sc->code = car(sc->code);
-		    if (is_optimized(sc->code))
-		      goto OPT_EVAL;
-		  }
+		sc->envir = old_frame_with_three_slots(sc, closure_environment(ecdr(code)), finder(sc, cadr(code)), y, z);
+		code = closure_body(ecdr(code));
+		if (is_pair(cdr(code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(code));
+		sc->code = car(code);
 		goto EVAL;
 	      }
 	      
@@ -47778,8 +47801,40 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  car(p) = ((s7_function)fcdr(args))(sc, car(args));
 		clear_list_in_use(sc->args);
 		sc->code = ecdr(code);
-		goto SAFE_CLOSURE;
+		/* goto SAFE_CLOSURE; */
 	      }
+	      
+	    SAFE_CLOSURE:
+	      {
+		s7_pointer env, x, z;
+		unsigned long long int id;
+		
+		id = ++environment_number;
+		env = closure_environment(sc->code);
+		environment_id(env) = id;
+		
+		for (x = environment_slots(env), z = sc->args; is_slot(x); x = next_slot(x), z = cdr(z))
+		  {
+		    slot_set_value(x, car(z));
+		    symbol_set_local(slot_symbol(x), id, x);
+		  }
+		sc->envir = env;
+		sc->code = closure_body(sc->code);
+		
+		if (is_pair(cdr(sc->code)))
+		  {
+		    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		    sc->code = car(sc->code);
+		  }
+		else
+		  {
+		    sc->code = car(sc->code);
+		    if (is_optimized(sc->code))
+		      goto OPT_EVAL;
+		  }
+		goto EVAL;
+	      }
+	      
 	      
 	      
 
@@ -49207,7 +49262,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    (!arglist_has_accessed_symbol(closure_args(f))))
 			  {
 			    annotate_args(sc, cdr(code));
-			    set_opt_and_goto_opt_eval(code, f, (((is_global(car(code))) ? 1 : 0) + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_ALL_X : OP_CLOSURE_ALL_X)));
+			    if (is_safe_closure(f))
+			      {
+				if ((is_symbol(cadr(code))) &&
+				    (num_args == 3))
+				  set_optimize_data(code, ((is_global(car(code))) ? 1 : 0) + OP_SAFE_CLOSURE_SAA);
+				else set_optimize_data(code, ((is_global(car(code))) ? 1 : 0) + OP_SAFE_CLOSURE_ALL_X);
+			      }
+			    else set_optimize_data(code, ((is_global(car(code))) ? 1 : 0) + OP_CLOSURE_ALL_X);
+			    ecdr(code) = f;
+			    goto OPT_EVAL;
 			  }
 			break;
 
@@ -63686,12 +63750,12 @@ s7_scheme *s7_init(void)
  * outa loops unrolled?, poly7?
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
- * bench    42736 8752 8051 7725 6515 5194 4364 4195
- * lint           9328 8140 7887 7736 7300 7180
- * index    44300 3291 3005 2742 2078 1643 1435
- * s7test    1721 1358 1297 1244  977  961  957
- * t455|6     265   89   55   31   14   14    9
- * lat        229   63   52   47   42   40   34
- * t502        90   43   39   36   29   23   20
+ * bench    42736 8752 8051 7725 6515 5194 4364 4184
+ * lint           9328 8140 7887 7736 7300 7180 7201
+ * index    44300 3291 3005 2742 2078 1643 1435 1430
+ * s7test    1721 1358 1297 1244  977  961  957  962
+ * t455|6     265   89   55   31   14   14    9 9419
+ * lat        229   63   52   47   42   40   34   32
+ * t502        90   43   39   36   29   23   20   20
  * calls           275  207  175  115   89   71   63
  */

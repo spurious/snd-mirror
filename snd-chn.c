@@ -2572,8 +2572,8 @@ static void make_sonogram(chan_info *cp)
 { 
   #define SAVE_FFT_SIZE 4096
   sono_info *si;
-  static int *sono_js = NULL;
-  static int sono_js_size = 0;
+  static unsigned int *sono_js = NULL;
+  static unsigned int sono_js_size = 0;
 
   if (chan_fft_in_progress(cp)) return;
   si = cp->sonogram_data;
@@ -2581,7 +2581,7 @@ static void make_sonogram(chan_info *cp)
   if ((si) && (si->scale > 0.0))
     {
       int i, slice, fwidth, fheight, j, bins;
-      int rectw, recth;
+      int rectw, recth, cmap_size;
       axis_info *fap;
       mus_float_t xf, xfincr, yf, yfincr, frectw, frecth, xscl, scl = 1.0;
       mus_float_t *hfdata;
@@ -2623,8 +2623,8 @@ static void make_sonogram(chan_info *cp)
       if (sono_js_size != color_map_size(ss))
 	{
 	  if (sono_js) free(sono_js);
-	  sono_js_size = color_map_size(ss);
-	  sono_js = (int *)calloc(sono_js_size, sizeof(int));
+	  sono_js_size = (unsigned int)color_map_size(ss);
+	  sono_js = (unsigned int *)calloc(sono_js_size, sizeof(unsigned int));
 	}
       if (cp->printing) ps_allocate_grf_points();
       allocate_sono_rects(si->total_bins);
@@ -2678,12 +2678,13 @@ static void make_sonogram(chan_info *cp)
       xfincr = ((mus_float_t)fwidth / (mus_float_t)(si->target_slices));
       xf = 2 + fap->x_axis_x0;
       ss->stopped_explicitly = false;
+      cmap_size = color_map_size(ss) - 4;
 
       for (slice = 0; slice < si->active_slices; slice++, xf += xfincr)
 	{
 	  mus_float_t *fdata;
 
-	  memset((void *)sono_js, 0, color_map_size(ss) * sizeof(int));
+	  memset((void *)sono_js, 0, color_map_size(ss) * sizeof(unsigned int));
 	  fdata = si->data[slice];
 
 	  for (i = 0; i < bins; i++)
@@ -2708,9 +2709,20 @@ static void make_sonogram(chan_info *cp)
 		}
 	    }
 
-	  for (i = 0; i < color_map_size(ss); i++)
-	    if (sono_js[i] > 0) 
-	      draw_sono_rectangles(ax, i, sono_js[i]);
+	  i = 0;
+	  while (i <= cmap_size)
+	    {
+	      if (sono_js[i] != 0) draw_sono_rectangles(ax, i, sono_js[i]);
+	      i++;
+	      if (sono_js[i] != 0) draw_sono_rectangles(ax, i, sono_js[i]);
+	      i++;
+	      if (sono_js[i] != 0) draw_sono_rectangles(ax, i, sono_js[i]);
+	      i++;
+	      if (sono_js[i] != 0) draw_sono_rectangles(ax, i, sono_js[i]);
+	      i++;
+	    }
+	  for (; i < color_map_size(ss); i++)
+	    if (sono_js[i] != 0) draw_sono_rectangles(ax, i, sono_js[i]);
 	}
 
 #if USE_MOTIF

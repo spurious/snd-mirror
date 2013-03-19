@@ -1772,14 +1772,33 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 	  /* and using memmove for the "state" changes slowed it down by a factor of 2! */
 	  for (j = 0; j < dur; j++)
 	    {
-	      mus_float_t *ap, *dp, *dprev;
+	      mus_float_t *ap, *dp, *dprev, *d4;
 
 	      ap = (mus_float_t *)(a + order - 1);
 	      dp = (mus_float_t *)(d + order - 1);
+	      d4 = (mus_float_t *)(d + 4);
 
 	      d[0] = read_sample(sf);
 	      x = d[0] * a[0]; 
 
+	      while (dp > d4)
+		{
+		  x += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+
+		  x += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+
+		  x += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+
+		  x += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+		}
 	      while (dp > d)
 		{
 		  x += (*dp) * (*ap--);
@@ -1798,14 +1817,33 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 	    x = mus_apply(gen, read_sample(sf), 0.0);
 	  else
 	    {
-	      mus_float_t *ap, *dp, *dprev;
+	      mus_float_t *ap, *dp, *dprev, *d4;
 
 	      ap = (mus_float_t *)(a + order - 1);
 	      dp = (mus_float_t *)(d + order - 1);
+	      d4 = (mus_float_t *)(d + 4);
 
 	      d[0] = read_sample(sf);
 	      x = d[0] * a[0]; 
 
+	      while (dp > d4)
+		{
+		  x += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+
+		  x += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+
+		  x += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+
+		  x += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+		}
 	      while (dp > d)
 		{
 		  x += (*dp) * (*ap--);
@@ -1844,14 +1882,33 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 	    x = mus_apply(gen, read_sample(sf), 0.0);
 	  else
 	    {
-	      mus_float_t *ap, *dp, *dprev;
+	      mus_float_t *ap, *dp, *dprev, *d4;
 
 	      ap = (mus_float_t *)(a + order - 1);
 	      dp = (mus_float_t *)(d + order - 1);
+	      d4 = (mus_float_t *)(d + 4);
 
 	      d[0] = read_sample(sf);
 	      x = d[0] * a[0];
 
+	      while (dp > d4)
+		{
+		  x += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+
+		  x += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+
+		  x += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+
+		  x += (*dp) * (*ap--);
+		  dprev = dp--;
+		  (*dprev) = (*dp);
+		}
 	      while (dp > d)
 		{
 		  x += (*dp) * (*ap--);

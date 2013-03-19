@@ -367,18 +367,28 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	  for (n = 0; (n < lm) && (sb < ep->peak_env_size); n++, sb++)
 	    {
 	      mus_float_t ymin, ymax, val;
-	      int i;
+	      int i, lim;
 	      val = read_sample(sfd);
 	      ymin = val;
 	      ymax = val;
-	      for (i = 1; i < ep->samps_per_bin; i++)
+	      i = 1;
+	      lim = ep->samps_per_bin - 4;
+	      while (i <= lim)
 		{
 		  val = read_sample(sfd);
-		  if (ymin > val) 
-		    ymin = val; 
-		  else 
-		    if (ymax < val) 
-		      ymax = val;
+		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
+		  val = read_sample(sfd);
+		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
+		  val = read_sample(sfd);
+		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
+		  val = read_sample(sfd);
+		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
+		  i += 4;
+		}
+	      for (; i < ep->samps_per_bin; i++)
+		{
+		  val = read_sample(sfd);
+		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
 		}
 	      ep->data_max[sb] = ymax;
 	      ep->data_min[sb] = ymin;
