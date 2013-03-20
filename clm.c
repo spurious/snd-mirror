@@ -129,6 +129,7 @@ enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
       MUS_MOVING_AVERAGE, MUS_MOVING_MAX, MUS_NSIN, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
       MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS, MUS_POLYWAVE, MUS_FIRMANT, MUS_FORMANT_BANK,
+      MUS_ONE_POLE_ALL_PASS,
       MUS_INITIAL_GEN_TAG};
 
 mus_any_class *mus_generator_class(mus_any *ptr) {return(ptr->core);}
@@ -7244,6 +7245,162 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
 
   return(a);
 }
+
+
+
+/* ---------------- one-pole-all-pass ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  int size;
+  mus_float_t coeff;
+  mus_float_t *x, *y;
+} onepall;
+
+
+static int free_onepall(mus_any *ptr) 
+{
+  if (ptr) 
+    {
+      onepall *f = (onepall *)ptr;
+      if (f->x) {free(f->x); f->x = NULL;}
+      if (f->y) {free(f->y); f->y = NULL;}
+      free(ptr); 
+    }
+  return(0);
+}
+
+
+static mus_float_t run_onepall(mus_any *ptr, mus_float_t input, mus_float_t unused) 
+{
+  return(mus_one_pole_all_pass(ptr, input));
+}
+
+
+static mus_long_t onepall_length(mus_any *ptr)
+{
+  return(((onepall *)ptr)->size);
+}
+
+
+static void onepall_reset(mus_any *ptr)
+{
+  onepall *f = (onepall *)ptr;
+  int size;
+  size = f->size;
+  memset((void *)(f->x), 0, size * sizeof(mus_float_t));
+  memset((void *)(f->y), 0, size * sizeof(mus_float_t));
+}
+
+
+static bool onepall_equalp(mus_any *p1, mus_any *p2)
+{
+  onepall *f1 = (onepall *)p1;
+  onepall *f2 = (onepall *)p2;
+
+  if (f1 == f2) return(true);
+  if (f1->size != f2->size) return(false);
+  if (f1->coeff != f2->coeff) return(false);
+
+  return((mus_arrays_are_equal(f1->x, f2->x, float_equal_fudge_factor, f1->size)) &&
+	 (mus_arrays_are_equal(f1->y, f2->y, float_equal_fudge_factor, f1->size)));
+}
+
+
+static char *describe_onepall(mus_any *ptr)
+{
+  onepall *gen = (onepall *)ptr;
+  char *describe_buffer;
+  describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s size: %d, coeff: %f",
+	       mus_name(ptr),
+	       gen->size,
+	       gen->coeff);
+  return(describe_buffer);
+}
+
+
+mus_float_t mus_one_pole_all_pass(mus_any *f, mus_float_t input)
+{
+  onepall *p = (onepall *)f;
+  int i, size2;
+  mus_float_t coeff, y0;
+  mus_float_t *x, *y;
+  x = p->x;
+  y = p->y;
+  coeff = p->coeff;
+  i = 0;
+  size2 = p->size - 2;
+  y0 = input;
+  while (i <= size2)
+    {
+      y[i] = x[i] + (coeff * (y0 - y[i]));
+      x[i] = y0;
+      y0 = y[i];
+      i++;
+
+      y[i] = x[i] + (coeff * (y0 - y[i]));
+      x[i] = y0;
+      y0 = y[i];
+      i++;
+    }
+  if (i < p->size)
+    {
+      y[i] = x[i] + (coeff * (y0 - y[i]));
+      x[i] = y0;
+      y0 = y[i];
+    }
+  return(y0);
+}
+
+
+static mus_any_class ONE_POLE_ALL_PASS_CLASS = {
+  MUS_ONE_POLE_ALL_PASS,
+  (char *)S_one_pole_all_pass,
+  &free_onepall,
+  &describe_onepall,
+  &onepall_equalp,
+  0, 0,
+  &onepall_length, 0,
+  0, 0, 
+  0, 0,
+  0, 0,
+  0, 0,
+  &run_onepall,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  0, 0, 0, 0,
+  0, 0,
+  0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0,
+  &onepall_reset,
+  0
+};
+
+
+mus_any *mus_make_one_pole_all_pass(int size, mus_float_t coeff)
+{
+  onepall *gen;
+
+  gen = (onepall *)calloc(1, sizeof(onepall));
+  gen->core = &ONE_POLE_ALL_PASS_CLASS;
+  gen->size = size;
+
+  gen->x = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+  gen->y = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+  gen->coeff = coeff;
+
+  return((mus_any *)gen);
+}
+
+
+bool mus_one_pole_all_pass_p(mus_any *ptr)
+{
+  return((ptr) && 
+	 (ptr->core->type == MUS_ONE_POLE_ALL_PASS));
+}
+  
 
 
 

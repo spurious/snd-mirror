@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 10
-#define MUS_DATE "14-Mar-13"
+#define MUS_REVISION 11
+#define MUS_DATE "21-Mar-13"
 
 /* isn't mus_env_interp backwards? */
 
@@ -325,6 +325,10 @@ MUS_EXPORT mus_any *mus_make_two_pole(mus_float_t a0, mus_float_t b1, mus_float_
 MUS_EXPORT bool mus_two_pole_p(mus_any *gen);
 MUS_EXPORT mus_any *mus_make_two_pole_from_frequency_and_radius(mus_float_t frequency, mus_float_t radius);
 
+MUS_EXPORT mus_float_t mus_one_pole_all_pass(mus_any *f, mus_float_t input);
+MUS_EXPORT mus_any *mus_make_one_pole_all_pass(int size, mus_float_t coeff);
+MUS_EXPORT bool mus_one_pole_all_pass_p(mus_any *ptr);
+
 MUS_EXPORT mus_float_t mus_formant(mus_any *ptr, mus_float_t input); 
 MUS_EXPORT mus_any *mus_make_formant(mus_float_t frequency, mus_float_t radius);
 MUS_EXPORT bool mus_formant_p(mus_any *ptr);
@@ -589,6 +593,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 21-Mar:     added one-pole-all-pass generator.
  * 14-Mar:     added formant-bank generator.
  *             removed mus_delay_tick_noz.
  * 4-Mar:      added moving_max generator.

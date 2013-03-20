@@ -6,84 +6,7 @@
     (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
-(defgenerator one-pole-allpass coeff input x1 y1)
-
-(define (one-pole-allpass gen input)
-  (environment-set! gen 'input input)
-  (with-environment gen
-    (set! y1 (+ x1 (* coeff (- input y1))))
-    (set! x1 input)
-    y1))
-
-
-(defgenerator one-pole-allpass-bank coeff input x1 y1 x2 y2 x3 y3 x4 y4 x5 y5 x6 y6 x7 y7 x8 y8) 
-
-(define (one-pole-allpass-bank gen input)
-  (environment-set! gen 'input input)
-  (with-environment gen
-    (set! y1 (+ x1 (* coeff (- input y1))))
-    (set! x1 input)
-
-    (set! y2 (+ x2 (* coeff (- y1 y2))))
-    (set! x2 y1)
-
-    (set! y3 (+ x3 (* coeff (- y2 y3))))
-    (set! x3 y2)
-
-    (set! y4 (+ x4 (* coeff (- y3 y4))))
-    (set! x4 y3)
-
-    (set! y5 (+ x5 (* coeff (- y4 y5))))
-    (set! x5 y4)
-
-    (set! y6 (+ x6 (* coeff (- y5 y6))))
-    (set! x6 y5)
-
-    (set! y7 (+ x7 (* coeff (- y6 y7))))
-    (set! x7 y6)
-
-    (set! y8 (+ x8 (* coeff (- y7 y8))))
-    (set! x8 y7)
-    y8))
-
-
-#|
-;;; since that is most of the actual computation in the piano, move it to C
-;;;   this is about 50% faster overall, but is restricted to Linux/OSX
-
-(if (not (provided? 'cload.scm)) (load "cload.scm"))
-
-(define-c-function '((in-C "static double *make_apb(double coeff) {double *data; data = (double *)calloc(20, sizeof(double)); data[0] = coeff; return(data);}")
-		     (in-C "enum {coeff, x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6, x7, y7, x8, y8};  \
-                            static double apb(double *data, double input) \
-                            { \
-                              data[y1] = data[x1] + data[coeff] * (input - data[y1]); \
-                              data[x1] = input; \
-                              data[y2] = data[x2] + data[coeff] * (data[y1] - data[y2]); \
-                              data[x2] = data[y1]; \
-                              data[y3] = data[x3] + data[coeff] * (data[y2] - data[y3]); \
-                              data[x3] = data[y2]; \
-                              data[y4] = data[x4] + data[coeff] * (data[y3] - data[y4]); \
-                              data[x4] = data[y3]; \
-                              data[y5] = data[x5] + data[coeff] * (data[y4] - data[y5]); \
-                              data[x5] = data[y4]; \
-                              data[y6] = data[x6] + data[coeff] * (data[y5] - data[y6]); \
-                              data[x6] = data[y5]; \
-                              data[y7] = data[x7] + data[coeff] * (data[y6] - data[y7]); \
-                              data[x7] = data[y6]; \
-                              data[y8] = data[x8] + data[coeff] * (data[y7] - data[y8]); \
-                              data[x8] = data[y7]; \
-                              return(data[y8]); \
-                            }")
-		     (void free (void*))
-		     (double* make_apb (double))
-		     (double apb (double* double)))
-  "")
-
-(define one-pole-allpass-bank apb)
-(define make-one-pole-allpass-bank make_apb)
-|#
-                              
+;;; see generators.scm for the old scheme version of one-pole-all-pass
 (defgenerator expseg currentValue targetValue r)
 
 (define (expseg gen r)
@@ -406,7 +329,7 @@
 			   ctemp))
 		  
 		  (agraffe-delay1 (make-delay dlen1))
-		  (agraffe-tuning-ap1 (make-one-pole-allpass apcoef1)))
+		  (agraffe-tuning-ap1 (make-one-pole-all-pass 1 apcoef1)))
 	      
 	      (let ((couplingFilter-pair (make-one-pole-one-zero cfb0 cfb1 cfa1))
 		    ;;initialize the coupled-string elements
@@ -438,16 +361,16 @@
 			(cou1 (cadr couplingFilter-pair))
 			
 			(string1-delay (make-delay (- delayLength1 1)))
-			(string1-tuning-ap (make-one-pole-allpass tuningCoefficient1))
-			(string1-stiffness-ap (make-one-pole-allpass-bank stiffnessCoefficientL))
+			(string1-tuning-ap (make-one-pole-all-pass 1 tuningCoefficient1))
+			(string1-stiffness-ap (make-one-pole-all-pass 8 stiffnessCoefficientL))
 			
 			(string2-delay (make-delay (- delayLength2 1)))
-			(string2-tuning-ap (make-one-pole-allpass tuningCoefficient2))
-			(string2-stiffness-ap (make-one-pole-allpass-bank stiffnessCoefficient))
+			(string2-tuning-ap (make-one-pole-all-pass 1 tuningCoefficient2))
+			(string2-stiffness-ap (make-one-pole-all-pass 8 stiffnessCoefficient))
 			
 			(string3-delay (make-delay (- delayLength3 1)))
-			(string3-tuning-ap (make-one-pole-allpass tuningCoefficient3))
-			(string3-stiffness-ap (make-one-pole-allpass-bank stiffnessCoefficient))
+			(string3-tuning-ap (make-one-pole-all-pass 1 tuningCoefficient3))
+			(string3-stiffness-ap (make-one-pole-all-pass 8 stiffnessCoefficient))
 			
 			;;initialize loop-gain envelope
 			(loop-gain-expseg (make-expseg :currentValue loop-gain-default :targetValue releaseLoopGain))
@@ -499,39 +422,33 @@
 		      (set! adelIn (one-pole op1 (one-pole op2 (one-pole op3 (one-pole op4 totalTap)))))
 		      (set! combedExcitationSignal (* hammerGain (+ adelOut (* adelIn StrikePositionInvFac))))
 		      (set! noi (delay agraffe-delay1 adelIn))
-		      (set! adelOut (one-pole-allpass agraffe-tuning-ap1 noi))
+		      (set! adelOut (one-pole-all-pass agraffe-tuning-ap1 noi))
 		      
 		      (set! string1-junction-input (+ string1-junction-input couplingFilter-output))
-		      (set! string1-junction-input (one-pole-allpass-bank string1-stiffness-ap string1-junction-input))
+		      (set! string1-junction-input (one-pole-all-pass string1-stiffness-ap string1-junction-input))
 		      (set! string1-junction-input (+ (* unaCordaGain combedExcitationSignal)
 						      (* loop-gain
 							 (delay string1-delay
-								(one-pole-allpass string1-tuning-ap string1-junction-input)))))
+								(one-pole-all-pass string1-tuning-ap string1-junction-input)))))
 		      
 		      (set! string2-junction-input (+ string2-junction-input couplingFilter-output))
-		      (set! string2-junction-input (one-pole-allpass-bank string2-stiffness-ap string2-junction-input))
+		      (set! string2-junction-input (one-pole-all-pass string2-stiffness-ap string2-junction-input))
 		      (set! string2-junction-input (+ combedExcitationSignal
 						      (* loop-gain 
 							 (delay string2-delay
-								(one-pole-allpass string2-tuning-ap string2-junction-input)))))
+								(one-pole-all-pass string2-tuning-ap string2-junction-input)))))
 		      
 		      (set! string3-junction-input (+ string3-junction-input couplingFilter-output))
-		      (set! string3-junction-input (one-pole-allpass-bank string3-stiffness-ap string3-junction-input))
+		      (set! string3-junction-input (one-pole-all-pass string3-stiffness-ap string3-junction-input))
 		      (set! string3-junction-input (+ combedExcitationSignal
 						      (* loop-gain
 							 (delay string3-delay
-								(one-pole-allpass string3-tuning-ap string3-junction-input)))))
+								(one-pole-all-pass string3-tuning-ap string3-junction-input)))))
 		      
 		      (set! couplingFilter-input (+ string1-junction-input string2-junction-input string3-junction-input))
 		      (set! couplingFilter-output (one-zero cou0 (one-pole cou1 couplingFilter-input)))
 		      
-		      (outa i couplingFilter-input))
-#|
-		    (free string1-stiffness-ap)
-		    (free string2-stiffness-ap)
-		    (free string3-stiffness-ap)
-|#
-		    ))))))))))
+		      (outa i couplingFilter-input))))))))))))
 
 #|
 

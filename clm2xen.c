@@ -4191,6 +4191,52 @@ static XEN g_formant_bank_p(XEN os)
 
 
 
+/* ---------------- one-pole-all-pass ---------------- */
+
+static XEN g_make_one_pole_all_pass(XEN arg1, XEN arg2)
+{
+  #define H_make_one_pole_all_pass "(" S_make_one_pole_all_pass " size coeff): return a new one-pole-all-pass generator."
+
+  mus_any *ge = NULL;
+  int size;
+  mus_float_t coeff;
+
+  /* TODO: one-pole-all-pass doc/test/keyword cases */
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, XEN_ARG_1, S_make_one_pole_all_pass, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(arg2), arg2, XEN_ARG_2, S_make_one_pole_all_pass, "a number");
+
+  size = XEN_TO_C_INT(arg1);
+  if (size == 0) return(XEN_FALSE);
+  coeff = XEN_TO_C_DOUBLE(arg2);
+
+  ge = mus_make_one_pole_all_pass(size, coeff);
+  if (ge) 
+    return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(XEN_FALSE);
+}
+
+
+static XEN g_one_pole_all_pass_p(XEN os) 
+{
+  #define H_one_pole_all_pass_p "(" S_one_pole_all_pass_p " gen): " PROC_TRUE " if gen is a " S_one_pole_all_pass
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_one_pole_all_pass_p(XEN_TO_MUS_ANY(os)))));
+}
+
+
+static XEN g_one_pole_all_pass(XEN gen, XEN fm)
+{
+  #define H_one_pole_all_pass "(" S_one_pole_all_pass " gen (input 0.0)): run a one-pole-all-pass generator"
+  mus_float_t in1 = 0.0;
+  mus_any *g = NULL;
+  mus_xen *gn;
+
+  XEN_TO_C_GENERATOR(gen, gn, g, mus_one_pole_all_pass_p, S_one_pole_all_pass, "a one-pole-all-pass generator");
+  XEN_TO_C_DOUBLE_IF_BOUND(fm, in1, S_one_pole_all_pass, XEN_ARG_2);
+  return(C_TO_XEN_DOUBLE(mus_one_pole_all_pass(g, in1)));
+}
+
+
+
 
 /* ---------------- firmant ---------------- */
 
@@ -9652,7 +9698,7 @@ GEN_2(two_pole, mus_two_pole)
 GEN_2(filter, mus_filter)
 GEN_2(fir_filter, mus_fir_filter)
 GEN_2(iir_filter, mus_iir_filter)
-
+/* GEN_2(one_pole_all_pass, mus_one_pole_all_pass) */
 GEN_2(formant, mus_formant)
 GEN_2(firmant, mus_firmant)
 
@@ -12640,6 +12686,7 @@ static void init_choices(void)
   SET_GEN_2(iir_filter, mus_iir_filter)
   SET_GEN_2(formant, mus_formant)
   SET_GEN_2(firmant, mus_firmant)
+    /*  SET_GEN_2(one_pole_all_pass, mus_one_pole_all_pass) */
   SET_GEN_2(wave_train, mus_wave_train)
   SET_GEN_2(table_lookup, mus_table_lookup)
   SET_GEN_2(ssb_am, mus_ssb_am_unmodulated)
@@ -14426,6 +14473,12 @@ static s7_pointer notch_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
   return(f);
 }
 
+#if 0
+static s7_pointer one_pole_all_pass_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  return(f);
+}
+#endif
 
 static s7_pointer all_pass_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
@@ -16109,7 +16162,9 @@ static void init_choosers(s7_scheme *sc)
   formant_bank_sss = clm_make_function(sc, "formant", g_formant_bank_sss, 3, 0, false, "formant-bank optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   formant_bank_ssz = clm_make_function(sc, "formant", g_formant_bank_ssz, 3, 0, false, "formant-bank optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
-
+  /*
+  GEN_F2("one-pole-all-pass", one_pole_all_pass);
+  */
 
   GEN_F2("firmant", firmant);
 
@@ -16470,6 +16525,10 @@ XEN_NARGIFY_1(g_firmant_p_w, g_firmant_p)
 XEN_ARGIFY_4(g_make_firmant_w, g_make_firmant)
 XEN_ARGIFY_3(g_firmant_w, g_firmant)
 
+XEN_NARGIFY_1(g_one_pole_all_pass_p_w, g_one_pole_all_pass_p)
+XEN_NARGIFY_2(g_make_one_pole_all_pass_w, g_make_one_pole_all_pass)
+XEN_ARGIFY_2(g_one_pole_all_pass_w, g_one_pole_all_pass)
+
 XEN_NARGIFY_3(g_set_formant_radius_and_frequency_w, g_set_formant_radius_and_frequency)
 XEN_VARGIFY(g_make_frame_w, g_make_frame)
 XEN_VARGIFY(g_make_frame_unchecked_w, g_make_frame_unchecked)
@@ -16790,6 +16849,10 @@ XEN_NARGIFY_3(g_out_bank_w, g_out_bank)
 #define g_firmant_p_w g_firmant_p
 #define g_make_firmant_w g_make_firmant
 #define g_firmant_w g_firmant
+
+#define g_one_pole_all_pass_p_w g_one_pole_all_pass_p
+#define g_make_one_pole_all_pass_w g_make_one_pole_all_pass
+#define g_one_pole_all_pass_w g_one_pole_all_pass
 
 #define g_set_formant_radius_and_frequency_w g_set_formant_radius_and_frequency
 #define g_make_frame_w g_make_frame
@@ -17311,6 +17374,10 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_firmant_p,    g_firmant_p_w,    1, 0, 0, H_firmant_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_firmant, g_make_firmant_w, 0, 4, 0, H_make_firmant);
   XEN_DEFINE_REAL_PROCEDURE(S_firmant,      g_firmant_w,      1, 2, 0, H_firmant);
+
+  XEN_DEFINE_SAFE_PROCEDURE(S_one_pole_all_pass_p,    g_one_pole_all_pass_p_w,    1, 0, 0, H_one_pole_all_pass_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_one_pole_all_pass, g_make_one_pole_all_pass_w, 2, 0, 0, H_make_one_pole_all_pass);
+  XEN_DEFINE_REAL_PROCEDURE(S_one_pole_all_pass,      g_one_pole_all_pass_w,      1, 1, 0, H_one_pole_all_pass);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency);
 

@@ -6425,6 +6425,53 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 
+
+;;; --------------------------------------------------------------------------------
+;;; old version of one-pole-all-pass
+#|
+(defgenerator one-pole-allpass coeff input x1 y1)
+
+(define (one-pole-allpass gen input)
+  (environment-set! gen 'input input)
+  (with-environment gen
+    (set! y1 (+ x1 (* coeff (- input y1))))
+    (set! x1 input)
+    y1))
+
+(defgenerator one-pole-allpass-bank coeff input x1 y1 x2 y2 x3 y3 x4 y4 x5 y5 x6 y6 x7 y7 x8 y8) 
+
+(define (one-pole-allpass-bank gen input)
+  (environment-set! gen 'input input)
+  (with-environment gen
+    (set! y1 (+ x1 (* coeff (- input y1))))
+    (set! x1 input)
+
+    (set! y2 (+ x2 (* coeff (- y1 y2))))
+    (set! x2 y1)
+
+    (set! y3 (+ x3 (* coeff (- y2 y3))))
+    (set! x3 y2)
+
+    (set! y4 (+ x4 (* coeff (- y3 y4))))
+    (set! x4 y3)
+
+    (set! y5 (+ x5 (* coeff (- y4 y5))))
+    (set! x5 y4)
+
+    (set! y6 (+ x6 (* coeff (- y5 y6))))
+    (set! x6 y5)
+
+    (set! y7 (+ x7 (* coeff (- y6 y7))))
+    (set! x7 y6)
+
+    (set! y8 (+ x8 (* coeff (- y7 y8))))
+    (set! x8 y7)
+    y8))
+|#
+                              
+
+
+
 ;;; --------------------------------------------------------------------------------
 
 (define (calling-all-generators)
@@ -6443,4 +6490,5 @@ index 10 (so 10/2 is the bes-jn arg):
     (machine1 10 .3 100 540 0.5 3.0 0.0)
     (organish 11 .4 100 .5 1.0 #f)
     (brassy 12 4 50 .5 '(0 0 1 1 10 1 11 0) '(0 1 1 0) 1000)))
+
 
