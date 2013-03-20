@@ -6573,6 +6573,50 @@ static XEN g_env_any(XEN e, XEN func)
 #endif
 
 
+#define S_envelope_interp "envelope-interp"
+
+static XEN g_envelope_interp(XEN ux, XEN e, XEN ubase)
+{
+  #define H_envelope_interp "(envelope-interp x e (base 1.0)) -> value of e at x; base controls connecting segment type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
+  mus_float_t x, base = 1.0, x0, x1, y0, y1;
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(ux), ux, XEN_ARG_1, S_envelope_interp, "a number");
+  XEN_ASSERT_TYPE(XEN_LIST_P(e), e, XEN_ARG_2, S_envelope_interp, "a list");
+
+  if (XEN_NULL_P(e))
+    return(XEN_ZERO);
+
+  x = XEN_TO_C_DOUBLE(ux);
+  if (XEN_BOUND_P(ubase)) base = XEN_TO_C_DOUBLE(ubase);
+  x0 = XEN_TO_C_DOUBLE(XEN_CAR(e));
+
+  while (true)
+    {
+      XEN ey;
+      ey = XEN_CADR(e);
+      if ((x <= x0) ||
+	  (XEN_NULL_P(XEN_CDDR(e))))
+	return(ey);
+      x1 = XEN_TO_C_DOUBLE(XEN_CADDR(e));
+      if (x < x1)
+	{
+	  if (base == 0.0)
+	    return(ey);
+	  y0 = XEN_TO_C_DOUBLE(ey);
+	  y1 = XEN_TO_C_DOUBLE(XEN_CADDDR(e));
+	  if (y0 == y1)
+	    return(ey);
+	  if (base == 1.0)
+	    return(C_TO_XEN_DOUBLE(y0 + ((x - x0) * (y1 - y0) / (x1 - x0))));
+	  return(C_TO_XEN_DOUBLE(y0 + (((y1 - y0) / (base - 1.0)) * (pow(base, (x - x0) / (x1 - x0)) - 1.0))));
+	}
+      e = XEN_CDDR(e);
+      x0 = x1;
+    }
+  return(XEN_FALSE);
+}
+
+
+
 
 /* ---------------- io ---------------- */
 
@@ -12801,46 +12845,21 @@ static s7_pointer g_add_direct_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer y;
   double x;
-  /*
-347976: (rand-interp rnd)
-276727: (polywave gen1 (env frqf))
-187310: (polywave gen1 frq)
-180810: (* (env rndf) (oscil gen2 (rand-interp rnd)))
-170084: (polywave gen2)
-161914: (* (env ampf2) (polywave gen2 frq))
-132300: (* 0.95 (oscil gen1 noise))
-132300: (* 0.05 (oscil gen4 noise))
-108259: (* (env ampf2) (polywave gen2 (env frqf2)))
-104517: (* (env intrpf) (polywave gen1 frq))
-88200: (polywave gp buzz)
-88200: (* (env indf) (polywave gb buzz))
-88200: (* (env intrpf-1) (oscil gen2 frq))
-81585: (* (env interpf-1) (polywave poly1 frq))
-81585: (* (env interpf) (polywave poly2 frq))
-81365: (* (env low-ampf) (polywave gp frq2))
-81050: (* 0.1 (oscil md))
-81050: (* 0.2 (oscil md1))
-78938: (polywave gen1 (env frqf1))
-77175: (oscil vib)
-66150: (polywave gen1 (+ (* 2.0 frq) (polywave gen4 frq)))
-66150: (polywave gen2 (+ (* 8.0 frq) (polywave gen3 frq)))
-62087: (* (env ampf1) (polywave gen1 (env frqf1)))
-60480: (* 0.9 (oscil gen1 (rand-interp rnd1)))
-60480: (* 0.1 (oscil gen2 (rand-interp rnd2)))
-57330: (rand-interp vibr)
-56007: (* hz7 (oscil vib))
-55125: (polywave gen2 (env frqf2))
-44100: (oscil gen2 noise)
-44100: (table-lookup frq-pulser)
-44100: (* (table-lookup amp-pulser) (polywave gen1 (+ (rand-interp rnd) (table-lookup frq-pulser))))
-44100: (* 0.05 (+ (oscil gen2 noise) (* 0.2 (oscil gen3 (* 0.2 noise)))))
-44100: (* 0.2 (oscil gen3 (* 0.2 noise)))
-43657: (* 0.7 (oscil trem))
-41013: (oscil gen1 frq)
-   */
   x = s7_call_direct_to_real_and_free(sc, car(args));
   y = s7_call_direct(sc, cadr(args));
   return(s7_remake_real(sc, y, x + s7_cell_real(y)));
+}
+
+static s7_pointer add_direct_3;
+static s7_pointer g_add_direct_3(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer y;
+  double x,z;
+  x = s7_call_direct_to_real_and_free(sc, car(args));
+  args = cdr(args);
+  y = s7_call_direct(sc, car(args));
+  z = s7_call_direct_to_real_and_free(sc, cadr(args));
+  return(s7_remake_real(sc, y, x + z + s7_cell_real(y)));
 }
 
 static s7_pointer add_env_direct_2;
@@ -12852,6 +12871,20 @@ static s7_pointer g_add_env_direct_2(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR_CADAR(args, env, e);
   y = s7_call_direct(sc, cadr(args));
   return(s7_remake_real(sc, y, mus_env(e) + s7_cell_real(y)));
+}
+
+static s7_pointer add_env_direct_3;
+static s7_pointer g_add_env_direct_3(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer y;
+  mus_any *e;
+  double z;
+  
+  GET_GENERATOR_CADAR(args, env, e);
+  args = cdr(args);
+  y = s7_call_direct(sc, car(args));
+  z = s7_call_direct_to_real_and_free(sc, cadr(args));
+  return(s7_remake_real(sc, y, mus_env(e) + z + s7_cell_real(y)));
 }
 
 static s7_pointer add_env_s;
@@ -13183,7 +13216,7 @@ static s7_pointer g_sample_to_file_four(s7_scheme *sc, s7_pointer args)
 
 
 static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
-
+void tick(int this);
 static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 2)
@@ -13410,11 +13443,15 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       if (happy)
 	{
 	  s7_function_choice_set_direct(sc, expr);
-	  {
-	    if (caadr(expr) == env_symbol)
+	  if (caadr(expr) == env_symbol)
+	    {
+	      if (args == 3)
+		return(add_env_direct_3);
 	      return(add_env_direct_any);
-	    return(add_direct_any);
-	  }
+	    }
+	  if (args == 3)
+	    return(add_direct_3);
+	  return(add_direct_any);
 	}
     }
 
@@ -15683,8 +15720,10 @@ static void init_choosers(s7_scheme *sc)
   jc_reverb_combs = clm_make_function(sc, "+", g_jc_reverb_combs, 2, 0, false, "jc-reverb optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   nrev_combs = clm_make_function(sc, "+", g_nrev_combs, 2, 0, false, "nrev optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   add_direct_2 = clm_make_function(sc, "+", g_add_direct_2, 2, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  add_direct_3 = clm_make_function(sc, "+", g_add_direct_3, 3, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   add_env_s = clm_make_function(sc, "+", g_add_env_s, 2, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   add_env_direct_2 = clm_make_function(sc, "+", g_add_env_direct_2, 2, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  add_env_direct_3 = clm_make_function(sc, "+", g_add_env_direct_3, 3, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   add_direct_s2 = clm_make_function(sc, "+", g_add_direct_s2, 3, 0, false, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   add_direct_any = clm_make_function(sc, "+", g_add_direct_any, 3, 0, true, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   add_env_direct_any = clm_make_function(sc, "+", g_add_env_direct_any, 3, 0, true, "+ optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -16495,6 +16534,7 @@ XEN_NARGIFY_1(g_env_p_w, g_env_p)
 XEN_NARGIFY_1(g_env_w, g_env)
 XEN_VARGIFY(g_make_env_w, g_make_env)
 XEN_NARGIFY_2(g_env_interp_w, g_env_interp)
+XEN_ARGIFY_3(g_envelope_interp_w, g_envelope_interp)
 XEN_NARGIFY_2(g_env_any_w, g_env_any)
 XEN_NARGIFY_1(g_file_to_sample_p_w, g_file_to_sample_p)
 XEN_ARGIFY_2(g_make_file_to_sample_w, g_make_file_to_sample)
@@ -16815,6 +16855,7 @@ XEN_NARGIFY_3(g_out_bank_w, g_out_bank)
 #define g_env_w g_env
 #define g_make_env_w g_make_env
 #define g_env_interp_w g_env_interp
+#define g_envelope_interp_w g_envelope_interp
 #define g_env_any_w g_env_any
 #define g_file_to_sample_p_w g_file_to_sample_p
 #define g_make_file_to_sample_w g_make_file_to_sample
@@ -17312,6 +17353,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_REAL_PROCEDURE(S_env,         g_env_w,         1, 0, 0, H_env);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_env,    g_make_env_w,    0, 0, 1, H_make_env);
   XEN_DEFINE_SAFE_PROCEDURE(S_env_interp,  g_env_interp_w,  2, 0, 0, H_env_interp);
+  XEN_DEFINE_SAFE_PROCEDURE(S_envelope_interp,  g_envelope_interp_w,  2, 1, 0, H_envelope_interp);
   XEN_DEFINE_PROCEDURE(S_env_any,          g_env_any_w,     2, 0, 0, H_env_any);
 
 

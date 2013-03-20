@@ -13,7 +13,7 @@
 ;;;   changed 11-Jul-06 to use array-interp
 
 (provide 'snd-moog.scm)
-(if (not (provided? 'snd-env.scm)) (load "env.scm"))
+;; (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 (define moog-gaintable (vct 0.999969 0.990082 0.980347 0.970764 0.961304 0.951996 0.94281 0.933777 0.924866 0.916077 

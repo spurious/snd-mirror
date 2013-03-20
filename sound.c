@@ -339,12 +339,15 @@ int mus_sound_prune(void)
 
 int mus_sound_forget(const char *name)
 {
-  int i, len, short_len = 0;
+  int i, len, len2, short_len = 0;
   bool free_name = false;
   char *short_name = NULL;
 
   if (name == NULL) return(MUS_ERROR);
   len = strlen(name);
+  if (len > 6)
+    len2 = len - 6;
+  else len2 = len / 2;
 
   if (name[0] == '/')
     {
@@ -365,6 +368,7 @@ int mus_sound_forget(const char *name)
       for (i = 0; i < sound_table_size; i++)
 	if ((sound_table[i]) &&
 	    (((sound_table[i]->file_name_length == len) &&
+	      (sound_table[i]->file_name[len2] == name[len2]) &&
 	      (strcmp(name, sound_table[i]->file_name) == 0)) ||
 	     ((short_name) && 
 	      (sound_table[i]->file_name_length == short_len) &&
@@ -415,7 +419,7 @@ static sound_file *check_write_date(const char *name, sound_file *sf)
 
 static sound_file *find_sound_file(const char *name)
 {
-  int i, len;
+  int i, len, len2;
   sound_file *sf;
 
   if ((!name) ||
@@ -423,12 +427,16 @@ static sound_file *find_sound_file(const char *name)
     return(NULL);
 
   len = strlen(name);
+  if (len > 6)
+    len2 = len - 6; /* the names probably all start with '/' and end with ".snd", so try to find a changing character... */
+  else len2 = len / 2;
   i = 0;
   while (i <= sound_table_size4)
     {
       sf = sound_table[i];
       if ((sf) &&
 	  (sf->file_name_length == len) &&
+	  (name[len2] == sf->file_name[len2]) &&
 	  (strcmp(name, sf->file_name) == 0))
 	return(check_write_date(name, sf));
       i++;
@@ -436,6 +444,7 @@ static sound_file *find_sound_file(const char *name)
       sf = sound_table[i];
       if ((sf) &&
 	  (sf->file_name_length == len) &&
+	  (name[len2] == sf->file_name[len2]) &&
 	  (strcmp(name, sf->file_name) == 0))
 	return(check_write_date(name, sf));
       i++;
@@ -443,6 +452,7 @@ static sound_file *find_sound_file(const char *name)
       sf = sound_table[i];
       if ((sf) &&
 	  (sf->file_name_length == len) &&
+	  (name[len2] == sf->file_name[len2]) &&
 	  (strcmp(name, sf->file_name) == 0))
 	return(check_write_date(name, sf));
       i++;
@@ -450,6 +460,7 @@ static sound_file *find_sound_file(const char *name)
       sf = sound_table[i];
       if ((sf) &&
 	  (sf->file_name_length == len) &&
+	  (name[len2] == sf->file_name[len2]) &&
 	  (strcmp(name, sf->file_name) == 0))
 	return(check_write_date(name, sf));
       i++;
@@ -459,6 +470,7 @@ static sound_file *find_sound_file(const char *name)
       sf = sound_table[i];
       if ((sf) &&
 	  (sf->file_name_length == len) &&
+	  (name[len2] == sf->file_name[len2]) &&
 	  (strcmp(name, sf->file_name) == 0))
 	return(check_write_date(name, sf));
     }

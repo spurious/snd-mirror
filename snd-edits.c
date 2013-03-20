@@ -1536,10 +1536,11 @@ static void display_edits(chan_info *cp, FILE *outp)
 static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, snd_fd **sfs, mus_long_t length, bool report_ok)
 {
   /* create ofile, fill it by following sfs, use hdr for srate/type/format decisions */
+  #define MAKE_FILE_MAX_BUFFER_SIZE 1048576
   int ofd;
   int i, j, datumb;
   bool reporting = false;
-  mus_long_t len, total = 0;
+  mus_long_t len, total = 0, alloc_len;
   chan_info *cp = NULL;
   mus_float_t **obufs;
   io_error_t io_err = IO_NO_ERROR;
@@ -1549,6 +1550,9 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
   ofd = open_temp_file(ofile, chans, hdr, &io_err);
   if (ofd == -1) 
     return(io_err);
+  alloc_len = length;
+  if (alloc_len > MAKE_FILE_MAX_BUFFER_SIZE)
+    alloc_len = MAKE_FILE_MAX_BUFFER_SIZE;
 
   need_clipping = clipping(ss);
   if (need_clipping)
@@ -1590,10 +1594,10 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 
   obufs = (mus_float_t **)malloc(chans * sizeof(mus_float_t *));
   for (i = 0; i < chans; i++)
-    obufs[i] = (mus_float_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_float_t));
+    obufs[i] = (mus_float_t *)calloc(alloc_len, sizeof(mus_float_t));
   j = 0;
 
-  reporting = ((report_ok) && (length > REPORTING_SIZE));
+  reporting = ((report_ok) && (length > alloc_len));
   if (reporting) 
     {
       cp = sfs[0]->cp;
@@ -1606,20 +1610,20 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
       snd_fd *sf;
       buf = obufs[0];
       sf = sfs[0];
-      if (length > FILE_BUFFER_SIZE)
+      if (length > alloc_len)
 	{
 	  for (len = 0; len < length; len++)
 	    {
 	      buf[j] = read_sample_to_mus_sample(sf);
 	      j++;
-	      if (j == FILE_BUFFER_SIZE)
+	      if (j == alloc_len)
 		{
 		  sl_err = mus_file_write(ofd, 0, j - 1, 1, obufs);
 		  j = 0;
 		  if (sl_err != MUS_NO_ERROR) break;
 		  if (reporting)
 		    {
-		      total += FILE_BUFFER_SIZE;
+		      total += alloc_len;
 		      progress_report(cp, (mus_float_t)((double)total / (double)length));
 		    }
 		}
@@ -1627,32 +1631,78 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 	}
       else
 	{
-	  for (len = 0; len < length; len++)
+	  mus_long_t len8;
+	  len8 = length - 8;
+	  len = 0;
+	  while (len <= len8)
+	    {
+	      buf[len++] = read_sample_to_mus_sample(sf);
+	      buf[len++] = read_sample_to_mus_sample(sf);
+	      buf[len++] = read_sample_to_mus_sample(sf);
+	      buf[len++] = read_sample_to_mus_sample(sf);
+	      buf[len++] = read_sample_to_mus_sample(sf);
+	      buf[len++] = read_sample_to_mus_sample(sf);
+	      buf[len++] = read_sample_to_mus_sample(sf);
+	      buf[len++] = read_sample_to_mus_sample(sf);
+	    }
+	  for (; len < length; len++)
 	    buf[len] = read_sample_to_mus_sample(sf);
 	  j = (int)length;
 	}
     }
   else
     {
-      for (len = 0; len < length; len++)
+      if (length > alloc_len)
 	{
-	  for (i = 0; i < chans; i++)
-	    obufs[i][j] = read_sample_to_mus_sample(sfs[i]);
-	  j++;
-	  if (j == FILE_BUFFER_SIZE)
+	  for (len = 0; len < length; len++)
 	    {
-	      sl_err = mus_file_write(ofd, 0, j - 1, chans, obufs);
-	      j = 0;
-	      if (sl_err != MUS_NO_ERROR) break;
-	      if (reporting)
+	      for (i = 0; i < chans; i++)
+		obufs[i][j] = read_sample_to_mus_sample(sfs[i]);
+	      j++;
+	      if (j == alloc_len)
 		{
-		  total += FILE_BUFFER_SIZE;
-		  progress_report(cp, (mus_float_t)((double)total / (double)length));
+		  sl_err = mus_file_write(ofd, 0, j - 1, chans, obufs);
+		  j = 0;
+		  if (sl_err != MUS_NO_ERROR) break;
+		  if (reporting)
+		    {
+		      total += alloc_len;
+		      progress_report(cp, (mus_float_t)((double)total / (double)length));
+		    }
 		}
 	    }
 	}
+      else
+	{
+	  mus_long_t len8;
+	  len8 = length - 8;
+	  for (i = 0; i < chans; i++)
+	    {
+	      mus_float_t *buf;
+	      snd_fd *sf;
+	      buf = obufs[i];
+	      sf = sfs[i];
+	      
+	      len = 0;
+	      while (len <= len8)
+		{
+		  buf[len++] = read_sample_to_mus_sample(sf);
+		  buf[len++] = read_sample_to_mus_sample(sf);
+		  buf[len++] = read_sample_to_mus_sample(sf);
+		  buf[len++] = read_sample_to_mus_sample(sf);
+		  buf[len++] = read_sample_to_mus_sample(sf);
+		  buf[len++] = read_sample_to_mus_sample(sf);
+		  buf[len++] = read_sample_to_mus_sample(sf);
+		  buf[len++] = read_sample_to_mus_sample(sf);
+		}
+	      for (; len < length; len++)
+		buf[len] = read_sample_to_mus_sample(sf);
+	    }
+	  j = (int)length;
+	}
     }
-  if ((sl_err == MUS_NO_ERROR) && (j > 0))
+  if ((sl_err == MUS_NO_ERROR) && 
+      (j > 0))
     sl_err = mus_file_write(ofd, 0, j - 1, chans, obufs);
   if (sl_err == MUS_NO_ERROR)
     {
@@ -7577,7 +7627,27 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 	      if ((loc == 0) &&
 		  (last == (jnum - 1)))
 		{
-		  for (j = 0; j < jnum; j++)
+		  int jnum2;
+		  jnum2 = jnum - 2;
+		  j = 0;
+		  while (j <= jnum2)
+		    {
+		      mval = fabs(dat[j]);
+		      if (mval > ymax) 
+			{
+			  ymax = mval;
+			  jpos = j;
+			}
+		      j++;
+		      mval = fabs(dat[j]);
+		      if (mval > ymax) 
+			{
+			  ymax = mval;
+			  jpos = j;
+			}
+		      j++;
+		    }
+		  if (j < jnum)
 		    {
 		      mval = fabs(dat[j]);
 		      if (mval > ymax) 
@@ -8129,7 +8199,15 @@ vct *run_samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos)
 	    }
 	  else
 	    {
-	      for (j = 0; j < jnum; j++)
+	      int jnum2;
+	      jnum2 = jnum - 2;
+	      j = 0;
+	      while (j <= jnum2)
+		{
+		  fvals[j++] = read_sample(sf);
+		  fvals[j++] = read_sample(sf);
+		}
+	      if (j < jnum)
 		fvals[j] = read_sample(sf);
 	    }
 	}

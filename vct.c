@@ -1312,7 +1312,7 @@ static XEN g_vct_offset(XEN obj1, XEN obj2)
 static XEN g_vct_fill(XEN obj1, XEN obj2)
 {
   #define H_vct_fillB "(" S_vct_fillB " v val): set each element of v to val: v[i] = val, returns v"
-  mus_long_t i;
+  mus_long_t i; /* unsigned int is much slower */
   vct *v1;
   mus_float_t scl;
 

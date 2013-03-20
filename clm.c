@@ -2872,6 +2872,27 @@ static mus_float_t mus_chebyshev_t_sum_with_index(mus_float_t x, mus_float_t ind
   return((mus_float_t)(b - b1 * cx));
 }
 
+/*
+total: 3171853
+11: 1653309
+10: 403372
+7: 285366
+9: 164930
+13: 160698
+16: 79821
+21: 66150
+5: 55114
+31: 45100
+3: 44196
+40: 44100
+41: 44100
+61: 44100
+101: 44100
+17: 34397
+51: 1000
+129: 1000
+201: 1000
+*/
 
 static mus_float_t mus_chebyshev_t_sum_with_index_2(mus_float_t x, mus_float_t index, int n, mus_float_t *tn)
 {
@@ -2909,6 +2930,42 @@ static mus_float_t mus_chebyshev_t_sum_with_index_3(mus_float_t x, mus_float_t i
   b = tn[n - 1];
   for (i = n - 2; i >= 0;)
     {
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i--];
+
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i--];
+
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i--];
+    }
+  return((mus_float_t)(b - b1 * cx));
+}
+
+
+static mus_float_t mus_chebyshev_t_sum_with_index_5(mus_float_t x, mus_float_t index, int n, mus_float_t *tn)
+{
+  int i;
+  double x2, b, b1 = 0.0, b2 = 0.0, cx;
+
+  cx = index * cos(x);
+  x2 = 2.0 * cx;
+
+  /* Tn calc */
+  b = tn[n - 1];
+  for (i = n - 2; i >= 0;)
+    {
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i--];
+
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i--];
+
       b2 = b1;
       b1 = b;
       b = x2 * b1 - b2 + tn[i--];
@@ -3102,6 +3159,16 @@ static mus_float_t polyw_f3(mus_any *ptr, mus_float_t fm)
 }
 
 
+static mus_float_t polyw_f5(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  mus_float_t ph;
+  ph = gen->phase;
+  gen->phase += (gen->freq + fm);
+  return(mus_chebyshev_t_sum_with_index_5(ph, gen->index, gen->n, gen->coeffs));
+}
+
+
 static mus_float_t polyw_second(mus_any *ptr, mus_float_t fm)
 {
   pw *gen = (pw *)ptr;
@@ -3250,13 +3317,18 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
 			    gen->polyw = polyw_first_6;
 			  else 
 			    {
-			      if (((n - 1) % 3) == 0)
-				gen->polyw = polyw_f3;
+			      if (((n - 1) % 5) == 0)
+				gen->polyw = polyw_f5;
 			      else
 				{
-				  if (((n - 1) % 2) == 0)
-				    gen->polyw = polyw_f2;
-				  else gen->polyw = polyw_first;
+				  if (((n - 1) % 3) == 0)
+				    gen->polyw = polyw_f3;
+				  else
+				    {
+				      if (((n - 1) % 2) == 0)
+					gen->polyw = polyw_f2;
+				      else gen->polyw = polyw_first;
+				    }
 				}
 			    }
 			}
@@ -9404,8 +9476,27 @@ static void flush_buffers(rdout *gen)
 	{
 	  /* fill/write output buffers with current data added to saved data */
 	  for (j = 0; j < gen->chans; j++)
-	    for (i = 0; i <= frames_to_add; i++)
-	      addbufs[j][i] += gen->obufs[j][i];
+	    {
+	      mus_float_t *adder, *vals;
+	      mus_long_t add4;
+	      adder = addbufs[j];
+	      vals = gen->obufs[j];
+	      add4 = frames_to_add - 4;
+	      i = 0;
+	      while (i <= add4)
+		{
+		  adder[i] += vals[i];
+		  i++;
+		  adder[i] += vals[i];
+		  i++;
+		  adder[i] += vals[i];
+		  i++;
+		  adder[i] += vals[i];
+		  i++;
+		}
+	      for (; i <= frames_to_add; i++)
+		adder[i] += vals[i];
+	    }
 	  
 	  mus_file_seek_frame(fd, gen->data_start);
 	  mus_file_write(fd, 0, frames_to_add, gen->chans, addbufs);
@@ -13670,14 +13761,16 @@ bool mus_ssb_am_p(mus_any *ptr)
 static mus_float_t run_hilbert(flt *gen, mus_float_t insig)
 {
   mus_float_t xout = 0.0, d1 = 0.0, d2 = 0.0;
-  mus_float_t *ap, *dp, *dend;
+  mus_float_t *ap, *dp, *dend, *d8;
 
   ap = gen->x;
   dp = gen->state;
   dend = (mus_float_t *)(gen->state + gen->order);
+  d8 = (mus_float_t *)(dend - 8);
 
   dp[0] = insig;
-  while (dp < dend)
+
+  while (dp <= d8)
     {
       xout += (*dp) * (*ap++);
       d2 = d1;
@@ -13698,6 +13791,38 @@ static mus_float_t run_hilbert(flt *gen, mus_float_t insig)
       d1 = (*dp);
       (*dp++) = d2;
       ap++;
+
+      xout += (*dp) * (*ap++);
+      d2 = d1;
+      d1 = (*dp);
+      (*dp++) = d2;
+      
+      d2 = d1;
+      d1 = (*dp);
+      (*dp++) = d2;
+      ap++; 
+      
+      xout += (*dp) * (*ap++);
+      d2 = d1;
+      d1 = (*dp);
+      (*dp++) = d2;
+      
+      d2 = d1;
+      d1 = (*dp);
+      (*dp++) = d2;
+      ap++;
+    }
+  while (dp < dend)
+    {
+      xout += (*dp) * (*ap++);
+      d2 = d1;
+      d1 = (*dp);
+      (*dp++) = d2;
+      
+      d2 = d1;
+      d1 = (*dp);
+      (*dp++) = d2;
+      ap++; 
     }
 
   return(xout);

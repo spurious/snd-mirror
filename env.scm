@@ -21,6 +21,9 @@
 
 (provide 'snd-env.scm)
 
+
+#|
+;;; this is now moved to C -- TODO: doc 
 ;;; -------- envelope-interp
 
 (define* (envelope-interp x e (base 1.0))   ;e is list of x y breakpoint pairs, interpolate at x returning y
@@ -45,6 +48,8 @@
 					(- (caddr e) (car e))))
 			  1.0))))))
 	(else (envelope-interp x (cddr e) base)))) ;go on looking for x segment
+|#
+
 
 
 ;;; -------- window-envelope (a kinda brute-force translation from the CL version in env.lisp)

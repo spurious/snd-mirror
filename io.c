@@ -1165,12 +1165,34 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 #endif
 		  break;
 		  
-		case MUS_BINT:              
+		case MUS_BINT:    
+		  while (bufnow <= bufend4)
+		    {
+		      (*bufnow++) = MUS_INT_TO_SAMPLE(big_endian_int(jchar)); 
+		      jchar += 4;
+		      (*bufnow++) = MUS_INT_TO_SAMPLE(big_endian_int(jchar)); 
+		      jchar += 4;
+		      (*bufnow++) = MUS_INT_TO_SAMPLE(big_endian_int(jchar)); 
+		      jchar += 4;
+		      (*bufnow++) = MUS_INT_TO_SAMPLE(big_endian_int(jchar)); 
+		      jchar += 4;
+		    }
 		  for (; bufnow <= bufend; jchar += 4) 
 		    (*bufnow++) = MUS_INT_TO_SAMPLE(big_endian_int(jchar)); 
 		  break;
 		  
 		case MUS_LINT: 
+		  while (bufnow <= bufend4)
+		    {
+		      (*bufnow++) = MUS_INT_TO_SAMPLE(little_endian_int(jchar)); 
+		      jchar += 4;
+		      (*bufnow++) = MUS_INT_TO_SAMPLE(little_endian_int(jchar)); 
+		      jchar += 4;
+		      (*bufnow++) = MUS_INT_TO_SAMPLE(little_endian_int(jchar)); 
+		      jchar += 4;
+		      (*bufnow++) = MUS_INT_TO_SAMPLE(little_endian_int(jchar)); 
+		      jchar += 4;
+		    }
 		  for (; bufnow <= bufend; jchar += 4) 
 		    (*bufnow++) = MUS_INT_TO_SAMPLE(little_endian_int(jchar)); 
 		  break;
@@ -1339,11 +1361,33 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		  break;
 		  
 		case MUS_UBSHORT:   
+		  while (bufnow <= bufend4)
+		    {
+		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      jchar += 2;
+		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      jchar += 2;
+		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      jchar += 2;
+		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      jchar += 2;
+		    }
 		  for (; bufnow <= bufend; jchar += 2) 
 		    (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
 		  break;
 		  
 		case MUS_ULSHORT:   
+		  while (bufnow <= bufend4)
+		    {
+		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      jchar += 2;
+		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      jchar += 2;
+		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      jchar += 2;
+		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      jchar += 2;
+		    }
 		  for (; bufnow <= bufend; jchar += 2) 
 		    (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
 		  break;
@@ -2807,45 +2851,72 @@ static void min_max_switch_doubles(unsigned char *data, int bytes, int chan, int
 
 #define THREE_BYTES 3
 
-static int three_bytes(unsigned char *data, int loc, bool big_endian)
-{
-  if (big_endian)
-    return((int)(((data[loc + 0] << 24) + 
-		  (data[loc + 1] << 16) + 
-		  (data[loc + 2] << 8)) >> 8));
-  return((int)(((data[loc + 2] << 24) + 
-		(data[loc + 1] << 16) + 
-		(data[loc + 0] << 8)) >> 8));
-}
+#define BIG_THREE(Data, Loc)    ((int)(((Data[Loc + 0] << 24) + (Data[Loc + 1] << 16) + (Data[Loc + 2] << 8)) >> 8))
+#define LITTLE_THREE(Data, Loc) ((int)(((Data[Loc + 2] << 24) + (Data[Loc + 1] << 16) + (Data[Loc + 0] << 8)) >> 8))
 
 static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp, bool big_endian)
 {
   int cur_min, cur_max;
-  int i, bytes_per_frame, len, len2, offset;
+  int i, k, bytes_per_frame, len, len2, offset;
 
   bytes_per_frame = chans * THREE_BYTES;
   len = bytes / bytes_per_frame;
   len2 = len - 2;
   offset = chan * THREE_BYTES;
 
-  cur_min = three_bytes(data, offset, big_endian);
-  cur_max = cur_min;
-  i = 1;
-  while (i <= len2)
+  k = offset;
+
+  if (big_endian)
     {
-      int val;
-      val = three_bytes(data, i * bytes_per_frame + offset, big_endian);
-      if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      i++;
-      val = three_bytes(data, i * bytes_per_frame + offset, big_endian);
-      if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
-      i++;
+      cur_min = BIG_THREE(data, k);
+      cur_max = cur_min;
+      i = 1;
+      k += bytes_per_frame;
+
+      while (i <= len2)
+	{
+	  int val;
+	  val = BIG_THREE(data, k);
+	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
+	  i++;
+	  k += bytes_per_frame;
+	  val = BIG_THREE(data, k);
+	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
+	  i++;
+	  k += bytes_per_frame;
+	}
+      if (i < len)
+	{
+	  int val;
+	  val = BIG_THREE(data, k);
+	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
+	}
     }
-  if (i < len)
+  else
     {
-      int val;
-      val = three_bytes(data, i * bytes_per_frame + offset, big_endian);
-      if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
+      cur_min = LITTLE_THREE(data, k);
+      cur_max = cur_min;
+      i = 1;
+      k += bytes_per_frame;
+
+      while (i <= len2)
+	{
+	  int val;
+	  val = LITTLE_THREE(data, k);
+	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
+	  i++;
+	  k += bytes_per_frame;
+	  val = LITTLE_THREE(data, k);
+	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
+	  i++;
+	  k += bytes_per_frame;
+	}
+      if (i < len)
+	{
+	  int val;
+	  val = LITTLE_THREE(data, k);
+	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
+	}
     }
 
   (*min_samp) = (mus_float_t)cur_min / (mus_float_t)(1 << 23);

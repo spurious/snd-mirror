@@ -686,7 +686,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_CLOSURE_ALL_C, HOP_CLOSURE_ALL_C, OP_CLOSURE_ALL_X, HOP_CLOSURE_ALL_X, 
       OP_CLOSURE_CDR_S, HOP_CLOSURE_CDR_S, OP_CLOSURE_ALL_S, HOP_CLOSURE_ALL_S, 
 
-      OP_CLOSURE_STAR_S, HOP_CLOSURE_STAR_S, OP_CLOSURE_STAR_SS, HOP_CLOSURE_STAR_SS, OP_CLOSURE_STAR_SC, HOP_CLOSURE_STAR_SC, 
+      OP_CLOSURE_STAR_S, HOP_CLOSURE_STAR_S, OP_CLOSURE_STAR_SX, HOP_CLOSURE_STAR_SX,
       OP_CLOSURE_STAR, HOP_CLOSURE_STAR, OP_CLOSURE_STAR_ALL_X, HOP_CLOSURE_STAR_ALL_X, 
 
       OP_SAFE_THUNK, HOP_SAFE_THUNK,
@@ -701,7 +701,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_CLOSURE_S_Z, HOP_SAFE_CLOSURE_S_Z, OP_SAFE_CLOSURE_S_P, HOP_SAFE_CLOSURE_S_P,
 
       OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, OP_SAFE_CLOSURE_STAR_SS, HOP_SAFE_CLOSURE_STAR_SS, 
-      OP_SAFE_CLOSURE_STAR_SC, HOP_SAFE_CLOSURE_STAR_SC, OP_SAFE_CLOSURE_STAR_SA, HOP_SAFE_CLOSURE_STAR_SA,
+      OP_SAFE_CLOSURE_STAR_SC, HOP_SAFE_CLOSURE_STAR_SC, OP_SAFE_CLOSURE_STAR_SA, HOP_SAFE_CLOSURE_STAR_SA, OP_SAFE_CLOSURE_STAR_S0, HOP_SAFE_CLOSURE_STAR_S0,
       OP_SAFE_CLOSURE_STAR, HOP_SAFE_CLOSURE_STAR, OP_SAFE_CLOSURE_STAR_ALL_X, HOP_SAFE_CLOSURE_STAR_ALL_X, 
       
       /* these can't be embedded, and have to be the last thing called */
@@ -711,7 +711,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_C_FOR_EACH_LS, HOP_C_FOR_EACH_LS, OP_C_FOR_EACH_LS_2, HOP_C_FOR_EACH_LS_2, OP_C_FOR_EACH_L_opSq, HOP_C_FOR_EACH_L_opSq, 
       OP_C_S, HOP_C_S, OP_READ_S, HOP_READ_S, OP_C_P, HOP_C_P, OP_C_SP, HOP_C_SP, OP_C_A, HOP_C_A,
 
-      OP_GOTO, HOP_GOTO, OP_GOTO_C, HOP_GOTO_C, 
+      OP_GOTO, HOP_GOTO, OP_GOTO_C, HOP_GOTO_C, OP_GOTO_S, HOP_GOTO_S, 
       
       OP_VECTOR_C, HOP_VECTOR_C, OP_VECTOR_S, HOP_VECTOR_S, OP_VECTOR_opCq, HOP_VECTOR_opCq, 
       OP_STRING_C, HOP_STRING_C, OP_STRING_S, HOP_STRING_S, OP_STRING_opCq, HOP_STRING_opCq, 
@@ -796,7 +796,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "closure_all_c", "h_closure_all_c", "closure_all_x", "h_closure_all_x", 
       "closure_cdr_s", "h_closure_cdr_s", "closure_all_s", "h_closure_all_s", 
 
-      "closure_star_s", "h_closure_star_s", "closure_star_ss", "h_closure_star_ss", "closure_star_sc", "h_closure_star_sc",
+      "closure_star_s", "h_closure_star_s", "closure_star_sx", "h_closure_star_sx", 
       "closure_star", "h_closure_star", "closure_star_all_x", "h_closure_star_all_x", 
 
       "safe_thunk", "h_safe_thunk",
@@ -811,7 +811,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_closure_s_z", "h_safe_closure_s_z", "safe_closure_s_p", "h_safe_closure_s_p",
 
       "safe_closure_star_s", "h_safe_closure_star_s", "safe_closure_star_ss", "h_safe_closure_star_ss", 
-      "safe_closure_star_sc", "h_safe_closure_star_sc", "safe_closure_star_sa", "h_safe_closure_star_sa",
+      "safe_closure_star_sc", "h_safe_closure_star_sc", "safe_closure_star_sa", "h_safe_closure_star_sa", "safe_closure_star_s0", "h_safe_closure_star_s0",
       "safe_closure_star", "h_safe_closure_star", "safe_closure_star_all_x", "h_safe_closure_star_all_x", 
       
       "apply_ss", "h_apply_ss",
@@ -820,7 +820,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "c_for_each_ls", "h_c_for_each_ls", "c_for_each_ls_2", "h_c_for_each_ls_2", "c_for_each_l_opsq", "h_c_for_each_l_opsq", 
       "c_s", "h_c_s", "read_s", "h_read_s", "c_p", "h_c_p", "c_sp", "h_c_sp", "c_a", "h_c_a",
 
-      "goto", "h_goto", "goto_c", "h_goto_c", 
+      "goto", "h_goto", "goto_c", "h_goto_c", "goto_s", "h_goto_s", 
       
       "vector_c", "h_vector_c", "vector_s", "h_vector_s", "vector_opcq", "h_vector_opcq", 
       "string_c", "h_string_c", "string_s", "h_string_s", "string_opcq", "h_string_opcq", 
@@ -2366,7 +2366,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 1
+#if 0
 #if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -36962,8 +36962,6 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  return(subtract_ran);
 	}
 
-      /* 330750: (- (* pn-gen 4.6566128730774e-10) 1.0)
-       */
       /* fprintf(stderr, "%d: %s\n", args, DISPLAY_80(expr)); */
       return(subtract_2);
     }
@@ -38944,7 +38942,21 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		  (symbols == 1))
 		{
 		  set_unsafely_optimized(car_x);
-		  set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_S : OP_CLOSURE_STAR_S));
+		  if (is_safe_closure(func))
+		    {
+		      set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_STAR_S);
+		      if (closure_star_arity_to_int(sc, func) == 2)
+			{
+			  s7_pointer defarg2;
+			  defarg2 = cadr(closure_args(func));
+			  /* fprintf(stderr, "look for s0: %s %s\n", DISPLAY(func), DISPLAY(defarg2)); */
+			  if ((is_pair(defarg2)) &&
+			      (is_real(cadr(defarg2))) &&
+			      (real(cadr(defarg2)) == 0.0))
+			    set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_STAR_S0);
+			}
+		    }
+		  else set_optimize_data(car_x, hop + OP_CLOSURE_STAR_S);
 		  ecdr(car_x) = func;
 		  fcdr(car_x) = cadar_x;
 		  return(false); 
@@ -39252,8 +39264,8 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		{
 		  set_unsafely_optimized(car_x);
 		  if (symbols == 2)
-		    set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SS));
-		  else set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_SC : OP_CLOSURE_STAR_SC));
+		    set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SX));
+		  else set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_SC : OP_CLOSURE_STAR_SX));
 		  ecdr(car_x) = func;
 		  fcdr(car_x) = caddar_x;
 		  return(false); 
@@ -39953,8 +39965,6 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
       arglist_length(car_x) = small_int(3);
     }
 
-  
-
   if ((pairs == 1) &&
       (bad_pairs == 1) &&
       (symbols == 2) &&
@@ -39969,6 +39979,9 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
       return(false);
     }
 
+  /* bad pairs 1 here and others all_x_safe (i.e. safe_c_aap etc) in old/apa-s7.c --
+   *   works, costs 140 lines of code, gains only about 40 in calls/502, 30 in lg, nothing elsewhere.
+   */
   /* (define (hi) (catch #t (lambda () 1) (lambda args 2))) 
    *   first arg list must be (), second a symbol
    */
@@ -47205,19 +47218,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
 
 
-    POP_BEGIN:
-      {
-	s7_pointer code;
-	sc->envir = main_stack_environment(sc);
-	code = main_stack_code(sc); 
-	sc->code =  car(code); 
-	if (is_null(cdr(code))) 
-	  pop_main_stack(sc);                 
-	else main_stack_code(sc) = cdr(code); 
-	goto EVAL;
-      }
-
-      
     DO_BEGIN:
       {
 	/* I don't think this matters at all -- use BEGIN! */
@@ -47239,6 +47239,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = finder(sc, sc->code);
 	else sc->value = sc->code;
 	goto START;
+      }
+
+
+    POP_BEGIN:
+      {
+	s7_pointer code;
+	sc->envir = main_stack_environment(sc);
+	code = main_stack_code(sc); 
+	sc->code =  car(code); 
+	if (is_null(cdr(code))) 
+	  pop_main_stack(sc);                 
+	else main_stack_code(sc) = cdr(code); 
+	goto EVAL;
       }
 
 
@@ -47282,8 +47295,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 
 	sc->code = car(code);
+	/* goto EVAL; */
       }
 
+      
 
       /* --------------- */
     EVAL:
@@ -47420,7 +47435,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case OP_SAFE_CLOSURE_Q:
 	      if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1))
-		break;
+		{
+		  set_optimize_data(code, OP_UNKNOWN_Q);
+		  goto OPT_EVAL;
+		}
+
 	      
 	    case HOP_SAFE_CLOSURE_Q:
 	      sc->envir = old_frame_with_slot(sc, closure_environment(ecdr(code)), cadr(cadr(code)));
@@ -47868,7 +47887,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_SAFE_CLOSURE_STAR_SC:
-	      if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2))
+	      if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) /* ?? this omitted the _STAR */
 		{
 		  set_optimize_data(code, OP_UNKNOWN_SC);
 		  goto OPT_EVAL;
@@ -47890,7 +47909,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_SAFE_CLOSURE_STAR_SA:
-	      if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2))
+	      if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) /* ?? this omitted the _STAR */
 		break;
 	      
 	    case HOP_SAFE_CLOSURE_STAR_SA:
@@ -47901,7 +47920,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		 */
 		arg = cddr(code);
 		arg = ((s7_function)fcdr(arg))(sc, car(arg));
-
 		sc->envir = old_frame_with_two_slots(sc, closure_environment(ecdr(code)), finder(sc, cadr(code)), arg);
 		
 		sc->code = closure_body(ecdr(code));
@@ -47913,7 +47931,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_SAFE_CLOSURE_STAR_ALL_X:
-	      if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE, integer(arglist_length(code))))
+	      if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, integer(arglist_length(code)))) /* ?? this omitted the _STAR */
 		break;
 
 	    case HOP_SAFE_CLOSURE_STAR_ALL_X:
@@ -47976,6 +47994,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto FILL_SAFE_CLOSURE_STAR;
 
 
+	    case OP_SAFE_CLOSURE_STAR_S0:
+	      if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 1))
+		{
+		  set_optimize_data(code, OP_UNKNOWN_S);
+		  goto OPT_EVAL;
+		}
+	      
+	    case HOP_SAFE_CLOSURE_STAR_S0:
+	      sc->envir = old_frame_with_two_slots(sc, closure_environment(ecdr(code)), finder(sc, cadr(code)), real_zero);
+	      sc->code = closure_body(ecdr(code));
+	      if (is_pair(cdr(sc->code)))
+		push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	      sc->code = car(sc->code);
+	      goto EVAL;
+	      
+	      
 	    case OP_SAFE_CLOSURE_STAR_S:
 	      if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 1))
 		{
@@ -48052,6 +48086,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto START;
 	      
 
+	    case OP_GOTO_S:
+	      ecdr(code) = finder(sc, car(code));
+	      if (!is_goto(ecdr(code)))
+		{
+		  set_optimize_data(code, OP_UNKNOWN_S);
+		  goto OPT_EVAL;
+		}
+
+	    case HOP_GOTO_S:
+	      sc->args = list_1(sc, finder(sc, cadr(code)));
+	      /* I think this needs listification because call_with_exit might call dynamic unwinders etc. */
+	      sc->code = ecdr(code);
+	      call_with_exit(sc);
+	      goto START;
+	      
+
 	    case OP_CLOSURE_C:
 	      if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 1))
 		{
@@ -48066,7 +48116,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case OP_CLOSURE_Q:
 	      if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 1))
-		break;
+		{
+		  set_optimize_data(code, OP_UNKNOWN_Q);
+		  goto OPT_EVAL;
+		}
+
 	      
 	    case HOP_CLOSURE_Q:
 	      sc->value = cadr(cadr(code));
@@ -48610,51 +48664,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      
 
-	    case OP_CLOSURE_STAR_SS:
+	    case OP_CLOSURE_STAR_SX:
 	      if (!closure_star_is_ok(sc, code, MATCH_UNSAFE_CLOSURE_STAR, 2))
 		{
 		  set_optimize_data(code, OP_UNKNOWN_SS);
 		  goto OPT_EVAL;
 		}
 	      
-	    case HOP_CLOSURE_STAR_SS:
-	      {
-		s7_pointer val1, val2, args;
-		args = cddr(closure_args(ecdr(code)));
-		val1 = find_symbol_or_bust(sc, cadr(code));
-		val2 = find_symbol_or_bust(sc, fcdr(code)); /* caddr */
-		if (is_null(args))
-		  {
-		    car(sc->T2_1) = val1;
-		    car(sc->T2_2) = val2;
-		    goto UNSAFE_CLOSURE_STAR_TWO;
-		  }
-
-		sc->args = list_2(sc, val2, val1);
-		sc->value = args;
-		goto FILL_CLOSURE_STAR;
-	      }
-
-
-	    case OP_CLOSURE_STAR_SC:
-	      if (!closure_star_is_ok(sc, code, MATCH_UNSAFE_CLOSURE_STAR, 2))
-		{
-		  set_optimize_data(code, OP_UNKNOWN_SC);
-		  goto OPT_EVAL;
-		}
-	      
-	    case HOP_CLOSURE_STAR_SC:
+	    case HOP_CLOSURE_STAR_SX:
 	      {
 		s7_pointer val1, val2, args;
 		args = cddr(closure_args(ecdr(code)));
 		val1 = find_symbol_or_bust(sc, cadr(code));
 		val2 = caddr(code);
+		if (is_symbol(val2))
+		  val2 = find_symbol_or_bust(sc, val2);
 		if (is_null(args))
 		  {
 		    car(sc->T2_1) = val1;
 		    car(sc->T2_2) = val2;
 		    goto UNSAFE_CLOSURE_STAR_TWO;
 		  }
+
 		sc->args = list_2(sc, val2, val1);
 		sc->value = args;
 		goto FILL_CLOSURE_STAR;
@@ -48895,15 +48926,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  case T_HASH_TABLE:
 		    set_opt_and_goto_opt_eval(code, f, OP_HASH_TABLE_S);
 		    
-		    /* another possibility: goto, also continuation, macro
-		     * case T_GOTO:
-		     *  sc->args = list_1(sc, finder(sc, cadr(code))); ??
-		     *  call_with_exit(sc)
-		     *  goto START;
-		     */
+		  case T_GOTO:
+		    set_opt_and_goto_opt_eval(code, f, OP_GOTO_S);
 		    
 		  default:
-		    /* fprintf(stderr, "un_s: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
+		    /* fprintf(stderr, "un_s: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));  */
 		    break;
 		  }
 		break;
@@ -49008,7 +49035,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    (closure_star_arity_to_int(sc, f) >= 2))
 			  {
 			    fcdr(code) = caddr(code);
-			    set_opt_and_goto_opt_eval(code, f, (((is_global(car(code))) ? 1 : 0) + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SS)));
+			    set_opt_and_goto_opt_eval(code, f, (((is_global(car(code))) ? 1 : 0) + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SX)));
 			  }
 			break;
 
@@ -49060,7 +49087,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if ((!is_keyword(cadr(code))) &&
 			    (has_simple_args(closure_body(f))) &&
 			    (closure_star_arity_to_int(sc, f) >= 2))
-			  set_opt_and_goto_opt_eval(code, f, (((is_global(car(code))) ? 1 : 0) + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_SC : OP_CLOSURE_STAR_SC)));
+			  set_opt_and_goto_opt_eval(code, f, (((is_global(car(code))) ? 1 : 0) + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_SC : OP_CLOSURE_STAR_SX)));
 			break;
 
 		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
@@ -49814,7 +49841,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			sc->value = vector_elements(v)[index];
 			goto START;
-			/* 48684: 10859716 */
 		      }
 		    out_of_range(sc, sc->VECTOR_REF, small_int(1), cadr(code), "between 0 and vector length");
 		  }
@@ -50524,14 +50550,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      push_stack(sc, OP_SAFE_C_ZZ_2, c_call(cadr(code))(sc, cdr(cadr(code))), code);
 	      sc->code = caddr(code);
 	      goto OPT_EVAL;
-	      /*
-h_safe_c_aaa: 383729 (17.802600)
-h_safe_c_s_op_s_opssqq: 270461 (12.547681)
-h_safe_c_xzx: 139356 (6.465238)
-h_safe_c_xxz: 47187 (2.189179)
-h_safe_c_zxz: 22050 (1.022981)
-	       */
-	      
+
 	      
 	    case OP_SAFE_C_ZXX:
 	      if (!c_function_is_ok(sc, code))
@@ -51463,13 +51482,6 @@ h_safe_c_zxz: 22050 (1.022981)
 	      
 	    case HOP_SAFE_C_opCq_S:
 	      {
-		/* 330750: (* (+ frm-int 1) frq)
-		 * 203312: (* (+ i 1) frq)
-		 * 197314: (- (* 0.999 lasty) lastx)
-		 * 178966: (* (- n 1) x)
-		 * 132300: (* (vct-ref indices k) carrier)
-		 * 132300: (* (vct-ref indices k) car)
-		 */
 		s7_pointer args, val;
 		args = cdr(code);
 		val = finder(sc, cadr(args));
@@ -52098,6 +52110,8 @@ h_safe_c_zxz: 22050 (1.022981)
 	  /* and fall into the normal evaluator */
 	}
       
+      /* main cases here seem to be symbols from set!? 
+       */
       if (is_pair(sc->code))
 	{
 	  if (typeflag(car(sc->code)) == SYNTACTIC_TYPE) /* this is much faster than checking is_syntactic */
@@ -52115,9 +52129,9 @@ h_safe_c_zxz: 22050 (1.022981)
 	  
 	  
 	  /* -------------------------------------------------------------------------------- */
-	  
 	  /* trailers */
 	  sc->cur_code = sc->code;
+
 	  {
 	    s7_pointer carc;
 	    carc = car(sc->code);
@@ -52181,7 +52195,6 @@ h_safe_c_zxz: 22050 (1.022981)
 	      /* sc->code is not a pair or a symbol */
 	      sc->value = sc->code;
 	      goto START;
-	      /* 51110: 8777125 */
 	    }
 	}
       /* sc->value is car=something applicable
@@ -52316,7 +52329,6 @@ h_safe_c_zxz: 22050 (1.022981)
       car(sc->T2_2) = sc->value;
       sc->value = c_call(sc->code)(sc, sc->T2_1);
       goto START;
-      /* 16714369 */
 
 
     case OP_EVAL_ARGS_P_2_MV:
@@ -54166,25 +54178,7 @@ h_safe_c_zxz: 22050 (1.022981)
 
       /* --------------- */
     case OP_SET_SYMBOL_Z:
-      /* ([set!] sum (+ sum n)) 
-330748: (pnoise amp)
-220498: (+ (dline1 k) (- (dline2 j) x))
-211687: (* (radii k) (radii k))
-165374: (one-pole-allpass agraffe-tuning-ap1 noi)
-etc
-507879: (moving-average avg (if (> mx 0.0) (min 100.0 (/ 1.0 mx)) 0.0))
-416229: (+ sum (ssb-am (vector-ref ssbs i) (bandpass (vector-ref bands i) input)))
-406703: (min (max -0.95 (+ A (* fc (- A st)))) 0.95)
-406703: (min (max -0.95 (+ A st)) 0.95)
-287999: (data chan)
-264598: (env (frmfs k))
-254139: (filter (gen i) val)
-210832: (+ denom (* x1 x1) (* x2 x2))
-but also
-210832: (+ num (* x1 x2))
-107315: (/ (* val frequency) (* 2 pi))
-88242: (+ sum (abs samp0))
-       */
+      /* ([set!] sum (+ sum n)) */
       push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
       sc->code = cadr(sc->code);
       goto OPT_EVAL;
@@ -55418,7 +55412,6 @@ but also
 	}
       sc->value = sc->UNSPECIFIED;
       goto START;
-      /* 54261: 2725312 */
       
       
       /* --------------- */
@@ -55471,11 +55464,6 @@ but also
       
       /* --------------- */
     case OP_SAFE_IF_CSC_P:
-      /* 174104*2: ((> pulse 0.1) ...)
-       * greater_sf|si=s_ic currently, so s_fc?
-       * 2880035: ((> diff 0.002) 
-       * 508279: ((> amp 0.0) * many
-       */
       car(sc->T2_1) = finder(sc, cadr(car(sc->code)));
       car(sc->T2_2) = fcdr(sc->code);
       if (is_true(sc, c_call(car(sc->code))(sc, sc->T2_1)))
@@ -55578,7 +55566,6 @@ but also
       car(sc->T2_2) = sc->value;
       sc->value = c_call(sc->code)(sc, sc->T2_1);
       goto START;
-      /* 54430: 12513831 */
 
 
       /* --------------- */
@@ -55760,19 +55747,7 @@ but also
 
       /* --------------- */
     case OP_LET_opCq:
-      /* one var, init is safe_c_c
-       */
-      /*
-352799: ((outa i (* (env ampf) (+ (polywave modulator1 (+ (* 2.0 frq) (* hfreq pitch (+ 1.0 (rand-interp indf))))) (polywave modulator3 (+ (* 3.0 frq) (* index3 pitch))) (polywave modulator2 (+ (* 8.0 frq) (* index2 pitch)))))))
-352799: ((let ((pitch (oscil carrier frq))) (outa i (* (env ampf) (+ (polywave modulator1 (+ (* 2.0 frq) (* hfreq pitch (+ 1.0 (rand-interp indf))))) (polywave modulator3 (+ (* 3.0 frq) (* index3 pitch))) (polywave modulator2 (+ (* 8.0 frq) (* index2 pitch))))))))
-216541: ((if (negative? ex-samp) (begin (set! sample-0 (* vol (granulate ingen))) (set! sample-1 (* vol (granulate ingen))) (set! ex-samp (+ ex-samp 1)) (set! next-samp ex-samp) (outa i sample-0)) (begin (set! next-samp (+ next-samp srate)) (if (> next-samp (+ ex-samp 1)) (let ((samps (floor (- next-samp ex-samp)))) (if (= samps 2) (begin (set! sample-0 (* vol (granulate ingen))) (set! sample-1 (* vol (granulate ingen)))) (do ((k 0 (+ k 1))) ((= k samps)) (set! sample-0 sample-1) (set! sample-1 (* vol (granulate ingen))))) (set! ex-samp (+ ex-samp samps)))) (if (= next-samp ex-samp) (outa i sample-0) (outa i (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0))))))))
-88199: ((outa i (* (env ampf) (+ 0.75 (* sw sw)) (+ (polywave gp1 md) (polywave gp2 (* 0.8593 md)) (polywave gp3 (* 1.1406 md))))))
-81364: ((if (> (pulse-train pulser frq2) 0.1) (begin (mus-reset pulse-ampf) (set! (mus-location ampf) (- i attack-stop)) (set! pulse-amp (env ampf)) (set! (mus-phase gen1) (* pi 0.75)))) (outa i (* pulse-amp (env pulse-ampf) (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf))))))
-79374: ((outa k (* (env ae) (oscil gen1 frq (* 0.03 (oscil gen2 (* 2.0 frq)))))))
-47186: ((outa i (* (env ampf) (+ (* 0.9 (oscil gen1 frq)) (* (env indf) (oscil gen2 (* 2.0 frq))) (* (env indf-1) 0.075 (oscil gen3 (* 3.0 frq)))))))
-44981: ((outa i (* (env ampf) (+ (rxyk!cos gen1 (* 16.8 fm)) (rxyk!cos gen2 (* 18.8 fm)) (polywave gen3 fm)))))
-44099: ((set! nose-reftemp (+ (* alpha1 plussamp) (* alpha2 minussamp) (* alpha3 nose2-1))) (set! nose-last-minus-refl (- nose-reftemp plussamp)) (set! nose-last-plus-refl (- nose-reftemp minussamp)))
-       */
+      /* one var, init is safe_c_c */
       {
 	s7_pointer binding;
 	binding = caar(sc->code);
@@ -55967,15 +55942,6 @@ but also
 
     case OP_LET_ALL_X:
       {
-	/*
-139355: ((outa i (* (env ampf) (+ (* (env buzzf-1) (polywave gen1 frq)) (* (env buzzf) (+ 0.1 (* 0.9 (abs (oscil buzz bfrq)))) (polywave gen2 (+ frq (* bsweep (nrxysin buzzsweep bfrq)) (rand-interp rnd))))))))
-132299: ((outa i (* amp (+ (* (polywave gen5) (- 1.0 pval) (oscil gen2 (* 2.4 noise))) (* (max pval 0.0) (+ (* 0.95 (oscil gen1 noise)) (* 0.05 (oscil gen4 noise))))))))
-108269: ((if (= samps 2) (begin (set! sample-0 (* vol (granulate ingen))) (set! sample-1 (* vol (granulate ingen)))) (do ((k 0 (+ k 1))) ((= k samps)) (set! sample-0 sample-1) (set! sample-1 (* vol (granulate ingen))))) (set! ex-samp (+ ex-samp samps)))
-88199: ((let ((md (+ frq (rand-interp rnd)))) (outa i (* (env ampf) (+ 0.75 (* sw sw)) (+ (polywave gp1 md) (polywave gp2 (* 0.8593 md)) (polywave gp3 (* 1.1406 md)))))))
-80261: ((let ((frq1 (+ frq (* 1.5 noise))) (frq2 (+ (* 2.0 frq) (* 0.5 noise))) (frq3 (+ (* 0.5 frq) (* 2.0 noise)))) (outa i (* (env ampf) (+ (polywave gen1 frq1) (* (env ampf2) (oscil gen2 frq2)) (* (env ampf3) (polywave gen3 frq3)))))))
-46304: ((outa i (* (env ampf) (+ (polywave gen1 (* 2.0 frq)) (* amp2 (polywave gen2 frq)) (* (- 1.0 amp2) (polywave gen3 (* 2.0 frq))) (* (env ampf4) (oscil gen4 (* 6.0 frq)))))))
-29987: ((outa i (* (env ampf) (+ (* (env ampf1) (polywave gen1 (+ frq1 (* rn (env rndf1))))) (* (env ampf2) (polywave gen2 (+ (env frqf2) (* rn (env rndf2))))) (* (env ampf3) (polywave gen3 (+ frq1 (* rn (env rndf3)))))))))
-	*/
 	s7_pointer p, frame;
 	frame = make_simple_environment(sc);   		
 	sc->args = frame; 
@@ -57000,7 +56966,6 @@ but also
 		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
 		sc->code = car(sc->code);
 		goto EVAL;
-		/* 55947: 3577131 */
 	      }
 	    do {
 	      if (car(y) == selector)
@@ -57375,7 +57340,6 @@ but also
 	  push_stack_no_args(sc, OP_BEGIN1, cdr(e));
 	sc->code = car(e);
 	goto EVAL;
-	/* 56342: 2255283 */
       }
       
 
@@ -63744,6 +63708,7 @@ s7_scheme *s7_init(void)
  *
  * dox oneline opt -> outa i safe-closure_star_s|sa where all syms are not steppers:
  *   get sym vals, on each step, push to return, set code/args, call body (s: 1.1 mil, sa: 434k, sc: 539k)
+ * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x)
  *
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
  * maybe other banks.

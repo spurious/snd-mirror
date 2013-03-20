@@ -85,6 +85,7 @@
 
 (provide 'snd-dlocsig.scm)
 
+#|
 (define* (envelope-interp x e base)   ;e is list of x y breakpoint pairs, interpolate at x returning y
  ;; "(envelope-interp x e (base 1.0)) -> value of e at x; base controls connecting segment type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
   (cond ((null? e) 0.0)		        ;no data -- return 0.0
@@ -107,6 +108,7 @@
 					(- (caddr e) (car e))))
 			  1.0))))))
 	(else (envelope-interp x (cddr e) base)))) ;go on looking for x segment
+|#
 
 (define (x-norm e xmax)
   "(x-norm e xmax) changes 'e' x axis values so that they run to 'xmax'"

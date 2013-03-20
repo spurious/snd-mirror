@@ -228,6 +228,7 @@
 	    (set! len (ceiling (/ (seconds->samples dur) bufsize)))))
       func)))
 
+#|
 ;; from env.scm
 (define* (envelope-interp :rest args)
   (let ((x (car args))
@@ -253,6 +254,7 @@
 					  (- (caddr env) (car env))))
 			    1.0))))))
 	  (else (envelope-interp x (cddr env))))))
+|#
 
 (define* (rt-motif :rest args)
   (let* ((shell-app (XtVaOpenApplication 
