@@ -413,7 +413,7 @@ enum {OP_NO_OP,
       OP_DEFINE_WITH_ACCESSOR, OP_DEFMACRO_WITH_ACCESSOR, OP_DEFINE_MACRO_WITH_ACCESSOR,
       OP_LET_NO_VARS, OP_NAMED_LET, OP_NAMED_LET_NO_VARS, OP_NAMED_LET_STAR,
       OP_CASE_SIMPLE, OP_CASE_SIMPLER, OP_CASE_SIMPLER_1, OP_CASE_SIMPLER_SS,
-      OP_CASE_SIMPLEST, OP_CASE_SIMPLEST_SS, OP_CASE_SIMPLEST_ELSE, OP_CASE_SIMPLEST_ELSE_C, OP_CASE_INT,
+      OP_CASE_SIMPLEST, OP_CASE_SIMPLEST_SS, OP_CASE_SIMPLEST_ELSE, OP_CASE_SIMPLEST_ELSE_C,
       OP_LET_C, OP_LET_S, OP_LET_Q, OP_LET_ALL_C, OP_LET_ALL_S, OP_LET_ALL_X,
       OP_LET_STAR_ALL_X, OP_LET_opCq, OP_LET_opSSq, OP_LET_C_P, OP_LET_S_P, 
       OP_IF_P_P_P, OP_IF_P_P, OP_IF_P_P_X, OP_IF_P_X_P, OP_IF_P_X_X, 
@@ -448,8 +448,8 @@ enum {OP_NO_OP,
       OP_SAFE_CAR_1,
 
       OP_SAFE_C_ZZ_1, OP_SAFE_C_ZZ_2, OP_SAFE_C_SZ_1, OP_SAFE_C_ZS_1, OP_SAFE_C_ZA_1, OP_INCREMENT_SZ_1, OP_SAFE_C_SZ_SZ,
-      OP_SAFE_C_ZXX_1, OP_SAFE_C_XZX_1, OP_SAFE_C_XXZ_1, 
-      OP_SAFE_C_ZZX_1, OP_SAFE_C_ZZX_2, OP_SAFE_C_ZXZ_1, OP_SAFE_C_ZXZ_2, OP_SAFE_C_XZZ_1, OP_SAFE_C_XZZ_2, 
+      OP_SAFE_C_ZAA_1, OP_SAFE_C_AZA_1, OP_SAFE_C_AAZ_1, 
+      OP_SAFE_C_ZZA_1, OP_SAFE_C_ZZA_2, OP_SAFE_C_ZAZ_1, OP_SAFE_C_ZAZ_2, OP_SAFE_C_AZZ_1, OP_SAFE_C_AZZ_2, 
       OP_SAFE_C_ZZZ_1, OP_SAFE_C_ZZZ_2, OP_SAFE_C_ZZZ_3, 
 
       OP_SAFE_C_opSq_P_1, OP_SAFE_C_opSq_P_MV, OP_C_P_1, OP_C_P_2, OP_C_SP_1, OP_C_SP_2,
@@ -511,7 +511,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "define", "defmacro", "define-macro",
    "let", "let", "let", "let*",
    "case", "case", "case", "case",
-   "case", "case", "case", "case", "case",
+   "case", "case", "case", "case", 
    "let", "let", "let", "let", "let", "let", 
    "let*", "let", "let", "let", "let",
 
@@ -547,8 +547,8 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "car",
 
    "c_zz_1", "c_zz_2", "c_sz_1", "c_zs_1", "c_za_1", "increment_sz_1", "c_sz_sz",
-   "c_zxx_1", "c_xzx_1", "c_xxz_1", 
-   "c_zzx_1", "c_zzx_2", "c_zxz_1", "c_zxz_2", "c_xzz_1", "c_xzz_2", 
+   "c_zaa_1", "c_aza_1", "c_aaz_1", 
+   "c_zza_1", "c_zza_2", "c_zaz_1", "c_zaz_2", "c_azz_1", "c_azz_2", 
    "c_zzz_1", "c_zzz_2", "c_zzz_3", 
 
    "c_opsq_p_1", "c_opsq_p_mv", "c_p_1", "c_p_2", "c_sp_1", "c_sp_2",
@@ -598,7 +598,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_DEFINE_WITH_ACCESSOR", "OP_DEFMACRO_WITH_ACCESSOR", "OP_DEFINE_MACRO_WITH_ACCESSOR",
   "OP_LET_NO_VARS", "OP_NAMED_LET", "OP_NAMED_LET_NO_VARS", "OP_NAMED_LET_STAR",
   "OP_CASE_SIMPLE", "OP_CASE_SIMPLER", "OP_CASE_SIMPLER_1", "OP_CASE_SIMPLER_SS",
-  "OP_CASE_SIMPLEST", "OP_CASE_SIMPLEST_SS", "OP_CASE_SIMPLEST_ELSE", "OP_CASE_SIMPLEST_ELSE_C", "OP_CASE_INT",
+  "OP_CASE_SIMPLEST", "OP_CASE_SIMPLEST_SS", "OP_CASE_SIMPLEST_ELSE", "OP_CASE_SIMPLEST_ELSE_C",
   "OP_LET_C", "OP_LET_S", "OP_LET_Q", "OP_LET_ALL_C", "OP_LET_ALL_S", "OP_LET_ALL_X", 
   "OP_LET_STAR_ALL_X", "OP_LET_opCq", "OP_LET_opSSq", "OP_LET_C_P", "OP_LET_S_P", 
   "OP_IF_P_P_P", "OP_IF_P_P", "OP_IF_P_P_X", "OP_IF_P_X_P", "OP_IF_P_X_X", 
@@ -633,8 +633,8 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_CAR_1",
 
   "OP_SAFE_C_ZZ_1", "OP_SAFE_C_ZZ_2", "OP_SAFE_C_SZ_1", "OP_SAFE_C_ZS_1", "OP_SAFE_C_ZA_1", "OP_INCREMENT_SZ_1", "OP_SAFE_C_SZ_SZ",
-  "OP_SAFE_C_ZXX_1", "OP_SAFE_C_XZX_1", "OP_SAFE_C_XXZ_1", 
-  "OP_SAFE_C_ZZX_1", "OP_SAFE_C_ZZX_2", "OP_SAFE_C_ZXZ_1", "OP_SAFE_C_ZXZ_2", "OP_SAFE_C_XZZ_1", "OP_SAFE_C_XZZ_2", 
+  "OP_SAFE_C_ZAA_1", "OP_SAFE_C_AZA_1", "OP_SAFE_C_AAZ_1", 
+  "OP_SAFE_C_ZZA_1", "OP_SAFE_C_ZZA_2", "OP_SAFE_C_ZAZ_1", "OP_SAFE_C_ZAZ_2", "OP_SAFE_C_AZZ_1", "OP_SAFE_C_AZZ_2", 
   "OP_SAFE_C_ZZZ_1", "OP_SAFE_C_ZZZ_2", "OP_SAFE_C_ZZZ_3", 
 
   "OP_SAFE_C_opSq_P_1", "OP_SAFE_C_opSq_P_MV", "OP_C_P_1", "OP_C_P_2", "OP_C_SP_1", "OP_C_SP_2",
@@ -738,8 +738,8 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_opCq_Z, HOP_SAFE_C_opCq_Z, OP_SAFE_C_S_opSZq, HOP_SAFE_C_S_opSZq, 
       OP_SAFE_C_S_opAAq, HOP_SAFE_C_S_opAAq, OP_SAFE_C_S_opAAAq, HOP_SAFE_C_S_opAAAq, 
       
-      OP_SAFE_C_ZXX, HOP_SAFE_C_ZXX, OP_SAFE_C_XZX, HOP_SAFE_C_XZX, OP_SAFE_C_XXZ, HOP_SAFE_C_XXZ,
-      OP_SAFE_C_ZZX, HOP_SAFE_C_ZZX, OP_SAFE_C_ZXZ, HOP_SAFE_C_ZXZ, OP_SAFE_C_XZZ, HOP_SAFE_C_XZZ, 
+      OP_SAFE_C_ZAA, HOP_SAFE_C_ZAA, OP_SAFE_C_AZA, HOP_SAFE_C_AZA, OP_SAFE_C_AAZ, HOP_SAFE_C_AAZ,
+      OP_SAFE_C_ZZA, HOP_SAFE_C_ZZA, OP_SAFE_C_ZAZ, HOP_SAFE_C_ZAZ, OP_SAFE_C_AZZ, HOP_SAFE_C_AZZ, 
       OP_SAFE_C_ZZZ, HOP_SAFE_C_ZZZ,
       OP_SAFE_C_SSP, HOP_SAFE_C_SSP,
       
@@ -847,8 +847,8 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_opcq_z", "h_safe_c_opcq_z", "safe_c_s_opszq", "h_safe_c_s_opszq", 
       "safe_c_s_opaaq", "h_safe_c_s_opaaq", "safe_c_s_opaaaq", "h_safe_c_s_opaaaq", 
       
-      "safe_c_zxx", "h_safe_c_zxx", "safe_c_xzx", "h_safe_c_xzx", "safe_c_xxz", "h_safe_c_xxz",
-      "safe_c_zzx", "h_safe_c_zzx", "safe_c_zxz", "h_safe_c_zxz", "safe_c_xzz", "h_safe_c_xzz", 
+      "safe_c_zaa", "h_safe_c_zaa", "safe_c_aza", "h_safe_c_aza", "safe_c_aaz", "h_safe_c_aaz",
+      "safe_c_zza", "h_safe_c_zza", "safe_c_zaz", "h_safe_c_zaz", "safe_c_azz", "h_safe_c_azz", 
       "safe_c_zzz", "h_safe_c_zzz",
       "safe_c_ssp", "h_safe_c_ssp",
       
@@ -1325,7 +1325,7 @@ struct s7_scheme {
   s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_A, SET_PAIR_P, SET_PWS, SET_ENV_S, SET_ENV_ALL_X, SET_PAIR_C, SET_PAIR_C_P;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED;
   s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLER_1, CASE_SIMPLER_SS;
-  s7_pointer CASE_SIMPLEST, CASE_SIMPLEST_SS, CASE_SIMPLEST_ELSE, CASE_SIMPLEST_ELSE_C, CASE_INT;
+  s7_pointer CASE_SIMPLEST, CASE_SIMPLEST_SS, CASE_SIMPLEST_ELSE, CASE_SIMPLEST_ELSE_C;
   s7_pointer LET_C, LET_S, LET_Q, LET_ALL_C, LET_ALL_S, LET_ALL_X;
   s7_pointer LET_STAR_ALL_X, LET_opCq, LET_opSSq, LET_C_P, LET_S_P;
   s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, NAMED_LET_STAR, LET_STAR2, AND_UNCHECKED, AND_P, OR_UNCHECKED, OR_P;
@@ -2306,8 +2306,6 @@ static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args);
 static bool is_thunk(s7_scheme *sc, s7_pointer x);
 static int remember_file_name(s7_scheme *sc, const char *file);
 static const char *type_name(s7_scheme *sc, s7_pointer arg, int article);
-static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer arg);
-enum {NO_ARTICLE, DEFINITE_ARTICLE, INDEFINITE_ARTICLE};
 static s7_pointer make_string_uncopied(s7_scheme *sc, char *str);
 static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int len);
 static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
@@ -2328,39 +2326,42 @@ static bool call_begin_hook(s7_scheme *sc);
 
 static s7_pointer simple_wrong_type_arg_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg, s7_pointer typnam, s7_pointer descr);
 static s7_pointer wrong_type_arg_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg_n, s7_pointer arg, s7_pointer typnam, s7_pointer descr);
-static s7_pointer out_of_range_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg_n, s7_pointer arg, s7_pointer descr);
-static s7_pointer simple_out_of_range_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg, s7_pointer descr);
+static s7_pointer out_of_range_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg_n, s7_pointer arg, const char *descr);
+static s7_pointer simple_out_of_range_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg, const char *descr);
 
+/* putting off the type description until s7_error via the sc->GC_NIL marker below makes it possible
+ *    for gcc to speed up the functions that call these as tail-calls.  1-2% overall speedup!
+ */
 #define simple_wrong_type_argument(Sc, Caller, Arg, Desired_Type) \
-  simple_wrong_type_arg_error_prepackaged(Sc, symbol_name_cell(Caller), Arg, prepackaged_type_name(sc, Arg), prepackaged_type_names[Desired_Type])
+  simple_wrong_type_arg_error_prepackaged(Sc, symbol_name_cell(Caller), Arg, sc->GC_NIL, prepackaged_type_names[Desired_Type])
 
 #define simple_wrong_type_argument_with_type(Sc, Caller, Arg, Type) \
-  simple_wrong_type_arg_error_prepackaged(Sc, symbol_name_cell(Caller), Arg, prepackaged_type_name(sc, Arg), Type)
+  simple_wrong_type_arg_error_prepackaged(Sc, symbol_name_cell(Caller), Arg, sc->GC_NIL, Type)
 
 #define wrong_type_argument(Sc, Caller, Arg_Num, Arg, Desired_Type)	\
-  wrong_type_arg_error_prepackaged(Sc, symbol_name_cell(Caller), Arg_Num, Arg, prepackaged_type_name(sc, Arg), prepackaged_type_names[Desired_Type])
+  wrong_type_arg_error_prepackaged(Sc, symbol_name_cell(Caller), Arg_Num, Arg, sc->GC_NIL, prepackaged_type_names[Desired_Type])
 
 #define wrong_type_argument_with_type(Sc, Caller, Arg_Num, Arg, Type)	\
-  wrong_type_arg_error_prepackaged(Sc, symbol_name_cell(Caller), Arg_Num, Arg, prepackaged_type_name(sc, Arg), Type)
+  wrong_type_arg_error_prepackaged(Sc, symbol_name_cell(Caller), Arg_Num, Arg, sc->GC_NIL, Type)
 
 #define wrong_type_argument_n(Sc, Caller, Num, Arg, Desired_Type)	\
-  wrong_type_arg_error_prepackaged(Sc, symbol_name_cell(Caller), make_integer(Sc, Num), Arg, prepackaged_type_name(sc, Arg), prepackaged_type_names[Desired_Type])
+  wrong_type_arg_error_prepackaged(Sc, symbol_name_cell(Caller), make_integer(Sc, Num), Arg, sc->GC_NIL, prepackaged_type_names[Desired_Type])
 
 #define wrong_type_argument_n_with_type(Sc, Caller, Num, Arg, Type)	\
-  wrong_type_arg_error_prepackaged(Sc, symbol_name_cell(Caller), make_integer(Sc, Num), Arg, prepackaged_type_name(sc, Arg), Type)
+  wrong_type_arg_error_prepackaged(Sc, symbol_name_cell(Caller), make_integer(Sc, Num), Arg, sc->GC_NIL, Type)
 
 #define simple_out_of_range(Sc, Caller, Arg, Description) \
-  simple_out_of_range_error_prepackaged(Sc, symbol_name_cell(Caller), Arg, make_protected_string(sc, Description))
+  simple_out_of_range_error_prepackaged(Sc, symbol_name_cell(Caller), Arg, Description)
 
 #define out_of_range(Sc, Caller, Arg_Num, Arg, Description)		\
-  out_of_range_error_prepackaged(Sc, symbol_name_cell(Caller), Arg_Num, Arg, make_protected_string(sc, Description))
+  out_of_range_error_prepackaged(Sc, symbol_name_cell(Caller), Arg_Num, Arg, Description)
 
 
 static s7_pointer CAR_A_LIST, CDR_A_LIST;
 static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
 static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
 static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, A_NORMAL_REAL, A_RATIONAL, A_CLOSURE;
-static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE;
+static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL;
 static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 
 
@@ -4134,7 +4135,7 @@ static void resize_op_stack(s7_scheme *sc)
 
 
 #define main_stack_op(Sc)             ((opcode_t)(Sc->stack_end[-1]))
-#define main_stack_args(Sc)           (Sc->stack_end[-2]
+#define main_stack_args(Sc)           (Sc->stack_end[-2])
 #define main_stack_environment(Sc)    (Sc->stack_end[-3])
 #define main_stack_code(Sc)           (Sc->stack_end[-4])
 #define pop_main_stack(Sc)            Sc->stack_end -= 4
@@ -5466,7 +5467,7 @@ static s7_pointer g_environment_ref(s7_scheme *sc, s7_pointer args)
 
   sym = cadr(args);
   if (!is_symbol(sym))
-    return(s7_wrong_type_arg_error(sc, "environment-ref", 2, sym, "a symbol"));
+    return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, sym, A_SYMBOL));
 
   return(s7_environment_ref(sc, e, sym));
 }
@@ -5480,11 +5481,11 @@ static s7_pointer g_environment_set(s7_scheme *sc, s7_pointer args)
 
   e = car(args);
   if (!is_environment(e))
-    return(s7_wrong_type_arg_error(sc, "environment-set!", 1, e, "an environment"));
+    return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_SET, e, AN_ENVIRONMENT));
 
   sym = cadr(args);
   if (!is_symbol(sym))
-    return(s7_wrong_type_arg_error(sc, "environment set!", 2, sym, "a symbol"));
+    return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_SET, sym, A_SYMBOL));
 
   return(s7_environment_set(sc, e, sym, caddr(args)));
 }
@@ -22051,6 +22052,8 @@ static const char *c_closure_name(s7_scheme *sc, s7_pointer closure, int *nlen)
 }
 
 
+enum {NO_ARTICLE, DEFINITE_ARTICLE, INDEFINITE_ARTICLE};
+
 static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 {
   char *buf;
@@ -22939,7 +22942,16 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 	  if (print_func != sc->UNDEFINED)
 	    {
 	      s7_pointer p;
+	      /* TODO: here push a marker on the stack with x,y,z,various temps (temp_cell_1|2etc)
+	       *   then restore everything after the function call -- this way format is safe?
+	       */
+
+	      push_stack(sc, OP_NO_OP, sc->temp_cell_2, sc->temp_cell_3);
 	      p = s7_apply_function(sc, print_func, list_1(sc, obj));
+	      sc->temp_cell_2 = main_stack_args(sc);
+	      sc->temp_cell_3 = main_stack_code(sc);
+	      pop_main_stack(sc);
+
 	      if (string_length(p) > 0)
 		port_write_string(port)(sc, string_value(p), string_length(p), port);
 	      break;
@@ -25405,6 +25417,7 @@ static void init_car_a_list(void)
   AN_INPUT_PORT = s7_make_permanent_string("an input port");
   AN_OUTPUT_PORT = s7_make_permanent_string("an output port");
   A_THUNK = s7_make_permanent_string("a thunk");
+  A_SYMBOL = s7_make_permanent_string("a symbol");
   SOMETHING_APPLICABLE = s7_make_permanent_string("a procedure or something applicable");
   CONSTANT_ARG_ERROR = s7_make_permanent_string("lambda* parameter '~A is a constant");
   BAD_BINDING = s7_make_permanent_string("~A: can't bind some variable to ~S");
@@ -32299,6 +32312,7 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
 }
 
 
+
 static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
 {
   const char *name;
@@ -32308,12 +32322,11 @@ static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
   if (s7_is_string(p))
     return(p);
 
-  name = type_name(sc, x, INDEFINITE_ARTICLE);
+  name = type_name(sc, x, INDEFINITE_ARTICLE); 
   if (name == closures[INDEFINITE_ARTICLE])
     return(A_CLOSURE);
   if (name == environments[INDEFINITE_ARTICLE])
     return(AN_ENVIRONMENT);
-
   return(make_protected_string(sc, name));
 }
 
@@ -32360,22 +32373,22 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
 }
 
 
-static s7_pointer out_of_range_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg_n, s7_pointer arg, s7_pointer descr)
+static s7_pointer out_of_range_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg_n, s7_pointer arg, const char *descr)
 {
   /* info list is '(format_string caller arg_n arg descr) */
   list_set(sc, sc->OUT_OF_RANGE_INFO, 1, caller);
   list_set(sc, sc->OUT_OF_RANGE_INFO, 2, arg_n);
   list_set(sc, sc->OUT_OF_RANGE_INFO, 3, arg);
-  list_set(sc, sc->OUT_OF_RANGE_INFO, 4, descr);
+  list_set(sc, sc->OUT_OF_RANGE_INFO, 4, make_protected_string(sc, descr));
   return(s7_error(sc, sc->OUT_OF_RANGE, sc->OUT_OF_RANGE_INFO));
 }
 
 
-static s7_pointer simple_out_of_range_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg, s7_pointer descr)
+static s7_pointer simple_out_of_range_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg, const char *descr)
 {
   list_set(sc, sc->SIMPLE_OUT_OF_RANGE_INFO, 1, caller);
   list_set(sc, sc->SIMPLE_OUT_OF_RANGE_INFO, 2, arg);
-  list_set(sc, sc->SIMPLE_OUT_OF_RANGE_INFO, 3, descr);
+  list_set(sc, sc->SIMPLE_OUT_OF_RANGE_INFO, 3, make_protected_string(sc, descr));
   return(s7_error(sc, sc->OUT_OF_RANGE, sc->SIMPLE_OUT_OF_RANGE_INFO));
 }
 
@@ -32390,11 +32403,11 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
 					  make_protected_string(sc, caller),
 					  make_integer(sc, arg_n),
 					  arg,
-					  make_protected_string(sc, descr)));
+					  descr));
   return(simple_out_of_range_error_prepackaged(sc,
 					       make_protected_string(sc, caller),
 					       arg,
-					       make_protected_string(sc, descr)));
+					       descr));
 }
 
 
@@ -32955,6 +32968,18 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
       slot_set_value(sc->error_line, sc->F);
       slot_set_value(sc->error_file, sc->F);
     }
+
+  /* check for the sc->GC_NIL marker */
+  if ((info == sc->SIMPLE_WRONG_TYPE_ARG_INFO) &&
+      (cadddr(info) == sc->GC_NIL))
+    cadddr(info) = prepackaged_type_name(sc, caddr(info));
+  else
+    {
+      if ((info == sc->WRONG_TYPE_ARG_INFO) &&
+	  (car(sc->WTA4) == sc->GC_NIL))
+	car(sc->WTA4) = prepackaged_type_name(sc, car(sc->WTA3));
+    }
+
 
   if (found_catch(sc, type, info, &reset_error_hook))
     return(type);
@@ -36184,7 +36209,8 @@ static s7_pointer g_format_allg_no_column(s7_scheme *sc, s7_pointer args)
 static s7_pointer format_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((is_optimized(expr)) &&
-      (op_no_hop(expr) == OP_C_ALL_X))
+      ((op_no_hop(expr) == OP_C_ALL_X) ||
+       (op_no_hop(expr) == OP_SAFE_C_ALL_X)))
     {
       if ((args > 1) &&
 	  (!s7_is_string(cadr(expr))) &&
@@ -39921,7 +39947,7 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
 	  if ((!is_pair(caddar_x)) ||
 	      (is_all_x_op(optimize_data(caddar_x))))
 	    {
-	      set_optimize_data(car_x, hop + OP_SAFE_C_XXZ); /* here last can't be X because we checked for that above */
+	      set_optimize_data(car_x, hop + OP_SAFE_C_AAZ); /* here last can't be A because we checked for that above */
 	      annotate_arg(sc, cddr(car_x));
 	    }
 	  else
@@ -39929,10 +39955,10 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
 	      if ((!is_pair(cadddar_x)) ||
 		  (is_all_x_op(optimize_data(cadddar_x))))
 		{
-		  set_optimize_data(car_x, hop + OP_SAFE_C_XZX); 
+		  set_optimize_data(car_x, hop + OP_SAFE_C_AZA); 
 		  annotate_arg(sc, cdddr(car_x));
 		}
-	      else set_optimize_data(car_x, hop + OP_SAFE_C_XZZ); 
+	      else set_optimize_data(car_x, hop + OP_SAFE_C_AZZ); 
 	    }
 	}
       else
@@ -39944,17 +39970,17 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
 	      if ((!is_pair(cadddar_x)) ||
 		  (is_all_x_op(optimize_data(cadddar_x))))
 		{
-		  set_optimize_data(car_x, hop + OP_SAFE_C_ZXX); 
+		  set_optimize_data(car_x, hop + OP_SAFE_C_ZAA); 
 		  annotate_arg(sc, cdddr(car_x));
 		}
-	      else set_optimize_data(car_x, hop + OP_SAFE_C_ZXZ); 
+	      else set_optimize_data(car_x, hop + OP_SAFE_C_ZAZ); 
 	    }
 	  else
 	    {
 	      if ((!is_pair(cadddar_x)) ||
 		  (is_all_x_op(optimize_data(cadddar_x))))
 		{
-		  set_optimize_data(car_x, hop + OP_SAFE_C_ZZX); 
+		  set_optimize_data(car_x, hop + OP_SAFE_C_ZZA); 
 		  annotate_arg(sc, cdddr(car_x));
 		}
 	      else set_optimize_data(car_x, hop + OP_SAFE_C_ZZZ); 
@@ -41577,17 +41603,6 @@ static s7_pointer check_case(s7_scheme *sc)
 		}
 	    }
 	}
-#if (!WITH_GMP)
-      else 
-	{
-	  /* OP_CASE_INT assumes non-gmp ints for the selector */
-	  if ((is_symbol(car(sc->code))) &&
-	      (!has_feed_to) &&
-	      (keys_int) &&
-	      (keys_single))
-	    set_syntax_op(sc->code, sc->CASE_INT);
-	}
-#endif
     }
 
   return(sc->code);
@@ -44638,7 +44653,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
     case T_ENVIRONMENT:
       if (is_symbol(car(indices)))
 	obj = s7_environment_ref(sc, obj, car(indices));
-      else return(s7_wrong_type_arg_error(sc, "environment application", 1, car(indices), "a symbol"));
+      else return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, car(indices), A_SYMBOL));
       if (is_pair(cdr(indices)))
 	return(implicit_index(sc, obj, cdr(indices)));
       return(obj);
@@ -49934,7 +49949,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sym = find_symbol_or_bust(sc, cadr(code));
 		if (is_symbol(sym))                             /* (env pi) */
 		  sc->value = s7_environment_ref(sc, s, sym);
-		else return(s7_wrong_type_arg_error(sc, "environment application", 1, sym, "a symbol"));
+		else return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, sym, A_SYMBOL));
 		goto START;
 	      }
 	      
@@ -49950,7 +49965,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sym = cadr(cadr(code));
 		if (is_symbol(sym))
 		  sc->value = s7_environment_ref(sc, s, sym);
-		else return(s7_wrong_type_arg_error(sc, "environment application", 1, sym, "a symbol"));
+		else return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, sym, A_SYMBOL));
 		goto START;
 	      }
 	      
@@ -50529,44 +50544,44 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto OPT_EVAL;
 
 	      
-	    case OP_SAFE_C_ZXX:
+	    case OP_SAFE_C_ZAA:
 	      if (!c_function_is_ok(sc, code))
 		break;
 	      if (!c_function_is_ok(sc, cadr(code)))
 		break;
 	      
-	    case HOP_SAFE_C_ZXX:
-	      push_stack(sc, OP_SAFE_C_ZXX_1, sc->NIL, code);
+	    case HOP_SAFE_C_ZAA:
+	      push_stack(sc, OP_SAFE_C_ZAA_1, sc->NIL, code);
 	      sc->code = cadr(code);
 	      goto OPT_EVAL;
 	      
 	      
-	    case OP_SAFE_C_XZX:
+	    case OP_SAFE_C_AZA:
 	      if (!c_function_is_ok(sc, code))
 		break;
 	      if (!c_function_is_ok(sc, caddr(code)))
 		break;
 	      
-	    case HOP_SAFE_C_XZX:
-	      push_stack(sc, OP_SAFE_C_XZX_1, ((s7_function)fcdr(cdr(code)))(sc, cadr(code)), code);
+	    case HOP_SAFE_C_AZA:
+	      push_stack(sc, OP_SAFE_C_AZA_1, ((s7_function)fcdr(cdr(code)))(sc, cadr(code)), code);
 	      sc->code = caddr(code);
 	      goto OPT_EVAL;
 	      
 	      
-	    case OP_SAFE_C_XXZ:
+	    case OP_SAFE_C_AAZ:
 	      if (!c_function_is_ok(sc, code))
 		break;
 	      if (!c_function_is_ok(sc, cadddr(code)))
 		break;
 	      
-	    case HOP_SAFE_C_XXZ:
+	    case HOP_SAFE_C_AAZ:
 	      push_op_stack(sc, ((s7_function)fcdr(cdr(code)))(sc, cadr(code)));
-	      push_stack(sc, OP_SAFE_C_XXZ_1, ((s7_function)fcdr(cddr(code)))(sc, caddr(code)), code);
+	      push_stack(sc, OP_SAFE_C_AAZ_1, ((s7_function)fcdr(cddr(code)))(sc, caddr(code)), code);
 	      sc->code = cadddr(code);
 	      goto OPT_EVAL;
 	      
 	      
-	    case OP_SAFE_C_ZZX:
+	    case OP_SAFE_C_ZZA:
 	      if (!c_function_is_ok(sc, code))
 		break;
 	      if (!c_function_is_ok(sc, cadr(code)))
@@ -50574,13 +50589,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (!c_function_is_ok(sc, caddr(code)))
 		break;
 	      
-	    case HOP_SAFE_C_ZZX:
-	      push_stack(sc, OP_SAFE_C_ZZX_1, sc->NIL, code);
+	    case HOP_SAFE_C_ZZA:
+	      push_stack(sc, OP_SAFE_C_ZZA_1, sc->NIL, code);
 	      sc->code = cadr(code);
 	      goto OPT_EVAL;
 	      
 	      
-	    case OP_SAFE_C_ZXZ:
+	    case OP_SAFE_C_ZAZ:
 	      if (!c_function_is_ok(sc, code))
 		break;
 	      if (!c_function_is_ok(sc, cadr(code)))
@@ -50588,13 +50603,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (!c_function_is_ok(sc, cadddr(code)))
 		break;
 	      
-	    case HOP_SAFE_C_ZXZ:
-	      push_stack(sc, OP_SAFE_C_ZXZ_1, sc->NIL, code);
+	    case HOP_SAFE_C_ZAZ:
+	      push_stack(sc, OP_SAFE_C_ZAZ_1, sc->NIL, code);
 	      sc->code = cadr(code);
 	      goto OPT_EVAL;
 	      
 	      
-	    case OP_SAFE_C_XZZ:
+	    case OP_SAFE_C_AZZ:
 	      if (!c_function_is_ok(sc, code))
 		break;
 	      if (!c_function_is_ok(sc, caddr(code)))
@@ -50602,8 +50617,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (!c_function_is_ok(sc, cadddr(code)))
 		break;
 	      
-	    case HOP_SAFE_C_XZZ:
-	      push_stack(sc, OP_SAFE_C_XZZ_1, ((s7_function)fcdr(cdr(code)))(sc, cadr(code)), code);
+	    case HOP_SAFE_C_AZZ:
+	      push_stack(sc, OP_SAFE_C_AZZ_1, ((s7_function)fcdr(cdr(code)))(sc, cadr(code)), code);
 	      sc->code = caddr(code);
 	      goto OPT_EVAL;
 	      
@@ -52421,7 +52436,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
       /* --------------- */
-    case OP_SAFE_C_ZXX_1:
+    case OP_SAFE_C_ZAA_1:
       car(sc->A3_1) = sc->value;
       car(sc->A3_2) = ((s7_function)fcdr(cddr(sc->code)))(sc, caddr(sc->code));
       car(sc->A3_3) = ((s7_function)fcdr(cdddr(sc->code)))(sc, cadddr(sc->code));
@@ -52430,7 +52445,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
       /* --------------- */
-    case OP_SAFE_C_XZX_1:
+    case OP_SAFE_C_AZA_1:
       car(sc->T3_3) = ((s7_function)fcdr(cdddr(sc->code)))(sc, cadddr(sc->code));
       car(sc->T3_2) = sc->value;
       car(sc->T3_1) = sc->args;
@@ -52439,7 +52454,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
       /* --------------- */
-    case OP_SAFE_C_XXZ_1:
+    case OP_SAFE_C_AAZ_1:
       car(sc->T3_1) = pop_op_stack(sc);
       car(sc->T3_2) = sc->args;
       car(sc->T3_3) = sc->value;
@@ -52448,15 +52463,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
       /* --------------- */
-    case OP_SAFE_C_ZZX_1:
+    case OP_SAFE_C_ZZA_1:
       push_op_stack(sc, sc->value);
-      push_stack(sc, OP_SAFE_C_ZZX_2, sc->args, sc->code);
+      push_stack(sc, OP_SAFE_C_ZZA_2, sc->args, sc->code);
       sc->code = caddr(sc->code);
       goto OPT_EVAL;
       
 
       /* --------------- */
-    case OP_SAFE_C_ZZX_2:
+    case OP_SAFE_C_ZZA_2:
       car(sc->A3_1) = pop_op_stack(sc);
       car(sc->A3_2) = sc->value;
       car(sc->A3_3) = ((s7_function)fcdr(cdddr(sc->code)))(sc, cadddr(sc->code));
@@ -52465,15 +52480,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
       /* --------------- */
-    case OP_SAFE_C_ZXZ_1:
+    case OP_SAFE_C_ZAZ_1:
       push_op_stack(sc, sc->value);
-      push_stack(sc, OP_SAFE_C_ZXZ_2, ((s7_function)fcdr(cddr(sc->code)))(sc, caddr(sc->code)),  sc->code);
+      push_stack(sc, OP_SAFE_C_ZAZ_2, ((s7_function)fcdr(cddr(sc->code)))(sc, caddr(sc->code)),  sc->code);
       sc->code = cadddr(sc->code);
       goto OPT_EVAL;
       
 
       /* --------------- */
-    case OP_SAFE_C_ZXZ_2:
+    case OP_SAFE_C_ZAZ_2:
       car(sc->T3_1) = pop_op_stack(sc);
       car(sc->T3_2) = sc->args;
       car(sc->T3_3) = sc->value;
@@ -52482,15 +52497,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
       /* --------------- */
-    case OP_SAFE_C_XZZ_1:
+    case OP_SAFE_C_AZZ_1:
       push_op_stack(sc, sc->value);
-      push_stack(sc, OP_SAFE_C_XZZ_2, sc->args, sc->code);
+      push_stack(sc, OP_SAFE_C_AZZ_2, sc->args, sc->code);
       sc->code = cadddr(sc->code);
       goto OPT_EVAL;
       
 
       /* --------------- */
-    case OP_SAFE_C_XZZ_2:
+    case OP_SAFE_C_AZZ_2:
       car(sc->T3_1) = sc->args;
       car(sc->T3_2) = pop_op_stack(sc);
       car(sc->T3_3) = sc->value;
@@ -53179,9 +53194,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_ENVIRONMENT:                       /* -------- environment as applicable object -------- */
 	  if (is_null(sc->args))
 	    return(s7_wrong_number_of_args_error(sc, "environment as applicable object takes one argument: ~A", sc->args));
+
 	  if (is_symbol(car(sc->args)))
 	    sc->value = s7_environment_ref(sc, sc->code, car(sc->args));
-	  else return(s7_wrong_type_arg_error(sc, "environment application", 1, car(sc->args), "a symbol"));
+	  else return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, car(sc->args), A_SYMBOL));
+
 	  if (is_pair(cdr(sc->args)))
 	    sc->value = implicit_index(sc, sc->value, cdr(sc->args));
 	  /*    (let ((v #(1 2 3))) (let ((e (current-environment))) ((e 'v) 1))) -> 2
@@ -56906,51 +56923,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      y = cdr(y);
 	    } while (is_pair(y));
-	  }
-	sc->value = sc->UNSPECIFIED;
-	goto START;
-      }
-
-
-      /* --------------- */
-    case OP_CASE_INT: 
-      /* assume symbol as selector, all keys are single and int, and no =>
-       * ideally we'd just jump to the code we want indexed via the selector,
-       * but I can't find any place to store the vector.
-       */
-      {
-	s7_pointer x, y, selector;
-	selector = finder(sc, car(sc->code));
-	if (!is_integer(selector))
-	  {
-	    for (x = cdr(sc->code); is_pair(x); x = cdr(x))
-	      {
-		y = fcdr(x);
-		if (!is_pair(y))
-		  {
-		    sc->code = cdar(x);
-		    goto BEGIN;
-		  }
-	      }
-	  }
-	else
-	  {
-	    s7_Int index;
-	    index = integer(selector);
-	    for (x = cdr(sc->code); is_pair(x); x = cdr(x))
-	      {
-		y = fcdr(x);
-		if (!is_pair(y))
-		  {
-		    sc->code = cdar(x);
-		    goto BEGIN;
-		  }
-		if (integer(car(y)) == index)
-		  {
-		    sc->code = cdar(x);
-		    goto BEGIN;
-		  }
-	      }
 	  }
 	sc->value = sc->UNSPECIFIED;
 	goto START;
@@ -62638,7 +62610,6 @@ s7_scheme *s7_init(void)
   sc->SET_SYMBOL_Z =          assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_Z);  
   sc->SET_SYMBOL_ALL_X =      assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_ALL_X);  
   sc->CASE_UNCHECKED =        assign_internal_syntax(sc, "case",    OP_CASE_UNCHECKED);  
-  sc->CASE_INT =              assign_internal_syntax(sc, "case",    OP_CASE_INT);  
   sc->CASE_SIMPLE =           assign_internal_syntax(sc, "case",    OP_CASE_SIMPLE);  
   sc->CASE_SIMPLER =          assign_internal_syntax(sc, "case",    OP_CASE_SIMPLER);  
   sc->CASE_SIMPLER_1 =        assign_internal_syntax(sc, "case",    OP_CASE_SIMPLER_1);  
@@ -63072,13 +63043,17 @@ s7_scheme *s7_init(void)
   sc->LIST_TO_STRING =        s7_define_safe_function(sc, "list->string",            g_list_to_string,         1, 0, false, H_list_to_string);
   sc->STRING_TO_LIST =        s7_define_safe_function(sc, "string->list",            g_string_to_list,         1, 0, false, H_string_to_list);
   sc->OBJECT_TO_STRING =      s7_define_safe_function(sc, "object->string",          g_object_to_string,       1, 1, false, H_object_to_string);
-  sc->FORMAT =                s7_define_function(sc,      "format",                  g_format,                 1, 0, true,  H_format);
+  sc->FORMAT =                s7_define_safe_function(sc, "format",                  g_format,                 1, 0, true,  H_format);
   /* as format runs through the saved args, "~A" can call object->string; it can call format, and 
    *    sc->temp_cell_2 can be stepped on in the arg evaluation of the recursive format call,
    *    so format isn't safe if we've seen open_env + object->string.  This isn't called
    *    millions of times, normally, so I think I'll just leave it "unsafe" (rather than
    *    clearing that flag in open_environment).  Any other function that keeps sc->args
    *    in play long enough for s7_call should also be unsafe.
+   *
+   * Would it fix this to save/restore the temp cells across the object->string method application? -- this experiment is running...
+   *   By changing to safe function, don't we use either the T|An series or the prebuilt (in-use flag) set? Perhaps temp_cell_2
+   *   is not enough.
    */
 
 
@@ -63636,17 +63611,17 @@ s7_scheme *s7_init(void)
  * dox oneline opt -> outa i safe-closure_star_s|sa where all syms are not steppers:
  *   get sym vals, on each step, push to return, set code/args, call body (s: 1.1 mil, sa: 434k, sc: 539k)
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x)
- *
+ *   and goto*
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
  * maybe other banks.
  * outa loops unrolled?, poly7?
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
- * bench    42736 8752 8051 7725 6515 5194 4364 4184
- * lint           9328 8140 7887 7736 7300 7180 7201
- * index    44300 3291 3005 2742 2078 1643 1435 1430
+ * bench    42736 8752 8051 7725 6515 5194 4364 4079
+ * lint           9328 8140 7887 7736 7300 7180 7109
+ * index    44300 3291 3005 2742 2078 1643 1435 1408
  * s7test    1721 1358 1297 1244  977  961  957  962
- * t455|6     265   89   55   31   14   14    9 9419
+ * t455|6     265   89   55   31   14   14    9 9140
  * lat        229   63   52   47   42   40   34   32
  * t502        90   43   39   36   29   23   20   19
  * calls           275  207  175  115   89   71   63
