@@ -1047,10 +1047,16 @@ void mus_rectangular_to_polar(mus_float_t *rl, mus_float_t *im, mus_long_t size)
     {
       mus_float_t temp; /* apparently floating underflows (denormals?) in sqrt are bringing us to a halt */
       temp = rl[i] * rl[i] + im[i] * im[i];
-      im[i] = -atan2(im[i], rl[i]); /* "-" here so that clockwise is positive? is this backwards? */
       if (temp < .00000001) 
-	rl[i] = 0.0;
-      else rl[i] = sqrt(temp);
+	{
+	  rl[i] = 0.0;
+	  im[i] = 0.0;
+	}
+      else 
+	{
+	  im[i] = -atan2(im[i], rl[i]); /* "-" here so that clockwise is positive? is this backwards? */
+	  rl[i] = sqrt(temp);
+	}
     }
 }
 
@@ -4021,7 +4027,7 @@ mus_float_t mus_comb_unmodulated_noz(mus_any *ptr, mus_float_t input)
   dly *gen = (dly *)ptr;
   mus_float_t result;
   result = gen->line[gen->loc];
-  gen->line[gen->loc] = input + (gen->line[gen->loc] * gen->yscl);
+  gen->line[gen->loc] = input + (result * gen->yscl);
   gen->loc++;
   if (gen->loc >= gen->size) 
     gen->loc = 0;
@@ -7190,6 +7196,7 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
   int n, i, j, jj;
   mus_float_t scl;
   mus_float_t *a;
+
   n = order;
   if (n <= 0) return(aa);
   if (aa) 
@@ -7201,21 +7208,23 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
       int m;
       mus_float_t am, q, xt = 0.0, xt0, qj, x;
       m = (n + 1) / 2;
-      am = 0.5 * (n + 1);
+      am = 0.5 * (n + 1) - 1.0;
       scl = 2.0 / (mus_float_t)n;
       q = TWO_PI / (mus_float_t)n;
       xt0 = envl[0] * 0.5;
       for (j = 0, jj = n - 1; j < m; j++, jj--)
 	{
 	  xt = xt0;
-	  qj = q * (am - j - 1);
+	  qj = q * (am - j);
 	  for (i = 1, x = qj; i < m; i++, x += qj)
 	    xt += (envl[i] * cos(x));
 	  a[j] = xt * scl;
 	  a[jj] = a[j];
 	}
     }
-  else /* use fft if it's easy to match -- there must be a way to handle odd orders here */
+  else /* use fft if it's easy to match -- there must be a way to handle odd orders here 
+	*   stretch envl to a power of 2, fft, subsample?
+	*/
     {
       mus_float_t *rl, *im;
       mus_long_t fsize; 
@@ -8587,7 +8596,7 @@ static mus_any *frame_to_frame_right(mus_any *arg1, mus_any *arg2, mus_any *arg_
   mus_mixer *mix = (mus_mixer *)arg2;
   mus_frame *frame = (mus_frame *)arg1;
   mus_frame *out = (mus_frame *)arg_out;
-  int i, in_chans, out_chans;
+  int i, j, in_chans, out_chans;
 
   in_chans = frame->chans;
   if (in_chans > mix->chans) 
@@ -8599,9 +8608,9 @@ static mus_any *frame_to_frame_right(mus_any *arg1, mus_any *arg2, mus_any *arg_
 	out_chans = out->chans;
     }
   else out = (mus_frame *)mus_make_empty_frame(out_chans);
+
   for (i = 0; i < out_chans; i++)
     {
-      int j;
       out->vals[i] = 0.0;
       for (j = 0; j < in_chans; j++)
 	out->vals[i] += (frame->vals[j] * mix->vals[j][i]);

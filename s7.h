@@ -482,10 +482,6 @@ s7_pointer s7_slot(s7_scheme *sc, s7_pointer symbol);
 s7_pointer s7_slot_value(s7_scheme *sc, s7_pointer slot);
 s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value);
 s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value);
-s7_Int s7_slot_value_to_integer(s7_scheme *sc, s7_pointer slot);
-s7_Double s7_slot_value_to_real(s7_scheme *sc, s7_pointer slot);
-bool s7_slot_value_is_real(s7_pointer slot);
-bool s7_slot_value_is_integer(s7_pointer slot);
 
 s7_pointer s7_global_environment(s7_scheme *sc);                            /* (global-environment) */
 s7_pointer s7_current_environment(s7_scheme *sc);                           /* (current-environment) */
