@@ -2163,165 +2163,10 @@ static char *find_source_file(const char *orig)
 }
 
 
-#if HAVE_SCHEME
-
-static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
-{
-  #define H_char_position "(char-position char str (start 0)) returns the position of the first occurrence of char in str, or #f"
-  const char *porig, *p;
-  char c;
-  int start = 0;
-
-  if (!s7_is_character(s7_car(args)))
-    return(s7_wrong_type_arg_error(sc, "char-position", 1, s7_car(args), "a character"));
-  if (!s7_is_string(s7_cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "char-position", 2, s7_cadr(args), "a string"));
-
-  if (s7_is_pair(s7_cddr(args)))
-    {
-      s7_pointer arg;
-      arg = s7_cadr(s7_cdr(args));
-      if (!s7_is_integer(arg))
-	return(s7_wrong_type_arg_error(sc, "char-position", 3, arg, "an integer"));
-
-      start = s7_integer(arg);
-      if (start < 0)
-	return(s7_wrong_type_arg_error(sc, "char-position", 3, arg, "a non-negative integer"));
-    }
-
-  c = s7_character(s7_car(args));
-  porig = s7_string(s7_cadr(args));
-
-  if ((!porig) || (start >= (int)s7_string_length(s7_cadr(args))))
-    return(s7_f(sc));
-
-#if 0
-  for (p = (const char *)(porig + start); (*p); p++)
-    if ((*p) == c)
-      return(s7_make_integer(sc, p - porig));
-#else
-  p = strchr((const char *)(porig + start), (int)c);
-  if (p)
-    return(s7_make_integer(sc, p - porig));
-#endif
-  return(s7_f(sc));
-}
-
-static s7_pointer g_any_char_position(s7_scheme *sc, s7_pointer args)
-{
-  #define H_any_char_position "(any-char-position str1 str2 (start 0)) returns the position of the first occurrence of any char in str2 in str1, or #f"
-  const char *porig, *pset;
-  int start = 0, pos, len;
-
-  if (!s7_is_string(s7_car(args)))
-    return(s7_wrong_type_arg_error(sc, "any-char-position", 1, s7_car(args), "a string"));
-  if (!s7_is_string(s7_cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "any-char-position", 2, s7_cadr(args), "a string"));
-
-  if (s7_is_pair(s7_cddr(args)))
-    {
-      s7_pointer arg;
-      arg = s7_cadr(s7_cdr(args));
-      if (!s7_is_integer(arg))
-	return(s7_wrong_type_arg_error(sc, "any-char-position", 3, arg, "an integer"));
-
-      start = s7_integer(arg);
-      if (start < 0)
-	return(s7_wrong_type_arg_error(sc, "any-char-position", 3, arg, "a non-negative integer"));
-    }
-
-  pset = s7_string(s7_cadr(args));
-  porig = s7_string(s7_car(args));
-  len = (int)s7_string_length(s7_car(args));
-
-  if ((!porig) || (start >= len))
-    return(s7_f(sc));
-
-  pos = strcspn((const char *)(porig + start), (const char *)pset);
-  if (pos < len)
-    return(s7_make_integer(sc, pos));
-
-  return(s7_f(sc));
-}
-
-
-static unsigned char uppers[256];
-static void init_uppers(void)
-{
-  int i;
-  for (i = 0; i < 256; i++)
-    uppers[i] = toupper((unsigned char)i);
-}
-
-static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
-{
-  #define H_string_position "(string-position str1 str2 (start 0)) returns the starting position of str1 in str2 or #f"
-  const char *s1, *s2, *p2;
-  int start = 0;
-  s7_pointer s1p, s2p;
-
-  s1p = s7_car(args);
-  s2p = s7_cadr(args);
-
-  if (!s7_is_string(s1p))
-    return(s7_wrong_type_arg_error(sc, "string-position", 1, s1p, "a string"));
-  if (!s7_is_string(s2p))
-    return(s7_wrong_type_arg_error(sc, "string-position", 2, s2p, "a string"));
-
-  if (s7_is_pair(s7_cddr(args)))
-    {
-      s7_pointer arg;
-      arg = s7_caddr(args);
-      if (!s7_is_integer(arg))
-	return(s7_wrong_type_arg_error(sc, "string-position", 3, arg, "an integer"));
-
-      start = s7_integer(arg);
-      if (start < 0)
-	return(s7_wrong_type_arg_error(sc, "string-position", 3, arg, "a non-negative integer"));
-    }
-  
-  s1 = s7_string(s1p);
-  s2 = s7_string(s2p);
-  if (start >= (int)s7_string_length(s2p))
-    return(s7_f(sc));
-
-  p2 = strstr((const char *)(s2 + start), s1);
-  if (!p2) return(s7_f(sc));
-  return(s7_make_integer(sc, p2 - s2));
-#if 0
-  if (!ci)
-    {
-    }
-  else
-    {
-#if (defined(__GNUC__))
-      p2 = strcasestr((const char *)(s2 + start), s1);
-      if (!p2) return(s7_f(sc));
-      return(s7_make_integer(sc, p2 - s2));
-#else
-      for (p2 = (const char *)(s2 + start); (*p2); p2++)
-	{
-	  const char *p1, *ptemp;
-	  for (p1 = s1, ptemp = p2; (*p1) && (*ptemp) && (uppers[(int)(*p1)] == uppers[(int)(*ptemp)]); p1++, ptemp++);
-	  if (!(*p1))
-	    return(s7_make_integer(sc, p2 - s2));
-	}
-#endif
-    }
-
-  return(s7_f(sc));
-#endif
-}
-
-
-
 /* list-in-vector|list, vector-in-list|vector, cobj-in-vector|list obj-in-cobj
  *   string-ci-in-vector? hash-table cases?
  *   most of this could be done via for-each
  */
-
-#endif
-
 
 #ifdef XEN_ARGIFY_1
 #if HAVE_SCHEME && HAVE_DLFCN_H && HAVE_DLOPEN
@@ -2491,7 +2336,6 @@ void g_xen_initialize(void)
   add_source_file_extension("cl");
   add_source_file_extension("lisp");
   add_source_file_extension("init");  /* for slib */
-  init_uppers();
 #endif
 #if HAVE_FORTH
   add_source_file_extension("fth");
@@ -2563,12 +2407,6 @@ void g_xen_initialize(void)
 
 #if HAVE_SCHEME && WITH_GMP
   s7_define_function(s7, "bignum-fft", bignum_fft, 3, 1, false, H_bignum_fft);
-#endif
-
-#if HAVE_SCHEME
-  s7_define_safe_function(s7, "char-position",           g_char_position,           2, 1, false, H_char_position);
-  s7_define_safe_function(s7, "any-char-position",       g_any_char_position,       2, 1, false, H_any_char_position);
-  s7_define_safe_function(s7, "string-position",         g_string_position,         2, 1, false, H_string_position);
 #endif
 
   g_init_base();

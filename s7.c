@@ -1272,7 +1272,7 @@ struct s7_scheme {
   s7_pointer CAADR, CAAR, CADAAR, CADADR, CADAR, CADDAR, CADDDR, CADDR, CADR, CALL_CC, CALL_WITH_EXIT;
   s7_pointer CALL_WITH_INPUT_FILE, CALL_WITH_INPUT_STRING, CALL_WITH_OUTPUT_FILE, CALL_WITH_OUTPUT_STRING, CAR, CATCH, CDAAAR;
   s7_pointer CDAADR, CDAAR, CDADAR, CDADDR, CDADR, CDAR, CDDAAR, CDDADR, CDDAR, CDDDAR, CDDDDR, CDDDR, CDDR, CDR, CEILING;
-  s7_pointer CHAR_LEQ, CHAR_LT, CHAR_EQ, CHAR_GEQ, CHAR_GT, CHARP, CHAR_TO_INTEGER, CHAR_ALPHABETICP, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ;
+  s7_pointer CHAR_LEQ, CHAR_LT, CHAR_EQ, CHAR_GEQ, CHAR_GT, CHARP, CHAR_POSITION, CHAR_TO_INTEGER, CHAR_ALPHABETICP, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ;
   s7_pointer CHAR_CI_GEQ, CHAR_CI_GT, CHAR_DOWNCASE, CHAR_LOWER_CASEP, CHAR_NUMERICP, CHAR_READYP, CHAR_UPCASE, CHAR_UPPER_CASEP;
   s7_pointer CHAR_WHITESPACEP, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, COMPLEXP, CONS, CONSTANTP, CONTINUATIONP, COPY, COS, COSH, DEFINEDP;
   s7_pointer DENOMINATOR, DISPLAY, DYNAMIC_WIND, ENVIRONMENTP, ENVIRONMENT, ENVIRONMENT_REF, ENVIRONMENT_SET, ENVIRONMENT_TO_LIST;
@@ -1288,7 +1288,7 @@ struct s7_scheme {
   s7_pointer POSITIVEP, PROCEDUREP, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, PROCEDURE_ENVIRONMENT, PROCEDURE_NAME, PROCEDURE_SOURCE, PROVIDE;
   s7_pointer PROVIDEDP, QUOTIENT, RANDOM, RANDOM_STATEP, RANDOM_STATE_TO_LIST, RATIONALIZE, RATIONALP, READ, READ_BYTE, READ_CHAR, READ_LINE, REALP;
   s7_pointer REAL_PART, REMAINDER, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STRING, STRING_LEQ, STRING_LT, STRING_EQ;
-  s7_pointer STRING_GEQ, STRING_GT, STRINGP, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND, STRING_CI_LEQ, STRING_CI_LT;
+  s7_pointer STRING_GEQ, STRING_GT, STRINGP, STRING_POSITION, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND, STRING_CI_LEQ, STRING_CI_LT;
   s7_pointer STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_COPY, STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
   s7_pointer SYMBOL_ACCESS, SYMBOLP, SYMBOL_TO_KEYWORD, SYMBOL_TO_STRING, SYMBOL_TO_DYNAMIC_VALUE, SYMBOL_TO_VALUE;
   s7_pointer TAN, TANH, THROW, TRUNCATE, UNOPTIMIZE, VALUES, VECTOR;
@@ -2361,13 +2361,13 @@ static s7_pointer CAR_A_LIST, CDR_A_LIST;
 static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
 static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
 static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, A_NORMAL_REAL, A_RATIONAL, A_CLOSURE;
-static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL;
+static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL, A_NON_NEGATIVE_INTEGER;
 static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 1
+#if 0
 #if 0
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -14914,6 +14914,9 @@ static s7_pointer g_equal_s_ic(s7_scheme *sc, s7_pointer args)
 
   val = finder(sc, car(args));
   y = s7_integer(cadr(args));
+  if (is_integer(val))
+    return(make_boolean(sc, integer(val) == y));
+
   switch (type(val))
     {
     case T_INTEGER:
@@ -18262,6 +18265,101 @@ static s7_pointer g_char_ci_leq_2(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* non-standard, but extremely useful -- more so than all the *-ci stuff put together!
+ */
+/* TODO: doc/test char-position and string-position, add descriptors to lint, check snd-test et all (substring?)
+ */
+static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
+{
+  #define H_char_position "(char-position char-or-str str (start 0)) returns the position of the first occurrence of char in str, or #f"
+  const char *porig, *p, *pset;
+  char c;
+  int start = 0, pos, len;
+  s7_pointer arg1, arg2;
+
+  arg1 = car(args);
+  arg2 = cadr(args);
+
+  if (!s7_is_string(arg2))
+    return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(2), arg2, T_STRING));
+  porig = string_value(arg2);
+
+  if (is_pair(cddr(args)))
+    {
+      s7_pointer arg3;
+      arg3 = caddr(args);
+      if (!is_integer(arg3))
+	return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(3), arg3, T_INTEGER));
+
+      start = integer(arg3);
+      if (start < 0)
+	return(wrong_type_argument_with_type(sc, sc->CHAR_POSITION, small_int(3), arg3, A_NON_NEGATIVE_INTEGER));
+    }
+  len = string_length(arg2);
+  if ((!porig) || (start >= len))
+      return(sc->F);
+
+  if (s7_is_character(arg1))
+    {
+      c = character(arg1);
+      p = strchr((const char *)(porig + start), (int)c);
+      if (p)
+	return(make_integer(sc, p - porig));
+      return(sc->F);
+    }
+  
+  if (!s7_is_string(arg1))
+    return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(1), arg1, T_CHARACTER));
+
+  pset = s7_string(arg1);
+  pos = strcspn((const char *)(porig + start), (const char *)pset);
+  if (pos < len)
+    return(make_integer(sc, pos));
+
+  return(sc->F);
+}
+
+
+static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_position "(string-position str1 str2 (start 0)) returns the starting position of str1 in str2 or #f"
+  const char *s1, *s2, *p2;
+  int start = 0;
+  s7_pointer s1p, s2p;
+
+  s1p = car(args);
+  s2p = cadr(args);
+
+  if (!s7_is_string(s1p))
+    return(wrong_type_argument(sc, sc->STRING_POSITION, small_int(1), s1p, T_STRING));
+  if (!s7_is_string(s2p))
+    return(wrong_type_argument(sc, sc->STRING_POSITION, small_int(2), s2p, T_STRING));
+
+  if (is_pair(cddr(args)))
+    {
+      s7_pointer arg3;
+      arg3 = caddr(args);
+      if (!is_integer(arg3))
+	return(wrong_type_argument(sc, sc->STRING_POSITION, small_int(3), arg3, T_INTEGER));
+
+      start = integer(arg3);
+      if (start < 0)
+	return(wrong_type_argument_with_type(sc, sc->STRING_POSITION, small_int(3), arg3, A_NON_NEGATIVE_INTEGER));
+    }
+  
+  s1 = string_value(s1p);
+  s2 = string_value(s2p);
+  if (start >= string_length(s2p))
+    return(sc->F);
+
+  p2 = strstr((const char *)(s2 + start), s1);
+  if (!p2) return(sc->F);
+  return(make_integer(sc, p2 - s2));
+}
+
+
+
+
 
 /* -------------------------------- strings -------------------------------- */
 
@@ -18512,7 +18610,7 @@ static s7_pointer string_ref_1(s7_scheme *sc, s7_pointer strng, s7_pointer index
     return(wrong_type_argument(sc, sc->STRING_REF, small_int(2), index, T_INTEGER));
   ind = s7_integer(index);
   if (ind < 0)
-    return(wrong_type_argument_with_type(sc, sc->STRING_REF, small_int(2), index, make_protected_string(sc, "a non-negative integer")));
+    return(wrong_type_argument_with_type(sc, sc->STRING_REF, small_int(2), index, A_NON_NEGATIVE_INTEGER));
   if (ind >= string_length(strng))
     return(out_of_range(sc, sc->STRING_REF, small_int(2), index, "should be less than string length"));
 
@@ -18541,7 +18639,7 @@ static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
     return(wrong_type_argument(sc, sc->STRING_REF, small_int(2), index, T_INTEGER));
   ind = s7_integer(index);
   if (ind < 0)
-    return(wrong_type_argument_with_type(sc, sc->STRING_REF, small_int(2), index, make_protected_string(sc, "a non-negative integer")));
+    return(wrong_type_argument_with_type(sc, sc->STRING_REF, small_int(2), index, A_NON_NEGATIVE_INTEGER));
   if (ind >= string_length(strng))
     return(out_of_range(sc, sc->STRING_REF, small_int(2), index, "should be less than string length"));
 
@@ -18578,7 +18676,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
 
   ind = s7_integer(index);
   if (ind < 0)
-    return(wrong_type_argument_with_type(sc, sc->STRING_SET, small_int(2), index, make_protected_string(sc, "a non-negative integer")));
+    return(wrong_type_argument_with_type(sc, sc->STRING_SET, small_int(2), index, A_NON_NEGATIVE_INTEGER));
   if (ind >= string_length(x))
     return(out_of_range(sc, sc->STRING_SET, small_int(2), index, "should be less than string length"));
 
@@ -18698,7 +18796,7 @@ static s7_pointer substring_bounds(s7_scheme *sc, s7_pointer str, s7_pointer arg
 
   i0 = s7_integer(start);
   if (i0 < 0)
-    return(wrong_type_argument_with_type(sc, sc->SUBSTRING, small_int(2), start, make_protected_string(sc, "a non-negative integer")));
+    return(wrong_type_argument_with_type(sc, sc->SUBSTRING, small_int(2), start, A_NON_NEGATIVE_INTEGER));
   if (i0 > string_length(str))            /* (substring "012" 10) */
     return(out_of_range(sc, sc->SUBSTRING, small_int(2), start, "start <= string length"));
   /* this is how guile handles it: (substring "012" 3) -> "" */
@@ -25395,6 +25493,7 @@ static void init_car_a_list(void)
   AN_OUTPUT_PORT = s7_make_permanent_string("an output port");
   A_THUNK = s7_make_permanent_string("a thunk");
   A_SYMBOL = s7_make_permanent_string("a symbol");
+  A_NON_NEGATIVE_INTEGER = s7_make_permanent_string("a non-negative integer");
   SOMETHING_APPLICABLE = s7_make_permanent_string("a procedure or something applicable");
   CONSTANT_ARG_ERROR = s7_make_permanent_string("lambda* parameter '~A is a constant");
   BAD_BINDING = s7_make_permanent_string("~A: can't bind some variable to ~S");
@@ -27665,8 +27764,7 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
     {
       len = s7_integer(x);
       if (len < 0)
-	return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(1), x, 
-					     make_protected_string(sc, "a non-negative integer")));
+	return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(1), x, A_NON_NEGATIVE_INTEGER));
     }
   else
     {
@@ -27698,8 +27796,7 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
 		return(wrong_type_argument_n(sc, sc->MAKE_VECTOR, position_of(y, x), car(y), T_INTEGER));
 	      len *= s7_integer(car(y));
 	      if (len < 0)
-		return(wrong_type_argument_n_with_type(sc, sc->MAKE_VECTOR, position_of(y, x), car(y), 
-						       make_protected_string(sc, "a non-negative integer")));
+		return(wrong_type_argument_n_with_type(sc, sc->MAKE_VECTOR, position_of(y, x), car(y), A_NON_NEGATIVE_INTEGER));
 	    }
 	}
     }
@@ -63110,6 +63207,8 @@ s7_scheme *s7_init(void)
   sc->CHAR_CI_LEQ =           s7_define_safe_function(sc, "char-ci<=?",              g_chars_are_ci_leq,       2, 0, true,  H_chars_are_ci_leq);
   sc->CHAR_CI_GEQ =           s7_define_safe_function(sc, "char-ci>=?",              g_chars_are_ci_geq,       2, 0, true,  H_chars_are_ci_geq);
   
+  sc->CHAR_POSITION =         s7_define_safe_function(sc, "char-position",           g_char_position,          2, 1, false,  H_char_position);
+  sc->STRING_POSITION =       s7_define_safe_function(sc, "string-position",         g_string_position,        2, 1, false,  H_string_position);
   
   sc->STRINGP =               s7_define_safe_function(sc, "string?",                 g_is_string,              1, 0, false, H_is_string);
   sc->MAKE_STRING =           s7_define_safe_function(sc, "make-string",             g_make_string,            1, 1, false, H_make_string);
@@ -63710,10 +63809,10 @@ s7_scheme *s7_init(void)
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
  * bench    42736 8752 8051 7725 6515 5194 4364 4022
- * lint           9328 8140 7887 7736 7300 7180 7109
- * index    44300 3291 3005 2742 2078 1643 1435 1408
+ * lint           9328 8140 7887 7736 7300 7180 7056
+ * index    44300 3291 3005 2742 2078 1643 1435 1345
  * s7test    1721 1358 1297 1244  977  961  957  962
- * t455|6     265   89   55   31   14   14    9 9140
+ * t455|6     265   89   55   31   14   14    9 9164
  * lat        229   63   52   47   42   40   34   31
  * t502        90   43   39   36   29   23   20   19
  * calls           275  207  175  115   89   71   62

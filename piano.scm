@@ -4,47 +4,10 @@
 (if (provided? 'snd)
     (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
     (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
+
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
-;;; see generators.scm for the old scheme version of one-pole-all-pass
-(defgenerator expseg currentValue targetValue r)
-
-(define (expseg gen r)
-  (environment-set! gen 'r r)
-  (with-environment gen
-    (set! currentValue (+ (* r targetValue) (* (- 1.0 r) currentValue)))))
-    ;(set! currentValue (+ currentValue (* r (- targetValue currentValue))))))
-    ;; (bil) this is slightly different (getting clicks)
-
-
-#|
-(define (make-one-pole-swept)
-  (vector 0.0))
-
-(define (one-pole-swept gen input coef)
-  ;; signal controlled one-pole lowpass filter
-  (set! (gen 0) (- (* (+ 1.0 coef) input) (* coef (gen 0)))))
-|#
-
-#|
-(define (make-pnoise)
-  (vector 16383))
-
-(define (pnoise gen x)
-  ;; very special noise generator
-  (set! (gen 0) (logand (floor (+ (* (gen 0) 1103515245) 12345)) #xffffffff))
-  ;; (bil) added the logand -- otherwise we get an overflow somewhere
-  (* x (- (* (modulo (floor (/ (gen 0) 65536.0)) 65536) 0.0000305185) 1.0)))
-  ;; this looks nutty to me -- was it originally running in 32 bits?
-|#
-(define pn-gen 16383)
-(define (pnoise x)
-  ;; very special noise generator
-  (set! pn-gen (logand (+ (* pn-gen 1103515245) 12345) #xffffffff))
-  ;; (bil) added the logand -- otherwise we get an overflow somewhere, also removed floor
-  (* x (- (* pn-gen 4.6566128730774e-10) 1.0)))
-
-
+;;; see generators.scm for the old scheme versions of one-pole-all-pass, pnoise, one-pole-swept, and expseg
 
 (define number-of-stiffness-allpasses 8)
 (define longitudinal-mode-cutoff-keynum 29)
@@ -257,8 +220,6 @@
 	
 	(dryTap-one-pole-one-zero-pair (make-one-pole-one-zero 1.0 0.0 0.0))
 	(dryTap-one-pole-swept 0.0)
-	(dryTap-amp-expseg (make-expseg :currentValue 1.0 :targetValue 0.0))
-	(wetTap-coef-expseg (make-expseg :currentValue 0.0 :targetValue -.5))
 	(wetTap-one-pole-swept 0.0)
 	
 	(beg (seconds->samples start))
@@ -273,18 +234,9 @@
 	 (singleStringDecayRate (* singleStringDecayRateFactor singleStringDecayRate-1)))
       
       (let (;;initialize soundboard impulse response elements
-	    (dryTap-coef-expseg (make-expseg :currentValue DryTapFiltCoefCurrent :targetValue DryTapFiltCoefTarget))
-	    (drycoefrate (In-t60 DryTapFiltCoeft60))
-	    
-	    (dryamprate (In-t60 DryTapAmpt60))
-	    
 	    ;;initialize open-string resonance elements		
 	    (wetTap-one-pole-one-zero-pair (make-one-pole-one-zero (- 1.0 (* (signum pedalResonancePole) pedalResonancePole)) 0.0 (- pedalResonancePole)))
-	    
-	    (wetcoefrate (In-t60 pedalEnvelopet60))
-	    (wetTap-amp-expseg (make-expseg :currentValue (* sustainPedalLevel pedalPresenceFactor (if pedal-down 1.0 DryPedalResonanceFactor))
-					    :targetValue 0.0))
-	    (wetamprate (In-t60 pedalEnvelopet60))
+
 	    (sb-cutoff-rate (In-t60 soundboardCutofft60))
 	    
 	    ;;initialize velocity-dependent piano hammer filter elements
@@ -373,15 +325,30 @@
 			(string3-stiffness-ap (make-one-pole-all-pass 8 stiffnessCoefficient))
 			
 			;;initialize loop-gain envelope
-			(loop-gain-expseg (make-expseg :currentValue loop-gain-default :targetValue releaseLoopGain))
-			(looprate (In-t60 loop-gain-env-t60))
+			(loop-gain loop-gain-default) 
+			(loop-gain-ry (* releaseLoopGain (In-t60 loop-gain-env-t60)))
+			(loop-gain-rx (- 1.0 (In-t60 loop-gain-env-t60)))
+
+			(dry-coef DryTapFiltCoefCurrent)
+			(dry-coef-ry (* DryTapFiltCoefTarget (In-t60 DryTapFiltCoeft60)))
+			(dry-coef-rx (- 1.0 (In-t60 DryTapFiltCoeft60)))
+
+			(wet-coef 0.0)
+			(wet-coef-ry (* -0.5 (In-t60 pedalEnvelopet60)))
+			(wet-coef-rx (- 1.0 (In-t60 pedalEnvelopet60)))
+
 			(dryTap 0.0)
+			(dryTap-x 1.0)
+			(dryTap-rx (- 1.0 (In-t60 DryTapAmpt60)))
+
 			(openStrings 0.0)
+			(wetTap-x (* sustainPedalLevel pedalPresenceFactor (if pedal-down 1.0 DryPedalResonanceFactor)))
+			(wetTap-rx (- 1.0 (In-t60 pedalEnvelopet60)))
+
 			(combedExcitationSignal 0.0)
 			(adelOut 0.0)
 			(adelIn 0.0)
 			(totalTap 0.0)
-			(loop-gain loop-gain-default)
 			(is-release-time #f)
 			(string1-junction-input 0.0)
 			(string2-junction-input 0.0)
@@ -389,33 +356,38 @@
 			(couplingFilter-input 0.0)
 			(couplingFilter-output 0.0)
 			(temp1 0.0)
-			(temp2 0.0)
 			(noi 0.0)
+			(pn-gen 16383)
 			)
-		    (set! pn-gen 16383)
 
 		    (do ((i beg (+ i 1)))
 			((= i end))
 		      
 		      (if is-release-time
-			  (set! loop-gain (expseg loop-gain-expseg looprate))
+			  (set! loop-gain (+ loop-gain-ry (* loop-gain-rx loop-gain)))
 			  (if (= i release-time)
 			      (begin
 				(set! is-release-time #t)
-				(set! dryamprate sb-cutoff-rate)
-				(set! wetamprate sb-cutoff-rate))))
+				(set! dryTap-rx (- 1.0 sb-cutoff-rate))
+				(set! wetTap-rx dryTap-rx))))
 		      
-		      (set! noi (pnoise amp))
+		      (set! pn-gen (logand (+ (* pn-gen 1103515245) 12345) #xffffffff))
+		      (set! noi (* amp (- (* pn-gen 4.6566128730774e-10) 1.0)))
+
 		      (set! temp1 (one-zero dryTap0 (one-pole dryTap1 noi)))
-		      (set! temp2 (expseg dryTap-coef-expseg drycoefrate))
-		      (set! dryTap-one-pole-swept (- (* (+ 1.0 temp2) temp1) (* temp2 dryTap-one-pole-swept)))
-		      (set! dryTap (* (expseg dryTap-amp-expseg dryamprate) dryTap-one-pole-swept))
+		      (set! dry-coef (+ dry-coef-ry (* dry-coef-rx dry-coef)))
+		      (set! dryTap-one-pole-swept (- (* (+ 1.0 dry-coef) temp1) (* dry-coef dryTap-one-pole-swept)))
+		      (set! dryTap-x (* dryTap-x dryTap-rx))
+		      (set! dryTap (* dryTap-x dryTap-one-pole-swept))
 						      
-		      (set! noi (pnoise amp))
+		      (set! pn-gen (logand (+ (* pn-gen 1103515245) 12345) #xffffffff))
+		      (set! noi (* amp (- (* pn-gen 4.6566128730774e-10) 1.0)))
+
 		      (set! temp1 (one-zero wetTap0 (one-pole wetTap1 noi)))
-		      (set! temp2 (expseg wetTap-coef-expseg wetcoefrate))
-		      (set! wetTap-one-pole-swept (- (* (+ 1.0 temp2) temp1) (* temp2 wetTap-one-pole-swept)))
-		      (set! openStrings (* (expseg wetTap-amp-expseg wetamprate) wetTap-one-pole-swept))
+		      (set! wet-coef (+ wet-coef-ry (* wet-coef-rx wet-coef)))
+		      (set! wetTap-one-pole-swept (- (* (+ 1.0 wet-coef) temp1) (* wet-coef wetTap-one-pole-swept)))
+		      (set! wetTap-x (* wetTap-x wetTap-rx))
+		      (set! openStrings (* wetTap-x wetTap-one-pole-swept))
 							   
 		      (set! totalTap (+ dryTap openStrings))
 		      
@@ -526,7 +498,7 @@
 						    82.986 -0.040 92.240 .3 96.000 .5
 						    99.000 .7 108.000 .7)
 					;these are the actual allpass coefficients modified here
-					;to allow dampedness at hig freqs
+					;to allow dampedness at high freqs
 	       )))
 
 (let ((i 5))

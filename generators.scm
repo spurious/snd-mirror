@@ -6467,6 +6467,43 @@ index 10 (so 10/2 is the bes-jn arg):
     (set! y8 (+ x8 (* coeff (- y7 y8))))
     (set! x8 y7)
     y8))
+
+
+(defgenerator expseg currentValue targetValue r)
+
+(define (expseg gen r)
+  (environment-set! gen 'r r)
+  (with-environment gen
+    (set! currentValue (+ (* r targetValue) (* (- 1.0 r) currentValue)))))
+    ;(set! currentValue (+ currentValue (* r (- targetValue currentValue))))))
+    ;; (bil) this is slightly different (getting clicks)
+
+
+(define (make-one-pole-swept)
+  (vector 0.0))
+
+(define (one-pole-swept gen input coef)
+  ;; signal controlled one-pole lowpass filter
+  (set! (gen 0) (- (* (+ 1.0 coef) input) (* coef (gen 0)))))
+
+(define (make-pnoise)
+  (vector 16383))
+
+(define (pnoise gen x)
+  ;; very special noise generator
+  (set! (gen 0) (logand (floor (+ (* (gen 0) 1103515245) 12345)) #xffffffff))
+  ;; (bil) added the logand -- otherwise we get an overflow somewhere
+  (* x (- (* (modulo (floor (/ (gen 0) 65536.0)) 65536) 0.0000305185) 1.0)))
+  ;; this looks nutty to me -- was it originally running in 32 bits?
+
+
+(define pn-gen 16383)
+(define (pnoise x)
+  ;; very special noise generator
+  (set! pn-gen (logand (+ (* pn-gen 1103515245) 12345) #xffffffff))
+  ;; (bil) added the logand -- otherwise we get an overflow somewhere, also removed floor
+  (* x (- (* pn-gen 4.6566128730774e-10) 1.0)))
+
 |#
                               
 

@@ -1937,7 +1937,7 @@
 	(gen1 (make-oscil 7500))
 	(gen2 (make-polywave 200 '(1 .15)))
 	(rnd (make-rand-interp 200))
-	(rndf (make-env '(0 .3  .7 .3  .8 1  1 0) :scaler (hz->radians 120)))
+	(rndf (make-env '(0 .3  .7 .3  .8 1  1 0) :duration dur :scaler (hz->radians 120)))
 	(frqf (make-env '(0 -.5  .2 0  .85 0  1 -1) :scaler (hz->radians 400) :duration dur))
 	(rx (make-rxyk!cos 4000 (/ 600 4000) 8.0)))
     (do ((i start (+ i 1)))

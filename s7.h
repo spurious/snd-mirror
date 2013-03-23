@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.19"
-#define S7_DATE "26-Jan-13"
+#define S7_VERSION "2.20"
+#define S7_DATE "25-Mar-13"
 
 
 typedef long long int s7_Int;
@@ -844,7 +844,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  *    augment-environment! call-with-exit call-with-input-file call-with-input-string 
  *    call-with-output-file call-with-output-string catch ceiling char->integer char-alphabetic? 
  *    char-ci<=? char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? 
- *    char-numeric? char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<? 
+ *    char-numeric? char-position char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<? 
  *    char=? char>=? char>? cosh dynamic-wind environment? eof-object? eval even? 
  *    exact->inexact exp expt fill! floor for-each gcd hash-table hash-table-size 
  *    hook inexact->exact infinite? initial-environment integer->char integer-decode-float 
@@ -853,7 +853,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  *    make-rectangular map max memv min modulo nan? negative? not odd? port-closed? 
  *    port-line-number positive? provided? quotient read-byte read-line remainder round s7-version 
  *    sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 
- *    string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-ref 
+ *    string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-position string-ref 
  *    string-set! string<=? string<? string=? string>=? string>? substring symbol symbol->keyword 
  *    symbol-table tan tanh truncate vector vector->list with-input-from-file 
  *    with-input-from-string with-output-to-file with-output-to-string write-byte zero?
@@ -869,6 +869,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 25-Mar:    char-position, string-position, environment-ref, environment-set! added to the scheme side.
  * 26-Jan:    s7_function_set_dox_looped (loop optimization experiments).
  * 9-Jan:     s7_cos, s7_sin, other optimization changes.
  * --------

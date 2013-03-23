@@ -3044,41 +3044,48 @@
 			   
 			   (define (count-directives str name form)
 			     (let ((curlys 0)
-				   (len (string-length str))
 				   (dirs 0)
-				   (tilde-time #f))
-			       (do ((i 0 (+ i 1)))
-				   ((= i len))
-				 (let ((c (string-ref str i)))
-				   (if tilde-time
-				       (begin
-					 (if (= curlys 0)
-					     (if (and (not (memq c '(#\~ #\T #\t #\& #\% #\^ #\newline #\}))) ; ~* consumes an arg
-						      (not (call-with-exit
-							    (lambda (return)
-							      (do ((k i (+ k 1)))
-								  ((= k len) #f)
-								;; this can be confused by pad chars in ~T
-								(if (and (not (char-numeric? (string-ref str k)))
-									 (not (char=? (string-ref str k) #\,)))
-								    (return (char-ci=? (string-ref str k) #\t))))))))
-						 (begin
-						   ;; the possibilities are endless, so I'll stick to the simplest
-						   (if (not (vector-ref format-control-char (char->integer c)))
-						       (lint-format "unrecognized format directive: ~C in ~S, ~S"
-								    name c str form))
-						   (set! dirs (+ dirs 1)))))
-					 (set! tilde-time #f)
-					 (case c 
-					   ((#\{) (set! curlys (+ curlys 1)))
-					   ((#\}) (set! curlys (- curlys 1)))))
-				       (if (char=? c #\~)
-					   (set! tilde-time #t)))))
-			       
-			       (if tilde-time
-				   (lint-format "~A control string ends in tilde:~A"
-						name head
-						(truncated-list->string form)))
+				   (pos (char-position #\~ str)))
+			       (if pos
+				   (let ((len (string-length str))
+					 (tilde-time #t)) 
+				     (do ((i (+ pos 1) (+ i 1)))
+					 ((>= i len))
+				       (let ((c (string-ref str i)))
+					 (if tilde-time
+					     (begin
+					       (if (= curlys 0)
+						   (if (and (not (memq c '(#\~ #\T #\t #\& #\% #\^ #\newline #\}))) ; ~* consumes an arg
+							    (not (call-with-exit
+								  (lambda (return)
+								    (do ((k i (+ k 1)))
+									((= k len) #f)
+								      ;; this can be confused by pad chars in ~T
+								      (if (and (not (char-numeric? (string-ref str k)))
+									       (not (char=? (string-ref str k) #\,)))
+									  (return (char-ci=? (string-ref str k) #\t))))))))
+						       (begin
+							 ;; the possibilities are endless, so I'll stick to the simplest
+							 (if (not (vector-ref format-control-char (char->integer c)))
+							     (lint-format "unrecognized format directive: ~C in ~S, ~S"
+									  name c str form))
+							 (set! dirs (+ dirs 1)))))
+					       (set! tilde-time #f)
+					       (case c 
+						 ((#\{) (set! curlys (+ curlys 1)))
+						 ((#\}) (set! curlys (- curlys 1)))))
+					     (begin
+					       (set! pos (char-position #\~ str i))
+					       (if pos 
+						   (begin
+						     (set! tilde-time #t)
+						     (set! i pos))
+						   (set! i len))))))
+				     
+				     (if tilde-time
+					 (lint-format "~A control string ends in tilde:~A"
+						      name head
+						      (truncated-list->string form)))))
 			       
 			       (if (not (= curlys 0))
 				   (lint-format "~A has ~D unmatched ~A~A:~A"

@@ -56,6 +56,8 @@
   #endif
 #endif
 
+/* void add_expr(s7_scheme *sc, s7_pointer expr); */
+
 
 struct mus_xen {
   mus_any *gen;
@@ -6366,7 +6368,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, len = 0, arglist_len;
   mus_float_t base = 1.0, scaler = 1.0, offset = 0.0, duration = 0.0;
-  mus_long_t end = 0, dur = 0;
+  mus_long_t end = 0, dur = -1;
   int npts = 0;
   mus_float_t *brkpts = NULL, *odata = NULL;
   XEN lst;
@@ -6532,6 +6534,8 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	}
       end = dur - 1;
     }
+  if ((dur < 0) && (duration <= 0.0))
+    XEN_OUT_OF_RANGE_ERROR(S_make_env, 0, C_TO_XEN_DOUBLE(duration), "duration <= 0.0?");
 
   {
     mus_error_handler_t *old_error_handler;
@@ -10877,8 +10881,11 @@ static s7_pointer g_indirect_placer_3_looped(s7_scheme *sc, s7_pointer args, voi
 		      
 		      if (is_sampler(obj))
 			{
+			  /* rand_s
+			   */
 			  gen = s7_object_value(obj);
 			  arg = caddr(inner_callee);
+			  /* fprintf(stderr, "(2nd): %lld: %s\n", end - pos, DISPLAY(arg)); */
 			  for (; pos < end; pos++) 
 			    mover(locs, pos, mus_env(e) * sampler(gen, s7_call_direct_to_real_and_free(sc, arg)));
 			  (*step) = end;
@@ -10969,8 +10976,27 @@ static s7_pointer g_indirect_placer_3_looped(s7_scheme *sc, s7_pointer args, voi
     }
   else
     {
-      for (; pos < end; pos++)
-	mover(locs, pos, s7_number_to_real(sc, s7_call_direct(sc, callee)));
+      /* also g_read_sample_s
+       */
+      /* fprintf(stderr, "%lld: %s\n", end - pos, DISPLAY(callee));  */
+      if ((f == (s7_function)g_mul_c_oscil_1) ||
+	  (f == (s7_function)g_mul_s_oscil_1))
+	{
+	  mus_float_t scl;
+	  mus_any *o;
+	  if (s7_is_symbol(cadr(callee)))
+	    scl = s7_number_to_real(sc, s7_cadr_value(sc, callee));
+	  else scl = s7_number_to_real(sc, cadr(callee));
+	  GET_GENERATOR_CADR(caddr(callee), oscil, o);
+
+	  for (; pos < end; pos++)
+	    mover(locs, pos, scl * mus_oscil_unmodulated(o));
+	}
+      else
+	{
+	  for (; pos < end; pos++)
+	    mover(locs, pos, s7_number_to_real(sc, s7_call_direct(sc, callee)));
+	}
     }
   (*step) = end;
   return(args);
@@ -11411,6 +11437,7 @@ static s7_pointer g_indirect_outa_2(s7_scheme *sc, s7_pointer args)
   return(out_any_2(pos, s7_number_to_real(sc, x), 0, "outa"));
 }
 
+
 static s7_pointer indirect_outa_2_temp;
 static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 {
@@ -11827,6 +11854,9 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 			      return(args);
 			    }
 			      
+			  /* just a few calls here (valgrind is confused)
+			   */
+
 			  OUTA_LOOP(x * mus_env(e1) * s7_call_direct_to_real_and_free(sc, arg2) * s7_call_direct_to_real_and_free(sc, arg3));
 			  return(args);
 			}
@@ -12887,11 +12917,43 @@ static s7_pointer g_mul_direct_2(s7_scheme *sc, s7_pointer args)
   return(s7_remake_real(sc, y, x * s7_cell_real(y)));
 }
 
+
+
 static s7_pointer add_direct_2;
 static s7_pointer g_add_direct_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer y;
   double x;
+  /* t502:
+   * 180810: ((polywave gen1 (env frqf)) (* (env rndf) (oscil gen2 (rand-interp rnd))))
+   * 171362: ((polywave gen2) (rand-interp rnd))
+   * 132300: ((* 0.95 (oscil gen1 noise)) (* 0.05 (oscil gen4 noise)))
+   * 104751: ((polywave gen1 frq) (* (env ampf2) (polywave gen2 frq)))
+   * 88200: ((polywave gp buzz) (* (env indf) (polywave gb buzz)))
+   * 88200: ((* (env intrpf) (polywave gen1 frq)) (* (env intrpf-1) (oscil gen2 frq)))
+   * 81585: ((* (env interpf-1) (polywave poly1 frq)) (* (env interpf) (polywave poly2 frq)))
+   * 81365: ((* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf)))
+   * 81050: ((* 0.1 (oscil md)) (* 0.2 (oscil md1)))
+   * snd-test:
+   * 264600: ((filter lp y) (filter hp y))
+   * 180810: ((polywave gen1 (env frqf)) (* (env rndf) (oscil gen2 (rand-interp rnd))))
+   * 170396: ((polywave gen2) (rand-interp rnd))
+   * 132300: ((abs (* (env bouncef) (oscil gen1))) (env rf))
+   * 132300: ((* 0.95 (oscil gen1 noise)) (* 0.05 (oscil gen4 noise)))
+   * 106006: ((polywave gen1 frq) (* (env ampf2) (polywave gen2 frq)))
+   * 88200: ((moving-average slant harmonic) (* vib-index (oscil vib)))
+   * 88200: ((polywave gp buzz) (* (env indf) (polywave gb buzz)))
+   * 88200: ((* (env intrpf) (polywave gen1 frq)) (* (env intrpf-1) (oscil gen2 frq)))
+   * 81585: ((* (env interpf-1) (polywave poly1 frq)) (* (env interpf) (polywave poly2 frq)))
+   * 81365: ((* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf)))
+   * 81050: ((* 0.1 (oscil md)) (* 0.2 (oscil md1)))
+   * 72765: ((* (env gr-int-env) (table-lookup gr-env-end)) (* (env gr-int-env-1) (table-lookup gr-env)))
+   * 66150: ((polywave gen1 (+ (* 2.0 frq) (polywave gen4 frq))) (polywave gen2 (+ (* 8.0 frq) (polywave gen3 frq))))
+   * 60480: ((* 0.9 (oscil gen1 (rand-interp rnd1))) (* 0.1 (oscil gen2 (rand-interp rnd2))))
+   * 57330: ((oscil vib) (rand-interp vibr))
+   * 56007: ((* hz7 (oscil vib)) (rand-interp rnd))
+   */
+
   x = s7_call_direct_to_real_and_free(sc, car(args));
   y = s7_call_direct(sc, cadr(args));
   return(s7_remake_real(sc, y, x + s7_cell_real(y)));
@@ -15407,6 +15469,21 @@ static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 			    return(outa_2_temp_eg);
 			}
 		    }
+		  /* fprintf(stderr, "(choose) %s\n", DISPLAY(caddr(expr))); */
+		  /* lots of (* (env s) ...) here and (* amp (gen s))
+		   * TODO: indirect_outa_2_temp_env and _looped cases 
+		   * unlooped in t502:
+		   *  81365: (* pulse-amp (env pulse-ampf) (+ ...
+		   *  66150: (one-zero oz (* (env ampf) (+ ...
+		   * calls:
+		   *  508280: (ssb-am ssb (bandpass flt (vct-ref in-data j))): g_ssb_am_2
+		   *  264600: (oscil-bank n oscs amps): g_oscil_bank_3
+		   *  88200: (formant-bank amps fs inputs) : g_formant_bank_sss
+		   *  88200: (* ampa (ina i *reverb*))
+		   *  81365: (* pulse-amp (env pulse-ampf) ...
+		   *  66150: (one-zero oz (* (env ampf) (+ ...
+		   *  50828: (formant-bank amps frms1 x)
+		   */
 		  return(indirect_outa_2_temp);
 		}
 	      return(indirect_outa_2);

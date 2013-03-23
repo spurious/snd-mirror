@@ -200,18 +200,12 @@ indented and on a sort of brownish background.
   <li><a href="#constants">define-constant, symbol-access</a>
   <li><a href="#miscellanea">miscellaneous:</a> 
 
-    <a href="#loadpath">*load-path*</a>,
-    <a href="#featureslist">*features*</a>,
-    <a href="#sharpreaders">*#readers*</a>,
-    <a href="#makelist">make-list</a>,
-    <a href="#keywords">keywords</a>,
-    <a href="#symboltable">symbol-table</a>,
-    <a href="#s7help">help</a>,
-    <a href="#s7gc">gc</a>,
-    <a href="#morallyequalp">morally-equal?</a>,
-    <a href="#s7vsr5rs">r5rs</a>,
-    <a href="#circle">circular lists</a>,
-    etc
+  <ul>
+    <li><a href="#loadpath">*load-path*</a>, <a href="#featureslist">*features*</a>, <a href="#sharpreaders">*#readers*</a>
+    <li><a href="#makelist">make-list</a>, <a href="#charposition">char-position</a>, <a href="#keywords">keywords</a>
+    <li><a href="#symboltable">symbol-table</a>, <a href="#s7help">help</a>, <a href="#s7gc">gc</a>, <a href="#morallyequalp">morally-equal?</a>
+    <li><a href="#s7vsr5rs">r5rs</a>, <a href="#r7rs">r7rs</a>, <li><a href="#circle">circular lists</a>, etc...
+    </ul>
 
   <li class="li_header"><a href="#FFIexamples">FFI examples</a>
   <ul>
@@ -4882,6 +4876,26 @@ function passed as its second argument to choose the new ordering.
 <p>Despite the "!" in its name, sort! actually copies any list argument passed to it,
 but vectors are sorted in place.  
 </p>
+
+
+<div class="separator"></div>
+
+<p>
+<b>char-position</b> and <b>string-position</b> search a string for the occurrence of a character,
+any of a set of characters, or a string.  They return either #f if none is found, or the position
+within the searched string of the first occurrence.  The optional third argument sets where the
+search starts in the second argument.
+</p>
+
+<pre class="indented">
+(<em class="def id="charposition">char-position</em> char-or-string searched-string (start 0))
+(<em class="def id="stringposition">string-position</em> substring searched-string (start 0))
+</pre>
+
+<p>If char-position's first argument is a string, it is treated as a set of characters, and
+char-position looks for the first occurrence of any member of that set.
+</p>
+
 
 <div class="separator"></div>
 

@@ -47576,4 +47576,18 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   943,099,655  clm.c:mus_formant_bank_wrapped [/home/bil/snd-13/snd]
   911,248,552  clm.c:fir_8 [/home/bil/snd-13/snd]
 
+61,629,635,513
+8,409,405,092  s7.c:eval [/home/bil/snd-13/snd]
+6,352,029,763  ???:sin [/lib64/libm-2.12.so]
+3,652,591,567  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+2,571,558,285  ???:cos [/lib64/libm-2.12.so]
+2,428,764,225  clm.c:mus_src [/home/bil/snd-13/snd]
+1,751,203,929  s7.c:gc [/home/bil/snd-13/snd]
+1,557,880,425  s7.c:eval'2 [/home/bil/snd-13/snd]
+1,041,006,596  s7.c:s7_make_real [/home/bil/snd-13/snd]
+1,004,679,667  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+  954,196,378  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+  943,099,655  clm.c:mus_formant_bank_wrapped [/home/bil/snd-13/snd]
+  911,248,552  clm.c:fir_8 [/home/bil/snd-13/snd]
+
 |#

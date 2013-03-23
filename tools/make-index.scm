@@ -1127,12 +1127,12 @@
 		     (let* ((len (length line))
 			    (opos (and line 
 				       (positive? len)
-				       (any-char-position line "<>\"(){}&"))))
+				       (char-position "<>\"(){}&" line))))
 		       (when opos
 			 ;; open/close html entities
 			 (do ((i opos (+ i opos 1)))
 			     ((>= i len))
-			   (set! opos (or (any-char-position line "<>\"(){}&" (+ i 1)) len))
+			   (set! opos (or (char-position "<>\"(){}&" line (+ i 1)) len))
 			   (case (string-ref line i)
 			     ((#\<)
 			      (if (and (not (zero? openctr))
@@ -1226,7 +1226,7 @@
 			       (if pos
 				   (do ((i pos (+ i pos 1)))
 				       ((>= i len))
-				     (set! pos (or (any-char-position line "</! >" (+ i 1)) len))
+				     (set! pos (or (char-position "</! >" line (+ i 1)) len))
 				     (case (string-ref line i)
 				       ((#\<)
 					(if start

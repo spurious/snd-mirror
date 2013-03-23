@@ -7420,7 +7420,7 @@ typedef enum {MUS_ENV_LINEAR, MUS_ENV_EXPONENTIAL, MUS_ENV_STEP} mus_env_t;
 typedef struct {
   mus_any_class *core;
   double rate, current_value, base, offset, scaler, power, init_y, init_power, original_scaler, original_offset;
-  mus_long_t loc, end, cur_end;
+  mus_long_t loc, end;
   mus_env_t style;
   int index, size;
   bool data_allocated;
@@ -7482,14 +7482,14 @@ static mus_float_t mus_env_step(mus_any *ptr)
   seg *gen = (seg *)ptr;
   mus_float_t val;
   val = gen->current_value;
-  if (gen->loc >= gen->cur_end) /* gen->locs[gen->index]) */
+  if (gen->loc == 0)
     {
       gen->index++;
-      gen->cur_end = gen->locs[gen->index];
+      gen->loc = gen->locs[gen->index] - gen->locs[gen->index - 1];
       gen->rate = gen->rates[gen->index];
     }
   gen->current_value = gen->rate; 
-  gen->loc++;
+  gen->loc--;
   return(val);
 }
 
@@ -7506,14 +7506,14 @@ static mus_float_t mus_env_linear(mus_any *ptr)
   seg *gen = (seg *)ptr;
   mus_float_t val;
   val = gen->current_value;
-  if (gen->loc >= gen->cur_end) /* gen->locs[gen->index]) */
+  if (gen->loc == 0)
     {
       gen->index++;
-      gen->cur_end = gen->locs[gen->index];
+      gen->loc = gen->locs[gen->index] - gen->locs[gen->index - 1];
       gen->rate = gen->rates[gen->index];
     }
   gen->current_value += gen->rate; 
-  gen->loc++;
+  gen->loc--;
   return(val);
 }
 
@@ -7523,15 +7523,15 @@ static mus_float_t mus_env_exponential(mus_any *ptr)
   seg *gen = (seg *)ptr;
   mus_float_t val;
   val = gen->current_value;
-  if (gen->loc >= gen->cur_end) /* gen->locs[gen->index]) */
+  if (gen->loc == 0)
     {
       gen->index++;
-      gen->cur_end = gen->locs[gen->index];
+      gen->loc = gen->locs[gen->index] - gen->locs[gen->index - 1];
       gen->rate = gen->rates[gen->index];
     }
   gen->power *= gen->rate;
   gen->current_value = gen->offset + (gen->scaler * gen->power);
-  gen->loc++;
+  gen->loc--;
   return(val);
 }
 
@@ -7709,7 +7709,7 @@ static char *describe_env(mus_any *ptr)
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s, pass: %lld (dur: %lld), index: %d, scaler: %.4f, offset: %.4f, data: %s",
 	       mus_name(ptr),
 	       ((e->style == MUS_ENV_LINEAR) ? "linear" : ((e->style == MUS_ENV_EXPONENTIAL) ? "exponential" : "step")),
-	       e->loc, 
+	       e->locs[e->index] - e->loc, 
 	       e->end + 1, 
 	       e->index,
 	       e->original_scaler, 
@@ -7758,11 +7758,15 @@ double mus_env_scaler(mus_any *gen) {return(((seg *)gen)->scaler);}
 
 double mus_env_initial_power(mus_any *gen) {return(((seg *)gen)->init_power);}
 
-static mus_long_t seg_pass(mus_any *ptr) {return(((seg *)ptr)->loc);}
-
 static void env_set_location(mus_any *ptr, mus_long_t val);
 
 static mus_long_t seg_set_pass(mus_any *ptr, mus_long_t val) {env_set_location(ptr, val); return(val);}
+
+static mus_long_t seg_pass(mus_any *ptr) 
+{
+  seg *gen = (seg *)ptr;
+  return(gen->locs[gen->index] - gen->loc);
+}
 
 
 static mus_float_t env_increment(mus_any *rd)
@@ -7777,9 +7781,8 @@ static void env_reset(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
   gen->current_value = gen->init_y;
-  gen->loc = 0;
   gen->index = 0;
-  gen->cur_end = gen->locs[0];
+  gen->loc = gen->locs[0];
   gen->rate = gen->rates[0];
   gen->power = gen->init_power;
 }
@@ -7949,7 +7952,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
     }
 
   e->rate = e->rates[0];
-  e->cur_end = e->locs[0];
+  e->loc = e->locs[0];
 
   return((mus_any *)e);
 }
@@ -7958,14 +7961,14 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
 static void env_set_location(mus_any *ptr, mus_long_t val)
 {
   seg *gen = (seg *)ptr;
-  mus_long_t ctr = 0;
+  mus_long_t ctr = 0, loc;
 
-  if (gen->loc == val) return;
+  loc = gen->locs[gen->index] - gen->loc;
+  if (loc == val) return;
 
-  if (gen->loc > val)
+  if (loc > val)
     mus_reset(ptr);
-  else ctr = gen->loc;
-  gen->loc = val;
+  else ctr = loc;
 
   while ((gen->index < (gen->size - 1)) && /* this was gen->size */
 	 (ctr < val))
@@ -7996,12 +7999,10 @@ static void env_set_location(mus_any *ptr, mus_long_t val)
 	{
 	  gen->index++;
 	  if (gen->index < gen->size)
-	    {
-	      gen->cur_end = gen->locs[gen->index];
-	      gen->rate = gen->rates[gen->index];
-	    }
+	    gen->rate = gen->rates[gen->index];
 	}
     }
+  gen->loc = gen->locs[gen->index] - ctr;
 }
 
 
