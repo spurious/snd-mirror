@@ -9218,8 +9218,8 @@ function option to time the playing of each mix in a sequence of mixes.  Another
 <pre class="indented">
 (define (play-sine freq amp)
   "(play-sine freq amp) plays a 1 second sinewave at freq and amp"
-  (let* ((len 22050)
-	 (osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq)))
+  (let ((len 22050)
+        (osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq)))
     (<em class=red>play</em> (lambda ()
 	    (set! len (- len 1))
 	    (if (&lt;= len 0)        ; we've sent 22050 samples, so it's time to stop

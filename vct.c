@@ -1191,7 +1191,9 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
       mus_long_t lim8;
       lim8 = lim - 8;
       i = 0;
-      /* this form (explicit v->data indexing) is faster than using *data++! */
+      /* this form (explicit v->data indexing) is faster than using *data++!
+       *   counting down to 0 here was bizarrely slower??
+       */
       while (i <= lim8)
 	{
 	  v1->data[i] += v2->data[i];

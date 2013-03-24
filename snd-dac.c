@@ -2179,7 +2179,8 @@ static bool start_audio_output_1(void)
       /* read the number of samples per channel the device wants buffered */
       samples_per_channel = mus_audio_alsa_samples_per_channel(alsa_devices[out_dev[0]]);
       snd_dacp->frames = samples_per_channel;
-      set_dac_size(snd_dacp->frames * mus_bytes_per_sample(snd_dacp->out_format));
+      /* set_dac_size(snd_dacp->frames * mus_bytes_per_sample(snd_dacp->out_format)); */
+      set_dac_size(samples_per_channel); /* bil 24-Mar-13 */
 
       /* open all allocated devices */
       for (d = 0; d < alloc_devs; d++) 

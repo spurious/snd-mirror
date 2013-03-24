@@ -3805,34 +3805,6 @@ is arbitrary, though it's simplest to use 0.0 to 1.0.
 <div class="spacer"></div>
 
 
-<!-- envelope-interp -->
-<pre class="indented">
-<em class=def id="envelopeinterp">envelope-interp</em> x env (base 1.0)
-</pre>
-
-<p>(envelope-interp x env base) returns value of 'env' at 'x'.
-If 'base' is 0, 'env' is treated as a step function; if 'base' is 1.0 (the
-default), the breakpoints of 'env' are connected by a straight line, and
-any other 'base' connects the breakpoints with a kind of exponential
-curve:
-</p>
-
-<pre class="indented">
-&gt; (envelope-interp .1 '(0 0 1 1))
-0.1
-&gt; (envelope-interp .1 '(0 0 1 1) 32.0)
-0.0133617278184869
-&gt; (envelope-interp .1 '(0 0 1 1) .012)
-0.361774730775292
-</pre>
-
-<p>The corresponding function for a CLM env generator is <a href="sndclm.html#env-interp">env-interp</a>.
-If you'd rather think in terms of e^-kt, set the 'base' to (exp k).  
-</p>
-<div class="spacer"></div>
-
-
-
 <!-- envelope-last-x -->
 <pre class="indented">
 <em class=emdef>envelope-last-x</em> env

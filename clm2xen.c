@@ -15477,7 +15477,6 @@ static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 		   *  66150: (one-zero oz (* (env ampf) (+ ...
 		   * calls:
 		   *  508280: (ssb-am ssb (bandpass flt (vct-ref in-data j))): g_ssb_am_2
-		   *  264600: (oscil-bank n oscs amps): g_oscil_bank_3
 		   *  88200: (formant-bank amps fs inputs) : g_formant_bank_sss
 		   *  88200: (* ampa (ina i *reverb*))
 		   *  81365: (* pulse-amp (env pulse-ampf) ...

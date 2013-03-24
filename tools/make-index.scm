@@ -1130,9 +1130,8 @@
 				       (char-position "<>\"(){}&" line))))
 		       (when opos
 			 ;; open/close html entities
-			 (do ((i opos (+ i opos 1)))
+			 (do ((i opos (or (char-position "<>\"(){}&" line (+ i 1)) len)))
 			     ((>= i len))
-			   (set! opos (or (char-position "<>\"(){}&" line (+ i 1)) len))
 			   (case (string-ref line i)
 			     ((#\<)
 			      (if (and (not (zero? openctr))
@@ -1224,9 +1223,8 @@
 				   (closing #f)
 				   (pos (char-position #\< line)))
 			       (if pos
-				   (do ((i pos (+ i pos 1)))
+				   (do ((i pos (or (char-position "</! >" line (+ i 1)) len)))
 				       ((>= i len))
-				     (set! pos (or (char-position "</! >" line (+ i 1)) len))
 				     (case (string-ref line i)
 				       ((#\<)
 					(if start

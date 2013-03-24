@@ -2360,7 +2360,7 @@ static s7_pointer simple_out_of_range_error_prepackaged(s7_scheme *sc, s7_pointe
 static s7_pointer CAR_A_LIST, CDR_A_LIST;
 static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
 static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
-static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, A_NORMAL_REAL, A_RATIONAL, A_CLOSURE;
+static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, AN_OPEN_PORT, A_NORMAL_REAL, A_RATIONAL, A_CLOSURE;
 static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL, A_NON_NEGATIVE_INTEGER;
 static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
 
@@ -18267,14 +18267,12 @@ static s7_pointer g_char_ci_leq_2(s7_scheme *sc, s7_pointer args)
 
 /* non-standard, but extremely useful -- more so than all the *-ci stuff put together!
  */
-/* TODO: doc/test char-position and string-position, add descriptors to lint, check snd-test et all (substring?)
- */
 static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
 {
   #define H_char_position "(char-position char-or-str str (start 0)) returns the position of the first occurrence of char in str, or #f"
   const char *porig, *p, *pset;
   char c;
-  int start = 0, pos, len;
+  s7_Int start = 0, pos, len; /* not "int" because start arg might be most-negative-fixnum */
   s7_pointer arg1, arg2;
 
   arg1 = car(args);
@@ -18295,6 +18293,7 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
       if (start < 0)
 	return(wrong_type_argument_with_type(sc, sc->CHAR_POSITION, small_int(3), arg3, A_NON_NEGATIVE_INTEGER));
     }
+
   len = string_length(arg2);
   if ((!porig) || (start >= len))
       return(sc->F);
@@ -18311,10 +18310,13 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
   if (!s7_is_string(arg1))
     return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(1), arg1, T_CHARACTER));
 
-  pset = s7_string(arg1);
+  if (string_length(arg1) == 0)
+    return(sc->F);
+  pset = string_value(arg1);
+
   pos = strcspn((const char *)(porig + start), (const char *)pset);
-  if (pos < len)
-    return(make_integer(sc, pos));
+  if ((pos + start) < len)
+    return(make_integer(sc, pos + start));
 
   return(sc->F);
 }
@@ -18324,7 +18326,7 @@ static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_position "(string-position str1 str2 (start 0)) returns the starting position of str1 in str2 or #f"
   const char *s1, *s2, *p2;
-  int start = 0;
+  s7_Int start = 0;
   s7_pointer s1p, s2p;
 
   s1p = car(args);
@@ -18347,6 +18349,8 @@ static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
 	return(wrong_type_argument_with_type(sc, sc->STRING_POSITION, small_int(3), arg3, A_NON_NEGATIVE_INTEGER));
     }
   
+  if (string_length(s1p) == 0)
+    return(sc->F);
   s1 = string_value(s1p);
   s2 = string_value(s2p);
   if (start >= string_length(s2p))
@@ -19644,7 +19648,7 @@ static s7_pointer g_port_line_number(s7_scheme *sc, s7_pointer args)
       (port_is_closed(x)))
     {
       CHECK_METHOD(sc, x, sc->PORT_LINE_NUMBER, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->PORT_LINE_NUMBER, x, make_protected_string(sc, "an open input port")));
+      return(simple_wrong_type_argument_with_type(sc, sc->PORT_LINE_NUMBER, x, AN_INPUT_PORT));
     }
   return(make_integer(sc, port_line_number(x)));
 }
@@ -19679,7 +19683,7 @@ static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
       /* otherwise (eval-string (port-filename)) and (string->symbol (port-filename)) segfault */
     }
   CHECK_METHOD(sc, x, sc->PORT_FILENAME, args);
-  return(simple_wrong_type_argument_with_type(sc, sc->PORT_FILENAME, x, make_protected_string(sc, "an open port")));
+  return(simple_wrong_type_argument_with_type(sc, sc->PORT_FILENAME, x, AN_OPEN_PORT));
 }
 
 
@@ -19835,7 +19839,7 @@ static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
 	  return(simple_wrong_type_argument_with_type(sc, sc->CHAR_READYP, pt, AN_INPUT_PORT));
 	}
       if (port_is_closed(pt))
-	return(simple_wrong_type_argument_with_type(sc, sc->CHAR_READYP, pt, make_protected_string(sc, "an open input port")));
+	return(simple_wrong_type_argument_with_type(sc, sc->CHAR_READYP, pt, AN_OPEN_PORT));
 
       if (is_function_port(pt))
 	return((*(port_input_function(pt)))(sc, S7_IS_CHAR_READY, pt));
@@ -20012,7 +20016,7 @@ static int output_read_char(s7_scheme *sc, s7_pointer port)
 
 static int closed_port_read_char(s7_scheme *sc, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->READ_CHAR, port, make_protected_string(sc, "an open port"));
+  simple_wrong_type_argument_with_type(sc, sc->READ_CHAR, port, AN_OPEN_PORT);
   return(0);
 }
 
@@ -20028,7 +20032,7 @@ static s7_pointer output_read_line(s7_scheme *sc, s7_pointer port, bool with_eol
 
 static s7_pointer closed_port_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
 {
-  return(simple_wrong_type_argument_with_type(sc, sc->READ_LINE, port, make_protected_string(sc, "an open port")));
+  return(simple_wrong_type_argument_with_type(sc, sc->READ_LINE, port, AN_OPEN_PORT));
 }
 
 
@@ -20183,7 +20187,7 @@ static void input_write_char(s7_scheme *sc, int c, s7_pointer port)
 
 static void closed_port_write_char(s7_scheme *sc, int c, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->WRITE_CHAR, port, make_protected_string(sc, "an open port"));
+  simple_wrong_type_argument_with_type(sc, sc->WRITE_CHAR, port, AN_OPEN_PORT);
 }
 
 
@@ -20198,7 +20202,7 @@ static void input_write_string(s7_scheme *sc, const char *str, int len, s7_point
 
 static void closed_port_write_string(s7_scheme *sc, const char *str, int len, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->WRITE, port, make_protected_string(sc, "an open port"));
+  simple_wrong_type_argument_with_type(sc, sc->WRITE, port, AN_OPEN_PORT);
 }
 
 
@@ -20209,7 +20213,7 @@ static void input_display(s7_scheme *sc, const char *s, s7_pointer port)
 
 static void closed_port_display(s7_scheme *sc, const char *s, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->WRITE, port, make_protected_string(sc, "an open port"));
+  simple_wrong_type_argument_with_type(sc, sc->WRITE, port, AN_OPEN_PORT);
 }
 
 static void stdout_write_string(s7_scheme *sc, const char *str, int len, s7_pointer port)
@@ -20238,6 +20242,7 @@ static void string_write_string(s7_scheme *sc, const char *str, int len, s7_poin
     }
 
   memcpy((void *)(port_string(pt) + port_string_point(pt)), (void *)str, len);
+  /* memcpy is much faster than the equivalent while loop */
   port_string_point(pt) = new_len;
 }
 
@@ -21346,7 +21351,7 @@ static s7_pointer g_peek_char(s7_scheme *sc, s7_pointer args)
       return(simple_wrong_type_argument_with_type(sc, sc->PEEK_CHAR, port, AN_INPUT_PORT));
     }
   if (port_is_closed(port))
-    return(simple_wrong_type_argument_with_type(sc, sc->PEEK_CHAR, port, make_protected_string(sc, "an open input port")));
+    return(simple_wrong_type_argument_with_type(sc, sc->PEEK_CHAR, port, AN_OPEN_PORT));
       
   c = s7_peek_char(sc, port);
   return(chars[c]);
@@ -25490,6 +25495,7 @@ static void init_car_a_list(void)
   A_PROPER_LIST = s7_make_permanent_string("a proper list");
   A_CLOSURE = s7_make_permanent_string("a function");
   AN_INPUT_PORT = s7_make_permanent_string("an input port");
+  AN_OPEN_PORT = s7_make_permanent_string("an open port");
   AN_OUTPUT_PORT = s7_make_permanent_string("an output port");
   A_THUNK = s7_make_permanent_string("a thunk");
   A_SYMBOL = s7_make_permanent_string("a symbol");
@@ -48003,7 +48009,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      /* -------------------------------------------------------------------------------- */
 
-	      /* TODO: check these -- maybe the arity==2 case is common enough */
 	    case OP_SAFE_CLOSURE_STAR_SS:
 	      if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2))
 		{
@@ -51952,7 +51957,7 @@ snd-test:
 		  }
 		/* I guess this port_is_closed check is needed because we're going down a level below */
 		if (port_is_closed(port))
-		  simple_wrong_type_argument_with_type(sc, sc->READ, port, make_protected_string(sc, "an open input port"));
+		  simple_wrong_type_argument_with_type(sc, sc->READ, port, AN_OPEN_PORT);
 		
 		if (is_function_port(port))
 		  sc->value = (*(port_input_function(port)))(sc, S7_READ, port);
@@ -63806,6 +63811,7 @@ s7_scheme *s7_init(void)
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
  * maybe other banks.
  * outa loops unrolled?, poly7?
+ * TODO: all the html examples need to be run through lint, or brought up to date
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
  * bench    42736 8752 8051 7725 6515 5194 4364 4022

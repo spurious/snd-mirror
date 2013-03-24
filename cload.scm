@@ -138,56 +138,40 @@
 
   (define (C-type->s7-type type)
 
-    (define (substring? subs s)
-      (let ((start 0)
-	    (ls (length s))
-	    (lu (length subs)))
-	(let ((limit (- ls lu)))
-	  (let loop ((i start))
-	    (if (> i limit)
-		#f
-		(if (do ((j i (+ j 1))
-			 (k 0 (+ k 1)))
-			((or (= k lu)
-			     (not (char-ci=? (subs k) (s j))))
-			 (= k lu)))
-		    i
-		    (loop (+ i 1))))))))
-
     (if (pair? type)                             ; in case the type name does not make its C type obvious: (graph_style_t int)
 	(symbol->string (cadr type))
 	(let ((type-name (symbol->string type)))
-	  (cond ((substring? "**" type-name)     ; any complicated C pointer is uninterpreted
+	  (cond ((string-position "**" type-name)     ; any complicated C pointer is uninterpreted
 		 'c_pointer)
 
 		((string=? "s7_pointer" type-name)
 		 's7_pointer)
 		
-		((substring? "char*" type-name)  ; but not char** (caught above)
+		((string-position "char*" type-name)  ; but not char** (caught above)
 		 'string)
 
-		((or (substring? "*" type-name)  ; float* etc
-		     (substring? "pointer" type-name))
+		((or (string-position "*" type-name)  ; float* etc
+		     (string-position "pointer" type-name))
 		 'c_pointer)
 
-		((substring? "char" type-name)
+		((string-position "char" type-name)
 		 'character)
 
-		((substring? "bool" type-name) 
+		((string-position "bool" type-name) 
 		 'boolean)
 		
-;		((substring? "complex")
+;		((string-position "complex")
 ;		 'complex)
 
-		((or (substring? "float" type-name) 
-		     (substring? "double" type-name)) 
+		((or (string-position "float" type-name) 
+		     (string-position "double" type-name)) 
 		 'real)
 
-		((or (substring? "int" type-name) 
-		     (substring? "long" type-name) ; assuming not "long double" here so we need to look for it first (above)
-		     (substring? "short" type-name) 
-		     (substring? "size" type-name)
-		     (substring? "byte" type-name)) 
+		((or (string-position "int" type-name) 
+		     (string-position "long" type-name) ; assuming not "long double" here so we need to look for it first (above)
+		     (string-position "short" type-name) 
+		     (string-position "size" type-name)
+		     (string-position "byte" type-name)) 
 		 'integer)
 
 		(#t #t)))))

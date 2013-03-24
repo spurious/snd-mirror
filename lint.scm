@@ -124,11 +124,11 @@
 		  caaaar caaadr caaar caadar caaddr caadr caar cadaar cadadr cadar caddar cadddr caddr cadr 
 		  call-with-exit car case catch cdaaar cdaadr cdaar cdadar cdaddr cdadr cdar cddaar cddadr 
 		  cddar cdddar cddddr cdddr cddr cdr ceiling char->integer char-alphabetic? char-ci<=? char-ci<? 
-		  char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? char-ready? char-upcase 
+		  char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? char-position char-ready? char-upcase 
 		  char-upper-case? char-whitespace? char<=? char<? char=? char>=? char>? char? complex? cond 
 		  cons constant? continuation? copy cos cosh current-environment current-error-port current-input-port current-output-port 
 		  defined? denominator do dynamic-wind 
-		  environment environment? eof-object? eq? equal? eqv? error-environment even? exact->inexact exact? exp expt 
+		  environment environment-ref environment? eof-object? eq? equal? eqv? error-environment even? exact->inexact exact? exp expt 
 		  floor for-each 
 		  gcd gensym global-environment 
 		  hash-table hash-table-ref hash-table-size hash-table? hash-table-iterator? hook-functions 
@@ -146,7 +146,7 @@
 		  quasiquote quote quotient 
 		  random random-state? rational? rationalize real-part real? remainder reverse round 
 		  s7-version sin sinh sqrt string string->list string->number string->symbol string-append string-ci<=? string-ci<? 
-		  string-ci=? string-ci>=? string-ci>? string-copy string-length string-ref string<=? string<? string=? string>=? 
+		  string-ci=? string-ci>=? string-ci>? string-copy string-length string-position string-ref string<=? string<? string=? string>=? 
 		  string>? string? substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol? 
 		  tan tanh truncate 
 		  vector vector->list vector-dimensions vector-length vector-ref vector? 
@@ -191,6 +191,7 @@
 			   (cons 'char-downcase +character+)
 			   (cons 'char-lower-case? +boolean+)
 			   (cons 'char-numeric? +boolean+)
+			   (cons 'char-position 'integer-or-f)
 			   (cons 'char-ready? +boolean+)
 			   (cons 'char-upcase +character+)
 			   (cons 'char-upper-case? +boolean+)
@@ -332,6 +333,7 @@
 			   (cons 'string-ci>? +boolean+)
 			   (cons 'string-copy +string+)
 			   (cons 'string-length +integer+)
+			   (cons 'string-position 'integer-or-f)
 			   (cons 'string-ref +character+)
 			   (cons 'string<=? +boolean+)
 			   (cons 'string<? +boolean+)
@@ -518,6 +520,7 @@
 			  (cons 'string-copy string?)
 			  (cons 'string-fill! (list string? char?))
 			  (cons 'string-length string?)
+			  (cons 'string-position (list string? string?))
 			  (cons 'string-ref (list non-null-string? non-negative-integer?))
 			  (cons 'string-set! (list non-null-string? non-negative-integer? char?))
 			  (cons 'string<=? string?)

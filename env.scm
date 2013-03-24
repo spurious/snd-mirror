@@ -1,6 +1,5 @@
 ;;; various envelope functions
 ;;;
-;;; envelope-interp (x env (base 1.0)) -> value of env at x (base controls connecting segment type)
 ;;; window-envelope (beg end env) -> portion of env lying between x axis values beg and end
 ;;; map-envelopes (func env1 env2) maps func over the breakpoints in env1 and env2 returning a new envelope
 ;;;   multiply-envelopes (env1 env2) multiplies break-points of env1 and env2 returning a new envelope
@@ -20,36 +19,6 @@
 ;;; simplify-envelope
 
 (provide 'snd-env.scm)
-
-
-#|
-;;; this is now moved to C -- TODO: doc 
-;;; -------- envelope-interp
-
-(define* (envelope-interp x e (base 1.0))   ;e is list of x y breakpoint pairs, interpolate at x returning y
-;;  "(envelope-interp x e (base 1.0)) -> value of e at x; base controls connecting segment type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
-  (cond ((null? e) 0.0)		        ;no data -- return 0.0
-	((or (<= x (car e))	        ;we're sitting on x val (or if < we blew it)
-	     (null? (cddr e)))	        ;or we're at the end of the list
-	 (cadr e))		        ;so return current y value
-	((> (caddr e) x)		;x <= next env x axis value
-	 (if (or (= (cadr e) (cadddr e))
-		 (= base 0.0))
-	     (cadr e)		        ;y1=y0, so just return y0 (avoid endless calculations below)
-	     (if (= base 1.0)
-		 (+ (cadr e)	        ;y0+(x-x0)*(y1-y0)/(x1-x0)
-		    (* (- x (car e))
-		       (/ (- (cadddr e) (cadr e))
-			  (- (caddr e) (car e)))))
-		 (+ (cadr e) ; this does not exactly match xramp-channel
-		    (* (/ (- (cadddr e) (cadr e))
-			  (- base 1.0))
-		       (- (expt base (/ (- x (car e))
-					(- (caddr e) (car e))))
-			  1.0))))))
-	(else (envelope-interp x (cddr e) base)))) ;go on looking for x segment
-|#
-
 
 
 ;;; -------- window-envelope (a kinda brute-force translation from the CL version in env.lisp)

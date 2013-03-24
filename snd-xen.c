@@ -2489,24 +2489,11 @@ void g_xen_initialize(void)
   XEN_EVAL_C_STRING("\
         (define* (apropos name port)\
           \"(apropos name (port #f)) looks for 'name' as a part of any symbol name, and sends matches to 'port'\"\
-          (define (substring? subs s)\
-            (let* ((start 0)\
-	           (ls (length s))\
-	           (lu (length subs))\
-	           (limit (- ls lu)))\
-              (let loop ((i start))\
-	        (cond ((> i limit) #f)\
-	              ((do ((j i (+ j 1))\
-	        	    (k 0 (+ k 1)))\
-	        	   ((or (= k lu)\
-	        		(not (char=? (subs k) (s j))))\
-	        	    (= k lu))) i)\
-	              (else (loop (+ i 1)))))))\
           (define (apropos-1 e)\
             (for-each\
              (lambda (binding)\
                (if (and (pair? binding)\
-                        (substring? name (symbol->string (car binding))))\
+                        (string-position name (symbol->string (car binding))))\
                    (let ((str (format #f \"~%~A: ~A\" \
 	        	              (car binding) \
 	        	              (if (procedure? (cdr binding))\
