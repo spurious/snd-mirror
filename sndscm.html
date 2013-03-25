@@ -428,7 +428,7 @@ elliptic filters depend on GSL, so you'll also need GSL (Snd's configure script 
 </p>
 
 <pre class="indented">
-(let* ((flt (make-elliptic-lowpass 8 .1))) ; 8th order elliptic with cutoff at .1 * srate
+(let ((flt (make-elliptic-lowpass 8 .1))) ; 8th order elliptic with cutoff at .1 * srate
   (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> flt))                       ; flt is a clm filter generator
 </pre>
 
@@ -991,7 +991,7 @@ I saved that data in a separate file, just in case of disaster:
 
 
 <pre class="indented">
-(with-output-to-file "clips" (display (list-clips)))
+(with-output-to-file "clips" (lambda () (display (list-clips))))
 </pre>
 
 
@@ -1091,7 +1091,7 @@ telephone recordings, I assumed anything under 40 Hz or above
 
 <pre class="indented">
 (define* (notch-out-rumble-and-hiss snd chn)
-  (let* ((cur-srate (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd))))
+  (let ((cur-srate (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd))))
     (<a class=quiet href="extsnd.html#filtersound" onmouseout="UnTip()" onmouseover="Tip(extsnd_filtersound_tip)">filter-sound</a>
      (list 0.0 0.0                    ; get rid of DC
 	   (/ 80.0 cur-srate) 0.0     ; get rid of anything under 40 Hz (1.0=srate/2 here)
@@ -1102,7 +1102,7 @@ telephone recordings, I assumed anything under 40 Hz or above
      ;; since I'm assuming the minimum band is 10 Hz here, 
      ;;   cur-srate/10 rounded up to next power of 2 seems a safe filter size
      ;;   filter-sound will actually use overlap-add convolution in this case
-     (floor (expt 2 (ceiling (/ (log (/ cur-srate 10.0)) (log 2.0)))))
+     (floor (expt 2 (ceiling (log (/ cur-srate 10.0) 2))))
      snd chn)))
 
 (notch-out-rumble-and-hiss)
@@ -2637,8 +2637,8 @@ An instrument that uses dlocsig is:
 	 (dloc (car vals))
 	 (beg (cadr vals))
 	 (end (caddr vals)))
-    (let* ((osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq))
-	   (aenv (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> amp-env :scaler amp :duration duration)))
+    (let ((osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq))
+	  (aenv (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> amp-env :scaler amp :duration duration)))
       (do ((i beg (+ 1 i)))
           ((= i end))
 	(<em class=red>dlocsig</em> dloc i (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> aenv) (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc)))))))
@@ -4290,7 +4290,7 @@ current spectrum value.
 (define (brfft lofrq hifrq)
   "(brfft lofrq hifrq) removes all frequencies between lofrq and hifrq: (brfft 1000.0 2000.0)"
   (let* ((len (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
-	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
+	 (fsize (expt 2 (ceiling (log len 2))))
 	 (ctr -1)
 	 (lo (round (/ (* fsize lofrq) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))
 	 (hi (round (/ (* fsize hifrq) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))))
@@ -5167,8 +5167,8 @@ in rxvt:
 </p>
 
 <pre class="indented">
-(display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~Athis is red!~Abut this is not" red-text normal-text))
-(display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A~Ahiho~Ahiho" yellow-bg red-fg normal-text))
+(<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #t "~Athis is red!~Abut this is not" red-text normal-text)
+(<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #t "~A~Ahiho~Ahiho" yellow-bg red-fg normal-text)
 </pre>
 
 <p>It's possible to use the same escape sequences in a normal shell script, of course:
@@ -6830,46 +6830,6 @@ if 'low-pass' if #t, a low pass filter is inserted before the output;
 </pre>
 
 
-<p>It is possible to use the CLM/with-sound reverbs (or any such instrument) as
-an ordinary editing function:
-</p>
-
-<pre class="indented">
-(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
-(define* (clm-reverb-sound reverb-amount reverb (reverb-data '()) snd)
-  (let ((output (<a class=quiet href="extsnd.html#sndtempnam" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndtempnam_tip)">snd-tempnam</a>))
-	(revout (<a class=quiet href="extsnd.html#sndtempnam" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndtempnam_tip)">snd-tempnam</a>))
-	(len (+ (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd))))
-    (<a class=quiet href="extsnd.html#scaleby" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleby_tip)">scale-by</a> (- 1.0 reverb-amount) snd)
-    (<a class=quiet href="extsnd.html#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> output snd)
-    (<a class=quiet href="extsnd.html#undo" onmouseout="UnTip()" onmouseover="Tip(extsnd_undo_tip)">undo</a> 1 snd)
-    (<a class=quiet href="extsnd.html#scaleby" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleby_tip)">scale-by</a> reverb-amount snd)
-    (<a class=quiet href="extsnd.html#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> revout snd)
-    (<a class=quiet href="extsnd.html#undo" onmouseout="UnTip()" onmouseover="Tip(extsnd_undo_tip)">undo</a> 1 snd)
-    (dynamic-wind
-      (lambda ()
-        (set! *output* (<a class=quiet href="sndclm.html#continue-sampletofile" onmouseout="UnTip()" onmouseover="Tip(sndclm_continue_sampletofile_tip)">continue-sample-&gt;file</a> output))
-        (set! (<a class=quiet href="sndclm.html#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd))
-        (set! *reverb* (<a class=quiet href="sndclm.html#make-filetosample" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_filetosample_tip)">make-file-&gt;sample</a> revout)))
-      (lambda ()
-        (apply reverb reverb-data))
-      (lambda ()
-        (<a class=quiet href="sndclm.html#mus-close" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_close_tip)">mus-close</a> *reverb*)
-        (<a class=quiet href="sndclm.html#mus-close" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_close_tip)">mus-close</a> *output*)
-        (set! *reverb* #f)
-        (set! *output* #f)
-        (delete-file revout)
-        (set! (<a class=quiet href="extsnd.html#samples" onmouseout="UnTip()" onmouseover="Tip(extsnd_samples_tip)">samples</a> 0 len snd #f #f #f 0 #f #t) output)))))
-
-(clm-reverb-sound .1 jc-reverb)
-</pre>
-
-<p>Another approach to this problem would be to use <a href="extsnd.html#sndtosample">snd-&gt;sample</a> to
-redirect the *reverb* input (without any change to the reverberator),
-getting its data from the current sound (probably after scaling it
-by the reverb amount). 
-</p>
-
 <!-- INDEX reverbexamples:Reverb -->
 
 <TABLE class="method">
@@ -7564,7 +7524,7 @@ So,
 </p>
 
 <pre class="indented">
-(pan-mix \"oboe.snd\" 1000 '(0 0 1 1))
+(pan-mix "oboe.snd" 1000 '(0 0 1 1))
 </pre>
 
 <p>goes from all chan 0 to all chan 1.
@@ -8151,7 +8111,7 @@ We can reduce the peak difference below .00000002 by using:
                    (* .0000035 (sin (* 14 phi)))))
          (ax (- (+ b (* (- phi pi) (/ (- a b) pi))) waver))
          (bx (- (+ ap (* phi (/ (- bp ap) pi))) waver)))
-    ....)
+    ...)
 </pre>
 
 <p>
@@ -10131,9 +10091,9 @@ argument to pvocoder can be a function.
 </p>
 
 <pre class="indented">
-(let* ((ind (<a class=quiet href="extsnd.html#opensound" onmouseout="UnTip()" onmouseover="Tip(extsnd_opensound_tip)">open-sound</a> "oboe.snd"))
-       (pv (<em class=red>make-pvocoder</em> 256 4 64))
-       (rd (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0)))
+(let ((ind (<a class=quiet href="extsnd.html#opensound" onmouseout="UnTip()" onmouseover="Tip(extsnd_opensound_tip)">open-sound</a> "oboe.snd"))
+      (pv (<em class=red>make-pvocoder</em> 256 4 64))
+      (rd (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0)))
   (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y) (<em class=red>pvocoder</em> pv rd))))
 </pre>
 
@@ -10154,7 +10114,7 @@ pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 					(if (&lt; (vct-ref (phase-vocoder-amp-increments v) i) gate)
 					    (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> (phase-vocoder-amp-increments v) i 0.0)))
 				      #t))
-				  #f ;no change to synthesis))
+				  #f)) ;no change to synthesis
 	  (reader (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0)))
       (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (val)
 		  (<a class=quiet href="sndclm.html#phase-vocoder" onmouseout="UnTip()" onmouseover="Tip(sndclm_phase_vocoder_tip)">phase-vocoder</a> pv (lambda (dir) 
@@ -12338,7 +12298,7 @@ compute time: 0.030
 
 <pre class="indented">
 (with-sound (:scale-to .5) 
-  (do ((i 0 (+ 1 i))) ((= i 10)) (fm-violin 0 i (random) 440.0)))
+  (do ((i 0 (+ 1 i))) ((= i 10)) (fm-violin 0 i 440.0 (random 1.0))))
 </pre>
 
 
@@ -12513,7 +12473,7 @@ So, an instrument that wants to cooperate fully with with-sound and Common Music
 
 <pre class="indented">
 (definstrument (simp beg dur (frequency 440.0) (amplitude 0.1))
-  (let* ((os (make-oscil frequency)))
+  (let ((os (make-oscil frequency)))
      (do ((i 0 (+ 1 i))) ((= i dur))
        (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> (+ i beg) (* amplitude (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> os))))))
 
@@ -12529,9 +12489,9 @@ by calling the oscils and whatnot directly in the with-sound body:
 
 <pre class="indented">
 (define (shepard-tone)
-  (let* ((x 0.0)
-	 (incr .000001)               ; sets speed of glissandoes
-	 (oscs (make-vector 12)))
+  (let ((x 0.0)
+	(incr .000001)               ; sets speed of glissandoes
+	(oscs (make-vector 12)))
     (do ((i 0 (+ 1 i)))
 	((= i 12))
       (set! (oscs i) (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> :frequency 0.0)))

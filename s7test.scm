@@ -4266,6 +4266,24 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 ;; if "" as string-pos 1st, -> #f so same for char-pos, even if string contains a null
 
+(let ()
+  ;; actually more of a string-append/temp substring test
+  (define (fixit str)
+    (let ((pos (char-position #\& str)))
+      (if (not pos)
+	  str
+	  (string-append (substring str 0 pos)
+			 (let ((epos (char-position #\; str pos)))
+			   (let ((substr (substring str (+ pos 1) epos)))
+			     (let ((replacement (if (string=? substr "gt") ">"
+						    (if (string=? substr "lt") "<"
+							(if (string=? substr "mdash") "-"
+							    (format #t "unknown: ~A~%" substr))))))
+			       (string-append replacement
+					      (fixit (substring str (+ epos 1)))))))))))
+  (test (fixit "(let ((f (hz-&gt;radians 100)) (g (hz-&gt;radians 200))) (&lt; f g))")
+	"(let ((f (hz->radians 100)) (g (hz->radians 200))) (< f g))"))
+
 
 
 

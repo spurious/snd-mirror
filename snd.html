@@ -892,7 +892,7 @@ window size:</p>
     ;; if so, set the FFT size to reflect the graph boundaries
     (if (and (<a class=quiet href="extsnd.html#transformgraphp" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphp_tip)">transform-graph?</a>) 
              (= (<a class=quiet href="extsnd.html#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphtype_tip)">transform-graph-type</a>) <a class=quiet href="extsnd.html#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphonce_tip)">graph-once</a>))
-        (let ((size (expt 2 (ceiling (/ (log (+ 1.0 (- (<a class=quiet href="extsnd.html#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>) (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>)))) (log 2.0))))))
+        (let ((size (expt 2 (ceiling (log (+ 1.0 (- (<a class=quiet href="extsnd.html#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>) (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>))) 2.0)))))
           (if (not (= size (<a class=quiet href="extsnd.html#transformsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformsize_tip)">transform-size)</a>))
               (set! (<a class=quiet href="extsnd.html#transformsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformsize_tip)">transform-size)</a> size))))))
 </pre>

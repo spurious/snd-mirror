@@ -3603,6 +3603,12 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
       data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t));
       ss->stopped_explicitly = false;
       
+      /* fprintf(stderr, "%d, %lld %s\n", __LINE__, num, DISPLAY(body)); */
+      /* 100000 (+ (next-sample reader) y)
+       * 94928 (+ inval (delay outdel (* volume (comb-bank combs (all-pass-bank allpasses inval)))))
+       * 94928 ((do ((i 0 (+ i 1))) ((= i 8)) (vct-set! xcof i (env (vector-ref es i)))) (fir-filter flt x))
+       */
+
       for (kp = 0; kp < num; kp++)
 	{
 	  /* changed here to remove catch 24-Mar-02 */
@@ -3839,21 +3845,66 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 			{
 			  if (s7_function_returns_temp(res))
 			    {
+                              #define GEN_DIRECT_2 9
+                              #define GEN_DIRECT_CHECKER 11
 			      s7_pointer y, old_e;
 			      s7_Double *ry;
+			      s7_pointer *choices = NULL;
 
-			      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
-			      old_e = s7_set_current_environment(s7, e);
-			      y = s7_make_mutable_real(s7, 1.5);
-			      ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
-			      slot = s7_make_slot(s7, e, arg, y); /* make sure it is mutable */
+			      choices = (s7_pointer *)s7_function_chooser_data_direct(s7_symbol_value(s7, s7_car(res)));
 			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
 
+			      if ((choices) &&
+				  (choices[GEN_DIRECT_2]) &&
+				  (choices[GEN_DIRECT_CHECKER]) &&
+				  (arg == s7_caddr(res)) &&            /* (lambda (y) (oscil g y))? */
+				  (s7_nil(s7) == s7_cdddr(res)) &&
+				  (s7_is_symbol(s7_cadr(res))) &&
+				  (s7_is_defined(s7, s7_symbol_name(s7_cadr(res)))))
+				{
+				  void *gen;
+				  mus_float_t (*sampler)(void *p, mus_float_t x);
+				  bool (*is_sampler)(s7_pointer p);
+				  s7_pointer obj;
+		      
+				  sampler = (mus_float_t (*)(void *p, mus_float_t x))(choices[GEN_DIRECT_2]);
+				  is_sampler = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+				  obj = s7_cadr_value(s7, res);
+				  if (is_sampler(obj))
+				    {
+				      gen = s7_object_value(obj);
+				      for (kp = 0; kp < num; kp++)
+					data[kp] = sampler(gen, read_sample(sf));
+
+				      sf = free_snd_fd(sf);
+				      change_samples(beg, num, data, cp, caller, pos, -1.0);
+				      free(data);
+				      return(res);
+				    }
+				}
+				  
+			      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
+			      old_e = s7_set_current_environment(s7, e);                  /* new env for map lambda */
+			      y = s7_make_mutable_real(s7, 1.5);                          /* slot for the map lambda arg */
+			      ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
+			      slot = s7_make_slot(s7, e, arg, y);                         /* make sure it is mutable */
+
+			      /* fprintf(stderr, "%lld %s\n", num, DISPLAY(res)); */
+			      /* 10000 (hilbert-transform h y)
+			       * 100000 (fir-filter f2 y)
+			       * 200000 (filter lp (filter hp y))
+			       * 200000 (+ (filter lp y) (filter hp y))
+			       * 50000 (+ y (* (env e1) (read-sample reader1))) and others
+			       * 100000 (ssb-am gen y)
+			       * 100000 (* inval (oscil os))
+			       * 100000 (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)))
+			       */
 			      for (kp = 0; kp < num; kp++)
 				{
 				  (*ry) = read_sample(sf);
 				  data[kp] = s7_call_direct_to_real_and_free(s7, res);
 				}
+
 			      sf = free_snd_fd(sf);
 			      change_samples(beg, num, data, cp, caller, pos, -1.0);
 			      free(data);
@@ -3918,8 +3969,12 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 			      s7_pointer old_e;
 			      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
 			      old_e = s7_set_current_environment(s7, e);
-			      /* the function closure might be needed even if the arg isn't */
+			      /* the function closure might be needed even if the arg isn't -- why? it's direct and temp? */
 			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
+
+			      /* fprintf(stderr, "%d, %lld %s\n", __LINE__, num, DISPLAY(res)); */
+			      /* about 400000 (granulate gen) or (wave-train gen)
+			       */
 
 			      for (kp = 0; kp < num; kp++)
 				data[kp] = s7_call_direct_to_real_and_free(s7, res);

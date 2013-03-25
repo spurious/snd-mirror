@@ -637,7 +637,7 @@ static const char *help_urls[HELP_NAMES_SIZE] = {
  "extsnd.html#envedclipping", "extsnd.html#enveddialog", "extsnd.html#envedenvelope", "extsnd.html#filterenv",
  "extsnd.html#filterenvorder", "extsnd.html#envedhook", "extsnd.html#envedin-dB", "extsnd.html#envedpower",
  "extsnd.html#envedstyle", "extsnd.html#envedtarget", "extsnd.html#envedwaving", "extsnd.html#envedwaveformcolor",
- "sndscm.html#envelopeinterp", "sndscm.html#envelopedmix", "s7.html#environment", "s7.html#environmenttolist",
+ "sndclm.html#envelopeinterp", "sndscm.html#envelopedmix", "s7.html#environment", "s7.html#environmenttolist",
  "s7.html#environmentref", "s7.html#environmentset", "s7.html#environmentp", "sndclm.html#eoddcos",
  "sndclm.html#eoddcos?", "extsnd.html#epsbottommargin", "extsnd.html#epsfile", "extsnd.html#epsleftmargin",
  "extsnd.html#epssize", "sndclm.html#ercos", "sndclm.html#ercos?", "s7.html#errorenvironment",

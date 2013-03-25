@@ -824,12 +824,12 @@ keep the spectra steady, and in the second, I fix up the PM index.
 	 (modpitch 100)
 	 (pm-index 4.0)
 	 (fm-index (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (* 4.0 modpitch))))
-    (let* ((car1 (make-oscil pitch))
-	   (mod1 (make-oscil modpitch))
-	   (car2 (make-oscil pitch))
-	   (mod2 (make-oscil modpitch))
-	   (frqf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :duration dur))
-	   (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 20 1 21 0) :duration dur :scaler .5)))
+    (let ((car1 (make-oscil pitch))
+	  (mod1 (make-oscil modpitch))
+	  (car2 (make-oscil pitch))
+	  (mod2 (make-oscil modpitch))
+	  (frqf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :duration dur))
+	  (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 20 1 21 0) :duration dur :scaler .5)))
       (do ((i 0 (+ 1 i)))
 	  ((= i samps))
 	(let* ((frq (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf))
@@ -839,25 +839,23 @@ keep the spectra steady, and in the second, I fix up the PM index.
 					(* <em class=red>fm-index (+ 1 frq)</em> ; keep spectrum the same
 					   (oscil mod1 (* rfrq modpitch)))))))
 	  (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outb</a> i (* amp (oscil car2 (* rfrq pitch)
-				(+ (* <em class=red>pm-index</em>
-				      (oscil mod2 (* rfrq modpitch)))))))))
-      (let* ((car1 (make-oscil pitch))
-	     (mod1 (make-oscil modpitch))
-	     (car2 (make-oscil pitch))
-	     (mod2 (make-oscil modpitch))
-	     (frqf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :duration dur))
-	     (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 20 1 21 0) :duration dur :scaler .5)))
-	(do ((i 0 (+ 1 i)))
-	    ((= i samps))
-	  (let* ((frq (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf))
-		 (rfrq (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frq))
-		 (amp (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf)))
-	    (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> (+ i samps) (* amp (oscil car1 (+ (* rfrq pitch)
-						    (* <em class=red>fm-index</em>   ; let spectrum decay
-						       (oscil mod1 (* rfrq modpitch)))))))
-	    (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outb</a> (+ i samps) (* amp (oscil car2 (* rfrq pitch)
-					    (+ (* <em class=red>(/ pm-index (+ 1 frq))</em>
-						  (oscil mod2 (* rfrq modpitch)))))))))))))
+				(* <em class=red>pm-index</em> (oscil mod2 (* rfrq modpitch)))))))))
+    (let ((car1 (make-oscil pitch))
+	  (mod1 (make-oscil modpitch))
+	  (car2 (make-oscil pitch))
+	  (mod2 (make-oscil modpitch))
+	  (frqf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :duration dur))
+	  (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 20 1 21 0) :duration dur :scaler .5)))
+      (do ((i 0 (+ 1 i)))
+	  ((= i samps))
+	(let* ((frq (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf))
+	       (rfrq (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frq))
+	       (amp (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf)))
+	  (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> (+ i samps) (* amp (oscil car1 (+ (* rfrq pitch)
+						  (* <em class=red>fm-index</em>   ; let spectrum decay
+						     (oscil mod1 (* rfrq modpitch)))))))
+	  (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outb</a> (+ i samps) (* amp (oscil car2 (* rfrq pitch)
+				          (* <em class=red>(/ pm-index (+ 1 frq))</em> (oscil mod2 (* rfrq modpitch)))))))))))
 </pre>
 
 
@@ -1389,7 +1387,7 @@ and get more info (in this case, the begin time and duration of the enclosing no
 	 (lambda ()
 	   (apply <em class=red>make-env</em> args))
 	 (lambda args
-	   (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f ";~A ~A: ~A~%" beg dur args)))))
+	   (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #t ";~A ~A: ~A~%" beg dur args))))
 </pre>
 
 <p>(envelope-interp x env base) returns value of 'env' at 'x'.
@@ -2087,14 +2085,14 @@ in phase and amplitude at run-time by setting a vct value.
 
 <pre class="indented">
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:clipped #f :statistics #t :play #t :scaled-to .5)
-  (let* ((gen (<em class=red>make-polywave</em> 200 (let ((harms (make-vct (* 5 2)))) ; 5 harmonics, 2 numbers for each
+  (let ((gen (<em class=red>make-polywave</em> 200 (let ((harms (make-vct (* 5 2)))) ; 5 harmonics, 2 numbers for each
 				   (do ((k 1 (+ k 3))
 					(i 0 (+ i 2)))
 				       ((= i (* 5 2)))
 				     (set! (harms i) k) ; harmonic number (k*freq)
 				     (set! (harms (+ i 1)) (/ 1.0 (sqrt k)))) ; harmonic amplitude
 				   harms)))
-	 (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 10 1 11 0) :duration 1.0 :scaler .5)))
+	(ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 10 1 11 0) :duration 1.0 :scaler .5)))
     (do ((i 0 (+ 1 i)))
 	((= i 44100))
       (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) (<em class=red>polywave</em> gen))))))
@@ -2163,11 +2161,11 @@ Here is a somewhat low-level example:
 
 <pre class="indented">
 (<a class=quiet href="sndscm.html#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> (bl-saw start dur frequency order)
-  (let* ((norm (if (= order 1) 1.0     ; these peak amps were determined empirically
+  (let ((norm (if (= order 1) 1.0     ; these peak amps were determined empirically
                  (if (= order 2) 1.3   ;   actual limit is supposed to be pi/2 (G&amp;R 1.441)
                    (if (&lt; order 9) 1.7 ;   but Gibbs phenomenon pushes it to 1.851
                      1.852))))
-         (freqs '()))
+        (freqs '()))
     (do ((i 1 (+ 1 i)))
 	((&gt; i order))
       (set! freqs (cons (/ 1.0 (* norm i)) (cons i freqs))))
@@ -3015,7 +3013,7 @@ Even more amusing is this algorithm (related to tanh(sin)):
         (incr (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> 100.0)))
     (do ((i 0 (+ 1 i)))
         ((= i 20000))
-      (let* ((result (* z (sin angle))))
+      (let ((result (* z (sin angle))))
         (do ((k 0 (+ 1 k)))
             ((= k 100))  ; the limit here sets how square it is, and also the overall amplitude
           (set! result (* z (sin result))))
@@ -3031,9 +3029,8 @@ The derivative is B * cos(x) / (cosh^2(B * sin(x))):
 
 <pre class="indented">
 (with-sound ()
-  (let* ((Benv (make-env '(0 .1 .1 1 .7 2 2 5) 
-		 :end 10000))
-	 (osc (make-oscil 100)))	 
+  (let ((Benv (make-env '(0 .1 .1 1 .7 2 2 5) :end 10000))
+        (osc (make-oscil 100)))	 
     (do ((i 0 (+ i 1)))
 	((= i 10000))
       (let* ((B (env Benv))
@@ -3051,9 +3048,8 @@ Similar, but simpler is B*cos(x)/(e^(B*cos(x)) - 1):
 
 <pre class="indented">
 (with-sound ()
-  (let* ((gen (make-oscil 40.0))
-	 (Benv (make-env '(0 .75 1 1.5 2 20) 
-                 :end 10000)))
+  (let ((gen (make-oscil 40.0))
+        (Benv (make-env '(0 .75 1 1.5 2 20) :end 10000)))
    (do ((i 0 (+ i 1)))
        ((= i 10000))
      (let* ((B (env Benv))
@@ -3071,11 +3067,11 @@ on both the frequency and the "B" factor (which sets how close we get to a trian
 
 <pre class="indented">
 (with-sound ()
-  (let* ((gen (make-oscil 30.0))
-	 (Benv (make-env '(0 .1 .25 1 2 3 3 10) 
-                 :end 20000))
-	 (scl (hz-&gt;radians 30.0))
-	 (sum 0.0))
+  (let ((gen (make-oscil 30.0))
+	(Benv (make-env '(0 .1 .25 1 2 3 3 10) 
+                :end 20000))
+	(scl (hz-&gt;radians 30.0))
+	(sum 0.0))
     (do ((i 0 (+ i 1)))
 	((= i 20000))
       (let* ((B (env Benv))
@@ -3688,10 +3684,10 @@ the initial phase by taking advantage of the trig identity:
 
 <pre class="indented">
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
-  (let* ((nc (<em class=red>make-ncos</em> 500.0 6))
-	 (ns (<em class=red>make-nsin</em> 500.0 6))
-	 (phase (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) 
-                   :length 1000 :scaler (/ pi 2))))
+  (let ((nc (<em class=red>make-ncos</em> 500.0 6))
+	(ns (<em class=red>make-nsin</em> 500.0 6))
+	(phase (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) 
+                  :length 1000 :scaler (/ pi 2))))
     (do ((i 0 (+ 1 i)))
 	((= i 1000)) 
       (let ((angle (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> phase)))
@@ -4390,8 +4386,8 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
          (rd (<a class=quiet href="#make-readin" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_readin_tip)">make-readin</a> sound)))
     (do ((i 1 (+ 1 i)))
         ((&gt; i pairs))
-      (let* ((aff (* i old-freq))
-             (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
+      (let ((aff (* i old-freq))
+            (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
         (set! (ssbs (- i 1)) (<em class=red>make-ssb-am</em> (* i factor old-freq)))
         (set! (bands (- i 1)) (<a class=quiet href="sndscm.html#makebandpass" onmouseout="UnTip()" onmouseover="Tip(sndscm_makebandpass_tip)">make-bandpass</a> (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (- aff bwf)) ; bandpass is in dsp.scm
                                              (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (+ aff bwf)) 
@@ -4607,7 +4603,7 @@ using the same frequency envelope as the wave-train, so we have some idea when t
     (let ((original-grain (<a class=quiet href="extsnd.html#vctcopy" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctcopy_tip)">vct-copy</a> grain)))
       (do ((i beg (+ 1 i)))
           ((= i end))
-        (let* ((gliss (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf)))
+        (let ((gliss (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf)))
           (outa i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) (<em class=red>wave-train</em> grains gliss)))
           (let ((click (<em class=red>pulse-train</em> click-track gliss)))
             (if (&gt; click 0.0)
@@ -4888,7 +4884,7 @@ but 0.5 should happen three times as often as either of the others:
 (let ((vals (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0.0 0.5 0.5 0.5 1.0)))
   (do ((i 0 (+ 1 i)))
       ((= i 10))
-    (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f ";~A " (vals (floor (random 5.0)))))))
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #t ";~A " (vals (floor (random 5.0))))))
 </pre>
 
 <p>These "distributions" refer to the values returned by the random number
@@ -5508,8 +5504,8 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 	 (click (<a class=quiet href="#make-ncos" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_ncos_tip)">make-ncos</a> 40 500)))
     (do ((i 0 (+ 1 i)))
         ((= i samps))
-      (let* ((vib (* index (+ 1 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> vib))))
-             (pulse (<a class=quiet href="#ncos" onmouseout="UnTip()" onmouseover="Tip(sndclm_ncos_tip)">ncos</a> click)))
+      (let ((vib (* index (+ 1 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> vib))))
+            (pulse (<a class=quiet href="#ncos" onmouseout="UnTip()" onmouseover="Tip(sndclm_ncos_tip)">ncos</a> click)))
         (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* 10 (<em class=red>formant</em> flta pulse vib)))
         (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outb</a> i (* 10 (<em class=red>firmant</em> fltc pulse vib)))))))
 </pre>
@@ -5642,9 +5638,9 @@ The Hilbert transform can be implemented with an fir-filter:
          (lim (if (even? len) len (+ 1 len))))
     (do ((i (- len) (+ 1 i)))
         ((= i lim))
-      (let* ((k (+ i len))
-             (denom (* pi i))
-             (num (- 1.0 (cos (* pi i)))))
+      (let ((k (+ i len))
+            (denom (* pi i))
+            (num (- 1.0 (cos (* pi i)))))
         (if (or (= num 0.0) (= i 0))
             (set! (arr k) 0.0)
             (set! (arr k) (* (/ num denom) 
@@ -6032,10 +6028,10 @@ delay line as the coefficients for an FIR filter:
               (floor (* comb-len (combs1 k))))))
     (do ((i beg (+ 1 i)))
         ((= i end))
-      (let* ((interp (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))
-             (sum0 0.0)
-             (sum1 0.0)
-             (x (<a class=quiet href="#readin" onmouseout="UnTip()" onmouseover="Tip(sndclm_readin_tip)">readin</a> rd)))
+      (let ((interp (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))
+            (sum0 0.0)
+            (sum1 0.0)
+            (x (<a class=quiet href="#readin" onmouseout="UnTip()" onmouseover="Tip(sndclm_readin_tip)">readin</a> rd)))
         (do ((k 0 (+ 1 k)))
             ((= k num-combs0))
           (set! sum0 (+ sum0 (<em class=red>comb</em> (cmbs0 k) x))))
@@ -6344,8 +6340,8 @@ upon output (to track the original sound's amplitude envelope):
 
 <pre class="indented">
 (define (intensify index)
-  (let* ((mx (<em class=red>make-moving-max</em>))
-         (flt (<a class=quiet href="sndscm.html#makelowpass" onmouseout="UnTip()" onmouseover="Tip(sndscm_makelowpass_tip)">make-lowpass</a> (* pi .1) 8))) ; smooth the maxamp signal
+  (let ((mx (<em class=red>make-moving-max</em>))
+        (flt (<a class=quiet href="sndscm.html#makelowpass" onmouseout="UnTip()" onmouseover="Tip(sndscm_makelowpass_tip)">make-lowpass</a> (* pi .1) 8))) ; smooth the maxamp signal
     (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y)
                    (let ((amp (max .1 (<a class=quiet href="#fir-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_fir_filter_tip)">fir-filter</a> flt (<em class=red>moving-max</em> mx y)))))
                      (* amp (<a class=quiet href="#contrast-enhancement" onmouseout="UnTip()" onmouseover="Tip(sndclm_contrast_enhancement_tip)">contrast-enhancement</a> (/ y amp) index)))))))
@@ -6975,9 +6971,9 @@ argument to granulate.  It cause the granulation to run backwards through the fi
 
 <pre class="indented">
 (<a class=quiet href="sndscm.html#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> (grev beg dur exp-amt file file-beg)
-  (let* ((exA (<em class=red>make-granulate</em> :expansion exp-amt))
-	 (fil (<a class=quiet href="#make-filetosample" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_filetosample_tip)">make-file-&gt;sample</a> file))
-	 (ctr file-beg))
+  (let ((exA (<em class=red>make-granulate</em> :expansion exp-amt))
+	(fil (<a class=quiet href="#make-filetosample" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_filetosample_tip)">make-file-&gt;sample</a> file))
+	(ctr file-beg))
     (do ((i beg (+ 1 i)))
         ((= i (+ beg dur)))
       (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<em class=red>granulate</em> exA
@@ -7566,9 +7562,9 @@ object.
 <pre class="indented">
 (with-sound (:channels 2)
   ;; swap channels of stereo file
-  (let* ((input (make-file-&gt;frame "stereo.snd"))
-	 (len (mus-sound-frames "stereo.snd"))
-	 (frame (make-frame 2)))
+  (let ((input (make-file-&gt;frame "stereo.snd"))
+	(len (mus-sound-frames "stereo.snd"))
+	(frame (make-frame 2)))
     (do ((i 0 (+ 1 i)))
 	((= i len))
       (file-&gt;frame input i frame)
@@ -9179,9 +9175,9 @@ at an srate of 44100:
 
 <pre class="indented">
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:channels 2)
-  (let* ((gen1 (<em class=red>make-rcos</em> 1050 0.99))
-         ;; r=.6 or so is the safe max
-	 (gen2 (<em class=red>make-rcos</em> 1048 0.99)))
+  (let ((gen1 (<em class=red>make-rcos</em> 1050 0.99))
+        ;; r=.6 or so is the safe max
+	(gen2 (<em class=red>make-rcos</em> 1048 0.99)))
     (do ((i 0 (+ 1 i)))
 	((= i 88200))
       (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<em class=red>rcos</em> gen1))
@@ -9325,12 +9321,12 @@ differ by a factor of 3.  I think the one with the higher peak amplitude sounds 
 
 <pre class="indented">
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:channels 2)
-  (let* ((gen1 (<a class=quiet href="#make-adjustable-square-wave">make-adjustable-square-wave</a> 400 
-		 :duty-factor .75 :amplitude .25))
-	 (gen2 (<a class=quiet href="#make-adjustable-square-wave">make-adjustable-square-wave</a> 400 
-                 :duty-factor .11 :amplitude .75))
-	 (flt1 (<a class=quiet href="#make-moving-average">make-moving-average</a> 10))
-	 (flt2 (<a class=quiet href="#make-moving-average">make-moving-average</a> 10)))
+  (let ((gen1 (<a class=quiet href="#make-adjustable-square-wave">make-adjustable-square-wave</a> 400 
+	        :duty-factor .75 :amplitude .25))
+	(gen2 (<a class=quiet href="#make-adjustable-square-wave">make-adjustable-square-wave</a> 400 
+                :duty-factor .11 :amplitude .75))
+	(flt1 (<a class=quiet href="#make-moving-average">make-moving-average</a> 10))
+	(flt2 (<a class=quiet href="#make-moving-average">make-moving-average</a> 10)))
     (do ((i 0 (+ 1 i)))
 	((= i 50000))
       (<a class=quiet href="#outa">outa</a> i (<a class=quiet href="#moving-average">moving-average</a> flt1 
@@ -9603,7 +9599,7 @@ given assumes that r is less than 1.0, and in that case, the safe maximum r is g
 
 <pre class="indented">
   (define (safe-krk-max-r freq srate)
-    (let* ((topk (floor (/ srate (* 3 freq)))))
+    (let ((topk (floor (/ srate (* 3 freq)))))
       (expt (/ .001 topk) (/ 1.0 topk))))
 </pre>
 
@@ -9722,13 +9718,13 @@ via mus-data.
 </p>
 
 <pre class="indented">
-(let* ((rd (make-readin "oboe.snd"))
-       (cur-srate (srate "oboe.snd"))
-       (old-srate (mus-srate)))
+(let ((rd (make-readin "oboe.snd"))
+      (cur-srate (srate "oboe.snd"))
+      (old-srate (mus-srate)))
   (set! (mus-srate) cur-srate)
-  (let* ((scn (<em class=red>make-moving-pitch</em> rd))
-	 (last-pitch 0.0)
-	 (pitch 0.0))
+  (let ((scn (<em class=red>make-moving-pitch</em> rd))
+	(last-pitch 0.0)
+	(pitch 0.0))
     (do ((i 0 (+ i 1)))
 	((= i 22050))
       (set! last-pitch pitch)

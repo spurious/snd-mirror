@@ -11517,6 +11517,7 @@ static s7_pointer g_mul_direct_any(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_mul_env_direct_any(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_oscil_bank_6(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_mul_s_env_2(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_oscil_bank_3(s7_scheme *sc, s7_pointer args);
 
 static s7_pointer indirect_outa_2_temp_looped;
 static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
@@ -11660,6 +11661,17 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 				}
 			      
 			    }
+			  /* fprintf(stderr, "%lld: %s\n", end - pos, DISPLAY(callee)); */
+			  /* snd-test
+			   * 10000 (* index (table-lookup fm))
+			   * 350000 (comb dly (rand r))
+			   * 44100 (oscil os)
+			   * 44100: (* fm-index (oscil md (env skewf)))
+			   * 22050: (* fm-ind0 (oscil md (* fm-ind1 (oscil ca))))
+			   * 22050: (* fm-ind0 (oscil md (* fm-ind1 (oscil ca))))
+			   * 98000: (env frqe)
+			   */
+
 			  OUTA_LOOP(x * gen2(gen, s7_call_direct_to_real_and_free(sc, callee)));
 			  return(args);
 			}
@@ -11679,7 +11691,10 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 		      mus_float_t y;
 		      y = s7_number_to_real(sc, caddr(callee));
 		      callee = cadddr(callee);
-		      /* fprintf(stderr, "    x*gen(y, callee) %lld: %s\n", end - pos, DISPLAY(args)); */
+
+		      /* fprintf(stderr, "%lld: %s\n", end - pos, DISPLAY(callee)); */
+		      /* 10000 (* index (oscil pm))
+		       */
 		      OUTA_LOOP(x * gen3(gen, y, s7_call_direct_to_real_and_free(sc, callee)));
 		      return(args);
 		    }
@@ -11687,7 +11702,9 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 	    }
 	  else
 	    {
-	      /* fprintf(stderr, "    x*callee %lld: %s\n", end - pos, DISPLAY(args)); */
+	      /* fprintf(stderr, "%lld: %s\n", end - pos, DISPLAY(callee)); */
+	      /* 40000 (ina i *reverb*)
+	       */
 	      OUTA_LOOP(x * s7_call_direct_to_real_and_free(sc, callee));
 	      return(args);
 	    }
@@ -11956,7 +11973,49 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
       return(args);
     }
 
-  /* fprintf(stderr, "nope: %s\n", DISPLAY(args)); */
+  if (s7_function_choice(sc, callee) == g_oscil_bank_3)
+    {
+      /* since there is no frequency change here, there's no need to call mus_oscil 
+       * TODO: make this a function (it's also called below, but with an env)
+       */
+      mus_any **oscs;
+      int i, size;
+      mus_float_t *amps, *freqs, *phases;
+
+      size = s7_number_to_integer(sc, s7_cadr_value(sc, callee));
+      oscs = s7_vector_to_gens(sc, s7_value(sc, caddr(callee)), 2, S_oscil_bank);
+
+      amps = XEN_TO_VCT(s7_cadr_value(sc, cddr(callee)))->data;
+      freqs =  (mus_float_t *)calloc(size, sizeof(mus_float_t));
+      phases = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+      for (i = 0; i < size; i++)
+	{
+	  freqs[i] = mus_increment(oscs[i]);
+	  phases[i] = mus_phase(oscs[i]);
+	}
+
+      for (; pos < end; pos++)
+	{
+	  s7_Double sum = 0.0;
+	  for (i = 0; i < size; i++)
+	    {
+	      sum += amps[i] * sin(phases[i]);
+	      phases[i] += freqs[i];
+	    }
+	  out_any_2(pos, sum, 0, "outa");
+	}
+      (*step) = end;
+      free(oscs); 
+      free(freqs); 
+      free(phases);
+      return(args);
+    }
+
+  /* fprintf(stderr, "nope: %lld %s\n", end - pos, DISPLAY(callee)); */
+  /* 11907 (formant-bank fs fb (* (env ampf) ...)
+   * [250000 (oscil-bank n oscs amps)]
+   * 40000 (* 0.1 (+ (oscil frq1) (oscil frq2)))
+   */
   OUTA_LOOP(s7_call_direct_to_real_and_free(sc, callee));
   return(args);
 }
@@ -12034,8 +12093,6 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
   return(args);
 }
 #endif
-
-static s7_pointer g_oscil_bank_3(s7_scheme *sc, s7_pointer args);
 
 static s7_pointer indirect_outa_2_env;
 static s7_pointer g_indirect_outa_2_env(s7_scheme *sc, s7_pointer args)
@@ -12175,8 +12232,10 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
 	  freqs =  (mus_float_t *)calloc(size, sizeof(mus_float_t));
 	  phases = (mus_float_t *)calloc(size, sizeof(mus_float_t));
 	  for (i = 0; i < size; i++)
-	    freqs[i] = mus_increment(oscs[i]);
-
+	    {
+	      freqs[i] = mus_increment(oscs[i]);
+	      phases[i] = mus_phase(oscs[i]);
+	    }
 	  for (; pos < end; pos++)
 	    {
 	      s7_Double sum = 0.0;
@@ -12309,6 +12368,9 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
       letr = ((s7_Double *)((unsigned char *)(mut) + XEN_S7_NUMBER_LOCATION));
       s7_slot_set_value(sc, lets, mut);
 
+      /* fprintf(stderr, "%lld %s\n", end - pos, DISPLAY(callee)); */
+      /* lots of polywaves here
+       */
       for (; pos < end; pos++)
 	{
 	  (*step) = pos;

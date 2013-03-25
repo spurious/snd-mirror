@@ -2085,8 +2085,8 @@ than one input is required, the first argument to apply-ladspa should be a list 
 
 <pre class="indented">
 (define* (ladspa-channel ladspa-data (beg 0) ndur snd chn (edpos -1))
-  (let* ((dur (or ndur (- (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) beg)))
-	 (reader (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> beg snd chn 1 edpos)))
+  (let ((dur (or ndur (- (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) beg)))
+	(reader (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> beg snd chn 1 edpos)))
     (let ((result (<em class=red>apply-ladspa</em> reader ladspa-data dur "apply-ladspa" snd chn)))
       (<a class=quiet href="extsnd.html#freesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesampler_tip)">free-sampler</a> reader)
       result)))

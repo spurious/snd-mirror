@@ -3377,8 +3377,8 @@ up protected portions of the edit history:
 <pre class="indented">
 (define* (protect snd chn)
   "(protect snd chn) disallows any edits before the current one"
-  (let* ((edit-pos (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> snd chn))
-         (hook (<em class=red>edit-hook</em> snd chn)))
+  (let ((edit-pos (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> snd chn))
+        (hook (<em class=red>edit-hook</em> snd chn)))
     (set! (hook functions hook)
       (list 
         (lambda ()
@@ -4692,10 +4692,10 @@ or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
 </p>
 
 <pre class="indented">
-(let* ((audio-fd (<a class=quiet href="#musaudioopenoutput" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioopenoutput_tip)">mus-audio-open-output</a> mus-audio-default 22050 1 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslshort_tip)">mus-lshort</a> 1024))
-       ;; open DAC at srate 22050, 1 channel, 1024 bytes per buffer
-       (osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 440.0))                       ; make a sine wave at 440 Hz
-       (data (<a class=quiet href="#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> 1 512)))                ; output buffer (1 chan, 512 samples)
+(let ((audio-fd (<a class=quiet href="#musaudioopenoutput" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioopenoutput_tip)">mus-audio-open-output</a> mus-audio-default 22050 1 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslshort_tip)">mus-lshort</a> 1024))
+      ;; open DAC at srate 22050, 1 channel, 1024 bytes per buffer
+      (osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 440.0))                       ; make a sine wave at 440 Hz
+      (data (<a class=quiet href="#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> 1 512)))                ; output buffer (1 chan, 512 samples)
   (do ((beg 0 (+ beg 512)))                           ; fill a buffer at a time
       ((&gt; beg 22050))                                 ;   stop playing after 1 second
     (do ((i 0 (+ 1 i)))                                ; write each sample of the sinusoid
@@ -4752,7 +4752,7 @@ If 'start' is given, it sets where to start reading in the sound-data buffers.
     (fm-violin 0 1 440 .1)
     (fm-violin .5 .1 660 .1))
 
-  (let* ((audio-fd (mus-audio-open-output mus-audio-default 44100 1 mus-lfloat (* 4 1024))))
+  (let ((audio-fd (mus-audio-open-output mus-audio-default 44100 1 mus-lfloat (* 4 1024))))
     (do ((i 0 (+ i 1024)))
 	((&gt;= i 44100))
       (mus-audio-write audio-fd sd 1024 i))
@@ -4996,8 +4996,8 @@ This function reads the first 32 samples of a file, returning the 30th in channe
 <pre class="indented">
 (define read-sample-30 
   (lambda (file)
-    (let* ((fd (<a class=quiet href="#mussoundopeninput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundopeninput_tip)">>mus-sound-open-input</a> file))
-	   (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> (channels file))
+    (let* ((fd (<a class=quiet href="#mussoundopeninput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundopeninput_tip)">mus-sound-open-input</a> file))
+	   (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> (channels file))
 	   (data (<a class=quiet href="#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> chans 32)))
       (<a class=quiet href="#mussoundread" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundread_tip)">mus-sound-read</a> fd 0 31 chans data)
       (let ((val (<a class=quiet href="#sounddataref" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddataref_tip)">sound-data-ref</a> data 0 29)))
@@ -6136,12 +6136,11 @@ to use multiple output files, collecting related notes in one file, then mixing 
   (cello  0 1 'c3 .2)  (cello  1 1.5 'e3 .2)  (cello  2.5 .5 'g2 .2)
   ;; etc
 
-  (let ((index (<a class=quiet href="#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "test.snd" :channels 1))) ; our overall output file
-    (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> "violins.snd")
-    (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> "cellos.snd"))
-
-    (<a class=quiet href="sndclm.html#mus-close" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_close_tip)">mus-close</a> violins)
-    (<a class=quiet href="sndclm.html#mus-close" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_close_tip)">mus-close</a> cellos))
+  (<a class=quiet href="#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "test.snd" :channels 1) ; our overall output file
+  (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> "violins.snd")
+  (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> "cellos.snd")
+  (<a class=quiet href="sndclm.html#mus-close" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_close_tip)">mus-close</a> violins)
+  (<a class=quiet href="sndclm.html#mus-close" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_close_tip)">mus-close</a> cellos))
 </pre>
 
 <p>See also <a href="sndscm.html#withmixedsound">with-mixed-sound</a> in ws.scm.
@@ -6427,8 +6426,8 @@ function uses insert-region (and other region functions) to rotate the samples i
 
 <pre class="indented">
 (define* (rotate-channel (samps 1) snd chn)
-  (let* ((ind (or snd (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>) (car (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
-	 (chan (or chn (<a class=quiet href="#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>) 0)))
+  (let ((ind (or snd (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>) (car (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
+	(chan (or chn (<a class=quiet href="#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>) 0)))
     (let ((reg (<em class=red>make-region</em> 0 (- samps 1) ind chan)))
       (<a class=quiet href="#asoneedit" onmouseout="UnTip()" onmouseover="Tip(extsnd_asoneedit_tip)">as-one-edit</a>
        (lambda ()
@@ -8359,7 +8358,6 @@ the lisp-graph-hook, where the redisplay is automatic.
            (rs (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>))
 	   (datal (<a class=quiet href="#makegraphdata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makegraphdata_tip)">make-graph-data</a> snd chn))
 	   (data (if (<a class=quiet href="#vctp" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctp_tip)">vct?</a> datal) datal (cadr datal)))
-           (len (length data))
            (sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd))
 	   (y-max (<a class=quiet href="#yzoomslider" onmouseout="UnTip()" onmouseover="Tip(extsnd_yzoomslider_tip)">y-zoom-slider</a> snd chn)))
       (<a class=quiet href="#vctmultiply" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctmultiply_tip)">vct-multiply!</a> data data)
@@ -10122,10 +10120,10 @@ at the loop points:
          (if (not (null? lst))
              (let* ((vals (car lst))
                     (m1 (<a class=quiet href="#addmark" onmouseout="UnTip()" onmouseover="Tip(extsnd_addmark_tip)">add-mark</a> (cadr vals))))
-               (set! (<a class=quiet href="#markname" onmouseout="UnTip()" onmouseover="Tip(extsnd_markname_tip)">mark-name</a> m1) (car vals)))
+               (set! (<a class=quiet href="#markname" onmouseout="UnTip()" onmouseover="Tip(extsnd_markname_tip)">mark-name</a> m1) (car vals))
                (<a class=quiet href="#addmark" onmouseout="UnTip()" onmouseover="Tip(extsnd_addmark_tip)">add-mark</a> (caddr vals))
                (<a class=quiet href="#addmark" onmouseout="UnTip()" onmouseover="Tip(extsnd_addmark_tip)">add-mark</a> (cadddr vals))
-               (sf2it (cdr lst))))))
+               (sf2it (cdr lst)))))))
    (sf2it (<em class=red>soundfont-info</em>))))
 </pre>
 
@@ -11999,8 +11997,8 @@ into an independent Snd process:
     (with-output-to-file
 	scm1
       (lambda ()
-	(display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "(define sfile (<a class=quiet href="#opensound" onmouseout="UnTip()" onmouseover="Tip(extsnd_opensound_tip)">open-sound</a> ~S))~%" name))
-	(display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "(load ~S)~%" scm))))
+	(<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #t "(define sfile (<a class=quiet href="#opensound" onmouseout="UnTip()" onmouseover="Tip(extsnd_opensound_tip)">open-sound</a> ~S))~%" name)
+	(<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #t "(load ~S)~%" scm)))
     (system (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "snd ~A &amp;" scm1))))
 </pre>
 <div class="separator"></div>

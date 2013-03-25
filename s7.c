@@ -37380,17 +37380,26 @@ static s7_pointer char_ci_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
 
 static void check_for_substring_temp(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if ((is_pair(cadr(expr))) &&
+  if ((args == 1) &&
+      (is_pair(cadr(expr))) &&
       (is_symbol(caadr(expr))) &&
       (c_call(cadr(expr)) == g_substring))
     set_c_function(cadr(expr), substring_to_temp);
   else
     {
-      if ((args > 1) &&
-	  (is_pair(caddr(expr))) &&
-	  (is_symbol(caaddr(expr))) &&
-	  (c_call(caddr(expr)) == g_substring))
-	set_c_function(caddr(expr), substring_to_temp);
+      if (args == 2)
+	{
+	  if ((!is_pair(cadr(expr))) &&
+	      (is_pair(caddr(expr))) &&
+	      (is_symbol(caaddr(expr))) &&
+	      (c_call(caddr(expr)) == g_substring))
+	    set_c_function(caddr(expr), substring_to_temp);
+	  if ((!is_pair(caddr(expr))) &&
+	      (is_pair(cadr(expr))) &&
+	      (is_symbol(caadr(expr))) &&
+	      (c_call(cadr(expr)) == g_substring))
+	    set_c_function(cadr(expr), substring_to_temp);
+	}
     }
 }
 
@@ -63811,12 +63820,11 @@ s7_scheme *s7_init(void)
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
  * maybe other banks.
  * outa loops unrolled?, poly7?
- * TODO: all the html examples need to be run through lint, or brought up to date
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
  * bench    42736 8752 8051 7725 6515 5194 4364 4022
  * lint           9328 8140 7887 7736 7300 7180 7056
- * index    44300 3291 3005 2742 2078 1643 1435 1345
+ * index    44300 3291 3005 2742 2078 1643 1435 1371
  * s7test    1721 1358 1297 1244  977  961  957  962
  * t455|6     265   89   55   31   14   14    9 9164
  * lat        229   63   52   47   42   40   34   31

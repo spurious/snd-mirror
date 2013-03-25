@@ -49,7 +49,7 @@
     (define +environment+ (environment))
     (define +hash-table+ (hash-table))
     (define +port+ *stdout*)
-    
+
     (define (integer-between-2-and-16? radix) 
       (and (integer? radix) 
 	   (<= 2 radix 16)))
@@ -581,7 +581,7 @@
 				    #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p
 				    #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
 				 chars))
-	  
+	  (outport #t)
 	  (loaded-files #f)
 	  (globals #f)
 	  (undefined-identifiers #f)
@@ -627,8 +627,8 @@
       (define (lint-format str name . args)
 	(if (and (positive? line-number)
 		 (< line-number 100000))
-	    (apply format #t (string-append "  ~A (line ~D): " str "~%") name line-number args)
-	    (apply format #t (string-append "  ~A: " str "~%") name args)))
+	    (apply format outport (string-append "  ~A (line ~D): " str "~%") name line-number args)
+	    (apply format outport (string-append "  ~A: " str "~%") name args)))
       
       (define (lists->string f1 f2)
 	;; same but 2 strings that may need to be lined up vertically
@@ -1196,7 +1196,7 @@
 		    (set! false (cons e false))))))
 	
 	(let ((form (bsimp in-form)))
-					; (if (not (equal? form in-form)) (format #t "bsimp ~A -> ~A~%" in-form form))
+					; (if (not (equal? form in-form)) (format outport "bsimp ~A -> ~A~%" in-form form))
 	  
 	  (if (or (not (pair? form))
 		  (not (memq (car form) '(or and not))))
@@ -2273,12 +2273,12 @@
 			  (lambda ()
 			    (open-input-file file))
 			  (lambda args
-			    (format #t "  can't load ~S: ~A~%" file (apply format #f (cadr args)))
+			    (format outport "  can't load ~S: ~A~%" file (apply format #f (cadr args)))
 			    #f))))
 		(if (input-port? fp)
 		    (begin
 		      (set! loaded-files (cons file loaded-files))
-					;(format #t "  (scanning ~S)~%" file)
+					;(format outport "  (scanning ~S)~%" file)
 		      (do ((form (read fp) (read fp)))
 			  ((eof-object? form))
 			(if (and (pair? form)
@@ -2479,7 +2479,7 @@
       (define (lint-walk-function head name args val env)
 	;; check out function arguments (adding them to the current env), then walk its body, (name == function name, val == body)
 	
-	;; (format #t "walk function ~A ~A ~A ~A ~A~%" head name args val (if (pair? env) (car env) ""))
+	;; (format outport "walk function ~A ~A ~A ~A ~A~%" head name args val (if (pair? env) (car env) ""))
 	
 	;; first check for (define (hi...) (ho...)) where ho has no opt args (and try to ignore possible string constant doc string)
 	(if (and *report-minor-stuff*
@@ -2611,7 +2611,7 @@
 				 
 				 (if (not (null? (cddr form)))
 				     (let ((e (lint-walk sym (caddr form) env)))
-					;(format #t "define ~A: ~A~%" sym (car e))
+					;(format outport "define ~A: ~A~%" sym (car e))
 				       (if (and (pair? e)
 						(eq? (caar e) sym)) ; (define x (lambda ...)) but it misses closures
 					   e
@@ -3202,8 +3202,9 @@
       
     ;;; --------------------------------------------------------------------------------
       
-      (lambda (file)
+      (lambda* (file (outp #t))
 	"(lint file) looks for infelicities in file's scheme code"
+	(set! outport outp)
 	(set! *current-file* file)
 	(set! undefined-identifiers ())
 	(set! globals (make-hash-table))
@@ -3216,7 +3217,7 @@
 		    (lambda ()
 		      (open-input-file file))
 		    (lambda args
-		      (format #t "  can't open ~S: ~A~%" file (apply format #f (cadr args)))
+		      (format outport "  can't open ~S: ~A~%" file (apply format #f (cadr args)))
 		      #f))))
 	  
 	  (if (input-port? fp)
@@ -3224,7 +3225,7 @@
 		    (line 0)
 		    (last-form #f)
 		    (last-line-number -1))
-		(format #t ";~A~%" file)
+		(if (eq? outport #t) (format outport ";~A~%" file))
 		(set! loaded-files (cons file loaded-files))
 		
 		(do ((form (read fp) (read fp)))
@@ -3234,7 +3235,7 @@
 		  
 		  (if (and (not (= last-line-number -1))
 			   (not (side-effect? last-form vars)))
-		      (format #t "  top-level (line ~D): this has no effect:~A~%" 
+		      (format outport "  top-level (line ~D): this has no effect:~A~%" 
 			      last-line-number
 			      (truncated-list->string last-form)))
 		  (set! last-form form)
@@ -3254,7 +3255,7 @@
 			 (if (not var-file)
 			     (hash-table-set! *top-level-objects* (car var) *current-file*)
 			     (if (not (string=? var-file *current-file*))
-				 (format #t ";~S is defined at the top level in ~S and ~S~%" (car var) var-file *current-file*)))))
+				 (format outport ";~S is defined at the top level in ~S and ~S~%" (car var) var-file *current-file*)))))
 		     vars))
 		
 		(if *report-unused-top-level-functions* 
@@ -3292,3 +3293,89 @@
 
 ;;; if function arg or local var collides with built-in, warn?
 ;;; simplifications currently don't notice pi in many cases (and lots of similar cases)
+
+
+
+;;; this reads an HTML file, finds likely-looking scheme code, and runs lint over it.
+
+(define (html-lint file)
+  
+  (define (remove-markups str)
+    (let ((apos (string-position "<a " str))
+	  (epos (string-position "<em " str)))
+      (if (and (not apos)
+	       (not epos))
+	  str
+	  (let* ((pos (if (and apos epos) (min apos epos) (or apos epos)))
+		 (bpos (char-position #\> str (+ pos 1)))
+		 (epos (if (and apos (= pos apos))
+			   (string-position "</a>" str (+ bpos 1))
+			   (string-position "</em>" str (+ bpos 1)))))
+	    (string-append (substring str 0 pos)
+			   (substring str (+ bpos 1) epos)
+			   (remove-markups (substring str (+ epos (if (and apos (= apos pos)) 4 5)))))))))
+  
+  (define (fixup-html str)
+    (let ((pos (char-position #\& str)))
+      (if (not pos)
+	  str
+	  (string-append (substring str 0 pos)
+			 (let ((epos (char-position #\; str pos)))
+			   (let ((substr (substring str (+ pos 1) epos)))
+			     (let ((replacement (cond ((string=? substr "gt") ">")
+						      ((string=? substr "lt") "<")
+						      ((string=? substr "mdash") "-")
+						      ((string=? substr "amp") "&")
+						      (else (format #t "unknown: ~A~%" substr)))))
+			       (string-append replacement
+					      (fixup-html (substring str (+ epos 1)))))))))))
+  
+  (call-with-input-file file
+    (lambda (f)
+      (do ((line-num 0 (+ line-num 1))
+	   (line (read-line f #t) (read-line f #t)))
+	  ((eof-object? line))
+	
+	;; look for <pre , gather everything until </pre>
+	;;   decide if it is scheme code (first char is #\()
+	;;   if so, clean out html markup stuff, write to temp file, call lint on that
+	
+	(let ((pos (string-position "<pre" line)))
+	  (if pos
+	      (let ((code (substring line (+ (char-position #\> line) 1))))
+		(do ((cline (read-line f #t) (read-line f #t))
+		     (rline 1 (+ rline 1)))
+		    ((string-position "</pre>" cline)
+		     (set! line-num (+ line-num rline)))
+		  (set! code (string-append code cline)))
+		
+		;; is first non-whitespace char #\(? ignoring comments
+		(let ((len (length code)))
+		  (do ((i 0 (+ i 1)))
+		      ((>= i len))
+		    (let ((c (string-ref code i)))
+		      (if (not (char-whitespace? c))
+			  (if (char=? c #\;)
+			      (set! i (char-position #\newline code i))
+			      (begin
+				(set! i (+ len 1))
+				(if (char=? c #\()
+				    (catch #t
+				      (lambda ()
+					(let ((ncode (with-input-from-string 
+							 (fixup-html (remove-markups code)) 
+						       (lambda () 
+							 (read)))))
+					  (call-with-output-file "t631-temp.scm"
+					    (lambda (fout)
+					      (format fout "~S~%" ncode)))
+					  (let ((outstr (call-with-output-string
+							 (lambda (p)
+							   (lint "t631-temp.scm" p)))))
+					    (if (> (length outstr) 0)
+						(format #t ";~A ~D: ~A~%" file line-num outstr)))))
+				      (lambda args
+					(format #t ";~A ~D, error in read: ~A ~A~%" file line-num args
+						(fixup-html (remove-markups code)))))))))))))))))))
+				    
+				    
