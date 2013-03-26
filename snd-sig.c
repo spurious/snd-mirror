@@ -3890,12 +3890,12 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 			      slot = s7_make_slot(s7, e, arg, y);                         /* make sure it is mutable */
 
 			      /* fprintf(stderr, "%lld %s\n", num, DISPLAY(res)); */
-			      /* 10000 (hilbert-transform h y)
-			       * 100000 (fir-filter f2 y)
+			      /* [10000 (hilbert-transform h y)]
+			       * [100000 (fir-filter f2 y)]
 			       * 200000 (filter lp (filter hp y))
 			       * 200000 (+ (filter lp y) (filter hp y))
 			       * 50000 (+ y (* (env e1) (read-sample reader1))) and others
-			       * 100000 (ssb-am gen y)
+			       * [1000?? (ssb-am gen y)]
 			       * 100000 (* inval (oscil os))
 			       * 100000 (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)))
 			       */
@@ -3966,11 +3966,44 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 			{
 			  if (s7_function_returns_temp(res))
 			    {
+                              #define GEN_DIRECT_1 8
+			      s7_pointer *choices = NULL;
 			      s7_pointer old_e;
+
+			      choices = (s7_pointer *)s7_function_chooser_data_direct(s7_symbol_value(s7, s7_car(res)));
+			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
+
+			      if ((choices) &&
+				  (choices[GEN_DIRECT_1]) &&
+				  (choices[GEN_DIRECT_CHECKER]) &&
+				  (s7_nil(s7) == s7_cddr(res)) &&
+				  (s7_is_symbol(s7_cadr(res))) &&
+				  (s7_is_defined(s7, s7_symbol_name(s7_cadr(res)))))
+				{
+				  void *gen;
+				  mus_float_t (*sampler)(void *p);
+				  bool (*is_sampler)(s7_pointer p);
+				  s7_pointer obj;
+		      
+				  sampler = (mus_float_t (*)(void *p))(choices[GEN_DIRECT_1]);
+				  is_sampler = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+				  obj = s7_cadr_value(s7, res);
+				  if (is_sampler(obj))
+				    {
+				      gen = s7_object_value(obj);
+				      for (kp = 0; kp < num; kp++)
+					data[kp] = sampler(gen);
+
+				      sf = free_snd_fd(sf);
+				      change_samples(beg, num, data, cp, caller, pos, -1.0);
+				      free(data);
+				      return(res);
+				    }
+				}
+
 			      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
 			      old_e = s7_set_current_environment(s7, e);
 			      /* the function closure might be needed even if the arg isn't -- why? it's direct and temp? */
-			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
 
 			      /* fprintf(stderr, "%d, %lld %s\n", __LINE__, num, DISPLAY(res)); */
 			      /* about 400000 (granulate gen) or (wave-train gen)

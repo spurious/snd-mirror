@@ -27326,9 +27326,9 @@ EDITS: 2
     (let* ((intrp (make-sound-interp 0 snd1 0))
 	   (len (- (frames snd1 0) 1))
 	   (rd (make-sampler 0 snd2 0))
-	   (mx (maxamp snd2 0)))
+	   (mx (/ 1.0 (maxamp snd2 0))))
       (map-channel (lambda (val) 
-		     (sound-interp intrp (floor (* len 0.5 (+ 1.0 (/ (read-sample rd) mx)))))))))
+		     (sound-interp intrp (floor (* len 0.5 (+ 1.0 (* mx (read-sample rd))))))))))
   
   (set! (transform-type) fourier-transform)
   
@@ -47563,32 +47563,18 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-21-Mar-13:
-62,104,041,024
-8,408,670,849  s7.c:eval [/home/bil/snd-13/snd]
-6,360,019,342  ???:sin [/lib64/libm-2.12.so]
-3,658,301,000  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-2,546,502,244  ???:cos [/lib64/libm-2.12.so]
-2,427,975,568  clm.c:mus_src [/home/bil/snd-13/snd]
-1,761,626,624  s7.c:gc [/home/bil/snd-13/snd]
-1,560,082,416  s7.c:eval'2 [/home/bil/snd-13/snd]
-1,043,258,902  s7.c:s7_make_real [/home/bil/snd-13/snd]
-1,004,875,340  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
-  985,242,945  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
-  943,099,655  clm.c:mus_formant_bank_wrapped [/home/bil/snd-13/snd]
-  911,248,552  clm.c:fir_8 [/home/bil/snd-13/snd]
-
-61,629,635,513
-8,409,405,092  s7.c:eval [/home/bil/snd-13/snd]
-6,352,029,763  ???:sin [/lib64/libm-2.12.so]
-3,652,591,567  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-2,571,558,285  ???:cos [/lib64/libm-2.12.so]
-2,428,764,225  clm.c:mus_src [/home/bil/snd-13/snd]
-1,751,203,929  s7.c:gc [/home/bil/snd-13/snd]
-1,557,880,425  s7.c:eval'2 [/home/bil/snd-13/snd]
-1,041,006,596  s7.c:s7_make_real [/home/bil/snd-13/snd]
-1,004,679,667  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
-  954,196,378  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+25-Mar-13:
+61,327,898,070
+8,372,483,786  s7.c:eval [/home/bil/snd-13/snd]
+6,351,358,843  ???:sin [/lib64/libm-2.12.so]
+3,572,465,312  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+2,550,012,006  ???:cos [/lib64/libm-2.12.so]
+2,433,790,403  clm.c:mus_src [/home/bil/snd-13/snd]
+1,743,022,462  s7.c:gc [/home/bil/snd-13/snd]
+1,475,734,699  s7.c:eval'2 [/home/bil/snd-13/snd]
+1,018,647,334  s7.c:s7_make_real [/home/bil/snd-13/snd]
+1,014,488,043  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+1,004,686,674  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
   943,099,655  clm.c:mus_formant_bank_wrapped [/home/bil/snd-13/snd]
   911,248,552  clm.c:fir_8 [/home/bil/snd-13/snd]
 

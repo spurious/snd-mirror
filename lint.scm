@@ -464,7 +464,7 @@
 			  (cons 'list-ref (list pair-or-null? non-negative-integer?))
 			  (cons 'list-set! (list pair? non-negative-integer?))
 			  (cons 'list-tail (list pair-or-null? non-negative-integer?))
-			  (cons 'load non-null-string?)
+			  (cons 'load (list non-null-string?))
 			  (cons 'log (list number? non-zero-number?))
 			  (cons 'logand (list integer? integer?))
 			  (cons 'logbit? (list integer? integer?))
@@ -3266,7 +3266,7 @@
 		     (lambda (var)
 		       (if (not (or (assq (car var) vars)
 				    (hash-table-ref globals (car var))))
-			   (lint-format "undefined identifier ~A in:~A"
+			   (lint-format "undefined identifier ~A in: ~A"
 					(list-ref var 0)
 					(list-ref var 2)
 					(list-ref var 1))))
@@ -3301,19 +3301,25 @@
 (define (html-lint file)
   
   (define (remove-markups str)
-    (let ((apos (string-position "<a " str))
-	  (epos (string-position "<em " str)))
-      (if (and (not apos)
-	       (not epos))
-	  str
-	  (let* ((pos (if (and apos epos) (min apos epos) (or apos epos)))
-		 (bpos (char-position #\> str (+ pos 1)))
-		 (epos (if (and apos (= pos apos))
-			   (string-position "</a>" str (+ bpos 1))
-			   (string-position "</em>" str (+ bpos 1)))))
-	    (string-append (substring str 0 pos)
-			   (substring str (+ bpos 1) epos)
-			   (remove-markups (substring str (+ epos (if (and apos (= apos pos)) 4 5)))))))))
+    (let ((tpos (string-position "<b>" str)))
+      (if tpos
+	  (let ((epos (string-position "</b>" str)))
+	    (remove-markups (string-append (substring str 0 tpos)
+					   (substring str (+ tpos 3) epos)
+					   (substring str (+ epos 4)))))
+	  (let ((apos (string-position "<a " str))
+		(epos (string-position "<em " str)))
+	    (if (and (not apos)
+		     (not epos))
+		str
+		(let* ((pos (if (and apos epos) (min apos epos) (or apos epos)))
+		       (bpos (char-position #\> str (+ pos 1)))
+		       (epos (if (and apos (= pos apos))
+				 (string-position "</a>" str (+ bpos 1))
+				 (string-position "</em>" str (+ bpos 1)))))
+		  (string-append (substring str 0 pos)
+				 (substring str (+ bpos 1) epos)
+				 (remove-markups (substring str (+ epos (if (and apos (= apos pos)) 4 5)))))))))))
   
   (define (fixup-html str)
     (let ((pos (char-position #\& str)))
@@ -3377,5 +3383,4 @@
 				      (lambda args
 					(format #t ";~A ~D, error in read: ~A ~A~%" file line-num args
 						(fixup-html (remove-markups code)))))))))))))))))))
-				    
 				    

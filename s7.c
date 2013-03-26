@@ -37073,15 +37073,19 @@ static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 {
   if (args == 2)
     {
-      if (cadr(expr) == small_int(1))
+      s7_pointer arg1;
+      arg1 = cadr(expr);
+
+      if (arg1 == small_int(1))
 	return(divide_1);
 #if (!WITH_GMP)
-      if ((type(cadr(expr)) == T_REAL) &&
-	  (real(cadr(expr)) == 1.0))
+      if ((type(arg1) == T_REAL) &&
+	  (real(arg1) == 1.0))
 	return(divide_1r);
 #endif
     }
   /* fprintf(stderr, "%d: %s\n", args, DISPLAY_80(expr)); */
+  /* si sf ii ff fs */
   return(f);
 }
 
@@ -63811,15 +63815,13 @@ s7_scheme *s7_init(void)
  * TODO: get rid of all arg lambdas -- move them to the make function (*.html especially!)
  * easy closure_arity done right away?  0/1 should not be expensive -- maybe just set it!
  *
- * direct (all_x) let/case/etc [map/for-each/sort and so on]
- * op_closure_car_car is rarely called, cdr_cdr case only in bench
  * dox oneline opt -> outa i safe-closure_star_s|sa where all syms are not steppers:
  *   get sym vals, on each step, push to return, set code/args, call body (s: 1.1 mil, sa: 434k, sc: 539k)
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x)
  *   and goto*, and the entire safe_car_s set
+ * op_closure_car_car is rarely called, cdr_cdr case only in bench
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
  * maybe other banks.
- * outa loops unrolled?, poly7?
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
  * bench    42736 8752 8051 7725 6515 5194 4364 4022
@@ -63829,5 +63831,5 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14    9 9164
  * lat        229   63   52   47   42   40   34   31
  * t502        90   43   39   36   29   23   20   19
- * calls           275  207  175  115   89   71   62
+ * calls           275  207  175  115   89   71   61
  */

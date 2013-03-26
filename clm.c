@@ -11192,17 +11192,14 @@ typedef struct {
 } sr;
 
 
-/* I wonder if it would be more accurate and not too much slower to use
- *   the Chebyshev expansion of sinc here, or even the power series:
- *   1 - x^2/3! + x^4/5! etc (i.e. x divides sin(x))
- */
-
 #define SRC_SINC_DENSITY 1000
 #define SRC_SINC_WIDTH 10
 
 static mus_float_t **sinc_tables = NULL;
 static int *sinc_widths = NULL;
 static int sincs = 0;
+static mus_float_t *sinc = NULL;
+static int sinc_size = 0;
 
 void mus_clear_sinc_tables(void)
 {
@@ -11224,7 +11221,28 @@ void mus_clear_sinc_tables(void)
 static mus_float_t *init_sinc_table(int width)
 {
   int i, size, padded_size, loc;
-  mus_float_t sinc_freq, win_freq, sinc_phase, win_phase;
+  mus_float_t win_freq, win_phase;
+
+  if (width > sinc_size)
+    {
+      int old_end;
+      mus_float_t sinc_phase, sinc_freq;
+      if (sinc_size == 0)
+	old_end = 1;
+      else old_end = sinc_size * SRC_SINC_DENSITY + 4;
+      padded_size = width * SRC_SINC_DENSITY + 4;
+      if (sinc_size == 0)
+	{
+	  sinc = (mus_float_t *)malloc(padded_size * sizeof(mus_float_t));
+	  sinc[0] = 1.0;
+	}
+      else sinc = (mus_float_t *)realloc(sinc, padded_size * sizeof(mus_float_t));
+      sinc_size = width;
+      sinc_freq = M_PI / (mus_float_t)SRC_SINC_DENSITY;
+      sinc_phase = old_end * sinc_freq;
+      for (i = old_end; i < padded_size; i++, sinc_phase += sinc_freq)
+	sinc[i] = sin(sinc_phase) / (2.0 * sinc_phase);
+    }
 
   for (i = 0; i < sincs; i++)
     if (sinc_widths[i] == width)
@@ -11263,12 +11281,13 @@ static mus_float_t *init_sinc_table(int width)
   sinc_widths[loc] = width;
   size = width * SRC_SINC_DENSITY;
   padded_size = size + 4;
-  sinc_freq = M_PI / (mus_float_t)SRC_SINC_DENSITY;
   win_freq = M_PI / (mus_float_t)size;
+
   sinc_tables[loc] = (mus_float_t *)calloc(padded_size, sizeof(mus_float_t));
   sinc_tables[loc][0] = 1.0;
-  for (i = 1, sinc_phase = sinc_freq, win_phase = win_freq; i < padded_size; i++, sinc_phase += sinc_freq, win_phase += win_freq)
-    sinc_tables[loc][i] = sin(sinc_phase) * (0.5 + 0.5 * cos(win_phase)) / sinc_phase;
+
+  for (i = 1, win_phase = win_freq; i < padded_size; i++, win_phase += win_freq)
+    sinc_tables[loc][i] = sinc[i] * (1.0 + cos(win_phase));
 
   return(sinc_tables[loc]);
 }

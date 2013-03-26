@@ -4816,10 +4816,10 @@ I need to know where something unexpected happened.  So:
 <pre class="indented">
 (define (sharp-plus str)
   ;; str here is "+", we assume either a symbol or an expression involving symbols follows
-  (let* ((e (if (string=? str "+")
+  (let ((e (if (string=? str "+")
 		(read)                                ; must be #+(...)
 		(string-&gt;symbol (substring str 1))))  ; #+feature
-	 (expr (read)))  ; this is the expression following #+
+	(expr (read)))  ; this is the expression following #+
     (if (symbol? e)
         (if (provided? e)
 	    expr

@@ -848,9 +848,9 @@ constants and functions described above into Scheme.  To initialize sndlib, call
 </p>
 
 <pre>
-(let ((sndlib (dynamic-link "libsndlib.so")))
-  (dynamic-call (dynamic-func "Init_sndlib" sndlib) #f))
+(let ((sndlib (load "libsndlib.so")))
 </pre>
+<!-- TODO: fixup the load example -->
 
 <p>Init_sndlib ties most of the functions mentioned above into the extension language (s7, Forth, or Ruby).
 </p>

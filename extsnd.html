@@ -3319,7 +3319,7 @@ the returned procedure to make sure the mark pane is reactivated right away when
 (hook-push <em class=red>update-hook</em>
   (lambda (hook)
     (let ((old-snd (hook 'snd)))  ; (hook 'snd) is the sound about to be updated
-      (set (hook 'result) 
+      (set! (hook 'result) 
            (lambda (snd)
               (do ((i 0 (+ 1 i)))
 	          ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd)))
@@ -3379,7 +3379,7 @@ up protected portions of the edit history:
   "(protect snd chn) disallows any edits before the current one"
   (let ((edit-pos (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> snd chn))
         (hook (<em class=red>edit-hook</em> snd chn)))
-    (set! (hook functions hook)
+    (set! (hook-functions hook)
       (list 
         (lambda ()
           (let ((val (&lt; (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> snd chn) edit-pos)))
@@ -12016,7 +12016,7 @@ put in it something like:
 </p>
 
 <pre class="indented">
-(let ((myfile (<a class=quiet href="#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "mysound.snd" mus-aifc-sound-file <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbshort_tip)">mus-bshort</a> 44100 2 "this is my sound")))
+(let ((myfile (<a class=quiet href="#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "mysound.snd" mus-aifc <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbshort_tip)">mus-bshort</a> 44100 2 "this is my sound")))
 	;; this is equivalent to the New file menu option
   (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> "oboe.snd" 0 0 myfile 0)
   ;; this mixes in the mono file oboe.snd at sample 0 in channel 0
@@ -13027,24 +13027,7 @@ starts the File:New sound dialog, returning the dialog widget.
 
 <p>This creates and (if 'managed' which defaults to #t) activates the File:Open dialog,
 returning the dialog widget.
-If the xm module is loaded, we could add our own info via:
 </p>
-
-<pre class="indented">
-  (let* ((dialog (<em class=red>open-file-dialog</em> #f))
-	 (rc (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndscm_findchild_tip)">find-child</a> dialog "info-rc2")) ; holds the info labels if a sound file is selected
-	 (label (XtCreateManagedWidget "file-preview-info" xmLabelWidgetClass rc 
-                  (list XmNbackground (<a class=quiet href="#highlightcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_highlightcolor_tip)">highlight-color</a>)))))
-    (XtAddCallback (XmFileSelectionBoxGetChild dialog XmDIALOG_LIST)
-		   XmNbrowseSelectionCallback
-		   (lambda (widget context info)
-		     (let ((file (cadr (XmStringGetLtoR (.item info) XmFONTLIST_DEFAULT_TAG))))
-		       (XtVaSetValues label
-				      (list XmNlabelString
-					    (XmStringCreateLtoR (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A: no comment" file)
-								XmFONTLIST_DEFAULT_TAG)))))
-		   #f))
-</pre>
 <div class="spacer"></div>
 
 

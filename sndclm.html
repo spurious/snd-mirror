@@ -8737,7 +8737,7 @@ So j0evencos produces a spectral sweep that is like FM's but smoother.
 	((= i end))
       (let ((ind (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> indf))
 	    (vol (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf)))
-	(set! (<em class=red>j0evencos-index</em> jmd) ind)
+	(set! (<em class=red>(jmd 'index)</em> ind)
 	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* vol (- (cos (* ind (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> fmd))) 
                           (<a class=quiet href="extsnd.html#besj0" onmouseout="UnTip()" onmouseover="Tip(extsnd_besj0_tip)">bes-j0</a> ind)))) ; subtract out DC (see cos(B sin x) above)
 	(<a class=quiet href="#out-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_outb_tip)">outb</a> i (* vol (<em class=red>j0evencos</em> jmd)))))))
@@ -8769,7 +8769,7 @@ snd -horizontal
          (indf (make-env index-env :scaler index :duration dur)))
        (do ((i start (+ 1 i)))
 	   ((= i end))
-	 (set! (j0evencos-index md) (env indf))
+	 (set! (md 'index) (env indf))
 	 (outa i (* (env ampf)
                     (j0evencos md))))))
 
@@ -9249,7 +9249,7 @@ The ercoser instrument uses ercos:
 	    (a-env (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :length 10000)))
         (do ((i 0 (+ 1 i)))
 	    ((= i 10000))
-	  (set! (eoddcos-r gen1) (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> a-env))
+	  (set! (gen1 'r) (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> a-env))
  	  (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<em class=red>eoddcos</em> gen1 (* .1 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> gen2))))))))
 </pre>
 <div class="separator"></div>

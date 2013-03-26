@@ -1803,8 +1803,10 @@ and replaces it with the spectrum given in coeffs"
 	      ((= k len))
 	    (set! sig (bandpass bp (vct-ref indata k)))
 	    (set! mx (moving-max pk sig))
-	    (set! amp (moving-average avg (if (> mx 0.0) (min 100.0 (/ 1.0 mx)) 0.0)))
-	    (if (> amp 0.0)
+	    (if (positive? mx)
+		(set! amp (moving-average avg (min 100.0 (/ 1.0 mx))))
+		(set! amp (moving-average avg 0.0)))
+	    (if (positive? amp)
 		(vct-set! adder k (* mx (polynomial pcoeffs (* amp sig))))))
 	  (vct-add! summer adder)))
 

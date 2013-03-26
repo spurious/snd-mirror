@@ -862,7 +862,9 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
   v = (vct *)imported_s7_object_value_checked(vc, vct_tag);
   if (v)
     {
+      int val_len;
       val = s7_cadddr(args);
+      val_len = s7_list_length(sc, val);
 
       stepper = s7_car(args);
       callee = s7_slot(sc, s7_caddr(args));
@@ -878,7 +880,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	  (end > v->length))
 	XEN_OUT_OF_RANGE_ERROR("vct-set!", 2, s7_caddr(args), "index out of range");
 
-      if (s7_list_length(sc, val) == 2)
+      if (val_len == 2)
 	{
 	  if (s7_is_symbol(s7_cadr(val)))
 	    {
@@ -909,7 +911,6 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 		}
 
 	      choices = (s7_pointer *)s7_function_chooser_data_direct(s7_symbol_value(sc, s7_car(val)));
-	      /* choices = s7_function_chooser_data(sc, val); */
 	      if (choices)
 		{
 		  if ((choices[GEN_DIRECT_1]) &&
@@ -959,23 +960,80 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	    }
 	}
 
-      if ((s7_list_length(sc, val) == 3) &&
-	  (s7_caddr(args) == s7_caddr(val)) &&
-	  (s7_car(val) == s7_make_symbol(sc, "vct-ref")) &&
+      if ((val_len == 3) &&
 	  (s7_is_symbol(s7_cadr(val))))
 	{
-	  vct *rv;
-	  rv = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, val), vct_tag);
-	  if (rv)
+	  if ((s7_caddr(args) == s7_caddr(val)) &&
+	      (s7_car(val) == s7_make_symbol(sc, "vct-ref")))
 	    {
-	      if (end > rv->length)
-		XEN_OUT_OF_RANGE_ERROR("vct-ref", 2, s7_caddr(args), "index out of range");
-	      for (; pos < end; pos++)
-		v->data[pos] = rv->data[pos];
-	      (*step) = end;
-	      return(args);
+	      vct *rv;
+	      rv = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, val), vct_tag);
+	      if (rv)
+		{
+		  if (end > rv->length)
+		    XEN_OUT_OF_RANGE_ERROR("vct-ref", 2, s7_caddr(args), "index out of range");
+		  for (; pos < end; pos++)
+		    v->data[pos] = rv->data[pos];
+		  (*step) = end;
+		  return(args);
+		}
 	    }
+
+	  {
+            #define GEN_DIRECT_2 9
+            #define GEN_DIRECT_CHECKER 11
+	    s7_pointer *choices;
+	    s7_pointer arg1, arg2;
+
+	    arg1 = s7_cadr(val);
+	    arg2 = s7_caddr(val);
+	    choices = (s7_pointer *)s7_function_chooser_data_direct(s7_symbol_value(sc, s7_car(val)));
+
+	    if ((choices) &&
+		(choices[GEN_DIRECT_2]) &&
+		(choices[GEN_DIRECT_CHECKER]) &&
+		(s7_is_pair(arg2)) &&
+		(s7_is_defined(sc, s7_symbol_name(arg1))))
+	      {
+		void *gen;
+		mus_float_t (*sampler)(void *p, mus_float_t x);
+		bool (*is_sampler)(s7_pointer p);
+		s7_pointer obj;
+		      
+		sampler = (mus_float_t (*)(void *p, mus_float_t x))(choices[GEN_DIRECT_2]);
+		is_sampler = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+		obj = s7_value(sc, arg1);
+		if (is_sampler(obj))
+		  {
+		    gen = s7_object_value(obj);
+		    /*
+		    if (s7_tree_memq(sc, s7_caddr(args), val))
+		      fprintf(stderr, "stepper? %s\n", DISPLAY(args));
+		    */
+		    for (; pos < end; pos++)
+		      {
+			(*step) = pos; /* in case val expr depends on the step var */
+			v->data[pos] = sampler(gen, s7_call_direct_to_real_and_free(sc, arg2));
+		      }
+		    (*step) = end;
+		    return(args);
+		  }
+	      }
+	  }
 	}
+      /* fprintf(stderr, "%lld: %s\n", end - pos, DISPLAY(val)); */
+      /* 150001: (src s (* osamp (oscil os)))
+       * 49948: (src rd (rand-interp rn))
+       * 41623 * 4: (src s (* osamp (oscil os)))
+       * 50788: (filter flt (vct-ref summer k))
+       * 49948: (src rd (rand-interp rn))
+       * 41623: (src s (* osamp (oscil os)))
+       * 50788: (filter flt (vct-ref summer k))
+       * 41623 * 15: (ssb-am gen (bandpass filt (vct-ref data k)))
+       * 60994 * 2: (src rd (rand-interp rn))
+       * 50828 * 15: (ssb-am gen (bandpass filt (vct-ref data k)))
+       * 50828 * 15: (ssb-am gen (bandpass filt (vct-ref data k)) (env e))
+       */
 
       for (; pos < end; pos++)
 	{
