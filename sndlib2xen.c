@@ -1202,7 +1202,7 @@ from the audio line into sound-data sdata."
 }
 
 
-/* global default clipping and prescaler values */
+/* global default clipping values */
 
 static XEN g_mus_clipping(void)
 {
@@ -1218,21 +1218,7 @@ static XEN g_mus_set_clipping(XEN clipped)
 }
 
 
-static XEN g_mus_prescaler(void)
-{
-  #define H_mus_prescaler "(" S_mus_prescaler "): default prescaler (normally 1.0)"
-  return(C_TO_XEN_DOUBLE(mus_prescaler()));
-}
-
-
-static XEN g_mus_set_prescaler(XEN val)
-{
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_mus_prescaler, "a number");
-  return(C_TO_XEN_DOUBLE(mus_set_prescaler(XEN_TO_C_DOUBLE(val))));
-}
-
-
-/* file local clipping and prescaler values */
+/* file local clipping values */
 
 static XEN g_mus_file_clipping(XEN fd)
 {
@@ -1249,21 +1235,6 @@ static XEN g_mus_file_set_clipping(XEN fd, XEN clipped)
   return(C_TO_XEN_BOOLEAN(mus_file_set_clipping(XEN_TO_C_INT(fd), XEN_TO_C_BOOLEAN(clipped))));
 }
 
-
-static XEN g_mus_file_prescaler(XEN fd)
-{
-  #define H_mus_file_prescaler "(" S_mus_file_prescaler " fd): prescaler associated with file 'fd'"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ONLY_ARG, S_mus_file_prescaler, "an integer");
-  return(C_TO_XEN_DOUBLE(mus_file_prescaler(XEN_TO_C_INT(fd))));
-}
-
-
-static XEN g_mus_file_set_prescaler(XEN fd, XEN val)
-{
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_setB S_mus_file_prescaler, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_mus_prescaler, "a number");
-  return(C_TO_XEN_DOUBLE(mus_file_set_prescaler(XEN_TO_C_INT(fd), XEN_TO_C_DOUBLE(val))));
-}
 
 
 XEN g_mus_expand_filename(XEN file)
@@ -2506,10 +2477,6 @@ XEN_NARGIFY_0(g_mus_clipping_w, g_mus_clipping)
 XEN_NARGIFY_1(g_mus_set_clipping_w, g_mus_set_clipping)
 XEN_NARGIFY_1(g_mus_file_clipping_w, g_mus_file_clipping)
 XEN_NARGIFY_2(g_mus_file_set_clipping_w, g_mus_file_set_clipping)
-XEN_NARGIFY_0(g_mus_prescaler_w, g_mus_prescaler)
-XEN_NARGIFY_1(g_mus_set_prescaler_w, g_mus_set_prescaler)
-XEN_NARGIFY_1(g_mus_file_prescaler_w, g_mus_file_prescaler)
-XEN_NARGIFY_2(g_mus_file_set_prescaler_w, g_mus_file_set_prescaler)
 XEN_NARGIFY_0(g_mus_header_raw_defaults_w, g_mus_header_raw_defaults)
 XEN_NARGIFY_1(g_mus_header_set_raw_defaults_w, g_mus_header_set_raw_defaults)
 XEN_NARGIFY_2(g_mus_header_writable_w, g_mus_header_writable)
@@ -2617,10 +2584,6 @@ XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 #define g_mus_set_clipping_w g_mus_set_clipping
 #define g_mus_file_clipping_w g_mus_file_clipping
 #define g_mus_file_set_clipping_w g_mus_file_set_clipping
-#define g_mus_prescaler_w g_mus_prescaler
-#define g_mus_set_prescaler_w g_mus_set_prescaler
-#define g_mus_file_prescaler_w g_mus_file_prescaler
-#define g_mus_file_set_prescaler_w g_mus_file_set_prescaler
 #define g_mus_header_raw_defaults_w g_mus_header_raw_defaults
 #define g_mus_header_set_raw_defaults_w g_mus_header_set_raw_defaults
 #define g_mus_expand_filename_w g_mus_expand_filename
@@ -3009,12 +2972,6 @@ void mus_sndlib_xen_initialize(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_header_raw_defaults, g_mus_header_raw_defaults_w, H_mus_header_raw_defaults,
 				   S_setB S_mus_header_raw_defaults, g_mus_header_set_raw_defaults_w, 0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_prescaler, g_mus_prescaler_w, H_mus_prescaler,
-				   S_setB S_mus_prescaler, g_mus_set_prescaler_w, 0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_prescaler, g_mus_file_prescaler_w, H_mus_file_prescaler,
-				   S_setB S_mus_file_prescaler, g_mus_file_set_prescaler_w, 1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_clipping, g_mus_clipping_w, H_mus_clipping,
 				   S_setB S_mus_clipping, g_mus_set_clipping_w, 0, 0, 1, 0);

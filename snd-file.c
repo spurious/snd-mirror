@@ -6029,14 +6029,9 @@ upon File:Save as or " S_save_sound_as " completion."
   #define H_before_save_as_hook S_before_save_as_hook " (snd name selection sampling-rate header-type data-format comment): called \
 before File:Save as or " S_save_sound_as ". Provides a way to fixup a sound just before it is saved."
 
-#if HAVE_SCHEME
-  #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \
-but before data has been read. \n\
-  (hook-push " S_during_open_hook "\n\
-    (lambda (fd name reason) \n\
-      (if (= (" S_mus_sound_header_type " name) " S_mus_raw ")\n\
-          (set! (" S_mus_file_prescaler " fd) 500.0))))"
+  #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, but before data has been read."
 
+#if HAVE_SCHEME
   #define H_after_open_hook S_after_open_hook " (snd): called just before the new file's window is displayed. \
 This provides a way to set various sound-specific defaults. \n\
   (hook-push " S_after_open_hook "\n\
@@ -6046,13 +6041,6 @@ This provides a way to set various sound-specific defaults. \n\
 #endif
 
 #if HAVE_RUBY
-  #define H_during_open_hook "$" S_during_open_hook " lambda do |fd, name, reason| ...; called after file is opened, \
-but before data has been read. \n\
-  $during_open_hook.add_hook!(\"during-open-hook\") do |fd, name, reason|\n\
-    if (mus_sound_header_type(name) == Mus_raw)\n\
-      set_mus_file_prescaler(fd, 500.0)\n\
-    end\n\
-  end"
   #define H_after_open_hook S_after_open_hook " (snd): called just before the new file's window is displayed. \
 This provides a way to set various sound-specific defaults. \n\
   $after_open_hook.add-hook!(\"set-channels-combined\") do |snd| \n\
@@ -6063,15 +6051,6 @@ This provides a way to set various sound-specific defaults. \n\
 #endif
 
 #if HAVE_FORTH
-  #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \
-but before data has been read. \n\
-" S_during_open_hook " lambda: <{ fd name reason }>\n\
-  name " S_mus_sound_header_type " " S_mus_raw " = if\n\
-    fd 500.0 set-" S_mus_file_prescaler "\n\
-  else\n\
-    #f\n\
-  then\n\
-; add-hook!"
   #define H_after_open_hook S_after_open_hook " (snd): called just before the new file's window is displayed. \
 This provides a way to set various sound-specific defaults. \n\
 " S_after_open_hook " lambda: <{ snd }>\n\

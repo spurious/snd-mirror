@@ -1786,14 +1786,11 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	(outdel1 (make-delay (round (* .013 (srate)))))
 	(samp 0))
     (let ((combs (make-comb-bank (vector comb1 comb2 comb3 comb4))))
+	  (allpasses (make-all-pass-bank (vector allpass1 allpass2 allpass3))))
       (lambda (inval)
-      (let ((allpass-sum (all-pass allpass3 
-				   (all-pass allpass2 
-					     (all-pass allpass1 
-						       (if (< samp input-samps) inval 0.0))))))
 	(set! samp (+ samp 1))
 	(+ inval
-	   (* volume (delay outdel1 (comb-bank combs allpass-sum)))))))))
+	   (* volume (delay outdel1 (comb-bank combs (all-pass-bank allpasses (if (< samp input-samps) inval 0.0)))))))))
     
 (define* (effects-jc-reverb-1 volume beg dur snd chn)
   (map-channel (effects-jc-reverb (or dur (frames snd chn)) volume)

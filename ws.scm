@@ -850,7 +850,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 (define (clm-display-globals)
 
-  (format #f ";CLM globals:~%;  *clm-srate*: ~A (default: ~A, mus-srate: ~A)~%;  *clm-file-name*: ~A~%;  *clm-channels: ~A (default: ~A)~%;  *clm-data-format*: ~A (default: ~A)~%;  *clm-header-type*: ~A (default: ~A)~%;  *clm-reverb-channels*: ~A, *clm-reverb-data*: ~A~%;  *clm-table-size*: ~A~%;  *clm-file-buffer-size*: ~A (~A)~%;  *clm-locsig-type*: ~A~%;  *clm-array-print-length*: ~A (~A)~%;  *clm-notehook*: ~A~%;  *clm-default-frequency*: ~A~%;  *clm-clipped*: ~A, mus-clipping: ~A, mus-prescaler: ~A~%~%"
+  (format #f ";CLM globals:~%;  *clm-srate*: ~A (default: ~A, mus-srate: ~A)~%;  *clm-file-name*: ~A~%;  *clm-channels: ~A (default: ~A)~%;  *clm-data-format*: ~A (default: ~A)~%;  *clm-header-type*: ~A (default: ~A)~%;  *clm-reverb-channels*: ~A, *clm-reverb-data*: ~A~%;  *clm-table-size*: ~A~%;  *clm-file-buffer-size*: ~A (~A)~%;  *clm-locsig-type*: ~A~%;  *clm-array-print-length*: ~A (~A)~%;  *clm-notehook*: ~A~%;  *clm-default-frequency*: ~A~%;  *clm-clipped*: ~A, mus-clipping: ~A~%~%"
 
 	  *clm-srate* (default-output-srate) (mus-srate)
 	  *clm-file-name*
@@ -864,8 +864,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	  *clm-array-print-length* (print-length)
 	  *clm-notehook*
 	  *clm-default-frequency*
-	  *clm-clipped* (mus-clipping)
-	  (mus-prescaler)))
+	  *clm-clipped* (mus-clipping)))
 
 
 

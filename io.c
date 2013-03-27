@@ -545,17 +545,11 @@ bool mus_clipping(void) {return(clipping_default);}
 bool mus_set_clipping(bool new_value) {clipping_default = new_value; return(new_value);}
 
 
-static mus_float_t prescaler_default = 1.0;
-mus_float_t mus_prescaler(void) {return(prescaler_default);}
-mus_float_t mus_set_prescaler(mus_float_t new_value) {prescaler_default = new_value; return(new_value);}
-
-
 typedef struct {
   char *name;
   int data_format, bytes_per_sample, chans, header_type;
   bool clipping;
   mus_long_t data_location;
-  mus_float_t prescaler;
 } io_fd;
 
 static int io_fd_size = 0;
@@ -594,7 +588,6 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
 	  fd->bytes_per_sample = size;
 	  fd->data_location = location;
 	  fd->clipping = clipping_default;
-	  fd->prescaler = prescaler_default;
 	  fd->header_type = type;
 	  fd->chans = chans;
 	  if (name)
@@ -645,25 +638,6 @@ int mus_file_header_type(int tfd)
   if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
   fd = io_fds[tfd];
   return(fd->header_type);
-}
-
-
-mus_float_t mus_file_prescaler(int tfd) 
-{
-  io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(0.0);
-  fd = io_fds[tfd];
-  return(fd->prescaler);
-}
-
-
-mus_float_t mus_file_set_prescaler(int tfd, mus_float_t val) 
-{
-  io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(0.0);
-  fd = io_fds[tfd];
-  fd->prescaler = val; 
-  return(val);
 }
 
 
@@ -995,7 +969,6 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
   static char *ur_charbuf = NULL;
   char *charbuf = NULL;
   mus_float_t *buffer;
-  float prescaling;
 
   if (nints <= 0) return(0);
 
@@ -1014,8 +987,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
       siz = fd->bytes_per_sample;
       if ((format == MUS_OUT_FORMAT) && 
 	  (chans == 1) && 
-	  (beg == 0) && 
-	  (fd->prescaler == 1.0))
+	  (beg == 0))
 	{
 	  ssize_t total;
 
@@ -1036,7 +1008,6 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	  return(total / siz);
 	}
 
-      prescaling = fd->prescaler;
       if (ur_charbuf == NULL) 
 	ur_charbuf = (char *)malloc(BUFLIM * sizeof(char)); 
       charbuf = ur_charbuf;
@@ -1045,7 +1016,6 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
     {
       charbuf = inbuf;
       siz = mus_bytes_per_sample(tfd);
-      prescaling = 1.0;
       format = tfd;
     }
 
@@ -1256,27 +1226,19 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		  break;
 		  
 		case MUS_BFLOAT:
-		  if (prescaling == 1.0)
+		  while (bufnow <= bufend4)
 		    {
-		      while (bufnow <= bufend4)
-			{
-			  (*bufnow++) = (mus_float_t)(big_endian_float(jchar));
-			  jchar += 4;
-			  (*bufnow++) = (mus_float_t)(big_endian_float(jchar));
-			  jchar += 4;
-			  (*bufnow++) = (mus_float_t)(big_endian_float(jchar));
-			  jchar += 4;
-			  (*bufnow++) = (mus_float_t)(big_endian_float(jchar));
-			  jchar += 4;
-			}
-		      for (; bufnow <= bufend; jchar += 4) 
-			(*bufnow++) = (mus_float_t)(big_endian_float(jchar));
+		      (*bufnow++) = (mus_float_t)(big_endian_float(jchar));
+		      jchar += 4;
+		      (*bufnow++) = (mus_float_t)(big_endian_float(jchar));
+		      jchar += 4;
+		      (*bufnow++) = (mus_float_t)(big_endian_float(jchar));
+		      jchar += 4;
+		      (*bufnow++) = (mus_float_t)(big_endian_float(jchar));
+		      jchar += 4;
 		    }
-		  else
-		    {
-		      for (; bufnow <= bufend; jchar += 4) 
-			(*bufnow++) = (mus_float_t)(prescaling * (big_endian_float(jchar)));
-		    }
+		  for (; bufnow <= bufend; jchar += 4) 
+		    (*bufnow++) = (mus_float_t)(big_endian_float(jchar));
 		  break;
 		  
 		case MUS_BFLOAT_UNSCALED:
@@ -1285,27 +1247,19 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		  break;
 		  
 		case MUS_BDOUBLE:   
-		  if (prescaling == 1.0)
+		  while (bufnow <= bufend4)
 		    {
-		      while (bufnow <= bufend4)
-			{
-			  (*bufnow++) = (mus_float_t)(big_endian_double(jchar));
-			  jchar += 8;
-			  (*bufnow++) = (mus_float_t)(big_endian_double(jchar));
-			  jchar += 8;
-			  (*bufnow++) = (mus_float_t)(big_endian_double(jchar));
-			  jchar += 8;
-			  (*bufnow++) = (mus_float_t)(big_endian_double(jchar));
-			  jchar += 8;
-			}
-		      for (; bufnow <= bufend; jchar += 8)
-			(*bufnow++) = (mus_float_t)(big_endian_double(jchar));
+		      (*bufnow++) = (mus_float_t)(big_endian_double(jchar));
+		      jchar += 8;
+		      (*bufnow++) = (mus_float_t)(big_endian_double(jchar));
+		      jchar += 8;
+		      (*bufnow++) = (mus_float_t)(big_endian_double(jchar));
+		      jchar += 8;
+		      (*bufnow++) = (mus_float_t)(big_endian_double(jchar));
+		      jchar += 8;
 		    }
-		  else
-		    {
-		      for (; bufnow <= bufend; jchar += 8)
-			(*bufnow++) = (mus_float_t)(prescaling * (big_endian_double(jchar)));
-		    }
+		  for (; bufnow <= bufend; jchar += 8)
+		    (*bufnow++) = (mus_float_t)(big_endian_double(jchar));
 		  break;
 		  
 		case MUS_BDOUBLE_UNSCALED:   
@@ -1314,27 +1268,19 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		  break;
 		  
 		case MUS_LFLOAT:
-		  if (prescaling == 1.0)
+		  while (bufnow <= bufend4)
 		    {
-		      while (bufnow <= bufend4)
-			{
-			  (*bufnow++) = (mus_float_t)(little_endian_float(jchar));
-			  jchar += 4;
-			  (*bufnow++) = (mus_float_t)(little_endian_float(jchar));
-			  jchar += 4;
-			  (*bufnow++) = (mus_float_t)(little_endian_float(jchar));
-			  jchar += 4;
-			  (*bufnow++) = (mus_float_t)(little_endian_float(jchar));
-			  jchar += 4;
-			}
-		      for (; bufnow <= bufend; jchar += 4) 
-			(*bufnow++) = (mus_float_t)(little_endian_float(jchar));
+		      (*bufnow++) = (mus_float_t)(little_endian_float(jchar));
+		      jchar += 4;
+		      (*bufnow++) = (mus_float_t)(little_endian_float(jchar));
+		      jchar += 4;
+		      (*bufnow++) = (mus_float_t)(little_endian_float(jchar));
+		      jchar += 4;
+		      (*bufnow++) = (mus_float_t)(little_endian_float(jchar));
+		      jchar += 4;
 		    }
-		  else
-		    {
-		      for (; bufnow <= bufend; jchar += 4) 
-			(*bufnow++) = (mus_float_t)(prescaling * (little_endian_float(jchar)));
-		    }
+		  for (; bufnow <= bufend; jchar += 4) 
+		    (*bufnow++) = (mus_float_t)(little_endian_float(jchar));
 		  break;
 		  
 		case MUS_LFLOAT_UNSCALED:    
@@ -1343,16 +1289,8 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		  break;
 		  
 		case MUS_LDOUBLE:   
-		  if (prescaling == 1.0)
-		    {
-		      for (; bufnow <= bufend; jchar += 8) 
-			(*bufnow++) = (mus_float_t)(little_endian_double(jchar));
-		    }
-		  else
-		    {
-		      for (; bufnow <= bufend; jchar += 8) 
-			(*bufnow++) = (mus_float_t)(prescaling * (little_endian_double(jchar)));
-		    }
+		  for (; bufnow <= bufend; jchar += 8) 
+		    (*bufnow++) = (mus_float_t)(little_endian_double(jchar));
 		  break;
 		  
 		case MUS_LDOUBLE_UNSCALED:   
@@ -1529,16 +1467,8 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			  break;
 			  
 			case MUS_BFLOAT:
-			  if (prescaling == 1.0)
-			    {
-			      for (; bufnow <= bufend; jchar += siz_chans) 
-				(*bufnow++) = (mus_float_t)(big_endian_float(jchar));
-			    }
-			  else
-			    {
-			      for (; bufnow <= bufend; jchar += siz_chans) 
-				(*bufnow++) = (mus_float_t)(prescaling * (big_endian_float(jchar)));
-			    }
+			  for (; bufnow <= bufend; jchar += siz_chans) 
+			    (*bufnow++) = (mus_float_t)(big_endian_float(jchar));
 			  break;
 			  
 			case MUS_BFLOAT_UNSCALED:
@@ -1547,16 +1477,8 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			  break;
 			  
 			case MUS_BDOUBLE:   
-			  if (prescaling == 1.0)
-			    {
-			      for (; bufnow <= bufend; jchar += siz_chans)
-				(*bufnow++) = (mus_float_t)(big_endian_double(jchar));
-			    }
-			  else
-			    {
-			      for (; bufnow <= bufend; jchar += siz_chans)
-				(*bufnow++) = (mus_float_t)(prescaling * (big_endian_double(jchar)));
-			    }
+			  for (; bufnow <= bufend; jchar += siz_chans)
+			    (*bufnow++) = (mus_float_t)(big_endian_double(jchar));
 			  break;
 			  
 			case MUS_BDOUBLE_UNSCALED:   
@@ -1565,16 +1487,8 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			  break;
 			  
 			case MUS_LFLOAT:
-			  if (prescaling == 1.0)
-			    {
-			      for (; bufnow <= bufend; jchar += siz_chans) 
-				(*bufnow++) = (mus_float_t)(little_endian_float(jchar));
-			    }
-			  else
-			    {
-			      for (; bufnow <= bufend; jchar += siz_chans) 
-				(*bufnow++) = (mus_float_t)(prescaling * (little_endian_float(jchar)));
-			    }
+			  for (; bufnow <= bufend; jchar += siz_chans) 
+			    (*bufnow++) = (mus_float_t)(little_endian_float(jchar));
 			  break;
 			  
 			case MUS_LFLOAT_UNSCALED:    
@@ -1583,16 +1497,8 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			  break;
 			  
 			case MUS_LDOUBLE:   
-			  if (prescaling == 1.0)
-			    {
-			      for (; bufnow <= bufend; jchar += siz_chans) 
-				(*bufnow++) = (mus_float_t)(little_endian_double(jchar));
-			    }
-			  else
-			    {
-			      for (; bufnow <= bufend; jchar += siz_chans) 
-				(*bufnow++) = (mus_float_t)(prescaling * (little_endian_double(jchar)));
-			    }
+			  for (; bufnow <= bufend; jchar += siz_chans) 
+			    (*bufnow++) = (mus_float_t)(little_endian_double(jchar));
 			  break;
 			  
 			case MUS_LDOUBLE_UNSCALED:   
@@ -2095,7 +2001,6 @@ void mus_reset_io_c(void)
   io_fd_size = 0;
   io_fds = NULL;
   clipping_default = false;
-  prescaler_default = 1.0;
   mus_clip_set_handler(NULL);
 }
 
@@ -3108,7 +3013,6 @@ int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int 
 
     case MUS_LFLOAT:
     case MUS_LFLOAT_UNSCALED:
-      /* prescaler is known to be 1.0 here */
       min_max_floats(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LFLOAT_UNSCALED);
       break;
 

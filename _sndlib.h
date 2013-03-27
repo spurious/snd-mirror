@@ -417,11 +417,6 @@ MUS_EXPORT int mus_file_header_type(int tfd);
 MUS_EXPORT char *mus_file_fd_name(int tfd);
 MUS_EXPORT int mus_file_set_chans(int tfd, int chans);
 
-MUS_EXPORT mus_float_t mus_file_prescaler(int tfd);
-MUS_EXPORT mus_float_t mus_file_set_prescaler(int tfd, mus_float_t val);
-MUS_EXPORT mus_float_t mus_prescaler(void);
-MUS_EXPORT mus_float_t mus_set_prescaler(mus_float_t new_value);
-
 MUS_EXPORT int mus_iclamp(int lo, int val, int hi);
 MUS_EXPORT mus_long_t mus_oclamp(mus_long_t lo, mus_long_t val, mus_long_t hi);
 MUS_EXPORT mus_float_t mus_fclamp(mus_float_t lo, mus_float_t val, mus_float_t hi);

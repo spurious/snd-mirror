@@ -150,11 +150,7 @@ var extsnd_drawline_tip = "<code>(draw-line x0 y0 x1 y1 snd chn (ax time-graph))
 var extsnd_drawstring_tip = "<code>(draw-string text x0 y0 snd chn (ax time-graph))</code>: draw a string";
 
 var extsnd_duringopenhook_tip = "<code>during-open-hook (fd name reason)</code>:<br>" +
-                                " called after file is opened, but before data has been read.<br>" +
-                                "<pre> (hook-push during-open-hook<br>" +
-                                "    (lambda (fd name reason) <br>" +
-                                "      (if (= (mus-sound-header-type name) mus-raw)<br>" +
-                                "          (set! (mus-file-prescaler fd) 500.0))))</pre>";
+                                " called after file is opened, but before data has been read.";
 
 var extsnd_editfragment_tip = "<code>(edit-fragment (ctr current-edit-position) snd chn)</code>:<br>" +
                               " edit history entry at ctr associated with snd's channel chn;<br>" +
@@ -370,9 +366,6 @@ var extsnd_musbfloat_tip = "<code>mus-bfloat</code> data is big-endian float";
 var extsnd_musbshort_tip = "<code>mus-bshort</code> data is big-endian signed 16-bit integer";
 
 var extsnd_musdataformatname_tip = "<code>(mus-data-format-name format)</code>: data format (e.g. mus-bshort) as a string";
-
-var extsnd_musfileprescaler_tip = "sometimes sound files sample values are so small that they need<br>" +
-                                  "to be boosted before Snd uses them.";
 
 var extsnd_musheadertypename_tip = "<code>(mus-header-type-name type)</code>: header type (e.g. mus-aiff) as a string";
 

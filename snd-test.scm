@@ -1261,7 +1261,6 @@
       'mus-array-print-length (mus-array-print-length) 8
       'mus-clipping (mus-clipping) #f
       'mus-float-equal-fudge-factor (mus-float-equal-fudge-factor) .0000001
-      'mus-prescaler (mus-prescaler) 1.0
       'play-arrow-size (play-arrow-size) 10
       'print-length (print-length) 12 
       'read-only (without-errors (read-only)) 'no-such-sound
@@ -1806,7 +1805,6 @@
 	(list 'mix-tag-width mix-tag-width 6 20)
 	(list 'mark-tag-height mark-tag-height 4 20)
 	(list 'mark-tag-width mark-tag-width 10 20)
-	(list 'mus-prescaler mus-prescaler 1.0 100.0)
 	(list 'mus-clipping mus-clipping #f #t)
 	(list 'selection-creates-region selection-creates-region #t #f)
 	(list 'transform-normalization transform-normalization normalize-by-channel dont-normalize)
@@ -2110,7 +2108,7 @@
 		       'mus-chebyshev-first-kind 'mus-chebyshev-second-kind 'mus-clipping 'mus-close
 		       'mus-data 'mus-data-format->string 'mus-data-format-name 'mus-describe 'mus-error-hook
 		       'mus-error-type->string 'mus-expand-filename 'mus-feedback 'mus-feedforward 'mus-fft
-		       'mus-file-buffer-size 'mus-file-clipping 'mus-file-name 'mus-file-prescaler
+		       'mus-file-buffer-size 'mus-file-clipping 'mus-file-name
 		       'mus-frequency 'mus-generator? 'mus-header-raw-defaults 'mus-header-type->string 'mus-header-type-name
 		       'mus-hop 'mus-increment 'mus-input? 'mus-interp-all-pass 'mus-interp-bezier
 		       'mus-interp-hermite 'mus-interp-lagrange 'mus-interp-linear 'mus-interp-none 'mus-interp-sinusoidal
@@ -2119,7 +2117,7 @@
 		       'mus-lintn 'mus-location 'mus-lshort 'mus-max-malloc 'mus-max-table-size
 		       'mus-mix 'mus-mulaw 'mus-name 
 		       'mus-next 'mus-nist 'mus-offset 'mus-order 'mus-oss-set-buffers
-		       'mus-out-format 'mus-output? 'mus-phase 'mus-prescaler 'mus-ramp
+		       'mus-out-format 'mus-output? 'mus-phase 'mus-ramp
 		       'mus-rand-seed 'mus-random 'mus-raw 'mus-reset 'mus-riff
 		       'mus-run 'mus-scaler 'mus-set-formant-radius-and-frequency 'mus-sound-chans 'mus-sound-close-input
 		       'mus-sound-close-output 'mus-sound-comment 'mus-sound-data-format 'mus-sound-data-location 'mus-sound-datum-size
@@ -25530,8 +25528,6 @@ EDITS: 2
 			 (filename (hook 'name))
 			 (reason (hook 'reason)))
 		     (set! dop #t)
-		     (if (fneq (mus-file-prescaler fd) 1.0)
-			 (snd-display #__line__ ";mus-file-prescaler: ~A" (mus-file-prescaler fd)))
 		     (if (not (string=? filename (mus-expand-filename "oboe.snd")))
 			 (snd-display #__line__ ";during-open-hook filename: ~A?" filename))
 		     (if (not (= reason 1))
@@ -45359,7 +45355,7 @@ EDITS: 1
 					;mus-sound-open-input mus-sound-open-output
 					;mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write
 					;mus-sound-seek-frame 
-		     mus-file-prescaler mus-prescaler mus-clipping mus-file-clipping mus-header-raw-defaults 
+		     mus-clipping mus-file-clipping mus-header-raw-defaults 
 		     moving-average moving-average? make-moving-average moving-max moving-max? make-moving-max
 		     mus-expand-filename 
 		     make-sound-data sound-data-ref sound-data-set! sound-data-scale! sound-data-fill! sound-data? sound-data-length
@@ -45469,7 +45465,7 @@ EDITS: 1
 			 phase-vocoder-amp-increments phase-vocoder-amps 
 			 phase-vocoder-freqs phase-vocoder-phase-increments phase-vocoder-phases 
 			 html-dir html-program mus-interp-type widget-position widget-size 
-			 mus-file-prescaler mus-prescaler mus-clipping mus-file-clipping mus-header-raw-defaults
+			 mus-clipping mus-file-clipping mus-header-raw-defaults
 			 ))
 	     
 	     (make-procs (list

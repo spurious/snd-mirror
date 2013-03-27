@@ -2238,17 +2238,7 @@ mix the dragged file even from the menubar:
 </pre>
 
 <p>This hook is called after a file is opened, but before its data has been read.
-This provides an opportunity to set sndlib prescaling values:
-</p>
-
-<pre class="indented">
-(hook-push <em class=red>during-open-hook</em>
-  (lambda (hook)
-    (if (= (<a class=quiet href="#mussoundheadertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundheadertype_tip)">mus-sound-header-type</a> (hook 'name)) <a class=quiet href="#headertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_musraw_tip)">mus-raw</a>)
-        (set! (<a href="#musfileprescaler" onmouseout="UnTip()" onmouseover="Tip(extsnd_musfileprescaler_tip)">mus-file-prescaler</a> (hook 'fd)) 500.0))))
-</pre>
-
-<p>The prescaling affects only sound data made up of floats or doubles.  'reason' is an integer indicating why this file is being opened:
+'reason' is an integer indicating why this file is being opened:
 </p>
 <pre class="indented">
 0: reopen a temporarily closed file (internal to Snd &mdash; normally invisible)
@@ -4867,23 +4857,6 @@ See also <a href="#cliphook">clip-hook</a>.
 <div class="spacer"></div>
 
 
-<!-- mus-file-prescaler -->
-<pre class="indented">
-<em class=def id="musfileprescaler">mus-file-prescaler</em> fd
-</pre>
-
-<p>This is the prescaling value for reading data from the sndlib file descriptor 'fd'.
-If you're reading float data that is extremely soft (i.e. peak amplitude
-below .001), the transfer to integer form in sndlib (if you're using an integer internal sample format) can cause bits
-to be lost, resulting in hiss.  In this case set the prescaler for
-the file to 1000.0 or so to get the data into a more normal
-range.  Since mus-file-prescaler must be set after opening
-the sound file, but before trying to read any data, you need to use it in the context of <a href="#duringopenhook">during-open-hook</a>.
-The default prescaler value is <a href="#musprescaler">mus-prescaler</a>, normally 1.0.
-</p>
-<div class="spacer"></div>
-
-
 <!-- mus-header-raw-defaults -->
 <pre class="indented">
 <em class=def id="musheaderrawdefaults">mus-header-raw-defaults</em>
@@ -4948,16 +4921,6 @@ equivalent to (mus-oss-set-buffers 16 12).  This default makes the control panel
 Snd used to call (mus-oss-set-buffers 4 12) as its default, 
 but this seems to cause trouble for a variety of new sound cards.
 My initialization file includes (mus-oss-set-buffers 2 12).
-</p>
-<div class="spacer"></div>
-
-
-<!-- mus-prescaler -->
-<pre class="indented">
-<em class=def id="musprescaler">mus-prescaler</em>
-</pre>
-
-<p>mus-prescaler is the global default prescaling value for reading data from a file (see <a href="#musfileprescaler">mus-file-prescaler</a>).
 </p>
 <div class="spacer"></div>
 

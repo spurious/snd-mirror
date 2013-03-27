@@ -971,16 +971,15 @@ is a physical model of a flute:
 		       (if (not chan4)
 			   (vector allpass5 allpass6)
 			   (vector allpass5 allpass6 allpass7 allpass8))))
-	    (combs (make-comb-bank (vector comb1 comb2 comb3 comb4 comb5 comb6))))
+	    (combs (make-comb-bank (vector comb1 comb2 comb3 comb4 comb5 comb6)))
+	    (allpasses (make-all-pass-bank (vector allpass1 allpass2 allpass3))))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
 	    (out-bank i filts
 		      (all-pass allpass4
 				(one-pole low
-					  (all-pass allpass3
-						    (all-pass allpass2
-							      (all-pass allpass1
-									(comb-bank combs (* volume (ina i *reverb*))))))))))))))
+					  (all-pass-bank allpasses
+							 (comb-bank combs (* volume (ina i *reverb*))))))))))))
 
 (definstrument (reson startime dur pitch amp numformants indxfun skewfun pcskew skewat skewdc
 		      vibfreq vibpc ranvibfreq ranvibpc degree distance reverb-amount data)
