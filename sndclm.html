@@ -5284,9 +5284,10 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
       radius      ; resonance width, indirectly
 <em class=def id="formant">formant</em> f input center-frequency-in-radians
 <em class=def id="formant?">formant?</em> f
-<em class=def id="formantbank">formant-bank</em> amps filters input
+
+<em class=def id="formantbank">formant-bank</em> filters input
 <em class=def id="formantbankp">formant-bank?</em> f
-<em class=def id="makeformantbank">make-formant-bank</em> filters
+<em class=def id="makeformantbank">make-formant-bank</em> filters amps
 
 <em class=def id="make-firmant">make-firmant</em> frequency radius
 <em class=def id="firmant">firmant</em> f input center-frequency-in-radians
@@ -5466,24 +5467,49 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
       (do ((i 0 (+ 1 i)))
 	  ((= i num-formants))
 	(set! (frms i) (<em class=red>make-formant</em> (* (+ i 1) start-frq) radius))))
-    (do ((k beg (+ 1 k)))
-        ((= k end))
-      (let ((sum 0.0)
-            (x (<a class=quiet href="#readin" onmouseout="UnTip()" onmouseover="Tip(sndclm_readin_tip)">readin</a> rd))
-            (frq (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> menv)))
-       (do ((i 0 (+ 1 i)))
-	    ((= i num-formants))
-	  (set! sum (+ sum (<em class=red>formant</em> (frms i) x)))
-	  (let ((curfrq (* (+ i 1) frq)))
+    (let ((fb (<em class=red>make-formant-bank</em> frms)))
+      (do ((k beg (+ 1 k)))
+          ((= k end))
+        (let ((frq (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> menv)))
+          (outa k (<em class=red>formant-bank</em> fb (* amp (readin rd))))
+	  (do ((i 0 (+ i 1))
+	       (curfrq frq (+ curfrq frq)))
+	      ((= i num-formants))
 	    (if (&lt; (* 2 curfrq) (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>))
-	        (set! (<em class=red>mus-frequency</em> (frms i)) curfrq))))
-        (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> k (* amp sum))))))
+	        (set! (<em class=red>mus-frequency</em> (frms i)) curfrq))))))))
 
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
   (move-formants 0 "oboe.snd" 2.0 0.99 '(0 1200 1.6 2400 2 1400) 4))
 </pre>
 
+<p>make-formant-bank creates a formant-bank generator, an array of formant generators that is summed in parallel. The
+explicit do loop:
+</p>
 
+<pre class="indented">
+(let ((sum 0.0)) ; say we have n formant generators in the formants vector, and we're passing each a signal x
+  (do ((i 0 (+ i 1)))
+      ((= i n) sum)
+    (set! sum (+ sum (formant (formants i) x)))))
+</pre>
+
+<p>can be replaced with:
+</p>
+
+<pre class="indented">
+(let ((fb (make-formant-bank formants)))
+  ...
+  (formant-bank fb x))
+</pre>
+
+<p>make-formant-bank takes a vector of formant generators as its first argument.  Its optional second argument
+is a vct of gains (amplitudes) to scale each formant's contribution to the sum.  Similarly, formant-bank's
+second argument is either a real number or a vct.  If a vct, each element is treated as the input to the
+corresponding formant in the bank.
+</p>
+
+
+<br>
 <p>The clm-3 formant gain calculation was incorrect.  To translate from the old
 formant to the new one, multiply the old gain by (* 2 (sin (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frequency))).
 </p>
@@ -5849,12 +5875,18 @@ and is the basis for about a dozen extensions (comb and friends below).
 <em class=def id="make-comb">make-comb</em> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
 <em class=def id="comb">comb</em> cflt input (pm 0.0)
 <em class=def id="comb?">comb?</em> cflt
+
 <em class=def id="combbank">comb-bank</em> combs input
+<em class=def id="combbankp">comb-bank?</em> object
+<em class=def id="makecombbank">make-comb-bank</em> combs
 
 <em class=def id="make-filtered-comb">make-filtered-comb</em> (scaler 1.0) size initial-contents (initial-element 0.0) max-size filter
 <em class=def id="filtered-comb">filtered-comb</em> cflt input (pm 0.0)
 <em class=def id="filtered-comb?">filtered-comb?</em> cflt
-<em class=def id="filteredcombbank">filtered-comb-bank</em> filtered-combs input
+
+<em class=def id="filteredcombbank">filtered-comb-bank</em> fcombs input
+<em class=def id="filteredcombbankp">filtered-comb-bank?</em> object
+<em class=def id="makefilteredcombbank">make-filtered-comb-bank</em> fcombs
 
 <em class=def id="make-notch">make-notch</em> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
 <em class=def id="notch">notch</em> cflt input (pm 0.0)
@@ -5980,6 +6012,29 @@ The following instrument sweeps the comb filter using the pm argument:
   (zc 3.5 3 100 .1 90 100 .95))
 </pre>
 
+<p>Nearly every actual use of comb filters involves a bank of them, a vector of combs
+summed in parallel.  The comb-bank generator is intended for this kind of application.
+make-comb-bank takes a vector of combs and returns the comb-bank generator which can
+be called via comb-bank.
+</p>
+
+<pre class="indented">
+(let ((sum 0.0)) 
+  (do ((i 0 (+ i 1)))
+      ((= i n) sum)
+    (set! sum (+ sum (comb (combs i) x)))))
+</pre>
+
+<p>can be replaced with:
+</p>
+
+<pre class="indented">
+(let ((cb (make-comb-bank combs)))
+  ...
+  (comb-bank cb x))
+</pre>
+
+
 <p>The comb filter can produce some nice effects; here's one that treats the comb filter's
 delay line as the coefficients for an FIR filter:
 </p>
@@ -6002,7 +6057,7 @@ delay line as the coefficients for an FIR filter:
   (fir+comb 6 2 3000 .0005 1000))
 </pre>
 
-<p>Here's another that fluctuates between two sets of combs; it usually works best with voice sounds:
+<p>Here's another that fluctuates between two sets of combs; it usually works best with voice sounds.  We use comb-bank generators:
 </p>
 
 <pre class="indented">
@@ -6026,19 +6081,14 @@ delay line as the coefficients for an FIR filter:
       (set! (cmbs1 k)
             (<em class=red>make-comb</em> scaler 
               (floor (* comb-len (combs1 k))))))
-    (do ((i beg (+ 1 i)))
-        ((= i end))
-      (let ((interp (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))
-            (sum0 0.0)
-            (sum1 0.0)
-            (x (<a class=quiet href="#readin" onmouseout="UnTip()" onmouseover="Tip(sndclm_readin_tip)">readin</a> rd)))
-        (do ((k 0 (+ 1 k)))
-            ((= k num-combs0))
-          (set! sum0 (+ sum0 (<em class=red>comb</em> (cmbs0 k) x))))
-        (do ((k 0 (+ 1 k)))
-            ((= k num-combs1))
-          (set! sum1 (+ sum1 (<em class=red>comb</em> (cmbs1 k) x))))
-        (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (+ (* interp sum0) (* (- 1.0 interp) sum1)))))))
+    (let ((nc0 (<em class=red>make-comb-bank</em> cmbs0))
+          (nc1 (<em class=red>make-comb-bank</em> cmbs1)))
+      (do ((i beg (+ 1 i)))
+          ((= i end))
+        (let ((interp (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))
+              (x (<a class=quiet href="#readin" onmouseout="UnTip()" onmouseover="Tip(sndclm_readin_tip)">readin</a> rd)))
+          (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (+ (* interp (<em class=red>comb-bank</em> nc0 x)) 
+                     (* (- 1.0 interp) (<em class=red>comb-bank</em> nc1 x)))))))))
 
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:scaled-to .5) 
   (flux 0 "oboe.snd" 10.0 '(1.0 1.25 1.5) '(1.0 1.333 1.6)) ; bowed oboe?
@@ -6051,8 +6101,11 @@ delay line as the coefficients for an FIR filter:
 
 <p>For more comb filter examples,
 see examp.scm, <a href="sndscm.html#chordalize">chordalize</a> in dsp.scm, or
-any of the standard reverbs such as <a href="sndscm.html#nrev">nrev</a>. 
-filtered-comb is used in <a href="sndscm.html#freeverb">freeverb</a>
+any of the standard reverbs such as <a href="sndscm.html#nrev">nrev</a>.
+</p>
+
+<br> 
+<p>filtered-comb is used in <a href="sndscm.html#freeverb">freeverb</a>
 where a <a href="#one-zero">one-zero</a> filter is placed
 in the feedback loop:
 </p>
@@ -6060,6 +6113,10 @@ in the feedback loop:
 <pre class="indented">
 (make-filtered-comb :size len :scaler room-decay-val :filter (make-one-zero :a0 (- 1.0 dmp) :a1 dmp))
 </pre>
+
+<p>As with the normal comb filter, the filtered-comb-bank generator sums a vector of filtered-comb
+generators in parallel.
+</p>
 
 
 
@@ -6079,7 +6136,10 @@ in the feedback loop:
 
 <em class=def id="all-pass">all-pass</em> f input (pm 0.0)
 <em class=def id="all-pass?">all-pass?</em> f
+
 <em class=def id="allpassbank">all-pass-bank</em> all-passes input
+<em class=def id="allpassbankp">all-pass-bank?</em> object
+<em class=def id="makeallpassbank">make-all-pass-bank</em> all-passes
 
 <em class=def id="make-one-pole-all-pass">make-one-pole-all-pass</em> size coeff
 <em class=def id="one-pole-all-pass">one-pole-all-pass</em> f input 
@@ -6207,6 +6267,24 @@ old analog tapes &mdash; the reverb slightly precedes the direct signal:
     (later tmp 10000 .1)))
 </pre>
 
+<p>In all such applications, the all-pass filters are connected in series (each one's output is the
+input to the next in the set).  To package this up in one generator, use an all-pass-bank.  An
+all-pass-bank is slightly different from the other "bank" generators in that it connects the
+vector of all-passes in series, rather than summing them in parallel.
+Code of the form:
+</p>
+
+<pre class="indented">
+(all-pass a1 (all-pass a2 input))
+</pre>
+
+<p>can be replaced with:
+</p>
+
+<pre class="indented">
+(let ((ab (make-all-pass-bank (vector a1 a2))))
+  (all-pass-bank ab input))
+</pre>
 
 
 

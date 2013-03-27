@@ -2414,6 +2414,7 @@
 		    (vector-set! cs 0 (make-comb scaler comb-len))
 		    (vector-set! cs 1 (make-comb scaler (floor (* comb-len .75))))
 		    (vector-set! cs 2 (make-comb scaler (floor (* comb-len 1.25))))
+		    (set! cs (make-comb-bank cs))
 		    (do ((k 0 (+ k 1)))
 			((= k grain-size))
 		      (set! (grain k) (comb-bank cs (original-grain k)))))))))))))
@@ -2431,12 +2432,12 @@
 	(do ((i 0 (+ i 1)))
 	    ((= i num-formants))
 	  (set! (frms i) (make-formant (* (+ i 1) start-frq) radius))))
-      (let ((frms1 (make-formant-bank frms)))
+      (let ((frms1 (make-formant-bank frms amps)))
 	(do ((k beg (+ k 1)))
 	    ((= k end))
 	  (let ((x (readin rd))
 		(frq (env menv)))
-	    (outa k (formant-bank amps frms1 x))
+	    (outa k (formant-bank frms1 x))
 	    (do ((i 0 (+ i 1))
 		 (curfrq frq (+ curfrq frq)))
 		((= i num-formants))
@@ -2473,6 +2474,9 @@
 	  (set! (cmbs1 k)
 		(make-comb scaler 
 			   (floor (* comb-len (combs1 k))))))
+	
+	(set! cmbs0 (make-comb-bank cmbs0))
+	(set! cmbs1 (make-comb-bank cmbs1))
 
 	(do ((i beg (+ i 1)))
 	    ((= i end))

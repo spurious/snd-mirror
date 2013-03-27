@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 11
-#define MUS_DATE "21-Mar-13"
+#define MUS_REVISION 12
+#define MUS_DATE "27-Mar-13"
 
 /* isn't mus_env_interp backwards? */
 
@@ -239,6 +239,10 @@ MUS_EXPORT mus_any *mus_make_comb(mus_float_t scaler, int size, mus_float_t *lin
 MUS_EXPORT bool mus_comb_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_comb_unmodulated_noz(mus_any *ptr, mus_float_t input);
 
+MUS_EXPORT mus_float_t mus_comb_bank(mus_any *bank, mus_float_t inval);
+MUS_EXPORT mus_any *mus_make_comb_bank(int size, mus_any **combs);
+MUS_EXPORT bool mus_comb_bank_p(mus_any *g);
+
 MUS_EXPORT mus_float_t mus_notch(mus_any *gen, mus_float_t input, mus_float_t pm);
 MUS_EXPORT mus_float_t mus_notch_unmodulated(mus_any *gen, mus_float_t input);
 MUS_EXPORT mus_any *mus_make_notch(mus_float_t scaler, int size, mus_float_t *line, int line_size, mus_interp_t type);
@@ -250,6 +254,10 @@ MUS_EXPORT mus_float_t mus_all_pass_unmodulated(mus_any *gen, mus_float_t input)
 MUS_EXPORT mus_any *mus_make_all_pass(mus_float_t backward, mus_float_t forward, int size, mus_float_t *line, int line_size, mus_interp_t type);
 MUS_EXPORT bool mus_all_pass_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_all_pass_unmodulated_noz(mus_any *ptr, mus_float_t input);
+
+MUS_EXPORT mus_float_t mus_all_pass_bank(mus_any *bank, mus_float_t inval);
+MUS_EXPORT mus_any *mus_make_all_pass_bank(int size, mus_any **combs);
+MUS_EXPORT bool mus_all_pass_bank_p(mus_any *g);
 
 MUS_EXPORT mus_any *mus_make_moving_average(int size, mus_float_t *line);
 MUS_EXPORT bool mus_moving_average_p(mus_any *ptr);
@@ -334,11 +342,10 @@ MUS_EXPORT mus_any *mus_make_formant(mus_float_t frequency, mus_float_t radius);
 MUS_EXPORT bool mus_formant_p(mus_any *ptr);
 MUS_EXPORT void mus_set_formant_radius_and_frequency(mus_any *ptr, mus_float_t radius, mus_float_t frequency);
 MUS_EXPORT mus_float_t mus_formant_with_frequency(mus_any *ptr, mus_float_t input, mus_float_t freq_in_radians);
-MUS_EXPORT mus_float_t mus_formant_bank(int size, mus_float_t *amps, mus_any **formants, mus_float_t inval);
 
-MUS_EXPORT mus_float_t mus_formant_bank_wrapped(mus_any *bank, mus_float_t *amps, mus_float_t inval);
-MUS_EXPORT mus_float_t mus_formant_bank_wrapped_with_inputs(mus_any *bank, mus_float_t *amps, mus_float_t *inval);
-MUS_EXPORT mus_any *mus_make_formant_bank(int size, mus_any **formants);
+MUS_EXPORT mus_float_t mus_formant_bank(mus_any *bank, mus_float_t inval);
+MUS_EXPORT mus_float_t mus_formant_bank_with_inputs(mus_any *bank, mus_float_t *inval);
+  MUS_EXPORT mus_any *mus_make_formant_bank(int size, mus_any **formants, mus_float_t *amps);
 MUS_EXPORT bool mus_formant_bank_p(mus_any *g);
 
 MUS_EXPORT mus_float_t mus_firmant(mus_any *ptr, mus_float_t input);
@@ -367,6 +374,10 @@ MUS_EXPORT mus_float_t mus_filtered_comb(mus_any *ptr, mus_float_t input, mus_fl
 MUS_EXPORT mus_float_t mus_filtered_comb_unmodulated(mus_any *ptr, mus_float_t input);
 MUS_EXPORT bool mus_filtered_comb_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_filtered_comb(mus_float_t scaler, int size, mus_float_t *line, int line_size, mus_interp_t type, mus_any *filt);
+
+MUS_EXPORT mus_float_t mus_filtered_comb_bank(mus_any *bank, mus_float_t inval);
+MUS_EXPORT mus_any *mus_make_filtered_comb_bank(int size, mus_any **combs);
+MUS_EXPORT bool mus_filtered_comb_bank_p(mus_any *g);
 
 MUS_EXPORT mus_float_t mus_wave_train(mus_any *gen, mus_float_t fm);
 MUS_EXPORT mus_float_t mus_wave_train_unmodulated(mus_any *gen);
@@ -593,10 +604,11 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
- * 21-Mar:     added one-pole-all-pass generator.
- * 14-Mar:     added formant-bank generator.
+ * 27-Mar:     comb-bank, all-pass-bank, filtered-comb-bank.
+ * 21-Mar:     one-pole-all-pass generator.
+ * 14-Mar:     formant-bank generator.
  *             removed mus_delay_tick_noz.
- * 4-Mar:      added moving_max generator.
+ * 4-Mar:      moving_max generator.
  *             removed the unstable filter check in make_two_pole.
  * 21-Jan-13:  changed mus_formant_bank parameters.
  * --------

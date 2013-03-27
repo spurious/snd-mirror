@@ -54,7 +54,7 @@
 	      ((= i ramp-start))
 	    ;; in bank1 section -- fire up the resonators
 	    (let ((inval (read-sample fil1)))
-	      (set! outval (formant-bank #f fs1 inval))
+	      (set! outval (formant-bank fs1 inval))
 	      (outa i (* amp (+ (* bank1 outval) (* (- 1.0 bank1) inval))))))
 	  
 	  ;; in the ramp
@@ -83,7 +83,7 @@
 			    (ks (* 2.0 ramp) (- ks ifs)))
 			   ((= k mid))
 			 (vct-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
-		 (outa i (* amp (formant-bank #f fs1 inputs))))))
+		 (outa i (* amp (formant-bank fs1 inputs))))))
 	    
 	    ((1)
 	     (do ((i ramp-start (+ i 1)))
@@ -108,7 +108,7 @@
 			    (ks 0.0 (+ ks ifs)))
 			   ((>= k fs))
 			 (vct-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
-		 (outa i (* amp (formant-bank #f fs1 inputs))))))
+		 (outa i (* amp (formant-bank fs1 inputs))))))
 	    
 	    (else
 	     (let ((half-fs (/ fs 2)))
@@ -128,14 +128,14 @@
 		     (let ((rfs (min 1.0 ks)))
 		       (set! (inputs k) (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))
 		       (set! (inputs hk) (inputs k))))
-		   (outa i (* amp (formant-bank #f fs1 inputs))))))))
+		   (outa i (* amp (formant-bank fs1 inputs))))))))
 	  
 	  (do ((i ramp-end (+ i 1))
 	       (bank2 1.0 (- bank2 bank-incr)))
 	      ((= i bank2-end))
 	    ;; in bank2 section -- ramp out resonators
 	    (let ((inval (read-sample fil2)))
-	      (set! outval (formant-bank #f fs1 inval))
+	      (set! outval (formant-bank fs1 inval))
 	      (outa i (* amp (+ (* bank2 outval) (* (- 1.0 bank2) inval))))))
 	  
 	  (do ((i bank2-end (+ i 1)))
@@ -178,7 +178,7 @@
 	(do ((k lo (+ k 1)))
 	    ((= k hi))
 	  (set! (fs k) (make-formant (* k bin) radius))))
-      (set! fs (make-formant-bank fs)) ; wrap it up...
+      (set! fs (make-formant-bank fs amps)) ; wrap it up...
 
       (do ((i start (+ i 1)))
 	  ((= i end))
@@ -246,7 +246,7 @@
 			      (set! j (+ j 1)))))
 		      (set! ramp-ctr j)))))
 
-	  (outa i (formant-bank amps fs inputs)))))))
+	  (outa i (formant-bank fs inputs)))))))
 
 
 ;;; (with-sound (:statistics #t) (dissolve-fade 0 1 1.0 "oboe.snd" "trumpet.snd" 256 2 0 128))

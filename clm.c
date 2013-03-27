@@ -129,7 +129,7 @@ enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
       MUS_MOVING_AVERAGE, MUS_MOVING_MAX, MUS_NSIN, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
       MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS, MUS_POLYWAVE, MUS_FIRMANT, MUS_FORMANT_BANK,
-      MUS_ONE_POLE_ALL_PASS,
+      MUS_ONE_POLE_ALL_PASS, MUS_COMB_BANK, MUS_ALL_PASS_BANK, MUS_FILTERED_COMB_BANK,
       MUS_INITIAL_GEN_TAG};
 
 mus_any_class *mus_generator_class(mus_any *ptr) {return(ptr->core);}
@@ -3999,6 +3999,8 @@ bool mus_delay_p(mus_any *ptr)
 }
 
 
+/* ---------------- comb ---------------- */
+
 mus_float_t mus_comb(mus_any *ptr, mus_float_t input, mus_float_t pm) 
 {
   dly *gen = (dly *)ptr;
@@ -4006,7 +4008,7 @@ mus_float_t mus_comb(mus_any *ptr, mus_float_t input, mus_float_t pm)
     return(mus_delay(ptr, input + (gen->yscl * mus_tap(ptr, pm)), pm)); 
   /* mus.lisp has 0 in place of the final pm -- the question is whether the delay
      should interpolate as well as the tap.  There is a subtle difference in
-     output (the pm case is low-passed by the interpolation ("average"),
+     output (the pm case is low-passed by the interpolation ("average")),
      but I don't know if there's a standard here, or what people expect.
      We're doing the outer-level interpolation in notch and all-pass.
      Should mus.lisp be changed?
@@ -4109,6 +4111,140 @@ bool mus_comb_p(mus_any *ptr)
 	 (ptr->core->type == MUS_COMB));
 }
 
+
+
+/* ---------------- comb-bank ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  int size;
+  mus_any **gens;
+} cmb_bank;
+
+
+static int free_comb_bank(mus_any *ptr) 
+{
+  if (ptr) 
+    {
+      cmb_bank *f = (cmb_bank *)ptr;
+      if (f->gens) {free(f->gens); f->gens = NULL;}
+      free(ptr); 
+    }
+  return(0);
+}
+
+
+static mus_float_t run_comb_bank(mus_any *ptr, mus_float_t input, mus_float_t unused) 
+{
+  return(mus_comb_bank(ptr, input));
+}
+
+
+static mus_long_t comb_bank_length(mus_any *ptr)
+{
+  return(((cmb_bank *)ptr)->size);
+}
+
+
+static void comb_bank_reset(mus_any *ptr)
+{
+  cmb_bank *f = (cmb_bank *)ptr;
+  int i;
+  for (i = 0; i < f->size; i++)
+    mus_reset(f->gens[i]);
+}
+
+
+static bool comb_bank_equalp(mus_any *p1, mus_any *p2)
+{
+  cmb_bank *f1 = (cmb_bank *)p1;
+  cmb_bank *f2 = (cmb_bank *)p2;
+  int i, size;
+
+  if (f1 == f2) return(true);
+  if (f1->size != f2->size) return(false);
+  size = f1->size;
+
+  for (i = 0; i < size; i++)
+    if (!delay_equalp(f1->gens[i], f2->gens[i]))
+      return(false);
+  
+  /* now check the locals... */
+  return(true);
+}
+
+
+static char *describe_comb_bank(mus_any *ptr)
+{
+  cmb_bank *gen = (cmb_bank *)ptr;
+  char *describe_buffer;
+  describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s size: %d",
+	       mus_name(ptr),
+	       gen->size);
+  return(describe_buffer);
+}
+
+static mus_any_class COMB_BANK_CLASS = {
+  MUS_COMB_BANK,
+  (char *)S_comb_bank,
+  &free_comb_bank,
+  &describe_comb_bank,
+  &comb_bank_equalp,
+  0, 0,
+  &comb_bank_length, 0,
+  0, 0, 
+  0, 0,
+  0, 0,
+  0, 0,
+  &run_comb_bank,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  0, 0, 0, 0,
+  0, 0,
+  0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0,
+  &comb_bank_reset,
+  0
+};
+
+
+mus_any *mus_make_comb_bank(int size, mus_any **combs)
+{
+  cmb_bank *gen;
+  int i;
+
+  gen = (cmb_bank *)calloc(1, sizeof(cmb_bank));
+  gen->core = &COMB_BANK_CLASS;
+  gen->size = size;
+
+  gen->gens = (mus_any **)malloc(size * sizeof(mus_any *));
+  for (i = 0; i < size; i++)
+    gen->gens[i] = combs[i];
+
+  return((mus_any *)gen);
+}
+
+bool mus_comb_bank_p(mus_any *ptr)
+{
+  return((ptr) && 
+	 (ptr->core->type == MUS_COMB_BANK));
+}
+
+mus_float_t mus_comb_bank(mus_any *combs, mus_float_t inval)
+{
+  int i;
+  mus_float_t sum = 0.0;
+  cmb_bank *c = (cmb_bank *)combs;
+  for (i = 0; i < c->size; i++) 
+    sum += mus_comb_unmodulated_noz(c->gens[i], inval);
+  return(sum);
+}
+
+
+
+/* ---------------- notch ---------------- */
 
 static char *describe_notch(mus_any *ptr)
 {
@@ -4323,7 +4459,140 @@ mus_any *mus_make_all_pass(mus_float_t backward, mus_float_t forward, int size, 
 }
 
 
-/* moving-average */
+/* ---------------- all_pass-bank ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  int size;
+  mus_any **gens;
+} allp_bank;
+
+
+static int free_all_pass_bank(mus_any *ptr) 
+{
+  if (ptr) 
+    {
+      allp_bank *f = (allp_bank *)ptr;
+      if (f->gens) {free(f->gens); f->gens = NULL;}
+      free(ptr); 
+    }
+  return(0);
+}
+
+
+static mus_float_t run_all_pass_bank(mus_any *ptr, mus_float_t input, mus_float_t unused) 
+{
+  return(mus_all_pass_bank(ptr, input));
+}
+
+
+static mus_long_t all_pass_bank_length(mus_any *ptr)
+{
+  return(((allp_bank *)ptr)->size);
+}
+
+
+static void all_pass_bank_reset(mus_any *ptr)
+{
+  allp_bank *f = (allp_bank *)ptr;
+  int i;
+  for (i = 0; i < f->size; i++)
+    mus_reset(f->gens[i]);
+}
+
+
+static bool all_pass_bank_equalp(mus_any *p1, mus_any *p2)
+{
+  allp_bank *f1 = (allp_bank *)p1;
+  allp_bank *f2 = (allp_bank *)p2;
+  int i, size;
+
+  if (f1 == f2) return(true);
+  if (f1->size != f2->size) return(false);
+  size = f1->size;
+
+  for (i = 0; i < size; i++)
+    if (!delay_equalp(f1->gens[i], f2->gens[i]))
+      return(false);
+
+  return(true);
+}
+
+
+static char *describe_all_pass_bank(mus_any *ptr)
+{
+  allp_bank *gen = (allp_bank *)ptr;
+  char *describe_buffer;
+  describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s size: %d",
+	       mus_name(ptr),
+	       gen->size);
+  return(describe_buffer);
+}
+
+static mus_any_class ALL_PASS_BANK_CLASS = {
+  MUS_ALL_PASS_BANK,
+  (char *)S_all_pass_bank,
+  &free_all_pass_bank,
+  &describe_all_pass_bank,
+  &all_pass_bank_equalp,
+  0, 0,
+  &all_pass_bank_length, 0,
+  0, 0, 
+  0, 0,
+  0, 0,
+  0, 0,
+  &run_all_pass_bank,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  0, 0, 0, 0,
+  0, 0,
+  0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0,
+  &all_pass_bank_reset,
+  0
+};
+
+
+mus_any *mus_make_all_pass_bank(int size, mus_any **all_passs)
+{
+  allp_bank *gen;
+  int i;
+
+  gen = (allp_bank *)calloc(1, sizeof(allp_bank));
+  gen->core = &ALL_PASS_BANK_CLASS;
+  gen->size = size;
+
+  gen->gens = (mus_any **)malloc(size * sizeof(mus_any *));
+  for (i = 0; i < size; i++)
+    gen->gens[i] = all_passs[i];
+
+  return((mus_any *)gen);
+}
+
+bool mus_all_pass_bank_p(mus_any *ptr)
+{
+  return((ptr) && 
+	 (ptr->core->type == MUS_ALL_PASS_BANK));
+}
+
+mus_float_t mus_all_pass_bank(mus_any *all_passs, mus_float_t inval)
+{
+  /* this is the old version that takes an array of mus_any pointers */
+  int i;
+  mus_float_t sum = inval;
+  allp_bank *c = (allp_bank *)all_passs;
+  for (i = 0; i < c->size; i++) 
+    sum = mus_all_pass_unmodulated_noz(c->gens[i], sum);
+  return(sum);
+}
+
+
+
+
+/* ---------------- moving-average ---------------- */
+
 bool mus_moving_average_p(mus_any *ptr) 
 {
   return((ptr) && 
@@ -4634,6 +4903,137 @@ mus_any *mus_make_filtered_comb(mus_float_t scaler, int size, mus_float_t *line,
     }
   else return(NULL);
 }
+
+
+/* ---------------- filtered_comb-bank ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  int size;
+  mus_any **gens;
+} fltcmb_bank;
+
+
+static int free_filtered_comb_bank(mus_any *ptr) 
+{
+  if (ptr) 
+    {
+      fltcmb_bank *f = (fltcmb_bank *)ptr;
+      if (f->gens) {free(f->gens); f->gens = NULL;}
+      free(ptr); 
+    }
+  return(0);
+}
+
+
+static mus_float_t run_filtered_comb_bank(mus_any *ptr, mus_float_t input, mus_float_t unused) 
+{
+  return(mus_filtered_comb_bank(ptr, input));
+}
+
+
+static mus_long_t filtered_comb_bank_length(mus_any *ptr)
+{
+  return(((fltcmb_bank *)ptr)->size);
+}
+
+
+static void filtered_comb_bank_reset(mus_any *ptr)
+{
+  fltcmb_bank *f = (fltcmb_bank *)ptr;
+  int i;
+  for (i = 0; i < f->size; i++)
+    mus_reset(f->gens[i]);
+}
+
+
+static bool filtered_comb_bank_equalp(mus_any *p1, mus_any *p2)
+{
+  fltcmb_bank *f1 = (fltcmb_bank *)p1;
+  fltcmb_bank *f2 = (fltcmb_bank *)p2;
+  int i, size;
+
+  if (f1 == f2) return(true);
+  if (f1->size != f2->size) return(false);
+  size = f1->size;
+
+  for (i = 0; i < size; i++)
+    if (!filtered_comb_equalp(f1->gens[i], f2->gens[i]))
+      return(false);
+
+  return(true);
+}
+
+
+static char *describe_filtered_comb_bank(mus_any *ptr)
+{
+  fltcmb_bank *gen = (fltcmb_bank *)ptr;
+  char *describe_buffer;
+  describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s size: %d",
+	       mus_name(ptr),
+	       gen->size);
+  return(describe_buffer);
+}
+
+static mus_any_class FILTERED_COMB_BANK_CLASS = {
+  MUS_FILTERED_COMB_BANK,
+  (char *)S_filtered_comb_bank,
+  &free_filtered_comb_bank,
+  &describe_filtered_comb_bank,
+  &filtered_comb_bank_equalp,
+  0, 0,
+  &filtered_comb_bank_length, 0,
+  0, 0, 
+  0, 0,
+  0, 0,
+  0, 0,
+  &run_filtered_comb_bank,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  0, 0, 0, 0,
+  0, 0,
+  0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0,
+  &filtered_comb_bank_reset,
+  0
+};
+
+
+mus_any *mus_make_filtered_comb_bank(int size, mus_any **filtered_combs)
+{
+  fltcmb_bank *gen;
+  int i;
+
+  gen = (fltcmb_bank *)calloc(1, sizeof(fltcmb_bank));
+  gen->core = &FILTERED_COMB_BANK_CLASS;
+  gen->size = size;
+
+  gen->gens = (mus_any **)malloc(size * sizeof(mus_any *));
+  for (i = 0; i < size; i++)
+    gen->gens[i] = filtered_combs[i];
+
+  return((mus_any *)gen);
+}
+
+bool mus_filtered_comb_bank_p(mus_any *ptr)
+{
+  return((ptr) && 
+	 (ptr->core->type == MUS_FILTERED_COMB_BANK));
+}
+
+mus_float_t mus_filtered_comb_bank(mus_any *filtered_combs, mus_float_t inval)
+{
+  /* this is the old version that takes an array of mus_any pointers */
+  int i;
+  mus_float_t sum = 0.0;
+  fltcmb_bank *c = (fltcmb_bank *)filtered_combs;
+  for (i = 0; i < c->size; i++) 
+    sum += mus_filtered_comb_unmodulated(c->gens[i], inval);
+  return(sum);
+}
+
 
 
 
@@ -5940,22 +6340,10 @@ mus_any *mus_make_formant(mus_float_t frequency, mus_float_t radius)
 
 /* ---------------- formant-bank ---------------- */
 
-mus_float_t mus_formant_bank(int size, mus_float_t *amps, mus_any **formants, mus_float_t inval)
-{
-  /* this is the old version that takes an array of mus_any pointers */
-  int i;
-  mus_float_t sum = 0.0;
-  for (i = 0; i < size; i++) 
-    if (formants[i])
-      sum += (amps[i] * mus_formant(formants[i], inval));
-  return(sum);
-}
-
-
 typedef struct {
   mus_any_class *core;
   int size;
-  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps;
   mus_any **gens;
 } frm_bank;
 
@@ -5980,7 +6368,7 @@ static int free_formant_bank(mus_any *ptr)
 
 static mus_float_t run_formant_bank(mus_any *ptr, mus_float_t input, mus_float_t unused) 
 {
-  return(mus_formant_bank_wrapped(ptr, NULL, input));
+  return(mus_formant_bank(ptr, input));
 }
 
 
@@ -6035,14 +6423,12 @@ static char *describe_formant_bank(mus_any *ptr)
 }
 
 
-/* ideally we'd use the name mus_formant_bank for the main function, but it is already in use */
-
-mus_float_t mus_formant_bank_wrapped(mus_any *fbank, mus_float_t *amps, mus_float_t inval)
+mus_float_t mus_formant_bank(mus_any *fbank, mus_float_t inval)
 {
   frm_bank *bank = (frm_bank *)fbank;
   int i, size4;
   mus_float_t sum = 0.0;
-  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps;
   frm **gens;
 
   x0 = bank->x0;
@@ -6052,6 +6438,7 @@ mus_float_t mus_formant_bank_wrapped(mus_any *fbank, mus_float_t *amps, mus_floa
   y1 = bank->y1;
   y2 = bank->y2;
   gens = (frm **)(bank->gens);
+  amps = bank->amps;
   size4 = bank->size - 4;
   i = 0;
 
@@ -6129,12 +6516,12 @@ mus_float_t mus_formant_bank_wrapped(mus_any *fbank, mus_float_t *amps, mus_floa
   return(sum);
 }
 
-mus_float_t mus_formant_bank_wrapped_with_inputs(mus_any *fbank, mus_float_t *amps, mus_float_t *inval)
+mus_float_t mus_formant_bank_with_inputs(mus_any *fbank, mus_float_t *inval)
 {
   frm_bank *bank = (frm_bank *)fbank;
   int i, size4;
   mus_float_t sum = 0.0;
-  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps;
   frm **gens;
 
   x0 = bank->x0;
@@ -6143,7 +6530,8 @@ mus_float_t mus_formant_bank_wrapped_with_inputs(mus_any *fbank, mus_float_t *am
   y0 = bank->y0;
   y1 = bank->y1;
   y2 = bank->y2;
-  gens = (frm **)(bank->gens);			
+  gens = (frm **)(bank->gens);	
+  amps = bank->amps;
   size4 = bank->size - 4;
   i = 0;
 
@@ -6246,7 +6634,7 @@ static mus_any_class FORMANT_BANK_CLASS = {
 };
 
 
-mus_any *mus_make_formant_bank(int size, mus_any **formants)
+mus_any *mus_make_formant_bank(int size, mus_any **formants, mus_float_t *amps)
 {
   frm_bank *gen;
   int i;
@@ -6265,6 +6653,7 @@ mus_any *mus_make_formant_bank(int size, mus_any **formants)
   gen->y0 = (mus_float_t *)calloc(size, sizeof(mus_float_t));
   gen->y1 = (mus_float_t *)calloc(size, sizeof(mus_float_t));
   gen->y2 = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+  gen->amps = amps;
 
   return((mus_any *)gen);
 }
@@ -11590,15 +11979,6 @@ mus_float_t mus_src_20(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
 	{
 	  /* sinc_table is srp->width * SRC_SINC_DENSITY + 4 in length 
 	   */
-#if 0
-	  if ((xs >= (srp->width * SRC_SINC_DENSITY + 4)) ||
-	      ((-xs) >= (srp->width * SRC_SINC_DENSITY + 4)) ||
-	      (!(srp->sinc_table)))
-	    {
-	      fprintf(stderr, "xs: %d, len: %d, table:%p\n", xs, srp->width * SRC_SINC_DENSITY + 4, srp->sinc_table);
-	      abort();
-	    }
-#endif
 	  if (xs < 0)
 	    srp->coeffs[i] = srp->sinc_table[-xs];
 	  else srp->coeffs[i] = srp->sinc_table[xs];

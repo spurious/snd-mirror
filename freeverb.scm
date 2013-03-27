@@ -140,12 +140,15 @@
 		(set! len (+ len (floor (* srate-scale stereo-spread)))))
 	    (vector-set! allpasses (+ (* c numallpasses) i)
 			 (make-all-pass :size len :feedforward -1 :feedback 0.5)))))
-      
+
       (if (and (= out-chans 1)
 	       (= in-chans 1))
 	  
 	  (let ((amp (out-mix 0 0))
 		(pdelay (vector-ref predelays 0)))
+	    (set! allpasses (make-all-pass-bank allpasses))
+	    (set! fcombs (make-filtered-comb-bank fcombs))
+
 	    (do ((i beg (+ i 1)))
 		((= i end))
 	      (outa i (* amp (all-pass-bank allpasses
@@ -166,7 +169,9 @@
 		(set! ((fcmb-c c) j) (fcombs (+ j (* c numcombs)))))
 	      (do ((j 0 (+ j 1)))
 		  ((= j numallpasses))
-		(set! ((allp-c c) j) (allpasses (+ j (* c numallpasses))))))
+		(set! ((allp-c c) j) (allpasses (+ j (* c numallpasses)))))
+	      (set! (allp-c c) (make-all-pass-bank (allp-c c)))
+	      (set! (fcmb-c c) (make-filtered-comb-bank (fcmb-c c))))
 	    
 	    (do ((i beg (+ i 1)))
 		((= i end))

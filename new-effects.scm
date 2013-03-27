@@ -776,9 +776,9 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
 (define* (effects-comb-chord scaler size amp interval-one interval-two beg dur snd chn)
   "(effects-comb-chord scaler size amp interval-one interval-two beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
-  (let ((cs (vector (make-comb scaler size)
-		    (make-comb scaler (* size interval-one))
-		    (make-comb scaler (* size interval-two)))))
+  (let ((cs (make-comb-bank (vector (make-comb scaler size)
+				    (make-comb scaler (* size interval-one))
+				    (make-comb scaler (* size interval-two))))))
     (map-channel (lambda (x)
 		   (* amp (comb-bank cs x)))
 		 beg dur snd chn #f
@@ -1187,9 +1187,9 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
     (define new-comb-chord
       (lambda (scaler size amp interval-one interval-two)
 	"Comb chord filter: create chords by using filters at harmonically related sizes."
-	(let ((cs (vector (make-comb scaler size)
-			  (make-comb scaler (* size interval-one))
-			  (make-comb scaler (* size interval-two)))))
+	(let ((cs (make-comb-bank (vector (make-comb scaler size)
+					  (make-comb scaler (* size interval-one))
+					  (make-comb scaler (* size interval-two))))))
 	  (lambda (x)
 	    (* amp (comb-bank cs x))))))
     
@@ -1908,19 +1908,15 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	(outdel1 (make-delay (round (* .013 (srate)))))
 	(comb-sum 0.0)
 	(samp 0))
-    (lambda (inval)
-      (let ((allpass-sum (all-pass allpass3 
-				   (all-pass allpass2 
-					     (all-pass allpass1 
-						       (if (< samp input-samps) inval 0.0))))))
-	(set! samp (+ samp 1))
-	(set! comb-sum 
-	      (+ (comb comb1 allpass-sum)
-		 (comb comb2 allpass-sum)
-		 (comb comb3 allpass-sum)
-		 (comb comb4 allpass-sum)))
-	(+ inval
-	   (* volume (delay outdel1 comb-sum)))))))
+    (let ((combs (make-comb-bank (vector comb1 comb2 comb3 comb4))))
+      (lambda (inval)
+	(let ((allpass-sum (all-pass allpass3 
+				     (all-pass allpass2 
+					       (all-pass allpass1 
+							 (if (< samp input-samps) inval 0.0))))))
+	  (set! samp (+ samp 1))
+	  (+ inval
+	     (* volume (delay outdel1 (comb-bank combs allpass-sum)))))))))
 
 (define* (effects-jc-reverb-1 volume beg dur snd chn)
   "(effects-jc-reverb-1 volume beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
@@ -2260,7 +2256,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
     (do ((i 0 (+ 1 i)))
 	((= i freq-inc))
       (set! (formants i) (make-formant (* i bin) radius)))
-    (set! formants (make-formant-bank formants))
+    (set! formants (make-formant-bank formants spectr))
     (lambda (inval)
       (if (= ctr freq-inc)
 	  (begin
@@ -2272,7 +2268,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	    (set! ctr 0)))
       (set! ctr (+ ctr 1))
       (vct-add! spectr fdr)
-      (* amp (formant-bank spectr formants inval)))))
+      (* amp (formant-bank formants inval)))))
 
 (define* (effects-cross-synthesis-1 cross-snd amp fftsize r beg dur snd chn)
   "(effects-cross-synthesis-1 cross-snd amp fftsize r beg dur snd chn) is used by the effects dialog to tie into edit-list->function"

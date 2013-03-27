@@ -970,23 +970,17 @@ is a physical model of a flute:
 		       (vector allpass5)
 		       (if (not chan4)
 			   (vector allpass5 allpass6)
-			   (vector allpass5 allpass6 allpass7 allpass8)))))
+			   (vector allpass5 allpass6 allpass7 allpass8))))
+	    (combs (make-comb-bank (vector comb1 comb2 comb3 comb4 comb5 comb6))))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
-	  (let ((rev (* volume (ina i *reverb*))))
 	    (out-bank i filts
 		      (all-pass allpass4
 				(one-pole low
 					  (all-pass allpass3
 						    (all-pass allpass2
 							      (all-pass allpass1
-									(+ (comb comb1 rev)
-									   (comb comb2 rev)
-									   (comb comb3 rev)
-									   (comb comb4 rev)
-									   (comb comb5 rev)
-									   (comb comb6 rev))))))))))))))
-
+									(comb-bank combs (* volume (ina i *reverb*))))))))))))))
 
 (definstrument (reson startime dur pitch amp numformants indxfun skewfun pcskew skewat skewdc
 		      vibfreq vibpc ranvibfreq ranvibpc degree distance reverb-amount data)
@@ -1108,8 +1102,8 @@ is a physical model of a flute:
 	(outdel2 (make-delay (seconds->samples .011)))
 	(len (floor (+ (* decay (mus-srate)) (length *reverb*)))))
     (let ((filts (vector outdel1 outdel2))
-	  (combs (vector comb1 comb2 comb3 comb4))
-	  (allpasses (vector allpass1 allpass2 allpass3)))
+	  (combs (make-comb-bank (vector comb1 comb2 comb3 comb4)))
+	  (allpasses (make-all-pass-bank (vector allpass1 allpass2 allpass3))))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
 	(out-bank i filts (* volume (comb-bank combs (all-pass-bank allpasses (ina i *reverb*)))))))))
@@ -2370,7 +2364,7 @@ nil doesnt print anything, which will speed up a bit the process.
 		(set! (gains k) (if (< (+ offset-gain gval) 0) 
 				    0
 				    (+ offset-gain gval)))))))
-      (set! frm-size (make-formant-bank frm-size))
+      (set! frm-size (make-formant-bank frm-size gains))
 
       (if if-list-in-gain
 	  (do ((i st (+ i 1)))
@@ -2378,10 +2372,10 @@ nil doesnt print anything, which will speed up a bit the process.
 	    (do ((k 0 (+ k 1)))
 		((= k half-list))
 	      (set! (gains k) (env (env-size k))))
-	    (outa i (* (env ampenv) (formant-bank gains frm-size (readin RdA)))))
+	    (outa i (* (env ampenv) (formant-bank frm-size (readin RdA)))))
 	  (do ((i st (+ i 1)))
 	      ((= i nd))
-	    (outa i (* (env ampenv) (formant-bank gains frm-size (readin RdA)))))))))
+	    (outa i (* (env ampenv) (formant-bank frm-size (readin RdA)))))))))
 
 
 (definstrument (anoi infile start dur (fftsize 128) (amp-scaler 1.0) rr)
@@ -2411,7 +2405,7 @@ nil doesnt print anything, which will speed up a bit the process.
       (do ((ctr 0 (+ ctr 1)))
 	  ((= ctr freq-inc))
 	(set! (fs ctr) (make-formant (* ctr bin) radius)))
-      (set! fs (make-formant-bank fs))
+      (set! fs (make-formant-bank fs scales))
 
       (set! (scales 0) 0.0)
       (do ((i beg (+ i 1)))
@@ -2435,7 +2429,7 @@ nil doesnt print anything, which will speed up a bit the process.
 			    (/ (- (/ (- fdrc (spectr ctr)) fdrc)
 				  (scales ctr))
 			       fftsize))))))
-	  (outa i (* amp (formant-bank scales fs inval)))
+	  (outa i (* amp (formant-bank fs inval)))
 	  (vct-add! scales diffs))))))
 
 #|

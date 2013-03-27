@@ -657,7 +657,7 @@
 
       (let ((fb (vector frm1 frm2 frm3 frm4))
 	    (fs (vct 0.0 0.0 ampfr3 0.0)))
-	(set! fb (make-formant-bank fb))
+	(set! fb (make-formant-bank fb fs))
 
 	(do ((i start (+ i pulse-samps)))
 	    ((>= i stop))
@@ -695,7 +695,7 @@
 			    (env pulsef)
 			    (rk!cos gen1 (env pulse-frqf)))))
 		(outa k (+ (* val val-amp)
-			   (formant-bank fs fb val)))))
+			   (formant-bank fb val)))))
 	    
 	    (set! (mus-phase gen1) (* -0.1 pi))
 	    (mus-reset pulse-frqf)
@@ -1024,16 +1024,16 @@
 
       (let ((fb (vector frm1 frm2 frm3))
 	    (fs (vct frm1f frm2f frm3f)))
-	(set! fb (make-formant-bank fb))
+	(set! fb (make-formant-bank fb fs))
 
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (let ((frq (+ (env frqf)
 			(rand-interp rnd1))))
 	    (set! (mus-frequency frm2) (env intrpf))
-	    (outa i (formant-bank fs fb (* (env ampf)
-					   (+ .8 (rand-interp rnd))
-					   (+       (rxyk!cos f1 (* 2.0 frq))
+	    (outa i (formant-bank fb (* (env ampf)
+					(+ .8 (rand-interp rnd))
+					(+          (rxyk!cos f1 (* 2.0 frq))
 					      (* .5 (rxyk!cos f2 (* 2.3 frq)))
 					      (* .1 (rxyk!cos f3 (* 6.0 frq)))
 					      (* .1 (rxyk!cos f4 (* 6.3 frq)))))))))))))
@@ -4339,13 +4339,13 @@
 
       (let ((fb (vector frm1 frm2 frm3))
 	    (fs (vct fr1 fr2 fr3)))
-	(set! fb (make-formant-bank fb))
+	(set! fb (make-formant-bank fb fs))
 
 	(do ((i start (+ i 1)))
 	    ((= i stop))
-	  (outa i (formant-bank fs fb (* (env ampf)
-					 (polywave gen (+ (env frqf)
-							  (rand-interp rnd)))))))))))
+	  (outa i (formant-bank fb (* (env ampf)
+				      (polywave gen (+ (env frqf)
+						       (rand-interp rnd)))))))))))
 
 ;; (with-sound (:play #t) (american-crow 0 .5))
 
@@ -4550,7 +4550,7 @@
 
     (let ((fb (vector frm1 frm2 frm3))
 	  (fs (vct fr1 fr2 fr3)))
-      (set! fb (make-formant-bank fb))
+      (set! fb (make-formant-bank fb fs))
     
       (do ((i 0 (+ i 1)))
 	  ((= i 3))
@@ -4578,7 +4578,7 @@
 	      (gen (gens k)))
 	  (do ((i start (+ i 1)))
 	      ((= i stop))
-	    (outa i (* (env ampf) (formant-bank fs fb (nrxysin gen (env frqf)))))))))))
+	    (outa i (* (env ampf) (formant-bank fb (nrxysin gen (env frqf)))))))))))
 
 ;; (with-sound (:play #t) (california-quail 0 .25))
 
@@ -4781,7 +4781,7 @@
 
       (let ((fb (vector frm1 frm2 frm3))
 	    (fs (vct fr1 fr2 fr3)))
-	(set! fb (make-formant-bank fb))
+	(set! fb (make-formant-bank fb fs))
       
 	(do ((i start (+ i 1)))
 	    ((= i stop))
@@ -4789,10 +4789,10 @@
 	  (set! (mus-frequency frm2) (env intrpf2))
 	  (set! (mus-frequency frm3) (env intrpf3))
 	  (outa i (* (env ampf) 
-		     (formant-bank fs fb (* (+ .9 (rand-interp rnd1))
-					    (polywave gen1 (+ (env frqf)
-							      (* (env intrpf) (+ (* hz7 (oscil vib))
-										 (rand-interp rnd))))))))))))))
+		     (formant-bank fb (* (+ .9 (rand-interp rnd1))
+					 (polywave gen1 (+ (env frqf)
+							   (* (env intrpf) (+ (* hz7 (oscil vib))
+									      (rand-interp rnd))))))))))))))
 
 ;; (with-sound (:play #t :statistics #t) (barred-owl-1 0 .5))
 
@@ -5014,7 +5014,7 @@
 
       (let ((fb (vector frm1 frm2 frm3 frm4))
 	    (fs (vct fr1 fr2 fr3 fr4)))
-	(set! fb (make-formant-bank fb))
+	(set! fb (make-formant-bank fb fs))
 
 	(do ((i start (+ i 1)))
 	    ((= i stop))
@@ -5023,9 +5023,9 @@
 			(* (env attf)
 			   (rand-interp rnd)))))
 	    (outa i (* (env ampf)
-		       (formant-bank fs fb (+ (rcos gen1 frq)
-					      (* (env intrpf)
-						 (rxycos gen2 frq))))))))))))
+		       (formant-bank fb (+ (rcos gen1 frq)
+					   (* (env intrpf)
+					      (rxycos gen2 frq))))))))))))
 
 ;; (with-sound (:play #t) (common-gull 0 .5))
 
@@ -5482,14 +5482,14 @@
 	   (vib-index (hz->radians -100)))
       (let ((fb (vector frm1 frm2 frm3))
 	    (fs (vct fr1 fr2 fr3)))
-	(set! fb (make-formant-bank fb))
+	(set! fb (make-formant-bank fb fs))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
-		     (formant-bank fs fb (* (+ .85 (abs (rand-interp rnd1)))
-					    (polywave gen (+ (env frqf)
-							     (rand-interp rnd)
-							     (* vib-index (blackman vib))))))))))))
+		     (formant-bank fb (* (+ .85 (abs (rand-interp rnd1)))
+					 (polywave gen (+ (env frqf)
+							  (rand-interp rnd)
+							  (* vib-index (blackman vib))))))))))))
   
   (plain-chacalaca-1 beg1 0.17    (* .7 amp) 1700 (list 0 450  1 680))
   (plain-chacalaca-1 (+ beg1 0.20) 0.12 amp  1400 (list 0 500  1 680  2 660))
@@ -5862,7 +5862,7 @@
 	  (rnd (make-rand-interp 400 (hz->radians 10))))
       (let ((fb (vector frm1 frm2 frm3 frm4))
 	    (fs (vct fr1 fr2 fr3 fr4)))
-	(set! fb (make-formant-bank fb))
+	(set! fb (make-formant-bank fb fs))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (let* ((frq (+ (env frqf)
@@ -5871,7 +5871,7 @@
 			 (+ (polywave histuff (* 2.0 frq))
 			    (* (env oddf) (polywave lostuff frq))
 			    (* (env midf) (polywave midstuff (* 2.0 frq)))))))
-	    (outa i (+ val (formant-bank fs fb val)))))))))
+	    (outa i (+ val (formant-bank fb val)))))))))
 
 ;; (with-sound (:play #t) (red-shouldered-hawk 0 .5))
 
@@ -6067,7 +6067,7 @@
 	(let ((fb (vector frm1 frm2 frm3))
 	      (fs (make-vct 3)))
 	  (set! (fs 2) fr3)
-	  (set! fb (make-formant-bank fb))
+	  (set! fb (make-formant-bank fb fs))
 
 	  (do ((i start (+ i 1)))
 	      ((= i stop))
@@ -6081,7 +6081,7 @@
 			       (polywave gen2 (env frqf2)))))))
 	    (set! (fs 0) (* fr1 (env frmaf-1)))
 	    (set! (fs 1) (* fr2 (env frmaf)))
-	    (outa i (+ (* 0.75 val1) (formant-bank fs fb (* val1 (rand-interp rnd)))))))))))
+	    (outa i (+ (* 0.75 val1) (formant-bank fb (* val1 (rand-interp rnd)))))))))))
   
   (do ((beg beg1 (+ beg .15))
        (i 0 (+ i 1)))
@@ -7990,15 +7990,15 @@
 	  (fr5 (* 2 (sin (hz->radians 7500)))))
       (let ((fb (vector frm1 frm2 frm3 frm4 frm5))
 	    (fs (vct fr1 fr2 fr3 fr4 fr5)))
-	(set! fb (make-formant-bank fb))
+	(set! fb (make-formant-bank fb fs))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (outa i (* (env ampf)
-		     (formant-bank fs fb (* (+ .4 (abs (rand-interp trem)))
-					    (+ (* (env ampf1) 
-						  (polywave gen1 (* (env rndf) (rand-interp rnd))))
-					       (* (env ampf2)
-						  (polywave gen2 (env frqf2)))))))))))))
+		     (formant-bank fb (* (+ .4 (abs (rand-interp trem)))
+					 (+ (* (env ampf1) 
+					       (polywave gen1 (* (env rndf) (rand-interp rnd))))
+					    (* (env ampf2)
+					       (polywave gen2 (env frqf2)))))))))))))
 
 ;; (with-sound (:play #t :statistics #t) (barn-owl 0 .5))
 

@@ -956,9 +956,9 @@ in a hurry use: (clm-channel (make-comb .8 32)) instead"
 
 (define (comb-chord scaler size amp)
   "(comb-chord scaler size amp) returns a set of harmonically-related comb filters: (map-channel (comb-chord .95 100 .3))"
-  (let ((cs (vector (make-comb scaler (floor size))
-		    (make-comb scaler (floor (* size .75)))
-		    (make-comb scaler (floor (* size 1.2))))))
+  (let ((cs (make-comb-bank (vector (make-comb scaler (floor size))
+				    (make-comb scaler (floor (* size .75)))
+				    (make-comb scaler (floor (* size 1.2)))))))
     (lambda (x) 
       (* amp (comb-bank cs x)))))
 
@@ -1028,10 +1028,10 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 	((= i len))
       (set! (frms i) (make-formant (bases i) radius))
       (set! (oscs i) (make-oscil (freqs i))))
-    (let ((frms1 (make-formant-bank frms)))
+    (let ((frms1 (make-formant-bank frms amps)))
       (map-channel
        (lambda (x)
-	 (let ((val (formant-bank amps frms1 x)))
+	 (let ((val (formant-bank frms1 x)))
 	   (do ((i 0 (+ i 1)))
 	       ((= i len))
 	     (set! (mus-frequency (vector-ref frms i))
@@ -1240,7 +1240,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
     (do ((i 0 (+ i 1)))
 	((= i freq-inc))
       (set! (formants i) (make-formant (* i bin) radius)))
-    (set! formants (make-formant-bank formants))
+    (set! formants (make-formant-bank formants spectr))
     (set! (mus-srate) old-srate)
 
     (lambda (inval)
@@ -1255,7 +1255,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	    (set! ctr 0)))
       (set! ctr (+ ctr 1))
       (vct-add! spectr fdr)
-      (* amp (formant-bank spectr formants inval)))))
+      (* amp (formant-bank formants inval)))))
 
 
 
@@ -1282,7 +1282,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
     (do ((i 0 (+ i 1)))
 	((= i freq-inc))
       (set! (formants i) (make-formant (* i bin) radius)))
-    (set! formants (make-formant-bank formants))
+    (set! formants (make-formant-bank formants spectr))
 
     (do ((i 0 (+ i freq-inc)))
 	((>= i outlen))
@@ -1301,7 +1301,8 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
       (do ((k 0 (+ k 1))
 	   (j i (+ j 1)))
 	  ((= k ctr))
-	(set! (out-data j) (formant-bank (vct-add! spectr fdr) formants (rand noi)))))
+	(vct-add! spectr fdr)
+	(set! (out-data j) (formant-bank formants (rand noi)))))
 
     (vct-scale! out-data (* amp (/ old-peak-amp (vct-peak out-data))))
     (vct->channel out-data 0 (max len outlen) snd chn)))
@@ -1328,7 +1329,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
     (do ((i 0 (+ i 1)))
 	((= i freq-inc))
       (set! (formants i) (make-formant (* i bin) radius)))
-    (set! formants (make-formant-bank formants))
+    (set! formants (make-formant-bank formants spectr))
 
     (do ((i 0 (+ i freq-inc)))
 	((>= i len))
@@ -1347,7 +1348,8 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
       (do ((k 0 (+ k 1))
 	   (j i (+ j 1)))
 	  ((= k ctr))
-	(set! (out-data j) (formant-bank (vct-add! spectr fdr) formants (ncos pulse)))))
+	(vct-add! spectr fdr)
+	(set! (out-data j) (formant-bank formants (ncos pulse)))))
 
     (vct-scale! out-data (* amp (/ old-peak-amp (vct-peak out-data))))
     (vct->channel out-data 0 len snd chn)))

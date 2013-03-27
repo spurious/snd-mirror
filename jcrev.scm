@@ -22,12 +22,12 @@
 	  (filts (if (= chns 1) 
 		     (vector (make-delay (seconds->samples .013)))
 		     (vector (make-delay (seconds->samples .013))
-			     (make-delay (seconds->samples .011))))))
+			     (make-delay (seconds->samples .011)))))
+	  (combs (make-comb-bank (vector comb1 comb2 comb3 comb4)))
+	  (allpasses (make-all-pass-bank (vector allpass1 allpass2 allpass3))))
 
       (if (or amp-env low-pass)
 	  (let ((flt (if low-pass (make-fir-filter 3 (vct 0.25 0.5 0.25)) #f))
-		(combs (vector comb1 comb2 comb3 comb4))
-		(allpasses (vector allpass1 allpass2 allpass3))
 		(envA (make-env :envelope (or amp-env '(0 1 1 1)) :scaler volume :duration (/ len (mus-srate)))))
 	    (if low-pass
 		(do ((i 0 (+ i 1)))
@@ -38,11 +38,7 @@
 		  (out-bank i filts (* (env envA) (comb-bank combs (all-pass-bank allpasses (ina i *reverb*))))))))
 	  (do ((i 0 (+ i 1)))
 	      ((= i len))
-	    (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 (ina i *reverb*))))))
-	      (out-bank i filts (* volume (+ (comb comb1 allpass-sum)
-					     (comb comb2 allpass-sum)
-					     (comb comb3 allpass-sum)
-					     (comb comb4 allpass-sum))))))))))
+	    (out-bank i filts (* volume (comb-bank combs (all-pass-bank allpasses (ina i *reverb*))))))))))
   
 ;;; (with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .1 :reverb-amount .3))
 ;;; (with-sound (:reverb jc-reverb) (outa 0 .1) (outa 0 .5 *reverb*))
