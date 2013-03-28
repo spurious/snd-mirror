@@ -23199,21 +23199,6 @@ char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
 }
 
 
-#if 0
-static int display_ctr = 0;
-static char **strs = NULL;
-
-char *s7_object_to_c_string_with_free(s7_scheme *sc, s7_pointer obj)
-{
-  if (display_ctr >= 32) display_ctr = 0;
-  if (strs == NULL) strs = (char **)calloc(32, sizeof(char *));
-  else if (strs[display_ctr]) free(strs[display_ctr]);
-  strs[display_ctr++] = s7_object_to_c_string_1(sc, obj, USE_WRITE, NULL);
-  return(strs[display_ctr - 1]);
-}
-#endif
-
-
 s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 {
   char *str;
@@ -33452,20 +33437,6 @@ static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len)
     return(truncate_string(s, len, false, &s_len));
   return(s);
 }
-
-
-#if 0
-static char *object_to_truncated_string_with_free(s7_scheme *sc, s7_pointer p, int len)
-{
-  char *s;
-  int s_len;
-  s = s7_object_to_c_string_with_free(sc, p);
-  s_len = safe_strlen(s);
-  if (s_len > len)
-    return(truncate_string(s, len, false, &s_len));
-  return(s);
-}
-#endif
 
 
 static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
@@ -63830,6 +63801,7 @@ s7_scheme *s7_init(void)
  * s7test    1721 1358 1297 1244  977  961  957  962
  * t455|6     265   89   55   31   14   14    9 9164
  * lat        229   63   52   47   42   40   34   31
- * t502        90   43   39   36   29   23   20   19
+ * t502        90   43   39   36   29   23   20   18
  * calls           275  207  175  115   89   71   61
  */
+

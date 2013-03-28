@@ -20,11 +20,6 @@ mus_long_t io_end(snd_io *io)
   return(io->end);
 }
 
-int io_filed(snd_io *io)
-{
-  return(io->fd);
-}
-
 
 void snd_remove(const char *name, cache_remove_t forget)
 {

@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [566]
-;;;  test 1: defaults                           [1152]
-;;;  test 2: headers                            [1366]
-;;;  test 3: variables                          [1681]
-;;;  test 4: sndlib                             [2260]
-;;;  test 5: simple overall checks              [4711]
-;;;  test 6: vcts                               [9482]
-;;;  test 7: colors                             [9809]
-;;;  test 8: clm                                [10327]
-;;;  test 9: mix                                [21695]
-;;;  test 10: marks                             [23482]
-;;;  test 11: dialogs                           [24442]
-;;;  test 12: extensions                        [24637]
-;;;  test 13: menus, edit lists, hooks, etc     [24903]
-;;;  test 14: all together now                  [26280]
-;;;  test 15: chan-local vars                   [27159]
-;;;  test 16: regularized funcs                 [28917]
-;;;  test 17: dialogs and graphics              [32530]
-;;;  test 18: enved                             [32629]
-;;;  test 19: save and restore                  [32648]
-;;;  test 20: transforms                        [34262]
-;;;  test 21: new stuff                         [36395]
-;;;  test 22: (run)                             [38408]
-;;;  test 23: with-sound                        [38414]
-;;;  test 25: X/Xt/Xm                           [41379]
-;;;  test 26:                                   [45061]
-;;;  test 27: GL                                [45067]
-;;;  test 28: errors                            [45191]
-;;;  test 29: s7                                [47252]
-;;;  test all done                              [47324]
-;;;  test the end                               [47502]
+;;;  test 0: constants                          [546]
+;;;  test 1: defaults                           [1132]
+;;;  test 2: headers                            [1345]
+;;;  test 3: variables                          [1660]
+;;;  test 4: sndlib                             [2240]
+;;;  test 5: simple overall checks              [4691]
+;;;  test 6: vcts                               [9462]
+;;;  test 7: colors                             [9778]
+;;;  test 8: clm                                [10296]
+;;;  test 9: mix                                [21851]
+;;;  test 10: marks                             [23638]
+;;;  test 11: dialogs                           [24598]
+;;;  test 12: extensions                        [24793]
+;;;  test 13: menus, edit lists, hooks, etc     [25059]
+;;;  test 14: all together now                  [26434]
+;;;  test 15: chan-local vars                   [27313]
+;;;  test 16: regularized funcs                 [29071]
+;;;  test 17: dialogs and graphics              [32682]
+;;;  test 18: enved                             [32781]
+;;;  test 19: save and restore                  [32800]
+;;;  test 20: transforms                        [34414]
+;;;  test 21: new stuff                         [36547]
+;;;  test 22: (run)                             [38560]
+;;;  test 23: with-sound                        [38566]
+;;;  test 25: X/Xt/Xm                           [41531]
+;;;  test 26:                                   [45213]
+;;;  test 27: GL                                [45219]
+;;;  test 28: errors                            [45343]
+;;;  test 29: s7                                [47405]
+;;;  test all done                              [47477]
+;;;  test the end                               [47657]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -2044,7 +2044,9 @@
 		       'filter-control-order 'filter-control-waveform-color 'filter-control? 'filter-selection 'filter-sound
 		       'filter? 'find-dialog 'find-mark 'find-sound
 		       'finish-progress-report 'fir-filter 'fir-filter? 'flat-top-window 'focus-widget 'foreground-color
-		       'forget-region 'formant 'formant-bank 'formant? 'firmant 'firmant? 
+		       'forget-region 'formant 'formant-bank 'formant-bank? 'formant? 'firmant 'firmant? 
+		       'comb-bank 'comb-bank? 'all-pass-bank 'all-pass-bank? 'filtered-comb-bank 'filtered-comb-bank?
+		       'make-comb-bank 'make-all-pass-bank 'make-filtered-comb-bank
 		       'fourier-transform
 		       'frame 'frame* 'frame+ 'frame->file 'frame->file?
 		       'frame->frame 'frame->list 'frame->sample 'frame-ref 'frame-set!
@@ -2072,7 +2074,7 @@
 		       'locsig? 'log-freq-start 'main-menu 'main-widgets 'make-all-pass
 		       'make-asymmetric-fm 'make-moving-average 'make-moving-max 'make-bezier 'make-color 'make-comb 'make-filtered-comb
 		       'make-convolve 'make-delay 'make-env 'make-fft-window 'make-file->frame
-		       'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter 'make-formant 'make-firmant
+		       'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter 'make-formant 'make-firmant 'make-formant-bank
 		       'make-frame 'make-frame->file 'make-granulate 'make-graph-data 'make-iir-filter
 		       'make-locsig 'make-mix-sampler 'make-mixer 'make-move-sound 'make-notch 'make-one-pole
 		       'make-one-zero 'make-oscil 'make-phase-vocoder 'make-player 'make-polyshape 'make-polywave
@@ -21661,6 +21663,187 @@ EDITS: 2
     (if (not (= (signum 0) 0)) (snd-display #__line__ ";signum 0: ~A" (signum 0)))
     (if (not (= (signum 10) 1)) (snd-display #__line__ ";signum 10: ~A" (signum 10)))
     (if (not (= (signum -32) -1)) (snd-display #__line__ ";signum -32: ~A" (signum -32)))
+
+
+    (let ((c1 (make-comb .5 3))
+	  (c2 (make-comb-bank (vector (make-comb .5 3)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 20))
+	(let ((x0 (comb c1 x))
+	      (x1 (comb-bank c2 x)))
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";(comb .5 3) ~A, comb: ~A, bank: ~A" i x0 x1)))))
+    
+    (let ((c1 (make-comb .5 3))
+	  (c2 (make-comb .2 10))
+	  (c3 (make-comb-bank (vector (make-comb .5 3)
+				      (make-comb .2 10)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 30))
+	(let ((x0 (+ (comb c1 x) (comb c2 x)))
+	      (x1 (comb-bank c3 x)))
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";(comb .5 3) + (comb .2 10) ~A, comb: ~A, bank: ~A" i x0 x1)))))
+    
+    (let ((c1 (make-comb .5 3))
+	  (c2 (make-comb .2 10))
+	  (c3 (make-comb -.7 11))
+	  (c4 (make-comb-bank (vector (make-comb .5 3)
+				      (make-comb .2 10)
+				      (make-comb -.7 11)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 40))
+	(let ((x0 (+ (comb c1 x) (comb c2 x) (comb c3 x)))
+	      (x1 (comb-bank c4 x)))
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";(comb .5 3) + (comb .2 10) + (comb -.7 11) ~A, comb: ~A, bank: ~A" i x0 x1)))))
+    
+    
+    (let ((c1 (make-all-pass -.5 .5 3))
+	  (c2 (make-all-pass-bank (vector (make-all-pass -.5 .5 3)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 20))
+	(let ((x0 (all-pass c1 x))
+	      (x1 (all-pass-bank c2 x)))
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";(all-pass -.5 .5 3) ~A, all-pass: ~A, bank: ~A" i x0 x1)))))
+    
+    (let ((c1 (make-all-pass -.5 .5 3))
+	  (c2 (make-all-pass -.2 .2 10))
+	  (c3 (make-all-pass-bank (vector (make-all-pass -.5 .5 3)
+					  (make-all-pass -.2 .2 10)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 30))
+	(let ((x0 (all-pass c1 (all-pass c2 x)))
+	      (x1 (all-pass-bank c3 x)))
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";(all-pass -.5 .5 3) + (all-pass -.2 .2 10) ~A, all-pass: ~A, bank: ~A" i x0 x1)))))
+    
+    (let ((c1 (make-all-pass -.5 .5 3))
+	  (c2 (make-all-pass -.2 .2 10))
+	  (c3 (make-all-pass -.7 .1 11))
+	  (c4 (make-all-pass-bank (vector (make-all-pass -.5 .5 3)
+					  (make-all-pass -.2 .2 10)
+					  (make-all-pass -.7 .1 11)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 40))
+	(let ((x0 (all-pass c1 (all-pass c2 (all-pass c3 x))))
+	      (x1 (all-pass-bank c4 x)))
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";(all-pass -.5 .5 3) + (all-pass -.2 .2 10) + (all-pass -.7 .1 11) ~A, all-pass: ~A, bank: ~A" i x0 x1)))))
+    
+    
+    
+    (let ((c1 (make-filtered-comb .5 3))
+	  (c2 (make-filtered-comb-bank (vector (make-filtered-comb .5 3)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 20))
+	(let ((x0 (filtered-comb c1 x))
+	      (x1 (filtered-comb-bank c2 x)))
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";(filtered-comb .5 3) ~A, filtered-comb: ~A, bank: ~A" i x0 x1)))))
+    
+    (let ((c1 (make-filtered-comb .5 3))
+	  (c2 (make-filtered-comb .2 10))
+	  (c3 (make-filtered-comb-bank (vector (make-filtered-comb .5 3)
+					       (make-filtered-comb .2 10)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 30))
+	(let ((x0 (+ (filtered-comb c1 x) (filtered-comb c2 x)))
+	      (x1 (filtered-comb-bank c3 x)))
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";(filtered-comb .5 3) + (filtered-comb .2 10) ~A, filtered-comb: ~A, bank: ~A" i x0 x1)))))
+    
+    (let ((c1 (make-filtered-comb .5 3))
+	  (c2 (make-filtered-comb .2 10))
+	  (c3 (make-filtered-comb -.7 11))
+	  (c4 (make-filtered-comb-bank (vector (make-filtered-comb .5 3)
+					       (make-filtered-comb .2 10)
+					       (make-filtered-comb -.7 11)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 40))
+	(let ((x0 (+ (filtered-comb c1 x) (filtered-comb c2 x) (filtered-comb c3 x)))
+	      (x1 (filtered-comb-bank c4 x)))
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";(filtered-comb .5 3) + (filtered-comb .2 10) + (filtered-comb -.7 11) ~A, filtered-comb: ~A, bank: ~A" i x0 x1)))))
+    
+    
+    
+    (let ((c1 (make-formant 440.0 .5))
+	  (c2 (make-formant-bank (vector (make-formant 440.0 .5)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 20))
+	(let ((x0 (formant c1 x))
+	      (x1 (formant-bank c2 x)))
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";(formant 440.0 .5) ~A, formant: ~A, bank: ~A" i x0 x1)))))
+    
+    (let ((c1 (make-formant 440.0 .5))
+	  (c2 (make-formant 1000.0 .2))
+	  (c3 (make-formant-bank (vector (make-formant 440.0 .5)
+					 (make-formant 1000.0 .2)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 30))
+	(let ((x0 (+ (formant c1 x) (formant c2 x)))
+	      (x1 (formant-bank c3 x)))
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";(formant 440.0 .5) + (formant 1000.0 .2) ~A, formant: ~A, bank: ~A" i x0 x1)))))
+    
+    (let ((c1 (make-formant 440.0 .5))
+	  (c2 (make-formant 1000.0 .2))
+	  (c3 (make-formant 34.0 .1))
+	  (c4 (make-formant-bank (vector (make-formant 440.0 .5)
+					 (make-formant 1000.0 .2)
+					 (make-formant 34.0 .1)))))
+      (do ((i 0 (+ i 1))
+	   (x 1.0 0.0))
+	  ((= i 40))
+	(let ((x0 (+ (formant c1 x) (formant c2 x) (formant c3 x)))
+	      (x1 (formant-bank c4 x)))
+	  (if (not (morally-equal? x0 x1))
+	      (snd-display #__line__ ";(formant 440.0 .5) + (formant 1000.0 .2) + (formant 34.0 .1) ~A, formant: ~A, bank: ~A" i x0 x1)))))
+
+    (if (file-exists? "jcrev-ip.snd")
+	(begin
+	  (with-sound (:reverb jc-reverb) (outa 0 .1) (outa 0 .5 *reverb*))
+	  (let ((s1 (find-sound "test.snd"))
+		(s2 (open-sound "jcrev-ip.snd")))
+	    (if (not (= (channel-distance s1 0 s2 0) 0.0))
+		(snd-display #__line__ ";jcrev ip: ~A" (channel-distance s1 0 s2 0)))
+	    (close-sound s1)
+	    (close-sound s2))))
+    
+    (if (file-exists? "nrev-ip.snd")
+	(begin
+	  (with-sound (:reverb nrev) (outa 0 .1) (outa 0 .5 *reverb*))
+	  (let ((s1 (find-sound "test.snd"))
+		(s2 (open-sound "nrev-ip.snd")))
+	    (if (not (= (channel-distance s1 0 s2 0) 0.0))
+		(snd-display #__line__ ";nrev ip: ~A" (channel-distance s1 0 s2 0)))
+	    (close-sound s1)
+	    (close-sound s2))))
+    
+    (if (file-exists? "freeverb-ip.snd")
+	(begin
+	  (with-sound (:reverb freeverb :reverb-data '(:output-gain 3.0)) (outa 0 .5 *reverb*))
+	  (let ((s1 (find-sound "test.snd"))
+		(s2 (open-sound "freeverb-ip.snd")))
+	    (if (not (= (channel-distance s1 0 s2 0) 0.0))
+		(snd-display #__line__ ";freeverb ip: ~A" (channel-distance s1 0 s2 0)))
+	    (close-sound s1)
+	    (close-sound s2))))
+    
     ))
 
 
@@ -45365,7 +45548,8 @@ EDITS: 1
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm? sound-data->sound-data
 		     clear-array comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
 		     delay delay? dot-product env env-interp env? file->array file->frame file->frame?  file->sample
-		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant? frame* frame+ firmant firmant?
+		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant-bank? formant? frame* frame+ firmant firmant?
+		     comb-bank make-comb-bank comb-bank? all-pass-bank make-all-pass-bank all-pass-bank? filtered-comb-bank make-filtered-comb-bank filtered-comb-bank?
 		     frame->file frame->file? frame->frame frame->list frame->sample frame-ref frame-set! frame?
 		     granulate granulate? hz->radians iir-filter iir-filter? linear->db locsig ; in-any ina inb (sound-data arg troubles)
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
@@ -45723,7 +45907,7 @@ EDITS: 1
 				    (if tag
 					(snd-display #__line__ ";?proc ~A: ~A" n tag))))
 				(list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frame? file->sample? snd->sample?
-				      filter? fir-filter? formant? firmant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
+				      filter? fir-filter? formant? formant-bank? firmant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
 				      mus-output? notch? one-pole? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 				      sample->file? sawtooth-wave? nrxysin? nrxycos?
 				      square-wave? src? ncos? nsin? table-lookup? 
@@ -45741,7 +45925,7 @@ EDITS: 1
 			(if tag
 			    (snd-display #__line__ ";oscil?proc ~A: ~A" n tag))))
 		    (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frame? file->sample? snd->sample?
-			  filter? fir-filter? formant? firmant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
+			  filter? fir-filter? formant? formant-bank? firmant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
 			  mus-output? notch? one-pole? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 			  sample->file? sawtooth-wave? nrxysin? nrxycos?
 			  square-wave? src? ncos? nsin? table-lookup? 

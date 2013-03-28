@@ -699,7 +699,6 @@ io_error_t close_temp_file(const char *filename, int ofd, int type, mus_long_t b
 void set_up_snd_io(chan_info *cp, int i, int fd, const char *filename, file_info *hdr, bool post_close);
 mus_long_t io_beg(snd_io *io);
 mus_long_t io_end(snd_io *io);
-int io_filed(snd_io *io); /* io_fd is in use already */
 
 
 

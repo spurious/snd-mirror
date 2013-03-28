@@ -4911,6 +4911,7 @@ index 10 (so 10/2 is the bes-jn arg):
     (/ (rand-bank rands) (* 2.5 (sqrt n))))) ; this normalization is not quite right
 |#
 
+#|
 (define pink-noise rand-bank)
 
 (define (pink-noise? n)
@@ -4927,14 +4928,49 @@ index 10 (so 10/2 is the bes-jn arg):
 	((= i n) v)
       (set! (v i) (make-rand (/ (mus-srate) (expt 2 i)) amp))
       (set! (mus-phase (v i)) (random pi)))))
-    
+|#
+
+(define* (make-pink-noise (n 1))
+  (let ((v (make-vct (* n 2)))
+	(amp (/ (* 2.5 (sqrt n)))))
+    (set! (v 0) amp)
+    (do ((i 2 (+ i 2)))
+	((= i (* 2 n)))
+      (set! (v i) (mus-random amp))
+      (set! (v (+ i 1)) (random 1.0)))
+    v))
+
+(define pink-noise? vct?)
+
+#|
+(define (pink-noise v)
+  (let ((amp (v 0))
+	(sum 0.0)
+	(p 0.0)
+	(len (vct-length v)))
+    (do ((i 2 (+ i 2))
+	 (x 0.5 (* x 0.5)))
+	((= i len) 
+	 (+ sum (mus-random amp)))
+      (set! sum (+ sum (v i)))
+      (set! p (- (v (+ i 1)) x))
+      (if (negative? p)
+	  (begin
+	    (set! (v (+ i 1)) (+ p 1.0))
+	    (set! (v i) (mus-random amp)))
+	  (set! (v (+ i 1)) p)))))
+|#      
+
 #|
 (with-sound (:clipped #f :statistics #t)
-  (let* ((gen (make-pink-noise 12)))
+  (let ((gen (make-pink-noise 12)))
     (do ((i 0 (+ i 1)))
 	((= i 44100))
       (outa i (pink-noise gen)))))
+
+(with-sound (:statistics #t) (let ((gen (make-pink-noise 12))) (do ((i 0 (+ i 1))) ((= i 441000)) (outa i (pink-noise gen)))))
 |#
+
 
 
 

@@ -4119,6 +4119,7 @@ typedef struct {
   mus_any_class *core;
   int size;
   mus_any **gens;
+  mus_float_t (*cmbf)(mus_any *ptr, mus_float_t input);
 } cmb_bank;
 
 
@@ -4210,6 +4211,41 @@ static mus_any_class COMB_BANK_CLASS = {
 };
 
 
+static mus_float_t comb_bank_any(mus_any *combs, mus_float_t inval)
+{
+  int i;
+  mus_float_t sum = 0.0;
+  cmb_bank *c = (cmb_bank *)combs;
+  for (i = 0; i < c->size; i++) 
+    sum += mus_comb_unmodulated_noz(c->gens[i], inval);
+  return(sum);
+}
+
+static mus_float_t comb_bank_4(mus_any *combs, mus_float_t inval)
+{
+  cmb_bank *c = (cmb_bank *)combs;
+  mus_any **gs;
+  gs = c->gens;
+  return(mus_comb_unmodulated_noz(gs[0], inval) +
+	 mus_comb_unmodulated_noz(gs[1], inval) +
+	 mus_comb_unmodulated_noz(gs[2], inval) +
+	 mus_comb_unmodulated_noz(gs[3], inval));
+}
+
+static mus_float_t comb_bank_6(mus_any *combs, mus_float_t inval)
+{
+  cmb_bank *c = (cmb_bank *)combs;
+  mus_any **gs;
+  gs = c->gens;
+  return(mus_comb_unmodulated_noz(gs[0], inval) +
+	 mus_comb_unmodulated_noz(gs[1], inval) +
+	 mus_comb_unmodulated_noz(gs[2], inval) +
+	 mus_comb_unmodulated_noz(gs[3], inval) +
+	 mus_comb_unmodulated_noz(gs[4], inval) +
+	 mus_comb_unmodulated_noz(gs[5], inval));
+}
+
+
 mus_any *mus_make_comb_bank(int size, mus_any **combs)
 {
   cmb_bank *gen;
@@ -4223,6 +4259,15 @@ mus_any *mus_make_comb_bank(int size, mus_any **combs)
   for (i = 0; i < size; i++)
     gen->gens[i] = combs[i];
 
+  if (size == 4)
+    gen->cmbf = comb_bank_4;
+  else
+    {
+      if (size == 6)
+	gen->cmbf = comb_bank_6;
+      else gen->cmbf = comb_bank_any;
+    }
+
   return((mus_any *)gen);
 }
 
@@ -4234,13 +4279,10 @@ bool mus_comb_bank_p(mus_any *ptr)
 
 mus_float_t mus_comb_bank(mus_any *combs, mus_float_t inval)
 {
-  int i;
-  mus_float_t sum = 0.0;
-  cmb_bank *c = (cmb_bank *)combs;
-  for (i = 0; i < c->size; i++) 
-    sum += mus_comb_unmodulated_noz(c->gens[i], inval);
-  return(sum);
+  cmb_bank *gen = (cmb_bank *)combs;
+  return((gen->cmbf)(combs, inval));
 }
+
 
 
 
@@ -4465,6 +4507,7 @@ typedef struct {
   mus_any_class *core;
   int size;
   mus_any **gens;
+  mus_float_t (*apf)(mus_any *ptr, mus_float_t input);
 } allp_bank;
 
 
@@ -4555,6 +4598,33 @@ static mus_any_class ALL_PASS_BANK_CLASS = {
 };
 
 
+static mus_float_t all_pass_bank_3(mus_any *all_passes, mus_float_t inval)
+{
+  allp_bank *c = (allp_bank *)all_passes;
+  mus_any **gs;
+  gs = c->gens;
+  return(mus_all_pass_unmodulated_noz(gs[2], mus_all_pass_unmodulated_noz(gs[1], mus_all_pass_unmodulated_noz(gs[0], inval))));
+}
+
+static mus_float_t all_pass_bank_4(mus_any *all_passes, mus_float_t inval)
+{
+  allp_bank *c = (allp_bank *)all_passes;
+  mus_any **gs;
+  gs = c->gens;
+  return(mus_all_pass_unmodulated_noz(gs[3], mus_all_pass_unmodulated_noz(gs[2], mus_all_pass_unmodulated_noz(gs[1], mus_all_pass_unmodulated_noz(gs[0], inval)))));
+}
+
+static mus_float_t all_pass_bank_any(mus_any *all_passs, mus_float_t inval)
+{
+  int i;
+  mus_float_t sum = inval;
+  allp_bank *c = (allp_bank *)all_passs;
+  for (i = 0; i < c->size; i++) 
+    sum = mus_all_pass_unmodulated_noz(c->gens[i], sum);
+  return(sum);
+}
+
+
 mus_any *mus_make_all_pass_bank(int size, mus_any **all_passs)
 {
   allp_bank *gen;
@@ -4568,8 +4638,18 @@ mus_any *mus_make_all_pass_bank(int size, mus_any **all_passs)
   for (i = 0; i < size; i++)
     gen->gens[i] = all_passs[i];
 
+  if (size == 3)
+    gen->apf = all_pass_bank_3;
+  else
+    {
+      if (size == 4)
+	gen->apf = all_pass_bank_4;
+      else gen->apf = all_pass_bank_any;
+    }
+
   return((mus_any *)gen);
 }
+
 
 bool mus_all_pass_bank_p(mus_any *ptr)
 {
@@ -4577,15 +4657,11 @@ bool mus_all_pass_bank_p(mus_any *ptr)
 	 (ptr->core->type == MUS_ALL_PASS_BANK));
 }
 
-mus_float_t mus_all_pass_bank(mus_any *all_passs, mus_float_t inval)
+
+mus_float_t mus_all_pass_bank(mus_any *all_passes, mus_float_t inval)
 {
-  /* this is the old version that takes an array of mus_any pointers */
-  int i;
-  mus_float_t sum = inval;
-  allp_bank *c = (allp_bank *)all_passs;
-  for (i = 0; i < c->size; i++) 
-    sum = mus_all_pass_unmodulated_noz(c->gens[i], sum);
-  return(sum);
+  allp_bank *gen = (allp_bank *)all_passes;
+  return((gen->apf)(all_passes, inval));
 }
 
 
@@ -4911,6 +4987,7 @@ typedef struct {
   mus_any_class *core;
   int size;
   mus_any **gens;
+  mus_float_t (*cmbf)(mus_any *ptr, mus_float_t input);
 } fltcmb_bank;
 
 
@@ -5001,6 +5078,32 @@ static mus_any_class FILTERED_COMB_BANK_CLASS = {
 };
 
 
+static mus_float_t filtered_comb_bank_8(mus_any *combs, mus_float_t inval)
+{
+  fltcmb_bank *c = (fltcmb_bank *)combs;
+  mus_any **gs;
+  gs = c->gens;
+  return(mus_filtered_comb_unmodulated(gs[0], inval) +
+	 mus_filtered_comb_unmodulated(gs[1], inval) +
+	 mus_filtered_comb_unmodulated(gs[2], inval) +
+	 mus_filtered_comb_unmodulated(gs[3], inval) +
+	 mus_filtered_comb_unmodulated(gs[4], inval) +
+	 mus_filtered_comb_unmodulated(gs[5], inval) +
+	 mus_filtered_comb_unmodulated(gs[6], inval) +
+	 mus_filtered_comb_unmodulated(gs[7], inval));
+}
+
+static mus_float_t filtered_comb_bank_any(mus_any *filtered_combs, mus_float_t inval)
+{
+  int i;
+  mus_float_t sum = 0.0;
+  fltcmb_bank *c = (fltcmb_bank *)filtered_combs;
+  for (i = 0; i < c->size; i++) 
+    sum += mus_filtered_comb_unmodulated(c->gens[i], inval);
+  return(sum);
+}
+
+
 mus_any *mus_make_filtered_comb_bank(int size, mus_any **filtered_combs)
 {
   fltcmb_bank *gen;
@@ -5014,8 +5117,13 @@ mus_any *mus_make_filtered_comb_bank(int size, mus_any **filtered_combs)
   for (i = 0; i < size; i++)
     gen->gens[i] = filtered_combs[i];
 
+  if (size == 8)
+    gen->cmbf = filtered_comb_bank_8;
+  else gen->cmbf = filtered_comb_bank_any;
+
   return((mus_any *)gen);
 }
+
 
 bool mus_filtered_comb_bank_p(mus_any *ptr)
 {
@@ -5023,15 +5131,11 @@ bool mus_filtered_comb_bank_p(mus_any *ptr)
 	 (ptr->core->type == MUS_FILTERED_COMB_BANK));
 }
 
+
 mus_float_t mus_filtered_comb_bank(mus_any *filtered_combs, mus_float_t inval)
 {
-  /* this is the old version that takes an array of mus_any pointers */
-  int i;
-  mus_float_t sum = 0.0;
-  fltcmb_bank *c = (fltcmb_bank *)filtered_combs;
-  for (i = 0; i < c->size; i++) 
-    sum += mus_filtered_comb_unmodulated(c->gens[i], inval);
-  return(sum);
+  fltcmb_bank *gen = (fltcmb_bank *)filtered_combs;
+  return((gen->cmbf)(filtered_combs, inval));
 }
 
 
@@ -5543,7 +5647,7 @@ mus_float_t mus_rand_unmodulated(mus_any *ptr)
   noi *gen = (noi *)ptr;
   if (gen->phase >= TWO_PI)
     {
-      gen->phase = fmod(gen->phase, TWO_PI);
+      gen->phase -= TWO_PI;
       gen->output = random_any(gen);
     }
   gen->phase += gen->freq;
@@ -5579,7 +5683,7 @@ mus_float_t mus_rand_interp_unmodulated(mus_any *ptr)
   gen->output += gen->incr;
   if (gen->phase >= TWO_PI)
     {
-      gen->phase = fmod(gen->phase, TWO_PI);
+      gen->phase -= TWO_PI;
       gen->incr = (random_any(gen) - gen->output) / (ceil(TWO_PI / gen->freq));
     }
   gen->phase += gen->freq;
@@ -5736,8 +5840,8 @@ mus_any *mus_make_rand(mus_float_t freq, mus_float_t base)
   noi *gen;
   gen = (noi *)calloc(1, sizeof(noi));
   gen->core = &RAND_CLASS;
-  gen->freq = mus_hz_to_radians(freq);
   if (freq < 0.0) freq = -freq;
+  gen->freq = mus_hz_to_radians(freq);
   gen->base = base;
   gen->incr = 0.0;
   gen->output = random_any(gen); /* this was always starting at 0.0 (changed 23-Dec-06) */

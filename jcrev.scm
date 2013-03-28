@@ -32,13 +32,13 @@
 	    (if low-pass
 		(do ((i 0 (+ i 1)))
 		    ((= i len))
-		  (out-bank i filts (* (env envA) (fir-filter flt (comb-bank combs (all-pass-bank allpasses (ina i *reverb*)))))))
+		  (out-bank filts i (* (env envA) (fir-filter flt (comb-bank combs (all-pass-bank allpasses (ina i *reverb*)))))))
 		(do ((i 0 (+ i 1)))
 		    ((= i len))
-		  (out-bank i filts (* (env envA) (comb-bank combs (all-pass-bank allpasses (ina i *reverb*))))))))
+		  (out-bank filts i (* (env envA) (comb-bank combs (all-pass-bank allpasses (ina i *reverb*))))))))
 	  (do ((i 0 (+ i 1)))
 	      ((= i len))
-	    (out-bank i filts (* volume (comb-bank combs (all-pass-bank allpasses (ina i *reverb*))))))))))
+	    (out-bank filts i (* volume (comb-bank combs (all-pass-bank allpasses (ina i *reverb*))))))))))
   
 ;;; (with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .1 :reverb-amount .3))
 ;;; (with-sound (:reverb jc-reverb) (outa 0 .1) (outa 0 .5 *reverb*))

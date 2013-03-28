@@ -1722,27 +1722,18 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 	      clipend = oldloc + lim;
 	      bufnow = (mus_float_t *)(buffer + oldloc);
 	      bufend = (mus_float_t *)(buffer + clipend - 1);
-	      bufend4 = (mus_float_t *)(bufend - 4);
+	      bufend4 = (mus_float_t *)(bufend - 4); 
+	      /* we seem to be running off the end of this buffer somehow -- do we need channel-specific size checks? */
 
 	      if (mus_clip_handler)
 		{
-		  while (bufnow <= bufend)
+		  while (bufnow < bufend)
 		    {
 		      sample = (*bufnow);
 		      if ((sample > 0.99999) || (sample < -1.0))
 			(*bufnow) = (*mus_clip_handler)(sample);
 		      bufnow++;
-
-		      sample = (*bufnow);
-		      if ((sample > 0.99999) || (sample < -1.0))
-			(*bufnow) = (*mus_clip_handler)(sample);
-		      bufnow++;
-
-		      sample = (*bufnow);
-		      if ((sample > 0.99999) || (sample < -1.0))
-			(*bufnow) = (*mus_clip_handler)(sample);
-		      bufnow++;
-
+		      
 		      sample = (*bufnow);
 		      if ((sample > 0.99999) || (sample < -1.0))
 			(*bufnow) = (*mus_clip_handler)(sample);

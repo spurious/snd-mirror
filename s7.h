@@ -143,7 +143,6 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer arg, bool use_write);
                                                                      /* (object->string obj) */
 char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj);          /* same as object->string but returns a C char* directly */
                                                                      /*   the returned value should be freed by the caller */
-char *s7_object_to_c_string_with_free(s7_scheme *sc, s7_pointer obj); 
 
 s7_pointer s7_load(s7_scheme *sc, const char *file);                 /* (load file) */
 s7_pointer s7_load_path(s7_scheme *sc);                              /* *load-path* */

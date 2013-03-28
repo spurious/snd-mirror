@@ -62,8 +62,8 @@
 struct mus_xen {
   mus_any *gen;
   int type; /* currently only oscil/formant type checks */
-  XEN *vcts; /* one for each accessible mus_float_t array (wrapped up here in a vct) */
   int nvcts;
+  XEN *vcts; /* one for each accessible mus_float_t array (wrapped up here in a vct) */
 };
 
 #define FORMANT_TAG 1
@@ -282,7 +282,7 @@ mus_long_t mus_optkey_to_mus_long_t(XEN key, const char *caller, int n, mus_long
 {
   if (!(XEN_KEYWORD_P(key)))
     {
-      XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, n, caller, "a sample number");
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, n, caller, "a sample number or size");
       return(XEN_TO_C_LONG_LONG_OR_ELSE(key, def));
     }
   return(def);
@@ -5130,7 +5130,7 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
   return(XEN_FALSE);
 }
 
-/* TODO: doc/test these new banks: oscil|comb|all-pass|filtered-comb|formant|ssb-am|out-bank
+/* TODO: doc/test these new banks: oscil|ssb-am|out-bank
  *   and regularize the args.
  */
 #if HAVE_SCHEME
@@ -5211,36 +5211,34 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
 }
 
 
-
-#define S_rand_bank "rand-bank"
-static XEN g_rand_bank(XEN gens)
+#define S_pink_noise "pink-noise"
+static XEN g_pink_noise(XEN gens)
 {
-  #define H_rand_bank "(rand-bank gens) sums a vector of rands -- this will change soon."
+  #define H_pink_noise "(pink-noise gens) generates an approximation to pink noise."
   int i, size;
-  double x = 0.0;
-#if defined(XEN_VECTOR_ELEMENTS)
-  XEN *gs;
-#endif
+  double sum = 0.0, amp, x;
+  vct *v;
+  double *data;
 
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_1, S_rand_bank, "a vector of " S_rand " generators");
-  size = XEN_VECTOR_LENGTH(gens);
-#if defined(XEN_VECTOR_ELEMENTS)
-  gs = XEN_VECTOR_ELEMENTS(gens);
-#endif
+  XEN_ASSERT_TYPE(MUS_VCT_P(gens), gens, XEN_ARG_1, S_pink_noise, "a vct");
+  v = XEN_TO_VCT(gens);
+  size = v->length;
+  data = v->data;
+  amp = data[0];
 
-  for (i = 0; i < size; i++)
+  for (i = 2, x = 0.5; i < size; i += 2, x *= 0.5)
     {
-#if defined(XEN_VECTOR_ELEMENTS)
-      x += mus_rand_unmodulated(XEN_TO_MUS_ANY(gs[i]));
-#else
-      x += mus_rand_unmodulated(XEN_TO_MUS_ANY(XEN_VECTOR_REF(gens, i)));
-#endif      
+      sum += data[i];
+      data[i + 1] -= x;
+      if (data[i + 1] < 0.0)
+	{
+	  data[i] = mus_random(amp);
+	  data[i + 1] += 1.0;
+	}
     }
 
-  return(C_TO_XEN_DOUBLE(x));
+  return(C_TO_XEN_DOUBLE(sum + mus_random(amp)));
 }
-
-
 
 
 
@@ -7040,21 +7038,21 @@ static s7_pointer g_clm_reverb_set(s7_scheme *sc, s7_pointer args)
 
 
 #define S_out_bank "out-bank"
-static XEN g_out_bank(XEN loc, XEN gens, XEN inval)
+static XEN g_out_bank(XEN gens, XEN loc, XEN inval)
 {
-  #define H_out_bank "(out-bank location gens val) calls each generator in the gens vector, passing it the argument val, then \
+  #define H_out_bank "(out-bank gens location val) calls each generator in the gens vector, passing it the argument val, then \
 sends that output to the output channels in the vector order (the first generator writes to outa, the second to outb, etc)."
 
   mus_long_t pos;
   int i, size;
   double x = 0.0;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(loc), loc, XEN_ARG_1, S_out_bank, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(loc), loc, XEN_ARG_2, S_out_bank, "an integer");
   pos = XEN_TO_C_LONG_LONG(loc);
   if (pos < 0) 
-    XEN_OUT_OF_RANGE_ERROR(S_out_bank, XEN_ARG_1, loc, "must be >= 0");    
+    XEN_OUT_OF_RANGE_ERROR(S_out_bank, XEN_ARG_2, loc, "must be >= 0");    
 
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_2, S_out_bank, "a vector of generators");
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_1, S_out_bank, "a vector of generators");
   size = XEN_VECTOR_LENGTH(gens);
 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(inval), inval, XEN_ARG_3, S_out_bank, "a number");
@@ -10922,8 +10920,8 @@ static s7_pointer g_jc_reverb_out(s7_scheme *sc, s7_pointer args)
   mus_any *combs, *allpasses;
   s7_Double x;
 
-  GET_INTEGER(args, out-bank, pos);
-  fs = s7_cadr_value(sc, args);
+  GET_INTEGER_CADR(args, out-bank, pos);
+  fs = s7_car_value(sc, args);
   size = XEN_VECTOR_LENGTH(fs);
 
   p = caddr(args);
@@ -10956,7 +10954,7 @@ static s7_pointer g_jc_reverb_out_looped(s7_scheme *sc, s7_pointer args)
   mus_float_t vol;
 			  
   stepper = car(args);
-  callee = s7_slot(sc, cadr(args));
+  callee = s7_slot(sc, caddr(args));
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
@@ -10971,8 +10969,8 @@ static s7_pointer g_jc_reverb_out_looped(s7_scheme *sc, s7_pointer args)
    */
 
   args = cdr(args);
-  GET_INTEGER(args, out-bank, pos);
-  fs = s7_cadr_value(sc, args);
+  GET_INTEGER_CADR(args, out-bank, pos);
+  fs = s7_car_value(sc, args);
   size = XEN_VECTOR_LENGTH(fs);
 
   outs = (mus_any **)malloc(size * sizeof(mus_any *));
@@ -11082,8 +11080,8 @@ static s7_pointer g_nrev_out(s7_scheme *sc, s7_pointer args)
   mus_any *combs, *allpasses, *op, *ap4;
   s7_Double x;
 
-  GET_INTEGER(args, out-bank, pos);
-  fs = s7_cadr_value(sc, args);
+  GET_INTEGER_CADR(args, out-bank, pos);
+  fs = s7_car_value(sc, args);
   size = XEN_VECTOR_LENGTH(fs);
 
   p = caddr(args);
@@ -11121,7 +11119,7 @@ static s7_pointer g_nrev_out_looped(s7_scheme *sc, s7_pointer args)
   mus_float_t vol;
 			  
   stepper = car(args);
-  callee = s7_slot(sc, cadr(args));
+  callee = s7_slot(sc, caddr(args));
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
 
@@ -11131,8 +11129,8 @@ static s7_pointer g_nrev_out_looped(s7_scheme *sc, s7_pointer args)
   end = (*stop);
 
   args = cdr(args);
-  GET_INTEGER(args, out-bank, pos);
-  fs = s7_cadr_value(sc, args);
+  GET_INTEGER_CADR(args, out-bank, pos);
+  fs = s7_car_value(sc, args);
   size = XEN_VECTOR_LENGTH(fs);
 
   outs = (mus_any **)malloc(size * sizeof(mus_any *));
@@ -11252,6 +11250,64 @@ static s7_pointer g_nrev_out_looped(s7_scheme *sc, s7_pointer args)
     (*step) = end;
     free(outs);
   
+  return(args);
+}
+
+
+static s7_pointer direct_two_pole_2_looped;
+static s7_pointer g_direct_two_pole_2_looped(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *tp;
+  s7_Int pos, end;
+  s7_pointer stepper, callee;
+  s7_Int *step, *stop;
+
+  /* args: (0 flt (next-sample reader)) so cadr is not a counter */
+
+  stepper = car(args);
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  pos = (*step);
+  end = (*stop);
+
+  GET_GENERATOR_CADR(args, two-pole, tp);
+  callee = caddr(args);
+
+  if ((s7_list_length(sc, callee) == 2) &&
+      (s7_is_symbol(cadr(callee))))
+    {
+      s7_pointer *choices;
+      choices = (s7_pointer *)s7_function_chooser_data_direct(s7_symbol_value(sc, s7_car(callee)));
+      if (choices)
+	{
+	  if ((choices[GEN_DIRECT_1]) &&
+	      (choices[GEN_DIRECT_CHECKER]))
+	    {		
+	      s7_pointer obj;
+	      void *gen;
+	      mus_float_t (*sampler)(void *p);
+	      bool (*is_sampler)(s7_pointer p);
+
+	      sampler = (mus_float_t (*)(void *p))(choices[GEN_DIRECT_1]);
+	      is_sampler = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+	      obj = s7_cadr_value(sc, callee);
+	      gen = s7_object_value(obj);
+
+	      if (is_sampler(obj))
+		{
+		  for (; pos < end; pos++)
+		    mus_two_pole(tp, sampler(gen));
+		  return(args);
+		}
+	    }
+	}
+    }
+  for (; pos < end; pos++)
+    {
+      (*step) = pos;
+      mus_two_pole(tp, s7_call_direct_to_real_and_free(sc, callee));
+    }
+  (*step) = end;
   return(args);
 }
 
@@ -13266,8 +13322,35 @@ static s7_pointer g_sample_to_file_four(s7_scheme *sc, s7_pointer args)
   return(val);
 }
 
+static s7_pointer sample_to_file_four_looped;
+static s7_pointer g_sample_to_file_four_looped(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *sf;
+  s7_Int pos, end;
+  int chan;
+  s7_pointer stepper, val;
+  s7_Int *step, *stop;
 
+  /* args: (0 rdout k 0 (readin rdin)) */
 
+  stepper = car(args);
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  pos = (*step);
+  end = (*stop);
+
+  GET_GENERATOR_CADR(args, sample->file, sf);
+  chan = s7_cell_integer(cadddr(args));
+  val = cadddr(cdr(args));
+
+  for (; pos < end; pos++)
+    {
+      (*step) = pos;
+      mus_sample_to_file(sf, pos, chan, s7_number_to_real(sc, s7_call_direct(sc, val)));
+    }
+  (*step) = end;
+  return(args);
+}
 
 
 static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
@@ -15182,9 +15265,9 @@ static s7_pointer out_bank_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       s7_pointer arg1, arg2, arg3;
 
       /* jcrev: 
-	  (out-bank i filts (* volume (comb-bank combs (all-pass-bank allpasses (ina i *reverb*)))))
+	  (out-bank filts i (* volume (comb-bank combs (all-pass-bank allpasses (ina i *reverb*)))))
          nrev: 
-	  (out-bank i filts (all-pass allpass4 (one-pole low (all-pass-bank allpasses (comb-bank combs (* volume (ina i *reverb*)))))))
+	  (out-bank filts i (all-pass allpass4 (one-pole low (all-pass-bank allpasses (comb-bank combs (* volume (ina i *reverb*)))))))
 	  where filts is 1, 2, or 4 allpasses						 
        */
       arg1 = cadr(expr);
@@ -15224,7 +15307,7 @@ static s7_pointer out_bank_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 		      (s7_list_length(sc, c2) == 3))
 		    {
 		      if ((s7_car(c2) == ina_symbol) &&
-			  (cadr(c2) == arg1) &&
+			  (cadr(c2) == arg2) &&
 			  (caddr(c2) == reverb_symbol))
 			{
 			  s7_function_choice_set_direct(sc, expr);
@@ -15275,7 +15358,7 @@ static s7_pointer out_bank_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 			      (s7_list_length(sc, e2) == 3))
 			    {
 			      if ((s7_car(e2) == ina_symbol) &&
-				  (cadr(e2) == arg1) &&
+				  (cadr(e2) == arg2) &&
 				  (caddr(e2) == reverb_symbol))
 				{
 				  s7_function_choice_set_direct(sc, expr);
@@ -15989,6 +16072,10 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "sample->file");
   s7_function_set_chooser(sc, f, sample_to_file_chooser);
   sample_to_file_four = clm_make_function(sc, "sample->file", g_sample_to_file_four, 4, 0, false, "sample->file optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+#if (!WITH_GMP)
+  sample_to_file_four_looped = clm_make_function(sc, "sample->file", g_sample_to_file_four_looped, 4, 0, false, "sample->file optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  s7_function_set_looped(sample_to_file_four, sample_to_file_four_looped);
+#endif
 
 
   GEN_F2("comb", comb);
@@ -16027,6 +16114,10 @@ static void init_choosers(s7_scheme *sc)
 				 mul_c_two_pole_2, mul_s_two_pole_2, env_two_pole_2, NULL, NULL, NULL);
   direct_two_pole_2 = clm_make_function(sc, "two-pole", g_direct_two_pole_2, 2, 0, false, "two-pole optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_two_pole_2 = clm_make_function(sc, "two-pole", g_indirect_two_pole_2, 2, 0, false, "two-pole optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+#if (!WITH_GMP)
+  direct_two_pole_2_looped = clm_make_function(sc, "two-pole", g_direct_two_pole_2_looped, 2, 0, false, "two-pole optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  s7_function_set_looped(direct_two_pole_2, direct_two_pole_2_looped);
+#endif
 
 
   GEN_F2("one-zero", one_zero);
@@ -16711,7 +16802,7 @@ XEN_NARGIFY_1(g_make_filtered_comb_bank_w, g_make_filtered_comb_bank)
 XEN_NARGIFY_2(g_all_pass_bank_w, g_all_pass_bank)
 XEN_NARGIFY_1(g_all_pass_bank_p_w, g_all_pass_bank_p)
 XEN_NARGIFY_1(g_make_all_pass_bank_w, g_make_all_pass_bank)
-XEN_NARGIFY_1(g_rand_bank_w, g_rand_bank)
+XEN_NARGIFY_1(g_pink_noise_w, g_pink_noise)
 XEN_NARGIFY_3(g_out_bank_w, g_out_bank)
 
 #else
@@ -17038,7 +17129,7 @@ XEN_NARGIFY_3(g_out_bank_w, g_out_bank)
 #define g_all_pass_bank_w g_all_pass_bank
 #define g_all_pass_bank_p_w g_all_pass_bank_p
 #define g_make_all_pass_bank_w g_make_all_pass_bank
-#define g_rand_bank_w g_rand_bank
+#define g_pink_noise_w g_pink_noise
 #define g_out_bank_w g_out_bank
 #endif
 
@@ -17287,7 +17378,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_all_pass_bank_p, g_all_pass_bank_p_w, 1, 0, 0, H_all_pass_bank_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_all_pass_bank, g_make_all_pass_bank_w, 1, 0, 0, H_make_all_pass_bank);
 
-  XEN_DEFINE_REAL_PROCEDURE(S_rand_bank, g_rand_bank_w, 1, 0, 0, H_rand_bank);
+  XEN_DEFINE_REAL_PROCEDURE(S_pink_noise, g_pink_noise_w, 1, 0, 0, H_pink_noise);
 
   XEN_DEFINE_REAL_PROCEDURE(S_out_bank, g_out_bank_w, 3, 0, 0, H_out_bank);
 

@@ -66,7 +66,7 @@
 	    (allpasses (make-all-pass-bank (vector allpass1 allpass2 allpass3))))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
-	  (out-bank i filts
+	  (out-bank filts i
 		      (all-pass allpass4
 				(one-pole low
 					  (all-pass-bank allpasses 

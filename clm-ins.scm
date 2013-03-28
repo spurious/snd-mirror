@@ -975,7 +975,7 @@ is a physical model of a flute:
 	    (allpasses (make-all-pass-bank (vector allpass1 allpass2 allpass3))))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
-	    (out-bank i filts
+	    (out-bank filts i
 		      (all-pass allpass4
 				(one-pole low
 					  (all-pass-bank allpasses
@@ -1105,7 +1105,7 @@ is a physical model of a flute:
 	  (allpasses (make-all-pass-bank (vector allpass1 allpass2 allpass3))))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
-	(out-bank i filts (* volume (comb-bank combs (all-pass-bank allpasses (ina i *reverb*)))))))))
+	(out-bank filts i (* volume (comb-bank combs (all-pass-bank allpasses (ina i *reverb*)))))))))
 
 
 (definstrument (gran-synth start-time duration audio-freq grain-dur grain-interval amp)
