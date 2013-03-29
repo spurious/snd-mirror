@@ -414,6 +414,11 @@ MUS_EXPORT int mus_env_breakpoints(mus_any *gen);      /* for Snd */
 MUS_EXPORT mus_float_t mus_env_any(mus_any *e, mus_float_t (*connect_points)(mus_float_t val));
 #define mus_make_env_with_length(Brkpts, Pts, Scaler, Offset, Base, Length) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, 0.0, (Length) - 1, NULL)
 
+MUS_EXPORT mus_any *mus_make_pulsed_env(mus_any *e, mus_any *p);
+MUS_EXPORT bool mus_pulsed_env_p(mus_any *ptr);
+MUS_EXPORT mus_float_t mus_pulsed_env(mus_any *pl, mus_float_t inval);
+MUS_EXPORT mus_float_t mus_pulsed_env_unmodulated(mus_any *pl);
+
 MUS_EXPORT bool mus_frame_p(mus_any *ptr);
 MUS_EXPORT bool mus_frame_or_mixer_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_empty_frame(int chans);
@@ -604,7 +609,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
- * 27-Mar:     comb-bank, all-pass-bank, filtered-comb-bank.
+ * 27-Mar:     comb-bank, all-pass-bank, filtered-comb-bank, pulsed-env.
  * 21-Mar:     one-pole-all-pass generator.
  * 14-Mar:     formant-bank generator.
  *             removed mus_delay_tick_noz.

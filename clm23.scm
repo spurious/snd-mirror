@@ -2188,6 +2188,14 @@
 	      ((= i end))
 	    (outa i (ssb-am ssb (bandpass flt (vct-ref in-data j))))))))))
 
+#|
+(let* ((sound "oboe.snd") ; 1.8
+	 (mx (maxamp sound))
+	 (dur (mus-sound-duration sound)))
+    (with-sound (:scaled-to mx :srate 22050 :statistics #t) 
+      (sndclmdoc-repitch 0 dur sound 554 1000)))
+|#
+
 (definstrument (sndclmdoc-fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 ve ae)
   (let ((foflen (if (= (mus-srate) 22050) 100 200)))
     (let ((foftab (make-vct foflen)))

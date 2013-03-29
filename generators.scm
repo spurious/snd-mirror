@@ -777,14 +777,18 @@
 				(lambda (g val) (set! (g 'frequency) (hz->radians val)))))
 			 (cons 'mus-scaler
 			       (make-procedure-with-setter
-				(lambda (g) (g 'r))
+				(lambda (g) 
+				  (g 'r))
 				(lambda (g val)
-				  (set! (g 'r) (generator-clamp-r val))
-				  (set! (g 'rr) (* (g 'r) (g 'r)))
-				  (set! (g 'r1) (+ 1.0 (g 'rr)))
-				  (set! (g 'norm) (- (/ (- (expt (abs (g 'r)) (g 'n)) 1) (- (abs (g 'r)) 1)) 1.0))
-				  (set! (g 'trouble) (or (= (g 'n) 1) (< (abs (g 'r)) nearly-zero)))
-				  val)))))
+				  (set! (g 'r) (min 0.999999 (max -0.999999 val)))
+				  (with-environment g
+				    (let ((absr (abs r)))
+				      (set! rr (* r r))
+				      (set! r1 (+ 1.0 rr))
+				      (set! norm (- (/ (- (expt absr n) 1) (- absr 1)) 1.0))
+				      (set! trouble (or (= n 1) 
+							(< absr 1.0e-12)))))
+				    val)))))
   (frequency *clm-default-frequency*) (n 1) (r 0.5) (angle 0.0) fm rr r1 e1 e2 norm trouble)
 
 
@@ -4909,25 +4913,6 @@ index 10 (so 10/2 is the bes-jn arg):
   
   (with-environment gen
     (/ (rand-bank rands) (* 2.5 (sqrt n))))) ; this normalization is not quite right
-|#
-
-#|
-(define pink-noise rand-bank)
-
-(define (pink-noise? n)
-  (and (vector? n)
-       (do ((i 0 (+ i 1)))
-	   ((or (= i (length n))
-		(not (rand? (n i))))
-	    (= i (length n))))))
-
-(define* (make-pink-noise (n 1))
-  (let ((v (make-vector n))
-	(amp (/ (* 2.5 (sqrt n))))) ; this normalization is not quite right
-    (do ((i 0 (+ i 1)))
-	((= i n) v)
-      (set! (v i) (make-rand (/ (mus-srate) (expt 2 i)) amp))
-      (set! (mus-phase (v i)) (random pi)))))
 |#
 
 (define* (make-pink-noise (n 1))

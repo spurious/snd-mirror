@@ -670,7 +670,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_opSCq_opSCq, HOP_SAFE_C_opSCq_opSCq, OP_SAFE_C_opSSq_opSSq, HOP_SAFE_C_opSSq_opSSq, 
       OP_SAFE_C_opSSq_opCq, HOP_SAFE_C_opSSq_opCq, OP_SAFE_C_opSSq_opSq, HOP_SAFE_C_opSSq_opSq, OP_SAFE_C_opSq_opSSq, HOP_SAFE_C_opSq_opSSq,
       OP_SAFE_C_opSSq_S, HOP_SAFE_C_opSSq_S, OP_SAFE_C_opSCq_S, HOP_SAFE_C_opSCq_S, OP_SAFE_C_opCSq_S, HOP_SAFE_C_opCSq_S,
-      OP_SAFE_C_opSCq_C, HOP_SAFE_C_opSCq_C, 
+      OP_SAFE_C_opSCq_C, HOP_SAFE_C_opSCq_C, OP_SAFE_C_opCq_opSSq, HOP_SAFE_C_opCq_opSSq, 
       OP_SAFE_C_S_op_opSSq_Sq, HOP_SAFE_C_S_op_opSSq_Sq, OP_SAFE_C_S_op_S_opSSqq, HOP_SAFE_C_S_op_S_opSSqq, 
       OP_SAFE_C_op_opSSq_q_C, HOP_SAFE_C_op_opSSq_q_C,
       
@@ -780,7 +780,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_opscq_opscq", "h_safe_c_opscq_opscq", "safe_c_opssq_opssq", "h_safe_c_opssq_opssq", 
       "safe_c_opssq_opcq", "h_safe_c_opssq_opcq", "safe_c_opssq_opsq", "h_safe_c_opssq_opsq", "safe_c_opsq_opssq", "h_safe_c_opsq_opssq",
       "safe_c_opssq_s", "h_safe_c_opssq_s", "safe_c_opscq_s", "h_safe_c_opscq_s", "safe_c_opcsq_s", "h_safe_c_opcsq_s",
-      "safe_c_opscq_c", "h_safe_c_opscq_c", 
+      "safe_c_opscq_c", "h_safe_c_opscq_c", "safe_c_opcq_opssq", "h_safe_c_opcq_opssq",
       "safe_c_s_op_opssq_sq", "h_safe_c_s_op_opssq_sq", "safe_c_s_op_s_opssqq", "h_safe_c_s_op_s_opssqq", 
       "safe_c_op_opssq_q_c", "h_safe_c_op_opssq_q_c",
       
@@ -38900,6 +38900,8 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	  break;
 
 	case OP_SAFE_C_SS:
+	  if (optimize_data_match(e1, OP_SAFE_C_C))
+	    return(OP_SAFE_C_opCq_opSSq);
 	  if (optimize_data_match(e1, OP_SAFE_C_SS))
 	    return(OP_SAFE_C_opSSq_opSSq);
 	  if (optimize_data_match(e1, OP_SAFE_C_S))
@@ -46944,22 +46946,49 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (arg < 3)
 		    {
 		      s7_function endf;
+		      dox_function d1, d2;
 		      s7_pointer expr1, expr2, end;
 
 		      endf = (s7_function)fcdr(cdr(sc->code));
 		      end = fcdr(sc->code);
-		      if (slot1) expr1 = slot_expression(slot1);
-		      if (slot2) expr2 = slot_expression(slot2);
-
-		      while (true)
+		      if (slot1) 
 			{
-			  f(sc, code);
-			  if (slot1) slot_set_value(slot1, ((dox_function)fcdr(expr1))(sc, car(expr1), slot1));
-			  if (slot2) slot_set_value(slot2, ((dox_function)fcdr(expr2))(sc, car(expr2), slot2));
-			  if (is_true(sc, endf(sc, end)))
+			  expr1 = slot_expression(slot1);
+			  d1 = (dox_function)fcdr(expr1);
+			  expr1 = car(expr1);
+			}
+		      if (slot2) 
+			{
+			  expr2 = slot_expression(slot2);
+			  d2 = (dox_function)fcdr(expr2);
+			  expr2 = car(expr2);
+			}
+
+		      if ((slot1) && (slot2))
+			{
+			  while (true)
 			    {
-			      sc->code = cdadr(sc->code);
-			      goto DO_BEGIN;
+			      f(sc, code);
+			      slot_set_value(slot1, d1(sc, expr1, slot1));
+			      slot_set_value(slot2, d2(sc, expr2, slot2));
+			      if (is_true(sc, endf(sc, end)))
+				{
+				  sc->code = cdadr(sc->code);
+				  goto DO_BEGIN;
+				}
+			    }
+			}
+		      else
+			{
+			  while (true)
+			    {
+			      f(sc, code);
+			      if (slot1) slot_set_value(slot1, d1(sc, expr1, slot1));
+			      if (is_true(sc, endf(sc, end)))
+				{
+				  sc->code = cdadr(sc->code);
+				  goto DO_BEGIN;
+				}
 			    }
 			}
 		    }
@@ -50721,6 +50750,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_AAZ:
+	      /* biggy here is almost surely SSZ
+	       */
 	      push_op_stack(sc, ((s7_function)fcdr(cdr(code)))(sc, cadr(code)));
 	      push_stack(sc, OP_SAFE_C_AAZ_1, ((s7_function)fcdr(cddr(code)))(sc, caddr(code)), code);
 	      sc->code = cadddr(code);
@@ -50791,6 +50822,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_A:
+	      /* biggies here are all_x_c_opsq_s (90722x)
+	       *                  all_x_c_opcq_s (139739x)
+	       */
 	      car(sc->A1_1) = ((s7_function)fcdr(cdr(code)))(sc, cadr(code));
 	      sc->value = c_call(code)(sc, sc->A1_1);
 	      goto START;
@@ -50819,9 +50853,9 @@ lint:
 214: h_safe_c_s h_safe_c_opsq
 
 snd-test:
-452010: h_safe_c_ss h_safe_c_opssq_opssq
-396907: h_safe_c_s h_safe_c_opssq
-286468: h_safe_c_c h_safe_c_ss
+452010: h_safe_c_ss h_safe_c_opssq_opssq    op_c_opssq_op_opssq_opssqq
+396907: h_safe_c_s h_safe_c_opssq           op_c_opsq_op_opssqq
+[286468: h_safe_c_c h_safe_c_ss]
 186401: h_safe_c_s_opcq h_safe_c_s
 132300: h_safe_c_cs h_safe_c_c
 131072: h_safe_c_opssq_s h_safe_c_opssq_s
@@ -51734,6 +51768,30 @@ snd-test:
 		args = cdr(code);
 		car(sc->T2_1) = c_call(car(args))(sc, cdr(car(args)));
 		car(sc->T2_2) = c_call(cadr(args))(sc, cdr(cadr(args)));
+		sc->value = c_call(code)(sc, sc->T2_1);
+		goto START;
+	      }
+	      
+	      
+	    case OP_SAFE_C_opCq_opSSq:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      if (!c_function_is_ok(sc, cadr(code)))
+		break;
+	      if (!c_function_is_ok(sc, caddr(code)))
+		break;
+	      
+	    case HOP_SAFE_C_opCq_opSSq:
+	      {
+		s7_pointer args, val;
+		/* code: (/ (+ bn 1) (+ bn an)) */
+		args = cdr(code);
+		val = c_call(car(args))(sc, cdr(car(args)));
+		args = cdr(args);
+		car(sc->T2_1) = finder(sc, cadar(args));
+		car(sc->T2_2) = finder(sc, caddar(args));
+		car(sc->T2_2) = c_call(car(args))(sc, sc->T2_1);
+		car(sc->T2_1) = val;
 		sc->value = c_call(code)(sc, sc->T2_1);
 		goto START;
 	      }
@@ -63792,10 +63850,10 @@ s7_scheme *s7_init(void)
  *   and goto*, and the entire safe_car_s set
  * op_closure_car_car is rarely called, cdr_cdr case only in bench
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
- * maybe other banks.
+ * maybe oscil-bank.
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
- * bench    42736 8752 8051 7725 6515 5194 4364 4022
+ * bench    42736 8752 8051 7725 6515 5194 4364 4017
  * lint           9328 8140 7887 7736 7300 7180 7056
  * index    44300 3291 3005 2742 2078 1643 1435 1371
  * s7test    1721 1358 1297 1244  977  961  957  962

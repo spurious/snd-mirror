@@ -130,6 +130,7 @@ enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_MOVING_AVERAGE, MUS_MOVING_MAX, MUS_NSIN, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
       MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS, MUS_POLYWAVE, MUS_FIRMANT, MUS_FORMANT_BANK,
       MUS_ONE_POLE_ALL_PASS, MUS_COMB_BANK, MUS_ALL_PASS_BANK, MUS_FILTERED_COMB_BANK,
+      MUS_PULSED_ENV,
       MUS_INITIAL_GEN_TAG};
 
 mus_any_class *mus_generator_class(mus_any *ptr) {return(ptr->core);}
@@ -6768,8 +6769,6 @@ bool mus_formant_bank_p(mus_any *ptr)
 	 (ptr->core->type == MUS_FORMANT_BANK));
 }
 
-/* TODO: doc/test make-formant-bank */
-
 
 
 /* ---------------- firmant ---------------- */
@@ -8542,6 +8541,122 @@ mus_float_t mus_env_any(mus_any *e, mus_float_t (*connect_points)(mus_float_t va
   new_val = connect_points( (val - y0) / (y1 - y0));
   return(offset + scaler * (y0 + new_val * (y1 - y0)));
 }
+
+
+/* ---------------- pulsed-env ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  mus_any *e, *p;
+} plenv;
+
+
+static int free_pulsed_env(mus_any *ptr) 
+{
+  if (ptr) 
+    free(ptr); 
+  return(0);
+}
+
+
+static mus_float_t run_pulsed_env(mus_any *ptr, mus_float_t input, mus_float_t unused) 
+{
+  return(mus_pulsed_env(ptr, input));
+}
+
+
+static void pulsed_env_reset(mus_any *ptr)
+{
+  plenv *pl = (plenv *)ptr;
+  mus_reset(pl->e);
+  mus_reset(pl->p);
+}
+
+
+static bool pulsed_env_equalp(mus_any *p1, mus_any *p2)
+{
+  plenv *f1 = (plenv *)p1;
+  plenv *f2 = (plenv *)p2;
+
+  if (f1 == f2) return(true);
+  return((env_equalp(f1->e, f2->e)) &&
+	 (sw_equalp(f1->p, f2->p)));
+}
+
+
+static char *describe_pulsed_env(mus_any *ptr)
+{
+  char *describe_buffer;
+  describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s",
+	       mus_name(ptr));
+  return(describe_buffer);
+}
+
+static mus_any_class PULSED_ENV_CLASS = {
+  MUS_PULSED_ENV,
+  (char *)S_pulsed_env,
+  &free_pulsed_env,
+  &describe_pulsed_env,
+  &pulsed_env_equalp,
+  0, 0,
+  0, 0,
+  0, 0, 
+  0, 0,
+  0, 0,
+  0, 0,
+  &run_pulsed_env,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  0, 0, 0, 0,
+  0, 0,
+  0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0,
+  &pulsed_env_reset,
+  0
+};
+
+
+mus_any *mus_make_pulsed_env(mus_any *e, mus_any *p)
+{
+  plenv *gen;
+
+  gen = (plenv *)calloc(1, sizeof(plenv));
+  gen->core = &PULSED_ENV_CLASS;
+  gen->e = e;
+  gen->p = p;
+  return((mus_any *)gen);
+}
+
+bool mus_pulsed_env_p(mus_any *ptr)
+{
+  return((ptr) && 
+	 (ptr->core->type == MUS_PULSED_ENV));
+}
+
+mus_float_t mus_pulsed_env(mus_any *g, mus_float_t inval)
+{
+  plenv *pl = (plenv *)g;
+  mus_float_t pt_val;
+  pt_val = mus_pulse_train(pl->p, inval);
+  if (pt_val > 0.1)
+    mus_reset(pl->e);
+  return(mus_env(pl->e));
+}
+
+
+mus_float_t mus_pulsed_env_unmodulated(mus_any *g)
+{
+  plenv *pl = (plenv *)g;
+  mus_float_t pt_val;
+  pt_val = mus_pulse_train_unmodulated(pl->p);
+  if (pt_val > 0.1)
+    mus_reset(pl->e);
+  return(mus_env(pl->e));
+}
+
+/* TODO: snd-test pulsed-env and one-pole-all-pass */
 
 
 

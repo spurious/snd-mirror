@@ -5130,9 +5130,7 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
   return(XEN_FALSE);
 }
 
-/* TODO: doc/test these new banks: oscil|ssb-am|out-bank
- *   and regularize the args.
- */
+
 #if HAVE_SCHEME
   static mus_any **s7_vector_to_gens(s7_scheme *sc, s7_pointer vect, int arg, const char *caller);
   #define vector_to_gens(V, A, C) s7_vector_to_gens(s7, V, A, C)
@@ -6667,6 +6665,43 @@ static XEN g_envelope_interp(XEN ux, XEN e, XEN ubase)
   return(XEN_FALSE);
 }
 
+/* -------------------------------- pulsed-env -------------------------------- */
+
+static XEN g_make_pulsed_env(XEN e, XEN dur, XEN frq)
+{
+  #define H_make_pulsed_env "(" S_make_pulsed_env " envelope duration frequency) returns a pulsed-env generator."
+  XEN gp, ge;
+  mus_any *pl;
+
+  gp = g_make_pulse_train(frq, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED);
+  ge = g_make_env(XEN_LIST_3(e, C_TO_XEN_DOUBLE(1.0), dur));
+
+  pl = mus_make_pulsed_env(XEN_TO_MUS_ANY(ge), XEN_TO_MUS_ANY(gp));
+  return(mus_xen_to_object(mus_any_to_mus_xen_with_two_vcts(pl, ge, gp)));
+}
+
+static XEN g_pulsed_env_p(XEN os)
+{
+  #define H_pulsed_env_p "(" S_pulsed_env_p " gen) returns " PROC_TRUE " if gen is a pulsed-env generator."
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_pulsed_env_p(XEN_TO_MUS_ANY(os)))));
+}
+
+static XEN g_pulsed_env(XEN g, XEN fm)
+{
+  #define H_pulsed_env "(" S_pulsed_env " gen fm) runs a pulsed-env generator."
+  mus_any *pl;
+
+  pl = XEN_TO_MUS_ANY(g);
+  if (mus_pulsed_env_p(pl))
+    {
+      if (XEN_NUMBER_P(fm))
+	return(C_TO_XEN_DOUBLE(mus_pulsed_env(pl, XEN_TO_C_DOUBLE(fm))));
+      return(C_TO_XEN_DOUBLE(mus_pulsed_env_unmodulated(pl)));
+    }
+  XEN_ASSERT_TYPE(false, g, XEN_ARG_1, S_pulsed_env, "a pulsed-env object");
+  return(XEN_ZERO);
+}
+
 
 
 
@@ -8138,7 +8173,7 @@ static mus_float_t as_needed_input_generator(void *ptr, int direction)
 {
   mus_xen *x = (mus_xen *)ptr;
   XEN v;
-  v = x->vcts[MUS_INPUT_FUNCTION]; /* TODO: do this as below */
+  v = x->vcts[MUS_INPUT_FUNCTION];
   return(mus_apply(XEN_TO_MUS_ANY(v), 0.0, 0.0));
 }
 
@@ -9221,7 +9256,7 @@ static XEN g_ssb_am(XEN obj, XEN insig, XEN fm)
 
 static XEN g_ssb_bank(XEN ssbs, XEN filters, XEN inval, XEN size)
 {
-  /* an experiment -- TODO: args should parallel oscil-bank one way or the other */
+  /* an experiment TODO: get rid of ssb-bank (snd-test and snd-motif) */
   int i, len;
   mus_float_t sum = 0.0, val = 0.0;
 
@@ -9245,122 +9280,6 @@ static XEN g_ssb_bank(XEN ssbs, XEN filters, XEN inval, XEN size)
 static XEN g_mus_frandom(XEN val) {return(C_TO_XEN_DOUBLE(mus_frandom(XEN_TO_C_DOUBLE(val))));}
 static XEN g_mus_irandom(XEN val) {return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(val))));}
 
-
-
-/* pulsed-env from generators.scm */
-#define S_pulsed_env "pulsed-env"
-#define S_pulsed_env_p "pulsed-env?"
-#define S_make_pulsed_env "make-pulsed-env"
-
-#if HAVE_SCHEME
-static XEN g_make_pulsed_env(XEN e, XEN dur, XEN frq)
-{
-  #define H_make_pulsed_env "(" S_make_pulsed_env " envelope duration frequency) returns a pulsed-env generator."
-  XEN v, gp, ge;
-  v = XEN_MAKE_VECTOR(4, XEN_FALSE);
-  gp = g_make_pulse_train(frq, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED);
-  ge = g_make_env(XEN_LIST_3(e, C_TO_XEN_DOUBLE(1.0), dur));
-  XEN_VECTOR_SET(v, 0, gp);
-  XEN_VECTOR_SET(v, 1, ge);
-  XEN_VECTOR_SET(v, 2, s7_make_c_pointer(s7, (void *)(XEN_TO_MUS_ANY(gp))));
-  XEN_VECTOR_SET(v, 3, s7_make_c_pointer(s7, (void *)(XEN_TO_MUS_ANY(ge))));
-  return(v);
-}
-
-static XEN g_pulsed_env_p(XEN g)
-{
-  #define H_pulsed_env_p "(" S_pulsed_env_p " gen) returns " PROC_TRUE " if gen is a pulsed-env generator."
-  return(C_TO_XEN_BOOLEAN((XEN_VECTOR_P(g)) &&
-			  (XEN_VECTOR_LENGTH(g) == 4) &&
-			  (mus_pulse_train_p((mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 2)))) &&
-			  (mus_env_p((mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 3))))));
-}
-
-static XEN g_pulsed_env(XEN g, XEN fm)
-{
-  #define H_pulsed_env "(" S_pulsed_env " gen fm) runs a pulsed-env generator."
-  mus_float_t pt_val, fm1 = 0.0;
-  mus_any *p, *e;
-  XEN_ASSERT_TYPE((XEN_VECTOR_P(g)) && (XEN_VECTOR_LENGTH(g) == 4), g, XEN_ARG_1, S_pulsed_env, "a vector from make-pulsed-env");
-
-  p = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 2));
-  e = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 3));
-  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_pulsed_env, XEN_ARG_2);
-
-  pt_val = mus_pulse_train(p, fm1);
-  if (pt_val > 0.1)
-    mus_reset(e);
-  return(C_TO_XEN_DOUBLE(mus_env(e)));
-}
-
-static s7_pointer pulsed_env_1;
-static s7_pointer g_pulsed_env_1(s7_scheme *sc, s7_pointer args)
-{
-  mus_any *p, *e;
-  s7_pointer g;
-
-  g = s7_car_value(sc, args);
-  XEN_ASSERT_TYPE((XEN_VECTOR_P(g)) && (XEN_VECTOR_LENGTH(g) == 4), g, XEN_ARG_1, S_pulsed_env, "a vector from make-pulsed-env");
-
-  p = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 2));
-  e = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 3));
-
-  if (mus_pulse_train_unmodulated(p) > 0.1)
-    mus_reset(e);
-  return(C_TO_XEN_DOUBLE(mus_env(e)));
-}
-
-static s7_pointer pulsed_env_2;
-static s7_pointer g_pulsed_env_2(s7_scheme *sc, s7_pointer args)
-{
-  mus_any *p, *e;
-  s7_pointer g;
-  mus_float_t fm1 = 0.0;
-
-  g = s7_car_value(sc, args);
-  XEN_ASSERT_TYPE((XEN_VECTOR_P(g)) && (XEN_VECTOR_LENGTH(g) == 4), g, XEN_ARG_1, S_pulsed_env, "a vector from make-pulsed-env");
-
-  p = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 2));
-  e = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 3));
-  fm1 = s7_number_to_real(sc, s7_cadr_value(sc, args));
-
-  if (mus_pulse_train(p, fm1) > 0.1)
-    mus_reset(e);
-  return(C_TO_XEN_DOUBLE(mus_env(e)));
-}
-
-#else
-
-static XEN g_make_pulsed_env(XEN e, XEN dur, XEN frq)
-{
-  #define H_make_pulsed_env "(" S_make_pulsed_env " envelope duration frequency) returns a pulsed-env generator."
-  XEN v;
-  v = XEN_MAKE_VECTOR(2, XEN_FALSE);
-  XEN_VECTOR_SET(v, 0, g_make_pulse_train(frq, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-  XEN_VECTOR_SET(v, 1, g_make_env(XEN_LIST_3(e, C_TO_XEN_DOUBLE(1.0), dur)));
-  return(v);
-}
-
-static XEN g_pulsed_env_p(XEN g)
-{
-  #define H_pulsed_env_p "(" S_pulsed_env_p " gen) returns " PROC_TRUE " if gen is a pulsed-env generator."
-  return(C_TO_XEN_BOOLEAN((XEN_VECTOR_P(g)) &&
-			  (XEN_VECTOR_LENGTH(g) == 2) &&
-			  (XEN_TRUE_P(g_pulse_train_p(XEN_VECTOR_REF(g, 0)))) &&
-			  (XEN_TRUE_P(g_env_p(XEN_VECTOR_REF(g, 1))))));
-}
-
-static XEN g_pulsed_env(XEN g, XEN fm)
-{
-  #define H_pulsed_env "(" S_pulsed_env " gen fm) runs a pulsed-env generator."
-  mus_float_t pt_val;
-  XEN_ASSERT_TYPE((XEN_VECTOR_P(g)) && (XEN_VECTOR_LENGTH(g) == 2), g, XEN_ARG_1, S_pulsed_env, "a vector from make-pulsed-env");
-  pt_val = XEN_TO_C_DOUBLE(g_pulse_train(XEN_VECTOR_REF(g, 0), fm));
-  if (pt_val > 0.1)
-    g_mus_reset(XEN_VECTOR_REF(g, 1));
-  return(g_env(XEN_VECTOR_REF(g, 1)));
-}
-#endif
 
 
 #if HAVE_SCHEME
@@ -9411,6 +9330,7 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #define cdadr(E)  s7_cdadr(E)
 #define caddar(E) s7_caddar(E)
 #define caadr(E)  s7_caadr(E)
+#define caaddr(E) s7_caaddr(E)
 #define cddar(E)  s7_cddar(E)
 #define cadddr(E) s7_cadddr(E)
 
@@ -9678,12 +9598,14 @@ GEN_1(ncos, mus_ncos_unmodulated)
 GEN_1(nsin, mus_nsin_unmodulated)
 GEN_1(nrxycos, mus_nrxycos_unmodulated)
 GEN_1(nrxysin, mus_nrxysin_unmodulated)
+GEN_1(pulsed_env, mus_pulsed_env_unmodulated)
 
 GEN_1(readin, mus_readin)
 
 GEN_2(comb, mus_comb_unmodulated_noz)
 GEN_2(notch, mus_notch_unmodulated_noz)
 GEN_2(all_pass, mus_all_pass_unmodulated_noz)
+GEN_2(pulsed_env, mus_pulsed_env)
 GEN_2(delay, mus_delay_unmodulated_noz)
 
 GEN_2(moving_average, mus_moving_average)
@@ -9705,7 +9627,7 @@ GEN_2(two_pole, mus_two_pole)
 GEN_2(filter, mus_filter)
 GEN_2(fir_filter, mus_fir_filter)
 GEN_2(iir_filter, mus_iir_filter)
-/* GEN_2(one_pole_all_pass, mus_one_pole_all_pass) */
+GEN_2(one_pole_all_pass, mus_one_pole_all_pass)
 GEN_2(formant, mus_formant)
 GEN_2(firmant, mus_firmant)
 
@@ -11479,11 +11401,13 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 	    }
 	  else
 	    {
+	      /* car is a symbol but not a real, so give-up at this level */
 	      /* fprintf(stderr, "    callee: %s\n", DISPLAY(args)); */
 	      OUTA_LOOP(s7_call_direct_to_real_and_free(sc, callee));
 	      return(args);
 	    }
 	}
+
       callee = cdr(callee);
       outer_len--;
 
@@ -11561,17 +11485,43 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 				}
 			      
 			    }
+
+			  choices = (s7_pointer *)s7_function_chooser_data_direct(s7_car_value(sc, callee));
+			  if ((choices) &&
+			      (s7_is_symbol(cadr(callee))) &&
+			      (choices[GEN_DIRECT_CHECKER]))
+			    {
+			      int inner_len;
+			      inner_len = s7_list_length(sc, callee);
+			      if ((inner_len == 2) &&
+				  (choices[GEN_DIRECT_1]))
+				{		
+				  mus_float_t (*gen4)(void *p);
+				  bool (*is_gen4)(s7_pointer p);
+				  s7_pointer obj1;
+				  void *gen5;
+
+				  gen4 = (mus_float_t (*)(void *p))(choices[GEN_DIRECT_1]);
+				  is_gen4 = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+				  obj1 = s7_cadr_value(sc, callee);
+				  gen5 = s7_object_value(obj1);
+				  if (is_gen4(obj1))
+				    {
+				      OUTA_LOOP(x * gen2(gen, gen4(gen5)));
+				      return(args);
+				    }
+				}
+			    }
+			  
 			  /* fprintf(stderr, "%lld: %s\n", end - pos, DISPLAY(callee)); */
 			  /* snd-test
 			   * 10000 (* index (table-lookup fm))
 			   * 350000 (comb dly (rand r))
-			   * 44100 (oscil os)
 			   * 44100: (* fm-index (oscil md (env skewf)))
 			   * 22050: (* fm-ind0 (oscil md (* fm-ind1 (oscil ca))))
 			   * 22050: (* fm-ind0 (oscil md (* fm-ind1 (oscil ca))))
-			   * 98000: (env frqe)
 			   */
-
+			  
 			  OUTA_LOOP(x * gen2(gen, s7_call_direct_to_real_and_free(sc, callee)));
 			  return(args);
 			}
@@ -11771,12 +11721,33 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 			      return(args);
 			    }
 			      
+			  choices = (s7_pointer *)s7_function_chooser_data_direct(s7_car_value(sc, arg2));
+			  if ((choices) &&
+			      (choices[GEN_DIRECT_CHECKER]) &&
+			      (s7_is_symbol(cadr(arg2))))
+			    {
+			      int inner_len;
+			      inner_len = s7_list_length(sc, arg2);
+			      if ((inner_len == 2) &&
+				  (choices[GEN_DIRECT_1]))
+				{
+				  gen1 = (mus_float_t (*)(void *p))(choices[GEN_DIRECT_1]);
+				  is_gen = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+				  obj = s7_cadr_value(sc, arg2);
+				  gen = s7_object_value(obj);
+				  if (is_gen(obj))
+				    {
+				      OUTA_LOOP(x * mus_env(e1) * gen1(gen) * s7_call_direct_to_real_and_free(sc, arg3));
+				      return(args);
+				    }
+				}
+			    }
 			  /* fprintf(stderr, "%d, %lld %s\n", __LINE__, end - pos, DISPLAY(callee)); */
 			  /* 76200 ((env pulsef) (blackman pulse2) (polywave gen (rand-interp rnd)))
 			   * 11025 ((env ampf) (pulsed-env pulse) (oscil base (+ (env frqf) (* index (oscil modm)))))
 			   * 88200 ((env ampf) (pulsed-env pulsef) (oscil gen1 (+ (polywave gen2) (rand-interp rnd))))
 			   * 6438 * 6 ((env pulsef) (+ 0.6 (rand-interp rnd2)) (oscil gen1 (polywave gp (rand-interp rnd1))))
-			   * 88200 ((env ampf) (wave-train pulser) (polywave gen1 (rand-interp rnd)))
+			   * [88200 ((env ampf) (wave-train pulser) (polywave gen1 (rand-interp rnd)))]
 			   * 2205 * 6 ((env ampf) (+ 0.8 (* 0.2 (abs (oscil gen3)))) (polywave gp (env frqf)))
 			   * 48069 ((env buzz-ampf) (+ 0.2 (abs (triangle-wave buzzer-amp))) (oscil gen1 (* buzzer-index (nrxysin buzzer))))
 			   * 14112 ((env ampf) (+ 0.25 (* 0.75 (abs (oscil buzz)))) (oscil gen1 (rand-interp rnd)))
@@ -11786,6 +11757,89 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 			   */
 
 			  OUTA_LOOP(x * mus_env(e1) * s7_call_direct_to_real_and_free(sc, arg2) * s7_call_direct_to_real_and_free(sc, arg3));
+			  return(args);
+			}
+		    }
+		}
+	      else
+		{
+		  if ((outer_len == 4) && 
+		      (x == 1.0))
+		    {
+		      /* (with-sound (:statistics #t) (long-spurred-meadow-katydid 0 .5)) */
+		      s7_pointer arg1, arg2, arg3, arg4;
+		      arg1 = car(callee);
+		      arg2 = cadr(callee);
+		      arg3 = caddr(callee);
+		      arg4 = cadddr(callee);
+		      if ((s7_is_pair(arg1)) &&
+			  (car(arg1) == env_symbol) &&
+			  (s7_is_symbol(cadr(arg1))))
+			{
+			  mus_any *e;
+			  int inner_len;
+			  inner_len = s7_list_length(sc, arg2);
+
+			  GET_GENERATOR_CADR(arg1, env, e);
+			  choices = (s7_pointer *)s7_function_chooser_data_direct(s7_car_value(sc, arg2));
+
+			  if ((choices) &&
+			      (choices[GEN_DIRECT_CHECKER]) &&
+			      (s7_is_symbol(cadr(arg2))) &&
+			      (inner_len == 2) &&
+			      (choices[GEN_DIRECT_1]))
+			    {
+			      gen1 = (mus_float_t (*)(void *p))(choices[GEN_DIRECT_1]);
+			      is_gen = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+			      obj = s7_cadr_value(sc, arg2);
+			      gen = s7_object_value(obj);
+			      if (is_gen(obj))
+				{
+				  if ((s7_list_length(sc, arg3) == 3) &&
+				      (s7_is_symbol(cadr(arg3))) &&
+				      (caaddr(arg3) == env_symbol) &&
+				      (s7_is_symbol(cadr(caddr(arg3)))))
+
+				    {
+				      choices = (s7_pointer *)s7_function_chooser_data_direct(s7_car_value(sc, arg3));
+				      if ((choices) &&
+					  (choices[GEN_DIRECT_CHECKER]) &&
+					  (choices[GEN_DIRECT_2]))
+					{
+					  void *gen3;
+					  mus_any *e3;
+					  gen2 = (mus_float_t (*)(void *p, mus_float_t fm))(choices[GEN_DIRECT_2]);
+					  is_gen = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+					  obj = s7_cadr_value(sc, arg3);
+					  gen3 = s7_object_value(obj);
+					  if (is_gen(obj))
+					    {
+					      GET_GENERATOR_CADR(caddr(arg3), env, e3);
+					      
+					      if ((s7_list_length(sc, arg4) == 3) &&
+						  (s7_is_symbol(cadr(arg4))) &&
+						  (car(arg4) == polywave_symbol))
+						{
+						  s7_pointer mfm;
+						  mus_any *p;
+						  mfm = caddr(arg4);
+						  GET_GENERATOR_CADR(arg4, polywave, p);
+						  OUTA_LOOP(mus_env(e) * gen1(gen) * gen2(gen3, mus_env(e3)) * mus_polywave(p, s7_call_direct_to_real_and_free(sc, mfm)));
+						  return(args);
+						}
+					      OUTA_LOOP(mus_env(e) * gen1(gen) * gen2(gen3, mus_env(e3)) * s7_call_direct_to_real_and_free(sc, arg4));
+					      return(args);
+					    }
+					}
+				    }
+				  OUTA_LOOP(mus_env(e) * gen1(gen) * s7_call_direct_to_real_and_free(sc, arg3) * s7_call_direct_to_real_and_free(sc, arg4));
+				  return(args);
+				}
+			    }
+			  OUTA_LOOP(mus_env(e) *
+				    s7_call_direct_to_real_and_free(sc, arg2) * 
+				    s7_call_direct_to_real_and_free(sc, arg3) * 
+				    s7_call_direct_to_real_and_free(sc, arg4));
 			  return(args);
 			}
 		    }
@@ -11939,12 +11993,13 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
   /* 11907 (formant-bank fs fb (* (env ampf) ...)
    * [250000 (oscil-bank n oscs amps)]
    * 40000 (* 0.1 (+ (oscil frq1) (oscil frq2)))
+   * 5000(* pulse-amp (+ (* intrp (env pulsef1)) ...
    */
   OUTA_LOOP(s7_call_direct_to_real_and_free(sc, callee));
   return(args);
 }
 
-/* this gives almost no gain */
+
 static s7_pointer indirect_outa_2_temp_let_looped;
 static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer args)
 {
@@ -12004,6 +12059,10 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
 	}
       return(args);
     }
+
+  /* fprintf(stderr, "%lld: %s\n", end - pos, DISPLAY(callee)); */
+  /* complex, but all start with (* [s] (env ...) [(pulsed-env...)])
+   */
 
   letf = s7_function_choice(sc, letp);
   letp = cdr(letp);
@@ -12683,6 +12742,7 @@ static void init_choices(void)
   SET_GEN_1(src, mus_src_simple)
   SET_GEN_1(convolve, mus_convolve_simple)
   SET_GEN_1(phase_vocoder, mus_phase_vocoder_simple)
+  SET_GEN_1(pulsed_env, mus_pulsed_env_unmodulated)
 
 #define SET_GEN_2(Gen, CFun) \
   {\
@@ -12718,13 +12778,14 @@ static void init_choices(void)
   SET_GEN_2(iir_filter, mus_iir_filter)
   SET_GEN_2(formant, mus_formant)
   SET_GEN_2(firmant, mus_firmant)
-    /*  SET_GEN_2(one_pole_all_pass, mus_one_pole_all_pass) */
+  SET_GEN_2(one_pole_all_pass, mus_one_pole_all_pass)
   SET_GEN_2(wave_train, mus_wave_train)
   SET_GEN_2(table_lookup, mus_table_lookup)
   SET_GEN_2(ssb_am, mus_ssb_am_unmodulated)
   SET_GEN_2(asymmetric_fm, mus_asymmetric_fm_unmodulated)
   SET_GEN_2(polyshape, mus_polyshape_unmodulated)
   SET_GEN_2(filtered_comb, mus_filtered_comb_unmodulated)
+  SET_GEN_2(pulsed_env, mus_pulsed_env)
 }
 
 #if (!WITH_GMP)
@@ -14498,12 +14559,31 @@ static s7_pointer notch_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
   return(f);
 }
 
-#if 0
+
 static s7_pointer one_pole_all_pass_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      if (s7_is_symbol(caddr(expr)))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(one_pole_all_pass_2);
+	}
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(sc, caddr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_one_pole_all_pass_2);
+      return(indirect_one_pole_all_pass_2);
+    }
+
   return(f);
 }
-#endif
+
 
 static s7_pointer all_pass_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
@@ -14944,19 +15024,20 @@ static s7_pointer pulsed_env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
       return(pulsed_env_1);
     }
   if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))))
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
     {
-      if ((s7_is_real(caddr(expr))) &&
-	  (s7_cell_real(caddr(expr)) == 0.0))
-	{
-	  s7_function_choice_set_direct(sc, expr);
-	  return(pulsed_env_1);
-	}
-      if (s7_is_symbol(caddr(expr)))
-	{
-	  s7_function_choice_set_direct(sc, expr);
-	  return(pulsed_env_2);
-	}
+      s7_function_choice_set_direct(sc, expr);
+      return(pulsed_env_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(sc, caddr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_pulsed_env_2);
+      return(indirect_pulsed_env_2);
     }
   return(f);
 }
@@ -15493,11 +15574,11 @@ static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 		   *  66150: (one-zero oz (* (env ampf) (+ ...
 		   * calls:
 		   *  508280: (ssb-am ssb (bandpass flt (vct-ref in-data j))): g_ssb_am_2
-		   *  88200: (formant-bank amps fs inputs) : g_formant_bank_ss
+		   *  88200: (formant-bank fs inputs) : g_formant_bank_ss
 		   *  88200: (* ampa (ina i *reverb*))
 		   *  81365: (* pulse-amp (env pulse-ampf) ...
 		   *  66150: (one-zero oz (* (env ampf) (+ ...
-		   *  50828: (formant-bank amps frms1 x)
+		   *  50828: (formant-bank frms1 x)
 		   */
 		  return(indirect_outa_2_temp);
 		}
@@ -15710,6 +15791,7 @@ static void init_choosers(s7_scheme *sc)
   mul_c_comb_2 = clm_make_function(sc, "*", g_mul_c_comb_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_notch_2 = clm_make_function(sc, "*", g_mul_c_notch_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_all_pass_2 = clm_make_function(sc, "*", g_mul_c_all_pass_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_c_one_pole_all_pass_2 = clm_make_function(sc, "*", g_mul_c_one_pole_all_pass_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_delay_2 = clm_make_function(sc, "*", g_mul_c_delay_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_moving_average_2 = clm_make_function(sc, "*", g_mul_c_moving_average_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_moving_max_2 = clm_make_function(sc, "*", g_mul_c_moving_max_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -15725,6 +15807,8 @@ static void init_choosers(s7_scheme *sc)
   mul_c_sawtooth_wave_1 = clm_make_function(sc, "*", g_mul_c_sawtooth_wave_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_pulse_train_2 = clm_make_function(sc, "*", g_mul_c_pulse_train_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_pulse_train_1 = clm_make_function(sc, "*", g_mul_c_pulse_train_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_c_pulsed_env_2 = clm_make_function(sc, "*", g_mul_c_pulsed_env_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_c_pulsed_env_1 = clm_make_function(sc, "*", g_mul_c_pulsed_env_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_square_wave_2 = clm_make_function(sc, "*", g_mul_c_square_wave_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_square_wave_1 = clm_make_function(sc, "*", g_mul_c_square_wave_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_triangle_wave_2 = clm_make_function(sc, "*", g_mul_c_triangle_wave_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -15765,6 +15849,7 @@ static void init_choosers(s7_scheme *sc)
   mul_s_comb_2 = clm_make_function_no_choice(sc, "*", g_mul_s_comb_2, 2, 0, false, "* optimization", f);
   mul_s_notch_2 = clm_make_function_no_choice(sc, "*", g_mul_s_notch_2, 2, 0, false, "* optimization", f);
   mul_s_all_pass_2 = clm_make_function_no_choice(sc, "*", g_mul_s_all_pass_2, 2, 0, false, "* optimization", f);
+  mul_s_one_pole_all_pass_2 = clm_make_function_no_choice(sc, "*", g_mul_s_one_pole_all_pass_2, 2, 0, false, "* optimization", f);
   mul_s_delay_2 = clm_make_function_no_choice(sc, "*", g_mul_s_delay_2, 2, 0, false, "* optimization", f);
   mul_s_moving_average_2 = clm_make_function_no_choice(sc, "*", g_mul_s_moving_average_2, 2, 0, false, "* optimization", f);
   mul_s_moving_max_2 = clm_make_function_no_choice(sc, "*", g_mul_s_moving_max_2, 2, 0, false, "* optimization", f);
@@ -15780,6 +15865,8 @@ static void init_choosers(s7_scheme *sc)
   mul_s_sawtooth_wave_1 = clm_make_function_no_choice(sc, "*", g_mul_s_sawtooth_wave_1, 1, 0, false, "* optimization", f);
   mul_s_pulse_train_2 = clm_make_function_no_choice(sc, "*", g_mul_s_pulse_train_2, 2, 0, false, "* optimization", f);
   mul_s_pulse_train_1 = clm_make_function_no_choice(sc, "*", g_mul_s_pulse_train_1, 1, 0, false, "* optimization", f);
+  mul_s_pulsed_env_2 = clm_make_function_no_choice(sc, "*", g_mul_s_pulsed_env_2, 2, 0, false, "* optimization", f);
+  mul_s_pulsed_env_1 = clm_make_function_no_choice(sc, "*", g_mul_s_pulsed_env_1, 1, 0, false, "* optimization", f);
   mul_s_square_wave_2 = clm_make_function_no_choice(sc, "*", g_mul_s_square_wave_2, 2, 0, false, "* optimization", f);
   mul_s_square_wave_1 = clm_make_function_no_choice(sc, "*", g_mul_s_square_wave_1, 1, 0, false, "* optimization", f);
   mul_s_triangle_wave_2 = clm_make_function_no_choice(sc, "*", g_mul_s_triangle_wave_2, 2, 0, false, "* optimization", f);
@@ -15820,6 +15907,7 @@ static void init_choosers(s7_scheme *sc)
   env_comb_2 = clm_make_function(sc, "*", g_env_comb_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   env_notch_2 = clm_make_function(sc, "*", g_env_notch_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   env_all_pass_2 = clm_make_function(sc, "*", g_env_all_pass_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  env_one_pole_all_pass_2 = clm_make_function(sc, "*", g_env_one_pole_all_pass_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   env_delay_2 = clm_make_function(sc, "*", g_env_delay_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   env_moving_average_2 = clm_make_function(sc, "*", g_env_moving_average_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   env_moving_max_2 = clm_make_function(sc, "*", g_env_moving_max_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -15835,6 +15923,8 @@ static void init_choosers(s7_scheme *sc)
   env_sawtooth_wave_1 = clm_make_function(sc, "*", g_env_sawtooth_wave_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   env_pulse_train_2 = clm_make_function(sc, "*", g_env_pulse_train_2, 2, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
   env_pulse_train_1 = clm_make_function(sc, "*", g_env_pulse_train_1, 1, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
+  env_pulsed_env_2 = clm_make_function(sc, "*", g_env_pulsed_env_2, 2, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
+  env_pulsed_env_1 = clm_make_function(sc, "*", g_env_pulsed_env_1, 1, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
   env_square_wave_2 = clm_make_function(sc, "*", g_env_square_wave_2, 2, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
   env_square_wave_1 = clm_make_function(sc, "*", g_env_square_wave_1, 1, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
   env_triangle_wave_2 = clm_make_function(sc, "*", g_env_triangle_wave_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -16264,10 +16354,6 @@ static void init_choosers(s7_scheme *sc)
   formant_bank_ss = clm_make_function(sc, "formant", g_formant_bank_ss, 3, 0, false, "formant-bank optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   formant_bank_sz = clm_make_function(sc, "formant", g_formant_bank_sz, 3, 0, false, "formant-bank optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
-  /*
-  GEN_F2("one-pole-all-pass", one_pole_all_pass);
-  */
-
   GEN_F2("firmant", firmant);
 
   firmant_2 = clm_make_function(sc, "firmant", g_firmant_2, 2, 0, false, "firmant optimization", f,
@@ -16286,6 +16372,14 @@ static void init_choosers(s7_scheme *sc)
   direct_all_pass_3 = clm_make_function(sc, "all-pass", g_direct_all_pass_3, 3, 0, false, "all-pass optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_all_pass_3 = clm_make_function(sc, "all-pass", g_indirect_all_pass_3, 3, 0, false, "all-pass optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 #endif
+
+  GEN_F2("one-pole-all-pass", one_pole_all_pass);
+  one_pole_all_pass_2 = clm_make_function(sc, "one-pole-all-pass", g_one_pole_all_pass_2, 2, 0, false, "one-pole-all-pass optimization", f, 
+					  mul_c_one_pole_all_pass_2, mul_s_one_pole_all_pass_2, env_one_pole_all_pass_2, NULL, NULL, NULL);
+  direct_one_pole_all_pass_2 = clm_make_function(sc, "one-pole-all-pass", g_direct_one_pole_all_pass_2, 2, 0, false, "one-pole-all-pass optimization", f, 
+						 NULL, NULL, NULL, NULL, NULL, NULL);
+  indirect_one_pole_all_pass_2 = clm_make_function(sc, "one-pole-all-pass", g_indirect_one_pole_all_pass_2, 2, 0, false, "one-pole-all-pass optimization", f, 
+						   NULL, NULL, NULL, NULL, NULL, NULL);
 
 
   GEN_F2("delay", delay);
@@ -16312,11 +16406,16 @@ static void init_choosers(s7_scheme *sc)
   polyshape_three = clm_make_function(sc, "polyshape", g_polyshape_three, 3, 0, false, "polyshape optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
 
 
-  f = s7_name_to_value(sc, "pulsed-env");
-  s7_function_set_chooser(sc, f, pulsed_env_chooser);
-  pulsed_env_1 = clm_make_function_no_choice(sc, "pulsed-env", g_pulsed_env_1, 1, 0, false, "pulsed-env optimization", f);
-  pulsed_env_2 = clm_make_function_no_choice(sc, "pulsed-env", g_pulsed_env_2, 2, 0, false, "pulsed-env optimization", f);
-  /* this includes the returns_temp bit */
+  GEN_F("pulsed-env", pulsed_env);
+
+  pulsed_env_2 = clm_make_function(sc, "pulsed-env", g_pulsed_env_2, 2, 0, false, "pulsed-env optimization", f,
+				    mul_c_pulsed_env_2, mul_s_pulsed_env_2, env_pulsed_env_2, NULL, NULL, NULL);
+  direct_pulsed_env_2 = clm_make_function(sc, "pulsed-env", g_direct_pulsed_env_2, 2, 0, false, "pulsed-env optimization", f,
+					   NULL, NULL, NULL, NULL, NULL, NULL);
+  indirect_pulsed_env_2 = clm_make_function(sc, "pulsed-env", g_indirect_pulsed_env_2, 2, 0, false, "pulsed-env optimization", f,
+					   NULL, NULL, NULL, NULL, NULL, NULL);
+  pulsed_env_1 = clm_make_function(sc, "pulsed-env", g_pulsed_env_1, 1, 0, false, "pulsed-env optimization", f,
+				    NULL, NULL, NULL, mul_c_pulsed_env_1, mul_s_pulsed_env_1, env_pulsed_env_1);
 
 
   GEN_F2("ssb-am", ssb_am);

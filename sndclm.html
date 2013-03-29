@@ -1138,6 +1138,10 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 <em class=def id="env-interp">env-interp</em> x env (base 1.0) ;value of env at x
 <em class=def id="env-any">env-any</em> e connecting-function
 <em class=def id="envelopeinterp">envelope-interp</em> x env (base 1.0)
+
+<em class=def id="make-pulsed-env">make-pulsed-env</em> envelope duration frequency
+<em class=def id="pulsedenv">pulsed-env</em> gen (fm 0.0)
+<em class=def id="pulsedenv?">pulsed-env?</em> gen
 </pre>
 
 
@@ -1410,6 +1414,12 @@ curve:
 If you'd rather think in terms of e^-kt, set the 'base' to (exp k).  
 </p>
 <div class="spacer"></div>
+
+
+<p>
+pulsed-env produces a repeating envelope.  <a href="#env">env</a> sticks at its last value, but pulsed-env repeats it over and over.
+"duration" is the envelope duration, and "frequency" is the repeitition rate, changeable via the "fm" argument to the pulsed-env generator.
+</p>
 
 
 <p>
@@ -8487,20 +8497,6 @@ asyfm-I is the modified Bessel function version (the second formula in the <a hr
 <p>This generator produces the "gapped" spectra mentioned in <a href="fm.html">fm.html</a>. It is used extensively in the
 various "imaginary machines".  Also included in this section of generators.scm is fpmc, an instrument
 that performs FM with a complex index (complex in the sense of complex numbers). 
-</p>
-<div class="separator"></div>
-
-
-<pre class="indented">
-<em class=def id="make-pulsed-env">make-pulsed-env</em> envelope duration frequency
-<em class=def id="pulsedenv">pulsed-env</em> gen (fm 0.0)
-<em class=def id="pulsedenv?">pulsed-env?</em> gen
-</pre>
-
-<p>
-This produces a repeating envelope.  <a href="#env">env</a> sticks at its last value, but pulsed-env repeats it over and over.
-"duration" is the envelope duration, and "frequency" is the repeitition rate, changeable via the "fm" argument to the pulsed-env generator.
-Many of the instruments in animals.scm use this generator.  (In a sense, this is the original Music V OSC generator).
 </p>
 <div class="separator"></div>
 
