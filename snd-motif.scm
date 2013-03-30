@@ -2750,7 +2750,11 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 
     (letrec ((ssb-expand 
 	      (lambda ()
-		(mus-ssb-bank ssbs bands (reader) ssb-pairs))) ; clm2xen.c -- an experiment
+		(let ((sum 0.0)
+		      (sig (reader)))
+		  (do ((i 0 (+ i 1)))
+		      ((= i ssb-pairs) sum)
+		    (set! sum (+ sum (ssb-am (ssbs i) (fir-filter (bands i) sig))))))))
 	     (set-freq 
 	      (lambda (nfreq)
 		(set! old-freq nfreq)

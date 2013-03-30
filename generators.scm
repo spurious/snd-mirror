@@ -5493,20 +5493,27 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define (test-polyoid n)
   (let* ((res (with-sound (:channels 2 :clipped #f)
-		(let ((cur-phases (make-vct (* 3 n)))
-		      (oscs (make-vector n))
-		      (amps (make-vct n (/ 1.0 n))))
+		(let ((freqs (make-vct n))
+		      (phases (make-vct n))           ; for oscil-bank
+		      (cur-phases (make-vct (* 3 n))) ; for polyoid
+		      (amp (/ 1.0 n)))
 		  (do ((i 0 (+ i 1))
 		       (j 0 (+ j 3)))
 		      ((= i n))
 		    (set! (cur-phases j) (+ i 1))
 		    (set! (cur-phases (+ j 1)) (/ 1.0 n))
 		    (set! (cur-phases (+ j 2)) (random (* 2 pi)))
-		    (vector-set! oscs i (make-oscil (+ i 1.0) (cur-phases (+ j 2)))))
-		  (let ((gen (make-polyoid 1.0 cur-phases)))
+		    
+		    (set! (freqs i) (hz->radians (+ i 1.0)))
+		    (set! (phases i) (cur-phases (+ j 2))))
+		  
+		  (let ((gen (make-polyoid 1.0 cur-phases))
+			(obank (make-oscil-bank freqs phases)))
 		    (do ((i 0 (+ i 1)))
 			((= i 88200))
-		      (outa i (oscil-bank n oscs amps))
+		      (outa i (* amp (oscil-bank obank))))
+		    (do ((i 0 (+ i 1)))
+			((= i 88200))
 		      (outb i (polyoid gen 0.0)))))))
 	 (snd (find-sound res)))
     (channel-distance snd 0 snd 1)))

@@ -1658,8 +1658,9 @@ is a physical model of a flute:
 	    (env1dur (- newdur *piano-release-duration*))
 	    (siz (floor (/ (length partials) 2))))
 	(let ((env1samples (+ beg (seconds->samples env1dur)))
-	      (oscils (make-vector siz))
-	      (alist (make-vct siz 0.0))
+	      (freqs (make-vct siz))
+	      (phases (make-vct siz 0.0))
+	      (alist (make-vct siz))
 	      (locs (make-locsig degree distance reverb-amount))
 	      (ampfun1 (make-piano-ampfun env1dur)))
 	  (let ((ampenv1 (make-env ampfun1
@@ -1669,20 +1670,19 @@ is a physical model of a flute:
 		(ampenv2 (make-env '(0 1 100 0)
 				   :scaler (* amplitude (ampfun1 (- (length ampfun1) 1)))
 				   :duration env1dur
-				   :base 1.0)))
+				   :base 1.0))
+		(obank (make-oscil-bank freqs phases alist)))
 	    (do ((i 0 (+ i 2))
 		 (j 0 (+ j 1)))
 		((= i (length partials)))
 	      (set! (alist j) (partials (+ i 1)))
-	      (set! (oscils j) (make-oscil (* (partials i) frequency))))
+	      (set! (freqs j) (hz->radians (* (partials i) frequency))))
 	    (do ((i beg (+ i 1)))
 		((= i env1samples))
-	      (locsig locs i (* (env ampenv1)
-				(oscil-bank siz oscils alist))))
+	      (locsig locs i (* (env ampenv1) (oscil-bank obank))))
 	    (do ((i env1samples (+ i 1)))
 		((= i end))
-	      (locsig locs i (* (env ampenv2)
-				(oscil-bank siz oscils alist))))))))))
+	      (locsig locs i (* (env ampenv2) (oscil-bank obank))))))))))
 
 ;;; (with-sound () (lbj-piano 0 3 440.0 .2))
 
@@ -2006,7 +2006,7 @@ is a physical model of a flute:
 		      (do ((k i (+ k 1)))
 			  ((= k stop))
 			;; run oscils, update envelopes
-			(outa k (oscil-bank cur-oscils resynth-oscils amps freqs rates sweeps)))))))))))) ; amps = amps+rates on each sample internally
+			(outa k (old-oscil-bank cur-oscils resynth-oscils amps freqs rates sweeps)))))))))))) ; amps = amps+rates on each sample internally
 
 ;; (with-sound (:statistics #t) (pins 0 2 "oboe.snd" 1.0 :max-peaks 8))
 

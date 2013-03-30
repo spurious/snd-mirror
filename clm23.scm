@@ -148,14 +148,15 @@
   "(simple-osc beg dur freq amp) test instrument for oscil"
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
-	(arr (make-vector 20))
-	(amps (make-vct 20 (* amp .05))))
-    (do ((i 0 (+ i 1)))
-	((= i 20))
-      (set! (arr i) (make-oscil (* (+ i 1) 100))))
-    (do ((i start (+ i 1))) 
-	((= i end))
-      (outa i (oscil-bank 20 arr amps)))))
+	(freqs (make-vct 20)))
+    (let ((obank (make-oscil-bank freqs (make-vct 20 0.0))))
+      (do ((i 0 (+ i 1)))
+	  ((= i 20))
+	(set! (freqs i) (hz->radians (* (+ i 1) 100))))
+      (set! amp (* 0.05 amp))
+      (do ((i start (+ i 1))) 
+	  ((= i end))
+	(outa i (* amp (oscil-bank obank)))))))
 
 (define (simple-asy beg dur amp)
   "(simple-asy beg dur amp) test instrument for asymmetric-fm"

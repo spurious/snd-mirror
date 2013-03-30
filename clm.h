@@ -207,6 +207,11 @@ MUS_EXPORT mus_float_t mus_oscil_pm(mus_any *ptr, mus_float_t pm);
 MUS_EXPORT bool mus_oscil_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_oscil(mus_float_t freq, mus_float_t phase);
 
+MUS_EXPORT bool mus_oscil_bank_p(mus_any *ptr);
+MUS_EXPORT mus_float_t mus_oscil_bank(mus_any *ptr, mus_float_t *fms);
+MUS_EXPORT mus_float_t mus_oscil_bank_unmodulated(mus_any *ptr);
+MUS_EXPORT mus_any *mus_make_oscil_bank(int size, mus_float_t *freqs, mus_float_t *phases, mus_float_t *amps);
+
 MUS_EXPORT mus_any *mus_make_ncos(mus_float_t freq, int n);
 MUS_EXPORT mus_float_t mus_ncos(mus_any *ptr, mus_float_t fm);
 MUS_EXPORT bool mus_ncos_p(mus_any *ptr);
@@ -609,7 +614,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
- * 27-Mar:     comb-bank, all-pass-bank, filtered-comb-bank, pulsed-env.
+ * 27-Mar:     comb-bank, all-pass-bank, filtered-comb-bank, pulsed-env, oscil-bank.
  * 21-Mar:     one-pole-all-pass generator.
  * 14-Mar:     formant-bank generator.
  *             removed mus_delay_tick_noz.

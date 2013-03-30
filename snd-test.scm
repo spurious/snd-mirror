@@ -11496,20 +11496,25 @@ EDITS: 2
   
   (define (test-polyoid n)
     (let* ((res (with-sound (:channels 2 :clipped #f)
-		  (let ((cur-phases (make-vct (* 3 n)))
-			(oscs (make-vector n))
-			(amps (make-vct n (/ 1.0 n))))
+		  (let ((freqs (make-vct n))
+			(phases (make-vct n))           ; for oscil-bank
+			(cur-phases (make-vct (* 3 n))) ; for polyoid
+			(amp (/ 1.0 n)))
 		    (do ((i 0 (+ i 1))
 			 (j 0 (+ j 3)))
 			((= i n))
 		      (set! (cur-phases j) (+ i 1))
 		      (set! (cur-phases (+ j 1)) (/ 1.0 n))
 		      (set! (cur-phases (+ j 2)) (random (* 2 pi)))
-		      (vector-set! oscs i (make-oscil (+ i 1.0) (cur-phases (+ j 2)))))
-		    (let ((gen (make-polyoid 1.0 cur-phases)))
+
+		      (set! (freqs i) (hz->radians (+ i 1.0)))
+		      (set! (phases i) (cur-phases (+ j 2))))
+
+		    (let ((gen (make-polyoid 1.0 cur-phases))
+			  (obank (make-oscil-bank freqs phases)))
 		      (do ((i 0 (+ i 1)))
 			  ((= i 88200))
-			(outa i (oscil-bank n oscs amps)))
+			(outa i (* amp (oscil-bank obank))))
 		      (do ((i 0 (+ i 1)))
 			  ((= i 88200))
 			(outb i (polyoid gen 0.0)))))))
@@ -17459,14 +17464,16 @@ EDITS: 2
       (for-each
        (lambda (k)
 	 (let ((gen (make-polywave 100.0 (list 1 0.5 k 0.5)))
-	       (incr (/ (* 2.0 pi 100.0) 44100)))
+	       (incr (/ (* 2.0 pi 100.0) 44100))
+	       (kincr (/ (* 2.0 k pi 100.0) 44100)))
 	   (do ((i 0 (+ i 1)))
 	       ((= i 44100))
 	     (vct-set! v0 i (polywave gen)))
 	   (do ((i 0 (+ i 1))
-		(ph 0.0 (+ ph incr)))
+		(ph 0.0 (+ ph incr))
+		(kph 0.0 (+ kph kincr)))
 	       ((= i 44100))
-	     (vct-set! v1 i (+ (cos ph) (cos (* k ph)))))
+	     (vct-set! v1 i (+ (cos ph) (cos kph))))
 	   (vct-scale! v1 0.5)
 	   (if (not (vequal v0 v1))
 	       (snd-display #__line__ ";polywave ~D vs cos: ~A" k (vct-peak-and-location (vct-subtract! v0 v1))))))
@@ -20392,15 +20399,6 @@ EDITS: 2
 	(map-channel (lambda (y) (- y (* 0.5 (oscil gen1)))))
 	(if (> (maxamp) .004) (snd-display #__line__ ";ssb-am fm cancelled: ~A" (maxamp)))
 	(close-sound ind)))
-    
-    (if (defined? 'mus-ssb-bank)
-	(let ((bands (make-vector 3))
-	      (ssbs (make-vector 3)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 3))
-	    (set! (ssbs i) (make-ssb-am (+ 100.0 (random 400))))
-	    (set! (bands i) (make-bandpass (hz->radians 500.0) (hz->radians 600.0) 10)))
-	  (mus-ssb-bank ssbs bands .1 3)))
     
     (let ((ind (new-sound "test.snd" :srate 22050 :channels 1 :size 1000))
 	  (ctr 0))
@@ -47745,34 +47743,18 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-25-Mar-13:
-61,327,898,070
-8,372,483,786  s7.c:eval [/home/bil/snd-13/snd]
-6,351,358,843  ???:sin [/lib64/libm-2.12.so]
-3,572,465,312  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-2,550,012,006  ???:cos [/lib64/libm-2.12.so]
-2,433,790,403  clm.c:mus_src [/home/bil/snd-13/snd]
-1,743,022,462  s7.c:gc [/home/bil/snd-13/snd]
-1,475,734,699  s7.c:eval'2 [/home/bil/snd-13/snd]
-1,018,647,334  s7.c:s7_make_real [/home/bil/snd-13/snd]
-1,014,488,043  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
-1,004,686,674  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
-  943,099,655  clm.c:mus_formant_bank_wrapped [/home/bil/snd-13/snd]
-  911,248,552  clm.c:fir_8 [/home/bil/snd-13/snd]
-
-28-Mar-13:
-60,667,938,798
-8,255,470,100  s7.c:eval [/home/bil/snd-13/snd]
-6,287,042,272  ???:sin [/lib64/libm-2.12.so]
-3,435,812,566  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-2,759,216,582  clm.c:mus_src [/home/bil/snd-13/snd]
-2,546,933,337  ???:cos [/lib64/libm-2.12.so]
-1,705,553,105  s7.c:gc [/home/bil/snd-13/snd]
-1,511,622,795  s7.c:eval'2 [/home/bil/snd-13/snd]
+29-Mar-13:
+60,381,923,018
+8,210,024,112  s7.c:eval [/home/bil/snd-13/snd]
+6,284,374,999  ???:sin [/lib64/libm-2.12.so]
+3,398,198,716  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+2,546,442,527  ???:cos [/lib64/libm-2.12.so]
+2,430,568,684  clm.c:mus_src [/home/bil/snd-13/snd]
+1,693,293,709  s7.c:gc [/home/bil/snd-13/snd]
+1,372,556,328  s7.c:eval'2 [/home/bil/snd-13/snd]
+1,043,915,623  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
 1,004,682,384  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
-  986,609,184  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
-  960,208,494  s7.c:s7_make_real [/home/bil/snd-13/snd]
+  947,121,756  s7.c:s7_make_real [/home/bil/snd-13/snd]
   943,679,698  clm.c:mus_formant_bank [/home/bil/snd-13/snd]
   911,248,552  clm.c:fir_8 [/home/bil/snd-13/snd]
-
 |#

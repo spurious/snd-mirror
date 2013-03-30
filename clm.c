@@ -129,7 +129,7 @@ enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
       MUS_MOVING_AVERAGE, MUS_MOVING_MAX, MUS_NSIN, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
       MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS, MUS_POLYWAVE, MUS_FIRMANT, MUS_FORMANT_BANK,
-      MUS_ONE_POLE_ALL_PASS, MUS_COMB_BANK, MUS_ALL_PASS_BANK, MUS_FILTERED_COMB_BANK,
+      MUS_ONE_POLE_ALL_PASS, MUS_COMB_BANK, MUS_ALL_PASS_BANK, MUS_FILTERED_COMB_BANK, MUS_OSCIL_BANK,
       MUS_PULSED_ENV,
       MUS_INITIAL_GEN_TAG};
 
@@ -1482,6 +1482,186 @@ mus_any *mus_make_oscil(mus_float_t freq, mus_float_t phase)
  *   and there are many options for the filtering -- since this part of the signal path
  *   is not hidden, there's no reason to bring it out explicitly (as in filtered-comb)
  */
+
+
+/* ---------------- oscil-bank ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  int size, orig_size;
+  mus_float_t *amps, *phases, *freqs;
+} ob;
+
+
+static int free_oscil_bank(mus_any *ptr) 
+{
+  if (ptr) 
+    free(ptr);
+  return(0);
+}
+
+
+static mus_float_t run_oscil_bank(mus_any *ptr, mus_float_t input, mus_float_t unused) 
+{
+  return(mus_oscil_bank(ptr, NULL));
+}
+
+
+static mus_long_t oscil_bank_length(mus_any *ptr)
+{
+  return(((ob *)ptr)->size);
+}
+
+
+static mus_long_t oscil_bank_set_length(mus_any *ptr, mus_long_t len)
+{
+  ob *g = (ob *)ptr;
+  if (len < 0) 
+    g->size = 0; 
+  else 
+    {
+      if (len > g->orig_size) 
+	g->size = g->orig_size;
+      else g->size = len;
+    }
+  return(len);
+}
+
+
+static void oscil_bank_reset(mus_any *ptr)
+{
+  ob *p = (ob *)ptr;
+  p->size = p->orig_size;
+  memset((void *)(p->phases), 0, p->orig_size * sizeof(mus_float_t));
+}
+
+
+static bool oscil_bank_equalp(mus_any *p1, mus_any *p2)
+{
+  ob *o1 = (ob *)p1;
+  ob *o2 = (ob *)p2;
+  if (p1 == p2) return(true);
+  return((o1->size == o2->size) &&
+	 (o1->orig_size == o2->orig_size) &&
+	 (o1->amps == o2->amps) &&
+	 (o1->freqs == o2->freqs) &&
+	 (o1->phases == o2->phases));
+}
+
+
+static char *describe_oscil_bank(mus_any *ptr)
+{
+  ob *gen = (ob *)ptr;
+  char *describe_buffer;
+  describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s size: %d",
+	       mus_name(ptr),
+	       gen->size);
+  return(describe_buffer);
+}
+
+static mus_any_class OSCIL_BANK_CLASS = {
+  MUS_OSCIL_BANK,
+  (char *)S_oscil_bank,
+  &free_oscil_bank,
+  &describe_oscil_bank,
+  &oscil_bank_equalp,
+  0, 0,
+  &oscil_bank_length, &oscil_bank_set_length,
+  0, 0, 
+  0, 0,
+  0, 0,
+  0, 0,
+  &run_oscil_bank,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  0, 0, 0, 0,
+  0, 0,
+  0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0,
+  &oscil_bank_reset,
+  0
+};
+
+
+bool mus_oscil_bank_p(mus_any *ptr)
+{
+  return((ptr) && 
+	 (ptr->core->type == MUS_OSCIL_BANK));
+}
+
+
+mus_float_t mus_oscil_bank_unmodulated(mus_any *ptr)
+{
+  ob *p = (ob *)ptr;
+  int i;
+  mus_float_t sum = 0.0;
+  
+  if (!p->amps)
+    {
+      for (i = 0; i < p->size; i++)
+	{
+	  sum += sin(p->phases[i]);
+	  p->phases[i] += p->freqs[i];
+	}
+    }
+  else
+    {
+      for (i = 0; i < p->size; i++)
+	{
+	  sum += (p->amps[i] * sin(p->phases[i]));
+	  p->phases[i] += p->freqs[i];
+	}
+    }
+  return(sum);
+}
+
+
+mus_float_t mus_oscil_bank(mus_any *ptr, mus_float_t *fms)
+{
+  ob *p = (ob *)ptr;
+  int i;
+  mus_float_t sum = 0.0;
+  
+  if (!fms)
+    return(mus_oscil_bank_unmodulated(ptr));
+  if (!p->amps)
+    {
+      for (i = 0; i < p->size; i++)
+	{
+	  sum += sin(p->phases[i]);
+	  p->phases[i] += p->freqs[i];
+	  p->phases[i] += fms[i];
+	}
+    }
+  else
+    {
+      for (i = 0; i < p->size; i++)
+	{
+	  sum += (p->amps[i] * sin(p->phases[i]));
+	  p->phases[i] += p->freqs[i];
+	  p->phases[i] += fms[i];
+	}
+    }
+  return(sum);
+}
+
+
+mus_any *mus_make_oscil_bank(int size, mus_float_t *freqs, mus_float_t *phases, mus_float_t *amps)
+{
+  ob *gen;
+
+  gen = (ob *)calloc(1, sizeof(ob));
+  gen->core = &OSCIL_BANK_CLASS;
+  gen->orig_size = size;
+  gen->size = size;
+  gen->amps = amps;
+  gen->freqs = freqs;
+  gen->phases = phases;
+
+  return((mus_any *)gen);
+}
 
 
 

@@ -355,7 +355,7 @@
 	;; loop over the partials interpolate frequency and amplitude
 	(vct-add! lastamp ampinc)
 	(vct-add! lastfreq freqinc)
-	(set! (out-data i) (oscil-bank N2 resynth-oscils lastamp lastfreq))
+	(set! (out-data i) (old-oscil-bank N2 resynth-oscils lastamp lastfreq))
 	(set! output (+ 1 output)))
       (vct->channel out-data 0 (max len outlen)))))
 
