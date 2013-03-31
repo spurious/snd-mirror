@@ -208,8 +208,7 @@ MUS_EXPORT bool mus_oscil_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_oscil(mus_float_t freq, mus_float_t phase);
 
 MUS_EXPORT bool mus_oscil_bank_p(mus_any *ptr);
-MUS_EXPORT mus_float_t mus_oscil_bank(mus_any *ptr, mus_float_t *fms);
-MUS_EXPORT mus_float_t mus_oscil_bank_unmodulated(mus_any *ptr);
+MUS_EXPORT mus_float_t mus_oscil_bank(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_oscil_bank(int size, mus_float_t *freqs, mus_float_t *phases, mus_float_t *amps);
 
 MUS_EXPORT mus_any *mus_make_ncos(mus_float_t freq, int n);

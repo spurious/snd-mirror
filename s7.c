@@ -46967,8 +46967,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (arg < 3)
 		    {
 		      s7_function endf;
-		      dox_function d1, d2;
-		      s7_pointer expr1, expr2, end;
+		      dox_function d1 = NULL, d2;
+		      s7_pointer expr1 = NULL, expr2, end;
 
 		      endf = (s7_function)fcdr(cdr(sc->code));
 		      end = fcdr(sc->code);

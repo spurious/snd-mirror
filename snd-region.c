@@ -818,7 +818,7 @@ int define_region(sync_info *si, mus_long_t *ends)
 
 static void deferred_region_to_temp_file(region *r)
 {
-  int i, k, ofd = 0, datumb = 0, err = 0;
+  int i, k = 0, ofd = 0, datumb = 0, err = 0;
   bool copy_ok;
   mus_long_t j, len = 0;
   snd_fd **sfs = NULL;

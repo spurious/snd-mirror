@@ -1503,7 +1503,7 @@ static int free_oscil_bank(mus_any *ptr)
 
 static mus_float_t run_oscil_bank(mus_any *ptr, mus_float_t input, mus_float_t unused) 
 {
-  return(mus_oscil_bank(ptr, NULL));
+  return(mus_oscil_bank(ptr));
 }
 
 
@@ -1592,7 +1592,7 @@ bool mus_oscil_bank_p(mus_any *ptr)
 }
 
 
-mus_float_t mus_oscil_bank_unmodulated(mus_any *ptr)
+mus_float_t mus_oscil_bank(mus_any *ptr)
 {
   ob *p = (ob *)ptr;
   int i;
@@ -1612,36 +1612,6 @@ mus_float_t mus_oscil_bank_unmodulated(mus_any *ptr)
 	{
 	  sum += (p->amps[i] * sin(p->phases[i]));
 	  p->phases[i] += p->freqs[i];
-	}
-    }
-  return(sum);
-}
-
-
-mus_float_t mus_oscil_bank(mus_any *ptr, mus_float_t *fms)
-{
-  ob *p = (ob *)ptr;
-  int i;
-  mus_float_t sum = 0.0;
-  
-  if (!fms)
-    return(mus_oscil_bank_unmodulated(ptr));
-  if (!p->amps)
-    {
-      for (i = 0; i < p->size; i++)
-	{
-	  sum += sin(p->phases[i]);
-	  p->phases[i] += p->freqs[i];
-	  p->phases[i] += fms[i];
-	}
-    }
-  else
-    {
-      for (i = 0; i < p->size; i++)
-	{
-	  sum += (p->amps[i] * sin(p->phases[i]));
-	  p->phases[i] += p->freqs[i];
-	  p->phases[i] += fms[i];
 	}
     }
   return(sum);

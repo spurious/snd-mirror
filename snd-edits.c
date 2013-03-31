@@ -1540,7 +1540,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
   int ofd;
   int i, j, datumb;
   bool reporting = false;
-  mus_long_t len, total = 0, alloc_len;
+  mus_long_t len = 0, total = 0, alloc_len;
   chan_info *cp = NULL;
   mus_float_t **obufs;
   io_error_t io_err = IO_NO_ERROR;

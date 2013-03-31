@@ -276,17 +276,13 @@
 	   ;; expresses the fundamental in terms of radians per output sample
 	   (fundamental (/ pi2 N))
 	   (output interp)      ; count of samples that have been output
-	   (resynth-oscils (make-vector N2))  ; synthesis oscillators
 	   ;; (nextpct 10.0)       ; how often to print out the percentage complete message
 	   (outlen (floor (* time len)))
 	   (out-data (make-vct (max len outlen)))
 	   (in-data (channel->vct 0 (* N 2) snd chn))
-	   (in-data-beg 0))
+	   (in-data-beg 0)
+	   (obank (make-oscil-bank lastfreq (make-vct N2 0.0) lastamp)))
 
-      ;; setup oscillators
-      (do ((i 0 (+ i 1)))
-	  ((= i N2))
-	(set! (resynth-oscils i) (make-oscil :frequency 0)))
       (set! window (vct->vector (vct-scale! window (/ 2.0 (* 0.54 fftsize))))) ;den = hamming window integrated
 
       (do ((i 0 (+ i 1)))
@@ -355,7 +351,7 @@
 	;; loop over the partials interpolate frequency and amplitude
 	(vct-add! lastamp ampinc)
 	(vct-add! lastfreq freqinc)
-	(set! (out-data i) (old-oscil-bank N2 resynth-oscils lastamp lastfreq))
+	(set! (out-data i) (oscil-bank obank))
 	(set! output (+ 1 output)))
       (vct->channel out-data 0 (max len outlen)))))
 
