@@ -4016,8 +4016,11 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
  * timing tests here if we force 4-byte boundaries found no difference on x86
  */
 
+/* also use calloc here if -O3 in gcc */
 #if (__bfin__)
-  #define permanent_calloc calloc
+  #define permanent_calloc(Bytes) calloc(1, Bytes)
+  #define PERMANENT_HEAP_SIZE 8
+  static unsigned char *permanent_heap = NULL, *permanent_heap_top = NULL;
 #else
 
 #define PERMANENT_HEAP_SIZE 65536
@@ -50910,6 +50913,17 @@ snd-test:
 	      
 	    case HOP_SAFE_C_AAA:
 	      {
+		/* PERHAPS: C_SAA
+419248: (* (exp (* r (cos y))) (cos (+ x (* r (sin y)))) ar) - could be SAA
+210833: (+ denom (* x1 x1) (* x2 x2))
+197314: (array-interp tbl (+ 8.0 (* 8.0 (next-sample reader))) 17)
+132300: (comb d0 (pulse-train s) (env zenv))
+81050: (oscil gen1 (rand-interp rnd) (+ (* 0.1 (oscil md)) (* 0.2 (oscil md1))))
+66150: (locsig-set! loc 0 (* (- 1.0 degval) dist-scaler))
+66150: (locsig-set! loc 1 (* degval dist-scaler))
+66150: (locsig-reverb-set! loc 0 (* reverb-amount (sqrt dist-scaler)))
+etc
+		 */
 		s7_pointer arg;
 		arg = cdr(code);
 		car(sc->A3_1) = ((s7_function)fcdr(arg))(sc, car(arg));
@@ -63859,14 +63873,14 @@ s7_scheme *s7_init(void)
   /* if the error checks are removed, s7test will be very unhappy 
    */
   
-  /* -------- *load-hook* -------- */
-  sc->load_hook = s7_eval_c_string(sc, "(make-hook 'name)");
-  s7_define_constant(sc, "*load-hook*", sc->load_hook);
-
   /* -------- *unbound-variable-hook* -------- */
   sc->unbound_variable_hook = s7_eval_c_string(sc, "(make-hook 'variable)");
   s7_define_constant(sc, "*unbound-variable-hook*", sc->unbound_variable_hook); 
   
+  /* -------- *load-hook* -------- */
+  sc->load_hook = s7_eval_c_string(sc, "(make-hook 'name)");
+  s7_define_constant(sc, "*load-hook*", sc->load_hook);
+
   /* -------- *error-hook* -------- */
   sc->error_hook = s7_eval_c_string(sc, "(make-hook 'type 'data)");
   s7_define_constant(sc, "*error-hook*", sc->error_hook);
@@ -63927,6 +63941,7 @@ s7_scheme *s7_init(void)
  * op_closure_car_car is rarely called, cdr_cdr case only in bench
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
  * maybe oscil-bank.
+ * why is s7 so unhappy when we use -O3? 
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
  * bench    42736 8752 8051 7725 6515 5194 4364 4011

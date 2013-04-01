@@ -10567,17 +10567,14 @@ static s7_pointer g_mul_env_direct_any(s7_scheme *sc, s7_pointer args);
  *  At least do the first step and plug in throughout.
  */
 
-typedef struct {
-  void *gen;
-  mus_float_t (*func_1)(void *p);
-  mus_float_t (*func_2)(void *p, mus_float_t x);
-} gf;
-
-static gf *find_gf(s7_scheme *sc, s7_pointer expr)
+gf *find_gf(s7_scheme *sc, s7_pointer expr)
 {
   /* no, this isn't what you think */
   s7_pointer *choices;
   int len;
+
+  if (!s7_is_pair(expr))
+    return(NULL);
 
   len = s7_list_length(sc, expr);
   if ((len == 2) ||
@@ -10588,7 +10585,6 @@ static gf *find_gf(s7_scheme *sc, s7_pointer expr)
 	  (s7_is_symbol(cadr(expr))) &&
 	  (choices[GEN_DIRECT_CHECKER]))
 	{
-	  void *gen;
 	  bool (*is_gen)(s7_pointer p);
 	  mus_float_t (*gen1)(void *p);
 	  mus_float_t (*gen2)(void *p, mus_float_t x);
@@ -10601,12 +10597,13 @@ static gf *find_gf(s7_scheme *sc, s7_pointer expr)
 	      gen1 = (mus_float_t (*)(void *p))(choices[GEN_DIRECT_1]);
 	      is_gen = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
 	      obj = s7_cadr_value(sc, expr);
-	      gen = s7_object_value(obj);
 	      if (is_gen(obj))
 		{
 		  p = (gf *)calloc(1, sizeof(gf));
 		  p->func_1 = gen1;
-		  p->gen = gen;
+		  if (s7_is_object(obj))
+		    p->gen = s7_object_value(obj);
+		  else p->gen = (void *)obj;
 		  return(p);
 		}
 	    }
@@ -10617,12 +10614,13 @@ static gf *find_gf(s7_scheme *sc, s7_pointer expr)
 	      gen2 = (mus_float_t (*)(void *p, mus_float_t y))(choices[GEN_DIRECT_2]);
 	      is_gen = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
 	      obj = s7_cadr_value(sc, expr);
-	      gen = s7_object_value(obj);
 	      if (is_gen(obj))
 		{
 		  p = (gf *)calloc(1, sizeof(gf));
 		  p->func_2 = gen2;
-		  p->gen = gen;
+		  if (s7_is_object(obj))
+		    p->gen = s7_object_value(obj);
+		  else p->gen = (void *)obj;
 		  return(p);
 		}
 	    }
@@ -12027,42 +12025,173 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
 
   /* fprintf(stderr, "%lld: %s\n     %s\n\n", end - pos, DISPLAY_80(letp), DISPLAY_80(callee)); */
   
-  if ((s7_is_pair(letp)) &&
-      (s7_is_null(sc, cddr(letp))) &&
-      ((car(letp) == rand_interp_symbol) || (car(letp) == env_symbol)) &&
-      (s7_is_symbol(cadr(letp))))
+  if (s7_is_pair(letp))
     {
-      mus_any *e;
-      mus_float_t (*genf)(mus_any *p);
       s7_Double *ry;
-      s7_pointer y;
+      s7_pointer y, a2;
+      gf *let_gf1, *let_gf2, *let_gf3;
+
       y = s7_make_mutable_real(s7, 1.5);
       ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
       s7_slot_set_value(sc, lets, y);
 
-      if (car(letp) == rand_interp_symbol)
+      let_gf1 = find_gf(sc, letp);
+      if (let_gf1)
 	{
-	  GET_GENERATOR_CADR(letp, rand-interp, e);
-	  genf = mus_rand_interp_unmodulated;
+	  if (let_gf1->func_1)
+	    {
+	      for (; pos < end; pos++)
+		{
+		  (*step) = pos;
+		  (*ry) = let_gf1->func_1(let_gf1->gen);
+		  x = s7_call_direct_to_real_and_free(sc, callee); 
+		  out_any_2(pos, x, 0, "outa");
+		}
+	      free(let_gf1);
+	      return(args);
+	    }
+	  /* here we have func_2 */
+	  a2 = caddr(letp);
+	  if (s7_is_pair(a2))
+	    {
+	      let_gf2 = find_gf(sc, a2);
+	      if (let_gf2)
+		{
+		  if (let_gf2->func_1)
+		    {
+		      for (; pos < end; pos++)
+			{
+			  (*step) = pos;
+			  (*ry) = let_gf1->func_2(let_gf1->gen, let_gf2->func_1(let_gf2->gen));
+			  x = s7_call_direct_to_real_and_free(sc, callee); 
+			  out_any_2(pos, x, 0, "outa");
+			}
+		      free(let_gf1); free(let_gf2);
+		      return(args);
+		    }
+		  free(let_gf2);
+		}
+	    }
+	  free(let_gf1);
 	}
-      else 
-	{
-	  GET_GENERATOR_CADR(letp, env, e);
-	  genf = mus_env;
-	}
-      for (; pos < end; pos++)
-	{
-	  (*step) = pos;
-	  (*ry) = genf(e);
-	  x = s7_call_direct_to_real_and_free(sc, callee); 
-	  out_any_2(pos, x, 0, "outa");
-	}
-      return(args);
-    }
 
-  /* fprintf(stderr, "%lld: %s\n", end - pos, DISPLAY(callee)); */
-  /* complex, but all start with (* [s] (env ...) [(pulsed-env...)])
-   */
+      if ((car(letp) == multiply_symbol) &&
+	  (s7_list_length(sc, letp) == 3) &&
+	  (s7_is_symbol(cadr(letp))))
+	{
+	  a2 = caddr(letp);
+	  let_gf1 = find_gf(sc, a2);
+	  if (let_gf1)
+	    {
+	      if (let_gf1->func_1)
+		{
+		  x = s7_number_to_real(sc, s7_cadr_value(sc, letp));
+		  for (; pos < end; pos++)
+		    {
+		      (*step) = pos;
+		      (*ry) = x * let_gf1->func_1(let_gf1->gen);
+		      x = s7_call_direct_to_real_and_free(sc, callee); 
+		      out_any_2(pos, x, 0, "outa");
+		    }
+		  free(let_gf1);
+		  return(args);
+		}
+	      free(let_gf1);
+	    }
+	}
+
+      if ((car(letp) == add_symbol) &&
+	  (s7_list_length(sc, letp) == 3))
+	{
+	  if (s7_is_symbol(cadr(letp)))
+	    {
+	      a2 = caddr(letp);
+	      let_gf1 = find_gf(sc, a2);
+	      if (let_gf1)
+		{
+		  if (let_gf1->func_1)
+		    {
+		      x = s7_number_to_real(sc, s7_cadr_value(sc, letp));
+		      for (; pos < end; pos++)
+			{
+			  (*step) = pos;
+			  (*ry) = x + let_gf1->func_1(let_gf1->gen);
+			  x = s7_call_direct_to_real_and_free(sc, callee); 
+			  out_any_2(pos, x, 0, "outa");
+			}
+		      free(let_gf1);
+		      return(args);
+		    }
+		  free(let_gf1);
+		}
+	    }
+
+	  let_gf1 = find_gf(sc, cadr(letp));
+	  if ((let_gf1) && (let_gf1->func_1))
+	    {
+	      a2 = caddr(letp);
+	      let_gf2 = find_gf(sc, a2);
+	      if ((let_gf2) && (let_gf2->func_1))
+		{
+		  for (; pos < end; pos++)
+		    {
+		      (*step) = pos;
+		      (*ry) = let_gf1->func_1(let_gf1->gen) + let_gf2->func_1(let_gf2->gen);
+		      x = s7_call_direct_to_real_and_free(sc, callee); 
+		      out_any_2(pos, x, 0, "outa");
+		    }
+		  free(let_gf1); free(let_gf2);
+		  return(args);
+		}
+	      if (let_gf2) free(let_gf2);
+	      if ((car(a2) == multiply_symbol) &&
+		  (s7_list_length(sc, a2) == 3))
+		{
+		  let_gf2 = find_gf(sc, cadr(a2));
+		  let_gf3 = find_gf(sc, caddr(a2));
+		  if ((let_gf2) && (let_gf2->func_1) &&
+		      (let_gf3) && (let_gf3->func_1))
+		    {
+		      for (; pos < end; pos++)
+			{
+			  (*step) = pos;
+			  (*ry) = let_gf1->func_1(let_gf1->gen) + (let_gf2->func_1(let_gf2->gen) * let_gf3->func_1(let_gf3->gen));
+			  x = s7_call_direct_to_real_and_free(sc, callee); 
+			  out_any_2(pos, x, 0, "outa");
+			}
+		      free(let_gf1); free(let_gf2); free(let_gf3);
+		      return(args);
+		    }
+		  if (let_gf2) free(let_gf2);
+		  if (let_gf3) free(let_gf3);
+		}
+	    }
+	  if (let_gf1) free(let_gf1);
+	}
+      if ((car(letp) == add_symbol) &&
+	  (s7_list_length(sc, letp) == 4))
+	{
+	  let_gf1 = find_gf(sc, cadr(letp));
+	  let_gf2 = find_gf(sc, caddr(letp));
+	  let_gf3 = find_gf(sc, cadddr(letp));
+	  if ((let_gf1) && (let_gf2) && (let_gf3) &&
+	      (let_gf1->func_1) && (let_gf2->func_1) && (let_gf3->func_1))
+	    {
+	      for (; pos < end; pos++)
+		{
+		  (*step) = pos;
+		  (*ry) = let_gf1->func_1(let_gf1->gen) + let_gf2->func_1(let_gf2->gen) + let_gf3->func_1(let_gf3->gen);
+		  x = s7_call_direct_to_real_and_free(sc, callee); 
+		  out_any_2(pos, x, 0, "outa");
+		}
+	      free(let_gf1); free(let_gf2); free(let_gf3);
+	      return(args);
+	    }
+	  if (let_gf1) free(let_gf1);
+	  if (let_gf2) free(let_gf2);
+	  if (let_gf3) free(let_gf3);
+	}
+    }
 
   letf = s7_function_choice(sc, letp);
   letp = cdr(letp);
@@ -16436,6 +16565,7 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "polynomial");
   s7_function_set_chooser(sc, f, polynomial_chooser);
   direct_choice_2(sc, f, (s7_pointer)wrapped_polynomial_2, (s7_pointer)wrapped_polynomial_p);
+  /* TODO: test polynomial direct if passed a vector */
   polynomial_temp = clm_make_function_no_choice(sc, "polynomial", g_polynomial_temp, 2, 0, false, "polynomial optimization", f);
   polynomial_cos = clm_make_function_no_choice(sc, "polynomial", g_polynomial_cos, 2, 0, false, "polynomial optimization", f);
 
@@ -17941,10 +18071,3 @@ void Init_sndlib(void)
 #endif
 }
 
-/* opts: frame_set/mixer_set with 0 or 1 as chan
- *       frame->frame unroll the loop for 1/2 chans
- *       frame->frame go direct, not through mus_frame_to_frame wrapper
- *       mus_file_to_frame unrolled 1 chan
- *       mus_mix all_mix case has lots of expandable calls
- *       nrxysin looks redundant -- cos(y) sin(x) sin(x-y) sin(x+(n+1)y) sin(x+ny) y = x/ratio where ratio might be 1.0!
- */

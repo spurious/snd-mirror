@@ -5,6 +5,16 @@
 
 typedef struct mus_xen mus_xen;
 
+#if HAVE_SCHEME
+typedef struct {
+  void *gen;
+  mus_float_t (*func_1)(void *p);
+  mus_float_t (*func_2)(void *p, mus_float_t x);
+} gf;
+
+gf *find_gf(s7_scheme *sc, s7_pointer expr);
+#endif
+
 #define XEN_TO_MUS_XEN(arg) ((mus_xen *)XEN_OBJECT_REF(arg))
 #define XEN_TO_MUS_ANY(obj) mus_xen_gen(XEN_TO_MUS_XEN(obj))
 #define MUS_CLM_DEFAULT_TABLE_SIZE 512

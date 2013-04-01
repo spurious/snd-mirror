@@ -853,22 +853,22 @@ static s7_pointer g_vct_set_direct(s7_scheme *sc, s7_pointer args)
 static s7_pointer vct_set_direct_looped;
 static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 {
-  s7_Int pos, end;
-  s7_pointer stepper, vc, val, callee;
+  s7_Int pos, end, val_len;
+  s7_pointer stepper, vc, val, index_slot, fm;
   s7_Int *step, *stop;
   vct *v;
+  gf *gf1, *gf2, *gf3;
   
   vc = s7_cadr_value(sc, args);                      /* (0 v i (...)) */
   v = (vct *)imported_s7_object_value_checked(vc, vct_tag);
   if (v)
     {
-      int val_len;
       val = s7_cadddr(args);
       val_len = s7_list_length(sc, val);
 
       stepper = s7_car(args);
-      callee = s7_slot(sc, s7_caddr(args));
-      if (s7_slot_value(sc, callee) != stepper)
+      index_slot = s7_slot(sc, s7_caddr(args));
+      if (s7_slot_value(sc, index_slot) != stepper)
 	return(NULL);
       
       step = ((s7_Int *)((unsigned char *)(stepper) + VCT_NUMBER_LOCATION));
@@ -880,160 +880,168 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	  (end > v->length))
 	XEN_OUT_OF_RANGE_ERROR("vct-set!", 2, s7_caddr(args), "index out of range");
 
-      if (val_len == 2)
+      gf1 = find_gf(sc, val);
+      if (gf1)
 	{
-	  if (s7_is_symbol(s7_cadr(val)))
+	  if (gf1->func_1)
 	    {
-	      s7_pointer obj;
-	      s7_pointer *choices;
-
-	      obj = s7_cadr_value(sc, val);
-	      if (mus_xen_p(obj))
+	      mus_long_t dist;
+	      void *gen;
+	      mus_float_t (*sampler)(void *p);
+	      gen = gf1->gen;
+	      sampler = gf1->func_1;
+	      
+	      dist = end - 4;
+	      while (pos < dist)
 		{
-		  mus_any *g;
-		  g = XEN_TO_MUS_ANY(obj);
-		  if ((mus_env_p(g)) &&
-		      (s7_car(val) == s7_make_symbol(sc, "env")))
-		    {
-		      for (; pos < end; pos++) 
-			v->data[pos] = mus_env(g);
-		      (*step) = end;
-		      return(args);
-		    }
-		  if ((mus_readin_p(g)) &&
-		      (s7_car(val) == s7_make_symbol(sc, "readin")))
-		    {
-		      for (; pos < end; pos++) 
-			v->data[pos] = mus_readin(g);
-		      (*step) = end;
-		      return(args);
-		    }
+		  v->data[pos++] = sampler(gen);
+		  v->data[pos++] = sampler(gen);
+		  v->data[pos++] = sampler(gen);
+		  v->data[pos++] = sampler(gen);
 		}
+	      for (; pos < end; pos++) 
+		v->data[pos] = sampler(gen);
+	      
+	      (*step) = end;
+	      free(gf1);
+	      return(args);
+	    }
 
-	      choices = (s7_pointer *)s7_function_chooser_data_direct(s7_symbol_value(sc, s7_car(val)));
-	      if (choices)
+	  /* must be func_2 */
+	  fm = s7_caddr(val);
+	  if (s7_is_pair(fm))
+	    {
+	      gf2 = find_gf(sc, fm);
+	      if (gf2)
 		{
-		  if ((choices[GEN_DIRECT_1]) &&
-		      (choices[GEN_DIRECT_CHECKER]))
-		    {					
-		      void *gen;
-		      mus_float_t (*sampler)(void *p);
-		      bool (*is_sampler)(s7_pointer p);
-
-		      sampler = (mus_float_t (*)(void *p))(choices[GEN_DIRECT_1]);
-		      is_sampler = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
-		      gen = s7_object_value(obj);
-
-		      if (is_sampler(obj))
+		  if (gf2->func_1)
+		    {
+		      for (; pos < end; pos++)
+			v->data[pos] = gf1->func_2(gf1->gen, gf2->func_1(gf2->gen));
+		      (*step) = end;
+		      free(gf1); free(gf2);
+		      return(args);
+		    }
+		  fm = s7_caddr(fm);
+		  if (s7_is_pair(fm))
+		    {
+		      gf3 = find_gf(sc, fm);
+		      if (gf3)
 			{
-			  mus_long_t dist;
-
-			  dist = end - 4;
-			  while (pos < dist)
+			  if (gf3->func_1)
 			    {
-			      v->data[pos++] = sampler(gen);
-			      v->data[pos++] = sampler(gen);
-			      v->data[pos++] = sampler(gen);
-			      v->data[pos++] = sampler(gen);
+			      for (; pos < end; pos++)
+				v->data[pos] = gf1->func_2(gf1->gen, gf2->func_2(gf2->gen, gf3->func_1(gf3->gen)));
+			      (*step) = end;
+			      free(gf1); free(gf2); free(gf3);
+			      return(args);
 			    }
-			  for (; pos < end; pos++) 
-			    v->data[pos] = sampler(gen);
-
+			  fm = s7_caddr(fm);
+			  for (; pos < end; pos++)
+			    {
+			      (*step) = pos;
+			      v->data[pos] = gf1->func_2(gf1->gen, gf2->func_2(gf2->gen, gf3->func_2(gf3->gen, s7_call_direct_to_real_and_free(sc, fm))));
+			    }
 			  (*step) = end;
+			  free(gf1); free(gf2); free(gf3);
 			  return(args);
 			}
+		      
+		      if ((s7_is_symbol(s7_cadr(fm))) &&
+			  (s7_caddr(fm) == s7_caddr(args)) &&
+			  (s7_car(fm) == s7_make_symbol(sc, "vct-ref")))
+			{
+			  vct *rv;
+			  rv = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, fm), vct_tag);
+			  if (rv)
+			    {
+			      if (end > rv->length)
+				XEN_OUT_OF_RANGE_ERROR("vct-ref", 2, s7_caddr(fm), "index out of range");
+			      for (; pos < end; pos++)
+				v->data[pos] = gf1->func_2(gf1->gen, gf2->func_2(gf2->gen, rv->data[pos]));
+			      (*step) = end;
+			      free(gf1); free(gf2);
+			      return(args);
+			    }
+			}
+
+		      for (; pos < end; pos++)
+			{
+			  (*step) = pos;
+			  v->data[pos] = gf1->func_2(gf1->gen, gf2->func_2(gf2->gen, s7_call_direct_to_real_and_free(sc, fm)));
+			  (*step) = end;
+			}
+		      free(gf1); free(gf2);
+		      return(args);
+		    }
+		  free(gf2);
+		}
+	      
+	      if ((s7_car(fm) == s7_make_symbol(sc, "*")) &&
+		  (s7_is_symbol(s7_cadr(fm))) &&
+		  (s7_list_length(sc, fm) == 3))
+		{
+		  gf2 = find_gf(sc, s7_caddr(fm));
+		  if (gf2)
+		    {
+		      if (gf2->func_1)
+			{
+			  double x;
+			  x = s7_number_to_real(sc, s7_cadr_value(sc, fm));
+			  for (; pos < end; pos++)
+			    v->data[pos] = gf1->func_2(gf1->gen, x * gf2->func_1(gf2->gen));
+			  (*step) = end;
+			  free(gf1); free(gf2);
+			  return(args);
+			}
+		      free(gf2);
 		    }
 		}
-	    }
-	  else
-	    {
-	      if ((s7_is_real(s7_cadr(val))) &&
-		  (s7_car(val) == s7_make_symbol(sc, "mus-random")))
+
+	      for (; pos < end; pos++)
 		{
-		  s7_Double x;
-		  x = s7_number_to_real(sc, s7_cadr(val));
-		  for (; pos < end; pos++) 
-		    v->data[pos] = mus_random(x);
+		  (*step) = pos;
+		  v->data[pos] = gf1->func_2(gf1->gen, s7_call_direct_to_real_and_free(sc, fm));
 		  (*step) = end;
-		  return(args);
 		}
+	      free(gf1);
+	      return(args);
 	    }
+	  free(gf1);
 	}
 
-      if ((val_len == 3) &&
-	  (s7_is_symbol(s7_cadr(val))))
+      /* call-directs are  (+ off (* scl (cos angle))) and (polynomial coeffs (cos angle)) */
+
+      /* TODO: directify mus-random */
+      if ((s7_is_real(s7_cadr(val))) &&
+	  (val_len == 2) &&
+	  (s7_car(val) == s7_make_symbol(sc, "mus-random")))
 	{
-	  if ((s7_caddr(args) == s7_caddr(val)) &&
-	      (s7_car(val) == s7_make_symbol(sc, "vct-ref")))
-	    {
-	      vct *rv;
-	      rv = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, val), vct_tag);
-	      if (rv)
-		{
-		  if (end > rv->length)
-		    XEN_OUT_OF_RANGE_ERROR("vct-ref", 2, s7_caddr(args), "index out of range");
-		  for (; pos < end; pos++)
-		    v->data[pos] = rv->data[pos];
-		  (*step) = end;
-		  return(args);
-		}
-	    }
-
-	  {
-            #define GEN_DIRECT_2 9
-            #define GEN_DIRECT_CHECKER 11
-	    s7_pointer *choices;
-	    s7_pointer arg1, arg2;
-
-	    arg1 = s7_cadr(val);
-	    arg2 = s7_caddr(val);
-	    choices = (s7_pointer *)s7_function_chooser_data_direct(s7_symbol_value(sc, s7_car(val)));
-
-	    if ((choices) &&
-		(choices[GEN_DIRECT_2]) &&
-		(choices[GEN_DIRECT_CHECKER]) &&
-		(s7_is_pair(arg2)) &&
-		(s7_is_defined(sc, s7_symbol_name(arg1))))
-	      {
-		void *gen;
-		mus_float_t (*sampler)(void *p, mus_float_t x);
-		bool (*is_sampler)(s7_pointer p);
-		s7_pointer obj;
-		      
-		sampler = (mus_float_t (*)(void *p, mus_float_t x))(choices[GEN_DIRECT_2]);
-		is_sampler = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
-		obj = s7_value(sc, arg1);
-		if (is_sampler(obj))
-		  {
-		    gen = s7_object_value(obj);
-		    /*
-		    if (s7_tree_memq(sc, s7_caddr(args), val))
-		      fprintf(stderr, "stepper? %s\n", DISPLAY(args));
-		    */
-		    for (; pos < end; pos++)
-		      {
-			(*step) = pos; /* in case val expr depends on the step var */
-			v->data[pos] = sampler(gen, s7_call_direct_to_real_and_free(sc, arg2));
-		      }
-		    (*step) = end;
-		    return(args);
-		  }
-	      }
-	  }
+	  s7_Double x;
+	  x = s7_number_to_real(sc, s7_cadr(val));
+	  for (; pos < end; pos++) 
+	    v->data[pos] = mus_random(x);
+	  (*step) = end;
+	  return(args);
 	}
-      /* fprintf(stderr, "%lld: %s\n", end - pos, DISPLAY(val)); */
-      /* 150001: (src s (* osamp (oscil os)))
-       * 49948: (src rd (rand-interp rn))
-       * 41623 * 4: (src s (* osamp (oscil os)))
-       * 50788: (filter flt (vct-ref summer k))
-       * 49948: (src rd (rand-interp rn))
-       * 41623: (src s (* osamp (oscil os)))
-       * 50788: (filter flt (vct-ref summer k))
-       * 41623 * 15: (ssb-am gen (bandpass filt (vct-ref data k)))
-       * 60994 * 2: (src rd (rand-interp rn))
-       * 50828 * 15: (ssb-am gen (bandpass filt (vct-ref data k)))
-       * 50828 * 15: (ssb-am gen (bandpass filt (vct-ref data k)) (env e))
-       */
+
+      if ((s7_is_symbol(s7_cadr(val))) &&
+	  (val_len == 3) &&
+	  (s7_caddr(args) == s7_caddr(val)) &&
+	  (s7_car(val) == s7_make_symbol(sc, "vct-ref")))
+	{
+	  vct *rv;
+	  rv = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, val), vct_tag);
+	  if (rv)
+	    {
+	      if (end > rv->length)
+		XEN_OUT_OF_RANGE_ERROR("vct-ref", 2, s7_caddr(args), "index out of range");
+	      for (; pos < end; pos++)
+		v->data[pos] = rv->data[pos];
+	      (*step) = end;
+	      return(args);
+	    }
+	}
 
       for (; pos < end; pos++)
 	{
@@ -1053,8 +1061,11 @@ static mus_float_t *vid_data;
 static s7_pointer vid_i_slot, vid_x_slot;
 static mus_float_t x1, x2;
 static mus_long_t vid_length;
+static void *vid_gen;
+static mus_float_t (*vid_func_1)(void *p);
+static s7_pointer vid_expr;
 
-static s7_pointer g_vct_set_direct_dox(s7_scheme *sc, s7_pointer code)
+static s7_pointer g_vct_set_direct_dox_add_1ss(s7_scheme *sc, s7_pointer code)
 {
   mus_long_t pos;
   mus_float_t x;
@@ -1067,25 +1078,43 @@ static s7_pointer g_vct_set_direct_dox(s7_scheme *sc, s7_pointer code)
   return(NULL);
 }
 
+static s7_pointer g_vct_set_direct_dox_gen1(s7_scheme *sc, s7_pointer code)
+{
+  mus_long_t pos;
+  pos = s7_cell_integer(s7_slot_value(sc, vid_i_slot));
+  if (pos < vid_length)
+    vid_data[pos] = vid_func_1(vid_gen);
+  return(NULL);
+}
+
+static s7_pointer g_vct_set_direct_dox_expr(s7_scheme *sc, s7_pointer code)
+{
+  mus_long_t pos;
+  pos = s7_cell_integer(s7_slot_value(sc, vid_i_slot));
+  if (pos < vid_length)
+    vid_data[pos] = vid_func_1(vid_gen) * s7_call_direct_to_real_and_free(sc, vid_expr);
+  return(NULL);
+}
+
 static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 {
-  /* for now just look for the main dox-looped case: (vct-set! v i (+ (* x x1) (* (- 1.0 x) x2)))
-   */
-  if (s7_function_choice(sc, s7_cadddr(code)) == g_add_ss_1ss)
+  vct *v;
+  v = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, code), vct_tag);
+  if ((v) &&
+      (!s7_local_slot(sc, s7_cadr(code))))                                         /* v is a vct, and it is not a stepper */
     {
-      vct *v;
-      v = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, code), vct_tag);
-      if ((v) &&
-	  (!s7_local_slot(sc, s7_cadr(code))))                                         /* v is a vct, and it is not a stepper */
+      vid_data = v->data;
+      vid_length = v->length;
+      vid_i_slot = s7_local_slot(sc, s7_caddr(code));
+      if ((vid_i_slot) && 
+	  (s7_is_integer(s7_slot_value(sc, vid_i_slot))))                          /* i is an integer */
 	{
-	  vid_data = v->data;
-	  vid_length = v->length;
-	  vid_i_slot = s7_local_slot(sc, s7_caddr(code));
-	  if ((vid_i_slot) && 
-	      (s7_is_integer(s7_slot_value(sc, vid_i_slot))))                          /* i is an integer */
+	  gf *gf1;
+	  s7_pointer add_expr;
+	  add_expr = s7_cadddr(code);
+	  
+	  if (s7_function_choice(sc, s7_cadddr(code)) == g_add_ss_1ss)
 	    {
-	      s7_pointer add_expr;
-	      add_expr = s7_cadddr(code);
 	      vid_x_slot = s7_local_slot(sc, s7_cadr(s7_cadr(add_expr)));              /* x is real */
 	      if ((vid_x_slot) &&
 		  (s7_is_real(s7_slot_value(sc, vid_x_slot))))
@@ -1102,10 +1131,41 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 			  if (s7_is_real(xp))
 			    {
 			      x2 = s7_cell_real(xp);                                        /* x1 and x2 are real */
-			      return((s7_pointer)g_vct_set_direct_dox);
+			      return((s7_pointer)g_vct_set_direct_dox_add_1ss);
 			    }
 			}
 		    }
+		}
+	    }
+
+	  gf1 = find_gf(sc, add_expr);
+	  if (gf1)
+	    {
+	      if (gf1->func_1)
+		{
+		  vid_func_1 = gf1->func_1;
+		  vid_gen = gf1->gen;
+		  free(gf1);
+		  return((s7_pointer)g_vct_set_direct_dox_gen1);
+		}
+	      free(gf1);
+	    }
+
+	  if ((s7_car(add_expr) == s7_make_symbol(sc, "*")) &&
+	      (s7_list_length(sc, add_expr) == 3))
+	    {
+	      gf1 = find_gf(sc, s7_cadr(add_expr));
+	      if (gf1)
+		{
+		  if (gf1->func_1)
+		    {
+		      vid_expr = s7_caddr(add_expr);
+		      vid_func_1 = gf1->func_1;
+		      vid_gen = gf1->gen;
+		      free(gf1);
+		      return((s7_pointer)g_vct_set_direct_dox_expr);
+		    }
+		  free(gf1);
 		}
 	    }
 	}
