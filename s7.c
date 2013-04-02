@@ -29267,6 +29267,72 @@ bool s7_function_choice_is_direct(s7_scheme *sc, s7_pointer expr)
 
 s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr)
 {
+  /*
+1016560: (bandpass filt (vct-ref data k)) -- specific to motif snd-test 19
+1016560: (vct-ref data k)
+1016560: (env e)
+732617: (rand-interp rnd)
+[663993: (read-sample bread)]
+573300: (filter hp y)
+547236: (* (env ampf) (oscil carrier modf))
+508280: (bandpass flt (vct-ref in-data j))
+508280: (vct-ref in-data j)
+507880: (vct-ref indata k)
+434385: (rand-interp vib)
+352800: (polywave modulator3 (+ (* 3.0 frq) (* index3 pitch)))
+302085: (ina i *reverb*)
+257985: (all-pass-bank allpasses (ina i *reverb*))
+257985: (comb-bank combs (all-pass-bank allpasses (ina i *reverb*)))
+254140: (readin rdin)
+240519: (* (env rndf) (rand-interp rnd))
+233730: (fir-filter flt (comb-bank combs (all-pass-bank allpasses (ina i *reverb*))))
+231253: (comb-bank cmbs1 x)
+231253: (* (- 1.0 interp) (comb-bank cmbs1 x))
+226452: (env frqf)
+222098: (oscil gen2 (* 2.0 frq))
+212622: (* (env ampf2) (polywave gen2 frq))
+211479: (rand-interp rnd1)
+197358: (next-sample reader)
+197314: (* 8.0 (next-sample reader))
+173647: (oscil gen3 (* 3.0 frq))
+139356: (+ frq (* bsweep (nrxysin buzzsweep bfrq)) (rand-interp rnd))
+134407: (* y y)
+132300: (env rf)
+132300: (* 0.05 (oscil gen4 noise))
+115542: (table-lookup buzz-ampf frq)
+115542: (table-lookup buzz-frqf frq)
+103418: (rand-interp rn)
+101656: (all-pass-bank allpasses (if (< samp input-samps) inval 0.0))
+101656: (comb-bank combs (all-pass-bank allpasses (if (< samp input-samps) inval 0.0)))
+101656: (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)
+101656: (if (< samp input-samps) inval 0.0)
+101656: (* osamp (oscil os))
+94928: (all-pass-bank allpasses inval)
+94928: (ncos pulse)
+94928: (* volume (comb-bank combs (all-pass-bank allpasses inval)))
+93707: (* (env ampf2) (polywave gen2 (env frqf2)))
+92610: (* (env tranfun) (rand ranvib))
+88200: (polywave gp2 (* 0.8593 md))
+88200: (triangle-wave ampmod)
+88200: (env ramp)
+88200: (+ (env frqf) (* (env rndf) (rand-interp rnd)) (polywave gen2))
+88200: (+ val (delay pulse2 val))
+88200: (+ (env frqf) (rand-interp rnd1))
+88200: (+ 0.93 (triangle-wave ampmod))
+88200: (* (env indf) (polywave gb buzz))
+88200: (* (env intrpf-1) (oscil gen2 frq))
+88200: (* vib-index (oscil vib))
+84231: (* (env noisef) (rand-interp noise))
+82026: (+ (- 1.0 rf) (* rf (rand-interp rnd)))
+82026: (* rf (rand-interp rnd))
+81992: (* (env ampf2) (oscil gen2 (* 2.0 frq)))
+81585: (* (env interpf) (polywave poly2 frq))
+81365: (polywave gen1 (env frqf))
+81365: (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf)))
+81050: (* 0.2 (oscil md1))
+80262: (* (env vibf) (triangle-wave vib))
+80262: (* (env ampf2) (oscil gen2 frq2))
+*/
   return(c_function_call(ecdr(expr))(sc, cdr(expr)));
 }
 
@@ -29275,7 +29341,69 @@ s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr)
 {
   s7_Double val;
   s7_pointer temp;
-
+  /*
+1016560: (ssb-am gen (bandpass filt (vct-ref data k)) (env e))
+[508280: (ssb-am ssb (bandpass flt (vct-ref in-data j)))]
+352800: (polywave modulator1 (+ (* 2.0 frq) (* hfreq pitch (+ 1.0 (rand-interp indf)))))
+352800: (polywave modulator2 (+ (* 8.0 frq) (* index2 pitch)))
+352800: (+ (polywave modulator1 (+ (* 2.0 frq) (* hfreq pitch (+ 1.0 (rand-interp indf))))) (polywave modulator3 (+ (* 3.0 frq) (* index3 pitch))) (polywave modulator2 (+ (* 8.0 frq) (* index2 pitch))))
+308700: (filter lp (filter hp y))
+283265: (polywave gen1 frq)
+264600: (filter lp y)
+264600: (+ (filter lp y) (filter hp y))
+231253: (+ (* interp (comb-bank cmbs0 x)) (* (- 1.0 interp) (comb-bank cmbs1 x)))
+231253: (* interp (comb-bank cmbs0 x))
+203713: (polynomial coeffs (cos angle))
+203447: (+ off (* scl (cos angle)))
+176575: (rand-interp rnd)
+176400: (polywave gen2)
+155123: (granulate exA)
+[150504: (mus-random 0.001)]
+140767: (read-sample rd)
+139356: (* bsweep (nrxysin buzzsweep bfrq))
+136710: (ina i *reverb*)
+132300: (abs (* (env bouncef) (oscil gen1)))
+132300: (* 0.95 (oscil gen1 noise))
+126355: (* (env ampf3) (oscil gen3 (* 3.0 frq)))
+115542: (polywave buzz-gen (table-lookup buzz-frqf frq))
+115542: (* (env buzz-amp) (table-lookup buzz-ampf frq) (polywave buzz-gen (table-lookup buzz-frqf frq)))
+105595: (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 frq)))
+104517: (* (env intrpf) (polywave gen1 frq))
+102400: (next-sample reader)
+101656: (+ y 0.2)
+101656: (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)))
+101656: (* inval (oscil os))
+94928: (+ inval (delay outdel (* volume (comb-bank combs (all-pass-bank allpasses inval)))))
+88200: (moving-average slant harmonic)
+88200: (polywave gen1 (+ (env frqf) (rand-interp rnd1)))
+88200: (polywave gp buzz)
+88200: (polywave gp1 md)
+88200: (polywave gp3 (* 1.1406 md))
+88200: (formant-bank fs inputs)
+88200: (* (env ampf) (+ val (delay pulse2 val)) (polywave gen1 (+ (env frqf) (rand-interp rnd1))))
+88200: (* (env pulsef) (+ 0.93 (triangle-wave ampmod)) (+ (polywave gp buzz) (* (env indf) (polywave gb buzz))))
+88200: (+ (polywave gp buzz) (* (env indf) (polywave gb buzz)))
+88200: (+ (polywave gen2) (rand-interp rnd))
+88200: (+ (* (env intrpf) (polywave gen1 frq)) (* (env intrpf-1) (oscil gen2 frq)))
+88200: (* amp (oscil g))
+88200: (* ampa (ina i *reverb*))
+88200: (* (env ampf) (wave-train grains gliss))
+84318: (next-sample rd)
+84231: (+ (env frqf) (* (env noisef) (rand-interp noise)))
+82026: (polywave gen1 (env frqf))
+82026: (* (env ampf) (+ (- 1.0 rf) (* rf (rand-interp rnd))) (polywave gen1 (env frqf)))
+81585: (+ (* (env interpf-1) (polywave poly1 frq)) (* (env interpf) (polywave poly2 frq)))
+81585: (* index (oscil fm))
+81585: (* (env interpf-1) (polywave poly1 frq))
+81365: (* pulse-amp (env pulse-ampf) (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf))))
+81365: (* (env low-ampf) (polywave gp frq2))
+81050: (* 0.1 (oscil md))
+80262: (polywave gen1 frq1)
+80262: (+ (polywave gen1 frq1) (* (env ampf2) (oscil gen2 frq2)) (* (env ampf3) (polywave gen3 frq3)))
+80262: (* (env ampf3) (polywave gen3 frq3))
+80224: (* (env ampf3) (polywave gen3 frq))
+77175: (oscil vib)
+   */
   temp = c_function_call(ecdr(expr))(sc, cdr(expr));
 #if (!WITH_GMP)
   val = real(temp);
@@ -46443,7 +46571,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	fcdr(code) = cddr(code);
 
-	/* this code works but is almost never called 
+	/* this code works but is almost never called -- TODO: is it obsolete now that we check dox_looped?
 	 * (do ((i 0 (+ i 1))) ((= i 10)) (list-set! lst i i)) in s7test.scm for example
 	 * we need something much more general -- even all_x_op isn't called much here
 	 */
@@ -46492,6 +46620,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto DO_BEGIN;
 		      }
 		  }
+	      }
+	    
+	    /* the dox_loop function should be safe here because it makes no assumptions about the steppers
+	     */
+	    if (c_function_dox_looped(ecdr(body)))
+	      {
+		s7_function nf;
+		nf = (s7_function)(((s7_function)c_function_call(c_function_dox_looped(ecdr(body))))(sc, body));
+		if (nf) func = nf;
 	      }
 
 	    while (true)
@@ -63940,8 +64077,9 @@ s7_scheme *s7_init(void)
  *   and goto*, and the entire safe_car_s set
  * op_closure_car_car is rarely called, cdr_cdr case only in bench
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
- * maybe oscil-bank.
- * why is s7 so unhappy when we use -O3? 
+ * test all the opt branches (vct-set vs outa)
+ * can't we use dox_looped to collapse away all the special do-loops?
+ * use find_gf in map/scan-channel -- s7_eval_form/apply and call_direct
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
  * bench    42736 8752 8051 7725 6515 5194 4364 4011

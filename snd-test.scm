@@ -3404,8 +3404,9 @@
 	      (close-sound ind1))
 	    (delete-file "test.snd")
 	    (set! (clipping) #f)
-	    (let ((mx (maxamp ind)))
-	      (map-channel (lambda (y) (+ y (- 1.001 mx))) 0 (frames) ind 0)
+	    (let* ((mx (maxamp ind))
+		  (sub (- 1.001 mx)))
+	      (map-channel (lambda (y) (+ y sub)) 0 (frames) ind 0)
 	      (save-sound-as "test.snd" ind mus-next mus-bshort)
 	      (let ((ind1 (open-sound "test.snd"))
 		    (baddy (scan-channel (lambda (y) (< y 0.0)))))
@@ -27860,7 +27861,7 @@ EDITS: 2
 		    (snd-display #__line__ ";sound-properties: ~A?" (sound-properties id))))
 	      
 	      (let ((tag (catch #t (lambda () (map-channel (lambda (y) "hiho"))) (lambda args args))))
-		(if (not (eq? (car tag) 'bad-type)) (snd-display #__line__ ";map-channel bad val: ~A" tag)))
+		(if (not (eq? (car tag) 'wrong-type-arg)) (snd-display #__line__ ";map-channel bad val: ~A" tag)))
 	      
 	      (close-sound id))
 	    
@@ -30161,7 +30162,7 @@ EDITS: 2
 	  (undo 1 ind)
 	  (if (= (frames ind) 0) (snd-display #__line__ ";map-channel #f frames after undo: ~A" (frames ind)))
 	  (let ((tag (catch #t (lambda () (map-channel (lambda (y) "hiho"))) (lambda args (car args)))))
-	    (if (not (eq? tag 'bad-type)) (snd-display #__line__ ";map-channel bad-type: ~A" tag)))
+	    (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";map-channel bad-type: ~A" tag)))
 	  (let* ((ctr 0)
 		 (tag (catch #t (lambda () (scan-channel (lambda (y) (set! ctr (+ ctr 1)) (asdf)))) (lambda args (car args)))))
 	    (if (not (= ctr 1)) (snd-display #__line__ ";scan-channel error exit: ~A" ctr))
@@ -47342,9 +47343,6 @@ EDITS: 1
 					;(let ((tag (catch #t (lambda () (set! (frames ind 0 1) 1)) (lambda args (car args)))))
 					;  (if (not (eq? tag 'wrong-number-of-args)) (snd-display #__line__ ";set frames + edpos: ~A" tag)))
 	  (revert-sound ind)
-	  
-	  (let ((tag (catch #t (lambda () (map-channel (lambda (y) (* y 0.0+1.0i)))) (lambda args (car args)))))
-	    (if (not (eq? tag 'bad-type)) (snd-display #__line__ ";map-channel rtn complex: ~A" tag)))
 	  
 	  (let ((rd (make-sampler 0)))
 	    (do ((i 0 (+ i 1)))

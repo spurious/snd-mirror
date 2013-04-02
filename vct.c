@@ -1012,19 +1012,6 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 
       /* call-directs are  (+ off (* scl (cos angle))) and (polynomial coeffs (cos angle)) */
 
-      /* TODO: directify mus-random */
-      if ((s7_is_real(s7_cadr(val))) &&
-	  (val_len == 2) &&
-	  (s7_car(val) == s7_make_symbol(sc, "mus-random")))
-	{
-	  s7_Double x;
-	  x = s7_number_to_real(sc, s7_cadr(val));
-	  for (; pos < end; pos++) 
-	    v->data[pos] = mus_random(x);
-	  (*step) = end;
-	  return(args);
-	}
-
       if ((s7_is_symbol(s7_cadr(val))) &&
 	  (val_len == 3) &&
 	  (s7_caddr(args) == s7_caddr(val)) &&
