@@ -9811,6 +9811,30 @@ static s7_pointer g_oscil_pm_direct(s7_scheme *sc, s7_pointer args)
   return(s7_make_real(sc, mus_oscil_pm(o, s7_cell_real(x))));
 }
 
+static s7_pointer oscil_3_direct;
+static s7_pointer g_oscil_3_direct(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *o;
+  s7_pointer fm, pm;
+
+  GET_GENERATOR(args, oscil, o);
+  fm = s7_call_direct(sc, cadr(args));
+  pm = s7_call_direct(sc, caddr(args));
+  return(s7_make_real(sc, mus_oscil(o, s7_cell_real(fm), s7_cell_real(pm))));
+}
+
+static s7_pointer oscil_ss3_direct;
+static s7_pointer g_oscil_ss3_direct(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *o;
+  s7_pointer fm, pm;
+
+  GET_GENERATOR(args, oscil, o);
+  fm = s7_cadr_value(sc, args);
+  pm = s7_call_direct(sc, caddr(args));
+  return(s7_make_real(sc, mus_oscil(o, s7_cell_real(fm), s7_cell_real(pm))));
+}
+
 static s7_pointer oscil_mul_c_s;
 static s7_pointer g_oscil_mul_c_s(s7_scheme *sc, s7_pointer args)
 {
@@ -10148,10 +10172,10 @@ static s7_pointer g_fm_violin_4(s7_scheme *sc, s7_pointer args)
 
 #if (!WITH_GMP)
 static s7_pointer fm_violin_4_looped;
-static s7_pointer g_fm_violin_4_looped(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_fm_violin_4_looped(s7_scheme *sc, s7_pointer u_args)
 {
   s7_Int pos, end;
-  s7_pointer stepper, callee, vib, loc, vargs, fm_args;
+  s7_pointer stepper, callee, vib, loc, vargs, fm_args, vars, let, body;
   s7_function vibf;
   s7_Int *step, *stop;
   mus_any *ampf, *locs, *carrier, *indf1, *fmosc1, *indf2, *fmosc2, *indf3, *fmosc3, *f, *t, *r;
@@ -10159,21 +10183,26 @@ static s7_pointer g_fm_violin_4_looped(s7_scheme *sc, s7_pointer args)
 
   /* (with-sound () (fm-violin 0 1 440 .1 :fm1-rat 1.002)) */
   /* args: (0 
-            ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
+            (let ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
             (locsig locs i (* (env ampf) 
                               (oscil carrier (+ vib 
                                                 (* (env indf1) (oscil fmosc1 (* fm1-rat vib))) 
                                                 (* (env indf2) (oscil fmosc2 (* fm2-rat vib))) 
-                                                (* (env indf3) (oscil fmosc3 (* fm3-rat vib))))))))
+                                                (* (env indf3) (oscil fmosc3 (* fm3-rat vib)))))))))
   */
 
-  vib = cadr(caadr(args));               /* (+ ...) in ([let]((vib (+ ...)))) */
+  stepper = car(u_args);
+  let = cadr(u_args);
+  vars = cadr(let);
+  body = caddr(let);
+  if (s7_is_pair(cdr(vars))) {/* fprintf(stderr, "fmv4 let2: %s\n", DISPLAY(u_args)); */ return(NULL);}
+
+  vib = cadr(car(vars)); /* (+ ...) in ([let]((vib (+ ...)))) */
   vibf = s7_function_choice(sc, vib);
   if (vibf != g_fm_violin_vibrato)
     return(NULL);
 
-  stepper = car(args);
-  loc = cdaddr(args);                    /* (locs i ...) */
+  loc = cdr(body);                    /* (locs i ...) */
 
   callee = s7_slot(sc, cadr(loc));
   if (s7_slot_value(sc, callee) != stepper)
@@ -10230,7 +10259,7 @@ static s7_pointer g_fm_violin_4_looped(s7_scheme *sc, s7_pointer args)
 					                      (mus_env(indf3) * mus_oscil_fm(fmosc3, fm3_rat * vibrato))));
     }
   (*step) = end;
-  return(args);
+  return(u_args);
 }
 #endif
 
@@ -10262,10 +10291,10 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
 
 #if (!WITH_GMP)
 static s7_pointer fm_violin_2_looped;
-static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 {
   s7_Int pos, end;
-  s7_pointer stepper, callee, vib, loc, vargs;
+  s7_pointer stepper, callee, vib, loc, vargs, let, vars, body;
   s7_function vibf;
   s7_Int *step, *stop;
   mus_any *e, *t, *m, *r, *o, *a, *lc, *f;
@@ -10273,19 +10302,25 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer args)
 
   /* incoming args: 
      (0 
-      ((vib (+ (triangle-wave pervib) (rand-interp ranvib)))) 
-      (locsig locs i (* (env ampf) (oscil carrier (+ vib (* (env indf1) (polywave fmosc1 vib))))))) 
+      (let ((vib (+ (triangle-wave pervib) (rand-interp ranvib)))) 
+        (locsig locs i (* (env ampf) (oscil carrier (+ vib (* (env indf1) (polywave fmosc1 vib))))))))
+     from:
+     (with-sound () (fm-violin 0 1 440 .1 :random-vibrato-amplitude 0.0))
   */
 
-  vib = cadr(caadr(args)); /* (+ ...) */
+  stepper = car(u_args);
+  let = cadr(u_args);
+  vars = cadr(let);
+  body = caddr(let);
+  if (s7_is_pair(cdr(vars))) {/* fprintf(stderr, "fmv let2: %s\n", DISPLAY(u_args)); */ return(NULL);}
+
+  vib = cadr(car(vars)); /* (+ ...) */
   vibf = s7_function_choice(sc, vib);
   if ((vibf != g_fm_violin_vibrato) &&
       (vibf != g_fm_violin_vibrato_no_env))
     return(NULL);
-
-  stepper = car(args);
-  loc = cdaddr(args);      /* (locs i ...) */
-
+  
+  loc = cdr(body);      /* (locs i ...) */
   callee = s7_slot(sc, cadr(loc));
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
@@ -10426,10 +10461,37 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer args)
 	}
     }
   (*step) = end;
-  return(args);
+  return(u_args);
 }
 #endif
 
+
+static s7_pointer env_vss;
+static s7_pointer g_env_vss(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer vec, ind, e, arg;
+  s7_Int index;
+  mus_any *g = NULL;
+  mus_xen *gn;
+  /* args is ((vector-ref v i))" */
+  arg = cdar(args);
+  vec = s7_car_value(s7, arg);
+  if ((!s7_is_vector(vec)) ||
+      (s7_vector_rank(vec) != 1))
+    XEN_WRONG_TYPE_ARG_ERROR("vector-ref", 1, car(arg), "a simple vector");
+  
+  ind = s7_cadr_value(s7, arg);
+  if (!s7_is_integer(ind))
+    XEN_WRONG_TYPE_ARG_ERROR("vector-ref", 2, cadr(arg), "an integer");
+  index = s7_integer(ind);
+  if ((index < 0) ||
+      (index >= s7_vector_length(vec)))
+    XEN_OUT_OF_RANGE_ERROR("vector-ref", 2, ind, "should be between 0 and the vector length");
+
+  e = s7_vector_elements(vec)[index];
+  XEN_TO_C_GENERATOR(e, gn, g, mus_env_p, S_env, "an env generator");
+  return(C_TO_XEN_DOUBLE(mus_env(g)));
+}
 
 
 static s7_pointer env_oscil_env;
@@ -12059,13 +12121,18 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
 {
   s7_Int pos, end;
   s7_Double x;
-  s7_pointer stepper, callee, loc, letp, lets;
+  s7_pointer stepper, callee, loc, letp, lets, vars, let, body;
   s7_Int *step, *stop;
   s7_function letf;
   /* s7_pointer *choices; */
 
   stepper = car(args);
-  loc = cdaddr(args); 
+  let = cadr(args);
+  vars = cadr(let);
+  body = caddr(let);
+  if (s7_is_pair(cdr(vars))) {/* fprintf(stderr, "temp let2: %s\n", DISPLAY(args)); */ return(NULL);}
+
+  loc = cdr(body); 
   callee = s7_slot(sc, car(loc));
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
@@ -12075,9 +12142,9 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
   pos = (*step);
   end = (*stop);
 
-  letp = cadr(caadr(args));
-  lets = s7_slot(sc, car(caadr(args)));
-  callee = caddr(caddr(args));
+  letp = cadr(car(vars));
+  lets = s7_slot(sc, caar(vars));
+  callee = caddr(body);
 
   /* fprintf(stderr, "%lld: %s\n     %s\n\n", end - pos, DISPLAY_80(letp), DISPLAY_80(callee)); */
   
@@ -12137,8 +12204,7 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
 		{
 		  (*step) = pos;
 		  (*ry) = let_gf1->func_1(let_gf1->gen);
-		  x = s7_call_direct_to_real_and_free(sc, callee); 
-		  out_any_2(pos, x, 0, "outa");
+		  out_any_2(pos, s7_call_direct_to_real_and_free(sc, callee), 0, "outa");
 		}
 	      free(let_gf1);
 	      return(args);
@@ -12185,8 +12251,7 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
 			{
 			  (*step) = pos;
 			  (*ry) = let_gf1->func_2(let_gf1->gen, let_gf2->func_1(let_gf2->gen));
-			  x = s7_call_direct_to_real_and_free(sc, callee); 
-			  out_any_2(pos, x, 0, "outa");
+			  out_any_2(pos, s7_call_direct_to_real_and_free(sc, callee), 0, "outa");
 			}
 		      free(let_gf1); free(let_gf2);
 		      return(args);
@@ -12213,8 +12278,7 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
 		    {
 		      (*step) = pos;
 		      (*ry) = x * let_gf1->func_1(let_gf1->gen);
-		      x = s7_call_direct_to_real_and_free(sc, callee); 
-		      out_any_2(pos, x, 0, "outa");
+		      out_any_2(pos, s7_call_direct_to_real_and_free(sc, callee), 0, "outa");
 		    }
 		  free(let_gf1);
 		  return(args);
@@ -12241,8 +12305,7 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
 			{
 			  (*step) = pos;
 			  (*ry) = x + let_gf1->func_1(let_gf1->gen);
-			  x = s7_call_direct_to_real_and_free(sc, callee); 
-			  out_any_2(pos, x, 0, "outa");
+			  out_any_2(pos, s7_call_direct_to_real_and_free(sc, callee), 0, "outa");
 			}
 		      free(let_gf1);
 		      return(args);
@@ -12264,8 +12327,7 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
 		    {
 		      (*step) = pos;
 		      (*ry) = let_gf1->func_1(let_gf1->gen) + let_gf2->func_1(let_gf2->gen);
-		      x = s7_call_direct_to_real_and_free(sc, callee); 
-		      out_any_2(pos, x, 0, "outa");
+		      out_any_2(pos, s7_call_direct_to_real_and_free(sc, callee), 0, "outa");
 		    }
 		  free(let_gf1); free(let_gf2);
 		  return(args);
@@ -12285,8 +12347,7 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
 			{
 			  (*step) = pos;
 			  (*ry) = let_gf1->func_1(let_gf1->gen) + (let_gf2->func_1(let_gf2->gen) * let_gf3->func_1(let_gf3->gen));
-			  x = s7_call_direct_to_real_and_free(sc, callee); 
-			  out_any_2(pos, x, 0, "outa");
+			  out_any_2(pos, s7_call_direct_to_real_and_free(sc, callee), 0, "outa");
 			}
 		      free(let_gf1); free(let_gf2); free(let_gf3);
 		      return(args);
@@ -12312,8 +12373,7 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
 		{
 		  (*step) = pos;
 		  (*ry) = let_gf1->func_1(let_gf1->gen) + let_gf2->func_1(let_gf2->gen) + let_gf3->func_1(let_gf3->gen);
-		  x = s7_call_direct_to_real_and_free(sc, callee); 
-		  out_any_2(pos, x, 0, "outa");
+		  out_any_2(pos, s7_call_direct_to_real_and_free(sc, callee), 0, "outa");
 		}
 	      free(let_gf1); free(let_gf2); free(let_gf3);
 	      return(args);
@@ -12489,6 +12549,36 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
 	       * 39689: (* (+ 0.4 (abs (rand-interp trem))) (+ (* (env ampf1) (polywave gen1 (* (env rndf) (rand-interp rnd)))) (* (env ampf2) (polywave gen2 (env frqf2)))))
 	       * 33516: (+ (env frqf) (* (env rndf) (rand-interp rnd)))
 	       */
+	      if ((car(fm) == add_symbol) &&
+		  (s7_list_length(sc, fm) == 3))
+		{
+		  gf2 = find_gf(sc, cadr(fm));
+		  if (gf2)
+		    {
+		      if (gf2->func_1)
+			{
+			  s7_pointer fm1;
+			  fm1 = caddr(fm);
+			  if ((car(fm1) == multiply_symbol) &&
+			      (s7_list_length(sc, fm1) == 3))
+			    {
+			      gf3 = find_gf(sc, cadr(fm1));
+			      gf4 = find_gf(sc, caddr(fm1));
+			      if ((gf3) && (gf4) &&
+				  (gf3->func_1) && (gf4->func_1))
+				{
+				  OUTA_LOOP(mus_env(e) * gf1->func_2(gf1->gen, gf2->func_1(gf2->gen) + (gf3->func_1(gf3->gen) * gf4->func_1(gf4->gen))));
+				  free(gf1); free(gf2); free(gf3); free(gf4);
+				  return(args);
+				}
+			    }
+			  OUTA_LOOP(mus_env(e) * gf1->func_2(gf1->gen, gf2->func_1(gf2->gen) + s7_call_direct_to_real_and_free(sc, fm1)));
+			  free(gf1); free(gf2);
+			  return(args);
+			}
+		      free(gf2);
+		    }
+		}
 	      OUTA_LOOP(mus_env(e) * gf1->func_2(gf1->gen, s7_call_direct_to_real_and_free(sc, fm)));
 	      free(gf1);
 	      return(args);
@@ -12616,7 +12706,7 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
 
   
   /* fprintf(stderr, "%lld: %s\n", end - pos, DISPLAY(callee)); 
-   * 200000: (+ (polywave gen1 (env frqf))                                          (* (env rndf) (oscil gen2 (rand-interp rnd))))
+   *  20000: (+ (polywave gen1 (env frqf))                                          (* (env rndf) (oscil gen2 (rand-interp rnd))))
    *  20000: (+ (* 0.2 (oscil gen1 (* 0.075 (oscil gen2))))                         (* 0.8 (oscil gen3 (+ (* 0.0125 (oscil gen4)) (rand-interp rnd)))))
    *  30000: (+ (polywave gen1 (+ (env frqf) (env pulse-frqf) (rand-interp rnd)))   (rand-interp pulse-rnd))
    *  14000: (+ (* (env ampf1) (polywave gen1 (env frqf1)))                         (* (env ampf2) (+ 0.3 (abs (rand-interp rnd))) (polywave gen2 (env frqf2))))
@@ -12632,14 +12722,22 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
   s7_Int pos, end;
   s7_Double x;
   mus_any *e = NULL;
-  s7_pointer stepper, callee, loc, letp, lets, letsym;
+  s7_pointer stepper, callee, loc, letp, lets, letsym, fm, let, vars, body;
   s7_Int *step, *stop;
   s7_function letf;
+  gf *let_gf1, *let_gf2, *gf1, *gf2, *gf3, *gf4, *gf5, *gf6;
+  s7_pointer mut;
+  s7_Double *letr;
 
   /* args: (0 ((frq (env frqf))) (outa i (* (env ampf) (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 frq))))))
    */
+
   stepper = car(args);
-  loc = cdaddr(args);              /* (i (* (env ...)) */
+  let = cadr(args);
+  vars = cadr(let);
+  body = caddr(let);
+
+  loc = cdr(body); 
   callee = s7_slot(sc, car(loc));
   if (s7_slot_value(sc, callee) != stepper)
     return(NULL);
@@ -12649,95 +12747,323 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
   pos = (*step);
   end = (*stop);
 
-  letp = cadr(caadr(args));
-  letsym = car(caadr(args));
+  letp = cadr(car(vars));
+  letsym = caar(vars);
   lets = s7_slot(sc, letsym);
-  
-  args = cdar(cddr(caddr(args)));
+
+  args = cdaddr(body); /* skip (outa i (* to here ...) */
   callee = cadr(args);
+  
+  if (s7_is_pair(cdr(vars)))
+    {
+      /* (with-sound () (mosquito 0 5 560 .2))
+       */
+      /* (let* ((frq (+ (env frqf) (rand-interp vib))) (pitch (oscil carrier frq))) (outa i (* (env ampf) (+ (polywave modulator1 (+ (* 2.0 frq) (* hfreq pitch (+ 1.0 (rand-interp indf))))) (polywave modulator3 (+ (* 3.0 frq) (* index3 pitch))) (polywave modulator2 (+ (* 8.0 frq) (* index2 pitch))))))))
+       * vars: ((frq (+ (env frqf) (rand-interp vib))) (pitch (oscil carrier frq)))
+
+args: ((env ampf) (+ (polywave modulator1 (+ (* 2.0 frq) (* hfreq pitch (+ 1.0 (rand-interp indf))))) (polywave modulator3 (+ (* 3.0 frq) (* index3 pitch))) (polywave modulator2 (+ (* 8.0 frq) (* index2 pitch)))))
+callee: (+ (polywave modulator1 (+ (* 2.0 frq) (* hfreq pitch (+ 1.0 (rand-interp indf))))) (polywave modulator3 (+ (* 3.0 frq) (* index3 pitch))) (polywave modulator2 (+ (* 8.0 frq) (* index2 pitch))))
+       */
+      /* fprintf(stderr, "letm vars: %s\n    args: %s\n    callee: %s\n", DISPLAY(vars), DISPLAY(args), DISPLAY(callee)); */
+      return(NULL);
+    }
 
   GET_GENERATOR_CADAR(args, env, e);
 
-  letf = s7_function_choice(sc, letp);
-
-  if (((car(letp) == env_symbol) || (car(letp) == rand_interp_symbol)) &&
-      (s7_is_symbol(cadr(letp))) &&
-      (s7_is_null(sc, cddr(letp))))
+  let_gf1 = find_gf(sc, letp);
+  if (let_gf1)
     {
-      s7_pointer mut;
-      s7_Double *letr;
-      mus_any *e1;
-      mus_float_t (*genf)(mus_any *p);
-
-      if (car(letp) == env_symbol)
+      if (let_gf1->func_1)
 	{
-	  genf = mus_env;
-	  GET_GENERATOR_CADR(letp, env, e1);
-	}
-      else 
-	{
-	  genf = mus_rand_interp_unmodulated;
-	  GET_GENERATOR_CADR(letp, rand-interp, e1);
-	}
+	  if (car(callee) == add_symbol)
+	    {
+	      int len;
+	      len = s7_list_length(sc, callee);
+	      if (len == 3)
+		{
+		  s7_pointer arg1, arg2;
+		  arg1 = cadr(callee);
+		  arg2 = caddr(callee);
+		  gf1 = find_gf(sc, arg1);
+		  if (gf1)
+		    {
+		      if ((gf1->func_2) &&
+			  (letsym == caddr(arg1)))
+			{
+			  gf2 = find_gf(sc, arg2);
+			  if (gf2)
+			    {
+			      if ((gf2->func_2) &&
+				  (letsym == caddr(arg2)))
+				{
+				  double lx;
+				  for (; pos < end; pos++)
+				    {
+				      lx = let_gf1->func_1(let_gf1->gen);
+				      out_any_2(pos, mus_env(e) * (gf1->func_2(gf1->gen, lx) + gf2->func_2(gf2->gen, lx)), 0, "outa");
+				    }
+				  (*step) = end;
+				  free(let_gf1); free(gf1); free(gf2); 
+				  return(args);
+				}
+			      free(gf2);
+			    }
+			  if ((s7_is_pair(arg2)) &&
+			      (car(arg2) == multiply_symbol) &&
+			      (s7_list_length(sc, arg2) == 3))
+			    {
+			      s7_pointer a1, a2;
+			      a1 = cadr(arg2);
+			      a2 = caddr(arg2);
+			      gf2 = find_gf(sc, a1);
+			      gf3 = find_gf(sc, a2);
+			      if ((gf2) && (gf3) &&
+				  (gf2->func_1) && (gf3->func_2))
+				{
+				  if (caddr(a2) == letsym)
+				    {
+				      double lx;
+				      for (; pos < end; pos++)
+					{
+					  lx = let_gf1->func_1(let_gf1->gen);
+					  out_any_2(pos, mus_env(e) * (gf1->func_2(gf1->gen, lx) +
+								       (gf2->func_1(gf2->gen) * gf3->func_2(gf3->gen, lx))),
+						    0, "outa");
+					}
+				      (*step) = end;
+				      free(let_gf1); free(gf1); free(gf2); free(gf3);
+				      return(args);
+				    }
+				  if (s7_is_pair(caddr(a2)))
+				    {
+				      s7_pointer fm2;
+				      fm2 = caddr(a2);
+				      if ((car(fm2) == multiply_symbol) &&
+					  (s7_list_length(sc, fm2) == 3) &&
+					  (((cadr(fm2) == letsym) && (s7_is_real(caddr(fm2)))) ||
+					   ((caddr(fm2) == letsym) && (s7_is_real(cadr(fm2))))))
+					{
+					  double lx, fx;
+					  if (cadr(fm2) == letsym)
+					    fx = s7_number_to_real(sc, caddr(fm2));
+					  else fx = s7_number_to_real(sc, cadr(fm2));
+					  for (; pos < end; pos++)
+					    {
+					      lx = let_gf1->func_1(let_gf1->gen);
+					      out_any_2(pos, mus_env(e) * (gf1->func_2(gf1->gen, lx) +
+									   (gf2->func_1(gf2->gen) * gf3->func_2(gf3->gen, fx * lx))),
+							0, "outa");
+					    }
+					  (*step) = end;
+					  free(let_gf1); free(gf1); free(gf2); free(gf3);
+					  return(args);
+					}
+				    }
+				}
+			      if (gf2) free(gf2);
+			      if (gf3) free(gf3);
+			    }
+			}
+		      free(gf1);
+		    }
+		  if ((s7_is_pair(arg1)) &&
+		      (car(arg1) == multiply_symbol) &&
+		      (s7_list_length(sc, arg1) == 3) &&
+		      (s7_is_pair(arg2)) &&
+		      (car(arg2) == multiply_symbol) &&
+		      (s7_list_length(sc, arg2) == 3))
+		    {
+		      s7_pointer a1, a2, a3, a4;
+		      a1 = cadr(arg1);
+		      a2 = caddr(arg1);
+		      a3 = cadr(arg2);
+		      a4 = caddr(arg2);
+		      gf1 = find_gf(sc, a1);
+		      gf2 = find_gf(sc, a2);
+		      gf3 = find_gf(sc, a3);
+		      gf4 = find_gf(sc, a4);
+		      if ((gf1) && (gf2) && (gf3) && (gf4))
+			{
+			  if ((gf1->func_1) && (gf3->func_1) && (gf2->func_2) && (gf4->func_2))
+			    {
+			      s7_pointer fm1, fm2;
+			      fm1 = caddr(a2);
+			      fm2 = caddr(a4);
+			      if ((fm1 == letsym) && (fm2 == letsym))
+				{
+				  double lx;
+				  for (; pos < end; pos++)
+				    {
+				      lx = let_gf1->func_1(let_gf1->gen);
+				      out_any_2(pos, mus_env(e) * ((gf1->func_1(gf1->gen) * gf2->func_2(gf2->gen, lx)) +
+						                   (gf3->func_1(gf3->gen) * gf4->func_2(gf4->gen, lx))), 
+						0, "outa");
+				    }
+				  (*step) = end;
+				  free(let_gf1); free(gf1); free(gf2); free(gf3); free(gf4);
+				  return(args);
+				}
+			      if ((fm1 == letsym) &&
+				  (s7_is_pair(fm2)) &&
+				  (car(fm2) == multiply_symbol) &&
+				  (s7_is_real(cadr(fm2))) &&
+				  (caddr(fm2) == letsym))
+				{
+				  double lx, fx;
+				  fx = s7_number_to_real(sc, cadr(fm2));
+				  for (; pos < end; pos++)
+				    {
+				      lx = let_gf1->func_1(let_gf1->gen);
+				      out_any_2(pos, mus_env(e) * ((gf1->func_1(gf1->gen) * gf2->func_2(gf2->gen, lx)) +
+						                   (gf3->func_1(gf3->gen) * gf4->func_2(gf4->gen, fx * lx))), 
+						0, "outa");
+				    }
+				  (*step) = end;
+				  free(let_gf1); free(gf1); free(gf2); free(gf3); free(gf4);
+				  return(args);
+				}
+			      if ((s7_is_pair(fm1)) &&
+				  (s7_is_pair(fm2)))
+				{
+				  mut = s7_make_mutable_real(sc, 1.5);
+				  letr = ((s7_Double *)((unsigned char *)(mut) + XEN_S7_NUMBER_LOCATION));
+				  s7_slot_set_value(sc, lets, mut);
+				  for (; pos < end; pos++)
+				    {
+				      (*step) = pos;
+				      (*letr) = let_gf1->func_1(let_gf1->gen);
+				      out_any_2(pos, mus_env(e) * ((gf1->func_1(gf1->gen) * gf2->func_2(gf2->gen, s7_call_direct_to_real_and_free(sc, fm1))) +
+								   (gf3->func_1(gf3->gen) * gf4->func_2(gf4->gen, s7_call_direct_to_real_and_free(sc, fm2)))),
+						0, "outa");
+				    }
+				  (*step) = end;
+				  free(let_gf1); free(gf1); free(gf2); free(gf3); free(gf4);
+				  return(args);
+				}
+			    }
+			}
+		      if (gf1) free(gf1);
+		      if (gf2) free(gf2);
+		      if (gf3) free(gf3);
+		      if (gf4) free(gf4);
+		    }
+		}
+	    }
+	  gf1 = find_gf(sc, callee);
+	  if (gf1)
+	    {
+	      if (gf1->func_2)
+		{
+		  fm = caddr(callee);
+		  mut = s7_make_mutable_real(sc, 1.5);
+		  letr = ((s7_Double *)((unsigned char *)(mut) + XEN_S7_NUMBER_LOCATION));
+		  s7_slot_set_value(sc, lets, mut);
 
-      mut = s7_make_mutable_real(sc, 1.5);
-      letr = ((s7_Double *)((unsigned char *)(mut) + XEN_S7_NUMBER_LOCATION));
-      s7_slot_set_value(sc, lets, mut);
+		  /* 5733 (oscil gen3 (+ frq (* index (oscil gen4 (* 0.5 frq)))))
+		   * 7497 (oscil gen1 (+ frq (* index (+ (* 0.2 (oscil gen2 (* 0.5 frq))) (* 1.5 (oscil gen2a frq))))))
+		   */
+		  for (; pos < end; pos++)
+		    {
+		      (*step) = pos;
+		      (*letr) = let_gf1->func_1(let_gf1->gen);
+		      out_any_2(pos, mus_env(e) * gf1->func_2(gf1->gen, s7_call_direct_to_real_and_free(sc, fm)), 0, "outa");
+		    }
+		  free(let_gf1); free(gf1); 
+		  return(args);
+		}
+	      free(gf1);
+	    }
 
-      /* fprintf(stderr, "%d, %lld %s\n", __LINE__, end - pos, DISPLAY(callee)); */
-      /* TODO: split out 1st gen2
-       * 7497 (oscil gen1 (+ frq (* index (+ (* 0.2 (oscil gen2 (* 0.5 frq))) (* 1.5 (oscil gen2a frq))))))
-       * 5733 (oscil gen3 (+ frq (* index (oscil gen4 (* 0.5 frq)))))
-       * 44100 (+ (* (table-lookup amp-pulser) (polywave gen1 (+ (rand-interp rnd) ...
-       * 1411 (+ (* 0.9 (oscil gen1 frq)) (* 0.1 (oscil gen11 (* 2.0 frq))))
-       * 1764 (+ (* 0.7 (oscil gen2 noise)) (* 0.3 (oscil gen21 noise)))
-       * 88200 (+ (* (env intrpf) (polywave gen1 frq)) (* (env intrpf-1) (oscil gen2 frq)))
-       * 9702 (+ (* (env call3-f1) (polywave call3-gen frq)) (* (env call3-f2) (polywave call4-gen (* 0.5 frq))))
-       * 14994 (+ (polywave gen1 frq) (* (env ampf1a) (oscil gen1a (* 2.0 frq))) (* (env ampf2) (polywave gen2 (+ (env frqf2) (rand-interp buzz)))))
-       * 3528 *5 (+ (* (env ampf1) (polywave gen1 (* pulse-frq (+ noise (env frqf1))))) (* (env ampf2) (polywave gen2 (* pulse-frq (+ noise (env frqf2))))))
-       * 22050 (+ (* (env f1) (oscil gen1 frq)) (* (env f2) (oscil gen2 (* 2.0 frq))) ...
-       * 13230 (+ (* (env f1) (oscil gen1 frq)) (* (env f2) (oscil gen2 (* 2.0 frq))) ...
-       * 3748 (+ (* (env f1) (oscil gen1 frq)) (* 0.01 (oscil gen2 (* 2.0 frq))))
-       * 38808 (+ (polywave gen1 (* 2.0 frq)) (* (env ampf2) (polywave gen2 frq)))
-       * 6174 *4 (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 frq)))
-       * 28664 (+ (polywave gen1 frq) (* (env ampf2) (oscil gen2 (* 2.0 frq))))
-       * 11289 (+ (* (env ampf1) (polywave gen1 frq)) (* (env ampf2) (oscil gen2 (* frq 2))) (* (env ampf3) (oscil gen3 (* frq 3))))
-       * 24696 (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 frq)) (* (env ampf3) (polywave gen3 frq)))
-       * 8820 (+ (oscil gen1 frq) (* (env ampf2) (polywave gen2 frq)))
-       * 5292 (+ (polywave gen2 frq) (* (env ampf2a) (polywave gen2a frq)) (* (env ampf1) (oscil gen1 frq)) (* (env ampf3) (nrxysin gen3 (* 9.0 frq))))
-       * 4851 (+ (* (env intrpf) (polywave gen1 frq)) (* (env intrpf-1) (+ (polywave gen2 frq) (* 0.03 (nrxysin gen3 (* 9.0 frq))))))
-       * 3617 (+ (* (env ampf1) (oscil gen1 frq)) (* (env ampf2) (oscil gen2 (* 2.0 frq))) ...
-       * 1764 (+ (polywave gen1 vb) (* (env ampf2) (nrxysin gen2 vb)))
-       * 2734 *10 (+ (* (env ampf1) (polywave gen1 frq)) (* 0.9 (oscil gen2 (* 2.0 frq))) (* (env ampf3) (oscil gen3 (* 3.0 frq))))
-       * 10804 (+ (* (env ampf1) (oscil gen1 frq)) (* (env ampf2) (oscil gen2 (* 2.0 frq))) ...
-       * 4924 *20 (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 frq)))
-       * 2028 (+ (* (env ampf2) (oscil gen2 frq)) (* (env ampf3) (oscil gen3 (* 3.0 frq))) (polywave gen1 frq))
-       */
+	  mut = s7_make_mutable_real(sc, 1.5);
+	  letr = ((s7_Double *)((unsigned char *)(mut) + XEN_S7_NUMBER_LOCATION));
+	  s7_slot_set_value(sc, lets, mut);
 
-      for (; pos < end; pos++)
-	{
-	  (*step) = pos;
-	  (*letr) = genf(e1);
-	  x = s7_call_direct_to_real_and_free(sc, callee);
-	  out_any_2(pos, mus_env(e) * x, 0, "outa");
+	  /* fprintf(stderr, "%lld %s\n", end - pos, DISPLAY(callee)); */
+	  /*
+44100 (+ (* (table-lookup amp-pulser) (polywave gen1 (+ (rand-interp rnd) (table-lookup frq-pulser)))) (* 0.05 (+ (oscil gen2 noise) (* 0.2 (oscil gen3 (* 0.2 noise))))))
+1411 (+ (* 0.9 (oscil gen1 frq)) (* 0.1 (oscil gen11 (* 2.0 frq))))
+1764 (+ (* 0.7 (oscil gen2 noise)) (* 0.3 (oscil gen21 noise)))
+22050 (+ (* (env f1) (oscil gen1 frq)) (* (env f2) (oscil gen2 (* 2.0 frq))) (* (env f3) (oscil gen3 (* 3.0 frq))) (* 0.005 (oscil gen4 (* 4.0 frq))) (* 0.005 (oscil gen5 (* 5.0 frq))))
+13230 (+ (* (env f1) (oscil gen1 frq)) (* (env f2) (oscil gen2 (* 2.0 frq))) (* (env f3) (oscil gen3 (* 3.0 frq))) (* (env f4) (oscil gen4 (* 4.0 frq))) (* 0.005 (oscil gen5 (* 5.0 frq))))
+3748 (+ (* (env f1) (oscil gen1 frq)) (* 0.01 (oscil gen2 (* 2.0 frq))))
+38808 (+ (polywave gen1 (* 2.0 frq)) (* (env ampf2) (polywave gen2 frq)))
+10143 (+ (* (env interpf) (oscil gen1 frq)) (* (env interpf-1) (+ (oscil gen2 (* 2.0 frq)) (oscil gen3 (* 3.0 frq)))))
+2116 (+ (polywave gen1 frq) (polywave gen2 frq) (polywave gen3 frq))
+2117 (+ (polywave gen1 frq) (polywave gen2 frq) (polywave gen3 frq))
+2116 (+ (polywave gen1 frq) (polywave gen2 frq) (polywave gen3 frq))
+2116 (+ (polywave gen1 frq) (polywave gen2 frq) (polywave gen3 frq))
+11289 (+ (* (env ampf1) (polywave gen1 frq)) (* (env ampf2) (oscil gen2 (* frq 2))) (* (env ampf3) (oscil gen3 (* frq 3))))
+24696 (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 frq)) (* (env ampf3) (polywave gen3 frq)))
+5292 (+ (polywave gen2 frq) (* (env ampf2a) (polywave gen2a frq)) (* (env ampf1) (oscil gen1 frq)) (* (env ampf3) (nrxysin gen3 (* 9.0 frq))))
+48510 (+ (* (env intrpf) (polywave gen1 frq)) (* (env intrpf-1) (+ (polywave gen2 frq) (* 0.03 (nrxysin gen3 (* 9.0 frq))))))
+3617*10 (+ (* (env ampf1) (oscil gen1 frq)) (* (env ampf2) (oscil gen2 (* 2.0 frq))) (* (env ampf3) (nrxysin gen3 (* 8.0 frq))) (* (env ampf4) (polywave gen4 frq)))
+2028 (+ (* (env ampf2) (oscil gen2 frq)) (* (env ampf3) (oscil gen3 (* 3.0 frq))) (polywave gen1 frq))
+	   */
+	  for (; pos < end; pos++)
+	    {
+	      (*step) = pos;
+	      (*letr) = let_gf1->func_1(let_gf1->gen);
+	      out_any_2(pos, mus_env(e) * s7_call_direct_to_real_and_free(sc, callee), 0, "outa");
+	    }
+	  free(let_gf1); 
+	  return(args);
 	}
-      return(args);
+      free(let_gf1);
     }
 
-  /* fprintf(stderr, "%d, %lld %s\n", __LINE__, end - pos, DISPLAY(callee)); */
-  /* TODO: split out 1st gen2
-   * 837 *20 (+ (oscil gen1 frq) (polywave gen2 (* 0.25 frq)))
-   * 1050 * 100 (+ (* (env interpf-1) (polywave poly1 frq)) (* (env interpf) (polywave poly2 frq)))
-   * 66150 (+ (polywave gen1 (+ (* 2.0 frq) (polywave gen4 frq))) (polywave gen2 (+ (* 8.0 frq) (polywave gen3 frq))))
-   * 3263 (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 (* 2.0 frq))))
-   * 20065 (+ (polywave gen1 frq) (* (env ampf2) (oscil gen2 (* 1.5 frq))) (* (env ampf3) (oscil gen3 (* 2.0 frq))))
-   * 12568 (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 (* 1.5 frq))))
-   * 7497 (+ (polywave gen1 frq) (* (env emphf) (oscil emph (* 2.0 frq))))
-   * 2954 (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 frq)))
-   * 11686 (+ (* (env ampf1) (oscil gen1 frq)) (* (env ampf2) (oscil gen2 (* 2.0 frq))) (* (env ampf3) (oscil gen3 (* 3.0 frq))))
-   * 8820 (+ (oscil gen1 frq) (* (env ampf2) (polywave gen2 frq)))
+  /* let expr not just (f s) */
+  if (car(letp) == add_symbol)
+    {
+      let_gf1 = find_gf(sc, cadr(letp));
+      let_gf2 = find_gf(sc, caddr(letp));
+      if ((let_gf1) && (let_gf2) &&
+	  (let_gf1->func_1) && (let_gf2->func_1))
+	{
+	  mut = s7_make_mutable_real(sc, 1.5);
+	  letr = ((s7_Double *)((unsigned char *)(mut) + XEN_S7_NUMBER_LOCATION));
+	  s7_slot_set_value(sc, lets, mut);
+
+	  for (; pos < end; pos++)
+	    {
+	      (*step) = pos;
+	      (*letr) = let_gf1->func_1(let_gf1->gen) + let_gf2->func_1(let_gf2->gen);
+	      out_any_2(pos, mus_env(e) * s7_call_direct_to_real_and_free(sc, callee), 0, "outa");
+	    }
+	  free(let_gf1); free(let_gf2);
+	  return(args);
+	}
+
+      if (let_gf1) free(let_gf1);
+      if (let_gf2) free(let_gf2);
+    }
+  
+
+  /* fprintf(stderr, "%lld %s %s\n", end - pos, DISPLAY(letp), DISPLAY(callee)); */
+  /*
+837*40 (+ pulse-frq (rand-interp rnd))    (+ (oscil gen1 frq) (polywave gen2 (* 0.25 frq)))
+1050*80 (+ (env frqf) (rand-interp vib) (* index (oscil fm))) (+ (* (env interpf-1) (polywave poly1 frq)) (* (env interpf) (polywave poly2 frq)))
+735 (+ (env frqf) (rand-interp vib) (* index (oscil fm))) (+ (* (env interpf-1) (polywave poly1 frq)) (* (env interpf) (polywave poly2 frq)))
+66150 (+ (env frqf) (polywave vib))       (+ (polywave gen1 (+ (* 2.0 frq) (polywave gen4 frq))) (polywave gen2 (+ (* 8.0 frq) (polywave gen3 frq))))
+14994 (+ (env frqf) (rand-interp rnd))    (+ (polywave gen1 frq) (* (env ampf1a) (oscil gen1a (* 2.0 frq))) (* (env ampf2) (polywave gen2 (+ (env frqf2) (rand-interp buzz)))))
+882 (+ (env frqf1) (rand-interp rnd))     (+ (* (env f1) (oscil gen1 (* 2.0 frq1))) (* (env f2) (oscil gen2 frq1)) (* (env f3) (oscil gen3 (* 3.0 frq1))) (* (env f4) (oscil gen4 (env frqf2))))
+11466 (+ (env frqf) (rand-interp rnd))    (+ (* (env intrpf) (polywave gen1 frq)) (* (env intrpf-1) (polywave gen2 frq)))
+13230 (+ (env frqf) (rand-interp rnd))    (+ (polywave gen1 frq) (* (env ampf2) (oscil gen2 (* 3.0 frq))))
+3748 (+ (env frqf) (* (env rndf) (rand-interp rnd))) (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 (* 0.5 frq))))
+12656 (+ (env frqf) (rand-interp rnd))    (polywave gen1 (+ (* 5.0 frq) (* index (oscil mod1 frq))))
+26460 (+ (env frqf) (rand-interp rnd))    (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 frq)) (* (env ampf3) (oscil gen3 (* 5.0 frq))))
+3263 (+ (env frqf) (rand-interp rnd))     (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 (* 2.0 frq))))
+20065 (+ (env frqf) (rand-interp rnd))    (+ (polywave gen1 frq) (* (env ampf2) (oscil gen2 (* 1.5 frq))) (* (env ampf3) (oscil gen3 (* 2.0 frq))))
+12568 (+ (env frqf) (* (env rndf) (nrxysin rnd (env rndfrqf))))     (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 (* 1.5 frq))))
+7497 (+ (env frqf) (* (env vibf) (oscil vib)))    (+ (polywave gen1 frq) (* (env emphf) (oscil emph (* 2.0 frq))))
+2954 (+ (env frqf) (rand-interp rnd))     (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 frq)))
+11686 (+ (env frqf) (rand-interp rnd))    (+ (* (env ampf1) (oscil gen1 frq)) (* (env ampf2) (oscil gen2 (* 2.0 frq))) (* (env ampf3) (oscil gen3 (* 3.0 frq))))
+8820 (+ (env frqf) (* (env rndf) (rand-interp rnd))) (+ (oscil gen1 frq) (* (env ampf2) (polywave gen2 frq)))
+1764 (* index (rand-interp vib))          (+ (polywave gen1 vb) (* (env ampf2) (nrxysin gen2 vb)))
+10804 (+ (env frqf) (* (env rndf) (rand-interp rnd))) (+ (* (env ampf1) (oscil gen1 frq)) (* (env ampf2) (oscil gen2 (* 2.0 frq))) (* (env ampf3) (oscil gen3 (* 3.0 frq))) (* (env ampf4) (polywave gen4 frq)) (* (env ampf5) (nrxysin gen5 (* 6.0 frq))) (* (env ampf6) (nrxysin gen6 (* 3.0 frq))) (* (env humf) (oscil hum (* 0.25 frq))))
    */
+  letf = s7_function_choice(sc, letp);
   letp = cdr(letp);
+  
   for (; pos < end; pos++)
     {
       (*step) = pos;
@@ -14408,6 +14734,21 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 	  s7_function_choice_set_direct(sc, expr);
 	  return(oscil_pm_direct);
 	}
+      if ((s7_is_symbol(caddr(expr))) &&
+	  (s7_is_pair(cadddr(expr))) &&
+	  (s7_function_choice_is_direct(sc, cadddr(expr))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(oscil_ss3_direct);
+	}
+      if ((s7_is_pair(caddr(expr))) &&
+	  (s7_function_choice_is_direct(sc, caddr(expr))) &&
+	  (s7_is_pair(cadddr(expr))) &&
+	  (s7_function_choice_is_direct(sc, cadddr(expr))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(oscil_3_direct);
+	}
       return(oscil_three);
     }
   return(f);
@@ -14880,11 +15221,23 @@ static s7_pointer nrxycos_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 
 static s7_pointer env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if ((args == 1) &&
-      (s7_is_symbol(cadr(expr))))
+  if (args == 1)
     {
-      s7_function_choice_set_direct(sc, expr);
-      return(env_1);
+      s7_pointer arg;
+      arg = cadr(expr);
+      if (s7_is_symbol(arg))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(env_1);
+	}
+      if ((s7_is_pair(arg)) &&
+	  (car(arg) == vector_ref_symbol) &&
+	  (s7_is_symbol(cadr(arg))) &&
+	  (s7_is_symbol(caddr(arg))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(env_vss);
+	}
     }
   return(f);
 }
@@ -16442,6 +16795,8 @@ static void init_choosers(s7_scheme *sc)
   direct_oscil_2 = clm_make_function(sc, "oscil", g_direct_oscil_2, 2, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_oscil_2 = clm_make_function(sc, "oscil", g_indirect_oscil_2, 2, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
   oscil_pm_direct = clm_make_function(sc, "oscil", g_oscil_pm_direct, 3, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
+  oscil_3_direct = clm_make_function(sc, "oscil", g_oscil_3_direct, 3, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
+  oscil_ss3_direct = clm_make_function(sc, "oscil", g_oscil_ss3_direct, 3, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
   oscil_one = clm_make_function(sc, "oscil", g_oscil_one, 1, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
   oscil_two = clm_make_function(sc, "oscil", g_oscil_two, 2, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
   oscil_three = clm_make_function(sc, "oscil", g_oscil_three, 3, 0, false, "oscil optimization", f,  NULL, NULL, NULL, NULL, NULL, NULL);
@@ -16580,6 +16935,7 @@ static void init_choosers(s7_scheme *sc)
   GEN_F1("env", env);
   store_choices(sc, f, (s7_pointer)wrapped_env_1, NULL, NULL, (s7_pointer)wrapped_env_p);
   env_1 = clm_make_function(sc, "env", g_env_1, 1, 0, false, "env optimization", f, NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
+  env_vss = clm_make_function(sc, "env", g_env_vss, 1, 0, false, "env optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
 
   GEN_F1("readin", readin);
@@ -16590,9 +16946,11 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "sample->file");
   s7_function_set_chooser(sc, f, sample_to_file_chooser);
-  sample_to_file_four = clm_make_function(sc, "sample->file", g_sample_to_file_four, 4, 0, false, "sample->file optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  sample_to_file_four = clm_make_function(sc, "sample->file", g_sample_to_file_four, 4, 0, false, "sample->file optimization", f, 
+					  NULL, NULL, NULL, NULL, NULL, NULL);
 #if (!WITH_GMP)
-  sample_to_file_four_looped = clm_make_function(sc, "sample->file", g_sample_to_file_four_looped, 4, 0, false, "sample->file optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  sample_to_file_four_looped = clm_make_function(sc, "sample->file", g_sample_to_file_four_looped, 4, 0, false, "sample->file optimization", f, 
+						 NULL, NULL, NULL, NULL, NULL, NULL);
   s7_function_set_looped(sample_to_file_four, sample_to_file_four_looped);
 #endif
 

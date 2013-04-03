@@ -1682,12 +1682,12 @@
 	(hfreq (hz->radians freq)))
     (do ((i start (+ i 1)))
 	((= i stop))
-      (let ((frq (+ (env frqf) (rand-interp vib))))
-	(let ((pitch (oscil carrier frq)))
+      (let* ((frq (+ (env frqf) (rand-interp vib)))
+	     (pitch (oscil carrier frq)))
 	  (outa i (* (env ampf)
 		     (+ (polywave modulator1 (+ (* 2.0 frq) (* hfreq pitch (+ 1.0 (rand-interp indf)))))
 			(polywave modulator3 (+ (* 3.0 frq) (* index3 pitch)))
-			(polywave modulator2 (+ (* 8.0 frq) (* index2 pitch)))))))))))
+			(polywave modulator2 (+ (* 8.0 frq) (* index2 pitch))))))))))
 
 ;; (with-sound (:play #t) (mosquito 0 5 560 .2) (mosquito 1 3 880 .05))
 

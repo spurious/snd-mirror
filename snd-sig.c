@@ -4060,39 +4060,43 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 		  else
 		    {
 		      /* not direct but possibly temp:
-		       * (let ((reader (make-sampler 0 0 0))) (map-channel (lambda (y) (read-sample reader))))
+		       * (let ((rd (make-sampler)) (g (make-granulate))) (map-channel (lambda (y) (granulate g (lambda (dir) (read-sample rd))))))
+		       * but this is not currently handled because it takes so much time to check it out.  The idea would be:
+		       *
+		       *    map gran+func and func is trivial (read-sample) can we handle that directly? Currently the example above
+		       *    goes to eval_form to as_needed_input_func to as_needed_input_cs (after enormous effort) to s7_call_direct_to_real_and_free to g_read_sample_s!!
+		       *    since samplers are mus_xen objects, we really want as_needed_input_generator, then gn->vcts[MUS_INPUT_FUNCTION] = obj;
+		       *    but this goes through mus_apply -- we need a parallel to as_needed_input_readin. (and need an interface to clm to set these)
+		       *    	  mus_generator_set_feeder(gn->gen, as_needed_input_sampler); gn via XEN_TO_C_GENERATOR, called with g->closure which is gn
+		       *        static mus_float_t as_needed_input_readin(void *ptr, int direction) -- ignore ptr/direction! call granulate(gen)
 		       */
-		      len = s7_list_length(s7, res);
-		      if ((s7_function_returns_temp(res)) &&
-			  (len == 2) &&
-			  (s7_is_symbol(s7_cadr(res))))
+		      s7_pointer old_e, g;
+		      gf *gf1;
+		      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
+		      old_e = s7_set_current_environment(s7, e);
+
+		      gf1 = find_gf(s7, res);
+		      if (gf1)
 			{
-			  s7_pointer old_e, z, args;
-			  
-			  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
-			  old_e = s7_set_current_environment(s7, e);
-			  /* the function closure might be needed even if the arg isn't */
-			  
-			  z = s7_symbol_value(s7, s7_cadr(res));
-			  args = s7_cons(s7, z, s7_nil(s7));
-			  gc_loc = s7_gc_protect(s7, args);
-			  data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
-			  
-			  for (kp = 0; kp < num; kp++)
-			    data[kp] = s7_real(f(s7, args));
-			  
-			  change_samples(beg, num, data, cp, caller, pos, -1.0);
-			  free(data);
-			  sf = free_snd_fd(sf);
-			  s7_gc_unprotect_at(s7, gc_loc);
-			  s7_set_current_environment(s7, old_e);
-			  return(res);
+			  if (gf1->func_1)
+			    {
+			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
+			      for (kp = 0; kp < num; kp++)
+				data[kp] = gf1->func_1(gf1->gen);
+			      change_samples(beg, num, data, cp, caller, pos, -1.0);
+			      free(data);
+			      sf = free_snd_fd(sf);
+			      s7_set_current_environment(s7, old_e);
+			      return(res);
+			    }
+			  free(gf1);
 			}
+		      s7_set_current_environment(s7, old_e);
 		    }
 		}
 	    }
 	}
-  
+
       arg = s7_caadar(source);
       e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
       gc_loc = s7_gc_protect(s7, e);
@@ -4119,6 +4123,9 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
   cur_size = num;
 
   /* fprintf(stderr, "%lld: %s\n", num, DISPLAY(s7_car(source))); */
+  /* 150000: (lambda (y) (granulate grn (lambda (dir) (read-sample rd))))
+   * 100000: (lambda (inval) (amplitude-modulate 1.0 inval (oscil os)))
+   */
   for (kp = 0; kp < num; kp++)
     {
 

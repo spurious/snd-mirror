@@ -27731,6 +27731,47 @@ static s7_pointer g_vector_set_ssc_looped(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if (!WITH_GMP)
+static s7_pointer vector_set_sss_dox_looped, vector_set_sss;
+static s7_pointer *vid_data;
+static s7_Int vid_length;
+static s7_pointer vid_i_slot, vid_s_slot;
+
+static s7_pointer g_vector_set_sss(s7_scheme *sc, s7_pointer args)
+{
+  /* this is just a placeholder */
+  return(g_vector_set(sc, list_3(sc, finder(sc, car(args)), finder(sc, cadr(args)), finder(sc, caddr(args)))));
+}
+
+static s7_pointer g_vector_set_sss_dox(s7_scheme *sc, s7_pointer code)
+{
+  s7_Int pos;
+  pos = integer(s7_slot_value(sc, vid_i_slot));
+  if (pos < vid_length)
+    vid_data[pos] = s7_slot_value(sc, vid_s_slot);
+  return(NULL);
+}
+
+static s7_pointer g_vector_set_sss_dox_looped(s7_scheme *sc, s7_pointer code)
+{
+  s7_pointer v;
+  v = s7_cadr_value(sc, code);
+  if ((v) &&
+      (s7_is_vector(v)) &&
+      (!s7_local_slot(sc, s7_cadr(code))))
+    {
+      vid_data = vector_elements(v);
+      vid_length = vector_length(v);
+      vid_i_slot = s7_local_slot(sc, s7_caddr(code));
+      vid_s_slot = s7_local_slot(sc, s7_cadddr(code));
+      if ((vid_i_slot) && 
+	  (s7_is_integer(s7_slot_value(sc, vid_i_slot))))                          /* i is an integer */
+	return((s7_pointer)g_vector_set_sss_dox);
+    }
+  return(NULL);
+}
+#endif
+
 /* other standard cases (fft-related): (+|- (vector-ref ...) s) -- actually (vector-set! v i (+|- (vector-ref v i) s))
  *                                     (+|- (* s (vector-ref ...)) (* s (vector-ref ...)))
  * (vset v i s)
@@ -36703,6 +36744,11 @@ static s7_pointer vector_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 		  set_optimize_data(expr, HOP_SAFE_C_C);
 		  return(vector_set_vref);
 		}
+	      if (is_symbol(arg3))
+		{
+		  set_optimize_data(expr, HOP_SAFE_C_C);
+		  return(vector_set_sss);
+		}
 	    }
 	}
       return(vector_set_3);
@@ -38028,6 +38074,7 @@ static void init_choosers(s7_scheme *sc)
 
   random_ic = make_function_with_class(sc, f, "random", g_random_ic, 1, 0, false, "random optimization");
   random_rc = make_function_with_class(sc, f, "random", g_random_rc, 1, 0, false, "random optimization");
+  set_returns_temp(random_rc);
 #endif
 
   /* aritable? */
@@ -38227,9 +38274,14 @@ static void init_choosers(s7_scheme *sc)
   vector_set_ssc = make_function_with_class(sc, f, "vector-set!", g_vector_set_ssc, 3, 0, false, "vector-set! optimization");
   vector_set_3 = make_function_with_class(sc, f, "vector-set!", g_vector_set_3, 3, 0, false, "vector-set! optimization");
 
-  vector_set_ssc_looped = s7_make_function(sc, "vector-set!", g_vector_set_ssc_looped, 3, 0, false, "vector-set! optimization");
-  s7_function_set_class(vector_set_ssc_looped, f);
+  vector_set_ssc_looped = make_function_with_class(sc, f, "vector-set!", g_vector_set_ssc_looped, 3, 0, false, "vector-set! optimization");
   s7_function_set_looped(vector_set_ssc, vector_set_ssc_looped);
+
+#if (!WITH_GMP)
+  vector_set_sss = make_function_with_class(sc, f, "vector-set!", g_vector_set_sss, 3, 0, false, "vector-set! optimization");
+  vector_set_sss_dox_looped = make_function_with_class(sc, f, "vector-set!", g_vector_set_sss_dox_looped, 3, 0, false, "vector-set! optimization");
+  s7_function_set_dox_looped(vector_set_sss, vector_set_sss_dox_looped);
+#endif
 
 
   /* list-ref */
@@ -45656,76 +45708,43 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  add_slot(sc, caar(let_var), sc->UNDEFINED);
 		
 		stepper = slot_value(sc->args);
-		/* func = ecdr(caddr(caddr(sc->code))); */
 		func = caddr(caddr(sc->code));
+		
+		if (c_function_let_looped(ecdr(func)))
+		  {
+		    s7_function f;
+		    s7_pointer result;
+			
+		    f = (s7_function)c_function_call(c_function_let_looped(ecdr(func)));
+		    car(sc->T2_1) = stepper;
+		    car(sc->T2_2) = caddr(sc->code);
+		    result = f(sc, sc->T2_1);
+			
+		    if (result)
+		      {
+			sc->code = cdr(cadr(sc->code));
+			goto DO_BEGIN;
+		      }
+		    /* else fall into the ordinary loop */
+		  }
+
 		body = cdr(caddr(caddr(sc->code)));
 		lets = car(cdaddr(sc->code));
-		
-		if (num_vars != 1)
+
+		while (true)
 		  {
-		    while (true)
+		    /* eval let + body  (cddr(sc->code)) */
+		    for (let_var = lets; is_pair(let_var); let_var = cdr(let_var))
 		      {
-			/* eval let + body  (cddr(sc->code)) */
-			for (let_var = lets; is_pair(let_var); let_var = cdr(let_var))
-			  {
-			    p = find_local_symbol(sc, sc->envir, caar(let_var));
-			    slot_set_value(p, c_call(cadar(let_var))(sc, cdadar(let_var)));
-			  }
-			
-			/* (with-sound () (fm-violin 0 .0001 440 .1))
-			 */
-			c_call(func)(sc, body);
-			numerator(stepper)++;
-			if (numerator(stepper) == denominator(stepper))
-			  {
-			    sc->code = cdr(cadr(sc->code));
-			    goto DO_BEGIN;
-			  }
+			p = find_local_symbol(sc, sc->envir, caar(let_var));
+			slot_set_value(p, c_call(cadar(let_var))(sc, cdadar(let_var)));
 		      }
-		  }
-		else
-		  {
-		    s7_pointer temp_val;
-		    bool free_safe;
-		    
-		    if (c_function_let_looped(ecdr(func)))
+		    c_call(func)(sc, body);
+		    numerator(stepper)++;
+		    if (numerator(stepper) == denominator(stepper))
 		      {
-			s7_function f;
-			s7_pointer result;
-			
-			f = (s7_function)c_function_call(c_function_let_looped(ecdr(func)));
-			result = f(sc, sc->args = cons(sc, stepper, cdaddr(sc->code)));
-			
-			if (result)
-			  {
-			    sc->code = cdr(cadr(sc->code));
-			    goto DO_BEGIN;
-			  }
-			/* else fall into the ordinary loop */
-		      }
-		    
-		    p = environment_slots(sc->envir);
-		    let_var = cdadar(lets);
-		    lets = cadar(lets);
-		    free_safe = (returns_temp(ecdr(lets)));
-		    
-		    while (true)
-		      {
-			slot_set_value(p, temp_val = c_call(lets)(sc, let_var));
-			c_call(func)(sc, body);
-			if ((free_safe) &&
-			    (is_simple_real(temp_val))) /* i.e. not immutable, not integer or something else unexpected */
-			  {
-			    typeflag(temp_val) = 0;
-			    (*(sc->free_heap_top++)) = temp_val;
-			  }
-			
-			numerator(stepper)++;
-			if (numerator(stepper) == denominator(stepper))
-			  {
-			    sc->code = cdr(cadr(sc->code));
-			    goto DO_BEGIN;
-			  }
+			sc->code = cdr(cadr(sc->code));
+			goto DO_BEGIN;
 		      }
 		  }
 	      }
@@ -45926,6 +45945,46 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if ((typesflag(sc->code) == SYNTACTIC_PAIR) || 
 			(typeflag(car(sc->code)) == SYNTACTIC_TYPE))
 		      {
+			/* (with-sound () (mosquito 0 5 560 .2))
+			 */
+			if (((syntax_opcode(car(sc->code)) == OP_LET) ||
+			     (syntax_opcode(car(sc->code)) == OP_LET_STAR)) &&
+			    (is_null(cdddr(sc->code))))
+			  {
+			    /* it's a let of some sort, and one-line body */
+			    if ((is_optimized(caddr(sc->code))) &&
+				(c_function_let_looped(ecdr(caddr(sc->code)))))
+			      {
+				bool happy = true;
+				s7_pointer p;
+				for (p = cadr(sc->code); is_pair(p); p = cdr(p))
+				  if ((!is_pair(cadar(p))) ||
+				      (!is_optimized(cadar(p))) ||
+				      (optimize_data(cadar(p)) != HOP_SAFE_C_C))
+				    {
+				      happy = false;
+				      break;
+				    }
+				/* fprintf(stderr, "%s%s%s is let loopable\n", (happy) ? RED_TEXT : "", DISPLAY(sc->code), (happy) ? NORMAL_TEXT : ""); */
+				if (happy)
+				  {
+				    s7_function f;
+				    s7_pointer result;
+				    f = (s7_function)c_function_call(c_function_let_looped(ecdr(caddr(sc->code))));
+				    car(sc->T2_1) = slot_value(sc->args);
+				    car(sc->T2_2) = sc->code;
+
+				    result = f(sc, sc->T2_1);
+				    if (result)
+				      {
+					sc->code = cdr(cadr(sc->code));
+					goto DO_BEGIN;
+				      }
+				    /* else fall into the ordinary loop */
+				  }
+			      }
+			  }
+
 			push_stack(sc, OP_SAFE_DOTIMES_STEP_P, sc->args, code);
 			if (typesflag(sc->code) == SYNTACTIC_PAIR)
 			  sc->op = (opcode_t)lifted_op(sc->code);
@@ -45940,8 +45999,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      }
 		    else
 		      {
+			/* fprintf(stderr, "code: %s %d %s\n", DISPLAY(sc->code), is_optimized(sc->code), opt_name(sc->code)); */
+			/* (outa k (* (env pulsef) (oscil gen1 (rand-interp rnd) (+ (* 0.1 (oscil md)) (* 0.2 (oscil md1))))))
+			 * (outa i (* (env ampf) (+ 0.25 (* 0.45 (abs (+ (rand-interp rnd) (* 0.7 (oscil trem)))))) (polywave gen1 (+ (env frqf1) (* (env vibf) (oscil vib))))))
+			 */
+#if 0
+			if ((is_optimized(sc->code)) &&
+			    (c_function_looped(ecdr(sc->code))))
+			  fprintf(stderr, "%s%s%s is loopable (%s)\n", BOLD_TEXT, DISPLAY(sc->code), UNBOLD_TEXT, opt_name(sc->code));
+			else
+			  {
+			    if ((is_pair(caddr(sc->code))) &&
+				(is_optimized(caddr(sc->code))) &&
+				(c_function_looped(ecdr(caddr(sc->code)))))
+			      fprintf(stderr, "caddr(code) %s%s%s is loopable (%s)\n", BOLD_TEXT, DISPLAY(caddr(sc->code)), UNBOLD_TEXT, opt_name(caddr(sc->code)));
+			  }
+#endif
+
 			if (is_optimized(sc->code))
 			  {
+
 			    if ((optimize_data(sc->code) == HOP_SAFE_C_SZ) &&
 				(cadr(sc->code) == slot_symbol(sc->args)))
 			      {
@@ -45953,7 +46030,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    /* (define (hi) (let ((v (make-vct 10))) (do ((i 0 (+ i 1))) ((= i 10) v) (vct-set! v i (random 1.0)))))
 			    */
 			    /* fprintf(stderr, "%s %s %s\n", opt_name(sc->code), opt_name(cadddr(sc->code)), DISPLAY_80(sc->code)); */
-
+			    
+			    /* TODO: why can't we check for loopers here? -- at least let_looped and pass all let vars (check in other cases) */
+			    /* why not do this junk with a looper?
+			     */
 			    if (optimize_data(sc->code) == HOP_SAFE_C_SSA)
 			      {
 				/* 1 stepper, step by 1, end test is =, no set in body, we checked above for null case, body is one-line
@@ -46571,15 +46651,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	fcdr(code) = cddr(code);
 
-	/* this code works but is almost never called -- TODO: is it obsolete now that we check dox_looped?
-	 * (do ((i 0 (+ i 1))) ((= i 10)) (list-set! lst i i)) in s7test.scm for example
-	 * we need something much more general -- even all_x_op isn't called much here
-	 */
 	if ((is_null(cdr(fcdr(code)))) &&
 	    (is_pair(car(fcdr(code)))) &&
 	    (is_optimized(car(fcdr(code)))) &&
 	    (is_all_x_op(optimize_data(car(fcdr(code))))) &&
-	    (is_symbol(cadr(caddr(caar(code))))))
+	    (is_symbol(cadr(caddr(caar(code)))))) /* caar=(i 0 (+ i 1)), caddr=(+ i 1), so this is apparently checking that the stepf is reasonable? */
 	  {
 	    s7_pointer step_var, ctr, end, body;
 	    s7_function func, endf, stepf;
@@ -46592,35 +46668,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    step_var = caddr(caddr(caar(code))); 
 	    func = all_x_eval(car(fcdr(code)));
 	    body = car(fcdr(code));
-
-	    if (func == all_x_c_sss)
-	      {
-		s7_pointer a, b, c;
-		a = find_symbol(sc, cadr(body));
-		b = find_symbol(sc, caddr(body));
-		c = find_symbol(sc, cadddr(body));
-		func = c_call(body);
-
-		while (true)
-		  {
-		    car(sc->T3_1) = slot_value(a);
-		    car(sc->T3_2) = slot_value(b);
-		    car(sc->T3_3) = slot_value(c);
-		    func(sc, sc->T3_1);
-		    
-		    car(sc->T2_1) = slot_value(ctr);
-		    car(sc->T2_2) = step_var;
-		    slot_set_value(ctr, stepf(sc, sc->T2_1));
-
-		    car(sc->T2_1) = slot_value(ctr);
-		    car(sc->T2_2) = slot_value(end);
-		    if (is_true(sc, endf(sc, sc->T2_1)))
-		      {
-			sc->code = cdr(cadr(code));
-			goto DO_BEGIN;
-		      }
-		  }
-	      }
 	    
 	    /* the dox_loop function should be safe here because it makes no assumptions about the steppers
 	     */
@@ -51050,8 +51097,7 @@ snd-test:
 	      
 	    case HOP_SAFE_C_AAA:
 	      {
-		/* PERHAPS: C_SAA
-419248: (* (exp (* r (cos y))) (cos (+ x (* r (sin y)))) ar) - could be SAA
+		/* PERHAPS: C_SAA or SCA
 210833: (+ denom (* x1 x1) (* x2 x2))
 197314: (array-interp tbl (+ 8.0 (* 8.0 (next-sample reader))) 17)
 132300: (comb d0 (pulse-train s) (env zenv))
@@ -64081,14 +64127,15 @@ s7_scheme *s7_init(void)
  * can't we use dox_looped to collapse away all the special do-loops?
  * use find_gf in map/scan-channel -- s7_eval_form/apply and call_direct
  *
+ *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
- * bench    42736 8752 8051 7725 6515 5194 4364 4011
- * lint           9328 8140 7887 7736 7300 7180 7056
- * index    44300 3291 3005 2742 2078 1643 1435 1371
+ * bench    42736 8752 8051 7725 6515 5194 4364 3989
+ * lint           9328 8140 7887 7736 7300 7180 7051
+ * index    44300 3291 3005 2742 2078 1643 1435 1368
  * s7test    1721 1358 1297 1244  977  961  957  962
  * t455|6     265   89   55   31   14   14    9 9164
  * lat        229   63   52   47   42   40   34   31
- * t502        90   43   39   36   29   23   20   18
- * calls           275  207  175  115   89   71   60
+ * t502        90   43   39   36   29   23   20   17
+ * calls           275  207  175  115   89   71   59
  */
 

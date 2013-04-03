@@ -7166,6 +7166,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((L '#(#(1 2 3) #(4 5 6)))) (eq? (car (catch #t (lambda () (set! ((L 1) 2)) L) (lambda args args))) 'syntax-error)) #t)
 
 (let ((v #(1 2 3))) (define (vr v a) (vector-ref v (+ a 1))) (test (vr v 1) 3))
+(let () (define (fillv) (let ((v (make-vector 10))) (do ((i 0 (+ i 1))) ((= i 10) v) (vector-set! v i i)))) (test (fillv) #(0 1 2 3 4 5 6 7 8 9)))
 
 
 
@@ -12625,6 +12626,7 @@ a2" 3) "132")
 (test (eval-string "(eval (with-input-from-string \"(+ 1 2)\" (lambda () (read))))") 3)
 (test (eval-string (object->string (eval-string (format #f "(+ 1 2)")))) 3)
 
+
 ;;; -------- test that we can plow past errors --------
 
 (if (and (defined? 'file-exists?) ; (ifdef name ...)?
@@ -12659,7 +12661,6 @@ a2" 3) "132")
   (if (or (not (string? str))
 	  (not (string=? str "s")))
       (format #t ";call-with-input-file + error -> ~S~%" str)))
-
 
 (if (and (defined? 'file-exists?)
 	 (file-exists? "tests.data"))
@@ -12786,7 +12787,6 @@ a2" 3) "132")
 (num-test (with-input-from-string "#x2.1" (lambda () (read))) 2.0625)
 (test (with-input-from-string "'hi" (lambda () (read))) ''hi)
 (test (with-input-from-string "'(1 . 2)" (lambda () (read))) ''(1 . 2))
-
 
 (test
  (let ((cin #f)
