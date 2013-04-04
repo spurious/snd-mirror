@@ -45692,7 +45692,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      end_val = finder(sc, end_val);
 	    if (s7_is_integer(end_val))
 	      {
-		int num_vars = 0;
 		sc->envir = new_frame_in_env(sc, sc->envir); 
 		sc->args = add_slot(sc, caar(vars), make_mutable_integer(sc, s7_integer(init_val)));
 		if (s7_integer(init_val) == s7_integer(end_val))
@@ -45704,7 +45703,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		/* add the let vars but not initialized yet 
 		 */
-		for (let_var = car(cdaddr(sc->code)); is_pair(let_var); let_var = cdr(let_var), num_vars++)
+		for (let_var = car(cdaddr(sc->code)); is_pair(let_var); let_var = cdr(let_var))
 		  add_slot(sc, caar(let_var), sc->UNDEFINED);
 		
 		stepper = slot_value(sc->args);
@@ -45947,6 +45946,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			/* (with-sound () (mosquito 0 5 560 .2))
 			 */
+			/* if we don't handle it here, check_let mangles it, and a subsequent return here sees OP_LET_ALL_X or whatever
+			 */
+
 			if (((syntax_opcode(car(sc->code)) == OP_LET) ||
 			     (syntax_opcode(car(sc->code)) == OP_LET_STAR)) &&
 			    (is_null(cdddr(sc->code))))
@@ -45969,15 +45971,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				if (happy)
 				  {
 				    s7_function f;
-				    s7_pointer result;
+				    s7_pointer result, old_e;
+				    old_e = sc->envir;
+				    sc->envir = new_frame_in_env(sc, sc->envir); 
+				    for (p = cadr(sc->code); is_pair(p); p = cdr(p))
+				      add_slot(sc, caar(p), sc->UNDEFINED);				      
+				    
 				    f = (s7_function)c_function_call(c_function_let_looped(ecdr(caddr(sc->code))));
 				    car(sc->T2_1) = slot_value(sc->args);
 				    car(sc->T2_2) = sc->code;
 
 				    result = f(sc, sc->T2_1);
+				    sc->envir = old_e;
+
 				    if (result)
 				      {
-					sc->code = cdr(cadr(sc->code));
+					sc->code = cdr(cadr(code));
 					goto DO_BEGIN;
 				      }
 				    /* else fall into the ordinary loop */
@@ -46027,13 +46036,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				goto OPT_EVAL;
 			      }
 			    
-			    /* (define (hi) (let ((v (make-vct 10))) (do ((i 0 (+ i 1))) ((= i 10) v) (vct-set! v i (random 1.0)))))
-			    */
-			    /* fprintf(stderr, "%s %s %s\n", opt_name(sc->code), opt_name(cadddr(sc->code)), DISPLAY_80(sc->code)); */
-			    
-			    /* TODO: why can't we check for loopers here? -- at least let_looped and pass all let vars (check in other cases) */
-			    /* why not do this junk with a looper?
-			     */
 			    if (optimize_data(sc->code) == HOP_SAFE_C_SSA)
 			      {
 				/* 1 stepper, step by 1, end test is =, no set in body, we checked above for null case, body is one-line

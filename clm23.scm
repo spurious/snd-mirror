@@ -628,9 +628,10 @@
 (define (simple-in-rev beg dur ampa ampb)
   "(simple-in-rev beg dur ampa ampb) test instrument for in reverb"
   (let ((start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur))))
+	(end (seconds->samples (+ beg dur)))
+	(chns (mus-channels *reverb*)))
     (if (or (> ampa 0.0) (> ampb 0.0))
-	(if (zero? ampb)
+	(if (or (zero? ampb) (= chns 1))
 	    (do ((i start (+ i 1))) ((= i end))
 	      (outa i (* ampa (ina i *reverb*))))
 	    (do ((i start (+ i 1))) ((= i end))

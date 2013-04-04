@@ -4070,7 +4070,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 		       *    	  mus_generator_set_feeder(gn->gen, as_needed_input_sampler); gn via XEN_TO_C_GENERATOR, called with g->closure which is gn
 		       *        static mus_float_t as_needed_input_readin(void *ptr, int direction) -- ignore ptr/direction! call granulate(gen)
 		       */
-		      s7_pointer old_e, g;
+		      s7_pointer old_e;
 		      gf *gf1;
 		      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
 		      old_e = s7_set_current_environment(s7, e);

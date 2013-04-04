@@ -8853,23 +8853,6 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
 }
 
 #if HAVE_SCHEME
-/* this needs to parallel clm2xen.c */
-#define GEN_DIRECT_1 8
-#define GEN_DIRECT_2 9
-#define GEN_DIRECT_3 10
-#define GEN_DIRECT_CHECKER 11
-#define NUM_CHOICES 12
-
-static void make_sampler_choices(s7_scheme *sc, s7_pointer f, mus_float_t (*sampler)(void *p), bool (*is_sampler)(s7_pointer p))
-{
-  s7_pointer *choices;
-  choices = (s7_pointer *)calloc(NUM_CHOICES, sizeof(s7_pointer));
-  choices[GEN_DIRECT_1] = (s7_pointer)sampler;
-  choices[GEN_DIRECT_CHECKER] = (s7_pointer)is_sampler;
-  s7_function_chooser_set_data(sc, f, (void *)choices);
-}
-
-
 static s7_pointer next_sample_s;
 static s7_pointer g_next_sample_s(s7_scheme *sc, s7_pointer args)
 {
@@ -9132,8 +9115,8 @@ keep track of which files are in a given saved state batch, and a way to rename 
     next_sample_s = s7_make_function(s7, "next-sample", g_next_sample_s, 1, 0, false, "next-sample optimization");
     s7_function_set_class(next_sample_s, f);
     s7_function_set_returns_temp(next_sample_s);
-    make_sampler_choices(s7, next_sample_s, next_sample_direct, sampler_p);
-    make_sampler_choices(s7, f, next_sample_direct, sampler_p);
+    store_choices(s7, next_sample_s, (s7_pointer)next_sample_direct, NULL, NULL, (s7_pointer)sampler_p);
+    store_choices(s7, f, (s7_pointer)next_sample_direct, NULL, NULL, (s7_pointer)sampler_p);
 
     /* read-sample */
     f = s7_name_to_value(s7, "read-sample");
@@ -9142,8 +9125,8 @@ keep track of which files are in a given saved state batch, and a way to rename 
     read_sample_s = s7_make_function(s7, "read-sample", g_read_sample_s, 1, 0, false, "read-sample optimization");
     s7_function_set_class(read_sample_s, f);
     s7_function_set_returns_temp(read_sample_s);
-    make_sampler_choices(s7, read_sample_s, read_sample_direct, sampler_p);
-    make_sampler_choices(s7, f, read_sample_direct, sampler_p);
+    store_choices(s7, read_sample_s, (s7_pointer)read_sample_direct, NULL, NULL, (s7_pointer)sampler_p);
+    store_choices(s7, f, (s7_pointer)read_sample_direct, NULL, NULL, (s7_pointer)sampler_p);
   }
 #endif
 

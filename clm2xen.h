@@ -5,16 +5,6 @@
 
 typedef struct mus_xen mus_xen;
 
-#if HAVE_SCHEME
-typedef struct {
-  void *gen;
-  mus_float_t (*func_1)(void *p);
-  mus_float_t (*func_2)(void *p, mus_float_t x);
-} gf;
-
-gf *find_gf(s7_scheme *sc, s7_pointer expr);
-#endif
-
 #define XEN_TO_MUS_XEN(arg) ((mus_xen *)XEN_OBJECT_REF(arg))
 #define XEN_TO_MUS_ANY(obj) mus_xen_gen(XEN_TO_MUS_XEN(obj))
 #define MUS_CLM_DEFAULT_TABLE_SIZE 512
@@ -50,6 +40,20 @@ MUS_EXPORT XEN g_mus_channels(XEN obj);
 MUS_EXPORT XEN g_mus_length(XEN gen);
 MUS_EXPORT XEN g_mus_file_name(XEN gen);
 MUS_EXPORT XEN g_mus_data(XEN gen);
+
+#if HAVE_SCHEME
+typedef struct {
+  void *gen;
+  mus_float_t (*func_1)(void *p);
+  mus_float_t (*func_2)(void *p, mus_float_t x);
+  mus_float_t (*func_3)(void *p, mus_float_t x, mus_float_t y);
+} gf;
+
+MUS_EXPORT gf *find_gf(s7_scheme *sc, s7_pointer expr);
+MUS_EXPORT void store_choices(s7_scheme *sc, s7_pointer base_f, s7_pointer g1, s7_pointer g2, s7_pointer g3, s7_pointer isg);
+MUS_EXPORT gf *find_gf3(s7_scheme *sc, s7_pointer expr);
+MUS_EXPORT mus_any *s7_to_mus_any(s7_pointer p);
+#endif
 
 MUS_EXPORT void Init_sndlib(void);
 

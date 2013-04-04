@@ -9307,6 +9307,16 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
  *    of the extra static vars and the equality checks actually is greater than the symbol lookup!
  */
 
+mus_any *s7_to_mus_any(s7_pointer p)
+{
+  mus_xen *gn;
+  gn = (mus_xen *)imported_s7_object_value_checked(p, mus_xen_tag);
+  if (gn)
+    return(gn->gen);
+  return(NULL);
+}
+
+
 #define GET_GENERATOR(Obj, Type, Val) \
   do { \
   s7_pointer gp; \
@@ -9424,6 +9434,9 @@ static mus_float_t wrapped_mus_random_1(s7_pointer x) {return(mus_random(s7_cell
 
 /* special pm oscil case */
 static mus_float_t wrapped_oscil_3(mus_xen *p, mus_float_t x, mus_float_t y) {return(mus_oscil(p->gen, x, y));}
+
+static mus_float_t wrapped_ssb_am_3(mus_xen *p, mus_float_t x, mus_float_t y) {return(mus_ssb_am(p->gen, x, y));}
+static mus_float_t wrapped_ssb_am_1(mus_xen *p) {return(mus_ssb_am_unmodulated(p->gen, 0.0));}
 
 /* (define (hi) (let ((o (make-oscil 440.0)) (scl 0+i)) (oscil o) (* scl (oscil o))))
  * (define (hi) (let ((o (make-oscil 440.0)) (scl 0+i) (val 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! val (* scl (oscil o)))) val))
@@ -10003,6 +10016,30 @@ static s7_pointer g_polywave_add_cs_ss(s7_scheme *sc, s7_pointer args)
   GET_REAL(p, *, x3);
   GET_REAL_CADR(p, *, x4);
   return(s7_make_real(sc, mus_polywave(o, (x1 * x2) + (x3 * x4))));
+}
+
+static s7_pointer polywave_add_cs_ssr;
+static s7_pointer g_polywave_add_cs_ssr(s7_scheme *sc, s7_pointer args)
+{
+  /* (polywave g (+ (* c s) (* s s (+ c (rand-interp r))))), args is (g (+ ...)) */
+  mus_any *o, *r;
+  double x1, x2, x3, x4, c;
+  s7_pointer vargs, p;
+
+  GET_GENERATOR(args, polywave, o);
+  vargs = cdadr(args);   /* ((* c s) (* s s)) */
+  p = cdar(vargs);       /* (c s) */
+  x1 = s7_number_to_real(sc, car(p));
+  GET_REAL_CADR(p, *, x2);
+  p = cdadr(vargs);
+  GET_REAL(p, *, x3);
+  p = cdr(p);
+  GET_REAL(p, *, x4);
+  p = cdadr(p);
+  c = s7_number_to_real(sc, car(p));
+  p = cdadr(p);
+  GET_GENERATOR(p, rand-interp, r);
+  return(s7_make_real(sc, mus_polywave(o, (x1 * x2) + (x3 * x4 * (c + mus_rand_interp_unmodulated(r))))));
 }
 
 /* (with-sound () (fm-violin 0 .0001 440 .1)) */
@@ -10699,6 +10736,43 @@ gf *find_gf(s7_scheme *sc, s7_pointer expr)
   return(NULL);
 }
 
+gf *find_gf3(s7_scheme *sc, s7_pointer expr)
+{
+  if ((s7_is_pair(expr)) &&
+      (!s7_is_pair(cadr(expr))) &&
+      (s7_list_length(sc, expr) == 4))
+    {
+      s7_pointer *choices;
+
+      choices = (s7_pointer *)s7_function_chooser_data_direct(s7_car_value(sc, expr));
+      if ((choices) &&
+	  (choices[GEN_DIRECT_CHECKER]) &&
+	  (choices[GEN_DIRECT_3]))
+	{
+	  bool (*is_gen)(s7_pointer p);
+	  mus_float_t (*gen)(void *p, mus_float_t x, mus_float_t y);
+	  gf *p;
+	  s7_pointer obj;
+	  
+	  gen = (mus_float_t (*)(void *p, mus_float_t x, mus_float_t y))(choices[GEN_DIRECT_3]);
+	  is_gen = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+	  obj = cadr(expr);
+	  if (s7_is_symbol(obj))
+	    obj = s7_value(sc, obj);
+	  if (is_gen(obj))
+	    {
+	      p = (gf *)calloc(1, sizeof(gf));
+	      p->func_3 = gen;
+	      if (s7_is_object(obj))
+		p->gen = s7_object_value(obj);
+	      else p->gen = (void *)obj;
+	      return(p);
+	    }
+	}
+    }
+  return(NULL);
+}
+
 
 #if (!WITH_GMP)
 
@@ -11368,6 +11442,27 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 {
   s7_Int pos;
   s7_Double x;
+  /*
+88200: (formant-bank fs inputs) -- fade.scm (large do loop)
+88200: (* ampa (ina i *reverb*)) --clm23 -- we need ina direct or rather TODO: add looper for mul_s_ina_reverb [and checl fixed clm23!]
+81365: (* pulse-amp (env pulse-ampf) (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf))))
+66150: (one-zero oz (* (env ampf) (+ (* 0.6 (nsin spikes1 noi)) (* 0.6 (nsin spikes1a noi)) (* 0.4 (nsin spikes2 frq)) (* 0.3 (nsin spikes3 frq)))))
+50828: (formant-bank frms1 x) --clm23 move-formants
+44100: (delay outdel11 (comb-bank combs1 (all-pass-bank allpasses1 (ina i *reverb*))))
+44100: (* amp (formant-bank fs1 inputs)) -- fade
+24600: (src s incr)
+23813: (+ (* 0.75 val1) (formant-bank fb (* val1 (rand-interp rnd))))
+22050: (* amp (formant-bank fs inval))
+22050: (* amp (sin y))
+22050: (* amp (ina ctr fil))
+20947: (+ val (formant-bank fb val))
+6394: (* (env ampf) (+ 0.5 (abs (rand-interp rnd1))) (+ (oscil gen1 (* 2.0 frq)) (polywave gens0 frq) (nrxycos gens (* 6.0 frq))))
+6350: (* (env ampf) (+ (- 1.0 rf) (* rf (abs (rand-interp rnd1)))) (+ (* (env ampf1) (oscil gen1 frq)) (* (env ampf2) (oscil gen2 (* 2.0 frq))) (* (env ampf3) (oscil gen3 (* 3.0 frq)))))
+4410: (* amp (+ (* bank1 outval) (* (- 1.0 bank1) inval)))
+4410: (* amp (+ (* bank2 outval) (* (- 1.0 bank2) inval)))
+4410: (* amp (filter flt (oscil os)))
+2205: (* sndamp (one-zero oz (two-pole tz input)))
+   */
   GET_INTEGER(args, outa, pos);
   x = s7_call_direct_to_real_and_free(sc, cadr(args));
   return(out_any_2(pos, x, 0, "outa"));
@@ -12130,7 +12225,6 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
   let = cadr(args);
   vars = cadr(let);
   body = caddr(let);
-  if (s7_is_pair(cdr(vars))) {/* fprintf(stderr, "temp let2: %s\n", DISPLAY(args)); */ return(NULL);}
 
   loc = cdr(body); 
   callee = s7_slot(sc, car(loc));
@@ -12141,6 +12235,65 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
   stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
   pos = (*step);
   end = (*stop);
+
+  if (s7_is_pair(cdr(vars))) 
+    {
+      /* fprintf(stderr, "%lld %s\n", end - pos, DISPLAY(vars)); */
+      /*
+temp let2: 66150 (let* ((noi (rand-interp rnd)) (frq (+ noi (env frqf)))) (outa i (one-zero oz (* (env ampf) (+ (* 0.6 (nsin spikes1 noi)) (* 0.6 (nsin spikes1a noi)) (* 0.4 (nsin spikes2 frq)) (* 0.3 (nsin spikes3 frq)))))))
+
+temp let2: 20947 (let* ((frq (+ (env frqf) (rand-interp rnd))) (val (* (env ampf) (+ (polywave histuff (* 2.0 frq)) (* (env oddf) (polywave lostuff frq)) (* (env midf) (polywave midstuff (* 2.0 frq))))))) (outa i (+ val (formant-bank fb val))))
+
+temp let2: 6350  (let ((rf (env rndf1)) (frq (+ (env frqf) (rand-interp rnd)))) (outa i (* (env ampf) (+ (- 1.0 rf) (* rf (abs (rand-interp rnd1)))) (+ (* (env ampf1) (oscil gen1 frq)) (* (env ampf2) (oscil gen2 (* 2.0 frq))) (* (env ampf3) (oscil gen3 (* 3.0 frq)))))))
+
+temp let2: 50000*6 (let ((interp (oscil osc)) (x (readin rd))) (outa i (+ (* interp (comb-bank cmbs0 x)) (* (- 1.0 interp) (comb-bank cmbs1 x)))))
+
+so 2 vars, 
+       */
+      callee = caddr(body);
+      if ((s7_list_length(sc, vars) == 2) &&
+	  (s7_list_length(sc, callee) == 3))
+	{
+	  gf *lf1, *lf2;
+
+	  lf1 = find_gf(sc, cadr(car(vars)));
+	  lf2 = find_gf(sc, cadr(cadr(vars)));
+	  if ((lf1) && (lf2) &&
+	      (lf1->func_1) && (lf2->func_1))
+	    {
+	      s7_pointer arg1, arg2;
+	      arg1 = cadr(callee);
+	      arg2 = caddr(callee);
+	      if (car(callee) == add_symbol)
+		{
+		  s7_pointer x1, x2, y1, y2;
+		  s7_Double *x1r, *x2r;
+
+		  x1 = s7_slot(sc, caar(vars));
+		  x2 = s7_slot(sc, caadr(vars));
+		  y1 = s7_make_mutable_real(sc, 1.5);
+		  y2 = s7_make_mutable_real(sc, 1.5);
+		  x1r = (s7_Double *)((unsigned char *)(y1) + xen_s7_number_location);
+		  x2r = (s7_Double *)((unsigned char *)(y2) + xen_s7_number_location);
+		  s7_slot_set_value(sc, x1, y1);
+		  s7_slot_set_value(sc, x2, y2);
+
+		  for (; pos < end; pos++)
+		    {
+		      (*step) = pos;
+		      (*x1r) = lf1->func_1(lf1->gen);
+		      (*x2r) = lf2->func_1(lf2->gen);
+		      out_any_2(pos, s7_call_direct_to_real_and_free(sc, arg1) + s7_call_direct_to_real_and_free(sc, arg2), 0, "outa");
+		    }
+		  free(lf1); free(lf2);
+		  return(args);
+		}
+	    }
+	  if (lf1) free(lf1);
+	  if (lf2) free(lf2);
+	}
+      return(NULL);
+    }
 
   letp = cadr(car(vars));
   lets = s7_slot(sc, caar(vars));
@@ -12155,7 +12308,7 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
       gf *let_gf1, *let_gf2, *let_gf3;
       gf *gf1, *gf2;
 
-      y = s7_make_mutable_real(s7, 1.5);
+      y = s7_make_mutable_real(sc, 1.5);
       ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
       s7_slot_set_value(sc, lets, y);
 
@@ -12408,12 +12561,10 @@ static s7_pointer g_indirect_outa_2_env(s7_scheme *sc, s7_pointer args)
   args = cdadr(args);
   GET_GENERATOR_CADAR(args, env, e);
   /*
-    352800: (+ (polywave modulator1 (+ (* 2.0 frq) (* hfreq pitch (+ 1.0 (rand-interp indf))))) ...)
     80262: (+ (polywave gen1 frq1) (* (env ampf2) (oscil gen2 frq2)) (* (env ampf3) (polywave gen3 frq3)))
     56007: (formant-bank fs fb (* (+ 0.9 (rand-interp rnd1)) ...))
     46305: (+ (polywave gen1 (* 2.0 frq)) ...)
     29988: (+ (* (env ampf1) (polywave gen1 (+ frq1 (* rn (env rndf1)))))...)
-    4410: (old-oscil-bank 5 oscs amps frqs)
   */
   x = s7_call_direct_to_real_and_free(sc, cadr(args)); /* g_mul_env_direct from chooser, so it's a temp -- the free might be slower */
   return(out_any_2(pos, mus_env(e) * x, 0, "outa"));
@@ -12725,7 +12876,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
   s7_pointer stepper, callee, loc, letp, lets, letsym, fm, let, vars, body;
   s7_Int *step, *stop;
   s7_function letf;
-  gf *let_gf1, *let_gf2, *gf1, *gf2, *gf3, *gf4, *gf5, *gf6;
+  gf *let_gf1, *let_gf2, *gf1, *gf2, *gf3, *gf4;
   s7_pointer mut;
   s7_Double *letr;
 
@@ -12757,14 +12908,68 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
   if (s7_is_pair(cdr(vars)))
     {
       /* (with-sound () (mosquito 0 5 560 .2))
+       * it's tricky to further optimize the mosquito because the caddr's are not actually direct (see polywave_add_cs_ss[r]).
        */
-      /* (let* ((frq (+ (env frqf) (rand-interp vib))) (pitch (oscil carrier frq))) (outa i (* (env ampf) (+ (polywave modulator1 (+ (* 2.0 frq) (* hfreq pitch (+ 1.0 (rand-interp indf))))) (polywave modulator3 (+ (* 3.0 frq) (* index3 pitch))) (polywave modulator2 (+ (* 8.0 frq) (* index2 pitch))))))))
-       * vars: ((frq (+ (env frqf) (rand-interp vib))) (pitch (oscil carrier frq)))
+      /*
+letm vars: 15876 ((frq (+ (env frqf) (* (env rndf) (rand-interp rnd)))) (amp2 (env ampf2)))
+    args: ((env ampf) (+ (polywave gen1 (* 2.0 frq)) (* amp2 (polywave gen2 frq)) (* (- 1.0 amp2) (polywave gen3 (* 2.0 frq))) (* (env ampf4) (oscil gen4 (* 6.0 frq)))))
+    callee: (+ (polywave gen1 (* 2.0 frq)) (* amp2 (polywave gen2 frq)) (* (- 1.0 amp2) (polywave gen3 (* 2.0 frq))) (* (env ampf4) (oscil gen4 (* 6.0 frq))))
 
-args: ((env ampf) (+ (polywave modulator1 (+ (* 2.0 frq) (* hfreq pitch (+ 1.0 (rand-interp indf))))) (polywave modulator3 (+ (* 3.0 frq) (* index3 pitch))) (polywave modulator2 (+ (* 8.0 frq) (* index2 pitch)))))
-callee: (+ (polywave modulator1 (+ (* 2.0 frq) (* hfreq pitch (+ 1.0 (rand-interp indf))))) (polywave modulator3 (+ (* 3.0 frq) (* index3 pitch))) (polywave modulator2 (+ (* 8.0 frq) (* index2 pitch))))
+letm vars: 29988 ((frq1 (env frqf1)) (rn (rand-interp rnd)))
+    args: ((env ampf) (+ (* (env ampf1) (polywave gen1 (+ frq1 (* rn (env rndf1))))) (* (env ampf2) (polywave gen2 (+ (env frqf2) (* rn (env rndf2))))) (* (env ampf3) (polywave gen3 (+ frq1 (* rn (env rndf3)))))))
+    callee: (+ (* (env ampf1) (polywave gen1 (+ frq1 (* rn (env rndf1))))) (* (env ampf2) (polywave gen2 (+ (env frqf2) (* rn (env rndf2))))) (* (env ampf3) (polywave gen3 (+ frq1 (* rn (env rndf3))))))
        */
       /* fprintf(stderr, "letm vars: %s\n    args: %s\n    callee: %s\n", DISPLAY(vars), DISPLAY(args), DISPLAY(callee)); */
+
+      /* so we have 2 vars, one case is let*, body is always (* (env e) (+ ...)) -- 3|4 addends
+       *    some are gf2, (* s gf2), (* (env e) gf2), fm is complicated if not letsym (* f letsym) at best
+       */
+
+      if (s7_list_length(sc, vars) == 2)
+	{
+	  gf *lf1, *lf2, *lf3;
+	  s7_pointer v1, v2;
+	  v1 = car(vars);
+	  v2 = cadr(vars);
+
+	  if ((car(cadr(v1)) == add_symbol) &&
+	      (s7_list_length(sc, cadr(v1)) == 3))
+	    {
+	      lf1 = find_gf(sc, cadr(cadr(v1)));
+	      lf2 = find_gf(sc, caddr(cadr(v1)));
+	      lf3 = find_gf(sc, cadr(v2));
+	      if ((lf1) && (lf2) && (lf3) &&
+		  (lf1->func_1) && (lf2->func_1) && (lf3->func_2) &&
+		  (caddr(cadr(v2)) == car(v1)))
+		{
+		  s7_pointer x1, x2, y1, y2;
+		  s7_Double *x1r, *x2r;
+
+		  GET_GENERATOR_CADAR(args, env, e);
+
+		  x1 = s7_slot(sc, car(v1));
+		  x2 = s7_slot(sc, car(v2));
+		  y1 = s7_make_mutable_real(sc, 1.5);
+		  y2 = s7_make_mutable_real(sc, 1.5);
+		  x1r = (s7_Double *)((unsigned char *)(y1) + xen_s7_number_location);
+		  x2r = (s7_Double *)((unsigned char *)(y2) + xen_s7_number_location);
+		  s7_slot_set_value(sc, x1, y1);
+		  s7_slot_set_value(sc, x2, y2);
+
+		  for (; pos < end; pos++)
+		    {
+		      (*step) = pos;
+		      (*x1r) = lf1->func_1(lf1->gen) + lf2->func_1(lf2->gen);
+		      (*x2r) = lf3->func_2(lf3->gen, *x1r);
+		      out_any_2(pos, mus_env(e) * s7_call_direct_to_real_and_free(sc, callee), 0, "outa");
+		    }
+		  free(lf1); free(lf2); free(lf3);
+		  return(args);
+		}
+	      if (lf1) free(lf1);
+	      if (lf2) free(lf2);
+	    }
+	}
       return(NULL);
     }
 
@@ -13377,7 +13582,7 @@ static s7_pointer *make_choices(s7_pointer mul_c, s7_pointer mul_s, s7_pointer e
   return(choices);
 }
 
-static void store_choices(s7_scheme *sc, s7_pointer base_f, s7_pointer g1, s7_pointer g2, s7_pointer g3, s7_pointer isg)
+void store_choices(s7_scheme *sc, s7_pointer base_f, s7_pointer g1, s7_pointer g2, s7_pointer g3, s7_pointer isg)
 {
   s7_pointer *choices;
   choices = (s7_pointer *)s7_function_chooser_data(sc, base_f);
@@ -14865,26 +15070,39 @@ static s7_pointer polywave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	{
 	  if (s7_list_length(sc, arg2) == 3)
 	    {
+	      s7_pointer a1, a2;
+	      a1 = cadr(arg2);
+	      a2 = caddr(arg2);
 	      if ((s7_car(arg2) == multiply_symbol) &&
-		  (s7_is_real(cadr(arg2))) &&
-		  (s7_is_symbol(caddr(arg2))))
+		  (s7_is_real(a1)) &&
+		  (s7_is_symbol(a2)))
 		{
 		  s7_function_choice_set_direct(sc, expr);
 		  return(polywave_mul_c_s);
 		}
 	      
 	      if ((car(arg2) == add_symbol) &&
-		  (s7_is_pair(cadr(arg2))) &&
-		  (s7_is_pair(caddr(arg2))) &&
-		  (car(cadr(arg2)) == multiply_symbol) &&
-		  (car(caddr(arg2)) == multiply_symbol) &&
-		  (s7_is_real(cadr(cadr(arg2)))) &&
-		  (s7_is_symbol(caddr(cadr(arg2)))) &&
-		  (s7_is_symbol(cadr(caddr(arg2)))) &&
-		  (s7_is_symbol(caddr(caddr(arg2)))))
+		  (s7_is_pair(a1)) &&
+		  (s7_is_pair(a2)) &&
+		  (car(a1) == multiply_symbol) &&
+		  (car(a2) == multiply_symbol) &&
+		  (s7_is_real(cadr(a1))) &&
+		  (s7_is_symbol(caddr(a1))) &&
+		  (s7_is_symbol(cadr(a2))) &&
+		  (s7_is_symbol(caddr(a2))) &&
+		  (s7_list_length(sc, a1) == 3))
 		{
-		  s7_function_choice_set_direct(sc, expr);
-		  return(polywave_add_cs_ss);
+		  if (s7_list_length(sc, a2) == 3)
+		    {
+		      s7_function_choice_set_direct(sc, expr);
+		      return(polywave_add_cs_ss);
+		    }
+		  if ((s7_list_length(sc, a2) == 4) &&
+		      (s7_function_choice(sc, cadddr(a2)) == g_add_c_rand_interp))
+		    {
+		      s7_function_choice_set_direct(sc, expr);
+		      return(polywave_add_cs_ssr);
+		    }
 		}
 	    }
 	      
@@ -16827,6 +17045,7 @@ static void init_choosers(s7_scheme *sc)
   indirect_polywave_2 = clm_make_function(sc, "polywave", g_indirect_polywave_2, 2, 0, false, "polywave optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   polywave_mul_c_s = clm_make_function(sc, "polywave", g_polywave_mul_c_s, 2, 0, false, "polywave optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   polywave_add_cs_ss = clm_make_function(sc, "polywave", g_polywave_add_cs_ss, 2, 0, false, "polywave optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  polywave_add_cs_ssr = clm_make_function(sc, "polywave", g_polywave_add_cs_ssr, 2, 0, false, "polywave optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
 
   /* table-lookup */
@@ -17228,7 +17447,7 @@ static void init_choosers(s7_scheme *sc)
 				    NULL, NULL, NULL, mul_c_pulsed_env_1, mul_s_pulsed_env_1, env_pulsed_env_1);
 
 
-  GEN_F2("ssb-am", ssb_am);
+  GEN_F3("ssb-am", ssb_am);
 
   ssb_am_2 = clm_make_function(sc, "ssb-am", g_ssb_am_2, 2, 0, false, "ssb-am optimization", f,
 				mul_c_ssb_am_2, mul_s_ssb_am_2, env_ssb_am_2, NULL, NULL, NULL);

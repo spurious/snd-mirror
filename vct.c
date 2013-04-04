@@ -621,6 +621,24 @@ static XEN g_vct_ref(XEN obj, XEN pos)
 
 #if HAVE_SCHEME
 
+#define car(E)    s7_car(E)
+#define caar(E)   s7_caar(E)
+#define cdr(E)    s7_cdr(E)
+#define cadr(E)   s7_cadr(E)
+#define caddr(E)  s7_caddr(E)
+#define cadddr(E) s7_cadddr(E)
+#define cddr(E)   s7_cddr(E)
+#define cdddr(E)  s7_cdddr(E)
+#define cadar(E)  s7_cadar(E)
+#define cdar(E)   s7_cdar(E)
+#define cdaddr(E) s7_cdaddr(E)
+#define cdadr(E)  s7_cdadr(E)
+#define caddar(E) s7_caddar(E)
+#define caadr(E)  s7_caadr(E)
+#define caaddr(E) s7_caaddr(E)
+#define cddar(E)  s7_cddar(E)
+#define cadddr(E) s7_cadddr(E)
+
 #if 1
 static size_t c_object_value_location, c_object_type_location, cell_type_location;
 static int c_object_built_in_type;
@@ -637,8 +655,8 @@ static int c_object_built_in_type;
 
 static void *imported_s7_object_value_checked(s7_pointer obj, int type)
 {
-#define imported_is_c_object(p) ((unsigned char)(*((unsigned char *)((unsigned char *)(p) + CELL_TYPE_LOCATION))) == (unsigned char)C_OBJECT_BUILT_IN_TYPE)
-#define imported_is_c_object_type(p, type) ((int)(*((int *)((unsigned char *)(p) + C_OBJECT_TYPE_LOCATION))) == (int)type)
+  #define imported_is_c_object(p) ((unsigned char)(*((unsigned char *)((unsigned char *)(p) + CELL_TYPE_LOCATION))) == (unsigned char)C_OBJECT_BUILT_IN_TYPE)
+  #define imported_is_c_object_type(p, type) ((int)(*((int *)((unsigned char *)(p) + C_OBJECT_TYPE_LOCATION))) == (int)type)
   #define imported_c_object_value(p) ((void *)(*((unsigned char **)((unsigned char *)(p) + C_OBJECT_VALUE_LOCATION))))
 
   if ((imported_is_c_object(obj)) &&
@@ -657,13 +675,13 @@ static s7_pointer vct_ref_two;
 static s7_pointer g_vct_ref_two(s7_scheme *sc, s7_pointer args)
 {
   vct *v;
-  v = (vct *)imported_s7_object_value_checked(s7_car(args), vct_tag);
+  v = (vct *)imported_s7_object_value_checked(car(args), vct_tag);
   if (v)
     {
       mus_long_t loc;
-      loc = s7_number_to_integer(sc, s7_cadr(args));
+      loc = s7_number_to_integer(sc, cadr(args));
       if ((loc < 0) || (loc >= v->length))
-	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_cadr(args), "index out of range");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, cadr(args), "index out of range");
       return(s7_make_real(sc, v->data[loc]));
     }
   XEN_ASSERT_TYPE(false, s7_car_value(sc, args), XEN_ARG_1, "vct-ref", "a vct");
@@ -680,7 +698,7 @@ static s7_pointer g_vct_ref_ss(s7_scheme *sc, s7_pointer args)
       mus_long_t loc;
       loc = s7_number_to_integer(sc, s7_cadr_value(sc, args));
       if ((loc < 0) || (loc>= v->length))
-	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_cadr(args), "index out of range");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, cadr(args), "index out of range");
       return(s7_make_real(sc, v->data[loc]));
     }
   XEN_ASSERT_TYPE(false, s7_car_value(sc, args), XEN_ARG_1, "vct-ref", "a vct");
@@ -692,8 +710,8 @@ static s7_pointer vct_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 {
   if (args == 2)
     {
-      if ((s7_is_symbol(s7_cadr(expr))) &&
-	  (s7_is_symbol(s7_caddr(expr))))
+      if ((s7_is_symbol(cadr(expr))) &&
+	  (s7_is_symbol(caddr(expr))))
 	{
 	  s7_function_choice_set_direct(sc, expr);
 	  return(vct_ref_ss);
@@ -708,17 +726,17 @@ static s7_pointer vct_set_three;
 static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
 {
   vct *v;
-  v = (vct *)imported_s7_object_value_checked(s7_car(args), vct_tag);
+  v = (vct *)imported_s7_object_value_checked(car(args), vct_tag);
   if (v)
     {
       mus_long_t loc;
       s7_pointer val;
 
-      loc = s7_number_to_integer(sc, s7_cadr(args));
+      loc = s7_number_to_integer(sc, cadr(args));
       if ((loc < 0) || (loc>= v->length))
-	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_cadr(args), "index out of range");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, cadr(args), "index out of range");
 
-      val = s7_caddr(args);
+      val = caddr(args);
       XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_vct_setB, "a real number");
       
       v->data[loc] = XEN_TO_C_DOUBLE(val);
@@ -747,14 +765,14 @@ static s7_pointer g_vct_set_vector_ref(s7_scheme *sc, s7_pointer args)
       mus_long_t loc;
       s7_pointer val, vect, vect_index;
 
-      val = s7_cdadr(args);
+      val = cdadr(args);
       vect = s7_car_value(sc, val);
       vect_index = s7_cadr_value(sc, val);
       loc = s7_number_to_integer(sc, s7_vector_ref(sc, vect, s7_integer(vect_index)));
       if ((loc < 0) || (loc>= v->length))
-	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_cadr(args), "index out of range");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, cadr(args), "index out of range");
 
-      v->data[loc] = s7_number_to_real(sc, val = s7_car_value(sc, s7_cddr(args)));
+      v->data[loc] = s7_number_to_real(sc, val = s7_car_value(sc, cddr(args)));
       return(val);
     }
   XEN_ASSERT_TYPE(false, s7_car_value(sc, args), XEN_ARG_1, "vct-set!", "a vct");
@@ -776,11 +794,11 @@ static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
   if (v)
     {
       mus_long_t dist;
-      val = s7_car_value(sc, s7_cdddr(args));
+      val = s7_car_value(sc, cdddr(args));
       x = s7_number_to_real(sc, val);
 
-      stepper = s7_car(args);
-      vecind = s7_caddr(s7_caddr(args));
+      stepper = car(args);
+      vecind = caddr(caddr(args));
       callee = s7_slot(sc, vecind);
       if (s7_slot_value(sc, callee) != stepper)
 	return(NULL);
@@ -790,11 +808,11 @@ static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
       pos = (*step);
       end = (*stop);
       
-      vec = s7_car_value(sc, s7_cdr(s7_caddr(args)));
+      vec = s7_car_value(sc, cdr(caddr(args)));
       XEN_ASSERT_TYPE(s7_is_vector(vec), vec, XEN_ARG_1, "vector-ref", "a vector");
       if ((pos < 0) ||
 	  (end > s7_vector_length(vec)))
-	XEN_OUT_OF_RANGE_ERROR("vector-ref", 2, s7_caddr(s7_caddr(args)), "index out of range");   
+	XEN_OUT_OF_RANGE_ERROR("vector-ref", 2, caddr(caddr(args)), "index out of range");   
       vec_el = s7_vector_elements(vec);
 
       dist = end - 4;
@@ -832,9 +850,9 @@ static s7_pointer g_vct_set_direct(s7_scheme *sc, s7_pointer args)
 
       loc = s7_number_to_integer(sc, s7_cadr_value(sc, args));
       if ((loc < 0) || (loc>= v->length))
-	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_cadr(args), "index out of range");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, cadr(args), "index out of range");
 
-      val = s7_call_direct(sc, s7_caddr(args));
+      val = s7_call_direct(sc, caddr(args));
       v->data[loc] = s7_number_to_real(sc, val);
       return(val);
     }
@@ -854,11 +872,11 @@ static s7_pointer g_vct_set_temp(s7_scheme *sc, s7_pointer args)
 
       loc = s7_number_to_integer(sc, s7_cadr_value(sc, args));
       if ((loc < 0) || (loc>= v->length))
-	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_cadr(args), "index out of range");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, cadr(args), "index out of range");
 
-      val = s7_call_direct(sc, s7_caddr(args));
+      val = s7_call_direct(sc, caddr(args));
       v->data[loc] = s7_cell_real(val);
-      /* if not returning val: v->data[loc] = s7_call_direct_to_real_and_free(sc, s7_caddr(args)); */
+      /* if not returning val: v->data[loc] = s7_call_direct_to_real_and_free(sc, caddr(args)); */
       return(val);
     }
   XEN_ASSERT_TYPE(false, s7_car_value(sc, args), XEN_ARG_1, "vct-set!", "a vct");
@@ -876,21 +894,15 @@ static s7_pointer g_vct_set_ssf(s7_scheme *sc, s7_pointer args)
 
       loc = s7_number_to_integer(sc, s7_cadr_value(sc, args));
       if ((loc < 0) || (loc>= v->length))
-	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_cadr(args), "index out of range");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, cadr(args), "index out of range");
 
-      v->data[loc] = s7_cell_real(s7_caddr(args));
-      return(s7_caddr(args));
+      v->data[loc] = s7_cell_real(caddr(args));
+      return(caddr(args));
     }
   XEN_ASSERT_TYPE(false, s7_car_value(sc, args), XEN_ARG_1, "vct-set!", "a vct");
   return(s7_f(sc));
 }
 
-/* this needs to parallel clm2xen.c */
-#define GEN_DIRECT_1 8
-#define GEN_DIRECT_2 9
-#define GEN_DIRECT_3 10
-#define GEN_DIRECT_CHECKER 11
-#define NUM_CHOICES 12
 
 static s7_pointer vct_set_direct_looped;
 static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
@@ -905,8 +917,8 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
   v = (vct *)imported_s7_object_value_checked(vc, vct_tag);
   if (v)
     {
-      stepper = s7_car(args);
-      index_slot = s7_slot(sc, s7_caddr(args));
+      stepper = car(args);
+      index_slot = s7_slot(sc, caddr(args));
       if (s7_slot_value(sc, index_slot) != stepper)
 	return(NULL);
       
@@ -917,9 +929,9 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 
       if ((pos < 0) ||
 	  (end > v->length))
-	XEN_OUT_OF_RANGE_ERROR("vct-set!", 2, s7_caddr(args), "index out of range");
+	XEN_OUT_OF_RANGE_ERROR("vct-set!", 2, caddr(args), "index out of range");
 
-      val = s7_cadddr(args);
+      val = cadddr(args);
       if (s7_is_real(val))
 	{
 	  double x;
@@ -959,7 +971,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	    }
 
 	  /* must be func_2 */
-	  fm = s7_caddr(val);
+	  fm = caddr(val);
 	  if (s7_is_pair(fm))
 	    {
 	      gf2 = find_gf(sc, fm);
@@ -973,7 +985,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 		      free(gf1); free(gf2);
 		      return(args);
 		    }
-		  fm = s7_caddr(fm);
+		  fm = caddr(fm);
 		  if (s7_is_pair(fm))
 		    {
 		      gf3 = find_gf(sc, fm);
@@ -987,7 +999,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 			      free(gf1); free(gf2); free(gf3);
 			      return(args);
 			    }
-			  fm = s7_caddr(fm);
+			  fm = caddr(fm);
 			  for (; pos < end; pos++)
 			    {
 			      (*step) = pos;
@@ -998,16 +1010,16 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 			  return(args);
 			}
 		      
-		      if ((s7_is_symbol(s7_cadr(fm))) &&
-			  (s7_caddr(fm) == s7_caddr(args)) &&
-			  (s7_car(fm) == s7_make_symbol(sc, "vct-ref")))
+		      if ((s7_is_symbol(cadr(fm))) &&
+			  (caddr(fm) == caddr(args)) &&
+			  (car(fm) == s7_make_symbol(sc, "vct-ref")))
 			{
 			  vct *rv;
 			  rv = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, fm), vct_tag);
 			  if (rv)
 			    {
 			      if (end > rv->length)
-				XEN_OUT_OF_RANGE_ERROR("vct-ref", 2, s7_caddr(fm), "index out of range");
+				XEN_OUT_OF_RANGE_ERROR("vct-ref", 2, caddr(fm), "index out of range");
 			      for (; pos < end; pos++)
 				v->data[pos] = gf1->func_2(gf1->gen, gf2->func_2(gf2->gen, rv->data[pos]));
 			      (*step) = end;
@@ -1028,11 +1040,11 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 		  free(gf2);
 		}
 	      
-	      if ((s7_car(fm) == s7_make_symbol(sc, "*")) &&
-		  (s7_is_symbol(s7_cadr(fm))) &&
+	      if ((car(fm) == s7_make_symbol(sc, "*")) &&
+		  (s7_is_symbol(cadr(fm))) &&
 		  (s7_list_length(sc, fm) == 3))
 		{
-		  gf2 = find_gf(sc, s7_caddr(fm));
+		  gf2 = find_gf(sc, caddr(fm));
 		  if (gf2)
 		    {
 		      if (gf2->func_1)
@@ -1063,17 +1075,17 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 
       /* call-directs are  (+ off (* scl (cos angle))) and (polynomial coeffs (cos angle)) */
 
-      if ((s7_is_symbol(s7_cadr(val))) &&
+      if ((s7_is_symbol(cadr(val))) &&
 	  (val_len == 3) &&
-	  (s7_caddr(args) == s7_caddr(val)) &&
-	  (s7_car(val) == s7_make_symbol(sc, "vct-ref")))
+	  (caddr(args) == caddr(val)) &&
+	  (car(val) == s7_make_symbol(sc, "vct-ref")))
 	{
 	  vct *rv;
 	  rv = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, val), vct_tag);
 	  if (rv)
 	    {
 	      if (end > rv->length)
-		XEN_OUT_OF_RANGE_ERROR("vct-ref", 2, s7_caddr(args), "index out of range");
+		XEN_OUT_OF_RANGE_ERROR("vct-ref", 2, caddr(args), "index out of range");
 	      for (; pos < end; pos++)
 		v->data[pos] = rv->data[pos];
 	      (*step) = end;
@@ -1083,6 +1095,70 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 
       if (s7_function_returns_temp(val))
 	{
+	  gf *gf3;
+	  gf3 = find_gf3(sc, val);
+	  if (gf3)
+	    {
+	      gf *a2, *a3;
+	      s7_pointer arg2, arg3;
+	      arg2 = caddr(val);
+	      arg3 = cadddr(val);
+	      a3 = find_gf(sc, arg3);
+	      if ((a3) && (a3->func_1))
+		{
+		  a2 = find_gf(sc, arg2);
+		  if ((a2) && (a2->func_2))
+		    {
+		      s7_pointer b1;
+		      b1 = caddr(arg2);
+		      if ((s7_is_pair(b1)) &&
+			  (car(b1) == s7_make_symbol(sc, "vct-ref")) &&
+			  (s7_is_symbol(cadr(b1))) &&
+			  (caddr(b1) == caddr(args)))
+			{
+			  vct *rv;
+			  rv = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, b1), vct_tag);
+			  if (rv)
+			    {
+			      if (end > rv->length)
+				XEN_OUT_OF_RANGE_ERROR("vct-ref", 2, caddr(args), "index out of range");
+			      for (; pos < end; pos++)
+				v->data[pos] = gf3->func_3(gf3->gen, a2->func_2(a2->gen, rv->data[pos]), a3->func_1(a3->gen));
+			      (*step) = end;
+			      return(args);
+			    }
+			}
+		    }
+		  if (a2) free(a2);
+		}
+	      if (a3) free(a3);
+	      free(gf3);
+	    }
+	  if (car(val) == s7_make_symbol(sc, "env"))
+	    {
+	      s7_pointer e;
+	      e = cadr(val);
+	      if ((s7_is_pair(e)) &&
+		  (caddr(e) == caddr(args)) &&
+		  (car(e) == s7_make_symbol(sc, "vector-ref")) &&
+		  (s7_is_symbol(cadr(e))))
+		{
+		  s7_pointer rv;
+		  rv = s7_cadr_value(sc, e);
+		  if (s7_is_vector(rv))
+		    {
+		      s7_pointer *elements;
+		      if (end > s7_vector_length(rv))
+			XEN_OUT_OF_RANGE_ERROR("vector-ref", 2, caddr(e), "index out of range");
+		      elements = s7_vector_elements(rv);
+		      for (; pos < end; pos++)
+			v->data[pos] = mus_env(s7_to_mus_any(elements[pos]));
+		      (*step) = end;
+		      return(args);
+		    }
+		}
+	    }
+
 	  for (; pos < end; pos++)
 	    {
 	      (*step) = pos; /* in case val expr depends on the step var */
@@ -1150,33 +1226,33 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
   vct *v;
   v = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, code), vct_tag);
   if ((v) &&
-      (!s7_local_slot(sc, s7_cadr(code))))                                         /* v is a vct, and it is not a stepper */
+      (!s7_local_slot(sc, cadr(code))))                                         /* v is a vct, and it is not a stepper */
     {
       vid_data = v->data;
       vid_length = v->length;
-      vid_i_slot = s7_local_slot(sc, s7_caddr(code));
+      vid_i_slot = s7_local_slot(sc, caddr(code));
       if ((vid_i_slot) && 
 	  (s7_is_integer(s7_slot_value(sc, vid_i_slot))))                          /* i is an integer */
 	{
 	  gf *gf1;
 	  s7_pointer add_expr;
-	  add_expr = s7_cadddr(code);
+	  add_expr = cadddr(code);
 	  
-	  if (s7_function_choice(sc, s7_cadddr(code)) == g_add_ss_1ss)
+	  if (s7_function_choice(sc, cadddr(code)) == g_add_ss_1ss)
 	    {
-	      vid_x_slot = s7_local_slot(sc, s7_cadr(s7_cadr(add_expr)));              /* x is real */
+	      vid_x_slot = s7_local_slot(sc, cadr(cadr(add_expr)));              /* x is real */
 	      if ((vid_x_slot) &&
 		  (s7_is_real(s7_slot_value(sc, vid_x_slot))))
 		{
-		  if ((!s7_local_slot(sc, s7_caddr(s7_cadr(add_expr)))) &&
-		      (!s7_local_slot(sc, s7_caddr(s7_caddr(add_expr)))))              /* x1 and x2 are not steppers */
+		  if ((!s7_local_slot(sc, caddr(cadr(add_expr)))) &&
+		      (!s7_local_slot(sc, caddr(caddr(add_expr)))))              /* x1 and x2 are not steppers */
 		    {
 		      s7_pointer xp;
-		      xp = s7_symbol_value(sc, s7_caddr(s7_cadr(add_expr)));
+		      xp = s7_symbol_value(sc, caddr(cadr(add_expr)));
 		      if (s7_is_real(xp))
 			{
 			  x1 = s7_cell_real(xp);
-			  xp = s7_symbol_value(sc, s7_caddr(s7_caddr(add_expr)));
+			  xp = s7_symbol_value(sc, caddr(caddr(add_expr)));
 			  if (s7_is_real(xp))
 			    {
 			      x2 = s7_cell_real(xp);                                        /* x1 and x2 are real */
@@ -1200,15 +1276,15 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 	      free(gf1);
 	    }
 
-	  if ((s7_car(add_expr) == s7_make_symbol(sc, "*")) &&
+	  if ((car(add_expr) == s7_make_symbol(sc, "*")) &&
 	      (s7_list_length(sc, add_expr) == 3))
 	    {
-	      gf1 = find_gf(sc, s7_cadr(add_expr));
+	      gf1 = find_gf(sc, cadr(add_expr));
 	      if (gf1)
 		{
 		  if (gf1->func_1)
 		    {
-		      vid_expr = s7_caddr(add_expr);
+		      vid_expr = caddr(add_expr);
 		      vid_func_1 = gf1->func_1;
 		      vid_gen = gf1->gen;
 		      free(gf1);
@@ -1251,17 +1327,17 @@ static s7_pointer vct_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
     {
 #if (!WITH_GMP)
       s7_pointer arg1, arg2, arg3;
-      arg1 = s7_cadr(expr);
-      arg2 = s7_caddr(expr);
-      arg3 = s7_cadddr(expr);
+      arg1 = cadr(expr);
+      arg2 = caddr(expr);
+      arg3 = cadddr(expr);
 
       if ((s7_is_symbol(arg1)) &&
 	  (s7_is_symbol(arg3)) &&
 	  (s7_is_pair(arg2)) &&
-	  (s7_is_symbol(s7_car(arg2))) &&
-	  (s7_car(arg2) == s7_make_symbol(sc, "vector-ref")) &&
-	  (s7_is_symbol(s7_cadr(arg2))) &&
-	  (s7_is_symbol(s7_caddr(arg2))))
+	  (s7_is_symbol(car(arg2))) &&
+	  (car(arg2) == s7_make_symbol(sc, "vector-ref")) &&
+	  (s7_is_symbol(cadr(arg2))) &&
+	  (s7_is_symbol(caddr(arg2))))
 	{
 	  s7_function_choice_set_direct(sc, expr);
 	  return(vct_set_vector_ref);
@@ -2337,6 +2413,8 @@ void mus_vct_init(void)
     vct_set_direct_dox_looped = s7_make_function(s7, "vct-set!", g_vct_set_direct_dox_looped, 2, 0, false, "vct-set! optimization");
     s7_function_set_class(vct_set_direct_dox_looped, f);
     s7_function_set_dox_looped(vct_set_direct, vct_set_direct_dox_looped);
+    s7_function_set_dox_looped(vct_set_temp, vct_set_direct_dox_looped);
+    s7_function_set_dox_looped(vct_set_ssf, vct_set_direct_dox_looped);
 #endif
   }
 
