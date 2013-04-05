@@ -255,9 +255,8 @@
 			    output-1
 			    (if (vct? output-1) "vct" 
 				(if (sound-data? output-1) "sound-data"
-				    (if (procedure? output-1) "function" 
-					(if (vector? output-1) "vector"
-					    "flush")))))
+				    (if (vector? output-1) "vector"
+					"flush"))))
 			(if (or scaled-to scaled-by) 
 			    " (before scaling)" 
 			    "")
@@ -734,7 +733,8 @@ finish-with-sound to complete the process."
       (format fd "      (set! *clm-header-type* ~A)))~%" (mus-header-type->string *clm-header-type*))
       (close-appending fd))))
 
-(hook-push after-save-state-hook ws-save-state)
+(if (not (memq ws-save-state (hook-functions after-save-state-hook)))
+    (set! (hook-functions after-save-state-hook) (list ws-save-state)))
 
 
 ;;; -------- ->frequency --------

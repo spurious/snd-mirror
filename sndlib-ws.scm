@@ -196,8 +196,7 @@
 			       output-1)
 			   (if (vct? output-1) "vct" 
 			       (if (sound-data? output-1) "sound-data"
-				   (if (procedure? output-1) "function" 
-				       "flush"))))
+				   "flush")))
 		       (if (or scaled-to scaled-by) 
 			   " (before scaling)" 
 			   "")

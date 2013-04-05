@@ -5,32 +5,32 @@
 ;;;  test 2: headers                            [1345]
 ;;;  test 3: variables                          [1660]
 ;;;  test 4: sndlib                             [2240]
-;;;  test 5: simple overall checks              [4691]
-;;;  test 6: vcts                               [9462]
-;;;  test 7: colors                             [9778]
-;;;  test 8: clm                                [10296]
-;;;  test 9: mix                                [21851]
-;;;  test 10: marks                             [23638]
-;;;  test 11: dialogs                           [24598]
-;;;  test 12: extensions                        [24793]
-;;;  test 13: menus, edit lists, hooks, etc     [25059]
-;;;  test 14: all together now                  [26434]
-;;;  test 15: chan-local vars                   [27313]
-;;;  test 16: regularized funcs                 [29071]
-;;;  test 17: dialogs and graphics              [32682]
-;;;  test 18: enved                             [32781]
-;;;  test 19: save and restore                  [32800]
-;;;  test 20: transforms                        [34414]
-;;;  test 21: new stuff                         [36547]
-;;;  test 22: (run)                             [38560]
-;;;  test 23: with-sound                        [38566]
-;;;  test 25: X/Xt/Xm                           [41531]
-;;;  test 26:                                   [45213]
-;;;  test 27: GL                                [45219]
-;;;  test 28: errors                            [45343]
-;;;  test 29: s7                                [47405]
-;;;  test all done                              [47477]
-;;;  test the end                               [47657]
+;;;  test 5: simple overall checks              [4692]
+;;;  test 6: vcts                               [9463]
+;;;  test 7: colors                             [9779]
+;;;  test 8: clm                                [10297]
+;;;  test 9: mix                                [21850]
+;;;  test 10: marks                             [23637]
+;;;  test 11: dialogs                           [24597]
+;;;  test 12: extensions                        [24792]
+;;;  test 13: menus, edit lists, hooks, etc     [25058]
+;;;  test 14: all together now                  [26433]
+;;;  test 15: chan-local vars                   [27312]
+;;;  test 16: regularized funcs                 [29070]
+;;;  test 17: dialogs and graphics              [32681]
+;;;  test 18: enved                             [32780]
+;;;  test 19: save and restore                  [32799]
+;;;  test 20: transforms                        [34413]
+;;;  test 21: new stuff                         [36546]
+;;;  test 22: (run)                             [38559]
+;;;  test 23: with-sound                        [38864]
+;;;  test 25: X/Xt/Xm                           [41829]
+;;;  test 26:                                   [45511]
+;;;  test 27: GL                                [45517]
+;;;  test 28: errors                            [45641]
+;;;  test 29: s7                                [47700]
+;;;  test all done                              [47772]
+;;;  test the end                               [47953]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -435,9 +435,9 @@
   
   (system (format #f "rm -f ~A/snd_*" (or (save-dir) original-save-dir)))
   (if (file-exists? "/var/tmp") 
-      (system (format #f "rm -f /var/tmp/snd_save_*")))
+      (system "rm -f /var/tmp/snd_save_*"))
   (if (file-exists? "/tmp") 
-      (system (format #f "rm -f /tmp/snd_save_*")))
+      (system "rm -f /tmp/snd_save_*"))
   (mus-sound-prune))
 
 (set! (hook-functions after-test-hook) ())
@@ -38558,7 +38558,306 @@ EDITS: 1
 
 ;;; ---------------- test 22: (run) ----------------
 
-(define (snd_test_22) #f)
+(define (snd_test_22)
+  (if all-args
+      (let ()
+	(define args1 (list 1.5 '(oscil o1) '(env e1) 'x 'i '(oscil o)))
+	(define args2 (list 1.5 '(oscil o2) '(env e2) 'x 'i))
+	(define args3 (list 1.5 '(oscil o3) '(env e3) 'x 'i))
+	(define args4 (list 1.5 '(oscil o4) '(env e4) 'x 'i))
+	
+	(define (try str)
+					;(format *stderr* "~A~%" str)
+	  (call-with-output-file "try-test.scm"
+	    (lambda (p)
+	      (format p "(if (not (provided? 'snd-ws.scm)) (load \"ws.scm\"))~%~%")
+	      (format p "(set! (mus-float-equal-fudge-factor) 1e-4)~%")
+	      (format p "(define (tester-1)~%")
+	      (format p "  (let ((o (make-oscil 1000.0))~%")
+	      (format p "        (o1 (make-oscil 1000.0))~%")
+	      (format p "        (o2 (make-oscil 1000.0))~%")
+	      (format p "        (o3 (make-oscil 1000.0))~%")
+	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (x 3.14)~%")
+	      (format p "        (v (make-vct 10)))~%")
+	      (format p "    (do ((i 0 (+ i 1)))~%")
+	      (format p "        ((= i 10) v)~%")
+	      (format p "      (vct-set! v i ~A))))~%~%" str)
+	      (format p "(define (tester-2)~%")
+	      (format p "  (let ((o (make-oscil 1000.0))~%")
+	      (format p "        (o1 (make-oscil 1000.0))~%")
+	      (format p "        (o2 (make-oscil 1000.0))~%")
+	      (format p "        (o3 (make-oscil 1000.0))~%")
+	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (x 3.14)~%")
+	      (format p "        (v (make-vct 10)))~%")
+	      (format p "    (with-sound (:output v :clipped #f :to-snd #f)~%")
+	      (format p "      (do ((i 0 (+ i 1)))~%")
+	      (format p "          ((= i 10) v)~%")
+	      (format p "        (outa i ~A)))~%" str)
+	      (format p "     v))~%~%")
+	      (format p "(define (tester-3)~%")
+	      (format p "  (let ((o (make-oscil 1000.0))~%")
+	      (format p "        (o1 (make-oscil 1000.0))~%")
+	      (format p "        (o2 (make-oscil 1000.0))~%")
+	      (format p "        (o3 (make-oscil 1000.0))~%")
+	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (x 3.14)~%")
+	      (format p "        (v (make-vct 10)))~%")
+	      (format p "    (with-sound (:output \"try-test.snd\" :clipped #f :to-snd #f)~%")
+	      (format p "      (do ((i 0 (+ i 1)))~%")
+	      (format p "          ((= i 10) v)~%")
+	      (format p "        (outa i ~A)))~%" str)
+	      (format p "    (file->array \"try-test.snd\" 0 0 10 v)~%")
+	      (format p "    v))~%~%")
+	      (format p "(define (tester-4)~%")
+	      (format p "  (let ((o (make-oscil 1000.0))~%")
+	      (format p "        (o1 (make-oscil 1000.0))~%")
+	      (format p "        (o2 (make-oscil 1000.0))~%")
+	      (format p "        (o3 (make-oscil 1000.0))~%")
+	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (x 3.14))~%")
+	      (format p "    (do ((i 0 (+ i 1))~%")
+	      (format p "         (lst (make-list 10)))~%")
+	      (format p "        ((= i 10) (apply vct lst))~%")
+	      (format p "      (set! (lst i) ~A))))~%~%" str)
+	      (format p "(define (tester-5)~%")
+	      (format p "  (let ((o (make-oscil 1000.0))~%")
+	      (format p "        (o1 (make-oscil 1000.0))~%")
+	      (format p "        (o2 (make-oscil 1000.0))~%")
+	      (format p "        (o3 (make-oscil 1000.0))~%")
+	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (v (make-vct 10)))~%")
+	      (format p "    (with-sound (:output \"try-test.snd\" :clipped #f :to-snd #f)~%")
+	      (format p "      (do ((i 0 (+ i 1))~%")
+	      (format p "           (x 0.0 (+ x 0.1)))~%")
+	      (format p "          ((= i 10) v)~%")
+	      (format p "        (outa i ~A)))~%" str)
+	      (format p "    (file->array \"try-test.snd\" 0 0 10 v)~%")
+	      (format p "    v))~%~%")
+	      (format p "(define (tester-6)~%")
+	      (format p "  (let ((o (make-oscil 1000.0))~%")
+	      (format p "        (o1 (make-oscil 1000.0))~%")
+	      (format p "        (o2 (make-oscil 1000.0))~%")
+	      (format p "        (o3 (make-oscil 1000.0))~%")
+	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (v (make-vct 10)))~%")
+	      (format p "    (do ((i 0 (+ i 1))~%")
+	      (format p "         (x 0.0 (+ x 0.1)))~%")
+	      (format p "        ((= i 10) v)~%")
+	      (format p "      (vct-set! v i ~A))))~%~%" str)
+	      (format p "(define (tester-7)~%")
+	      (format p "  (let ((o (make-oscil 1000.0))~%")
+	      (format p "        (o1 (make-oscil 1000.0))~%")
+	      (format p "        (o2 (make-oscil 1000.0))~%")
+	      (format p "        (o3 (make-oscil 1000.0))~%")
+	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (x 3.14)~%")
+	      (format p "        (v (make-vct 10)))~%")
+	      (format p "    (do ((i 0 (+ i 1)))~%")
+	      (format p "        ((= i 10) v)~%")
+	      (format p "      (let ((z ~A))~%" str)
+	      (format p "        (vct-set! v i (oscil o z))))))~%")
+	      (format p "(define (tester-8)~%")
+	      (format p "  (let ((o (make-oscil 1000.0))~%")
+	      (format p "        (o1 (make-oscil 1000.0))~%")
+	      (format p "        (o2 (make-oscil 1000.0))~%")
+	      (format p "        (o3 (make-oscil 1000.0))~%")
+	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (x 3.14)~%")
+	      (format p "        (v (make-vct 10)))~%")
+	      (format p "    (with-sound (:output v :clipped #f :to-snd #f)~%")
+	      (format p "      (do ((i 0 (+ i 1)))~%")
+	      (format p "          ((= i 10) v)~%")
+	      (format p "        (let ((z ~A))~%" str)
+	      (format p "          (outa i (oscil o z)))))~%")
+	      (format p "     v))~%~%")
+	      (format p "(define (tester-9)~%")
+	      (format p "  (let ((o (make-oscil 1000.0))~%")
+	      (format p "        (o1 (make-oscil 1000.0))~%")
+	      (format p "        (o2 (make-oscil 1000.0))~%")
+	      (format p "        (o3 (make-oscil 1000.0))~%")
+	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (x 3.14)~%")
+	      (format p "        (v (make-vct 10)))~%")
+	      (format p "    (do ((i 0 (+ i 1)))~%")
+	      (format p "        ((= i 10) v)~%")
+	      (format p "      (let ((z ~A))~%" str)
+	      (format p "        (vct-set! v i (* (env e1) (oscil o z)))))))~%")
+	      (format p "(define (tester-10)~%")
+	      (format p "  (let ((o (make-oscil 1000.0))~%")
+	      (format p "        (o1 (make-oscil 1000.0))~%")
+	      (format p "        (o2 (make-oscil 1000.0))~%")
+	      (format p "        (o3 (make-oscil 1000.0))~%")
+	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (x 3.14)~%")
+	      (format p "        (v (make-vct 10)))~%")
+	      (format p "    (with-sound (:output v :clipped #f :to-snd #f)~%")
+	      (format p "      (do ((i 0 (+ i 1)))~%")
+	      (format p "          ((= i 10) v)~%")
+	      (format p "        (let ((z ~A))~%" str)
+	      (format p "          (outa i (* (env e1) (oscil o z))))))~%")
+	      (format p "     v))~%~%")
+	      (format p "(let ((v1 (tester-1))~%")
+	      (format p "      (v2 (tester-2))~%")
+	      (format p "      (v3 (tester-3))~%")
+	      (format p "      (v4 (tester-4))~%")
+	      (format p "      (v5 (tester-5))~%")
+	      (format p "      (v6 (tester-6))~%")
+	      (format p "      (v7 (tester-7))~%")
+	      (format p "      (v8 (tester-8))~%")
+	      (format p "      (v9 (tester-9))~%")
+	      (format p "      (v10 (tester-10)))~%")
+	      (format p "  (if (or (not (equal? v1 v2)) (not (equal? v1 v3)) (not (equal? v1 v4)))~%")
+	      (format p "      (format *stderr* \"~A:~~%    vct-set: ~~A~~%    outa->v:~~A~~%    outa:   ~~A~~%    list:   ~~A~~%\" v1 v2 v3 v4))~%" str)
+	      (format p "  (if (not (equal? v5 v6))~%")
+	      (format p "      (format *stderr* \"dox ~A:~~%    vct-set: ~~A~~%    outa->v:~~A~~%\" v5 v6))~%" str)
+	      (format p "  (if (not (equal? v7 v8))~%")
+	      (format p "      (format *stderr* \"let ~A:~~%    ~~A~~%    ~~A~~%\" v7 v8))~%" str)
+	      (format p "  (if (not (equal? v9 v10))~%")
+	      (format p "      (format *stderr* \"env let ~A:~~%    ~~A~~%    ~~A~~%\" v9 v10)))~%~%" str)))
+	  
+	  (load "try-test.scm"))
+	
+	
+	(define (out-args)
+	  
+	  (for-each 
+	   (lambda (a) 
+	     (try (format #f "~A" a))
+	     (try (format #f "(oscil o ~A)" a)))
+	   args1)
+	  
+	  (for-each 
+	   (lambda (a) 
+	     (for-each 
+	      (lambda (b) 
+		(try (format #f "(+ ~A ~A)" a b))
+		(try (format #f "(* ~A ~A)" a b))
+		(try (format #f "(oscil o (+ ~A ~A))" a b))
+		(try (format #f "(oscil o (* ~A ~A))" a b))
+		(try (format #f "(+ ~A (oscil o ~A))" a b))
+		(try (format #f "(* ~A (oscil o ~A))" a b))
+		(try (format #f "(+ (oscil o ~A) ~A)" a b))
+		(try (format #f "(* (oscil o ~A) ~A)" a b)))
+	      args2))
+	   args1)
+	  
+	  (for-each 
+	   (lambda (c)
+	     (for-each
+	      (lambda (b)
+		(for-each
+		 (lambda (a)
+		   (try (format #f "(+ ~A ~A ~A)" a b c))
+		   (try (format #f "(+ (* ~A ~A) ~A)" a b c))
+		   (try (format #f "(+ ~A (* ~A ~A))" a b c))
+		   (try (format #f "(* ~A ~A ~A)" a b c))
+		   (try (format #f "(* ~A (+ ~A ~A))" a b c))
+		   (try (format #f "(* (+ ~A ~A) ~A)" a b c))
+		   (try (format #f "(oscil o (+ ~A ~A ~A))" a b c))
+		   (try (format #f "(oscil o (* ~A ~A ~A))" a b c))
+		   (try (format #f "(oscil o (* ~A (+ ~A ~A)))" a b c))
+		   (try (format #f "(oscil o (+ ~A (* ~A ~A)))" a b c))
+		   (try (format #f "(oscil o (* (+ ~A ~A) ~A))" a b c))
+		   (try (format #f "(oscil o (+ (* ~A ~A) ~A))" a b c))
+		   (try (format #f "(+ ~A (oscil o (+ ~A ~A)))" a b c))
+		   (try (format #f "(+ ~A (oscil o (* ~A ~A)))" a b c))
+		   (try (format #f "(* ~A (oscil o (+ ~A ~A)))" a b c))
+		   (try (format #f "(* ~A (oscil o (* ~A ~A)))" a b c))
+		   
+		   (try (format #f "(+ ~A ~A (oscil o ~A))" a b c))
+		   (try (format #f "(* ~A ~A (oscil o ~A))" a b c))
+		   (try (format #f "(+ (* ~A ~A) (oscil o ~A))" a b c))
+		   (try (format #f "(* (+ ~A ~A) (oscil o ~A))" a b c))
+		   (try (format #f "(+ ~A (* ~A (oscil o ~A)))" a b c))
+		   (try (format #f "(* ~A (+ ~A (oscil o ~A)))" a b c))
+		   
+		   (try (format #f "(+ ~A (oscil o ~A) ~A)" a b c))
+		   (try (format #f "(* ~A (oscil o ~A) ~A)" a b c))
+		   (try (format #f "(+ (* ~A (oscil o ~A)) ~A)" a b c))
+		   (try (format #f "(* (+ ~A (oscil o ~A)) ~A)" a b c))
+		   (try (format #f "(+ ~A (* (oscil o ~A) ~A))" a b c))
+		   (try (format #f "(* ~A (+ (oscil o ~A) ~A))" a b c))
+		   
+		   (try (format #f "(+ (oscil o ~A) ~A ~A)" a b c))
+		   (try (format #f "(+ (oscil o ~A) (* ~A ~A))" a b c))
+		   (try (format #f "(* (oscil o ~A) (+ ~A ~A))" a b c))
+		   (try (format #f "(* (oscil o ~A) ~A ~A)" a b c))
+		   )
+		 args3))
+	      args2))
+	   args1)
+	  
+	  (for-each
+	   (lambda (d)
+	     (for-each 
+	      (lambda (c)
+		(for-each
+		 (lambda (b)
+		   (for-each
+		    (lambda (a)
+		      (try (format #f "(+ ~A ~A ~A ~A)" a b c d))
+		      (try (format #f "(* ~A ~A ~A ~A)" a b c d))
+		      (try (format #f "(+ (* ~A ~A) (* ~A ~A))" a b c d))
+		      (try (format #f "(* (+ ~A ~A) (+ ~A ~A))" a b c d))
+		      (try (format #f "(+ ~A (* ~A ~A ~A))" a b c d))
+		      (try (format #f "(* ~A (+ ~A ~A ~A))" a b c d))
+		      (try (format #f "(+ ~A (* ~A (+ ~A ~A)))" a b c d))
+		      (try (format #f "(* ~A (+ ~A (* ~A ~A)))" a b c d))
+		      (try (format #f "(+ (* ~A ~A ~A) ~A)" a b c d))
+		      (try (format #f "(* (+ ~A ~A ~A) ~A)" a b c d))
+		      (try (format #f "(+ (* ~A (+ ~A ~A)) ~A)" a b c d))
+		      (try (format #f "(* (+ ~A (* ~A ~A)) ~A)" a b c d))
+		      )
+		    args4))
+		 args3))
+	      args2))
+	   args1)
+	  )
+	
+	(out-args)
+	)))
 
 
 
@@ -47742,20 +48041,27 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-2-Apr-13:
-58,930,523,920
-8,084,673,014  s7.c:eval [/home/bil/snd-13/snd]
-6,286,651,555  ???:sin [/lib64/libm-2.12.so]
-3,130,307,976  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-2,551,219,058  ???:cos [/lib64/libm-2.12.so]
-2,430,379,178  clm.c:mus_src [/home/bil/snd-13/snd]
-1,651,655,444  s7.c:gc [/home/bil/snd-13/snd]
-1,337,196,393  s7.c:eval'2 [/home/bil/snd-13/snd]
-1,044,240,994  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
-1,004,682,421  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+4-Apr-13:
+58,335,176,559
+7,975,975,728  s7.c:eval [/home/bil/snd-13/snd]
+6,276,190,862  ???:sin [/lib64/libm-2.12.so]
+3,050,752,119  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+2,553,230,706  ???:cos [/lib64/libm-2.12.so]
+2,434,318,875  clm.c:mus_src [/home/bil/snd-13/snd]
+1,598,916,523  s7.c:gc [/home/bil/snd-13/snd]
+1,318,564,116  s7.c:eval'2 [/home/bil/snd-13/snd]
+1,004,685,256  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+  990,612,139  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
   943,679,698  clm.c:mus_formant_bank [/home/bil/snd-13/snd]
   911,248,552  clm.c:fir_8 [/home/bil/snd-13/snd]
-  885,250,720  ???:t2_32 [/home/bil/snd-13/snd]
-  792,256,706  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
-  786,074,764  s7.c:s7_make_real [/home/bil/snd-13/snd]
+  885,196,084  ???:t2_32 [/home/bil/snd-13/snd]
+  782,153,720  ???:t2_64 [/home/bil/snd-13/snd]
+  747,532,530  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+  741,741,726  s7.c:s7_make_real [/home/bil/snd-13/snd]
+  693,360,038  clm.c:run_hilbert [/home/bil/snd-13/snd]
+  507,150,000  clm.c:mus_formant_bank_with_inputs [/home/bil/snd-13/snd]
+  503,385,271  clm.c:mus_src_05 [/home/bil/snd-13/snd]
+  449,626,156  ???:n1_64 [/home/bil/snd-13/snd]
+  429,175,828  io.c:mus_write_1 [/home/bil/snd-13/snd]
+ 
  |#

@@ -2362,7 +2362,7 @@ static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
 static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
 static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, AN_OPEN_PORT, A_NORMAL_REAL, A_RATIONAL, A_CLOSURE;
 static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL, A_NON_NEGATIVE_INTEGER;
-static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING;
+static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT;
 
 
 #define WITH_COUNTS 0
@@ -23608,7 +23608,8 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
    *   if with_result, returned string is wanted.
    *   if port is sc->F, no non-string result is wanted.
    *   if port is not boolean, it better be a port.
-   *   if we are about to goto START in eval, and main_stack_op(Sc) == OP_BEGIN1, no return string is wanted
+   *   if we are about to goto START in eval, and main_stack_op(Sc) == OP_BEGIN1, no return string is wanted -- yow, this is not true
+   *   since format is now safe, it can be embedded, so we also have to check that op(cur_code) is hop_safe_sc?
    */
 
   if (with_result)
@@ -24037,7 +24038,6 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	  s7_gc_unprotect_at(sc, fdat->gc_loc);
 	  fdat->gc_loc = -1;
 	}
-
       return(result);
     }
   return(sc->F);
@@ -25491,6 +25491,7 @@ static void init_car_a_list(void)
   SOMETHING_APPLICABLE = s7_make_permanent_string("a procedure or something applicable");
   CONSTANT_ARG_ERROR = s7_make_permanent_string("lambda* parameter '~A is a constant");
   BAD_BINDING = s7_make_permanent_string("~A: can't bind some variable to ~S");
+  A_FORMAT_PORT = s7_make_permanent_string("#f, #t, or an open output port");
 }
 
 
@@ -29305,6 +29306,17 @@ bool s7_function_choice_is_direct(s7_scheme *sc, s7_pointer expr)
 	  ((optimize_data(expr) == OP_SAFE_C_C) &&
 	   (symbol_id(car(expr)) == 0))));
 }
+
+bool s7_function_choice_is_direct_to_real(s7_scheme *sc, s7_pointer expr)
+{
+  return((is_optimized(expr)) && 
+	 (ecdr(expr)) &&
+	 (returns_temp(ecdr(expr))) &&
+	 ((optimize_data(expr) == HOP_SAFE_C_C) ||
+	  ((optimize_data(expr) == OP_SAFE_C_C) &&
+	   (symbol_id(car(expr)) == 0))));
+}
+
 
 s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr)
 {
@@ -36394,11 +36406,71 @@ static s7_pointer car_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 }
 
 
-static s7_pointer format_allg, format_allg_no_column;
+static s7_pointer format_allg, format_allg_no_column, format_just_newline;
 static s7_pointer g_format_allg(s7_scheme *sc, s7_pointer args)
 {
-  return(g_format_1(sc, args, (main_stack_op(sc) != OP_BEGIN1)));
+  return(g_format_1(sc, args, ((main_stack_op(sc) != OP_BEGIN1) || (!is_optimized(sc->cur_code)) || (op_no_hop(sc->cur_code) != OP_SAFE_C_SC))));
 }
+
+static s7_pointer g_format_just_newline(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer pt, str;
+  bool need_output;
+  int tpoint;
+  char *new_str;
+
+  pt = car(args);
+ 
+  if (pt == sc->T)
+    pt = sc->output_port;
+  else
+    {
+      if ((pt != sc->F) &&              
+	  ((!is_output_port(pt)) ||    
+	   (port_is_closed(pt))))
+	{
+	  CHECK_METHOD(sc, pt, sc->FORMAT, args);
+	  return(wrong_type_argument_with_type(sc, sc->FORMAT, small_int(1), pt, A_FORMAT_PORT));
+	}
+    }
+
+  str = cadr(args);
+  new_str = (char *)string_value(str);
+  tpoint = string_length(str) - 2;
+
+  need_output = ((main_stack_op(sc) != OP_BEGIN1) || (!is_optimized(sc->cur_code)) || (op_no_hop(sc->cur_code) != OP_SAFE_C_SC));
+
+  if (pt == sc->F)
+    {
+      if (!need_output)
+	return(sc->F);
+    }
+  else
+    {
+      if (tpoint > 0)
+	{
+	  new_str[tpoint] = '\0';
+	  port_write_string(pt)(sc, new_str, tpoint, pt);
+	  new_str[tpoint] = '~';
+	}
+      port_write_character(pt)(sc, '\n', pt);
+    }
+
+  if (need_output)
+    {
+      if (tpoint == 0)
+	return(s7_make_string_with_length(sc, "\n", 1));
+
+      new_str[tpoint] = '\n';
+      new_str[tpoint + 1] = '\0';
+      str = s7_make_string_with_length(sc, new_str, tpoint + 1);
+      new_str[tpoint] = '~';
+      new_str[tpoint + 1] = '%';
+      return(str);
+    }
+  return(sc->F);
+}
+
 
 static s7_pointer g_format_allg_no_column(s7_scheme *sc, s7_pointer args)
 {
@@ -36410,29 +36482,50 @@ static s7_pointer g_format_allg_no_column(s7_scheme *sc, s7_pointer args)
 	 (!port_is_closed(pt)))))
     {
       CHECK_METHOD(sc, pt, sc->FORMAT, args);
-      return(wrong_type_argument_with_type(sc, sc->FORMAT, small_int(1), pt, 
-					   make_protected_string(sc, "#f, #t, or an open output port")));
+      return(wrong_type_argument_with_type(sc, sc->FORMAT, small_int(1), pt, A_FORMAT_PORT));
     }
 
   return(format_to_port_1(sc, (pt == sc->T) ? sc->output_port : pt, 
 			  s7_string(cadr(args)), cddr(args), NULL,
-			  (main_stack_op(sc) != OP_BEGIN1),
+			  ((main_stack_op(sc) != OP_BEGIN1) || (!is_optimized(sc->cur_code)) || (op_no_hop(sc->cur_code) != OP_SAFE_C_SC)),
 			  false,
 			  string_length(cadr(args))));
 }
 
+
 static s7_pointer format_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if ((is_optimized(expr)) &&
-      ((op_no_hop(expr) == OP_C_ALL_X) ||
-       (op_no_hop(expr) == OP_SAFE_C_ALL_X)))
+  if ((args > 1) &&
+      (!s7_is_string(cadr(expr))) &&
+      (s7_is_string(caddr(expr))))
     {
-      if ((args > 1) &&
-	  (!s7_is_string(cadr(expr))) &&
-	  (s7_is_string(caddr(expr))) &&
-	  (!is_columnizing(s7_string(caddr(expr)))))
-	return(format_allg_no_column);
-      return(format_allg);
+      s7_pointer str_arg;
+      str_arg = caddr(expr);
+      if (args == 2) 
+	{
+	  int len;
+	  const char *p, *orig;
+
+	  orig = (const char *)string_value(str_arg);
+	  len = string_length(str_arg);
+	  if ((len > 1) &&
+	      (orig[len - 1] == '%'))
+	    {
+	      p = strchr(orig, (int)'~');
+	      if ((p) && ((p - orig) == len - 2))
+		return(format_just_newline);
+	    }
+	}
+	  
+      if ((args == 2) ||
+	  ((is_optimized(expr)) &&
+	   ((op_no_hop(expr) == OP_C_ALL_X) ||
+	    (op_no_hop(expr) == OP_SAFE_C_ALL_X))))
+	{
+	  if (!is_columnizing(string_value(str_arg)))
+	    return(format_allg_no_column);
+	  return(format_allg);
+	}
     }
   return(f);
 }
@@ -38314,6 +38407,7 @@ static void init_choosers(s7_scheme *sc)
 
   format_allg = make_function_with_class(sc, f, "format", g_format_allg, 1, 0, true, "format optimization");
   format_allg_no_column = make_function_with_class(sc, f, "format", g_format_allg_no_column, 1, 0, true, "format optimization");
+  format_just_newline = make_function_with_class(sc, f, "format", g_format_just_newline, 2, 0, false, "format optimization");
 
 
   /* not */
@@ -63567,6 +63661,9 @@ s7_scheme *s7_init(void)
    * Would it fix this to save/restore the temp cells across the object->string method application? -- this experiment is running...
    *   By changing to safe function, don't we use either the T|An series or the prebuilt (in-use flag) set? Perhaps temp_cell_2
    *   is not enough.
+   *
+   * Another gotcha with format declared safe: (format #f ...) can occur where main_stack_op is OP_BEGIN1 and yet
+   *   it needs to return its value -- it might now be embedded!
    */
 
 
@@ -64138,6 +64235,6 @@ s7_scheme *s7_init(void)
  * t455|6     265   89   55   31   14   14    9 9164
  * lat        229   63   52   47   42   40   34   31
  * t502        90   43   39   36   29   23   20   17
- * calls           275  207  175  115   89   71   59
+ * calls           275  207  175  115   89   71   58
  */
 

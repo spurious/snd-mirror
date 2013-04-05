@@ -3109,7 +3109,14 @@
 				     (lint-format "~A has ~A arguments:~A" 
 						  name head 
 						  (if (> ndirs nargs) "too few" "too many")
-						  (truncated-list->string form)))))
+						  (truncated-list->string form))
+				     (if (and (not (cadr form))
+					      (zero? ndirs)
+					      (not (char-position #\~ control-string)))
+					 (lint-format "~A could be ~S, (format is a no-op here)"
+						      name form
+						      (caddr form))))))
+
 			   (lint-walk name (cdr form) env))))
 		    
 		    ;; ---------------- other schemes ----------------		  

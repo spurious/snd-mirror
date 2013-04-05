@@ -3606,8 +3606,6 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
       /* fprintf(stderr, "%d, %lld %s\n", __LINE__, num, DISPLAY(body)); */
       /* 100000 (+ (next-sample reader) y)
        * 94928 (+ inval (delay outdel (* volume (comb-bank combs (all-pass-bank allpasses inval)))))
-       * 94928 ((do ((i 0 (+ i 1))) ((= i 8)) (vct-set! xcof i (env (vector-ref es i)))) (fir-filter flt x))
-       * TODO: can we use find_gf here? (can be 10000000 calls)
        */
 
       for (kp = 0; kp < num; kp++)
@@ -4006,6 +4004,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 			    {
 			      (*ry) = read_sample(sf);
 			      data[kp] = s7_call_direct_to_real_and_free(s7, res);  /* 100000 */
+			      /* should this be s7_number_to_real(s7, s7_call_direct(s7, res)) -- it apparently might not be a real result? */
 			    }
 			  
 			  sf = free_snd_fd(sf);
