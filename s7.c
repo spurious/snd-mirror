@@ -20240,8 +20240,8 @@ static void string_write_string(s7_scheme *sc, const char *str, int len, s7_poin
       int loc;
       loc = port_string_length(pt);
       port_string_length(pt) = new_len * 2;
-      port_string(pt) = (char *)realloc(port_string(pt), port_string_length(pt) * sizeof(char));
-      memset((void *)(port_string(pt) + loc), 0, port_string_length(pt) - loc); 
+      port_string(pt) = (char *)realloc(port_string(pt), port_string_length(pt) * sizeof(char) + 8);
+      memset((void *)(port_string(pt) + loc), 0, port_string_length(pt) + 8 - loc); 
     }
 
   memcpy((void *)(port_string(pt) + port_string_point(pt)), (void *)str, len);
@@ -20987,7 +20987,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
   port_string_length(x) = STRING_PORT_INITIAL_LENGTH;
-  port_string(x) = (char *)calloc(STRING_PORT_INITIAL_LENGTH, sizeof(char));
+  port_string(x) = (char *)calloc(STRING_PORT_INITIAL_LENGTH + 8, sizeof(char));
   port_string_point(x) = 0;
   port_needs_free(x) = true;
   port_read_character(x) = output_read_char;
@@ -23637,6 +23637,9 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		  (port_string_point(port) < port_string_length(port)))
 		{
 		  port_string(port)[port_string_point(port)++] = '\n';
+		  /* which is actually a bad idea, but as a desperate stopgap, I simply padded
+		   *  the string port string with 8 chars that are not in the length.
+		   */
 		  fdat->col = 0;
 		}
 	      else format_append_newline(sc, fdat, port);
@@ -64222,8 +64225,6 @@ s7_scheme *s7_init(void)
  *   and goto*, and the entire safe_car_s set
  * op_closure_car_car is rarely called, cdr_cdr case only in bench
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
- * test all the opt branches (vct-set vs outa)
- * can't we use dox_looped to collapse away all the special do-loops?
  * use find_gf in map/scan-channel -- s7_eval_form/apply and call_direct
  *
  *
@@ -64232,7 +64233,7 @@ s7_scheme *s7_init(void)
  * lint           9328 8140 7887 7736 7300 7180 7051
  * index    44300 3291 3005 2742 2078 1643 1435 1368
  * s7test    1721 1358 1297 1244  977  961  957  962
- * t455|6     265   89   55   31   14   14    9 9164
+ * t455|6     265   89   55   31   14   14    9 9155
  * lat        229   63   52   47   42   40   34   31
  * t502        90   43   39   36   29   23   20   17
  * calls           275  207  175  115   89   71   58

@@ -2,7 +2,6 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-
 /* collect syncd chans */
 typedef struct {
   sync_info *si;
@@ -3940,22 +3939,49 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 				  s7_set_current_environment(s7, old_e);
 				  return(res);
 				}
+			      if (gf1) free(gf1);
+			      if (gf2) free(gf2);
+
+			      if ((arg1 == arg) &&
+				  (s7_function_choice_is_direct_to_real(s7, arg2)) &&
+				  (!s7_tree_memq(s7, arg, arg2)))
+				{
+				  for (kp = 0; kp < num; kp++)
+				    data[kp] = read_sample(sf) + s7_call_direct_to_real_and_free(s7, arg2);
+				  sf = free_snd_fd(sf);
+				  change_samples(beg, num, data, cp, caller, pos, -1.0);
+				  free(data);
+				  s7_set_current_environment(s7, old_e);
+				  return(res);
+				}
 			    }
 			  
+			  if ((s7_car(res) == s7_make_symbol(s7, "*")) &&
+			      (s7_list_length(s7, res) == 3) &&
+			      (s7_cadr(res) == arg))
+			    {
+			      gf1 = find_gf(s7, s7_caddr(res));
+			      if (gf1)
+				{
+				  if (gf1->func_1)
+				    {
+				      for (kp = 0; kp < num; kp++)
+					data[kp] = read_sample(sf) * gf1->func_1(gf1->gen);
+				      sf = free_snd_fd(sf);
+				      change_samples(beg, num, data, cp, caller, pos, -1.0);
+				      free(data);
+				      s7_set_current_environment(s7, old_e);
+				      return(res);
+				    }
+				  free(gf1);
+				}
+			    }
+
 			  y = s7_make_mutable_real(s7, 1.5);                          /* slot for the map lambda arg */
 			  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
 			  slot = s7_make_slot(s7, e, arg, y);                         /* make sure it is mutable */
 			  
 			  /* fprintf(stderr, "%lld %s\n", num, DISPLAY(res)); */
-			  /* 50828 (* scaler (comb-bank combs x))
-			   * 41623 (* amp (comb-bank cs x))
-			   * 41623 (+ (formant fr1 x) (formant fr2 x) (formant fr3 x))
-			   * 50828 (+ y (* (env e1) (read-sample reader1)))
-			   * 50828 (+ y (* pos (read-sample reader1)))
-			   * 50828 (+ y (* (- 1.0 pos) (read-sample reader0)))
-			   * 50828*2 (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)))
-			   * 50828*2 (* inval (oscil os))
-			   */
 			  
 			  for (kp = 0; kp < num; kp++)
 			    {
@@ -4124,7 +4150,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
   /* fprintf(stderr, "%lld: %s\n", num, DISPLAY(s7_car(source))); */
   /* 150000: (lambda (y) (granulate grn (lambda (dir) (read-sample rd))))
    * 100000: (lambda (inval) (amplitude-modulate 1.0 inval (oscil os)))
-   */
+   * 850000 here altogether I think   */
   for (kp = 0; kp < num; kp++)
     {
 
