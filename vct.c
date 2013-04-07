@@ -800,7 +800,7 @@ static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
       stepper = car(args);
       vecind = caddr(caddr(args));
       callee = s7_slot(sc, vecind);
-      if (s7_slot_value(sc, callee) != stepper)
+      if (s7_slot_value(callee) != stepper)
 	return(NULL);
       
       step = ((s7_Int *)((unsigned char *)(stepper) + VCT_NUMBER_LOCATION));
@@ -922,7 +922,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
       stepper = car(args);
       locsym = caddr(args);
       index_slot = s7_slot(sc, locsym);
-      if (s7_slot_value(sc, index_slot) != stepper)
+      if (s7_slot_value(index_slot) != stepper)
 	return(NULL);
       
       step = ((s7_Int *)((unsigned char *)(stepper) + VCT_NUMBER_LOCATION));
@@ -944,6 +944,44 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	  (*step) = end;
 	  return(args);
 	}
+
+      /* ---------------------------------------- */
+      gf1 = find_gf(sc, val);
+      if (gf1)
+	{
+	  if (gf1->func_1)
+	    {
+	      mus_long_t dist;
+	      void *gen;
+	      mus_float_t (*func)(void *p);
+	      gen = gf1->gen;
+	      func = gf1->func_1;
+	      dist = end - 4;
+	      while (pos < dist)
+		{
+		  v->data[pos++] = func(gen);
+		  v->data[pos++] = func(gen);
+		  v->data[pos++] = func(gen);
+		  v->data[pos++] = func(gen);
+		}
+	      for (; pos < end; pos++) 
+		v->data[pos] = func(gen);
+	      
+	      (*step) = end;
+	      free_gf(gf1);
+	      return(args);
+	    }
+	  if (gf1->func)
+	    {
+	      for (; pos < end; pos++)
+		v->data[pos] = gf1->func(gf1);
+	      (*step) = end;
+	      free_gf(gf1);
+	      return(args);
+	    }
+	  free_gf(gf1);
+	}
+      /* ---------------------------------------- */
 
       val_len = s7_list_length(sc, val);
       gf1 = find_gf(sc, val);
@@ -1213,10 +1251,10 @@ static s7_pointer g_vct_set_direct_dox_add_1ss(s7_scheme *sc, s7_pointer code)
 {
   mus_long_t pos;
   mus_float_t x;
-  pos = s7_cell_integer(s7_slot_value(sc, vid_i_slot));
+  pos = s7_cell_integer(s7_slot_value(vid_i_slot));
   if (pos < vid_length)
     {
-      x = s7_cell_real(s7_slot_value(sc, vid_x_slot));
+      x = s7_cell_real(s7_slot_value(vid_x_slot));
       vid_data[pos] = (x * x1) + ((1.0 - x) * x2);
     }
   return(NULL);
@@ -1225,7 +1263,7 @@ static s7_pointer g_vct_set_direct_dox_add_1ss(s7_scheme *sc, s7_pointer code)
 static s7_pointer g_vct_set_direct_dox_gen1(s7_scheme *sc, s7_pointer code)
 {
   mus_long_t pos;
-  pos = s7_cell_integer(s7_slot_value(sc, vid_i_slot));
+  pos = s7_cell_integer(s7_slot_value(vid_i_slot));
   if (pos < vid_length)
     vid_data[pos] = vid_func_1(vid_gen);
   return(NULL);
@@ -1234,7 +1272,7 @@ static s7_pointer g_vct_set_direct_dox_gen1(s7_scheme *sc, s7_pointer code)
 static s7_pointer g_vct_set_direct_dox_expr(s7_scheme *sc, s7_pointer code)
 {
   mus_long_t pos;
-  pos = s7_cell_integer(s7_slot_value(sc, vid_i_slot));
+  pos = s7_cell_integer(s7_slot_value(vid_i_slot));
   if (pos < vid_length)
     vid_data[pos] = vid_func_1(vid_gen) * s7_call_direct_to_real_and_free(sc, vid_expr);
   return(NULL);
@@ -1251,7 +1289,7 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
       vid_length = v->length;
       vid_i_slot = s7_local_slot(sc, caddr(code));
       if ((vid_i_slot) && 
-	  (s7_is_integer(s7_slot_value(sc, vid_i_slot))))                          /* i is an integer */
+	  (s7_is_integer(s7_slot_value(vid_i_slot))))                          /* i is an integer */
 	{
 	  gf *gf1;
 	  s7_pointer add_expr;
@@ -1261,7 +1299,7 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 	    {
 	      vid_x_slot = s7_local_slot(sc, cadr(cadr(add_expr)));              /* x is real */
 	      if ((vid_x_slot) &&
-		  (s7_is_real(s7_slot_value(sc, vid_x_slot))))
+		  (s7_is_real(s7_slot_value(vid_x_slot))))
 		{
 		  if ((!s7_local_slot(sc, caddr(cadr(add_expr)))) &&
 		      (!s7_local_slot(sc, caddr(caddr(add_expr)))))              /* x1 and x2 are not steppers */
@@ -1282,6 +1320,7 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 		}
 	    }
 
+	  /* TODO: vct dox case needs full gf */
 	  gf1 = find_gf(sc, add_expr);
 	  if (gf1)
 	    {

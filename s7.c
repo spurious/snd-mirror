@@ -5644,7 +5644,7 @@ s7_pointer s7_slot(s7_scheme *sc, s7_pointer symbol)
 }
 
 
-s7_pointer s7_slot_value(s7_scheme *sc, s7_pointer slot)
+s7_pointer s7_slot_value(s7_pointer slot)
 {
   return(slot_value(slot));
 }
@@ -5678,6 +5678,18 @@ s7_pointer s7_local_slot(s7_scheme *sc, s7_pointer symbol)
   for (y = environment_slots(sc->envir); is_slot(y); y = next_slot(y))
     if (slot_symbol(y) == symbol)
       return(y);
+  return(NULL);
+}
+
+
+s7_pointer s7_is_local_variable(s7_scheme *sc, s7_pointer symbol, s7_pointer e)
+{
+  /* search from env e inward */
+  s7_pointer x, y;
+  for (x = e; is_environment(x); x = cdr(x))
+    for (y = environment_slots(x); is_slot(y); y = next_slot(y))
+      if (slot_symbol(y) == symbol)
+	return(y);
   return(NULL);
 }
 
@@ -18719,7 +18731,7 @@ static s7_pointer g_string_set_ssa_looped(s7_scheme *sc, s7_pointer args)
 
   stepper = car(args);
   ind = s7_slot(sc, caddr(args));
-  if (s7_slot_value(sc, ind) != stepper)
+  if (slot_value(ind) != stepper)
     return(NULL);
 
   pos = numerator(stepper);
@@ -27717,7 +27729,7 @@ static s7_pointer g_vector_set_ssc_looped(s7_scheme *sc, s7_pointer args)
 
   stepper = car(args);
   ind = s7_slot(sc, caddr(args));
-  if (s7_slot_value(sc, ind) != stepper)
+  if (slot_value(ind) != stepper)
     return(NULL);
 
   pos = numerator(stepper);
@@ -27750,9 +27762,9 @@ static s7_pointer g_vector_set_sss(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_vector_set_sss_dox(s7_scheme *sc, s7_pointer code)
 {
   s7_Int pos;
-  pos = integer(s7_slot_value(sc, vid_i_slot));
+  pos = integer(slot_value(vid_i_slot));
   if (pos < vid_length)
-    vid_data[pos] = s7_slot_value(sc, vid_s_slot);
+    vid_data[pos] = slot_value(vid_s_slot);
   return(NULL);
 }
 
@@ -27769,7 +27781,7 @@ static s7_pointer g_vector_set_sss_dox_looped(s7_scheme *sc, s7_pointer code)
       vid_i_slot = s7_local_slot(sc, s7_caddr(code));
       vid_s_slot = s7_local_slot(sc, s7_cadddr(code));
       if ((vid_i_slot) && 
-	  (s7_is_integer(s7_slot_value(sc, vid_i_slot))))                          /* i is an integer */
+	  (s7_is_integer(slot_value(vid_i_slot))))                          /* i is an integer */
 	return((s7_pointer)g_vector_set_sss_dox);
     }
   return(NULL);
@@ -45812,9 +45824,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer result;
 			
 		    f = (s7_function)c_function_call(c_function_let_looped(ecdr(func)));
-		    car(sc->T2_1) = stepper;
-		    car(sc->T2_2) = caddr(sc->code);
-		    result = f(sc, sc->T2_1);
+		    car(sc->T3_1) = stepper;
+		    car(sc->T3_2) = caddr(sc->code);
+		    car(sc->T3_3) = sc->envir;
+		    result = f(sc, sc->T3_1);
 			
 		    if (result)
 		      {
@@ -46075,10 +46088,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				      add_slot(sc, caar(p), sc->UNDEFINED);				      
 				    
 				    f = (s7_function)c_function_call(c_function_let_looped(ecdr(caddr(sc->code))));
-				    car(sc->T2_1) = slot_value(sc->args);
-				    car(sc->T2_2) = sc->code;
-
-				    result = f(sc, sc->T2_1);
+				    car(sc->T3_1) = slot_value(sc->args);
+				    car(sc->T3_2) = sc->code;
+				    car(sc->T3_3) = old_e;
+				    result = f(sc, sc->T3_1);
 				    sc->envir = old_e;
 
 				    if (result)

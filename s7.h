@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.20"
-#define S7_DATE "25-Mar-13"
+#define S7_VERSION "2.21"
+#define S7_DATE "7-Apr-13"
 
 
 typedef long long int s7_Int;
@@ -478,7 +478,7 @@ s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer funcs);
 
 s7_pointer s7_slot(s7_scheme *sc, s7_pointer symbol);
-s7_pointer s7_slot_value(s7_scheme *sc, s7_pointer slot);
+s7_pointer s7_slot_value(s7_pointer slot);
 s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value);
 s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value);
 
@@ -728,7 +728,7 @@ void s7_function_set_looped(s7_pointer f, s7_pointer c);
 void s7_function_set_let_looped(s7_pointer f, s7_pointer c);
 void s7_function_set_dox_looped(s7_pointer f, s7_pointer c);
 s7_pointer s7_local_slot(s7_scheme *sc, s7_pointer symbol);
-
+s7_pointer s7_is_local_variable(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
 
   /* These functions create a new Scheme object type.  There is a simple example in s7.html.
    *
@@ -869,6 +869,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 7-Apr:     removed s7_scheme* arg from s7_slot_value, add s7_is_local_variable.
  * 25-Mar:    char-position, string-position, environment-ref, environment-set! added to the scheme side.
  * 26-Jan:    s7_function_set_dox_looped (loop optimization experiments).
  * 9-Jan:     s7_cos, s7_sin, other optimization changes.

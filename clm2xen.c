@@ -1217,6 +1217,7 @@ static void mus_xen_free(mus_xen *ms)
   ms->gen = NULL;
   if (ms->vcts) free(ms->vcts);
   ms->vcts = NULL;
+  ms->nvcts = 0;
   free(ms);
 }
 
@@ -6690,8 +6691,8 @@ static XEN clm_output, clm_reverb; /* *output* and *reverb* at extlang level -- 
 #if (HAVE_SCHEME)
 static XEN clm_output_slot = NULL, clm_reverb_slot = NULL;
 
-#define CLM_OUTPUT s7_slot_value(s7, clm_output_slot)
-#define CLM_REVERB s7_slot_value(s7, clm_reverb_slot)
+#define CLM_OUTPUT s7_slot_value(clm_output_slot)
+#define CLM_REVERB s7_slot_value(clm_reverb_slot)
 
 #else
 
@@ -9429,8 +9430,9 @@ static bool wrapped_polynomial_p(s7_pointer obj) {return(MUS_VCT_P(obj));}
 static mus_float_t wrapped_polynomial_2(vct *p, mus_float_t x) {return(mus_polynomial(p->data, x, p->length));}
 
 /* same for mus-random */
-static bool wrapped_mus_random_p(s7_pointer obj) {return(s7_is_real(obj));}
+static bool wrapped_mus_random_p(s7_pointer obj) {return(s7_is_real(obj) && (!s7_is_rational(obj)));}
 static mus_float_t wrapped_mus_random_1(s7_pointer x) {return(mus_random(s7_cell_real(x)));}
+
 
 /* special pm oscil case */
 static mus_float_t wrapped_oscil_3(mus_xen *p, mus_float_t x, mus_float_t y) {return(mus_oscil(p->gen, x, y));}
@@ -10242,7 +10244,7 @@ static s7_pointer g_fm_violin_4_looped(s7_scheme *sc, s7_pointer u_args)
   loc = cdr(body);                    /* (locs i ...) */
 
   callee = s7_slot(sc, cadr(loc));
-  if (s7_slot_value(sc, callee) != stepper)
+  if (s7_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
@@ -10359,7 +10361,7 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
   
   loc = cdr(body);      /* (locs i ...) */
   callee = s7_slot(sc, cadr(loc));
-  if (s7_slot_value(sc, callee) != stepper)
+  if (s7_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
@@ -10663,17 +10665,49 @@ static s7_pointer g_mul_env_direct_any(s7_scheme *sc, s7_pointer args);
 #define NUM_CHOICES 12
 
 
-/* need a function that looks at an expression, gets choices if any, returns
- *         the generator + function + ...
- *       so we gather a tree of funcs and args that handles any tree of known-real calls
- *       with access to slots, and pre-checks for types:
- *  (is? g) -- if not fallback
- *  (f <g>) or (f <g> ...) where <g> is the slot
- *  but how to handle as C? -- another set of callers?
- *  At least do the first step and plug in throughout.
- */
+static mus_float_t gf_1(void *p)
+{
+  gf *g = (gf *)p;
+  return(g->func_1(g->gen));
+}
+
+static mus_float_t gf_2_g1(void *p)
+{
+  gf *g = (gf *)p;
+  return(g->func_2(g->gen, ((gf *)(g->g1))->func(g->g1)));
+}
+
+static mus_float_t gf_2_x1(void *p)
+{
+  gf *g = (gf *)p;
+  return(g->func_2(g->gen, g->x1));
+}
+
+static mus_float_t gf_2_s1(void *p)
+{
+  gf *g = (gf *)p;
+  return(g->func_2(g->gen, s7_cell_real(s7_slot_value(g->s1))));
+}
+
+static mus_float_t gf_3_x1_g1(void *p)
+{
+  gf *g = (gf *)p;
+  return(g->func_3(g->gen, g->x1, ((gf *)(g->g1))->func(g->g1)));
+}
+
+void free_gf(void *p)
+{
+  gf *g = (gf *)p;
+  if (g->g1) free_gf(g->g1);
+  free(g);
+}
 
 gf *find_gf(s7_scheme *sc, s7_pointer expr)
+{
+  return(find_gf_with_locals(sc, expr, s7_current_environment(sc)));
+}
+
+gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
   /* no, this isn't what you think */
   s7_pointer *choices;
@@ -10707,11 +10741,13 @@ gf *find_gf(s7_scheme *sc, s7_pointer expr)
 		obj = s7_value(sc, obj);
 	      if (is_gen(obj))
 		{
-		  p = (gf *)calloc(1, sizeof(gf));
+		  p = (gf *)calloc(1, sizeof(gf));            /* (gen g) */
 		  p->func_1 = gen1;
 		  if (s7_is_object(obj))
 		    p->gen = s7_object_value(obj);
 		  else p->gen = (void *)obj;
+		  p->func = gf_1;
+		  p->s4 = expr;
 		  return(p);
 		}
 	    }
@@ -10726,14 +10762,103 @@ gf *find_gf(s7_scheme *sc, s7_pointer expr)
 		obj = s7_value(sc, obj);
 	      if (is_gen(obj))
 		{
+		  s7_pointer fm;
+		  gf *igf;
+
 		  p = (gf *)calloc(1, sizeof(gf));
 		  p->func_2 = gen2;
 		  if (s7_is_object(obj))
 		    p->gen = s7_object_value(obj);
 		  else p->gen = (void *)obj;
+
+		  fm = caddr(expr);
+		  if (!s7_is_pair(fm))
+		    {
+		      s7_pointer slot;
+		      slot = s7_is_local_variable(sc, fm, locals);
+		      if (!slot)       /* i.e. not a stepper, or a let_looped local */
+			{
+			  if (s7_is_symbol(fm))
+			    fm = s7_symbol_value(sc, fm);  /* avoid unbound var error */
+			  if (s7_is_real(fm))
+			    {
+			      p->func = gf_2_x1;                     /* (gen g s) */
+			      p->x1 = s7_number_to_real(sc, fm);
+			    }
+			}
+		      else
+			{
+			  /* TODO: if val is a mutable real (=1.5), it is one of our locals */
+			  s7_pointer val;
+			  val = s7_slot_value(slot);
+			  if (((s7_is_real(val)) &&
+			       (!s7_is_rational(val))) ||
+			      (val == s7_undefined(sc)))
+			    {
+			      p->func = gf_2_s1;
+			      p->s1 = slot;
+			    }
+			}
+		    }
+		  else
+		    {
+		      igf = find_gf(sc, fm);                     /* (gen g gf-expr) */
+		      if ((igf) && (igf->func))
+			{
+			  p->func = gf_2_g1;
+			  p->g1 = (void *)igf;
+			}
+		      else
+			{
+			  if (igf) free_gf(igf);
+ 			}
+		    }
+		  p->s4 = expr;
 		  return(p);
 		}
 	    }
+#if 0
+	  /* not ready for this yet */
+	  if ((len == 4) &&
+	      (choices[GEN_DIRECT_3]))
+	    {
+	      bool (*is_gen)(s7_pointer p);
+	      mus_float_t (*gen)(void *p, mus_float_t x, mus_float_t y);
+	      gf *p;
+	      s7_pointer obj;
+	  
+	      gen = (mus_float_t (*)(void *p, mus_float_t x, mus_float_t y))(choices[GEN_DIRECT_3]);
+	      is_gen = (bool (*)(s7_pointer p))(choices[GEN_DIRECT_CHECKER]);
+	      obj = cadr(expr);
+	      if (s7_is_symbol(obj))
+		obj = s7_value(sc, obj);
+	      if (is_gen(obj))
+		{
+		  s7_pointer fm;
+		  fm = cadddr(expr);
+
+		  p = (gf *)calloc(1, sizeof(gf));
+		  p->func_3 = gen;
+		  if (s7_is_object(obj))
+		    p->gen = s7_object_value(obj);
+		  else p->gen = (void *)obj;
+
+		  if ((s7_is_pair(fm)) &&
+		      (s7_is_real(caddr(expr))))
+		    {
+		      igf = find_gf(sc, fm);
+		      if (igf)
+			{
+			  p->func = gf_3_x1_g1;
+			  p->g1 = (void *)igf;
+			  p->x1 = s7_number_to_real(sc, caddr(expr));
+			}
+		    }
+		  p->s4 = expr;
+		  return(p);
+		}
+	    }
+#endif
 	}
     }
   return(NULL);
@@ -10799,7 +10924,7 @@ static s7_pointer g_indirect_placer_3_looped(s7_scheme *sc, s7_pointer args, voi
   stepper = car(args);
   locsym = caddr(args);
   callee = s7_slot(sc, locsym);
-  if (s7_slot_value(sc, callee) != stepper)
+  if (s7_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
@@ -10810,6 +10935,7 @@ static s7_pointer g_indirect_placer_3_looped(s7_scheme *sc, s7_pointer args, voi
   GET_GENERATOR_CADR(args, locsig, locs);
   callee = cadddr(args);
   
+  /* ---------------------------------------- */
   topgf = find_gf(sc, callee);
   if (topgf)
     {
@@ -10818,13 +10944,20 @@ static s7_pointer g_indirect_placer_3_looped(s7_scheme *sc, s7_pointer args, voi
 	  for (; pos < end; pos++) 
 	    mover(locs, pos, topgf->func_1(topgf->gen));
 	  (*step) = end;
-	  free(topgf);
+	  free_gf(topgf);
 	  return(args);
 	}
-      if (topgf->func_2)
-	fprintf(stderr, "skipping %s\n", DISPLAY(callee));
-      free(topgf);
+      if (topgf->func)
+	{
+	  for (; pos < end; pos++) 
+	    mover(locs, pos, topgf->func(topgf));
+	  (*step) = end;
+	  free_gf(topgf);
+	  return(args);
+	}
+      free_gf(topgf);
     }
+  /* ---------------------------------------- */
 
   callee_len = s7_list_length(sc, callee);
   if (car(callee) == multiply_symbol)
@@ -11083,7 +11216,7 @@ static s7_pointer g_jc_reverb_out_looped(s7_scheme *sc, s7_pointer args)
 			  
   stepper = car(args);
   callee = s7_slot(sc, caddr(args));
-  if (s7_slot_value(sc, callee) != stepper)
+  if (s7_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
@@ -11248,7 +11381,7 @@ static s7_pointer g_nrev_out_looped(s7_scheme *sc, s7_pointer args)
 			  
   stepper = car(args);
   callee = s7_slot(sc, caddr(args));
-  if (s7_slot_value(sc, callee) != stepper)
+  if (s7_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
@@ -11402,6 +11535,7 @@ static s7_pointer g_direct_two_pole_2_looped(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR_CADR(args, two-pole, tp);
   callee = caddr(args);
 
+  /* ---------------------------------------- */
   gf1 = find_gf(sc, callee);
   if (gf1)
     {
@@ -11409,11 +11543,19 @@ static s7_pointer g_direct_two_pole_2_looped(s7_scheme *sc, s7_pointer args)
 	{
 	  for (; pos < end; pos++)
 	    mus_two_pole(tp, gf1->func_1(gf1->gen));
-	  free(gf1);
+	  free_gf(gf1);
 	  return(args);
 	}
-      free(gf1);
+      if (gf1->func)
+	{
+	  for (; pos < end; pos++)
+	    mus_two_pole(tp, gf1->func(gf1));
+	  free_gf(gf1);
+	  return(args);
+	}
+      free_gf(gf1);
     }
+  /* ---------------------------------------- */
   
   if (s7_function_choice_is_direct_to_real(sc, callee))
     {
@@ -11496,8 +11638,8 @@ static vct *o2_data = NULL;
 static s7_pointer g_indirect_outa_2_temp_dox(s7_scheme *sc, s7_pointer code)
 {
   mus_long_t i, k;
-  i = s7_cell_integer(s7_slot_value(sc, o2_i_slot));
-  k = s7_cell_integer(s7_slot_value(sc, o2_k_slot));
+  i = s7_cell_integer(s7_slot_value(o2_i_slot));
+  k = s7_cell_integer(s7_slot_value(o2_k_slot));
   return(out_any_2(i, gfnc1(g1, gfnc2(g2, o2_data->data[k])), 0, "outa"));
 }
 
@@ -11511,6 +11653,7 @@ static s7_pointer g_indirect_outa_2_temp_dox_looped(s7_scheme *sc, s7_pointer co
       s7_pointer p;
       gf *gf1, *gf2;
       o2_i_slot = s7_local_slot(sc, cadr(code));
+      /* TODO: dox case gf for indirect_outa_2_temp */
       gf1 = find_gf(sc, caddr(code));
       if ((gf1) && (gf1->func_2))
 	{
@@ -11589,7 +11732,7 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
   stepper = car(args);
   locsym = cadr(args);
   callee = s7_slot(sc, locsym);
-  if (s7_slot_value(sc, callee) != stepper)
+  if (s7_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
@@ -11608,17 +11751,27 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
       /* these are used by the OUTA_LOOP macros above */
     }
 
+  /* ---------------------------------------- */
   gf1 = find_gf(sc, callee);
   if (gf1)
     {
       if (gf1->func_1)
 	{
 	  OUTA_LOOP(gf1->func_1(gf1->gen));             /* (gen g) */
-	  free(gf1);
+	  free_gf(gf1);
 	  return(args);
 	}
-      /* must be gen2 */
+      if (gf1->func)
+	{
+	  OUTA_LOOP(gf1->func(gf1));
+	  free_gf(gf1); 
+	  return(args);
+	}
+      /* ---------------------------------------- */
+
       fm = caddr(callee);
+
+      /* must be gen2 */
       if ((!s7_is_pair(fm)) &&
 	  (fm != locsym))
 	{
@@ -11640,6 +11793,7 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 	    }
 	  free(gf2);
 	}
+
       if (car(fm) == multiply_symbol)
 	{
 	  if (s7_list_length(sc, fm) == 3)
@@ -12388,20 +12542,21 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
 {
   s7_Int pos, end;
   s7_Double x;
-  s7_pointer stepper, callee, loc, letp, lets, vars, let, body, locsym;
+  s7_pointer stepper, callee, loc, letp, lets, vars, let, body, locsym, old_e;
   s7_Int *step, *stop;
   s7_function letf;
   /* s7_pointer *choices; */
 
   stepper = car(args);
   let = cadr(args);
+  old_e = caddr(args);
   vars = cadr(let);
   body = caddr(let);
 
   loc = cdr(body); 
   locsym = car(loc);
   callee = s7_slot(sc, locsym);
-  if (s7_slot_value(sc, callee) != stepper)
+  if (s7_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
@@ -12409,7 +12564,8 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
   pos = (*step);
   end = (*stop);
 
-  if (s7_is_pair(cdr(vars))) 
+
+  if (s7_is_pair(cdr(vars)))  /* more than 1 let var */
     {
       /* fprintf(stderr, "%lld %s\n", end - pos, DISPLAY(vars)); */
       /*
@@ -12475,6 +12631,36 @@ so 2 vars,
   letp = cadr(car(vars));
   lets = s7_slot(sc, caar(vars));
   callee = caddr(body);
+
+  /* ---------------------------------------- */
+  {
+    gf *lg, *bg;
+    lg = find_gf(sc, letp);
+    bg = find_gf_with_locals(sc, callee, old_e);
+    if ((lg) && (bg) &&
+	(lg->func) && (bg->func))
+      {
+	s7_Double *ry;
+	s7_pointer y;
+	y = s7_make_mutable_real(sc, 1.5);
+	ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
+	s7_slot_set_value(sc, lets, y);
+
+	for (; pos < end; pos++)
+	  {
+	    (*step) = pos;
+	    (*ry) = lg->func(lg);
+	    out_any_2(pos, bg->func(bg), 0, "outa");
+	  }
+
+	free_gf(lg);
+	free_gf(bg);
+	return(args);
+      }
+    if (lg) free_gf(lg);
+    if (bg) free_gf(bg);
+  }
+  /* ---------------------------------------- */
 
   /* fprintf(stderr, "%lld: %s\n     %s\n\n", end - pos, DISPLAY_80(letp), DISPLAY_80(callee)); */
   
@@ -12799,7 +12985,7 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
   stepper = car(args);
   locsym = cadr(args);
   callee = s7_slot(sc, locsym);
-  if (s7_slot_value(sc, callee) != stepper)
+  if (s7_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
@@ -12818,15 +13004,24 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
       dlen = mus_file_buffer_size();
     }
 
+  /* ---------------------------------------- */
   gf1 = find_gf(sc, callee);
   if (gf1)
     {
       if (gf1->func_1)
 	{
 	  OUTA_LOOP(mus_env(e) * gf1->func_1(gf1->gen));
-	  free(gf1);
+	  free_gf(gf1);
 	  return(args);
 	}
+      if (gf1->func)
+	{
+	  OUTA_LOOP(mus_env(e) * gf1->func(gf1));
+	  free_gf(gf1);
+	  return(args);
+	}
+      /* ---------------------------------------- */
+
       fm = caddr(callee);
       if (s7_is_pair(fm))
 	{
@@ -13101,7 +13296,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
   s7_Int pos, end;
   s7_Double x;
   mus_any *e = NULL;
-  s7_pointer stepper, callee, loc, letp, lets, letsym, fm, let, vars, body;
+  s7_pointer stepper, callee, loc, letp, lets, letsym, fm, let, vars, body, old_e;
   s7_Int *step, *stop;
   s7_function letf;
   gf *let_gf1, *let_gf2, *gf1, *gf2, *gf3, *gf4;
@@ -13113,12 +13308,13 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
 
   stepper = car(args);
   let = cadr(args);
+  old_e = caddr(args);
   vars = cadr(let);
   body = caddr(let);
 
   loc = cdr(body); 
   callee = s7_slot(sc, car(loc));
-  if (s7_slot_value(sc, callee) != stepper)
+  if (s7_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
@@ -13690,7 +13886,7 @@ static s7_pointer g_outa_env_polywave_env_looped(s7_scheme *sc, s7_pointer args)
 
   stepper = car(args);
   callee = s7_slot(sc, cadr(args));
-  if (s7_slot_value(sc, callee) != stepper)
+  if (s7_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
@@ -13731,7 +13927,7 @@ static s7_pointer g_outa_env_polywave_env_ri_looped(s7_scheme *sc, s7_pointer ar
 
   stepper = car(args);
   callee = s7_slot(sc, cadr(args));
-  if (s7_slot_value(sc, callee) != stepper)
+  if (s7_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
@@ -13774,7 +13970,7 @@ static s7_pointer g_outa_env_oscil_env_looped(s7_scheme *sc, s7_pointer args)
 
   stepper = car(args);
   callee = s7_slot(sc, cadr(args));
-  if (s7_slot_value(sc, callee) != stepper)
+  if (s7_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
@@ -13958,7 +14154,7 @@ static s7_pointer g_outa_2_temp_simple_looped(s7_scheme *sc, s7_pointer args)
 
   stepper = car(args);
   callee = s7_slot(sc, cadr(args));
-  if (s7_slot_value(sc, callee) != stepper)
+  if (s7_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
@@ -14016,7 +14212,7 @@ static s7_pointer g_outa_2_temp_sg_looped(s7_scheme *sc, s7_pointer args)
 
   stepper = car(args);
   callee = s7_slot(sc, cadr(args));
-  if (s7_slot_value(sc, callee) != stepper)
+  if (s7_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
@@ -14080,7 +14276,7 @@ static s7_pointer g_outa_2_temp_eg_looped(s7_scheme *sc, s7_pointer args)
 
   stepper = car(args);
   callee = s7_slot(sc, cadr(args));
-  if (s7_slot_value(sc, callee) != stepper)
+  if (s7_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
@@ -17275,6 +17471,7 @@ static void init_choosers(s7_scheme *sc)
   abs_rand_interp = clm_make_function(sc, "abs", g_abs_rand_interp, 1, 0, false, "abs optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   abs_oscil = clm_make_function(sc, "abs", g_abs_oscil, 1, 0, false, "abs optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   abs_triangle_wave = clm_make_function(sc, "abs", g_abs_triangle_wave, 1, 0, false, "abs optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  /* direct_choice_1(sc, f, (s7_pointer)wrapped_abs_1, (s7_pointer)wrapped_abs_p); */
 
 
 #define GEN_F(Name, Type)				\
@@ -17849,7 +18046,7 @@ static void init_choosers(s7_scheme *sc)
 
   indirect_outa_2_temp_looped = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_temp_looped, 2, 0, false, "outa optimization", f);
   s7_function_set_looped(indirect_outa_2_temp, indirect_outa_2_temp_looped);
-  indirect_outa_2_temp_let_looped = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_temp_let_looped, 2, 0, false, "outa optimization", f);
+  indirect_outa_2_temp_let_looped = clm_make_function_not_temp(sc, "outa", g_indirect_outa_2_temp_let_looped, 3, 0, false, "outa optimization", f);
   s7_function_set_let_looped(indirect_outa_2_temp, indirect_outa_2_temp_let_looped);
 
   indirect_outa_2_temp_dox_looped = s7_make_function(sc, "outa", g_indirect_outa_2_temp_dox_looped, 2, 0, false, "outa optimization");

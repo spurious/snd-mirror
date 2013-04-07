@@ -3893,6 +3893,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 				  s7_set_current_environment(s7, old_e);
 				  return(res);
 				}
+
 			      if (s7_is_pair(fm))
 				{
 				  gf2 = find_gf(s7, fm);
@@ -4067,10 +4068,25 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 				  sf = free_snd_fd(sf);
 				  change_samples(beg, num, data, cp, caller, pos, -1.0);
 				  free(data);
+				  free_gf(gf1);
 				  s7_set_current_environment(s7, old_e);
 				  return(res);
 				}
-			      free(gf1);
+
+			      /* ---------------------------------------- */
+			      if (gf1->func)
+				{
+				  for (kp = 0; kp < num; kp++)
+				    data[kp] = gf1->func(gf1);
+				  sf = free_snd_fd(sf);
+				  change_samples(beg, num, data, cp, caller, pos, -1.0);
+				  free(data);
+				  free_gf(gf1);
+				  s7_set_current_environment(s7, old_e);
+				  return(res);
+				}
+			      /* ---------------------------------------- */
+			      free_gf(gf1);				
 			    }
 			  
 			  for (kp = 0; kp < num; kp++)

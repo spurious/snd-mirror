@@ -43,13 +43,22 @@ MUS_EXPORT XEN g_mus_data(XEN gen);
 
 #if HAVE_SCHEME
 typedef struct {
-  void *gen;
+  void *gen, *g1, *g2, *g3, *g4;
   mus_float_t (*func_1)(void *p);
   mus_float_t (*func_2)(void *p, mus_float_t x);
   mus_float_t (*func_3)(void *p, mus_float_t x, mus_float_t y);
+  mus_float_t (*func)(void *p);
+  mus_float_t (*f1)(void *p);
+  mus_float_t (*f2)(void *p);
+  mus_float_t (*f3)(void *p);
+  mus_float_t (*f4)(void *p);
+  double x1, x2, x3, x4;
+  s7_pointer s1, s2, s3, s4;
 } gf;
 
 MUS_EXPORT gf *find_gf(s7_scheme *sc, s7_pointer expr);
+MUS_EXPORT void free_gf(void *p);
+MUS_EXPORT gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
 MUS_EXPORT void store_choices(s7_scheme *sc, s7_pointer base_f, s7_pointer g1, s7_pointer g2, s7_pointer g3, s7_pointer isg);
 MUS_EXPORT gf *find_gf3(s7_scheme *sc, s7_pointer expr);
 MUS_EXPORT mus_any *s7_to_mus_any(s7_pointer p);

@@ -2705,7 +2705,7 @@ static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
 
       stepper = s7_car(args);
       callee = s7_slot(sc, s7_cadddr(args));
-      if (s7_slot_value(sc, callee) != stepper)
+      if (s7_slot_value(callee) != stepper)
 	return(NULL);
       
       step = ((s7_Int *)((unsigned char *)(stepper) + SOUND_DATA_NUMBER_LOCATION));
