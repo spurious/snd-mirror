@@ -3877,9 +3877,9 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 			  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
 			  old_e = s7_set_current_environment(s7, e);                  /* new env for map lambda */
 			  /* we need to connect to the lambda's closure so subsequent symbol lookups work right */
-			  
+
 			  gf1 = find_gf(s7, res);
-			  if (gf1)
+			  if ((gf1) && (gf1->func_2))
 			    {
 			      /* here the arg is a member of the tree, so func_1 can't happen */
 			      fm = s7_caddr(res);
@@ -3913,7 +3913,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 				      free(gf2);
 				    }
 				}
-			      free(gf1);
+			      if (gf1) free(gf1);
 			    }
 			  if ((s7_car(res) == s7_make_symbol(s7, "+")) &&
 			      (s7_list_length(s7, res) == 3))

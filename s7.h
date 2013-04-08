@@ -320,6 +320,7 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double num);                       /* 
 s7_pointer s7_make_mutable_real(s7_scheme *sc, s7_Double n);
 s7_Double s7_number_to_real(s7_scheme *sc, s7_pointer x);                    /* x can be any kind of number */
 s7_Int s7_number_to_integer(s7_scheme *sc, s7_pointer x);
+bool s7_is_mutable(s7_pointer p);
 
 bool s7_is_ulong(s7_pointer arg);                                            /* returns true if arg is an unsigned long */
 unsigned long s7_ulong(s7_pointer p);                                        /* Scheme unsigned long -> C */
@@ -869,7 +870,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
- * 7-Apr:     removed s7_scheme* arg from s7_slot_value, add s7_is_local_variable.
+ * 7-Apr:     removed s7_scheme* arg from s7_slot_value, added s7_is_local_variable.
  * 25-Mar:    char-position, string-position, environment-ref, environment-set! added to the scheme side.
  * 26-Jan:    s7_function_set_dox_looped (loop optimization experiments).
  * 9-Jan:     s7_cos, s7_sin, other optimization changes.

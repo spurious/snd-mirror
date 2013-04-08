@@ -5686,7 +5686,7 @@ s7_pointer s7_is_local_variable(s7_scheme *sc, s7_pointer symbol, s7_pointer e)
 {
   /* search from env e inward */
   s7_pointer x, y;
-  for (x = e; is_environment(x); x = cdr(x))
+  for (x = sc->envir; (x != e) && (is_environment(x)); x = next_environment(x))
     for (y = environment_slots(x); is_slot(y); y = next_slot(y))
       if (slot_symbol(y) == symbol)
 	return(y);
@@ -7385,6 +7385,11 @@ s7_pointer s7_make_mutable_real(s7_scheme *sc, s7_Double n)
   set_type(x, T_REAL | T_MUTABLE);
   real(x) = n;
   return(x);
+}
+
+bool s7_is_mutable(s7_pointer p)
+{
+  return(is_mutable(p));
 }
 
 
@@ -13851,6 +13856,7 @@ static s7_pointer g_multiply_1_any(s7_scheme *sc, s7_pointer args)
 	  arg2 = g_multiply(sc, arg2);
 	  if (is_simple_real(arg2))
 	    return(s7_remake_real(sc, arg1, product * real(arg2)));
+	  real(arg1) = product;
 	  return(g_m_s_t(sc, arg2, arg1, args));
 	}
     }
@@ -29287,7 +29293,9 @@ void *s7_function_chooser_data(s7_scheme *sc, s7_pointer expr)
 
 void *s7_function_chooser_data_direct(s7_pointer f)
 {
-  return(c_function_chooser_data(f));
+  if (is_c_function(f))
+    return(c_function_chooser_data(f));
+  return(NULL);
 }
 
 void s7_function_chooser_set_data(s7_scheme *sc, s7_pointer f, void *data)
@@ -45823,10 +45831,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_function f;
 		    s7_pointer result;
 			
+		    /* fprintf(stderr, "%d: %s\n", __LINE__, DISPLAY(sc->envir)); */
 		    f = (s7_function)c_function_call(c_function_let_looped(ecdr(func)));
 		    car(sc->T3_1) = stepper;
 		    car(sc->T3_2) = caddr(sc->code);
-		    car(sc->T3_3) = sc->envir;
+		    car(sc->T3_3) = next_environment(sc->envir);
 		    result = f(sc, sc->T3_1);
 			
 		    if (result)
@@ -46086,11 +46095,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    sc->envir = new_frame_in_env(sc, sc->envir); 
 				    for (p = cadr(sc->code); is_pair(p); p = cdr(p))
 				      add_slot(sc, caar(p), sc->UNDEFINED);				      
-				    
+
+				    /* fprintf(stderr, "%d: %s\n", __LINE__, DISPLAY(old_e)); */
 				    f = (s7_function)c_function_call(c_function_let_looped(ecdr(caddr(sc->code))));
 				    car(sc->T3_1) = slot_value(sc->args);
 				    car(sc->T3_2) = sc->code;
-				    car(sc->T3_3) = old_e;
+				    car(sc->T3_3) = next_environment(old_e);
 				    result = f(sc, sc->T3_1);
 				    sc->envir = old_e;
 

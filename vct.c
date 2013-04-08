@@ -909,11 +909,11 @@ static s7_pointer multiply_symbol, vct_ref_symbol, vector_ref_symbol, env_symbol
 static s7_pointer vct_set_direct_looped;
 static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 {
-  s7_Int pos, end, val_len;
-  s7_pointer stepper, vc, val, index_slot, fm, locsym;
+  s7_Int pos, end;
+  s7_pointer stepper, vc, val, index_slot, locsym;
   s7_Int *step, *stop;
   vct *v;
-  gf *gf1, *gf2, *gf3;
+  gf *gf1;
   
   vc = s7_cadr_value(sc, args);                      /* (0 v i (...)) */
   v = (vct *)imported_s7_object_value_checked(vc, vct_tag);
@@ -966,7 +966,6 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 		}
 	      for (; pos < end; pos++) 
 		v->data[pos] = func(gen);
-	      
 	      (*step) = end;
 	      free_gf(gf1);
 	      return(args);
@@ -974,7 +973,10 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	  if (gf1->func)
 	    {
 	      for (; pos < end; pos++)
-		v->data[pos] = gf1->func(gf1);
+		{
+		  (*step) = pos;
+		  v->data[pos] = gf1->func(gf1);
+		}
 	      (*step) = end;
 	      free_gf(gf1);
 	      return(args);
@@ -983,259 +985,90 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	}
       /* ---------------------------------------- */
 
-      val_len = s7_list_length(sc, val);
-      gf1 = find_gf(sc, val);
-      if (gf1)
+      if (car(val) == env_symbol)
 	{
-	  if (gf1->func_1)
+	  s7_pointer e;
+	  e = cadr(val);
+	  if ((s7_is_pair(e)) &&
+	      (caddr(e) == caddr(args)) &&
+	      (car(e) == vector_ref_symbol) &&
+	      (s7_is_symbol(cadr(e))))
 	    {
-	      mus_long_t dist;
-	      void *gen;
-	      mus_float_t (*sampler)(void *p);
-	      gen = gf1->gen;
-	      sampler = gf1->func_1;
-	      
-	      dist = end - 4;
-	      while (pos < dist)
+	      s7_pointer rv;
+	      rv = s7_cadr_value(sc, e);
+	      if (s7_is_vector(rv))
 		{
-		  v->data[pos++] = sampler(gen);
-		  v->data[pos++] = sampler(gen);
-		  v->data[pos++] = sampler(gen);
-		  v->data[pos++] = sampler(gen);
-		}
-	      for (; pos < end; pos++) 
-		v->data[pos] = sampler(gen);
-	      
-	      (*step) = end;
-	      free(gf1);
-	      return(args);
-	    }
-
-	  /* must be func_2 */
-	  fm = caddr(val);
-	  if (s7_is_pair(fm))
-	    {
-	      gf2 = find_gf(sc, fm);
-	      if (gf2)
-		{
-		  if (gf2->func_1)
-		    {
-		      for (; pos < end; pos++)
-			v->data[pos] = gf1->func_2(gf1->gen, gf2->func_1(gf2->gen));
-		      (*step) = end;
-		      free(gf1); free(gf2);
-		      return(args);
-		    }
-		  fm = caddr(fm);
-		  if (s7_is_pair(fm))
-		    {
-		      gf3 = find_gf(sc, fm);
-		      if (gf3)
-			{
-			  if (gf3->func_1)
-			    {
-			      for (; pos < end; pos++)
-				v->data[pos] = gf1->func_2(gf1->gen, gf2->func_2(gf2->gen, gf3->func_1(gf3->gen)));
-			      (*step) = end;
-			      free(gf1); free(gf2); free(gf3);
-			      return(args);
-			    }
-			  fm = caddr(fm);
-			  if (s7_function_choice_is_direct_to_real(sc, fm))
-			    {
-			      for (; pos < end; pos++)
-				{
-				  (*step) = pos;
-				  v->data[pos] = gf1->func_2(gf1->gen, gf2->func_2(gf2->gen, gf3->func_2(gf3->gen, s7_call_direct_to_real_and_free(sc, fm))));
-				}
-			      (*step) = end;
-			      free(gf1); free(gf2); free(gf3);
-			      return(args);
-			    }
-			}
-		      
-		      if ((s7_is_symbol(cadr(fm))) &&
-			  (caddr(fm) == caddr(args)) &&
-			  (car(fm) == vct_ref_symbol))
-			{
-			  vct *rv;
-			  rv = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, fm), vct_tag);
-			  if (rv)
-			    {
-			      if (end > rv->length)
-				XEN_OUT_OF_RANGE_ERROR("vct-ref", 2, caddr(fm), "index out of range");
-			      for (; pos < end; pos++)
-				v->data[pos] = gf1->func_2(gf1->gen, gf2->func_2(gf2->gen, rv->data[pos]));
-			      (*step) = end;
-			      free(gf1); free(gf2);
-			      return(args);
-			    }
-			}
-		      if (s7_function_choice_is_direct_to_real(sc, fm))
-			{
-			  for (; pos < end; pos++)
-			    {
-			      (*step) = pos;
-			      v->data[pos] = gf1->func_2(gf1->gen, gf2->func_2(gf2->gen, s7_call_direct_to_real_and_free(sc, fm)));
-			      (*step) = end;
-			    }
-			  free(gf1); free(gf2);
-			  return(args);
-			}
-		    }
-		  free(gf2);
-		}
-	      
-	      if ((car(fm) == multiply_symbol) &&
-		  (s7_is_symbol(cadr(fm))) &&
-		  (cadr(fm) != locsym) &&
-		  (s7_list_length(sc, fm) == 3))
-		{
-		  gf2 = find_gf(sc, caddr(fm));
-		  if (gf2)
-		    {
-		      if (gf2->func_1)
-			{
-			  double x;
-			  x = s7_number_to_real(sc, s7_cadr_value(sc, fm));
-			  for (; pos < end; pos++)
-			    v->data[pos] = gf1->func_2(gf1->gen, x * gf2->func_1(gf2->gen));
-			  (*step) = end;
-			  free(gf1); free(gf2);
-			  return(args);
-			}
-		      free(gf2);
-		    }
-		}
-	      if (s7_function_choice_is_direct_to_real(sc, fm))
-		{
+		  s7_pointer *elements;
+		  if (end > s7_vector_length(rv))
+		    XEN_OUT_OF_RANGE_ERROR("vector-ref", 2, caddr(e), "index out of range");
+		  elements = s7_vector_elements(rv);
 		  for (; pos < end; pos++)
-		    {
-		      (*step) = pos;
-		      v->data[pos] = gf1->func_2(gf1->gen, s7_call_direct_to_real_and_free(sc, fm));
-		      (*step) = end;
-		    }
-		  free(gf1);
+		    v->data[pos] = mus_env(s7_to_mus_any(elements[pos]));
+		  (*step) = end;
 		  return(args);
 		}
 	    }
-	  free(gf1);
 	}
 
-      /* call-directs are  (+ off (* scl (cos angle))) and (polynomial coeffs (cos angle)) */
+      if (s7_function_choice_is_direct_to_real(sc, val))
+	{
+	  /* fprintf(stderr, "vct %lld %s\n", end - pos, DISPLAY(val));
+	     (hilbert-transform...)
+	     (env (vector-ref es i))
+	     (random 1.0)
+	   */
 
-      if ((s7_is_symbol(cadr(val))) &&
-	  (val_len == 3) &&
-	  (caddr(args) == caddr(val)) &&
-	  (car(val) == vct_ref_symbol))
-	{
-	  vct *rv;
-	  rv = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, val), vct_tag);
-	  if (rv)
+	  for (; pos < end; pos++)
 	    {
-	      if (end > rv->length)
-		XEN_OUT_OF_RANGE_ERROR("vct-ref", 2, caddr(args), "index out of range");
-	      for (; pos < end; pos++)
-		v->data[pos] = rv->data[pos];
-	      (*step) = end;
-	      return(args);
+	      (*step) = pos; /* in case val expr depends on the step var */
+	      v->data[pos] = s7_number_to_real(sc, s7_call_direct(sc, val));
 	    }
-	}
-
-      if (s7_function_returns_temp(val))
-	{
-	  gf *gf3;
-	  gf3 = find_gf3(sc, val);
-	  if (gf3)
-	    {
-	      gf *a2, *a3;
-	      s7_pointer arg2, arg3;
-	      arg2 = caddr(val);
-	      arg3 = cadddr(val);
-	      a3 = find_gf(sc, arg3);
-	      if ((a3) && (a3->func_1))
-		{
-		  a2 = find_gf(sc, arg2);
-		  if ((a2) && (a2->func_2))
-		    {
-		      s7_pointer b1;
-		      b1 = caddr(arg2);
-		      if ((s7_is_pair(b1)) &&
-			  (car(b1) == vct_ref_symbol) &&
-			  (s7_is_symbol(cadr(b1))) &&
-			  (caddr(b1) == caddr(args)))
-			{
-			  vct *rv;
-			  rv = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, b1), vct_tag);
-			  if (rv)
-			    {
-			      if (end > rv->length)
-				XEN_OUT_OF_RANGE_ERROR("vct-ref", 2, caddr(args), "index out of range");
-			      for (; pos < end; pos++)
-				v->data[pos] = gf3->func_3(gf3->gen, a2->func_2(a2->gen, rv->data[pos]), a3->func_1(a3->gen));
-			      (*step) = end;
-			      return(args);
-			    }
-			}
-		    }
-		  if (a2) free(a2);
-		}
-	      if (a3) free(a3);
-	      free(gf3);
-	    }
-	  if (car(val) == env_symbol)
-	    {
-	      s7_pointer e;
-	      e = cadr(val);
-	      if ((s7_is_pair(e)) &&
-		  (caddr(e) == caddr(args)) &&
-		  (car(e) == vector_ref_symbol) &&
-		  (s7_is_symbol(cadr(e))))
-		{
-		  s7_pointer rv;
-		  rv = s7_cadr_value(sc, e);
-		  if (s7_is_vector(rv))
-		    {
-		      s7_pointer *elements;
-		      if (end > s7_vector_length(rv))
-			XEN_OUT_OF_RANGE_ERROR("vector-ref", 2, caddr(e), "index out of range");
-		      elements = s7_vector_elements(rv);
-		      for (; pos < end; pos++)
-			v->data[pos] = mus_env(s7_to_mus_any(elements[pos]));
-		      (*step) = end;
-		      return(args);
-		    }
-		}
-	    }
-	  if (s7_function_choice_is_direct_to_real(sc, val))
-	    {
-	      for (; pos < end; pos++)
-		{
-		  (*step) = pos; /* in case val expr depends on the step var */
-		  v->data[pos] = s7_call_direct_to_real_and_free(sc, val);
-		}
-	      (*step) = end;
-	      return(args);
-	    }
-	}
-      else
-	{
-	  if (s7_function_choice_is_direct_to_real(sc, val))
-	    {
-	      for (; pos < end; pos++)
-		{
-		  (*step) = pos; /* in case val expr depends on the step var */
-		  v->data[pos] = s7_number_to_real(sc, s7_call_direct(sc, val));
-		}
-	      (*step) = end;
-	      return(args);
-	    }
+	  (*step) = end;
+	  return(args);
 	}
       return(NULL);
     }
   XEN_ASSERT_TYPE(false, s7_cadr_value(sc, args), XEN_ARG_1, "vct-set!", "a vct");
   return(s7_f(sc));
 }
+
+
+/* static bool wrapped_vct_p(s7_pointer obj) {return(mus_vct_p(obj));} */
+
+static mus_float_t wrapped_vct_ref(void *p)
+{
+  gf *g = (gf *)p;
+  vct *v;
+  s7_Int k;
+  v = (vct *)(g->gen);
+  k = s7_cell_integer(s7_slot_value(g->s1));
+  if ((k >= 0) && (k < v->length))
+    return(v->data[k]);
+  return(0.0);
+}
+
+static gf *fixup_vct_ref(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
+{
+  gf *g;
+  s7_pointer obj;
+  if ((s7_is_symbol(cadr(expr))) &&
+      (!s7_is_local_variable(sc, cadr(expr), locals)) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      obj = s7_cadr_value(sc, expr);
+      if ((s7_is_object(obj)) &&
+	  (mus_vct_p(obj)))
+	{
+	  g = (gf *)calloc(1, sizeof(gf));
+	  g->func = wrapped_vct_ref;
+	  g->gen = s7_object_value(obj);
+	  g->s1 = s7_slot(sc, caddr(expr));
+	  return(g);
+	}
+    }
+  return(NULL);
+}
+
 
 s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args);
 static s7_pointer vct_set_direct_dox_looped;
@@ -1244,8 +1077,9 @@ static s7_pointer vid_i_slot, vid_x_slot;
 static mus_float_t x1, x2;
 static mus_long_t vid_length;
 static void *vid_gen;
+static gf *vid_gf;
 static mus_float_t (*vid_func_1)(void *p);
-static s7_pointer vid_expr;
+static mus_float_t (*vid_func)(void *p);
 
 static s7_pointer g_vct_set_direct_dox_add_1ss(s7_scheme *sc, s7_pointer code)
 {
@@ -1269,12 +1103,12 @@ static s7_pointer g_vct_set_direct_dox_gen1(s7_scheme *sc, s7_pointer code)
   return(NULL);
 }
 
-static s7_pointer g_vct_set_direct_dox_expr(s7_scheme *sc, s7_pointer code)
+static s7_pointer g_vct_set_direct_dox_gf(s7_scheme *sc, s7_pointer code)
 {
   mus_long_t pos;
   pos = s7_cell_integer(s7_slot_value(vid_i_slot));
   if (pos < vid_length)
-    vid_data[pos] = vid_func_1(vid_gen) * s7_call_direct_to_real_and_free(sc, vid_expr);
+    vid_data[pos] = vid_func((void *)vid_gf);
   return(NULL);
 }
 
@@ -1320,7 +1154,6 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 		}
 	    }
 
-	  /* TODO: vct dox case needs full gf */
 	  gf1 = find_gf(sc, add_expr);
 	  if (gf1)
 	    {
@@ -1331,25 +1164,13 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 		  free(gf1);
 		  return((s7_pointer)g_vct_set_direct_dox_gen1);
 		}
-	      free(gf1);
-	    }
-
-	  if ((car(add_expr) == multiply_symbol) &&
-	      (s7_list_length(sc, add_expr) == 3))
-	    {
-	      gf1 = find_gf(sc, cadr(add_expr));
-	      if (gf1)
+	      if (gf1->func)
 		{
-		  if (gf1->func_1)
-		    {
-		      vid_expr = caddr(add_expr);
-		      vid_func_1 = gf1->func_1;
-		      vid_gen = gf1->gen;
-		      free(gf1);
-		      return((s7_pointer)g_vct_set_direct_dox_expr);
-		    }
-		  free(gf1);
+		  vid_func = gf1->func;
+		  vid_gf = gf1;
+		  return((s7_pointer)g_vct_set_direct_dox_gf);
 		}
+	      free(gf1);
 	    }
 	}
     }
@@ -2441,6 +2262,7 @@ void mus_vct_init(void)
     s7_function_set_class(vct_ref_ss, f);
     s7_function_set_returns_temp(vct_ref_ss);
 
+    store_gf_fixup(s7, f, fixup_vct_ref);
 
     /* vct-set! */
     f = s7_name_to_value(s7, "vct-set!");
