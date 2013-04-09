@@ -2292,11 +2292,9 @@ void mus_vct_init(void)
 
     vct_set_direct_dox_looped = s7_make_function(s7, "vct-set!", g_vct_set_direct_dox_looped, 2, 0, false, "vct-set! optimization");
     s7_function_set_class(vct_set_direct_dox_looped, f);
-#if 0
     s7_function_set_dox_looped(vct_set_direct, vct_set_direct_dox_looped);
     s7_function_set_dox_looped(vct_set_temp, vct_set_direct_dox_looped);
     s7_function_set_dox_looped(vct_set_ssf, vct_set_direct_dox_looped);
-#endif
 #endif
   }
   multiply_symbol = s7_make_symbol(s7, "*");

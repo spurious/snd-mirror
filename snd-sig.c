@@ -3864,126 +3864,44 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	       */
 	      if (s7_tree_memq(s7, arg, res))
 		{
-		  s7_pointer y, fm, fm1;
+		  s7_pointer y;
 		  s7_Double *ry;
 		  if (s7_function_choice_is_direct(s7, res))
 		    {
 		      if (s7_function_returns_temp(res))
 			{
-			  gf *gf1, *gf2;
-			  
+			  gf *gf1;
+
 			  data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
-			  
 			  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
 			  old_e = s7_set_current_environment(s7, e);                  /* new env for map lambda */
 			  /* we need to connect to the lambda's closure so subsequent symbol lookups work right */
 
-			  gf1 = find_gf(s7, res);
-			  if ((gf1) && (gf1->func_2))
-			    {
-			      /* here the arg is a member of the tree, so func_1 can't happen */
-			      fm = s7_caddr(res);
-			      if (fm == arg)
-				{
-				  for (kp = 0; kp < num; kp++)
-				    data[kp] = gf1->func_2(gf1->gen, read_sample(sf));
-				  sf = free_snd_fd(sf);
-				  change_samples(beg, num, data, cp, caller, pos, -1.0);
-				  free(data);
-				  s7_set_current_environment(s7, old_e);
-				  return(res);
-				}
-
-			      if (s7_is_pair(fm))
-				{
-				  gf2 = find_gf(s7, fm);
-				  if (gf2)
-				    {
-				      fm1 = s7_caddr(fm);
-				      if (fm1 == arg)
-					{
-					  for (kp = 0; kp < num; kp++)
-					    data[kp] = gf1->func_2(gf1->gen, gf2->func_2(gf2->gen, read_sample(sf)));
-					  sf = free_snd_fd(sf);
-					  change_samples(beg, num, data, cp, caller, pos, -1.0);
-					  free(data);
-					  s7_set_current_environment(s7, old_e);
-					  return(res);
-					}
-				      free(gf2);
-				    }
-				}
-			      if (gf1) free(gf1);
-			    }
-			  if ((s7_car(res) == s7_make_symbol(s7, "+")) &&
-			      (s7_list_length(s7, res) == 3))
-			    {
-			      s7_pointer arg1, arg2;
-			      arg1 = s7_cadr(res);
-			      arg2 = s7_caddr(res);
-			      gf1 = find_gf(s7, arg1);
-			      gf2 = find_gf(s7, arg2);
-			      if ((gf1) && (gf2) &&
-				  (gf1->func_2) && (gf2->func_2) &&
-				  (s7_caddr(arg1) == arg) &&
-				  (s7_caddr(arg2) == arg))
-				{
-				  double x;
-				  for (kp = 0; kp < num; kp++)
-				    {
-				      x = read_sample(sf);
-				      data[kp] = gf1->func_2(gf1->gen, x) + gf2->func_2(gf2->gen, x);
-				    }
-				  sf = free_snd_fd(sf);
-				  change_samples(beg, num, data, cp, caller, pos, -1.0);
-				  free(data);
-				  s7_set_current_environment(s7, old_e);
-				  return(res);
-				}
-			      if (gf1) free(gf1);
-			      if (gf2) free(gf2);
-
-			      if ((arg1 == arg) &&
-				  (s7_function_choice_is_direct_to_real(s7, arg2)) &&
-				  (!s7_tree_memq(s7, arg, arg2)))
-				{
-				  for (kp = 0; kp < num; kp++)
-				    data[kp] = read_sample(sf) + s7_call_direct_to_real_and_free(s7, arg2);
-				  sf = free_snd_fd(sf);
-				  change_samples(beg, num, data, cp, caller, pos, -1.0);
-				  free(data);
-				  s7_set_current_environment(s7, old_e);
-				  return(res);
-				}
-			    }
-			  
-			  if ((s7_car(res) == s7_make_symbol(s7, "*")) &&
-			      (s7_list_length(s7, res) == 3) &&
-			      (s7_cadr(res) == arg))
-			    {
-			      gf1 = find_gf(s7, s7_caddr(res));
-			      if (gf1)
-				{
-				  if (gf1->func_1)
-				    {
-				      for (kp = 0; kp < num; kp++)
-					data[kp] = read_sample(sf) * gf1->func_1(gf1->gen);
-				      sf = free_snd_fd(sf);
-				      change_samples(beg, num, data, cp, caller, pos, -1.0);
-				      free(data);
-				      s7_set_current_environment(s7, old_e);
-				      return(res);
-				    }
-				  free(gf1);
-				}
-			    }
-
 			  y = s7_make_mutable_real(s7, 1.5);                          /* slot for the map lambda arg */
 			  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
 			  slot = s7_make_slot(s7, e, arg, y);                         /* make sure it is mutable */
+
+			  gf1 = find_gf_with_locals(s7, res, old_e);
+			  if (gf1)
+			    {
+			      for (kp = 0; kp < num; kp++)
+				{
+				  (*ry) = read_sample(sf);
+				  data[kp] = gf1->func(gf1);
+				}
+			      sf = free_snd_fd(sf);
+			      change_samples(beg, num, data, cp, caller, pos, -1.0);
+			      free(data);
+			      s7_set_current_environment(s7, old_e);
+			      return(res);
+			    }
 			  
-			  /* fprintf(stderr, "%lld %s\n", num, DISPLAY(res)); */
-			  
+			  /*
+			  fprintf(stderr, "%lld %s\n", num, DISPLAY(res));
+			  50828 (+ y (* (- 1.0 pos) (read-sample reader0)))
+			  50828 (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)))
+			  50828 (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)))
+			  */
 			  for (kp = 0; kp < num; kp++)
 			    {
 			      (*ry) = read_sample(sf);
