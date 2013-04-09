@@ -3847,7 +3847,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 		  data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
 		  for (kp = 0; kp < num; kp++)
 		    data[kp] = x + read_sample(sf);
-		  change_samples(beg, num, data, cp, caller, pos, fabs(x));
+		  change_samples(beg, num, data, cp, caller, pos, -1.0);
 		  free(data);
 		}
 	      sf = free_snd_fd(sf);
@@ -3892,6 +3892,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 			      sf = free_snd_fd(sf);
 			      change_samples(beg, num, data, cp, caller, pos, -1.0);
 			      free(data);
+			      free_gf(gf1);
 			      s7_set_current_environment(s7, old_e);
 			      return(res);
 			    }
@@ -4044,11 +4045,12 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 				data[kp] = gf1->func_1(gf1->gen);
 			      change_samples(beg, num, data, cp, caller, pos, -1.0);
 			      free(data);
+			      free_gf(gf1);
 			      sf = free_snd_fd(sf);
 			      s7_set_current_environment(s7, old_e);
 			      return(res);
 			    }
-			  free(gf1);
+			  free_gf(gf1);
 			}
 		      s7_set_current_environment(s7, old_e);
 		    }

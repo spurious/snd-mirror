@@ -273,6 +273,7 @@ MUS_EXPORT mus_print_handler_t *mus_print_set_handler(mus_print_handler_t *new_p
 
 typedef mus_float_t mus_clip_handler_t(mus_float_t val);
 MUS_EXPORT mus_clip_handler_t *mus_clip_set_handler(mus_clip_handler_t *new_clip_handler);
+MUS_EXPORT mus_clip_handler_t *mus_clip_set_handler_and_checker(mus_clip_handler_t *new_clip_handler, bool (*checker)(void));
 
 MUS_EXPORT mus_long_t mus_sound_samples(const char *arg);
 MUS_EXPORT mus_long_t mus_sound_frames(const char *arg);

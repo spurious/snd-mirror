@@ -1077,7 +1077,7 @@ static s7_pointer vid_i_slot, vid_x_slot;
 static mus_float_t x1, x2;
 static mus_long_t vid_length;
 static void *vid_gen;
-static gf *vid_gf;
+static gf *vid_gf = NULL;
 static mus_float_t (*vid_func_1)(void *p);
 static mus_float_t (*vid_func)(void *p);
 
@@ -1115,6 +1115,8 @@ static s7_pointer g_vct_set_direct_dox_gf(s7_scheme *sc, s7_pointer code)
 static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 {
   vct *v;
+  if (vid_gf) {free_gf(vid_gf); vid_gf = NULL;} /* TODO: we need dox support for cleanups! */
+
   v = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, code), vct_tag);
   if ((v) &&
       (!s7_local_slot(sc, cadr(code))))                                         /* v is a vct, and it is not a stepper */
@@ -1161,7 +1163,7 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 		{
 		  vid_func_1 = gf1->func_1;
 		  vid_gen = gf1->gen;
-		  free(gf1);
+		  free_gf(gf1);
 		  return((s7_pointer)g_vct_set_direct_dox_gen1);
 		}
 	      if (gf1->func)
@@ -1170,7 +1172,7 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 		  vid_gf = gf1;
 		  return((s7_pointer)g_vct_set_direct_dox_gf);
 		}
-	      free(gf1);
+	      free_gf(gf1);
 	    }
 	}
     }

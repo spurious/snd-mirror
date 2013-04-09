@@ -273,6 +273,17 @@ static mus_float_t run_clip_hook(mus_float_t val)
   return(-1.0);
 }
 
+static bool clip_hook_checker(void)
+{
+  bool result;
+  result = XEN_HOOKED(clip_hook);
+  if (result)
+    mus_clip_set_handler(run_clip_hook);
+  else mus_clip_set_handler(NULL);
+  return(result);
+}
+
+
  
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_snd_error_w, g_snd_error)
@@ -349,7 +360,6 @@ be clipped upon being written to a sound file.  The hook function can return the
 be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val')."
 
   clip_hook = XEN_DEFINE_HOOK(S_clip_hook, "(make-hook 'val)", 1, H_clip_hook); 
-
-  mus_clip_set_handler(run_clip_hook);
+  mus_clip_set_handler_and_checker(NULL, clip_hook_checker);
 }
 

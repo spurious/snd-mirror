@@ -26,6 +26,7 @@
 #include "_sndlib.h"
 #include "sndlib-strings.h"
 #include "sndlib2xen.h"
+#include "clm2xen.h"
 #include "vct.h"
 #include "clm.h"
 
@@ -2696,6 +2697,7 @@ static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
   s7_pointer stepper, vc, val, callee;
   s7_Int *step, *stop;
   sound_data *sd;
+  gf *gf1;
   
   vc = s7_car_value(sc, s7_cdr(args));                      /* (0 sd k i (...)) */
   sd = (sound_data *)imported_s7_object_value_checked(vc, sound_data_tag);
@@ -2722,24 +2724,59 @@ static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	  (chan >= sd->chans))
 	XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 2, s7_caddr(args), "channel number out of range");   
 
-      if ((s7_is_real(s7_cadr(val))) &&
-	  (s7_car(val) == s7_make_symbol(sc, "mus-random")))
+      if (s7_is_real(val))
 	{
-	  mus_float_t x;
-	  x = s7_number_to_real(sc, s7_cadr(val));
-	  for (; pos < end; pos++)
-	    sd->data[chan][pos] = mus_random(x);
+	  double x;
+	  x = s7_number_to_real(sc, val);
+	  for (; pos < end; pos++) 
+	    sd->data[chan][pos] = x;
 	  (*step) = end;
 	  return(args);
 	}
 
-      for (; pos < end; pos++)
+      /* ---------------------------------------- */
+      gf1 = find_gf(sc, val);
+      if (gf1)
 	{
-	  (*step) = pos;
-	  sd->data[chan][pos] = s7_call_direct_to_real_and_free(sc, val);
+	  if (gf1->func_1)
+	    {
+	      void *gen;
+	      mus_float_t (*func)(void *p);
+	      gen = gf1->gen;
+	      func = gf1->func_1;
+	      for (; pos < end; pos++) 
+		sd->data[chan][pos] = func(gen);
+	      (*step) = end;
+	      free_gf(gf1);
+	      return(args);
+	    }
+	  if (gf1->func)
+	    {
+	      for (; pos < end; pos++)
+		{
+		  (*step) = pos;
+		  sd->data[chan][pos] = gf1->func(gf1);
+		}
+	      (*step) = end;
+	      free_gf(gf1);
+	      return(args);
+	    }
+	  free_gf(gf1);
 	}
-      (*step) = end;
-      return(args);
+      /* ---------------------------------------- */
+
+      fprintf(stderr, "sd %lld: %s\n", end - pos, DISPLAY(val));
+      if (s7_function_choice_is_direct_to_real(sc, val))
+	{
+	  for (; pos < end; pos++)
+	    {
+	      (*step) = pos;
+	      sd->data[chan][pos] = s7_call_direct_to_real_and_free(sc, val);
+	    }
+	  (*step) = end;
+	  return(args);
+	}
+      return(NULL);
     }
   XEN_ASSERT_TYPE(false, s7_cadr_value(sc, args), XEN_ARG_1, "sound-data-set!", "a sound-data object");
   return(s7_f(sc));

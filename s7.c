@@ -3897,6 +3897,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 {
   int loc;
   s7_pointer p;
+
   /* global functions are very rarely redefined, so we can remove the function body from
    *   the heap when it is defined.  If redefined, we currently lose the memory held by the
    *   old definition.  (It is not trivial to recover this memory because it is allocated
@@ -5654,6 +5655,12 @@ s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value)
 {
   slot_set_value(slot, value);
   return(value);
+}
+
+
+s7_Double s7_slot_value_to_real(s7_scheme *sc, s7_pointer slot)
+{
+  return(s7_number_to_real(sc, slot_value(slot)));
 }
 
 
@@ -37037,12 +37044,16 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	      set_optimize_data(expr, HOP_SAFE_C_C);
 	      return(add_fs);
 	    }
-	  if (fcdr(arg2) == (s7_pointer)g_multiply_sf)
+	  if ((is_pair(arg2)) &&
+	      (is_optimized(arg2)) &&
+	      (fcdr(arg2) == (s7_pointer)g_multiply_sf))
 	    {
 	      set_optimize_data(expr, HOP_SAFE_C_C);
 	      return(add_f_sf);
 	    }
-	  if (fcdr(arg2) == (s7_pointer)g_sqr_ss)
+	  if ((is_pair(arg2)) &&
+	      (is_optimized(arg2)) &&
+	      (fcdr(arg2) == (s7_pointer)g_sqr_ss))
 	    {
 	      set_optimize_data(expr, HOP_SAFE_C_C);
 	      return(add_f_sqr);

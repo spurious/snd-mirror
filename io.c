@@ -1626,12 +1626,22 @@ static int checked_write(int tfd, char *buf, mus_long_t chars)
 
 
 static mus_clip_handler_t *mus_clip_handler = NULL;
+static bool (*clip_checker)(void) = NULL;
 
-mus_clip_handler_t *mus_clip_set_handler(mus_clip_handler_t *new_clip_handler) 
+mus_clip_handler_t *mus_clip_set_handler(mus_clip_handler_t *new_clip_handler)
 {
   mus_clip_handler_t *old_handler;
   old_handler = mus_clip_handler;
   mus_clip_handler = new_clip_handler;
+  return(old_handler);
+}
+
+mus_clip_handler_t *mus_clip_set_handler_and_checker(mus_clip_handler_t *new_clip_handler, bool (*checker)(void))
+{
+  mus_clip_handler_t *old_handler;
+  old_handler = mus_clip_handler;
+  mus_clip_handler = new_clip_handler;
+  clip_checker = checker;
   return(old_handler);
 }
 
@@ -1725,6 +1735,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 	      bufend4 = (mus_float_t *)(bufend - 4); 
 	      /* we seem to be running off the end of this buffer somehow -- do we need channel-specific size checks? */
 
+	      if (clip_checker) clip_checker();
 	      if (mus_clip_handler)
 		{
 		  while (bufnow < bufend)
@@ -2265,7 +2276,7 @@ static void min_max_shorts(unsigned char *data, int bytes, int chan, int chans, 
   cur_max = cur_min;
 
   len2 = len - 2 * chans;
-  i = chans + chan;
+  i = chan;       /* we read the first sample above, but we're reading by twos below */
   while (i <= len2)
     {
       tmp = sbuf[i];
@@ -2303,7 +2314,7 @@ static void min_max_switch_shorts(unsigned char *data, int bytes, int chan, int 
   cur_min = little_endian_short((unsigned char *)(data + (chan * SHORT_BYTES)));
 #endif
   cur_max = cur_min;
-  samp = (unsigned char *)(data + (chan * SHORT_BYTES) + bytes_per_frame);
+  samp = (unsigned char *)(data + (chan * SHORT_BYTES));
   while (samp <= eod2)
     {
       short val;
@@ -2354,7 +2365,7 @@ static void min_max_ushorts(unsigned char *data, int bytes, int chan, int chans,
 
   cur_min = sbuf[chan];
   cur_max = cur_min;
-  i = chans + chan;
+  i = chan;
   while (i <= len2)
     {
       if (sbuf[i] < cur_min) cur_min = sbuf[i]; else if (sbuf[i] > cur_max) cur_max = sbuf[i];
@@ -2390,7 +2401,7 @@ static void min_max_switch_ushorts(unsigned char *data, int bytes, int chan, int
 #endif
   cur_max = cur_min;
 
-  samp = (unsigned char *)(data + (chan * SHORT_BYTES) + bytes_per_frame);
+  samp = (unsigned char *)(data + (chan * SHORT_BYTES));
   while (samp <= eod2)
     {
       unsigned short val;
@@ -2443,7 +2454,7 @@ static void min_max_ints(unsigned char *data, int bytes, int chan, int chans, mu
   cur_min = sbuf[chan];
   cur_max = cur_min;
 
-  i = chans + chan;
+  i = chan;
   while (i <= len2)
     {
       if (sbuf[i] < cur_min) cur_min = sbuf[i]; else if (sbuf[i] > cur_max) cur_max = sbuf[i];
@@ -2487,7 +2498,7 @@ static void min_max_switch_ints(unsigned char *data, int bytes, int chan, int ch
 #endif
   cur_max = cur_min;
 
-  samp = (unsigned char *)(data + (chan * INT_BYTES) + bytes_per_frame);
+  samp = (unsigned char *)(data + (chan * INT_BYTES));
   while (samp <= eod2)
     {
       int val;
@@ -2548,17 +2559,18 @@ static void min_max_floats(unsigned char *data, int bytes, int chan, int chans, 
   cur_min = sbuf[chan];
   cur_max = cur_min;
 
-  i = chans + chan;
-  while (i <= len2)
+  i = chan;
+  while (i < len2)
     {
       if (sbuf[i] < cur_min) cur_min = sbuf[i]; else if (sbuf[i] > cur_max) cur_max = sbuf[i];
       i += chans;
       if (sbuf[i] < cur_min) cur_min = sbuf[i]; else if (sbuf[i] > cur_max) cur_max = sbuf[i];
       i += chans;
     }
-  if (i < len)
+  while (i < len)
     {
       if (sbuf[i] < cur_min) cur_min = sbuf[i]; else if (sbuf[i] > cur_max) cur_max = sbuf[i];
+      i += chans;
     }
 
   if (unscaled)
@@ -2591,7 +2603,7 @@ static void min_max_switch_floats(unsigned char *data, int bytes, int chan, int 
   cur_min = little_endian_float((unsigned char *)(data + (chan * FLOAT_BYTES)));
 #endif
   cur_max = cur_min;
-  samp = (unsigned char *)(data + (chan * FLOAT_BYTES) + bytes_per_frame); 
+  samp = (unsigned char *)(data + (chan * FLOAT_BYTES)); 
   while (samp <= eod2)
     {
       float val;
@@ -2654,7 +2666,7 @@ static void min_max_doubles(unsigned char *data, int bytes, int chan, int chans,
 
   cur_min = sbuf[chan];
   cur_max = cur_min;
-  i = chans + chan;
+  i = chan;
   while (i <= len2)
     {
       if (sbuf[i] < cur_min) cur_min = sbuf[i]; else if (sbuf[i] > cur_max) cur_max = sbuf[i];
@@ -2697,7 +2709,7 @@ static void min_max_switch_doubles(unsigned char *data, int bytes, int chan, int
   cur_min = little_endian_double((unsigned char *)(data + (chan * DOUBLE_BYTES)));
 #endif
   cur_max = cur_min;
-  samp = (unsigned char *)(data + (chan * DOUBLE_BYTES) + bytes_per_frame); 
+  samp = (unsigned char *)(data + (chan * DOUBLE_BYTES)); 
   while (samp <= eod2)
     {
       double val;
@@ -2781,11 +2793,13 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
 	  i++;
 	  k += bytes_per_frame;
 	}
-      if (i < len)
+      while (i < len)
 	{
 	  int val;
 	  val = BIG_THREE(data, k);
 	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
+	  i++;
+	  k += bytes_per_frame;
 	}
     }
   else
@@ -2807,11 +2821,13 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
 	  i++;
 	  k += bytes_per_frame;
 	}
-      if (i < len)
+      while (i < len)
 	{
 	  int val;
 	  val = LITTLE_THREE(data, k);
 	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
+	  i++;
+	  k += bytes_per_frame;
 	}
     }
 
@@ -2831,7 +2847,7 @@ static void min_max_mulaw(unsigned char *data, int bytes, int chan, int chans, m
   cur_min = mus_mulaw[(int)data[chan]];
   cur_max = cur_min;
 
-  i = chans + chan;
+  i = chan;
   b2 = bytes - 2;
   while (i <= b2)
     {
@@ -2863,7 +2879,7 @@ static void min_max_alaw(unsigned char *data, int bytes, int chan, int chans, mu
   cur_min = mus_alaw[(int)data[chan]];
   cur_max = cur_min;
 
-  i = chans + chan;
+  i = chan;
   b2 = bytes - 2;
   while (i <= b2)
     {
@@ -2895,7 +2911,7 @@ static void min_max_bytes(unsigned char *data, int bytes, int chan, int chans, m
   cur_min = (signed char)(data[chan]);
   cur_max = cur_min;
 
-  i = chans + chan;
+  i = chan;
   b2 = bytes - 2;
   while (i <= b2)
     {
@@ -2927,7 +2943,7 @@ static void min_max_ubytes(unsigned char *data, int bytes, int chan, int chans, 
   cur_min = data[chan];
   cur_max = cur_min;
 
-  i = chans + chan;
+  i = chan;
   b2 = bytes - 2;
   while (i <= b2)
     {
