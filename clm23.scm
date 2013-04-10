@@ -1035,12 +1035,13 @@
       (let ((g (arr i))
 	    (frq (arrfrq i)))
 	(if (oscil? g)
-	    (do ((k start (+ k 1))) 
-		((= k end))
+	    (begin
 	      (set! (mus-frequency g) frq)
 	      (if (> (abs (- (mus-frequency g) frq)) .001)
 		  (format #t "oops ~A ~A" (mus-frequency g) frq))
-	      (outa k (* amp (oscil g)))))))))
+	      (do ((k start (+ k 1))) 
+		  ((= k end))
+		(outa k (* amp (oscil g))))))))))
 
 (define (sample-ardcl beg dur freq amp)
   "(sample-ardcl beg dur freq amp) test instrument for arith"

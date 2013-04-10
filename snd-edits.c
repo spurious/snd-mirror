@@ -3993,6 +3993,7 @@ bool file_override_samples(mus_long_t num, const char *tempfile, chan_info *cp, 
 
 bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info *cp, const char *origin, int edpos, mus_float_t mx)
 {
+  /* mx should be -1.0 except in the one case where vals is a block all of the same value */
   mus_long_t prev_len, new_len;
   ed_fragment *cb;
   ed_list *ed, *old_ed;
@@ -4070,6 +4071,7 @@ bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info
 	    }
 	}
     }
+
   ripple_all(cp, 0, 0);
   if (new_len > prev_len) reflect_sample_change_in_axis(cp);
   reflect_mix_change(ANY_MIX_ID);

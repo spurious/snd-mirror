@@ -2778,8 +2778,8 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
     {
       cur_min = BIG_THREE(data, k);
       cur_max = cur_min;
-      i = 1;
-      k += bytes_per_frame;
+      i = 0;
+      /* k += bytes_per_frame; */
 
       while (i <= len2)
 	{
@@ -2806,8 +2806,8 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
     {
       cur_min = LITTLE_THREE(data, k);
       cur_max = cur_min;
-      i = 1;
-      k += bytes_per_frame;
+      i = 0;
+      /* k += bytes_per_frame; */
 
       while (i <= len2)
 	{

@@ -56,7 +56,7 @@
   #endif
 #endif
 
-/* void add_expr(s7_scheme *sc, s7_pointer expr); */
+/* void add_expr(s7_scheme *sc, s7_pointer expr);  */
 
 
 struct mus_xen {
@@ -10707,8 +10707,7 @@ static gf *fixup_abs(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	{
 	  r = s7_slot_value(slot);
 	  if ((s7_is_mutable(r)) &&
-	      (((s7_is_real(r)) && (!s7_is_rational(r))) ||
-	       (r == s7_undefined(sc))))
+	      ((s7_is_real(r)) && (!s7_is_rational(r))))
 	    {
 	      g = (gf *)calloc(1, sizeof(gf));
 	      g->func = gf_abs_rx1;
@@ -10871,8 +10870,7 @@ static gf *fixup_subtract(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	    {
 	      s7_pointer r;
 	      r = s7_slot_value(slot);
-	      if ((((s7_is_real(r)) && (!s7_is_rational(r))) ||
-		   (r == s7_undefined(sc))) &&
+	      if (((s7_is_real(r)) && (!s7_is_rational(r))) &&
 		  (s7_is_mutable(r)))
 		{
 		  g = (gf *)calloc(1, sizeof(gf));
@@ -10888,30 +10886,28 @@ static gf *fixup_subtract(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 }
 
 
-/* 
- * bad reads in io.c
+/* bad reads in io.c
  * occasionally (- x2 x1)
- * mus-scaler|frequency? hz->radians?, test mus-srate
+ * mus-scaler|frequency? hz->radians?
  * frame-ref|frame->frame
  * [sin/cos?] exact->inexact? exp/expt
  * vector-ref as gen arg?
- * direct if? (if ... 0 1) -- no associated c_function 
+ * direct if? (if ... 0 1) -- no associated c_function -- if_direct and friends! -- moving-average case below is if_all_x
  * used in input_as_needed cases?
- * various sqr cases non-symbol?
- * dox looped cases here and vct -- these never happen? they do in t636
  * multi-statement loops
- * (* 2 frq) et al and possibly split remainders?
  * back combine more cases
  * could indirect_outa_2_temp and others use gf on the 1st call, then vector to that?
  *   how to gc the gf struct? and where to find the locals end point?
  *   indirect_outa_2_temp in all_x_c_c, hop_safe_c_c -- are these doxable? -- some are -- see temp_dox_looped
  *   all vars could be treated as slots -- how to update? try the multistatement stuff first.
  *   if the dox looped cases had a cleanup pass perhaps this could be cleared there (would need push cleanup)
+ *
+ * recheck io.c valgrind
+ * use parse_arg elsewhere -- gf_parse?
  */
 
 /*
 +|*: 11027 (* amp (ina ctr fil))
-+|*: 11027 (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)))
 +|*: 11027 (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)))
 +|*: 11027 (+ (* 2.0 frq) (* hfreq pitch (+ 1.0 (rand-interp indf))))
 +|*: 11227 (+ (polywave modulator1 (+ (* 2.0 frq) (* hfreq pitch (+ 1.0 (rand-interp indf))))) (polywave modulator3 (+ (* 3.0 frq) (* index3 pitch))) (polywave modulator2 (+ (* 8.0 frq) (* index2 pitch))))
@@ -10944,12 +10940,22 @@ static mus_float_t gf_multiply_s1_s2(void *p)
 }
 
 
-static mus_float_t gf_add_3(void *p)              {gf *g = (gf *)p; return(g->f1(g->gen1) + g->f2(g->gen2) + g->f3(g->gen3));}
-static mus_float_t gf_multiply_3(void *p)         {gf *g = (gf *)p; return(g->f1(g->gen1) * g->f2(g->gen2) * g->f3(g->gen3));}
-static mus_float_t gf_add_g1_g2_g3(void *p)       {gf *g = (gf *)p; return(g->f1(g->g1) + g->f2(g->g2) + g->f3(g->g3));}
-static mus_float_t gf_multiply_g1_g2_g3(void *p)  {gf *g = (gf *)p; return(g->f1(g->g1) * g->f2(g->g2) * g->f3(g->g3));}
-static mus_float_t gf_add_g1_g2_x1(void *p)       {gf *g = (gf *)p; return(g->f1(g->g1) + g->f2(g->g2) + g->x1);}
-static mus_float_t gf_multiply_g1_g2_x1(void *p)  {gf *g = (gf *)p; return(g->f1(g->g1) * g->f2(g->g2) * g->x1);}
+static mus_float_t gf_add_3(void *p)                {gf *g = (gf *)p; return(g->f1(g->gen1) + g->f2(g->gen2) + g->f3(g->gen3));}
+static mus_float_t gf_multiply_3(void *p)           {gf *g = (gf *)p; return(g->f1(g->gen1) * g->f2(g->gen2) * g->f3(g->gen3));}
+static mus_float_t gf_add_g1_g2_g3(void *p)         {gf *g = (gf *)p; return(g->f1(g->g1) + g->f2(g->g2) + g->f3(g->g3));}
+static mus_float_t gf_multiply_g1_g2_g3(void *p)    {gf *g = (gf *)p; return(g->f1(g->g1) * g->f2(g->g2) * g->f3(g->g3));}
+static mus_float_t gf_add_g1_g2_x1(void *p)         {gf *g = (gf *)p; return(g->f1(g->g1) + g->f2(g->g2) + g->x1);}
+static mus_float_t gf_multiply_g1_g2_x1(void *p)    {gf *g = (gf *)p; return(g->f1(g->g1) * g->f2(g->g2) * g->x1);}
+static mus_float_t gf_add_g1_g2_rx1(void *p)        {gf *g = (gf *)p; return(g->f1(g->g1) + g->f2(g->g2) + (*(g->rx1)));}
+static mus_float_t gf_multiply_g1_g2_rx1(void *p)   {gf *g = (gf *)p; return(g->f1(g->g1) * g->f2(g->g2) * (*(g->rx1)));}
+static mus_float_t gf_add_g1_x1_rx1(void *p)        {gf *g = (gf *)p; return(g->f1(g->g1) + g->x1 + (*(g->rx1)));}
+static mus_float_t gf_multiply_g1_x1_rx1(void *p)   {gf *g = (gf *)p; return(g->f1(g->g1) * g->x1 * (*(g->rx1)));}
+static mus_float_t gf_add_g1_rx1_rx2(void *p)       {gf *g = (gf *)p; return(g->f1(g->g1) + (*(g->rx1)) + (*(g->rx2)));}
+static mus_float_t gf_multiply_g1_rx1_rx2(void *p)  {gf *g = (gf *)p; return(g->f1(g->g1) * (*(g->rx1)) * (*(g->rx2)));}
+static mus_float_t gf_add_x1_rx1_rx2(void *p)       {gf *g = (gf *)p; return(g->x1 + (*(g->rx1)) + (*(g->rx2)));}
+static mus_float_t gf_multiply_x1_rx1_rx2(void *p)  {gf *g = (gf *)p; return(g->x1 * (*(g->rx1)) * (*(g->rx2)));}
+static mus_float_t gf_add_rx1_rx2_rx3(void *p)      {gf *g = (gf *)p; return((*(g->rx1)) + (*(g->rx2)) + (*(g->rx3)));}
+static mus_float_t gf_multiply_rx1_rx2_rx3(void *p) {gf *g = (gf *)p; return((*(g->rx1)) * (*(g->rx2)) * (*(g->rx3)));}
 
 static mus_float_t gf_add_g1_g2_g3_g4(void *p)       {gf *g = (gf *)p; return(g->f1(g->g1) + g->f2(g->g2) + g->f3(g->g3) + g->f4(g->g4));}
 static mus_float_t gf_multiply_g1_g2_g3_g4(void *p)  {gf *g = (gf *)p; return(g->f1(g->g1) * g->f2(g->g2) * g->f3(g->g3) * g->f4(g->g4));}
@@ -10959,6 +10965,53 @@ static mus_float_t gf_multiply_g1_g2_g3_g4_g5(void *p)  {gf *g = (gf *)p; return
 
 
 #define PRINTING 0
+
+enum {GF_NONE, GF_G, GF_S, GF_X, GF_RX};
+
+static int gf_parse(s7_scheme *sc, s7_pointer arg, s7_pointer locals, gf **g, s7_pointer *s, double *x, double **rx)
+{
+  s7_pointer slot, r;
+  if (s7_is_pair(arg))
+    {
+      gf *g1;
+      g1 = find_gf_with_locals(sc, arg, locals);
+      if (!g1) return(GF_NONE);
+      (*g) = g1;
+      return(GF_G);
+    }
+
+  if (s7_is_real(arg))
+    {
+      (*x) = s7_number_to_real(sc, arg);
+      return(GF_X);
+    }
+
+  if (!s7_is_symbol(arg))
+    return(GF_NONE);
+
+  slot = s7_is_local_variable(sc, arg, locals);
+  if (slot) /* it's local */
+    {
+      r = s7_slot_value(slot);
+      if ((s7_is_mutable(r)) && 
+	  ((s7_is_real(r)) && (!s7_is_rational(r))))
+	{
+	  (*rx) = (s7_Double *)((unsigned char *)(r) + xen_s7_number_location);
+	  return(GF_RX);
+	}
+      (*s) = slot;
+      return(GF_S);
+    }
+  
+  r = s7_symbol_value(sc, arg);
+  if (s7_is_real(r))
+    {
+      (*x) = s7_number_to_real(sc, r);
+      return(GF_X);
+    }
+  return(GF_NONE);
+}
+
 
 static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer locals, bool its_add)
 {
@@ -11065,9 +11118,7 @@ static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer loca
 		}
 
 	      r = s7_slot_value(slot);
-	      if (((s7_is_real(r)) &&
-		       (!s7_is_rational(r))) ||
-		  (r == s7_undefined(sc)))
+	      if ((s7_is_real(r)) && (!s7_is_rational(r)))
 		{
 		  if (s7_is_mutable(r))
 		    {
@@ -11198,215 +11249,242 @@ static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer loca
     {
       gf *g1 = NULL, *g2 = NULL, *g3 = NULL, *g;
       double x1, x2, x3;
-      bool use_x1 = false, use_x2 = false, use_x3 = false;
-      int syms = 0;
+      double *rx1, *rx2, *rx3;
+      int typ1 = GF_G, typ2 = GF_G, typ3 = GF_G;
+      s7_pointer s1, s2, s3;
+
       arg1 = cadr(expr);
       arg2 = caddr(expr);
       arg3 = cadddr(expr);
 
-      if (s7_is_pair(arg1))
+      typ1 = gf_parse(sc, arg1, locals, &g1, &s1, &x1, &rx1);
+      typ2 = gf_parse(sc, arg2, locals, &g2, &s2, &x2, &rx2);
+      typ3 = gf_parse(sc, arg3, locals, &g3, &s3, &x3, &rx3);
+
+      if ((typ1 == GF_NONE) || (typ2 == GF_NONE) || (typ3 == GF_NONE) ||
+	  (typ1 == GF_S) || (typ2 == GF_S) || (typ3 == GF_S)) /* maybe handle these later */
 	{
-	  g1 = find_gf_with_locals(sc, arg1, locals);
-	  if (!g1) 
-	    {
+	  if (g1) free_gf(g1);
+	  if (g2) free_gf(g2);
+	  if (g3) free_gf(g3);
 #if PRINTING
-	      fprintf(stderr, "+|*: %d %s\n", __LINE__, DISPLAY(expr));
+	  fprintf(stderr, "+|*: %d %s\n", __LINE__, DISPLAY(expr));
 #endif
-	      return(NULL);
-	    }
-	}
-      else
-	{
-	  if ((s7_is_symbol(arg1)) && (!s7_is_local_variable(sc, arg1, locals)))
-	    arg1 = s7_symbol_value(sc, arg1);
-	  if (s7_is_real(arg1))
-	    {
-	      use_x1 = true;
-	      syms++;
-	      x1 = s7_number_to_real(sc, arg1);
-	    }
-	  else
-	    {
-#if PRINTING
-	      fprintf(stderr, "+|*: %d %s\n", __LINE__, DISPLAY(expr));
-#endif
-	      return(NULL);
-	    }
+	  return(NULL);
 	}
 
-      if (s7_is_pair(arg2))
+      g = (gf *)calloc(1, sizeof(gf));
+      switch (typ1)
 	{
-	  g2 = find_gf_with_locals(sc, arg2, locals);
-	  if (!g2) 
+	case GF_G:
+	  g->f1 = g1->func;
+	  g->g1 = g1;
+	  switch (typ2)
 	    {
-	      if (g1) free_gf(g1); 
-#if PRINTING
-	      fprintf(stderr, "+|*: %d %s\n", __LINE__, DISPLAY(expr));
-#endif
-	      return(NULL);
-	    }
-	}
-      else
-	{
-	  if ((s7_is_symbol(arg2)) && (!s7_is_local_variable(sc, arg2, locals)))
-	    arg2 = s7_symbol_value(sc, arg2);
-	  if (s7_is_real(arg2))
-	    {
-	      use_x2 = true;
-	      syms++;
-	      x2 = s7_number_to_real(sc, arg2);
-	    }
-	  else
-	    {
-	      if (g1) free_gf(g1);
-#if PRINTING
-	      fprintf(stderr, "+|*: %d %s\n", __LINE__, DISPLAY(expr));
-#endif
-	      return(NULL);
-	    }
-	}
-
-      if (s7_is_pair(arg3))
-	{
-	  g3 = find_gf_with_locals(sc, arg3, locals);
-	  if (!g3) 
-	    {
-	      if (g1) free_gf(g1); 
-	      if (g2) free_gf(g2); 
-#if PRINTING
-	      fprintf(stderr, "+|*: %d %s\n", __LINE__, DISPLAY(expr));
-#endif
-	      return(NULL);
-	    }
-	}
-      else
-	{
-	  if ((s7_is_symbol(arg3)) && (!s7_is_local_variable(sc, arg3, locals)))
-	    arg3 = s7_symbol_value(sc, arg3);
-	  if (s7_is_real(arg3))
-	    {
-	      use_x3 = true;
-	      syms++;
-	      x3 = s7_number_to_real(sc, arg3);
-	    }
-	  else
-	    {
-	      if (g1) free_gf(g1);
-	      if (g2) free_gf(g2);
-#if PRINTING
-	      fprintf(stderr, "+|*: %d %s\n", __LINE__, DISPLAY(expr));
-#endif
-	      return(NULL);
-	    }
-	}
-
-      if (syms == 0)
-	{
-	  g = (gf *)calloc(1, sizeof(gf));
-	  if ((g1->func_1) && (g2->func_1) && (g3->func_1))
-	    {
-	      g->f1 = g1->func_1;
-	      g->f2 = g2->func_1;
-	      g->f3 = g3->func_1;
-	      g->gen1 = g1->gen;
-	      g->gen2 = g2->gen;
-	      g->gen3 = g3->gen;
-	      g->func = (its_add) ? gf_add_3 : gf_multiply_3;
-	      g->func_1 = NULL;
-	      free_gf(g1); 
-	      free_gf(g2);
-	      free_gf(g3);
-	    }
-	  else
-	    {
-	      g->f1 = g1->func;
+	    case GF_G:
 	      g->f2 = g2->func;
-	      g->f3 = g3->func;
-	      g->g1 = g1;
 	      g->g2 = g2;
-	      g->g3 = g3;
-	      g->func = (its_add) ? gf_add_g1_g2_g3 : gf_multiply_g1_g2_g3;
-	      g->func_2 = NULL;
-	    }
-	  return(g);
-	}
+	      switch (typ3)
+		{
+		case GF_G:
+		  if ((g1->func_1) && (g2->func_1) && (g3->func_1))
+		    {
+		      g->f1 = g1->func_1;
+		      g->f2 = g2->func_1;
+		      g->f3 = g3->func_1;
+		      g->gen1 = g1->gen;
+		      g->gen2 = g2->gen;
+		      g->gen3 = g3->gen;
+		      g->func = (its_add) ? gf_add_3 : gf_multiply_3;
+		      g->func_1 = NULL;
+		      free_gf(g1); 
+		      free_gf(g2);
+		      free_gf(g3);
+		      g->g1 = NULL;
+		      g->g2 = NULL;
+		      g->g3 = NULL;
+		    }
+		  else
+		    {
+		      g->f3 = g3->func;
+		      g->g3 = g3;
+		      g->func = (its_add) ? gf_add_g1_g2_g3 : gf_multiply_g1_g2_g3;
+		    }
+		  return(g);
+		  
+		case GF_X:
+		  g->x1 = x3;
+		  g->func = (its_add) ? gf_add_g1_g2_x1 : gf_multiply_g1_g2_x1;
+		  return(g);
 
-      if (syms == 3)
-	{
-	  g = (gf *)calloc(1, sizeof(gf));
-	  g->func = gf_constant;
-	  if (its_add)
-	    g->x1 = x1 + x2 + x3;
-	  else g->x1 = x1 * x2 * x3;
-	  return(g);
-	}
+		case GF_RX:
+		  g->rx1 = rx3;
+		  g->func = (its_add) ? gf_add_g1_g2_rx1 : gf_multiply_g1_g2_rx1;
+		  return(g);
+		}
+	      break;
 
-      if (syms == 1)
-	{
-	  double x;
-	  gf *p1, *p2;
-	  if (use_x1)
-	    {
-	      x = x1;
-	      p1 = g2;
-	      p2 = g3;
-	    }
-	  else
-	    {
-	      if (use_x2)
+	    case GF_X:
+	      g->x1 = x2;
+	      switch (typ3)
 		{
-		  x = x2;
-		  p1 = g1;
-		  p2 = g3;
-		}
-	      else
-		{
-		  x = x3;
-		  p1 = g1;
-		  p2 = g2;
-		}
-	    }
-	  g = (gf *)calloc(1, sizeof(gf));
-	  g->f1 = p1->func;
-	  g->f2 = p2->func;
-	  g->g1 = p1;
-	  g->g2 = p2;
-	  g->x1 = x;
-	  g->func = (its_add) ? gf_add_g1_g2_x1 : gf_multiply_g1_g2_x1;
-	  g->func_2 = NULL;
-	  return(g);
-	}
+		case GF_G:
+		  g->f2 = g3->func;
+		  g->g2 = g3;
+		  g->func = (its_add) ? gf_add_g1_g2_x1 : gf_multiply_g1_g2_x1;
+		  return(g);
 
-      /* syms must be 2?? */
-      if (syms == 2)
-	{
-	  double x;
-	  gf *p;
-	  if (g1)
-	    {
-	      p = g1;
-	      if (its_add) x = x2 + x3; else x = x2 * x3;
-	    }
-	  else
-	    {
-	      if (g2)
-		{
-		  p = g2;
-		  if (its_add) x = x1 + x3; else x = x1 * x3;
+		case GF_X:
+		  if (its_add) g->x1 += x3; else g->x1 *= x3;
+		  g->func = (its_add) ? gf_add_g1_x1 : gf_multiply_g1_x1;
+		  return(g);
+		  
+		case GF_RX:
+		  g->rx1 = rx3;
+		  g->func = (its_add) ? gf_add_g1_x1_rx1 : gf_multiply_g1_x1_rx1;
+		  return(g);
 		}
-	      else
+	    case GF_RX:
+	      g->rx1 = rx2;
+	      switch (typ3)
 		{
-		  p = g3;
-		  if (its_add) x = x1 + x2; else x = x1 * x2;
+		case GF_G:
+		  g->f2 = g3->func;
+		  g->g2 = g3;
+		  g->func = (its_add) ? gf_add_g1_g2_rx1 : gf_multiply_g1_g2_rx1;
+		  return(g);
+		case GF_X:
+		  g->x1 = x3;
+		  g->func = (its_add) ? gf_add_g1_x1_rx1 : gf_multiply_g1_x1_rx1;
+		  return(g);
+		case GF_RX:
+		  g->rx2 = rx3;
+		  g->func = (its_add) ? gf_add_g1_rx1_rx2 : gf_multiply_g1_rx1_rx2;
+		  return(g);
 		}
 	    }
-	  g = (gf *)calloc(1, sizeof(gf));
-	  g->f1 = p->func;
-	  g->g1 = p;
-	  g->x1 = x;
-	  g->func = (its_add) ? gf_add_g1_x1 : gf_multiply_g1_x1;
-	  g->func_2 = NULL;
-	  return(g);
+
+	case GF_X:
+	  g->x1 = x1;
+	  switch (typ2)
+	    {
+	    case GF_G:
+	      g->f1 = g2->func;
+	      g->g1 = g2;
+	      switch (typ3)
+		{
+		case GF_G:
+		  g->f2 = g3->func;
+		  g->g2 = g3;
+		  g->func = (its_add) ? gf_add_g1_g2_x1 : gf_multiply_g1_g2_x1;
+		  return(g);
+		case GF_X:
+		  if (its_add) g->x1 += x3; else g->x1 *= x3;
+		  g->func = (its_add) ? gf_add_g1_x1 : gf_multiply_g1_x1;
+		  return(g);
+		case GF_RX:
+		  g->rx1 = rx3;
+		  g->func = (its_add) ? gf_add_g1_x1_rx1 : gf_multiply_g1_x1_rx1;
+		  return(g);
+		}
+	    case GF_X:
+	      if (its_add) g->x1 += x2; else g->x1 *= x2;
+	      switch (typ3)
+		{
+		case GF_G:
+		  g->f1 = g3->func;
+		  g->g1 = g3;
+		  g->func = (its_add) ? gf_add_g1_x1 : gf_multiply_g1_x1;
+		  return(g);
+		case GF_X:
+		  if (its_add) g->x1 += x3; else g->x1 *= x3;
+		  g->func = gf_constant;
+		  return(g);
+		case GF_RX:
+		  g->rx1 = rx3;
+		  g->func = (its_add) ? gf_add_x1_rx1 : gf_multiply_x1_rx1;
+		  return(g);
+		}
+	    case GF_RX:
+	      g->rx1 = rx2;
+	      switch (typ3)
+		{
+		case GF_G:
+		  g->f1 = g3->func;
+		  g->g1 = g3;
+		  g->func = (its_add) ? gf_add_g1_x1_rx1 : gf_multiply_g1_x1_rx1;
+		  return(g);
+		case GF_X:
+		  if (its_add) g->x1 += x3; else g->x1 *= x3;
+		  g->func = (its_add) ? gf_add_x1_rx1 : gf_multiply_x1_rx1;
+		  return(g);
+		case GF_RX:
+		  g->rx2 = rx3;
+		  g->func = (its_add) ? gf_add_x1_rx1_rx2 : gf_multiply_x1_rx1_rx2;
+		  return(g);
+		}
+	    }
+	  break;
+	case GF_RX:
+	  g->rx1 = rx1;
+	  switch (typ2)
+	    {
+	    case GF_G:
+	      g->f1 = g2->func;
+	      g->g1 = g2;
+	      switch (typ3)
+		{
+		case GF_G:
+		  g->f2 = g3->func;
+		  g->g2 = g3;
+		  g->func = (its_add) ? gf_add_g1_g2_rx1 : gf_multiply_g1_g2_rx1;
+		  return(g);
+		case GF_X:
+		  g->x1 = x3;
+		  g->func = (its_add) ? gf_add_g1_x1_rx1 : gf_multiply_g1_x1_rx1;
+		  return(g);
+		case GF_RX:
+		  g->rx2 = rx3;
+		  g->func = (its_add) ? gf_add_g1_rx1_rx2 : gf_multiply_g1_rx1_rx2;
+		  return(g);
+		}
+	    case GF_X:
+	      g->x1 = x2;
+	      switch (typ3)
+		{
+		case GF_G:
+		  g->f1 = g3->func;
+		  g->g1 = g3;
+		  g->func = (its_add) ? gf_add_g1_x1_rx1 : gf_multiply_g1_x1_rx1;
+		  return(g);
+		case GF_X:
+		  if (its_add) g->x1 += x3; else g->x1 *= x3;
+		  g->func = (its_add) ? gf_add_x1_rx1 : gf_multiply_x1_rx1;
+		  return(g);
+		case GF_RX:
+		  g->rx2 = rx3;
+		  g->func = (its_add) ? gf_add_x1_rx1_rx2 : gf_multiply_x1_rx1_rx2;
+		  return(g);
+		}
+	    case GF_RX:
+	      g->rx2 = rx2;
+	      switch (typ3)
+		{
+		case GF_G:
+		  g->f1 = g3->func;
+		  g->g1 = g3;
+		  g->func = (its_add) ? gf_add_g1_rx1_rx2 : gf_multiply_g1_rx1_rx2;
+		  return(g);
+		case GF_X:
+		  g->x1 = x3;
+		  g->func = (its_add) ? gf_add_x1_rx1_rx2 : gf_multiply_x1_rx1_rx2;
+		  return(g);
+		case GF_RX:
+		  g->rx3 = rx3;
+		  g->func = (its_add) ? gf_add_rx1_rx2_rx3 : gf_multiply_rx1_rx2_rx3;
+		  return(g);
+		}
+	    }
 	}
     }
 
@@ -11626,7 +11704,6 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	  if (s7_is_object(obj))
 	    p->gen = s7_object_value(obj);
 	  else p->gen = (void *)obj;
-	  p->s4 = expr;
 	  return(p);
 	}
 
@@ -11664,12 +11741,9 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 		}
 	      else
 		{
-		  /* TODO: if val is a mutable real (=1.5), it is one of our locals */
 		  s7_pointer val;
 		  val = s7_slot_value(slot);
-		  if (((s7_is_real(val)) &&
-		       (!s7_is_rational(val))) ||
-		      (val == s7_undefined(sc)))
+		  if ((s7_is_real(val)) && (!s7_is_rational(val)))
 		    {
 		      if (s7_is_mutable(val))
 			{
@@ -11710,7 +11784,6 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 		  if (igf) free_gf(igf);
 		}
 	    }
-	  /* p->s4 = expr; */
 	  /* return(p); */
 	  if (p) free_gf(p); /* a stopgap */
 	  return(NULL);
@@ -11815,7 +11888,6 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 		    }
 		}
 	    }
-	  /* p->s4 = expr; */
 	  /* return(p); */
 	  if (p) free_gf(p);
 	  return(NULL);
@@ -12333,49 +12405,31 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 {
   s7_Int pos;
   s7_Double x;
-
-  /*
-231253: (+ (* interp (comb-bank cmbs0 x)) (* (- 1.0 interp) (comb-bank cmbs1 x)))
+  /* 9-Apr
 100000: (granulate exA)
 88200: (formant-bank fs inputs)
-88200: (* amp (oscil g))
-88200: (* (env ampf) (wave-train grains gliss))
-81365: (* pulse-amp (env pulse-ampf) (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf)))) -- great-plains-narrow-mouthed-toad 
-   -- why is this here? preceded by if
-66150: (one-zero oz (* (env ampf) (+ (* 0.6 (nsin spikes1 noi)) (* 0.6 (nsin spikes1a noi)) (* 0.4 (nsin spikes2 frq)) (* 0.3 (nsin spikes3 frq)))))
+[88200: (* amp (oscil g))]
+88200: (* (env ampf) (wave-train grains gliss)) -- when? clm23 (if in loop)
+81365: (* pulse-amp (env pulse-ampf) (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf)))) -- if in loop
 50828: (formant-bank frms1 x)
-44100: (delay outdel11 (comb-bank combs1 (all-pass-bank allpasses1 (ina i *reverb*))))
+[44100: (delay outdel11 (comb-bank combs1 (all-pass-bank allpasses1 (ina i *reverb*))))]
 44100: (* amp (formant-bank fs1 inputs))
 44100: (* ampa (ina i *reverb*))
 44100: (* amp (oscil cr sum))
 40000: (nrxycos gen)
 24600: (src s incr)
 23813: (+ (* 0.75 val1) (formant-bank fb (* val1 (rand-interp rnd))))
-22050: (oscil-bank obank)
+22050: (oscil-bank obank) -- clm-ins + 2 vct-add calls
 22050: (* amp (formant-bank fs inval))
 22050: (* amp (sin y))
 22050: (* amp (ina ctr fil))
-20947: (+ val (formant-bank fb val))
 17640: (* amp (oscil os))
---------
-88200: (formant-bank fs inputs) -- fade.scm (large do loop)
-88200: (* ampa (ina i *reverb*)) --clm23 -- we need ina direct or rather TODO: add looper for mul_s_ina_reverb [and checl fixed clm23!]
-81365: (* pulse-amp (env pulse-ampf) (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf))))
-66150: (one-zero oz (* (env ampf) (+ (* 0.6 (nsin spikes1 noi)) (* 0.6 (nsin spikes1a noi)) (* 0.4 (nsin spikes2 frq)) (* 0.3 (nsin spikes3 frq)))))
-50828: (formant-bank frms1 x) --clm23 move-formants
-44100: (delay outdel11 (comb-bank combs1 (all-pass-bank allpasses1 (ina i *reverb*))))
-44100: (* amp (formant-bank fs1 inputs)) -- fade
-24600: (src s incr)
-23813: (+ (* 0.75 val1) (formant-bank fb (* val1 (rand-interp rnd))))
-22050: (* amp (formant-bank fs inval))
-22050: (* amp (sin y))
-22050: (* amp (ina ctr fil))
-20947: (+ val (formant-bank fb val))
 6394: (* (env ampf) (+ 0.5 (abs (rand-interp rnd1))) (+ (oscil gen1 (* 2.0 frq)) (polywave gens0 frq) (nrxycos gens (* 6.0 frq))))
-6350: (* (env ampf) (+ (- 1.0 rf) (* rf (abs (rand-interp rnd1)))) (+ (* (env ampf1) (oscil gen1 frq)) (* (env ampf2) (oscil gen2 (* 2.0 frq))) (* (env ampf3) (oscil gen3 (* 3.0 frq)))))
+4410: (oscil os)
 4410: (* amp (+ (* bank1 outval) (* (- 1.0 bank1) inval)))
 4410: (* amp (+ (* bank2 outval) (* (- 1.0 bank2) inval)))
 4410: (* amp (filter flt (oscil os)))
+4410: (* (env ampf) (oscil-bank obank))
 2205: (* sndamp (one-zero oz (two-pole tz input)))
    */
   GET_INTEGER(args, outa, pos);
@@ -12568,6 +12622,8 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
   pos = (*step);
   end = (*stop);
 
+  callee = caddr(body);
+
   if ((s7_is_pair(cdr(vars))) &&
       (s7_list_length(sc, vars) == 2))
     {
@@ -12611,12 +12667,8 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
       if (lf2) free_gf(lf2);
       if (bg) free_gf(bg);
       
-      /*
-      fprintf(stderr, "(1) %lld %s %s\n", end - pos, DISPLAY(let), DISPLAY(callee));
-20947 (let* ((frq (+ (env frqf) (rand-interp rnd))) (val (* (env ampf) (+ (polywave histuff (* 2.0 frq)) (* (env oddf) (polywave lostuff frq)) (* (env midf) (polywave midstuff (* 2.0 frq))))))) (outa i (+ val (formant-bank fb val)))) #<slot: i 11907000>
-50828 (let ((interp (oscil osc)) (x (readin rd))) (outa i (+ (* interp (comb-bank cmbs0 x)) (* (- 1.0 interp) (comb-bank cmbs1 x))))) #<slot: i 0>
-6350 (let ((rf (env rndf1)) (frq (+ (env frqf) (rand-interp rnd)))) (outa i (* (env ampf) (+ (- 1.0 rf) (* rf (abs (rand-interp rnd1)))) (+ (* (env ampf1) (oscil gen1 frq)) (* (env ampf2) (oscil gen2 (* 2.0 frq))) (* (env ampf3) (oscil gen3 (* 3.0 frq))))))) #<slot: i 16173675>
-66150 (let* ((noi (rand-interp rnd)) (frq (+ noi (env frqf)))) (outa i (one-zero oz (* (env ampf) (+ (* 0.6 (nsin spikes1 noi)) (* 0.6 (nsin spikes1a noi)) (* 0.4 (nsin spikes2 frq)) (* 0.3 (nsin spikes3 frq))))))) #<slot: i 4828950>
+      
+      /* 9 Apr nothing fprintf(stderr, "(1) %lld %s %s\n", end - pos, DISPLAY(let), DISPLAY(callee));
       */
 
       return(NULL);
@@ -12624,7 +12676,6 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
 
   letp = cadr(car(vars));
   lets = s7_slot(sc, caar(vars));
-  callee = caddr(body);
 
   /* ---------------------------------------- */
   {
@@ -12657,20 +12708,7 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
   }
   /* ---------------------------------------- */
 
-  /*
-  fprintf(stderr, "(2) %lld %s %s\n", end - pos, DISPLAY(letp), DISPLAY(callee));
-10143 (env rndf) (* (env ampf) (+ (- 1.0 rf) (* rf (rand-interp rnd))) (polywave gen1 (env frqf)))
-10584 (env rndf) (* (env ampf) (+ (- 1.0 rf) (* rf (rand-interp rnd))) (polywave gen1 (env frqf)))
-11025 (env rndf) (* (env ampf) (+ (- 1.0 rf) (* rf (rand-interp rnd))) (polywave gen1 (env frqf)))
-11907 (env rndf) (* (env ampf) (+ (- 1.0 rf) (* rf (rand-interp rnd))) (polywave gen1 (env frqf)))
-12789 (env rndf) (* (env ampf) (+ (- 1.0 rf) (* rf (rand-interp rnd))) (polywave gen1 (env frqf)))
-14553 (+ (env frqf) (* (env rndf) (rand-interp rnd))) (* (env ampf) (+ (env tremf-1) (* (env tremf) (abs (triangle-wave trem)))) (+ (* (env ampf1) (oscil gen1 frq)) (* 0.5 (oscil gen2 (* 2.0 frq))) (* (env ampf3) (oscil gen3 (* 3.0 frq))) (* (env ampf4) (polywave gen4 frq)) (* (env ampf5) (nrxysin gen5 (* 6.0 frq))) (* (env humf) (+ 0.25 (abs (triangle-wave tri1))) (oscil hum (env humfrq)))))
-16537 (+ (env frqf) (* (env rndf) (rand-interp rnd))) (* (env ampf) (+ (env tremf-1) (* (env tremf) (abs (triangle-wave trem)))) (+ (* (env ampf1) (oscil gen1 frq)) (* 0.5 (oscil gen2 (* 2.0 frq))) (* (env ampf3) (oscil gen3 (* 3.0 frq))) (* (env ampf4) (polywave gen4 frq)) (* (env ampf5) (nrxysin gen5 (* 6.0 frq))) (* (env ampf6) (nrxysin gen6 (* 3.0 frq))) (* (env humf) (oscil hum (* 0.25 frq)))))
-33075 (+ (env frqf) (* (env rndf) (rand-interp rnd))) (* (env ampf) (+ 0.9 (abs (rand-interp rnd1))) (+ (* (env attf) (polywave att (* 0.5 frq))) (* (env ampf1) (oscil gen1 frq)) (* (env ampf2) (oscil gen2 (* 2.0 frq))) (* (env ampf3) (oscil gen3 (* 3.0 frq))) (* (env ampf4) (+ (oscil gen4 (* 4.0 frq)) (oscil gen5 (* 5.0 frq))))))
-4851 (env rndf) (* (env ampf) (+ (- 1.0 rf) (* rf (rand-interp rnd))) (polywave gen1 (env frqf)))
-5733 (env rndf) (* (env ampf) (+ (- 1.0 rf) (* rf (rand-interp rnd))) (polywave gen1 (env frqf)))
-7056 (env rndf) (* (env ampf) (+ (- 1.0 rf) (* rf (rand-interp rnd))) (polywave gen1 (env frqf)))
-7938 (env rndf) (* (env ampf) (+ (- 1.0 rf) (* rf (rand-interp rnd))) (polywave gen1 (env frqf)))
+  /* 9 Apr nothing fprintf(stderr, "(2) %lld %s %s\n", end - pos, DISPLAY(letp), DISPLAY(callee));
   */
 
   letf = s7_function_choice(sc, letp);

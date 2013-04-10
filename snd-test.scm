@@ -39279,7 +39279,9 @@ EDITS: 1
 	    (allpasses2 (make-all-pass-bank (vector allpass12 allpass22 allpass32))))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
-	  (outa i (delay outdel11 (comb-bank combs1 (all-pass-bank allpasses1 (ina i *reverb*)))))
+	  (outa i (delay outdel11 (comb-bank combs1 (all-pass-bank allpasses1 (ina i *reverb*))))))
+	(do ((i 0 (+ i 1)))
+	    ((= i len))
 	  (outb i (delay outdel12 (comb-bank combs2 (all-pass-bank allpasses2 (inb i *reverb*)))))))))
   
   

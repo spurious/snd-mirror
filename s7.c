@@ -37359,8 +37359,11 @@ static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 	return(divide_1r);
 #endif
     }
+
   /* fprintf(stderr, "%d: %s\n", args, DISPLAY_80(expr)); */
-  /* si sf ii ff fs */
+  /* si sf ii ff fs -- c as div case? */
+  /*
+   */
   return(f);
 }
 
@@ -45832,7 +45835,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* add the let vars but not initialized yet 
 		 */
 		for (let_var = car(cdaddr(sc->code)); is_pair(let_var); let_var = cdr(let_var))
-		  add_slot(sc, caar(let_var), sc->UNDEFINED);
+		  add_slot(sc, caar(let_var), s7_make_mutable_real(sc, 1.5));
 		
 		stepper = slot_value(sc->args);
 		func = caddr(caddr(sc->code));
@@ -46105,7 +46108,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    old_e = sc->envir;
 				    sc->envir = new_frame_in_env(sc, sc->envir); 
 				    for (p = cadr(sc->code); is_pair(p); p = cdr(p))
-				      add_slot(sc, caar(p), sc->UNDEFINED);				      
+				      add_slot(sc, caar(p), s7_make_mutable_real(sc, 1.5));
 
 				    /* fprintf(stderr, "%d: %s\n", __LINE__, DISPLAY(old_e)); */
 				    f = (s7_function)c_function_call(c_function_let_looped(ecdr(caddr(sc->code))));
@@ -64269,7 +64272,7 @@ s7_scheme *s7_init(void)
  * s7test    1721 1358 1297 1244  977  961  957  962
  * t455|6     265   89   55   31   14   14    9 9155
  * lat        229   63   52   47   42   40   34   31
- * t502        90   43   39   36   29   23   20   17
+ * t502        90   43   39   36   29   23   20   16
  * calls           275  207  175  115   89   71   58
  */
 

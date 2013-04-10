@@ -56,8 +56,8 @@ typedef struct {
   mus_float_t (*f4)(void *p);
   mus_float_t (*f5)(void *p);
   double x1, x2;
-  double *rx1, *rx2;
-  s7_pointer s1, s2, s4;
+  double *rx1, *rx2, *rx3;
+  s7_pointer s1, s2;
 } gf;
 
 MUS_EXPORT gf *find_gf(s7_scheme *sc, s7_pointer expr);

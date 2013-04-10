@@ -1690,7 +1690,7 @@
 			(polywave modulator2 (+ (* 8.0 frq) (* index2 pitch))))))))))
 
 ;; (with-sound (:play #t) (mosquito 0 5 560 .2) (mosquito 1 3 880 .05))
-
+;; (with-sound () (mosquito 0 1 560 .1))
 
 ;;; --------------------------------------------------------------------------------
 ;;;
