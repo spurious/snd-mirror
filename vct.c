@@ -1013,11 +1013,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
       if (s7_function_choice_is_direct_to_real(sc, val))
 	{
 	  /* fprintf(stderr, "vct %lld %s\n", end - pos, DISPLAY(val));
-	     (hilbert-transform...)
-	     (env (vector-ref es i))
-	     (random 1.0)
 	   */
-
 	  for (; pos < end; pos++)
 	    {
 	      (*step) = pos; /* in case val expr depends on the step var */

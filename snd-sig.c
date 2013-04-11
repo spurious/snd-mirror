@@ -3785,8 +3785,9 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
       if (s7_is_null(s7, s7_cdr(body)))
 	{
 	  s7_pointer old_e;
-	  int len;
-	  s7_function f;
+	  gf *gf1;
+	  s7_pointer y;
+	  s7_Double *ry;
 
 	  res = s7_car(body);
 	  arg = s7_caadar(source);
@@ -3854,208 +3855,39 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	      return(res);
 	    }
 
-	  f = s7_function_choice(s7, res);
-	  if (f)
+	  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
+	  old_e = s7_set_current_environment(s7, e);                  /* new env for map lambda */
+	  /* we need to connect to the lambda's closure so subsequent symbol lookups work right */
+
+	  y = s7_make_mutable_real(s7, 1.5);                          /* slot for the map lambda arg */
+	  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
+	  s7_make_slot(s7, e, arg, y);
+
+	  gf1 = find_gf_with_locals(s7, res, old_e);
+	  if (gf1)
 	    {
-	      /* it is optimized and f can be applied f(s7, args) */
-	      /* now is lambda arg used at all?
-	       * is it direct? can other symbols all be looked up in advance?
-	       * can we assume only real as return val?
-	       */
+	      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
 	      if (s7_tree_memq(s7, arg, res))
 		{
-		  s7_pointer y;
-		  s7_Double *ry;
-		  if (s7_function_choice_is_direct(s7, res))
+		  for (kp = 0; kp < num; kp++)
 		    {
-		      if (s7_function_returns_temp(res))
-			{
-			  gf *gf1;
-
-			  data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
-			  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
-			  old_e = s7_set_current_environment(s7, e);                  /* new env for map lambda */
-			  /* we need to connect to the lambda's closure so subsequent symbol lookups work right */
-
-			  y = s7_make_mutable_real(s7, 1.5);                          /* slot for the map lambda arg */
-			  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
-			  slot = s7_make_slot(s7, e, arg, y);                         /* make sure it is mutable */
-
-			  gf1 = find_gf_with_locals(s7, res, old_e);
-			  if (gf1)
-			    {
-			      for (kp = 0; kp < num; kp++)
-				{
-				  (*ry) = read_sample(sf);
-				  data[kp] = gf1->func(gf1);
-				}
-			      sf = free_snd_fd(sf);
-			      change_samples(beg, num, data, cp, caller, pos, -1.0);
-			      free(data);
-			      free_gf(gf1);
-			      s7_set_current_environment(s7, old_e);
-			      return(res);
-			    }
-			  
-			  /*
-			  fprintf(stderr, "%lld %s\n", num, DISPLAY(res));
-			  50828 (+ y (* (- 1.0 pos) (read-sample reader0)))
-			  50828 (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)))
-			  50828 (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)))
-			  */
-			  for (kp = 0; kp < num; kp++)
-			    {
-			      (*ry) = read_sample(sf);
-			      data[kp] = s7_call_direct_to_real_and_free(s7, res); /* f(s7, cdr(res)), but that doesn't free the result */
-			    }
-			  
-			  sf = free_snd_fd(sf);
-			  change_samples(beg, num, data, cp, caller, pos, -1.0);
-			  free(data);
-			  s7_set_current_environment(s7, old_e);
-			  return(res);
-			}
-		      /* here it's direct but not known to be always real */
-		      
-		      /* here and parallel elsewhere: direct (requires that we set up a slot for arg in this branch)
-		       *   other choices: safe_s, and safe_cs|sc
-		       *   if s != arg, do we have to look it up every time?
-		       *   can this ever return a vct?
-		       */
-		      /* fprintf(stderr, "(2) %lld %s\n", num, DISPLAY(res)); */
-		      /* 50828*2+1000 (+ y 0.2)
-		       */
-		      len = s7_list_length(s7, res);
-		      if ((len == 3) &&
-			  (s7_cadr(res) == arg) &&      /* tree_memq but perhaps (* (abs y) 2.0) ? */
-			  (s7_is_real(s7_caddr(res))))  /* avoid complex here */
-			{
-			  /* (map-channel (lambda (y) (* y 2.0))) */
-			  s7_pointer y, z, args;
-			  s7_Double *ry;
-			  s7_pointer old_e;
-			  
-			  z = s7_caddr(res);
-			  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
-			  old_e = s7_set_current_environment(s7, e);
-			  y = s7_make_mutable_real(s7, 1.5);
-			  ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
-			  slot = s7_make_slot(s7, e, arg, y); 
-			  data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
-			  
-			  args = s7_cons(s7, y, s7_cons(s7, z, s7_nil(s7)));
-			  gc_loc = s7_gc_protect(s7, args);
-			  
-			  for (kp = 0; kp < num; kp++)
-			    {
-			      (*ry) = read_sample(sf);
-			      data[kp] = s7_call_direct_to_real_and_free(s7, res);  /* 100000 */
-			      /* should this be s7_number_to_real(s7, s7_call_direct(s7, res)) -- it apparently might not be a real result? */
-			    }
-			  
-			  sf = free_snd_fd(sf);
-			  s7_gc_unprotect_at(s7, gc_loc);			  
-			  change_samples(beg, num, data, cp, caller, pos, -1.0);
-			  free(data);
-			  s7_set_current_environment(s7, old_e);
-			  return(res);
-			}
+		      (*ry) = read_sample(sf);
+		      data[kp] = gf1->func(gf1);
 		    }
 		}
 	      else
 		{
-		  /* lambda arg can be ignored */
-		  if (s7_function_choice_is_direct(s7, res))
-		    {
-		      if (s7_function_returns_temp(res))
-			{
-			  gf *gf1;
-			  s7_pointer old_e;
-			  
-			  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
-			  old_e = s7_set_current_environment(s7, e);
-			  /* the function closure might be needed even if the arg isn't -- gen might be local, etc */
-			  data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
-			  
-			  gf1 = find_gf(s7, res);
-			  if (gf1)
-			    {
-			      if (gf1->func_1)
-				{
-				  for (kp = 0; kp < num; kp++)
-				    data[kp] = gf1->func_1(gf1->gen);
-				  sf = free_snd_fd(sf);
-				  change_samples(beg, num, data, cp, caller, pos, -1.0);
-				  free(data);
-				  free_gf(gf1);
-				  s7_set_current_environment(s7, old_e);
-				  return(res);
-				}
-
-			      /* ---------------------------------------- */
-			      if (gf1->func)
-				{
-				  for (kp = 0; kp < num; kp++)
-				    data[kp] = gf1->func(gf1);
-				  sf = free_snd_fd(sf);
-				  change_samples(beg, num, data, cp, caller, pos, -1.0);
-				  free(data);
-				  free_gf(gf1);
-				  s7_set_current_environment(s7, old_e);
-				  return(res);
-				}
-			      /* ---------------------------------------- */
-			      free_gf(gf1);				
-			    }
-			  
-			  for (kp = 0; kp < num; kp++)
-			    data[kp] = s7_call_direct_to_real_and_free(s7, res);
-			  change_samples(beg, num, data, cp, caller, pos, -1.0);
-			  free(data);
-			  sf = free_snd_fd(sf);
-			  s7_set_current_environment(s7, old_e);
-			  return(res);
-			}
-		    }
-		  else
-		    {
-		      /* not direct but possibly temp:
-		       * (let ((rd (make-sampler)) (g (make-granulate))) (map-channel (lambda (y) (granulate g (lambda (dir) (read-sample rd))))))
-		       * but this is not currently handled because it takes so much time to check it out.  The idea would be:
-		       *
-		       *    map gran+func and func is trivial (read-sample) can we handle that directly? Currently the example above
-		       *    goes to eval_form to as_needed_input_func to as_needed_input_cs (after enormous effort) to s7_call_direct_to_real_and_free to g_read_sample_s!!
-		       *    since samplers are mus_xen objects, we really want as_needed_input_generator, then gn->vcts[MUS_INPUT_FUNCTION] = obj;
-		       *    but this goes through mus_apply -- we need a parallel to as_needed_input_readin. (and need an interface to clm to set these)
-		       *    	  mus_generator_set_feeder(gn->gen, as_needed_input_sampler); gn via XEN_TO_C_GENERATOR, called with g->closure which is gn
-		       *        static mus_float_t as_needed_input_readin(void *ptr, int direction) -- ignore ptr/direction! call granulate(gen)
-		       */
-		      s7_pointer old_e;
-		      gf *gf1;
-		      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
-		      old_e = s7_set_current_environment(s7, e);
-
-		      gf1 = find_gf(s7, res);
-		      if (gf1)
-			{
-			  if (gf1->func_1)
-			    {
-			      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
-			      for (kp = 0; kp < num; kp++)
-				data[kp] = gf1->func_1(gf1->gen);
-			      change_samples(beg, num, data, cp, caller, pos, -1.0);
-			      free(data);
-			      free_gf(gf1);
-			      sf = free_snd_fd(sf);
-			      s7_set_current_environment(s7, old_e);
-			      return(res);
-			    }
-			  free_gf(gf1);
-			}
-		      s7_set_current_environment(s7, old_e);
-		    }
+		  for (kp = 0; kp < num; kp++)
+		    data[kp] = gf1->func(gf1);
 		}
+	      sf = free_snd_fd(sf);
+	      change_samples(beg, num, data, cp, caller, pos, -1.0);
+	      free(data);
+	      free_gf(gf1);
+	      s7_set_current_environment(s7, old_e);
+	      return(res);
 	    }
+	  s7_set_current_environment(s7, old_e);
 	}
 
       arg = s7_caadar(source);

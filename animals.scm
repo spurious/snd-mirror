@@ -9344,13 +9344,10 @@
 	      (frq (+ (env frqf)
 		      (* (env vibf)
 			 (triangle-wave vib)))))
-	  (let ((frq1 (+ frq (* 1.5 noise)))
-		(frq2 (+ (* 2.0 frq) (* 0.5 noise)))
-		(frq3 (+ (* 0.5 frq) (* 2.0 noise))))
-	    (outa i (* (env ampf)
-		       (+ (polywave gen1 frq1)
-			  (* (env ampf2) (oscil gen2 frq2))
-			  (* (env ampf3) (polywave gen3 frq3)))))))))))
+	  (outa i (* (env ampf)
+		     (+ (polywave gen1 (+ frq (* 1.5 noise)))
+			(* (env ampf2) (oscil gen2 (+ (* 2.0 frq) (* 0.5 noise))))
+			(* (env ampf3) (polywave gen3 (+ (* 0.5 frq) (* 2.0 noise))))))))))))
 
 
 ;; (with-sound (:play #t) (zone-tailed-hawk 0 .5))
