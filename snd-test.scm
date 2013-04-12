@@ -40820,7 +40820,7 @@ EDITS: 1
 	(with-sound (:output v1 :revfile v2 :reverb jc-reverb)
 		    (fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9))
-	(if (< (car (sound-data-maxamp v1)) .56) 
+	(if (< (car (sound-data-maxamp v1)) .55) 
 	    (snd-display #__line__ ";3 rev with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
   
     (for-each
@@ -48202,28 +48202,24 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
 11-Apr-13:
-57,496,878,562
-7,789,088,740  s7.c:eval [/home/bil/snd-13/snd]
-6,284,048,832  ???:sin [/lib64/libm-2.12.so]
-2,725,485,637  clm.c:mus_src [/home/bil/snd-13/snd]
-2,718,136,787  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-2,546,351,498  ???:cos [/lib64/libm-2.12.so]
-1,560,864,839  s7.c:gc [/home/bil/snd-13/snd]
-1,395,884,797  s7.c:eval'2 [/home/bil/snd-13/snd]
-1,068,559,925  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
-1,004,682,384  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+ 56,762,032,942
+7,794,054,996  s7.c:eval [/home/bil/snd-13/snd]
+6,285,091,651  ???:sin [/lib64/libm-2.12.so]
+2,701,933,091  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+2,558,456,605  clm.c:mus_src [/home/bil/snd-13/snd]
+2,551,743,210  ???:cos [/lib64/libm-2.12.so]
+1,547,425,759  s7.c:gc [/home/bil/snd-13/snd]
+1,363,617,343  s7.c:eval'2 [/home/bil/snd-13/snd]
+1,004,679,547  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+  971,624,516  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
   943,679,698  clm.c:mus_formant_bank [/home/bil/snd-13/snd]
   911,248,552  clm.c:fir_8 [/home/bil/snd-13/snd]
-  899,283,812  ???:t2_32 [/home/bil/snd-13/snd]
-  823,220,519  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
-  781,643,274  ???:t2_64 [/home/bil/snd-13/snd]
+  885,250,720  ???:t2_32 [/home/bil/snd-13/snd]
+  785,981,295  ???:t2_64 [/home/bil/snd-13/snd]
+  737,181,483  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
   693,360,038  clm.c:run_hilbert [/home/bil/snd-13/snd]
-  570,938,404  s7.c:s7_make_real [/home/bil/snd-13/snd]
-  508,956,420  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
-  507,862,572  clm.c:mus_src_05 [/home/bil/snd-13/snd]
+  560,479,036  s7.c:s7_make_real [/home/bil/snd-13/snd]
   507,150,000  clm.c:mus_formant_bank_with_inputs [/home/bil/snd-13/snd]
-  462,755,380  clm.c:mus_src_20 [/home/bil/snd-13/snd]
-  454,130,292  ???:n1_64 [/home/bil/snd-13/snd]
-  447,973,306  io.c:mus_write_1 [/home/bil/snd-13/snd]
+  505,152,458  clm.c:mus_src_05 [/home/bil/snd-13/snd]
  
  |#

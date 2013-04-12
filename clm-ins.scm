@@ -718,14 +718,14 @@ is a physical model of a flute:
       (do ((i beg (+ i 1)))
 	  ((= i end))
 	(let* ((vib (+ (triangle-wave tr) (rand-interp rn)))
-	       (ax (* (env ind-env) (oscil spacing-cos vib)))
-	       (fax (polynomial cos-coeffs ax))
-	       (yfax (* (oscil spacing-sin vib) (polynomial sin-coeffs ax))))
+	       (ax (* (env ind-env) (oscil spacing-cos vib))))
 	  (locsig loc i (* (env amp-env)
-			   (- (* (oscil carrier-sin (* vib r)) yfax) 
-			      (* (oscil carrier-cos (* vib r)) fax)))))))))
+			   (- (* (oscil carrier-sin (* vib r)) 
+				 (* (oscil spacing-sin vib) (polynomial sin-coeffs ax)))
+			      (* (oscil carrier-cos (* vib r)) 
+				 (polynomial cos-coeffs ax))))))))))
 
-;; (pqw 0 .5 200 1000 .2 '(0 0 25 1 100 0) '(0 1 100 0) '(2 .1 3 .3 6 .5))
+;; (with-sound () (pqw 0 .5 200 1000 .2 '(0 0 25 1 100 0) '(0 1 100 0) '(2 .1 3 .3 6 .5)))
 ;; to see the asymmetric spectrum most clearly, set the index function above to '(0 1 100 1)
 
 

@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 12
-#define MUS_DATE "27-Mar-13"
+#define MUS_REVISION 13
+#define MUS_DATE "11-Apr-13"
 
 /* isn't mus_env_interp backwards? */
 
@@ -233,6 +233,7 @@ MUS_EXPORT mus_float_t mus_tap(mus_any *gen, mus_float_t loc);
 MUS_EXPORT mus_float_t mus_tap_unmodulated(mus_any *gen);
 MUS_EXPORT mus_any *mus_make_delay(int size, mus_float_t *line, int line_size, mus_interp_t type);
 MUS_EXPORT bool mus_delay_p(mus_any *ptr);
+MUS_EXPORT bool mus_tap_p(mus_any *ptr);
 MUS_EXPORT bool mus_delay_line_p(mus_any *gen); /* added 2-Mar-03 for tap error checks */
 MUS_EXPORT mus_float_t mus_delay_tick(mus_any *ptr, mus_float_t input);
 MUS_EXPORT mus_float_t mus_delay_unmodulated_noz(mus_any *ptr, mus_float_t input);
@@ -613,6 +614,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 11-Apr:     mus_tap_p as a better name for mus_delay_line_p.
  * 27-Mar:     comb-bank, all-pass-bank, filtered-comb-bank, pulsed-env, oscil-bank.
  * 21-Mar:     one-pole-all-pass generator.
  * 14-Mar:     formant-bank generator.

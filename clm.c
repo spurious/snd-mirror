@@ -4074,6 +4074,12 @@ bool mus_delay_line_p(mus_any *gen)
 	 (gen->core->extended_type == MUS_DELAY_LINE));
 }
 
+bool mus_tap_p(mus_any *gen)
+{
+  return((gen) && 
+	 (gen->core->extended_type == MUS_DELAY_LINE));
+}
+
 
 static void delay_reset(mus_any *ptr)
 {

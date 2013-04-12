@@ -3302,9 +3302,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
       
 #if HAVE_SCHEME
 
-      s7_pointer arg_list;
       int gc_loc;
-      bool use_apply;
       s7_pointer source, arg, body, e, slot;
       s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
       mus_long_t local_samps;
@@ -3576,26 +3574,18 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 		    }
 		}
 	    }
+	}
 
-	  arg = s7_caadar(source);
-	  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
-	  gc_loc = s7_gc_protect(s7, e);
-	  slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
-	  use_apply = false;
-	  if (s7_is_null(s7, s7_cdr(body)))
-	    {
-	      eval = s7_eval_form;
-	      body = s7_car(body);
-	    }
-	  else eval = s7_eval;
-	}
-      else
+      arg = s7_caadar(source);
+      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
+      gc_loc = s7_gc_protect(s7, e);
+      slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
+      if (s7_is_null(s7, s7_cdr(body)))
 	{
-	  /* presumably "proc" is something like abs */
-	  arg_list = XEN_LIST_1(XEN_FALSE);
-	  gc_loc = s7_gc_protect(s7, arg_list);
-	  use_apply = true;
+	  eval = s7_eval_form;
+	  body = s7_car(body);
 	}
+      else eval = s7_eval;
 #endif
       
       data = (mus_float_t **)calloc(1, sizeof(mus_float_t *));
@@ -3603,30 +3593,12 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
       ss->stopped_explicitly = false;
       
       /* fprintf(stderr, "%d, %lld %s\n", __LINE__, num, DISPLAY(body)); */
-      /* 100000 (+ (next-sample reader) y)
-       * 94928 (+ inval (delay outdel (* volume (comb-bank combs (all-pass-bank allpasses inval)))))
-       */
-
       for (kp = 0; kp < num; kp++)
 	{
 	  /* changed here to remove catch 24-Mar-02 */
 #if HAVE_SCHEME
-
-	  /* TODO: if use_apply can't we remake the arg? */
-	  if (use_apply)
-	    {
-	      s7_set_car(arg_list, s7_make_real(s7, read_sample(sf)));
-	      if (kp == 0)
-		res = s7_call_with_location(s7, proc, arg_list, c__FUNCTION__, __FILE__, __LINE__);
-	      else res = s7_apply_function(s7, proc, arg_list);
-	    }
-	  else
-	    {
-	      /* TODO: if body is safe, can't we remake the arg? */
-	      s7_slot_set_value(s7, slot, s7_make_real(s7, read_sample(sf)));
-	      res = eval(s7, body, e);
-	    }
-	  
+	  s7_slot_set_value(s7, slot, s7_make_real(s7, read_sample(sf)));
+	  res = eval(s7, body, e);
 #else
 	  res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
 #endif
@@ -3916,9 +3888,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
   cur_size = num;
 
   /* fprintf(stderr, "%lld: %s\n", num, DISPLAY(s7_car(source))); */
-  /* 150000: (lambda (y) (granulate grn (lambda (dir) (read-sample rd))))
-   * 100000: (lambda (inval) (amplitude-modulate 1.0 inval (oscil os)))
-   * 850000 here altogether I think   */
+
   for (kp = 0; kp < num; kp++)
     {
 
