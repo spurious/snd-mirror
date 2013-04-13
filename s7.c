@@ -45931,7 +45931,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_function f;
 		    s7_pointer result;
 		    f = (s7_function)c_function_call(c_function_looped(ecdr(func)));
-		    result = f(sc, sc->args = cons(sc, stepper, body));
+		    result = f(sc, sc->z = cons(sc, stepper, body));
 		    if (result)
 		      {
 			sc->code = cdr(cadr(sc->code));
@@ -46142,22 +46142,29 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      }
 		    else
 		      {
-			/* fprintf(stderr, "code: %s %d %s\n", DISPLAY(sc->code), is_optimized(sc->code), opt_name(sc->code)); */
-			/* (outa k (* (env pulsef) (oscil gen1 (rand-interp rnd) (+ (* 0.1 (oscil md)) (* 0.2 (oscil md1))))))
-			 * (outa i (* (env ampf) (+ 0.25 (* 0.45 (abs (+ (rand-interp rnd) (* 0.7 (oscil trem)))))) (polywave gen1 (+ (env frqf1) (* (env vibf) (oscil vib))))))
-			 */
-#if 0
 			if ((is_optimized(sc->code)) &&
 			    (c_function_looped(ecdr(sc->code))))
-			  fprintf(stderr, "%s%s%s is loopable (%s)\n", BOLD_TEXT, DISPLAY(sc->code), UNBOLD_TEXT, opt_name(sc->code));
-			else
 			  {
-			    if ((is_pair(caddr(sc->code))) &&
-				(is_optimized(caddr(sc->code))) &&
-				(c_function_looped(ecdr(caddr(sc->code)))))
-			      fprintf(stderr, "caddr(code) %s%s%s is loopable (%s)\n", BOLD_TEXT, DISPLAY(caddr(sc->code)), UNBOLD_TEXT, opt_name(caddr(sc->code)));
+			    s7_pointer body, stepper, result;
+			    s7_function f;
+
+			    stepper = slot_value(sc->args);
+			    body = cdr(sc->code);
+
+			    f = (s7_function)c_function_call(c_function_looped(ecdr(sc->code)));
+			    result = f(sc, sc->z = cons(sc, stepper, body));
+			    if (result)
+			      {
+				sc->code = cdr(cadr(code));
+				goto DO_BEGIN;
+			      }
 			  }
-#endif
+			/* else {if (is_optimized(sc->code)) fprintf(stderr, "%s has no looper\n", DISPLAY(sc->code));} */
+			/* no looper: write-byte|char out-bank mixer-set! locsig+constant "(locsig gen i 1.0)" locsig-set!
+			 *            frame->file file->sample ina 
+			 * not gf: contrast-enhancement
+			 * (out-bank filts i (* (env envA) (fir-filter flt (comb-bank combs (all-pass-bank allpasses (ina i *reverb*))))))
+			 */
 
 			if (is_optimized(sc->code))
 			  {
@@ -46201,6 +46208,66 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				  }
 			      }
 			  }
+
+			/* fprintf(stderr, "%lld: %s\n", denominator(slot_value(sc->args)) - numerator(slot_value(sc->args)), DISPLAY(sc->code));
+			 */
+			/*
+ 90402: (frame-set! f-out c (filtered-comb-bank (vector-ref fcmb-c c) (delay (vector-ref predelays c) (frame-ref f-in c))))
+68492: (sound-data-set! sd i pos (frame-ref fr i))
+16: (sound-data-set! sd chn i (+ i (* chn 10)))
+
+32: (sound-data-set! sd1 0 i (* 0.01 i))
+4: (sound-data-set! sdata i 1 0.1)
+10: (scale-channel 0.5 (* i 10) 10)
+10: (scale-channel 0.5 (* i 10) 10)
+99: (vct-set! v i (+ 0.5 (* 0.5 (cos (+ pi (/ (* pi i) dur))))))
+33: (vct-set! v i (+ 0.5 (* 0.5 (cos (+ pi (/ (* pi i) dur))))))
+99: (vct-set! v i (+ 0.5 (* 0.5 (cos (+ pi (/ (* pi i) dur))))))
+33: (vct-set! v i (+ 0.5 (* 0.5 (cos (+ pi (/ (* pi i) dur))))))
+100: (vct-set! data i (+ (next-sample reader) (mus-random dither) (mus-random dither)))
+10: (vct-set! v0 i (sin (* pi (/ i 5))))
+5: (vct-set! v0 i (delay del 0.0 0.4))
+10: (vct-set! v i (delay gen 0.5 i))
+10: (vct-set! v i (delay gen (if (odd? i) 1.0 0.0) (* i 0.1)))
+10: (vct-set! v i (delay gen (if (odd? i) 1.0 0.0) (+ 1.0 (* i 0.1))))
+5: (vct-set! v0 i (comb del 0.0 0.4))
+5: (vct-set! v0 i (filtered-comb del 0.0 0.4))
+100: (vct-set! data i (* 1.05 (env e) (oscil o)))
+100: (vct-set! data i (* 1.1 (env e) (oscil o)))
+100: (vct-set! data i (* 1.2 (env e) (+ (* 0.75 (oscil o1)) (* 0.25 (oscil o2)))))
+100: (vct-set! data i (* 1.5 (env e) (+ (* 0.75 (oscil o1)) (* 0.25 (oscil o2)))))
+2: (scale-channel scl beg dur index chn)
+2: (scale-channel scl beg dur index chn)
+10: (vct-set! v i (table-lookup tbl1 (/ (* 2 pi 0.2) 4)))
+10: (vct-set! v i (table-lookup tbl1 (/ (* 2 pi 0.2) 4)))
+10: (vct-set! v i (table-lookup tbl1 (/ (* 2 pi 0.2) 4)))
+10: (vct-set! v i (table-lookup tbl1 (/ (* 2 pi 0.2) 4)))
+10: (vct-set! v i (table-lookup tbl1 (/ (* 2 pi 0.2) 4)))
+10: (frame->file sf i (make-frame 2 (* i 0.1) (* i 0.01)))
+10: (frame->file sf (+ i 5) (make-frame 2 (* i -0.02) (* i -0.01)))
+8: (locsig (make-locsig :degree (* i 45) :output *output*) i 0.5)
+8: (locsig (make-locsig :degree (* i 45) :output *output*) i 0.5)
+8: (locsig (make-locsig :degree (* i 45) :output *output*) i 0.5)
+8: (locsig (make-locsig :degree (* i 45) :output *output*) i 0.5)
+8: (locsig (make-locsig :degree (* i 45) :output *output*) i 0.5)
+100: (locsig lc i 1.0)
+100: (locsig lc i 1.0)
+10: (locsig gen i 1.0)
+10: (locsig gen i 1.0)
+10: (locsig gen i 1.0)
+10: (locsig gen i 0.5)
+10: (locsig gen i 1.0)
+10: (locsig gen i 0.5)
+10: (locsig gen i 1.0)
+10: (locsig gen i 0.5)
+10: (locsig gen i 1.0)
+95658: (vct-set! data i (array-interp tbl (+ 8.0 (* 8.0 (next-sample reader))) 17))
+10: (vct-set! v i (+ off (* scale (cos (+ angle (* i incr))))))
+10: (vct-set! v i (+ off (* scale (cos (+ angle (* i incr))))))
+10: (vct-set! v i (+ off (* scale (cos (+ angle (* i incr))))))
+10: (vct-set! v i (+ off (* scale (cos (+ angle (* i incr))))))
+
+			 */
 
 			push_stack(sc, OP_SAFE_DOTIMES_STEP_O, sc->args, code);
 			goto NS_EVAL;
@@ -46512,7 +46579,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    slot_set_value(environment_dox1(sc->envir), stepper);
 
 		    f = (s7_function)c_function_call(c_function_looped(ecdr(sc->code)));
-		    result = f(sc, sc->args = cons(sc, stepper, body));
+		    result = f(sc, sc->z = cons(sc, stepper, body));
 		    if (result)
 		      {
 			sc->code = cdr(cadr(code));
@@ -46958,7 +47025,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (c_function_looped(ecdr(body)))
 	  {
 	    func = (s7_function)c_function_call(c_function_looped(ecdr(body)));
-	    if (func(sc, sc->args = cons(sc, small_int(0), args))) /* make it compatible with the other looped calls */
+	    if (func(sc, sc->z = cons(sc, small_int(0), args))) /* make it compatible with the other looped calls */
 	      goto START; /* won't happen? */
 	    /* else fall into the ordinary loop */
 	  }
@@ -51189,38 +51256,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_AA:
-	      /* 
-t502:
-330750: h_safe_c_opcq_s h_safe_c_ss
-132300: h_safe_c_cs h_safe_c_c
-45000: h_safe_c_opcq h_safe_c_opcq
-
-bench:
-2304: h_safe_c_s_opssq h_safe_c_s_opcq
-2304: h_safe_c_s_opcq h_safe_c_s_opssq
-
-index:
-27562: h_safe_c_opsq h_safe_c_opsq
-
-lint:
-735: h_safe_c_opsq h_safe_c_opsq
-214: h_safe_c_s h_safe_c_opsq
-
-snd-test:
-452010: h_safe_c_ss h_safe_c_opssq_opssq    op_c_opssq_op_opssq_opssqq
-396907: h_safe_c_s h_safe_c_opssq           op_c_opsq_op_opssqq
-[286468: h_safe_c_c h_safe_c_ss]
-186401: h_safe_c_s_opcq h_safe_c_s
-132300: h_safe_c_cs h_safe_c_c
-131072: h_safe_c_opssq_s h_safe_c_opssq_s
-92008: h_safe_c_opsq_s h_safe_c_opcq_s
-67116: h_safe_c_opcq h_safe_c_opcq
-65751: h_safe_c_s h_safe_c_opcq
-60024: h_safe_c_sss h_safe_c_ss
-55124: h_safe_c_opcq_s h_safe_c_ss
-50828: h_safe_c_s_opcq h_safe_c_c
-50000: h_safe_c_s h_safe_c_opsq_s
-	      */
 	      car(sc->A2_1) = ((s7_function)fcdr(cdr(code)))(sc, cadr(code));
 	      car(sc->A2_2) = ((s7_function)fcdr(cddr(code)))(sc, caddr(code));
 	      sc->value = c_call(code)(sc, sc->A2_1);
@@ -51234,14 +51269,25 @@ snd-test:
 	    case HOP_SAFE_C_AAA:
 	      {
 		/* PERHAPS: C_SAA or SCA
-210833: (+ denom (* x1 x1) (* x2 x2))
-197314: (array-interp tbl (+ 8.0 (* 8.0 (next-sample reader))) 17)
-132300: (comb d0 (pulse-train s) (env zenv))
-81050: (oscil gen1 (rand-interp rnd) (+ (* 0.1 (oscil md)) (* 0.2 (oscil md1))))
+419248: (* (exp (* r (cos y))) (cos (+ x (* r (sin y)))) ar) -- generators rxyk!cos
+210833: (+ denom (* x1 x1) (* x2 x2))                        -- dsl lpc-coeffs
+101756: (+ (next-sample reader) (mus-random dither) (mus-random dither))
+92050: (* 0.5 (- (* 2 n) 1) x)
 66150: (locsig-set! loc 0 (* (- 1.0 degval) dist-scaler))
 66150: (locsig-set! loc 1 (* degval dist-scaler))
 66150: (locsig-reverb-set! loc 0 (* reverb-amount (sqrt dist-scaler)))
-etc
+60000: (+ 1.0 (* -2.0 r (cos y)) (* r r))
+54100: (* (cos cx) ercosmx (cos rsinmx))
+54100: (* (sin cx) ercosmx (sin rsinmx))
+52038: (* interp (sin cxx) s1)
+50828: (mus-set-formant-radius-and-frequency filt (env re) (env fe))
+42496: (file->frame current (+ current-loc i) on)
+39984: (* 0.5 (+ n 1) x)
+34255: (+ 1.0 (* 2.0 r (cos mx)) (* r r))
+34255: (+ 1.0 (* -2.0 r (cos mx)) (* r r))
+22050: (outb samp (* rev val2) *reverb*)
+22050: (outa samp (* rev val1) *reverb*)
+22050: (+ 1.0 (* (env vib-env) (oscil vib-osc)) (rand-interp ran-vib))
 		 */
 		s7_pointer arg;
 		arg = cdr(code);

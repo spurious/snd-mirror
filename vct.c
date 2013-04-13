@@ -915,6 +915,8 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
   vct *v;
   gf *gf1;
   
+  /* fprintf(stderr, "args: %s\n", DISPLAY(args)); */
+
   vc = s7_cadr_value(sc, args);                      /* (0 v i (...)) */
   v = (vct *)imported_s7_object_value_checked(vc, vct_tag);
   if (v)
@@ -984,31 +986,6 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	  free_gf(gf1);
 	}
       /* ---------------------------------------- */
-
-      if (car(val) == env_symbol)
-	{
-	  s7_pointer e;
-	  e = cadr(val);
-	  if ((s7_is_pair(e)) &&
-	      (caddr(e) == caddr(args)) &&
-	      (car(e) == vector_ref_symbol) &&
-	      (s7_is_symbol(cadr(e))))
-	    {
-	      s7_pointer rv;
-	      rv = s7_cadr_value(sc, e);
-	      if (s7_is_vector(rv))
-		{
-		  s7_pointer *elements;
-		  if (end > s7_vector_length(rv))
-		    XEN_OUT_OF_RANGE_ERROR("vector-ref", 2, caddr(e), "index out of range");
-		  elements = s7_vector_elements(rv);
-		  for (; pos < end; pos++)
-		    v->data[pos] = mus_env(s7_to_mus_any(elements[pos]));
-		  (*step) = end;
-		  return(args);
-		}
-	    }
-	}
 
       if (s7_function_choice_is_direct_to_real(sc, val))
 	{
@@ -2287,6 +2264,7 @@ void mus_vct_init(void)
     s7_function_set_looped(vct_set_direct, vct_set_direct_looped);
     s7_function_set_looped(vct_set_temp, vct_set_direct_looped);
     s7_function_set_looped(vct_set_ssf, vct_set_direct_looped);
+    s7_function_set_looped(vct_set_three, vct_set_direct_looped);
 
     vct_set_direct_dox_looped = s7_make_function(s7, "vct-set!", g_vct_set_direct_dox_looped, 2, 0, false, "vct-set! optimization");
     s7_function_set_class(vct_set_direct_dox_looped, f);

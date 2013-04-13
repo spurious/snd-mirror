@@ -2663,7 +2663,7 @@ static int sound_data_number_location;
 #define SOUND_DATA_DENOMINATOR_LOCATION 16
 
 #if (!WITH_GMP)
-static s7_pointer sound_data_set_direct;
+static s7_pointer sound_data_set_direct, sound_data_set_four;
 static s7_pointer g_sound_data_set_direct(s7_scheme *sc, s7_pointer args)
 {
   sound_data *sd;
@@ -2694,35 +2694,47 @@ static s7_pointer sound_data_set_direct_looped;
 static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
 {
   s7_Int pos, end, chan;
-  s7_pointer stepper, vc, val, callee;
+  s7_pointer stepper, vc, val, chn, samp, slot;
   s7_Int *step, *stop;
   sound_data *sd;
   gf *gf1;
+
+  /* fprintf(stderr, "args: %s\n", DISPLAY(args)); */
   
-  vc = s7_car_value(sc, s7_cdr(args));                      /* (0 sd k i (...)) */
+  vc = s7_cadr_value(sc, args);                      /* (0 sd k i (...)) or possibly (0 sdata i 1 0.1) etc */
   sd = (sound_data *)imported_s7_object_value_checked(vc, sound_data_tag);
   if (sd)
     {
+      stepper = s7_car(args);
+      /* cadr is the sound-data object */
+      chn = s7_caddr(args);
+      samp = s7_cadddr(args);
       val = s7_cadddr(s7_cdr(args));
 
-      stepper = s7_car(args);
-      callee = s7_slot(sc, s7_cadddr(args));
-      if (s7_slot_value(callee) != stepper)
+      /* here we might be stepping through the channel which makes things messy 
+       */
+      if (((s7_is_symbol(chn)) && (!s7_is_symbol(samp))) ||
+	  (chn == samp))  /* try to catch (sound-data-set! sd i i 0.0) */
 	return(NULL);
-      
+
       step = ((s7_Int *)((unsigned char *)(stepper) + SOUND_DATA_NUMBER_LOCATION));
       stop = ((s7_Int *)((unsigned char *)(stepper) + SOUND_DATA_DENOMINATOR_LOCATION));
       pos = (*step);
       end = (*stop);
+      slot = s7_slot(sc, samp);
+      if ((!slot) || (s7_slot_value(slot) != stepper))
+	return(NULL);
 
       if ((pos < 0) ||
 	  (end > sd->length))
 	XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 3, s7_cadddr(args), "index out of range");   
 
-      chan = s7_number_to_integer(sc, s7_cadr_value(sc, s7_cdr(args)));
+      if (s7_is_symbol(chn))
+	chan = s7_number_to_integer(sc, s7_value(sc, chn));
+      else chan = s7_number_to_integer(sc, chn);
       if ((chan < 0) ||
 	  (chan >= sd->chans))
-	XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 2, s7_caddr(args), "channel number out of range");   
+	XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 2, chn, "channel number out of range");   
 
       if (s7_is_real(val))
 	{
@@ -2838,6 +2850,7 @@ static s7_pointer sound_data_set_chooser(s7_scheme *sc, s7_pointer f, int args, 
 	  return(sound_data_set_direct);
 	}
 #endif
+      return(sound_data_set_four);
     }
   return(f);
 }
@@ -3080,13 +3093,16 @@ void mus_sndlib_xen_initialize(void)
 #if (!WITH_GMP)
     sound_data_set_direct = s7_make_function(s7, "sound-data-set!", g_sound_data_set_direct, 4, 0, false, "sound-data-set! optimization");
     s7_function_set_class(sound_data_set_direct, f);
+    
+    sound_data_set_four = s7_make_function(s7, "sound-data-set!", g_sound_data_set_w, 4, 0, false, "sound-data-set! optimization");
 
     sound_data_set_direct_looped = s7_make_function(s7, "sound-data-set!", g_sound_data_set_direct_looped, 4, 0, false, "sound-data-set! optimization");
     s7_function_set_class(sound_data_set_direct_looped, f);
     s7_function_set_looped(sound_data_set_direct, sound_data_set_direct_looped);
+    s7_function_set_looped(sound_data_set_four, sound_data_set_direct_looped);
 #endif
 
-    /* sound-data-set! */
+    /* sound-data-ref */
     f = s7_name_to_value(s7, "sound-data-ref");
     s7_function_set_chooser(s7, f, sound_data_ref_chooser);
 

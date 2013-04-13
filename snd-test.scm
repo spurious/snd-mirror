@@ -10487,7 +10487,7 @@ EDITS: 2
     (let ((tbl (envelope->vct (list 0.0 -1.0 1.0 1.0) 1001))
 	  (curpos (edit-position snd chn)))
       (map-channel (lambda (y)
-		     (array-interp tbl (+ 500.0 (* y 500))  1000))
+		     (array-interp tbl (+ 500.0 (* y 500)) 1000))
 		   0 #f snd chn)
       
       (let ((r (make-sampler 0 snd chn 1 curpos))
@@ -17123,7 +17123,7 @@ EDITS: 2
 	   (let ((v (make-vct 10)))
 	     (do ((i 0 (+ i 1)))
 		 ((= i 10))
-	       (vct-set! v i (table-lookup tbl1 (/ (* 2 pi .2) 4))))
+	       (vct-set! v i (table-lookup tbl1 (* .1 pi))))
 	     (if (and (not (vequal v vals))
 		      (not (= type mus-interp-all-pass))
 		      (or (not (= type mus-interp-none))
