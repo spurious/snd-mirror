@@ -3855,7 +3855,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	      sf = free_snd_fd(sf);
 	      change_samples(beg, num, data, cp, caller, pos, -1.0);
 	      free(data);
-	      free_gf(gf1);
+	      gf_free(gf1);
 	      s7_set_current_environment(s7, old_e);
 	      return(res);
 	    }
@@ -3881,13 +3881,15 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
       gc_loc = s7_gc_protect(s7, arg_list);
       use_apply = true;
     }
-
 #endif
   
   data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
   cur_size = num;
 
-  /* fprintf(stderr, "%lld: %s\n", num, DISPLAY(s7_car(source))); */
+  /* fprintf(stderr, "%lld: %s\n", num, DISPLAY(s7_car(source)));  */
+  /*
+50828: (lambda (x) (+ x (* (- m 1.0) (filter flt x)))) -- not real->temp?
+   */
 
   for (kp = 0; kp < num; kp++)
     {

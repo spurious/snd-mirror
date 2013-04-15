@@ -8605,6 +8605,10 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
   return((mus_any *)e);
 }
 
+/* one way to make an impulse: (make-env '(0 1 1 0) :length 1 :base 0.0)
+ * a counter: (make-env '(0 0 1 1) :length 21 :scaler 20) -- length = 1+scaler
+ */ 
+
 
 static void env_set_location(mus_any *ptr, mus_long_t val)
 {
@@ -12114,7 +12118,7 @@ static void src_reset(mus_any *ptr)
       int i, dir = 1;
       if (gen->incr < 0.0) dir = -1;
       for (i = gen->width - 1; i < gen->lim; i++) 
-	gen->data[i] = (*(gen->feeder))(gen->closure, dir);
+	gen->data[i] = gen->feeder(gen->closure, dir);
     }
   gen->start = 0;
 }
@@ -12144,7 +12148,7 @@ static mus_any_class SRC_CLASS = {
 };
 
 
-mus_any *mus_make_src(mus_float_t (*input)(void *arg, int direction), mus_float_t srate, int width, void *closure)
+mus_any *mus_make_src_with_init(mus_float_t (*input)(void *arg, int direction), mus_float_t srate, int width, void *closure, void (*init)(void *p, mus_any *g))
 {
   if (fabs(srate) > MUS_MAX_CLM_SRC)
     mus_error(MUS_ARG_OUT_OF_RANGE, S_make_src " srate arg invalid: %f", srate);
@@ -12177,18 +12181,26 @@ mus_any *mus_make_src(mus_float_t (*input)(void *arg, int direction), mus_float_
 	  srp->sinc_table = init_sinc_table(wid);
 	  srp->coeffs = NULL;
 
-	  if (input)
+	  if (init)
+	    init(closure, (mus_any *)srp);
+
+	  if (srp->feeder)
 	    {
 	      int i, dir = 1;
 	      if (srate < 0.0) dir = -1;
 	      for (i = wid - 1; i < srp->lim; i++) 
-		srp->data[i] = (*input)(closure, dir);
+		srp->data[i] = srp->feeder(closure, dir);
 	      /* was i = 0 here but we want the incoming data centered */
 	    }
 	  return((mus_any *)srp);
 	}
     }
   return(NULL);
+}
+
+mus_any *mus_make_src(mus_float_t (*input)(void *arg, int direction), mus_float_t srate, int width, void *closure)
+{
+  return(mus_make_src_with_init(input, srate, width, closure, NULL));
 }
 
 mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(void *arg, int direction))
@@ -12214,16 +12226,14 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
     {
       int fsx, dir = 1;
 
-      mus_float_t (*sr_input)(void *arg, int direction) = input;
-      if (sr_input == NULL) sr_input = srp->feeder;
-
       if (srx < 0.0) dir = -1;
       fsx = (int)(srp->x);
       srp->x -= fsx;
 
+      if (input) srp->feeder = input;
       for (i = 0; i < fsx; i++)
 	{
-	  srp->data[loc++] = (*sr_input)(srp->closure, dir);
+	  srp->data[loc++] = srp->feeder(srp->closure, dir);
 	  if (loc == lim) loc = 0;
 	}
       srp->start = loc; /* next time araound we start here */
@@ -12327,8 +12337,11 @@ mus_float_t mus_src_20(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
     {
       mus_float_t (*sr_input)(void *arg, int direction) = input;
       if (sr_input == NULL) sr_input = srp->feeder;
-      srp->data[loc] = (*sr_input)(srp->closure, 1);
-      srp->data[loc + 1] = (*sr_input)(srp->closure, 1);
+
+      if (input) srp->feeder = input;
+      srp->data[loc] = srp->feeder(srp->closure, 1);
+      srp->data[loc + 1] = srp->feeder(srp->closure, 1);
+
       loc += 2; /* start of data */
       
       srp->start = loc;
@@ -12407,9 +12420,9 @@ mus_float_t mus_src_05(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
   loc = srp->start;
   if (srp->x >= 1.0)
     {
-      mus_float_t (*sr_input)(void *arg, int direction) = input;
-      if (sr_input == NULL) sr_input = srp->feeder;
-      srp->data[loc] = (*sr_input)(srp->closure, 1);
+      if (input) srp->feeder = input;
+      srp->data[loc] = srp->feeder(srp->closure, 1);
+
       srp->x = 0.5;
       srp->start++;
 
@@ -12730,21 +12743,18 @@ mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *a
 
   if (spd->ctr >= spd->cur_out)       /* time for next grain */
     {
-      int i;
-
       /* set up edit/input functions and possible outside-accessible grain array */
-      mus_float_t (*spd_input)(void *arg, int direction) = input;
+      int i;
       int (*spd_edit)(void *closure) = edit;
-      if (spd_input == NULL) spd_input = spd->rd;
+      if (input) spd->rd = input;
       if (spd_edit == NULL) spd_edit = spd->edit;
 
       if (spd->first_samp)
 	{
 	  /* fill up in_data, out_data is already cleared */
 	  for (i = 0; i < spd->in_data_len; i++)
-	    spd->in_data[i] = (*spd_input)(spd->closure, 1);
+	    spd->in_data[i] = spd->rd(spd->closure, 1);
 	}
-
       else
 	{
 
@@ -12767,10 +12777,10 @@ mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *a
 	  if (spd->input_hop > spd->in_data_len)
 	    {
 	      /* need to flush enough samples to accommodate the fact that the hop is bigger than our data buffer */
-	      for (i = spd->in_data_len; i < spd->input_hop; i++) (*spd_input)(spd->closure, 1);
+	      for (i = spd->in_data_len; i < spd->input_hop; i++) spd->rd(spd->closure, 1);
 	      /* then get a full input buffer */
 	      for (i = 0; i < spd->in_data_len; i++)
-		spd->in_data[i] = (*spd_input)(spd->closure, 1);
+		spd->in_data[i] = spd->rd(spd->closure, 1);
 	    }
 	  else
 	    {
@@ -12779,7 +12789,7 @@ mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *a
 	      good_samps = (spd->in_data_len - spd->input_hop);
 	      memmove((void *)(spd->in_data), (void *)(spd->in_data + spd->input_hop), good_samps * sizeof(mus_float_t));
 	      for (i = good_samps; i < spd->in_data_len; i++)
-		spd->in_data[i] = (*spd_input)(spd->closure, 1);
+		spd->in_data[i] = spd->rd(spd->closure, 1);
 	    }
 	}
 
@@ -14147,15 +14157,14 @@ mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direc
   if (gen->ctr >= gen->fftsize2)
     {
       mus_long_t i, j;
-      mus_float_t (*conv_input)(void *arg, int direction) = input;
-      if (conv_input == NULL) conv_input = gen->feeder;
 
       mus_clear_array(gen->rl2, gen->fftsize);
+      if (input) gen->feeder = input;
       for (i = 0, j = gen->fftsize2; i < gen->fftsize2; i++, j++) 
 	{
 	  gen->buf[i] = gen->buf[j]; 
 	  gen->buf[j] = 0.0;
-	  gen->rl1[i] = (*conv_input)(gen->closure, 1);
+	  gen->rl1[i] = gen->feeder(gen->closure, 1);
 	  gen->rl1[j] = 0.0;
 	}
       memcpy((void *)(gen->rl2), (void *)(gen->filter), gen->filtersize * sizeof(mus_float_t));
@@ -14509,10 +14518,10 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
 
 
 mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr, 
-				     mus_float_t (*input)(void *arg, int direction),
-				     bool (*analyze)(void *arg, mus_float_t (*input)(void *arg1, int direction)),
-				     int (*edit)(void *arg), 
-				     mus_float_t (*synthesize)(void *arg))
+					   mus_float_t (*input)(void *arg, int direction),
+					   bool (*analyze)(void *arg, mus_float_t (*input)(void *arg1, int direction)),
+					   int (*edit)(void *arg), 
+					   mus_float_t (*synthesize)(void *arg))
 {
   pv_info *pv = (pv_info *)ptr;
   int N2, i, N4;
@@ -14525,35 +14534,32 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
   if (pv->outctr >= pv->interp)
     {
       mus_float_t scl;
-      mus_float_t (*pv_input)(void *arg, int direction) = input;
       bool (*pv_analyze)(void *arg, mus_float_t (*input)(void *arg1, int direction)) = analyze;
       int (*pv_edit)(void *arg) = edit;
 
-      if (pv_input == NULL) 
-	{
-	  pv_input = pv->input;
-	  if (pv_input == NULL)
-	    mus_error(MUS_NO_SAMPLE_INPUT, "%s has no input function!", mus_describe(ptr));
-	}
       if (pv_analyze == NULL) pv_analyze = pv->analyze;
       if (pv_edit == NULL) pv_edit = pv->edit;
+      if (input) pv->input = input;
 
       pv->outctr = 0;
 
       if ((pv_analyze == NULL) || 
-	  ((*pv_analyze)(pv->closure, pv_input)))
+	  ((*pv_analyze)(pv->closure, pv->input)))
 	{
 	  int j, buf;
 	  mus_clear_array(pv->freqs, pv->N);
 	  if (pv->in_data == NULL)
 	    {
 	      pv->in_data = (mus_float_t *)calloc(pv->N, sizeof(mus_float_t));
-	      for (i = 0; i < pv->N; i++) pv->in_data[i] = (*pv_input)(pv->closure, 1);
+	      for (i = 0; i < pv->N; i++) 
+		pv->in_data[i] = pv->input(pv->closure, 1);
 	    }
 	  else
 	    {
-	      for (i = 0, j = pv->D; j < pv->N; i++, j++) pv->in_data[i] = pv->in_data[j];
-	      for (i = pv->N - pv->D; i < pv->N; i++) pv->in_data[i] = (*pv_input)(pv->closure, 1);
+	      for (i = 0, j = pv->D; j < pv->N; i++, j++)
+		pv->in_data[i] = pv->in_data[j];
+	      for (i = pv->N - pv->D; i < pv->N; i++) 
+		pv->in_data[i] = pv->input(pv->closure, 1);
 	    }
 	  buf = pv->filptr % pv->N;
 	  for (i = 0; i < pv->N; i++)
@@ -14667,7 +14673,6 @@ void mus_generator_set_feeder(mus_any *g, mus_float_t (*feed)(void *arg, int dir
 	    }
 	}
     }
-
 }
 
 

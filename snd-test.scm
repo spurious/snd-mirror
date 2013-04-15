@@ -7477,10 +7477,8 @@ EDITS: 5
 	  
 	  (let ((ind (new-sound "fmv.snd"))
 		(v (make-vct 2000))
-		(ctr 0))
-	    (fill-vct v (let ((val (sin (* ctr 2.0 (/ pi 10.0)))))
-			    (set! ctr (+ ctr 1))
-			    val))
+		(e (make-env (list 0.0 0.0 1.0 (* 2000 0.2 pi)) :length 2001)))
+	    (fill-vct v (sin (env e)))
 	    (vct->channel v 0 2000 ind 0)
 	    (filter-sound '(0 0 .09 0 .1 1 .11 0 1 0) 1024)
 	    (if (> (maxamp) .025) (snd-display #__line__ ";filter-sound maxamp 1: ~A" (maxamp)))
@@ -19800,7 +19798,7 @@ EDITS: 2
 	    (ctr -0.5)
 	    (incr .001))
 	(map-channel (lambda (y) (granulate gen 
-					    (lambda (dir) (set! ctr (+ ctr incr)) ctr)
+					    (lambda (dir) (set! ctr (+ ctr incr)))
 					    (lambda (g)
 					      (let ((grain (mus-data g))
 						    (len (mus-length g)))
@@ -20163,17 +20161,14 @@ EDITS: 2
 			   (channel->vct 2203 10) (channel->vct 4523 10) (channel->vct 8928 10)))
 	  (undo)
 	  
-	  (set! ctr 0)
-	  (set! gen (make-granulate :expansion 2.0
-				    :input (lambda (dir)
-					     (let ((val (* ctr .0001)))
-					       (set! ctr (+ ctr 1))
-					       val))
-				    :length .00995
-				    :hop .01
-				    :ramp 0.0
-				    :scaler 1.0
-				    :jitter 0.0))
+	  (let ((e (make-env '(0 0 1 1) :length 10000)))
+	    (set! gen (make-granulate :expansion 2.0
+				      :input (lambda (dir) (env e))
+				      :length .00995
+				      :hop .01
+				      :ramp 0.0
+				      :scaler 1.0
+				      :jitter 0.0)))
 	  (clm-channel gen)
 	  (if (fneq (maxamp) .505) (snd-display #__line__ ";granulate ramped 5: ~A" (maxamp)))
 	  (let* ((mxoff 0.0)
@@ -20189,17 +20184,14 @@ EDITS: 2
 	    (if (> mxoff .02) (snd-display #__line__ ";granulate ramped 5 mxoff: ~A" mxoff))) ; .0108 actually
 	  (undo)
 	  
-	  (set! ctr 0)
+	  (let ((e (make-env '(0 0 1 1) :length 10000)))
 	  (set! gen (make-granulate :expansion 2.0
-				    :input (lambda (dir)
-					     (let ((val (* ctr .0001)))
-					       (set! ctr (+ ctr 1))
-					       val))
+				    :input (lambda (dir) (env e))
 				    :length .00995
 				    :hop .01
 				    :ramp 0.5
 				    :scaler 1.0
-				    :jitter 0.0))
+				    :jitter 0.0)))
 	  (clm-channel gen)
 	  (if (fneq (maxamp) .495) (snd-display #__line__ ";granulate ramped 6: ~A" (maxamp)))
 	  (if (or (not (vequal (channel->vct 2000 10)
@@ -20210,17 +20202,14 @@ EDITS: 2
 			   (channel->vct 2000 10) (channel->vct 8000 10)))
 	  (undo)
 	  
-	  (set! ctr 0)
+	  (let ((e (make-env '(0 0 1 1) :length 10000)))
 	  (set! gen (make-granulate :expansion 2.0
-				    :input (lambda (dir)
-					     (let ((val (* ctr .0001)))
-					       (set! ctr (+ ctr 1))
-					       val))
+				    :input (lambda (dir) (env e))
 				    :length .00995
 				    :hop .01
 				    :ramp 0.25
 				    :scaler 1.0
-				    :jitter 0.0))
+				    :jitter 0.0)))
 	  (clm-channel gen)
 	  (if (fneq (maxamp) .505) (snd-display #__line__ ";granulate ramped 7: ~A" (maxamp)))
 	  (if (or (not (vequal (channel->vct 2000 10)
@@ -20231,17 +20220,14 @@ EDITS: 2
 			   (channel->vct 2000 10) (channel->vct 8000 10)))
 	  (undo)
 	  
-	  (set! ctr 0)
+	  (let ((e (make-env '(0 0 1 1) :length 10000)))
 	  (set! gen (make-granulate :expansion 2.0
-				    :input (lambda (dir)
-					     (let ((val (* ctr .0001)))
-					       (set! ctr (+ ctr 1))
-					       val))
+				    :input (lambda (dir) (env e))
 				    :length .05
 				    :hop .01
 				    :ramp 0.25
 				    :scaler 0.1
-				    :jitter 0.0))
+				    :jitter 0.0)))
 	  (clm-channel gen)
 	  (if (fneq (maxamp) .201) (snd-display #__line__ ";granulate ramped 7: ~A" (maxamp)))
 	  (let* ((mxoff 0.0)
@@ -20257,17 +20243,14 @@ EDITS: 2
 	    (if (> mxoff .01) (snd-display #__line__ ";granulate ramped 7 mxoff: ~A" mxoff))) ; .0097 actually
 	  (undo)
 	  
-	  (set! ctr 0)
+	  (let ((e (make-env '(0 0 1 1) :length 10000)))
 	  (set! gen (make-granulate :expansion 2.0
-				    :input (lambda (dir)
-					     (let ((val (* ctr .0001)))
-					       (set! ctr (+ ctr 1))
-					       val))
+				    :input (lambda (dir) (env e))
 				    :length .1
 				    :hop .01
 				    :ramp 0.1
 				    :scaler 0.1
-				    :jitter 0.0))
+				    :jitter 0.0)))
 	  (clm-channel gen)
 	  (if (fneq (maxamp) .501) (snd-display #__line__ ";granulate ramped 8: ~A" (maxamp)))
 	  (let* ((mxoff 0.0)
@@ -20284,18 +20267,14 @@ EDITS: 2
 	    (if (> mxoff .001) (snd-display #__line__ ";granulate ramped 8 mxoff: ~A" mxoff)))
 	  (undo)
 	  
-	  
-	  (set! ctr 0)
+	  (let ((e (make-env '(0 0 1 1) :length 10000)))
 	  (set! gen (make-granulate :expansion 2.0
-				    :input (lambda (dir)
-					     (let ((val (* ctr .0001)))
-					       (set! ctr (+ ctr 1))
-					       val))
+				    :input (lambda (dir) (env e))
 				    :length .4
 				    :hop .01
 				    :ramp 0.4
 				    :scaler 0.025
-				    :jitter 0.0))
+				    :jitter 0.0)))
 	  (clm-channel gen)
 	  (if (fneq (maxamp) .433) (snd-display #__line__ ";granulate ramped 9: ~A" (maxamp)))
 	  (undo)
@@ -28840,10 +28819,9 @@ EDITS: 2
 		  (old-size (transform-size))
 		  (old-type (transform-type))
 		  (old-norm (transform-normalization))
-		  (old-grf (transform-graph-type)))
-	      (fill-vct v (let ((val (sin (* ctr 2.0 (/ pi 10.0)))))
-			    (set! ctr (+ ctr 1))
-			    val))
+		  (old-grf (transform-graph-type))
+		  (e (make-env (list 0.0 0.0 1.0 (* 2000 0.2 pi)) :length 2001)))
+	      (fill-vct v (sin (env e)))
 	      (vct->channel v 0 2000 ind 0)
 	      (set! (transform-size) 256)
 	      (set! (transform-type) fourier-transform)
@@ -38562,9 +38540,9 @@ EDITS: 1
   (if all-args
       (let ()
 
-	(define args1 (list 1.5 '(oscil o1) '(env e1) 'x 'i '(oscil o) '(- 1.0 x)))
-	(define args2 (list 1.5 '(oscil o2) '(env e2) 'x 'i '(vct-ref v-1 i)))
-	(define args3 (list 1.5 '(oscil o3) '(env e3) 'x 'i '(cos x)))
+	(define args1 (list 1.5 '(oscil o1) '(env e1) 'x 'i '(oscil o) '(- 1.0 x) '(oscil (vector-ref oscs k))))
+	(define args2 (list 1.5 '(oscil o2) '(env e2) 'y 'i '(vct-ref v-1 i)))
+	(define args3 (list 1.5 '(oscil o3) '(env e3) 'z 'i '(cos x)))
 	(define args4 (list 1.5 '(oscil o4) '(env e4) 'x 'i))
 	
 	(define (try str)
@@ -38573,20 +38551,24 @@ EDITS: 1
 	  (call-with-output-file "try-test.scm"
 	    (lambda (p)
 	      (format p "(if (not (provided? 'snd-ws.scm)) (load \"ws.scm\"))~%~%")
-	      (format p "(let ()~%")
 	      (format p "(set! (mus-float-equal-fudge-factor) 1e-4)~%")
-	      (format p "(define v-1 (make-vct 100 .25)) (do ((i 0 (+ i 1))) ((= i 100)) (vct-set! v-1 i (* i .01)))~%~%")
-	      (format p "(define v0 (make-vct 10))~%")
+	      (format p "(let ()~%")
+	      (format p "  (define v-1 (make-vct 100 .25)) (do ((i 0 (+ i 1))) ((= i 100)) (vct-set! v-1 i (* i .01)))~%~%")
+	      (format p "  (define v0 (make-vct 10))~%")
 	      (format p "  (let ((o (make-oscil 1000.0))~%")
 	      (format p "        (o1 (make-oscil 1000.0))~%")
 	      (format p "        (o2 (make-oscil 1000.0))~%")
 	      (format p "        (o3 (make-oscil 1000.0))~%")
 	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (oscs (vector (make-oscil 400.0) (make-oscil 500.0) (make-oscil 600.0)))~%")
 	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (x 3.14)~%")
+	      (format p "        (y -0.5)~%")
+	      (format p "        (z 0.1)~%")
+	      (format p "        (k 1)~%")
 	      (format p "        (i 0)~%")
 	      (format p "        (v (make-vct 10)))~%")
 	      (format p "    (set! (v0 0) ~A) (set! i (+ i 1))~%" str)
@@ -38605,11 +38587,15 @@ EDITS: 1
 	      (format p "        (o2 (make-oscil 1000.0))~%")
 	      (format p "        (o3 (make-oscil 1000.0))~%")
 	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (oscs (vector (make-oscil 400.0) (make-oscil 500.0) (make-oscil 600.0)))~%")
 	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (x 3.14)~%")
+	      (format p "        (y -0.5)~%")
+	      (format p "        (z 0.1)~%")
+	      (format p "        (k 1)~%")
 	      (format p "        (v (make-vct 10)))~%")
 	      (format p "    (do ((i 0 (+ i 1)))~%")
 	      (format p "        ((= i 10) v)~%")
@@ -38620,11 +38606,15 @@ EDITS: 1
 	      (format p "        (o2 (make-oscil 1000.0))~%")
 	      (format p "        (o3 (make-oscil 1000.0))~%")
 	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (oscs (vector (make-oscil 400.0) (make-oscil 500.0) (make-oscil 600.0)))~%")
 	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (x 3.14)~%")
+	      (format p "        (y -0.5)~%")
+	      (format p "        (z 0.1)~%")
+	      (format p "        (k 1)~%")
 	      (format p "        (v (make-vct 10)))~%")
 	      (format p "    (with-sound (:output v :clipped #f :to-snd #f)~%")
 	      (format p "      (do ((i 0 (+ i 1)))~%")
@@ -38637,11 +38627,15 @@ EDITS: 1
 	      (format p "        (o2 (make-oscil 1000.0))~%")
 	      (format p "        (o3 (make-oscil 1000.0))~%")
 	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (oscs (vector (make-oscil 400.0) (make-oscil 500.0) (make-oscil 600.0)))~%")
 	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (x 3.14)~%")
+	      (format p "        (y -0.5)~%")
+	      (format p "        (z 0.1)~%")
+	      (format p "        (k 1)~%")
 	      (format p "        (v (make-vct 10)))~%")
 	      (format p "    (with-sound (:output \"try-test.snd\" :clipped #f :to-snd #f)~%")
 	      (format p "      (do ((i 0 (+ i 1)))~%")
@@ -38655,12 +38649,16 @@ EDITS: 1
 	      (format p "        (o2 (make-oscil 1000.0))~%")
 	      (format p "        (o3 (make-oscil 1000.0))~%")
 	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (oscs (vector (make-oscil 400.0) (make-oscil 500.0) (make-oscil 600.0)))~%")
 	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (v (make-vct 10))~%")
-	      (format p "        (x 3.14))~%")
+	      (format p "        (x 3.14)~%")
+	      (format p "        (y -0.5)~%")
+	      (format p "        (k 1)~%")
+	      (format p "        (z 0.1))~%")
 	      (format p "    (do ((i 0 (+ i 1))~%")
 	      (format p "         (lst (make-list 10)))~%")
 	      (format p "        ((= i 10) (apply vct lst))~%")
@@ -38671,10 +38669,14 @@ EDITS: 1
 	      (format p "        (o2 (make-oscil 1000.0))~%")
 	      (format p "        (o3 (make-oscil 1000.0))~%")
 	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (oscs (vector (make-oscil 400.0) (make-oscil 500.0) (make-oscil 600.0)))~%")
 	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (y -0.5)~%")
+	      (format p "        (k 1)~%")
+	      (format p "        (z 0.1)~%")
 	      (format p "        (v (make-vct 10)))~%")
 	      (format p "    (with-sound (:output \"try-test.snd\" :clipped #f :to-snd #f)~%")
 	      (format p "      (do ((i 0 (+ i 1))~%")
@@ -38689,12 +38691,16 @@ EDITS: 1
 	      (format p "        (o2 (make-oscil 1000.0))~%")
 	      (format p "        (o3 (make-oscil 1000.0))~%")
 	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (oscs (vector (make-oscil 400.0) (make-oscil 500.0) (make-oscil 600.0)))~%")
 	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (k 1)~%")
 	      (format p "        (v (make-vct 10)))~%")
 	      (format p "    (do ((i 0 (+ i 1))~%")
+	      (format p "         (y -0.5)~%")
+	      (format p "         (z 0.1)~%")
 	      (format p "         (x 0.0 (+ x 0.1)))~%")
 	      (format p "        ((= i 10) v)~%")
 	      (format p "      (vct-set! v i ~A))))~%~%" str)
@@ -38705,11 +38711,15 @@ EDITS: 1
 	      (format p "        (o2 (make-oscil 1000.0))~%")
 	      (format p "        (o3 (make-oscil 1000.0))~%")
 	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (oscs (vector (make-oscil 400.0) (make-oscil 500.0) (make-oscil 600.0)))~%")
 	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (x 3.14)~%")
+	      (format p "        (y -0.5)~%")
+	      (format p "        (k 1)~%")
+	      (format p "        (z 0.1)~%")
 	      (format p "        (v (make-vct 10)))~%")
 	      (format p "    (do ((i 0 (+ i 1)))~%")
 	      (format p "        ((= i 10) v)~%")
@@ -38721,11 +38731,15 @@ EDITS: 1
 	      (format p "        (o2 (make-oscil 1000.0))~%")
 	      (format p "        (o3 (make-oscil 1000.0))~%")
 	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (oscs (vector (make-oscil 400.0) (make-oscil 500.0) (make-oscil 600.0)))~%")
 	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (x 3.14)~%")
+	      (format p "        (y -0.5)~%")
+	      (format p "        (z 0.1)~%")
+	      (format p "        (k 1)~%")
 	      (format p "        (v (make-vct 10)))~%")
 	      (format p "    (with-sound (:output v :clipped #f :to-snd #f)~%")
 	      (format p "      (do ((i 0 (+ i 1)))~%")
@@ -38740,11 +38754,15 @@ EDITS: 1
 	      (format p "        (o2 (make-oscil 1000.0))~%")
 	      (format p "        (o3 (make-oscil 1000.0))~%")
 	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (oscs (vector (make-oscil 400.0) (make-oscil 500.0) (make-oscil 600.0)))~%")
 	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (x 3.14)~%")
+	      (format p "        (y -0.5)~%")
+	      (format p "        (z 0.1)~%")
+	      (format p "        (k 1)~%")
 	      (format p "        (v (make-vct 10)))~%")
 	      (format p "    (do ((i 0 (+ i 1)))~%")
 	      (format p "        ((= i 10) v)~%")
@@ -38756,11 +38774,15 @@ EDITS: 1
 	      (format p "        (o2 (make-oscil 1000.0))~%")
 	      (format p "        (o3 (make-oscil 1000.0))~%")
 	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (oscs (vector (make-oscil 400.0) (make-oscil 500.0) (make-oscil 600.0)))~%")
 	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (x 3.14)~%")
+	      (format p "        (y -0.5)~%")
+	      (format p "        (z 0.1)~%")
+	      (format p "        (k 1)~%")
 	      (format p "        (v (make-vct 10)))~%")
 	      (format p "    (with-sound (:output v :clipped #f :to-snd #f)~%")
 	      (format p "      (do ((i 0 (+ i 1)))~%")
@@ -38775,10 +38797,14 @@ EDITS: 1
 	      (format p "        (o2 (make-oscil 1000.0))~%")
 	      (format p "        (o3 (make-oscil 1000.0))~%")
 	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (oscs (vector (make-oscil 400.0) (make-oscil 500.0) (make-oscil 600.0)))~%")
 	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (y -0.5)~%")
+	      (format p "        (z 0.1)~%")
+	      (format p "        (k 1)~%")
 	      (format p "        (v (make-vct 10)))~%")
 	      (format p "    (do ((i 0 (+ i 1)))~%")
 	      (format p "        ((= i 10) v)~%")
@@ -38790,10 +38816,14 @@ EDITS: 1
 	      (format p "        (o2 (make-oscil 1000.0))~%")
 	      (format p "        (o3 (make-oscil 1000.0))~%")
 	      (format p "        (o4 (make-oscil 1000.0))~%")
+	      (format p "        (oscs (vector (make-oscil 400.0) (make-oscil 500.0) (make-oscil 600.0)))~%")
 	      (format p "        (e1 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e2 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e3 (make-env '(0 .1 1 1) :length 100))~%")
 	      (format p "        (e4 (make-env '(0 .1 1 1) :length 100))~%")
+	      (format p "        (y -0.5)~%")
+	      (format p "        (z 0.1)~%")
+	      (format p "        (k 1)~%")
 	      (format p "        (v (make-vct 10)))~%")
 	      (format p "    (with-sound (:output v :clipped #f :to-snd #f)~%")
 	      (format p "      (do ((i 0 (+ i 1)))~%")
@@ -38827,6 +38857,7 @@ EDITS: 1
 	  
 	  (load "try-test.scm"))
 	
+	
 	(define (out-args)
 	  
 	  (for-each 
@@ -38842,7 +38873,11 @@ EDITS: 1
 	     (for-each 
 	      (lambda (b) 
 		(try (format #f "(+ ~A ~A)" a b))
+		(try (format #f "(- ~A ~A)" a b))
 		(try (format #f "(* ~A ~A)" a b))
+		(try (format #f "(cos (+ ~A ~A))" a b))
+		(try (format #f "(sin (* ~A ~A))" a b))
+		(try (format #f "(abs (* ~A ~A))" a b))
 		(try (format #f "(* ~A (abs ~A))" a b))
 		(try (format #f "(oscil o (+ ~A ~A))" a b))
 		(try (format #f "(oscil o (* ~A ~A))" a b))
@@ -38900,9 +38935,13 @@ EDITS: 1
 		   (try (format #f "(* (oscil o ~A) ~A ~A)" a b c))
 		   
 		   (try (format #f "(+ ~A (abs ~A) ~A)" a b c))
-		   (try (format #f "(* ~A (oscil o ~A ~A))" a b c))
+		   (try (format #f "(+ ~A (sin ~A) ~A)" a b c))
+		   (try (format #f "(+ ~A (cos ~A) ~A)" a b c))
+		   (try (format #f "(* (cos ~A) (oscil o ~A ~A))" a b c))
 		   (try (format #f "(+ (oscil o ~A ~A) ~A)" a b c))
 		   (try (format #f "(+ (abs (oscil o ~A ~A)) ~A)" a b c))
+		   (try (format #f "(+ (cos (oscil o ~A ~A)) ~A)" a b c))
+		   (try (format #f "(+ (sin (oscil o ~A ~A)) ~A)" a b c))
 		   )
 		 args3))
 	      args2))
@@ -39011,9 +39050,8 @@ EDITS: 1
 		    args4))
 		 args3))
 	      args2))
-	   args1)
-	  )
-
+	   args1))
+	
 	(out-args))))
 
 
@@ -39554,7 +39592,7 @@ EDITS: 1
 		       (outa k (* (env e) (oscil gen)))))))
 
     (let ((ind (find-sound "test.snd")))
-      (if (not (= (frames ind) 144100))
+      (if (> (abs (- (frames ind) 144100)) 2)
 	  (snd-display #__line__ ";with-sound make-oscil frames: ~A" (frames)))
       (if (fneq (maxamp ind) .1)
 	  (snd-display #__line__ ";with-sound make-oscil maxamp: ~A" (maxamp ind)))
@@ -47975,6 +48013,7 @@ EDITS: 1
 ;; 14-Mar-13: #(1 1 2 2 31  92 4 1 316 1 19 1 2 12 17 1  80 1 1 121 40  81 1 1174 0 0 0 1 1 75)  ;  21
 ;; 20-Mar-13: #(1 1 2 2 30  90 4 1 317 1 12 1 1 10 22 1  79 1 1 115 40  78 1 1131 0 0 0 1 2 79)  ;  20
 ;; 3-Apr-13:  #(1 1 2 2 30  89 4 1 297 1 11 1 2 10  9 1  81 1 1 110 41  73 1 1048 0 0 0 1 2 80)  ;  19
+;; 14-Apr-13: #(1 1 2 2 31  88 4 1 288 1 16 1 2 10 17 1  77 1 1 110 39  73 1  975 0 0 0 1 2 75)  ;  18
 
 ;;; -------- cleanup temp files
 

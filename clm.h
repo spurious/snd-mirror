@@ -529,6 +529,7 @@ MUS_EXPORT void *mus_move_sound_closure(mus_any *ptr);
 MUS_EXPORT void mus_move_sound_set_detour(mus_any *ptr, void (*detour)(mus_any *ptr, mus_long_t val));
 
 MUS_EXPORT mus_any *mus_make_src(mus_float_t (*input)(void *arg, int direction), mus_float_t srate, int width, void *closure);
+MUS_EXPORT mus_any *mus_make_src_with_init(mus_float_t (*input)(void *arg, int direction), mus_float_t srate, int width, void *closure, void (*init)(void *p, mus_any *g));
 MUS_EXPORT mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(void *arg, int direction));
 MUS_EXPORT bool mus_src_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_src_20(mus_any *srptr, mus_float_t (*input)(void *arg, int direction));

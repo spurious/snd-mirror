@@ -169,10 +169,10 @@
 ;;; AMPLITUDE EFFECTS
 
 (define* (effects-squelch-channel amp gate-size snd chn)
-  "(effects-squelch-channel amount gate-size snd chn) is used by the effects dialog to tie into edit-list->function"
   (let ((f0 (make-moving-average gate-size))
 	(f1 (make-moving-average gate-size :initial-element 1.0)))
     (map-channel (lambda (y) (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0))))
+		 ;; or       (* y (moving-average f1 (ceiling (max 0.0 (- (moving-average f0 (* y y)) amp))))))
 		 0 #f snd chn #f
 		 (format #f "effects-squelch-channel ~A ~A" amp gate-size))))
 

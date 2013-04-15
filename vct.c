@@ -969,7 +969,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	      for (; pos < end; pos++) 
 		v->data[pos] = func(gen);
 	      (*step) = end;
-	      free_gf(gf1);
+	      gf_free(gf1);
 	      return(args);
 	    }
 	  if (gf1->func)
@@ -980,10 +980,10 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 		  v->data[pos] = gf1->func(gf1);
 		}
 	      (*step) = end;
-	      free_gf(gf1);
+	      gf_free(gf1);
 	      return(args);
 	    }
-	  free_gf(gf1);
+	  gf_free(gf1);
 	}
       /* ---------------------------------------- */
 
@@ -1032,7 +1032,7 @@ static gf *fixup_vct_ref(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
       if ((s7_is_object(obj)) &&
 	  (mus_vct_p(obj)))
 	{
-	  g = (gf *)calloc(1, sizeof(gf));
+	  g = gf_alloc();
 	  g->func = wrapped_vct_ref;
 	  g->gen = s7_object_value(obj);
 	  g->s1 = s7_slot(sc, caddr(expr));
@@ -1088,7 +1088,7 @@ static s7_pointer g_vct_set_direct_dox_gf(s7_scheme *sc, s7_pointer code)
 static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 {
   vct *v;
-  if (vid_gf) {free_gf(vid_gf); vid_gf = NULL;} /* TODO: we need dox support for cleanups! */
+  if (vid_gf) {gf_free(vid_gf); vid_gf = NULL;} /* TODO: we need dox support for cleanups! */
 
   v = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, code), vct_tag);
   if ((v) &&
@@ -1136,7 +1136,7 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 		{
 		  vid_func_1 = gf1->func_1;
 		  vid_gen = gf1->gen;
-		  free_gf(gf1);
+		  gf_free(gf1);
 		  return((s7_pointer)g_vct_set_direct_dox_gen1);
 		}
 	      if (gf1->func)
@@ -1145,7 +1145,7 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 		  vid_gf = gf1;
 		  return((s7_pointer)g_vct_set_direct_dox_gf);
 		}
-	      free_gf(gf1);
+	      gf_free(gf1);
 	    }
 	}
     }

@@ -2759,7 +2759,7 @@ static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	      for (; pos < end; pos++) 
 		sd->data[chan][pos] = func(gen);
 	      (*step) = end;
-	      free_gf(gf1);
+	      gf_free(gf1);
 	      return(args);
 	    }
 	  if (gf1->func)
@@ -2770,10 +2770,10 @@ static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
 		  sd->data[chan][pos] = gf1->func(gf1);
 		}
 	      (*step) = end;
-	      free_gf(gf1);
+	      gf_free(gf1);
 	      return(args);
 	    }
-	  free_gf(gf1);
+	  gf_free(gf1);
 	}
       /* ---------------------------------------- */
 

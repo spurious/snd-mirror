@@ -894,8 +894,9 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (alpha (- 0.5 beta))
 	 (flt (make-filter 3
 			   (vct alpha 0.0 (- alpha))
-			   (vct 0.0 (* -2.0 gamma) (* 2.0 beta)))))
-    (lambda (x) (+ x (* (- m 1.0) (filter flt x))))))
+			   (vct 0.0 (* -2.0 gamma) (* 2.0 beta))))
+	 (m1 (- m 1.0)))
+    (lambda (x) (+ x (* m1 (filter flt x))))))
 
 
 (define (cascade->canonical A)
