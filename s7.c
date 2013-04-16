@@ -5463,7 +5463,7 @@ s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, 
 
 static s7_pointer g_environment_ref(s7_scheme *sc, s7_pointer args)
 {
-  #define H_environment_ref "(environment-ref! env sym) returns the value of the symbol sym in the environment env"
+  #define H_environment_ref "(environment-ref env sym) returns the value of the symbol sym in the environment env"
   s7_pointer e, sym;
 
   e = car(args);
@@ -29372,6 +29372,253 @@ s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr)
   return(val);
 }
 
+/* 
+t502:
+229277: (rand-interp rnd)
+165375: (one-pole-all-pass string1-tuning-ap string1-junction-input)
+165375: (one-pole-all-pass string2-tuning-ap string2-junction-input)
+165375: (one-pole-all-pass string3-tuning-ap string3-junction-input)
+165375: (one-pole dryTap1 noi)
+165375: (one-pole wetTap1 noi)
+165375: (one-pole op2 (one-pole op3 (one-pole op4 totalTap)))
+165375:               (one-pole op3 (one-pole op4 totalTap))
+165375:                             (one-pole op4 totalTap)
+165375: (one-pole cou1 couplingFilter-input)
+[88200: (polywave gp1 md)]
+[88200: (polywave gp2 (* 0.8593 md))]
+[88200: (polywave gp3 (* 1.1406 md))]
+88200:                                                (polywave gen2)
+88200: (+ (env frqf) (* (env rndf) (rand-interp rnd)) (polywave gen2)) ; dog-day cicada with rk!xycos
+88200:               (* (env rndf) (rand-interp rnd))
+;;; narrow-mouth toad in animals (if in loop)
+81365:                                                                        (polywave gen1 (env frqf))
+81365:                                                                                       (env frqf)
+81365: (* pulse-amp (env pulse-ampf) (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf))))
+81365:                               (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf)))
+81365:                                  (* (env low-ampf) (polywave gp frq2))
+62799: (rand-interp rnd1)
+56007:                                                (polywave gen1 (+ (env frqf) (* (env intrpf) (+ (* hz7 (oscil vib)) (rand-interp rnd)))))
+56007: (formant-bank fb (* (+ 0.9 (rand-interp rnd1)) (polywave gen1 (+ (env frqf) (* (env intrpf) (+ (* hz7 (oscil vib)) (rand-interp rnd)))))))
+56007:                     (+ 0.9 (rand-interp rnd1))
+56007:                                                               (+ (env frqf) (* (env intrpf) (+ (* hz7 (oscil vib)) (rand-interp rnd))))
+56007:                                                                                             (+ (* hz7 (oscil vib)) (rand-interp rnd))
+56007:                  (* (+ 0.9 (rand-interp rnd1)) (polywave gen1 (+ (env frqf) (* (env intrpf) (+ (* hz7 (oscil vib)) (rand-interp rnd))))))
+56007:                                                                             (* (env intrpf) (+ (* hz7 (oscil vib)) (rand-interp rnd)))
+56007:                                                                                                (* hz7 (oscil vib))
+50880: (oscil-bank obank)
+27078: (env pulse-frqf)
+27078: (+ (env frqf) (env pulse-frqf) (rand-interp rnd))
+23813:     (polywave gen1 (env frqf1))
+23813:                  (formant-bank fb (* val1 (rand-interp rnd)))
+23813:                   (env frqf1)
+23813: (+ (polywave gen1 (env frqf1)) (* (env ampf2) (polywave gen2 (env frqf2))))
+23813: (+ (* 0.75 val1) (formant-bank fb (* val1 (rand-interp rnd))))
+23813:                                (* (env ampf2) (polywave gen2 (env frqf2)))
+23813:                                   (* val1 (rand-interp rnd))
+22050: (env (vector-ref ampfs k))
+19845: (oscil gen4 (* frq 5))
+19845: (oscil gen5 (* frq 6))
+19845: (oscil vib)
+19845: (polywave gen2 frq)
+19845: (+ (* (env ampf1) (polywave gen1 frq)) (* (env ampf4) (oscil gen4 (* frq 5))) (* (env ampf5) (oscil gen5 (* frq 6))) (polywave gen2 frq) (* (env ampf3) (polywave gen3 frq)) (* (env ampf6) (polywave gen6 frq)))
+19845: (+ (oscil vib) (rand-interp rnd))
+19845: (* (env vibf1) (+ (oscil vib) (rand-interp rnd)))
+19845: (* (env ampf1) (polywave gen1 frq))
+19845: (* (env ampf4) (oscil gen4 (* frq 5)))
+19845: (* (env ampf5) (oscil gen5 (* frq 6)))
+19845: (* (env ampf3) (polywave gen3 frq))
+19845: (* (env ampf6) (polywave gen6 frq))
+19845: (* fr1 (formant frm1 val))
+19845: (* fr2 (formant frm2 val))
+18522: (rand-interp rnd2)
+18522: (* (env attf) (rand-interp rnd))
+13671: (polywave gen1 mfrq)
+13671: (* index (oscil mod1 frq))
+13671: (* (env ampf2) (polywave gen2 mfrq))
+6394: (oscil gen1 (* 2.0 frq))
+6394: (polywave gens0 frq)
+6394: (nrxycos gens (* 6.0 frq))
+6394: (+ (oscil gen1 (* 2.0 frq)) (polywave gens0 frq) (nrxycos gens (* 6.0 frq)))
+6394: (* (env ampf) (+ 0.5 (abs (rand-interp rnd1))) (+ (oscil gen1 (* 2.0 frq)) (polywave gens0 frq) (nrxycos gens (* 6.0 frq))))
+6394: (+ 0.5 (abs (rand-interp rnd1)))
+6394: (* 6.0 frq)
+4410: (* (env ampf) (oscil-bank obank))
+
+snd-test:
+[547236: (* (env ampf) (oscil carrier modf))]
+[507880: (vct-ref indata k)]
+[254140: (readin rdin)]
+229277: (rand-interp rnd)
+134407: (* y y)
+132300: (env rf)
+132300: (abs (* (env bouncef) (oscil gen1))) ; bouncy instr in generators.scm
+103415: (env frqf)
+102805: (rand-interp rn)
+101656: (all-pass-bank allpasses (if (< samp input-samps) inval 0.0))
+101656: (comb-bank combs (all-pass-bank allpasses (if (< samp input-samps) inval 0.0)))
+101656: (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)
+101656: (if (< samp input-samps) inval 0.0)
+101656: (* osamp (oscil os))
+100000: (granulate exA)
+94928: (all-pass-bank allpasses inval)
+94928: (ncos pulse)
+[94928: (+ inval (delay outdel (* volume (comb-bank combs (all-pass-bank allpasses inval)))))]
+[94928: (* volume (comb-bank combs (all-pass-bank allpasses inval)))]
+92610: (* (env tranfun) (rand ranvib))       ; canter clm-ins.scm 3 var let for locsig?
+88200: (moving-average slant harmonic)       ; arg to funny gen (generators.scm)
+[88200: (polywave gp1 md)]
+[88200: (polywave gp2 (* 0.8593 md))]
+[88200: (polywave gp3 (* 1.1406 md))]
+88200: (polywave gen2)
+88200: (formant-bank fs inputs)
+88200: (env ramp)                          ; test-filter in clm23 -- unknown arg func]
+88200: (+ (env frqf) (* (env rndf) (rand-interp rnd)) (polywave gen2))
+88200: (* (env rndf) (rand-interp rnd))
+88200: (* vib-index (oscil vib))
+88200: (* (env ampf) (wave-train grains gliss))
+81365: (polywave gen1 (env frqf))
+81365: (* pulse-amp (env pulse-ampf) (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf))))
+81365: (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf)))
+81365: (* (env low-ampf) (polywave gp frq2))
+66150: (* (env amp-env) (readin rdA))
+62799: (rand-interp rnd1)
+                                            ; all these are barred-owl in animals: has 3 sets of mus-frequency 1st
+56007: (polywave gen1 (+ (env frqf) (* (env intrpf) (+ (* hz7 (oscil vib)) (rand-interp rnd)))))
+56007: (formant-bank fb (* (+ 0.9 (rand-interp rnd1)) (polywave gen1 (+ (env frqf) (* (env intrpf) (+ (* hz7 (oscil vib)) (rand-interp rnd)))))))
+56007: (+ 0.9 (rand-interp rnd1)) 
+56007: (+ (env frqf) (* (env intrpf) (+ (* hz7 (oscil vib)) (rand-interp rnd))))
+56007: (+ (* hz7 (oscil vib)) (rand-interp rnd))
+56007: (* (+ 0.9 (rand-interp rnd1)) (polywave gen1 (+ (env frqf) (* (env intrpf) (+ (* hz7 (oscil vib)) (rand-interp rnd))))))
+56007: (* (env intrpf) (+ (* hz7 (oscil vib)) (rand-interp rnd)))
+56007: (* hz7 (oscil vib))
+55120: (* val val)
+50828: (formant-bank frms1 x)
+47464: (rand noi)
+47464: (formant-bank formants (rand noi))
+44100: (two-pole f1 input1)
+44100: (two-pole f2 input1)
+44100: (two-pole f3 input1)
+44100: (triangle-wave per-vib)
+44100: (rand-interp ran-vib)
+44100: (+ (two-pole f1 input1) (two-pole f2 input1) (two-pole f3 input1)) ; locsig with let
+44100: (* amp (formant-bank fs1 inputs))
+44100: (* sum (env ampf))
+44100: (* ampa (ina i *reverb*))
+44100: (* amp (oscil cr sum))
+40870: (* r (sin mx))
+40870: (* rn (sin nmx))
+40870: (* rn1 (sin n1mx))
+40000: (nrxycos gen)
+30000: (* amplitude (oscil os))
+27562: (one-pole-all-pass string1-tuning-ap string1-junction-input)
+27562: (one-pole-all-pass string2-tuning-ap string2-junction-input)
+27562: (one-pole-all-pass string3-tuning-ap string3-junction-input)
+27562: (one-pole dryTap1 noi)
+27562: (one-pole wetTap1 noi)
+27562: (one-pole op2 (one-pole op3 (one-pole op4 totalTap)))
+27562: (one-pole op3 (one-pole op4 totalTap))
+27562: (one-pole op4 totalTap)
+27562: (one-pole cou1 couplingFilter-input)
+27078: (env pulse-frqf)
+27078: (+ (env frqf) (env pulse-frqf) (rand-interp rnd))
+24600: (src s incr)
+23813: (polywave gen1 (env frqf1))
+23813: (formant-bank fb (* val1 (rand-interp rnd)))
+23813: (env frqf1)
+23813: (+ (polywave gen1 (env frqf1)) (* (env ampf2) (polywave gen2 (env frqf2))))
+23813: (+ (* 0.75 val1) (formant-bank fb (* val1 (rand-interp rnd))))
+23813: (* (env ampf2) (polywave gen2 (env frqf2)))
+23813: (* val1 (rand-interp rnd))
+22051: (* (env pervenv) (triangle-wave per-vib))
+22051: (* (env ranvenv) (rand-interp ran-vib))
+22050: (oscil-bank obank)
+22050: (ncos cn (env frqf))
+22050: (env glisenv)
+22050: (env (vector-ref ampfs k))
+22050: (env amplitude)
+22050: (env skenv)
+22050: (+ (* (env interp-env) (table-lookup s-1 vib)) (* (env interp-env-1) (table-lookup s-2 vib)))
+22050: (+ 0.8 (rand-interp avib))
+22050: (* (env pvibenv) (triangle-wave pvib))
+22050: (* (env rvibenv) (rand-interp rvib))
+22050: (* (env amp-env) (+ (* (env interp-env) (table-lookup s-1 vib)) (* (env interp-env-1) (table-lookup s-2 vib))))
+22050: (* (env interp-env) (table-lookup s-1 vib))
+22050: (* (env interp-env-1) (table-lookup s-2 vib))
+22050: (* amp (formant-bank fs inval))
+22050: (* h3freq (oscil mod1))
+22050: (* amp (sin y))
+22050: (* amp (ina ctr fil))
+19845: (oscil gen4 (* frq 5))
+19845: (oscil gen5 (* frq 6))
+19845: (oscil vib)
+19845: (polywave gen2 frq)
+19845: (+ (* (env ampf1) (polywave gen1 frq)) (* (env ampf4) (oscil gen4 (* frq 5))) (* (env ampf5) (oscil gen5 (* frq 6))) (polywave gen2 frq) (* (env ampf3) (polywave gen3 frq)) (* (env ampf6) (polywave gen6 frq)))
+19845: (+ (oscil vib) (rand-interp rnd))
+19845: (* (env vibf1) (+ (oscil vib) (rand-interp rnd)))
+19845: (* (env ampf1) (polywave gen1 frq))
+19845: (* (env ampf4) (oscil gen4 (* frq 5)))
+19845: (* (env ampf5) (oscil gen5 (* frq 6)))
+19845: (* (env ampf3) (polywave gen3 frq))
+19845: (* (env ampf6) (polywave gen6 frq))
+19845: (* fr1 (formant frm1 val))
+19845: (* fr2 (formant frm2 val))
+18522: (rand-interp rnd2)
+18522: (* (env attf) (rand-interp rnd))
+17640: (* amp (oscil os))
+17639: (oscil os)
+13671: (polywave gen1 mfrq)
+13671: (* index (oscil mod1 frq))
+13671: (* (env ampf2) (polywave gen2 mfrq))
+10128: (mus-random 5.0)
+6615: (* xnb (env ampf))
+6615: (* -0.95 dlyout)
+6394: (oscil gen1 (* 2.0 frq))
+6394: (polywave gens0 frq)
+6394: (nrxycos gens (* 6.0 frq))
+6394: (+ (oscil gen1 (* 2.0 frq)) (polywave gens0 frq) (nrxycos gens (* 6.0 frq)))
+6394: (* (env ampf) (+ 0.5 (abs (rand-interp rnd1))) (+ (oscil gen1 (* 2.0 frq)) (polywave gens0 frq) (nrxycos gens (* 6.0 frq))))
+6394: (+ 0.5 (abs (rand-interp rnd1)))
+6394: (* 6.0 frq)
+5955: (next-sample sr1)
+5955: (* x (next-sample sr0))
+5955: (* (- 1.0 x) (next-sample sr1))
+5512: (oscil car1 (* frq-change (+ frq1 (* (env mod1-f) (oscil mod1 (* modfrq1 frq-change))))))
+5512: (oscil car2 (* frq-change (+ frq2 (* (env mod2-f) (oscil mod2 (* modfrq2 frq-change))))))
+5512: (env frq-f)
+5512: (+ 1.0 (rand-interp ran-vib))
+5512: (+ 1.0 (* (env per-vib-f) (oscil per-vib)))
+5512: (+ (* (env car1-f) (oscil car1 (* frq-change (+ frq1 (* (env mod1-f) (oscil mod1 (* modfrq1 frq-change))))))) (* (env car2-f) (oscil car2 (* frq-change (+ frq2 (* (env mod2-f) (oscil mod2 (* modfrq2 frq-change))))))))
+5512: (* (env per-vib-f) (oscil per-vib))
+5512: (* (env car1-f) (oscil car1 (* frq-change (+ frq1 (* (env mod1-f) (oscil mod1 (* modfrq1 frq-change)))))))
+5512: (* frq-change (+ frq1 (* (env mod1-f) (oscil mod1 (* modfrq1 frq-change)))))
+5512: (* (env car2-f) (oscil car2 (* frq-change (+ frq2 (* (env mod2-f) (oscil mod2 (* modfrq2 frq-change)))))))
+5512: (* frq-change (+ frq2 (* (env mod2-f) (oscil mod2 (* modfrq2 frq-change)))))
+4410: (rand-interp random-vibrato)
+4410: (env flowf)
+4410: (* amp (+ (* bank1 outval) (* (- 1.0 bank1) inval)))
+4410: (* amp (+ (* bank2 outval) (* (- 1.0 bank2) inval)))
+4410: (* vib-amount (oscil periodic-vibrato))
+4410: (* amp (filter flt (oscil os)))
+4410: (* (env ampf) (oscil-bank obank))
+3416: (mus-random 0.5)
+2205: (two-pole tz input)
+2205: (* sndamp (one-zero oz (two-pole tz input)))
+2048: (* fm1 (oscil gen5))
+1021: (random 1.0)
+1001: (oscil car0 (hilbert-transform mod0 modsig))
+1001: (oscil car1 (delay mod1 modsig))
+1001: (oscil am0)
+1001: (oscil am1)
+1001: (delay mod1 modsig)
+1001: (hilbert-transform mod0 modsig)
+1001: (* (oscil am0) (oscil car0 (hilbert-transform mod0 modsig)))
+1001: (* (oscil am1) (oscil car1 (delay mod1 modsig)))
+1000: (* 0.9 (oscil gen1))
+1000: (* 0.1 (oscil gen2))
+
+
+*/
+
 
 
 
@@ -36738,11 +36985,13 @@ static s7_pointer vector_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 		  set_optimize_data(expr, HOP_SAFE_C_C);
 		  return(vector_set_vref);
 		}
+#if (!WITH_GMP)
 	      if (is_symbol(arg3))
 		{
 		  set_optimize_data(expr, HOP_SAFE_C_C);
 		  return(vector_set_sss);
 		}
+#endif
 	    }
 	}
       return(vector_set_3);
@@ -41717,7 +41966,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int *ar
 
 static s7_pointer check_case(s7_scheme *sc)
 {
-  bool keys_simple = true, has_else = false, has_feed_to = false, keys_single = true, keys_int = true, bodies_simple = true, bodies_simplest = true;
+  bool keys_simple = true, has_else = false, has_feed_to = false, keys_single = true, bodies_simple = true, bodies_simplest = true;
   s7_pointer x, y;
 
   /* (let () (define (hi a) (case a ((0) (+ a 1)) ((1 2) a))) (define (ho) (hi 1)) (ho))
@@ -41785,8 +42034,6 @@ static s7_pointer check_case(s7_scheme *sc)
 	   */
 	  if (!is_simple(car(y)))
 	    keys_simple = false;
-	  if (!is_integer(car(y)))
-	    keys_int = false;
 	  if (!is_null(cdr(y)))
 	    keys_single = false;
 
@@ -41796,8 +42043,6 @@ static s7_pointer check_case(s7_scheme *sc)
 		return(eval_error(sc, "case key list is improper? ~A", x));
 	      if (!is_simple(car(y)))
 		keys_simple = false;
-	      if (!is_integer(car(y)))
-		keys_int = false;
 	    }
 	}
 
@@ -44692,6 +44937,9 @@ static s7_pointer check_do(s7_scheme *sc)
 			  (f == step_dox_c_c_s_indirect) ||
 			  (f == step_dox_read_char_s))
 			lifted_op(cddr(var)) = DOX_STEP_S;
+#if (WITH_GMP)
+		      else lifted_op(cddr(var)) = DOX_STEP_DEFAULT;
+#else
 		      else
 			{
 			  if ((f == step_dox_c_add_ss) ||
@@ -44707,6 +44955,7 @@ static s7_pointer check_do(s7_scheme *sc)
 			      else lifted_op(cddr(var)) = DOX_STEP_DEFAULT;
 			    }
 			}
+#endif
 		    }
 		}
 	    }
@@ -64317,11 +64566,11 @@ s7_scheme *s7_init(void)
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
  * bench    42736 8752 8051 7725 6515 5194 4364 3989
  * lint           9328 8140 7887 7736 7300 7180 7051
- * index    44300 3291 3005 2742 2078 1643 1435 1368
+ * index    44300 3291 3005 2742 2078 1643 1435 1366
  * s7test    1721 1358 1297 1244  977  961  957  962
  * t455|6     265   89   55   31   14   14    9 9155
  * lat        229   63   52   47   42   40   34   31
  * t502        90   43   39   36   29   23   20   15
- * calls           275  207  175  115   89   71   56
+ * calls           275  207  175  115   89   71   55
  */
 

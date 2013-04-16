@@ -2620,7 +2620,7 @@ static void make_sonogram(chan_info *cp)
 	}
 #endif
 
-      if (sono_js_size != color_map_size(ss))
+      if (sono_js_size != (unsigned int)color_map_size(ss))
 	{
 	  if (sono_js) free(sono_js);
 	  sono_js_size = (unsigned int)color_map_size(ss);

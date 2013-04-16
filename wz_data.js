@@ -237,8 +237,6 @@ var extsnd_helpdialog_tip = "<code>(help-dialog subject message xrefs urls)</cod
 
 var extsnd_hidewidget_tip = "<code>(hide-widget widget)</code>: hide or undisplay widget";
 
-var extsnd_highlightcolor_tip = "<code>(highlight-color)</code>: color of highlighted text or buttons";
-
 var extsnd_infodialog_tip = "<code>(info-dialog subject message)</code>: start the Info window with subject and message";
 
 var extsnd_initialgraphhook_tip = "<code>initial-graph-hook (snd chn dur)</code>:<br>" +
@@ -372,8 +370,6 @@ var extsnd_musheadertypename_tip = "<code>(mus-header-type-name type)</code>: he
 var extsnd_muslfloat_tip = "<code>mus-lfloat</code> data is little-endian float";
 
 var extsnd_muslshort_tip = "<code>mus-lshort</code> data is little-endian signed 16-bit integer";
-
-var extsnd_musraw_tip = "<code>mus-raw</code> means 'no header'; see header-type.";
 
 var extsnd_musosssetbuffers_tip = "<code>(mus-oss-set-buffers num size)</code>: set Linux OSS 'fragment' number and size.<br>" +
                                   " If Snd's controls seem sluggish, try <code>(mus-oss-set-buffers 4 12)</code><br>" +
@@ -757,9 +753,6 @@ var sndclm_array_interp_tip = "<code>(array-interp v phase size)</code>: v[phase
 
 var sndclm_comb_tip = "<code>(comb gen (val 0.0) (pm 0.0))</code>: comb filter val, pm changes the delay length.";
 
-var sndclm_continue_sampletofile_tip = "<code>(continue-sample-&gt;file filename)</code>: return an output generator<br>" +
-                                       " that reopens an existing sound file 'filename' ready for output via sample->file";
-
 var sndclm_contrast_enhancement_tip = "<code>(contrast-enhancement sig (index 1.0))</code>: sin(sig * pi / 2 + index * sin(sig * 2 * pi))";
 
 var sndclm_convolve_tip = "<code>(convolve gen input-func)</code>: next sample from convolution generator";
@@ -1035,9 +1028,6 @@ var sndscm_envexptchannel_tip = "<code>(env-expt-channel env exponent (symmetric
                                 " applies 'env' to the given channel using 'exponent' for the exponential base.<br>" +
                                 " The 'symmetric' argument determines whether the up and down moving ramps look<br>" +
                                 " symmetrical around a break point.";
-
-var sndscm_findchild_tip = "<code>(find-child widget name)</code> searches for a widget named 'name',<br>" +
-                           "starting from 'widget' and moving through all its children.";
 
 var sndscm_fmviolin_tip = "The fm-violin instrument uses FM to produce a string-like sound;<br>" +
                           " It has many parameters, the principal ones being <code>startime dur frequency amplitude</code>.<br>" +

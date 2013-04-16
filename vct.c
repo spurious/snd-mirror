@@ -1152,6 +1152,125 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
   return(NULL);
 }
 
+static s7_pointer vct_set_let_looped;
+static s7_pointer g_vct_set_let_looped(s7_scheme *sc, s7_pointer args)
+{
+  s7_Int pos, end;
+  s7_pointer stepper, callee, loc, letp, lets, vars, let, body, locsym, old_e, vc;
+  s7_Int *step, *stop;
+  vct *v;
+
+  /* args (harmonicizer in dsp.scm): (40 (let* ((sig (bandpass bp (vct-ref indata k))) ...)) #<environment ...>)
+   *     (harmonicizer 550.0 (list 1 .5 2 .3 3 .2) 10)
+   */
+  /* fprintf(stderr, "%s\n", DISPLAY(args)); */
+
+  stepper = car(args);
+  let = cadr(args);
+  old_e = caddr(args);
+  vars = cadr(let);
+  body = caddr(let);
+
+  loc = cdr(body); 
+  locsym = cadr(loc);
+  callee = s7_slot(sc, locsym);
+  if (s7_slot_value(callee) != stepper)
+    return(NULL);
+
+  step = ((s7_Int *)((unsigned char *)(stepper) + VCT_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + VCT_NUMBER_LOCATION + sizeof(s7_Int)));
+  pos = (*step);
+  end = (*stop);
+
+  vc = s7_car_value(sc, loc); 
+  v = (vct *)imported_s7_object_value_checked(vc, vct_tag);
+  callee = caddr(loc);
+
+  if ((s7_is_pair(cdr(vars))) &&
+      (s7_list_length(sc, vars) == 2))
+    {
+      gf *lf1, *lf2, *bg;
+      s7_pointer v1, v2;
+      s7_pointer x1, x2, y1, y2;
+      s7_Double *x1r, *x2r;
+      
+      v1 = car(vars);
+      v2 = cadr(vars);
+      
+      x1 = s7_slot(sc, car(v1));
+      x2 = s7_slot(sc, car(v2));
+      y1 = s7_make_mutable_real(sc, 1.5);
+      y2 = s7_make_mutable_real(sc, 1.5);
+      x1r = (s7_Double *)((unsigned char *)(y1) + xen_s7_number_location);
+      x2r = (s7_Double *)((unsigned char *)(y2) + xen_s7_number_location);
+      s7_slot_set_value(sc, x1, y1);
+      s7_slot_set_value(sc, x2, y2);
+      
+      lf1 = find_gf_with_locals(sc, cadr(v1), old_e);
+      lf2 = find_gf_with_locals(sc, cadr(v2), old_e);
+      bg = find_gf_with_locals(sc, callee, old_e);
+
+      /* fprintf(stderr, "%s %p %p %p\n", DISPLAY(callee), lf1, lf2, bg); */
+      
+      if ((lf1) && (lf2) && (bg) &&
+	  (lf1->func) && (lf2->func) && (bg->func))
+	{
+	  for (; pos < end; pos++)
+	    {
+	      (*step) = pos;
+	      (*x1r) = lf1->func(lf1);
+	      (*x2r) = lf2->func(lf2);
+	      v->data[pos] = bg->func(bg);
+	    }
+	  gf_free(lf1);
+	  gf_free(lf2);
+	  gf_free(bg);
+	  return(args);
+	}
+      if (lf1) gf_free(lf1);
+      if (lf2) gf_free(lf2);
+      if (bg) gf_free(bg);
+
+      return(NULL);
+    }
+
+  letp = cadr(car(vars));
+  lets = s7_slot(sc, caar(vars));
+
+  /* ---------------------------------------- */
+  {
+    gf *lg, *bg;
+    s7_Double *ry;
+    s7_pointer y;
+
+    y = s7_make_mutable_real(sc, 1.5);
+    ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
+    s7_slot_set_value(sc, lets, y);
+
+    lg = find_gf_with_locals(sc, letp, old_e);
+    bg = find_gf_with_locals(sc, callee, old_e);
+
+    if ((lg) && (bg) &&
+	(lg->func) && (bg->func))
+      {
+	for (; pos < end; pos++)
+	  {
+	    (*step) = pos;
+	    (*ry) = lg->func(lg);
+	    v->data[pos] = bg->func(bg);
+	  }
+	gf_free(lg);
+	gf_free(bg);
+	return(args);
+      }
+    if (lg) gf_free(lg);
+    if (bg) gf_free(bg);
+  }
+  /* ---------------------------------------- */
+
+  return(NULL);
+}
+
 #endif
 /* (!WITH_GMP) */
 
@@ -2236,8 +2355,9 @@ void mus_vct_init(void)
     vct_ref_ss = s7_make_function(s7, "vct-ref", g_vct_ref_ss, 2, 0, false, "vct-ref optimization");
     s7_function_set_class(vct_ref_ss, f);
     s7_function_set_returns_temp(vct_ref_ss);
-
+#if (!WITH_GMP)
     store_gf_fixup(s7, f, fixup_vct_ref);
+#endif
 
     /* vct-set! */
     f = s7_name_to_value(s7, "vct-set!");
@@ -2266,17 +2386,27 @@ void mus_vct_init(void)
     s7_function_set_looped(vct_set_ssf, vct_set_direct_looped);
     s7_function_set_looped(vct_set_three, vct_set_direct_looped);
 
+    vct_set_let_looped = s7_make_function(s7, "vct-set!", g_vct_set_let_looped, 3, 0, false, "vct-set! optimization");
+    s7_function_set_class(vct_set_let_looped, f);
+    s7_function_set_let_looped(vct_set_direct, vct_set_let_looped);
+    s7_function_set_let_looped(vct_set_temp, vct_set_let_looped);
+    s7_function_set_let_looped(vct_set_ssf, vct_set_let_looped);
+    s7_function_set_let_looped(vct_set_three, vct_set_let_looped);
+
     vct_set_direct_dox_looped = s7_make_function(s7, "vct-set!", g_vct_set_direct_dox_looped, 2, 0, false, "vct-set! optimization");
     s7_function_set_class(vct_set_direct_dox_looped, f);
     s7_function_set_dox_looped(vct_set_direct, vct_set_direct_dox_looped);
     s7_function_set_dox_looped(vct_set_temp, vct_set_direct_dox_looped);
     s7_function_set_dox_looped(vct_set_ssf, vct_set_direct_dox_looped);
+    s7_function_set_dox_looped(vct_set_three, vct_set_direct_dox_looped);
 #endif
   }
+#if (!WITH_GMP)
   multiply_symbol = s7_make_symbol(s7, "*");
   vector_ref_symbol = s7_make_symbol(s7, "vector-ref");
   env_symbol = s7_make_symbol(s7, "env");
   vct_ref_symbol = s7_make_symbol(s7, "vct-ref");
+#endif
 
   c_object_value_location = s7_c_object_value_offset(s7);
   if (c_object_value_location != C_OBJECT_VALUE_LOCATION) fprintf(stderr, "value location: %ld %d\n", c_object_value_location, C_OBJECT_VALUE_LOCATION);

@@ -3303,7 +3303,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 #if HAVE_SCHEME
 
       int gc_loc;
-      s7_pointer source, arg, body, e, slot;
+      s7_pointer source, arg, body = NULL, e, slot;
       s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
       mus_long_t local_samps;
       
@@ -3394,6 +3394,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 				{
 				  s7_pointer old_e, y;
 				  s7_Double *ry;
+				  gf *gf1;
 
 				  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
 				  old_e = s7_set_current_environment(s7, e);
@@ -3402,6 +3403,29 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 				  slot = s7_make_slot(s7, e, arg, y); 
 				  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
 				  data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
+
+				  gf1 = find_gf_with_locals(s7, res, old_e);
+				  if (gf1)
+				    {
+				      for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
+					{
+					  local_samps = num - kp;
+					  if (local_samps > MAX_BUFFER_SIZE)
+					    local_samps = MAX_BUFFER_SIZE;
+
+					  for (j = 0; j < local_samps; j++)
+					    {
+					      (*ry) = read_sample(sf);
+					      data[0][j] = gf1->func(gf1);
+					    }
+					  err = mus_file_write(ofd, 0, j - 1, 1, data);
+					  if (err != MUS_NO_ERROR) break;
+					}
+				      gf_free(gf1);
+				      s7_set_current_environment(s7, old_e);
+				      samps = num;
+				      goto DO_EDIT;
+				    }
 
 				  for (kp = 0; kp < num; kp += MAX_BUFFER_SIZE)
 				    {

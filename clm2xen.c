@@ -10536,9 +10536,9 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 	  mus_float_t f1, f2, r1;
 	  mus_any *outp, *revp;
 
-	  mus_float_t **ob;
-	  mus_float_t *buf, *buf2;
-	  mus_long_t dstart, dend, dpos, dlen;
+	  mus_float_t **ob = NULL;
+	  mus_float_t *buf = NULL, *buf2;
+	  mus_long_t dstart, dend, dpos, dlen = 0;
 	  
 	  chans = mus_locsig_channels(lc);
 	  rev_chans = mus_locsig_reverb_channels(lc);
@@ -11172,6 +11172,57 @@ static gf *fixup_frame_ref(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	  return(g);
 	}
     }
+  return(NULL);
+}
+
+
+/* -------- divide -------- */
+
+static mus_float_t gf_divide(void *p)     {gf *g = (gf *)p; return(1.0 / g->f1(g->g1));}
+static mus_float_t gf_divide_rx1(void *p) {gf *g = (gf *)p; return(1.0 / (*(g->rx1)));}
+static mus_float_t gf_divide_s1(void *p)  {gf *g = (gf *)p; return(1.0 / (s7_slot_value_to_real((s7_scheme *)(g->gen1), g->s1)));}
+
+static gf *fixup_divide(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
+{
+  int typ;
+  double x;
+  double *rx;
+  s7_pointer s;
+  gf *g1 = NULL, *g = NULL;
+
+  if (s7_list_length(sc, expr) != 2)
+    return(NULL);
+
+  typ = gf_parse(sc, cadr(expr), locals, &g1, &s, &x, &rx);
+  switch (typ)
+    {
+    case GF_G:
+      g = gf_alloc();
+      g->func = gf_divide;
+      g->g1 = g1;
+      g->f1 = g1->func;
+      return(g);
+
+    case GF_X:
+      g = gf_alloc();
+      g->func = gf_constant;
+      g->x1 = 1.0 / x;
+      return(g);
+
+    case GF_S:
+      g = gf_alloc();
+      g->func = gf_divide_s1;
+      g->s1 = s;
+      g->gen1 = (void *)sc;
+      return(g);
+
+    case GF_RX:
+      g = gf_alloc();
+      g->func = gf_divide_rx1;
+      g->rx1 = rx;
+      return(g);
+    }
+  if (g1) gf_free(g1);
   return(NULL);
 }
 
@@ -12074,7 +12125,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
     {
       bool (*is_gen)(s7_pointer p);
       int len;
-      s7_pointer obj, vec, ind;
+      s7_pointer obj, vec = NULL, ind = NULL;
       gf *(*fixup_gf)(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
       gf *p;
       bool its_gf = true;
@@ -12474,6 +12525,135 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
 {
   return(g_indirect_placer_3_looped(sc, args, mus_locsig));
 }
+
+
+static s7_pointer g_placer_let_looped(s7_scheme *sc, s7_pointer args, void (*mover)(mus_any *ptr, mus_long_t loc, mus_float_t uval))
+{
+  /* (with-sound () (fm-violin 0 1 440 .1 :noise-amount .01)) */
+  s7_Int pos, end;
+  s7_pointer stepper, callee, loc, letp, lets, vars, let, body, locsym, old_e;
+  s7_Int *step, *stop;
+  mus_any *locs = NULL;
+
+  /* fprintf(stderr, "%s\n", DISPLAY(args)); */
+
+  stepper = car(args);
+  let = cadr(args);
+  old_e = caddr(args);
+  vars = cadr(let);
+  body = caddr(let);
+
+  loc = cdr(body); 
+  locsym = cadr(loc);
+  callee = s7_slot(sc, locsym);
+  if (s7_slot_value(callee) != stepper)
+    return(NULL);
+
+  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  pos = (*step);
+  end = (*stop);
+
+  GET_GENERATOR(loc, locsig, locs);
+  callee = caddr(loc);
+
+  if ((s7_is_pair(cdr(vars))) &&
+      (s7_list_length(sc, vars) == 2))
+    {
+      gf *lf1, *lf2, *bg;
+      s7_pointer v1, v2;
+      s7_pointer x1, x2, y1, y2;
+      s7_Double *x1r, *x2r;
+      
+      v1 = car(vars);
+      v2 = cadr(vars);
+      
+      x1 = s7_slot(sc, car(v1));
+      x2 = s7_slot(sc, car(v2));
+      y1 = s7_make_mutable_real(sc, 1.5);
+      y2 = s7_make_mutable_real(sc, 1.5);
+      x1r = (s7_Double *)((unsigned char *)(y1) + xen_s7_number_location);
+      x2r = (s7_Double *)((unsigned char *)(y2) + xen_s7_number_location);
+      s7_slot_set_value(sc, x1, y1);
+      s7_slot_set_value(sc, x2, y2);
+      
+      lf1 = find_gf_with_locals(sc, cadr(v1), old_e);
+      lf2 = find_gf_with_locals(sc, cadr(v2), old_e);
+      bg = find_gf_with_locals(sc, callee, old_e);
+      
+      if ((lf1) && (lf2) && (bg) &&
+	  (lf1->func) && (lf2->func) && (bg->func))
+	{
+	  for (; pos < end; pos++)
+	    {
+	      (*step) = pos;
+	      (*x1r) = lf1->func(lf1);
+	      (*x2r) = lf2->func(lf2);
+	      mover(locs, pos, bg->func(bg));
+	    }
+	  gf_free(lf1);
+	  gf_free(lf2);
+	  gf_free(bg);
+	  return(args);
+	}
+      if (lf1) gf_free(lf1);
+      if (lf2) gf_free(lf2);
+      if (bg) gf_free(bg);
+
+      return(NULL);
+    }
+
+  letp = cadr(car(vars));
+  lets = s7_slot(sc, caar(vars));
+
+  /* ---------------------------------------- */
+  {
+    gf *lg, *bg;
+    s7_Double *ry;
+    s7_pointer y;
+
+    y = s7_make_mutable_real(sc, 1.5);
+    ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
+    s7_slot_set_value(sc, lets, y);
+
+    lg = find_gf_with_locals(sc, letp, old_e);
+    bg = find_gf_with_locals(sc, callee, old_e);
+
+    if ((lg) && (bg) &&
+	(lg->func) && (bg->func))
+      {
+	for (; pos < end; pos++)
+	  {
+	    (*step) = pos;
+	    (*ry) = lg->func(lg);
+	    mover(locs, pos, bg->func(bg));
+	  }
+	gf_free(lg);
+	gf_free(bg);
+	return(args);
+      }
+
+    /* fprintf(stderr, "%p %p, %lld: %s %s\n", lg, bg, end - pos, DISPLAY(vars), DISPLAY(callee));
+     * nothing here
+     */
+
+    if (lg) gf_free(lg);
+    if (bg) gf_free(bg);
+  }
+  /* ---------------------------------------- */
+
+  return(NULL);
+}
+
+
+static s7_pointer locsig_let_looped, locsig_3;
+static s7_pointer g_locsig_let_looped(s7_scheme *sc, s7_pointer args)
+{
+  return(g_placer_let_looped(sc, args, mus_locsig));
+}
+
+
+
 
 #if 0
 /* to get out-bank looped we need a mus_any* wrapper for a vector of gens or its own looper
@@ -13003,8 +13183,8 @@ static s7_pointer g_indirect_outa_2_temp_dox_looped(s7_scheme *sc, s7_pointer co
 		{
 		  o2_data = (vct *)s7_object_value(s7_cadr_value(sc, p));
 		  o2_k_slot = s7_local_slot(sc, caddr(p));
-		  g1 = gf1->gen;
-		  g2 = gf2->gen;
+		  g1 = (mus_any *)(gf1->gen);
+		  g2 = (mus_any *)(gf2->gen);
 		  gfnc1 = gf1->func_2;
 		  gfnc2 = gf2->func_2;
 		  gf_free(gf1);
@@ -13250,8 +13430,8 @@ static s7_pointer out_looped(s7_scheme *sc, s7_pointer args, int out_chan)
   s7_pointer stepper, callee, locsym;
   s7_Int *step, *stop;
   mus_float_t **ob;
-  mus_float_t *buf;
-  mus_long_t dstart, dend, dpos, dlen;
+  mus_float_t *buf = NULL;
+  mus_long_t dstart, dend, dpos, dlen = 0;
   gf *gf1;
 
   stepper = car(args);
@@ -13478,8 +13658,8 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
   s7_pointer stepper, callee, locsym;
   s7_Int *step, *stop;
   mus_float_t **ob;
-  mus_float_t *buf;
-  mus_long_t dstart, dend, dpos, dlen;
+  mus_float_t *buf = NULL;
+  mus_long_t dstart, dend, dpos, dlen = 0;
   gf *gf1;
 
   stepper = car(args);
@@ -13879,8 +14059,8 @@ static s7_pointer g_outa_env_polywave_env_looped(s7_scheme *sc, s7_pointer args)
 
   {
     mus_float_t **ob;
-    mus_float_t *buf;
-    mus_long_t dstart, dend, dpos, dlen;
+    mus_float_t *buf = NULL;
+    mus_long_t dstart, dend, dpos, dlen = 0;
 
     if (mus_out_any_is_safe(clm_output_gen))
       {
@@ -13922,8 +14102,8 @@ static s7_pointer g_outa_env_polywave_env_ri_looped(s7_scheme *sc, s7_pointer ar
 
   {
     mus_float_t **ob;
-    mus_float_t *buf;
-    mus_long_t dstart, dend, dpos, dlen;
+    mus_float_t *buf = NULL;
+    mus_long_t dstart, dend, dpos, dlen = 0;
 
     if (mus_out_any_is_safe(clm_output_gen))
       {
@@ -13963,8 +14143,8 @@ static s7_pointer g_outa_env_oscil_env_looped(s7_scheme *sc, s7_pointer args)
 
   {
     mus_float_t **ob;
-    mus_float_t *buf;
-    mus_long_t dstart, dend, dpos, dlen;
+    mus_float_t *buf = NULL;
+    mus_long_t dstart, dend, dpos, dlen = 0;
 
     if (mus_out_any_is_safe(clm_output_gen))
       {
@@ -14564,6 +14744,7 @@ static s7_pointer g_sample_to_file_four_looped(s7_scheme *sc, s7_pointer args)
   int chan;
   s7_pointer stepper, val;
   s7_Int *step, *stop;
+  gf *gf1;
 
   /* args: (0 rdout k 0 (readin rdin)) */
 
@@ -14576,6 +14757,21 @@ static s7_pointer g_sample_to_file_four_looped(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR_CADR(args, sample->file, sf);
   chan = s7_cell_integer(cadddr(args));
   val = cadddr(cdr(args));
+
+  /* ---------------------------------------- */
+  gf1 = find_gf(sc, val);
+  if (gf1)
+    {
+      for (; pos < end; pos++)
+	{
+	  (*step) = pos;
+	  mus_sample_to_file(sf, pos, chan, gf1->func(gf1));
+	}
+      (*step) = end;
+      gf_free(gf1);
+      return(args);
+    }
+  /* ---------------------------------------- */
 
   for (; pos < end; pos++)
     {
@@ -16414,6 +16610,9 @@ static s7_pointer locsig_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 	  s7_function_choice_set_direct(sc, expr);
 	  return(indirect_locsig_3);
 	}
+#if (!WITH_GMP)
+      return(locsig_3);
+#endif
     }
   return(f);
 }
@@ -16531,7 +16730,9 @@ static s7_pointer out_bank_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 		}
 	    }
 	}
+#if (!WITH_GMP)
       return(out_bank_three);
+#endif
     }
   return(f);
 }
@@ -17560,6 +17761,9 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_let_looped(fm_violin_2, fm_violin_2_looped);
   fm_violin_4_looped = clm_make_function_not_temp(sc, "locsig", g_fm_violin_4_looped, 3, 0, false, "fm-violin optimization", f);
   s7_function_set_let_looped(fm_violin_4, fm_violin_4_looped);
+
+  locsig_let_looped = clm_make_function_not_temp(sc, "locsig", g_locsig_let_looped, 3, 0, false, "locsig optimization", f);
+  s7_function_set_let_looped(indirect_locsig_3, locsig_let_looped);
 #endif
 
 
@@ -17669,6 +17873,9 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "sin");
   store_gf_fixup(s7, f, fixup_sin);
+
+  f = s7_name_to_value(sc, "/");
+  store_gf_fixup(s7, f, fixup_divide);
 
   f = s7_name_to_value(sc, "max");
   store_gf_fixup(s7, f, fixup_max);
@@ -18921,12 +19128,13 @@ static void mus_xen_init(void)
     frame_set_looped = s7_make_function(s7, "frame-set!", g_frame_set_looped, 3, 0, false, "frame-set! optimization");
     s7_function_set_class(frame_set_looped, f);
     s7_function_set_looped(frame_set_three, frame_set_looped);
-#endif
 
-  out_bank_three = s7_make_function(s7, "out-bank", g_out_bank_w, 3, 0, false, "out-bank optimization");
-#if (!WITH_GMP)
-  out_bank_looped = s7_make_function(s7, "out-bank", g_out_bank_looped, 3, 0, false, "out-bank optimization");
-  s7_function_set_looped(out_bank_three, out_bank_looped);
+    locsig_3 = s7_make_function(s7, "locsig", g_locsig_w, 3, 0, false, "locsig optimization");
+    s7_function_set_let_looped(locsig_3, locsig_let_looped);
+
+    out_bank_three = s7_make_function(s7, "out-bank", g_out_bank_w, 3, 0, false, "out-bank optimization");
+    out_bank_looped = s7_make_function(s7, "out-bank", g_out_bank_looped, 3, 0, false, "out-bank optimization");
+    s7_function_set_looped(out_bank_three, out_bank_looped);
 #endif
   }
 
@@ -19034,3 +19242,5 @@ void Init_sndlib(void)
 #endif
 }
 
+/* TODO: let looped (with 3 vars) for placer cases
+ */

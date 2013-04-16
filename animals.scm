@@ -1954,16 +1954,15 @@
 	(saw (make-sawtooth-wave 180 .5)))
     (do ((i start (+ i 1)))
 	((= i stop))
-      (let ((frq (env frqf))
-	    (sw (sawtooth-wave saw)))
-	(let ((md (+ frq (rand-interp rnd))))
-	  (outa i (* (env ampf)
-		     (+ .75 (* sw sw))
-		     (+ (polywave gp1 md)
-			(polywave gp2 (* 0.8593 md))          ;(/ 1100 1280)
-			(polywave gp3 (* 1.1406 md))))))))))  ;(/ 1460 1280)
+      (let ((sw (sawtooth-wave saw))
+	    (md (+ (env frqf) (rand-interp rnd))))
+	(outa i (* (env ampf)
+		   (+ .75 (* sw sw))
+		   (+ (polywave gp1 md)
+		      (polywave gp2 (* 0.8593 md))          ;(/ 1100 1280)
+		      (polywave gp3 (* 1.1406 md)))))))))  ;(/ 1460 1280)
 
-;; (with-sound (:play #t) (linnaeus-cicada 0 2 .5))
+;; (with-sound (:statistics #t) (linnaeus-cicada 0 2 .5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -7312,7 +7311,7 @@
 	    (let ((frq (env frqf)))
 	      (do ((k 0 (+ k 1)))
 		  ((= k 5))
-		(vct-set! amps k (env (ampfs k)))
+		(vct-set! amps k (env (vector-ref ampfs k)))
 		(vct-set! frqs k (* (+ k 1) frq)))
 	      (outa i (* (env ampf) (oscil-bank obank)))))))))
   

@@ -2694,7 +2694,7 @@ static s7_pointer sound_data_set_direct_looped;
 static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
 {
   s7_Int pos, end, chan;
-  s7_pointer stepper, vc, val, chn, samp, slot;
+  s7_pointer stepper, vc, val, chn, samp;
   s7_Int *step, *stop;
   sound_data *sd;
   gf *gf1;
@@ -2705,6 +2705,8 @@ static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
   sd = (sound_data *)imported_s7_object_value_checked(vc, sound_data_tag);
   if (sd)
     {
+      s7_pointer chn_slot = NULL, samp_slot = NULL;
+
       stepper = s7_car(args);
       /* cadr is the sound-data object */
       chn = s7_caddr(args);
@@ -2713,80 +2715,136 @@ static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
 
       /* here we might be stepping through the channel which makes things messy 
        */
-      if (((s7_is_symbol(chn)) && (!s7_is_symbol(samp))) ||
-	  (chn == samp))  /* try to catch (sound-data-set! sd i i 0.0) */
-	return(NULL);
 
       step = ((s7_Int *)((unsigned char *)(stepper) + SOUND_DATA_NUMBER_LOCATION));
       stop = ((s7_Int *)((unsigned char *)(stepper) + SOUND_DATA_DENOMINATOR_LOCATION));
       pos = (*step);
       end = (*stop);
-      slot = s7_slot(sc, samp);
-      if ((!slot) || (s7_slot_value(slot) != stepper))
-	return(NULL);
 
-      if ((pos < 0) ||
-	  (end > sd->length))
-	XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 3, s7_cadddr(args), "index out of range");   
-
-      if (s7_is_symbol(chn))
-	chan = s7_number_to_integer(sc, s7_value(sc, chn));
-      else chan = s7_number_to_integer(sc, chn);
-      if ((chan < 0) ||
-	  (chan >= sd->chans))
-	XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 2, chn, "channel number out of range");   
-
-      if (s7_is_real(val))
+      if (s7_is_symbol(samp))
 	{
-	  double x;
-	  x = s7_number_to_real(sc, val);
-	  for (; pos < end; pos++) 
-	    sd->data[chan][pos] = x;
-	  (*step) = end;
-	  return(args);
+	  samp_slot = s7_slot(sc, samp);
+	  if (!samp_slot) return(NULL);
 	}
-
-      /* ---------------------------------------- */
-      gf1 = find_gf(sc, val);
-      if (gf1)
+      if (s7_is_symbol(chn))
 	{
-	  if (gf1->func_1)
+	  chn_slot = s7_slot(sc, chn);
+	  if (!chn_slot) return(NULL);
+	}
+      
+      if ((samp_slot) && 
+	  (s7_slot_value(samp_slot) == stepper) &&
+	  ((!chn_slot) || (s7_slot_value(chn_slot) != stepper)))
+	{
+	  if ((pos < 0) ||
+	      (end > sd->length))
+	    XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 3, s7_cadddr(args), "index out of range");   
+
+	  if (chn_slot)
+	    chan = s7_number_to_integer(sc, s7_slot_value(chn_slot));
+	  else chan = s7_number_to_integer(sc, chn);
+	  if ((chan < 0) ||
+	      (chan >= sd->chans))
+	    XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 2, chn, "channel number out of range");   
+
+	  if (s7_is_real(val))
 	    {
-	      void *gen;
-	      mus_float_t (*func)(void *p);
-	      gen = gf1->gen;
-	      func = gf1->func_1;
+	      double x;
+	      x = s7_number_to_real(sc, val);
 	      for (; pos < end; pos++) 
-		sd->data[chan][pos] = func(gen);
+		sd->data[chan][pos] = x;
 	      (*step) = end;
-	      gf_free(gf1);
 	      return(args);
 	    }
-	  if (gf1->func)
+	  
+	  /* ---------------------------------------- */
+	  gf1 = find_gf(sc, val);
+	  if (gf1)
+	    {
+	      if (gf1->func_1)
+		{
+		  void *gen;
+		  mus_float_t (*func)(void *p);
+		  gen = gf1->gen;
+		  func = gf1->func_1;
+		  for (; pos < end; pos++) 
+		    sd->data[chan][pos] = func(gen);
+		  (*step) = end;
+		  gf_free(gf1);
+		  return(args);
+		}
+	      if (gf1->func)
+		{
+		  for (; pos < end; pos++)
+		    {
+		      (*step) = pos;
+		      sd->data[chan][pos] = gf1->func(gf1);
+		    }
+		  (*step) = end;
+		  gf_free(gf1);
+		  return(args);
+		}
+	      gf_free(gf1);
+	    }
+	  /* ---------------------------------------- */
+	  
+	  fprintf(stderr, "sd %lld: %s\n", end - pos, DISPLAY(val));
+	  if (s7_function_choice_is_direct_to_real(sc, val))
 	    {
 	      for (; pos < end; pos++)
 		{
 		  (*step) = pos;
-		  sd->data[chan][pos] = gf1->func(gf1);
+		  sd->data[chan][pos] = s7_call_direct_to_real_and_free(sc, val);
 		}
 	      (*step) = end;
-	      gf_free(gf1);
 	      return(args);
 	    }
-	  gf_free(gf1);
 	}
-      /* ---------------------------------------- */
-
-      fprintf(stderr, "sd %lld: %s\n", end - pos, DISPLAY(val));
-      if (s7_function_choice_is_direct_to_real(sc, val))
+      else
 	{
-	  for (; pos < end; pos++)
+	  s7_Int smp;
+	  if ((chn_slot) && 
+	      (s7_slot_value(chn_slot) == stepper) &&
+	      ((!samp_slot) || (s7_slot_value(samp_slot) != stepper)))
 	    {
-	      (*step) = pos;
-	      sd->data[chan][pos] = s7_call_direct_to_real_and_free(sc, val);
+	      if ((pos < 0) ||
+		  (end > sd->chans))
+		XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 2, s7_cadddr(args), "channel number out of range");   
+
+	      if (samp_slot)
+		smp = s7_number_to_integer(sc, s7_slot_value(samp_slot));
+	      else smp = s7_number_to_integer(sc, samp);
+
+	      if ((smp < 0) ||
+		  (smp >= sd->length))
+		XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 3, chn, "index out of range");   
+
+	      if (s7_is_real(val))
+		{
+		  double x;
+		  x = s7_number_to_real(sc, val);
+		  for (; pos < end; pos++) 
+		    sd->data[pos][smp] = x;
+		  (*step) = end;
+		  return(args);
+		}
+
+	      /* ---------------------------------------- */
+	      gf1 = find_gf(sc, val);
+	      if (gf1)
+		{
+		  for (; pos < end; pos++)
+		    {
+		      (*step) = pos;
+		      sd->data[pos][smp] = gf1->func(gf1);
+		    }
+		  (*step) = end;
+		  gf_free(gf1);
+		  return(args);
+		}
+	      gf_free(gf1);
 	    }
-	  (*step) = end;
-	  return(args);
+	  /* ---------------------------------------- */
 	}
       return(NULL);
     }
@@ -2849,8 +2907,8 @@ static s7_pointer sound_data_set_chooser(s7_scheme *sc, s7_pointer f, int args, 
 	  s7_function_choice_set_direct(sc, expr);
 	  return(sound_data_set_direct);
 	}
-#endif
       return(sound_data_set_four);
+#endif
     }
   return(f);
 }
