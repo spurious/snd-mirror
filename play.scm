@@ -304,7 +304,7 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
 
 (define (play-sine freq amp)
   "(play-sine freq amp) plays a 1 second sinewave at freq and amp"
-  (let ((len 22050)
+  (let ((len 44100)
 	(osc (make-oscil freq)))
     (play (lambda ()
 	    (set! len (- len 1))
@@ -315,7 +315,7 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
 
 (define (play-sines freqs-and-amps)
   "(play-sines freqs-and-amps) produces a tone given its spectrum: (play-sines '((440 .4) (660 .3)))"
-  (let* ((len 22050)
+  (let* ((len 44100)
 	 (num-oscs (length freqs-and-amps))
 	 (oscs (make-vector num-oscs))
 	 (amps (make-vector num-oscs)))

@@ -13244,8 +13244,7 @@ static s7_pointer g_indirect_outa_two_let_looped(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer indirect_outa_two_looped;
-static s7_pointer g_indirect_outa_two_looped(s7_scheme *sc, s7_pointer args)
+static s7_pointer out_looped(s7_scheme *sc, s7_pointer args, int out_chan)
 {
   s7_Int pos, end;
   s7_pointer stepper, callee, locsym;
@@ -13267,11 +13266,13 @@ static s7_pointer g_indirect_outa_two_looped(s7_scheme *sc, s7_pointer args)
   end = (*stop);
 
   callee = caddr(args);
+  if (mus_channels(clm_output_gen) <= out_chan)
+    return(NULL);
 
   if (mus_out_any_is_safe(clm_output_gen))
     {
       ob = mus_out_any_buffers(clm_output_gen);
-      buf = ob[0];
+      buf = ob[out_chan];
       dlen = mus_file_buffer_size();
       /* these are used by the OUTA_LOOP macros above */
     }
@@ -13282,13 +13283,13 @@ static s7_pointer g_indirect_outa_two_looped(s7_scheme *sc, s7_pointer args)
     {
       if (gf1->func_1)
 	{
-	  OUTA_LOOP(gf1->func_1(gf1->gen));             /* (gen g) */
+	  OUT_LOOP(out_chan, gf1->func_1(gf1->gen));             /* (gen g) */
 	  gf_free(gf1);
 	  return(args);
 	}
       if (gf1->func)
 	{
-	  OUTA_LOOP(gf1->func(gf1));
+	  OUT_LOOP(out_chan, gf1->func(gf1));
 	  gf_free(gf1); 
 	  return(args);
 	}
@@ -13298,59 +13299,18 @@ static s7_pointer g_indirect_outa_two_looped(s7_scheme *sc, s7_pointer args)
   return(NULL);
 }
 
+static s7_pointer indirect_outa_two_looped;
+static s7_pointer g_indirect_outa_two_looped(s7_scheme *sc, s7_pointer args)
+{
+  return(out_looped(sc, args, 0));
+}
 
 static s7_pointer indirect_outb_two_looped;
 static s7_pointer g_indirect_outb_two_looped(s7_scheme *sc, s7_pointer args)
 {
-  s7_Int pos, end;
-  s7_pointer stepper, callee, locsym;
-  s7_Int *step, *stop;
-  mus_float_t **ob;
-  mus_float_t *buf;
-  mus_long_t dstart, dend, dpos, dlen;
-  gf *gf1;
-
-  /* fprintf(stderr, "outb %d %s\n", mus_channels(clm_output_gen), DISPLAY(args)); */
-  if (mus_channels(clm_output_gen) < 2)
-    return(NULL);
-
-  stepper = car(args);
-  locsym = cadr(args);
-  callee = s7_slot(sc, locsym);
-  if (s7_slot_value(callee) != stepper)
-    return(NULL);
-
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION)); 
-  pos = (*step);
-  end = (*stop);
-
-  callee = caddr(args);
-
-  if (mus_out_any_is_safe(clm_output_gen))
-    {
-      ob = mus_out_any_buffers(clm_output_gen);
-      buf = ob[1];
-      dlen = mus_file_buffer_size();
-      /* these are used by the OUTA_LOOP macros above */
-    }
-
-  /* ---------------------------------------- */
-  gf1 = find_gf(sc, callee);
-  if (gf1)
-    {
-      if (gf1->func)
-	{
-	  OUTB_LOOP(gf1->func(gf1));
-	  gf_free(gf1); 
-	  return(args);
-	}
-      gf_free(gf1);
-    }
-  /* ---------------------------------------- */
-  return(NULL);
+  return(out_looped(sc, args, 1));
 }
-
+/* out-any is obvious if it is needed */
 
 
 static s7_pointer indirect_outa_2_temp_let_looped;

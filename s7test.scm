@@ -23414,6 +23414,62 @@ who says the continuation has to restart the map from the top?
     (test (morally-equal? i1 i2) #f)))
 
   
+(let ()
+  (define-macro (mac-free-x y)
+    `(set! x ,y))
+  
+  (define (mac-y1)
+    (let ((x .1))
+      (do ((i 0 (+ i 1))
+	   (y 0.5 (+ y x)))
+	  ((= i 10) y)
+	(if (= i 2)
+	    (mac-free-x 1.1)))))
+  
+  (define (mac-y0)
+    (let ((x .1))
+      (do ((i 0 (+ i 1))
+	   (y 0.5 (+ y x)))
+	  ((= i 10) y)
+	(if (= i 2)
+	    (set! x 1.1)))))
+  
+  (define-macro (mac-free-v) 
+    `(v 1))
+  
+  (define-macro (set-mac-free-v z)
+    `(vct-set! v 1 ,z))
+  
+  (set! (procedure-setter mac-free-v) set-mac-free-v)
+  
+  (define (mac-y2)
+    (let ((v (vct 1.0 0.1 1.2)))
+      (do ((i 0 (+ i 1))
+	   (y 0.5 (+ y (vct-ref v 1))))
+	  ((= i 10) y)
+	(if (= i 2)
+	    (set! (mac-free-v) 1.1)))))
+  
+  (define (mac-y3)
+    (let ((v (vct 1.0 0.1 1.2)))
+      (do ((i 0 (+ i 1))
+	   (y 0.5 (+ y (vct-ref v 1))))
+	  ((= i 10) y)
+	(if (= i 2)
+	    (vct-set! v 1 1.1)))))
+  
+  (let ((y0 (mac-y0))
+	(y1 (mac-y1))
+	(y2 (mac-y2))
+	(y3 (mac-y3)))
+    (if (not (morally-equal? y0 y1))
+	(format #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) 'mac-y0 y0 y1))
+    (if (not (morally-equal? y2 y3))
+	(format #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) 'mac-y2 y2 y3)))
+
+  (let ((y (+ (mac-y0) (mac-y1) (mac-y2) (mac-y3))))
+    (if (> (abs (- y (* 4 9.5))) 1e-9)
+	(format #t "(2) ~A: ~A got ~S but expected ~S~%~%" (port-line-number) 'mac-y0 y (* 4 9.5)))))
 
 
 

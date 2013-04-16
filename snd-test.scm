@@ -23018,7 +23018,7 @@ EDITS: 2
 		      (reader (make-sampler 57 ind 0 -1)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i 10))
-		    (vct-set! data i (reader)))
+		    (vct-set! data i (read-sample reader)))
 		  (if (not (vequal data (vct-reverse! (vct 0.485 0.495 0.605 0.715 0.825 0.535 0.545 0.556 0.566 0.576))))
 		      (snd-display #__line__ ";read mix on env reversed: ~A" data)))
 		(undo))
@@ -23036,7 +23036,7 @@ EDITS: 2
 		      (reader (make-sampler 57 ind 0 -1)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i 10))
-		    (vct-set! data i (reader)))
+		    (vct-set! data i (read-sample reader)))
 		  (if (not (vequal data (vct-reverse! (vct 0.235 0.245 0.355 0.465 0.576 0.287 0.298 0.309 0.320 0.331))))
 		      (snd-display #__line__ ";read mix on env1 reversed: ~A" data)))
 		(undo))
@@ -23054,7 +23054,7 @@ EDITS: 2
 		      (reader (make-sampler 57 ind 0 -1)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i 10))
-		    (vct-set! data i (reader)))
+		    (vct-set! data i (read-sample reader)))
 		  (if (not (vequal data (vct-reverse! (vct 0.114 0.121 0.229 0.337 0.445 0.153 0.162 0.171 0.181 0.191))))
 		      (snd-display #__line__ ";read mix on env2 reversed: ~A" data)))
 		(undo))
@@ -23072,7 +23072,7 @@ EDITS: 2
 		      (reader (make-sampler 57 ind 0 -1)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i 10))
-		    (vct-set! data i (reader)))
+		    (vct-set! data i (read-sample reader)))
 		  (if (not (vequal data (vct-reverse! (vct 0.055 0.060 0.165 0.270 0.376 0.082 0.089 0.095 0.102 0.110))))
 		      (snd-display #__line__ ";read mix on env3 reversed: ~A" data)))
 		(undo))
@@ -23090,7 +23090,7 @@ EDITS: 2
 		      (reader (make-sampler 57 ind 0 -1)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i 10))
-		    (vct-set! data i (reader)))
+		    (vct-set! data i (read-sample reader)))
 		  (if (not (vequal data (vct-reverse! (vct 0.027 0.030 0.133 0.236 0.340 0.044 0.048 0.053 0.058 0.063))))
 		      (snd-display #__line__ ";read mix on env4 reversed: ~A" data)))
 		(undo))
@@ -23109,7 +23109,7 @@ EDITS: 2
 		      (reader (make-sampler 57 ind 0 -1)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i 10))
-		    (vct-set! data i (reader)))
+		    (vct-set! data i (read-sample reader)))
 		  (if (not (vequal data (vct-reverse! (vct 0.160 0.153 0.247 0.341 0.435 0.129 0.124 0.118 0.113 0.108))))
 		      (snd-display #__line__ ";read mix on xramp reversed: ~A" data))))
 	      
@@ -23128,7 +23128,7 @@ EDITS: 2
 		      (reader (make-sampler 57 ind 0 -1)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i 10))
-		    (vct-set! data i (reader)))
+		    (vct-set! data i (read-sample reader)))
 		  (if (not (vequal data (vct-reverse! (vct 0.026 0.024 0.122 0.220 0.318 0.017 0.015 0.014 0.013 0.012))))
 		      (snd-display #__line__ ";read mix on xramp2 reversed: ~A" data))))
 	      
@@ -23148,7 +23148,7 @@ EDITS: 2
 		      (reader (make-sampler 57 ind 0 -1)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i 10))
-		    (vct-set! data i (reader)))
+		    (vct-set! data i (read-sample reader)))
 		  (if (not (vequal data (vct-reverse! (vct 0.013 0.012 0.111 0.210 0.309 0.008 0.007 0.006 0.006 0.005))))
 		      (snd-display #__line__ ";read mix on xramp2_ramp reversed: ~A" data))))
 	      
@@ -23169,7 +23169,7 @@ EDITS: 2
 		      (reader (make-sampler 57 ind 0 -1)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i 10))
-		    (vct-set! data i (reader)))
+		    (vct-set! data i (read-sample reader)))
 		  (if (not (vequal data (vct-reverse! (vct 0.007 0.006 0.105 0.205 0.304 0.004 0.003 0.003 0.002 0.002))))
 		      (snd-display #__line__ ";read mix on xramp2_ramp2 reversed: ~A" data))))
 	      
@@ -23188,7 +23188,7 @@ EDITS: 2
 		      (reader (make-sampler 57 ind 0 -1)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i 10))
-		    (vct-set! data i (reader)))
+		    (vct-set! data i (read-sample reader)))
 		  (if (not (vequal data (vct-reverse! (vct 0.082 0.077 0.173 0.268 0.364 0.060 0.056 0.053 0.049 0.046))))
 		      (snd-display #__line__ ";read mix on xramp_ramp reversed: ~A" data))))
 	      
@@ -23208,7 +23208,7 @@ EDITS: 2
 		      (reader (make-sampler 57 ind 0 -1)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i 10))
-		    (vct-set! data i (reader)))
+		    (vct-set! data i (read-sample reader)))
 		  (if (not (vequal data (vct-reverse! (vct 0.042 0.039 0.136 0.233 0.330 0.028 0.026 0.023 0.021 0.019))))
 		      (snd-display #__line__ ";read mix on xramp_ramp2 reversed: ~A" data))))
 	      
@@ -23229,7 +23229,7 @@ EDITS: 2
 		      (reader (make-sampler 57 ind 0 -1)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i 10))
-		    (vct-set! data i (reader)))
+		    (vct-set! data i (read-sample reader)))
 		  (if (not (vequal data (vct-reverse! (vct 0.022 0.020 0.118 0.216 0.314 0.013 0.012 0.010 0.009 0.008))))
 		      (snd-display #__line__ ";read mix on xramp_ramp3 reversed: ~A" data))))
 	      
@@ -38509,7 +38509,7 @@ EDITS: 1
 	(revert-sound ind0)
 	(filter-channel (vct 1.0 0.5 0.25) 3 0 #f ind1 0)
 	(let* ((diff (snddiff ind0 0 ind1 0))
-	       (info (and (cadr diff) (= (length (cadr diff)) 3))))
+	       (info (and (cadr diff) (= (length (cadr diff)) 3) (cadr diff))))
 	  (if (or (not (list? info))
 		  (not (list? diff))
 		  (not (eq? (car diff) 'filter))
@@ -38519,7 +38519,7 @@ EDITS: 1
 		  (not (= (cadr (car info)) 0))
 		  (not (= (cadr (cadr info)) 1))
 		  (not (= (cadr (caddr info)) 1)))
-	      (snd-display #__line__ ";snddiff filter: ~A" diff)))
+	      (snd-display #__line__ ";snddiff filter: ~A ~A" diff info)))
 	(revert-sound ind1)
 	
 	(close-sound ind0)
@@ -48240,25 +48240,26 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-11-Apr-13:
- 56,762,032,942
-7,794,054,996  s7.c:eval [/home/bil/snd-13/snd]
-6,285,091,651  ???:sin [/lib64/libm-2.12.so]
-2,701,933,091  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-2,558,456,605  clm.c:mus_src [/home/bil/snd-13/snd]
-2,551,743,210  ???:cos [/lib64/libm-2.12.so]
-1,547,425,759  s7.c:gc [/home/bil/snd-13/snd]
-1,363,617,343  s7.c:eval'2 [/home/bil/snd-13/snd]
-1,004,679,547  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
-  971,624,516  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+13-Apr-13:
+56,255,299,518
+7,626,345,843  s7.c:eval [/home/bil/snd-13/snd]
+6,285,217,752  ???:sin [/lib64/libm-2.12.so]
+2,648,513,692  ???:cos [/lib64/libm-2.12.so]
+2,601,577,602  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+2,415,738,308  clm.c:mus_src [/home/bil/snd-13/snd]
+1,497,906,868  s7.c:gc [/home/bil/snd-13/snd]
+1,343,616,038  s7.c:eval'2 [/home/bil/snd-13/snd]
+1,003,984,647  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+  993,859,561  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
   943,679,698  clm.c:mus_formant_bank [/home/bil/snd-13/snd]
   911,248,552  clm.c:fir_8 [/home/bil/snd-13/snd]
   885,250,720  ???:t2_32 [/home/bil/snd-13/snd]
-  785,981,295  ???:t2_64 [/home/bil/snd-13/snd]
-  737,181,483  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+  781,643,274  ???:t2_64 [/home/bil/snd-13/snd]
+  774,994,570  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
   693,360,038  clm.c:run_hilbert [/home/bil/snd-13/snd]
-  560,479,036  s7.c:s7_make_real [/home/bil/snd-13/snd]
   507,150,000  clm.c:mus_formant_bank_with_inputs [/home/bil/snd-13/snd]
-  505,152,458  clm.c:mus_src_05 [/home/bil/snd-13/snd]
- 
+  505,325,033  clm.c:mus_src_05 [/home/bil/snd-13/snd]
+  481,547,007  clm.c:mus_src_20 [/home/bil/snd-13/snd]
+  476,860,064  s7.c:s7_make_real [/home/bil/snd-13/snd]
+
  |#
