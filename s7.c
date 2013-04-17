@@ -12617,6 +12617,7 @@ static s7_pointer g_add_f_sqr(s7_scheme *sc, s7_pointer args)
 
 
 static s7_pointer add_ss_1ss;
+s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args);
 s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args)
 {
   /* (+ (* s1 s2) (* (- 1.0 s1) s3)) */
@@ -13820,6 +13821,7 @@ static s7_pointer g_m_s_t(s7_scheme *sc, s7_pointer arg1, s7_pointer arg2, s7_po
 }
 
 
+s7_pointer g_multiply_s_direct(s7_scheme *sc, s7_pointer args);
 s7_pointer g_multiply_s_direct(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer arg1, arg2;
@@ -29358,6 +29360,7 @@ s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr)
 {
   s7_Double val;
   s7_pointer temp;
+
   temp = c_function_call(ecdr(expr))(sc, cdr(expr));
 #if (!WITH_GMP)
   val = real(temp);
@@ -29381,12 +29384,9 @@ t502:
 165375: (one-pole dryTap1 noi)
 165375: (one-pole wetTap1 noi)
 165375: (one-pole op2 (one-pole op3 (one-pole op4 totalTap)))
-165375:               (one-pole op3 (one-pole op4 totalTap))
-165375:                             (one-pole op4 totalTap)
+165375: (one-pole op3 (one-pole op4 totalTap))
+165375: (one-pole op4 totalTap)
 165375: (one-pole cou1 couplingFilter-input)
-[88200: (polywave gp1 md)]
-[88200: (polywave gp2 (* 0.8593 md))]
-[88200: (polywave gp3 (* 1.1406 md))]
 88200:                                                (polywave gen2)
 88200: (+ (env frqf) (* (env rndf) (rand-interp rnd)) (polywave gen2)) ; dog-day cicada with rk!xycos
 88200:               (* (env rndf) (rand-interp rnd))
@@ -29445,47 +29445,37 @@ t502:
 4410: (* (env ampf) (oscil-bank obank))
 
 snd-test:
-[547236: (* (env ampf) (oscil carrier modf))]
-[507880: (vct-ref indata k)]
-[254140: (readin rdin)]
 229277: (rand-interp rnd)
 134407: (* y y)
 132300: (env rf)
-132300: (abs (* (env bouncef) (oscil gen1))) ; bouncy instr in generators.scm
-103415: (env frqf)
-102805: (rand-interp rn)
+132300: (abs (* (env bouncef) (oscil gen1)))
+104003: (rand-interp rn)
 101656: (all-pass-bank allpasses (if (< samp input-samps) inval 0.0))
 101656: (comb-bank combs (all-pass-bank allpasses (if (< samp input-samps) inval 0.0)))
 101656: (if (< (moving-average f0 (* y y)) amp) 0.0 1.0)
 101656: (if (< samp input-samps) inval 0.0)
 101656: (* osamp (oscil os))
 100000: (granulate exA)
-94928: (all-pass-bank allpasses inval)
 94928: (ncos pulse)
-[94928: (+ inval (delay outdel (* volume (comb-bank combs (all-pass-bank allpasses inval)))))]
-[94928: (* volume (comb-bank combs (all-pass-bank allpasses inval)))]
-92610: (* (env tranfun) (rand ranvib))       ; canter clm-ins.scm 3 var let for locsig?
-88200: (moving-average slant harmonic)       ; arg to funny gen (generators.scm)
-[88200: (polywave gp1 md)]
-[88200: (polywave gp2 (* 0.8593 md))]
-[88200: (polywave gp3 (* 1.1406 md))]
+92610: (* (env tranfun) (rand ranvib))
+88200: (moving-average slant harmonic)
 88200: (polywave gen2)
 88200: (formant-bank fs inputs)
-88200: (env ramp)                          ; test-filter in clm23 -- unknown arg func]
+88200: (env ramp)
 88200: (+ (env frqf) (* (env rndf) (rand-interp rnd)) (polywave gen2))
 88200: (* (env rndf) (rand-interp rnd))
 88200: (* vib-index (oscil vib))
 88200: (* (env ampf) (wave-train grains gliss))
 81365: (polywave gen1 (env frqf))
+81365: (env frqf)
 81365: (* pulse-amp (env pulse-ampf) (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf))))
 81365: (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf)))
 81365: (* (env low-ampf) (polywave gp frq2))
 66150: (* (env amp-env) (readin rdA))
 62799: (rand-interp rnd1)
-                                            ; all these are barred-owl in animals: has 3 sets of mus-frequency 1st
 56007: (polywave gen1 (+ (env frqf) (* (env intrpf) (+ (* hz7 (oscil vib)) (rand-interp rnd)))))
 56007: (formant-bank fb (* (+ 0.9 (rand-interp rnd1)) (polywave gen1 (+ (env frqf) (* (env intrpf) (+ (* hz7 (oscil vib)) (rand-interp rnd)))))))
-56007: (+ 0.9 (rand-interp rnd1)) 
+56007: (+ 0.9 (rand-interp rnd1))
 56007: (+ (env frqf) (* (env intrpf) (+ (* hz7 (oscil vib)) (rand-interp rnd))))
 56007: (+ (* hz7 (oscil vib)) (rand-interp rnd))
 56007: (* (+ 0.9 (rand-interp rnd1)) (polywave gen1 (+ (env frqf) (* (env intrpf) (+ (* hz7 (oscil vib)) (rand-interp rnd))))))
@@ -29495,12 +29485,8 @@ snd-test:
 50828: (formant-bank frms1 x)
 47464: (rand noi)
 47464: (formant-bank formants (rand noi))
-44100: (two-pole f1 input1)
-44100: (two-pole f2 input1)
-44100: (two-pole f3 input1)
 44100: (triangle-wave per-vib)
 44100: (rand-interp ran-vib)
-44100: (+ (two-pole f1 input1) (two-pole f2 input1) (two-pole f3 input1)) ; locsig with let
 44100: (* amp (formant-bank fs1 inputs))
 44100: (* sum (env ampf))
 44100: (* ampa (ina i *reverb*))
@@ -29532,18 +29518,13 @@ snd-test:
 22051: (* (env pervenv) (triangle-wave per-vib))
 22051: (* (env ranvenv) (rand-interp ran-vib))
 22050: (oscil-bank obank)
-22050: (ncos cn (env frqf))
 22050: (env glisenv)
 22050: (env (vector-ref ampfs k))
 22050: (env amplitude)
 22050: (env skenv)
-22050: (+ (* (env interp-env) (table-lookup s-1 vib)) (* (env interp-env-1) (table-lookup s-2 vib)))
 22050: (+ 0.8 (rand-interp avib))
 22050: (* (env pvibenv) (triangle-wave pvib))
 22050: (* (env rvibenv) (rand-interp rvib))
-22050: (* (env amp-env) (+ (* (env interp-env) (table-lookup s-1 vib)) (* (env interp-env-1) (table-lookup s-2 vib))))
-22050: (* (env interp-env) (table-lookup s-1 vib))
-22050: (* (env interp-env-1) (table-lookup s-2 vib))
 22050: (* amp (formant-bank fs inval))
 22050: (* h3freq (oscil mod1))
 22050: (* amp (sin y))
@@ -29570,53 +29551,6 @@ snd-test:
 13671: (* index (oscil mod1 frq))
 13671: (* (env ampf2) (polywave gen2 mfrq))
 10128: (mus-random 5.0)
-6615: (* xnb (env ampf))
-6615: (* -0.95 dlyout)
-6394: (oscil gen1 (* 2.0 frq))
-6394: (polywave gens0 frq)
-6394: (nrxycos gens (* 6.0 frq))
-6394: (+ (oscil gen1 (* 2.0 frq)) (polywave gens0 frq) (nrxycos gens (* 6.0 frq)))
-6394: (* (env ampf) (+ 0.5 (abs (rand-interp rnd1))) (+ (oscil gen1 (* 2.0 frq)) (polywave gens0 frq) (nrxycos gens (* 6.0 frq))))
-6394: (+ 0.5 (abs (rand-interp rnd1)))
-6394: (* 6.0 frq)
-5955: (next-sample sr1)
-5955: (* x (next-sample sr0))
-5955: (* (- 1.0 x) (next-sample sr1))
-5512: (oscil car1 (* frq-change (+ frq1 (* (env mod1-f) (oscil mod1 (* modfrq1 frq-change))))))
-5512: (oscil car2 (* frq-change (+ frq2 (* (env mod2-f) (oscil mod2 (* modfrq2 frq-change))))))
-5512: (env frq-f)
-5512: (+ 1.0 (rand-interp ran-vib))
-5512: (+ 1.0 (* (env per-vib-f) (oscil per-vib)))
-5512: (+ (* (env car1-f) (oscil car1 (* frq-change (+ frq1 (* (env mod1-f) (oscil mod1 (* modfrq1 frq-change))))))) (* (env car2-f) (oscil car2 (* frq-change (+ frq2 (* (env mod2-f) (oscil mod2 (* modfrq2 frq-change))))))))
-5512: (* (env per-vib-f) (oscil per-vib))
-5512: (* (env car1-f) (oscil car1 (* frq-change (+ frq1 (* (env mod1-f) (oscil mod1 (* modfrq1 frq-change)))))))
-5512: (* frq-change (+ frq1 (* (env mod1-f) (oscil mod1 (* modfrq1 frq-change)))))
-5512: (* (env car2-f) (oscil car2 (* frq-change (+ frq2 (* (env mod2-f) (oscil mod2 (* modfrq2 frq-change)))))))
-5512: (* frq-change (+ frq2 (* (env mod2-f) (oscil mod2 (* modfrq2 frq-change)))))
-4410: (rand-interp random-vibrato)
-4410: (env flowf)
-4410: (* amp (+ (* bank1 outval) (* (- 1.0 bank1) inval)))
-4410: (* amp (+ (* bank2 outval) (* (- 1.0 bank2) inval)))
-4410: (* vib-amount (oscil periodic-vibrato))
-4410: (* amp (filter flt (oscil os)))
-4410: (* (env ampf) (oscil-bank obank))
-3416: (mus-random 0.5)
-2205: (two-pole tz input)
-2205: (* sndamp (one-zero oz (two-pole tz input)))
-2048: (* fm1 (oscil gen5))
-1021: (random 1.0)
-1001: (oscil car0 (hilbert-transform mod0 modsig))
-1001: (oscil car1 (delay mod1 modsig))
-1001: (oscil am0)
-1001: (oscil am1)
-1001: (delay mod1 modsig)
-1001: (hilbert-transform mod0 modsig)
-1001: (* (oscil am0) (oscil car0 (hilbert-transform mod0 modsig)))
-1001: (* (oscil am1) (oscil car1 (delay mod1 modsig)))
-1000: (* 0.9 (oscil gen1))
-1000: (* 0.1 (oscil gen2))
-
-
 */
 
 
@@ -38143,7 +38077,7 @@ static s7_pointer g_if_s_direct(s7_scheme *sc, s7_pointer args)
 
 
 
-s7_pointer make_function_with_class(s7_scheme *sc, s7_pointer cls, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
+static s7_pointer make_function_with_class(s7_scheme *sc, s7_pointer cls, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer uf;
   uf = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
@@ -38151,7 +38085,7 @@ s7_pointer make_function_with_class(s7_scheme *sc, s7_pointer cls, const char *n
   return(uf);
 }
 
-s7_pointer make_temp_function_with_class(s7_scheme *sc, s7_pointer cls, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
+static s7_pointer make_temp_function_with_class(s7_scheme *sc, s7_pointer cls, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer uf;
   uf = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
@@ -38160,7 +38094,7 @@ s7_pointer make_temp_function_with_class(s7_scheme *sc, s7_pointer cls, const ch
   return(uf);
 }
 
-s7_pointer set_function_chooser(s7_scheme *sc, s7_pointer sym, s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr))
+static s7_pointer set_function_chooser(s7_scheme *sc, s7_pointer sym, s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr))
 {
   s7_pointer f;
   f = slot_value(global_slot(sym));
@@ -64560,14 +64494,13 @@ s7_scheme *s7_init(void)
  *   and goto*, and the entire safe_car_s set
  * op_closure_car_car is rarely called, cdr_cdr case only in bench
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
- * use find_gf in map/scan-channel -- s7_eval_form/apply and call_direct
  *
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
  * bench    42736 8752 8051 7725 6515 5194 4364 3989
  * lint           9328 8140 7887 7736 7300 7180 7051
  * index    44300 3291 3005 2742 2078 1643 1435 1366
- * s7test    1721 1358 1297 1244  977  961  957  962
+ * s7test    1721 1358 1297 1244  977  961  957  960
  * t455|6     265   89   55   31   14   14    9 9155
  * lat        229   63   52   47   42   40   34   31
  * t502        90   43   39   36   29   23   20   15

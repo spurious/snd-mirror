@@ -1155,7 +1155,7 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 static s7_pointer vct_set_let_looped;
 static s7_pointer g_vct_set_let_looped(s7_scheme *sc, s7_pointer args)
 {
-  s7_Int pos, end;
+  s7_Int pos, end, num_vars;
   s7_pointer stepper, callee, loc, letp, lets, vars, let, body, locsym, old_e, vc;
   s7_Int *step, *stop;
   vct *v;
@@ -1186,8 +1186,10 @@ static s7_pointer g_vct_set_let_looped(s7_scheme *sc, s7_pointer args)
   v = (vct *)imported_s7_object_value_checked(vc, vct_tag);
   callee = caddr(loc);
 
-  if ((s7_is_pair(cdr(vars))) &&
-      (s7_list_length(sc, vars) == 2))
+  num_vars = s7_list_length(sc, vars);
+  if (num_vars > 2) return(NULL);
+
+  if (num_vars == 2)
     {
       gf *lf1, *lf2, *bg;
       s7_pointer v1, v2;

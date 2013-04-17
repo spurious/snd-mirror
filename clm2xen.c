@@ -64,7 +64,9 @@ struct mus_xen {
   int type; /* currently only oscil/formant type checks */
   int nvcts;
   XEN *vcts; /* one for each accessible mus_float_t array (wrapped up here in a vct) */
+#if HAVE_SCHEME
   gf *g;
+#endif
 };
 
 #define FORMANT_TAG 1
@@ -1219,7 +1221,9 @@ static void mus_xen_free(mus_xen *ms)
   if (ms->vcts) free(ms->vcts);
   ms->vcts = NULL;
   ms->nvcts = 0;
+#if HAVE_SCHEME
   if (ms->g) {gf_free(ms->g); ms->g = NULL;}
+#endif
   free(ms);
 }
 
@@ -1684,7 +1688,9 @@ static XEN g_mus_describe(XEN gen)
 
 #endif
 
+#if HAVE_SCHEME
 static XEN sym_frequency, sym_phase, sym_scaler, sym_increment, sym_width, sym_offset, sym_feedforward, sym_feedback;
+#endif
 
 static XEN g_mus_frequency(XEN gen) 
 {
@@ -12508,7 +12514,7 @@ static s7_pointer g_indirect_placer_3_looped(s7_scheme *sc, s7_pointer args, voi
   return(NULL);
 }
 
-void local_move_sound(mus_any *ptr, mus_long_t loc, mus_float_t uval)
+static void local_move_sound(mus_any *ptr, mus_long_t loc, mus_float_t uval)
 {
   /* mus_move_sound currently returns mus_float_t but g_indirect_placer_3_looped wants it to return void */
   mus_move_sound(ptr, loc, uval);
@@ -12530,7 +12536,7 @@ static s7_pointer g_indirect_locsig_3_looped(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_placer_let_looped(s7_scheme *sc, s7_pointer args, void (*mover)(mus_any *ptr, mus_long_t loc, mus_float_t uval))
 {
   /* (with-sound () (fm-violin 0 1 440 .1 :noise-amount .01)) */
-  s7_Int pos, end;
+  s7_Int pos, end, num_vars;
   s7_pointer stepper, callee, loc, letp, lets, vars, let, body, locsym, old_e;
   s7_Int *step, *stop;
   mus_any *locs = NULL;
@@ -12557,8 +12563,10 @@ static s7_pointer g_placer_let_looped(s7_scheme *sc, s7_pointer args, void (*mov
   GET_GENERATOR(loc, locsig, locs);
   callee = caddr(loc);
 
-  if ((s7_is_pair(cdr(vars))) &&
-      (s7_list_length(sc, vars) == 2))
+  num_vars = s7_list_length(sc, vars);
+  if (num_vars > 2) return(NULL);
+
+  if (num_vars == 2)
     {
       gf *lf1, *lf2, *bg;
       s7_pointer v1, v2;
@@ -12709,6 +12717,7 @@ static s7_pointer g_jc_reverb_out(s7_scheme *sc, s7_pointer args)
   return(args);
 }
 
+#if (!WITH_GMP)
 static s7_pointer jc_reverb_out_looped;
 static s7_pointer g_jc_reverb_out_looped(s7_scheme *sc, s7_pointer args)
 {
@@ -12838,7 +12847,7 @@ static s7_pointer g_jc_reverb_out_looped(s7_scheme *sc, s7_pointer args)
   
   return(args);
 }
-
+#endif
 
 static s7_pointer nrev_out;
 static s7_pointer g_nrev_out(s7_scheme *sc, s7_pointer args)
@@ -12874,6 +12883,7 @@ static s7_pointer g_nrev_out(s7_scheme *sc, s7_pointer args)
   return(args);
 }
 
+#if (!WITH_GMP)
 static s7_pointer nrev_out_looped;
 static s7_pointer g_nrev_out_looped(s7_scheme *sc, s7_pointer args)
 {
@@ -13079,7 +13089,7 @@ static s7_pointer g_direct_two_pole_2_looped(s7_scheme *sc, s7_pointer args)
     }
   return(NULL);
 }
-
+#endif
 
 s7_pointer g_multiply_s_direct(s7_scheme *sc, s7_pointer args);
 
@@ -13145,6 +13155,7 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if (!WITH_GMP)
 static s7_pointer o2_i_slot, o2_k_slot;
 static mus_any *g1, *g2;
 static mus_float_t (*gfnc1)(void *p, mus_float_t x);
@@ -13201,6 +13212,7 @@ static s7_pointer g_indirect_outa_2_temp_dox_looped(s7_scheme *sc, s7_pointer co
    */
   return(NULL);
 }
+#endif
 
 
 #define OUT_LOOP(Chan, Call)						\
@@ -13307,7 +13319,7 @@ static s7_pointer indirect_outa_two_let_looped;
 static s7_pointer g_indirect_outa_two_let_looped(s7_scheme *sc, s7_pointer args)
 {
   /* (with-sound (:play #t) (zone-tailed-hawk 0 .5)) */
-  s7_Int pos, end;
+  s7_Int pos, end, num_vars;
   s7_pointer stepper, callee, loc, letp, lets, vars, let, body, locsym, old_e;
   s7_Int *step, *stop;
 
@@ -13330,10 +13342,12 @@ static s7_pointer g_indirect_outa_two_let_looped(s7_scheme *sc, s7_pointer args)
 
   callee = caddr(body);
 
-  /* fprintf(stderr, "%lld %s %s\n", end - pos, DISPLAY(vars), DISPLAY(callee)); */
+  num_vars = s7_list_length(sc, vars);
+  if (num_vars > 2) return(NULL);
 
-  if ((s7_is_pair(cdr(vars))) &&
-      (s7_list_length(sc, vars) == 2))
+  /* fprintf(stderr, "(out_two) %lld %s %s\n", end - pos, DISPLAY(vars), DISPLAY(callee)); */
+
+  if (num_vars == 2)
     {
       gf *lf1, *lf2, *bg;
       s7_pointer v1, v2;
@@ -13446,7 +13460,9 @@ static s7_pointer out_looped(s7_scheme *sc, s7_pointer args, int out_chan)
   end = (*stop);
 
   callee = caddr(args);
-  if (mus_channels(clm_output_gen) <= out_chan)
+  if ((out_chan > 0) && 
+      (clm_output_gen) &&
+      (mus_channels(clm_output_gen) <= out_chan))
     return(NULL);
 
   if (mus_out_any_is_safe(clm_output_gen))
@@ -13496,14 +13512,13 @@ static s7_pointer g_indirect_outb_two_looped(s7_scheme *sc, s7_pointer args)
 static s7_pointer indirect_outa_2_temp_let_looped;
 static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer args)
 {
-  s7_Int pos, end;
+  s7_Int pos, end, num_vars;
   s7_Double x;
   s7_pointer stepper, callee, loc, letp, lets, vars, let, body, locsym, old_e;
   s7_Int *step, *stop;
   s7_function letf;
-  /* s7_pointer *choices; */
 
-  /* fprintf(stderr, "%d: %s\n", __LINE__, DISPLAY(args)); */
+  /* fprintf(stderr, "(outa_2_temp) %d: %s\n", __LINE__, DISPLAY(args)); */
 
   stepper = car(args);
   let = cadr(args);
@@ -13523,9 +13538,10 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
   end = (*stop);
 
   callee = caddr(body);
+  num_vars = s7_list_length(sc, vars);
+  if (num_vars > 2) return(NULL);
 
-  if ((s7_is_pair(cdr(vars))) &&
-      (s7_list_length(sc, vars) == 2))
+  if (num_vars == 2)
     {
       gf *lf1, *lf2, *bg;
       s7_pointer v1, v2;
@@ -13720,7 +13736,7 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
 static s7_pointer indirect_outa_2_env_let_looped;
 static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer args)
 {
-  s7_Int pos, end;
+  s7_Int pos, end, num_vars;
   s7_Double x;
   mus_any *e = NULL;
   s7_pointer stepper, callee, loc, letp, lets, letsym, let, vars, body, old_e;
@@ -13730,7 +13746,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
   s7_Double *ry;
   s7_pointer y;
 
-  /* fprintf(stderr, "%s\n", DISPLAY(args)); */
+  /* fprintf(stderr, "(outa_2_env) %s\n", DISPLAY(args)); */
   /* args: (0 ((frq (env frqf))) (outa i (* (env ampf) (+ (polywave gen1 frq) (* (env ampf2) (polywave gen2 frq))))))
    */
 
@@ -13750,6 +13766,9 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
   pos = (*step);
   end = (*stop);
 
+  num_vars = s7_list_length(sc, vars);
+  if (num_vars > 2) return(NULL);
+
   letp = cadr(car(vars));
   letsym = caar(vars);
   lets = s7_slot(sc, letsym);
@@ -13759,8 +13778,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
 
   GET_GENERATOR_CADAR(args, env, e);
   
-  if ((s7_is_pair(cdr(vars))) &&
-      (s7_list_length(sc, vars) == 2))
+  if (num_vars == 2)
     {
       gf *lf1, *lf2, *bg;
       s7_pointer v1, v2;
@@ -14736,6 +14754,7 @@ static s7_pointer g_sample_to_file_four(s7_scheme *sc, s7_pointer args)
   return(val);
 }
 
+#if (!WITH_GMP)
 static s7_pointer sample_to_file_four_looped;
 static s7_pointer g_sample_to_file_four_looped(s7_scheme *sc, s7_pointer args)
 {
@@ -14781,6 +14800,7 @@ static s7_pointer g_sample_to_file_four_looped(s7_scheme *sc, s7_pointer args)
   (*step) = end;
   return(args);
 }
+#endif
 
 
 static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
@@ -19204,19 +19224,6 @@ XEN_EVAL_C_STRING("<'> fth-print alias clm-print ( fmt args -- )");
     gettimeofday(&overall_start_time, &z0);
   }
 #endif
-
-#if (!SND_DISABLE_DEPRECATED)
-#if HAVE_SCHEME
-  s7_eval_c_string(s7, "(define-macro (run . code) \n\
-                          (if (and (symbol? (caar code)) \n\
-                                   (string=? (symbol->string (caar code)) \"lambda\"))   \n\
-                              `(,@code) \n\
-                              `((lambda () ,@code))))");
-  s7_eval_c_string(s7, "(define-macro (declare . args) #f)");
-  s7_eval_c_string(s7, "(define optimization (make-procedure-with-setter (lambda () 0) (lambda (val) 0)))");
-  XEN_DEFINE_HOOK("optimization-hook", "(make-hook 'message)", 1, "a no-op");
-#endif
-#endif
 }
 
 
@@ -19243,4 +19250,6 @@ void Init_sndlib(void)
 }
 
 /* TODO: let looped (with 3 vars) for placer cases
+ * TODO: dotimes let loop (and normal case?)
+ * TODO: check the let/let* distinction in let_looped
  */

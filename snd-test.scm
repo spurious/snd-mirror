@@ -2158,7 +2158,7 @@
 		       'reverb-control-decay 'reverb-control-feedback 'reverb-control-length 'reverb-control-length-bounds 'reverb-control-lowpass
 		       'reverb-control-scale 'reverb-control-scale-bounds 'reverb-control? 'reverse-channel 'reverse-selection
 		       'reverse-sound 'revert-sound 'riemann-window 'right-sample 'ring-modulate
-		       'run 'rv2-window 'rv3-window 'rv4-window 
+		       'rv2-window 'rv3-window 'rv4-window 
 		       'samaraki-window 'sample 'sample->file
 		       'sample->file? 'sample->frame 'sampler-at-end? 'sampler-home 'sampler-position
 		       'sampler? 'samples 'samples->seconds 'sash-color

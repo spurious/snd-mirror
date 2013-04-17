@@ -23438,25 +23438,25 @@ who says the continuation has to restart the map from the top?
     `(v 1))
   
   (define-macro (set-mac-free-v z)
-    `(vct-set! v 1 ,z))
+    `(vector-set! v 1 ,z))
   
   (set! (procedure-setter mac-free-v) set-mac-free-v)
   
   (define (mac-y2)
-    (let ((v (vct 1.0 0.1 1.2)))
+    (let ((v (vector 1.0 0.1 1.2)))
       (do ((i 0 (+ i 1))
-	   (y 0.5 (+ y (vct-ref v 1))))
+	   (y 0.5 (+ y (vector-ref v 1))))
 	  ((= i 10) y)
 	(if (= i 2)
 	    (set! (mac-free-v) 1.1)))))
   
   (define (mac-y3)
-    (let ((v (vct 1.0 0.1 1.2)))
+    (let ((v (vector 1.0 0.1 1.2)))
       (do ((i 0 (+ i 1))
-	   (y 0.5 (+ y (vct-ref v 1))))
+	   (y 0.5 (+ y (vector-ref v 1))))
 	  ((= i 10) y)
 	(if (= i 2)
-	    (vct-set! v 1 1.1)))))
+	    (vector-set! v 1 1.1)))))
   
   (let ((y0 (mac-y0))
 	(y1 (mac-y1))
@@ -41680,11 +41680,11 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	  (let ((counts 0))
 	    (for-each
 	     (lambda (int)
-	       (if (not (zero? (logand int (ash 1 b))))
+	       (if (logbit? int b) ;(not (zero? (logand int (ash 1 b))))
 		   (set! counts (+ counts 1))))
 	     ints)
 	    
-	    (if (not (zero? (logand result (ash 1 b))))
+	    (if (logbit? result b) ;(not (zero? (logand result (ash 1 b))))
 		(if (not (= counts 1))
 		    (format #t ";(log-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" ints result (ash 1 b) counts))
 		(if (= counts 1)
@@ -41766,11 +41766,11 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	  (let ((counts 0))
 	    (for-each
 	     (lambda (int)
-	       (if (not (zero? (logand int (ash 1 b))))
+	       (if (logbit? int b) ;(not (zero? (logand int (ash 1 b))))
 		   (set! counts (+ counts 1))))
 	     ints)
 	    
-	    (if (not (zero? (logand result (ash 1 b))))
+	    (if (logbit? result b) ;(not (zero? (logand result (ash 1 b))))
 		(if (not (= counts (- len 1)))
 		    (format #t ";(log-n-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" ints result (ash 1 b) counts))
 		(if (and (> len 1) (= counts (- len 1)))
@@ -41892,11 +41892,11 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	  (let ((counts 0))
 	    (for-each
 	     (lambda (int)
-	       (if (not (zero? (logand int (ash 1 b))))
+	       (if (logbit? int b) ;(not (zero? (logand int (ash 1 b))))
 		   (set! counts (+ counts 1))))
 	     ints)
 	    
-	    (if (not (zero? (logand result (ash 1 b))))
+	    (if (logbit? result b) ;(not (zero? (logand result (ash 1 b))))
 		(if (not (= counts n))
 		    (format #t ";(log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" n ints result (ash 1 b) counts))
 		(if (and (> len 1) (= counts n))
@@ -41948,11 +41948,11 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	  (let ((counts 0))
 	    (for-each
 	     (lambda (int)
-	       (if (not (zero? (logand int (ash 1 b))))
+	       (if (logbit? int b) ;(not (zero? (logand int (ash 1 b))))
 		   (set! counts (+ counts 1))))
 	     ints)
 	    
-	    (if (not (zero? (logand result (ash 1 b))))
+	    (if (logbit? result b) ;(not (zero? (logand result (ash 1 b))))
 		(if (not (= counts n))
 		    (format #t ";(simple-log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" n ints result (ash 1 b) counts))
 		(if (and (> len 1) (= counts n))
