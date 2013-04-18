@@ -305,7 +305,6 @@
   (let* ((len (length xref))
 	 (outstr (make-string (* len 2) #\space)))
     (let ((url-str "")
-	  (i 0)
 	  (j 0)
 	  (need-start #f)
 	  (in-bracket #f)
@@ -335,8 +334,8 @@
 
       (set! (outstr j) #\")
       (set! j (+ j 1))
-      (do ()
-	  ((>= i len))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
 	(let ((c (xref i)))
 	  (if in-bracket
 	      (if (char=? c #\>)
@@ -415,9 +414,7 @@
 			 (set! need-start #f)))
 		   (set! (outstr j) c)
 		   (set! j (+ j 1)))))
-	      )
-	  )
-	(set! i (+ i 1)))
+	      )))
       (list 
        (substring outstr 0 j)
        url-str))))

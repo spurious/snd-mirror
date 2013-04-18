@@ -987,6 +987,12 @@ static const char *Tracking_cursors_xrefs[] = {
   NULL};
 
 static const char *Tracking_cursors_urls[] = {
+  "extsnd.html#pfc",
+  "extsnd.html#trackingcursorstyle",
+  NULL,
+  NULL,
+  "extsnd.html#cursorlocationoffset",
+  "extsnd.html#cursorupdateinterval",
   NULL};
 
 static const char *Copying_xrefs[] = {
@@ -1007,6 +1013,20 @@ static const char *Copying_xrefs[] = {
   NULL};
 
 static const char *Copying_urls[] = {
+  NULL,
+  NULL,
+  NULL,
+  "extsnd.html#vctcopy",
+  "sndscm.html#mixtovct",
+  "extsnd.html#copysampler",
+  "extsnd.html#clonesoundas",
+  "extsnd.html#channeltovct",
+  "extsnd.html#selection2vct",
+  "extsnd.html#regiontovct",
+  "extsnd.html#transformtovct",
+  "extsnd.html#sounddatatovct",
+  "sndscm.html#framecopy",
+  "extsnd.html#vectortovct",
   NULL};
 
 static const char *Marking_xrefs[] = {
@@ -1222,6 +1242,14 @@ static const char *Deletions_xrefs[] = {
   NULL};
 
 static const char *Deletions_urls[] = {
+  NULL,
+  "extsnd.html#forgetregion",
+  "extsnd.html#deleteselection",
+  "extsnd.html#deleteselectionandsmooth",
+  "extsnd.html#deletemark",
+  "extsnd.html#deletecolormap",
+  "extsnd.html#deletesamples",
+  "extsnd.html#deletesamplesandsmooth",
   "extsnd.html#mussoundforget",
   "extsnd.html#removefrommenu",
   "sndscm.html#silenceallmixes",
@@ -1250,6 +1278,22 @@ static const char *Envelopes_xrefs[] = {
   NULL};
 
 static const char *Envelopes_urls[] = {
+  "extsnd.html#envchannel",
+  "extsnd.html#rampchannel",
+  "sndclm.html#make-env",
+  "sndscm.html#envdoc",
+  "snd.html#editenvelope",
+  NULL,
+  "sndscm.html#envelopedmix",
+  "sndscm.html#enveddoc",
+  "sndscm.html#envsoundinterp",
+  "extsnd.html#cosinechannel",
+  "sndscm.html#sineenvchannel",
+  "sndscm.html#powenvchannel",
+  "sndscm.html#envsquaredchannel",
+  "sndscm.html#envexptchannel",
+  "sndclm.html#ncos",
+  "extsnd.html#envedhook",
   "sndclm.html#moving-max",
   NULL};
 
@@ -1674,6 +1718,9 @@ static const char *FFTs_xrefs[] = {
   NULL};
 
 static const char *FFTs_urls[] = {
+  "sndclm.html#fft",
+  "sndclm.html#spectrum",
+  "extsnd.html#sndspectrum",
   "sndclm.html#autocorrelate",
   "sndclm.html#correlate",
   "sndclm.html#make-fft-window",
@@ -1749,6 +1796,11 @@ static const char *Random_Numbers_xrefs[] = {
   NULL};
 
 static const char *Random_Numbers_urls[] = {
+  "sndclm.html#randdoc",
+  "sndscm.html#ditherchannel",
+  "sndscm.html#noisedoc",
+  "sndscm.html#maracadoc",
+  "sndscm.html#anyrandom",
   NULL,
   NULL,
   "sndclm.html#mus-random",
@@ -1768,6 +1820,13 @@ static const char *Reverb_xrefs[] = {
   NULL};
 
 static const char *Reverb_urls[] = {
+  "sndscm.html#freeverbdoc",
+  "sndscm.html#jcrevdoc",
+  "sndscm.html#clminsdoc",
+  "sndscm.html#clminsdoc",
+  "snd.html#reverb",
+  "extsnd.html#convolvewith",
+  "sndscm.html#wsdoc",
   NULL};
 
 

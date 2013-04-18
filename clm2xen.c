@@ -6071,6 +6071,109 @@ return a new nrxycos generator."
 
 
 
+/* ---------------- rxyksin and rxykcos ---------------- */
+
+static XEN g_rxyksin_p(XEN obj) 
+{
+  #define H_rxyksin_p "(" S_rxyksin_p " gen): " PROC_TRUE " if gen is an " S_rxyksin " generator"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && 
+			  (mus_rxyksin_p(XEN_TO_MUS_ANY(obj)))));
+}
+
+
+static XEN g_rxykcos_p(XEN obj) 
+{
+  #define H_rxykcos_p "(" S_rxykcos_p " gen): " PROC_TRUE " if gen is an " S_rxykcos " generator"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && 
+			  (mus_rxykcos_p(XEN_TO_MUS_ANY(obj)))));
+}
+
+
+static XEN g_rxyksin(XEN obj, XEN fm)
+{
+  #define H_rxyksin "(" S_rxyksin " gen (fm 0.0)): next sample of rxyksin generator"
+  mus_float_t fm1 = 0.0;
+  mus_any *g = NULL;
+  mus_xen *gn;
+
+  XEN_TO_C_GENERATOR(obj, gn, g, mus_rxyksin_p, S_rxyksin, "an rxyksin generator");
+  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_rxyksin, XEN_ARG_2);
+
+  return(C_TO_XEN_DOUBLE(mus_rxyksin(g, fm1)));
+}
+
+static XEN g_rxykcos(XEN obj, XEN fm)
+{
+  #define H_rxykcos "(" S_rxykcos " gen (fm 0.0)): next sample of rxykcos generator"
+  mus_float_t fm1 = 0.0;
+  mus_any *g = NULL;
+  mus_xen *gn;
+
+  XEN_TO_C_GENERATOR(obj, gn, g, mus_rxykcos_p, S_rxykcos, "an rxykcos generator");
+  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_rxykcos, XEN_ARG_2);
+
+  return(C_TO_XEN_DOUBLE(mus_rxykcos(g, fm1)));
+}
+
+
+static XEN g_make_rxyk(bool sin_case, const char *caller, XEN arglist)
+{
+  mus_any *ge;
+  XEN args[MAX_ARGLIST_LEN]; 
+  XEN keys[3];
+  int orig_arg[3] = {0, 0, 0};
+  int vals, i, arglist_len;
+  mus_float_t freq, r = 0.5, ratio = 1.0; /* original in generators.scm assumes initial-phase = 0.0 */
+
+  freq = clm_default_frequency;
+
+  keys[0] = kw_frequency;
+  keys[1] = kw_ratio;
+  keys[2] = kw_r;
+
+  arglist_len = XEN_LIST_LENGTH(arglist);
+  if (arglist_len > MAX_ARGLIST_LEN)
+    clm_error(caller, "too many args!", arglist);
+
+  for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
+
+  vals = mus_optkey_unscramble(caller, 3, keys, args, orig_arg);
+  if (vals > 0)
+    {
+      freq = mus_optkey_to_float(keys[0], caller, orig_arg[0], freq);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[0], keys[0], "freq > srate/2?");
+
+      ratio = mus_optkey_to_float(keys[1], caller, orig_arg[1], ratio);
+      r = mus_optkey_to_float(keys[2], caller, orig_arg[2], r);
+    }
+  if (sin_case)
+    ge = mus_make_rxyksin(freq, 0.0, r, ratio);
+  else ge = mus_make_rxykcos(freq, 0.0, r, ratio);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(XEN_FALSE);
+}
+
+
+static XEN g_make_rxyksin(XEN arglist)
+{
+  #define H_make_rxyksin "(" S_make_rxyksin " (frequency *clm-default-frequency*) (initial-phase 0.0) (ratio 1.0) (r 0.5)): \
+return a new rxyksin generator."
+
+  return(g_make_rxyk(true, S_make_rxyksin, arglist));
+}
+
+static XEN g_make_rxykcos(XEN arglist)
+{
+  #define H_make_rxykcos "(" S_make_rxykcos " (frequency *clm-default-frequency*) (initial-phase 0.0) (ratio 1.0) (r 0.5)): \
+return a new rxykcos generator."
+
+  return(g_make_rxyk(false, S_make_rxykcos, arglist));
+}
+
+
+
 /* ----------------  filter ---------------- */
 
 typedef enum {G_FILTER, G_FIR_FILTER, G_IIR_FILTER} xclm_fir_t;
@@ -9300,6 +9403,8 @@ static mus_float_t mus_nsin_unmodulated(mus_any *p) {return(mus_nsin(p, 0.0));}
 static mus_float_t mus_ncos_unmodulated(mus_any *p) {return(mus_ncos(p, 0.0));}
 static mus_float_t mus_nrxysin_unmodulated(mus_any *p) {return(mus_nrxysin(p, 0.0));}
 static mus_float_t mus_nrxycos_unmodulated(mus_any *p) {return(mus_nrxycos(p, 0.0));}
+static mus_float_t mus_rxyksin_unmodulated(mus_any *p) {return(mus_rxyksin(p, 0.0));}
+static mus_float_t mus_rxykcos_unmodulated(mus_any *p) {return(mus_rxykcos(p, 0.0));}
 static mus_float_t mus_square_wave_unmodulated(mus_any *p) {return(mus_square_wave(p, 0.0));}
 static mus_float_t mus_sawtooth_wave_unmodulated(mus_any *p) {return(mus_sawtooth_wave(p, 0.0));}
 
@@ -9454,6 +9559,8 @@ static mus_float_t wrapped_notch_3(mus_xen *p, mus_float_t x, mus_float_t y) {re
 static mus_float_t wrapped_all_pass_3(mus_xen *p, mus_float_t x, mus_float_t y) {return(mus_all_pass(p->gen, x, y));}
 static mus_float_t wrapped_asymmetric_fm_3(mus_xen *p, mus_float_t x, mus_float_t y) {return(mus_asymmetric_fm(p->gen, x, y));}
 static mus_float_t wrapped_tap_1(mus_xen *p) {return(mus_tap_unmodulated(p->gen));}
+static mus_float_t wrapped_formant_3(mus_xen *p, mus_float_t x, mus_float_t y) {return(mus_formant_with_frequency(p->gen, x, y));}
+static mus_float_t wrapped_firmant_3(mus_xen *p, mus_float_t x, mus_float_t y) {return(mus_firmant_with_frequency(p->gen, x, y));}
 
 static mus_float_t wrapped_ssb_am_3(mus_xen *p, mus_float_t x, mus_float_t y) {return(mus_ssb_am(p->gen, x, y));}
 static mus_float_t wrapped_ssb_am_1(mus_xen *p) {return(mus_ssb_am_unmodulated(p->gen, 0.0));}
@@ -9597,6 +9704,8 @@ GEN_1(ncos, mus_ncos_unmodulated)
 GEN_1(nsin, mus_nsin_unmodulated)
 GEN_1(nrxycos, mus_nrxycos_unmodulated)
 GEN_1(nrxysin, mus_nrxysin_unmodulated)
+GEN_1(rxykcos, mus_rxykcos_unmodulated)
+GEN_1(rxyksin, mus_rxyksin_unmodulated)
 GEN_1(pulsed_env, mus_pulsed_env_unmodulated)
 
 GEN_1(readin, mus_readin)
@@ -9619,6 +9728,8 @@ GEN_2(square_wave, mus_square_wave)
 GEN_2(triangle_wave, mus_triangle_wave)
 GEN_2(nrxysin, mus_nrxysin)
 GEN_2(nrxycos, mus_nrxycos)
+GEN_2(rxyksin, mus_rxyksin)
+GEN_2(rxykcos, mus_rxykcos)
 GEN_2(one_zero, mus_one_zero)
 GEN_2(one_pole, mus_one_pole)
 GEN_2(two_zero, mus_two_zero)
@@ -13343,50 +13454,76 @@ static s7_pointer g_indirect_outa_two_let_looped(s7_scheme *sc, s7_pointer args)
   callee = caddr(body);
 
   num_vars = s7_list_length(sc, vars);
-  if (num_vars > 2) return(NULL);
+  if (num_vars > 3) return(NULL);
 
   /* fprintf(stderr, "(out_two) %lld %s %s\n", end - pos, DISPLAY(vars), DISPLAY(callee)); */
 
-  if (num_vars == 2)
+  if (num_vars > 1)
     {
-      gf *lf1, *lf2, *bg;
-      s7_pointer v1, v2;
-      s7_pointer x1, x2, y1, y2;
-      s7_Double *x1r, *x2r;
+      gf *lf1, *lf2, *lf3 = NULL, *bg;
+      s7_pointer v1, v2, v3 = NULL;
+      s7_pointer x1, x2, x3, y1, y2, y3;
+      s7_Double *x1r, *x2r, *x3r;
       
       v1 = car(vars);
       v2 = cadr(vars);
+      if (num_vars == 3) v3 = caddr(vars);
       
       x1 = s7_slot(sc, car(v1));
       x2 = s7_slot(sc, car(v2));
+      if (v3) x3 = s7_slot(sc, car(v3));
+
       y1 = s7_make_mutable_real(sc, 1.5);
       y2 = s7_make_mutable_real(sc, 1.5);
+      if (v3) y3 = s7_make_mutable_real(sc, 1.5);
+
       x1r = (s7_Double *)((unsigned char *)(y1) + xen_s7_number_location);
       x2r = (s7_Double *)((unsigned char *)(y2) + xen_s7_number_location);
+      if (v3) x3r = (s7_Double *)((unsigned char *)(y3) + xen_s7_number_location);
+
       s7_slot_set_value(sc, x1, y1);
       s7_slot_set_value(sc, x2, y2);
+      if (v3) s7_slot_set_value(sc, x3, y3);
       
       lf1 = find_gf_with_locals(sc, cadr(v1), old_e);
       lf2 = find_gf_with_locals(sc, cadr(v2), old_e);
+      if (v3) lf3 = find_gf_with_locals(sc, cadr(v3), old_e);
+
       bg = find_gf_with_locals(sc, callee, old_e);
       
       if ((lf1) && (lf2) && (bg) &&
 	  (lf1->func) && (lf2->func) && (bg->func))
 	{
-	  for (; pos < end; pos++)
+	  if ((lf3) && (lf3->func))
 	    {
-	      (*step) = pos;
-	      (*x1r) = lf1->func(lf1);
-	      (*x2r) = lf2->func(lf2);
-	      out_any_2(pos, bg->func(bg), 0, "outa");
+	      for (; pos < end; pos++)
+		{
+		  (*step) = pos;
+		  (*x1r) = lf1->func(lf1);
+		  (*x2r) = lf2->func(lf2);
+		  (*x3r) = lf3->func(lf3);
+		  out_any_2(pos, bg->func(bg), 0, "outa");
+		}
+	    }
+	  else
+	    {
+	      for (; pos < end; pos++)
+		{
+		  (*step) = pos;
+		  (*x1r) = lf1->func(lf1);
+		  (*x2r) = lf2->func(lf2);
+		  out_any_2(pos, bg->func(bg), 0, "outa");
+		}
 	    }
 	  gf_free(lf1);
 	  gf_free(lf2);
+	  if (lf3) gf_free(lf3);
 	  gf_free(bg);
 	  return(args);
 	}
       if (lf1) gf_free(lf1);
       if (lf2) gf_free(lf2);
+      if (lf3) gf_free(lf3);
       if (bg) gf_free(bg);
 
       /* fprintf(stderr, "%lld: %s %s\n", end - pos, DISPLAY(vars), DISPLAY(callee)); 
@@ -14271,6 +14408,8 @@ static void init_choices(void)
   SET_GEN_1(nsin);
   SET_GEN_1(nrxycos);
   SET_GEN_1(nrxysin);
+  SET_GEN_1(rxykcos);
+  SET_GEN_1(rxyksin);
   SET_GEN_1(readin);
   SET_GEN_1(granulate);
   SET_GEN_1(src);
@@ -14303,6 +14442,8 @@ static void init_choices(void)
   SET_GEN_2(triangle_wave);
   SET_GEN_2(nrxysin);
   SET_GEN_2(nrxycos);
+  SET_GEN_2(rxyksin);
+  SET_GEN_2(rxykcos);
   SET_GEN_2(one_zero);
   SET_GEN_2(one_pole);
   SET_GEN_2(two_zero);
@@ -15792,6 +15933,44 @@ static s7_pointer nrxysin_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
   return(f);
 }
 
+static s7_pointer rxykcos_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 1) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(rxykcos_1);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(rxykcos_2);
+    }
+  return(f);
+}
+
+
+static s7_pointer rxyksin_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 1) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(rxyksin_1);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(rxyksin_2);
+    }
+  return(f);
+}
+
+
 static s7_pointer nrxycos_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 1) &&
@@ -17072,6 +17251,10 @@ static void init_choosers(s7_scheme *sc)
   mul_c_nrxysin_1 = clm_make_function(sc, "*", g_mul_c_nrxysin_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_nrxycos_2 = clm_make_function(sc, "*", g_mul_c_nrxycos_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_nrxycos_1 = clm_make_function(sc, "*", g_mul_c_nrxycos_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_c_rxyksin_2 = clm_make_function(sc, "*", g_mul_c_rxyksin_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_c_rxyksin_1 = clm_make_function(sc, "*", g_mul_c_rxyksin_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_c_rxykcos_2 = clm_make_function(sc, "*", g_mul_c_rxykcos_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_c_rxykcos_1 = clm_make_function(sc, "*", g_mul_c_rxykcos_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_one_zero_2 = clm_make_function(sc, "*", g_mul_c_one_zero_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_one_pole_2 = clm_make_function(sc, "*", g_mul_c_one_pole_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_two_zero_2 = clm_make_function(sc, "*", g_mul_c_two_zero_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -17134,6 +17317,10 @@ static void init_choosers(s7_scheme *sc)
   mul_s_nrxysin_1 = clm_make_function_no_choice(sc, "*", g_mul_s_nrxysin_1, 1, 0, false, "* optimization", f);
   mul_s_nrxycos_2 = clm_make_function_no_choice(sc, "*", g_mul_s_nrxycos_2, 2, 0, false, "* optimization", f);
   mul_s_nrxycos_1 = clm_make_function_no_choice(sc, "*", g_mul_s_nrxycos_1, 1, 0, false, "* optimization", f);
+  mul_s_rxyksin_2 = clm_make_function_no_choice(sc, "*", g_mul_s_rxyksin_2, 2, 0, false, "* optimization", f);
+  mul_s_rxyksin_1 = clm_make_function_no_choice(sc, "*", g_mul_s_rxyksin_1, 1, 0, false, "* optimization", f);
+  mul_s_rxykcos_2 = clm_make_function_no_choice(sc, "*", g_mul_s_rxykcos_2, 2, 0, false, "* optimization", f);
+  mul_s_rxykcos_1 = clm_make_function_no_choice(sc, "*", g_mul_s_rxykcos_1, 1, 0, false, "* optimization", f);
   mul_s_one_zero_2 = clm_make_function_no_choice(sc, "*", g_mul_s_one_zero_2, 2, 0, false, "* optimization", f);
   mul_s_one_pole_2 = clm_make_function_no_choice(sc, "*", g_mul_s_one_pole_2, 2, 0, false, "* optimization", f);
   mul_s_two_zero_2 = clm_make_function_no_choice(sc, "*", g_mul_s_two_zero_2, 2, 0, false, "* optimization", f);
@@ -17196,6 +17383,10 @@ static void init_choosers(s7_scheme *sc)
   env_nrxysin_1 = clm_make_function(sc, "*", g_env_nrxysin_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   env_nrxycos_2 = clm_make_function(sc, "*", g_env_nrxycos_2, 2, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
   env_nrxycos_1 = clm_make_function(sc, "*", g_env_nrxycos_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  env_rxyksin_2 = clm_make_function(sc, "*", g_env_rxyksin_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  env_rxyksin_1 = clm_make_function(sc, "*", g_env_rxyksin_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  env_rxykcos_2 = clm_make_function(sc, "*", g_env_rxykcos_2, 2, 0, false, "* optimization", f,	NULL, NULL, NULL, NULL, NULL, NULL);
+  env_rxykcos_1 = clm_make_function(sc, "*", g_env_rxykcos_1, 1, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   env_one_zero_2 = clm_make_function(sc, "*", g_env_one_zero_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   env_one_pole_2 = clm_make_function(sc, "*", g_env_one_pole_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   env_two_zero_2 = clm_make_function(sc, "*", g_env_two_zero_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -17428,6 +17619,26 @@ static void init_choosers(s7_scheme *sc)
 				NULL, NULL, NULL, mul_c_nrxycos_1, mul_s_nrxycos_1, env_nrxycos_1);
 
 
+  GEN_F("rxyk!sin", rxyksin);
+
+  rxyksin_2 = clm_make_function(sc, "rxyk!sin", g_rxyksin_2, 2, 0, false, "rxyk!sin optimization", f,
+				mul_c_rxyksin_2, mul_s_rxyksin_2, env_rxyksin_2, NULL, NULL, NULL);
+  direct_rxyksin_2 = clm_make_function(sc, "rxyk!sin", g_direct_rxyksin_2, 2, 0, false, "rxyk!sin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  indirect_rxyksin_2 = clm_make_function(sc, "rxyk!sin", g_indirect_rxyksin_2, 2, 0, false, "rxyk!sin optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  rxyksin_1 = clm_make_function(sc, "rxyk!sin", g_rxyksin_1, 1, 0, false, "rxyk!sin optimization", f,
+				NULL, NULL, NULL, mul_c_rxyksin_1, mul_s_rxyksin_1, env_rxyksin_1);
+
+
+  GEN_F("rxyk!cos", rxykcos);
+
+  rxykcos_2 = clm_make_function(sc, "rxyk!cos", g_rxykcos_2, 2, 0, false, "rxykcos optimization", f,
+				mul_c_rxykcos_2, mul_s_rxykcos_2, env_rxykcos_2, NULL, NULL, NULL);
+  direct_rxykcos_2 = clm_make_function(sc, "rxyk!cos", g_direct_rxykcos_2, 2, 0, false, "rxyk!cos optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  indirect_rxykcos_2 = clm_make_function(sc, "rxyk!cos", g_indirect_rxykcos_2, 2, 0, false, "rxyk!cos optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
+  rxykcos_1 = clm_make_function(sc, "rxyk!cos", g_rxykcos_1, 1, 0, false, "rxyk!cos optimization", f,
+				NULL, NULL, NULL, mul_c_rxykcos_1, mul_s_rxykcos_1, env_rxykcos_1);
+
+
   GEN_F1("env", env);
   store_choices(sc, f, (s7_pointer)wrapped_env_1, NULL, NULL, (s7_pointer)wrapped_env_p);
   env_1 = clm_make_function(sc, "env", g_env_1, 1, 0, false, "env optimization", f, NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
@@ -17626,7 +17837,7 @@ static void init_choosers(s7_scheme *sc)
 					   NULL, NULL, NULL, NULL, NULL, NULL);
 
 
-  GEN_F2("formant", formant);
+  GEN_F2_3("formant", formant);
 
   formant_2 = clm_make_function(sc, "formant", g_formant_2, 2, 0, false, "formant optimization", f,
 				mul_c_formant_2, mul_s_formant_2, env_formant_2, NULL, NULL, NULL);
@@ -17642,7 +17853,7 @@ static void init_choosers(s7_scheme *sc)
   formant_bank_sz = clm_make_function(sc, "formant", g_formant_bank_sz, 3, 0, false, "formant-bank optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
 
 
-  GEN_F2("firmant", firmant);
+  GEN_F2_3("firmant", firmant);
 
   firmant_2 = clm_make_function(sc, "firmant", g_firmant_2, 2, 0, false, "firmant optimization", f,
 				mul_c_firmant_2, mul_s_firmant_2, env_firmant_2, NULL, NULL, NULL);
@@ -18121,6 +18332,13 @@ XEN_VARGIFY(g_make_nrxycos_w, g_make_nrxycos)
 XEN_ARGIFY_2(g_nrxycos_w, g_nrxycos)
 XEN_NARGIFY_1(g_nrxycos_p_w, g_nrxycos_p)
 
+XEN_VARGIFY(g_make_rxyksin_w, g_make_rxyksin)
+XEN_ARGIFY_2(g_rxyksin_w, g_rxyksin)
+XEN_NARGIFY_1(g_rxyksin_p_w, g_rxyksin_p)
+XEN_VARGIFY(g_make_rxykcos_w, g_make_rxykcos)
+XEN_ARGIFY_2(g_rxykcos_w, g_rxykcos)
+XEN_NARGIFY_1(g_rxykcos_p_w, g_rxykcos_p)
+
 XEN_ARGIFY_6(g_make_filter_w, g_make_filter)
 XEN_NARGIFY_2(g_filter_w, g_filter)
 XEN_NARGIFY_1(g_filter_p_w, g_filter_p)
@@ -18453,6 +18671,13 @@ XEN_NARGIFY_3(g_out_bank_w, g_out_bank)
 #define g_make_nrxycos_w g_make_nrxycos
 #define g_nrxycos_w g_nrxycos
 #define g_nrxycos_p_w g_nrxycos_p
+
+#define g_make_rxyksin_w g_make_rxyksin
+#define g_rxyksin_w g_rxyksin
+#define g_rxyksin_p_w g_rxyksin_p
+#define g_make_rxykcos_w g_make_rxykcos
+#define g_rxykcos_w g_rxykcos
+#define g_rxykcos_p_w g_rxykcos_p
 
 #define g_make_filter_w g_make_filter
 #define g_filter_w g_filter
@@ -18971,6 +19196,13 @@ static void mus_xen_init(void)
   XEN_DEFINE_REAL_PROCEDURE(S_nrxycos,                g_nrxycos_w,                1, 1, 0, H_nrxycos);
   XEN_DEFINE_SAFE_PROCEDURE(S_nrxycos_p,              g_nrxycos_p_w,              1, 0, 0, H_nrxycos_p);
 
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_rxyksin,                g_make_rxyksin_w,           0, 0, 1, H_make_rxyksin);
+  XEN_DEFINE_REAL_PROCEDURE(S_rxyksin,                g_rxyksin_w,                1, 1, 0, H_rxyksin);
+  XEN_DEFINE_SAFE_PROCEDURE(S_rxyksin_p,              g_rxyksin_p_w,              1, 0, 0, H_rxyksin_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_rxykcos,                g_make_rxykcos_w,           0, 0, 1, H_make_rxykcos);
+  XEN_DEFINE_REAL_PROCEDURE(S_rxykcos,                g_rxykcos_w,                1, 1, 0, H_rxykcos);
+  XEN_DEFINE_SAFE_PROCEDURE(S_rxykcos_p,              g_rxykcos_p_w,              1, 0, 0, H_rxykcos_p);
+
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_filter,     g_make_filter_w,     0, 6, 0, H_make_filter);
   XEN_DEFINE_REAL_PROCEDURE(S_filter,          g_filter_w,          2, 0, 0, H_filter);
@@ -19249,7 +19481,6 @@ void Init_sndlib(void)
 #endif
 }
 
-/* TODO: let looped (with 3 vars) for placer cases
- * TODO: dotimes let loop (and normal case?)
+/* 
  * TODO: check the let/let* distinction in let_looped
  */

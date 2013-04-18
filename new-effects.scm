@@ -172,7 +172,7 @@
   (let ((f0 (make-moving-average gate-size))
 	(f1 (make-moving-average gate-size :initial-element 1.0)))
     (map-channel (lambda (y) (* y (moving-average f1 (if (< (moving-average f0 (* y y)) amp) 0.0 1.0))))
-		 ;; or       (* y (moving-average f1 (ceiling (max 0.0 (- (moving-average f0 (* y y)) amp))))))
+		 ;; or       (* y (moving-average f1 (min 1.0 (* (max 0.0 (- (moving-average f0 (* y y)) amp)) 1e7)))) -- no "if"
 		 0 #f snd chn #f
 		 (format #f "effects-squelch-channel ~A ~A" amp gate-size))))
 
@@ -1896,8 +1896,9 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
       (if (> max-samp 1.0) (set! (y-bounds snd chn) (list (- max-samp) max-samp)))
       max-samp)))
 
-(define (effects-jc-reverb input-samps volume)
-  "(effects-jc-reverb input-samps volume) is used by the effects dialog to tie into edit-list->function"
+
+(define* (effects-jc-reverb volume beg dur snd chn)
+  "(effects-jc-reverb volume beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
   (let ((allpass1 (make-all-pass -0.700 0.700 1051))
 	(allpass2 (make-all-pass -0.700 0.700  337))
 	(allpass3 (make-all-pass -0.700 0.700  113))
@@ -1906,21 +1907,17 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	(comb3 (make-comb 0.715 5399))
 	(comb4 (make-comb 0.697 5801))
 	(outdel1 (make-delay (round (* .013 (srate)))))
-	(comb-sum 0.0)
-	(samp 0))
+	(e (make-env '(0 1 1 0) :scaler volume :base 0.0 :length dur)))
     (let ((combs (make-comb-bank (vector comb1 comb2 comb3 comb4)))
 	  (allpasses (make-all-pass-bank (vector allpass1 allpass2 allpass3))))
       (lambda (inval)
-	(set! samp (+ samp 1))
 	(+ inval
-	   (* volume (delay outdel1 (comb-bank combs (all-pass-bank allpasses (if (< samp input-samps) inval 0.0))))))))))
+	   (delay outdel1 (comb-bank combs (all-pass-bank allpasses (* inval (env e))))))))))
 
 (define* (effects-jc-reverb-1 volume beg dur snd chn)
-  "(effects-jc-reverb-1 volume beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
-  (map-channel (effects-jc-reverb (or dur (frames snd chn)) volume)
-	       beg dur snd chn #f
+  (map-channel (effects-jc-reverb volume (or beg 0) (or dur (frames snd chn)) snd chn)
+	       (or beg 0) dur snd chn #f
 	       (format #f "effects-jc-reverb-1 ~A ~A ~A" volume beg dur)))
-
 
 (let* ((reverb-menu-list ())
        (reverb-menu (XmCreatePulldownMenu (main-menu effects-menu) "Reverbs"
@@ -2030,7 +2027,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	(jc-reverb-label "Chowning reverb")
 	(jc-reverb-dialog #f)
 	(jc-reverb-target 'sound)
-	(jc-reverb-truncate #t))
+	(jc-reverb-truncate #f))
     
     (define (post-jc-reverb-dialog)
       (if (not (Widget? jc-reverb-dialog))
@@ -2043,8 +2040,11 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		   jc-reverb-label
 		   
 		   (lambda (w context info) 
+		     ;; TODO: this is meesed up
+		     ;(pad-channel (- (frames) 1) (srate))
 		     (map-chan-over-target-with-sync
-		      (lambda (samps) (effects-jc-reverb samps jc-reverb-volume))
+		      (lambda (samps) 
+			(effects-jc-reverb jc-reverb-volume samps (frames)))
 		      jc-reverb-target 
 		      (lambda (target samps) 
 			(format #f "effects-jc-reverb-1 ~A" jc-reverb-volume))

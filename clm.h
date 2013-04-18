@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 13
-#define MUS_DATE "11-Apr-13"
+#define MUS_REVISION 14
+#define MUS_DATE "19-Apr-13"
 
 /* isn't mus_env_interp backwards? */
 
@@ -226,6 +226,14 @@ MUS_EXPORT bool mus_nrxysin_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_nrxycos(mus_float_t frequency, mus_float_t y_over_x, int n, mus_float_t r);
 MUS_EXPORT mus_float_t mus_nrxycos(mus_any *ptr, mus_float_t fm);
 MUS_EXPORT bool mus_nrxycos_p(mus_any *ptr);
+
+MUS_EXPORT mus_any *mus_make_rxykcos(mus_float_t freq, mus_float_t phase, mus_float_t r, mus_float_t ratio);
+MUS_EXPORT mus_float_t mus_rxykcos(mus_any *ptr, mus_float_t fm);
+MUS_EXPORT bool mus_rxykcos_p(mus_any *ptr);
+
+MUS_EXPORT mus_any *mus_make_rxyksin(mus_float_t freq, mus_float_t phase, mus_float_t r, mus_float_t ratio);
+MUS_EXPORT mus_float_t mus_rxyksin(mus_any *ptr, mus_float_t fm);
+MUS_EXPORT bool mus_rxyksin_p(mus_any *ptr);
 
 MUS_EXPORT mus_float_t mus_delay(mus_any *gen, mus_float_t input, mus_float_t pm);
 MUS_EXPORT mus_float_t mus_delay_unmodulated(mus_any *ptr, mus_float_t input);
@@ -615,6 +623,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 19-Apr:     rxyk!cos and rxyk!sin from generators.scm.
  * 11-Apr:     mus_tap_p as a better name for mus_delay_line_p.
  * 27-Mar:     comb-bank, all-pass-bank, filtered-comb-bank, pulsed-env, oscil-bank.
  * 21-Mar:     one-pole-all-pass generator.

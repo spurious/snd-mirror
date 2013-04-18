@@ -2459,9 +2459,10 @@
 			  
 
 
-
+#|
 ;;; --------------------------------------------------------------------------------
 ;;; rxyk!cos
+;;; moved to clm.c 18-Apr-13)
 
 (defgenerator (rxyk!sin
 	       :make-wrapper (lambda (g)
@@ -2480,16 +2481,15 @@
 	   (y (* x ratio)))
       (set! angle (+ angle fm frequency))
       (/ (* (exp (* r (cos y)))
-	    (cos (+ x (* r (sin y)))))
+	    (sin (+ x (* r (sin y))))) ; was cos by mistake (18-Apr-13)
 	 (exp (abs r))))))
 
-#|
+
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-rxyk!sin 1000 0.1 0.5)))
     (do ((i 0 (+ i 1)))
 	((= i 10000))
       (outa i (rxyk!sin gen)))))
-|#
 
 
 
@@ -2514,13 +2514,14 @@
 	 (cos (+ x (* r (sin y))))
 	 ar))))
 
-#|
+
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-rxyk!cos 1000 0.1 0.5)))
     (do ((i 0 (+ i 1)))
 	((= i 10000))
       (outa i (rxyk!cos gen)))))
 |#
+
 
 (definstrument (brassy beg dur freq amp ampf freqf gliss)
   (let ((pitch-time .05)
@@ -2539,12 +2540,12 @@
 	(let* ((harmfrq (env pitch-env))
 	       (harmonic (floor harmfrq))
 	       (dist (abs (- harmfrq harmonic))))
-	  (set! (gen 'r) (* 20.0
-			    (if (< dist amp-time)
-				dist
-				(if (> dist 0.9)
-				    (- 1.0 dist)
-				    amp-time))))
+	  (set! (mus-scaler gen) (* 20.0
+				    (if (< dist amp-time)
+					dist
+					(if (> dist 0.9)
+					    (- 1.0 dist)
+					    amp-time))))
 	  (outa i (* (env amp-env)
 		     (rxyk!cos gen (+ (moving-average slant harmonic)
 				      (* vib-index (oscil vib)))))))))))

@@ -7892,10 +7892,11 @@ EDITS: 5
 				      (if (not (= beg 0))
 					  (set! (sample (+ beg dur) index chan) 0.0)))
 			     (lambda (dur)
-			       (let ((v (make-vct dur)))
+			       (let ((v (make-vct dur))
+				     (ipi (/ pi dur)))
 				 (do ((i 0 (+ i 1)))
 				     ((= i dur))
-				   (vct-set! v i (+ 0.5 (* 0.5 (cos (+ pi (/ (* pi i) dur)))))))
+				   (vct-set! v i (+ 0.5 (* 0.5 (cos (+ pi (* ipi i)))))))
 				 v))
 			     1.0)
 	  
@@ -41676,7 +41677,7 @@ EDITS: 1
 			       (outa i (rxyk!sin gen))))))
 	 (snd (find-sound res)))
     (if (not (sound? snd)) (snd-display #__line__ ";rxyk!sin ~A" snd))
-    (if (fneq (maxamp snd) 1.0) (snd-display #__line__ ";rxyk!sin max: ~A" (maxamp snd))))
+    (if (fneq (maxamp snd) 0.992) (snd-display #__line__ ";rxyk!sin max: ~A" (maxamp snd))))
   
   (let* ((res (with-sound (:clipped #f)
 			  (let ((gen (make-rxyk!cos 1000 0.1 0.5)))
@@ -48240,31 +48241,31 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-16-Apr-13:
-55,036,861,302
-7,075,135,515  s7.c:eval [/home/bil/snd-13/snd]
-6,287,279,159  ???:sin [/lib64/libm-2.12.so]
-2,746,928,210  clm.c:mus_src [/home/bil/snd-13/snd]
-2,552,806,500  ???:cos [/lib64/libm-2.12.so]
-2,365,885,756  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-1,422,980,590  s7.c:gc [/home/bil/snd-13/snd]
-1,279,175,639  s7.c:eval'2 [/home/bil/snd-13/snd]
-1,039,053,375  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
-1,003,983,082  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
-  943,679,698  clm.c:mus_formant_bank [/home/bil/snd-13/snd]
+17-Apr-13:
+54,051,209,902
+6,935,433,180  s7.c:eval [/home/bil/snd-13/snd]
+6,289,588,387  ???:sin [/lib64/libm-2.12.so]
+2,672,651,920  clm.c:mus_src [/home/bil/snd-13/snd]
+2,546,355,189  ???:cos [/lib64/libm-2.12.so]
+2,294,642,372  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+1,389,917,187  s7.c:gc [/home/bil/snd-13/snd]
+1,325,513,836  s7.c:eval'2 [/home/bil/snd-13/snd]
+1,003,984,581  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+  979,663,733  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+  936,398,788  clm.c:mus_formant_bank [/home/bil/snd-13/snd]
   911,248,552  clm.c:fir_8 [/home/bil/snd-13/snd]
-  899,229,176  ???:t2_32 [/home/bil/snd-13/snd]
-  804,000,784  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
-  781,898,497  ???:t2_64 [/home/bil/snd-13/snd]
+  899,338,404  ???:t2_32 [/home/bil/snd-13/snd]
+  781,643,274  ???:t2_64 [/home/bil/snd-13/snd]
+  739,881,111  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
   693,360,038  clm.c:run_hilbert [/home/bil/snd-13/snd]
-  508,050,673  clm.c:mus_src_20 [/home/bil/snd-13/snd]
   507,150,000  clm.c:mus_formant_bank_with_inputs [/home/bil/snd-13/snd]
-  489,139,647  clm.c:mus_src_05 [/home/bil/snd-13/snd]
-  454,280,400  ???:n1_64 [/home/bil/snd-13/snd]
-  442,236,891  io.c:mus_write_1 [/home/bil/snd-13/snd]
-  429,429,040  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
+  454,205,360  ???:n1_64 [/home/bil/snd-13/snd]
+  442,015,116  io.c:mus_write_1 [/home/bil/snd-13/snd]
   428,928,818  vct.c:g_vct_add [/home/bil/snd-13/snd]
+  420,679,804  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
   399,441,728  clm.c:fir_9 [/home/bil/snd-13/snd]
-  396,715,150  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 
+  371,955,014  s7.c:s7_make_real [/home/bil/snd-13/snd]
+
  |#
+
+;;; TODO: tests for rxyk!cos and sin [epsecially the latter since it was broken up to now]

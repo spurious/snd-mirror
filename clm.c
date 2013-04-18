@@ -130,7 +130,7 @@ enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_MOVING_AVERAGE, MUS_MOVING_MAX, MUS_NSIN, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
       MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS, MUS_POLYWAVE, MUS_FIRMANT, MUS_FORMANT_BANK,
       MUS_ONE_POLE_ALL_PASS, MUS_COMB_BANK, MUS_ALL_PASS_BANK, MUS_FILTERED_COMB_BANK, MUS_OSCIL_BANK,
-      MUS_PULSED_ENV,
+      MUS_PULSED_ENV, MUS_RXYKSIN, MUS_RXYKCOS,
       MUS_INITIAL_GEN_TAG};
 
 mus_any_class *mus_generator_class(mus_any *ptr) {return(ptr->core);}
@@ -2493,6 +2493,192 @@ mus_any *mus_make_nrxycos(mus_float_t frequency, mus_float_t y_over_x, int n, mu
   gen = (nrxy *)mus_make_nrxysin(frequency, y_over_x, n, r);
   gen->core = &NRXYCOS_CLASS;
   return((mus_any *)gen);
+}
+
+
+
+/* ---------------- rxykcos/sin ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  mus_float_t r, ar;
+  double freq, phase;
+  mus_float_t ratio;
+} rxyk;
+
+
+static int free_rxykcos(mus_any *ptr) {if (ptr) free(ptr); return(0);}
+static void rxyk_reset(mus_any *ptr) {((rxyk *)ptr)->phase = 0.0;}
+
+static mus_float_t rxyk_freq(mus_any *ptr) {return(mus_radians_to_hz(((rxyk *)ptr)->freq));}
+static mus_float_t rxyk_set_freq(mus_any *ptr, mus_float_t val) {((rxyk *)ptr)->freq = mus_hz_to_radians(val); return(val);}
+
+static mus_float_t rxyk_increment(mus_any *ptr) {return(((rxyk *)ptr)->freq);}
+static mus_float_t rxyk_set_increment(mus_any *ptr, mus_float_t val) {((rxyk *)ptr)->freq = val; return(val);}
+
+static mus_float_t rxyk_phase(mus_any *ptr) {return(fmod(((rxyk *)ptr)->phase, TWO_PI));}
+static mus_float_t rxyk_set_phase(mus_any *ptr, mus_float_t val) {((rxyk *)ptr)->phase = val; return(val);}
+
+static mus_float_t rxyk_ratio(mus_any *ptr) {return(((rxyk *)ptr)->ratio);}
+
+static mus_float_t rxyk_r(mus_any *ptr) {return(((rxyk *)ptr)->r);}
+
+static mus_float_t rxyk_set_r(mus_any *ptr, mus_float_t val) 
+{
+  rxyk *gen = (rxyk *)ptr;
+  gen->r = val; 
+  gen->ar = 1.0 / exp(fabs(val));
+  return(val);
+}
+
+static mus_float_t run_rxykcos(mus_any *ptr, mus_float_t fm, mus_float_t unused) {return(mus_rxykcos(ptr, fm));}
+static mus_float_t run_rxyksin(mus_any *ptr, mus_float_t fm, mus_float_t unused) {return(mus_rxyksin(ptr, fm));}
+
+static bool rxyk_equalp(mus_any *p1, mus_any *p2)
+{
+  return((p1 == p2) ||
+	 (((p1->core)->type == (p2->core)->type) &&
+	  ((((rxyk *)p1)->freq) == (((rxyk *)p2)->freq)) && 
+	  ((((rxyk *)p1)->phase) == (((rxyk *)p2)->phase)) &&
+	  ((((rxyk *)p1)->ratio) == (((rxyk *)p2)->ratio)) &&
+	  ((((rxyk *)p1)->r) == (((rxyk *)p2)->r))));
+}
+
+
+static char *describe_rxyk(mus_any *ptr)
+{
+  char *describe_buffer;
+  describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, ratio: %.3f, r: %.3f",
+	       mus_name(ptr),
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
+	       ((rxyk *)ptr)->ratio, 
+	       rxyk_r(ptr));
+  return(describe_buffer);
+}
+
+
+bool mus_rxykcos_p(mus_any *ptr) 
+{
+  return((ptr) && 
+	 (ptr->core->type == MUS_RXYKCOS));
+}
+
+
+mus_float_t mus_rxykcos(mus_any *ptr, mus_float_t fm)
+{
+  rxyk *gen = (rxyk *)ptr;
+  mus_float_t result, rx;
+
+  rx = gen->ratio * gen->phase;
+  result = gen->ar * exp(gen->r * cos(rx)) * cos(gen->phase + (gen->r * sin(rx)));
+  gen->phase += (fm + gen->freq);
+
+  return(result);
+}
+
+
+static mus_any_class RXYKCOS_CLASS = {
+  MUS_RXYKCOS,
+  (char *)S_rxykcos,
+  &free_rxykcos,
+  &describe_rxyk,
+  &rxyk_equalp,
+  0, 0, 0, 0,
+  &rxyk_freq,
+  &rxyk_set_freq,
+  &rxyk_phase,
+  &rxyk_set_phase,
+  &rxyk_r,
+  &rxyk_set_r,
+  &rxyk_increment,
+  &rxyk_set_increment,
+  &run_rxykcos,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  &rxyk_ratio, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0,
+  &rxyk_reset,
+  0
+};
+
+
+mus_any *mus_make_rxykcos(mus_float_t freq, mus_float_t phase, mus_float_t r, mus_float_t ratio) /* r default 0.5, ratio 1.0 */
+{
+ rxyk *gen = NULL;
+ gen = (rxyk *)calloc(1, sizeof(rxyk));
+ gen->core = &RXYKCOS_CLASS;
+ gen->freq = mus_hz_to_radians(freq);
+ gen->phase = phase;
+ gen->r = r;
+ gen->ar = 1.0 / exp(fabs(r));
+ gen->ratio = ratio;
+ return((mus_any *)gen);
+}
+
+
+
+bool mus_rxyksin_p(mus_any *ptr) 
+{
+  return((ptr) && 
+	 (ptr->core->type == MUS_RXYKSIN));
+}
+
+
+mus_float_t mus_rxyksin(mus_any *ptr, mus_float_t fm)
+{
+  rxyk *gen = (rxyk *)ptr;
+  mus_float_t result, rx;
+
+  rx = gen->ratio * gen->phase;
+  result = gen->ar * exp(gen->r * cos(rx)) * sin(gen->phase + (gen->r * sin(rx)));
+  gen->phase += (fm + gen->freq);
+
+  return(result);
+}
+
+
+static mus_any_class RXYKSIN_CLASS = {
+  MUS_RXYKSIN,
+  (char *)S_rxyksin,
+  &free_rxykcos,
+  &describe_rxyk,
+  &rxyk_equalp,
+  0, 0, 0, 0,
+  &rxyk_freq,
+  &rxyk_set_freq,
+  &rxyk_phase,
+  &rxyk_set_phase,
+  &rxyk_r,
+  &rxyk_set_r,
+  &rxyk_increment,
+  &rxyk_set_increment,
+  &run_rxyksin,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  &rxyk_ratio, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0,
+  &rxyk_reset,
+  0
+};
+
+
+mus_any *mus_make_rxyksin(mus_float_t freq, mus_float_t phase, mus_float_t r, mus_float_t ratio) /* r default 0.5, ratio 1.0 */
+{
+ rxyk *gen = NULL;
+ gen = (rxyk *)calloc(1, sizeof(rxyk));
+ gen->core = &RXYKSIN_CLASS;
+ gen->freq = mus_hz_to_radians(freq);
+ gen->phase = phase;
+ gen->r = r;
+ gen->ar = 1.0 / exp(fabs(r));
+ gen->ratio = ratio;
+ return((mus_any *)gen);
 }
 
 

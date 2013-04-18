@@ -1020,25 +1020,45 @@ is: (filter-sound (make-formant 2400 .99))"
 (define (osc-formants radius bases amounts freqs) ; changed to call map-channel itself, 21-Apr-05
   "(osc-formants radius bases amounts freqs) set up any number of independently oscillating 
 formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vct 400.0 800.0 1200.0) (vct 4.0 2.0 3.0))"
-  (let* ((len (length bases))
-	 (frms (make-vector len))
-	 (oscs (make-vector len))
-	 (amps (make-vct len 1.0)))
-    (do ((i 0 (+ i 1)))
-	((= i len))
-      (set! (frms i) (make-formant (bases i) radius))
-      (set! (oscs i) (make-oscil (freqs i))))
-    (let ((frms1 (make-formant-bank frms amps)))
-      (map-channel
-       (lambda (x)
-	 (let ((val (formant-bank frms1 x)))
-	   (do ((i 0 (+ i 1)))
-	       ((= i len))
-	     (set! (mus-frequency (vector-ref frms i))
-		   (+ (bases i)
-		      (* (amounts i) 
-			 (oscil (oscs i))))))
-	   val))))))
+  (let ((len (length bases)))
+    (if (= len 3)
+	;; this way is faster but verbose
+	(let ((fa1 (amounts 0))
+	      (fa2 (amounts 1))
+	      (fa3 (amounts 2))
+	      (frq1 (bases 0))
+	      (frq2 (bases 1))
+	      (frq3 (bases 2))
+	      (fr1 (make-formant (bases 0) radius))
+	      (fr2 (make-formant (bases 1) radius))
+	      (fr3 (make-formant (bases 2) radius))
+	      (o1 (make-oscil (freqs 0)))
+	      (o2 (make-oscil (freqs 1)))
+	      (o3 (make-oscil (freqs 2))))
+	  (map-channel
+	   (lambda (y)
+	     (+ (formant fr1 y (hz->radians (+ frq1 (* fa1 (oscil o1)))))
+		(formant fr2 y (hz->radians (+ frq2 (* fa2 (oscil o2)))))
+		(formant fr3 y (hz->radians (+ frq3 (* fa3 (oscil o3)))))))))
+
+	(let ((frms (make-vector len))
+	      (oscs (make-vector len))
+	      (amps (make-vct len 1.0)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i len))
+	    (set! (frms i) (make-formant (bases i) radius))
+	    (set! (oscs i) (make-oscil (freqs i))))
+	  (let ((frms1 (make-formant-bank frms amps)))
+	    (map-channel
+	     (lambda (x)
+	       (let ((val (formant-bank frms1 x)))
+		 (do ((i 0 (+ i 1)))
+		     ((= i len))
+		   (set! (mus-frequency (vector-ref frms i))
+			 (+ (bases i)
+			    (* (amounts i) 
+			       (oscil (oscs i))))))
+		 val))))))))
 
 
 
@@ -1302,7 +1322,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	   (j i (+ j 1)))
 	  ((= k ctr))
 	(vct-add! spectr fdr)
-	(set! (out-data j) (formant-bank formants (rand noi)))))
+	(vct-set! out-data j (formant-bank formants (rand noi)))))
 
     (vct-scale! out-data (* amp (/ old-peak-amp (vct-peak out-data))))
     (vct->channel out-data 0 (max len outlen) snd chn)))
