@@ -562,7 +562,25 @@
 			      logior lognot logxor logand numerator denominator 
 			      floor round truncate ceiling ash))
 			 h))
+
+	  (repeated-args-table (let ((h (make-hash-table)))
+				 (for-each
+				  (lambda (op)
+				    (set! (h op) #t))
+				  '(= / max min < > <= >= - quotient remainder modulo lcm gcd and or
+				      string=? string<=? string>=? string<? string>?
+				      char=? char<=? char>=? char<? char>?))
+				 h))
 	  
+	  (repeated-args-table-2 (let ((h (make-hash-table)))
+				   (for-each
+				    (lambda (op)
+				      (set! (h op) #t))
+				    '(= max min < > <= >= and or
+					string=? string<=? string>=? string<? string>?
+					char=? char<=? char>=? char<? char>?))
+				   h))
+
 	  (syntaces (let ((h (make-hash-table)))
 		      (for-each
 		       (lambda (op)
@@ -703,9 +721,7 @@
       (define (check-for-repeated-args name head form env)
 	(if (and (or (memq head '(eq? eqv? equal?))
 		     (and (= (length form) 3)
-			  (memq head '(= / max min < > <= >= - quotient remainder modulo lcm gcd and or
-					 string=? string<=? string>=? string<? string>?
-					 char=? char<=? char>=? char<? char>?))))
+			  (hash-table-ref repeated-args-table head)))
 		 (repeated-member? (cdr form) env))
 	    (lint-format "this looks odd:~A"
 			 name
@@ -713,9 +729,7 @@
 			 ;;   and (/ 0 0) might be deliberate (as in gmp)
 			 ;;   also (min (random x) (random x)) is not pointless
 			 (truncated-list->string form))
-	    (if (and (memq head '(= max min < > <= >= and or
-				    string=? string<=? string>=? string<? string>?
-				    char=? char<=? char>=? char<? char>?))
+	    (if (and (hash-table-ref repeated-args-table-2 head)
 		     (repeated-member? (cdr form) env))
 		(lint-format "it looks odd to have repeated arguments in~A"
 			     name (truncated-list->string form)))))

@@ -9424,16 +9424,6 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
  *    of the extra static vars and the equality checks actually is greater than the symbol lookup!
  */
 
-mus_any *s7_to_mus_any(s7_pointer p)
-{
-  mus_xen *gn;
-  gn = (mus_xen *)imported_s7_object_value_checked(p, mus_xen_tag);
-  if (gn)
-    return(gn->gen);
-  return(NULL);
-}
-
-
 #define GET_GENERATOR(Obj, Type, Val) \
   do { \
   s7_pointer gp; \
@@ -9647,41 +9637,6 @@ static mus_float_t wrapped_ssb_am_1(mus_xen *p) {return(mus_ssb_am_unmodulated(p
     return(s7_make_real(sc, Func(_o_, _fm_)));		    \
   }
 
-#if 0
-#define GEN_3(Type, Func) \
-  static s7_pointer Type ## _3; \
-  static s7_pointer g_ ## Type ## _3(s7_scheme *sc, s7_pointer args) \
-  { \
-    mus_any *_o_; \
-    double _a1_, _a2_; \
-   \
-    GET_GENERATOR(args, Type, _o_); \
-    GET_REAL_CADR(args, Type, _a1_);	       \
-    GET_REAL_CADR(cdr(args), Type, _a2_);      \
-    return(s7_make_real(sc, Func(_o_, _a1_, _a2_))); \
-  } \
-  static s7_pointer direct_ ## Type ## _3; \
-  static s7_pointer g_direct_ ## Type ## _3(s7_scheme *sc, s7_pointer args) \
-  { \
-    mus_any *_o_;	  \
-    double _a1_, _a2_;	  \
-    s7_pointer rl; \
-    _a1_ = s7_cell_real(rl = s7_call_direct(sc, cadr(args)));	\
-    _a2_ = s7_call_direct_to_real_and_free(sc, caddr(args));	\
-    GET_GENERATOR(args, Type, _o_); \
-    return(s7_remake_real(sc, rl, Func(_o_, _a1_, _a2_)));	\
-  } \
-  static s7_pointer indirect_ ## Type ## _3; \
-  static s7_pointer g_indirect_ ## Type ## _3(s7_scheme *sc, s7_pointer args) \
-  { \
-    mus_any *_o_;	  \
-    double _a1_, _a2_;							\
-    _a1_ = s7_number_to_real(sc, s7_call_direct(sc, cadr(args)));	\
-    _a2_ = s7_number_to_real(sc, s7_call_direct(sc, caddr(args)));	\
-    GET_GENERATOR(args, Type, _o_); \
-    return(s7_make_real(sc, Func(_o_, _a1_, _a2_)));	\
-  }
- #endif
 
 GEN_1(oscil, mus_oscil_unmodulated)
 GEN_2(oscil, mus_oscil_fm)
@@ -9758,32 +9713,6 @@ GEN_1(src, mus_src_simple)
 GEN_2(src, mus_src_two)
 GEN_1(convolve, mus_convolve_simple)
 GEN_1(phase_vocoder, mus_phase_vocoder_simple)
-
-/*
-GEN_3(notch, mus_notch)
-GEN_3(comb, mus_comb)
-GEN_3(all_pass, mus_all_pass)
-
-GEN3(ssb_am)         ;(ssb-am gen (insig 0.0) (fm 0.0)), mus_ssb_am_unmodulated
-GEN3(asymmetric_fm)  ;(asymmetric-fm gen (index 0.0) (fm 0.0)), mus_*_no_input(1), unmod(2)
-GEN3(polyshape)      ;(polyshape gen (index 1.0) (fm 0.0)), unmod(2), no_input(1)
-GEN3(filtered_comb)  ;(filtered-comb gen (val 0.0) (pm 0.0)), unmod(1)
-
-GEN3(locsig)         ;(locsig gen loc val)
-GEN3(move-sound)     ;(move-sound gen loc val)
-
-GEN_P(file_to_sample)
-GEN_P(sample_to_file)
-GEN_P(file_to_frame)
-GEN_P(frame_to_file)
-
-MUS_SRC, 
-MUS_GRANULATE,
-MUS_CONVOLVE,
-MUS_PHASE_VOCODER,
-
-;(set! (mus-location ...) ...)?
-*/
 
 
 
@@ -10917,7 +10846,7 @@ static s7_pointer g_indirect_move_sound_3(s7_scheme *sc, s7_pointer args)
 #define GEN_DIRECT_1 6
 #define GEN_DIRECT_2 7
 #define GEN_DIRECT_3 8
-#define GEN_DIRECT_4 9
+#define GEN_DIRECT_4 9 
 #define GEN_DIRECT_CHECKER 10
 #define GEN_DIRECT_FIXUP 11
 
@@ -11590,6 +11519,8 @@ static mus_float_t gf_add_g1_g2_g3_g4(void *p)      {gf *g = (gf *)p; return(g->
 static mus_float_t gf_multiply_g1_g2_g3_g4(void *p) {gf *g = (gf *)p; return(g->f1(g->g1) * g->f2(g->g2) * g->f3(g->g3) * g->f4(g->g4));}
 static mus_float_t gf_add_rx1_g1_g2_g3(void *p)     {gf *g = (gf *)p; return((*(g->rx1)) + g->f1(g->g1) + g->f2(g->g2) + g->f3(g->g3));}
 static mus_float_t gf_multiply_rx1_g1_g2_g3(void *p){gf *g = (gf *)p; return((*(g->rx1)) * g->f1(g->g1) * g->f2(g->g2) * g->f3(g->g3));}
+static mus_float_t gf_add_x1_g1_g2_g3(void *p)      {gf *g = (gf *)p; return(g->x1 + g->f1(g->g1) + g->f2(g->g2) + g->f3(g->g3));}
+static mus_float_t gf_multiply_x1_g1_g2_g3(void *p) {gf *g = (gf *)p; return(g->x1 * g->f1(g->g1) * g->f2(g->g2) * g->f3(g->g3));}
 
 static mus_float_t gf_add_g1_g2_g3_g4_g5(void *p)      {gf *g = (gf *)p; return(g->f1(g->g1) + g->f2(g->g2) + g->f3(g->g3) + g->f4(g->g4) + g->f5(g->g5));}
 static mus_float_t gf_multiply_g1_g2_g3_g4_g5(void *p) {gf *g = (gf *)p; return(g->f1(g->g1) * g->f2(g->g2) * g->f3(g->g3) * g->f4(g->g4) * g->f5(g->g5));}
@@ -12027,7 +11958,7 @@ static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer loca
       gf *g1 = NULL, *g2 = NULL, *g3 = NULL, *g4 = NULL, *g;
 
       typ = gf_parse(sc, cadr(expr), locals, &g1, &s, &x, &rx);
-      if ((typ == GF_RX) || (typ == GF_G))
+      if ((typ == GF_RX) || (typ == GF_G) || (typ == GF_X))
 	{
 	  g2 = find_gf_with_locals(sc, caddr(expr), locals);
 	  if (g2) g3 = find_gf_with_locals(sc, cadddr(expr), locals);
@@ -12048,15 +11979,19 @@ static gf *fixup_add_or_multiply(s7_scheme *sc, s7_pointer expr, s7_pointer loca
 		  g->func = (its_add) ? gf_add_g1_g2_g3_g4 : gf_multiply_g1_g2_g3_g4;
 		  g->func_2 = NULL;
 		  return(g);
-		}				
-	      g->rx1 = rx;
+		}	
+	      if (typ == GF_RX)
+		g->rx1 = rx;
+	      else g->x1 = x;
 	      g->f1 = g2->func;
 	      g->f2 = g3->func;
 	      g->f3 = g4->func;
 	      g->g1 = g2;
 	      g->g2 = g3;
 	      g->g3 = g4;
-	      g->func = (its_add) ? gf_add_rx1_g1_g2_g3 : gf_multiply_rx1_g1_g2_g3;
+	      if (typ == GF_RX)
+		g->func = (its_add) ? gf_add_rx1_g1_g2_g3 : gf_multiply_rx1_g1_g2_g3;
+	      else g->func = (its_add) ? gf_add_x1_g1_g2_g3 : gf_multiply_x1_g1_g2_g3;
 	      g->func_2 = NULL;
 	      return(g);
 	    }
@@ -12234,7 +12169,8 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 
   /* fprintf(stderr, "%d: %s\n", __LINE__, DISPLAY(expr)); */
 
-  if (!s7_is_pair(expr))
+  if ((!s7_is_pair(expr)) ||
+      (!s7_is_symbol(car(expr))))
     return(NULL);
 
   choices = (s7_pointer *)s7_function_chooser_data_direct(s7_car_value(sc, expr));
@@ -13644,6 +13580,34 @@ static s7_pointer g_indirect_outb_two_looped(s7_scheme *sc, s7_pointer args)
   return(out_looped(sc, args, 1));
 }
 /* out-any is obvious if it is needed */
+
+
+
+static s7_pointer otwo_i_slot;
+static gf *otwo_g1;
+
+static s7_pointer g_outa_two_dox(s7_scheme *sc, s7_pointer code)
+{
+  mus_long_t i;
+  i = s7_cell_integer(s7_slot_value(otwo_i_slot));
+  return(out_any_2(i, otwo_g1->func(otwo_g1), 0, "outa"));
+}
+
+static s7_pointer outa_two_dox_looped;
+static s7_pointer g_outa_two_dox_looped(s7_scheme *sc, s7_pointer code)
+{
+  gf *gf1;
+  otwo_i_slot = s7_local_slot(sc, cadr(code));
+  gf1 = find_gf(sc, caddr(code));
+  if ((gf1) && (gf1->func))
+    {
+      otwo_g1 = gf1;
+      return((s7_pointer)g_outa_two_dox);
+    }
+  if (gf1) gf_free(gf1);
+  return(NULL);
+}
+
 
 
 static s7_pointer indirect_outa_2_temp_let_looped;
@@ -18048,6 +18012,8 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_let_looped(outa_two, indirect_outa_two_let_looped);
   indirect_outa_two_looped = clm_make_function_not_temp(sc, "outa", g_indirect_outa_two_looped, 3, 0, false, "outa optimization", f);
   s7_function_set_looped(outa_two, indirect_outa_two_looped);
+  outa_two_dox_looped = clm_make_function_not_temp(sc, "outa", g_outa_two_dox_looped, 3, 0, false, "outa optimization", f);
+  s7_function_set_dox_looped(outa_two, outa_two_dox_looped);
 
   indirect_outa_2_temp_dox_looped = s7_make_function(sc, "outa", g_indirect_outa_2_temp_dox_looped, 2, 0, false, "outa optimization");
   s7_function_set_class(indirect_outa_2_temp_dox_looped, f);

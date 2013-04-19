@@ -48241,31 +48241,30 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-17-Apr-13:
-54,051,209,902
-6,935,433,180  s7.c:eval [/home/bil/snd-13/snd]
-6,289,588,387  ???:sin [/lib64/libm-2.12.so]
-2,672,651,920  clm.c:mus_src [/home/bil/snd-13/snd]
-2,546,355,189  ???:cos [/lib64/libm-2.12.so]
-2,294,642,372  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-1,389,917,187  s7.c:gc [/home/bil/snd-13/snd]
-1,325,513,836  s7.c:eval'2 [/home/bil/snd-13/snd]
-1,003,984,581  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
-  979,663,733  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
-  936,398,788  clm.c:mus_formant_bank [/home/bil/snd-13/snd]
+18-Apr-13:
+53,227,192,058
+6,679,229,750  s7.c:eval [/home/bil/snd-13/snd]
+6,227,994,765  ???:sin [/lib64/libm-2.12.so]
+2,485,863,631  ???:cos [/lib64/libm-2.12.so]
+2,428,164,947  clm.c:mus_src [/home/bil/snd-13/snd]
+2,230,232,379  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+1,334,628,987  s7.c:gc [/home/bil/snd-13/snd]
+1,323,786,448  s7.c:eval'2 [/home/bil/snd-13/snd]
+1,018,453,361  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+1,003,990,243  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+  936,385,788  clm.c:mus_formant_bank [/home/bil/snd-13/snd]
   911,248,552  clm.c:fir_8 [/home/bil/snd-13/snd]
-  899,338,404  ???:t2_32 [/home/bil/snd-13/snd]
-  781,643,274  ???:t2_64 [/home/bil/snd-13/snd]
-  739,881,111  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+  888,799,420  ???:t2_32 [/home/bil/snd-13/snd]
+  782,408,943  ???:t2_64 [/home/bil/snd-13/snd]
+  773,868,601  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
   693,360,038  clm.c:run_hilbert [/home/bil/snd-13/snd]
   507,150,000  clm.c:mus_formant_bank_with_inputs [/home/bil/snd-13/snd]
-  454,205,360  ???:n1_64 [/home/bil/snd-13/snd]
-  442,015,116  io.c:mus_write_1 [/home/bil/snd-13/snd]
+  449,776,264  ???:n1_64 [/home/bil/snd-13/snd]
+  442,125,249  io.c:mus_write_1 [/home/bil/snd-13/snd]
+  437,437,696  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
   428,928,818  vct.c:g_vct_add [/home/bil/snd-13/snd]
-  420,679,804  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
-  399,441,728  clm.c:fir_9 [/home/bil/snd-13/snd]
-  371,955,014  s7.c:s7_make_real [/home/bil/snd-13/snd]
-
+  418,076,031  clm.c:mus_src_20 [/home/bil/snd-13/snd]
+ 
  |#
 
 ;;; TODO: tests for rxyk!cos and sin [epsecially the latter since it was broken up to now]

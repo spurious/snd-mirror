@@ -118,7 +118,6 @@ s7_scheme *s7_init(void);
 
 typedef s7_pointer (*s7_function)(s7_scheme *sc, s7_pointer args);   /* that is, obj = func(s7, args) -- args is a list of arguments */
 
-
 s7_pointer s7_f(s7_scheme *sc);                                      /* #f */
 s7_pointer s7_t(s7_scheme *sc);                                      /* #t */
 s7_pointer s7_nil(s7_scheme *sc);                                    /* () */
@@ -596,6 +595,15 @@ size_t s7_c_object_value_offset(s7_scheme *sc);
 size_t s7_c_object_type_offset(s7_scheme *sc);
 size_t s7_type_offset(s7_scheme *sc);
   /* these are for experimental optimization choices */
+
+typedef struct {
+  void (*ex_vf)(void *p); 
+  void (*ex_free)(void *p); 
+  void *ex_data;
+} s7_ex;
+
+void s7_function_set_ex_parser(s7_pointer f, s7_ex *(*func)(s7_scheme *sc, s7_pointer expr));
+
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer e);

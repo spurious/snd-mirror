@@ -1087,8 +1087,17 @@ static s7_pointer g_vct_set_direct_dox_gf(s7_scheme *sc, s7_pointer code)
 
 static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 {
+  s7_pointer add_expr;
   vct *v;
   if (vid_gf) {gf_free(vid_gf); vid_gf = NULL;} /* TODO: we need dox support for cleanups! */
+
+  /* we can get here in unoptimized cases, so can't assume anything about the expression (cadddr(code)) */
+  /* fprintf(stderr, "code: %s\n", DISPLAY(code)); */
+
+  add_expr = cadddr(code);
+  if ((s7_is_pair(add_expr)) &&
+      (!s7_is_symbol(car(add_expr))))
+    return(NULL);
 
   v = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, code), vct_tag);
   if ((v) &&
@@ -1101,8 +1110,6 @@ static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
 	  (s7_is_integer(s7_slot_value(vid_i_slot))))                          /* i is an integer */
 	{
 	  gf *gf1;
-	  s7_pointer add_expr;
-	  add_expr = cadddr(code);
 	  
 	  if (s7_function_choice(sc, cadddr(code)) == g_add_ss_1ss)
 	    {
