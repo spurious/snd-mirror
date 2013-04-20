@@ -746,14 +746,15 @@ static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
   return(s7_f(sc));
 }
 
-static int vct_number_location;
 
 #define VCT_NUMBER_LOCATION 8
+#define VCT_SLOT_VALUE_LOCATION 16
 
 
 #if (!WITH_GMP)
 #define s7_cell_integer(p) (s7_Int)(*((s7_Int *)((unsigned char *)(p) + VCT_NUMBER_LOCATION)))
 #define s7_cell_real(p) (s7_Double)(*((s7_Double *)((unsigned char *)(p) + VCT_NUMBER_LOCATION)))
+#define s7_cell_slot_value(p) (s7_pointer)(*((s7_pointer *)((unsigned char *)(p) + VCT_SLOT_VALUE_LOCATION)))
 
 static s7_pointer vct_set_vector_ref;
 static s7_pointer g_vct_set_vector_ref(s7_scheme *sc, s7_pointer args)
@@ -800,7 +801,7 @@ static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
       stepper = car(args);
       vecind = caddr(caddr(args));
       callee = s7_slot(sc, vecind);
-      if (s7_slot_value(callee) != stepper)
+      if (s7_cell_slot_value(callee) != stepper)
 	return(NULL);
       
       step = ((s7_Int *)((unsigned char *)(stepper) + VCT_NUMBER_LOCATION));
@@ -924,7 +925,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
       stepper = car(args);
       locsym = caddr(args);
       index_slot = s7_slot(sc, locsym);
-      if (s7_slot_value(index_slot) != stepper)
+      if (s7_cell_slot_value(index_slot) != stepper)
 	return(NULL);
       
       step = ((s7_Int *)((unsigned char *)(stepper) + VCT_NUMBER_LOCATION));
@@ -1014,7 +1015,7 @@ static mus_float_t wrapped_vct_ref(void *p)
   vct *v;
   s7_Int k;
   v = (vct *)(g->gen);
-  k = s7_cell_integer(s7_slot_value(g->s1));
+  k = s7_cell_integer(s7_cell_slot_value(g->s1));
   if ((k >= 0) && (k < v->length))
     return(v->data[k]);
   return(0.0);
@@ -1043,121 +1044,217 @@ static gf *fixup_vct_ref(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 }
 
 
-s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args);
-static s7_pointer vct_set_direct_dox_looped;
-static mus_float_t *vid_data;
-static s7_pointer vid_i_slot, vid_x_slot;
-static mus_float_t x1, x2;
-static mus_long_t vid_length;
-static void *vid_gen;
-static gf *vid_gf = NULL;
-static mus_float_t (*vid_func_1)(void *p);
-static mus_float_t (*vid_func)(void *p);
+/* -------------------------------------------------------------------------------- */
 
-static s7_pointer g_vct_set_direct_dox_add_1ss(s7_scheme *sc, s7_pointer code)
+s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args);
+
+
+typedef struct {
+  s7_pointer i_slot, val_slot;
+  int v_len;
+  mus_float_t *v_data;
+  mus_float_t x1, x2;
+  void *gen;
+  gf *g;
+  s7_scheme *sc;
+  mus_float_t (*func_1)(void *p);
+  mus_float_t (*func)(void *p);
+} vcset_ex;
+
+
+static void vcset_free(void *p)
 {
+  vcset_ex *ep = (vcset_ex *)p;
+  if (ep->g) gf_free(ep->g);
+  free(p);
+}
+
+
+static void vcset_0(void *p)
+{
+  vcset_ex *ep = (vcset_ex *)p;
+  mus_long_t pos;
+  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
+  if (pos < ep->v_len)
+    ep->v_data[pos] = ep->x1;
+}
+
+
+static void vcset_s(void *p)
+{
+  vcset_ex *ep = (vcset_ex *)p;
+  mus_long_t pos;
+  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
+  if (pos < ep->v_len)
+    ep->v_data[pos] = s7_number_to_real(ep->sc, s7_cell_slot_value(ep->val_slot));
+}
+
+
+static void vcset_1(void *p)
+{
+  vcset_ex *ep = (vcset_ex *)p;
+  mus_long_t pos;
+  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
+  if (pos < ep->v_len)
+    ep->v_data[pos] = ep->func_1(ep->gen);
+}
+
+
+static void vcset_2(void *p)
+{
+  vcset_ex *ep = (vcset_ex *)p;
+  mus_long_t pos;
+  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
+  if (pos < ep->v_len)
+    ep->v_data[pos] = ep->func(ep->g);
+}
+
+
+static void vcset_3(void *p)
+{
+  vcset_ex *ep = (vcset_ex *)p;
   mus_long_t pos;
   mus_float_t x;
-  pos = s7_cell_integer(s7_slot_value(vid_i_slot));
-  if (pos < vid_length)
+  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
+  if (pos < ep->v_len)
     {
-      x = s7_cell_real(s7_slot_value(vid_x_slot));
-      vid_data[pos] = (x * x1) + ((1.0 - x) * x2);
+      x = s7_cell_real(s7_cell_slot_value(ep->val_slot));
+      ep->v_data[pos] = (x * ep->x1) + ((1.0 - x) * ep->x2);
     }
-  return(NULL);
 }
 
-static s7_pointer g_vct_set_direct_dox_gen1(s7_scheme *sc, s7_pointer code)
-{
-  mus_long_t pos;
-  pos = s7_cell_integer(s7_slot_value(vid_i_slot));
-  if (pos < vid_length)
-    vid_data[pos] = vid_func_1(vid_gen);
-  return(NULL);
-}
 
-static s7_pointer g_vct_set_direct_dox_gf(s7_scheme *sc, s7_pointer code)
+static s7_ex *vct_set_ex_parser(s7_scheme *sc, s7_pointer expr)
 {
-  mus_long_t pos;
-  pos = s7_cell_integer(s7_slot_value(vid_i_slot));
-  if (pos < vid_length)
-    vid_data[pos] = vid_func((void *)vid_gf);
-  return(NULL);
-}
-
-static s7_pointer g_vct_set_direct_dox_looped(s7_scheme *sc, s7_pointer code)
-{
-  s7_pointer add_expr;
+  /* get vct, check type, get loc, check type
+   *   run find_gf on cadddr
+   */
+  s7_pointer v_arg, i_arg, val_arg, i_slot;
   vct *v;
-  if (vid_gf) {gf_free(vid_gf); vid_gf = NULL;} /* TODO: we need dox support for cleanups! */
+  gf *gf1;
+  vcset_ex *p;
+  s7_ex *e;
 
-  /* we can get here in unoptimized cases, so can't assume anything about the expression (cadddr(code)) */
-  /* fprintf(stderr, "code: %s\n", DISPLAY(code)); */
-
-  add_expr = cadddr(code);
-  if ((s7_is_pair(add_expr)) &&
-      (!s7_is_symbol(car(add_expr))))
+  v_arg = cadr(expr);
+  i_arg = caddr(expr);
+  if ((!s7_is_symbol(v_arg)) ||
+      (!s7_is_symbol(i_arg)))
     return(NULL);
 
-  v = (vct *)imported_s7_object_value_checked(s7_cadr_value(sc, code), vct_tag);
-  if ((v) &&
-      (!s7_local_slot(sc, cadr(code))))                                         /* v is a vct, and it is not a stepper */
+  v = (vct *)imported_s7_object_value_checked(s7_value(sc, v_arg), vct_tag);
+  if ((!v) ||
+      (s7_local_slot(sc, v_arg)))
+    return(NULL);
+
+  i_slot = s7_local_slot(sc, i_arg);
+  if ((!i_slot) ||
+      (!s7_is_integer(s7_cell_slot_value(i_slot))))
+    return(NULL);
+
+  val_arg = cadddr(expr);
+  if (!s7_is_pair(val_arg))
     {
-      vid_data = v->data;
-      vid_length = v->length;
-      vid_i_slot = s7_local_slot(sc, caddr(code));
-      if ((vid_i_slot) && 
-	  (s7_is_integer(s7_slot_value(vid_i_slot))))                          /* i is an integer */
+      p = (vcset_ex *)calloc(1, sizeof(vcset_ex));
+      e = (s7_ex *)malloc(sizeof(s7_ex));
+      e->ex_free = vcset_free;
+      e->ex_data = p;
+      p->v_len = v->length;
+      p->v_data = v->data;
+      p->i_slot = i_slot;
+      p->sc = sc;
+      if (s7_is_symbol(val_arg))
 	{
-	  gf *gf1;
-	  
-	  if (s7_function_choice(sc, cadddr(code)) == g_add_ss_1ss)
+	  e->ex_vf = vcset_s;
+	  p->val_slot = s7_slot(sc, val_arg);
+	}
+      else
+	{
+	  p->x1 = s7_number_to_real(sc, val_arg);
+	  e->ex_vf = vcset_0;
+	}
+      return(e);
+    }
+
+  /* fade.scm (crossfade) uses the add_ss_1ss calculation so much that it's worth splitting out that one special case.
+   */
+  if (s7_function_choice(sc, val_arg) == g_add_ss_1ss)
+    {
+      s7_pointer x_slot;
+      mus_float_t x1, x2;
+
+      x_slot = s7_local_slot(sc, cadr(cadr(val_arg)));              /* x is real */
+      if ((x_slot) &&
+	  (s7_is_real(s7_cell_slot_value(x_slot))))
+	{
+	  if ((!s7_local_slot(sc, caddr(cadr(val_arg)))) &&
+	      (!s7_local_slot(sc, caddr(caddr(val_arg)))))          /* x1 and x2 are not steppers */
 	    {
-	      vid_x_slot = s7_local_slot(sc, cadr(cadr(add_expr)));              /* x is real */
-	      if ((vid_x_slot) &&
-		  (s7_is_real(s7_slot_value(vid_x_slot))))
+	      s7_pointer xp;
+	      xp = s7_symbol_value(sc, caddr(cadr(val_arg)));
+	      if (s7_is_real(xp))
 		{
-		  if ((!s7_local_slot(sc, caddr(cadr(add_expr)))) &&
-		      (!s7_local_slot(sc, caddr(caddr(add_expr)))))              /* x1 and x2 are not steppers */
+		  x1 = s7_cell_real(xp);
+		  xp = s7_symbol_value(sc, caddr(caddr(val_arg)));
+		  if (s7_is_real(xp))
 		    {
-		      s7_pointer xp;
-		      xp = s7_symbol_value(sc, caddr(cadr(add_expr)));
-		      if (s7_is_real(xp))
-			{
-			  x1 = s7_cell_real(xp);
-			  xp = s7_symbol_value(sc, caddr(caddr(add_expr)));
-			  if (s7_is_real(xp))
-			    {
-			      x2 = s7_cell_real(xp);                                        /* x1 and x2 are real */
-			      return((s7_pointer)g_vct_set_direct_dox_add_1ss);
-			    }
-			}
+		      x2 = s7_cell_real(xp);                        /* x1 and x2 are real */
+
+		      p = (vcset_ex *)calloc(1, sizeof(vcset_ex));
+		      e = (s7_ex *)malloc(sizeof(s7_ex));
+		      e->ex_free = vcset_free;
+		      e->ex_data = p;
+		      p->v_len = v->length;
+		      p->v_data = v->data;
+		      p->i_slot = i_slot;
+		      p->val_slot = x_slot;
+		      p->x1 = x1;
+		      p->x2 = x2;
+		      e->ex_vf = vcset_3;
+		      return(e);
 		    }
 		}
 	    }
-
-	  gf1 = find_gf(sc, add_expr);
-	  if (gf1)
-	    {
-	      if (gf1->func_1)
-		{
-		  vid_func_1 = gf1->func_1;
-		  vid_gen = gf1->gen;
-		  gf_free(gf1);
-		  return((s7_pointer)g_vct_set_direct_dox_gen1);
-		}
-	      if (gf1->func)
-		{
-		  vid_func = gf1->func;
-		  vid_gf = gf1;
-		  return((s7_pointer)g_vct_set_direct_dox_gf);
-		}
-	      gf_free(gf1);
-	    }
 	}
     }
+
+  gf1 = find_gf(sc, val_arg);
+  if (gf1)
+    {
+      p = (vcset_ex *)calloc(1, sizeof(vcset_ex));
+      e = (s7_ex *)malloc(sizeof(s7_ex));
+      e->ex_free = vcset_free;
+      e->ex_data = p;
+      p->v_len = v->length;
+      p->v_data = v->data;
+      p->i_slot = i_slot;
+
+      if (gf1->func_1)
+	{
+	  p->func_1 = gf1->func_1;
+	  p->gen = gf1->gen;
+	  p->g = NULL;
+	  gf_free(gf1);
+	  e->ex_vf = vcset_1;
+	  return(e);
+	}
+      if (gf1->func)
+	{
+	  p->func = gf1->func;
+	  p->g = gf1;
+	  e->ex_vf = vcset_2;
+	  return(e);
+	}
+
+      gf_free(gf1);
+    }
+
+  /* fprintf(stderr, "ex: %s\n", DISPLAY(expr)); */
+  /* expt ss, (* r r s)
+   */
   return(NULL);
 }
+/* -------------------------------------------------------------------------------- */
+
 
 static s7_pointer vct_set_let_looped;
 static s7_pointer g_vct_set_let_looped(s7_scheme *sc, s7_pointer args)
@@ -1181,7 +1278,7 @@ static s7_pointer g_vct_set_let_looped(s7_scheme *sc, s7_pointer args)
   loc = cdr(body); 
   locsym = cadr(loc);
   callee = s7_slot(sc, locsym);
-  if (s7_slot_value(callee) != stepper)
+  if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
   step = ((s7_Int *)((unsigned char *)(stepper) + VCT_NUMBER_LOCATION));
@@ -2350,8 +2447,8 @@ void mus_vct_init(void)
 #if HAVE_SCHEME
   {
     s7_pointer f;
-    vct_number_location = s7_number_offset(s7);
-    if (vct_number_location != VCT_NUMBER_LOCATION) fprintf(stderr, "vct number location: %d %d\n", vct_number_location, VCT_NUMBER_LOCATION);
+    if (s7_number_offset(s7) != VCT_NUMBER_LOCATION) fprintf(stderr, "vct number location: %d %d\n", (int)s7_number_offset(s7), VCT_NUMBER_LOCATION);
+    if (s7_slot_value_offset(s7) != VCT_SLOT_VALUE_LOCATION) fprintf(stderr, "vct slot-value location: %d %d\n", (int)s7_slot_value_offset(s7), VCT_SLOT_VALUE_LOCATION);
 
     /* vct-ref */
     f = s7_name_to_value(s7, "vct-ref");
@@ -2371,6 +2468,7 @@ void mus_vct_init(void)
     /* vct-set! */
     f = s7_name_to_value(s7, "vct-set!");
     s7_function_set_chooser(s7, f, vct_set_chooser);
+    s7_function_set_ex_parser(f, vct_set_ex_parser);
 
     vct_set_three = s7_make_function(s7, "vct-set!", g_vct_set_three, 3, 0, false, "vct-set! optimization");
     s7_function_set_class(vct_set_three, f);
@@ -2401,13 +2499,6 @@ void mus_vct_init(void)
     s7_function_set_let_looped(vct_set_temp, vct_set_let_looped);
     s7_function_set_let_looped(vct_set_ssf, vct_set_let_looped);
     s7_function_set_let_looped(vct_set_three, vct_set_let_looped);
-
-    vct_set_direct_dox_looped = s7_make_function(s7, "vct-set!", g_vct_set_direct_dox_looped, 2, 0, false, "vct-set! optimization");
-    s7_function_set_class(vct_set_direct_dox_looped, f);
-    s7_function_set_dox_looped(vct_set_direct, vct_set_direct_dox_looped);
-    s7_function_set_dox_looped(vct_set_temp, vct_set_direct_dox_looped);
-    s7_function_set_dox_looped(vct_set_ssf, vct_set_direct_dox_looped);
-    s7_function_set_dox_looped(vct_set_three, vct_set_direct_dox_looped);
 #endif
   }
 #if (!WITH_GMP)

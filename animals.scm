@@ -4292,10 +4292,7 @@
 
 (define (nrcos->polywave n r scl)
   (let ((lst ())
-	(total 0.0))
-    (do ((i 0 (+ i 1)))
-	((= i n))
-      (set! total (+ total (expt r i)))) ; there's surely a formula for this...
+	(total (polynomial (make-vct n 1.0) r)))
     (set! scl (/ scl total))
     (do ((i 0 (+ i 1)))
 	((= i n) (reverse lst))

@@ -4676,7 +4676,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (e (make-env pulse-env :length len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (set! (ve i) (env e)))
+      (vct-set! ve i (env e)))
     (make-table-lookup frequency 0.0 ve len)))
 
 (define* (make-wave-train-with-env frequency pulse-env size)
@@ -4685,7 +4685,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (e (make-env pulse-env :length len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (set! (ve i) (env e)))
+      (vct-set! ve i (env e)))
     (make-wave-train frequency 0.0 ve len)))
 
 

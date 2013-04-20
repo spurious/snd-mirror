@@ -905,7 +905,7 @@ typedef struct c_proc_t {
   int name_length;
   unsigned int id;
   char *doc;
-  s7_pointer generic_ff, looped_ff, let_looped_ff, dox_looped_ff;
+  s7_pointer generic_ff, looped_ff, let_looped_ff;
   s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
   s7_ex *(*exf)(s7_scheme *sc, s7_pointer expr);
   void *chooser_data;
@@ -2033,7 +2033,6 @@ static void set_syntax_op(s7_pointer p, s7_pointer op) {syntax_op(p) = op; lifte
 #define c_function_base(f)            c_function_data(f)->generic_ff
 #define c_function_looped(f)          c_function_data(f)->looped_ff
 #define c_function_let_looped(f)      c_function_data(f)->let_looped_ff
-#define c_function_dox_looped(f)      c_function_data(f)->dox_looped_ff
 #define c_function_ex_parser(f)       c_function_data(f)->exf
 
 void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
@@ -5745,6 +5744,12 @@ s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst)
 size_t s7_number_offset(s7_scheme *sc)
 {
   return(offsetof(s7_cell, object.number.real_value));
+}
+
+
+size_t s7_slot_value_offset(s7_scheme *sc)
+{
+  return(offsetof(s7_cell, object.slt.val));
 }
 
 
@@ -27774,12 +27779,12 @@ static s7_pointer g_vector_set_ssc_looped(s7_scheme *sc, s7_pointer args)
 
 
 typedef struct {
-  s7_pointer i_slot, val_slot;
+  s7_pointer i_slot, val_slot, val;
   s7_Int v_len;
   s7_pointer *v_els;
 } vset_ex;
 
-static void vset_exf(void *p)
+static void vset_s(void *p)
 {
   vset_ex *data = (vset_ex *)p;
   s7_Int pos;
@@ -27789,6 +27794,15 @@ static void vset_exf(void *p)
   /* TODO: else s7_error but this requires freeing data? */
 }
 
+static void vset_c(void *p)
+{
+  vset_ex *data = (vset_ex *)p;
+  s7_Int pos;
+  pos = s7_integer(slot_value(data->i_slot));
+  if (pos < data->v_len)
+    data->v_els[pos] = data->val;
+}
+
 static void vset_free(void *p)
 {
   free(p);
@@ -27796,12 +27810,10 @@ static void vset_free(void *p)
 
 static s7_ex *vector_set_ex_parser(s7_scheme *sc, s7_pointer expr)
 {
-  /* fprintf(stderr, "ex: %s\n", DISPLAY(expr)); */
   if ((is_symbol(cadr(expr))) &&
-      (is_symbol(caddr(expr))) &&
-      (is_symbol(cadddr(expr))))
+      (is_symbol(caddr(expr))))
     {
-      s7_pointer v, loc;
+      s7_pointer v, loc, val;
       v = finder(sc, cadr(expr));
       loc = s7_local_slot(sc, s7_caddr(expr));
       if ((loc) &&
@@ -27809,20 +27821,37 @@ static s7_ex *vector_set_ex_parser(s7_scheme *sc, s7_pointer expr)
 	  (s7_is_vector(v)) &&
 	  (!s7_local_slot(sc, s7_cadr(expr))))
 	{
-	  vset_ex *p;
-	  s7_ex *e;
-	  p = (vset_ex *)malloc(sizeof(vset_ex));
-	  e = (s7_ex *)malloc(sizeof(s7_ex));
-	  e->ex_free = vset_free;
-	  e->ex_data = p;
-	  e->ex_vf = vset_exf;
-	  p->v_els = vector_elements(v);
-	  p->v_len = vector_length(v);
-	  p->i_slot = loc;
-	  p->val_slot = s7_local_slot(sc, s7_cadddr(expr));
-	  return(e);
+	  val = cadddr(expr);
+	  if (!s7_is_pair(val))
+	    {
+	      vset_ex *p;
+	      s7_ex *e;
+	      p = (vset_ex *)malloc(sizeof(vset_ex));
+	      e = (s7_ex *)malloc(sizeof(s7_ex));
+	      e->ex_free = vset_free;
+	      e->ex_data = p;
+	      p->v_els = vector_elements(v);
+	      p->v_len = vector_length(v);
+	      p->i_slot = loc;
+	      if (is_symbol(cadddr(expr)))
+		{
+		  e->ex_vf = vset_s;
+		  p->val_slot = s7_local_slot(sc, s7_cadddr(expr));
+		}
+	      else
+		{
+		  e->ex_vf = vset_c;
+		  p->val = val;
+		}
+	      return(e);
+	    }
 	}
     }
+
+  /* fprintf(stderr, "vector-set ex: %s\n", DISPLAY(expr)); */
+  /*
+    
+   */
   return(NULL);
 }
 
@@ -29294,16 +29323,16 @@ void s7_function_set_let_looped(s7_pointer f, s7_pointer c)
 }
 
 
-void s7_function_set_dox_looped(s7_pointer f, s7_pointer c)
-{
-  c_function_dox_looped(f) = c;
-}
-
-
 void s7_function_set_ex_parser(s7_pointer f, s7_ex *(*func)(s7_scheme *sc, s7_pointer expr))
 {
   c_function_ex_parser(f) = func;
 }
+
+s7_ex *(*s7_function_ex_parser(s7_pointer f))(s7_scheme *sc, s7_pointer expr)
+{
+  return(c_function_ex_parser(f));
+}
+
 
 
 s7_pointer (*s7_function_chooser(s7_scheme *sc, s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -29455,7 +29484,6 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   c_function_chooser_data(x) = NULL;
   c_function_looped(x) = NULL;
   c_function_let_looped(x) = NULL;
-  c_function_dox_looped(x) = NULL;
   c_function_ex_parser(x) = NULL;
 
   return(x);
@@ -46362,6 +46390,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    set_type(sc->code, SYNTACTIC_PAIR);
 		  }
 
+		/* if (sc->op == OP_SET) fprintf(stderr, "%s\n", DISPLAY_80(code)); */
+		/* code: (((i 0 (+ i 1))) ((= i size)) (set! (ones i) 1.0))
+		 *       (((i 0 (+ i 1))) ((= i size)) (set! x (* (env e1) (oscil osc x))))
+		 */
+		
+		/* TODO: get rid of (misnamed) set_dox_eval and this block
+		 *   use ex_parser for setter etc
+		 */
 		if ((sc->op == OP_SET) &&
 		    (ecdr(car(cadr(code))) != geq_2))
 		  {
@@ -46834,18 +46870,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 		      }
 		  }
-
-		/* this is going away... */
-		/* the dox_loop function should be safe here because it makes no assumptions about the steppers
-		 *   but the dox_looped checkers need to be careful -- they can't assume anything about the expression!
-		 */
-		/* this is ugly -- ecdr could be anything.  I need to somehow coordinate the old opts and the new.
-		 */
-		if ((is_c_function(f)) &&
-		    (ecdr(body)) &&
-		    (is_c_function(ecdr(body))) &&
-		    (c_function_dox_looped(ecdr(body))))
-		  func = (s7_function)(((s7_function)c_function_call(c_function_dox_looped(ecdr(body))))(sc, body));
 	      }
 
 	    if ((!func) &&
@@ -47355,6 +47379,47 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto START_WITHOUT_POP_STACK;
 		}
 	      
+	    if (is_symbol(car(code)))
+	      {
+		s7_pointer f;
+		f = s7_symbol_value(sc, car(code));
+
+		if ((is_c_function(f)) &&
+		    (c_function_ex_parser(f)))
+		  {
+		    s7_ex *exd = NULL;
+		    exd = c_function_ex_parser(f)(sc, code);
+		    if (exd)
+		      {
+			s7_function endf;
+			s7_pointer endp, slots, slot;
+
+			endf = (s7_function)fcdr(cdr(sc->code));
+			endp = fcdr(sc->code);
+			slots = environment_slots(sc->envir);
+
+			/* TODO: split out the 1 slot case etc as below */
+			while (true)
+			  {
+			    exd->ex_vf(exd->ex_data);
+		    
+			    for (slot = slots; is_slot(slot); slot = next_slot(slot))
+			      if (is_pair(slot_expression(slot)))
+				slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
+
+			    if (is_true(sc, endf(sc, endp)))
+			      {
+				exd->ex_free(exd->ex_data);
+				free(exd);
+				sc->code = cdadr(sc->code);
+				goto DO_BEGIN;
+			      }
+			  }
+		      }
+		  }
+	      }
+
+	    /* this block can go away now  I think (need to check outa_ex cases) */
 	      if (is_all_x_safe(sc, code))
 		{
 		  s7_function f;
@@ -47362,15 +47427,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  s7_pointer p, slot1 = NULL, slot2 = NULL;
 
 		  f = all_x_eval(code);
-
-		  /* this is going away... */
-		  if (c_function_dox_looped(ecdr(code)))
-		    {
-		      s7_function nf;
-		      nf = (s7_function)(((s7_function)c_function_call(c_function_dox_looped(ecdr(code))))(sc, code));
-		      if (nf) f = nf;
-		    }
-		  /* if we get here, either no looper or it gave up */
 
 		  for (arg = 0, p = environment_slots(sc->envir); is_slot(p); p = next_slot(p))
 		    if (is_pair(slot_expression(p)))

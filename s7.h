@@ -589,6 +589,7 @@ s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst);
 s7_pointer s7_cadar_value(s7_scheme *sc, s7_pointer lst);
 size_t s7_number_offset(s7_scheme *sc);
 size_t s7_denominator_offset(s7_scheme *sc);
+size_t s7_slot_value_offset(s7_scheme *sc);
 
 int s7_c_object_built_in_type(s7_scheme *sc);
 size_t s7_c_object_value_offset(s7_scheme *sc);
@@ -603,6 +604,7 @@ typedef struct {
 } s7_ex;
 
 void s7_function_set_ex_parser(s7_pointer f, s7_ex *(*func)(s7_scheme *sc, s7_pointer expr));
+s7_ex *(*s7_function_ex_parser(s7_pointer f))(s7_scheme *sc, s7_pointer expr);
 
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
@@ -736,7 +738,6 @@ void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_a
   /* experiments */
 void s7_function_set_looped(s7_pointer f, s7_pointer c);
 void s7_function_set_let_looped(s7_pointer f, s7_pointer c);
-void s7_function_set_dox_looped(s7_pointer f, s7_pointer c);
 s7_pointer s7_local_slot(s7_scheme *sc, s7_pointer symbol);
 s7_pointer s7_is_local_variable(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
 
@@ -881,7 +882,6 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  *		
  * 7-Apr:     removed s7_scheme* arg from s7_slot_value, added s7_is_local_variable.
  * 25-Mar:    char-position, string-position, environment-ref, environment-set! added to the scheme side.
- * 26-Jan:    s7_function_set_dox_looped (loop optimization experiments).
  * 9-Jan:     s7_cos, s7_sin, other optimization changes.
  * --------
  * 24-Dec:    s7_set_object_array_info and other such changes.
