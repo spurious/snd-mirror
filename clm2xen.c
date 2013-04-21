@@ -5141,41 +5141,77 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
     int inp, outp, off;
     mus_float_t src_env_val = 0.0;
     mus_any *in_frame, *out_frame, *rev_frame = NULL;
+    mus_float_t *infs;
+    mus_float_t **mxs;
+
+    mxs = (mus_float_t **)mus_data(mix);
 
     in_frame = mus_make_empty_frame(in_chans);
+    infs = mus_data(in_frame);
     out_frame = mus_make_empty_frame(out_chans);
     if (rev_mix) rev_frame = mus_make_empty_frame(1);
 
-    for (samp = st; samp < nd; samp++)
+    if (in_chans == 1)
       {
-	for (inp = 0, off = 0; inp < in_chans; inp++, off += out_chans)
-	  for (outp = 0; outp < out_chans; outp++)
-	    {
-	      mus_any *e;
-	      e = mix_envs[off + outp];
-	      if (e)
-		mus_mixer_set(mix, inp, outp, mus_env(e));
-	    }
-	if (s_env)
-	  src_env_val = mus_env(s_env);
-	for (inp = 0; inp < in_chans; inp++)
+	mus_any *s = NULL, *r = NULL;
+	s = mix_srcs[0];
+	if (!s) r = mix_rds[0];
+
+	for (samp = st; samp < nd; samp++)
 	  {
-	    mus_any *s;
-	    s = mix_srcs[inp];
+	    for (outp = 0; outp < out_chans; outp++)
+	      {
+		mus_any *e;
+		e = mix_envs[outp];
+		if (e)
+		  mxs[0][outp] = mus_env(e);
+	      }
+	    if (s_env)
+	      src_env_val = mus_env(s_env);
 	    if (s)
-	      mus_frame_set(in_frame, inp, mus_src(s, src_env_val, NULL));
+	      infs[0] = mus_src(s, src_env_val, NULL);
 	    else 
 	      {
-		s = mix_rds[inp];
-		if (s) 
-		  mus_frame_set(in_frame, inp, mus_readin(s));
-		else mus_frame_set(in_frame, inp, 0.0);
+		if (r) 
+		  infs[0] = mus_readin(r);
+		else infs[0] = 0.0;
 	      }
+	    mus_frame_to_file(ostr, samp, mus_frame_to_frame(in_frame, mix, out_frame));
+	    if (rev_mix) mus_frame_to_file(rstr, samp, mus_frame_to_frame(in_frame, rev_mix, rev_frame));
 	  }
-	mus_frame_to_file(ostr, samp, mus_frame_to_frame(in_frame, mix, out_frame));
-	if (rev_mix) mus_frame_to_file(rstr, samp, mus_frame_to_frame(in_frame, rev_mix, rev_frame));
       }
-
+    else
+      {
+	for (samp = st; samp < nd; samp++)
+	  {
+	    for (inp = 0, off = 0; inp < in_chans; inp++, off += out_chans)
+	      for (outp = 0; outp < out_chans; outp++)
+		{
+		  mus_any *e;
+		  e = mix_envs[off + outp];
+		  if (e)
+		    mxs[inp][outp] = mus_env(e);
+		}
+	    if (s_env)
+	      src_env_val = mus_env(s_env);
+	    for (inp = 0; inp < in_chans; inp++)
+	      {
+		mus_any *s;
+		s = mix_srcs[inp];
+		if (s)
+		  infs[inp] = mus_src(s, src_env_val, NULL);
+		else 
+		  {
+		    s = mix_rds[inp];
+		    if (s) 
+		      infs[inp] = mus_readin(s);
+		    else infs[inp] = 0.0;
+		  }
+	      }
+	    mus_frame_to_file(ostr, samp, mus_frame_to_frame(in_frame, mix, out_frame));
+	    if (rev_mix) mus_frame_to_file(rstr, samp, mus_frame_to_frame(in_frame, rev_mix, rev_frame));
+	  }
+      }
     mus_free(in_frame);
     mus_free(out_frame);
     if (rev_frame) mus_free(rev_frame);
@@ -12507,7 +12543,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
       vct *v;
       p = gf_alloc();            /* (v i) where v is a vct */
       p->func = gf_vct_ref;
-      v = s7_object_value(op);
+      v = (vct *)s7_object_value(op);
       p->gen = (void *)v;
       p->rx1 = v->data;
       p->s1 = s7_slot(sc, cadr(expr));
@@ -13485,7 +13521,7 @@ static s7_pointer g_indirect_outa_two_let_looped(s7_scheme *sc, s7_pointer args)
       gf *lf1, *lf2, *lf3 = NULL, *bg;
       s7_pointer v1, v2, v3 = NULL;
       s7_pointer x1, x2, x3, y1, y2, y3;
-      s7_Double *x1r, *x2r, *x3r;
+      s7_Double *x1r, *x2r, *x3r = NULL;
       
       v1 = car(vars);
       v2 = cadr(vars);
@@ -18037,6 +18073,7 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "outa");
   s7_function_set_chooser(sc, f, outa_chooser);
   s7_function_set_ex_parser(f, outa_ex_parser);
+  s7_function_set_step_safe(f);
 
   outa_mul_s_delay = clm_make_function_not_temp(sc, "outa", g_outa_mul_s_delay, 2, 0, false, "outa optimization", f);
   outa_mul_s_env = clm_make_function_not_temp(sc, "outa", g_outa_mul_s_env, 2, 0, false, "outa optimization", f);

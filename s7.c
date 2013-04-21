@@ -425,7 +425,7 @@ enum {OP_NO_OP,
       OP_SAFE_IF_Z_Z, 
       OP_CATCH_1, OP_CATCH_ALL, OP_COND_ALL_X,
       OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_SAFE_DOTIMES, OP_SAFE_DOTIMES_STEP, OP_SAFE_DOTIMES_STEP_P, OP_SAFE_DOTIMES_STEP_O, OP_SAFE_DOTIMES_STEP_A,
-      OP_SIMPLE_SAFE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_SAFE_DO_STEP_P, OP_SAFE_DO_STEP_A, OP_SAFE_DOTIMES_C_C,
+      OP_SIMPLE_SAFE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_SAFE_DOTIMES_C_C,
       OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_DOX, OP_DOX_STEP, OP_DOX_STEP_P, OP_SIMPLE_DO_FOREVER,
       OP_DOTIMES_P, OP_DOTIMES_STEP_P, OP_SAFE_DOTIMES_C_A,
       OP_SIMPLE_DO_A, OP_SIMPLE_DO_STEP_A,
@@ -525,7 +525,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
 
    "if", 
    "catch", "catch", "cond",
-   "do", "do", "do", "do", "do", "do", "do",
+   "do", "do", "do", "do", "do", 
    "do", "do", "do", "do", "do", "do",
    "do", "do", "do", "do", "do",
    "do", "do", "do",
@@ -611,7 +611,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_IF_Z_Z", 
   "OP_CATCH_1", "OP_CATCH_ALL", "OP_COND_ALL_X",
   "OP_SIMPLE_DO", "OP_SIMPLE_DO_STEP", "OP_SAFE_DOTIMES", "OP_SAFE_DOTIMES_STEP", "OP_SAFE_DOTIMES_STEP_P", "OP_SAFE_DOTIMES_STEP_O", "OP_SAFE_DOTIMES_STEP_A",
-  "OP_SIMPLE_SAFE_DOTIMES", "OP_SAFE_DO", "OP_SAFE_DO_STEP", "OP_SAFE_DO_STEP_P", "OP_SAFE_DO_STEP_A", "OP_SAFE_DOTIMES_C_C",
+  "OP_SIMPLE_SAFE_DOTIMES", "OP_SAFE_DO", "OP_SAFE_DO_STEP", "OP_SAFE_DOTIMES_C_C",
   "OP_SIMPLE_DO_P", "OP_SIMPLE_DO_STEP_P", "OP_DOX", "OP_DOX_STEP", "OP_DOX_STEP_P", "OP_SIMPLE_DO_FOREVER",
   "OP_DOTIMES_P", "OP_DOTIMES_STEP_P", "OP_SAFE_DOTIMES_C_A",
   "OP_SIMPLE_DO_A", "OP_SIMPLE_DO_STEP_A",
@@ -1706,6 +1706,11 @@ static int t_optimized = T_OPTIMIZED;
 /* optimizer flag saying "this expression is not completely self-contained.  It might involve the stack, etc"
  */
 
+#define T_STEP_SAFE                   T_UNSAFE
+#define is_step_safe(p)               ((typeflag(p) & T_STEP_SAFE) != 0)
+#define set_step_safe(p)              typeflag(p) |= T_STEP_SAFE
+/* an experiment */
+
 #define T_KEYWORD                     (1 << (TYPE_BITS + 16))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
 /* this bit distinguishes a symbol from a symbol that is also a keyword
@@ -1724,8 +1729,9 @@ static int t_optimized = T_OPTIMIZED;
 
 #define T_MUTABLE                     T_ONE_LINER
 #define is_mutable(p)                 ((typeflag(p) & T_MUTABLE) != 0)
-/* #define set_mutable(p)                typeflag(p) |= T_MUTABLE 
- */
+#define set_mutable(p)                typeflag(p) |= T_MUTABLE
+#define clear_mutable(p)              typeflag(p) &= (~T_MUTABLE)
+
 
 #define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
 #define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
@@ -1735,15 +1741,17 @@ static int t_optimized = T_OPTIMIZED;
 #define is_immediate(p)               ((typeflag(p) & T_IMMEDIATE) != 0)
 #define set_immediate(p)              typeflag(p) |= T_IMMEDIATE
 
+
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define set_copy_args(p)              typeflag(p) |= T_COPY_ARGS
 #define needs_copied_args(p)          ((typeflag(p) & T_COPY_ARGS) != 0)
 /* this marks something that might mess with its argument list, it should not be in the 2nd byte
  */
 
+
 #define T_GENSYM                      (1 << (TYPE_BITS + 21))
 #define is_gensym(p)                  ((typeflag(p) & T_GENSYM) != 0)
-#define clear_gensym(p)               typeflag(p) = (typeflag(p) & (~T_GENSYM))
+#define clear_gensym(p)               typeflag(p) &= (~T_GENSYM)
 /* symbol is from gensym (GC-able etc)
  *   since this is only relevant to symbols, this bit is used below in several other non-intersecting ways
  */
@@ -1756,7 +1764,7 @@ static int t_optimized = T_OPTIMIZED;
 #define T_LIST_IN_USE                 T_GENSYM
 #define list_is_in_use(p)             ((typeflag(p) & T_LIST_IN_USE) != 0)
 #define set_list_in_use(p)            typeflag(p) |= T_LIST_IN_USE
-#define clear_list_in_use(p)          typeflag(p) = (typeflag(p) & (~T_LIST_IN_USE))
+#define clear_list_in_use(p)          typeflag(p) &= (~T_LIST_IN_USE)
 /* these could all be one permanent list, indexed from inside, and this bit is never actually protecting anything across a call
  */
 
@@ -1769,6 +1777,7 @@ static int t_optimized = T_OPTIMIZED;
 #define is_function_env(p)            ((typeflag(p) & T_FUNCTION_ENV) != 0)
 #define set_function_env(p)           typeflag(p) |= T_FUNCTION_ENV
 /* this marks a closure environment */
+
 
 #define T_HAS_METHODS                 (1 << (TYPE_BITS + 22))
 #define has_methods(p)                ((typeflag(p) & T_HAS_METHODS) != 0)
@@ -2534,7 +2543,7 @@ static void report_counts(s7_scheme *sc)
   qsort((void *)data, loc, sizeof(datum *), sort_data);
   if (loc > 200) loc = 200;
   for (i = 0; i < loc; i++)
-    if (data[i]->count > 10)
+    if (data[i]->count > 0)
       fprintf(stderr, "%lld: %s\n", data[i]->count, DISPLAY(data[i]->expr));
 }
 #endif
@@ -29290,6 +29299,10 @@ bool s7_is_object(s7_pointer p)
 }
 
 
+void s7_function_set_step_safe(s7_pointer f)
+{
+  set_step_safe(f);
+}
 
 static unsigned int f_class = 0;
 
@@ -43813,6 +43826,24 @@ static s7_pointer step_dox_c_subtract_f(s7_scheme *sc, s7_pointer code, s7_point
   return(g_subtract_2(sc, sc->T2_1));
 }
 
+static s7_pointer step_dox_c_mutable_subtract_f(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+{
+  real(slot_value(slot)) -= real(slot_value(slot_pending_value(slot)));
+  return(slot_value(slot));
+}
+
+static s7_pointer step_dox_c_mutable_add_f(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+{
+  real(slot_value(slot)) += real(slot_value(slot_pending_value(slot)));
+  return(slot_value(slot));
+}
+
+static s7_pointer step_dox_c_mutable_add1(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+{
+  integer(slot_value(slot))++;
+  return(slot_value(slot));
+}
+
 static s7_pointer step_dox_c_add_i(s7_scheme *sc, s7_pointer code, s7_pointer slot)
 {
   if ((is_integer(slot_value(slot))) &&
@@ -43948,6 +43979,40 @@ static s7_pointer dox_add_ti(s7_scheme *sc, s7_pointer args, s7_pointer slot)
 static s7_pointer dox_cdr_s(s7_scheme *sc, s7_pointer arg, s7_pointer slot)
 {
   return((is_pair(slot_value(slot))) ? cdr(slot_value(slot)) : g_cdr(sc, list_1(sc, slot_value(slot))));
+}
+
+
+static dox_function dox_mutate(s7_scheme *sc, s7_pointer slot)
+{
+  /* TODO: remove this gmp restriction... */
+  s7_pointer expr;
+  expr = slot_expression(slot);
+#if (!WITH_GMP)
+  if ((((dox_function)fcdr(expr)) == step_dox_c_subtract_f) ||
+      (((dox_function)fcdr(expr)) == step_dox_c_add_f))
+    {
+      if ((type(slot_value(slot)) == T_REAL) &&
+	  (type(slot_value(slot_pending_value(slot))) == T_REAL))
+	{
+	  slot_value(slot) = s7_make_mutable_real(sc, real(slot_value(slot)));
+	  if (((dox_function)fcdr(expr)) == step_dox_c_subtract_f)
+	    return(step_dox_c_mutable_subtract_f);
+	  else return(step_dox_c_mutable_add_f);
+	}
+    }
+  else
+    {
+      if (((dox_function)fcdr(expr)) == dox_add_t1)
+	{
+	  if (type(slot_value(slot)) == T_INTEGER)
+	    {
+	      slot_value(slot) = make_mutable_integer(sc, integer(slot_value(slot)));
+	      return(step_dox_c_mutable_add1);
+	    }
+	}
+    }
+#endif
+  return((dox_function)fcdr(expr));
 }
 		    
 
@@ -44227,155 +44292,6 @@ static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code)
     }
   return(NULL);
 }
-
-
-#if (!WITH_GMP)
-/* steppers parallel to all_x cases, dox1=step/init, dox2=end, dox1.pending=sym, dox2.pending=2nd ind?
- */
-
-#define SET_SYMBOL_SLOT(Sc)  slot_pending_value(environment_dox1(Sc->envir))
-#define SET_STEPPER_SLOT(Sc) environment_dox1(Sc->envir)
-#define SET_END_SLOT(Sc)     environment_dox2(Sc->envir)
-#define SET_STEPPER_INT(Sc)  s7_integer(slot_value(SET_STEPPER_SLOT(Sc)))
-#define SET_END_INT(Sc)      s7_integer(slot_value(SET_END_SLOT(Sc)))
-
-static s7_pointer set_s_all_x(s7_scheme *sc, s7_pointer args)
-{
-  slot_set_value(SET_SYMBOL_SLOT(sc), ((s7_function)fcdr(args))(sc, car(args)));
-  return(slot_value(SET_SYMBOL_SLOT(sc)));
-}
-
-static s7_pointer increment_s_all_x(s7_scheme *sc, s7_pointer args)
-{
-  car(sc->T2_2) = ((s7_function)fcdr(args))(sc, caddar(args));
-  car(sc->T2_1) = slot_value(SET_SYMBOL_SLOT(sc));
-  slot_set_value(SET_SYMBOL_SLOT(sc), c_call(car(args))(sc, sc->T2_1));
-  return(slot_value(SET_SYMBOL_SLOT(sc)));
-}
-
-static s7_pointer set_vector_all_x(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer val;
-  val = ((s7_function)fcdr(args))(sc, car(args));
-  vector_element(slot_value(SET_SYMBOL_SLOT(sc)), SET_STEPPER_INT(sc)) = val;
-  return(val);
-}
-
-static s7_pointer set_string_all_x(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer val;
-  char *str;
-  val = ((s7_function)fcdr(args))(sc, car(args));
-  if (s7_is_character(val))
-    {
-      str = string_value(slot_value(SET_SYMBOL_SLOT(sc)));
-      str[SET_STEPPER_INT(sc)] = s7_character(val);
-    }
-  else return(wrong_type_argument(sc, sc->STRING_SET, small_int(3), val, T_CHARACTER));
-  return(val);
-}
-
-static s7_pointer set_c_object_array_all_x(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer val;
-  val = ((s7_function)fcdr(args))(sc, car(args));
-  c_object_array(slot_value(SET_SYMBOL_SLOT(sc)))[SET_STEPPER_INT(sc)] = s7_number_to_real(sc, val);
-  return(val);
-}
-
-
-static s7_function set_dox_eval(s7_scheme *sc, s7_pointer code)
-{
-  s7_pointer slot;
-  /* code: (sym ...) here (cdr of the original) */
-
-  if (is_all_x_safe(sc, cadr(code)))
-    {
-      if (is_symbol(car(code)))
-	{
-	  /* (set! sym (...)) */
-	  slot = find_symbol(sc, car(code));
-	  if (!is_slot(slot)) 
-	    eval_error(sc, "set! ~A: unbound variable", sc->code);
-	  SET_SYMBOL_SLOT(sc) = slot;
-
-	  if ((is_pair(cadr(code))) &&
-	      (s7_list_length(sc, cadr(code)) == 3) &&
-	      (optimize_data(cadr(code)) != HOP_SAFE_C_C) && /* add_cs1 etc expects the s */
-	      (cadr(cadr(code)) == car(code)))
-	    {
-	      fcdr(cdr(code)) = (s7_pointer)all_x_eval(caddr(cadr(code)));
-	      return(increment_s_all_x);
-	    }
-	  else
-	    {
-	      fcdr(cdr(code)) = (s7_pointer)all_x_eval(cadr(code));
-	      return(set_s_all_x);
-	    }
-	}
-      else
-	{
-	  if ((is_pair(car(code))) &&
-	      (is_symbol(caar(code))) &&
-	      (is_pair(cdr(code))) &&
-	      (is_null(cddr(code))) &&
-	      (is_symbol(cadar(code))) &&
-	      (cadar(code) == slot_symbol(SET_STEPPER_SLOT(sc))))
-	    {
-	      s7_pointer v;
-	      /* it's a one line do-loop involving (set! (sym i) ...) --
-	       *    get the target type, check bounds, and get the correct setter all before the loop.
-	       */
-	      if (SET_STEPPER_INT(sc) > SET_END_INT(sc))
-		return((s7_function)eval_error(sc, "infinite do loop", sc->code));
-
-	      slot = find_symbol(sc, caar(code));
-	      if (!is_slot(slot)) 
-		eval_error(sc, "set! ~A: unbound variable", sc->code);
-	      SET_SYMBOL_SLOT(sc) = slot;
-	      v = slot_value(slot);
-	      
-	      if ((s7_is_vector(v)) &&
-		  (!vector_is_multidimensional(v)))
-		{
-		  if ((SET_STEPPER_INT(sc) < 0) ||
-		      (SET_END_INT(sc) > vector_length(v)))                     /* not ">=" here -- we go up to but not including the end value */
-		    return((s7_function)out_of_range(sc, sc->VECTOR_SET, slot_value(SET_END_SLOT(sc)), v, "index should be between 0 and the vector length"));
-
-		  fcdr(cdr(code)) = (s7_pointer)all_x_eval(cadr(code));
-		  return(set_vector_all_x);
-		}
-	      else
-		{
-		  if ((is_c_object(v)) &&
-		      (c_object_has_array(v)))
-		    {
-		      if ((SET_STEPPER_INT(sc) < 0) ||
-			  (SET_END_INT(sc) > c_object_array_length(v)))
-			return((s7_function)out_of_range(sc, sc->SET, slot_value(SET_END_SLOT(sc)), v, "index should be between 0 and the object's array length"));
-
-		      fcdr(cdr(code)) = (s7_pointer)all_x_eval(cadr(code));
-		      return(set_c_object_array_all_x);
-		    }
-		  else
-		    {
-		      if (s7_is_string(v))
-			{
-			  if ((SET_STEPPER_INT(sc) < 0) ||
-			      (SET_END_INT(sc) > string_length(v)))
-			    return((s7_function)out_of_range(sc, sc->STRING_SET, slot_value(SET_END_SLOT(sc)), v, "index should be between 0 and the string's length"));
-
-			  fcdr(cdr(code)) = (s7_pointer)all_x_eval(cadr(code));
-			  return(set_string_all_x);
-			}
-		    }
-		}
-	    }
-	}
-    }
-  return(NULL);
-}
-#endif
 
 
 enum {DOX_STEP_DEFAULT, DOX_STEP_SS, DOX_STEP_S, DOX_STEP_ADD, DOX_STEP_SUBTRACT};
@@ -46366,375 +46282,131 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	sc->code = cddr(code);
 
-#if WITH_GMP
-	fcdr(code) = sc->code;
-	push_stack(sc, OP_SAFE_DO_STEP, sc->args, code);
-	goto BEGIN;
-#else
+	/* see tmp8 */
 
 	if ((is_null(cdr(sc->code))) &&
 	    (is_pair(car(sc->code))))
 	  {
-	    sc->code = car(sc->code);
-	    fcdr(code) = sc->code;
+	    s7_pointer body;
+	    body = car(sc->code);
 
-	    if ((typesflag(sc->code) == SYNTACTIC_PAIR) ||
-		(typeflag(car(sc->code)) == SYNTACTIC_TYPE))
+	    if ((typesflag(body) == SYNTACTIC_PAIR) ||
+		(typeflag(car(body)) == SYNTACTIC_TYPE))
 	      {
-		if (typesflag(sc->code) == SYNTACTIC_PAIR)
-		  sc->op = (opcode_t)lifted_op(sc->code);
+		if (typesflag(body) == SYNTACTIC_PAIR)
+		  sc->op = (opcode_t)lifted_op(body);
 		else
 		  {
-		    sc->op = (opcode_t)syntax_opcode(car(sc->code));
-		    lifted_op(sc->code) = sc->op;
-		    set_type(sc->code, SYNTACTIC_PAIR);
+		    sc->op = (opcode_t)syntax_opcode(car(body));
+		    lifted_op(body) = sc->op;
+		    set_type(body, SYNTACTIC_PAIR);
 		  }
-
-		/* if (sc->op == OP_SET) fprintf(stderr, "%s\n", DISPLAY_80(code)); */
-		/* code: (((i 0 (+ i 1))) ((= i size)) (set! (ones i) 1.0))
-		 *       (((i 0 (+ i 1))) ((= i size)) (set! x (* (env e1) (oscil osc x))))
-		 */
 		
-		/* TODO: get rid of (misnamed) set_dox_eval and this block
-		 *   use ex_parser for setter etc
-		 */
-		if ((sc->op == OP_SET) &&
-		    (ecdr(car(cadr(code))) != geq_2))
+		if (sc->op == OP_SET)
 		  {
-		    s7_function f;
-		    f = set_dox_eval(sc, cdr(sc->code));
-		    if (f)
+		    s7_pointer settee, val;
+		    s7_Int i, start, lim;
+		    settee = cadr(body);
+		    val = caddr(body);
+
+		    /* one common case: (set! (x i) c)
+		     */
+		    if (is_pair(settee))
 		      {
-			/* (set! j (+ j 1) and many of the form (set! (sym i [j]) (...))
-			 */
-			s7_pointer step_slot, end_slot, callee;
-			step_slot = environment_dox1(sc->envir);
-			end_slot = environment_dox2(sc->envir);
-			callee = cddr(sc->code);
-
-			if (!direct_memq(slot_symbol(step_slot), callee))
+			if ((cadr(settee) == caaar(code)) &&
+			    (is_null(cddr(settee))) &&
+			    (is_symbol(car(settee))))
 			  {
-			    s7_Int end;
-			    s7_pointer i, settee, setargs;
-
-			    slot_set_value(step_slot, i = make_mutable_integer(sc, integer(slot_value(step_slot))));
-			    
-			    if (f == set_c_object_array_all_x)
+			    s7_pointer obj, new_val;
+			    obj = finder(sc, car(settee));
+			    if (!is_pair(val))
 			      {
-				/* apparently array bounds have already been checked */
-				double *data;
-				data = c_object_array(slot_value(slot_pending_value(environment_dox1(sc->envir))));
-				f = (s7_function)(fcdr(callee));
-				setargs = car(callee);
-
-				/* here if temp or has gen_direct we could avoid the make_real etc 
-				 *   at least if it's returning a temp, we could free it.
-				 *   handling it direct requires figuring out which direct function to call, type checks on arg(s) etc
-				 */
-				while (true)
+				if (is_symbol(val))
+				  new_val = finder(sc, val);
+				else new_val = val;
+				lim = s7_integer(end_val);
+				start = s7_integer(init_val);
+				if (s7_is_vector(obj))
 				  {
-				    data[integer(i)] = s7_number_to_real(sc, f(sc, setargs));
-				    integer(i)++;
-				    end = integer(slot_value(end_slot));
-				    if (integer(i) == end)
-				      {
-					sc->code = cdr(cadr(code));
-					goto DO_BEGIN;
-				      }
-				  }
-			      }
-			    
-			    /* I tried setting up fake env id's and localizing every symbol in the do-loop
-			     *   (localizer-s7.c), and got about a 10% speed up in find_symbol_or_bust.
-			     *   But it's tricky code, so I decided not to use it.
-			     */
-			    if (f == set_s_all_x)
-			      {
-				settee = slot_pending_value(environment_dox1(sc->envir));
-				setargs = car(callee);
-				f = (s7_function)(fcdr(callee));
-
-				if (f == all_x_c_c)
-				  {
-				    f = c_call(setargs);
-				    setargs = cdr(setargs);
-				  }
-				while (true)
-				  {
-				    slot_set_value(settee, f(sc, setargs));
-				    integer(i)++;
-				    end = integer(slot_value(end_slot));
-				    if (integer(i) == end)
-				      {
-					sc->code = cdr(cadr(code));
-					goto DO_BEGIN;
-				      }
-				  }
-			      }
-			    if (f == set_vector_all_x)
-			      {
-				settee = slot_value(slot_pending_value(environment_dox1(sc->envir)));
-				f = (s7_function)(fcdr(callee));
-				setargs = car(callee);
-				while (true)
-				  {
-				    vector_element(settee, integer(i)) = f(sc, setargs);
-				    integer(i)++;
-				    end = integer(slot_value(end_slot));
-				    if (integer(i) == end)
-				      {
-					sc->code = cdr(cadr(code));
-					goto DO_BEGIN;
-				      }
-				  }
-			      }
-
-			    while (true)
-			      {
-				f(sc, callee);
-				integer(i)++;
-				end = integer(slot_value(end_slot));
-				if (integer(i) == end)
-				  {
-				    sc->code = cdr(cadr(code));
-				    goto DO_BEGIN;
-				  }
-			      }
-			  }
-			else
-			  {
-			    while (true)
-			      {
-				s7_Int step, end;
-				/* we checked for step == end above */
-				f(sc, callee);
-				step = s7_integer(slot_value(step_slot)) + 1;
-				slot_set_value(step_slot, make_integer(sc, step));
-				end = s7_integer(slot_value(end_slot));
-				if (step == end)
-				  {
-				    sc->code = cdr(cadr(code));
-				    goto DO_BEGIN;
-				  }
-			      }
-			  }
-		      }
-		  }
-		push_stack(sc, OP_SAFE_DO_STEP_P, sc->args, code);
-		sc->code = cdr(sc->code);
-		/* fprintf(stderr, "%d %s\n", __LINE__, DISPLAY_80(sc->code)); */
-		goto START_WITHOUT_POP_STACK;
-	      }
-	    else
-	      {
-		/* one line non-syntactic -- so it must be optimized? */
-
-		if ((is_optimized(sc->code)) &&
-		    (c_function_looped(ecdr(sc->code))))
-		  {
-		    s7_pointer body, stepper, result;
-		    s7_function f;
-
-		    body = cdr(sc->code);
-		    stepper = make_mutable_integer(sc, integer(init_val));
-		    denominator(stepper) = integer(end_val);
-		    slot_set_value(environment_dox1(sc->envir), stepper);
-
-		    f = (s7_function)c_function_call(c_function_looped(ecdr(sc->code)));
-		    result = f(sc, sc->z = cons(sc, stepper, body));
-		    if (result)
-		      {
-			sc->code = cdr(cadr(code));
-			goto DO_BEGIN;
-		      }
-		  }
-
-		if ((car(sc->code) == sc->VECTOR_SET) &&
-		    (integer(slot_value(environment_dox1(sc->envir))) >= 0) &&
-		    (is_symbol(cadr(sc->code))) &&
-		    (ecdr(car(cadr(code))) != geq_2) &&
-		    (caddr(sc->code) == slot_symbol(environment_dox1(sc->envir)))) /* step slot */
-		  {
-		    s7_pointer v;
-		    v = finder(sc, cadr(sc->code));
-		    if (s7_is_vector(v))
-		      {
-			s7_pointer step_slot, end_slot, callee;
-			s7_Int len;
-
-			len = vector_length(v);
-			step_slot = environment_dox1(sc->envir);
-			end_slot = environment_dox2(sc->envir);
-			callee = cadddr(sc->code);
-
-			if (is_all_x_safe(sc, callee))
-			  {
-			    s7_function f;
-			    f = all_x_eval(callee);
-			    while (true)
-			      {
-				s7_Int step, end;
-				step = s7_integer(slot_value(step_slot));
-				if (step >= len)
-				  eval_error(sc, "vector-set!: index must not be less than vector length: ~S", sc->code);
-				vector_element(v, step) = f(sc, callee);
-				step++;
-				slot_set_value(step_slot, make_integer(sc, step));
-				end = s7_integer(slot_value(end_slot));
-				if (step == end)
-				  {
-				    sc->code = cdr(cadr(code));
-				    goto DO_BEGIN;
-				  }
-			      }
-			  }
-			if ((s7_list_length(sc, callee) < 4) &&
-			    (is_all_x_safe(sc, cadr(callee))) &&
-			    ((is_null(cddr(callee))) || (is_all_x_safe(sc, caddr(callee)))))
-			  {
-			    bool v1, v2 = false;
-			    s7_pointer a1, a2 = NULL;
-			    s7_function f1 = NULL, f2 = NULL;
-
-			    a1 = cadr(callee);
-			    v1 = ((is_pair(a1)) &&
-				  (car(a1) == sc->VECTOR_REF) &&
-				  (cadr(a1) == cadr(sc->code)) &&
-				  (caddr(a1) == caddr(sc->code)));
-			    if (!v1) f1 = all_x_eval(a1);
-
-			    if (is_pair(cddr(callee)))
-			      {
-				a2 = caddr(callee);
-				v2 = ((is_pair(a2)) &&
-				      (car(a2) == sc->VECTOR_REF) &&
-				      (cadr(a2) == cadr(sc->code)) &&
-				      (caddr(a2) == caddr(sc->code)));
-				if (!v2) f2 = all_x_eval(a2);
-			      }
-
-			    if ((v1) && (v2))
-			      {
-				s7_pointer i;
-				s7_Int step, end;
-				end = integer(slot_value(end_slot));
-				slot_set_value(step_slot, i = make_mutable_integer(sc, integer(slot_value(step_slot))));
-				while (true)
-				  {
-				    step = integer(i);
-				    if (step >= len)
-				      eval_error(sc, "vector-set!: index must not be less than vector length: ~S", sc->code);
-				    car(sc->T2_1) = vector_element(v, step); 
-				    car(sc->T2_2) = vector_element(v, step); 
-				    vector_element(v, step) = c_call(callee)(sc, sc->T2_1);
-
-				    integer(i)++;
-				    if (integer(i) == end)
-				      {
-					sc->code = cdr(cadr(code));
-					goto DO_BEGIN;
-				      }
-				  }
-			      }
-
-			    while (true)
-			      {
-				s7_Int step, end;
-				step = s7_integer(slot_value(step_slot));
-				if (step >= len)
-				  eval_error(sc, "vector-set!: index must not be less than vector length: ~S", sc->code);
-				if (a2)
-				  {
-				    if (v1) car(sc->T2_1) = vector_element(v, step); else car(sc->T2_1) = f1(sc, a1);
-				    if (v2) car(sc->T2_2) = vector_element(v, step); else car(sc->T2_2) = f2(sc, a2);
-				    vector_element(v, step) = c_call(callee)(sc, sc->T2_1);
+				    if ((start < 0) || (lim > vector_length(obj)))
+				      out_of_range(sc, sc->VECTOR_SET, end_val, obj, "index should be between 0 and the vector length");
+				    for (i = start; i < lim; i++)
+				      vector_element(obj, i) = new_val;
+				    goto SAFE_DO_DONE;
 				  }
 				else
 				  {
-				    if (v1) car(sc->T1_1) = vector_element(v, step); else car(sc->T1_1) = f1(sc, a1);
-				    vector_element(v, step) = c_call(callee)(sc, sc->T1_1);
+				    if ((is_c_object(obj)) &&
+					(c_object_has_array(obj)))
+				      {
+					double x;
+					double *data;
+					if ((start < 0) || (lim > c_object_array_length(obj)))
+					  out_of_range(sc, sc->SET, end_val, obj, "index should be between 0 and the object's array length");
+					x = s7_number_to_real(sc, new_val);
+					data = c_object_array(obj);
+					for (i = start; i < lim; i++)
+					  data[i] = x;
+					goto SAFE_DO_DONE;
+				      }
 				  }
-				step++;
-				slot_set_value(step_slot, make_integer(sc, step));
-				end = s7_integer(slot_value(end_slot));
-				if (step == end)
-				  {
-				    sc->code = cdr(cadr(code));
-				    goto DO_BEGIN;
-				  }
+			      }
+			    else /* is_pair(val) */
+			      {
 			      }
 			  }
 		      }
-		  }
+		    else /* !is_pair(settee) */
+		      {
+			/* this is stupid... */
+			if ((is_symbol(settee)) &&
+			    (settee != caaar(code)) &&
+			    (is_pair(val)))
+			  {
+			    s7_pointer slot;
+			    slot = find_symbol(sc, settee);
+			    if (!is_slot(slot)) 
+			      eval_error(sc, "set! ~A: unbound variable", settee);
+			    if ((car(val) == sc->VECTOR_REF) &&
+				(s7_list_length(sc, val) == 3) &&
+				(caddr(val) == caaar(code)) &&
+				(is_symbol(cadr(val))))
+			      {
+				car(sc->T2_1) = finder(sc, cadr(val));
+				car(sc->T2_2) = make_integer(sc, integer(end_val) - 1);
+				slot_set_value(slot, g_vector_ref(sc, sc->T2_1));
+				goto SAFE_DO_DONE;
+			      }
+			    if ((car(val) == sc->MULTIPLY) &&
+				(s7_list_length(sc, val) == 3) &&
+				(cadr(val) == caaar(code)) &&
+				(is_real(caddr(val))))
+			      {
+				slot_set_value(slot, make_real(sc, (integer(end_val) - 1) * s7_number_to_real(sc, caddr(val))));
+				goto SAFE_DO_DONE;
+			      }
+			  }
+		      }
 
-		push_stack(sc, OP_SAFE_DO_STEP_A, sc->args, code);
-		/* fprintf(stderr, "%d %s\n", __LINE__, DISPLAY_80(sc->code)); */
-		goto NS_EVAL;
+		    /* fprintf(stderr, "safe do set 1 line: %s\n", DISPLAY_80(code)); */
+		  }
+		/* else fprintf(stderr, "safe do syntax 1 line: %s\n", DISPLAY_80(code)); */
+	      }
+	    else
+	      {
+		/* fprintf(stderr, "safe do 1 line: %s\n", DISPLAY_80(code)); */
 	      }
 	  }
+	/* else fprintf(stderr, "safe do: %s\n", DISPLAY_80(code)); */
+
 	fcdr(code) = sc->code;
 	push_stack(sc, OP_SAFE_DO_STEP, sc->args, code);
-	/* fprintf(stderr, "%d %s\n", __LINE__, DISPLAY_80(sc->code)); */
 	goto BEGIN;
-#endif
-      }
 
-
-      /* --------------- */
-    case OP_SAFE_DO_STEP_P:
-      {
-	s7_Int step, end;
-	s7_pointer args;
-	args = sc->envir;
-
-	step = s7_integer(slot_value(environment_dox1(args))) + 1;
-	slot_set_value(environment_dox1(args), make_integer(sc, step));
-	end = s7_integer(slot_value(environment_dox2(args)));
-#if WITH_GMP
-	if (step == end)
-#else
-        if ((step == end) ||
-	    ((step > end) &&
-	     (ecdr(car(cadr(sc->code))) == geq_2)))
-#endif	      
-	  {
-	    sc->code = cdr(cadr(sc->code));
-	    goto DO_BEGIN;
-	  }
-	push_stack(sc, OP_SAFE_DO_STEP_P, sc->args, sc->code);
-	sc->code = fcdr(sc->code);
-	sc->op = (opcode_t)lifted_op(sc->code);
-	sc->code = cdr(sc->code);
-	/* primarily set cases here: (set! x (* (env e1) (oscil osc x))) etc
-	 */
-	goto START_WITHOUT_POP_STACK;
-      }
-
-
-      /* --------------- */
-    case OP_SAFE_DO_STEP_A:
-      {
-	s7_Int step, end;
-	s7_pointer args;
-	args = sc->envir;
-
-	step = s7_integer(slot_value(environment_dox1(args))) + 1;
-	slot_set_value(environment_dox1(args), make_integer(sc, step));
-	end = s7_integer(slot_value(environment_dox2(args)));
-#if WITH_GMP
-	if (step == end)
-#else
-        if ((step == end) ||
-	    ((step > end) &&
-	     (ecdr(car(cadr(sc->code))) == geq_2)))
-#endif	      
-	  {
-	    sc->code = cdr(cadr(sc->code));
-	    goto DO_BEGIN;
-	  }
-	push_stack(sc, OP_SAFE_DO_STEP_A, sc->args, sc->code);
-	sc->code = fcdr(sc->code);
-	goto NS_EVAL;
+      SAFE_DO_DONE:
+	slot_value(environment_dox1(sc->envir)) = slot_value(environment_dox2(sc->envir));
+	sc->code = cdr(cadr(code));
+	goto DO_BEGIN;
       }
 
 
@@ -47073,8 +46745,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	/* (((i 0 (+ 1 i))) ((= i len)) (set! (v i) (read-mix-sample reader)))
 	 */
 	push_stack(sc, OP_SIMPLE_DO_STEP_P, sc->args, code);
-	/* fprintf(stderr, "%d %s\n", __LINE__, DISPLAY_80(sc->code)); */
-
 	sc->code = caddr(code);
 	goto EVAL;
       }
@@ -47393,12 +47063,94 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			s7_function endf;
 			s7_pointer endp, slots, slot;
+			int arg;
+			s7_pointer p, slot1 = NULL, slot2 = NULL, expr1 = NULL, expr2 = NULL;
+			dox_function d1 = NULL, d2 = NULL;
+			bool mut; /* C++ claims "mutable" */
+
+			mut = is_step_safe(f);
+
+			for (arg = 0, p = environment_slots(sc->envir); is_slot(p); p = next_slot(p))
+			  if (is_pair(slot_expression(p)))
+			    {
+			      arg++;
+			      if (!slot1) 
+				{
+				  slot1 = p; 
+				  expr1 = slot_expression(slot1);
+				  if (mut)
+				    d1 = dox_mutate(sc, p);
+				  else d1 = (dox_function)fcdr(expr1);
+				  expr1 = car(expr1);
+				}
+			      else 
+				{
+				  if (!slot2)
+				    {
+				      slot2 = p;
+				      expr2 = slot_expression(slot2);
+				      if (mut)
+					d2 = dox_mutate(sc, p);
+				      else d2 = (dox_function)fcdr(expr2);
+				      expr2 = car(expr2);
+				    }
+				}
+			    }
 
 			endf = (s7_function)fcdr(cdr(sc->code));
 			endp = fcdr(sc->code);
 			slots = environment_slots(sc->envir);
 
-			/* TODO: split out the 1 slot case etc as below */
+			if (arg == 1)
+			  {
+			    while (true)
+			      {
+				exd->ex_vf(exd->ex_data);
+				slot_set_value(slot1, d1(sc, expr1, slot1));
+				if (is_true(sc, endf(sc, endp)))
+				  {
+				    exd->ex_free(exd->ex_data);
+				    free(exd);
+				    sc->code = cdadr(sc->code);
+				    if (!is_null(sc->code))
+				      {
+					if (mut)
+					  clear_mutable(slot_value(slot1));
+					goto BEGIN;
+				      }
+				    sc->value = sc->NIL;
+				    goto START;	
+				  }
+			      }
+			  }
+
+			if (arg == 2)
+			  {
+			    while (true)
+			      {
+				exd->ex_vf(exd->ex_data);
+				slot_set_value(slot1, d1(sc, expr1, slot1));
+				slot_set_value(slot2, d2(sc, expr2, slot2));
+				if (is_true(sc, endf(sc, endp)))
+				  {
+				    exd->ex_free(exd->ex_data);
+				    free(exd);
+				    sc->code = cdadr(sc->code);
+				    if (!is_null(sc->code))
+				      {
+					if (mut)
+					  {
+					    clear_mutable(slot_value(slot1));
+					    clear_mutable(slot_value(slot2));
+					  }
+					goto BEGIN;
+				      }
+				    sc->value = sc->NIL;
+				    goto START;	
+				  }
+			      }
+			  }
+
 			while (true)
 			  {
 			    exd->ex_vf(exd->ex_data);
@@ -47412,78 +47164,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				exd->ex_free(exd->ex_data);
 				free(exd);
 				sc->code = cdadr(sc->code);
-				goto DO_BEGIN;
+				if (!is_null(sc->code))
+				  {
+				    if (mut)
+				      {
+					if (slot1) clear_mutable(slot_value(slot1));
+					if (slot2) clear_mutable(slot_value(slot2));
+				      }
+				    goto BEGIN;
+				  }
+				sc->value = sc->NIL;
+				goto START;	
 			      }
 			  }
 		      }
 		  }
 	      }
-
-	    /* this block can go away now  I think (need to check outa_ex cases) */
-	      if (is_all_x_safe(sc, code))
-		{
-		  s7_function f;
-		  int arg;
-		  s7_pointer p, slot1 = NULL, slot2 = NULL;
-
-		  f = all_x_eval(code);
-
-		  for (arg = 0, p = environment_slots(sc->envir); is_slot(p); p = next_slot(p))
-		    if (is_pair(slot_expression(p)))
-		      {
-			arg++;
-			if (!slot1) slot1 = p; else slot2 = p;
-		      }
-		  if (arg < 3)
-		    {
-		      s7_function endf;
-		      dox_function d1 = NULL, d2;
-		      s7_pointer expr1 = NULL, expr2, end;
-
-		      endf = (s7_function)fcdr(cdr(sc->code));
-		      end = fcdr(sc->code);
-		      if (slot1) 
-			{
-			  expr1 = slot_expression(slot1);
-			  d1 = (dox_function)fcdr(expr1);
-			  expr1 = car(expr1);
-			}
-		      if (slot2) 
-			{
-			  expr2 = slot_expression(slot2);
-			  d2 = (dox_function)fcdr(expr2);
-			  expr2 = car(expr2);
-			}
-
-		      if ((slot1) && (slot2))
-			{
-			  while (true)
-			    {
-			      f(sc, code);
-			      slot_set_value(slot1, d1(sc, expr1, slot1));
-			      slot_set_value(slot2, d2(sc, expr2, slot2));
-			      if (is_true(sc, endf(sc, end)))
-				{
-				  sc->code = cdadr(sc->code);
-				  goto DO_BEGIN;
-				}
-			    }
-			}
-		      else
-			{
-			  while (true)
-			    {
-			      f(sc, code);
-			      if (slot1) slot_set_value(slot1, d1(sc, expr1, slot1));
-			      if (is_true(sc, endf(sc, end)))
-				{
-				  sc->code = cdadr(sc->code);
-				  goto DO_BEGIN;
-				}
-			    }
-			}
-		    }
-		}
 	    }
 	}
 	push_stack_no_args(sc, OP_DOX_STEP, sc->code);
@@ -64507,22 +64203,15 @@ s7_scheme *s7_init(void)
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
  *
  *
- * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6
+ * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7
  * bench    42736 8752 8051 7725 6515 5194 4364 3989
  * lint           9328 8140 7887 7736 7300 7180 7051
  * index    44300 3291 3005 2742 2078 1643 1435 1363
  * s7test    1721 1358 1297 1244  977  961  957  960
  * t455|6     265   89   55   31   14   14    9 9155
  * lat        229   63   52   47   42   40   34   31
- * t502        90   43   39   36   29   23   20   15
+ * t502        90   43   39   36   29   23   20   14
  * calls           275  207  175  115   89   71   53
  *
  * TODO: math ops where 1 arg type/value is known (see multiply-chooser)
- */
-
-/*
-  dox (and all loops) need to be brought into s7
-  car(expr) -> function -> c_function_ex (i.e. don't look at optimization/ecdr etc)
-  s7 calls c_function_sx(f)(sc, expr) -> NULL or struct as above -- how to precheck bounds?
-  what about let/set/if?
  */

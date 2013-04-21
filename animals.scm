@@ -1038,7 +1038,7 @@
 					      (* .1 (rxyk!cos f3 (* 6.0 frq)))
 					      (* .1 (rxyk!cos f4 (* 6.3 frq)))))))))))))
 
-;; (with-sound (:play #t) (bullfrog 0 .5))
+;; (with-sound (:statistics #t) (bullfrog 0 .5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -6037,37 +6037,30 @@
 	    (fr1 (* 2 5 (sin (hz->radians 2460))))
 	    (fr2 (* 2 5 (sin (hz->radians 5200))))
 	    (fr3 (* 2 2 (sin (hz->radians 8200))))
-	    (frmf (make-env '(0 5200 .7 4900 .9 2200 1 2000) :duration dur))
-	    (frmf3 (make-env '(0 8200 .7 8400 .9 4000 1 4000) :duration dur))
 	    (frmaf (make-env '(0 0 .6 .3 .9 .8  1 .5) :duration dur))
 	    (frmaf-1 (make-env '(0 0 .6 .3 .9 .8  1 .5) :duration dur :offset 1.0 :scaler -1.0))
-	    (frmf1 (make-env '(0 2460 .7 2400 .9 1400 1 1500) :duration dur)))
-
-	(let ((fb (vector frm1 frm2 frm3))
-	      (fs (make-vct 3)))
-	  (set! (fs 2) fr3)
-	  (set! fb (make-formant-bank fb fs))
+	    (frmf (make-env '(0 5200 .7 4900 .9 2200 1 2000) :scaler (hz->radians 1.0) :duration dur))
+	    (frmf3 (make-env '(0 8200 .7 8400 .9 4000 1 4000) :scaler (hz->radians 1.0) :duration dur))
+	    (frmf1 (make-env '(0 2460 .7 2400 .9 1400 1 1500) :scaler (hz->radians 1.0) :duration dur)))
 
 	  (do ((i start (+ i 1)))
 	      ((= i stop))
-	    (set! (mus-frequency frm2) (env frmf))
-	    (set! (mus-frequency frm3) (env frmf3))
-	    (set! (mus-frequency frm1) (env frmf1))
-	  
-	  (let ((val1 (* (env ampf)
-			 (+ (polywave gen1 (env frqf1))
-			    (* (env ampf2)
-			       (polywave gen2 (env frqf2)))))))
-	    (set! (fs 0) (* fr1 (env frmaf-1)))
-	    (set! (fs 1) (* fr2 (env frmaf)))
-	    (outa i (+ (* 0.75 val1) (formant-bank fb (* val1 (rand-interp rnd)))))))))))
+	    (let* ((val1 (* (env ampf)
+			    (+ (polywave gen1 (env frqf1))
+			       (* (env ampf2)
+				  (polywave gen2 (env frqf2))))))
+		   (frm-in (* val1 (rand-interp rnd))))
+	      (outa i (+ (* 0.75 val1)
+			 (* fr1 (env frmaf-1) (formant frm1 frm-in (env frmf1)))
+			 (* fr2 (env frmaf) (formant frm2 frm-in (env frmf)))
+			 (* fr3 (formant frm3 frm-in (env frmf3))))))))))
   
   (do ((beg beg1 (+ beg .15))
        (i 0 (+ i 1)))
       ((= i 6))
     (stellers-jay-1 beg amp1)))
 
-;; (with-sound (:play #t) (stellers-jay 0 .5))
+;; (with-sound (:statistics #t) (stellers-jay 0 .5))
 
 
 

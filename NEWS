@@ -1,9 +1,16 @@
-Snd 13.5
+Snd 13.6
 
-moving-max is now built-in.
-added vct-min and vct-max.
+added environment-ref|set!
+      char-position and string-position (moved from Snd to s7)
+      make-formant-bank and formant-bank? (and changed formant-bank again)
+      comb-bank, all-pass-bank, and filtered-comb-bank generators
+      one-pole-all-pass generator moved to C
+      envelope-interp, rxyk!cos, and rxyk!sin moved to C
+      yet another version of oscil-bank
 
-checked: sbcl 1.1.5, ruby 2.0.0, gtk 3.7.12
+removed mus-file-prescaler and mus-prescaler  -- these no longer serve any purpose.
 
-Thanks!: Mike and Fernando.
+checked: gtk 3.7.14, 3.8.0|1, sbcl 1.1.6
+
+Thanks!: Michael Edwards, Mike Scholz
 

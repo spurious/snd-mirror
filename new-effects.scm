@@ -2040,7 +2040,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		   jc-reverb-label
 		   
 		   (lambda (w context info) 
-		     ;; TODO: this is meesed up
+		     ;; TODO: this is messed up
 		     ;(pad-channel (- (frames) 1) (srate))
 		     (map-chan-over-target-with-sync
 		      (lambda (samps) 

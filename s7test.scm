@@ -14950,6 +14950,8 @@ in s7:
 
 (test (do ((i 0 (+ i 1))) ((= i 3) #f)) #f)
 (test (do ((i 0 (+ i 1))) ((= i 3) i)) 3)
+(test (do ((i 1/2 (+ i 1/8))) ((= i 2) i)) 2)
+(test (do ((i 1/2 (+ i 1/8))) ((> i 2) i)) 17/8)
 (test (do ((vec (make-vector 5)) (i 0 (+ i 1))) ((= i 5) vec) (vector-set! vec i i)) '#(0 1 2 3 4))
 (test (let ((x '(1 3 5 7 9))) (do ((x x (cdr x)) (sum 0 (+ sum (car x))))  ((null? x) sum))) 25)
 (test (do ((i 4 (- i 1)) (a 1 (* a i))) ((zero? i) a)) 24)
@@ -26709,6 +26711,16 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (test (environment-ref) 'error)
 (test (environment-ref a b c) 'error)
+(test (environment-ref (augment-environment ()) '_asdf_) #<undefined>)
+(test (environment-ref (augment-environment () '(a . 3)) 'a) 3)
+(test (environment-ref (augment-environment () '(a . 3)) 'A) #<undefined>)
+(test (environment-ref (global-environment) '+) +)
+(test (environment-ref (global-environment) +) 'error)
+(test (environment-ref () '+) 'error)
+(test (environment-ref (procedure-environment (let ((a 2)) (lambda (b) (+ a b)))) 'a) 2)
+(let ((etest (let ((a 2)) (lambda (b) (+ a b))))) 
+  (environment-set! (procedure-environment etest) 'a 32)
+  (test (etest 1) 33))
 (test (environment-set!) 'error)
 (test (environment-set! a b) 'error)
 (for-each

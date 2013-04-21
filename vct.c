@@ -2016,66 +2016,6 @@ static XEN g_vct_plus(XEN obj1, XEN obj2)
   return(g_vct_offset(obj2, obj1));
 }
 
-
-#ifdef XEN_ARGIFY_1
-XEN_ARGIFY_2(g_make_vct_w, g_make_vct)
-XEN_NARGIFY_1(g_vct_copy_w, g_vct_copy)
-XEN_NARGIFY_1(g_vct_p_w, g_vct_p)
-XEN_NARGIFY_1(g_list_to_vct_w, xen_list_to_vct)
-XEN_NARGIFY_1(g_vct_to_list_w, g_vct_to_list)
-XEN_NARGIFY_1(g_vector_to_vct_w, g_vector_to_vct)
-XEN_NARGIFY_1(g_vct_to_vector_w, g_vct_to_vector)
-XEN_NARGIFY_1(g_vct_length_w, g_vct_length)
-XEN_NARGIFY_2(g_vct_ref_w, g_vct_ref)
-XEN_NARGIFY_3(g_vct_set_w, g_vct_set)
-XEN_NARGIFY_2(g_vct_multiply_w, g_vct_multiply)
-XEN_NARGIFY_2(g_vct_scale_w, g_vct_scale)
-XEN_NARGIFY_2(g_vct_fill_w, g_vct_fill)
-XEN_ARGIFY_3(g_vct_add_w, g_vct_add)
-XEN_NARGIFY_2(g_vct_subtract_w, g_vct_subtract)
-XEN_NARGIFY_2(g_vct_offset_w, g_vct_offset)
-XEN_NARGIFY_1(g_vct_peak_w, g_vct_peak)
-XEN_NARGIFY_1(g_vct_peak_and_location_w, g_vct_peak_and_location)
-XEN_ARGIFY_4(g_vct_move_w, g_vct_move)
-XEN_ARGIFY_4(g_vct_subseq_w, g_vct_subseq)
-XEN_VARGIFY(g_vct_w, g_vct)
-XEN_ARGIFY_2(g_vct_reverse_w, g_vct_reverse)
-XEN_NARGIFY_1(g_vct_to_readable_string_w, g_vct_to_readable_string)
-XEN_NARGIFY_2(g_vct_times_w, g_vct_times)
-XEN_NARGIFY_2(g_vct_plus_w, g_vct_plus)
-XEN_NARGIFY_1(g_vct_max_w, g_vct_max)
-XEN_NARGIFY_1(g_vct_min_w, g_vct_min)
-#else
-#define g_make_vct_w g_make_vct
-#define g_vct_copy_w g_vct_copy
-#define g_vct_p_w g_vct_p
-#define g_list_to_vct_w xen_list_to_vct
-#define g_vct_to_list_w g_vct_to_list
-#define g_vector_to_vct_w g_vector_to_vct
-#define g_vct_to_vector_w g_vct_to_vector
-#define g_vct_length_w g_vct_length
-#define g_vct_ref_w g_vct_ref
-#define g_vct_set_w g_vct_set
-#define g_vct_multiply_w g_vct_multiply
-#define g_vct_scale_w g_vct_scale
-#define g_vct_fill_w g_vct_fill
-#define g_vct_add_w g_vct_add
-#define g_vct_subtract_w g_vct_subtract
-#define g_vct_offset_w g_vct_offset
-#define g_vct_peak_w g_vct_peak
-#define g_vct_peak_and_location_w g_vct_peak_and_location
-#define g_vct_move_w g_vct_move
-#define g_vct_subseq_w g_vct_subseq
-#define g_vct_w g_vct
-#define g_vct_reverse_w g_vct_reverse
-#define g_vct_to_readable_string_w g_vct_to_readable_string
-#define g_vct_times_w g_vct_times
-#define g_vct_plus_w g_vct_plus
-#define g_vct_max_w g_vct_max
-#define g_vct_min_w g_vct_min
-#endif
-
-
 #if HAVE_RUBY
 static XEN g_vct_each(XEN obj)
 {
@@ -2324,6 +2264,66 @@ vct( 0.5 0.3 0.1 ) .g => #<vct[len=3]: 0.500 0.300 0.100>"
 #endif
 
 
+
+#ifdef XEN_ARGIFY_1
+XEN_ARGIFY_2(g_make_vct_w, g_make_vct)
+XEN_NARGIFY_1(g_vct_copy_w, g_vct_copy)
+XEN_NARGIFY_1(g_vct_p_w, g_vct_p)
+XEN_NARGIFY_1(g_list_to_vct_w, xen_list_to_vct)
+XEN_NARGIFY_1(g_vct_to_list_w, g_vct_to_list)
+XEN_NARGIFY_1(g_vector_to_vct_w, g_vector_to_vct)
+XEN_NARGIFY_1(g_vct_to_vector_w, g_vct_to_vector)
+XEN_NARGIFY_1(g_vct_length_w, g_vct_length)
+XEN_NARGIFY_2(g_vct_ref_w, g_vct_ref)
+XEN_NARGIFY_3(g_vct_set_w, g_vct_set)
+XEN_NARGIFY_2(g_vct_multiply_w, g_vct_multiply)
+XEN_NARGIFY_2(g_vct_scale_w, g_vct_scale)
+XEN_NARGIFY_2(g_vct_fill_w, g_vct_fill)
+XEN_ARGIFY_3(g_vct_add_w, g_vct_add)
+XEN_NARGIFY_2(g_vct_subtract_w, g_vct_subtract)
+XEN_NARGIFY_2(g_vct_offset_w, g_vct_offset)
+XEN_NARGIFY_1(g_vct_peak_w, g_vct_peak)
+XEN_NARGIFY_1(g_vct_peak_and_location_w, g_vct_peak_and_location)
+XEN_ARGIFY_4(g_vct_move_w, g_vct_move)
+XEN_ARGIFY_4(g_vct_subseq_w, g_vct_subseq)
+XEN_VARGIFY(g_vct_w, g_vct)
+XEN_ARGIFY_2(g_vct_reverse_w, g_vct_reverse)
+XEN_NARGIFY_1(g_vct_to_readable_string_w, g_vct_to_readable_string)
+XEN_NARGIFY_2(g_vct_times_w, g_vct_times)
+XEN_NARGIFY_2(g_vct_plus_w, g_vct_plus)
+XEN_NARGIFY_1(g_vct_max_w, g_vct_max)
+XEN_NARGIFY_1(g_vct_min_w, g_vct_min)
+#else
+#define g_make_vct_w g_make_vct
+#define g_vct_copy_w g_vct_copy
+#define g_vct_p_w g_vct_p
+#define g_list_to_vct_w xen_list_to_vct
+#define g_vct_to_list_w g_vct_to_list
+#define g_vector_to_vct_w g_vector_to_vct
+#define g_vct_to_vector_w g_vct_to_vector
+#define g_vct_length_w g_vct_length
+#define g_vct_ref_w g_vct_ref
+#define g_vct_set_w g_vct_set
+#define g_vct_multiply_w g_vct_multiply
+#define g_vct_scale_w g_vct_scale
+#define g_vct_fill_w g_vct_fill
+#define g_vct_add_w g_vct_add
+#define g_vct_subtract_w g_vct_subtract
+#define g_vct_offset_w g_vct_offset
+#define g_vct_peak_w g_vct_peak
+#define g_vct_peak_and_location_w g_vct_peak_and_location
+#define g_vct_move_w g_vct_move
+#define g_vct_subseq_w g_vct_subseq
+#define g_vct_w g_vct
+#define g_vct_reverse_w g_vct_reverse
+#define g_vct_to_readable_string_w g_vct_to_readable_string
+#define g_vct_times_w g_vct_times
+#define g_vct_plus_w g_vct_plus
+#define g_vct_max_w g_vct_max
+#define g_vct_min_w g_vct_min
+#endif
+
+
 void mus_vct_init(void)
 {
 
@@ -2468,7 +2468,10 @@ void mus_vct_init(void)
     /* vct-set! */
     f = s7_name_to_value(s7, "vct-set!");
     s7_function_set_chooser(s7, f, vct_set_chooser);
+#if (!WITH_GMP)
     s7_function_set_ex_parser(f, vct_set_ex_parser);
+#endif
+    s7_function_set_step_safe(f);
 
     vct_set_three = s7_make_function(s7, "vct-set!", g_vct_set_three, 3, 0, false, "vct-set! optimization");
     s7_function_set_class(vct_set_three, f);
