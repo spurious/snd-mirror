@@ -748,8 +748,11 @@ static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
 
 
 #define VCT_NUMBER_LOCATION 8
-#define VCT_SLOT_VALUE_LOCATION 16
-
+#if (SIZEOF_VOID_P == 4)
+  #define VCT_SLOT_VALUE_LOCATION 12
+#else
+  #define VCT_SLOT_VALUE_LOCATION 16
+#endif
 
 #if (!WITH_GMP)
 #define s7_cell_integer(p) (s7_Int)(*((s7_Int *)((unsigned char *)(p) + VCT_NUMBER_LOCATION)))

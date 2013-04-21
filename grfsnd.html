@@ -942,13 +942,26 @@ Scholz.  It starts with a long and detailed commentary.
 
 <div class="innerheader" id="dynamic">Dynamically loaded modules</div>
 
-<p>You can import shared object files into Snd at any time.
+<p>You can load shared object files into Snd at any time.  In s7, load knows how to handle ".so" files:
 </p>
 
 <pre class="indented">
-(define lib (<em class=red>load</em> "/home/bil/cl/cscm.so"))
+(<em class=red>load</em> "/home/bil/cl/cscm.so")
 </pre>
-<!-- TODO: show how the variable init_func works here -->
+
+<p>load assumes the library has a function that ties the library functions into s7 (via s7_define_function
+and so on).  This function is named "init_func" in the load's current environment, so if our library 
+calls it init_ex, we add it to the loader's environment as follows:
+
+<pre class=indented>
+(load so-file-name 
+  (augment-environment 
+    (current-environment)
+    (cons 'init_func 'init_ex)))
+</pre>
+
+<p>See cload.scm for a much more friendly approach.
+</p>
 
 
 

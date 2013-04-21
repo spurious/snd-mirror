@@ -9495,7 +9495,11 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
 
 #define XEN_S7_NUMBER_LOCATION 8
 #define XEN_S7_DENOMINATOR_LOCATION 16
-#define XEN_S7_SLOT_VALUE_LOCATION 16
+#if (SIZEOF_VOID_P == 4)
+  #define XEN_S7_SLOT_VALUE_LOCATION 12
+#else
+  #define XEN_S7_SLOT_VALUE_LOCATION 16
+#endif
 
 #define s7_cell_slot_value(p) (s7_pointer)(*((s7_pointer *)((unsigned char *)(p) + XEN_S7_SLOT_VALUE_LOCATION)))
 
