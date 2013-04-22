@@ -110,7 +110,9 @@ static void sp_file_changed(GFileMonitor *mon, GFile *file, GFile *other, GFileM
 	}
 
     case G_FILE_MONITOR_EVENT_CREATED:
+#if HAVE_GTK_WIDGET_GET_VISIBLE
     case G_FILE_MONITOR_EVENT_MOVED:
+#endif
       if (sp->write_date != file_write_date(sp->filename))
 	{
 	  sp->file_unreadable = false;
@@ -185,7 +187,9 @@ static void vf_watch_directory(GFileMonitor *mon, GFile *file, GFile *other, GFi
       break;
 
     case G_FILE_MONITOR_EVENT_DELETED:
+#if HAVE_GTK_WIDGET_GET_VISIBLE
     case G_FILE_MONITOR_EVENT_MOVED:
+#endif
       /* it's an existing file that is moved? -- I see the old name?? */
       vf_remove_file_if_present(vdat, filename);
       break;
@@ -357,7 +361,9 @@ static void watch_current_directory_contents(GFileMonitor *mon, GFile *file, GFi
     {
     case G_FILE_MONITOR_EVENT_DELETED:
     case G_FILE_MONITOR_EVENT_CREATED:
+#if HAVE_GTK_WIDGET_GET_VISIBLE
     case G_FILE_MONITOR_EVENT_MOVED:
+#endif
       if ((!(just_sounds(ss))) ||
 	  (sound_file_p(g_file_get_path(file))))
 	{
@@ -1265,7 +1271,9 @@ static void watch_info_file(GFileMonitor *mon, GFile *file, GFile *other, GFileM
     case G_FILE_MONITOR_EVENT_CHANGED:
     case G_FILE_MONITOR_EVENT_DELETED:
     case G_FILE_MONITOR_EVENT_CREATED:
+#if HAVE_GTK_WIDGET_GET_VISIBLE
     case G_FILE_MONITOR_EVENT_MOVED:
+#endif
       repost_sound_info((file_dialog_info *)data);
       break;
 
@@ -2812,7 +2820,9 @@ static void watch_save_as_file(GFileMonitor *mon, GFile *file, GFile *other, GFi
     case G_FILE_MONITOR_EVENT_CHANGED:
     case G_FILE_MONITOR_EVENT_DELETED:
     case G_FILE_MONITOR_EVENT_CREATED:
+#if HAVE_GTK_WIDGET_GET_VISIBLE
     case G_FILE_MONITOR_EVENT_MOVED:
+#endif
       save_as_undoit((save_as_dialog_info *)data);
       break;
 
@@ -3891,7 +3901,9 @@ static void watch_new_file(GFileMonitor *mon, GFile *file, GFile *other, GFileMo
     case G_FILE_MONITOR_EVENT_CHANGED:
     case G_FILE_MONITOR_EVENT_DELETED:
     case G_FILE_MONITOR_EVENT_CREATED:
+#if HAVE_GTK_WIDGET_GET_VISIBLE
     case G_FILE_MONITOR_EVENT_MOVED:
+#endif
       new_file_undoit();
       break;
 
@@ -4346,7 +4358,9 @@ static void watch_file_read_only(GFileMonitor *mon, GFile *file, GFile *other, G
       /* else fall through */
     case G_FILE_MONITOR_EVENT_DELETED:
     case G_FILE_MONITOR_EVENT_CREATED:
+#if HAVE_GTK_WIDGET_GET_VISIBLE
     case G_FILE_MONITOR_EVENT_MOVED:
+#endif
       /* I don't think it makes sense to continue the dialog at this point */
       clear_dialog_error(ep->edat);
       gtk_widget_hide(ep->dialog);

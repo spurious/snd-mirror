@@ -4347,6 +4347,8 @@ static XEN g_formant_bank(XEN gens, XEN inp)
 
 /* ---------------- one-pole-all-pass ---------------- */
 
+/* SOMEDAY: make-one-pole-all-pass does not accept keyword args */
+
 static XEN g_make_one_pole_all_pass(XEN arg1, XEN arg2)
 {
   #define H_make_one_pole_all_pass "(" S_make_one_pole_all_pass " size coeff): return a new one-pole-all-pass generator."
@@ -19545,4 +19547,8 @@ void Init_sndlib(void)
 
 /* 
  * TODO: check the let/let* distinction in let_looped
+ * TODO: pulsed-env in snd-test (doc?)
+ * TODO: pink-noise snd-test (and doc?)
+ * TODO: *-bank in snd-test and doc examples
+ * TODO: tap? or is it mus-tap? in snd-test and doc
  */
