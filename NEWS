@@ -10,7 +10,7 @@ added environment-ref|set!
 
 removed mus-file-prescaler and mus-prescaler  -- these no longer serve any purpose.
 
-checked: gtk 3.7.14, 3.8.0|1, sbcl 1.1.6
+checked: gtk 3.7.14, 3.8.0|1, sbcl 1.1.6.
 
 Thanks!: Michael Edwards, Mike Scholz
 

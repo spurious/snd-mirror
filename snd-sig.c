@@ -3278,7 +3278,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
   bool reporting = false;
   io_error_t io_err = IO_NO_ERROR;
   XEN res = XEN_FALSE;
-  
+
   sp = cp->sound;
   reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
   if (reporting) start_progress_report(cp);
@@ -3602,6 +3602,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 
       arg = s7_caadar(source);
       e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
+
       gc_loc = s7_gc_protect(s7, e);
       slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
       if (s7_is_null(s7, s7_cdr(body)))

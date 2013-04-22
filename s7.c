@@ -64192,8 +64192,6 @@ s7_scheme *s7_init(void)
  *   or in the let for that matter -- could this always work?
  * TODO: give each e|f|gcdr ref a unique name
  * f|gcdr in let_op*q -- can let_r -> let_all_x? (or let_d similarly?)
- * TODO: get rid of all arg lambdas -- move them to the make function (*.html especially!)
- * easy closure_arity done right away?  0/1 should not be expensive -- maybe just set it!
  *
  * dox oneline opt -> outa i safe-closure_star_s|sa where all syms are not steppers:
  *   get sym vals, on each step, push to return, set code/args, call body (s: 1.1 mil, sa: 434k, sc: 539k)

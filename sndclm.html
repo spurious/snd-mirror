@@ -6236,7 +6236,6 @@ lambda: ( -- )
 </table>
 
 
-
 <p>all-pass filters are used extensively in reverberation; 
 see <a href="sndscm.html#jcrevdoc">jcrev</a> or <a href="sndscm.html#nrev">nrev</a>.
 To get the "all-pass" behavior, set feedback equal to -feedforward. Here's an example
@@ -6298,6 +6297,18 @@ Code of the form:
 (let ((ab (make-all-pass-bank (vector a1 a2))))
   (all-pass-bank ab input))
 </pre>
+
+
+<p>one-pole-all-pass is used by piano.scm:
+</p>
+
+<pre class="indented">
+y(n) = x(n) + coeff * (y(n-1) - y(n))
+x(n) = y(n-1)
+</pre>
+
+<p>This is repeated "size" times, with the generator input as the first y(n-1) value.
+</p>
 
 
 

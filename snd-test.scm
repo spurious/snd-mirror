@@ -4,33 +4,33 @@
 ;;;  test 1: defaults                           [1132]
 ;;;  test 2: headers                            [1345]
 ;;;  test 3: variables                          [1660]
-;;;  test 4: sndlib                             [2240]
-;;;  test 5: simple overall checks              [4692]
+;;;  test 4: sndlib                             [2241]
+;;;  test 5: simple overall checks              [4693]
 ;;;  test 6: vcts                               [9463]
 ;;;  test 7: colors                             [9779]
 ;;;  test 8: clm                                [10297]
-;;;  test 9: mix                                [21850]
-;;;  test 10: marks                             [23637]
-;;;  test 11: dialogs                           [24597]
-;;;  test 12: extensions                        [24792]
-;;;  test 13: menus, edit lists, hooks, etc     [25058]
-;;;  test 14: all together now                  [26433]
-;;;  test 15: chan-local vars                   [27312]
-;;;  test 16: regularized funcs                 [29070]
-;;;  test 17: dialogs and graphics              [32681]
-;;;  test 18: enved                             [32780]
-;;;  test 19: save and restore                  [32799]
-;;;  test 20: transforms                        [34413]
-;;;  test 21: new stuff                         [36546]
-;;;  test 22: (run)                             [38559]
-;;;  test 23: with-sound                        [38864]
-;;;  test 25: X/Xt/Xm                           [41829]
-;;;  test 26:                                   [45511]
-;;;  test 27: GL                                [45517]
-;;;  test 28: errors                            [45641]
-;;;  test 29: s7                                [47700]
-;;;  test all done                              [47772]
-;;;  test the end                               [47953]
+;;;  test 9: mix                                [21966]
+;;;  test 10: marks                             [23753]
+;;;  test 11: dialogs                           [24713]
+;;;  test 12: extensions                        [24908]
+;;;  test 13: menus, edit lists, hooks, etc     [25174]
+;;;  test 14: all together now                  [26549]
+;;;  test 15: chan-local vars                   [27428]
+;;;  test 16: regularized funcs                 [29185]
+;;;  test 17: dialogs and graphics              [32796]
+;;;  test 18: enved                             [32895]
+;;;  test 19: save and restore                  [32914]
+;;;  test 20: transforms                        [34528]
+;;;  test 21: new stuff                         [36661]
+;;;  test 22: (run)                             [38674]
+;;;  test 23: with-sound                        [39197]
+;;;  test 25: X/Xt/Xm                           [42164]
+;;;  test 26:                                   [45846]
+;;;  test 27: GL                                [45852]
+;;;  test 28: errors                            [45976]
+;;;  test 29: s7                                [48035]
+;;;  test all done                              [48107]
+;;;  test the end                               [48290]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -2076,11 +2076,12 @@
 		       'make-convolve 'make-delay 'make-env 'make-fft-window 'make-file->frame
 		       'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter 'make-formant 'make-firmant 'make-formant-bank
 		       'make-frame 'make-frame->file 'make-granulate 'make-graph-data 'make-iir-filter
-		       'make-locsig 'make-mix-sampler 'make-mixer 'make-move-sound 'make-notch 'make-one-pole
+		       'make-locsig 'make-mix-sampler 'make-mixer 'make-move-sound 'make-notch 'make-one-pole 'make-one-pole-all-pass
 		       'make-one-zero 'make-oscil 'make-phase-vocoder 'make-player 'make-polyshape 'make-polywave
 		       'make-pulse-train 'make-rand 'make-rand-interp 'make-readin
 		       'make-region 'make-region-sampler 'make-sample->file 'make-sampler 'make-sawtooth-wave
-		       'make-scalar-mixer 'make-nrxysin 'make-nrxycos 'make-snd->sample 'make-sound-data 'make-square-wave
+		       'make-scalar-mixer 'make-nrxysin 'make-nrxycos 'make-rxyk!cos 'make-rxyk!sin 
+		       'make-snd->sample 'make-sound-data 'make-square-wave
 		       'make-src 'make-ssb-am 'make-ncos 'make-nsin 'make-table-lookup
 		       'make-triangle-wave 'make-two-pole 'make-two-zero
 		       'make-variable-graph 'make-vct 'make-wave-train 
@@ -2132,8 +2133,8 @@
 		       'mus-width 'mus-xcoeff 'mus-xcoeffs 'mus-ycoeff 'mus-ycoeffs
 		       'name-click-hook 'new-sound 'new-sound-dialog 'new-sound-hook 'new-widget-hook
 		       'next-sample 'normalize-by-channel 'normalize-by-sound 'normalize-channel 'normalize-globally
-		       'notch 'notch? 'one-pole 'one-pole? 'one-zero
-		       'one-zero? 'open-file-dialog 'open-file-dialog-directory 'open-hook 'open-raw-sound 'open-raw-sound-hook
+		       'notch 'notch? 'one-pole 'one-pole? 'one-pole-all-pass 'one-pole-all-pass? 
+		       'one-zero 'one-zero? 'open-file-dialog 'open-file-dialog-directory 'open-hook 'open-raw-sound 'open-raw-sound-hook
 		       'open-sound
 		       'orientation-hook 'oscil 'oscil? 'out-any 'outa
 		       'outb 'outc 'outd 'output-comment-hook 'output-name-hook 
@@ -2177,7 +2178,7 @@
 		       'show-axes 'show-controls 'show-grid 'show-indices 'show-full-duration 'show-full-range 'initial-beg 'initial-dur
 		       'show-listener 'show-marks 'show-mix-waveforms 'show-no-axes 'show-selection 'show-selection-transform
 		       'show-sonogram-cursor 'show-transform-peaks 'show-widget 'show-x-axis 'show-x-axis-unlabelled
-		       'show-y-zero 'sinc-width 'nrxysin 'nrxysin? 'nrxycos 'nrxycos?
+		       'show-y-zero 'sinc-width 'nrxysin 'nrxysin? 'nrxycos 'nrxycos? 'rxyk!cos 'rxyk!cos? 'rxyk!sin 'rxyk!sin? 
 		       'smooth-channel 'smooth-selection 'smooth-sound 'snd->sample 'snd->sample?
 		       'snd-error 'snd-error-hook 'snd-gcs 'snd-help 'snd-font 'snd-color
 		       'snd-print 'snd-spectrum 'snd-tempnam 'snd-url
@@ -21046,7 +21047,7 @@ EDITS: 2
 		       (lambda () (make-filtered-comb :filter (make-one-zero .5 .5)))
 		       make-formant (lambda () (make-frame 3)) make-granulate
 		       (lambda () (make-iir-filter :xcoeffs (vct 0 1 2))) make-locsig (lambda () (make-mixer 3 3)) 
-		       make-notch make-one-pole make-one-zero make-oscil 
+		       make-notch make-one-pole (lambda () (make-one-pole-all-pass 1 .5)) make-one-zero make-oscil 
 		       make-pulse-train make-rand make-rand-interp make-sawtooth-wave
 		       make-square-wave make-src make-table-lookup make-triangle-wave
 		       make-two-pole make-two-zero make-wave-train make-polyshape make-phase-vocoder make-ssb-am
@@ -21055,7 +21056,7 @@ EDITS: 2
 	  (gen-procs (list all-pass asymmetric-fm moving-average moving-max
 			   comb convolve delay env 
 			   filter fir-filter filtered-comb formant (lambda (gen ind) (gen ind)) granulate
-			   iir-filter (lambda (gen a) (locsig gen 0 a)) (lambda (gen a) (gen a 0)) notch one-pole one-zero oscil 
+			   iir-filter (lambda (gen a) (locsig gen 0 a)) (lambda (gen a) (gen a 0)) notch one-pole one-pole-all-pass one-zero oscil 
 			   pulse-train rand rand-interp sawtooth-wave
 			   square-wave (lambda (gen a) (src gen 0.0 a)) table-lookup triangle-wave
 			   two-pole two-zero wave-train polyshape phase-vocoder ssb-am
@@ -21063,7 +21064,7 @@ EDITS: 2
 	  (ques-procs (list all-pass? asymmetric-fm? moving-average? moving-max?
 			    comb? convolve? delay? env? 
 			    filter? fir-filter? filtered-comb? formant? frame? granulate?
-			    iir-filter? locsig? mixer? notch? one-pole? one-zero? oscil? 
+			    iir-filter? locsig? mixer? notch? one-pole? one-pole-all-pass? one-zero? oscil? 
 			    pulse-train? rand? rand-interp? sawtooth-wave?
 			    square-wave? src? table-lookup? triangle-wave?
 			    two-pole? two-zero? wave-train? polyshape? phase-vocoder? ssb-am?
@@ -21071,7 +21072,7 @@ EDITS: 2
 	  (func-names (list 'all-pass 'asymmetric-fm 'moving-average 'moving-max
 			    'comb 'convolve 'delay 'env 
 			    'filter-x 'fir-filter 'filtered-comb 'formant 'frame 'granulate
-			    'iir-filter 'locsig 'mixer 'notch 'one-pole 'one-zero 'oscil
+			    'iir-filter 'locsig 'mixer 'notch 'one-pole 'one-pole-all-pass 'one-zero 'oscil
 			    'pulse-train 'rand 'rand-interp 'sawtooth-wave
 			    'square-wave 'src 'table-lookup 'triangle-wave
 			    'two-pole 'two-zero 'wave-train 'polyshape 'phase-vocoder 'ssb-am
@@ -21079,7 +21080,7 @@ EDITS: 2
 	  (gen-args (list 0.0 0.0 1.0 1.0
 			  0.0 (lambda (dir) 0.0) 0.0 #f
 			  0.0 0.0 0.0 0.0 0 (lambda (dir) 0.0)
-			  0.0 0.0 0 0.0 0.0 0.0 0.0
+			  0.0 0.0 0 0.0 0.0 0.0 0.0 0.0
 			  0.0 0.0 0.0 0.0
 			  0.0 (lambda (dir) 0.0) 0.0 0.0
 			  0.0 0.0 0.0 0.0 (lambda (dir) 0.0) 0.0
@@ -21300,7 +21301,7 @@ EDITS: 2
 					make-comb ;make-convolve
 					make-delay make-env make-fft-window
 					make-filter make-filtered-comb make-fir-filter make-formant make-frame ;make-granulate
-					make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil
+					make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
 					make-pulse-train make-rand make-rand-interp make-sawtooth-wave make-polyshape make-polywave
 					make-square-wave ;make-src
 					make-two-pole make-two-zero make-wave-train
@@ -21823,6 +21824,201 @@ EDITS: 2
 	    (close-sound s1)
 	    (close-sound s2))))
     
+    (let ()
+      (defgenerator (old-rxyk!sin
+		     :make-wrapper (lambda (g)
+				     (set! (g 'frequency) (hz->radians (g 'frequency)))
+				     g))
+	(frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
+      
+      (define* (old-rxyk!sin gen (fm 0.0))
+	(set! (gen 'fm) fm)
+	(with-environment gen
+	  (let* ((x angle)
+		 (y (* x ratio)))
+	    (set! angle (+ x fm frequency))
+	    (/ (* (exp (* r (cos y)))
+		  (sin (+ x (* r (sin y)))))
+	       (exp (abs r))))))
+      
+      (defgenerator (old-rxyk!cos
+		     :make-wrapper (lambda (g)
+				     (set! (g 'frequency) (hz->radians (g 'frequency)))
+				     (set! (g 'ar) (/ 1.0 (exp (abs (g 'r)))))
+				     g))
+	(frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm ar)
+      
+      (define* (old-rxyk!cos gen (fm 0.0))
+	(set! (gen 'fm) fm)
+	(with-environment gen
+	  (let* ((x angle)
+		 (y (* x ratio)))
+	    (set! angle (+ x fm frequency))
+	    (* (exp (* r (cos y)))
+	       (cos (+ x (* r (sin y))))
+	       ar))))
+      
+      (define-macro (define-memoized name&arg . body)
+	(let ((arg (cadr name&arg))
+	      (memo (gensym "memo")))
+	  `(define ,(car name&arg)
+	     (let ((,memo (make-hash-table)))
+	       (lambda (,arg)
+		 (or (,memo ,arg)                             ; check for saved value
+		     (set! (,memo ,arg) (begin ,@body)))))))) ; set! returns the new value
+      
+      (define-memoized (kfactorial n)
+	(define (k n m)
+	  (if (<= n m)
+	      n
+	      (* (k n (* 2 m))
+		 (k (- n m) (* 2 m)))))
+	(if (zero? n)
+	    1
+	    (k n 1)))
+      
+      (define (rxyk!cos-direct x y a terms)
+	(let ((sum 0.0))
+	  (do ((k 0 (+ k 1)))
+	      ((= k terms) (/ sum (exp (abs a))))
+	    (set! sum (+ sum (* (/ (expt a k) (kfactorial k))
+				(cos (+ x (* k y)))))))))
+      
+      (define (rxyk!sin-direct x y a terms)
+	(let ((sum 0.0))
+	  (do ((k 0 (+ k 1)))
+	      ((= k terms) (/ sum (exp (abs a))))
+	    (set! sum (+ sum (* (/ (expt a k) (kfactorial k))
+				(sin (+ x (* k y)))))))))
+      
+      
+      (let ((g1 (make-rxyk!cos 100.0))
+	    (g2 (make-old-rxyk!cos 100.0))
+	    (x3 (hz->radians 100.0)))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x x3)))
+	    ((= i 100))
+	  (let ((v1 (rxyk!cos g1))
+		(v2 (old-rxyk!cos g2))
+		(v3 (rxyk!cos-direct x x 0.5 12)))
+	    (if (or (> (abs (- v1 v2)) 1e-6)
+		    (> (abs (- v1 v3)) 1e-6))
+		(format #t ";rxyk!cos ~A ~A: ~A ~A ~A -> ~A~%" i x v1 v2 v3 (max (abs (- v1 v2)) (abs (- v1 v3))))))))
+      
+      (let ((g1 (make-rxyk!sin 100.0))
+	    (g2 (make-old-rxyk!sin 100.0))
+	    (x3 (hz->radians 100.0)))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x x3)))
+	    ((= i 100))
+	  (let ((v1 (rxyk!sin g1))
+		(v2 (old-rxyk!sin g2))
+		(v3 (rxyk!sin-direct x x 0.5 12)))
+	    (if (or (> (abs (- v1 v2)) 1e-6)
+		    (> (abs (- v1 v3)) 1e-6))
+		(format #t ";rxyk!sin ~A ~A: ~A ~A ~A -> ~A~%" i x v1 v2 v3 (max (abs (- v1 v2)) (abs (- v1 v3))))))))
+      
+      (let ((g1 (make-rxyk!cos 100.0 :ratio 2.0 :r 0.25))
+	    (g2 (make-old-rxyk!cos 100.0 :ratio 2.0 :r 0.25)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 100))
+	  (let ((v1 (rxyk!cos g1))
+		(v2 (old-rxyk!cos g2)))
+	    (if (> (abs (- v1 v2)) 1e-6)
+		(format #t ";rxyk!cos ratio:2: A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
+      
+      (let ((g1 (make-rxyk!sin 100.0 :ratio 2.0 :r 0.25))
+	    (g2 (make-old-rxyk!sin 100.0 :ratio 2.0 :r 0.25)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 100))
+	  (let ((v1 (rxyk!sin g1))
+		(v2 (old-rxyk!sin g2)))
+	    (if (> (abs (- v1 v2)) 1e-6)
+		(format #t ";rxyk!sin ratio:2: A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
+      
+      (let ((g1 (make-rxyk!cos 100.0 :ratio 2.0 :r 0.25))
+	    (o1 (make-oscil 400.0))
+	    (g2 (make-old-rxyk!cos 100.0 :ratio 2.0 :r 0.25))
+	    (o2 (make-oscil 400.0)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 100))
+	  (let ((v1 (rxyk!cos g1 (oscil o1)))
+		(v2 (old-rxyk!cos g2 (oscil o2))))
+	    (if (> (abs (- v1 v2)) 1e-6)
+		(format #t ";rxyk!cos fm ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
+      
+      (let ((g1 (make-rxyk!sin 100.0 :ratio 2.0 :r 0.25))
+	    (o1 (make-oscil 400.0))
+	    (g2 (make-old-rxyk!sin 100.0 :ratio 2.0 :r 0.25))
+	    (o2 (make-oscil 400.0)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 100))
+	  (let ((v1 (rxyk!sin g1 (oscil o1)))
+		(v2 (old-rxyk!sin g2 (oscil o2))))
+	    (if (> (abs (- v1 v2)) 1e-6)
+		(format #t ";rxyk!sin fm ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2))))))))
+
+    (let ()
+      (defgenerator one-pole-allpass coeff input x1 y1)
+      
+      (define (one-pole-allpass gen input)
+	(set! (gen 'input) input)
+	(with-environment gen
+	  (set! y1 (+ x1 (* coeff (- input y1))))
+	  (set! x1 input)
+	  y1))
+      
+      (defgenerator one-pole-allpass-bank coeff input x1 y1 x2 y2 x3 y3 x4 y4 x5 y5 x6 y6 x7 y7 x8 y8) 
+      
+      (define (one-pole-allpass-bank gen input)
+	(set! (gen 'input) input)
+	(with-environment gen
+	  (set! y1 (+ x1 (* coeff (- input y1))))
+	  (set! x1 input)
+	  
+	  (set! y2 (+ x2 (* coeff (- y1 y2))))
+	  (set! x2 y1)
+	  
+	  (set! y3 (+ x3 (* coeff (- y2 y3))))
+	  (set! x3 y2)
+	  
+	  (set! y4 (+ x4 (* coeff (- y3 y4))))
+	  (set! x4 y3)
+	  
+	  (set! y5 (+ x5 (* coeff (- y4 y5))))
+	  (set! x5 y4)
+	  
+	  (set! y6 (+ x6 (* coeff (- y5 y6))))
+	  (set! x6 y5)
+	  
+	  (set! y7 (+ x7 (* coeff (- y6 y7))))
+	  (set! x7 y6)
+	  
+	  (set! y8 (+ x8 (* coeff (- y7 y8))))
+	  (set! x8 y7)
+	  y8))
+      
+      (let ((o1 (make-one-pole-all-pass 1 .5))
+	    (o2 (make-one-pole-allpass .5)))
+	(do ((i 0 (+ i 1))
+	     (impulse 1.0 0.0))
+	    ((= i 30))
+	  (let ((v1 (one-pole-all-pass o1 impulse))
+		(v2 (one-pole-allpass o2 impulse)))
+	    (if (> (abs (- v1 v2)) 1e-6)
+		(format #t ";one-pole-all-pass (1) ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
+      
+      (let ((o1 (make-one-pole-all-pass 8 .5))
+	    (o2 (make-one-pole-allpass-bank .5)))
+	(do ((i 0 (+ i 1))
+	     (impulse 1.0 0.0))
+	    ((= i 30))
+	  (let ((v1 (one-pole-all-pass o1 impulse))
+		(v2 (one-pole-allpass-bank o2 impulse)))
+	    (if (> (abs (- v1 v2)) 1e-6)
+		(format #t ";one-pole-all-pass (1) ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
+      )
+
     ))
 
 
@@ -38547,7 +38743,6 @@ EDITS: 1
 	(define args4 (list 1.5 '(oscil o4) '(env e4) 'x 'i))
 	
 	(define (try str)
-	  (set! tries (+ tries 1))
 					;(format *stderr* "~A~%" str)
 	  (call-with-output-file "try-test.scm"
 	    (lambda (p)
@@ -38948,6 +39143,7 @@ EDITS: 1
 	      args2))
 	   args1)
 	  
+#|
 	  (for-each
 	   (lambda (d)
 	     (for-each 
@@ -39051,8 +39247,9 @@ EDITS: 1
 		    args4))
 		 args3))
 	      args2))
-	   args1))
-	
+	   args1)
+|#	
+	  )
 	(out-args))))
 
 
@@ -46052,21 +46249,22 @@ EDITS: 1
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
 		     make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
 		     make-file->sample make-filter make-fir-filter make-formant make-firmant frame make-frame make-frame->file make-granulate
-		     make-iir-filter make-locsig move-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil
+		     make-iir-filter make-locsig move-locsig make-mixer make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
-		     make-nrxysin make-nrxycos make-square-wave make-src make-ncos 
+		     make-nrxysin make-nrxycos make-square-wave make-src make-ncos make-rxyk!cos make-rxyk!sin 
 		     make-nsin make-ssb-am make-table-lookup make-triangle-wave
 		     make-two-pole make-two-zero make-wave-train mixer mixer* mixer-ref mixer-set! mixer? mixer+
 		     move-sound make-move-sound move-sound? mus-float-equal-fudge-factor
 		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape polyshape polyshape? make-polywave polywave polywave?
 		     mus-close mus-data mus-feedback mus-feedforward mus-fft mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
-		     mus-ramp mus-random mus-scaler mus-srate mus-xcoeff mus-xcoeffs mus-ycoeff mus-ycoeffs notch notch? one-pole one-pole?
+		     mus-ramp mus-random mus-scaler mus-srate mus-xcoeff mus-xcoeffs mus-ycoeff mus-ycoeffs 
+		     notch notch? one-pole one-pole? one-pole-all-pass one-pole-all-pass?
 		     one-zero one-zero? oscil oscil? out-any outa outb outc outd partials->polynomial normalize-partials
 		     partials->wave phase-partials->wave polynomial pulse-train pulse-train?
 		     radians->degrees radians->hz rand rand-interp rand-interp?  rand? readin readin? rectangular->polar rectangular->magnitudes
 		     ring-modulate sample->file sample->file? sample->frame sawtooth-wave
-		     sawtooth-wave? nrxysin nrxysin? nrxycos nrxycos?
+		     sawtooth-wave? nrxysin nrxysin? nrxycos nrxycos? rxyk!cos rxyk!cos? rxyk!sin rxyk!sin?
 		     spectrum square-wave square-wave? src src? ncos nsin ssb-am
 		     ncos? nsin? ssb-am? table-lookup table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero
 		     two-zero? wave-train wave-train?  make-vct vct-add! vct-subtract!  vct-copy
@@ -46153,9 +46351,9 @@ EDITS: 1
 			  make-all-pass make-asymmetric-fm make-snd->sample make-moving-average make-moving-max
 			  make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
 			  make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame make-frame->file make-granulate
-			  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil
+			  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
 			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
-			  make-nrxysin make-nrxycos make-square-wave 
+			  make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave 
 			  make-src make-ncos make-nsin make-table-lookup make-triangle-wave
 			  make-two-pole make-two-zero make-wave-train make-phase-vocoder make-ssb-am make-polyshape make-polywave
 			  make-color make-player make-region make-scalar-mixer
@@ -46405,8 +46603,8 @@ EDITS: 1
 					(snd-display #__line__ ";?proc ~A: ~A" n tag))))
 				(list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frame? file->sample? snd->sample?
 				      filter? fir-filter? formant? formant-bank? firmant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
-				      mus-output? notch? one-pole? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
-				      sample->file? sawtooth-wave? nrxysin? nrxycos?
+				      mus-output? notch? one-pole? one-pole-all-pass? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
+				      sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
 				      square-wave? src? ncos? nsin? table-lookup? 
 				      triangle-wave? two-pole? two-zero? wave-train? color? mix-sampler? moving-average? moving-max? ssb-am?
 				      sampler? region-sampler? vct? )))
@@ -46423,8 +46621,8 @@ EDITS: 1
 			    (snd-display #__line__ ";oscil?proc ~A: ~A" n tag))))
 		    (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frame? file->sample? snd->sample?
 			  filter? fir-filter? formant? formant-bank? firmant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
-			  mus-output? notch? one-pole? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
-			  sample->file? sawtooth-wave? nrxysin? nrxycos?
+			  mus-output? notch? one-pole? one-pole-all-pass? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
+			  sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
 			  square-wave? src? ncos? nsin? table-lookup? 
 			  triangle-wave? two-pole? two-zero? wave-train? sound? color? mix-sampler? moving-average? moving-max? ssb-am?
 			  sampler? region-sampler? vct?))
@@ -46468,19 +46666,19 @@ EDITS: 1
 				      degrees->radians delay env formant firmant frame->list granulate hz->radians linear->db
 				      make-all-pass make-asymmetric-fm make-comb make-filtered-comb make-convolve make-delay make-env
 				      make-file->frame make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame
-				      make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero
+				      make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero
 				      make-oscil make-pulse-train make-rand make-rand-interp make-readin
-				      make-sawtooth-wave make-nrxysin make-nrxycos make-square-wave make-src 
+				      make-sawtooth-wave make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave make-src 
 				      make-ncos make-nsin
 				      make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train make-ssb-am
 				      mus-channel mus-channels make-polyshape make-polywave
 				      mus-data mus-feedback mus-feedforward mus-frequency mus-hop
 				      mus-increment mus-length mus-file-name mus-location mus-name mus-order mus-phase mus-ramp mus-random mus-run
-				      mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-moving-average make-moving-max 
+				      mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-pole-all-pass one-zero make-moving-average make-moving-max 
 				      seconds->samples samples->seconds
 				      oscil partials->polynomial partials->wave phase-partials->wave
 				      phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin
-				      sawtooth-wave nrxysin nrxycos square-wave src 
+				      sawtooth-wave nrxysin nrxycos rxyk!cos rxyk!sin square-wave src 
 				      ncos nsin table-lookup tap triangle-wave
 				      two-pole two-zero wave-train ssb-am)))
 		    (list (make-vector 1) color-95 (list 1.0)))
@@ -46502,14 +46700,14 @@ EDITS: 1
 			  formant-bank frame* frame+ frame->frame frame-ref frame->sample granulate iir-filter ina
 			  inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-comb make-filtered-comb
 			  make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-firmant make-frame make-granulate
-			  make-iir-filter make-locsig make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder
+			  make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil make-phase-vocoder
 			  make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-moving-average make-moving-max
-			  make-nrxysin make-nrxycos make-square-wave make-src make-ncos 
+			  make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave make-src make-ncos 
 			  make-nsin make-table-lookup make-triangle-wave
 			  make-two-pole make-two-zero make-wave-train mixer* mixer+ multiply-arrays
-			  notch one-pole one-zero oscil partials->polynomial partials->wave make-polyshape make-polywave
+			  notch one-pole one-pole-all-pass one-zero oscil partials->polynomial partials->wave make-polyshape make-polywave
 			  phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar rectangular->magnitudes
-			  ring-modulate sample->frame sawtooth-wave nrxysin nrxycos square-wave src ncos nsin
+			  ring-modulate sample->frame sawtooth-wave nrxysin nrxycos rxyk!cos rxyk!sin square-wave src ncos nsin
 			  table-lookup tap triangle-wave two-pole two-zero wave-train ssb-am make-ssb-am))
 	  
 	  (for-each (lambda (n)
@@ -48015,6 +48213,7 @@ EDITS: 1
 ;; 20-Mar-13: #(1 1 2 2 30  90 4 1 317 1 12 1 1 10 22 1  79 1 1 115 40  78 1 1131 0 0 0 1 2 79)  ;  20
 ;; 3-Apr-13:  #(1 1 2 2 30  89 4 1 297 1 11 1 2 10  9 1  81 1 1 110 41  73 1 1048 0 0 0 1 2 80)  ;  19
 ;; 14-Apr-13: #(1 1 2 2 31  88 4 1 288 1 16 1 2 10 17 1  77 1 1 110 39  73 1  975 0 0 0 1 2 75)  ;  18
+;; 21-Apr-13: #(1 1 2 2 27  88 4 1 266 1 15 1 2 10 15 1  78 1 1  97 39  69 1  917 0 0 0 1 2 77)  ;  17
 
 ;;; -------- cleanup temp files
 

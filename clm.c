@@ -15584,3 +15584,6 @@ void mus_initialize(void)
   data_format_zero[MUS_ULSHORT] = 0x80;
 #endif  
 }
+
+/* TODO: currently if (say) mus-feedback called incorrectly, error message says "mus-increment"
+ */

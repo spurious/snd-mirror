@@ -4355,7 +4355,6 @@ static XEN g_make_one_pole_all_pass(XEN arg1, XEN arg2)
   int size;
   mus_float_t coeff;
 
-  /* TODO: one-pole-all-pass doc/test/keyword cases */
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, XEN_ARG_1, S_make_one_pole_all_pass, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(arg2), arg2, XEN_ARG_2, S_make_one_pole_all_pass, "a number");
 
@@ -17961,7 +17960,6 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "polynomial");
   s7_function_set_chooser(sc, f, polynomial_chooser);
   direct_choice_2(sc, f, (s7_pointer)wrapped_polynomial_2, (s7_pointer)wrapped_polynomial_p);
-  /* TODO: test polynomial direct if passed a vector */
   polynomial_temp = clm_make_function_no_choice(sc, "polynomial", g_polynomial_temp, 2, 0, false, "polynomial optimization", f);
   polynomial_cos = clm_make_function_no_choice(sc, "polynomial", g_polynomial_cos, 2, 0, false, "polynomial optimization", f);
 
