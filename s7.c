@@ -240,7 +240,7 @@
 
 #ifndef WITH_C_LOADER
 #define WITH_C_LOADER WITH_GCC
-  /* an experiment -- (load file.so e) looks for (e 'init) and if found, calls it
+  /* an experiment -- (load file.so e) looks for (e 'init_func) and if found, calls it
    *   as the shared object init function.  If WITH_SYSTEM_EXTRAS is 0, the caller
    *   needs to supply system and delete-file so that cload.scm works.
    */
@@ -445,8 +445,6 @@ enum {OP_NO_OP,
       OP_LET_O, OP_LET_O1, OP_LET_R, OP_LET_ALL_R, OP_LET_C_D, OP_LET_O_P, OP_LET_Z_P, OP_LET_O2, OP_LET_O_O, OP_LET_Z_O, OP_LET_O3, 
       OP_LET_R_P, OP_LET_CAR_P,
 
-      OP_SAFE_CAR_1,
-
       OP_SAFE_C_ZZ_1, OP_SAFE_C_ZZ_2, OP_SAFE_C_SZ_1, OP_SAFE_C_ZS_1, OP_SAFE_C_ZA_1, OP_INCREMENT_SZ_1, OP_SAFE_C_SZ_SZ,
       OP_SAFE_C_ZAA_1, OP_SAFE_C_AZA_1, OP_SAFE_C_AAZ_1, OP_SAFE_C_SSZ_1, 
       OP_SAFE_C_ZZA_1, OP_SAFE_C_ZZA_2, OP_SAFE_C_ZAZ_1, OP_SAFE_C_ZAZ_2, OP_SAFE_C_AZZ_1, OP_SAFE_C_AZZ_2, 
@@ -545,8 +543,6 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "let", "let", "let", "let", "let", "let", "let", "let", "let", "let", "let", 
    "let", "let", 
 
-   "car",
-
    "c_zz_1", "c_zz_2", "c_sz_1", "c_zs_1", "c_za_1", "increment_sz_1", "c_sz_sz",
    "c_zaa_1", "c_aza_1", "c_aaz_1", "c_ssz_1", 
    "c_zza_1", "c_zza_2", "c_zaz_1", "c_zaz_2", "c_azz_1", "c_azz_2", 
@@ -631,8 +627,6 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_LET_O", "OP_LET_O1", "OP_LET_R", "OP_LET_ALL_R", "OP_LET_C_D", "OP_LET_O_P", "OP_LET_Z_P", "OP_LET_O2", "OP_LET_O_O", "OP_LET_Z_O", "OP_LET_O3", 
   "OP_LET_R_P", "OP_LET_CAR_P",
 
-  "OP_SAFE_CAR_1",
-
   "OP_SAFE_C_ZZ_1", "OP_SAFE_C_ZZ_2", "OP_SAFE_C_SZ_1", "OP_SAFE_C_ZS_1", "OP_SAFE_C_ZA_1", "OP_INCREMENT_SZ_1", "OP_SAFE_C_SZ_SZ",
   "OP_SAFE_C_ZAA_1", "OP_SAFE_C_AZA_1", "OP_SAFE_C_AAZ_1", "OP_SAFE_C_SSZ_1", 
   "OP_SAFE_C_ZZA_1", "OP_SAFE_C_ZZA_2", "OP_SAFE_C_ZAZ_1", "OP_SAFE_C_ZAZ_2", "OP_SAFE_C_AZZ_1", "OP_SAFE_C_AZZ_2", 
@@ -655,9 +649,6 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_A, HOP_SAFE_C_A, OP_SAFE_C_AA, HOP_SAFE_C_AA, OP_SAFE_C_AAA, HOP_SAFE_C_AAA, OP_SAFE_C_AAAA, HOP_SAFE_C_AAAA, 
       OP_SAFE_C_AZ, HOP_SAFE_C_AZ, OP_SAFE_C_ZA, HOP_SAFE_C_ZA, OP_SAFE_C_SQS, HOP_SAFE_C_SQS, 
 
-      OP_SAFE_CAR_Q, HOP_SAFE_CAR_Q, OP_SAFE_CAR_S, HOP_SAFE_CAR_S, OP_SAFE_CAR_OPT, HOP_SAFE_CAR_OPT, OP_SAFE_CAR_P, HOP_SAFE_CAR_P, 
-      OP_SAFE_CDR_S, HOP_SAFE_CDR_S, OP_SAFE_NULL_S, HOP_SAFE_NULL_S, 
-      
       OP_SAFE_C_opCq, HOP_SAFE_C_opCq, OP_SAFE_C_opQq, HOP_SAFE_C_opQq, OP_SAFE_C_opSq, HOP_SAFE_C_opSq, 
       OP_SAFE_C_opSSq, HOP_SAFE_C_opSSq, OP_SAFE_C_opSCq, HOP_SAFE_C_opSCq, OP_SAFE_C_opSQq, HOP_SAFE_C_opSQq, 
       OP_SAFE_C_opCSq, HOP_SAFE_C_opCSq, OP_SAFE_C_S_opSq, HOP_SAFE_C_S_opSq,
@@ -764,9 +755,6 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_all_s", "h_safe_c_all_s", "safe_c_all_x", "h_safe_c_all_x", "safe_c_ssa", "h_safe_c_ssa", "safe_c_csa", "h_safe_c_csa",
       "safe_c_a", "h_safe_c_a", "safe_c_aa", "h_safe_c_aa", "safe_c_aaa", "h_safe_c_aaa", "safe_c_aaaa", "h_safe_c_aaaa", 
       "safe_c_az", "h_safe_c_az", "safe_c_za", "h_safe_c_za", "safe_c_sqs", "h_safe_c_sqs",
-
-      "safe_car_q", "h_safe_car_q", "safe_car_s", "h_safe_car_s", "safe_car_opt", "h_safe_car_opt", "safe_car_p", "h_safe_car_p", 
-      "safe_cdr_s", "h_safe_cdr_s", "safe_null_s", "h_safe_null_s", 
       
       "safe_c_opcq", "h_safe_c_opcq", "safe_c_opqq", "h_safe_c_opqq", "safe_c_opsq", "h_safe_c_opsq", 
       "safe_c_opssq", "h_safe_c_opssq", "safe_c_opscq", "h_safe_c_opscq", "safe_c_opsqq", "h_safe_c_opsqq", 
@@ -1005,19 +993,20 @@ typedef struct s7_cell {
     void *c_pointer;
 
     int baffle_key;
+
+    struct {
+      s7_Int length;
+      s7_pointer *elements;
+      s7_vdims_t *dim_info;
+      unsigned int fill_ptr;                                                    /* used only in global env (a vector) */
+    } vector;
     
     struct {
       s7_Int length;
       s7_pointer *elements;
-      /* in the normal vector case, the rest is unneeded, but is_multidimension checks whether dim_info is null
-       */
-      union {
-	s7_vdims_t *dim_info;
-	unsigned int entries;          
-      } vextra;
-      s7_pointer (*hash_func)(s7_scheme *sc, s7_pointer table, s7_pointer key); /* only used if vector is a hash-table */
-      unsigned int fill_ptr;                                                    /* used only in global env (a vector) */
-    } vector;
+      unsigned int entries;          
+      s7_pointer (*hash_func)(s7_scheme *sc, s7_pointer table, s7_pointer key); 
+    } hasher;
     
     struct {
       c_proc_t *c_proc;     /* C functions, macros */
@@ -1960,7 +1949,6 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 #define is_syntax(p)                  (type(p) == T_SYNTAX)
 #define syntax_opcode(p)              ((p)->hloc)
 
-/* an experiment... */
 #define lifted_op(P)                  (P)->object.cons.dat.op
 #define syntax_op(P)                  car(ecdr(P))
 static void set_syntax_op(s7_pointer p, s7_pointer op) {syntax_op(p) = op; lifted_op(ecdr(p)) = syntax_opcode(op);}
@@ -1983,16 +1971,21 @@ static void set_syntax_op(s7_pointer p, s7_pointer op) {syntax_op(p) = op; lifte
 #define vector_elements(p)            (p)->object.vector.elements
 #define vector_fill_pointer(p)        ((p)->object.vector.fill_ptr)
 
-#define vector_dimension(p, i)        ((p)->object.vector.vextra.dim_info->dims[i])
-#define vector_ndims(p)               ((p)->object.vector.vextra.dim_info->ndims)
-#define vector_offset(p, i)           ((p)->object.vector.vextra.dim_info->offsets[i])
-#define vector_is_multidimensional(p) ((p)->object.vector.vextra.dim_info)
-#define shared_vector(p)              ((p)->object.vector.vextra.dim_info->original)
+#define vector_ndims(p)               ((p)->object.vector.dim_info->ndims)
+#define vector_dimension(p, i)        ((p)->object.vector.dim_info->dims[i])
+#define vector_dimensions(p)          ((p)->object.vector.dim_info->dims)
+#define vector_offset(p, i)           ((p)->object.vector.dim_info->offsets[i])
+#define vector_offsets(p)             ((p)->object.vector.dim_info->offsets)
+#define vector_is_multidimensional(p) ((p)->object.vector.dim_info)
+#define vector_dimension_info(p)      ((p)->object.vector.dim_info)
+#define shared_vector(p)              ((p)->object.vector.dim_info->original)
+#define vector_rank(p)                ((vector_dimension_info(p)) ? vector_ndims(p) : 1)
 
-#define hash_table_length(p)          (p)->object.vector.length
-#define hash_table_elements(p)        (p)->object.vector.elements
-#define hash_table_entries(p)         (p)->object.vector.vextra.entries
-#define hash_table_function(p)        (p)->object.vector.hash_func
+#define hash_table_length(p)          (p)->object.hasher.length
+#define hash_table_element(p, i)      ((p)->object.hasher.elements[i])
+#define hash_table_elements(p)        (p)->object.hasher.elements
+#define hash_table_entries(p)         (p)->object.hasher.entries
+#define hash_table_function(p)        (p)->object.hasher.hash_func
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT) 
 #define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
@@ -2306,7 +2299,6 @@ static int safe_strcmp(const char *s1, const char *s2)
 /* forward decls */
 static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen);
 static bool is_proper_list(s7_scheme *sc, s7_pointer lst);
-static s7_function all_x_eval(s7_pointer arg);
 static bool is_all_x_safe(s7_scheme *sc, s7_pointer p);
 static void annotate_args(s7_scheme *sc, s7_pointer args);
 static void annotate_arg(s7_scheme *sc, s7_pointer arg);
@@ -2913,16 +2905,16 @@ static void sweep(s7_scheme *sc)
 	      s7_pointer a;
 	      a = sc->vectors[i];
 
-	      /* a multidimensional empty vector can have dim_info */
-	      if (vector_is_multidimensional(a))
+	      /* a multidimensional empty vector can have dimension info */
+	      if (vector_dimension_info(a))
 		{
 		  if (shared_vector(a) == sc->F)
 		    {
-		      free(a->object.vector.vextra.dim_info->dims);
-		      free(a->object.vector.vextra.dim_info->offsets);
+		      free(vector_dimensions(a));
+		      free(vector_offsets(a));
 		      free(vector_elements(a));
 		    }
-		  free(a->object.vector.vextra.dim_info);
+		  free(vector_dimension_info(a));
 		}
 	      else 
 		{
@@ -3454,13 +3446,24 @@ static void mark_dynamic_wind(s7_pointer p)
     }
 }
 
+
 static void mark_hash_table(s7_pointer p)
 {
   if (!is_marked(p))
     {
-      if (hash_table_entries(p) == 0)
-	set_mark(p);
-      else mark_vector_1(p, hash_table_length(p));
+      set_mark(p);
+      if (hash_table_entries(p) > 0)
+	{
+	  s7_pointer *tp, *tend;
+	  tp = (s7_pointer *)(hash_table_elements(p));
+	  tend = (s7_pointer *)(tp + hash_table_length(p));
+	  while (tp < tend)
+	    {
+	      if (is_pair(*tp))
+		mark_pair(*tp);
+	      tp++;
+	    }
+	}
     }
 }
 
@@ -3791,7 +3794,7 @@ static void try_to_call_gc(s7_scheme *sc)
 
   freed_heap = gc(sc);
   if ((freed_heap < sc->heap_size / 2) &&
-      (freed_heap < 1000000)) /* an experiment, if huge heap */
+      (freed_heap < 1000000)) /* if huge heap */
     {
       /* alloc more heap */
       unsigned int old_size, old_free;
@@ -5867,7 +5870,6 @@ s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 }
 
 
-/* an experiment */
 static s7_pointer find_dynamic_value(s7_scheme *sc, s7_pointer x, s7_pointer sym, long long int *id)
 { 
   for (; symbol_id(sym) < environment_id(x); x = next_environment(x));
@@ -17390,7 +17392,7 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
 /* ---------------------------------------- random ---------------------------------------- */
 
 /* random numbers.  The simple version used in clm.c is probably adequate,
- *   but here I'll use Marsaglia's MWC algorithm as an experiment.
+ *   but here I'll use Marsaglia's MWC algorithm.
  *     (random num) -> a number (0..num), if num == 0 return 0, use global default state
  *     (random num state) -> same but use this state
  *     (make-random-state seed) -> make a new state
@@ -24429,9 +24431,6 @@ s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q)
 }
 
 /* -------------------------------------------------------------------------------- */
-/* 
- * this is an (ugly) experiment...
- */
 
 s7_pointer s7_apply_1(s7_scheme *sc, s7_pointer args, s7_pointer (*f1)(s7_pointer a1))
 {
@@ -26944,7 +26943,7 @@ bool s7_is_vector(s7_pointer p)
 #define FILLED true
 #define NOT_FILLED false
 
-static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, bool add_to_cache) 
+static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled) 
 {
   s7_pointer x;
   if (len > 134217728)
@@ -26983,15 +26982,15 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, bool add
       if (filled) s7_vector_fill(sc, x, sc->NIL); /* make_hash_table assumes nil as the default value */
     }
 
-  x->object.vector.vextra.dim_info = NULL;
-  if (add_to_cache) add_vector(sc, x);
+  vector_dimension_info(x) = NULL;
+  add_vector(sc, x);
   return(x);
 }
 
 
 s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len)
 {
-  return(make_vector_1(sc, len, FILLED, true));
+  return(make_vector_1(sc, len, FILLED));
 }
 
 
@@ -27124,8 +27123,8 @@ s7_pointer *s7_vector_elements(s7_pointer vec)
 s7_Int *s7_vector_dimensions(s7_pointer vec)
 {
   s7_Int *dims;
-  if (vector_is_multidimensional(vec))
-    return(vec->object.vector.vextra.dim_info->dims);
+  if (vector_dimension_info(vec))
+    return(vector_dimensions(vec));
   dims = (s7_Int *)malloc(sizeof(s7_Int));
   dims[0] = vector_length(vec);
   return(dims);
@@ -27135,8 +27134,8 @@ s7_Int *s7_vector_dimensions(s7_pointer vec)
 s7_Int *s7_vector_offsets(s7_pointer vec)
 {
   s7_Int *offs;
-  if (vector_is_multidimensional(vec))
-    return(vec->object.vector.vextra.dim_info->offsets);
+  if (vector_dimension_info(vec))
+    return(vector_offsets(vec));
   offs = (s7_Int *)malloc(sizeof(s7_Int));
   offs[0] = 1;
   return(offs);
@@ -27286,7 +27285,7 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill)
 {
   s7_pointer vect;
-  vect = make_vector_1(sc, len, NOT_FILLED, true);
+  vect = make_vector_1(sc, len, NOT_FILLED);
   s7_vector_fill(sc, vect, fill);
   return(vect);
 }
@@ -27299,7 +27298,7 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
   s7_pointer vec;
   
   len = s7_list_length(sc, args);
-  vec = make_vector_1(sc, len, NOT_FILLED, true);
+  vec = make_vector_1(sc, len, NOT_FILLED);
   if (len > 0)
     {
       s7_pointer x;
@@ -27359,10 +27358,10 @@ static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_di
   v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
  
   v->ndims = vector_ndims(vect) - skip_dims;
-  v->dims = (s7_Int *)((vect)->object.vector.vextra.dim_info->dims + skip_dims);
-  v->offsets = (s7_Int *)((vect)->object.vector.vextra.dim_info->offsets + skip_dims);
+  v->dims = (s7_Int *)(vector_dimensions(vect) + skip_dims);
+  v->offsets = (s7_Int *)(vector_offsets(vect) + skip_dims);
   v->original = vect;
-  x->object.vector.vextra.dim_info = v;  
+  vector_dimension_info(x) = v;
 
   vector_length(x) = vector_offset(vect, skip_dims - 1);
   vector_elements(x) = (s7_pointer *)(vector_elements(vect) + index);
@@ -27931,7 +27930,7 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
   if (is_not_null(cdr(args))) 
     fill = cadr(args);
 
-  vec = make_vector_1(sc, len, NOT_FILLED, true);
+  vec = make_vector_1(sc, len, NOT_FILLED);
   if (len > 0) s7_vector_fill(sc, vec, fill);
 
   if ((is_pair(x)) &&
@@ -27956,8 +27955,7 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
 	  v->offsets[i] = offset;
 	  offset *= v->dims[i];
 	}
-
-      vec->object.vector.vextra.dim_info = v;
+      vector_dimension_info(vec) = v;
     }
 
   return(vec);
@@ -27973,9 +27971,7 @@ static s7_pointer g_is_vector(s7_scheme *sc, s7_pointer args)
 
 int s7_vector_rank(s7_pointer vect)
 {
-  if (vector_is_multidimensional(vect))
-    return(vector_ndims(vect));
-  return(1);
+  return(vector_rank(vect));
 }
 
 
@@ -28126,7 +28122,7 @@ s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
 
   if (vector_is_multidimensional(old_vect))
     new_vect = g_make_vector(sc, list_1(sc, g_vector_dimensions(sc, list_1(sc, old_vect))));
-  else new_vect = make_vector_1(sc, len, NOT_FILLED, true);
+  else new_vect = make_vector_1(sc, len, NOT_FILLED);
 
   /* here and in vector-fill! we have a problem with bignums -- should new bignums be allocated? (copy_list also) */
 
@@ -28751,6 +28747,7 @@ static s7_pointer hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)
 s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 {
   s7_pointer table;
+  int i;
   /* size is rounded up to the next power of 2 */
 
   if ((size & (size + 1)) != 0)      /* already 2^n - 1 ? */
@@ -28764,14 +28761,21 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
       if (s7_int_bits > 31) /* this is either 31 or 63 */
 	size |= (size >> 32);
     }
+  size++;
 
-  table = make_vector_1(sc, size + 1, FILLED, false); /* nil is the default value, don't add to vector cache! */
-  /* size + 1 can be fooled if we don't catch most-positive-fixnum */
-
-  set_type(table, T_HASH_TABLE | T_SAFE_PROCEDURE);
+  NEW_CELL(sc, table);
+  hash_table_length(table) = size;
+  hash_table_elements(table) = (s7_pointer *)malloc(size * sizeof(s7_pointer));
+  if (!(hash_table_elements(table)))
+    return(s7_error(sc, make_symbol(sc, "out-of-memory"), 
+		    list_1(sc, make_protected_string(sc, "make-hash-table allocation failed!"))));
+  for (i = 0; i < size; i++)
+    hash_table_element(table, i) = sc->NIL;
   hash_table_function(table) = hash_empty;
   hash_table_entries(table) = 0;
+  set_type(table, T_HASH_TABLE | T_SAFE_PROCEDURE);
   add_hash_table(sc, table);
+
   return(table);
 }
 
@@ -28927,7 +28931,6 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
 
 static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 {
-  /* basically the same layout as the symbol table */
   #define H_hash_table_ref "(hash-table-ref table key) returns the value associated with key in the hash table"
   s7_pointer table;
 
@@ -29088,12 +29091,12 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash)
   s7_pointer *old_lists, *new_lists;
   int gc_loc;
 
-  len = vector_length(old_hash);
+  len = hash_table_length(old_hash);
   new_hash = s7_make_hash_table(sc, len);
   gc_loc = s7_gc_protect(sc, new_hash);
 
-  old_lists = vector_elements(old_hash);
-  new_lists = vector_elements(new_hash);
+  old_lists = hash_table_elements(old_hash);
+  new_lists = hash_table_elements(new_hash);
 
   for (i = 0; i < len; i++)
     if (is_not_null(old_lists[i]))
@@ -29114,11 +29117,11 @@ static s7_pointer hash_table_reverse(s7_scheme *sc, s7_pointer old_hash)
   s7_pointer *old_lists;
   int gc_loc;
 
-  len = vector_length(old_hash);
+  len = hash_table_length(old_hash);
   new_hash = s7_make_hash_table(sc, len);
   gc_loc = s7_gc_protect(sc, new_hash);
 
-  old_lists = vector_elements(old_hash);
+  old_lists = hash_table_elements(old_hash);
   /* don't set entries or function -- s7_hash_table_set below will handle those */
 
   for (i = 0; i < len; i++)
@@ -29137,9 +29140,9 @@ static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
 {
   int i, len;
 
-  len = vector_length(table);
+  len = hash_table_length(table);
   for (i = 0; i < len; i++)
-    vector_element(table, i) = sc->NIL;
+    hash_table_element(table, i) = sc->NIL;
   hash_table_entries(table) = 0;
   hash_table_function(table) = hash_empty;
   return(table);
@@ -31282,8 +31285,8 @@ static bool hash_tables_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
   if (hash_table_function(x) != hash_table_function(y))
     return(false);
 
-  len = vector_length(x);
-  lists = vector_elements(x);
+  len = hash_table_length(x);
+  lists = hash_table_elements(x);
 
   for (i = 0; i < len; i++)
     {
@@ -31560,8 +31563,8 @@ static bool hash_tables_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointe
     return(true);
   /* can't precheck the function here (2 != 2.0) */
 
-  len = vector_length(x);
-  lists = vector_elements(x);
+  len = hash_table_length(x);
+  lists = hash_table_elements(x);
 
   for (i = 0; i < len; i++)
     {
@@ -32178,7 +32181,7 @@ also accepts a string or vector argument."
 	len = vector_length(p);
 	if (vector_is_multidimensional(p))
 	  np = g_make_vector(sc, list_1(sc, g_vector_dimensions(sc, list_1(sc, p))));
-	else np = make_vector_1(sc, len, NOT_FILLED, true);
+	else np = make_vector_1(sc, len, NOT_FILLED);
 	if (len > 0)
 	  for (i = 0, j = len - 1; i < len; i++, j--)
 	    vector_element(np, i) = vector_element(p, j);
@@ -36332,49 +36335,16 @@ static s7_pointer is_null_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	  return(is_null_cdr);
 	}
     }
-  if (is_optimized(expr))
-    {
-      if (is_symbol(cadr(expr)))
-	set_optimize_op(expr, HOP_SAFE_NULL_S);
-    }
   return(f);
 }
 
 static s7_pointer cdr_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if (is_optimized(expr))
-    {
-      if (is_symbol(cadr(expr)))
-	set_optimize_op(expr, HOP_SAFE_CDR_S);
-    }
   return(f);
 }
 
 static s7_pointer car_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if (is_optimized(expr))
-    {
-      if (is_symbol(cadr(expr)))
-	set_optimize_op(expr, HOP_SAFE_CAR_S);
-      else
-	{
-	  s7_pointer arg;
-	  arg = cadr(expr);
-	  if (is_pair(arg))
-	    {
-	      if ((car(arg) == sc->QUOTE) &&
-		  (is_pair(cadr(arg))))
-		set_optimize_op(expr, HOP_SAFE_CAR_Q);
-	      else
-		{
-		  if ((is_optimized(arg)) &&
-		      (is_hopping(arg)))
-		    set_optimize_op(expr, HOP_SAFE_CAR_OPT);
-		  else set_optimize_op(expr, HOP_SAFE_CAR_P);
-		}
-	    }
-	}
-    }
   return(f);
 }
 
@@ -38803,7 +38773,7 @@ static s7_pointer all_x_c_opssq_opssq(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T2_1));
 }
 
-static s7_function all_x_eval(s7_pointer arg)
+static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
 {
   if (is_pair(arg))
     {
@@ -38814,11 +38784,11 @@ static s7_function all_x_eval(s7_pointer arg)
 	    case HOP_SAFE_C_C:         return(all_x_c_c);
 	    case HOP_SAFE_C_Q:         return(all_x_c_q);
 	    case HOP_SAFE_C_S:         
-	      if (optimize_op(arg) == HOP_SAFE_CDR_S)
+	      if (car(arg) == sc->CDR)
 		return(all_x_cdr_s);
-	      if (optimize_op(arg) == HOP_SAFE_CAR_S)
+	      if (car(arg) == sc->CAR)
 		return(all_x_car_s);
-	      if (optimize_op(arg) == HOP_SAFE_NULL_S)
+	      if (car(arg) == sc->NULLP)
 		return(all_x_null_s);
 	      return(all_x_c_s);
 	    case HOP_SAFE_C_SC:        return(all_x_c_sc);
@@ -38850,50 +38820,13 @@ static s7_function all_x_eval(s7_pointer arg)
   return(all_x_c);
 }
 
-#if 0
-static int all_x_uneval(s7_pointer arg)
-{
-  /* tick(all_x_uneval(cdr(code)), all_x_uneval(cddr(code))); */
-
-  if (fcdr(arg) == all_x_c_c) return(HOP_SAFE_C_C);
-  if (fcdr(arg) == all_x_c_q) return(HOP_SAFE_C_Q);
-  if (fcdr(arg) == all_x_c_sc) return(HOP_SAFE_C_SC);
-  if (fcdr(arg) == all_x_c_cs) return(HOP_SAFE_C_CS);
-  if (fcdr(arg) == all_x_c_ss) return(HOP_SAFE_C_SS);
-  if (fcdr(arg) == all_x_c_sss) return(HOP_SAFE_C_SSS);
-  if (fcdr(arg) == all_x_c_sq) return(HOP_SAFE_C_SQ);
-  if (fcdr(arg) == all_x_c_opcq) return(HOP_SAFE_C_opCq);
-  if (fcdr(arg) == all_x_c_opsq) return(HOP_SAFE_C_opSq);
-  if (fcdr(arg) == all_x_c_opssq) return(HOP_SAFE_C_opSSq);
-  if (fcdr(arg) == all_x_c_opsq_s) return(HOP_SAFE_C_opSq_S);
-  if (fcdr(arg) == all_x_c_opsq_c) return(HOP_SAFE_C_opSq_C);
-  if (fcdr(arg) == all_x_c_s_opsq) return(HOP_SAFE_C_S_opSq);
-  if (fcdr(arg) == all_x_c_s_opcq) return(HOP_SAFE_C_S_opCq);
-  if (fcdr(arg) == all_x_c_opcq_s) return(HOP_SAFE_C_opCq_S);
-  if (fcdr(arg) == all_x_c_opcq_c) return(HOP_SAFE_C_opCq_C);
-  if (fcdr(arg) == all_x_c_c_opsq) return(HOP_SAFE_C_C_opSq);
-  if (fcdr(arg) == all_x_c_c_opcq) return(HOP_SAFE_C_C_opCq);
-  if (fcdr(arg) == all_x_c_opssq_s) return(HOP_SAFE_C_opSSq_S);
-  if (fcdr(arg) == all_x_c_s_opssq) return(HOP_SAFE_C_S_opSSq);
-  if (fcdr(arg) == all_x_c_opsq_opsq) return(HOP_SAFE_C_opSq_opSq);
-  if (fcdr(arg) == all_x_c_opssq_opssq) return(HOP_SAFE_C_opSSq_opSSq);
-  if (fcdr(arg) == all_x_c_s) return(HOP_SAFE_C_S);
-  if (fcdr(arg) == all_x_cdr_s) return(HOP_SAFE_CDR_S);
-  if (fcdr(arg) == all_x_car_s) return(HOP_SAFE_CAR_S);
-  if (fcdr(arg) == all_x_null_s) return(HOP_SAFE_NULL_S);
-  if (fcdr(arg) == all_x_q) return(OP_CLOSURE_Q);
-  if (fcdr(arg) == all_x_s) return(OP_CLOSURE_S);
-  if (fcdr(arg) == all_x_c) return(OP_CLOSURE_C);
-  return(OP_NOT_AN_OP);
-}
-#endif
 
 static s7_function orp_all_x_eval(s7_scheme *sc, s7_pointer arg)
 {
   if ((!is_pair(arg)) ||
       ((is_optimized(arg)) &&
        (is_all_x_op(optimize_data(arg)))))
-    return(all_x_eval(arg));
+    return(all_x_eval(sc, arg));
   return(NULL);
 }
 
@@ -38901,7 +38834,7 @@ static s7_function cond_all_x_eval(s7_scheme *sc, s7_pointer arg)
 {
   if (arg == sc->ELSE)
     return(all_x_else);
-  return(all_x_eval(arg));
+  return(all_x_eval(sc, arg));
 }
 
 
@@ -38926,13 +38859,11 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer car_x, s7_pointer func, int
     }
   
   if ((is_closure(func)) &&
-      (is_null(closure_args(func))))                /* no rest arg funny business */
+      (is_null(closure_args(func))))                 /* no rest arg funny business */
     {
       /* look for a case like (define (version) (s7-version)) 
-       *   this is an experiment for later expansion I hope
        */
-      if (/* (hop == 1) && */ /* I think if the body is hop_safe_c_c, the current hop setting is irrelevant (local func -> 1 etc) */
-	  (is_null(cdr(closure_body(func)))))
+      if (is_null(cdr(closure_body(func))))          /* I think if the body is hop_safe_c_c, the current hop setting is irrelevant (local func -> 1 etc) */
 	{
 	  s7_pointer body;
 	  body = car(closure_body(func));
@@ -39178,12 +39109,12 @@ static void annotate_args(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p;
   for (p = args; is_pair(p); p = cdr(p))
-    fcdr(p) = (s7_pointer)all_x_eval(car(p));
+    fcdr(p) = (s7_pointer)all_x_eval(sc, car(p));
 }
 
 static void annotate_arg(s7_scheme *sc, s7_pointer arg)
 {
-  fcdr(arg) = (s7_pointer)all_x_eval(car(arg));
+  fcdr(arg) = (s7_pointer)all_x_eval(sc, car(arg));
 }
 
 static s7_pointer check_or(s7_scheme *sc);
@@ -40899,7 +40830,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 
 		  /* fprintf(stderr, "%s: %d -> %d %d %d\n", DISPLAY(car(x)), args, rest, symbols, pairs); */
 		  for (p = cdar(x); is_pair(p); p = cdr(p))
-		    fcdr(p) = (s7_pointer)all_x_eval(car(p));
+		    fcdr(p) = (s7_pointer)all_x_eval(sc, car(p));
 		  
 		  if (op == OP_OR)
 		    set_c_function(car_x, or_all_x);
@@ -42265,7 +42196,7 @@ static s7_pointer check_let(s7_scheme *sc)
 	{
 	  s7_pointer p;
 	  for (p = car(sc->code); is_pair(p); p = cdr(p))
-	    fcdr(cdar(p)) = (s7_pointer)all_x_eval(cadar(p));
+	    fcdr(cdar(p)) = (s7_pointer)all_x_eval(sc, cadar(p));
 	}
       /*
       fprintf(stderr, "%s\n    %s: %s\n", DISPLAY_80(sc->code), real_op_names[lifted_op(ecdr(sc->code))], 
@@ -42489,7 +42420,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	{
 	  s7_pointer p;
 	  for (p = car(sc->code); is_pair(p); p = cdr(p))
-	    fcdr(cdar(p)) = (s7_pointer)all_x_eval(cadar(p));
+	    fcdr(cdar(p)) = (s7_pointer)all_x_eval(sc, cadar(p));
 	}
     }
   return(sc->code);
@@ -42725,7 +42656,7 @@ static s7_pointer check_if(s7_scheme *sc)
 					  if (is_all_x_safe(sc, test))
 					    {
 					      set_syntax_op(sc->code, sc->IF_A_P_P);
-					      fcdr(sc->code) = (s7_pointer)all_x_eval(test);
+					      fcdr(sc->code) = (s7_pointer)all_x_eval(sc, test);
 					    }
 					  else set_syntax_op(sc->code, sc->IF_Z_P_P);
 					}
@@ -42838,7 +42769,7 @@ static s7_pointer check_if(s7_scheme *sc)
 							}
 						      else 
 							{
-							  fcdr(sc->code) = (s7_pointer)all_x_eval(test);
+							  fcdr(sc->code) = (s7_pointer)all_x_eval(sc, test);
 							  set_syntax_op(sc->code, sc->IF_A_P);
 							}
 						    }
@@ -43269,7 +43200,7 @@ static s7_pointer check_set(s7_scheme *sc)
 			      else 
 				{
 				  set_syntax_op(sc->code, sc->SET_ENV_ALL_X);
-				  fcdr(cdr(sc->code)) = (s7_pointer)all_x_eval(value);
+				  fcdr(cdr(sc->code)) = (s7_pointer)all_x_eval(sc, value);
 				}
 			    }
 			  else
@@ -45926,7 +45857,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		/* func = ecdr(caddr(sc->code)); */
 		body = caddr(sc->code);
-		func = all_x_eval(body);
+		func = all_x_eval(sc, body);
 		if (func == all_x_c_s)
 		  {
 		    environment_dox1(sc->envir) = find_symbol(sc, cadr(caddr(sc->code)));
@@ -46547,7 +46478,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if ((!func) &&
 		(is_optimized(car(fcdr(code)))) && 
 		(is_all_x_op(optimize_data(car(fcdr(code))))))
-	      func = all_x_eval(car(fcdr(code)));
+	      func = all_x_eval(sc, car(fcdr(code)));
 	    
 	    if (func)
 	      {
@@ -50536,63 +50467,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      
 
-	      /* -------------------------------------------------------------------------------- */
-	      /* the following code is an experiment */
-	      
-	    case OP_SAFE_CAR_Q:
-	    case HOP_SAFE_CAR_Q:
-	      sc->value = car(cadr(cadr(code)));
-	      goto START;
-	      
-	    case OP_SAFE_CAR_S:
-	    case HOP_SAFE_CAR_S:
-	      {
-		s7_pointer arg;
-		arg = finder(sc, cadr(code));
-		if (is_pair(arg))
-		  sc->value = car(arg);
-		else sc->value = g_car(sc, list_1(sc, arg));
-	      }
-	      goto START;
-	      
-	    case OP_SAFE_CAR_OPT:
-	    case HOP_SAFE_CAR_OPT:
-	      push_stack(sc, OP_SAFE_CAR_1, sc->NIL, code);
-	      sc->code = cadr(sc->code);
-	      goto OPT_EVAL;
-	      
-	    case OP_SAFE_CAR_P:
-	    case HOP_SAFE_CAR_P:
-	      push_stack(sc, OP_SAFE_CAR_1, sc->NIL, code);
-	      sc->code = cadr(sc->code);
-	      goto EVAL; 
-	      
-
-	    case OP_SAFE_CDR_S:
-	    case HOP_SAFE_CDR_S:
-	      {
-		s7_pointer arg;
-		arg = finder(sc, cadr(code));
-		if (is_pair(arg))
-		  sc->value = cdr(arg);
-		else sc->value = g_cdr(sc, list_1(sc, arg));
-	      }
-	      goto START;
-	      
-	    case OP_SAFE_NULL_S:
-	    case HOP_SAFE_NULL_S:
-	      {
-		s7_pointer arg;
-		arg = finder(sc, cadr(code));
-		if (is_null(arg))
-		  sc->value = sc->T;
-		else sc->value = sc->F;
-	      }
-	      goto START;
-	      
-	      /* -------------------------------- */
-
-	      
 	    case OP_SAFE_CONS_SS:
 	      if (!c_function_is_ok(sc, code))
 		break;
@@ -52885,14 +52759,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->args = cons(sc, sc->args, sc->value);
       sc->code = c_function_base(ecdr(sc->code));
       goto APPLY; /* (define (hi) (log (values 1 2) 3)) ? */
-      
-
-      /* --------------- */
-    case OP_SAFE_CAR_1:
-      if (is_pair(sc->value))
-	sc->value = car(sc->value);
-      else sc->value = g_car(sc, list_1(sc, sc->value));
-      goto START;
       
 
       /* --------------- */
@@ -64193,11 +64059,8 @@ s7_scheme *s7_init(void)
  * TODO: give each e|f|gcdr ref a unique name
  * f|gcdr in let_op*q -- can let_r -> let_all_x? (or let_d similarly?)
  *
- * dox oneline opt -> outa i safe-closure_star_s|sa where all syms are not steppers:
- *   get sym vals, on each step, push to return, set code/args, call body (s: 1.1 mil, sa: 434k, sc: 539k)
- * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x)
- *   and goto*, and the entire safe_car_s set
- * op_closure_car_car is rarely called, cdr_cdr case only in bench
+ * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x) and goto*
+ *   op_closure_car_car is rarely called, cdr_cdr case only in bench
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
  *
  *
@@ -64213,3 +64076,10 @@ s7_scheme *s7_init(void)
  *
  * TODO: math ops where 1 arg type/value is known (see multiply-chooser)
  */
+
+/* vector: void *elements, int element_type(?)
+ *         void *(*ref_1)(s7_pointer vector, s7_Int i)
+ *         set, compatible_set?
+ *         mark, copy, fill, reverse, etc print
+ */
+ 

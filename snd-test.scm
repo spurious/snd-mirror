@@ -46666,7 +46666,7 @@ EDITS: 1
 				      degrees->radians delay env formant firmant frame->list granulate hz->radians linear->db
 				      make-all-pass make-asymmetric-fm make-comb make-filtered-comb make-convolve make-delay make-env
 				      make-file->frame make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame
-				      make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero
+				      make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero
 				      make-oscil make-pulse-train make-rand make-rand-interp make-readin
 				      make-sawtooth-wave make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave make-src 
 				      make-ncos make-nsin
