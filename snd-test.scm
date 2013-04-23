@@ -48463,7 +48463,30 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   437,437,696  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
   428,928,818  vct.c:g_vct_add [/home/bil/snd-13/snd]
   418,076,031  clm.c:mus_src_20 [/home/bil/snd-13/snd]
+
+23-Apr-13:
+52,886,592,302
+6,697,050,795  s7.c:eval [/home/bil/snd-13/snd]
+6,228,616,918  ???:sin [/lib64/libm-2.12.so]
+2,546,631,823  clm.c:mus_src [/home/bil/snd-13/snd]
+2,496,647,180  ???:cos [/lib64/libm-2.12.so]
+2,176,750,987  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+1,263,726,083  s7.c:eval'2 [/home/bil/snd-13/snd]
+1,248,608,065  s7.c:gc [/home/bil/snd-13/snd]
+1,021,282,278  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+1,003,986,022  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
+  933,290,098  clm.c:mus_formant_bank [/home/bil/snd-13/snd]
+  911,248,552  clm.c:fir_8 [/home/bil/snd-13/snd]
+  885,305,356  ???:t2_32 [/home/bil/snd-13/snd]
+  796,412,317  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+  785,981,295  ???:t2_64 [/home/bil/snd-13/snd]
+  693,360,038  clm.c:run_hilbert [/home/bil/snd-13/snd]
+  507,150,000  clm.c:mus_formant_bank_with_inputs [/home/bil/snd-13/snd]
+  459,853,855  clm.c:mus_src_20 [/home/bil/snd-13/snd]
+  449,476,048  ???:n1_64 [/home/bil/snd-13/snd]
+  444,970,752  io.c:mus_write_1 [/home/bil/snd-13/snd]
+  428,928,818  vct.c:g_vct_add [/home/bil/snd-13/snd]
  
- |#
+|#
 
 ;;; TODO: tests for rxyk!cos and sin [epsecially the latter since it was broken up to now]

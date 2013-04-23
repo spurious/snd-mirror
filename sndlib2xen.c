@@ -25,10 +25,10 @@
 
 #include "_sndlib.h"
 #include "sndlib-strings.h"
-#include "sndlib2xen.h"
-#include "clm2xen.h"
 #include "vct.h"
 #include "clm.h"
+#include "sndlib2xen.h"
+#include "clm2xen.h"
 
 #ifndef S_setB
   #if HAVE_RUBY
@@ -2788,7 +2788,6 @@ static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	    }
 	  /* ---------------------------------------- */
 	  
-	  fprintf(stderr, "sd %lld: %s\n", end - pos, DISPLAY(val));
 	  if (s7_function_choice_is_direct_to_real(sc, val))
 	    {
 	      for (; pos < end; pos++)

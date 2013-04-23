@@ -44225,6 +44225,20 @@ static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code)
 }
 
 
+static s7_pointer g_mutable_add1(s7_scheme *sc, s7_pointer args)
+{
+  integer(car(args))++;
+  return(car(args));
+}
+
+
+static s7_pointer g_mutable_subtract1(s7_scheme *sc, s7_pointer args)
+{
+  integer(car(args))--;
+  return(car(args));
+}
+
+
 enum {DOX_STEP_DEFAULT, DOX_STEP_SS, DOX_STEP_S, DOX_STEP_ADD, DOX_STEP_SUBTRACT};
 
 static s7_pointer check_do(s7_scheme *sc)
@@ -46453,6 +46467,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    exd = c_function_ex_parser(f)(sc, body);
 		    if (exd)
 		      {
+			bool mut;
+			mut = is_step_safe(f);
+
+			if ((mut) &&
+			    (type(slot_value(ctr)) == T_INTEGER) &&
+			    (((s7_function)stepf == g_subtract_s1) ||
+			     ((s7_function)stepf == g_add_s1)))
+			  {
+			    slot_value(ctr) = make_mutable_integer(sc, integer(slot_value(ctr)));
+			    if ((s7_function)stepf == g_subtract_s1)
+			      stepf = g_mutable_subtract1;
+			    else stepf = g_mutable_add1;
+			  }
+			else mut = false;
+
 			while (true)
 			  {
 			    exd->ex_vf(exd->ex_data);
@@ -46468,7 +46497,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				exd->ex_free(exd->ex_data);
 				free(exd);
 				sc->code = cdr(cadr(code));
-				goto DO_BEGIN;
+				if (!is_null(sc->code))
+				  {
+				    if (mut)
+				      clear_mutable(slot_value(ctr));
+				    goto BEGIN;
+				  }
+				sc->value = sc->NIL;
+				goto START;	
 			      }
 			  }
 		      }
@@ -46995,8 +47031,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			s7_function endf;
 			s7_pointer endp, slots, slot;
 			int arg;
-			s7_pointer p, slot1 = NULL, slot2 = NULL, expr1 = NULL, expr2 = NULL;
-			dox_function d1 = NULL, d2 = NULL;
+			s7_pointer p, slot1 = NULL, slot2 = NULL, slot3 = NULL, expr1 = NULL, expr2 = NULL, expr3 = NULL;
+			dox_function d1 = NULL, d2 = NULL, d3 = NULL;
 			bool mut; /* C++ claims "mutable" */
 
 			mut = is_step_safe(f);
@@ -47024,6 +47060,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					d2 = dox_mutate(sc, p);
 				      else d2 = (dox_function)fcdr(expr2);
 				      expr2 = car(expr2);
+				    }
+				  else
+				    {
+				      if (!slot3)
+					{
+					  slot3 = p;
+					  expr3 = slot_expression(slot3);
+					  if (mut)
+					    d3 = dox_mutate(sc, p);
+					  else d3 = (dox_function)fcdr(expr3);
+					  expr3 = car(expr3);
+					}
 				    }
 				}
 			    }
@@ -47055,13 +47103,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      }
 			  }
 
-			if (arg == 2)
+			if (arg < 4)
 			  {
 			    while (true)
 			      {
 				exd->ex_vf(exd->ex_data);
 				slot_set_value(slot1, d1(sc, expr1, slot1));
 				slot_set_value(slot2, d2(sc, expr2, slot2));
+				if (slot3) slot_set_value(slot3, d3(sc, expr3, slot3));
 				if (is_true(sc, endf(sc, endp)))
 				  {
 				    exd->ex_free(exd->ex_data);
@@ -47073,6 +47122,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					  {
 					    clear_mutable(slot_value(slot1));
 					    clear_mutable(slot_value(slot2));
+					    if (slot3) clear_mutable(slot_value(slot3));
 					  }
 					goto BEGIN;
 				      }
@@ -47081,7 +47131,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				  }
 			      }
 			  }
-
+			
 			while (true)
 			  {
 			    exd->ex_vf(exd->ex_data);
@@ -64068,7 +64118,7 @@ s7_scheme *s7_init(void)
  * bench    42736 8752 8051 7725 6515 5194 4364 3989
  * lint           9328 8140 7887 7736 7300 7180 7051
  * index    44300 3291 3005 2742 2078 1643 1435 1363
- * s7test    1721 1358 1297 1244  977  961  957  960
+ * s7test    1721 1358 1297 1244  977  961  957  960  943
  * t455|6     265   89   55   31   14   14    9 9155
  * lat        229   63   52   47   42   40   34   31
  * t502        90   43   39   36   29   23   20   14
