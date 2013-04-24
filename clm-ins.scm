@@ -1817,12 +1817,12 @@ is a physical model of a flute:
 	    (fdr (make-vct fftsize-1))
 	    (fdi (make-vct fftsize-1))
 	    (window (make-fft-window blackman2-window fftsize-1))
-	    (current-peak-freqs (make-vector max-oscils 0.0))
-	    (last-peak-freqs (make-vector max-oscils 0.0))
-	    (current-peak-amps (make-vector max-oscils 0.0))
-	    (last-peak-amps (make-vector max-oscils 0.0))
-	    (peak-amps (make-vector max-peaks-1 0.0))
-	    (peak-freqs (make-vector max-peaks-1 0.0))
+	    (current-peak-freqs (make-vct max-oscils 0.0))
+	    (last-peak-freqs (make-vct max-oscils 0.0))
+	    (current-peak-amps (make-vct max-oscils 0.0))
+	    (last-peak-amps (make-vct max-oscils 0.0))
+	    (peak-amps (make-vct max-peaks-1 0.0))
+	    (peak-freqs (make-vct max-peaks-1 0.0))
 	    (amps (make-vct max-oscils 0.0))	;run-time generated amplitude and frequency envelopes
 	    (rates (make-vct max-oscils 0.0))
 	    (freqs (make-vct max-oscils 0.0))
@@ -1837,15 +1837,14 @@ is a physical model of a flute:
 	    (filend 0)
 	    (cur-oscils max-oscils)
 	    (splice-attack (number? attack))
-	    (ramped-attack (make-vector attack-size 0.0)))
+	    (ramped-attack (make-vct attack-size 0.0)))
 	(let ((obank (make-oscil-bank freqs (make-vct max-oscils 0.0) amps)))
 
 	  (set! filend (mus-length fil))
 	  (vct-scale! window fftscale)
 	  
 	  (if splice-attack
-	      (let ((ramp (/ 1.0 attack-size))
-		    (cur-end (+ start attack-size)))
+	      (let ((cur-end (+ start attack-size)))
 		;; my experience in translating SMS, and rumor via Greg Sandell leads me to believe that
 		;; there is in fact no way to model some attacks successfully in this manner, so this block
 		;; simply splices the original attack on to the rest of the note.  "attack" is the number
@@ -1854,11 +1853,10 @@ is a physical model of a flute:
 		    ((= i cur-end))
 		  (outa i (* amp (readin fil))))
 		(set! filptr attack_size)
-		(let ((mult 1.0))
+		(let ((mult (make-env '(0 1.0 1.0 0.0) :length attack-size)))
 		  (do ((k 0 (+ k 1)))
 		      ((= k attack-size))
-		    (set! (ramped-attack k) (* mult (readin fil)))
-		    (set! mult (- mult ramp))))
+		    (vct-set! (ramped-attack k) (* (env mult) (readin fil)))))
 		(set! start cur-end)))
 	  
 	  (if (< start end)
@@ -1880,12 +1878,10 @@ is a physical model of a flute:
 		      (rectangular->magnitudes fdr fdi)
 		      (vct-scale! fdr 2.0)
 		      
-		      (do ((k 0 (+ k 1)))
-			  ((= k max-oscils))
-			(set! (last-peak-freqs k) (current-peak-freqs k))
-			(set! (last-peak-amps k) (current-peak-amps k)))
-		      (vector-fill! current-peak-amps 0.0)
-		      (vector-fill! peak-amps 0.0)
+		      (vct-subseq current-peak-freqs 0 max-oscils last-peak-freqs)
+		      (vct-subseq current-peak-amps 0 max-oscils last-peak-amps)
+		      (vct-fill! current-peak-amps 0.0)
+		      (vct-fill! peak-amps 0.0)
 		      
 		      (let ((ra (fdr 0))
 			    (la 0.0)

@@ -1711,7 +1711,15 @@ static int t_optimized = T_OPTIMIZED;
 /* optimizer flag for a procedure that sets some variable (set-car! for example).
  */
 
+#define T_ANNOTATED                   T_SETTER
+#define set_annotated(p)              typeflag(p) |= T_ANNOTATED
+#define is_annotated(p)               ((typeflag(p) & T_ANNOTATED) != 0)
+/* optimizer flag for a pair that has all_x_* info
+ */
+
+
 #define T_ONE_LINER                   (1 << (TYPE_BITS + 18))
+#define is_one_liner(p)               ((typeflag(p) & T_ONE_LINER) != 0)
 #define set_one_liner(p)              typeflag(p) |= T_ONE_LINER
 /* this comes and goes...
  */
@@ -1729,7 +1737,8 @@ static int t_optimized = T_OPTIMIZED;
 #define T_IMMEDIATE                   T_PRINT_NAME
 #define is_immediate(p)               ((typeflag(p) & T_IMMEDIATE) != 0)
 #define set_immediate(p)              typeflag(p) |= T_IMMEDIATE
-
+/* this marks a one-line safe_c_c callable closure body
+ */
 
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define set_copy_args(p)              typeflag(p) |= T_COPY_ARGS
@@ -38605,6 +38614,24 @@ static s7_pointer all_x_c_ss(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T2_1));
 }		    
 
+static s7_pointer all_x_c_s1s2(s7_scheme *sc, s7_pointer arg)
+{
+  /* (define (hi a b) (if (> a b) a b)) */
+  s7_pointer slots;
+  slots = environment_slots(sc->envir);
+  if (slot_symbol(slots) == cadr(arg))
+    {
+      car(sc->T2_1) = slot_value(slots);
+      car(sc->T2_2) = slot_value(next_slot(slots));
+    }
+  else
+    {
+      car(sc->T2_2) = slot_value(slots);
+      car(sc->T2_1) = slot_value(next_slot(slots));
+    }
+  return(c_call(arg)(sc, sc->T2_1));
+}		    
+
 static s7_pointer all_x_c_sss(s7_scheme *sc, s7_pointer arg)
 {
   car(sc->T3_1) = finder(sc, cadr(arg));
@@ -38616,6 +38643,17 @@ static s7_pointer all_x_c_sss(s7_scheme *sc, s7_pointer arg)
 static s7_pointer all_x_c_sq(s7_scheme *sc, s7_pointer arg)
 {
   car(sc->T2_1) = finder(sc, cadr(arg));
+  car(sc->T2_2) = cadr(caddr(arg));
+  return(c_call(arg)(sc, sc->T2_1));
+}
+
+static s7_pointer all_x_c_s12q(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer slots;
+  slots = environment_slots(sc->envir);
+  if (slot_symbol(slots) == cadr(arg))
+    car(sc->T2_1) = slot_value(slots);
+  else car(sc->T2_1) = slot_value(next_slot(slots));
   car(sc->T2_2) = cadr(caddr(arg));
   return(c_call(arg)(sc, sc->T2_1));
 }
@@ -38779,6 +38817,8 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
     {
       if (is_optimized(arg))
 	{
+	  set_annotated(arg);
+	  /* fprintf(stderr, "annotate %s %s\n", DISPLAY(arg), opt_name(arg)); */
 	  switch (optimize_data(arg))
 	    {
 	    case HOP_SAFE_C_C:         return(all_x_c_c);
@@ -42935,6 +42975,8 @@ static s7_pointer check_if(s7_scheme *sc)
 static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer x, s7_pointer args, s7_pointer body)
 {
   int len;
+  /* fprintf(stderr, "optimize: %s %s\n", DISPLAY(args), DISPLAY(body)); */
+
   len = s7_list_length(sc, body);
   if (len < 0)                                                               /* (define (hi) 1 . 2) */
     return(eval_error_with_name(sc, "~A: function body messed up, ~A", sc->code));
@@ -42996,6 +43038,117 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 	}
     }
   return(x);
+}
+
+
+static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1, s7_pointer sym2)
+{
+  /* look for all_x_[s*] where s matches sym1|2, optimize to use current env
+   *   also HOP_SAFE_C_[s*] -> HOP_SAFE_C_S1|2?
+   * stop if any new env possible (shadowing and more complex env access)
+   * TODO: how does __func__ affect this? -- are there any other hidden vars?
+   */
+  s7_pointer p;
+  if (!is_pair(expr)) return;
+  /*
+    fprintf(stderr, "%s %d %d %s\n", DISPLAY_80(expr), is_annotated(expr), is_annotated(cadr(expr)), opt_name(expr));
+  */
+
+  if (is_syntactic(car(expr)))
+    {
+      switch (syntax_opcode(car(expr)))
+	{
+	case OP_IF:
+	case OP_OR:
+	case OP_AND:
+	case OP_BEGIN:
+	case OP_WITH_BAFFLE:
+	case OP_COND:
+	case OP_CASE:
+	  for (p = cdr(expr); is_pair(p); p = cdr(p))
+	    if (is_pair(car(p)))
+	      substitute_arg_refs(sc, p, sym1, sym2);
+	  break;
+	  
+	case OP_SET:
+	  substitute_arg_refs(sc, caddr(expr), sym1, sym2);
+	  break;
+
+	case OP_LET:
+	case OP_LET_STAR:
+	case OP_LETREC:
+	  /* SOMEDAY: these can be optimized to some extent */
+	  break;
+	  
+	case OP_QUOTE:
+	case OP_DO:
+	case OP_WITH_ENV:
+	default:
+	  break;
+	}
+    }
+  else  /* car(expr) is not syntactic */
+    {
+      if (is_annotated(car(expr)))
+	{
+	  /*
+	    fprintf(stderr, "  annotated %s %d %d %d %s %s %s\n", DISPLAY(expr),
+	    ((s7_function)fcdr(expr) == all_x_c_sq), 
+	    ((s7_function)fcdr(expr) == all_x_c_ss), 
+	    ((s7_function)fcdr(expr) == all_x_c_c), 
+	    DISPLAY(sym1), (sym2) ? DISPLAY(sym2) : "", 
+	    opt_name(car(expr)));
+	  */
+	  if (((s7_function)fcdr(expr) == all_x_c_ss) &&
+	      (cadr(car(expr)) == sym1) &&
+	      (caddr(car(expr)) == sym2))
+	    {
+	      /* fprintf(stderr, "reset...\n"); */
+	      fcdr(expr) = (s7_pointer)all_x_c_s1s2;
+	    }
+	  else
+	    {
+	      if (((s7_function)fcdr(expr) == all_x_c_sq) &&
+		  ((cadr(car(expr)) == sym1) ||
+		   (cadr(car(expr)) == sym2)))
+		{
+		  /* fprintf(stderr, "reset...\n"); */
+		  fcdr(expr) = (s7_pointer)all_x_c_s12q;
+		}
+	    }
+	  substitute_arg_refs(sc, car(expr), sym1, sym2);
+	}
+      for (p = cdr(expr); is_pair(p); p = cdr(p))
+	if (is_pair(car(p)))
+	      substitute_arg_refs(sc, p, sym1, sym2);
+    }
+}
+
+static void optimize_safe_closure_arg_refs(s7_scheme *sc, s7_pointer func, int argn)
+{
+  /* we can replace all_x_c_ss (etc) with specializations that do not need to look up
+   *   the function args: all_x_c_s1s2 (sc->envir slots will be in the any order!
+   *
+   * 1-arg: no order problem
+   * 2-arg: s1s2 as above, s1c, s2c? etc -- everything splits
+   * need a 2nd level all_x_eval -- all_x_prefind
+   *
+   * anything that introduces a new env halts our tree walker
+   */
+  /* if we used the arg list instead of e, I think this would also work for any closure.
+   */
+
+  s7_pointer body, p, e, sym1, sym2 = NULL;
+  if ((argn == 0) || (argn > 2)) return;
+
+  body = closure_body(func);
+  e = closure_environment(func);
+  sym1 = slot_symbol(environment_slots(e));
+  if (argn == 2) sym2 = slot_symbol(next_slot(environment_slots(e)));
+
+  for (p = body; is_pair(p); p = cdr(p))
+    if (is_pair(p))
+      substitute_arg_refs(sc, car(p), sym1, sym2);
 }
 
 
@@ -53918,6 +54071,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  closure_environment(new_func) = new_env;		   
 	  environment_slots(new_env) = sc->NIL;
 	  environment_function(new_env) = sc->code;
+
 	  if ((!is_environment(sc->envir)) &&
 	      (port_filename(sc->input_port)) &&
 	      (port_file(sc->input_port) != stdin))
@@ -53936,16 +54090,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 	  if (is_safe_closure(new_func))
 	    {
+	      int i;
 	      s7_pointer arg;
-	      for (arg = closure_args(new_func); is_pair(arg); arg = cdr(arg))
+	      for (i = 0, arg = closure_args(new_func); is_pair(arg); i++, arg = cdr(arg))
 		{
 		  if (is_pair(car(arg)))
 		    s7_make_slot(sc, new_env, caar(arg), sc->NIL);
 		  else s7_make_slot(sc, new_env, car(arg), sc->NIL);
 		}
 	      environment_slots(new_env) = reverse_slots(sc, environment_slots(new_env));
+	      optimize_safe_closure_arg_refs(sc, new_func, i);
 	    }
-	  
 	  /* add the newly defined thing to the current environment */
 	  if (is_environment(sc->envir))
 	    {
@@ -64120,7 +64275,7 @@ s7_scheme *s7_init(void)
  * index    44300 3291 3005 2742 2078 1643 1435 1363
  * s7test    1721 1358 1297 1244  977  961  957  960  943
  * t455|6     265   89   55   31   14   14    9 9155
- * lat        229   63   52   47   42   40   34   31
+ * lat        229   63   52   47   42   40   34   31   30
  * t502        90   43   39   36   29   23   20   14
  * calls           275  207  175  115   89   71   53
  *
