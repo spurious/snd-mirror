@@ -2530,6 +2530,7 @@ static void report_counts(s7_scheme *sc)
   int len, i, loc = 0, entries;
   s7_pointer *elements;
   datum **data;
+
   len = hash_table_length(hashes);
   elements = hash_table_elements(hashes);
   entries = hash_table_entries(hashes);
@@ -38632,6 +38633,13 @@ static s7_pointer all_x_c_s1s2(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T2_1));
 }		    
 
+static s7_pointer all_x_c_is_eq_ss(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer slots;
+  slots = environment_slots(sc->envir);
+  return(make_boolean(sc, slot_value(slots) == slot_value(next_slot(slots))));
+}		    
+
 static s7_pointer all_x_c_sss(s7_scheme *sc, s7_pointer arg)
 {
   car(sc->T3_1) = finder(sc, cadr(arg));
@@ -38656,6 +38664,15 @@ static s7_pointer all_x_c_s12q(s7_scheme *sc, s7_pointer arg)
   else car(sc->T2_1) = slot_value(next_slot(slots));
   car(sc->T2_2) = cadr(caddr(arg));
   return(c_call(arg)(sc, sc->T2_1));
+}
+
+static s7_pointer all_x_c_is_eq_s2q(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer slots;
+  slots = environment_slots(sc->envir);
+  if (slot_symbol(slots) == cadr(arg))
+    return(make_boolean(sc, slot_value(slots) == cadr(caddr(arg))));
+  return(make_boolean(sc, slot_value(next_slot(slots)) == cadr(caddr(arg))));
 }
 
 static s7_pointer all_x_c_opcq(s7_scheme *sc, s7_pointer arg)
@@ -43041,12 +43058,19 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 }
 
 
+/* an experiment -- prelookup static refs */
+
 static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1, s7_pointer sym2)
 {
   /* look for all_x_[s*] where s matches sym1|2, optimize to use current env
    *   also HOP_SAFE_C_[s*] -> HOP_SAFE_C_S1|2?
+   *   HOP_SAFE_CLOSURE_CAR_CAR -> HOP_SAFE_CLOSURE_CARS1_CARS2 (and CDR) (and S_CDR_CDR) via the unknown op sequence -- tricky
+   *     better perhaps: remove these special cases, use _AA or _SAA with all_x_car specializations
    * stop if any new env possible (shadowing and more complex env access)
-   * TODO: how does __func__ affect this? -- are there any other hidden vars?
+   *
+   * why can't we do something similar with locals? 
+   * how can slots be reversed if safe closure? -- macros and OP_APPLY handling -- apparently no way around this
+   * can augment-env screw us? -- perhaps if aug-env called on proc env, add to end?
    */
   s7_pointer p;
   if (!is_pair(expr)) return;
@@ -43059,10 +43083,11 @@ static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1,
       switch (syntax_opcode(car(expr)))
 	{
 	case OP_IF:
+	  /* if (is_annotated(expr)) fprintf(stderr, "%s\n", DISPLAY(expr)); */
+
 	case OP_OR:
 	case OP_AND:
 	case OP_BEGIN:
-	case OP_WITH_BAFFLE:
 	case OP_COND:
 	case OP_CASE:
 	  for (p = cdr(expr); is_pair(p); p = cdr(p))
@@ -43080,6 +43105,7 @@ static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1,
 	  /* SOMEDAY: these can be optimized to some extent */
 	  break;
 	  
+	case OP_WITH_BAFFLE: /* this creates a new env */
 	case OP_QUOTE:
 	case OP_DO:
 	case OP_WITH_ENV:
@@ -43104,7 +43130,9 @@ static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1,
 	      (caddr(car(expr)) == sym2))
 	    {
 	      /* fprintf(stderr, "reset...\n"); */
-	      fcdr(expr) = (s7_pointer)all_x_c_s1s2;
+	      if (c_call(car(expr)) == g_is_eq)
+		fcdr(expr) = (s7_pointer)all_x_c_is_eq_ss;
+	      else fcdr(expr) = (s7_pointer)all_x_c_s1s2;
 	    }
 	  else
 	    {
@@ -43113,7 +43141,9 @@ static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1,
 		   (cadr(car(expr)) == sym2)))
 		{
 		  /* fprintf(stderr, "reset...\n"); */
-		  fcdr(expr) = (s7_pointer)all_x_c_s12q;
+		  if (c_call(car(expr)) == g_is_eq)
+		    fcdr(expr) = (s7_pointer)all_x_c_is_eq_s2q;
+		  else fcdr(expr) = (s7_pointer)all_x_c_s12q;
 		}
 	    }
 	  substitute_arg_refs(sc, car(expr), sym1, sym2);
@@ -46483,6 +46513,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				slot_set_value(slot, make_real(sc, (integer(end_val) - 1) * s7_number_to_real(sc, caddr(val))));
 				goto SAFE_DO_DONE;
 			      }
+
+			    if ((is_optimized(val)) &&
+				(optimize_data(val) == HOP_SAFE_C_C))
+			      {
+				s7_function f;
+				s7_pointer args, stepper, step_val;
+
+				stepper = environment_dox1(sc->envir);
+				lim = s7_integer(end_val);
+				start = s7_integer(init_val);
+				f = (s7_function)c_call(val);
+				args = cdr(val);
+				slot_value(stepper) = make_mutable_integer(sc, start);
+				step_val = slot_value(stepper);
+
+				for (i = start; i < lim; i++)
+				  {
+				    integer(step_val) = i;
+				    slot_set_value(slot, f(sc, args));
+				  }
+				goto SAFE_DO_DONE;
+			      }
 			  }
 		      }
 
@@ -46589,6 +46641,44 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 
 	fcdr(code) = cddr(code);
+
+#if 0
+	if (s7_hash_table_ref(sc, hashes, fcdr(code)) == sc->F)
+	  {
+	    s7_pointer p;
+	    int good, len;
+	    add_expr(sc, fcdr(code));
+	    len = s7_list_length(sc, fcdr(code));
+	    for (good = 0, p = fcdr(code); is_pair(p); p = cdr(p))
+	      {
+		if (!is_pair(car(p))) 
+		  good++;
+		else
+		  {
+		    s7_ex *exd = NULL;
+		    s7_pointer f, sym;
+		    sym = caar(p);
+		    if ((is_symbol(sym)) &&
+			(!is_syntactic(sym)))
+		      {
+			f = s7_symbol_value(sc, caar(p));
+			if ((is_c_function(f)) &&
+			    (c_function_ex_parser(f)))
+			  {
+			    exd = c_function_ex_parser(f)(sc, car(p));
+			    if (exd)
+			      {
+				good++;
+				exd->ex_free(exd->ex_data);
+				free(exd);
+			      }
+			  }
+		      }
+		  }
+	      }
+	    fprintf(stderr, "%d / %d: %s%s%s\n\n", good, len, (good > 0) ? BOLD_TEXT : "", DISPLAY_80(fcdr(code)), (good > 0) ? UNBOLD_TEXT : "");
+	  }
+#endif
 
 	if ((is_null(cdr(fcdr(code)))) &&
 	    (is_pair(car(fcdr(code)))) &&
@@ -47143,7 +47233,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 		}
 	    }
-
 	  if ((is_null(cdr(code))) &&
 	      (is_pair(car(code))))
 	    {
@@ -50581,6 +50670,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_C_OBJECT_S:
 	      {
 		s7_pointer c, ind;
+		/*
+		  t502:
+		  441000: (dline1 k)
+		  423376: (radii k)
+		  220500: (dline2 j)
+		  etc
+		 */
+
 		c = find_symbol_or_bust(sc, car(code));
 		if (!is_c_object(c))
 		  break;
@@ -50630,6 +50727,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_C:
+	      /*
+		t502:
+		165375: (outa i couplingFilter-input)
+		108271: (outa i sample-0)
+		81365: (outa i (* pulse-amp (env pulse-ampf) (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf))))) animals
+		50880: (outa k (oscil-bank obank))
+		44999: (env pulsef)
+		etc
+	      */
 	      sc->value = c_call(code)(sc, cdr(code)); /* this includes all safe calls where all args are constants */
 	      goto START;
 
@@ -51140,25 +51246,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_SAFE_C_AAA:
 	      {
 		/* PERHAPS: C_SAA or SCA
-419248: (* (exp (* r (cos y))) (cos (+ x (* r (sin y)))) ar) -- generators rxyk!cos
-210833: (+ denom (* x1 x1) (* x2 x2))                        -- dsl lpc-coeffs
-101756: (+ (next-sample reader) (mus-random dither) (mus-random dither))
-92050: (* 0.5 (- (* 2 n) 1) x)
-66150: (locsig-set! loc 0 (* (- 1.0 degval) dist-scaler))
-66150: (locsig-set! loc 1 (* degval dist-scaler))
-66150: (locsig-reverb-set! loc 0 (* reverb-amount (sqrt dist-scaler)))
-60000: (+ 1.0 (* -2.0 r (cos y)) (* r r))
-54100: (* (cos cx) ercosmx (cos rsinmx))
-54100: (* (sin cx) ercosmx (sin rsinmx))
-52038: (* interp (sin cxx) s1)
-50828: (mus-set-formant-radius-and-frequency filt (env re) (env fe))
-42496: (file->frame current (+ current-loc i) on)
-39984: (* 0.5 (+ n 1) x)
-34255: (+ 1.0 (* 2.0 r (cos mx)) (* r r))
-34255: (+ 1.0 (* -2.0 r (cos mx)) (* r r))
-22050: (outb samp (* rev val2) *reverb*)
-22050: (outa samp (* rev val1) *reverb*)
-22050: (+ 1.0 (* (env vib-env) (oscil vib-osc)) (rand-interp ran-vib))
 		 */
 		s7_pointer arg;
 		arg = cdr(code);
@@ -52710,6 +52797,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* trailers */
 	  sc->cur_code = sc->code;
 
+	  /* t502:
+	     44999: (* pulse-amp (env pulsef) (rk!cos gen1 (env pulse-frqf)))
+	     10580: (make-polywave (* fm1-rat frequency) (list (floor fm1-rat) ...))
+	     and macro expansion
+	  */
 	  {
 	    s7_pointer carc;
 	    carc = car(sc->code);
@@ -53543,6 +53635,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 	  
 	case T_CLOSURE:                              /* -------- normal function (lambda), or macro -------- */
+	  /* not often safe closure here, and very confusing if so to get identity macro args handled correctly */
 	  CHECK_STACK_SIZE(sc);
 	  
 	case T_MACRO:
@@ -64275,14 +64368,17 @@ s7_scheme *s7_init(void)
  * index    44300 3291 3005 2742 2078 1643 1435 1363
  * s7test    1721 1358 1297 1244  977  961  957  960  943
  * t455|6     265   89   55   31   14   14    9 9155
- * lat        229   63   52   47   42   40   34   31   30
+ * lat        229   63   52   47   42   40   34   31   29
  * t502        90   43   39   36   29   23   20   14
  * calls           275  207  175  115   89   71   53
  *
  * TODO: math ops where 1 arg type/value is known (see multiply-chooser)
+ * TODO: check the apply safe closure odd case
  */
 
-/* vector: void *elements, int element_type(?)
+/* vector: void *elements, int element_type(?) or s7_pointer default_element [so ref if not elements -> default]
+ *         so a vector need not have a size!  (make-vector #f 1.0) -> 1.0 no matter what index or combination of indices
+ *         getter|setter for each vector (or hash-table?)
  *         void *(*ref_1)(s7_pointer vector, s7_Int i)
  *         set, compatible_set?
  *         mark, copy, fill, reverse, etc print

@@ -2472,6 +2472,8 @@ use augment-environment!.  Both of these functions accept nil as the
 'env' argument as shorthand for <code>(global-environment)</code>.
 Both also accept other environments as well as individual bindings,
 adding all the argument's bindings to the new environment.
+If you call augment-environment! on a procedure-environment,
+whatever happens next is not a bug.
 </p>
 
 <blockquote>
