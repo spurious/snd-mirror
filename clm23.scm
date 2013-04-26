@@ -495,7 +495,6 @@
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
 	(filt (make-vct 8)))
-    (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) 0.0))
     (set! (filt 4) 1.0)
     (let ((ff (make-convolve :input (make-readin file) :filter filt)))
       (do ((i start (+ i 1))) ((= i end))
@@ -506,7 +505,6 @@
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
 	(filt (make-vct 8)))
-    (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) 0.0))
     (set! (filt 4) 1.0)
     (let ((ff (make-convolve (make-readin file) :filter filt)))
       (do ((i start (+ i 1))) ((= i end))
@@ -522,9 +520,6 @@
 			   (readin rd)
 			   0.0)))
 	  (filt (make-vct 8)))
-      (do ((i 0 (+ i 1))) 
-	  ((= i 8)) 
-	(set! (filt i) 0.0))
       (set! (filt 4) 1.0)
       (let ((ff (make-convolve :filter filt :input read-func)))
 	(do ((i start (+ i 1))) ((= i end))
@@ -541,9 +536,6 @@
 			   (readin rd)
 			   0.0)))
 	  (filt (make-vct 8)))
-      (do ((i 0 (+ i 1))) 
-	  ((= i 8)) 
-	(set! (filt i) 0.0))
       (set! (filt 4) 1.0)
       (let ((ff (make-convolve :filter filt :input read-func))
 	    (ff1 (make-convolve :filter filt :input (make-readin file))))
@@ -864,7 +856,6 @@
 	(end (seconds->samples (+ beg dur)))
 	(sr (make-src (make-readin file) :srate speed))	 
 	(filt (make-vct 8)))
-    (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) 0.0))
     (set! (filt 4) 1.0)
     (let ((ff (make-convolve :filter filt :input (lambda (dir) (src sr)))))
       (do ((i start (+ i 1))) ((= i end))
@@ -876,7 +867,6 @@
 	(end (seconds->samples (+ beg dur)))
 	(sr (make-src :srate speed :input (make-readin file)))
 	(filt (make-vct 8)))
-    (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) 0.0))
     (set! (filt 4) 1.0)
     (let ((ff (make-convolve :filter filt :input (lambda (dir) (src sr)))))
       (do ((i start (+ i 1))) ((= i end))
@@ -1211,9 +1201,7 @@
 	((= i 100))
       (set! (arr i) (* amp (+ -.5 (* i .01)))))
     (array->file "testx.data" arr 100 22050 1)
-    (do ((i 0 (+ i 1)))
-	((= i 100))
-      (set! (arr i) 0.0))
+    (clear-array arr)
     (file->array "testx.data" 0 0 100 arr)
     (do ((i start (+ i 1))) ((= i end))
       (outa i (* (arr ctr) (oscil os)))
@@ -1268,14 +1256,7 @@
 	(end (seconds->samples (+ beg dur)))
 	(sr (make-granulate :input (make-readin file) :expansion speed)))
     (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (granulate sr #f
-				(lambda (g)
-				  (let ((grain (mus-data g))  ; current grain
-					(len (length g))) ; current grain length
-				    (do ((i 0 (+ i 1)))
-					((= i len) len)       ; grain length unchanged in this case
-				      (set! (grain i) (* 2.0 (grain i)))))
-				  0)))))))
+      (outa i (* amp (granulate sr #f (lambda (g) (vct-scale! (mus-data g) 2.0) 0.0)))))))
 
 					;(with-sound (:statistics #t) (simple-grn-f5 0 1 1 2 "oboe.snd"))
 
@@ -2015,7 +1996,7 @@
       (let ((zval (env zv))) 
 	(outa i 
 	      (* amp 
-		 (sin (* pi2 zval zval zval)) 
+		 (sin (* pi2 zval (* zval zval)))
 		 (oscil osc)))))))
 
 (definstrument (sndclmdoc-simple-table dur)

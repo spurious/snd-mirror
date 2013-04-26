@@ -829,19 +829,12 @@
 
       (when (not (= ctr n))
         (set! n ctr)
-	(let ((temp (make-vector n)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i n))
-	    (vector-set! temp i (vector-ref tnames i)))
-	  (set! tnames temp)))
+	(set! tnames (copy tnames (make-vector n))))
       
       (when (positive? g)
 	(if (< (length tnames) (+ g n))
-	  (let ((temp (make-vector (+ g n) #f)))
-	    (do ((i 0 (+ i 1)))
-		((= i n))
-	      (vector-set! temp i (vector-ref tnames i)))
-	    (set! tnames temp)))
+	    (set! tnames (copy tnames (make-vector (+ g n) #f))))
+
 	(do ((i 0 (+ i 1)))
 	    ((= i g))
 	  (set! (tnames (+ i n))

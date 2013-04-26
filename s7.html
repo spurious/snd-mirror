@@ -1817,6 +1817,19 @@ Here's a generic FFT:
 &gt; (cfft! (vector 0.0 1+i 0.0 0.0))
 #(1+1i -1+1i -1-1i 1-1i)
 </pre>
+
+<p>And a generic function that copies one sequence's elements into another sequence:
+</p>
+<pre class="indented">
+(define (copy-into source dest) ; this is equivalent to (copy source dest)
+  (do ((i 0 (+ i 1))) 
+      ((= i (min (length source) (length dest))) 
+       dest)
+    (set! (dest i) (source i))))
+</pre>
+
+<p>but that is already built-in as the two-argument version of the copy function.
+</p>
 </div>
 
 

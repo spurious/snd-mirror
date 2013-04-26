@@ -15007,7 +15007,7 @@ static s7_pointer g_equal_s_ic(s7_scheme *sc, s7_pointer args)
   return(sc->T);
 }
 
-static s7_pointer object_length(s7_scheme *sc, s7_pointer obj);
+static s7_Int object_length_to_int(s7_scheme *sc, s7_pointer obj);
 
 static s7_pointer g_equal_length_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -15038,7 +15038,7 @@ static s7_pointer g_equal_length_ic(s7_scheme *sc, s7_pointer args)
       return(make_boolean(sc, hash_table_length(val) == ilen));
 
     case T_C_OBJECT:
-      return(make_boolean(sc, s7_integer(object_length(sc, val)) == ilen));
+      return(make_boolean(sc, object_length_to_int(sc, val) == ilen));
 
     case T_ENVIRONMENT:
       return(make_boolean(sc, environment_length(sc, val) == ilen));
@@ -16038,7 +16038,7 @@ static s7_pointer g_less_length_ic(s7_scheme *sc, s7_pointer args)
       return(make_boolean(sc, hash_table_length(val) < ilen));
 
     case T_C_OBJECT:
-      return(make_boolean(sc, s7_integer(object_length(sc, val)) < ilen));
+      return(make_boolean(sc, object_length_to_int(sc, val) < ilen));
 
     case T_ENVIRONMENT:
       return(make_boolean(sc, environment_length(sc, val) < ilen));
@@ -16990,7 +16990,7 @@ static s7_pointer g_is_negative_length(s7_scheme *sc, s7_pointer args)
       return(sc->F);
 
     case T_C_OBJECT:
-      return(make_boolean(sc, s7_integer(object_length(sc, val)) < 0));
+      return(make_boolean(sc, object_length_to_int(sc, val) < 0));
 
     default:
       return(simple_wrong_type_argument_with_type(sc, sc->LENGTH, val, make_protected_string(sc, "a list, vector, string, or hash-table")));
@@ -27833,11 +27833,11 @@ static s7_ex *vector_set_ex_parser(s7_scheme *sc, s7_pointer expr)
     {
       s7_pointer v, loc, val;
       v = finder(sc, cadr(expr));
-      loc = s7_local_slot(sc, s7_caddr(expr));
+      loc = s7_local_slot(sc, caddr(expr));
       if ((loc) &&
 	  (is_integer(slot_value(loc))) &&
 	  (s7_is_vector(v)) &&
-	  (!s7_local_slot(sc, s7_cadr(expr))))
+	  (!s7_local_slot(sc, cadr(expr))))
 	{
 	  val = cadddr(expr);
 	  if (!s7_is_pair(val))
@@ -30294,6 +30294,21 @@ static s7_pointer object_length(s7_scheme *sc, s7_pointer obj)
 }
 
 
+static s7_Int object_length_to_int(s7_scheme *sc, s7_pointer obj)
+{
+  s7_pointer res;
+  if (c_object_has_array(obj))
+    return(c_object_array_length(obj));
+  if (c_object_length(obj))
+    {
+      res = (*(c_object_length(obj)))(sc, obj);
+      if (s7_is_integer(res))
+	return(s7_integer(res));
+    }
+  return(-1);
+}
+
+
 static s7_pointer object_copy(s7_scheme *sc, s7_pointer obj)
 {
   if (c_object_copy(obj))
@@ -32111,11 +32126,202 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
 }
 
 
+/* an experiment */
+
+static s7_pointer string_setter(s7_scheme *sc, s7_pointer str, s7_Int loc, s7_pointer val) 
+{
+  if (s7_is_character(val))
+    {
+      string_value(str)[loc] = s7_character(val); 
+      return(val);
+    }
+  return(wrong_type_argument(sc, sc->STRING_SET, small_int(3), val, T_CHARACTER));
+}
+
+static s7_pointer string_getter(s7_scheme *sc, s7_pointer str, s7_Int loc) 
+{
+  return(s7_make_character(sc, string_value(str)[loc]));
+}
+
+static s7_pointer list_setter(s7_scheme *sc, s7_pointer lst, s7_Int loc, s7_pointer val)
+{
+  int i;
+  s7_pointer p;
+  for (p = lst, i = 0; i < loc; i++, p = cdr(p));
+  car(p) = val;
+  return(val);
+}
+
+static s7_pointer list_getter(s7_scheme *sc, s7_pointer lst, s7_Int loc) 
+{
+  int i;
+  s7_pointer p;
+  for (p = lst, i = 0; i < loc; i++, p = cdr(p));
+  return(car(p));
+}
+
+static s7_pointer vector_setter(s7_scheme *sc, s7_pointer vec, s7_Int loc, s7_pointer val)
+{
+  vector_element(vec, loc) = val;
+  return(val);
+}
+
+static s7_pointer vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc) 
+{
+  return(vector_element(vec, loc));
+}
+
+static s7_pointer c_object_setter(s7_scheme *sc, s7_pointer obj, s7_Int loc, s7_pointer val)
+{
+  if ((c_object_has_array(obj)) &&
+      (is_real(val)))
+    {
+      c_object_array(obj)[loc] = s7_number_to_real(sc, val);
+      return(val);
+    }
+
+  if (c_object_set_3(obj))
+    return((*(c_object_set_3(obj)))(sc, c_object_value(obj), make_integer(sc, loc), val));
+
+  car(sc->T2_1) = make_integer(sc, loc);
+  car(sc->T2_2) = val;
+  return((*(c_object_set(obj)))(sc, obj, sc->T2_1));
+} 
+
+static s7_pointer c_object_getter(s7_scheme *sc, s7_pointer obj, s7_Int loc)
+{
+  if (c_object_has_array(obj))
+    return(make_real(sc, c_object_array(obj)[loc]));
+
+  if (c_object_ref_2(obj))
+    return((*(c_object_ref_2(obj)))(sc, c_object_value(obj), make_integer(sc, loc)));
+  
+  car(sc->T1_1) = make_integer(sc, loc);
+  return((*(c_object_ref(obj)))(sc, obj, sc->T1_1));
+}
+
+
+/* hash_table? -- not so good because what is the key? 
+ * environment? -- same problem here -- what is the symbol?
+ */
+
+static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
+{
+  #define H_copy "(copy obj) returns a copy of obj, (copy src dest) copies src into dest."
+  s7_pointer source, dest;
+  s7_Int i, len;
+  s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_Int loc, s7_pointer val);
+  s7_pointer (*get)(s7_scheme *sc, s7_pointer obj, s7_Int loc);
+
+  if (is_null(cdr(args)))
+    return(s7_copy(sc, car(args)));
+
+  /* (do ((i 0 (+ i 1))) ((= i (min (length src) (length dest))) dest) (set! (dest i) (src i)))
+   */
+  source = car(args);
+  dest = cadr(args);
+
+  if (type(source) == type(dest))
+    {
+      switch (type(source))
+	{
+	case T_PAIR:
+	  {
+	    s7_pointer slow, ps, pd;
+	    slow = source;
+	    ps = source;
+	    pd = dest;
+	    while (is_pair(ps) && is_pair(pd))
+	      {
+		car(pd) = car(ps);
+		ps = cdr(ps);
+		pd = cdr(pd);
+		if ((!is_pair(ps)) || (!is_pair(pd))) return(dest);
+
+		car(pd) = car(ps);
+		ps = cdr(ps);
+		pd = cdr(pd);
+
+		slow = cdr(slow);
+		if (slow == ps) return(dest);
+	      }
+	    return(dest);
+	  }
+
+	case T_VECTOR:
+	  /* ignore possible dimensional mismatch */
+	  len = vector_length(source);
+	  i = vector_length(dest);
+	  if (len > i) len = i;
+	  if (len == 0) return(dest); 
+	  for (i = 0; i < len; i++)
+	    vector_element(dest, i) = vector_element(source, i);
+	  return(dest);
+
+	case T_STRING:
+	  len = string_length(source);
+	  i = string_length(dest);
+	  if (len > i) len = i;
+	  if (len == 0) return(dest); 
+	  for (i = 0; i < len; i++)
+	    string_value(dest)[i] = string_value(source)[i];
+	  return(dest);
+	  
+	case T_C_OBJECT:
+	  if ((c_object_has_array(source)) &&
+	      (c_object_has_array(dest)))
+	    {
+	      len = c_object_array_length(source);
+	      i = c_object_array_length(dest);
+	      if (len > i) len = i;
+	      if (len == 0) return(dest); 
+	      for (i = 0; i < len; i++)
+		c_object_array(dest)[i] = c_object_array(source)[i];
+	      return(dest);
+	    }
+	  break;
+
+	default:
+	  return(dest);
+	}
+    }
+  
+  switch (type(source))
+    {
+    case T_PAIR:     get = list_getter;     len = s7_list_length(sc, source);       break;
+    case T_VECTOR:   get = vector_getter;   len = vector_length(source);            break;
+    case T_STRING:   get = string_getter;   len = string_length(source);            break;
+    case T_C_OBJECT: get = c_object_getter; len = object_length_to_int(sc, source); break;
+    default: return(dest);
+    }
+  if (len <= 0) return(dest);
+
+  switch (type(dest))
+    {
+    case T_PAIR:     set = list_setter;     i = s7_list_length(sc, dest);       break;
+    case T_VECTOR:   set = vector_setter;   i = vector_length(dest);            break;
+    case T_STRING:   set = string_setter;   i = string_length(dest);            break;
+    case T_C_OBJECT: set = c_object_setter; i = object_length_to_int(sc, dest); break;
+    default: return(dest);
+    }
+
+  if (i <= 0) return(dest);
+  if (len > i) len = i;
+
+  for (i = 0; i < len; i++) 
+    set(sc, dest, i, get(sc, source, i));
+  return(dest);
+}
+
+
+
+/* old form:
 static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 {
   #define H_copy "(copy obj) returns a copy of obj"
   return(s7_copy(sc, car(args)));
 }
+*/
 
 
 #if 0
@@ -34042,15 +34248,7 @@ static s7_Int applicable_length(s7_scheme *sc, s7_pointer obj)
       }
 
     case T_C_OBJECT:
-      {
-	/* both map and for-each assume sc->x|y|z are unchanged across this call */
-	s7_pointer result;
-
-	result = object_length(sc, obj);
-	if (s7_is_integer(result))   /* we need to check, else misinterpreting it as an integer can lead to a infinite loop */
-	  return(s7_integer(result));
-	return(-1);
-      }
+      return(object_length_to_int(sc, obj));
 
     case T_STRING:
       return(string_length(obj));
@@ -63872,7 +64070,7 @@ s7_scheme *s7_init(void)
 
 
   sc->LENGTH =                s7_define_safe_function(sc, "length",                  g_length,                 1, 0, false, H_length);
-  sc->COPY =                  s7_define_safe_function(sc, "copy",                    g_copy,                   1, 0, false, H_copy);
+  sc->COPY =                  s7_define_safe_function(sc, "copy",                    g_copy,                   1, 1, false, H_copy);
   sc->FILL =                  s7_define_function(sc,      "fill!",                   g_fill,                   2, 0, false, H_fill);
   sc->REVERSE =               s7_define_safe_function(sc, "reverse",                 g_reverse,                1, 0, false, H_reverse);
   sc->REVERSEB =              s7_define_function(sc,      "reverse!",                g_reverse_in_place,       1, 0, false, H_reverse_in_place); /* used by Snd code */
@@ -63967,9 +64165,9 @@ s7_scheme *s7_init(void)
   sc->EQUALP =                s7_define_safe_function(sc, "equal?",                  g_is_equal,               2, 0, false, H_is_equal);
   sc->MORALLY_EQUALP =        s7_define_safe_function(sc, "morally-equal?",          g_is_morally_equal,       2, 0, false, H_is_morally_equal);
   
-  s7_define_safe_function(sc,                               "s7-version",              g_s7_version,             0, 0, false, H_s7_version);
+  s7_define_safe_function(sc,                             "s7-version",              g_s7_version,             0, 0, false, H_s7_version);
 #if DEBUGGING
-  s7_define_function(sc,                                    "abort",                   g_abort,                  0, 0, false, "drop into gdb I hope");
+  s7_define_function(sc,                                  "abort",                   g_abort,                  0, 0, false, "drop into gdb I hope");
 #endif
 
   {
@@ -64367,7 +64565,7 @@ s7_scheme *s7_init(void)
  * lint           9328 8140 7887 7736 7300 7180 7051
  * index    44300 3291 3005 2742 2078 1643 1435 1363
  * s7test    1721 1358 1297 1244  977  961  957  960  943
- * t455|6     265   89   55   31   14   14    9 9155
+ * t455|6     265   89   55   31   14   14    9 9155 8998
  * lat        229   63   52   47   42   40   34   31   29
  * t502        90   43   39   36   29   23   20   14
  * calls           275  207  175  115   89   71   53
@@ -64383,4 +64581,8 @@ s7_scheme *s7_init(void)
  *         set, compatible_set?
  *         mark, copy, fill, reverse, etc print
  */
- 
+
+/* like vector_set_ex_parser would be list_set, but we need something like copy-into
+ *   or direct do-loop recognition of this case, or def arg to copy? (copy src dest) -> dest
+ *   it could even support cross-type copies (copy lst vct) -> vct etc.
+ */

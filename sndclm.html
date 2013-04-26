@@ -647,46 +647,57 @@ plugging it into the following with-sound call:
       (outa i (square-wave sqr)))))
 </pre>
 
-<p>By the way, there's nothing special about a generator in CLM: it is a function, or perhaps more accurately, a closure.  
-If such a function happens to restrict itself
-to functions that the "run" macro can handle (and this includes most of Scheme), then it will run
-nearly as fast as any built-in function.  If it needs to keep on-going state around, it is simplest to use a vct
-as the generator object:
-</p>
 
-<pre class="indented">
-(define (<em class="noem">make-my-oscil</em> frequency)       ; we want our own oscil!
-  (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0.0 (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frequency)))    ; current phase and frequency-based phase increment
+<!--
+(define (simp1 beg dur freq amp)
+  (let* ((o (make-oscil freq))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur))))
+    (do ((i start (+ i 1)))
+	((= i end))
+      (outa i (* amp (oscil o))))))
 
-(define (my-oscil gen fm)       ; the corresponding generator
-  (let ((result (sin (gen 0)))) ; return sin(current-phase)
-    (set! (gen 0) (+ (gen 0)    ; increment current phase
-                       (gen 1)  ;    by frequency
-                       fm))     ;    and FM
-    result))                    ; return sine wave
+(define (simp2 beg dur freq amp)
+  (let* ((o (make-oscil freq))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur))))
+    (let loop ((i start))
+      (outa i (* amp (oscil o)))
+      (if (< i end)
+	  (loop (+ i 1))))))
 
-(with-sound () 
- (let ((osc (make-my-oscil 440.0)))
-   (do ((i 0 (+ 1 i))) 
-       ((= i 44100))
-     (outa i (my-oscil osc 0.0)))))
-</pre>
+(define (simp3 beg dur freq amp)
+  (let* ((o (make-oscil freq))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur))))
+    (define (simper i)
+      (outa i (* amp (oscil o)))
+      (if (< i end)
+	  (simper (+ i 1))))
+    (simper start)))
 
-<p>There are many more such generators scattered around the Snd package, most now collected in generators.scm.
-I'm also writing pure-scheme versions of the built-in generators: big-gens.scm.  For comparison, here is the sinewave
-instrument in Grace (Common Music):
-</p>
+(with-sound (:statistics #t) (simp1 0 10 440 .1))
 
-<pre class="indented">
-file "test.wav" () 
-  with osc = make-oscil(440) 
-  loop for i below 44100 
-       outa(i, .1 * oscil(osc)) 
-  end 
-end 
-</pre>
+(with-sound (:statistics #t) (simp2 0 10 440 .1))
 
+(with-sound (:statistics #t) (simp3 0 10 440 .1))
 
+(exit)
+
+#|
+;test.snd:
+  maxamp: 0.1000
+  compute time: 0.023
+
+;test.snd:
+  maxamp: 0.1000
+  compute time: 0.061
+
+;test.snd:
+  maxamp: 0.1000
+  compute time: 0.062
+|#
+-->
 
 <!-- INDEX generators:Generators -->
 

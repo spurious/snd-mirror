@@ -41,20 +41,7 @@
 	    (set! (fr j) temp)))
 	fr)))
 
-(define (frame-copy fr)
-  "(frame-copy fr) returns a copy of frame fr"
-  (if (not (frame? fr))
-      (error 'wrong-type-arg "frame-copy: ~A" fr)
-      (copy fr)))
-#|
-      (let* ((len (channels fr))
-	     (nfr (make-frame len)))
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
-	  (set! (nfr i) (fr i)))
-	nfr)))
-|#
-
+(define frame-copy copy)
 
 #|
 (define (frame-cross m1 m2)
@@ -86,29 +73,11 @@
 
 (define* (frame->vct fr v)
   "(frame->vct fr v) copies frame fr into either vct v or a new vct, returning the vct"
-  (if (not (frame? fr))
-      (error 'wrong-type-arg "frame->vct: ~A" fr)
-      (let* ((flen (channels fr))
-	     (nv (or (and (vct? v) v)
-		     (make-vct flen)))
-	     (len (min flen (length nv))))
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
-	  (set! (nv i) (fr i)))
-	nv)))
+  (copy fr (or v (make-vct (length fr)))))
 
 (define* (vct->frame v fr)
   "(vct->frame v fr) copies vct v into either frame fr or a new frame, returning the frame"
-  (if (not (vct? v))
-      (error 'wrong-type-arg "vct->frame: ~A" v)
-      (let* ((vlen (length v))
-	     (nfr (or (and (frame? fr) fr)
-		      (make-frame vlen)))
-	     (len (min vlen (channels nfr))))
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
-	  (set! (nfr i) (v i)))
-	nfr)))
+  (copy v (or fr (make-frame (length v)))))
 
 
 (define* (frame->sound-data fr sd (pos 0))

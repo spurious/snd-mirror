@@ -15850,6 +15850,24 @@ in s7:
 
   (test (fold and #t '(#t #f #t #t)) #f))
 
+;;; here are some tests from S. Lewis in the r7rs mailing list
+(let ()
+  (define myand and)
+  (test (myand #t (+ 1 2 3)) 6)
+  (define (return-op) and)
+  (define myop (return-op))
+  (test (myop #t (+ 1 2 3)) 6)
+  (test (and #t (+ 1 2 3)) 6)
+  (test ((return-op) #t (+ 1 2 3)) 6)
+  (test ((and and) #t (+ 1 2 3)) 6)
+  (define ops `(,* ,and))
+  (test ((car ops) 2 3) 6)
+  (test ((cadr ops) #t #f) #f)
+  (test (and #f never) #f)
+  (test (and #f and) #f)
+  (test ((and #t and) #t (+ 1 2 3)) 6))
+
+
 
 
 
@@ -23786,7 +23804,7 @@ who says the continuation has to restart the map from the top?
 (test (arity assv)                                                   '(2 . 2))
 (test (arity cond)                                                   '(1 . 536870912))
 (test (arity cons)                                                   '(2 . 2))
-(test (arity copy)                                                   '(1 . 1))
+(test (arity copy)                                                   '(1 . 2))
 (test (arity else)                                                   '#f)
 (test (arity eqv?)                                                   '(2 . 2))
 (test (arity define*)                                                '(2 . 536870912))
@@ -28189,6 +28207,28 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (copy '()) '())
 
 (test (copy) 'error)
+(test (copy () () ()) 'error)
+
+;;; 2 arg version of copy
+(test (copy (list 1 2) (vector 0 0)) #(1 2))
+(test (copy (list 1 2) (vector 0)) #(1))
+(test (copy (list 1 2) (vector)) #())
+(test (copy (list) (vector)) #())
+(test (copy (list 1 2) (vector 0 0 3 4)) #(1 2 3 4))
+; should (copy 1 2) be an error?
+(test (copy #2d((1 2) (3 4)) (vector 0 0 0 0 0)) #(1 2 3 4 0))
+(test (copy "12345" (make-list 5)) '(#\1 #\2 #\3 #\4 #\5))
+(test (copy (list #\0 #\1 #\2) (make-string 3)) "012")
+(test (copy '(0 1 2 3) (list 4 3 2 1)) '(0 1 2 3))
+(test (copy #(0 1 2 3) (vector 4 3 2 1)) #(0 1 2 3))
+(test (copy "12345" (make-string 5)) "12345")
+(test (copy '(4 3 2 1) '(1 . 2)) '(4 . 2))
+
+(let ((lst (list 1 2 3)))
+   (set! (cdr (cddr lst)) lst)
+   (test (copy lst lst) lst)
+   (test (copy lst (make-list 15 5)) '(1 2 3 1 2 3 5 5 5 5 5 5 5 5 5)))
+
 
 (if with-bignums
     (begin
@@ -28223,6 +28263,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (test (= c (bignum "1.0+1.0i")) #t)))
 
 
+;;; --------
 
 (let ((c1 #f))
   (call/cc
