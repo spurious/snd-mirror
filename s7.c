@@ -3314,8 +3314,11 @@ static void just_mark(s7_pointer p)
 
 static void mark_c_proc(s7_pointer p)
 {
-  set_mark(p);
-  S7_MARK(c_function_setter(p));
+  if (!is_marked(p)) /* this is needed since it is remotely possible a function is its own setter(?!?) and otherwise we get an infinite loop */
+    {
+      set_mark(p);
+      S7_MARK(c_function_setter(p));
+    }
 }
 
 
@@ -5222,7 +5225,7 @@ environment."
 						 make_protected_string(sc, "a pair whose car is a symbol: '(symbol . value)")));
 	  sym = car(p);
 	  val = cdr(p);
-	  if ((is_immutable(sym)) &&                     /* check for (eval 'pi (augment-environment! () '(pi . 1))) */
+	  if ((is_immutable(sym)) &&                    /* check for (eval 'pi (augment-environment! () '(pi . 1))) */
 	      (!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
 	    return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), sym, 
 						 make_protected_string(sc, "a non-contant symbol")));
@@ -5231,15 +5234,31 @@ environment."
   
   if (e == sc->global_env)
     {
-      for (x = cdr(args); is_not_null(x); x = cdr(x))
+      for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x))
 	{
 	  s7_pointer p;
 	  p = car(x);
 	  if (is_pair(p))
 	    {
-	      if (is_slot(global_slot(car(p))))
-		slot_set_value(global_slot(car(p)), cdr(p));
-	      else s7_make_slot(sc, e, car(p), cdr(p));
+	      s7_pointer sym;
+	      sym = car(p);
+	      if (is_slot(global_slot(sym)))
+		{
+		  if (is_syntax(slot_value(global_slot(sym))))
+		    return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), p, 
+							 make_protected_string(sc, "a non-syntactic keyword")));
+		  /*  without this check we can end up turning our code into gibberish:
+		   *
+		   * :(set! quote 1)
+		   * ;can't set! quote
+		   * :(augment-environment! (global-environment) '(quote . 1))
+		   * :quote
+		   * 1
+		   * or worse set quote to a function of one arg that tries to quote something -- infinite loop
+		   */
+		  slot_set_value(global_slot(sym), cdr(p));
+		}
+	      else s7_make_slot(sc, e, sym, cdr(p));
 	    }
 	  else append_environment(sc, e, p);
 	}
@@ -6268,14 +6287,33 @@ static s7_pointer g_is_continuation(s7_scheme *sc, s7_pointer args)
  */
 
 
+static s7_pointer list_copy(s7_scheme *sc, s7_pointer x, s7_pointer y, bool step)
+{
+  if ((!is_pair(x)) ||
+       (x == y))
+    return(x);
+  return(cons(sc, car(x), list_copy(sc, cdr(x), (step) ? cdr(y) : y, !step)));
+}
+
+
 static s7_pointer copy_arg_list(s7_scheme *sc, s7_pointer lst)
 {
-  /* lst may be dotted, but not circular */
+  /* lst can be dotted or circular here.  The circular list only happens in a case like:
+   *    (dynamic-wind 
+   *      (lambda () (eq? (let ((lst (cons 1 2))) (set-cdr! lst lst) lst) (call/cc (lambda (k) k))))
+   *      (lambda () #f)
+   *      (lambda () #f))
+   *
+   * on the first call, we know lst is a pair
+   */
+  return(cons(sc, car(lst), list_copy(sc, cdr(lst), lst, true))); 
+  /*
   if (is_null(lst))
     return(sc->NIL);
   if (is_pair(cdr(lst)))
     return(cons(sc, car(lst), copy_arg_list(sc, cdr(lst))));
   return(cons(sc, car(lst), cdr(lst)));
+  */
 }
 
 
@@ -20196,7 +20234,7 @@ static s7_pointer string_read_line(s7_scheme *sc, s7_pointer port, bool with_eol
       }
   i = port_string_length(port);
   port_string_point(port) = i;
-  if (i == port_start)
+  if (i <= port_start)         /* the < part can happen -- if not caught we try to create a string of length -1 -> segfault */
     return(sc->EOF_OBJECT);
 
   return(s7_make_terminated_string_with_length(sc, start, i - port_start));
@@ -30442,6 +30480,18 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
       (!is_procedure_or_macro(setter)))
     return(s7_wrong_type_arg_error(sc, "set! procedure-setter setter", 2, setter, "a procedure or #f"));
 
+  /* should we check that p != setter?
+   *
+   * :(set! (procedure-setter <) <)
+   * <
+   * :(set! (< 3 2) 3)
+   * #t
+   * :(set! (< 1) 2)
+   * #t
+   *
+   * can this make sense?
+   */
+
   switch (type(p))
     {
     case T_MACRO:
@@ -32072,15 +32122,6 @@ list has infinite length."
  */
 
 
-static s7_pointer list_copy(s7_scheme *sc, s7_pointer x, s7_pointer y, bool step)
-{
-  if ((!is_pair(x)) ||
-       (x == y))
-    return(x);
-  return(cons(sc, car(x), list_copy(sc, cdr(x), (step) ? cdr(y) : y, !step)));
-}
-
-
 s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
 {
   switch (type(obj))
@@ -32106,7 +32147,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
       return(s7_vector_copy(sc, obj)); /* "shallow" copy */
 
     case T_PAIR:                    /* top level only, as in the other cases, last arg checks for circles */
-      return(cons(sc, car(obj), list_copy(sc, cdr(obj), obj, true)));  /* this is the only use of list_copy */
+      return(cons(sc, car(obj), list_copy(sc, cdr(obj), obj, true))); 
 
 #if WITH_GMP
     case T_BIG_INTEGER:
@@ -32203,6 +32244,7 @@ static s7_pointer c_object_getter(s7_scheme *sc, s7_pointer obj, s7_Int loc)
 
 /* hash_table? -- not so good because what is the key? 
  * environment? -- same problem here -- what is the symbol?
+ *   it might make sense to support env/ht -> vector/list but then you'd expect the reverse to work as well (ambiguous?)
  */
 
 static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
@@ -43268,7 +43310,6 @@ static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1,
    *
    * why can't we do something similar with locals? 
    * how can slots be reversed if safe closure? -- macros and OP_APPLY handling -- apparently no way around this
-   * can augment-env screw us? -- perhaps if aug-env called on proc env, add to end?
    */
   s7_pointer p;
   if (!is_pair(expr)) return;
@@ -44118,7 +44159,6 @@ static s7_pointer step_dox_c_subtract_ss(s7_scheme *sc, s7_pointer code, s7_poin
 static s7_pointer step_dox_c_subtract_i(s7_scheme *sc, s7_pointer code, s7_pointer slot)
 {
   /* this is hard to optimize because macros can cause hidden changes 
-   *   PERHAPS: can we see that the tree has no macros? or make a smarter tree_memq? perhaps even see that the stepper is not set!
    */
   if ((is_integer(slot_value(slot))) &&
       (is_integer(slot_value(slot_pending_value(slot)))))
@@ -55741,12 +55781,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* --------------- */
     case OP_SET1:  
       /* if unbound variable hook here, we need the binding, not the current value */
-#if 0
-      if (is_global(sc->code))
-	sc->y = global_slot(sc->code);
-      else 
-#endif
-	sc->y = find_symbol(sc, sc->code);
+      sc->y = find_symbol(sc, sc->code);
       if (is_slot(sc->y)) 
 	{
 	  if (symbol_has_accessor(sc->code))
@@ -64552,11 +64587,11 @@ s7_scheme *s7_init(void)
  * TODO: what happened to hook documentation? hook is now an s7 constant (see xen.c xen_s7_define_hook)
  *   but make-hook above could presumably put the docstring in the lambda* body -can we find it there?
  *   or in the let for that matter -- could this always work?
- * TODO: give each e|f|gcdr ref a unique name
- * f|gcdr in let_op*q -- can let_r -> let_all_x? (or let_d similarly?)
+ * SOMEDAY: give each e|f|gcdr ref a unique name
  *
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x) and goto*
  *   op_closure_car_car is rarely called, cdr_cdr case only in bench
+ *   can't these be done equally well via _aa?
  * M. in listener -> code if its scheme, and maybe autohelp as in html?
  *
  *
@@ -64571,7 +64606,6 @@ s7_scheme *s7_init(void)
  * calls           275  207  175  115   89   71   53
  *
  * TODO: math ops where 1 arg type/value is known (see multiply-chooser)
- * TODO: check the apply safe closure odd case
  */
 
 /* vector: void *elements, int element_type(?) or s7_pointer default_element [so ref if not elements -> default]
@@ -64582,7 +64616,3 @@ s7_scheme *s7_init(void)
  *         mark, copy, fill, reverse, etc print
  */
 
-/* like vector_set_ex_parser would be list_set, but we need something like copy-into
- *   or direct do-loop recognition of this case, or def arg to copy? (copy src dest) -> dest
- *   it could even support cross-type copies (copy lst vct) -> vct etc.
- */

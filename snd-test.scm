@@ -9,28 +9,28 @@
 ;;;  test 6: vcts                               [9463]
 ;;;  test 7: colors                             [9779]
 ;;;  test 8: clm                                [10297]
-;;;  test 9: mix                                [21966]
-;;;  test 10: marks                             [23753]
-;;;  test 11: dialogs                           [24713]
-;;;  test 12: extensions                        [24908]
-;;;  test 13: menus, edit lists, hooks, etc     [25174]
-;;;  test 14: all together now                  [26549]
-;;;  test 15: chan-local vars                   [27428]
-;;;  test 16: regularized funcs                 [29185]
-;;;  test 17: dialogs and graphics              [32796]
-;;;  test 18: enved                             [32895]
-;;;  test 19: save and restore                  [32914]
-;;;  test 20: transforms                        [34528]
-;;;  test 21: new stuff                         [36661]
-;;;  test 22: (run)                             [38674]
-;;;  test 23: with-sound                        [39197]
-;;;  test 25: X/Xt/Xm                           [42164]
-;;;  test 26:                                   [45846]
-;;;  test 27: GL                                [45852]
-;;;  test 28: errors                            [45976]
-;;;  test 29: s7                                [48035]
-;;;  test all done                              [48107]
-;;;  test the end                               [48290]
+;;;  test 9: mix                                [22041]
+;;;  test 10: marks                             [23828]
+;;;  test 11: dialogs                           [24788]
+;;;  test 12: extensions                        [24983]
+;;;  test 13: menus, edit lists, hooks, etc     [25249]
+;;;  test 14: all together now                  [26624]
+;;;  test 15: chan-local vars                   [27503]
+;;;  test 16: regularized funcs                 [29260]
+;;;  test 17: dialogs and graphics              [32871]
+;;;  test 18: enved                             [32970]
+;;;  test 19: save and restore                  [32989]
+;;;  test 20: transforms                        [34603]
+;;;  test 21: new stuff                         [36736]
+;;;  test 22: (run)                             [38749]
+;;;  test 23: with-sound                        [39273]
+;;;  test 25: X/Xt/Xm                           [42240]
+;;;  test 26:                                   [45922]
+;;;  test 27: GL                                [45928]
+;;;  test 28: errors                            [46052]
+;;;  test 29: s7                                [48112]
+;;;  test all done                              [48184]
+;;;  test the end                               [48367]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -22019,6 +22019,21 @@ EDITS: 2
 		(format #t ";one-pole-all-pass (1) ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
       )
 
+    (let ((old-srate (mus-srate)))
+      (set! (mus-srate) 44100)
+      (let ((pe (make-pulsed-env '(0 0 1 1 2 0) .0004 2205))
+	    (v (make-vct 100)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 100))
+	  (vct-set! v i (pulsed-env pe)))
+	(if (not (vequal v (vct 0.000 0.125 0.250 0.375 0.500 0.625 0.750 0.875 1.000 0.875 0.750 0.625 0.500 0.375 0.250 0.125 0.000 0.000 0.000 0.000 
+				0.000 0.125 0.250 0.375 0.500 0.625 0.750 0.875 1.000 0.875 0.750 0.625 0.500 0.375 0.250 0.125 0.000 0.000 0.000 0.000 
+				0.000 0.125 0.250 0.375 0.500 0.625 0.750 0.875 1.000 0.875 0.750 0.625 0.500 0.375 0.250 0.125 0.000 0.000 0.000 0.000 
+				0.000 0.125 0.250 0.375 0.500 0.625 0.750 0.875 1.000 0.875 0.750 0.625 0.500 0.375 0.250 0.125 0.000 0.000 0.000 0.000 
+				0.000 0.125 0.250 0.375 0.500 0.625 0.750 0.875 1.000 0.875 0.750 0.625 0.500 0.375 0.250 0.125 0.000 0.000 0.000 0.000)))
+	    (snd-display #__line__ ";pulsed-env: ~A" v)))
+      (set! (mus-srate) old-srate))
+    
     ))
 
 
@@ -48440,30 +48455,6 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-18-Apr-13:
-53,227,192,058
-6,679,229,750  s7.c:eval [/home/bil/snd-13/snd]
-6,227,994,765  ???:sin [/lib64/libm-2.12.so]
-2,485,863,631  ???:cos [/lib64/libm-2.12.so]
-2,428,164,947  clm.c:mus_src [/home/bil/snd-13/snd]
-2,230,232,379  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-1,334,628,987  s7.c:gc [/home/bil/snd-13/snd]
-1,323,786,448  s7.c:eval'2 [/home/bil/snd-13/snd]
-1,018,453,361  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
-1,003,990,243  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
-  936,385,788  clm.c:mus_formant_bank [/home/bil/snd-13/snd]
-  911,248,552  clm.c:fir_8 [/home/bil/snd-13/snd]
-  888,799,420  ???:t2_32 [/home/bil/snd-13/snd]
-  782,408,943  ???:t2_64 [/home/bil/snd-13/snd]
-  773,868,601  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
-  693,360,038  clm.c:run_hilbert [/home/bil/snd-13/snd]
-  507,150,000  clm.c:mus_formant_bank_with_inputs [/home/bil/snd-13/snd]
-  449,776,264  ???:n1_64 [/home/bil/snd-13/snd]
-  442,125,249  io.c:mus_write_1 [/home/bil/snd-13/snd]
-  437,437,696  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-13/snd]
-  428,928,818  vct.c:g_vct_add [/home/bil/snd-13/snd]
-  418,076,031  clm.c:mus_src_20 [/home/bil/snd-13/snd]
-
 23-Apr-13:
 52,886,592,302
 6,697,050,795  s7.c:eval [/home/bil/snd-13/snd]
@@ -48489,4 +48480,4 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  
 |#
 
-;;; TODO: tests for rxyk!cos and sin [epsecially the latter since it was broken up to now]
+

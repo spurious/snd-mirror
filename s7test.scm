@@ -20873,6 +20873,12 @@ who says the continuation has to restart the map from the top?
 		    (lambda args 'error))))
     (test val 'error)))
 
+(test (dynamic-wind 
+	  (lambda () (eq? (let ((lst (cons 1 2))) (set-cdr! lst lst) lst) (call/cc (lambda (k) k))))
+	  (lambda () #f)
+	  (lambda () #f))
+      #f)
+
 
 
 
@@ -26601,6 +26607,7 @@ func
 (test ((augment-environment () '(asdf . 32)) 'asdf) 32)
 (test ((augment-environment () '(asdf . 32)) 'asd) #<undefined>)
 (test (environment? (augment-environment (current-environment))) #t) ; no bindings is like (let () ...)
+(test (augment-environment! (global-environment) '(quote . 1)) 'error)
 
 #|
 if t423.scm is

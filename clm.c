@@ -9002,8 +9002,6 @@ mus_float_t mus_pulsed_env_unmodulated(mus_any *g)
   return(mus_env(pl->e));
 }
 
-/* TODO: snd-test pulsed-env and one-pole-all-pass */
-
 
 
 /* ---------------- frame ---------------- */

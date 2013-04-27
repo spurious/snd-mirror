@@ -2791,7 +2791,12 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 (define-macro (define-generic name)
   `(define ,name (lambda args (apply ((car args) ',name) args)))) ; (define (genfun any) ((any 'genfun) any))
 
-
+<!-- actually we need to block an infinite loop here:
+  `(define ,name (lambda args (if (not (eq? (car args) (global-environment))) (apply ((car args) ',name) args)))))
+   that is we don't want ((global-enironment) 'add) == add applied all over again!
+   or perhaps it should be checking that it is not calling itself? (local define-generic) -- how to do that?
+   TODO: save the current-env in a closure, and check envs?
+-->
 (define-macro (define-slot-accessor name slot)
   `(define ,name (make-procedure-with-setter 
                    (lambda (obj) (obj ',slot)) 
@@ -5830,8 +5835,8 @@ the current environment, so defines happen in the enclosing environment.
   (define string-for-each for-each) 
   (define copy-vector copy) 
   (define copy-list copy)
-  (define (vector-&gt;string vect) (apply string (vector-&gt;list vect)))
-  (define (string-&gt;vector str) (apply vector (string-&gt;list str)))
+  (define (vector-&gt;string vect) (copy vect (make-string (length vect))))
+  (define (string-&gt;vector str) (copy str (make-vector (length str))))
 
   (define char-foldcase char-downcase) 
   (define string-foldcase string-downcase)
