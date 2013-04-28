@@ -2788,15 +2788,15 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
       ',class-name)))
 
 
-(define-macro (define-generic name)
-  `(define ,name (lambda args (apply ((car args) ',name) args)))) ; (define (genfun any) ((any 'genfun) any))
+(define-macro (define-generic name)    ; (define (genfun any) ((any 'genfun) any))
+  `(define ,name 
+     (lambda args 
+       (let ((gf ((car args) ',name))) ; get local definition
+	 (if (not (eq? gf ,name))      ; avoid infinite recursion
+             (apply gf args)
+	     (error "attempt to call generic function wrapper recursively"))))))
 
-<!-- actually we need to block an infinite loop here:
-  `(define ,name (lambda args (if (not (eq? (car args) (global-environment))) (apply ((car args) ',name) args)))))
-   that is we don't want ((global-enironment) 'add) == add applied all over again!
-   or perhaps it should be checking that it is not calling itself? (local define-generic) -- how to do that?
-   TODO: save the current-env in a closure, and check envs?
--->
+
 (define-macro (define-slot-accessor name slot)
   `(define ,name (make-procedure-with-setter 
                    (lambda (obj) (obj ',slot)) 
@@ -2928,7 +2928,7 @@ class-3
 
 <p>with-environment (used briefly above) provides an even more striking simplification of syntax
 than implicit indexing or multidimensional vectors, and it is faster as well!
-See Snd's piano.scm for an extended example.  
+See Snd's generators.scm for many examples.  
 </p>
 
 <!--

@@ -37759,8 +37759,6 @@ EDITS: 1
       
       (let ((tag (catch #t (lambda () (frame-reverse! 32)) (lambda args (car args)))))
 	(if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";frame-reverse! bad arg: ~A" tag)))
-      (let ((tag (catch #t (lambda () (frame-copy 32)) (lambda args (car args)))))
-	(if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";frame-copy bad arg: ~A" tag)))
       
       (let ((fr1 (make-frame 3 .1 .2 .3)))
 	(let ((val (frame-copy fr1)))

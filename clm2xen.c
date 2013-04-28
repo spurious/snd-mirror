@@ -15317,6 +15317,7 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	  
       if ((s7_is_symbol(cadr(expr))) &&
 	  (s7_is_pair(caddr(expr))) &&
+	  (s7_is_pair(cdr(caddr(expr)))) &&  /* hmmm -- I thought junk like (* quote ((x . 1) . 2)) was trapped earlier */
 	  (s7_is_symbol(cadr(caddr(expr)))))
 	{
 	  if (car(caddr(expr)) == sin_symbol)

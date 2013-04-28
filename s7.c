@@ -533,7 +533,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "if", "if", "if",
    "if", "if", "if", "if", "if", "if", "if",
    "if", "if", "if", "if",
-   "if", "if", "if", "if", "if",
+   "if", "if", "if", "if", "if", "if", "if",
    "c_p_1", "c_pp_1", "c_pp_2", "c_pp_3", "c_pp_4", "c_pp_5", "c_pp_6", 
    "eval_args_p_1", "eval_args_p_1_mv", "eval_args_p_2", "eval_args_p_2_mv", 
    "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv", 
@@ -546,7 +546,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "c_zz_1", "c_zz_2", "c_sz_1", "c_zs_1", "c_za_1", "increment_sz_1", "c_sz_sz",
    "c_zaa_1", "c_aza_1", "c_aaz_1", "c_ssz_1", 
    "c_zza_1", "c_zza_2", "c_zaz_1", "c_zaz_2", "c_azz_1", "c_azz_2", 
-   "c_zzz_1", "c_zzz_2", "c_zzz_3", 
+   "c_zzz_1", "c_zzz_2", "c_zzz_3", "zzzz_1", "zzzz_2", "zzzz_3", "zzzz_4",
 
    "c_opsq_p_1", "c_opsq_p_mv", "c_p_1", "c_p_2", "c_sp_1", "c_sp_2",
    
@@ -3863,7 +3863,13 @@ Evaluation produces a surprising amount of garbage, so don't leave the GC off fo
 	return(simple_wrong_type_argument_with_type(sc, sc->GC, car(args), make_protected_string(sc, "#f (turn GC off) or #t (turn it on)")));
 
       sc->gc_off = (car(args) == sc->F);
-      if (sc->gc_off) return(sc->F);
+      if (sc->gc_off) 
+	{
+#if DEBUGGING
+	  fprintf(stderr, "gc off\n");
+#endif
+	  return(sc->F);
+	}
     }
 
   gc(sc);
@@ -6286,6 +6292,46 @@ static s7_pointer g_is_continuation(s7_scheme *sc, s7_pointer args)
  * how to recognize the call-with-exit function?  "goto" is an internal name.
  */
 
+static s7_pointer protected_list_copy(s7_scheme *sc, s7_pointer a) 
+{
+  s7_pointer slow, fast, p;
+
+  sc->w = cons(sc, car(a), sc->NIL);
+  p = sc->w;
+
+  slow = fast = cdr(a);
+  while (true)
+    {
+      if (!is_pair(fast))
+	{
+	  if (is_null(fast))
+	    return(sc->w);
+	  cdr(p) = fast;
+	  return(sc->w);
+	}
+      
+      cdr(p) = cons(sc, car(fast), sc->NIL);
+      p = cdr(p);
+
+      fast = cdr(fast);
+      if (!is_pair(fast)) 
+	{
+	  if (is_null(fast))
+	    return(sc->w);
+	  cdr(p) = fast;
+	  return(sc->w);
+	}
+      /* if unrolled further, it's a lot slower? */
+      cdr(p) = cons(sc, car(fast), sc->NIL);
+      p = cdr(p);
+      
+      fast = cdr(fast);
+      slow = cdr(slow);
+      if (fast == slow) 
+	return(sc->w);
+    }
+  return(sc->w);
+}
 
 static s7_pointer list_copy(s7_scheme *sc, s7_pointer x, s7_pointer y, bool step)
 {
@@ -6306,7 +6352,12 @@ static s7_pointer copy_arg_list(s7_scheme *sc, s7_pointer lst)
    *
    * on the first call, we know lst is a pair
    */
+
+  return(protected_list_copy(sc, lst));
+
+  /*
   return(cons(sc, car(lst), list_copy(sc, cdr(lst), lst, true))); 
+  */
   /*
   if (is_null(lst))
     return(sc->NIL);
@@ -7893,7 +7944,7 @@ static s7_pointer s7_invert(s7_scheme *sc, s7_pointer p)      /* s7_ to be consi
     case T_REAL:
       return(make_real(sc, 1.0 / real(p)));
 
-    default:
+    case T_COMPLEX:
       {
 	s7_Double r2, i2, den;
 	r2 = real_part(p);
@@ -7901,6 +7952,9 @@ static s7_pointer s7_invert(s7_scheme *sc, s7_pointer p)      /* s7_ to be consi
 	den = (r2 * r2 + i2 * i2);
 	return(s7_make_complex(sc, r2 / den, -i2 / den));
       }
+
+    default:
+      return(wrong_type_argument_with_type(sc, sc->DIVIDE, small_int(1), p, A_NUMBER));
     }
 }
 
@@ -14652,7 +14706,9 @@ static s7_pointer g_max_f2(s7_scheme *sc, s7_pointer args)
   y = cadr(args);
   if (is_simple_real(y))
     return((real(x) >= real(y)) ? x : y);
-  return((real(x) >= s7_number_to_real(sc, y)) ? x : y);
+  if (is_real(y))
+    return((real(x) >= s7_number_to_real(sc, y)) ? x : y);
+  return(wrong_type_argument(sc, sc->MAX, small_int(2), y, T_REAL));
 }
 
 
@@ -14851,7 +14907,9 @@ static s7_pointer g_min_f2(s7_scheme *sc, s7_pointer args)
   y = cadr(args);
   if (is_simple_real(y))
     return((real(x) <= real(y)) ? x : y);
-  return((real(x) <= s7_number_to_real(sc, y)) ? x : y);
+  if (is_real(y))
+    return((real(x) <= s7_number_to_real(sc, y)) ? x : y);
+  return(wrong_type_argument(sc, sc->MIN, small_int(2), y, T_REAL));
 }
 
 
@@ -16005,7 +16063,9 @@ static s7_pointer g_less_s0(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (is_integer(x))
     return(make_boolean(sc, integer(x) < 0));
-  return(make_boolean(sc, s7_is_negative(x)));
+  if (is_real(x))
+    return(make_boolean(sc, s7_is_negative(x)));
+  return(wrong_type_argument(sc, sc->LT, small_int(1), x, T_REAL));
 }
 
 static s7_pointer g_less_s_ic(s7_scheme *sc, s7_pointer args)
@@ -18869,9 +18929,6 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, s7_pointer s
   
   /* store the contents of the argument strings into the new string */
   newstr = make_empty_string(sc, len + 1, 0); 
-  /* +1 here because valgrind (but only in FC15) thinks we occasionally go one past the end,
-   *   but I think it'c confused by low level copy operations that do 8 bytes at a time.
-   */
   string_length(newstr) = len;
   for (pos = string_value(newstr), x = args; is_not_null(x); pos += string_length(car(x)), x = cdr(x)) 
     memcpy(pos, string_value(car(x)), string_length(car(x)));
@@ -32181,7 +32238,7 @@ static s7_pointer string_setter(s7_scheme *sc, s7_pointer str, s7_Int loc, s7_po
 
 static s7_pointer string_getter(s7_scheme *sc, s7_pointer str, s7_Int loc) 
 {
-  return(s7_make_character(sc, string_value(str)[loc]));
+  return(s7_make_character(sc, (unsigned char)(string_value(str)[loc]))); /* cast needed else (copy (string (integer->char 255))...) is trouble */
 }
 
 static s7_pointer list_setter(s7_scheme *sc, s7_pointer lst, s7_Int loc, s7_pointer val)
@@ -32748,10 +32805,6 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
   switch (type(arg))
     {
     case T_C_OBJECT:     
-#if DEBUGGING
-      if ((c_object_type(arg) < 0) || (c_object_type(arg) > num_types))
-	return("this is not a c_object!\n");
-#endif
       return(make_type_name(object_types[c_object_type(arg)]->name, article));
 
     case T_INPUT_PORT:   
@@ -37532,7 +37585,8 @@ static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 static s7_pointer max_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 2) &&
-      (type(cadr(expr)) == T_REAL))
+      (type(cadr(expr)) == T_REAL) &&
+      (!isnan(real(cadr(expr)))))
     return(max_f2);
   return(f);
 }
@@ -37541,7 +37595,8 @@ static s7_pointer max_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 static s7_pointer min_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 2) &&
-      (type(cadr(expr)) == T_REAL))
+      (type(cadr(expr)) == T_REAL) &&
+      (!isnan(real(cadr(expr)))))
     return(min_f2);
   return(f);
 }
@@ -41870,7 +41925,7 @@ static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args, int *arity)
   s7_pointer x;
   int i;
 
-  if (!s7_is_list(sc, args))
+  if ((!is_pair(args)) && (!is_null(args)))
     {
       if (s7_is_constant(args))                       /* (lambda :a ...) */
 	return(eval_error(sc, "lambda parameter '~S is a constant", args)); /* not ~A here, (lambda #\null do) for example */
@@ -41887,16 +41942,12 @@ static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args, int *arity)
 
   for (i = 0, x = args; is_pair(x); i++, x = cdr(x))
     {
-      if (s7_is_constant(car(x)))                      /* (lambda (pi) pi) */
+      if (s7_is_constant(car(x)))                       /* (lambda (pi) pi), constant here means not a symbol */
 	{
-	  if ((is_pair(car(x))) &&
-	      (is_symbol(caar(x))) &&
-	      (s7_is_constant(cadar(x))) &&
-	      (is_null(cddar(x))))
-	    return(eval_error(sc, "lambda parameter '~S is a constant (perhaps you want define* or lambda*?)", car(x)));
+	  if (is_pair(car(x)))                          /* (lambda ((:hi . "hi") . "hi") 1) */
+	    return(eval_error(sc, "lambda parameter '~S is a pair (perhaps you want define* or lambda*?)", car(x)));
 	  return(eval_error(sc, "lambda parameter '~S is a constant", car(x)));
 	}
-      
       if (symbol_is_in_arg_list(car(x), cdr(x)))       /* (lambda (a a) ...) or (lambda (a . a) ...) */
 	return(eval_error(sc, "lambda parameter '~S is used twice in the parameter list", car(x)));
       set_local(car(x));
@@ -64616,3 +64667,7 @@ s7_scheme *s7_init(void)
  *         mark, copy, fill, reverse, etc print
  */
 
+/* TODO: all the opt cases are screwing up if there's something unexpected:
+   ((lambda (x) (min  0/0+0i .0)) "")
+   (let ((x "")) (min 0/0+0i .0))
+*/

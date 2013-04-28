@@ -16651,6 +16651,9 @@ in s7:
 (test ((lambda ("x") x)) 'error)
 (test ((lambda "x" x)) 'error)
 (test ((lambda (x . "hi") x)) 'error)
+(test (lambda ((:hi . "hi") . "hi") 1) 'error)
+(test ((lambda (x) (* quote ((x . 1) . 2))) 1) 'error)
+
 (test (let ((hi (lambda (a 0.0) (b 0.0) (+ a b)))) (hi)) 'error)
 (test (object->string
        ((lambda (arg)
@@ -28230,6 +28233,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (copy #(0 1 2 3) (vector 4 3 2 1)) #(0 1 2 3))
 (test (copy "12345" (make-string 5)) "12345")
 (test (copy '(4 3 2 1) '(1 . 2)) '(4 . 2))
+(test (copy (string (integer->char 255)) (vector 0)) #(#\xff))
+(test (copy (vector (integer->char 255)) (string #\a)) (string (integer->char 255)))
 
 (let ((lst (list 1 2 3)))
    (set! (cdr (cddr lst)) lst)
