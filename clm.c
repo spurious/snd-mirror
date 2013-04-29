@@ -3216,27 +3216,6 @@ static mus_float_t mus_chebyshev_t_sum_with_index(mus_float_t x, mus_float_t ind
   return((mus_float_t)(b - b1 * cx));
 }
 
-/*
-total: 3171853
-11: 1653309
-10: 403372
-7: 285366
-9: 164930
-13: 160698
-16: 79821
-21: 66150
-5: 55114
-31: 45100
-3: 44196
-40: 44100
-41: 44100
-61: 44100
-101: 44100
-17: 34397
-51: 1000
-129: 1000
-201: 1000
-*/
 
 static mus_float_t mus_chebyshev_t_sum_with_index_2(mus_float_t x, mus_float_t index, int n, mus_float_t *tn)
 {

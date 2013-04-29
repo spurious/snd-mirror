@@ -178,6 +178,8 @@
 			   (set! revmax (vct-peak reverb-1))
 			   (if (sound-data? reverb-1)
 			       (set! revmax (sound-data-peak reverb-1))))))
+	       (if reverb-to-file
+		   (set! *reverb* (make-file->sample reverb-1)))
 	       (apply reverb reverb-data)                                   ; here is the reverb call(!)
 	       (if reverb-to-file
 		   (mus-close *reverb*))

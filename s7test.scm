@@ -24268,6 +24268,12 @@ who says the continuation has to restart the map from the top?
 (let ()
   (define-bacro* (amac (a 1)) "this is a string" `(+ ,a 1))
   (test (procedure-documentation amac) "this is a string"))
+(let ()
+  (define-macro (amac a) `(+ ,a 1))
+  (test (procedure-documentation amac) ""))
+(let ()
+  (define-bacro (amac a) ,a)
+  (test (procedure-documentation amac) ""))
 
 (test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of the real number x") #t)
 (test (string=? (help abs) "(abs x) returns the absolute value of the real number x") #t)

@@ -19553,5 +19553,5 @@ void Init_sndlib(void)
  * TODO: check the let/let* distinction in let_looped
  * TODO: pink-noise snd-test (and doc?)
  * TODO: *-bank in snd-test and doc examples
- * TODO: tap? or is it mus-tap? in snd-test and doc
+ * TODO: tap? or is it mus-tap? in snd-test and doc -- and implemented...
  */
