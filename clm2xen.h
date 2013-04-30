@@ -70,6 +70,7 @@ MUS_EXPORT gf *gf_alloc(void);
 MUS_EXPORT gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
 MUS_EXPORT void store_choices(s7_scheme *sc, s7_pointer base_f, s7_pointer g1, s7_pointer g2, s7_pointer g3, s7_pointer isg);
 MUS_EXPORT void store_gf_fixup(s7_scheme *sc, s7_pointer f, gf *(*fixup)(s7_scheme *sc, s7_pointer expr, s7_pointer locals));
+MUS_EXPORT void s7_init_sndlib(s7_scheme *sc);
 #endif
 
 MUS_EXPORT void Init_sndlib(void);

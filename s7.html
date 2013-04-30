@@ -7230,10 +7230,8 @@ static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
 
 static s7_pointer error_handler(s7_scheme *sc, s7_pointer args)
 {
-  /* put &lt;&lt;&gt;&gt; around the string so it's obvious who is producing what */
-
-  fprintf(stdout, "&lt;&lt;%s&gt;&gt;", s7_string(s7_car(args)));
-  return(s7_make_symbol(sc, "our-error"));
+  fprintf(stdout, "error: %s\n", s7_format(sc, s7_cons(sc, s7_f(sc), s7_cadr(args))));
+  return(s7_car(args));
 }
 
 

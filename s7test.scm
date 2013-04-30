@@ -502,6 +502,23 @@
 |#
 (if (not (= (- (port-line-number) comment-start) 7)) (format *stderr* ";block comment newline counter: ~D ~D~%" comment-start (port-line-number)))
 
+;;; this comes from G Sussman
+(let ()
+  (define (counter count)
+    (lambda ()
+      (set! count (+ 1 count))
+      count))
+
+  (define c1 (counter 0))
+  (define c2 (counter 0))
+
+  (test (eq? c1 c2) #f)
+  (test (eq? c1 c1) #t)
+  (test (eq? c2 c2) #t)
+
+  (test (let ((p (lambda (x) x))) (eqv? p p)) #t))
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -42072,6 +42089,11 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (logbit? -1 most-positive-fixnum) #t)
 (test (logbit? -1 64) #t)
 (test (logbit? 1 64) #f)
+
+;;; (test (logbit? most-negative-fixnum most-positive-fixnum) #t) ;??
+(test (logbit? most-negative-fixnum most-negative-fixnum) 'error)
+(test (logbit? most-positive-fixnum most-positive-fixnum) #f)
+(test (logbit? (ash most-negative-fixnum 1) 1) #f)
 
 (if with-bignums
     (begin

@@ -844,13 +844,16 @@ the modules sndlib2xen and clm2xen tie most of the library into that language
 making it possible to call the library functions from its interpreter.  The documentation
 is scattered around, unfortunately: the clm side is in sndclm.html and extsnd.html with many
 examples in Snd's <a href="sndscm.html#exampdoc">examp.scm</a>.  Most of these are obvious translations of the
-constants and functions described above into Scheme.  To initialize sndlib, call Init_sndlib.
+constants and functions described above into Scheme.  To initialize sndlib, call Init_sndlib,
+or, at run time, use s7's loader and s7_init_sndlib:
 </p>
 
 <pre>
-(let ((sndlib (load "libsndlib.so"))) ...)
+(let ((sndlib (load "libsndlib.so" 
+                (augment-environment (current-environment)
+                  (cons 'init_func 's7_init_sndlib)))))
+  ....)
 </pre>
-<!-- TODO: fixup the load example -->
 
 <p>Init_sndlib ties most of the functions mentioned above into the extension language (s7, Forth, or Ruby).
 </p>

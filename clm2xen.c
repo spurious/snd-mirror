@@ -2963,10 +2963,17 @@ static XEN g_tap(XEN obj, XEN loc)
   mus_any *g = NULL;
   mus_xen *gn;
 
-  XEN_TO_C_GENERATOR(obj, gn, g, mus_delay_line_p, S_tap, "a delay line tap");
+  XEN_TO_C_GENERATOR(obj, gn, g, mus_tap_p, S_tap, "a delay line tap");
   XEN_TO_C_DOUBLE_IF_BOUND(loc, dloc, S_tap, XEN_ARG_3);
 
   return(C_TO_XEN_DOUBLE(mus_tap(g, dloc)));
+}
+
+
+static XEN g_tap_p(XEN obj) 
+{
+  #define H_tap_p "(" S_tap_p " gen): " PROC_TRUE " if gen is a delay line tap"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_tap_p(XEN_TO_MUS_ANY(obj)))));
 }
 
 
@@ -18275,6 +18282,7 @@ XEN_ARGIFY_3(g_filtered_comb_w, g_filtered_comb)
 XEN_ARGIFY_3(g_all_pass_w, g_all_pass)
 XEN_ARGIFY_2(g_moving_average_w, g_moving_average)
 XEN_ARGIFY_2(g_moving_max_w, g_moving_max)
+XEN_NARGIFY_1(g_tap_p_w, g_tap_p)
 XEN_NARGIFY_1(g_delay_p_w, g_delay_p)
 XEN_NARGIFY_1(g_notch_p_w, g_notch_p)
 XEN_NARGIFY_1(g_comb_p_w, g_comb_p)
@@ -18612,6 +18620,7 @@ XEN_NARGIFY_3(g_out_bank_w, g_out_bank)
 #define g_all_pass_w g_all_pass
 #define g_moving_average_w g_moving_average
 #define g_moving_max_w g_moving_max
+#define g_tap_p_w g_tap_p
 #define g_delay_p_w g_delay_p
 #define g_notch_p_w g_notch_p
 #define g_comb_p_w g_comb_p
@@ -19094,6 +19103,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_REAL_PROCEDURE(S_all_pass,        g_all_pass_w,        1, 2, 0, H_all_pass);
   XEN_DEFINE_SAFE_PROCEDURE(S_moving_average,  g_moving_average_w,  1, 1, 0, H_moving_average);
   XEN_DEFINE_SAFE_PROCEDURE(S_moving_max,  g_moving_max_w,  1, 1, 0, H_moving_max);
+  XEN_DEFINE_SAFE_PROCEDURE(S_tap_p,         g_tap_p_w,         1, 0, 0, H_tap_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_delay_p,         g_delay_p_w,         1, 0, 0, H_delay_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_notch_p,         g_notch_p_w,         1, 0, 0, H_notch_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_comb_p,          g_comb_p_w,          1, 0, 0, H_comb_p);
@@ -19549,9 +19559,12 @@ void Init_sndlib(void)
 #endif
 }
 
-/* 
- * TODO: check the let/let* distinction in let_looped
- * TODO: pink-noise snd-test (and doc?)
- * TODO: *-bank in snd-test and doc examples
- * TODO: tap? or is it mus-tap? in snd-test and doc -- and implemented...
+#if HAVE_SCHEME
+void s7_init_sndlib(s7_scheme *sc)
+{
+  Init_sndlib();
+}
+#endif
+
+/* TODO: check the let/let* distinction in let_looped
  */

@@ -333,6 +333,7 @@
 #define S_table_lookup               "table-lookup"
 #define S_table_lookup_p             "table-lookup?"
 #define S_tap                        "tap"
+#define S_tap_p                      "tap?"
 #define S_triangle_wave              "triangle-wave"
 #define S_triangle_wave_p            "triangle-wave?"
 #define S_tukey_window               "tukey-window"

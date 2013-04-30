@@ -2197,7 +2197,7 @@
 		       'start-playing 'start-playing-hook 'start-playing-selection-hook 'start-progress-report 'stop-dac-hook
 		       'stop-player 'stop-playing 'stop-playing-hook 'stop-playing-selection-hook 'ncos
 		       'ncos? 'nsin 'nsin? 'swap-channels 'sync 'sync-style 'sync-none 'sync-all 'sync-by-sound
-		       'sync-max 'syncd-marks 'table-lookup 'table-lookup? 'tap
+		       'sync-max 'syncd-marks 'table-lookup 'table-lookup? 'tap 'tap?
 		       'temp-dir 'text-focus-color 'time-graph 'time-graph-style
 		       'time-graph-type 'time-graph? 'tiny-font 
 		       'tracking-cursor-style 'transform->vct
@@ -12983,6 +12983,7 @@ EDITS: 2
     (let ((dly (make-delay 6))
 	  (v (make-vct 20))
 	  (inval 1.0))
+      (if (not (tap? dly)) (snd-display #__line__ ";tap?: ~A" (tap? dly)))
       (fill-vct v (let ((res (delay dly (+ inval (tap dly -2.0)))))
 		    (set! inval 0.0)
 		    res))
@@ -46279,7 +46280,7 @@ EDITS: 1
 		     ring-modulate sample->file sample->file? sample->frame sawtooth-wave
 		     sawtooth-wave? nrxysin nrxysin? nrxycos nrxycos? rxyk!cos rxyk!cos? rxyk!sin rxyk!sin?
 		     spectrum square-wave square-wave? src src? ncos nsin ssb-am
-		     ncos? nsin? ssb-am? table-lookup table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero
+		     ncos? nsin? ssb-am? table-lookup table-lookup? tap tap? triangle-wave triangle-wave? two-pole two-pole? two-zero
 		     two-zero? wave-train wave-train?  make-vct vct-add! vct-subtract!  vct-copy
 		     vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! vct-peak vct-max vct-min
 		     vct? list->vct vct->list vector->vct vct->vector vct-move! vct-reverse! vct-subseq vct little-endian? vct->string
@@ -46618,7 +46619,7 @@ EDITS: 1
 				      filter? fir-filter? formant? formant-bank? firmant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
 				      mus-output? notch? one-pole? one-pole-all-pass? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 				      sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
-				      square-wave? src? ncos? nsin? table-lookup? 
+				      square-wave? src? ncos? nsin? tap? table-lookup? 
 				      triangle-wave? two-pole? two-zero? wave-train? color? mix-sampler? moving-average? moving-max? ssb-am?
 				      sampler? region-sampler? vct? )))
 		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) #(0 1)))
@@ -46636,7 +46637,7 @@ EDITS: 1
 			  filter? fir-filter? formant? formant-bank? firmant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
 			  mus-output? notch? one-pole? one-pole-all-pass? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 			  sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
-			  square-wave? src? ncos? nsin? table-lookup? 
+			  square-wave? src? ncos? nsin? tap? table-lookup? 
 			  triangle-wave? two-pole? two-zero? wave-train? sound? color? mix-sampler? moving-average? moving-max? ssb-am?
 			  sampler? region-sampler? vct?))
 	  

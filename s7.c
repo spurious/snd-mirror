@@ -18920,6 +18920,77 @@ static s7_pointer g_string_set_ssa_looped(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* this does not give much of a speed up */
+typedef struct {
+  s7_pointer i_slot, j_slot, s0, s1;
+  s7_Int s0_len, s1_len;
+} strset_ex;
+
+static void strset_ref(void *p)
+{
+  strset_ex *data = (strset_ex *)p;
+  s7_Int i, j;
+  i = s7_integer(slot_value(data->i_slot));
+  j = s7_integer(slot_value(data->j_slot));
+  if ((i >= 0) && (i < data->s0_len) &&
+      (j >= 0) && (j < data->s1_len))
+    string_value(data->s0)[i] = string_value(data->s1)[j];
+}
+
+static void strset_free(void *p)
+{
+  free(p);
+}
+
+static s7_ex *string_set_ex_parser(s7_scheme *sc, s7_pointer expr)
+{
+  if ((is_symbol(cadr(expr))) &&
+      (is_symbol(caddr(expr))))
+    {
+      s7_pointer s0, iloc, val;
+      s0 = finder(sc, cadr(expr));
+      iloc = s7_local_slot(sc, caddr(expr));
+      if ((iloc) &&
+	  (is_integer(slot_value(iloc))) &&
+	  (s7_is_string(s0)) &&
+	  (!s7_local_slot(sc, cadr(expr))))
+	{
+	  val = cadddr(expr);
+	  if ((is_pair(val)) &&
+	      (car(val) == sc->STRING_REF) &&
+	      (is_symbol(cadr(val))) &&
+	      (is_symbol(caddr(val))))
+	    {
+	      s7_pointer s1, jloc;
+	      s1 = finder(sc, cadr(val));
+	      jloc = s7_local_slot(sc, caddr(val));
+	      if ((jloc) &&
+		  (is_integer(slot_value(jloc))) &&
+		  (s7_is_string(s1)) &&
+		  (!s7_local_slot(sc, cadr(val))))
+		{
+		  strset_ex *p;
+		  s7_ex *e;
+		  p = (strset_ex *)malloc(sizeof(strset_ex));
+		  e = (s7_ex *)malloc(sizeof(s7_ex));
+		  e->ex_free = strset_free;
+		  e->ex_data = p;
+		  p->s0 = s0;
+		  p->s0_len = string_length(s0);
+		  p->i_slot = iloc;
+		  p->s1 = s1;
+		  p->s1_len = string_length(s1);
+		  p->j_slot = jloc;
+		  e->ex_vf = strset_ref;
+		  return(e);
+		}
+	    }
+	}
+    }
+  return(NULL);
+}
+
+
 static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, s7_pointer sym)
 {
   int len = 0;
@@ -23205,10 +23276,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 	  if (print_func != sc->UNDEFINED)
 	    {
 	      s7_pointer p;
-	      /* TODO: here push a marker on the stack with x,y,z,various temps (temp_cell_1|2etc)
-	       *   then restore everything after the function call -- this way format is safe?
-	       */
-
+	      /* what needs to be protected here? */
 	      push_stack(sc, OP_NO_OP, sc->temp_cell_2, sc->temp_cell_3);
 	      p = s7_apply_function(sc, print_func, list_1(sc, obj));
 	      sc->temp_cell_2 = main_stack_args(sc);
@@ -38613,6 +38681,7 @@ static void init_choosers(s7_scheme *sc)
   string_set_ssa_looped = s7_make_function(sc, "string-set!", g_string_set_ssa_looped, 3, 0, false, "string-set! optimization");
   s7_function_set_class(string_set_ssa_looped, f);
   s7_function_set_looped(string_set_ssa, string_set_ssa_looped);
+  s7_function_set_ex_parser(f, string_set_ex_parser);
 
 
   /* string-append */
@@ -38999,6 +39068,18 @@ static s7_pointer all_x_c_is_eq_s2q(s7_scheme *sc, s7_pointer arg)
     return(make_boolean(sc, slot_value(slots) == cadr(caddr(arg))));
   return(make_boolean(sc, slot_value(next_slot(slots)) == cadr(caddr(arg))));
 }
+
+#if 0
+static s7_pointer all_x_c_if_sq_qq(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer slots, eq_expr;
+  slots = environment_slots(sc->envir);
+  eq_expr = cadr(arg);
+  if (slot_symbol(slots) != cadr(eq_expr))
+    slots = next_slot(slots);
+  return((slot_value(slots) == cadr(caddr(eq_expr))) ? cadr(caddr(arg)) : cadr(cadddr(arg)));
+}
+#endif
 
 static s7_pointer all_x_c_opcq(s7_scheme *sc, s7_pointer arg)
 {
@@ -43403,7 +43484,22 @@ static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1,
       switch (syntax_opcode(car(expr)))
 	{
 	case OP_IF:
-	  /* if (is_annotated(expr)) fprintf(stderr, "%s\n", DISPLAY(expr)); */
+#if 0
+	  for (p = cdr(expr); is_pair(p); p = cdr(p))
+	    if (is_pair(car(p)))
+	      substitute_arg_refs(sc, p, sym1, sym2);
+	  if ((is_pair(cdddr(expr))) && 
+	      (is_annotated(cadddr(expr))) &&
+	      (fcdr(cdddr(expr)) == (s7_pointer)all_x_c_c) &&
+	      (c_call(cadddr(expr)) == (s7_function)g_if_all_x_qq) &&
+	      (fcdr(cdr(cadddr(expr))) == (s7_pointer)all_x_c_is_eq_s2q))
+	    {
+	      /* an experiment in combining these guys -- it was not a big win
+	       */
+	      fcdr(cdddr(expr)) = (s7_pointer)all_x_c_if_sq_qq;
+	    }
+	  break;
+#endif
 
 	case OP_OR:
 	case OP_AND:
@@ -43422,7 +43518,7 @@ static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1,
 	case OP_LET:
 	case OP_LET_STAR:
 	case OP_LETREC:
-	  /* SOMEDAY: these can be optimized to some extent */
+	  /* these can be optimized to some extent */
 	  break;
 	  
 	case OP_WITH_BAFFLE: /* this creates a new env */
@@ -64679,7 +64775,7 @@ s7_scheme *s7_init(void)
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7
  * bench    42736 8752 8051 7725 6515 5194 4364 3989
  * lint           9328 8140 7887 7736 7300 7180 7051
- * index    44300 3291 3005 2742 2078 1643 1435 1363
+ * index    44300 3291 3005 2742 2078 1643 1435 1363 1365
  * s7test    1721 1358 1297 1244  977  961  957  960  943
  * t455|6     265   89   55   31   14   14    9 9155 8998
  * lat        229   63   52   47   42   40   34   31   29
