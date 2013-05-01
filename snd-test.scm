@@ -3663,6 +3663,7 @@
 			  "no increment method" "no offset method"
 			  "no xcoeff method" "no ycoeff method" "no xcoeffs method" "no ycoeffs method" "no reset" "bad size" "can't convert"
 			  "read error"
+			  "no feedforward method" "no feedback method" "no interp-type method" "no position method" "no order method"
 			  "can't translate"
 			  )))
 	  (let ((happy #t)
@@ -9772,6 +9773,13 @@ EDITS: 2
 	  (for-each (lambda (n) (set! sum (+ sum n))) (vct 1 2 3))
 	  (if (not (= sum 6.0))
 	      (snd-display #__line__ ";object for-each (vct): ~A" sum)))
+
+	(let ((x (vct 0.0))
+	      (osc (make-oscil :frequency 440))
+	      (e1 (make-env '(0 0 1 1 2 0) :length 100)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 100))
+	    (vct-set! x 0 (* (env e1) (oscil osc (vct-ref x 0))))))
 	
 	))))
 

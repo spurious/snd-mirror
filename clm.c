@@ -608,7 +608,7 @@ mus_float_t mus_feedforward(mus_any *gen) /* shares "scaler" */
   if ((check_gen(gen, S_mus_feedforward)) &&
       (gen->core->scaler))
     return((*(gen->core->scaler))(gen));
-  return((mus_float_t)mus_error(MUS_NO_SCALER, "can't get %s's feedforward", mus_name(gen)));
+  return((mus_float_t)mus_error(MUS_NO_FEEDFORWARD, "can't get %s's feedforward", mus_name(gen)));
 }
 
 
@@ -617,7 +617,7 @@ mus_float_t mus_set_feedforward(mus_any *gen, mus_float_t val)
   if ((check_gen(gen, S_setB S_mus_feedforward)) &&
       (gen->core->set_scaler))
     return((*(gen->core->set_scaler))(gen, val));
-  return((mus_float_t)mus_error(MUS_NO_SCALER, "can't set %s's feedforward", mus_name(gen)));
+  return((mus_float_t)mus_error(MUS_NO_FEEDFORWARD, "can't set %s's feedforward", mus_name(gen)));
 }
 
 
@@ -680,7 +680,7 @@ mus_float_t mus_feedback(mus_any *gen) /* shares "increment" */
   if ((check_gen(gen, S_mus_feedback)) &&
       (gen->core->increment))
     return((*(gen->core->increment))(gen));
-  return((mus_float_t)mus_error(MUS_NO_INCREMENT, "can't get %s's feedback", mus_name(gen)));
+  return((mus_float_t)mus_error(MUS_NO_FEEDBACK, "can't get %s's feedback", mus_name(gen)));
 }
 
 
@@ -689,7 +689,7 @@ mus_float_t mus_set_feedback(mus_any *gen, mus_float_t val)
   if ((check_gen(gen, S_setB S_mus_feedback)) &&
       (gen->core->set_increment))
     return((*(gen->core->set_increment))(gen, val));
-  return((mus_float_t)mus_error(MUS_NO_INCREMENT, "can't set %s's feedback", mus_name(gen)));
+  return((mus_float_t)mus_error(MUS_NO_FEEDBACK, "can't set %s's feedback", mus_name(gen)));
 }
 
 
@@ -741,7 +741,7 @@ mus_long_t mus_order(mus_any *gen) /* shares "length", no set */
   if ((check_gen(gen, S_mus_order)) &&
       (gen->core->length))
     return((*(gen->core->length))(gen));
-  return(mus_error(MUS_NO_LENGTH, "can't get %s's order", mus_name(gen)));
+  return(mus_error(MUS_NO_ORDER, "can't get %s's order", mus_name(gen)));
 }
 
 
@@ -759,7 +759,7 @@ int mus_interp_type(mus_any *gen) /* shares "channels", no set */
   if ((check_gen(gen, S_mus_interp_type)) &&
       (gen->core->channels))
     return((*(gen->core->channels))(gen));
-  return(mus_error(MUS_NO_CHANNELS, "can't get %s's interp type", mus_name(gen)));
+  return(mus_error(MUS_NO_INTERP_TYPE, "can't get %s's interp type", mus_name(gen)));
 }
 
 
@@ -768,7 +768,7 @@ int mus_position(mus_any *gen) /* shares "channels", no set, only used in C (snd
   if ((check_gen(gen, "mus-position")) &&
       (gen->core->channels))
     return((*(gen->core->channels))(gen));
-  return(mus_error(MUS_NO_CHANNELS, "can't get %s's position", mus_name(gen)));
+  return(mus_error(MUS_NO_POSITION, "can't get %s's position", mus_name(gen)));
 }
 
 
@@ -15562,5 +15562,3 @@ void mus_initialize(void)
 #endif  
 }
 
-/* TODO: currently if (say) mus-feedback called incorrectly, error message says "mus-increment"
- */

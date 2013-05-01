@@ -204,7 +204,7 @@ indented and on a sort of brownish background.
     <li><a href="#loadpath">*load-path*</a>, <a href="#featureslist">*features*</a>, <a href="#sharpreaders">*#readers*</a>
     <li><a href="#makelist">make-list</a>, <a href="#charposition">char-position</a>, <a href="#keywords">keywords</a>
     <li><a href="#symboltable">symbol-table</a>, <a href="#s7help">help</a>, <a href="#s7gc">gc</a>, <a href="#morallyequalp">morally-equal?</a>
-    <li><a href="#s7vsr5rs">r5rs</a>, <a href="#r7rs">r7rs</a>, <li><a href="#circle">circular lists</a>, etc...
+    <li><a href="#s7vsr5rs">r5rs</a>, <a href="#r7rs">r7rs</a>, <a href="#circle">circular lists</a>, <a href="#legolambda">legolambda</a>, etc...
     </ul>
 
   <li class="li_header"><a href="#FFIexamples">FFI examples</a>
@@ -5683,7 +5683,7 @@ These symbols are not just an optimization of string comparison:
 
 <div class="indented">
 
-<p>The built-in syntactic forms, such as "begin", are almost first-class citizens.
+<p id="legolambda">The built-in syntactic forms, such as "begin", are almost first-class citizens.
 </p>
 
 <pre class="indented">
@@ -5762,6 +5762,25 @@ glambda
 3
 </pre>
 
+<p>Or another enum (for-each with a macro as its first argument might be called "transparent-for-each"):
+</p>
+
+<pre class="indented">
+&gt; (define-macro (enum . args)
+    `(for-each (let ((ctr -1))
+                 (symbol->value 
+                   (define-macro (m a) 
+                     (set! ctr (+ ctr 1)) 
+                     `(apply define ',a ,ctr ()))))
+               ',args))
+enum
+&gt; (enum a b c)
+#&lt;unspecified&gt;
+&gt; b
+1
+</pre>
+
+
 <p>
 Currently, you can't set! a built-in syntactic keyword to some new value:
 <code>(set! if 3)</code>.
@@ -5829,8 +5848,8 @@ the current environment, so defines happen in the enclosing environment.
 </p>
 
 <pre>
-  (define vector-map map) 
-  (define string-map map) 
+  (define (vector-map p . args) (list->vector (apply map p args)))
+  (define (string-map p . args) (list->string (apply map p args)))
   (define vector-for-each for-each) 
   (define string-for-each for-each) 
   (define copy-vector copy) 
@@ -5859,7 +5878,7 @@ the current environment, so defines happen in the enclosing environment.
   (define (binary-port? p) #t)
   (define (port? p) (or (input-port? p) (output-port? p)))
 
-  (define read-u8 read-byte) 
+  (define read-u8 read-byte)   ; perhaps bytevector = string in s7?
   (define write-u8 write-byte) 
   (define u8-ready? char-ready?) 
   (define peek-u8 peek-char)
@@ -5870,6 +5889,9 @@ the current environment, so defines happen in the enclosing environment.
   (define blob-copy copy)
   (define blob-u8-ref vector-ref) 
   (define blob-u8-set! vector-set!)
+
+  (define (with-exception-handler handler thunk) (catch #t thunk handler))
+  (define raise error)
 
   (define interaction-environment current-environment)
   (define-bacro (include file) `(load ,file (outer-environment (current-environment))))

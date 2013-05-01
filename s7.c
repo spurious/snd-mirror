@@ -51660,8 +51660,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_SAFE_C_AAA:
 	      {
-		/* PERHAPS: C_SAA or SCA
-		 */
 		s7_pointer arg;
 		arg = cdr(code);
 		car(sc->A3_1) = ((s7_function)fcdr(arg))(sc, car(arg));
@@ -64272,7 +64270,6 @@ s7_scheme *s7_init(void)
     set_copy_args(p);
     /* currently list is not safe because this copy_args bit is being ignored in the safe func case? 
      *  (i.e. OP_C_... as opposed to OP_SAFE_C...)
-     *  TODO: but list should not cause an otherwise safe closure to call itself unsafe -- does this happen?
      */
   }
   sc->LIST_REF =              s7_define_safe_function(sc, "list-ref",                g_list_ref,               2, 0, true,  H_list_ref);
@@ -64764,7 +64761,7 @@ s7_scheme *s7_init(void)
  * TODO: what happened to hook documentation? hook is now an s7 constant (see xen.c xen_s7_define_hook)
  *   but make-hook above could presumably put the docstring in the lambda* body -can we find it there?
  *   or in the let for that matter -- could this always work?
- * SOMEDAY: give each e|f|gcdr ref a unique name
+ * SOMEDAY: give each e|f|gcdr ref a unique name and figure out how to avoid collisions
  *
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x) and goto*
  *   op_closure_car_car is rarely called or cdr_cdr (only in bench)

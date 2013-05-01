@@ -648,56 +648,6 @@ plugging it into the following with-sound call:
 </pre>
 
 
-<!--
-(define (simp1 beg dur freq amp)
-  (let* ((o (make-oscil freq))
-	 (start (seconds->samples beg))
-	 (end (+ start (seconds->samples dur))))
-    (do ((i start (+ i 1)))
-	((= i end))
-      (outa i (* amp (oscil o))))))
-
-(define (simp2 beg dur freq amp)
-  (let* ((o (make-oscil freq))
-	 (start (seconds->samples beg))
-	 (end (+ start (seconds->samples dur))))
-    (let loop ((i start))
-      (outa i (* amp (oscil o)))
-      (if (< i end)
-	  (loop (+ i 1))))))
-
-(define (simp3 beg dur freq amp)
-  (let* ((o (make-oscil freq))
-	 (start (seconds->samples beg))
-	 (end (+ start (seconds->samples dur))))
-    (define (simper i)
-      (outa i (* amp (oscil o)))
-      (if (< i end)
-	  (simper (+ i 1))))
-    (simper start)))
-
-(with-sound (:statistics #t) (simp1 0 10 440 .1))
-
-(with-sound (:statistics #t) (simp2 0 10 440 .1))
-
-(with-sound (:statistics #t) (simp3 0 10 440 .1))
-
-(exit)
-
-#|
-;test.snd:
-  maxamp: 0.1000
-  compute time: 0.023
-
-;test.snd:
-  maxamp: 0.1000
-  compute time: 0.061
-
-;test.snd:
-  maxamp: 0.1000
-  compute time: 0.062
-|#
--->
 
 <!-- INDEX generators:Generators -->
 

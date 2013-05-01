@@ -2624,6 +2624,26 @@
 
 
 
+;;; --------------------------------------------------------------------------------
+
+(define (simp-named-let beg dur freq amp)
+  (let ((o (make-oscil freq))
+	 (start (seconds->samples beg))
+	 (end (seconds->samples (+ beg dur))))
+    (let loop ((i start))
+      (outa i (* amp (oscil o)))
+      (if (< i end)
+	  (loop (+ i 1))))))
+
+(define (simp-tail-recursion beg dur freq amp)
+  (let ((o (make-oscil freq))
+	 (start (seconds->samples beg))
+	 (end (seconds->samples (+ beg dur))))
+    (define (simper i)
+      (outa i (* amp (oscil o)))
+      (if (< i end)
+	  (simper (+ i 1))))
+    (simper start)))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -2772,7 +2792,9 @@
   (with-sound () 
     (sndscm-osc-fm 0 1 440 .1 1 1)
     (sndscm-osc1-fm 0 1 440 .1 1)
-    (sndscm-osc2-fm 0 1 440.0 .1 1))
+    (sndscm-osc2-fm 0 1 440.0 .1 1)
+    (simp-named-let 0 .01 440 .1)
+    (simp-tail-recursion 0 .01 440 .1))
   
   (with-sound () 
     (let ((gen (make-dsp-asyfm :freq 2000 :ratio .1))) 

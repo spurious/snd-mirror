@@ -14412,6 +14412,7 @@ this prints:
 (test (map vector (memv 1 (list 1 2 3))) '(#(1) #(2) #(3)))
 (test (map append #(1 2 3)) '(1 2 3))
 (test (map eval '((+ 1 2) (* 3 4))) '(3 12))
+(test (map (map + (list 1 2 3)) (list 0 1 2)) '(1 2 3))
 
 (test (let* ((x (list (list 1 2 3))) (y (apply map abs x))) (list x y)) '(((1 2 3)) (1 2 3)))
 (test (let* ((x (quote ((1 2) (3 4)))) (y (apply map ash x))) (list x y)) '(((1 2) (3 4)) (8 32)))

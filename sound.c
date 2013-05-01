@@ -167,7 +167,8 @@ static const char *mus_initial_error_names[MUS_INITIAL_ERROR_TAG] = {
   "no channels method", "no hop method", "no width method", "no file-name method", "no ramp method", "no run method",
   "no increment method", "no offset method",
   "no xcoeff method", "no ycoeff method", "no xcoeffs method", "no ycoeffs method", "no reset", "bad size", "can't convert",
-  "read error"
+  "read error",
+  "no feedforward method", "no feedback method", "no interp-type method", "no position method", "no order method",
 };
 
 static char **mus_error_names = NULL;

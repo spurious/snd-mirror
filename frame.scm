@@ -28,19 +28,7 @@
     (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 
 
-(define (frame-reverse! fr)
-  "(frame-reverse fr) reverses the contents of frame fr"
-  (if (not (frame? fr))
-      (error 'wrong-type-arg "frame-reverse: ~A" fr)
-      (let ((len (channels fr)))
-	(do ((i 0 (+ i 1))
-	     (j (- len 1) (- j 1)))
-	    ((>= i (/ len 2)))
-	  (let ((temp (fr i)))
-	    (set! (fr i) (fr j))
-	    (set! (fr j) temp)))
-	fr)))
-
+(define frame-reverse! reverse)
 (define frame-copy copy)
 
 #|

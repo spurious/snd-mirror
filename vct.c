@@ -927,6 +927,8 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
     {
       stepper = car(args);
       locsym = caddr(args);
+      if (!s7_is_symbol(locsym))
+	return(NULL);
       index_slot = s7_slot(sc, locsym);
       if (s7_cell_slot_value(index_slot) != stepper)
 	return(NULL);
@@ -1280,6 +1282,8 @@ static s7_pointer g_vct_set_let_looped(s7_scheme *sc, s7_pointer args)
 
   loc = cdr(body); 
   locsym = cadr(loc);
+  if (!s7_is_symbol(locsym))
+    return(NULL);
   callee = s7_slot(sc, locsym);
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
