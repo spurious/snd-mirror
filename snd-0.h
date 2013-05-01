@@ -67,15 +67,16 @@
 #define DEFAULT_OUTPUT_CHANS 1
 #define DEFAULT_OUTPUT_SRATE 44100
 #define DEFAULT_OUTPUT_HEADER_TYPE MUS_NEXT
+/* mus-next is probably best here since intermediate/temp files can be any length (> 2^32 bytes)
+ *   and the next header-specified size, although 32 bits, is explicitly "advisory".
+ */
 
 #if MUS_LITTLE_ENDIAN
   #define DEFAULT_OUTPUT_DATA_FORMAT MUS_LFLOAT
 #else
   #define DEFAULT_OUTPUT_DATA_FORMAT MUS_BFLOAT
 #endif
-/* mus-next is probably best here since intermediate/temp files can be any length (> 2^32 bytes)
- *   and the next header-specified size, although 32 bits, is explicitly "advisory".
- */
+/* it's a bit faster to use doubles here */
 
 #define NO_COMPLETER -1
 #define NO_SELECTION -1

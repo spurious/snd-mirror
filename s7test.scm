@@ -23139,6 +23139,20 @@ who says the continuation has to restart the map from the top?
   )
 
 (let ()
+  (define-macro (enum . args)
+    `(for-each (let ((ctr -1))
+                 (symbol->value     ; perhaps define-macro and friends should return the value
+		  (define-macro (m a) ;   I think they return the symbol for the REPL's benefit(?)
+		    (set! ctr (+ ctr 1)) 
+		    `(apply define ',a ,ctr ()))))
+               ',args))
+
+  (enum a b c)
+  (test b 1)
+  (test (+ a b c) 3))
+
+
+(let ()
   ;; how to protect a recursive macro call from being stepped on
   ;; (define-macro (mac a b) `(if (> ,b 0) (let ((,a (- ,b 1))) (mac ,a (- ,b 1))) ,b))
   ;; (mac mac 1)

@@ -5538,7 +5538,7 @@ static XEN g_set_default_output_data_format(XEN val)
 {
   int format;
   #define H_default_output_data_format "(" S_default_output_data_format "): default data format when a new or temporary file is created, \
-normally " S_mus_bshort "; -1 here means try to use the current sound's data format; many other formats \
+normally " S_mus_ldouble "; -1 here means try to use the current sound's data format; many other formats \
 are available, but not all are compatible with all header types"
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_data_format, "an integer"); 

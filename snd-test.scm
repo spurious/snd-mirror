@@ -40777,8 +40777,8 @@ EDITS: 1
     (if (fneq c1 32.703) (snd-display #__line__ ";c1->frequency: ~A" c1))
     (if (fneq b8 7902.132) (snd-display #__line__ ";b8->frequency: ~A" b8)))
   
-  (let ((violins (make-sample->file "violins.snd" 1 mus-lfloat mus-next))
-	(cellos (make-sample->file "cellos.snd" 1 mus-lfloat mus-next)))
+  (let ((violins (make-sample->file "violins.snd" 1 mus-ldouble mus-next))
+	(cellos (make-sample->file "cellos.snd" 1 mus-ldouble mus-next)))
     
     (define (violin beg dur freq amp)
       (with-temp-sound (:continue-old-file #t :output "violins.snd") 

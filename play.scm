@@ -246,7 +246,7 @@ read, even if not playing.  'files' is a list of files to be played."
 					  (file->frame current (+ current-loc i) on)
 					  (do ((k 0 (+ 1 k)))
 					      ((= k chans))
-					    (sound-data-set! data k i (on k))))
+					    (sound-data-set! data k i (frame-ref on k))))
 					(if read-even-when-not-playing
 					    (do ((i 0 (+ i 1)))
 						((= i files-len))

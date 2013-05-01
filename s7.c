@@ -2559,7 +2559,7 @@ static void report_counts(s7_scheme *sc)
   if (loc > 200) loc = 200;
   for (i = 0; i < loc; i++)
     if (data[i]->count > 0)
-      fprintf(stderr, "%lld: %s\n", data[i]->count, DISPLAY(data[i]->expr));
+      fprintf(stderr, "%lld: %s\n", data[i]->count, DISPLAY_80(data[i]->expr));
 }
 #endif
 #endif
@@ -47056,45 +47056,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 
 	fcdr(code) = cddr(code);
-
-#if 0
-	if (s7_hash_table_ref(sc, hashes, fcdr(code)) == sc->F)
-	  {
-	    s7_pointer p;
-	    int good, len;
-	    add_expr(sc, fcdr(code));
-	    len = s7_list_length(sc, fcdr(code));
-	    for (good = 0, p = fcdr(code); is_pair(p); p = cdr(p))
-	      {
-		if (!is_pair(car(p))) 
-		  good++;
-		else
-		  {
-		    s7_ex *exd = NULL;
-		    s7_pointer f, sym;
-		    sym = caar(p);
-		    if ((is_symbol(sym)) &&
-			(!is_syntactic(sym)))
-		      {
-			f = s7_symbol_value(sc, caar(p));
-			if ((is_c_function(f)) &&
-			    (c_function_ex_parser(f)))
-			  {
-			    exd = c_function_ex_parser(f)(sc, car(p));
-			    if (exd)
-			      {
-				good++;
-				exd->ex_free(exd->ex_data);
-				free(exd);
-			      }
-			  }
-		      }
-		  }
-	      }
-	    fprintf(stderr, "%d / %d: %s%s%s\n\n", good, len, (good > 0) ? BOLD_TEXT : "", DISPLAY_80(fcdr(code)), (good > 0) ? UNBOLD_TEXT : "");
-	  }
-#endif
-
 	if ((is_null(cdr(fcdr(code)))) &&
 	    (is_pair(car(fcdr(code)))) &&
 	    /* (is_optimized(car(fcdr(code)))) && */
@@ -64770,16 +64731,14 @@ s7_scheme *s7_init(void)
  *
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7
- * bench    42736 8752 8051 7725 6515 5194 4364 3989
- * lint           9328 8140 7887 7736 7300 7180 7051
+ * bench    42736 8752 8051 7725 6515 5194 4364 3989 3997
+ * lint           9328 8140 7887 7736 7300 7180 7051 7078
  * index    44300 3291 3005 2742 2078 1643 1435 1363 1365
  * s7test    1721 1358 1297 1244  977  961  957  960  943
  * t455|6     265   89   55   31   14   14    9 9155 8998
  * lat        229   63   52   47   42   40   34   31   29
- * t502        90   43   39   36   29   23   20   14
- * calls           275  207  175  115   89   71   53
- *
- * TODO: math ops where 1 arg type/value is known (see multiply-chooser)
+ * t502        90   43   39   36   29   23   20   14   14
+ * calls           275  207  175  115   89   71   53   53
  */
 
 /* vector: void *elements, int element_type(?) or s7_pointer default_element [so ref if not elements -> default]

@@ -5768,8 +5768,8 @@ glambda
 <pre class="indented">
 &gt; (define-macro (enum . args)
     `(for-each (let ((ctr -1))
-                 (symbol->value 
-                   (define-macro (m a) 
+                 (symbol-&gt;value     ; perhaps define-macro and friends should return the value
+                   (define-macro (m a) ;   I think they return the symbol for the REPL's benefit(?)
                      (set! ctr (+ ctr 1)) 
                      `(apply define ',a ,ctr ()))))
                ',args))
@@ -5848,14 +5848,14 @@ the current environment, so defines happen in the enclosing environment.
 </p>
 
 <pre>
-  (define (vector-map p . args) (list->vector (apply map p args)))
-  (define (string-map p . args) (list->string (apply map p args)))
+  (define (vector-map p . args) (list-&gt;vector (apply map p args)))
+  (define (string-map p . args) (list-&gt;string (apply map p args)))
   (define vector-for-each for-each) 
   (define string-for-each for-each) 
-  (define copy-vector copy) 
-  (define copy-list copy)
   (define (vector-&gt;string vect) (copy vect (make-string (length vect))))
   (define (string-&gt;vector str) (copy str (make-vector (length str))))
+  (define list-copy copy)
+  (define vector-copy copy)
 
   (define char-foldcase char-downcase) 
   (define string-foldcase string-downcase)
@@ -5872,23 +5872,25 @@ the current environment, so defines happen in the enclosing environment.
   (define (exact-integer-sqrt i) (let ((sq (floor (sqrt i)))) (values sq (- i (* sq sq)))))
   (define inexact exact-&gt;inexact)
   (define exact inexact-&gt;exact)
+  (define (square x) (* x x))
 
-  (define (port-open? p) (not (port-closed? p))) 
-  (define (character-port? p) #t) 
+  (define (input-port-open? p) (not (port-closed? p))) 
+  (define (output-port-open? p) (not (port-closed? p))) 
   (define (binary-port? p) #t)
+  (define (textual-port? p) #t)
   (define (port? p) (or (input-port? p) (output-port? p)))
 
   (define read-u8 read-byte)   ; perhaps bytevector = string in s7?
   (define write-u8 write-byte) 
   (define u8-ready? char-ready?) 
   (define peek-u8 peek-char)
+  (define write-simple write)
 
-  (define blob? vector?)      ; "blob???"
-  (define make-blob make-vector) 
-  (define blob-length length) 
-  (define blob-copy copy)
-  (define blob-u8-ref vector-ref) 
-  (define blob-u8-set! vector-set!)
+  (define boolean=? eq?)
+  (define symbol=? eq?)
+  (define (read-error? obj) (eq? (car obj) 'read-error))
+  (define (file-error? obj) (eq? (car obj) 'io-error))
+  (define (eof-object) #&lt;eof&gt;)
 
   (define (with-exception-handler handler thunk) (catch #t thunk handler))
   (define raise error)
@@ -5910,6 +5912,48 @@ the current environment, so defines happen in the enclosing environment.
 	        `(apply define-values ',nvars ',@nbody))
 	      (map car vars) (map cdr vars))
        ,@body))
+
+
+  ;; this depends on define-class above       
+  (define-macro (define-record-type type make ? . fields)
+    (let ((new-type (if (pair? type) (car type) type))
+	  (inherited (if (pair? type) `(list ,@(cdr type)) ())))
+    `(begin
+       (define-class ,new-type ,inherited
+         (map (lambda (f) (if (pair? f) (car f) f)) ',fields))
+
+       (define (,? obj)    ; perhaps the define-class type predicate should use this 
+         (define (search-inherited obj type)
+	   (define (search-inheritors objs type)
+	     (and (pair? objs)
+		  (or (search-inherited (car objs) type)
+		      (search-inheritors (cdr objs) type))))
+	   (or (eq? (obj 'class-name) type)
+	       (search-inheritors (obj 'inherited) type)))
+         (and (environment? obj)
+	      (search-inherited obj ',new-type)))
+
+       (define ,make 
+         (let ((new-obj (copy ,new-type)))
+	   ,@(map (lambda (slot)
+		    `(set! (new-obj ',slot) ,slot))
+		  (cdr make))
+	   new-obj))
+
+       ,@(map
+	  (lambda (field)
+	    (if (pair? field)
+	        (if (null? (cdr field))
+		    (values)
+		    (if (null? (cddr field))
+		        `(define ,(cadr field) (lambda (obj) (obj ',(car field))))
+		        `(begin
+			   (define ,(cadr field) (lambda (obj) (obj ',(car field))))
+			   (define ,(caddr field) (lambda (obj val) (set! (obj ',(car field)) val))))))))
+	  fields)
+
+       ',new-type)))
+
 
   ;; floor/ and friends can't work as intended: they assume that multiple values 
   ;;   are not spliced.  The "division library" is a trivial, pointless micro-optimization.
@@ -5933,6 +5977,50 @@ the current environment, so defines happen in the enclosing environment.
 </pre>
 </div>
 
+<!-- more diffs:
+
+(define string->list
+  (let ((s7-string->list string->list))
+    (lambda* (str start end)
+      (s7-string->list (substring str (or start 0) (or end (length str)))))))
+
+string-copy start/end string-fill! string->vector
+same vector->list, vector-copy vector-copy! vector->string vector-fill!
+
+close-port flush-output-port
+read-string with numeric 1st arg??  write-string last arg?
+#true #false
+unquote-splicing
+#!fold-case
+nested #||#
+raise-continuable
+guard
+error-object?|-message|-irritants
+scheme-report-environment
+null-environment
+bytevector? and others bytevector-length|u8-ref open-output-bytevector
+string-copy!
+vector-append
+(define (force . args) #f)
+(define (delay . args) #f)
+delay-force
+paramterize
+make-parameter
+case-lambda
+syntax-rules etc
++i as a number
+chars of form #\x0E50
+digit-value
+unicode?
+bytevector constants #u8()
+utf8->string
+write-string
+read-string (k port)=how many to read from port
+string->utf8
+get-environment-variable
+time stuff
+lcm does not accept "inexact integers", nor denominator
+-->
 
 
 <div class="indented">
