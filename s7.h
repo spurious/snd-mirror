@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.21"
-#define S7_DATE "7-Apr-13"
+#define S7_VERSION "2.22"
+#define S7_DATE "2-May-13"
 
 
 typedef long long int s7_Int;
@@ -427,6 +427,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string);
 s7_pointer s7_open_output_string(s7_scheme *sc);                            /* (open-output-string) */
 const char *s7_get_output_string(s7_scheme *sc, s7_pointer out_port);       /* (get-output-string port) -- current contents of output string */
   /*    don't free the string */
+void s7_flush_output_port(s7_scheme *sc, s7_pointer p);                     /* (flush-output-port port) */
 
 typedef enum {S7_READ, S7_READ_CHAR, S7_READ_LINE, S7_READ_BYTE, S7_PEEK_CHAR, S7_IS_CHAR_READY} s7_read_t;
 s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc, unsigned char c, s7_pointer port));  
@@ -881,6 +882,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 2-May:     flush-output-port.
  * 7-Apr:     removed s7_scheme* arg from s7_slot_value, added s7_is_local_variable.
  * 25-Mar:    char-position, string-position, environment-ref, environment-set! added to the scheme side.
  * 9-Jan:     s7_cos, s7_sin, other optimization changes.

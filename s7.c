@@ -1268,8 +1268,8 @@ struct s7_scheme {
   s7_pointer CHAR_CI_GEQ, CHAR_CI_GT, CHAR_DOWNCASE, CHAR_LOWER_CASEP, CHAR_NUMERICP, CHAR_READYP, CHAR_UPCASE, CHAR_UPPER_CASEP;
   s7_pointer CHAR_WHITESPACEP, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, COMPLEXP, CONS, CONSTANTP, CONTINUATIONP, COPY, COS, COSH, DEFINEDP;
   s7_pointer DENOMINATOR, DISPLAY, DYNAMIC_WIND, ENVIRONMENTP, ENVIRONMENT, ENVIRONMENT_REF, ENVIRONMENT_SET, ENVIRONMENT_TO_LIST;
-  s7_pointer EOF_OBJECTP, EQP, EQUALP, EQVP, ERROR, EVAL, EVAL_STRING;
-  s7_pointer EVENP, EXACTP, EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOOR, FORMAT, FOR_EACH, GC, GCD, GENSYM, GET_OUTPUT_STRING, HASH_TABLE;
+  s7_pointer EOF_OBJECTP, EQP, EQUALP, EQVP, ERROR, EVAL, EVAL_STRING, EVENP, EXACTP;
+  s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, GET_OUTPUT_STRING, HASH_TABLE;
   s7_pointer HASH_TABLEP, HASH_TABLE_ITERATORP, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_SIZE, HELP, IMAG_PART, INEXACTP, INEXACT_TO_EXACT;
   s7_pointer INFINITEP, INPUT_PORTP, INTEGERP, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, KEYWORDP, KEYWORD_TO_SYMBOL, LCM, LENGTH;
   s7_pointer LIST, LISTP, LIST_TO_STRING, LIST_TO_VECTOR, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBITP, LOGIOR, LOGNOT, LOGXOR;
@@ -20168,6 +20168,54 @@ static s7_pointer g_close_input_port(s7_scheme *sc, s7_pointer args)
 
   return(sc->UNSPECIFIED);
 }
+
+
+void s7_flush_output_port(s7_scheme *sc, s7_pointer p)
+{
+  if ((!is_output_port(p)) || 
+      (is_function_port(p)) ||   /* function ports are not buffered, so flush not needed */
+      (port_is_closed(p)))
+    return;
+
+  if ((is_file_port(p)) &&
+      (port_file(p)))
+    {
+      if (port_position(p) > 0)
+	fwrite((void *)(port_data(p)), 1, port_position(p), port_file(p));
+      port_position(p) = 0;
+      fflush(port_file(p));
+    }
+  else
+    {
+      if ((is_string_port(p)) && 
+	  (port_string(p)))
+	{
+	  port_string_point(p) = 0;
+	  port_string(p)[0] = '\0';
+	}
+    }
+}
+
+
+static s7_pointer g_flush_output_port(s7_scheme *sc, s7_pointer args)
+{
+  #define H_flush_output_port "(flush-output-port port) flushes the port"
+  s7_pointer pt;
+  
+  if (is_null(args))
+    pt = sc->output_port;
+  else pt = car(args);
+
+  if (!is_output_port(pt))
+    {
+      CHECK_METHOD(sc, pt, sc->FLUSH_OUTPUT_PORT, args);
+      return(simple_wrong_type_argument_with_type(sc, sc->FLUSH_OUTPUT_PORT, pt, AN_OUTPUT_PORT));
+    }
+  s7_flush_output_port(sc, pt);
+  return(sc->UNSPECIFIED);
+}
+/* TODO: doc/test scheme-side flush-output-port
+ */                               
 
 
 void s7_close_output_port(s7_scheme *sc, s7_pointer p)
@@ -63983,6 +64031,7 @@ s7_scheme *s7_init(void)
                               s7_define_safe_function(sc, "set-current-error-port",  g_set_current_error_port, 1, 0, false, H_set_current_error_port);
   sc->CLOSE_INPUT_PORT =      s7_define_safe_function(sc, "close-input-port",        g_close_input_port,       1, 0, false, H_close_input_port);
   sc->CLOSE_OUTPUT_PORT =     s7_define_safe_function(sc, "close-output-port",       g_close_output_port,      1, 0, false, H_close_output_port);
+  sc->FLUSH_OUTPUT_PORT =     s7_define_safe_function(sc, "flush-output-port",       g_flush_output_port,      0, 1, false, H_flush_output_port);
   sc->OPEN_INPUT_FILE =       s7_define_safe_function(sc, "open-input-file",         g_open_input_file,        1, 1, false, H_open_input_file);
   sc->OPEN_OUTPUT_FILE =      s7_define_safe_function(sc, "open-output-file",        g_open_output_file,       1, 1, false, H_open_output_file);
   sc->OPEN_INPUT_STRING =     s7_define_safe_function(sc, "open-input-string",       g_open_input_string,      1, 0, false, H_open_input_string);

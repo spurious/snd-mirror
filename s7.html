@@ -2676,7 +2676,7 @@ Here we have, in effect, an anonymous instance of an anonymous class.
 
 
 <blockquote>
-<div class="indented">
+<div class="indented" id="defineclass">
 
 <p>Here is yet another object system.  Each class and each instance is an environment.
 A class might be thought of as a template for instances, but
@@ -5857,6 +5857,14 @@ the current environment, so defines happen in the enclosing environment.
   (define list-copy copy)
   (define vector-copy copy)
 
+  (define string-&gt;list     ; and similarly for all the others of this ilk
+    (let ((s7-string-&gt;list string-&gt;list))
+      (lambda* (str start end)
+        (s7-string-&gt;list (substring str (or start 0) (or end (length str)))))))
+
+  (define boolean=? eq?)
+  (define symbol=? eq?)
+
   (define char-foldcase char-downcase) 
   (define string-foldcase string-downcase)
   (define (string-downcase str) (apply string (map char-downcase str)))
@@ -5879,6 +5887,7 @@ the current environment, so defines happen in the enclosing environment.
   (define (binary-port? p) #t)
   (define (textual-port? p) #t)
   (define (port? p) (or (input-port? p) (output-port? p)))
+  (define (close-port p) (if (input-port? p) (close-input-port p) (close-output-port p)))
 
   (define read-u8 read-byte)   ; perhaps bytevector = string in s7?
   (define write-u8 write-byte) 
@@ -5886,11 +5895,10 @@ the current environment, so defines happen in the enclosing environment.
   (define peek-u8 peek-char)
   (define write-simple write)
 
-  (define boolean=? eq?)
-  (define symbol=? eq?)
   (define (read-error? obj) (eq? (car obj) 'read-error))
   (define (file-error? obj) (eq? (car obj) 'io-error))
   (define (eof-object) #&lt;eof&gt;)
+  (define (features) *features*)
 
   (define (with-exception-handler handler thunk) (catch #t thunk handler))
   (define raise error)
@@ -5910,12 +5918,12 @@ the current environment, so defines happen in the enclosing environment.
     `(let () 
        ,@(map (lambda (nvars . nbody)
 	        `(apply define-values ',nvars ',@nbody))
-	      (map car vars) (map cdr vars))
+	      (map car vars) 
+              (map cdr vars))
        ,@body))
 
-
-  ;; this depends on define-class above       
   (define-macro (define-record-type type make ? . fields)
+    ;; this depends on <a href="#defineclass">define-class</a> above       
     (let ((new-type (if (pair? type) (car type) type))
 	  (inherited (if (pair? type) `(list ,@(cdr type)) ())))
     `(begin
@@ -5954,6 +5962,38 @@ the current environment, so defines happen in the enclosing environment.
 
        ',new-type)))
 
+  (define-macro (case-lambda . choices)
+    `(lambda args
+       (case (length args)
+         ,@(map (lambda (choice)
+		  (if (or (symbol? (car choice))
+			  (negative? (length (car choice))))
+		      `(else (apply (lambda ,(car choice) ,@(cdr choice)) args))
+		      `((,(length (car choice))) 
+                        (apply (lambda ,(car choice) ,@(cdr choice)) args))))
+	        choices))))
+
+  (define* (make-parameter init converter)
+    (let ((convert converter)
+	  (old-values ())
+	  (value (if converter (converter init) init)))
+      (lambda () value)))
+
+  (define-macro (parameterize vars . body)
+    `(dynamic-wind
+        (lambda ()
+	  ,@(map (lambda (var)
+		   `(with-environment (procedure-environment ,(car var))
+		      (set! old-values (cons value old-values))
+		      (set! value (convert ,(cadr var)))))
+	         vars))
+         (lambda () ,@body)
+         (lambda ()
+	  ,@(map (lambda (var)
+		   `(with-environment (procedure-environment ,(car var))
+		      (set! value (car old-values))
+		      (set! old-values (cdr old-values))))
+	         vars))))
 
   ;; floor/ and friends can't work as intended: they assume that multiple values 
   ;;   are not spliced.  The "division library" is a trivial, pointless micro-optimization.
@@ -5979,47 +6019,36 @@ the current environment, so defines happen in the enclosing environment.
 
 <!-- more diffs:
 
-(define string->list
-  (let ((s7-string->list string->list))
-    (lambda* (str start end)
-      (s7-string->list (substring str (or start 0) (or end (length str)))))))
+implement in C?
+write-string
+read-string (k port)=how many to read from port
+vector-append
 
 string-copy start/end string-fill! string->vector
 same vector->list, vector-copy vector-copy! vector->string vector-fill!
-
-close-port flush-output-port
-read-string with numeric 1st arg??  write-string last arg?
 #true #false
-unquote-splicing
 #!fold-case
-nested #||#
 raise-continuable
 guard
 error-object?|-message|-irritants
-scheme-report-environment
-null-environment
 bytevector? and others bytevector-length|u8-ref open-output-bytevector
-string-copy!
-vector-append
-(define (force . args) #f)
-(define (delay . args) #f)
-delay-force
-paramterize
-make-parameter
-case-lambda
-syntax-rules etc
-+i as a number
+string-copy! = copy to a bytevector (string-copy to at from start end), similarly vector-copy!
 chars of form #\x0E50
 digit-value
 unicode?
 bytevector constants #u8()
 utf8->string
-write-string
-read-string (k port)=how many to read from port
 string->utf8
-get-environment-variable
 time stuff
-lcm does not accept "inexact integers", nor denominator
+
+these we won't do:
+unquote-splicing
+nested #||#
+scheme-report-environment, null-environment
+syntax-rules etc
++i as a number
+libraries
+delay/force/delay-force
 -->
 
 
