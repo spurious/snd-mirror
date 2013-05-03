@@ -1283,7 +1283,7 @@ struct s7_scheme {
   s7_pointer STRING_GEQ, STRING_GT, STRINGP, STRING_POSITION, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND, STRING_CI_LEQ, STRING_CI_LT;
   s7_pointer STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_COPY, STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
   s7_pointer SYMBOL_ACCESS, SYMBOLP, SYMBOL_TO_KEYWORD, SYMBOL_TO_STRING, SYMBOL_TO_DYNAMIC_VALUE, SYMBOL_TO_VALUE;
-  s7_pointer TAN, TANH, THROW, TRUNCATE, UNOPTIMIZE, VALUES, VECTOR;
+  s7_pointer TAN, TANH, THROW, TRUNCATE, UNOPTIMIZE, VALUES, VECTOR, VECTOR_APPEND;
   s7_pointer VECTORP, VECTOR_TO_LIST, VECTOR_DIMENSIONS, VECTOR_FILL, VECTOR_LENGTH, VECTOR_REF, VECTOR_SET, WITH_INPUT_FROM_FILE;
   s7_pointer WITH_INPUT_FROM_STRING, WITH_OUTPUT_TO_FILE, WITH_OUTPUT_TO_STRING, WRITE, WRITE_BYTE, WRITE_CHAR, ZEROP;
   s7_pointer S7_FEATURES, GC_STATS, LOAD_PATH, PI;
@@ -20192,6 +20192,7 @@ void s7_flush_output_port(s7_scheme *sc, s7_pointer p)
 	{
 	  port_string_point(p) = 0;
 	  port_string(p)[0] = '\0';
+	  /* does this need to be cleared throughout? */
 	}
     }
 }
@@ -20214,8 +20215,6 @@ static s7_pointer g_flush_output_port(s7_scheme *sc, s7_pointer args)
   s7_flush_output_port(sc, pt);
   return(sc->UNSPECIFIED);
 }
-/* TODO: doc/test scheme-side flush-output-port
- */                               
 
 
 void s7_close_output_port(s7_scheme *sc, s7_pointer p)
@@ -27381,6 +27380,42 @@ s7_Int *s7_vector_offsets(s7_pointer vec)
   offs = (s7_Int *)malloc(sizeof(s7_Int));
   offs[0] = 1;
   return(offs);
+}
+
+
+static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
+{
+  #define H_vector_append "(vector-append . vectors) returns a new (1-dimensional) vector containing the elements of its vector arguments."
+  s7_Int i = 0, j, len = 0, source_len;
+  s7_pointer p, v, x;
+  s7_pointer *dest, *source;
+
+  if (is_null(args))
+    return(make_vector_1(sc, 0, false));
+
+  for (p = args; is_pair(p); p = cdr(p))
+    {
+      x = car(p);
+      if (!s7_is_vector(x))
+	{
+	  CHECK_METHOD(sc, x, sc->VECTOR_APPEND, args);
+	  return(wrong_type_argument_n(sc, sc->VECTOR_APPEND, position_of(p, args), x, T_VECTOR));
+	}
+      len += vector_length(x);
+    }
+  
+  v = make_vector_1(sc, len, false);
+  dest = vector_elements(v);
+  for (p = args; is_pair(p); p = cdr(p))
+    {
+      x = car(p);
+      source = vector_elements(x);
+      source_len = vector_length(x);
+      for (j = 0; j < source_len; j++, i++)
+	dest[i] = source[j];
+    }
+
+  return(v);
 }
 
 
@@ -42944,10 +42979,10 @@ static s7_pointer check_letrec(s7_scheme *sc)
   
   for (x = car(sc->code); is_not_null(x); x = cdr(x))
     {
-      if (!is_pair(x))                    /* (letrec ((a 1) . 2) ...) */
+      if (!is_pair(x))                        /* (letrec ((a 1) . 2) ...) */
 	return(eval_error(sc, "improper list of letrec variables? ~A", sc->code));
       
-      if ((!is_pair(car(x))) ||           /* (letrec (1 2) #t) */
+      if ((!is_pair(car(x))) ||               /* (letrec (1 2) #t) */
 	  (!(is_symbol(caar(x)))))
 	return(eval_error(sc, "bad variable ~S in letrec", car(x)));
       
@@ -42955,13 +42990,13 @@ static s7_pointer check_letrec(s7_scheme *sc)
 	return(s7_error(sc, sc->WRONG_TYPE_ARG,
 			list_2(sc, make_protected_string(sc, "can't bind an immutable object: ~S"), x)));
 
-      if (!is_pair(cdar(x)))              /* (letrec ((x . 1))...) */
+      if (!is_pair(cdar(x)))                  /* (letrec ((x . 1))...) */
 	{
 	  if (is_null(cdar(x)))               /* (letrec ((x)) x) -- perhaps this is legal? */
 	    return(eval_error(sc, "letrec variable declaration has no value?: ~A", car(x)));
 	  return(eval_error(sc, "letrec variable declaration is not a proper list?: ~A", car(x)));
 	}
-      if (is_not_null(cddar(x)))          /* (letrec ((x 1 2 3)) ...) */
+      if (is_not_null(cddar(x)))              /* (letrec ((x 1 2 3)) ...) */
 	return(eval_error(sc, "letrec variable declaration has more than one value?: ~A", car(x)));
 
       set_local(caar(x));
@@ -64299,6 +64334,7 @@ s7_scheme *s7_init(void)
   sc->LIST_TO_VECTOR =        s7_define_safe_function(sc, "list->vector",            g_list_to_vector,         1, 0, false, H_list_to_vector);
   sc->VECTOR_TO_LIST =        s7_define_safe_function(sc, "vector->list",            g_vector_to_list,         1, 0, false, H_vector_to_list);
   sc->VECTORP =               s7_define_safe_function(sc, "vector?",                 g_is_vector,              1, 0, false, H_is_vector);
+  sc->VECTOR_APPEND =         s7_define_safe_function(sc, "vector-append",           g_vector_append,          0, 0, true,  H_vector_append);
   sc->VECTOR_FILL =           s7_define_safe_function(sc, "vector-fill!",            g_vector_fill,            2, 0, false, H_vector_fill);
   sc->VECTOR_LENGTH =         s7_define_safe_function(sc, "vector-length",           g_vector_length,          1, 0, false, H_vector_length);
   sc->VECTOR_REF =            s7_define_safe_function(sc, "vector-ref",              g_vector_ref,             2, 0, true,  H_vector_ref);
@@ -64491,6 +64527,8 @@ s7_scheme *s7_init(void)
 #ifdef __linux__
   s7_provide(sc, "linux");
 #endif
+  s7_provide(sc, "ratio");
+  s7_provide(sc, "s7-" S7_VERSION);
 
   sc->Vector_Set = s7_symbol_value(sc, sc->VECTOR_SET);
   set_setter(sc->Vector_Set);
@@ -64796,4 +64834,8 @@ s7_scheme *s7_init(void)
  *         void *(*ref_1)(s7_pointer vector, s7_Int i)
  *         set, compatible_set?
  *         mark, copy, fill, reverse, etc print
+ */
+
+/* possible additions (r7rs): start/end points for various copy/conversion ops, read|write-string, utf8/bytevector stuff
+                   current-second current-jiffy jiffies-per-second -- see get_internal_real_time in clm2xen.c (uses gettimeofday)
  */

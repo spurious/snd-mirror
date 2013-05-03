@@ -930,6 +930,8 @@ else
         AC_CHECK_LIB(m, gtk_color_chooser_dialog_new, [AC_DEFINE(HAVE_GTK_COLOR_CHOOSER_DIALOG_NEW)], ,$GTK_LIBS)
 	# for 3.5.8
         AC_CHECK_LIB(m, gtk_level_bar_new, [AC_DEFINE(HAVE_GTK_LEVEL_BAR_NEW)], ,$GTK_LIBS)
+	# for 3.9.0
+        AC_CHECK_LIB(m, gtk_header_bar_new, [AC_DEFINE(HAVE_GTK_HEADER_BAR_NEW)], ,$GTK_LIBS)
 
 	AC_CHECK_LIB(cairo, cairo_glyph_allocate, [AC_DEFINE(HAVE_CAIRO_GLYPH_ALLOCATE)], ,$GTK_LIBS)
 	AC_CHECK_LIB(cairo, cairo_region_xor, [AC_DEFINE(HAVE_CAIRO_REGION_XOR)], ,$GTK_LIBS)

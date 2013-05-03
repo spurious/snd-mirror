@@ -7239,7 +7239,31 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (v 0) v)
   (set! (v 1) 32)
   (test ((v 0) 1) 32))
+
+
+;;; --------------------------------------------------------------------------------
+;;; vector-append
+
+(test (vector-append #() #2d()) #())
+(test (vector-append) #())
+(test (vector-append #()) #())
+(test (vector-append #(1 2)) #(1 2))
+(test (vector-append #(1) #(2 3) #() #(4)) #(1 2 3 4))
+(test (vector-append #(1) #2d((2 3) (4 5)) #3d()) #(1 2 3 4 5))
+(test (vector-append #2d((1 2) (3 4)) #3d(((5 6) (7 8)) ((9 10) (11 12)))) #(1 2 3 4 5 6 7 8 9 10 11 12))
+
+(for-each
+ (lambda (arg)
+   (test (vector-append arg) 'error)
+   (test (vector-append #(1 2) arg) 'error))
+ (list "hi" #\a '() 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
+       3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
+
+
+
   
+;;; --------------------------------------------------------------------------------
+;;; miscellaneous vectors
 
 (test (let ((sum 0)) (for-each (lambda (n) (set! sum (+ sum n))) (vector 1 2 3)) sum) 6)
 (test (let ((sum 0)) (for-each (lambda (n m) (set! sum (+ sum n (- m)))) (vector 1 2 3) (vector 4 5 6)) sum) -9)
@@ -12214,6 +12238,37 @@ a2" 3) "132")
 	(display "open-output-string + format ... expected \"this is a test 3\", but got \"")
 	(display res) (display "\"?") (newline))))
 
+(let ((res #f)) 
+  (let ((this-file (open-output-string))) 
+    (format this-file "this is a test")
+    (set! res (get-output-string this-file))
+    (if (not (string=? res "this is a test"))
+	(format #t "open-output-string + format expected \"this is a test\", but got ~S~%" res))
+    (flush-output-port this-file)
+    (set! res (get-output-string this-file))
+    (if (not (string=? res ""))
+	(format #t "flush-output-port of string port expected \"\", but got ~S~%" res))
+    (format this-file "this is a test")
+    (set! res (get-output-string this-file))
+    (if (not (string=? res "this is a test"))
+	(format #t "open-output-string after flush expected \"this is a test\", but got ~S~%" res))
+    (close-output-port this-file)
+    (test (flush-output-port this-file) #<unspecified>)))
+
+(test (flush-output-port "hiho") 'error)
+(test (flush-output-port *stdin*) 'error)
+
+(call-with-output-file "tmp1.r5rs"
+  (lambda (p)
+    (format p "123456~%")
+    (format p "67890~%")
+    (flush-output-port p)
+    (test (call-with-input-file "tmp1.r5rs"
+	    (lambda (p)
+	      (read-line p)))
+	  "123456")
+    (close-output-port p)))
+    
 (let ((res1 #f)
       (res2 #f)
       (res3 #f))
@@ -28265,6 +28320,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (copy (list 1 2) (vector 0 0 3 4)) #(1 2 3 4))
 ; should (copy 1 2) be an error?
 (test (copy #2d((1 2) (3 4)) (vector 0 0 0 0 0)) #(1 2 3 4 0))
+(test (copy (vector 0 0 0 0 0) #2d((1 2) (3 4))) #2d((0 0) (0 0)))
+(test (copy (vector 1 2 3 4 5) #2d((0 0) (0 0))) #2d((1 2) (3 4)))
 (test (copy "12345" (make-list 5)) '(#\1 #\2 #\3 #\4 #\5))
 (test (copy (list #\0 #\1 #\2) (make-string 3)) "012")
 (test (copy '(0 1 2 3) (list 4 3 2 1)) '(0 1 2 3))
@@ -28273,6 +28330,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (copy '(4 3 2 1) '(1 . 2)) '(4 . 2))
 (test (copy (string (integer->char 255)) (vector 0)) #(#\xff))
 (test (copy (vector (integer->char 255)) (string #\a)) (string (integer->char 255)))
+(test (copy #() "") "")
+(test (copy "" #()) #())
+(test (copy #() (vector 1 2 3)) #(1 2 3))
 
 (let ((lst (list 1 2 3)))
    (set! (cdr (cddr lst)) lst)
@@ -70799,6 +70859,7 @@ etc
 	  (list 'symbol (lambda args 'symbol))
 	  (list 'directory? (lambda args 'directory?))
 	  (list 'vector->list (lambda args 'vector->list))
+	  (list 'vector-append (lambda args 'vector-append))
 	  (list 'imag-part (lambda args 'imag-part))
 	  (list 'vector-length (lambda args 'vector-length))
 	  (list 'char-ready? (lambda args 'char-ready?))
@@ -70971,6 +71032,7 @@ etc
 	  (list 'caddar (lambda args 'caddar))
 	  (list 'cadddr (lambda args 'cadddr))
 	  (list 'close-output-port (lambda args 'close-output-port))
+	  (list 'flush-output-port (lambda args 'flush-output-port))
 	  ))
   
   (let ((procs (make-test-all-methods)))
@@ -70989,7 +71051,7 @@ etc
 	     (if (not (eq? val p))
 		 (format #t ";test-all-methods: (~A~A~A (~D)procs) -> ~A~%" bold-text p unbold-text (max 1 (car (arity function))) val))))))
      (list 
-      '* '+ '- '/ '< '= '> 'call-with-output-file 'round 'keyword? '<= '>= 'cdaaar 'cdaadr 'cdadar 'cdaddr 'cddaar 'cddadr 'cdddar 'cddddr 'make-rectangular 'truncate 'string->number 'remainder 'char-downcase 'char->integer 'zero? 'char<? 'char=? 'char>? 'char-ci<? 'char-ci=? 'char-ci>? 'close-input-port 'infinite? 'magnitude 'open-input-file 'string->list 'write-char 'abs 'car 'procedure? 'cdr 'ash 'cos 'gcd 'list->vector 'exp 'symbol->keyword 'lcm 'max 'write-byte 'inexact? 'min 'log 'tan 'sin 'list-ref 'string 'integer-decode-float 'list->string 'symbol 'vector->list 'imag-part 'vector-length 'char-ready? 'random-state->list 'with-output-to-file 'char-alphabetic? 'char-numeric? 'integer-length 'peek-char 'keyword->symbol 'vector? 'ceiling 'real-part 'gensym 'make-hash-table 'negative? 'char<=? 'char>=? 'char-ci<=? 'char-ci>=? 'string-append 'port-line-number 'numerator 'make-hash-table-iterator 'string->symbol 'make-random-state 'string-ci<? 'string-ci=? 'string-ci>? 'make-keyword 'integer->char 'exact? 'string-copy 'string<? 'string=? 'string>? 'vector-ref 'acos 'caar 'with-input-from-file 'cadr 'cdar 'cddr 'string-set! 'rationalize 'atan 'asin 'assq 'assv 'cosh 'expt 'continuation? 'nan? 'memq 'memv 'odd? 'load 'hash-table-iterator? 'read 'tanh 'sinh 'number? 'sqrt 'set-car! 'set-cdr! 'pair-line-number 'string-ci<=? 'char-upcase 'string-ci>=? 'macro? 'list-set! 'list-tail 'reverse! 'symbol->value 'complex? 'symbol->string 'make-vector 'positive? 'string? 'make-polar 'member 'string-fill! 'number->string 'make-list 'reverse 'rational? 'open-input-string 'hash-table-set! 'hash-table-ref 'logand 'hash-table-size 'logior 'lognot 'logbit? 'integer? 'make-string 'exact->inexact 'logxor 'string<=? 'string>=? 'vector-set! 'modulo 'vector-fill! 'acosh 'call-with-output-string 'get-output-string 'caaar 'caadr 'cadar 'caddr 'cdaar 'cdadr 'cddar 'boolean? 'cdddr 'char-upper-case? 'angle 'char? 'inexact->exact 'string-length 'atanh 'symbol? 'denominator 'asinh 'with-output-to-string 'assoc 'input-port? 'call-with-input-file 'fill! 'port-closed? 'newline 'provided? 'char-whitespace? 'random 'floor 'read-char 'vector-dimensions 'even? 'defined? 'read-byte 'output-port? 'substring 'string-ref 'provide 'read-line 'eval-string 'port-filename 'list? 'open-output-file 'quotient 'pair? 'call-with-input-string 'random-state? 'with-input-from-string 'real? 'char-lower-case? 'null? 'eof-object? 'hash-table? 'caaaar 'caaadr 'caadar 'caaddr 'cadaar 'cadadr 'caddar 'cadddr 'close-output-port)))
+      '* '+ '- '/ '< '= '> 'call-with-output-file 'round 'keyword? '<= '>= 'cdaaar 'cdaadr 'cdadar 'cdaddr 'cddaar 'cddadr 'cdddar 'cddddr 'make-rectangular 'truncate 'string->number 'remainder 'char-downcase 'char->integer 'zero? 'char<? 'char=? 'char>? 'char-ci<? 'char-ci=? 'char-ci>? 'close-input-port 'infinite? 'magnitude 'open-input-file 'string->list 'write-char 'abs 'car 'procedure? 'cdr 'ash 'cos 'gcd 'list->vector 'exp 'symbol->keyword 'lcm 'max 'write-byte 'inexact? 'min 'log 'tan 'sin 'list-ref 'string 'integer-decode-float 'list->string 'symbol 'vector->list 'vector-append 'imag-part 'vector-length 'char-ready? 'random-state->list 'with-output-to-file 'char-alphabetic? 'char-numeric? 'integer-length 'peek-char 'keyword->symbol 'vector? 'ceiling 'real-part 'gensym 'make-hash-table 'negative? 'char<=? 'char>=? 'char-ci<=? 'char-ci>=? 'string-append 'port-line-number 'numerator 'make-hash-table-iterator 'string->symbol 'make-random-state 'string-ci<? 'string-ci=? 'string-ci>? 'make-keyword 'integer->char 'exact? 'string-copy 'string<? 'string=? 'string>? 'vector-ref 'acos 'caar 'with-input-from-file 'cadr 'cdar 'cddr 'string-set! 'rationalize 'atan 'asin 'assq 'assv 'cosh 'expt 'continuation? 'nan? 'memq 'memv 'odd? 'load 'hash-table-iterator? 'read 'tanh 'sinh 'number? 'sqrt 'set-car! 'set-cdr! 'pair-line-number 'string-ci<=? 'char-upcase 'string-ci>=? 'macro? 'list-set! 'list-tail 'reverse! 'symbol->value 'complex? 'symbol->string 'make-vector 'positive? 'string? 'make-polar 'member 'string-fill! 'number->string 'make-list 'reverse 'rational? 'open-input-string 'hash-table-set! 'hash-table-ref 'logand 'hash-table-size 'logior 'lognot 'logbit? 'integer? 'make-string 'exact->inexact 'logxor 'string<=? 'string>=? 'vector-set! 'modulo 'vector-fill! 'acosh 'call-with-output-string 'get-output-string 'caaar 'caadr 'cadar 'caddr 'cdaar 'cdadr 'cddar 'boolean? 'cdddr 'char-upper-case? 'angle 'char? 'inexact->exact 'string-length 'atanh 'symbol? 'denominator 'asinh 'with-output-to-string 'assoc 'input-port? 'call-with-input-file 'fill! 'port-closed? 'newline 'provided? 'char-whitespace? 'random 'floor 'read-char 'vector-dimensions 'even? 'defined? 'read-byte 'output-port? 'substring 'string-ref 'provide 'read-line 'eval-string 'port-filename 'list? 'open-output-file 'quotient 'pair? 'call-with-input-string 'random-state? 'with-input-from-string 'real? 'char-lower-case? 'null? 'eof-object? 'hash-table? 'caaaar 'caaadr 'caadar 'caaddr 'cadaar 'cadadr 'caddar 'cadddr 'close-output-port 'flush-output-port)))
   )
 
 

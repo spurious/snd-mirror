@@ -182,7 +182,7 @@
 (CINT "GDK_ACTION_PRIVATE" "GdkDragAction")
 (CINT "GDK_ACTION_ASK" "GdkDragAction")
 
-(CINT-gtk2 "GDK_DRAG_PROTO_MOTIF" "GdkDragProtocol")
+;;; 3.9.0 (CINT-gtk2 "GDK_DRAG_PROTO_MOTIF" "GdkDragProtocol")
 (CINT-gtk2 "GDK_DRAG_PROTO_XDND" "GdkDragProtocol")
 (CINT-gtk2 "GDK_DRAG_PROTO_ROOTWIN" "GdkDragProtocol")
 (CINT-gtk2 "GDK_DRAG_PROTO_NONE" "GdkDragProtocol")
@@ -480,7 +480,7 @@
 (CFNC "void gdk_set_program_class char* program_class")
 (CFNC "void gdk_error_trap_push void")
 (CFNC "gint gdk_error_trap_pop void")
-(CFNC "gchar* gdk_get_display void" 'free)
+;;; 3.9.0 (CFNC "gchar* gdk_get_display void" 'free)
 (CFNC "gchar* gdk_get_display_arg_name void")
 (CFNC "void gdk_notify_startup_complete void")
 ;;; 2.99.0 (CFNC "GdkGrabStatus gdk_pointer_grab GdkWindow* window gboolean owner_events GdkEventMask event_mask GdkWindow* confine_to GdkCursor* cursor guint32 time")
@@ -3773,12 +3773,12 @@
 (CFNC "PangoContext* gtk_widget_get_pango_context GtkWidget* widget")
 (CFNC "PangoLayout* gtk_widget_create_pango_layout GtkWidget* widget gchar* text")
 (CFNC-gtk2 "GdkPixbuf* gtk_widget_render_icon GtkWidget* widget gchar* stock_id GtkIconSize size gchar* detail")
-(CFNC "void gtk_widget_set_composite_name GtkWidget* widget gchar* name")
-(CFNC "gchar* gtk_widget_get_composite_name GtkWidget* widget")
+;;; 3.9.0 (CFNC "void gtk_widget_set_composite_name GtkWidget* widget gchar* name")
+;;; 3.9.0 (CFNC "gchar* gtk_widget_get_composite_name GtkWidget* widget")
 (CFNC-gtk2 "void gtk_widget_reset_rc_styles GtkWidget* widget")
 (CFNC-gtk2 "void gtk_widget_push_colormap GdkColormap* cmap")
-(CFNC "void gtk_widget_push_composite_child void")
-(CFNC "void gtk_widget_pop_composite_child void")
+;;; 3.9.0 (CFNC "void gtk_widget_push_composite_child void")
+;;; 3.9.0 (CFNC "void gtk_widget_pop_composite_child void")
 (CFNC-gtk2 "void gtk_widget_pop_colormap void")
 ;(CFNC "void gtk_widget_class_install_style_property GtkWidgetClass* klass GParamSpec* pspec")
 ;(CFNC "void gtk_widget_class_install_style_property_parser GtkWidgetClass* klass GParamSpec* pspec GtkRcPropertyParser parser")
@@ -4537,7 +4537,7 @@
 ;;;;(CFNC "GType gdk_display_get_type void")
 (CFNC "GdkDisplay* gdk_display_open gchar* display_name")
 (CFNC "gchar* gdk_display_get_name GdkDisplay* display")
-(CFNC "int gdk_display_get_n_screens GdkDisplay* display")
+;;; 3.9.0 (CFNC "int gdk_display_get_n_screens GdkDisplay* display")
 (CFNC "GdkScreen* gdk_display_get_screen GdkDisplay* display int screen_num")
 (CFNC "GdkScreen* gdk_display_get_default_screen GdkDisplay* display")
 ;;; 2.99.0 (CFNC "void gdk_display_pointer_ungrab GdkDisplay* display guint32 time")
@@ -8460,68 +8460,64 @@
 (CFNC-358 "gboolean gtk_level_bar_get_offset_value GtkLevelBar* self gchar* name gdouble* [value]" 'const)
 
 
-#|
+
 ;;; 3.5.12
-(CFNC "GtkWindow* gtk_application_get_active_window GtkApplication* application")
-(CFNC "void gtk_entry_set_input_purpose GtkEntry* entry GtkInputPurpose purpose")
-(CFNC "GtkInputPurpose gtk_entry_get_input_purpose GtkEntry* entry")
-(CFNC "void gtk_entry_set_input_hints GtkEntry* entry GtkInputHints hints")
-(CFNC "GtkInputHints gtk_entry_get_input_hints GtkEntry* entry")
-(CFNC "void gtk_menu_button_set_menu GtkMenuButton* menu_button GtkWidget* menu")
-(CFNC "GtkMenu* gtk_menu_button_get_popup GtkMenuButton* menu_button")
-(CFNC "void gtk_text_view_set_input_purpose GtkTextView* text_view GtkInputPurpose purpose")
-(CFNC "GtkInputPurpose gtk_text_view_get_input_purpose GtkTextView* text_view")
-(CFNC "void gtk_text_view_set_input_hints GtkTextView* text_view GtkInputHints hints")
-(CFNC "GtkInputHints gtk_text_view_get_input_hints GtkTextView* text_view")
-(CFNC "void gtk_widget_insert_action_group GtkWidget* widget gchar* name GActionGroup* group" 'const)
+(CFNC-390 "GtkWindow* gtk_application_get_active_window GtkApplication* application")
+(CFNC-390 "void gtk_entry_set_input_purpose GtkEntry* entry GtkInputPurpose purpose")
+(CFNC-390 "GtkInputPurpose gtk_entry_get_input_purpose GtkEntry* entry")
+(CFNC-390 "void gtk_entry_set_input_hints GtkEntry* entry GtkInputHints hints")
+(CFNC-390 "GtkInputHints gtk_entry_get_input_hints GtkEntry* entry")
+(CFNC-390 "void gtk_menu_button_set_menu GtkMenuButton* menu_button GtkWidget* menu")
+(CFNC-390 "GtkMenu* gtk_menu_button_get_popup GtkMenuButton* menu_button")
+(CFNC-390 "void gtk_text_view_set_input_purpose GtkTextView* text_view GtkInputPurpose purpose")
+(CFNC-390 "GtkInputPurpose gtk_text_view_get_input_purpose GtkTextView* text_view")
+(CFNC-390 "void gtk_text_view_set_input_hints GtkTextView* text_view GtkInputHints hints")
+(CFNC-390 "GtkInputHints gtk_text_view_get_input_hints GtkTextView* text_view")
+(CFNC-390 "void gtk_widget_insert_action_group GtkWidget* widget gchar* name GActionGroup* group" 'const)
 
-(CINT "GTK_INPUT_PURPOSE_FREE_FORM" "GtkInputPurpose")
-(CINT "GTK_INPUT_PURPOSE_ALPHA" "GtkInputPurpose")
-(CINT "GTK_INPUT_PURPOSE_DIGITS" "GtkInputPurpose")
-(CINT "GTK_INPUT_PURPOSE_NUMBER" "GtkInputPurpose")
-(CINT "GTK_INPUT_PURPOSE_PHONE" "GtkInputPurpose")
-(CINT "GTK_INPUT_PURPOSE_URL" "GtkInputPurpose")
-(CINT "GTK_INPUT_PURPOSE_EMAIL" "GtkInputPurpose")
-(CINT "GTK_INPUT_PURPOSE_NAME" "GtkInputPurpose")
-(CINT "GTK_INPUT_PURPOSE_PASSWORD" "GtkInputPurpose")
-(CINT "GTK_INPUT_PURPOSE_PIN" "GtkInputPurpose")
+(CINT-390 "GTK_INPUT_PURPOSE_FREE_FORM" "GtkInputPurpose")
+(CINT-390 "GTK_INPUT_PURPOSE_ALPHA" "GtkInputPurpose")
+(CINT-390 "GTK_INPUT_PURPOSE_DIGITS" "GtkInputPurpose")
+(CINT-390 "GTK_INPUT_PURPOSE_NUMBER" "GtkInputPurpose")
+(CINT-390 "GTK_INPUT_PURPOSE_PHONE" "GtkInputPurpose")
+(CINT-390 "GTK_INPUT_PURPOSE_URL" "GtkInputPurpose")
+(CINT-390 "GTK_INPUT_PURPOSE_EMAIL" "GtkInputPurpose")
+(CINT-390 "GTK_INPUT_PURPOSE_NAME" "GtkInputPurpose")
+(CINT-390 "GTK_INPUT_PURPOSE_PASSWORD" "GtkInputPurpose")
+(CINT-390 "GTK_INPUT_PURPOSE_PIN" "GtkInputPurpose")
 
-(CINT "GTK_INPUT_HINT_NONE" "GtkInputHints")
-(CINT "GTK_INPUT_HINT_SPELLCHECK" "GtkInputHints")
-(CINT "GTK_INPUT_HINT_NO_SPELLCHECK" "GtkInputHints")
-(CINT "GTK_INPUT_HINT_WORD_COMPLETION" "GtkInputHints")
-(CINT "GTK_INPUT_HINT_LOWERCASE" "GtkInputHints")
-(CINT "GTK_INPUT_HINT_UPPERCASE_CHARS" "GtkInputHints")
-(CINT "GTK_INPUT_HINT_UPPERCASE_WORDS" "GtkInputHints")
-(CINT "GTK_INPUT_HINT_UPPERCASE_SENTENCES" "GtkInputHints")
+(CINT-390 "GTK_INPUT_HINT_NONE" "GtkInputHints")
+(CINT-390 "GTK_INPUT_HINT_SPELLCHECK" "GtkInputHints")
+(CINT-390 "GTK_INPUT_HINT_NO_SPELLCHECK" "GtkInputHints")
+(CINT-390 "GTK_INPUT_HINT_WORD_COMPLETION" "GtkInputHints")
+(CINT-390 "GTK_INPUT_HINT_LOWERCASE" "GtkInputHints")
+(CINT-390 "GTK_INPUT_HINT_UPPERCASE_CHARS" "GtkInputHints")
+(CINT-390 "GTK_INPUT_HINT_UPPERCASE_WORDS" "GtkInputHints")
+(CINT-390 "GTK_INPUT_HINT_UPPERCASE_SENTENCES" "GtkInputHints")
 
 
 ;;; 3.5.14
-(CINT "GTK_INPUT_HINT_INHIBIT_OSK" "GtkInputHints")
-(CFNC "void gtk_entry_set_attributes GtkEntry* entry PangoAttrList* attrs")
-(CFNC "PangoAttrList* gtk_entry_get_attributes GtkEntry* entry")
+(CINT-390 "GTK_INPUT_HINT_INHIBIT_OSK" "GtkInputHints")
+(CFNC-390 "void gtk_entry_set_attributes GtkEntry* entry PangoAttrList* attrs")
+(CFNC-390 "PangoAttrList* gtk_entry_get_attributes GtkEntry* entry")
  
 ;;; nothing new in 3.5.16
 
 ;;; 3.5.18
-(CFNC "void gtk_accel_label_set_accel GtkAccelLabel* accel_label guint accelerator_key GdkModifierType accelerator_mods")
-(CFNC "GtkAccelGroup* gtk_action_group_get_accel_group GtkActionGroup* action_group")
-(CFNC "void gtk_action_group_set_accel_group GtkActionGroup* action_group GtkAccelGroup* accel_group")
-(CFNC "void gtk_menu_shell_bind_model GtkMenuShell* menu_shell GMenuModel* model gchar* action_namespace gboolean with_separators" 'const)
+(CFNC-390 "void gtk_accel_label_set_accel GtkAccelLabel* accel_label guint accelerator_key GdkModifierType accelerator_mods")
+(CFNC-390 "GtkAccelGroup* gtk_action_group_get_accel_group GtkActionGroup* action_group")
+(CFNC-390 "void gtk_action_group_set_accel_group GtkActionGroup* action_group GtkAccelGroup* accel_group")
+(CFNC-390 "void gtk_menu_shell_bind_model GtkMenuShell* menu_shell GMenuModel* model gchar* action_namespace gboolean with_separators" 'const)
 
 ;;; nothing new in 3.6.0|1
 
 ;;; 3.7.0
-(CFNC "void gtk_level_bar_set_inverted GtkLevelBar* self gboolean inverted")
-(CFNC "gboolean gtk_level_bar_get_inverted GtkLevelBar* self")
+(CFNC-390 "void gtk_level_bar_set_inverted GtkLevelBar* self gboolean inverted")
+(CFNC-390 "gboolean gtk_level_bar_get_inverted GtkLevelBar* self")
 
 
 ;;; 3.7.2
-(CINT "GTK_SIZE_GROUP_NONE" "GtkSizeGroupMode")
-(CINT "GTK_SIZE_GROUP_HORIZONTAL" "GtkSizeGroupMode")
-(CINT "GTK_SIZE_GROUP_VERTICAL" "GtkSizeGroupMode")
-(CINT "GTK_SIZE_GROUP_BOTH" "GtkSizeGroupMode")
-(CFNC "gboolean gtk_widget_is_visible GtkWidget* widget")
+(CFNC-390 "gboolean gtk_widget_is_visible GtkWidget* widget")
 
 
 ;;; 3.7.4
@@ -8529,73 +8525,136 @@
 
 
 ;;; 3.7.6
-(CINT "GTK_STATE_FLAG_DIR_LTR" "GtkStateFlags")
-(CINT "GTK_STATE_FLAG_DIR_RTL" "GtkStateFlags")
+(CINT-390 "GTK_STATE_FLAG_DIR_LTR" "GtkStateFlags")
+(CINT-390 "GTK_STATE_FLAG_DIR_RTL" "GtkStateFlags")
 
 
 ;;; 3.7.8
-(CINT "GDK_FULLSCREEN_ON_CURRENT_MONITOR" "GdkFullscreenMode")
-(CINT "GDK_FULLSCREEN_ON_ALL_MONITORS" "GdkFullscreenMode")
+(CINT-390 "GDK_FULLSCREEN_ON_CURRENT_MONITOR" "GdkFullscreenMode")
+(CINT-390 "GDK_FULLSCREEN_ON_ALL_MONITORS" "GdkFullscreenMode")
 
-(CFNC "void gdk_window_set_fullscreen_mode GdkWindow* window GdkFullscreenMode mode")
-(CFNC "GdkFullscreenMode gdk_window_get_fullscreen_mode GdkWindow* window")
-(CFNC "void gtk_icon_view_set_activate_on_single_click GtkIconView* icon_view gboolean single")
-(CFNC "gboolean gtk_icon_view_get_activate_on_single_click GtkIconView* icon_view")
-(CFNC "gboolean gtk_tree_view_get_activate_on_single_click GtkTreeView* tree_view")
-(CFNC "void gtk_tree_view_set_activate_on_single_click GtkTreeView* tree_view gboolean single")
+(CFNC-390 "void gdk_window_set_fullscreen_mode GdkWindow* window GdkFullscreenMode mode")
+(CFNC-390 "GdkFullscreenMode gdk_window_get_fullscreen_mode GdkWindow* window")
+(CFNC-390 "void gtk_icon_view_set_activate_on_single_click GtkIconView* icon_view gboolean single")
+(CFNC-390 "gboolean gtk_icon_view_get_activate_on_single_click GtkIconView* icon_view")
+(CFNC-390 "gboolean gtk_tree_view_get_activate_on_single_click GtkTreeView* tree_view")
+(CFNC-390 "void gtk_tree_view_set_activate_on_single_click GtkTreeView* tree_view gboolean single")
 
 
 ;;; 3.7.10
-+ void                  gtk_icon_info_load_icon_async   (GtkIconInfo          *icon_info,
-+ 						       GCancellable         *cancellable,
-+ 						       GAsyncReadyCallback   callback,
-+ 						       gpointer              user_data);
-+ GdkPixbuf *           gtk_icon_info_load_icon_finish  (GtkIconInfo          *icon_info,
-+ 						       GAsyncResult         *res,
-+ 						       GError              **error);
-+ void                  gtk_icon_info_load_symbolic_async (GtkIconInfo   *icon_info,
-+ 							 const GdkRGBA *fg,
-+ 							 const GdkRGBA *success_color,
-+ 							 const GdkRGBA *warning_color,
-+ 							 const GdkRGBA *error_color,
-+ 							 GCancellable         *cancellable,
-+ 							 GAsyncReadyCallback   callback,
-+ 							 gpointer              user_data);
-+ GdkPixbuf *           gtk_icon_info_load_symbolic_finish (GtkIconInfo   *icon_info,
-+ 							  GAsyncResult         *res,
-+ 							  gboolean      *was_symbolic,
-+ 							  GError       **error);
-+ void                  gtk_icon_info_load_symbolic_for_context_async (GtkIconInfo      *icon_info,
-+ 								     GtkStyleContext  *context,
-+ 								     GCancellable     *cancellable,
-+ 								     GAsyncReadyCallback callback,
-+ 								     gpointer          user_data);
-+ GdkPixbuf *           gtk_icon_info_load_symbolic_for_context_finish (GtkIconInfo      *icon_info,
-+ 								      GAsyncResult     *res,
-+ 								      gboolean         *was_symbolic,
-+ 								      GError          **error);
-+ void           gtk_style_context_set_frame_clock (GtkStyleContext *context,
-+                                                   GdkFrameClock   *frame_clock);
-+ GdkFrameClock *gtk_style_context_get_frame_clock (GtkStyleContext *context);
-+ void                  gtk_widget_register_window        (GtkWidget    *widget,
-+                                                          GdkWindow    *window);
-+ void                  gtk_widget_unregister_window      (GtkWidget    *widget,
-+                                                          GdkWindow    *window);
-+ void	   gtk_widget_set_opacity	  (GtkWidget	       *widget,
-+ 					   double		opacity);
-+ double	   gtk_widget_get_opacity	  (GtkWidget	       *widget);
+(CFNC-390 "void gtk_widget_register_window GtkWidget* widget GdkWindow* window")
+(CFNC-390 "void gtk_widget_unregister_window GtkWidget* widget GdkWindow* window")
+(CFNC-390 "void gtk_widget_set_opacity GtkWidget* widget double opacity")
+(CFNC-390 "double gtk_widget_get_opacity GtkWidget* widget")
   
-new headers: frameclock frametimings (gdk)
-
-
 ;;; 3.7.12:
-+ void          pango_font_map_changed       (PangoFontMap                 *fontmap);
-
+(CFNC-390 "void pango_font_map_changed PangoFontMap* fontmap")
 
 ;;; 3.7.14: no changes
 ;;; 3.8.0: no changes
 
-|#
+;;; 3.9.0: lots of changes!  here we go...
+
+(CFNC-390 "GdkDisplayManager* gdk_display_manager_peek void")
+(CFNC-390 "void gdk_set_allowed_backends gchar* backends" 'const)
+(CFNC-390 "void gtk_box_set_baseline_position GtkBox* box GtkBaselinePosition position")
+(CFNC-390 "GtkBaselinePosition gtk_box_get_baseline_position GtkBox* box")
+(CFNC-390 "void gtk_grid_remove_row GtkGrid* grid gint position")
+(CFNC-390 "void gtk_grid_remove_column GtkGrid* grid gint position")
+(CFNC-390 "void gtk_grid_set_row_baseline_position GtkGrid* grid gint row GtkBaselinePosition pos")
+(CFNC-390 "GtkBaselinePosition gtk_grid_get_row_baseline_position GtkGrid* grid gint row")
+(CFNC-390 "void gtk_grid_set_baseline_row GtkGrid* grid gint row")
+(CFNC-390 "gint gtk_grid_get_baseline_row GtkGrid* grid")
+(CFNC-390 "void gtk_widget_size_allocate_with_baseline GtkWidget* widget GtkAllocation* allocation gint baseline")
+(CFNC-390 "void gtk_widget_get_preferred_height_and_baseline_for_width GtkWidget* widget gint width gint* [minimum_height] gint* [natural_height] gint* [minimum_baseline] gint* [natural_baseline]")
+(CFNC-390 "void gtk_widget_get_preferred_size_and_baseline GtkWidget* widget GtkRequisition* [minimum_size] GtkRequisition* [natural_size] gint* [minimum_baseline] gint* [natural_baseline]")
+(CFNC-390 "int gtk_widget_get_allocated_baseline GtkWidget* widget")
+(CFNC-390 "GtkAlign gtk_widget_get_valign_with_baseline GtkWidget* widget")
+(CFNC-390 "void gtk_widget_init_template GtkWidget* widget")
+(CFNC-390 "GObject* gtk_widget_get_automated_child GtkWidget* widget GType widget_type gchar* name" 'const)
+(CFNC-390 "void gtk_widget_class_set_template GtkWidgetClass* widget_class GBytes* template_bytes")
+(CFNC-390 "void gtk_widget_class_set_template_from_resource GtkWidgetClass* widget_class gchar* resource_name" 'const)
+(CFNC-390 "void gtk_widget_class_declare_callback GtkWidgetClass* widget_class gchar* callback_name GCallback callback_symbol" 'const)
+(CFNC-390 "void gtk_widget_class_automate_child GtkWidgetClass* widget_class gchar* name gboolean internal_child gssize struct_offset" 'const)
+(CFNC-390 "void gtk_window_set_titlebar GtkWindow* window GtkWidget* titlebar")
+(CFNC-390 "GtkWidget* gtk_places_sidebar_new void")
+(CFNC-390 "GtkPlacesOpenFlags gtk_places_sidebar_get_open_flags GtkPlacesSidebar* sidebar")
+(CFNC-390 "void gtk_places_sidebar_set_open_flags GtkPlacesSidebar* sidebar GtkPlacesOpenFlags flags")
+(CFNC-390 "GFile* gtk_places_sidebar_get_location GtkPlacesSidebar* sidebar")
+(CFNC-390 "void gtk_places_sidebar_set_location GtkPlacesSidebar* sidebar GFile* location")
+(CFNC-390 "gboolean gtk_places_sidebar_get_show_desktop GtkPlacesSidebar* sidebar")
+(CFNC-390 "void gtk_places_sidebar_set_show_desktop GtkPlacesSidebar* sidebar gboolean show_desktop")
+(CFNC-390 "gboolean gtk_places_sidebar_get_show_connect_to_server GtkPlacesSidebar* sidebar")
+(CFNC-390 "void gtk_places_sidebar_set_show_connect_to_server GtkPlacesSidebar* sidebar gboolean show_connect_to_server")
+(CFNC-390 "void gtk_places_sidebar_add_shortcut GtkPlacesSidebar* sidebar GFile* location")
+(CFNC-390 "void gtk_places_sidebar_remove_shortcut GtkPlacesSidebar* sidebar GFile* location")
+(CFNC-390 "GSList* gtk_places_sidebar_list_shortcuts GtkPlacesSidebar* sidebar")
+(CFNC-390 "GFile* gtk_places_sidebar_get_nth_bookmark GtkPlacesSidebar* sidebar gint n")
+(CFNC-390 "GtkWidget* gtk_stack_switcher_new void")
+(CFNC-390 "void gtk_stack_switcher_set_stack GtkStackSwitcher* switcher GtkStack* stack")
+(CFNC-390 "GtkStack* gtk_stack_switcher_get_stack GtkStackSwitcher* switcher")
+(CFNC-390 "GtkWidget* gtk_stack_new void")
+(CFNC-390 "void gtk_stack_add_named GtkStack* stack GtkWidget* child gchar* name" 'const)
+(CFNC-390 "void gtk_stack_add_titled GtkStack* stack GtkWidget* child gchar* name gchar* title" 'const)
+(CFNC-390 "void gtk_stack_set_visible_child GtkStack* stack GtkWidget* child")
+(CFNC-390 "GtkWidget* gtk_stack_get_visible_child GtkStack* stack")
+(CFNC-390 "void gtk_stack_set_visible_child_name GtkStack* stack gchar* name" 'const)
+(CFNC-390 "gchar* gtk_stack_get_visible_child_name GtkStack* stack")
+(CFNC-390 "void gtk_stack_set_visible_child_full GtkStack* stack gchar* name" 'const)
+(CFNC-390 "void gtk_stack_set_homogeneous GtkStack* stack gboolean homogeneous")
+(CFNC-390 "gboolean gtk_stack_get_homogeneous GtkStack* stack")
+(CFNC-390 "void gtk_stack_set_transition_duration GtkStack* stack guint duration")
+(CFNC-390 "guint gtk_stack_get_transition_duration GtkStack* stack")
+(CFNC-390 "void gtk_stack_set_transition_type GtkStack* stack GtkStackTransitionType transition")
+(CFNC-390 "GtkStackTransitionType gtk_stack_get_transition_type GtkStack* stack")
+(CFNC-390 "GtkWidget* gtk_revealer_new void")
+(CFNC-390 "gboolean gtk_revealer_get_reveal_child GtkRevealer* revealer")
+(CFNC-390 "void gtk_revealer_set_reveal_child GtkRevealer* revealer gboolean reveal_child")
+(CFNC-390 "gboolean gtk_revealer_get_child_revealed GtkRevealer* revealer")
+(CFNC-390 "guint gtk_revealer_get_transition_duration GtkRevealer* revealer")
+(CFNC-390 "void gtk_revealer_set_transition_duration GtkRevealer* revealer guint duration")
+(CFNC-390 "void gtk_revealer_set_transition_type GtkRevealer* revealer GtkRevealerTransitionType transition")
+(CFNC-390 "GtkRevealerTransitionType gtk_revealer_get_transition_type GtkRevealer* revealer")
+(CFNC-390 "GtkWidget* gtk_header_bar_new void")
+(CFNC-390 "void gtk_header_bar_set_title GtkHeaderBar* bar gchar* title" 'const)
+(CFNC-390 "gchar* gtk_header_bar_get_title GtkHeaderBar* bar" 'const)
+(CFNC-390 "void gtk_header_bar_set_subtitle GtkHeaderBar* bar gchar* subtitle" 'const)
+(CFNC-390 "gchar* gtk_header_bar_get_subtitle GtkHeaderBar* bar" 'const)
+(CFNC-390 "void gtk_header_bar_set_custom_title GtkHeaderBar* bar GtkWidget* title_widget")
+(CFNC-390 "GtkWidget* gtk_header_bar_get_custom_title GtkHeaderBar* bar")
+(CFNC-390 "void gtk_header_bar_pack_start GtkHeaderBar* bar GtkWidget* child")
+(CFNC-390 "void gtk_header_bar_pack_end GtkHeaderBar* bar GtkWidget* child")
+
+(CINT-390 "GTK_ALIGN_BASELINE" "GtkAlign")
+(CINT-390 "GTK_BASELINE_POSITION_TOP" "GtkBaselinePosition")
+(CINT-390 "GTK_BASELINE_POSITION_CENTER" "GtkBaselinePosition")
+(CINT-390 "GTK_BASELINE_POSITION_BOTTOM" "GtkBaselinePosition")
+(CINT-390 "GTK_PLACES_OPEN_NORMAL" "GtkPlacesOpenFlags")
+(CINT-390 "GTK_PLACES_OPEN_NEW_TAB" "GtkPlacesOpenFlags")
+(CINT-390 "GTK_PLACES_OPEN_NEW_WINDOW" "GtkPlacesOpenFlags")
+(CINT-390 "GTK_STACK_TRANSITION_TYPE_NONE" "GtkStackTransitionType")
+(CINT-390 "GTK_STACK_TRANSITION_TYPE_CROSSFADE" "GtkStackTransitionType")
+(CINT-390 "GTK_STACK_TRANSITION_TYPE_SLIDE_RIGHT" "GtkStackTransitionType")
+(CINT-390 "GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT" "GtkStackTransitionType")
+(CINT-390 "GTK_STACK_TRANSITION_TYPE_SLIDE_UP" "GtkStackTransitionType")
+(CINT-390 "GTK_STACK_TRANSITION_TYPE_SLIDE_DOWN" "GtkStackTransitionType")
+(CINT-390 "GTK_REVEALER_TRANSITION_TYPE_NONE" "GtkRevealerTransitionType")
+(CINT-390 "GTK_REVEALER_TRANSITION_TYPE_CROSSFADE" "GtkRevealerTransitionType")
+(CINT-390 "GTK_REVEALER_TRANSITION_TYPE_SLIDE_RIGHT" "GtkRevealerTransitionType")
+(CINT-390 "GTK_REVEALER_TRANSITION_TYPE_SLIDE_LEFT" "GtkRevealerTransitionType")
+(CINT-390 "GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP" "GtkRevealerTransitionType")
+(CINT-390 "GTK_REVEALER_TRANSITION_TYPE_SLIDE_DOWN" "GtkRevealerTransitionType")
+
+(CCAST-390 "GTK_PLACES_SIDEBAR" "GtkPlacesSidebar*")
+(CCHK-390 "GTK_IS_PLACES_SIDEBAR" "GtkPlacesSidebar*")
+(CCAST-390 "GTK_STACK_SWITCHER" "GtkStackSwitcher*")
+(CCHK-390 "GTK_IS_STACK_SWITCHER" "GtkStackSwitcher*")
+(CCAST-390 "GTK_STACK" "GtkStack*")
+(CCHK-390 "GTK_IS_STACK" "GtkStack*")
+(CCAST-390 "GTK_REVEALER" "GtkRevealer*")
+(CCHK-390 "GTK_IS_REVEALER" "GtkRevealer*")
+(CCAST-390 "GTK_HEADER_BAR" "GtkHeaderBar*")
+(CCHK-390 "GTK_IS_HEADER_BAR" "GtkHeaderBar*")
 
  
 
@@ -8792,7 +8851,7 @@ new headers: frameclock frametimings (gdk)
 ;;; 3.6 (CFNC-300 "void gtk_style_context_scroll_animations GtkStyleContext* context GdkWindow* window gint dx gint dy")
 
 ;;; 3.7.4 (CFNC-300 "void gtk_style_properties_register_property GtkStylePropertyParser parse_func GParamSpec* pspec")
-;;; 3.7.4 (CFNC-300 "gboolean gtk_style_properties_lookup_property gchar* property_name GtkStylePropertyParser* parse_func GParamSpec** pspec" 'const)
+;;; 3.7.4 (CFNC-300 "gboolean gtk_style_properties_lookup_property gchar* property_name GtkStylePropertyParser* parse_func GParamSpec** [pspec]" 'const)
 (CFNC-300 "GtkStyleProperties* gtk_style_properties_new void")
 ;;; 3.7.4 (CFNC-300 "void gtk_style_properties_map_color GtkStyleProperties* props gchar* name GtkSymbolicColor* color" 'const)
 ;;; 3.7.4 (CFNC-300 "GtkSymbolicColor* gtk_style_properties_lookup_color GtkStyleProperties* props gchar* name" 'const)

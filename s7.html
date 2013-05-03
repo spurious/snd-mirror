@@ -5895,16 +5895,26 @@ the current environment, so defines happen in the enclosing environment.
   (define peek-u8 peek-char)
   (define write-simple write)
 
-  (define (read-error? obj) (eq? (car obj) 'read-error))
-  (define (file-error? obj) (eq? (car obj) 'io-error))
   (define (eof-object) #&lt;eof&gt;)
   (define (features) *features*)
 
   (define (with-exception-handler handler thunk) (catch #t thunk handler))
   (define raise error)
 
+  (define-macro (guard results . body)
+    `(let ((,(car results) (catch #t (lambda () ,@body) (lambda args (car args)))))
+       (cond ,@(cdr results))))
+
+  (define (read-error? obj) (eq? (car obj) 'read-error))
+  (define (file-error? obj) (eq? (car obj) 'io-error))
+  (define (error-message obj) (apply format #f (cadr obj)))
+  (define (error-irritants obj) (cdadr obj))
+
   (define interaction-environment current-environment)
-  (define-bacro (include file) `(load ,file (outer-environment (current-environment))))
+  (define-bacro (include . files) 
+    ,@(map (lambda (file)
+             `(load ,file (outer-environment (current-environment)))
+           files)))
 
   (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
 
@@ -6000,7 +6010,7 @@ the current environment, so defines happen in the enclosing environment.
   ;;   (define (floor-remainder x y) (- x (* y (floor (/ x y)))))
   ;; and why no euclidean-rationalize or exact-integer-expt?
   ;;   (imagine what will happen when r8rs stumbles on the zoo of continued fraction algorithms!)
-
+  ;;
   ;; get-environment-variable is a bad name: "environment" is already in use, and "get-"
   ;;   in any name should raise a red flag.
   ;;   if <a href="#cload">cload.scm</a> is loaded:
@@ -6019,17 +6029,26 @@ the current environment, so defines happen in the enclosing environment.
 
 <!-- more diffs:
 
-implement in C?
-write-string
-read-string (k port)=how many to read from port
-vector-append
+(define* (write-string string port (start 0) end)
+  (do ((i start (+ i 1)))
+      ((= i (if end (min end (length string)) (length string))))
+    (write-char (string i) (or port (current-output-port)))))
+
+(define* (read-string k port)
+  (let ((string (make-string k #\null)))
+    (catch #t
+      (lambda ()
+        (do ((i 0 (+ i 1)))
+            ((= i k) string)
+          (set! (string i) (read-char (or port (current-input-port))))))
+      (lambda args
+        (if (char=? (string 0) #\null) #<eof> string)))))
 
 string-copy start/end string-fill! string->vector
 same vector->list, vector-copy vector-copy! vector->string vector-fill!
 #true #false
 #!fold-case
 raise-continuable
-guard
 error-object?|-message|-irritants
 bytevector? and others bytevector-length|u8-ref open-output-bytevector
 string-copy! = copy to a bytevector (string-copy to at from start end), similarly vector-copy!

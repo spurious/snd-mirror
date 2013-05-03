@@ -882,7 +882,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
- * 2-May:     flush-output-port.
+ * 2-May:     flush-output-port, vector-append.
  * 7-Apr:     removed s7_scheme* arg from s7_slot_value, added s7_is_local_variable.
  * 25-Mar:    char-position, string-position, environment-ref, environment-set! added to the scheme side.
  * 9-Jan:     s7_cos, s7_sin, other optimization changes.
