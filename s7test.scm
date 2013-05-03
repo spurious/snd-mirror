@@ -518,6 +518,9 @@
 
   (test (let ((p (lambda (x) x))) (eqv? p p)) #t))
 
+;;; this for r7rs
+(test (eq? #t #true) #t)
+(test (eq? #f #false) #t)
 
 
 

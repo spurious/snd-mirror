@@ -4072,7 +4072,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
  */
 
 /* also use calloc here if -O3 in gcc */
-#if (__bfin__)
+#if (__bfin__ || __ANDROID__)
   #define permanent_calloc(Bytes) calloc(1, Bytes)
   #define PERMANENT_HEAP_SIZE 8
   static unsigned char *permanent_heap = NULL, *permanent_heap_top = NULL;
@@ -8733,10 +8733,12 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
   int len;
   s7_pointer x;
 
-  if ((name[0] == 't') && (name[1] == '\0'))
+  if ((name[0] == 't') && 
+      ((name[1] == '\0') || (strings_are_equal(name, "true"))))
     return(sc->T);
   
-  if ((name[0] == 'f') && (name[1] == '\0'))
+  if ((name[0] == 'f') && 
+      ((name[1] == '\0') || (strings_are_equal(name, "false"))))
     return(sc->F);
 
   if (is_not_null(slot_value(sc->sharp_readers)))
@@ -10356,7 +10358,11 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 	      if (ix > 0)
 		{
 		  s7_Double fx;
+#if (__ANDROID__)
+		  fx = log((double)ix)/log(2.0);
+#else
 		  fx = log2((double)ix);
+#endif
 		  if ((ix & (ix - 1)) == 0)
 		    return(make_integer(sc, (s7_Int)fx));
 		  return(make_real(sc, fx));

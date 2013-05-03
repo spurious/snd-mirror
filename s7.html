@@ -2571,23 +2571,11 @@ all the other functions are of no interest:
 </p>
 
 <pre class="indented">
-(begin
-  (define bitwise-not-or #f)
-  (let ()
-    (with-environment (initial-environment)
-      (load "any-library.scm" (current-environment))
-      (set! bitwise-not-or lognor)))) ; lognor is presumably defined in "any-library.scm"
-</pre>
-
-<p>Or equivalently:
-</p>
-
-<pre class="indented">
 (augment-environment! (current-environment)
   (cons 'bitwise-not-or 
     (with-environment (initial-environment)
       (load "any-library.scm" (current-environment))
-      lognor)))
+      lognor))) ; lognor is presumably defined in "any-library.scm"
 </pre>
 
 <p>Say he wants to make sure the library is cleanly loaded, but all
@@ -2595,12 +2583,11 @@ its top-level bindings are imported into the current environment:
 </p>
 
 <pre class="indented">
-(apply augment-environment! (current-environment)
+(augment-environment! (current-environment)
   (with-environment (initial-environment)
     (let ()
       (load "any-library.scm" (current-environment))
-      (environment-&gt;list (current-environment)))))
-      ;; these are the bindings introduced by loading the library
+      (current-environment)))) ; these are the bindings introduced by loading the library
 </pre>
 
 <p>To do the same thing, but prepend "library:" to each name:
@@ -2615,7 +2602,7 @@ its top-level bindings are imported into the current environment:
 	     (cons (string-&gt;symbol 
 		    (string-append "library:" (symbol-&gt;string (car binding))))
 		   (cdr binding)))
-	   (environment-&gt;list (current-environment))))))
+	    (environment-&gt;list (current-environment))))))
 </pre>
 
 <p>That's all there is to it!
@@ -5869,6 +5856,7 @@ the current environment, so defines happen in the enclosing environment.
   (define string-foldcase string-downcase)
   (define (string-downcase str) (apply string (map char-downcase str)))
   (define (string-upcase str) (apply string (map char-upcase str)))
+  (define (digit-value c) (and (char-numeric? c) (- (char-&gt;integer c) (char-&gt;integer #\0))))
 
   (define -inf.0 (real-part (log 0.0))) 
   (define +inf.0 (- -inf.0))    ; or (atanh 1.0)
@@ -6005,6 +5993,24 @@ the current environment, so defines happen in the enclosing environment.
 		      (set! old-values (cdr old-values))))
 	         vars))))
 
+  (define-macro (define-library libname . body) ; |(lib n)| -&gt; env 
+    `(define ,(symbol (object-&gt;string libname))
+       (with-environment (augment-environment (initial-environment) 
+			   (cons '*export* ())
+			   (cons 'export (symbol-&gt;value 
+					  (define-macro (,(gensym) . names) 
+					    `(set! *export* (append ',names *export*))))))
+         ,@body
+         (apply environment
+	        (map (lambda (entry)
+		       (if (or (member (car entry) '(*export* export))
+			       (and (pair? *export*)
+				    (not (member (car entry) *export*))))
+			   (values)
+			   entry))
+		     (environment-&gt;list (current-environment)))))))
+
+
   ;; floor/ and friends can't work as intended: they assume that multiple values 
   ;;   are not spliced.  The "division library" is a trivial, pointless micro-optimization.
   ;;   (define (floor-remainder x y) (- x (* y (floor (/ x y)))))
@@ -6031,7 +6037,7 @@ the current environment, so defines happen in the enclosing environment.
 
 (define* (write-string string port (start 0) end)
   (do ((i start (+ i 1)))
-      ((= i (if end (min end (length string)) (length string))))
+      ((>= i (if end (min end (length string)) (length string))))
     (write-char (string i) (or port (current-output-port)))))
 
 (define* (read-string k port)
@@ -6046,27 +6052,25 @@ the current environment, so defines happen in the enclosing environment.
 
 string-copy start/end string-fill! string->vector
 same vector->list, vector-copy vector-copy! vector->string vector-fill!
-#true #false
-#!fold-case
-raise-continuable
+raise-continuable = throw?  then (apply error args) to pass it on up
 error-object?|-message|-irritants
 bytevector? and others bytevector-length|u8-ref open-output-bytevector
 string-copy! = copy to a bytevector (string-copy to at from start end), similarly vector-copy!
 chars of form #\x0E50
-digit-value
 unicode?
 bytevector constants #u8()
 utf8->string
 string->utf8
 time stuff
+libraries
 
 these we won't do:
+#!fold-case
 unquote-splicing
 nested #||#
 scheme-report-environment, null-environment
 syntax-rules etc
 +i as a number
-libraries
 delay/force/delay-force
 -->
 
