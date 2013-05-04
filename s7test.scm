@@ -12359,6 +12359,27 @@ a2" 3) "132")
     (test (read-line p) "345")
     (test (read-line p) "67890")))
 
+(call-with-output-file "tmp1.r5rs"
+  (lambda (p)
+    (write-string "123" p)
+    (write-string "" p)
+    (write-string "456\n789" p)))
+
+(call-with-input-file "tmp1.r5rs"
+  (lambda (p)
+    (test (read-line p) "123456")
+    (test (read-char p) #\7)
+    (test (read-char p) #\8)
+    (test (read-char p) #\9)
+    (test (eof-object? (read-char p)) #t)))
+    
+(test (with-output-to-string
+	(lambda ()
+	  (write-string "123")
+	  (write-string "")
+	  (write-string "456")))
+      "123456")
+
 (test (write 1 (current-input-port)) 'error)
 (test (write-char #\a (current-input-port)) 'error)
 (test (write-byte 0 (current-input-port)) 'error)
@@ -12459,8 +12480,16 @@ a2" 3) "132")
    (test (write-byte arg) 'error)
    (test (read-char arg) 'error)
    (test (read-byte arg) 'error)
-   (test (peek-char arg) 'error))
+   (test (peek-char arg) 'error)
+   (test (write-char #\a arg) 'error)
+   (test (write-byte 1 arg) 'error))
  (list "hi" 1.0 1+i 2/3 'a-symbol (make-vector 3) '(1 2) (cons 1 2) abs #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
+
+(for-each 
+ (lambda (arg)
+   (test (write-string arg) 'error)
+   (test (write-string "hi" arg) 'error))
+ (list 1.0 1+i 2/3 'a-symbol (make-vector 3) '(1 2) (cons 1 2) abs #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (op)

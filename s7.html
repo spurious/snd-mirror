@@ -5196,9 +5196,9 @@ This should be named define-reader-macro.
 </p>
 
 <ul>
-<li>no force or delay (use slib).
+<li>no force or delay (see <a href="#r7rs">below</a>).
 <li>no syntax-rules or any of its friends.
-<li>no scheme-report-environment (use initial-environment), null-environment, or interaction-environment (use current-environment).
+<li>no scheme-report-environment, null-environment, or interaction-environment (use current-environment).
 <li>no transcript-on or transcript-off.
 <li>begin returns the value of the last form; it can contain both definitions and other statements.
 <li>#&lt;unspecified&gt;, #&lt;eof&gt;, and #&lt;undefined&gt; are first-class objects.
@@ -5849,8 +5849,13 @@ the current environment, so defines happen in the enclosing environment.
     (lambda* (str start end)
       (s7-string-&gt;list (substring str (or start 0) (or end (length str)))))))
 
-(define boolean=? eq?)
-(define symbol=? eq?)
+(define (boolean=? . args) 
+  (or (null? args) 
+      (null? (cdr args))
+      (and (boolean? (car args)) 
+           (eq? (car args) (cadr args)) 
+           (apply boolean=? (cdr args)))))
+;; similarly for symbol=?
 
 (define char-foldcase char-downcase) 
 (define string-foldcase string-downcase)
@@ -5888,6 +5893,7 @@ the current environment, so defines happen in the enclosing environment.
 
 (define (with-exception-handler handler thunk) (catch #t thunk handler))
 (define raise error)
+(define raise-continuable error)
 
 (define-macro (guard results . body)
   `(let ((,(car results) (catch #t (lambda () ,@body) (lambda args (car args)))))
@@ -5906,8 +5912,10 @@ the current environment, so defines happen in the enclosing environment.
 
 (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
 
+
 (define-macro (when test . forms) `(if ,test (begin ,@forms)))         ; or `(cond (,test ,@forms))
 (define-macro (unless test . forms) `(if (not ,test) (begin ,@forms))) ;    `(or ,test (begin ,@forms))
+
 
 (define-macro (define-values vars . body)
   `(apply begin (map (lambda (var val) `(define ,var ,val)) ',vars (list (begin ,@body)))))
@@ -5919,6 +5927,7 @@ the current environment, so defines happen in the enclosing environment.
             (map car vars) 
             (map cdr vars))
      ,@body))
+
 
 ;; records, based on <a href="#defineclass">define-class</a> above
 (define-macro (define-record-type type make ? . fields)
@@ -5960,6 +5969,7 @@ the current environment, so defines happen in the enclosing environment.
        
        ',new-type)))
 
+
 ;; case-lambda       
 (define-macro (case-lambda . choices)
   `(lambda args
@@ -5971,6 +5981,7 @@ the current environment, so defines happen in the enclosing environment.
 		    `((,(length (car choice))) 
 		      (apply (lambda ,(car choice) ,@(cdr choice)) args))))
 	      choices))))
+
 
 ;; parameters
 (define* (make-parameter init converter)
@@ -5994,6 +6005,7 @@ the current environment, so defines happen in the enclosing environment.
 		     (set! value (car old-values))
 		     (set! old-values (cdr old-values))))
 		vars))))
+
 
 ;; libraries
 (apply define (symbol (object-&gt;string '(scheme base))) (environment) ()) ; ignore (scheme base)
@@ -6071,34 +6083,51 @@ the current environment, so defines happen in the enclosing environment.
 			(symbol-&gt;value sym))))))
 	    libs)))
 
-  ;; floor/ and friends can't work as intended: they assume that multiple values 
-  ;;   are not spliced.  The "division library" is a trivial, pointless micro-optimization.
-  ;;   (define (floor-remainder x y) (- x (* y (floor (/ x y)))))
-  ;; and why no euclidean-rationalize or exact-integer-expt?
-  ;;   (imagine what will happen when r8rs stumbles on the zoo of continued fraction algorithms!)
-  ;;
-  ;; get-environment-variable is a bad name: "environment" is already in use, and "get-"
-  ;;   in any name should raise a red flag.
-  ;;   if <a href="#cload">cload.scm</a> is loaded:
-  (define get-environment-variable (let () (define-c-function '(char* getenv (char*))) getenv))
 
-  ;; similarly:
-  (define file-exists? (let ()
-                         (define-c-function '((int F_OK) (int access (char* int))) "" "unistd.h") 
-                         (lambda (arg) 
-                           (= (access arg F_OK) 0))))
+;; delay and force: really bad ideas (avert your gaze!)
+;;   this implementation is from the r7rs spec
+(define-macro (delay-force expr) 
+  `(make-promise #f (lambda () ,expr)))
+(define-macro (delay expr) 
+  `(delay-force (make-promise #t (lambda () ,expr))))
+(define (make-promise done? proc) 
+  (list (cons done? proc)))
+(define (force promise)
+  (if (caar promise)
+      ((cdar promise))
+      (let ((promise* ((cdar promise))))
+        (if (not (caar promise))
+            (begin
+              (set-car! (car promise) (caar promise*))
+              (set-cdr! (car promise) (cdar promise*))))
+        (force promise))))
 
-  ;; command-line is problematic: s7 has no access to the caller's "main" function, and
-  ;;   outside Windows, there's no reasonable way to get these arguments.
+
+;; floor/ and friends can't work as intended: they assume that multiple values 
+;;   are not spliced.  The "division library" is a trivial, pointless micro-optimization.
+;;   (define (floor-remainder x y) (- x (* y (floor (/ x y)))))
+;; and why no euclidean-rationalize or exact-integer-expt?
+;;   (imagine what will happen when r8rs stumbles on the zoo of continued fraction algorithms!)
+;;
+;; get-environment-variable is a bad name: "environment" is already in use, and "get-"
+;;   in any name should raise a red flag.
+;;   if <a href="#cload">cload.scm</a> is loaded:
+(define get-environment-variable (let () (define-c-function '(char* getenv (char*))) getenv))
+
+;; similarly:
+(define file-exists? (let ()
+                       (define-c-function '((int F_OK) (int access (char* int))) "" "unistd.h") 
+                       (lambda (arg) 
+                         (= (access arg F_OK) 0))))
+
+;; see the <a href="#cload">cload</a> section below for the time functions.
+
+;; command-line is problematic: s7 has no access to the caller's "main" function, and
+;;   outside Windows, there's no reasonable way to get these arguments.
 </pre>
 </div>
 
 <!-- more diffs:
-
-(define* (write-string string port (start 0) end)
-  (do ((i start (+ i 1)))
-      ((>= i (if end (min end (length string)) (length string))))
-    (write-char (string i) (or port (current-output-port)))))
 
 (define* (read-string k port)
   (let ((string (make-string k #\null)))
@@ -6112,8 +6141,7 @@ the current environment, so defines happen in the enclosing environment.
 
 string-copy start/end string-fill! string->vector
 same vector->list, vector-copy vector-copy! vector->string vector-fill!
-raise-continuable = throw?  then (apply error args) to pass it on up
-error-object?|-message|-irritants
+error-object?
 bytevector? and others bytevector-length|u8-ref open-output-bytevector
 string-copy! = copy to a bytevector (string-copy to at from start end), similarly vector-copy!
 chars of form #\x0E50
@@ -6121,8 +6149,6 @@ unicode?
 bytevector constants #u8()
 utf8->string
 string->utf8
-time stuff
-libraries
 
 these we won't do:
 #!fold-case
@@ -6131,7 +6157,6 @@ nested #||#
 scheme-report-environment, null-environment
 syntax-rules etc
 +i as a number
-delay/force/delay-force
 -->
 
 

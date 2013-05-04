@@ -92,7 +92,6 @@
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  * Rick Taube and Andrew Burnson provided the MS Visual C++ support
  *
- *
  * Documentation is in s7.h and s7.html.  s7test.scm is a regression test.
  *
  *
@@ -883,7 +882,7 @@ typedef struct s7_port_t {
   token_t (*read_semicolon)(s7_scheme *sc, s7_pointer port);             /* internal skip-to-semicolon reader */
   int (*read_white_space)(s7_scheme *sc, s7_pointer port);               /* internal skip white space reader */
   s7_pointer (*read_name)(s7_scheme *sc, s7_pointer pt, bool atom_case); /* internal get-next-name reader */
-  s7_pointer (*read_line)(s7_scheme *sc, s7_pointer pt, bool eol_case);  /* function to display or write a string */
+  s7_pointer (*read_line)(s7_scheme *sc, s7_pointer pt, bool eol_case);  /* function to display or write a string up to \n */
   void (*display)(s7_scheme *sc, const char *s, s7_pointer pt);
 } s7_port_t;
 
@@ -1285,7 +1284,7 @@ struct s7_scheme {
   s7_pointer SYMBOL_ACCESS, SYMBOLP, SYMBOL_TO_KEYWORD, SYMBOL_TO_STRING, SYMBOL_TO_DYNAMIC_VALUE, SYMBOL_TO_VALUE;
   s7_pointer TAN, TANH, THROW, TRUNCATE, UNOPTIMIZE, VALUES, VECTOR, VECTOR_APPEND;
   s7_pointer VECTORP, VECTOR_TO_LIST, VECTOR_DIMENSIONS, VECTOR_FILL, VECTOR_LENGTH, VECTOR_REF, VECTOR_SET, WITH_INPUT_FROM_FILE;
-  s7_pointer WITH_INPUT_FROM_STRING, WITH_OUTPUT_TO_FILE, WITH_OUTPUT_TO_STRING, WRITE, WRITE_BYTE, WRITE_CHAR, ZEROP;
+  s7_pointer WITH_INPUT_FROM_STRING, WITH_OUTPUT_TO_FILE, WITH_OUTPUT_TO_STRING, WRITE, WRITE_BYTE, WRITE_CHAR, WRITE_STRING, ZEROP;
   s7_pointer S7_FEATURES, GC_STATS, LOAD_PATH, PI;
 
 #if WITH_GMP
@@ -20594,6 +20593,58 @@ static void stdout_display(s7_scheme *sc, const char *s, s7_pointer port)
 static void stderr_display(s7_scheme *sc, const char *s, s7_pointer port)
 {
   if (s) fputs(s, stderr);
+}
+
+
+static s7_pointer g_write_string(s7_scheme *sc, s7_pointer args)
+{
+  #define H_write_string "(write-string str port start end) writes str to port."
+  s7_pointer str, port, ind;
+  s7_Int start = 0, end;
+
+  str = car(args);
+  if (!is_string(str))
+    {
+      CHECK_METHOD(sc, str, sc->WRITE_STRING, args);
+      return(wrong_type_argument(sc, sc->WRITE_STRING, small_int(1), str, T_STRING));
+    }
+
+  end = string_length(str);
+  if (!is_null(cdr(args)))
+    {
+      port = cadr(args);
+      if (!is_output_port(port))
+	return(wrong_type_argument_with_type(sc, sc->WRITE_STRING, small_int(2), port, AN_OUTPUT_PORT));
+
+      if (!is_null(cddr(args)))
+	{
+	  ind = caddr(args);
+	  if (!s7_is_integer(ind))
+	    return(wrong_type_argument_n(sc, sc->WRITE_STRING, 3, ind, T_INTEGER));
+	  start = s7_integer(ind);
+	  if ((start < 0) ||
+	      (start >= end))
+	    return(out_of_range(sc, sc->WRITE_STRING, small_int(3), ind, "should be between 0 and the string length"));
+  
+	  if (!is_null(cdddr(args)))
+	    {
+	      ind = cadddr(args);
+	      if (!s7_is_integer(ind))
+		return(wrong_type_argument_n(sc, sc->WRITE_STRING, 4, ind, T_INTEGER));
+	      end = s7_integer(ind);
+	      if ((end < start) ||
+		  (end > string_length(str)))
+		return(out_of_range(sc, sc->WRITE_STRING, small_int(4), ind, "should be between the start index and the string length"));
+	      /* TODO: check/test these args in write-string */
+	    }
+	}
+    }
+  else port = sc->output_port;
+
+  if (start == 0)
+    port_write_string(port)(sc, string_value(str), end, port);
+  else port_write_string(port)(sc, (char *)(string_value(str) + start), (end - start), port);
+  return(sc->UNSPECIFIED);
 }
 
 
@@ -64085,6 +64136,7 @@ s7_scheme *s7_init(void)
   sc->READ_CHAR =             s7_define_safe_function(sc, "read-char",               g_read_char,              0, 1, false, H_read_char);
   sc->PEEK_CHAR =             s7_define_safe_function(sc, "peek-char",               g_peek_char,              0, 1, false, H_peek_char);
   sc->WRITE_CHAR =            s7_define_safe_function(sc, "write-char",              g_write_char,             1, 1, false, H_write_char);
+  sc->WRITE_STRING =          s7_define_safe_function(sc, "write-string",            g_write_string,           1, 3, false, H_write_string);
   sc->READ_BYTE =             s7_define_safe_function(sc, "read-byte",               g_read_byte,              0, 1, false, H_read_byte);
   sc->WRITE_BYTE =            s7_define_safe_function(sc, "write-byte",              g_write_byte,             1, 1, false, H_write_byte);
   sc->READ_LINE =             s7_define_safe_function(sc, "read-line",               g_read_line,              0, 2, false, H_read_line);
@@ -64851,6 +64903,23 @@ s7_scheme *s7_init(void)
  *         mark, copy, fill, reverse, etc print
  */
 
-/* possible additions (r7rs): start/end points for various copy/conversion ops, read|write-string, utf8/bytevector stuff
-                   current-second current-jiffy jiffies-per-second -- see get_internal_real_time in clm2xen.c (uses gettimeofday)
+/* possible additions (r7rs): start/end points for various copy/conversion ops, read-string, utf8/bytevector stuff
+   bytevector?
+   make-bytevector
+   bytevector
+   #u8(...) read and write
+   bytevector-length
+   bytevector-u8-ref
+   bytevector-u8-set!
+   bytevector-copy
+   bytevector-copy!
+   bytevector-append
+   utf8->string
+   string->utf8
+   open-input|output-bytevector get-output-bytevector
+
+   call-with-port
+   boolean=? take n args, same for symbol=?
+   exit emergency-exit (these come from Snd for example)
+     even s7_quit is not quite what is wanted
  */
