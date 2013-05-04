@@ -155,7 +155,7 @@
  *     WITH_COMPLEX, WITH_COMPLEX_TRIG, HAVE_STDBOOL_H, HAVE_SYS_PARAM_H, SIZEOF_VOID_P, 
  *     HAVE_GETTIMEOFDAY, HAVE_LSTAT, HAVE_DIRENT_H
  *
- * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__, __clang__, __bfin__
+ * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__, __clang__, __bfin__, __ANDROID__,
  *     (and __FreeBSD_version if HAVE_SYS_PARAM_H)
  *
  * if SIZEOF_VOID_P is not defined, we look for __SIZEOF_POINTER__ instead
@@ -302,7 +302,7 @@
  *    vectors and hash-tables
  *    c-objects and functions
  *    eq?
- *    generic length, copy, fill!
+ *    generic length, copy, reverse, fill!
  *    error handlers
  *    sundry leftovers
  *    multiple-values, quasiquote
@@ -998,7 +998,7 @@ typedef struct s7_cell {
       s7_Int length;
       s7_pointer *elements;
       s7_vdims_t *dim_info;
-      unsigned int fill_ptr;                                                    /* used only in global env (a vector) */
+      unsigned int fill_ptr;           /* used only in global env (a vector) */
     } vector;
     
     struct {
@@ -10359,7 +10359,7 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 		{
 		  s7_Double fx;
 #if (__ANDROID__)
-		  fx = log((double)ix)/log(2.0);
+		  fx = log((double)ix) / log(2.0);
 #else
 		  fx = log2((double)ix);
 #endif
@@ -64532,6 +64532,15 @@ s7_scheme *s7_init(void)
 #endif
 #ifdef __linux__
   s7_provide(sc, "linux");
+#endif
+#ifdef _MSC_VER
+  s7_provide(sc, "windows");
+#endif  
+#ifdef __bfin__
+  s7_provide(sc, "blackfin");
+#endif
+#ifdef __ANDROID__
+  s7_provide(sc, "android");
 #endif
   s7_provide(sc, "ratio");
   s7_provide(sc, "s7-" S7_VERSION);
