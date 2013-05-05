@@ -2463,6 +2463,42 @@ Environments are first class (and applicable) objects in s7.
 (<em class=def id="environmentset">environment-set!</em> env sym val)
 </pre>
 
+<div class="indented">
+<p>Environments provide a very simple, yet very powerful structure or class mechanism.
+As a quick example, here is a structure definition:
+</p>
+
+<pre class="indented">
+(define* (make-tree (key 0) (left ()) (right ()))
+  ;; make a tree structure with 3 fields, and a type indicator
+  (environment (cons 'key key) 
+	       (cons 'left left) 
+	       (cons 'right right)
+	       (cons 'type 'tree)))
+
+(define (tree? obj)
+  (and (environment? obj)
+       (eq? (obj 'type) 'tree)))
+
+&gt; (let ((t1 (make-tree)))
+    (format #t "t1 (~A): ~{~A~^ ~}~%" 
+	    (if (tree? t1) "a tree" "oops")
+	    (map (lambda (x)
+		   (if (eq? (car x) 'type)
+		       (values) ; don't mention the internal type field
+		       x))
+	         (environment-&gt;list t1))))
+"t1 (a tree): (key . 0) (left) (right)
+
+;; to access a field, use either environment-ref and -set, or implicit indexing:
+&gt; (let ((t1 (make-tree))) (t1 'key))
+0
+&gt; (let ((t1 (make-tree))) (set! (t1 'key) 32) (t1 'key))
+32
+&gt; (let ((t1 (make-tree))) (with-environment t1 (set! key 32) key))
+</pre>
+</div>
+
 
 <p>with-environment evaluates its body in the given environment,
 and augment-environment adds a binding (a symbol and its value) to an environment:
@@ -2514,10 +2550,10 @@ open-environment      open-let(?)
 open-environment?
 object-environment
 </pre>
-</div>
 
 <p>If "let" is no good, what about "lex"?
 </p>
+</div>
 </blockquote>
 
 
@@ -5839,15 +5875,11 @@ the current environment, so defines happen in the enclosing environment.
 (define (string-map p . args) (list-&gt;string (apply map p args)))
 (define vector-for-each for-each) 
 (define string-for-each for-each) 
+
 (define (vector-&gt;string vect) (copy vect (make-string (length vect))))
 (define (string-&gt;vector str) (copy str (make-vector (length str))))
 (define list-copy copy)
 (define vector-copy copy)
-
-(define string-&gt;list     ; and similarly for all the others of this ilk
-  (let ((s7-string-&gt;list string-&gt;list))
-    (lambda* (str start end)
-      (s7-string-&gt;list (substring str (or start 0) (or end (length str)))))))
 
 (define char-foldcase char-downcase) 
 (define string-foldcase string-downcase)
@@ -5873,6 +5905,9 @@ the current environment, so defines happen in the enclosing environment.
 (define (textual-port? p) #t)
 (define (port? p) (or (input-port? p) (output-port? p)))
 (define (close-port p) (if (input-port? p) (close-input-port p) (close-output-port p)))
+(define open-binary-input-file open-input-file)
+(define open-binary-output-file open-output-file)
+(define (call-with-port port proc) ((if (input-port? port) call-with-input-port call-with-output-port) port proc))
 
 (define read-u8 read-byte)   ; perhaps bytevector = string in s7?
 (define write-u8 write-byte) 
@@ -5977,9 +6012,9 @@ the current environment, so defines happen in the enclosing environment.
 
 ;; parameters
 (define* (make-parameter init converter)
-  (let ((convert converter)
-	(old-values ())
-	(value (if converter (converter init) init)))
+  (let* ((convert (or converter (lambda (x) x)))
+	 (old-values ())
+	 (value (convert init)))
     (lambda () value)))
 
 (define-macro (parameterize vars . body)
@@ -5988,9 +6023,10 @@ the current environment, so defines happen in the enclosing environment.
 	 ,@(map (lambda (var)
 		  `(with-environment (procedure-environment ,(car var))
 		     (set! old-values (cons value old-values))
-		     (set! value (convert ,(cadr var)))))
+		     (set! value (convert ,(cadr var))))
 		vars))
-       (lambda () ,@body)
+       (lambda () 
+         ,@body)
        (lambda ()
 	 ,@(map (lambda (var)
 		  `(with-environment (procedure-environment ,(car var))
@@ -6118,38 +6154,6 @@ the current environment, so defines happen in the enclosing environment.
 ;;   outside Windows, there's no reasonable way to get these arguments.
 </pre>
 </div>
-
-<!-- more diffs:
-
-(define* (read-string k port)
-  (let ((string (make-string k #\null)))
-    (catch #t
-      (lambda ()
-        (do ((i 0 (+ i 1)))
-            ((= i k) string)
-          (set! (string i) (read-char (or port (current-input-port))))))
-      (lambda args
-        (if (char=? (string 0) #\null) #<eof> string)))))
-
-string-copy start/end string-fill! string->vector
-same vector->list, vector-copy vector-copy! vector->string vector-fill!
-error-object?
-bytevector? and others bytevector-length|u8-ref open-output-bytevector
-string-copy! = copy to a bytevector (string-copy to at from start end), similarly vector-copy!
-chars of form #\x0E50
-unicode?
-bytevector constants #u8()
-utf8->string
-string->utf8
-
-these we won't do:
-#!fold-case
-unquote-splicing
-nested #||#
-scheme-report-environment, null-environment
-syntax-rules etc
-+i as a number
--->
 
 
 <div class="indented">

@@ -6403,6 +6403,7 @@ static s7_pointer copy_counter(s7_scheme *sc, s7_pointer obj)
   counter_count(nobj) = counter_count(obj);
   counter_length(nobj) = counter_length(obj);
   counter_environment(nobj) = counter_environment(obj);
+  set_type(nobj, T_COUNTER);
   return(nobj);
 }
 
@@ -19769,8 +19770,9 @@ static s7_pointer g_string_ci_leq_2(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
 {
-  #define H_string_fill "(string-fill! str chr) fills the string str with the character chr"
-  s7_pointer x;
+  #define H_string_fill "(string-fill! str chr start end) fills the string str with the character chr"
+  s7_pointer x, chr;
+  s7_Int start = 0, end;
   x = car(args);
 
   if (!is_string(x))
@@ -19778,10 +19780,12 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, x, sc->STRING_FILL, args);
       return(wrong_type_argument(sc, sc->STRING_FILL, small_int(1), x, T_STRING));
     }
-  if (!s7_is_character(cadr(args)))
+
+  chr = cadr(args);
+  if (!s7_is_character(chr))
     {
-      CHECK_METHOD(sc, cadr(args), sc->STRING_FILL, args);
-      return(wrong_type_argument(sc, sc->STRING_FILL, small_int(2), cadr(args), T_CHARACTER));
+      CHECK_METHOD(sc, chr, sc->STRING_FILL, args);
+      return(wrong_type_argument(sc, sc->STRING_FILL, small_int(2), chr, T_CHARACTER));
     }
   /* strlen and so on here is probably not right -- a scheme string has a length
    *   set when it is created, and (apparently) can contain an embedded 0, so its
@@ -19789,9 +19793,16 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
    *         char *str; char c; str = string_value(car(args)); c = character(cadr(args));
    *         int i, len = 0; if (str) len = safe_strlen(str); if (len > 0) for (i = 0; i < len; i++) str[i] = c; 
    */
-  if (string_length(x) > 0)
-    memset((void *)(string_value(x)), (int)character(cadr(args)), string_length(x));
-  return(cadr(args)); 
+  end = string_length(x);
+  if (end == 0) return(chr);
+
+  if (!is_null(cddr(args)))
+    {
+      start_and_end(sc, sc->STRING_FILL, cddr(args), 3, &start, &end);
+      if (start == end) return(chr);
+    }
+  memset((void *)(string_value(x) + start), (int)character(chr), end - start);
+  return(chr);
 }
 
 
@@ -19849,27 +19860,27 @@ static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str, int len)
 
   if (len < (sc->free_heap_top - sc->free_heap))
     {
-      sc->w = s7_cons (sc, s7_make_character(sc, ((unsigned char)str[0])), sc->NIL);
-      for (i = 1; i < len; i++)
+      sc->w = s7_cons(sc, s7_make_character(sc, ((unsigned char)str[len - 1])), sc->NIL);
+      for (i = len - 2; i >= 0; i--)
 	sc->w = cons_unchecked(sc, s7_make_character(sc, ((unsigned char)str[i])), sc->w);
     }
   else
     {
       sc->w = sc->NIL;
-      for (i = 0; i < len; i++)
+      for (i = len - 1; i >= 0; i--)
 	sc->w = cons(sc, s7_make_character(sc, ((unsigned char)str[i])), sc->w);
     }
   p = sc->w;
   sc->w = sc->NIL;
-
-  return(safe_reverse_in_place(sc, p));
+  return(p);
 }
 
 
 static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
 {
-  #define H_string_to_list "(string->list str) returns the elements of the string str in a list; (map values str)"
-  s7_pointer str;
+  #define H_string_to_list "(string->list str start end) returns the elements of the string str in a list; (map values str)"
+  s7_Int i, start = 0, end;
+  s7_pointer p, str;
 
   str = car(args);
   if (!is_string(str))
@@ -19877,7 +19888,25 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, str, sc->STRING_TO_LIST, args);
       return(simple_wrong_type_argument(sc, sc->STRING_TO_LIST, str, T_STRING));
     }
-  return(s7_string_to_list(sc, string_value(str), string_length(str)));
+
+  end = string_length(str);
+  if (end == 0) return(sc->NIL);
+
+  if (!is_null(cdr(args)))
+    {
+      start_and_end(sc, sc->STRING_TO_LIST, cdr(args), 2, &start, &end);
+      if (start == end) return(sc->NIL);
+    }
+  if ((start == 0) && (end == string_length(str)))
+    return(s7_string_to_list(sc, string_value(str), string_length(str)));
+  
+  sc->w = sc->NIL;
+  for (i = end - 1; i >= start; i--)
+    sc->w = cons(sc, s7_make_character(sc, ((unsigned char)string_value(str)[i])), sc->w);
+
+  p = sc->w;
+  sc->w = sc->NIL;
+  return(p);
 }
 
 
@@ -20630,7 +20659,6 @@ static s7_pointer g_write_string(s7_scheme *sc, s7_pointer args)
     }
 
   end = string_length(str);
-
   if (!is_null(cdr(args)))
     {
       port = cadr(args);
@@ -27379,17 +27407,36 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 
 static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 {
-  #define H_vector_fill "(vector-fill! v val) sets all elements of the vector v to val"
-  s7_pointer x;
-  x = car(args);
+  #define H_vector_fill "(vector-fill! v val start end) sets all elements of the vector v between start and end to val"
+  s7_pointer x, fill;
+  s7_Int start = 0, end;
 
+  x = car(args);
   if (!s7_is_vector(x))
     {
       CHECK_METHOD(sc, x, sc->VECTOR_FILL, args);
       return(wrong_type_argument(sc, sc->VECTOR_FILL, small_int(1), x, T_VECTOR));
     }
-  s7_vector_fill(sc, x, cadr(args));
-  return(cadr(args));
+
+  fill = cadr(args);
+  end = vector_length(x);
+  if (end == 0) return(fill);
+
+  if (!is_null(cddr(args)))
+    {
+      start_and_end(sc, sc->VECTOR_FILL, cddr(args), 3, &start, &end);
+      if (start == end) return(fill);
+    }
+
+  if ((start == 0) && (end == vector_length(x)))
+    s7_vector_fill(sc, x, fill);
+  else
+    {
+      s7_Int i;
+      for (i = start; i < end; i++)
+	vector_element(x, i) = fill;
+    }
+  return(fill);
 }
 
 
@@ -27603,8 +27650,9 @@ s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
 
 static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer vec;
-  #define H_vector_to_list "(vector->list v) returns the elements of the vector v as a list; (map values v)"
+  s7_Int i, start = 0, end;
+  s7_pointer p, vec;
+  #define H_vector_to_list "(vector->list v start end) returns the elements of the vector v as a list; (map values v)"
 
   vec = car(args);
   if (!s7_is_vector(vec))
@@ -27612,7 +27660,23 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, vec, sc->VECTOR_TO_LIST, args);
       return(simple_wrong_type_argument(sc, sc->VECTOR_TO_LIST, vec, T_VECTOR));
     }
-  return(s7_vector_to_list(sc, vec));
+
+  end = vector_length(vec);
+  if (!is_null(cdr(args)))
+    {
+      start_and_end(sc, sc->VECTOR_TO_LIST, cdr(args), 2, &start, &end);
+      if (start == end) return(sc->NIL);
+    }
+  if ((start == 0) && (end == vector_length(vec)))
+    return(s7_vector_to_list(sc, vec));
+
+  sc->w = sc->NIL;
+  for (i = end - 1; i >= start; i--)
+    sc->w = cons(sc, vector_element(vec, i), sc->w);
+
+  p = sc->w;
+  sc->w = sc->NIL;
+  return(p);
 }
 
 
@@ -31879,7 +31943,7 @@ static s7_pointer g_booleans_are_eq(s7_scheme *sc, s7_pointer args)
     return(sc->F);
 
   for (p = cdr(args); is_pair(p); p = cdr(p))
-    if (p != x)
+    if (car(p) != x)
       return(sc->F);
   return(sc->T);
 }
@@ -31895,7 +31959,7 @@ static s7_pointer g_symbols_are_eq(s7_scheme *sc, s7_pointer args)
     return(sc->F);
 
   for (p = cdr(args); is_pair(p); p = cdr(p))
-    if (p != x)
+    if (car(p) != x)
       return(sc->F);
   return(sc->T);
 }
@@ -64328,12 +64392,12 @@ s7_scheme *s7_init(void)
   sc->STRING_CI_GEQ =         s7_define_safe_function(sc, "string-ci>=?",            g_strings_are_ci_geq,     2, 0, true,  H_strings_are_ci_geq);
   
   sc->STRING_APPEND =         s7_define_safe_function(sc, "string-append",           g_string_append,          0, 0, true,  H_string_append);
-  sc->STRING_FILL =           s7_define_safe_function(sc, "string-fill!",            g_string_fill,            2, 0, false, H_string_fill);
+  sc->STRING_FILL =           s7_define_safe_function(sc, "string-fill!",            g_string_fill,            2, 2, false, H_string_fill);
   sc->STRING_COPY =           s7_define_safe_function(sc, "string-copy",             g_string_copy,            1, 0, false, H_string_copy);
   sc->SUBSTRING =             s7_define_safe_function(sc, "substring",               g_substring,              2, 1, false, H_substring);
   sc->STRING =                s7_define_safe_function(sc, "string",                  g_string,                 0, 0, true,  H_string);
   sc->LIST_TO_STRING =        s7_define_safe_function(sc, "list->string",            g_list_to_string,         1, 0, false, H_list_to_string);
-  sc->STRING_TO_LIST =        s7_define_safe_function(sc, "string->list",            g_string_to_list,         1, 0, false, H_string_to_list);
+  sc->STRING_TO_LIST =        s7_define_safe_function(sc, "string->list",            g_string_to_list,         1, 2, false, H_string_to_list);
   sc->OBJECT_TO_STRING =      s7_define_safe_function(sc, "object->string",          g_object_to_string,       1, 1, false, H_object_to_string);
   sc->FORMAT =                s7_define_safe_function(sc, "format",                  g_format,                 1, 0, true,  H_format);
   /* as format runs through the saved args, "~A" can call object->string; it can call format, and 
@@ -64422,10 +64486,10 @@ s7_scheme *s7_init(void)
   
 
   sc->LIST_TO_VECTOR =        s7_define_safe_function(sc, "list->vector",            g_list_to_vector,         1, 0, false, H_list_to_vector);
-  sc->VECTOR_TO_LIST =        s7_define_safe_function(sc, "vector->list",            g_vector_to_list,         1, 0, false, H_vector_to_list);
+  sc->VECTOR_TO_LIST =        s7_define_safe_function(sc, "vector->list",            g_vector_to_list,         1, 2, false, H_vector_to_list);
   sc->VECTORP =               s7_define_safe_function(sc, "vector?",                 g_is_vector,              1, 0, false, H_is_vector);
   sc->VECTOR_APPEND =         s7_define_safe_function(sc, "vector-append",           g_vector_append,          0, 0, true,  H_vector_append);
-  sc->VECTOR_FILL =           s7_define_safe_function(sc, "vector-fill!",            g_vector_fill,            2, 0, false, H_vector_fill);
+  sc->VECTOR_FILL =           s7_define_safe_function(sc, "vector-fill!",            g_vector_fill,            2, 2, false, H_vector_fill);
   sc->VECTOR_LENGTH =         s7_define_safe_function(sc, "vector-length",           g_vector_length,          1, 0, false, H_vector_length);
   sc->VECTOR_REF =            s7_define_safe_function(sc, "vector-ref",              g_vector_ref,             2, 0, true,  H_vector_ref);
   sc->VECTOR_SET =            s7_define_safe_function(sc, "vector-set!",             g_vector_set,             3, 0, true,  H_vector_set);
@@ -64937,7 +65001,8 @@ s7_scheme *s7_init(void)
  *         mark, copy, fill, reverse, etc print
  */
 
-/* possible additions (r7rs): start/end points for various copy/conversion ops, read-string, utf8/bytevector stuff
+/* possible additions (r7rs):
+
    bytevector?
    make-bytevector
    bytevector
@@ -64952,8 +65017,13 @@ s7_scheme *s7_init(void)
    string->utf8
    open-input|output-bytevector get-output-bytevector
 
-   call-with-port
-   boolean=? take n args, same for symbol=? TODO: test these
    exit emergency-exit (these come from Snd for example)
      even s7_quit is not quite what is wanted
+
+   start/end: string-copy(!) 
+       vector->list vector->string string->vector vector-copy(!)
+       same for bytevector, utf8<>string
+       read|write-bytevector! 
+
+   copy with 2 args -- what if they overlap?
  */

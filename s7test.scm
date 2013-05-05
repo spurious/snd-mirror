@@ -1830,6 +1830,28 @@
 
 
 
+;;; boolean=?
+(test (boolean=? #f #f) #t)
+(test (boolean=? #f #t) #f)
+(test (boolean=? #f #f #f) #t)
+(test (boolean=? #t #t) #t)
+(test (boolean=? #f #f #t #f) #f)
+(test (boolean=? #f (values) #f) #f)
+(test (boolean=? 1 #t) #f)
+(test (boolean=?) 'error)
+(test (boolean=? #f) 'error)
+(for-each
+ (lambda (arg)
+   (if (boolean=? #f arg)
+       (format #t ";(boolean=? #f ~A) -> #t?~%" arg)))
+ (list "hi" '(1 2) () "" #() (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
+       3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) :hi (if #f #f) #<eof> #<undefined> #<unspecified>))
+
+;;; and this just for r7rs
+(test (boolean=? #f #false) #t)
+(test (boolean=? #t #true) #t)
+
+
 
 ;;; --------------------------------------------------------------------------------
 ;;; not
@@ -2008,6 +2030,24 @@
 	(string-set! name 2 #\null)
 	(symbol? (string->symbol name)))
       #t)
+
+
+;;; symbol=?
+(test (symbol=? 'hi 'hi) #t)
+(test (symbol=? 'hi 'hi 'hi) #t)
+(test (symbol=? 'hi 'hi 'ho) #f)
+(test (symbol=? 'hi 'hi pi) #f)
+(test (symbol=? #f 'hi) #f)
+(for-each
+ (lambda (arg)
+   (if (symbol=? 'abs arg)
+       (format #t ";(symbol=? 'abs ~A) -> #t?~%" arg)))
+ (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
+       3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) #<eof> #<undefined>))
+(test (symbol=?) 'error)
+(test (symbol=? 'hi) 'error)
+(test (symbol=? :hi :hi) #t)
+(test (symbol=? :hi hi:) #f)
 
 
 
@@ -3787,6 +3827,21 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (list #\a 1 () (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
+(test (let ((str "1234567890")) (string-fill! str #\a 0) str) "aaaaaaaaaa")
+(test (let ((str "1234567890")) (string-fill! str #\a 0 10) str) "aaaaaaaaaa")
+(test (let ((str "1234567890")) (string-fill! str #\a 0 0) str) "1234567890")
+(test (let ((str "1234567890")) (string-fill! str #\a 4 4) str) "1234567890")
+(test (let ((str "1234567890")) (string-fill! str #\a 10 10) str) "1234567890")
+(test (let ((str "1234567890")) (string-fill! str #\a 0 4) str) "aaaa567890")
+(test (let ((str "1234567890")) (string-fill! str #\a 3 4) str) "123a567890")
+(test (let ((str "1234567890")) (string-fill! str #\a 1 9) str) "1aaaaaaaa0")
+(test (let ((str "1234567890")) (string-fill! str #\a 8) str) "12345678aa")
+(test (let ((str "1234567890")) (string-fill! str #\a 1 9 0) str) 'error)
+(test (let ((str "1234567890")) (string-fill! str #\a 1 0) str) 'error)
+(test (let ((str "1234567890")) (string-fill! str #\a 11) str) 'error)
+(test (let ((str "1234567890")) (string-fill! str #\a 9 11) str) 'error)
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -4212,6 +4267,17 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (and (string=? "\\,\\\"" (string #\\ #\, #\\ #\")) (equal? '(#\\ #\, #\\ #\") (string->list "\\,\\\""))) #t)
 (test (and (string=? "\\\"`\"" (string #\\ #\" #\` #\")) (equal? '(#\\ #\" #\` #\") (string->list "\\\"`\""))) #t)
 (test (and (string=? "\\\\#\"" (string #\\ #\\ #\# #\")) (equal? '(#\\ #\\ #\# #\") (string->list "\\\\#\""))) #t)
+
+;;; TODO: start/end tests
+(test (string->list "12345" 0) '(#\1 #\2 #\3 #\4 #\5))
+(test (string->list "12345" 0 5) '(#\1 #\2 #\3 #\4 #\5))
+(test (string->list "12345" 5 5) ())
+(test (string->list "12345" 4 5) '(#\5))
+(test (string->list "12345" 2 4) '(#\3 #\4))
+(test (string->list "12345" 2 1) 'error)
+(test (string->list "12345" 2 3 4) 'error)
+(test (string->list (make-string 3 #\null) 2 3) '(#\null))
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -6872,6 +6938,17 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
+(test (vector->list #(1 2 3 4) 0) '(1 2 3 4))
+(test (vector->list #(1 2 3 4) 2) '(3 4))
+(test (vector->list #(1 2 3 4) 0 4) '(1 2 3 4))
+(test (vector->list #(1 2 3 4) 4 4) ())
+(test (vector->list #(1 2 3 4) 1 2) '(2))
+
+(test (vector->list #(1 2 3 4) -1 4) 'error)
+(test (vector->list #(1 2 3 4) 1 0) 'error)
+(test (vector->list #(1 2 3 4) 5) 'error)
+(test (vector->list #(1 2 3 4) 1 5) 'error)
+(test (vector->list #(1 2 3 4) 1 2 3) 'error)
 
 
 
@@ -7243,6 +7320,15 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (set! (v 1) 32)
   (test ((v 0) 1) 32))
 
+(test (let ((v (vector 1 2 3 4 5))) (vector-fill! v 21 0) v) #(21 21 21 21 21))
+(test (let ((v (vector 1 2 3 4 5))) (vector-fill! v 21 0 5) v) #(21 21 21 21 21))
+(test (let ((v (vector 1 2 3 4 5))) (vector-fill! v 21 0 3) v) #(21 21 21 4 5))
+(test (let ((v (vector 1 2 3 4 5))) (vector-fill! v 21 2 3) v) #(1 2 21 4 5))
+(test (let ((v (vector 1 2 3 4 5))) (vector-fill! v 21 3 3) v) #(1 2 3 4 5))
+
+
+
+
 
 ;;; --------------------------------------------------------------------------------
 ;;; vector-append
@@ -7317,7 +7403,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	     (format #t ";for-each call/cc data: ~A~%" v))))))
  
  (list (make-vector 10)
-;       (make-vct 10)
        (make-list 10)))
 
 
@@ -23995,7 +24080,7 @@ who says the continuation has to restart the map from the top?
 (test (arity procedure-environment)                                  '(1 . 1))
 (test (arity make-vector)                                            '(1 . 2))
 (test (arity member)                                                 '(2 . 3))
-(test (arity string-fill!)                                           '(2 . 2))
+(test (arity string-fill!)                                           '(2 . 4))
 (test (arity hook-functions)                                         '(1 . 1))
 (test (arity make-hook)                                              '(0 . 536870912))
 (test (arity number->string)                                         '(1 . 2))
