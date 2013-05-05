@@ -5256,7 +5256,7 @@ This should be named define-reader-macro.
 <p>There are several other less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,
 *most-positive-fixnum* so that all the built-in variables and constants have the
 same kind of name.  All the environment function names are bad &mdash; "environment" by itself
-is annoying.  At least we can say s7 is environmentally sound!
+is annoying. 
 get-output-string should be current-output-string.
 "cond-expand" is bad &mdash; we're not expanding anything, and the macro's point is to make it easy to
 operate with the *features* list; perhaps "cond-provided"?  Not only is cond-expand poorly named, but the whole
@@ -5848,14 +5848,6 @@ the current environment, so defines happen in the enclosing environment.
   (let ((s7-string-&gt;list string-&gt;list))
     (lambda* (str start end)
       (s7-string-&gt;list (substring str (or start 0) (or end (length str)))))))
-
-(define (boolean=? . args) 
-  (or (null? args) 
-      (null? (cdr args))
-      (and (boolean? (car args)) 
-           (eq? (car args) (cadr args)) 
-           (apply boolean=? (cdr args)))))
-;; similarly for symbol=?
 
 (define char-foldcase char-downcase) 
 (define string-foldcase string-downcase)

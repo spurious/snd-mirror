@@ -962,7 +962,7 @@ typedef struct s7_cell {
 	s7_Double im;
       } complex_value;
 
-      unsigned long ul_value; /* these two are not used by s7 in any way */
+      unsigned long ul_value;           /* these two are not used by s7 in any way */
       unsigned long long ull_value;
 
 #if WITH_GMP
@@ -985,7 +985,7 @@ typedef struct s7_cell {
       unsigned char c;
       unsigned char up_c, down_c;
       bool alpha_p, digit_p, space_p, upper_p, lower_p;
-      const char *c_name; /* actually we have room here for the name */
+      const char *c_name;              /* actually we have room here for the name */
       int length;
     } chr;
 
@@ -1008,14 +1008,14 @@ typedef struct s7_cell {
     } hasher;
     
     struct {
-      c_proc_t *c_proc;     /* C functions, macros */
+      c_proc_t *c_proc;                /* C functions, macros */
       s7_function ff;
       s7_pointer setter;
       unsigned int required_args, optional_args, all_args;
       bool rest_arg;
     } fnc;
       
-    struct {               /* pairs */ 
+    struct {                           /* pairs */ 
       s7_pointer car, cdr, ecdr, fcdr;
       unsigned int line;
       union {
@@ -1034,7 +1034,7 @@ typedef struct s7_cell {
     struct {
       s7_pointer args, body, env, setter;
       int arity;
-      int match_type; /* currently unused */
+      int match_type;                 /* currently unused */
     } func;
 
     struct { 
@@ -1728,6 +1728,20 @@ static int t_optimized = T_OPTIMIZED;
 #define set_mutable(p)                typeflag(p) |= T_MUTABLE
 #define clear_mutable(p)              typeflag(p) &= (~T_MUTABLE)
 
+#define T_BYTEVECTOR                  T_ONE_LINER
+#define is_bytevector(p)              ((typeflag(p) & T_BYTEVECTOR) != 0)
+/* PERHAPS: use this bit to mark a string that is a bytevector in scheme-land.
+ *   then each object->string call needs to check this to decide about #u8(...)?
+ *   alternatively, add type T_BYTEVECTOR, but piggy-back on all the string support (gc etc)
+ *   the only difference: character vs byte coming and going, and the bytevector wrapper could handle that.
+ *   the wrappers can handle either case.  And the writer could be in the object -- there is room in
+ *   the string portion of the s7_cell struct for a writer -- expense looks small.
+ *   Could that extend to utf8?  Perhaps read/write in each "string" object --also
+ *   would need length and so on.  Many similarities to the (float) vector case.
+ *   T_FLOAT_VECTOR = data is s7_double* not s7_pointer*, whereas here T_BYTEVECTOR: "u8" not unsigned char.
+ *   void (*to_port)(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool use_write)
+ *   reader handles the other side.
+ */
 
 #define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
 #define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
@@ -19040,39 +19054,42 @@ static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer substring_bounds(s7_scheme *sc, s7_pointer str, s7_pointer args, s7_Int *new_i0, s7_Int *new_i1)
+static bool start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer start_and_end_args, int position, s7_Int *start, s7_Int *end)
 {
-  s7_pointer start, end;
-  s7_Int i0, i1;
+  /* we assume that *start=0 and *end=length, that end is "exclusive"
+   *   return true if the start/end points are not changed.
+   */
+  s7_pointer pstart, pend;
+  s7_Int index;
+
+  if (is_null(start_and_end_args))
+    return(true);
+
+  pstart = car(start_and_end_args);
+  if (!s7_is_integer(pstart))
+    return(wrong_type_argument_n(sc, caller, position, pstart, T_INTEGER));
+  index = s7_integer(pstart);
+  if ((index < 0) ||
+      (index > *end)) /* *end == length here */
+    return(out_of_range(sc, caller, small_int(position), pstart, "should be between 0 and length"));
+  *start = index;
+
+  if (is_null(cdr(start_and_end_args)))
+    return(index == 0);
+
+  pend = cadr(start_and_end_args);
+  if (!s7_is_integer(pend))
+    return(wrong_type_argument_n(sc, caller, position + 1, pend, T_INTEGER));
+  index = s7_integer(pend);
+  if ((index < *start) ||
+      (index > *end))
+    return(out_of_range(sc, caller, small_int(position + 1), pend, "should be between the start index and the length"));
   
-  start = car(args);
-  if (!s7_is_integer(start))
-    return(wrong_type_argument(sc, sc->SUBSTRING, small_int(2), start, T_INTEGER));
-
-  i0 = s7_integer(start);
-  if (i0 < 0)
-    return(wrong_type_argument_with_type(sc, sc->SUBSTRING, small_int(2), start, A_NON_NEGATIVE_INTEGER));
-  if (i0 > string_length(str))            /* (substring "012" 10) */
-    return(out_of_range(sc, sc->SUBSTRING, small_int(2), start, "start <= string length"));
-  /* this is how guile handles it: (substring "012" 3) -> "" */
-
-  if (is_not_null(cdr(args)))
-    {
-      end = cadr(args);
-      if (!s7_is_integer(end))
-	return(wrong_type_argument(sc, sc->SUBSTRING, small_int(3), end, T_INTEGER));
-
-      i1 = s7_integer(end);
-      if (i1 < i0)
-	return(wrong_type_argument_with_type(sc, sc->SUBSTRING, small_int(3), end, make_protected_string(sc, "an integer >= start")));
-      if (i1 > string_length(str))
-	return(out_of_range(sc, sc->SUBSTRING, small_int(3), end, "end <= string length"));
-    }
-  else i1 = string_length(str);
-
-  (*new_i0) = i0;
-  (*new_i1) = i1;
-  return(str);
+  if (index == *end)
+    return(*start == 0);
+  *end = index;
+  
+  return(false);
 }
 
 
@@ -19082,7 +19099,7 @@ static s7_pointer g_substring(s7_scheme *sc, s7_pointer args)
 end: (substring \"01234\" 1 2) -> \"1\""
   
   s7_pointer x, str;
-  s7_Int i0 = 0, i1 = 0;
+  s7_Int start = 0, end;
   int len;
   char *s;
   
@@ -19093,10 +19110,11 @@ end: (substring \"01234\" 1 2) -> \"1\""
       return(wrong_type_argument(sc, sc->SUBSTRING, small_int(1), str, T_STRING));
     }
 
-  substring_bounds(sc, str, cdr(args), &i0, &i1);
+  end = string_length(str);
+  start_and_end(sc, sc->SUBSTRING, cdr(args), 2, &start, &end);
   s = string_value(str);
-  len = (int)(i1 - i0);
-  x = s7_make_string_with_length(sc, (char *)(s + i0), len);
+  len = (int)(end - start);
+  x = s7_make_string_with_length(sc, (char *)(s + start), len);
   string_value(x)[len] = 0;
   return(x);
 }
@@ -19106,7 +19124,7 @@ static s7_pointer substring_to_temp;
 static s7_pointer g_substring_to_temp(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer str;
-  s7_Int i0 = 0, i1 = 0;
+  s7_Int start = 0, end;
   
   str = car(args);
   if (!is_string(str))
@@ -19115,8 +19133,10 @@ static s7_pointer g_substring_to_temp(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument(sc, sc->SUBSTRING, small_int(1), str, T_STRING));
     }
 
-  substring_bounds(sc, str, cdr(args), &i0, &i1);
-  return(make_temporary_string(sc, (const char *)(string_value(str) + i0), (int)(i1 - i0)));
+  end = string_length(str);
+  start_and_end(sc, sc->SUBSTRING, cdr(args), 2, &start, &end);
+
+  return(make_temporary_string(sc, (const char *)(string_value(str) + start), (int)(end - start)));
 }
 
 
@@ -20599,7 +20619,7 @@ static void stderr_display(s7_scheme *sc, const char *s, s7_pointer port)
 static s7_pointer g_write_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_write_string "(write-string str port start end) writes str to port."
-  s7_pointer str, port, ind;
+  s7_pointer str, port;
   s7_Int start = 0, end;
 
   str = car(args);
@@ -20610,34 +20630,14 @@ static s7_pointer g_write_string(s7_scheme *sc, s7_pointer args)
     }
 
   end = string_length(str);
+
   if (!is_null(cdr(args)))
     {
       port = cadr(args);
       if (!is_output_port(port))
 	return(wrong_type_argument_with_type(sc, sc->WRITE_STRING, small_int(2), port, AN_OUTPUT_PORT));
 
-      if (!is_null(cddr(args)))
-	{
-	  ind = caddr(args);
-	  if (!s7_is_integer(ind))
-	    return(wrong_type_argument_n(sc, sc->WRITE_STRING, 3, ind, T_INTEGER));
-	  start = s7_integer(ind);
-	  if ((start < 0) ||
-	      (start >= end))
-	    return(out_of_range(sc, sc->WRITE_STRING, small_int(3), ind, "should be between 0 and the string length"));
-  
-	  if (!is_null(cdddr(args)))
-	    {
-	      ind = cadddr(args);
-	      if (!s7_is_integer(ind))
-		return(wrong_type_argument_n(sc, sc->WRITE_STRING, 4, ind, T_INTEGER));
-	      end = s7_integer(ind);
-	      if ((end < start) ||
-		  (end > string_length(str)))
-		return(out_of_range(sc, sc->WRITE_STRING, small_int(4), ind, "should be between the start index and the string length"));
-	      /* TODO: check/test these args in write-string */
-	    }
-	}
+      start_and_end(sc, sc->WRITE_STRING, cddr(args), 3, &start, &end);
     }
   else port = sc->output_port;
 
@@ -31866,6 +31866,38 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
       return(raw_pointer(x) == raw_pointer(y));
     }
   return(false); /* we already checked that x != y (port etc) */
+}
+
+
+static s7_pointer g_booleans_are_eq(s7_scheme *sc, s7_pointer args)
+{
+  #define H_booleans_are_eq "(eq? bool1 bool2 ...) returns #t if all args are either all #f or all #t."
+  s7_pointer p, x;
+
+  x = car(args);
+  if (!s7_is_boolean(x))
+    return(sc->F);
+
+  for (p = cdr(args); is_pair(p); p = cdr(p))
+    if (p != x)
+      return(sc->F);
+  return(sc->T);
+}
+
+
+static s7_pointer g_symbols_are_eq(s7_scheme *sc, s7_pointer args)
+{
+  #define H_symbols_are_eq "(eq? sym1 sym2 ...) returns #t if all args are the same symbol."
+  s7_pointer p, x;
+
+  x = car(args);
+  if (!is_symbol(x))
+    return(sc->F);
+
+  for (p = cdr(args); is_pair(p); p = cdr(p))
+    if (p != x)
+      return(sc->F);
+  return(sc->T);
 }
 
 
@@ -64473,6 +64505,8 @@ s7_scheme *s7_init(void)
   
   sc->NOT =                   s7_define_safe_function(sc, "not",                     g_not,                    1, 0, false, H_not);
   sc->BOOLEANP =              s7_define_safe_function(sc, "boolean?",                g_is_boolean,             1, 0, false, H_is_boolean);
+                              s7_define_safe_function(sc, "boolean=?",               g_booleans_are_eq,        2, 0, true,  H_booleans_are_eq);
+                              s7_define_safe_function(sc, "symbol=?",                g_symbols_are_eq,         2, 0, true,  H_symbols_are_eq);
   sc->EQP =                   s7_define_safe_function(sc, "eq?",                     g_is_eq,                  2, 0, false, H_is_eq);
   sc->EQVP =                  s7_define_safe_function(sc, "eqv?",                    g_is_eqv,                 2, 0, false, H_is_eqv);
   sc->EQUALP =                s7_define_safe_function(sc, "equal?",                  g_is_equal,               2, 0, false, H_is_equal);
@@ -64919,7 +64953,7 @@ s7_scheme *s7_init(void)
    open-input|output-bytevector get-output-bytevector
 
    call-with-port
-   boolean=? take n args, same for symbol=?
+   boolean=? take n args, same for symbol=? TODO: test these
    exit emergency-exit (these come from Snd for example)
      even s7_quit is not quite what is wanted
  */

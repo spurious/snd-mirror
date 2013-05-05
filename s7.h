@@ -60,7 +60,6 @@ typedef double s7_Double;
    *    port-filename           current file name during loading
    *    pair-line-number        location of a piece of code read from a file
    *    gc                      calls the GC. If its argument is #f, the GC is turned off
-   *    quit                    exits s7
    *    call-with-exit          just like call/cc but without the ability to jump back into a context
    *    continuation?           #t if its argument is a continuation (as opposed to an ordinary procedure)
    *    procedure-documentation doc string associated with a procedure
@@ -882,7 +881,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
- * 2-May:     flush-output-port, vector-append.
+ * 2-May:     flush-output-port, vector-append, write-string, boolean=?, symbol=?.
  * 7-Apr:     removed s7_scheme* arg from s7_slot_value, added s7_is_local_variable.
  * 25-Mar:    char-position, string-position, environment-ref, environment-set! added to the scheme side.
  * 9-Jan:     s7_cos, s7_sin, other optimization changes.
