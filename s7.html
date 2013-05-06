@@ -5287,6 +5287,7 @@ This should be named define-reader-macro.
 <li>remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!, set-car!|cdr!, and set-current-output|input|error-port.
 <li>change file-exists? to file?
 <li>change with-output-to-* and with-input-from-* to omit the pointless lambda.
+<li>remove all the conversion and copy functions like vector-&gt;list and vector-copy (use copy).
 </ul>
 
 <p>There are several other less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,
@@ -5876,10 +5877,23 @@ the current environment, so defines happen in the enclosing environment.
 (define vector-for-each for-each) 
 (define string-for-each for-each) 
 
-(define (vector-&gt;string vect) (copy vect (make-string (length vect))))
-(define (string-&gt;vector str) (copy str (make-vector (length str))))
+(define* (vector-&gt;string v (start 0) end) 
+  (let ((stop (or end (length v)))) 
+    (copy v (make-string (- stop start)) start stop)))
+
+(define* (string-&gt;vector s (start 0) end)
+  (let ((stop (or end (length s)))) 
+    (copy s (make-vector (- stop start)) start stop)))
+
 (define list-copy copy)
-(define vector-copy copy)
+
+(define* (vector-copy v (start 0) end)
+  (let ((stop (or end (length v)))) 
+    (copy v (make-vector (- stop start)) start stop)))
+
+(define* (string-copy s (start 0) end) 
+  (let ((stop (or end (length s)))) 
+    (copy s (make-string (- stop start)) start stop))
 
 (define char-foldcase char-downcase) 
 (define string-foldcase string-downcase)

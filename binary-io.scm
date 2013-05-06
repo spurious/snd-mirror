@@ -9,7 +9,7 @@
 
 ;;; -------- strings (0-terminated)
 
-(define (read-string)
+(define (io-read-string)
   (let ((chars ()))
     (do ((c (read-byte) (read-byte)))
 	((or (eof-object? c)
@@ -17,7 +17,7 @@
 	 (apply string (reverse chars)))
       (set! chars (cons (integer->char c) chars)))))
 
-(define (write-string str)
+(define (io-write-string str)
   (for-each write-char str) ; or maybe (lambda (c) (write-byte (char->integer c)))
   (write-byte 0))
 
@@ -248,7 +248,7 @@
 		  (data-format (read-bint32))
 		  (srate (read-bint32))
 		  (chns (read-bint32))
-		  (comment (read-string)))
+		  (comment (io-read-string)))
 	      (list magic data-location data-size data-format srate chns comment)))))))
 
 (define (write-au-header file chns srate data-size data-format comment) ; data-size in bytes
@@ -266,8 +266,8 @@
 	(write-bint32 chns)
 	(if (> comlen 0)
 	    (begin
-	      (write-string comment)
-	      (set! curloc (+ curloc comlen 1)))) ; write-string adds a trailing 0
+	      (io-write-string comment)
+	      (set! curloc (+ curloc comlen 1)))) ; io-write-string adds a trailing 0
 	(do ((i curloc (+ i 1)))
 	    ((>= i data-location))
 	  (write-byte 0))))))

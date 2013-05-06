@@ -24049,7 +24049,7 @@ who says the continuation has to restart the map from the top?
 (test (arity assv)                                                   '(2 . 2))
 (test (arity cond)                                                   '(1 . 536870912))
 (test (arity cons)                                                   '(2 . 2))
-(test (arity copy)                                                   '(1 . 2))
+(test (arity copy)                                                   '(1 . 4))
 (test (arity else)                                                   '#f)
 (test (arity eqv?)                                                   '(2 . 2))
 (test (arity define*)                                                '(2 . 536870912))
@@ -28487,6 +28487,12 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
    (set! (cdr (cddr lst)) lst)
    (test (copy lst lst) lst)
    (test (copy lst (make-list 15 5)) '(1 2 3 1 2 3 5 5 5 5 5 5 5 5 5)))
+
+(let ((v (vector 1 2 3)))
+  (test (copy v v) v)
+  (test (copy v v 1 3) #(2 3 3)))
+
+;;; TODO: copy 3/4 args, source=dest dotted/circular lists, nils, other types
 
 
 (if with-bignums

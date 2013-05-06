@@ -32640,31 +32640,95 @@ static s7_pointer c_object_getter(s7_scheme *sc, s7_pointer obj, s7_Int loc)
 
 static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 {
-  #define H_copy "(copy obj) returns a copy of obj, (copy src dest) copies src into dest."
+  #define H_copy "(copy obj) returns a copy of obj, (copy src dest) copies src into dest, (copy src dest start end) copies src from start to end."
+  #define COPY_CIRCLE_LEN 2147483641
   s7_pointer source, dest;
-  s7_Int i, len;
+  s7_Int i, j, dest_len, start = 0, end, source_len;
   s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_Int loc, s7_pointer val);
   s7_pointer (*get)(s7_scheme *sc, s7_pointer obj, s7_Int loc);
+  bool have_indices;
 
-  if (is_null(cdr(args)))
+  if (is_null(cdr(args)))                /* (copy obj) -- this works for environments, hash-tables and bignums */
     return(s7_copy(sc, car(args)));
+  have_indices = (is_pair(cddr(args)));
 
   /* (do ((i 0 (+ i 1))) ((= i (min (length src) (length dest))) dest) (set! (dest i) (src i)))
    */
+
   source = car(args);
   dest = cadr(args);
+  if ((source == dest) && (!have_indices))
+    return(dest);
 
-  if (type(source) == type(dest))
+  switch (type(source))
+    {
+    case T_PAIR:     
+      get = list_getter;     
+      end = s7_list_length(sc, source); 
+      if (end == 0) end = COPY_CIRCLE_LEN; /* end == 0 -> circular */
+      if (end < 0) end = -end; 
+      break; 
+
+    case T_VECTOR:   get = vector_getter;   end = vector_length(source);            break;
+    case T_STRING:   get = string_getter;   end = string_length(source);            break;
+    case T_C_OBJECT: get = c_object_getter; end = object_length_to_int(sc, source); break;
+    default: 
+      if (!is_null(cddr(args))) /* (copy () () ()) */
+	{
+	  if (!s7_is_integer(caddr(args)))
+	    return(wrong_type_argument_n(sc, sc->COPY, 3, caddr(args), T_INTEGER));
+	  if ((!is_null(cdddr(args))) &&
+	      (!s7_is_integer(cadddr(args))))
+	    return(wrong_type_argument_n(sc, sc->COPY, 4, cadddr(args), T_INTEGER));
+	}
+      return(dest);
+    }
+
+  if (have_indices)
+    start_and_end(sc, sc->COPY, cddr(args), 3, &start, &end);
+
+  if ((start == 0) && (source == dest))
+    return(dest);
+  source_len = end - start;
+  if (source_len == 0)
+    return(dest);
+
+  switch (type(dest))
+    {
+    case T_PAIR:     
+      set = list_setter;     
+      dest_len = s7_list_length(sc, dest); 
+      if (dest_len == 0) dest_len = COPY_CIRCLE_LEN; 
+      if (dest_len < 0) dest_len = -dest_len;
+      break;
+
+    case T_VECTOR:   set = vector_setter;   dest_len = vector_length(dest);            break;
+    case T_STRING:   set = string_setter;   dest_len = string_length(dest);            break;
+    case T_C_OBJECT: set = c_object_setter; dest_len = object_length_to_int(sc, dest); break;
+    default: return(dest);
+    }
+  
+  if (dest_len == 0)
+    return(dest);
+  if (dest_len < source_len) 
+    end = dest_len - start;
+
+  if ((source != dest) &&
+      (type(source) == type(dest)))
     {
       switch (type(source))
 	{
 	case T_PAIR:
 	  {
 	    s7_pointer slow, ps, pd;
-	    slow = source;
+
 	    ps = source;
+	    for (i = 0; i < start; i++)
+	      ps = cdr(ps);
+	    slow = ps;
+
 	    pd = dest;
-	    while (is_pair(ps) && is_pair(pd))
+	    for (; (i < end) && is_pair(ps) && is_pair(pd); i++)
 	      {
 		car(pd) = car(ps);
 		ps = cdr(ps);
@@ -32683,33 +32747,21 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 
 	case T_VECTOR:
 	  /* ignore possible dimensional mismatch */
-	  len = vector_length(source);
-	  i = vector_length(dest);
-	  if (len > i) len = i;
-	  if (len == 0) return(dest); 
-	  for (i = 0; i < len; i++)
-	    vector_element(dest, i) = vector_element(source, i);
+	  for (i = start, j = 0; i < end; i++, j++)
+	    vector_element(dest, j) = vector_element(source, i);
 	  return(dest);
 
 	case T_STRING:
-	  len = string_length(source);
-	  i = string_length(dest);
-	  if (len > i) len = i;
-	  if (len == 0) return(dest); 
-	  for (i = 0; i < len; i++)
-	    string_value(dest)[i] = string_value(source)[i];
+	  for (i = start, j = 0; i < end; i++, j++)
+	    string_value(dest)[j] = string_value(source)[i];
 	  return(dest);
 	  
 	case T_C_OBJECT:
 	  if ((c_object_has_array(source)) &&
 	      (c_object_has_array(dest)))
 	    {
-	      len = c_object_array_length(source);
-	      i = c_object_array_length(dest);
-	      if (len > i) len = i;
-	      if (len == 0) return(dest); 
-	      for (i = 0; i < len; i++)
-		c_object_array(dest)[i] = c_object_array(source)[i];
+	      for (i = start, j = 0; i < end; i++, j++)
+		c_object_array(dest)[j] = c_object_array(source)[i];
 	      return(dest);
 	    }
 	  break;
@@ -32718,31 +32770,12 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 	  return(dest);
 	}
     }
-  
-  switch (type(source))
-    {
-    case T_PAIR:     get = list_getter;     len = s7_list_length(sc, source);       break;
-    case T_VECTOR:   get = vector_getter;   len = vector_length(source);            break;
-    case T_STRING:   get = string_getter;   len = string_length(source);            break;
-    case T_C_OBJECT: get = c_object_getter; len = object_length_to_int(sc, source); break;
-    default: return(dest);
-    }
-  if (len <= 0) return(dest);
 
-  switch (type(dest))
-    {
-    case T_PAIR:     set = list_setter;     i = s7_list_length(sc, dest);       break;
-    case T_VECTOR:   set = vector_setter;   i = vector_length(dest);            break;
-    case T_STRING:   set = string_setter;   i = string_length(dest);            break;
-    case T_C_OBJECT: set = c_object_setter; i = object_length_to_int(sc, dest); break;
-    default: return(dest);
-    }
+  /* if source == dest here, we're moving data backwards, so this is safe in either case */
 
-  if (i <= 0) return(dest);
-  if (len > i) len = i;
+  for (i = start, j = 0; i < end; i++, j++)
+    set(sc, dest, j, get(sc, source, i));
 
-  for (i = 0; i < len; i++) 
-    set(sc, dest, i, get(sc, source, i));
   return(dest);
 }
 
@@ -34651,6 +34684,28 @@ static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 #endif
   return(s7_make_string(sc, "s7 " S7_VERSION ", " S7_DATE));
 }
+
+
+static s7_pointer g_emergency_exit(s7_scheme *sc, s7_pointer args)
+{
+  #define H_emergency_exit "(emergency-exit obj) exits s7"
+  s7_pointer obj;
+#ifndef EXIT_SUCCESS 
+  #define EXIT_SUCCESS 0
+  #define EXIT_FAILURE 1
+#endif
+  if (is_null(args))
+    _exit(EXIT_SUCCESS);          /* r7rs spec says use _exit here */
+  obj = car(args);
+  if (obj == sc->F)
+    _exit(EXIT_FAILURE);
+  if ((obj == sc->T) || (!s7_is_integer(obj)))
+    _exit(EXIT_SUCCESS);
+  _exit((int)s7_integer(obj));
+  return(sc->F);
+}
+
+
 
 
 #if DEBUGGING
@@ -64478,7 +64533,7 @@ s7_scheme *s7_init(void)
 
 
   sc->LENGTH =                s7_define_safe_function(sc, "length",                  g_length,                 1, 0, false, H_length);
-  sc->COPY =                  s7_define_safe_function(sc, "copy",                    g_copy,                   1, 1, false, H_copy);
+  sc->COPY =                  s7_define_safe_function(sc, "copy",                    g_copy,                   1, 3, false, H_copy);
   sc->FILL =                  s7_define_function(sc,      "fill!",                   g_fill,                   2, 0, false, H_fill);
   sc->REVERSE =               s7_define_safe_function(sc, "reverse",                 g_reverse,                1, 0, false, H_reverse);
   sc->REVERSEB =              s7_define_function(sc,      "reverse!",                g_reverse_in_place,       1, 0, false, H_reverse_in_place); /* used by Snd code */
@@ -64577,6 +64632,7 @@ s7_scheme *s7_init(void)
   sc->MORALLY_EQUALP =        s7_define_safe_function(sc, "morally-equal?",          g_is_morally_equal,       2, 0, false, H_is_morally_equal);
   
   s7_define_safe_function(sc,                             "s7-version",              g_s7_version,             0, 0, false, H_s7_version);
+  s7_define_safe_function(sc,                             "emergency-exit",          g_emergency_exit,         0, 1, false, H_emergency_exit);
 #if DEBUGGING
   s7_define_function(sc,                                  "abort",                   g_abort,                  0, 0, false, "drop into gdb I hope");
 #endif
@@ -65016,14 +65072,7 @@ s7_scheme *s7_init(void)
    utf8->string
    string->utf8
    open-input|output-bytevector get-output-bytevector
+   read|write-bytevector! 
 
-   exit emergency-exit (these come from Snd for example)
-     even s7_quit is not quite what is wanted
-
-   start/end: string-copy(!) 
-       vector->list vector->string string->vector vector-copy(!)
-       same for bytevector, utf8<>string
-       read|write-bytevector! 
-
-   copy with 2 args -- what if they overlap?
+   exit -- s7_quit is not quite what is wanted
  */

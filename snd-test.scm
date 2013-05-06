@@ -22,7 +22,7 @@
 ;;;  test 19: save and restore                  [32989]
 ;;;  test 20: transforms                        [34603]
 ;;;  test 21: new stuff                         [36736]
-;;;  test 22: (run)                             [38749]
+;;;  test 22: optimizer                         [38749]
 ;;;  test 23: with-sound                        [39273]
 ;;;  test 25: X/Xt/Xm                           [42240]
 ;;;  test 26:                                   [45922]
@@ -38753,7 +38753,7 @@ EDITS: 1
       )))
 
 
-;;; ---------------- test 22: (run) ----------------
+;;; ---------------- test 22: optimizer ----------------
 
 (define (snd_test_22)
   (if all-args
