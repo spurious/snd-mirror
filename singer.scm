@@ -287,11 +287,6 @@
 					    (* (vct-ref sines k) (sin kx)))))))))
 	  (set! s-glot-mix 1.0)
 	  (copy glot-table glot-table2)
-#|
-	  (do ((i 0 (+ i 1)))
-	      ((> i table-size))
-	    (vct-set! glot-table2 i (vct-ref glot-table i)))
-|#
 	  ;; ---------------- end make glot ----------------
 
 	  
@@ -320,18 +315,10 @@
 	    
 	    (if new-tract
 		(begin
-		  (do ((j last-sfd (+ j 1))
-		       (k 0 (+ k 1)))
-		      ((= k tractlength+8))
-		    (vct-set! target-radii k (vct-ref shape-data j)))
+		  (copy shape-data target-radii last-sfd)
+
 		  (if first-tract
 		      (copy target-radii radii))
-#|
-		      (begin
-			(do ((k 0 (+ k 1)))
-			    ((= k tractlength+8))
-			  (vct-set! radii k (vct-ref target-radii k)))))
-|#
 		  (set! change-radii #f)
 		  (set! initial-noise-position (radii tractlength+1))
 		  (do ((j 0 (+ j 1)))

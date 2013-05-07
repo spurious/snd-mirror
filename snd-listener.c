@@ -695,7 +695,7 @@ void listener_return(widget_t w, int last_prompt)
   }
 #else
   for (i = current_position - 1; i >= 0; i--)
-    if (full_str[i] == '\n')
+    if ((full_str[i] == '\n') && (is_prompt(full_str, i + 1)))
       break;
     else
       if (full_str[i] == ';')
@@ -829,97 +829,118 @@ void listener_return(widget_t w, int last_prompt)
 #endif
 
   if (full_str) GUI_FREE(full_str);
-  if (str)
-    {
-      char *errmsg = NULL;
-
-      if (current_position < (last_position - 2))
-	GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
-
-      GUI_SET_CURSOR(w, ss->wait_cursor);
-      GUI_UPDATE(w); /* not sure about this... */
-
-      if ((mus_strlen(str) > 1) || (str[0] != '\n'))
-	remember_listener_string(str);
-
+  {
+    bool need_eval = false;
+    int i, len;
+    len = mus_strlen(str);
+    for (i = 0; i < len; i++)
+      if ((str[i] != ' ') &&
+	  (str[i] != '\n') &&
+	  (str[i] != '\r') &&
+	  (str[i] != '\t'))
+	{
+	  need_eval = true;
+	  break;
+	}
+    if (!need_eval)
+      append_listener_text(-1, "\n");
+    else
+      {
+	if (str)
+	  {
+	    char *errmsg = NULL;
+	    
+	    /* fprintf(stderr, "str: [%c]\n", str[0]); */
+	    
+	    if (current_position < (last_position - 2))
+	      GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
+	    
+	    GUI_SET_CURSOR(w, ss->wait_cursor);
+	    GUI_UPDATE(w); /* not sure about this... */
+	    
+	    if ((mus_strlen(str) > 1) || (str[0] != '\n'))
+	      remember_listener_string(str);
+	    
 #if HAVE_RUBY || HAVE_FORTH
-      form = XEN_EVAL_C_STRING(str);
+	    form = XEN_EVAL_C_STRING(str);
 #endif
-
+	    
 #if HAVE_SCHEME
-      /* very tricky -- we need the interface running to see C-g, and in ordinary (not-hung, but very slow-to-compute) code
-       *   we need to let other interface stuff run.  We can't look at each event and flush all but the C-g we're waiting
-       *   for because that confuses the rest of the GUI, and some such interactions are expected.  But if interface actions
-       *   are tied to scheme code, the check_for_event lets that code be evaluated, even though we're actually running
-       *   the evaluator already in a separate thread.  If we block on the thread ID (pthread_self), bad stuff still gets
-       *   through somehow.  
-       *
-       * s7 threads here only solves the s7 side of the problem.  To make the Gtk calls thread-safe,
-       *   we have to use gdk threads, and that means either wrapping every gtk section thoughout Snd in
-       *   gdk_thread_enter/leave, or expecting the caller to do that in every expression he types in the listener.
-       *
-       * Using clone_s7 code in s7 for CL-like stack-groups is much trickier
-       *   than I thought -- it's basically importing all the pthread GC and alloc stuff into the main s7.
-       *
-       * So... set begin_hook to a func that calls gtk_main_iteration or check_for_event;
-       *   if C-g, the begin_hook func returns true, and s7 calls s7_quit, and C_g_typed is true here.
-       *   Otherwise, I think anything is safe because we're only looking at the block start, and
-       *   we're protected there by a stack barrier.  
-       *
-       * But this polling at block starts is expensive, mainly because XtAppPending and gtk_events_pending
-       *   are very slow.  So with_interrupts can turn off this check.
-       */
-
-      if (s7_begin_hook(s7) != NULL) return;      /* s7 is already running (user typed <cr> during computation) */
-
-      if ((mus_strlen(str) > 1) || (str[0] != '\n'))
-	{
-
-	  int gc_loc;
-	  s7_pointer old_port;
-
-	  old_port = s7_set_current_error_port(s7, s7_open_output_string(s7));
-	  gc_loc = s7_gc_protect(s7, old_port);
-	  
-	  if (with_interrupts(ss))
-	    s7_set_begin_hook(s7, listener_begin_hook);
-	  
-	  if (XEN_HOOKED(read_hook))
-	    form = run_or_hook(read_hook, 
-			       XEN_LIST_1(C_TO_XEN_STRING(str)),
-			       S_read_hook);
-	  else form = XEN_EVAL_C_STRING(str);
-
-	  s7_set_begin_hook(s7, NULL);
-	  if (ss->C_g_typed)
-	    {
-	      errmsg = mus_strdup("\nSnd interrupted!");
-	      ss->C_g_typed = false;
-	    }
-	  else errmsg = mus_strdup(s7_get_output_string(s7, s7_current_error_port(s7)));
-
-	  s7_close_output_port(s7, s7_current_error_port(s7));
-	  s7_set_current_error_port(s7, old_port);
-	  s7_gc_unprotect_at(s7, gc_loc);
-	}
+	    /* very tricky -- we need the interface running to see C-g, and in ordinary (not-hung, but very slow-to-compute) code
+	     *   we need to let other interface stuff run.  We can't look at each event and flush all but the C-g we're waiting
+	     *   for because that confuses the rest of the GUI, and some such interactions are expected.  But if interface actions
+	     *   are tied to scheme code, the check_for_event lets that code be evaluated, even though we're actually running
+	     *   the evaluator already in a separate thread.  If we block on the thread ID (pthread_self), bad stuff still gets
+	     *   through somehow.  
+	     *
+	     * s7 threads here only solves the s7 side of the problem.  To make the Gtk calls thread-safe,
+	     *   we have to use gdk threads, and that means either wrapping every gtk section thoughout Snd in
+	     *   gdk_thread_enter/leave, or expecting the caller to do that in every expression he types in the listener.
+	     *
+	     * Using clone_s7 code in s7 for CL-like stack-groups is much trickier
+	     *   than I thought -- it's basically importing all the pthread GC and alloc stuff into the main s7.
+	     *
+	     * So... set begin_hook to a func that calls gtk_main_iteration or check_for_event;
+	     *   if C-g, the begin_hook func returns true, and s7 calls s7_quit, and C_g_typed is true here.
+	     *   Otherwise, I think anything is safe because we're only looking at the block start, and
+	     *   we're protected there by a stack barrier.  
+	     *
+	     * But this polling at block starts is expensive, mainly because XtAppPending and gtk_events_pending
+	     *   are very slow.  So with_interrupts can turn off this check.
+	     */
+	    
+	    if (s7_begin_hook(s7) != NULL) return;      /* s7 is already running (user typed <cr> during computation) */
+	    
+	    if ((mus_strlen(str) > 1) || (str[0] != '\n'))
+	      {
+		
+		int gc_loc;
+		s7_pointer old_port;
+		
+		old_port = s7_set_current_error_port(s7, s7_open_output_string(s7));
+		gc_loc = s7_gc_protect(s7, old_port);
+		
+		if (with_interrupts(ss))
+		  s7_set_begin_hook(s7, listener_begin_hook);
+		
+		if (XEN_HOOKED(read_hook))
+		  form = run_or_hook(read_hook, 
+				     XEN_LIST_1(C_TO_XEN_STRING(str)),
+				     S_read_hook);
+		else form = XEN_EVAL_C_STRING(str);
+		
+		s7_set_begin_hook(s7, NULL);
+		if (ss->C_g_typed)
+		  {
+		    errmsg = mus_strdup("\nSnd interrupted!");
+		    ss->C_g_typed = false;
+		  }
+		else errmsg = mus_strdup(s7_get_output_string(s7, s7_current_error_port(s7)));
+		
+		s7_close_output_port(s7, s7_current_error_port(s7));
+		s7_set_current_error_port(s7, old_port);
+		s7_gc_unprotect_at(s7, gc_loc);
+	      }
 #endif
-
-      if (errmsg)
-	{
-	  if (*errmsg)
-	    snd_display_result(errmsg, NULL);
-	  free(errmsg);
-	}
-      else snd_report_listener_result(form); /* used to check for unbound form here, but that's no good in Ruby */
-
-      free(str);
-      str = NULL;
-      GUI_UNSET_CURSOR(w, ss->arrow_cursor); 
-    }
-  else
-    {
-      listener_append_and_prompt(NULL);
-    }
+	    
+	    if (errmsg)
+	      {
+		if (*errmsg)
+		  snd_display_result(errmsg, NULL);
+		free(errmsg);
+	      }
+	    else snd_report_listener_result(form); /* used to check for unbound form here, but that's no good in Ruby */
+	    
+	    free(str);
+	    str = NULL;
+	    GUI_UNSET_CURSOR(w, ss->arrow_cursor); 
+	  }
+	else
+	  {
+	    listener_append_and_prompt(NULL);
+	  }
+      }
+  }
 
   cmd_eot = GUI_TEXT_END(w);
   add_listener_position(cmd_eot);

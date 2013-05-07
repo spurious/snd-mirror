@@ -1272,17 +1272,17 @@ struct s7_scheme {
   s7_pointer HASH_TABLEP, HASH_TABLE_ITERATORP, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_SIZE, HELP, IMAG_PART, INEXACTP, INEXACT_TO_EXACT;
   s7_pointer INFINITEP, INPUT_PORTP, INTEGERP, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, KEYWORDP, KEYWORD_TO_SYMBOL, LCM, LENGTH;
   s7_pointer LIST, LISTP, LIST_TO_STRING, LIST_TO_VECTOR, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBITP, LOGIOR, LOGNOT, LOGXOR;
-  s7_pointer MACROP, MAGNITUDE, MAKE_HASH_TABLE, MAKE_HASH_TABLE_ITERATOR, MAKE_KEYWORD, MAKE_LIST, MAKE_POLAR, MAKE_RANDOM_STATE;
+  s7_pointer MACROP, MAGNITUDE, MAKE_BYTEVECTOR, MAKE_HASH_TABLE, MAKE_HASH_TABLE_ITERATOR, MAKE_KEYWORD, MAKE_LIST, MAKE_POLAR, MAKE_RANDOM_STATE;
   s7_pointer MAKE_RECTANGULAR, MAKE_STRING, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, MORALLY_EQUALP, NANP, NEGATIVEP, NEWLINE;
   s7_pointer NOT, NULLP, NUMBERP, NUMBER_TO_STRING, NUMERATOR, OBJECT_ENVIRONMENT, OBJECT_TO_STRING, ODDP, OPEN_ENVIRONMENT, OPEN_ENVIRONMENTP, OPEN_INPUT_FILE;
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTER_ENVIRONMENT, OUTPUT_PORTP, PAIRP, PAIR_LINE_NUMBER, PEEK_CHAR, PORT_CLOSEDP, PORT_FILENAME, PORT_LINE_NUMBER;
   s7_pointer POSITIVEP, PROCEDUREP, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, PROCEDURE_ENVIRONMENT, PROCEDURE_NAME, PROCEDURE_SOURCE, PROVIDE;
   s7_pointer PROVIDEDP, QUOTIENT, RANDOM, RANDOM_STATEP, RANDOM_STATE_TO_LIST, RATIONALIZE, RATIONALP, READ, READ_BYTE, READ_CHAR, READ_LINE, REALP;
-  s7_pointer REAL_PART, REMAINDER, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STRING, STRING_LEQ, STRING_LT, STRING_EQ;
+  s7_pointer READ_STRING, REAL_PART, REMAINDER, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STRING, STRING_LEQ, STRING_LT, STRING_EQ;
   s7_pointer STRING_GEQ, STRING_GT, STRINGP, STRING_POSITION, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND, STRING_CI_LEQ, STRING_CI_LT;
   s7_pointer STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_COPY, STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
   s7_pointer SYMBOL_ACCESS, SYMBOLP, SYMBOL_TO_KEYWORD, SYMBOL_TO_STRING, SYMBOL_TO_DYNAMIC_VALUE, SYMBOL_TO_VALUE;
-  s7_pointer TAN, TANH, THROW, TRUNCATE, UNOPTIMIZE, VALUES, VECTOR, VECTOR_APPEND;
+  s7_pointer TAN, TANH, THROW, TO_BYTEVECTOR, TRUNCATE, UNOPTIMIZE, VALUES, VECTOR, VECTOR_APPEND;
   s7_pointer VECTORP, VECTOR_TO_LIST, VECTOR_DIMENSIONS, VECTOR_FILL, VECTOR_LENGTH, VECTOR_REF, VECTOR_SET, WITH_INPUT_FROM_FILE;
   s7_pointer WITH_INPUT_FROM_STRING, WITH_OUTPUT_TO_FILE, WITH_OUTPUT_TO_STRING, WRITE, WRITE_BYTE, WRITE_CHAR, WRITE_STRING, ZEROP;
   s7_pointer S7_FEATURES, GC_STATS, LOAD_PATH, PI;
@@ -1730,6 +1730,8 @@ static int t_optimized = T_OPTIMIZED;
 
 #define T_BYTEVECTOR                  T_ONE_LINER
 #define is_bytevector(p)              ((typeflag(p) & T_BYTEVECTOR) != 0)
+#define set_bytevector(p)             typeflag(p) |= T_BYTEVECTOR
+
 /* PERHAPS: use this bit to mark a string that is a bytevector in scheme-land.
  *   then each object->string call needs to check this to decide about #u8(...)?
  *   alternatively, add type T_BYTEVECTOR, but piggy-back on all the string support (gc etc)
@@ -19910,6 +19912,55 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* -------------------------------- bytevectors -------------------------------- 
+ *
+ * these are just strings with the T_BYTEVECTOR bit set.
+ */
+
+static s7_pointer g_is_bytevector(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_bytevector "(bytevector? obj) returns #t if obj is a bytevector"
+  return(make_boolean(sc, is_string(car(args)) && is_bytevector(car(args))));
+}
+
+
+static s7_pointer g_to_bytevector(s7_scheme *sc, s7_pointer args)
+{
+  #define H_to_bytevector "(->bytevector obj) turns a string into a bytevector."
+  if (!is_string(car(args)))
+    return(wrong_type_argument(sc, sc->TO_BYTEVECTOR, small_int(1), car(args), T_STRING));
+  set_bytevector(car(args));
+  return(car(args));
+}
+
+
+static s7_pointer g_make_bytevector(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_bytevector "(make-bytevector len (byte 0)) makes a bytevector of length len filled with byte."
+  s7_pointer str;
+  if (is_null(cdr(args)))
+    {
+      str = g_make_string(sc, args);
+      memset((void *)(string_value(str)), 0, string_length(str));
+    }
+  else 
+    {
+      s7_pointer byte;
+      s7_Int b;
+      byte = cadr(args);
+      if (!s7_is_integer(byte))
+	return(wrong_type_argument(sc, sc->MAKE_BYTEVECTOR, small_int(2), byte, T_INTEGER));
+      b = s7_integer(byte);
+      if ((b < 0) || (b > 255))
+	return(simple_wrong_type_argument_with_type(sc, sc->MAKE_BYTEVECTOR, byte, make_protected_string(sc, "an unsigned byte")));
+      str = g_make_string(sc, list_2(sc, car(args), chars[b]));
+    }
+  set_bytevector(str);
+  return(str);
+}
+
+
+   
 
 
 /* -------------------------------- ports -------------------------------- 
@@ -21819,6 +21870,55 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
 }
 
 
+static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
+{
+  #define H_read_string "(read-string k port) reads k characters from port into a new string and returns it."
+  s7_pointer k, port, str;
+  int c;
+  s7_Int i, chars;
+
+  k = car(args);
+  if (!s7_is_integer(k))
+    return(wrong_type_argument(sc, sc->READ_STRING, small_int(1), k, T_INTEGER));
+  chars = s7_integer(k);
+  if (chars < 0)
+    return(wrong_type_argument_with_type(sc, sc->READ_STRING, small_int(1), k, A_NON_NEGATIVE_INTEGER));
+
+  if (!is_null(cdr(args)))
+    {
+      port = cadr(args);
+      if (!is_input_port(port))
+	{
+	  CHECK_METHOD(sc, port, sc->READ_STRING, args);
+	  return(wrong_type_argument_with_type(sc, sc->READ_STRING, small_int(2), port, AN_INPUT_PORT));
+	}
+    }
+  else port = sc->input_port;
+  c = port_read_character(port)(sc, port);
+  if (c == EOF)
+    return(sc->EOF_OBJECT);
+
+  if (chars == 0)
+    {
+      backchar(c, port);
+      return(make_empty_string(sc, 0, 0));
+    }
+  
+  str = make_empty_string(sc, chars, 0);
+  string_value(str)[0] = c;
+  for (i = 1; i < chars; i++)
+    {
+      c = port_read_character(port)(sc, port);
+      if (c == EOF)
+	{
+	  string_length(str) = i;
+	  return(str);
+	}
+      string_value(str)[i] = (unsigned int)c;
+    }
+  return(str);
+}
+
 
 s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
 {
@@ -23012,6 +23112,49 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, bool
 }
 
 
+static void bytevector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, bool use_write, bool to_file)
+{
+  s7_Int i, len, plen;
+  bool too_long = false;
+
+  len = string_length(vect);
+  plen = s7_vector_print_length(sc);
+
+  if (len == 0)
+    port_write_string(port)(sc, "#u8()", 5, port);
+  else
+    {
+      if (plen <= 0)
+	port_write_string(port)(sc, "#u8(...)", 8, port);
+      else
+	{
+	  int nlen;
+          #define BYTE_TO_STR_SIZE 8
+	  char byte_to_str[BYTE_TO_STR_SIZE];
+
+	  if (len > plen)
+	    {
+	      too_long = true;
+	      len = plen;
+	    }
+	  port_write_string(port)(sc, "#u8(", 4, port);
+	  for (i = 0; i < len - 1; i++)
+	    {
+	      nlen = snprintf(byte_to_str, BYTE_TO_STR_SIZE, "%d", (unsigned int)string_value(vect)[i]);
+	      port_write_string(port)(sc, byte_to_str, nlen, port);
+	      port_write_character(port)(sc, ' ', port);
+	    }
+	  nlen = snprintf(byte_to_str, BYTE_TO_STR_SIZE, "%d", (unsigned int)string_value(vect)[i]);
+	  port_write_string(port)(sc, byte_to_str, nlen, port);
+
+	  if (too_long)
+	    port_write_string(port)(sc, " ...)", 5, port);
+	  else port_write_character(port)(sc, ')', port);
+	}
+    }
+}
+
+
 static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, bool use_write, bool to_file, shared_info *ci)
 {
   s7_pointer x;
@@ -23289,31 +23432,36 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
       break;
 
     case T_STRING:
-      if (string_length(obj) > 0)
-	{
-	  /* this used to check for length > 1<<24 -- is that still necessary?
-	   */
-	  if (!use_write)
-	    port_write_string(port)(sc, string_value(obj), string_length(obj), port);
-	  else
-	    {
-	      if (!needs_slashification(string_value(obj), string_length(obj)))
-		{
-		  port_write_character(port)(sc, '"', port);
-		  port_write_string(port)(sc, string_value(obj), string_length(obj), port);
-		  port_write_character(port)(sc, '"', port);
-		}
-	      else
-		{
-		  str = slashify_string(string_value(obj), string_length(obj), IN_QUOTES, &nlen);
-		  port_write_string(port)(sc, str, nlen, port);
-		}
-	    }
-	}
+      if (is_bytevector(obj))
+	bytevector_to_port(sc, obj, port, use_write, to_file);
       else
 	{
-	  if (use_write)
-	    port_write_string(port)(sc, "\"\"", 2, port);
+	  if (string_length(obj) > 0)
+	    {
+	      /* this used to check for length > 1<<24 -- is that still necessary?
+	       */
+	      if (!use_write)
+		port_write_string(port)(sc, string_value(obj), string_length(obj), port);
+	      else
+		{
+		  if (!needs_slashification(string_value(obj), string_length(obj)))
+		    {
+		      port_write_character(port)(sc, '"', port);
+		      port_write_string(port)(sc, string_value(obj), string_length(obj), port);
+		      port_write_character(port)(sc, '"', port);
+		    }
+		  else
+		    {
+		      str = slashify_string(string_value(obj), string_length(obj), IN_QUOTES, &nlen);
+		      port_write_string(port)(sc, str, nlen, port);
+		    }
+		}
+	    }
+	  else
+	    {
+	      if (use_write)
+		port_write_string(port)(sc, "\"\"", 2, port);
+	    }
 	}
       break;
 
@@ -34688,7 +34836,7 @@ static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_emergency_exit(s7_scheme *sc, s7_pointer args)
 {
-  #define H_emergency_exit "(emergency-exit obj) exits s7"
+  #define H_emergency_exit "(emergency-exit obj) exits s7 immediately"
   s7_pointer obj;
 #ifndef EXIT_SUCCESS 
   #define EXIT_SUCCESS 0
@@ -34706,6 +34854,12 @@ static s7_pointer g_emergency_exit(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer g_exit(s7_scheme *sc, s7_pointer args)
+{
+  #define H_exit "(exit obj) exits s7"
+  s7_quit(sc);
+  return(g_emergency_exit(sc, args));
+}
 
 
 #if DEBUGGING
@@ -64291,6 +64445,7 @@ s7_scheme *s7_init(void)
   sc->READ_BYTE =             s7_define_safe_function(sc, "read-byte",               g_read_byte,              0, 1, false, H_read_byte);
   sc->WRITE_BYTE =            s7_define_safe_function(sc, "write-byte",              g_write_byte,             1, 1, false, H_write_byte);
   sc->READ_LINE =             s7_define_safe_function(sc, "read-line",               g_read_line,              0, 2, false, H_read_line);
+  sc->READ_STRING =           s7_define_safe_function(sc, "read-string",             g_read_string,            1, 1, false, H_read_string);
   sc->READ =                  s7_define_function(sc,      "read",                    g_read,                   0, 1, false, H_read);
   /* read can't be safe because it messes with the stack, expecting to be all by itself in the call sequence (not embedded in OP_SAFE_C_opSq for example)
    */
@@ -64556,6 +64711,10 @@ s7_scheme *s7_init(void)
   set_setter(sc->Vector);
 
 
+                              s7_define_safe_function(sc, "bytevector?",             g_is_bytevector,          1, 0, false, H_is_bytevector);
+  sc->TO_BYTEVECTOR =         s7_define_safe_function(sc, "->bytevector",            g_to_bytevector,          1, 0, false, H_to_bytevector);
+  sc->MAKE_BYTEVECTOR =       s7_define_safe_function(sc, "make-bytevector",         g_make_bytevector,        1, 1, false, H_make_bytevector);
+
   sc->HASH_TABLE =            s7_define_safe_function(sc, "hash-table",              g_hash_table,             0, 0, true,  H_hash_table);
   sc->HASH_TABLEP =           s7_define_safe_function(sc, "hash-table?",             g_is_hash_table,          1, 0, false, H_is_hash_table);
   sc->MAKE_HASH_TABLE =       s7_define_safe_function(sc, "make-hash-table",         g_make_hash_table,        0, 1, false, H_make_hash_table);
@@ -64633,6 +64792,7 @@ s7_scheme *s7_init(void)
   
   s7_define_safe_function(sc,                             "s7-version",              g_s7_version,             0, 0, false, H_s7_version);
   s7_define_safe_function(sc,                             "emergency-exit",          g_emergency_exit,         0, 1, false, H_emergency_exit);
+  s7_define_safe_function(sc,                             "exit",                    g_exit,                   0, 1, false, H_exit);
 #if DEBUGGING
   s7_define_function(sc,                                  "abort",                   g_abort,                  0, 0, false, "drop into gdb I hope");
 #endif
@@ -65059,20 +65219,10 @@ s7_scheme *s7_init(void)
 
 /* possible additions (r7rs):
 
-   bytevector?
-   make-bytevector
-   bytevector
-   #u8(...) read and write
-   bytevector-length
-   bytevector-u8-ref
-   bytevector-u8-set!
-   bytevector-copy
+   #u8(...) read
    bytevector-copy!
-   bytevector-append
    utf8->string
    string->utf8
    open-input|output-bytevector get-output-bytevector
    read|write-bytevector! 
-
-   exit -- s7_quit is not quite what is wanted
  */

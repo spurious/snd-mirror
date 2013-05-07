@@ -164,8 +164,7 @@ void listener_append(const char *msg)
   append_listener_text(0, msg);
   if (listener_text)
     {
-      if (ss->graph_is_active)
-	ss->graph_is_active = false;
+      ss->graph_is_active = false;
       printout_end = gtk_text_buffer_get_char_count(LISTENER_BUFFER) - 1;
     }
 }
@@ -174,8 +173,11 @@ void listener_append(const char *msg)
 void listener_append_and_prompt(const char *msg)
 {
   if (msg)
-    append_listener_text(0, msg);
-  append_listener_prompt();
+    {
+      append_listener_text(0, msg);
+      append_listener_prompt();
+    }
+  else append_listener_text(0, "\n");
   if (listener_text)
     {
       int cmd_eot;
@@ -219,7 +221,7 @@ static void ctrl_k(GtkWidget *w)
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
   gtk_text_buffer_get_iter_at_mark(buf, &beg, gtk_text_buffer_get_mark(buf, "insert"));
   end = beg;
-  gtk_text_iter_forward_to_end(&end);
+  gtk_text_iter_forward_to_line_end(&end); /* was forward_to_end! */
   if (!gtk_text_iter_equal(&beg, &end))
     {
       gtk_text_buffer_select_range(buf, &beg, &end);
@@ -530,6 +532,15 @@ static gboolean listener_mouse_move(GtkWidget *w, GdkEvent *ev, gpointer data)
 
 
 
+static bool cursor_set_blinks(GtkWidget *w, bool blinks)
+{
+  GtkSettings *settings;
+  settings = gtk_widget_get_settings(w);
+  g_object_set(settings, "gtk-cursor-blink", (gboolean)blinks, NULL);
+  return(blinks);
+}
+
+
 static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   check_parens();
@@ -549,15 +560,24 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
     {
       chan_info *cp;
       cp = current_channel();
-      graph_key_press(channel_graph(cp), event, (gpointer)cp); 
-      return(true); /* don't repeat the keystroke */
+      if (!cp) 
+	ss->graph_is_active = false;
+      else
+	{
+	  graph_key_press(channel_graph(cp), event, (gpointer)cp); 
+	  return(true); /* don't repeat the keystroke */
+	}
     }
 
   key = EVENT_KEYVAL(event);
   state = (GdkModifierType)EVENT_STATE(event);
 
+  /* fprintf(stderr, "key: %d, state: %d\n", key, state); */
+
   if (key == snd_K_Tab)
     {
+      /* this goes to end?  we need to look at current cursor and go from there */
+
       listener_completion(gtk_text_buffer_get_char_count(LISTENER_BUFFER));
       return(true);
     }
@@ -576,8 +596,8 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 	}
       else
 	{
-	  if (((key == snd_K_a) || (key == snd_K_A)) && 
-	      (state & snd_ControlMask))
+	  if ((((key == snd_K_a) || (key == snd_K_A)) && (state & snd_ControlMask)) ||
+	      ((key == snd_K_Left) && (state == 0)))
 	    {
 	      back_to_start(true);
 	    }
@@ -610,9 +630,11 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 		    }
 		  else
 		    {
-		      if ((key == snd_K_less) && (state & snd_MetaMask))
+		      if (((key == snd_K_less) && (state & snd_MetaMask)) ||
+			  ((key == snd_K_Up) && (state == 0)))
 			{
-			  sg_set_cursor(listener_text, 2);
+			  sg_set_cursor(listener_text, ss->listener_prompt_length + 1);
+			  return(true); /* keep the cursor on! */
 			}
 		      else 
 			{
@@ -724,15 +746,6 @@ static bool cursor_blinks(GtkWidget *w)
 #endif
 
 
-static bool cursor_set_blinks(GtkWidget *w, bool blinks)
-{
-  GtkSettings *settings;
-  settings = gtk_widget_get_settings(w);
-  g_object_set(settings, "gtk-cursor-blink", (gboolean)blinks, NULL);
-  return(blinks);
-}
-
-
 static gboolean listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
   if (with_pointer_focus(ss))
@@ -798,9 +811,9 @@ static void make_bindings(gpointer cls)
   set = gtk_binding_set_by_class(cls);
   
   /* C-b back char */
-  gtk_binding_entry_remove(set, snd_K_b, GDK_CONTROL_MASK);
+  gtk_binding_entry_remove(set, snd_K_b, GDK_CONTROL_MASK);                  /* gdk/gdktypes.h */
   gtk_binding_entry_add_signal(set, snd_K_b, GDK_CONTROL_MASK, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_VISUAL_POSITIONS,
+			       G_TYPE_ENUM, GTK_MOVEMENT_VISUAL_POSITIONS,   /* these are in gtk/gtkenums.h */
 			       G_TYPE_INT, -1,
 			       G_TYPE_BOOLEAN, false);
   /* M-b back word */
@@ -827,9 +840,21 @@ static void make_bindings(gpointer cls)
 			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
 			       G_TYPE_INT, 1,
 			       G_TYPE_BOOLEAN, false);
+  /* right-arrow end of line */
+  gtk_binding_entry_remove(set, snd_K_Right, 0);
+  gtk_binding_entry_add_signal(set, snd_K_Right, 0, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
+			       G_TYPE_INT, 1,
+			       G_TYPE_BOOLEAN, false);
   /* C-a start of line */
   gtk_binding_entry_remove(set, snd_K_a, GDK_CONTROL_MASK);
   gtk_binding_entry_add_signal(set, snd_K_a, GDK_CONTROL_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
+			       G_TYPE_INT, -1,
+			       G_TYPE_BOOLEAN, false);
+  /* left-arrow start of line */
+  gtk_binding_entry_remove(set, snd_K_Left, 0);
+  gtk_binding_entry_add_signal(set, snd_K_Left, 0, "move_cursor", 3,
 			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
 			       G_TYPE_INT, -1,
 			       G_TYPE_BOOLEAN, false);
@@ -839,9 +864,21 @@ static void make_bindings(gpointer cls)
 			       G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
 			       G_TYPE_INT, -1,
 			       G_TYPE_BOOLEAN, false);
+  /* up-arrow start of file */
+  gtk_binding_entry_remove(set, snd_K_Up, 0);
+  gtk_binding_entry_add_signal(set, snd_K_Up, 0, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
+			       G_TYPE_INT, -1,
+			       G_TYPE_BOOLEAN, false);
   /* M-> end of file */
   gtk_binding_entry_remove(set, snd_K_greater, GDK_MOD1_MASK);
   gtk_binding_entry_add_signal(set, snd_K_greater, GDK_MOD1_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
+			       G_TYPE_INT, 1,
+			       G_TYPE_BOOLEAN, false);
+  /* down-arrow end of file */
+  gtk_binding_entry_remove(set, snd_K_Down, 0);
+  gtk_binding_entry_add_signal(set, snd_K_Down, 0, "move_cursor", 3,
 			       G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
 			       G_TYPE_INT, 1,
 			       G_TYPE_BOOLEAN, false);
@@ -1034,7 +1071,11 @@ static void listener_stop_callback(GtkWidget *w, gpointer info)
 #if HAVE_SCHEME
 static void listener_stacktrace_callback(GtkWidget *w, gpointer info)
 {
-  snd_display_result(s7_string(s7_stacktrace(s7)), NULL);
+  s7_pointer str;
+  str = s7_eval_c_string(s7, "(stacktrace)");
+  if (s7_string_length(str) == 0)
+    str = s7_eval_c_string(s7, "(object->string (error-environment))");
+  snd_display_result(s7_string(str), NULL);
 }
 #endif
 
@@ -1347,3 +1388,16 @@ $mouse_enter_text_hook.add_hook!(\"enter\") do |w|\n\
   listener_click_hook = XEN_DEFINE_HOOK(S_listener_click_hook, "(make-hook 'position)", 1,   H_listener_click_hook); 
 }
 
+
+/* TODO: the edit history window is sometimes empty in gtk
+ * doesn't c-g unselect? -- it was held up somewhere
+ * why not c-r c-s in listener? where to prompt?
+ * split this out as a separate "widget"
+ * c-_ to undo, completion in g? and deletion from end is sometimes blocked?
+ */
+
+/* to get rid of 
+ *    Fontconfig error: Cannot load default config file
+ * and the consequent ridiculous fonts, since I think I built fontconfig from scratch,
+ * copy (as root) /etc/fonts/fonts.conf to /usr/local/etc/fonts/fonts.conf
+ */

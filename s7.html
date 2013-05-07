@@ -5923,7 +5923,13 @@ the current environment, so defines happen in the enclosing environment.
 (define open-binary-output-file open-output-file)
 (define (call-with-port port proc) ((if (input-port? port) call-with-input-port call-with-output-port) port proc))
 
-(define read-u8 read-byte)   ; perhaps bytevector = string in s7?
+(define (bytevector-u8-ref b k) (char->integer (b k)))
+(define (bytevector-u8-set! b k c) (char->integer (set! (b k) (integer->char c))))
+(define bytevector-length string-length)
+(define (bytevector . args) (->bytevector (apply string args)))
+(define (bytevector-copy . args) (->bytevector (apply string-copy args)))
+(define (bytevector-append . args) (->bytevector (apply string-append args)))
+(define read-u8 read-byte)
 (define write-u8 write-byte) 
 (define u8-ready? char-ready?) 
 (define peek-u8 peek-char)
@@ -6380,8 +6386,6 @@ g_io_channel_unref(channel);
 #include &lt;libtecla.h&gt;
 #include "s7.h"
 
-static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
-
 int main(int argc, char **argv)
 {
   s7_scheme *s7;
@@ -6391,7 +6395,6 @@ int main(int argc, char **argv)
 
   gl = new_GetLine(500, 5000);
   s7 = s7_init();  
-  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
 
   while (1) 
     {
@@ -6431,12 +6434,6 @@ See <a href="#signal">signal handling</a> and <a href="#replrescue">begin_hook t
 
 #include "s7.h"
 
-static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
-{
-  exit(1);
-  return(s7_nil(sc));
-}
-
 static s7_pointer add1(s7_scheme *sc, s7_pointer args)
 {
   if (<em class=red>s7_is_integer</em>(s7_car(args)))
@@ -6452,7 +6449,6 @@ int main(int argc, char **argv)
 
   s7 = s7_init();                     /* initialize the interpreter */
   
-  s7_define_function(s7, "exit", our_exit, 0, 0, false, "(exit) exits the program");
   s7_define_function(s7, "add1", add1, 1, 0, false, "(add1 int) adds 1 to int");
   <em class=red>s7_define_variable</em>(s7, "my-pi", <em class=red>s7_make_real</em>(s7, 3.14159265));
 
@@ -6591,12 +6587,6 @@ static void mus_error_to_s7(int type, char *msg)
 	   s7_cons(s7, s7_make_string(s7, msg), s7_nil(s7)));
 }
 
-static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
-{
-  exit(1);
-  return(s7_nil(sc));
-}
-
 int main(int argc, char **argv)
 {
   char buffer[512];
@@ -6607,7 +6597,6 @@ int main(int argc, char **argv)
   Init_sndlib();                      /* initialize sndlib with all the functions linked into s7 */  
 
   mus_error_set_handler(mus_error_to_s7); /* catch low-level errors and pass them to s7-error */
-  s7_define_function(s7, "exit", our_exit, 0, 0, false, "(exit) exits the program");
 
   while (1)                           /* fire up a "repl" */
     {
@@ -6648,12 +6637,6 @@ int main(int argc, char **argv)
 #include &lt;string.h&gt;
 
 #include "s7.h"
-
-static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
-{
-  exit(1);
-  return(s7_nil(sc));
-}
 
 /* define *listener-prompt* in scheme, add two accessors for C get/set */
 
@@ -6762,7 +6745,6 @@ int main(int argc, char **argv)
 
   s7 = s7_init();
   
-  s7_define_function(s7, "exit", our_exit, 0, 0, false, "(exit) exits the program");
   s7_define_variable(s7, "*listener-prompt*", s7_make_string(s7, "&gt;"));
 
   dax_type_tag = <em class=red>s7_new_type</em>("dax", print_dax, free_dax, equal_dax, mark_dax, NULL, NULL);
@@ -7142,13 +7124,6 @@ static void handle_sigint(int ignored)
   s7_quit(s7);                             /* get out of the eval loop if possible */
 }  
 
-static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
-{ 
-  /* this function is really needed if we are trapping C-C! */
-  exit(1);
-  return(s7_f(sc));
-}
-
 static s7_pointer our_sleep(s7_scheme *sc, s7_pointer args)
 {
   /* slow down our infinite loop for demo purposes */
@@ -7162,7 +7137,6 @@ int main(int argc, char **argv)
   char response[1024];
 
   s7 = s7_init();
-  s7_define_function(s7, "exit", our_exit, 0, 0, false, "(exit) exits");
   s7_define_function(s7, "sleep", our_sleep, 0, 0, false, "(sleep) sleeps");
   s7_define_variable(s7, "*interrupt*", s7_f(s7)); 
   /* Scheme variable *interrupt* holds the continuation at the point of the interrupt */
@@ -7309,8 +7283,6 @@ int main(int argc, char **argv)
 
 #include "s7.h"
 
-static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
-
 static s7_pointer scheme_set_notification(s7_scheme *sc, s7_pointer args)
 {
   /* this function is called when the Scheme variable is set! */
@@ -7324,7 +7296,6 @@ int main(int argc, char **argv)
 {
   s7_scheme *s7;
   s7 = s7_init();  
-  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
 
   s7_define_function(s7, "notify-C", scheme_set_notification, 2, 0, false, "called if notified-var is set!");
   s7_define_variable(s7, "notified-var", s7_make_integer(s7, 0));
@@ -7379,8 +7350,6 @@ int main(int argc, char **argv)
 
 #include "s7.h"
 
-static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
-
 static s7_pointer func1(s7_scheme *sc, s7_pointer args)
 {
   return(s7_make_integer(sc, s7_integer(s7_car(args)) + 1));
@@ -7392,7 +7361,6 @@ int main(int argc, char **argv)
   s7_pointer new_env;
 
   s7 = s7_init();  
-  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
 
   /* "func1" and "var1" will be placed in an anonymous environment,
    *   accessible from Scheme via the global variable "lib-exports"
@@ -7483,8 +7451,6 @@ int main(int argc, char **argv)
 
 #include "s7.h"
 
-static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
-
 static s7_pointer error_handler(s7_scheme *sc, s7_pointer args)
 {
   fprintf(stdout, "error: %s\n", s7_format(sc, s7_cons(sc, s7_f(sc), s7_cadr(args))));
@@ -7500,7 +7466,6 @@ int main(int argc, char **argv)
   bool with_error_hook = false;
 
   s7 = s7_init();  
-  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
   s7_define_function(s7, "error-handler", error_handler, 1, 0, false, "our error handler");
 
   if (with_error_hook)
@@ -7647,8 +7612,6 @@ static s7_pointer define_closure(s7_scheme *sc, const char *name, s7_pointer fun
   return(s7_unspecified(sc));
 }
 
-static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
-
 int main(int argc, char **argv)
 {
   char buffer[512];
@@ -7657,7 +7620,6 @@ int main(int argc, char **argv)
   s7_scheme *s7;
 
   s7 = s7_init();  
-  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
 
   c_func = s7_make_function(s7, "#&lt;closure function&gt;", closure_func, 1, 0, false, "function used by define_closure");
 
@@ -7704,8 +7666,6 @@ int main(int argc, char **argv)
 
 #include "s7.h"
 
-static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
-
 static s7_pointer my_hook_function(s7_scheme *sc, s7_pointer args)
 {
   fprintf(stderr, "a is %s\n", s7_object_to_c_string(sc, s7_symbol_local_value(sc, s7_make_symbol(sc, "a"), s7_car(args))));
@@ -7720,7 +7680,6 @@ int main(int argc, char **argv)
   s7_pointer test_hook;
 
   s7 = s7_init();  
-  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
 
   /* define test_hook in C, test-hook in Scheme, arguments are named a and b */
   test_hook = <em class=red>s7_eval_c_string</em>(s7, "(make-hook 'a 'b)");
@@ -7813,9 +7772,6 @@ void init_ex(s7_scheme *sc)  /* this needs to be globally accessible (not "stati
 #include &lt;string.h&gt;
 
 #include "s7.h"
-
-static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
-
 #include &lt;dlfcn.h&gt;
 
 static void *library = NULL;
@@ -7866,7 +7822,6 @@ int main(int argc, char **argv)
 
   s7 = s7_init();  
 
-  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
   s7_define_function(s7, "cload", cload, 2, 0, false, CLOAD_HELP);
   s7_define_function(s7, "try", try, 2, 0, false, 
                          "(try name num) tries to call name in the shared library with the argument num.");
@@ -7949,8 +7904,6 @@ so we have to copy that into a new number before adding.
 
 #include "s7.h"
 
-static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
-
 static s7_pointer big_add_1(s7_scheme *sc, s7_pointer args)
 {
   /* add 1 to either a normal number or a bignum */
@@ -8019,7 +7972,6 @@ int main(int argc, char **argv)
   char response[1024];
 
   s7 = s7_init();  
-  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
   s7_define_function(s7, "add-1", big_add_1, 1, 0, false, "(add-1 num) adds 1 to num");
 
   while (1) 
@@ -8091,7 +8043,6 @@ catching errors.
 #endif
 
 #include "s7.h"
-static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
 
 #define S7_PROMPT "s7&gt; "
 #define S7_PROMPT_LENGTH 4
@@ -8223,7 +8174,6 @@ int main(int argc, char **argv)
   GtkTextIter pos;
 
   s7 = s7_init();  
-  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
 
   /* make a window with a scrolled text widget */
   gtk_init(&amp;argc, &amp;argv);
@@ -8295,14 +8245,11 @@ Here is the same code, but now using libxm; first the C side, called gtkex.c:
 #include "xen.h"
 void Init_libxg(void);
 
-static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
-
 int main(int argc, char **argv)
 {
   s7_scheme *s7;
   s7 = s7_init();             /* start s7 */
   s7_xen_initialize(s7);     /* start the xen connection to libxm */
-  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
   Init_libxg();              /* load up all the glib/gdk/gtk/cairo/pango bindings in libxm */
   s7_load(s7, "gtkex.scm");  /* load and run our REPL (below) */ 
 }
@@ -8463,7 +8410,6 @@ thread for the s7 evaluation:
 #endif
 
 #include "s7.h"
-static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
 
 #define S7_PROMPT "s7&gt; "
 #define S7_PROMPT_LENGTH 4
@@ -8629,7 +8575,6 @@ int main(int argc, char **argv)
   GtkTextIter pos;
 
   s7 = s7_init();  
-  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
 
   /* make a window with a scrolled text widget */
   gtk_init(&amp;argc, &amp;argv);
@@ -8726,7 +8671,6 @@ to insert your own function into eval.  In s7, we have a "begin_hook" which sits
 #include &lt;signal.h&gt;
 
 #include "s7.h"
-static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
 
 static struct termios save_buf, buf;
 
@@ -8780,7 +8724,6 @@ int main(int argc, char **argv)
     }
 
   s7 = s7_init();  
-  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
 
   if (argc == 2)
     {
@@ -8839,7 +8782,6 @@ int main(int argc, char **argv)
 #endif
 
 #include "s7.h"
-static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
 
 #define S7_PROMPT "s7&gt; "
 #define S7_PROMPT_LENGTH 4
@@ -8983,7 +8925,6 @@ int main(int argc, char **argv)
   s7_scheme *s7;
 
   s7 = s7_init();  
-  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
 
   gtk_init(&amp;argc, &amp;argv);
   spinner = gdk_cursor_new(GDK_WATCH);
@@ -9140,19 +9081,11 @@ static s7_pointer g_J0_e(s7_scheme *sc, s7_pointer args)
   return(s7_values(sc, 2, s7_make_real(sc, r.val), s7_make_real(sc, r.err)));
 }
 
-static s7_pointer g_exit(s7_scheme *sc, s7_pointer args)
-{
-  #define exit_help "(exit) exits the program"
-  exit(0);
-}
-
 int main(int argc, char **argv)
 {
   gsl_set_error_handler(g_gsl_error); /* use our error handler */
 
   s7 = s7_init();  
-  s7_define_function(s7, "exit", g_exit, 0, 0, false, exit_help);
-
   s7_define_function(s7, "J0", g_J0, 1, 0, false, J0_help);
   s7_define_function(s7, "J0_e", g_J0_e, 1, 0, false, J0_e_help);
 
@@ -9228,12 +9161,6 @@ static void g_gsl_error(const char *reason, const char *file, int line, int gsl_
 		   s7_make_string(s7, reason),
 		   s7_make_string(s7, file),
 		   s7_make_integer(s7, line)));
-}
-
-static s7_pointer g_exit(s7_scheme *sc, s7_pointer args)
-{
-  #define exit_help "(exit) exits the program"
-  exit(0);
 }
 
 typedef struct {
@@ -9402,7 +9329,6 @@ int main(int argc, char **argv)
   gsl_set_error_handler(g_gsl_error);
 
   s7 = s7_init();  
-  s7_define_function(s7, "exit", g_exit, 0, 0, false, exit_help);
 
   g_block_type = <em class=red>s7_new_type_x</em>("#&lt;block&gt;", 
 			       g_block_display, g_block_free, 

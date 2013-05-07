@@ -1229,7 +1229,11 @@ static void listener_clear_callback(Widget w, XtPointer context, XtPointer info)
 #if HAVE_SCHEME
 static void listener_stacktrace_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_display_result(s7_string(s7_stacktrace(s7)), NULL);
+  s7_pointer str;
+  str = s7_eval_c_string(s7, "(stacktrace)");
+  if (s7_string_length(str) == 0)
+    str = s7_eval_c_string(s7, "(object->string (error-environment))");
+  snd_display_result(s7_string(str), NULL);
 }
 #endif
 

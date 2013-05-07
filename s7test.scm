@@ -12497,6 +12497,18 @@ a2" 3) "132")
 (test (write-string "12345" 0 most-positive-fixnum) 'error)
 (test (write-string "12345" 0 4294967296) 'error)
 
+(test (with-input-from-string "12345" (lambda () (read-string 3))) "123")
+(test (with-input-from-string "" (lambda () (read-string 3))) #<eof>)
+(test (with-input-from-string "" (lambda () (read-string 0))) #<eof>)
+(test (with-input-from-string "1" (lambda () (read-string 0))) "")
+(test (with-input-from-string "1" (lambda () (read-string -1))) 'error)
+(test (with-input-from-string "1" (lambda () (read-string #f))) 'error)
+(test (with-input-from-string "123" (lambda () (read-string 10))) "123")
+(test (call-with-input-string "123" (lambda (p) (read-string 2 p))) "12")
+(test (call-with-input-string "123" (lambda (p) (read-string 2 #f))) 'error)
+(test (call-with-input-string "123" (lambda (p) (read-string 2 (current-output-port)))) 'error)
+
+
 (test (write 1 (current-input-port)) 'error)
 (test (write-char #\a (current-input-port)) 'error)
 (test (write-byte 0 (current-input-port)) 'error)
@@ -24512,7 +24524,8 @@ who says the continuation has to restart the map from the top?
   (test (procedure-documentation amac) ""))
 
 (test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of the real number x") #t)
-(test (string=? (help abs) "(abs x) returns the absolute value of the real number x") #t)
+(if (not (string=? (help abs) "(abs x) returns the absolute value of the real number x"))
+    (format #t "(help abs): ~S~%" (help abs)))
 (test (string=? (#_help abs) "(abs x) returns the absolute value of the real number x") #t)
 (test (string=? (procedure-documentation 'abs) "(abs x) returns the absolute value of the real number x") #t)
 (test (let ((hi (lambda (x) "this is a test" (+ x 1)))) 
@@ -28492,7 +28505,36 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
   (test (copy v v) v)
   (test (copy v v 1 3) #(2 3 3)))
 
-;;; TODO: copy 3/4 args, source=dest dotted/circular lists, nils, other types
+(test (copy #(1 2 3 4 5 6) (make-list 3) 0 3) '(1 2 3))
+(test (copy #(1 2 3 4 5 6) (make-list 3) 0) '(1 2 3))
+(test (copy #(1 2 3 4 5 6) (make-list 3)) '(1 2 3))
+(test (copy #(1 2 3 4 5 6) (make-list 3) 1 4) '(2 3 4))
+(test (copy #(1 2 3 4 5 6) (make-list 3 #f) 1 2) '(2 #f #f))
+(test (copy #(1 2 3 4 5 6) (make-list 3 #f) 1 1) '(#f #f #f))
+(test (copy #(1 2 3 4 5 6) (make-list 3 #f) -1 1) 'error)
+(test (copy #(1 2 3 4 5 6) (make-list 3 #f) 1 7) 'error)
+(test (copy #(1 2 3 4 5 6) (make-list 3 #f) 1 0) 'error)
+(test (copy #(1 2 3 4 5 6) () 1 2) ())
+(test (copy #(1 2 3 4 5 6) ()) ())
+(test (copy #(1 2 3 4 5 6) (make-list 6 #f) 2) '(3 4 5 6 #f #f))
+(test (copy #(1 2 3 4 5 6) '(0 0 0 . 3)) '(1 2 3 . 3))
+
+(let ((lst (list 7 8 9)))
+   (set! (cdr (cddr lst)) lst)
+   (copy #(1 2 3 4 5 6) lst 0 1)
+   (test (car lst) 1)
+   (copy #(1 2 3 4 5 6) lst 1 5)
+   (test (car lst) 5))
+
+(test (copy #(#\a #\b #\c) (make-string 2) 1) "bc")
+(test (copy '(#\a #\b #\c) (make-string 2) 1) "bc")
+(test (copy "abc" (make-string 2) 1) "bc")
+(test (copy "abc" (make-vector 2) 1) #(#\b #\c))
+(test (copy "abc" (make-list 2) 1) '(#\b #\c))
+(test (copy '(1 2 3) (make-list 2) 1) '(2 3))
+(test (copy '(1 2 3) (make-vector 2) 1) #(2 3))
+(test (copy #(1 2 3) (make-vector 2) 1) #(2 3))
+(test (copy #(1 2 3) (make-list 2) 1) '(2 3))
 
 
 (if with-bignums
