@@ -39,8 +39,6 @@ void append_listener_text(int end, const char *msg)
 }
 
 
-static GtkTextTag *prompt_not_editable = NULL;
-
 static void append_listener_prompt(void)
 {
   /* append cr + prompt with not-editable tag */
@@ -51,7 +49,7 @@ static void append_listener_prompt(void)
       chars = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
       if (chars > 0) sg_set_cursor(listener_text, chars + 1);
       gtk_text_buffer_get_end_iter(LISTENER_BUFFER, &pos);
-      gtk_text_buffer_insert_with_tags(LISTENER_BUFFER, &pos, listener_prompt_with_cr(), ss->listener_prompt_length + 1, prompt_not_editable, NULL);
+      gtk_text_buffer_insert(LISTENER_BUFFER, &pos, listener_prompt_with_cr(), ss->listener_prompt_length + 1);
     }
 }
 
@@ -66,17 +64,225 @@ static void sg_text_delete(GtkWidget *w, int start, int end)
   gtk_text_buffer_delete(buf, &s, &e);
 }
 
+static void sg_text_insert_at_pos(GtkWidget *w, int start, char *text)
+{
+  GtkTextIter pos;
+  GtkTextBuffer *buf;
+  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+  gtk_text_buffer_get_iter_at_offset(buf, &pos, start);
+  gtk_text_buffer_insert(buf, &pos, text, strlen(text));
+}
+
+
+static bool forward_to_newline(void)
+{
+  char *full_str = NULL;
+  int i, len, start_of_text;
+
+  full_str = sg_get_text(listener_text, 0, -1);
+  len = mus_strlen(full_str);
+  start_of_text = sg_cursor_position(listener_text);
+
+  for (i = start_of_text; i < len; i++)
+    if (full_str[i] == '\n')
+      {
+	if ((len - i) > ss->listener_prompt_length)
+	  return(!is_prompt(full_str, i + ss->listener_prompt_length));
+      }
+  return(true);
+}
+
+
+static bool back_to_start_or_newline(bool move_cursor, int count)
+{
+  char *full_str = NULL;
+  int i, start_of_text;
+  bool found_newline;
+
+  full_str = sg_get_text(listener_text, 0, -1);
+  start_of_text = sg_cursor_position(listener_text);
+
+  for (i = start_of_text - 1; i >= 0; i--)
+    if ((is_prompt(full_str, i)) ||
+	(full_str[i] == '\n'))
+      {
+	start_of_text = i + 2;
+	count--;
+	if ((count <= 0) || (i <= ss->listener_prompt_length))
+	  break;
+      }
+  if (move_cursor)
+    sg_set_cursor(listener_text, start_of_text);
+
+  found_newline = (full_str[i] == '\n');
+  if (full_str) g_free(full_str);
+  return(found_newline);
+}
+
+
+static int back_to_start(bool move_cursor, int count)
+{
+  char *full_str = NULL;
+  int i, start_of_text;
+
+  full_str = sg_get_text(listener_text, 0, -1);
+  start_of_text = (sg_cursor_position(listener_text) + ss->listener_prompt_length - 1);
+
+  for (i = start_of_text; i >= 0; i--)
+    if (is_prompt(full_str, i))
+      {
+	start_of_text = i + 1;
+	count--;
+	if ((count <= 0) || (i <= ss->listener_prompt_length))
+	  break;
+      }
+
+  if (move_cursor) 
+    sg_set_cursor(listener_text, start_of_text + 1);
+
+  if (full_str) g_free(full_str);
+  return(start_of_text + 1);
+}
+
+
+static bool whitespace_p(char c)
+{
+  return((c == ' ') ||
+	 (c == '\n') ||
+	 (c == '\r') ||
+	 (c == '\t'));
+}
+
 
 static void listener_completion(int end)
 {
+  static char *indent_spaces = "                                        ";
   int beg;
-  char *old_text = NULL;
+  char *old_text = NULL, *previous_text;
 
-  beg = printout_end + 1;
+  /* if previous char was whitespace, treat as indentation */
+  beg = back_to_start(false, 1);
   if (end <= beg) return;
-
-  old_text = sg_get_text(listener_text, beg, end);
+  old_text = sg_get_text(listener_text, beg - 1, end);
   /* now old_text is the stuff typed since the last prompt */
+  /* fprintf(stderr, "completion %s\n", old_text); */
+
+  previous_text = sg_get_text(listener_text, end - 1, end);
+  /* fprintf(stderr, "old(%d): [%c]\n", end, previous_text[0]); */
+
+  if (whitespace_p(previous_text[0]))
+    {
+      /* look back for \n, on that line look for complete expr closest to \n, if none go back another
+       *   back up to key? or align with it?
+       */
+      int k, len, parens = 0, wpos = 0, crs = 0, exprs = 0;
+      bool in_whitespace;
+
+      len = mus_strlen(old_text);
+      in_whitespace = whitespace_p(old_text[len - 1]);
+
+      for (k = len - 1; k >= 0; k--)
+	{
+	  if (whitespace_p(old_text[k]))
+	    {
+	      if (parens == 0)
+		{
+		  if (!in_whitespace) exprs++;
+		  in_whitespace = true;
+		}
+	      wpos = k;
+	      if (old_text[k] == '\n')
+		crs++;
+	    }
+	  else
+	    {
+	      if (crs == 0)
+		{
+		  sg_text_insert_at_pos(listener_text, end, "    ");
+		  return;
+		}
+	      /* lots of memory leaks throughout... */
+	      if (old_text[k] == '(')
+		{
+		  parens--;
+		  if (parens < 0) break;
+		  if (parens == 0) 
+		    {
+		      exprs++;
+		      in_whitespace = true;
+		    }
+		}
+	      else
+		{
+		  if (old_text[k] == ')')
+		    parens++;
+		}
+	    }
+	}
+      if (parens == 0)
+	sg_text_insert_at_pos(listener_text, end, "    ");
+      else
+	{
+	  int j, col = 0;
+	  /* we have an unmatched open paren at k, next whitespace at wpos */
+	  if (crs == 0) return;
+	  for (j = k - 1; j >= 0; j--)
+	    if (old_text[j] == '\n')
+	      {
+		col = k - j;
+		break;
+	      }
+	  if (col == 0)
+	    col = ss->listener_prompt_length;
+	  /* fprintf(stderr, "check forward from %d to %d, exprs: %d, crs: %d, column: %d\n", k, wpos, exprs, crs, col); 
+	   * TODO: exprs misses non-paren cases
+	   * TODO: def* and or begin set lambda letrec define lambda* define* letrec* define-macro etc
+	   */
+	  switch (wpos - k)
+	    {
+	    case 3:
+	      if (strncmp((const char *)(old_text + k + 1), "if", 2) == 0)
+		{
+		  if (exprs < 2)
+		    sg_text_insert_at_pos(listener_text, end, (char *)(indent_spaces + 40 - col - 4));
+		  else sg_text_insert_at_pos(listener_text, end, (char *)(indent_spaces + 40 - col - 2));
+		}
+	      else
+		{
+		  if (strncmp((const char *)(old_text + k + 1), "do", 2) == 0)
+		    {
+		      /* line up steppers also */
+		      if (exprs < 2)
+			sg_text_insert_at_pos(listener_text, end, (char *)(indent_spaces + 40 - col - 4));
+		      else sg_text_insert_at_pos(listener_text, end, (char *)(indent_spaces + 40 - col - 2));
+		    }
+		}
+	      break;
+	  
+	    case 4:
+	      if (strncmp((const char *)(old_text + k + 1), "let", 3) == 0) /* we're in the body? */
+		sg_text_insert_at_pos(listener_text, end, (char *)(indent_spaces + 40 - col - 2));
+	      break;
+	      
+	    case 5:
+	      if (strncmp((const char *)(old_text + k + 1), "cond", 4) == 0)
+		sg_text_insert_at_pos(listener_text, end, (char *)(indent_spaces + 40 - col - 6));
+	      else
+		{
+		  if (strncmp((const char *)(old_text + k + 1), "case", 4) == 0)
+		    sg_text_insert_at_pos(listener_text, end, (char *)(indent_spaces + 40 - col - 2));
+		  else
+		    {
+		      if (strncmp((const char *)(old_text + k + 1), "let*", 4) == 0) /* we're in the body? -- make this the default */
+			sg_text_insert_at_pos(listener_text, end, (char *)(indent_spaces + 40 - col - 2));
+		    }
+		}
+	      break;
+	    }
+	}
+      return;
+    }
+
 
   if (old_text)
     {
@@ -84,13 +290,32 @@ static void listener_completion(int end)
       bool try_completion = true;
 
       new_text = complete_listener_text(old_text, end, &try_completion, &file_text);
+      /* fprintf(stderr, "completion: %s %d\n", new_text, try_completion); */
+
       if (try_completion)
 	{
 	  if (mus_strcmp(old_text, new_text))
 	    get_completion_matches();
+	  /*
 	  sg_text_delete(listener_text, beg, end);
 	  append_listener_text(0, new_text);
+	  */
+	  {
+	    int old_len, new_len;
+	    old_len = end - beg + 1;
+	    new_len = mus_strlen(new_text);
+	    if (new_len > old_len)
+	      {
+		/* fprintf(stderr, "completion: %d to %d\n", old_len, new_len); */
+		sg_text_insert_at_pos(listener_text, end, (char *)(new_text + old_len));
+	      }
+	  }
 	  goto_window(listener_text);
+	}
+      else
+	{
+	  /* tab to indent? */
+	  sg_text_insert_at_pos(listener_text, end, "    ");
 	}
 
       if (new_text) free(new_text); 
@@ -98,29 +323,6 @@ static void listener_completion(int end)
       g_free(old_text);
     }
   
-}
-
-
-static int back_to_start(bool move_cursor)
-{
-  char *full_str = NULL;
-  int start_of_text;
-  full_str = sg_get_text(listener_text, 0, -1);
-  start_of_text = sg_cursor_position(listener_text);
-  if (start_of_text > 0)
-    {
-      int i;
-      for (i = start_of_text; i >= 0; i--)
-	if (is_prompt(full_str, i))
-	  {
-	    start_of_text = i + 1;
-	    break;
-	  }
-    }
-  if (move_cursor) 
-    sg_set_cursor(listener_text, start_of_text + 1);
-  if (full_str) g_free(full_str);
-  return(start_of_text + 1);
 }
 
 
@@ -136,7 +338,7 @@ static void text_at_cursor(GtkWidget *w)
       return;
     }
 
-  prompt_pos = back_to_start(false);
+  prompt_pos = back_to_start(false, 1);
 
   if (curpos > 40)
     start = curpos - 40;
@@ -187,7 +389,7 @@ void listener_append_and_prompt(const char *msg)
 }
 
 
-static void listener_return_callback(void)
+static void glistener_return_callback(void)
 {
   listener_return(listener_text, printout_end);
 }
@@ -206,7 +408,7 @@ static void clear_back_to_prompt(GtkWidget *w)
 {
   int beg, end;
   end = sg_cursor_position(w);
-  back_to_start(true);
+  back_to_start(true, 1);
   beg = sg_cursor_position(w);
   if (end <= beg) return;
   sg_text_delete(w, beg, end);
@@ -553,6 +755,8 @@ static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer 
 
 static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
+  int pos;
+  char *text;
   guint key;
   GdkModifierType state;
 
@@ -572,135 +776,369 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   key = EVENT_KEYVAL(event);
   state = (GdkModifierType)EVENT_STATE(event);
 
-  /* fprintf(stderr, "key: %d, state: %d\n", key, state); */
+  /* fprintf(stderr, "key: %d, state: %d\n", key, state);  */
 
-  if (key == snd_K_Tab)
+  switch (key)
     {
-      /* this goes to end?  we need to look at current cursor and go from there */
+      /* further processing (by gtk) of the keystroke is blocked if we fall through */
+    case snd_K_a:
+      if (state & snd_ControlMask)
+	back_to_start_or_newline(true, 1);
+      else
+	{
+	  if (state & snd_MetaMask)
+	    back_to_start(true, 2);
+	  else return(false);
+	}
+      break;
 
-      listener_completion(gtk_text_buffer_get_char_count(LISTENER_BUFFER));
-      return(true);
-    }
+    case snd_K_b:
+      /* TODO: sg_get_text result need g_free I think */
+      if (state & snd_ControlMask)
+	{
+	  pos = sg_cursor_position(listener_text);
+	  if (pos > ss->listener_prompt_length)
+	    {
+	      text = sg_get_text(listener_text, pos - ss->listener_prompt_length - 2, pos);
+	      if (!is_prompt(text, ss->listener_prompt_length + 1))
+		sg_set_cursor(listener_text, pos);
+	      g_free(text);
+	    }
+	}
+      /* if (state & snd_MetaMask) we need to look for whitespace til prompt and block(goto prompt) if so
+       */
+      else return(false);
+      break;
 
-  if (key == snd_K_Return)
-    listener_return_callback();
-  else
-    {
-      if (((key == snd_K_g) || (key == snd_K_G)) && 
-	  (state & snd_ControlMask))
+    case snd_K_c:
+    case snd_K_C:
+      if (state & snd_MetaMask)
+	word_upper(listener_text, true, false);
+      else return(false);
+      break;
+
+    case snd_K_f:
+      if (state & snd_ControlMask)
+	{
+	  pos = sg_cursor_position(listener_text);
+	  text = sg_get_text(listener_text, pos, pos + ss->listener_prompt_length + 1);
+	  if (!is_prompt(text, ss->listener_prompt_length))
+	    sg_set_cursor(listener_text, pos + 2);
+	  else sg_set_cursor(listener_text, pos + 2 + ss->listener_prompt_length);
+	  g_free(text);
+	}
+      else return(false);
+      break;
+
+    case snd_K_g: 
+    case snd_K_G:
+      if (state & snd_ControlMask)
 	{
 	  ss->C_g_typed = true; 
 	  if (state & snd_MetaMask)
 	    clear_listener();
 	  else control_g(any_selected_sound());
 	}
+      else return(false);
+      break;
+
+    case snd_K_BackSpace:
+      {
+	/* make sure we don't backspace over the prompt */
+	int current_position;
+	char *fstr;
+	
+	current_position = sg_cursor_position(listener_text);
+	if (current_position > ss->listener_prompt_length)
+	  {
+	    fstr = sg_get_text(listener_text, current_position - ss->listener_prompt_length - 1, current_position);
+	    if ((current_position != (printout_end - ss->listener_prompt_length - 1)) && 
+		(!(mus_strcmp(fstr, listener_prompt_with_cr())))) /* TODO: is_prompt? */
+	      {
+		g_free(fstr);
+		return(false);
+	      }
+	    g_free(fstr);
+	  }
+      }
+      break;
+
+    case snd_K_k:
+      if (state & snd_ControlMask)
+	/* select to line end, copy to clipboard, delete */
+	ctrl_k(listener_text);
+      else return(false);
+      break;
+      
+    case snd_K_l:
+    case snd_K_L:
+      if (state & snd_MetaMask)
+	word_upper(listener_text, false, false);
+      else return(false);
+      break;
+
+    case snd_K_n:
+    case snd_K_N:
+      if (state & snd_ControlMask)
+	{
+	  int i, col;
+	  char *text;
+
+	  pos = sg_cursor_position(listener_text);
+	  text = sg_get_text(listener_text, pos - ss->listener_prompt_length - 1, pos);
+	  for (i = mus_strlen(text), col = 0; (i >= 0) && (col <= ss->listener_prompt_length); i--, col++)
+	    if (text[i] == '\n')
+	      break;
+	  if (col > ss->listener_prompt_length) return(false);
+	  g_free(text);
+
+	  /* now we have to find the next \n and see if it has a prompt
+	   *   if we hit a prompt, should we go up and over or stop?
+	   */
+	  if (forward_to_newline())
+	    return(false);
+	}
       else
 	{
-	  if ((((key == snd_K_a) || (key == snd_K_A)) && (state & snd_ControlMask)) ||
-	      ((key == snd_K_Left) && (state == 0)))
+	  if (state & snd_MetaMask)
 	    {
-	      back_to_start(true);
+	      clear_back_to_prompt(listener_text);
+	      restore_listener_string(false);
 	    }
-	  else
+	  else return(false);
+	}
+      break;
+
+    case snd_K_p:
+    case snd_K_P:
+      if (state & snd_ControlMask)
+	{
+	  int i, col;
+	  char *text;
+
+	  pos = sg_cursor_position(listener_text);
+	  if (pos > ss->listener_prompt_length)           /* gtk c-p happily backs up to pos 0! */
 	    {
-	      if (key == snd_K_BackSpace)
+	      text = sg_get_text(listener_text, pos - ss->listener_prompt_length - 1, pos);
+	      for (i = mus_strlen(text), col = 0; (i >= 0) && (col <= ss->listener_prompt_length); i--, col++)
+		if (text[i] == '\n')
+		  break;
+	      if (col > ss->listener_prompt_length) return(false);
+	      g_free(text);
+
+	      /* now we have to find the previous \n and see if it has a prompt */
+	      if (back_to_start_or_newline(false, 2))
+		return(false);
+	    }
+	}
+      else
+	{
+	  if (state & snd_MetaMask)
+	    {
+	      clear_back_to_prompt(listener_text);
+	      restore_listener_string(true);
+	    }
+	  else return(false);
+	}
+      break;
+
+    case snd_K_t:
+    case snd_K_T:
+      if (state & snd_ControlMask)
+	{
+	  pos = sg_cursor_position(listener_text);
+	  if (pos > ss->listener_prompt_length)
+	    {
+	      text = sg_get_text(listener_text, pos - ss->listener_prompt_length - 2, pos);
+	      if (!is_prompt(text, ss->listener_prompt_length + 1))
 		{
-		  int current_position;
-		  char *fstr;
-		  current_position = sg_cursor_position(listener_text);
-		  if (current_position > 1)
-		    {
-		      fstr = sg_get_text(listener_text, current_position - 2, current_position);
-		      if ((current_position != (printout_end - 2)) && 
-			  (!(mus_strcmp(fstr, listener_prompt_with_cr()))))
-			{
-			  g_free(fstr);
-			  return(false);
-			}
-		      g_free(fstr);
-		    }
+		  g_free(text);
+		  text_transpose(listener_text);
 		}
-	      else
-		{
-		  if ((key == snd_K_greater) && (state & snd_MetaMask))
-		    {
-		      int end;
-		      end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
-		      sg_set_cursor(listener_text, end + 1);
-		    }
-		  else
-		    {
-		      if (((key == snd_K_less) && (state & snd_MetaMask)) ||
-			  ((key == snd_K_Up) && (state == 0)))
-			{
-			  sg_set_cursor(listener_text, ss->listener_prompt_length + 1);
-			  return(true); /* keep the cursor on! */
-			}
-		      else 
-			{
-			  if (((key == snd_K_p) || (key == snd_K_P)) && (state & snd_MetaMask))
-			    {
-			      clear_back_to_prompt(listener_text);
-			      restore_listener_string(true);
-			    }
-			  else 
-			    {
-			      if (((key == snd_K_n) || (key == snd_K_N)) && (state & snd_MetaMask))
-				{
-				  clear_back_to_prompt(listener_text);
-				  restore_listener_string(false);
-				}
-			      else 
-				{
-				  if (((key == snd_K_question) && (state & snd_ControlMask)) ||
-				      ((key == snd_K_period) && (state & snd_MetaMask)))
-				    {
-				      text_at_cursor(listener_text);
-				    }
-				  else
-				    {
-				      if (((key == snd_K_c) || (key == snd_K_C)) && (state & snd_MetaMask))
-					{
-					  /* M-c (as opposed to M-C) is trapped somewhere else */
-					  word_upper(listener_text, true, false);
-					} 
-				      else
-					{
-					  if (((key == snd_K_l) || (key == snd_K_L)) && (state & snd_MetaMask))
-					    {
-					      word_upper(listener_text, false, false);
-					    }
-					  else
-					    {
-					      if (((key == snd_K_u) || (key == snd_K_U)) && (state & snd_MetaMask))
-						{
-						  word_upper(listener_text, false, true);
-						}
-					      else
-						{
-						  if (((key == snd_K_t) || (key == snd_K_T)) && (state & snd_ControlMask))
-						    {
-						      text_transpose(listener_text);
-						    }
-						  else
-						    {
-						      if ((key == snd_K_underscore) && (state & snd_ControlMask))
-							{
-							  backup_listener_to_previous_expression();
-							}
-						      else
-							{
-							  if ((key == snd_K_k) && (state & snd_ControlMask))
-							    {
-							      /* select to line end, copy to clipboard, delete */
-							      ctrl_k(listener_text);
-							    }
-							  else
-							    return(false);
-							}}}}}}}}}}}}}}
+	      else return(false);
+	    }
+	  /* else drop through and block signal */
+	}
+      else return(false);
+      break;
+
+    case snd_K_u:
+    case snd_K_U:
+      if (state & snd_MetaMask)
+	word_upper(listener_text, false, true);
+      else return(false);
+      break;
+
+    case snd_K_Tab:
+      listener_completion(sg_cursor_position(listener_text));
+      return(true);
+
+    case snd_K_Return:
+      glistener_return_callback();
+      break;
+
+    case snd_K_Left:
+      if (state == 0)
+	{
+	  /* TODO: c-a = start of line or at prompt, whereas <- = prompt 
+	   *   and similarly for the others
+	   * and in all these searches, why not use strstr?
+	   */
+	  back_to_start(true, 1);
+	}
+      else return(false);
+      break;
+
+    case snd_K_greater:
+      if (state & snd_MetaMask)
+	{
+	  int end;
+	  end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
+	  sg_set_cursor(listener_text, end + 1);
+	}
+      else return(false);
+      break;
+
+    case snd_K_less:
+    case snd_K_Up:
+      if ((key == snd_K_Up) || 
+	  ((key == snd_K_less) && (state & snd_MetaMask)))
+	{
+	  sg_set_cursor(listener_text, ss->listener_prompt_length + 1);
+	  return(true); /* keep the cursor on! */
+	}
+      else return(false);
+      break;
+
+    case snd_K_question:
+      if (state & snd_ControlMask)
+	text_at_cursor(listener_text);
+      else return(false);
+      break;
+
+    case snd_K_period:
+      if (state & snd_MetaMask)
+	text_at_cursor(listener_text);
+      else return(false);
+      break;
+      
+    case snd_K_underscore:
+      if (state & snd_ControlMask)
+	backup_listener_to_previous_expression();
+      else return(false);
+      break;
+
+    default: 
+      return(false);
+    }
+
   g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
   return(false);
 }
+
+
+static void make_bindings(gpointer cls)
+{
+  /* TOOD: almost none of these is correct because they don't know about the prompt and c-d is totally wrong!
+   */
+
+  /* sigh... activate Emacs key bindings to some extent */
+  GtkBindingSet *set;
+  set = gtk_binding_set_by_class(cls);
+  
+  /* C-d delete at cursor */
+  gtk_binding_entry_remove(set, snd_K_d, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_d, GDK_CONTROL_MASK,
+			       "delete_from_cursor", 2,
+			       G_TYPE_ENUM, GTK_DELETE_CHARS,
+			       G_TYPE_INT, 1); /* -1 = delete to left of cursor */
+  /* M-d delete word at cursor */
+  gtk_binding_entry_remove(set, snd_K_d, GDK_MOD1_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_d, GDK_MOD1_MASK,
+			       "delete_from_cursor", 2,
+			       G_TYPE_ENUM, GTK_DELETE_WORD_ENDS,
+			       G_TYPE_INT, 1);
+  /* C-e end of line */
+  gtk_binding_entry_remove(set, snd_K_e, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_e, GDK_CONTROL_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
+			       G_TYPE_INT, 1,
+			       G_TYPE_BOOLEAN, false);
+  /* right-arrow end of line */
+  gtk_binding_entry_remove(set, snd_K_Right, 0);
+  gtk_binding_entry_add_signal(set, snd_K_Right, 0, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
+			       G_TYPE_INT, 1,
+			       G_TYPE_BOOLEAN, false);
+  /* M-> end of file */
+  gtk_binding_entry_remove(set, snd_K_greater, GDK_MOD1_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_greater, GDK_MOD1_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
+			       G_TYPE_INT, 1,
+			       G_TYPE_BOOLEAN, false);
+  /* down-arrow end of file */
+  gtk_binding_entry_remove(set, snd_K_Down, 0);
+  gtk_binding_entry_add_signal(set, snd_K_Down, 0, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
+			       G_TYPE_INT, 1,
+			       G_TYPE_BOOLEAN, false);
+  /* C-n down line */
+  gtk_binding_entry_remove(set, snd_K_n, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_n, GDK_CONTROL_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINES,
+			       G_TYPE_INT, 1,
+			       G_TYPE_BOOLEAN, false);
+  /* C-p up line */
+  gtk_binding_entry_remove(set, snd_K_p, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_p, GDK_CONTROL_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINES,
+			       G_TYPE_INT, -1,
+			       G_TYPE_BOOLEAN, false);
+
+  /* ---------------------------------------- these are broken ---------------------------------------- */
+  /* M-b back word -- TODO: check prompt */
+  gtk_binding_entry_remove(set, snd_K_b, GDK_MOD1_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_b, GDK_MOD1_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_WORDS,
+			       G_TYPE_INT, -1,
+			       G_TYPE_BOOLEAN, false);
+  /* M-f forward word -- TODO: check prompt */
+  gtk_binding_entry_remove(set, snd_K_f, GDK_MOD1_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_f, GDK_MOD1_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_WORDS,
+			       G_TYPE_INT, 1,
+			       G_TYPE_BOOLEAN, false);
+  /* C-v down window -- TODO: can this end up in a prompt? */
+  gtk_binding_entry_remove(set, snd_K_v, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_v, GDK_CONTROL_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_PAGES,
+			       G_TYPE_INT, 1,
+			       G_TYPE_BOOLEAN, false);
+  /* M-v for up window?? -- TODO: check prompt */
+  gtk_binding_entry_remove(set, snd_K_v, GDK_MOD1_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_v, GDK_MOD1_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_PAGES,
+			       G_TYPE_INT, -1,
+			       G_TYPE_BOOLEAN, false);
+  /* M-delete delete to start of line -- TODO: this clobbers the prompt */
+  gtk_binding_entry_remove(set, snd_K_Delete, GDK_MOD1_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_Delete, GDK_MOD1_MASK,
+			       "delete_from_cursor", 2,
+			       G_TYPE_ENUM, GTK_DELETE_PARAGRAPH_ENDS,
+			       G_TYPE_INT, -1);
+
+  
+  /* C-w delete region -> clipboard -- it's possible to clobber a prompt here */
+  gtk_binding_entry_remove(set, snd_K_w, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_w, GDK_CONTROL_MASK,
+			       "cut_clipboard", 0);
+  
+  /* C-y yank <- clipboard */
+  gtk_binding_entry_remove(set, snd_K_y, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_y, GDK_CONTROL_MASK,
+			       "paste_clipboard", 0);
+}
+
 
 
 static XEN listener_click_hook; 
@@ -714,16 +1152,29 @@ static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer
 
 static gboolean listener_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
+  /* before doing anything, make sure we're not in the prompt! */
+  int cpos, bpos;
+
+  cpos = sg_cursor_position(w);
+  if (cpos == 0)
+    sg_set_cursor(listener_text, ss->listener_prompt_length + 1);
+  else
+    {
+      bpos = back_to_start(false, 1);
+      /* fprintf(stderr, "bpos: %d, cpos: %d\n", bpos, cpos); */
+      if (cpos < bpos)
+	sg_set_cursor(listener_text, bpos);
+    }
+  
+#if 0
   if (EVENT_STATE(ev) & GDK_BUTTON2_MASK)
     {
       int end;
       end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
       sg_set_cursor(listener_text, end + 1);
-      /* I guess ideally we'd go to the end of the current form.  At least this
-       *   squelches the redundant copy of the text and leaves the cursor in most
-       *   cases at the end of the form.
-       */
+      /* I think this happens after we past something via the middle button */
     }
+#endif
   check_parens();
   return(false);
 }
@@ -802,144 +1253,6 @@ void connect_mouse_to_text(GtkWidget *text)
   SG_SIGNAL_CONNECT(text, "enter_notify_event", mouse_enter_text_callback, NULL);
   SG_SIGNAL_CONNECT(text, "leave_notify_event", mouse_leave_text_callback, NULL);
 }
-
-
-static void make_bindings(gpointer cls)
-{
-  /* sigh... activate Emacs key bindings to some extent */
-  GtkBindingSet *set;
-  set = gtk_binding_set_by_class(cls);
-  
-  /* C-b back char */
-  gtk_binding_entry_remove(set, snd_K_b, GDK_CONTROL_MASK);                  /* gdk/gdktypes.h */
-  gtk_binding_entry_add_signal(set, snd_K_b, GDK_CONTROL_MASK, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_VISUAL_POSITIONS,   /* these are in gtk/gtkenums.h */
-			       G_TYPE_INT, -1,
-			       G_TYPE_BOOLEAN, false);
-  /* M-b back word */
-  gtk_binding_entry_remove(set, snd_K_b, GDK_MOD1_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_b, GDK_MOD1_MASK, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_WORDS,
-			       G_TYPE_INT, -1,
-			       G_TYPE_BOOLEAN, false);
-  /* C-f forward char */
-  gtk_binding_entry_remove(set, snd_K_f, GDK_CONTROL_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_f, GDK_CONTROL_MASK, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_VISUAL_POSITIONS,
-			       G_TYPE_INT, 1,
-			       G_TYPE_BOOLEAN, false);
-  /* OVERRIDDEN: M-f forward word */
-  gtk_binding_entry_remove(set, snd_K_f, GDK_MOD1_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_f, GDK_MOD1_MASK, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_WORDS,
-			       G_TYPE_INT, 1,
-			       G_TYPE_BOOLEAN, false);
-  /* C-e end of line */
-  gtk_binding_entry_remove(set, snd_K_e, GDK_CONTROL_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_e, GDK_CONTROL_MASK, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
-			       G_TYPE_INT, 1,
-			       G_TYPE_BOOLEAN, false);
-  /* right-arrow end of line */
-  gtk_binding_entry_remove(set, snd_K_Right, 0);
-  gtk_binding_entry_add_signal(set, snd_K_Right, 0, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
-			       G_TYPE_INT, 1,
-			       G_TYPE_BOOLEAN, false);
-  /* C-a start of line */
-  gtk_binding_entry_remove(set, snd_K_a, GDK_CONTROL_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_a, GDK_CONTROL_MASK, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
-			       G_TYPE_INT, -1,
-			       G_TYPE_BOOLEAN, false);
-  /* left-arrow start of line */
-  gtk_binding_entry_remove(set, snd_K_Left, 0);
-  gtk_binding_entry_add_signal(set, snd_K_Left, 0, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
-			       G_TYPE_INT, -1,
-			       G_TYPE_BOOLEAN, false);
-  /* M-< start of file */
-  gtk_binding_entry_remove(set, snd_K_less, GDK_MOD1_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_less, GDK_MOD1_MASK, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
-			       G_TYPE_INT, -1,
-			       G_TYPE_BOOLEAN, false);
-  /* up-arrow start of file */
-  gtk_binding_entry_remove(set, snd_K_Up, 0);
-  gtk_binding_entry_add_signal(set, snd_K_Up, 0, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
-			       G_TYPE_INT, -1,
-			       G_TYPE_BOOLEAN, false);
-  /* M-> end of file */
-  gtk_binding_entry_remove(set, snd_K_greater, GDK_MOD1_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_greater, GDK_MOD1_MASK, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
-			       G_TYPE_INT, 1,
-			       G_TYPE_BOOLEAN, false);
-  /* down-arrow end of file */
-  gtk_binding_entry_remove(set, snd_K_Down, 0);
-  gtk_binding_entry_add_signal(set, snd_K_Down, 0, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
-			       G_TYPE_INT, 1,
-			       G_TYPE_BOOLEAN, false);
-  /* C-n down line */
-  gtk_binding_entry_remove(set, snd_K_n, GDK_CONTROL_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_n, GDK_CONTROL_MASK, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINES,
-			       G_TYPE_INT, 1,
-			       G_TYPE_BOOLEAN, false);
-  /* C-p up line */
-  gtk_binding_entry_remove(set, snd_K_p, GDK_CONTROL_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_p, GDK_CONTROL_MASK, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINES,
-			       G_TYPE_INT, -1,
-			       G_TYPE_BOOLEAN, false);
-  /* C-v down window */
-  gtk_binding_entry_remove(set, snd_K_v, GDK_CONTROL_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_v, GDK_CONTROL_MASK, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_PAGES,
-			       G_TYPE_INT, 1,
-			       G_TYPE_BOOLEAN, false);
-  /* OVERRIDEN: M-v up window */
-  gtk_binding_entry_remove(set, snd_K_v, GDK_MOD1_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_v, GDK_MOD1_MASK, "move_cursor", 3,
-			       G_TYPE_ENUM, GTK_MOVEMENT_PAGES,
-			       G_TYPE_INT, -1,
-			       G_TYPE_BOOLEAN, false);
-  /* C-d delete at cursor */
-  gtk_binding_entry_remove(set, snd_K_d, GDK_CONTROL_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_d, GDK_CONTROL_MASK,
-			       "delete_from_cursor", 2,
-			       G_TYPE_ENUM, GTK_DELETE_CHARS,
-			       G_TYPE_INT, -1);
-  /* M-d delete word at cursor */
-  gtk_binding_entry_remove(set, snd_K_d, GDK_MOD1_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_d, GDK_MOD1_MASK,
-			       "delete_from_cursor", 2,
-			       G_TYPE_ENUM, GTK_DELETE_WORD_ENDS,
-			       G_TYPE_INT, 1);
-  
-  /* C-k delete to end of line -- see explicit handling above */
-  gtk_binding_entry_remove(set, snd_K_k, GDK_CONTROL_MASK);
-  
-  /* M-delete delete to start of line */
-  gtk_binding_entry_remove(set, snd_K_Delete, GDK_MOD1_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_Delete, GDK_MOD1_MASK,
-			       "delete_from_cursor", 2,
-			       G_TYPE_ENUM, GTK_DELETE_PARAGRAPH_ENDS,
-			       G_TYPE_INT, -1);
-  
-  /* C-w delete region -> clipboard */
-  gtk_binding_entry_remove(set, snd_K_w, GDK_CONTROL_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_w, GDK_CONTROL_MASK,
-			       "cut_clipboard", 0);
-  
-  /* C-y yank <- clipboard */
-  gtk_binding_entry_remove(set, snd_K_y, GDK_CONTROL_MASK);
-  gtk_binding_entry_add_signal(set, snd_K_y, GDK_CONTROL_MASK,
-			       "paste_clipboard", 0);
-}
-
 
 static bool bindings_ok = false;
 
@@ -1124,6 +1437,7 @@ static void make_listener_widget(int height)
   if (!listener_text)
     {
       GtkWidget *frame;
+      GtkTextIter pos;
 
       frame = gtk_frame_new(NULL);
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
@@ -1153,20 +1467,18 @@ static void make_listener_widget(int height)
 #endif
       ss->listener_pane = listener_text;
 
-      if (!prompt_not_editable) 
-	prompt_not_editable = gtk_text_buffer_create_tag(LISTENER_BUFFER, "prompt_not_editable", 
-							 "editable", false, 
-							 "weight", PANGO_WEIGHT_BOLD,
-							 NULL);
-      {
-	GtkTextIter pos;
-	gtk_text_buffer_get_end_iter(LISTENER_BUFFER, &pos);
-	gtk_text_buffer_insert_with_tags(LISTENER_BUFFER, &pos, listener_prompt(ss), ss->listener_prompt_length, prompt_not_editable, NULL);
-      }
+      gtk_text_buffer_get_end_iter(LISTENER_BUFFER, &pos);
+      /* this tries to make the first prompt uneditable since we don't want something unexpected to erase all the prompts,
+       *   but of course, gtk lets you clobber it anyway...
+       *
+       * gtk_text_buffer_insert_with_tags(LISTENER_BUFFER, &pos,
+       *                                  listener_prompt(ss), ss->listener_prompt_length,
+       *                                  gtk_text_buffer_create_tag(LISTENER_BUFFER, "first_prompt", "editable", false, NULL),
+       *                                  NULL);
+       */
+      gtk_text_buffer_insert(LISTENER_BUFFER, &pos, listener_prompt(ss), ss->listener_prompt_length);
 
       gtk_widget_show(listener_text);
-
-      /* an attempt to add the completions list here as the end of an hbox failed */
     }
 }
 
@@ -1390,14 +1702,22 @@ $mouse_enter_text_hook.add_hook!(\"enter\") do |w|\n\
 
 
 /* TODO: the edit history window is sometimes empty in gtk
- * doesn't c-g unselect? -- it was held up somewhere
  * why not c-r c-s in listener? where to prompt?
  * split this out as a separate "widget"
- * c-_ to undo, completion in g? and deletion from end is sometimes blocked?
+ * c-_ to undo--it's sort of working, completion in g? 
+ * need a key to go by command up/down M-a and M-e perhaps
+ *
+ * x case needs prompt length fixups
  */
+
+
 
 /* to get rid of 
  *    Fontconfig error: Cannot load default config file
  * and the consequent ridiculous fonts, since I think I built fontconfig from scratch,
  * copy (as root) /etc/fonts/fonts.conf to /usr/local/etc/fonts/fonts.conf
+ *
+ * to disable the goddamn beep put
+ *   gtk-error-bell = 0
+ * in /etc/gtk-2.0/gtkrc
  */

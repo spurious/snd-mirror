@@ -126,7 +126,7 @@ static int find_prompt(Widget w, XmTextPosition start)
 }
 
 
-static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
+static void motif_listener_completion(Widget w, XEvent *event, char **str, Cardinal *num)  /* change name because emacs is confused */
 {
   /* used only by the listener widget -- needs to be smart about text since overall string can be enormous 
    *   and we don't want to back up past the last prompt
@@ -710,7 +710,7 @@ static XtActionsRec acts[NUM_ACTS] = {
   {(char *)"text-transpose",             Text_transpose},
   {(char *)"word-upper",                 Word_upper},
   {(char *)"tab-completion",             Tab_completion},
-  {(char *)"listener-completion",        Listener_completion},
+  {(char *)"listener-completion",        motif_listener_completion},
   {(char *)"listener-clear",             Listener_clear},
   {(char *)"listener-g",                 Listener_g},
   {(char *)"listener-meta-p",            Listener_Meta_P},

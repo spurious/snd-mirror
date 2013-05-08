@@ -694,136 +694,93 @@ void listener_return(widget_t w, int last_prompt)
 	}
   }
 #else
-  for (i = current_position - 1; i >= 0; i--)
-    if ((full_str[i] == '\n') && (is_prompt(full_str, i + 1)))
-      break;
-    else
-      if (full_str[i] == ';')
-	{
-	  /* now look for complete form from current_position backwards */
-	  parens = 0;
-	  start_of_text = i;
-	  end_of_text = -1;
-
-	  for (i = current_position; i > start_of_text; i--)
-	    if (full_str[i] == ')')
-	      {
-		if (end_of_text == -1)
-		  end_of_text = i;
-		parens--;
-	      }
-	    else
-	      if (full_str[i] == '(')
-		{
-		  parens++;
-		  start_of_text = i;
-		}
-
-	  if ((parens == 0) && (end_of_text != -1))
-	    {
-	      str = (char *)calloc(end_of_text - start_of_text + 2, sizeof(char));
-	      for (i = start_of_text, j = 0; i <= end_of_text; j++, i++) 
-		str[j] = full_str[i]; 
-	    }
-	  else
-	    {
-	      start_of_text = current_position;
-	      end_of_text = current_position;
-	    }
-	  break;
-	}
-
-  if (str == NULL)
+  if (last_position > end_of_text)
     {
-      if (last_position > end_of_text)
+      end_of_text = last_position; /* added 12-Nov-07 for first form */
+      for (i = current_position; i < last_position; i++)
+	if (is_prompt(full_str, i + 1))
+	  {
+	    end_of_text = i - ss->listener_prompt_length + 1;
+	    break;
+	  }
+    }
+  if (start_of_text > 0)
+    {
+      for (i = end_of_text; i >= 0; i--)
+	if (is_prompt(full_str, i))
+	  {
+	    start_of_text = i + 1;
+	    break;
+	  }
+    }
+  
+  if (end_of_text > start_of_text)
+    {
+      int slen;
+      parens = 0;
+      slen = end_of_text - start_of_text + 2;
+      str = (char *)calloc(slen, sizeof(char));
+      for (i = start_of_text, j = 0; i <= end_of_text; j++, i++) 
 	{
-	  end_of_text = last_position; /* added 12-Nov-07 for first form */
-	  for (i = current_position; i < last_position; i++)
-	    if (is_prompt(full_str, i + 1))
-	      {
-		end_of_text = i - ss->listener_prompt_length + 1;
-		break;
-	      }
+	  str[j] = full_str[i]; 
+	  if (str[j] == '(') 
+	    parens++;
 	}
-
-      if (start_of_text > 0)
+      str[end_of_text - start_of_text + 1] = 0;
+      end_of_text = mus_strlen(str);
+      
+      if (parens)
 	{
-	  for (i = end_of_text; i >= 0; i--)
-	    if (is_prompt(full_str, i))
-	      {
-		start_of_text = i + 1;
-		break;
-	      }
-	}
-
-      if (end_of_text > start_of_text)
-	{
-	  int slen;
-	  parens = 0;
-	  slen = end_of_text - start_of_text + 2;
-	  str = (char *)calloc(slen, sizeof(char));
-	  for (i = start_of_text, j = 0; i <= end_of_text; j++, i++) 
+	  end_of_text = check_balance(str, 0, (int)end_of_text, true); /* last-arg->we are in the listener */
+	  if ((end_of_text > 0) && 
+	      (end_of_text < slen))
 	    {
-	      str[j] = full_str[i]; 
-	      if (str[j] == '(') 
-		parens++;
-	    }
-	  str[end_of_text - start_of_text + 1] = 0;
-	  end_of_text = mus_strlen(str);
-
-	  if (parens)
-	    {
-	      end_of_text = check_balance(str, 0, (int)end_of_text, true); /* last-arg->we are in the listener */
-	      if ((end_of_text > 0) && 
-		  (end_of_text < slen))
-		{
-		  if (end_of_text < (slen - 1))
-		    str[end_of_text + 1] = 0;
-		  else str[end_of_text] = 0;
-		  if (str[end_of_text] == '\n') str[end_of_text] = 0;
-		}
-	      else
-		{
-		  free(str);
-		  str = NULL;
-		  if (end_of_text < 0)
-		    listener_append_and_prompt(NULL);
-		  else 
-		    {
-#if USE_MOTIF
-		      new_eot = GUI_TEXT_END(w);
-		      GUI_LISTENER_TEXT_INSERT(w, new_eot, (char *)"\n");
-#else
-		      GUI_LISTENER_TEXT_INSERT(w, 0, (char *)"\n");
-#endif
-		    }
-		  if (full_str) GUI_FREE(full_str);
-		  return;
-		}
+	      if (end_of_text < (slen - 1))
+		str[end_of_text + 1] = 0;
+	      else str[end_of_text] = 0;
+	      if (str[end_of_text] == '\n') str[end_of_text] = 0;
 	    }
 	  else
 	    {
-	      /* no parens -- pick up closest entity */
-	      int loc, k, len;
-	      char *tmp;
-	      loc = current_position - start_of_text - 1;
-	      for (i = loc; i >= 0; i--)
-		if ((str[i] == '\n') || (i == 0))
-		  {
-		    len = mus_strlen(str);
-		    tmp = (char *)calloc(len + 1, sizeof(char));
-		    if (i != 0) i++;
-		    for (k = 0; i < len; i++, k++) 
-		      if ((i > loc) &&
-			  ((str[i] == '\n') || 
-			   (str[i] == ' ')))
-			break;
-		      else tmp[k] = str[i];
-		    free(str);
-		    str = tmp;
-		    break;
-		  }
+	      free(str);
+	      str = NULL;
+	      if (end_of_text < 0)
+		listener_append_and_prompt(NULL);
+	      else 
+		{
+#if USE_MOTIF
+		  new_eot = GUI_TEXT_END(w);
+		  GUI_LISTENER_TEXT_INSERT(w, new_eot, (char *)"\n");
+#else
+		  GUI_LISTENER_TEXT_INSERT(w, 0, (char *)"\n");
+#endif
+		}
+	      if (full_str) GUI_FREE(full_str);
+	      return;
 	    }
+	}
+      else
+	{
+	  /* no parens -- pick up closest entity */
+	  int loc, k, len;
+	  char *tmp;
+	  loc = current_position - start_of_text - 1;
+	  for (i = loc; i >= 0; i--)
+	    if ((str[i] == '\n') || (i == 0))
+	      {
+		len = mus_strlen(str);
+		tmp = (char *)calloc(len + 1, sizeof(char));
+		if (i != 0) i++;
+		for (k = 0; i < len; i++, k++) 
+		  if ((i > loc) &&
+		      ((str[i] == '\n') || 
+		       (str[i] == ' ')))
+		    break;
+		  else tmp[k] = str[i];
+		free(str);
+		str = tmp;
+		break;
+	      }
 	}
     }
 #endif
@@ -832,6 +789,8 @@ void listener_return(widget_t w, int last_prompt)
   {
     bool need_eval = false;
     int i, len;
+    /* fprintf(stderr, "return: %s\n", str); */
+    
     len = mus_strlen(str);
     for (i = 0; i < len; i++)
       if ((str[i] != ' ') &&
@@ -849,8 +808,6 @@ void listener_return(widget_t w, int last_prompt)
 	if (str)
 	  {
 	    char *errmsg = NULL;
-	    
-	    /* fprintf(stderr, "str: [%c]\n", str[0]); */
 	    
 	    if (current_position < (last_position - 2))
 	      GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
