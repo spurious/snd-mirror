@@ -3659,12 +3659,15 @@ and its value is returned."
 	      free(str);
 	      str = NULL;
 	    }
+#if (!USE_GTK)
 	  if (widget_wid > 0)
 	    {
 	      str = word_wrap(new_str, widget_wid);
 	      if (new_str) free(new_str);
 	    }
-	  else str = new_str;
+	  else 
+#endif
+	    str = new_str;
 	  help_text = C_TO_XEN_STRING(str);
 	  if (str) free(str);
 	  return(help_text);

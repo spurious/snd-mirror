@@ -516,7 +516,19 @@
   (test (eq? c1 c1) #t)
   (test (eq? c2 c2) #t)
 
-  (test (let ((p (lambda (x) x))) (eqv? p p)) #t))
+  (test (let ((p (lambda (x) x))) (eqv? p p)) #t)
+  (for-each
+   (lambda (arg)
+     (if (not ((lambda (p) (eq? p p)) arg))
+	 (format #t "~A not eq? to itself?~%" arg)))
+   (list "hi" '(1 2) (integer->char 65) 1 'a-symbol (make-vector 3) abs quasiquote macroexpand 1/0 (log 0) 
+	 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) :hi (if #f #f) #<eof> #<undefined> '(1 2 . 3)
+	 (let ((lst (list 1 2)))
+	   (set! (cdr (cdr lst)) lst)
+	   lst)
+	 (vector) (string) (list)
+	 (let ((x 3))
+	   (lambda (y) (+ x y))))))
 
 ;;; this for r7rs
 (test (eq? #t #true) #t)
@@ -71249,12 +71261,17 @@ etc
 		 (format #t ";test-all-methods: (~A~A~A (~D)procs) -> ~A~%" bold-text p unbold-text (max 1 (car (arity function))) val))))))
      (list 
       '* '+ '- '/ '< '= '> 'call-with-output-file 'round 'keyword? '<= '>= 'cdaaar 'cdaadr 'cdadar 'cdaddr 'cddaar 'cddadr 'cdddar 'cddddr 'make-rectangular 'truncate 'string->number 'remainder 'char-downcase 'char->integer 'zero? 'char<? 'char=? 'char>? 'char-ci<? 'char-ci=? 'char-ci>? 'close-input-port 'infinite? 'magnitude 'open-input-file 'string->list 'write-char 'abs 'car 'procedure? 'cdr 'ash 'cos 'gcd 'list->vector 'exp 'symbol->keyword 'lcm 'max 'write-byte 'inexact? 'min 'log 'tan 'sin 'list-ref 'string 'integer-decode-float 'list->string 'symbol 'vector->list 'vector-append 'imag-part 'vector-length 'char-ready? 'random-state->list 'with-output-to-file 'char-alphabetic? 'char-numeric? 'integer-length 'peek-char 'keyword->symbol 'vector? 'ceiling 'real-part 'gensym 'make-hash-table 'negative? 'char<=? 'char>=? 'char-ci<=? 'char-ci>=? 'string-append 'port-line-number 'numerator 'make-hash-table-iterator 'string->symbol 'make-random-state 'string-ci<? 'string-ci=? 'string-ci>? 'make-keyword 'integer->char 'exact? 'string-copy 'string<? 'string=? 'string>? 'vector-ref 'acos 'caar 'with-input-from-file 'cadr 'cdar 'cddr 'string-set! 'rationalize 'atan 'asin 'assq 'assv 'cosh 'expt 'continuation? 'nan? 'memq 'memv 'odd? 'load 'hash-table-iterator? 'read 'tanh 'sinh 'number? 'sqrt 'set-car! 'set-cdr! 'pair-line-number 'string-ci<=? 'char-upcase 'string-ci>=? 'macro? 'list-set! 'list-tail 'reverse! 'symbol->value 'complex? 'symbol->string 'make-vector 'positive? 'string? 'make-polar 'member 'string-fill! 'number->string 'make-list 'reverse 'rational? 'open-input-string 'hash-table-set! 'hash-table-ref 'logand 'hash-table-size 'logior 'lognot 'logbit? 'integer? 'make-string 'exact->inexact 'logxor 'string<=? 'string>=? 'vector-set! 'modulo 'vector-fill! 'acosh 'call-with-output-string 'get-output-string 'caaar 'caadr 'cadar 'caddr 'cdaar 'cdadr 'cddar 'boolean? 'cdddr 'char-upper-case? 'angle 'char? 'inexact->exact 'string-length 'atanh 'symbol? 'denominator 'asinh 'with-output-to-string 'assoc 'input-port? 'call-with-input-file 'fill! 'port-closed? 'newline 'provided? 'char-whitespace? 'random 'floor 'read-char 'vector-dimensions 'even? 'defined? 'read-byte 'output-port? 'substring 'string-ref 'provide 'read-line 'eval-string 'port-filename 'list? 'open-output-file 'quotient 'pair? 'call-with-input-string 'random-state? 'with-input-from-string 'real? 'char-lower-case? 'null? 'eof-object? 'hash-table? 'caaaar 'caaadr 'caadar 'caaddr 'cadaar 'cadadr 'caddar 'cadddr 'close-output-port 'flush-output-port)))
+  (set! test-all-methods #f)
   )
 
 
 (test (let ((x (abs -1)) (sba abs)) (set! abs odd?) (let ((y (abs 1))) (set! abs sba) (list x y abs))) (list 1 #t abs))
 (test (let () (define (hi z) (abs z)) (let ((x (hi -1)) (sba abs)) (set! abs odd?) (let ((y (hi 1))) (set! abs sba) (list x y)))) (list 1 #t))
 (test (let () (define (hi z) (abs z)) (let ((x (hi -1)) (sba abs)) (set! abs (lambda (a b) (+ a b))) (let ((y (hi 1))) (set! abs sba) (list x y)))) 'error)
+;;; since abs lost its global bit "somewhere up to here", that second hi call gets an error
+;;;   because abs is not optimized in the first call!  So the the error jumps out, leaving
+;;;   abs set to the lambda form.  Is this a bug in our optimization process?
+(set! abs #_abs)
 (test (let () (define (hi) (let ((cond 3)) (set! cond 4) cond)) (hi)) 4)
 (test (let ((old+ +) (j 0)) (do ((i 0 (+ i 1))) ((or (< i -3) (> i 3))) (set! + -) (set! j (old+ j i))) (set! + old+) j) -6)
 
@@ -71455,3 +71472,5 @@ in non-gmp,
      (set! lst (cons i lst))))
 ;;; ok (tested) up to 10000000 
 |#
+
+;;; TODO: bytevector tests, #u8 reader/writer tests

@@ -5002,7 +5002,8 @@ Here we scan the symbol table looking for any function that doesn't have documen
                 (if (and (procedure? val)
                          (string=? "" (procedure-documentation val)))
                     (format #t "~A " sym)))))
-        lst))))
+        lst)))
+  (newline))
 </pre>
 
 
@@ -5926,7 +5927,6 @@ the current environment, so defines happen in the enclosing environment.
 (define (bytevector-u8-ref b k) (char->integer (b k)))
 (define (bytevector-u8-set! b k c) (char->integer (set! (b k) (integer->char c))))
 (define bytevector-length string-length)
-(define (bytevector . args) (->bytevector (apply string args)))
 (define (bytevector-copy . args) (->bytevector (apply string-copy args)))
 (define (bytevector-append . args) (->bytevector (apply string-append args)))
 (define read-u8 read-byte)

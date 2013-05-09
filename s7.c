@@ -384,7 +384,7 @@ enum {OP_NO_OP,
       OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
       OP_CASE, OP_CASE1, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
       OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_APPLY_VALUES,
-      OP_READ_VECTOR, OP_READ_DONE, 
+      OP_READ_VECTOR, OP_READ_BYTEVECTOR, OP_READ_DONE, 
       OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_DONE,
       OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
       OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
@@ -486,7 +486,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "define-macro", "define-macro*", "define-expansion",
    "case", "case", "read-list", "read-dot", "read-quote", 
    "read-quasiquote", "read-quasiquote-vector", "read-unquote", "read-apply-values",
-   "read-vector", "read-done", 
+   "read-vector", "read-bytevector", "read-done", 
    "load", "load", "eval-string", "eval",
    "catch", "dynamic-wind", "define-constant", "define-constant", 
    "do", "do", "do", "do", "do", "do",
@@ -566,7 +566,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_DEFINE_MACRO", "OP_DEFINE_MACRO_STAR", "OP_DEFINE_EXPANSION",
   "OP_CASE", "OP_CASE1", "OP_READ_LIST", "OP_READ_DOT", "OP_READ_QUOTE", 
   "OP_READ_QUASIQUOTE", "OP_READ_QUASIQUOTE_VECTOR", "OP_READ_UNQUOTE", "OP_READ_APPLY_VALUES",
-  "OP_READ_VECTOR", "OP_READ_DONE", 
+  "OP_READ_VECTOR", "OP_READ_BYTEVECTOR", "OP_READ_DONE", 
   "OP_LOAD_RETURN_IF_EOF", "OP_LOAD_CLOSE_AND_POP_IF_EOF", "OP_EVAL_STRING", "OP_EVAL_DONE",
   "OP_CATCH", "OP_DYNAMIC_WIND", "OP_DEFINE_CONSTANT", "OP_DEFINE_CONSTANT1", 
   "OP_DO", "OP_DO_END", "OP_DO_END1", "OP_DO_STEP", "OP_DO_STEP2", "OP_DO_INIT",
@@ -851,13 +851,13 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
 
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
-	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} token_t;
+	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR, TOKEN_BYTEVECTOR} token_t;
 
 #if 0
-#define NUM_TOKENS 12
+#define NUM_TOKENS 13
 static const char *token_names[NUM_TOKENS] = {
   "token_eof", "token_left_paren", "token_right_paren", "token_dot", "token_atom", "token_quote", "token_double_quote", 
-  "token_back_quote", "token_comma", "token_at_mark", "token_sharp_const", "token_vector"};
+  "token_back_quote", "token_comma", "token_at_mark", "token_sharp_const", "token_vector", "token_bytevector"};
 #endif
 
 
@@ -1259,7 +1259,7 @@ struct s7_scheme {
    */
   s7_pointer MINUS, MULTIPLY, ADD, DIVIDE, LT, LEQ, EQ, GT, GEQ, ABS, ACOS, ACOSH;
   s7_pointer ANGLE, APPEND, APPLY, ARITABLEP, ARITY, ASH, ASIN, ASINH, ASSOC, ASSQ, ASSV, ATAN, ATANH;
-  s7_pointer AUGMENT_ENVIRONMENT, AUGMENT_ENVIRONMENTB, BOOLEANP, CAAAAR, CAAADR, CAAAR, CAADAR, CAADDR;
+  s7_pointer AUGMENT_ENVIRONMENT, AUGMENT_ENVIRONMENTB, BOOLEANP, BYTEVECTOR, CAAAAR, CAAADR, CAAAR, CAADAR, CAADDR;
   s7_pointer CAADR, CAAR, CADAAR, CADADR, CADAR, CADDAR, CADDDR, CADDR, CADR, CALL_CC, CALL_WITH_EXIT;
   s7_pointer CALL_WITH_INPUT_FILE, CALL_WITH_INPUT_STRING, CALL_WITH_OUTPUT_FILE, CALL_WITH_OUTPUT_STRING, CAR, CATCH, CDAAAR;
   s7_pointer CDAADR, CDAAR, CDADAR, CDADDR, CDADR, CDAR, CDDAAR, CDDADR, CDDAR, CDDDAR, CDDDDR, CDDDR, CDDR, CDR, CEILING;
@@ -19960,6 +19960,33 @@ static s7_pointer g_make_bytevector(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer g_bytevector(s7_scheme *sc, s7_pointer args)
+{
+  #define H_bytevector "(bytevector ...) returns a bytevector whose elements are the arguments"
+  s7_Int i, len;
+  s7_pointer vec, x;
+  
+  len = s7_list_length(sc, args);
+  vec = make_empty_string(sc, len, 0);
+
+  for (i = 0, x = args; is_pair(x); i++, x = cdr(x)) 
+    {
+      s7_pointer byte;
+      s7_Int b;
+      byte = car(x);
+      if (!s7_is_integer(byte))
+	return(wrong_type_argument(sc, sc->BYTEVECTOR, make_integer(sc, i), byte, T_INTEGER));
+      b = s7_integer(byte);
+      if ((b < 0) || (b > 255))
+	return(simple_wrong_type_argument_with_type(sc, sc->BYTEVECTOR, byte, make_protected_string(sc, "an unsigned byte")));
+      string_value(vec)[i] = (unsigned char)b;
+    }
+  set_bytevector(vec);
+  return(vec);
+}
+
+
+
    
 
 
@@ -35072,6 +35099,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
    *   (map abs "") -> '()
    * and the function's max arity might be less than the number of sequences, but that also isn't an error!
    *   (let ((x 0)) (for-each (lambda* (a) (set! x (+ x a))) (list :a :a :a) (list 1 2 3)) x)
+   *   where :a is the keyword argname (hi :a 1) etc
    */
   obj = cadr(args); 
 
@@ -35213,6 +35241,11 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			list_2(sc, make_protected_string(sc, "for-each's arguments are circular lists! ~S"), cdr(args))));
     }
+
+  /* (for-each (lambda () 1) (list 1 2 3)) */
+  if ((is_closure(sc->code)) &&
+      (closure_arity_to_int(sc, sc->code) == 0))
+    return(s7_error(sc, sc->WRONG_TYPE_ARG, list_1(sc, make_protected_string(sc, "for-each function is a thunk")))); 
 
   sc->y = args;
   sc->args = make_counter(sc, sc->x, safe_reverse_in_place(sc, sc->z), 0, len);
@@ -35541,6 +35574,11 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			list_2(sc, make_protected_string(sc, "map's arguments are circular lists! ~S"), cdr(args))));
     }
+
+  /* (for-each (lambda () 1) (list 1 2 3)) */
+  if ((is_closure(sc->code)) &&
+      (closure_arity_to_int(sc, sc->code) == 0))
+    return(s7_error(sc, sc->WRONG_TYPE_ARG, list_1(sc, make_protected_string(sc, "map function is a thunk")))); 
 
   sc->args = make_counter(sc, sc->NIL, safe_reverse_in_place(sc, sc->z), 0, len);
   sc->y = sc->NIL;
@@ -36030,7 +36068,8 @@ static void back_up_stack(s7_scheme *sc)
       pop_stack(sc);
       top_op = stack_op(sc->stack, s7_stack_top(sc) - 1);
     }
-  if (top_op == OP_READ_VECTOR)
+  if ((top_op == OP_READ_VECTOR) ||
+      (top_op == OP_READ_BYTEVECTOR))
     {
       pop_stack(sc);
       top_op = stack_op(sc->stack, s7_stack_top(sc) - 1);
@@ -36106,6 +36145,28 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 	/* try to back out */
 	for (d = loc - 1; d > 0; d--)
 	  backchar(sc->strbuf[d], pt);
+      }
+      break;
+
+    case 'u':
+      {
+	int d;
+	d = inchar(pt);
+	if (d == EOF)
+	  s7_error(sc, sc->READ_ERROR,
+		   list_1(sc, make_protected_string(sc, "unexpected end of input while reading #u...")));
+	if (d == '8')
+	  {
+	    d = inchar(pt);
+	    if (d == EOF)
+	      s7_error(sc, sc->READ_ERROR,
+		       list_1(sc, make_protected_string(sc, "unexpected end of input while reading #u8...")));
+	    if (d == '(')
+	      return(TOKEN_BYTEVECTOR);
+	    backchar(d, pt);
+	    backchar('8', pt);
+	    backchar('u', pt);
+	  }
       }
       break;
       
@@ -36487,6 +36548,11 @@ static s7_pointer read_expression(s7_scheme *sc)
 	case TOKEN_EOF:
 	  return(sc->EOF_OBJECT);
 	  
+	case TOKEN_BYTEVECTOR:
+	  push_stack_no_code(sc, OP_READ_BYTEVECTOR, sc->NIL);
+	  sc->tok = TOKEN_LEFT_PAREN;
+	  break;
+
 	case TOKEN_VECTOR:  /* already read #( -- TOKEN_VECTOR is triggered by #( */
 	    push_stack_no_code(sc, OP_READ_VECTOR, sc->w);   /* sc->w is the dimensions */
 	    /* fall through */
@@ -59156,10 +59222,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_READ_VECTOR:
       if (!is_proper_list(sc, sc->value))       /* #(1 . 2) */
 	return(read_error(sc, "vector constant data is not a proper list"));
-
       if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
 	sc->value = g_vector(sc, sc->value);
       else sc->value = g_multivector(sc, s7_integer(sc->args), sc->value);
+      goto START;
+
+      
+      /* --------------- */
+    case OP_READ_BYTEVECTOR:
+      if (!is_proper_list(sc, sc->value))       /* #u8(1 . 2) */
+	return(read_error(sc, "bytevector constant data is not a proper list"));
+      sc->value = g_bytevector(sc, sc->value);
       goto START;
 
       
@@ -64713,6 +64786,7 @@ s7_scheme *s7_init(void)
 
                               s7_define_safe_function(sc, "bytevector?",             g_is_bytevector,          1, 0, false, H_is_bytevector);
   sc->TO_BYTEVECTOR =         s7_define_safe_function(sc, "->bytevector",            g_to_bytevector,          1, 0, false, H_to_bytevector);
+  sc->BYTEVECTOR =            s7_define_safe_function(sc, "bytevector",              g_bytevector,             0, 0, true,  H_bytevector);
   sc->MAKE_BYTEVECTOR =       s7_define_safe_function(sc, "make-bytevector",         g_make_bytevector,        1, 1, false, H_make_bytevector);
 
   sc->HASH_TABLE =            s7_define_safe_function(sc, "hash-table",              g_hash_table,             0, 0, true,  H_hash_table);
