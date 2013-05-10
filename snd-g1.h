@@ -81,8 +81,8 @@ void set_listener_text_font(void);
 void g_init_gxlistener(void);
 GtkWidget *snd_entry_new(GtkWidget *container, GtkWidget *prev, snd_entry_bg_t with_white_background);
 GtkWidget *snd_entry_new_with_size(GtkWidget *container, int size);
-bool highlight_unbalanced_paren(void);
 void connect_mouse_to_text(GtkWidget *text);
+void glistener_set_prompt(const char *str);
 
 
 

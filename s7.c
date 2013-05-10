@@ -65292,11 +65292,7 @@ s7_scheme *s7_init(void)
  */
 
 /* possible additions (r7rs):
-
-   #u8(...) read
+   string-copy! et al?
    bytevector-copy!
-   utf8->string
-   string->utf8
-   open-input|output-bytevector get-output-bytevector
    read|write-bytevector! 
  */

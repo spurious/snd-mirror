@@ -149,13 +149,13 @@ static int completions(const char *text) {return(0);}
 
 
 #if HAVE_FORTH
-static bool separator_char_p(char c)
+bool separator_char_p(char c)
 {
   /* only space is separator */
   return(!(isgraph((int)c)));
 }
 #else
-static bool separator_char_p(char c)
+bool separator_char_p(char c)
 {
   return((!(isalpha((int)c))) &&
 	 (!(isdigit((int)c))) &&

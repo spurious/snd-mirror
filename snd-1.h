@@ -826,7 +826,7 @@ char *list_completer(widget_t w, const char *text, void *data);
 char *complete_listener_text(char *old_text, int end, bool *try_completion, char **to_file_text);
 void add_srate_to_completion_list(int srate);
 char *direct_completions(const char *str);
-
+bool separator_char_p(char c);
 
 
 /* -------- snd-print.c -------- */
@@ -1615,19 +1615,12 @@ void g_init_utils(void);
 
 /* -------- snd-listener -------- */
 
-void backup_listener_to_previous_expression(void);
-void listener_return(widget_t w, int last_prompt);
-bool is_prompt(const char *str, int beg);
-bool within_prompt(const char *str, int beg, int end);
-char *listener_prompt_with_cr(void);
-void set_listener_prompt(const char *new_prompt);
 int check_balance(const char *expr, int start, int end, bool in_listener);
-int find_matching_paren(const char *str, int parens, int pos, int *highlight_pos);
+bool listener_begin_hook(s7_scheme *sc);
+void set_listener_prompt(const char *new_prompt);
 bool listener_is_visible(void);
-void g_init_listener(void);
-char *trim(char *orig);
-void listener_help_at_cursor(char *buf, int name_curpos, int len, int prompt_pos);
-void restore_listener_string(bool back);
+XEN run_read_hook(char *str);
+bool have_read_hook(void);
 
 
 

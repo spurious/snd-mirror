@@ -62,7 +62,6 @@ bool listener_exists(void);
 int listener_height(void);
 int listener_width(void);
 void clear_listener(void);
-bool highlight_unbalanced_paren(void);
 
 
 /* -------- snd-xmenu.c -------- */

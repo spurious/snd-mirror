@@ -68,7 +68,7 @@ void handle_listener(bool new_state) {}
 bool listener_exists(void) {return(false);}
 int listener_height(void) {return(0);}
 int listener_width(void) {return(0);}
-bool highlight_unbalanced_paren(void) {return(true);}
+static bool highlight_unbalanced_paren(void) {return(true);}
 void set_button_label(int label, const char *str) {}
 int g_add_to_main_menu(const char *label, int slot) {return(0);}
 widget_t g_add_to_menu(int which_menu, const char *label, int callb, int position) {return(0);}
@@ -329,6 +329,10 @@ void top_level_catch(int ignore)
 }
 #endif
 
+int check_balance(const char *expr, int start, int end, bool in_listener)
+{
+  return(mus_strlen(expr));
+}
 
 #define FALLBACK_FONT "9x15"
 static XEN colormap_temp[16]; /* static for Ruby's sake */

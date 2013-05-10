@@ -2149,7 +2149,7 @@
 		       'pulse-train
 		       'pulse-train? 'radians->degrees 'radians->hz
 		       'ramp-channel 'rand 'rand-interp 'rand-interp? 'rand?
-		       'read-hook 'read-mix-sample 'read-only 'read-region-sample
+		       'read-mix-sample 'read-only 'read-region-sample
 		       'read-sample 'readin 'readin? 
 		       'rectangular->magnitudes 'rectangular->polar 'rectangular-window 'redo 'redo-edit
 		       'region->vct 'region-chans 'region-home 'region-frames 'region-graph-style 'region-maxamp

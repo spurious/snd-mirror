@@ -84,7 +84,6 @@ Widget make_textfield_widget(const char *name, Widget parent, Arg *args, int n, 
 void clear_listener(void);
 void set_listener_text_font(void);
 void g_init_gxlistener(void);
-bool highlight_unbalanced_paren(void);
 
 
 /* -------- snd-xmenu.c -------- */
