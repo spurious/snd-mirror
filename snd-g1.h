@@ -72,16 +72,12 @@ int listener_height(void);
 int listener_width(void);
 void goto_listener(void);
 int save_listener_text(FILE *fp);
-void listener_delete_text(int new_end);
 void append_listener_text(int end, const char *msg);
 void listener_append(const char *msg);
 void listener_append_and_prompt(const char *msg);
 void clear_listener(void);
 void set_listener_text_font(void);
 void g_init_gxlistener(void);
-GtkWidget *snd_entry_new(GtkWidget *container, GtkWidget *prev, snd_entry_bg_t with_white_background);
-GtkWidget *snd_entry_new_with_size(GtkWidget *container, int size);
-void connect_mouse_to_text(GtkWidget *text);
 void glistener_set_prompt(const char *str);
 
 
@@ -338,6 +334,7 @@ gpointer get_user_data(GObject *obj);
 int get_user_int_data(GObject *obj);
 void set_stock_button_label(GtkWidget *w, const char *new_label);
 GtkWidget *sg_button_new_from_stock_with_label(const char *text, const gchar *stock_id);
+bool cursor_set_blinks(GtkWidget *w, bool blinks);
 
 char *sg_get_text(GtkWidget *w, int start, int end);
 void sg_set_cursor(GtkWidget *w, int position);
@@ -376,6 +373,7 @@ void free_cairo(cairo_t *cr, const char *func, const char *file, int line);
 #define MAKE_CAIRO(Win) make_cairo(Win, __func__, __FILE__, __LINE__)
 #define FREE_CAIRO(Cr)  free_cairo(Cr, __func__, __FILE__, __LINE__)
 void init_gtk(void);
+
 
 
 
@@ -427,6 +425,11 @@ void progress_report(chan_info *cp, mus_float_t pct);
 void g_init_gxsnd(void);
 void reflect_sound_selection(snd_info *sp);
 void make_controls_dialog(void);
+
+
+GtkWidget *snd_entry_new(GtkWidget *container, GtkWidget *prev, snd_entry_bg_t with_white_background);
+GtkWidget *snd_entry_new_with_size(GtkWidget *container, int size);
+void connect_mouse_to_text(GtkWidget *text);
 
 
 

@@ -1615,8 +1615,9 @@ void g_init_utils(void);
 
 /* -------- snd-listener -------- */
 
-int check_balance(const char *expr, int start, int end, bool in_listener);
+#if HAVE_SCHEME
 bool listener_begin_hook(s7_scheme *sc);
+#endif
 void set_listener_prompt(const char *new_prompt);
 bool listener_is_visible(void);
 XEN run_read_hook(char *str);

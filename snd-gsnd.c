@@ -2449,9 +2449,151 @@ pane-box (10)name-form"
   #define g_sound_widgets_w g_sound_widgets
 #endif
 
+
+
+/* -------------------------------------------------------------------------------- */
+
+
+static XEN mouse_enter_text_hook;
+static XEN mouse_leave_text_hook;
+
+static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
+{
+  if (with_pointer_focus(ss))
+    goto_window(w);
+  widget_modify_base(w, GTK_STATE_NORMAL, ss->white);
+  if (XEN_HOOKED(mouse_enter_text_hook))
+    run_hook(mouse_enter_text_hook,
+	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
+	     S_mouse_enter_text_hook);
+  cursor_set_blinks(w, true);
+  return(false);
+}
+
+
+static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
+{
+  widget_modify_base(w, GTK_STATE_NORMAL, ss->basic_color);
+  if (XEN_HOOKED(mouse_leave_text_hook))
+    run_hook(mouse_leave_text_hook,
+	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
+	     S_mouse_leave_text_hook);
+  cursor_set_blinks(w, false);
+  return(false);
+}
+
+
+void connect_mouse_to_text(GtkWidget *text)
+{
+  SG_SIGNAL_CONNECT(text, "enter_notify_event", mouse_enter_text_callback, NULL);
+  SG_SIGNAL_CONNECT(text, "leave_notify_event", mouse_leave_text_callback, NULL);
+}
+
+
+static bool bindings_ok = false;
+
+GtkWidget *snd_entry_new(GtkWidget *container, GtkWidget *prev, snd_entry_bg_t with_white_background)
+{
+  GtkWidget *text;
+  GtkSettings *settings;
+
+  text = gtk_entry_new();
+  gtk_editable_set_editable(GTK_EDITABLE(text), true);
+  add_entry_style(text);
+
+  settings = gtk_widget_get_settings(text);
+  g_object_set(settings, "gtk-entry-select-on-focus", false, NULL);
+
+#if HAVE_GTK_GRID_NEW
+  if (prev)
+    {
+      g_object_set(text, "margin", 2, NULL);
+      gtk_widget_set_halign(text, GTK_ALIGN_FILL);
+      gtk_widget_set_hexpand(text, true);
+      gtk_grid_attach_next_to(GTK_GRID(container), text, prev, GTK_POS_RIGHT, 1, 1);
+    }
+  else gtk_box_pack_start(GTK_BOX(container), text, true, true, 2);
+#else
+  gtk_box_pack_start(GTK_BOX(container), text, true, true, 2);
+#endif
+
+  if (!bindings_ok)
+    {
+      bindings_ok = true;
+      glistener_bindings(GTK_ENTRY_GET_CLASS(GTK_ENTRY(text)));
+    }
+  gtk_widget_show(text);
+
+#if (!HAVE_GTK_3)
+  if (with_white_background == WITH_WHITE_BACKGROUND) 
+    {
+      widget_modify_bg(text, GTK_STATE_NORMAL, ss->white);
+      widget_modify_base(text, GTK_STATE_SELECTED, ss->white); 
+    }
+#endif
+  connect_mouse_to_text(text);
+  return(text);
+}
+
+
+GtkWidget *snd_entry_new_with_size(GtkWidget *container, int size)
+{
+  GtkWidget *text;
+  GtkSettings *settings;
+
+  text = gtk_entry_new();
+  gtk_editable_set_editable(GTK_EDITABLE(text), true);
+  gtk_entry_set_width_chars(GTK_ENTRY(text), size);
+  add_entry_style(text);
+
+  settings = gtk_widget_get_settings(text);
+  g_object_set(settings, "gtk-entry-select-on-focus", false, NULL);
+
+  gtk_box_pack_start(GTK_BOX(container), text, false, false, 4);
+
+  if (!bindings_ok)
+    {
+      bindings_ok = true;
+      glistener_bindings(GTK_ENTRY_GET_CLASS(GTK_ENTRY(text)));
+    }
+  gtk_widget_show(text);
+
+#if (!HAVE_GTK_3)
+  widget_modify_bg(text, GTK_STATE_NORMAL, ss->white);
+  widget_modify_base(text, GTK_STATE_SELECTED, ss->white); 
+#endif
+  connect_mouse_to_text(text);
+  return(text);
+}
+
+
+
+
 void g_init_gxsnd(void) 
 {
   XEN_ADD_HOOK(ss->snd_open_file_hook, reflect_file_close_in_sync_w, "sync-open-file-watcher", "sound sync open-file-hook handler");
 
   XEN_DEFINE_PROCEDURE(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
+
+#if HAVE_SCHEME
+  #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
+(hook-push " S_mouse_enter_text_hook "\n\
+  (lambda (w)\n\
+    (" S_focus_widget " w)))"
+#endif
+#if HAVE_RUBY
+  #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
+$mouse_enter_text_hook.add_hook!(\"enter\") do |w|\n\
+    focus_widget(w)\n\
+  end"
+#endif
+#if HAVE_FORTH
+  #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
+" S_mouse_enter_text_hook " lambda: <{ wid }> wid " S_focus_widget " ; add-hook!"
+#endif
+
+  #define H_mouse_leave_text_hook S_mouse_leave_text_hook " (widget): called when the mouse leaves a text widget"
+
+  mouse_enter_text_hook = XEN_DEFINE_HOOK(S_mouse_enter_text_hook, "(make-hook 'widget)", 1, H_mouse_enter_text_hook);
+  mouse_leave_text_hook = XEN_DEFINE_HOOK(S_mouse_leave_text_hook, "(make-hook 'widget)", 1, H_mouse_leave_text_hook);
 }

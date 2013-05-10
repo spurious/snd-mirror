@@ -53,7 +53,6 @@ void save_find_dialog_state(FILE *fd);
 
 void append_listener_text(int end, const char *msg);
 int save_listener_text(FILE *fp);
-void listener_delete_text(int new_end);
 void listener_append_and_prompt(const char *msg);
 void goto_listener(void);
 void listener_append(const char *msg);

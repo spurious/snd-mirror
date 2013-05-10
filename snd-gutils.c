@@ -554,6 +554,15 @@ void set_toggle_button(GtkWidget *wid, bool val, bool passed, void *data)
 }
 
 
+bool cursor_set_blinks(GtkWidget *w, bool blinks)
+{
+  GtkSettings *settings;
+  settings = gtk_widget_get_settings(w);
+  g_object_set(settings, "gtk-cursor-blink", (gboolean)blinks, NULL);
+  return(blinks);
+}
+
+
 #if HAVE_GTK_3
 
 int widget_height(GtkWidget *w)
@@ -1573,3 +1582,5 @@ void init_gtk(void)
     -1, NULL);
 }
 #endif
+
+

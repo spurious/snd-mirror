@@ -705,6 +705,197 @@ void clear_stdin(void)
 }
 
 
+
+static int check_balance(const char *expr, int start, int end, bool in_listener) 
+{
+  int i;
+  bool non_whitespace_p = false;
+  int paren_count = 0;
+  bool prev_separator = true;
+  bool quote_wait = false;
+
+  i = start;
+  while (i < end) 
+    {
+      switch (expr[i]) 
+	{
+	case ';' :
+	  /* skip till newline. */
+	  do {
+	    i++;
+	  } while ((expr[i] != '\n') && (i < end));
+	  break;
+
+	case ' ':
+	case '\n':
+	case '\t':
+	case '\r':
+	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+	    return(i);
+	  else 
+	    {
+	      prev_separator = true;
+	      i++;
+	    }
+	  break;
+
+	case '\"' :
+	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+	    return(i);
+	  else 
+	    {
+	      /* skip past ", ignoring \", some cases:
+	       *  "\"\"" '("\"\"") "\\" "#\\(" "'(\"#\\\")"
+	       */
+	      while (i < end)
+		{
+		  i++;
+		  if (expr[i] == '\\') 
+		    i++;
+		  else
+		    {
+		      if (expr[i] == '\"')
+			break;
+		    }
+		}
+	      i++;
+	      if (paren_count == 0) 
+		{
+		  if (i < end) 
+		    return(i);
+		  else return(0);
+		} 
+	      else 
+		{
+		  prev_separator = true;
+		  non_whitespace_p = true;
+		  quote_wait = false;
+		}
+	    }
+	  break;
+
+	case '#':
+	  if ((i < end - 1) &&
+	      (expr[i + 1] == '|'))
+	    {
+	      /* (+ #| a comment |# 2 1) */
+	      i++;
+	      do {
+		i++;
+	      } while (((expr[i] != '|') || (expr[i + 1] != '#')) && (i < end));
+	      i++;
+	      break;
+	    }
+	  else
+	    {
+	      /* (set! *#readers* (cons (cons #\c (lambda (str) (apply make-rectangular (read)))) *#readers*))
+	       */
+	      if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+		return(i);
+	      else 
+		{
+		  bool found_it = false;
+		  if (prev_separator)
+		    {
+		      int k, incr = 0;
+		      for (k = i + 1; k < end; k++)
+			{
+			  if (expr[k] == '(')
+			    {
+			      /* should we look at the readers here? I want to support #c(1 2) for example */
+			      non_whitespace_p = false;
+			      prev_separator = false;
+			      incr = k - i;
+			      break;
+			    }
+			  else
+			    {
+			      if ((!isdigit(expr[k])) && /* #2d(...)? */
+				  (!isalpha(expr[k])) && /* #c(1 2)? */
+				  (expr[k] != 'D') && 
+				  (expr[k] != 'd') &&
+				  (expr[k] != '=') &&   /* what is this for? */
+				  (expr[k] != '#'))     /* perhaps #1d(#(1 2) 3) ? */
+				break;
+			    }
+			}
+		      if (incr > 0)
+			{
+			  i += incr;
+			  found_it = true;
+			}
+		    }
+		  if (!found_it)
+		    {
+		      if ((i + 2 < end) && (expr[i + 1] == '\\') && 
+			  ((expr[i + 2] == ')') || (expr[i + 2] == ';') || (expr[i + 2] == '\"') || (expr[i + 2] == '(')))
+			i += 3;
+		      else
+			{
+			  prev_separator = false;
+			  quote_wait = false;
+			  non_whitespace_p = true;
+			  i++;
+			}
+		    }
+		}
+	    }
+	  break;
+
+	case '(' :
+	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+	    return(i - 1); /* 'a(...) -- ignore the (...) */
+	  else 
+	    {
+	      i++;
+	      paren_count++;
+	      non_whitespace_p = true;
+	      prev_separator = true;
+	      quote_wait = false;
+	    }
+	  break;
+
+	case ')' :
+	  paren_count--;
+	  if ((non_whitespace_p) && (paren_count == 0))
+	    return(i + 1);
+	  else 
+	    {
+	      i++;
+	      non_whitespace_p = true;
+	      prev_separator = true;
+	      quote_wait = false;
+	    }
+	  break;
+
+	case '\'' :
+	case '`' :                  /* `(1 2) */
+	  if (prev_separator) 
+	    quote_wait = true;
+	  non_whitespace_p = true;
+	  i++;
+	  break;
+
+	case ',':                   /* `,(+ 1 2) */
+	case '@':                   /* `,@(list 1 2) */
+	  prev_separator = false;
+	  non_whitespace_p = true;
+	  i++;
+	  break;
+
+	default:
+	  prev_separator = false;
+	  quote_wait = false;
+	  non_whitespace_p = true;
+	  i++;
+	  break;
+	}
+    }
+
+  return(0);
+}
+
+
 static char *stdin_check_for_full_expression(const char *newstr)
 {
 #if HAVE_SCHEME

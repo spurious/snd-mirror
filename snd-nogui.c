@@ -62,7 +62,6 @@ void listener_append_and_prompt(const char *msg) {fprintf(stderr, "%s", msg);}
 void goto_listener(void) {}
 int save_listener_text(FILE *fp) {return(0);}
 void append_listener_text(int end, const char *msg) {}
-void listener_delete_text(int new_end) {}
 void listener_append(const char *msg) {fprintf(stderr, "%s", msg);}
 void handle_listener(bool new_state) {}
 bool listener_exists(void) {return(false);}
@@ -329,10 +328,6 @@ void top_level_catch(int ignore)
 }
 #endif
 
-int check_balance(const char *expr, int start, int end, bool in_listener)
-{
-  return(mus_strlen(expr));
-}
 
 #define FALLBACK_FONT "9x15"
 static XEN colormap_temp[16]; /* static for Ruby's sake */

@@ -274,8 +274,9 @@ static int find_matching_paren(const char *str, int parens, int pos, int *highli
   return(parens);
 }
 
+static bool highlight_unbalanced_paren(void);
 
-int check_balance(const char *expr, int start, int end, bool in_listener) 
+static int check_balance(const char *expr, int start, int end, bool in_listener) 
 {
   int i;
   bool non_whitespace_p = false;
