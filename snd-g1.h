@@ -78,7 +78,11 @@ void listener_append_and_prompt(const char *msg);
 void clear_listener(void);
 void set_listener_text_font(void);
 void g_init_gxlistener(void);
+
 void glistener_set_prompt(const char *str);
+void glistener_clear(void);
+bool glistener_write(FILE *fp);
+bool glistener_write_to_file(const char *filename);
 
 
 
