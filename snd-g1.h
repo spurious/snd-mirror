@@ -94,6 +94,7 @@ void glistener_set_background_color(GdkColor *p);
 void glistener_set_text_color(GdkRGBA *p);
 void glistener_set_background_color(GdkRGBA *p);
 #endif
+GtkWidget *glistener_new(GtkWidget *parent, void (*initializations)(GtkWidget *new_listener));
 
 
 

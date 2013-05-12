@@ -80,7 +80,6 @@ void glistener_set_background_color(GdkRGBA *p)
 
 
 
-
 /* ---------------- cursor ---------------- */
 
 static void glistener_set_cursor_position(int position)
@@ -156,6 +155,12 @@ void glistener_set_prompt(const char *str)
   /* the internal version includes a preceding <cr>, and its length is in unicode terms
    *   also, if we have prompts displayed in the listener, they need to change to match
    *   the new one.
+   *
+   * glistener_set_prompt("s7>")
+   *
+   * from Snd, to get a prompt of lambda: in Greek font: 
+   *   (set! (listener-prompt) (string (integer->char #xce) (integer->char #xbb) #\:))
+   *   (set! (listener-prompt) (bytevector #xce #xbb (char->integer #\:)))
    */
   char *old_prompt;
   int old_prompt_length;
@@ -290,7 +295,7 @@ static int find_next_prompt(void)
   int pos;
   pos = glistener_cursor(&it);
   if (!gtk_text_iter_forward_search(&it, prompt, 0, &start, &end, NULL))
-    return(pos + 1);
+    gtk_text_buffer_get_end_iter(LISTENER_BUFFER, &end);
   return(gtk_text_iter_get_offset(&end) + 1);
 }
 
@@ -450,47 +455,134 @@ void glistener_scroll_to_end(void)
 
 /* ---------------- paren matching ---------------- */
 
-static int find_string_start(int pos)
+static gboolean is_unslashed_double_quote(gunichar c, gpointer data)
 {
-  /* there could be any number of slashified slashes before this quote. */
+  int *slashes = (int *)data;
+  if (c == '\\')
+    (*slashes)++;
+  else
+    {
+      if ((c == '\"') &&
+	  (*slashes & 1) == 0)
+	return(true);
+      *slashes = 0;
+    }
+  return(false);
+}
+
+
+static int find_string_end(int pos, GtkTextIter *limit)
+{
+  /* returns -1 if no close quote */
+
+  GtkTextIter scan;
   int slashes = 0;
-  GtkTextIter slasher;
+  gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &scan, pos);  
+  if (!gtk_text_iter_forward_find_char(&scan, is_unslashed_double_quote, &slashes, limit))
+    return(-1);
+  return(gtk_text_iter_get_offset(&scan));
+}
+
+
+static gboolean is_double_quote(gunichar c, gpointer data)
+{
+  return(c == '\"');
+}
+
+
+static int find_string_start(int pos, GtkTextIter *limit)
+{
+  /* returns -1 if no close quote */
+  GtkTextIter scan, slasher;
+  int slashes = 0;
   gunichar cs;
 
-  gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &slasher, pos);  
-  while (!gtk_text_iter_is_start(&slasher))
+  gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &scan, pos);  
+  while (!gtk_text_iter_equal(limit, &scan))
     {
-      gtk_text_iter_backward_char(&slasher);
-      cs = gtk_text_iter_get_char(&slasher);
-      if (cs == (gunichar)'\\')
-	slashes++;
-      else break;
-    }
-  if ((slashes & 1) == 0)
-    {
-      /* we have a string -- scan backwards for its start */
-      while (!gtk_text_iter_is_start(&slasher))
+      if (!gtk_text_iter_backward_find_char(&scan, is_double_quote, NULL, limit))
+	return(-1);
+      slashes = 0;
+      slasher = scan;
+      while (!gtk_text_iter_equal(limit, &slasher))
 	{
 	  gtk_text_iter_backward_char(&slasher);
 	  cs = gtk_text_iter_get_char(&slasher);
-	  if (cs == (gunichar)'\"')
-	    {
-	      /* now the same business as before -- is it slashified */
-	      slashes = 0;
-	      while (!gtk_text_iter_is_start(&slasher))
-		{
-		  gtk_text_iter_backward_char(&slasher);
-		  cs = gtk_text_iter_get_char(&slasher);
-		  if (cs == (gunichar)'\\')
-		    slashes++;
-		  else break;
-		}
-	      if ((slashes & 1) == 0)
-		break;
-	    }
+	  if (cs == (gunichar)'\\')
+	    slashes++;
+	  else break;
 	}
+      if ((slashes & 1) == 0)
+	break;
+      scan = slasher;
     }
-  return(gtk_text_iter_get_offset(&slasher));
+  return(gtk_text_iter_get_offset(&scan));
+}
+
+
+static gboolean is_block_comment(gunichar c, gpointer data)
+{
+  int *last_c = (int *)data;
+  if ((c == '#') &&
+      (*last_c == '|'))
+    return(true);
+  *last_c = c;
+  return(false);
+}
+
+
+static int find_open_block_comment(int pos, GtkTextIter *limit)
+{
+  GtkTextIter scan;
+  int last_cs = 0;
+
+  gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &scan, pos);  
+  gtk_text_iter_backward_find_char(&scan, is_block_comment, &last_cs, limit);
+  return(gtk_text_iter_get_offset(&scan));
+}
+
+
+static int find_close_block_comment(int pos, GtkTextIter *limit)
+{
+  GtkTextIter scan;
+  int last_cs = 0;
+
+  gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &scan, pos);  
+  gtk_text_iter_forward_find_char(&scan, is_block_comment, &last_cs, limit);
+  return(gtk_text_iter_get_offset(&scan));
+}
+
+
+static gboolean is_delimiter(gunichar c, gpointer data)
+{
+  return((g_unichar_isspace(c)) ||
+	 (c == '(') ||
+	 (c == ')') ||
+	 (c == ';') ||
+	 (c == '\"'));
+  /* in s7, single-quote can appear in a name */
+}
+
+
+static void find_surrounding_word(int pos, int *start_pos, int *end_pos, GtkTextIter *start_limit, GtkTextIter *end_limit)
+{
+  GtkTextIter start, end;
+
+  *start_pos = gtk_text_iter_get_offset(start_limit);
+  *end_pos = gtk_text_iter_get_offset(end_limit);
+
+  gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &start, pos);
+  end = start;
+  if (!gtk_text_iter_equal(start_limit, &start))
+    {
+      if (gtk_text_iter_backward_find_char(&start, is_delimiter, NULL, start_limit))
+	*start_pos = gtk_text_iter_get_offset(&start) + 1;
+    }
+  if (!gtk_text_iter_equal(&end, end_limit))
+    {
+      if (gtk_text_iter_forward_find_char(&end, is_delimiter, NULL, end_limit))
+	*end_pos = gtk_text_iter_get_offset(&end);
+    }
 }
 
 
@@ -502,33 +594,39 @@ static bool at_character_constant(int end_pos)
   if (gtk_text_iter_backward_chars(&start, 2))
     {
       char *txt;
+      bool result;
       txt = gtk_text_iter_get_text(&start, &end);
       /* fprintf(stderr, "char: [%s: %c%c]\n", txt, txt[0], txt[1]); */
-      return(mus_strcmp(txt, "#\\"));
+      result = (mus_strcmp(txt, "#\\"));
+      g_free(txt);
+      return(result);
     }
   return(false);
 }
 
 
-static bool find_matching_paren(int parens, int pos, int *highlight_pos)
+static bool find_open_paren(int parens, int pos, int *highlight_pos, GtkTextIter *limit)
 {
   GtkTextIter scan;
-  int parens_at_line_end = parens;
+  int parens_at_line_end = parens, ppos;
   bool end_scan = false;
-  gunichar c;
+  gunichar c = 0, last_c;
 
   if (at_character_constant(pos + 1))
     return(false);
 
   gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &scan, pos);  
-  while (!gtk_text_iter_is_start(&scan))
+  while (!gtk_text_iter_equal(limit, &scan))
     {
-      if (is_prompt_end(gtk_text_iter_get_offset(&scan) + 1))
-	return(parens == 0);
-
+      last_c = c;
       c = gtk_text_iter_get_char(&scan);
-      if (c == (gunichar)'\"')
-	gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &scan, find_string_start(gtk_text_iter_get_offset(&scan)));
+      if (c == (gunichar)'\"') 
+	{
+	  ppos = find_string_start(gtk_text_iter_get_offset(&scan), limit);
+	  /* TODO: if no matching quote then we're currently in a string? */
+	  gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &scan, ppos);
+	  last_c = '\"';
+	}
       else
 	{
 	  if (!at_character_constant(gtk_text_iter_get_offset(&scan)))
@@ -548,19 +646,29 @@ static bool find_matching_paren(int parens, int pos, int *highlight_pos)
 		    }
 		  else
 		    {
-		      if (!end_scan)
+		      if ((c == (gunichar)'|') &&
+			  (last_c == (gunichar)'#')) /* we're looking backwards here, so in the end marker |# we see the # first */
 			{
-			  if (c == ')') 
-			    parens++; 
-			  else
+			  ppos = find_open_block_comment(gtk_text_iter_get_offset(&scan), limit);
+			  gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &scan, ppos);
+			  last_c = '#';
+			}
+		      else
+			{
+			  if (!end_scan)
 			    {
-			      if (c == '(')
+			      if (c == ')') 
+				parens++; 
+			      else
 				{
-				  parens--; 
-				  if (parens == 0)
+				  if (c == '(')
 				    {
-				      (*highlight_pos) = gtk_text_iter_get_offset(&scan);
-				      end_scan = true;
+				      parens--; 
+				      if (parens == 0)
+					{
+					  (*highlight_pos) = gtk_text_iter_get_offset(&scan);
+					  end_scan = true;
+					}
 				    }
 				}
 			    }
@@ -572,6 +680,66 @@ static bool find_matching_paren(int parens, int pos, int *highlight_pos)
       gtk_text_iter_backward_char(&scan);
     }
 
+  return(parens == 0);
+}
+
+
+static bool find_close_paren(int parens, int pos, int *highlight_pos, GtkTextIter *limit)
+{
+  GtkTextIter scan;
+  int parens_at_line_end = parens, ppos;
+  bool end_scan = false;
+  gunichar c, prev_c = 0, prev_prev_c = 0;
+
+  gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &scan, pos);  
+  while (!gtk_text_iter_equal(&scan, limit))
+    {
+      prev_prev_c = prev_c;
+      prev_c = c;
+      c = gtk_text_iter_get_char(&scan);
+      if ((prev_c != '\\') || (prev_prev_c != '#'))
+	{
+	  if (c == (gunichar)'\"')
+	    {
+	      ppos = find_string_end(gtk_text_iter_get_offset(&scan), limit);
+	      gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &scan, ppos);
+	      prev_prev_c = 0;
+	      prev_c = '\"';
+	    }
+	  else
+	    {
+	      if (c == (gunichar)';')
+		gtk_text_iter_forward_to_line_end(&scan);
+	      else
+		{
+		  if ((c == (gunichar)'|') &&
+		      (prev_c == (gunichar)'#'))
+		    {
+		      ppos = find_close_block_comment(gtk_text_iter_get_offset(&scan), limit);
+		      gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &scan, ppos);
+		    }
+		  else
+		    {
+		      if (c == ')') 
+			{
+			  parens--; 
+			  if (parens == 0)
+			    {
+			      (*highlight_pos) = gtk_text_iter_get_offset(&scan);
+			      return(true);
+			    }
+			}
+		      else
+			{
+			  if (c == '(')
+			    parens++;
+			}
+		    }
+		}
+	    }
+	}
+      gtk_text_iter_forward_char(&scan);
+    }
   return(parens == 0);
 }
 
@@ -623,32 +791,35 @@ static gint flash_unbalanced_paren(gpointer data)
 
 
 static GtkTextTag *underline_tag = NULL;
-static int underline_pos = -1;
+static int underline_start = -1, underline_end = -1;
 
-static void add_underline(int pos)
+static void add_underline(int bpos, int epos)
 {
   GtkTextIter start, end;
   GtkTextBuffer *buf;
   buf = LISTENER_BUFFER;
-  gtk_text_buffer_get_iter_at_offset(buf, &start, pos);
-  gtk_text_buffer_get_iter_at_offset(buf, &end, pos + 1);
+  gtk_text_buffer_get_iter_at_offset(buf, &start, bpos);
+  gtk_text_buffer_get_iter_at_offset(buf, &end, epos);
   if (!underline_tag) underline_tag = gtk_text_buffer_create_tag(buf, "underline", "underline", PANGO_UNDERLINE_DOUBLE, NULL);
   gtk_text_buffer_apply_tag(buf, underline_tag, &start, &end);
+  underline_start = bpos;
+  underline_end = epos;
 }
 
 
-static void remove_underline(int pos)
+static void remove_underline()
 {
   if ((underline_tag) &&
-      (underline_pos != -1))
+      (underline_start != -1))
     {
       GtkTextIter start, end;
       GtkTextBuffer *buf;
       buf = LISTENER_BUFFER;
-      gtk_text_buffer_get_iter_at_offset(buf, &start, pos);
-      gtk_text_buffer_get_iter_at_offset(buf, &end, pos + 1);
+      gtk_text_buffer_get_iter_at_offset(buf, &start, underline_start);
+      gtk_text_buffer_get_iter_at_offset(buf, &end, underline_end);
       gtk_text_buffer_remove_tag(buf, underline_tag, &start, &end);
-      underline_pos = -1;
+      underline_start = -1;
+      underline_end = -1;
     }
 }
 
@@ -656,22 +827,48 @@ static void remove_underline(int pos)
 static void check_parens(void)
 {
   int pos;
-  GtkTextIter scan;
+  GtkTextIter scan, limit;
   gunichar c;
 
-  remove_underline(underline_pos);
+  remove_underline();
 
   pos = glistener_cursor_position();
   flash_paren_pos = pos;
   gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &scan, pos - 1);
+
   c = gtk_text_iter_get_char(&scan);
   if (c == ')')
     {
-      if (find_matching_paren(1, pos - 2, &pos))
+      gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &limit, find_current_prompt() - 1);
+      if (find_open_paren(1, pos - 2, &pos, &limit))
+	add_underline(pos, pos + 1);
+    }
+  else
+    {
+      gtk_text_iter_forward_char(&scan);
+      c = gtk_text_iter_get_char(&scan);
+      if (c == '(')
 	{
-	  add_underline(pos);
-	  underline_pos = pos;
+	  gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &limit, find_next_prompt());
+	  if (find_close_paren(1, pos + 1, &pos, &limit))
+	    add_underline(pos, pos + 1);
 	}
+#if 0 
+/* TODO: if there's help and there's a status area, post it?
+ *       also the "loading..." message in the same area
+ */
+      else
+	{
+
+	  GtkTextIter s1, e1;
+	  int start = 0, end = 0;
+	  gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &s1, find_current_prompt());
+	  gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &e1, find_next_prompt());
+	  find_surrounding_word(glistener_cursor_position(), &start, &end, &s1, &e1);
+	  if (start < end)
+	    add_underline(start, end);
+	}
+#endif
     }
 }
 
@@ -1142,15 +1339,99 @@ static gboolean glistener_button_release(GtkWidget *w, GdkEventButton *ev, gpoin
 	}
     }
   check_parens();
+
+#if 0
+  {
+    GtkTextIter s1, e1;
+    int start = 0, end = 0;
+    gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &s1, find_current_prompt());
+    gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &e1, find_next_prompt());
+    find_surrounding_word(glistener_cursor_position(), &start, &end, &s1, &e1);
+    gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &s1, start);
+    gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &e1, end);
+    fprintf(stderr, "[%s], %d %d, %d %d\n", 
+	    gtk_text_buffer_get_text(LISTENER_BUFFER, &s1, &e1, true),
+	    start, find_current_prompt(),
+	    end, find_next_prompt());
+  }
+#endif
+
   return(false);
 }
 
 
-/* ---------------- <tab> completion and indentation ---------------- */
+/* ---------------- new listener ---------------- */
 
+#define SIGNAL_CONNECT(Widget, Signal, Function, Data) g_signal_connect(G_OBJECT(Widget), Signal, G_CALLBACK(Function), (gpointer)Data)
+#define SIGNAL_CONNECT_AFTER(Widget, Signal, Function, Data) g_signal_connect_after(G_OBJECT(Widget), Signal, G_CALLBACK(Function), (gpointer)Data)
+
+GtkWidget *glistener_new(GtkWidget *parent, void (*initializations)(GtkWidget *new_listener))
+{
+  GtkWidget *sw, *new_text;
+  GtkTextBuffer *buf;
+
+  sw = gtk_scrolled_window_new(NULL, NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+
+  new_text = gtk_text_view_new();
+  buf = gtk_text_buffer_new(NULL);
+
+  gtk_text_view_set_buffer(GTK_TEXT_VIEW(new_text), buf);
+  gtk_text_view_set_editable(GTK_TEXT_VIEW(new_text), true);
+  gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(new_text), GTK_WRAP_NONE);
+  gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(new_text), true);
+  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(new_text), 4);
+  gtk_container_add(GTK_CONTAINER(sw), new_text);
+  gtk_widget_set_events(new_text, GDK_ALL_EVENTS_MASK);
+  if (parent)
+    gtk_container_add(GTK_CONTAINER(parent), sw);
+
+  listener_text = new_text;
+
+  glistener_set_font(pango_font_description_from_string("Monospace 11"));
+  glistener_bindings(GTK_TEXT_VIEW_GET_CLASS(LISTENER_TEXT));
+
+  if (initializations)
+    initializations(listener_text);
+
+  SIGNAL_CONNECT(listener_text, "key_press_event", glistener_key_press, NULL);
+  SIGNAL_CONNECT(listener_text, "key_release_event", glistener_key_release, NULL);
+  SIGNAL_CONNECT(listener_text, "button_release_event", glistener_button_release, NULL);
+  SIGNAL_CONNECT_AFTER(LISTENER_BUFFER, "insert-text", text_insert, NULL);
+
+  if (!prompt)
+    {
+      prompt = calloc(3, sizeof(char));
+      prompt[0] = '\n';
+      prompt[1] = '>';
+      prompt_length = g_utf8_strlen(prompt, -1);
+    }
+
+  /* put in the first prompt without the preceding <cr> */
+  {
+    GtkTextIter start;
+    gtk_text_buffer_get_start_iter(LISTENER_BUFFER, &start);
+    prompt_insert(&start, true);
+  }
+
+  gtk_widget_show(new_text);
+  gtk_widget_show(sw);
+
+  return(sw);  /* gtk_bin_get_child(GTK_BIN(sw)) -> listener_text(?) */
+}
+
+
+
+/* ---------------- <tab> completion ---------------- */
+
+
+/* ---------------- <tab> indentation ---------------- */
 
 
 /* ---------------- <cr> evaluation ---------------- */
+
+
+/* ---------------- help ---------------- */
 
 
 
@@ -1376,6 +1657,11 @@ static void listener_completion(int end)
 
       new_text = complete_listener_text(old_text, end, &try_completion, &file_text);
       /* fprintf(stderr, "completion: %s %d\n", new_text, try_completion); */
+
+      /* snd-completion:
+       *  filename-completer
+       *  completions (s7_for_each_symbol)
+       */
 
       if (try_completion)
 	{
@@ -1713,7 +1999,9 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 	if ((str[pos - 1] == ')') &&
 	    ((str[pos - 2] != '\\') || (str[pos - 3] != '#')))
 	  {
-	    if (find_matching_paren(2, pos - 1, &flash_paren_pos))
+	    GtkTextIter limit;
+	    gtk_text_buffer_get_iter_at_offset(LISTENER_BUFFER, &limit, find_current_prompt() - 1);
+	    if (find_open_paren(2, pos - 1, &flash_paren_pos, &limit))
 	      {
 		add_inverse(flash_paren_pos);
 		flashes = 4;
@@ -1751,7 +2039,7 @@ void listener_append_and_prompt(const char *msg)
 static void glistener_return_callback(GtkWidget *w)
 {
 
-  remove_underline(underline_pos);
+  remove_underline();
 
 #if 0
   GtkTextIter cursor, scan, s1, s2, start, end;
@@ -1790,7 +2078,7 @@ static void glistener_return_callback(GtkWidget *w)
 
   if (c == ')')
     {
-      if (find_matching_paren(1, pos - 2, &oparen_pos))
+      if (find_open_paren(1, pos - 2, &oparen_pos, &start)) /* PERHAPS: bpos - 1 */
 	{
 	  /* look back for "(", if none, send current expr (oparen_pos to pos)
 	     if found, look forward from pos for ")"
@@ -2073,59 +2361,108 @@ static void glistener_return_callback(GtkWidget *w)
 
 
 
-#if 0
-GtkWidget *glistener_new(GtkWidget *parent)
+
+
+
+
+
+
+#define WITH_LISTENER_TIPS 0
+
+#if WITH_LISTENER_TIPS
+
+static GtkTextTag *hover_tag = NULL;
+static int old_hover_start, old_hover_end;
+static bool hover_underlined = false;
+
+static void remove_hover_underline(void)
 {
-  GtkWidget *sw, *new_text;
+  if (hover_underlined)
+    {
+      GtkTextBuffer *buf;
+      GtkTextIter hover_start, hover_end;
+      buf = LISTENER_BUFFER;
+      gtk_text_buffer_get_iter_at_offset(buf, &hover_start, old_hover_start);
+      gtk_text_buffer_get_iter_at_offset(buf, &hover_end, old_hover_end);
+      gtk_text_buffer_remove_tag(buf, hover_tag, &hover_start, &hover_end);
+      hover_underlined = false;
+    }
+}
+
+static void add_hover_underline(GtkTextIter hover_start, GtkTextIter hover_end)
+{
   GtkTextBuffer *buf;
 
-  sw = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  buf = LISTENER_BUFFER;
+  if (!hover_tag)
+    hover_tag = gtk_text_buffer_create_tag(buf, "tipped", "underline", PANGO_UNDERLINE_SINGLE, NULL);
+  gtk_text_buffer_apply_tag(buf, hover_tag, &hover_start, &hover_end);
 
-  new_text = gtk_text_view_new();
-  buf = gtk_text_buffer_new(NULL);
+  old_hover_start = gtk_text_iter_get_offset(&hover_start);
+  old_hover_end = gtk_text_iter_get_offset(&hover_end);
+  hover_underlined = true;
+}
 
-  gtk_text_view_set_buffer(GTK_TEXT_VIEW(new_text), buf);
-  gtk_text_view_set_editable(GTK_TEXT_VIEW(new_text), true);
-  gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(new_text), GTK_WRAP_NONE);
-  gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(new_text), true);
-  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(new_text), 4);
-  gtk_container_add(GTK_CONTAINER(sw), new_text);
-  gtk_widget_set_events(new_text, GDK_ALL_EVENTS_MASK);
-  gtk_container_add(GTK_CONTAINER(parent), sw);
 
-  listener_text = new_text;
+static gboolean listener_mouse_move(GtkWidget *w, GdkEvent *ev, gpointer data)
+{
+  gint ev_x, ev_y, wx, wy;
+  gdouble x, y;
+  GtkTextIter iter;
 
-  glistener_set_font(pango_font_description_from_string("Monospace 11"));
-  glistener_bindings(GTK_TEXT_VIEW_GET_CLASS(LISTENER_TEXT));
+  gdk_event_get_coords(ev, &x, &y);
+  ev_x = x;
+  ev_y = y;
 
-  SIGNAL_CONNECT(listener_text, "key_press_event", glistener_key_press, NULL);
-  SIGNAL_CONNECT(listener_text, "key_release_event", glistener_key_release, NULL);
-  SIGNAL_CONNECT(listener_text, "button_release_event", glistener_button_release, NULL);
-  SIGNAL_CONNECT_AFTER(LISTENER_BUFFER, "insert-text", text_insert, NULL);
+  remove_hover_underline();
 
-  prompt = calloc(3, sizeof(char));
-  prompt[0] = '\n';
-  prompt[1] = '>';
-  prompt_length = g_utf8_strlen(prompt, -1);
-  glistener_set_prompt_tag(gtk_text_buffer_create_tag(LISTENER_BUFFER, "glistener_prompt_tag", "weight", PANGO_WEIGHT_BOLD, NULL));
+  gtk_text_view_window_to_buffer_coords(LISTENER_TEXT, GTK_TEXT_WINDOW_TEXT, ev_x, ev_y, &wx, &wy);
+  gtk_text_view_get_iter_at_location(LISTENER_TEXT, &iter, wx, wy);
 
-  /* put in the first prompt without the preceding <cr> */
-  gtk_text_buffer_get_start_iter(LISTENER_BUFFER, &start);
-  prompt_insert(&start, true);
+  if (gtk_text_iter_inside_word(&iter))
+    {
+      GtkTextIter start, end, back, front;
+      char *txt;
+      char c;
+  
+      start = iter;
+      end = iter;
 
-  gtk_widget_show(new_text);
-  gtk_widget_show(sw);
+      if (!gtk_text_iter_starts_word(&start))
+	gtk_text_iter_backward_word_start(&start);
+      while (true)
+	{
+	  back = start;
+	  gtk_text_iter_backward_char(&back);
+	  c = gtk_text_iter_get_char(&back);
+	  if (!separator_char_p(c))
+	    gtk_text_iter_backward_word_start(&start);
+	  else break;
+	}
 
-  return(sw);
-  /* I think gtk_bin_get_child(GTK_BIN(sw)) -> listener_text */
+      if (!gtk_text_iter_ends_word(&end))
+	gtk_text_iter_forward_word_end(&end);
+      while (true)
+	{
+	  front = end;
+	  gtk_text_iter_forward_char(&front);
+	  c = gtk_text_iter_get_char(&front);
+	  if (!separator_char_p(c))
+	    gtk_text_iter_forward_word_end(&end);
+	  else break;
+	}
+      txt = gtk_text_buffer_get_text(LISTENER_BUFFER, &start, &end, true);
+      /* TODO: add this only if help is actually available */
+      add_hover_underline(start, end);
+    }
+  return(false);
 }
 #endif
 
 
-
-
-
+#if WITH_LISTENER_TIPS
+      SG_SIGNAL_CONNECT(listener_text, "motion_notify_event", listener_mouse_move, NULL);
+#endif
 static void listener_help_callback(GtkWidget *w, gpointer info)
 {
   /* for selected text or text near cursor or text near pointer, get help or completion,
@@ -2277,7 +2614,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   state = (GdkModifierType)EVENT_STATE(event);
 
   if ((state & snd_ControlMask) &&
-      ((key == GDK_g) || (key == GDK_G)))
+      ((key == GDK_KEY_g) || (key == GDK_KEY_G)))
     ss->C_g_typed = true; 
 
   if (ss->graph_is_active) 
@@ -2295,9 +2632,20 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   return(false);
 }
 
-#define SIGNAL_CONNECT(Widget, Signal, Function, Data) g_signal_connect(G_OBJECT(Widget), Signal, G_CALLBACK(Function), (gpointer)Data)
-#define SIGNAL_CONNECT_AFTER(Widget, Signal, Function, Data) g_signal_connect_after(G_OBJECT(Widget), Signal, G_CALLBACK(Function), (gpointer)Data)
 
+static void listener_init(GtkWidget *w)
+{
+  set_listener_text_font();
+  add_listener_style(w);
+  SIGNAL_CONNECT(w, "key_press_event", listener_key_press, NULL); /* Snd's should run first */
+  SIGNAL_CONNECT(listener_text, "button_press_event", listener_button_press, NULL);
+  SIGNAL_CONNECT(listener_text, "enter_notify_event", listener_focus_callback, NULL);
+  SIGNAL_CONNECT(listener_text, "leave_notify_event", listener_unfocus_callback, NULL);
+  SIGNAL_CONNECT(listener_text, "populate-popup", listener_popup_populate_callback, NULL);
+
+  glistener_set_prompt_tag(gtk_text_buffer_create_tag(LISTENER_BUFFER, "glistener_prompt_tag", "weight", PANGO_WEIGHT_BOLD, NULL));
+  ss->listener_pane = w;
+}
 
 
 static void make_listener_widget(int height)
@@ -2305,7 +2653,6 @@ static void make_listener_widget(int height)
   if (!listener_text)
     {
       GtkWidget *frame;
-      GtkTextIter pos, start;
 
       frame = gtk_frame_new(NULL);
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
@@ -2315,39 +2662,51 @@ static void make_listener_widget(int height)
 	gtk_paned_pack2(GTK_PANED(SOUND_PANE(ss)), frame, false, true); /* add2 but resize=false */
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
 
-      listener_text = make_scrolled_text(frame, true, CONTAINER_ADD, false); 
-      set_listener_text_font();
-      add_listener_style(listener_text);
+#if (!HAVE_GTK_3)
+      {
+	GtkWidget *vb, *sb, *sw;
+	vb = gtk_table_new(2, 1, false);
+	gtk_container_add(GTK_CONTAINER(frame), vb);
+	gtk_widget_show(vb);
 
-      glistener_bindings(GTK_TEXT_VIEW_GET_CLASS(LISTENER_TEXT));
+	sw = glistener_new(NULL, listener_init);
+	gtk_table_attach(GTK_TABLE(vb), sw, 0, 1, 0, 1, /* left right top bottom */
+			 (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+			 (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+			 0, 0);
 
-      SIGNAL_CONNECT(listener_text, "key_press_event", listener_key_press, NULL); /* Snd's should run first -- how to do this in the separated case? */
-      SIGNAL_CONNECT(listener_text, "key_press_event", glistener_key_press, NULL);
-      SIGNAL_CONNECT(listener_text, "key_release_event", glistener_key_release, NULL);
-      SIGNAL_CONNECT(listener_text, "button_press_event", listener_button_press, NULL);
-      SIGNAL_CONNECT(listener_text, "button_release_event", glistener_button_release, NULL);
-      SIGNAL_CONNECT(listener_text, "enter_notify_event", listener_focus_callback, NULL);
-      SIGNAL_CONNECT(listener_text, "leave_notify_event", listener_unfocus_callback, NULL);
-      SIGNAL_CONNECT(listener_text, "populate-popup", listener_popup_populate_callback, NULL);
-      SIGNAL_CONNECT_AFTER(LISTENER_BUFFER, "insert-text", text_insert, NULL);
-      ss->listener_pane = listener_text;
+	sb = gtk_statusbar_new();
+	gtk_table_attach(GTK_TABLE(vb), sb, 0, 1, 1, 2,
+			(GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
+		       (GtkAttachOptions)(GTK_FILL), 
+		       0, 0);
+			 
+	gtk_widget_show(sb);
+	gtk_widget_show(vb);
+      }
+#else
+      {
+	GtkWidget *vb, *sb, *sw;
+	vb = gtk_grid_new();
+	gtk_container_add(GTK_CONTAINER(frame), vb);
+	gtk_widget_show(vb);
 
-      if (!prompt)
-	{
-	  prompt = calloc(3, sizeof(char));
-	  prompt[0] = '\n';
-	  prompt[1] = '>';
-	  prompt_length = g_utf8_strlen(prompt, -1);
-	}
-
-      glistener_set_prompt_tag(gtk_text_buffer_create_tag(LISTENER_BUFFER, "glistener_prompt_tag", 
-							  "weight", PANGO_WEIGHT_BOLD,
-							  NULL));
-
-      /* put in the first prompt without the preceding <cr> */
-      gtk_text_buffer_get_start_iter(LISTENER_BUFFER, &start);
-      prompt_insert(&start, true);
-      gtk_widget_show(listener_text);
+	sw = glistener_new(NULL, listener_init);
+	
+	gtk_widget_set_halign(sw, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(sw, GTK_ALIGN_FILL);
+	gtk_widget_set_hexpand(sw, TRUE);
+	gtk_widget_set_vexpand(sw, TRUE);
+	gtk_grid_attach(GTK_GRID(vb), sw, 0, 0, 1, 1); /* left top w h */
+ 
+	sb = gtk_statusbar_new();
+	gtk_widget_set_halign(sb, GTK_ALIGN_FILL); 
+	gtk_grid_attach(GTK_GRID(vb), sb, 0, 1, 1, 1);
+ 
+	gtk_widget_show(sb);
+	gtk_widget_show(vb);
+      }
+#endif
     }
 }
 
@@ -2364,7 +2723,7 @@ void color_listener(color_info *pix)
 #if (!HAVE_GTK_3)
   glistener_set_background_color(rgb_to_gdk_color(ss->listener_color));
 #else
-  glistener_set_background_color(ss->listener_color);
+  glistener_set_background_color((GdkRGBA *)(ss->listener_color));
 #endif
 }
 
@@ -2375,7 +2734,7 @@ void color_listener_text(color_info *pix)
 #if (!HAVE_GTK_3)
   glistener_set_text_color(rgb_to_gdk_color(ss->listener_text_color));
 #else
-  glistener_set_text_color(ss->listener_text_color);
+  glistener_set_text_color((GdkRGBA *)(ss->listener_text_color));
 #endif
 }
 
@@ -2560,16 +2919,9 @@ leaves the lisp listener pane"
  * scroll to new prompt -- when does this fail?
  *    when snd opens a sound, listener size changes and we end up somewhere random
  *    when sound is closed, listener should fill space
- *    gtk's paned window widget is junk
- * also when scroll to right (big expr), then result is not fully displayed (reset horizontal scroll to 0)
- *
  *
  * use all the gtk_text_iter stuff, not strcmp et al
  * selection isn't transferable?
- *
- * to get a prompt of lambda: in Greek font: 
- *   (set! (listener-prompt) (string (integer->char #xce) (integer->char #xbb) #\:))
- *   (set! (listener-prompt) (bytevector #xce #xbb (char->integer #\>)))
  *
  * motif case needs prompt length fixups
  *
