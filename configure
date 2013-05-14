@@ -2704,7 +2704,7 @@ IFS=$ac_save_IFS
 case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
-ac_config_headers="$ac_config_headers mus-config.h sndlib.h"
+ac_config_headers="$ac_config_headers mus-config.h sndlib.h glistener.h"
 
 ac_config_files="$ac_config_files makefile"
 
@@ -11687,6 +11687,7 @@ do
   case $ac_config_target in
     "mus-config.h") CONFIG_HEADERS="$CONFIG_HEADERS mus-config.h" ;;
     "sndlib.h") CONFIG_HEADERS="$CONFIG_HEADERS sndlib.h" ;;
+    "glistener.h") CONFIG_HEADERS="$CONFIG_HEADERS glistener.h" ;;
     "makefile") CONFIG_FILES="$CONFIG_FILES makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;

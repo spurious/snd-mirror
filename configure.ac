@@ -4,8 +4,8 @@ AC_INIT(snd, 13.7, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
-AC_CONFIG_HEADERS(mus-config.h sndlib.h)
-AC_CONFIG_FILES(makefile )
+AC_CONFIG_HEADERS(mus-config.h sndlib.h glistener.h)
+AC_CONFIG_FILES(makefile)
 AC_PROG_CC
 AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER! (is this the case in 2.60?)
 AC_PROG_INSTALL

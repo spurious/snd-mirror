@@ -79,23 +79,6 @@ void clear_listener(void);
 void set_listener_text_font(void);
 void g_init_gxlistener(void);
 
-void glistener_set_prompt(const char *str);
-void glistener_clear(void);
-bool glistener_write(FILE *fp);
-bool glistener_write_to_file(const char *filename);
-void glistener_scroll_to_end(void);
-void glistener_append_text(const char *msg);
-void glistener_set_prompt_tag(GtkTextTag *m);
-void glistener_set_font(PangoFontDescription *font);
-#if (!HAVE_GTK_3)
-void glistener_set_text_color(GdkColor *p);
-void glistener_set_background_color(GdkColor *p);
-#else
-void glistener_set_text_color(GdkRGBA *p);
-void glistener_set_background_color(GdkRGBA *p);
-#endif
-GtkWidget *glistener_new(GtkWidget *parent, void (*initializations)(GtkWidget *new_listener));
-
 
 
 /* -------- snd-gmain.c -------- */
