@@ -9,6 +9,8 @@
   #include <gdk/gdkkeysyms.h>
 #endif
 
+#include "glistener.h"
+
 #define HAVE_GTK true
 /* I keep using this form (not USE_GTK) by mistake */
 

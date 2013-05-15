@@ -623,6 +623,8 @@ typedef struct snd_state {
   GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor, *bounds_cursor, *play_cursor, *loop_play_cursor, *yaxis_cursor;
   GtkWidget **mw;
   bool axis_color_set;
+
+  glistener *listener;
 #endif
 
 #if USE_NO_GUI

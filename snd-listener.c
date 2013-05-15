@@ -1,5 +1,4 @@
 #include "snd.h"
-#include "glistener.h"
 
 bool listener_is_visible(void)
 {
@@ -176,7 +175,7 @@ void set_listener_prompt(const char *new_prompt)
 #if (!USE_GTK)
   listener_append_and_prompt(NULL); /* this checks first that the listener exists */
 #else
-  glistener_set_prompt(listener_prompt(ss));
+  glistener_set_prompt(ss->listener, listener_prompt(ss));
 #endif  
 #endif
   

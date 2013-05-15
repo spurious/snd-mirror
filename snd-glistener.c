@@ -1,9 +1,8 @@
 #include "snd.h"
-#include "glistener.h"
 
 
 #if HAVE_SCHEME
-static void evaluator(const char *text)
+static void evaluator(glistener *g, const char *text)
 {
   int gc_loc;
   s7_pointer old_port, result;
@@ -38,7 +37,7 @@ static void evaluator(const char *text)
 
 
 #if HAVE_FORTH || HAVE_RUBY
-static void evaluator(const char *text)
+static void evaluator(glistener *g, const char *text)
 {
   call_read_hook_or_eval(text); /* snd-listener.c */
 }
@@ -54,7 +53,7 @@ static GtkTextBuffer *listener_buffer = NULL;
 
 void listener_append(const char *msg)
 {
-  glistener_append_text(msg);
+  glistener_append_text(ss->listener, msg);
   if (listener_text)
     ss->graph_is_active = false;
 }
@@ -64,10 +63,10 @@ void listener_append_and_prompt(const char *msg)
 {
   if (msg)
     {
-      glistener_append_text(msg);
-      glistener_append_prompt();
+      glistener_append_text(ss->listener, msg);
+      glistener_append_prompt(ss->listener);
     }
-  else glistener_append_text("\n");
+  else glistener_append_text(ss->listener, "\n");
 }
 
 
@@ -111,7 +110,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   GdkModifierType state;
 
   /* clear possible warning */
-  glistener_clear_status();
+  glistener_clear_status(ss->listener);
 
   key = EVENT_KEYVAL(event);
   state = (GdkModifierType)EVENT_STATE(event);
@@ -140,15 +139,16 @@ static s7_pointer g_listener_load_hook(s7_scheme *sc, s7_pointer args)
 {
   /* arg is the hook, (hook 'name) is the file */
   s7_pointer hook;
+  if (!(ss->listener)) return(args);
   char msg[128];
   hook = s7_car(args);
   snprintf(msg, 128, "loading %s", s7_string(s7_environment_ref(s7, hook, s7_make_symbol(s7, "name"))));
-  glistener_post_status(msg);
+  glistener_post_status(ss->listener, msg);
   return(args);
 }
 #endif
 
-static void listener_init(GtkWidget *w)
+static void listener_init(glistener *g, GtkWidget *w)
 {
   listener_text = w;
   listener_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
@@ -160,20 +160,20 @@ static void listener_init(GtkWidget *w)
   SG_SIGNAL_CONNECT(w, "enter_notify_event", listener_focus_callback, NULL);
   SG_SIGNAL_CONNECT(w, "leave_notify_event", listener_unfocus_callback, NULL);
 
-  glistener_set_prompt_tag(gtk_text_buffer_create_tag(listener_buffer, "glistener_prompt_tag", "weight", PANGO_WEIGHT_BOLD, NULL));
+  glistener_set_prompt_tag(ss->listener, gtk_text_buffer_create_tag(listener_buffer, "glistener_prompt_tag", "weight", PANGO_WEIGHT_BOLD, NULL));
   ss->listener_pane = w;
 
 }
 
 #if HAVE_SCHEME
-static const char *helper(const char *text)
+static const char *helper(glistener *g, const char *text)
 {
   if (s7_is_defined(s7, text))
     return(s7_help(s7, s7_make_symbol(s7, text)));
   return(NULL);
 }
 
-static void completer(bool (*symbol_func)(const char *symbol_name, void *data), void *data)
+static void completer(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
 {
   s7_for_each_symbol_name(s7, symbol_func, data);
 }
@@ -194,12 +194,15 @@ static void make_listener_widget(int height)
 	gtk_paned_pack2(GTK_PANED(SOUND_PANE(ss)), frame, false, true); /* add2 but resize=false */
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
 
-      glistener_new(frame, listener_init);
+      ss->listener = glistener_new(frame, listener_init);
 
-      glistener_set_evaluator(evaluator);
+      glistener_set_evaluator(ss->listener, evaluator);
 #if HAVE_SCHEME
-      glistener_set_helper(helper);
-      glistener_set_completer(completer);
+      glistener_set_helper(ss->listener, helper);
+      glistener_set_completer(ss->listener, completer);
+#endif
+#if HAVE_FORTH || HAVE_RUBY
+      glistener_filters_expression(ss->listener, false);
 #endif
     }
 }
@@ -215,9 +218,9 @@ void color_listener(color_info *pix)
 {
   ss->listener_color = pix;
 #if (!HAVE_GTK_3)
-  glistener_set_background_color(rgb_to_gdk_color(ss->listener_color));
+  glistener_set_background_color(ss->listener, rgb_to_gdk_color(ss->listener_color));
 #else
-  glistener_set_background_color((GdkRGBA *)(ss->listener_color));
+  glistener_set_background_color(ss->listener, (GdkRGBA *)(ss->listener_color));
 #endif
 }
 
@@ -226,9 +229,9 @@ void color_listener_text(color_info *pix)
 {
   ss->listener_text_color = pix;
 #if (!HAVE_GTK_3)
-  glistener_set_text_color(rgb_to_gdk_color(ss->listener_text_color));
+  glistener_set_text_color(ss->listener, rgb_to_gdk_color(ss->listener_text_color));
 #else
-  glistener_set_text_color((GdkRGBA *)(ss->listener_text_color));
+  glistener_set_text_color(ss->listener, (GdkRGBA *)(ss->listener_text_color));
 #endif
 }
 
@@ -315,7 +318,7 @@ static XEN g_listener_selection(void)
 
 void set_listener_text_font(void)
 {
-  glistener_set_font(LISTENER_FONT(ss));
+  glistener_set_font(ss->listener, LISTENER_FONT(ss));
 }
 
 
@@ -323,27 +326,27 @@ static XEN g_reset_listener_cursor(void)
 {
   #define H_reset_listener_cursor "(" S_reset_listener_cursor "): reset listener cursor to the default pointer"
   if (listener_text)
-    glistener_set_cursor_shape(ss->arrow_cursor);
+    glistener_set_cursor_shape(ss->listener, ss->arrow_cursor);
   return(XEN_FALSE);
 }
 
 
 void clear_listener(void)
 {
-  glistener_clear();
+  glistener_clear(ss->listener);
 }
 
 void append_listener_text(int end, const char *msg)
 {
   /* "end" arg needed in Motif */
-  glistener_append_text(msg);
+  glistener_append_text(ss->listener, msg);
 }
 
 int save_listener_text(FILE *fp)
 {
   
   if ((!listener_text) ||
-      (glistener_write(fp)))
+      (glistener_write(ss->listener, fp)))
     return(0);
   return(-1);
 }
@@ -351,7 +354,7 @@ int save_listener_text(FILE *fp)
 static XEN g_goto_listener_end(void)
 {
   #define H_goto_listener_end "(" S_goto_listener_end "): move cursor and scroll to bottom of listener pane"
-  glistener_scroll_to_end();
+  glistener_scroll_to_end(ss->listener);
   return(XEN_FALSE);
 }
 

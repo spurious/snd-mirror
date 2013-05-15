@@ -2452,7 +2452,6 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 
 #if HAVE_FORTH
   char *function = NULL, *old_function = NULL;
-  bool close_mix_let = false;
   int i, edits;
   ed_list *ed;
   edits = cp->edit_ctr;
@@ -2468,7 +2467,6 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
       mix_list = edit_list_mix_init(cp);
       if (mix_list)
 	{
-	  close_mix_let = true;
 	  function = mus_format("lambda: <{ snd chn -- val }> %s", mix_list);
 	  free(mix_list);
 	}

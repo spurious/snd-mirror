@@ -1122,6 +1122,9 @@ static XEN g_snd_print(XEN msg)
 
   if (str)
     {
+#if USE_GTK
+      if (ss->listener)
+#endif
       listener_append(str);
       free(str);
     }

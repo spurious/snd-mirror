@@ -9047,7 +9047,7 @@ static s7_scheme *s7;
 
 static gint quit_repl(GtkWidget *w, GdkEvent *event, gpointer context) {exit(0);}
 
-static void evaluator(const char *text)
+static void evaluator(glistener *g, const char *text)
 {
   int gc_loc;
   s7_pointer old_port, result;
@@ -9069,40 +9069,41 @@ static void evaluator(const char *text)
   s7_set_current_error_port(s7, old_port);
   s7_gc_unprotect_at(s7, gc_loc);
   
-  glistener_append_text("\n");
+  glistener_append_text(g, "\n");
   if (msg)
-    glistener_append_text(msg);
+    glistener_append_text(g, msg);
   else 
     {
       msg = s7_object_to_c_string(s7, result);
-      glistener_append_text(msg);
+      glistener_append_text(g, msg);
     }
   if (msg) free(msg);
-  glistener_append_prompt();
+  glistener_append_prompt(g);
 }
 
-static void listener_init(GtkWidget *w)
+static void listener_init(glistener *g, GtkWidget *w)
 {
-  GtkTextBuffer *listener_buffer;
   unsigned char prompt[3];
-  listener_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-  glistener_set_font(pango_font_description_from_string("Monospace 10"));
-  glistener_set_prompt_tag(gtk_text_buffer_create_tag(listener_buffer, "glistener_prompt_tag", 
-						      "weight", PANGO_WEIGHT_BOLD, 
-						      "foreground", "red",
-						      NULL));
-  prompt[0] = 0xce; prompt[1] = 0xbb; prompt[2] = '&gt;'; prompt[3] = '\0'; /* red lambda as prompt */
-  glistener_set_prompt(prompt);
+  GtkTextBuffer *buffer;
+
+  buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+  glistener_set_font(g, pango_font_description_from_string("Monospace 10"));
+  glistener_set_prompt_tag(g, gtk_text_buffer_create_tag(buffer, "glistener_prompt_tag", 
+							 "weight", PANGO_WEIGHT_BOLD, 
+							 "foreground", "red",
+							 NULL));
+  prompt[0] = 0xce; prompt[1] = 0xbb; prompt[2] = '&gt;'; prompt[3] = '\0'; /* lambda as prompt */
+  glistener_set_prompt(g, prompt);
 }
 
-static const char *helper(const char *text)
+static const char *helper(glistener *g, const char *text)
 {
   if (s7_is_defined(s7, text))
     return(s7_help(s7, s7_make_symbol(s7, text)));
   return(NULL);
 }
 
-static void completer(bool (*symbol_func)(const char *symbol_name, void *data), void *data)
+static void completer(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
 {
   s7_for_each_symbol_name(s7, symbol_func, data);
 }
@@ -9110,6 +9111,7 @@ static void completer(bool (*symbol_func)(const char *symbol_name, void *data), 
 int main(int argc, char **argv)
 {
   GtkWidget *shell, *frame;
+  glistener *g;
 
   s7 = s7_init();  
 
@@ -9123,15 +9125,16 @@ int main(int argc, char **argv)
 
   gtk_container_add(GTK_CONTAINER(shell), frame);
 
-  glistener_new(frame, listener_init);
-  glistener_set_evaluator(evaluator);
-  glistener_set_helper(helper);
-  glistener_set_completer(completer);
+  g = glistener_new(frame, listener_init);
+  glistener_set_evaluator(g, evaluator);
+  glistener_set_helper(g, helper);
+  glistener_set_completer(g, completer);
 
   gtk_widget_show(shell);
   gdk_window_resize(gtk_widget_get_window(shell), 400, 200);
   gtk_main();
 }
+
 </pre></div>
 
 
