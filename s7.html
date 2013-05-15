@@ -233,6 +233,7 @@ indented and on a sort of brownish background.
       <li><a href="#gtkschemerepl">Gtk/Scheme-based REPL</a>
       <li><a href="#s7inathread">s7 running in a separate thread</a>
       <li><a href="#replrescue">begin_hook to the rescue!</a>
+      <li><a href="#glistener">glistener.c</a>
       <li><a href="#gsl">GSL</a>
   </ul>
 
@@ -8025,7 +8026,7 @@ int main(int argc, char **argv)
 <div class="header" id="gtkrepl"><h4>gtk-based repl</h4></div>
 
 <p>In this example, we use Gtk to make a window with a scrolled text widget, running s7
-in a read-eval-print loop.  I've tried to make this as short as possible; see Snd for
+in a read-eval-print loop.  I've tried to make this as short as possible; see glistener.c for
 a much more elaborate REPL.  From s7's point of view, the only tricky part involves
 catching errors.
 </p>
@@ -8992,8 +8993,10 @@ then you don't need to use begin_hook.
 </p>
 
 <p>begin_hook provides a way to call arbitrary C or Scheme code at any time;
-the mind boggles!  In the Snd listener, for example, you can ask for a stack trace
-to see if your long computation is making progress.  Since the normal
+the mind boggles!  
+</p>
+
+<p>Since the normal
 begin_hook function keeps the interface alive, a callback can save the current
 begin_hook function, insert its own function to do something useful, then that function can
 replace itself with the original:
@@ -9019,6 +9022,117 @@ static void listener_stacktrace_callback(...)            /* the usual callback b
 }
 </pre></div>
 
+
+
+<div class="header" id="glistener"><h4>glistener.c</h4></div>
+
+<p>glistener.c has a more extended example of a gtk-based repl.
+This is work-in-progress!  
+Here's a quick way to try it out:
+</p>
+
+<div class="indented">
+<pre>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;stdbool.h&gt;
+
+#include &lt;gtk/gtk.h&gt;
+
+#include "s7.h"
+#include "glistener.h"
+
+static s7_scheme *s7;
+
+static gint quit_repl(GtkWidget *w, GdkEvent *event, gpointer context) {exit(0);}
+
+static void evaluator(const char *text)
+{
+  int gc_loc;
+  s7_pointer old_port, result;
+  const char *errmsg = NULL;
+  char *msg = NULL;
+  
+  old_port = s7_set_current_error_port(s7, s7_open_output_string(s7));
+  gc_loc = s7_gc_protect(s7, old_port);
+  
+  result = s7_eval_c_string(s7, text);
+  errmsg = s7_get_output_string(s7, s7_current_error_port(s7));
+  if ((errmsg) && (*errmsg))
+    {
+      msg = (char *)calloc(strlen(errmsg) + 1, sizeof(char));
+      strcpy(msg, errmsg);
+    }
+  
+  s7_close_output_port(s7, s7_current_error_port(s7));
+  s7_set_current_error_port(s7, old_port);
+  s7_gc_unprotect_at(s7, gc_loc);
+  
+  glistener_append_text("\n");
+  if (msg)
+    glistener_append_text(msg);
+  else 
+    {
+      msg = s7_object_to_c_string(s7, result);
+      glistener_append_text(msg);
+    }
+  if (msg) free(msg);
+  glistener_append_prompt();
+}
+
+static void listener_init(GtkWidget *w)
+{
+  GtkTextBuffer *listener_buffer;
+  unsigned char prompt[3];
+  listener_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+  glistener_set_font(pango_font_description_from_string("Monospace 10"));
+  glistener_set_prompt_tag(gtk_text_buffer_create_tag(listener_buffer, "glistener_prompt_tag", 
+						      "weight", PANGO_WEIGHT_BOLD, 
+						      "foreground", "red",
+						      NULL));
+  prompt[0] = 0xce; prompt[1] = 0xbb; prompt[2] = '&gt;'; prompt[3] = '\0'; /* red lambda as prompt */
+  glistener_set_prompt(prompt);
+}
+
+static const char *helper(const char *text)
+{
+  if (s7_is_defined(s7, text))
+    return(s7_help(s7, s7_make_symbol(s7, text)));
+  return(NULL);
+}
+
+static void completer(bool (*symbol_func)(const char *symbol_name, void *data), void *data)
+{
+  s7_for_each_symbol_name(s7, symbol_func, data);
+}
+
+int main(int argc, char **argv)
+{
+  GtkWidget *shell, *frame;
+
+  s7 = s7_init();  
+
+  gtk_init(&argc, &argv);
+  shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  g_signal_connect(G_OBJECT(shell), "delete_event", G_CALLBACK(quit_repl), NULL);
+
+  frame = gtk_frame_new(NULL);
+  gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
+  gtk_widget_show(frame);
+
+  gtk_container_add(GTK_CONTAINER(shell), frame);
+
+  glistener_new(frame, listener_init);
+  glistener_set_evaluator(evaluator);
+  glistener_set_helper(helper);
+  glistener_set_completer(completer);
+
+  gtk_widget_show(shell);
+  gdk_window_resize(gtk_widget_get_window(shell), 400, 200);
+  gtk_main();
+}
+</pre></div>
 
 
 

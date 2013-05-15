@@ -1,13 +1,17 @@
 #include "glistener.h"
 
 /* compile-time switches: HAVE_GTK_3
- * supplied: help finder, evaluator, symbol table lookup
+ * supplied by caller: help finder, evaluator, symbol table lookup
  */
+
+struct glistener {
+  GtkWidget *text, *buffer, *scroller, *status;
+};
+
 
 #if (!HAVE_GTK_3)
   #define GDK_KEY_BackSpace GDK_BackSpace
   #define GDK_KEY_Down      GDK_Down
-  #define GDK_KEY_G         GDK_G
   #define GDK_KEY_Left      GDK_Left
   #define GDK_KEY_Return    GDK_Return
   #define GDK_KEY_Right     GDK_Right
@@ -19,15 +23,12 @@
   #define GDK_KEY_d         GDK_d
   #define GDK_KEY_e         GDK_e
   #define GDK_KEY_f         GDK_f
-  #define GDK_KEY_g         GDK_g
   #define GDK_KEY_greater   GDK_greater
   #define GDK_KEY_k         GDK_k
   #define GDK_KEY_l         GDK_l
   #define GDK_KEY_less      GDK_less
   #define GDK_KEY_n         GDK_n
   #define GDK_KEY_p         GDK_p
-  #define GDK_KEY_period    GDK_period
-  #define GDK_KEY_question  GDK_question
   #define GDK_KEY_t         GDK_t
   #define GDK_KEY_u         GDK_u
   #define GDK_KEY_v         GDK_v
@@ -46,7 +47,9 @@
 #define ControlMask GDK_CONTROL_MASK
 #define MetaMask GDK_MOD1_MASK
 
-
+/* TODO: glistener struct + pointer args throughout,
+ * TODO: forth/ruby cases in snd-glistener -- currently they're not getting the full expression because we depend on parens
+ */
 
 
 static GtkWidget *listener_text = NULL;
@@ -55,6 +58,52 @@ static GtkWidget *listener_statusbar = NULL;
 static GtkWidget *listener_scrolled_window = NULL;
 
 #define LISTENER_TEXT GTK_TEXT_VIEW(listener_text)
+
+
+
+/* these are the functions we get from the caller:
+ *   helper -- provide a brief string describing some entity (NULL = no help)
+ *   completer -- provide name completion (NULL = no completion)
+ *   evaluator -- evaluate an expression (a C string) and normally print the result in the glistener window
+ */
+
+static const char *(*glistener_helper)(const char *text) = NULL;
+static void (*glistener_evaluator)(const char *text) = NULL;
+static void (*glistener_completer)(bool (*symbol_func)(const char *symbol_name, void *data), void *data) = NULL;
+
+void glistener_set_helper(const char *(*help)(const char *text))
+{
+  glistener_helper = help;
+}
+
+void glistener_set_evaluator(void (*eval)(const char *text))
+{
+  glistener_evaluator = eval;
+}
+
+void glistener_set_completer(void (*completer)(bool (*symbol_func)(const char *symbol_name, void *data), void *data))
+{
+  glistener_completer = completer;
+}
+
+/* these are the fallback defaults for those 3 functions
+ */
+
+static const char *glistener_default_helper(const char *text)
+{
+  return(NULL);
+}
+
+static void glistener_default_completer(bool (*symbol_func)(const char *symbol_name, void *data), void *data)
+{
+}
+
+static void glistener_default_evaluator(const char *text)
+{
+  glistener_append_text("\n?");
+  glistener_append_prompt();
+}
+
 
 
 void glistener_set_font(PangoFontDescription *font)
@@ -98,7 +147,7 @@ void glistener_set_background_color(GdkRGBA *p)
 
 
 /* TODO: clean this up eventually */
-void post_status(const char *msg)
+void glistener_post_status(const char *msg)
 {
   if (listener_statusbar)
     {
@@ -106,7 +155,7 @@ void post_status(const char *msg)
     }
 }
 
-void clear_status(void)
+void glistener_clear_status(void)
 {
   if (listener_statusbar)
     {
@@ -258,7 +307,7 @@ void glistener_append_prompt(void)
  */
 static gboolean prompt_backward_search(const GtkTextIter *iter, GtkTextIter *start, GtkTextIter *end)
 {
-  int pos, old_pos = 0, cur_pos;
+  int cur_pos;
   GtkTextIter scan1, scan2, s1, s2;
   bool found_it = false;
   
@@ -395,7 +444,7 @@ static void remember_listener_string(const char *str)
   if (listener_strings[top]) free(listener_strings[top]);
   for (i = top; i > 0; i--) listener_strings[i] = listener_strings[i - 1];
 
-  len = strlen(str);
+  len = strlen(str) + 1;
   listener_strings[0] = (char *)calloc(len, sizeof(char));
   strcpy(listener_strings[0], str);
 }
@@ -665,7 +714,6 @@ static char *get_preceding_text(int pos, bool *in_string)
 {
   GtkTextIter s1, e1, elimit;
   int start = 0, end = 0;
-  char *text;
 
   gtk_text_buffer_get_iter_at_offset(listener_buffer, &s1, find_current_prompt());
   gtk_text_buffer_get_iter_at_offset(listener_buffer, &e1, pos);
@@ -714,9 +762,11 @@ static bool at_character_constant(int end_pos)
 static bool find_open_paren(int parens, int pos, int *highlight_pos, GtkTextIter *limit)
 {
   GtkTextIter scan;
-  int parens_at_line_end = parens, ppos;
+  int parens_at_line_end, ppos;
   bool end_scan = false;
   gunichar c = 0, last_c;
+
+  parens_at_line_end = parens;
 
   if (at_character_constant(pos + 1))
     return(false);
@@ -794,8 +844,7 @@ static bool find_open_paren(int parens, int pos, int *highlight_pos, GtkTextIter
 static bool find_close_paren(int parens, int pos, int *highlight_pos, GtkTextIter *limit)
 {
   GtkTextIter scan;
-  int parens_at_line_end = parens, ppos;
-  bool end_scan = false;
+  int ppos;
   gunichar c, prev_c = 0, prev_prev_c = 0;
 
   /* fprintf(stderr, "start ) search at %d\n", pos); */
@@ -1046,33 +1095,7 @@ static void clear_back_to_prompt(GtkWidget *w)
 
 /* ---------------- key bindings ---------------- */
 
-/* a temporary kludge */
-GtkWidget *glistener_text(void) {return(listener_text);}
-GtkTextBuffer *glistener_buffer(void) {return(listener_buffer);}
-
-static const char *(*glistener_helper)(const char *text) = NULL;
-static void (*glistener_evaluator)(const char *text) = NULL;
-static void (*glistener_symbol_completer)(bool (*symbol_func)(const char *symbol_name, void *data), void *data) = NULL;
-
-void glistener_set_help(const char *(*help)(const char *text))
-{
-  glistener_helper = help;
-}
-
-void glistener_set_evaluator(void (*eval)(const char *text))
-{
-  glistener_evaluator = eval;
-}
-
-void glistener_set_symbol_completer(void (*completer)(bool (*symbol_func)(const char *symbol_name, void *data), void *data))
-{
-  glistener_symbol_completer = completer;
-}
-
-
-
-
-void glistener_bindings(gpointer cls)
+void glistener_key_bindings(gpointer cls)
 {
   /* emacs key bindings for the most part
    */
@@ -1225,7 +1248,6 @@ static void listener_completion(int end);
 static gboolean glistener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   int pos;
-  char *text;
   guint key;
   GdkModifierType state;
 
@@ -1263,7 +1285,6 @@ static gboolean glistener_key_press(GtkWidget *w, GdkEventKey *event, gpointer d
 	    {
 	      GtkTextIter p;
 	      int i, pos, new_pos, cur;
-	      char *text;
 	      bool hits_prompt = false;
 
 	      pos = glistener_cursor(&p);
@@ -1291,17 +1312,6 @@ static gboolean glistener_key_press(GtkWidget *w, GdkEventKey *event, gpointer d
       else return(false);
       break;
       
-    case GDK_KEY_g: 
-    case GDK_KEY_G:
-      if (state & ControlMask)
-	{
-	  if (state & MetaMask)
-	    clear_listener();
-	  else control_g(any_selected_sound());
-	}
-      else return(false);
-      break;
-
     case GDK_KEY_BackSpace:
       /* need to check for prompt at cursor */
       if (!is_prompt_end(glistener_cursor_position()))
@@ -1473,7 +1483,7 @@ static gboolean glistener_button_release(GtkWidget *w, GdkEventButton *ev, gpoin
       {
 	help = glistener_helper(text);
 	if (help)
-	  post_status(help);
+	  glistener_post_status(help);
 	g_free(text);
       }
   }
@@ -1487,19 +1497,6 @@ static gboolean glistener_button_release(GtkWidget *w, GdkEventButton *ev, gpoin
 
 static GdkCursor *wait_cursor = NULL, *arrow_cursor = NULL;
 
-void glistener_set_wait_cursor_shape(GdkCursor *wait)
-{
-  wait_cursor = wait;
-}
-
-void glistener_set_normal_cursor_shape(GdkCursor *arrow)
-{
-  arrow_cursor = arrow;
-}
-
-
-
-
 #define SIGNAL_CONNECT(Widget, Signal, Function, Data) g_signal_connect(G_OBJECT(Widget), Signal, G_CALLBACK(Function), (gpointer)Data)
 #define SIGNAL_CONNECT_AFTER(Widget, Signal, Function, Data) g_signal_connect_after(G_OBJECT(Widget), Signal, G_CALLBACK(Function), (gpointer)Data)
 
@@ -1507,6 +1504,10 @@ GtkWidget *glistener_new(GtkWidget *parent, void (*initializations)(GtkWidget *n
 {
   GtkWidget *sw, *new_text, *vb, *sb;
   GtkTextBuffer *buf;
+
+  if (!glistener_helper) glistener_set_helper(glistener_default_helper);
+  if (!glistener_completer) glistener_set_completer(glistener_default_completer);
+  if (!glistener_evaluator) glistener_set_evaluator(glistener_default_evaluator);
 
   sw = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -1527,7 +1528,7 @@ GtkWidget *glistener_new(GtkWidget *parent, void (*initializations)(GtkWidget *n
   listener_scrolled_window = sw;
 
   glistener_set_font(pango_font_description_from_string("Monospace 11"));
-  glistener_bindings(GTK_TEXT_VIEW_GET_CLASS(LISTENER_TEXT));
+  glistener_key_bindings(GTK_TEXT_VIEW_GET_CLASS(LISTENER_TEXT));
 
   if (initializations)
     initializations(listener_text);
@@ -1608,12 +1609,8 @@ static void eval_text(char *text, int pos)
 	glistener_append_text(text);
       
       glistener_set_cursor_shape(wait_cursor);
-      
       remember_listener_string(text);
-      
       glistener_evaluator(text);
-
-      g_free(text);
       glistener_set_cursor_shape(arrow_cursor); 
       glistener_set_cursor_position(gtk_text_buffer_get_char_count(listener_buffer));
     }
@@ -1622,8 +1619,7 @@ static void eval_text(char *text, int pos)
 
 static int find_form_limits(int *bpos, int *epos)
 {
-  GtkTextIter cursor, scan, start, end;
-  char *text;
+  GtkTextIter cursor, start, end;
   int pos;
   
   pos = glistener_cursor_position();
@@ -1653,7 +1649,7 @@ static int find_form_limits(int *bpos, int *epos)
 
 static void glistener_return_callback(GtkWidget *w)
 {
-  GtkTextIter scan, s1, s2, start, end;
+  GtkTextIter scan, s1, start, end;
   char *text;
   int pos, bpos, epos, oparen_pos, inner_bpos, inner_epos;
   gunichar c;
@@ -1701,12 +1697,6 @@ static void glistener_return_callback(GtkWidget *w)
     /* fprintf(stderr, "first section (with prompt end): %s\n", gtk_text_buffer_get_text(listener_buffer, &start, &scan, false)); */
   }
 
-  /* TODO: unmatched flash is off by 2 if (+ 1 2(
-   * also wherever we send out newline, scroll to it
-   * also don't forget ruby/forth
-   */
-
-
   /* first look for easy cases:
    *   if all whitespace, send out newline
    *   if just atom (no open paren on left), eval and print result
@@ -1727,7 +1717,7 @@ static void glistener_return_callback(GtkWidget *w)
 	      add_inverse(pos - 1);
 	      flashes = 4;
 	      g_timeout_add_full(0, (guint32)FLASH_TIME, flash_unbalanced_paren, NULL, NULL);
-	      post_status("unmatched ')'");
+	      glistener_post_status("unmatched ')'");
 	      return;
 	    }
 	  inner_bpos = oparen_pos - 1;
@@ -1802,7 +1792,7 @@ static void glistener_return_callback(GtkWidget *w)
 	  add_inverse(inner_bpos + 1);
 	  flashes = 4;
 	  g_timeout_add_full(0, (guint32)FLASH_TIME, flash_unbalanced_paren, NULL, NULL);
-	  post_status("unmatched '('");
+	  glistener_post_status("unmatched '('");
 	  glistener_append_text("\n");
 	  return;
 	}
@@ -1816,6 +1806,7 @@ static void glistener_return_callback(GtkWidget *w)
   /* fprintf(stderr, "%d: \n", __LINE__);  */
   text = gtk_text_buffer_get_text(listener_buffer, &start, &end, false);
   eval_text(text, epos);
+  g_free(text);
 }
 
 
@@ -1875,8 +1866,10 @@ static char *filename_completion(const char *partial_name)
   if ((directory_name) && (file_name))
     {
       dir = g_dir_open(directory_name, 0, NULL);
-      while (rname = g_dir_read_name(dir))
+      while (true)
 	{
+	  rname = g_dir_read_name(dir);
+	  if (!rname) break;
 	  if (strncmp(rname, file_name, flen) == 0)
 	    {
 	      if (current_match == NULL)
@@ -1974,7 +1967,7 @@ static char *symbol_completion(const char *text)
   m->tlen = strlen(text);
   m->len = 0;
   m->current_match = NULL;
-  glistener_symbol_completer(compare_names, (void *)m);
+  glistener_completer(compare_names, (void *)m);
   if (m->len > m->tlen)
     result = m->current_match;
   else 
@@ -1989,9 +1982,6 @@ static char *symbol_completion(const char *text)
 
 static void listener_completion(int pos)
 {
-  #define INDENT_SPACES_LENGTH 80
-  static char *indent_spaces = "                                                                                ";
-  
   /* <whitespace><tab><any> -> indent (no-op if on prompt line and at end?) [tmp has old indentation code]
    * <text><tab><whitespace> -> try to complete
    * <text><tab><text> -> ???
@@ -2115,8 +2105,7 @@ static void listener_completion(int pos)
 			      }
 			    g_free(text);
 			  }
-			/* TODO: remember g_free of get_text!
-			 * TODO: if trailing white space, no indentation of cursor?
+			/* TODO: if trailing white space, no indentation of cursor?
 			 */
 		      }
 		  }
@@ -2125,3 +2114,4 @@ static void listener_completion(int pos)
       }
   }
 }
+

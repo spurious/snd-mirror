@@ -1,4 +1,5 @@
 #include "snd.h"
+#include "glistener.h"
 
 /* gtk's paned window is so buggy that perhaps I should simply replace all of them
  *   with boxes.  Especially the control panel.
@@ -2520,7 +2521,7 @@ GtkWidget *snd_entry_new(GtkWidget *container, GtkWidget *prev, snd_entry_bg_t w
   if (!bindings_ok)
     {
       bindings_ok = true;
-      glistener_bindings(GTK_ENTRY_GET_CLASS(GTK_ENTRY(text)));
+      glistener_key_bindings(GTK_ENTRY_GET_CLASS(GTK_ENTRY(text)));
     }
   gtk_widget_show(text);
 
@@ -2554,7 +2555,7 @@ GtkWidget *snd_entry_new_with_size(GtkWidget *container, int size)
   if (!bindings_ok)
     {
       bindings_ok = true;
-      glistener_bindings(GTK_ENTRY_GET_CLASS(GTK_ENTRY(text)));
+      glistener_key_bindings(GTK_ENTRY_GET_CLASS(GTK_ENTRY(text)));
     }
   gtk_widget_show(text);
 

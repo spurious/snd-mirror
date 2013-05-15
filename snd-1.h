@@ -827,6 +827,10 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 void add_srate_to_completion_list(int srate);
 char *direct_completions(const char *str);
 bool separator_char_p(char c);
+#if HAVE_FORTH || HAVE_RUBY
+  void call_read_hook_or_eval(const char *text);
+#endif
+
 
 
 /* -------- snd-print.c -------- */
@@ -1615,6 +1619,7 @@ void g_init_utils(void);
 
 /* -------- snd-listener -------- */
 
+void g_init_listener(void);
 #if HAVE_SCHEME
 bool listener_begin_hook(s7_scheme *sc);
 #endif

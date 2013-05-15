@@ -25,6 +25,7 @@
   #include <gdk/gdkkeysyms.h>
 #endif
 
+typedef struct glistener glistener;
 
 void glistener_set_prompt(const char *str);
 void glistener_clear(void);
@@ -44,15 +45,12 @@ void glistener_set_background_color(GdkRGBA *p);
 GtkWidget *glistener_new(GtkWidget *parent, void (*initializations)(GtkWidget *new_listener));
 void glistener_set_cursor_shape(GdkCursor *cursor_shape);
 void glistener_append_prompt(void);
+void glistener_post_status(const char *msg);
+void glistener_clear_status(void);
+void glistener_key_bindings(gpointer cls);
 
-
-/* temporary */
-GtkWidget *glistener_text(void);
-GtkTextBuffer *glistener_buffer(void);
-void glistener_set_wait_cursor_shape(GdkCursor *wait);
-void glistener_set_normal_cursor_shape(GdkCursor *arrow);
-void glistener_set_symbol_completer(void (*completer)(bool (*symbol_func)(const char *symbol_name, void *data), void *data));
-void glistener_set_help(const char *(*help)(const char *text));
+void glistener_set_completer(void (*completer)(bool (*symbol_func)(const char *symbol_name, void *data), void *data));
+void glistener_set_helper(const char *(*help)(const char *text));
 void glistener_set_evaluator(void (*eval)(const char *text));
 
 #endif

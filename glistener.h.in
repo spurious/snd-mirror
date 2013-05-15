@@ -45,6 +45,8 @@ void glistener_set_background_color(GdkRGBA *p);
 GtkWidget *glistener_new(GtkWidget *parent, void (*initializations)(GtkWidget *new_listener));
 void glistener_set_cursor_shape(GdkCursor *cursor_shape);
 void glistener_append_prompt(void);
+void glistener_post_status(const char *msg);
+void glistener_clear_status(void);
 
 
 /* temporary */

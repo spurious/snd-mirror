@@ -2,6 +2,7 @@
 #include "glistener.h"
 
 
+#if HAVE_SCHEME
 static void evaluator(const char *text)
 {
   int gc_loc;
@@ -33,6 +34,16 @@ static void evaluator(const char *text)
     }
   else snd_report_listener_result(result);
 }
+#endif
+
+
+#if HAVE_FORTH || HAVE_RUBY
+static void evaluator(const char *text)
+{
+  call_read_hook_or_eval(text); /* snd-listener.c */
+}
+#endif
+
 
 
 /* a temporary kludge */
@@ -100,7 +111,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   GdkModifierType state;
 
   /* clear possible warning */
-  clear_status();
+  glistener_clear_status();
 
   key = EVENT_KEYVAL(event);
   state = (GdkModifierType)EVENT_STATE(event);
@@ -132,7 +143,7 @@ static s7_pointer g_listener_load_hook(s7_scheme *sc, s7_pointer args)
   char msg[128];
   hook = s7_car(args);
   snprintf(msg, 128, "loading %s", s7_string(s7_environment_ref(s7, hook, s7_make_symbol(s7, "name"))));
-  post_status(msg);
+  glistener_post_status(msg);
   return(args);
 }
 #endif
@@ -154,7 +165,7 @@ static void listener_init(GtkWidget *w)
 
 }
 
-
+#if HAVE_SCHEME
 static const char *helper(const char *text)
 {
   if (s7_is_defined(s7, text))
@@ -166,6 +177,8 @@ static void completer(bool (*symbol_func)(const char *symbol_name, void *data), 
 {
   s7_for_each_symbol_name(s7, symbol_func, data);
 }
+#endif
+
 
 static void make_listener_widget(int height)
 {
@@ -184,8 +197,10 @@ static void make_listener_widget(int height)
       glistener_new(frame, listener_init);
 
       glistener_set_evaluator(evaluator);
-      glistener_set_help(helper);
-      glistener_set_symbol_completer(completer);
+#if HAVE_SCHEME
+      glistener_set_helper(helper);
+      glistener_set_completer(completer);
+#endif
     }
 }
 

@@ -1,4 +1,5 @@
 #include "snd.h"
+#include "glistener.h"
 
 bool listener_is_visible(void)
 {
@@ -76,6 +77,23 @@ XEN run_read_hook(char *str)
 		     XEN_LIST_1(C_TO_XEN_STRING(str)),
 		     S_read_hook));
 }
+
+#if HAVE_FORTH || HAVE_RUBY
+void call_read_hook_or_eval(const char *text)
+{
+  XEN form;
+  if (XEN_HOOKED(read_hook))
+    {
+      form = run_or_hook(read_hook, 
+			 XEN_LIST_1(C_TO_XEN_STRING(text)),
+			 S_read_hook);
+      if (XEN_TRUE_P(form))
+	return;
+    }
+  else form = XEN_EVAL_C_STRING(text);
+  snd_report_listener_result(form);
+}
+#endif
 
 
 static XEN g_save_listener(XEN filename)

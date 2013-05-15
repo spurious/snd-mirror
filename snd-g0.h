@@ -401,12 +401,7 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #define snd_keypad_8 GDK_KEY_KP_8
 #define snd_keypad_9 GDK_KEY_KP_9
 
-#define snd_K_Return    GDK_KEY_Return
 #define snd_K_Tab       GDK_KEY_Tab
-#define snd_K_BackSpace GDK_KEY_BackSpace
-#define snd_K_Delete    GDK_KEY_Delete
-#define snd_K_question  GDK_KEY_question
-
 #else
 /* ---------------- old version ---------------- */
 
@@ -513,12 +508,7 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #define snd_keypad_8 GDK_KP_8
 #define snd_keypad_9 GDK_KP_9
 
-#define snd_K_Return    GDK_Return
 #define snd_K_Tab       GDK_Tab
-#define snd_K_BackSpace GDK_BackSpace
-#define snd_K_Delete    GDK_Delete
-#define snd_K_question  GDK_question
-
 #endif
 
 #endif
