@@ -713,29 +713,6 @@ void sg_text_insert(GtkWidget *w, const char *text)
 }
 
 
-void sg_set_cursor(GtkWidget *w, int position)
-{
-  GtkTextIter pos;
-  GtkTextBuffer *buf;
-  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-  gtk_text_buffer_get_iter_at_offset(buf, &pos, position - 1);
-  gtk_text_buffer_place_cursor(buf, &pos);
-  gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(w), gtk_text_buffer_get_insert(buf));
-}
-
-
-int sg_cursor_position(GtkWidget *w)
-{
-  GtkTextMark *m;
-  GtkTextIter pos;
-  GtkTextBuffer *buf;
-  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-  m = gtk_text_buffer_get_insert(buf);
-  gtk_text_buffer_get_iter_at_mark(buf, &pos, m);
-  return(gtk_text_iter_get_offset(&pos));
-}
-
-
 GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, int add_choice, bool resize)
 {
   /* returns new text widget */

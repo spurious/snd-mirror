@@ -415,7 +415,6 @@ leaves the lisp listener pane"
 
 /* TODO: the edit history window is sometimes empty in gtk
  * why not c-r c-s in listener? where to prompt? -- status bar?
- * split this out as a separate "widget"
  * c-_ to undo--it's sort of working, completion in g? 
  *
  * what about all the other gtk key bindings?
@@ -426,7 +425,6 @@ leaves the lisp listener pane"
  * motif case needs prompt length fixups
  *
  * why is gtk 3 default font so small?  and snd looks terrible in gtk 3, but not across the net?
- * why not add the closing " when completing a name like "oboe. if completion is full filename
  */
 
 

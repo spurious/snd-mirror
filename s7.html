@@ -6332,7 +6332,7 @@ int main(int argc, char **argv)
 /* make mus-config.h (it can be empty), then
  *
  *   gcc -c s7.c -I.
- *   gcc -o doc7 doc7.c s7.o -lm -I.
+ *   gcc -o doc7 doc7.c s7.o -lm -I. -ldl
  *
  * run it:
  *
@@ -6620,7 +6620,7 @@ int main(int argc, char **argv)
     }
 }
 
-/* gcc -o doc7 doc7.c -lm -I. /usr/local/lib/libsndlib.a -lasound
+/* gcc -o doc7 doc7.c -lm -I. /usr/local/lib/libsndlib.a -lasound -ldl
  *
  *   (load "sndlib-ws.scm")
  *   (with-sound () (outa 10 .1))
@@ -7092,7 +7092,7 @@ int main(int argc, char **argv)
 }
 
 /* gcc -c s7.c -I.
- * gcc -o ex15 ex15.c s7.o -I. -lm 
+ * gcc -o ex15 ex15.c s7.o -I. -lm -ldl
  *
  * &gt; (plus 1 2)
  * #f
@@ -7522,7 +7522,7 @@ int main(int argc, char **argv)
 
 /* 
  *   gcc -c s7.c -I. -g3
- *   gcc -o ex3 ex3.c s7.o -lm -I.
+ *   gcc -o ex3 ex3.c s7.o -lm -I. -ldl
  *
  * if with_error_hook is false,
  *
@@ -7997,7 +7997,7 @@ int main(int argc, char **argv)
 
 /* 
  *   gcc -DWITH_GMP=1 -c s7.c -I. -O2 -g3
- *   gcc -DWITH_GMP=1 -o ex2 ex2.c s7.o -I. -O2 -lm -lgmp -lmpfr -lmpc
+ *   gcc -DWITH_GMP=1 -o ex2 ex2.c s7.o -I. -O2 -lm -ldl -lgmp -lmpfr -lmpc
  *
  *   ex2
  *   &gt; (add-1 1)   
@@ -8227,7 +8227,7 @@ int main(int argc, char **argv)
 
 /* 
  *   gcc -c s7.c -I. 
- *   gcc -o listener listener.c s7.o -lm -I. &lt;insert all the gtk flags and libraries here&gt;
+ *   gcc -o listener listener.c s7.o -lm -ldl -I. &lt;insert all the gtk flags and libraries here&gt;
  */
 
 </pre></div>
@@ -8263,7 +8263,7 @@ int main(int argc, char **argv)
 }
 
 /*   libxm: configure --with-gtk, then make
- *   gcc -o gtkex gtkex.c libxg.so -lm -I.
+ *   gcc -o gtkex gtkex.c libxg.so -lm -ldl -I.
  *   ;; you may need to include the libxm directory above
  */
 </pre></div>
@@ -9240,7 +9240,7 @@ int main(int argc, char **argv)
 
 /* 
  *  gcc -c s7.c -I.
- *  gcc -o ex14 ex14.c s7.o -I. -lm -lgsl -lgslcblas
+ *  gcc -o ex14 ex14.c s7.o -I. -lm -ldl -lgsl -lgslcblas
  *
  *  &gt; (J0 1.0)
  *  0.76519768655797
@@ -9494,7 +9494,7 @@ int main(int argc, char **argv)
 }
 
 /* gcc -c s7.c -I.
- * gcc -o ex14 ex14.c s7.o -I. -lm -lgsl -lgslcblas
+ * gcc -o ex14 ex14.c s7.o -I. -lm -ldl -lgsl -lgslcblas
  *
  *  &gt; (define g (make-block 32))
  *  g

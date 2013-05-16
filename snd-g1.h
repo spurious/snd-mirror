@@ -336,9 +336,7 @@ GtkWidget *sg_button_new_from_stock_with_label(const char *text, const gchar *st
 bool cursor_set_blinks(GtkWidget *w, bool blinks);
 
 char *sg_get_text(GtkWidget *w, int start, int end);
-void sg_set_cursor(GtkWidget *w, int position);
 void sg_text_insert(GtkWidget *w, const char *text);
-int sg_cursor_position(GtkWidget *w);
 GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, int add_choice, bool resize);
 void sg_make_resizable(GtkWidget *w);
 idle_t add_work_proc(GSourceFunc func, gpointer data);
