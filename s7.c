@@ -1731,19 +1731,8 @@ static int t_optimized = T_OPTIMIZED;
 #define T_BYTEVECTOR                  T_ONE_LINER
 #define is_bytevector(p)              ((typeflag(p) & T_BYTEVECTOR) != 0)
 #define set_bytevector(p)             typeflag(p) |= T_BYTEVECTOR
-
-/* PERHAPS: use this bit to mark a string that is a bytevector in scheme-land.
- *   then each object->string call needs to check this to decide about #u8(...)?
- *   alternatively, add type T_BYTEVECTOR, but piggy-back on all the string support (gc etc)
- *   the only difference: character vs byte coming and going, and the bytevector wrapper could handle that.
- *   the wrappers can handle either case.  And the writer could be in the object -- there is room in
- *   the string portion of the s7_cell struct for a writer -- expense looks small.
- *   Could that extend to utf8?  Perhaps read/write in each "string" object --also
- *   would need length and so on.  Many similarities to the (float) vector case.
- *   T_FLOAT_VECTOR = data is s7_double* not s7_pointer*, whereas here T_BYTEVECTOR: "u8" not unsigned char.
- *   void (*to_port)(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool use_write)
- *   reader handles the other side.
- */
+/* marks a string that the caller considers a bytevector 
+*/
 
 #define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
 #define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
@@ -8975,7 +8964,12 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	return(chars[0x7f]);
 
       if (name[1] == 'x')     /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e -- Guile doesn't have this
-			       *    (it is from r6rs -- perhaps it is a bad idea...)
+			       *
+			       * r7rs has 2-byte "characters" of the form #\xcebb but this is not compatible with
+			       *   make-string, string-length, and so on.  We'd either have to have 2-byte chars
+			       *   so (string-length (make-string 3 #\xcebb)) = 3, or accept 6 here for number of chars.
+			       *   Then substring and string-set! and so have to use utf8 encoding throughout or
+			       *   risk changing the string length unexpectedly.
 			       */
 	{
 	  /* sscanf here misses errors like #\x1.4, but make_atom misses #\x6/3,
@@ -65294,5 +65288,15 @@ s7_scheme *s7_init(void)
 /* possible additions (r7rs):
    string-copy! et al?
    bytevector-copy!
-   read|write-bytevector! 
+   read|write-bytevector!
+
+   (string-copy! to at from start end ) -> bytevector
  */
+
+
+/* from comp.lang.scheme:
+  (define-macro trad (lambda args `(let ((num 2)) ,@args)))
+  currently s7 gives an error:
+  ;define-macro argument 1, trad, is a symbol but should be a list (name ...)
+  but why not make it work?
+*/
