@@ -16,6 +16,7 @@ struct glistener {
   char **strings;
   int strings_size, strings_pos;
   bool first_time;
+  char *status_message;
 
   GtkTextTag *flash_tag;
   int flashes;
@@ -207,7 +208,39 @@ void glistener_post_status(glistener *g, const char *msg)
 void glistener_clear_status(glistener *g)
 {
   if (g->status)
-    gtk_statusbar_pop(GTK_STATUSBAR(g->status), 1);
+    {
+      gtk_statusbar_pop(GTK_STATUSBAR(g->status), 1);
+      if (g->status_message)
+	{
+	  free(g->status_message);
+	  g->status_message = NULL;
+	}
+    }
+}
+
+static void glistener_append_status(glistener *g, const char *msg)
+{
+  if ((g->status) && (msg))
+    {
+      int len;
+      len = strlen(msg);
+      if (g->status_message)
+	{
+	  char *new_msg;
+	  len += (strlen(g->status_message) + 2);
+	  new_msg = (char *)calloc(len, sizeof(char));
+	  snprintf(new_msg, len, "%s %s", msg, g->status_message);
+	  free(g->status_message);
+	  g->status_message = new_msg;
+	}
+      else
+	{
+	  g->status_message = (char *)calloc(len, sizeof(char));
+	  strcpy(g->status_message, msg);
+	}
+      gtk_statusbar_pop(GTK_STATUSBAR(g->status), 1);
+      gtk_statusbar_push(GTK_STATUSBAR(g->status), 1, g->status_message);
+    }
 }
 
 
@@ -577,6 +610,7 @@ void glistener_append_text(glistener *g, const char *msg)
       GtkTextIter end;
       gtk_text_buffer_get_end_iter(g->buffer, &end);
       gtk_text_buffer_insert(g->buffer, &end, (char *)msg, -1);
+      gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(g->text), gtk_text_buffer_get_insert(g->buffer));
     }
 }
 
@@ -584,7 +618,10 @@ void glistener_append_text(glistener *g, const char *msg)
 void glistener_insert_text(glistener *g, const char *text)
 {
   if (g->text)
-    gtk_text_buffer_insert_at_cursor(g->buffer, text, -1);
+    {
+      gtk_text_buffer_insert_at_cursor(g->buffer, text, -1);
+      gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(g->text), gtk_text_buffer_get_insert(g->buffer));
+    }
 }
 
 
@@ -613,7 +650,6 @@ static gboolean is_not_whitespace(gunichar c, gpointer data)
   return(!g_unichar_isspace(c));
 }
 
-
 static gboolean is_whitespace(gunichar c, gpointer data)
 {
 #if PRINTING
@@ -621,7 +657,6 @@ static gboolean is_whitespace(gunichar c, gpointer data)
 #endif
   return(g_unichar_isspace(c));
 }
-
 
 static gboolean is_not_whitespace_or_quote(gunichar c, gpointer data)
 {
@@ -633,7 +668,10 @@ static gboolean is_not_whitespace_or_quote(gunichar c, gpointer data)
 
   if ((c == '\'') ||
       (c == '`') ||
-      (c == '#') || /* TODO: and then also #u8\#nd(...) */
+      (c == '#') || 
+
+      (c == 'u') || (c == 'd') || (c == 'D') || (g_unichar_isdigit(c)) ||
+
       (c == ','))
     {
       bool *q = (bool *)data;
@@ -652,6 +690,18 @@ static bool find_not_whitespace(glistener *g, int pos, GtkTextIter *limit)
 }
 
 
+static gboolean is_not_slash(gunichar c, gpointer data)
+{
+  int *slashes = (int *)data;
+  if (c == '\\')
+    {
+      (*slashes)++;
+      return(false);
+    }
+  return(true);
+}
+
+
 static gboolean is_unslashed_double_quote(gunichar c, gpointer data)
 {
   int *slashes = (int *)data;
@@ -667,7 +717,7 @@ static gboolean is_unslashed_double_quote(gunichar c, gpointer data)
   return(false);
 }
 
-
+#if 0
 static int find_string_end(glistener *g, int pos, GtkTextIter *limit)
 {
   /* returns -1 if no close dquote */
@@ -679,6 +729,7 @@ static int find_string_end(glistener *g, int pos, GtkTextIter *limit)
     return(-1);
   return(gtk_text_iter_get_offset(&scan));
 }
+#endif
 
 
 static gboolean is_double_quote(gunichar c, gpointer data)
@@ -686,7 +737,7 @@ static gboolean is_double_quote(gunichar c, gpointer data)
   return(c == '\"');
 }
 
-
+#if 0
 static int find_string_start(glistener *g, int pos, GtkTextIter *limit)
 {
   /* returns -1 if no close dquote */
@@ -715,41 +766,133 @@ static int find_string_start(glistener *g, int pos, GtkTextIter *limit)
     }
   return(gtk_text_iter_get_offset(&scan));
 }
+#endif
 
 
 static bool find_enclosing_string(glistener *g, int pos, int *d1, int *d2, GtkTextIter *start, GtkTextIter *end)
 {
   GtkTextIter scan;
-  int p1 = -1, p2 = -1;
+  int p1 = -1, p2 = -1, slashes = 0;
+  gunichar c;
+  bool found_left_quote = false;
 
   gtk_text_buffer_get_iter_at_offset(g->buffer, &scan, pos - 1);
+#if 0
   if (gtk_text_iter_get_char(&scan) == '\"')
-    p1 = pos - 1;
-
-  if (gtk_text_iter_backward_find_char(&scan, is_double_quote, NULL, start))
     {
-      if (p1 != -1)
+      fprintf(stderr, "starting at a dq\n");
+      p2 = pos - 1;
+    }
+#endif
+
+#if PRINTING
+  fprintf(stderr, "enclosing %d [%c] %d %d\n", pos, gtk_text_iter_get_char(&scan), p1, p2);
+#endif
+
+  gtk_text_iter_backward_char(&scan);
+  while (gtk_text_iter_compare(start, &scan) < 0)
+    {
+      c = gtk_text_iter_get_char(&scan);
+#if PRINTING
+      fprintf(stderr, "[%c %d %d]", c, gtk_text_iter_get_offset(&scan), gtk_text_iter_get_offset(start));
+#endif
+      if (c == '\"')
 	{
-	  p2 = p1;
+	  found_left_quote = true;
 	  p1 = gtk_text_iter_get_offset(&scan);
 	}
-      else p1 = gtk_text_iter_get_offset(&scan);
+      else
+	{
+	  if (c == '\\')
+	    {
+	      if (found_left_quote)
+		slashes++;
+	    }
+	  else
+	    {
+	      if ((found_left_quote) &&
+		  ((slashes & 1) == 0))
+		{
+#if PRINTING
+		  fprintf(stderr, "found it at %d\n", p1);
+#endif
+		  break;
+		}
+
+#if PRINTING
+	      fprintf(stderr, "not found %d %d\n", slashes, found_left_quote);
+#endif
+	      found_left_quote = false;
+	      p1 = -1;
+	      slashes = 0;
+	    }
+	}
+      gtk_text_iter_backward_char(&scan);
     }
-  
-  if (p2 == -1)
+
+#if PRINTING
+  fprintf(stderr, "%d %d %d\n", p1, p2, found_left_quote);
+#endif
+
+  if (p1 != -1)
+    gtk_text_buffer_get_iter_at_offset(g->buffer, &scan, p1);
+
+  slashes = 0;
+  if (gtk_text_iter_forward_find_char(&scan, is_unslashed_double_quote, &slashes, end))
     {
-      gtk_text_buffer_get_iter_at_offset(g->buffer, &scan, pos - 1);
-      if (gtk_text_iter_forward_find_char(&scan, is_double_quote, NULL, end))
+      if (found_left_quote)
 	p2 = gtk_text_iter_get_offset(&scan);
+      else 
+	{
+#if PRINTING
+	  fprintf(stderr, "scan right 2nd time\n");
+#endif
+	  p1 = gtk_text_iter_get_offset(&scan);
+	  if (gtk_text_iter_forward_find_char(&scan, is_unslashed_double_quote, &slashes, end))
+	    p2 = gtk_text_iter_get_offset(&scan);
+	}
     }
+#if PRINTING
+  fprintf(stderr, "%d %d", p1, p2);
+#endif
 
   if ((p1 == -1) || (p2 == -1))
     return(false);
 
+#if PRINTING
+  {
+    GtkTextIter a, b;
+    gtk_text_buffer_get_iter_at_offset(g->buffer, &a, p1);
+    gtk_text_buffer_get_iter_at_offset(g->buffer, &b, p2 + 1);
+    fprintf(stderr, " -> %s\n", gtk_text_buffer_get_text(g->buffer, &a, &b, false));
+  }
+#endif
+
   *d1 = p1;
-  *d2 = p2+1;
+  *d2 = p2 + 1;
   return(true);
 }
+
+static int find_string_start(glistener *g, int pos, GtkTextIter *limit)
+{
+  int d1, d2;
+  GtkTextIter e;
+  gtk_text_buffer_get_end_iter(g->buffer, &e);
+  if (find_enclosing_string(g, pos, &d1, &d2, limit, &e))
+    return(d1);
+  return(-1);
+}
+
+static int find_string_end(glistener *g, int pos, GtkTextIter *limit)
+{
+  int d1, d2;
+  GtkTextIter e;
+  gtk_text_buffer_get_end_iter(g->buffer, &e);
+  if (find_enclosing_string(g, pos, &d1, &d2, limit, &e))
+    return(d2 - 1);
+  return(-1);
+}
+
 
 static gboolean is_block_comment(gunichar c, gpointer data)
 {
@@ -804,6 +947,14 @@ static gboolean is_delimiter_q(gunichar c, gpointer data)
 }
 #endif
 
+static gboolean is_vector(gunichar c, gpointer data)
+{
+  return(!((g_unichar_isspace(c)) ||
+	   (g_unichar_isdigit(c)) ||
+	   (c == 'd') || (c == 'D') || (c == 'u') ||
+	   (c == '#')));
+}
+
 
 static void find_surrounding_word(glistener *g, int pos, 
 				  gboolean (*checker)(gunichar c, gpointer data),
@@ -830,7 +981,8 @@ static void find_surrounding_word(glistener *g, int pos,
 
   if (!gtk_text_iter_equal(&end, end_limit))
     {
-      if (!g_unichar_isspace(gtk_text_iter_get_char(&end)))
+      if (!is_delimiter(gtk_text_iter_get_char(&end), NULL))
+	  
 	{
 #if PRINTING
 	  fprintf(stderr, "at end: [%c]\n", gtk_text_iter_get_char(&end));
@@ -867,11 +1019,17 @@ static char *get_preceding_text(glistener *g, int pos, bool *in_string)
   if ((gtk_text_iter_equal(&e1, &elimit)) ||
       (g_unichar_isspace(gtk_text_iter_get_char(&e1))))
     {
+#if PRINTING
+      fprintf(stderr, "%d: ", __LINE__);
+#endif
       find_surrounding_word(g, pos, is_delimiter, &start, &end, &s1, &e1);
       gtk_text_buffer_get_iter_at_offset(g->buffer, &elimit, start - 1);
       *in_string = (gtk_text_iter_get_char(&elimit) == '\"');
       gtk_text_buffer_get_iter_at_offset(g->buffer, &s1, start);
       gtk_text_buffer_get_iter_at_offset(g->buffer, &e1, end);
+#if PRINTING
+      fprintf(stderr, "preceding: %s\n", gtk_text_buffer_get_text(g->buffer, &s1, &e1, true));
+#endif
       return(gtk_text_buffer_get_text(g->buffer, &s1, &e1, true));
     }
   return(NULL);
@@ -917,16 +1075,18 @@ static bool find_open_paren(glistener *g, int parens, int pos, int *highlight_po
       last_c = c;
       c = gtk_text_iter_get_char(&scan);
       /* fprintf(stderr, "%d %c\n", __LINE__, c); */
-      if (c == (gunichar)'\"') 
+
+      if (!at_character_constant(g, gtk_text_iter_get_offset(&scan)))
 	{
-	  ppos = find_string_start(g, gtk_text_iter_get_offset(&scan), limit);
-	  if (ppos == -1) return(false);                /* no matching double-quote so we're probably in a string */
-	  gtk_text_buffer_get_iter_at_offset(g->buffer, &scan, ppos);
-	  last_c = '\"';
-	}
-      else
-	{
-	  if (!at_character_constant(g, gtk_text_iter_get_offset(&scan)))
+	  if (c == (gunichar)'\"') 
+	    {
+	      ppos = find_string_start(g, gtk_text_iter_get_offset(&scan), limit);
+	      if (ppos == -1) return(false);                /* no matching double-quote so we're probably in a string */
+	      gtk_text_buffer_get_iter_at_offset(g->buffer, &scan, ppos);
+
+	      last_c = '\"';
+	    }
+	  else
 	    {
 	      if (c == '\n')
 		{
@@ -954,7 +1114,7 @@ static bool find_open_paren(glistener *g, int parens, int pos, int *highlight_po
 			{
 			  if (!end_scan)
 			    {
-			      if (c == ')') 
+			      if (c == ')')
 				parens++; 
 			      else
 				{
@@ -986,23 +1146,31 @@ static bool find_close_paren(glistener *g, int parens, int pos, int *highlight_p
   GtkTextIter scan;
   int ppos;
   gunichar c = 0, prev_c = 0, prev_prev_c = 0;
-
-  /* fprintf(stderr, "start ) search at %d\n", pos); */
+#if PRINTING
+  fprintf(stderr, "start ) search at %d -> %d\n", pos, gtk_text_iter_get_offset(limit));
+#endif
 
   gtk_text_buffer_get_iter_at_offset(g->buffer, &scan, pos);  
-  while (!gtk_text_iter_equal(&scan, limit))
+  while (gtk_text_iter_compare(&scan, limit) < 0)
     {
       prev_prev_c = prev_c;
       prev_c = c;
       c = gtk_text_iter_get_char(&scan);
-      /* fprintf(stderr, "%d: %c\n", __LINE__, c); */
-
-      if ((prev_c != '\\') || (prev_prev_c != '#'))
+#if PRINTINF
+      fprintf(stderr, "%d: [%c] %d %d\n", __LINE__, c, gtk_text_iter_get_offset(&scan), gtk_text_iter_get_offset(limit));
+#endif
+      if (!at_character_constant(g, gtk_text_iter_get_offset(&scan)))
 	{
 	  if (c == (gunichar)'\"')
 	    {
 	      ppos = find_string_end(g, gtk_text_iter_get_offset(&scan), limit);
-	      gtk_text_buffer_get_iter_at_offset(g->buffer, &scan, ppos);
+#if PRINTING
+	      fprintf(stderr, "ppos: %d (from %d)\n", ppos, gtk_text_iter_get_offset(&scan));
+#endif
+	      if (ppos != -1) 
+		{
+		  gtk_text_buffer_get_iter_at_offset(g->buffer, &scan, ppos);
+		}
 	      prev_prev_c = 0;
 	      prev_c = '\"';
 	    }
@@ -1020,7 +1188,7 @@ static bool find_close_paren(glistener *g, int parens, int pos, int *highlight_p
 		    }
 		  else
 		    {
-		      if (c == ')') 
+		      if (c == ')')
 			{
 			  parens--; 
 			  if (parens == 0)
@@ -1640,6 +1808,9 @@ static gboolean glistener_button_release(GtkWidget *w, GdkEventButton *ev, gpoin
     const char *help;
     gtk_text_buffer_get_iter_at_offset(g->buffer, &s1, find_current_prompt(g));
     gtk_text_buffer_get_iter_at_offset(g->buffer, &e1, find_next_prompt(g));
+#if PRINTING
+    fprintf(stderr, "%d: ", __LINE__);
+#endif
     find_surrounding_word(g, glistener_cursor_position(g), is_delimiter, &start, &end, &s1, &e1);
     gtk_text_buffer_get_iter_at_offset(g->buffer, &s1, start);
     gtk_text_buffer_get_iter_at_offset(g->buffer, &e1, end);
@@ -1754,14 +1925,40 @@ static void glistener_return_callback(glistener *g)
     gtk_text_buffer_get_iter_at_offset(g->buffer, &s1, bpos);
     gtk_text_iter_forward_find_char(&s1, is_not_whitespace, NULL, &end);
     oparen_pos = gtk_text_iter_get_offset(&s1);
-    if (oparen_pos > pos)
+#if PRINTING
+    fprintf(stderr, "bpos: %d, oparen: %d, pos: %d\n", bpos, oparen_pos, pos);
+#endif
+    if (oparen_pos >= pos)
       {
 #if PRINTING
-	fprintf(stderr, "cursor %d -> %d\n", pos, oparen_pos + 1); 
+	fprintf(stderr, "resetting cursor %d -> %d\n", pos, oparen_pos + 1); 
 #endif
-      pos = oparen_pos + 1;
+	pos = oparen_pos + 1;
+	gtk_text_buffer_get_iter_at_offset(g->buffer, &scan, pos - 1);
+      }
+#if 1
+    else
+      {
+	gtk_text_buffer_get_iter_at_offset(g->buffer, &s1, pos);
+	gtk_text_iter_backward_find_char(&s1, is_not_whitespace, NULL, &start);
+	if (gtk_text_iter_compare(&s1, &start)> 0)
+	  {
+	oparen_pos = gtk_text_iter_get_offset(&s1) + 1;
+	if (oparen_pos < pos)
+	  {
+#if PRINTING
+	    fprintf(stderr, "resetting cursor back %d -> %d [%c]\n", pos, oparen_pos, gtk_text_iter_get_char(&s1));
+#endif
+	    pos = oparen_pos;
+	    scan = s1;
+#if PRINTING
+	    fprintf(stderr, "now scan: [%c]\n", gtk_text_iter_get_char(&scan));
+#endif
+	  }
+      }
       }
   }
+#endif
 
   /* first look for easy cases:
    *   if all whitespace, send out newline
@@ -1773,6 +1970,9 @@ static void glistener_return_callback(glistener *g)
   inner_epos = pos;
 
   c = gtk_text_iter_get_char(&scan);
+#if PRINTING
+  fprintf(stderr, "c at %d: [%c]\n", __LINE__, c);
+#endif
   if (c == ')')
     {
       if (!at_character_constant(g, pos - 1))
@@ -1825,7 +2025,6 @@ static void glistener_return_callback(glistener *g)
 #if PRINTING
       fprintf(stderr, "now %c\n", gtk_text_iter_get_char(&scan));
 #endif
-
       if (!find_open_paren(g, 1, pos - 1, &oparen_pos, &start))
 	{
 	  /* not at ) and no ( */
@@ -1843,7 +2042,44 @@ static void glistener_return_callback(glistener *g)
 	      return;
 	    }
 	  gtk_text_buffer_get_iter_at_offset(g->buffer, &start, bpos);
+#if PRINTING
+	  fprintf(stderr, "%d (%c): ", __LINE__, gtk_text_iter_get_char(&start));
+#endif
+	  if (gtk_text_iter_get_char(&start) == '#')
+	    {
+#if PRINTING
+	      fprintf(stderr, "look for vector constant\n");
+#endif
+	      scan = start;
+	      if (gtk_text_iter_forward_find_char(&scan, is_vector, NULL, &end))
+		{
+		  int ppos;
+#if PRINTING
+		  fprintf(stderr, "now scan: %c\n", gtk_text_iter_get_char(&scan));
+#endif
+		  if (gtk_text_iter_get_char(&scan) == '(')
+		    {
+		      gtk_text_iter_forward_char(&scan);
+		      if (find_close_paren(g, 1, gtk_text_iter_get_offset(&scan), &ppos, &end))
+			{
+			  gtk_text_buffer_get_iter_at_offset(g->buffer, &start, bpos);
+			  gtk_text_buffer_get_iter_at_offset(g->buffer, &end, ppos + 1);
+#if PRINTING
+			  fprintf(stderr, "#case: %s\n", gtk_text_buffer_get_text(g->buffer, &start, &end, false));
+#endif
+			  text = gtk_text_buffer_get_text(g->buffer, &start, &end, false);
+			  eval_text(g, text, gtk_text_iter_get_offset(&end) + 1);
+			  g_free(text);
+			  return;
+			}
+		    }
+		}
+#if PRINTING
+	      fprintf(stderr, "%d (%c): ", __LINE__, gtk_text_iter_get_char(&scan));
+#endif
+	    }
 	  find_surrounding_word(g, pos, is_whitespace, &bpos, &pos, &start, &end);
+
 	  if (bpos < pos)
 	    {
 	      gtk_text_buffer_get_iter_at_offset(g->buffer, &start, bpos);
@@ -1955,11 +2191,9 @@ static void glistener_return_callback(glistener *g)
 /* ---------------- <tab> completion and indentation ---------------- */
 
 /* realpath eqv in glib? -- not available yet (many complaints ...)
- * TODO: show in status why not complete
- * TODO: key for apropos?
  */
 
-static char *filename_completion(const char *partial_name)
+static char *filename_completion(glistener *g, const char *partial_name)
 {
   char *file_name = NULL, *directory_name = NULL, *temp, *new_name = NULL, *slash, *current_match = NULL, *result;
   const char *rname;
@@ -2003,6 +2237,8 @@ static char *filename_completion(const char *partial_name)
     flen = strlen(file_name);
   else return(NULL);
 
+  glistener_clear_status(g);
+
   if ((directory_name) && (file_name))
     {
       dir = g_dir_open(directory_name, 0, NULL);
@@ -2012,6 +2248,8 @@ static char *filename_completion(const char *partial_name)
 	  if (!rname) break;
 	  if (strncmp(rname, file_name, flen) == 0)
 	    {
+	      if (strcmp(rname, file_name) != 0)
+		glistener_append_status(g, rname);
 	      if (current_match == NULL)
 		{
 		  len = strlen(rname);
@@ -2070,6 +2308,7 @@ typedef struct {
   const char *text;
   char *current_match;
   int len, tlen;
+  glistener *g;
 } match_info;
 
 static bool compare_names(const char *symbol_name, void *data)
@@ -2077,6 +2316,9 @@ static bool compare_names(const char *symbol_name, void *data)
   match_info *m = (match_info *)data;
   if (strncmp(m->text, symbol_name, m->tlen) == 0)
     {
+      if (strcmp(m->text, symbol_name) != 0)
+	glistener_append_status(m->g, symbol_name);
+
       if (m->current_match == NULL)
 	{
 	  m->len = strlen(symbol_name);
@@ -2108,6 +2350,8 @@ static char *symbol_completion(glistener *g, const char *text)
   m->tlen = strlen(text);
   m->len = 0;
   m->current_match = NULL;
+  m->g = g;
+  glistener_clear_status(g);
   g->completer(g, compare_names, (void *)m);
   if (m->len > m->tlen)
     result = m->current_match;
@@ -2142,7 +2386,7 @@ static void glistener_completion(glistener *g, int pos)
     {
       if (!in_string)
 	new_name = symbol_completion(g, text);
-      else new_name = filename_completion(text);
+      else new_name = filename_completion(g, text);
       if (new_name)
 	{
 	  int old_len, new_len;
@@ -2219,12 +2463,16 @@ static void glistener_completion(glistener *g, int pos)
 		      
 		      gtk_text_buffer_get_iter_at_offset(g->buffer, &start_limit, oparen_pos);
 		      gtk_text_buffer_get_iter_at_offset(g->buffer, &end_limit, epos);
+#if PRINTING
+      fprintf(stderr, "%d: ", __LINE__);
+#endif
 		      find_surrounding_word(g, oparen_pos + 1, is_delimiter, &start, &end, &start_limit, &end_limit);
 		      gtk_text_buffer_get_iter_at_offset(g->buffer, &s1, start);
 		      gtk_text_buffer_get_iter_at_offset(g->buffer, &e1, end);
 		      text = gtk_text_buffer_get_text(g->buffer, &s1, &e1, true);
-		      /* fprintf(stderr, "car: %s\n", text); */
-		      
+#if PRINTING
+		      fprintf(stderr, "car: %s\n", text);
+#endif		      
 		      if (text)
 			{
 			  if (strcmp(text, "or") == 0)
@@ -2341,6 +2589,7 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
   g->insertion_position = 0;
   g->wait_cursor = NULL; 
   g->arrow_cursor = NULL;
+  g->status_message = NULL;
 
   /* make the listener widgets */
   g->scroller = gtk_scrolled_window_new(NULL, NULL);
@@ -2446,4 +2695,5 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
 /* TODO: move by expr, then use that in indent code
  * TODO: user-set key-bindings (glistener-bind-key) -- a separate callback before the current one?
  * TODOL gtest.scm enough to use with call/valgrind
+ * TODO: key for apropos?
  */
