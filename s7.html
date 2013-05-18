@@ -9026,8 +9026,10 @@ static void listener_stacktrace_callback(...)            /* the usual callback b
 
 <div class="header" id="glistener"><h4>glistener.c</h4></div>
 
-<p>glistener.c has a more extended example of a gtk-based repl.
-This is work-in-progress!  
+<p>glistener.c has a more extended example of a gtk-based repl.  It is not specific to s7:
+Snd uses it as its Forth and Ruby listener as well as for s7.  
+A multilistener test program is the Snd file tools/gcall.c which
+is used by tools/gtest.scm for regression testing.  This is still very much work in progress!
 Here's a quick way to try it out:
 </p>
 

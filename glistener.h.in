@@ -51,7 +51,7 @@ void glistener_post_status         (glistener *g, const char *msg);
 void glistener_clear_status        (glistener *g);
 
 void glistener_key_bindings        (glistener *g, gpointer cls);
-void glistener_filters_expression  (glistener *g, bool filtering);
+void glistener_is_schemish         (glistener *g, bool filtering);
 
 void glistener_set_font            (glistener *g, PangoFontDescription *font);
 #if (!HAVE_GTK_3)

@@ -202,7 +202,7 @@ static void make_listener_widget(int height)
       glistener_set_completer(ss->listener, completer);
 #endif
 #if HAVE_FORTH || HAVE_RUBY
-      glistener_filters_expression(ss->listener, false);
+      glistener_is_schemish(ss->listener, false);
 #endif
     }
 }

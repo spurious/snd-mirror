@@ -7,7 +7,7 @@
 struct glistener {
   GtkWidget *text, *scroller, *status;
   GtkTextBuffer *buffer;
-  bool filtering;
+  bool is_schemish;
 
   GtkTextTag *prompt_tag;
   char *prompt;
@@ -120,9 +120,9 @@ void glistener_set_completer(glistener *g, void (*completer)(glistener *g, bool 
 
 
 
-void glistener_filters_expression(glistener *g, bool filtering)
+void glistener_is_schemish(glistener *g, bool is_schemish)
 {
-  g->filtering = filtering;
+  g->is_schemish = is_schemish;
 }
 
 
@@ -689,7 +689,7 @@ static bool find_not_whitespace(glistener *g, int pos, GtkTextIter *limit)
   return(gtk_text_iter_forward_find_char(&scan, is_not_whitespace, NULL, limit));
 }
 
-
+#if 0
 static gboolean is_not_slash(gunichar c, gpointer data)
 {
   int *slashes = (int *)data;
@@ -700,6 +700,7 @@ static gboolean is_not_slash(gunichar c, gpointer data)
     }
   return(true);
 }
+#endif
 
 
 static gboolean is_unslashed_double_quote(gunichar c, gpointer data)
@@ -729,7 +730,6 @@ static int find_string_end(glistener *g, int pos, GtkTextIter *limit)
     return(-1);
   return(gtk_text_iter_get_offset(&scan));
 }
-#endif
 
 
 static gboolean is_double_quote(gunichar c, gpointer data)
@@ -737,7 +737,7 @@ static gboolean is_double_quote(gunichar c, gpointer data)
   return(c == '\"');
 }
 
-#if 0
+
 static int find_string_start(glistener *g, int pos, GtkTextIter *limit)
 {
   /* returns -1 if no close dquote */
@@ -972,14 +972,14 @@ static void find_surrounding_word(glistener *g, int pos,
   gtk_text_buffer_get_iter_at_offset(g->buffer, &start, pos);
   gtk_text_buffer_get_iter_at_offset(g->buffer, &end, pos);
 
-  if (!gtk_text_iter_equal(start_limit, &start))
+  if (gtk_text_iter_compare(start_limit, &start) < 0)
     {
       if (gtk_text_iter_backward_find_char(&start, checker, NULL, start_limit))
 	*start_pos = gtk_text_iter_get_offset(&start) + 1;
       else *start_pos = bpos;
     }
 
-  if (!gtk_text_iter_equal(&end, end_limit))
+  if (gtk_text_iter_compare(&end, end_limit) < 0)
     {
       if (!is_delimiter(gtk_text_iter_get_char(&end), NULL))
 	  
@@ -1013,7 +1013,7 @@ static char *get_preceding_text(glistener *g, int pos, bool *in_string)
   gtk_text_buffer_get_end_iter(g->buffer, &elimit);
   *in_string = false;
 
-  if (gtk_text_iter_equal(&s1, &elimit))
+  if (gtk_text_iter_equal(&s1, &elimit)) /* s1 can't be beyond elimit=end iter */
     return(NULL);
   
   if ((gtk_text_iter_equal(&e1, &elimit)) ||
@@ -1070,7 +1070,7 @@ static bool find_open_paren(glistener *g, int parens, int pos, int *highlight_po
 
   parens_at_line_end = parens;
   gtk_text_buffer_get_iter_at_offset(g->buffer, &scan, pos);  
-  while (!gtk_text_iter_equal(limit, &scan))
+  while (gtk_text_iter_compare(limit, &scan) < 0)
     {
       last_c = c;
       c = gtk_text_iter_get_char(&scan);
@@ -1156,7 +1156,7 @@ static bool find_close_paren(glistener *g, int parens, int pos, int *highlight_p
       prev_prev_c = prev_c;
       prev_c = c;
       c = gtk_text_iter_get_char(&scan);
-#if PRINTINF
+#if PRINTING
       fprintf(stderr, "%d: [%c] %d %d\n", __LINE__, c, gtk_text_iter_get_offset(&scan), gtk_text_iter_get_offset(limit));
 #endif
       if (!at_character_constant(g, gtk_text_iter_get_offset(&scan)))
@@ -1836,7 +1836,7 @@ static gboolean glistener_button_release(GtkWidget *w, GdkEventButton *ev, gpoin
 static void eval_text(glistener *g, char *text, int pos)
 {
 #if PRINTING
-  fprintf(stderr, "eval %d [%s]\n", glistener_cursor_position(g), text);
+  fprintf(stderr, "eval %d %d [%s]\n", glistener_cursor_position(g), pos, text);
 #endif
   if (text)
     {
@@ -1892,19 +1892,22 @@ static void glistener_return_callback(glistener *g)
   int pos, bpos, epos, oparen_pos, inner_bpos, inner_epos;
   gunichar c;
   
-  remove_underline(g);
-  pos = find_expression_limits(g, &bpos, &epos);
-  if (!g->filtering)
+  if (!g->is_schemish)
     {
       GtkTextIter a, b;
-      gtk_text_buffer_get_iter_at_offset(g->buffer, &a, bpos);
-      gtk_text_buffer_get_iter_at_offset(g->buffer, &b, epos);
+      gtk_text_buffer_get_iter_at_offset(g->buffer, &a, find_current_prompt(g)); /* or perhaps line start if not on the prompt line? */
+      gtk_text_buffer_get_iter_at_offset(g->buffer, &b, glistener_cursor_position(g));
+      if (!gtk_text_iter_ends_line(&b)) 
+	gtk_text_iter_forward_to_line_end(&b);
       text = gtk_text_buffer_get_text(g->buffer, &a, &b, false);
-      eval_text(g, text, pos);
+      eval_text(g, text, gtk_text_iter_get_offset(&b));
       g_free(text);
       return;
     }
   
+  remove_underline(g);
+  pos = find_expression_limits(g, &bpos, &epos);
+
   if (bpos == epos) /* <cr> at end? */
     {
       glistener_append_text(g, "\n");
@@ -2082,13 +2085,14 @@ static void glistener_return_callback(glistener *g)
 
 	  if (bpos < pos)
 	    {
+	      epos = gtk_text_iter_get_offset(&end);
 	      gtk_text_buffer_get_iter_at_offset(g->buffer, &start, bpos);
 	      gtk_text_buffer_get_iter_at_offset(g->buffer, &end, pos);
 #if PRINTING
 	      fprintf(stderr, "%d: ", __LINE__);  
 #endif
 	      text = gtk_text_buffer_get_text(g->buffer, &start, &end, false);
-	      eval_text(g, text, pos);
+	      eval_text(g, text, epos + 1);
 	      g_free(text);
 	      return;
 	    }
@@ -2568,7 +2572,7 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
 
   /* make a new glistener, set defaults */
   g = (glistener *)calloc(1, sizeof(glistener));
-  g->filtering = true;
+  g->is_schemish = true;
   g->helper = glistener_default_helper;
   g->completer = glistener_default_completer;
   g->evaluator = glistener_default_evaluator;
@@ -2694,6 +2698,8 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
 
 /* TODO: move by expr, then use that in indent code
  * TODO: user-set key-bindings (glistener-bind-key) -- a separate callback before the current one?
- * TODOL gtest.scm enough to use with call/valgrind
  * TODO: key for apropos?
+ * TODO: g->checker for func arg help and undefined names etc
+ * PERHAPS: add 'a' to 'd' cases for CL?
+ * TODO: gtk3 should be the default, not gtk2
  */

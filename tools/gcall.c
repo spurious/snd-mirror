@@ -99,6 +99,12 @@ static s7_pointer g_clear(s7_scheme *sc, s7_pointer args)
   return(s7_car(args));
 }
 
+static s7_pointer g_set_prompt(s7_scheme *sc, s7_pointer args)
+{
+  glistener_set_prompt(unwrap_glistener(s7_car(args)), s7_string(s7_cadr(args)));
+  return(s7_cadr(args));
+}
+
 static void glistener_init(glistener *g1, glistener *g2)
 {
   s7_define_function(s7, "append-text", g_append_text, 2, 0, false, "(append-text g txt)");
@@ -108,6 +114,7 @@ static void glistener_init(glistener *g1, glistener *g2)
   s7_define_function(s7, "text", g_text, 3, 0, false, "(text g start end)");
   s7_define_function(s7, "append-prompt", g_append_prompt, 1, 0, false, "(append-prompt g)");
   s7_define_function(s7, "prompt-position", g_prompt_position, 1, 0, false, "(prompt-position g)");
+  s7_define_function(s7, "set-prompt", g_set_prompt, 2, 0, false, "(set-prompt g str)");
   s7_define_function(s7, "evaluate", g_evaluate, 1, 0, false, "(evaluate g)");
   s7_define_function(s7, "complete", g_complete, 1, 0, false, "(complete g)");
   s7_define_function(s7, "scroll", g_scroll_to_end, 1, 0, false, "(scroll g)");
