@@ -4431,6 +4431,18 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
 }
 
 
+s7_pointer s7_symbol_table_find_name(s7_scheme *sc, const char *name)
+{
+  int location;
+  s7_pointer result;
+  location = symbol_table_hash(name); 
+  result = symbol_table_find_by_name(sc, name, location); 
+  if (is_null(result))
+    return(NULL);
+  return(result);
+}
+
+
 static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym)
 {
   unsigned int loc;
@@ -6135,8 +6147,13 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 bool s7_is_defined(s7_scheme *sc, const char *name)
 {
   s7_pointer x;
-  x = find_symbol(sc, make_symbol(sc, name));
-  return(is_slot(x));
+  x = s7_symbol_table_find_name(sc, name);
+  if (x)
+    {
+      x = find_symbol(sc, x);
+      return(is_slot(x));
+    }
+  return(false);
 }
 
 
@@ -30507,7 +30524,7 @@ shorthand for (define func (lambda args ...))");
   if (is_symbol(obj))
     {
       /* here look for name */
-    obj = s7_symbol_value(sc, obj);
+      obj = s7_symbol_value(sc, obj);
     }
   
   if (is_procedure_or_macro(obj))

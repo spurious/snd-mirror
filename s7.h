@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.22"
-#define S7_DATE "2-May-13"
+#define S7_VERSION "2.23"
+#define S7_DATE "18-May-13"
 
 
 typedef long long int s7_Int;
@@ -497,6 +497,7 @@ bool s7_is_open_environment(s7_pointer e);                                  /* (
 s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
+s7_pointer s7_symbol_table_find_name(s7_scheme *sc, const char *name);
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val);
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env);
@@ -881,7 +882,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
- * 14-May:    glistener.c
+ * 14-May:    glistener.c, glistener.h, s7_symbol_table_find_name (for glistener).
  * 2-May:     r7rs changes: flush-output-port, vector-append, read|write-string, boolean=?, symbol=?.
  *              start/end args for string-fill!, vector-fill!, string->list, vector->list, and copy.
  *              exit, emergency-exit.

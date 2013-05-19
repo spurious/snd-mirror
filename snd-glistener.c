@@ -110,7 +110,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   GdkModifierType state;
 
   /* clear possible warning */
-  glistener_clear_status(ss->listener);
+  /* glistener_clear_status(ss->listener); */
 
   key = EVENT_KEYVAL(event);
   state = (GdkModifierType)EVENT_STATE(event);
@@ -160,16 +160,22 @@ static void listener_init(glistener *g, GtkWidget *w)
   SG_SIGNAL_CONNECT(w, "enter_notify_event", listener_focus_callback, NULL);
   SG_SIGNAL_CONNECT(w, "leave_notify_event", listener_unfocus_callback, NULL);
 
-  glistener_set_prompt_tag(ss->listener, gtk_text_buffer_create_tag(listener_buffer, "glistener_prompt_tag", "weight", PANGO_WEIGHT_BOLD, NULL));
+  glistener_set_prompt_tag(ss->listener, gtk_text_buffer_create_tag(listener_buffer, "glistener_prompt_tag", 
+								    "weight", PANGO_WEIGHT_BOLD, 
+								    NULL));
   ss->listener_pane = w;
-
 }
 
 #if HAVE_SCHEME
 static const char *helper(glistener *g, const char *text)
 {
-  if (s7_is_defined(s7, text))
-    return(s7_help(s7, s7_make_symbol(s7, text)));
+  s7_pointer sym;
+
+  sym = s7_symbol_table_find_name(s7, text);
+  if (sym)
+    return(s7_help(s7, sym));
+
+  glistener_clear_status(g);
   return(NULL);
 }
 
