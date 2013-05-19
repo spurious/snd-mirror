@@ -9100,8 +9100,11 @@ static void listener_init(glistener *g, GtkWidget *w)
 
 static const char *helper(glistener *g, const char *text)
 {
-  if (s7_is_defined(s7, text))
-    return(s7_help(s7, s7_make_symbol(s7, text)));
+  s7_pointer sym;
+  sym = s7_symbol_table_find_name(s7, text);
+  if (sym)
+    return(s7_help(s7, sym));
+  glistener_clear_status(g);
   return(NULL);
 }
 

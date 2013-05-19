@@ -19,7 +19,7 @@
       (set-cursor-position *g2* i)
       (let ((result (evaluate *g2*)))
 	(if (not (string=? result rtn))
-	    (append-text *g1* (format #f "~%~S, cursor at ~D: ~S~%" expr i result)))))))
+	    (append-text *g1* (format #f "~%~S, cursor at ~D:~%~S~%~S~%" expr i result rtn)))))))
 
 (simple-test "(+ 1 2)" "(+ 1 2)\n3")
 (simple-test "#\\a" "#\\a\n#\\a")
@@ -52,7 +52,7 @@
 (simple-test "`(1 2)" "`(1 2)\n(1 2)")
 (simple-test "((if (< 3 2) * +) 3 2)" "((if (< 3 2) * +) 3 2)\n5")
 (simple-test "(if (char? #\\\") 0 1)" "(if (char? #\\\") 0 1)\n0")
-(simple-test "  (+ 1 2)  " "(+ 1 2)\n3")
+;; (simple-test "  (+ 1 2)  " "(+ 1 2)\n3")
 ;;; for "   #()   " if cursor trails, the preceding whitespace is included -- make test smarter?
 ;;; and here: (simple-test "#()   " "#()\n#()"), we get trailing space in the first case!
 (simple-test "(+ #| 1 2 3 |# 4 5)" "(+ #| 1 2 3 |# 4 5)\n9")
@@ -68,23 +68,27 @@
 (simple-test "(+ 1 2 ; a test\n3)" "(+ 1 2 ; a test\n3)\n6")
 (simple-test "(+ 1 2 #| a test\n|#3)" "(+ 1 2 #| a test\n|#3)\n6")
 (simple-test "\"a;b\"" "\"a;b\"\n\"a;b\"")
+(simple-test "\"a)b\"" "\"a)b\"\n\"a)b\"")
+(simple-test "\"a(b\"" "\"a(b\"\n\"a(b\"")
 (simple-test "'(a #|foo|||||# b)" "'(a #|foo|||||# b)\n(a b)")
 (simple-test "(let ((@,@'[1] 1) (\\,| 2)) (+ @,@'[1] \\,|))" "(let ((@,@'[1] 1) (\\,| 2)) (+ @,@'[1] \\,|))\n3")
+(simple-test "(length \";\")" "(length \";\")\n1")
+(simple-test "(cons \";\" 1)" "(cons \";\" 1)\n(\";\" . 1)")
+(simple-test "(length \")\")" "(length \")\")\n1")
+(simple-test "\"a\\\"b\"" "\"a\\\"b\"\n\"a\\\"b\"")
+(simple-test "(length \"#|\")" "(length \"#|\")\n2")
+(simple-test "(length \"(\")" "(length \"(\")\n1") ; works outside this test??
+(simple-test "(length '(#xA\"\"#(1)))" "(length '(#xA\"\"#(1)))\n3")
+(simple-test "(+ #| 1 ( 2 3 |# 4 5)" "(+ #| 1 ( 2 3 |# 4 5)\n9")
+(simple-test "(+ #| 1 ; 2 3 |# 4 5)" "(+ #| 1 ; 2 3 |# 4 5)\n9") 
 
 
-; (simple-test "(length '(#xA\"\"#(1)))" "(length '(#xA\"\"#(1)))\n3")
-; ' and # problem here
+;(simple-test "\"\\\"\"" "\"\\\"\n\\\"\"")
+
+;; block comments get confused if cursor to left?
 
 
-;(simple-test "\"\\\"\"" "\"\\\"\n\\\"\"") -- results are correct??
-;(simple-test "a\"b" "a\"b\n\"a\"b")
-;(cons ";" 1) has similar trouble despite working when all by itself
-
-;(simple-test "(+ #| 1 ( 2 3 |# 4 5)" "(+ #| 1 ( 2 3 |# 4 5)\n9") ; TODO: trouble seeing we're in block comment
-;(simple-test "(+ #| 1 ; 2 3 |# 4 5)" "(+ #| 1 ; 2 3 |# 4 5)\n9") ; TODO: if cursor between | and ; -- confusion, double-quote has same problem
-
-;TODO: we're being confused by ; comments if parens in comment and we start in the comment
-; also "a(n" if cursor if just after the (
+; also "a(n" if cursor is just after the (
 ; (map /""'(123)) if cursor between ' and ( -- trouble
 
 
@@ -106,11 +110,23 @@
 	(if (not (string=? result (if (< (- i bpos) pos) rtn1 rtn2)))
 	    (append-text *g1* (format #f "~%~S, cursor at ~D (pos: ~D): ~S~%" exprs i pos result)))))))
 
-(multi-test "123 432" 5 "123 432\n123" "123\n123" "432\n432")
-(multi-test "123 #\\a" 5 "123 #\\a\n123" "123\n123" "#\\a\n#\\a")
-(multi-test "123 \"a\"" 5 "123 \"a\"\n123" "123\n123" "\"a\"\n\"a\"")
-(multi-test "(+ 1 2) 123" 9 "(+ 1 2) 123\n3" "(+ 1 2)\n3" "123\n123")
+(multi-test "123 432" 4 "123 432\n123" "123\n123" "432\n432")
+(multi-test "123 #\\a" 4 "123 #\\a\n123" "123\n123" "#\\a\n#\\a")
+(multi-test "123 \"a\"" 4 "123 \"a\"\n123" "123\n123" "\"a\"\n\"a\"")
+(multi-test "(+ 1 2) 123" 8 "(+ 1 2) 123\n3" "(+ 1 2)\n3" "123\n123")
 
 
 
 ;;; gtk_text_buffer_backspace -- try at start and make sure pos unchanged
+
+
+(define (completion-test text rtn)
+  (clear *g2*)
+  (append-text *g2* text)
+  (let ((result (complete *g2*)))
+    (if (not (string=? result rtn))
+	(append-text *g1* (format #f "~S -> ~S~%" text result)))))
+
+(completion-test "(trunc" "(truncate")
+(completion-test "\"card" "\"cardinal.snd\"")
+
