@@ -135,6 +135,7 @@ char *glistener_complete           (glistener *g);
  *    glistener_set_prompt(g, prompt);
  *  UTF8 lambda is 0xce 0xbb.
  *
+ *
  * --------
  * void glistener_set_prompt_tag(glistener *g, GtkTextTag *m);
  *
@@ -310,7 +311,7 @@ char *glistener_complete           (glistener *g);
  *
  *  This is the heart of the listener.  It gets a string ("text") and
  *  does something debonair.  In s7, it calls s7_eval_c_string, and then
- *  displays the result.  Althoufh error handling makes the code complicated,
+ *  displays the result.  Although error handling makes the code complicated,
  *  the basic idea is:
  *
  *    static void evaluator(glistener *g, const char *text)

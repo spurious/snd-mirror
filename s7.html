@@ -9098,7 +9098,7 @@ static void listener_init(glistener *g, GtkWidget *w)
    *   "g" is the new glistener pointer, passed to any function that wants to talk to this
    *   listener. 
    */
-  unsigned char prompt[3];
+  unsigned char prompt[4] = {0xce, 0xbb, '&gt;', '\0'}; /* lambda as prompt */
   GtkTextBuffer *buffer;
 
   buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
@@ -9109,7 +9109,6 @@ static void listener_init(glistener *g, GtkWidget *w)
 							 "weight", PANGO_WEIGHT_BOLD, 
 							 "foreground", "red",
 							 NULL));
-  prompt[0] = 0xce; prompt[1] = 0xbb; prompt[2] = '&gt;'; prompt[3] = '\0'; /* utf8 lambda */
   glistener_set_prompt(g, prompt);
 }
 
