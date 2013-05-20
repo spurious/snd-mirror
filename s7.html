@@ -6277,6 +6277,7 @@ The examples that follow show:
 <li><a href="#gtkschemerepl">Gtk/Scheme-based REPL</a>
 <li><a href="#s7inathread">s7 running in a separate thread</a>
 <li><a href="#replrescue">begin_hook to the rescue!</a>
+<li><a href="#glistener">glistener.c</a>
 <li><a href="#gsl">GSL</a>
 </ul>
 
@@ -9026,11 +9027,9 @@ static void listener_stacktrace_callback(...)            /* the usual callback b
 
 <div class="header" id="glistener"><h4>glistener.c</h4></div>
 
-<p>glistener.c has a more extended example of a gtk-based repl.  It is not specific to s7:
+<p>glistener.c is a gtk-based repl.  It is not specific to s7:
 Snd uses it as its Forth and Ruby listener as well as for s7.  
-A multilistener test program is the Snd file tools/gcall.c which
-is used by tools/gtest.scm for regression testing.  This is still very much work in progress!
-Here's a quick way to try it out:
+Here's a short example:
 </p>
 
 <div class="indented">
@@ -9051,6 +9050,7 @@ static gint quit_repl(GtkWidget *w, GdkEvent *event, gpointer context) {exit(0);
 
 static void evaluator(glistener *g, const char *text)
 {
+  /* this sends "text" to s7 for evaluation, then displays the result */
   int gc_loc;
   s7_pointer old_port, result;
   const char *errmsg = NULL;
@@ -9072,34 +9072,43 @@ static void evaluator(glistener *g, const char *text)
   s7_gc_unprotect_at(s7, gc_loc);
   
   glistener_append_text(g, "\n");
-  if (msg)
+  if (msg)                      /* some error occurred during evaluation */
     glistener_append_text(g, msg);
   else 
-    {
+    {                           /* evaluation produced an s7 object which we need to display */
       msg = s7_object_to_c_string(s7, result);
       glistener_append_text(g, msg);
     }
   if (msg) free(msg);
-  glistener_append_prompt(g);
+  glistener_append_prompt(g);  /* prompt for more input */
 }
 
 static void listener_init(glistener *g, GtkWidget *w)
 {
+  /* this is the glistener initialization function. "w" above is the new text-view widget,
+   *   "g" is the new glistener pointer, passed to any function that wants to talk to this
+   *   listener. 
+   */
   unsigned char prompt[3];
   GtkTextBuffer *buffer;
 
   buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
   glistener_set_font(g, pango_font_description_from_string("Monospace 10"));
+
+  /* our prompt will be a red lambda */
   glistener_set_prompt_tag(g, gtk_text_buffer_create_tag(buffer, "glistener_prompt_tag", 
 							 "weight", PANGO_WEIGHT_BOLD, 
 							 "foreground", "red",
 							 NULL));
-  prompt[0] = 0xce; prompt[1] = 0xbb; prompt[2] = '&gt;'; prompt[3] = '\0'; /* lambda as prompt */
+  prompt[0] = 0xce; prompt[1] = 0xbb; prompt[2] = '&gt;'; prompt[3] = '\0'; /* utf8 lambda */
   glistener_set_prompt(g, prompt);
 }
 
 static const char *helper(glistener *g, const char *text)
 {
+  /* this function is called whenever the listener thinks help is needed.
+   *   Any string it returns is posted in the listener statusbar.
+   */
   s7_pointer sym;
   sym = s7_symbol_table_find_name(s7, text);
   if (sym)
@@ -9110,6 +9119,11 @@ static const char *helper(glistener *g, const char *text)
 
 static void completer(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
 {
+  /* this function is called when &lt;tab&gt; is typed after a partial symbol name. 
+   *   "symbol_func" above should be called on each member of the symbol-table, passing it
+   *   the symbol name (as a string) and the data passed as "completer's" third argument.
+   *   If symbol_func returns true, it is done, so the loop through the symbol-table can stop.
+   */
   s7_for_each_symbol_name(s7, symbol_func, data);
 }
 
@@ -9130,6 +9144,7 @@ int main(int argc, char **argv)
 
   gtk_container_add(GTK_CONTAINER(shell), frame);
 
+  /* make a new listener */
   g = glistener_new(frame, listener_init);
   glistener_set_evaluator(g, evaluator);
   glistener_set_helper(g, helper);
@@ -9140,7 +9155,18 @@ int main(int argc, char **argv)
   gtk_main();
 }
 
-</pre></div>
+</pre>
+
+<p>The three functions supplied by the caller (evaluator, helper, and
+completer) all have defaults, so you don't have to supply symbol name
+completion or help.  The default evaluator just prints "?" and prompts
+for more input.
+</p>
+
+<p>A multi-listener test program is the Snd file tools/gcall.c which
+is used by tools/gtest.scm for regression testing. 
+</p>
+</div>
 
 
 

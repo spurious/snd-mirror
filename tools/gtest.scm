@@ -52,9 +52,7 @@
 (simple-test "`(1 2)" "`(1 2)\n(1 2)")
 (simple-test "((if (< 3 2) * +) 3 2)" "((if (< 3 2) * +) 3 2)\n5")
 (simple-test "(if (char? #\\\") 0 1)" "(if (char? #\\\") 0 1)\n0")
-;; (simple-test "  (+ 1 2)  " "(+ 1 2)\n3")
-;;; for "   #()   " if cursor trails, the preceding whitespace is included -- make test smarter?
-;;; and here: (simple-test "#()   " "#()\n#()"), we get trailing space in the first case!
+(simple-test "  (+ 1 2)  " "(+ 1 2)\n3")
 (simple-test "(+ #| 1 2 3 |# 4 5)" "(+ #| 1 2 3 |# 4 5)\n9")
 (simple-test "(char? \"\")" "(char? \"\")\n#f")
 (simple-test "(equal? \"\" \"\")" "(equal? \"\" \"\")\n#t")
@@ -81,15 +79,10 @@
 (simple-test "(length '(#xA\"\"#(1)))" "(length '(#xA\"\"#(1)))\n3")
 (simple-test "(+ #| 1 ( 2 3 |# 4 5)" "(+ #| 1 ( 2 3 |# 4 5)\n9")
 (simple-test "(+ #| 1 ; 2 3 |# 4 5)" "(+ #| 1 ; 2 3 |# 4 5)\n9") 
-
-
-;(simple-test "\"\\\"\"" "\"\\\"\n\\\"\"")
-
-;; block comments get confused if cursor to left?
-
-
-; also "a(n" if cursor is just after the (
-; (map /""'(123)) if cursor between ' and ( -- trouble
+(simple-test "(map /\"\"'(123))" "(map /\"\"'(123))\n()")
+(simple-test "(eq? ()#())" "(eq? ()#())\n#f")
+(simple-test "(eq? \"\"1)" "(eq? \"\"1)\n#f")
+(simple-test "(eq? #()#())" "(eq? #()#())\n#f")
 
 
 (define (multi-test exprs pos rtn0 rtn1 rtn2)
@@ -113,7 +106,9 @@
 (multi-test "123 432" 4 "123 432\n123" "123\n123" "432\n432")
 (multi-test "123 #\\a" 4 "123 #\\a\n123" "123\n123" "#\\a\n#\\a")
 (multi-test "123 \"a\"" 4 "123 \"a\"\n123" "123\n123" "\"a\"\n\"a\"")
-(multi-test "(+ 1 2) 123" 8 "(+ 1 2) 123\n3" "(+ 1 2)\n3" "123\n123")
+(multi-test "(+ 1 2) 123" 9 "(+ 1 2) 123\n3" "(+ 1 2)\n3" "123\n123")
+(multi-test "(+ 1 2)123" 8 "(+ 1 2)123\n3" "(+ 1 2)\n3" "123\n123")
+(multi-test "(+ 1 2)(* 2 3)" 8 "(+ 1 2)(* 2 3)\n3" "(+ 1 2)\n3" "(* 2 3)\n6")
 
 
 
