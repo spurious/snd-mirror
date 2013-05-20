@@ -166,7 +166,7 @@ static void evaluator(glistener *g, const char *text)
 
 static void listener_init(glistener *g, GtkWidget *w)
 {
-  unsigned char prompt[3];
+  unsigned char prompt[4] = {0xce, 0xbb, '>', '\0'}; /* lambda as prompt */
   GtkTextBuffer *buffer;
 
   buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
@@ -175,7 +175,6 @@ static void listener_init(glistener *g, GtkWidget *w)
 							 "weight", PANGO_WEIGHT_BOLD, 
 							 "foreground", "red",
 							 NULL));
-  prompt[0] = 0xce; prompt[1] = 0xbb; prompt[2] = '>'; prompt[3] = '\0'; /* lambda as prompt */
   glistener_set_prompt(g, prompt);
 }
 
@@ -240,10 +239,7 @@ int main(int argc, char **argv)
   gtk_main();
 }
 
-/* in gtk-2:
-   gcc gcall.c -g3 -o gcall glistener.o s7.o -lm -I. -I/usr/include/gtk-2.0 -I/usr/lib64/gtk-2.0/include -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng12 -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng12 -I. -g3 -I/usr/local/include -I/usr/local/include -lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgio-2.0 -lpangoft2-1.0 -lgdk_pixbuf-2.0 -lpangocairo-1.0 -lcairo -lpango-1.0 -lfreetype -lfontconfig -lgobject-2.0 -lgmodule-2.0 -lgthread-2.0 -lrt -lglib-2.0 -ldl
-
-   in gtk-3:
-   gcc gcall.c -g3 -o gcall glistener.o s7.o -lm -I. -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/gio-unix-2.0/ -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/freetype2 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/libpng15   -I/usr/include/cairo -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng15   -I. -g3   -I/usr/local/include   -I/usr/local/include -lgtk-3 -lgdk-3 -latk-1.0 -lgio-2.0 -lpangocairo-1.0 -lgdk_pixbuf-2.0 -lcairo-gobject -lpango-1.0 -lcairo -lgobject-2.0 -lglib-2.0      -lasound -L/usr/local/lib -lfftw3 -lm   -L/usr/local/lib -lgsl -lgslcblas -lm  -ldl -lc
+/* in gtk-2: gcc gcall.c -o gcall s7.o glistener.o `pkg-config --libs gtk+-2.0 --cflags` -lm -ldl
+   in gtk-3: gcc gcall.c -o gcall s7.o glistener.o `pkg-config --libs gtk+-3.0 --cflags` -lm -ldl
 */
 

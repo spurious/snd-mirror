@@ -8,6 +8,7 @@
 
 <style type="text/css">
 	EM.red {color:red; font-style:normal}
+	EM.redb {color:red; font-weight: bold; font-style: normal}
         EM.error {color:chocolate; font-style:normal}
 	EM.emdef {font-weight: bold; font-style: normal}
 	EM.green {color:green; font-style:normal}
@@ -113,6 +114,15 @@
 		   -moz-border-radius: 8px;
 		   -webkit-border-radius: 8px;
 		   }
+        DIV.listener {background-color: #f2f2ff;
+	              font-family: 'Monospace';
+		   padding-left: 6px;
+		   padding-right: 6px;
+		   padding-bottom: 4px;
+		   margin-left: 1.0cm;
+		   margin-right: 4.0cm;
+	              border: 2px solid #a0a0a0;
+		      }
         LI.li_header {padding-top: 20px;}
 </style>
 </head>
@@ -8226,8 +8236,7 @@ int main(int argc, char **argv)
   gtk_main();
 }
 
-/* 
- *   gcc -c s7.c -I. 
+/*   gcc -c s7.c -I. 
  *   gcc -o listener listener.c s7.o -lm -ldl -I. &lt;insert all the gtk flags and libraries here&gt;
  */
 
@@ -9155,19 +9164,35 @@ int main(int argc, char **argv)
   gtk_main();
 }
 
+/* in gtk-2: gcc gcall.c -o gcall s7.o glistener.o `pkg-config --libs gtk+-2.0 --cflags` -lm -ldl
+ * in gtk-3: gcc gcall.c -o gcall s7.o glistener.o `pkg-config --libs gtk+-3.0 --cflags` -lm -ldl
+ */
 </pre>
 
+<div class="listener">
+<pre>
+<em class=redb>&lambda;&gt;</em> (define &lambda; lambda)
+&lambda;
+<em class=redb>&lambda;&gt;</em> ((&lambda; (a b) (+ a b)) 1 2)
+3
+<em class=redb>&lambda;&gt;</em>
+</pre>
+</div>
+
+<br>
 <p>The three functions supplied by the caller (evaluator, helper, and
 completer) all have defaults, so you don't have to supply symbol name
 completion or help.  The default evaluator just prints "?" and prompts
-for more input.
+for more input.  See glistener.h for the full API and an earnest attempt
+at helpful documentation.
 </p>
 
 <p>A multi-listener test program is the Snd file tools/gcall.c which
 is used by tools/gtest.scm for regression testing. 
 </p>
-</div>
 
+
+</div>
 
 
 <div class="header" id="gsl"><h4>GSL</h4></div>

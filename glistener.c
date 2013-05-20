@@ -2,6 +2,7 @@
 
 /* compile-time switches: HAVE_GTK_3
  * supplied by caller: help finder, evaluator, symbol table lookup
+ * see s7.html#glistener for examples and documentation.
  */
 
 struct glistener {
@@ -178,9 +179,10 @@ static GdkRGBA *default_background_color = NULL;
 
 void glistener_set_text_color(glistener *g, GdkRGBA *p)
 {
+  /* TODO: this is not working, or is it? background_color is being cranky also */
   if ((g) && (g->text))
     {
-      gtk_widget_override_color(g->text, GTK_STATE_FLAG_ACTIVE, p);
+      gtk_widget_override_color(g->text, GTK_STATE_FLAG_NORMAL, p);
       default_text_color = NULL;
     }
   else default_text_color = p;
@@ -190,7 +192,7 @@ void glistener_set_background_color(glistener *g, GdkRGBA *p)
 {
   if ((g) && (g->text))
     {
-      gtk_widget_override_background_color(g->text, GTK_STATE_FLAG_ACTIVE, p);
+      gtk_widget_override_background_color(g->text, GTK_STATE_FLAG_NORMAL, p);
       default_background_color = NULL;
     }
   else default_background_color = p;
@@ -596,7 +598,7 @@ bool glistener_write(glistener *g, FILE *fp)
   return(true);
 }
 
-
+#if 0
 bool glistener_write_to_file(glistener *g, const char *filename)
 {
   if (g->text)
@@ -613,6 +615,7 @@ bool glistener_write_to_file(glistener *g, const char *filename)
     }
   return(false);
 }
+#endif
 
 
 void glistener_append_text(glistener *g, const char *msg)
