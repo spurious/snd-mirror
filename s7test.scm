@@ -71476,4 +71476,20 @@ in non-gmp,
 ;;; ok (tested) up to 10000000 
 |#
 
+#|
 ;;; TODO: bytevector tests, #u8 reader/writer tests
+
+(let ((bv #u8(1 0 3)))
+  (test bv #u8(1 0 3))
+  (test (object->string bv) "#u8(1 0 3)")
+  (test (bv 1) #\null) ; should this return 0?
+  (let ((bv #u8(1 0 3))) (set! (bv 2) 64) bv) -> complaint from string-set!
+  (map values bv)) -> (#\x1 #\null #\x3) 
+  (equal? bv #u8(1 0 3)) -> #t
+  (equal? (bytevector 1 0 3) #u8(1 0 3)) -> #t
+  (bytevector? bv) -> #t (it's also a string)
+  (equal? (make-bytevector 3) #u8(0 0 0))
+  (string-ref #u8(64 65 66) 1) -> #\A
+
+)
+|#

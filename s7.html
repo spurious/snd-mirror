@@ -114,7 +114,7 @@
 		   -moz-border-radius: 8px;
 		   -webkit-border-radius: 8px;
 		   }
-        DIV.listener {background-color: #f2f2ff;
+        DIV.listener {background-color: #f0f8ff;
 	              font-family: 'Monospace';
 		   padding-left: 6px;
 		   padding-right: 6px;
@@ -5933,7 +5933,8 @@ the current environment, so defines happen in the enclosing environment.
 (define (close-port p) (if (input-port? p) (close-input-port p) (close-output-port p)))
 (define open-binary-input-file open-input-file)
 (define open-binary-output-file open-output-file)
-(define (call-with-port port proc) ((if (input-port? port) call-with-input-port call-with-output-port) port proc))
+(define (call-with-port port proc) 
+  ((if (input-port? port) call-with-input-port call-with-output-port) port proc))
 
 (define (bytevector-u8-ref b k) (char->integer (b k)))
 (define (bytevector-u8-set! b k c) (char->integer (set! (b k) (integer->char c))))

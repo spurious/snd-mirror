@@ -333,8 +333,8 @@ char *glistener_complete           (glistener *g);
  *				      
  *
  * --------
- * char *glistener_evaluate           (glistener *g);
- * char *glistener_complete           (glistener *g);
+ * char *glistener_evaluate(glistener *g);
+ * char *glistener_complete(glistener *g);
  *
  *  These two functions are intended for regression testing.  glistener_evaluate
  *  simulates typing <cr>, and glistener_complete simulates <tab>.

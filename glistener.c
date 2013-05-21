@@ -35,7 +35,6 @@ struct glistener {
   void (*completer)(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data);
 };
 
-
 #if (!HAVE_GTK_3)
   #define GDK_KEY_BackSpace GDK_BackSpace
   #define GDK_KEY_Down      GDK_Down
@@ -179,7 +178,6 @@ static GdkRGBA *default_background_color = NULL;
 
 void glistener_set_text_color(glistener *g, GdkRGBA *p)
 {
-  /* TODO: this is not working, or is it? background_color is being cranky also */
   if ((g) && (g->text))
     {
       gtk_widget_override_color(g->text, GTK_STATE_FLAG_NORMAL, p);
@@ -308,7 +306,9 @@ static void prompt_insert(glistener *g, GtkTextIter *pos, bool at_top)
       if (g->prompt_tag)
 	gtk_text_buffer_insert_with_tags(g->buffer, pos, g->prompt, -1, g->prompt_tag, NULL);
       else gtk_text_buffer_insert(g->buffer, pos, g->prompt, -1);
-      /* scroll fully left so the new prompt is in view */
+      /* scroll fully to prompt and left so the new prompt is in view 
+       */
+      gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(g->text), gtk_text_buffer_get_insert(g->buffer));
       gtk_adjustment_set_value(GTK_ADJUSTMENT(gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(g->scroller))), 0.0);
     }
 }
@@ -397,6 +397,8 @@ void glistener_append_prompt(glistener *g)
       GtkTextIter end;
       gtk_text_buffer_get_end_iter(g->buffer, &end);
       prompt_insert(g, &end, false);
+      gtk_text_buffer_get_end_iter(g->buffer, &end);
+      gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(g->text), &end, 0.0, false, 0.0, 1.0);
     }
 }
 
@@ -664,6 +666,11 @@ void glistener_scroll_to_end(glistener *g)
 
 
 /* ---------------- paren matching ---------------- */
+
+static gboolean is_gt(gunichar c, gpointer data)
+{
+  return(c == '>');
+}
 
 static gboolean is_not_whitespace(gunichar c, gpointer data)
 {
@@ -1752,7 +1759,7 @@ static void eval_text(glistener *g, GtkTextIter *start, GtkTextIter *end)
   char *text;
   text = gtk_text_buffer_get_text(g->buffer, start, end, false);
   
-  /* fprintf(stderr, "text: %s, %d\n", text, append_text); */
+  /* fprintf(stderr, "text: %s, %d\n", text); */
 
   if (text)
     {
@@ -1909,7 +1916,9 @@ static void glistener_return_callback(glistener *g)
 	      
 	    case '#':
 	      {
-		/* the special cases here involve block comments and character constants */
+		/* the special cases here involve block comments and character constants 
+		 *   there's also #<...> if user types inside the brackets and there's whitespace to confuse it
+		 */
 		GtkTextIter bc_iter, c_iter;
 		gunichar nc;
 		
@@ -1957,6 +1966,14 @@ static void glistener_return_callback(glistener *g)
 			  }
 			continue;
 		      }
+		    else
+		      {
+			/* a variable name can't start with '#', so I think we can assume #<... must have a closing > ? 
+			 * other retricted chars: ,:`'
+			 */
+			if (nc == '<')
+			  gtk_text_iter_forward_find_char(&scan_iter, is_gt, NULL, &end_iter);
+		      }
 		  }
 	      }
 	      break;
@@ -1972,7 +1989,7 @@ static void glistener_return_callback(glistener *g)
 	      if (open_parens == 0)
 		{
 		  GtkTextIter c_iter;
-		  /* see if we're in the current expression */
+		  /* see if the cursor is in the current expression */
 		  
 		  if (expr_start == -1)
 		    {
@@ -2521,7 +2538,8 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
   return(g); 
 }
 
-/* it might be nice to share the status area across listeners or with the calling program
+/* should we provide glistener_text_view and friends?  
+ * it might be nice to share the status area across listeners or with the calling program
  *    perhaps glistener_set_statusbar(glistener *g, GtkWidget *sb)
  *    where we free the old one? and set g->status to the new one.
  *    but we also have to fix up the old grid.

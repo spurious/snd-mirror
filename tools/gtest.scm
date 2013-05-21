@@ -83,7 +83,8 @@
 (simple-test "(eq? ()#())" "(eq? ()#())\n#f")
 (simple-test "(eq? \"\"1)" "(eq? \"\"1)\n#f")
 (simple-test "(eq? #()#())" "(eq? #()#())\n#f")
-
+(simple-test "#(#(1) #((1 2)))" "#(#(1) #((1 2)))\n#(#(1) #((1 2)))")
+(simple-test "'''3" "'''3\n''3")
 
 (define (multi-test exprs pos rtn0 rtn1 rtn2)
   (clear *g2*)
