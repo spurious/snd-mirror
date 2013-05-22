@@ -1,8 +1,8 @@
 #include "glistener.h"
 
-/* compile-time switches: HAVE_GTK_3
+/* compile-time switches: HAVE_GTK_2 (default is gtk 3)
  * supplied by caller: help finder, evaluator, symbol table lookup
- * see s7.html#glistener for examples and documentation.
+ * see s7.html#glistener and glistener.h for examples and documentation.
  */
 
 struct glistener {
@@ -35,7 +35,8 @@ struct glistener {
   void (*completer)(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data);
 };
 
-#if (!HAVE_GTK_3)
+
+#if (HAVE_GTK_2)
   #define GDK_KEY_BackSpace GDK_BackSpace
   #define GDK_KEY_Down      GDK_Down
   #define GDK_KEY_Left      GDK_Left
@@ -64,7 +65,7 @@ struct glistener {
 
 #define EVENT_KEYVAL(Ev) (Ev)->keyval
 
-#if (HAVE_GTK_3) && defined(__GNUC__) && (!(defined(__cplusplus)))
+#if (!HAVE_GTK_2) && defined(__GNUC__) && (!(defined(__cplusplus)))
   #define EVENT_STATE(Ev) ({ GdkModifierType Type;  gdk_event_get_state((GdkEvent *)Ev, &Type); Type; })
 #else
   #define EVENT_STATE(Ev) (Ev)->state
@@ -140,7 +141,7 @@ void glistener_set_font(glistener *g, PangoFontDescription *font)
       return;
     }
   else default_font = NULL;
-#if (!HAVE_GTK_3)
+#if (HAVE_GTK_2)
   gtk_widget_modify_font(GTK_WIDGET(g->text), font);
 #else
   gtk_widget_override_font(GTK_WIDGET(g->text), font);
@@ -148,7 +149,7 @@ void glistener_set_font(glistener *g, PangoFontDescription *font)
 }
 
 
-#if (!HAVE_GTK_3)
+#if (HAVE_GTK_2)
 static GdkColor *default_text_color = NULL;
 static GdkColor *default_background_color = NULL;
 
@@ -212,7 +213,7 @@ void glistener_clear_status(glistener *g)
 {
   if (g->status)
     {
-#if HAVE_GTK_3
+#if (!HAVE_GTK_2)
       gtk_statusbar_remove_all(GTK_STATUSBAR(g->status), 1);
 #else
       gtk_statusbar_pop(GTK_STATUSBAR(g->status), 1);
@@ -403,7 +404,7 @@ void glistener_append_prompt(glistener *g)
 }
 
 
-#if (!HAVE_GTK_3)
+#if (HAVE_GTK_2)
 /* backward search is buggy in gtk 2.20 (it's ok in gtk3 I think), and we depend on it!
  *   this code is ridiculous, but it's the least stupid thing I can find that seems to work.
  */
@@ -1663,6 +1664,7 @@ static void post_help(glistener *g, int pos)
     }
 }
 
+
 static void check_for_open_paren_help(glistener *g)
 {
   int pos;
@@ -2381,7 +2383,7 @@ static void glistener_completion(glistener *g, int pos)
 /* ---------------- testing ----------------
  *
  * these functions are intended for regression test suites.  They make it possible to mimic
- *   most user input actions and see the resultant output.
+ *    user <cr> and <tab> and see the resultant output.
  */
 
 char *glistener_evaluate(glistener *g)
@@ -2502,7 +2504,7 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
   if (!g->wait_cursor) g->wait_cursor = gdk_cursor_new(GDK_WATCH);
   if (!g->arrow_cursor) g->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
 
-#if (!HAVE_GTK_3)
+#if (HAVE_GTK_2)
   vb = gtk_table_new(2, 1, false);
   if (parent)
     gtk_container_add(GTK_CONTAINER(parent), vb);
@@ -2547,7 +2549,9 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
  */
 
 /* TODO: move by expr, then use that in indent code and function arg checking [need type info too]
- * TODO: key for apropos? (levenstein is in snd-help.c but needs serious optimization)
- * TODO: gtk3 should be the default, not gtk2
+ * TODO: key for apropos? fuzzy-completion? (levenstein is in snd-help.c but needs serious optimization)
  * TODO: indent do and if need expr counts -- can this use rtn_cb?
+ */
+
+/* 21-May-13: changed HAVE_GTK_3 to HAVE_GTK_2.
  */

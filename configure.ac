@@ -918,7 +918,10 @@ else
 	AC_CHECK_LIB(m, gtk_combo_box_new_with_area,
                           [AC_DEFINE(HAVE_GTK_COMBO_BOX_NEW_WITH_AREA)
                            AC_DEFINE(HAVE_GTK_3)
-                          ], ,$GTK_LIBS)
+                          ], 
+			  [AC_DEFINE(HAVE_GTK_2)
+			  ],
+			  $GTK_LIBS)
   
         # for 3.1.10
         AC_CHECK_LIB(m, gtk_adjustment_get_minimum_increment, [AC_DEFINE(HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT)], ,$GTK_LIBS)

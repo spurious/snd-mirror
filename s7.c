@@ -87,6 +87,7 @@
  *        symbol-access modifies symbol value lookup
  *        member and assoc accept an optional third argument, the comparison function
  *        morally-equal?
+ *        unicode (utf8)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -1005,6 +1006,7 @@ typedef struct s7_cell {
       s7_pointer *elements;
       unsigned int entries;          
       s7_pointer (*hash_func)(s7_scheme *sc, s7_pointer table, s7_pointer key); 
+      s7_pointer eq_func;
     } hasher;
     
     struct {
@@ -2000,6 +2002,7 @@ static void set_syntax_op(s7_pointer p, s7_pointer op) {syntax_op(p) = op; lifte
 #define hash_table_elements(p)        (p)->object.hasher.elements
 #define hash_table_entries(p)         (p)->object.hasher.entries
 #define hash_table_function(p)        (p)->object.hasher.hash_func
+#define hash_table_eq_function(p)     (p)->object.hasher.eq_func
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT) 
 #define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
@@ -22784,6 +22787,7 @@ static void add_shared_ref(shared_info *ci, s7_pointer x, int ref_x)
 
 static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top);
 static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key);
+static s7_pointer hash_eq_func(s7_scheme *sc, s7_pointer table, s7_pointer key);
 
 static void collect_vector_info(s7_scheme *sc, shared_info *ci, s7_pointer top)
 {
@@ -22858,7 +22862,8 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 	      int gc_iter;
 	      bool keys_safe;
 	      
-	      keys_safe = (hash_table_function(top) != hash_equal);
+	      keys_safe = ((hash_table_function(top) != hash_equal) &&
+			   (hash_table_function(top) != hash_eq_func));
 	      iterator = g_make_hash_table_iterator(sc, list_1(sc, top));
 	      gc_iter = s7_gc_protect(sc, iterator);
 	      
@@ -29308,6 +29313,27 @@ static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
 }
 
 
+static s7_pointer hash_eq_func(s7_scheme *sc, s7_pointer table, s7_pointer key)
+{
+  s7_pointer x;
+  int hash_len, loc;
+  s7_function f;
+
+  f = c_function_call(hash_table_eq_function(table));
+  hash_len = (int)hash_table_length(table) - 1;
+  loc = hash_loc(sc, key) & hash_len;
+
+  car(sc->T2_1) = key;
+  for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
+    {
+      car(sc->T2_2) = fcdr(x);
+      if (is_true(sc, (*f)(sc, sc->T2_1)))
+	return(car(x));
+    }
+  return(sc->NIL);
+}
+
+
 static s7_pointer hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   if (is_symbol(key))
@@ -29356,6 +29382,7 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
   for (i = 0; i < size; i++)
     hash_table_element(table, i) = sc->NIL;
   hash_table_function(table) = hash_empty;
+  hash_table_eq_function(table) = NULL;
   hash_table_entries(table) = 0;
   set_type(table, T_HASH_TABLE | T_SAFE_PROCEDURE);
   add_hash_table(sc, table);
@@ -29366,28 +29393,66 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 
 static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_hash_table "(make-hash-table (size 511)) returns a new hash table"
+  #define H_make_hash_table "(make-hash-table (size 511) eq-func) or (make-hash-table eq-func (size 511)) returns a new hash table"
   s7_Int size = DEFAULT_HASH_TABLE_SIZE;
 
   if (is_not_null(args))
     {
+      s7_pointer size_arg, eq_arg;
       if (s7_is_integer(car(args)))
 	{
-	  size = s7_integer(car(args));
-	  if (size <= 0)                      /* we need s7_Int here to catch (make-hash-table most-negative-fixnum) etc */
-	    return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, car(args), "should be a positive integer"));
-	  if (size > MAX_LIST_LENGTH)
-	    return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, car(args), "should be a reasonable integer"));
+	  size_arg = car(args);
+	  if (is_not_null(cdr(args)))
+	    eq_arg = cadr(args);
+	  else eq_arg = sc->NIL;
 	}
-      else 
+      else
 	{
-	  CHECK_METHOD(sc, car(args), sc->MAKE_HASH_TABLE, args);
-	  return(simple_wrong_type_argument(sc, sc->MAKE_HASH_TABLE, car(args), T_INTEGER));
+	  eq_arg = car(args);
+	  if (is_not_null(cdr(args)))
+	    {
+	      size_arg = cadr(args);
+	      if (!s7_is_integer(size_arg))
+		return(simple_wrong_type_argument(sc, sc->MAKE_HASH_TABLE, size_arg, T_INTEGER));
+	    }
+	  else size_arg = sc->NIL;
+	}
+
+      if (is_not_null(size_arg))
+	{
+	  size = s7_integer(size_arg);
+	  if (size <= 0)                      /* we need s7_Int here to catch (make-hash-table most-negative-fixnum) etc */
+	    return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, size_arg, "should be a positive integer"));
+	  if (size > MAX_LIST_LENGTH)
+	    return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, size_arg, "should be a reasonable integer"));
+	}
+      if (is_not_null(eq_arg))
+	{
+	  s7_pointer ht;
+	  if (!is_procedure(eq_arg))
+	    {
+	      CHECK_METHOD(sc, eq_arg, sc->MAKE_HASH_TABLE, args);
+	      return(simple_wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, eq_arg, A_PROCEDURE));
+	    }
+	  /* now try to deal with eq_arg -> hash_table_eq_func[tion]
+	   */
+	  if (is_c_function(eq_arg)) /* we need to restrict this function so that hash-table-ref|set! remain safe functions */
+	    {
+	      ht = s7_make_hash_table(sc, size);
+	      hash_table_function(ht) = hash_eq_func;
+	      hash_table_eq_function(ht) = eq_arg;
+	      return(ht);
+	    }
 	}
     }
   
   return(s7_make_hash_table(sc, size));
 }
+
+/* t671.scm here -- need a reason for hash-table-index. remember s7test of this stuff
+ *   currently only c-funcs work here (need to document this I guess)
+ */
+
 
 
 s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, s7_pointer key)
@@ -29415,93 +29480,96 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
       hash_len = hash_table_length(table) - 1;
       loc = hash_loc(sc, key) & hash_len;
       hash_table_entries(table)++;
-      typ = type(key);
 
-      if (hash_table_function(table) == hash_empty)
+      if (hash_table_function(table) != hash_eq_func)
 	{
-	  switch (typ)
+	  typ = type(key);
+	  if (hash_table_function(table) == hash_empty)
 	    {
-	    case T_STRING:
-	      hash_table_function(table) = hash_string;
-	      break;
-
-	    case T_INTEGER:
-	      hash_table_function(table) = hash_int;
-	      break;
-
-	    case T_REAL:
-	      hash_table_function(table) = hash_float;
-	      break;
-
-	    case T_RATIO:
-	    case T_COMPLEX:
-	      hash_table_function(table) = hash_equal;
-	      break;
-
-	    case T_SYMBOL:
-	      hash_table_function(table) = hash_symbol;
-	      break;
-
-	    case T_CHARACTER:
-	      hash_table_function(table) = hash_char;
-	      break;
-	      
-	    default:
-	      hash_table_function(table) = hash_equal;
-	      /* if every key structure is simple, we'd like to use a simple_equal checker (no circles),
-	       *    but circles can sneak in!  lists (etc) are dangerous keys:
-	       *
-                (let ((ht (make-hash-table))
-                      (lst1 (list 1 2))
-                      (lst2 (list 1 2)))
-                  (set! (ht lst1) 32)
-                  (let ((start (ht lst2)))
-                    (set! (lst1 0) 3)
-                    (list start (ht lst2))))
-                (32 #f)
-	       *
-	       * but this applies to all such variables, even strings.  Do other schemes copy the key?
-	       */
-	      break;
+	      switch (typ)
+		{
+		case T_STRING:
+		  hash_table_function(table) = hash_string;
+		  break;
+		  
+		case T_INTEGER:
+		  hash_table_function(table) = hash_int;
+		  break;
+		  
+		case T_REAL:
+		  hash_table_function(table) = hash_float;
+		  break;
+		  
+		case T_RATIO:
+		case T_COMPLEX:
+		  hash_table_function(table) = hash_equal;
+		  break;
+		  
+		case T_SYMBOL:
+		  hash_table_function(table) = hash_symbol;
+		  break;
+		  
+		case T_CHARACTER:
+		  hash_table_function(table) = hash_char;
+		  break;
+		  
+		default:
+		  hash_table_function(table) = hash_equal;
+		  /* if every key structure is simple, we'd like to use a simple_equal checker (no circles),
+		   *    but circles can sneak in!  lists (etc) are dangerous keys:
+		   *
+		   (let ((ht (make-hash-table))
+		   (lst1 (list 1 2))
+		   (lst2 (list 1 2)))
+		   (set! (ht lst1) 32)
+		   (let ((start (ht lst2)))
+		   (set! (lst1 0) 3)
+		   (list start (ht lst2))))
+		   (32 #f)
+		   *
+		   * but this applies to all such variables, even strings.  Do other schemes copy the key?
+		   */
+		  break;
+		}
 	    }
-	}
-      else
-	{
-	  switch (typ)
+	  else
 	    {
-	    case T_STRING:
-	      if (hash_table_function(table) != hash_string)
-		hash_table_function(table) = hash_equal;
-	      break;
-	      
-	    case T_INTEGER:
-	      if (hash_table_function(table) != hash_int)
-		hash_table_function(table) = hash_equal;
-	      break;
-
-	    case T_REAL:
-	      if (hash_table_function(table) != hash_float)
-		hash_table_function(table) = hash_equal;
-	      break;
-
-	    case T_RATIO:
-	    case T_COMPLEX:
-	      hash_table_function(table) = hash_equal;
-	      break;
-
-	    case T_CHARACTER:
-	      if (hash_table_function(table) != hash_char)
-		hash_table_function(table) = hash_equal;
-	      break;
-
-	    case T_SYMBOL:
-	      if (hash_table_function(table) != hash_symbol)
-		hash_table_function(table) = hash_equal;
-	      break;
-
-	    default:
-	      hash_table_function(table) = hash_equal;
-	      break;
+	      switch (typ)
+		{
+		case T_STRING:
+		  if (hash_table_function(table) != hash_string)
+		    hash_table_function(table) = hash_equal;
+		  break;
+		  
+		case T_INTEGER:
+		  if (hash_table_function(table) != hash_int)
+		    hash_table_function(table) = hash_equal;
+		  break;
+		  
+		case T_REAL:
+		  if (hash_table_function(table) != hash_float)
+		    hash_table_function(table) = hash_equal;
+		  break;
+		  
+		case T_RATIO:
+		case T_COMPLEX:
+		  hash_table_function(table) = hash_equal;
+		  break;
+		  
+		case T_CHARACTER:
+		  if (hash_table_function(table) != hash_char)
+		    hash_table_function(table) = hash_equal;
+		  break;
+		  
+		case T_SYMBOL:
+		  if (hash_table_function(table) != hash_symbol)
+		    hash_table_function(table) = hash_equal;
+		  break;
+		  
+		default:
+		  hash_table_function(table) = hash_equal;
+		  break;
+		}
 	    }
 	}
 
@@ -29688,6 +29756,7 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash)
 
   hash_table_entries(new_hash) = hash_table_entries(old_hash);
   hash_table_function(new_hash) = hash_table_function(old_hash);
+  hash_table_eq_function(new_hash) = hash_table_eq_function(old_hash);
 
   s7_gc_unprotect_at(sc, gc_loc);
   return(new_hash);
@@ -29706,7 +29775,7 @@ static s7_pointer hash_table_reverse(s7_scheme *sc, s7_pointer old_hash)
   gc_loc = s7_gc_protect(sc, new_hash);
 
   old_lists = hash_table_elements(old_hash);
-  /* don't set entries or function -- s7_hash_table_set below will handle those */
+  /* don't set entries or function -- s7_hash_table_set below will handle those (really?) */
 
   for (i = 0; i < len; i++)
     {
@@ -29715,6 +29784,12 @@ static s7_pointer hash_table_reverse(s7_scheme *sc, s7_pointer old_hash)
 	s7_hash_table_set(sc, new_hash, cdar(x), caar(x));
     }
 
+  if (hash_table_function(old_hash) == hash_eq_func)
+    {
+      hash_table_function(new_hash) = hash_eq_func;
+      hash_table_eq_function(new_hash) = hash_table_eq_function(old_hash);
+    }
+    
   s7_gc_unprotect_at(sc, gc_loc);
   return(new_hash);
 }
@@ -29728,7 +29803,8 @@ static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
   for (i = 0; i < len; i++)
     hash_table_element(table, i) = sc->NIL;
   hash_table_entries(table) = 0;
-  hash_table_function(table) = hash_empty;
+  if (hash_table_function(table) != hash_eq_func)
+    hash_table_function(table) = hash_empty;
   return(table);
 }
 
@@ -31903,6 +31979,8 @@ static bool hash_tables_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
   if (hash_table_entries(x) == 0)
     return(true);
   if (hash_table_function(x) != hash_table_function(y))
+    return(false);
+  if (hash_table_eq_function(x) != hash_table_eq_function(y))
     return(false);
 
   len = hash_table_length(x);
@@ -64802,7 +64880,7 @@ s7_scheme *s7_init(void)
 
   sc->HASH_TABLE =            s7_define_safe_function(sc, "hash-table",              g_hash_table,             0, 0, true,  H_hash_table);
   sc->HASH_TABLEP =           s7_define_safe_function(sc, "hash-table?",             g_is_hash_table,          1, 0, false, H_is_hash_table);
-  sc->MAKE_HASH_TABLE =       s7_define_safe_function(sc, "make-hash-table",         g_make_hash_table,        0, 1, false, H_make_hash_table);
+  sc->MAKE_HASH_TABLE =       s7_define_safe_function(sc, "make-hash-table",         g_make_hash_table,        0, 2, false, H_make_hash_table);
   sc->HASH_TABLE_REF =        s7_define_safe_function(sc, "hash-table-ref",          g_hash_table_ref,         2, 0, true,  H_hash_table_ref);
   sc->HASH_TABLE_SET =        s7_define_safe_function(sc, "hash-table-set!",         g_hash_table_set,         3, 0, false, H_hash_table_set);
   sc->HASH_TABLE_SIZE =       s7_define_safe_function(sc, "hash-table-size",         g_hash_table_size,        1, 0, false, H_hash_table_size);
@@ -65232,7 +65310,7 @@ s7_scheme *s7_init(void)
   s7_define_constant(sc, "*error-hook*", sc->error_hook);
   
   /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
-  /* 64 bit machine: size: 48 72, max op: 318 */
+  /* 64 bit machine: size: 48, max op: 320 [size 72 if gmp] */
 
 #if DEBUGGING
   if (strcmp(op_names[OP_DEFINE_BACRO_STAR], "define-bacro*") != 0)
@@ -65308,6 +65386,8 @@ s7_scheme *s7_init(void)
    read|write-bytevector!
 
    (string-copy! to at from start end ) -> bytevector
+
+   bytevectors support is minimal and confusing -- see end of s7test.scm for a few of the problems
  */
 
 

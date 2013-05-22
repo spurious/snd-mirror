@@ -2306,7 +2306,7 @@ but a function grabs all remaining indices.  Trickier than I expected!
 
 
 <ul>
-<li>(<em class=def id="makehashtable">make-hash-table</em> (size 512))
+<li>(<em class=def id="makehashtable">make-hash-table</em> (size 512) eq-func)
 <li>(<em class=def id="hashtable">hash-table</em> ...)
 <li>(<em class=def id="hashtableref">hash-table-ref</em> ht key)
 <li>(<em class=def id="hashtableset">hash-table-set!</em> ht key value)
@@ -2320,6 +2320,8 @@ but a function grabs all remaining indices.  Trickier than I expected!
 <p>
 Any s7 object can be the key or the key's value.
 Each hash-table keeps track of the keys it contains, optimizing the search wherever possible.
+If you know what equality function you want, you can override this optimization by passing that function
+as the second or third argument to make-hash-table.
 If you pass a table size that is not a power of 2, make-hash-table rounds it up to the next power of 2.
 </p>
 
@@ -2499,7 +2501,7 @@ As a quick example, here is a structure definition:
 		       (values) ; don't mention the internal type field
 		       x))
 	         (environment-&gt;list t1))))
-"t1 (a tree): (key . 0) (left) (right)
+"t1 (a tree): (key . 0) (left) (right)"
 
 ;; to access a field, use either environment-ref and -set, or implicit indexing:
 &gt; (let ((t1 (make-tree))) (t1 'key))
@@ -5905,11 +5907,11 @@ the current environment, so defines happen in the enclosing environment.
 
 (define* (string-copy s (start 0) end) 
   (let ((stop (or end (length s)))) 
-    (copy s (make-string (- stop start)) start stop))
+    (copy s (make-string (- stop start)) start stop)))
 
 (define char-foldcase char-downcase) 
-(define string-foldcase string-downcase)
 (define (string-downcase str) (apply string (map char-downcase str)))
+(define string-foldcase string-downcase)
 (define (string-upcase str) (apply string (map char-upcase str)))
 (define (digit-value c) (and (char-numeric? c) (- (char-&gt;integer c) (char-&gt;integer #\0))))
 
@@ -5936,22 +5938,22 @@ the current environment, so defines happen in the enclosing environment.
 (define (call-with-port port proc) 
   ((if (input-port? port) call-with-input-port call-with-output-port) port proc))
 
-(define (bytevector-u8-ref b k) (char->integer (b k)))
-(define (bytevector-u8-set! b k c) (char->integer (set! (b k) (integer->char c))))
+(define (bytevector-u8-ref b k) (char-&gt;integer (b k)))
+(define (bytevector-u8-set! b k c) (char-&gt;integer (set! (b k) (integer-&gt;char c))))
 (define bytevector-length string-length)
-(define (bytevector-copy . args) (->bytevector (apply string-copy args)))
-(define (bytevector-append . args) (->bytevector (apply string-append args)))
+(define (bytevector-copy . args) (-&gt;bytevector (apply string-copy args)))
+(define (bytevector-append . args) (-&gt;bytevector (apply string-append args)))
 (define write-bytevector write-string)
-(define (read-bytevector . args) (->bytevector (apply write-string args)))
-(define (get-output-bytevector port) (->bytevector (get-output-string port)))
+(define (read-bytevector . args) (-&gt;bytevector (apply write-string args)))
+(define (get-output-bytevector port) (-&gt;bytevector (get-output-string port)))
 (define open-input-bytevector open-input-string)
 (define open-output-bytevector open-output-string)
 (define read-u8 read-byte)
 (define write-u8 write-byte) 
 (define u8-ready? char-ready?) 
 (define peek-u8 peek-char)
-(define* (utf8->string v (start 0) end) (substring v start (or end (length v))))
-(define* (string->utf8 s (start 0) end) (->bytevector (substring s start (or end (length s)))))
+(define* (utf8-&gt;string v (start 0) end) (substring v start (or end (length v))))
+(define* (string-&gt;utf8 s (start 0) end) (-&gt;bytevector (substring s start (or end (length s)))))
 (define write-simple write)
 
 (define (eof-object) #&lt;eof&gt;)
@@ -6071,7 +6073,7 @@ the current environment, so defines happen in the enclosing environment.
 		  `(with-environment (procedure-environment ,(car var))
 		     (set! value (car old-values))
 		     (set! old-values (cdr old-values))))
-		vars))))
+		vars)))))
 
 
 ;; libraries
@@ -9143,7 +9145,7 @@ int main(int argc, char **argv)
 
   s7 = s7_init();  
 
-  gtk_init(&argc, &argv);
+  gtk_init(&amp;argc, &amp;argv);
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   g_signal_connect(G_OBJECT(shell), "delete_event", G_CALLBACK(quit_repl), NULL);
 
@@ -9164,7 +9166,7 @@ int main(int argc, char **argv)
   gtk_main();
 }
 
-/* in gtk-2: gcc gcall.c -o gcall s7.o glistener.o `pkg-config --libs gtk+-2.0 --cflags` -lm -ldl
+/* in gtk-2: gcc gcall.c -o gcall s7.o glistener.o -DHAVE_GTK_2=1 `pkg-config --libs gtk+-2.0 --cflags` -lm -ldl
  * in gtk-3: gcc gcall.c -o gcall s7.o glistener.o `pkg-config --libs gtk+-3.0 --cflags` -lm -ldl
  */
 </pre>

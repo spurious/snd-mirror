@@ -203,7 +203,7 @@ int main(int argc, char **argv)
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   g_signal_connect(G_OBJECT(shell), "delete_event", G_CALLBACK(quit_repl), NULL);
 
-#if (!HAVE_GTK_3)
+#if (HAVE_GTK_2)
   vb = gtk_vbox_new(false, 0);
 #else
   vb = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -239,7 +239,7 @@ int main(int argc, char **argv)
   gtk_main();
 }
 
-/* in gtk-2: gcc gcall.c -o gcall s7.o glistener.o `pkg-config --libs gtk+-2.0 --cflags` -lm -ldl
+/* in gtk-2: gcc gcall.c -DHAVE_GTK_2=1 -o gcall s7.o glistener.o `pkg-config --libs gtk+-2.0 --cflags` -lm -ldl
    in gtk-3: gcc gcall.c -o gcall s7.o glistener.o `pkg-config --libs gtk+-3.0 --cflags` -lm -ldl
 */
 

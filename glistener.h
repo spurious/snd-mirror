@@ -17,11 +17,11 @@
 
 #include <gtk/gtk.h>
 
-/* #define HAVE_GTK_3 1 */
-/* define this flag if you have gtk version 3, rather than version 2.
+/* #define HAVE_GTK_2 0 */
+/* define this flag if you have gtk version 2, rather than version 3.
  */
 
-#if HAVE_GTK_3
+#if (!HAVE_GTK_2)
   #include <gdk/gdk.h>
 #else
   #include <gdk/gdkkeysyms.h>
@@ -53,7 +53,7 @@ bool glistener_write               (glistener *g, FILE *fp);
 
 void glistener_set_highlight_tag   (glistener *g, GtkTextTag *m);
 void glistener_set_font            (glistener *g, PangoFontDescription *font);
-#if (!HAVE_GTK_3)
+#if (HAVE_GTK_2)
 void glistener_set_text_color      (glistener *g, GdkColor *p);
 void glistener_set_background_color(glistener *g, GdkColor *p);
 #else

@@ -8436,6 +8436,10 @@ if test "x$ac_cv_lib_m_gtk_combo_box_new_with_area" = xyes; then :
                            $as_echo "#define HAVE_GTK_3 1" >>confdefs.h
 
 
+else
+  $as_echo "#define HAVE_GTK_2 1" >>confdefs.h
+
+
 fi
 
 

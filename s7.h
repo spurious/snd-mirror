@@ -882,6 +882,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 21-May:    equality predicate optional arg in make-hash-table.
  * 14-May:    glistener.c, glistener.h, s7_symbol_table_find_name (for glistener).
  * 2-May:     r7rs changes: flush-output-port, vector-append, read|write-string, boolean=?, symbol=?.
  *              start/end args for string-fill!, vector-fill!, string->list, vector->list, and copy.
