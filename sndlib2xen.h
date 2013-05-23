@@ -20,7 +20,6 @@ extern "C" {
 MUS_EXPORT bool sound_data_p(XEN obj);
 MUS_EXPORT void mus_sndlib_xen_initialize (void);
 MUS_EXPORT XEN wrap_sound_data(int chans, mus_long_t frames, mus_float_t **data);
-MUS_EXPORT mus_float_t **mus_sound_data_data(sound_data *sd);
 MUS_EXPORT mus_float_t mus_sound_data_ref(sound_data *sd, int chan, mus_long_t pos);
 MUS_EXPORT mus_float_t mus_sound_data_set(sound_data *sd, int chan, mus_long_t pos, mus_float_t val);
 MUS_EXPORT int mus_sound_data_chans(sound_data *sd);

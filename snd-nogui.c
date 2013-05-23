@@ -67,7 +67,6 @@ void handle_listener(bool new_state) {}
 bool listener_exists(void) {return(false);}
 int listener_height(void) {return(0);}
 int listener_width(void) {return(0);}
-static bool highlight_unbalanced_paren(void) {return(true);}
 void set_button_label(int label, const char *str) {}
 int g_add_to_main_menu(const char *label, int slot) {return(0);}
 widget_t g_add_to_menu(int which_menu, const char *label, int callb, int position) {return(0);}

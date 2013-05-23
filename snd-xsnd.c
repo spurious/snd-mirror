@@ -268,8 +268,6 @@ static void speed_click_callback(Widget w, XtPointer context, XtPointer info)
 static void speed_label_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_info *sp = (snd_info *)context;
-
-
   switch (sp->speed_control_style)
     {
     default:
@@ -283,12 +281,8 @@ static void speed_label_click_callback(Widget w, XtPointer context, XtPointer in
 
 static void speed_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
-#if (HAVE_MAKE_RATIO || HAVE_MAKE_RECTANGULAR)
   snd_info *sp = (snd_info *)context;
-#endif
-
-
-  scroll_to_speed((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
+  scroll_to_speed(sp, ((XmScrollBarCallbackStruct *)info)->value);
 
 #if XEN_HAVE_RATIOS
   if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
@@ -301,8 +295,6 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
-
-
   scroll_to_speed(sp, cb->value);
 
 #if XEN_HAVE_RATIOS
@@ -368,8 +360,6 @@ static void expand_click_callback(Widget w, XtPointer context, XtPointer info)
   XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
-
-
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask))
     set_expand(sp, sp->last_expand_control);
@@ -387,8 +377,6 @@ static void expand_valuechanged_callback(Widget w, XtPointer context, XtPointer 
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
-
-
   scroll_to_expand(sp, cb->value);
   sp->last_expand_control = sp->saved_expand_control;
   sp->saved_expand_control = sp->expand_control;
@@ -450,8 +438,6 @@ static void contrast_click_callback(Widget w, XtPointer context, XtPointer info)
   XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
-
-
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask))
     set_contrast(sp, sp->last_contrast_control);
@@ -469,8 +455,6 @@ static void contrast_valuechanged_callback(Widget w, XtPointer context, XtPointe
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
-
-
   scroll_to_contrast(sp, cb->value);
   sp->last_contrast_control = sp->saved_contrast_control;
   sp->saved_contrast_control = sp->contrast_control;
@@ -481,8 +465,6 @@ static void contrast_button_callback(Widget w, XtPointer context, XtPointer info
 {
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-
-
   sp->contrast_control_p = cb->set;
   XmChangeColor(CONTRAST_SCROLLBAR(sp), (Pixel)((sp->contrast_control_p) ? (ss->position_color) : (ss->basic_color)));
 }
@@ -546,8 +528,6 @@ static void revscl_click_callback(Widget w, XtPointer context, XtPointer info)
   XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
-
-
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask))
     set_revscl(sp, sp->last_reverb_control_scale);
@@ -565,8 +545,6 @@ static void revscl_valuechanged_callback(Widget w, XtPointer context, XtPointer 
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
-
-
   scroll_to_revscl(sp, cb->value);
   sp->last_reverb_control_scale = sp->saved_reverb_control_scale;
   sp->saved_reverb_control_scale = sp->reverb_control_scale;
@@ -611,8 +589,6 @@ static void revlen_click_callback(Widget w, XtPointer context, XtPointer info)
   XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
-
-
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     set_revlen(sp, sp->last_reverb_control_length);
@@ -630,8 +606,6 @@ static void revlen_valuechanged_callback(Widget w, XtPointer context, XtPointer 
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
-
-
   scroll_to_revlen(sp, cb->value);
   sp->last_reverb_control_length = sp->saved_reverb_control_length;
   sp->saved_reverb_control_length = sp->reverb_control_length;
@@ -642,8 +616,6 @@ static void reverb_button_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-
-
   sp->reverb_control_p = cb->set;
   XmChangeColor(REVLEN_SCROLLBAR(sp), (Pixel)((sp->reverb_control_p) ? (ss->position_color) : (ss->basic_color)));
   XmChangeColor(REVSCL_SCROLLBAR(sp), (Pixel)((sp->reverb_control_p) ? (ss->position_color) : (ss->basic_color)));

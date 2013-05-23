@@ -1151,7 +1151,7 @@ void read_sample_change_direction(snd_fd *sf, read_direction_t dir1) /* can't us
 }
 
 
-mus_float_t protected_next_sample(snd_fd *sf)
+static mus_float_t protected_next_sample(snd_fd *sf)
 {
   if (sf->direction == READ_BACKWARD) 
     read_sample_change_direction(sf, READ_FORWARD);
@@ -1159,7 +1159,7 @@ mus_float_t protected_next_sample(snd_fd *sf)
 }
 
 
-mus_float_t protected_previous_sample(snd_fd *sf)
+static mus_float_t protected_previous_sample(snd_fd *sf)
 {
   if (sf->direction == READ_FORWARD) 
     read_sample_change_direction(sf, READ_BACKWARD);

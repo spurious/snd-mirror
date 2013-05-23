@@ -828,7 +828,6 @@ char *list_completer(widget_t w, const char *text, void *data);
 char *complete_listener_text(char *old_text, int end, bool *try_completion, char **to_file_text);
 void add_srate_to_completion_list(int srate);
 char *direct_completions(const char *str);
-bool separator_char_p(char c);
 #if HAVE_FORTH || HAVE_RUBY
   void call_read_hook_or_eval(const char *text);
 #endif
@@ -1000,8 +999,6 @@ bool unrampable(chan_info *cp, mus_long_t beg, mus_long_t dur, int pos, bool is_
 bool sound_fragments_in_use(chan_info *cp, int pos);
 #define read_sample_to_mus_sample(Sf) ((*((Sf)->runf))(Sf))
 #define read_sample(Sf) (*((Sf)->runf))(Sf)
-mus_float_t protected_next_sample(snd_fd *sf);
-mus_float_t protected_previous_sample(snd_fd *sf);
 mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, int edpos, mus_long_t *maxpos);
 bool undo_edit_with_sync(chan_info *cp, int count);
 bool redo_edit_with_sync(chan_info *cp, int count);

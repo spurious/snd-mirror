@@ -9448,6 +9448,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (make-hash-table most-positive-fixnum) 'error)
 (test (make-hash-table (+ 1 (expt 2 31))) 'error)
 (test (make-hash-table most-negative-fixnum) 'error)
+(test (make-hash-table 21 eq? 12) 'error)
+(test (make-hash-table 21 12) 'error)
+(test (make-hash-table eq? eq?) 'error)
+(test (make-hash-table eq? eq? 12) 'error)
 
 (let ((hi (make-hash-table 7)))
   (test (object->string hi) "#<hash-table>")
@@ -9919,63 +9923,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((h1 (make-hash-table))) (hash-table-set! h1 "hi" h1) (object->string h1)) "#1=#<hash-table (\"hi\" . #1#)>")
 (test (let ((ht (make-hash-table))) (hash-table-set! ht 'a ht) (morally-equal? ht (copy ht))) #t)
 (test (let ((ht (make-hash-table))) (hash-table-set! ht 'a ht) (equal? ht (copy ht))) #t)
-
-
-;;; hash-table-index
-(test (hash-table-index) 'error)
-(test (hash-table-index 1 2) 'error)
-(for-each
- (lambda (arg)
-   (let ((b (hash-table-index arg)))
-     (if (not (= b (hash-table-index arg)))
-	 (format #t ";hash-table-index ~A: ~A ~A~%" arg b (hash-table-index arg)))))
-  (list '() (list 1) '(1 . 2) #f #\a 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) "" "hi" #() #(1 2) #<eof> #<unspecified> #<undefined>
-       1 0 3.14 3/4 1.0+1.0i #t :hi))
-
-(let ()
-  (define (make-hash-list size)
-    (make-vector size ()))
-  
-  (define (hash-list-set! lst id data)
-    (let ((loc (modulo (hash-table-index id) (length lst))))
-      (vector-set! lst loc (cons (cons id data) (vector-ref lst loc)))))
-  
-  (define (hash-list-ref lst id)
-    (let ((loc (modulo (hash-table-index id) (length lst))))
-      (assq id (vector-ref lst loc))))
-  
-  (define hash-list-branch copy)
-  
-  (define (hash-list-test)
-    (let ((lst (make-hash-list 8)))
-      (hash-list-set! lst 'a 1)
-      (let ((aval (hash-list-ref lst 'a)))
-	(if (not (equal? aval '(a . 1))) (format #t ";hash-list-ref 'a: ~A ~A~%" aval lst)))
-      (if (hash-list-ref lst 'b) (format #t ";hash-list-ref 'b: ~A ~A~%" (hash-list-ref lst 'b) lst))
-      (hash-list-set! lst 'b #t)
-      (let ((aval (hash-list-ref lst 'a)))
-	(if (not (equal? aval '(a . 1))) (format #t ";hash-list-ref 'a(b): ~A ~A~%" aval lst))
-	(set! aval (hash-list-ref lst 'b))
-	(if (not (equal? aval '(b . #t))) (format #t ";hash-list-ref 'b(a): ~A ~A~%" aval lst)))
-      (let ((old-lst lst))
-	(set! lst (hash-list-branch lst))
-	(let ((aval (hash-list-ref lst 'a)))
-	  (if (not (equal? aval '(a . 1))) (format #t ";hash-list-ref 'a(branched): ~A ~A~%" aval lst))
-	  (hash-list-set! lst 'c 123)
-	  (set! aval (hash-list-ref lst 'c))
-	  (if (not (equal? aval '(c . 123))) (format #t ";hash-list-ref 'c: ~A ~A~%" aval lst))
-	  (hash-list-set! lst 'a "hiho")
-	  (set! aval (hash-list-ref lst 'a))
-	  (if (not (equal? aval '(a . "hiho"))) (format #t ";hash-list-ref 'a(set): ~A ~A~%" aval lst)))
-	(set! lst old-lst))
-      (let ((aval (hash-list-ref lst 'a)))
-	(if (not (equal? aval '(a . 1))) (format #t ";hash-list-ref 'a(restored): ~A ~A~%" aval lst))
-	(set! aval (hash-list-ref lst 'b))
-	(if (not (equal? aval '(b . #t))) (format #t ";hash-list-ref 'b(restored): ~A ~A~%" aval lst))
-	(if (hash-list-ref lst 'c) (format #t ";hash-list-ref 'c(restored): ~A ~A~%" (hash-list-ref lst 'c) lst))
-	lst)))
-  
-  (hash-list-test))
 
 ;; there's no real need for multidim hashes:
 
@@ -71512,10 +71459,6 @@ in non-gmp,
 				 (autotest val '() 0 3)))))))))
 	 lst)))))
 |#
-
-;;; (aritable? '2 8) -> #t
-;;; (gensym "a\x00b") -> {a}-10 for unreadable gensym??
-
 
 ;;; write/display hash-table stdin lambda? macro/bacro cont/goto func/closure etc, all the pair types, circular etc
 

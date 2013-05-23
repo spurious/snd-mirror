@@ -44,9 +44,6 @@ static void evaluator(glistener *g, const char *text)
 #endif
 
 
-
-/* a temporary kludge */
-
 static GtkWidget *listener_text = NULL;
 static GtkTextBuffer *listener_buffer = NULL;
 
@@ -98,11 +95,13 @@ static gboolean listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gp
   return(false);
 }
 
+
 static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   ss->graph_is_active = false;
   return(false);
 }
+
 
 static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
@@ -134,6 +133,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   return(false);
 }
 
+
 #if HAVE_SCHEME
 static s7_pointer g_listener_load_hook(s7_scheme *sc, s7_pointer args)
 {
@@ -147,6 +147,7 @@ static s7_pointer g_listener_load_hook(s7_scheme *sc, s7_pointer args)
   return(args);
 }
 #endif
+
 
 static void listener_init(glistener *g, GtkWidget *w)
 {
@@ -166,6 +167,7 @@ static void listener_init(glistener *g, GtkWidget *w)
   ss->listener_pane = w;
 }
 
+
 #if HAVE_SCHEME
 static const char *helper(glistener *g, const char *text)
 {
@@ -178,6 +180,7 @@ static const char *helper(glistener *g, const char *text)
   glistener_clear_status(g);
   return(NULL);
 }
+
 
 static void completer(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
 {
@@ -201,7 +204,7 @@ static void make_listener_widget(int height)
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
 
       ss->listener = glistener_new(frame, listener_init);
-
+#if HAVE_EXTENSION_LANGUAGE
       glistener_set_evaluator(ss->listener, evaluator);
 #if HAVE_SCHEME
       glistener_set_helper(ss->listener, helper);
@@ -209,6 +212,7 @@ static void make_listener_widget(int height)
 #endif
 #if HAVE_FORTH || HAVE_RUBY
       glistener_is_schemish(ss->listener, false);
+#endif
 #endif
     }
 }
@@ -342,11 +346,13 @@ void clear_listener(void)
   glistener_clear(ss->listener);
 }
 
+
 void append_listener_text(int end, const char *msg)
 {
   /* "end" arg needed in Motif */
   glistener_append_text(ss->listener, msg);
 }
+
 
 int save_listener_text(FILE *fp)
 {
@@ -356,6 +362,7 @@ int save_listener_text(FILE *fp)
     return(0);
   return(-1);
 }
+
 
 static XEN g_goto_listener_end(void)
 {

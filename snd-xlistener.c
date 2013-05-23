@@ -274,6 +274,7 @@ static int find_matching_paren(const char *str, int parens, int pos, int *highli
   return(parens);
 }
 
+#if HAVE_SCHEME
 static bool highlight_unbalanced_paren(void);
 
 static int check_balance(const char *expr, int start, int end, bool in_listener) 
@@ -466,6 +467,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
     return(-1);
   return(0);
 }
+#endif
 
 static char listener_prompt_buffer[LABEL_BUFFER_SIZE];
 
@@ -1880,6 +1882,8 @@ static void listener_return_callback(Widget w, XtPointer context, XtPointer info
 }
 
 
+#if HAVE_SCHEME
+
 static int flashes = 0;
 static int paren_pos = -1;
 #define FLASH_TIME 150
@@ -1899,7 +1903,6 @@ static void flash_unbalanced_paren(XtPointer context, XtIntervalId *id)
       paren_pos = -1;
     }
 }
-
 
 static bool highlight_unbalanced_paren(void)
 {
@@ -1931,6 +1934,7 @@ static bool highlight_unbalanced_paren(void)
     }
   return(success);
 }
+#endif
 
 
 static int last_highlight_position = -1;

@@ -705,7 +705,7 @@ void clear_stdin(void)
 }
 
 
-
+#if HAVE_SCHEME
 static int check_balance(const char *expr, int start, int end, bool in_listener) 
 {
   int i;
@@ -894,6 +894,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 
   return(0);
 }
+#endif
 
 
 static char *stdin_check_for_full_expression(const char *newstr)

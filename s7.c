@@ -29119,12 +29119,6 @@ static int hash_loc(s7_scheme *sc, s7_pointer key)
 }
 
 
-static s7_pointer g_hash_table_index(s7_scheme *sc, s7_pointer args)
-{
-  return(make_integer(sc, hash_loc(sc, car(args))));
-}
-
-
 static s7_pointer hash_empty(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   return(sc->NIL);
@@ -29448,11 +29442,6 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
   
   return(s7_make_hash_table(sc, size));
 }
-
-/* t671.scm here -- need a reason for hash-table-index. remember s7test of this stuff
- *   currently only c-funcs work here (need to document this I guess)
- */
-
 
 
 s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, s7_pointer key)
@@ -64885,8 +64874,6 @@ s7_scheme *s7_init(void)
   sc->HASH_TABLE_SET =        s7_define_safe_function(sc, "hash-table-set!",         g_hash_table_set,         3, 0, false, H_hash_table_set);
   sc->HASH_TABLE_SIZE =       s7_define_safe_function(sc, "hash-table-size",         g_hash_table_size,        1, 0, false, H_hash_table_size);
   
-  s7_define_safe_function(sc, "hash-table-index", g_hash_table_index, 1, 0, false, "an experiment");
-
   ht_iter_tag = s7_new_type_x("hash-table-iterator", print_ht_iter, free_ht_iter, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
   sc->MAKE_HASH_TABLE_ITERATOR = s7_define_safe_function(sc, "make-hash-table-iterator", g_make_hash_table_iterator, 1, 0, false, H_make_hash_table_iterator);
   sc->HASH_TABLE_ITERATORP =    s7_define_safe_function(sc, "hash-table-iterator?",  g_is_hash_table_iterator, 1, 0, false, H_is_hash_table_iterator);
@@ -65034,6 +65021,7 @@ s7_scheme *s7_init(void)
 
 
   s7_provide(sc, "s7");
+  s7_provide(sc, "s7-" S7_VERSION);
 
 #if WITH_EXTRA_EXPONENT_MARKERS
   s7_provide(sc, "dfls-exponents");
@@ -65072,7 +65060,7 @@ s7_scheme *s7_init(void)
   s7_provide(sc, "android");
 #endif
   s7_provide(sc, "ratio");
-  s7_provide(sc, "s7-" S7_VERSION);
+
 
   sc->Vector_Set = s7_symbol_value(sc, sc->VECTOR_SET);
   set_setter(sc->Vector_Set);
@@ -65358,7 +65346,6 @@ s7_scheme *s7_init(void)
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x) and goto*
  *   op_closure_car_car is rarely called or cdr_cdr (only in bench)
  *   can't these be done equally well via _aa?
- * M. in listener -> code if its scheme, and maybe autohelp as in html?
  *
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7
@@ -65384,9 +65371,7 @@ s7_scheme *s7_init(void)
    string-copy! et al?
    bytevector-copy!
    read|write-bytevector!
-
    (string-copy! to at from start end ) -> bytevector
-
    bytevectors support is minimal and confusing -- see end of s7test.scm for a few of the problems
  */
 

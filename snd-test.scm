@@ -3647,7 +3647,7 @@
 	
 	(let ((errs (list "no error" "no frequency method" "no phase method" "null gen arg to method" "no length method"
 			  "no free method" "no describe method" "no data method" "no scaler method"
-			  "memory allocation failed" "unstable two pole error"
+			  "memory allocation failed" 
 			  "can't open file" "no sample input" "no sample output"
 			  "no such channel" "no file name provided" "no location method" "no channel method"
 			  "no such fft window" "unsupported data format" "header read failed"
@@ -3658,7 +3658,7 @@
 			  "audio write error" "audio size not available" "audio device not available"
 			  "can't close audio" "can't open audio" "audio read error"
 			  "can't write audio" "can't read audio" "no audio read permission" 
-			  "can't close file" "arg out of range" "wrong type arg"
+			  "can't close file" "arg out of range" 
 			  "no channels method" "no hop method" "no width method" "no file-name method" "no ramp method" "no run method"
 			  "no increment method" "no offset method"
 			  "no xcoeff method" "no ycoeff method" "no xcoeffs method" "no ycoeffs method" "no reset" "bad size" "can't convert"
