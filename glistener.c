@@ -436,7 +436,7 @@ static gboolean prompt_backward_search(glistener *g, const GtkTextIter *iter, Gt
 
 static gboolean prompt_backward_search(glistener *g, const GtkTextIter *iter, GtkTextIter *start, GtkTextIter *end)
 {
-  return(gtk_text_iter_backward_search(iter, g->prompt, (GtkTextSeachFlags)0, start, end, NULL));
+  return(gtk_text_iter_backward_search(iter, g->prompt, (GtkTextSearchFlags)0, start, end, NULL));
 }
 #endif
 
