@@ -436,7 +436,7 @@ static gboolean prompt_backward_search(glistener *g, const GtkTextIter *iter, Gt
 
 static gboolean prompt_backward_search(glistener *g, const GtkTextIter *iter, GtkTextIter *start, GtkTextIter *end)
 {
-  return(gtk_text_iter_backward_search(iter, g->prompt, 0, start, end, NULL));
+  return(gtk_text_iter_backward_search(iter, g->prompt, (GtkTextSeachFlags)0, start, end, NULL));
 }
 #endif
 
@@ -996,12 +996,11 @@ static bool find_close_paren(glistener *g, int parens, int pos, int *highlight_p
 {
   GtkTextIter scan;
   int ppos;
-  gunichar c = 0, prev_c = 0, prev_prev_c = 0;
+  gunichar c = 0, prev_c = 0;
 
   gtk_text_buffer_get_iter_at_offset(g->buffer, &scan, pos);  
   while (gtk_text_iter_compare(&scan, limit) < 0)
     {
-      prev_prev_c = prev_c;
       prev_c = c;
       c = gtk_text_iter_get_char(&scan);
       if (!at_character_constant(g, gtk_text_iter_get_offset(&scan)))
@@ -1013,7 +1012,6 @@ static bool find_close_paren(glistener *g, int parens, int pos, int *highlight_p
 		{
 		  gtk_text_buffer_get_iter_at_offset(g->buffer, &scan, ppos);
 		}
-	      prev_prev_c = 0;
 	      prev_c = '\"';
 	    }
 	  else
@@ -2290,7 +2288,7 @@ static void glistener_completion(glistener *g, int pos)
       static const char indent_spaces[] = "                                                                                ";
       #define INDENT_SPACES 80
       
-      int pos, bpos, epos, bline, eline, cline, linepos, linecol;
+      int pos, bpos, epos, bline, cline, linepos, linecol;
       GtkTextIter cursor, curline, start_limit, end_limit;
       
       pos = find_expression_limits(g, &bpos, &epos);
@@ -2298,7 +2296,7 @@ static void glistener_completion(glistener *g, int pos)
       gtk_text_buffer_get_iter_at_offset(g->buffer, &end_limit, epos);
       gtk_text_buffer_get_iter_at_offset(g->buffer, &cursor, pos);
       bline = gtk_text_iter_get_line(&start_limit);
-      eline = gtk_text_iter_get_line(&end_limit);
+      /* eline = gtk_text_iter_get_line(&end_limit); */
       cline = gtk_text_iter_get_line(&cursor);
       gtk_text_buffer_get_iter_at_line(g->buffer, &curline, cline);
       linepos = gtk_text_iter_get_offset(&curline);

@@ -8985,7 +8985,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 
       if (name[1] == 'x')     /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e -- Guile doesn't have this
 			       *
-			       * r7rs has 2-byte "characters" of the form #\xcebb but this is not compatible with
+			       * r7rs has 2/3/4-byte "characters" of the form #\xcebb but this is not compatible with
 			       *   make-string, string-length, and so on.  We'd either have to have 2-byte chars
 			       *   so (string-length (make-string 3 #\xcebb)) = 3, or accept 6 here for number of chars.
 			       *   Then substring and string-set! and so have to use utf8 encoding throughout or
@@ -65020,6 +65020,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "-s7-stack-size", g_stack_size, 0, 0, false, "current stack size");
 
 
+  /* *features* */
   s7_provide(sc, "s7");
   s7_provide(sc, "s7-" S7_VERSION);
 
@@ -65367,12 +65368,7 @@ s7_scheme *s7_init(void)
  *         mark, copy, fill, reverse, etc print
  */
 
-/* possible additions (r7rs):
-   string-copy! et al?
-   bytevector-copy!
-   read|write-bytevector!
-   (string-copy! to at from start end ) -> bytevector
-   bytevectors support is minimal and confusing -- see end of s7test.scm for a few of the problems
+/* bytevectors support is minimal and confusing -- see end of s7test.scm for a few of the problems
  */
 
 

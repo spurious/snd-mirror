@@ -4379,8 +4379,6 @@ static XEN g_formant_bank(XEN gens, XEN inp)
 
 /* ---------------- one-pole-all-pass ---------------- */
 
-/* SOMEDAY: make-one-pole-all-pass does not accept keyword args */
-
 static XEN g_make_one_pole_all_pass(XEN arg1, XEN arg2)
 {
   #define H_make_one_pole_all_pass "(" S_make_one_pole_all_pass " size coeff): return a new one-pole-all-pass generator."
@@ -6778,7 +6776,7 @@ static XEN g_env_any(XEN e, XEN func)
 
 static XEN g_envelope_interp(XEN ux, XEN e, XEN ubase)
 {
-  #define H_envelope_interp "(envelope-interp x e (base 1.0)) -> value of e at x; base controls connecting segment type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
+  #define H_envelope_interp "(envelope-interp x e (base 1.0)) -> value of e at x; base controls connecting segment type: (envelope-interp .3 '(0 0 .5 1 1 0)) -> .6"
   mus_float_t x, base = 1.0, x0, x1, y0, y1;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(ux), ux, XEN_ARG_1, S_envelope_interp, "a number");
   XEN_ASSERT_TYPE(XEN_LIST_P(e), e, XEN_ARG_2, S_envelope_interp, "a list");

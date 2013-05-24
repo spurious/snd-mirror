@@ -231,6 +231,7 @@ int main(int argc, char **argv)
   add_header("sndlib2xen.h");
   add_header("clm2xen.h");
   add_header("snd.h");
+  add_header("glistener.h");
 #if 1
   add_header("snd-strings.h");
   add_header("sndlib-strings.h");
@@ -256,6 +257,7 @@ int main(int argc, char **argv)
   /* add_file("xen.h"); */
   /* add_file("snd.h"); */
 
+  add_file("glistener.c");
   add_file("headers.c");
   add_file("audio.c");
   add_file("io.c");
@@ -344,6 +346,11 @@ int main(int argc, char **argv)
   add_file("clm1.lisp");
 
   add_file("sndins/sndins.c");
+
+  add_file("/home/bil/test/cm308/cm-3.8.0/src/CmSupport.cpp");
+  add_file("/home/bil/test/cm308/cm-3.8.0/src/Scheme.cpp");
+  add_file("/home/bil/test/cm308/cm-3.8.0/src/SndLib.cpp");
+  add_file("/home/bil/test/cm308/cm-3.8.0/src/SndLibBridge.cpp");
 
   for (i = 0; i < headers_ctr; i++)
     {

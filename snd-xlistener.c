@@ -274,7 +274,7 @@ static int find_matching_paren(const char *str, int parens, int pos, int *highli
   return(parens);
 }
 
-#if HAVE_SCHEME
+#if (!HAVE_RUBY) && (!HAVE_FORTH)
 static bool highlight_unbalanced_paren(void);
 
 static int check_balance(const char *expr, int start, int end, bool in_listener) 
@@ -1882,7 +1882,7 @@ static void listener_return_callback(Widget w, XtPointer context, XtPointer info
 }
 
 
-#if HAVE_SCHEME
+#if (!HAVE_FORTH) && (!HAVE_RUBY)
 
 static int flashes = 0;
 static int paren_pos = -1;

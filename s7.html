@@ -154,7 +154,7 @@ to gain easy access to slib.  This init file is named "s7.init" in the slib dist
 </p>
 
 <p>Although it is a descendant of tinyScheme, s7 is closest as a Scheme dialect to Guile 1.8.
-I believe it is compatible with r5rs:  you can just ignore all the additions discussed in this file.
+I believe it is compatible with <a href="#s7vsr5rs">r5rs</a> and <a href="#r7rs">r7rs</a>:  you can just ignore all the additions discussed in this file.
 It has continuations, 
 ratios, complex numbers,
 macros, keywords, hash-tables, 
@@ -5892,6 +5892,7 @@ the current environment, so defines happen in the enclosing environment.
 (define vector-for-each for-each) 
 (define string-for-each for-each) 
 
+
 (define* (vector-&gt;string v (start 0) end) 
   (let ((stop (or end (length v)))) 
     (copy v (make-string (- stop start)) start stop)))
@@ -5910,11 +5911,41 @@ the current environment, so defines happen in the enclosing environment.
   (let ((stop (or end (length s)))) 
     (copy s (make-string (- stop start)) start stop)))
 
+(define* (r7rs-fill! seq fill start end)
+  (if (not start)
+      (fill! seq fill)
+      (let ((len (or end (length seq))))
+	(do ((i start (+ i 1)))
+	    ((= i len) seq)
+	  (set! (seq i) fill)))))
+
+(define string-fill! r7rs-fill!)
+(define vector-fill! r7rs-fill!)
+
+(define* (r7rs-copy! dest at src (start 0) end)
+  (let ((len (or end (length src))))
+    (if (or (not (eq? dest src))
+	    (&lt;= at start))
+	(do ((i at (+ i 1))
+	     (k start (+ k 1)))
+	    ((= k len) dest)
+	  (set! (dest i) (src k)))
+	(do ((i (+ at (- len start)) (- i 1))
+	     (k (- len 1) (- k 1)))
+	    ((&lt; k start) dest)
+	  (set! (dest i) (src k))))))
+
+(define vector-copy! r7rs-copy!)
+(define bytevector-copy! r7rs-copy!)
+(define string-copy! r7rs-copy!)
+
+
 (define char-foldcase char-downcase) 
 (define (string-downcase str) (apply string (map char-downcase str)))
 (define string-foldcase string-downcase)
 (define (string-upcase str) (apply string (map char-upcase str)))
 (define (digit-value c) (and (char-numeric? c) (- (char-&gt;integer c) (char-&gt;integer #\0))))
+
 
 (define -inf.0 (real-part (log 0.0))) 
 (define +inf.0 (- -inf.0))    ; or (atanh 1.0)
@@ -5928,6 +5959,7 @@ the current environment, so defines happen in the enclosing environment.
 (define exact inexact-&gt;exact)
 (define (square x) (* x x))
 
+
 (define (input-port-open? p) (not (port-closed? p))) 
 (define (output-port-open? p) (not (port-closed? p))) 
 (define (binary-port? p) #t)
@@ -5938,6 +5970,7 @@ the current environment, so defines happen in the enclosing environment.
 (define open-binary-output-file open-output-file)
 (define (call-with-port port proc) 
   ((if (input-port? port) call-with-input-port call-with-output-port) port proc))
+
 
 (define (bytevector-u8-ref b k) (char-&gt;integer (b k)))
 (define (bytevector-u8-set! b k c) (char-&gt;integer (set! (b k) (integer-&gt;char c))))
@@ -5960,6 +5993,7 @@ the current environment, so defines happen in the enclosing environment.
 (define (eof-object) #&lt;eof&gt;)
 (define (features) *features*)
 
+
 (define (with-exception-handler handler thunk) (catch #t thunk handler))
 (define raise error)
 (define raise-continuable error)
@@ -5972,6 +6006,7 @@ the current environment, so defines happen in the enclosing environment.
 (define (file-error? obj) (eq? (car obj) 'io-error))
 (define (error-message obj) (apply format #f (cadr obj)))
 (define (error-irritants obj) (cdadr obj))
+
 
 (define interaction-environment current-environment)
 (define-bacro (include . files) 
@@ -6190,13 +6225,71 @@ the current environment, so defines happen in the enclosing environment.
                        (lambda (arg) 
                          (= (access arg F_OK) 0))))
 
-;; see the <a href="#cload">cload</a> section below for the time functions.
+
+(let ((e (current-environment)))
+  (define-c-function 
+    '((in-C "static int g_time(void) {return((int)time(NULL));} \n\
+             static struct timeval overall_start_time;  \n\
+             static bool time_set_up = false;           \n\
+             static double get_internal_real_time(void) \n\
+             {                                          \n\
+               struct timezone z0;                      \n\
+               struct timeval t0;                       \n\
+               double secs;                             \n\
+               if (!time_set_up) {gettimeofday(&amp;overall_start_time, &amp;z0); time_set_up = true;} \n\
+               gettimeofday(&amp;t0, &amp;z0);                  \n\
+               secs = difftime(t0.tv_sec, overall_start_time.tv_sec);\n\
+               return(secs + 0.000001 * (t0.tv_usec - overall_start_time.tv_usec)); \n\
+             }")
+      (double get_internal_real_time (void))
+      (int g_time (void)))
+    "" '("time.h" "sys/time.h"))
+  (augment-environment! e 
+    (cons 'jiffies-per-second (lambda () 1000))
+    (cons 'current-jiffy (lambda () (round (* (get_internal_real_time) 1000.0))))
+    (cons 'current-second g_time)))
+
+
+(let ((e (current-environment)))
+  (define-c-function 
+    '((char* getenv (char*))
+      (in-C "s7_scheme *s7; extern char **environ;              \n\
+             static s7_pointer getenvs(void)                    \n\
+             {                                                  \n\
+               s7_pointer p;                                    \n\
+               int i;                                           \n\
+               p = s7_nil(s7);                                  \n\
+               for (i = 0; environ[i]; i++)                     \n\
+                 {                                              \n\
+                  const char *eq;                               \n\
+                  s7_pointer name, value;                       \n\
+                  eq = strchr((const char *)environ[i], (int)'=');                   \n\
+                  name = s7_make_string_with_length(s7, environ[i], eq - environ[i]);\n\
+                  value = s7_make_string(s7, (char *)(eq + 1)); \n\
+                  p = s7_cons(s7, s7_cons(s7, name, value), p); \n\
+                 }                                              \n\
+               return(p);                                       \n\
+              }")
+      (s7_pointer getenvs (void)))
+    "" '("unistd.h"))
+  (augment-environment! e
+    (cons 'get-environment-variable getenv)
+    (cons 'get-environment-variables getenvs)))
 
 ;; command-line is problematic: s7 has no access to the caller's "main" function, and
 ;;   outside Windows, there's no reasonable way to get these arguments.
+
 </pre>
 
-<!-- for implementation library (srfi-112):
+<!-- more diffs:
+     single quote can occur in a name
+     rename?
+     include-ci #!fold-case
+     #\x... chars where not a byte
+-->
+
+
+<!-- implementation library (srfi-112):
 
 (let ((e (current-environment)))
   (define-c-function '((in-C "static struct utsname buf; \
@@ -9819,29 +9912,6 @@ Here are some examples:
       ((= (length p) 0))
     (format *stderr* "~A " p))
   (closedir dir))
-
-
-;;; time
-(define-c-function 
-  '((in-C "static struct timeval overall_start_time;  \n\
-           static bool time_set_up = false;           \n\
-           static double get_internal_real_time(void) \n\
-           {                                          \n\
-             struct timezone z0;                      \n\
-             struct timeval t0;                       \n\
-             double secs;                             \n\
-             if (!time_set_up) {gettimeofday(&amp;overall_start_time, &amp;z0); time_set_up = true;} \n\
-             gettimeofday(&amp;t0, &amp;z0);                  \n\
-             secs = difftime(t0.tv_sec, overall_start_time.tv_sec);\n\
-             return(secs + 0.000001 * (t0.tv_usec - overall_start_time.tv_usec)); \n\
-           }")
-    (double get_internal_real_time (void)))
-  "" '("time.h" "sys/time.h"))
-
-(define-macro (time func) 
-  `(let ((start (get_internal_real_time)))
-     ,func
-     (- (get_internal_real_time) start)))
 </pre>
 
 

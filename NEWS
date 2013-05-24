@@ -1,16 +1,12 @@
-Snd 13.6
+Snd 13.7.
 
-added environment-ref|set!
-      char-position and string-position (moved from Snd to s7)
-      make-formant-bank and formant-bank? (and changed formant-bank again)
-      comb-bank, all-pass-bank, and filtered-comb-bank generators
-      one-pole-all-pass generator moved to C
-      envelope-interp, rxyk!cos, and rxyk!sin moved to C
-      yet another version of oscil-bank
+s7: r7rs changes: flush-output-port, vector-append, read|write-string, 
+       boolean=?, symbol=?, exit, emergency-exit.
+       added destination/start/end args to copy.
 
-removed mus-file-prescaler and mus-prescaler  -- these no longer serve any purpose.
+Snd: new gtk listener, split out as glistener.c/h, 
+       tests in tools/gcall.c and tools/gtest.scm.
+     
+checked: sbcl 1.1.7, gtk 3.9.0
 
-checked: gtk 3.7.14, 3.8.0|1, sbcl 1.1.6.
-
-Thanks!: Michael Edwards, Mike Scholz
-
+Thanks!: Nando, Jason Ripley, James Hearon

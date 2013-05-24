@@ -1666,7 +1666,7 @@ The function should return one of the cursor choices (e.g. " S_keyboard_no_actio
 the name reported if an error occurs. The 'key' argument can be the X/Gtk name of the key (e.g. \"plus\" for \"+\" or \"Home\"), \
 the character on the key (#\\a), or the integer corresponding to that character: (\"(char->integer #\\a)\" in Scheme, \
 \"?a\" in Ruby, \
-or \"<char> a\" in Forth."
+or \"<char> a\" in Forth)."
   
   return(g_bind_key_1(key, state, code, cx_extended, origin, prefs_info, S_bind_key));
 }
