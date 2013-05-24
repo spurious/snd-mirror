@@ -47945,14 +47945,7 @@ EDITS: 1
 		      (snd-display #__line__ ";away: ~A" val))
 		    (for-each close-sound (sounds))
 		    (if (file-exists? "a.snd") (delete-file "a.snd"))
-		    (if (file-exists? "ar.snd") (delete-file "ar.snd"))))
-	      (if (file-exists? "colony5.scm")
-		  (begin
-		    (let ((val (simple-time (load "colony5.scm"))))
-		      (snd-display #__line__ ";colony 5: ~A" val))
-		    (for-each close-sound (sounds))
-		    (if (file-exists? "col5.snd") (delete-file "col5.snd"))
-		    (if (file-exists? "reverb.snd") (delete-file "reverb.snd"))))))
+		    (if (file-exists? "ar.snd") (delete-file "ar.snd"))))))
 	
 	;; close-sound cases that are nutty...
 	(let ((tag (catch #t
@@ -48162,7 +48155,7 @@ EDITS: 1
 	  ((= i test-at-random))
 	(set! snd-test (random 24))
 	(if (> snd-test 23) (set! snd-test 23))
-	(format #t "~%~A: ~A" i snd-test)
+	(format *stderr* "~%~A: ~A~%" i snd-test)
 	(before-test-hook snd-test)
 	((vector-ref test-funcs snd-test))
 	(after-test-hook snd-test)
