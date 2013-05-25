@@ -1395,6 +1395,26 @@ to be evaluated in its definition environment:
     (list (mac 1) 
 	  (mac-1 1))))
 </pre>
+
+<p>Here's define-immaculo in the new form:
+</p>
+
+<pre>
+(define-macro (define-safe-macro name&amp;args . body)
+  `(define-macro ,name&amp;args
+     (with-environment 
+         (#_environment 
+	  (initial-environment)
+	  ,@(#_let ((rest (#_if (#_list? name&amp;args) 
+			    #f 
+			    (#_list-tail name&amp;args (#_abs (#_length name&amp;args))))))
+	    (#_append 
+	     (#_map (#_lambda (b) 
+		    `(#_cons ',b ,b))
+		  (#_cdr name&amp;args))
+	     (#_if rest `((#_cons ',rest ,rest)) ()))))
+	,@body)))
+</pre>
 </div>
 
 
@@ -1433,6 +1453,41 @@ to be evaluated in its definition environment:
 	      `(set! ,(car b) ,(cadr b)))
 	    bindings)
      ,@body))
+
+(define-macro (safe-let bindings . body)
+  `(with-environment 
+       (#_environment 
+	(initial-environment)
+	,@(#_map (#_lambda (b) 
+		 `(#_cons ',(#_car b) ,(#_cadr b)))
+	       bindings))
+     ,@body))
+
+(define-macro (let! init end . body)
+  (let ((e (gensym)))
+    `(let ((,e (current-environment))
+	   ,@init)
+       ,@body
+       (augment-environment! ,e
+	 ,@(map (lambda (export)
+		  `(cons ',export ,export))
+		(car end)))
+       ,@(cdr end))))
+
+(define-macro (safe-let! init end . body)
+  `(with-environment 
+       (#_environment 
+	(initial-environment)
+	,@(#_map (#_lambda (b) 
+		 `(#_cons ',(#_car b) ,(#_cadr b)))
+	       init))
+     ,@body
+     (#_augment-environment! (#_outer-environment (#_current-environment))
+	,@(#_map (#_lambda (export)
+		 `(#_cons ',export ,export))
+	       (#_car end)))
+     ,@(#_cdr end)))
+
 -->
 
 
@@ -2654,6 +2709,19 @@ its top-level bindings are imported into the current environment:
 
 <p>That's all there is to it!
 </p>
+
+<pre>
+(define-macro (let! init end . body) ; syntax mimics 'do: (let! (vars&amp;values) ((exported-names) result) body)
+  (let ((e (gensym)))
+    `(let ((,e (current-environment))
+	   ,@init)
+       ,@body
+       (augment-environment! ,e
+	 ,@(map (lambda (export)
+		  `(cons ',export ,export))
+		(car end)))
+       ,@(cdr end))))
+</pre>
 
 </div>
 

@@ -411,9 +411,9 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+24-May-13: Snd 13.7.\n\
 23-Apr-13: Snd 13.6.\n\
 12-Mar-13: Snd 13.5.\n\
-4-Feb-13:  Snd 13.4.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",
