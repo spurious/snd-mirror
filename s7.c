@@ -1036,7 +1036,6 @@ typedef struct s7_cell {
     struct {
       s7_pointer args, body, env, setter;
       int arity;
-      int match_type;                 /* currently unused */
     } func;
 
     struct { 
@@ -1049,7 +1048,7 @@ typedef struct s7_cell {
       s7_pointer initial_slot;
     } string;
     
-    struct {               /* symbols */
+    struct {                      /* symbols */
       s7_pointer name, global_slot, local_slot;
       long long int id;
       union {
@@ -1058,13 +1057,13 @@ typedef struct s7_cell {
       } ext;
     } sym;
 
-    struct {               /* slots (bindings) */
+    struct {                       /* slots (bindings) */
       s7_pointer sym, val, nxt, pending_value, expr;
     } slt;
 
-    struct {                   /* environments (frames) */
+    struct {                       /* environments (frames) */
       s7_pointer slots, nxt;
-      long long int id;        /* id of global_env is -1 */
+      long long int id;            /* id of global_env is -1 */
       union {
 	struct {
 	  s7_pointer function;     /* __func__ (code) if this is a closure environment */
@@ -21966,18 +21965,33 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
   if (is_input_port(port))
     {
       bool old_longjmp;
+      s7_pointer old_envir;
+      old_envir = sc->envir;
+      sc->envir = sc->NIL; 
+      if (sc->longjmp_ok)
+	{
+	  push_input_port(sc, port);
+	  push_stack(sc, OP_BARRIER, port, sc->NIL);
+	  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);  
+	  eval(sc, OP_READ_INTERNAL);
+	  pop_input_port(sc);
+	  sc->envir = old_envir;
+	  return(sc->value);
+	}
+      stack_reset(sc); 
+      push_stack(sc, OP_EVAL_DONE, old_envir, sc->NIL); /* GC protect envir */
+      push_input_port(sc, port);
       old_longjmp = sc->longjmp_ok;
       if (!sc->longjmp_ok)
 	{
 	  sc->longjmp_ok = true;
 	  if (setjmp(sc->goto_start) != 0)
-	    return(sc->value);
+	    eval(sc, sc->op);
+	  else eval(sc, OP_READ_INTERNAL);
 	}
-      push_input_port(sc, port);
-      push_stack(sc, OP_EVAL_DONE, port, sc->NIL);
-      eval(sc, OP_READ_INTERNAL);
       sc->longjmp_ok = old_longjmp;
       pop_input_port(sc);
+      sc->envir = old_envir;  
       return(sc->value);
     }
   return(simple_wrong_type_argument_with_type(sc, sc->READ, port, AN_INPUT_PORT));
@@ -30432,6 +30446,8 @@ void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, c
 
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 {
+  static char *arglist = NULL;
+  #define ARGLIST_SIZE 512
   if (is_symbol(x))
     x = s7_symbol_value(sc, x); /* this is needed by Snd */
 
@@ -30440,9 +30456,23 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
     return((char *)c_function_documentation(x));
   
   if (((is_closure(x)) || 
-       (is_closure_star(x))) &&
-      (is_string(car(closure_body(x)))))
-    return(string_value(car(closure_body(x))));
+       (is_closure_star(x))))
+    {
+      char *args;
+
+      if (is_string(car(closure_body(x))))
+	return(string_value(car(closure_body(x))));
+
+      if (!arglist)
+	arglist = (char *)calloc(ARGLIST_SIZE, sizeof(char));
+      args = s7_object_to_c_string(sc, closure_args(x));
+      if (args)
+	{
+	  snprintf(arglist, ARGLIST_SIZE, "args: %s", args);
+	  free(args);
+	  return(arglist);
+	}
+    }
   
   if ((s7_is_macro(sc, x)) &&
       (is_pair(closure_body(x))))
@@ -30457,6 +30487,7 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 	  (is_string(caddr(cadr(p)))))
 	return(string_value(caddr(cadr(p))));
     }
+
   return(""); /* not NULL here so that (string=? "" (procedure-documentation no-doc-func)) -> #t */
 }
 
@@ -34212,7 +34243,8 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	    format_to_port(sc, error_port, "\n;  ~A[~D]", list_2(sc, make_protected_string(sc, filename), make_integer(sc, line)), NULL, false, 10);
 	  else 
 	    {
-	      if (line > 0)
+	      if ((line > 0) &&
+		  (slot_value(sc->error_line) != sc->F))
 		format_to_port(sc, error_port, "\n;  line ~D", list_1(sc, make_integer(sc, line)), NULL, false, 11);
 	    }
 	}
@@ -65339,9 +65371,19 @@ s7_scheme *s7_init(void)
  * get rid of sound-data: mus-audio* mus-sound* use vct for now
  *   sound-data as output: ws.scm, conversions: frame.scm, play: play.scm, snd-motif|gtk.scm, enved.scm
  *   mus-sound|audio-write
+ *
  * TODO: what happened to hook documentation? hook is now an s7 constant (see xen.c xen_s7_define_hook)
  *   but make-hook above could presumably put the docstring in the lambda* body -can we find it there?
- *   or in the let for that matter -- could this always work?
+ *   or in the let for that matter -- could this always work? -- sure -- it's just like the current init var
+ *   just add documentation to that list and use ((procedure-environment hook) 'documentation) to get/set it.
+ *   but how to tell the procedure has this env var and it's the right thing in procedure-documentation or help?
+ *   If the function builder moved the docstring into the env, we'd solve both problems at once, but 
+ *   make closure becomes slower.  We also need a 'hook? function -- a type field as well?
+ *   Environments could also have a documentation field.
+ *
+ * append as generic? we have append (list), string-append, vector-append, would need c_object case
+ *   to be like map, we'd need to accept any mixture of args and return a list
+ *
  * SOMEDAY: give each e|f|gcdr ref a unique name and figure out how to avoid collisions
  *
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x) and goto*
@@ -65368,7 +65410,7 @@ s7_scheme *s7_init(void)
  *         mark, copy, fill, reverse, etc print
  */
 
-/* bytevectors support is minimal and confusing -- see end of s7test.scm for a few of the problems
+/* bytevector support is minimal and confusing -- see end of s7test.scm for a few of the problems
  */
 
 

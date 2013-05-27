@@ -1,49 +1,5 @@
 #include "snd.h"
 
-
-#if HAVE_SCHEME
-static void evaluator(glistener *g, const char *text)
-{
-  int gc_loc;
-  s7_pointer old_port, result;
-  char *errmsg = NULL;
-  
-  if (s7_begin_hook(s7) != NULL) return;      /* s7 is already running (user typed <cr> during computation) */
-  
-  old_port = s7_set_current_error_port(s7, s7_open_output_string(s7));
-  gc_loc = s7_gc_protect(s7, old_port);
-  
-  if (with_interrupts(ss))
-    s7_set_begin_hook(s7, listener_begin_hook);
-  
-  result = s7_eval_c_string(s7, text);
-  
-  s7_set_begin_hook(s7, NULL);
-  errmsg = mus_strdup(s7_get_output_string(s7, s7_current_error_port(s7)));
-  
-  s7_close_output_port(s7, s7_current_error_port(s7));
-  s7_set_current_error_port(s7, old_port);
-  s7_gc_unprotect_at(s7, gc_loc);
-  
-  if (errmsg)
-    {
-      if (*errmsg)
-	snd_display_result(errmsg, NULL);
-      free(errmsg);
-    }
-  else snd_report_listener_result(result);
-}
-#endif
-
-
-#if HAVE_FORTH || HAVE_RUBY
-static void evaluator(glistener *g, const char *text)
-{
-  call_read_hook_or_eval(text); /* snd-listener.c */
-}
-#endif
-
-
 static GtkWidget *listener_text = NULL;
 static GtkTextBuffer *listener_buffer = NULL;
 
@@ -182,9 +138,75 @@ static const char *helper(glistener *g, const char *text)
 }
 
 
+static const char *checker(glistener *g, const char *text)
+{
+#if 0
+  int gc_loc, err_loc;
+  s7_pointer port, err_port, result;
+
+  if (s7_begin_hook(s7) != NULL) return(NULL);      /* s7 is already running */
+  err_port = s7_set_current_error_port(s7, s7_open_output_string(s7)); /* squelch the read error, if any */
+  err_loc = s7_gc_protect(s7, err_port);
+  port = s7_open_input_string(s7, text);
+  gc_loc = s7_gc_protect(s7, port);
+  result = s7_read(s7, port);
+  s7_close_input_port(s7, port);
+  s7_gc_unprotect_at(s7, gc_loc);
+  s7_close_output_port(s7, s7_current_error_port(s7));
+  s7_set_current_error_port(s7, err_port);
+  s7_gc_unprotect_at(s7, err_loc);
+  
+#endif  
+  return(NULL);
+}
+
+
 static void completer(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
 {
   s7_for_each_symbol_name(s7, symbol_func, data);
+}
+#endif
+
+
+#if HAVE_SCHEME
+static void evaluator(glistener *g, const char *text)
+{
+  int gc_loc;
+  s7_pointer old_port, result;
+  char *errmsg = NULL;
+  
+  if (s7_begin_hook(s7) != NULL) return;      /* s7 is already running (user typed <cr> during computation) */
+  
+  old_port = s7_set_current_error_port(s7, s7_open_output_string(s7));
+  gc_loc = s7_gc_protect(s7, old_port);
+  
+  if (with_interrupts(ss))
+    s7_set_begin_hook(s7, listener_begin_hook);
+  
+  result = s7_eval_c_string(s7, text);
+  
+  s7_set_begin_hook(s7, NULL);
+  errmsg = mus_strdup(s7_get_output_string(s7, s7_current_error_port(s7)));
+  
+  s7_close_output_port(s7, s7_current_error_port(s7));
+  s7_set_current_error_port(s7, old_port);
+  s7_gc_unprotect_at(s7, gc_loc);
+  
+  if (errmsg)
+    {
+      if (*errmsg)
+	snd_display_result(errmsg, NULL);
+      free(errmsg);
+    }
+  else snd_report_listener_result(result);
+}
+#endif
+
+
+#if HAVE_FORTH || HAVE_RUBY
+static void evaluator(glistener *g, const char *text)
+{
+  call_read_hook_or_eval(text); /* snd-listener.c */
 }
 #endif
 
@@ -208,6 +230,7 @@ static void make_listener_widget(int height)
       glistener_set_evaluator(ss->listener, evaluator);
 #if HAVE_SCHEME
       glistener_set_helper(ss->listener, helper);
+      glistener_set_checker(ss->listener, checker);
       glistener_set_completer(ss->listener, completer);
 #endif
 #if HAVE_FORTH || HAVE_RUBY

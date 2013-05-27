@@ -8,6 +8,7 @@
 
 <style type="text/css">
 	EM.red {color:red; font-style:normal}
+	EM.normal {font-style:normal}
 	EM.redb {color:red; font-weight: bold; font-style: normal}
         EM.error {color:chocolate; font-style:normal}
 	EM.emdef {font-weight: bold; font-style: normal}
@@ -1462,32 +1463,6 @@ to be evaluated in its definition environment:
 		 `(#_cons ',(#_car b) ,(#_cadr b)))
 	       bindings))
      ,@body))
-
-(define-macro (let! init end . body)
-  (let ((e (gensym)))
-    `(let ((,e (current-environment))
-	   ,@init)
-       ,@body
-       (augment-environment! ,e
-	 ,@(map (lambda (export)
-		  `(cons ',export ,export))
-		(car end)))
-       ,@(cdr end))))
-
-(define-macro (safe-let! init end . body)
-  `(with-environment 
-       (#_environment 
-	(initial-environment)
-	,@(#_map (#_lambda (b) 
-		 `(#_cons ',(#_car b) ,(#_cadr b)))
-	       init))
-     ,@body
-     (#_augment-environment! (#_outer-environment (#_current-environment))
-	,@(#_map (#_lambda (export)
-		 `(#_cons ',export ,export))
-	       (#_car end)))
-     ,@(#_cdr end)))
-
 -->
 
 
@@ -2361,7 +2336,7 @@ but a function grabs all remaining indices.  Trickier than I expected!
 
 
 <ul>
-<li>(<em class=def id="makehashtable">make-hash-table</em> (size 512) eq-func)
+<li>(<em class=def id="makehashtable">make-hash-table</em> (size 512) eq-func) or (make-hash-table eq-func size)
 <li>(<em class=def id="hashtable">hash-table</em> ...)
 <li>(<em class=def id="hashtableref">hash-table-ref</em> ht key)
 <li>(<em class=def id="hashtableset">hash-table-set!</em> ht key value)
@@ -2375,7 +2350,7 @@ but a function grabs all remaining indices.  Trickier than I expected!
 Any s7 object can be the key or the key's value.
 Each hash-table keeps track of the keys it contains, optimizing the search wherever possible.
 If you know what equality function you want, you can override this optimization by passing that function
-as the second or third argument to make-hash-table.
+as the second or third argument to make-hash-table (the odd way of handling arguments here is r7rs's fault).
 If you pass a table size that is not a power of 2, make-hash-table rounds it up to the next power of 2.
 </p>
 
@@ -2707,21 +2682,37 @@ its top-level bindings are imported into the current environment:
 	    (environment-&gt;list (current-environment))))))
 </pre>
 
-<p>That's all there is to it!
+<p>That's all there is to it!  Here is the same idea as a macro:
 </p>
 
 <pre>
-(define-macro (let! init end . body) ; syntax mimics 'do: (let! (vars&amp;values) ((exported-names) result) body)
-  (let ((e (gensym)))
-    `(let ((,e (current-environment))
-	   ,@init)
-       ,@body
-       (augment-environment! ,e
-	 ,@(map (lambda (export)
-		  `(cons ',export ,export))
-		(car end)))
-       ,@(cdr end))))
+(define-macro (<em class=normal id="let!">let!</em> init end . body)
+  ;; syntax mimics 'do: (let! (vars&amp;values) ((exported-names) result) body)
+  ;;   (let! ((a 1)) ((hiho)) (define (hiho x) (+ a x)))
+  `(let ,init
+     ,@body
+     (augment-environment! (outer-environment (current-environment))
+       ,@(map (lambda (export)
+		`(cons ',export ,export))
+	      (car end)))
+     ,@(cdr end)))
 </pre>
+
+<!--
+(define-macro (safe-let! init end . body)
+  `(with-environment 
+       (#_environment 
+	(initial-environment)
+	,@(#_map (#_lambda (b) 
+		 `(#_cons ',(#_car b) ,(#_cadr b)))
+	       init))
+     ,@body
+     (#_augment-environment! (#_outer-environment (#_current-environment))
+	,@(#_map (#_lambda (export)
+		 `(#_cons ',export ,export))
+	       (#_car end)))
+     ,@(#_cdr end)))
+-->
 
 </div>
 
@@ -4292,7 +4283,7 @@ are:
 </p>
 
 <ul>
-<li>read-byte and write-byte: binary IO, named "read-u8" and "write-u8" in r6rs, I think
+<li>read-byte and write-byte: binary IO.
 <li>read-line: line-at-a-time reads (for write-line, use format or for-each with write-char).
 <li>current-error-port, set-current-error-port
 </ul>
@@ -5979,7 +5970,7 @@ the current environment, so defines happen in the enclosing environment.
   (let ((stop (or end (length s)))) 
     (copy s (make-string (- stop start)) start stop)))
 
-(define* (r7rs-fill! seq fill start end)
+(define* (vector-fill! seq fill start end)
   (if (not start)
       (fill! seq fill)
       (let ((len (or end (length seq))))
@@ -5987,10 +5978,9 @@ the current environment, so defines happen in the enclosing environment.
 	    ((= i len) seq)
 	  (set! (seq i) fill)))))
 
-(define string-fill! r7rs-fill!)
-(define vector-fill! r7rs-fill!)
+(define string-fill! vector-fill!)
 
-(define* (r7rs-copy! dest at src (start 0) end)
+(define* (vector-copy! dest at src (start 0) end)
   (let ((len (or end (length src))))
     (if (or (not (eq? dest src))
 	    (&lt;= at start))
@@ -6003,9 +5993,8 @@ the current environment, so defines happen in the enclosing environment.
 	    ((&lt; k start) dest)
 	  (set! (dest i) (src k))))))
 
-(define vector-copy! r7rs-copy!)
-(define bytevector-copy! r7rs-copy!)
-(define string-copy! r7rs-copy!)
+(define bytevector-copy! vector-copy!)
+(define string-copy! vector-copy!)
 
 
 (define char-foldcase char-downcase) 
@@ -6026,6 +6015,10 @@ the current environment, so defines happen in the enclosing environment.
 (define inexact exact-&gt;inexact)
 (define exact inexact-&gt;exact)
 (define (square x) (* x x))
+(define truncate-quotient quotient)
+(define truncate-remainder remainder)
+(define floor-remainder modulo)
+(define (floor-quotient x y) (floor (/ x y)))
 
 
 (define (input-port-open? p) (not (port-closed? p))) 
@@ -6276,9 +6269,8 @@ the current environment, so defines happen in the enclosing environment.
         (force promise))))
 
 
-;; floor/ and friends can't work as intended: they assume that multiple values 
+;; floor/ and truncate/ can't work as intended: they assume that multiple values 
 ;;   are not spliced.  The "division library" is a trivial, pointless micro-optimization.
-;;   (define (floor-remainder x y) (- x (* y (floor (/ x y)))))
 ;; and why no euclidean-rationalize or exact-integer-expt?
 ;;   (imagine what will happen when r8rs stumbles on the zoo of continued fraction algorithms!)
 ;;

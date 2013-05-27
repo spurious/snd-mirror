@@ -66,6 +66,7 @@ void glistener_is_schemish         (glistener *g, bool filtering);
 
 void glistener_set_completer       (glistener *g, void (*completer)(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data));
 void glistener_set_helper          (glistener *g, const char *(*help)(glistener *g, const char *text));
+void glistener_set_checker         (glistener *g, const char *(*check)(glistener *g, const char *text));
 void glistener_set_evaluator       (glistener *g, void (*eval)(glistener *g, const char *text));
 
 /* these are for regression testing */
@@ -303,7 +304,7 @@ char *glistener_complete           (glistener *g);
  *
  *    glistener_set_helper(g1, helper);
  *  
-
+ *
  *				      
  * --------
  * void glistener_set_evaluator(glistener *g, void (*eval)(glistener *g, const char *text));

@@ -31,6 +31,7 @@ struct glistener {
   GdkCursor *wait_cursor, *arrow_cursor;
 
   const char *(*helper)(glistener *g, const char *text);
+  const char *(*checker)(glistener *g, const char *text);
   void (*evaluator)(glistener *g, const char *text);
   void (*completer)(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data);
 };
@@ -77,6 +78,7 @@ struct glistener {
 
 /* these are the functions we get from the caller:
  *   helper -- provide a brief string describing some entity (NULL = no help)
+ *   checker -- check for obvious mistakes in an expression
  *   completer -- provide name completion (NULL = no completion)
  *   evaluator -- evaluate an expression (a C string) and normally print the result in the glistener window
  */
@@ -91,6 +93,19 @@ void glistener_set_helper(glistener *g, const char *(*help)(glistener *g, const 
   if (help)
     g->helper = help;
   else g->helper = glistener_default_helper;
+}
+
+
+static const char *glistener_default_checker(glistener *g, const char *text)
+{
+  return(NULL);
+}
+
+void glistener_set_checker(glistener *g, const char *(*check)(glistener *g, const char *text))
+{
+  if (check)
+    g->checker = check;
+  else g->checker = glistener_default_checker;
 }
 
 
@@ -1185,11 +1200,26 @@ static void check_parens(glistener *g)
   if ((c == ')') &&
       (!at_character_constant(g, pos - 1)))
     {
+      int opos = 0;
       gtk_text_buffer_get_iter_at_offset(g->buffer, &limit, find_current_prompt(g) - 1);
-      if (find_open_paren(g, 1, pos - 2, &pos, &limit))
+      if (find_open_paren(g, 1, pos - 2, &opos, &limit))
 	{
-	  add_highlight(g, pos, pos + 1);
-	  check_for_offscreen_matching_paren(g, pos);
+	  add_highlight(g, opos, opos + 1);
+	  check_for_offscreen_matching_paren(g, opos);
+	  if (g->checker != glistener_default_checker)
+	    {
+	      /* TODO: add checker doc in glistener.h* */
+	      char *text;
+	      text = glistener_text(g, pos, opos);
+	      if (text)
+		{
+		  const char *help;
+		  help = g->checker(g, (const char *)text);
+		  if (help)
+		    glistener_post_status(g, help);
+		  g_free(text);
+		}
+	    }
 	}
     }
   else
@@ -1645,6 +1675,8 @@ static void post_help(glistener *g, int pos)
   int start = 0, end = 0;
   char *text;
   const char *help;
+
+  if (g->helper == glistener_default_helper) return;
 
   gtk_text_buffer_get_iter_at_offset(g->buffer, &s1, find_current_prompt(g));
   gtk_text_buffer_get_iter_at_offset(g->buffer, &e1, find_next_prompt(g));
@@ -2231,6 +2263,9 @@ static char *symbol_completion(glistener *g, const char *text)
 {
   match_info *m;
   char *result = NULL;
+
+  if (g->completer == glistener_default_completer) return(NULL);
+
   m = (match_info *)calloc(1, sizeof(match_info));
   m->text = text;
   m->tlen = strlen(text);
@@ -2420,6 +2455,7 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
   g = (glistener *)calloc(1, sizeof(glistener));
   g->is_schemish = true;
   g->helper = glistener_default_helper;
+  g->checker = glistener_default_checker;
   g->completer = glistener_default_completer;
   g->evaluator = glistener_default_evaluator;
   g->prompt_tag = NULL;
@@ -2551,5 +2587,7 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
  * TODO: indent do and if need expr counts -- can this use rtn_cb?
  */
 
-/* 21-May-13: changed HAVE_GTK_3 to HAVE_GTK_2.
+/* changes:
+ * 28-May:    added checker function.
+ * 21-May-13: changed HAVE_GTK_3 to HAVE_GTK_2.
  */
