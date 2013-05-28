@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.23"
-#define S7_DATE "18-May-13"
+#define S7_VERSION "2.24"
+#define S7_DATE "28-May-13"
 
 
 typedef long long int s7_Int;
@@ -95,6 +95,9 @@ typedef double s7_Double;
   #define bool	int
   #define true	1
   #define false	0
+  /* this fallback code does not actually work -- perhaps "bool" is not an int? in gcc it's _Bool.
+   *    we need stdbool.h 
+   */
 #endif
 #endif
 #endif
@@ -162,6 +165,7 @@ s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e);
 s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form, s7_pointer e);
 
 void s7_provide(s7_scheme *sc, const char *feature);                 /* add feature (as a symbol) to the *features* list */
+bool s7_is_provided(s7_scheme *sc, const char *feature);             /* (provided? feature) */
 
 
 s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info);
@@ -864,7 +868,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  *    integer-length keyword->symbol lcm length list->string list->vector list-tail log logand 
  *    logior lognot logxor logbit? magnitude make-hash-table-iterator make-list make-polar
  *    make-rectangular map max memv min modulo nan? negative? not odd? port-closed? 
- *    port-line-number positive? provided? quotient read-byte read-line remainder round s7-version 
+ *    port-line-number positive? quotient read-byte read-line remainder round s7-version 
  *    sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 
  *    string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-position string-ref 
  *    string-set! string<=? string<? string=? string>=? string>? substring symbol symbol->keyword 
@@ -882,6 +886,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 28-May:    export s7_is_provided.
  * 21-May:    equality predicate optional arg in make-hash-table.
  * 14-May:    glistener.c, glistener.h, s7_symbol_table_find_name (for glistener).
  * 2-May:     r7rs changes: flush-output-port, vector-append, read|write-string, boolean=?, symbol=?.

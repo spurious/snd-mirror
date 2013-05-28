@@ -19905,12 +19905,15 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
     }
 
   end = string_length(str);
-  if (end == 0) return(sc->NIL);
 
   if (!is_null(cdr(args)))
     {
       start_and_end(sc, sc->STRING_TO_LIST, cdr(args), 2, &start, &end);
       if (start == end) return(sc->NIL);
+    }
+  else
+    {
+      if (end == 0) return(sc->NIL);
     }
   if ((start == 0) && (end == string_length(str)))
     return(s7_string_to_list(sc, string_value(str), string_length(str)));
@@ -27343,7 +27346,7 @@ static s7_pointer g_is_provided(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, car(args), sc->PROVIDEDP, args);
       return(simple_wrong_type_argument(sc, sc->PROVIDEDP, car(args), T_SYMBOL));
     }
-  return(make_boolean(sc, is_member(car(args), s7_name_to_value(sc, "*features*"))));
+  return(make_boolean(sc, is_member(car(args), s7_symbol_value(sc, sc->S7_FEATURES))));
 }
 
 
@@ -27367,6 +27370,12 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
 void s7_provide(s7_scheme *sc, const char *feature)
 {
   g_provide(sc, cons(sc, s7_make_symbol(sc, feature), sc->NIL));
+}
+
+
+bool s7_is_provided(s7_scheme *sc, const char *feature)
+{
+  return(is_member(s7_make_symbol(sc, feature), s7_symbol_value(sc, sc->S7_FEATURES)));
 }
 
 
@@ -65371,18 +65380,6 @@ s7_scheme *s7_init(void)
  * get rid of sound-data: mus-audio* mus-sound* use vct for now
  *   sound-data as output: ws.scm, conversions: frame.scm, play: play.scm, snd-motif|gtk.scm, enved.scm
  *   mus-sound|audio-write
- *
- * TODO: what happened to hook documentation? hook is now an s7 constant (see xen.c xen_s7_define_hook)
- *   but make-hook above could presumably put the docstring in the lambda* body -can we find it there?
- *   or in the let for that matter -- could this always work? -- sure -- it's just like the current init var
- *   just add documentation to that list and use ((procedure-environment hook) 'documentation) to get/set it.
- *   but how to tell the procedure has this env var and it's the right thing in procedure-documentation or help?
- *   If the function builder moved the docstring into the env, we'd solve both problems at once, but 
- *   make closure becomes slower.  We also need a 'hook? function -- a type field as well?
- *   Environments could also have a documentation field.
- *
- * append as generic? we have append (list), string-append, vector-append, would need c_object case
- *   to be like map, we'd need to accept any mixture of args and return a list
  *
  * SOMEDAY: give each e|f|gcdr ref a unique name and figure out how to avoid collisions
  *

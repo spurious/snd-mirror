@@ -4282,7 +4282,27 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (and (string=? "\\\"`\"" (string #\\ #\" #\` #\")) (equal? '(#\\ #\" #\` #\") (string->list "\\\"`\""))) #t)
 (test (and (string=? "\\\\#\"" (string #\\ #\\ #\# #\")) (equal? '(#\\ #\\ #\# #\") (string->list "\\\\#\""))) #t)
 
-;;; TODO: start/end tests
+(test (string->list "" 0 10) 'error)
+(test (string->list "1" 0 2) 'error)
+(test (string->list "" 0 0) ())
+(test (string->list "1" 1) ())
+(test (string->list "1" 0) '(#\1))
+(test (string->list "" #\null) 'error)
+(test (string->list "" 0 #\null) 'error)
+(test (string->list "" -1) 'error)
+(test (string->list "1" -1) 'error)
+(test (string->list "1" 0 -1) 'error)
+(test (string->list "1" -2 -1) 'error)
+(test (string->list "1" most-negative-fixnum) 'error)
+(test (string->list "1" 2) 'error)
+
+(for-each
+ (lambda (arg)
+   (test (string->list "012345" arg) 'error)
+   (test (string->list "012345" 1 arg) 'error))
+ (list #\a "hi" () (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
+       3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
+
 (test (string->list "12345" 0) '(#\1 #\2 #\3 #\4 #\5))
 (test (string->list "12345" 0 5) '(#\1 #\2 #\3 #\4 #\5))
 (test (string->list "12345" 5 5) ())
@@ -6963,6 +6983,27 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (vector->list #(1 2 3 4) 5) 'error)
 (test (vector->list #(1 2 3 4) 1 5) 'error)
 (test (vector->list #(1 2 3 4) 1 2 3) 'error)
+
+(test (vector->list #() 0 10) 'error)
+(test (vector->list #(1) 0 2) 'error)
+(test (vector->list #() 0 0) ())
+(test (vector->list #(1) 1) ())
+(test (vector->list #(1) 0) '(1))
+(test (vector->list #() #\null) 'error)
+(test (vector->list #() 0 #\null) 'error)
+(test (vector->list #() -1) 'error)
+(test (vector->list #(1) -1) 'error)
+(test (vector->list #(1) 0 -1) 'error)
+(test (vector->list #(1) -2 -1) 'error)
+(test (vector->list #(1) most-negative-fixnum) 'error)
+(test (vector->list #(1) 2) 'error)
+
+(for-each
+ (lambda (arg)
+   (test (vector->list #(0 1 2 3 4 5) arg) 'error)
+   (test (vector->list #(0 1 2 3 4 5) 1 arg) 'error))
+ (list #\a "hi" () (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
+       3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
 

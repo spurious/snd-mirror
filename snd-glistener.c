@@ -138,27 +138,48 @@ static const char *helper(glistener *g, const char *text)
 }
 
 
+#if HAVE_CHECKER
 static const char *checker(glistener *g, const char *text)
 {
-#if 0
   int gc_loc, err_loc;
   s7_pointer port, err_port, result;
+  const char *errmsg;
+  bool err = false;
+  result = s7_f(s7);
 
-  if (s7_begin_hook(s7) != NULL) return(NULL);      /* s7 is already running */
-  err_port = s7_set_current_error_port(s7, s7_open_output_string(s7)); /* squelch the read error, if any */
+  if (s7_begin_hook(s7) != NULL) return(NULL); 
+  err_port = s7_set_current_error_port(s7, s7_open_output_string(s7));
   err_loc = s7_gc_protect(s7, err_port);
   port = s7_open_input_string(s7, text);
   gc_loc = s7_gc_protect(s7, port);
   result = s7_read(s7, port);
+  errmsg = s7_get_output_string(s7, err_port);
+  if (errmsg) {err = true; glistener_post_status(g, errmsg);}
   s7_close_input_port(s7, port);
   s7_gc_unprotect_at(s7, gc_loc);
   s7_close_output_port(s7, s7_current_error_port(s7));
   s7_set_current_error_port(s7, err_port);
   s7_gc_unprotect_at(s7, err_loc);
-  
-#endif  
+
+  if ((!err) &&
+      (s7_is_pair(result)))
+    {
+      s7_pointer sym;
+      sym = s7_car(result);
+      if (s7_is_symbol(sym))
+	{
+	  s7_pointer val;
+	  val = s7_symbol_value(s7, sym);
+	  if ((val != s7_undefined(s7)) &&
+	      (!s7_is_aritable(s7, val, s7_list_length(s7, result) - 1)))
+	    {
+	      glistener_post_status(g, "wrong number of args");
+	    }
+	}
+    }
   return(NULL);
 }
+#endif
 
 
 static void completer(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
@@ -230,7 +251,9 @@ static void make_listener_widget(int height)
       glistener_set_evaluator(ss->listener, evaluator);
 #if HAVE_SCHEME
       glistener_set_helper(ss->listener, helper);
+#if HAVE_CHECKER
       glistener_set_checker(ss->listener, checker);
+#endif
       glistener_set_completer(ss->listener, completer);
 #endif
 #if HAVE_FORTH || HAVE_RUBY
