@@ -8657,6 +8657,83 @@
 (CCAST-390 "GTK_HEADER_BAR" "GtkHeaderBar*")
 (CCHK-390 "GTK_IS_HEADER_BAR" "GtkHeaderBar*")
 
+
+#|
+;;; 3.9.2
+
+GdkDisplayManager *gdk_display_manager_peek                (void);
+GDK_WINDOW_STATE_TILED      = 1 << 8
+  GType              gtk_places_sidebar_get_type                   (void) G_GNUC_CONST;
+  GtkWidget *        gtk_places_sidebar_new                        (void);
+  GtkPlacesOpenFlags gtk_places_sidebar_get_open_flags             (GtkPlacesSidebar   *sidebar);
+  void               gtk_places_sidebar_set_open_flags             (GtkPlacesSidebar   *sidebar,
+                                                                    GtkPlacesOpenFlags  flags);
+  GFile *            gtk_places_sidebar_get_location               (GtkPlacesSidebar   *sidebar);
+  void               gtk_places_sidebar_set_location               (GtkPlacesSidebar   *sidebar,
+                                                                    GFile              *location);
+  gboolean           gtk_places_sidebar_get_show_desktop           (GtkPlacesSidebar   *sidebar);
+  void               gtk_places_sidebar_set_show_desktop           (GtkPlacesSidebar   *sidebar,
+                                                                    gboolean            show_desktop);
+  gboolean           gtk_places_sidebar_get_show_connect_to_server (GtkPlacesSidebar   *sidebar);
+  void               gtk_places_sidebar_set_show_connect_to_server (GtkPlacesSidebar   *sidebar,
+                                                                    gboolean            show_connect_to_server);
+  void               gtk_places_sidebar_add_shortcut               (GtkPlacesSidebar   *sidebar,
+                                                                    GFile              *location);
+  void               gtk_places_sidebar_remove_shortcut            (GtkPlacesSidebar   *sidebar,
+                                                                    GFile              *location);
+  GSList *           gtk_places_sidebar_list_shortcuts             (GtkPlacesSidebar   *sidebar);
+  GFile *            gtk_places_sidebar_get_nth_bookmark           (GtkPlacesSidebar   *sidebar, LOST LINES
+
+  GType                      gtk_revealer_get_type                (void) G_GNUC_CONST;
+  GtkWidget*                 gtk_revealer_new                     (void);
+  gboolean                   gtk_revealer_get_reveal_child        (GtkRevealer               *revealer);
+  void                       gtk_revealer_set_reveal_child        (GtkRevealer               *revealer,
+                                                                   gboolean                   reveal_child);
+  gboolean                   gtk_revealer_get_child_revealed      (GtkRevealer               *revealer);
+  guint                      gtk_revealer_get_transition_duration (GtkRevealer               *revealer);
+  void                       gtk_revealer_set_transition_duration (GtkRevealer               *revealer,
+                                                                   guint                      duration);
+  void                       gtk_revealer_set_transition_type     (GtkRevealer               *revealer,
+                                                                   GtkRevealerTransitionType  transition);
+  GtkRevealerTransitionType  gtk_revealer_get_transition_type     (GtkRevealer               *revealer);
+  GType                  gtk_stack_get_type                (void) G_GNUC_CONST;
+  
+  GtkWidget *            gtk_stack_new                     (void);
+  void                   gtk_stack_add_named               (GtkStack               *stack,
+                                                            GtkWidget              *child,
+                                                            const gchar            *name);
+  void                   gtk_stack_add_titled              (GtkStack               *stack,
+                                                            GtkWidget              *child,
+                                                            const gchar            *name,
+                                                            const gchar            *title);
+  void                   gtk_stack_set_visible_child       (GtkStack               *stack,
+                                                            GtkWidget              *child);
+  GtkWidget *            gtk_stack_get_visible_child       (GtkStack               *stack);
+  void                   gtk_stack_set_visible_child_name  (GtkStack               *stack,
+                                                            const gchar            *name);
+  const gchar *          gtk_stack_get_visible_child_name  (GtkStack               *stack);
+  void                   gtk_stack_set_visible_child_full  (GtkStack               *stack,
+                                                            const gchar            *name,
+                                                            GtkStackTransitionType  transition);
+  void                   gtk_stack_set_homogeneous         (GtkStack               *stack,
+                                                            gboolean                homogeneous);
+  gboolean               gtk_stack_get_homogeneous         (GtkStack               *stack);
+  void                   gtk_stack_set_transition_duration (GtkStack               *stack,
+                                                            guint                   duration);
+  guint                  gtk_stack_get_transition_duration (GtkStack               *stack);
+  void                   gtk_stack_set_transition_type     (GtkStack               *stack,
+                                                            GtkStackTransitionType  transition);
+  GtkStackTransitionType gtk_stack_get_transition_type     (GtkStack               *stack);
+  GType        gtk_stack_switcher_get_type          (void) G_GNUC_CONST;
+  GtkWidget *  gtk_stack_switcher_new               (void);
+  void         gtk_stack_switcher_set_stack         (GtkStackSwitcher *switcher,
+                                                     GtkStack         *stack);
+  GtkStack *   gtk_stack_switcher_get_stack         (GtkStackSwitcher *switcher);
++ void            gtk_test_widget_wait_for_draw   (GtkWidget      *widget);
+
+new files: gtkactionmuxer|observable|observer, gtkmenutrackeritem
+
+|#
  
 
 

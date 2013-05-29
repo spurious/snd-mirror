@@ -65399,6 +65399,9 @@ s7_scheme *s7_init(void)
  * calls           275  207  175  115   89   71   53   53
  */
 
+/* TODO: (env env) in clm should be an error
+ */
+
 /* vector: void *elements, int element_type(?) or s7_pointer default_element [so ref if not elements -> default]
  *         so a vector need not have a size!  (make-vector #f 1.0) -> 1.0 no matter what index or combination of indices
  *         getter|setter for each vector (or hash-table?)

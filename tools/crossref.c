@@ -346,6 +346,7 @@ int main(int argc, char **argv)
   add_file("clm1.lisp");
 
   add_file("sndins/sndins.c");
+  add_file("ffitest.c");
 
   add_file("/home/bil/test/cm308/cm-3.8.0/src/CmSupport.cpp");
   add_file("/home/bil/test/cm308/cm-3.8.0/src/Scheme.cpp");
