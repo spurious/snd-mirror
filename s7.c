@@ -4074,11 +4074,12 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
  *   this does not work as is if run on a system that requires aligned accesses
  *   so we need a compile-time switch.
  *
- * timing tests here if we force 4-byte boundaries found no difference on x86
+ * timing tests here if we force 4-byte boundaries found no difference on x86,
+ *  so I think I'll disable this optimization.
  */
 
 /* also use calloc here if -O3 in gcc */
-#if (__bfin__ || __ANDROID__)
+#if (__bfin__ || __ANDROID__ || (1))
   #define permanent_calloc(Bytes) calloc(1, Bytes)
   #define PERMANENT_HEAP_SIZE 8
   static unsigned char *permanent_heap = NULL, *permanent_heap_top = NULL;
@@ -36289,12 +36290,14 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
       }
       break;
       
-#if (!S7_DISABLE_DEPRECATED)
-    case ':':  /* turn #: into : -- this is for compatibility with Guile, #:optional in particular */
+    case ':':  /* turn #: into : -- this is for compatibility with Guile, #:optional in particular.
+		*   I just noticed that Rick is using this -- I'll just leave it alone.
+		*/
       sc->strbuf[0] = ':';
       return(TOKEN_ATOM);
-      
-      /* block comments in either #! ... !# */
+
+#if (!S7_DISABLE_DEPRECATED)
+      /* block comments in #! ... !# */
     case '!':
       {
 	char last_char;
