@@ -47570,12 +47570,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				goto SAFE_DO_DONE;
 			      }
 
-			    if ((is_optimized(val)) &&
-				(optimize_data(val) == HOP_SAFE_C_C))
+			    /* TODO: if it's safe_c_ss we can handle the symbols here */
+
+			    if (is_optimized(val))
 			      {
 				s7_function f;
 				s7_pointer args, stepper, step_val;
-
+				
 				stepper = environment_dox1(sc->envir);
 				lim = s7_integer(end_val);
 				start = s7_integer(init_val);
@@ -47584,12 +47585,32 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				slot_value(stepper) = make_mutable_integer(sc, start);
 				step_val = slot_value(stepper);
 
-				for (i = start; i < lim; i++)
+				if (optimize_data(val) == HOP_SAFE_C_C)
 				  {
-				    integer(step_val) = i;
-				    slot_set_value(slot, f(sc, args));
+				    for (i = start; i < lim; i++)
+				      {
+					integer(step_val) = i;
+					slot_set_value(slot, f(sc, args));
+				      }
+				    goto SAFE_DO_DONE;
 				  }
-				goto SAFE_DO_DONE;
+				else
+				  {
+				    s7_pointer s1, s2;
+				    s1 = s7_slot(sc, car(args));
+				    s2 = s7_slot(sc, cadr(args));
+				    if (optimize_data(val) == HOP_SAFE_C_SS)
+				      {
+					for (i = start; i < lim; i++)
+					  {
+					    car(sc->T2_1) = slot_value(s1);
+					    car(sc->T2_2) = slot_value(s2);
+					    integer(step_val) = i;
+					    slot_set_value(slot, f(sc, sc->T2_1));
+					  }
+					goto SAFE_DO_DONE;
+				      }
+				  }
 			      }
 			  }
 		      }
