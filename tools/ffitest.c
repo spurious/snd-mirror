@@ -34,6 +34,45 @@ static s7_pointer test_hook_function(s7_scheme *sc, s7_pointer args)
   return(val);
 }
 
+static char last_c;
+static void my_print(s7_scheme *sc, unsigned char c, s7_pointer port)
+{
+  last_c = c;
+}
+
+static s7_pointer my_read(s7_scheme *sc, s7_read_t peek, s7_pointer port)
+{
+  return(s7_make_character(sc, '0'));
+}
+
+static s7_pointer test_values(s7_scheme *sc, s7_pointer args)
+{
+  return(s7_values(sc, 3, s7_make_integer(sc, 1), s7_make_integer(sc, 2), s7_make_integer(sc, 3)));
+}
+
+
+static bool tested_begin_hook = false;
+static bool test_begin_hook(s7_scheme *sc)
+{
+  tested_begin_hook = true;
+  return(false);
+}
+
+static s7_pointer test_error_handler(s7_scheme *sc, s7_pointer args)
+{
+  s7_display(sc, s7_make_symbol(sc, "error!"), s7_current_error_port(sc));
+  return(s7_f(sc));
+}
+
+static s7_pointer set_sym, set_val;
+static s7_pointer scheme_set_notification(s7_scheme *sc, s7_pointer args)
+{
+  set_sym = s7_car(args);
+  set_val = s7_cadr(args);
+  return(set_val);
+}
+
+
 typedef struct {
   s7_Double x;
   s7_pointer data;
@@ -247,6 +286,128 @@ static s7_pointer define_closure(s7_scheme *sc, const char *name, s7_pointer fun
 }
 
 
+typedef struct {
+  size_t size;
+  double *data;
+} g_block;    
+
+static int g_block_type = 0;
+static s7_pointer g_block_methods;
+
+static s7_pointer g_make_block(s7_scheme *sc, s7_pointer args)
+{
+  #define g_make_block_help "(make-block size) returns a new block of the given size"
+  g_block *g;
+  s7_pointer new_g;
+  g = (g_block *)calloc(1, sizeof(g_block));
+  g->size = (size_t)s7_integer(s7_car(args));
+  g->data = (double *)calloc(g->size, sizeof(double));
+  new_g = s7_make_object(sc, g_block_type, (void *)g);
+  s7_object_set_environment(new_g, g_block_methods);
+  s7_open_environment(new_g);
+  return(new_g);
+}
+
+static s7_pointer g_to_block(s7_scheme *sc, s7_pointer args)
+{
+  #define g_block_help "(block ...) returns a block object with the arguments as its contents."
+  s7_pointer p, b;
+  size_t i, len;
+  g_block *gb;
+  len = s7_list_length(sc, args);
+  b = g_make_block(sc, s7_cons(sc, s7_make_integer(sc, len), s7_nil(sc)));
+  gb = (g_block *)s7_object_value(b);
+  for (i = 0, p = args; i < len; i++, p = s7_cdr(p))
+    gb->data[i] = s7_number_to_real(sc, s7_car(p));
+  return(b);
+}
+
+static char *g_block_display(s7_scheme *sc, void *value)
+{
+  return(strdup("#<block>"));
+}
+
+static void g_block_free(void *value)
+{
+  g_block *g = (g_block *)value;
+  free(g->data);
+  free(g);
+}
+
+static bool g_block_is_equal(void *val1, void *val2)
+{
+  return(val1 == val2);
+}
+
+static void g_block_mark(void *val)
+{
+  /* nothing to mark */
+}
+
+static s7_pointer g_block_ref(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+{
+  g_block *g = (g_block *)s7_object_value(obj);
+  size_t index;
+  index = (size_t)s7_integer(s7_car(args));
+  if ((index >= 0) && (index < g->size))
+    return(s7_make_real(sc, g->data[index]));
+  return(s7_out_of_range_error(sc, "block-ref", 2, s7_car(args), "should be less than block length"));
+}
+
+static s7_pointer g_block_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+{
+  g_block *g = (g_block *)s7_object_value(obj);
+  s7_Int index;
+  index = s7_integer(s7_car(args));
+  if ((index >= 0) && (index < g->size))
+    {
+      g->data[index] = s7_number_to_real(sc, s7_cadr(args));
+      return(s7_cadr(args));
+    }
+  return(s7_out_of_range_error(sc, "block-set", 2, s7_car(args), "should be less than block length"));
+}
+
+static s7_pointer g_block_length(s7_scheme *sc, s7_pointer obj)
+{
+  g_block *g = (g_block *)s7_object_value(obj);
+  return(s7_make_integer(sc, g->size));
+}
+
+static s7_pointer g_block_copy(s7_scheme *sc, s7_pointer obj)
+{
+  g_block *g = (g_block *)s7_object_value(obj);
+  g_block *g1;
+  s7_pointer new_g;
+  new_g = g_make_block(sc, s7_cons(sc, s7_make_integer(sc, g->size), s7_nil(sc)));
+  g1 = (g_block *)s7_object_value(new_g);
+  memcpy((void *)(g1->data), (void *)(g->data), g->size * sizeof(double));
+  return(new_g);
+}
+
+static s7_pointer g_block_reverse(s7_scheme *sc, s7_pointer obj)
+{
+  size_t i, j;
+  g_block *g = (g_block *)s7_object_value(obj);
+  g_block *g1;
+  s7_pointer new_g;
+  new_g = g_make_block(sc, s7_cons(sc, s7_make_integer(sc, g->size), s7_nil(sc)));
+  g1 = (g_block *)s7_object_value(new_g);
+  for (i = 0, j = g->size - 1; i < g->size; i++, j--)
+    g1->data[i] = g->data[j];
+  return(new_g);
+}
+
+static s7_pointer g_block_fill(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+{
+  size_t i;
+  double fill_val;
+  g_block *g = (g_block *)s7_object_value(obj);
+  fill_val = s7_number_to_real(sc, s7_car(args));
+  for (i = 0; i < g->size; i++)
+    g->data[i] = fill_val;
+  return(obj);
+}
+
 
 int main(int argc, char **argv)
 {
@@ -254,7 +415,7 @@ int main(int argc, char **argv)
   s7_pointer p, p1;
   int i, gc_loc;
   char *s1, *s2;
-
+  
   sc = s7_init(); 
   
   /* try each straight (no errors) case */
@@ -534,6 +695,18 @@ int main(int argc, char **argv)
 
   s7_gc_unprotect_at(sc, gc_loc);
 
+  p = s7_make_and_fill_vector(sc, 3, TO_S7_INT(3));
+  gc_loc = s7_gc_protect(sc, p);
+
+  if (s7_integer(s7_vector_ref(sc, p, 1)) != 3)
+    {fprintf(stderr, "%d: (%s 1) is not 3?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
+
+  p1 = s7_vector_copy(sc, p);
+  if ((p == p1) ||
+      (!s7_is_vector(p1)))
+    {fprintf(stderr, "%d: copied vector: %s\n", __LINE__, s1 = TO_STR(p1)); free(s1);}
+  s7_gc_unprotect_at(sc, gc_loc);
+
 
   p = s7_make_string(sc, "1234");
   gc_loc = s7_gc_protect(sc, p);
@@ -730,9 +903,12 @@ int main(int argc, char **argv)
     free(s1);    
 
     s7_set_car(c1234, s7_make_symbol(sc, "+")); 
-    p = s7_eval(sc, s7_list(sc, 2, s7_make_symbol(sc, "quote"), c1234), s7_global_environment(sc));
+    p = s7_eval(sc, s7_list(sc, 2, s7_make_symbol(sc, "quote"), c1234), s7_augment_environment(sc, s7_global_environment(sc), s7_nil(sc)));
     if (s7_integer(p) != 9)
       {fprintf(stderr, "%d: (eval '(+ 2 3 4)) is %s?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
+    p = s7_eval_form(sc, c1234, s7_augment_environment(sc, s7_global_environment(sc), s7_nil(sc)));
+    if (s7_integer(p) != 9)
+      {fprintf(stderr, "%d: (eval(form) '(+ 2 3 4)) is %s?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
     
     s7_gc_on(sc, true);
   }
@@ -986,8 +1162,8 @@ int main(int argc, char **argv)
 
   
   {
-    s7_pointer new_env;
-    new_env = s7_augment_environment(sc, s7_current_environment(sc), s7_nil(sc));
+    s7_pointer new_env, old_env;
+    new_env = s7_augment_environment(sc, old_env = s7_current_environment(sc), s7_nil(sc));
     gc_loc = s7_gc_protect(sc, new_env);
 
     s7_define(sc, new_env, s7_make_symbol(sc, "var1"), s7_make_integer(sc, 32));
@@ -1009,6 +1185,40 @@ int main(int argc, char **argv)
     if (s7_integer(p) != 3)
       {fprintf(stderr, "%d: %s is not 3?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
+    s7_set_current_environment(sc, new_env);
+    p = s7_slot(sc, s7_make_symbol(sc, "var1"));
+    if (s7_integer(s7_slot_value(p)) != 3)
+      {fprintf(stderr, "%d: slot-value %s is not 3?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
+
+    s7_slot_set_value(sc, p, s7_f(sc));
+    p = s7_environment_ref(sc, new_env, s7_make_symbol(sc, "var1"));
+    if (p != s7_f(sc))
+      {fprintf(stderr, "%d: set slot-value %s is not #f?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
+
+    if (s7_outer_environment(new_env) != old_env)
+      {fprintf(stderr, "%d: outer-env %s?\n", __LINE__, s1 = TO_STR(old_env)); free(s1);}
+
+    s7_make_slot(sc, new_env, s7_make_symbol(sc, "var2"), TO_S7_INT(-1));
+    p = s7_environment_ref(sc, new_env, s7_make_symbol(sc, "var2"));
+    if (s7_integer(p) != -1)
+      {fprintf(stderr, "%d: make_slot %s is not -1?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
+
+    s7_symbol_set_value(sc, s7_make_symbol(sc, "var2"), s7_t(sc));
+    p = s7_symbol_local_value(sc, s7_make_symbol(sc, "var2"), new_env);
+    if (p != s7_t(sc))
+      {fprintf(stderr, "%d: set symbol-value %s is not #t?\n", __LINE__, s1 = TO_STR(p)); free(s1);}    
+    
+    p = s7_environment_to_list(sc, new_env);
+    {
+      int gloc;
+      gloc = s7_gc_protect(sc, p);
+      s1 = TO_STR(p);
+      if (strcmp(s1, "((var1 . #f) (var2 . #t))") != 0)
+	{fprintf(stderr, "%d: env->list: %s\n", __LINE__, s1);}
+      free(s1);
+      s7_gc_unprotect_at(sc, gloc);
+    }
+    s7_set_current_environment(sc, old_env);
     s7_gc_unprotect_at(sc, gc_loc);
   }
 
@@ -1103,6 +1313,19 @@ int main(int argc, char **argv)
     }
     s7_close_output_port(sc, port);
     s7_gc_unprotect_at(sc, gc_loc);
+
+    p = s7_set_current_output_port(sc, s7_open_output_function(sc, my_print));
+    p1 = s7_open_input_function(sc, my_read);
+    gc_loc = s7_gc_protect(sc, p1);
+
+    s7_display(sc, s7_make_character(sc, '3'), s7_current_output_port(sc));
+    if (last_c != '3')
+      {fprintf(stderr, "%d: last_c: %c, c: %c\n", __LINE__, last_c, '3');}
+    last_c = s7_read_char(sc, p1);
+    if (last_c != '0')
+      {fprintf(stderr, "%d: last_c: %c\n", __LINE__, last_c);}
+    s7_set_current_output_port(sc, p);
+    s7_gc_unprotect_at(sc, gc_loc);
   }
 
   {
@@ -1113,9 +1336,183 @@ int main(int argc, char **argv)
 			  s7_cons(sc, s7_make_function(sc, "test-hook-function", test_hook_function, 1, 0, false, "a test-hook function"), 
 				  s7_hook_functions(sc, test_hook)));
     s7_call(sc, test_hook, s7_list(sc, 2, TO_S7_INT(1), TO_S7_INT(2)));
+    s7_call_with_location(sc, test_hook, s7_list(sc, 2, TO_S7_INT(1), TO_S7_INT(2)), "ffitest", "ffitest.c", __LINE__);
   }
 
+  if (s7_begin_hook(sc) != NULL)
+    {fprintf(stderr, "%d: begin_hook is not null?\n", __LINE__);}
+  tested_begin_hook = false;
+  s7_set_begin_hook(sc, test_begin_hook);
+  s7_eval_c_string(sc, "(begin (+ 1 2))");
+  if (!tested_begin_hook)
+    {fprintf(stderr, "%d: begin_hook not called?\n", __LINE__);}
+  if (s7_begin_hook(sc) != test_begin_hook)
+    {fprintf(stderr, "%d: begin_hook was not set?\n", __LINE__);}
+  s7_set_begin_hook(sc, NULL);
 
+  
+  p1 = s7_name_to_value(sc, "abs");
+  p = s7_procedure_arity(sc, p1);
+  s1 = TO_STR(p);
+  if (strcmp(s1, "(1 0 #f)") != 0)
+    {fprintf(stderr, "%d: (procedure-arity abs) = %s?\n", __LINE__, s1);}
+  free(s1);
+
+  if (!s7_is_procedure(p1))
+    {fprintf(stderr, "%d: (procedure? abs) = #f?\n", __LINE__);}
+  if (s7_is_macro(sc, p1))
+    {fprintf(stderr, "%d: (macro? abs) = #t?\n", __LINE__);}
+  
+  if (!s7_is_aritable(sc, p1, 1))
+    {fprintf(stderr, "%d: (aritable? abs 1) = #f?\n", __LINE__);}
+  if (s7_is_aritable(sc, p1, 2))
+    {fprintf(stderr, "%d: (aritable? abs 2) = #t?\n", __LINE__);}
+
+  if (strcmp(s7_procedure_name(sc, p1), "abs") != 0)
+    {fprintf(stderr, "%d: (procedure-name abs) = %s?\n", __LINE__, s7_procedure_name(sc, p1));}
+
+  p = s7_procedure_environment(sc, p1);
+  if (p != s7_global_environment(sc))
+    {fprintf(stderr, "%d: (procedure-environment abs) = %s?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
+
+  {
+    const char *s3;
+    s3 = s7_procedure_documentation(sc, p1);
+    if (strcmp(s3, "(abs x) returns the absolute value of the real number x") != 0)
+      {fprintf(stderr, "%d: (procedure-documentation abs) = %s?\n", __LINE__, s3);}
+
+    s3 = s7_help(sc, p1);
+    if (strcmp(s3, "(abs x) returns the absolute value of the real number x") != 0)
+      {fprintf(stderr, "%d: (help abs) = %s?\n", __LINE__, s3);}
+  }
+
+  p = s7_eval_c_string(sc, "(lambda (a b . c) (+ a b (apply * c)))");
+  gc_loc = s7_gc_protect(sc, p);
+  
+  if (!s7_is_procedure(p))
+    {fprintf(stderr, "%d: %s is not a procedure?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
+
+  s1 = TO_STR(s7_car(s7_procedure_source(sc, p)));
+  if (strcmp(s1, "(lambda (a b . c) (+ a b (apply * c)))") != 0)
+    {fprintf(stderr, "%d: procedure-source is %s?\n", __LINE__, s1);}
+  free(s1);
+  
+  p1 = s7_procedure_arity(sc, p);
+  s1 = TO_STR(p1);
+  if (strcmp(s1, "(2 0 #t)") != 0)
+    {fprintf(stderr, "%d: (procedure-arity lambda case) = %s?\n", __LINE__, s1);}
+  free(s1);
+
+  if (!s7_is_aritable(sc, p, 2))
+    {fprintf(stderr, "%d: aritable? lambda 2 = #f?\n", __LINE__);}
+  if (s7_is_aritable(sc, p, 1))
+    {fprintf(stderr, "%d: aritable? lambda 1 = #t?\n", __LINE__);}
+
+  s7_gc_unprotect_at(sc, gc_loc);
+
+
+  g_block_type = s7_new_type_x("#<block>", 
+			       g_block_display, g_block_free, 
+			       g_block_is_equal, g_block_mark,
+			       g_block_ref, g_block_set, g_block_length, 
+			       g_block_copy, g_block_reverse, g_block_fill);
+
+  s7_define_function(sc, "make-block", g_make_block, 1, 0, false, g_make_block_help);
+  s7_define_function(sc, "block", g_to_block, 0, 0, true, g_block_help);
+
+  g_block_methods = s7_eval_c_string(sc, "(environment (cons 'vector? (lambda (p) #t)))");
+  s7_gc_protect(sc, g_block_methods);
+
+  {
+    g_block *g;
+    s7_pointer gp;
+
+    gp = g_make_block(sc, s7_list(sc, 1, TO_S7_INT(32)));
+    gc_loc = s7_gc_protect(sc, gp);
+    if (!s7_is_object(gp))
+      {fprintf(stderr, "%d: g_block %s is not an object?\n", __LINE__, s1 = TO_STR(gp)); free(s1);}
+    g = (g_block *)s7_object_value(gp);
+    if (s7_object_type(gp) != g_block_type)
+      {fprintf(stderr, "%d: g_block types: %d %d\n", __LINE__, g_block_type, s7_object_type(gp));}
+    if (s7_object_value_checked(gp, g_block_type) != g)
+      {fprintf(stderr, "%d: checked g_block types: %d %d\n", __LINE__, g_block_type, s7_object_type(gp));}
+
+    s7_gc_unprotect_at(sc, gc_loc);
+  }
+  
+
+  s7_define_function(sc, "test-values", test_values, 0, 0, false, "test values");
+  p = s7_eval_c_string(sc, "(+ 1 (test-values) 2)");
+  if ((!s7_is_integer(p)) ||
+      (s7_integer(p) != 9))
+    {fprintf(stderr, "values: %s\n", s1 = TO_STR(p)); free(s1);}
+
+  {                            
+    s7_pointer old_port, result;
+    const char *errmsg = NULL;
+
+    old_port = s7_set_current_error_port(sc, s7_open_output_string(sc));
+    gc_loc = s7_gc_protect(sc, old_port);
+
+    result = s7_eval_c_string(sc, "(+ 1 #\\c)");
+    errmsg = s7_get_output_string(sc, s7_current_error_port(sc));
+    if ((errmsg) && (*errmsg))
+      {
+         if (strcmp(errmsg, "\n;+ argument 2, #\\c, is a character but should be a number\n;    (+ 1 #\\c)\n") != 0)
+           fprintf(stderr, "%d: error: %s\n", __LINE__, errmsg);
+      }
+    else fprintf(stderr, "%d: no error!\n", __LINE__);
+
+    s7_close_output_port(sc, s7_current_error_port(sc));
+    s7_set_current_error_port(sc, old_port);
+    s7_gc_unprotect_at(sc, gc_loc);
+  }
+
+  {                            
+    s7_pointer old_port, result;
+    const char *errmsg = NULL;
+
+    s7_define_function(sc, "error-handler", test_error_handler, 1, 0, false, "our error handler");
+
+    s7_eval_c_string(sc, "(set! (hook-functions *error-hook*)                                 \n\
+                            (list (lambda (hook)                                              \n\
+                                    (error-handler                                            \n\
+				     (string-append \"hook: \" (apply format #f (hook 'data)))) \n\
+                                    (set! (hook 'result) 'our-error))))");
+
+    old_port = s7_set_current_error_port(sc, s7_open_output_string(sc));
+    gc_loc = s7_gc_protect(sc, old_port);
+
+    result = s7_eval_c_string(sc, "(+ 1 #\\c)");
+    if (result != s7_make_symbol(sc, "our-error"))
+      {fprintf(stderr, "%d: error hook result: %s\n", __LINE__, s1 = TO_STR(result)); free(s1);}
+    errmsg = s7_get_output_string(sc, s7_current_error_port(sc));
+    if ((errmsg) && (*errmsg))
+      {
+	if (strcmp(errmsg, "error!") != 0)
+	  fprintf(stderr, "%d: error: %s\n", __LINE__, errmsg);
+      }
+    else fprintf(stderr, "%d: no error!\n", __LINE__);
+
+    s7_close_output_port(sc, s7_current_error_port(sc));
+    s7_set_current_error_port(sc, old_port);
+    s7_gc_unprotect_at(sc, gc_loc);
+
+    s7_eval_c_string(sc, "(set! (hook-functions *error-hook*) ())");
+  }
+
+  s7_define_function(sc, "notify-C", scheme_set_notification, 2, 0, false, "called if notified-var is set!");
+  s7_define_variable(sc, "notified-var", s7_make_integer(sc, 0));
+  s7_symbol_set_access(sc, s7_make_symbol(sc, "notified-var"), s7_list(sc, 3, s7_f(sc), s7_name_to_value(sc, "notify-C"), s7_f(sc)));
+  s7_eval_c_string(sc, "(set! notified-var 32)");
+  p = s7_name_to_value(sc, "notified-var");
+  if (s7_integer(p) != 32)
+    {fprintf(stderr, "%d: sym set: %s\n", __LINE__, s1 = TO_STR(p)); free(s1);}
+  if (s7_integer(set_val) != 32)
+    {fprintf(stderr, "%d: sym val: %s\n", __LINE__, s1 = TO_STR(set_val)); free(s1);}
+  if (set_sym != s7_make_symbol(sc, "notified-var"))
+    {fprintf(stderr, "%d: sym: %s\n", __LINE__, s1 = TO_STR(set_sym)); free(s1);}
+    
   return(0);
 }
 

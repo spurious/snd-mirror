@@ -449,7 +449,7 @@ const char *s7_format(s7_scheme *sc, s7_pointer args);                      /* (
 bool s7_is_procedure(s7_pointer x);                                         /* (procedure? x) */
 bool s7_is_macro(s7_scheme *sc, s7_pointer x);                              /* (macro? x) */
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);                /* (procedure-source x) if it can be found */
-s7_pointer s7_procedure_environment(s7_pointer p);                          /* (procedure-environment x) */
+s7_pointer s7_procedure_environment(s7_scheme *sc, s7_pointer p);           /* (procedure-environment x) */
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);        /* (procedure-documentation x) if any (don't free the string) */
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);                 /* (procedure-arity x) -- returns a list (required optional rest?) */
 bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args);                 /* (aritable? x args) */
@@ -886,7 +886,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
- * 28-May:    export s7_is_provided.
+ * 28-May:    export s7_is_provided.  Added s7_scheme* arg to s7_procedure_environment.
  * 21-May:    equality predicate optional arg in make-hash-table.
  * 14-May:    glistener.c, glistener.h, s7_symbol_table_find_name (for glistener).
  * 2-May:     r7rs changes: flush-output-port, vector-append, read|write-string, boolean=?, symbol=?.

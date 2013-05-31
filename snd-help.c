@@ -3552,11 +3552,11 @@ and its value is returned."
 
 	    if (((str == NULL) || 
 		 (mus_strlen(str) == 0)) &&
-		(s7_procedure_environment(sym) != sym))
+		(s7_procedure_environment(s7, sym) != sym))
 	      {
 		const char *url = NULL;
 		s7_pointer x, e;
-		e = s7_procedure_environment(sym);
+		e = s7_procedure_environment(s7, sym);
 		str = (char *)calloc(256, sizeof(char));
 		/* unavoidable memleak I guess -- we could use a backup statically allocated buffer here */
 		if (s7_is_null(s7, e))

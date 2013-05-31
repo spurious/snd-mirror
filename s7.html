@@ -7013,14 +7013,14 @@ int main(int argc, char **argv)
 
 #include "s7.h"
 
-static void my_print(s7_scheme *sc, char c, s7_pointer port)
+static void my_print(s7_scheme *sc, unsigned char c, s7_pointer port)
 {
   fprintf(stderr, "[%c] ", c);
 }
 
 static s7_pointer my_read(s7_scheme *sc, s7_read_t peek, s7_pointer port)
 {
-  return(<em class=red>s7_make_character</em>(s7, fgetc(stdin)));
+  return(<em class=red>s7_make_character</em>(sc, fgetc(stdin)));
 }
 
 int main(int argc, char **argv)
@@ -7658,10 +7658,9 @@ int main(int argc, char **argv)
 
 static s7_pointer error_handler(s7_scheme *sc, s7_pointer args)
 {
-  fprintf(stdout, "error: %s\n", s7_format(sc, s7_cons(sc, s7_f(sc), s7_cadr(args))));
-  return(s7_car(args));
+  fprintf(stdout, "error: %s\n", s7_string(s7_car(args)));
+  return(s7_f(sc));
 }
-
 
 int main(int argc, char **argv)
 {
@@ -7677,8 +7676,8 @@ int main(int argc, char **argv)
     s7_eval_c_string(s7, "(set! (hook-functions *error-hook*)                    \n\
                             (list (lambda (hook)                                 \n\
                                     (error-handler                               \n\
-                                      (apply format #f (hook 'data))))))");
-
+                                      (apply format #f (hook 'data)))            \n\
+                                    (set! (hook 'result) 'our-error))))");
   while (1) 
     {
       fprintf(stdout, "\n&gt; ");
@@ -7739,7 +7738,8 @@ int main(int argc, char **argv)
  *   &gt; (+ 1 2)
  *   {3}
  *   &gt; (+ 1 #\c)
- *   &lt;&lt;+ argument 2, #\c, is character but should be a number&gt;&gt;{our-error}
+ *   error: + argument 2, #\c, is character but should be a number
+ *   {our-error}
  *
  * so now the *error-hook* code handles both the error reporting and
  *   the value returned ('our-error in this case).

@@ -30305,11 +30305,11 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_procedure_environment(s7_pointer p)    
+s7_pointer s7_procedure_environment(s7_scheme *sc, s7_pointer p)    
 { 
   if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
     return(closure_environment(p));
-  return(p); /* we need an s7_scheme arg! */
+  return(sc->global_env);
 }
 
 
@@ -34839,9 +34839,14 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
 {
+  /* TODO: in OSX this and eval_form below need to protect against sc->global_env as e here */
+
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
   sc->code = code;
-  sc->envir = e;
+  if ((e != sc->global_env) &&
+      (is_environment(e)))
+    sc->envir = e; 
+  else sc->envir = sc->NIL; /* can't check is_environment(e) because sc->global_env sets its type to t_env! */
   eval(sc, OP_BEGIN);
   return(sc->value);
 }
@@ -34851,7 +34856,10 @@ s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form, s7_pointer e)
 {
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
   sc->code = form;
-  sc->envir = e;
+  if ((e != sc->global_env) &&
+      (is_environment(e)))
+    sc->envir = e; 
+  else sc->envir = sc->NIL;
   eval(sc, OP_EVAL);
   return(sc->value);
 }
