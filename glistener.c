@@ -250,7 +250,7 @@ static void glistener_append_status(glistener *g, const char *msg)
       if (g->status_message)
 	{
 	  char *new_msg;
-	  len += (strlen(g->status_message) + 2);
+	  len += (strlen(g->status_message) + 3);
 	  new_msg = (char *)calloc(len, sizeof(char));
 	  snprintf(new_msg, len, "%s %s", msg, g->status_message);
 	  free(g->status_message);
@@ -258,7 +258,7 @@ static void glistener_append_status(glistener *g, const char *msg)
 	}
       else
 	{
-	  g->status_message = (char *)calloc(len, sizeof(char));
+	  g->status_message = (char *)calloc(len + 1, sizeof(char));
 	  strcpy(g->status_message, msg);
 	}
       gtk_statusbar_pop(GTK_STATUSBAR(g->status), 1);

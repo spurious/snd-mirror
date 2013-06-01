@@ -221,6 +221,116 @@ static void evaluator(glistener *g, const char *text)
     }
   else snd_report_listener_result(result);
 }
+
+
+static s7_pointer wrap_glistener(glistener *g)
+{
+  return(s7_make_c_pointer(s7, (void *)g));
+}
+
+static glistener *unwrap_glistener(s7_pointer p)
+{
+  return((glistener *)s7_c_pointer(p));
+}
+
+static s7_pointer g_evaluate(s7_scheme *sc, s7_pointer args)
+{
+  char *str;
+  s7_pointer result;
+  str = glistener_evaluate(unwrap_glistener(s7_car(args)));
+  result = s7_make_string(s7, str);
+  if (str) g_free(str);
+  return(result);
+}
+
+static s7_pointer g_complete(s7_scheme *sc, s7_pointer args)
+{
+  char *str;
+  s7_pointer result;
+  str = glistener_complete(unwrap_glistener(s7_car(args)));
+  result = s7_make_string(s7, str);
+  if (str) g_free(str);
+  return(result);
+}
+
+static s7_pointer g_append_text(s7_scheme *sc, s7_pointer args)
+{
+  glistener_append_text(unwrap_glistener(s7_car(args)), s7_string(s7_cadr(args)));
+  return(s7_cadr(args));
+}
+
+static s7_pointer g_insert_text(s7_scheme *sc, s7_pointer args)
+{
+  glistener_insert_text(unwrap_glistener(s7_car(args)), s7_string(s7_cadr(args)));
+  return(s7_cadr(args));
+}
+
+static s7_pointer g_scroll_to_end(s7_scheme *sc, s7_pointer args)
+{
+  glistener_scroll_to_end(unwrap_glistener(s7_car(args)));
+  return(s7_car(args));
+}
+
+static s7_pointer g_append_prompt(s7_scheme *sc, s7_pointer args)
+{
+  glistener_append_prompt(unwrap_glistener(s7_car(args)));
+  return(s7_car(args));
+}
+
+static s7_pointer g_prompt_position(s7_scheme *sc, s7_pointer args)
+{
+  return(s7_make_integer(s7, glistener_prompt_position(unwrap_glistener(s7_car(args)))));
+}
+
+static s7_pointer g_cursor_position(s7_scheme *sc, s7_pointer args)
+{
+  return(s7_make_integer(s7, glistener_cursor_position(unwrap_glistener(s7_car(args)))));
+}
+
+static s7_pointer g_set_cursor_position(s7_scheme *sc, s7_pointer args)
+{
+  glistener_set_cursor_position(unwrap_glistener(s7_car(args)), s7_integer(s7_cadr(args)));
+  return(s7_cadr(args));
+}
+
+static s7_pointer g_text(s7_scheme *sc, s7_pointer args)
+{
+  char *str;
+  s7_pointer result;
+  str = glistener_text(unwrap_glistener(s7_car(args)), s7_integer(s7_cadr(args)), s7_integer(s7_caddr(args)));
+  result = s7_make_string(s7, str);
+  if (str) g_free(str);
+  return(result);
+}
+
+static s7_pointer g_clear(s7_scheme *sc, s7_pointer args)
+{
+  glistener_clear(unwrap_glistener(s7_car(args)));
+  return(s7_car(args));
+}
+
+static s7_pointer g_set_prompt(s7_scheme *sc, s7_pointer args)
+{
+  glistener_set_prompt(unwrap_glistener(s7_car(args)), s7_string(s7_cadr(args)));
+  return(s7_cadr(args));
+}
+
+static void glistener_init(glistener *g1)
+{
+  s7_define_function(s7, "listener-append-text", g_append_text, 2, 0, false, "(listener-append-text g txt)");
+  s7_define_function(s7, "listener-insert-text", g_insert_text, 2, 0, false, "(listener-insert-text g txt)");
+  s7_define_function(s7, "listener-cursor-position", g_cursor_position, 1, 0, false, "(listener-cursor-position g)");
+  s7_define_function(s7, "listener-set-cursor-position", g_set_cursor_position, 2, 0, false, "(listener-set-cursor-position g pos)");
+  s7_define_function(s7, "listener-text", g_text, 3, 0, false, "(listener-text g start end)");
+  s7_define_function(s7, "listener-append-prompt", g_append_prompt, 1, 0, false, "(listener-append-prompt g)");
+  s7_define_function(s7, "listener-prompt-position", g_prompt_position, 1, 0, false, "(listener-prompt-position g)");
+  s7_define_function(s7, "listener-set-prompt", g_set_prompt, 2, 0, false, "(listener-set-prompt g str)");
+  s7_define_function(s7, "listener-evaluate", g_evaluate, 1, 0, false, "(listener-evaluate g)");
+  s7_define_function(s7, "listener-complete", g_complete, 1, 0, false, "(listener-complete g)");
+  s7_define_function(s7, "listener-scroll", g_scroll_to_end, 1, 0, false, "(listener-scroll g)");
+  s7_define_function(s7, "listener-clear", g_clear, 1, 0, false, "(listener-clear g)");
+  s7_define_variable(s7, "*listener*", wrap_glistener(g1));
+}
 #endif
 
 
@@ -255,6 +365,7 @@ static void make_listener_widget(int height)
       glistener_set_checker(ss->listener, checker);
 #endif
       glistener_set_completer(ss->listener, completer);
+      glistener_init(ss->listener);
 #endif
 #if HAVE_FORTH || HAVE_RUBY
       glistener_is_schemish(ss->listener, false);
@@ -416,6 +527,7 @@ static XEN g_goto_listener_end(void)
   glistener_scroll_to_end(ss->listener);
   return(XEN_FALSE);
 }
+
 
 
 #ifdef XEN_ARGIFY_1
