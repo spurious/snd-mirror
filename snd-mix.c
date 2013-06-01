@@ -2943,13 +2943,13 @@ static XEN g_set_mix_tag_y(XEN n, XEN val)
 	  graphics_context *ax;
 	  ax = erase_context(cp);
 #if USE_GTK
-	  ss->cr = MAKE_CAIRO(ax->wn);
+	  ss->cr = make_cairo(ax->wn);
 #endif
 	  erase_mix_tag_and_waveform(ms, cp, cp->axis, ax, md->x, cp->axis->y_offset + md->tag_y + MIX_TAG_Y_OFFSET);
 	  md->tag_y = XEN_TO_C_INT(val);
 	  display_one_mix(ms, cp);
 #if USE_GTK
-	  FREE_CAIRO(ss->cr);
+	  free_cairo(ss->cr);
 	  ss->cr = NULL;
 	  copy_context(cp);
 #endif

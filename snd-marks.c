@@ -1433,7 +1433,7 @@ static void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj)
   ax = draw_cp->ax;
 
 #if USE_GTK
-  ss->cr = MAKE_CAIRO(ax->wn);
+  ss->cr = make_cairo(ax->wn);
 #endif
 
   undraw_gc = erase_GC(draw_cp);
@@ -1456,7 +1456,7 @@ static void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj)
   ax->gc = draw_gc;
 
 #if USE_GTK
-  FREE_CAIRO(ss->cr);
+  free_cairo(ss->cr);
   ss->cr = NULL;
 #endif
 }
@@ -1480,7 +1480,7 @@ static void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int 
   ax = draw_cp->ax;
 
 #if USE_GTK
-  ss->cr = MAKE_CAIRO(ax->wn);
+  ss->cr = make_cairo(ax->wn);
 #endif
 
   undraw_gc = erase_GC(draw_cp);
@@ -1507,7 +1507,7 @@ static void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int 
   ax->gc = draw_gc;
 
 #if USE_GTK
-  FREE_CAIRO(ss->cr);
+  free_cairo(ss->cr);
   ss->cr = NULL;
 #endif
 }
@@ -1911,7 +1911,7 @@ static void show_mark(chan_info *cp, mark *mp, bool show)
 
   ax = mark_tag_context(cp);
 #if USE_GTK
-  ss->cr = MAKE_CAIRO(ax->wn);
+  ss->cr = make_cairo(ax->wn);
 #endif
 
   if (mp->name)
@@ -1939,7 +1939,7 @@ static void show_mark(chan_info *cp, mark *mp, bool show)
 		 cx, y0);
   mp->visible = show;
 #if USE_GTK
-  FREE_CAIRO(ss->cr);
+  free_cairo(ss->cr);
   ss->cr = NULL;
   copy_context(cp);
 #endif
