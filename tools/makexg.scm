@@ -753,6 +753,7 @@
 	(cons "char*" "String")
 	(cons "gchar*" "String")
 	(cons "guchar*" "String") ; added 30-Jul-02 then removed then put back... -- this is a real mess!
+
 	(cons "guint" "ULONG")
 	(cons "guint16" "INT")
 	(cons "gint" "INT")
@@ -910,7 +911,10 @@
 	(cons "GtkRecentFilterFlags" "INT")
 	(cons "GtkRecentManagerError" "INT")
 	(cons "GtkTreeViewGridLines" "INT")
-	
+
+	(cons "GNormalizeMode" "INT")
+	(cons "gunichar" "INT")
+	(cons "gunichar*" "String")	
 					;(cons "GtkPrintCapabilities" "INT")
 	(cons "GtkPrintStatus" "INT")
 	(cons "GtkPrintOperationResult" "INT")

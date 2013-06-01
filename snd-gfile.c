@@ -5654,7 +5654,7 @@ static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
       vdat->env_ax->w = w;
       vdat->env_ax->gc = vdat->env_gc;
     }
-  ss->cr = MAKE_CAIRO(WIDGET_TO_WINDOW(w));
+  ss->cr = make_cairo(WIDGET_TO_WINDOW(w));
   cairo_push_group(ss->cr);
 
   /* erase previous */
@@ -5667,7 +5667,7 @@ static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
 
   cairo_pop_group_to_source(ss->cr);
   cairo_paint(ss->cr);
-  FREE_CAIRO(ss->cr);
+  free_cairo(ss->cr);
   ss->cr = NULL;
 }
 

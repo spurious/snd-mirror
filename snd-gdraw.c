@@ -201,10 +201,10 @@ void draw_picture(graphics_context *ax, picture_t *src, gint xsrc, gint ysrc, gi
   if ((ax) && (IS_DRAWABLE(ax->wn)))
     {
       cairo_t *cr;
-      cr = MAKE_CAIRO(ax->wn);
+      cr = make_cairo(ax->wn);
       cairo_set_source_surface(cr, src, xsrc + xdest, ysrc + ydest);
       cairo_paint(cr);
-      FREE_CAIRO(cr);
+      free_cairo(cr);
     }
 }
 

@@ -120,7 +120,7 @@
 		(hash-table-set! ht op #t))
 	      '(* + - / < <= = > >= 
 		  abs acos acosh and angle append aritable? arity ash asin asinh assoc assq assv atan atanh 
-		  begin boolean? 
+		  begin boolean? boolean=?
 		  caaaar caaadr caaar caadar caaddr caadr caar cadaar cadadr cadar caddar cadddr caddr cadr 
 		  call-with-exit car case catch cdaaar cdaadr cdaar cdadar cdaddr cdadr cdar cddaar cddadr 
 		  cddar cdddar cddddr cdddr cddr cdr ceiling char->integer char-alphabetic? char-ci<=? char-ci<? 
@@ -147,7 +147,7 @@
 		  random random-state? rational? rationalize real-part real? remainder reverse round 
 		  s7-version sin sinh sqrt string string->list string->number string->symbol string-append string-ci<=? string-ci<? 
 		  string-ci=? string-ci>=? string-ci>? string-copy string-length string-position string-ref string<=? string<? string=? string>=? 
-		  string>? string? substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol? 
+		  string>? string? substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol? symbol=?
 		  tan tanh truncate 
 		  vector vector->list vector-dimensions vector-length vector-ref vector? 
 		  zero?))
@@ -180,6 +180,7 @@
 			   (cons 'augment-environment +environment+)
 			   (cons 'augment-environment! +environment+)
 			   (cons 'boolean? +boolean+)
+			   (cons 'boolean=? +boolean+)
 			   (cons 'ceiling +integer+)
 			   (cons 'char->integer +integer+)
 			   (cons 'char-alphabetic? +boolean+)
@@ -204,6 +205,7 @@
 			   (cons 'char? +boolean+)
 			   (cons 'close-input-port +unspecified+)
 			   (cons 'close-output-port +unspecified+)
+			   (cons 'flush-output-port +unspecified+)
 			   (cons 'complex? +boolean+)
 			   (cons 'cons +list+)
 			   (cons 'constant? +boolean+)
@@ -314,6 +316,7 @@
 			   (cons 'read-byte 'number-or-eof)
 			   (cons 'read-char 'char-or-eof)
 			   (cons 'read-line 'string-or-eof)
+			   (cons 'read-string 'string-or-eof)
 			   (cons 'real-part +number+)
 			   (cons 'real? +boolean+)
 			   (cons 'remainder +number+)
@@ -344,15 +347,18 @@
 			   (cons 'symbol +symbol+)
 			   (cons 'symbol->string +string+)
 			   (cons 'symbol? +boolean+)
+			   (cons 'symbol=? +boolean+)
 			   (cons 'tan +number+)
 			   (cons 'tanh +not-integer+)
 			   (cons 'truncate +integer+)
 			   (cons 'vector +vector+)
+			   (cons 'vector-append +vector+)
 			   (cons 'vector->list +list+)
 			   (cons 'vector-length +integer+)
 			   (cons 'vector? +boolean+)
 			   (cons 'write +unspecified+)
 			   (cons 'write-char +unspecified+)
+			   (cons 'write-string +unspecified+)
 			   (cons 'zero? +boolean+)
 			   (cons 'procedure-with-setter? +boolean+)))
 	  (argument-data (hash-table
@@ -518,7 +524,7 @@
 			  (cons 'string-ci>=? string?)
 			  (cons 'string-ci>? string?)
 			  (cons 'string-copy string?)
-			  (cons 'string-fill! (list string? char?))
+			  (cons 'string-fill! (list string? char? non-negative-integer? non-negative-integer?))
 			  (cons 'string-length string?)
 			  (cons 'string-position (list string? string?))
 			  (cons 'string-ref (list non-null-string? non-negative-integer?))
@@ -537,8 +543,9 @@
 			  (cons 'tanh number?)
 			  (cons 'truncate real?)
 			  (cons 'vector->list vector?)
+			  (cons 'vector-append vector?)
 			  (cons 'vector-dimensions vector?)
-			  (cons 'vector-fill! (list vector?))
+			  (cons 'vector-fill! (list vector? non-negative-integer? non-negative-integer?))
 			  (cons 'vector-length vector?)
 			  (cons 'vector-ref (list non-null-vector? non-negative-integer?))
 			  (cons 'vector-set! (list non-null-vector? non-negative-integer?))
@@ -547,6 +554,8 @@
 			  (cons 'with-output-to-file (list string? thunk?))
 			  (cons 'with-output-to-string thunk?)
 			  (cons 'write-byte (list integer-between-0-and-255?))
+			  (cons 'write-char (list char?))
+			  (cons 'write-string (list string?))
 			  (cons 'zero? number?)))
 	  
 	  (numeric-ops (let ((h (make-hash-table)))
@@ -569,7 +578,8 @@
 				    (set! (h op) #t))
 				  '(= / max min < > <= >= - quotient remainder modulo lcm gcd and or
 				      string=? string<=? string>=? string<? string>?
-				      char=? char<=? char>=? char<? char>?))
+				      char=? char<=? char>=? char<? char>?
+				      boolean=? symbol=?))
 				 h))
 	  
 	  (repeated-args-table-2 (let ((h (make-hash-table)))
@@ -578,7 +588,8 @@
 				      (set! (h op) #t))
 				    '(= max min < > <= >= and or
 					string=? string<=? string>=? string<? string>?
-					char=? char<=? char>=? char<? char>?))
+					char=? char<=? char>=? char<? char>?
+					boolean=? symbol=?))
 				   h))
 
 	  (syntaces (let ((h (make-hash-table)))

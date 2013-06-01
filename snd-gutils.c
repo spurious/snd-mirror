@@ -1,16 +1,17 @@
 #include "snd.h"
 
+
 #if HAVE_GTK_3
-cairo_t *make_cairo(GdkWindow *win, const char *func, const char *file, int line)
+cairo_t *make_cairo(GdkWindow *win)
 #else
-cairo_t *make_cairo(GdkDrawable *win, const char *func, const char *file, int line)
+cairo_t *make_cairo(GdkDrawable *win)
 #endif
 {
   ss->line_width = -1.0;
   return(gdk_cairo_create(win));
 }
 
-void free_cairo(cairo_t *cr, const char *func, const char *file, int line)
+void free_cairo(cairo_t *cr)
 {
   ss->line_width = -1.0;
   cairo_destroy(cr);

@@ -160,7 +160,7 @@ It has continuations,
 ratios, complex numbers,
 macros, keywords, hash-tables, 
 multiprecision arithmetic,
-generalized set!, and so on.
+generalized set!, unicode, and so on.
 It does not have syntax-rules or any of
 its friends, and it does not think there is any such thing
 as an inexact integer.  
@@ -9360,7 +9360,7 @@ int main(int argc, char **argv)
 &lambda;
 <em class=redb>&lambda;&gt;</em> ((&lambda; (a b) (+ a b)) 1 2)
 3
-<em class=redb>&lambda;&gt;</em>
+<em class=redb>&lambda;&gt;</em> 
 </pre>
 </div>
 
@@ -9373,9 +9373,12 @@ at helpful documentation.
 </p>
 
 <p>A multi-listener test program is the Snd file tools/gcall.c which
-is used by tools/gtest.scm for regression testing. 
+is used by tools/gtest.scm for regression testing. One way to name unicode characters
+is: <code>(define-constant |lambda| #u8(#xce #xbb))</code>.  This can be embedded
+in an ordinary s7 string with any string operation: <code>(string-append |lambda| "ambda")</code>
+which returns "&lambda;ambda".  (string-length will still return the number of bytes; to get
+the number of characters in a case like this, use the built-in g_utf8_strlen).
 </p>
-
 
 </div>
 

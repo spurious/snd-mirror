@@ -362,13 +362,11 @@ void slist_select(slist *lst, int row);
 char *slist_selection(slist *lst);
 
 #if HAVE_GTK_3
-cairo_t *make_cairo(GdkWindow *win, const char *func, const char *file, int line);
+cairo_t *make_cairo(GdkWindow *win);
 #else
-cairo_t *make_cairo(GdkDrawable *win, const char *func, const char *file, int line);
+cairo_t *make_cairo(GdkDrawable *win);
 #endif
-void free_cairo(cairo_t *cr, const char *func, const char *file, int line);
-#define MAKE_CAIRO(Win) make_cairo(Win, __func__, __FILE__, __LINE__)
-#define FREE_CAIRO(Cr)  free_cairo(Cr, __func__, __FILE__, __LINE__)
+void free_cairo(cairo_t *cr);
 void init_gtk(void);
 
 

@@ -237,7 +237,7 @@ static void env_redisplay_1(printing_t printing)
 	  (!(ss->cr)))
 	{
 	  /* we can get here from display_channel_data_with_size with an existing ss->cr */
-	  ss->cr = MAKE_CAIRO(WIDGET_TO_WINDOW(drawer));
+	  ss->cr = make_cairo(WIDGET_TO_WINDOW(drawer));
 	  clear_cr = true;
 	}
       if (!(ss->cr)) return;
@@ -282,7 +282,7 @@ static void env_redisplay_1(printing_t printing)
       if ((printing == NOT_PRINTING) &&
 	  (clear_cr))
 	{
-	  FREE_CAIRO(ss->cr);
+	  free_cairo(ss->cr);
 	  ss->cr = NULL;
 	}
     }

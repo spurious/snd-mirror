@@ -3,11 +3,74 @@
 ;;; & in struct for settable field
 ;;; 4 semicolon comments = removed because I can't see any use for it
 
-(CFNC "gchar* g_type_name GType type")
-(CFNC "GQuark g_type_qname GType type")
-(CFNC "GType g_type_from_name gchar* name")
-(CFNC "GType g_type_parent GType type")
-(CFNC "gboolean g_type_is_a GType type GType is_a_type")
+(CFNC "gboolean g_unichar_validate gunichar ch")
+(CFNC "gboolean g_unichar_isalnum gunichar c")
+(CFNC "gboolean g_unichar_isalpha gunichar c")
+(CFNC "gboolean g_unichar_iscntrl gunichar c")
+(CFNC "gboolean g_unichar_isdefined gunichar c")
+(CFNC "gboolean g_unichar_isdigit gunichar c")
+(CFNC "gboolean g_unichar_isgraph gunichar c")
+(CFNC "gboolean g_unichar_islower gunichar c")
+(CFNC "gboolean g_unichar_ismark gunichar c")
+(CFNC "gboolean g_unichar_isprint gunichar c")
+(CFNC "gboolean g_unichar_ispunct gunichar c")
+(CFNC "gboolean g_unichar_isspace gunichar c")
+(CFNC "gboolean g_unichar_istitle gunichar c")
+(CFNC "gboolean g_unichar_isupper gunichar c")
+(CFNC "gboolean g_unichar_isxdigit gunichar c")
+(CFNC "gboolean g_unichar_iswide gunichar c")
+(CFNC "gboolean g_unichar_iswide_cjk gunichar c")
+(CFNC "gboolean g_unichar_iszerowidth gunichar c")
+(CFNC "gunichar g_unichar_toupper gunichar c")
+(CFNC "gunichar g_unichar_tolower gunichar c")
+(CFNC "gunichar g_unichar_totitle gunichar c")
+(CFNC "gint g_unichar_digit_value gunichar c")
+(CFNC "gint g_unichar_xdigit_value gunichar c")
+;(CFNC "gboolean g_unichar_compose gunichar a gunichar b gunichar* [ch]")
+;(CFNC "gboolean g_unichar_decompose gunichar ch gunichar* a gunichar* [b]")
+;(CFNC "gsize g_unichar_fully_decompose gunichar ch gboolean compat gunichar* [result] gsize result_len")
+(CFNC "gint g_unichar_combining_class gunichar uc")
+(CFNC "void g_unicode_canonical_ordering gunichar* string gsize len")
+;(CFNC "gunichar* g_unicode_canonical_decomposition gunichar ch gsize* [result_len]")
+;(CFNC "gboolean g_unichar_get_mirror_char gunichar ch gunichar* mirrored_ch")
+
+(CFNC "gunichar g_utf8_get_char gchar* p" 'const)
+(CFNC "gunichar g_utf8_get_char_validated gchar* p gssize max_len" 'const)
+(CFNC "gchar* g_utf8_prev_char gchar* p" 'const)
+(CFNC "gchar* g_utf8_find_next_char gchar* p gchar* end" 'const)
+(CFNC "gchar* g_utf8_find_prev_char gchar* str gchar* p" 'const)
+(CFNC "glong g_utf8_strlen gchar* p gssize max" 'const)
+;(CFNC "gchar* g_utf8_strncpy gchar* dest gchar* src gsize n" 'const)
+(CFNC "gchar* g_utf8_strchr gchar* p gssize len gunichar c" 'const)
+(CFNC "gchar* g_utf8_strrchr gchar* p gssize len gunichar c" 'const)
+(CFNC "gchar* g_utf8_strreverse gchar* str gssize len" 'const)
+;(CFNC "gchar* g_utf8_substring gchar* str glong start_pos glong end_pos" 'const)
+(CFNC "gboolean g_utf8_validate gchar* str gssize max_len gchar** [end]" 'const)
+(CFNC "gchar* g_utf8_strup gchar* str gssize len" 'const)
+(CFNC "gchar* g_utf8_strdown gchar* str gssize len" 'const)
+(CFNC "gchar* g_utf8_casefold gchar* str gssize len" 'const)
+(CFNC "gchar* g_utf8_normalize gchar* str gssize len GNormalizeMode mode" 'const)
+(CFNC "gint g_utf8_collate gchar* str1 gchar* str2" 'const)
+(CFNC "gchar* g_utf8_collate_key gchar* str gssize len" 'const)
+(CFNC "gchar* g_utf8_collate_key_for_filename gchar* str gssize len" 'const)
+
+
+(CINT "G_NORMALIZE_DEFAULT" "GNormalizeMode")
+(CINT "G_NORMALIZE_NFD" "GNormalizeMode")
+(CINT "G_NORMALIZE_DEFAULT_COMPOSE" "GNormalizeMode")
+(CINT "G_NORMALIZE_NFC" "GNormalizeMode")
+(CINT "G_NORMALIZE_ALL" "GNormalizeMode")
+(CINT "G_NORMALIZE_NFKD" "GNormalizeMode")
+(CINT "G_NORMALIZE_ALL_COMPOSE" "GNormalizeMode")
+(CINT "G_NORMALIZE_NFKC" "GNormalizeMode")
+
+;gunichar is int
+
+;(CFNC "gchar* g_type_name GType type")
+;(CFNC "GQuark g_type_qname GType type")
+;(CFNC "GType g_type_from_name gchar* name")
+;(CFNC "GType g_type_parent GType type")
+;(CFNC "gboolean g_type_is_a GType type GType is_a_type")
 (CINT "G_SIGNAL_RUN_FIRST" "GSignalFlags")
 (CINT "G_SIGNAL_RUN_LAST" "GSignalFlags")
 (CINT "G_SIGNAL_RUN_CLEANUP" "GSignalFlags")
@@ -4392,131 +4455,6 @@
 (CLNG "G_TYPE_PARAM")
 (CLNG "G_TYPE_OBJECT")
 
-#|
-(CLNG "G_UNICODE_CONTROL")
-(CLNG "G_UNICODE_FORMAT")
-(CLNG "G_UNICODE_UNASSIGNED")
-(CLNG "G_UNICODE_PRIVATE_USE")
-(CLNG "G_UNICODE_SURROGATE")
-(CLNG "G_UNICODE_LOWERCASE_LETTER")
-(CLNG "G_UNICODE_MODIFIER_LETTER")
-(CLNG "G_UNICODE_OTHER_LETTER")
-(CLNG "G_UNICODE_TITLECASE_LETTER")
-(CLNG "G_UNICODE_UPPERCASE_LETTER")
-(CLNG "G_UNICODE_COMBINING_MARK")
-(CLNG "G_UNICODE_ENCLOSING_MARK")
-(CLNG "G_UNICODE_NON_SPACING_MARK")
-(CLNG "G_UNICODE_DECIMAL_NUMBER")
-(CLNG "G_UNICODE_LETTER_NUMBER")
-(CLNG "G_UNICODE_OTHER_NUMBER")
-(CLNG "G_UNICODE_CONNECT_PUNCTUATION")
-(CLNG "G_UNICODE_DASH_PUNCTUATION")
-(CLNG "G_UNICODE_CLOSE_PUNCTUATION")
-(CLNG "G_UNICODE_FINAL_PUNCTUATION")
-(CLNG "G_UNICODE_INITIAL_PUNCTUATION")
-(CLNG "G_UNICODE_OTHER_PUNCTUATION")
-(CLNG "G_UNICODE_OPEN_PUNCTUATION")
-(CLNG "G_UNICODE_CURRENCY_SYMBOL")
-(CLNG "G_UNICODE_MODIFIER_SYMBOL")
-(CLNG "G_UNICODE_MATH_SYMBOL")
-(CLNG "G_UNICODE_OTHER_SYMBOL")
-(CLNG "G_UNICODE_LINE_SEPARATOR")
-(CLNG "G_UNICODE_PARAGRAPH_SEPARATOR")
-(CLNG "G_UNICODE_SPACE_SEPARATOR")
-(CLNG "G_UNICODE_BREAK_MANDATORY")
-(CLNG "G_UNICODE_BREAK_CARRIAGE_RETURN")
-(CLNG "G_UNICODE_BREAK_LINE_FEED")
-(CLNG "G_UNICODE_BREAK_COMBINING_MARK")
-(CLNG "G_UNICODE_BREAK_SURROGATE")
-(CLNG "G_UNICODE_BREAK_ZERO_WIDTH_SPACE")
-(CLNG "G_UNICODE_BREAK_INSEPARABLE")
-(CLNG "G_UNICODE_BREAK_NON_BREAKING_GLUE")
-(CLNG "G_UNICODE_BREAK_CONTINGENT")
-(CLNG "G_UNICODE_BREAK_SPACE")
-(CLNG "G_UNICODE_BREAK_AFTER")
-(CLNG "G_UNICODE_BREAK_BEFORE")
-(CLNG "G_UNICODE_BREAK_BEFORE_AND_AFTER")
-(CLNG "G_UNICODE_BREAK_HYPHEN")
-(CLNG "G_UNICODE_BREAK_NON_STARTER")
-(CLNG "G_UNICODE_BREAK_OPEN_PUNCTUATION")
-(CLNG "G_UNICODE_BREAK_CLOSE_PUNCTUATION")
-(CLNG "G_UNICODE_BREAK_QUOTATION")
-(CLNG "G_UNICODE_BREAK_EXCLAMATION")
-(CLNG "G_UNICODE_BREAK_IDEOGRAPHIC")
-(CLNG "G_UNICODE_BREAK_NUMERIC")
-(CLNG "G_UNICODE_BREAK_INFIX_SEPARATOR")
-(CLNG "G_UNICODE_BREAK_SYMBOL")
-(CLNG "G_UNICODE_BREAK_ALPHABETIC")
-(CLNG "G_UNICODE_BREAK_PREFIX")
-(CLNG "G_UNICODE_BREAK_POSTFIX")
-(CLNG "G_UNICODE_BREAK_COMPLEX_CONTEXT")
-(CLNG "G_UNICODE_BREAK_AMBIGUOUS")
-(CLNG "G_UNICODE_BREAK_UNKNOWN")
-(CINT "G_NORMALIZE_DEFAULT")
-(CINT "G_NORMALIZE_NFD")
-(CINT "G_NORMALIZE_DEFAULT_COMPOSE")
-(CINT "G_NORMALIZE_NFC")
-(CINT "G_NORMALIZE_ALL")
-(CINT "G_NORMALIZE_NFKD")
-(CINT "G_NORMALIZE_ALL_COMPOSE")
-(CINT "G_NORMALIZE_NFKC")
-
-(CFNC "gboolean g_get_charset char** charset")
-(CFNC "gboolean g_unichar_isalnum gunichar c") 
-(CFNC "gboolean g_unichar_isalpha gunichar c") 
-(CFNC "gboolean g_unichar_iscntrl gunichar c") 
-(CFNC "gboolean g_unichar_isdigit gunichar c") 
-(CFNC "gboolean g_unichar_isgraph gunichar c") 
-(CFNC "gboolean g_unichar_islower gunichar c") 
-(CFNC "gboolean g_unichar_isprint gunichar c") 
-(CFNC "gboolean g_unichar_ispunct gunichar c") 
-(CFNC "gboolean g_unichar_isspace gunichar c") 
-(CFNC "gboolean g_unichar_isupper gunichar c") 
-(CFNC "gboolean g_unichar_isxdigit gunichar c") 
-(CFNC "gboolean g_unichar_istitle gunichar c") 
-(CFNC "gboolean g_unichar_isdefined gunichar c") 
-(CFNC "gboolean g_unichar_iswide gunichar c") 
-(CFNC "gunichar g_unichar_toupper gunichar c") 
-(CFNC "gunichar g_unichar_tolower gunichar c") 
-(CFNC "gunichar g_unichar_totitle gunichar c") 
-(CFNC "gint g_unichar_digit_value gunichar c") 
-(CFNC "gint g_unichar_xdigit_value gunichar c") 
-(CFNC "GUnicodeType g_unichar_type gunichar c") 
-(CFNC "GUnicodeBreakType g_unichar_break_type gunichar c") 
-(CFNC "void g_unicode_canonical_ordering gunichar* string gsize len")
-(CFNC "gunichar* g_unicode_canonical_decomposition gunichar ch gsize* result_len")
-(CFNC "gchar* g_utf8_next_char gchar* p") ;??
-(CFNC "gunichar g_utf8_get_char gchar* p")
-(CFNC "gunichar g_utf8_get_char_validated gchar* p gssize max_len")
-(CFNC "gchar* g_utf8_offset_to_pointer gchar* str glong offset") 
-(CFNC "glong g_utf8_pointer_to_offset gchar* str gchar* pos")
-(CFNC "gchar* g_utf8_prev_char gchar* p")
-(CFNC "gchar* g_utf8_find_next_char gchar* p gchar* end")
-(CFNC "gchar* g_utf8_find_prev_char gchar* str gchar* p")
-(CFNC "glong g_utf8_strlen gchar* p gssize max") 
-(CFNC "gchar* g_utf8_strncpy gchar* dest gchar* src gsize n")
-(CFNC "gchar* g_utf8_strchr gchar* p gssize len gunichar c")
-(CFNC "gchar* g_utf8_strrchr gchar* p gssize len gunichar c")
-(CFNC "gunichar2* g_utf8_to_utf16 gchar* str glong len glong* [items_read] glong* [items_written] GError** [error]")
-(CFNC "gunichar* g_utf8_to_ucs4 gchar* str glong len glong* [items_read] glong* [items_written] GError** [error]")
-(CFNC "gunichar* g_utf8_to_ucs4_fast gchar* str glong len glong* [items_written]") 
-(CFNC "gunichar* g_utf16_to_ucs4 gunichar2* str glong len glong* [items_read] glong* [items_written] GError** [error]")
-(CFNC "gchar* g_utf16_to_utf8 gunichar2* str glong len glong* [items_read] glong* [items_written] GError** [error]")
-(CFNC "gunichar2* g_ucs4_to_utf16 gunichar* str glong len glong* [items_read] glong* [items_written] GError** [error]")
-(CFNC "gchar* g_ucs4_to_utf8 gunichar* str glong len glong* [items_read] glong* [items_written] GError** [error]")
-(CFNC "gint g_unichar_to_utf8 gunichar c gchar* outbuf")
-(CFNC "gboolean g_unichar_validate gunichar ch")
-(CFNC "gchar* g_utf8_strup gchar* str gssize len")
-(CFNC "gchar* g_utf8_strdown gchar* str gssize len")
-(CFNC "gchar* g_utf8_casefold gchar* str gssize len")
-(CFNC "gchar* g_utf8_normalize gchar* str gssize len GNormalizeMode mode")
-(CFNC "gint g_utf8_collate gchar* str1 gchar* str2")
-(CFNC "gchar* g_utf8_collate_key gchar* str gssize len")
-|#
-
-(CFNC "gboolean g_utf8_validate gchar* str gssize max_len gchar** [end]" 'const)
-;;; and gobject/gtype.h type creation functions
-
 
 ;;; 2.90.6 (CFNC "void gdk_draw_pixbuf GdkDrawable* drawable GdkGC* gc GdkPixbuf* pixbuf int src_x int src_y int dest_x int dest_y int width int height GdkRgbDither dither int x_dither int y_dither")
 (CFNC "gchar* gtk_tree_model_get_string_from_iter GtkTreeModel* tree_model GtkTreeIter* iter" 'free)
@@ -6786,8 +6724,8 @@
 (CFNC "void gtk_entry_set_cursor_hadjustment GtkEntry* entry GtkAdjustment* adjustment")
 (CFNC "GtkAdjustment* gtk_entry_get_cursor_hadjustment GtkEntry* entry")
 (CFNC "GList* gtk_icon_theme_list_contexts GtkIconTheme* icon_theme")
-(CFNC "GtkPageSetup* gtk_page_setup_new_from_file gchar* file_name GError** [error]")
-(CFNC "gboolean gtk_page_setup_to_file GtkPageSetup* setup char* file_name GError** [error]")
+;(CFNC "GtkPageSetup* gtk_page_setup_new_from_file gchar* file_name GError** [error]")
+;(CFNC "gboolean gtk_page_setup_to_file GtkPageSetup* setup char* file_name GError** [error]")
 ;(CFNC "GtkPageSetup* gtk_page_setup_new_from_key_file GKeyFile* key_file gchar* group_name GError** [error]")
 ;(CFNC "void gtk_page_setup_to_key_file GtkPageSetup* setup GKeyFile* key_file gchar* group_name")
 ;(CFNC "GtkPaperSize* gtk_paper_size_new_from_key_file GKeyFile* key_file gchar* group_name GError** [error]")
@@ -8661,77 +8599,50 @@
 #|
 ;;; 3.9.2
 
-GdkDisplayManager *gdk_display_manager_peek                (void);
-GDK_WINDOW_STATE_TILED      = 1 << 8
-  GType              gtk_places_sidebar_get_type                   (void) G_GNUC_CONST;
-  GtkWidget *        gtk_places_sidebar_new                        (void);
-  GtkPlacesOpenFlags gtk_places_sidebar_get_open_flags             (GtkPlacesSidebar   *sidebar);
-  void               gtk_places_sidebar_set_open_flags             (GtkPlacesSidebar   *sidebar,
-                                                                    GtkPlacesOpenFlags  flags);
-  GFile *            gtk_places_sidebar_get_location               (GtkPlacesSidebar   *sidebar);
-  void               gtk_places_sidebar_set_location               (GtkPlacesSidebar   *sidebar,
-                                                                    GFile              *location);
-  gboolean           gtk_places_sidebar_get_show_desktop           (GtkPlacesSidebar   *sidebar);
-  void               gtk_places_sidebar_set_show_desktop           (GtkPlacesSidebar   *sidebar,
-                                                                    gboolean            show_desktop);
-  gboolean           gtk_places_sidebar_get_show_connect_to_server (GtkPlacesSidebar   *sidebar);
-  void               gtk_places_sidebar_set_show_connect_to_server (GtkPlacesSidebar   *sidebar,
-                                                                    gboolean            show_connect_to_server);
-  void               gtk_places_sidebar_add_shortcut               (GtkPlacesSidebar   *sidebar,
-                                                                    GFile              *location);
-  void               gtk_places_sidebar_remove_shortcut            (GtkPlacesSidebar   *sidebar,
-                                                                    GFile              *location);
-  GSList *           gtk_places_sidebar_list_shortcuts             (GtkPlacesSidebar   *sidebar);
-  GFile *            gtk_places_sidebar_get_nth_bookmark           (GtkPlacesSidebar   *sidebar, LOST LINES
+(CINT "GDK_WINDOW_STATE_TILED" "GdkWindowState")
 
-  GType                      gtk_revealer_get_type                (void) G_GNUC_CONST;
-  GtkWidget*                 gtk_revealer_new                     (void);
-  gboolean                   gtk_revealer_get_reveal_child        (GtkRevealer               *revealer);
-  void                       gtk_revealer_set_reveal_child        (GtkRevealer               *revealer,
-                                                                   gboolean                   reveal_child);
-  gboolean                   gtk_revealer_get_child_revealed      (GtkRevealer               *revealer);
-  guint                      gtk_revealer_get_transition_duration (GtkRevealer               *revealer);
-  void                       gtk_revealer_set_transition_duration (GtkRevealer               *revealer,
-                                                                   guint                      duration);
-  void                       gtk_revealer_set_transition_type     (GtkRevealer               *revealer,
-                                                                   GtkRevealerTransitionType  transition);
-  GtkRevealerTransitionType  gtk_revealer_get_transition_type     (GtkRevealer               *revealer);
-  GType                  gtk_stack_get_type                (void) G_GNUC_CONST;
-  
-  GtkWidget *            gtk_stack_new                     (void);
-  void                   gtk_stack_add_named               (GtkStack               *stack,
-                                                            GtkWidget              *child,
-                                                            const gchar            *name);
-  void                   gtk_stack_add_titled              (GtkStack               *stack,
-                                                            GtkWidget              *child,
-                                                            const gchar            *name,
-                                                            const gchar            *title);
-  void                   gtk_stack_set_visible_child       (GtkStack               *stack,
-                                                            GtkWidget              *child);
-  GtkWidget *            gtk_stack_get_visible_child       (GtkStack               *stack);
-  void                   gtk_stack_set_visible_child_name  (GtkStack               *stack,
-                                                            const gchar            *name);
-  const gchar *          gtk_stack_get_visible_child_name  (GtkStack               *stack);
-  void                   gtk_stack_set_visible_child_full  (GtkStack               *stack,
-                                                            const gchar            *name,
-                                                            GtkStackTransitionType  transition);
-  void                   gtk_stack_set_homogeneous         (GtkStack               *stack,
-                                                            gboolean                homogeneous);
-  gboolean               gtk_stack_get_homogeneous         (GtkStack               *stack);
-  void                   gtk_stack_set_transition_duration (GtkStack               *stack,
-                                                            guint                   duration);
-  guint                  gtk_stack_get_transition_duration (GtkStack               *stack);
-  void                   gtk_stack_set_transition_type     (GtkStack               *stack,
-                                                            GtkStackTransitionType  transition);
-  GtkStackTransitionType gtk_stack_get_transition_type     (GtkStack               *stack);
-  GType        gtk_stack_switcher_get_type          (void) G_GNUC_CONST;
-  GtkWidget *  gtk_stack_switcher_new               (void);
-  void         gtk_stack_switcher_set_stack         (GtkStackSwitcher *switcher,
-                                                     GtkStack         *stack);
-  GtkStack *   gtk_stack_switcher_get_stack         (GtkStackSwitcher *switcher);
-+ void            gtk_test_widget_wait_for_draw   (GtkWidget      *widget);
+(CFNC "GdkDisplayManager* gdk_display_manager_peek void")
+(CFNC "GtkWidget* gtk_places_sidebar_new void")
+(CFNC "GtkPlacesOpenFlags gtk_places_sidebar_get_open_flags GtkPlacesSidebar* sidebar")
+(CFNC "void gtk_places_sidebar_set_open_flags GtkPlacesSidebar* sidebar GtkPlacesOpenFlags flags")
+(CFNC "GFile* gtk_places_sidebar_get_location GtkPlacesSidebar* sidebar")
+(CFNC "void gtk_places_sidebar_set_location GtkPlacesSidebar* sidebar GFile* location")
+(CFNC "gboolean gtk_places_sidebar_get_show_desktop GtkPlacesSidebar* sidebar")
+(CFNC "void gtk_places_sidebar_set_show_desktop GtkPlacesSidebar* sidebar gboolean show_desktop")
+(CFNC "gboolean gtk_places_sidebar_get_show_connect_to_server GtkPlacesSidebar* sidebar")
+(CFNC "void gtk_places_sidebar_set_show_connect_to_server GtkPlacesSidebar* sidebar gboolean show_connect_to_server")
+(CFNC "void gtk_places_sidebar_add_shortcut GtkPlacesSidebar* sidebar GFile* location")
+(CFNC "void gtk_places_sidebar_remove_shortcut GtkPlacesSidebar* sidebar GFile* location")
+(CFNC "GSList* gtk_places_sidebar_list_shortcuts GtkPlacesSidebar* sidebar")
+(CFNC "GFile* gtk_places_sidebar_get_nth_bookmark GtkPlacesSidebar* sidebar gint n")
+(CFNC "GtkWidget* gtk_revealer_new void")
+(CFNC "gboolean gtk_revealer_get_reveal_child GtkRevealer* revealer")
+(CFNC "void gtk_revealer_set_reveal_child GtkRevealer* revealer gboolean reveal_child")
+(CFNC "gboolean gtk_revealer_get_child_revealed GtkRevealer* revealer")
+(CFNC "guint gtk_revealer_get_transition_duration GtkRevealer* revealer")
+(CFNC "void gtk_revealer_set_transition_duration GtkRevealer* revealer guint duration")
+(CFNC "void gtk_revealer_set_transition_type GtkRevealer* revealer GtkRevealerTransitionType transition")
+(CFNC "GtkRevealerTransitionType gtk_revealer_get_transition_type GtkRevealer* revealer")
+(CFNC "GtkWidget* gtk_stack_new void")
+(CFNC "void gtk_stack_add_named GtkStack* stack GtkWidget* child gchar* name" 'const)
+(CFNC "void gtk_stack_add_titled GtkStack* stack GtkWidget* child gchar* name gchar* title" 'const)
+(CFNC "void gtk_stack_set_visible_child GtkStack* stack GtkWidget* child")
+(CFNC "GtkWidget* gtk_stack_get_visible_child GtkStack* stack")
+(CFNC "void gtk_stack_set_visible_child_name GtkStack* stack gchar* name" 'const)
+(CFNC "gchar* gtk_stack_get_visible_child_name GtkStack* stack" 'const)
+(CFNC "void gtk_stack_set_visible_child_full GtkStack* stack gchar* name GtkStackTransitionType transition" 'const)
+(CFNC "void gtk_stack_set_homogeneous GtkStack* stack gboolean homogeneous")
+(CFNC "gboolean gtk_stack_get_homogeneous GtkStack* stack")
+(CFNC "void gtk_stack_set_transition_duration GtkStack* stack guint duration")
+(CFNC "guint gtk_stack_get_transition_duration GtkStack* stack")
+(CFNC "void gtk_stack_set_transition_type GtkStack* stack GtkStackTransitionType transition")
+(CFNC "GtkStackTransitionType gtk_stack_get_transition_type GtkStack* stack")
+(CFNC "GtkWidget* gtk_stack_switcher_new void")
+(CFNC "void gtk_stack_switcher_set_stack GtkStackSwitcher* switcher GtkStack* stack")
+(CFNC "GtkStack* gtk_stack_switcher_get_stack GtkStackSwitcher* switcher")
 
-new files: gtkactionmuxer|observable|observer, gtkmenutrackeritem
+
+new files: [gtkactionmuxer|observable|observer] -- not apparently tying these in (see recent action), [gtkmenutrackeritem]
 
 |#
  

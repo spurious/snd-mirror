@@ -312,7 +312,7 @@ static void mix_amp_env_resize(GtkWidget *w)
       ax->w = w_env;
       ax->gc = cur_gc;
     }
-  ss->cr = MAKE_CAIRO(ax->wn);
+  ss->cr = make_cairo(ax->wn);
   cairo_push_group(ss->cr);
 
   /* erase previous */
@@ -327,7 +327,7 @@ static void mix_amp_env_resize(GtkWidget *w)
 
   cairo_pop_group_to_source(ss->cr);
   cairo_paint(ss->cr);
-  FREE_CAIRO(ss->cr);
+  free_cairo(ss->cr);
   ss->cr = NULL;
 }
 

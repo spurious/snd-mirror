@@ -22,6 +22,7 @@
  *   XM_PIXEL in xm.c and in that context, it assumes the layout given above.
  */
 
+
 /* our "current path" */
 static point_t points[POINT_BUFFER_SIZE];
 static point_t points1[POINT_BUFFER_SIZE];
@@ -196,7 +197,7 @@ void draw_cursor(chan_info *cp)
 
     case CURSOR_PROC:
 #if USE_GTK
-      FREE_CAIRO(ss->cr);
+      free_cairo(ss->cr);
       ss->cr = NULL;
 #endif
       XEN_CALL_3((XEN_PROCEDURE_P(cp->cursor_proc)) ? (cp->cursor_proc) : (ss->cursor_proc),
@@ -206,7 +207,7 @@ void draw_cursor(chan_info *cp)
 		 C_TO_XEN_BOOLEAN(ss->tracking),
 		 S_cursor_style " procedure");
 #if USE_GTK
-      ss->cr = MAKE_CAIRO(ap->ax->wn);
+      ss->cr = make_cairo(ap->ax->wn);
       copy_context(cp);
 #endif
       break;
@@ -1195,9 +1196,9 @@ static XEN g_make_cairo(XEN drawer)
   XEN_ASSERT_TYPE(XEN_WIDGET_P(drawer), drawer, XEN_ONLY_ARG, S_make_cairo, "a widget");
 
 #if (!HAVE_GTK_3)
-  cr = MAKE_CAIRO(GDK_DRAWABLE(gtk_widget_get_window(XEN_UNWRAP_WIDGET(drawer))));
+  cr = make_cairo(GDK_DRAWABLE(gtk_widget_get_window(XEN_UNWRAP_WIDGET(drawer))));
 #else
-  cr = MAKE_CAIRO(GDK_WINDOW(gtk_widget_get_window(XEN_UNWRAP_WIDGET(drawer))));
+  cr = make_cairo(GDK_WINDOW(gtk_widget_get_window(XEN_UNWRAP_WIDGET(drawer))));
 #endif
 
   return(C_TO_XEN_cairo_t(cr));
@@ -1216,7 +1217,7 @@ static XEN g_free_cairo(XEN xcr)
       (XEN_LIST_LENGTH(xcr) == 2) &&
       (XEN_SYMBOL_P(XEN_CAR(xcr))) &&
       (strcmp("cairo_t_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(xcr))) == 0))
-    FREE_CAIRO((cairo_t *)XEN_UNWRAP_C_POINTER(XEN_CADR(xcr)));
+    free_cairo((cairo_t *)XEN_UNWRAP_C_POINTER(XEN_CADR(xcr)));
   else 
     XEN_ERROR(XEN_ERROR_TYPE("not-a-graphics-context"),
 	      XEN_LIST_2(C_TO_XEN_STRING(S_free_cairo ": cairo_t argument is not a cairo_t pointer: ~A"), xcr));

@@ -71,7 +71,7 @@ static void graph_redisplay(void)
   axis_ap->x0 = 0.0;
   axis_ap->x1 = 1.0;
 
-  ss->cr = MAKE_CAIRO(ax->wn);
+  ss->cr = make_cairo(ax->wn);
   cairo_push_group(ss->cr);
 
   /* erase previous */
@@ -139,7 +139,7 @@ static void graph_redisplay(void)
 
   cairo_pop_group_to_source(ss->cr);
   cairo_paint(ss->cr);
-  FREE_CAIRO(ss->cr);
+  free_cairo(ss->cr);
   ss->cr = NULL;
 }
 

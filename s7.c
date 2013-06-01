@@ -34839,8 +34839,6 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
 {
-  /* TODO: in OSX this and eval_form below need to protect against sc->global_env as e here */
-
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
   sc->code = code;
   if ((e != sc->global_env) &&
@@ -47570,8 +47568,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				goto SAFE_DO_DONE;
 			      }
 
-			    /* TODO: if it's safe_c_ss we can handle the symbols here */
-
 			    if (is_optimized(val))
 			      {
 				s7_function f;
@@ -47596,16 +47592,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				  }
 				else
 				  {
-				    s7_pointer s1, s2;
-				    s1 = s7_slot(sc, car(args));
-				    s2 = s7_slot(sc, cadr(args));
 				    if (optimize_data(val) == HOP_SAFE_C_SS)
 				      {
+					s7_pointer s1, s2;
+					s1 = s7_slot(sc, car(args));
+					s2 = s7_slot(sc, cadr(args));
 					for (i = start; i < lim; i++)
 					  {
+					    integer(step_val) = i;
 					    car(sc->T2_1) = slot_value(s1);
 					    car(sc->T2_2) = slot_value(s2);
-					    integer(step_val) = i;
 					    slot_set_value(slot, f(sc, sc->T2_1));
 					  }
 					goto SAFE_DO_DONE;

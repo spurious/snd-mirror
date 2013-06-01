@@ -370,13 +370,20 @@ XM_TYPE_PTR_CONST(guint8_, guint8*)
 #define XEN_gsize_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_CONST(GtkRecentFilterInfo_, GtkRecentFilterInfo*)
 XM_TYPE_PTR(GtkRecentInfo_, GtkRecentInfo*)
+#define XEN_TO_C_gunichar_(Arg) (gunichar*)(XEN_TO_C_String(Arg))
+#define XEN_gunichar__P(Arg) XEN_String_P(Arg)
+#define XEN_TO_C_gssize(Arg) (gssize)(XEN_TO_C_INT(Arg))
+#define XEN_gssize_P(Arg) XEN_INTEGER_P(Arg)
+#define C_TO_XEN_glong(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_glong(Arg) (glong)(XEN_TO_C_INT(Arg))
+#define XEN_glong_P(Arg) XEN_INTEGER_P(Arg)
+#define C_TO_XEN_GNormalizeMode(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GNormalizeMode(Arg) (GNormalizeMode)(XEN_TO_C_INT(Arg))
+#define XEN_GNormalizeMode_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR_1(GClosureNotify, GClosureNotify)
 #define C_TO_XEN_GType(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GType(Arg) (GType)(XEN_TO_C_ULONG(Arg))
 #define XEN_GType_P(Arg) XEN_ULONG_P(Arg)
-#define C_TO_XEN_GQuark(Arg) C_TO_XEN_ULONG(Arg)
-#define XEN_TO_C_GQuark(Arg) (GQuark)(XEN_TO_C_ULONG(Arg))
-#define XEN_GQuark_P(Arg) XEN_ULONG_P(Arg)
-XM_TYPE_PTR_1(GClosureNotify, GClosureNotify)
 #define XEN_TO_C_GSignalFlags(Arg) (GSignalFlags)(XEN_TO_C_INT(Arg))
 #define XEN_GSignalFlags_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_1(GSignalAccumulator, GSignalAccumulator)
@@ -385,6 +392,9 @@ XM_TYPE_1(GSignalCMarshaller, GSignalCMarshaller)
 XM_TYPE_PTR_1(GType_, GType*)
 XM_TYPE_PTR_1(GSignalQuery_, GSignalQuery*)
 XM_TYPE_PTR(guint_, guint*)
+#define C_TO_XEN_GQuark(Arg) C_TO_XEN_ULONG(Arg)
+#define XEN_TO_C_GQuark(Arg) (GQuark)(XEN_TO_C_ULONG(Arg))
+#define XEN_GQuark_P(Arg) XEN_ULONG_P(Arg)
 XM_TYPE_PTR_2(GSignalInvocationHint_, GSignalInvocationHint*)
 #define C_TO_XEN_gulong(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_gulong(Arg) (gulong)(XEN_TO_C_ULONG(Arg))
@@ -665,7 +675,6 @@ XM_TYPE_PTR(PangoAttribute_, PangoAttribute*)
 XM_TYPE_PTR_1(PangoRectangle_, PangoRectangle*)
 XM_TYPE_PTR(PangoAttrIterator_, PangoAttrIterator*)
 XM_TYPE_PTR_1(PangoAttrList__, PangoAttrList**)
-XM_TYPE_PTR_1(gunichar_, gunichar*)
 XM_TYPE_PTR_1(PangoAnalysis_, PangoAnalysis*)
 XM_TYPE_PTR(PangoLogAttr_, PangoLogAttr*)
 XM_TYPE_PTR_2(PangoFontFamily__, PangoFontFamily**)
@@ -698,8 +707,6 @@ XM_TYPE_PTR(int_, int*)
 XM_TYPE_PTR(PangoLayoutLine_, PangoLayoutLine*)
 XM_TYPE_PTR(PangoLayoutIter_, PangoLayoutIter*)
 XM_TYPE_PTR_2(PangoLayoutRun_, PangoLayoutRun*)
-#define XEN_TO_C_gssize(Arg) (gssize)(XEN_TO_C_INT(Arg))
-#define XEN_gssize_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GdkDisplay_, GdkDisplay*)
 XM_TYPE_PTR(GdkScreen_, GdkScreen*)
 #define C_TO_XEN_GtkCalendarDisplayOptions(Arg) C_TO_XEN_INT(Arg)
@@ -1496,40 +1503,323 @@ static gboolean gxg_func4(GtkPrintOperation *op, GtkPrintContext *context, gint 
 
 /* ---------------------------------------- functions ---------------------------------------- */
 
-static XEN gxg_g_type_name(XEN type)
+static XEN gxg_g_unichar_validate(XEN ch)
 {
-  #define H_g_type_name "gchar* g_type_name(GType type)"
-  XEN_ASSERT_TYPE(XEN_GType_P(type), type, 1, "g_type_name", "GType");
-  return(C_TO_XEN_gchar_(g_type_name(XEN_TO_C_GType(type))));
+  #define H_g_unichar_validate "gboolean g_unichar_validate(gunichar ch)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(ch), ch, 1, "g_unichar_validate", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_validate(XEN_TO_C_gunichar(ch))));
 }
 
-static XEN gxg_g_type_qname(XEN type)
+static XEN gxg_g_unichar_isalnum(XEN c)
 {
-  #define H_g_type_qname "GQuark g_type_qname(GType type)"
-  XEN_ASSERT_TYPE(XEN_GType_P(type), type, 1, "g_type_qname", "GType");
-  return(C_TO_XEN_GQuark(g_type_qname(XEN_TO_C_GType(type))));
+  #define H_g_unichar_isalnum "gboolean g_unichar_isalnum(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_isalnum", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_isalnum(XEN_TO_C_gunichar(c))));
 }
 
-static XEN gxg_g_type_from_name(XEN name)
+static XEN gxg_g_unichar_isalpha(XEN c)
 {
-  #define H_g_type_from_name "GType g_type_from_name(gchar* name)"
-  XEN_ASSERT_TYPE(XEN_gchar__P(name), name, 1, "g_type_from_name", "gchar*");
-  return(C_TO_XEN_GType(g_type_from_name(XEN_TO_C_gchar_(name))));
+  #define H_g_unichar_isalpha "gboolean g_unichar_isalpha(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_isalpha", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_isalpha(XEN_TO_C_gunichar(c))));
 }
 
-static XEN gxg_g_type_parent(XEN type)
+static XEN gxg_g_unichar_iscntrl(XEN c)
 {
-  #define H_g_type_parent "GType g_type_parent(GType type)"
-  XEN_ASSERT_TYPE(XEN_GType_P(type), type, 1, "g_type_parent", "GType");
-  return(C_TO_XEN_GType(g_type_parent(XEN_TO_C_GType(type))));
+  #define H_g_unichar_iscntrl "gboolean g_unichar_iscntrl(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_iscntrl", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_iscntrl(XEN_TO_C_gunichar(c))));
 }
 
-static XEN gxg_g_type_is_a(XEN type, XEN is_a_type)
+static XEN gxg_g_unichar_isdefined(XEN c)
 {
-  #define H_g_type_is_a "gboolean g_type_is_a(GType type, GType is_a_type)"
-  XEN_ASSERT_TYPE(XEN_GType_P(type), type, 1, "g_type_is_a", "GType");
-  XEN_ASSERT_TYPE(XEN_GType_P(is_a_type), is_a_type, 2, "g_type_is_a", "GType");
-  return(C_TO_XEN_gboolean(g_type_is_a(XEN_TO_C_GType(type), XEN_TO_C_GType(is_a_type))));
+  #define H_g_unichar_isdefined "gboolean g_unichar_isdefined(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_isdefined", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_isdefined(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_isdigit(XEN c)
+{
+  #define H_g_unichar_isdigit "gboolean g_unichar_isdigit(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_isdigit", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_isdigit(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_isgraph(XEN c)
+{
+  #define H_g_unichar_isgraph "gboolean g_unichar_isgraph(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_isgraph", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_isgraph(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_islower(XEN c)
+{
+  #define H_g_unichar_islower "gboolean g_unichar_islower(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_islower", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_islower(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_ismark(XEN c)
+{
+  #define H_g_unichar_ismark "gboolean g_unichar_ismark(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_ismark", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_ismark(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_isprint(XEN c)
+{
+  #define H_g_unichar_isprint "gboolean g_unichar_isprint(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_isprint", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_isprint(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_ispunct(XEN c)
+{
+  #define H_g_unichar_ispunct "gboolean g_unichar_ispunct(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_ispunct", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_ispunct(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_isspace(XEN c)
+{
+  #define H_g_unichar_isspace "gboolean g_unichar_isspace(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_isspace", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_isspace(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_istitle(XEN c)
+{
+  #define H_g_unichar_istitle "gboolean g_unichar_istitle(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_istitle", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_istitle(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_isupper(XEN c)
+{
+  #define H_g_unichar_isupper "gboolean g_unichar_isupper(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_isupper", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_isupper(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_isxdigit(XEN c)
+{
+  #define H_g_unichar_isxdigit "gboolean g_unichar_isxdigit(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_isxdigit", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_isxdigit(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_iswide(XEN c)
+{
+  #define H_g_unichar_iswide "gboolean g_unichar_iswide(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_iswide", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_iswide(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_iswide_cjk(XEN c)
+{
+  #define H_g_unichar_iswide_cjk "gboolean g_unichar_iswide_cjk(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_iswide_cjk", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_iswide_cjk(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_iszerowidth(XEN c)
+{
+  #define H_g_unichar_iszerowidth "gboolean g_unichar_iszerowidth(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_iszerowidth", "gunichar");
+  return(C_TO_XEN_gboolean(g_unichar_iszerowidth(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_toupper(XEN c)
+{
+  #define H_g_unichar_toupper "gunichar g_unichar_toupper(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_toupper", "gunichar");
+  return(C_TO_XEN_gunichar(g_unichar_toupper(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_tolower(XEN c)
+{
+  #define H_g_unichar_tolower "gunichar g_unichar_tolower(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_tolower", "gunichar");
+  return(C_TO_XEN_gunichar(g_unichar_tolower(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_totitle(XEN c)
+{
+  #define H_g_unichar_totitle "gunichar g_unichar_totitle(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_totitle", "gunichar");
+  return(C_TO_XEN_gunichar(g_unichar_totitle(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_digit_value(XEN c)
+{
+  #define H_g_unichar_digit_value "gint g_unichar_digit_value(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_digit_value", "gunichar");
+  return(C_TO_XEN_gint(g_unichar_digit_value(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_xdigit_value(XEN c)
+{
+  #define H_g_unichar_xdigit_value "gint g_unichar_xdigit_value(gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 1, "g_unichar_xdigit_value", "gunichar");
+  return(C_TO_XEN_gint(g_unichar_xdigit_value(XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_unichar_combining_class(XEN uc)
+{
+  #define H_g_unichar_combining_class "gint g_unichar_combining_class(gunichar uc)"
+  XEN_ASSERT_TYPE(XEN_gunichar_P(uc), uc, 1, "g_unichar_combining_class", "gunichar");
+  return(C_TO_XEN_gint(g_unichar_combining_class(XEN_TO_C_gunichar(uc))));
+}
+
+static XEN gxg_g_unicode_canonical_ordering(XEN string, XEN len)
+{
+  #define H_g_unicode_canonical_ordering "void g_unicode_canonical_ordering(gunichar* string, gsize len)"
+  XEN_ASSERT_TYPE(XEN_gunichar__P(string), string, 1, "g_unicode_canonical_ordering", "gunichar*");
+  XEN_ASSERT_TYPE(XEN_gsize_P(len), len, 2, "g_unicode_canonical_ordering", "gsize");
+  g_unicode_canonical_ordering(XEN_TO_C_gunichar_(string), XEN_TO_C_gsize(len));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_g_utf8_get_char(XEN p)
+{
+  #define H_g_utf8_get_char "gunichar g_utf8_get_char(gchar* p)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(p), p, 1, "g_utf8_get_char", "gchar*");
+  return(C_TO_XEN_gunichar(g_utf8_get_char((const gchar*)XEN_TO_C_gchar_(p))));
+}
+
+static XEN gxg_g_utf8_get_char_validated(XEN p, XEN max_len)
+{
+  #define H_g_utf8_get_char_validated "gunichar g_utf8_get_char_validated(gchar* p, gssize max_len)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(p), p, 1, "g_utf8_get_char_validated", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gssize_P(max_len), max_len, 2, "g_utf8_get_char_validated", "gssize");
+  return(C_TO_XEN_gunichar(g_utf8_get_char_validated((const gchar*)XEN_TO_C_gchar_(p), XEN_TO_C_gssize(max_len))));
+}
+
+static XEN gxg_g_utf8_prev_char(XEN p)
+{
+  #define H_g_utf8_prev_char "gchar* g_utf8_prev_char(gchar* p)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(p), p, 1, "g_utf8_prev_char", "gchar*");
+  return(C_TO_XEN_gchar_(g_utf8_prev_char((const gchar*)XEN_TO_C_gchar_(p))));
+}
+
+static XEN gxg_g_utf8_find_next_char(XEN p, XEN end)
+{
+  #define H_g_utf8_find_next_char "gchar* g_utf8_find_next_char(gchar* p, gchar* end)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(p), p, 1, "g_utf8_find_next_char", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(end), end, 2, "g_utf8_find_next_char", "gchar*");
+  return(C_TO_XEN_gchar_(g_utf8_find_next_char((const gchar*)XEN_TO_C_gchar_(p), (const gchar*)XEN_TO_C_gchar_(end))));
+}
+
+static XEN gxg_g_utf8_find_prev_char(XEN str, XEN p)
+{
+  #define H_g_utf8_find_prev_char "gchar* g_utf8_find_prev_char(gchar* str, gchar* p)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(str), str, 1, "g_utf8_find_prev_char", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(p), p, 2, "g_utf8_find_prev_char", "gchar*");
+  return(C_TO_XEN_gchar_(g_utf8_find_prev_char((const gchar*)XEN_TO_C_gchar_(str), (const gchar*)XEN_TO_C_gchar_(p))));
+}
+
+static XEN gxg_g_utf8_strlen(XEN p, XEN max)
+{
+  #define H_g_utf8_strlen "glong g_utf8_strlen(gchar* p, gssize max)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(p), p, 1, "g_utf8_strlen", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gssize_P(max), max, 2, "g_utf8_strlen", "gssize");
+  return(C_TO_XEN_glong(g_utf8_strlen((const gchar*)XEN_TO_C_gchar_(p), XEN_TO_C_gssize(max))));
+}
+
+static XEN gxg_g_utf8_strchr(XEN p, XEN len, XEN c)
+{
+  #define H_g_utf8_strchr "gchar* g_utf8_strchr(gchar* p, gssize len, gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(p), p, 1, "g_utf8_strchr", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gssize_P(len), len, 2, "g_utf8_strchr", "gssize");
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 3, "g_utf8_strchr", "gunichar");
+  return(C_TO_XEN_gchar_(g_utf8_strchr((const gchar*)XEN_TO_C_gchar_(p), XEN_TO_C_gssize(len), XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_utf8_strrchr(XEN p, XEN len, XEN c)
+{
+  #define H_g_utf8_strrchr "gchar* g_utf8_strrchr(gchar* p, gssize len, gunichar c)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(p), p, 1, "g_utf8_strrchr", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gssize_P(len), len, 2, "g_utf8_strrchr", "gssize");
+  XEN_ASSERT_TYPE(XEN_gunichar_P(c), c, 3, "g_utf8_strrchr", "gunichar");
+  return(C_TO_XEN_gchar_(g_utf8_strrchr((const gchar*)XEN_TO_C_gchar_(p), XEN_TO_C_gssize(len), XEN_TO_C_gunichar(c))));
+}
+
+static XEN gxg_g_utf8_strreverse(XEN str, XEN len)
+{
+  #define H_g_utf8_strreverse "gchar* g_utf8_strreverse(gchar* str, gssize len)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(str), str, 1, "g_utf8_strreverse", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gssize_P(len), len, 2, "g_utf8_strreverse", "gssize");
+  return(C_TO_XEN_gchar_(g_utf8_strreverse((const gchar*)XEN_TO_C_gchar_(str), XEN_TO_C_gssize(len))));
+}
+
+static XEN gxg_g_utf8_validate(XEN str, XEN max_len, XEN ignore_end)
+{
+  #define H_g_utf8_validate "gboolean g_utf8_validate(gchar* str, gssize max_len, gchar** [end])"
+  gchar* ref_end = NULL;
+  XEN_ASSERT_TYPE(XEN_gchar__P(str), str, 1, "g_utf8_validate", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gssize_P(max_len), max_len, 2, "g_utf8_validate", "gssize");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(g_utf8_validate((const gchar*)XEN_TO_C_gchar_(str), XEN_TO_C_gssize(max_len), (const gchar**)&ref_end));
+    return(XEN_LIST_2(result, C_TO_XEN_gchar_(ref_end)));
+   }
+}
+
+static XEN gxg_g_utf8_strup(XEN str, XEN len)
+{
+  #define H_g_utf8_strup "gchar* g_utf8_strup(gchar* str, gssize len)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(str), str, 1, "g_utf8_strup", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gssize_P(len), len, 2, "g_utf8_strup", "gssize");
+  return(C_TO_XEN_gchar_(g_utf8_strup((const gchar*)XEN_TO_C_gchar_(str), XEN_TO_C_gssize(len))));
+}
+
+static XEN gxg_g_utf8_strdown(XEN str, XEN len)
+{
+  #define H_g_utf8_strdown "gchar* g_utf8_strdown(gchar* str, gssize len)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(str), str, 1, "g_utf8_strdown", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gssize_P(len), len, 2, "g_utf8_strdown", "gssize");
+  return(C_TO_XEN_gchar_(g_utf8_strdown((const gchar*)XEN_TO_C_gchar_(str), XEN_TO_C_gssize(len))));
+}
+
+static XEN gxg_g_utf8_casefold(XEN str, XEN len)
+{
+  #define H_g_utf8_casefold "gchar* g_utf8_casefold(gchar* str, gssize len)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(str), str, 1, "g_utf8_casefold", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gssize_P(len), len, 2, "g_utf8_casefold", "gssize");
+  return(C_TO_XEN_gchar_(g_utf8_casefold((const gchar*)XEN_TO_C_gchar_(str), XEN_TO_C_gssize(len))));
+}
+
+static XEN gxg_g_utf8_normalize(XEN str, XEN len, XEN mode)
+{
+  #define H_g_utf8_normalize "gchar* g_utf8_normalize(gchar* str, gssize len, GNormalizeMode mode)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(str), str, 1, "g_utf8_normalize", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gssize_P(len), len, 2, "g_utf8_normalize", "gssize");
+  XEN_ASSERT_TYPE(XEN_GNormalizeMode_P(mode), mode, 3, "g_utf8_normalize", "GNormalizeMode");
+  return(C_TO_XEN_gchar_(g_utf8_normalize((const gchar*)XEN_TO_C_gchar_(str), XEN_TO_C_gssize(len), XEN_TO_C_GNormalizeMode(mode))));
+}
+
+static XEN gxg_g_utf8_collate(XEN str1, XEN str2)
+{
+  #define H_g_utf8_collate "gint g_utf8_collate(gchar* str1, gchar* str2)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(str1), str1, 1, "g_utf8_collate", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(str2), str2, 2, "g_utf8_collate", "gchar*");
+  return(C_TO_XEN_gint(g_utf8_collate((const gchar*)XEN_TO_C_gchar_(str1), (const gchar*)XEN_TO_C_gchar_(str2))));
+}
+
+static XEN gxg_g_utf8_collate_key(XEN str, XEN len)
+{
+  #define H_g_utf8_collate_key "gchar* g_utf8_collate_key(gchar* str, gssize len)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(str), str, 1, "g_utf8_collate_key", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gssize_P(len), len, 2, "g_utf8_collate_key", "gssize");
+  return(C_TO_XEN_gchar_(g_utf8_collate_key((const gchar*)XEN_TO_C_gchar_(str), XEN_TO_C_gssize(len))));
+}
+
+static XEN gxg_g_utf8_collate_key_for_filename(XEN str, XEN len)
+{
+  #define H_g_utf8_collate_key_for_filename "gchar* g_utf8_collate_key_for_filename(gchar* str, gssize len)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(str), str, 1, "g_utf8_collate_key_for_filename", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gssize_P(len), len, 2, "g_utf8_collate_key_for_filename", "gssize");
+  return(C_TO_XEN_gchar_(g_utf8_collate_key_for_filename((const gchar*)XEN_TO_C_gchar_(str), XEN_TO_C_gssize(len))));
 }
 
 static XEN gxg_g_cclosure_new(XEN func, XEN func_info, XEN destroy_data)
@@ -15298,19 +15588,6 @@ static XEN gxg_G_OBJECT_TYPE(XEN object)
   return(C_TO_XEN_GType(G_OBJECT_TYPE(XEN_TO_C_GObject_(object))));
 }
 
-static XEN gxg_g_utf8_validate(XEN str, XEN max_len, XEN ignore_end)
-{
-  #define H_g_utf8_validate "gboolean g_utf8_validate(gchar* str, gssize max_len, gchar** [end])"
-  gchar* ref_end = NULL;
-  XEN_ASSERT_TYPE(XEN_gchar__P(str), str, 1, "g_utf8_validate", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gssize_P(max_len), max_len, 2, "g_utf8_validate", "gssize");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_gboolean(g_utf8_validate((const gchar*)XEN_TO_C_gchar_(str), XEN_TO_C_gssize(max_len), (const gchar**)&ref_end));
-    return(XEN_LIST_2(result, C_TO_XEN_gchar_(ref_end)));
-   }
-}
-
 static XEN gxg_gtk_tree_model_get_string_from_iter(XEN tree_model, XEN iter)
 {
   #define H_gtk_tree_model_get_string_from_iter "gchar* gtk_tree_model_get_string_from_iter(GtkTreeModel* tree_model, \
@@ -23888,33 +24165,6 @@ static XEN gxg_gtk_icon_theme_list_contexts(XEN icon_theme)
   #define H_gtk_icon_theme_list_contexts "GList* gtk_icon_theme_list_contexts(GtkIconTheme* icon_theme)"
   XEN_ASSERT_TYPE(XEN_GtkIconTheme__P(icon_theme), icon_theme, 1, "gtk_icon_theme_list_contexts", "GtkIconTheme*");
   return(C_TO_XEN_GList_(gtk_icon_theme_list_contexts(XEN_TO_C_GtkIconTheme_(icon_theme))));
-}
-
-static XEN gxg_gtk_page_setup_new_from_file(XEN file_name, XEN ignore_error)
-{
-  #define H_gtk_page_setup_new_from_file "GtkPageSetup* gtk_page_setup_new_from_file(gchar* file_name, \
-GError** [error])"
-  GError* ref_error = NULL;
-  XEN_ASSERT_TYPE(XEN_gchar__P(file_name), file_name, 1, "gtk_page_setup_new_from_file", "gchar*");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_GtkPageSetup_(gtk_page_setup_new_from_file(XEN_TO_C_gchar_(file_name), &ref_error));
-    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
-   }
-}
-
-static XEN gxg_gtk_page_setup_to_file(XEN setup, XEN file_name, XEN ignore_error)
-{
-  #define H_gtk_page_setup_to_file "gboolean gtk_page_setup_to_file(GtkPageSetup* setup, char* file_name, \
-GError** [error])"
-  GError* ref_error = NULL;
-  XEN_ASSERT_TYPE(XEN_GtkPageSetup__P(setup), setup, 1, "gtk_page_setup_to_file", "GtkPageSetup*");
-  XEN_ASSERT_TYPE(XEN_char__P(file_name), file_name, 2, "gtk_page_setup_to_file", "char*");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_gboolean(gtk_page_setup_to_file(XEN_TO_C_GtkPageSetup_(setup), XEN_TO_C_char_(file_name), &ref_error));
-    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
-   }
 }
 
 static XEN gxg_gtk_print_settings_new_from_file(XEN file_name, XEN ignore_error)
@@ -35771,6 +36021,12 @@ static XEN c_array_to_xen_list(XEN val_1, XEN clen)
       if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gdouble(arr[i]), result);
     }
+  if (strcmp(ctype, "gunichar_") == 0)
+    {
+      gunichar* arr; arr = (gunichar*)XEN_UNWRAP_C_POINTER(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gunichar(arr[i]), result);
+    }
   if (strcmp(ctype, "GType_") == 0)
     {
       GType* arr; arr = (GType*)XEN_UNWRAP_C_POINTER(XEN_CADR(val)); 
@@ -35824,12 +36080,6 @@ static XEN c_array_to_xen_list(XEN val_1, XEN clen)
       guint16* arr; arr = (guint16*)XEN_UNWRAP_C_POINTER(XEN_CADR(val)); 
       if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint16(arr[i]), result);
-    }
-  if (strcmp(ctype, "gunichar_") == 0)
-    {
-      gunichar* arr; arr = (gunichar*)XEN_UNWRAP_C_POINTER(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
-      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gunichar(arr[i]), result);
     }
   if (strcmp(ctype, "int_") == 0)
     {
@@ -35920,6 +36170,12 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gdouble(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gdouble_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
+  if (strcmp(ctype, "gunichar*") == 0)
+    {
+      gunichar* arr; arr = (gunichar*)calloc(len + 1, sizeof(gunichar));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gunichar(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gunichar_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
+    }
   if (strcmp(ctype, "GType*") == 0)
     {
       GType* arr; arr = (GType*)calloc(len + 1, sizeof(GType));
@@ -35973,12 +36229,6 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       guint16* arr; arr = (guint16*)calloc(len + 1, sizeof(guint16));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guint16(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guint16_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
-    }
-  if (strcmp(ctype, "gunichar*") == 0)
-    {
-      gunichar* arr; arr = (gunichar*)calloc(len + 1, sizeof(gunichar));
-      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gunichar(XEN_CAR(val));
-      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gunichar_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "int*") == 0)
     {
@@ -36059,11 +36309,48 @@ static XEN gxg_make_GdkRGBA(void)
 
 
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_1(gxg_g_type_name_w, gxg_g_type_name)
-XEN_NARGIFY_1(gxg_g_type_qname_w, gxg_g_type_qname)
-XEN_NARGIFY_1(gxg_g_type_from_name_w, gxg_g_type_from_name)
-XEN_NARGIFY_1(gxg_g_type_parent_w, gxg_g_type_parent)
-XEN_NARGIFY_2(gxg_g_type_is_a_w, gxg_g_type_is_a)
+XEN_NARGIFY_1(gxg_g_unichar_validate_w, gxg_g_unichar_validate)
+XEN_NARGIFY_1(gxg_g_unichar_isalnum_w, gxg_g_unichar_isalnum)
+XEN_NARGIFY_1(gxg_g_unichar_isalpha_w, gxg_g_unichar_isalpha)
+XEN_NARGIFY_1(gxg_g_unichar_iscntrl_w, gxg_g_unichar_iscntrl)
+XEN_NARGIFY_1(gxg_g_unichar_isdefined_w, gxg_g_unichar_isdefined)
+XEN_NARGIFY_1(gxg_g_unichar_isdigit_w, gxg_g_unichar_isdigit)
+XEN_NARGIFY_1(gxg_g_unichar_isgraph_w, gxg_g_unichar_isgraph)
+XEN_NARGIFY_1(gxg_g_unichar_islower_w, gxg_g_unichar_islower)
+XEN_NARGIFY_1(gxg_g_unichar_ismark_w, gxg_g_unichar_ismark)
+XEN_NARGIFY_1(gxg_g_unichar_isprint_w, gxg_g_unichar_isprint)
+XEN_NARGIFY_1(gxg_g_unichar_ispunct_w, gxg_g_unichar_ispunct)
+XEN_NARGIFY_1(gxg_g_unichar_isspace_w, gxg_g_unichar_isspace)
+XEN_NARGIFY_1(gxg_g_unichar_istitle_w, gxg_g_unichar_istitle)
+XEN_NARGIFY_1(gxg_g_unichar_isupper_w, gxg_g_unichar_isupper)
+XEN_NARGIFY_1(gxg_g_unichar_isxdigit_w, gxg_g_unichar_isxdigit)
+XEN_NARGIFY_1(gxg_g_unichar_iswide_w, gxg_g_unichar_iswide)
+XEN_NARGIFY_1(gxg_g_unichar_iswide_cjk_w, gxg_g_unichar_iswide_cjk)
+XEN_NARGIFY_1(gxg_g_unichar_iszerowidth_w, gxg_g_unichar_iszerowidth)
+XEN_NARGIFY_1(gxg_g_unichar_toupper_w, gxg_g_unichar_toupper)
+XEN_NARGIFY_1(gxg_g_unichar_tolower_w, gxg_g_unichar_tolower)
+XEN_NARGIFY_1(gxg_g_unichar_totitle_w, gxg_g_unichar_totitle)
+XEN_NARGIFY_1(gxg_g_unichar_digit_value_w, gxg_g_unichar_digit_value)
+XEN_NARGIFY_1(gxg_g_unichar_xdigit_value_w, gxg_g_unichar_xdigit_value)
+XEN_NARGIFY_1(gxg_g_unichar_combining_class_w, gxg_g_unichar_combining_class)
+XEN_NARGIFY_2(gxg_g_unicode_canonical_ordering_w, gxg_g_unicode_canonical_ordering)
+XEN_NARGIFY_1(gxg_g_utf8_get_char_w, gxg_g_utf8_get_char)
+XEN_NARGIFY_2(gxg_g_utf8_get_char_validated_w, gxg_g_utf8_get_char_validated)
+XEN_NARGIFY_1(gxg_g_utf8_prev_char_w, gxg_g_utf8_prev_char)
+XEN_NARGIFY_2(gxg_g_utf8_find_next_char_w, gxg_g_utf8_find_next_char)
+XEN_NARGIFY_2(gxg_g_utf8_find_prev_char_w, gxg_g_utf8_find_prev_char)
+XEN_NARGIFY_2(gxg_g_utf8_strlen_w, gxg_g_utf8_strlen)
+XEN_NARGIFY_3(gxg_g_utf8_strchr_w, gxg_g_utf8_strchr)
+XEN_NARGIFY_3(gxg_g_utf8_strrchr_w, gxg_g_utf8_strrchr)
+XEN_NARGIFY_2(gxg_g_utf8_strreverse_w, gxg_g_utf8_strreverse)
+XEN_ARGIFY_3(gxg_g_utf8_validate_w, gxg_g_utf8_validate)
+XEN_NARGIFY_2(gxg_g_utf8_strup_w, gxg_g_utf8_strup)
+XEN_NARGIFY_2(gxg_g_utf8_strdown_w, gxg_g_utf8_strdown)
+XEN_NARGIFY_2(gxg_g_utf8_casefold_w, gxg_g_utf8_casefold)
+XEN_NARGIFY_3(gxg_g_utf8_normalize_w, gxg_g_utf8_normalize)
+XEN_NARGIFY_2(gxg_g_utf8_collate_w, gxg_g_utf8_collate)
+XEN_NARGIFY_2(gxg_g_utf8_collate_key_w, gxg_g_utf8_collate_key)
+XEN_NARGIFY_2(gxg_g_utf8_collate_key_for_filename_w, gxg_g_utf8_collate_key_for_filename)
 XEN_NARGIFY_3(gxg_g_cclosure_new_w, gxg_g_cclosure_new)
 XEN_VARGIFY(gxg_g_signal_newv_w, gxg_g_signal_newv)
 XEN_NARGIFY_2(gxg_g_signal_lookup_w, gxg_g_signal_lookup)
@@ -37522,7 +37809,6 @@ XEN_NARGIFY_1(gxg_pango_layout_iter_get_baseline_w, gxg_pango_layout_iter_get_ba
 XEN_NARGIFY_1(gxg_pango_language_from_string_w, gxg_pango_language_from_string)
 XEN_NARGIFY_2(gxg_pango_language_matches_w, gxg_pango_language_matches)
 XEN_NARGIFY_1(gxg_G_OBJECT_TYPE_w, gxg_G_OBJECT_TYPE)
-XEN_ARGIFY_3(gxg_g_utf8_validate_w, gxg_g_utf8_validate)
 XEN_NARGIFY_2(gxg_gtk_tree_model_get_string_from_iter_w, gxg_gtk_tree_model_get_string_from_iter)
 XEN_NARGIFY_2(gxg_gtk_tree_model_sort_iter_is_valid_w, gxg_gtk_tree_model_sort_iter_is_valid)
 XEN_NARGIFY_2(gxg_gtk_tree_view_expand_to_path_w, gxg_gtk_tree_view_expand_to_path)
@@ -38472,8 +38758,6 @@ XEN_NARGIFY_1(gxg_gtk_entry_completion_get_completion_prefix_w, gxg_gtk_entry_co
 XEN_NARGIFY_2(gxg_gtk_entry_set_cursor_hadjustment_w, gxg_gtk_entry_set_cursor_hadjustment)
 XEN_NARGIFY_1(gxg_gtk_entry_get_cursor_hadjustment_w, gxg_gtk_entry_get_cursor_hadjustment)
 XEN_NARGIFY_1(gxg_gtk_icon_theme_list_contexts_w, gxg_gtk_icon_theme_list_contexts)
-XEN_ARGIFY_2(gxg_gtk_page_setup_new_from_file_w, gxg_gtk_page_setup_new_from_file)
-XEN_ARGIFY_3(gxg_gtk_page_setup_to_file_w, gxg_gtk_page_setup_to_file)
 XEN_ARGIFY_2(gxg_gtk_print_settings_new_from_file_w, gxg_gtk_print_settings_new_from_file)
 XEN_ARGIFY_3(gxg_gtk_print_settings_to_file_w, gxg_gtk_print_settings_to_file)
 XEN_NARGIFY_2(gxg_gtk_range_set_show_fill_level_w, gxg_gtk_range_set_show_fill_level)
@@ -40233,11 +40517,48 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 
 #else
 /* not XEN_ARGIFY_1 */
-#define gxg_g_type_name_w gxg_g_type_name
-#define gxg_g_type_qname_w gxg_g_type_qname
-#define gxg_g_type_from_name_w gxg_g_type_from_name
-#define gxg_g_type_parent_w gxg_g_type_parent
-#define gxg_g_type_is_a_w gxg_g_type_is_a
+#define gxg_g_unichar_validate_w gxg_g_unichar_validate
+#define gxg_g_unichar_isalnum_w gxg_g_unichar_isalnum
+#define gxg_g_unichar_isalpha_w gxg_g_unichar_isalpha
+#define gxg_g_unichar_iscntrl_w gxg_g_unichar_iscntrl
+#define gxg_g_unichar_isdefined_w gxg_g_unichar_isdefined
+#define gxg_g_unichar_isdigit_w gxg_g_unichar_isdigit
+#define gxg_g_unichar_isgraph_w gxg_g_unichar_isgraph
+#define gxg_g_unichar_islower_w gxg_g_unichar_islower
+#define gxg_g_unichar_ismark_w gxg_g_unichar_ismark
+#define gxg_g_unichar_isprint_w gxg_g_unichar_isprint
+#define gxg_g_unichar_ispunct_w gxg_g_unichar_ispunct
+#define gxg_g_unichar_isspace_w gxg_g_unichar_isspace
+#define gxg_g_unichar_istitle_w gxg_g_unichar_istitle
+#define gxg_g_unichar_isupper_w gxg_g_unichar_isupper
+#define gxg_g_unichar_isxdigit_w gxg_g_unichar_isxdigit
+#define gxg_g_unichar_iswide_w gxg_g_unichar_iswide
+#define gxg_g_unichar_iswide_cjk_w gxg_g_unichar_iswide_cjk
+#define gxg_g_unichar_iszerowidth_w gxg_g_unichar_iszerowidth
+#define gxg_g_unichar_toupper_w gxg_g_unichar_toupper
+#define gxg_g_unichar_tolower_w gxg_g_unichar_tolower
+#define gxg_g_unichar_totitle_w gxg_g_unichar_totitle
+#define gxg_g_unichar_digit_value_w gxg_g_unichar_digit_value
+#define gxg_g_unichar_xdigit_value_w gxg_g_unichar_xdigit_value
+#define gxg_g_unichar_combining_class_w gxg_g_unichar_combining_class
+#define gxg_g_unicode_canonical_ordering_w gxg_g_unicode_canonical_ordering
+#define gxg_g_utf8_get_char_w gxg_g_utf8_get_char
+#define gxg_g_utf8_get_char_validated_w gxg_g_utf8_get_char_validated
+#define gxg_g_utf8_prev_char_w gxg_g_utf8_prev_char
+#define gxg_g_utf8_find_next_char_w gxg_g_utf8_find_next_char
+#define gxg_g_utf8_find_prev_char_w gxg_g_utf8_find_prev_char
+#define gxg_g_utf8_strlen_w gxg_g_utf8_strlen
+#define gxg_g_utf8_strchr_w gxg_g_utf8_strchr
+#define gxg_g_utf8_strrchr_w gxg_g_utf8_strrchr
+#define gxg_g_utf8_strreverse_w gxg_g_utf8_strreverse
+#define gxg_g_utf8_validate_w gxg_g_utf8_validate
+#define gxg_g_utf8_strup_w gxg_g_utf8_strup
+#define gxg_g_utf8_strdown_w gxg_g_utf8_strdown
+#define gxg_g_utf8_casefold_w gxg_g_utf8_casefold
+#define gxg_g_utf8_normalize_w gxg_g_utf8_normalize
+#define gxg_g_utf8_collate_w gxg_g_utf8_collate
+#define gxg_g_utf8_collate_key_w gxg_g_utf8_collate_key
+#define gxg_g_utf8_collate_key_for_filename_w gxg_g_utf8_collate_key_for_filename
 #define gxg_g_cclosure_new_w gxg_g_cclosure_new
 #define gxg_g_signal_newv_w gxg_g_signal_newv
 #define gxg_g_signal_lookup_w gxg_g_signal_lookup
@@ -41696,7 +42017,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_pango_language_from_string_w gxg_pango_language_from_string
 #define gxg_pango_language_matches_w gxg_pango_language_matches
 #define gxg_G_OBJECT_TYPE_w gxg_G_OBJECT_TYPE
-#define gxg_g_utf8_validate_w gxg_g_utf8_validate
 #define gxg_gtk_tree_model_get_string_from_iter_w gxg_gtk_tree_model_get_string_from_iter
 #define gxg_gtk_tree_model_sort_iter_is_valid_w gxg_gtk_tree_model_sort_iter_is_valid
 #define gxg_gtk_tree_view_expand_to_path_w gxg_gtk_tree_view_expand_to_path
@@ -42646,8 +42966,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_entry_set_cursor_hadjustment_w gxg_gtk_entry_set_cursor_hadjustment
 #define gxg_gtk_entry_get_cursor_hadjustment_w gxg_gtk_entry_get_cursor_hadjustment
 #define gxg_gtk_icon_theme_list_contexts_w gxg_gtk_icon_theme_list_contexts
-#define gxg_gtk_page_setup_new_from_file_w gxg_gtk_page_setup_new_from_file
-#define gxg_gtk_page_setup_to_file_w gxg_gtk_page_setup_to_file
 #define gxg_gtk_print_settings_new_from_file_w gxg_gtk_print_settings_new_from_file
 #define gxg_gtk_print_settings_to_file_w gxg_gtk_print_settings_to_file
 #define gxg_gtk_range_set_show_fill_level_w gxg_gtk_range_set_show_fill_level
@@ -44414,11 +44732,48 @@ static void define_functions(void)
   xm_protected_size = 512;
   xm_protected = XEN_MAKE_VECTOR(xm_protected_size, XEN_FALSE);
   XEN_VECTOR_SET(xm_gc_table, 0, xm_protected);
-  XG_DEFINE_PROCEDURE(g_type_name, gxg_g_type_name_w, 1, 0, 0, H_g_type_name);
-  XG_DEFINE_PROCEDURE(g_type_qname, gxg_g_type_qname_w, 1, 0, 0, H_g_type_qname);
-  XG_DEFINE_PROCEDURE(g_type_from_name, gxg_g_type_from_name_w, 1, 0, 0, H_g_type_from_name);
-  XG_DEFINE_PROCEDURE(g_type_parent, gxg_g_type_parent_w, 1, 0, 0, H_g_type_parent);
-  XG_DEFINE_PROCEDURE(g_type_is_a, gxg_g_type_is_a_w, 2, 0, 0, H_g_type_is_a);
+  XG_DEFINE_PROCEDURE(g_unichar_validate, gxg_g_unichar_validate_w, 1, 0, 0, H_g_unichar_validate);
+  XG_DEFINE_PROCEDURE(g_unichar_isalnum, gxg_g_unichar_isalnum_w, 1, 0, 0, H_g_unichar_isalnum);
+  XG_DEFINE_PROCEDURE(g_unichar_isalpha, gxg_g_unichar_isalpha_w, 1, 0, 0, H_g_unichar_isalpha);
+  XG_DEFINE_PROCEDURE(g_unichar_iscntrl, gxg_g_unichar_iscntrl_w, 1, 0, 0, H_g_unichar_iscntrl);
+  XG_DEFINE_PROCEDURE(g_unichar_isdefined, gxg_g_unichar_isdefined_w, 1, 0, 0, H_g_unichar_isdefined);
+  XG_DEFINE_PROCEDURE(g_unichar_isdigit, gxg_g_unichar_isdigit_w, 1, 0, 0, H_g_unichar_isdigit);
+  XG_DEFINE_PROCEDURE(g_unichar_isgraph, gxg_g_unichar_isgraph_w, 1, 0, 0, H_g_unichar_isgraph);
+  XG_DEFINE_PROCEDURE(g_unichar_islower, gxg_g_unichar_islower_w, 1, 0, 0, H_g_unichar_islower);
+  XG_DEFINE_PROCEDURE(g_unichar_ismark, gxg_g_unichar_ismark_w, 1, 0, 0, H_g_unichar_ismark);
+  XG_DEFINE_PROCEDURE(g_unichar_isprint, gxg_g_unichar_isprint_w, 1, 0, 0, H_g_unichar_isprint);
+  XG_DEFINE_PROCEDURE(g_unichar_ispunct, gxg_g_unichar_ispunct_w, 1, 0, 0, H_g_unichar_ispunct);
+  XG_DEFINE_PROCEDURE(g_unichar_isspace, gxg_g_unichar_isspace_w, 1, 0, 0, H_g_unichar_isspace);
+  XG_DEFINE_PROCEDURE(g_unichar_istitle, gxg_g_unichar_istitle_w, 1, 0, 0, H_g_unichar_istitle);
+  XG_DEFINE_PROCEDURE(g_unichar_isupper, gxg_g_unichar_isupper_w, 1, 0, 0, H_g_unichar_isupper);
+  XG_DEFINE_PROCEDURE(g_unichar_isxdigit, gxg_g_unichar_isxdigit_w, 1, 0, 0, H_g_unichar_isxdigit);
+  XG_DEFINE_PROCEDURE(g_unichar_iswide, gxg_g_unichar_iswide_w, 1, 0, 0, H_g_unichar_iswide);
+  XG_DEFINE_PROCEDURE(g_unichar_iswide_cjk, gxg_g_unichar_iswide_cjk_w, 1, 0, 0, H_g_unichar_iswide_cjk);
+  XG_DEFINE_PROCEDURE(g_unichar_iszerowidth, gxg_g_unichar_iszerowidth_w, 1, 0, 0, H_g_unichar_iszerowidth);
+  XG_DEFINE_PROCEDURE(g_unichar_toupper, gxg_g_unichar_toupper_w, 1, 0, 0, H_g_unichar_toupper);
+  XG_DEFINE_PROCEDURE(g_unichar_tolower, gxg_g_unichar_tolower_w, 1, 0, 0, H_g_unichar_tolower);
+  XG_DEFINE_PROCEDURE(g_unichar_totitle, gxg_g_unichar_totitle_w, 1, 0, 0, H_g_unichar_totitle);
+  XG_DEFINE_PROCEDURE(g_unichar_digit_value, gxg_g_unichar_digit_value_w, 1, 0, 0, H_g_unichar_digit_value);
+  XG_DEFINE_PROCEDURE(g_unichar_xdigit_value, gxg_g_unichar_xdigit_value_w, 1, 0, 0, H_g_unichar_xdigit_value);
+  XG_DEFINE_PROCEDURE(g_unichar_combining_class, gxg_g_unichar_combining_class_w, 1, 0, 0, H_g_unichar_combining_class);
+  XG_DEFINE_PROCEDURE(g_unicode_canonical_ordering, gxg_g_unicode_canonical_ordering_w, 2, 0, 0, H_g_unicode_canonical_ordering);
+  XG_DEFINE_PROCEDURE(g_utf8_get_char, gxg_g_utf8_get_char_w, 1, 0, 0, H_g_utf8_get_char);
+  XG_DEFINE_PROCEDURE(g_utf8_get_char_validated, gxg_g_utf8_get_char_validated_w, 2, 0, 0, H_g_utf8_get_char_validated);
+  XG_DEFINE_PROCEDURE(g_utf8_prev_char, gxg_g_utf8_prev_char_w, 1, 0, 0, H_g_utf8_prev_char);
+  XG_DEFINE_PROCEDURE(g_utf8_find_next_char, gxg_g_utf8_find_next_char_w, 2, 0, 0, H_g_utf8_find_next_char);
+  XG_DEFINE_PROCEDURE(g_utf8_find_prev_char, gxg_g_utf8_find_prev_char_w, 2, 0, 0, H_g_utf8_find_prev_char);
+  XG_DEFINE_PROCEDURE(g_utf8_strlen, gxg_g_utf8_strlen_w, 2, 0, 0, H_g_utf8_strlen);
+  XG_DEFINE_PROCEDURE(g_utf8_strchr, gxg_g_utf8_strchr_w, 3, 0, 0, H_g_utf8_strchr);
+  XG_DEFINE_PROCEDURE(g_utf8_strrchr, gxg_g_utf8_strrchr_w, 3, 0, 0, H_g_utf8_strrchr);
+  XG_DEFINE_PROCEDURE(g_utf8_strreverse, gxg_g_utf8_strreverse_w, 2, 0, 0, H_g_utf8_strreverse);
+  XG_DEFINE_PROCEDURE(g_utf8_validate, gxg_g_utf8_validate_w, 2, 1, 0, H_g_utf8_validate);
+  XG_DEFINE_PROCEDURE(g_utf8_strup, gxg_g_utf8_strup_w, 2, 0, 0, H_g_utf8_strup);
+  XG_DEFINE_PROCEDURE(g_utf8_strdown, gxg_g_utf8_strdown_w, 2, 0, 0, H_g_utf8_strdown);
+  XG_DEFINE_PROCEDURE(g_utf8_casefold, gxg_g_utf8_casefold_w, 2, 0, 0, H_g_utf8_casefold);
+  XG_DEFINE_PROCEDURE(g_utf8_normalize, gxg_g_utf8_normalize_w, 3, 0, 0, H_g_utf8_normalize);
+  XG_DEFINE_PROCEDURE(g_utf8_collate, gxg_g_utf8_collate_w, 2, 0, 0, H_g_utf8_collate);
+  XG_DEFINE_PROCEDURE(g_utf8_collate_key, gxg_g_utf8_collate_key_w, 2, 0, 0, H_g_utf8_collate_key);
+  XG_DEFINE_PROCEDURE(g_utf8_collate_key_for_filename, gxg_g_utf8_collate_key_for_filename_w, 2, 0, 0, H_g_utf8_collate_key_for_filename);
   XG_DEFINE_PROCEDURE(g_cclosure_new, gxg_g_cclosure_new_w, 3, 0, 0, H_g_cclosure_new);
   XG_DEFINE_PROCEDURE(g_signal_newv, gxg_g_signal_newv_w, 0, 0, 1, H_g_signal_newv);
   XG_DEFINE_PROCEDURE(g_signal_lookup, gxg_g_signal_lookup_w, 2, 0, 0, H_g_signal_lookup);
@@ -45877,7 +46232,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_language_from_string, gxg_pango_language_from_string_w, 1, 0, 0, H_pango_language_from_string);
   XG_DEFINE_PROCEDURE(pango_language_matches, gxg_pango_language_matches_w, 2, 0, 0, H_pango_language_matches);
   XG_DEFINE_PROCEDURE(G_OBJECT_TYPE, gxg_G_OBJECT_TYPE_w, 1, 0, 0, H_G_OBJECT_TYPE);
-  XG_DEFINE_PROCEDURE(g_utf8_validate, gxg_g_utf8_validate_w, 2, 1, 0, H_g_utf8_validate);
   XG_DEFINE_PROCEDURE(gtk_tree_model_get_string_from_iter, gxg_gtk_tree_model_get_string_from_iter_w, 2, 0, 0, H_gtk_tree_model_get_string_from_iter);
   XG_DEFINE_PROCEDURE(gtk_tree_model_sort_iter_is_valid, gxg_gtk_tree_model_sort_iter_is_valid_w, 2, 0, 0, H_gtk_tree_model_sort_iter_is_valid);
   XG_DEFINE_PROCEDURE(gtk_tree_view_expand_to_path, gxg_gtk_tree_view_expand_to_path_w, 2, 0, 0, H_gtk_tree_view_expand_to_path);
@@ -46827,8 +47181,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_entry_set_cursor_hadjustment, gxg_gtk_entry_set_cursor_hadjustment_w, 2, 0, 0, H_gtk_entry_set_cursor_hadjustment);
   XG_DEFINE_PROCEDURE(gtk_entry_get_cursor_hadjustment, gxg_gtk_entry_get_cursor_hadjustment_w, 1, 0, 0, H_gtk_entry_get_cursor_hadjustment);
   XG_DEFINE_PROCEDURE(gtk_icon_theme_list_contexts, gxg_gtk_icon_theme_list_contexts_w, 1, 0, 0, H_gtk_icon_theme_list_contexts);
-  XG_DEFINE_PROCEDURE(gtk_page_setup_new_from_file, gxg_gtk_page_setup_new_from_file_w, 1, 1, 0, H_gtk_page_setup_new_from_file);
-  XG_DEFINE_PROCEDURE(gtk_page_setup_to_file, gxg_gtk_page_setup_to_file_w, 2, 1, 0, H_gtk_page_setup_to_file);
   XG_DEFINE_PROCEDURE(gtk_print_settings_new_from_file, gxg_gtk_print_settings_new_from_file_w, 1, 1, 0, H_gtk_print_settings_new_from_file);
   XG_DEFINE_PROCEDURE(gtk_print_settings_to_file, gxg_gtk_print_settings_to_file_w, 2, 1, 0, H_gtk_print_settings_to_file);
   XG_DEFINE_PROCEDURE(gtk_range_set_show_fill_level, gxg_gtk_range_set_show_fill_level_w, 2, 0, 0, H_gtk_range_set_show_fill_level);
@@ -48603,6 +48955,14 @@ static void define_integers(void)
 #if !GLIB_CHECK_VERSION(2,35,0)
   g_type_init();
 #endif
+  DEFINE_INTEGER(G_NORMALIZE_DEFAULT);
+  DEFINE_INTEGER(G_NORMALIZE_NFD);
+  DEFINE_INTEGER(G_NORMALIZE_DEFAULT_COMPOSE);
+  DEFINE_INTEGER(G_NORMALIZE_NFC);
+  DEFINE_INTEGER(G_NORMALIZE_ALL);
+  DEFINE_INTEGER(G_NORMALIZE_NFKD);
+  DEFINE_INTEGER(G_NORMALIZE_ALL_COMPOSE);
+  DEFINE_INTEGER(G_NORMALIZE_NFKC);
   DEFINE_INTEGER(G_SIGNAL_RUN_FIRST);
   DEFINE_INTEGER(G_SIGNAL_RUN_LAST);
   DEFINE_INTEGER(G_SIGNAL_RUN_CLEANUP);
@@ -49679,6 +50039,7 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_ICON_LOOKUP_FORCE_SIZE);
   DEFINE_INTEGER(GTK_ICON_THEME_NOT_FOUND);
   DEFINE_INTEGER(GTK_ICON_THEME_FAILED);
+  DEFINE_INTEGER(GTK_STATE_FLAG_NORMAL);
   DEFINE_INTEGER(GTK_STATE_FLAG_ACTIVE);
   DEFINE_INTEGER(GTK_STATE_FLAG_PRELIGHT);
   DEFINE_INTEGER(GTK_STATE_FLAG_SELECTED);
@@ -50432,7 +50793,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("02-May-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("01-Jun-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
