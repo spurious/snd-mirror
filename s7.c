@@ -22337,7 +22337,7 @@ s7_pointer s7_autoload(s7_scheme *sc, s7_pointer symbol, s7_pointer file_or_func
     {
       /* make a hash table, set global_slot(*autoload*) to it */
       sc->autoload_table = s7_make_hash_table(sc, 511);
-      global_slot(s7_make_symbol(sc, "*autoload*")) = sc->autoload_table;
+      slot_set_value(global_slot(s7_make_symbol(sc, "*autoload*")), sc->autoload_table);
     }
   
   s7_hash_table_set(sc, sc->autoload_table, symbol, file_or_function);
@@ -65530,18 +65530,15 @@ s7_scheme *s7_init(void)
 
 /* autoload:
  *  check recursive autoload and errors during it
- *  TODO: doc(examples)/test s7 side, possible handle system_extras and r7rs this way?
+ *  TODO: test s7 side (s7test), possibly handle system_extras and r7rs this way?
  *
- * auto-cload like autoload (use autoload but func not file as value)
- *   1: find autoload-hashed name, in this case value in autoload is a function doing the cloading
- *   3: if function, autoload cload, call function, and check that we have a winner
+ * auto-cload: (use autoload but func not file as value)
  *   can these functions be auto-generated?
  *   This way, all simple stuff like math library ops can be autoloaded (and gtk?)
  *
  * colorized syntax in glistener
  *   doesn't this belong to the caller?  At key release, it's easier for glistener to scan (return_callback already has the code)
  *   mark unbound vars, constants?/strings/comments especially
- *   can't this be done purely in scheme? -- create tag? -- see gtkex.scm: 	    
  *     (gtk_text_buffer_create_tag repl_buf "prompt_not_editable" (list "editable" 0 "weight" PANGO_WEIGHT_BOLD))
  *   how to choose tag given context at insert/delete: contexts: string comment symbol[global/unknown/shadowed/ambiguous] various-constants 
  */

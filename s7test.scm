@@ -10578,6 +10578,23 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (call-with-output-file "empty-file" (lambda (p) (display "\"empty-file\"" p)))
 (test (load (load "empty-file")) "empty-file")
 
+;;; autoload
+(test (autoload) 'error)
+(test (autoload 'abs) 'error)
+(for-each
+ (lambda (arg)
+   (test (autoload arg "dsp.scm") 'error)
+   (test (autoload 'hi arg) 'error))
+ (list #f '() (integer->char 65) 1 (list 1 2) _ht_ '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f))
+(test (autoload 'abs "dsp.scm" 123) 'error)
+
+(autoload 'auto_test_var "empty-file")
+(test (defined? 'auto_test_var) #f)
+(call-with-output-file "empty-file" (lambda (p) (format p "(define auto_test_var 123)~%")))
+(load "empty-file")
+(test (+ 1 auto_test_var) 124)
+
+
 #|
 (let ((c #f)
       (i 0)

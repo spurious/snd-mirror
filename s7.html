@@ -4598,12 +4598,21 @@ If s7 encounters an unbound variable, it first looks to see if it has any autolo
 This info can be declared via <em class=def>autoload</em>, a function of two arguments, the
 symbol that triggers the autoload, and either a filename or a function.  If a filename, s7
 loads that file; if a function, it is called with one argument, the current (calling) environment.
-If after all that the symbol is still unbound, s7 calls
+</p>
+
+<pre class="indented">
+(autoload 'channel-distance "dsp.scm") 
+;; now if we subsequently call channel-distance but forget to load "dsp.scm" first,
+;;   s7 loads "dsp.scm" itself, and uses its definition of channel-distance.
+;;   The C-side equivalent is s7_autoload.
+</pre>
+
+<p>The hash-table that holds the autoload info is named *autoload*.
+If after checking autoload, the symbol is still unbound, s7 calls
 <em class=def id="unboundvariablehook">*unbound-variable-hook*</em>.
 The offending symbol is named 'variable in the hook environment.
 If after running *unbound-variable-hook*, the symbol is still unbound,
 s7 calls the error handler.
-The hash-table that holds the autoload info is named *autoload*.
 </p>
 
 

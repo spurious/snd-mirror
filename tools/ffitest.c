@@ -1287,7 +1287,7 @@ int main(int argc, char **argv)
 	      }
 	  }
       }
-    
+
     port = s7_open_input_string(sc, "(+ 1 2)");
     if (!s7_is_input_port(sc, port))
       {fprintf(stderr, "%d: %s is not an input port?\n", __LINE__, s1 = TO_STR(port)); free(s1);}
@@ -1328,6 +1328,21 @@ int main(int argc, char **argv)
     s7_gc_unprotect_at(sc, gc_loc);
   }
 
+  {
+    s7_pointer port, val;
+    s7_autoload(sc, s7_make_symbol(sc, "auto_var"), s7_make_string(sc, "ffitest.scm"));
+    port = s7_open_output_file(sc, "ffitest.scm", "w");
+    gc_loc = s7_gc_protect(sc, port);      
+    s7_display(sc, s7_make_string(sc, "(define auto_var 123)"), port);
+    s7_newline(sc, port);
+    s7_close_output_port(sc, port);
+    s7_gc_unprotect_at(sc, gc_loc);
+    val = s7_eval_c_string(sc, "(+ auto_var 1)");
+    if ((!s7_is_integer(val)) ||
+	(s7_integer(val) != 124))
+      {fprintf(stderr, "%d: auto_var+1 = %s?\n", __LINE__, s1 = TO_STR(val)); free(s1);}
+  }
+    
   {
     s7_pointer test_hook;
     test_hook = s7_eval_c_string(sc, "(make-hook 'a 'b)");
