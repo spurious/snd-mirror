@@ -207,7 +207,7 @@ indented and on a sort of brownish background.
   <li><a href="#procedureinfo">procedure info</a>
   <li><a href="#evalstring">eval</a>
   <li><a href="#IO">IO and other OS functions</a>
-  <li><a href="#errors">errors</a>
+  <li><a href="#errors">errors, autoload</a>
   <li><a href="#constants">define-constant, symbol-access</a>
   <li><a href="#miscellanea">miscellaneous:</a> 
 
@@ -4352,7 +4352,7 @@ a more direct approach.
 
 
 
-<div class="header" id="errors"><h4>error handling</h4></div>
+<div class="header" id="errors"><h4>error handling and autoload</h4></div>
 
 <pre class="indented">
 (error tag . info)           ; signal an error of type tag with addition information
@@ -4594,12 +4594,16 @@ which allows you to stop at some point, then evaluate arbitrary expressions in t
 
 <!-- INDEX autoload:autoload -->
 <p id="autoload">
-If s7 encounters an unbound variable, it calls
-<em class=def id="unboundvariablehook">*unbound-variable-hook*</em> before signalling an error.
+If s7 encounters an unbound variable, it first looks to see if it has any autoload information about it.
+This info can be declared via <em class=def>autoload</em>, a function of two arguments, the
+symbol that triggers the autoload, and either a filename or a function.  If a filename, s7
+loads that file; if a function, it is called with one argument, the current (calling) environment.
+If after all that the symbol is still unbound, s7 calls
+<em class=def id="unboundvariablehook">*unbound-variable-hook*</em>.
 The offending symbol is named 'variable in the hook environment.
-In Snd, *unbound-variable-hook* is used to implement autoloading (see snd-help.c).
-If none of the *unbound-variable-hook* functions sets 'result' to something other than #&lt;undefined&gt;,
+If after running *unbound-variable-hook*, the symbol is still unbound,
 s7 calls the error handler.
+The hash-table that holds the autoload info is named *autoload*.
 </p>
 
 

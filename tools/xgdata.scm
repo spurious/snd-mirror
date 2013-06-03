@@ -4430,6 +4430,8 @@
 (CFNC "GType G_OBJECT_TYPE GObject* object") 
 (CCHK "G_IS_OBJECT(object)" "GObject*")
 
+#|
+;;; where are these used? gtk_binding_entry_add_signal, but that is commented out
 (CLNG "G_TYPE_IO_CONDITION")
 ;(CLNG "G_TYPE_FUNDAMENTAL(type)")
 ;(CLNG "G_TYPE_FUNDAMENTAL_MAX")
@@ -4454,6 +4456,7 @@
 (CLNG "G_TYPE_BOXED")
 (CLNG "G_TYPE_PARAM")
 (CLNG "G_TYPE_OBJECT")
+|#
 
 
 ;;; 2.90.6 (CFNC "void gdk_draw_pixbuf GdkDrawable* drawable GdkGC* gc GdkPixbuf* pixbuf int src_x int src_y int dest_x int dest_y int width int height GdkRgbDither dither int x_dither int y_dither")

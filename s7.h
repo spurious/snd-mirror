@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.24"
-#define S7_DATE "28-May-13"
+#define S7_VERSION "2.25"
+#define S7_DATE "3-June-13"
 
 
 typedef long long int s7_Int;
@@ -148,6 +148,7 @@ char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj);          /* same as 
 s7_pointer s7_load(s7_scheme *sc, const char *file);                 /* (load file) */
 s7_pointer s7_load_path(s7_scheme *sc);                              /* *load-path* */
 s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir);      /* (set! *load-path* (cons dir *load-path*)) */
+s7_pointer s7_autoload(s7_scheme *sc, s7_pointer symbol, s7_pointer file_or_function);  /* (autoload symbol file-or-function) */
 
   /* the load path is a list of directories to search if load can't find the file passed as its argument.
    */
@@ -886,6 +887,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 3-June:    s7_autoload.
  * 28-May:    export s7_is_provided.  Added s7_scheme* arg to s7_procedure_environment.
  * 21-May:    equality predicate optional arg in make-hash-table.
  * 14-May:    glistener.c, glistener.h, s7_symbol_table_find_name (for glistener).

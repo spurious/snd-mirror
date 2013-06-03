@@ -3806,61 +3806,6 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 }
 
 
-#if HAVE_SCHEME
-#define S_autoload_file "autoload-file"
-
-static XEN g_autoload_file(XEN symbol_name)
-{
-  #define H_autoload_file "(autoload-file symbol-name) looks for the file that contains a definition of the variable \
-whose name (as a string) is 'symbol-name'"
-
-  int i;
-  const char *name;
-
-  XEN_ASSERT_TYPE(XEN_STRING_P(symbol_name), symbol_name, XEN_ONLY_ARG, S_autoload_file, "a string");
-  name = XEN_TO_C_STRING(symbol_name);
-
-  for (i = 0; i < AUTOLOAD_NAMES; i++)
-    if (strcmp(name, autoload_names[i]) == 0)
-      {
-	const char *filename;
-	char *str;
-	int len;
-	XEN result;
-
-	filename = autoload_files[autoload_indices[i]];
-	if (mus_file_probe(filename))
-	  return(C_TO_XEN_STRING(filename));
-
-	/* try /usr/local/share/snd */
-	len = strlen(filename) + 32;
-	str = (char *)calloc(len, sizeof(char));
-	snprintf(str, len, "/usr/local/share/snd/%s", filename);
-	if (mus_file_probe(str))
-	  {
-	    result = C_TO_XEN_STRING(str);
-	    free(str);
-	    return(result);
-	  }
-
-	/* try /usr/lib/snd/scheme */
-	snprintf(str, len, "/usr/lib/snd/scheme/%s", filename);
-	if (mus_file_probe(str))
-	  {
-	    result = C_TO_XEN_STRING(str);
-	    free(str);
-	    return(result);
-	  }
-
-	/* no luck */
-	free(str);
-      }
-  
-  return(XEN_FALSE);
-}
-#endif
-
-
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_listener_help_w, g_listener_help)
 XEN_NARGIFY_0(g_html_dir_w, g_html_dir)
@@ -3870,9 +3815,6 @@ XEN_NARGIFY_1(g_set_html_program_w, g_set_html_program)
 XEN_NARGIFY_1(g_snd_url_w, g_snd_url)
 XEN_NARGIFY_0(g_snd_urls_w, g_snd_urls)
 XEN_ARGIFY_4(g_help_dialog_w, g_help_dialog)
-#if HAVE_SCHEME
-XEN_NARGIFY_1(g_autoload_file_w, g_autoload_file)
-#endif
 #else
 #define g_listener_help_w g_listener_help
 #define g_html_dir_w g_html_dir
@@ -3882,9 +3824,6 @@ XEN_NARGIFY_1(g_autoload_file_w, g_autoload_file)
 #define g_snd_url_w g_snd_url
 #define g_snd_urls_w g_snd_urls
 #define g_help_dialog_w g_help_dialog
-#if HAVE_SCHEME
-#define g_autoload_file_w g_autoload_file
-#endif
 #endif
 
 void g_init_help(void)
@@ -3934,34 +3873,6 @@ If more than one hook function, each function gets the previous function's outpu
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_program, g_html_program_w, H_html_program, S_setB S_html_program, g_set_html_program_w,  0, 0, 1, 0);
 
 #if HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE(S_autoload_file, g_autoload_file_w,  1, 0, 0, H_autoload_file);
-
-  {
-    /* we're trying to keep any "normal" symbol out of this environment, so the argument to the
-     *   hook function (normally "hook") has to be a gensym, but even the gensym has to be
-     *   outside the expression!
-     */
-    char *arg_name, *expression;
-    arg_name = mus_strdup(s7_symbol_name(s7_gensym(s7, "unbound-variable")));
-    expression = (char *)calloc(1024, sizeof(char));
-    snprintf(expression, 1024, "(set! (hook-functions *unbound-variable-hook*)     \n\
- 	                          (list (lambda (%s)                               \n\
-		                    (let* ((sym (%s 'variable))                    \n\
-			              (file (autoload-file (symbol->string sym)))) \n\
-		                      (if file (load file))                        \n\
-		                      (set! (%s 'result) (symbol->value sym))))))",
-	     arg_name, arg_name, arg_name);
-    XEN_EVAL_C_STRING(expression);
-    free(expression);
-    free(arg_name);
-
-  /* (procedure-source (car (hook-functions *unbound-variable-hook*)))
-     (lambda ({unbound-variable}-7) 
-       (let* ((sym ({unbound-variable}-7 'variable)) 
-              (file (autoload-file (symbol->string sym)))) 
-         (if file (load file)) 
-         (set! ({unbound-variable}-7 'result) (symbol->value sym))))
-  */
-  }
+  autoload_info(s7); /* snd-xref.c included above */
 #endif
 }

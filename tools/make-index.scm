@@ -520,167 +520,114 @@
 (load "nb.scm")
 
 
-(let ()
-  (define (report-places)
-    (let ((names ())
-	  (places ()))
-      
-      (define (where-is func)
-	(let ((addr (with-environment (procedure-environment func) __func__)))
-	  ;; this misses scheme-side pws because their environment is (probably) the global env
-	  (if (not (pair? addr))
-	      #f
-	      (cadr addr))))
-      
-      (define (apropos-1 alist)
-	(for-each
-	 (lambda (binding)
-	   (if (pair? binding)
-	       (let ((symbol (car binding))
-		     (value (cdr binding)))
-		 (if (and (procedure? value) 
-			  (not (assq symbol names)))
-		     (let ((file (where-is value)))
-		       (if (and file
-				(not (string=? file "~/.snd_s7"))
-				(not (string=? file "/home/bil/.snd_s7"))
-				(not (string=? file "t.scm"))
-				(not (string=? file "/home/bil/cl/t.scm"))
-				(not (string=? file "/home/bil/cl/make-index.scm"))
-				)
-			   (begin
-			     (set! names (cons (cons symbol file) names))
-			     (if (not (member file places))
-				 (set! places (cons file places))))))))))
-	 alist))
-      
-      ;; handle the main macros by hand
-      (for-each
-       (lambda (symbol-and-file)
-	 (let ((symbol (car symbol-and-file))
-	       (file (cadr symbol-and-file)))
-	   (if (not (file-exists? file))
-	       (format *stderr* ";~S says it is in ~S which does not exist~%" symbol file))
-	   (set! names (cons (cons symbol file) names))
-	   (if (not (member file places))
-	       (set! places (cons file places)))))
-       (list 
-	(list 'with-sound "ws.scm")
-	(list 'with-mixed-sound "ws.scm")
-	(list 'with-full-sound "ws.scm")
-	(list 'with-temp-sound "ws.scm")
-	(list 'with-marked-sound "ws.scm")
-	(list 'with-simple-sound "ws.scm")
-	(list 'sound-let "ws.scm")
-	(list 'definstrument "ws.scm")
-	(list 'defgenerator "generators.scm")
-
-	(list 'channel-sync "extensions.scm")
-	(list 'cursor-follows-play "snd11.scm")
-	(list 'xe-envelope "xm-enved.scm")
-	))
-      
-      ;; and some of the main variables
-      (for-each
-       (lambda (symbol-and-file)
-	 (let ((symbol (car symbol-and-file))
-	       (file (cadr symbol-and-file)))
-	   (if (not (file-exists? file))
-	       (format *stderr* ";~S says it is in ~S which does not exist~%" symbol file))
-	   (set! names (cons (cons symbol file) names))
-	   (if (not (member file places))
-	       (set! places (cons file places)))))
-       
-       (list
-	(list '*clm-srate* "ws.scm")
-	(list '*clm-file-name* "ws.scm")
-	(list '*clm-channels* "ws.scm")
-	(list '*clm-data-format* "ws.scm")
-	(list '*clm-header-type* "ws.scm")
-	(list '*clm-verbose* "ws.scm")
-	(list '*clm-play* "ws.scm")
-	(list '*clm-statistics* "ws.scm")
-	(list '*clm-reverb* "ws.scm")
-	(list '*clm-reverb-channels* "ws.scm")
-	(list '*clm-reverb-data* "ws.scm")
-	(list '*clm-table-size* "ws.scm")
-	(list '*clm-file-buffer-size* "ws.scm")
-	(list '*clm-locsig-type* "ws.scm")
-	(list '*clm-clipped* "ws.scm")
-	(list '*clm-array-print-length* "ws.scm")
-	(list '*clm-player* "ws.scm")
-	(list '*clm-notehook* "ws.scm")
-	(list '*clm-with-sound-depth* "ws.scm")
-	(list '*clm-default-frequency* "ws.scm")
-	(list '*clm-delete-reverb* "ws.scm")
-	(list '*to-snd* "ws.scm")
-	(list '*clm-search-list* "ws.scm")
-	(list '*definstrument-hook* "ws.scm")))
-      
-      (apropos-1 (reverse (environment->list (global-environment))))
-
-      (let* ((name-len (length names))
-	     (nl-1 (- name-len 1))
-	     (file-len (length places))
-	     (fl-1 (- file-len 1)))
-
-	(do ((i 0 (+ i 1))
-	     (p places (cdr p)))
-	    ((= i file-len))
-	  (let ((pos (char-position #\/ (car p))))
-	    (if (not pos)
-		(set! (places i) (car p))
-		(let ((place (car p)))
-		  (do ((k (char-position #\/ place (+ pos 1)) (char-position #\/ place (+ pos 1))))
-		      ((not k)
-		       (set! (places i) (substring place (+ pos 1))))
-		    (set! pos k))))))
-	
-	(set! places (sort! places string<?))
-	(set! names (sort! names (lambda (a b)
-				   (string<? (symbol->string (car a)) 
-					     (symbol->string (car b))))))
-	
-	(call-with-output-file "indexer.data"
-	  (lambda (p)
-	    
-	    (let ((hashed-places (make-hash-table)))
-	      (do ((i 0 (+ i 1)))
-		  ((= i file-len)) 
-		(set! (hashed-places (list-ref places i)) i))
-
-	      (format p "#define AUTOLOAD_FILES ~D~%~%" file-len)
-	      (format p "static const char *autoload_files[AUTOLOAD_FILES] = {~%  ")
-	      (format p "~S, " (places 0))
-	      (do ((i 1 (+ i 1)))
-		  ((= i fl-1))
-		(if (= (modulo i 6) 0)
-		    (format p "~S, ~%  " (places i))
-		    (format p "~S, " (places i))))
-	      (format p "~S};~%~%" (places fl-1))
-	      
-	      (format p "#define AUTOLOAD_NAMES ~D~%~%" name-len)
-	      (format p "static const char *autoload_names[AUTOLOAD_NAMES] = {~%  ")
-	      (format p "~S, " (symbol->string (caar names)))
-	      (do ((i 1 (+ i 1))
-		   (cur-name (cdr names) (cdr cur-name)))
-		  ((= i nl-1))
-		(if (= (modulo i 4) 0)
-		    (format p "~S, ~%  " (symbol->string (caar cur-name)))
-		    (format p "~S, " (symbol->string (caar cur-name)))))
-	      (format p "~S};~%~%" (symbol->string (car (names nl-1))))
-	      
-	      (format p "static int autoload_indices[AUTOLOAD_NAMES] = {~%  ")
-	      (format p "~D, " (or (hashed-places (cdar names)) 0))
-	      (do ((i 1 (+ i 1))
-		   (cur-name (cdr names) (cdr cur-name)))
-		  ((= i nl-1))
-		(if (= (modulo i 24) 0)
-		    (format p "~D, ~%  " (or (hashed-places (cdar cur-name)) 0))
-		    (format p "~D, " (or (hashed-places (cdar cur-name)) 0))))
-	      (format p "~D};~%~%" (or (hashed-places (cdr (names nl-1))) 0))))))))
+(let ((names (make-hash-table)))
   
-  (report-places))
+  (define (where-is func)
+    (let ((addr (with-environment (procedure-environment func) __func__)))
+      ;; this misses scheme-side pws because their environment is (probably) the global env
+      (if (not (pair? addr))
+	  #f
+	  (cadr addr))))
+  
+  (define (apropos-1 alist)
+    (for-each
+     (lambda (binding)
+       (if (pair? binding)
+	   (let ((symbol (car binding))
+		 (value (cdr binding)))
+	     (if (procedure? value)
+		 (let ((file (where-is value)))
+		   
+		   (if (and file
+			    (not (string=? file "~/.snd_s7"))
+			    (not (string=? file "/home/bil/.snd_s7"))
+			    (not (string=? file "t.scm"))
+			    (not (string=? file "/home/bil/cl/t.scm"))
+			    (not (string=? file "/home/bil/cl/make-index.scm"))
+			    )
+		       (let ((pos (char-position #\/ file)))
+			 (if pos
+			     (do ((k (char-position #\/ file (+ pos 1)) (char-position #\/ file (+ pos 1))))
+				 ((not k)
+				  (set! file (substring file (+ pos 1))))
+			       (set! pos k)))
+			 (let ((cur-names (hash-table-ref names file)))
+			   (if cur-names
+			       (if (not (memq symbol cur-names))
+				   (hash-table-set! names file (cons symbol cur-names)))
+			       (hash-table-set! names file (list symbol)))))))))))
+     alist))
+  
+  ;; handle the main macros by hand
+  (for-each
+   (lambda (symbol-and-file)
+     (let ((symbol (car symbol-and-file))
+	   (file (cadr symbol-and-file)))
+       (if (not (file-exists? file))
+	   (format *stderr* ";~S says it is in ~S which does not exist~%" symbol file))
+       
+       (let ((cur-names (hash-table-ref names file)))
+	 (if cur-names
+	     (hash-table-set! names file (cons symbol cur-names))
+	     (hash-table-set! names file (list symbol))))))
+   (list 
+    (list 'with-sound "ws.scm")
+    (list 'with-mixed-sound "ws.scm")
+    (list 'with-full-sound "ws.scm")
+    (list 'with-temp-sound "ws.scm")
+    (list 'with-marked-sound "ws.scm")
+    (list 'with-simple-sound "ws.scm")
+    (list 'sound-let "ws.scm")
+    (list 'definstrument "ws.scm")
+    (list 'defgenerator "generators.scm")
+    
+    (list 'channel-sync "extensions.scm")
+    (list 'cursor-follows-play "snd11.scm")
+    (list 'xe-envelope "xm-enved.scm")
+    (list '*clm-srate* "ws.scm")
+    (list '*clm-file-name* "ws.scm")
+    (list '*clm-channels* "ws.scm")
+    (list '*clm-data-format* "ws.scm")
+    (list '*clm-header-type* "ws.scm")
+    (list '*clm-verbose* "ws.scm")
+    (list '*clm-play* "ws.scm")
+    (list '*clm-statistics* "ws.scm")
+    (list '*clm-reverb* "ws.scm")
+    (list '*clm-reverb-channels* "ws.scm")
+    (list '*clm-reverb-data* "ws.scm")
+    (list '*clm-table-size* "ws.scm")
+    (list '*clm-file-buffer-size* "ws.scm")
+    (list '*clm-locsig-type* "ws.scm")
+    (list '*clm-clipped* "ws.scm")
+    (list '*clm-array-print-length* "ws.scm")
+    (list '*clm-player* "ws.scm")
+    (list '*clm-notehook* "ws.scm")
+    (list '*clm-with-sound-depth* "ws.scm")
+    (list '*clm-default-frequency* "ws.scm")
+    (list '*clm-delete-reverb* "ws.scm")
+    (list '*to-snd* "ws.scm")
+    (list '*clm-search-list* "ws.scm")
+    (list '*definstrument-hook* "ws.scm")))
+  
+  (apropos-1 (reverse (environment->list (global-environment))))
+  
+  (call-with-output-file "indexer.data"
+    (lambda (p)
+      (let ((hti (make-hash-table-iterator names)))
+	(format p "static void autoload_info(s7_scheme *sc)~%{~%  int gloc;~%  s7_pointer str;~%")
+	(do ((ns (hti) (hti)))
+	    ((null? ns))
+	  (let ((file (car ns))
+		(symbols (cdr ns)))
+	    (format p "  str = s7_make_string(sc, ~S);~%  gloc = s7_gc_protect(sc, str);~%" file)
+	    (for-each 
+	     (lambda (symbol)
+	       (format p "  s7_autoload(sc, s7_make_symbol(sc, \"~S\"), str);~%" symbol))
+	     symbols)
+	    (format p "  s7_gc_unprotect_at(sc, gloc);~%~%")))
+	(format p "}~%")))))
+  
+
 
 
 

@@ -616,25 +616,6 @@ bool glistener_write(glistener *g, FILE *fp)
   return(true);
 }
 
-#if 0
-bool glistener_write_to_file(glistener *g, const char *filename)
-{
-  if (g->text)
-    {
-      FILE *fp;
-      fp = fopen(filename, "w");
-      if (fp)
-	{
-	  bool result;
-	  result = glistener_write(g, fp);
-	  fclose(fp);
-	  return(result);
-	}
-    }
-  return(false);
-}
-#endif
-
 
 void glistener_append_text(glistener *g, const char *msg)
 {
@@ -1318,7 +1299,6 @@ static void text_transpose(glistener *g)
 
 static void clear_back_to_prompt(glistener *g)
 {
-  /* buggy in gtk 2.20 (backward search) */
   int beg, end;
   GtkTextIter start, last;
 
@@ -2585,6 +2565,7 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
 /* TODO: move by expr, then use that in indent code and function arg checking [need type info too]
  * TODO: key for apropos? fuzzy-completion? (levenstein is in snd-help.c but needs serious optimization)
  * TODO: indent do and if need expr counts -- can this use rtn_cb?
+ * PERHAPS: syntax highlights (or should caller do this?)
  */
 
 /* changes:

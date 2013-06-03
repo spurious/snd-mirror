@@ -1260,7 +1260,7 @@ struct s7_scheme {
    */
   s7_pointer MINUS, MULTIPLY, ADD, DIVIDE, LT, LEQ, EQ, GT, GEQ, ABS, ACOS, ACOSH;
   s7_pointer ANGLE, APPEND, APPLY, ARITABLEP, ARITY, ASH, ASIN, ASINH, ASSOC, ASSQ, ASSV, ATAN, ATANH;
-  s7_pointer AUGMENT_ENVIRONMENT, AUGMENT_ENVIRONMENTB, BOOLEANP, BYTEVECTOR, CAAAAR, CAAADR, CAAAR, CAADAR, CAADDR;
+  s7_pointer AUGMENT_ENVIRONMENT, AUGMENT_ENVIRONMENTB, AUTOLOAD, BOOLEANP, BYTEVECTOR, CAAAAR, CAAADR, CAAAR, CAADAR, CAADDR;
   s7_pointer CAADR, CAAR, CADAAR, CADADR, CADAR, CADDAR, CADDDR, CADDR, CADR, CALL_CC, CALL_WITH_EXIT;
   s7_pointer CALL_WITH_INPUT_FILE, CALL_WITH_INPUT_STRING, CALL_WITH_OUTPUT_FILE, CALL_WITH_OUTPUT_STRING, CAR, CATCH, CDAAAR;
   s7_pointer CDAADR, CDAAR, CDADAR, CDADDR, CDADR, CDAR, CDDAAR, CDDADR, CDDAR, CDDDAR, CDDDDR, CDDDR, CDDR, CDR, CEILING;
@@ -1337,6 +1337,7 @@ struct s7_scheme {
   s7_pointer SIMPLE_DO_P, DOTIMES_P, SIMPLE_DO_FOREVER, SIMPLE_DO_A;
   s7_pointer DOX;
 
+  s7_pointer autoload_table;
   s7_pointer *safe_lists;
 };
 
@@ -1996,6 +1997,7 @@ static void set_syntax_op(s7_pointer p, s7_pointer op) {syntax_op(p) = op; lifte
 #define shared_vector(p)              ((p)->object.vector.dim_info->original)
 #define vector_rank(p)                ((vector_dimension_info(p)) ? vector_ndims(p) : 1)
 
+#define is_hash_table(p)              (type(p) == T_HASH_TABLE)
 #define hash_table_length(p)          (p)->object.hasher.length
 #define hash_table_element(p, i)      ((p)->object.hasher.elements[i])
 #define hash_table_elements(p)        (p)->object.hasher.elements
@@ -22041,6 +22043,8 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* -------------------------------- load -------------------------------- */
+
 static FILE *search_load_path(s7_scheme *sc, const char *name)
 {
   int i, len, name_len;
@@ -22076,6 +22080,7 @@ static s7_pointer load_file(s7_scheme *sc, FILE *fp, const char *name)
 {
   return(read_file(sc, fp, name, -1, "load"));  /* -1 means always read its contents into a local string */
 }
+
 
 s7_pointer s7_load(s7_scheme *sc, const char *filename)
 {
@@ -22324,6 +22329,51 @@ static s7_pointer g_load_path_set(s7_scheme *sc, s7_pointer args)
   return(sc->ERROR);
 }
 
+
+s7_pointer s7_autoload(s7_scheme *sc, s7_pointer symbol, s7_pointer file_or_function)
+{
+  /* add '(symbol . file) to s7's autoload table */
+  if (is_null(sc->autoload_table))
+    {
+      /* make a hash table, set global_slot(*autoload*) to it */
+      sc->autoload_table = s7_make_hash_table(sc, 511);
+      global_slot(s7_make_symbol(sc, "*autoload*")) = sc->autoload_table;
+    }
+  
+  s7_hash_table_set(sc, sc->autoload_table, symbol, file_or_function);
+  return(file_or_function);
+}
+
+
+static s7_pointer g_autoload(s7_scheme *sc, s7_pointer args)
+{
+  #define H_autoload "(autoload symbol file-or-function) adds the symbol to its table of autoloadable symbols. \
+If that symbol is encountered as an unbound variable, s7 either loads the file (following *load-path*), or calls \
+the function.  The function takes one argument, the calling environment.  Presumably the symbol is defined \
+in the file, or by the function."
+
+  s7_pointer sym, value;
+
+  sym = car(args);
+  if (is_string(sym))
+    sym = s7_make_symbol(sc, string_value(sym));
+  if (!is_symbol(sym))
+    {
+      CHECK_METHOD(sc, sym, sc->AUTOLOAD, args);
+      return(s7_wrong_type_arg_error(sc, "autoload", 1, sym, "a string (symbol-name) or a symbol"));
+    }
+  
+  value = cadr(args);
+  if ((is_string(value)) ||
+      (is_closure(value)))
+    return(s7_autoload(sc, sym, value));
+
+  return(s7_wrong_type_arg_error(sc, "autoload", 2, value, "a string (file-name) or a thunk"));
+}
+
+
+
+/* -------------------------------- eval-string -------------------------------- */
 
 static s7_pointer eval_string_1(s7_scheme *sc, const char *str)
 {
@@ -29047,21 +29097,21 @@ If its first argument is a list, the list is copied (despite the '!')."
 
 bool s7_is_hash_table(s7_pointer p)
 {
-  return(type(p) == T_HASH_TABLE);
+  return(is_hash_table(p));
 }
 
 
 static s7_pointer g_is_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_hash_table "(hash-table? obj) returns #t if obj is a hash-table"
-  CHECK_BOOLEAN_METHOD(sc, car(args), s7_is_hash_table, sc->HASH_TABLEP, args);
+  CHECK_BOOLEAN_METHOD(sc, car(args), is_hash_table, sc->HASH_TABLEP, args);
 }
 
 
 static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_size "(hash-table-size obj) returns the size of the hash-table obj"
-  if (!s7_is_hash_table(car(args)))
+  if (!is_hash_table(car(args)))
     {
       CHECK_METHOD(sc, car(args), sc->HASH_TABLE_SIZE, args);
       return(simple_wrong_type_argument(sc, sc->HASH_TABLE_SIZE, car(args), T_HASH_TABLE));
@@ -29601,7 +29651,7 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 
   table = car(args);
   
-  if (!s7_is_hash_table(table))
+  if (!is_hash_table(table))
     {
       CHECK_METHOD(sc, table, sc->HASH_TABLE_REF, args);
       return(wrong_type_argument(sc, sc->HASH_TABLE_REF, small_int(1), table, T_HASH_TABLE));
@@ -29625,7 +29675,7 @@ static s7_pointer g_hash_table_ref_2(s7_scheme *sc, s7_pointer args)
   s7_pointer x, table;
   table = car(args);
   
-  if (!s7_is_hash_table(table))
+  if (!is_hash_table(table))
     {
       CHECK_METHOD(sc, table, sc->HASH_TABLE_REF, args);
       return(wrong_type_argument(sc, sc->HASH_TABLE_REF, small_int(1), table, T_HASH_TABLE));
@@ -29645,7 +29695,7 @@ static s7_pointer g_hash_table_ref_ss(s7_scheme *sc, s7_pointer args)
   s7_pointer x, table;
   table = finder(sc, car(args));
   
-  if (!s7_is_hash_table(table))
+  if (!is_hash_table(table))
     {
       CHECK_METHOD(sc, table, sc->HASH_TABLE_REF, list_2(sc, table, finder(sc, cadr(args))));
       return(wrong_type_argument(sc, sc->HASH_TABLE_REF, small_int(1), table, T_HASH_TABLE));
@@ -29665,7 +29715,7 @@ static s7_pointer g_hash_table_ref_car(s7_scheme *sc, s7_pointer args)
   s7_pointer x, y, table;
   table = finder(sc, car(args));
   
-  if (!s7_is_hash_table(table))
+  if (!is_hash_table(table))
     {
       CHECK_METHOD(sc, table, sc->HASH_TABLE_REF, list_2(sc, table, car(finder(sc, cadadr(args)))));
       return(wrong_type_argument(sc, sc->HASH_TABLE_REF, small_int(1), table, T_HASH_TABLE));
@@ -29691,7 +29741,7 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
 
   table = car(args);
   
-  if (!s7_is_hash_table(table))
+  if (!is_hash_table(table))
     {
       CHECK_METHOD(sc, table, sc->HASH_TABLE_SET, args);
       return(wrong_type_argument(sc, sc->HASH_TABLE_SET, small_int(1), table, T_HASH_TABLE));
@@ -29882,7 +29932,7 @@ static s7_pointer g_make_hash_table_iterator(s7_scheme *sc, s7_pointer args)
 returns the next (key . value) pair in the hash-table each time it is called.  When there are no more pairs, it returns nil."
 
   ht_iter *iter;
-  if (!s7_is_hash_table(car(args)))
+  if (!is_hash_table(car(args)))
     {
       CHECK_METHOD(sc, car(args), sc->MAKE_HASH_TABLE_ITERATOR, args);
       return(simple_wrong_type_argument(sc, sc->MAKE_HASH_TABLE_ITERATOR, car(args), T_HASH_TABLE));
@@ -35313,7 +35363,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
   if (len != 0)
     {
       sc->x = list_1(sc, sc->NIL);
-      if (s7_is_hash_table(obj))
+      if (is_hash_table(obj))
 	sc->z = list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
       else 
 	{ 
@@ -35334,7 +35384,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	    {
 	      sc->x = cons(sc, sc->NIL, sc->x);          /* we're making a list to be filled in later with the individual args */
 
-	      if (s7_is_hash_table(car(x)))
+	      if (is_hash_table(car(x)))
 		sc->z = cons_unchecked(sc, g_make_hash_table_iterator(sc, x), sc->z);
 	      else
 		{
@@ -35651,7 +35701,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
   if (len != 0)
     {
-      if (s7_is_hash_table(obj))
+      if (is_hash_table(obj))
 	sc->z = list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
       else 
 	{
@@ -35677,7 +35727,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      if (nlen < len) len = nlen;
 	      if (len == 0) break; /* need error check below */
 	      
-	      if (s7_is_hash_table(car(x)))
+	      if (is_hash_table(car(x)))
 		sc->z = cons(sc, g_make_hash_table_iterator(sc, x), sc->z);
 	      else
 		{
@@ -36807,9 +36857,10 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
   if (safe_strcmp(symbol_name(sym), "|#") == 0)
     return(read_error(sc, "unmatched |#"));
 
-  /* check *unbound-variable-hook* 
+  /* check *autoload*, then *unbound-variable-hook* 
    */
-  if (is_not_null(s7_hook_functions(sc, sc->unbound_variable_hook)))
+  if ((is_hash_table(sc->autoload_table)) ||
+      (is_not_null(s7_hook_functions(sc, sc->unbound_variable_hook))))
     {
       int cur_code_loc, value_loc, args_loc, code_loc;
       s7_pointer result, cur_code, value, code, args;
@@ -36831,6 +36882,8 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       value = sc->value;
       value_loc = s7_gc_protect(sc, value);
       cur_code = sc->cur_code;
+      result = sc->UNDEFINED;
+
       if (!is_pair(cur_code))
 	{
 	  /* isolated typo perhaps -- no pair to hold the position info, so make one.
@@ -36843,7 +36896,28 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       cur_code_loc = s7_gc_protect(sc, cur_code);   /* we need to save this because it has the file/line number of the unbound symbol */
 
       SAVE_X_Y_Z(save_x, save_y, save_z); /* this is needed to protect entire expression context */
-      result = s7_call(sc, sc->unbound_variable_hook, list_1(sc, sym)); /* not s7_apply_function */
+      if (is_hash_table(sc->autoload_table))
+	{
+	  s7_pointer val;
+	  val = s7_hash_table_ref(sc, sc->autoload_table, sym);
+	  if (is_string(val))
+	    {
+	      /* val should be a filename. *load-path* is searched if necessary. */
+	      s7_load(sc, string_value(val));
+	    }
+	  else
+	    {
+	      if (is_closure(val))
+		{
+		  /* val should be a function of one argument, the current (calling) environment. */
+		  s7_call(sc, val, s7_cons(sc, sc->envir, sc->NIL));
+		}
+	    }
+	  result = s7_symbol_value(sc, sym); /* calls find_symbol, does not trigger unbound_variable search */
+	}
+
+      if (result == sc->UNDEFINED)
+	result = s7_call(sc, sc->unbound_variable_hook, list_1(sc, sym)); /* not s7_apply_function */
       RESTORE_X_Y_Z(save_x, save_y, save_z);
 
       sc->value = value;
@@ -51536,7 +51610,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer s;
 		s = find_symbol_or_bust(sc, car(code));
-		if (!s7_is_hash_table(s))
+		if (!is_hash_table(s))
 		  break;
 		
 		sc->value = s7_hash_table_ref(sc, s, cadr(code));
@@ -51549,7 +51623,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer s;
 		s = find_symbol_or_bust(sc, car(code));
-		if (!s7_is_hash_table(s))
+		if (!is_hash_table(s))
 		  break;
 		
 		sc->value = s7_hash_table_ref(sc, s, find_symbol_or_bust(sc, cadr(code)));
@@ -64147,6 +64221,7 @@ s7_scheme *s7_init(void)
 
   sc->begin_hook = NULL;
   sc->default_rng = NULL;
+  sc->autoload_table = sc->NIL;
   
   sc->heap_size = INITIAL_HEAP_SIZE;
   if ((sc->heap_size % 32) != 0)
@@ -64954,6 +65029,7 @@ s7_scheme *s7_init(void)
   sc->CALL_WITH_EXIT =        s7_define_function(sc,      "call-with-exit",          g_call_with_exit,         1, 0, false, H_call_with_exit);
 
   sc->LOAD =                  s7_define_function(sc,      "load",                    g_load,                   1, 1, false, H_load);
+  sc->AUTOLOAD =              s7_define_function(sc,      "autoload",                g_autoload,               2, 0, false, H_autoload);
   sc->EVAL =                  s7_define_function(sc,      "eval",                    g_eval,                   1, 1, false, H_eval);
   sc->EVAL_STRING =           s7_define_function(sc,      "eval-string",             g_eval_string,            1, 1, false, H_eval_string);
   sc->APPLY =                 s7_define_function(sc,      "apply",                   g_apply,                  1, 0, true,  H_apply);
@@ -65070,6 +65146,9 @@ s7_scheme *s7_init(void)
 			      sc->F, 
 			      s7_make_function(sc, "(set *load-path*)", g_load_path_set, 2, 0, false, "called if *load-path* is set"), 
 			      s7_make_function(sc, "(bind *load-path*)", g_load_path_set, 2, 0, false, "called if *load-path* is bound")));
+
+  /* -------- *autoload* -------- */
+  s7_define_constant(sc, "*autoload*", sc->NIL);
 
   /* -------- *#readers* -------- */
   s7_define_variable(sc, "*#readers*", sc->NIL);
@@ -65419,7 +65498,7 @@ s7_scheme *s7_init(void)
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7 13.8
  * bench    42736 8752 8051 7725 6515 5194 4364 3989 3997
  * lint           9328 8140 7887 7736 7300 7180 7051 7078
- * index    44300 3291 3005 2742 2078 1643 1435 1363 1365
+ * index    44300 3291 3005 2742 2078 1643 1435 1363 1365 1345
  * s7test    1721 1358 1297 1244  977  961  957  960  943
  * t455|6     265   89   55   31   14   14    9 9155 8998
  * lat        229   63   52   47   42   40   34   31   29
@@ -65448,3 +65527,21 @@ s7_scheme *s7_init(void)
   ;define-macro argument 1, trad, is a symbol but should be a list (name ...)
   but why not make it work?
 */
+
+/* autoload:
+ *  check recursive autoload and errors during it
+ *  TODO: doc(examples)/test s7 side, possible handle system_extras and r7rs this way?
+ *
+ * auto-cload like autoload (use autoload but func not file as value)
+ *   1: find autoload-hashed name, in this case value in autoload is a function doing the cloading
+ *   3: if function, autoload cload, call function, and check that we have a winner
+ *   can these functions be auto-generated?
+ *   This way, all simple stuff like math library ops can be autoloaded (and gtk?)
+ *
+ * colorized syntax in glistener
+ *   doesn't this belong to the caller?  At key release, it's easier for glistener to scan (return_callback already has the code)
+ *   mark unbound vars, constants?/strings/comments especially
+ *   can't this be done purely in scheme? -- create tag? -- see gtkex.scm: 	    
+ *     (gtk_text_buffer_create_tag repl_buf "prompt_not_editable" (list "editable" 0 "weight" PANGO_WEIGHT_BOLD))
+ *   how to choose tag given context at insert/delete: contexts: string comment symbol[global/unknown/shadowed/ambiguous] various-constants 
+ */
