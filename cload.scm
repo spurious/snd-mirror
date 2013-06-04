@@ -369,7 +369,8 @@
     ;; this is the body of define-c-function
     (initialize-c-file)
 
-    (if (symbol? (cadr function-info))
+    (if (and (pair? (cdr function-info))
+	     (symbol? (cadr function-info)))
 	(if (= (length function-info) 3)
 	    (apply add-one-function function-info)
 	    (if (eq? (car function-info) 'in-C)

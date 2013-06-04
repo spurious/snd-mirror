@@ -182,6 +182,49 @@ static const char *checker(glistener *g, const char *text)
 #endif
 
 
+static GtkTextTag *string_tag = NULL, *comment_tag = NULL, *block_comment_tag = NULL, *atom_tag = NULL, *list_tag = NULL;
+static char *gnames[5] = {"string", "comment", "block_comment", "atom", "list"};
+
+static void colorizer(glistener *g, glistener_colorizer_t type, int start, int end)
+{
+  GtkTextIter s1, s2;
+  GtkTextTag *tag;
+  if (!comment_tag)
+    {
+      comment_tag = gtk_text_buffer_create_tag(listener_buffer, "colorizer-comment", "foreground", "red", NULL);
+      block_comment_tag = gtk_text_buffer_create_tag(listener_buffer, "colorizer-block-comment", "foreground", "green", NULL);
+      string_tag = gtk_text_buffer_create_tag(listener_buffer, "colorizer-string", "foreground", "brown", NULL);
+      atom_tag = gtk_text_buffer_create_tag(listener_buffer, "colorizer-atom", "foreground", "blue", NULL);
+    }
+  switch (type)
+    {
+    case GLISTENER_COMMENT:        tag = comment_tag;       break;
+    case GLISTENER_BLOCK_COMMENT:  tag = block_comment_tag; break;
+    case GLISTENER_STRING:         tag = string_tag;        break;
+    case GLISTENER_ATOM:           tag = atom_tag;          break;
+    case GLISTENER_LIST:           tag = list_tag;          break;
+    }
+  if (!tag) return;
+
+  fprintf(stderr, "%s: %d %d\n", gnames[type], start, end);
+
+  gtk_text_buffer_get_iter_at_offset(listener_buffer, &s1, start);
+  gtk_text_buffer_get_iter_at_offset(listener_buffer, &s2, end);
+  gtk_text_buffer_apply_tag(listener_buffer, tag, &s1, &s2);
+}
+
+static bool listener_colorizing = false;
+bool listener_colorized(void) {return(listener_colorizing);}
+bool listener_set_colorized(bool val) 
+{
+  listener_colorizing = val;
+  if (val)
+    glistener_set_colorizer(ss->listener, colorizer);
+  else glistener_set_colorizer(ss->listener, NULL);
+  return(val);
+}
+
+
 static void completer(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
 {
   s7_for_each_symbol_name(s7, symbol_func, data);
@@ -365,6 +408,7 @@ static void make_listener_widget(int height)
       glistener_set_checker(ss->listener, checker);
 #endif
       glistener_set_completer(ss->listener, completer);
+      /* glistener_set_colorizer(ss->listener, colorizer); */
       glistener_init(ss->listener);
 #endif
 #if HAVE_FORTH || HAVE_RUBY

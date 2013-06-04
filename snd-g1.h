@@ -77,6 +77,8 @@ void listener_append(const char *msg);
 void listener_append_and_prompt(const char *msg);
 void clear_listener(void);
 void set_listener_text_font(void);
+bool listener_colorized(void);
+bool listener_set_colorized(bool val);
 void g_init_gxlistener(void);
 
 

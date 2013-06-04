@@ -216,6 +216,26 @@ static XEN g_snd_completion(XEN text)
 }
 
 
+static XEN g_listener_colorized(void) 
+{
+  #define H_listener_colorized "(" S_listener_colorized ") returns #t if the listener is highlighting syntax."
+#if USE_GTK
+  return(C_TO_XEN_BOOLEAN(listener_colorized()));
+#else
+  return(XEN_FALSE);
+#endif
+}
+
+static XEN g_listener_set_colorized(XEN val) 
+{
+#if USE_GTK
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_listener_colorized, "a boolean");
+  listener_set_colorized(XEN_TO_C_BOOLEAN(val));
+#endif
+  return(val);
+}
+
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_save_listener_w, g_save_listener)
 XEN_NARGIFY_0(g_clear_listener_w, g_clear_listener);
@@ -224,6 +244,8 @@ XEN_NARGIFY_1(g_set_show_listener_w, g_set_show_listener)
 XEN_NARGIFY_0(g_listener_prompt_w, g_listener_prompt)
 XEN_NARGIFY_1(g_set_listener_prompt_w, g_set_listener_prompt)
 XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
+XEN_NARGIFY_0(g_listener_colorized_w, g_listener_colorized)
+XEN_NARGIFY_1(g_listener_set_colorized_w, g_listener_set_colorized)
 #else
 #define g_save_listener_w g_save_listener
 #define g_clear_listener_w g_clear_listener
@@ -232,6 +254,8 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_listener_prompt_w g_listener_prompt
 #define g_set_listener_prompt_w g_set_listener_prompt
 #define g_snd_completion_w g_snd_completion
+#define g_listener_colorized_w g_listener_colorized
+#define g_listener_set_colorized_w g_listener_set_colorized
 #endif
 
 void g_init_listener(void)
@@ -244,6 +268,9 @@ void g_init_listener(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_prompt, g_listener_prompt_w, H_listener_prompt,
 				   S_setB S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_colorized, g_listener_colorized_w, H_listener_colorized,
+				   S_setB S_listener_colorized, g_listener_set_colorized_w,  0, 0, 1, 0);
 
   #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns true, Snd assumes you've dealt the text yourself, and does not try to evaluate it."

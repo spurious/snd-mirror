@@ -4605,6 +4605,14 @@ loads that file; if a function, it is called with one argument, the current (cal
 ;; now if we subsequently call channel-distance but forget to load "dsp.scm" first,
 ;;   s7 loads "dsp.scm" itself, and uses its definition of channel-distance.
 ;;   The C-side equivalent is s7_autoload.
+
+;; here is the cload.scm case, loading j0 from the math library if it is called:
+(autoload 'j0
+	  (lambda (e)
+	    (if (not (provided? 'cload.scm))
+		(load "cload.scm"))
+	    (define-c-function '(double j0 (double)) "" "math.h")
+	    (augment-environment! e (cons 'j0 j0))))
 </pre>
 
 <p>The hash-table that holds the autoload info is named *autoload*.

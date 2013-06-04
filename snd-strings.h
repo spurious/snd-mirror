@@ -295,6 +295,7 @@
 #define S_lisp_graph_style              "lisp-graph-style"
 #define S_listener_click_hook           "listener-click-hook"
 #define S_listener_color                "listener-color"
+#define S_listener_colorized            "listener-colorized"
 #define S_listener_font                 "listener-font"
 #define S_listener_prompt               "listener-prompt"
 #define S_listener_selection            "listener-selection"

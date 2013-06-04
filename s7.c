@@ -65528,17 +65528,16 @@ s7_scheme *s7_init(void)
   but why not make it work?
 */
 
-/* autoload:
- *  check recursive autoload and errors during it
- *  TODO: test s7 side (s7test), possibly handle system_extras and r7rs this way?
- *
- * auto-cload: (use autoload but func not file as value)
- *   can these functions be auto-generated?
- *   This way, all simple stuff like math library ops can be autoloaded (and gtk?)
- *
- * colorized syntax in glistener
- *   doesn't this belong to the caller?  At key release, it's easier for glistener to scan (return_callback already has the code)
- *   mark unbound vars, constants?/strings/comments especially
- *     (gtk_text_buffer_create_tag repl_buf "prompt_not_editable" (list "editable" 0 "weight" PANGO_WEIGHT_BOLD))
- *   how to choose tag given context at insert/delete: contexts: string comment symbol[global/unknown/shadowed/ambiguous] various-constants 
+/* TODO: check errors during autoload (file and function)
+ * PERHAPS: handle system_extras and r7rs with autoload
+
+(autoload 'j0
+	  (lambda (e)
+	    (if (not (provided? 'cload.scm))
+		(load "cload.scm"))
+	    (define-c-function '(double j0 (double)) "" "math.h")
+	    (augment-environment! e (cons 'j0 j0))))
+
+ * so we'd have a function that loads n funcs, augments with all n, autoload that with each
+ * needs to be dependent on 'dlopen in *features*
  */

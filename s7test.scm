@@ -10594,6 +10594,13 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (load "empty-file")
 (test (+ 1 auto_test_var) 124)
 
+(autoload 'auto_test_var_2 (lambda (e) (augment-environment! e (cons 'auto_test_var_2 1))))
+(test (let () (+ 1 auto_test_var_2)) 2)
+
+(autoload 'auto_test_var_3 (lambda (e) (augment-environment! e (cons 'auto_test_var_3 1))))
+(autoload 'auto_test_var_4 (lambda (e) (augment-environment! e (cons 'auto_test_var_4 (+ auto_test_var_3 1)))))
+(test (let () (+ auto_test_var_4 1)) 3)
+
 
 #|
 (let ((c #f)
