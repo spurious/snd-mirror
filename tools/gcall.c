@@ -239,7 +239,7 @@ int main(int argc, char **argv)
   gtk_main();
 }
 
-/* in gtk-2: gcc gcall.c -DHAVE_GTK_2=1 -o gcall s7.o glistener.o `pkg-config --libs gtk+-2.0 --cflags` -lm -ldl
+/* in gtk-2: gcc gcall.c -o gcall s7.o glistener.o `pkg-config --libs gtk+-2.0 --cflags` -lm -ldl
    in gtk-3: gcc gcall.c -o gcall s7.o glistener.o `pkg-config --libs gtk+-3.0 --cflags` -lm -ldl
 */
 

@@ -9370,7 +9370,7 @@ int main(int argc, char **argv)
   gtk_main();
 }
 
-/* in gtk-2: gcc gcall.c -o gcall s7.o glistener.o -DHAVE_GTK_2=1 `pkg-config --libs gtk+-2.0 --cflags` -lm -ldl
+/* in gtk-2: gcc gcall.c -o gcall s7.o glistener.o `pkg-config --libs gtk+-2.0 --cflags` -lm -ldl
  * in gtk-3: gcc gcall.c -o gcall s7.o glistener.o `pkg-config --libs gtk+-3.0 --cflags` -lm -ldl
  */
 </pre>
@@ -9398,7 +9398,7 @@ is used by tools/gtest.scm for regression testing. One way to name unicode chara
 is: <code>(define-constant |lambda| #u8(#xce #xbb))</code>.  This can be embedded
 in an ordinary s7 string with any string operation: <code>(string-append |lambda| "ambda")</code>
 which returns "&lambda;ambda".  (string-length will still return the number of bytes; to get
-the number of characters in a case like this, use the built-in g_utf8_strlen).
+the number of characters in a case like this, use g_utf8_strlen).
 </p>
 
 </div>

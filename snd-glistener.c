@@ -182,31 +182,134 @@ static const char *checker(glistener *g, const char *text)
 #endif
 
 
-static GtkTextTag *string_tag = NULL, *comment_tag = NULL, *block_comment_tag = NULL, *atom_tag = NULL, *list_tag = NULL;
-static char *gnames[5] = {"string", "comment", "block_comment", "atom", "list"};
+static GtkTextTag *string_tag = NULL, *comment_tag = NULL, *comment3_tag = NULL, *block_comment_tag = NULL;
+static GtkTextTag *syntax_tag = NULL, *macro_tag = NULL, *procedure_tag = NULL, *constant_tag = NULL;
+static GtkTextTag *undefined_tag = NULL;
+
+static s7_pointer g_colorizer_colors(s7_scheme *sc, s7_pointer args)
+{
+  #define H_colorizer_colors "(colorizer-colors comment comment3 block-comment string constant syntax macro procedure undefined)"
+  /* set the tag colors from scheme -- tags are owned by the buffer, so I assume we don't free the old ones
+   *
+   * default: (colorizer-colors "red" "red1" "red2" "gray40" "gray20" "blue" "blue2" "blue1" "orange")
+   */
+  s7_pointer p;
+  p = args;
+
+  if (s7_is_pair(p)) {comment_tag =       gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", s7_string(s7_car(p)), NULL); p = s7_cdr(p);}
+  if (s7_is_pair(p)) {comment3_tag =      gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", s7_string(s7_car(p)), NULL); p = s7_cdr(p);}
+  if (s7_is_pair(p)) {block_comment_tag = gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", s7_string(s7_car(p)), NULL); p = s7_cdr(p);}
+  if (s7_is_pair(p)) {string_tag =        gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", s7_string(s7_car(p)), NULL); p = s7_cdr(p);}
+  if (s7_is_pair(p)) {constant_tag =      gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", s7_string(s7_car(p)), NULL); p = s7_cdr(p);}
+  if (s7_is_pair(p)) {syntax_tag =        gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", s7_string(s7_car(p)), NULL); p = s7_cdr(p);}
+  if (s7_is_pair(p)) {macro_tag =         gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", s7_string(s7_car(p)), NULL); p = s7_cdr(p);}
+  if (s7_is_pair(p)) {procedure_tag =     gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", s7_string(s7_car(p)), NULL); p = s7_cdr(p);}
+  if (s7_is_pair(p)) {undefined_tag =     gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", s7_string(s7_car(p)), NULL); p = s7_cdr(p);}
+
+  return(args);
+}
+
 
 static void colorizer(glistener *g, glistener_colorizer_t type, int start, int end)
 {
   GtkTextIter s1, s2;
   GtkTextTag *tag;
+
   if (!comment_tag)
     {
-      comment_tag = gtk_text_buffer_create_tag(listener_buffer, "colorizer-comment", "foreground", "red", NULL);
-      block_comment_tag = gtk_text_buffer_create_tag(listener_buffer, "colorizer-block-comment", "foreground", "green", NULL);
-      string_tag = gtk_text_buffer_create_tag(listener_buffer, "colorizer-string", "foreground", "brown", NULL);
-      atom_tag = gtk_text_buffer_create_tag(listener_buffer, "colorizer-atom", "foreground", "blue", NULL);
+      comment_tag =       gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "red", NULL);
+      comment3_tag =      gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "red1", NULL);
+      block_comment_tag = gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "red2", NULL);
+      string_tag =        gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "gray40", NULL);
+      constant_tag =      gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "gray20", NULL);
+      syntax_tag =        gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "blue", NULL);
+      macro_tag =         gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "blue2", NULL);
+      procedure_tag =     gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "blue1", NULL);
+      undefined_tag =     gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "orange", NULL);
     }
+  tag = NULL;
+
   switch (type)
     {
-    case GLISTENER_COMMENT:        tag = comment_tag;       break;
-    case GLISTENER_BLOCK_COMMENT:  tag = block_comment_tag; break;
-    case GLISTENER_STRING:         tag = string_tag;        break;
-    case GLISTENER_ATOM:           tag = atom_tag;          break;
-    case GLISTENER_LIST:           tag = list_tag;          break;
+    case GLISTENER_COMMENT:        
+      tag = comment_tag; 
+      if (comment3_tag)
+	{
+	  /* presumably ;;; ... is handled differently in this case */
+	  GtkTextIter iter;
+	  gtk_text_buffer_get_iter_at_offset(listener_buffer, &iter, start);
+	  /* is start the start of a line, and are the first 3 chars semicolons */
+	  if ((gtk_text_iter_starts_line(&iter)) &&
+	      ((end - start) > 2))
+	    {
+	      char *text;
+	      text = glistener_text(ss->listener, start, start + 3);
+	      if (strcmp(text, ";;;") == 0)
+		tag = comment3_tag;
+	      if (text) free(text);
+	    }
+	}
+      break;
+
+    case GLISTENER_BLOCK_COMMENT:  
+      tag = block_comment_tag; 
+      break;
+
+    case GLISTENER_STRING:         
+      tag = string_tag;
+      break;
+
+    case GLISTENER_ATOM: 
+      {
+	char *text;
+	tag = NULL;
+
+	text = glistener_text(ss->listener, start, end);
+	if (text[0] == '#')
+	  {
+	    tag = constant_tag;
+	  }
+	else
+	  {
+	    s7_pointer sym;
+	    sym = s7_symbol_table_find_name(s7, text);
+	    
+	    if (sym)
+	      {
+		if (s7_is_syntax(s7_symbol_value(s7, sym)))
+		  tag = syntax_tag;
+		else
+		  {
+		    if (s7_is_procedure(s7_symbol_value(s7, sym)))
+		      tag = procedure_tag;
+		    else
+		      {
+			if (s7_is_macro(s7, sym))
+			  tag = macro_tag;
+			else
+			  {
+			    if (!s7_is_defined(s7, text))
+			      {
+			      }
+			  }
+		      }
+		  }
+	      }
+	    else
+	      {
+
+	      }
+	  }
+	if (text) free(text);
+      }
+      break;
+
+    case GLISTENER_LIST:
+    case GLISTENER_BRACKET:
+    case GLISTENER_CHARACTER:
+      break;
     }
   if (!tag) return;
-
-  fprintf(stderr, "%s: %d %d\n", gnames[type], start, end);
 
   gtk_text_buffer_get_iter_at_offset(listener_buffer, &s1, start);
   gtk_text_buffer_get_iter_at_offset(listener_buffer, &s2, end);
@@ -218,9 +321,12 @@ bool listener_colorized(void) {return(listener_colorizing);}
 bool listener_set_colorized(bool val) 
 {
   listener_colorizing = val;
-  if (val)
-    glistener_set_colorizer(ss->listener, colorizer);
-  else glistener_set_colorizer(ss->listener, NULL);
+  if (ss->listener)
+    {
+      if (val)
+	glistener_set_colorizer(ss->listener, colorizer);
+      else glistener_set_colorizer(ss->listener, NULL);
+    }
   return(val);
 }
 
@@ -229,10 +335,8 @@ static void completer(glistener *g, bool (*symbol_func)(const char *symbol_name,
 {
   s7_for_each_symbol_name(s7, symbol_func, data);
 }
-#endif
 
 
-#if HAVE_SCHEME
 static void evaluator(glistener *g, const char *text)
 {
   int gc_loc;
@@ -408,7 +512,8 @@ static void make_listener_widget(int height)
       glistener_set_checker(ss->listener, checker);
 #endif
       glistener_set_completer(ss->listener, completer);
-      /* glistener_set_colorizer(ss->listener, colorizer); */
+      if (listener_colorizing)
+	glistener_set_colorizer(ss->listener, colorizer);
       glistener_init(ss->listener);
 #endif
 #if HAVE_FORTH || HAVE_RUBY
@@ -620,6 +725,7 @@ leaves the lisp listener pane"
   listener_click_hook = XEN_DEFINE_HOOK(S_listener_click_hook, "(make-hook 'position)", 1,   H_listener_click_hook); 
 
 #if HAVE_SCHEME
+  s7_define_function(s7, "colorizer-colors", g_colorizer_colors, 0, 0, true, H_colorizer_colors);
   s7_hook_set_functions(s7, s7_name_to_value(s7, "*load-hook*"),
     s7_cons(s7, 
       s7_make_function(s7, "listener-load-hook", g_listener_load_hook, 1, 0, false, "listener *load-hook* function"), 

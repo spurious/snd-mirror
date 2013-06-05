@@ -1475,7 +1475,8 @@ void init_gtk(void)
   listener_provider = gtk_css_provider_new();
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(listener_provider),
     "#listener_text { \n"
-     "  background-color: rgb(240, 248, 255);\n"
+     /* "  background-color: rgb(240, 248, 255);\n" */
+     "  background-color: #ffffff;\n"
      "  color: #000000;\n"
     "}\n"
     "#listener_text:selected { \n"

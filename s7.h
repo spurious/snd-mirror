@@ -470,6 +470,7 @@ s7_pointer s7_values(s7_scheme *sc, int num_values, ...);                   /* (
    * (+ 1 (v) 2) => 9
    */
 
+bool s7_is_syntax(s7_pointer p);
 bool s7_is_symbol(s7_pointer p);                                            /* (symbol? p) */
 const char *s7_symbol_name(s7_pointer p);                                   /* (symbol->string p) -- don't free the string */
 s7_pointer s7_make_symbol(s7_scheme *sc, const char *name);                 /* (string->symbol name) */

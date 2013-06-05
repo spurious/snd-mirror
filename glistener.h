@@ -17,9 +17,7 @@
 
 #include <gtk/gtk.h>
 
-/* #define HAVE_GTK_2 0 */
-/* define this flag if you have gtk version 2, rather than version 3.
- */
+#define HAVE_GTK_2 (GTK_MAJOR_VERSION == 2)
 
 #if (!HAVE_GTK_2)
   #include <gdk/gdk.h>
@@ -30,7 +28,7 @@
 typedef struct glistener glistener;
 
 typedef enum {GLISTENER_STRING, GLISTENER_COMMENT, GLISTENER_BLOCK_COMMENT,
-              GLISTENER_ATOM, GLISTENER_LIST
+              GLISTENER_ATOM, GLISTENER_LIST, GLISTENER_BRACKET, GLISTENER_CHARACTER
              } glistener_colorizer_t;
 
 glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g, GtkWidget *new_listener));
@@ -336,6 +334,27 @@ char *glistener_complete           (glistener *g);
  *    glistener_set_evaluator(g1, evaluator);
  *
  *				      
+ *
+ * --------
+ * void glistener_set_checker         (glistener *g, const char *(*check)(glistener *g, const char *text));
+ *
+ *  The checker is called when close-paren is typed and the matching open-paren can be found.
+ *  "text" in this case is the expression. If it notices something awry in the expression, 
+ *  it can squawk in the status area.  The checker in snd-glistener.c calls s7_read on the text,
+ *  then runs various checks on that code (function argument checks and so on).
+ *
+ *
+ *
+ * --------
+ * void glistener_set_colorizer       (glistener *g, void (*colorizer)(glistener *g, glistener_colorizer_t type, int start, int end));
+ *
+ *  The colorizer highlights portions of the code, normally using colors, but the GtkTextBuffer
+ *  is at your disposal.  This function is called whenever there is any change in the listener
+ *  buffer's contents.  The "start" and "end" ints are offsets into the buffer giving what the
+ *  listener thinks are the current expression bounds where the change took place.  There is an
+ *  example in snd-glistener.c.
+ *
+ *
  *
  * --------
  * char *glistener_evaluate(glistener *g);

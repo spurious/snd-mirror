@@ -15,7 +15,7 @@
 #define DATA_COLOR           rgb_to_color(0.0, 0.0, 0.0)    /* "black" */
 #define SELECTED_DATA_COLOR  rgb_to_color(0.0, 0.0, 0.0)    /* "black" */
 #define MARK_COLOR           rgb_to_color(1.0, 0.0, 0.0)    /* "red" */
-#define LISTENER_COLOR       rgb_to_color(0.94, 0.97, 1.00) /* "AliceBlue" */
+#define LISTENER_COLOR       rgb_to_color(1.0, 1.0, 1.0)    /* "white" */ /* rgb_to_color(0.94, 0.97, 1.00) */ /* "AliceBlue" */
 #define LISTENER_TEXT_COLOR  rgb_to_color(0.0, 0.0, 0.0)    /* "black" */
 #define LIGHT_BLUE_COLOR     rgb_to_color(0.79, 0.88, 1.00) /* "lightsteelblue1" */
 #define LIGHTER_BLUE_COLOR   rgb_to_color(0.94, 0.97, 1.00) /* "AliceBlue" */

@@ -4363,6 +4363,8 @@ static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
 
 void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
 {
+  /* this includes the special constants #<unspecified> and so on for simplicity -- are there any others?
+   */
   int i; 
   s7_pointer x; 
 
@@ -4370,6 +4372,14 @@ void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symb
     for (x  = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
       if (symbol_func(symbol_name(car(x)), data))
 	return;
+
+  if (symbol_func("#t", data)) return;
+  if (symbol_func("#f", data)) return;
+  if (symbol_func("#true", data)) return; /* for r7rs */
+  if (symbol_func("#false", data)) return;
+  if (symbol_func("#<unspecified>", data)) return;
+  if (symbol_func("#<undefined>", data)) return;
+  symbol_func("#<eof>", data);
 }
 
 
@@ -4562,6 +4572,12 @@ s7_pointer s7_name_to_value(s7_scheme *sc, const char *name)
 bool s7_is_symbol(s7_pointer p)   
 { 
   return(is_symbol(p));
+}
+
+
+bool s7_is_syntax(s7_pointer p)   
+{ 
+  return(is_syntax(p));
 }
 
 

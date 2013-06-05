@@ -1862,7 +1862,7 @@ static int find_expression_limits(glistener *g, int *bpos, int *epos)
 static void glistener_return_callback(glistener *g)
 {
   GtkTextIter scan_iter, end_iter, cursor_iter;
-  int cursor_pos, start_pos, end_pos, expr_start = -1, any_start = -1, open_parens = 0;
+  int cursor_pos, start_pos, end_pos, expr_start = -1, any_start = -1, open_parens = 0, prev_start = -1;
 
   glistener_clear_status(g);
   
@@ -1915,12 +1915,15 @@ static void glistener_return_callback(glistener *g)
 		  }
 		gtk_text_iter_forward_char(&scan_iter); /* step over the close double-quote */
 		
-		if ((expr_start == -1) &&
-		    (gtk_text_iter_compare(&cursor_iter, &scan_iter) <= 0))
+		if (expr_start == -1)
 		  {
-		    /* we're in a string with no surrounding context */
-		    eval_text(g, &str_iter, &scan_iter);
-		    return;
+		    if (gtk_text_iter_compare(&cursor_iter, &scan_iter) <= 0)
+		      {
+			/* we're in a string with no surrounding context */
+			eval_text(g, &str_iter, &scan_iter);
+			return;
+		      }
+		    prev_start = gtk_text_iter_get_offset(&str_iter);
 		  }
 	      }
 	      continue;
@@ -1932,7 +1935,14 @@ static void glistener_return_callback(glistener *g)
 		if ((expr_start == -1) &&
 		    (gtk_text_iter_compare(&cursor_iter, &scan_iter) <= 0))
 		  {
-		    /* we're in a comment and there's no enclosing context */
+		    /* we're in a comment and there's no enclosing context, but there might be a preceding expression */
+		    if (prev_start != -1)
+		      {
+			GtkTextIter semi_iter;
+			gtk_text_buffer_get_iter_at_offset(g->buffer, &semi_iter, prev_start);
+			eval_text(g, &semi_iter, &scan_iter);
+			return;
+		      }
 		    glistener_insert_text(g, "\n");
 		    return;
 		  }
@@ -1964,7 +1974,14 @@ static void glistener_return_callback(glistener *g)
 		    if ((expr_start == -1) &&
 			(gtk_text_iter_compare(&cursor_iter, &scan_iter) <= 0))
 		      {
-			/* we're in a block comment and there's no enclosing context */
+			/* we're in a block comment and there's no enclosing context, but there might be a preceding expression */
+			if (prev_start != -1)
+			  {
+			    GtkTextIter semi_iter;
+			    gtk_text_buffer_get_iter_at_offset(g->buffer, &semi_iter, prev_start);
+			    eval_text(g, &semi_iter, &scan_iter);
+			    return;
+			  }
 			glistener_insert_text(g, "\n");
 			return;
 		      }
@@ -1982,12 +1999,15 @@ static void glistener_return_callback(glistener *g)
 			  }
 			else gtk_text_iter_forward_char(&scan_iter);
 			
-			if ((expr_start == -1) &&
-			    (gtk_text_iter_compare(&cursor_iter, &scan_iter) <= 0))
+			if (expr_start == -1)
 			  {
-			    /* we're in a character constant with no surrounding context */
-			    eval_text(g, &c_iter, &scan_iter);
-			    return;
+			    if (gtk_text_iter_compare(&cursor_iter, &scan_iter) <= 0)
+			      {
+				/* we're in a character constant with no surrounding context */
+				eval_text(g, &c_iter, &scan_iter);
+				return;
+			      }
+			    prev_start = gtk_text_iter_get_offset(&c_iter);
 			  }
 			continue;
 		      }
@@ -2042,6 +2062,8 @@ static void glistener_return_callback(glistener *g)
 		      return;
 		    }
 		  
+		  if (any_start != -1) prev_start = any_start; else prev_start = expr_start;
+
 		  expr_start = -1;
 		  any_start = -1;
 		  continue;
@@ -2063,6 +2085,7 @@ static void glistener_return_callback(glistener *g)
 		      eval_text(g, &c_iter, &scan_iter);
 		      return;
 		    }
+		  prev_start = any_start;
 		  any_start = -1;
 		}
 	    }
@@ -2412,6 +2435,7 @@ static void glistener_colorizer_callback(glistener *g)
 {
   GtkTextIter scan_iter, end_iter;
   int cur_pos, start_pos, end_pos, expr_start = -1, any_start = -1, open_parens = 0, end_space_pos = 0;
+  bool atom_awaits = false;
 
   if ((g->colorizer == glistener_default_colorizer) ||
       (!g->is_schemish))
@@ -2420,7 +2444,7 @@ static void glistener_colorizer_callback(glistener *g)
   find_expression_limits(g, &start_pos, &end_pos);
   if (start_pos >= end_pos) return;
   cur_pos = start_pos;
-  end_space_pos = start_pos;
+  end_space_pos = start_pos - 1;
 
   gtk_text_buffer_get_iter_at_offset(g->buffer, &scan_iter, start_pos);
   gtk_text_buffer_get_iter_at_offset(g->buffer, &end_iter, end_pos);
@@ -2437,7 +2461,9 @@ static void glistener_colorizer_callback(glistener *g)
 	{
 	  if (any_start == -1)
 	    any_start = cur_pos;
-	  
+
+	  /* TODO: if " ` , ( etc and atom_awaits I guess we should send it out? 
+	   */
 	  switch (c)
 	    {
 	    case '"':
@@ -2460,8 +2486,6 @@ static void glistener_colorizer_callback(glistener *g)
 	      {
 		gtk_text_iter_forward_to_line_end(&scan_iter);
 		g->colorizer(g, GLISTENER_COMMENT, cur_pos, gtk_text_iter_get_offset(&scan_iter)); /* +1? etc */
-		if (expr_start == -1)    /* we're in a comment and there's no enclosing context */
-		  return;
 	      }
 	      break;
 	      
@@ -2499,7 +2523,7 @@ static void glistener_colorizer_callback(glistener *g)
 			      gtk_text_iter_forward_char(&scan_iter);
 			  }
 			else gtk_text_iter_forward_char(&scan_iter);
-			g->colorizer(g, GLISTENER_ATOM, cur_pos, gtk_text_iter_get_offset(&scan_iter));
+			g->colorizer(g, GLISTENER_CHARACTER, cur_pos, gtk_text_iter_get_offset(&scan_iter));
 			
 			if (expr_start == -1) /* we're in a character constant with no surrounding context */
 			  return;
@@ -2513,8 +2537,9 @@ static void glistener_colorizer_callback(glistener *g)
 			if (nc == '<')
 			  {
 			    gtk_text_iter_forward_find_char(&scan_iter, is_gt, NULL, &end_iter);
-			    g->colorizer(g, GLISTENER_ATOM, cur_pos, gtk_text_iter_get_offset(&scan_iter));
+			    g->colorizer(g, GLISTENER_BRACKET, cur_pos, gtk_text_iter_get_offset(&scan_iter) + 1);
 			  }
+			else atom_awaits = true; /* #t for example */
 		      }
 		  }
 	      }
@@ -2524,9 +2549,17 @@ static void glistener_colorizer_callback(glistener *g)
 	      if (open_parens == 0)
 		expr_start = cur_pos;
 	      open_parens++;
+	      end_space_pos = cur_pos;
 	      break;
 	      
 	    case ')':
+	      if (atom_awaits)
+		{
+		  g->colorizer(g, GLISTENER_ATOM, end_space_pos + 1, cur_pos);
+		  atom_awaits = false;
+		}
+	      end_space_pos = cur_pos;
+	  
 	      open_parens--;
 	      if (open_parens == 0)
 		{
@@ -2544,27 +2577,29 @@ static void glistener_colorizer_callback(glistener *g)
 	      break;
 
 	    default:
-	      g->colorizer(g, GLISTENER_ATOM, end_space_pos + 1, cur_pos + 1);
+	      atom_awaits = true;
 	      break;
 	    }
 	}
       else
 	{
+	  if (atom_awaits)
+	    {
+	      g->colorizer(g, GLISTENER_ATOM, end_space_pos + 1, cur_pos);
+	      atom_awaits = false;
+	    }
 	  end_space_pos = cur_pos;
 	  if (expr_start == -1)
-	    {
-	      g->colorizer(g, GLISTENER_ATOM, end_space_pos, cur_pos);
-	      any_start = -1;
-	    }
+	    any_start = -1;
 	}
       
       gtk_text_iter_forward_char(&scan_iter);
     }
-  /* we fell off the end */
-  /*
-  if (open_parens == 0)
-    g->colorizer(g, GLISTENER_ATOM, end_space_pos, end_pos);
-  */
+  if (atom_awaits)
+    {
+      g->colorizer(g, GLISTENER_ATOM, end_space_pos + 1, end_pos);
+      atom_awaits = false;
+    }
 }
 
 
@@ -2750,30 +2785,13 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
 /* TODO: move by expr, then use that in indent code and function arg checking [need type info too]
  * TODO: key for apropos? fuzzy-completion? (levenstein is in snd-help.c but needs serious optimization)
  * TODO: indent do and if need expr counts -- can this use rtn_cb?
- * PERHAPS: syntax highlights (or should caller do this?)
- * TODO: example of scheme-as-colorize/helper
- *
- * colorized syntax in glistener
- *   doesn't this belong to the caller?  At key release, it's easier for glistener to scan (return_callback already has the code)
- *   mark unbound vars, constants?/strings/comments especially
- *     (gtk_text_buffer_create_tag repl_buf "prompt_not_editable" (list "editable" 0 "weight" PANGO_WEIGHT_BOLD))
- *   how to choose tag given context at insert/delete: contexts: string comment symbol[global/unknown/shadowed/ambiguous] various-constants 
- *   at deletion/insertion, scan as currently in rtn, but return the context data (not insert newline)
- *   call colorizer with that info, current atom, -> tag
- *   in insertion, just tag current -- there could be trailers
- *   deletion might change previous? -- so we need to recolorize the whole expr each time!?
- *   remove/apply tag (not insert_with_tag), or remove_all_tags[start..end], then apply -- this could
- *     be done all in one sweep.
- *  colorizer(glistener *g, int type, GtkTextIter *start, GtkTextIter *end)
- *   "type" is problematic: symbol symbol-as-[syntax/function/macro/sequence...] symbol-as-local-variable-name symbol-undefined-but-autoloadable etc
- *      maybe use: name(in let etc) operator[type=func/mac/etc] constant[type=string/list/etc]
- *            position: where in current expr (-1 = no parens?) -- and quoted list confuses this
- *            info: bound/shadowed/global/local/autoloadable/completely-unknown
- *      and for comment: ";;;" ";;" ";" "#|" or even "#;"
- *    looks like we need a descriptor struct
+ * TODO: doc key bindings and how things work (<cr>->eval)
+ * TODO: might be nice to add example of user-key-binding or whatever
+ * PERHAPS: add checker/colorizer to gcall.c
  */
 
 /* changes:
+ * 4-June:    added colorizer function.
  * 28-May:    added checker function.
  * 21-May-13: changed HAVE_GTK_3 to HAVE_GTK_2.
  */
