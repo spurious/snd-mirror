@@ -96,7 +96,7 @@ Here at CCRMA, we use this configure invocation:
 
 
 Version info:
-  if Gtk, then Gtk+ 2.12 or later and Cairo 1.6.4 or later
+  if Gtk, then Gtk+ 2.13 or later and Cairo 1.6.4 or later
   if Motif, then Motif 2.n but not Lesstif
   in Linux, if ALSA, then ALSA 1.0 or later
   if Ruby, Ruby 1.8.0 or later.  

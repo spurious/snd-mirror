@@ -351,8 +351,8 @@ char *glistener_complete           (glistener *g);
  *  The colorizer highlights portions of the code, normally using colors, but the GtkTextBuffer
  *  is at your disposal.  This function is called whenever there is any change in the listener
  *  buffer's contents.  The "start" and "end" ints are offsets into the buffer giving what the
- *  listener thinks are the current expression bounds where the change took place.  There is an
- *  example in snd-glistener.c.
+ *  listener thinks are the current bounds where there is an entity of "type", one of the glistener_colorizer_t
+ *  enums given above.  See the colorizer function in snd-glistener.c.
  *
  *
  *

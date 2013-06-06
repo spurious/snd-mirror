@@ -185,13 +185,15 @@ static const char *checker(glistener *g, const char *text)
 static GtkTextTag *string_tag = NULL, *comment_tag = NULL, *comment3_tag = NULL, *block_comment_tag = NULL;
 static GtkTextTag *syntax_tag = NULL, *macro_tag = NULL, *procedure_tag = NULL, *constant_tag = NULL;
 static GtkTextTag *undefined_tag = NULL;
+/* also bracket and character
+ */
 
 static s7_pointer g_colorizer_colors(s7_scheme *sc, s7_pointer args)
 {
   #define H_colorizer_colors "(colorizer-colors comment comment3 block-comment string constant syntax macro procedure undefined)"
   /* set the tag colors from scheme -- tags are owned by the buffer, so I assume we don't free the old ones
    *
-   * default: (colorizer-colors "red" "red1" "red2" "gray40" "gray20" "blue" "blue2" "blue1" "orange")
+   * default: (colorizer-colors "red" "brown" "orangered" "gray40" "gray20" "blue" "seagreen" "steelblue4" "black")
    */
   s7_pointer p;
   p = args;
@@ -206,7 +208,7 @@ static s7_pointer g_colorizer_colors(s7_scheme *sc, s7_pointer args)
   if (s7_is_pair(p)) {procedure_tag =     gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", s7_string(s7_car(p)), NULL); p = s7_cdr(p);}
   if (s7_is_pair(p)) {undefined_tag =     gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", s7_string(s7_car(p)), NULL); p = s7_cdr(p);}
 
-  return(args);
+  return(s7_t(sc));
 }
 
 
@@ -218,14 +220,14 @@ static void colorizer(glistener *g, glistener_colorizer_t type, int start, int e
   if (!comment_tag)
     {
       comment_tag =       gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "red", NULL);
-      comment3_tag =      gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "red1", NULL);
-      block_comment_tag = gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "red2", NULL);
+      comment3_tag =      gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "brown", NULL);
+      block_comment_tag = gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "orangered", NULL);
       string_tag =        gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "gray40", NULL);
       constant_tag =      gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "gray20", NULL);
       syntax_tag =        gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "blue", NULL);
-      macro_tag =         gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "blue2", NULL);
-      procedure_tag =     gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "blue1", NULL);
-      undefined_tag =     gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "orange", NULL);
+      macro_tag =         gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "seagreen", NULL);
+      procedure_tag =     gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "steelblue4", NULL);
+      undefined_tag =     gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", "black", NULL);
     }
   tag = NULL;
 
@@ -290,6 +292,7 @@ static void colorizer(glistener *g, glistener_colorizer_t type, int start, int e
 			  {
 			    if (!s7_is_defined(s7, text))
 			      {
+				tag = undefined_tag;
 			      }
 			  }
 		      }
@@ -297,7 +300,6 @@ static void colorizer(glistener *g, glistener_colorizer_t type, int start, int e
 	      }
 	    else
 	      {
-
 	      }
 	  }
 	if (text) free(text);
@@ -736,7 +738,7 @@ leaves the lisp listener pane"
 
 /* TODO: the edit history window is sometimes empty in gtk
  * why not c-r c-s in listener? where to prompt? -- status bar?
- * c-_ to undo--it's sort of working, completion in g? 
+ * c-_ to undo--it's sort of working
  *
  * what about all the other gtk key bindings?
  * scroll to new prompt -- when does this fail?

@@ -1068,7 +1068,7 @@ static void add_inverse(glistener *g, int pos)
   if (g->flash_paren_pos == -1) g->flash_paren_pos = pos;
   gtk_text_buffer_get_iter_at_offset(g->buffer, &start, pos);
   gtk_text_buffer_get_iter_at_offset(g->buffer, &end, pos + 1);
-  if (!g->flash_tag) g->flash_tag = gtk_text_buffer_create_tag(g->buffer, "red_background", "background", "red", NULL);
+  if (!g->flash_tag) g->flash_tag = gtk_text_buffer_create_tag(g->buffer, NULL, "background", "red", NULL);
   gtk_text_buffer_apply_tag(g->buffer, g->flash_tag, &start, &end);
 }
 
@@ -1079,7 +1079,7 @@ static void remove_inverse(glistener *g, int pos)
 
   gtk_text_buffer_get_iter_at_offset(g->buffer, &start, pos);
   gtk_text_buffer_get_iter_at_offset(g->buffer, &end, pos + 1);
-  if (!g->flash_tag) g->flash_tag = gtk_text_buffer_create_tag(g->buffer, "red_background", "background", "red", NULL);
+  if (!g->flash_tag) g->flash_tag = gtk_text_buffer_create_tag(g->buffer, NULL, "background", "red", NULL);
   gtk_text_buffer_remove_tag(g->buffer, g->flash_tag, &start, &end);
 }
 
@@ -1124,10 +1124,7 @@ static void add_highlight(glistener *g, int bpos, int epos)
   gtk_text_buffer_get_iter_at_offset(g->buffer, &start, bpos);
   gtk_text_buffer_get_iter_at_offset(g->buffer, &end, epos);
   if (!g->highlight_tag) 
-    g->highlight_tag = gtk_text_buffer_create_tag(g->buffer, "highlight",
-						  "weight", PANGO_WEIGHT_BOLD, 
-						  "foreground", "red",
-						  NULL);
+    g->highlight_tag = gtk_text_buffer_create_tag(g->buffer, NULL, "weight", PANGO_WEIGHT_BOLD, "foreground", "red", NULL);
   gtk_text_buffer_apply_tag(g->buffer, g->highlight_tag, &start, &end);
   g->highlight_start = bpos;
   g->highlight_end = epos;
@@ -1202,7 +1199,6 @@ static void check_parens(glistener *g)
 	  check_for_offscreen_matching_paren(g, opos);
 	  if (g->checker != glistener_default_checker)
 	    {
-	      /* TODO: add checker doc in glistener.h* */
 	      char *text;
 	      text = glistener_text(g, pos, opos);
 	      if (text)
@@ -2477,7 +2473,7 @@ static void glistener_colorizer_callback(glistener *g)
 		  }
 
 		gtk_text_iter_forward_char(&scan_iter); /* step over the close double-quote */
-		g->colorizer(g, GLISTENER_STRING, cur_pos, gtk_text_iter_get_offset(&scan_iter)); /* TODO: +1? */
+		g->colorizer(g, GLISTENER_STRING, cur_pos, gtk_text_iter_get_offset(&scan_iter)); 
 	      }
 	      continue;
 	      break;
@@ -2485,7 +2481,7 @@ static void glistener_colorizer_callback(glistener *g)
 	    case ';':
 	      {
 		gtk_text_iter_forward_to_line_end(&scan_iter);
-		g->colorizer(g, GLISTENER_COMMENT, cur_pos, gtk_text_iter_get_offset(&scan_iter)); /* +1? etc */
+		g->colorizer(g, GLISTENER_COMMENT, cur_pos, gtk_text_iter_get_offset(&scan_iter)); 
 	      }
 	      break;
 	      
@@ -2787,7 +2783,7 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
  * TODO: indent do and if need expr counts -- can this use rtn_cb?
  * TODO: doc key bindings and how things work (<cr>->eval)
  * TODO: might be nice to add example of user-key-binding or whatever
- * PERHAPS: add checker/colorizer to gcall.c
+ * PERHAPS: should the error reports and the copied exprs be colorized?
  */
 
 /* changes:

@@ -2799,7 +2799,7 @@
 (CFNC "GtkCornerType gtk_scrolled_window_get_placement GtkScrolledWindow* scrolled_window")
 (CFNC "void gtk_scrolled_window_set_shadow_type GtkScrolledWindow* scrolled_window GtkShadowType type")
 (CFNC "GtkShadowType gtk_scrolled_window_get_shadow_type GtkScrolledWindow* scrolled_window")
-(CFNC "void gtk_scrolled_window_add_with_viewport GtkScrolledWindow* scrolled_window GtkWidget* child")
+;;; 3.8 (CFNC "void gtk_scrolled_window_add_with_viewport GtkScrolledWindow* scrolled_window GtkWidget* child")
 (CFNC "GtkTargetList* gtk_target_list_new GtkTargetEntry* @targets guint ntargets")
 ;;; return type changed 290
 ;;;(CFNC "void gtk_target_list_ref GtkTargetList* list")

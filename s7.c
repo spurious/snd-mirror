@@ -42517,9 +42517,15 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 		if (is_pair(expr)) /* ?? */
 		  {
 		    if ((is_pair(car(expr))) && (!form_is_safe(sc, func, args, car(expr), false, bad_set)))
+		      {
 		      happy = false;
+		      /* fprintf(stderr, "test %s is not safe\n", DISPLAY(car(expr))); */
+		      }
 		    if ((is_pair(cdr(expr))) && (!body_is_safe(sc, func, args, cdr(expr), at_end, bad_set)))
+		      {
 		      happy = false;
+		      /* fprintf(stderr, "clause %s is not safe (%d %s)\n", DISPLAY(cdr(expr)), at_end, DISPLAY(func)); */
+		      }
 		  }
 	      }
 	    if ((!happy) || (is_not_null(p)))
@@ -42626,6 +42632,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
     }
   else /* car(x) is not syntactic */
     {
+      /* fprintf(stderr, "%s %d %d %d\n", DISPLAY(x), is_optimized(x), is_unsafe(x), is_hop_safe_closure(x)); */
       if ((!is_optimized(x)) || 
 	  ((is_unsafe(x)) &&
 	   (!is_hop_safe_closure(x))))
@@ -42633,13 +42640,20 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	  if (car(x) == func) /* try to catch tail call */
 	    {
 	      s7_pointer p;
+	      /* fprintf(stderr, "%s car(x) is func\n", DISPLAY(x)); */
+
 	      for (p = cdr(x); is_pair(p); p = cdr(p))
 		if ((is_pair(car(p))) &&
-		    ((!is_optimized(car(p))) ||
+		    (((!is_optimized(car(p))) &&
+		      (caar(p) != sc->QUOTE)) ||
 		     (is_unsafe(car(p))) ||
 		     (caar(p) == func)))  /* ?? not sure about this */
+		  {
+		    /* fprintf(stderr, "%s false %d %d %d\n", DISPLAY(p), is_optimized(car(p)), is_unsafe(car(p)), caar(p) == func); */
 		  return(false);
+		  }
 	      
+	      /* fprintf(stderr, "%d %d %d\n", at_end, is_null(p), *bad_set); */
 	      if ((at_end) && (is_null(p) && (!*bad_set)))
 		{
 		  /* we still miss a few cases, and need more unknown optimizations, or set them here

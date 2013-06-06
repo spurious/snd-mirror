@@ -1188,7 +1188,11 @@ slist *slist_new_with_title_and_table_data(const char *title,
     }
 
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(lst->scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+#if HAVE_GTK_HEADER_BAR_NEW
+  gtk_container_add(GTK_CONTAINER(lst->scroller), lst->topics);
+#else
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(lst->scroller), lst->topics);
+#endif
 
   if (title)
     {

@@ -336,10 +336,7 @@ void snd_help_append_monospace(const char *text)
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text));
 
   if (!monospace_tag)
-    monospace_tag = gtk_text_buffer_create_tag(buf, "monospace", 
-					       "family", "monospace",
-					       "size", 11 * PANGO_SCALE,
-					       NULL);
+    monospace_tag = gtk_text_buffer_create_tag(buf, NULL, "family", "monospace", "size", 11 * PANGO_SCALE, NULL);
   gtk_text_buffer_get_end_iter(buf, &pos);
   gtk_text_buffer_insert_with_tags_by_name(buf, &pos, text, -1, "monospace", NULL);
 }

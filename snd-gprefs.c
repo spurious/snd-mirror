@@ -1671,7 +1671,11 @@ widget_t make_preferences_dialog(void)
   scroller = gtk_scrolled_window_new(NULL, NULL);
   gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(preferences_dialog)), scroller, true, true, 0);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+#if HAVE_GTK_HEADER_BAR_NEW
+  gtk_container_add(GTK_CONTAINER(scroller), topics);
+#else
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), topics);
+#endif
 
   gtk_widget_show(topics);
   gtk_widget_show(scroller);

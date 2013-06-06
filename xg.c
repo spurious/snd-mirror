@@ -8060,16 +8060,6 @@ static XEN gxg_gtk_scrolled_window_get_shadow_type(XEN scrolled_window)
   return(C_TO_XEN_GtkShadowType(gtk_scrolled_window_get_shadow_type(XEN_TO_C_GtkScrolledWindow_(scrolled_window))));
 }
 
-static XEN gxg_gtk_scrolled_window_add_with_viewport(XEN scrolled_window, XEN child)
-{
-  #define H_gtk_scrolled_window_add_with_viewport "void gtk_scrolled_window_add_with_viewport(GtkScrolledWindow* scrolled_window, \
-GtkWidget* child)"
-  XEN_ASSERT_TYPE(XEN_GtkScrolledWindow__P(scrolled_window), scrolled_window, 1, "gtk_scrolled_window_add_with_viewport", "GtkScrolledWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(child), child, 2, "gtk_scrolled_window_add_with_viewport", "GtkWidget*");
-  gtk_scrolled_window_add_with_viewport(XEN_TO_C_GtkScrolledWindow_(scrolled_window), XEN_TO_C_GtkWidget_(child));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_target_list_new(XEN targets, XEN ntargets)
 {
   #define H_gtk_target_list_new "GtkTargetList* gtk_target_list_new(GtkTargetEntry* targets, guint ntargets)"
@@ -37013,7 +37003,6 @@ XEN_NARGIFY_2(gxg_gtk_scrolled_window_set_placement_w, gxg_gtk_scrolled_window_s
 XEN_NARGIFY_1(gxg_gtk_scrolled_window_get_placement_w, gxg_gtk_scrolled_window_get_placement)
 XEN_NARGIFY_2(gxg_gtk_scrolled_window_set_shadow_type_w, gxg_gtk_scrolled_window_set_shadow_type)
 XEN_NARGIFY_1(gxg_gtk_scrolled_window_get_shadow_type_w, gxg_gtk_scrolled_window_get_shadow_type)
-XEN_NARGIFY_2(gxg_gtk_scrolled_window_add_with_viewport_w, gxg_gtk_scrolled_window_add_with_viewport)
 XEN_NARGIFY_2(gxg_gtk_target_list_new_w, gxg_gtk_target_list_new)
 XEN_NARGIFY_1(gxg_gtk_target_list_unref_w, gxg_gtk_target_list_unref)
 XEN_NARGIFY_4(gxg_gtk_target_list_add_w, gxg_gtk_target_list_add)
@@ -41221,7 +41210,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_scrolled_window_get_placement_w gxg_gtk_scrolled_window_get_placement
 #define gxg_gtk_scrolled_window_set_shadow_type_w gxg_gtk_scrolled_window_set_shadow_type
 #define gxg_gtk_scrolled_window_get_shadow_type_w gxg_gtk_scrolled_window_get_shadow_type
-#define gxg_gtk_scrolled_window_add_with_viewport_w gxg_gtk_scrolled_window_add_with_viewport
 #define gxg_gtk_target_list_new_w gxg_gtk_target_list_new
 #define gxg_gtk_target_list_unref_w gxg_gtk_target_list_unref
 #define gxg_gtk_target_list_add_w gxg_gtk_target_list_add
@@ -45436,7 +45424,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_scrolled_window_get_placement, gxg_gtk_scrolled_window_get_placement_w, 1, 0, 0, H_gtk_scrolled_window_get_placement);
   XG_DEFINE_PROCEDURE(gtk_scrolled_window_set_shadow_type, gxg_gtk_scrolled_window_set_shadow_type_w, 2, 0, 0, H_gtk_scrolled_window_set_shadow_type);
   XG_DEFINE_PROCEDURE(gtk_scrolled_window_get_shadow_type, gxg_gtk_scrolled_window_get_shadow_type_w, 1, 0, 0, H_gtk_scrolled_window_get_shadow_type);
-  XG_DEFINE_PROCEDURE(gtk_scrolled_window_add_with_viewport, gxg_gtk_scrolled_window_add_with_viewport_w, 2, 0, 0, H_gtk_scrolled_window_add_with_viewport);
   XG_DEFINE_PROCEDURE(gtk_target_list_new, gxg_gtk_target_list_new_w, 2, 0, 0, H_gtk_target_list_new);
   XG_DEFINE_PROCEDURE(gtk_target_list_unref, gxg_gtk_target_list_unref_w, 1, 0, 0, H_gtk_target_list_unref);
   XG_DEFINE_PROCEDURE(gtk_target_list_add, gxg_gtk_target_list_add_w, 4, 0, 0, H_gtk_target_list_add);
@@ -50771,7 +50758,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("02-Jun-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("06-Jun-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
