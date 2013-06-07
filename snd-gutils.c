@@ -1007,9 +1007,11 @@ void add_menu_style(GtkWidget *w)
 
 void add_paned_style(GtkWidget *w)
 {
+#if 0
   GtkStyleContext *c;
   c = gtk_widget_get_style_context(w);
   gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(pd_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+#endif
 }
 
 void add_red_scale_style(GtkWidget *w)

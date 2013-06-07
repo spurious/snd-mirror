@@ -3114,7 +3114,7 @@
 (CFNC "void gtk_text_buffer_apply_tag_by_name GtkTextBuffer* buffer gchar* name GtkTextIter* start GtkTextIter* end")
 (CFNC "void gtk_text_buffer_remove_tag_by_name GtkTextBuffer* buffer gchar* name GtkTextIter* start GtkTextIter* end")
 (CFNC "void gtk_text_buffer_remove_all_tags GtkTextBuffer* buffer GtkTextIter* start GtkTextIter* end")
-(CFNC-PA "GtkTextTag* gtk_text_buffer_create_tag GtkTextBuffer* buffer gchar* tag_name etc #tags" 0 6 '("gchar*" "int"))
+(CFNC-PA "GtkTextTag* gtk_text_buffer_create_tag GtkTextBuffer* buffer gchar* tag_name etc #tags" 0 6 '("gchar*" "any"))
 (CFNC "void gtk_text_buffer_get_iter_at_line_offset GtkTextBuffer* buffer GtkTextIter* iter gint line_number gint char_offset")
 (CFNC "void gtk_text_buffer_get_iter_at_line_index GtkTextBuffer* buffer GtkTextIter* iter gint line_number gint byte_index")
 (CFNC "void gtk_text_buffer_get_iter_at_offset GtkTextBuffer* buffer GtkTextIter* iter gint char_offset")

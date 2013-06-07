@@ -25,6 +25,8 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     7-Jun-13:  added mixed arg types to the ... arg lists.
+ *     --------
  *     19-Aug-10: removed lots of Gdk stuff -- we assume Gtk 2.9 and cairo now.
  *     28-Jan-10: removed the rest of the struct accessors.
  *     --------
@@ -1042,8 +1044,10 @@ XM_TYPE_NO_P_2(cairo_region_overlap_t, cairo_region_overlap_t)
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
 #define XLI(a, b) ((int)XEN_TO_C_INT(XEN_LIST_REF(a, b)))
+#define XLL(a, b) (XEN_TO_C_INT64_T(XEN_LIST_REF(a, b)))
 #define XLG(a, b) XEN_TO_C_GType(XEN_LIST_REF(a, b))
 #define XLT(a, b) XEN_TO_C_GtkTextTag_(XEN_LIST_REF(a, b))
+#define XLA(a, b) ((XEN_INTEGER_P(XEN_LIST_REF(a, b))) ? ((gpointer)XLL(a, b)) : ((XEN_STRING_P(XEN_LIST_REF(a, b))) ? ((gpointer)XLS(a, b)) : ((gpointer)XLG(a, b))))
 
 static XEN c_to_xen_string(XEN str)
 {
@@ -9065,9 +9069,9 @@ gchar* tag_name, etc tags)"
     switch (etc_len)
       {
         case 0: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, NULL); break;
-        case 2: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, XLS(tags, 0), XLI(tags, 1), NULL); break;
-        case 4: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, XLS(tags, 0), XLI(tags, 1), XLS(tags, 2), XLI(tags, 3), NULL); break;
-        case 6: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, XLS(tags, 0), XLI(tags, 1), XLS(tags, 2), XLI(tags, 3), XLS(tags, 4), XLI(tags, 5), NULL); break;
+        case 2: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, XLS(tags, 0), XLA(tags, 1), NULL); break;
+        case 4: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, XLS(tags, 0), XLA(tags, 1), XLS(tags, 2), XLA(tags, 3), NULL); break;
+        case 6: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, XLS(tags, 0), XLA(tags, 1), XLS(tags, 2), XLA(tags, 3), XLS(tags, 4), XLA(tags, 5), NULL); break;
       }
     return(C_TO_XEN_GtkTextTag_(result));
   }
@@ -36131,7 +36135,14 @@ static XEN xg_object_set(XEN val, XEN name, XEN new_val)
 {
   XEN_ASSERT_TYPE(XEN_gpointer_P(val), val, 1, "g_object_set", "gpointer");
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 2, "g_object_set", "string");
-  g_object_set(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), (XEN_BOOLEAN_P(new_val)) ? XEN_TO_C_BOOLEAN(new_val) : XEN_TO_C_INT(new_val), NULL);
+  if (XEN_BOOLEAN_P(new_val))
+    g_object_set(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), XEN_TO_C_BOOLEAN(new_val), NULL);
+  else
+    {
+      if (XEN_NUMBER_P(new_val))
+        g_object_set(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), XEN_TO_C_INT(new_val), NULL);
+      else g_object_set(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), XEN_TO_C_STRING(new_val), NULL);
+    }
   return(new_val);
 }
 
@@ -50758,7 +50769,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("06-Jun-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("07-Jun-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

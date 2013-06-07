@@ -116,9 +116,10 @@ static void listener_init(glistener *g, GtkWidget *w)
   SG_SIGNAL_CONNECT(w, "button_press_event", listener_button_press, NULL);
   SG_SIGNAL_CONNECT(w, "enter_notify_event", listener_focus_callback, NULL);
   SG_SIGNAL_CONNECT(w, "leave_notify_event", listener_unfocus_callback, NULL);
-
+  
   glistener_set_prompt_tag(ss->listener, gtk_text_buffer_create_tag(listener_buffer, "glistener_prompt_tag", 
 								    "weight", PANGO_WEIGHT_BOLD, 
+								    /* "foreground", "red", */
 								    NULL));
   ss->listener_pane = w;
 }
@@ -458,11 +459,35 @@ static s7_pointer g_clear(s7_scheme *sc, s7_pointer args)
   return(s7_car(args));
 }
 
+static s7_pointer g_text_widget(s7_scheme *sc, s7_pointer args)
+{
+  return(s7_list(sc, 2, s7_make_symbol(sc, "GtkTextView*"), s7_make_c_pointer(sc, (void *)listener_text)));
+}
+
 static s7_pointer g_set_prompt(s7_scheme *sc, s7_pointer args)
 {
   glistener_set_prompt(unwrap_glistener(s7_car(args)), s7_string(s7_cadr(args)));
   return(s7_cadr(args));
 }
+
+static s7_pointer g_set_prompt_tag(s7_scheme *sc, s7_pointer args)
+{
+  /* args: (#<c_pointer 0x2dfbed0> (GtkTextTag_ #<c_pointer 0x2e8f180>))
+   */
+  GtkTextTag *new_tag = NULL;
+  if (s7_cadr(args) != s7_f(sc))
+    new_tag = (GtkTextTag *)(s7_c_pointer(s7_cadr(s7_cadr(args))));
+
+  glistener_set_prompt_tag(unwrap_glistener(s7_car(args)), new_tag);
+  return(s7_cadr(args));
+}
+
+/*  (listener-set-prompt-tag *listener* 
+      (gtk_text_buffer_create_tag 
+        (GTK_TEXT_BUFFER (gtk_text_view_get_buffer (GTK_TEXT_VIEW (listener-text-widget *listener*))))
+	#f (list "weight" PANGO_WEIGHT_BOLD "foreground" "red")))
+*/
+
 
 static void glistener_init(glistener *g1)
 {
@@ -474,11 +499,17 @@ static void glistener_init(glistener *g1)
   s7_define_function(s7, "listener-append-prompt", g_append_prompt, 1, 0, false, "(listener-append-prompt g)");
   s7_define_function(s7, "listener-prompt-position", g_prompt_position, 1, 0, false, "(listener-prompt-position g)");
   s7_define_function(s7, "listener-set-prompt", g_set_prompt, 2, 0, false, "(listener-set-prompt g str)");
+  s7_define_function(s7, "listener-set-prompt-tag", g_set_prompt_tag, 2, 0, false, "(listener-set-prompt-tag g tag)");
   s7_define_function(s7, "listener-evaluate", g_evaluate, 1, 0, false, "(listener-evaluate g)");
   s7_define_function(s7, "listener-complete", g_complete, 1, 0, false, "(listener-complete g)");
   s7_define_function(s7, "listener-scroll", g_scroll_to_end, 1, 0, false, "(listener-scroll g)");
   s7_define_function(s7, "listener-clear", g_clear, 1, 0, false, "(listener-clear g)");
+  s7_define_function(s7, "listener-text-widget", g_text_widget, 1, 0, false, "(listener-text-widget g)");
   s7_define_variable(s7, "*listener*", wrap_glistener(g1));
+
+  
+  /* TODO: show the listener if nothing else is active at startup
+   */
 }
 #endif
 

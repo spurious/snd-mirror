@@ -1998,6 +1998,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), SND_PANE(sp), sp->short_filename);
       else reset_controls(sp); /* segfault here in notebook case! */
     }
+
   gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), true);
   if (currently_showing_controls) show_controls(sp); else hide_controls(sp);
 
@@ -2041,6 +2042,12 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       reset_controls(sp);
     }
   if (free_filename) free(filename);
+  
+#if HAVE_GTK_3
+  if (listener_exists)
+    gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), 300);
+  /* actually we haven't reached full size here at start-up */
+#endif
   return(sp);
 }
 

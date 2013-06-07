@@ -2784,6 +2784,7 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
  * TODO: doc key bindings and how things work (<cr>->eval)
  * TODO: might be nice to add example of user-key-binding or whatever
  * PERHAPS: should the error reports and the copied exprs be colorized?
+ * TODO: if size changes, make sure current prompt is visible
  */
 
 /* changes:

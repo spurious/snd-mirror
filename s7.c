@@ -65526,12 +65526,12 @@ s7_scheme *s7_init(void)
  *
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7 13.8
- * bench    42736 8752 8051 7725 6515 5194 4364 3989 3997
+ * bench    42736 8752 8051 7725 6515 5194 4364 3989 3997 3997
  * lint           9328 8140 7887 7736 7300 7180 7051 7078
  * index    44300 3291 3005 2742 2078 1643 1435 1363 1365 1345
  * s7test    1721 1358 1297 1244  977  961  957  960  943
  * t455|6     265   89   55   31   14   14    9 9155 8998
- * lat        229   63   52   47   42   40   34   31   29
+ * lat        229   63   52   47   42   40   34   31   29   29
  * t502        90   43   39   36   29   23   20   14   14
  * calls           275  207  175  115   89   71   53   53
  */
@@ -65558,16 +65558,3 @@ s7_scheme *s7_init(void)
   but why not make it work?
 */
 
-/* TODO: check errors during autoload (file and function)
- * PERHAPS: handle system_extras and r7rs with autoload
-
-(autoload 'j0
-	  (lambda (e)
-	    (if (not (provided? 'cload.scm))
-		(load "cload.scm"))
-	    (define-c-function '(double j0 (double)) "" "math.h")
-	    (augment-environment! e (cons 'j0 j0))))
-
- * so we'd have a function that loads n funcs, augments with all n, autoload that with each
- * needs to be dependent on 'dlopen in *features*
- */

@@ -9386,8 +9386,8 @@ int main(int argc, char **argv)
 </div>
 
 <br>
-<p>The three functions supplied by the caller (evaluator, helper, and
-completer) all have defaults, so you don't have to supply symbol name
+<p>The five functions supplied by the caller (evaluator, helper, 
+completer, checker, and colorizer) all have defaults, so you don't have to supply symbol name
 completion or help.  The default evaluator just prints "?" and prompts
 for more input.  See glistener.h for the full API and an earnest attempt
 at helpful documentation.
@@ -9399,8 +9399,18 @@ is: <code>(define-constant |lambda| #u8(#xce #xbb))</code>.  This can be embedde
 in an ordinary s7 string with any string operation: <code>(string-append |lambda| "ambda")</code>
 which returns "&lambda;ambda".  (string-length will still return the number of bytes; to get
 the number of characters in a case like this, use g_utf8_strlen).
+So, to set the prompt to be a red lambda and the font to be "Nimbus mono 10" from Scheme,
+assuming we have the usual Scheme-to-C linkages (see snd-glistener.c):
 </p>
 
+<pre class="indented">
+(set! (listener-prompt) (bytevector #xce #xbb (char-&gt;integer #\&gt;) (char-&gt;integer #\space)))
+(set! (listener-font) "Nimbus mono 10")
+(listener-set-prompt-tag *listener* ; ideally this too would be a setter
+  (gtk_text_buffer_create_tag 
+    (GTK_TEXT_BUFFER (gtk_text_view_get_buffer (GTK_TEXT_VIEW (listener-text-widget *listener*))))
+    #f (list "weight" PANGO_WEIGHT_BOLD "foreground" "red")))
+</pre>
 </div>
 
 
