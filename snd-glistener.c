@@ -506,10 +506,6 @@ static void glistener_init(glistener *g1)
   s7_define_function(s7, "listener-clear", g_clear, 1, 0, false, "(listener-clear g)");
   s7_define_function(s7, "listener-text-widget", g_text_widget, 1, 0, false, "(listener-text-widget g)");
   s7_define_variable(s7, "*listener*", wrap_glistener(g1));
-
-  
-  /* TODO: show the listener if nothing else is active at startup
-   */
 }
 #endif
 
@@ -776,9 +772,7 @@ leaves the lisp listener pane"
  *    when snd opens a sound, listener size changes and we end up somewhere random
  *    when sound is closed, listener should fill space
  *
- * motif case needs prompt length fixups
- *
- * why is gtk 3 default font so small?  and snd looks terrible in gtk 3, but not across the net?
+ * SOMEDAY: motif case needs prompt length fixups and listener if no panes
  */
 
 

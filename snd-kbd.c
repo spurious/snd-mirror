@@ -352,7 +352,9 @@ static void call_keymap(int hashedsym, int count)
 }
 
 
-/* ---------------- status area ---------------- */
+/* ---------------- status area ---------------- 
+ * this should be in snd-snd.c?
+ */
 
 void status_report(snd_info *sp, const char *format, ...)
 {

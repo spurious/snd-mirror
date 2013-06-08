@@ -71,6 +71,7 @@ void glistener_set_helper          (glistener *g, const char *(*help)(glistener 
 void glistener_set_checker         (glistener *g, const char *(*check)(glistener *g, const char *text));
 void glistener_set_evaluator       (glistener *g, void (*eval)(glistener *g, const char *text));
 void glistener_set_colorizer       (glistener *g, void (*colorizer)(glistener *g, glistener_colorizer_t type, int start, int end));
+void glistener_set_keyer           (glistener *g, bool (*key)(glistener *g, GtkWidget *w, GdkEventKey *e));
 
 /* these are for regression testing */
 char *glistener_evaluate           (glistener *g);
@@ -262,7 +263,7 @@ char *glistener_complete           (glistener *g);
  *
  *
  * --------
- * void glistener_set_completer(glistener *g, void (*completer)(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data));
+ * void glistener_set_completer(glistener *g, void (*completer)(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data))
  *
  *  The completer is called whenever the user types TAB after what appears to be a
  *  partial symbol name (in a string, the filename completer is called instead).
@@ -287,7 +288,7 @@ char *glistener_complete           (glistener *g);
  *
  *				      
  * --------
- * void glistener_set_helper(glistener *g, const char *(*help)(glistener *g, const char *text));
+ * void glistener_set_helper(glistener *g, const char *(*help)(glistener *g, const char *text))
  *
  *  The helper is called whenever the listener thinks a help string is in order.  It is passed 
  *  a string ("text") about which it hopes to get help.  If the helper returns NULL, nothing 
@@ -310,7 +311,7 @@ char *glistener_complete           (glistener *g);
  *
  *				      
  * --------
- * void glistener_set_evaluator(glistener *g, void (*eval)(glistener *g, const char *text));
+ * void glistener_set_evaluator(glistener *g, void (*eval)(glistener *g, const char *text))
  *
  *  This is the heart of the listener.  It gets a string ("text") and
  *  does something debonair.  In s7, it calls s7_eval_c_string, and then
@@ -336,7 +337,7 @@ char *glistener_complete           (glistener *g);
  *				      
  *
  * --------
- * void glistener_set_checker         (glistener *g, const char *(*check)(glistener *g, const char *text));
+ * void glistener_set_checker(glistener *g, const char *(*check)(glistener *g, const char *text))
  *
  *  The checker is called when close-paren is typed and the matching open-paren can be found.
  *  "text" in this case is the expression. If it notices something awry in the expression, 
@@ -346,13 +347,24 @@ char *glistener_complete           (glistener *g);
  *
  *
  * --------
- * void glistener_set_colorizer       (glistener *g, void (*colorizer)(glistener *g, glistener_colorizer_t type, int start, int end));
+ * void glistener_set_colorizer(glistener *g, void (*colorizer)(glistener *g, glistener_colorizer_t type, int start, int end))
  *
  *  The colorizer highlights portions of the code, normally using colors, but the GtkTextBuffer
  *  is at your disposal.  This function is called whenever there is any change in the listener
  *  buffer's contents.  The "start" and "end" ints are offsets into the buffer giving what the
  *  listener thinks are the current bounds where there is an entity of "type", one of the glistener_colorizer_t
  *  enums given above.  See the colorizer function in snd-glistener.c.
+ *
+ *
+ *
+ * --------
+ * void glistener_set_keyer(glistener *g, bool (*key)(glistener *g, GtkWidget *w, GdkEventKey *e))
+ *
+ *  The keyer is called upon key-press.  It is passed the widget involved (the listener
+ *  text-view widget), and the GdkEvent.  The event has fields giving the key itself, and
+ *  any auxiliary keys (control, shift, etc).  If you don't want to handle that key, or
+ *  want the built-in action to be called, return false.  If keyer returns true, any
+ *  further handling of the signal is blocked.  The default keyer simply returns false.
  *
  *
  *

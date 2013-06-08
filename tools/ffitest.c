@@ -174,7 +174,7 @@ static s7_pointer mac_plus(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer open_plus(s7_scheme *sc, s7_pointer args)
 {
-  #define plus_help "(plus obj ...) applies obj's plus method to obj and any trailing arguments."
+  #define plus_help "(plus obj ...) applies obj's plus method to any trailing arguments."
   s7_pointer obj;
   obj = s7_car(args);
   if (s7_is_open_environment(obj))          /* does obj have methods? */
@@ -182,7 +182,7 @@ static s7_pointer open_plus(s7_scheme *sc, s7_pointer args)
       s7_pointer method;                    /* does it have a 'plus method? */
       method = s7_search_open_environment(sc, s7_make_symbol(sc, "plus"), obj);
       if (s7_is_procedure(method))
-	return(s7_apply_function(sc, method, args));
+	return(s7_apply_function(sc, method, s7_cdr(args)));
     }
   return(s7_f(sc));
 }
@@ -1082,11 +1082,22 @@ int main(int argc, char **argv)
   p = s7_eval_c_string(sc, "(mac-plus 2 3)");
   if (s7_integer(p) != 5)
     {fprintf(stderr, "%d: %s is not 5?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
-  /* TODO: how to call this from C? also macroexpand? */
+  p1 = s7_apply_function(sc, 
+	s7_name_to_value(sc, "mac-plus"),
+	s7_list(sc, 1, s7_list(sc, 3, s7_make_symbol(sc, "mac-plus"), s7_make_integer(sc, 3), s7_make_integer(sc, 4))));
+  p = s7_eval_form(sc, p1, s7_global_environment(sc));
+  if ((!s7_is_integer(p)) ||
+      (s7_integer(p) != 7))
+    {char *s2; fprintf(stderr, "%d: %s -> %s is not 7?\n", __LINE__, s1 = TO_STR(p1), s2 = TO_STR(p)); free(s1); free(s2);}
 
 
   s7_define_function(sc, "open-plus", open_plus, 1, 0, true, plus_help);
-  /* TODO: here we need an env with a open-plus slot */
+  p = s7_augment_environment(sc, s7_nil(sc), s7_cons(sc, s7_cons(sc, s7_make_symbol(sc, "plus"), s7_name_to_value(sc, "plus")), s7_nil(sc)));
+  s7_open_environment(p);
+  p1 = s7_apply_function(sc, s7_name_to_value(sc, "open-plus"), s7_list(sc, 3, p, s7_make_integer(sc, 2), s7_make_integer(sc, 3)));
+  if ((!s7_is_integer(p1)) ||
+      (s7_integer(p1) != 7))
+    {fprintf(stderr, "%d: %s is not 7?\n", __LINE__, s1 = TO_STR(p1)); free(s1);}
 
 
   s7_eval_c_string(sc,  "(define my-vect (make-vector '(2 3 4) 0))");

@@ -4711,6 +4711,53 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
+;;; BYTEVECTORS
+;;; --------------------------------------------------------------------------------
+
+(let ((bv #u8(1 0 3)))
+  (test bv #u8(1 0 3))
+  (test (object->string bv) "#u8(1 0 3)")
+  (test (equal? bv #u8(1 0 3)) #t)
+  (test (eq? bv bv) #t)
+  (test (eqv? bv bv) #t)
+  (test (equal? (bytevector 1 0 3) #u8(1 0 3)) #t)
+  (test (bytevector? bv) #t)
+  (test (equal? (make-bytevector 3) #u8(0 0 0)) #t)
+  (test (string-ref #u8(64 65 66) 1) #\A)
+  (test (let ((nbv (copy bv))) (equal? nbv bv)) #t)
+  (test (let ((rbv (reverse bv))) (equal? rbv #u8(3 0 1))) #t)
+  (test (length bv) 3)
+  )
+
+(test (eval-string "#u8(-1)") 'error)
+(test (eval-string "#u8(1.0)") 'error)
+(test (eval-string "#u8(3/2)") 'error)
+(test (eval-string "#u8(1+i)") 'error)
+(test (eval-string "#u8((32))") 'error)
+(test (eval-string "#u8(#\\a)") 'error)
+(test (eval-string "#u8(256)") 'error)
+(test (eval-string "#u8(1/0)") 'error)
+(test (eval-string "#u8(9223372036854775807)") 'error)
+(test (eval-string "#u8(-9223372036854775808)") 'error)
+(test #u8(#b11 #x8) #u8(3 8))
+
+(test #u8(255) (bytevector 255))
+(test (object->string #u8()) "#u8()")
+(test (object->string #u8(255)) "#u8(255)")
+(test (object->string #u8(255 255)) "#u8(255 255)")
+(test (object->string #u8(128)) "#u8(128)")
+(test (object->string #u8(128 128)) "#u8(128 128)")
+
+(test (length #u8(1)) 1)
+(test (length #u8()) 0)
+(test (length (bytevector)) 0)
+(test (bytevector? #u8()) #t)
+
+
+
+
+
 
 ;;; --------------------------------------------------------------------------------
 ;;; LISTS
@@ -71591,3 +71638,5 @@ in non-gmp,
 
 )
 |#
+
+	  

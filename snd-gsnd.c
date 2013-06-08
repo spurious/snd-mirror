@@ -39,7 +39,7 @@ GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->snd_widgets[W_pane_box]);}
 
 #define CLOSE_BUTTON(Sp)         Sp->snd_widgets[W_close]
 
-#define STATUS_AREA(Sp)      Sp->snd_widgets[W_info]
+#define STATUS_AREA(Sp)          Sp->snd_widgets[W_info]
 #define NAME_PIX(Sp)             Sp->snd_widgets[W_name_pix]
 #define STOP_PIX(Sp)             Sp->snd_widgets[W_stop_pix]
 #define SYNC_BUTTON(Sp)          Sp->snd_widgets[W_sync]
@@ -343,6 +343,7 @@ static gboolean clock_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data
 }
 
 
+
 /* -------- STATUS AREA CALLBACKS -------- */
 
 static char stupid[1] = {'\0'};
@@ -351,8 +352,8 @@ void set_status(snd_info *sp, const char *str, bool update)
 {
   if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return;
   if (str)
-    gtk_entry_set_text(GTK_ENTRY(STATUS_AREA(sp)), str);
-  else gtk_entry_set_text(GTK_ENTRY(STATUS_AREA(sp)), stupid);
+    set_label(STATUS_AREA(sp), str);
+  else set_label(STATUS_AREA(sp), stupid);
 }
 
 
@@ -1670,12 +1671,11 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	  }
       }
 
-      STATUS_AREA(sp) = gtk_entry_new();
+      STATUS_AREA(sp) = gtk_label_new(NULL);
 #if HAVE_GTK_3
       gtk_widget_set_halign(STATUS_AREA(sp), GTK_ALIGN_FILL);
       gtk_widget_set_hexpand(STATUS_AREA(sp), true);
 #endif
-      gtk_entry_set_has_frame(GTK_ENTRY(STATUS_AREA(sp)), false);
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), STATUS_AREA(sp), true, true, 2);
       gtk_widget_show(STATUS_AREA(sp));
 

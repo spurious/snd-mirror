@@ -35,6 +35,7 @@ struct glistener {
   void (*evaluator)(glistener *g, const char *text);
   void (*completer)(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data);
   void (*colorizer)(glistener *g, glistener_colorizer_t type, int start, int end);
+  bool (*keyer)(glistener *g, GtkWidget *w, GdkEventKey *e);
 };
 
 
@@ -84,7 +85,7 @@ struct glistener {
  *   evaluator -- evaluate an expression (a C string) and normally print the result in the glistener window
  */
 
-static const char *glistener_default_helper(glistener *g, const char *text)
+static const char *default_helper(glistener *g, const char *text)
 {
   return(NULL);
 }
@@ -93,11 +94,11 @@ void glistener_set_helper(glistener *g, const char *(*help)(glistener *g, const 
 {
   if (help)
     g->helper = help;
-  else g->helper = glistener_default_helper;
+  else g->helper = default_helper;
 }
 
 
-static const char *glistener_default_checker(glistener *g, const char *text)
+static const char *default_checker(glistener *g, const char *text)
 {
   return(NULL);
 }
@@ -106,11 +107,11 @@ void glistener_set_checker(glistener *g, const char *(*check)(glistener *g, cons
 {
   if (check)
     g->checker = check;
-  else g->checker = glistener_default_checker;
+  else g->checker = default_checker;
 }
 
 
-static void glistener_default_evaluator(glistener *g, const char *text)
+static void default_evaluator(glistener *g, const char *text)
 {
   glistener_append_text(g, "\n?");
   glistener_append_prompt(g);
@@ -120,11 +121,11 @@ void glistener_set_evaluator(glistener *g, void (*eval)(glistener *g, const char
 {
   if (eval)
     g->evaluator = eval;
-  else g->evaluator = glistener_default_evaluator;
+  else g->evaluator = default_evaluator;
 }
 
 
-static void glistener_default_completer(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
+static void default_completer(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
 {
 }
 
@@ -132,11 +133,11 @@ void glistener_set_completer(glistener *g, void (*completer)(glistener *g, bool 
 {
   if (completer)
     g->completer = completer;
-  else g->completer = glistener_default_completer;
+  else g->completer = default_completer;
 }
 
 
-static void glistener_default_colorizer(glistener *g, glistener_colorizer_t type, int start, int end)
+static void default_colorizer(glistener *g, glistener_colorizer_t type, int start, int end)
 {
 }
 
@@ -144,9 +145,28 @@ void glistener_set_colorizer(glistener *g, void (*colorizer)(glistener *g, glist
 {
   if (colorizer)
     g->colorizer = colorizer;
-  else g->colorizer = glistener_default_colorizer;
+  else g->colorizer = default_colorizer;
 }
 
+
+static bool default_keyer(glistener *g, GtkWidget *w, GdkEventKey *e)
+{
+  return(false);
+}
+
+void glistener_set_keyer(glistener *g, bool (*key)(glistener *g, GtkWidget *w, GdkEventKey *e))
+{
+  if (key)
+    g->keyer = key;
+  else g->keyer = default_keyer;
+  /* the keyer can itself block signal emission, so I think all bases are covered
+   *   false -> built-in actions
+   *   true -> skip built in 
+   *   block/true -> block, then skip
+   * the caller could simply add his signal to "key-press" in the widget, but then
+   *   has less fine-tuned control of the built-in handler. 
+   */
+}
 
 
 void glistener_is_schemish(glistener *g, bool is_schemish)
@@ -1197,7 +1217,7 @@ static void check_parens(glistener *g)
 	{
 	  add_highlight(g, opos, opos + 1);
 	  check_for_offscreen_matching_paren(g, opos);
-	  if (g->checker != glistener_default_checker)
+	  if (g->checker != default_checker)
 	    {
 	      char *text;
 	      text = glistener_text(g, pos, opos);
@@ -1477,182 +1497,187 @@ static void glistener_completion(glistener *g, int end);
 static gboolean glistener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   glistener *g = (glistener *)data;
-  int pos;
-  guint key;
-  GdkModifierType state;
 
-  key = EVENT_KEYVAL(event);
-  state = (GdkModifierType)EVENT_STATE(event);
-
-  /* fprintf(stderr, "key: %d, state: %x\n", key, state); */
-
-#if 1
-  /* just a fun hack -- need to make a map to do this right 
-   *   could be 1..3 bytes long
-   *   perhaps C->c4, M->c5, []->3, CM->c8?
-   */
-  if (state & GDK_SUPER_MASK)
+  if ((g->keyer == default_keyer) ||
+      (!(g->keyer(g, w, event))))
     {
-      char p[3];
-      p[0] = 0xce;
-      p[1] = key + (0xbb - GDK_KEY_l); /* works for lambda */
-      p[2] = 0;
-      glistener_insert_text(g, p);
-      g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
-      return(false);
-    }
-#endif
+      int pos;
+      guint key;
+      GdkModifierType state;
 
-  switch (key)
-    {
-      /* further processing (by gtk) of the keystroke is blocked if we fall through */
-    case GDK_KEY_a:
-      if (state & MetaMask)
-	glistener_set_cursor_position(g, find_previous_prompt(g, glistener_cursor_position(g)));
-      else return(false);
-      break;
+      key = EVENT_KEYVAL(event);
+      state = (GdkModifierType)EVENT_STATE(event);
       
-    case GDK_KEY_c:
-      if (state & MetaMask)
-	word_upper(g, true, false);
-      else return(false);
-      break;
-
-    case GDK_KEY_d:
-      if (state & ControlMask)
+      /* fprintf(stderr, "key: %d, state: %x\n", key, state); */
+      
+#if 1
+      /* just a fun hack -- need to make a map to do this right 
+       *   could be 1..3 bytes long
+       *   perhaps C->c4, M->c5, []->3, CM->c8?
+       */
+      if (state & GDK_SUPER_MASK)
 	{
-	  /* need to check for prompt just ahead */
-	  if (!is_prompt_end(g, glistener_cursor_position(g) + g->prompt_length))
-	    return(false);
-	  /* else we're sitting at (just in front of) the prompt so drop through and block the signal */
+	  char p[3];
+	  p[0] = 0xce;
+	  p[1] = key + (0xbb - GDK_KEY_l); /* works for lambda */
+	  p[2] = 0;
+	  glistener_insert_text(g, p);
+	  g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
+	  return(false);
 	}
-      else
+#endif
+      
+      switch (key)
 	{
+	  /* further processing (by gtk) of the keystroke is blocked if we fall through */
+	case GDK_KEY_a:
+	  if (state & MetaMask)
+	    glistener_set_cursor_position(g, find_previous_prompt(g, glistener_cursor_position(g)));
+	  else return(false);
+	  break;
+	  
+	case GDK_KEY_c:
+	  if (state & MetaMask)
+	    word_upper(g, true, false);
+	  else return(false);
+	  break;
+	  
+	case GDK_KEY_d:
+	  if (state & ControlMask)
+	    {
+	      /* need to check for prompt just ahead */
+	      if (!is_prompt_end(g, glistener_cursor_position(g) + g->prompt_length))
+		return(false);
+	      /* else we're sitting at (just in front of) the prompt so drop through and block the signal */
+	    }
+	  else
+	    {
+	      if (state & MetaMask)
+		{
+		  GtkTextIter p;
+		  int i, pos, new_pos, cur;
+		  bool hits_prompt = false;
+		  
+		  pos = glistener_cursor(g, &p);
+		  gtk_text_iter_forward_word_end(&p);
+		  new_pos = gtk_text_iter_get_offset(&p);
+		  cur = pos + g->prompt_length;
+		  
+		  /* if there's a prompt somewhere between pos and new_pos, block this deletion */
+		  for (i = 0; i < (new_pos - pos); i++)
+		    {
+		      hits_prompt = is_prompt_end(g, cur + i);
+		      if (hits_prompt)
+			break;
+		    }
+		  if (!hits_prompt)
+		    return(false);
+		}
+	      else return(false);
+	    }
+	  break;
+	  
+	case GDK_KEY_e:
+	  if (state & MetaMask)
+	    glistener_set_cursor_position(g, find_next_prompt(g) - 1);
+	  else return(false);
+	  break;
+	  
+	case GDK_KEY_BackSpace:
+	  /* need to check for prompt at cursor */
+	  if (!is_prompt_end(g, glistener_cursor_position(g)))
+	    return(false);
+	  break;
+	  
+	case GDK_KEY_k:
+	  if (state & ControlMask)
+	    {
+	      /* select to line end, copy to clipboard, delete */
+	      GtkTextIter beg, end;
+	      
+	      gtk_text_buffer_get_iter_at_mark(g->buffer, &beg, gtk_text_buffer_get_mark(g->buffer, "insert"));
+	      end = beg;
+	      gtk_text_iter_forward_to_line_end(&end); /* was forward_to_end! */
+	      if (!gtk_text_iter_equal(&beg, &end))
+		{
+		  gtk_text_buffer_select_range(g->buffer, &beg, &end);
+		  gtk_text_buffer_cut_clipboard(g->buffer, gtk_widget_get_clipboard(w, GDK_SELECTION_CLIPBOARD), true);
+		}
+	    }
+	  else return(false);
+	  break;
+	  
+	case GDK_KEY_l:
+	  if (state & MetaMask)
+	    word_upper(g, false, false);
+	  else return(false);
+	  break;
+	  
+	case GDK_KEY_n:
 	  if (state & MetaMask)
 	    {
-	      GtkTextIter p;
-	      int i, pos, new_pos, cur;
-	      bool hits_prompt = false;
-
-	      pos = glistener_cursor(g, &p);
-	      gtk_text_iter_forward_word_end(&p);
-	      new_pos = gtk_text_iter_get_offset(&p);
-	      cur = pos + g->prompt_length;
-
-	      /* if there's a prompt somewhere between pos and new_pos, block this deletion */
-	      for (i = 0; i < (new_pos - pos); i++)
-		{
-		  hits_prompt = is_prompt_end(g, cur + i);
-		  if (hits_prompt)
-		    break;
-		}
-	      if (!hits_prompt)
+	      clear_back_to_prompt(g);
+	      restore_listener_string(g, false);
+	    }
+	  else return(false);
+	  break;
+	  
+	case GDK_KEY_p:
+	  if (state & MetaMask)
+	    {
+	      clear_back_to_prompt(g);
+	      restore_listener_string(g, true);
+	    }
+	  else return(false);
+	  break;
+	  
+	case GDK_KEY_t:
+	  if (state & ControlMask)
+	    {
+	      pos = glistener_cursor_position(g);
+	      if ((!is_prompt_end(g, pos)) &&
+		  (!is_prompt_end(g, pos + g->prompt_length)))
+		text_transpose(g);
+	      else return(false);
+	    }
+	  else return(false);
+	  break;
+	  
+	case GDK_KEY_u:
+	  if (state & MetaMask)
+	    word_upper(g, false, true);
+	  else return(false);
+	  break;
+	  
+	case GDK_KEY_w:
+	  if (state & ControlMask)
+	    {
+	      GtkTextIter start, end;
+	      bool has_selection;
+	      has_selection = gtk_text_buffer_get_selection_bounds(g->buffer, &start, &end);
+	      if (!has_selection)
+		return(false);
+	      if (gtk_text_iter_get_offset(&start) >= g->prompt_length)
 		return(false);
 	    }
 	  else return(false);
+	  break;
+	  
+	case GDK_KEY_Tab:
+	  glistener_completion(g, glistener_cursor_position(g));
+	  return(true);
+	  
+	case GDK_KEY_Return:
+	  if (state & ControlMask)               /* C-return -> insert return no matter what */
+	    glistener_insert_text(g, "\n");
+	  else glistener_return_callback(g);
+	  break;
+	  
+	default: 
+	  return(false);
 	}
-      break;
-
-    case GDK_KEY_e:
-      if (state & MetaMask)
-	glistener_set_cursor_position(g, find_next_prompt(g) - 1);
-      else return(false);
-      break;
-      
-    case GDK_KEY_BackSpace:
-      /* need to check for prompt at cursor */
-      if (!is_prompt_end(g, glistener_cursor_position(g)))
-	return(false);
-      break;
-
-    case GDK_KEY_k:
-      if (state & ControlMask)
-	{
-	  /* select to line end, copy to clipboard, delete */
-	  GtkTextIter beg, end;
-
-	  gtk_text_buffer_get_iter_at_mark(g->buffer, &beg, gtk_text_buffer_get_mark(g->buffer, "insert"));
-	  end = beg;
-	  gtk_text_iter_forward_to_line_end(&end); /* was forward_to_end! */
-	  if (!gtk_text_iter_equal(&beg, &end))
-	    {
-	      gtk_text_buffer_select_range(g->buffer, &beg, &end);
-	      gtk_text_buffer_cut_clipboard(g->buffer, gtk_widget_get_clipboard(w, GDK_SELECTION_CLIPBOARD), true);
-	    }
-	}
-      else return(false);
-      break;
-      
-    case GDK_KEY_l:
-      if (state & MetaMask)
-	word_upper(g, false, false);
-      else return(false);
-      break;
-
-    case GDK_KEY_n:
-      if (state & MetaMask)
-	{
-	  clear_back_to_prompt(g);
-	  restore_listener_string(g, false);
-	}
-      else return(false);
-      break;
-
-    case GDK_KEY_p:
-      if (state & MetaMask)
-	{
-	  clear_back_to_prompt(g);
-	  restore_listener_string(g, true);
-	}
-      else return(false);
-      break;
-
-    case GDK_KEY_t:
-      if (state & ControlMask)
-	{
-	  pos = glistener_cursor_position(g);
-	  if ((!is_prompt_end(g, pos)) &&
-	      (!is_prompt_end(g, pos + g->prompt_length)))
-	    text_transpose(g);
-	  else return(false);
-	}
-      else return(false);
-      break;
-
-    case GDK_KEY_u:
-      if (state & MetaMask)
-	word_upper(g, false, true);
-      else return(false);
-      break;
-
-    case GDK_KEY_w:
-      if (state & ControlMask)
-	{
-	  GtkTextIter start, end;
-	  bool has_selection;
-	  has_selection = gtk_text_buffer_get_selection_bounds(g->buffer, &start, &end);
-	  if (!has_selection)
-	    return(false);
-	  if (gtk_text_iter_get_offset(&start) >= g->prompt_length)
-	    return(false);
-	}
-      else return(false);
-      break;
-
-    case GDK_KEY_Tab:
-      glistener_completion(g, glistener_cursor_position(g));
-      return(true);
-
-    case GDK_KEY_Return:
-      if (state & ControlMask)               /* C-return -> insert return no matter what */
-	glistener_insert_text(g, "\n");
-      else glistener_return_callback(g);
-      break;
-
-    default: 
-      return(false);
     }
-
+  
   g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
   return(false);
 }
@@ -1665,7 +1690,7 @@ static void post_help(glistener *g, int pos)
   char *text;
   const char *help;
 
-  if (g->helper == glistener_default_helper) return;
+  if (g->helper == default_helper) return;
 
   gtk_text_buffer_get_iter_at_offset(g->buffer, &s1, find_current_prompt(g));
   gtk_text_buffer_get_iter_at_offset(g->buffer, &e1, find_next_prompt(g));
@@ -2276,7 +2301,7 @@ static char *symbol_completion(glistener *g, const char *text)
   match_info *m;
   char *result = NULL;
 
-  if (g->completer == glistener_default_completer) return(NULL);
+  if (g->completer == default_completer) return(NULL);
 
   m = (match_info *)calloc(1, sizeof(match_info));
   m->text = text;
@@ -2433,7 +2458,7 @@ static void glistener_colorizer_callback(glistener *g)
   int cur_pos, start_pos, end_pos, expr_start = -1, any_start = -1, open_parens = 0, end_space_pos = 0;
   bool atom_awaits = false;
 
-  if ((g->colorizer == glistener_default_colorizer) ||
+  if ((g->colorizer == default_colorizer) ||
       (!g->is_schemish))
     return;
 
@@ -2648,11 +2673,12 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
   /* make a new glistener, set defaults */
   g = (glistener *)calloc(1, sizeof(glistener));
   g->is_schemish = true;
-  g->helper = glistener_default_helper;
-  g->checker = glistener_default_checker;
-  g->completer = glistener_default_completer;
-  g->evaluator = glistener_default_evaluator;
-  g->colorizer = glistener_default_colorizer;
+  g->helper = default_helper;
+  g->checker = default_checker;
+  g->completer = default_completer;
+  g->evaluator = default_evaluator;
+  g->colorizer = default_colorizer;
+  g->keyer = default_keyer;
   g->prompt_tag = NULL;
   g->prompt = NULL;
   g->prompt_length = 0;
@@ -2704,6 +2730,7 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
   SIGNAL_CONNECT(g->text, "key_release_event", glistener_key_release, (gpointer)g);
   SIGNAL_CONNECT(g->text, "button_release_event", glistener_button_release, (gpointer)g);
   SIGNAL_CONNECT_AFTER(g->buffer, "insert-text", text_insert, (gpointer)g);
+  /* do we also need a "paste-done" handler? */
   SIGNAL_CONNECT_AFTER(g->text, "cut-clipboard", check_for_empty_listener, (gpointer)g);
   SIGNAL_CONNECT_AFTER(g->buffer, "changed", colorize_listener, (gpointer)g);
 
@@ -2782,12 +2809,13 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
  * TODO: key for apropos? fuzzy-completion? (levenstein is in snd-help.c but needs serious optimization)
  * TODO: indent do and if need expr counts -- can this use rtn_cb?
  * TODO: doc key bindings and how things work (<cr>->eval)
- * TODO: might be nice to add example of user-key-binding or whatever
  * PERHAPS: should the error reports and the copied exprs be colorized?
- * TODO: if size changes, make sure current prompt is visible
+ * TODO: if size changes (pane changes), make sure current prompt is visible
+ *   is this the "configure-event" signal on a widget?
  */
 
 /* changes:
+ * 7-June:    added keyer function.
  * 4-June:    added colorizer function.
  * 28-May:    added checker function.
  * 21-May-13: changed HAVE_GTK_3 to HAVE_GTK_2.

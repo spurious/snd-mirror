@@ -1876,7 +1876,15 @@
 					   (lint-format "if is not needed here:~A"
 							name 
 							(truncated-list->string form))))))))))))
-	  
+
+	  ; (do) -- if no side effect in body, it's not needed
+	  ; in that case, if no side-effect in steppers/inits, they're not needed
+	  ; so if not in end, whole statement is otiose, else, we can use
+	  ; (let ((stepper end-val)...) end)
+	  ;
+	  ; in if, if both branches are the same, it's (begin [test] branch)
+	  ; in begin, no side-effect expr can be omitted if not at end
+
 	  ((car cdr)
 	   (if (and *report-minor-stuff*
 		    (pair? (cadr form))

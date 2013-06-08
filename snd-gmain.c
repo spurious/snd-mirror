@@ -688,6 +688,9 @@ void snd_doit(int argc, char **argv)
   color_chan_components(ss->zoom_color, COLOR_ZOOM);
   color_chan_components(ss->position_color, COLOR_POSITION);
 #endif
+  if ((!listener_exists()) &&
+      (!(ss->sounds[0])))
+    handle_listener(true);
 
 #ifndef SND_AS_WIDGET
   set_up_icon();

@@ -23267,11 +23267,11 @@ static void bytevector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, 
 	  port_write_string(port)(sc, "#u8(", 4, port);
 	  for (i = 0; i < len - 1; i++)
 	    {
-	      nlen = snprintf(byte_to_str, BYTE_TO_STR_SIZE, "%d", (unsigned int)string_value(vect)[i]);
+	      nlen = snprintf(byte_to_str, BYTE_TO_STR_SIZE, "%d", (unsigned int)((unsigned char)string_value(vect)[i])); /* casts are not redundant */
 	      port_write_string(port)(sc, byte_to_str, nlen, port);
 	      port_write_character(port)(sc, ' ', port);
 	    }
-	  nlen = snprintf(byte_to_str, BYTE_TO_STR_SIZE, "%d", (unsigned int)string_value(vect)[i]);
+	  nlen = snprintf(byte_to_str, BYTE_TO_STR_SIZE, "%d", (unsigned int)((unsigned char)string_value(vect)[i]));
 	  port_write_string(port)(sc, byte_to_str, nlen, port);
 
 	  if (too_long)
