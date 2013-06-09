@@ -366,6 +366,16 @@ char *glistener_complete           (glistener *g);
  *  want the built-in action to be called, return false.  If keyer returns true, any
  *  further handling of the signal is blocked.  The default keyer simply returns false.
  *
+ *  glistener rebinds some of the keys to mimic Emacs, then adds a few others:
+ *    M-<  go to start of text (also up-arrow)
+ *    M->  go to end of text   (also down-arrow)
+ *    M-a  go to previous prompt
+ *    M-e  go to next prompt
+ *    M-n  restore previous expression, moving back in the history
+ *    M-p  restore previous expression, moving forward in the history
+ *    Tab  complete preceding name, if any, else look for indentation opportunity
+ *    Return send current expression, if any, to evaluator, else insert return
+ *
  *
  *
  * --------

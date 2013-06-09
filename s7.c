@@ -93,7 +93,9 @@
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  * Rick Taube and Andrew Burnson provided the MS Visual C++ support
  *
- * Documentation is in s7.h and s7.html.  s7test.scm is a regression test.
+ * Documentation is in s7.h and s7.html.  
+ * s7test.scm is a regression test.
+ * glistener.c is a listener.
  *
  *
  * ---------------- compile time switches ---------------- 
@@ -163,6 +165,7 @@
  *
  * The __bfin__ switch refers to the Blackfin processor where int accesses must be 4-byte aligned.
  *   I can't find any built-in compiler switch to detect this case. (gcc has __alignof__(int) I think).
+ *   Currently the unaligned access code is turned off, so this switch can be ignored.
  *
  * in openBSD I think you need to include -ftrampolines in CFLAGS.
  */
@@ -240,7 +243,7 @@
 
 #ifndef WITH_C_LOADER
 #define WITH_C_LOADER WITH_GCC
-  /* an experiment -- (load file.so e) looks for (e 'init_func) and if found, calls it
+  /* (load file.so [e]) looks for (e 'init_func) and if found, calls it
    *   as the shared object init function.  If WITH_SYSTEM_EXTRAS is 0, the caller
    *   needs to supply system and delete-file so that cload.scm works.
    */
@@ -673,7 +676,6 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_CLOSURE_SC, HOP_CLOSURE_SC, OP_CLOSURE_CS, HOP_CLOSURE_CS, 
       OP_CLOSURE_opSq, HOP_CLOSURE_opSq, OP_CLOSURE_opCq, HOP_CLOSURE_opCq, 
       OP_CLOSURE_opSq_S, HOP_CLOSURE_opSq_S, OP_CLOSURE_opSq_opSq, HOP_CLOSURE_opSq_opSq, 
-      OP_CLOSURE_CAR_CAR, HOP_CLOSURE_CAR_CAR, OP_CLOSURE_CDR_CDR, HOP_CLOSURE_CDR_CDR, 
       OP_CLOSURE_S_opSq, HOP_CLOSURE_S_opSq, OP_CLOSURE_S_opSSq, HOP_CLOSURE_S_opSSq, OP_CLOSURE_opSSq_S, HOP_CLOSURE_opSSq_S, 
       OP_CLOSURE_SSS, HOP_CLOSURE_SSS,
       OP_CLOSURE_ALL_C, HOP_CLOSURE_ALL_C, OP_CLOSURE_ALL_X, HOP_CLOSURE_ALL_X, 
@@ -780,7 +782,6 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "closure_sc", "h_closure_sc", "closure_cs", "h_closure_cs", 
       "closure_opsq", "h_closure_opsq", "closure_opcq", "h_closure_opcq", 
       "closure_opsq_s", "h_closure_opsq_s", "closure_opsq_opsq", "h_closure_opsq_opsq", 
-      "closure_car_car", "h_closure_car_car", "closure_cdr_cdr", "h_closure_cdr_cdr", 
       "closure_s_opsq", "h_closure_s_opsq", "closure_s_opssq", "h_closure_s_opssq", "closure_opssq_s", "h_closure_opssq_s", 
       "closure_sss", "h_closure_sss",
       "closure_all_c", "h_closure_all_c", "closure_all_x", "h_closure_all_x", 
@@ -29192,6 +29193,7 @@ static int hash_loc(s7_scheme *sc, s7_pointer key)
     case T_CHARACTER:
       return(character(key));
 
+    case T_HASH_TABLE:
     case T_VECTOR:
       return(vector_length(key));
 
@@ -40829,18 +40831,19 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 			set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_opSq_opSq);
 		      else set_optimize_data(car_x, hop + OP_CLOSURE_opSq_opSq);
 		      if ((is_null(cdr(closure_body(func)))) &&
+			  (is_safe_closure(func)) &&
 			  (!arglist_has_accessed_symbol(closure_args(func))))
 			{
 			  if ((c_call(cadar_x) == g_car) &&
 			      (c_call(caddar_x) == g_car) &&
 			      (symbol_id(sc->CAR) == 0))
-			    set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_CAR_CAR : OP_CLOSURE_CAR_CAR));
+			    set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_CAR_CAR);
 			  else
 			    {
 			      if ((c_call(cadar_x) == g_cdr) &&
 				  (c_call(caddar_x) == g_cdr) &&
 				  (symbol_id(sc->CDR) == 0))
-				set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_CDR_CDR : OP_CLOSURE_CDR_CDR));
+				set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_CDR_CDR);
 			    }
 			}
 		      ecdr(car_x) = func;
@@ -49943,7 +49946,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		goto EVAL;  
 	      }
 
-	      /* todo; we're assuming 1-liner here, and non accessed args */
+	      /* TODO; we're assuming 1-liner here, and non accessed args */
 	    case OP_CLOSURE_SSb:
 	      if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 2))
 		{
@@ -50031,60 +50034,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      
 
-	    case OP_CLOSURE_CAR_CAR:
-	      if (!one_line_closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 2))
-		{
-		  set_optimize_data(code, OP_UNKNOWN_opSq_opSq);
-		  goto OPT_EVAL;
-		}
-
-	    case HOP_CLOSURE_CAR_CAR:
-	      {
-		s7_pointer p1, p2, p3;
-		p1 = finder(sc, fcdr(cdr(code)));
-		if (is_pair(p1))
-		  p1 = car(p1);
-		else p1 = g_car(sc, cdr(cadr(code)));
-		p2 = finder(sc, fcdr(code));
-		if (is_pair(p2))
-		  p2 = car(p2);
-		else p2 = g_car(sc, list_1(sc, p2));
-		CHECK_STACK_SIZE(sc);
-		code = ecdr(code);
-		p3 = closure_args(code);
-		NEW_FRAME_WITH_TWO_SLOTS(sc, closure_environment(code), sc->envir, car(p3), p1, cadr(p3), p2);
-		sc->code = car(closure_body(code));
-		goto EVAL;
-	      }
-
-	      
-	    case OP_CLOSURE_CDR_CDR:
-	      if (!one_line_closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 2))
-		{
-		  set_optimize_data(code, OP_UNKNOWN_opSq_opSq);
-		  goto OPT_EVAL;
-		}
-
-	    case HOP_CLOSURE_CDR_CDR:
-	      {
-		s7_pointer p1, p2, p3;
-		p1 = finder(sc, fcdr(cdr(code)));
-		if (is_pair(p1))
-		  p1 = cdr(p1);
-		else p1 = g_cdr(sc, cdr(cadr(code)));
-		p2 = finder(sc, fcdr(code));
-		if (is_pair(p2))
-		  p2 = cdr(p2);
-		else p2 = g_cdr(sc, list_1(sc, p2));
-		CHECK_STACK_SIZE(sc);
-		code = ecdr(code);
-		p3 = closure_args(code);
-		NEW_FRAME_WITH_TWO_SLOTS(sc, closure_environment(code), sc->envir, car(p3), p1, cadr(p3), p2);
-		sc->code = car(closure_body(code));
-		goto EVAL;
-	      }
-	      
-	      
 	    case OP_CLOSURE_SSS:
 	      if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 3))
 		{
@@ -51422,16 +51371,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    (optimize_data(car(closure_body(f))) == HOP_SAFE_C_C))
 				  set_immediate(car(closure_body(f)));
 
-				if ((c_call(cadr(code)) == g_car) &&
-				    (c_call(caddr(code)) == g_car) &&
-				    (symbol_id(sc->CAR) == 0))
-				  set_optimize_data(code, ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_CAR_CAR : OP_CLOSURE_CAR_CAR));
-				else
+				if (is_safe_closure(f))
 				  {
-				    if ((c_call(cadr(code)) == g_cdr) &&
-					(c_call(caddr(code)) == g_cdr) &&
-					(symbol_id(sc->CDR) == 0))
-				      set_optimize_data(code, ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_CDR_CDR : OP_CLOSURE_CDR_CDR));
+				    if ((c_call(cadr(code)) == g_car) &&
+					(c_call(caddr(code)) == g_car) &&
+					(symbol_id(sc->CAR) == 0))
+				      set_optimize_data(code, OP_SAFE_CLOSURE_CAR_CAR);
+				    else
+				      {
+					if ((c_call(cadr(code)) == g_cdr) &&
+					    (c_call(caddr(code)) == g_cdr) &&
+					    (symbol_id(sc->CDR) == 0))
+					  set_optimize_data(code, OP_SAFE_CLOSURE_CDR_CDR);
+				      }
 				  }
 			      }
 			    if ((is_global(car(code))) &&
@@ -53898,7 +53850,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  /* there is a problem with this -- if the caller still insists on goto OPT_EVAL, for example,
 	   *   we get here over and over.  (let ((x (list (car y))))...) where list is redefined away.
-	   *   TODO: Perhaps current cases should use NS_EVAL? and OPT_EVAL only if is_h_optimized?
 	   */
 
 	  /* see sss_apply_s7 for code to catch (f x y) here and set up optimizer code for it --
@@ -65520,9 +65471,7 @@ s7_scheme *s7_init(void)
  *
  * SOMEDAY: give each e|f|gcdr ref a unique name and figure out how to avoid collisions
  *
- * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x) and goto*
- *   op_closure_car_car is rarely called or cdr_cdr (only in bench)
- *   can't these be done equally well via _aa?
+ * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
  *
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7 13.8
@@ -65545,11 +65494,11 @@ s7_scheme *s7_init(void)
  *         void *(*ref_1)(s7_pointer vector, s7_Int i)
  *         set, compatible_set?
  *         mark, copy, fill, reverse, etc print
+ *    make-real|integer|rational|-vector is not quite right -- we want make-float|int|byte-vector
  */
 
 /* bytevector support is minimal and confusing -- see end of s7test.scm for a few of the problems
  */
-
 
 /* from comp.lang.scheme:
   (define-macro trad (lambda args `(let ((num 2)) ,@args)))

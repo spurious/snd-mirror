@@ -692,6 +692,9 @@ void glistener_scroll_to_end(glistener *g)
       gtk_adjustment_set_value(GTK_ADJUSTMENT(gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(g->scroller))), 0.0);
     }
 }
+/* there is apparently no way in gtk to make sure our prompt is still visible after
+ *   a paned widget holding this listener changes its layout!
+ */
 
 
 
@@ -1798,6 +1801,7 @@ static gboolean glistener_button_release(GtkWidget *w, GdkEventButton *ev, gpoin
 
 
 
+
 /* ---------------- <cr> evaluation ---------------- */
 
 static void eval_text(glistener *g, GtkTextIter *start, GtkTextIter *end)
@@ -2356,7 +2360,8 @@ static void glistener_completion(glistener *g, int pos)
     }
   else
     {
-      /* here we're indenting */
+      /* here we're indenting.  This code assumes we're using a true fixed width font -- "nimbus mono 10" is not one.
+       */
       static const char indent_spaces[] = "                                                                                ";
       #define INDENT_SPACES 80
       
@@ -2483,8 +2488,6 @@ static void glistener_colorizer_callback(glistener *g)
 	  if (any_start == -1)
 	    any_start = cur_pos;
 
-	  /* TODO: if " ` , ( etc and atom_awaits I guess we should send it out? 
-	   */
 	  switch (c)
 	    {
 	    case '"':
@@ -2515,10 +2518,9 @@ static void glistener_colorizer_callback(glistener *g)
 		/* the special cases here involve block comments and character constants 
 		 *   there's also #<...> if user types inside the brackets and there's whitespace to confuse it
 		 */
-		GtkTextIter bc_iter, c_iter;
+		GtkTextIter bc_iter;
 		gunichar nc;
 		
-		c_iter = scan_iter;
 		bc_iter = scan_iter;
 		gtk_text_iter_forward_char(&bc_iter);
 		nc = gtk_text_iter_get_char(&bc_iter);
@@ -2796,23 +2798,6 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
 
   return(g); 
 }
-
-/* should we provide glistener_text_view and friends?  
- * it might be nice to share the status area across listeners or with the calling program
- *    perhaps glistener_set_statusbar(glistener *g, GtkWidget *sb)
- *    where we free the old one? and set g->status to the new one.
- *    but we also have to fix up the old grid.
- *    caller's init function might set this -- then no need for grid?
- */
-
-/* TODO: move by expr, then use that in indent code and function arg checking [need type info too]
- * TODO: key for apropos? fuzzy-completion? (levenstein is in snd-help.c but needs serious optimization)
- * TODO: indent do and if need expr counts -- can this use rtn_cb?
- * TODO: doc key bindings and how things work (<cr>->eval)
- * PERHAPS: should the error reports and the copied exprs be colorized?
- * TODO: if size changes (pane changes), make sure current prompt is visible
- *   is this the "configure-event" signal on a widget?
- */
 
 /* changes:
  * 7-June:    added keyer function.

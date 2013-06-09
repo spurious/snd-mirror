@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* SOMEDAY: motif case needs prompt length fixups, listener if no panes, minibuffer as label not text entry
+ */
+
 /* ---------------- listener text history ---------------- */
 
 static char **listener_strings = NULL;

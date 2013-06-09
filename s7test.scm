@@ -4749,7 +4749,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (object->string #u8(128)) "#u8(128)")
 (test (object->string #u8(128 128)) "#u8(128 128)")
 
-(test (length #u8(1)) 1)
+(test (length #u8(0)) 1)
+(test (length #u8(0 0)) 2)
 (test (length #u8()) 0)
 (test (length (bytevector)) 0)
 (test (bytevector? #u8()) #t)
@@ -10029,6 +10030,38 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (test ((ht 'a0) 'a1) 'b1)
     (test (hash-table-ref ht 'a0 'a1) 'b1)
     (test (ht 'a0 'a1) 'b1)))
+
+(let ((ht (make-hash-table 31))
+      (e (current-environment)))
+  (define (a-func a) (+ a 1))
+  (define-macro (a-macro a) `(+ 1 , a))
+  (define (any-func a) (let ((x a)) (lambda () x)))
+
+  (set! (ht abs) 1)
+  (set! (ht begin) 2)
+  (set! (ht quasiquote) 3)
+  (set! (ht a-func) 4)
+  (set! (ht a-macro) 5)
+  (set! (ht (any-func 6)) 6)
+  (set! (ht e) 7)
+  (test (ht e) 7)
+  (set! (ht (global-environment)) 8)
+  (test (ht abs) 1)
+  (test (ht round) #f)
+  (test (ht quasiquote) 3)
+  (test (ht begin) 2)
+  (test (ht lambda) #f)
+  (test (ht a-func) 4)
+  (test (ht a-macro) 5)
+  (test (ht (any-func 6)) #f)
+  (test (ht (global-environment)) 8)
+  (call-with-exit
+   (lambda (return)
+     (set! (ht return) 9)
+     (test (ht return) 9)))
+  (set! (ht ht) 10)
+  (test (ht ht) 10))
+  
 
 (test (let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1) (set! (h2 'b) 2.0) (morally-equal? h1 h2)) #t)
 (test (let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1.0) (set! (h2 'b) 2) (morally-equal? (list h1) (list h2))) #t)
@@ -71622,7 +71655,7 @@ in non-gmp,
 |#
 
 #|
-;;; TODO: bytevector tests, #u8 reader/writer tests
+;;; TODO: bytevector tests
 
 (let ((bv #u8(1 0 3)))
   (test bv #u8(1 0 3))

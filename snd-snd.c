@@ -2061,6 +2061,52 @@ void reverb_control_set_feedback(mus_float_t hop)
 
 
 
+/* ---------------- status area ---------------- 
+ */
+
+void status_report(snd_info *sp, const char *format, ...)
+{
+#if (!USE_NO_GUI)
+  char *buf;
+  va_list ap;
+  if ((!sp) || (!(sp->active)) || (sp->inuse != SOUND_NORMAL)) return;
+  va_start(ap, format);
+  buf = vstr(format, ap);
+  va_end(ap);
+  set_status(sp, buf, false);
+  free(buf);
+#endif
+}
+
+
+void clear_status_area(snd_info *sp)
+{
+  set_status(sp, NULL, true);
+}
+
+
+void errors_to_status_area(const char *msg, void *data)
+{
+  snd_info *sp;
+  sp = (snd_info *)data;
+  if (!(snd_ok(sp)))
+    {
+      sp = any_selected_sound();
+      if (!snd_ok(sp)) return;
+    }
+  status_report((snd_info *)data, "%s", msg);
+}
+
+
+void printout_to_status_area(const char *msg, void *data)
+{
+  set_status((snd_info *)data, msg, false);
+}
+
+
+
+
+
 /* ---------------------------------------- sound objects ---------------------------------------- */
 
 /* this is my long term plan right now... */
@@ -5655,6 +5701,41 @@ static XEN g_sounds(void)
 }
 
 
+static XEN g_status_report(XEN msg, XEN snd)
+{
+  #define H_status_report "(" S_status_report " message :optional snd) posts message in snd's status area.\
+If 'snd' is not a currently open sound, the message is sent to the listener, if it is open. \
+If there is no sound or listener, it is sent to stderr."
+
+  snd_info *sp;
+  const char *message;
+
+  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_status_report, "a string");
+  ASSERT_SOUND(S_status_report, snd, 2);
+
+  message = XEN_TO_C_STRING(msg);
+  sp = get_sp(snd);
+
+  if ((sp == NULL) || 
+      (sp->inuse != SOUND_NORMAL))
+    {
+      if ((message) && (*message))
+	{
+	  if (listener_exists())
+	    append_listener_text(-1, message);
+	  else fprintf(stderr, "%s", message);
+	}
+    }
+  else
+    {
+      if ((message) && (*message))
+	set_status(sp, message, false);
+      else clear_status_area(sp);
+    }
+  return(msg);
+}
+
+
 
 #ifdef XEN_ARGIFY_1
 
@@ -5776,6 +5857,7 @@ XEN_ARGIFY_3(g_progress_report_w, g_progress_report)
 XEN_NARGIFY_0(g_sounds_w, g_sounds)
 XEN_NARGIFY_1(g_integer_to_sound_w, g_integer_to_sound)
 XEN_NARGIFY_1(g_sound_to_integer_w, g_sound_to_integer)
+XEN_ARGIFY_2(g_status_report_w, g_status_report)
 
 #else
 
@@ -5897,6 +5979,7 @@ XEN_NARGIFY_1(g_sound_to_integer_w, g_sound_to_integer)
 #define g_sounds_w g_sounds
 #define g_integer_to_sound_w g_integer_to_sound
 #define g_sound_to_integer_w g_sound_to_integer
+#define g_status_report_w g_status_report
 
 #endif
 
@@ -5924,6 +6007,8 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   XEN_DEFINE_CONSTANT(S_channels_separate,     CHANNELS_SEPARATE,     H_channels_separate);
   XEN_DEFINE_CONSTANT(S_channels_combined,     CHANNELS_COMBINED,     H_channels_combined);
   XEN_DEFINE_CONSTANT(S_channels_superimposed, CHANNELS_SUPERIMPOSED, H_channels_superimposed);
+
+  XEN_DEFINE_SAFE_PROCEDURE(S_status_report,          g_status_report_w,          1, 1, 0, H_status_report);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_channels,      g_channels_w,      H_channels,      S_setB S_channels,      g_set_channels_w,       0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_chans,         g_channels_w,      H_channels,      S_setB S_chans,         g_set_channels_w,       0, 1, 1, 1);

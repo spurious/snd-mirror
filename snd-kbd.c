@@ -352,49 +352,6 @@ static void call_keymap(int hashedsym, int count)
 }
 
 
-/* ---------------- status area ---------------- 
- * this should be in snd-snd.c?
- */
-
-void status_report(snd_info *sp, const char *format, ...)
-{
-#if (!USE_NO_GUI)
-  char *buf;
-  va_list ap;
-  if ((!sp) || (!(sp->active)) || (sp->inuse != SOUND_NORMAL)) return;
-  va_start(ap, format);
-  buf = vstr(format, ap);
-  va_end(ap);
-  set_status(sp, buf, false);
-  free(buf);
-#endif
-}
-
-
-void clear_status_area(snd_info *sp)
-{
-  set_status(sp, NULL, true);
-}
-
-
-void errors_to_status_area(const char *msg, void *data)
-{
-  snd_info *sp;
-  sp = (snd_info *)data;
-  if (!(snd_ok(sp)))
-    {
-      sp = any_selected_sound();
-      if (!snd_ok(sp)) return;
-    }
-  status_report((snd_info *)data, "%s", msg);
-}
-
-
-void printout_to_status_area(const char *msg, void *data)
-{
-  set_status((snd_info *)data, msg, false);
-}
-
 
 
 /* ---------------- other kbd built-in commands ---------------- */
@@ -1703,48 +1660,12 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
 }
 
 
-static XEN g_status_report(XEN msg, XEN snd)
-{
-  #define H_status_report "(" S_status_report " message :optional snd) posts message in snd's status area.\
-If 'snd' is not a currently open sound, the message is sent to the listener, if it is open. \
-If there is no sound or listener, it is sent to stderr."
-
-  snd_info *sp;
-  const char *message;
-
-  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_status_report, "a string");
-  ASSERT_SOUND(S_status_report, snd, 2);
-
-  message = XEN_TO_C_STRING(msg);
-  sp = get_sp(snd);
-
-  if ((sp == NULL) || 
-      (sp->inuse != SOUND_NORMAL))
-    {
-      if ((message) && (*message))
-	{
-	  if (listener_exists())
-	    append_listener_text(-1, message);
-	  else fprintf(stderr, "%s", message);
-	}
-    }
-  else
-    {
-      if ((message) && (*message))
-	set_status(sp, message, false);
-      else clear_status_area(sp);
-    }
-  return(msg);
-}
-
-
 #ifdef XEN_ARGIFY_1
 
 XEN_ARGIFY_3(g_key_binding_w, g_key_binding)
 XEN_ARGIFY_6(g_bind_key_w, g_bind_key)
 XEN_ARGIFY_3(g_unbind_key_w, g_unbind_key)
 XEN_ARGIFY_4(g_key_w, g_key)
-XEN_ARGIFY_2(g_status_report_w, g_status_report)
 
 #else
 
@@ -1752,7 +1673,6 @@ XEN_ARGIFY_2(g_status_report_w, g_status_report)
 #define g_bind_key_w g_bind_key
 #define g_unbind_key_w g_unbind_key
 #define g_key_w g_key
-#define g_status_report_w g_status_report
 
 #endif
 
@@ -1776,8 +1696,6 @@ void g_init_kbd(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_bind_key,               g_bind_key_w,               3, 3, 0, H_bind_key);
   XEN_DEFINE_SAFE_PROCEDURE(S_unbind_key,             g_unbind_key_w,             2, 1, 0, H_unbind_key);
   XEN_DEFINE_SAFE_PROCEDURE(S_key,                    g_key_w,                    2, 2, 0, H_key);
-
-  XEN_DEFINE_SAFE_PROCEDURE(S_status_report,          g_status_report_w,          1, 1, 0, H_status_report);
 
   for (i = 0; i < NUM_BUILT_IN_KEYS; i++)
     built_in_keys[i].func = XEN_FALSE;

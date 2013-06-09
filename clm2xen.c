@@ -9460,10 +9460,7 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #define cdar(E)   s7_cdar(E)
 #define cdaddr(E) s7_cdaddr(E)
 #define cdadr(E)  s7_cdadr(E)
-#define caddar(E) s7_caddar(E)
 #define caadr(E)  s7_caadr(E)
-#define caaddr(E) s7_caaddr(E)
-#define cddar(E)  s7_cddar(E)
 #define cadddr(E) s7_cadddr(E)
 
 static mus_float_t mus_nsin_unmodulated(mus_any *p) {return(mus_nsin(p, 0.0));}
@@ -13329,7 +13326,6 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 	}								\
     }
 #define OUTA_LOOP(Call) OUT_LOOP(0, Call)
-#define OUTB_LOOP(Call) OUT_LOOP(1, Call)
 
 
 /* -------------------------------------------------------------------------------- */

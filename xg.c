@@ -377,9 +377,6 @@ XM_TYPE_PTR(GtkRecentInfo_, GtkRecentInfo*)
 #define XEN_TO_C_gssize(Arg) (gssize)(XEN_TO_C_INT(Arg))
 #define XEN_gssize_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_glong(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_glong(Arg) (glong)(XEN_TO_C_INT(Arg))
-#define XEN_glong_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GNormalizeMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GNormalizeMode(Arg) (GNormalizeMode)(XEN_TO_C_INT(Arg))
 #define XEN_GNormalizeMode_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_1(GClosureNotify, GClosureNotify)
@@ -50769,7 +50766,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("07-Jun-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("08-Jun-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

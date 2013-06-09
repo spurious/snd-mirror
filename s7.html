@@ -2686,7 +2686,7 @@ its top-level bindings are imported into the current environment:
 </p>
 
 <pre>
-(define-macro (<em class=normal id="let!">let!</em> init end . body)
+(define-macro (let! init end . body)
   ;; syntax mimics 'do: (let! (vars&amp;values) ((exported-names) result) body)
   ;;   (let! ((a 1)) ((hiho)) (define (hiho x) (+ a x)))
   `(let ,init

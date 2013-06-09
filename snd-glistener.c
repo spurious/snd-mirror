@@ -763,20 +763,6 @@ leaves the lisp listener pane"
 }
 
 
-/* TODO: the edit history window is sometimes empty in gtk
- * why not c-r c-s in listener? where to prompt? -- status bar?
- * c-_ to undo--it's sort of working
- *
- * what about all the other gtk key bindings?
- * scroll to new prompt -- when does this fail?
- *    when snd opens a sound, listener size changes and we end up somewhere random
- *    when sound is closed, listener should fill space
- *
- * SOMEDAY: motif case needs prompt length fixups and listener if no panes
- */
-
-
-
 /* to get rid of 
  *    Fontconfig error: Cannot load default config file
  * and the consequent ridiculous fonts, since I think I built fontconfig from scratch,

@@ -247,7 +247,7 @@
 	"GdkModifierIntent" "guint**" "GtkApplication*" "GVariant*" "GtkApplicationWindow*"
 	"GdkEventKey*" "GtkColorChooser*"
 
-	"GtkLevelBar*" "GtkMenuButton*"
+	"GtkLevelBar*" "GtkMenuButton*" "GNormalizeMode"
 	))
 
 (define no-xen-p 
@@ -268,6 +268,8 @@
 	"GtkPrintOperationResult" "GtkPrintStatus" "GtkSizeRequestMode"
 	"GdkEventAny*" "GdkDeviceManager*"
 	"cairo_font_type_t" "cairo_pattern_type_t" "cairo_surface_type_t" "cairo_bool_t" "cairo_region_overlap_t"
+
+	"glong"
 	))
 
 (define no-xen-to-c 
@@ -290,6 +292,8 @@
 	
 	"cairo_surface_type_t" "cairo_pattern_type_t" "cairo_font_type_t" "cairo_bool_t"
 	"cairo_region_overlap_t" "cairo_device_type_t"
+
+	"glong"
 	))
 
 (define (cadr-str data)

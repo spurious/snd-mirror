@@ -1497,6 +1497,14 @@ snd_info *snd_new_file(const char *newname, int header_type, int data_format, in
 #if XEN_HAVE_RATIOS
   void snd_rationalize(mus_float_t a, int *num, int *den);
 #endif
+#ifdef __GNUC__
+  void status_report(snd_info *sp, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
+#else
+  void status_report(snd_info *sp, const char *format, ...);
+#endif
+void errors_to_status_area(const char *msg, void *data);
+void printout_to_status_area(const char *msg, void *data);
+void clear_status_area(snd_info *sp);;
 
 void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);
@@ -1750,15 +1758,6 @@ void g_init_base(void);
 
 
 /* -------- snd-kbd.c -------- */
-
-#ifdef __GNUC__
-  void status_report(snd_info *sp, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
-#else
-  void status_report(snd_info *sp, const char *format, ...);
-#endif
-void errors_to_status_area(const char *msg, void *data);
-void printout_to_status_area(const char *msg, void *data);
-void clear_status_area(snd_info *sp);;
 
 int in_keymap(int key, int state, bool cx_extended);
 void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, const char *origin, const char *prefs_info);
