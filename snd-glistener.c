@@ -319,20 +319,6 @@ static void colorizer(glistener *g, glistener_colorizer_t type, int start, int e
   gtk_text_buffer_apply_tag(listener_buffer, tag, &s1, &s2);
 }
 
-static bool listener_colorizing = false;
-bool listener_colorized(void) {return(listener_colorizing);}
-bool listener_set_colorized(bool val) 
-{
-  listener_colorizing = val;
-  if (ss->listener)
-    {
-      if (val)
-	glistener_set_colorizer(ss->listener, colorizer);
-      else glistener_set_colorizer(ss->listener, NULL);
-    }
-  return(val);
-}
-
 
 static void completer(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
 {
@@ -489,7 +475,7 @@ static s7_pointer g_set_prompt_tag(s7_scheme *sc, s7_pointer args)
 */
 
 
-static void glistener_init(glistener *g1)
+static void glistener_s7_init(glistener *g1)
 {
   s7_define_function(s7, "listener-append-text", g_append_text, 2, 0, false, "(listener-append-text g txt)");
   s7_define_function(s7, "listener-insert-text", g_insert_text, 2, 0, false, "(listener-insert-text g txt)");
@@ -510,6 +496,23 @@ static void glistener_init(glistener *g1)
 #endif
 
 
+static bool listener_colorizing = false;
+bool listener_colorized(void) {return(listener_colorizing);}
+bool listener_set_colorized(bool val) 
+{
+#if HAVE_SCHEME
+  listener_colorizing = val;
+  if (ss->listener)
+    {
+      if (val)
+	glistener_set_colorizer(ss->listener, colorizer);
+      else glistener_set_colorizer(ss->listener, NULL);
+    }
+#endif
+  return(val);
+}
+
+
 #if HAVE_FORTH || HAVE_RUBY
 static void evaluator(glistener *g, const char *text)
 {
@@ -518,8 +521,28 @@ static void evaluator(glistener *g, const char *text)
 #endif
 
 
+static bool keyer(glistener *g, GtkWidget *w, GdkEventKey *e)
+{
+  /* add C-g handling */
+  guint key;
+  GdkModifierType state;
+
+  key = EVENT_KEYVAL(e);
+  state = (GdkModifierType)EVENT_STATE(e);
+  if (((key == snd_K_g) || (key == snd_K_G)) &&
+      (state & snd_ControlMask))
+    {
+      ss->C_g_typed = true;
+      control_g(any_selected_sound());
+    }
+
+  return(false);
+}
+
+
 static void make_listener_widget(int height)
 {
+#if HAVE_EXTENSION_LANGUAGE
   if (!listener_text)
     {
       GtkWidget *frame;
@@ -533,8 +556,9 @@ static void make_listener_widget(int height)
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
 
       ss->listener = glistener_new(frame, listener_init);
-#if HAVE_EXTENSION_LANGUAGE
       glistener_set_evaluator(ss->listener, evaluator);
+      glistener_set_keyer(ss->listener, keyer);
+
 #if HAVE_SCHEME
       glistener_set_helper(ss->listener, helper);
 #if HAVE_CHECKER
@@ -543,13 +567,13 @@ static void make_listener_widget(int height)
       glistener_set_completer(ss->listener, completer);
       if (listener_colorizing)
 	glistener_set_colorizer(ss->listener, colorizer);
-      glistener_init(ss->listener);
+      glistener_s7_init(ss->listener);
 #endif
 #if HAVE_FORTH || HAVE_RUBY
       glistener_is_schemish(ss->listener, false);
 #endif
-#endif
     }
+#endif
 }
 
 

@@ -29158,7 +29158,7 @@ static int hash_loc(s7_scheme *sc, s7_pointer key)
     case T_STRING:
       if (string_hash(key) != 0)
 	return(string_hash(key));
-      for (c = string_value(key); *c; c++) 
+      for (c = string_value(key); *c; c++) /* PERHAPS: should we limit the chars here? (and  below) */
 	loc = *c + loc * HASH_MULT;
       string_hash(key) = loc;
       return(loc);
@@ -29208,6 +29208,12 @@ static int hash_loc(s7_scheme *sc, s7_pointer key)
     }
 
   return(type(key));
+}
+
+
+static s7_pointer g_hash_table_index(s7_scheme *sc, s7_pointer args)
+{
+  return(make_integer(sc, hash_loc(sc, car(args))));
 }
 
 
@@ -64999,6 +65005,8 @@ s7_scheme *s7_init(void)
   sc->HASH_TABLE_SET =        s7_define_safe_function(sc, "hash-table-set!",         g_hash_table_set,         3, 0, false, H_hash_table_set);
   sc->HASH_TABLE_SIZE =       s7_define_safe_function(sc, "hash-table-size",         g_hash_table_size,        1, 0, false, H_hash_table_size);
   
+  s7_define_safe_function(sc, "hash-table-index", g_hash_table_index, 1, 0, false, "an experiment");
+
   ht_iter_tag = s7_new_type_x("hash-table-iterator", print_ht_iter, free_ht_iter, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
   sc->MAKE_HASH_TABLE_ITERATOR = s7_define_safe_function(sc, "make-hash-table-iterator", g_make_hash_table_iterator, 1, 0, false, H_make_hash_table_iterator);
   sc->HASH_TABLE_ITERATORP =    s7_define_safe_function(sc, "hash-table-iterator?",  g_is_hash_table_iterator, 1, 0, false, H_is_hash_table_iterator);

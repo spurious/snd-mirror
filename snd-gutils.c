@@ -1271,6 +1271,8 @@ static void slist_set_row(GtkWidget *item, int row)
 void slist_append(slist *lst, const char *name)
 {
   int loc = 0;
+  if (!g_utf8_validate(name, -1, NULL)) return;
+
   if (lst->items_size == 0)
     {
       lst->items = (GtkWidget **)calloc(INITIAL_SLIST_LENGTH, sizeof(GtkWidget *));

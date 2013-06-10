@@ -9823,7 +9823,8 @@ EDITS: 2
 	  (if (not (eq? c1 c2)) (snd-display #__line__ ";color not eq? ~A ~A?" c1 c2))
 	  ;(if (not (equal? c1 c3)) (snd-display #__line__ ";diff color not equal? ~A ~A?" c1 c3))
 	  (if (eq? c1 c3) (snd-display #__line__ ";diff color eq? ~A ~A?" c1 c3))
-	  (if (not (equal? (color->list c1) (list 0.0 0.0 1.0)))
+	  (if (and (not (equal? (color->list c1) (list 0.0 0.0 1.0)))
+		   (not (equal? (color->list c1) (list 0.0 0.0 1.0 1.0))))
 	      (snd-display #__line__ ";color->list: ~A ~A?" c1 (color->list c1))))
 
 	(if (not (provided? 'snd-motif))
@@ -22850,8 +22851,10 @@ EDITS: 2
 		(old-color (mix-color)))
 	    (set! (mix-color) (make-color-with-catch 1 1 0))
 	    (let ((mix1 (mix-vct (make-vct 10 .5) 10)))
-	      (if (or (not (equal? (color->list (mix-color)) (list 1.0 1.0 0.0)))
-		      (not (equal? (color->list (mix-color mix1)) (list 1.0 1.0 0.0))))
+	      (if (or (and (not (equal? (color->list (mix-color)) (list 1.0 1.0 0.0)))
+			   (not (equal? (color->list (mix-color)) (list 1.0 1.0 0.0 1.0))))
+		      (and (not (equal? (color->list (mix-color mix1)) (list 1.0 1.0 0.0)))
+			   (not (equal? (color->list (mix-color mix1)) (list 1.0 1.0 0.0 1.0)))))
 		  (snd-display #__line__ ";set mix-color: ~A ~A ~A ~A" 
 			       (color->list (mix-color)) (color->list (mix-color mix1)) (list 1.0 1.0 0.0) (color->list old-color)))
 	      (set! (mix-color) old-color)
@@ -24824,7 +24827,10 @@ EDITS: 2
 		 (if (not (char=? (s1 i) (s2 j)))
 		     (return #f)))))))))
   
-  (if (and with-gui (not (provided? 'gtk3))) ; gtk3 hangs in mix-file-dialog
+  ;; TODO: gtk3 hangs in mix-file-dialog
+  ;;   actually it's not hung, just going very slow -- this is a bug in gtk!  I'll have to abandon the slist filers
+
+  (if (and with-gui (not (provided? 'gtk3))) 
       
       (begin
 	
