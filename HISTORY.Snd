@@ -1,5 +1,7 @@
 Snd change log
 
+ 11-Jun:    removed the view files dialog from the gtk version, including all the
+              related extension language functions, and view-files-select-hook.
  25-May:    Snd 13.7.
  14-May:    glistener.c/h (gtk listener).
  22-Apr:    Snd 13.6.

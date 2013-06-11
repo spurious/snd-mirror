@@ -411,6 +411,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+11-Jun: removed the view files dialog from the gtk version, including all the\n\
+           related extension language functions, and view-files-select-hook.\n\
 24-May-13: Snd 13.7.\n\
 23-Apr-13: Snd 13.6.\n\
 12-Mar-13: Snd 13.5.\n\
@@ -2410,6 +2412,7 @@ static const char *open_file_xrefs[] = {
 
 void open_file_dialog_help(void)
 {
+#if USE_MOTIF
   snd_help_with_xrefs("Open File",
 
 "The file selection dialog is slightly different from the Gtk or Motif default.  If you single click \
@@ -2426,6 +2429,13 @@ display possible matches.",
 		      WITH_WORD_WRAP,
 		      open_file_xrefs,
 		      NULL);
+#else
+  snd_help_with_xrefs("Open File",
+		      "This dialog provides a clumsy way to open a file.",
+		      WITH_WORD_WRAP,
+		      open_file_xrefs,
+		      NULL);
+#endif
 }
 
 
@@ -2646,9 +2656,9 @@ static const char *view_files_xrefs[5] = {
 
 void view_files_dialog_help(void)
 {
-  snd_help_with_xrefs("File Browser",
+  snd_help_with_xrefs("File Browser [Motif only]",
 
-#if HAVE_EXTENSION_LANGUAGE
+#if USE_MOTIF
 "The View:Files dialog provides a list of sounds and various things to do with them.\
 The play button plays the file. \
 Double click a file name, and that file is opened in Snd.  You can also mix or insert the \
@@ -2673,10 +2683,7 @@ The functions that refer to this dialog are: \n\
   " S_view_files_speed ": dialog's speed value\n\
   " S_view_files_speed_style ": dialog's speed style\n",
 #else
-"The View:Files dialog provides a list of sounds and various things to do with them.\
-The play button plays the file. \
-Double click a file name, and that file is opened in Snd.  You can also mix or insert the \
-selected file with amplitude envelopes and so on.",
+  "The View:Files dialog exists only in the Motif version of Snd.",
 #endif
 		      WITH_WORD_WRAP,
 		      view_files_xrefs,

@@ -173,79 +173,6 @@ static void edit_find_callback_1(GtkWidget *w, gpointer info)
 
 /* -------------------------------- VIEW MENU -------------------------------- */
 
-static GtkWidget **view_files_items = NULL, *view_files_cascade_menu = NULL;
-static int view_files_items_size = 0;
-
-static void view_files_item_callback(GtkWidget *w, gpointer info)
-{
-  view_files_start_dialog_with_title(get_item_label(w));
-}
-
-
-static void view_files_callback(GtkWidget *w, gpointer info)
-{
-  int size;
-
-  size = view_files_dialog_list_length();
-  if (size == 0)
-    make_view_files_dialog(true, true); /* managed and empty (brand-new) */
-  else
-    {
-      if (size == 1)
-	make_view_files_dialog(true, false); /* raise current */
-      else
-	{
-	  int i;
-	  char **view_files_names;
-	  
-	  view_files_names = view_files_dialog_titles();
-	  if (size > view_files_items_size)
-	    {
-	      if (view_files_items_size == 0)
-		view_files_items = (GtkWidget **)calloc(size, sizeof(GtkWidget *));
-	      else
-		{
-		  view_files_items = (GtkWidget **)realloc(view_files_items, size * sizeof(GtkWidget *));
-		  for (i = view_files_items_size; i < size; i++)
-		    view_files_items[i] = NULL;
-		}
-	      view_files_items_size = size;
-	    }
-	  
-	  for (i = 0; i < size; i++)
-	    {
-	      if (view_files_items[i] == NULL)
-		{
-		  view_files_items[i] = gtk_menu_item_new_with_label(view_files_names[i]);
-		  gtk_menu_shell_append(GTK_MENU_SHELL(view_files_cascade_menu), view_files_items[i]);
-		  gtk_widget_show(view_files_items[i]);
-		  SG_SIGNAL_CONNECT(view_files_items[i], "activate", view_files_item_callback, NULL);
-		}
-	      else
-		{
-		  set_item_label(view_files_items[i], view_files_names[i]);
-		  gtk_widget_show(view_files_items[i]);
-		}
-	      free(view_files_names[i]);
-	    }
-	  free(view_files_names);
-	}
-    }
-}
-
-
-static void view_menu_update_1(GtkWidget *w, gpointer info)
-{
-  if ((view_files_dialog_list_length() > 1) &&
-      (!view_files_cascade_menu))
-    {
-      view_files_cascade_menu = gtk_menu_new();
-      gtk_menu_item_set_submenu(GTK_MENU_ITEM(view_files_menu), view_files_cascade_menu);
-    }
-    
-  view_menu_update();
-}
-
 
 static void view_separate_callback(GtkWidget *w, gpointer info) {set_channel_style(CHANNELS_SEPARATE);}
 static void view_combined_callback(GtkWidget *w, gpointer info) {set_channel_style(CHANNELS_COMBINED);}
@@ -590,9 +517,6 @@ GtkWidget *add_menu(void)
   ml[v_listener_menu] = "Open listener";
 #endif
 
-  view_files_menu = add_menu_item(view_cascade_menu, "Files", NULL, (GCallback)view_files_callback);
-  ml[v_files_menu] = "Files";
-
   view_mix_dialog_menu = add_menu_item(view_cascade_menu, "Mixes", NULL, (GCallback)view_mix_dialog_callback);
   ml[v_mix_dialog_menu] = "Mixes";
 
@@ -881,7 +805,6 @@ GtkWidget *add_menu(void)
 
   SG_SIGNAL_CONNECT(file_menu, "activate", file_menu_update_1, NULL);
   SG_SIGNAL_CONNECT(edit_menu, "activate", edit_menu_update_1, NULL);
-  SG_SIGNAL_CONNECT(view_menu, "activate", view_menu_update_1, NULL);
 
   return(main_menu);
 }

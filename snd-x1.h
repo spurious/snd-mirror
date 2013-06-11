@@ -373,6 +373,15 @@ bool initialize_file_monitor(void);
 void *unmonitor_file(void *watcher);
 void monitor_sound(snd_info *sp);
 
+void save_view_files_dialogs(FILE *fd);
+widget_t make_view_files_dialog(bool managed, bool make_new);
+void view_files_unplay(void);
+void view_files_add_directory(widget_t dialog, const char *dirname);
+char *view_files_find_any_directory(void);
+int view_files_dialog_list_length(void);
+char **view_files_dialog_titles(void);
+void view_files_start_dialog_with_title(const char *title);
+
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, mus_long_t *location, mus_long_t *samples, int min_chan);
 void alert_new_file(void);
 widget_t make_open_file_dialog(read_only_t read_only, bool managed);

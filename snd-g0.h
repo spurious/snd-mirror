@@ -3,6 +3,8 @@
 
 #include <gtk/gtk.h>
 
+#define HAVE_GTK_3 (GTK_MAJOR_VERSION == 3)
+
 #if HAVE_GTK_3
   #include <gdk/gdk.h>
 #else
@@ -142,7 +144,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
   #define ADJUSTMENT_VALUE(Adjust)                gtk_adjustment_get_value(GTK_ADJUSTMENT(Adjust))
   #define ADJUSTMENT_LOWER(Adjust)                gtk_adjustment_get_lower(GTK_ADJUSTMENT(Adjust))
   #define ADJUSTMENT_UPPER(Adjust)                gtk_adjustment_get_upper(GTK_ADJUSTMENT(Adjust))
-  #define ADJUSTMENT_SET_UPPER(Adjust, Value)     gtk_adjustment_set_upper(GTK_ADJUSTMENT(Adjust), Value)
   #define ADJUSTMENT_PAGE_SIZE(Adjust)            gtk_adjustment_get_page_size(GTK_ADJUSTMENT(Adjust))
   #define ADJUSTMENT_SET_PAGE_SIZE(Adjust, Value) gtk_adjustment_set_page_size(GTK_ADJUSTMENT(Adjust), Value)
 #else
@@ -152,7 +153,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
   #define ADJUSTMENT_VALUE(Adjust)                ((GTK_ADJUSTMENT(Adjust))->value)
   #define ADJUSTMENT_LOWER(Adjust)                ((GTK_ADJUSTMENT(Adjust))->lower)
   #define ADJUSTMENT_UPPER(Adjust)                ((GTK_ADJUSTMENT(Adjust))->upper)
-  #define ADJUSTMENT_SET_UPPER(Adjust, Value)     (GTK_ADJUSTMENT(Adjust))->upper = Value
   #define ADJUSTMENT_PAGE_SIZE(Adjust)            ((GTK_ADJUSTMENT(Adjust))->page_size)
   #define ADJUSTMENT_SET_PAGE_SIZE(Adjust, Value) (GTK_ADJUSTMENT(Adjust))->page_size = Value
 #endif
@@ -290,9 +290,6 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #else
   #define snd_MetaMask (GDK_MOD1_MASK | GDK_MOD4_MASK)
 #endif
-
-#define NO_BUCKY_BITS_P(State) (((State) & (GDK_SHIFT_MASK | GDK_CONTROL_MASK | GDK_MOD1_MASK)) == 0)
-/* in some cases, numlock = GDK_MOD2_MASK for example, and we want to completely ignore that setting */
 
 #define BUTTON1_PRESSED(State) ((State) & GDK_BUTTON1_MASK)
 

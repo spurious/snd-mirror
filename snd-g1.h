@@ -343,7 +343,6 @@ GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, int add_choice, 
 void sg_make_resizable(GtkWidget *w);
 idle_t add_work_proc(GSourceFunc func, gpointer data);
 GtkWidget *snd_gtk_dialog_new(void);
-GtkWidget *snd_gtk_entry_label_new(const char *label, color_info *color);
 GtkWidget *make_info_widget(void);
 void info_widget_display(GtkWidget *w, const char *message);
 void info_widget_set_size(GtkWidget *w, int size);
@@ -361,7 +360,6 @@ void slist_clear(slist *lst);
 void slist_append(slist *lst, const char *name);
 void slist_moveto(slist *lst, int row);
 void slist_select(slist *lst, int row);
-char *slist_selection(slist *lst);
 
 #if HAVE_GTK_3
 cairo_t *make_cairo(GdkWindow *win);

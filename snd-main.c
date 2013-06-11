@@ -482,7 +482,9 @@ static void save_options(FILE *fd)
   if (show_axes(ss) != DEFAULT_SHOW_AXES) pss_ss(fd, S_show_axes, show_axes2string(show_axes(ss)));
   if (show_marks(ss) != DEFAULT_SHOW_MARKS) pss_ss(fd, S_show_marks, b2s(show_marks(ss)));
   if (clipping(ss) != DEFAULT_CLIPPING) pss_ss(fd, S_clipping, b2s(clipping(ss)));
+#if USE_MOTIF
   if (view_files_sort(ss) != DEFAULT_VIEW_FILES_SORT) pss_sd(fd, S_view_files_sort, view_files_sort(ss));
+#endif
   if (fft_log_magnitude(ss) != DEFAULT_FFT_LOG_MAGNITUDE) pss_ss(fd, S_fft_log_magnitude, b2s(fft_log_magnitude(ss)));
   if (fft_log_frequency(ss) != DEFAULT_FFT_LOG_FREQUENCY) pss_ss(fd, S_fft_log_frequency, b2s(fft_log_frequency(ss)));
   if (fft_with_phases(ss) != DEFAULT_FFT_WITH_PHASES) pss_ss(fd, S_fft_with_phases, b2s(fft_with_phases(ss)));
@@ -1261,9 +1263,9 @@ void save_state(const char *save_state_name)
   save_edit_header_dialog_state(save_fd);
 #if USE_MOTIF
   save_print_dialog_state(save_fd);
+  save_view_files_dialogs(save_fd);
 #endif
   save_file_dialog_state(save_fd);
-  save_view_files_dialogs(save_fd);
   
   /* saving mix/track state is problematic.  For example, if we make a selection, mix it,
    *   then make another selection and mix it, we get an edit list:
@@ -1437,6 +1439,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 	    return(auto_open_ctr + 2);
 	  else
 	    {
+#if USE_MOTIF
 	      if ((strcmp("-p", argname) == 0) ||
 		  (strcmp("-preload", argname) == 0) ||
 		  (strcmp("--preload", argname) == 0))
@@ -1449,6 +1452,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		  else view_files_add_directory(NULL_WIDGET, auto_open_file_names[auto_open_ctr]);
 		}
 	      else
+#endif
 		{
 		  if ((strcmp("-l", argname) == 0) ||
 		      (strcmp("-load", argname) == 0) ||

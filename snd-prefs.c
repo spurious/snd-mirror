@@ -1319,7 +1319,7 @@ static const char *help_ladspa_dir(prefs_info *prf)
 #endif
 
 
-
+#if USE_MOTIF
 /* ---------------- view-files directory ---------------- */
 
 static char *rts_vf_directory = NULL;
@@ -1368,6 +1368,7 @@ static void view_files_directory_text(prefs_info *prf)
       free_TEXT(str);
     }
 }
+#endif
 
 
 
@@ -4742,11 +4743,12 @@ static const char *help_dac_combines_channels(prefs_info *prf)
   channels are mixed into the existing ones.  ");
 }
 
-
+#if USE_MOTIF
 static const char *help_view_files_directory(prefs_info *prf) 
 {
   return("  This directory is added to the View:files dialog's list.  ");
 }
+#endif
 
 static const char *help_raw_chans(prefs_info *prf) 
 {

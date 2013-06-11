@@ -231,24 +231,6 @@ void post_basic_popup_menu(void *ev) {}
 void post_lisp_popup_menu(void *ev) {}
 void post_fft_popup_menu(void *ev) {}
 void post_selection_popup_menu(void *ev) {}
-vf_row *view_files_make_row(view_files_info *vdat, widget_t last_row) {return(NULL);}
-void vf_unhighlight_row(widget_t nm, widget_t rw) {}
-void vf_highlight_row(widget_t nm, widget_t rw) {}
-void vf_post_info(view_files_info *vdat, int pos) {}
-void vf_unpost_info(view_files_info *vdat) {}
-void vf_flash_row(vf_row *r) {}
-mus_long_t vf_location(view_files_info *vdat) {return(0);}
-void vf_post_error(const char *error_msg, view_files_info *data) {}
-void redirect_vf_post_error(const char *error_msg, void *data) {}
-void redirect_vf_post_location_error(const char *error_msg, void *data) {}
-void vf_post_add_error(const char *error_msg, view_files_info *data) {}
-widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed) {return(NULL_WIDGET);}
-void vf_post_selected_files_list(view_files_info *vdat) {}
-void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir) {}
-void vf_reflect_sort_choice_in_menu(view_files_info *vdat) {}
-void vf_set_amp(view_files_info *vdat, mus_float_t val) {}
-void vf_set_speed(view_files_info *vdat, mus_float_t val) {}
-void vf_set_amp_env(view_files_info *vdat, env *new_e) {}
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows) {}
 widget_t make_preferences_dialog(void) {return(NULL_WIDGET);}
 

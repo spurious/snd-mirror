@@ -1884,15 +1884,6 @@ widget_t make_preferences_dialog(void)
 #endif
 
     make_inter_variable_separator(dpy_box);
-    rts_vf_directory = mus_strdup(view_files_find_any_directory());
-    prf = prefs_row_with_text("directory for view-files dialog", S_add_directory_to_view_files_list,
-			      rts_vf_directory,
-			      dpy_box,
-			      view_files_directory_text);
-    remember_pref(prf, reflect_view_files_directory, save_view_files_directory, help_view_files_directory, NULL, revert_view_files_directory);
-    /* in this case clear_vf doesn't make much sense */
-
-    make_inter_variable_separator(dpy_box);
     rts_html_program = mus_strdup(html_program(ss));
     prf = prefs_row_with_text("external program to read HTML files via snd-help", S_html_program,
 			      html_program(ss),

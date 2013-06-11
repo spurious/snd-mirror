@@ -1547,6 +1547,8 @@ file_info *make_temp_header(const char *fullname, int srate, int chans, mus_long
 bool sound_file_p(const char *name);
 void init_sound_file_extensions(void);
 void save_added_sound_file_extensions(FILE *fd);
+const char **get_sound_file_extensions(void);
+int sound_file_extensions_length(void);
 snd_info *snd_open_file(const char *filename, read_only_t read_only);
 void snd_close_file(snd_info *sp);
 snd_info *make_sound_readable(const char *filename, bool post_close);
@@ -1562,14 +1564,6 @@ bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool se
 void during_open(int fd, const char *file, open_reason_t reason);
 void after_open(snd_info *sp);
 char *output_name(const char *current_name);
-void save_view_files_dialogs(FILE *fd);
-widget_t make_view_files_dialog(bool managed, bool make_new);
-void view_files_unplay(void);
-void view_files_add_directory(widget_t dialog, const char *dirname);
-char *view_files_find_any_directory(void);
-int view_files_dialog_list_length(void);
-char **view_files_dialog_titles(void);
-void view_files_start_dialog_with_title(const char *title);
 void set_with_toolbar_and_display(bool val);
 #if (!USE_NO_GUI)
   void display_info(snd_info *sp);

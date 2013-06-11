@@ -232,6 +232,8 @@
 (set! (hook-functions bad-header-hook) ())
 (hook-push bad-header-hook (lambda (hook) (set! (hook 'result) #t)))
 
+(define with-motif (provided? 'snd-motif))
+
 (define with-gui (or (provided? 'snd-gtk)
 		     (provided? 'snd-motif)))
 
@@ -908,9 +910,13 @@
     (set! (transform-normalization) (transform-normalization))
     (if (not (equal? (transform-normalization)  normalize-by-channel)) 
 	(snd-display #__line__ ";transform-normalization set def: ~A" (transform-normalization)))
-    (set! (view-files-sort) (view-files-sort))
-    (if (not (equal? (view-files-sort)  0 )) 
-	(snd-display #__line__ ";view-files-sort set def: ~A" (view-files-sort)))
+
+    (if with-motif 
+	(begin
+	  (set! (view-files-sort) (view-files-sort))
+	  (if (not (equal? (view-files-sort)  0 )) 
+	      (snd-display #__line__ ";view-files-sort set def: ~A" (view-files-sort)))))
+
     (set! (print-length) (print-length))
     (if (not (equal? (print-length)  12 )) 
 	(snd-display #__line__ ";print-length set def: ~A" (print-length)))
@@ -1094,9 +1100,12 @@
     (set! (audio-output-device) (audio-output-device))
     (if (not (equal? (audio-output-device)  0 )) 
 	(snd-display #__line__ ";audio-output-device set def: ~A" (audio-output-device)))
-    (set! (view-files-sort) (view-files-sort))
-    (if (not (= (view-files-sort) 0))
-	(snd-display #__line__ ";view-files-sort def: ~A" (view-files-sort)))
+
+    (if with-motif
+	(begin
+	  (set! (view-files-sort) (view-files-sort))
+	  (if (not (= (view-files-sort) 0))
+	      (snd-display #__line__ ";view-files-sort def: ~A" (view-files-sort)))))
     
     (if (> most-positive-fixnum (expt 2 36))
 	(begin
@@ -1313,8 +1322,6 @@
       'transform-normalization (transform-normalization) normalize-by-channel
       'transform-size (transform-size) 1024
       'transform-type (transform-type) fourier-transform
-      'view-files-sort (view-files-sort) 0
-      'view-files-sort (view-files-sort) 0 
       'wavelet-type (wavelet-type) 0 
       'wavo-hop (wavo-hop) 3 
       'wavo-trace (wavo-trace) 64 
@@ -1808,7 +1815,6 @@
 	(list 'mus-clipping mus-clipping #f #t)
 	(list 'selection-creates-region selection-creates-region #t #f)
 	(list 'transform-normalization transform-normalization normalize-by-channel dont-normalize)
-	(list 'view-files-sort view-files-sort 0 1)
 	(list 'play-arrow-size play-arrow-size 10 16)
 	(list 'print-length print-length 12 16)
 	(list 'region-graph-style region-graph-style graph-lines graph-lollipops)
@@ -1918,7 +1924,6 @@
 	(list 'filter-control-order filter-control-order 20 '(-10 -1 0))
 	(list 'max-transform-peaks max-transform-peaks 100 '(-1))
 	(list 'max-regions max-regions 16 '(-1 -123))
-	(list 'view-files-sort view-files-sort 0 '(-1 123))
 	(list 'reverb-control-length reverb-control-length 1.0 '(-1.0))
 	(list 'show-axes show-axes 1 '(-1 123))
 	(list 'sinc-width sinc-width 10 '(-10))
@@ -1986,8 +1991,7 @@
     (dismiss-all-dialogs)
     
     (let ((undef ())
-	  (names (list '*snd-opened-sound* 'abort 'add-colormap 
-		       'add-directory-to-view-files-list 'add-file-filter 'add-file-sorter 'add-file-to-view-files-list 'add-mark
+	  (names (list '*snd-opened-sound* 'abort 'add-colormap 'add-mark
 		       'add-player 'add-sound-file-extension 'add-source-file-extension 'add-to-main-menu 'add-to-menu
 		       'add-transform 'after-apply-controls-hook 'after-edit-hook 'after-graph-hook 'after-lisp-graph-hook
 		       'after-open-hook 'after-save-as-hook 'after-save-state-hook 'after-transform-hook 'all-pass
@@ -2019,7 +2023,7 @@
 		       'dac-combines-channels 'dac-hook 'dac-size 'data-color 'data-format
 		       'data-location 'data-size 'db->linear 'default-output-chans 'default-output-data-format
 		       'default-output-header-type 'default-output-srate 'define-envelope 'degrees->radians 'delay
-		       'delay-tick 'delay? 'delete-colormap 'delete-file-filter 'delete-file-sorter
+		       'delay-tick 'delay? 'delete-colormap
 		       'delete-mark 'delete-marks 'delete-sample 'delete-samples 'delete-samples-and-smooth
 		       'delete-selection 'delete-selection-and-smooth 'delete-transform 'dialog-widgets 'disk-kspace
 		       'display-edits 'dolph-chebyshev-window 'dont-normalize
@@ -2212,10 +2216,7 @@
 		       'vct-fill! 'vct-length 'vct-max 'vct-min 'vct-move!
 		       'vct-multiply! 'vct-offset! 'vct-peak 'vct-ref 'vct-reverse!
 		       'vct-scale! 'vct-set! 'vct-subseq 'vct-subtract! 'vct?
-		       'vector->vct 'view-files-amp 'view-files-amp-env
-		       'view-files-dialog 'view-files-files 'view-files-select-hook 'view-files-selected-files 'view-files-sort
-		       'view-files-speed 'view-files-speed-style 'view-mixes-dialog 'view-regions-dialog 'view-sound
-		       'walsh-transform
+		       'vector->vct 'walsh-transform
 		       'wave-train 'wave-train? 'wavelet-transform 'wavelet-type
 		       'wavo-hop 'wavo-trace 'welch-window 'widget-position
 		       'widget-size 'widget-text 'window-height
@@ -20101,7 +20102,8 @@ EDITS: 2
       (let ((fname (file-name ind)))
 	(close-sound ind)
 	(delete-file fname)
-	(if (view-files-dialog #f)
+	(if (and with-motif
+		 (view-files-dialog #f))
 	    (begin
 	      (set! (view-files-files (view-files-dialog #f)) ())
 	      (if (not (null? (view-files-files (view-files-dialog #f))))
@@ -24830,7 +24832,7 @@ EDITS: 2
   ;; TODO: gtk3 hangs in mix-file-dialog
   ;;   actually it's not hung, just going very slow -- this is a bug in gtk!  I'll have to abandon the slist filers
 
-  (if (and with-gui (not (provided? 'gtk3))) 
+  (if (and with-gui (not (provided? 'gtk1))) 
       
       (begin
 	
@@ -24838,7 +24840,7 @@ EDITS: 2
 	(enved-dialog)
 	(color-orientation-dialog)
 	(transform-dialog)
-	(view-files-dialog)
+	(if with-motif (view-files-dialog))
 	(view-regions-dialog)
 	(if (not (provided? 'snd-gtk)) (print-dialog))
 	(without-errors (edit-header-dialog))
@@ -24933,65 +24935,66 @@ EDITS: 2
 		  (XtUnmanageChild oscope-dialog)
 		  (gtk_widget_hide oscope-dialog))))
 	
-	(let ((dialog (view-files-dialog #f)))
-	  (let ((vfamp (view-files-amp dialog))
-		(vfs (view-files-speed dialog))
-		(vfsort (view-files-sort))
-		(vfsort1 (view-files-sort dialog))
-		(vfe (view-files-amp-env dialog))
-		(vffiles (view-files-files dialog))
-		(vfsel (view-files-selected-files dialog))
-		(selected-file #f))
-	    (if (fneq vfamp 1.0) (snd-display #__line__ ";vf amp: ~A" vfamp))
-	    (if (fneq vfs 1.0) (snd-display #__line__ ";vf spd: ~A" vfs))
-	    (if (not (= vfsort 0)) (snd-display #__line__ ";vf sort: ~A" vfsort))
-	    (if (not (= vfsort1 0)) (snd-display #__line__ ";vf sort(d): ~A" vfsort1))
-	    (if (not (feql vfe (list 0.0 1.0 1.0 1.0))) (snd-display #__line__ ";vf amp env: ~A" vfe))
-	    (if (not (list? vffiles)) (snd-display #__line__ ";vf files: ~A" vffiles))
-	    (if (not (list? vfsel)) (snd-display #__line__ ";vf selected files: ~A" vfsel))
-	    (if (not (= (view-files-speed-style dialog) (speed-control-style)))
-		(snd-display #__line__ ";vf speed-style def: ~A ~A" (view-files-speed-style dialog) (speed-control-style)))
-	    (set! (view-files-amp dialog) 0.5)
-	    (if (fneq (view-files-amp dialog) 0.5) (snd-display #__line__ ";set vf amp: ~A" (view-files-amp dialog)))
-	    (set! (view-files-speed dialog) 0.5)
-	    (if (fneq (view-files-speed dialog) 0.5) (snd-display #__line__ ";set vf spd: ~A" (view-files-speed dialog)))
-	    (set! (view-files-speed-style dialog) speed-control-as-ratio)
-	    (if (not (= (view-files-speed-style dialog) speed-control-as-ratio))
-		(snd-display #__line__ ";vf speed-style set: ~A" (view-files-speed-style dialog)))
-	    (set! (view-files-sort dialog) 2)
-	    (if (not (= (view-files-sort) 0)) (snd-display #__line__ ";vf global sort after local set: ~A" (view-files-sort)))
-	    (if (not (= (view-files-sort dialog) 2)) (snd-display #__line__ ";vf local sort after local set: ~A" (view-files-sort dialog)))
-	    (set! (view-files-sort) 4)
-	    (if (not (= (view-files-sort) 4)) (snd-display #__line__ ";vf global sort after global set: ~A" (view-files-sort)))    
-	    (if (not (= (view-files-sort dialog) 2)) (snd-display #__line__ ";vf local sort after global set: ~A" (view-files-sort dialog)))
-	    (set! (view-files-files dialog) (list "oboe.snd" "1a.snd" "pistol.snd" "storm.snd"))
-	    (let ((vf-files (view-files-files dialog)))
-	      (if (or (and (not (member "1a.snd" vf-files))
-			   (not (member (string-append home-dir "/cl/1a.snd") vf-files))
-			   (not (member (string-append home-dir "/snd-13/1a.snd") vf-files)))
-		      (and (not (member "pistol.snd" vf-files))
-			   (not (member (string-append home-dir "/cl/pistol.snd") vf-files))
-			   (not (member (string-append home-dir "/snd-13/pistol.snd") vf-files)))
-		      (not (= (length vf-files) 4)))
-		  (snd-display #__line__ ";vf files set: ~A (~A, ~A)" vf-files (string-append home-dir "/cl/1a.snd") (length vf-files))))
-	    (set! (hook-functions view-files-select-hook) ())
-	    (hook-push view-files-select-hook (lambda (hook)
-						(if (not (string? (hook 'name)))
-						    (snd-display #__line__ ";vf select hook arg: ~A" (hook 'name)))
-						(if (not (hook 'widget)) (snd-display #__line__ ";vf select hook dialog: ~A" (hook 'widget)))
-						(set! selected-file (hook 'name))))
-	    (set! (view-files-selected-files dialog) (list "1a.snd"))
-	    (if (or (not (string? selected-file))
-		    (and (not (equal? selected-file "1a.snd"))
-			 (not (equal? selected-file (string-append home-dir "/cl/1a.snd")))
-			 (not (equal? selected-file (string-append home-dir "/snd-13/1a.snd")))))
-		(snd-display #__line__ ";vf set selected select hook arg: ~A" selected-file))
-	    (if (and (not (equal? (view-files-selected-files dialog) (list "1a.snd")))
-		     (not (equal? (view-files-selected-files dialog) (list (string-append home-dir "/cl/1a.snd"))))
-		     (not (equal? (view-files-selected-files dialog) (list (string-append home-dir "/snd-13/1a.snd")))))
-		(snd-display #__line__ ";vf selected files set: ~A" (view-files-selected-files dialog)))
-	    (hide-widget dialog)
-	    ))
+	(if with-motif
+	    (let ((dialog (view-files-dialog #f)))
+	      (let ((vfamp (view-files-amp dialog))
+		    (vfs (view-files-speed dialog))
+		    (vfsort (view-files-sort))
+		    (vfsort1 (view-files-sort dialog))
+		    (vfe (view-files-amp-env dialog))
+		    (vffiles (view-files-files dialog))
+		    (vfsel (view-files-selected-files dialog))
+		    (selected-file #f))
+		(if (fneq vfamp 1.0) (snd-display #__line__ ";vf amp: ~A" vfamp))
+		(if (fneq vfs 1.0) (snd-display #__line__ ";vf spd: ~A" vfs))
+		(if (not (= vfsort 0)) (snd-display #__line__ ";vf sort: ~A" vfsort))
+		(if (not (= vfsort1 0)) (snd-display #__line__ ";vf sort(d): ~A" vfsort1))
+		(if (not (feql vfe (list 0.0 1.0 1.0 1.0))) (snd-display #__line__ ";vf amp env: ~A" vfe))
+		(if (not (list? vffiles)) (snd-display #__line__ ";vf files: ~A" vffiles))
+		(if (not (list? vfsel)) (snd-display #__line__ ";vf selected files: ~A" vfsel))
+		(if (not (= (view-files-speed-style dialog) (speed-control-style)))
+		    (snd-display #__line__ ";vf speed-style def: ~A ~A" (view-files-speed-style dialog) (speed-control-style)))
+		(set! (view-files-amp dialog) 0.5)
+		(if (fneq (view-files-amp dialog) 0.5) (snd-display #__line__ ";set vf amp: ~A" (view-files-amp dialog)))
+		(set! (view-files-speed dialog) 0.5)
+		(if (fneq (view-files-speed dialog) 0.5) (snd-display #__line__ ";set vf spd: ~A" (view-files-speed dialog)))
+		(set! (view-files-speed-style dialog) speed-control-as-ratio)
+		(if (not (= (view-files-speed-style dialog) speed-control-as-ratio))
+		    (snd-display #__line__ ";vf speed-style set: ~A" (view-files-speed-style dialog)))
+		(set! (view-files-sort dialog) 2)
+		(if (not (= (view-files-sort) 0)) (snd-display #__line__ ";vf global sort after local set: ~A" (view-files-sort)))
+		(if (not (= (view-files-sort dialog) 2)) (snd-display #__line__ ";vf local sort after local set: ~A" (view-files-sort dialog)))
+		(set! (view-files-sort) 4)
+		(if (not (= (view-files-sort) 4)) (snd-display #__line__ ";vf global sort after global set: ~A" (view-files-sort)))    
+		(if (not (= (view-files-sort dialog) 2)) (snd-display #__line__ ";vf local sort after global set: ~A" (view-files-sort dialog)))
+		(set! (view-files-files dialog) (list "oboe.snd" "1a.snd" "pistol.snd" "storm.snd"))
+		(let ((vf-files (view-files-files dialog)))
+		  (if (or (and (not (member "1a.snd" vf-files))
+			       (not (member (string-append home-dir "/cl/1a.snd") vf-files))
+			       (not (member (string-append home-dir "/snd-13/1a.snd") vf-files)))
+			  (and (not (member "pistol.snd" vf-files))
+			       (not (member (string-append home-dir "/cl/pistol.snd") vf-files))
+			       (not (member (string-append home-dir "/snd-13/pistol.snd") vf-files)))
+			  (not (= (length vf-files) 4)))
+		      (snd-display #__line__ ";vf files set: ~A (~A, ~A)" vf-files (string-append home-dir "/cl/1a.snd") (length vf-files))))
+		(set! (hook-functions view-files-select-hook) ())
+		(hook-push view-files-select-hook (lambda (hook)
+						    (if (not (string? (hook 'name)))
+							(snd-display #__line__ ";vf select hook arg: ~A" (hook 'name)))
+						    (if (not (hook 'widget)) (snd-display #__line__ ";vf select hook dialog: ~A" (hook 'widget)))
+						    (set! selected-file (hook 'name))))
+		(set! (view-files-selected-files dialog) (list "1a.snd"))
+		(if (or (not (string? selected-file))
+			(and (not (equal? selected-file "1a.snd"))
+			     (not (equal? selected-file (string-append home-dir "/cl/1a.snd")))
+			     (not (equal? selected-file (string-append home-dir "/snd-13/1a.snd")))))
+		    (snd-display #__line__ ";vf set selected select hook arg: ~A" selected-file))
+		(if (and (not (equal? (view-files-selected-files dialog) (list "1a.snd")))
+			 (not (equal? (view-files-selected-files dialog) (list (string-append home-dir "/cl/1a.snd"))))
+			 (not (equal? (view-files-selected-files dialog) (list (string-append home-dir "/snd-13/1a.snd")))))
+		    (snd-display #__line__ ";vf selected files set: ~A" (view-files-selected-files dialog)))
+		(hide-widget dialog)
+		)))
 	
 	)))
 
@@ -27437,7 +27440,6 @@ EDITS: 2
 	      (list 'log-freq-start log-freq-start #f 50.0 5.0)
 	      (list 'selection-creates-region selection-creates-region #f #f #t)
 	      (list 'transform-normalization transform-normalization #f dont-normalize normalize-globally)
-	      (list 'view-files-sort view-files-sort #f 0 3)
 	      (list 'play-arrow-size play-arrow-size #f 2 32)
 	      (list 'print-length print-length #f 2 32)
 	      (list 'region-graph-style region-graph-style #f graph-lines graph-lollipops)
@@ -46195,7 +46197,7 @@ EDITS: 1
 		     enved-target enved-waveform-color enved-wave? eps-file eps-left-margin 
 		     eps-bottom-margin eps-size expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp
 		     expand-control? fft fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size disk-kspace
-		     transform-graph-type fft-window transform-graph? view-files-dialog mix-file-dialog file-name fill-polygon
+		     transform-graph-type fft-window transform-graph? mix-file-dialog file-name fill-polygon
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
 		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control?
 		     find-mark find-sound finish-progress-report foreground-color insert-file-dialog file-write-date
@@ -46216,8 +46218,7 @@ EDITS: 1
 		     read-mix-sample next-sample read-region-sample show-full-duration show-full-range initial-beg initial-dur
 		     transform-normalization open-file-dialog-directory open-raw-sound open-sound previous-sample
 		     peaks player? players play-arrow-size
-		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort 
-		     view-files-amp view-files-speed view-files-files view-files-selected-files view-files-speed-style view-files-amp-env
+		     position-color position->x position->y 
 		     print-length progress-report read-only
 		     redo region-chans view-regions-dialog region-home 
 		     region-graph-style region-frames region-position region-maxamp region-maxamp-position remember-sound-state
@@ -46343,9 +46344,7 @@ EDITS: 1
 			 mix-amp-env mix-color mix-name mix-position mix-sync mix-properties mix-property 
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height 
 			 mix-waveform-height transform-normalization open-file-dialog-directory
-			 position-color view-files-sort print-length play-arrow-size
-			 view-files-amp view-files-speed view-files-speed-style view-files-amp-env
-			 view-files-files view-files-selected-files ; remember-sound-state
+			 position-color print-length play-arrow-size
 			 region-graph-style reverb-control-decay reverb-control-feedback
 			 reverb-control-length reverb-control-lowpass reverb-control-scale time-graph-style lisp-graph-style transform-graph-style
 			 reverb-control? sash-color ladspa-dir peak-env-dir save-dir save-state-file selected-data-color selected-graph-color
@@ -47104,7 +47103,7 @@ EDITS: 1
 			  listener-color listener-font listener-prompt listener-text-color max-regions
 			  mix-waveform-height region-graph-style position-color
 			  time-graph-style lisp-graph-style transform-graph-style peaks-font bold-peaks-font
-			  view-files-sort print-length play-arrow-size sash-color ladspa-dir peak-env-dir save-dir save-state-file
+			  print-length play-arrow-size sash-color ladspa-dir peak-env-dir save-dir save-state-file
 			  selected-channel selected-data-color selected-graph-color 
 			  selected-sound selection-creates-region show-controls show-indices show-listener
 			  show-selection-transform sinc-width temp-dir text-focus-color tiny-font
@@ -48194,7 +48193,7 @@ EDITS: 1
    (lambda (n)
      (forget-region n))
    regs))
-(set! (view-files-sort) 0)
+(if with-motif (set! (view-files-sort) 0))
 
 (stop-playing)
 (mus-oss-set-buffers 4 12)
@@ -48341,7 +48340,7 @@ EDITS: 1
 
 (for-each close-sound (sounds))
 (mus-sound-prune)
-(if (dialog-widgets)
+(if (and with-motif (dialog-widgets))
     (let ((vfs ((dialog-widgets) 8))) ; view-files (possible list)
       (if vfs
 	  (if (symbol? (car vfs))

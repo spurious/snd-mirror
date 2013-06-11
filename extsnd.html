@@ -3325,10 +3325,10 @@ the returned procedure to make sure the mark pane is reactivated right away when
 
 <!-- view-files-select-hook -->
 <pre class="indented">
-<em class=def id="viewfilesselecthook">view-files-select-hook</em> (dialog name)
+<em class=def id="viewfilesselecthook">view-files-select-hook</em> (dialog name) [Motif only]
 </pre>
 
-<p>This hook is called each time a file is selected in a View Files dialog's files list.
+<p>This hook is called each time a file is selected in a View Files dialog's files list. 
 </p>
 <div class="spacer"></div>
 
@@ -12238,7 +12238,7 @@ to the File:Open dialog, first makes sure the dialog exists with (open-file-dial
 
 <!-- add-directory-to-view-files-list -->
 <pre class="indented">
-<em class=def id="adddirectorytoviewfileslist">add-directory-to-view-files-list</em> dir dialog
+<em class=def id="adddirectorytoviewfileslist">add-directory-to-view-files-list</em> dir dialog [Motif only]
 </pre>
 
 <p>This adds the sound files in directory 'dir' to the list of files in the View:Files dialog.  
@@ -12248,7 +12248,7 @@ to the File:Open dialog, first makes sure the dialog exists with (open-file-dial
 
 <!-- add-file-to-view-files-list -->
 <pre class="indented">
-<em class=def id="addfiletoviewfileslist">add-file-to-view-files-list</em> file dialog
+<em class=def id="addfiletoviewfileslist">add-file-to-view-files-list</em> file dialog [Motif only]
 </pre>
 
 <p>This adds 'file' to the list of files in the View:Files dialog.
@@ -12258,7 +12258,7 @@ to the File:Open dialog, first makes sure the dialog exists with (open-file-dial
 
 <!-- add-file-filter -->
 <pre class="indented">
-<em class=def id="addfilefilter">add-file-filter</em> name func
+<em class=def id="addfilefilter">add-file-filter</em> name func [Motif only]
 </pre>
 
 <p>This adds 'func' to the file filter list under the name 'name'.  The file filter list is a list
@@ -12286,7 +12286,7 @@ add-file-filter returns an integer to identify 'func' in other contexts.
 
 <!-- add-file-sorter -->
 <pre class="indented">
-<em class=def id="addfilesorter">add-file-sorter</em> name func
+<em class=def id="addfilesorter">add-file-sorter</em> name func [Motif only]
 </pre>
 
 <p>This adds 'func' to the file-sorter list under the name 'name'.  Some dialog file lists include
@@ -13257,7 +13257,7 @@ this is a test
 
 <!-- view-files-amp -->
 <pre class="indented">
-<em class=def id="viewfilesamp">view-files-amp</em> dialog
+<em class=def id="viewfilesamp">view-files-amp</em> dialog [Motif only]
 </pre>
 
 <p>This is the value of the amplitude slider in the View:Files dialog.
@@ -13267,7 +13267,7 @@ this is a test
 
 <!-- view-files-amp-env -->
 <pre class="indented">
-<em class=def id="viewfilesampenv">view-files-amp-env</em> dialog
+<em class=def id="viewfilesampenv">view-files-amp-env</em> dialog [Motif only]
 </pre>
 
 <p>This is the amplitude envelope displayed in the View:Files dialog.
@@ -13277,7 +13277,7 @@ this is a test
 
 <!-- view-files-dialog -->
 <pre class="indented">
-<em class=def id="viewfilesdialog">view-files-dialog</em> managed
+<em class=def id="viewfilesdialog">view-files-dialog</em> managed [Motif only]
 </pre>
 
 <p>This creates and (if 'managed' which defaults to #t) activates a
@@ -13288,7 +13288,7 @@ View:Files <a href="snd.html#viewfiles">dialog</a> and returns the dialog widget
 
 <!-- view-files-files -->
 <pre class="indented">
-<em class=def id="viewfilesfiles">view-files-files</em> dialog
+<em class=def id="viewfilesfiles">view-files-files</em> dialog [Motif only]
 </pre>
 
 <p>This is the file list (a list of strings) of a View:Files dialog.
@@ -13298,7 +13298,7 @@ View:Files <a href="snd.html#viewfiles">dialog</a> and returns the dialog widget
 
 <!-- view-files-selected-files -->
 <pre class="indented">
-<em class=def id="viewfilesselectedfiles">view-files-selected-files</em> dialog
+<em class=def id="viewfilesselectedfiles">view-files-selected-files</em> dialog [Motif only]
 </pre>
 
 <p>This is the list of selected files (a list of strings) in a View:Files dialog.
@@ -13308,7 +13308,7 @@ View:Files <a href="snd.html#viewfiles">dialog</a> and returns the dialog widget
 
 <!-- view-files-sort -->
 <pre class="indented">
-<em class=def id="viewfilessort">view-files-sort</em> dialog
+<em class=def id="viewfilessort">view-files-sort</em> dialog [Motif only]
 </pre>
 
 <p>This is the sort function choice in a View:Files dialog.  Initially there are 6 sort choices: a..z, z..a (sort by file name),
@@ -13325,7 +13325,7 @@ dialogs.  To set the sort choice in the current dialog:
 
 <!-- view-files-speed -->
 <pre class="indented">
-<em class=def id="viewfilesspeed">view-files-speed</em> dialog
+<em class=def id="viewfilesspeed">view-files-speed</em> dialog [Motif only]
 </pre>
 
 <p>This is the value of the speed slider in a View:Files dialog.
@@ -13335,7 +13335,7 @@ dialogs.  To set the sort choice in the current dialog:
 
 <!-- view-files-speed-style -->
 <pre class="indented">
-<em class=def id="viewfilesspeedstyle">view-files-speed-style</em> dialog
+<em class=def id="viewfilesspeedstyle">view-files-speed-style</em> dialog [Motif only]
 </pre>
 
 <p>This is the speed style choice in a View:Files dialog. It is one of speed-control-as-float (the default),

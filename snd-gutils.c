@@ -805,7 +805,7 @@ GtkWidget *snd_gtk_highlight_label_new(const char *label)
 }
 
 
-GtkWidget *snd_gtk_entry_label_new(const char *label, color_info *color)
+static GtkWidget *snd_gtk_entry_label_new(const char *label, color_info *color)
 {
   GtkWidget *rlw;
   rlw = gtk_entry_new();
@@ -1311,16 +1311,6 @@ void slist_select(slist *lst, int row)
     widget_modify_bg(lst->items[row], GTK_STATE_NORMAL, ss->light_blue);
   lst->selected_item = row;
 }
-
-
-char *slist_selection(slist *lst)
-{
-  if (lst->selected_item != SLIST_NO_ITEM_SELECTED)
-    return((char *)gtk_button_get_label(GTK_BUTTON(lst->items[lst->selected_item])));
-  return(NULL);
-}
-
-/* (any place labels are erased see gtk_bin_get_child and snd-gregion.c) */
 
 
 #if (!HAVE_GTK_3)
