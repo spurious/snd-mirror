@@ -20,8 +20,6 @@
 \ A special *SND-HOME* path points to ~/.snd.d:
 \ 
 \ ~/.snd.d/sound      directory for *clm-file-name*
-\                                   add-directory-to-view-files-list
-\                                   set-open-file-dialog-director
 \ ~/.snd.d/zap        directory for set-temp-dir
 \                                   set-save-dir
 \ ~/.snd.d/peaks      directory for set-peak-env-dir
@@ -117,10 +115,6 @@ require clm-ins
 	add-sound-file-extension drop
 [end-each]
 
-*clm-search-list* [each] ( dir )
-	undef add-directory-to-view-files-list drop
-[end-each]
-
 \ make-default-comment from clm.fs
 output-comment-hook lambda: <{ str -- s }>
 	str empty? if
@@ -190,6 +184,9 @@ require examp
 	#f to use-combo-box-for-fft-size	\ boolean (default #f)
 
 	'snd-motif provided? [if]
+		*clm-search-list* [each] ( dir )
+			undef add-directory-to-view-files-list drop
+		[end-each]
 		\ snd-xm.fs
 		add-mark-pane
 		require popup

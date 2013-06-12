@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Aug 08 23:27:50 CEST 2006
-\ Changed: Sun Jul 22 00:54:10 CEST 2012
+\ Changed: Wed Jun 12 14:24:24 CEST 2013
 
 \ snd-hooks         Array with all Snd hooks.
 \ reset-all-hooks   ( -- )
@@ -83,8 +83,7 @@ require examp
      stop-dac-hook
      stop-playing-hook
      stop-playing-selection-hook
-     update-hook
-     view-files-select-hook )
+     update-hook )
 [else]
   #()
 [then] constant snd-hooks

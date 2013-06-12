@@ -14,6 +14,7 @@
 /* TODO: rather than mkdir, gtk_file_chooser_set_create_folders
  * PERHAPS: thumbnail graph if it looks easy (short, readable), use bg color for info1|2?
  * TODO: gtk3 tree view is inaccessible in filechooser and row colors can't be set!
+ * PERHAPS: include sound-comment in info?
  */
 
 
@@ -292,7 +293,6 @@ static void selection_changed_callback(GtkFileChooser *w, gpointer data)
 /* if icons do not get displayed, check the system preferences menu+toolbar dialog */
 
 static file_dialog_info *make_fsb(const char *title, const char *file_lab, const char *ok_lab,
-				  void (*add_innards)(GtkWidget *vbox, void *data),
 				  const gchar *stock, bool with_extract, bool with_mkdir)
 {
   file_dialog_info *fd;
@@ -401,20 +401,26 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
 
   gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(fd->chooser), (just_sounds(ss)) ? just_sounds_filter : all_files_filter);
   
-  /* -------- special case box -------- */
-  add_innards(DIALOG_CONTENT_AREA(fd->dialog), (void *)fd);
-  gtk_widget_show(fd->dialog);
-
   return(fd);
 }
 
 
-static void open_file_dialog_innards(GtkWidget *vbox, void *data)
+static file_dialog_info *make_file_dialog(read_only_t read_only, const char *title, const char *file_title, const char *ok_title,
+					  snd_dialog_t which_dialog, 
+					  GCallback file_ok_proc,
+					  GCallback file_mkdir_proc,
+					  GCallback file_delete_proc,
+					  GCallback file_dismiss_proc,
+					  GCallback file_help_proc,
+					  const gchar *stock)
 {
-  file_dialog_info *fd = (file_dialog_info *)data;
+  file_dialog_info *fd;
+  GtkWidget *center_info, *vbox;
 
-  GtkWidget *center_info;
+  fd = make_fsb(title, file_title, ok_title, stock, false, false);
+  fd->file_dialog_read_only = read_only;
 
+  vbox = DIALOG_CONTENT_AREA(fd->dialog);
   center_info = gtk_hbox_new(true, 10);
   gtk_box_pack_start(GTK_BOX(vbox), center_info, false, false, 0);
   gtk_widget_show(center_info);
@@ -432,22 +438,7 @@ static void open_file_dialog_innards(GtkWidget *vbox, void *data)
   gtk_widget_show(fd->vbox);
   gtk_widget_show(fd->info1);
   gtk_widget_show(fd->info2);
-}
-
-
-static file_dialog_info *make_file_dialog(read_only_t read_only, const char *title, const char *file_title, const char *ok_title,
-					  snd_dialog_t which_dialog, 
-					  GCallback file_ok_proc,
-					  GCallback file_mkdir_proc,
-					  GCallback file_delete_proc,
-					  GCallback file_dismiss_proc,
-					  GCallback file_help_proc,
-					  const gchar *stock)
-{
-  file_dialog_info *fd;
-
-  fd = make_fsb(title, file_title, ok_title, open_file_dialog_innards, stock, false, false);
-  fd->file_dialog_read_only = read_only;
+  gtk_widget_show(fd->dialog);
 
   SG_SIGNAL_CONNECT(fd->help_button, "clicked", file_help_proc, (gpointer)fd);
   SG_SIGNAL_CONNECT(fd->ok_button, "clicked", file_ok_proc, (gpointer)fd);
@@ -863,14 +854,6 @@ widget_t make_insert_file_dialog(bool managed)
 
 void set_open_file_play_button(bool val) 
 {
-#if WITH_AUDIO
-  if ((odat) && (odat->play_button))
-    set_toggle_button(odat->play_button, val, false, (gpointer)odat);
-  if ((mdat) && (mdat->play_button))
-    set_toggle_button(mdat->play_button, val, false, (gpointer)mdat);
-  if ((idat) && (idat->play_button))
-    set_toggle_button(idat->play_button, val, false, (gpointer)mdat);
-#endif
 }
 
 
@@ -1581,16 +1564,6 @@ static void file_data_auto_comment_callback(GtkWidget *w, gpointer context)
 }
 
 
-static file_dialog_info *new_file_dialog_info(save_dialog_t type)
-{
-  file_dialog_info *fd;
-  fd = (file_dialog_info *)calloc(1, sizeof(file_dialog_info));
-  fd->type = type;
-  fd->filename_watcher_id = 0;
-  return(fd);
-}
-
-
 void reflect_selection_in_save_as_dialog(bool on)
 {
   if ((on) && 
@@ -2015,11 +1988,17 @@ static void save_as_mkdir_callback(GtkWidget *w, gpointer context)
 }
 
 
-
-
-static void save_innards(GtkWidget *vbox, void *data)
+static file_dialog_info *make_save_as_dialog(const char *file_string, int header_type, int format_type, int dialog_type)
 {
-  file_dialog_info *fd = (file_dialog_info *)data;
+  file_dialog_info *fd;
+  GtkWidget *vbox;
+
+  fd = make_fsb(file_string, "save as:", "Save as", GTK_STOCK_SAVE_AS, (dialog_type != REGION_SAVE_AS), true);
+  fd->type = dialog_type;
+  fd->header_type = header_type;
+  fd->format_type = format_type;
+
+  vbox = DIALOG_CONTENT_AREA(fd->dialog);
   fd->panel_data = make_file_data_panel(vbox, "data-form", 
 					(fd->type == REGION_SAVE_AS) ? WITHOUT_CHANNELS_FIELD : WITH_EXTRACT_CHANNELS_FIELD, 
 					fd->header_type, fd->format_type, 
@@ -2032,72 +2011,52 @@ static void save_innards(GtkWidget *vbox, void *data)
 					fd->type == SOUND_SAVE_AS);
   widget_modify_base(fd->panel_data->error_text, GTK_STATE_NORMAL, ss->yellow);
   widget_modify_base(fd->panel_data->error_text, GTK_STATE_ACTIVE, ss->yellow);
-}
 
-
-
-
-static void make_save_as_dialog(file_dialog_info *fd, const char *sound_name, int header_type, int format_type)
-{
-  char *file_string;
-
-  file_string = mus_format("save %s", sound_name);
-  if (!(fd))
+  gtk_widget_show(fd->dialog);
+  
+  if (fd->type != REGION_SAVE_AS)
+    SG_SIGNAL_CONNECT(fd->extract_button, "clicked", save_as_extract_callback, (void *)fd);
+  SG_SIGNAL_CONNECT(fd->mkdir_button, "clicked", save_as_mkdir_callback, (void *)fd);
+  
+  SG_SIGNAL_CONNECT(fd->help_button, "clicked", save_as_help_callback, (gpointer)fd);
+  SG_SIGNAL_CONNECT(fd->ok_button, "clicked", save_as_ok_callback, (gpointer)fd);
+  SG_SIGNAL_CONNECT(fd->cancel_button, "clicked", save_as_cancel_callback, (gpointer)fd);
+  
+  fd->file_select_data = (void *)fd;
+  fd->file_select_callback = save_as_dialog_select_callback;
+  fd->directory_select_data = (void *)fd;
+  fd->directory_select_callback = save_as_dialog_select_callback;
+  
+  fd->panel_data->dialog = fd->dialog;
+  switch (fd->type)
     {
-      fd = make_fsb(file_string, "save as:", "Save as", save_innards, GTK_STOCK_SAVE_AS, (fd->type != REGION_SAVE_AS), true);
-
-      fd->header_type = header_type;
-      fd->format_type = format_type;
-
-      if (fd->type != REGION_SAVE_AS)
-	SG_SIGNAL_CONNECT(fd->extract_button, "clicked", save_as_extract_callback, (void *)fd);
-      SG_SIGNAL_CONNECT(fd->mkdir_button, "clicked", save_as_mkdir_callback, (void *)fd);
-
-      SG_SIGNAL_CONNECT(fd->help_button, "clicked", save_as_help_callback, (gpointer)fd);
-      SG_SIGNAL_CONNECT(fd->ok_button, "clicked", save_as_ok_callback, (gpointer)fd);
-      SG_SIGNAL_CONNECT(fd->cancel_button, "clicked", save_as_cancel_callback, (gpointer)fd);
-
-      fd->file_select_data = (void *)fd;
-      fd->file_select_callback = save_as_dialog_select_callback;
-      fd->directory_select_data = (void *)fd;
-      fd->directory_select_callback = save_as_dialog_select_callback;
-
-      fd->panel_data->dialog = fd->dialog;
-      switch (fd->type)
-	{
-	case SOUND_SAVE_AS:
-	  set_dialog_widget(SOUND_SAVE_AS_DIALOG, fd->dialog);
-	  break;
-
-	case SELECTION_SAVE_AS:
-	  set_dialog_widget(SELECTION_SAVE_AS_DIALOG, fd->dialog);
-	  break;
-
-	case REGION_SAVE_AS:
-	  set_dialog_widget(REGION_SAVE_AS_DIALOG, fd->dialog);
-	  break;
-
-	default:
-	  snd_error("internal screw up");
-	  break;
-	}
-      SG_SIGNAL_CONNECT(fd->dialog, "delete_event", save_as_delete_callback, (void *)fd);
-
-      set_sensitive(fd->ok_button, (!(file_is_directory(fd))));
-
-      if (fd->type != REGION_SAVE_AS)
-	{
-	  set_sensitive(fd->extract_button, (!(file_is_directory(fd))));
-	  if (fd->type == SOUND_SAVE_AS)
-	    SG_SIGNAL_CONNECT(fd->panel_data->auto_comment_button, "toggled", file_data_auto_comment_callback, fd);
-	}
+    case SOUND_SAVE_AS:
+      set_dialog_widget(SOUND_SAVE_AS_DIALOG, fd->dialog);
+      break;
+      
+    case SELECTION_SAVE_AS:
+      set_dialog_widget(SELECTION_SAVE_AS_DIALOG, fd->dialog);
+      break;
+      
+    case REGION_SAVE_AS:
+      set_dialog_widget(REGION_SAVE_AS_DIALOG, fd->dialog);
+      break;
+      
+    default:
+      snd_error("internal screw up");
+      break;
     }
-  else
+  SG_SIGNAL_CONNECT(fd->dialog, "delete_event", save_as_delete_callback, (void *)fd);
+  
+  set_sensitive(fd->ok_button, (!(file_is_directory(fd))));
+  
+  if (fd->type != REGION_SAVE_AS)
     {
-      gtk_window_set_title(GTK_WINDOW(fd->dialog), file_string);
+      set_sensitive(fd->extract_button, (!(file_is_directory(fd))));
+      if (fd->type == SOUND_SAVE_AS)
+	SG_SIGNAL_CONNECT(fd->panel_data->auto_comment_button, "toggled", file_data_auto_comment_callback, fd);
     }
-
-  free(file_string);
+  return(fd);
 }
 
 
@@ -2107,17 +2066,18 @@ static file_dialog_info *make_sound_save_as_dialog_1(bool managed, int chan)
   char *com = NULL;
   file_info *hdr = NULL;
   file_dialog_info *fd;
-
-  if (!save_sound_as)
-    save_sound_as = new_file_dialog_info(SOUND_SAVE_AS);
-  fd = save_sound_as;
+  char *file_string;
 
   sp = any_selected_sound();
   if (sp) hdr = sp->hdr;
-  make_save_as_dialog(fd,
-		      (char *)((sp) ? sp->short_filename : ""),
-		      default_output_header_type(ss),
-		      default_output_data_format(ss));
+  file_string = mus_format("save %s", (char *)((sp) ? sp->short_filename : ""));
+
+  if (!save_sound_as)
+    save_sound_as = make_save_as_dialog(file_string, default_output_header_type(ss), default_output_data_format(ss), SOUND_SAVE_AS);
+  else gtk_window_set_title(GTK_WINDOW(save_sound_as->dialog), file_string); 
+  free(file_string);
+
+  fd = save_sound_as;
   set_file_dialog_sound_attributes(fd->panel_data,
 				   fd->panel_data->current_type,
 				   fd->panel_data->current_format,
@@ -2158,19 +2118,17 @@ widget_t make_selection_save_as_dialog(bool managed)
   file_dialog_info *fd;
 
   if (!save_selection_as)
-    save_selection_as = new_file_dialog_info(SELECTION_SAVE_AS);
-  fd = save_selection_as;
+    save_selection_as = make_save_as_dialog("save current selection", default_output_header_type(ss), default_output_data_format(ss), SELECTION_SAVE_AS);
+  else gtk_window_set_title(GTK_WINDOW(save_selection_as->dialog), "save current selection");
 
-  make_save_as_dialog(fd,
-		      "current selection",
-		      default_output_header_type(ss),
-		      default_output_data_format(ss));
+  fd = save_selection_as;
   set_file_dialog_sound_attributes(fd->panel_data,
 				   fd->panel_data->current_type,
 				   fd->panel_data->current_format,
 				   selection_srate(), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
 				   NULL);
+
   if (managed) gtk_widget_show(fd->dialog);
   return(fd->dialog);
 }
@@ -2182,13 +2140,10 @@ widget_t make_region_save_as_dialog(bool managed)
   char *comment = NULL;
 
   if (!save_region_as)
-    save_region_as = new_file_dialog_info(REGION_SAVE_AS);
-  fd = save_region_as;
+    save_region_as = make_save_as_dialog("save current region", default_output_header_type(ss), default_output_data_format(ss), REGION_SAVE_AS);
+  else gtk_window_set_title(GTK_WINDOW(save_region_as->dialog), "save current region");
 
-  make_save_as_dialog(fd,
-		      "current region",
-		      default_output_header_type(ss),
-		      default_output_data_format(ss));
+  fd = save_region_as;
   comment = region_description(region_dialog_region());
   set_file_dialog_sound_attributes(fd->panel_data,
 				   fd->panel_data->current_type,

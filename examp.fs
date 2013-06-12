@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Sun Nov 25 18:36:20 CET 2012
+\ Changed: Wed Jun 12 17:03:48 CEST 2013
 
 \ Commentary:
 \
@@ -1661,24 +1661,23 @@ whispering: 1.0 256 2.0 2.0 #f #f voiced->unvoiced."
 	    #( amp fftsize r tempo get-func-name ) string-format { origin }
 	freq-inc make-array map!
 		i bin * radius make-formant
-	end-map { formants }
-	out-len 0.0 make-vct map!
-		i freq-inc mod 0= if
-			inctr fftsize snd chn #f channel->vct to fdr
-			fdr vct-peak old-peak-amp fmax to old-peak-amp
-			fdr fdi #f 2 spectrum ( fdr )
-			    spectr vct-subtract! ( fdr )
-			    freq-inc 1/f vct-scale! drop
-			hop inctr + to inctr
-		then
-		spectr fdr vct? if
-			fdr 0 vct-add!
-		then formants noi 0.0 rand formant-bank ( outval )
-		dup fabs new-peak-amp fmax to new-peak-amp
-		( outval )
-	end-map
-	old-peak-amp new-peak-amp f/ amp f* vct-scale!
-	    0 out-len snd chn #f origin vct->channel ( vct )
+	end-map ( formants ) spectr make-formant-bank { formants }
+	freq-inc 1/f { 1/freq-inc }
+
+ 	out-len 0.0 make-vct map!
+ 		i freq-inc mod 0= if
+ 			inctr fftsize snd chn #f channel->vct to fdr
+ 			fdr vct-peak old-peak-amp fmax to old-peak-amp
+ 			fdr fdi #f 2 spectrum ( fdr )
+ 			    spectr vct-subtract! ( fdr )
+ 			    1/freq-inc vct-scale! drop
+ 			hop inctr + to inctr
+ 		then
+ 		spectr fdr 0 vct-add! drop
+		formants noi 0.0 rand formant-bank ( outval )
+ 	end-map { out-data }
+	out-data old-peak-amp out-data vct-peak f/ amp f* vct-scale! ( odata )
+ 	    0 out-len snd chn #f origin vct->channel ( odata )
 ;
 
 : pulse-voice

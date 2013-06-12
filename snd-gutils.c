@@ -804,7 +804,7 @@ GtkWidget *snd_gtk_highlight_label_new(const char *label)
   return(w);
 }
 
-
+#if 0
 static GtkWidget *snd_gtk_entry_label_new(const char *label, color_info *color)
 {
   GtkWidget *rlw;
@@ -817,23 +817,31 @@ static GtkWidget *snd_gtk_entry_label_new(const char *label, color_info *color)
   widget_modify_base(rlw, GTK_STATE_ACTIVE, color);
   return(rlw);
 }
-
+#endif
 
 GtkWidget *make_info_widget(void)
 {
+  /*
   return(snd_gtk_entry_label_new(NULL, ss->highlight_color));
+  */
+  return(gtk_label_new(NULL));
 }
 
 
 void info_widget_display(GtkWidget *w, const char *message)
 {
+  /*
   gtk_entry_set_text(GTK_ENTRY(w), message);
+  */
+  gtk_label_set_text(GTK_LABEL(w), message);
 }
 
 
 void info_widget_set_size(GtkWidget *w, int size)
 {
+  /*
   gtk_entry_set_width_chars(GTK_ENTRY(w), size);
+  */
 }
 
 

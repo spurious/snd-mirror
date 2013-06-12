@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Tue Dec  4 01:27:14 CET 2012
+\ Changed: Wed Jun 12 17:12:07 CEST 2013
 
 \ Commentary:
 \ 
@@ -46,6 +46,7 @@
 \ test 03: variables
 \ test 04: sndlib
 \ test 05: simple overall checks
+\ test 08: clm
 \ test 10: marks
 \ test 15: chan-local vars
 \ test 19: save and restore
@@ -545,10 +546,12 @@ reset-all-hooks
   then
 ;
 
-: make-color-with-catch ( c1 c2 c3 -- color )
-  <'> make-color 'no-such-color #t fth-catch if
+1 0 0 make-color constant safe-color
+
+: make-color-with-catch { c1 c2 c3 -- color }
+  c1 c2 c3 <'> make-color 'no-such-color #t fth-catch if
     stack-reset
-    1 0 0 make-color
+    safe-color
   then
 ;
 
@@ -655,7 +658,6 @@ reset-all-hooks
   regions each ( r )
     forget-region drop
   end-each
-  0 set-view-files-sort drop
   clear-sincs drop
   sounds if
     stop-playing drop
@@ -1018,7 +1020,6 @@ SIGINT lambda: { sig -- }
      #( <'> log-freq-start 32.0 )
      #( <'> selection-creates-region #t )
      #( <'> transform-normalization normalize-by-channel )
-     #( <'> view-files-sort 0 )
      #( <'> print-length 12 )
      #( <'> play-arrow-size 10 )
      #( <'> save-state-file "saved-snd.fs" )
@@ -1219,7 +1220,6 @@ black-and-white-colormap constant *better-colormap*
      #( <'> mus-array-print-length 8 )
      #( <'> mus-clipping #f )
      #( <'> mus-float-equal-fudge-factor 0.0000001 )
-     #( <'> mus-prescaler 1.0 )
      #( <'> play-arrow-size 10 )
      #( <'> print-length 12 )
      #( <'> region-graph-style graph-lines )
@@ -1261,7 +1261,6 @@ black-and-white-colormap constant *better-colormap*
      #( <'> transform-normalization normalize-by-channel )
      #( <'> transform-size 512 )
      #( <'> transform-type fourier-transform )
-     #( <'> view-files-sort 0 )
      #( <'> wavelet-type 0 )
      #( <'> wavo-hop 3 )
      #( <'> wavo-trace 64 )
@@ -1934,10 +1933,8 @@ black-and-white-colormap constant *better-colormap*
      #( <'> mix-tag-width 6 20 )
      #( <'> mark-tag-height 4 20 )
      #( <'> mark-tag-width 10 20 )
-     #( <'> mus-prescaler 1.0 100.0 )
      #( <'> mus-clipping #f #t )
      #( <'> selection-creates-region #t #f )
-     #( <'> view-files-sort 0 1 )
      #( <'> play-arrow-size 10 16 )
      #( <'> print-length 12 16 )
      #( <'> region-graph-style graph-lines graph-lollipops )
@@ -2035,7 +2032,6 @@ black-and-white-colormap constant *better-colormap*
      #( <'> filter-control-order 20 '( -10 -1 0 ) )
      #( <'> max-transform-peaks 100 '( -1 ) )
      #( <'> max-regions 16 '( -1 -123 ) )
-     #( <'> view-files-sort 0 '( -1 123 ) )
      #( <'> reverb-control-length 1.0 '( -1.0 ) )
      #( <'> show-axes 1 '( -1 123 ) )
      #( <'> sinc-width 10 '( -10 ) )
@@ -2133,8 +2129,7 @@ black-and-white-colormap constant *better-colormap*
   \ 
   \ added:
   \   'snd-exit      (xen.c; in Forth exit is already in use)
-  #( '*snd-opened-sound* 'add-colormap 'add-directory-to-view-files-list
-     'add-file-filter 'add-file-sorter 'add-file-to-view-files-list 'add-mark
+  #( '*snd-opened-sound* 'add-colormap 'add-mark
      'add-player 'add-sound-file-extension 'add-source-file-extension
      'add-to-main-menu 'add-to-menu 'add-transform 'after-apply-controls-hook
      'after-edit-hook 'after-graph-hook 'after-lisp-graph-hook 'after-open-hook
@@ -2144,7 +2139,7 @@ black-and-white-colormap constant *better-colormap*
      'as-one-edit 'ask-about-unsaved-edits 'ask-before-overwrite
      'asymmetric-fm 'asymmetric-fm? 'audio-input-device 'audio-output-device
      'auto-resize 'auto-update 'auto-update-interval 'autocorrelate 
-     'autocorrelation 'moving-average 'moving-average? 'axis-color
+     'autocorrelation 'axis-color
      'axis-info 'axis-label-font 'axis-numbers-font 'bad-header-hook 
      'bartlett-window 'bartlett-hann-window 'basic-color 'beats-per-measure 
      'beats-per-minute 'before-close-hook 'before-exit-hook 
@@ -2175,8 +2170,8 @@ black-and-white-colormap constant *better-colormap*
      'data-location 'data-size 'db->linear 'default-output-chans 
      'default-output-data-format 'default-output-header-type
      'default-output-srate 'define-envelope 'degrees->radians 'delay
-     'delay-tick 'delay? 'delete-colormap 'delete-file-filter
-     'delete-file-sorter 'delete-mark 'delete-marks 'delete-sample 
+     'delay-tick 'delay? 'delete-colormap
+     'delete-mark 'delete-marks 'delete-sample 
      'delete-samples 'delete-samples-and-smooth 'delete-selection
      'delete-selection-and-smooth 'delete-transform 'dialog-widgets
      'disk-kspace 'display-edits 'dolph-chebyshev-window 'dont-normalize
@@ -2230,7 +2225,8 @@ black-and-white-colormap constant *better-colormap*
      'listener-text-color 'little-endian? 'locsig 'locsig-ref
      'locsig-reverb-ref 'locsig-reverb-set! 'locsig-set! 'locsig-type
      'locsig? 'log-freq-start 'main-menu 'main-widgets 'make-all-pass
-     'make-asymmetric-fm 'make-moving-average 'make-bezier 'make-color
+     'make-asymmetric-fm 'make-moving-average 'make-moving-max
+     'make-bezier 'make-color
      'make-comb 'make-filtered-comb 'make-convolve 'make-delay 'make-env
      'make-fft-window 'make-file->frame 'make-file->sample 'make-filter
      'make-fir-coeffs 'make-fir-filter 'make-formant 'make-firmant
@@ -2262,6 +2258,7 @@ black-and-white-colormap constant *better-colormap*
      'mouse-leave-graph-hook 'mouse-leave-label-hook
      'mouse-leave-listener-hook 'mouse-leave-text-hook 
      'mouse-press-hook 'move-locsig 'move-sound 'move-sound?
+     'moving-average 'moving-average?
      'multiply-arrays 'mus-aifc 'mus-aiff 'mus-alaw 'mus-alsa-buffer-size
      'mus-alsa-buffers 'mus-alsa-capture-device 'mus-alsa-device
      'mus-alsa-playback-device 'mus-alsa-squelch-warning 'mus-apply
@@ -2274,7 +2271,7 @@ black-and-white-colormap constant *better-colormap*
      'mus-data-format-name 'mus-describe 'mus-error-hook
      'mus-error-type->string 'mus-expand-filename 'mus-feedback
      'mus-feedforward 'mus-fft 'mus-file-buffer-size 'mus-file-clipping
-     'mus-file-name 'mus-file-prescaler 'mus-frequency 'mus-generator?
+     'mus-file-name 'mus-frequency 'mus-generator?
      'mus-header-raw-defaults 'mus-header-type->string
      'mus-header-type-name 'mus-hop 'mus-increment 'mus-input? 
      'mus-interp-all-pass 'mus-interp-bezier 'mus-interp-hermite 
@@ -2285,7 +2282,7 @@ black-and-white-colormap constant *better-colormap*
      'mus-location 'mus-lshort 'mus-max-malloc 'mus-max-table-size 
      'mus-mix 'mus-mulaw 'mus-name 'mus-next 'mus-nist 'mus-offset 
      'mus-order 'mus-oss-set-buffers 'mus-out-format 'mus-output?
-     'mus-phase 'mus-prescaler 'mus-ramp 'mus-rand-seed 'mus-random
+     'mus-phase 'mus-ramp 'mus-rand-seed 'mus-random
      'mus-raw 'mus-reset 'mus-riff 'mus-run 'mus-scaler
      'mus-set-formant-radius-and-frequency 'mus-sound-chans
      'mus-sound-close-input 'mus-sound-close-output 'mus-sound-comment 
@@ -2339,7 +2336,7 @@ black-and-white-colormap constant *better-colormap*
      'save-region-dialog 'save-selection 'save-selection-dialog 'save-sound
      'save-sound-as 'save-sound-dialog 'save-state 'save-state-file
      'save-state-hook 'sawtooth-wave 'sawtooth-wave?  'scale-by 'scale-channel
-     'scale-selection-by 'scale-selection-to 'scale-to 'scan-chan
+     'scale-selection-by 'scale-selection-to 'scale-to
      'scan-channel 'script-arg 'script-args 'search-procedure
      'seconds->samples 'select-all 'select-channel 'select-channel-hook
      'select-sound 'select-sound-hook 'selected-channel 'selected-data-color
@@ -2390,10 +2387,7 @@ black-and-white-colormap constant *better-colormap*
      'vct->channel 'vct->list 'vct->sound-data 'vct->string 'vct->vector
      'vct-add! 'vct-copy 'vct-fill!  'vct-length 'vct-move! 'vct-multiply!
      'vct-offset! 'vct-peak 'vct-ref 'vct-reverse!  'vct-scale! 'vct-set!
-     'vct-subseq 'vct-subtract! 'vct? 'vector->vct 'view-files-amp
-     'view-files-amp-env 'view-files-dialog 'view-files-files
-     'view-files-select-hook 'view-files-selected-files 'view-files-sort
-     'view-files-speed 'view-files-speed-style 'view-mixes-dialog
+     'vct-subseq 'vct-subtract! 'vct? 'vector->vct 'view-mixes-dialog
      'view-regions-dialog 'view-sound 'walsh-transform 'wave-train
      'wave-train? 'wavelet-transform 'wavelet-type 'wavo-hop 'wavo-trace
      'welch-window 'widget-position 'widget-size 'widget-text 'window-height
@@ -3858,7 +3852,6 @@ black-and-white-colormap constant *better-colormap*
      "no data method"
      "no scaler method"
      "memory allocation failed"
-     "unstable two pole error"
      "can't open file"
      "no sample input"
      "no sample output"
@@ -3894,7 +3887,6 @@ black-and-white-colormap constant *better-colormap*
      "no audio read permission" 
      "can't close file"
      "arg out of range"
-     "wrong type arg"
      "no channels method"
      "no hop method"
      "no width method"
@@ -3911,7 +3903,11 @@ black-and-white-colormap constant *better-colormap*
      "bad size"
      "can't convert"
      "read error"
-     "no safety method"
+     "no feedforward method"
+     "no feedback method"
+     "no interp-type method"
+     "no position method"
+     "no order method"
      "can't translate" ) each
     ( err ) i mus-error-type->string "mus-error-type->string[%d]" #( i )
       snd-test-neq
@@ -4854,6 +4850,112 @@ half-pi fnegate constant -half-pi
     then
     (05-simple-check-01)
   loop
+;
+
+\ ---------------- test 08: clm ----------------
+
+lambda: <{ -- x }> 0.0 ; value 08-clm-lambda-0.0
+lambda: <{ dir -- x }> 1.0 ; value 08-clm-lambda-dir-1.0
+lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
+32 make-delay constant make-delay-32
+
+\ xen-mus-apply (using mus-run):
+\ S7:    (gen arg)
+\ Ruby:  gen.call(arg)
+\ Forth: gen '( arg ) apply
+\ 
+\ mus-apply ( args -- res )
+\ mus-run ( gen :optional arg1 0.0 arg2 0.0 -- res )
+
+: random-gen-run ( ?? make-prc random-args -- )
+  { make-prc random-args }
+  make-prc #t nil fth-catch if
+    stack-reset
+    nil
+  then { gen }
+  nil { arg }
+  gen mus-generator? if
+    random-args each to arg
+      \ ~608.375s apply
+      \ ~701.320s mus-run
+      \ ~500.867s mus-apply
+      \ gen '( arg ) <'> apply #t nil fth-catch
+      \ gen arg undef <'> mus-run #t nil fth-catch
+      gen arg <'> mus-apply #t nil fth-catch
+      stack-reset
+    end-each
+  then
+;
+
+: random-gen ( -- )
+  #( 2.0 21.5 **
+     2.0 -18.0 **
+     1.5
+     "/hiho"
+     list( 0 1 )
+     1234
+     vct( 0 0 0 )
+     0.1 0.2 0.3 make-color-with-catch
+     #( 0 1 )
+     3/4
+     0+i
+     make-delay-32
+     08-clm-lambda-0.0
+     08-clm-lambda-dir-1.0
+     08-clm-lambda-a-b-c-1.0
+     0
+     1
+     -1
+     #f
+     #t
+     <char> c
+     0.0
+     1.0
+     -1.0
+     '()
+     32
+     '( 1 2 ) ) { random-args }
+  #( <'> make-all-pass <'> make-asymmetric-fm <'> make-moving-average
+     <'> make-table-lookup <'> make-triangle-wave <'> make-comb
+     <'> make-delay <'> make-env <'> make-fft-window <'> make-filter
+     <'> make-filtered-comb <'> make-fir-filter <'> make-formant
+     <'> make-frame <'> make-iir-filter <'> make-locsig <'> make-mixer
+     <'> make-notch <'> make-one-pole <'> make-one-zero <'> make-oscil
+     <'> make-pulse-train <'> make-rand <'> make-rand-interp
+     <'> make-sawtooth-wave <'> make-polyshape <'> make-polywave
+     <'> make-square-wave <'> make-two-pole <'> make-two-zero
+     <'> make-wave-train <'> make-ssb-am ) { gen-make-procs }
+  nil { make-prc }
+  nil nil nil nil { arg1 arg2 arg3 arg4 }
+  gen-make-procs each to make-prc
+    make-prc random-args random-gen-run
+  end-each
+  random-args each to arg1
+    gen-make-procs each to make-prc
+      arg1 make-prc random-args random-gen-run
+    end-each
+    random-args each to arg2
+      gen-make-procs each to make-prc
+        arg1 arg2 make-prc random-args random-gen-run
+      end-each
+      random-args each to arg3
+        gen-make-procs each to make-prc
+          arg1 arg2 arg3 make-prc random-args random-gen-run
+        end-each
+        random-args each to arg4
+          gen-make-procs each to make-prc
+            arg1 arg2 arg3 arg4 make-prc random-args random-gen-run
+          end-each
+        end-each
+      end-each
+    end-each
+  end-each
+;
+
+: 08-clm ( -- )
+  all-args if
+    random-gen
+  then
 ;
 
 \ ---------------- test 10: marks ----------------
@@ -6791,11 +6893,7 @@ half-pi fnegate constant -half-pi
    <'> next-sample <'> show-full-duration <'> show-full-range
    <'> initial-beg <'> initial-dur <'> transform-normalization
    <'> open-raw-sound <'> open-sound <'> previous-sample <'> peaks 
-   <'> player? <'> players <'> add-directory-to-view-files-list
-   <'> add-file-to-view-files-list <'> view-files-sort
-   <'> view-files-amp <'> view-files-speed <'> view-files-files
-   <'> view-files-selected-files <'> view-files-speed-style 
-   <'> view-files-amp-env <'> print-length <'> progress-report
+   <'> player? <'> players <'> print-length <'> progress-report
    <'> read-only <'> redo <'> region-chans <'> region-home 
    <'> region-graph-style <'> region-frames <'> region-position
    <'> region-maxamp <'> region-maxamp-position <'> remember-sound-state
@@ -6812,7 +6910,7 @@ half-pi fnegate constant -half-pi
    <'> save-envelopes <'> save-listener <'> save-marks 
    <'> save-region <'> save-selection <'> save-sound <'> save-sound-as
    <'> save-state <'> save-state-file <'> scale-by <'> scale-selection-by
-   <'> scale-selection-to <'> scale-to <'> scan-chan <'> search-procedure 
+   <'> scale-selection-to <'> scale-to <'> search-procedure 
    <'> select-all <'> select-channel <'> select-sound <'> selected-channel
    <'> selected-sound <'> selection-position <'> selection-creates-region
    <'> selection-frames <'> selection-member? <'> selection?
@@ -6857,7 +6955,7 @@ half-pi fnegate constant -half-pi
    <'> mus-sound-write-date <'> mus-bytes-per-sample 
    <'> mus-sound-loop-info <'> mus-alsa-squelch-warning 
    <'> mus-sound-maxamp <'> mus-sound-maxamp-exists?
-   <'> mus-file-prescaler <'> mus-prescaler <'> mus-clipping
+   <'> mus-clipping
    <'> mus-file-clipping <'> mus-header-raw-defaults <'> moving-average
    <'> moving-average? <'> make-moving-average <'> mus-expand-filename
    <'> make-sound-data <'> sound-data-ref <'> sound-data-set!
@@ -6974,9 +7072,7 @@ half-pi fnegate constant -half-pi
    <'> mix-position <'> mix-properties <'> mix-property <'> mix-speed
    <'> mix-tag-height <'> mix-tag-width <'> mix-tag-y <'> mark-tag-width
    <'> mark-tag-height <'> mix-waveform-height <'> transform-normalization
-   <'> view-files-sort <'> print-length <'> play-arrow-size
-   <'> view-files-amp <'> view-files-speed <'> view-files-speed-style
-   <'> view-files-amp-env <'> view-files-files <'> view-files-selected-files
+   <'> print-length <'> play-arrow-size
    <'> region-graph-style <'> reverb-control-decay <'> reverb-control-feedback
    <'> reverb-control-length <'> reverb-control-lowpass
    <'> reverb-control-scale <'> time-graph-style <'> lisp-graph-style
@@ -7017,8 +7113,7 @@ half-pi fnegate constant -half-pi
    <'> phase-vocoder-freqs <'> phase-vocoder-phase-increments
    <'> phase-vocoder-phases <'> html-dir <'> html-program
    <'> mus-interp-type <'> mixer-ref <'> frame-ref <'> locsig-ref
-   <'> locsig-reverb-ref <'> mus-file-prescaler <'> mus-prescaler
-   <'> mus-clipping <'> mus-file-clipping
+   <'> locsig-reverb-ref <'> mus-clipping <'> mus-file-clipping
    <'> mus-header-raw-defaults ) constant set-procs
 
 : arity-not-ok     <{ prc args -- f }> prc args     arity-ok not ;
@@ -7485,7 +7580,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> maxamp-position <'> min-dB <'> mix-region
      <'> transform-normalization <'> peaks <'> position->x <'> position->y
      <'> reverse-sound <'> revert-sound <'> right-sample <'> sample
-     <'> save-sound <'> save-sound-as <'> scan-chan <'> select-channel
+     <'> save-sound <'> save-sound-as <'> select-channel
      <'> show-axes <'> show-transform-peaks <'> show-marks
      <'> show-mix-waveforms <'> show-y-zero <'> show-grid
      <'> show-sonogram-cursor <'> spectrum-end <'> spectro-hop
@@ -7770,7 +7865,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> listener-text-color <'> max-regions <'> mix-waveform-height
      <'> region-graph-style <'> position-color <'> time-graph-style
      <'> lisp-graph-style <'> transform-graph-style <'> peaks-font
-     <'> bold-peaks-font <'> view-files-sort <'> print-length
+     <'> bold-peaks-font <'> print-length
      <'> play-arrow-size <'> sash-color <'> ladspa-dir <'> peak-env-dir
      <'> save-dir <'> save-state-file <'> selected-channel
      <'> selected-data-color <'> selected-graph-color <'> selected-sound 
@@ -7975,7 +8070,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   ind 123 <'> set-selected-channel 'no-such-channel check-error-tag
   <'> noop 3 make-proc <'> set-search-procedure 'bad-arity check-error-tag
   <'> noop 3 make-proc <'> map-chan 'bad-arity check-error-tag
-  <'> noop 3 make-proc <'> scan-chan 'bad-arity check-error-tag
   <'> noop 1 make-proc ind 0 <'> set-cursor-style 'bad-arity check-error-tag
   <'> noop 0 make-proc <'> find-channel 'bad-arity check-error-tag
   <'> noop 0 make-proc <'> count-matches 'bad-arity check-error-tag
@@ -8846,6 +8940,7 @@ let: ( -- )
   <'> 03-variables       run-fth-test
   <'> 04-sndlib          run-fth-test
   <'> 05-simple-check    run-fth-test
+  <'> 08-clm             run-fth-test
   <'> 10-marks           run-fth-test
   <'> 15-chan-local-vars run-fth-test
   <'> 19-save/restore    run-fth-test
