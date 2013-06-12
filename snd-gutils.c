@@ -1402,6 +1402,12 @@ style \"zoom_slider\" = \"default_slider\"\n		\
 widget \"*.zx_slider\" style \"zoom_slider\"\n		\
 widget \"*.zy_slider\" style \"zoom_slider\"\n		\
 widget \"*.gzy_slider\" style \"zoom_slider\"\n		\
+style \"default_tree_view\" = \"default\"\n		\
+{\n							\
+ GtkTreeView::odd-row-color = { 0.94, 0.97, 1.0 }\n	\
+ GtkTreeView::even-row-color = { 1.0, 1.0, 1.0 }\n	\
+}\n							\
+class \"GtkTreeView\" style \"default_tree_view\"\n	\
 style \"dialog_button\" = \"default_button\"\n          \
 {\n                                                     \
   bg[NORMAL] = { 1.0, 1.0, 0.94 }\n                     \

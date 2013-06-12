@@ -1177,8 +1177,10 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	    }
 	  snd_close(ofd, ofile);
 	  si = free_sync_info(si);
+#if USE_MOTIF
 	  if (!(ss->file_monitor_ok))
 	    alert_new_file();
+#endif
 	  return(IO_NO_ERROR);
 	}
     }
@@ -1249,8 +1251,10 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   free(ends);
   if (mus_file_close(ofd) != 0)
     return(IO_CANT_CLOSE_FILE);
+#if USE_MOTIF
   if (!(ss->file_monitor_ok))
     alert_new_file();
+#endif
   return(io_err);
 }
 

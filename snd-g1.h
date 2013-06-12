@@ -477,7 +477,6 @@ void *unmonitor_file(void *watcher);
 void monitor_sound(snd_info *sp);
 
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, mus_long_t *location, mus_long_t *samples, int min_chan);
-void alert_new_file(void);
 widget_t make_open_file_dialog(read_only_t read_only, bool managed);
 widget_t make_sound_save_as_dialog(bool managed);
 void make_channel_extract_dialog(int chan);
@@ -490,7 +489,7 @@ GtkWidget *edit_header(snd_info *sp);
 void save_edit_header_dialog_state(FILE *fd);
 void set_open_file_play_button(bool val);
 void g_init_gxfile(void);
-void clear_deleted_snd_info(struct dialog_play_info *fd);
+void clear_deleted_snd_info(void *fd);
 void reflect_just_sounds(void);
 void save_file_dialog_state(FILE *fd);
 widget_t post_it(const char *subject, const char *str);

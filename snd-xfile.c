@@ -1239,7 +1239,7 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
 	  if (mus_file_probe(filename))
 	    {
 	      dp->player = make_sound_readable(filename, false);
-	      dp->player->delete_me = dp;
+	      dp->player->delete_me = (void *)dp;
 	      if (dp->player)
 		play_sound(dp->player, 0, NO_END_SPECIFIED);
 	    }

@@ -727,7 +727,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 
   if ((sp) && (sp_stopping) && (sp->delete_me)) 
     {
-      if (sp->delete_me != (struct dialog_play_info *)1) clear_deleted_snd_info(sp->delete_me); /* for various file dialog play buttons */
+      if (sp->delete_me != (void *)1) clear_deleted_snd_info(sp->delete_me); /* for various file dialog play buttons */
       completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-xen.c */
     }
 }
@@ -2784,7 +2784,7 @@ static XEN play_file(const char *play_name, mus_long_t start, mus_long_t end, in
   sp = make_sound_readable(play_name, false);
   sp->short_filename = filename_without_directory(play_name);
   sp->filename = NULL;
-  sp->delete_me = (struct dialog_play_info *)1;
+  sp->delete_me = (void *)1;
   if (in_channel != -1)
     play_channel_1(sp->chans[in_channel], start, end, background, 0, stop_func, (out_channel < 0) ? 0 : out_channel);
   else play_sound_1(sp, start, end, background, XEN_ZERO, stop_func, S_play, -1);

@@ -470,6 +470,7 @@ void init_sound_file_extensions(void)
 
 #if HAVE_MPEG
   add_sound_file_extension("mpeg");
+  add_sound_file_extension("mp3");
 #endif
 
 #if HAVE_SHORTEN
@@ -1834,8 +1835,10 @@ snd_info *snd_update(snd_info *sp)
   /* no mus_sound_forget here because we may be simply re-interpreting the existing data (set! (data-format) ...) etc */
   /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */
 
+#if USE_MOTIF
   if (!(ss->file_monitor_ok))
     alert_new_file();
+#endif
 
   ss->reloading_updated_file = (old_index + 1);
   ss->open_requestor = FROM_UPDATE;

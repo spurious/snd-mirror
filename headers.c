@@ -6088,6 +6088,20 @@ static int mus_header_read_1(const char *filename, int fd)
     }
 
   /* SMS files start with 767 (4-byte int, apparently in native order) */
+  
+  /* try to catch mpeg... */
+  {
+    int len;
+    len = strlen(filename);
+    if (len > 4)
+      {
+	if (strcmp((const char *)(filename + len - 4), ".mp3") == 0)
+	  {
+	    header_type = MUS_MPEG;
+	    return(MUS_NO_ERROR);
+	  }
+      }
+  }
 
   header_type = MUS_RAW;
   return(read_no_header(fd));

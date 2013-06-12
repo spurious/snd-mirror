@@ -1707,8 +1707,10 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
   if (sl_err == MUS_NO_ERROR)
     {
       io_err = close_temp_file(ofile, ofd, hdr->type, len * chans * datumb);
+#if USE_MOTIF
       if (!(ss->file_monitor_ok))
 	alert_new_file();
+#endif
     }
   else 
     {

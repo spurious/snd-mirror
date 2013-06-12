@@ -1441,9 +1441,14 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 		}
 	      else
 		{
+#if USE_MOTIF
 		  if (err == 0)
 		    alert_new_file();
-		  else snd_error("%s %d: %s %s", S_save_region, rg, r->filename, snd_io_strerror());
+		  else
+#else
+		  if (err != 0)
+#endif
+		     snd_error("%s %d: %s %s", S_save_region, rg, r->filename, snd_io_strerror());
 		}
 	    }
 	  else snd_error("%s %d: %s %s", S_save_region, rg, r->filename, snd_io_strerror());

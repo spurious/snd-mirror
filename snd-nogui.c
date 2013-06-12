@@ -164,7 +164,6 @@ void start_progress_report(chan_info *cp) {}
 void finish_progress_report(chan_info *cp) {}
 void progress_report(chan_info *cp, mus_float_t pct) {}
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, mus_long_t *location, mus_long_t *samples, int min_chan) {return(NULL);}
-void alert_new_file(void) {}
 widget_t make_new_file_dialog(bool managed) {return(0);}
 int edit_header(snd_info *sp) {return(0);}
 void save_edit_header_dialog_state(FILE *fd) {}

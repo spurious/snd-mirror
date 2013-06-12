@@ -403,7 +403,7 @@ typedef struct snd_info {
   channel_style_t channel_style;
   int allocated_chans, selectpos; 
   struct region *edited_region;
-  struct dialog_play_info *delete_me;
+  void *delete_me;
   chan_info *lacp;
   struct ctrl_state *saved_controls;
   bool apply_ok, applying;

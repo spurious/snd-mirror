@@ -230,7 +230,6 @@ void *unmonitor_file(void *watcher);
 void monitor_sound(snd_info *sp);
 
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, mus_long_t *location, mus_long_t *samples, int min_chan);
-void alert_new_file(void);
 widget_t make_new_file_dialog(bool managed);
 int edit_header(snd_info *sp);
 void save_edit_header_dialog_state(FILE *fd);
