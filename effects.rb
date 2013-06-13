@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Changed: Sun Jun  3 23:40:53 CEST 2012
+# Changed: Thu Jun 13 18:50:26 CEST 2013
 
 # Commentary:
 #
@@ -1960,7 +1960,10 @@ of silence added at the cursor position.",
       ctr = freq_inc
       radius = 1.0 - r / fftsize.to_f
       bin = srate() / fftsize.to_f
-      formants = make_array(freq_inc) do |i| make_formant(i * bin, radius) end
+      fmts = make_array(freq_inc) do |i|
+        make_formant(i * bin, radius)
+      end
+      formants = make_formant_bank(fmts, spectr)
       lambda do |inval|
         if ctr == freq_inc
           fdr = channel2vct(inctr, fftsize, cross_snd, 0)
@@ -1972,7 +1975,7 @@ of silence added at the cursor position.",
         end
         ctr += 1
         spectr.add!(fdr)
-        amp * formant_bank(spectr, formants, inval)
+        amp * formant_bank(formants, inval)
       end
     end
     

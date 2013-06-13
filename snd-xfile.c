@@ -1193,7 +1193,7 @@ static void just_sounds_callback(Widget w, XtPointer context, XtPointer info)
 
 /* -------- play selected file handlers -------- */
 
-typedef struct dialog_play_info {
+typedef struct {
   Widget dialog, play_button;
   snd_info *player;
 } dialog_play_info;
@@ -1212,8 +1212,9 @@ static void file_dialog_stop_playing(dialog_play_info *dp)
 }
 
 
-void clear_deleted_snd_info(struct dialog_play_info *dp)
+void clear_deleted_snd_info(void *udp)
 {
+  dialog_play_info *dp = (dialog_play_info *)udp;
 #if WITH_AUDIO
   dp->player = NULL;
 #endif
@@ -8649,82 +8650,7 @@ static void view_files_run_select_hook(widget_t dialog, const char *selected_fil
 
 /* -------- file-filters and file-sorters -------- */
 
-#define INITIAL_FILE_FILTERS_SIZE 4
 #define INITIAL_FILE_SORTERS_SIZE 4
-
-static XEN g_expand_vector(XEN vector, int new_size)
-{
-  int i, len;
-  XEN new_vect;
-  len = XEN_VECTOR_LENGTH(vector);
-  new_vect = XEN_MAKE_VECTOR(new_size, XEN_FALSE);
-  XEN_PROTECT_FROM_GC(new_vect);
-  for (i = 0; i < len; i++)
-    {
-      XEN_VECTOR_SET(new_vect, i, XEN_VECTOR_REF(vector, i));
-      XEN_VECTOR_SET(vector, i, XEN_FALSE);
-    }
-#if HAVE_RUBY || HAVE_FORTH
-  XEN_UNPROTECT_FROM_GC(vector);
-#endif
-  return(new_vect);
-}
-
-
-static bool file_filter_ok(XEN name, XEN proc, const char *caller)
-{
-  char *errmsg;
-  XEN errstr;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, caller, "a string");   
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_2, caller, "a procedure of 1 arg (filename)");
-  errmsg = procedure_ok(proc, 1, caller, "function", 2);
-  if (errmsg)
-    {
-      errstr = C_TO_XEN_STRING(errmsg);
-      free(errmsg);
-      snd_bad_arity_error(caller, errstr, proc);
-      return(false);
-    }
-  return(true);
-}
-
-
-static XEN g_add_file_filter(XEN name, XEN proc)
-{
-  #define H_add_file_filter "(" S_add_file_filter " name proc) -- add proc with identifier name to file filter list"
-  int i, len;
-  if (file_filter_ok(name, proc, S_add_file_filter))
-    {
-      len = ss->file_filters_size;
-      for (i = 0; i < len; i++)
-	{
-	  if (XEN_FALSE_P(XEN_VECTOR_REF(ss->file_filters, i)))
-	    {
-	      XEN_VECTOR_SET(ss->file_filters, i, XEN_LIST_2(name, proc));
-	      return(C_TO_XEN_INT(i));
-	    }
-	}
-      ss->file_filters_size = len * 2;
-      ss->file_filters = g_expand_vector(ss->file_filters, ss->file_filters_size);
-      XEN_VECTOR_SET(ss->file_filters, len, XEN_LIST_2(name, proc));
-      return(C_TO_XEN_INT(len));
-    }
-  return(XEN_FALSE);
-}
-
-
-static XEN g_delete_file_filter(XEN index)
-{
-  #define H_delete_file_filter "(" S_delete_file_filter " index) -- delete proc with identifier index from file filter list"
-  int pos;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ONLY_ARG, S_delete_file_filter, "a file-filter function index");   
-  pos = XEN_TO_C_INT(index);
-  if ((pos >= 0) &&
-      (pos < ss->file_filters_size))
-    XEN_VECTOR_SET(ss->file_filters, pos, XEN_FALSE);
-  return(index);
-}
-
 
 static bool file_sorter_ok(XEN name, XEN proc, const char *caller)
 {
@@ -8806,8 +8732,6 @@ XEN_NARGIFY_1(g_view_files_selected_files_w, g_view_files_selected_files)
 XEN_NARGIFY_1(g_view_files_files_w, g_view_files_files)
 XEN_NARGIFY_2(g_view_files_set_selected_files_w, g_view_files_set_selected_files)
 XEN_NARGIFY_2(g_view_files_set_files_w, g_view_files_set_files)
-XEN_NARGIFY_1(g_delete_file_filter_w, g_delete_file_filter)
-XEN_NARGIFY_2(g_add_file_filter_w, g_add_file_filter)
 XEN_NARGIFY_1(g_delete_file_sorter_w, g_delete_file_sorter)
 XEN_NARGIFY_2(g_add_file_sorter_w, g_add_file_sorter)
 #else
@@ -8828,8 +8752,6 @@ XEN_NARGIFY_2(g_add_file_sorter_w, g_add_file_sorter)
 #define g_view_files_files_w g_view_files_files
 #define g_view_files_set_selected_files_w g_view_files_set_selected_files
 #define g_view_files_set_files_w g_view_files_set_files
-#define g_delete_file_filter_w g_delete_file_filter
-#define g_add_file_filter_w g_add_file_filter
 #define g_delete_file_sorter_w g_delete_file_sorter
 #define g_add_file_sorter_w g_add_file_sorter
 
@@ -8913,15 +8835,9 @@ files list of the View Files dialog.  If it returns " PROC_TRUE ", the default a
    *   make sure they're gc-protected through add/delete/set, and want such code compatible
    *   with current Ruby xen macros, so I'll use an array internally.
    */
-  ss->file_filters_size = INITIAL_FILE_FILTERS_SIZE;
   ss->file_sorters_size = INITIAL_FILE_SORTERS_SIZE;
-  ss->file_filters = XEN_MAKE_VECTOR(ss->file_filters_size, XEN_FALSE);
   ss->file_sorters = XEN_MAKE_VECTOR(ss->file_sorters_size, XEN_FALSE);
-  XEN_PROTECT_FROM_GC(ss->file_filters);
   XEN_PROTECT_FROM_GC(ss->file_sorters);
-
-  XEN_DEFINE_SAFE_PROCEDURE(S_add_file_filter,    g_add_file_filter_w,    2, 0, 0, H_add_file_filter);
-  XEN_DEFINE_SAFE_PROCEDURE(S_delete_file_filter, g_delete_file_filter_w, 1, 0, 0, H_delete_file_filter);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_add_file_sorter,    g_add_file_sorter_w,    2, 0, 0, H_add_file_sorter);
   XEN_DEFINE_SAFE_PROCEDURE(S_delete_file_sorter, g_delete_file_sorter_w, 1, 0, 0, H_delete_file_sorter);

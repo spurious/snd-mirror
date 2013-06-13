@@ -221,6 +221,87 @@ char **recent_files(void)
 }
 
 
+/* -------------------------------- file filters -------------------------------- */
+
+#define INITIAL_FILE_FILTERS_SIZE 4
+
+XEN g_expand_vector(XEN vector, int new_size)
+{
+  int i, len;
+  XEN new_vect;
+  len = XEN_VECTOR_LENGTH(vector);
+  new_vect = XEN_MAKE_VECTOR(new_size, XEN_FALSE);
+  XEN_PROTECT_FROM_GC(new_vect);
+  for (i = 0; i < len; i++)
+    {
+      XEN_VECTOR_SET(new_vect, i, XEN_VECTOR_REF(vector, i));
+      XEN_VECTOR_SET(vector, i, XEN_FALSE);
+    }
+#if HAVE_RUBY || HAVE_FORTH
+  XEN_UNPROTECT_FROM_GC(vector);
+#endif
+  return(new_vect);
+}
+
+
+static bool file_filter_ok(XEN name, XEN proc, const char *caller)
+{
+  char *errmsg;
+  XEN errstr;
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, caller, "a string");   
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_2, caller, "a procedure of 1 arg (filename)");
+  errmsg = procedure_ok(proc, 1, caller, "function", 2);
+  if (errmsg)
+    {
+      errstr = C_TO_XEN_STRING(errmsg);
+      free(errmsg);
+      snd_bad_arity_error(caller, errstr, proc);
+      return(false);
+    }
+  return(true);
+}
+
+
+static XEN g_add_file_filter(XEN name, XEN proc)
+{
+  #define H_add_file_filter "(" S_add_file_filter " name proc) -- add proc with identifier name to file filter list"
+  int i, len;
+  if (file_filter_ok(name, proc, S_add_file_filter))
+    {
+      len = ss->file_filters_size;
+      for (i = 0; i < len; i++)
+	{
+	  if (XEN_FALSE_P(XEN_VECTOR_REF(ss->file_filters, i)))
+	    {
+	      XEN_VECTOR_SET(ss->file_filters, i, XEN_LIST_2(name, proc));
+	      return(C_TO_XEN_INT(i));
+	    }
+	}
+      ss->file_filters_size = len * 2;
+      ss->file_filters = g_expand_vector(ss->file_filters, ss->file_filters_size);
+      XEN_VECTOR_SET(ss->file_filters, len, XEN_LIST_2(name, proc));
+      return(C_TO_XEN_INT(len));
+    }
+  return(XEN_FALSE);
+}
+
+
+static XEN g_delete_file_filter(XEN index)
+{
+  #define H_delete_file_filter "(" S_delete_file_filter " index) -- delete proc with identifier index from file filter list"
+  int pos;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ONLY_ARG, S_delete_file_filter, "a file-filter function index");   
+  pos = XEN_TO_C_INT(index);
+  if ((pos >= 0) &&
+      (pos < ss->file_filters_size))
+    XEN_VECTOR_SET(ss->file_filters, pos, XEN_FALSE);
+  return(index);
+}
+
+
+
+
+
 /* -------------------------------- directory readers -------------------------------- */
 
 static dir_info *make_dir_info(const char *name)
@@ -3742,6 +3823,8 @@ XEN_NARGIFY_0(g_initial_dur_w, g_initial_dur)
 XEN_NARGIFY_1(g_set_initial_dur_w, g_set_initial_dur)
 XEN_NARGIFY_0(g_clipping_w, g_clipping)
 XEN_NARGIFY_1(g_set_clipping_w, g_set_clipping)
+XEN_NARGIFY_1(g_delete_file_filter_w, g_delete_file_filter)
+XEN_NARGIFY_2(g_add_file_filter_w, g_add_file_filter)
 #else
 #define g_add_sound_file_extension_w g_add_sound_file_extension
 #define g_sound_file_extensions_w g_sound_file_extensions
@@ -3801,6 +3884,8 @@ XEN_NARGIFY_1(g_set_clipping_w, g_set_clipping)
 #define g_set_initial_dur_w g_set_initial_dur
 #define g_clipping_w g_clipping
 #define g_set_clipping_w g_set_clipping
+#define g_delete_file_filter_w g_delete_file_filter
+#define g_add_file_filter_w g_add_file_filter
 #endif
 
 
@@ -3974,4 +4059,11 @@ the newly updated sound may have a different index."
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_clipping, g_clipping_w, H_clipping,
 				   S_setB S_clipping, g_set_clipping_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_SAFE_PROCEDURE(S_add_file_filter,    g_add_file_filter_w,    2, 0, 0, H_add_file_filter);
+  XEN_DEFINE_SAFE_PROCEDURE(S_delete_file_filter, g_delete_file_filter_w, 1, 0, 0, H_delete_file_filter);
+
+  ss->file_filters_size = INITIAL_FILE_FILTERS_SIZE;
+  ss->file_filters = XEN_MAKE_VECTOR(ss->file_filters_size, XEN_FALSE);
+  XEN_PROTECT_FROM_GC(ss->file_filters);
 }

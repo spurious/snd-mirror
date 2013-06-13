@@ -240,7 +240,6 @@ widget_t make_region_save_as_dialog(bool managed);
 widget_t make_sound_save_as_dialog(bool managed);
 widget_t make_mix_file_dialog(bool managed);
 widget_t make_insert_file_dialog(bool managed);
-void clear_deleted_snd_info(struct dialog_play_info *dp);
 widget_t post_it(const char *subject, const char *str);
 void save_post_it_dialog_state(FILE *fd);
 void reflect_just_sounds(void);

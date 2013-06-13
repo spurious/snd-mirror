@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Tue Dec 11 02:04:53 CET 2012
+\ Changed: Thu Jun 13 18:45:16 CEST 2013
 
 \ Commentary:
 \
@@ -565,7 +565,7 @@ previous
 	#f srate fftsize / { bin }
 	freq-inc make-array map!
 		:radius radius :frequency bin i * make-formant
-	end-map { formants }
+	end-map spectr make-formant-bank { formants }
 	1 proc-create ( inctr ) 0 , ( ctr ) freq-inc ,
 	fdr , fdi , spectr , formants , snd , amp , ( prc )
   does> { inval self -- res }
@@ -590,7 +590,7 @@ previous
 	then
 	ctr 1+ self 1 cells + ! ( ctr++ )
 	spectr fdr 0 vct-add! drop
-	spectr formants inval formant-bank amp f*
+	formants inval formant-bank amp f*
 ;
 
 : effects-cross-synthesis-1

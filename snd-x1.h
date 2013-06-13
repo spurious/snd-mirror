@@ -398,7 +398,7 @@ void set_open_file_play_button(bool val);
 widget_t make_mix_file_dialog(bool managed);
 widget_t make_insert_file_dialog(bool managed);
 void g_init_gxfile(void);
-void clear_deleted_snd_info(struct dialog_play_info *dp);
+void clear_deleted_snd_info(void *dp);
 void reflect_just_sounds(void);
 void save_file_dialog_state(FILE *fd);
 widget_t post_it(const char *subject, const char *str);

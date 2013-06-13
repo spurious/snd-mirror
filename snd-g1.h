@@ -469,7 +469,6 @@ void g_init_gxenv(void);
 /* -------- snd-gfile.c -------- */
 
 void cleanup_file_monitor(void);
-bool initialize_file_monitor(void);
 void *unmonitor_file(void *watcher);
 void monitor_sound(snd_info *sp);
 

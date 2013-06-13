@@ -139,7 +139,6 @@ color_t get_foreground_color(graphics_context *ax) {return(0);}
 void set_foreground_color(graphics_context *ax, int color) {}
 void change_channel_style(snd_info *sp, channel_style_t new_style) {}
 void cleanup_cw(chan_info *cp) {}
-void clear_deleted_snd_info(struct dialog_play_info *dp) {}
 void set_status(snd_info *sp, const char *str, bool update) {if ((str) && (*str)) fprintf(stderr, "%s", str);}
 void snd_info_cleanup(snd_info *sp) {}
 void toggle_expand_button(snd_info *sp, bool state) {}

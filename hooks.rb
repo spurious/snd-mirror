@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Changed: Sun Jul 22 01:14:26 CEST 2012
+# Changed: Thu Jun 13 15:26:48 CEST 2013
 
 # Commentary:
 #
@@ -207,7 +207,6 @@ need a String or Symbol, not %s"
   $stop_playing_hook            = Hook.new("$stop_playing_hook", 1)
   $stop_playing_selection_hook  = Hook.new("$stop_playing_selection_hook", 0)
   $update_hook                  = Hook.new("$update_hook", 1)
-  $view_files_select_hook       = Hook.new("$view_files_select_hook", 2)
   # unless --with-no-gui
   $color_hook                   = Hook.new("$color_hook", 0)
 end
@@ -330,8 +329,7 @@ if defined? $after_graph_hook
                $stop_dac_hook,
                $stop_playing_hook,
                $stop_playing_selection_hook,
-               $update_hook,
-               $view_files_select_hook]
+               $update_hook]
 
   unless provided? :snd_nogui
     Snd_hooks.push($color_hook)

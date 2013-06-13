@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Wed Jun 12 17:03:48 CEST 2013
+\ Changed: Thu Jun 13 18:47:47 CEST 2013
 
 \ Commentary:
 \
@@ -1614,8 +1614,8 @@ and the currently selected sound:\n\
 	1.0 r fftsize f/ f- { radius }
 	#f srate fftsize / { bin }
 	freq-inc make-array map!
-	i bin * radius make-formant
-	end-map { formants }
+	  i bin * radius make-formant
+	end-map spectr make-formant-bank { formants }
 	1 proc-create ( prc )
 	fdr , fdi , spectr , formants ,
 	amp , freq-inc , cross-snd , fftsize , 0 ,
@@ -1638,8 +1638,8 @@ and the currently selected sound:\n\
 		0 self 5 cells + ! ( ctr = 0 )
 	then
 	1 self 5 cells + +! ( ctr++ )
-	formants cycle-ref drop
-	spectr fdr 0 vct-add! ( spectr ) formants y formant-bank amp f*
+	spectr fdr 0 vct-add! drop
+	formants y formant-bank amp f*
 ;
 
 : voiced->unvoiced <{ amp fftsize r tempo :optional snd #f chn #f -- vct }>
@@ -1697,7 +1697,7 @@ whispering: 1.0 256 2.0 2.0 #f #f voiced->unvoiced."
 	    #( co freq amp fftsize r get-func-name ) string-format { origin }
 	freq-inc make-array map!
 		i bin * radius make-formant
-	end-map { formants }
+	end-map spectr make-formant-bank { formants }
 	len 0.0 make-vct map!
 		i freq-inc mod 0= if
 			inctr fftsize snd chn #f channel->vct to fdr
@@ -1707,9 +1707,8 @@ whispering: 1.0 256 2.0 2.0 #f #f voiced->unvoiced."
 			    freq-inc 1/f vct-scale! drop
 			freq-inc inctr + to inctr
 		then
-		spectr fdr 0 vct-add! ( spectr )
-		    formants pulse 0.0 sum-of-cosines
-		    formant-bank ( outval )
+		spectr fdr 0 vct-add! drop
+		formants pulse 0.0 sum-of-cosines formant-bank ( outval )
 		    dup fabs new-peak-amp fmax to new-peak-amp
 		( outval )
 	end-map

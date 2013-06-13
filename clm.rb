@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Oct 14 23:02:57 CEST 2009
-# Changed: Tue Dec  4 21:41:20 CET 2012
+# Changed: Thu Jun 13 15:39:27 CEST 2013
 
 # Commentary:
 #
@@ -497,14 +497,6 @@ if provided? :snd
   alias delete_samples_with_origin      delete_samples
   alias default_output_type             default_output_header_type
   alias default_output_format           default_output_data_format
-  alias previous_files_sort             view_files_sort
-  alias preload_directory               add_directory_to_view_files_list
-  alias preload_file                    add_file_to_view_files_list
-  alias $previous_files_select_hook     $view_files_select_hook
-  Sort_files_by_name = 0
-  Sort_files_by_date = 2
-  Sort_files_by_size = 4
-  Sort_files_by_entry = -1
   alias mus_audio_set_oss_buffers       mus_oss_set_buffers
   unless defined? mus_file_data_clipped
     alias mus_file_data_clipped         mus_clipping
@@ -2372,7 +2364,7 @@ class Snd
   class << Snd
     Snd_path = Array.new
 
-    if provided? :snd
+    if provided? :snd_motif
       def add_sound_path(path)
         Snd_path.push(path)
         add_directory_to_view_files_list(path)

@@ -12,12 +12,23 @@
 */
 
 /* PERHAPS: thumbnail graph if it looks easy (short, readable)
+ *   show_inset_graph in snd-chn.c but no selected portion
+ *   snd_info *make_sound_readable(const char *filename, bool post_close)
+ *   need to check chans/frames and avoid huge cases, then cleanup after
+ *   see also channel_amp_envs in snd-snd.c
+ *        sp = make_sound_readable(fullname, false); post_close => close file until next buffer read [does this translate?]
+ *          snd-gmix/genv have simple drawing areas + expose event setup/callback
+ *        draw it [also upon expose event]
+ *     	  cp->active = CHANNEL_INACTIVE;
+ *   	  completely_free_snd_info(sp);
+ *
  * TODO: save-as dialogs are all messed up.
  * TODO: in gtk3, save-as won't go away?
- * TOD: in both cases, save-as data panel needs more room, not comment expansion, and a frame
+ *    it's fine unless I resize the dialog, then the button is ignored?
  */
 
 /* we can find the embedded tree view:
+
 (define* (traveler w (spaces 0))
   (gtk_container_foreach (GTK_CONTAINER w)
     (lambda (w1 d)
@@ -47,11 +58,6 @@ no way that I can find...
 /* ---------------------------------------- file monitor ---------------------------------------- */
 
 #if HAVE_G_FILE_MONITOR_DIRECTORY
-
-bool initialize_file_monitor(void)
-{
-  return(true);
-}
 
 static void cleanup_new_file_watcher(void);
 static void cleanup_edit_header_watcher(void);
@@ -175,7 +181,6 @@ void monitor_sound(snd_info *sp)
 #else
 
 void cleanup_file_monitor(void) {}
-bool initialize_file_monitor(void) {return(false);}
 void *unmonitor_file(void *watcher) {return(NULL);}
 static void *unmonitor_directory(void *watcher) {return(NULL);}
 void monitor_sound(snd_info *sp) {}
@@ -315,6 +320,19 @@ static void selection_changed_callback(GtkFileChooser *w, gpointer data)
 }
 
 
+/* (add-file-filter "just snd" (lambda (name) (string=? ".snd" (substring name (- (length name) 4)))))
+ * restricts the choice to .snd files
+ */
+
+static gboolean file_filter_callback(const GtkFileFilterInfo *filter_info, gpointer data)
+{
+  /* return true => include this file */
+  if (filter_info)
+    return(XEN_TO_C_BOOLEAN(XEN_CALL_1((XEN)data, C_TO_XEN_STRING(filter_info->filename), "filter func")));
+  return(false);
+}
+
+
 /* if icons do not get displayed, check the system preferences menu+toolbar dialog */
 
 static file_dialog_info *make_fsb(const char *title, const char *file_lab, const char *ok_lab,
@@ -407,11 +425,33 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
   all_files_filter = gtk_file_filter_new();
   gtk_file_filter_set_name(all_files_filter, "All files");
   gtk_file_filter_add_pattern(all_files_filter, "*");
-  
+
   fd->chooser = gtk_file_chooser_widget_new((with_mkdir) ? GTK_FILE_CHOOSER_ACTION_SAVE : GTK_FILE_CHOOSER_ACTION_OPEN);
   gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(fd->dialog)), fd->chooser, true, true, 10);
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(fd->chooser), just_sounds_filter);
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(fd->chooser), all_files_filter);
+
+  {
+    /* now look for added filters added via add-file-filter */
+    int i;
+    for (i = 0; i < ss->file_filters_size; i++)
+      if (!(XEN_FALSE_P(XEN_VECTOR_REF(ss->file_filters, i))))
+	{
+	  const char *filter_name;
+	  GtkFileFilter *nfilt;
+	  XEN filter_func;
+
+	  filter_name = XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_filters, i)));
+	  filter_func = XEN_CADR(XEN_VECTOR_REF(ss->file_filters, i));
+
+	  nfilt = gtk_file_filter_new();
+	  gtk_file_filter_set_name(nfilt, filter_name);
+	  gtk_file_filter_add_custom(nfilt, GTK_FILE_FILTER_FILENAME, file_filter_callback, (gpointer)filter_func, NULL);
+
+	  gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(fd->chooser), nfilt);
+	}
+  }
+  
   gtk_widget_show(fd->chooser);
   gtk_widget_set_size_request(fd->chooser, 500, 250); 
 
@@ -773,9 +813,7 @@ widget_t make_mix_file_dialog(bool managed)
 			      (GCallback)file_mix_help_callback,
 			      GTK_STOCK_ADD);
     }
-  else
-    {
-    }
+
   if (managed) gtk_widget_show(mdat->dialog);
   return(mdat->dialog);
 }
@@ -863,18 +901,16 @@ widget_t make_insert_file_dialog(bool managed)
 			    (GCallback)file_insert_cancel_callback,
 			    (GCallback)file_insert_help_callback,
 			    GTK_STOCK_PASTE);
-  else
-    {
-    }
+
   if (managed) gtk_widget_show(idat->dialog);
   return(idat->dialog);
 }
 
 
-
 void set_open_file_play_button(bool val) 
 {
 }
+
 
 
 /* ---------------- file data panel ---------------- */
@@ -1099,34 +1135,20 @@ static void unreflect_file_data_panel_change(file_data *fd, void *data, void (*c
 
 static void clear_dialog_error(file_data *fdat)
 {
-  gtk_widget_hide(fdat->error_text);
-}
-
-
-static void show_dialog_error(file_data *fdat)
-{
-  gtk_widget_show(fdat->error_text);
+  info_widget_display(fdat->error_text, "");
 }
 
 
 static void post_file_dialog_error(const char *error_msg, file_data *fdat)
 {
-  gtk_entry_set_text(GTK_ENTRY(fdat->error_text), (gchar *)error_msg);
-  show_dialog_error(fdat);
+  info_widget_display(fdat->error_text, (gchar *)error_msg);
 }
 
 
 static void redirect_post_file_dialog_error(const char *error_msg, void *ufd)
 {
-  post_file_dialog_error(error_msg, (file_data *)ufd);
-}
-
-
-/* key press event here, not key release -- the latter is triggered by the <return> release
- *   that triggered the error, so our error is immediately erased
- */
-static void clear_filename_handlers(file_dialog_info *fs)
-{
+  file_data *fdat = (file_data *)ufd;
+  info_widget_display(fdat->error_text, error_msg);
 }
 
 
@@ -1135,7 +1157,7 @@ static gulong chans_key_press_handler_id = 0;
 static gboolean chans_key_press_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   file_data *fdat = (file_data *)data;
-  clear_dialog_error(fdat);
+  info_widget_display(fdat->error_text, "");
   if (chans_key_press_handler_id)
     {
       g_signal_handler_disconnect(fdat->chans_text, chans_key_press_handler_id);
@@ -1158,7 +1180,7 @@ static gulong panel_modify_handler_id = 0;
 static gboolean panel_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   file_data *fdat = (file_data *)data;
-  clear_dialog_error(fdat);
+  info_widget_display(fdat->error_text, "");
   if (panel_modify_handler_id)
     {
       g_signal_handler_disconnect(w, panel_modify_handler_id);
@@ -1245,7 +1267,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 				       bool with_src, 
 				       bool with_auto_comment)
 {
-  GtkWidget *form, *scbox, *combox = NULL, *frame_box;
+  GtkWidget *form, *scbox, *combox = NULL, *frame_box, *frame;
   file_data *fdat;
   int nformats = 0, nheaders = 0;
   const char **formats = NULL, **headers = NULL;
@@ -1266,8 +1288,12 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   formats = type_and_format_to_position(fdat, header_type, data_format);
   nformats = fdat->formats;
 
+  frame = gtk_frame_new(NULL);
+  gtk_box_pack_start(GTK_BOX(parent), frame, false, true, 8);
+  gtk_widget_show(frame);
+
   frame_box = gtk_vbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(parent), frame_box, true, true, 8);
+  gtk_container_add(GTK_CONTAINER(frame), frame_box);
   gtk_widget_show(frame_box);
 
   form = gtk_hbox_new(true, 8);
@@ -1328,6 +1354,14 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       }
   }
 
+  if (with_samples != WITH_SAMPLES_FIELD)
+    {
+      GtkWidget *spacer;
+      spacer = gtk_vseparator_new();
+      gtk_box_pack_start(GTK_BOX(scbox), spacer, false, false, 12);
+      gtk_widget_show(spacer);
+    }
+
   /* chans */
   if (with_chan != WITHOUT_CHANNELS_FIELD)
     {
@@ -1364,7 +1398,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       /* need a spacer to force the lists to have room */
       GtkWidget *spacer;
       spacer = gtk_vseparator_new();
-      gtk_box_pack_start(GTK_BOX(scbox), spacer, false, false, 10);
+      gtk_box_pack_start(GTK_BOX(scbox), spacer, false, false, 12);
       gtk_widget_show(spacer);
     }
 
@@ -1379,7 +1413,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       gtk_widget_show(w1);
 
       combox = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(frame_box), combox, true, true, 4);
+      gtk_box_pack_start(GTK_BOX(frame_box), combox, false, true, 4);
       gtk_widget_show(combox);
 
       if (with_auto_comment)
@@ -1416,7 +1450,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   /* error */
   fdat->error_text = make_info_widget();
   gtk_box_pack_end(GTK_BOX(parent), fdat->error_text, false, false, 0);
-  gtk_widget_hide(fdat->error_text);
+  gtk_widget_show(fdat->error_text);
 
   return(fdat);
 }
@@ -1973,7 +2007,6 @@ static void save_as_help_callback(GtkWidget *w, gpointer data)
 static void save_as_dialog_select_callback(const char *filename, void *data)
 {
   file_dialog_info *fd = (file_dialog_info *)data;
-  clear_filename_handlers(fd);
   clear_dialog_error(fd->panel_data);
   set_sensitive(fd->ok_button, (!(file_is_directory(fd))));
   if (fd->extract_button) set_sensitive(fd->extract_button, (!(file_is_directory(fd))));
@@ -2009,8 +2042,6 @@ static file_dialog_info *make_save_as_dialog(const char *file_string, int header
 					WITH_WRITABLE_HEADERS,
 					WITH_SRATE_FIELD,
 					fd->type == SOUND_SAVE_AS);
-  widget_modify_base(fd->panel_data->error_text, GTK_STATE_NORMAL, ss->yellow);
-  widget_modify_base(fd->panel_data->error_text, GTK_STATE_ACTIVE, ss->yellow);
 
   gtk_widget_show(fd->dialog);
   
@@ -2393,7 +2424,7 @@ static void raw_data_reset_callback(GtkWidget *w, gpointer context)
 				   IGNORE_HEADER_TYPE, 
 				   raw_data_format, raw_srate, raw_chans, rp->location, 
 				   IGNORE_SAMPLES, NULL);
-  gtk_widget_hide(rp->rdat->error_text);
+  clear_dialog_error(rp->rdat);
 }
 
 

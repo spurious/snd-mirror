@@ -308,7 +308,7 @@ static gboolean io_invoke(GIOChannel *source, GIOCondition condition, gpointer d
 static void startup_funcs(void)
 {
   static int auto_open_ctr = 0;
-  ss->file_monitor_ok = initialize_file_monitor();
+  ss->file_monitor_ok = true;
 
 #ifndef SND_AS_WIDGET
   /* trap outer-level Close for cleanup check */

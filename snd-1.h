@@ -1571,6 +1571,7 @@ void set_with_toolbar_and_display(bool val);
 void g_init_file(void);
 void initialize_format_lists(void);
 void set_with_menu_icons(bool val);
+XEN g_expand_vector(XEN vector, int new_size);
 
 
 

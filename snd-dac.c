@@ -727,7 +727,10 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 
   if ((sp) && (sp_stopping) && (sp->delete_me)) 
     {
-      if (sp->delete_me != (void *)1) clear_deleted_snd_info(sp->delete_me); /* for various file dialog play buttons */
+#if USE_MOTIF || USE_GTK
+      if (sp->delete_me != (void *)1) 
+	clear_deleted_snd_info(sp->delete_me); /* for various file dialog play buttons */
+#endif
       completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-xen.c */
     }
 }

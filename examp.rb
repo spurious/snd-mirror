@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Tue Dec  4 21:42:41 CET 2012
+# Changed: Thu Jun 13 18:50:03 CEST 2013
 
 # module Examp (examp.scm)
 #  selection_rms
@@ -1266,7 +1266,10 @@ map_channel(cross_synthesis(1, 0.5, 128, 6.0))")
     ctr = freq_inc
     radius = 1.0 - r / fftsize.to_f
     bin = srate() / fftsize.to_f
-    formants = make_array(freq_inc) do |i| make_formant(i * bin, radius) end
+    fmts = make_array(freq_inc) do |i|
+      make_formant(i * bin, radius)
+    end
+    formants = make_formant_bank(fmts, spectr)
     lambda do |inval|
       if ctr == freq_inc
         fdr = channel2vct(inctr, fftsize, cross_snd, 0)
@@ -1278,7 +1281,7 @@ map_channel(cross_synthesis(1, 0.5, 128, 6.0))")
       end
       ctr += 1
       vct_add!(spectr, fdr)
-      amp * formant_bank(spectr, formants, inval)
+      amp * formant_bank(formants, inval)
     end
   end
 
@@ -1301,7 +1304,10 @@ turns a vocal sound into whispering: voiced2unvoiced(1.0, 256, 2.0, 2.0)")
     outlen = (len / tempo).floor
     hop = (freq_inc * tempo).floor
     out_data = make_vct([len, outlen].max)
-    formants = make_array(freq_inc) do |i| make_formant(i * bin, radius) end
+    fmts = make_array(freq_inc) do |i|
+      make_formant(i * bin, radius)
+    end
+    formants = make_formant_bank(fmts, spectr)
     old_peak_amp = new_peak_amp = 0.0
     outlen.times do |i|
       if ctr == freq_inc
@@ -1317,7 +1323,7 @@ turns a vocal sound into whispering: voiced2unvoiced(1.0, 256, 2.0, 2.0)")
       end
       ctr += 1
       vct_add!(spectr, fdr)
-      if (outval = formant_bank(spectr, formants, rand(noi))).abs > new_peak_amp
+      if (outval = formant_bank(formants, rand(noi))).abs > new_peak_amp
         new_peak_amp = outval.abs
       end
       out_data[i] = outval
@@ -1345,7 +1351,10 @@ uses sum-of-cosines to manipulate speech sounds")
     len = frames(snd, chn)
     out_data = make_vct(len)
     old_peak_amp = new_peak_amp = 0.0
-    formants = make_array(freq_inc) do |i| make_formant(i * bin, radius) end
+    fmts = make_array(freq_inc) do |i|
+      make_formant(i * bin, radius)
+    end
+    formants = make_formant_bank(fmts, spectr)
     out_data.map do |i|
       outval = 0.0
       if ctr == freq_inc
@@ -1360,7 +1369,7 @@ uses sum-of-cosines to manipulate speech sounds")
       end
       ctr += 1
       vct_add!(spectr, fdr)
-      outval = formant_bank(spectr, formants, sum_of_cosines(pulse))
+      outval = formant_bank(formants, sum_of_cosines(pulse))
       if outval.abs > new_peak_amp then new_peak_amp = outval.abs end
       outval
     end
