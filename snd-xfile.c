@@ -278,7 +278,6 @@ static void view_files_open_selected_files(view_files_info *vdat);
 static void view_files_select(vf_row *r, bool add_to_selected);
 static bool view_files_play(view_files_info *vdat, int pos, bool play);
 static view_files_info *new_view_files_dialog(void);
-static void view_files_update_list(view_files_info *vdat);
 static void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname);
 static void add_file_to_view_files_list(view_files_info *vdat, const char *filename, const char *fullname);
 static void view_files_reflect_sort_items(void);

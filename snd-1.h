@@ -637,7 +637,7 @@ typedef struct snd_state {
   int erase_gc, selected_erase_gc;        
   int mark_gc, selected_mark_gc;          
   int mix_gc;           
-  struct dialog_play_info *ignore_me; /* for the compiler's benefit */
+  void *ignore_me;
   int requestor_dialog;
   bool axis_color_set;
   int bounds_cursor, graph_cursor, play_cursor, loop_play_cursor, yaxis_cursor;

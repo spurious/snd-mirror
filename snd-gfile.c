@@ -336,7 +336,7 @@ static gboolean file_filter_callback(const GtkFileFilterInfo *filter_info, gpoin
 /* if icons do not get displayed, check the system preferences menu+toolbar dialog */
 
 static file_dialog_info *make_fsb(const char *title, const char *file_lab, const char *ok_lab,
-				  const gchar *stock, bool with_extract, bool with_mkdir)
+				  const gchar *stock, bool with_extract, bool save_as)
 {
   file_dialog_info *fd;
   int i;
@@ -357,12 +357,10 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
   /* -------- buttons -------- */
   fd->help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
   gtk_widget_set_name(fd->help_button, "dialog_button");
-  if (!with_mkdir) widget_set_margin_left(fd->help_button, 16);
 
   fd->cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_widget_set_name(fd->cancel_button, "dialog_button");
   set_stock_button_label(fd->cancel_button, I_GO_AWAY);
-  if (!with_mkdir) widget_set_margin_left(fd->cancel_button, 16);
 
   if (with_extract)
     {
@@ -382,7 +380,6 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
 #if WITH_AUDIO
   fd->play_button = sg_button_new_from_stock_with_label("Play", GTK_STOCK_MEDIA_PLAY);
   gtk_widget_set_name(fd->play_button, "dialog_button");
-  if (!with_mkdir) widget_set_margin_left(fd->play_button, 16);
 #if HAVE_GTK_3
   add_highlight_button_style(fd->play_button);
 #endif
@@ -426,7 +423,7 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
   gtk_file_filter_set_name(all_files_filter, "All files");
   gtk_file_filter_add_pattern(all_files_filter, "*");
 
-  fd->chooser = gtk_file_chooser_widget_new((with_mkdir) ? GTK_FILE_CHOOSER_ACTION_SAVE : GTK_FILE_CHOOSER_ACTION_OPEN);
+  fd->chooser = gtk_file_chooser_widget_new((save_as) ? GTK_FILE_CHOOSER_ACTION_SAVE : GTK_FILE_CHOOSER_ACTION_OPEN);
   gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(fd->dialog)), fd->chooser, true, true, 10);
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(fd->chooser), just_sounds_filter);
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(fd->chooser), all_files_filter);
@@ -457,7 +454,7 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
 
   gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(fd->chooser), (just_sounds(ss)) ? just_sounds_filter : all_files_filter);
 #if HAVE_GTK_WIDGET_GET_VISIBLE
-  if (with_mkdir)
+  if (save_as)
     gtk_file_chooser_set_create_folders(GTK_FILE_CHOOSER(fd->chooser), true);
 #endif
   
