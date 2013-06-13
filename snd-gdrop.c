@@ -189,14 +189,6 @@ void add_drag_and_drop(GtkWidget *w,
 }
  
 
-void add_drop(GtkWidget *w, 
-	      void (*drop_watcher)(GtkWidget *w, const char *message, int x, int y, void *data), 
-	      void *context)
-{
-  add_drag_and_drop(w, drop_watcher, NULL, context);
-}
-
-
 void g_init_gxdrop(void)
 {
   #define H_drop_hook S_drop_hook " (name): called whenever Snd receives a drag-and-drop \

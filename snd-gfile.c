@@ -11,11 +11,36 @@
    Info and Raw
 */
 
-/* TODO: rather than mkdir, gtk_file_chooser_set_create_folders
- * PERHAPS: thumbnail graph if it looks easy (short, readable), use bg color for info1|2?
- * TODO: gtk3 tree view is inaccessible in filechooser and row colors can't be set!
- * PERHAPS: include sound-comment in info?
+/* PERHAPS: thumbnail graph if it looks easy (short, readable)
+ * TODO: save-as dialogs are all messed up.
+ * TODO: in gtk3, save-as won't go away?
+ * TOD: in both cases, save-as data panel needs more room, not comment expansion, and a frame
  */
+
+/* we can find the embedded tree view:
+(define* (traveler w (spaces 0))
+  (gtk_container_foreach (GTK_CONTAINER w)
+    (lambda (w1 d)
+      (do ((i 0 (+ i 1)))
+	  ((= i spaces))
+	(format #t " "))
+      (format #t "~A " (gtk_widget_get_name w1))
+      (if (GTK_IS_LABEL w1)
+          (format #t "~A~%" (gtk_label_get_text (GTK_LABEL w1)))
+	  (if (GTK_IS_BUTTON w1)
+	      (format #t "~A~%" (gtk_button_get_label (GTK_BUTTON w1)))
+	      (if (GTK_IS_ENTRY w1)
+		  (format #t "~A~%" (gtk_entry_get_text (GTK_ENTRY w1)))
+		  (begin
+		    (newline)
+		    (if (GTK_IS_CONTAINER w1)
+			(traveler w1 (+ spaces 2))))))))))
+
+(traveler (open-file-dialog))
+
+now how to get at the sidebar and remove "recently used"? or change the row-colors in gtk3?
+no way that I can find...
+*/
 
 
 
@@ -163,7 +188,7 @@ void monitor_sound(snd_info *sp) {}
 
 typedef struct file_dialog_info {
 
-  GtkWidget *dialog, *ok_button, *mkdir_button, *cancel_button, *help_button, *extract_button, *play_button, *chooser;
+  GtkWidget *dialog, *ok_button, *cancel_button, *help_button, *extract_button, *play_button, *chooser;
   void (*file_select_callback)(const char *filename, void *data);
   void *file_select_data;
   void (*directory_select_callback)(const char *filename, void *data);
@@ -321,12 +346,6 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
   set_stock_button_label(fd->cancel_button, I_GO_AWAY);
   if (!with_mkdir) widget_set_margin_left(fd->cancel_button, 16);
 
-  if (with_mkdir)
-    {
-      fd->mkdir_button = sg_button_new_from_stock_with_label("Mkdir", GTK_STOCK_REFRESH);
-      gtk_widget_set_name(fd->mkdir_button, "dialog_button");
-    }
-
   if (with_extract)
     {
       fd->extract_button = sg_button_new_from_stock_with_label("Extract", GTK_STOCK_CUT);
@@ -354,13 +373,11 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
 #if HAVE_GTK_3
   add_highlight_button_style(fd->ok_button);
   add_highlight_button_style(fd->cancel_button);
-  if (with_mkdir) add_highlight_button_style(fd->mkdir_button);
   add_highlight_button_style(fd->help_button);
   if (with_extract) add_highlight_button_style(fd->extract_button);
 #endif
 
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fd->dialog)), fd->help_button, true, true, 10);
-  if (with_mkdir) gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fd->dialog)), fd->mkdir_button, true, true, 10);
 #if WITH_AUDIO
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fd->dialog)), fd->play_button, true, true, 10);
 #endif
@@ -374,7 +391,6 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
 #if WITH_AUDIO
   gtk_widget_show(fd->play_button);
 #endif
-  if (with_mkdir) gtk_widget_show(fd->mkdir_button);
   if (with_extract) gtk_widget_show(fd->extract_button);
 
   just_sounds_filter = gtk_file_filter_new();
@@ -400,6 +416,10 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
   gtk_widget_set_size_request(fd->chooser, 500, 250); 
 
   gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(fd->chooser), (just_sounds(ss)) ? just_sounds_filter : all_files_filter);
+#if HAVE_GTK_WIDGET_GET_VISIBLE
+  if (with_mkdir)
+    gtk_file_chooser_set_create_folders(GTK_FILE_CHOOSER(fd->chooser), true);
+#endif
   
   return(fd);
 }
@@ -1968,26 +1988,6 @@ static gint save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer cont
 }
 
 
-static void save_as_mkdir_callback(GtkWidget *w, gpointer context)
-{
-  file_dialog_info *fd = (file_dialog_info *)context;
-  char *filename = NULL, *str;
-
-  filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser));
-  if (snd_mkdir(filename) < 0)
-    {
-      /* could not make the directory */
-      str = mus_format("can't make %s: %s", filename, strerror(errno));
-      post_file_dialog_error((const char *)str, fd->panel_data);
-      free(str);
-    }
-  else
-    {
-      set_sensitive(w, false);
-    }
-}
-
-
 static file_dialog_info *make_save_as_dialog(const char *file_string, int header_type, int format_type, int dialog_type)
 {
   file_dialog_info *fd;
@@ -2016,7 +2016,6 @@ static file_dialog_info *make_save_as_dialog(const char *file_string, int header
   
   if (fd->type != REGION_SAVE_AS)
     SG_SIGNAL_CONNECT(fd->extract_button, "clicked", save_as_extract_callback, (void *)fd);
-  SG_SIGNAL_CONNECT(fd->mkdir_button, "clicked", save_as_mkdir_callback, (void *)fd);
   
   SG_SIGNAL_CONNECT(fd->help_button, "clicked", save_as_help_callback, (gpointer)fd);
   SG_SIGNAL_CONNECT(fd->ok_button, "clicked", save_as_ok_callback, (gpointer)fd);

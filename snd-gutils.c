@@ -1571,6 +1571,9 @@ void init_gtk(void)
     "  background-color: rgb(200, 200, 190);\n"
     "}\n",
     -1, NULL);
+
+/* gtk3 tree view is inaccessible in filechooser and row colors can't be set!
+ */
 }
 #endif
 

@@ -30739,6 +30739,13 @@ static XEN gxg_gtk_button_get_always_show_image(XEN button)
   return(C_TO_XEN_gboolean(gtk_button_get_always_show_image(XEN_TO_C_GtkButton_(button))));
 }
 
+static XEN gxg_gtk_tree_view_get_n_columns(XEN tree_view)
+{
+  #define H_gtk_tree_view_get_n_columns "guint gtk_tree_view_get_n_columns(GtkTreeView* tree_view)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_get_n_columns", "GtkTreeView*");
+  return(C_TO_XEN_guint(gtk_tree_view_get_n_columns(XEN_TO_C_GtkTreeView_(tree_view))));
+}
+
 static XEN gxg_gtk_menu_button_new(void)
 {
   #define H_gtk_menu_button_new "GtkWidget* gtk_menu_button_new( void)"
@@ -39529,6 +39536,7 @@ XEN_ARGIFY_3(gxg_gdk_event_get_scroll_deltas_w, gxg_gdk_event_get_scroll_deltas)
 XEN_NARGIFY_5(gxg_gtk_color_chooser_add_palette_w, gxg_gtk_color_chooser_add_palette)
 XEN_NARGIFY_2(gxg_gtk_button_set_always_show_image_w, gxg_gtk_button_set_always_show_image)
 XEN_NARGIFY_1(gxg_gtk_button_get_always_show_image_w, gxg_gtk_button_get_always_show_image)
+XEN_NARGIFY_1(gxg_gtk_tree_view_get_n_columns_w, gxg_gtk_tree_view_get_n_columns)
 XEN_NARGIFY_0(gxg_gtk_menu_button_new_w, gxg_gtk_menu_button_new)
 XEN_NARGIFY_2(gxg_gtk_menu_button_set_direction_w, gxg_gtk_menu_button_set_direction)
 XEN_NARGIFY_1(gxg_gtk_menu_button_get_direction_w, gxg_gtk_menu_button_get_direction)
@@ -43736,6 +43744,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_color_chooser_add_palette_w gxg_gtk_color_chooser_add_palette
 #define gxg_gtk_button_set_always_show_image_w gxg_gtk_button_set_always_show_image
 #define gxg_gtk_button_get_always_show_image_w gxg_gtk_button_get_always_show_image
+#define gxg_gtk_tree_view_get_n_columns_w gxg_gtk_tree_view_get_n_columns
 #define gxg_gtk_menu_button_new_w gxg_gtk_menu_button_new
 #define gxg_gtk_menu_button_set_direction_w gxg_gtk_menu_button_set_direction
 #define gxg_gtk_menu_button_get_direction_w gxg_gtk_menu_button_get_direction
@@ -47950,6 +47959,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_color_chooser_add_palette, gxg_gtk_color_chooser_add_palette_w, 5, 0, 0, H_gtk_color_chooser_add_palette);
   XG_DEFINE_PROCEDURE(gtk_button_set_always_show_image, gxg_gtk_button_set_always_show_image_w, 2, 0, 0, H_gtk_button_set_always_show_image);
   XG_DEFINE_PROCEDURE(gtk_button_get_always_show_image, gxg_gtk_button_get_always_show_image_w, 1, 0, 0, H_gtk_button_get_always_show_image);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_n_columns, gxg_gtk_tree_view_get_n_columns_w, 1, 0, 0, H_gtk_tree_view_get_n_columns);
   XG_DEFINE_PROCEDURE(gtk_menu_button_new, gxg_gtk_menu_button_new_w, 0, 0, 0, H_gtk_menu_button_new);
   XG_DEFINE_PROCEDURE(gtk_menu_button_set_direction, gxg_gtk_menu_button_set_direction_w, 2, 0, 0, H_gtk_menu_button_set_direction);
   XG_DEFINE_PROCEDURE(gtk_menu_button_get_direction, gxg_gtk_menu_button_get_direction_w, 1, 0, 0, H_gtk_menu_button_get_direction);
@@ -50766,7 +50776,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("08-Jun-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("12-Jun-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
