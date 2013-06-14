@@ -140,16 +140,6 @@ char *snd_open_strerror(void)
 }
 
 
-int snd_mkdir(const char *filename)
-{
-#ifdef __MINGW32__ 
-  return(mkdir(filename));
-#else 
-  return(mkdir(filename, 0777));
-#endif 
-}
-
-
 char *string_to_colon(char *val)
 {
   char *up_to_colon;

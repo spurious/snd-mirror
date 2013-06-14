@@ -95,17 +95,6 @@ bool directory_p(const char *filename)
 }
 
 
-static bool empty_file_p(const char *filename)
-{
-#if HAVE_LSTAT
-  struct stat statbuf;
-  if (lstat(filename, &statbuf) >= 0) 
-    return(statbuf.st_size == (mus_long_t)0);
-#endif
-  return(false);
-}
-
-
 time_t file_write_date(const char *filename)
 {
   struct stat statbuf;
@@ -113,27 +102,6 @@ time_t file_write_date(const char *filename)
   err = stat(filename, &statbuf);
   if (err < 0) return((time_t)err);
   return((time_t)(statbuf.st_mtime));
-}
-
-
-bool directory_exists(char *name)
-{
-  char temp;
-  bool result;
-  int i, len, last_slash = -1;
-  len = strlen(name);
-  for (i = 0; i < len; i++) 
-    if (name[i] == '/') 
-      last_slash = i;
-  if (last_slash <= 0)
-    return(true);
-  if (last_slash >= len - 1) /* can't be > */
-    return(directory_p(name));
-  temp = name[last_slash + 1];
-  name[last_slash + 1] = '\0';
-  result = directory_p(name);
-  name[last_slash + 1] = temp;
-  return(result);
 }
 
 
@@ -264,7 +232,12 @@ static bool file_filter_ok(XEN name, XEN proc, const char *caller)
 
 static XEN g_add_file_filter(XEN name, XEN proc)
 {
-  #define H_add_file_filter "(" S_add_file_filter " name proc) -- add proc with identifier name to file filter list"
+  #define H_add_file_filter "(" S_add_file_filter " name proc) -- add proc with identifier name to file filter list. \n\
+  (add-file-filter \"just .snd\" \n\
+    (lambda (name) \n\
+      (string=? \".snd\" (substring name (- (length name) 4)))))\n\
+  restricts the displayed files to .snd files."
+
   int i, len;
   if (file_filter_ok(name, proc, S_add_file_filter))
     {
@@ -294,7 +267,14 @@ static XEN g_delete_file_filter(XEN index)
   pos = XEN_TO_C_INT(index);
   if ((pos >= 0) &&
       (pos < ss->file_filters_size))
-    XEN_VECTOR_SET(ss->file_filters, pos, XEN_FALSE);
+    {
+#if USE_GTK
+      /* in the gtk case, the function might be in use anyway, so we need to protect it */
+      if (XEN_LIST_P(XEN_VECTOR_REF(ss->file_filters, pos)))
+	XEN_PROTECT_FROM_GC(XEN_CADR(XEN_VECTOR_REF(ss->file_filters, pos)));
+#endif
+      XEN_VECTOR_SET(ss->file_filters, pos, XEN_FALSE);
+    }
   return(index);
 }
 
@@ -614,32 +594,6 @@ bool sound_file_p(const char *name)
 	  return(true);
     }
   return(false);
-}
-
-
-static int local_error = MUS_NO_ERROR;
-static char *local_error_msg = NULL;
-static mus_error_handler_t *old_error_handler;
-
-static void local_error2snd(int type, char *msg) 
-{
-  local_error = type;
-  if (local_error_msg) free(local_error_msg);
-  if (msg)
-    local_error_msg = mus_strdup(msg);
-  else local_error_msg = NULL;
-}
-
-
-bool plausible_sound_file_p(const char *name)
-{
-  int err = MUS_NO_ERROR;
-  if (empty_file_p(name)) return(false);
-  old_error_handler = mus_error_set_handler(local_error2snd);
-  err = mus_header_read(name);
-  mus_error_set_handler(old_error_handler);
-  return((err == MUS_NO_ERROR) &&
-	 (mus_header_type() != MUS_RAW));
 }
 
 

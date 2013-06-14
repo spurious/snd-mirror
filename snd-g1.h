@@ -493,8 +493,6 @@ void post_it_append(const char *str);
 void save_post_it_dialog_state(FILE *fd);
 void reflect_region_in_save_as_dialog(void);
 void reflect_selection_in_save_as_dialog(bool on);
-void mouse_enter_label(void *r, int type);
-void mouse_leave_label(void *r, int type);
 void save_edits_now(snd_info *sp);
 void unpost_unsaved_edits_if_any(snd_info *sp);
 void unpost_file_has_changed_if_any(snd_info *sp);

@@ -3080,6 +3080,8 @@ void cos_smooth(chan_info *cp, mus_long_t beg, mus_long_t num, bool over_selecti
 }
 
 
+#if USE_MOTIF
+/* this is used by the view-files dialog */
 
 typedef struct {
   snd_fd **fds;
@@ -3264,7 +3266,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 
   return(tempfile);
 }
-
+#endif
 
 
 static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t beg, mus_long_t num, int pos, const char *caller)

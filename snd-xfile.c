@@ -1381,6 +1381,43 @@ static void unpost_file_info(file_dialog_info *fd)
 }
 
 
+static bool empty_file_p(const char *filename)
+{
+#if HAVE_LSTAT
+  struct stat statbuf;
+  if (lstat(filename, &statbuf) >= 0) 
+    return(statbuf.st_size == (mus_long_t)0);
+#endif
+  return(false);
+}
+
+
+static int local_error = MUS_NO_ERROR;
+static char *local_error_msg = NULL;
+static mus_error_handler_t *old_error_handler;
+
+static void local_error2snd(int type, char *msg) 
+{
+  local_error = type;
+  if (local_error_msg) free(local_error_msg);
+  if (msg)
+    local_error_msg = mus_strdup(msg);
+  else local_error_msg = NULL;
+}
+
+
+static bool plausible_sound_file_p(const char *name)
+{
+  int err = MUS_NO_ERROR;
+  if (empty_file_p(name)) return(false);
+  old_error_handler = mus_error_set_handler(local_error2snd);
+  err = mus_header_read(name);
+  mus_error_set_handler(old_error_handler);
+  return((err == MUS_NO_ERROR) &&
+	 (mus_header_type() != MUS_RAW));
+}
+
+
 static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer info)
 {
   file_dialog_info *fd = (file_dialog_info *)context;
@@ -3462,6 +3499,27 @@ static void save_as_help_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
+static bool directory_exists(char *name)
+{
+  char temp;
+  bool result;
+  int i, len, last_slash = -1;
+  len = strlen(name);
+  for (i = 0; i < len; i++) 
+    if (name[i] == '/') 
+      last_slash = i;
+  if (last_slash <= 0)
+    return(true);
+  if (last_slash >= len - 1) /* can't be > */
+    return(directory_p(name));
+  temp = name[last_slash + 1];
+  name[last_slash + 1] = '\0';
+  result = directory_p(name);
+  name[last_slash + 1] = temp;
+  return(result);
+}
+
+
 static void save_as_file_exists_check(Widget w, XtPointer context, XtPointer info)
 {
   Widget dialog = (Widget)context;
@@ -3492,6 +3550,16 @@ static void save_as_file_exists_check(Widget w, XtPointer context, XtPointer inf
 		XmNselectionLabelString, s1, 
 		NULL);
   if (filename) XtFree(filename);
+}
+
+
+static int snd_mkdir(const char *filename)
+{
+#ifdef __MINGW32__ 
+  return(mkdir(filename));
+#else 
+  return(mkdir(filename, 0777));
+#endif 
 }
 
 

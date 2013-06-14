@@ -22,35 +22,36 @@
  *     	  cp->active = CHANNEL_INACTIVE;
  *   	  completely_free_snd_info(sp);
  *
- * TODO: save-as dialogs are all messed up.
  * TODO: in gtk3, save-as won't go away?
  *    it's fine unless I resize the dialog, then the button is ignored?
  */
 
+#define WITH_SKETCH 0
+
 /* we can find the embedded tree view:
 
-(define* (traveler w (spaces 0))
-  (gtk_container_foreach (GTK_CONTAINER w)
-    (lambda (w1 d)
-      (do ((i 0 (+ i 1)))
-	  ((= i spaces))
-	(format #t " "))
-      (format #t "~A " (gtk_widget_get_name w1))
-      (if (GTK_IS_LABEL w1)
-          (format #t "~A~%" (gtk_label_get_text (GTK_LABEL w1)))
-	  (if (GTK_IS_BUTTON w1)
-	      (format #t "~A~%" (gtk_button_get_label (GTK_BUTTON w1)))
-	      (if (GTK_IS_ENTRY w1)
-		  (format #t "~A~%" (gtk_entry_get_text (GTK_ENTRY w1)))
-		  (begin
-		    (newline)
-		    (if (GTK_IS_CONTAINER w1)
-			(traveler w1 (+ spaces 2))))))))))
+  (define* (traveler w (spaces 0))
+    (gtk_container_foreach (GTK_CONTAINER w)
+      (lambda (w1 d)
+        (do ((i 0 (+ i 1)))
+	    ((= i spaces))
+	  (format #t " "))
+        (format #t "~A " (gtk_widget_get_name w1))
+        (if (GTK_IS_LABEL w1)
+            (format #t "~A~%" (gtk_label_get_text (GTK_LABEL w1)))
+	    (if (GTK_IS_BUTTON w1)
+	        (format #t "~A~%" (gtk_button_get_label (GTK_BUTTON w1)))
+	        (if (GTK_IS_ENTRY w1)
+		    (format #t "~A~%" (gtk_entry_get_text (GTK_ENTRY w1)))
+		    (begin
+		      (newline)
+		      (if (GTK_IS_CONTAINER w1)
+			  (traveler w1 (+ spaces 2))))))))))
 
-(traveler (open-file-dialog))
+  (traveler (open-file-dialog))
 
-now how to get at the sidebar and remove "recently used"? or change the row-colors in gtk3?
-no way that I can find...
+* now how to get at the sidebar and remove "recently used"? or change the row-colors in gtk3?
+* no way that I can find...
 */
 
 
@@ -194,10 +195,6 @@ void monitor_sound(snd_info *sp) {}
 typedef struct file_dialog_info {
 
   GtkWidget *dialog, *ok_button, *cancel_button, *help_button, *extract_button, *play_button, *chooser;
-  void (*file_select_callback)(const char *filename, void *data);
-  void *file_select_data;
-  void (*directory_select_callback)(const char *filename, void *data);
-  void *directory_select_data;
   read_only_t file_dialog_read_only;
   GtkWidget *frame, *info1, *info2, *vbox;
   void *unsound_directory_watcher; /* doesn't exist, not a sound file, bogus header, etc */
@@ -214,28 +211,28 @@ typedef struct file_dialog_info {
   gulong filename_watcher_id;
   int header_type, format_type;
 
+#if WITH_SKETCH
+  gc_t *gc;
+  axis_info *axis;
+  GtkWidget *drawer;
+#endif
+
 } file_dialog_info;
 
 static file_dialog_info *odat = NULL; /* open file */
 static file_dialog_info *mdat = NULL; /* mix file */
 static file_dialog_info *idat = NULL; /* insert file */
 
-
 void reflect_just_sounds(void) {}
-
-
-static bool file_is_directory(file_dialog_info *fd)
-{
-  char *filename;
-  filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser));
-  return((!filename) || (directory_p(filename)));
-}
 
 
 static void post_sound_info(GtkWidget *info1, GtkWidget *info2, const char *filename, bool with_filename)
 {
   /* filename is known[strongly believed] to be a sound file, etc */
   char *buf;
+  if (!filename)
+    return;
+
   if ((directory_p(filename)) ||
       (!sound_file_p(filename)))
     {
@@ -298,7 +295,8 @@ static void file_dialog_play(GtkWidget *w, gpointer data)
     {
       char *filename;
       filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser));
-      if (!directory_p(filename))
+      if ((filename) &&
+	  (!directory_p(filename)))
 	{
 	  if (mus_file_probe(filename))
 	    {
@@ -313,16 +311,96 @@ static void file_dialog_play(GtkWidget *w, gpointer data)
 #endif
 
 
+#if WITH_SKETCH
+static void sketch(file_dialog_info *fd)
+{
+  snd_info *sp;
+  char *filename;
+
+  filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser));
+  fprintf(stderr, "sketch %s\n", filename);
+
+  if (!filename)
+    return;
+
+  if ((directory_p(filename)) ||
+      (!sound_file_p(filename)))
+    return;
+  
+  sp = make_sound_readable(filename, false);
+  if (sp)
+    {
+
+      int srate, pts = 0;
+      mus_long_t samps;
+      bool two_sided = false;
+      axis_info *active_ap = NULL, *gray_ap;
+      chan_info *active_channel;
+      cairo_t *cr;
+
+      active_channel = sp->chans[0];
+      active_ap = active_channel->axis;
+      gray_ap = fd->axis;
+      gray_ap->graph_active = true;
+
+      samps = CURRENT_SAMPLES(active_channel);
+      srate = SND_SRATE(active_channel->sound);
+
+      gray_ap->losamp = 0;
+      gray_ap->hisamp = samps - 1;
+      gray_ap->y0 = -1.0;
+      gray_ap->y1 = 1.0;
+      gray_ap->x0 = 0.0;
+      gray_ap->x1 = (double)samps / (double)srate;
+
+      gray_ap->x_axis_x0 = 0;
+      gray_ap->y_axis_y0 = 0;
+      gray_ap->x_axis_x1 = widget_width(fd->drawer);
+      gray_ap->y_axis_y1 = widget_height(fd->drawer);
+
+      init_axis_scales(gray_ap);
+
+      cr = ss->cr;
+      ss->cr = make_cairo(WIDGET_TO_WINDOW(fd->drawer));
+      cairo_push_group(ss->cr);
+
+      active_channel->axis = gray_ap;
+      pts = make_background_graph(active_channel, srate, &two_sided);
+      active_channel->axis = active_ap;
+
+      cairo_set_source_rgba(ss->cr, fd->gc->bg_color->red, fd->gc->bg_color->green, fd->gc->bg_color->blue, fd->gc->bg_color->alpha);
+      cairo_rectangle(ss->cr, 0, 0, gray_ap->x_axis_x1, gray_ap->y_axis_y1);
+      cairo_fill(ss->cr);
+
+      if (pts > 0) 
+	{
+	  if (two_sided)
+	    draw_both_grf_points(1, gray_ap->ax, pts, GRAPH_LINES);
+	  else draw_grf_points(1, gray_ap->ax, pts, gray_ap, 0.0, GRAPH_LINES);
+	}
+
+      cairo_pop_group_to_source(ss->cr);
+      cairo_paint(ss->cr);
+      free_cairo(ss->cr);
+      ss->cr = cr;
+
+      active_channel->active = CHANNEL_INACTIVE;
+      completely_free_snd_info(sp);
+    }
+}
+
+#define resketch(Fd) sketch(Fd)
+#endif
+
 static void selection_changed_callback(GtkFileChooser *w, gpointer data)
 {
   file_dialog_info *fd = (file_dialog_info *)data;
   post_sound_info(fd->info1, fd->info2, gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser)), false);
+#if WITH_SKETCH
+  sketch(fd);
+#endif
 }
 
-
-/* (add-file-filter "just snd" (lambda (name) (string=? ".snd" (substring name (- (length name) 4)))))
- * restricts the choice to .snd files
- */
 
 static gboolean file_filter_callback(const GtkFileFilterInfo *filter_info, gpointer data)
 {
@@ -331,6 +409,26 @@ static gboolean file_filter_callback(const GtkFileFilterInfo *filter_info, gpoin
     return(XEN_TO_C_BOOLEAN(XEN_CALL_1((XEN)data, C_TO_XEN_STRING(filter_info->filename), "filter func")));
   return(false);
 }
+
+
+#if WITH_SKETCH
+static gboolean drawer_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+{
+  file_dialog_info *fd = (file_dialog_info *)data;
+  resketch(fd);
+  return(false);
+}
+
+#if 0
+static gboolean drawer_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
+{
+  file_dialog_info *fd = (file_dialog_info *)data;
+  fprintf(stderr, "resize ");
+  resketch(fd);
+  return(false);
+}
+#endif
+#endif
 
 
 /* if icons do not get displayed, check the system preferences menu+toolbar dialog */
@@ -457,7 +555,39 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
   if (save_as)
     gtk_file_chooser_set_create_folders(GTK_FILE_CHOOSER(fd->chooser), true);
 #endif
-  
+
+#if WITH_SKETCH
+  if (!save_as)
+    {
+      fd->gc = gc_new();
+      gc_set_background(fd->gc, ss->white);
+      gc_set_foreground(fd->gc, ss->black);
+
+      fd->drawer = gtk_drawing_area_new();
+      gtk_box_pack_end(GTK_BOX(DIALOG_CONTENT_AREA(fd->dialog)), fd->drawer, true, true, 10);
+#if 0
+      gtk_widget_set_events(fd->drawer, GDK_ALL_EVENTS_MASK); 
+#else
+      gtk_widget_set_events(fd->drawer, GDK_EXPOSURE_MASK);
+#endif
+      widget_modify_bg(fd->drawer, GTK_STATE_NORMAL, ss->white);
+      widget_modify_fg(fd->drawer, GTK_STATE_NORMAL, ss->black);
+      gtk_widget_show(fd->drawer);
+
+      fd->axis = (axis_info *)calloc(1, sizeof(axis_info));
+      fd->axis->ax = (graphics_context *)calloc(1, sizeof(graphics_context));
+      fd->axis->ax->wn = WIDGET_TO_WINDOW(fd->drawer);
+      fd->axis->ax->w = fd->drawer;
+      fd->axis->ax->gc = fd->gc;
+      fd->axis->ax->current_font = AXIS_NUMBERS_FONT(ss);
+
+      SG_SIGNAL_CONNECT(fd->drawer, DRAW_SIGNAL, drawer_expose, (gpointer)fd);
+#if 0
+      SG_SIGNAL_CONNECT(fd->drawer, "configure_event", drawer_resize, (gpointer)fd);
+#endif
+    }
+#endif
+
   return(fd);
 }
 
@@ -609,7 +739,8 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 
   filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser));
   file_dialog_stop_playing(fd);
-  if (!(directory_p(filename)))
+  if ((filename) &&
+      (!directory_p(filename)))
     {
       snd_info *sp;
       redirect_snd_error_to(redirect_file_open_error, (void *)fd);
@@ -1753,6 +1884,11 @@ static void save_or_extract(file_dialog_info *fd, bool saving)
       post_file_dialog_error((const char *)msg, fd->panel_data);
       return;
     }
+  if (directory_p(str))
+    {
+      post_file_dialog_error("can't overwrite a directory", fd->panel_data);
+      return;
+    }
 
   /* get output file attributes */
   redirect_snd_error_to(redirect_post_file_panel_error, (void *)(fd->panel_data));
@@ -2001,15 +2137,6 @@ static void save_as_help_callback(GtkWidget *w, gpointer data)
 }
 
 
-static void save_as_dialog_select_callback(const char *filename, void *data)
-{
-  file_dialog_info *fd = (file_dialog_info *)data;
-  clear_dialog_error(fd->panel_data);
-  set_sensitive(fd->ok_button, (!(file_is_directory(fd))));
-  if (fd->extract_button) set_sensitive(fd->extract_button, (!(file_is_directory(fd))));
-}
-
-
 static gint save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   file_dialog_info *fd = (file_dialog_info *)context;
@@ -2049,11 +2176,6 @@ static file_dialog_info *make_save_as_dialog(const char *file_string, int header
   SG_SIGNAL_CONNECT(fd->ok_button, "clicked", save_as_ok_callback, (gpointer)fd);
   SG_SIGNAL_CONNECT(fd->cancel_button, "clicked", save_as_cancel_callback, (gpointer)fd);
   
-  fd->file_select_data = (void *)fd;
-  fd->file_select_callback = save_as_dialog_select_callback;
-  fd->directory_select_data = (void *)fd;
-  fd->directory_select_callback = save_as_dialog_select_callback;
-  
   fd->panel_data->dialog = fd->dialog;
   switch (fd->type)
     {
@@ -2075,11 +2197,8 @@ static file_dialog_info *make_save_as_dialog(const char *file_string, int header
     }
   SG_SIGNAL_CONNECT(fd->dialog, "delete_event", save_as_delete_callback, (void *)fd);
   
-  set_sensitive(fd->ok_button, (!(file_is_directory(fd))));
-  
   if (fd->type != REGION_SAVE_AS)
     {
-      set_sensitive(fd->extract_button, (!(file_is_directory(fd))));
       if (fd->type == SOUND_SAVE_AS)
 	SG_SIGNAL_CONNECT(fd->panel_data->auto_comment_button, "toggled", file_data_auto_comment_callback, fd);
     }
@@ -2966,16 +3085,12 @@ static char *make_header_dialog_title(edhead_info *ep, snd_info *sp)
       if (sp->hdr->type == MUS_RAW)
 	mus_snprintf(str, PRINT_BUFFER_SIZE, "Add header to (write-protected) %s", sp->short_filename);
       else mus_snprintf(str, PRINT_BUFFER_SIZE, "Edit header of (write-protected) %s", sp->short_filename);
-      if (ep->dialog)
-	set_sensitive(ep->save_button, (sp->hdr->type == MUS_RAW));
     }
   else 
     {
       if (sp->hdr->type == MUS_RAW)
 	mus_snprintf(str, PRINT_BUFFER_SIZE, "Add header to %s", sp->short_filename);
       else mus_snprintf(str, PRINT_BUFFER_SIZE, "Edit header of %s", sp->short_filename);
-      if (ep->dialog)
-	set_sensitive(ep->save_button, ep->panel_changed);
     }
   return(str);
 }
@@ -2990,8 +3105,6 @@ static void edit_header_help_callback(GtkWidget *w, gpointer context)
 static void edit_header_set_ok_sensitive(GtkWidget *w, gpointer context) 
 {
   edhead_info *ep = (edhead_info *)context;
-  if (ep->sp->file_read_only == FILE_READ_WRITE)
-    gtk_widget_set_sensitive(ep->save_button, true);
   ep->panel_changed = true;
 }
 
@@ -3089,10 +3202,7 @@ static void edit_header_ok_callback(GtkWidget *w, gpointer context)
       else
 	{
 	  if (!ok)
-	    {
-	      set_sensitive(ep->save_button, false);
-	      return;
-	    }
+	    return;
 	}
       ep->file_ro_watcher = unmonitor_file(ep->file_ro_watcher);
       gtk_widget_hide(ep->dialog);
@@ -3189,8 +3299,6 @@ GtkWidget *edit_header(snd_info *sp)
   str = make_header_dialog_title(ep, sp);
   gtk_window_set_title(GTK_WINDOW(ep->dialog), str);
   free(str);
-
-  gtk_widget_set_sensitive(ep->save_button, (hdr->type == MUS_RAW));
 
   if (hdr->type == MUS_RAW)
     set_file_dialog_sound_attributes(ep->edat, 
@@ -3528,82 +3636,6 @@ void changed_file_dialog(snd_info *sp)
 
 
 
-static XEN mouse_enter_label_hook;
-static XEN mouse_leave_label_hook;
-
-static void mouse_enter_or_leave_label(void *r, int type, XEN hook, const char *caller)
-{
-  if ((r) &&
-      (XEN_HOOKED(hook)))
-    {
-      char *label = NULL;
-      /* TODO: move this to gregion */
-      label = regrow_get_label(r);
-      if (label)
-	run_hook(hook,
-		 XEN_LIST_3(C_TO_XEN_INT(type),
-			    C_TO_XEN_INT(regrow_get_pos(r)),
-			    C_TO_XEN_STRING(label)),
-		 caller);
-
-    }
-}
-
-
-void mouse_leave_label(void *r, int type)
-{
-  mouse_enter_or_leave_label(r, type, mouse_leave_label_hook, S_mouse_leave_label_hook);
-}
-
-
-void mouse_enter_label(void *r, int type)
-{
-  mouse_enter_or_leave_label(r, type, mouse_enter_label_hook, S_mouse_enter_label_hook);
-}
-
-
-
 void g_init_gxfile(void)
 {
-#if HAVE_SCHEME
-  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
-The 'type' is 1 for view-files, and 2 for regions. The 'position' \
-is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
-to popup file info as follows: \n\
-(hook-push " S_mouse_enter_label_hook "\n\
-  (lambda (type position name)\n\
-    (if (not (= type 2))\n\
-        (" S_info_dialog " name (finfo name)))))\n\
-See also nb.scm."
-#endif
-#if HAVE_RUBY
-  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
-The 'type' is 1 for view-files, and 2 for regions. The 'position' \
-is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.rb \
-to popup file info as follows: \n\
-$mouse_enter_label_hook.add_hook!(\"finfo\") do |type, position, name|\n\
-  if type != 2\n\
-    " S_info_dialog "(name, finfo(name))\n\
-  end\n\
-end\n\
-See also nb.rb."
-#endif
-#if HAVE_FORTH
-  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
-The 'type' is 1 for view-files, and 2 for regions. The 'position' \
-is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.fs \
-to popup file info as follows: \n\
-" S_mouse_enter_label_hook " lambda: <{ type position name }>\n\
-  type 2 <> if\n\
-    name name finfo info-dialog\n\
-  else\n\
-    #f\n\
-  then\n\
-; add-hook!"
-#endif
-
-  #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label): called when the mouse leaves a file viewer or region label"
-
-  mouse_enter_label_hook = XEN_DEFINE_HOOK(S_mouse_enter_label_hook, "(make-hook 'type 'position 'label)", 3, H_mouse_enter_label_hook);
-  mouse_leave_label_hook = XEN_DEFINE_HOOK(S_mouse_leave_label_hook, "(make-hook 'type 'position 'label)", 3, H_mouse_leave_label_hook);
 }

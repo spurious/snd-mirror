@@ -1592,7 +1592,6 @@ bool snd_feq(mus_float_t val1, mus_float_t val2);
   mus_float_t in_dB(mus_float_t min_dB, mus_float_t lin_dB, mus_float_t val);
 #endif
 
-int snd_mkdir(const char *filename);
 char *snd_local_time(void);
 char *snd_io_strerror(void);
 char *snd_open_strerror(void);
@@ -1790,7 +1789,9 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 mus_long_t to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_pos);
 mus_long_t beg_to_sample(XEN beg, const char *caller);
 mus_long_t dur_to_samples(XEN dur, mus_long_t beg, chan_info *cp, int edpos, int argn, const char *caller);
+#if USE_MOTIF
 char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_float_t speed, env *amp_env, bool *err);
+#endif
 XEN g_scale_selection_by(XEN scalers);
 void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int arg_pos);
 

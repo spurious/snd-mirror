@@ -14,7 +14,6 @@ const char **short_builtin_headers(int *len);
 bool encoded_header_p(int header_type);
 void snd_encode(int type, const char *input_filename, const char *output_filename);
 snd_info *file_is_open_elsewhere_and_has_unsaved_edits(snd_info *sp, const char *fullname);
-bool plausible_sound_file_p(const char *name);
 snd_info *finish_opening_sound(snd_info *sp, bool selected);
 
 bool edit_header_callback(snd_info *sp, file_data *edit_header_data, 
@@ -45,14 +44,12 @@ typedef struct {
 } dir_info;
 
 enum {NO_FILE_FILTER, JUST_SOUNDS_FILTER};
-#define PARENT_DIRECTORY ".."
 
 dir_info *free_dir_info (dir_info *dp);
 dir_info *find_files_in_dir(const char *name);
 dir_info *find_filtered_files_in_dir(const char *name, int filter_choice);
 dir_info *find_filtered_files_in_dir_with_pattern(const char *name, int filter_choice, const char *pattern);
 
-bool directory_exists(char *name);
 const char *short_data_format_name(int sndlib_format, const char *filename);
 
 #define FILENAME_LIST_SIZE 16

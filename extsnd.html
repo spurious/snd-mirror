@@ -12274,9 +12274,9 @@ add-file-filter returns an integer to identify 'func' in other contexts.
 
 <pre class="indented">
 (<em class=red>add-file-filter</em>
- "mono"
+ "mono files"
  (lambda (a)
-   "filter out all but mono sound files"
+   "filter out all but 1-channel sound files"
    (and (<a class=quiet href="#soundfilep" onmouseout="UnTip()" onmouseover="Tip(extsnd_soundfilep_tip)">sound-file?</a> a)
 	(= (channels a) 1))))
 </pre>

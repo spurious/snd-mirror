@@ -411,6 +411,39 @@ int regrow_get_pos(void *ur)
 }
 
 
+static XEN mouse_enter_label_hook;
+static XEN mouse_leave_label_hook;
+
+static void mouse_enter_or_leave_label(void *r, int type, XEN hook, const char *caller)
+{
+  if ((r) &&
+      (XEN_HOOKED(hook)))
+    {
+      char *label = NULL;
+      label = regrow_get_label(r);
+      if (label)
+	run_hook(hook,
+		 XEN_LIST_3(C_TO_XEN_INT(type),
+			    C_TO_XEN_INT(regrow_get_pos(r)),
+			    C_TO_XEN_STRING(label)),
+		 caller);
+
+    }
+}
+
+
+static void mouse_leave_label(void *r, int type)
+{
+  mouse_enter_or_leave_label(r, type, mouse_leave_label_hook, S_mouse_leave_label_hook);
+}
+
+
+static void mouse_enter_label(void *r, int type)
+{
+  mouse_enter_or_leave_label(r, type, mouse_enter_label_hook, S_mouse_enter_label_hook);
+}
+
+
 static gboolean regrow_mouse_enter_label(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
 {
   mouse_enter_label((void *)gp, REGION_VIEWER);
@@ -818,5 +851,46 @@ XEN_NARGIFY_0(g_view_regions_dialog_w, g_view_regions_dialog)
 void g_init_gxregion(void)
 {
   XEN_DEFINE_PROCEDURE(S_view_regions_dialog, g_view_regions_dialog_w, 0, 0, 0,  H_view_regions_dialog);
+#if HAVE_SCHEME
+  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
+The 'type' is 1 for view-files, and 2 for regions. The 'position' \
+is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
+to popup file info as follows: \n\
+(hook-push " S_mouse_enter_label_hook "\n\
+  (lambda (type position name)\n\
+    (if (not (= type 2))\n\
+        (" S_info_dialog " name (finfo name)))))\n\
+See also nb.scm."
+#endif
+#if HAVE_RUBY
+  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
+The 'type' is 1 for view-files, and 2 for regions. The 'position' \
+is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.rb \
+to popup file info as follows: \n\
+$mouse_enter_label_hook.add_hook!(\"finfo\") do |type, position, name|\n\
+  if type != 2\n\
+    " S_info_dialog "(name, finfo(name))\n\
+  end\n\
+end\n\
+See also nb.rb."
+#endif
+#if HAVE_FORTH
+  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
+The 'type' is 1 for view-files, and 2 for regions. The 'position' \
+is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.fs \
+to popup file info as follows: \n\
+" S_mouse_enter_label_hook " lambda: <{ type position name }>\n\
+  type 2 <> if\n\
+    name name finfo info-dialog\n\
+  else\n\
+    #f\n\
+  then\n\
+; add-hook!"
+#endif
+
+  #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label): called when the mouse leaves a file viewer or region label"
+
+  mouse_enter_label_hook = XEN_DEFINE_HOOK(S_mouse_enter_label_hook, "(make-hook 'type 'position 'label)", 3, H_mouse_enter_label_hook);
+  mouse_leave_label_hook = XEN_DEFINE_HOOK(S_mouse_leave_label_hook, "(make-hook 'type 'position 'label)", 3, H_mouse_leave_label_hook);
 }
 
