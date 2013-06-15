@@ -11,22 +11,27 @@
    Info and Raw
 */
 
-/* PERHAPS: thumbnail graph if it looks easy (short, readable)
- *   show_inset_graph in snd-chn.c but no selected portion
- *   snd_info *make_sound_readable(const char *filename, bool post_close)
- *   need to check chans/frames and avoid huge cases, then cleanup after
- *   see also channel_amp_envs in snd-snd.c
- *        sp = make_sound_readable(fullname, false); post_close => close file until next buffer read [does this translate?]
- *          snd-gmix/genv have simple drawing areas + expose event setup/callback
- *        draw it [also upon expose event]
- *     	  cp->active = CHANNEL_INACTIVE;
- *   	  completely_free_snd_info(sp);
+/* TODO: thumbnail graph: if long don't add, (an hour-long sound takes a couple seconds)
+ *                        check c-g to stop play
+ *                        if file changes but not name, sketch etc are not updated
+ *                        need tiny_font size (currently using 6 I think)
+ * TODO: open can can still get stuck -- what is the problem??
+ *
+ * TODO: check ask-before-overwrite [also it says the button is named "DoIt" I think]
  *
  * TODO: in gtk3, save-as won't go away?
  *    it's fine unless I resize the dialog, then the button is ignored?
+ *    the play button does this??  see below.
+ *
+ * In gtk2, if we have a file selected, then some other process writes a file in the 
+ *   current directory (emacs autosaving), the file chooser gets confused as
+ *   to what is selected!  So we can't get the selected filename except immediately upon 
+ *   "selection-changed" and even then we're asking for trouble.
+ *
+ * In gtk3, each time we reopen the chooser, it starts all the way back at the useless "recently used"!
+ *   We can't use gtk_..._set|select_filename -- the function is simply ignored!
+ *   And if we resize the dialog, a hand cursor appears, and the next thing we know we're moving the dialog itself!
  */
-
-#define WITH_SKETCH 0
 
 /* we can find the embedded tree view:
 
@@ -192,11 +197,15 @@ void monitor_sound(snd_info *sp) {}
 
 /* ---------------------------------------- dialogs ---------------------------------------- */
 
+#define FILE_DIALOG_DEFAULT_WIDTH 500
+#define FILE_DIALOG_DEFAULT_HEIGHT 300
+#define FILE_DIALOG_DEFAULT_SKETCH_HEIGHT 75
+
 typedef struct file_dialog_info {
 
   GtkWidget *dialog, *ok_button, *cancel_button, *help_button, *extract_button, *play_button, *chooser;
   read_only_t file_dialog_read_only;
-  GtkWidget *frame, *info1, *info2, *vbox;
+  GtkWidget *frame, *info, *vbox;
   void *unsound_directory_watcher; /* doesn't exist, not a sound file, bogus header, etc */
   void *info_filename_watcher;     /* watch for change in selected file and repost info */
   char *unsound_dirname, *unsound_filename;
@@ -211,11 +220,10 @@ typedef struct file_dialog_info {
   gulong filename_watcher_id;
   int header_type, format_type;
 
-#if WITH_SKETCH
   gc_t *gc;
   axis_info *axis;
   GtkWidget *drawer;
-#endif
+  snd_info *sp;
 
 } file_dialog_info;
 
@@ -226,47 +234,69 @@ static file_dialog_info *idat = NULL; /* insert file */
 void reflect_just_sounds(void) {}
 
 
-static void post_sound_info(GtkWidget *info1, GtkWidget *info2, const char *filename, bool with_filename)
+static void post_sound_info(file_dialog_info *fd, const char *filename, bool with_filename)
 {
-  /* filename is known[strongly believed] to be a sound file, etc */
-  char *buf;
-  if (!filename)
-    return;
-
-  if ((directory_p(filename)) ||
+  if ((!filename) ||
+      (directory_p(filename)) ||
       (!sound_file_p(filename)))
     {
-      info_widget_display(info1, "");
-      info_widget_display(info2, "");
-      return;
+      gtk_label_set_text(GTK_LABEL(fd->info), "");
+      gtk_widget_hide(fd->drawer);
     }
+  else
+    {
+      char *buf;
+      char *mx;
+      buf = (char *)calloc(1024, sizeof(char));
+      if (mus_sound_maxamp_exists(filename))
+	{
+	  int i, chns, lim;
+	  mus_long_t pos = 0;
 
-  buf = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s%s%d chan%s, %d Hz, %.3f secs",
-	       (with_filename) ? filename_without_directory(filename) : "",
-	       (with_filename) ? ": " : "",
-	       mus_sound_chans(filename),
-	       (mus_sound_chans(filename) > 1) ? "s" : "",
-	       mus_sound_srate(filename),
-	       mus_sound_duration(filename));
+	  mx = (char *)calloc(128, sizeof(char));
+	  chns = mus_sound_chans(filename);
+	  lim = 5;
+	  if (chns < lim) lim = chns;
+	  snprintf(mx, 128, "\nmaxamp: %.3f", mus_sound_channel_maxamp(filename, 0, &pos));
+	  for (i = 1; i < lim; i++)
+	    {
+	      char fb[16];
+	      snprintf(fb, 16, " %.3f", mus_sound_channel_maxamp(filename, i, &pos));
+	      strcat(mx, fb);
+	    }
+	  if (lim < chns)
+	    strcat(mx, "...");
+	}
+      else
+	{
+	  mx = (char *)calloc(2, sizeof(char));
+	  mx[0] = '\n';
+	}
+      mus_snprintf(buf, 1924, "%s%s%d chan%s, %d Hz, %.3f secs\n%s, %s%s%s",
 
-  info_widget_display(info1, buf);
-  info_widget_set_size(info1, 1 + strlen(buf));
+		   (with_filename) ? filename_without_directory(filename) : "",
+		   (with_filename) ? ": " : "", 
+		   mus_sound_chans(filename),
+		   (mus_sound_chans(filename) > 1) ? "s" : "",
+		   mus_sound_srate(filename),
+		   mus_sound_duration(filename),
 
-  mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s, %s%s",
-	       mus_header_type_name(mus_sound_header_type(filename)),
-	       short_data_format_name(mus_sound_data_format(filename), filename),
-	       snd_strftime(", %d-%b-%Y", mus_sound_write_date(filename)));
+		   mus_header_type_name(mus_sound_header_type(filename)),
+		   short_data_format_name(mus_sound_data_format(filename), filename),
+		   snd_strftime(", %d-%b-%Y", mus_sound_write_date(filename)),
+		   mx);
 
-  info_widget_display(info2, buf);
-  info_widget_set_size(info2, 1 + strlen(buf));
-
-  free(buf);
+      gtk_label_set_text(GTK_LABEL(fd->info), buf);
+      free(buf);
+      free(mx);
+      gtk_widget_show(fd->drawer);
+    }
 }
 
 
 static void file_dialog_stop_playing(file_dialog_info *fd)
 {
+  fprintf(stderr, "stop playing %p\n", fd->player);
   if ((fd->player) && 
       (fd->player->playing)) 
     {
@@ -294,7 +324,7 @@ static void file_dialog_play(GtkWidget *w, gpointer data)
   else
     {
       char *filename;
-      filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser));
+      filename = fd->filename; /* gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser)); */
       if ((filename) &&
 	  (!directory_p(filename)))
 	{
@@ -311,14 +341,27 @@ static void file_dialog_play(GtkWidget *w, gpointer data)
 #endif
 
 
-#if WITH_SKETCH
-static void sketch(file_dialog_info *fd)
+static void tiny_string(cairo_t *cr, const char *str, int x0, int y0)
+{
+  PangoLayout *layout = NULL;
+  cairo_save(cr);
+  layout = pango_cairo_create_layout(cr);
+  pango_layout_set_font_description(layout, TINY_FONT(ss));
+  pango_layout_set_text(layout, str, -1);
+  cairo_move_to(cr, x0, y0);
+  pango_cairo_show_layout(cr, layout);
+  g_object_unref(G_OBJECT(layout));
+  cairo_restore(cr);
+}
+
+
+static void sketch_1(file_dialog_info *fd, bool new_data)
 {
   snd_info *sp;
   char *filename;
 
-  filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser));
-  fprintf(stderr, "sketch %s\n", filename);
+  filename = fd->filename; /* gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser)); */
+  /* fprintf(stderr, "sketch %s\n", filename); */
 
   if (!filename)
     return;
@@ -327,7 +370,17 @@ static void sketch(file_dialog_info *fd)
       (!sound_file_p(filename)))
     return;
   
-  sp = make_sound_readable(filename, false);
+  if (new_data)
+    {
+      if (fd->sp)
+	{
+	  fd->sp->chans[0]->active = CHANNEL_INACTIVE;
+	  completely_free_snd_info(fd->sp);
+	}
+      sp = make_sound_readable(filename, false);
+      fd->sp = sp;
+    }
+  else sp = fd->sp;
   if (sp)
     {
 
@@ -336,7 +389,7 @@ static void sketch(file_dialog_info *fd)
       bool two_sided = false;
       axis_info *active_ap = NULL, *gray_ap;
       chan_info *active_channel;
-      cairo_t *cr;
+      cairo_t *old_cr;
 
       active_channel = sp->chans[0];
       active_ap = active_channel->axis;
@@ -358,19 +411,51 @@ static void sketch(file_dialog_info *fd)
       gray_ap->x_axis_x1 = widget_width(fd->drawer);
       gray_ap->y_axis_y1 = widget_height(fd->drawer);
 
-      init_axis_scales(gray_ap);
-
-      cr = ss->cr;
+      old_cr = ss->cr;
       ss->cr = make_cairo(WIDGET_TO_WINDOW(fd->drawer));
       cairo_push_group(ss->cr);
 
       active_channel->axis = gray_ap;
-      pts = make_background_graph(active_channel, srate, &two_sided);
-      active_channel->axis = active_ap;
 
       cairo_set_source_rgba(ss->cr, fd->gc->bg_color->red, fd->gc->bg_color->green, fd->gc->bg_color->blue, fd->gc->bg_color->alpha);
       cairo_rectangle(ss->cr, 0, 0, gray_ap->x_axis_x1, gray_ap->y_axis_y1);
       cairo_fill(ss->cr);
+
+      #define X_AXIS 24
+      #define Y_AXIS 8
+
+      cairo_set_source_rgba(ss->cr, fd->gc->fg_color->red, fd->gc->fg_color->green, fd->gc->fg_color->blue, fd->gc->fg_color->alpha);
+      /* y axis */
+      cairo_rectangle(ss->cr, X_AXIS, 8, 2, gray_ap->y_axis_y1 - Y_AXIS - 16);
+      cairo_fill(ss->cr);
+
+      /* x axis */
+      cairo_rectangle(ss->cr, X_AXIS, gray_ap->y_axis_y1 - Y_AXIS - 8, gray_ap->x_axis_x1 - X_AXIS - 4, 2);
+      cairo_fill(ss->cr);
+
+      tiny_string(ss->cr, "1.0", 4, 6);
+      tiny_string(ss->cr, "-1.0", 0, gray_ap->y_axis_y1 - 24);
+      tiny_string(ss->cr, "0.0", 24, gray_ap->y_axis_y1 - 12);
+      {
+	char *str;
+	str = prettyf(gray_ap->x1, 3);
+	if (str)
+	  {
+	    tiny_string(ss->cr, str, gray_ap->x_axis_x1 - 4 - 6 * strlen(str), gray_ap->y_axis_y1 - 12);
+	    free(str);
+	  }
+      }
+      
+      /* now fit the data inside the axes */
+      
+      gray_ap->x_axis_x0 = X_AXIS + 2;
+      gray_ap->y_axis_y1 = Y_AXIS;
+      gray_ap->x_axis_x1 = widget_width(fd->drawer) - 4;
+      gray_ap->y_axis_y0 = widget_height(fd->drawer) - Y_AXIS * 2;
+
+      init_axis_scales(gray_ap);
+      pts = make_background_graph(active_channel, srate, &two_sided);
+      active_channel->axis = active_ap;
 
       if (pts > 0) 
 	{
@@ -382,23 +467,21 @@ static void sketch(file_dialog_info *fd)
       cairo_pop_group_to_source(ss->cr);
       cairo_paint(ss->cr);
       free_cairo(ss->cr);
-      ss->cr = cr;
-
-      active_channel->active = CHANNEL_INACTIVE;
-      completely_free_snd_info(sp);
+      ss->cr = old_cr;
     }
 }
 
-#define resketch(Fd) sketch(Fd)
-#endif
+#define sketch(Fd) sketch_1(Fd, true)
+#define resketch(Fd) sketch_1(Fd, false)
+
+
 
 static void selection_changed_callback(GtkFileChooser *w, gpointer data)
 {
   file_dialog_info *fd = (file_dialog_info *)data;
-  post_sound_info(fd->info1, fd->info2, gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser)), false);
-#if WITH_SKETCH
+  fd->filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser));
+  post_sound_info(fd, fd->filename, false);
   sketch(fd);
-#endif
 }
 
 
@@ -411,24 +494,12 @@ static gboolean file_filter_callback(const GtkFileFilterInfo *filter_info, gpoin
 }
 
 
-#if WITH_SKETCH
 static gboolean drawer_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   file_dialog_info *fd = (file_dialog_info *)data;
   resketch(fd);
   return(false);
 }
-
-#if 0
-static gboolean drawer_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
-{
-  file_dialog_info *fd = (file_dialog_info *)data;
-  fprintf(stderr, "resize ");
-  resketch(fd);
-  return(false);
-}
-#endif
-#endif
 
 
 /* if icons do not get displayed, check the system preferences menu+toolbar dialog */
@@ -476,11 +547,14 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
   gtk_widget_set_name(fd->ok_button, "dialog_button");
 
 #if WITH_AUDIO
-  fd->play_button = sg_button_new_from_stock_with_label("Play", GTK_STOCK_MEDIA_PLAY);
-  gtk_widget_set_name(fd->play_button, "dialog_button");
+  if (!save_as)
+    {
+      fd->play_button = sg_button_new_from_stock_with_label("Play", GTK_STOCK_MEDIA_PLAY);
+      gtk_widget_set_name(fd->play_button, "dialog_button");
 #if HAVE_GTK_3
-  add_highlight_button_style(fd->play_button);
+      add_highlight_button_style(fd->play_button);
 #endif
+    }
 #endif
 
 #if HAVE_GTK_3
@@ -492,7 +566,8 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
 
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fd->dialog)), fd->help_button, true, true, 10);
 #if WITH_AUDIO
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fd->dialog)), fd->play_button, true, true, 10);
+  if (!save_as)
+    gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fd->dialog)), fd->play_button, true, true, 10);
 #endif
   if (with_extract) gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fd->dialog)), fd->extract_button, true, true, 10);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fd->dialog)), fd->cancel_button, true, true, 10);
@@ -502,7 +577,8 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
   gtk_widget_show(fd->cancel_button);
   gtk_widget_show(fd->help_button);
 #if WITH_AUDIO
-  gtk_widget_show(fd->play_button);
+  if (!save_as)
+    gtk_widget_show(fd->play_button);
 #endif
   if (with_extract) gtk_widget_show(fd->extract_button);
 
@@ -548,45 +624,14 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
   }
   
   gtk_widget_show(fd->chooser);
-  gtk_widget_set_size_request(fd->chooser, 500, 250); 
+  gtk_widget_set_size_request(fd->chooser, FILE_DIALOG_DEFAULT_WIDTH, FILE_DIALOG_DEFAULT_HEIGHT); 
 
   gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(fd->chooser), (just_sounds(ss)) ? just_sounds_filter : all_files_filter);
 #if HAVE_GTK_WIDGET_GET_VISIBLE
   if (save_as)
     gtk_file_chooser_set_create_folders(GTK_FILE_CHOOSER(fd->chooser), true);
 #endif
-
-#if WITH_SKETCH
-  if (!save_as)
-    {
-      fd->gc = gc_new();
-      gc_set_background(fd->gc, ss->white);
-      gc_set_foreground(fd->gc, ss->black);
-
-      fd->drawer = gtk_drawing_area_new();
-      gtk_box_pack_end(GTK_BOX(DIALOG_CONTENT_AREA(fd->dialog)), fd->drawer, true, true, 10);
-#if 0
-      gtk_widget_set_events(fd->drawer, GDK_ALL_EVENTS_MASK); 
-#else
-      gtk_widget_set_events(fd->drawer, GDK_EXPOSURE_MASK);
-#endif
-      widget_modify_bg(fd->drawer, GTK_STATE_NORMAL, ss->white);
-      widget_modify_fg(fd->drawer, GTK_STATE_NORMAL, ss->black);
-      gtk_widget_show(fd->drawer);
-
-      fd->axis = (axis_info *)calloc(1, sizeof(axis_info));
-      fd->axis->ax = (graphics_context *)calloc(1, sizeof(graphics_context));
-      fd->axis->ax->wn = WIDGET_TO_WINDOW(fd->drawer);
-      fd->axis->ax->w = fd->drawer;
-      fd->axis->ax->gc = fd->gc;
-      fd->axis->ax->current_font = AXIS_NUMBERS_FONT(ss);
-
-      SG_SIGNAL_CONNECT(fd->drawer, DRAW_SIGNAL, drawer_expose, (gpointer)fd);
-#if 0
-      SG_SIGNAL_CONNECT(fd->drawer, "configure_event", drawer_resize, (gpointer)fd);
-#endif
-    }
-#endif
+  fd->filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser));
 
   return(fd);
 }
@@ -602,29 +647,41 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, const char *tit
 					  const gchar *stock)
 {
   file_dialog_info *fd;
-  GtkWidget *center_info, *vbox;
+  GtkWidget *vbox, *hbox;
 
   fd = make_fsb(title, file_title, ok_title, stock, false, false);
   fd->file_dialog_read_only = read_only;
 
   vbox = DIALOG_CONTENT_AREA(fd->dialog);
-  center_info = gtk_hbox_new(true, 10);
-  gtk_box_pack_start(GTK_BOX(vbox), center_info, false, false, 0);
-  gtk_widget_show(center_info);
 
-  fd->vbox = gtk_vbox_new(false, 0);
-  gtk_container_set_border_width(GTK_CONTAINER(fd->vbox), 10);
-  gtk_container_add(GTK_CONTAINER(center_info), fd->vbox);
+  hbox = gtk_hbox_new(true, 8);
+  gtk_box_pack_start(GTK_BOX(vbox), hbox, true, true, 8);
+  gtk_widget_show(hbox);
 
-  fd->info1 = make_info_widget();
-  gtk_box_pack_start(GTK_BOX(fd->vbox), fd->info1, true, true, 0);
+  fd->info = gtk_label_new(NULL);
+  gtk_box_pack_start(GTK_BOX(hbox), fd->info, false, true, 8);
+  gtk_widget_show(fd->info);
 	
-  fd->info2 = make_info_widget();
-  gtk_box_pack_start(GTK_BOX(fd->vbox), fd->info2, true, true, 0);
+  fd->sp = NULL;
+  fd->gc = gc_new();
+  gc_set_background(fd->gc, ss->white);
+  gc_set_foreground(fd->gc, ss->black);
+  
+  fd->drawer = gtk_drawing_area_new();
+  gtk_box_pack_end(GTK_BOX(hbox), fd->drawer, true, true, 10);
+  gtk_widget_set_events(fd->drawer, GDK_EXPOSURE_MASK);
+  gtk_widget_set_size_request(fd->drawer, -1, FILE_DIALOG_DEFAULT_SKETCH_HEIGHT);
+  gtk_widget_show(fd->drawer);
+  
+  fd->axis = (axis_info *)calloc(1, sizeof(axis_info));
+  fd->axis->ax = (graphics_context *)calloc(1, sizeof(graphics_context));
+  fd->axis->ax->wn = WIDGET_TO_WINDOW(fd->drawer);
+  fd->axis->ax->w = fd->drawer;
+  fd->axis->ax->gc = fd->gc;
+  fd->axis->ax->current_font = AXIS_NUMBERS_FONT(ss);
+  
+  SG_SIGNAL_CONNECT(fd->drawer, DRAW_SIGNAL, drawer_expose, (gpointer)fd);
 
-  gtk_widget_show(fd->vbox);
-  gtk_widget_show(fd->info1);
-  gtk_widget_show(fd->info2);
   gtk_widget_show(fd->dialog);
 
   SG_SIGNAL_CONNECT(fd->help_button, "clicked", file_help_proc, (gpointer)fd);
@@ -636,23 +693,18 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, const char *tit
   SG_SIGNAL_CONNECT(fd->play_button, "clicked", file_dialog_play, (gpointer)(fd));
 #endif
 
-  info_widget_display(fd->info1, "");
-  info_widget_display(fd->info2, "");
+  gtk_label_set_text(GTK_LABEL(fd->info), "");
   set_dialog_widget(which_dialog, fd->dialog);
 
   SG_SIGNAL_CONNECT(fd->chooser, "selection-changed", selection_changed_callback, (gpointer)fd);
-
   return(fd);
 }
 
 
 static void file_open_error(const char *error_msg, file_dialog_info *fd)
 {
-  info_widget_display(fd->info1, error_msg);
-  info_widget_set_size(fd->info1, strlen(error_msg));
-  gtk_widget_show(fd->vbox);
-  gtk_widget_show(fd->info1);
-  info_widget_display(fd->info2, "");
+  gtk_label_set_text(GTK_LABEL(fd->info), error_msg);
+  gtk_widget_show(fd->info);
 }
 
 
@@ -665,7 +717,7 @@ static void redirect_file_open_error(const char *error_msg, void *ufd)
 
 static void clear_file_error_label(file_dialog_info *fd)
 {
-  info_widget_display(fd->info1, "");
+  gtk_label_set_text(GTK_LABEL(fd->info), "");
 
   if (fd->unsound_directory_watcher)
     {
@@ -737,7 +789,10 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
   char *filename = NULL;
   gpointer hide_me = 0;
 
-  filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser));
+  filename = fd->filename; /* gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser)); */
+
+  /* fprintf(stderr, "open %s, %s\n", fd->filename, gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser))); */
+
   file_dialog_stop_playing(fd);
   if ((filename) &&
       (!directory_p(filename)))
@@ -777,6 +832,7 @@ static void file_open_dialog_dismiss(GtkWidget *w, gpointer context)
 {
   file_dialog_info *fd = (file_dialog_info *)context;
   file_dialog_stop_playing(fd);
+  gtk_label_set_text(GTK_LABEL(fd->info), "");
   gtk_widget_hide(fd->dialog);
 }
 
@@ -791,6 +847,7 @@ static gint file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer cont
 {
   file_dialog_info *fd = (file_dialog_info *)context;
   file_dialog_stop_playing(fd);
+  gtk_label_set_text(GTK_LABEL(fd->info), "");
   gtk_widget_hide(fd->dialog);
   return(true);
 }
@@ -800,7 +857,8 @@ static void file_activated_callback(GtkFileChooser *w, gpointer data)
 {
   const char *filename;
   file_dialog_info *fd = (file_dialog_info *)data;
-  filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser));
+  fd->filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser));
+  filename = fd->filename;
   if ((filename) &&
       (!(directory_p(filename))))
     {
@@ -853,10 +911,14 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
 	  gtk_window_set_title(GTK_WINDOW(odat->dialog), (char *)((read_only == FILE_READ_ONLY) ? "View" : "Open"));
 	  odat->file_dialog_read_only = read_only;
 	}
+#if HAVE_GTK_3
+      /* this doesn't work!! and nothing else does either */
+      /* if (odat->filename) gtk_file_chooser_select_filename(GTK_FILE_CHOOSER(odat->chooser), odat->filename); */
+#endif
     }
+
   if (managed) 
     gtk_widget_show(odat->dialog);
-
   return(odat->dialog);
 }
 
@@ -866,6 +928,7 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
 static void file_mix_cancel_callback(GtkWidget *w, gpointer context)
 {
   file_dialog_stop_playing(mdat);
+  gtk_label_set_text(GTK_LABEL(mdat->info), "");
   gtk_widget_hide(mdat->dialog);
 }
 
@@ -879,6 +942,7 @@ static void file_mix_help_callback(GtkWidget *w, gpointer context)
 static gint file_mix_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   file_dialog_stop_playing(mdat);
+  gtk_label_set_text(GTK_LABEL(mdat->info), "");
   gtk_widget_hide(mdat->dialog);
   return(true);
 }
@@ -887,7 +951,7 @@ static gint file_mix_delete_callback(GtkWidget *w, GdkEvent *event, gpointer con
 static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 {
   char *filename = NULL;
-  filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(mdat->chooser));
+  filename = mdat->filename; /* gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(mdat->chooser)); */
   if ((!filename) || (!(*filename)))
     {
       file_open_error("no filename given", mdat);
@@ -974,7 +1038,7 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
 {
   file_dialog_info *fd = (file_dialog_info *)context;
   char *filename;
-  filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser));
+  filename = fd->filename; /* gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser)); */
   if ((!filename) || (!(*filename)))
     {
       file_open_error("no filename given", fd);
@@ -1263,20 +1327,20 @@ static void unreflect_file_data_panel_change(file_data *fd, void *data, void (*c
 
 static void clear_dialog_error(file_data *fdat)
 {
-  info_widget_display(fdat->error_text, "");
+  gtk_label_set_text(GTK_LABEL(fdat->error_text), "");
 }
 
 
 static void post_file_dialog_error(const char *error_msg, file_data *fdat)
 {
-  info_widget_display(fdat->error_text, (gchar *)error_msg);
+  gtk_label_set_text(GTK_LABEL(fdat->error_text), (gchar *)error_msg);
 }
 
 
 static void redirect_post_file_dialog_error(const char *error_msg, void *ufd)
 {
   file_data *fdat = (file_data *)ufd;
-  info_widget_display(fdat->error_text, error_msg);
+  gtk_label_set_text(GTK_LABEL(fdat->error_text), error_msg);
 }
 
 
@@ -1285,7 +1349,7 @@ static gulong chans_key_press_handler_id = 0;
 static gboolean chans_key_press_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   file_data *fdat = (file_data *)data;
-  info_widget_display(fdat->error_text, "");
+  gtk_label_set_text(GTK_LABEL(fdat->error_text), "");
   if (chans_key_press_handler_id)
     {
       g_signal_handler_disconnect(fdat->chans_text, chans_key_press_handler_id);
@@ -1308,7 +1372,7 @@ static gulong panel_modify_handler_id = 0;
 static gboolean panel_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   file_data *fdat = (file_data *)data;
-  info_widget_display(fdat->error_text, "");
+  gtk_label_set_text(GTK_LABEL(fdat->error_text), "");
   if (panel_modify_handler_id)
     {
       g_signal_handler_disconnect(w, panel_modify_handler_id);
@@ -1576,7 +1640,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
     }
 
   /* error */
-  fdat->error_text = make_info_widget();
+  fdat->error_text = gtk_label_new(NULL);
   gtk_box_pack_end(GTK_BOX(parent), fdat->error_text, false, false, 0);
   gtk_widget_show(fdat->error_text);
 

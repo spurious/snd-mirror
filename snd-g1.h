@@ -340,9 +340,6 @@ GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, int add_choice, 
 void sg_make_resizable(GtkWidget *w);
 idle_t add_work_proc(GSourceFunc func, gpointer data);
 GtkWidget *snd_gtk_dialog_new(void);
-GtkWidget *make_info_widget(void);
-void info_widget_display(GtkWidget *w, const char *message);
-void info_widget_set_size(GtkWidget *w, int size);
 GtkWidget *snd_gtk_highlight_label_new(const char *label);
 void widget_int_to_text(GtkWidget *w, int val);
 void widget_mus_long_t_to_text(GtkWidget *w, mus_long_t val);

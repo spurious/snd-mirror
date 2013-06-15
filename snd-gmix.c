@@ -413,7 +413,7 @@ static gint unpost_mix_error(gpointer data)
 
 static void errors_to_mix_text(const char *msg, void *data)
 {
-  info_widget_display(error_label, msg);
+  gtk_label_set_text(GTK_LABEL(error_label), msg);
   gtk_widget_show(error_frame);
   g_timeout_add_full(0, (guint32)5000, unpost_mix_error, NULL, NULL);
 }
@@ -722,7 +722,7 @@ GtkWidget *make_mix_dialog(void)
       error_frame = gtk_frame_new(NULL);
       gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(mix_dialog)), error_frame, false, false, 4);
 
-      error_label = make_info_widget();
+      error_label = gtk_label_new(NULL);
       gtk_container_add(GTK_CONTAINER(error_frame), error_label);
       gtk_widget_show(error_label);
 

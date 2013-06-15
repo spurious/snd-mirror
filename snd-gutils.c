@@ -804,46 +804,6 @@ GtkWidget *snd_gtk_highlight_label_new(const char *label)
   return(w);
 }
 
-#if 0
-static GtkWidget *snd_gtk_entry_label_new(const char *label, color_info *color)
-{
-  GtkWidget *rlw;
-  rlw = gtk_entry_new();
-  gtk_entry_set_has_frame(GTK_ENTRY(rlw), false);
-  if (label) gtk_entry_set_text(GTK_ENTRY(rlw), label);
-  gtk_editable_set_editable(GTK_EDITABLE(rlw), false);
-  UNSET_CAN_FOCUS(GTK_WIDGET(rlw)); /* turn off the $%#@$! blinking cursor */
-  widget_modify_base(rlw, GTK_STATE_NORMAL, color);
-  widget_modify_base(rlw, GTK_STATE_ACTIVE, color);
-  return(rlw);
-}
-#endif
-
-GtkWidget *make_info_widget(void)
-{
-  /*
-  return(snd_gtk_entry_label_new(NULL, ss->highlight_color));
-  */
-  return(gtk_label_new(NULL));
-}
-
-
-void info_widget_display(GtkWidget *w, const char *message)
-{
-  /*
-  gtk_entry_set_text(GTK_ENTRY(w), message);
-  */
-  gtk_label_set_text(GTK_LABEL(w), message);
-}
-
-
-void info_widget_set_size(GtkWidget *w, int size)
-{
-  /*
-  gtk_entry_set_width_chars(GTK_ENTRY(w), size);
-  */
-}
-
 
 void widget_int_to_text(GtkWidget *w, int val)
 {
@@ -853,17 +813,6 @@ void widget_int_to_text(GtkWidget *w, int val)
   gtk_entry_set_text(GTK_ENTRY(w), str);
   free(str);
 }
-
-#if 0
-void widget_float_to_text(GtkWidget *w, mus_float_t val)
-{
-  char *str;
-  str = (char *)calloc(8, sizeof(char));
-  mus_snprintf(str, 8, "%.2f", val);
-  gtk_entry_set_text(GTK_ENTRY(w), str);
-  free(str);
-}
-#endif
 
 
 void widget_mus_long_t_to_text(GtkWidget *w, mus_long_t val)
