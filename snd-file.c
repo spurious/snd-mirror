@@ -1241,7 +1241,6 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
 #if HAVE_SCHEME
       XEN_VARIABLE_SET(snd_opened_sound, C_INT_TO_XEN_SOUND(sp->index));
 #endif
-
       sp->write_date = file_write_date(sp->filename); /* redundant (see snd-xsnd.c) */
       sp->need_update = false;
       ss->active_sounds++;

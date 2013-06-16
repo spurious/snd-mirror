@@ -11,17 +11,13 @@
    Info and Raw
 */
 
-/* TODO: thumbnail graph: if long don't add, (an hour-long sound takes a couple seconds)
- *                        check c-g to stop play
- *                        if file changes but not name, sketch etc are not updated
- *                        need tiny_font size (currently using 6 I think)
+#define WITH_SKETCH 1 /* (!HAVE_GTK_3) see below */
+
+/* PERHAPS: thumbnail graph: save the points? split the idler? g_source_remove if overlap?
  * TODO: open can can still get stuck -- what is the problem??
- *
  * TODO: check ask-before-overwrite [also it says the button is named "DoIt" I think]
- *
- * TODO: in gtk3, save-as won't go away?
- *    it's fine unless I resize the dialog, then the button is ignored?
- *    the play button does this??  see below.
+ * TODO: call/valgrind these guys!
+ * PERHAPS: in gtk3, don't hide the open dialog unless asked to.
  *
  * In gtk2, if we have a file selected, then some other process writes a file in the 
  *   current directory (emacs autosaving), the file chooser gets confused as
@@ -31,6 +27,10 @@
  * In gtk3, each time we reopen the chooser, it starts all the way back at the useless "recently used"!
  *   We can't use gtk_..._set|select_filename -- the function is simply ignored!
  *   And if we resize the dialog, a hand cursor appears, and the next thing we know we're moving the dialog itself!
+ *   And valgrind reports a million invalid reads in gtk's code!
+ *   And the sketch gets an incomprehensible cairo error
+ *     this apparently happens because our "signal-changed" callback takes too long to draw a long sound's graph!
+ *     but making it idle does not fully fix the problem -- we have to save the graph points and rescale directly.
  */
 
 /* we can find the embedded tree view:
@@ -58,6 +58,7 @@
 * now how to get at the sidebar and remove "recently used"? or change the row-colors in gtk3?
 * no way that I can find...
 */
+
 
 
 
@@ -219,11 +220,18 @@ typedef struct file_dialog_info {
   void *file_watcher;
   gulong filename_watcher_id;
   int header_type, format_type;
-
+#if WITH_SKETCH
+  point_t *p0, *p1;
+  int pts;
   gc_t *gc;
   axis_info *axis;
   GtkWidget *drawer;
   snd_info *sp;
+  bool in_progress, two_sided;
+  mus_long_t samps;
+  int srate;
+  bool unreadable;
+#endif
 
 } file_dialog_info;
 
@@ -234,14 +242,17 @@ static file_dialog_info *idat = NULL; /* insert file */
 void reflect_just_sounds(void) {}
 
 
-static void post_sound_info(file_dialog_info *fd, const char *filename, bool with_filename)
+static bool post_sound_info(file_dialog_info *fd, const char *filename, bool with_filename)
 {
   if ((!filename) ||
       (directory_p(filename)) ||
       (!sound_file_p(filename)))
     {
       gtk_label_set_text(GTK_LABEL(fd->info), "");
+#if WITH_SKETCH
       gtk_widget_hide(fd->drawer);
+#endif
+      return(false);
     }
   else
     {
@@ -289,14 +300,16 @@ static void post_sound_info(file_dialog_info *fd, const char *filename, bool wit
       gtk_label_set_text(GTK_LABEL(fd->info), buf);
       free(buf);
       free(mx);
+#if WITH_SKETCH
       gtk_widget_show(fd->drawer);
+#endif
     }
+  return(true);
 }
 
 
 static void file_dialog_stop_playing(file_dialog_info *fd)
 {
-  fprintf(stderr, "stop playing %p\n", fd->player);
   if ((fd->player) && 
       (fd->player->playing)) 
     {
@@ -341,6 +354,7 @@ static void file_dialog_play(GtkWidget *w, gpointer data)
 #endif
 
 
+#if WITH_SKETCH
 static void tiny_string(cairo_t *cr, const char *str, int x0, int y0)
 {
   PangoLayout *layout = NULL;
@@ -357,11 +371,18 @@ static void tiny_string(cairo_t *cr, const char *str, int x0, int y0)
 
 static void sketch_1(file_dialog_info *fd, bool new_data)
 {
-  snd_info *sp;
-  char *filename;
+  #define X_AXIS 24
+  #define Y_AXIS 8
+
+  char *filename, *str;
+  int hgt, wid, i, xoff, yoff;
+  axis_info *ap;
+  cairo_t *old_cr;
+  double xscl, yscl;
+  point_t *g_p0, *g_p1;
 
   filename = fd->filename; /* gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser)); */
-  /* fprintf(stderr, "sketch %s\n", filename); */
+  /* gtk_widget_show(fd->drawer); */
 
   if (!filename)
     return;
@@ -370,118 +391,173 @@ static void sketch_1(file_dialog_info *fd, bool new_data)
       (!sound_file_p(filename)))
     return;
   
+  if ((!new_data) &&
+      (fd->unreadable))
+    return;
+  
+  old_cr = ss->cr;
+  ss->cr = make_cairo(WIDGET_TO_WINDOW(fd->drawer));
+  cairo_push_group(ss->cr);
+  
+  wid = widget_width(fd->drawer);
+  hgt = widget_height(fd->drawer);
+  ap = fd->axis;
+  
   if (new_data)
     {
-      if (fd->sp)
-	{
-	  fd->sp->chans[0]->active = CHANNEL_INACTIVE;
-	  completely_free_snd_info(fd->sp);
-	}
-      sp = make_sound_readable(filename, false);
-      fd->sp = sp;
-    }
-  else sp = fd->sp;
-  if (sp)
-    {
-
-      int srate, pts = 0;
-      mus_long_t samps;
       bool two_sided = false;
-      axis_info *active_ap = NULL, *gray_ap;
       chan_info *active_channel;
-      cairo_t *old_cr;
-
+      axis_info *active_ap = NULL;
+      snd_info *sp;
+      
+      sp = make_sound_readable(filename, false);
+      if (!sp)
+	{
+	  fd->unreadable = true;
+	  return;
+	}
+      fd->unreadable = false;
       active_channel = sp->chans[0];
       active_ap = active_channel->axis;
-      gray_ap = fd->axis;
-      gray_ap->graph_active = true;
-
-      samps = CURRENT_SAMPLES(active_channel);
-      srate = SND_SRATE(active_channel->sound);
-
-      gray_ap->losamp = 0;
-      gray_ap->hisamp = samps - 1;
-      gray_ap->y0 = -1.0;
-      gray_ap->y1 = 1.0;
-      gray_ap->x0 = 0.0;
-      gray_ap->x1 = (double)samps / (double)srate;
-
-      gray_ap->x_axis_x0 = 0;
-      gray_ap->y_axis_y0 = 0;
-      gray_ap->x_axis_x1 = widget_width(fd->drawer);
-      gray_ap->y_axis_y1 = widget_height(fd->drawer);
-
-      old_cr = ss->cr;
-      ss->cr = make_cairo(WIDGET_TO_WINDOW(fd->drawer));
-      cairo_push_group(ss->cr);
-
-      active_channel->axis = gray_ap;
-
-      cairo_set_source_rgba(ss->cr, fd->gc->bg_color->red, fd->gc->bg_color->green, fd->gc->bg_color->blue, fd->gc->bg_color->alpha);
-      cairo_rectangle(ss->cr, 0, 0, gray_ap->x_axis_x1, gray_ap->y_axis_y1);
-      cairo_fill(ss->cr);
-
-      #define X_AXIS 24
-      #define Y_AXIS 8
-
-      cairo_set_source_rgba(ss->cr, fd->gc->fg_color->red, fd->gc->fg_color->green, fd->gc->fg_color->blue, fd->gc->fg_color->alpha);
-      /* y axis */
-      cairo_rectangle(ss->cr, X_AXIS, 8, 2, gray_ap->y_axis_y1 - Y_AXIS - 16);
-      cairo_fill(ss->cr);
-
-      /* x axis */
-      cairo_rectangle(ss->cr, X_AXIS, gray_ap->y_axis_y1 - Y_AXIS - 8, gray_ap->x_axis_x1 - X_AXIS - 4, 2);
-      cairo_fill(ss->cr);
-
-      tiny_string(ss->cr, "1.0", 4, 6);
-      tiny_string(ss->cr, "-1.0", 0, gray_ap->y_axis_y1 - 24);
-      tiny_string(ss->cr, "0.0", 24, gray_ap->y_axis_y1 - 12);
-      {
-	char *str;
-	str = prettyf(gray_ap->x1, 3);
-	if (str)
-	  {
-	    tiny_string(ss->cr, str, gray_ap->x_axis_x1 - 4 - 6 * strlen(str), gray_ap->y_axis_y1 - 12);
-	    free(str);
-	  }
-      }
+      ap->graph_active = true;
       
-      /* now fit the data inside the axes */
+      fd->samps = CURRENT_SAMPLES(active_channel);
+      fd->srate = SND_SRATE(active_channel->sound);
       
-      gray_ap->x_axis_x0 = X_AXIS + 2;
-      gray_ap->y_axis_y1 = Y_AXIS;
-      gray_ap->x_axis_x1 = widget_width(fd->drawer) - 4;
-      gray_ap->y_axis_y0 = widget_height(fd->drawer) - Y_AXIS * 2;
-
-      init_axis_scales(gray_ap);
-      pts = make_background_graph(active_channel, srate, &two_sided);
+      ap->losamp = 0;
+      ap->hisamp = fd->samps - 1;
+      ap->y0 = -1.0;
+      ap->y1 = 1.0;
+      ap->x0 = 0.0;
+      ap->x1 = (double)(fd->samps) / (double)(fd->srate);
+      
+      ap->x_axis_x0 = 0;
+      ap->y_axis_y0 = 1000;
+      ap->x_axis_x1 = 1000;
+      ap->y_axis_y1 = 0;
+      
+      active_channel->axis = ap;
+      init_axis_scales(ap);
+      fd->pts = make_background_graph(active_channel, fd->srate, &two_sided);
+      fd->two_sided = two_sided;
+      memcpy((void *)(fd->p0), (void *)get_grf_points(), fd->pts * sizeof(point_t));
+      if (fd->two_sided)
+	memcpy((void *)(fd->p1), (void *)get_grf_points1(), fd->pts * sizeof(point_t));
       active_channel->axis = active_ap;
-
-      if (pts > 0) 
-	{
-	  if (two_sided)
-	    draw_both_grf_points(1, gray_ap->ax, pts, GRAPH_LINES);
-	  else draw_grf_points(1, gray_ap->ax, pts, gray_ap, 0.0, GRAPH_LINES);
-	}
-
-      cairo_pop_group_to_source(ss->cr);
-      cairo_paint(ss->cr);
-      free_cairo(ss->cr);
-      ss->cr = old_cr;
+      
+      sp->chans[0]->active = CHANNEL_INACTIVE;
+      completely_free_snd_info(sp);
+      sp = NULL;
     }
+  else
+    {
+      ap->x1 = (double)(fd->samps) / (double)(fd->srate);
+    }
+
+  cairo_set_source_rgba(ss->cr, fd->gc->bg_color->red, fd->gc->bg_color->green, fd->gc->bg_color->blue, fd->gc->bg_color->alpha);
+  cairo_rectangle(ss->cr, 0, 0, wid, hgt);
+  cairo_fill(ss->cr);
+
+  cairo_set_source_rgba(ss->cr, fd->gc->fg_color->red, fd->gc->fg_color->green, fd->gc->fg_color->blue, fd->gc->fg_color->alpha);
+  /* y axis */
+  cairo_rectangle(ss->cr, X_AXIS, 8, 2, hgt - Y_AXIS - 16);
+  cairo_fill(ss->cr);
+  
+  /* x axis */
+  cairo_rectangle(ss->cr, X_AXIS, hgt - Y_AXIS - 8, wid - X_AXIS - 4, 2);
+  cairo_fill(ss->cr);
+  
+  tiny_string(ss->cr, "1.0", 4, 6);
+  tiny_string(ss->cr, "-1.0", 0, hgt - 24);
+  tiny_string(ss->cr, "0.0", 24, hgt - 12);
+
+  str = prettyf(ap->x1, 3);
+  if (str)
+    {
+      tiny_string(ss->cr, str, wid - 4 - 6 * strlen(str), hgt - 12);
+      free(str);
+    }
+      
+  ap->x_axis_x0 = X_AXIS + 2;
+  ap->y_axis_y1 = Y_AXIS;
+  ap->x_axis_x1 = wid - 4;
+  ap->y_axis_y0 = hgt - Y_AXIS * 2;
+  
+  g_p0 = get_grf_points();
+  g_p1 = get_grf_points1();
+  if (!new_data)
+    {
+      memcpy((void *)g_p0, (void *)(fd->p0), fd->pts * sizeof(point_t));
+      if (fd->two_sided)
+	memcpy((void *)g_p1, (void *)(fd->p1), fd->pts * sizeof(point_t));
+    }
+  
+  xoff = ap->x_axis_x0;
+  yoff = ap->y_axis_y1;
+  xscl = (ap->x_axis_x1 - xoff) * 0.001;
+  yscl = (ap->y_axis_y0 - yoff) * 0.001;
+  init_axis_scales(ap);
+  
+  for (i = 0; i < fd->pts; i++)
+    {
+      g_p0[i].x = xoff + (int)(g_p0[i].x * xscl);
+      g_p0[i].y = yoff + (int)(g_p0[i].y * yscl);
+    }
+  if (fd->two_sided)
+    {
+      for (i = 0; i < fd->pts; i++)
+	{
+	  g_p1[i].x = xoff + (int)(g_p1[i].x * xscl);
+	  g_p1[i].y = yoff + (int)(g_p1[i].y * yscl);
+	}
+    }
+
+  if (fd->pts > 0) 
+    {
+      if (fd->two_sided)
+	draw_both_grf_points(1, ap->ax, fd->pts, GRAPH_LINES);
+      else draw_grf_points(1, ap->ax, fd->pts, ap, 0.0, GRAPH_LINES);
+    }
+  
+  cairo_pop_group_to_source(ss->cr);
+  cairo_paint(ss->cr);
+  free_cairo(ss->cr);
+  ss->cr = old_cr;
 }
 
-#define sketch(Fd) sketch_1(Fd, true)
-#define resketch(Fd) sketch_1(Fd, false)
 
+static idle_func_t get_sketch(gpointer data)
+{
+  sketch_1((file_dialog_info *)data, true);
+  return(false);
+}
 
+static idle_func_t get_resketch(gpointer data)
+{
+  sketch_1((file_dialog_info *)data, false);
+  return(false);
+}
+
+static void stop_sketch(gpointer data)
+{
+  file_dialog_info *fd = (file_dialog_info *)data;
+  fd->in_progress = false;
+}
+
+#define sketch(Fd)   {fd->in_progress = true; g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, get_sketch, (gpointer)Fd, (GDestroyNotify)stop_sketch);}
+#define resketch(Fd) if (!fd->in_progress) {fd->in_progress = true; g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, get_resketch, (gpointer)Fd, (GDestroyNotify)stop_sketch);}
+#endif
 
 static void selection_changed_callback(GtkFileChooser *w, gpointer data)
 {
   file_dialog_info *fd = (file_dialog_info *)data;
   fd->filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser));
+#if WITH_SKETCH
+  if (post_sound_info(fd, fd->filename, false))
+    sketch(fd);
+#else
   post_sound_info(fd, fd->filename, false);
-  sketch(fd);
+#endif
 }
 
 
@@ -494,12 +570,14 @@ static gboolean file_filter_callback(const GtkFileFilterInfo *filter_info, gpoin
 }
 
 
+#if WITH_SKETCH
 static gboolean drawer_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   file_dialog_info *fd = (file_dialog_info *)data;
   resketch(fd);
   return(false);
 }
+#endif
 
 
 /* if icons do not get displayed, check the system preferences menu+toolbar dialog */
@@ -661,7 +739,8 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, const char *tit
   fd->info = gtk_label_new(NULL);
   gtk_box_pack_start(GTK_BOX(hbox), fd->info, false, true, 8);
   gtk_widget_show(fd->info);
-	
+
+#if WITH_SKETCH	
   fd->sp = NULL;
   fd->gc = gc_new();
   gc_set_background(fd->gc, ss->white);
@@ -679,10 +758,14 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, const char *tit
   fd->axis->ax->w = fd->drawer;
   fd->axis->ax->gc = fd->gc;
   fd->axis->ax->current_font = AXIS_NUMBERS_FONT(ss);
-  
+  fd->p0 = (point_t *)calloc(POINT_BUFFER_SIZE, sizeof(point_t));
+  fd->p1 = (point_t *)calloc(POINT_BUFFER_SIZE, sizeof(point_t));
+  fd->unreadable = true;
+
   SG_SIGNAL_CONNECT(fd->drawer, DRAW_SIGNAL, drawer_expose, (gpointer)fd);
 
   gtk_widget_show(fd->dialog);
+#endif
 
   SG_SIGNAL_CONNECT(fd->help_button, "clicked", file_help_proc, (gpointer)fd);
   SG_SIGNAL_CONNECT(fd->ok_button, "clicked", file_ok_proc, (gpointer)fd);
