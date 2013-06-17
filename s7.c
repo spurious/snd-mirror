@@ -2404,7 +2404,7 @@ static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
 static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
 static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, AN_OPEN_PORT, A_NORMAL_REAL, A_RATIONAL, A_CLOSURE;
 static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL, A_NON_NEGATIVE_INTEGER;
-static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT;
+static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BYTE;
 
 
 #define WITH_COUNTS 0
@@ -18903,23 +18903,32 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   index = cadr(args);
   if (!s7_is_integer(index))
     return(wrong_type_argument(sc, sc->STRING_SET, small_int(2), index, T_INTEGER));
-  
-  c = caddr(args);
-  if (!s7_is_character(c))
-    {
-      CHECK_METHOD(sc, c, sc->STRING_SET, args);
-      return(wrong_type_argument(sc, sc->STRING_SET, small_int(3), c, T_CHARACTER));
-    }
-
   ind = s7_integer(index);
   if (ind < 0)
     return(wrong_type_argument_with_type(sc, sc->STRING_SET, small_int(2), index, A_NON_NEGATIVE_INTEGER));
   if (ind >= string_length(x))
     return(out_of_range(sc, sc->STRING_SET, small_int(2), index, "should be less than string length"));
-
   str = string_value(x);
+
+  c = caddr(args);
+  if (!s7_is_character(c))
+    {
+      if ((is_bytevector(x)) &&
+	  (s7_is_integer(c)))
+	{
+	  int ic;
+	  ic = s7_integer(c);
+	  if ((ic < 0) || (ic > 255))
+	    return(wrong_type_argument_with_type(sc, sc->STRING_SET, small_int(3), c, AN_UNSIGNED_BYTE));
+	  str[ind] = (char)ic;
+	  return(c);
+	}
+      CHECK_METHOD(sc, c, sc->STRING_SET, args);
+      return(wrong_type_argument(sc, sc->STRING_SET, small_int(3), c, T_CHARACTER));
+    }
+
   str[ind] = (char)s7_character(c);
-  return(caddr(args));
+  return(c);
 }
 
 static s7_pointer string_set_ssa;
@@ -19988,7 +19997,7 @@ static s7_pointer g_make_bytevector(s7_scheme *sc, s7_pointer args)
 	return(wrong_type_argument(sc, sc->MAKE_BYTEVECTOR, small_int(2), byte, T_INTEGER));
       b = s7_integer(byte);
       if ((b < 0) || (b > 255))
-	return(simple_wrong_type_argument_with_type(sc, sc->MAKE_BYTEVECTOR, byte, make_protected_string(sc, "an unsigned byte")));
+	return(simple_wrong_type_argument_with_type(sc, sc->MAKE_BYTEVECTOR, byte, AN_UNSIGNED_BYTE));
       str = g_make_string(sc, list_2(sc, car(args), chars[b]));
     }
   set_bytevector(str);
@@ -20014,7 +20023,7 @@ static s7_pointer g_bytevector(s7_scheme *sc, s7_pointer args)
 	return(wrong_type_argument(sc, sc->BYTEVECTOR, make_integer(sc, i), byte, T_INTEGER));
       b = s7_integer(byte);
       if ((b < 0) || (b > 255))
-	return(simple_wrong_type_argument_with_type(sc, sc->BYTEVECTOR, byte, make_protected_string(sc, "an unsigned byte")));
+	return(simple_wrong_type_argument_with_type(sc, sc->BYTEVECTOR, byte, AN_UNSIGNED_BYTE));
       string_value(vec)[i] = (unsigned char)b;
     }
   set_bytevector(vec);
@@ -26144,6 +26153,7 @@ static void init_car_a_list(void)
   A_THUNK = s7_make_permanent_string("a thunk");
   A_SYMBOL = s7_make_permanent_string("a symbol");
   A_NON_NEGATIVE_INTEGER = s7_make_permanent_string("a non-negative integer");
+  AN_UNSIGNED_BYTE = s7_make_permanent_string("an unsigned byte");
   SOMETHING_APPLICABLE = s7_make_permanent_string("a procedure or something applicable");
   CONSTANT_ARG_ERROR = s7_make_permanent_string("lambda* parameter '~A is a constant");
   BAD_BINDING = s7_make_permanent_string("~A: can't bind some variable to ~S");
@@ -55551,10 +55561,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		eval_error(sc, "string-set!: index must not be negative: ~S", sc->code);
 	      if (index >= string_length(obj))
 		eval_error(sc, "string-set!: index must not be less than string length: ~S", sc->code);
-	      if (!s7_is_character(value))
-		eval_error(sc, "string-set!: value must be a character: ~S", sc->code);
-	      string_value(obj)[index] = (char)s7_character(value);
-	      sc->value = value;
+	      if (s7_is_character(value))
+		{
+		  string_value(obj)[index] = (char)s7_character(value);
+		  sc->value = value;
+		}
+	      else
+		{
+		  if ((is_bytevector(obj)) &&
+		      (s7_is_integer(value)))
+		    {
+		      int ic;
+		      ic = s7_integer(value);
+		      if ((ic < 0) || (ic > 255))
+			eval_error(sc, "string-set!: value must be a character: ~S", sc->code);
+		      string_value(obj)[index] = (char)ic;
+		      sc->value = value;
+		    }
+		  else eval_error(sc, "string-set!: value must be a character: ~S", sc->code);
+		}
 	    }
 #endif
 	    break;
@@ -56343,11 +56368,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			if (is_symbol(val))
 			  val = finder(sc, val);
-			if (!s7_is_character(val))
-			  eval_error(sc, "string-set!: value must be a character: ~S", sc->code);
-			string_value(sc->x)[ind] = character(val);
-			sc->value = val;
-			goto START;
+			if (s7_is_character(val))
+			  {
+			    string_value(sc->x)[ind] = character(val);
+			    sc->value = val;
+			    goto START;
+			  }
+			else
+			  {
+			    if ((is_bytevector(sc->x)) &&
+				(s7_is_integer(val)))
+			      {
+				int ic;
+				ic = s7_integer(val);
+				if ((ic < 0) || (ic > 255))
+				  eval_error(sc, "string-set!: value must be a character: ~S", sc->code);
+				string_value(sc->x)[ind] = (char)ic;
+				sc->value = val;
+				goto START;
+			      }
+			  }
+			eval_error(sc, "string-set!: value must be a character: ~S", sc->code);
 		      }
 		    push_op_stack(sc, sc->String_Set);
 		    sc->args = list_2(sc, index, sc->x);
@@ -65507,11 +65548,3 @@ s7_scheme *s7_init(void)
 
 /* bytevector support is minimal and confusing -- see end of s7test.scm for a few of the problems
  */
-
-/* from comp.lang.scheme:
-  (define-macro trad (lambda args `(let ((num 2)) ,@args)))
-  currently s7 gives an error:
-  ;define-macro argument 1, trad, is a symbol but should be a list (name ...)
-  but why not make it work?
-*/
-

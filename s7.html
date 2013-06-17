@@ -1252,6 +1252,13 @@ national debt.  gensym is the standard approach:
 mac
 &gt; (let ((a 1) (+ *)) (mac a))
 13
+
+;; or use lambda:
+&gt; (define-macro (mac b) 
+  `((lambda (b) (let ((a 12)) (#_+ a b))) ,b))
+mac
+&gt; (let ((a 1) (+ *)) (mac a))
+13
 </pre>
 
 <p>If gensym worries you because it's creating a symbol on each macro invocation,

@@ -46,6 +46,10 @@ echo ' '
 ./snd tools/check-help.scm
 # ./snd generators.scm peak-phases.scm -e "(begin (test-peak-phases) (exit))"
 
+cp tools/ffitest.c .
+gcc -o ffitest ffitest.c -g3 -Wall s7.o -lm -I. -ldl
+ffitest
+
 echo ' -------------------------------- no strftime -------------------------------- '
 
 sed mus-config.h -e 's/#define HAVE_STRFTIME 1/#define HAVE_STRFTIME 0/' > tmp
@@ -746,6 +750,7 @@ make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gtk"
 make allclean
+
 
 
 cp ~/sndlib/* .

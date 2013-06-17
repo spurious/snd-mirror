@@ -2379,9 +2379,9 @@ void make_controls_dialog(void)
       reset_button = gtk_button_new_from_stock(GTK_STOCK_REVERT_TO_SAVED);
       gtk_widget_set_name(reset_button, "dialog_button");
 
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(controls_dialog)), help_button, false, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(controls_dialog)), reset_button, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(controls_dialog)), dismiss_button, false, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(controls_dialog)), help_button, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(controls_dialog)), dismiss_button, false, true, 10);
 
 #if HAVE_GTK_3
   add_highlight_button_style(dismiss_button);

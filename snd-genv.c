@@ -902,17 +902,17 @@ GtkWidget *create_envelope_editor(void)
       resetB = sg_button_new_from_stock_with_label("Clear graph", GTK_STOCK_REFRESH);
       gtk_widget_set_name(resetB, "dialog_button");
 
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), applyB, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), apply2B, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), helpB, false, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), resetB, false, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), cancelB, false, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), helpB, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), apply2B, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), applyB, false, true, 10);
 
       SG_SIGNAL_CONNECT(cancelB, "clicked", dismiss_enved_callback, NULL);
-      SG_SIGNAL_CONNECT(applyB, "clicked", apply_enved_callback, NULL);
-      SG_SIGNAL_CONNECT(apply2B, "clicked", undo_and_apply_enved_callback, NULL);
       SG_SIGNAL_CONNECT(resetB, "clicked", reset_button_pressed, NULL);
       SG_SIGNAL_CONNECT(helpB, "clicked", help_enved_callback, NULL);
+      SG_SIGNAL_CONNECT(apply2B, "clicked", undo_and_apply_enved_callback, NULL);
+      SG_SIGNAL_CONNECT(applyB, "clicked", apply_enved_callback, NULL);
 
 #if HAVE_GTK_3
       add_highlight_button_style(cancelB);

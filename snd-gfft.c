@@ -896,9 +896,9 @@ GtkWidget *make_transform_dialog(bool managed)
       color_button = sg_button_new_from_stock_with_label("Color/Orientation", GTK_STOCK_SELECT_COLOR);
       gtk_widget_set_name(color_button, "dialog_button");
 
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), help_button, false, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), color_button, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), dismiss_button, false, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), help_button, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), dismiss_button, false, true, 10);
 
 #if HAVE_GTK_3
       add_highlight_button_style(dismiss_button);

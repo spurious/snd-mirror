@@ -15,8 +15,7 @@
 
 /* PERHAPS: thumbnail graph: save the points? split the idler? g_source_remove if overlap?
  * TODO: open can can still get stuck -- what is the problem??
- * TODO: check ask-before-overwrite [also it says the button is named "DoIt" I think]
- * TODO: call/valgrind these guys!
+ * TODO: call/valgrind on these guys!
  * PERHAPS: in gtk3, don't hide the open dialog unless asked to.
  *
  * In gtk2, if we have a file selected, then some other process writes a file in the 
@@ -395,10 +394,6 @@ static void sketch_1(file_dialog_info *fd, bool new_data)
       (fd->unreadable))
     return;
   
-  old_cr = ss->cr;
-  ss->cr = make_cairo(WIDGET_TO_WINDOW(fd->drawer));
-  cairo_push_group(ss->cr);
-  
   wid = widget_width(fd->drawer);
   hgt = widget_height(fd->drawer);
   ap = fd->axis;
@@ -454,30 +449,6 @@ static void sketch_1(file_dialog_info *fd, bool new_data)
       ap->x1 = (double)(fd->samps) / (double)(fd->srate);
     }
 
-  cairo_set_source_rgba(ss->cr, fd->gc->bg_color->red, fd->gc->bg_color->green, fd->gc->bg_color->blue, fd->gc->bg_color->alpha);
-  cairo_rectangle(ss->cr, 0, 0, wid, hgt);
-  cairo_fill(ss->cr);
-
-  cairo_set_source_rgba(ss->cr, fd->gc->fg_color->red, fd->gc->fg_color->green, fd->gc->fg_color->blue, fd->gc->fg_color->alpha);
-  /* y axis */
-  cairo_rectangle(ss->cr, X_AXIS, 8, 2, hgt - Y_AXIS - 16);
-  cairo_fill(ss->cr);
-  
-  /* x axis */
-  cairo_rectangle(ss->cr, X_AXIS, hgt - Y_AXIS - 8, wid - X_AXIS - 4, 2);
-  cairo_fill(ss->cr);
-  
-  tiny_string(ss->cr, "1.0", 4, 6);
-  tiny_string(ss->cr, "-1.0", 0, hgt - 24);
-  tiny_string(ss->cr, "0.0", 24, hgt - 12);
-
-  str = prettyf(ap->x1, 3);
-  if (str)
-    {
-      tiny_string(ss->cr, str, wid - 4 - 6 * strlen(str), hgt - 12);
-      free(str);
-    }
-      
   ap->x_axis_x0 = X_AXIS + 2;
   ap->y_axis_y1 = Y_AXIS;
   ap->x_axis_x1 = wid - 4;
@@ -512,6 +483,36 @@ static void sketch_1(file_dialog_info *fd, bool new_data)
 	}
     }
 
+  /* here we could check that nothing has changed while getting the data ready, but it doesn't seem to be a problem? */
+
+  old_cr = ss->cr;
+  ss->cr = make_cairo(WIDGET_TO_WINDOW(fd->drawer));
+  cairo_push_group(ss->cr);
+  
+  cairo_set_source_rgba(ss->cr, fd->gc->bg_color->red, fd->gc->bg_color->green, fd->gc->bg_color->blue, fd->gc->bg_color->alpha);
+  cairo_rectangle(ss->cr, 0, 0, wid, hgt);
+  cairo_fill(ss->cr);
+
+  cairo_set_source_rgba(ss->cr, fd->gc->fg_color->red, fd->gc->fg_color->green, fd->gc->fg_color->blue, fd->gc->fg_color->alpha);
+  /* y axis */
+  cairo_rectangle(ss->cr, X_AXIS, 8, 2, hgt - Y_AXIS - 16);
+  cairo_fill(ss->cr);
+  
+  /* x axis */
+  cairo_rectangle(ss->cr, X_AXIS, hgt - Y_AXIS - 8, wid - X_AXIS - 4, 2);
+  cairo_fill(ss->cr);
+  
+  tiny_string(ss->cr, "1.0", 4, 6);
+  tiny_string(ss->cr, "-1.0", 0, hgt - 24);
+  tiny_string(ss->cr, "0.0", 24, hgt - 12);
+
+  str = prettyf(ap->x1, 3);
+  if (str)
+    {
+      tiny_string(ss->cr, str, wid - 4 - 6 * strlen(str), hgt - 12);
+      free(str);
+    }
+      
   if (fd->pts > 0) 
     {
       if (fd->two_sided)
@@ -2725,10 +2726,10 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
   okB = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_widget_set_name(okB, "dialog_button");
 
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), okB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), helpB, true, true, 10);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), resetB, true, true, 10);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), cancelB, true, true, 10);
-  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), helpB, true, true, 10);
+  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), okB, true, true, 10);
 
 #if HAVE_GTK_3
   add_highlight_button_style(cancelB);
@@ -3065,10 +3066,10 @@ widget_t make_new_file_dialog(bool managed)
       reset_button = sg_button_new_from_stock_with_label("Reset", GTK_STOCK_REFRESH);
       gtk_widget_set_name(reset_button, "dialog_button");
 
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), new_file_ok_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), help_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), reset_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), cancel_button, true, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), help_button, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), new_file_ok_button, true, true, 10);
 
 #if HAVE_GTK_3
       add_highlight_button_style(help_button);
@@ -3407,9 +3408,9 @@ GtkWidget *edit_header(snd_info *sp)
       ep->save_button = gtk_button_new_from_stock(GTK_STOCK_SAVE);
       gtk_widget_set_name(ep->save_button, "dialog_button");
 
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), ep->save_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), help_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), cancel_button, true, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), help_button, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), ep->save_button, true, true, 10);
 
 #if HAVE_GTK_3
       add_highlight_button_style(help_button);

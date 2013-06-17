@@ -903,9 +903,9 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       reset_button = gtk_button_new_from_stock(GTK_STOCK_REVERT_TO_SAVED);
       gtk_widget_set_name(reset_button, "dialog_button");
 
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ccd_dialog)), help_button, false, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ccd_dialog)), reset_button, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ccd_dialog)), dismiss_button, false, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(ccd_dialog)), help_button, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(ccd_dialog)), dismiss_button, false, true, 10);
 
       add_highlight_button_style(dismiss_button);
       add_highlight_button_style(reset_button);

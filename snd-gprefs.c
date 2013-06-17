@@ -23,7 +23,7 @@ static char *include_load_path = NULL;
 
 typedef struct prefs_info {
   GtkWidget *label, *text, *arrow_up, *arrow_down, *arrow_right, *error, *toggle, *scale, *toggle2, *toggle3;
-  GtkWidget *color, *rscl, *gscl, *bscl, *rtxt, *gtxt, *btxt, *list_menu, *radio_button, *helper;
+  GtkWidget *color, *rscl, *gscl, *bscl, *rtxt, *gtxt, *btxt, *list_menu, *radio_button;
   GtkAdjustment *adj, *radj, *gadj, *badj;
   GtkWidget **radio_buttons;
   bool got_error;
@@ -1632,13 +1632,13 @@ widget_t make_preferences_dialog(void)
   gtk_widget_set_name(dismissB, "dialog_button");
   set_stock_button_label(dismissB, I_GO_AWAY);
 
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), helpB, true, true, 10);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), revertB, true, true, 10);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), clearB, true, true, 10);
-#if HAVE_EXTENSION_LANGUAGE
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), saveB, true, true, 10);
-#endif
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), dismissB, true, true, 10);
-  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), helpB, true, true, 10);
+#if HAVE_EXTENSION_LANGUAGE
+  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), saveB, true, true, 10);
+#endif
 
 #if HAVE_GTK_3
   add_highlight_button_style(dismissB);
