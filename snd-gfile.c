@@ -681,6 +681,7 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(fd->chooser), just_sounds_filter);
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(fd->chooser), all_files_filter);
 
+#if HAVE_EXTENSION_LANGUAGE
   {
     /* now look for added filters added via add-file-filter */
     int i;
@@ -701,6 +702,7 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
 	  gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(fd->chooser), nfilt);
 	}
   }
+#endif
   
   gtk_widget_show(fd->chooser);
   gtk_widget_set_size_request(fd->chooser, FILE_DIALOG_DEFAULT_WIDTH, FILE_DIALOG_DEFAULT_HEIGHT); 
@@ -2299,7 +2301,7 @@ static file_dialog_info *make_save_as_dialog(const char *file_string, int header
   GtkWidget *vbox;
 
   fd = make_fsb(file_string, "save as:", "Save as", GTK_STOCK_SAVE_AS, (dialog_type != REGION_SAVE_AS), true);
-  fd->type = dialog_type;
+  fd->type = (save_dialog_t)dialog_type;
   fd->header_type = header_type;
   fd->format_type = format_type;
 

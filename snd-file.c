@@ -268,10 +268,11 @@ static XEN g_delete_file_filter(XEN index)
   if ((pos >= 0) &&
       (pos < ss->file_filters_size))
     {
-#if USE_GTK
+#if USE_GTK && (!HAVE_RUBY)
       /* in the gtk case, the function might be in use anyway, so we need to protect it */
       if (XEN_LIST_P(XEN_VECTOR_REF(ss->file_filters, pos)))
 	XEN_PROTECT_FROM_GC(XEN_CADR(XEN_VECTOR_REF(ss->file_filters, pos)));
+      /* in ruby XEN_PROTECT_FROM_GC takes the address of the arg, so we need a variable or something */
 #endif
       XEN_VECTOR_SET(ss->file_filters, pos, XEN_FALSE);
     }
