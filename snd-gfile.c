@@ -14,8 +14,7 @@
 #define WITH_SKETCH 1 /* (!HAVE_GTK_3) see below */
 
 /* PERHAPS: thumbnail graph: save the points? split the idler? g_source_remove if overlap?
- * TODO: open can can still get stuck -- what is the problem??
- * TODO: call/valgrind on these guys!
+ * TODO: open can still get stuck -- what is the problem??
  * PERHAPS: in gtk3, don't hide the open dialog unless asked to.
  *
  * In gtk2, if we have a file selected, then some other process writes a file in the 
@@ -256,7 +255,7 @@ static bool post_sound_info(file_dialog_info *fd, const char *filename, bool wit
   else
     {
       char *buf;
-      char *mx;
+      char *mx, *lenstr;
       buf = (char *)calloc(1024, sizeof(char));
       if (mus_sound_maxamp_exists(filename))
 	{
@@ -282,15 +281,20 @@ static bool post_sound_info(file_dialog_info *fd, const char *filename, bool wit
 	  mx = (char *)calloc(2, sizeof(char));
 	  mx[0] = '\n';
 	}
-      mus_snprintf(buf, 1924, "%s%s%d chan%s, %d Hz, %.3f secs\n%s, %s%s%s",
+
+      lenstr = (char *)calloc(128, sizeof(char));
+      if (mus_sound_samples(filename) < 1000)
+	snprintf(lenstr, 128, "%d samples", (int)mus_sound_samples(filename));
+      else snprintf(lenstr, 128, "%.3f seconds", mus_sound_duration(filename));
+
+      mus_snprintf(buf, 1924, "%s%s%d chan%s, %d Hz, %s\n%s, %s%s%s",
 
 		   (with_filename) ? filename_without_directory(filename) : "",
 		   (with_filename) ? ": " : "", 
 		   mus_sound_chans(filename),
 		   (mus_sound_chans(filename) > 1) ? "s" : "",
 		   mus_sound_srate(filename),
-		   mus_sound_duration(filename),
-
+		   lenstr,
 		   mus_header_type_name(mus_sound_header_type(filename)),
 		   short_data_format_name(mus_sound_data_format(filename), filename),
 		   snd_strftime(", %d-%b-%Y", mus_sound_write_date(filename)),
@@ -299,6 +303,7 @@ static bool post_sound_info(file_dialog_info *fd, const char *filename, bool wit
       gtk_label_set_text(GTK_LABEL(fd->info), buf);
       free(buf);
       free(mx);
+      free(lenstr);
 #if WITH_SKETCH
       gtk_widget_show(fd->drawer);
 #endif

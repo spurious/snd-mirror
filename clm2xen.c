@@ -56,8 +56,6 @@
   #endif
 #endif
 
-/* void add_expr(s7_scheme *sc, s7_pointer expr); */
-
 
 struct mus_xen {
   mus_any *gen;
@@ -18398,7 +18396,7 @@ XEN_NARGIFY_1(g_formant_p_w, g_formant_p)
 XEN_ARGIFY_4(g_make_formant_w, g_make_formant)
 XEN_ARGIFY_3(g_formant_w, g_formant)
 
-XEN_ARGIFY_2(g_formant_bank_w, g_formant_bank)
+XEN_NARGIFY_2(g_formant_bank_w, g_formant_bank)
 XEN_NARGIFY_1(g_formant_bank_p_w, g_formant_bank_p)
 XEN_ARGIFY_2(g_make_formant_bank_w, g_make_formant_bank)
 

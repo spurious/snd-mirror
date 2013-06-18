@@ -29086,9 +29086,7 @@ If its first argument is a list, the list is copied (despite the '!')."
 	}
       break;
 
-    case T_ENVIRONMENT:
-    case T_CLOSURE:
-    case T_CLOSURE_STAR:
+    default:
       CHECK_METHOD(sc, data, sc->SORT, args);
       return(wrong_type_argument_with_type(sc, sc->SORT, small_int(1), data, make_protected_string(sc, "a vector or a list")));
     }
@@ -32896,7 +32894,13 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
   switch (type(obj))
     {
     case T_STRING:
-      return(s7_make_string_with_length(sc, string_value(obj), string_length(obj)));
+      {
+	s7_pointer ns;
+	ns = s7_make_string_with_length(sc, string_value(obj), string_length(obj));
+      if (is_bytevector(obj))
+	set_bytevector(ns);
+      return(ns);
+      }
 
     case T_C_OBJECT:
       return(object_copy(sc, obj));
@@ -33232,6 +33236,8 @@ also accepts a string or vector argument."
 	if (len > 0)
 	  for (i = 0, j = len - 1; i < len; i++, j--)
 	    string_value(np)[i] = string_value(p)[j];
+	if (is_bytevector(p))
+	  set_bytevector(np);
       }
       break;
 
@@ -35183,7 +35189,9 @@ static bool next_for_each(s7_scheme *sc)
 	  break;
 	  
 	case T_STRING:
-	  car(x) = s7_make_character(sc, ((unsigned char)(string_value(car_y)[loc])));
+	  if (is_bytevector(car_y))
+	    car(x) = small_int((unsigned int)string_value(car_y)[loc]);
+	  else car(x) = s7_make_character(sc, ((unsigned char)(string_value(car_y)[loc])));
 	  break;
 	  
 	case T_C_OBJECT:
@@ -35587,7 +35595,9 @@ static bool next_map(s7_scheme *sc)
 	  break;
 
 	case T_STRING:
-	  x = s7_make_character(sc, ((unsigned char)(string_value(car_y)[loc])));
+	  if (is_bytevector(car_y))
+	    x = small_int((unsigned int)string_value(car_y)[loc]);
+	  else x = s7_make_character(sc, ((unsigned char)(string_value(car_y)[loc])));
 	  break;
 
 	case T_C_OBJECT: 
@@ -42518,6 +42528,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	case OP_IF:
 	  {
 	    bool t, e1, e2;
+	    if (!is_pair(cdr(x))) return(false); /* (if) ! */
 	    t = ((!is_pair(cadr(x))) || (form_is_safe(sc, func, args, cadr(x), false, bad_set)));
 	    e1 = ((!is_pair(caddr(x))) || (form_is_safe(sc, func, args, caddr(x), at_end, bad_set)));
 	    e2 = ((!is_pair(cdddr(x))) || (!is_pair(cadddr(x))) || (form_is_safe(sc, func, args, cadddr(x), at_end, bad_set)));
@@ -42604,6 +42615,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	  /* if we set func, we have to make sure we abandon the tail call scan:
 	   * (let () (define (hi a) (let ((v (vector 1 2 3))) (set! hi v) (hi a))) (hi 1))
 	   */
+	  if (!is_pair(cdr(x))) return(false); /* (set!) ! */
 	  if (cadr(x) == func)
 	    (*bad_set) = true;
 	  
@@ -43060,33 +43072,35 @@ static s7_pointer check_case(s7_scheme *sc)
       if ((!has_feed_to) &&
 	  (keys_simple))
 	{
-	  if ((has_else) &&
-	      (is_symbol(car(sc->code))))
+	  if (has_else)
 	    {
-	      if (bodies_simple)
+	      if (is_symbol(car(sc->code)))
 		{
-		  if (keys_single)
+		  if (bodies_simple)
 		    {
-		      if (bodies_simplest)
-			set_syntax_op(sc->code, sc->CASE_SIMPLEST_ELSE_C);
-		      else set_syntax_op(sc->code, sc->CASE_SIMPLEST_ELSE);
-		      for (x = cdr(sc->code); is_not_null(x); x = cdr(x))
+		      if (keys_single)
 			{
-			  if (is_pair(caar(x)))
+			  if (bodies_simplest)
+			    set_syntax_op(sc->code, sc->CASE_SIMPLEST_ELSE_C);
+			  else set_syntax_op(sc->code, sc->CASE_SIMPLEST_ELSE);
+			  for (x = cdr(sc->code); is_not_null(x); x = cdr(x))
 			    {
-			      fcdr(x) = caaar(x);
-			      /* ecdr(x) = cadar(x); */
-			    }
-			  else 
-			    {
-			      fcdr(x) = sc->ELSE;
-			      gcdr(sc->code) = cadar(x); 
+			      if (is_pair(caar(x)))
+				{
+				  fcdr(x) = caaar(x);
+				  /* ecdr(x) = cadar(x); */
+				}
+			      else 
+				{
+				  fcdr(x) = sc->ELSE;
+				  gcdr(sc->code) = cadar(x); 
+				}
 			    }
 			}
+		      else set_syntax_op(sc->code, sc->CASE_SIMPLE);
 		    }
 		  else set_syntax_op(sc->code, sc->CASE_SIMPLE);
 		}
-	      else set_syntax_op(sc->code, sc->CASE_SIMPLE);
 	    }
 	  else 
 	    {
@@ -46101,12 +46115,14 @@ static s7_pointer check_cond(s7_scheme *sc)
 
   for (x = sc->code; is_pair(x); x = cdr(x))
     {
-      if (!is_pair(car(x)))                                         /* (cond 1) or (cond (#t 1) 3) */
+      if (!is_pair(car(x)))                                           /* (cond 1) or (cond (#t 1) 3) */
 	return(eval_error(sc, "every clause in cond must be a list: ~A", car(x)));
       else
 	{
 	  s7_pointer y;
 	  y = car(x);
+	  if ((!is_pair(cdr(y))) && (!is_null(cdr(y))))               /* (cond (1 . 2)) */
+	    return(eval_error(sc, "cond: stray dot? ~A", sc->code));
 	  if ((cadr(y) == sc->FEED_TO) &&
 	      (s7_symbol_value(sc, sc->FEED_TO) == sc->UNDEFINED))
 	    {
@@ -51544,7 +51560,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if ((index < string_length(s)) &&
 		    (index >= 0))
 		  {
-		    sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
+		    if (is_bytevector(s))
+		      sc->value = small_int((unsigned int)string_value(s)[index]);
+		    else sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
 		    goto START;
 		  }
 		sc->value = string_ref_1(sc, s, cadr(code));
@@ -51570,7 +51588,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if ((index < string_length(s)) &&
 			(index >= 0))
 		      {
-			sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
+			if (is_bytevector(s))
+			  sc->value = small_int((unsigned int)string_value(s)[index]);
+			else sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
 			goto START;
 		      }
 		    out_of_range(sc, sc->STRING_REF, small_int(2), cadr(code), "between 0 and string length");
@@ -51595,7 +51615,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if ((index < string_length(s)) &&
 		    (index >= 0))
 		  {
-		    sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
+		    if (is_bytevector(s))
+		      sc->value = small_int((unsigned int)string_value(s)[index]);
+		    else sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
 		    goto START;
 		  }
 		sc->value = string_ref_1(sc, s, ind);
@@ -54974,7 +54996,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if ((index >= 0) &&
 		      (index < string_length(sc->code)))
 		    {
-		      sc->value = s7_make_character(sc, ((unsigned char *)string_value(sc->code))[index]);
+		      if (is_bytevector(sc->code))
+			sc->value = small_int((unsigned int)(string_value(sc->code))[index]);
+		      else sc->value = s7_make_character(sc, ((unsigned char *)string_value(sc->code))[index]);
 		      goto START;
 		    }
 		}
@@ -58717,6 +58741,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
     case OP_CASE1: 
+      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       {
 	s7_pointer x, y;
 	if (is_simple(sc->value))
@@ -58772,6 +58797,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_CASE_SIMPLE: 
+      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       /* assume symbol as selector, all keys are simple, and no =>
        */
       {
@@ -58807,6 +58833,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_CASE_SIMPLER: 
+      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       /* assume symbol as selector, all keys are simple, and no => and no else
        */
       {
@@ -58834,6 +58861,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_CASE_SIMPLER_1: 
+      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       /* assume symbol as selector, all keys are simple, and no => and no else, bodies are 1 liners
        */
       {
@@ -58858,7 +58886,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_CASE_SIMPLER_SS: 
-      /* assume symbol as selector, all keys are simple, and no => and no else, bodies are 1 liners
+      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
+      /* assume hop_safe_ss as selector, all keys are simple, and no => and no else, bodies are 1 liners
        */
       {
 	s7_pointer x, y, selector, args;
@@ -58886,7 +58915,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
       /* --------------- */
+
+      /* TODO: these cases are not being hit by s7test!  How many more are there?
+       */
+
     case OP_CASE_SIMPLEST_SS:
+      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       {
 	s7_pointer x, selector, args;
 	args = cdar(sc->code);
@@ -58894,7 +58928,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	car(sc->T2_2) = finder(sc, cadr(args));
 	car(sc->T2_1) = x;
 	selector = c_call(car(sc->code))(sc, sc->T2_1);
-
 	for (x = cdr(sc->code); is_pair(x); x = cdr(x))
 	  if (fcdr(x) == selector)
 	    {
@@ -58911,6 +58944,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_CASE_SIMPLEST: 
+      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       /* assume symbol as selector, all keys are simple and singletons, and no => and no else, bodies are 1 liners
        */
       {
@@ -58929,6 +58963,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_CASE_SIMPLEST_ELSE: 
+      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       /* assume symbol as selector, all keys are simple and singletons, and no =>, bodies are 1 liners
        */
       {
@@ -58947,6 +58982,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_CASE_SIMPLEST_ELSE_C: 
+      /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       /* assume symbol as selector, all keys are simple and singletons, and no =>, bodies are constants
        */
       {
@@ -59543,9 +59579,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* --------------- */
     default:
-      fprintf(stderr, "unknown operator: %d, %s\n", 
+      fprintf(stderr, "unknown operator: %d, %s in %s\n", 
 	      (int)(sc->op), 
-	      (((int)(sc->op) < OP_MAX_DEFINED) && ((int)(sc->op) >= 0)) ? op_names[(int)(sc->op)] : "?");
+	      (((int)(sc->op) < OP_MAX_DEFINED) && ((int)(sc->op) >= 0)) ? op_names[(int)(sc->op)] : "?",
+	      DISPLAY(sc->cur_code));
       return(sc->F);
     }
 
@@ -65544,7 +65581,4 @@ s7_scheme *s7_init(void)
  *         set, compatible_set?
  *         mark, copy, fill, reverse, etc print
  *    make-real|integer|rational|-vector is not quite right -- we want make-float|int|byte-vector
- */
-
-/* bytevector support is minimal and confusing -- see end of s7test.scm for a few of the problems
  */

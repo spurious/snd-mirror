@@ -24829,13 +24829,8 @@ EDITS: 2
 		 (if (not (char=? (s1 i) (s2 j)))
 		     (return #f)))))))))
   
-  ;; TODO: gtk3 hangs in mix-file-dialog
-  ;;   actually it's not hung, just going very slow -- this is a bug in gtk!  I'll have to abandon the slist filers
-
-  (if (and with-gui (not (provided? 'gtk1))) 
-      
+  (if with-gui
       (begin
-	
 	(without-errors (peaks))
 	(enved-dialog)
 	(color-orientation-dialog)

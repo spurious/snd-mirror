@@ -6061,9 +6061,9 @@ the current environment, so defines happen in the enclosing environment.
   ((if (input-port? port) call-with-input-port call-with-output-port) port proc))
 
 
-(define (bytevector-u8-ref b k) (char-&gt;integer (b k)))
-(define (bytevector-u8-set! b k c) (char-&gt;integer (set! (b k) (integer-&gt;char c))))
-(define bytevector-length string-length)
+(define (bytevector-u8-ref b k) (b k))
+(define (bytevector-u8-set! b k c) (set! (b k) c))
+(define bytevector-length length)
 (define (bytevector-copy . args) (-&gt;bytevector (apply string-copy args)))
 (define (bytevector-append . args) (-&gt;bytevector (apply string-append args)))
 (define write-bytevector write-string)
@@ -6278,8 +6278,8 @@ the current environment, so defines happen in the enclosing environment.
 	    libs)))
 
 
-;; delay and force: really bad ideas (avert your gaze!)
-;;   this implementation is from the r7rs spec
+;; delay and force: ugh (hold your nose!)
+;;   this implementation is based on the r7rs spec
 (define-macro (delay-force expr) 
   `(make-promise #f (lambda () ,expr)))
 (define-macro (delay expr) 
@@ -6367,15 +6367,10 @@ the current environment, so defines happen in the enclosing environment.
 ;; command-line is problematic: s7 has no access to the caller's "main" function, and
 ;;   outside Windows, there's no reasonable way to get these arguments.
 
+;; other minor differences: 
+;;  in s7, single-quote can occur in a name
+;;  s7 doesn't currently implement #\xxxx characters
 </pre>
-
-<!-- more diffs:
-     single quote can occur in a name
-     rename?
-     include-ci #!fold-case
-     #\x... chars where not a byte
--->
-
 
 <!-- implementation library (srfi-112):
 

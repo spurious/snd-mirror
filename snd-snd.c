@@ -2,9 +2,6 @@
 #include "sndlib-strings.h"
 #include "clm2xen.h"
 
-/* TODO: move apply-controls out of C
- */
-
 static snd_info *get_sp_1(int index)
 {
   if ((index >= 0) &&
@@ -2108,65 +2105,6 @@ void printout_to_status_area(const char *msg, void *data)
 
 
 /* ---------------------------------------- sound objects ---------------------------------------- */
-
-/* this is my long term plan right now... */
-
-/* generics (besides length, srate, channels, frames, file-name, sync, maxamp, play, copy, fill!, [apply], [set!], [for-each], [map]):
- *
- *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
- *                               mus cases: readin=file+chan? etc, port -> filename?, sound->filename?
- *               seems redundant -- why not use file-name?
- *
- *             position:       mark-sample mix-position region-position sampler-position
- *               [location?]     port->line number?, mus cases = mus_location?, player? widget? cursor if sound?
- *               (CL has position)
- *
- *             properties:     edit|mark|mix|sound|channel-properties procedure-property?  [also property as accessor]
- *               but then typos lead to seriously confusing behavior -- I think I'll leave out properties for now.
- *
- *             name:           mark|mix-name file-name (widget name via XtName) mus-name colormap
- *                               __func__? port-filename sampler-filename
- *
- *             reverse is a special case -- it really only makes sense with lists where reversal happens all the time
- *               and for all other types we'd want reverse! (in-place change), but extremely rarely.
- *
- *     which leaves:
- *             scale(-to|by) convolve fft env filter insert mix save smooth src map|scan pan-mix sampler?
- *
- * save with all the optkey args for all types (treat list/vector etc as sound data)
- * check map/for-each cases -- sound selection etc (and add to extsnd) and set/ref
- *   for-each depends on ref, map could depend on copy/set/ref
- *
- *    objects are generator(clm2xen), player(snd-dac), sampler(snd-edits), sound-data(sndlib2xen), transform (snd-fft),
- *               mark(snd-marks), mix(snd-mix), selection(snd-select), region(snd-region), colormap(snd-gxcolormap),
- *               vct(vct), hook(xen), XmObj(xm, xg), plus the base types(s7): string, hash-table, vector, pair, object
- *
- *    also needed are further cases of ref/set
- *    ref needed: mix? region selection sound
- *    set needed: selection? sound 
- *
- * possible new objects: menu-item, file-filter|sorter, fft-window?, variable-graph?
- *
- * (scan-channel -> channel-for-each)
- *   and channel-map rather than map-channel
- *   channel-for-each in the multiarg case would make it easier to compare chans 
- *   (find-if func snd...)
- * (eval-over-selection -> selection-for-each) *-for-each
- *   then selection-map would replace the current selected samples
- *
- * do everything through generic sampler (vector etc)
- *   in/out/readin generic as well, so we can use instruments for edits and vice-versa without change
- *   selection sampler [no need for snd-sampler (snd-edits) I think]
- *
- *  the goal being that all clm and snd structures are compatible, all operations interchangeable
- *    so (violin 0 1 440 .1) can appear sensibly in any context
- *
- * then deprecate all the special case stuff, add generic versions of *.scm examples
- * sound-file properties?  a data base saving all such info (rather than kludges involving headers)
- *   (hash-table makes more sense as a property list than a list in large cases) -- currently it's actually a vector
- *   or a global data base for all properties? -- easy to search or display in various ways
- */
-
 
 typedef struct {
   int n;

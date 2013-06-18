@@ -4754,8 +4754,16 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (length #u8()) 0)
 (test (length (bytevector)) 0)
 (test (bytevector? #u8()) #t)
-
-
+(test (equal? (let ((bv #u8(1 0 3))) (set! (bv 2) 64) bv) #u8(1 0 64)) #t)
+(test (let ((bv #u8(1 0 3))) (map values bv)) '(1 0 3))
+(test (let ((bv #u8(1 0 3)) (lst ())) (for-each (lambda (x) (set! lst (cons x lst))) bv) lst) '(3 0 1))
+(test (let ((bv #u8(1 2 3))) (bv 1)) 2)
+(test (let ((bv #u8(1 2 3))) (reverse bv)) #u8(3 2 1))
+(test (let ((bv #u8(1 2 3))) (object->string (reverse bv))) "#u8(3 2 1)")
+(test (let ((bv #u8(1 2 3))) (copy bv)) #u8(1 2 3))
+(test (#u8(1 2 3) 2) 3)
+;; (sort! #u8(3 1 2) <) -> error, but why not allow strings in sort? 
+;; should (vector? #u8(1 2)) be #t?
 
 
 
@@ -71653,22 +71661,4 @@ in non-gmp,
      (set! lst (cons i lst))))
 ;;; ok (tested) up to 10000000 
 |#
-
-#|
-;;; TODO: bytevector tests
-
-(let ((bv #u8(1 0 3)))
-  ;(test bv #u8(1 0 3))
-  ;(test (object->string bv) "#u8(1 0 3)")
-  ;(test (bv 1) #\null) ; should this return 0?
-  (let ((bv #u8(1 0 3))) (set! (bv 2) 64) bv)
-  (map values bv) ; -> (#\x1 #\null #\x3) 
-  (equal? bv #u8(1 0 3)); -> #t
-  (equal? (bytevector 1 0 3) #u8(1 0 3)); -> #t
-  (bytevector? bv); -> #t (it's also a string)
-  (equal? (make-bytevector 3) #u8(0 0 0))
-  (string-ref #u8(64 65 66) 1)); -> #\A
-
-|#
-
 	  
