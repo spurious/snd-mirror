@@ -1474,13 +1474,13 @@ int main(int argc, char **argv)
     {fprintf(stderr, "values: %s\n", s1 = TO_STR(p)); free(s1);}
 
   {                            
-    s7_pointer old_port, result;
+    s7_pointer old_port;
     const char *errmsg = NULL;
 
     old_port = s7_set_current_error_port(sc, s7_open_output_string(sc));
     gc_loc = s7_gc_protect(sc, old_port);
 
-    result = s7_eval_c_string(sc, "(+ 1 #\\c)");
+    s7_eval_c_string(sc, "(+ 1 #\\c)");
     errmsg = s7_get_output_string(sc, s7_current_error_port(sc));
     if ((errmsg) && (*errmsg))
       {

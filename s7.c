@@ -4211,7 +4211,6 @@ static void resize_op_stack(s7_scheme *sc)
 
 #define IF_BEGIN_POP_STACK(Sc) do {if (main_stack_op(Sc) == OP_BEGIN1) goto POP_BEGIN; goto START;} while (0)
 #define IF_BEGIN_POP_STACK_ELSE_SET_VALUE(Sc, Sym) do {if (main_stack_op(Sc) == OP_BEGIN1) goto POP_BEGIN; sc->value = slot_value(Sym); goto START;} while (0)
-#define IN_MEDIA_RES(Sc) (main_stack_op(Sc) == OP_BEGIN1)
 
 
 static void stack_reset(s7_scheme *sc) 
@@ -43072,7 +43071,7 @@ static s7_pointer check_case(s7_scheme *sc)
       if ((!has_feed_to) &&
 	  (keys_simple))
 	{
-	  if (has_else)
+	  if (has_else) /* don't combine ifs ! */
 	    {
 	      if (is_symbol(car(sc->code)))
 		{
@@ -43604,6 +43603,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 		  else
 		    {
 		      fcdr(sc->code) = cadaar(sc->code);
+		      gcdr(sc->code) = caaar(sc->code); /* added 18-Jun-13 to parallel LET_C_D cases above */
 		      if (is_symbol(cadaar(sc->code)))
 			{
 			  if (is_null(cddr(sc->code)))
@@ -45710,6 +45710,8 @@ static s7_pointer check_do(s7_scheme *sc)
 	  /* loop has one step variable, and normal-looking end test
 	   */
 	  vars = car(vars);
+	  if (symbol_has_accessor(car(vars)))
+	    return(sc->code);
 	  
 	  if ((safe_list_length(sc, vars) == 3) &&
 	      ((!is_pair(cadr(vars))) ||
@@ -45925,6 +45927,7 @@ static s7_pointer check_do(s7_scheme *sc)
 	    {
 	      s7_pointer var;
 	      var = car(p);
+
 	      if (!is_init_dox_safe(sc, cadr(var)))
 		{
 		  /* fprintf(stderr, "init: %s %s\n", DISPLAY(cadr(var)), (is_optimized(cadr(var))) ? opt_names[optimize_data(cadr(var))] : ""); */
@@ -45940,11 +45943,19 @@ static s7_pointer check_do(s7_scheme *sc)
 	      /* we want to use the pending_value slot for other purposes, so make sure
 	       *   the current val is not referred to in any trailing step exprs.  The inits
 	       *   are ok because at init-time, the new frame is not connected.
+	       *
+	       * another tricky case: current var might be used in previous step expr(!)
 	       */
 	      var = car(var);
-	      for (rp = cdr(p); is_pair(rp); rp = cdr(rp))
-		if (s7_tree_memq(sc, var, cddar(rp)))
-		  return(sc->code);
+	      if (symbol_has_accessor(var))
+		return(sc->code);
+	      for (rp = vars; is_pair(rp); rp = cdr(rp)) /* look both back and forward for cross-talk */
+		if ((rp != p) && 
+		    (s7_tree_memq(sc, var, cddar(rp))))
+		  {
+		    /* fprintf(stderr, "%s found in %s\n", DISPLAY(var), DISPLAY(rp)); */
+		    return(sc->code);
+		  }
 	    }
 	}
       
@@ -53912,11 +53923,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->cur_code = sc->code;               /* in case an error occurs, this helps tell us where we are */
 	      set_type(sc->code, SYNTACTIC_PAIR);
 	      sc->op = (opcode_t)syntax_opcode(car(sc->code));
+	      /* fprintf(stderr, "set %s to %lld %s\n", DISPLAY(sc->code), sc->op, real_op_names[sc->op]); */
 	      lifted_op(sc->code) = sc->op;
 	      sc->code = cdr(sc->code);
 	      goto START_WITHOUT_POP_STACK;
 	    }
-	  
 	  
 	  /* -------------------------------------------------------------------------------- */
 	  /* trailers */
@@ -53946,13 +53957,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    /* evaluate the inner list */
 		    push_stack(sc, OP_EVAL_ARGS, sc->NIL, cdr(sc->code));
-		    if (is_syntactic(car(carc)))
+		    if (typeflag(car(carc)) == SYNTACTIC_TYPE) 
+		      /* was checking for is_syntactic here but that can be confused by successive optimizer passes:
+		       *  (define (hi) (((lambda () list)) 1 2 3)) etc
+		       */
 		      {
 			if ((car(carc) == sc->QUOTE) &&        /* ('and #f) */
 			    ((!is_pair(cdr(carc))) ||          /* ((quote . #\h) (2 . #\i)) ! */
 			     (is_syntactic(cadr(carc)))))
 			  return(apply_error(sc, carc, cdr(sc->code)));
-			
 			sc->op = (opcode_t)syntax_opcode(car(carc));
 			sc->code = cdr(carc);
 			goto START_WITHOUT_POP_STACK;
@@ -54656,6 +54669,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       
     APPLY:
+      /* fprintf(stderr, "apply %s to %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
       switch (type(sc->code))
 	{
 	case T_C_FUNCTION: 	                    /* -------- C-based function -------- */
@@ -55114,55 +55128,49 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_DEFINE_FUNCHECKED:
-      sc->value = caar(sc->code);
-      if (IN_MEDIA_RES(sc))
-	{
-	  s7_pointer new_func, new_env;
+      {
+	/* we can't optimize away cases like (define (make-func) (define (a-func a) (+ a 1))) because we'll
+	 *   also collapse ((symbol->value (define...)) args)
+	 */
+	s7_pointer new_func, new_env;
 
-	  /* make_closure... */
-	  NEW_CELL(sc, new_func);
-	  closure_args(new_func) = cdar(sc->code);
-	  closure_body(new_func) = cdr(sc->code);
-	  closure_setter(new_func) = sc->F; 
-	  closure_arity(new_func) = integer(fcdr(sc->code));
-	  set_type(new_func, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); 
-	  if (is_null(cdr(closure_body(new_func)))) set_one_liner(new_func);
-	  sc->capture_env_counter++; 
-	  
-	  if (is_safe_closure(cdr(sc->code)))
-	    {
-	      s7_pointer arg;
-	      set_safe_closure(new_func);
-	      
-	      NEW_CELL_NO_CHECK(sc, new_env);
-	      environment_id(new_env) = ++environment_number;
-	      environment_slots(new_env) = sc->NIL;
-	      next_environment(new_env) = sc->envir;
-	      set_type(new_env, T_ENVIRONMENT | T_IMMUTABLE | T_FUNCTION_ENV);
-	      closure_environment(new_func) = new_env;
-	      environment_function(new_env) = sc->value;
-	      
-	      for (arg = closure_args(new_func); is_pair(arg); arg = cdr(arg))
-		s7_make_slot(sc, new_env, car(arg), sc->NIL);
-	      environment_slots(new_env) = reverse_slots(sc, environment_slots(new_env));
-	    }
-	  else closure_environment(new_func) = sc->envir;
-	  /* unsafe closures created by other functions do not support __func__ */
-	  
-	  ADD_SLOT(sc->envir, sc->value, new_func);
-	  set_local(sc->value);
-	  
-	  goto POP_BEGIN;
-	}
-      /* if just the define, the func is almost a no-op!
-       *
-       * (define (make-func) (define (a-func a) (+ a 1)))
-       * (symbol? (make-func)) -> #t but
-       * (symbol->value (make-func)) -> #<undefined>
-       *
-       * so we just set sc->value above and return
-       */
-      goto START;
+	sc->value = caar(sc->code);
+
+	/* make_closure... */
+	NEW_CELL(sc, new_func);
+	closure_args(new_func) = cdar(sc->code);
+	closure_body(new_func) = cdr(sc->code);
+	closure_setter(new_func) = sc->F; 
+	closure_arity(new_func) = integer(fcdr(sc->code));
+	set_type(new_func, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); 
+	if (is_null(cdr(closure_body(new_func)))) set_one_liner(new_func);
+	sc->capture_env_counter++; 
+	
+	if (is_safe_closure(cdr(sc->code)))
+	  {
+	    s7_pointer arg;
+	    set_safe_closure(new_func);
+	    
+	    NEW_CELL_NO_CHECK(sc, new_env);
+	    environment_id(new_env) = ++environment_number;
+	    environment_slots(new_env) = sc->NIL;
+	    next_environment(new_env) = sc->envir;
+	    set_type(new_env, T_ENVIRONMENT | T_IMMUTABLE | T_FUNCTION_ENV);
+	    closure_environment(new_func) = new_env;
+	    environment_function(new_env) = sc->value;
+	    
+	    for (arg = closure_args(new_func); is_pair(arg); arg = cdr(arg))
+	      s7_make_slot(sc, new_env, car(arg), sc->NIL);
+	    environment_slots(new_env) = reverse_slots(sc, environment_slots(new_env));
+	  }
+	else closure_environment(new_func) = sc->envir;
+	/* unsafe closures created by other functions do not support __func__ */
+	
+	ADD_SLOT(sc->envir, sc->value, new_func);
+	set_local(sc->value);
+	
+	goto START;
+      }
 
       
       /* --------------- */
@@ -55631,11 +55639,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  case T_C_RST_ARGS_FUNCTION:
 	  case T_C_ANY_ARGS_FUNCTION:                       /* (let ((lst (list 1 2))) (set! (list-ref lst 1) 2) lst) */
 	  case T_C_FUNCTION:
+	    /* obj here is a c_function, but its setter could be a closure and vice versa below
+	     */
 	    if (is_procedure(c_function_setter(obj)))
 	      {
-		car(sc->T2_1) = arg;
-		car(sc->T2_2) = value;
-		sc->value = c_function_call(c_function_setter(obj))(sc, sc->T2_1);
+		if (is_c_function(c_function_setter(obj)))
+		  {
+		    car(sc->T2_1) = arg;
+		    car(sc->T2_2) = value;
+		    sc->value = c_function_call(c_function_setter(obj))(sc, sc->T2_1);
+		  }
+		else
+		  {
+		    sc->code = c_function_setter(obj);
+		    sc->args = list_2(sc, arg, value);
+		    goto APPLY;
+		  }
 	      }
 	    else
 	      {
@@ -55658,9 +55677,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  case T_CLOSURE_STAR:
 	    if (is_procedure(closure_setter(obj)))
 	      {
-		sc->code = closure_setter(obj);
-		sc->args = list_2(sc, arg, value);
-		goto APPLY;
+		if (is_c_function(closure_setter(obj)))
+		  {
+		    car(sc->T2_1) = arg;
+		    car(sc->T2_2) = value;
+		    sc->value = c_function_call(closure_setter(obj))(sc, sc->T2_1);
+		  }
+		else
+		  {
+		    sc->code = closure_setter(obj);
+		    sc->args = list_2(sc, arg, value);
+		    goto APPLY;
+		  }
 	      }
 	    else
 	      {
@@ -58972,7 +59000,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	for (x = cdr(sc->code); is_pair(x); x = cdr(x))
 	  if (fcdr(x) == selector)
 	    {
-	      sc->code = ecdr(x);
+	      sc->code = cadar(x); /* ecdr(x); */
 	      goto EVAL;
 	    }
 	sc->code = gcdr(sc->code);
@@ -58991,7 +59019,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	for (x = cdr(sc->code); is_pair(x); x = cdr(x))
 	  if (fcdr(x) == selector)
 	    {
-	      sc->value = ecdr(x);
+	      sc->value = cadar(x); /* ecdr(x); */ /* TODO: why is the ecdr(x) stuff commented out in the case optimizer? are the others unsafe? */
 	      if (is_pair(sc->value))
 		sc->value = cadr(sc->value);
 	      goto START;
@@ -65582,3 +65610,4 @@ s7_scheme *s7_init(void)
  *         mark, copy, fill, reverse, etc print
  *    make-real|integer|rational|-vector is not quite right -- we want make-float|int|byte-vector
  */
+

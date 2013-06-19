@@ -71,6 +71,15 @@
   ;;                     (eval ',tst) works here, but eval-string is problematic
   ;; `(ok? ',tst (lambda () (eval-string (format #f "~S" ',tst))) ,expected))
   `(ok? ',tst (lambda () ,tst) ,expected))
+#|
+  `(ok? ',tst (let () 
+		(define (tster) ,tst)
+		(define (caller) (tster))
+		(catch #t caller (lambda args #f))
+		caller)
+	,expected))
+|#
+
 
 (define (tok? otst ola)
   (let* ((data #f)
@@ -1958,6 +1967,14 @@
 (test (let () (define (hi a b c d) (+ a (* (- b c) d))) (define (ho) (hi 1 2 3 4)) (ho)) -3)
 (test (let () (define (hi a b c d) (+ a (* d (- b c)))) (define (ho) (hi 1 2 3 4)) (ho)) -3)
 (test (let () (define (hi) (let ((x (values 1 2))) (if x (list x)))) (define (ho) (hi)) (catch #t (lambda () (ho)) (lambda args #f)) (ho)) 'error)
+
+(let () (define (e1) (((lambda () list)) 'a 'b 'c)) (define (e2) (e1)) (e2) (test (e2) '(a b c)))
+(let () (define (c1 s i) (case (string-ref s i) ((#\a) 1) (else 2))) (define (c3 s i) (c1 s i)) (c3 "hiho" 1) (test (c3 "hiho" 1) 2))
+(let () (define (c1 s i) (case (string-ref s i) ((#\a) 1) ((#\i) 2))) (define (c3 s i) (c1 s i)) (c3 "hiho" 1) (test (c3 "hiho" 1) 2))
+(let () (define (c1 s i) (case (string-ref s i) ((#\a #\h) 1) ((#\i #\o) 2))) (define (c3 s i) (c1 s i)) (c3 "hiho" 1) (test (c3 "hiho" 1) 2))
+(let () (define (c1 s i) (case (string-ref s i) ((#\a #\h) 1) (else 2))) (define (c3 s i) (c1 s i)) (c3 "hiho" 1) (test (c3 "hiho" 1) 2))
+(let () (define (d1) (do ((lst '() (cons i lst)) (i 0 (+ i 1))) ((> i 6) (reverse lst)))) (define (d2) (d1)) (d2) (test (d2) '(0 1 2 3 4 5 6)))
+(let () (define (d3) ((symbol->value (define (hi a) (+ a 1))) 2)) (define (d4) (d3)) (d4) (test (d4) 3))
 
 
 
@@ -15923,20 +15940,20 @@ in s7:
   (define (do-test-14) (do ((i 0 (+ i 1))) ((= i 10)) (set! i (+ i 1)) (display i))) 
   (test (with-output-to-string (lambda () (do-test-14))) "13579"))
 
-(let ((lst '()))
-  (define (do-test-15) (do ((i 0 (+ i 1))) ((= i 10)) (set! lst (cons i lst))) lst) 
+(let ((lst ()))
+  (define (do-test-15) (set! lst ()) (do ((i 0 (+ i 1))) ((= i 10)) (set! lst (cons i lst))) lst) 
   (test (do-test-15) '(9 8 7 6 5 4 3 2 1 0)))
 
 (let ((lst (list 9 8 7 6 5 4 3 2 1 0))) 
   (define (do-test-16) (do ((i 0 (+ i 1))) ((= i 10)) (list-set! lst i i)) lst) 
   (test (do-test-16) '(0 1 2 3 4 5 6 7 8 9)))
 
-(let ((lst '())) 
-  (define (do-test-17) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j i)) (set! lst (cons j lst)))) lst) 
+(let ((lst ())) 
+  (define (do-test-17) (set! lst ()) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j i)) (set! lst (cons j lst)))) lst) 
   (test (do-test-17) '(9 8 7 6 5 4 3 2 1 0)))
 
 (let ((lst '())) 
-  (define (do-test-17a) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j (min i 100))) (set! lst (cons j lst)))) lst) 
+  (define (do-test-17a) (set! lst ()) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j (min i 100))) (set! lst (cons j lst)))) lst) 
   (test (do-test-17a) '(9 8 7 6 5 4 3 2 1 0)))
 
 (let () 
