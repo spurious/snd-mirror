@@ -2372,49 +2372,88 @@ bool encoded_header_p(int header_type)
 }
 
 
+static char *quoted_filename(const char *filename, bool *new_name)
+{
+  int p, len;
+  p = strcspn(filename, "' *?"); /* also [] but do they actually ever happen? */
+  len = strlen(filename);
+  if (p < len)
+    {
+      int i, j;
+      char *name;
+      (*new_name) = true;
+      name = (char *)calloc(len * 2, sizeof(char));
+      for (i = 0, j = 0; i < len; i++)
+	{
+	  if ((filename[i] == ' ') || 
+	      (filename[i] == '\'') || 
+	      (filename[i] == '*') || 
+	      (filename[i] == '?'))
+	    name[j++] = '\\';
+	  name[j++] = filename[i];
+	}
+      return(name);
+    }
+  (*new_name) = false;
+  fprintf(stderr, "not quoted: %s\n", filename);
+  return((char *)filename);
+}
+
+
 void snd_encode(int type, const char *input_filename, const char *output_filename)
 {
   /* write lshort wav tmpfile, encode, remove tmpfile */
-  char *command = NULL;
+  char *command = NULL, *ofile, *ifile;
+  bool ofile_free = false, ifile_free = false;
+
   if (mus_file_probe(output_filename))
     snd_remove(output_filename, IGNORE_CACHE);
   /* these guys balk at overwriting */
+
+  /* can't use '%s' here because the filename might also have single-quotes!
+   */
+  ifile = quoted_filename(input_filename, &ifile_free);
+  ofile = quoted_filename(output_filename, &ofile_free);
 
   switch (type)
     {
 #if HAVE_OGG
     case MUS_OGG:
-      command = mus_format("%s %s -o %s", PATH_OGGENC, input_filename, output_filename);
+      command = mus_format("%s %s -o %s", PATH_OGGENC, ifile, ofile);
       break;
 #endif
 
 #if HAVE_FLAC
     case MUS_FLAC: 
-      command = mus_format("%s %s -o %s", PATH_FLAC, input_filename, output_filename);
+      command = mus_format("%s %s -o %s", PATH_FLAC, ifile, ofile);
       break;
 #endif
 
 #if HAVE_SPEEX
     case MUS_SPEEX:
-      command = mus_format("%s %s %s", PATH_SPEEXENC, input_filename, output_filename);
+      command = mus_format("%s %s %s", PATH_SPEEXENC, ifile, ofile);
       break;
 #endif
 
 #if HAVE_TTA
     case MUS_TTA:
-      command = mus_format("%s -e %s -o %s", PATH_TTA, input_filename, output_filename);
+      command = mus_format("%s -e %s -o %s", PATH_TTA, ifile, ofile);
       break;
 #endif
 
 #if HAVE_WAVPACK
     case MUS_WAVPACK:
-      command = mus_format("%s %s -o %s", PATH_WAVPACK, input_filename, output_filename);
+      command = mus_format("%s %s -o %s", PATH_WAVPACK, ifile, ofile);
       break;
 #endif
 
     default: 
       break;
     }
+
+  if (ofile_free) free(ofile);
+  if (ifile_free) free(ifile);
+
   if (command)
     {
       int err;
@@ -2429,68 +2468,77 @@ void snd_encode(int type, const char *input_filename, const char *output_filenam
 int snd_decode(int type, const char *input_filename, const char *output_filename)
 {
   int err = 0;
-  char *command = NULL;
+  char *command = NULL, *ofile, *ifile;
+  bool ofile_free = false, ifile_free = false;
+  
   if (mus_file_probe(output_filename))
     snd_remove(output_filename, IGNORE_CACHE);
   /* these guys balk at overwriting */
+
+  ifile = quoted_filename(input_filename, &ifile_free);
+  ofile = quoted_filename(output_filename, &ofile_free);
 
   switch (type)
     {
 #if HAVE_OGG
     case MUS_OGG:
-      command = mus_format("%s %s -b 16 -o %s", PATH_OGGDEC, input_filename, output_filename);
+      command = mus_format("%s %s -b 16 -o %s", PATH_OGGDEC, ifile, ofile);
       break;
 #endif
 
 #if HAVE_FLAC
     case MUS_FLAC: 
-      command = mus_format("%s -d %s -o %s", PATH_FLAC, input_filename, output_filename);
+      command = mus_format("%s -d %s -o %s", PATH_FLAC, ifile, ofile);
       break;
 #endif
 
 #if HAVE_SPEEX
     case MUS_SPEEX:
-      command = mus_format("%s %s %s", PATH_SPEEXDEC, input_filename, output_filename);
+      command = mus_format("%s %s %s", PATH_SPEEXDEC, ifile, ofile);
       break;
 #endif
 
 #if HAVE_MPEG
     case MUS_MPEG:
 #if HAVE_MPG321
-      command = mus_format("%s -q -w %s %s", PATH_MPG321, output_filename, input_filename);
+      command = mus_format("%s -q -w %s %s", PATH_MPG321, ofile, ifile);
 #else
-      command = mus_format("%s -q -w %s %s", PATH_MPG123, output_filename, input_filename);
+      command = mus_format("%s -q -w %s %s", PATH_MPG123, ofile, ifile);
 #endif
       break;
 #endif
 
 #if HAVE_TIMIDITY
     case MUS_MIDI:
-      command = mus_format("%s %s -Ou -o %s", PATH_TIMIDITY, input_filename, output_filename);
+      command = mus_format("%s %s -Ou -o %s", PATH_TIMIDITY, ifile, ofile);
       break;
 #endif
 
 #if HAVE_SHORTEN
     case MUS_SHORTEN:
-      command = mus_format("%s -x %s %s", PATH_SHORTEN, input_filename, output_filename);
+      command = mus_format("%s -x %s %s", PATH_SHORTEN, ifile, ofile);
       break;
 #endif
 
 #if HAVE_TTA
     case MUS_TTA:
-      command = mus_format("%s -d %s -o %s", PATH_TTA, input_filename, output_filename);
+      command = mus_format("%s -d %s -o %s", PATH_TTA, ifile, ofile);
       break;
 #endif
 
 #if HAVE_WAVPACK
     case MUS_WAVPACK:
-      command = mus_format("%s %s -o %s", PATH_WVUNPACK, input_filename, output_filename);
+      command = mus_format("%s %s -o %s", PATH_WVUNPACK, ifile, ofile);
       break;
 #endif
     default: 
       err = -1;
       break;
     }
+
+  if (ofile_free) free(ofile);
+  if (ifile_free) free(ifile);
+
   if (command)
     {
       int err;

@@ -14,8 +14,6 @@
 #define WITH_SKETCH 1 /* (!HAVE_GTK_3) see below */
 
 /* PERHAPS: thumbnail graph: save the points? split the idler? g_source_remove if overlap?
- * TODO: open can still get stuck -- what is the problem??
- * PERHAPS: in gtk3, don't hide the open dialog unless asked to.
  *
  * In gtk2, if we have a file selected, then some other process writes a file in the 
  *   current directory (emacs autosaving), the file chooser gets confused as
@@ -24,6 +22,7 @@
  *
  * In gtk3, each time we reopen the chooser, it starts all the way back at the useless "recently used"!
  *   We can't use gtk_..._set|select_filename -- the function is simply ignored!
+ *     so currently we never hide the dialog.
  *   And if we resize the dialog, a hand cursor appears, and the next thing we know we're moving the dialog itself!
  *   And valgrind reports a million invalid reads in gtk's code!
  *   And the sketch gets an incomprehensible cairo error
@@ -896,9 +895,11 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
       redirect_snd_error_to(NULL, NULL);
       if (sp) 
 	{
+#if (!HAVE_GTK_3)
 	  hide_me = g_object_get_data(G_OBJECT(fd->dialog), "hide-me"); /* see snd-gtk.scm where this is set */
 	  if (hide_me == 0)
 	    gtk_widget_hide(fd->dialog);
+#endif
 	  select_channel(sp, 0); /* add_sound_window (snd-xsnd.c) -> make_file_info (snd-file) will report reason for error, if any */
 	}
       else

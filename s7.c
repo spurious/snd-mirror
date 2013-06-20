@@ -22726,7 +22726,9 @@ static s7_pointer find_closure(s7_scheme *sc, s7_pointer closure, s7_pointer cur
   for (e = cur_env; is_environment(e); e = next_environment(e))
     {
       if ((is_function_env(e)) &&
-	  (is_symbol(environment_function(e))))
+	  (is_symbol(environment_function(e))) &&
+	  (is_global(environment_function(e))) && /* (define (f1) (lambda () 1)) shouldn't say the returned closure is named f1 */
+	  (slot_value(global_slot(environment_function(e))) == closure))
 	return(environment_function(e));
 
       for (y = environment_slots(e); is_slot(y); y = next_slot(y))
@@ -39665,7 +39667,8 @@ static bool is_all_x_op(int op)
 static bool is_all_x_safe(s7_scheme *sc, s7_pointer p)
 {
   if ((!is_pair(p)) ||
-      (car(p) == sc->QUOTE))
+      ((car(p) == sc->QUOTE) &&
+       (is_pair(cdr(p)))))   /* (if #t (quote . -1)) */
     return(true);
   if (!is_optimized(p))
     return(false);
@@ -42759,17 +42762,17 @@ static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
       if ((is_pair(car(p))) &&
 	  (!form_is_safe(sc, func, args, car(p), (at_end) && (is_null(cdr(p))), bad_set)))
 	{
-	  if ((at_end) && (!is_null(cdr(p))) && (!*bad_set))
+	  if ((at_end) && (is_pair(cdr(p))) && (!*bad_set))
 	    {
-	      /* we checked in check_define that this is not a circular list */
-	      for (p = cdr(p); is_not_null(cdr(p)); p = cdr(p));
-	      if (is_pair(car(p)))
+	      /* we checked in check_define that this is not a circular list, but dotted? */
+	      for (p = cdr(p); is_pair(cdr(p)); p = cdr(p));
+	      if ((is_pair(p)) && (is_pair(car(p))))
 		form_is_safe(sc, func, args, car(p), at_end, bad_set);
 	    }
 	  return(false);
 	}
     }
-  return(true);
+  return(is_null(p));
 }
 
 
@@ -54858,6 +54861,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = closure_body(sc->code);
 	  if (is_pair(cdr(sc->code)))
 	    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	  else
+	    {
+	      if (!is_null(cdr(sc->code)))
+		return(eval_error(sc, "closure body: stray dot? ~A", sc->code));		
+	    }
 	  sc->code = car(sc->code);
 	  goto EVAL;
 	  
@@ -65579,19 +65587,14 @@ s7_scheme *s7_init(void)
 
 /* TODO: use new generic_ff in methods opt case 
  * TODO: we need integer_length everywhere! These fixups are ignored by the optimized cases.
- * get rid of sound-data: mus-audio* mus-sound* use vct for now
- *   sound-data as output: ws.scm, conversions: frame.scm, play: play.scm, snd-motif|gtk.scm, enved.scm
- *   mus-sound|audio-write
- *
  * SOMEDAY: give each e|f|gcdr ref a unique name and figure out how to avoid collisions
- *
+ *          perhaps use type bits unused with pairs: ecdr_set etc [line_set data_set]
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
- *
  *
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7 13.8
  * bench    42736 8752 8051 7725 6515 5194 4364 3989 3997 3997
  * lint           9328 8140 7887 7736 7300 7180 7051 7078
- * index    44300 3291 3005 2742 2078 1643 1435 1363 1365 1345
+ * index    44300 3291 3005 2742 2078 1643 1435 1363 1365 1335
  * s7test    1721 1358 1297 1244  977  961  957  960  943
  * t455|6     265   89   55   31   14   14    9 9155 8998
  * lat        229   63   52   47   42   40   34   31   29   29
@@ -65610,4 +65613,3 @@ s7_scheme *s7_init(void)
  *         mark, copy, fill, reverse, etc print
  *    make-real|integer|rational|-vector is not quite right -- we want make-float|int|byte-vector
  */
-

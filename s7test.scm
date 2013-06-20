@@ -79,6 +79,13 @@
 		caller)
 	,expected))
 |#
+#|
+  `(ok? ',tst (let () 
+		(define (tster) (begin , tst))
+		(catch #t tster (lambda args #f))
+		tster)
+	,expected))
+|#
 
 
 (define (tok? otst ola)
@@ -543,6 +550,10 @@
 (test (eq? #t #true) #t)
 (test (eq? #f #false) #t)
 (test (eq? '() (map values '())) #t)
+
+(let () (define (f2) f2) (test (eq? f2 (f2)) #t))
+(letrec ((f2 (lambda () f2))) (test (eq? f2 (f2)) #t))
+
 
 
 
@@ -1975,6 +1986,9 @@
 (let () (define (c1 s i) (case (string-ref s i) ((#\a #\h) 1) (else 2))) (define (c3 s i) (c1 s i)) (c3 "hiho" 1) (test (c3 "hiho" 1) 2))
 (let () (define (d1) (do ((lst '() (cons i lst)) (i 0 (+ i 1))) ((> i 6) (reverse lst)))) (define (d2) (d1)) (d2) (test (d2) '(0 1 2 3 4 5 6)))
 (let () (define (d3) ((symbol->value (define (hi a) (+ a 1))) 2)) (define (d4) (d3)) (d4) (test (d4) 3))
+(let () (define (fif) (if (< 2 3) (quote . -1))) (catch #t fif (lambda args 'error)) (test (catch #t fif (lambda args 'error)) 'error))
+(let () (define (fcond) (cond ((< 2 3) ((lambda (x) x . 5) 2)))) (catch #t fcond (lambda args 'error)) (test (fcond) 'error))
+
 
 
 
@@ -24598,7 +24612,6 @@ who says the continuation has to restart the map from the top?
  (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() #(()) (list 1 2 3) '(1 . 2) "hi"))
 
 (if (defined? '1+) (test (procedure-name 1+) "1+"))
-(if (defined? 'identity) (test (procedure-name identity) "identity"))
 (test (procedure-name cddr-1) "cddr-1")
 (test (cddr-1 '(1 2 3 4)) (cddr '(1 2 3 4)))
 (test (procedure-name cddr) "cddr")
