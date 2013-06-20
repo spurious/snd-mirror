@@ -1832,6 +1832,7 @@ static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int 
 #define is_true(Sc, p)                ((p) != Sc->F)
 #define is_false(Sc, p)               ((p) == Sc->F)
 #ifdef _MSC_VER
+  #define MS_WINDOWS 1
   #define make_boolean(sc, Val)       (((Val) & 0xff) ? sc->T : sc->F)
 #else
   #define make_boolean(sc, Val)       ((Val) ? sc->T : sc->F)
@@ -8754,8 +8755,8 @@ static bool is_abnormal(s7_pointer x)
     case T_BIG_COMPLEX:
       return((isinf(s7_real_part(x))) || 
 	     (isinf(s7_imag_part(x))) ||
-	     (isnan(s7_real_part(x))) || 
-	     (isnan(s7_imag_part(x))));
+	     (is_NaN(s7_real_part(x))) || 
+	     (is_NaN(s7_imag_part(x))));
 #endif
 
     default:
@@ -10406,7 +10407,7 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 	      if (ix > 0)
 		{
 		  s7_Double fx;
-#if (__ANDROID__)
+#if (__ANDROID__) || (MS_WINDOWS)
 		  fx = log((double)ix) / log(2.0);
 #else
 		  fx = log2((double)ix);
@@ -14525,6 +14526,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if (!WITH_GMP)
 static s7_pointer divide_1;
 static s7_pointer g_divide_1(s7_scheme *sc, s7_pointer args)
 {
@@ -14534,7 +14536,6 @@ static s7_pointer g_divide_1(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if (!WITH_GMP)
 static s7_pointer divide_1r;
 static s7_pointer g_divide_1r(s7_scheme *sc, s7_pointer args)
 {
@@ -18518,10 +18519,10 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer arg3;
       arg3 = caddr(args);
-      if (!is_integer(arg3))
+      if (!s7_is_integer(arg3))
 	return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(3), arg3, T_INTEGER));
 
-      start = integer(arg3);
+      start = s7_integer(arg3);
       if (start < 0)
 	return(wrong_type_argument_with_type(sc, sc->CHAR_POSITION, small_int(3), arg3, A_NON_NEGATIVE_INTEGER));
     }
@@ -18573,10 +18574,10 @@ static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer arg3;
       arg3 = caddr(args);
-      if (!is_integer(arg3))
+      if (!s7_is_integer(arg3))
 	return(wrong_type_argument(sc, sc->STRING_POSITION, small_int(3), arg3, T_INTEGER));
 
-      start = integer(arg3);
+      start = s7_integer(arg3);
       if (start < 0)
 	return(wrong_type_argument_with_type(sc, sc->STRING_POSITION, small_int(3), arg3, A_NON_NEGATIVE_INTEGER));
     }
@@ -38421,9 +38422,10 @@ static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
       s7_pointer arg1;
       arg1 = cadr(expr);
 
+#if (!WITH_GMP)
       if (arg1 == small_int(1))
 	return(divide_1);
-#if (!WITH_GMP)
+
       if ((type(arg1) == T_REAL) &&
 	  (real(arg1) == 1.0))
 	return(divide_1r);
@@ -38442,7 +38444,7 @@ static s7_pointer max_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 {
   if ((args == 2) &&
       (type(cadr(expr)) == T_REAL) &&
-      (!isnan(real(cadr(expr)))))
+      (!is_NaN(real(cadr(expr)))))
     return(max_f2);
   return(f);
 }
@@ -38452,7 +38454,7 @@ static s7_pointer min_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 {
   if ((args == 2) &&
       (type(cadr(expr)) == T_REAL) &&
-      (!isnan(real(cadr(expr)))))
+      (!is_NaN(real(cadr(expr)))))
     return(min_f2);
   return(f);
 }
@@ -39191,9 +39193,10 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* / */
+#if (!WITH_GMP)
   f = set_function_chooser(sc, sc->DIVIDE, divide_chooser);
   divide_1 = make_function_with_class(sc, f, "/", g_divide_1, 2, 0, false, "/ optimization");
-#if (!WITH_GMP)
+
   divide_1r = make_function_with_class(sc, f, "/", g_divide_1r, 2, 0, false, "/ optimization");
 #endif
 
@@ -45292,10 +45295,9 @@ static s7_pointer dox_cdr_s(s7_scheme *sc, s7_pointer arg, s7_pointer slot)
 
 static dox_function dox_mutate(s7_scheme *sc, s7_pointer slot)
 {
-  /* TODO: remove this gmp restriction... */
   s7_pointer expr;
   expr = slot_expression(slot);
-#if (!WITH_GMP)
+#if (!WITH_GMP) 
   if ((((dox_function)fcdr(expr)) == step_dox_c_subtract_f) ||
       (((dox_function)fcdr(expr)) == step_dox_c_add_f))
     {
@@ -49992,7 +49994,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		goto EVAL;  
 	      }
 
-	      /* TODO; we're assuming 1-liner here, and non accessed args */
 	    case OP_CLOSURE_SSb:
 	      if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 2))
 		{
@@ -55240,6 +55241,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   in fcdr somewhere, and pick it up the next time around (since call/cc might take
 	   *   us back to the previous case).
 	   */
+
 	  MAKE_CLOSURE(sc, x, cdar(sc->code), cdr(sc->code), sc->envir);
 	  if (is_integer(fcdr(sc->code)))
 	    closure_arity(x) = integer(fcdr(sc->code));
@@ -58951,10 +58953,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
       /* --------------- */
-
-      /* TODO: these cases are not being hit by s7test!  How many more are there?
-       */
-
     case OP_CASE_SIMPLEST_SS:
       /* fprintf(stderr, "%s: %s\n", real_op_names[sc->op], DISPLAY(sc->code)); */
       {
