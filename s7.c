@@ -1833,7 +1833,11 @@ static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int 
 #define is_false(Sc, p)               ((p) == Sc->F)
 #ifdef _MSC_VER
   #define MS_WINDOWS 1
+  #if 1
+  static s7_pointer make_boolean(s7_scheme *sc, bool val) {if (val) return(sc->T); return(sc->F);}
+  #else
   #define make_boolean(sc, Val)       (((Val) & 0xff) ? sc->T : sc->F)
+  #endif
 #else
   #define make_boolean(sc, Val)       ((Val) ? sc->T : sc->F)
 #endif
@@ -3595,7 +3599,7 @@ void s7_mark_object(s7_pointer p)
 #define GC_TRIGGER_SIZE 64
 
 
-#if HAVE_GETTIMEOFDAY && (!_MSC_VER)
+#if HAVE_GETTIMEOFDAY && (!MS_WINDOWS)
   #include <time.h>
   #include <sys/time.h>
   static struct timeval start_time;
@@ -3611,7 +3615,7 @@ static int gc(s7_scheme *sc)
   if (sc->gc_stats)
     {
       fprintf(stdout, "gc ");
-#if HAVE_GETTIMEOFDAY && (!_MSC_VER)
+#if HAVE_GETTIMEOFDAY && (!MS_WINDOWS)
       gettimeofday(&start_time, &z0);
 #endif
     }
@@ -3767,7 +3771,7 @@ static int gc(s7_scheme *sc)
 
   if (sc->gc_stats)
     {
-#if HAVE_GETTIMEOFDAY && (!_MSC_VER)
+#if HAVE_GETTIMEOFDAY && (!MS_WINDOWS)
       struct timeval t0;
       double secs;
       gettimeofday(&t0, &z0);
@@ -6969,7 +6973,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 static bool is_NaN(s7_Double x) {return(x != x);}
 /* callgrind says this is faster than isnan, I think (very confusing data...) */
 
-#ifdef _MSC_VER
+#if MS_WINDOWS
 /* need to provide inverse hyperbolic trig funcs and cbrt */
 
 double asinh(double x);
@@ -15227,7 +15231,7 @@ static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
   x = car(args);
   y = cadr(args);
 
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
   if (type(x) == type(y))
     {
       if (is_integer(x))
@@ -15291,7 +15295,7 @@ static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
 	case T_REAL:
 	  return(sc->F);
 
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
 	case T_COMPLEX: 
 	  return(make_boolean(sc, (real_part(x) == real_part(y)) && (imag_part(x) == imag_part(y))));
 #else
@@ -16229,7 +16233,7 @@ static s7_pointer g_less_2(s7_scheme *sc, s7_pointer args)
   x = car(args);
   y = cadr(args);
 
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
   if (type(x) == type(y))
     {
       switch (type(x))
@@ -16559,7 +16563,7 @@ static s7_pointer g_geq_2(s7_scheme *sc, s7_pointer args)
   x = car(args);
   y = cadr(args);
 
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
   if (type(x) == type(y))
     {
       if (is_integer(x))
@@ -21185,13 +21189,13 @@ static s7_pointer make_input_file(s7_scheme *sc, const char *name, FILE *fp)
   return(read_file(sc, fp, name, MAX_SIZE_FOR_STRING_PORT, "open"));
 }
 
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
 #include <sys/stat.h>
 #endif
 
 static bool is_directory(const char *filename)
 {
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
   #ifdef S_ISDIR
     struct stat statbuf;
     #if HAVE_LSTAT
@@ -21219,7 +21223,7 @@ static s7_pointer open_input_file_1(s7_scheme *sc, const char *name, const char 
   fp = fopen(name, mode);
   if (!fp)
     {
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
       if (errno == EINVAL)
 	return(file_error(sc, caller, "invalid mode", mode));
 
@@ -21371,7 +21375,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   fp = fopen(name, mode);
   if (!fp)
     {
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
       if (errno == EINVAL)
 	return(file_error(sc, "open-output-file", "invalid mode", mode));
 #endif
@@ -24843,7 +24847,7 @@ static s7_pointer g_is_directory(s7_scheme *sc, s7_pointer args)
 
 static bool file_probe(const char *arg)
 {
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
   return(access(arg, F_OK) == 0);
 #else
   int fd;
@@ -65300,7 +65304,7 @@ s7_scheme *s7_init(void)
 #ifdef __linux__
   s7_provide(sc, "linux");
 #endif
-#ifdef _MSC_VER
+#if MS_WINDOWS
   s7_provide(sc, "windows");
 #endif  
 #ifdef __bfin__
@@ -65610,4 +65614,12 @@ s7_scheme *s7_init(void)
  *         set, compatible_set?
  *         mark, copy, fill, reverse, etc print
  *    make-real|integer|rational|-vector is not quite right -- we want make-float|int|byte-vector
+ */
+
+/* PERHAPS: add circular? | empty? (or nil? or generic null? or zero-length?) | typeq? -- but methods make this less than ideal (env-as-vector etc)
+ *              linearize? => break circles leaving some marker
+ *              map-once | for-each-once = map over all leaves, but each just once
+ *              map-all (= map-tree) 
+ *   (xor a b) -> a if a & not b, b if b & not a, #f otherwise -- not quite the same as or because if a and b, we get #f
+ *   (xor a b c ...) -> the one #t case if all others are #f, else #f? not quite right...
  */

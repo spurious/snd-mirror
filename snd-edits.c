@@ -8107,6 +8107,8 @@ void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length)
   time_t old_time, new_time;
   mus_long_t old_bytes, new_bytes;
 
+  if (!XEN_LIST_P(date_and_length)) return; /* can this happen? */
+
   file = XEN_TO_C_STRING(filename);
   if (mus_file_probe(file))
     {

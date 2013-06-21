@@ -7948,7 +7948,7 @@
 (CFNC-300 "GtkAdjustment* gtk_container_get_focus_vadjustment GtkContainer* container")
 (CFNC-300 "void gtk_container_set_focus_hadjustment GtkContainer* container GtkAdjustment* adjustment")
 (CFNC-300 "GtkAdjustment* gtk_container_get_focus_hadjustment GtkContainer* container")
-(CFNC-300 "void gtk_container_resize_children GtkContainer* container")
+;;; 3.9.4 (CFNC-300 "void gtk_container_resize_children GtkContainer* container")
 
 (CFNC-300 "void gtk_assistant_commit GtkAssistant* assistant")
 
@@ -8360,6 +8360,8 @@
 ;;; 3.5.4
 (CFNC-358 "void gtk_button_set_always_show_image GtkButton* button gboolean always_show")
 (CFNC-358 "gboolean gtk_button_get_always_show_image GtkButton* button")
+(CFNC-358 "guint gtk_tree_view_get_n_columns GtkTreeView* tree_view")
+
 
 ;;; GTK_UNIT_NONE as a GtkUnit (like pixel) but this enum is commented out above
 
@@ -8647,6 +8649,55 @@
 
 new files: [gtkactionmuxer|observable|observer] -- not apparently tying these in (see recent action), [gtkmenutrackeritem]
 
+;;; 3.9.4: gtklistbox (slist replacement?) and gtksearchbar
+
+#define GTK_LIST_BOX(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_LIST_BOX, GtkListBox))
+#define GTK_IS_LIST_BOX(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_LIST_BOX))
+
+#define GTK_LIST_BOX_ROW(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_LIST_BOX_ROW, GtkListBoxRow))
+#define GTK_IS_LIST_BOX_ROW(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_LIST_BOX_ROW))
+
+typedef gboolean (*GtkListBoxFilterFunc) (GtkListBoxRow *row, gpointer user_data);
+typedef gint (*GtkListBoxSortFunc) (GtkListBoxRow *row1, GtkListBoxRow *row2, gpointer user_data);
+typedef void (*GtkListBoxUpdateHeaderFunc) (GtkListBoxRow *row, GtkListBoxRow *before, gpointer user_data);
+
+GType gtk_list_box_row_get_type (void) G_GNUC_CONST;
+GtkWidget* gtk_list_box_row_new (void);
+GtkWidget* gtk_list_box_row_get_header (GtkListBoxRow *row);
+void gtk_list_box_row_set_header (GtkListBoxRow *row, GtkWidget *header);
+void gtk_list_box_row_changed (GtkListBoxRow *row);
+
+GtkListBoxRow* gtk_list_box_get_selected_row (GtkListBox *list_box);
+GtkListBoxRow* gtk_list_box_get_row_at_index (GtkListBox *list_box, gint index_);
+GtkListBoxRow* gtk_list_box_get_row_at_y (GtkListBox *list_box, gint y);
+void gtk_list_box_select_row (GtkListBox *list_box, GtkListBoxRow *row);
+void gtk_list_box_set_placeholder (GtkListBox *list_box, GtkWidget *placeholder);
+void gtk_list_box_set_adjustment (GtkListBox *list_box, GtkAdjustment *adjustment);
+GtkAdjustment *gtk_list_box_get_adjustment (GtkListBox *list_box);
+void gtk_list_box_set_selection_mode (GtkListBox *list_box, GtkSelectionMode mode);
+GtkSelectionMode gtk_list_box_get_selection_mode (GtkListBox *list_box);
+void gtk_list_box_set_filter_func (GtkListBox *list_box, GtkListBoxFilterFunc filter_func, gpointer user_data, GDestroyNotify destroy);
+void gtk_list_box_set_header_func (GtkListBox *list_box, GtkListBoxUpdateHeaderFunc update_header, gpointer user_data, GDestroyNotify destroy);
+void gtk_list_box_invalidate_filter (GtkListBox *list_box);
+void gtk_list_box_invalidate_sort (GtkListBox *list_box);
+void gtk_list_box_invalidate_headers (GtkListBox *list_box);
+void gtk_list_box_set_sort_func (GtkListBox *list_box, GtkListBoxSortFunc sort_func, gpointer user_data, GDestroyNotify destroy);
+void gtk_list_box_set_activate_on_single_click (GtkListBox *list_box, gboolean single);
+gboolean gtk_list_box_get_activate_on_single_click (GtkListBox *list_box);
+void gtk_list_box_drag_unhighlight_row (GtkListBox *list_box);
+void gtk_list_box_drag_highlight_row (GtkListBox *list_box, GtkListBoxRow *row);
+GtkWidget* gtk_list_box_new (void);
+
+#define GTK_SEARCH_BAR(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_SEARCH_BAR, GtkSearchBar))
+#define GTK_IS_SEARCH_BAR(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_SEARCH_BAR))
+
+GtkWidget* gtk_search_bar_new (void);
+void gtk_search_bar_connect_entry (GtkSearchBar *bar, GtkEntry *entry);
+gboolean gtk_search_bar_get_search_mode (GtkSearchBar *bar);
+void gtk_search_bar_set_search_mode (GtkSearchBar *bar, gboolean search_mode);
+gboolean gtk_search_bar_get_show_close_button (GtkSearchBar *bar);
+void gtk_search_bar_set_show_close_button (GtkSearchBar *bar, gboolean visible);
+gboolean gtk_search_bar_handle_event (GtkSearchBar *bar, GdkEvent *event);
 |#
  
 
@@ -9265,7 +9316,7 @@ gtkrecentmanager: gtk_recent_info_get_gicon
 ;; then get rid of all the obvious junk
 
 ;; omit gtkrc.h gtkcellarea* gtkstylecontext.h, gtkstyle.h, gtkrbtree.h (internal to gtktreeview), gtktimeline.h
-;;     gtktextlayout.h (all internal), gtktexttypes.h, gtktrayicon.h, gtkrecentchooserutils.h, gtksearch*.h
+;;      gtktextlayout.h (all internal), gtktexttypes.h, gtktrayicon.h, gtkrecentchooserutils.h, gtksearch*.h
 ;;      gtkmodules.h, gtkquery.h, gtktextsegment.h, gtkbuilder.h, gtkbuilable.h, gtkapplication.h, gtkuimanager.h
 ;;      gtksizerequest.h, gtkoffscreenwindow.h, gtkthemingengine.h, gtkwidgetpath.h, gtkpathbar.h, gtkmountoperation.h
 ;;      gtkhsv.h (not used anywhere?)

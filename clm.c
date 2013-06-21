@@ -10774,6 +10774,8 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
     mus_error(MUS_NO_FILE_NAME_PROVIDED, S_make_sample_to_file " requires a file name");
   else
     {
+      if (out_chans <= 0)
+	return(NULL);
       if (reopen)
 	fd = mus_sound_reopen_output(filename, out_chans, out_format, out_type, mus_sound_data_location(filename));
       else fd = mus_sound_open_output(filename, (int)sampling_rate, out_chans, out_format, out_type, comment);

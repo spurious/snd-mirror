@@ -3,6 +3,8 @@
 static GtkWidget *listener_text = NULL;
 static GtkTextBuffer *listener_buffer = NULL;
 
+/* PERHAPS: to implement stuff like find, the prompt might be in the status area?
+ */
 
 void listener_append(const char *msg)
 {

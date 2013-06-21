@@ -1692,10 +1692,12 @@ static XEN g_color_to_list(XEN obj)
   color_info *v;
   XEN_ASSERT_TYPE(XEN_PIXEL_P(obj), obj, XEN_ONLY_ARG, S_color_to_list, "a color"); 
   v = XEN_UNWRAP_PIXEL(obj);
-  return(XEN_LIST_4(C_TO_XEN_DOUBLE(RGB_TO_FLOAT(v->red)),
-		    C_TO_XEN_DOUBLE(RGB_TO_FLOAT(v->green)),
-		    C_TO_XEN_DOUBLE(RGB_TO_FLOAT(v->blue)),
-		    C_TO_XEN_DOUBLE(v->alpha)));
+  if (v)
+    return(XEN_LIST_4(C_TO_XEN_DOUBLE(RGB_TO_FLOAT(v->red)),
+		      C_TO_XEN_DOUBLE(RGB_TO_FLOAT(v->green)),
+		      C_TO_XEN_DOUBLE(RGB_TO_FLOAT(v->blue)),
+		      C_TO_XEN_DOUBLE(v->alpha)));
+  return(XEN_EMPTY_LIST);
 }
 
 
