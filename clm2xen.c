@@ -5260,13 +5260,13 @@ static XEN g_pink_noise(XEN gens)
   int i, size;
   double sum = 0.0, amp, x;
   vct *v;
-  double *data;
+  mus_float_t *data;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(gens), gens, XEN_ARG_1, S_pink_noise, "a vct");
   v = XEN_TO_VCT(gens);
   size = v->length;
   data = v->data;
-  amp = data[0];
+  amp = (double)(data[0]);
 
   for (i = 2, x = 0.5; i < size; i += 2, x *= 0.5)
     {

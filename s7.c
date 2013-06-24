@@ -34863,10 +34863,12 @@ void s7_set_begin_hook(s7_scheme *sc, bool (*hook)(s7_scheme *sc))
 
 static bool call_begin_hook(s7_scheme *sc)
 {
+  bool result;
   opcode_t op;
   op = sc->op;
   push_stack(sc, OP_BARRIER, sc->args, sc->code);
-  if (sc->begin_hook(sc))
+  result = sc->begin_hook(sc);
+  if (result)
     {
       /* set (error-environment) in case we were interrupted and need to see why something was hung */
       slot_set_value(sc->error_type, sc->F);
