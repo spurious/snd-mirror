@@ -5,6 +5,8 @@
  * see s7.html#glistener and glistener.h for examples and documentation.
  */
 
+#define strcopy(Dest, Src, Len) snprintf(Dest, Len, "%s", Src)
+
 struct glistener {
   GtkWidget *text, *scroller, *status;
   GtkTextBuffer *buffer;
@@ -292,7 +294,7 @@ static void glistener_append_status(glistener *g, const char *msg)
       else
 	{
 	  g->status_message = (char *)calloc(len + 1, sizeof(char));
-	  strcpy(g->status_message, msg);
+	  strcopy(g->status_message, msg, len + 1);
 	}
       gtk_statusbar_pop(GTK_STATUSBAR(g->status), 1);
       gtk_statusbar_push(GTK_STATUSBAR(g->status), 1, g->status_message);
@@ -596,7 +598,7 @@ static void remember_listener_string(glistener *g, const char *str)
 
   len = strlen(str) + 1;
   g->strings[0] = (char *)calloc(len, sizeof(char));
-  strcpy(g->strings[0], str);
+  strcopy(g->strings[0], str, len);
 }
 
 
@@ -2172,8 +2174,10 @@ static char *filename_completion(glistener *g, const char *partial_name)
     }
   if (!new_name)
     {
-      new_name = (char *)calloc(strlen(partial_name) + 1, sizeof(char));
-      strcpy(new_name, partial_name);
+      int new_len;
+      new_len = strlen(partial_name) + 1;
+      new_name = (char *)calloc(new_len, sizeof(char));
+      strcopy(new_name, partial_name, new_len);
     }
 
   slash = g_utf8_strrchr(new_name, -1, (gunichar)'/');
@@ -2182,7 +2186,7 @@ static char *filename_completion(glistener *g, const char *partial_name)
       len = slash - new_name + 1;
       temp = (char *)malloc(len * sizeof(char));
       file_name = (char *)(new_name + len);
-      strncpy(temp, new_name, len);
+      strcopy(temp, new_name, len);
       temp[len - 1] = '\0';
       directory_name = realpath(temp, NULL);
       free(temp);
@@ -2213,7 +2217,7 @@ static char *filename_completion(glistener *g, const char *partial_name)
 		{
 		  len = strlen(rname);
 		  current_match = (char *)calloc(len + 2, sizeof(char));
-		  strcpy(current_match, rname);
+		  strcopy(current_match, rname, len + 2);
 		}
 	      else 
 		{
@@ -2282,7 +2286,7 @@ static bool compare_names(const char *symbol_name, void *data)
 	{
 	  m->len = strlen(symbol_name);
 	  m->current_match = (char *)calloc(m->len + 1, sizeof(char));
-	  strcpy(m->current_match, symbol_name);
+	  strcopy(m->current_match, symbol_name, m->len + 1);
 	}
       else 
 	{

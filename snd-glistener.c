@@ -8,7 +8,8 @@ static GtkTextBuffer *listener_buffer = NULL;
 
 void listener_append(const char *msg)
 {
-  glistener_append_text(ss->listener, msg);
+  if (ss->listener)
+    glistener_append_text(ss->listener, msg);
   if (listener_text)
     ss->graph_is_active = false;
 }
@@ -21,7 +22,11 @@ void listener_append_and_prompt(const char *msg)
       glistener_append_text(ss->listener, msg);
       glistener_append_prompt(ss->listener);
     }
-  else glistener_append_text(ss->listener, "\n");
+  else 
+    {
+      if (ss->listener)
+	glistener_append_text(ss->listener, "\n");
+    }
 }
 
 
@@ -711,16 +716,19 @@ void clear_listener(void)
 void append_listener_text(int end, const char *msg)
 {
   /* "end" arg needed in Motif */
-  glistener_append_text(ss->listener, msg);
+  if (ss->listener)
+    glistener_append_text(ss->listener, msg);
 }
 
 
 int save_listener_text(FILE *fp)
 {
-  
-  if ((!listener_text) ||
-      (glistener_write(ss->listener, fp)))
-    return(0);
+  if (ss->listener)
+    {
+      if ((!listener_text) ||
+	  (glistener_write(ss->listener, fp)))
+	return(0);
+    }
   return(-1);
 }
 
@@ -728,7 +736,8 @@ int save_listener_text(FILE *fp)
 static XEN g_goto_listener_end(void)
 {
   #define H_goto_listener_end "(" S_goto_listener_end "): move cursor and scroll to bottom of listener pane"
-  glistener_scroll_to_end(ss->listener);
+  if (ss->listener)
+    glistener_scroll_to_end(ss->listener);
   return(XEN_FALSE);
 }
 

@@ -158,7 +158,7 @@
  *     HAVE_GETTIMEOFDAY, HAVE_LSTAT, HAVE_DIRENT_H
  *
  * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__, __clang__, __bfin__, __ANDROID__,
- *     (and __FreeBSD_version if HAVE_SYS_PARAM_H)
+ *     __OpenBSD__, (and __FreeBSD_version if HAVE_SYS_PARAM_H)
  *
  * if SIZEOF_VOID_P is not defined, we look for __SIZEOF_POINTER__ instead
  *   the default is to assume that we're running on a 64-bit machine.
@@ -2286,6 +2286,10 @@ static int safe_strlen5(const char *str)
   while ((*tmp++) && (tmp < end)) {};
   return(tmp - str - 1);
 }
+
+
+#define strcopy(Dest, Src, Len) snprintf(Dest, Len, "%s", Src)
+/* rather than futz around with str*cpy */
 
 
 static char *copy_string_with_len(const char *str, int len)
@@ -6242,9 +6246,11 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
 {
   s7_pointer sym;
   char *name;
+  int len;
   
-  name = (char *)malloc((safe_strlen(key) + 2) * sizeof(char));
-  sprintf(name, ":%s", key);                     /* prepend ":" */
+  len = safe_strlen(key) + 2;
+  name = (char *)malloc(len * sizeof(char));
+  snprintf(name, len, ":%s", key);                     /* prepend ":" */
   sym = make_symbol(sc, name);
   typeflag(sym) |= (T_IMMUTABLE); 
   free(name);
@@ -19116,11 +19122,18 @@ static bool start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer start_and
 
   pstart = car(start_and_end_args);
   if (!s7_is_integer(pstart))
-    return(wrong_type_argument_n(sc, caller, position, pstart, T_INTEGER));
+    {
+      wrong_type_argument_n(sc, caller, position, pstart, T_INTEGER);
+      return(true);
+    }
+      
   index = s7_integer(pstart);
   if ((index < 0) ||
       (index > *end)) /* *end == length here */
-    return(out_of_range(sc, caller, small_int(position), pstart, "should be between 0 and length"));
+    {
+      out_of_range(sc, caller, small_int(position), pstart, "should be between 0 and length");
+      return(true);
+    }
   *start = index;
 
   if (is_null(cdr(start_and_end_args)))
@@ -19128,11 +19141,17 @@ static bool start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer start_and
 
   pend = cadr(start_and_end_args);
   if (!s7_is_integer(pend))
-    return(wrong_type_argument_n(sc, caller, position + 1, pend, T_INTEGER));
+    {
+      wrong_type_argument_n(sc, caller, position + 1, pend, T_INTEGER);
+      return(true);
+    }
   index = s7_integer(pend);
   if ((index < *start) ||
       (index > *end))
-    return(out_of_range(sc, caller, small_int(position + 1), pend, "should be between the start index and the length"));
+    {
+      out_of_range(sc, caller, small_int(position + 1), pend, "should be between the start index and the length");
+      return(true);
+    }
   
   if (index == *end)
     return(*start == 0);
@@ -21148,6 +21167,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
 	  int len;
 	  len = snprintf(tmp, 256, "(%s \"%s\") read %ld bytes of an expected %ld?", caller, name, (long)bytes, size);
 	  port_write_string(sc->output_port)(sc, tmp, len, sc->output_port);
+	  size = bytes;
 	}
       content[size] = '\0';
       content[size + 1] = '\0';
@@ -21237,8 +21257,10 @@ static s7_pointer open_input_file_1(s7_scheme *sc, const char *name, const char 
 	  if (home)
 	    {
 	      char *filename;
-	      filename = (char *)calloc(safe_strlen(name) + safe_strlen(home) + 1, sizeof(char));
-	      strcpy(filename, home);
+	      int len;
+	      len = safe_strlen(name) + safe_strlen(home) + 1;
+	      filename = (char *)calloc(len, sizeof(char));
+	      strcopy(filename, home, len);
 	      strcat(filename, (char *)(name + 1));
 	      fp = fopen(filename, "r");
 	      free(filename);
@@ -22181,7 +22203,7 @@ static char *full_filename(const char *filename)
   rtn = (char *)calloc(len, sizeof(char));
   if (pwd)
     {
-      strcpy(rtn, pwd);
+      strcopy(rtn, pwd, len);
       free(pwd);
       strcat(rtn, "/");
     }
@@ -22291,8 +22313,10 @@ defaults to the global environment.  To load into the current environment instea
 	  if (home)
 	    {
 	      char *filename;
-	      filename = (char *)calloc(safe_strlen(fname) + safe_strlen(home) + 1, sizeof(char));
-	      strcpy(filename, home);
+	      int len;
+	      len = safe_strlen(fname) + safe_strlen(home) + 1;
+	      filename = (char *)calloc(len, sizeof(char));
+	      strcopy(filename, home, len);
 	      strcat(filename, (char *)(fname + 1));
 	      fp = fopen(filename, "r");
 	      free(filename);
@@ -29172,7 +29196,7 @@ static int hash_loc(s7_scheme *sc, s7_pointer key)
     case T_STRING:
       if (string_hash(key) != 0)
 	return(string_hash(key));
-      for (c = string_value(key); *c; c++) /* PERHAPS: should we limit the chars here? (and  below) */
+      for (c = string_value(key); *c; c++)
 	loc = *c + loc * HASH_MULT;
       string_hash(key) = loc;
       return(loc);
@@ -29261,10 +29285,12 @@ static s7_pointer hash_int(s7_scheme *sc, s7_pointer table, s7_pointer key)
 
 static s7_pointer hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
+  /* cityhash and spookyhash are the top-of-the-line, but do we need that much power? 
+   */
   if (is_string(key))
     {
       s7_pointer x;
-      int hash_len, loc;
+      int hash_len, loc, orig;
 
       hash_len = (int)hash_table_length(table) - 1;
       loc = string_hash(key);
@@ -29275,9 +29301,11 @@ static s7_pointer hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key)
 	    loc = *c + loc * HASH_MULT;
 	  string_hash(key) = loc;
 	}
+      orig = loc;
       loc &= hash_len;
       for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-	if (strings_are_equal(string_value(fcdr(x)), string_value(key)))
+	if ((orig == string_hash(fcdr(x))) &&
+	    (strings_are_equal(string_value(fcdr(x)), string_value(key))))
 	  return(car(x));
     }
   return(sc->NIL);
@@ -33466,8 +33494,8 @@ static const char *make_type_name(const char *name, int article)
     }
   if ((article == INDEFINITE_ARTICLE) &&
       ((name[0] == 'a') || (name[0] == 'e') || (name[0] == 'i') || (name[0] == 'o') || (name[0] == 'u')))
-    strcpy(typnam, "an ");
-  else strcpy(typnam, articles[article]);
+    strcopy(typnam, "an ", typnam_len);
+  else strcopy(typnam, articles[article], typnam_len);
   strcat(typnam, name);
   return(typnam);
 }
@@ -42407,7 +42435,10 @@ static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
     }
   if ((!is_null(x)) &&
       (!is_pair(x)))
-    return(eval_error(sc, "stray dot in function body: ~S", code));
+    {
+      eval_error(sc, "stray dot in function body: ~S", code);
+      return(false);
+    }
   return(happy);
 }
 
@@ -54677,7 +54708,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       
     APPLY:
-      /* fprintf(stderr, "apply %s to %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
+      /* fprintf(stderr, "apply %s to %s\n", DISPLAY(sc->code), DISPLAY(sc->args));  */
       switch (type(sc->code))
 	{
 	case T_C_FUNCTION: 	                    /* -------- C-based function -------- */
@@ -65276,6 +65307,7 @@ s7_scheme *s7_init(void)
   /* *features* */
   s7_provide(sc, "s7");
   s7_provide(sc, "s7-" S7_VERSION);
+  s7_provide(sc, "ratio");
 
 #if WITH_EXTRA_EXPONENT_MARKERS
   s7_provide(sc, "dfls-exponents");
@@ -65304,6 +65336,15 @@ s7_scheme *s7_init(void)
 #ifdef __linux__
   s7_provide(sc, "linux");
 #endif
+#ifdef __OpenBSD__
+  s7_provide(sc, "openbsd");
+#endif
+#ifdef __NetBSD__
+  s7_provide(sc, "netbsd");
+#endif
+#ifdef __FreeBSD_version
+  s7_provide(sc, "freebsd");
+#endif
 #if MS_WINDOWS
   s7_provide(sc, "windows");
 #endif  
@@ -65313,7 +65354,6 @@ s7_scheme *s7_init(void)
 #ifdef __ANDROID__
   s7_provide(sc, "android");
 #endif
-  s7_provide(sc, "ratio");
 
 
   sc->Vector_Set = s7_symbol_value(sc, sc->VECTOR_SET);
@@ -65616,10 +65656,14 @@ s7_scheme *s7_init(void)
  *    make-real|integer|rational|-vector is not quite right -- we want make-float|int|byte-vector
  */
 
-/* PERHAPS: add circular? | empty? (or nil? or generic null? or zero-length?) | typeq? -- but methods make this less than ideal (env-as-vector etc)
- *              linearize? => break circles leaving some marker
- *              map-once | for-each-once = map over all leaves, but each just once
- *              map-all (= map-tree) 
+/* PERHAPS: add empty? (or nil? or generic null? or zero-length?) | typeq? -- but methods make this less than ideal (env-as-vector etc)
  *   (xor a b) -> a if a & not b, b if b & not a, #f otherwise -- not quite the same as or because if a and b, we get #f
- *   (xor a b c ...) -> the one #t case if all others are #f, else #f? not quite right...
+ *
+ */
+
+/* ideally we'd replace strcpy with strcopy throughout Snd, and strcat with strlcat or some equivalent
+ *   also openbsd audio is broken in Snd -- see aucat.c I guess.
+ */
+
+/* names like #<closure> and #<macro> are useless -- could we include at least the arglist? or body truncated?
  */

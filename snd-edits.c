@@ -218,7 +218,7 @@ void reflect_file_change_in_label(chan_info *cp)
 
       len = strlen(shortname(sp)) + 16;
       starred_name = (char *)calloc(len, sizeof(char));
-      strcpy(starred_name, shortname_indexed(sp));
+      strcopy(starred_name, shortname_indexed(sp), len);
 
       if ((sp->user_read_only == FILE_READ_ONLY) || 
 	  (sp->file_read_only == FILE_READ_ONLY))

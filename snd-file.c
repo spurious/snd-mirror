@@ -367,7 +367,7 @@ static void load_dir(DIR *dpos, dir_info *dp, bool (*filter)(const char *filenam
     }
 
   fullname = (char *)calloc(path_max, sizeof(char));
-  strcpy(fullname, dp->dir_name);
+  strcopy(fullname, dp->dir_name, path_max);
   fullname_start = strlen(dp->dir_name);
   while ((dirp = readdir(dpos)) != NULL)
     if (dirp->d_name[0] != '.')

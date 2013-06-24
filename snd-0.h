@@ -37,6 +37,8 @@
   #define STRNCMP(a, b, c) strncmp(a, b, c)
 #endif
 
+#define strcopy(Dest, Src, Len) snprintf(Dest, Len, "%s", Src)
+
 #define XOR(a, b) ((a) ^ (b))
 /* can't get used to this operator -- in the good old days, ^ meant exponentiation */
 
