@@ -888,6 +888,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 24-Jun:    some bool-related changes for Windows Visual C++.
  * 3-June:    s7_autoload.
  * 28-May:    export s7_is_provided.  Added s7_scheme* arg to s7_procedure_environment.
  * 21-May:    equality predicate optional arg in make-hash-table.

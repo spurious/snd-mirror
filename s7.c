@@ -34866,15 +34866,20 @@ static bool call_begin_hook(s7_scheme *sc)
   opcode_t op;
   op = sc->op;
   push_stack(sc, OP_BARRIER, sc->args, sc->code);
-  if ((*(sc->begin_hook))(sc))
+  if (sc->begin_hook(sc))
     {
       /* set (error-environment) in case we were interrupted and need to see why something was hung */
       slot_set_value(sc->error_type, sc->F);
-      slot_set_value(sc->error_data, sc->F);
+      slot_set_value(sc->error_data, sc->value); /* was sc->F but we now clobber this below */
       slot_set_value(sc->error_code, sc->cur_code);
       slot_set_value(sc->error_line, sc->F);
       slot_set_value(sc->error_file, sc->F);
       next_environment(sc->error_env) = sc->envir;
+
+      sc->value = s7_make_symbol(sc, "begin-hook-interrupt"); 
+      /* otherwise the evaluator returns whatever random thing is in sc->value (normally #<closure>)
+       *   which makes debugging unnecessarily difficult.
+       */
       
       s7_quit(sc);     /* don't call gc here -- perhaps at restart somehow? */
       return(true);
@@ -65645,6 +65650,7 @@ s7_scheme *s7_init(void)
  */
 
 /* TODO: (env env) in clm should be an error
+ * TODO: set value to 'begin-hook-interrupt in begin_hook
  */
 
 /* vector: void *elements, int element_type(?) or s7_pointer default_element [so ref if not elements -> default]
