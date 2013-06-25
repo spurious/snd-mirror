@@ -877,7 +877,6 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 {
   file_dialog_info *fd = (file_dialog_info *)data;
   char *filename = NULL;
-  gpointer hide_me = 0;
 
   filename = fd->filename; /* gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd->chooser)); */
 
@@ -896,6 +895,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
       if (sp) 
 	{
 #if (!HAVE_GTK_3)
+	  gpointer hide_me;
 	  hide_me = g_object_get_data(G_OBJECT(fd->dialog), "hide-me"); /* see snd-gtk.scm where this is set */
 	  if (hide_me == 0)
 	    gtk_widget_hide(fd->dialog);
@@ -964,10 +964,12 @@ static void file_activated_callback(GtkFileChooser *w, gpointer data)
 
       if (sp) 
 	{
+#if (!HAVE_GTK_3)
 	  gpointer hide_me;
 	  hide_me = g_object_get_data(G_OBJECT(fd->dialog), "hide-me"); /* see snd-gtk.scm where this is set */
 	  if (hide_me == 0)
 	    gtk_widget_hide(fd->dialog);
+#endif
 	  select_channel(sp, 0); /* add_sound_window (snd-xsnd.c) -> make_file_info (snd-file) will report reason for error, if any */
 	}
       else

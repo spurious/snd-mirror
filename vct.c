@@ -632,7 +632,7 @@ static XEN g_vct_ref(XEN obj, XEN pos)
 #define cdadr(E)  s7_cdadr(E)
 #define cadddr(E) s7_cadddr(E)
 
-#if 1
+#ifndef _MSC_VER
 static size_t c_object_value_location, c_object_type_location, cell_type_location;
 static int c_object_built_in_type;
 
@@ -661,6 +661,7 @@ static void *imported_s7_object_value_checked(s7_pointer obj, int type)
 #else
 #define imported_s7_object_value_checked(Obj, Typ) s7_object_value_checked(Obj, Typ)
 #endif
+
 
 /* ---------------- #endif */
 
@@ -2511,6 +2512,7 @@ void mus_vct_init(void)
   vct_ref_symbol = s7_make_symbol(s7, "vct-ref");
 #endif
 
+#ifndef _MSC_VER
   c_object_value_location = s7_c_object_value_offset(s7);
   if (c_object_value_location != C_OBJECT_VALUE_LOCATION) fprintf(stderr, "value location: %ld %d\n", c_object_value_location, C_OBJECT_VALUE_LOCATION);
   c_object_type_location = s7_c_object_type_offset(s7);
@@ -2519,5 +2521,7 @@ void mus_vct_init(void)
   if (cell_type_location != CELL_TYPE_LOCATION) fprintf(stderr, "cell type location: %ld %d\n", cell_type_location, CELL_TYPE_LOCATION);
   c_object_built_in_type = s7_c_object_built_in_type(s7);
   if (c_object_built_in_type != C_OBJECT_BUILT_IN_TYPE) fprintf(stderr, "object type: %d %d\n", c_object_built_in_type, C_OBJECT_BUILT_IN_TYPE);
+#endif
+
 #endif
 }

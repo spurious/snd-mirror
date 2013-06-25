@@ -65652,7 +65652,6 @@ s7_scheme *s7_init(void)
  */
 
 /* TODO: (env env) in clm should be an error
- * TODO: set value to 'begin-hook-interrupt in begin_hook
  */
 
 /* vector: void *elements, int element_type(?) or s7_pointer default_element [so ref if not elements -> default]
@@ -65674,4 +65673,9 @@ s7_scheme *s7_init(void)
  */
 
 /* names like #<closure> and #<macro> are useless -- could we include at least the arglist? or body truncated?
+ */
+
+/* TODO: change begin_hook to store the value in s7, not the caller
+ *       and add this complication to s7.html,
+ *  used in s7.html, ffitest.c, s7.[ch], snd-x|glistener.c
  */

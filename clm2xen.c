@@ -96,7 +96,7 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 
 
 #if HAVE_SCHEME
-#if 1
+#ifndef _MSC_VER
 static size_t c_object_value_location, c_object_type_location, cell_type_location;
 static int c_object_built_in_type;
 
@@ -9519,12 +9519,16 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
   else {Val = NULL; XEN_ASSERT_TYPE(false, gp, XEN_ARG_1, "gen-lookup", "a generator");} \
   } while (0)
 
+#ifndef _MSC_VER
 #define XEN_S7_NUMBER_LOCATION 8
 #define XEN_S7_DENOMINATOR_LOCATION 16
 #if (SIZEOF_VOID_P == 4)
   #define XEN_S7_SLOT_VALUE_LOCATION 12
 #else
   #define XEN_S7_SLOT_VALUE_LOCATION 16
+#endif
+#else
+static int XEN_S7_NUMBER_LOCATION, XEN_S7_DENOMINATOR_LOCATION, XEN_S7_SLOT_VALUE_LOCATION;
 #endif
 
 #define s7_cell_slot_value(p) (s7_pointer)(*((s7_pointer *)((unsigned char *)(p) + XEN_S7_SLOT_VALUE_LOCATION)))
@@ -19584,7 +19588,9 @@ void Init_sndlib(void)
   mus_sndlib_xen_initialize();
   mus_vct_init();
   mus_xen_init();
+
 #if HAVE_SCHEME
+#ifndef _MSC_VER
   if (s7_slot_value_offset(s7) != XEN_S7_SLOT_VALUE_LOCATION) 
     fprintf(stderr, "clm slot-value location: %d %d\n", (int)s7_slot_value_offset(s7), XEN_S7_SLOT_VALUE_LOCATION);
 
@@ -19599,6 +19605,11 @@ void Init_sndlib(void)
 
   if (xen_s7_number_location != XEN_S7_NUMBER_LOCATION) fprintf(stderr, "number location: %ld %d\n", xen_s7_number_location, XEN_S7_NUMBER_LOCATION);
   if (xen_s7_denominator_location != XEN_S7_DENOMINATOR_LOCATION) fprintf(stderr, "denominator location: %ld %d\n", xen_s7_denominator_location, XEN_S7_DENOMINATOR_LOCATION);
+#else
+  XEN_S7_SLOT_VALUE_LOCATION = s7_slot_value_offset(s7); /* set in xen.c */
+  XEN_S7_NUMBER_LOCATION = xen_s7_number_location;
+  XEN_S7_DENOMINATOR_LOCATION = xen_s7_denominator_location;
+#endif
 
   init_choices();
 #endif
