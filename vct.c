@@ -741,11 +741,15 @@ static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
 }
 
 
+#ifndef _MSC_VER
 #define VCT_NUMBER_LOCATION 8
 #if (SIZEOF_VOID_P == 4)
   #define VCT_SLOT_VALUE_LOCATION 12
 #else
   #define VCT_SLOT_VALUE_LOCATION 16
+#endif
+#else
+static int VCT_NUMBER_LOCATION, VCT_SLOT_VALUE_LOCATION;
 #endif
 
 #if (!WITH_GMP)
@@ -2448,8 +2452,14 @@ void mus_vct_init(void)
 #if HAVE_SCHEME
   {
     s7_pointer f;
+
+#ifndef _MSC_VER
     if (s7_number_offset(s7) != VCT_NUMBER_LOCATION) fprintf(stderr, "vct number location: %d %d\n", (int)s7_number_offset(s7), VCT_NUMBER_LOCATION);
     if (s7_slot_value_offset(s7) != VCT_SLOT_VALUE_LOCATION) fprintf(stderr, "vct slot-value location: %d %d\n", (int)s7_slot_value_offset(s7), VCT_SLOT_VALUE_LOCATION);
+#else
+    VCT_NUMBER_LOCATION = s7_number_offset(s7);
+    VCT_SLOT_VALUE_LOCATION = s7_slot_value_offset(s7);
+#endif
 
     /* vct-ref */
     f = s7_name_to_value(s7, "vct-ref");

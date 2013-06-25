@@ -1235,7 +1235,7 @@ struct s7_scheme {
 
   jmp_buf goto_start;
   bool longjmp_ok;
-  bool (*begin_hook)(s7_scheme *sc);
+  void (*begin_hook)(s7_scheme *sc, bool *val);
   
   int no_values, current_line, s7_call_line, safety, class_name_location;
   const char *current_file, *s7_call_file, *s7_call_name;
@@ -21148,6 +21148,8 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
   port_line_number(port) = 1;  /* first line is numbered 1 */
   add_input_port(sc, port);
 
+#ifndef _MSC_VER
+  /* this doesn't work in MS C */
   fseek(fp, 0, SEEK_END);
   size = ftell(fp);
   rewind(fp);
@@ -21197,6 +21199,21 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
       port_read_white_space(port) = file_read_white_space;
       port_read_name(port) = file_read_name;
     }
+#else
+  /* _stat64 is no better than the fseek/ftell route, and 
+   *    GetFileSizeEx and friends requires Windows.h which makes hash of everything else.
+   *    fread until done takes too long on big files, so use a file port
+   */
+  port_file(port) = fp;
+  port_type(port) = FILE_PORT;
+  port_needs_free(port) = false;
+  port_read_character(port) = file_read_char;
+  port_read_line(port) = file_read_line;
+  port_display(port) = input_display;
+  port_read_semicolon(port) = file_read_semicolon;
+  port_read_white_space(port) = file_read_white_space;
+  port_read_name(port) = file_read_name;
+#endif
 
   s7_gc_unprotect_at(sc, port_loc);
   return(port);
@@ -34849,13 +34866,13 @@ s7_pointer s7_stacktrace(s7_scheme *sc)
 /* -------------------------------- leftovers -------------------------------- */
 
 
-bool (*s7_begin_hook(s7_scheme *sc))(s7_scheme *sc)
+void (*s7_begin_hook(s7_scheme *sc))(s7_scheme *sc, bool *val)
 {
   return(sc->begin_hook);
 }
 
 
-void s7_set_begin_hook(s7_scheme *sc, bool (*hook)(s7_scheme *sc))
+void s7_set_begin_hook(s7_scheme *sc, void (*hook)(s7_scheme *sc, bool *val))
 {
   sc->begin_hook = hook;
 }
@@ -34863,11 +34880,11 @@ void s7_set_begin_hook(s7_scheme *sc, bool (*hook)(s7_scheme *sc))
 
 static bool call_begin_hook(s7_scheme *sc)
 {
-  bool result;
+  bool result = false;
   opcode_t op;
   op = sc->op;
   push_stack(sc, OP_BARRIER, sc->args, sc->code);
-  result = sc->begin_hook(sc);
+  sc->begin_hook(sc, &result);
   if (result)
     {
       /* set (error-environment) in case we were interrupted and need to see why something was hung */

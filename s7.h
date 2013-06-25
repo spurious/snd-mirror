@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.25"
-#define S7_DATE "3-June-13"
+#define S7_VERSION "2.26"
+#define S7_DATE "26-June-13"
 
 
 typedef long long int s7_Int;
@@ -155,8 +155,8 @@ s7_pointer s7_autoload(s7_scheme *sc, s7_pointer symbol, s7_pointer file_or_func
 void s7_quit(s7_scheme *sc);
   /* this tries to break out of the current evaluation, leaving everything else intact */
 
-bool (*s7_begin_hook(s7_scheme *sc))(s7_scheme *sc);
-void s7_set_begin_hook(s7_scheme *sc, bool (*hook)(s7_scheme *sc));
+void (*s7_begin_hook(s7_scheme *sc))(s7_scheme *sc, bool *val);
+void s7_set_begin_hook(s7_scheme *sc, void (*hook)(s7_scheme *sc, bool *val));
   /* call "hook" at the start of any block; use NULL to cancel.
    *   see s7.html#replrescue and (in the Snd package) snd-listener.c for examples.
    *   s7_begin_hook returns the current begin_hook function or NULL.
@@ -888,7 +888,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
- * 24-Jun:    some bool-related changes for Windows Visual C++.
+ * 24-Jun:    some bool-related changes for Windows Visual C++, including change to s7_begin_hook.
  * 3-June:    s7_autoload.
  * 28-May:    export s7_is_provided.  Added s7_scheme* arg to s7_procedure_environment.
  * 21-May:    equality predicate optional arg in make-hash-table.

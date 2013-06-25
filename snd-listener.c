@@ -13,12 +13,12 @@ static XEN read_hook;
 static int skipped_calls = 0;
 #define SKIPPING 10
 
-bool listener_begin_hook(s7_scheme *sc)
+void listener_begin_hook(s7_scheme *sc, bool *val)
 {
   if (skipped_calls < SKIPPING)
     {
       skipped_calls++;
-      return(false);
+      return;
     }
   skipped_calls = 0;
   ss->C_g_typed = false;
@@ -59,7 +59,7 @@ bool listener_begin_hook(s7_scheme *sc)
 #endif
 #endif
 
-  return(ss->C_g_typed);
+  *val = ss->C_g_typed;
 }
 #endif
 

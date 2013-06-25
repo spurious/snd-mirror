@@ -1622,7 +1622,7 @@ void g_init_utils(void);
 
 void g_init_listener(void);
 #if HAVE_SCHEME
-bool listener_begin_hook(s7_scheme *sc);
+void listener_begin_hook(s7_scheme *sc, bool *val);
 #endif
 void set_listener_prompt(const char *new_prompt);
 bool listener_is_visible(void);

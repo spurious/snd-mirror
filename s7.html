@@ -8925,10 +8925,9 @@ static void sigcatch(int n)
 static char buffer[512];
 static int type_ahead_point = 0;
 
-static bool <em class=red>watch_for_c_g</em>(s7_scheme *sc)
+static void <em class=red>watch_for_c_g</em>(s7_scheme *sc, bool *all_done)
 {
   char c;
-  bool all_done = false;
   /* watch for C-g without blocking, save other chars as type-ahead */
   tcsetattr(fileno(stdin), TCSAFLUSH, &amp;buf);
 
@@ -8936,14 +8935,13 @@ static bool <em class=red>watch_for_c_g</em>(s7_scheme *sc)
     {
       if (c == 7) /* C-g */
 	{
-	  all_done = true;
+	  *all_done = true;
 	  type_ahead_point = 0;
 	}
       else buffer[type_ahead_point++] = c;
     }
 
   tcsetattr(fileno(stdin), TCSAFLUSH, &amp;save_buf);
-  return(all_done);
 }
 
 int main(int argc, char **argv)
@@ -9037,12 +9035,12 @@ static gint quit_repl(GtkWidget *w, GdkEvent *event, gpointer context) {exit(0);
 
 <em class=red>static bool C_c_typed = false;
 
-static bool begin_hook(s7_scheme *sc)
+static void begin_hook(s7_scheme *sc, bool *result)
 {
   C_c_typed = false;
   if (gtk_events_pending()) /* this is very slow &mdash; see snd-listener.c for a work-around */
     gtk_main_iteration();
-  return(C_c_typed);
+  *result = C_c_typed;
 }</em>
 
 static void evaluate_expression(s7_scheme *sc, char *expression)
@@ -9212,9 +9210,9 @@ infinite loop.  If a GUI event triggers a call on s7, that call happens in the c
 at a protected point in the s7 evaluation, so the GUI toolkit is happy because there's
 only the current thread, and s7 is happy because it handles the interleaved expression
 at a point where it can't confuse the current evaluation.
-If the begin_hook function returns true (if C-C is typed),
+If the begin_hook function sets its bool argument to true (if C-C is typed),
 s7 itself calls s7_quit, interrupting the current evaluation. 
-If return is typed, and s7 is running (begin_hook is not NULL),
+If the user types return, and s7 is running (begin_hook is not NULL),
 we ignore it.  Otherwise return causes our REPL to send
 the current string to s7_eval_c_string.  Upon returning from s7_eval_c_string,
 we check whether we were interrupted (C_c_typed is true), and if so, send a surprised
@@ -9238,20 +9236,19 @@ replace itself with the original:
 
 <div class="indented">
 <pre>
-static bool (*current_begin_hook)(s7_scheme *sc);        /* this will be the saved original function */
+static void (*current_begin_hook)(s7_scheme *sc, bool *val); /* this will be the saved original function */
 
-static bool stacktrace_begin_hook(s7_scheme *sc)         /* this is our one-shot replacement */
+static void stacktrace_begin_hook(s7_scheme *sc, bool *val)  /* this is our one-shot replacement */
 {
-  fprintf(stderr, "%s\n", s7_string(s7_stacktrace(sc))); /* it prints local var info */
-  s7_set_begin_hook(s7, current_begin_hook);             /*   then replaces itself with the original */
-  return(false);
+  fprintf(stderr, "%s\n", s7_string(s7_stacktrace(sc)));     /* it prints local var info */
+  s7_set_begin_hook(s7, current_begin_hook);                 /*   then replaces itself with the original */
 }
 
-static void listener_stacktrace_callback(...)            /* the usual callback boilerplate here */
+static void listener_stacktrace_callback(...)                /* the usual callback boilerplate here */
 {
-  current_begin_hook = s7_begin_hook(s7);                /* save current begin_hook function */
-  if (current_begin_hook)                                /* s7 is running, so... */
-    s7_set_begin_hook(s7, stacktrace_begin_hook);        /*   insert our stacktrace function in its place */
+  current_begin_hook = s7_begin_hook(s7);                    /* save current begin_hook function */
+  if (current_begin_hook)                                    /* s7 is running, so... */
+    s7_set_begin_hook(s7, stacktrace_begin_hook);            /*   insert our stacktrace function in its place */
 }
 </pre></div>
 

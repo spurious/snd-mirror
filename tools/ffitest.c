@@ -52,10 +52,9 @@ static s7_pointer test_values(s7_scheme *sc, s7_pointer args)
 
 
 static bool tested_begin_hook = false;
-static bool test_begin_hook(s7_scheme *sc)
+static void test_begin_hook(s7_scheme *sc, bool *val)
 {
   tested_begin_hook = true;
-  return(false);
 }
 
 static s7_pointer test_error_handler(s7_scheme *sc, s7_pointer args)
