@@ -10933,6 +10933,9 @@ static s7_pointer g_acosh(s7_scheme *sc, s7_pointer args)
 #if WITH_COMPLEX
     case T_COMPLEX:
       return(s7_from_c_complex(sc, cacosh(s7_complex(x)))); /* not as_c_complex because x might not be complex */
+#else
+      /* since we can fall through to this branch, we need a better error message than "must be a number, not 0.0" */
+      return(out_of_range(sc, sc->ACOSH, small_int(1), x, "a number >= 1.0 (no complex numbers in this version of s7)"));
 #endif
 
     default:
@@ -10962,9 +10965,12 @@ static s7_pointer g_atanh(s7_scheme *sc, s7_pointer args)
        *    (atanh 9223372036854775/9223372036854776) -> 18.714973875119
        *    (atanh 92233720368547758/92233720368547757) -> inf.0
        */
-
+#if WITH_COMPLEX
     case T_COMPLEX:
       return(s7_from_c_complex(sc, catanh(s7_complex(x))));
+#else
+      return(out_of_range(sc, sc->ATANH, small_int(1), x, "a number between -1.0 and 1.0 (no complex numbers in this version of s7)"));
+#endif
 
     default:
       CHECK_METHOD(sc, x, sc->ATANH, args);
@@ -34881,6 +34887,15 @@ void s7_set_begin_hook(s7_scheme *sc, void (*hook)(s7_scheme *sc, bool *val))
 static bool call_begin_hook(s7_scheme *sc)
 {
   bool result = false;
+  /* originally the begin_hook was bool (*hook)(s7_scheme *sc): the value was returned directly,
+   *   rather than going through a *bool arg (&result below).  That works in gcc (Linux/OSX),
+   *   but does not work in MS Visual C++.  In the latter, the compiler apparently completely
+   *   eliminates any local, returning (for example) a thread-relative stack-allocated value
+   *   directly, but then by the time we get here, that variable has vanished, and we get
+   *   garbage.  We had to thwart the optimization by adding if ((flag) && (!flag)) fprintf(...);
+   *   So, in the new form (26-Jun-13), the value is passed directly into an s7 variable
+   *   that I hope can't be optimized out of existence.
+   */
   opcode_t op;
   op = sc->op;
   push_stack(sc, OP_BARRIER, sc->args, sc->code);
@@ -65692,7 +65707,5 @@ s7_scheme *s7_init(void)
 /* names like #<closure> and #<macro> are useless -- could we include at least the arglist? or body truncated?
  */
 
-/* TODO: change begin_hook to store the value in s7, not the caller
- *       and add this complication to s7.html,
- *  used in s7.html, ffitest.c, s7.[ch], snd-x|glistener.c
+/* TODO: add Rick's s7.cpp to s7.html and the tarball (under what name?)
  */

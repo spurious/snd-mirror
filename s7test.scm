@@ -33,27 +33,40 @@
 
 (set! (hook-functions *unbound-variable-hook*) ())
 
+(define s7test-output #f) ; if a string, it's treated as a logfile
+
+
+
 ;;; --------------------------------------------------------------------------------
 
 (if (and (defined? 'current-time) ; in Snd
 	 (defined? 'mus-rand-seed))
     (set! (mus-rand-seed) (current-time)))
 
+(define (format-logged . args)
+  (let ((str (apply format args)))
+    (if (string? s7test-output)
+	(let ((p (open-output-file s7test-output "a")))
+	  (display str p)
+	  (flush-output-port p)
+	  (close-output-port p)))
+    str))
+
 (define (show-error args)
   (if (pair? args)
       (begin
 	(if (pair? (cdr args))
 	    (begin
-	      (format #t ";~D ~A: " (port-line-number) (car args))
+	      (format-logged #t ";~D ~A: " (port-line-number) (car args))
 	      (if (and (pair? (cadr args))
 		       (string? (caadr args)))
 		  (apply format #t (cadr args))
-		  (format #t "cdr args is messed up: ~A" (cdr args)))
+		  (format-logged #t "cdr args is messed up: ~A" (cdr args)))
 	      (if (not (null? (cddr args)))
-		  (format #t "~A~A~A" bold-test (cddr args) unbold-text)))
-	    (format #t ";~D args is ~A" (port-line-number) args)))
-      (format #t ";~D args is ~A" (port-line-number) args))
-  (format #t "~%~%"))
+		  (format-logged #t "~A~A~A" bold-test (cddr args) unbold-text)))
+	    (format-logged #t ";~D args is ~A" (port-line-number) args)))
+      (format-logged #t ";~D args is ~A" (port-line-number) args))
+  (format-logged #t "~%~%"))
 
 
 (define (ok? otst ola oexp)
@@ -63,9 +76,9 @@
 			 (if (not (eq? oexp 'error)) 
 			     (begin (display args) (newline)))
 			 'error))))
-    ;(format #t "~A: ~A -> ~A~%" otst result oexp)
+    ;(format-logged #t "~A: ~A -> ~A~%" otst result oexp)
     (if (not (equal? result oexp))
-	(format #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) otst result oexp))))
+	(format-logged #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) otst result oexp))))
 
 (defmacro test (tst expected) ;(display tst) (newline)
   ;;                     (eval ',tst) works here, but eval-string is problematic
@@ -97,7 +110,7 @@
 			 'error))))
     (if (or (not result)
 	    (eq? result 'error))
-	(format #t "~A: ~A got ~S ~A~%~%" (port-line-number) otst result (or data "")))))
+	(format-logged #t "~A: ~A got ~S ~A~%~%" (port-line-number) otst result (or data "")))))
 
 (defmacro test-t (tst) ;(display tst) (newline)
   `(tok? ',tst (lambda () ,tst)))
@@ -108,7 +121,7 @@
 			 ;(show-error args)
 			 'error))))
      (if (not (eq? result 'error))
-	 (format #t "~A: (~A ~S) got ~S but expected 'error~%~%" (port-line-number) ,op ,arg result))))
+	 (format-logged #t "~A: (~A ~S) got ~S but expected 'error~%~%" (port-line-number) ,op ,arg result))))
 
 
 (define (op-error op result expected)
@@ -177,7 +190,7 @@
 		   (> (op-error (car tst) result expected) error-6)))
 
 	  (begin
-	    (format #t "~A: ~A got ~A~Abut expected ~A~%" 
+	    (format-logged #t "~A: ~A got ~A~Abut expected ~A~%" 
 		    (port-line-number) tst result 
 		    (if (and (rational? result) (not (rational? expected)))
 			(format #f " (~A) " (* 1.0 result))
@@ -186,35 +199,35 @@
 	    
 	    (if (and (not (number? expected))
 		     (not (eq? result expected)))
-		(format #t "    (eq? ~A ~A) -> #f" result expected)
+		(format-logged #t "    (eq? ~A ~A) -> #f" result expected)
 		(if (and (number? expected)
 			 (or (not (number? result))
 			     (nan? result)))
 		    (begin
 		      (if (not (number? result))
-			  (format #t "    (number? ~A) but not (number? ~A)" expected result)
-			  (format #t "    (number? ~A) but (nan? ~A)" expected result)))
+			  (format-logged #t "    (number? ~A) but not (number? ~A)" expected result)
+			  (format-logged #t "    (number? ~A) but (nan? ~A)" expected result)))
 		    (if (and (rational? expected)
 			     (rational? result)
 			     (not (= result expected)))
-			(format #t "    exact results but not (= ~A ~A): ~A" expected result (= result expected))
+			(format-logged #t "    exact results but not (= ~A ~A): ~A" expected result (= result expected))
 			(if (and (or (rational? expected) 
 				     (rational? result))
 				 (real? expected)
 				 (real? result)
 				 (> (abs (- result expected)) error-12))
-			    (format #t "    rational results but diff > ~A: ~A" error-12 (abs (- result expected)))
+			    (format-logged #t "    rational results but diff > ~A: ~A" error-12 (abs (- result expected)))
 			    (if (and (pair? tst)
 				     (< (op-error (car tst) result expected) error-6))
 				(let ((n result))
-				  (format #t "    result not internally consistent")
+				  (format-logged #t "    result not internally consistent")
 				  (if (and (integer? n) 
 					   (or (not (= (denominator n) 1))
 					       (not (= n (numerator n)))
 					       (not (zero? (imag-part n)))
 					       (not (= (floor n) (ceiling n) (truncate n) (round n) n))
 					       (not (= n (real-part n)))))
-				      (format #t "    ~A integer but den: ~A, num: ~A, imag: ~A, real: ~A, floors: ~A ~A ~A ~A"
+				      (format-logged #t "    ~A integer but den: ~A, num: ~A, imag: ~A, real: ~A, floors: ~A ~A ~A ~A"
 					      n (denominator n) (numerator n) (imag-part n) (real-part n)
 					      (floor n) (ceiling n) (truncate n) (round n))
 				      (if (and (rational? n)
@@ -224,16 +237,16 @@
 						   (= (denominator n) 0)
 						   (not (= n (real-part n)))
 						   (not (= n (/ (numerator n) (denominator n))))))
-					  (format #t "    ~A ratio but imag: ~A, den: ~A, real: ~A, ~A/~A=~A"
+					  (format-logged #t "    ~A ratio but imag: ~A, den: ~A, real: ~A, ~A/~A=~A"
 						  n (imag-part n) (denominator n) (real-part n) 
 						  (numerator n) (denominator n) (* 1.0 (/ (numerator n) (denominator n))))
 					  (if (and (real? n)
 						   (not (rational? n))
 						   (or (not (zero? (imag-part n)))
 						       (not (= n (real-part n)))))
-					      (format #t "    ~A real but rational: ~A, imag: ~A, real: ~A"
+					      (format-logged #t "    ~A real but rational: ~A, imag: ~A, real: ~A"
 						      n (rational? n) (imag-part n) (real-part n))
-					      (format #t "    ~A complex but real? ~A, imag: ~A, ~A+~A=~A"
+					      (format-logged #t "    ~A complex but real? ~A, imag: ~A, ~A+~A=~A"
 						      n (real? n) (imag-part n) (real-part n) (imag-part n)
 						      (+ (real-part n) (* 0+i (imag-part n)))))))))))))
 	    (newline) (newline)))))
@@ -451,7 +464,7 @@
     (do ((j (+ i 1) (+ j 1)))
 	((= j (vector-length things)))
       (if (eq? (vector-ref things i) (vector-ref things j))
-	  (format #t ";(eq? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
+	  (format-logged #t ";(eq? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
 
 ;;; these are defined at user-level in s7 -- why are other schemes so coy about them?
 (test (eq? (if #f #f) #<unspecified>) #t)
@@ -499,11 +512,11 @@
    (let ((x arg)
 	 (y arg))
      (if (not (eq? x x))
-	 (format #t ";(eq? x x) of ~A -> #f?~%" x))
+	 (format-logged #t ";(eq? x x) of ~A -> #f?~%" x))
      (if (not (eq? x arg))
-	 (format #t ";(eq? x arg) of ~A ~A -> #f?~%" x arg))
+	 (format-logged #t ";(eq? x arg) of ~A ~A -> #f?~%" x arg))
      (if (not (eq? x y))
-	 (format #t ";(eq? x y) of ~A ~A -> #f?~%" x y))))
+	 (format-logged #t ";(eq? x y) of ~A ~A -> #f?~%" x y))))
  ;; actually I hear that #f is ok here for numbers
  (list "hi" '(1 2) (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3/4 #\f (lambda (a) (+ a 1)) :hi (if #f #f) #<eof> #<undefined>))
@@ -536,7 +549,7 @@
   (for-each
    (lambda (arg)
      (if (not ((lambda (p) (eq? p p)) arg))
-	 (format #t "~A not eq? to itself?~%" arg)))
+	 (format-logged #t "~A not eq? to itself?~%" arg)))
    (list "hi" '(1 2) (integer->char 65) 1 'a-symbol (make-vector 3) abs quasiquote macroexpand 1/0 (log 0) 
 	 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) :hi (if #f #f) #<eof> #<undefined> '(1 2 . 3)
 	 (let ((lst (list 1 2)))
@@ -661,7 +674,7 @@
     (do ((j (+ i 1) (+ j 1)))
 	((= j (vector-length things)))
       (if (eqv? (vector-ref things i) (vector-ref things j))
-	  (format #t ";(eqv? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
+	  (format-logged #t ";(eqv? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
 
 (test (eqv?) 'error)
 (test (eqv? #t) 'error)
@@ -873,7 +886,7 @@
     (do ((j (+ i 1) (+ j 1)))
 	((= j (vector-length things)))
       (if (equal? (vector-ref things i) (vector-ref things j))
-	  (format #t ";(equal? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
+	  (format-logged #t ";(equal? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
 
 (test (equal?) 'error)
 (test (equal? #t) 'error)
@@ -1130,7 +1143,7 @@
     (do ((j (+ i 1) (+ j 1)))
 	((= j (vector-length things)))
       (if (morally-equal? (vector-ref things i) (vector-ref things j))
-	  (format #t ";(morally-equal? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
+	  (format-logged #t ";(morally-equal? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
 
 (test (morally-equal?) 'error)
 (test (morally-equal? #t) 'error)
@@ -1681,21 +1694,21 @@
 
 (let ((lst1 '())
       (lst2 '()))
-  (if (not (eq? lst1 lst2)) (format #t ";~A: nils are not eq?~%" #__line__))
-  (if (not (eqv? lst1 lst2)) (format #t ";~A: nils are not eqv?~%" #__line__))
-  (if (not (equal? lst1 lst2)) (format #t ";~A: nils are not equal?~%" #__line__))
+  (if (not (eq? lst1 lst2)) (format-logged #t ";~A: nils are not eq?~%" #__line__))
+  (if (not (eqv? lst1 lst2)) (format-logged #t ";~A: nils are not eqv?~%" #__line__))
+  (if (not (equal? lst1 lst2)) (format-logged #t ";~A: nils are not equal?~%" #__line__))
 
   (let ((v1 (make-vector 100 #f))
 	(v2 (make-vector 100 #f)))
-    (if (not (equal? v1 v2)) (format #t ";~A: base vectors are not equal?~%" #__line__))
+    (if (not (equal? v1 v2)) (format-logged #t ";~A: base vectors are not equal?~%" #__line__))
 
     (let ((h1 (make-hash-table))
 	  (h2 (make-hash-table)))
-      (if (not (equal? h1 h2)) (format #t ";~A: base hash-tables are not equal?~%" #__line__))
+      (if (not (equal? h1 h2)) (format-logged #t ";~A: base hash-tables are not equal?~%" #__line__))
 
       (let ((e1 (augment-environment (current-environment)))
 	    (e2 (augment-environment (current-environment))))
-	(if (not (equal? e1 e2)) (format #t ";~A: base environments are not equal?~%" #__line__))
+	(if (not (equal? e1 e2)) (format-logged #t ";~A: base environments are not equal?~%" #__line__))
 
 	(let ((ctr 0))
 	  (for-each
@@ -1706,16 +1719,16 @@
 	   (let ((a1 arg1)
 		 (a2 arg2))
 	     (if (not (eq? a1 arg1)) 
-		 (format #t ";~A: ~A is not eq? to itself? ~A~%" #__line__ arg1 a1))
+		 (format-logged #t ";~A: ~A is not eq? to itself? ~A~%" #__line__ arg1 a1))
 	     (if (and (eq? a1 a2) (not (eqv? a1 a2)))
-		 (format #t ";~A: ~A is eq? but not eqv? ~A~%" #__line__ a1 a2))
+		 (format-logged #t ";~A: ~A is eq? but not eqv? ~A~%" #__line__ a1 a2))
 
 	     (if (equal? a1 a2)
 		 (begin
 		   (if (and (eq? a1 a2) (not (eqv? a1 a2))) 
-		       (format #t ";~A: ~A is eq? and equal? but not eqv?? ~A~%" #__line__ a1 a2))
+		       (format-logged #t ";~A: ~A is eq? and equal? but not eqv?? ~A~%" #__line__ a1 a2))
 		   (if (not (morally-equal? a1 a2))
-		       (format #t ";~A: ~A is equal? but not morally-equal? ~A~%" #__line__ a1 a2))
+		       (format-logged #t ";~A: ~A is equal? but not morally-equal? ~A~%" #__line__ a1 a2))
 		   (set! lst1 (cons a1 lst1))
 		   (set! lst2 (cons a2 lst2))
 		   (set! (v1 ctr) a1)
@@ -1729,29 +1742,29 @@
 
 		     (if (not (equal? lst1 lst2))
 			 (begin
-			   (format #t ";~A: add ~A to lists, now not equal?~%" #__line__ a1)
+			   (format-logged #t ";~A: add ~A to lists, now not equal?~%" #__line__ a1)
 			   (set! lst1 (cdr lst1))
 			   (set! lst2 (cdr lst2))))
 		     (if (not (equal? v1 v2))
 			 (begin
-			   (format #t ";~A: add ~A to vectors, now not equal?~%" #__line__ a1)
+			   (format-logged #t ";~A: add ~A to vectors, now not equal?~%" #__line__ a1)
 			   (set! (v1 ctr) #f)
 			   (set! (v2 ctr) #f)))
 		     (if (not (equal? h1 h2))
 			 (begin
-			   (format #t ";~A: add ~A to hash-tables, now not equal?~%" #__line__ a1)
+			   (format-logged #t ";~A: add ~A to hash-tables, now not equal?~%" #__line__ a1)
 			   (set! (h1 sym1) #f)
 			   (set! (h2 sym2) #f)))
 		     (if (not (equal? e1 e2))
 			 (begin
-			   (format #t ";~A: add ~A to environments, now not equal?~%" #__line__ a1)
+			   (format-logged #t ";~A: add ~A to environments, now not equal?~%" #__line__ a1)
 			   (eval `(set! ,sym1 #f) e1)
 			   (eval `(set! ,sym2 #f) e2)))
 		     ))
 		 (begin
-		   (if (eq? a1 arg1) (format #t ";~A: ~A is eq? but not equal? ~A~%" #__line__ a1 a2))
-		   (if (eqv? a1 arg1) (format #t ";~A: ~A is eqv? but not equal? ~A~%" #__line__ a1 a2))
-		   (format #t ";~A: ~A is not equal to ~A~%" #__line__ a1 a2)))
+		   (if (eq? a1 arg1) (format-logged #t ";~A: ~A is eq? but not equal? ~A~%" #__line__ a1 a2))
+		   (if (eqv? a1 arg1) (format-logged #t ";~A: ~A is eqv? but not equal? ~A~%" #__line__ a1 a2))
+		   (format-logged #t ";~A: ~A is not equal to ~A~%" #__line__ a1 a2)))
 
 	     (set! ctr (+ ctr 1))))
 
@@ -1792,29 +1805,29 @@
 	  (set! (v2 ctr) lst2)
 	  (set! ctr (+ ctr 1))
 	  (if (not (equal? v1 v2))
-	      (format #t ";~A: add lists to vectors, now vectors not equal?~%" #__line__)
+	      (format-logged #t ";~A: add lists to vectors, now vectors not equal?~%" #__line__)
 	      (begin
 		(set! lst1 (cons v1 lst1))
 		(set! lst2 (cons v2 lst2)) 
 		(if (not (equal? lst1 lst2))
 		    (begin
-		      (format #t ";~A: add vectors to lists, now lists not equal?~%" #__line__)
+		      (format-logged #t ";~A: add vectors to lists, now lists not equal?~%" #__line__)
 		      (set! (h1 'lst1) lst1)
 		      (set! (h2 'lst2) lst2)
 		      (if (not (equal? h1 h2))
-			  (format #t ";~A: add lists to hash-tables, not hash-tables not equal?~%" #__line__)
+			  (format-logged #t ";~A: add lists to hash-tables, not hash-tables not equal?~%" #__line__)
 			  (begin
 			    (set! (v1 ctr) v1)
 			    (set! (v2 ctr) v2)
 			    (set! ctr (+ ctr 1))
 			    (if (not (equal? v1 v2))
-				(format #t ";~A: add vectors to themselves, now vectors not equal?~%" #__line__))
+				(format-logged #t ";~A: add vectors to themselves, now vectors not equal?~%" #__line__))
 			    (if (not (equal? lst1 lst2))
-				(format #t ";~A: add vectors to themselves, now lists not equal?~%" #__line__))
+				(format-logged #t ";~A: add vectors to themselves, now lists not equal?~%" #__line__))
 			    (set! (h1 'h1) h1)
 			    (set! (h2 'h2) h2)
 			    (if (not (equal? h1 h2))
-				(format #t ";~A: add hash-tables to themselves, not hash-tables not equal?~%" #__line__))
+				(format-logged #t ";~A: add hash-tables to themselves, not hash-tables not equal?~%" #__line__))
 			    )))))))))))
 (set! *#readers* old-readers)
 
@@ -1847,7 +1860,7 @@
 (for-each
  (lambda (arg)
    (if (boolean? arg)
-       (format #t ";(boolean? ~A) -> #t?~%" arg)))
+       (format-logged #t ";(boolean? ~A) -> #t?~%" arg)))
  (list "hi" '(1 2) (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) :hi (if #f #f) #<eof> #<undefined>))
 
@@ -1877,7 +1890,7 @@
 (for-each
  (lambda (arg)
    (if (boolean=? #f arg)
-       (format #t ";(boolean=? #f ~A) -> #t?~%" arg)))
+       (format-logged #t ";(boolean=? #f ~A) -> #t?~%" arg)))
  (list "hi" '(1 2) () "" #() (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) :hi (if #f #f) #<eof> #<undefined> #<unspecified>))
 
@@ -1908,7 +1921,7 @@
 (for-each
  (lambda (arg)
    (if (not arg)
-       (format #t ";(not ~A) -> #t?~%" arg)))
+       (format-logged #t ";(not ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) :hi #<eof> #<undefined> (if #f #f)))
 
@@ -2033,7 +2046,7 @@
 (for-each
  (lambda (arg)
    (if (symbol? arg)
-       (format #t ";(symbol? ~A) -> #t?~%" arg)))
+       (format-logged #t ";(symbol? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) #<eof> #<undefined>))
 
@@ -2086,7 +2099,7 @@
 (for-each
  (lambda (arg)
    (if (symbol=? 'abs arg)
-       (format #t ";(symbol=? 'abs ~A) -> #t?~%" arg)))
+       (format-logged #t ";(symbol=? 'abs ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) #<eof> #<undefined>))
 (test (symbol=?) 'error)
@@ -2128,7 +2141,7 @@
 (for-each
  (lambda (arg)
    (if (procedure? arg)
-       (format #t ";(procedure? ~A) -> #t?~%" arg)))
+       (format-logged #t ";(procedure? ~A) -> #t?~%" arg)))
  (list "hi" _ht_ :hi (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f #() (if #f #f)))
 
 (test (procedure?) 'error)
@@ -2195,7 +2208,7 @@
 (for-each
  (lambda (arg)
    (if (char? arg)
-       (format #t ";(char? ~A) -> #t?~%" arg)))
+       (format-logged #t ";(char? ~A) -> #t?~%" arg)))
  (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #f #t (if #f #f) :hi (lambda (a) (+ a 1))))
 
@@ -2204,7 +2217,7 @@
 (do ((i 0 (+ i 1)))
     ((= i 256))
   (if (not (char? (integer->char i)))
-      (format #t ";(char? (integer->char ~A)) -> #f?~%" i)))
+      (format-logged #t ";(char? (integer->char ~A)) -> #f?~%" i)))
 
 (test (char?) 'error)
 (test (char? #\a #\b) 'error)
@@ -2284,13 +2297,13 @@
   (for-each
    (lambda (arg)
      (if (not (char-upper-case? arg))
-	 (format #t ";(char-upper-case? ~A) -> #f?~%" arg)))
+	 (format-logged #t ";(char-upper-case? ~A) -> #f?~%" arg)))
    cap-a-to-z)
   
   (for-each
    (lambda (arg)
      (if (char-upper-case? arg)
-	 (format #t ";(char-upper-case? ~A) -> #t?~%" arg)))
+	 (format-logged #t ";(char-upper-case? ~A) -> #t?~%" arg)))
    a-to-z)
   
   ;; non-alpha chars are "unspecified" here
@@ -2313,13 +2326,13 @@
   (for-each
    (lambda (arg)
      (if (not (char-lower-case? arg))
-	 (format #t ";(char-lower-case? ~A) -> #f?~%" arg)))
+	 (format-logged #t ";(char-lower-case? ~A) -> #f?~%" arg)))
    a-to-z)
   
   (for-each
    (lambda (arg)
      (if (char-lower-case? arg)
-	 (format #t ";(char-lower-case? ~A) -> #t?~%" arg)))
+	 (format-logged #t ";(char-lower-case? ~A) -> #t?~%" arg)))
    cap-a-to-z)
   
   (test (char-lower-case? 1) 'error)
@@ -2366,7 +2379,7 @@
   (for-each
    (lambda (arg1 arg2)
      (if (not (char=? (char-upcase arg1) arg2))
-	 (format #t ";(char-upcase ~A) != ~A?~%" arg1 arg2)))
+	 (format-logged #t ";(char-upcase ~A) != ~A?~%" arg1 arg2)))
    a-to-z
    cap-a-to-z)
   
@@ -2374,7 +2387,7 @@
       ((= i 256))
     (if (and (not (char=? (integer->char i) (char-upcase (integer->char i))))
 	     (not (char-alphabetic? (integer->char i))))
-	(format #t ";(char-upcase ~A) -> ~A but not alphabetic?~%" (integer->char i) (char-upcase (integer->char i)))))
+	(format-logged #t ";(char-upcase ~A) -> ~A but not alphabetic?~%" (integer->char i) (char-upcase (integer->char i)))))
 
   (test (recompose 12 char-upcase #\a) #\A)
   (test (reinvert 12 char-upcase char-downcase #\a) #\a)
@@ -2406,7 +2419,7 @@
   (for-each
    (lambda (arg1 arg2)
      (if (not (char=? (char-downcase arg1) arg2))
-	 (format #t ";(char-downcase ~A) != ~A?~%" arg1 arg2)))
+	 (format-logged #t ";(char-downcase ~A) != ~A?~%" arg1 arg2)))
    cap-a-to-z
    a-to-z)
 
@@ -2438,13 +2451,13 @@
   (for-each
    (lambda (arg)
      (if (char-numeric? arg)
-	 (format #t ";(char-numeric? ~A) -> #t?~%" arg)))
+	 (format-logged #t ";(char-numeric? ~A) -> #t?~%" arg)))
    cap-a-to-z)
   
   (for-each
    (lambda (arg)
      (if (char-numeric? arg)
-	 (format #t ";(char-numeric? ~A) -> #t?~%" arg)))
+	 (format-logged #t ";(char-numeric? ~A) -> #t?~%" arg)))
    a-to-z)
 
   (test (char-numeric?) 'error)
@@ -2476,13 +2489,13 @@
   (for-each
    (lambda (arg)
      (if (char-whitespace? arg)
-	 (format #t ";(char-whitespace? ~A) -> #t?~%" arg)))
+	 (format-logged #t ";(char-whitespace? ~A) -> #t?~%" arg)))
    mixed-a-to-z)
   
   (for-each
    (lambda (arg)
      (if (char-whitespace? arg)
-	 (format #t ";(char-whitespace? ~A) -> #t?~%" arg)))
+	 (format-logged #t ";(char-whitespace? ~A) -> #t?~%" arg)))
    digits)
 
   (test (char-whitespace?) 'error)
@@ -2513,13 +2526,13 @@
   (for-each
    (lambda (arg)
      (if (char-alphabetic? arg)
-	 (format #t ";(char-alphabetic? ~A) -> #t?~%" arg)))
+	 (format-logged #t ";(char-alphabetic? ~A) -> #t?~%" arg)))
    digits)
   
   (for-each
    (lambda (arg)
      (if (not (char-alphabetic? arg))
-	 (format #t ";(char-alphabetic? ~A) -> #f?~%" arg)))
+	 (format-logged #t ";(char-alphabetic? ~A) -> #f?~%" arg)))
    mixed-a-to-z)
 
   (test (char-alphabetic?) 'error)
@@ -2546,11 +2559,11 @@
 
 	 (if (and (not (char=? ch chu))
 		  (not (char-upper-case? chu)))
-	     (format #t ";(char-upper-case? (char-upcase ~C)) is #f~%" ch))
+	     (format-logged #t ";(char-upper-case? (char-upcase ~C)) is #f~%" ch))
 
 	 (if (and (not (char=? ch chd))
 		  (not (char-lower-case? chd)))
-	     (format #t ";(char-lower-case? (char-downcase ~C)) is #f~%" ch))
+	     (format-logged #t ";(char-lower-case? (char-downcase ~C)) is #f~%" ch))
 
 	 (if (or (and (not (char=? ch chu))
 		      (not (char=? ch (char-downcase chu))))
@@ -2827,7 +2840,7 @@
 	(for-each
 	 (lambda (op1 op2)
 	   (if (not (eq? (op1 c1 c2) (op2 (string c1) (string c2))))
-	       (format #t ";(~A|~A ~A ~A) -> ~A|~A~%" op1 op2 c1 c2 (op1 c1 c2) (op2 (string c1) (string c2)))))
+	       (format-logged #t ";(~A|~A ~A ~A) -> ~A|~A~%" op1 op2 c1 c2 (op1 c1 c2) (op2 (string c1) (string c2)))))
 	 (list char=? char<? char<=? char>? char>=? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
 	 (list string=? string<? string<=? string>? string>=? string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?)))))
 |#
@@ -2963,7 +2976,7 @@
 (do ((i 0 (+ i 1)))
     ((= i 256)) 
   (if (not (= (char->integer (integer->char i)) i)) 
-      (format #t ";char->integer ~D ~A != ~A~%" i (integer->char i) (char->integer (integer->char i)))))
+      (format-logged #t ";char->integer ~D ~A != ~A~%" i (integer->char i) (char->integer (integer->char i)))))
 
 (test (reinvert 12 integer->char char->integer 60) 60)
 
@@ -3367,13 +3380,13 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	    (set! (str2 k) (char-upcase (str1 k)))
 	    (set! (str2 k) (char-downcase (str1 k)))))
       (if (not (string-ci=? str1 str2))
-	  (format #t "not =: ~S ~S~%" str1 str2))
+	  (format-logged #t "not =: ~S ~S~%" str1 str2))
       (if (and (string-ci<? str1 str2)
 	       (string-ci>=? str1 str2))
-	  (format #t "< : ~S ~S~%" str1 str2))
+	  (format-logged #t "< : ~S ~S~%" str1 str2))
       (if (and (string-ci>? str1 str2)
 	       (string-ci<=? str1 str2))
-	  (format #t "> : ~S ~S~%" str1 str2)))))
+	  (format-logged #t "> : ~S ~S~%" str1 str2)))))
 |#
 
 
@@ -4246,7 +4259,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 		(newstrlen (length newstr)))
 	    (if (or (not (= lstlen strlen newstrlen))
 		    (not (string=? newstr str)))
-		(format #t ";string->list->string: ~S -> ~A -> ~S~%" str lst newstr))))))))
+		(format-logged #t ";string->list->string: ~S -> ~A -> ~S~%" str lst newstr))))))))
 
 #|
 (define (all-strs len file)
@@ -4429,7 +4442,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 			     (let ((replacement (if (string=? substr "gt") ">"
 						    (if (string=? substr "lt") "<"
 							(if (string=? substr "mdash") "-"
-							    (format #t "unknown: ~A~%" substr))))))
+							    (format-logged #t "unknown: ~A~%" substr))))))
 			       (string-append replacement
 					      (fixit (substring str (+ epos 1)))))))))))
   (test (fixit "(let ((f (hz-&gt;radians 100)) (g (hz-&gt;radians 200))) (&lt; f g))")
@@ -4570,11 +4583,11 @@ zzy" (lambda (p) (eval (read p))))) 32)
 			  (set! (str 7) (integer->char i))
 			  (set! (str 13) (integer->char i))
 			  (let ((val (eval-string str)))
-			    (format #t "ok: ~S -> ~S~%" str val)))
+			    (format-logged #t "ok: ~S -> ~S~%" str val)))
 			(lambda args
-			  (format #t "bad but symbol: ~S~%" str))))) ; 11 12 # ' , . 
+			  (format-logged #t "bad but symbol: ~S~%" str))))) ; 11 12 # ' , . 
 	   (lambda args
-	     (format #t "bad: ~C~%" (integer->char i))))))  ; # ( ) ' " . ` nul 9 10 13 space 0..9 ;
+	     (format-logged #t "bad: ~C~%" (integer->char i))))))  ; # ( ) ' " . ` nul 9 10 13 space 0..9 ;
 
 (let ((str "(let ((XY 3)) XY)"))
   (do ((i 0 (+ i 1)))
@@ -4591,11 +4604,11 @@ zzy" (lambda (p) (eval (read p))))) 32)
 			    (set! (str 14) (integer->char i))
 			    (set! (str 15) (integer->char k))
 			    (let ((val (eval-string str)))
-			      (format #t "ok: ~S -> ~S~%" str val)))
+			      (format-logged #t "ok: ~S -> ~S~%" str val)))
 			  (lambda args
-			    (format #t "bad but symbol: ~S~%" str))))) ; 11 12 # ' , . 
+			    (format-logged #t "bad but symbol: ~S~%" str))))) ; 11 12 # ' , . 
 	     (lambda args
-	       (format #t "bad: ~C~%" (integer->char i)))))))  ; # ( ) ' " . ` nul 9 10 13 space 0..9 ;
+	       (format-logged #t "bad: ~C~%" (integer->char i)))))))  ; # ( ) ' " . ` nul 9 10 13 space 0..9 ;
 |#
 
 
@@ -4870,7 +4883,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (if (not (equal? (car (cons arg '())) arg))
-       (format #t ";(car '(~A)) returned ~A?~%" arg (car (cons arg '()))))
+       (format-logged #t ";(car '(~A)) returned ~A?~%" arg (car (cons arg '()))))
    (test (car arg) 'error))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
@@ -4908,7 +4921,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (if (not (equal? (cdr (cons '() arg)) arg))
-       (format #t ";(cdr '(() ~A) -> ~A?~%" arg (cdr (cons '() arg))))
+       (format-logged #t ";(cdr '(() ~A) -> ~A?~%" arg (cdr (cons '() arg))))
    (test (cdr arg) 'error))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
@@ -4995,7 +5008,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (let ((val1 (catch #t (lambda () (op1 lst)) (lambda args 'error)))
 	    (val2 (catch #t (lambda () (op2 lst)) (lambda args 'error))))
 	(if (not (equal? val1 val2))
-	    (format #t ";(~A ~S) -> ~S, (~A-1): ~S?~%" name lst val1 name val2))))
+	    (format-logged #t ";(~A ~S) -> ~S, (~A-1): ~S?~%" name lst val1 name val2))))
     lists))
  (list 'caar 'cadr 'cdar 'cddr 'caaar 'caadr 'cadar 'cdaar 'caddr 'cdddr 'cdadr 'cddar 
        'caaaar 'caaadr 'caadar 'cadaar 'caaddr 'cadddr 'cadadr 'caddar 'cdaaar 
@@ -5430,14 +5443,14 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (lst)
    (if (list? lst)
        (if (not (equal? lst (reverse (reverse lst))))
-	   (format #t ";(reverse (reverse ~A)) -> ~A?~%" lst (reverse (reverse lst))))))
+	   (format-logged #t ";(reverse (reverse ~A)) -> ~A?~%" lst (reverse (reverse lst))))))
  lists)
 
 (for-each
  (lambda (lst)
    (if (list? lst)
        (if (not (equal? lst (reverse (reverse (reverse (reverse lst))))))
-	   (format #t ";(reverse...(4x) ~A) -> ~A?~%" lst (reverse (reverse (reverse (reverse lst))))))))
+	   (format-logged #t ";(reverse...(4x) ~A) -> ~A?~%" lst (reverse (reverse (reverse (reverse lst))))))))
  lists)
 
 (test (let ((x (list 1 2 3))) (list (recompose 32 reverse x) x)) '((1 2 3) (1 2 3)))
@@ -5546,7 +5559,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (if (pair? arg)
-       (format #t ";(pair? ~A) -> #t?~%" arg)))
+       (format-logged #t ";(pair? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
@@ -5604,7 +5617,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (if (list? arg)
-       (format #t ";(list? ~A) -> #t?~%" arg)))
+       (format-logged #t ";(list? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
@@ -5655,7 +5668,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (if (null? arg)
-       (format #t ";(null? ~A) -> #t?~%" arg)))
+       (format-logged #t ";(null? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f #t (if #f #f) :hi #<eof> #<undefined> (values) (lambda (a) (+ a 1))))
 
@@ -5772,7 +5785,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (let ((val1 (catch #t (lambda () (op1 lst)) (lambda args 'error)))
 	    (val2 (catch #t (lambda () (op2 lst)) (lambda args 'error))))
 	(if (not (equal? val1 val2))
-	    (format #t ";(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
+	    (format-logged #t ";(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
     lists))
  (list 'list-ref:0 'list-ref:1 'list-ref:2 'list-ref:3)
  (list car cadr caddr cadddr)
@@ -6103,7 +6116,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (let ((val1 (catch #t (lambda () (op1 lst)) (lambda args 'error)))
 	    (val2 (catch #t (lambda () (op2 lst)) (lambda args 'error))))
 	(if (not (equal? val1 val2))
-	    (format #t ";(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
+	    (format-logged #t ";(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
     lists))
  (list 'list-tail:0 'list-tail:1 'list-tail:2 'list-tail:3 'list-tail:4)
  (list (lambda (l) l) cdr cddr cdddr cddddr)
@@ -6784,7 +6797,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (lambda (arg)
       (let ((result (catch #t (lambda () (op arg)) (lambda args 'error))))
 	(if (not (eq? result 'error))
-	    (format #t ";(~A ~A) returned ~A?~%" op arg result))
+	    (format-logged #t ";(~A ~A) returned ~A?~%" op arg result))
 	(test (op arg '() arg) 'error)
 	(test (op arg) 'error)))
     (list '() "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
@@ -6806,7 +6819,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (lambda (arg)
       (let ((result (catch #t (lambda () (op #f arg)) (lambda args 'error))))
 	(if (not (eq? result 'error))
-	    (format #t ";(~A #f ~A) returned ~A?~%" op arg result))))
+	    (format-logged #t ";(~A #f ~A) returned ~A?~%" op arg result))))
     (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
 	  3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
  (list assq assv assoc memq memv member))
@@ -7571,7 +7584,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
        (do ((i 0 (+ i 1)))
 	   ((= i (length v)))
 	 (if (not (= (correct i) (inexact->exact (v i))))
-	     (format #t ";for-each call/cc data: ~A~%" v))))))
+	     (format-logged #t ";for-each call/cc data: ~A~%" v))))))
  
  (list (make-vector 10)
        (make-list 10)))
@@ -8043,16 +8056,16 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (let ((v1 (v 0))
 	(v2 (v 1)))
     (if (not (equal? v1 #(1 2 3)))
-	(format #t ";(v 0) subvector: ~A~%" v1))
+	(format-logged #t ";(v 0) subvector: ~A~%" v1))
     (if (not (equal? v2 #(4 5 6)))
-	(format #t ";(v 1) subvector: ~A~%" v2))
+	(format-logged #t ";(v 1) subvector: ~A~%" v2))
     (let ((v3 (copy v1)))
       (if (not (equal? v3 #(1 2 3)))
-	  (format #t ";(v 0) copied subvector: ~A~%" v3))
+	  (format-logged #t ";(v 0) copied subvector: ~A~%" v3))
       (if (not (= (length v3) 3))
-	  (format #t ";(v 0) copied length: ~A~%" (length v3)))
+	  (format-logged #t ";(v 0) copied length: ~A~%" (length v3)))
       (if (not (equal? v3 (copy (v 0))))
-	  (format #t ";(v 0) copied subvectors: ~A ~A~%" v3 (copy (v 0)))))))
+	  (format-logged #t ";(v 0) copied subvectors: ~A ~A~%" v3 (copy (v 0)))))))
 
 (let ((v1 (make-vector '(3 2 1) #f))
       (v2 (make-vector '(3 2 1) #f)))
@@ -8435,7 +8448,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	  (set! *vector-print-length* old-print-length)
 	  (let ((val (string=? result "#1=#<hash-table (\"hi\" . #1#)>")))
 	    (if (not val)
-		(format #t ";hash display:~%  ~A~%" (object->string h1)))
+		(format-logged #t ";hash display:~%  ~A~%" (object->string h1)))
 	    val)))
       #t)
 
@@ -8965,7 +8978,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 #|
 (define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
   "(for-each-permutation func vals) applies func to every permutation of vals"
-  ;;   (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))
+  ;;   (for-each-permutation (lambda args (format-logged #t "~{~A~^ ~}~%" args)) '(1 2 3))
   (define (pinner cur nvals len)
     (if (= len 1)
 	(apply func (cons (car nvals) cur))
@@ -8987,7 +9000,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;; a slightly faster version (avoids consing and some recursion)
 (define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
   "(for-each-permutation func vals) applies func to every permutation of vals"
-  ;;   (for-each-permutation (lambda args (format #t "~A~%" args)) '(1 2 3))
+  ;;   (for-each-permutation (lambda args (format-logged #t "~A~%" args)) '(1 2 3))
   (let ((cur (make-list (length vals))))
 
     (define (pinner nvals len)
@@ -9018,7 +9031,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;; and continuing down that line...
 (define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
   "(for-each-permutation func vals) applies func to every permutation of vals"
-  ;;   (for-each-permutation (lambda args (format #t "~A~%" args)) '(1 2 3))
+  ;;   (for-each-permutation (lambda args (format-logged #t "~A~%" args)) '(1 2 3))
   (let ((cur (make-list (length vals))))
 
     (define (pinner nvals len)
@@ -9203,21 +9216,21 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (val #f))
   (with-output-to-file "load-hook-test.scm"
     (lambda ()
-      (format #t "(define (load-hook-test val) (+ val 1))")))
+      (format-logged #t "(define (load-hook-test val) (+ val 1))")))
   (set! (hook-functions *load-hook*)
 	(list (lambda (hook) 
 		(if (or val
 			(defined? 'load-hook-test))
-		    (format #t ";*load-hook*: ~A ~A?~%" val load-hook-test))
+		    (format-logged #t ";*load-hook*: ~A ~A?~%" val load-hook-test))
 		(set! val (hook 'name)))))
   (load "load-hook-test.scm")
   (if (or (not (string? val))
 	  (not (string=? val "load-hook-test.scm")))
-      (format #t ";*load-hook-test* file: ~S~%" val))
+      (format-logged #t ";*load-hook-test* file: ~S~%" val))
   (if (not (defined? 'load-hook-test))
-      (format #t ";load-hook-test function not defined?~%")
+      (format-logged #t ";load-hook-test function not defined?~%")
       (if (not (= (load-hook-test 1) 2))
-	  (format #t ";load-hook-test: ~A~%" (load-hook-test 1))))
+	  (format-logged #t ";load-hook-test: ~A~%" (load-hook-test 1))))
   (set! (hook-functions *load-hook*) old-load-hook))
 
 (let ((old-hook (hook-functions *error-hook*)))
@@ -9469,7 +9482,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (let ((a-hook (make-hook 'error-type :rest 'error-info)))
    (set! (hook-functions a-hook)
          (list (lambda (hook) 
-		 ;(format #t "hooked-catch: ~A~%" (apply format #t (car (hook 'error-info))))
+		 ;(format-logged #t "hooked-catch: ~A~%" (apply format #t (car (hook 'error-info))))
 		 (set! (hook 'result) 32))))
    (test (hooked-catch a-hook (abs "hi")) 32)
    
@@ -9540,7 +9553,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (let ((ht1 (make-hash-table 31))
       (ht2 (make-hash-table 31)))
   (if (not (equal? ht1 ht2))
-      (format #t ";ht1 and ht2 are empty, but not equal??~%"))
+      (format-logged #t ";ht1 and ht2 are empty, but not equal??~%"))
 
       ;; these 1st tests take advantage of s7's hashing function
   (hash-table-set! ht1 'abc 1)
@@ -9550,27 +9563,27 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (hash-table-set! ht2 'abcabc 2) 
   (hash-table-set! ht2 'abc 1)
   (if (not (equal? ht1 ht2))
-      (format #t ";ht1 and ht2 have the same key value pairs, but are not equal??~%"))
+      (format-logged #t ";ht1 and ht2 have the same key value pairs, but are not equal??~%"))
   
   (set! ht2 (make-hash-table 31))
   (hash-table-set! ht2 'abc 1)
   (hash-table-set! ht2 'abcabc 2) 
   (hash-table-set! ht2 'abcabcabc 3)  
   (if (not (equal? ht1 ht2))
-      (format #t ";ht1 and ht2 have the same key value pairs in the same order, but are not equal??~%"))
+      (format-logged #t ";ht1 and ht2 have the same key value pairs in the same order, but are not equal??~%"))
   
   (hash-table-set! ht2 'abc "1")
   (if (equal? ht1 ht2) 
-      (format #t ";ht1 and ht2 are equal but values are not~%"))
+      (format-logged #t ";ht1 and ht2 are equal but values are not~%"))
   (hash-table-set! ht2 'abc 1)
   (if (not (equal? ht1 ht2))
-      (format #t ";after reset ht1 and ht2 have the same key value pairs in the same order, but are not equal??~%"))
+      (format-logged #t ";after reset ht1 and ht2 have the same key value pairs in the same order, but are not equal??~%"))
   (hash-table-set! ht2 1 'abc)
   (if (equal? ht1 ht2)
-      (format #t ";ht1 and ht2 are equal but entries are not~%"))
+      (format-logged #t ";ht1 and ht2 are equal but entries are not~%"))
   (hash-table-set! ht1 1 'abc)
   (if (not (equal? ht1 ht2))
-      (format #t ";after add ht1 and ht2 have the same key value pairs, but are not equal??~%"))
+      (format-logged #t ";after add ht1 and ht2 have the same key value pairs, but are not equal??~%"))
 
       ;; these should force chaining in any case
   (set! ht1 (make-hash-table 31))
@@ -9580,19 +9593,19 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (hash-table-set! ht1 i (* i 2))
     (hash-table-set! ht2 i (* i 2)))
   (if (not (equal? ht1 ht2))
-      (format #t ";ht1 and ht2 have the same (integer) key value pairs in the same order, but are not equal??~%"))
+      (format-logged #t ";ht1 and ht2 have the same (integer) key value pairs in the same order, but are not equal??~%"))
   
   (set! ht2 (make-hash-table 31))
   (do ((i 99 (- i 1)))
       ((< i 0))
     (hash-table-set! ht2 i (* i 2)))
   (if (not (equal? ht1 ht2))
-      (format #t ";ht1 and ht2 have the same (integer) key value pairs, but are not equal??~%"))
+      (format-logged #t ";ht1 and ht2 have the same (integer) key value pairs, but are not equal??~%"))
   
   (fill! ht1 '())
   (set! ht2 (make-hash-table))
   (if (not (equal? ht1 ht2))
-      (format #t ";ht1 and ht2 are now empty, but not equal??~%")))
+      (format-logged #t ";ht1 and ht2 are now empty, but not equal??~%")))
 
 (let ((ht (make-hash-table))
       (l1 '(x y z))
@@ -9874,13 +9887,13 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
  (let ((vals (list (hti) (hti))))
    (if (not (equal? (sort! vals (lambda (a b) (< (car a) (car b)))) '((123 . "123") (456 . "456"))))
-       (format #t ";hash-table-iterator: ~A~%" vals))
+       (format-logged #t ";hash-table-iterator: ~A~%" vals))
    (let ((val (hti)))
      (if (not (null? val))
-	 (format #t ";hash-table-iterator at end: ~A~%" val)))
+	 (format-logged #t ";hash-table-iterator at end: ~A~%" val)))
    (let ((val (hti)))
      (if (not (null? val))
-	 (format #t ";hash-table-iterator at end (2): ~A~%" val)))))
+	 (format-logged #t ";hash-table-iterator at end (2): ~A~%" val)))))
 
 (test (make-hash-table-iterator) 'error)
 (test (make-hash-table-iterator (make-hash-table) 1) 'error)
@@ -10037,13 +10050,13 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (for-each
      (lambda (a b)
        (if (not (equal? (string->number (car a)) (cdr a)))
-	   (format #t ";hash-table for-each (str . i): ~A?~%" a))
+	   (format-logged #t ";hash-table for-each (str . i): ~A?~%" a))
        (if (not (equal? (number->string (car b)) (cdr b)))
-	   (format #t ";hash-table for-each (i . str): ~A?~%" b))
+	   (format-logged #t ";hash-table for-each (i . str): ~A?~%" b))
        (set! cases (+ cases 1)))
      ht1 ht2)
     (if (not (= cases 256))
-	(format #t ";hash-table for-each cases: ~A~%" cases)))
+	(format-logged #t ";hash-table for-each cases: ~A~%" cases)))
   (let ((iter1 (make-hash-table-iterator ht1))
 	(iter2 (make-hash-table-iterator ht2)))
     (test (equal? iter1 iter2) #f)
@@ -10055,12 +10068,12 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	  ((or (null? a)
 	       (null? b)))
 	(if (not (equal? (string->number (car a)) (cdr a)))
-	    (format #t ";hash-table iter1 (str . i): ~A?~%" a))
+	    (format-logged #t ";hash-table iter1 (str . i): ~A?~%" a))
 	(if (not (equal? (number->string (car b)) (cdr b)))
-	    (format #t ";hash-table iter2 (i . str): ~A?~%" b))
+	    (format-logged #t ";hash-table iter2 (i . str): ~A?~%" b))
 	(set! cases (+ cases 1)))
       (if (not (= cases 256))
-	  (format #t ";hash-table iter1/2 cases: ~A~%" cases)))))
+	  (format-logged #t ";hash-table iter1/2 cases: ~A~%" cases)))))
 
 (let ((ht (make-hash-table 31)))
   (let ((ht1 (make-hash-table 31)))
@@ -10176,7 +10189,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 			 (outer-environment (procedure-environment f1)))
 	       #f))))
     (if (not (hash-table? ht))
-	(format #t ";can't find memo? ~A~%" (environment->list (outer-environment (procedure-environment f1))))
+	(format-logged #t ";can't find memo? ~A~%" (environment->list (outer-environment (procedure-environment f1))))
 	(test (length (map (lambda (x) x) ht)) 2))))
 
 (let ()
@@ -10305,25 +10318,25 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	      (len (min 5 (length val))))
 	 (do ((i 0 (+ i 1)))
 	     ((= i len))
-	   (format #t "(test (~S ~S) ~S)~%" arg i
+	   (format-logged #t "(test (~S ~S) ~S)~%" arg i
 		   (catch #t (lambda () (val i)) (lambda args 'error)))
 	   (let ((len1 (catch #t (lambda () (min 5 (length (val i)))) (lambda args 0))))
 	     (if (> len1 0)
 		 (do ((k 0 (+ k 1)))
 		     ((= k len1))
-		   (format #t "(test (~S ~S ~S) ~S)~%" arg i k
+		   (format-logged #t "(test (~S ~S ~S) ~S)~%" arg i k
 			   (catch #t (lambda () (val i k)) (lambda args 'error)))
 		   (let ((len2 (catch #t (lambda () (min 5 (length (val i k)))) (lambda args 0))))
 		     (if (> len2 0)
 			 (do ((m 0 (+ m 1)))
 			     ((= m len2))
-			   (format #t "(test (~S ~S ~S ~S) ~S)~%" arg i k m
+			   (format-logged #t "(test (~S ~S ~S ~S) ~S)~%" arg i k m
 				   (catch #t (lambda () (val i k m)) (lambda args 'error)))
 			   (let ((len3 (catch #t (lambda () (min 5 (length (val i k m)))) (lambda args 0))))
 			     (if (> len3 0)
 				 (do ((n 0 (+ n 1)))
 				     ((= n len3))
-				   (format #t "(test (~S ~S ~S ~S ~S) ~S)~%" arg i k m n
+				   (format-logged #t "(test (~S ~S ~S ~S ~S) ~S)~%" arg i k m n
 					   (catch #t (lambda () (val i k m n)) (lambda args 'error)))))))))))))))
      (list 'L2 'V2 'M2 'H2))
 |#
@@ -10533,16 +10546,16 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (if (input-port? arg)
-       (format #t ";(input-port? ~A) -> #t?~%" arg)))
+       (format-logged #t ";(input-port? ~A) -> #t?~%" arg)))
  (list "hi" #f (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f :hi #<eof> #<undefined> #<unspecified>))
 
 (test (call-with-input-file "s7test.scm" input-port?) #t)
 (if (not (eq? start-input-port (current-input-port)))
-    (format #t "call-with-input-file did not restore current-input-port? ~A from ~A~%" start-input-port (current-input-port)))
+    (format-logged #t "call-with-input-file did not restore current-input-port? ~A from ~A~%" start-input-port (current-input-port)))
 
 (test (let ((this-file (open-input-file "s7test.scm"))) (let ((res (input-port? this-file))) (close-input-port this-file) res)) #t)
 (if (not (eq? start-input-port (current-input-port)))
-    (format #t "open-input-file clobbered current-input-port? ~A from ~A~%" start-input-port (current-input-port)))
+    (format-logged #t "open-input-file clobbered current-input-port? ~A from ~A~%" start-input-port (current-input-port)))
 
 (test (call-with-input-string "(+ 1 2)" input-port?) #t)
 (test (let ((this-file (open-input-string "(+ 1 2)"))) (let ((res (input-port? this-file))) (close-input-port this-file) res)) #t)
@@ -10751,7 +10764,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (if (output-port? arg)
-       (format #t ";(output-port? ~A) -> #t?~%" arg)))
+       (format-logged #t ";(output-port? ~A) -> #t?~%" arg)))
  (list "hi" #f '() 'hi (integer->char 65) 1 (list 1 2) _ht_ '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f))
 
 (for-each
@@ -10762,11 +10775,11 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (test (call-with-output-file "tmp1.r5rs" output-port?) #t)
 (if (not (eq? start-output-port (current-output-port)))
-    (format #t "call-with-output-file did not restore current-output-port? ~A from ~A~%" start-output-port (current-output-port)))
+    (format-logged #t "call-with-output-file did not restore current-output-port? ~A from ~A~%" start-output-port (current-output-port)))
 
 (test (let ((this-file (open-output-file "tmp1.r5rs"))) (let ((res (output-port? this-file))) (close-output-port this-file) res)) #t)
 (if (not (eq? start-output-port (current-output-port)))
-    (format #t "open-output-file clobbered current-output-port? ~A from ~A~%" start-output-port (current-output-port)))
+    (format-logged #t "open-output-file clobbered current-output-port? ~A from ~A~%" start-output-port (current-output-port)))
 
 (test (let ((val #f)) (call-with-output-string (lambda (p) (set! val (output-port? p)))) val) #t)
 (test (let ((res #f)) (let ((this-file (open-output-string))) (set! res (output-port? this-file)) (close-output-port this-file) res)) #t)
@@ -10774,7 +10787,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (if (eof-object? arg)
-       (format #t ";(eof-object? ~A) -> #t?~%" arg)))
+       (format-logged #t ";(eof-object? ~A) -> #t?~%" arg)))
  (list "hi" '() '(1 2) -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #f #t (if #f #f) #<undefined> (lambda (a) (+ a 1))))
 
@@ -10784,7 +10797,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 		     (lambda () (port-closed? arg))
 		     (lambda args 'error))))
      (if (not (eq? val 'error))
-	 (format #t ";(port-closed? ~A) -> ~S?~%" arg val))))
+	 (format-logged #t ";(port-closed? ~A) -> ~S?~%" arg val))))
  (list "hi" '(1 2) -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #f #t (if #f #f) #<undefined> #<eof> (lambda (a) (+ a 1))))
 
@@ -10853,7 +10866,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 		   (test (eof-object? (read-char test-file)) #t)
 		   (input-port? test-file)))))
       (if (not (eq? val #t))
-	  (format #t "input-port? in call-with-input-file? returned ~A from ~A~%" val name))))
+	  (format-logged #t "input-port? in call-with-input-file? returned ~A from ~A~%" val name))))
   
   (test (call-with-output-file
 	    "tmp1.r5rs"
@@ -10883,13 +10896,13 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (call-with-output-file "tmp1.r5rs" (lambda (p) (display "3.14" p)))
 (test (with-input-from-file "tmp1.r5rs" (lambda () (read))) 3.14)
 (if (not (eq? start-input-port (current-input-port)))
-    (format #t "with-input-from-file did not restore current-input-port? ~A from ~A~%" start-input-port (current-input-port)))
+    (format-logged #t "with-input-from-file did not restore current-input-port? ~A from ~A~%" start-input-port (current-input-port)))
 
 (test (with-input-from-file "tmp1.r5rs" (lambda () (eq? (current-input-port) start-input-port))) #f)
 
 (test (with-output-to-file "tmp1.r5rs" (lambda () (eq? (current-output-port) start-output-port))) #f)
 (if (not (eq? start-output-port (current-output-port)))
-    (format #t "with-output-to-file did not restore current-output-port? ~A from ~A~%" start-output-port (current-output-port)))
+    (format-logged #t "with-output-to-file did not restore current-output-port? ~A from ~A~%" start-output-port (current-output-port)))
 
 
 (let ((newly-found-sonnet-probably-by-shakespeare 
@@ -10919,7 +10932,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 		    (read)))))
     (if (or (not (string? sonnet))
 	    (not (string=? sonnet newly-found-sonnet-probably-by-shakespeare)))
-	(format #t "write/read long string returned: ~A~%" sonnet)))
+	(format-logged #t "write/read long string returned: ~A~%" sonnet)))
   
   (let ((file (open-output-file "tmp1.r5rs")))
     (let ((len (string-length newly-found-sonnet-probably-by-shakespeare)))
@@ -10938,7 +10951,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (close-input-port file)
       (if (or (not (string? sonnet))
 	      (not (string=? sonnet newly-found-sonnet-probably-by-shakespeare)))
-	  (format #t "write-char/read long string returned: ~A~%" sonnet)))))
+	  (format-logged #t "write-char/read long string returned: ~A~%" sonnet)))))
 
 (let ((file (open-output-file "tmp1.r5rs")))
   (for-each
@@ -10953,7 +10966,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (lambda (arg)
      (let ((val (read file)))
        (if (not (equal? val arg))
-	   (format #t "read/write ~A returned ~A~%" arg val))))
+	   (format-logged #t "read/write ~A returned ~A~%" arg val))))
    (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t (list 1 2 3) '(1 . 2)))
   (close-input-port file))
 
@@ -10965,10 +10978,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	     (lambda ()
 	       (read)))))
   (if (not (equal? val lists))
-      (format #t "read/write lists returned ~A~%" val)))
+      (format-logged #t "read/write lists returned ~A~%" val)))
 
 (if (not (string=? "" (with-output-to-string (lambda () (display "")))))
-    (format #t "with-output-to-string null string?"))
+    (format-logged #t "with-output-to-string null string?"))
 
 (let ((str (with-output-to-string
 	     (lambda ()
@@ -10978,20 +10991,20 @@ zzy" (lambda (p) (eval (read p))))) 32)
 		       ((eof-object? c))
 		     (display c))))))))
   (if (not (string=? str "hiho123"))
-      (format #t "with string ports: ~S?~%" str)))
+      (format-logged #t "with string ports: ~S?~%" str)))
 
 
 (if (not (eof-object? (with-input-from-string "" (lambda () (read-char)))))
-    (format #t ";input from null string not #<eof>?~%")
+    (format-logged #t ";input from null string not #<eof>?~%")
     (let ((EOF (with-input-from-string "" (lambda () (read-char)))))
       (if (not (eq? (with-input-from-string "" (lambda () (read-char)))
 		    (with-input-from-string "" (lambda () (read-char)))))
-	  (format #t "#<eof> is not eq? to itself?~%"))
+	  (format-logged #t "#<eof> is not eq? to itself?~%"))
       (if (char? EOF)
 	  (do ((c 0 (+ c 1)))
 	      ((= c 256))
 	    (if (char=? EOF (integer->char c))
-		(format #t "#<eof> is char=? to ~C~%" (integer->char c)))))))
+		(format-logged #t "#<eof> is char=? to ~C~%" (integer->char c)))))))
 
 (test (+ 100 (call-with-output-file "tmp.r5rs" (lambda (p) (write "1" p) (values 1 2)))) 103)
 (test (+ 100 (with-output-to-file "tmp.r5rs" (lambda () (write "2") (values 1 2)))) 103)
@@ -11005,7 +11018,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 			    (eof-object? c)))
 		     (display c))))))))
   (if (not (string=? str "hiho123"))
-      (format #t "with string ports: ~S?~%" str)))
+      (format-logged #t "with string ports: ~S?~%" str)))
 
 (let ((str (with-output-to-string
 	     (lambda ()
@@ -11015,7 +11028,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 		       ((eof-object? c))
 		     (display c))))))))
   (if (not (string=? str ""))
-      (format #t "with string ports and null string: ~S?~%" str)))
+      (format-logged #t "with string ports and null string: ~S?~%" str)))
 
 (let ((str (with-output-to-string ; this is from the guile-user mailing list, I think -- don't know who wrote it
 	     (lambda ()
@@ -11070,7 +11083,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 				   (outx c))))
 		      (outx)))))))))
   (if (not (string=? str "ABB BEE EEE E44 446 66F GZY W22 220 0PQ 999 999 999 R."))
-      (format #t "call/cc with-input-from-string str: ~A~%" str)))
+      (format-logged #t "call/cc with-input-from-string str: ~A~%" str)))
 
 (let ((badfile "tmp1.r5rs"))
   (let ((p (open-output-file badfile)))
@@ -11108,7 +11121,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (op)
    (for-each
-    (lambda (arg) ;(format #t ";(~A ~A)~%" op arg)
+    (lambda (arg) ;(format-logged #t ";(~A ~A)~%" op arg)
       (test (op arg) 'error))
     (list (integer->char 65) 1 0 -1 (list 1) (cons 1 2) #f 'a-symbol (make-vector 3) abs lambda with-environment
 	  _ht_ quasiquote macroexpand 1/0 (log 0) 
@@ -11147,10 +11160,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	(let loop ((val (read-byte p)))
 	  (if (eof-object? val)
 	      (if (not (= ctr 26))
-		  (format #t "read-byte done at ~A~%" ctr))
+		  (format-logged #t "read-byte done at ~A~%" ctr))
 	      (begin
 		(if (not (= (bytes ctr) val))
-		    (format #t "read-byte bytes[~D]: ~A ~A~%" ctr (bytes ctr) val))
+		    (format-logged #t "read-byte bytes[~D]: ~A ~A~%" ctr (bytes ctr) val))
 		(set! ctr (+ 1 ctr))
 		(loop (read-byte p))))))))
   
@@ -11160,10 +11173,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	(let loop ((val (read-char p)))
 	  (if (eof-object? val)
 	      (if (not (= ctr 26))
-		  (format #t "read-char done at ~A~%" ctr))
+		  (format-logged #t "read-char done at ~A~%" ctr))
 	      (begin
 		(if (not (= (bytes ctr) (char->integer val)))
-		    (format #t "read-char bytes[~D]: ~A ~A~%" ctr (bytes ctr) (char->integer val)))
+		    (format-logged #t "read-char bytes[~D]: ~A ~A~%" ctr (bytes ctr) (char->integer val)))
 		(set! ctr (+ 1 ctr))
 		(loop (read-char p))))))))
   )
@@ -11180,22 +11193,22 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (if (not (string=? (port-filename (current-input-port)) "tmp1.r5rs")) (display (port-filename (current-input-port))))
     (let ((val (read)))
       (if (not (equal? val (list '+ 1 2)))
-	  (format #t "read: ~A~%" val)))
+	  (format-logged #t "read: ~A~%" val)))
     (let ((val (read)))
       (if (not (equal? val 32))
-	  (format #t "read: ~A~%" val)))
+	  (format-logged #t "read: ~A~%" val)))
     (let ((val (read)))
       (if (not (equal? val #\a))
-	  (format #t "read: ~A~%" val)))
+	  (format-logged #t "read: ~A~%" val)))
     (let ((val (read)))
       (if (not (equal? val -1))
-	  (format #t "read: ~A~%" val)))
+	  (format-logged #t "read: ~A~%" val)))
     (let ((val (read)))
       (if (not (eof-object? val))
-	  (format #t "read: ~A~%" val)))
+	  (format-logged #t "read: ~A~%" val)))
     (let ((val (read)))
       (if (not (eof-object? val))
-	  (format #t "read again: ~A~%" val)))))
+	  (format-logged #t "read again: ~A~%" val)))))
 
 (let ((port #f))
   (call-with-exit
@@ -11204,13 +11217,13 @@ zzy" (lambda (p) (eval (read p))))) 32)
        (lambda (p)
 	 (set! port p)
 	 (if (not (char=? (peek-char p) #\0))
-	     (format #t ";peek-char input-string: ~A~%" (peek-char p)))
+	     (format-logged #t ";peek-char input-string: ~A~%" (peek-char p)))
 	 (go)))))
   (if (not (input-port? port))
-      (format #t ";c/e-> c/is -> port? ~A~%" port)
+      (format-logged #t ";c/e-> c/is -> port? ~A~%" port)
       (if (not (port-closed? port))
 	  (begin
-	    (format #t ";c/e -> c/is -> closed? ~A~%" port)
+	    (format-logged #t ";c/e -> c/is -> closed? ~A~%" port)
 	    (close-input-port port)))))
 
 (call-with-output-file "tmp1.r5rs" (lambda (p) (display "0123456789" p)))
@@ -11222,13 +11235,13 @@ zzy" (lambda (p) (eval (read p))))) 32)
        (lambda (p)
 	 (set! port p)
 	 (if (not (char=? (peek-char p) #\0))
-	     (format #t ";peek-char input-file: ~A~%" (peek-char p)))
+	     (format-logged #t ";peek-char input-file: ~A~%" (peek-char p)))
 	 (go)))))
   (if (not (input-port? port))
-      (format #t ";c/e -> c/if -> port? ~A~%" port)
+      (format-logged #t ";c/e -> c/if -> port? ~A~%" port)
       (if (not (port-closed? port))
 	  (begin
-	    (format #t ";c/e -> c/if -> closed? ~A~%" port)
+	    (format-logged #t ";c/e -> c/if -> closed? ~A~%" port)
 	    (close-input-port port)))))
 
 (let ((port #f))
@@ -11241,15 +11254,15 @@ zzy" (lambda (p) (eval (read p))))) 32)
              (lambda (p)
 	       (set! port p)
 	       (if (not (char=? (peek-char p) #\0))
-		   (format #t ";peek-char input-string 1: ~A~%" (peek-char p)))
+		   (format-logged #t ";peek-char input-string 1: ~A~%" (peek-char p)))
 	       (go))))
 	 (lambda ()
 	   (close-input-port port)))))
   (if (not (input-port? port))
-      (format #t ";c/e -> dw -> c/is -> port? ~A~%" port)
+      (format-logged #t ";c/e -> dw -> c/is -> port? ~A~%" port)
       (if (not (port-closed? port))
 	  (begin
-	    (format #t ";c/e -> dw -> c/is -> closed? ~A~%" port)
+	    (format-logged #t ";c/e -> dw -> c/is -> closed? ~A~%" port)
 	    (close-input-port port)))))
 
 (let ((port #f))
@@ -11262,15 +11275,15 @@ zzy" (lambda (p) (eval (read p))))) 32)
             (lambda (p)
 	      (set! port p)
 	      (if (not (char=? (peek-char p) #\0))
-		  (format #t ";peek-char input-file: ~A~%" (peek-char p)))
+		  (format-logged #t ";peek-char input-file: ~A~%" (peek-char p)))
 	      (go))))
 	 (lambda ()
 	   (close-input-port port)))))
   (if (not (input-port? port))
-      (format #t ";c/e -> dw -> c/if -> port? ~A~%" port)
+      (format-logged #t ";c/e -> dw -> c/if -> port? ~A~%" port)
       (if (not (port-closed? port))
 	  (begin
-	    (format #t ";c/e -> dw -> c/if -> closed? ~A~%" port)
+	    (format-logged #t ";c/e -> dw -> c/if -> closed? ~A~%" port)
 	    (close-input-port port)))))
 
 (let ((port #f))
@@ -11280,14 +11293,14 @@ zzy" (lambda (p) (eval (read p))))) 32)
        (lambda (p)
 	 (set! port p)
 	 (if (not (char=? (peek-char p) #\0))
-	     (format #t ";peek-char input-string: ~A~%" (peek-char p)))
+	     (format-logged #t ";peek-char input-string: ~A~%" (peek-char p)))
 	 (error 'oops))))
     (lambda args #f))
   (if (not (input-port? port))
-      (format #t ";catch -> c/is -> error -> port? ~A~%" port)
+      (format-logged #t ";catch -> c/is -> error -> port? ~A~%" port)
       (if (not (port-closed? port))
 	  (begin
-	    (format #t ";catch -> c/is -> error -> closed? ~A~%" port)
+	    (format-logged #t ";catch -> c/is -> error -> closed? ~A~%" port)
 	    (close-input-port port)))))
 
 (let ((port #f))
@@ -11297,14 +11310,14 @@ zzy" (lambda (p) (eval (read p))))) 32)
        (lambda (p)
 	 (set! port p)
 	 (if (not (char=? (peek-char p) #\0))
-	     (format #t ";peek-char input-file: ~A~%" (peek-char p)))
+	     (format-logged #t ";peek-char input-file: ~A~%" (peek-char p)))
 	 (error 'oops))))
     (lambda args #f))
   (if (not (input-port? port))
-      (format #t ";catch -> c/if -> error -> port? ~A~%" port)
+      (format-logged #t ";catch -> c/if -> error -> port? ~A~%" port)
       (if (not (port-closed? port))
 	  (begin
-	    (format #t ";catch -> c/if -> error -> closed? ~A~%" port)
+	    (format-logged #t ";catch -> c/if -> error -> closed? ~A~%" port)
 	    (close-input-port port)))))
 
 (test (with-output-to-string (lambda () (write (string (integer->char 4) (integer->char 8) (integer->char 20) (integer->char 30))))) "\"\\x04\\x08\\x14\\x1e\"")
@@ -11492,7 +11505,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (test (format #f "~,123456789123456789123456789d" 1) 'error)
 ;format "~,123456789123456789123456789d" 1: numeric argument too large
-;    (format #t "~,123456789123456789123456789d" 1)
+;    (format-logged #t "~,123456789123456789123456789d" 1)
 
 (test (format #f "~D" 1 2) 'error)
 ;format: "~D" 1 2
@@ -12037,7 +12050,7 @@ a2" 3) "132")
 
 (do ((i 0 (+ i 1))) ((= i 256)) 
   (let ((chr (integer->char i)))
-    (format #t "~D: ~A ~A ~D~%" i (format #f "~S" (string chr)) (string chr) (length (format #f "~S" (string chr))))))
+    (format-logged #t "~D: ~A ~A ~D~%" i (format #f "~S" (string chr)) (string chr) (length (format #f "~S" (string chr))))))
 |#
 
 (for-each
@@ -12556,15 +12569,15 @@ a2" 3) "132")
     (format this-file "this is a test")
     (set! res (get-output-string this-file))
     (if (not (string=? res "this is a test"))
-	(format #t "open-output-string + format expected \"this is a test\", but got ~S~%" res))
+	(format-logged #t "open-output-string + format expected \"this is a test\", but got ~S~%" res))
     (flush-output-port this-file)
     (set! res (get-output-string this-file))
     (if (not (string=? res ""))
-	(format #t "flush-output-port of string port expected \"\", but got ~S~%" res))
+	(format-logged #t "flush-output-port of string port expected \"\", but got ~S~%" res))
     (format this-file "this is a test")
     (set! res (get-output-string this-file))
     (if (not (string=? res "this is a test"))
-	(format #t "open-output-string after flush expected \"this is a test\", but got ~S~%" res))
+	(format-logged #t "open-output-string after flush expected \"this is a test\", but got ~S~%" res))
     (close-output-port this-file)
     (test (flush-output-port this-file) #<unspecified>)))
 
@@ -12591,9 +12604,9 @@ a2" 3) "132")
       (format p2 "~D" 1)
       (let ((p3 (open-output-string)))
 	(if (not (string=? (get-output-string p1) "0"))
-	    (format #t ";format to nested ports, p1: ~S~%" (get-output-string p1)))	
+	    (format-logged #t ";format to nested ports, p1: ~S~%" (get-output-string p1)))	
 	(if (not (string=? (get-output-string p2) "1"))
-	    (format #t ";format to nested ports, p2: ~S~%" (get-output-string p2)))	
+	    (format-logged #t ";format to nested ports, p2: ~S~%" (get-output-string p2)))	
 	(format p3 "~D" 2)
 	(format p2 "~D" 3)
 	(format p1 "~D" 4)
@@ -12601,25 +12614,25 @@ a2" 3) "132")
 	(set! res3 (get-output-string p3))
 	(close-output-port p3)
 	(if (not (string=? (get-output-string p1) "04"))
-	    (format #t ";format to nested ports after close, p1: ~S~%" (get-output-string p1)))	
+	    (format-logged #t ";format to nested ports after close, p1: ~S~%" (get-output-string p1)))	
 	(if (not (string=? (get-output-string p2) "13"))
-	    (format #t ";format to nested ports after close, p2: ~S~%" (get-output-string p2))))
+	    (format-logged #t ";format to nested ports after close, p2: ~S~%" (get-output-string p2))))
       (format (or p1 p3) "~D" 6)
       (format (and p1 p2) "~D" 7)
       (set! res1 (get-output-string p1))
       (close-output-port p1)
       (if (not (string=? (get-output-string p2) "137"))
-	  (format #t ";format to nested ports after 2nd close, p2: ~S~%" (get-output-string p2)))
+	  (format-logged #t ";format to nested ports after 2nd close, p2: ~S~%" (get-output-string p2)))
       (format p2 "~D" 8)
       (set! res2 (get-output-string p2))
       (test (get-output-string p1) 'error)
       (close-output-port p2)))
   (if (not (string=? res1 "046"))
-      (format #t ";format to nested ports, res1: ~S~%" res1))
+      (format-logged #t ";format to nested ports, res1: ~S~%" res1))
   (if (not (string=? res2 "1378"))
-      (format #t ";format to nested ports, res2: ~S~%" res2))
+      (format-logged #t ";format to nested ports, res2: ~S~%" res2))
   (if (not (string=? res3 "25"))
-      (format #t ";format to nested ports, res3: ~S~%" res3)))
+      (format-logged #t ";format to nested ports, res3: ~S~%" res3)))
 
 (test (call/cc (lambda (return) 
 		 (let ((val (format #f "line 1~%line 2~%line 3")))
@@ -12627,7 +12640,7 @@ a2" 3) "132")
 					   (lambda (p) (return "oops"))))))
       "oops")
 
-;(format #t "format #t: ~D" 1)
+;(format-logged #t "format #t: ~D" 1)
 ;(format (current-output-port) " output-port: ~D! (this is testing output ports)~%" 2)
 
 (call-with-output-file "tmp1.r5rs"
@@ -12746,13 +12759,13 @@ a2" 3) "132")
   (display 1)
   (write 2)
   (write-char #\3)
-  (format #t "~D" 4) ; #t -> output port
+  (format-logged #t "~D" 4) ; #t -> output port
   (write-byte (char->integer #\5))
   (let ((op2 (set-current-output-port (open-output-file "tmp2.r5rs"))))
     (display 6)
     (write 7)
     (write-char #\8)
-    (format #t "~D" 9)
+    (format-logged #t "~D" 9)
     (write-byte (char->integer #\0))
     (newline)
     (close-output-port (current-output-port))
@@ -12771,7 +12784,7 @@ a2" 3) "132")
   (display 1)
   (write 2)
   (write-char #\3)
-  (format #t "~D" 4) ; #t -> output port
+  (format-logged #t "~D" 4) ; #t -> output port
   (write-byte (char->integer #\5))
   (let ((old-op2 (current-output-port))
 	(op2 (open-output-file "tmp2.r5rs")))
@@ -12779,7 +12792,7 @@ a2" 3) "132")
     (display 6)
     (write 7)
     (write-char #\8)
-    (format #t "~D" 9)
+    (format-logged #t "~D" 9)
     (write-byte (char->integer #\0))
     (newline)
     (close-output-port (current-output-port))
@@ -12962,14 +12975,14 @@ a2" 3) "132")
 	   (if (or (not (number? b))
 		   (not (= b i)))
 	       (begin
-		 (format #t "read-byte got ~A, expected ~A~%" b i)
+		 (format-logged #t "read-byte got ~A, expected ~A~%" b i)
 		 (quit)))))))
     (let ((eof (read-byte p)))
       (if (not (eof-object? eof))
-	  (format #t "read-byte at end: ~A~%" eof)))
+	  (format-logged #t "read-byte at end: ~A~%" eof)))
     (let ((eof (read-byte p)))
       (if (not (eof-object? eof))
-	  (format #t "read-byte at end: ~A~%" eof)))))
+	  (format-logged #t "read-byte at end: ~A~%" eof)))))
 
 (call-with-output-file "tmp1.r5rs"
   (lambda (p)
@@ -12989,15 +13002,15 @@ a2" 3) "132")
 	   (if (or (not (char? b))
 		   (not (char=? b (integer->char i))))
 	       (begin
-		 (format #t "read-char got ~A, expected ~A (~D: char? ~A)~%" b (integer->char i) i (char? (integer->char i)))
+		 (format-logged #t "read-char got ~A, expected ~A (~D: char? ~A)~%" b (integer->char i) i (char? (integer->char i)))
 		 (quit)))))))
     (let ((eof (read-char p)))
       (if (not (eof-object? eof))
-	  (format #t "read-char at end: ~A~%" eof))
+	  (format-logged #t "read-char at end: ~A~%" eof))
       (set! our-eof eof))
     (let ((eof (read-char p)))
       (if (not (eof-object? eof))
-	  (format #t "read-char again at end: ~A~%" eof)))))
+	  (format-logged #t "read-char again at end: ~A~%" eof)))))
 
 (test (eof-object? (integer->char 255)) #f)
 (test (eof-object? our-eof) #t)
@@ -13062,7 +13075,7 @@ a2" 3) "132")
     (write-char #\a)
     (with-output-to-file "tmp1.r5rs"
       (lambda ()
-	(format #t "~C" #\b)
+	(format-logged #t "~C" #\b)
 	(with-output-to-file "tmp2.r5rs"
 	  (lambda ()
 	    (display #\c)))
@@ -13115,7 +13128,7 @@ a2" 3) "132")
 	       (read-line p)))))
   (if (or (not (string? str))
 	  (not (string=? str "start next done")))
-      (format #t ";call-with-output-file + error -> ~S~%" str)))
+      (format-logged #t ";call-with-output-file + error -> ~S~%" str)))
 
 (let ((str (call-with-input-file "tests.data" 
              (lambda (p) 
@@ -13127,7 +13140,7 @@ a2" 3) "132")
 		      (lambda args "s"))))))
   (if (or (not (string? str))
 	  (not (string=? str "s")))
-      (format #t ";call-with-input-file + error -> ~S~%" str)))
+      (format-logged #t ";call-with-input-file + error -> ~S~%" str)))
 
 (if (and (defined? 'file-exists?)
 	 (file-exists? "tests.data"))
@@ -13135,20 +13148,20 @@ a2" 3) "132")
 
 (with-output-to-file "tests.data"
   (lambda ()
-    (format #t "start ")
+    (format-logged #t "start ")
     (catch #t 
       (lambda () 
-	(format #t "next ") (abs "hi") (format #t "oops "))
+	(format-logged #t "next ") (abs "hi") (format-logged #t "oops "))
       (lambda args
 	'error))
-    (format #t "done\n")))
+    (format-logged #t "done\n")))
 
 (let ((str (with-input-from-file "tests.data" 
              (lambda () 
 	       (read-line)))))
   (if (or (not (string? str))
 	  (not (string=? str "start next done")))
-      (format #t ";with-output-to-file + error -> ~S~%" str)))
+      (format-logged #t ";with-output-to-file + error -> ~S~%" str)))
 
 (let ((str (with-input-from-file "tests.data" 
              (lambda () 
@@ -13160,7 +13173,7 @@ a2" 3) "132")
 		      (lambda args "s"))))))
   (if (or (not (string? str))
 	  (not (string=? str "s")))
-      (format #t ";with-input-from-file + error -> ~S~%" str)))
+      (format-logged #t ";with-input-from-file + error -> ~S~%" str)))
 
 (test (call-with-output-string newline) (string #\newline))
 (test (call-with-output-string append) "")
@@ -13176,20 +13189,20 @@ a2" 3) "132")
 	      (format p "done")))))
   (if (or (not (string? str))
 	  (not (string=? str "start next done")))
-      (format #t ";call-with-output-string + error -> ~S~%" str)))
+      (format-logged #t ";call-with-output-string + error -> ~S~%" str)))
 
 (let ((str (with-output-to-string
 	    (lambda ()
-	      (format #t "start ")
+	      (format-logged #t "start ")
 	      (catch #t 
 		     (lambda () 
-		       (format #t "next ") (abs "hi") (format #t "oops "))
+		       (format-logged #t "next ") (abs "hi") (format-logged #t "oops "))
 		     (lambda args
 		       'error))
-	      (format #t "done")))))
+	      (format-logged #t "done")))))
   (if (or (not (string? str))
 	  (not (string=? str "start next done")))
-      (format #t ";with-output-to-string + error -> ~S~%" str)))
+      (format-logged #t ";with-output-to-string + error -> ~S~%" str)))
 
 (test (with-output-to-string (lambda () (format (current-output-port) "a test ~D" 123))) "a test 123")
 ;(test (with-output-to-string (lambda () (format *stdout* "a test ~D" 1234))) "a test 1234")
@@ -13217,7 +13230,7 @@ a2" 3) "132")
 		     (lambda args "s"))))))
   (if (or (not (string? str))
 	  (not (string=? str "s")))
-      (format #t ";call-with-input-string + error -> ~S~%" str)))
+      (format-logged #t ";call-with-input-string + error -> ~S~%" str)))
 
 (let ((str (with-input-from-string "12345"
 	    (lambda ()
@@ -13229,7 +13242,7 @@ a2" 3) "132")
 		     (lambda args "s"))))))
   (if (or (not (string? str))
 	  (not (string=? str "s")))
-      (format #t ";with-input-from-string + error -> ~S~%" str)))
+      (format-logged #t ";with-input-from-string + error -> ~S~%" str)))
 
 (for-each
  (lambda (arg)
@@ -13307,8 +13320,10 @@ a2" 3) "132")
   (newline p)
   (close-output-port p))
 
-(test (let ((p (open-output-file "tmp1.r5rs" "xyzzy"))) (close-output-port p)) 'error)
-(test (let ((p (open-input-file "tmp1.r5rs" "xyzzy"))) (close-input-port p)) 'error)
+(if (not (provided? 'windows)) ; "xyzzy" is legit in windows??
+    (begin
+      (test (let ((p (open-output-file "tmp1.r5rs" "xyzzy"))) (close-output-port p)) 'error)
+      (test (let ((p (open-input-file "tmp1.r5rs" "xyzzy"))) (close-input-port p)) 'error)))
 
 (call-with-input-file "tmp1.r5rs"
   (lambda (p)
@@ -13342,7 +13357,7 @@ a2" 3) "132")
  (lambda (op)
    (let ((tag (catch #t (lambda () (op)) (lambda args 'error))))
      (if (not (eq? tag 'error))
-	 (format #t ";(~A) -> ~A (expected 'error)~%" op tag))))
+	 (format-logged #t ";(~A) -> ~A (expected 'error)~%" op tag))))
  (list set-current-input-port set-current-error-port set-current-output-port 
        close-input-port close-output-port
        write display write-byte write-char format                     ; newline
@@ -13358,7 +13373,7 @@ a2" 3) "132")
  (lambda (op)
    (let ((tag (catch #t (lambda () (op 1 2 3 4 5)) (lambda args 'error))))
      (if (not (eq? tag 'error))
-	 (format #t ";(~A 1 2 3 4 5) -> ~A (expected 'error)~%" op tag))))
+	 (format-logged #t ";(~A 1 2 3 4 5) -> ~A (expected 'error)~%" op tag))))
  (list set-current-input-port set-current-error-port set-current-output-port 
        close-input-port close-output-port
        write display write-byte write-char format newline
@@ -13384,12 +13399,12 @@ a2" 3) "132")
 
       (with-output-to-file "/home/bil/test/load-path-test.scm"
 	(lambda ()
-	  (format #t "(define (load-path-test) *load-path*)~%")))
+	  (format-logged #t "(define (load-path-test) *load-path*)~%")))
 
       (load "load-path-test.scm")
       (if (or (not (defined? 'load-path-test))
 	      (not (equal? *load-path* (load-path-test))))
-	  (format #t ";*load-path*: ~S, but ~S~%" *load-path* (load-path-test)))
+	  (format-logged #t ";*load-path*: ~S, but ~S~%" *load-path* (load-path-test)))
       (set! *load-path* old-path)))
 
 
@@ -13559,7 +13574,7 @@ so anything that quotes ` is not going to equal quote quasiquote
        (let ((val (catch #t 
 			 (lambda () (eval-string expr))
 			 (lambda args 'error))))
-	 (format #t "--------~%~S -> ~S" expr val)
+	 (format-logged #t "--------~%~S -> ~S" expr val)
 	 (let* ((parens3 0)
 		(parens4 0)
 		(str3 (apply string-append (map (lambda (c)
@@ -13595,8 +13610,8 @@ so anything that quotes ` is not going to equal quote quasiquote
 		    (trouble (and (not (eq? val1 'error))
 				  (not (eq? val1 val)))))
 	       (if trouble
-		   (format #t "~%~8T~A~S -> ~S~A" bold-text expr val1 unbold-text)
-		   (format #t "~%~8T~S -> ~S" expr val1))))
+		   (format-logged #t "~%~8T~A~S -> ~S~A" bold-text expr val1 unbold-text)
+		   (format-logged #t "~%~8T~S -> ~S" expr val1))))
 	   (let ((expr (format #f "(equal? ~A~A ~A~A~A)" str1 arg str4 arg (make-string parens4 #\)))))
 	     (let* ((val1 (catch #t 
 			       (lambda () (eval-string expr))
@@ -13604,8 +13619,8 @@ so anything that quotes ` is not going to equal quote quasiquote
 		    (trouble (and (not (eq? val1 'error))
 				  (not (eq? val1 val)))))
 	       (if trouble
-		   (format #t "~%~8T~A~S -> ~S~A" bold-text expr val1 unbold-text)
-		   (format #t "~%~8T~S -> ~S" expr val1))))
+		   (format-logged #t "~%~8T~A~S -> ~S~A" bold-text expr val1 unbold-text)
+		   (format-logged #t "~%~8T~S -> ~S" expr val1))))
 	   (let ((expr (format #f "(equal? ~A~A~A ~A~A~A)" str3 arg (make-string parens3 #\)) str4 arg (make-string parens4 #\)))))
 	     (let* ((val1 (catch #t 
 			       (lambda () (eval-string expr))
@@ -13613,8 +13628,8 @@ so anything that quotes ` is not going to equal quote quasiquote
 		    (trouble (and (not (eq? val1 'error))
 				  (not (eq? val1 val)))))
 	       (if trouble
-		   (format #t "~%~8T~A~S -> ~S~A~%" bold-text expr val1 unbold-text)
-		   (format #t "~%~8T~S -> ~S~%" expr val1))))
+		   (format-logged #t "~%~8T~A~S -> ~S~A~%" bold-text expr val1 unbold-text)
+		   (format-logged #t "~%~8T~S -> ~S~%" expr val1))))
 	   ))))
    (list "()" "(1)" "#()" "#(1)" "1" "#f")))
    ;; (list ",(+ 1 2)" "\"\"" "(())" "#\\1" "3/4" ",1")
@@ -13671,9 +13686,9 @@ so anything that quotes ` is not going to equal quote quasiquote
 	(catch #t
 	       (lambda ()
 		 (let ((val (eval-string str)))
-		   (format #t "[~D] ~A -> ~S (~S ~S)~%" i str val (car val) (cdr val))))
+		   (format-logged #t "[~D] ~A -> ~S (~S ~S)~%" i str val (car val) (cdr val))))
 	       (lambda args
-		 (format #t "[~D] ~A -> ~A~%" i str args))))))
+		 (format-logged #t "[~D] ~A -> ~A~%" i str args))))))
 
 (let ((chars (vector (integer->char 0) #\newline #\space #\tab #\. #\, #\@ #\= #\x #\b #\' #\` 
 		     #\# #\] #\[ #\} #\{ #\( #\) #\1 #\i #\+ #\- #\e #\_ #\\ #\" #\: #\; #\> #\<)))
@@ -13698,13 +13713,13 @@ so anything that quotes ` is not going to equal quote quasiquote
 		((= k len))
 	      (string-set! str k (vector-ref chars (vector-ref ctrs k)))))
 
-	  (format #t "~A -> " str)
+	  (format-logged #t "~A -> " str)
 	  (catch #t
 		 (lambda ()
 		   (let ((val (eval-string str)))
-		     (format #t " ~S -> ~S~%" str val)))
+		     (format-logged #t " ~S -> ~S~%" str val)))
 		 (lambda args
-		   ;(format #t " ~A~%" args)
+		   ;(format-logged #t " ~A~%" args)
 		   #f
 		   )))))))
 |#
@@ -13821,9 +13836,9 @@ so anything that quotes ` is not going to equal quote quasiquote
 	    (set! (str k) (rest-chars (random rest-len))))
 	  (catch #t (lambda ()
 		      (let ((val (eval-string (format #f "(let () (define ~A 3) ~A)" str str))))
-			(format #t "~A -> ~A~%" str val)))
+			(format-logged #t "~A -> ~A~%" str val)))
 		 (lambda args
-		   (format #t "~A error: ~A~%" str args))))))))
+		   (format-logged #t "~A error: ~A~%" str args))))))))
 |#
 
 (let ((List 1)
@@ -13912,10 +13927,10 @@ so anything that quotes ` is not going to equal quote quasiquote
       (if (and (not (= (length str) 3))       ; "#\\a"
 	       (or (not (char=? (str 2) #\x))
 		   (not (= (length str) 5)))) ; "#\\xee"
-	  (format #t "(#t) ~C: ~S~%" c str))
+	  (format-logged #t "(#t) ~C: ~S~%" c str))
       (set! str (object->string c #f))
       (if (not (= (length str) 1))
-	  (format #t "(#f) ~C: ~S~%" c str)))))
+	  (format-logged #t "(#f) ~C: ~S~%" c str)))))
 this prints:
 (#t) : "#\\null"
 (#f) : ""
@@ -14003,19 +14018,19 @@ this prints:
 (for-each
  (lambda (op)
    (if (not (eq? op op))
-       (format #t "~A not eq? to itself?~%" op)))
+       (format-logged #t "~A not eq? to itself?~%" op)))
  control-ops)
 
 (for-each
  (lambda (op)
    (if (not (eqv? op op))
-       (format #t "~A not eqv? to itself?~%" op)))
+       (format-logged #t "~A not eqv? to itself?~%" op)))
  control-ops)
 
 (for-each
  (lambda (op)
    (if (not (equal? op op))
-       (format #t "~A not equal? to itself?~%" op)))
+       (format-logged #t "~A not equal? to itself?~%" op)))
  control-ops)
 
 (define question-ops (list boolean? eof-object? string?
@@ -14027,7 +14042,7 @@ this prints:
    (for-each
     (lambda (op)
       (if (ques op)
-	  (format #t ";(~A ~A) returned #t?~%" ques op)))
+	  (format-logged #t ";(~A ~A) returned #t?~%" ques op)))
     control-ops))
  question-ops)
 
@@ -14035,13 +14050,13 @@ this prints:
   (for-each
    (lambda (op)
      (if (op unspecified)
-	 (format #t ";(~A #<unspecified>) returned #t?~%" op)))
+	 (format-logged #t ";(~A #<unspecified>) returned #t?~%" op)))
    question-ops))
 
 (for-each 
  (lambda (s)
    (if (not (symbol? s))
-       (format #t ";(symbol? ~A returned #f?~%" s)))
+       (format-logged #t ";(symbol? ~A returned #f?~%" s)))
  '(+ - ... !.. $.+ %.- &.! *.: /:. <-. =. >. ?. ~. _. ^.))
 
 
@@ -14429,7 +14444,7 @@ this prints:
 (for-each
  (lambda (a)
    (if (not (string=? a "hi"))
-       (format #t "yow: ~S" a)))
+       (format-logged #t "yow: ~S" a)))
  (list "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi"))
 
 
@@ -14548,7 +14563,7 @@ this prints:
 	 (catch #t
 	   (lambda ()
 	     (if (defined? 'local-x)
-		 (format #t ";for-each catch local env not cleared: ~A~%" local-x))
+		 (format-logged #t ";for-each catch local env not cleared: ~A~%" local-x))
 	     (define local-x x)
 	     local-x)
 	   (lambda args #f)))
@@ -15870,10 +15885,10 @@ in s7:
 		     (let ((chr (car nlst)))
 		       (if (not (char-alphabetic? chr))
 			   (if (not (char=? v chr))
-			       (format #t ";(char-downcase #\\~A) -> ~A" chr v))
+			       (format-logged #t ";(char-downcase #\\~A) -> ~A" chr v))
 			   (if (and (not (char=? chr v))
 				    (not (char=? chr (char-upcase v))))
-			       (format #t ";(char-downcase #\\~A) -> ~A~%" chr v))))))
+			       (format-logged #t ";(char-downcase #\\~A) -> ~A~%" chr v))))))
 	  (result 0))
       (let ((try 0))
 	(do ((i 0 (+ i 1)))
@@ -15884,7 +15899,7 @@ in s7:
   (test (hi) '()))
 
 (define (__a-func__ a)
-  (format #t ";oops called first a-func by mistake: ~A~%" a)
+  (format-logged #t ";oops called first a-func by mistake: ~A~%" a)
   (if (> a 0)
       (__a-func__ (- a 1))))
 
@@ -15895,7 +15910,7 @@ in s7:
 (__a-func__ 3)
 
 (define (__c-func__ a)
-  (format #t ";oops called first __c-func__ by mistake: ~A~%" a)
+  (format-logged #t ";oops called first __c-func__ by mistake: ~A~%" a)
   (if (> a 0)
       (__c-func__ (- a 1))))
   
@@ -16520,7 +16535,7 @@ in s7:
 	(hi 1))
       1)
 (test (let ((x 0))
-	(cond-expand (guile (format #t ";oops~%"))
+	(cond-expand (guile (format-logged #t ";oops~%"))
 		     (else (set! x 32)))
 	x)
       32)
@@ -17737,7 +17752,7 @@ in s7:
 	    (not (= (cadr lst0) 0))
 	    (> (abs (+ (car lst1) (sqrt 2))) .0001)
 	    (> (abs (- (cadr lst1) (sqrt 3))) .0001))
-	(format #t ";cholesky decomp: ~A~%" lst))))
+	(format-logged #t ";cholesky decomp: ~A~%" lst))))
 
 (let ()
   (define* (a1 (b (let ()
@@ -17763,7 +17778,7 @@ in s7:
   (let ((nums (do ((lst '() (cons i lst))
 		   (i 0 (+ i 1)))
 		  ((> i n) (reverse lst)))))
-    (format #t "(let ((f~D (lambda (~{arg~D~^ ~})~%    (+ ~{arg~D~^ ~}))))~%  (f~D ~{~D~^ ~}))~%" n nums nums n nums)))
+    (format-logged #t "(let ((f~D (lambda (~{arg~D~^ ~})~%    (+ ~{arg~D~^ ~}))))~%  (f~D ~{~D~^ ~}))~%" n nums nums n nums)))
 |#
 
 (test (let ((f128 (lambda (arg128 arg127 arg126 arg125 arg124 arg123 arg122 arg121 arg120 arg119 arg118 arg117 arg116 arg115 arg114 arg113 arg112 arg111 arg110 arg109 arg108 arg107 arg106 arg105 arg104 arg103 arg102 arg101 arg100 arg99 arg98 arg97 arg96 arg95 arg94 arg93 arg92 arg91 arg90 arg89 arg88 arg87 arg86 arg85 arg84 arg83 arg82 arg81 arg80 arg79 arg78 arg77 arg76 arg75 arg74 arg73 arg72 arg71 arg70 arg69 arg68 arg67 arg66 arg65 arg64 arg63 arg62 arg61 arg60 arg59 arg58 arg57 arg56 arg55 arg54 arg53 arg52 arg51 arg50 arg49 arg48 arg47 arg46 arg45 arg44 arg43 arg42 arg41 arg40 arg39 arg38 arg37 arg36 arg35 arg34 arg33 arg32 arg31 arg30 arg29 arg28 arg27 arg26 arg25 arg24 arg23 arg22 arg21 arg20 arg19 arg18 arg17 arg16 arg15 arg14 arg13 arg12 arg11 arg10 arg9 arg8 arg7 arg6 arg5 arg4 arg3 arg2 arg1 arg0)
@@ -17793,12 +17808,12 @@ in s7:
   (define (f2 a) (+ a 2))
   (define (f1 a) (f2 a))
   (define (f2 a) (- a 2))
-  (format #t "f1: ~A~%" (f1 12)))
+  (format-logged #t "f1: ~A~%" (f1 12)))
 
 (let ()
   (define (f1 a) (+ a 2))
   (define + *)
-  (format #t "f1: ~A~%" (f1 12)))
+  (format-logged #t "f1: ~A~%" (f1 12)))
 |#
 
 (let ()
@@ -18336,19 +18351,19 @@ in s7:
 (let ((__p__ 321))
   (set! __p__ 432))
 
-(if (not (= __p__ 123)) (format #t "__p__: ~A~%" __p__))
+(if (not (= __p__ 123)) (format-logged #t "__p__: ~A~%" __p__))
 
 (let ()
   (define (args) (values __p__ (* __p__ 2)))
   (let ((__p__ 0)
 	(q 1))
     (call-with-values args (lambda (a b) (set! __p__ a) (set! q b)))
-    (if (not (= __p__ 123)) (format #t "    local __p__: ~A~%" __p__))
+    (if (not (= __p__ 123)) (format-logged #t "    local __p__: ~A~%" __p__))
     (set! __p__ 432)
     (call-with-values args (lambda (__p__ q) (set! __p__ 321)))
-    (if (not (= __p__ 432)) (format #t "    local __p__: ~A~%" __p__))))
+    (if (not (= __p__ 432)) (format-logged #t "    local __p__: ~A~%" __p__))))
 
-(if (not (= __p__ 123)) (format #t "__p__: ~A~%" __p__))
+(if (not (= __p__ 123)) (format-logged #t "__p__: ~A~%" __p__))
 
 (let ()
   (define-macro (args a b) `(values ,a ,b))
@@ -18359,32 +18374,32 @@ in s7:
   (sp (args __p__ __p__))
   (pq (args __p__ 567)))
 
-(if (not (= __p__ 123)) (format #t "__p__: ~A~%" __p__))
+(if (not (= __p__ 123)) (format-logged #t "__p__: ~A~%" __p__))
 
 (let ((__p__ 321))
   (eval '(set! __p__ 432) current-global-environment)
-  (if (not (= __p__ 321)) (format #t "    local __p__: ~A~%" __p__))
+  (if (not (= __p__ 321)) (format-logged #t "    local __p__: ~A~%" __p__))
   (eval '(set! __p__ 123))
-  (if (not (= __p__ 123)) (format #t "    local __p__: ~A~%" __p__)))
+  (if (not (= __p__ 123)) (format-logged #t "    local __p__: ~A~%" __p__)))
 
-(if (not (= __p__ 432)) (format #t "__p__: ~A~%" __p__))
+(if (not (= __p__ 432)) (format-logged #t "__p__: ~A~%" __p__))
 
 (let ()
   (eval '(let ((__p__ 321)) (set! __p__ 456)) current-global-environment))
 
-(if (not (= __p__ 432)) (format #t "__p__: ~A~%" __p__))
+(if (not (= __p__ 432)) (format-logged #t "__p__: ~A~%" __p__))
 
 (let ((__p__ (values __p__)))
-  (if (not (= __p__ 432)) (format #t "    local __p__: ~A~%" __p__))
+  (if (not (= __p__ 432)) (format-logged #t "    local __p__: ~A~%" __p__))
   (set! __p__ 123))
 
-(if (not (= __p__ 432)) (format #t "__p__: ~A~%" __p__))
+(if (not (= __p__ 432)) (format-logged #t "__p__: ~A~%" __p__))
 
 (let ()
   (define (sp __p__ q) (values __p__ q))
   (call-with-values (lambda () (sp __p__ (* __p__ 2))) (let ((__p__ 1)) (lambda (a b) (set! __p__ a)))))
 
-(if (not (= __p__ 432)) (format #t "__p__: ~A~%" __p__))
+(if (not (= __p__ 432)) (format-logged #t "__p__: ~A~%" __p__))
 
 (let ((lst (list __p__ (* __p__ 2))))
   (define-macro (sp a) `(set! __p__ ,a))
@@ -18392,47 +18407,47 @@ in s7:
 	(q 1))
     (define (pq a) (set! __p__ a))
     (map sp (list __p__ q))
-    (if (not (= __p__ 1)) (format #t "    local __p__: ~A~%" __p__))
+    (if (not (= __p__ 1)) (format-logged #t "    local __p__: ~A~%" __p__))
     (for-each sp (list __p__ q))
-    (if (not (= __p__ 1)) (format #t "    local __p__: ~A~%" __p__))
+    (if (not (= __p__ 1)) (format-logged #t "    local __p__: ~A~%" __p__))
     (map sp lst)
-    (if (not (= __p__ (* 432 2))) (format #t "    local __p__: ~A~%" __p__))
+    (if (not (= __p__ (* 432 2))) (format-logged #t "    local __p__: ~A~%" __p__))
     (for-each sp lst)
-    (if (not (= __p__ (* 432 2))) (format #t "    local __p__: ~A~%" __p__))
+    (if (not (= __p__ (* 432 2))) (format-logged #t "    local __p__: ~A~%" __p__))
     (set! __p__ 0)
     (set! q 1)
     (map pq (list __p__ q))
-    (if (not (= __p__ 1)) (format #t "    local __p__: ~A~%" __p__))
+    (if (not (= __p__ 1)) (format-logged #t "    local __p__: ~A~%" __p__))
     (for-each pq (list __p__ q))
-    (if (not (= __p__ 1)) (format #t "    local __p__: ~A~%" __p__))
+    (if (not (= __p__ 1)) (format-logged #t "    local __p__: ~A~%" __p__))
     (map pq lst)
-    (if (not (= __p__ (* 432 2))) (format #t "    local __p__: ~A~%" __p__))
+    (if (not (= __p__ (* 432 2))) (format-logged #t "    local __p__: ~A~%" __p__))
     (for-each pq lst)
-    (if (not (= __p__ (* 432 2))) (format #t "    local __p__: ~A~%" __p__))))
+    (if (not (= __p__ (* 432 2))) (format-logged #t "    local __p__: ~A~%" __p__))))
 
-(if (not (= __p__ 432)) (format #t "__p__: ~A~%" __p__))
+(if (not (= __p__ 432)) (format-logged #t "__p__: ~A~%" __p__))
 
 (if (eq? (current-environment) (global-environment)) (begin 
 (let ((__p__ 1))
   (eval `(define (__p__ a) (+ a ,__p__)) current-global-environment)
-  (if (not (= __p__ 1)) (format #t "    local __p__: ~A~%" __p__)))
+  (if (not (= __p__ 1)) (format-logged #t "    local __p__: ~A~%" __p__)))
 
-(if (not (procedure? __p__)) (format #t "__p__: ~A~%" __p__))
-(if (not (= (__p__ 2) 3)) (format #t "(__p__ 2): ~A~%" (__p__ 2)))
+(if (not (procedure? __p__)) (format-logged #t "__p__: ~A~%" __p__))
+(if (not (= (__p__ 2) 3)) (format-logged #t "(__p__ 2): ~A~%" (__p__ 2)))
 
 (let ((__p__ 1))
   (eval `(define __p__ 32))
-  (if (not (= __p__ 32)) (format #t "    local __p__: ~A~%" __p__)))
+  (if (not (= __p__ 32)) (format-logged #t "    local __p__: ~A~%" __p__)))
 
-(if (not (procedure? __p__)) (format #t "__p__: ~A~%" __p__))
-(if (not (= (__p__ 2) 3)) (format #t "(__p__ 2): ~A~%" (__p__ 2)))
+(if (not (procedure? __p__)) (format-logged #t "__p__: ~A~%" __p__))
+(if (not (= (__p__ 2) 3)) (format-logged #t "(__p__ 2): ~A~%" (__p__ 2)))
 
 (let ((__p__ 1))
   (eval `(define __p__ 32) (current-environment))
-  (if (not (= __p__ 32)) (format #t "    local __p__: ~A~%" __p__)))
+  (if (not (= __p__ 32)) (format-logged #t "    local __p__: ~A~%" __p__)))
 
-(if (not (procedure? __p__)) (format #t "__p__: ~A~%" __p__))
-(if (not (= (__p__ 2) 3)) (format #t "(__p__ 2): ~A~%" (__p__ 2)))
+(if (not (procedure? __p__)) (format-logged #t "__p__: ~A~%" __p__))
+(if (not (= (__p__ 2) 3)) (format-logged #t "(__p__ 2): ~A~%" (__p__ 2)))
 ))
     
 
@@ -18754,31 +18769,31 @@ in s7:
 					;(let ((initial-chars "aA!$%&*/:<=>?^_~")
 					;      (subsequent-chars "9aA!$%&*+-./:<=>?@^_~")
 					;      (ctr 0))
-					;  (format #t ";(let (")
+					;  (format-logged #t ";(let (")
 					;  (do ((i 0 (+ i 1)))
 					;      ((= i (string-length initial-chars)))
-					;    (format #t ";(~A ~D) " (string (string-ref initial-chars i)) ctr)
+					;    (format-logged #t ";(~A ~D) " (string (string-ref initial-chars i)) ctr)
 					;    (set! ctr (+ ctr 1)))
 					;
 					;  (do ((i 0 (+ i 1)))
 					;      ((= i (string-length initial-chars)))
 					;    (do ((k 0 (+ k 1)))
 					;	((= k (string-length subsequent-chars)))
-					;      (format #t ";(~A ~D) " (string (string-ref initial-chars i) (string-ref subsequent-chars k)) ctr)
+					;      (format-logged #t ";(~A ~D) " (string (string-ref initial-chars i) (string-ref subsequent-chars k)) ctr)
 					;      (set! ctr (+ ctr 1))))
 					;
-					;  (format #t ")~%  (+ ")
+					;  (format-logged #t ")~%  (+ ")
 					;  (do ((i 0 (+ i 1)))
 					;      ((= i (string-length initial-chars)))
-					;    (format #t "~A " (string (string-ref initial-chars i))))
+					;    (format-logged #t "~A " (string (string-ref initial-chars i))))
 					;
 					;  (do ((i 0 (+ i 1)))
 					;      ((= i (string-length initial-chars)))
 					;    (do ((k 0 (+ k 1)))
 					;	((= k (string-length subsequent-chars)))
-					;      (format #t "~A " (string (string-ref initial-chars i) (string-ref subsequent-chars k)))))
+					;      (format-logged #t "~A " (string (string-ref initial-chars i) (string-ref subsequent-chars k)))))
 					;
-					;  (format #t "))~%"))
+					;  (format-logged #t "))~%"))
 
 (num-test (let ((a 0) (A 1) (! 2) ($ 3) (% 4) (& 5) (| 8) (? 12) (^ 13) (_ 14) (~ 15) (a9 16) (aa 17) (aA 18) (a! 19) (a$ 20) (a% 21) (a& 22) (a* 23) (a+ 24) (a- 25) (a. 26) (a/ 27) (a| 28) (a< 29) (a= 30) (a> 31) (a? 32) (a@ 33) (a^ 34) (a_ 35) (a~ 36) (A9 37) (Aa 38) (AA 39) (A! 40) (A$ 41) (A% 42) (A& 43) (A* 44) (A+ 45) (A- 46) (A. 47) (A/ 48) (A| 49) (A< 50) (A= 51) (A> 52) (A? 53) (A@ 54) (A^ 55) (A_ 56) (A~ 57) (!9 58) (!a 59) (!A 60) (!! 61) (!$ 62) (!% 63) (!& 64) (!* 65) (!+ 66) (!- 67) (!. 68) (!/ 69) (!| 70) (!< 71) (!= 72) (!> 73) (!? 74) (!@ 75) (!^ 76) (!_ 77) (!~ 78) ($9 79) ($a 80) ($A 81) ($! 82) ($$ 83) ($% 84) ($& 85) ($* 86) ($+ 87) ($- 88) ($. 89) ($/ 90) ($| 91) ($< 92) ($= 93) ($> 94) ($? 95) ($@ 96) ($^ 97) ($_ 98) ($~ 99) (%9 100) (%a 101) (%A 102) (%! 103) (%$ 104) (%% 105) (%& 106) (%* 107) (%+ 108) (%- 109) (%. 110) (%/ 111) (%| 112) (%< 113) (%= 114) (%> 115) (%? 116) (%@ 117) (%^ 118) (%_ 119) (%~ 120) (&9 121) (&a 122) (&A 123) (&! 124) (&$ 125) (&% 126) (&& 127) (&* 128) (&+ 129) (&- 130) (&. 131) (&/ 132) (&| 133) (&< 134) (&= 135) (&> 136) (&? 137) (&@ 138) (&^ 139) (&_ 140) (&~ 141) (*9 142) (*a 143) (*A 144) (*! 145) (*$ 146) (*% 147) (*& 148) (** 149) (*+ 150) (*- 151) (*. 152) (*/ 153) (*| 154) (*< 155) (*= 156) (*> 157) (*? 158) (*@ 159) (*^ 160) (*_ 161) (*~ 162) (/9 163) (/a 164) (/A 165) (/! 166) (/$ 167) (/% 168) (/& 169) (/* 170) (/+ 171) (/- 172) (/. 173) (// 174) (/| 175) (/< 176) (/= 177) (/> 178) (/? 179) (/@ 180) (/^ 181) (/_ 182) (/~ 183) (|9 184) (ca 185) (CA 186) (|! 187) (|$ 188) (|% 189) (|& 190) (|* 191) (|+ 192) (|- 193) (|. 194) (|/ 195) (cc 196) (|< 197) (|= 198) (|> 199) (|? 200) (|@ 201) (|^ 202) (|_ 203) (|~ 204) (<9 205) (<a 206) (<A 207) (<! 208) (<$ 209) (<% 210) (<& 211) (<* 212) (<+ 213) (<- 214) (<. 215) (</ 216) (<| 217) (<< 218) (<> 220) (<? 221) (<@ 222) (<^ 223) (<_ 224) (<~ 225) (=9 226) (=a 227) (=A 228) (=! 229) (=$ 230) (=% 231) (=& 232) (=* 233) (=+ 234) (=- 235) (=. 236) (=/ 237) (=| 238) (=< 239) (== 240) (=> 241) (=? 242) (=@ 243) (=^ 244) (=_ 245) (=~ 246) (>9 247) (>a 248) (>A 249) (>! 250) (>$ 251) (>% 252) (>& 253) (>* 254) (>+ 255) (>- 256) (>. 257) (>/ 258) (>| 259) (>< 260) (>> 262) (>? 263) (>@ 264) (>^ 265) (>_ 266) (>~ 267) (?9 268) (?a 269) (?A 270) (?! 271) (?$ 272) (?% 273) (?& 274) (?* 275) (?+ 276) (?- 277) (?. 278) (?/ 279) (?| 280) (?< 281) (?= 282) (?> 283) (?? 284) (?@ 285) (?^ 286) (?_ 287) (?~ 288) (^9 289) (^a 290) (^A 291) (^! 292) (^$ 293) (^% 294) (^& 295) (^* 296) (^+ 297) (^- 298) (^. 299) (^/ 300) (^| 301) (^< 302) (^= 303) (^> 304) (^? 305) (^@ 306) (^^ 307) (^_ 308) (^~ 309) (_9 310) (_a 311) (_A 312) (_! 313) (_$ 314) (_% 315) (_& 316) (_* 317) (_+ 318) (_- 319) (_. 320) (_/ 321) (_| 322) (_< 323) (_= 324) (_> 325) (_? 326) (_@ 327) (_^ 328) (__ 329) (_~ 330) (~9 331) (~a 332) (~A 333) (~! 334) (~$ 335) (~% 336) (~& 337) (~* 338) (~+ 339) (~- 340) (~. 341) (~/ 342) (~| 343) (~< 344) (~= 345) (~> 346) (~? 347) (~@ 348) (~^ 349) (~_ 350) (~~ 351) )
 	    (+ a A ! $ % & | ? ^ _ ~ a9 aa aA a! a$ a% a& a* a+ a- a. a/ a| a< a= a> a? a@ a^ a_ a~ A9 Aa AA A! A$ A% A& A* A+ A- A. A/ A| A< A= A> A? A@ A^ A_ A~ !9 !a !A !! !$ !% !& !* !+ !- !. !/ !| !< != !> !? !@ !^ !_ !~ $9 $a $A $! $$ $% $& $* $+ $- $. $/ $| $< $= $> $? $@ $^ $_ $~ %9 %a %A %! %$ %% %& %* %+ %- %. %/ %| %< %= %> %? %@ %^ %_ %~ &9 &a &A &! &$ &% && &* &+ &- &. &/ &| &< &= &> &? &@ &^ &_ &~ *9 *a *A *! *$ *% *& ** *+ *- *. */ *| *< *= *> *? *@ *^ *_ *~ /9 /a /A /! /$ /% /& /* /+ /- /. // /| /< /= /> /? /@ /^ /_ /~ |9 ca CA |! |$ |% |& |* |+ |- |. |/ cc |< |= |> |? |@ |^ |_ |~ <9 <a <A <! <$ <% <& <* <+ <- <. </ <| << <> <? <@ <^ <_ <~ =9 =a =A =! =$ =% =& =* =+ =- =. =/ =| =< == => =? =@ =^ =_ =~ >9 >a >A >! >$ >% >& >* >+ >- >. >/ >| >< >> >? >@ >^ >_ >~ ?9 ?a ?A ?! ?$ ?% ?& ?* ?+ ?- ?. ?/ ?| ?< ?= ?> ?? ?@ ?^ ?_ ?~ ^9 ^a ^A ^! ^$ ^% ^& ^* ^+ ^- ^. ^/ ^| ^< ^= ^> ^? ^@ ^^ ^_ ^~ _9 _a _A _! _$ _% _& _* _+ _- _. _/ _| _< _= _> _? _@ _^ __ _~ ~9 ~a ~A ~! ~$ ~% ~& ~* ~+ ~- ~. ~/ ~| ~< ~= ~> ~? ~@ ~^ ~_ ~~ ))
@@ -19869,8 +19884,8 @@ in s7:
 (test (call-with-exit (lambda arg ((car arg) 32)) "oops!") 'error)
 (test (call-with-exit (lambda (a b) a)) 'error)
 (test (call-with-exit (lambda (return) (apply return '(3)))) 3)
-(test (call-with-exit (lambda (return) (apply return (list  (cons 1 2))) (format #t "; call-with-exit: we shouldn't be here!"))) (cons 1 2))
-(test (call/cc (lambda (return) (apply return (list  (cons 1 2))) (format #t "; call/cc: we shouldn't be here!"))) (cons 1 2))
+(test (call-with-exit (lambda (return) (apply return (list  (cons 1 2))) (format-logged #t "; call-with-exit: we shouldn't be here!"))) (cons 1 2))
+(test (call/cc (lambda (return) (apply return (list  (cons 1 2))) (format-logged #t "; call/cc: we shouldn't be here!"))) (cons 1 2))
 (test (procedure? (call-with-exit (lambda (return) (call-with-exit return)))) #t)
 (test (call-with-exit (lambda (return) #f) 1) 'error)
 (test (+ (call-with-exit ((lambda () (lambda (k) (k 1 2 3)))))) 6)
@@ -20138,7 +20153,7 @@ in s7:
   (for-each
    (lambda (ques)
      (if (ques a)
-	 (format #t ";(~A ~A) returned #t?~%" ques a)))
+	 (format-logged #t ";(~A ~A) returned #t?~%" ques a)))
    question-ops))
 
 (test (let ((conts (make-vector 4 #f)))
@@ -20225,7 +20240,7 @@ in s7:
 				  (#f)
 				(set! a (+ (* a1 tt) a2)) 
 				(set! b (+ (* tt b1) b2))
-					;(format #t "~A ~A~%" a (- b a))
+					;(format-logged #t "~A ~A~%" a (- b a))
 				(if (or (<= (abs (- ux (/ a b))) err)
 					(> ctr 1000))
 				    (return (/ a b)))
@@ -20260,11 +20275,11 @@ in s7:
 		      (set! max-diff diff)
 		      (set! max-case x))))
 	      (if (> (abs (- r1 x)) (+ err epsilon))
-		(format #t "(rationalize ~A ~A) is off: ~A -> ~A~%" x err r1 (abs (- r1 x))))
+		(format-logged #t "(rationalize ~A ~A) is off: ~A -> ~A~%" x err r1 (abs (- r1 x))))
 	      (if (> (abs (- r2 x)) (+ err epsilon))
-		(format #t "(ratify ~A ~A) is off: ~A -> ~A~%" x err r2 (abs (- r2 x))))
+		(format-logged #t "(ratify ~A ~A) is off: ~A -> ~A~%" x err r2 (abs (- r2 x))))
 	      (if (< (denominator r2) (denominator r1))
-		  (format #t "(ratify ~A ~A) is simpler? ~A ~A~%" x err r1 r2)))))))
+		  (format-logged #t "(ratify ~A ~A) is simpler? ~A ~A~%" x err r1 r2)))))))
   (list max-case max-diff (cr max-case err)))
 |#
 
@@ -21620,7 +21635,7 @@ who says the continuation has to restart the map from the top?
 		     (lambda () (eval-string str))
 		     (lambda args 'error))))
      (if (not (eqv? val -1))
-	 (format #t "~S = ~S?~%" str val))))
+	 (format-logged #t "~S = ~S?~%" str val))))
  (list "( '(.1 -1)1)" "( - '`-00 1)" "( - .(,`1/1))" "( - .(`1) )" "( -(/ .(1)))" "( / 01 -1 )" "(' '` -1(/ ' 1))" "(' (-01 )0)" 
        "(' `'`` -1 1 01)" "(''-1 .(1))" "('(, -1 )0)" "('(,-1)'000)" "('(,-1)00)" "('(-1  -.0)0)" "('(-1 '1`)0)" "('(-1 .-/-)0)" "('(-1()),0)"
        "('(-1) 0)" "('(10. -1 )1)" "(-  '`1)" "(-  `1 1 1)" "(- '  1)" "(- ' 1)" "(- '1 .())" "(- '` ,``1)" "(- '` 1)" "(- '`, `1)" "(- '`,`1)" 
@@ -21684,7 +21699,7 @@ who says the continuation has to restart the map from the top?
 		       (let ((num (eval-string str1)))
 			 (if (and (number? num)
 				  (eqv? num -1))
-			     (format #t "~S ~%" str1))))
+			     (format-logged #t "~S ~%" str1))))
 		     (lambda args
 		       'error)))
 	  (set! (-s7-symbol-table-locked?) #f))))))
@@ -21988,7 +22003,7 @@ who says the continuation has to restart the map from the top?
       (let ((key (make-keyword str)))
 	(let ((newstr (symbol->string (keyword->symbol key))))
 	  (if (not (string=? newstr str))
-	      (format #t ";make-keyword -> string: ~S -> ~A -> ~S~%" str key newstr)))))))
+	      (format-logged #t ";make-keyword -> string: ~S -> ~A -> ~S~%" str key newstr)))))))
 
 (let ()
   (define* (hi a b) (+ a b))
@@ -22102,10 +22117,10 @@ who says the continuation has to restart the map from the top?
      (if (eq? p 's7test)
 	 (set! count (+ count 1)))
      (if (not (provided? p))
-	 (format #t ";~A is in *features* but not provided? ~A~%" p *features*)))
+	 (format-logged #t ";~A is in *features* but not provided? ~A~%" p *features*)))
    *features*)
   (if (not (= count 1))
-      (format #t ";*features* has ~D 's7test entries? ~A~%" count *features*)))
+      (format-logged #t ";*features* has ~D 's7test entries? ~A~%" count *features*)))
 
 (for-each
  (lambda (arg)
@@ -22128,7 +22143,7 @@ who says the continuation has to restart the map from the top?
     (for-each
      (lambda (p)
        (if (eq? p last)
-	   (format #t ";*features has multiple ~A? ~A~%" p *features*))
+	   (format-logged #t ";*features has multiple ~A? ~A~%" p *features*))
        (set! last p))
      f)))
 
@@ -22441,7 +22456,7 @@ who says the continuation has to restart the map from the top?
 	       ((= i 999) #t)
 	     (if (< (v i) (v (+ i 1)))
 		 (begin
-		   (format #t "random vals after sort: ~A ~A~%" (v i) (v (+ i 1)))
+		   (format-logged #t "random vals after sort: ~A ~A~%" (v i) (v (+ i 1)))
 		   (return #f)))))))
       #t)
 
@@ -22451,7 +22466,7 @@ who says the continuation has to restart the map from the top?
     (set! v (cons (random 100.0) v)))
   (set! v (sort! v >))
   (if (not (apply >= v))
-      (format #t ";sort!: v not sorted by >: ~A~%" )))
+      (format-logged #t ";sort!: v not sorted by >: ~A~%" )))
 
 
 (test (sort! (list 3 2 1) (lambda (m n) (let ((vals (sort! (list m n) <))) (< m n)))) '(1 2 3))
@@ -22477,7 +22492,7 @@ who says the continuation has to restart the map from the top?
     (let ((v1 (copy v)))
       (sort! v <)
       (if (not (apply < (vector->list v)))
-	  (format #t ";(sort! ~A <) -> ~A?" v1 v)))))
+	  (format-logged #t ";(sort! ~A <) -> ~A?" v1 v)))))
 
 (test (sort!) 'error)
 (test (sort! '(1 2 3) < '(3 2 1)) 'error)
@@ -22531,7 +22546,7 @@ who says the continuation has to restart the map from the top?
 	       (lambda () (sort! '(1 2 "hi" 3) <))
 	       (lambda () (set! ok #t))))
 	 (lambda args 'error))
-  (if (not ok) (format #t "dynamic-wind out of sort! skipped cleanup?~%")))
+  (if (not ok) (format-logged #t "dynamic-wind out of sort! skipped cleanup?~%")))
 
 
 (let ((lst (list 1 2 3 9 8 7)))
@@ -22543,7 +22558,7 @@ who says the continuation has to restart the map from the top?
 			       #t)))
 		    (lambda args (car args)))))
     (if (not (eq? val 'sort-error))
-	(format #t ";sort! with error: ~A~%" val)))
+	(format-logged #t ";sort! with error: ~A~%" val)))
 
   (let ((val (call-with-exit
 	      (lambda (return)
@@ -22552,7 +22567,7 @@ who says the continuation has to restart the map from the top?
 			 (if (< a b) (return 'sort-error))
 			 #t))))))
     (if (not (eq? val 'sort-error))
-	(format #t ";sort! call-with-exit: ~A~%" val)))
+	(format-logged #t ";sort! call-with-exit: ~A~%" val)))
 
   (let ((val (call/cc
 	      (lambda (return)
@@ -22561,7 +22576,7 @@ who says the continuation has to restart the map from the top?
 			 (if (< a b) (return 'sort-error))
 			 #t))))))
     (if (not (eq? val 'sort-error))
-	(format #t ";sort! call/cc: ~A~%" val)))
+	(format-logged #t ";sort! call/cc: ~A~%" val)))
   )
 
 (let ((old-safety *safety*))
@@ -22821,7 +22836,7 @@ who says the continuation has to restart the map from the top?
 	       (lambda args (cadr args)))
 	     '(1 2 3)))
      (lambda args 
-       (format #t "~A not caught~%" (car args)))))
+       (format-logged #t "~A not caught~%" (car args)))))
  (list #\a 'a-symbol #f #t abs #<unspecified>))
 
 (test (let ((e #f)) 
@@ -22871,14 +22886,14 @@ who says the continuation has to restart the map from the top?
  (lambda (tag)
    (let ((val (catch tag (lambda () (error tag "an error") 123) (lambda args (car args)))))
      (if (not (equal? tag val))
-	 (format #t ";catch ~A -> ~A~%" tag val))))
+	 (format-logged #t ";catch ~A -> ~A~%" tag val))))
  (list :hi '() #() #<eof> #f #t #<unspecified> car #\a 32 9/2))
 
 (for-each
  (lambda (tag)
    (let ((val (catch #t (lambda () (error tag "an error") 123) (lambda args (car args)))))
      (if (not (equal? tag val))
-	 (format #t ";catch #t (~A) -> ~A~%" tag val))))
+	 (format-logged #t ";catch #t (~A) -> ~A~%" tag val))))
  (list :hi '() #<eof> #f #t #<unspecified> car #\a 32 9/2 '(1 2 3) '(1 . 2) #(1 2 3) #()))
 
 (for-each
@@ -22890,13 +22905,13 @@ who says the continuation has to restart the map from the top?
 ;; (error <string>...) throws 'no-catch which makes it harder to check
 (let ((val (catch #t (lambda () (error "hi") 123) (lambda args (car args)))))
   (if (not (eq? val 'no-catch))
-      (format #t ";catch #t, tag is string -> ~A~%" val)))
+      (format-logged #t ";catch #t, tag is string -> ~A~%" val)))
 
 (for-each
  (lambda (tag)
    (let ((val (catch tag (lambda () (error #t "an error") 123) (lambda args (car args)))))
      (if (not (equal? #t val))
-	 (format #t ";catch ~A -> ~A (#t)~%" tag val))))
+	 (format-logged #t ";catch ~A -> ~A (#t)~%" tag val))))
  (list :hi '() #<eof> #f #t #<unspecified> car #\a 32 9/2))
 
 (let ((tag 'tag)) (test (catch (let () tag) (lambda () (set! tag 123) (error 'tag "tag") tag) (lambda args (car args))) 'tag))
@@ -23084,7 +23099,7 @@ who says the continuation has to restart the map from the top?
   
   (let ((val (first_even '(1 3 5 6 7 8 9))))
     (if (not (equal? val (list 6)))
-	(format #t "first_even (tagbody, gensym, reverse!) (6): '~A~%" val)))
+	(format-logged #t "first_even (tagbody, gensym, reverse!) (6): '~A~%" val)))
   )
 
 
@@ -23428,9 +23443,9 @@ who says the continuation has to restart the map from the top?
       (catch #t
 	(lambda ()
 	  (let ((val (eval-string expr)))
-	    (format #t "~A -> ~A~%" expr val)))
+	    (format-logged #t "~A -> ~A~%" expr val)))
 	(lambda args
-	  ;(format #t "    ~A: ~A~%" expr (apply format #f (cadr args)))
+	  ;(format-logged #t "    ~A: ~A~%" expr (apply format #f (cadr args)))
 	  'error)))
 
     (if (< n 6)
@@ -23663,7 +23678,7 @@ who says the continuation has to restart the map from the top?
     `(and ,@(map (lambda (arg) `(,function ,arg)) args)))
 
   (let ((lst ()))
-    (and-call (lambda (a) (and a (set! lst (cons a lst)))) (+ 1 2) #\a #f (format #t "oops!~%"))
+    (and-call (lambda (a) (and a (set! lst (cons a lst)))) (+ 1 2) #\a #f (format-logged #t "oops!~%"))
     (test lst (list #\a 3))))
 
 (let ()
@@ -23696,12 +23711,12 @@ who says the continuation has to restart the map from the top?
     (let ((res ((if free add-1 add-2) (+ 1 2 3))))
       (if (or (not (equal? val '(+ 1 2 3)))
 	      (not (= res 7)))
-	  (format #t ";mac/proc[#t]: ~A ~A~%" val res)))
+	  (format-logged #t ";mac/proc[#t]: ~A ~A~%" val res)))
     (set! free #f)
     (let ((res ((if free add-1 add-2) (+ 1 2 3))))
       (if (or (not (equal? val '6))
 	      (not (= res 7)))
-	  (format #t ";mac/proc[#f]: ~A ~A~%" val res)))))
+	  (format-logged #t ";mac/proc[#f]: ~A ~A~%" val res)))))
 
 ;; define-macro* default arg expr does not see definition-time closure:
 (test (let ((mac #f))
@@ -23975,13 +23990,13 @@ who says the continuation has to restart the map from the top?
 	(y2 (mac-y2))
 	(y3 (mac-y3)))
     (if (not (morally-equal? y0 y1))
-	(format #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) 'mac-y0 y0 y1))
+	(format-logged #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) 'mac-y0 y0 y1))
     (if (not (morally-equal? y2 y3))
-	(format #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) 'mac-y2 y2 y3)))
+	(format-logged #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) 'mac-y2 y2 y3)))
 
   (let ((y (+ (mac-y0) (mac-y1) (mac-y2) (mac-y3))))
     (if (> (abs (- y (* 4 9.5))) 1e-9)
-	(format #t "(2) ~A: ~A got ~S but expected ~S~%~%" (port-line-number) 'mac-y0 y (* 4 9.5)))))
+	(format-logged #t "(2) ~A: ~A got ~S but expected ~S~%~%" (port-line-number) 'mac-y0 y (* 4 9.5)))))
 
 
 
@@ -23992,14 +24007,14 @@ who says the continuation has to restart the map from the top?
 (for-each
  (lambda (arg)
    (if (aritable? arg 0)
-       (format #t ";(aritable? ~A) -> #t?~%" arg)))
+       (format-logged #t ";(aritable? ~A) -> #t?~%" arg)))
  (list :hi (integer->char 65) 1 #t 3.14 3/4 1.0+1.0i #\f #<eof> #<unspecified>))
 
 (for-each
  (lambda (arg)
    (let ((val (catch #t (lambda () (aritable? abs arg)) (lambda args 'error))))
      (if (not (eq? val 'error))
-	 (format #t ";(aritable? abs ~A) -> ~A?~%" arg val))))
+	 (format-logged #t ";(aritable? abs ~A) -> ~A?~%" arg val))))
  (list :hi (integer->char 65) -1 most-negative-fixnum macroexpand quasiquote (lambda () #f) 
        car #() "hi" (list 1 2) 3.14 3/4 1.0+1.0i #\f #<eof> #<unspecified>))
 
@@ -24059,7 +24074,7 @@ who says the continuation has to restart the map from the top?
 (for-each
  (lambda (arg)
    (if (arity arg)
-       (format #t ";(arity ~A) -> ~A?~%" arg (arity arg))))
+       (format-logged #t ";(arity ~A) -> ~A?~%" arg (arity arg))))
  (list :hi (integer->char 65) 1 #t 3.14 3/4 1.0+1.0i #\f #<eof> #<unspecified> #<undefined> () 'a))
 
 
@@ -24068,27 +24083,27 @@ who says the continuation has to restart the map from the top?
   (define (next-arg expr)
     (catch #t
       (lambda ()
-	;(format #t "expr: ~A~%" expr)
+	;(format-logged #t "expr: ~A~%" expr)
 	(let ((func (eval-string expr)))
 	  (let ((min-max (arity func)))
-	    (format #t "(test (arity ~A) ~70T'~A)~%" expr min-max)
+	    (format-logged #t "(test (arity ~A) ~70T'~A)~%" expr min-max)
 	    (if (> (cdr min-max) 6)
 		(set! (cdr min-max) 6))
 	    (do ((i 0 (+ i 1)))
 		((= i (car min-max)))
 	      (if (aritable? func i)
-		  (format #t ";~A: arity: ~A, arg: ~A?~%" expr min-max i)))
+		  (format-logged #t ";~A: arity: ~A, arg: ~A?~%" expr min-max i)))
 	    (do ((i (car min-max) (+ i 1)))
 		((> i (cdr min-max)))
 	      (if (not (aritable? func i))
-		  (format #t ";~A: arity: ~A, arg: ~A?~%" expr min-max i)))
+		  (format-logged #t ";~A: arity: ~A, arg: ~A?~%" expr min-max i)))
 	    (do ((i (+ 1 (cdr min-max)) (+ i 1)))
 		((>= i 6))
 	      (if (aritable? func i)
-		  (format #t ";~A: arity: ~A, arg: ~A?~%" expr min-max i)))
+		  (format-logged #t ";~A: arity: ~A, arg: ~A?~%" expr min-max i)))
 	    )))
 	(lambda args
-	  ;(format #t "    ~A: ~A~%" expr (apply format #f (cadr args)))
+	  ;(format-logged #t "    ~A: ~A~%" expr (apply format #f (cadr args)))
 	  'error)))
 
   (define (next-choice str n)
@@ -24164,7 +24179,7 @@ who says the continuation has to restart the map from the top?
 	       (catch #t
 		 (lambda ()
 		   (let ((min-max (arity func)))
-		     (format #t "(test (arity ~A) ~70T'~A)~%" sym min-max)
+		     (format-logged #t "(test (arity ~A) ~70T'~A)~%" sym min-max)
 		     (if min-max
 			 (begin 
 			   (if (> (cdr min-max) 6)
@@ -24172,19 +24187,19 @@ who says the continuation has to restart the map from the top?
 			   (do ((i 0 (+ i 1)))
 			       ((= i (car min-max)))
 			     (if (aritable? func i)
-				 (format #t ";~A: arity: ~A, arg: ~A?~%" sym min-max i)))
+				 (format-logged #t ";~A: arity: ~A, arg: ~A?~%" sym min-max i)))
 			   (do ((i (car min-max) (+ i 1)))
 			       ((> i (cdr min-max)))
 			     (if (not (aritable? func i))
-				 (format #t ";~A: arity: ~A, arg: ~A?~%" sym min-max i)))
+				 (format-logged #t ";~A: arity: ~A, arg: ~A?~%" sym min-max i)))
 			   (do ((i (+ 1 (cdr min-max)) (+ i 1)))
 			       ((>= i 6))
 			     (if (aritable? func i)
-				 (format #t ";~A: arity: ~A, arg: ~A?~%" sym min-max i)))
+				 (format-logged #t ";~A: arity: ~A, arg: ~A?~%" sym min-max i)))
 			   ))))
 		     
 		 (lambda args
-		   (format #t "    ~A: ~A~%" sym (apply format #f (cadr args)))
+		   (format-logged #t "    ~A: ~A~%" sym (apply format #f (cadr args)))
 		   'error)))))
 	     lst))))
 |#
@@ -24487,7 +24502,7 @@ who says the continuation has to restart the map from the top?
       (if (null? source)
 	  (begin
 	    (if (member dest subsets)
-		(format #t ";got ~S twice in for-each-subset: ~S~%" dest args))
+		(format-logged #t ";got ~S twice in for-each-subset: ~S~%" dest args))
 	    (set! subsets (cons dest subsets))
 	    (if (aritable? func len)
 		(apply func dest)))
@@ -24549,9 +24564,9 @@ who says the continuation has to restart the map from the top?
 			
 			(snarf-1 n func lst)))))))))
 
-(test (let ((lst '(1 2 3 4))) (catch #t (lambda () (snarf (lambda (a b) (format #t "~A ~A~%" a b c)) lst)) (lambda args 'error)) lst) '(1 2 3 4))
-(test (snarf (lambda (a b) (format #t "~A ~A~%" a b)) '(1 2 3 4 5)) 'error)
-(test (snarf (lambda (a b) (format #t "~A ~A~%" a b)) '(1)) 'error)
+(test (let ((lst '(1 2 3 4))) (catch #t (lambda () (snarf (lambda (a b) (format-logged #t "~A ~A~%" a b c)) lst)) (lambda args 'error)) lst) '(1 2 3 4))
+(test (snarf (lambda (a b) (format-logged #t "~A ~A~%" a b)) '(1 2 3 4 5)) 'error)
+(test (snarf (lambda (a b) (format-logged #t "~A ~A~%" a b)) '(1)) 'error)
 (test (let ((x 0)) (snarf (lambda (a) (set! x (+ x a))) '(1 2 3)) x) 6)
 (test (let ((x 0)) (snarf (lambda (a b) (set! x (+ x a b))) '(1 2 3 4)) x) 10)
 (test (let ((x 0)) (snarf (lambda* (a b) (set! x (+ x a b))) '(1 2 3 4)) x) 10)
@@ -24759,7 +24774,7 @@ who says the continuation has to restart the map from the top?
 
 (test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of the real number x") #t)
 (if (not (string=? (help abs) "(abs x) returns the absolute value of the real number x"))
-    (format #t "(help abs): ~S~%" (help abs)))
+    (format-logged #t "(help abs): ~S~%" (help abs)))
 (test (string=? (#_help abs) "(abs x) returns the absolute value of the real number x") #t)
 (test (string=? (procedure-documentation 'abs) "(abs x) returns the absolute value of the real number x") #t)
 (test (let ((hi (lambda (x) "this is a test" (+ x 1)))) 
@@ -24985,7 +25000,7 @@ func
 				      (not (char=? (name i) #\-))
 				      (not (char-numeric? (name i))))
 				 (begin
-				   (format #t "ok? file name: ~S~%" name)
+				   (format-logged #t "ok? file name: ~S~%" name)
 				   (oops #f))))))))))
 	  #t)))
 
@@ -25755,7 +25770,7 @@ func
   (if (or (not (= val 11))
 	  fe1-called
 	  fe2-called)
-      (format #t "fully-expand: ~A ~A ~A ~A~%" val (procedure-source fe3) fe1-called fe2-called)))
+      (format-logged #t "fully-expand: ~A ~A ~A ~A~%" val (procedure-source fe3) fe1-called fe2-called)))
 
 (test (let ()
 	(define-macro (pop sym)
@@ -26466,56 +26481,56 @@ func
 
   (let ()
     (load reader-file (current-environment))
-    (if (not (= x 6)) (format #t ";#.(+ 1 2 3) -> ~A~%" x))
-    (if (not (equal? xlst '(1 2 3 4))) (format #t ";#.(* 2 2) -> ~A~%" xlst))
-    (if (not (equal? (object->string y) "#1=(2 . #1#)")) (format #t ";'#1=(2 . #1#) -> ~S~%" (object->string y)))
+    (if (not (= x 6)) (format-logged #t ";#.(+ 1 2 3) -> ~A~%" x))
+    (if (not (equal? xlst '(1 2 3 4))) (format-logged #t ";#.(* 2 2) -> ~A~%" xlst))
+    (if (not (equal? (object->string y) "#1=(2 . #1#)")) (format-logged #t ";'#1=(2 . #1#) -> ~S~%" (object->string y)))
     (if (not (equal? (object->string y1) "#1=(2 #3=(3 #2=(#1#) . #2#) . #3#)"))
-	(format #t ";'#1=(2 #2=(3 #3=(#1#) . #3#) . #2#) -> ~S~%" (object->string y1)))
-    (if (not (equal? y2 #2d((1 2) (3 4)))) (format #t ";#2d((1 2) (3 4)) -> ~A~%" y2))
-    (if (not (= z 32)) (format #t ";#+asdf? -> ~A~%" z))
-    (if (not (= z1 1)) (format #t ";#(or ... +asdf)? -> ~A~%" z1))
-    (if (not (= x2 5)) (format #t ";(+ 1 #;(* 2 3) 4) -> ~A~%" x2))
-    (if (not (= x3 3)) (format #t ";(+ #;32 1 2) -> ~A~%" x3))
-    (if (not (= x4 3)) (format #t ";(+ #; 32 1 2) -> ~A~%" x4))
-    (if (not (= y3 3)) (format #t ";(+ 1 (car '#1=(2 . #1#))) -> ~A~%" y3))
-    (if (not (= y4 3)) (format #t ";#.(+ 1 (car '#1=(2 . #1#))) -> ~A~%" y4))
-    (if (not (= y5 51)) (format #t ";(+ 1 #.(* 2 3) #.(* 4 #.(+ 5 6))) -> ~A~%" y5))
+	(format-logged #t ";'#1=(2 #2=(3 #3=(#1#) . #3#) . #2#) -> ~S~%" (object->string y1)))
+    (if (not (equal? y2 #2d((1 2) (3 4)))) (format-logged #t ";#2d((1 2) (3 4)) -> ~A~%" y2))
+    (if (not (= z 32)) (format-logged #t ";#+asdf? -> ~A~%" z))
+    (if (not (= z1 1)) (format-logged #t ";#(or ... +asdf)? -> ~A~%" z1))
+    (if (not (= x2 5)) (format-logged #t ";(+ 1 #;(* 2 3) 4) -> ~A~%" x2))
+    (if (not (= x3 3)) (format-logged #t ";(+ #;32 1 2) -> ~A~%" x3))
+    (if (not (= x4 3)) (format-logged #t ";(+ #; 32 1 2) -> ~A~%" x4))
+    (if (not (= y3 3)) (format-logged #t ";(+ 1 (car '#1=(2 . #1#))) -> ~A~%" y3))
+    (if (not (= y4 3)) (format-logged #t ";#.(+ 1 (car '#1=(2 . #1#))) -> ~A~%" y4))
+    (if (not (= y5 51)) (format-logged #t ";(+ 1 #.(* 2 3) #.(* 4 #.(+ 5 6))) -> ~A~%" y5))
 
-    (if (not (equal? r1 '(1 4))) (format #t ";'(1 #. #;(+ 2 3) 4) -> ~A~%" r1))
-    (if (not (equal? r2 '(1 (* 2 4)))) (format #t ";'(1 #. #;(+ 2 3) (* 2 4)) -> ~A~%" r2))
-    (if (not (equal? r3 '(1 (* 2 4)))) (format #t ";'(1 #; #.(+ 2 3) (* 2 4)) -> ~A~%" r3))
-    (if (not (equal? r4 '(1 5 (* 2 4)))) (format #t ";'(1 #. #1=(+ 2 3) (* 2 4)) -> ~A~%" r4))
-    (if (not (equal? r5 '(1 5 (* 2 4)))) (format #t ";'(1 #. #1=(+ 2 #. 3) (* 2 4)) -> ~A~%" r5))
-    (if (not (equal? r6 '(1 2 (* 2 4)))) (format #t ";'(1 #. #1=(+ 2 #+pi 3) (* 2 4)) -> ~A~%" r6))
-    (if (not (equal? r7 '(1 2 (* 2 4)))) (format #t ";'(1 #. #1=(+ 2 #+pi #1#) (* 2 4)) -> ~A~%" r7))
-    (if (not (equal? r8 '(1 (1 2) 3))) (format #t ";'(1 #+s7 #1=(1 2) 3) -> ~A~%" r8))
-    (if (not (equal? r9 '(1 3))) (format #t ";'(1 #+asdf #1=(1 2) 3)) -> ~A~%" r9))
-    (if (not (equal? r10 ':1)) (format #t ";#. #1# -> ~A~%" r10)) 
-    (if (not (equal? r13 0)) (format #t ";#+s7 #e0.0 -> ~A~%" r13))
-    (if (not (equal? r14 1)) (format #t ";#. #o1 -> ~A~%" r14))
-    (if (not (equal? r15 -)) (format #t ";#. #_- -> ~A~%" r15))
-    (if (not (equal? r16 0)) (format #t ";(#+s7 #_- #d0) -> ~A~%" r16))
-    (if (not (equal? r17 -1)) (format #t ";(#. #_- #o1) -> ~A~%" r17))
-    (if (not (equal? r18 0)) (format #t ";(#. #.  #_+) -> ~A~%" r18))
-    (if (not (equal? r19 0)) (format #t ";(#. #+s7  #_+) -> ~A~%" r19))
-    (if (not (equal? r20 0)) (format #t ";(#+s7 #+s7 #_+) -> ~A~%" r20))
-    (if (not (equal? r21 0)) (format #t ";(#_-(#_+ 1 2)3) -> ~A~%" r21))
-    (if (not (equal? r22 1)) (format #t ";(#(#_+ 1 2)#o1) -> ~A~%" r22))
-    (if (not (equal? r23 0)) (format #t ";(+ #;#1.##+asdf ) -> ~A~%" r23))
-    (if (not (equal? r24 0)) (format #t ";(+ #. #;(#_+ 1 2)) -> ~A~%" r24))
-    (if (not (equal? r25 0)) (format #t ";(+ #;#1=#2=) -> ~A~%" r25))
-    (if (not (equal? r26 3)) (format #t ";(+ #;#2#(#_+ 1 2)) -> ~A~%" r26))
-    (if (not (equal? r27 0)) (format #t ";(+ #;#1=.) -> ~A~%" r27))
-    (if (not (equal? r28 0)) (format #t ";(+ #; #; #; ()) -> ~A~%" r28))
-    (if (not (equal? r29 6)) (format #t ";(+ 3(#_+ 1 2)#;#. ) -> ~A~%" r29))
-    (if (not (equal? r30 0)) (format #t ";(+ #;#2=#+asdf#+s7) -> ~A~%" r30))
-    (if (not (equal? r31 0)) (format #t ";(+ #;#f#=#\\) -> ~A~%" r31))
-    (if (not (equal? r32 -3)) (format #t ";(#. + (#_-(#_+ 1 2))) -> ~A~%" r32))
-    (if (not (equal? r33 3)) (format #t ";(+ 1 #+asdf #\\a 2) -> ~A~%" r33))
-    (if (not (equal? r34 0)) (format #t ";(+ #++(#. #\\a)) -> ~A~%" r34))
-    (if (not (equal? r35 0)) (format #t ";(+ #+s7 #; (33)) -> ~A~%" r35))
+    (if (not (equal? r1 '(1 4))) (format-logged #t ";'(1 #. #;(+ 2 3) 4) -> ~A~%" r1))
+    (if (not (equal? r2 '(1 (* 2 4)))) (format-logged #t ";'(1 #. #;(+ 2 3) (* 2 4)) -> ~A~%" r2))
+    (if (not (equal? r3 '(1 (* 2 4)))) (format-logged #t ";'(1 #; #.(+ 2 3) (* 2 4)) -> ~A~%" r3))
+    (if (not (equal? r4 '(1 5 (* 2 4)))) (format-logged #t ";'(1 #. #1=(+ 2 3) (* 2 4)) -> ~A~%" r4))
+    (if (not (equal? r5 '(1 5 (* 2 4)))) (format-logged #t ";'(1 #. #1=(+ 2 #. 3) (* 2 4)) -> ~A~%" r5))
+    (if (not (equal? r6 '(1 2 (* 2 4)))) (format-logged #t ";'(1 #. #1=(+ 2 #+pi 3) (* 2 4)) -> ~A~%" r6))
+    (if (not (equal? r7 '(1 2 (* 2 4)))) (format-logged #t ";'(1 #. #1=(+ 2 #+pi #1#) (* 2 4)) -> ~A~%" r7))
+    (if (not (equal? r8 '(1 (1 2) 3))) (format-logged #t ";'(1 #+s7 #1=(1 2) 3) -> ~A~%" r8))
+    (if (not (equal? r9 '(1 3))) (format-logged #t ";'(1 #+asdf #1=(1 2) 3)) -> ~A~%" r9))
+    (if (not (equal? r10 ':1)) (format-logged #t ";#. #1# -> ~A~%" r10)) 
+    (if (not (equal? r13 0)) (format-logged #t ";#+s7 #e0.0 -> ~A~%" r13))
+    (if (not (equal? r14 1)) (format-logged #t ";#. #o1 -> ~A~%" r14))
+    (if (not (equal? r15 -)) (format-logged #t ";#. #_- -> ~A~%" r15))
+    (if (not (equal? r16 0)) (format-logged #t ";(#+s7 #_- #d0) -> ~A~%" r16))
+    (if (not (equal? r17 -1)) (format-logged #t ";(#. #_- #o1) -> ~A~%" r17))
+    (if (not (equal? r18 0)) (format-logged #t ";(#. #.  #_+) -> ~A~%" r18))
+    (if (not (equal? r19 0)) (format-logged #t ";(#. #+s7  #_+) -> ~A~%" r19))
+    (if (not (equal? r20 0)) (format-logged #t ";(#+s7 #+s7 #_+) -> ~A~%" r20))
+    (if (not (equal? r21 0)) (format-logged #t ";(#_-(#_+ 1 2)3) -> ~A~%" r21))
+    (if (not (equal? r22 1)) (format-logged #t ";(#(#_+ 1 2)#o1) -> ~A~%" r22))
+    (if (not (equal? r23 0)) (format-logged #t ";(+ #;#1.##+asdf ) -> ~A~%" r23))
+    (if (not (equal? r24 0)) (format-logged #t ";(+ #. #;(#_+ 1 2)) -> ~A~%" r24))
+    (if (not (equal? r25 0)) (format-logged #t ";(+ #;#1=#2=) -> ~A~%" r25))
+    (if (not (equal? r26 3)) (format-logged #t ";(+ #;#2#(#_+ 1 2)) -> ~A~%" r26))
+    (if (not (equal? r27 0)) (format-logged #t ";(+ #;#1=.) -> ~A~%" r27))
+    (if (not (equal? r28 0)) (format-logged #t ";(+ #; #; #; ()) -> ~A~%" r28))
+    (if (not (equal? r29 6)) (format-logged #t ";(+ 3(#_+ 1 2)#;#. ) -> ~A~%" r29))
+    (if (not (equal? r30 0)) (format-logged #t ";(+ #;#2=#+asdf#+s7) -> ~A~%" r30))
+    (if (not (equal? r31 0)) (format-logged #t ";(+ #;#f#=#\\) -> ~A~%" r31))
+    (if (not (equal? r32 -3)) (format-logged #t ";(#. + (#_-(#_+ 1 2))) -> ~A~%" r32))
+    (if (not (equal? r33 3)) (format-logged #t ";(+ 1 #+asdf #\\a 2) -> ~A~%" r33))
+    (if (not (equal? r34 0)) (format-logged #t ";(+ #++(#. #\\a)) -> ~A~%" r34))
+    (if (not (equal? r35 0)) (format-logged #t ";(+ #+s7 #; (33)) -> ~A~%" r35))
 
-    (if (not (morally-equal? r36 -1.0)) (format #t ";(cos #. #. #. `(string->symbol \"pi\")) -> ~A~%" r36))
+    (if (not (morally-equal? r36 -1.0)) (format-logged #t ";(cos #. #. #. `(string->symbol \"pi\")) -> ~A~%" r36))
     )
 
   (set! *#readers* old-readers)
@@ -26659,7 +26674,7 @@ func
     (set! (symbol-access var)
 	  (list (and cur-access (car cur-access))
 		(lambda (symbol new-value) 
-		  (format #t "~A set to ~A~%" symbol new-value) 
+		  (format-logged #t "~A set to ~A~%" symbol new-value) 
 		  (if cur-set 
 		      (cur-set symbol new-value)
 		      new-value))
@@ -26802,7 +26817,7 @@ func
   (test (let* ((_just_int_ 12.41)) _just_int_) 12)
   
   (test (do ((_just_int_ 1.5 (+ _just_int_ 2))) ((>= _just_int_ 10) _just_int_)) 11)
-  ;;  (format #t "do: ~A~%" (do ((_just_int_ 1.5 (+ _just_int_ 2.3))) ((>= _just_int_ 10) _just_int_))) ; 10.2 (no step check)
+  ;;  (format-logged #t "do: ~A~%" (do ((_just_int_ 1.5 (+ _just_int_ 2.3))) ((>= _just_int_ 10) _just_int_))) ; 10.2 (no step check)
   )
 
 (let ()
@@ -26873,13 +26888,13 @@ func
   (if (equal? val 33.2)
       (set! val (bad-idea)))
   (if (equal? val 33.2)
-      (format #t ";bad-idea 3rd time: ~A~%" val)))
+      (format-logged #t ";bad-idea 3rd time: ~A~%" val)))
 (num-test (bad-idea-1) 2)
 (let ((val (bad-idea-1)))
   (if (equal? val 33.2)
       (set! val (bad-idea-1)))
   (if (equal? val 33.2)
-      (format #t ";bad-idea-1 3rd time: ~A~%" val)))
+      (format-logged #t ";bad-idea-1 3rd time: ~A~%" val)))
 (set! *safety* 1)
 (load "tmp1.r5rs")
 (num-test (bad-idea) 2)
@@ -27315,12 +27330,12 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
   (set! e (current-environment))
   (set! g (global-environment))
   (if (not (equal? e (current-environment))) ; test here introduces a new environment
-      (format #t ";(equal? e (current-environment)) -> #f?~%"))
+      (format-logged #t ";(equal? e (current-environment)) -> #f?~%"))
   (test g (global-environment))
   (test (equal? e g) #f)
   (let ()
     (if (equal? e (current-environment))
-	(format #t ";2nd case (equal? e (current-environment)) -> #t?~%"))))
+	(format-logged #t ";2nd case (equal? e (current-environment)) -> #t?~%"))))
 
 (let ()
   (define global-env (global-environment)) 
@@ -28992,7 +29007,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (if (< b c) 
 	  (tc-1 b c))))
   (tc-1 0 32)
-  (if (> max-stack 10) (format #t "tc-1 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-1 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-1 a c) 
@@ -29006,7 +29021,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (if (< a c) 
 	(tc-1 (+ a 1) c)))
   (tc-1 0 32)
-  (if (> max-stack 10) (format #t "tc-1-1 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-1-1 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-2 a c) 
@@ -29017,7 +29032,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	  #f
 	  (tc-2 b c))))
   (tc-2 0 32)
-  (if (> max-stack 10) (format #t "tc-2 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-2 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-2 a c) 
@@ -29028,7 +29043,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	  (tc-2 b c)
 	  #f)))
   (tc-2 0 32)
-  (if (> max-stack 10) (format #t "tc-2-1 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-2-1 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-3 a c) 
@@ -29039,7 +29054,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	    ((< b c)
 	     (tc-3 b c)))))
   (tc-3 0 32)
-  (if (> max-stack 10) (format #t "tc-3 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-3 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-4 a c) 
@@ -29049,7 +29064,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (cond ((= b c) #f)
 	    (else (tc-4 b c)))))
   (tc-4 0 32)
-  (if (> max-stack 10) (format #t "tc-4 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-4 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-5 a c) 
@@ -29060,7 +29075,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	((32) #f)
 	(else (tc-5 b c)))))
   (tc-5 0 32)
-  (if (> max-stack 10) (format #t "tc-5 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-5 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-6 a c) 
@@ -29072,7 +29087,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	((0 1 2 3 4 5 6 7 8) (tc-6 b c))
 	((9 10 11 12 13 14 15 16) (tc-6 b c)))))
   (tc-6 0 32)
-  (if (> max-stack 10) (format #t "tc-6 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-6 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-7 a c) 
@@ -29082,7 +29097,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (or (>= b c)
 	  (tc-7 b c))))
   (tc-7 0 32)
-  (if (> max-stack 10) (format #t "tc-7 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-7 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-8 a c) 
@@ -29092,7 +29107,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (and (< b c)
 	   (tc-8 b c))))
   (tc-8 0 32)
-  (if (> max-stack 10) (format #t "tc-8 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-8 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-9 a c) 
@@ -29102,7 +29117,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (if (< b c)
 	  (tc-9a (+ b 1)))))
   (tc-9 0 32)
-  (if (> max-stack 10) (format #t "tc-9 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-9 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-10 a c) 
@@ -29112,7 +29127,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (and (< b c)
 	   (tc-10 b c))))
   (tc-10 0 32)
-  (if (> max-stack 10) (format #t "tc-10 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-10 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-11 a c) 
@@ -29122,7 +29137,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (and (< b c)
 	   (tc-11 b c))))
   (tc-11 0 32)
-  (if (> max-stack 10) (format #t "tc-11 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-11 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-12 a c) 
@@ -29132,7 +29147,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	      (set! max-stack (-s7-stack-size)))
 	  (tc-12 (+ a 1) c))))
   (tc-12 0 32)
-  (if (> max-stack 10) (format #t "tc-12 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-12 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-13 a c) 
@@ -29143,7 +29158,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	   (if (> a c) (display "oops"))
 	   (tc-13 (+ a 1) c))))
   (tc-13 0 32)
-  (if (> max-stack 10) (format #t "tc-13 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-13 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-14 a c) 
@@ -29152,7 +29167,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (cond ((>= a c) #f)
 	  ((values (+ a 1) c) => tc-14)))
   (tc-14 0 32)
-  (if (> max-stack 10) (format #t "tc-14 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-14 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-15 a c) 
@@ -29161,7 +29176,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (or (>= a c)
 	(apply tc-15 (list (+ a 1) c))))
   (tc-15 0 32)
-  (if (> max-stack 10) (format #t "tc-15 max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-15 max: ~D~%" max-stack)))
 
 (let ((max-stack 0))
   (define (tc-17 a c) 
@@ -29195,8 +29210,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	      (set! max-stack (-s7-stack-size))))
 	a))
   (let ((val (tc-21 0)))
-    (if (> max-stack 10) (format #t "tc-21 max: ~D~%" max-stack))
-    (if (not (= val 32)) (format #t "tc-21 returned: ~A~%" val))))
+    (if (> max-stack 10) (format-logged #t "tc-21 max: ~D~%" max-stack))
+    (if (not (= val 32)) (format-logged #t "tc-21 returned: ~A~%" val))))
 
 (let ((max-stack 0))
   (define (tc-env a c) 
@@ -29206,7 +29221,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (if (< b c) 
 	  (tc-env b c))))
   (tc-env 0 32)
-  (if (> max-stack 10) (format #t "tc-env max: ~D~%" max-stack)))
+  (if (> max-stack 10) (format-logged #t "tc-env max: ~D~%" max-stack)))
 
 
 ;;; make sure for-each and map aren't messed up
@@ -30212,7 +30227,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 		    (lambda () ( (cadr op) forms (append clauses parsed) ops))
 		  (lambda (a b) (set! clause a) (set! remains b)))
 		
-					;(format #t "~%after call clause=~s forms=~S" clause forms)      
+					;(format-logged #t "~%after call clause=~s forms=~S" clause forms)      
 		
 		(set! parsed (append parsed (list clause)))
 		(set! previous forms)
@@ -37442,14 +37457,14 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	  (do ((n 0 (+ n 1)))
 	      ((= n 16))
 	    (if (not (= n (logand (boole (boole-n-vector n) #b0101 #b0011) #b1111)))
-		(format #t "~A: ~A ~A~%" n (boole-n-vector n) (logand (boole (boole-n-vector n) #b0101 #b0011) #b1111))))
+		(format-logged #t "~A: ~A ~A~%" n (boole-n-vector n) (logand (boole (boole-n-vector n) #b0101 #b0011) #b1111))))
 	  (let ((lst '()))
 	    (do ((n #b0000 (+ n 1)))
 		((> n #b1111))
 	      (set! lst (cons (boole (boole-n-vector n) 5 3) lst)))
 	    (if (not (equal? (reverse lst)
 			     (list 0 1 2 3 4 5 6 7 -8 -7 -6 -5 -4 -3 -2 -1)))
-		(format #t ";boole: ~A~%" (reverse lst)))))
+		(format-logged #t ";boole: ~A~%" (reverse lst)))))
 	
 	(test (digit-char-p #\a) #f)
 	(test (digit-char-p #\a 16) 10)
@@ -37687,16 +37702,16 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (let ((pi 2)) pi) 'error)
 
 (define-constant nan.0 (string->number "nan.0"))
-(if (not (nan? nan.0)) (format #t ";(string->number \"nan.0\") returned ~A~%" nan.0))
-(if (infinite? nan.0) (format #t ";nan.0 is infinite?~%"))
+(if (not (nan? nan.0)) (format-logged #t ";(string->number \"nan.0\") returned ~A~%" nan.0))
+(if (infinite? nan.0) (format-logged #t ";nan.0 is infinite?~%"))
 
 (define-constant +inf.0 (string->number "+inf.0"))
-(if (not (infinite? +inf.0)) (format #t ";(string->number \"+inf.0\") returned ~A~%" +inf.0))
-(if (nan? +inf.0) (format #t ";+inf.0 is NaN?~%"))
+(if (not (infinite? +inf.0)) (format-logged #t ";(string->number \"+inf.0\") returned ~A~%" +inf.0))
+(if (nan? +inf.0) (format-logged #t ";+inf.0 is NaN?~%"))
 
 (define-constant -inf.0 (string->number "-inf.0"))
-(if (not (infinite? -inf.0)) (format #t ";(string->number \"-inf.0\") returned ~A~%" -inf.0))
-(if (nan? -inf.0) (format #t ";-inf.0 is NaN?~%"))
+(if (not (infinite? -inf.0)) (format-logged #t ";(string->number \"-inf.0\") returned ~A~%" -inf.0))
+(if (nan? -inf.0) (format-logged #t ";-inf.0 is NaN?~%"))
 
 (define-constant inf.0 +inf.0)
 (define-constant inf+infi (make-rectangular inf.0 inf.0))
@@ -37752,7 +37767,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (n)
    (let ((nb (catch #t (lambda () (number? n)) (lambda args 'error))))
-     (if (not nb) (format #t ";(number? ~A) -> #f?~%" n))))
+     (if (not nb) (format-logged #t ";(number? ~A) -> #f?~%" n))))
  (list '1e311 '1e-311 '0e311 '2.1e40000))
 
 (if with-bignums
@@ -37771,7 +37786,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
    (for-each
     (lambda (arg)
       (if (op arg)
-	  (format #t ";(~A ~A) -> #t?~%" op arg)))
+	  (format-logged #t ";(~A ~A) -> #t?~%" op arg)))
     (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
 	  #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>)))
  (list number? complex? real? rational? integer? infinite? nan?)
@@ -37806,7 +37821,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (arg) 
    (if (not (complex? arg))
-       (format #t ";(complex? ~A) -> #f?~%" arg)))
+       (format-logged #t ";(complex? ~A) -> #f?~%" arg)))
  (list 1 1.0 1.0+0.5i 1/2))
 
 (if with-bignums
@@ -38138,7 +38153,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (let ((num (string->number (substring str 0 j))))
 	(if (or (nan? num)
 		(infinite? num))
-	    (format #t "~A: ~S -> ~A~%" (if (infinite? num) 'inf 'nan) str num)))
+	    (format-logged #t "~A: ~S -> ~A~%" (if (infinite? num) 'inf 'nan) str num)))
       )))
 |#
 
@@ -38606,13 +38621,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (n)
    (if (not (positive? n))
-       (format #t ";(positive? ~A) -> #f?~%") n))
+       (format-logged #t ";(positive? ~A) -> #f?~%") n))
  (list 1 123 123456123 1.4 0.001 1/2 124124124.2))
 
 (for-each
  (lambda (n)
    (if (positive? n)
-       (format #t ";(positive? ~A) -> #t?~%" n)))
+       (format-logged #t ";(positive? ~A) -> #t?~%" n)))
  (list -1 -123 -123456123 -3/2 -0.00001 -1.4 -123124124.1))
 
 (if with-bignums
@@ -38676,13 +38691,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (n)
    (if (negative? n)
-       (format #t ";(negative? ~A) -> #t?~%" n)))
+       (format-logged #t ";(negative? ~A) -> #t?~%" n)))
  (list 1 123 123456123 1.4 0.001 1/2 12341243124.2))
 
 (for-each
  (lambda (n)
    (if (not (negative? n))
-       (format #t ";(negative? ~A) -> #f?~%" n)))
+       (format-logged #t ";(negative? ~A) -> #f?~%" n)))
  (list -1 -123 -123456123 -2/3 -0.00001 -1.4 -123124124.1))
 
 (let ((val1 (catch #t (lambda () (negative? 0.0)) (lambda args 'error)))
@@ -38739,13 +38754,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (n)
    (if (odd? n)
-       (format #t ";(odd? ~A) -> #t?~%" n)))
+       (format-logged #t ";(odd? ~A) -> #t?~%" n)))
  (list 0 2 1234 -4 -10000002 1000000006))
 
 (for-each
  (lambda (n)
    (if (not (odd? n))
-       (format #t ";(odd? ~A) -> #f?~%" n)))
+       (format-logged #t ";(odd? ~A) -> #f?~%" n)))
  (list 1 -1 31 50001 543321))
 
 (if with-bignums
@@ -38804,13 +38819,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (n)
    (if (not (even? n))
-       (format #t ";(even? ~A) -> #f?~%" n)))
+       (format-logged #t ";(even? ~A) -> #f?~%" n)))
  (list 0 2 1234 -4 -10000002 1000000006))
 
 (for-each
  (lambda (n)
    (if (even? n)
-       (format #t ";(even? ~A) -> #t?~%" n)))
+       (format-logged #t ";(even? ~A) -> #t?~%" n)))
  (list 1 -1 31 50001 543321))
 
 (let ((top-exp 60))
@@ -41948,7 +41963,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (let ((val (integer-decode-float 1.0e-307)))
   (if (and (not (equal? val '(5060056332682765 -1072 1)))
 	   (not (equal? val '(5060056332682766 -1072 1))))
-      (format #t ";(integer-decode-float 1.0e-307) got ~A?~%" val)))
+      (format-logged #t ";(integer-decode-float 1.0e-307) got ~A?~%" val)))
 
 (test (integer-decode-float (/ 1.0e-307 100.0e0)) '(4706001880677807 -1075 1)) ; denormal
 (test (integer-decode-float (/ (log 0.0))) '(6755399441055744 972 -1)) ; nan
@@ -42009,7 +42024,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (lambda (arg)
       (let ((val (catch #t (lambda () (op arg)) (lambda args 'error))))
 	(if (not (equal? val 'error))
-	    (format #t ";(~A ~A) -> ~A?~%" op arg val))))
+	    (format-logged #t ";(~A ~A) -> ~A?~%" op arg val))))
     (list "hi" _ht_ '() '(1 2) #f (integer->char 65) 'a-symbol (make-vector 3) 3.14 3/4 3.1+i abs #\f (lambda (a) (+ a 1)))))
  (list logior logand lognot logxor logbit? ash integer-length))
 
@@ -42019,7 +42034,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (lambda (arg)
       (let ((val (catch #t (lambda () (op 1 arg)) (lambda args 'error))))
 	(if (not (equal? val 'error))
-	    (format #t ";(~A ~A) -> ~A?~%" op arg val))))
+	    (format-logged #t ";(~A ~A) -> ~A?~%" op arg val))))
     (list "hi" _ht_ '() '(1 2) #f (integer->char 65) 'a-symbol (make-vector 3) 3.14 -1/2 1+i abs #\f (lambda (a) (+ a 1)))))
  (list logior logand logxor lognot logbit?))
 
@@ -42280,7 +42295,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	(set! ints (cons (- (random 1000) 500) ints)))
       
       (let ((result (apply log-1-of ints)))
-	;;(format #t "(test (log-1-of ~{~D~^ ~}) #b~B) ; (~D)~%" ints result result)
+	;;(format-logged #t "(test (log-1-of ~{~D~^ ~}) #b~B) ; (~D)~%" ints result result)
 	
 	(do ((b 0 (+ b 1)))
 	    ((= b top-checked-bit))
@@ -42293,9 +42308,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	    
 	    (if (logbit? result b) ;(not (zero? (logand result (ash 1 b))))
 		(if (not (= counts 1))
-		    (format #t ";(log-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" ints result (ash 1 b) counts))
+		    (format-logged #t ";(log-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" ints result (ash 1 b) counts))
 		(if (= counts 1)
-		    (format #t ";(log-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts = 1 but we're off]~%" ints result (ash 1 b)))))))))
+		    (format-logged #t ";(log-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts = 1 but we're off]~%" ints result (ash 1 b)))))))))
   
 
   (define (log-n-1-of . ints) ; bits on in exactly n-1 of ints
@@ -42366,7 +42381,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	(set! ints (cons (- (random 1000) 500) ints)))
       
       (let ((result (apply log-n-1-of ints)))
-	;;(format #t "(test (log-n-1-of ~{~D~^ ~}) #b~B) ; (~D)~%" ints result result)
+	;;(format-logged #t "(test (log-n-1-of ~{~D~^ ~}) #b~B) ; (~D)~%" ints result result)
 	
 	(do ((b 0 (+ b 1)))
 	    ((= b top-checked-bit))
@@ -42379,9 +42394,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	    
 	    (if (logbit? result b) ;(not (zero? (logand result (ash 1 b))))
 		(if (not (= counts (- len 1)))
-		    (format #t ";(log-n-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" ints result (ash 1 b) counts))
+		    (format-logged #t ";(log-n-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" ints result (ash 1 b) counts))
 		(if (and (> len 1) (= counts (- len 1)))
-		    (format #t ";(log-n-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" ints result (ash 1 b) counts))))))))
+		    (format-logged #t ";(log-n-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" ints result (ash 1 b) counts))))))))
   
   (define (log-n-of n . ints) ; bits on in exactly n of ints
     (let ((len (length ints)))
@@ -42492,7 +42507,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	(set! ints (cons (- (random 1000) 500) ints)))
       
       (let ((result (apply log-n-of n ints)))
-	;;(format #t "(test (log-n-of ~D ~{~D~^ ~}) #b~B) ; (~D)~%" n ints result result)
+	;;(format-logged #t "(test (log-n-of ~D ~{~D~^ ~}) #b~B) ; (~D)~%" n ints result result)
 	
 	(do ((b 0 (+ b 1)))
 	    ((= b top-checked-bit))
@@ -42505,9 +42520,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	    
 	    (if (logbit? result b) ;(not (zero? (logand result (ash 1 b))))
 		(if (not (= counts n))
-		    (format #t ";(log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" n ints result (ash 1 b) counts))
+		    (format-logged #t ";(log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" n ints result (ash 1 b) counts))
 		(if (and (> len 1) (= counts n))
-		    (format #t ";(log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" n ints result (ash 1 b) counts))))))))
+		    (format-logged #t ";(log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" n ints result (ash 1 b) counts))))))))
 
 
   (define (simple-log-n-of n . ints)     ; bits on in exactly n of ints
@@ -42561,9 +42576,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	    
 	    (if (logbit? result b) ;(not (zero? (logand result (ash 1 b))))
 		(if (not (= counts n))
-		    (format #t ";(simple-log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" n ints result (ash 1 b) counts))
+		    (format-logged #t ";(simple-log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" n ints result (ash 1 b) counts))
 		(if (and (> len 1) (= counts n))
-		    (format #t ";(simple-log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" n ints result (ash 1 b) counts)))))))))
+		    (format-logged #t ";(simple-log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" n ints result (ash 1 b) counts)))))))))
 
 
 
@@ -42641,7 +42656,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (let ((on? (logbit? x index))
 	  (ash? (not (zero? (logand x (ash 1 index))))))
       (if (not (eq? on? ash?))
-	  (format #t "(logbit? ~A ~A): ~A ~A~%" x index on? ash?)))))
+	  (format-logged #t "(logbit? ~A ~A): ~A ~A~%" x index on? ash?)))))
 
 
 
@@ -43460,13 +43475,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	     (cv (ceiling val1))
 	     (tv (truncate val1)))
 	(if (not (= fv (- val2 1)))
-	    (begin (set! happy #f) (format #t ";(floor ~S) = ~S?~%" val1 fv)))
+	    (begin (set! happy #f) (format-logged #t ";(floor ~S) = ~S?~%" val1 fv)))
 	(if (not (= cv val2))
-	    (begin (set! happy #f) (format #t ";(ceiling ~S) = ~S?~%" val1 cv)))
+	    (begin (set! happy #f) (format-logged #t ";(ceiling ~S) = ~S?~%" val1 cv)))
 	(if (not (= tv (- val2 1)))
-	    (begin (set! happy #f) (format #t ";(truncate ~S) = ~S?~%" val1 tv)))
+	    (begin (set! happy #f) (format-logged #t ";(truncate ~S) = ~S?~%" val1 tv)))
 	(if (not (= rv val2))
-	    (begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv))))))
+	    (begin (set! happy #f) (format-logged #t ";(round ~S) = ~S?~%" val1 rv))))))
   
   (let ((happy #t))
     (do ((i 2 (+ i 1)))
@@ -43478,13 +43493,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	     (cv (ceiling val1))
 	     (tv (truncate val1)))
 	(if (not (= fv val2))
-	    (begin (set! happy #f) (format #t ";(floor ~S) = ~S?~%" val1 fv)))
+	    (begin (set! happy #f) (format-logged #t ";(floor ~S) = ~S?~%" val1 fv)))
 	(if (not (= cv (+ val2 1)))
-	    (begin (set! happy #f) (format #t ";(ceiling ~S) = ~S?~%" val1 cv)))
+	    (begin (set! happy #f) (format-logged #t ";(ceiling ~S) = ~S?~%" val1 cv)))
 	(if (not (= tv val2))
-	    (begin (set! happy #f) (format #t ";(truncate ~S) = ~S?~%" val1 tv)))
+	    (begin (set! happy #f) (format-logged #t ";(truncate ~S) = ~S?~%" val1 tv)))
 	(if (not (= rv val2))
-	    (begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv))))))
+	    (begin (set! happy #f) (format-logged #t ";(round ~S) = ~S?~%" val1 rv))))))
   
   (let ((happy #t))
     (do ((i 2 (+ i 1)))
@@ -43492,13 +43507,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (let* ((val1 (expt 2 i))
 	     (val2 (- val1 1)))
 	(if (= (floor val1) (floor val2))
-	    (begin (set! happy #f) (format #t ";(floor ~S) = (floor ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format-logged #t ";(floor ~S) = (floor ~S)?~%" val1 val2)))
 	(if (= (ceiling val1) (ceiling val2))
-	    (begin (set! happy #f) (format #t ";(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format-logged #t ";(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
 	(if (= (truncate val1) (truncate val2))
-	    (begin (set! happy #f) (format #t ";(truncate ~S) = (truncate ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format-logged #t ";(truncate ~S) = (truncate ~S)?~%" val1 val2)))
 	(if (= (round val1) (round val2))
-	    (begin (set! happy #f) (format #t ";(round ~S) = (round ~S)?~%" val1 val2))))))
+	    (begin (set! happy #f) (format-logged #t ";(round ~S) = (round ~S)?~%" val1 val2))))))
   
   (let ((happy #t))
     (do ((i 2 (+ i 1)))
@@ -43506,13 +43521,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (let* ((val1 (/ (- (expt 2 i) 1) 2))
 	     (val2 (/ (- (expt 2 i) 3) 2)))
 	(if (= (floor val1) (floor val2))
-	    (begin (set! happy #f) (format #t ";(floor ~S) = (floor ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format-logged #t ";(floor ~S) = (floor ~S)?~%" val1 val2)))
 	(if (= (ceiling val1) (ceiling val2))
-	    (begin (set! happy #f) (format #t ";(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format-logged #t ";(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
 	(if (= (truncate val1) (truncate val2))
-	    (begin (set! happy #f) (format #t ";(truncate ~S) = (truncate ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format-logged #t ";(truncate ~S) = (truncate ~S)?~%" val1 val2)))
 	(if (= (round val1) (round val2))
-	    (begin (set! happy #f) (format #t ";(round ~S) = (round ~S)?~%" val1 val2))))))
+	    (begin (set! happy #f) (format-logged #t ";(round ~S) = (round ~S)?~%" val1 val2))))))
   
   (let ((happy #t)
 	(off-by 1/3))
@@ -43524,16 +43539,16 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	     (tv (truncate val1))
 	     (rv (round val1)))
 	(if (not (= fv (- val1 off-by)))
-	    (begin (set! happy #f) (format #t ";(floor ~S) = ~S?~%" val1 fv)))
+	    (begin (set! happy #f) (format-logged #t ";(floor ~S) = ~S?~%" val1 fv)))
 	(if (not (= cv (+ val1 (- 1 off-by))))
-	    (begin (set! happy #f) (format #t ";(ceiling ~S) = ~S?~%" val1 cv)))
+	    (begin (set! happy #f) (format-logged #t ";(ceiling ~S) = ~S?~%" val1 cv)))
 	(if (not (= tv (- val1 off-by)))
-	    (begin (set! happy #f) (format #t ";(truncate ~S) = ~S?~%" val1 tv)))
+	    (begin (set! happy #f) (format-logged #t ";(truncate ~S) = ~S?~%" val1 tv)))
 	(if (= off-by 1/3)
 	    (if (not (= rv (- val1 off-by)))
-		(begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv)))
+		(begin (set! happy #f) (format-logged #t ";(round ~S) = ~S?~%" val1 rv)))
 	    (if (not (= rv (+ val1 (- 1 off-by))))
-		(begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv))))
+		(begin (set! happy #f) (format-logged #t ";(round ~S) = ~S?~%" val1 rv))))
 	(if (= off-by 1/3)
 	    (set! off-by 2/3)
 	    (set! off-by 1/3)))))
@@ -43548,13 +43563,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	     (cv (ceiling val1))
 	     (tv (truncate val1)))
 	(if (not (= fv val2))
-	    (begin (set! happy #f) (format #t ";(floor ~S) = ~S?~%" val1 fv)))
+	    (begin (set! happy #f) (format-logged #t ";(floor ~S) = ~S?~%" val1 fv)))
 	(if (not (= cv (+ val2 1)))
-	    (begin (set! happy #f) (format #t ";(ceiling ~S) = ~S?~%" val1 cv)))
+	    (begin (set! happy #f) (format-logged #t ";(ceiling ~S) = ~S?~%" val1 cv)))
 	(if (not (= tv (+ val2 1)))
-	    (begin (set! happy #f) (format #t ";(truncate ~S) = ~S?~%" val1 tv)))
+	    (begin (set! happy #f) (format-logged #t ";(truncate ~S) = ~S?~%" val1 tv)))
 	(if (not (= rv val2))
-	    (begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv))))))
+	    (begin (set! happy #f) (format-logged #t ";(round ~S) = ~S?~%" val1 rv))))))
   
   (let ((happy #t))
     (do ((i 2 (+ i 1)))
@@ -43566,13 +43581,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	     (cv (ceiling val1))
 	     (tv (truncate val1)))
 	(if (not (= fv (- val2 1)))
-	    (begin (set! happy #f) (format #t ";(floor ~S) = ~S?~%" val1 fv)))
+	    (begin (set! happy #f) (format-logged #t ";(floor ~S) = ~S?~%" val1 fv)))
 	(if (not (= cv val2))
-	    (begin (set! happy #f) (format #t ";(ceiling ~S) = ~S?~%" val1 cv)))
+	    (begin (set! happy #f) (format-logged #t ";(ceiling ~S) = ~S?~%" val1 cv)))
 	(if (not (= tv val2))
-	    (begin (set! happy #f) (format #t ";(truncate ~S) = ~S?~%" val1 tv)))
+	    (begin (set! happy #f) (format-logged #t ";(truncate ~S) = ~S?~%" val1 tv)))
 	(if (not (= rv val2))
-	    (begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv))))))
+	    (begin (set! happy #f) (format-logged #t ";(round ~S) = ~S?~%" val1 rv))))))
   
   (let ((happy #t))
     (do ((i 2 (+ i 1)))
@@ -43580,13 +43595,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (let* ((val1 (- (expt 2 i)))
 	     (val2 (+ val1 1)))
 	(if (= (floor val1) (floor val2))
-	    (begin (set! happy #f) (format #t ";(floor ~S) = (floor ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format-logged #t ";(floor ~S) = (floor ~S)?~%" val1 val2)))
 	(if (= (ceiling val1) (ceiling val2))
-	    (begin (set! happy #f) (format #t ";(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format-logged #t ";(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
 	(if (= (truncate val1) (truncate val2))
-	    (begin (set! happy #f) (format #t ";(truncate ~S) = (truncate ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format-logged #t ";(truncate ~S) = (truncate ~S)?~%" val1 val2)))
 	(if (= (round val1) (round val2))
-	    (begin (set! happy #f) (format #t ";(round ~S) = (round ~S)?~%" val1 val2))))))
+	    (begin (set! happy #f) (format-logged #t ";(round ~S) = (round ~S)?~%" val1 val2))))))
   
   (let ((happy #t))
     (do ((i 2 (+ i 1)))
@@ -43594,13 +43609,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (let* ((val1 (- (/ (- (expt 2 i) 1) 2)))
 	     (val2 (- (/ (- (expt 2 i) 3) 2))))
 	(if (= (floor val1) (floor val2))
-	    (begin (set! happy #f) (format #t ";(floor ~S) = (floor ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format-logged #t ";(floor ~S) = (floor ~S)?~%" val1 val2)))
 	(if (= (ceiling val1) (ceiling val2))
-	    (begin (set! happy #f) (format #t ";(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format-logged #t ";(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
 	(if (= (truncate val1) (truncate val2))
-	    (begin (set! happy #f) (format #t ";(truncate ~S) = (truncate ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format-logged #t ";(truncate ~S) = (truncate ~S)?~%" val1 val2)))
 	(if (= (round val1) (round val2))
-	    (begin (set! happy #f) (format #t ";(round ~S) = (round ~S)?~%" val1 val2))))))
+	    (begin (set! happy #f) (format-logged #t ";(round ~S) = (round ~S)?~%" val1 val2))))))
   
   (let ((happy #t)
 	(off-by 2/3))
@@ -43612,16 +43627,16 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	     (tv (truncate val1))
 	     (rv (round val1)))
 	(if (not (= fv (- val1 off-by)))
-	    (begin (set! happy #f) (format #t ";(floor ~S) = ~S?~%" val1 fv)))
+	    (begin (set! happy #f) (format-logged #t ";(floor ~S) = ~S?~%" val1 fv)))
 	(if (not (= cv (+ val1 (- 1 off-by))))
-	    (begin (set! happy #f) (format #t ";(ceiling ~S) = ~S?~%" val1 cv)))
+	    (begin (set! happy #f) (format-logged #t ";(ceiling ~S) = ~S?~%" val1 cv)))
 	(if (not (= tv (+ val1 (- 1 off-by))))
-	    (begin (set! happy #f) (format #t ";(truncate ~S) = ~S?~%" val1 tv)))
+	    (begin (set! happy #f) (format-logged #t ";(truncate ~S) = ~S?~%" val1 tv)))
 	(if (= off-by 1/3)
 	    (if (not (= rv (- val1 off-by)))
-		(begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv)))
+		(begin (set! happy #f) (format-logged #t ";(round ~S) = ~S?~%" val1 rv)))
 	    (if (not (= rv (+ val1 (- 1 off-by))))
-		(begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv))))
+		(begin (set! happy #f) (format-logged #t ";(round ~S) = ~S?~%" val1 rv))))
 	(if (= off-by 1/3)
 	    (set! off-by 2/3)
 	    (set! off-by 1/3)))))
@@ -47766,7 +47781,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	     (vector-set! diffs i diff)
 	     (if (> diff err)
 		 (begin
-		   (format #t "|~A - ~A| = ~A > ~A (2^~A -> 2^~A)?~%" val rat diff err (log diff 2) (log err 2))
+		   (format-logged #t "|~A - ~A| = ~A > ~A (2^~A -> 2^~A)?~%" val rat diff err (log diff 2) (log err 2))
 		   (return #f)))))
 	 (and (apply >= (vector->list diffs))
 	      (apply <= (map denominator ratios)))))))
@@ -47781,7 +47796,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (let ((val (- (random 2.0) 1.0))) 
       (let ((rat (check-rationalize val 40)))
 	(if (not rat) 
-	    (format #t "rationalize trouble with ~A~%" val)))))
+	    (format-logged #t "rationalize trouble with ~A~%" val)))))
 
   (if with-bignums
       (let ((old-prec (bignum-precision)))
@@ -47853,7 +47868,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	      ((= i 100))
 	    (if (not (zero? (random fraction)))
 		(ok))))
-	(format #t ";random of small ratios is always 0 below ca. ~A~%" (expt 10.0 k))
+	(format-logged #t ";random of small ratios is always 0 below ca. ~A~%" (expt 10.0 k))
 	(done))))))
 
 
@@ -50803,7 +50818,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
    (let ((val1 (catch #t (lambda () (op 1.0)) (lambda args 'error)))
 	 (val2 (catch #t (lambda () (op 1.0+0i)) (lambda args 'error))))
      (if (not (equal? val1 val2))
-	 (format #t ";(~A 1) != (~A 1+0i)? (~A ~A)~%" op op val1 val2))))
+	 (format-logged #t ";(~A 1) != (~A 1+0i)? (~A ~A)~%" op op val1 val2))))
  (list magnitude angle rationalize abs exp log sin cos tan asin acos atan
        sinh cosh tanh asinh acosh atanh sqrt floor ceiling truncate round + - * /
        max min number? integer? real? complex? rational?
@@ -51462,7 +51477,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 			    (set! max-case (/ m n))
 			    (set! maxerr err)))))))))
 	(if (> maxerr 1e-35)
-	    (format #t "sin-m*pi/n (~A cases) max err ~A at ~A~%" cases maxerr max-case))))
+	    (format-logged #t "sin-m*pi/n (~A cases) max err ~A at ~A~%" cases maxerr max-case))))
     )
 
 (let ((sins (list 
@@ -51506,7 +51521,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (let ((err (abs (- (sin x) (list-ref sins i)))))
 	(if (> err mxerr)
 	    (set! mxerr err))))
-    (if (> mxerr 1e-12) (format #t "sin err: ~A~%" mxerr))))
+    (if (> mxerr 1e-12) (format-logged #t "sin err: ~A~%" mxerr))))
 	    
 (if with-bignums
     (let ((old-prec (bignum-precision)))
@@ -51547,7 +51562,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	    ((= k 30))
 	  (let ((sin-val-2 (number->string (sin (/ k (bignum "10"))))))
 	    (if (not (string=? (substring (list-ref sin-vals k) 3 60) (substring sin-val-2 2 59)))
-		(format #t ";(sin (/ ~A 10)) mp: ~A does not match~%~A~%" k (substring (list-ref sin-vals k) 3 60) (substring sin-val-2 2 59))))))
+		(format-logged #t ";(sin (/ ~A 10)) mp: ~A does not match~%~A~%" k (substring (list-ref sin-vals k) 3 60) (substring sin-val-2 2 59))))))
       
       (let ((sin-vals (list   ;arprec mathtool table[Sin[k/10], {k, 0, 30}]
 		       0.00000000000000000000000000000000000000000000000000000000000000000000
@@ -51592,7 +51607,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 		  (if (> err mxerr)
 		      (set! mxerr err)))))))
 	(if (> mxerr 1e-35)
-	    (format #t ";(sin big-angle) max error: ~A" mxerr)))
+	    (format-logged #t ";(sin big-angle) max error: ~A" mxerr)))
       (set! (bignum-precision) old-prec)))
 
 
@@ -52106,7 +52121,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	(if (> err mx)
 	    (set! mx err))))
     (if (> mx 1e-6)
-	(format #t "dht error: ~A~%" mx))))
+	(format-logged #t "dht error: ~A~%" mx))))
     
 (let ((coss (list 
 	     1.00000000000000000000000000000000000000000000000000000000000000000000
@@ -52149,7 +52164,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (let ((err (abs (- (cos x) (list-ref coss i)))))
 	(if (> err mxerr)
 	    (set! mxerr err))))
-    (if (> mxerr 1e-12) (format #t "cos err: ~A~%" mxerr))))
+    (if (> mxerr 1e-12) (format-logged #t "cos err: ~A~%" mxerr))))
 
 (if with-bignums
     (begin
@@ -52196,7 +52211,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	    ((= k 30))
 	  (let ((cos-val-2 (number->string (cos (/ k (bignum "20"))))))
 	    (if (not (string=? (substring (list-ref cos-vals k) 3 60) (substring cos-val-2 2 59)))
-		(format #t ";(cos (/ ~A 20)) mp: ~A does not match~%~A~%" k (substring (list-ref cos-vals k) 3 60) (substring cos-val-2 2 59))))))
+		(format-logged #t ";(cos (/ ~A 20)) mp: ~A does not match~%~A~%" k (substring (list-ref cos-vals k) 3 60) (substring cos-val-2 2 59))))))
       (set! (bignum-precision) old-prec)))
 	
 
@@ -52638,7 +52653,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 		      (set! mxerr err)
 		      (set! mxcase i))))))
 	  (if (> mxerr 1e-35)
-	      (format #t "sum-cot max error ~A at ~A~%" mxerr mxcase))))
+	      (format-logged #t "sum-cot max error ~A at ~A~%" mxerr mxcase))))
       ))
 
 (for-each
@@ -52695,7 +52710,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	    ((= i 30))
 	  (let ((val (tan (/ i (bignum "10")))))
 	    (if (> (magnitude (- val (list-ref tans i))) 1e-35)
-		(format #t ";(tan ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref tans i) (magnitude (- val (list-ref tans i))))))))
+		(format-logged #t ";(tan ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref tans i) (magnitude (- val (list-ref tans i))))))))
       (set! (bignum-precision) old-prec)))
   
 (test (tan) 'error)
@@ -53212,7 +53227,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (let ((y (magnitude (- x (sin (asin x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-12)
-      (format #t ";(sin (asin ~A)) error: ~A~%" mx err)))
+      (format-logged #t ";(sin (asin ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -53222,7 +53237,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (let ((y (magnitude (- x (sin (asin x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-9)
-      (format #t ";(sin (asin ~A)) error: ~A~%" mx err)))
+      (format-logged #t ";(sin (asin ~A)) error: ~A~%" mx err)))
 
 (test (asin) 'error)
 (test (asin "hi") 'error)
@@ -53284,7 +53299,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (let ((err (abs (- (asin x) (list-ref asins i)))))
 	(if (> err mxerr)
 	    (set! mxerr err))))
-    (if (> mxerr 1e-12) (format #t "asin err: ~A~%" mxerr))))
+    (if (> mxerr 1e-12) (format-logged #t "asin err: ~A~%" mxerr))))
 
 (if with-bignums
     (let ((old-prec (bignum-precision)))
@@ -53325,7 +53340,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	    ((= i 30))
 	  (let ((val (asin (/ i (bignum "30")))))
 	    (if (> (magnitude (- val (list-ref asins i))) 1e-36)
-		(format #t ";(asin ~A) -> ~A ~A~%[~A]~%" (/ i 30) val (list-ref asins i) (magnitude (- val (list-ref asins i))))))))
+		(format-logged #t ";(asin ~A) -> ~A ~A~%[~A]~%" (/ i 30) val (list-ref asins i) (magnitude (- val (list-ref asins i))))))))
       (set! (bignum-precision) old-prec)))
 
 
@@ -53830,7 +53845,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (let ((y (magnitude (- x (cos (acos x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-12)
-      (format #t ";(cos (acos ~A)) error: ~A~%" mx err)))
+      (format-logged #t ";(cos (acos ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -53840,7 +53855,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (let ((y (magnitude (- x (cos (acos x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-10)
-      (format #t ";(cos (acos ~A)) error: ~A~%" mx err)))
+      (format-logged #t ";(cos (acos ~A)) error: ~A~%" mx err)))
 
 (test (acos) 'error)
 (test (acos "hi") 'error)
@@ -53892,7 +53907,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	    ((= i 30))
 	  (let ((val (acos (/ i (bignum "30")))))
 	    (if (> (magnitude (- val (list-ref acoss i))) 1e-36)
-		(format #t ";(acos ~A) -> ~A ~A~%[~A]~%" (/ i 30) val (list-ref acoss i) (magnitude (- val (list-ref acoss i))))))))
+		(format-logged #t ";(acos ~A) -> ~A ~A~%[~A]~%" (/ i 30) val (list-ref acoss i) (magnitude (- val (list-ref acoss i))))))))
       (set! (bignum-precision) old-prec)))
 
 
@@ -54868,7 +54883,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 		   (set! mxerr err)))))
 	 formulas)
 	(if (> mxerr 1e-30)
-	    (format #t "big max error: ~A~%" mxerr)))))
+	    (format-logged #t "big max error: ~A~%" mxerr)))))
 
 (let ((atans (list
 	      0.00000000000000000000000000000000000000000000000000000000000000000000
@@ -54919,7 +54934,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (let ((err (abs (- (atan x) (list-ref atans i)))))
 	(if (> err mxerr)
 	    (set! mxerr err))))
-    (if (> mxerr 1e-12) (format #t "atan err: ~A~%" mxerr))))
+    (if (> mxerr 1e-12) (format-logged #t "atan err: ~A~%" mxerr))))
     
 (if with-bignums
     (let ((old-prec (bignum-precision)))
@@ -54960,7 +54975,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	    ((= i 30))
 	  (let ((val (atan (/ i (bignum "10")))))
 	    (if (> (magnitude (- val (list-ref atans i))) 1e-36)
-		(format #t ";(atan ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref atans i) (magnitude (- val (list-ref atans i))))))))
+		(format-logged #t ";(atan ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref atans i) (magnitude (- val (list-ref atans i))))))))
       (set! (bignum-precision) old-prec)))
 
 
@@ -55819,9 +55834,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 		    (set! max-sh-error err)
 		    (set! max-sh-error-case x))))))
 	(if (> max-s-error 1e-35)
-	    (format #t "s^2 + c^2 error: ~A at ~A~%" max-s-error max-s-error-case))
+	    (format-logged #t "s^2 + c^2 error: ~A at ~A~%" max-s-error max-s-error-case))
 	(if (> max-sh-error 1e-33)
-	    (format #t "sh^2 + ch^2 error: ~A at ~A~%" max-sh-error max-sh-error-case)))
+	    (format-logged #t "sh^2 + ch^2 error: ~A at ~A~%" max-sh-error max-sh-error-case)))
 
       (num-test (sinh 1000.0) 9.850355570085234969444396761216615626576E433)
       (num-test (cosh 1000.0) 9.850355570085234969444396761216615626576E433)
@@ -57776,7 +57791,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (let ((y (abs (- x (cosh (acosh x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-14)
-      (format #t ";(cosh (acosh ~A)) error: ~A~%" mx err)))
+      (format-logged #t ";(cosh (acosh ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -57786,7 +57801,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (let ((y (magnitude (- x (cosh (acosh x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-14)
-      (format #t ";(cosh (acosh ~A)) error: ~A~%" mx err)))
+      (format-logged #t ";(cosh (acosh ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -57796,7 +57811,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (let ((y (abs (- x (sinh (asinh x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-14)
-      (format #t ";(sinh (asinh ~A)) error: ~A~%" mx err)))
+      (format-logged #t ";(sinh (asinh ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -57806,7 +57821,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (let ((y (magnitude (- x (sinh (asinh x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-9)
-      (format #t ";(sinh (asinh ~A)) error: ~A~%" mx err)))
+      (format-logged #t ";(sinh (asinh ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -57816,7 +57831,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (let ((y (magnitude (- x (tanh (atanh x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-12)
-      (format #t ";(tanh (atanh ~A)) error: ~A~%" mx err)))
+      (format-logged #t ";(tanh (atanh ~A)) error: ~A~%" mx err)))
 
 (for-each
  (lambda (num-and-val)
@@ -58379,7 +58394,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	     (let ((val (sqrt n)))
 	       (if (or (not (integer? val))
 		       (not (eqv? sqn val)))
-		   (format #t ";(sqrt ~A) expected ~A but got ~A~%" n sqn val)))))
+		   (format-logged #t ";(sqrt ~A) expected ~A but got ~A~%" n sqn val)))))
        (list 9 491401 19439281 1248844921 235565593201)
        (list 3 701 4409 35339 485351))
       
@@ -58389,7 +58404,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	     (let ((val (sqrt n)))
 	       (if (or (integer? val)
 		       (> (abs (- (* val val) n)) .001))
-		   (format #t ";(sqrt ~A) expected ~A but got ~A~%" n (sqrt (* 1.0 n)) val)))))
+		   (format-logged #t ";(sqrt ~A) expected ~A but got ~A~%" n (sqrt (* 1.0 n)) val)))))
        (list 10 491400 19439282 1248844920 235565593200))
       
       (test (eqv? (expt 2 3) 8) #t)
@@ -58408,7 +58423,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (let ((y (magnitude (- x (* (sqrt x) (sqrt x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-14)
-      (format #t ";(sqr (sqrt ~A)) error: ~A~%" mx err)))
+      (format-logged #t ";(sqr (sqrt ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -58418,7 +58433,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (let ((y (magnitude (- x (* (sqrt x) (sqrt x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-12)
-      (format #t ";(sqr (sqrt ~A)) error: ~A~%" mx err)))
+      (format-logged #t ";(sqr (sqrt ~A)) error: ~A~%" mx err)))
 
 (num-test (* (/ 4 (sqrt 522)) 
 	     (log (* (expt (/ (+ 5 (sqrt 29)) (sqrt 2)) 3) 
@@ -58566,7 +58581,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (let ((err (abs (- (sqrt i) (list-ref sqrts (- i 1))))))
 	(if (> err mxerr)
 	    (set! mxerr err))))
-    (if (> mxerr 1e-12) (format #t "sqrt err: ~A~%" mxerr))))
+    (if (> mxerr 1e-12) (format-logged #t "sqrt err: ~A~%" mxerr))))
 
 (if with-bignums
     (begin
@@ -58615,7 +58630,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	    ((= i 30))
 	  (let ((val (sqrt (/ i (bignum "10")))))
 	    (if (> (magnitude (- val (list-ref sqrts i))) 1e-36)
-		(format #t ";(sqrt ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref sqrts i) (magnitude (- val (list-ref sqrts i))))))))
+		(format-logged #t ";(sqrt ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref sqrts i) (magnitude (- val (list-ref sqrts i))))))))
       (set! (bignum-precision) old-prec)))
       
 
@@ -59121,7 +59136,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (let ((val1 (* 1000 (- (exp 30) 10686474581524)))
 	    (val2 (* 1000 (- (exp (bignum "30")) 10686474581524))))
 	(if (> (abs (- val1 val2)) 1)
-	    (format #t "(exp 30): ~A ~A~%" val1 val2)))
+	    (format-logged #t "(exp 30): ~A ~A~%" val1 val2)))
       (num-test (exp (* 172.60813659204 (log 172.60813659204))) 1.364508485146898675293943657160611234948E386) ; not inf!
       (num-test (exp 800.0) 2.726374572112566567364779546367269757963E347)
       (num-test (exp -800.0) 3.667874584177687213455495654260798215465E-348)
@@ -59167,7 +59182,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	    ((= i 30))
 	  (let ((val (exp (/ i (bignum "10")))))
 	    (if (> (magnitude (- val (list-ref exps i))) 1e-36)
-		(format #t ";(exp ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref exps i) (magnitude (- val (list-ref exps i))))))))
+		(format-logged #t ";(exp ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref exps i) (magnitude (- val (list-ref exps i))))))))
       (set! (bignum-precision) old-prec)))
       
       
@@ -59888,7 +59903,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	(let ((y (magnitude (- x (exp (log x))))))
 	  (if (> y err) (begin (set! mx x) (set! err y))))))
   (if (> err 1e-14)
-      (format #t ";(exp (log ~A)) error: ~A~%" mx err)))
+      (format-logged #t ";(exp (log ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -59899,7 +59914,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	(let ((y (magnitude (- x (exp (log x))))))
 	  (if (> y err) (begin (set! err y) (set! mx x))))))
   (if (> err 1e-14)
-      (format #t ";(exp (log ~A)) error: ~A~%" mx err)))
+      (format-logged #t ";(exp (log ~A)) error: ~A~%" mx err)))
 
 (do ((i 0 (+ i 1)))
     ((= i 100))
@@ -60018,7 +60033,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 		      (abs (- (log y) (list-ref logs-2 i))))))
 	(if (> err mxerr)
 	    (set! mxerr err))))
-    (if (> mxerr 1e-12) (format #t "log err: ~A~%" mxerr))))
+    (if (> mxerr 1e-12) (format-logged #t "log err: ~A~%" mxerr))))
 
 (if with-bignums
     (let ((old-prec (bignum-precision)))
@@ -60060,7 +60075,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	    ((= i 30))
 	  (let ((val (log (+ (/ i (bignum "10")) (bignum "1.0")))))
 	    (if (> (magnitude (- val (list-ref logs i))) 1e-36)
-		(format #t ";(log ~A) -> ~A ~A~%[~A]~%" (+ 1.0 (/ i 10)) val (list-ref logs i) (magnitude (- val (list-ref logs i))))))))
+		(format-logged #t ";(log ~A) -> ~A ~A~%[~A]~%" (+ 1.0 (/ i 10)) val (list-ref logs i) (magnitude (- val (list-ref logs i))))))))
       (set! (bignum-precision) old-prec)))
 	
 (test (log) 'error)
@@ -61090,7 +61105,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 #|
 (do ((i 30 (+ i 1))) 
     ((= i 63)) 
-  (format #t "~D: (- ~A ~A) -> ~A~%" i (+ (expt 2.0 i) 500) (+ (expt 2.0 i) 100) (- (+ (expt 2.0 i) 500) (+ (expt 2.0 i) 100))))
+  (format-logged #t "~D: (- ~A ~A) -> ~A~%" i (+ (expt 2.0 i) 500) (+ (expt 2.0 i) 100) (- (+ (expt 2.0 i) 500) (+ (expt 2.0 i) 100))))
 
 55: (- 3.6028797018964e+16 3.6028797018964e+16) -> 400.0
 56: (- 7.2057594037928e+16 7.2057594037928e+16) -> 400.0
@@ -61120,7 +61135,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (lambda (y)
 	(num-test (expt (expt x y) (/ y)) x)
 	;;	(if (> (magnitude (- (expt (expt x y) (/ y)) x)) 1e-6)
-	;;	    (format #t ";(expt (expt ~A ~A) (/ ~A)) -> ~A (~A)~%" x y y (expt (expt x y) (/ y)) (magnitude (- (expt (expt x y) (/ y)) x))))
+	;;	    (format-logged #t ";(expt (expt ~A ~A) (/ ~A)) -> ~A (~A)~%" x y y (expt (expt x y) (/ y)) (magnitude (- (expt (expt x y) (/ y)) x))))
 	)
       ys))
    xs))
@@ -61137,7 +61152,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 		(g2 (gx (expt 10 (- i)))))
 	    (let ((diff (abs (- g1 g2))))
 	      (if (or (nan? diff) (> diff (expt 10 (- -7 i))))
-		  (format #t ";g(1e-~D) -> ~A ~A, diff: ~A~%" i g1 g2 (abs (- g1 g2))))))))
+		  (format-logged #t ";g(1e-~D) -> ~A ~A, diff: ~A~%" i g1 g2 (abs (- g1 g2))))))))
       
       (let ((p (lambda (x y) (+ (* 2 y y) (* 9 x x x x) (* -1 y y y y)))))
 	(num-test (p 408855776 708158977) 1))
@@ -61230,7 +61245,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 			 (min (magnitude (- val1 val2))
 			      (magnitude (- val1 val3)))))
 		    (if (> (/ diff (max (magnitude val1) 1)) 1e-12)
-			(format #t ";(expt ~A ~A), ~A ~A ~A: ~A~%" (v k) (v j) val1 val2 val3 diff)))))))))))
+			(format-logged #t ";(expt ~A ~A), ~A ~A ~A: ~A~%" (v k) (v j) val1 val2 val3 diff)))))))))))
 
 (if with-bignums
     (num-test (let ((dickey (lambda (x y) ; from Kawa
@@ -61732,9 +61747,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	  (for-each
 	   (lambda (e)
 	     (if (> (magnitude (- (expt rval e) (expt frval e))) eps)
-		 (format #t "~A: ;(expt ~A e) != (expt ~A e) -> ~A~%" e rval frval (magnitude (- (expt rval e) (expt frval e)))))
+		 (format-logged #t "~A: ;(expt ~A e) != (expt ~A e) -> ~A~%" e rval frval (magnitude (- (expt rval e) (expt frval e)))))
 	     (if (> (magnitude (- (expt ival e) (expt fival e))) eps)
-		 (format #t "~A ;(expt ~A e) != (expt ~A e) -> ~A~%" e ival fival (magnitude (- (expt ival e) (expt fival e))))))
+		 (format-logged #t "~A ;(expt ~A e) != (expt ~A e) -> ~A~%" e ival fival (magnitude (- (expt ival e) (expt fival e))))))
 	   (list 0 0.0 (log 0) (real-part (log 0)) (- (real-part (log 0))))))))))
 |#
 
@@ -62708,13 +62723,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each-permutation 
  (lambda args
    (if (not (< (magnitude (- (apply * args) 0.25+0.25i)) 1e-15))
-       (format #t "~A: (* ~{~A~^ ~}) -> ~A?~%" (port-line-number) args (apply * args))))
+       (format-logged #t "~A: (* ~{~A~^ ~}) -> ~A?~%" (port-line-number) args (apply * args))))
  '(1 1/2 0.5 1+i))
 
 (for-each-permutation 
  (lambda args
    (if (not (< (magnitude (- (apply * args) 1.0)) 1e-15))
-       (format #t "~A: (* ~{~A~^ ~}) -> ~A?~%" (port-line-number) args (apply * args))))
+       (format-logged #t "~A: (* ~{~A~^ ~}) -> ~A?~%" (port-line-number) args (apply * args))))
  '(5 1/3 0.5 1+i 1/5 3 2.0 0.5-0.5i))
 
 (num-test (* 7/1000 1000/999 999/7 most-positive-fixnum) most-positive-fixnum)
@@ -62945,13 +62960,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	(do ((i 0 (+ i 1)))
 	    ((= i 29))
 	  (if (not (= (twos (+ i 1)) (* 8 (twos i))))
-	      (format #t "~A * 8 -> ~A (~A)~%" (twos i) (* 8 (twos i)) (twos (+ i 1))))
+	      (format-logged #t "~A * 8 -> ~A (~A)~%" (twos i) (* 8 (twos i)) (twos (+ i 1))))
 	  (if (not (= (+ (twos (+ i 1)) (* 8 (twos i))) (* 2 (twos (+ i 1)))))
-	      (format #t "~A + ~A -> ~A (~A)~%" (* 8 (twos i)) (twos (+ i 1)) (* 2 (twos (+ i 1)))))
+	      (format-logged #t "~A + ~A -> ~A (~A)~%" (* 8 (twos i)) (twos (+ i 1)) (* 2 (twos (+ i 1)))))
 	  (if (not (= (/ (twos (+ i 1)) (twos i)) 8))
-	      (format #t "~A / ~A = ~A (8)~%" (twos (+ i 1)) (twos i) (/ (twos (+ i 1)) (twos i))))
+	      (format-logged #t "~A / ~A = ~A (8)~%" (twos (+ i 1)) (twos i) (/ (twos (+ i 1)) (twos i))))
 	  (if (not (= (- (twos (+ i 1)) (* 8 (twos i))) 0))
-	      (format #t "~A - ~A -> ~A (0)~%" (* 8 (twos i)) (twos (+ i 1)) (- (twos (+ i 1)) (* 8 (twos i)))))))
+	      (format-logged #t "~A - ~A -> ~A (0)~%" (* 8 (twos i)) (twos (+ i 1)) (- (twos (+ i 1)) (* 8 (twos i)))))))
 
       (letrec ((factorial (lambda (n i) (if (positive? n) (factorial (- n 1) (* i n)) i))))
 	(num-test (/ (factorial 100 1) (factorial 99 1)) 100)
@@ -64086,13 +64101,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each-permutation 
  (lambda args
    (if (not (= (apply + args) 3+i))
-       (format #t "~A: (+ ~{~A~^ ~}) -> ~A?~%" (port-line-number) args (apply + args))))
+       (format-logged #t "~A: (+ ~{~A~^ ~}) -> ~A?~%" (port-line-number) args (apply + args))))
  '(1 1/2 0.5 1+i))
 
 (for-each-permutation 
  (lambda args
    (if (not (zero? (apply + args)))
-       (format #t "~A: (+ ~{~A~^ ~}) -> ~A?~%" (port-line-number) args (apply + args))))
+       (format-logged #t "~A: (+ ~{~A~^ ~}) -> ~A?~%" (port-line-number) args (apply + args))))
  '(1 1/2 0.5 1+i -1/2 -1 -0.5 -1-i))
 
 
@@ -65600,13 +65615,13 @@ but it's the printout that is at fault:
 (for-each-permutation 
  (lambda args
    (if (not (= (apply - args) (- (car args) (apply + (cdr args)))))
-       (format #t "~A: ~A != ~A?~%" (port-line-number) (apply - args) (- (car args) (apply + (cdr args))))))
+       (format-logged #t "~A: ~A != ~A?~%" (port-line-number) (apply - args) (- (car args) (apply + (cdr args))))))
  '(1 1/2 0.5 1+i))
 
 (for-each-permutation 
  (lambda args
    (if (not (= (apply - args) (+ (car args) (- (apply + (cdr args))))))
-       (format #t "~A: (- ~{~A~^ ~}) -> ~A?~%" (port-line-number) args (apply - args))))
+       (format-logged #t "~A: (- ~{~A~^ ~}) -> ~A?~%" (port-line-number) args (apply - args))))
  '(1 1/2 0.5 1+i -1/2 -1 -0.5 -1-i))
 
 (num-test (- -1.797693134862315699999999999999999999998E308 -9223372036854775808) -1.797693134862315699999999999999999999998E308)
@@ -66668,7 +66683,7 @@ but it's the printout that is at fault:
 (for-each-permutation 
  (lambda args
    (if (not (= (apply / args) (/ (car args) (apply * (cdr args)))))
-       (format #t "~A: ~A != ~A?~%" (port-line-number) (apply / args) (/ (car args) (apply * (cdr args))))))
+       (format-logged #t "~A: ~A != ~A?~%" (port-line-number) (apply / args) (/ (car args) (apply * (cdr args))))))
  '(1 1/2 0.5 1+i))
 
 (num-test (/ -9223372036854775808 5.551115123125783999999999999999999999984E-17) -1.661534994731144452653560599947843044136E35)
@@ -67303,17 +67318,17 @@ but it's the printout that is at fault:
 	(for-each 
 	 (lambda (a b) 
 	   (if (not (< (abs (- b fifth)) (abs (- a fifth))))
-	       (format #t ";fifth: ~A is not better than ~A??~%" b a))
+	       (format-logged #t ";fifth: ~A is not better than ~A??~%" b a))
 	   (if (not (< (magnitude (- (make-rectangular b b) c-fifth)) (magnitude (- (make-rectangular a a) c-fifth))))
-	       (format #t ";rectangular fifth: ~A is not better than ~A??~%" b a))
+	       (format-logged #t ";rectangular fifth: ~A is not better than ~A??~%" b a))
 	   (let ((pa (make-polar (* (sqrt 2.0) a) (/ pi 4)))
 		 (pb (make-polar (* (sqrt 2.0) b) (/ pi 4))))
 	     (if (not (< (magnitude (- pb p-fifth)) (magnitude (- pa p-fifth))))
-		 (format #t ";polar  fifth: ~A is not better than ~A??~%" b a)))
+		 (format-logged #t ";polar  fifth: ~A is not better than ~A??~%" b a)))
 	   (if (not (< (abs (- b last-rat)) (abs (- a last-rat))))
-	       (format #t ";- last: ~A is not better than ~A??~%" b a))
+	       (format-logged #t ";- last: ~A is not better than ~A??~%" b a))
 	   (if (not (< (magnitude (sqrt (- b last-rat))) (magnitude (sqrt (- a last-rat)))))
-	       (format #t ";sqrt last: ~A is not better than ~A??~%" b a))
+	       (format-logged #t ";sqrt last: ~A is not better than ~A??~%" b a))
 	   )
 	 rats (cdr rats)))
       (set! (bignum-precision) old-prec)))
@@ -67334,7 +67349,7 @@ but it's the printout that is at fault:
 		 ((= i n))
 	       (let ((y (random range)))
 		 (if (not (chker y))
-		     (format #t ";(random ~A) -> ~A?~%" range y))
+		     (format-logged #t ";(random ~A) -> ~A?~%" range y))
 		 (let ((iy (min 99 (floor (* 100 (/ y range))))))
 		   (vector-set! hits iy (+ 1 (vector-ref hits iy))))))
 	     (let ((sum 0.0)
@@ -67354,7 +67369,7 @@ but it's the printout that is at fault:
     (let ((val (rtest)))
       (if (or (> val 1.0)
 	      (< val -1.0))
-	  (format #t "(- (random 2.0) 1.0): ~A~%" i val)))))
+	  (format-logged #t "(- (random 2.0) 1.0): ~A~%" i val)))))
 
   (let ((vr (v 1000 
 	       1.0
@@ -67364,7 +67379,7 @@ but it's the printout that is at fault:
 		      (<= val 1.0))))))
     (if (or (< vr 40)
 	    (> vr 400))
-	(format #t ";(random 1.0) not so random? ~A~%" vr)))
+	(format-logged #t ";(random 1.0) not so random? ~A~%" vr)))
   
   (let ((vr (v 1000 
 	       100
@@ -67374,7 +67389,7 @@ but it's the printout that is at fault:
 		      (<= val 100))))))
     (if (or (< vr 40)
 	    (> vr 400))
-	(format #t ";(random 100) not so random? ~A~%" vr)))
+	(format-logged #t ";(random 100) not so random? ~A~%" vr)))
   
   (let ((vr (v 1000 
 	       1/2
@@ -67384,7 +67399,7 @@ but it's the printout that is at fault:
 		      (<= val 1/2))))))
     (if (or (< vr 40)
 	    (> vr 400))
-	(format #t ";(random 1/2) not so random? ~A~%" vr)))
+	(format-logged #t ";(random 1/2) not so random? ~A~%" vr)))
   
   (let ((vr (v 1000 
 	       -10.0
@@ -67394,7 +67409,7 @@ but it's the printout that is at fault:
 		      (>= val -10.0))))))
     (if (or (< vr 40)
 	    (> vr 400))
-	(format #t ";(random -10.0) not so random? ~A~%" vr)))
+	(format-logged #t ";(random -10.0) not so random? ~A~%" vr)))
   
   (let ((imax 0.0)
 	(rmax 0.0)
@@ -67413,7 +67428,7 @@ but it's the printout that is at fault:
 	    (< rmin 0.0)
 	    (< rmax 0.001)
 	    (< imax 0.001))
-	(format #t ";(random 1+i): ~A ~A ~A ~A~%" rmin rmax imin imax)))
+	(format-logged #t ";(random 1+i): ~A ~A ~A ~A~%" rmin rmax imin imax)))
 	
   (let ((imax 0.0)
 	(rmax 0.0)
@@ -67431,7 +67446,7 @@ but it's the printout that is at fault:
 	    (> rmax 0.0)
 	    (< rmin 0.0)
 	    (< imax 0.001))
-	(format #t ";(random 0+i): ~A ~A ~A ~A~%" rmin rmax imin imax)))
+	(format-logged #t ";(random 0+i): ~A ~A ~A ~A~%" rmin rmax imin imax)))
 	
   (let ((imax 0.0)
 	(rmax 0.0)
@@ -67450,7 +67465,7 @@ but it's the printout that is at fault:
 	    (< rmin 0.0)
 	    (< imax 0.1)
 	    (< rmax 0.01))
-	(format #t ";(random 100+10i): ~A ~A ~A ~A~%" rmin rmax imin imax)))
+	(format-logged #t ";(random 100+10i): ~A ~A ~A ~A~%" rmin rmax imin imax)))
 	
   
   (do ((i 0 (+ i 1)))
@@ -67460,7 +67475,7 @@ but it's the printout that is at fault:
 	      (> (real-part val) 1.0)
 	      (> (imag-part val) 1.0)
 	      (< (real-part val) 0.0))
-	  (format #t ";(random 1.0+1.0i) -> ~A?~%" val))))
+	  (format-logged #t ";(random 1.0+1.0i) -> ~A?~%" val))))
   
   (let ((rs (make-random-state 12345678)))
     (do ((i 0 (+ i 1)))
@@ -67469,7 +67484,7 @@ but it's the printout that is at fault:
 	(if (or (not (real? val))
 		(negative? val)
 		(> val 1.0))
-	    (format #t ";(random 1.0 rs) -> ~A?~%" val)))))
+	    (format-logged #t ";(random 1.0 rs) -> ~A?~%" val)))))
   
   (if with-bignums
       (begin
@@ -67484,7 +67499,7 @@ but it's the printout that is at fault:
 			    (<= val 1.0))))))
 	  (if (or (< vr 40)
 		  (> vr 400))
-	      (format #t ";(big-random 1.0) not so random? ~A~%" vr)))
+	      (format-logged #t ";(big-random 1.0) not so random? ~A~%" vr)))
 	
 	(let ((vr (v 1000 
 		     (bignum "100")
@@ -67494,7 +67509,7 @@ but it's the printout that is at fault:
 			    (<= val 100))))))
 	  (if (or (< vr 40)
 		  (> vr 400))
-	      (format #t ";(big-random 100) not so random? ~A~%" vr)))
+	      (format-logged #t ";(big-random 100) not so random? ~A~%" vr)))
 	
 	(let ((vr (v 1000 
 		     (bignum "1/2")
@@ -67504,7 +67519,7 @@ but it's the printout that is at fault:
 			    (<= val 1/2))))))
 	  (if (or (< vr 40)
 		  (> vr 400))
-	      (format #t ";(big-random 1/2) not so random? ~A~%" vr)))
+	      (format-logged #t ";(big-random 1/2) not so random? ~A~%" vr)))
 	
 	(let ((vr (v 1000 
 		     (bignum "-10.0")
@@ -67514,7 +67529,7 @@ but it's the printout that is at fault:
 			    (>= val -10.0))))))
 	  (if (or (< vr 40)
 		  (> vr 400))
-	      (format #t ";(big-random -10.0) not so random? ~A~%" vr)))
+	      (format-logged #t ";(big-random -10.0) not so random? ~A~%" vr)))
 	
 	(do ((i 0 (+ i 1)))
 	    ((= i 100))
@@ -67523,7 +67538,7 @@ but it's the printout that is at fault:
 		    (> (real-part val) 1.0)
 		    (> (imag-part val) 1.0)
 		    (< (real-part val) 0.0))
-		(format #t ";(big-random 1.0+1.0i) -> ~A?~%" val))))
+		(format-logged #t ";(big-random 1.0+1.0i) -> ~A?~%" val))))
 	
 	(let ((rs (make-random-state (bignum "12345678"))))
 	  (do ((i 0 (+ i 1)))
@@ -67532,12 +67547,12 @@ but it's the printout that is at fault:
 	      (if (or (not (real? val))
 		      (negative? val)
 		      (> val 1.0))
-		  (format #t ";(big-random 1.0 rs) -> ~A?~%" val)))
+		  (format-logged #t ";(big-random 1.0 rs) -> ~A?~%" val)))
 	    (let ((val (random 1.0 rs)))
 	      (if (or (not (real? val))
 		      (negative? val)
 		      (> val 1.0))
-		  (format #t ";(big-random small-1.0 rs) -> ~A?~%" val)))))
+		  (format-logged #t ";(big-random small-1.0 rs) -> ~A?~%" val)))))
 	
 	(let ((rs (make-random-state 1234)))
 	  (do ((i 0 (+ i 1)))
@@ -67546,12 +67561,12 @@ but it's the printout that is at fault:
 	      (if (or (not (real? val))
 		      (negative? val)
 		      (> val 1.0))
-		  (format #t ";(big-random 1.0 small-rs) -> ~A?~%" val)))
+		  (format-logged #t ";(big-random 1.0 small-rs) -> ~A?~%" val)))
 	    (let ((val (random 1.0 rs)))
 	      (if (or (not (real? val))
 		      (negative? val)
 		      (> val 1.0))
-		  (format #t ";(random small-1.0 rs) -> ~A?~%" val)))))
+		  (format-logged #t ";(random small-1.0 rs) -> ~A?~%" val)))))
 	))
   )
 
@@ -67636,15 +67651,15 @@ but it's the printout that is at fault:
       (let ((v1 (random 1.0 rs2))
 	    (v2 (random 1.0 rs3)))
 	(if (not (= v1 v2 (r1 i)))
-	    (format #t ";random v1: ~A, v2: ~A, r1[~A]: ~A~%" v1 v2 i (r1 i))))
+	    (format-logged #t ";random v1: ~A, v2: ~A, r1[~A]: ~A~%" v1 v2 i (r1 i))))
       (if (> i 3)
 	  (let ((v3 (random 1.0 rs4)))
 	    (if (not (= v3 (r1 i)))
-		(format #t ";random v3: ~A, r1[~A]: ~A~%" v3 i (r1 i)))))
+		(format-logged #t ";random v3: ~A, r1[~A]: ~A~%" v3 i (r1 i)))))
       (if (> i 5)
 	  (let ((v4 (random 1.0 rs5)))
 	    (if (not (= v4 (r1 i)))
-		(format #t ";random v4: ~A, r1[~A]: ~A~%" v4 i (r1 i))))))))
+		(format-logged #t ";random v4: ~A, r1[~A]: ~A~%" v4 i (r1 i))))))))
 
 (do ((i 0 (+ i 1)))
     ((= i 20))              ; this was ((+ i 100)) !! -- surely a warning would be in order?
@@ -67697,7 +67712,7 @@ but it's the printout that is at fault:
 (for-each
  (lambda (n)
    (if (not (eqv? n (string->number (number->string n))))
-       (format #t ";(string->number (number->string ~A)) = ~A?~%" n (string->number (number->string n)))))
+       (format-logged #t ";(string->number (number->string ~A)) = ~A?~%" n (string->number (number->string n)))))
  (list 1 2 3 10 1234 1234000000 500029 362880 0/1 0/2 0/3 0/10 0/1234 0/1234000000 0/500029 
        0/362880 1/1 1/2 1/3 1/10 1/1234 1/1234000000 1/500029 1/362880 2/1 2/2 2/3 2/10 2/1234 
        2/1234000000 2/500029 2/362880 3/1 3/2 3/3 3/10 3/1234 3/1234000000 3/500029 3/362880 
@@ -67711,7 +67726,7 @@ but it's the printout that is at fault:
   (for-each
    (lambda (x)
      (if (not (fequal? x (string->number (number->string x))))
-	 (format #t ";(string->number (number->string ~A)) -> ~A?~%" x (string->number (number->string x)))))
+	 (format-logged #t ";(string->number (number->string ~A)) -> ~A?~%" x (string->number (number->string x)))))
    (list 0.000000 1.000000 3.141593 2.718282 1234.000000 1234000000.000000 0.000000+0.000000i 0.000000+0.000000i 0.000000+1.000000i 
 	 0.000000+3.141593i 0.000000+2.718282i 0.000000+1234.000000i 0.000000+1234000000.000000i 0.000000+0.000000i 0.000000+0.000000i 
 	 0.000000+1.000000i 0.000000+3.141593i 0.000000+2.718282i 0.000000+1234.000000i 0.000000+1234000000.000000i 1.000000+0.000000i 
@@ -67878,7 +67893,7 @@ but it's the printout that is at fault:
 			     (string->number str6)
 			     (string->number str7))))
 	    (if (not (apply = args))
-		(format #t "~A.~A: ~{~D~^~4T~}~%" strd str
+		(format-logged #t "~A.~A: ~{~D~^~4T~}~%" strd str
 			(map (lambda (val)
 			       (let ((ctr 0))
 				 (for-each
@@ -68450,7 +68465,7 @@ etc....
   (let ((str (string-append "#" (string (integer->char i)) "1.0e8")))
     (catch #t (lambda ()
 		(let ((val (eval-string str)))
-		  (format #t "~A -> ~S~%" str val)))
+		  (format-logged #t "~A -> ~S~%" str val)))
 	   (lambda args 'error))))
 |#
 (num-test #b1.0e8 256.0)
@@ -68676,7 +68691,7 @@ etc....
       (for-each
        (lambda (op)
 	 (if (not (= (op 1e19) (op .1e20)))
-	     (format #t ";(~A 1e19) = ~A, but (~A .1e20) = ~A?~%"
+	     (format-logged #t ";(~A 1e19) = ~A, but (~A .1e20) = ~A?~%"
 		     op (op 1e19)
 		     op (op .1e20))))
        (list floor ceiling truncate round inexact->exact exact->inexact))
@@ -68684,7 +68699,7 @@ etc....
        (for-each
 	(lambda (op)
 	  (if (not (= (op -1e19) (op -.1e20)))
-	      (format #t ";(~A -1e19) = ~A, but (~A -.1e20) = ~A?~%"
+	      (format-logged #t ";(~A -1e19) = ~A, but (~A -.1e20) = ~A?~%"
 		      op (op -1e19)
 		      op (op -.1e20))))
 	(list floor ceiling truncate round inexact->exact exact->inexact))
@@ -69025,23 +69040,23 @@ etc....
       (let ((rad (+ 2 (random 15))))
 	(let ((str (make-number rad)))
 	  (if (not (number? (string->number str rad)))
-	      (format #t ";(1) trouble in string->number ~A ~S: ~A~%"
+	      (format-logged #t ";(1) trouble in string->number ~A ~S: ~A~%"
 		      rad str
 		      (string->number str rad))
 	      (if (not (string? (number->string (string->number str rad) rad)))
-		  (format #t ";(2) trouble in number->string ~A ~S: ~A ~S~%"
+		  (format-logged #t ";(2) trouble in number->string ~A ~S: ~A ~S~%"
 			  rad str
 			  (string->number str rad)
 			  (number->string (string->number str rad) rad))
 		  (if (not (number? (string->number (number->string (string->number str rad) rad) rad)))
-		      (format #t ";(3) trouble in number->string ~A ~S: ~A ~S ~A~%"
+		      (format-logged #t ";(3) trouble in number->string ~A ~S: ~A ~S ~A~%"
 			      rad str
 			      (string->number str rad)
 			      (number->string (string->number str rad) rad)
 			      (string->number (number->string (string->number str rad) rad) rad))
 		      (let ((diff (abs (- (string->number (number->string (string->number str rad) rad) rad) (string->number str rad)))))
 			(if (> diff 1e-5)
-			    (format #t "(string->number ~S ~D): ~A, n->s: ~S, s->n: ~A, diff: ~A~%"
+			    (format-logged #t "(string->number ~S ~D): ~A, n->s: ~S, s->n: ~A, diff: ~A~%"
 				    str rad
 				    (string->number str rad)
 				    (number->string (string->number str rad) rad)
@@ -69055,7 +69070,7 @@ etc....
 	  ((= i len))
 	(if (and (not (char=? (str i) #\.))
 		 (>= (string->number (string (str i)) 16) radix))
-	    (format #t ";~S in base ~D has ~C?" str radix (str i))))))
+	    (format-logged #t ";~S in base ~D has ~C?" str radix (str i))))))
 
   (no-char (number->string (* 1.0 2/3) 9) 9)
   (no-char (number->string (string->number "0.05" 9) 9) 9)
@@ -69077,15 +69092,15 @@ etc....
     (if (not (eqv? 3/4 (string->number (number->string 3/4 i) i)))
 	(begin 
 	  (set! happy #f) 
-	  (format #t ";(string<->number 3/4 ~A) -> ~A?~%" i (string->number (number->string 3/4 i) i))))
+	  (format-logged #t ";(string<->number 3/4 ~A) -> ~A?~%" i (string->number (number->string 3/4 i) i))))
     (if (not (eqv? 1234/11 (string->number (number->string 1234/11 i) i)))
 	(begin 
 	  (set! happy #f) 
-	  (format #t ";(string<->number 1234/11 ~A) -> ~A?~%" i (string->number (number->string 1234/11 i) i))))
+	  (format-logged #t ";(string<->number 1234/11 ~A) -> ~A?~%" i (string->number (number->string 1234/11 i) i))))
     (if (not (eqv? -1234/11 (string->number (number->string -1234/11 i) i)))
 	(begin 
 	  (set! happy #f) 
-	  (format #t ";(string<->number -1234/11 ~A) -> ~A?~%" i (string->number (number->string -1234/11 i) i))))))
+	  (format-logged #t ";(string<->number -1234/11 ~A) -> ~A?~%" i (string->number (number->string -1234/11 i) i))))))
 
 (test (< (abs (- (string->number "3.1415926535897932384626433832795029") 3.1415926535897932384626433832795029)) 1e-7) #t)
 
@@ -69230,7 +69245,7 @@ etc....
        (let ((val (string->number (string-append "1" exponent "1") base)))
 	 (if (and (number? val)
 		  (> (abs (- val base)) 1e-9))
-	     (format #t ";(string->number ~S ~A) returned ~A?~%" 
+	     (format-logged #t ";(string->number ~S ~A) returned ~A?~%" 
 		     (string-append "1" exponent "1") base (string->number (string-append "1" exponent "1") base)))))
      
      (do ((base 2 (+ base 1)))
@@ -69238,7 +69253,7 @@ etc....
        (let ((val (string->number (string-append "1.1" exponent "1") base)))
 	 (if (and (number? val)
 		  (> (abs (- val (+ base 1))) 1e-9))
-	     (format #t ";(string->number ~S ~A) returned ~A?~%" 
+	     (format-logged #t ";(string->number ~S ~A) returned ~A?~%" 
 		     (string-append "1.1" exponent "1") base (string->number (string-append "1.1" exponent "1") base)))))
      
      (do ((base 2 (+ base 1)))
@@ -69246,7 +69261,7 @@ etc....
        (let ((val (string->number (string-append "1" exponent "+1") base)))
 	 (if (and (number? val)
 		  (> (abs (- val base)) 1e-9))
-	     (format #t ";(string->number ~S ~A) returned ~A?~%"
+	     (format-logged #t ";(string->number ~S ~A) returned ~A?~%"
 		     (string-append "1" exponent "+1") base (string->number (string-append "1" exponent "+1") base)))))
 					; in base 16 this is still not a number because of the + (or -)
 					; but "1e+1i" is a number -- gad!
@@ -69256,7 +69271,7 @@ etc....
        (let ((val (string->number (string-append "1" exponent "-1+1i") base)))
 	 (if (and (number? val)
 		  (> (magnitude (- val (make-rectangular (/ base) 1))) 1e-6))
-	     (format #t ";(string->number ~S ~A) returned ~A?~%" 
+	     (format-logged #t ";(string->number ~S ~A) returned ~A?~%" 
 		     (string-append "1" exponent "-1+1i") base (string->number (string-append "1" exponent "-1+1i") base)))))))
  
  (list #\e #\d #\f #\s #\l))
@@ -69288,7 +69303,7 @@ etc....
 	(if (> (abs (- val (string->number str i))) 1e-7)
 	    (begin
 	      (set! happy #f) 
-	      (format #t ";(string->number ~S ~A) -> ~A (expected ~A)?~%" str i (string->number str i) val)))))
+	      (format-logged #t ";(string->number ~S ~A) -> ~A (expected ~A)?~%" str i (string->number str i) val)))))
     
     (let* ((radlim (list 0 0 62 39 31 26 23 22 20 19 18 17 17 16 16 15 15))
 	   (digits "00123456789abcdef"))
@@ -69300,7 +69315,7 @@ etc....
 	    (if (> (abs (- val (string->number str i))) 1e-7)
 		(begin
 		  (set! happy #f) 
-		  (format #t ";(string->number ~S ~A) -> ~A (expected ~A)?~%" str i (string->number str i) val)))))))))
+		  (format-logged #t ";(string->number ~S ~A) -> ~A (expected ~A)?~%" str i (string->number str i) val)))))))))
 
 (let ((happy #t))
   (do ((i 2 (+ i 1)))
@@ -69309,17 +69324,17 @@ etc....
     (if (> (abs (- 0.75 (string->number (number->string 0.75 i) i))) 1e-6)
 	(begin 
 	  (set! happy #f) 
-	  (format #t ";(string->number (number->string 0.75 ~A) ~A) -> ~A?~%" i i (string->number (number->string 0.75 i) i))))
+	  (format-logged #t ";(string->number (number->string 0.75 ~A) ~A) -> ~A?~%" i i (string->number (number->string 0.75 i) i))))
     
     (if (> (abs (- 1234.75 (string->number (number->string 1234.75 i) i))) 1e-6)
 	(begin 
 	  (set! happy #f) 
-	  (format #t ";(string->number (number->string 1234.75 ~A) ~A) -> ~A?~%" i i (string->number (number->string 1234.75 i) i))))
+	  (format-logged #t ";(string->number (number->string 1234.75 ~A) ~A) -> ~A?~%" i i (string->number (number->string 1234.75 i) i))))
     
     (if (> (abs (- -1234.25 (string->number (number->string -1234.25 i) i))) 1e-6)
 	(begin 
 	  (set! happy #f) 
-	  (format #t ";(string->number (number->string -1234.75 ~A) ~A) -> ~A?~%" i i (string->number (number->string -1234.75 i) i))))
+	  (format-logged #t ";(string->number (number->string -1234.75 ~A) ~A) -> ~A?~%" i i (string->number (number->string -1234.75 i) i))))
     
     (let ((val (string->number (number->string 12.5+3.75i i) i)))
       (if (or (not (number? val))
@@ -69327,7 +69342,7 @@ etc....
 	      (> (abs (- (imag-part val) 3.75)) 1e-6))
 	  (begin 
 	    (set! happy #f) 
-	    (format #t ";(string->number (number->string 12.5+3.75i ~A) ~A) -> ~A?~%" i i (string->number (number->string 12.5+3.75i i) i)))))
+	    (format-logged #t ";(string->number (number->string 12.5+3.75i ~A) ~A) -> ~A?~%" i i (string->number (number->string 12.5+3.75i i) i)))))
     
     (let ((happy #t))
       (do ((base 2 (+ base 1)))
@@ -69354,7 +69369,7 @@ etc....
 		      (> (abs (- (imag-part nval) (imag-part val))) 1e-3))
 		  (begin
 		    (set! happy #f)
-		    (format #t ";(number<->string ~S ~A) -> ~A? [~A ~S]~%" str base nval sn nsn)
+		    (format-logged #t ";(number<->string ~S ~A) -> ~A? [~A ~S]~%" str base nval sn nsn)
 		    )))))))))
     
 
@@ -69795,7 +69810,7 @@ etc....
 		       +0001.e0 0000001. +000001.))
 		  (lambda args 'error))))
   (if (not (eq? val #t))
-      (format #t ";funny 1's are not all equal to 1? ~A~%" val)))
+      (format-logged #t ";funny 1's are not all equal to 1? ~A~%" val)))
 
 
 (for-each
@@ -69805,7 +69820,7 @@ etc....
       (let ((val (catch #t (lambda () (string->number str)) (lambda args 'error))))
 	(if (or (not (number? val))
 		(> (abs (- val 1.0)) 1.0e-15))
-	    (format #t ";(string->number ~S) = ~A?~%" str val))))
+	    (format-logged #t ";(string->number ~S) = ~A?~%" str val))))
     lst))
  (list
   (list "1")
@@ -69838,7 +69853,7 @@ etc....
    (let ((val (catch #t (lambda () (string->number str)) (lambda args 'error))))
      (if (or (not (number? val))
 	     (= val 1))
-	 (format #t ";(string->number ~S = ~A?~%" str val))))
+	 (format-logged #t ";(string->number ~S = ~A?~%" str val))))
  (list "011e0" "11e-00" "00.e01-i" "+10e10+i" "+1.110+i" "10011-0i" "-000.111" "0.100111" "-11.1111" "10.00011" "110e00+i" 
        "1e-011+i" "101001+i" "+11e-0-0i" "11+00e+0i" "-11101.-i" "1110e-0-i"))
 
@@ -69853,7 +69868,7 @@ etc....
  (lambda (str)
    (let ((val (catch #t (lambda () (string->number str)) (lambda args 'error))))
      (if val ;(number? val)
-	 (format #t ";(string->number ~S) = ~A?~%" str val))))
+	 (format-logged #t ";(string->number ~S) = ~A?~%" str val))))
  (list "#b#e#e1" "#x#e#e1" "#d#e#e1" "#o#e#e1" "#b#i#e1" "#x#i#e1" "#d#i#e1" "#o#i#e1" "#e#b#e1" "#i#b#e1" "#e#x#e1" "#i#x#e1" 
        "#e#d#e1" "#i#d#e1" "#e#o#e1" "#i#o#e1" "#e#b#i1" "#e#x#i1" "#e#d#i1" "#e#o#i1" "#b#e#b1" "#x#e#b1" "#d#e#b1" "#o#e#b1" 
        "#b#i#b1" "#x#i#b1" "#d#i#b1" "#o#i#b1" "#b#e#x1" "#x#e#x1" "#d#e#x1" "#o#e#x1" "#b#i#x1" "#x#i#x1" "#d#i#x1" "#o#i#x1" 
@@ -70024,16 +70039,16 @@ etc....
 	     (mnum (string->number str))
 	     (diff (let ()
 		     (if (not (string? n2s))
-			 (format #t "(number->string ~A) #f?~%" fnum))
+			 (format-logged #t "(number->string ~A) #f?~%" fnum))
 		     (if (not (number? s2n))
-			 (format #t "(string->number ~S) #f?~%" n2s))
+			 (format-logged #t "(string->number ~S) #f?~%" n2s))
 		     (/ (abs (- mnum s2n)) (max (expt 2 -31.0) (abs fnum))))))
 	(if (> diff maxdiff)
 	    (begin
 	      (set! maxdiff diff)
 	      (set! maxdiff-case (car lst))))))
     (if (> maxdiff 1e-15) ; we're only interested in real problems
-	(format #t ";number->string rounding checks worst case relative error ~A ~A ~S~%" maxdiff (car maxdiff-case) (cadr maxdiff-case)))
+	(format-logged #t ";number->string rounding checks worst case relative error ~A ~A ~S~%" maxdiff (car maxdiff-case) (cadr maxdiff-case)))
     ))
 
 
@@ -70043,7 +70058,7 @@ etc....
 	 (num (cdr p)))
      (let ((tag (catch #t (lambda () (string->number sym)) (lambda args 'error))))
        (if (not (equal? num tag))
-	   (format #t ";(string->number ~S) = ~A [~A]~%" sym tag num)))))
+	   (format-logged #t ";(string->number ~S) = ~A [~A]~%" sym tag num)))))
  '(("#xe/d" . 14/13) ("#xb/d" . 11/13) ("#xf/d" . 15/13) ("#x1/f" . 1/15) ("#xd/f" . 13/15) ("#xe/f" . 14/15) ("#d.1" . .1) ("#d01" . 1)
    ("#d+1" . 1) ("#d+0" . 0) ("#d0+i" . 0+i) ("#xe+i" . 14.0+1.0i) ("#xf+i" . 15.0+1.0i) ("#d1-i" . 1.0-1.0i); ("#e1+i" . 1+i)
    ))
@@ -70075,7 +70090,7 @@ etc....
 	(if (not with-file)
 	    (if (and (number? tag)
 		     (= tag 1))
-		(format #t "~S " sym))
+		(format-logged #t "~S " sym))
 	    (begin
 	      (if (number? tag)
 		  (display (format file "(if (not (number? (string->number ~S))) (begin (display ~S) (display #\space)))"))
@@ -70101,7 +70116,7 @@ etc....
 (for-each
  (lambda (n name)
    (if (number? n)
-       (format #t ";(number? ~A) returned #t?~%" name)))
+       (format-logged #t ";(number? ~A) returned #t?~%" name)))
  (list
   'a9 'aa 'aA 'a! 'a$ 'a% 'a& 'a* 'a+ 'a- 'a. 'a/ 'a: 'a< 'a= 'a> 'a? 'a@ 'a^ 'a_ 'a~ 'A9 'Aa 'AA 'A! 'A$ 'A% 'A& 'A* 'A+ 'A- 'A. 'A/ 'A: 'A< 'A= 'A> 'A? 'A@ 'A^ 'A_ 'A~ '!9 '!a '!A '!! '!$ '!% '!& '!* '!+ '!- '!. '!/ '!: '!< '!= '!> '!? '!@ '!^ '!_ '!~ '$9 '$a '$A '$! '$$ '$% '$& '$* '$+ '$- '$. '$/ '$: '$< '$= '$> '$? '$@ '$^ '$_ '$~ '%9 '%a '%A '%! '%$ '%% '%& '%* '%+ '%- '%. '%/ '%: '%< '%= '%> '%? '%@ '%^ '%_ '%~ '&9 '&a '&A '&! '&$ '&% '&& '&* '&+ '&- '&. '&/ '&: '&< '&= '&> '&? '&@ '&^ '&_ '&~ '*9 '*a '*A '*! '*$ '*% '*& '** '*+ '*- '*. '*/ '*: '*< '*= '*> '*? '*@ '*^ '*_ '*~ '/9 '/a '/A '/! '/$ '/% '/& '/* '/+ '/- '/. '// '/: '/< '/= '/> '/? '/@ '/^ '/_ '/~ ':9 ':a ':A ':! ':$ ':% ':& ':* ':+ ':- ':. ':/ ':: ':< ':= ':> ':? ':@ ':^ ':_ ':~ '<9 '<a '<A '<! '<$ '<% '<& '<* '<+ '<- '<. '</ '<: '<< '<= '<> '<? '<@ '<^ '<_ '<~ '=9 '=a '=A '=! '=$ '=% '=& '=* '=+ '=- '=. '=/ '=: '=< '== '=> '=? '=@ '=^ '=_ '=~ '>9 '>a '>A '>! '>$ '>% '>& '>* '>+ '>- '>. '>/ '>: '>< '>= '>> '>? '>@ '>^ '>_ '>~ '?9 '?a '?A '?! '?$ '?% '?& '?* '?+ '?- '?. '?/ '?: '?< '?= '?> '?? '?@ '?^ '?_ '?~ '^9 '^a '^A '^! '^$ '^% '^& '^* '^+ '^- '^. '^/ '^: '^< '^= '^> '^? '^@ '^^ '^_ '^~ '_9 '_a '_A '_! '_$ '_% '_& '_* '_+ '_- '_. '_/ '_: '_< '_= '_> '_? '_@ '_^ '__ '_~ '~9 '~a '~A '~! '~$ '~% '~& '~* '~+ '~- '~. '~/ '~: '~< '~= '~> '~? '~@ '~^ '~_ '~~)
  
@@ -70114,24 +70129,24 @@ etc....
 					;      ((= i (string-length initial-chars)))
 					;    (do ((k 0 (+ k 1)))
 					;	((= k (string-length subsequent-chars)))
-					;      (format #t "'~A " (string (string-ref initial-chars i) (string-ref subsequent-chars k))))))
+					;      (format-logged #t "'~A " (string (string-ref initial-chars i) (string-ref subsequent-chars k))))))
 
 
 (for-each
  (lambda (z)
    (if (not (zero? z))
-       (format #t "~A is not zero?~%" z))
+       (format-logged #t "~A is not zero?~%" z))
    (if (and (real? z) (positive? z))
-       (format #t "~A is positive?~%" z))
+       (format-logged #t "~A is positive?~%" z))
    (if (and (real? z) (negative? z))
-       (format #t "~A is negative?~%" z)))
+       (format-logged #t "~A is negative?~%" z)))
  '(0 -0 +0 0.0 -0.0 +0.0 0/1 -0/1 +0/24 0+0i 0-0i -0-0i +0-0i 0.0-0.0i -0.0+0i #b0 #o-0 #x000 #e0 #e0.0 #e#b0 #b#e0 #e0/1 #b+0 #d000/1111 000/111))
 
 
 (for-each 
  (lambda (x) 
    (if (string->number x)
-       (format #t ";(string->number ~A) returned ~A~%" x (string->number x))))
+       (format-logged #t ";(string->number ~A) returned ~A~%" x (string->number x))))
  '("" "q" "1q" "6+7iq" "8+9q" "10+11" "13+" "18@19q" "20@q" "23@"
    "+25iq" "26i" "-q" "-iq" "i" "5#.0" "8/" "10#11" ".#" "."
    "3.4q" "15.16e17q" "18.19e+q" ".q" ".17#18" "10q" "#b2" "#b12" "#b-12"
@@ -70153,7 +70168,7 @@ etc....
 		(and (rational? y)
 		     (not (eqv? xx y)))
 		(> (abs (- xx y)) 1e-12))
-	    (format #t ";(string->number ~A) returned ~A but expected ~A (~A ~A ~A ~A)~%"
+	    (format-logged #t ";(string->number ~A) returned ~A but expected ~A (~A ~A ~A ~A)~%"
 		    x (string->number x) y
 		    xx (eq? xx #f)
 		    (if (and xx y) (and (rational? y) (not (eqv? xx y))) #f)
@@ -70480,17 +70495,17 @@ etc
       (lambda (arg)
 	(let ((val (catch #t (lambda () (op arg)) (lambda args 'error))))
 	  (if (not (eq? val 'error))
-	      (format #t "(~A ~A) -> ~A (expected 'error)~%" op arg val)))
+	      (format-logged #t "(~A ~A) -> ~A (expected 'error)~%" op arg val)))
 	(let ((val (catch #t (lambda () (op 0 arg)) (lambda args 'error))))
 	  (if (not (eq? val 'error))
-	      (format #t "(~A 0 ~A) -> ~A (expected 'error)~%" op arg val)))
+	      (format-logged #t "(~A 0 ~A) -> ~A (expected 'error)~%" op arg val)))
 	(let ((val (catch #t (lambda () (op 0 1 arg)) (lambda args 'error))))
 	  (if (not (eq? val 'error))
-	      (format #t "(~A 0 1 ~A) -> ~A (expected 'error)~%" op arg val)))
+	      (format-logged #t "(~A 0 1 ~A) -> ~A (expected 'error)~%" op arg val)))
 	(if with-bignums
 	    (let ((val (catch #t (lambda () (op (expt 2 60) arg)) (lambda args 'error))))
 	      (if (not (eq? val 'error))
-		  (format #t "(~A 2^60 ~A) -> ~A (expected 'error)~%" op arg val)))))
+		  (format-logged #t "(~A 2^60 ~A) -> ~A (expected 'error)~%" op arg val)))))
 
       (list "hi" '() #\a (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs #t _ht_ :hi (if #f #f) (lambda (a) (+ a 1)) #<undefined> #<unspecified> #<eof> :key)))
 
@@ -70635,21 +70650,21 @@ etc
 	      (lambda p-args
 		;(format *stderr* "(~A ~{~A~^ ~})~%" name p-args)
 		(let ((val (catch #t (lambda () (apply func p-args)) (lambda e-args ''error))))
-		  (format #t "(let ((new-val (catch-it (~A ~{~A~^ ~})))) " name p-args)
+		  (format-logged #t "(let ((new-val (catch-it (~A ~{~A~^ ~})))) " name p-args)
 		  (if (nan? val)
-		      (format #t "(if (not (nan? new-val)) (format #t \"(~A ~{~A~^ ~}) -> ~~A, not NaN?~~%\" new-val)))~%" name p-args)
+		      (format-logged #t "(if (not (nan? new-val)) (format-logged #t \"(~A ~{~A~^ ~}) -> ~~A, not NaN?~~%\" new-val)))~%" name p-args)
 		      (if (infinite? val)
-			  (format #t "(if (not (infinite? new-val)) (format #t \"(~A ~{~A~^ ~}) -> ~~A, not inf?~~%\" new-val)))~%" name p-args)
+			  (format-logged #t "(if (not (infinite? new-val)) (format-logged #t \"(~A ~{~A~^ ~}) -> ~~A, not inf?~~%\" new-val)))~%" name p-args)
 			  (if (not (number? val))
-			      (format #t "(if (not (equal? new-val ~A)) (format #t \"(~A ~{~A~^ ~}) -> ~~A, not ~A?~~%\" new-val)))~%" val name p-args val)
-			      (format #t "(if (or (not (number? new-val)) (> (magnitude (- new-val ~A)) 1e-6)) (format #t \"(~A ~{~A~^ ~}) -> ~~A, not ~A?~~%\" new-val)))~%" 
+			      (format-logged #t "(if (not (equal? new-val ~A)) (format-logged #t \"(~A ~{~A~^ ~}) -> ~~A, not ~A?~~%\" new-val)))~%" val name p-args val)
+			      (format-logged #t "(if (or (not (number? new-val)) (> (magnitude (- new-val ~A)) 1e-6)) (format-logged #t \"(~A ~{~A~^ ~}) -> ~~A, not ~A?~~%\" new-val)))~%" 
 				      val name p-args val))))))
 	      s-args)))
        args)))
   
   (with-output-to-file "t248.data"
     (lambda ()
-      (format #t "(define-macro (catch-it tst)~%  `(catch #t (lambda () ,tst) (lambda args 'error)))~%")
+      (format-logged #t "(define-macro (catch-it tst)~%  `(catch #t (lambda () ,tst) (lambda args 'error)))~%")
 
       (for-each
        (lambda (func name)
@@ -71487,14 +71502,14 @@ etc
 	      (val (and (not (eq? fnc #<undefined>))
 			(fnc procs))))
 	 (if (not (eq? val p))
-	     (format #t "~A ~A -> ~A?~%" p fnc val))
+	     (format-logged #t "~A ~A -> ~A?~%" p fnc val))
 	 (let ((function (symbol->value p)))
 	   (let ((val (catch #t
-			(lambda () ;(format #t "(~A ~A)~%" p (arity function))
+			(lambda () ;(format-logged #t "(~A ~A)~%" p (arity function))
 			  (apply function (make-list (max 1 (car (arity function))) procs)))
 			(lambda args (apply format #f (cadr args))))))
 	     (if (not (eq? val p))
-		 (format #t ";test-all-methods: (~A~A~A (~D)procs) -> ~A~%" bold-text p unbold-text (max 1 (car (arity function))) val))))))
+		 (format-logged #t ";test-all-methods: (~A~A~A (~D)procs) -> ~A~%" bold-text p unbold-text (max 1 (car (arity function))) val))))))
      (list 
       '* '+ '- '/ '< '= '> 'call-with-output-file 'round 'keyword? '<= '>= 'cdaaar 'cdaadr 'cdadar 'cdaddr 'cddaar 'cddadr 'cdddar 'cddddr 'make-rectangular 'truncate 'string->number 'remainder 'char-downcase 'char->integer 'zero? 'char<? 'char=? 'char>? 'char-ci<? 'char-ci=? 'char-ci>? 'close-input-port 'infinite? 'magnitude 'open-input-file 'string->list 'write-char 'abs 'car 'procedure? 'cdr 'ash 'cos 'gcd 'list->vector 'exp 'symbol->keyword 'lcm 'max 'write-byte 'inexact? 'min 'log 'tan 'sin 'list-ref 'string 'integer-decode-float 'list->string 'symbol 'vector->list 'vector-append 'imag-part 'vector-length 'char-ready? 'random-state->list 'with-output-to-file 'char-alphabetic? 'char-numeric? 'integer-length 'peek-char 'keyword->symbol 'vector? 'ceiling 'real-part 'gensym 'make-hash-table 'negative? 'char<=? 'char>=? 'char-ci<=? 'char-ci>=? 'string-append 'port-line-number 'numerator 'make-hash-table-iterator 'string->symbol 'make-random-state 'string-ci<? 'string-ci=? 'string-ci>? 'make-keyword 'integer->char 'exact? 'string-copy 'string<? 'string=? 'string>? 'vector-ref 'acos 'caar 'with-input-from-file 'cadr 'cdar 'cddr 'string-set! 'rationalize 'atan 'asin 'assq 'assv 'cosh 'expt 'continuation? 'nan? 'memq 'memv 'odd? 'load 'hash-table-iterator? 'read 'tanh 'sinh 'number? 'sqrt 'set-car! 'set-cdr! 'pair-line-number 'string-ci<=? 'char-upcase 'string-ci>=? 'macro? 'list-set! 'list-tail 'reverse! 'symbol->value 'complex? 'symbol->string 'make-vector 'positive? 'string? 'make-polar 'member 'string-fill! 'number->string 'make-list 'reverse 'rational? 'open-input-string 'hash-table-set! 'hash-table-ref 'logand 'hash-table-size 'logior 'lognot 'logbit? 'integer? 'make-string 'exact->inexact 'logxor 'string<=? 'string>=? 'vector-set! 'modulo 'vector-fill! 'acosh 'call-with-output-string 'get-output-string 'caaar 'caadr 'cadar 'caddr 'cdaar 'cdadr 'cddar 'boolean? 'cdddr 'char-upper-case? 'angle 'char? 'inexact->exact 'string-length 'atanh 'symbol? 'denominator 'asinh 'with-output-to-string 'assoc 'input-port? 'call-with-input-file 'fill! 'port-closed? 'newline 'provided? 'char-whitespace? 'random 'floor 'read-char 'vector-dimensions 'even? 'defined? 'read-byte 'output-port? 'substring 'string-ref 'provide 'read-line 'eval-string 'port-filename 'list? 'open-output-file 'quotient 'pair? 'call-with-input-string 'random-state? 'with-input-from-string 'real? 'char-lower-case? 'null? 'eof-object? 'hash-table? 'caaaar 'caaadr 'caadar 'caaddr 'cadaar 'cadadr 'caddar 'cadddr 'close-output-port 'flush-output-port)))
   (set! test-all-methods #f)
@@ -71564,8 +71579,8 @@ etc
 
 
 (if (provided? 'debugging)
-    (format #t "~%;all done! (debugging flag is on)~%")
-    (format #t "~%;all done!~%"))
+    (format-logged #t "~%;all done! (debugging flag is on)~%")
+    (format-logged #t "~%;all done!~%"))
 
 
 
