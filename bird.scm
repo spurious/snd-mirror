@@ -1028,7 +1028,7 @@
 
 (define (make-birds)
   "(make-birds) calls all the birds in bird.scm"
-  (with-sound (:output "test.snd" :clipped #f)
+  (with-sound (:clipped #f)
     (b-orchard-oriole 0)
     (b-cassins-kingbird 3)
     (b-chipping-sparrow 6)

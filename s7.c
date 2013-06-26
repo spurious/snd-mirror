@@ -10935,6 +10935,9 @@ static s7_pointer g_acosh(s7_scheme *sc, s7_pointer args)
       return(s7_from_c_complex(sc, cacosh(s7_complex(x)))); /* not as_c_complex because x might not be complex */
 #else
       /* since we can fall through to this branch, we need a better error message than "must be a number, not 0.0" */
+
+      /* TODO: a similar error fixup is needed throughout this section */
+
       return(out_of_range(sc, sc->ACOSH, small_int(1), x, "a number >= 1.0 (no complex numbers in this version of s7)"));
 #endif
 
