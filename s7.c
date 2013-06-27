@@ -10505,6 +10505,8 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
     case T_COMPLEX:
 #if WITH_COMPLEX
       return(s7_from_c_complex(sc, csin(as_c_complex(x))));
+#else
+      return(out_of_range(sc, sc->SIN, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
 #endif
 
     default:
@@ -10569,6 +10571,8 @@ static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
     case T_COMPLEX:
 #if WITH_COMPLEX
       return(s7_from_c_complex(sc, ccos(as_c_complex(x))));
+#else
+      return(out_of_range(sc, sc->COS, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
 #endif
 
     default:
@@ -10619,13 +10623,15 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
     case T_RATIO:
       return(make_real(sc, tan((s7_Double)(fraction(x)))));
 
-#if WITH_COMPLEX
     case T_COMPLEX:
+#if WITH_COMPLEX
       if (imag_part(x) > 350.0)
 	return(s7_make_complex(sc, 0.0, 1.0));
       if (imag_part(x) < -350.0)
 	return(s7_make_complex(sc, 0.0, -1.0));
       return(s7_from_c_complex(sc, ctan(as_c_complex(x))));
+#else
+      return(out_of_range(sc, sc->TAN, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
 #endif
 
     default:
@@ -10685,6 +10691,8 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
 				 asinh(cimag(sq1pz * conj(sq1mz)))));
 	}
       return(s7_from_c_complex(sc, casin(as_c_complex(n))));
+#else
+      return(out_of_range(sc, sc->ASIN, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
 #endif
 
     default:
@@ -10740,6 +10748,8 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
 				 asinh(cimag(sq1mz * conj(sq1pz)))));
 	}
       return(s7_from_c_complex(sc, cacos(s7_complex(n))));
+#else
+      return(out_of_range(sc, sc->ACOS, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
 #endif
 
     default:
@@ -10768,9 +10778,11 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
 	case T_RATIO:
 	  return(make_real(sc, atan(number_to_real(x))));
 
-#if WITH_COMPLEX
 	case T_COMPLEX:
+#if WITH_COMPLEX
 	  return(s7_from_c_complex(sc, catan(as_c_complex(x))));
+#else
+      return(out_of_range(sc, sc->ATAN, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
 #endif
 
 	default:
@@ -10809,9 +10821,11 @@ static s7_pointer g_sinh(s7_scheme *sc, s7_pointer args)
     case T_RATIO:
       return(make_real(sc, sinh(number_to_real(x))));
 
-#if WITH_COMPLEX
     case T_COMPLEX:
+#if WITH_COMPLEX
       return(s7_from_c_complex(sc, csinh(as_c_complex(x))));
+#else
+      return(out_of_range(sc, sc->SINH, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
 #endif
 
     default:
@@ -10844,9 +10858,11 @@ static s7_pointer g_cosh(s7_scheme *sc, s7_pointer args)
        */
       return(make_real(sc, cosh(number_to_real(x))));
 
-#if WITH_COMPLEX
     case T_COMPLEX:
+#if WITH_COMPLEX
       return(s7_from_c_complex(sc, ccosh(as_c_complex(x))));
+#else
+      return(out_of_range(sc, sc->COSH, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
 #endif
 
     default:
@@ -10871,13 +10887,15 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
     case T_RATIO:
       return(make_real(sc, tanh(number_to_real(x))));
 
-#if WITH_COMPLEX
     case T_COMPLEX:
+#if WITH_COMPLEX
       if (real_part(x) > 350.0)
 	return(real_one);               /* closer than 0.0 which is what ctanh is about to return! */
       if (real_part(x) < -350.0)
 	return(make_real(sc, -1.0));              /* closer than -0.0 which is what ctanh is about to return! */
       return(s7_from_c_complex(sc, ctanh(as_c_complex(x))));
+#else
+      return(out_of_range(sc, sc->TANH, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
 #endif
 
     default:
@@ -10902,9 +10920,11 @@ static s7_pointer g_asinh(s7_scheme *sc, s7_pointer args)
     case T_RATIO:
       return(make_real(sc, asinh(number_to_real(x))));
 
-#if WITH_COMPLEX
     case T_COMPLEX:
+#if WITH_COMPLEX
       return(s7_from_c_complex(sc, casinh(as_c_complex(x))));
+#else
+      return(out_of_range(sc, sc->ASINH, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
 #endif
 
     default:
@@ -10930,14 +10950,11 @@ static s7_pointer g_acosh(s7_scheme *sc, s7_pointer args)
       if (number_to_real(x) >= 1.0)
 	return(make_real(sc, acosh(number_to_real(x))));
 
-#if WITH_COMPLEX
     case T_COMPLEX:
+#if WITH_COMPLEX
       return(s7_from_c_complex(sc, cacosh(s7_complex(x)))); /* not as_c_complex because x might not be complex */
 #else
       /* since we can fall through to this branch, we need a better error message than "must be a number, not 0.0" */
-
-      /* TODO: a similar error fixup is needed throughout this section */
-
       return(out_of_range(sc, sc->ACOSH, small_int(1), x, "a number >= 1.0 (no complex numbers in this version of s7)"));
 #endif
 
@@ -10968,8 +10985,8 @@ static s7_pointer g_atanh(s7_scheme *sc, s7_pointer args)
        *    (atanh 9223372036854775/9223372036854776) -> 18.714973875119
        *    (atanh 92233720368547758/92233720368547757) -> inf.0
        */
-#if WITH_COMPLEX
     case T_COMPLEX:
+#if WITH_COMPLEX
       return(s7_from_c_complex(sc, catanh(s7_complex(x))));
 #else
       return(out_of_range(sc, sc->ATANH, small_int(1), x, "a number between -1.0 and 1.0 (no complex numbers in this version of s7)"));
@@ -11029,10 +11046,12 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
       return(s7_make_complex(sc, 0.0, sqrt(-real(n))));
       break;
 
-#if WITH_COMPLEX
     case T_COMPLEX:
+#if WITH_COMPLEX
       return(s7_from_c_complex(sc, csqrt(as_c_complex(n))));
       break;
+#else
+      return(out_of_range(sc, sc->SQRT, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
 #endif
 
     default:
@@ -65698,7 +65717,8 @@ s7_scheme *s7_init(void)
  *    make-real|integer|rational|-vector is not quite right -- we want make-float|int|byte-vector
  */
 
-/* PERHAPS: add empty? (or nil? or generic null? or zero-length?) | typeq? -- but methods make this less than ideal (env-as-vector etc)
+/* PERHAPS: add empty? (or nil? or generic null? or zero-length?) 
+ *              typeq? -- but methods make this less than ideal (env-as-vector -- but they can override!)
  *   (xor a b) -> a if a & not b, b if b & not a, #f otherwise -- not quite the same as or because if a and b, we get #f
  *
  */

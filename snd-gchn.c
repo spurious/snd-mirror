@@ -1430,3 +1430,6 @@ leaves the drawing area (graph pane) of the given channel."
   mouse_enter_graph_hook = XEN_DEFINE_HOOK(S_mouse_enter_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_enter_graph_hook);
   mouse_leave_graph_hook = XEN_DEFINE_HOOK(S_mouse_leave_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_leave_graph_hook);
 }
+
+/* TODO: apparently in gtk 3.8.n the sliders are invisible until you try to move them.
+ */

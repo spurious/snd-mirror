@@ -10918,7 +10918,7 @@
 
 
 (define (calling-all-animals)
-  (with-sound (;:scaled-to .5 :srate 44100) ;(srate needed by snd-test)
+  (with-sound (:srate 44100) ;(srate needed by snd-test)
 	      (let ((beg 0.0))
 		(set! beg (calling-all-frogs beg))
 		(set! beg (calling-all-mammals beg))

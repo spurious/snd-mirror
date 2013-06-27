@@ -6664,6 +6664,119 @@ See <a href="#signal">signal handling</a> and <a href="#replrescue">begin_hook t
 </p>
 
 
+<p>If you prefer C++, here's a C++ version of the listener, extracted from Rick Taube's
+Common Music package:
+</p>
+
+<blockquote>
+<div class="indented">
+<pre>
+#include &lt;iostream&gt;
+#include "s7.h"
+
+static s7_pointer main_quit(s7_scheme *sc, s7_pointer args);
+static bool is_balanced(std::string str);
+static bool is_not_white(std::string str);
+
+int main(int argc, const char* argv[])
+{
+  s7_scheme* s7 = s7_init();
+  
+  s7_define_function(s7, "exit", main_quit, 0, 0, false, "(exit) quits the program");
+  
+  s7_pointer val;
+  std::string str;
+  try 
+    {
+      while (true)
+	{
+	  std::cout &lt;&lt; "\ns7&gt; ";
+	  str = "";
+	  while (true)
+	    {
+	      std::string lin;
+	      std::getline(std::cin, lin);
+	      str = str + lin + "\n";
+	      if (is_balanced(str))
+		break;
+	    }
+	  if (is_not_white(str))
+	    {
+	      val = s7_eval_c_string(s7, str.c_str());
+	      std::cout &lt;&lt; s7_object_to_c_string(s7, val);
+	    }
+	}
+    }
+  catch(...)
+    {
+    }
+  std::cout &lt;&lt; "Bye!\n";
+  return 0;
+}
+
+static s7_pointer main_quit(s7_scheme *sc, s7_pointer args)
+{
+  throw 0;
+  return(s7_nil(sc));
+}
+
+static bool is_balanced(std::string str)
+{
+  int parens = 0;
+  int quotes = 0;
+  unsigned i = 0;
+  while (i &lt; str.size())
+    {
+      if (str[i] == ';')
+	{
+	  for (i = i + 1; i &lt; str.size(); i++)
+	    {
+	      if (str[i] == '\n')
+		break;
+	    }
+	}
+      else if (str[i] == '"')
+	{
+	  if (i == 0 || str[i - 1] != '\\')
+	    {
+	      quotes = 1;
+	      for (i = i + 1; i &lt; str.size(); i++)
+		{
+		  if (str[i] == '"' &amp;&amp; str[i - 1] != '\\')
+		    {
+		      quotes = 0;
+		      break;
+		    }
+		}
+	      if (quotes)
+		return false;
+	    }
+	}
+      else if (str[i] == '(')
+	parens++;
+      else if (str[i] == ')')
+	parens--;
+      i++;
+    }
+  return (parens == 0) &amp;&amp; (quotes == 0);
+}
+
+static bool is_not_white(std::string str)
+{
+  for (unsigned i = 0; (i &lt; str.size() &amp;&amp; str[i] != ';'); i++)
+    if (str[i] != ' ' && str[i] != '\n' &amp;&amp; str[i] != '\t')
+      return true;
+  return false;
+}
+
+/* g++ -I. -c repl.cpp
+ * g++ -o repl repl.o s7.o -ldl
+ */
+</pre></div>
+</blockquote>
+
+
+
 
 <div class="header" id="defun"><h4>Define a function with arguments and a returned value, and a variable</h4></div>
 
