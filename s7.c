@@ -10692,7 +10692,7 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
 	}
       return(s7_from_c_complex(sc, casin(as_c_complex(n))));
 #else
-      return(out_of_range(sc, sc->ASIN, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
+      return(out_of_range(sc, sc->ASIN, small_int(1), n, "a real number (no complex numbers in this version of s7)"));
 #endif
 
     default:
@@ -10749,7 +10749,7 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
 	}
       return(s7_from_c_complex(sc, cacos(s7_complex(n))));
 #else
-      return(out_of_range(sc, sc->ACOS, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
+      return(out_of_range(sc, sc->ACOS, small_int(1), n, "a real number (no complex numbers in this version of s7)"));
 #endif
 
     default:
@@ -11051,7 +11051,7 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
       return(s7_from_c_complex(sc, csqrt(as_c_complex(n))));
       break;
 #else
-      return(out_of_range(sc, sc->SQRT, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
+      return(out_of_range(sc, sc->SQRT, small_int(1), n, "a real number (no complex numbers in this version of s7)"));
 #endif
 
     default:
@@ -29335,9 +29335,9 @@ static s7_pointer hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key)
   if (is_string(key))
     {
       s7_pointer x;
-      int hash_len, loc, orig;
+      unsigned int hash_len, loc, orig;
 
-      hash_len = (int)hash_table_length(table) - 1;
+      hash_len = (unsigned int)hash_table_length(table) - 1;
       loc = string_hash(key);
       if (loc == 0)
 	{
@@ -34746,7 +34746,7 @@ static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
   s7_pointer p, old_hook;
   int old_hook_loc;
   char *msg = NULL;
-
+  
   /* this can get into an infinite loop if unbound variable hook gets involved so...
    */
   old_hook = s7_hook_functions(sc, sc->unbound_variable_hook);
@@ -34764,7 +34764,11 @@ static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 	      len = s7_list_length(sc, car(p));
 	      if (((s7_is_eq(caar(p), s7_make_symbol(sc, "if"))) &&
 		   (len > 4)) ||
-		  ((s7_is_procedure(SYMBOL_TO_VALUE(sc, caar(p)))) &&
+		  /* extreme care is needed -- we can't risk autoloading the very same file we're complaining about! 
+		   *   so don't use unprotected SYMBOL_TO_VALUE or finder
+		   */
+		  ((s7_is_defined(sc, symbol_name(caar(p)))) &&
+		   (s7_is_procedure(SYMBOL_TO_VALUE(sc, caar(p)))) &&
 		   (!s7_is_aritable(sc, SYMBOL_TO_VALUE(sc, caar(p)), len))) ||
 		  ((s7_is_eq(caar(p), s7_make_symbol(sc, "define"))) &&
 		   (is_pair(cdr(p))) &&
@@ -34806,7 +34810,6 @@ static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 
   return(NULL);
 }
-
 
 static s7_pointer missing_close_paren_error(s7_scheme *sc)
 {
@@ -37038,6 +37041,9 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       if (is_hash_table(sc->autoload_table))
 	{
 	  s7_pointer val;
+	  /* it was possible to get in a loop here: missing paren in x.scm, checks last symbol, sees
+	   *   autoload sym -> x.scm, loads x.scm, missing paren...
+	   */
 	  val = s7_hash_table_ref(sc, sc->autoload_table, sym);
 	  if (is_string(val))
 	    {
@@ -65391,6 +65397,7 @@ s7_scheme *s7_init(void)
 #if WITH_C_LOADER
   s7_provide(sc, "dlopen");
 #endif
+
 #ifdef __APPLE__
   s7_provide(sc, "osx");
 #endif
@@ -65403,7 +65410,7 @@ s7_scheme *s7_init(void)
 #ifdef __NetBSD__
   s7_provide(sc, "netbsd");
 #endif
-#ifdef __FreeBSD_version
+#ifdef __FreeBSD__
   s7_provide(sc, "freebsd");
 #endif
 #if MS_WINDOWS
@@ -65414,6 +65421,15 @@ s7_scheme *s7_init(void)
 #endif
 #ifdef __ANDROID__
   s7_provide(sc, "android");
+#endif
+#ifdef __CYGWIN__
+  s7_provide(sc, "cygwin");
+#endif
+#ifdef __hpux
+  s7_provide(sc, "hpux");
+#endif
+#if defined(__sun) && defined(__SVR4)
+  s7_provide(sc, "solaris");
 #endif
 
 
@@ -65729,6 +65745,5 @@ s7_scheme *s7_init(void)
 
 /* names like #<closure> and #<macro> are useless -- could we include at least the arglist? or body truncated?
  */
-
-/* TODO: add Rick's s7.cpp to s7.html and the tarball (under what name?)
+/* first 1-bit stuff?
  */
