@@ -10359,6 +10359,8 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
       /* this is inaccurate for large arguments:
        *   (exp 0+1e20i) -> -0.66491178990701-0.74692189125949i, not 7.639704044417283004001468027378811228331E-1-6.45251285265780844205811711312523007406E-1i
        */
+#else
+      return(out_of_range(sc, sc->EXP, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
 #endif
 
     default:
@@ -11247,6 +11249,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  break;
 
 	case T_COMPLEX:
+#if WITH_COMPLEX
 	  if ((s7_real_part(n) == 0.0) &&
 	      ((s7_imag_part(n) == 1.0) ||
 	       (s7_imag_part(n) == -1.0)))
@@ -11262,6 +11265,9 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 		case 3: return(s7_make_complex(sc, 0.0, (yp == np) ? -1.0 : 1.0));
 		}
 	    }
+#else
+	  return(out_of_range(sc, sc->EXPT, small_int(2), n, "a real number (no complex numbers in this version of s7)"));
+#endif
 	  break;
 	}
     }
@@ -38514,6 +38520,7 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 }
 
 
+#if (!WITH_GMP)
 static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 2)
@@ -38521,14 +38528,12 @@ static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
       s7_pointer arg1;
       arg1 = cadr(expr);
 
-#if (!WITH_GMP)
       if (arg1 == small_int(1))
 	return(divide_1);
 
       if ((type(arg1) == T_REAL) &&
 	  (real(arg1) == 1.0))
 	return(divide_1r);
-#endif
     }
 
   /* fprintf(stderr, "%d: %s\n", args, DISPLAY_80(expr)); */
@@ -38537,6 +38542,7 @@ static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
    */
   return(f);
 }
+#endif
 
 
 static s7_pointer max_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
