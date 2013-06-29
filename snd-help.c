@@ -413,6 +413,7 @@ void about_snd_help(void)
 \n\
 11-Jun: removed the view files dialog from the gtk version, including all the\n\
            related extension language functions, and view-files-select-hook.\n\
+30-Jun-13: Snd 13.8.\n\
 24-May-13: Snd 13.7.\n\
 23-Apr-13: Snd 13.6.\n\
 12-Mar-13: Snd 13.5.\n\

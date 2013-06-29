@@ -1,12 +1,23 @@
-Snd 13.7.
+Snd 13.8.
 
-s7: r7rs changes: flush-output-port, vector-append, read|write-string, 
-       boolean=?, symbol=?, exit, emergency-exit.
-       added destination/start/end args to copy.
+s7: added autoload (actually moved it from Snd to s7).
+    ffitest.c
 
-Snd: new gtk listener, split out as glistener.c/h, 
-       tests in tools/gcall.c and tools/gtest.scm.
-     
-checked: sbcl 1.1.7, gtk 3.9.0
 
-Thanks!: Nando, Jason Ripley, James Hearon
+Snd: listener-colorized, syntax highlighting in glistener.
+     colorizer-colors.
+
+     removed the view files dialog from the gtk version, including all the
+       related extension language functions, and view-files-select-hook.
+
+     The various file open/save dialogs now (sigh) use gtk's filechooser.
+
+     the file-sorter functions now apply only to the Motif case.
+
+
+cmn: Lispworks port thanks to Anders Vinjar.
+clm: sbcl bugfix thanks to Michael Edwards.
+
+checked: gtk 3.9.2, sbcl 1.1.8, openbsd 5.3 and FC 19 (via VirtualBox)
+
+Thanks!: Victor Gerasimov, Mike Scholz, Anders Vinjar, Michael Edwards, Rick Taube.
