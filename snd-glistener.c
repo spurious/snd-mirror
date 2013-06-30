@@ -3,9 +3,6 @@
 static GtkWidget *listener_text = NULL;
 static GtkTextBuffer *listener_buffer = NULL;
 
-/* PERHAPS: to implement stuff like find, the prompt might be in the status area?
- */
-
 void listener_append(const char *msg)
 {
   if (ss->listener)
@@ -810,4 +807,6 @@ leaves the lisp listener pane"
  * to build fontconfig, use --disable-docs (there's no way to make the docbook chain happy)
  * atk-bridge-2.0 needed, glib needs automake 1.13.1, at-spi2-atk needs at-spi2-code which
  * is incompatible with glib 2.37.0, my FC18 machine is dead, so I'm stuck.  Wait for FC19...
+ *
+ * to implement stuff like find, the prompt might be in the status area?
  */

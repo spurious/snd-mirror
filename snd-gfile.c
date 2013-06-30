@@ -28,6 +28,8 @@
  *   And the sketch gets an incomprehensible cairo error
  *     this apparently happens because our "signal-changed" callback takes too long to draw a long sound's graph!
  *     but making it idle does not fully fix the problem -- we have to save the graph points and rescale directly.
+ *
+ * 3.10 will have gtk_file_chooser_get_current_name
  */
 
 /* we can find the embedded tree view:

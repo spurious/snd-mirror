@@ -13587,7 +13587,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	    return(big_multiply(sc, cons(sc, s7_Int_to_big_integer(sc, num_a), cons(sc, x, p))));
 #endif
 
-	  /* TODO: perhaps put all the math-safety stuff on this switch?
+	  /* perhaps put all the math-safety stuff on the *safety* switch?
 	   *    (* 256 17179869184 4194304) -> 0 which is annoying
 	   *    (* 134217728 137438953472) -> 0
 	   */
@@ -28570,7 +28570,9 @@ static void vset_s(void *p)
   pos = s7_integer(slot_value(data->i_slot));
   if (pos < data->v_len)
     data->v_els[pos] = slot_value(data->val_slot);
-  /* TODO: else s7_error but this requires freeing data? */
+  /* else out_of_range(sc, sc->VECTOR_SET, small_int(2), slot_value(data->i_slot), "should be less than the vector length");
+   *   but where is sc? 
+   */
 }
 
 static void vset_c(void *p)
@@ -59133,7 +59135,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	for (x = cdr(sc->code); is_pair(x); x = cdr(x))
 	  if (fcdr(x) == selector)
 	    {
-	      sc->value = cadar(x); /* ecdr(x); */ /* TODO: why is the ecdr(x) stuff commented out in the case optimizer? are the others unsafe? */
+	      sc->value = cadar(x); /* ecdr(x); but that requires setup in optimizer */
 	      if (is_pair(sc->value))
 		sc->value = cadr(sc->value);
 	      goto START;
@@ -65710,13 +65712,13 @@ s7_scheme *s7_init(void)
 
 
 
-/* TODO: use new generic_ff in methods opt case 
- * TODO: we need integer_length everywhere! These fixups are ignored by the optimized cases.
- * SOMEDAY: give each e|f|gcdr ref a unique name and figure out how to avoid collisions
- *          perhaps use type bits unused with pairs: ecdr_set etc [line_set data_set]
+/* use new generic_ff in methods opt case 
+ * we need integer_length everywhere! These fixups are ignored by the optimized cases.
+ * give each e|f|gcdr ref a unique name and figure out how to avoid collisions
+ *    perhaps use type bits unused with pairs: ecdr_set etc [line_set data_set]
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
  *
- * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7 13.8
+ * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7 13.9
  * bench    42736 8752 8051 7725 6515 5194 4364 3989 3997 3997
  * lint           9328 8140 7887 7736 7300 7180 7051 7078
  * index    44300 3291 3005 2742 2078 1643 1435 1363 1365 1335
@@ -65739,10 +65741,9 @@ s7_scheme *s7_init(void)
  *    make-real|integer|rational|-vector is not quite right -- we want make-float|int|byte-vector
  */
 
-/* PERHAPS: add empty? (or nil? or generic null? or zero-length?) 
+/* add empty? (or nil? or generic null? or zero-length?) 
  *              typeq? -- but methods make this less than ideal (env-as-vector -- but they can override!)
- *   (xor a b) -> a if a & not b, b if b & not a, #f otherwise -- not quite the same as or because if a and b, we get #f
- *
+ *   (xor a b) -> a if a & not b, b if b & not a, #f otherwise -- not quite the same as or because if a and b, we get #f (and no short-circuit)
  */
 
 /* ideally we'd replace strcpy with strcopy throughout Snd, and strcat with strlcat or some equivalent
@@ -65751,5 +65752,4 @@ s7_scheme *s7_init(void)
 
 /* names like #<closure> and #<macro> are useless -- could we include at least the arglist? or body truncated?
  */
-/* first 1-bit stuff?
- */
+
