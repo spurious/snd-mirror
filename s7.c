@@ -3771,6 +3771,22 @@ static int gc(s7_scheme *sc)
     
     sc->free_heap_top = fp;
     sweep(sc);
+
+#if 0
+    {
+      s7_pointer *p;
+      for (p = sc->free_heap_trigger; p < sc->free_heap_top; p++)
+	{
+	  /* for a test, put garbage in some fields */
+	  car(*p) = NULL;
+	  cdr(*p) = NULL;
+	  ecdr(*p) = NULL;
+	  fcdr(*p) = NULL;
+	  gcdr(*p) = NULL;
+	}
+    }
+#endif
+
   }
 
   if (sc->gc_stats)
@@ -4274,30 +4290,7 @@ static int symbol_table_hash(const char *key)
   for (c = key; *c; c++) 
     hashed = *c + hashed * HASH_MULT;
   return(hashed % SYMBOL_TABLE_SIZE); 
-
   /* using ints here is much faster, and the symbol table will not be enormous, so it's worth splitting out this case */
-
-  /* chain lengths (after s7test using mult=37): 
-   *   all chars: 43 159 329 441 395 349 217 152 69 35 12 4 1 0 0 1          max: 15
-   *    4 chars: 572 528 307 183 128 90 50 48 41 35 34 23 21 ...             max: 182!
-   *    8 chars: 114 307 404 411 301 197 146 98 77 35 28 18 11 16 ...        max: 79
-   *    16 chars: 44 160 344 400 435 348 206 143 72 31 16 4 0 1 0 0 0 2 1... max: 18
-   *
-   * currently the hash calculation is ca 8 (s7test) and the find_by_name process 3,
-   *   if we use 4 chars, this calc goes to 6/7 but the find calc to 8/9
-   *
-   * the multiplier (4 currently) doesn't matter:
-   *   mult  1: 1744
-   *         2: 1743
-   *         3: 1743
-   *         7: 1744
-   *         8: 1743
-   *        16: 1745
-   *        17: 1746
-   *        32: 1746
-   *        37: 1744
-   *        39: 1744
-   */
 } 
 
 
@@ -6859,7 +6852,7 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
   #define H_call_cc "(call-with-current-continuation func) is always a mistake!"
   s7_pointer p;
 
-  p = car(args);  /* this is the procedure passed to call/cc */
+  p = car(args);                             /* this is the procedure passed to call/cc */
   
   if (!is_procedure(p))                      /* this includes continuations */
     {
@@ -9017,7 +9010,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 			       * r7rs has 2/3/4-byte "characters" of the form #\xcebb but this is not compatible with
 			       *   make-string, string-length, and so on.  We'd either have to have 2-byte chars
 			       *   so (string-length (make-string 3 #\xcebb)) = 3, or accept 6 here for number of chars.
-			       *   Then substring and string-set! and so have to use utf8 encoding throughout or
+			       *   Then substring and string-set! and so on have to use utf8 encoding throughout or
 			       *   risk changing the string length unexpectedly.
 			       */
 	{
@@ -29539,6 +29532,13 @@ static s7_pointer hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)
 
 #define DEFAULT_HASH_TABLE_SIZE 511
 /* this may be too big -- smaller is faster in lint (even 31), but not in make-index.  Perhaps we need *hash-table-default-size*?
+ *   another approach: bi-level tables where we index twice, and thereby skip over (sqrt n) (or whatever) at a time.  
+ *   does this happen often? would it matter in the gc enough to warrant the code?
+ * or perhaps combine the back-and-forth indexing to a hash-table, so we'd only have the sections we need
+ *
+ * also what about a simplified hash_table with just the keys => a set, similar to the memq/assq difference
+ *   we could add T_SET just like T_BYTEVECTOR and specialize where necessary.
+ *   vector->set->hash-table->environment->library
  */
 
 s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
@@ -29568,6 +29568,7 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 		    list_1(sc, make_protected_string(sc, "make-hash-table allocation failed!"))));
   for (i = 0; i < size; i++)
     hash_table_element(table, i) = sc->NIL;
+  /* or use the vector fill stuff here, but that now just unrolls the loop */
   hash_table_function(table) = hash_empty;
   hash_table_eq_function(table) = NULL;
   hash_table_entries(table) = 0;
@@ -31305,7 +31306,7 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
    * :(set! (procedure-setter <) <)
    * <
    * :(set! (< 3 2) 3)
-   * #t
+   * #t ; hunh? 
    * :(set! (< 1) 2)
    * #t
    *
@@ -65114,6 +65115,7 @@ s7_scheme *s7_init(void)
   sc->STRING_TO_LIST =        s7_define_safe_function(sc, "string->list",            g_string_to_list,         1, 2, false, H_string_to_list);
   sc->OBJECT_TO_STRING =      s7_define_safe_function(sc, "object->string",          g_object_to_string,       1, 1, false, H_object_to_string);
   sc->FORMAT =                s7_define_safe_function(sc, "format",                  g_format,                 1, 0, true,  H_format);
+
   /* as format runs through the saved args, "~A" can call object->string; it can call format, and 
    *    sc->temp_cell_2 can be stepped on in the arg evaluation of the recursive format call,
    *    so format isn't safe if we've seen open_env + object->string.  This isn't called

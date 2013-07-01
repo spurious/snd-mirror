@@ -387,9 +387,3 @@
 
     (end-c-file)))
 
-
-
-
-;;; TODO: c-complex->complex
-;;;    can't we handle float* (etc) as c_pointer, then have a way to decode->vector?
-;;;    (vct->vector (xen_make_vct_wrapper len c_ptr)) but why no vct_length?
