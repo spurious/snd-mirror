@@ -24752,6 +24752,12 @@ who says the continuation has to restart the map from the top?
 	         (set! ,var (logand ,var (lognot (ash 1 ,index))))))))
   (test (let ((int #b1010)) (set! (logbit? int 0) #t) int) 11))
 
+(let ((old-setter (procedure-setter <)))
+  (set! (procedure-setter <) <)
+  (test (set! (< 3 2) 3) #f)
+  (test (set! (< 1) 2) #t)
+  (set! (procedure-setter <) old-setter))
+
 
 
 
@@ -71726,8 +71732,6 @@ in non-gmp,
 				 (autotest val '() 0 3)))))))))
 	 lst)))))
 |#
-
-;;; write/display hash-table stdin lambda? macro/bacro cont/goto func/closure etc, all the pair types, circular etc
 
 #|
 (let ((lst ()))

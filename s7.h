@@ -457,7 +457,7 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args);                 /* (
 const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc);              /* (procedure-name x) -- don't free the string! */
 
 const char *s7_help(s7_scheme *sc, s7_pointer obj);                         /* (help obj) */
-void s7_unoptimize(s7_scheme *sc, s7_pointer code);                         /* (unoptimize obj) */
+s7_pointer s7_unoptimize(s7_scheme *sc, s7_pointer code);                   /* (unoptimize obj) */
 
 bool s7_is_continuation(s7_pointer p);                                      /* (continuation? p) */
 s7_pointer s7_make_continuation(s7_scheme *sc);                             /* call/cc... (see example below) */
