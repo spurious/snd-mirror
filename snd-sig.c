@@ -3392,7 +3392,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 			{
 			  if (s7_function_choice_is_direct(s7, res))
 			    {
-			      if (s7_function_returns_temp(res))
+			      if (s7_function_returns_temp(s7, res))
 				{
 				  s7_pointer old_e, y;
 				  s7_Double *ry;
@@ -3500,7 +3500,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 			  if ((s7_function_choice_is_direct(s7, res)) &&
 			      (s7_car(res) != s7_make_symbol(s7, "read-sample"))) /* handled directly below */			
 			    {
-			      if (s7_function_returns_temp(res))
+			      if (s7_function_returns_temp(s7, res))
 				{
 				  s7_pointer old_e;
 				  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
@@ -3532,7 +3532,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 			       * (let ((reader (make-sampler 0 0 0))) (map-channel (lambda (y) (read-sample reader))))
 			       */
 			      len = s7_list_length(s7, res);
-			      if ((s7_function_returns_temp(res)) &&
+			      if ((s7_function_returns_temp(s7, res)) &&
 				  (len == 2) &&
 				  (s7_is_symbol(s7_cadr(res))))
 				{

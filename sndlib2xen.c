@@ -2902,7 +2902,7 @@ static s7_pointer sound_data_set_chooser(s7_scheme *sc, s7_pointer f, int args, 
 	  (s7_is_symbol(arg3)) &&
 	  (s7_is_pair(arg4)) &&
 	  (s7_function_choice_is_direct(sc, arg4)) &&
-	  (s7_function_returns_temp(arg4)))
+	  (s7_function_returns_temp(sc, arg4)))
 	{
 	  s7_function_choice_set_direct(sc, expr);
 	  return(sound_data_set_direct);

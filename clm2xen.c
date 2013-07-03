@@ -15629,7 +15629,7 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 	      if (s7_function_choice_is_direct(sc, caddr(expr)))
 		{
 		  s7_function_choice_set_direct(sc, expr);
-		  if (s7_function_returns_temp(caddr(expr))) 
+		  if (s7_function_returns_temp(sc, caddr(expr))) 
 		    return(direct_oscil_2);
 		  return(indirect_oscil_2);
 		}
@@ -15700,7 +15700,7 @@ static s7_pointer comb_bank_chooser(s7_scheme *sc, s7_pointer f, int args, s7_po
 	  if (s7_function_choice_is_direct(sc, caddr(expr)))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
-	      if (s7_function_returns_temp(caddr(expr))) 
+	      if (s7_function_returns_temp(sc, caddr(expr))) 
 		return(direct_comb_bank_2);
 	      return(indirect_comb_bank_2);
 	    }
@@ -15724,7 +15724,7 @@ static s7_pointer filtered_comb_bank_chooser(s7_scheme *sc, s7_pointer f, int ar
 	  if (s7_function_choice_is_direct(sc, caddr(expr)))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
-	      if (s7_function_returns_temp(caddr(expr))) 
+	      if (s7_function_returns_temp(sc, caddr(expr))) 
 		return(direct_filtered_comb_bank_2);
 	      return(indirect_filtered_comb_bank_2);
 	    }
@@ -15748,7 +15748,7 @@ static s7_pointer all_pass_bank_chooser(s7_scheme *sc, s7_pointer f, int args, s
 	  if (s7_function_choice_is_direct(sc, caddr(expr)))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
-	      if (s7_function_returns_temp(caddr(expr))) 
+	      if (s7_function_returns_temp(sc, caddr(expr))) 
 		return(direct_all_pass_bank_2);
 	      return(indirect_all_pass_bank_2);
 	    }
@@ -15822,7 +15822,7 @@ static s7_pointer polywave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  if (s7_function_choice_is_direct(sc, arg2))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
-	      if (s7_function_returns_temp(arg2)) 
+	      if (s7_function_returns_temp(sc, arg2)) 
 		return(direct_polywave_2);
 	      return(indirect_polywave_2);
 	    }
@@ -15854,7 +15854,7 @@ static s7_pointer table_lookup_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	  if (s7_function_choice_is_direct(sc, caddr(expr)))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
-	      if (s7_function_returns_temp(caddr(expr))) 
+	      if (s7_function_returns_temp(sc, caddr(expr))) 
 		return(direct_table_lookup_2);
 	      return(indirect_table_lookup_2);
 	    }
@@ -15885,7 +15885,7 @@ static s7_pointer wave_train_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 	  if (s7_function_choice_is_direct(sc, caddr(expr)))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
-	      if (s7_function_returns_temp(caddr(expr))) 
+	      if (s7_function_returns_temp(sc, caddr(expr))) 
 		return(direct_wave_train_2);
 	      return(indirect_wave_train_2);
 	    }
@@ -15919,7 +15919,7 @@ static s7_pointer src_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	  if (s7_function_choice_is_direct(sc, caddr(expr)))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
-	      if (s7_function_returns_temp(caddr(expr))) 
+	      if (s7_function_returns_temp(sc, caddr(expr))) 
 		return(direct_src_2);
 	      return(indirect_src_2);
 	    }
@@ -15985,7 +15985,7 @@ static s7_pointer nsin_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) 
+      if (s7_function_returns_temp(sc, caddr(expr))) 
 	return(direct_nsin_2);
       return(indirect_nsin_2);
     }
@@ -16013,7 +16013,7 @@ static s7_pointer ncos_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) 
+      if (s7_function_returns_temp(sc, caddr(expr))) 
 	return(direct_ncos_2);
       return(indirect_ncos_2);
     }
@@ -16052,7 +16052,7 @@ static s7_pointer nrxysin_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       if (s7_function_choice_is_direct(sc, arg2))
 	{
 	  s7_function_choice_set_direct(sc, expr);
-	  if (s7_function_returns_temp(arg2)) return(direct_nrxysin_2);
+	  if (s7_function_returns_temp(sc, arg2)) return(direct_nrxysin_2);
 	  return(indirect_nrxysin_2);
 	}
     }
@@ -16118,7 +16118,7 @@ static s7_pointer nrxycos_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_nrxycos_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_nrxycos_2);
       return(indirect_nrxycos_2);
     }
   return(f);
@@ -16189,7 +16189,7 @@ static s7_pointer comb_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_comb_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_comb_2);
       return(indirect_comb_2);
     }
   return(f);
@@ -16210,7 +16210,7 @@ static s7_pointer notch_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_notch_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_notch_2);
       return(indirect_notch_2);
     }
   return(f);
@@ -16234,7 +16234,7 @@ static s7_pointer one_pole_all_pass_chooser(s7_scheme *sc, s7_pointer f, int arg
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_one_pole_all_pass_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_one_pole_all_pass_2);
       return(indirect_one_pole_all_pass_2);
     }
 
@@ -16259,7 +16259,7 @@ static s7_pointer all_pass_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_all_pass_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_all_pass_2);
       return(indirect_all_pass_2);
     }
   return(f);
@@ -16281,7 +16281,7 @@ static s7_pointer delay_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_delay_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_delay_2);
       return(indirect_delay_2);
     }
   return(f);
@@ -16303,7 +16303,7 @@ static s7_pointer one_pole_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_one_pole_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_one_pole_2);
       return(indirect_one_pole_2);
     }
   return(f);
@@ -16324,7 +16324,7 @@ static s7_pointer two_pole_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_two_pole_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_two_pole_2);
       return(indirect_two_pole_2);
     }
   return(f);
@@ -16345,7 +16345,7 @@ static s7_pointer one_zero_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_one_zero_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_one_zero_2);
       return(indirect_one_zero_2);
     }
   return(f);
@@ -16366,7 +16366,7 @@ static s7_pointer two_zero_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_two_zero_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_two_zero_2);
       return(indirect_two_zero_2);
     }
   return(f);
@@ -16387,7 +16387,7 @@ static s7_pointer moving_average_chooser(s7_scheme *sc, s7_pointer f, int args, 
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_moving_average_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_moving_average_2);
       return(indirect_moving_average_2);
     }
   return(f);
@@ -16408,7 +16408,7 @@ static s7_pointer moving_max_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_moving_max_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_moving_max_2);
       return(indirect_moving_max_2);
     }
   return(f);
@@ -16429,7 +16429,7 @@ static s7_pointer formant_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	  (s7_function_choice_is_direct(sc, caddr(expr))))
 	{
 	  s7_function_choice_set_direct(sc, expr);
-	  if (s7_function_returns_temp(caddr(expr))) return(direct_formant_2);
+	  if (s7_function_returns_temp(sc, caddr(expr))) return(direct_formant_2);
 	  return(indirect_formant_2);
 	}
       return(formant_two);
@@ -16472,7 +16472,7 @@ static s7_pointer firmant_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_firmant_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_firmant_2);
       return(indirect_firmant_2);
     }
   return(f);
@@ -16493,7 +16493,7 @@ static s7_pointer filter_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_filter_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_filter_2);
       return(indirect_filter_2);
     }
   return(f);
@@ -16514,7 +16514,7 @@ static s7_pointer fir_filter_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_fir_filter_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_fir_filter_2);
       return(indirect_fir_filter_2);
     }
   return(f);
@@ -16535,7 +16535,7 @@ static s7_pointer iir_filter_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_iir_filter_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_iir_filter_2);
       return(indirect_iir_filter_2);
     }
   return(f);
@@ -16562,7 +16562,7 @@ static s7_pointer triangle_wave_chooser(s7_scheme *sc, s7_pointer f, int args, s
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_triangle_wave_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_triangle_wave_2);
       return(indirect_triangle_wave_2);
     }
   return(f);
@@ -16589,7 +16589,7 @@ static s7_pointer sawtooth_wave_chooser(s7_scheme *sc, s7_pointer f, int args, s
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_sawtooth_wave_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_sawtooth_wave_2);
       return(indirect_sawtooth_wave_2);
     }
   return(f);
@@ -16616,7 +16616,7 @@ static s7_pointer square_wave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_square_wave_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_square_wave_2);
       return(indirect_square_wave_2);
     }
   return(f);
@@ -16643,7 +16643,7 @@ static s7_pointer pulse_train_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_pulse_train_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_pulse_train_2);
       return(indirect_pulse_train_2);
     }
   return(f);
@@ -16670,7 +16670,7 @@ static s7_pointer pulsed_env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_pulsed_env_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_pulsed_env_2);
       return(indirect_pulsed_env_2);
     }
   return(f);
@@ -16721,7 +16721,7 @@ static s7_pointer rand_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_rand_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_rand_2);
       return(indirect_rand_2);
     }
   return(f);
@@ -16748,7 +16748,7 @@ static s7_pointer rand_interp_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_rand_interp_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_rand_interp_2);
       return(indirect_rand_interp_2);
     }
   return(f);
@@ -16762,7 +16762,7 @@ static s7_pointer polynomial_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 	  (s7_is_pair(caddr(expr))))
 	{
 	  if ((s7_function_choice_is_direct(sc, caddr(expr))) &&
-	      (s7_function_returns_temp(caddr(expr))))
+	      (s7_function_returns_temp(sc, caddr(expr))))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
 	      return(polynomial_temp);
@@ -16793,7 +16793,7 @@ static s7_pointer polyshape_chooser(s7_scheme *sc, s7_pointer f, int args, s7_po
 	  (s7_function_choice_is_direct(sc, caddr(expr))))
 	{
 	  s7_function_choice_set_direct(sc, expr);
-	  if (s7_function_returns_temp(caddr(expr))) return(direct_polyshape_2);
+	  if (s7_function_returns_temp(sc, caddr(expr))) return(direct_polyshape_2);
 	  return(indirect_polyshape_2);
 	}
     }
@@ -16816,7 +16816,7 @@ static s7_pointer ssb_am_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 	  (s7_function_choice_is_direct(sc, caddr(expr))))
 	{
 	  s7_function_choice_set_direct(sc, expr);
-	  if (s7_function_returns_temp(caddr(expr))) return(direct_ssb_am_2);
+	  if (s7_function_returns_temp(sc, caddr(expr))) return(direct_ssb_am_2);
 	  return(indirect_ssb_am_2);
 	}
     }
@@ -16857,7 +16857,7 @@ static s7_pointer asymmetric_fm_chooser(s7_scheme *sc, s7_pointer f, int args, s
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_asymmetric_fm_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_asymmetric_fm_2);
       return(indirect_asymmetric_fm_2);
     }
   if ((args == 3) &&
@@ -16886,7 +16886,7 @@ static s7_pointer filtered_comb_chooser(s7_scheme *sc, s7_pointer f, int args, s
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_filtered_comb_2);
+      if (s7_function_returns_temp(sc, caddr(expr))) return(direct_filtered_comb_2);
       return(indirect_filtered_comb_2);
     }
   return(f);
@@ -17126,7 +17126,7 @@ static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 	      if (s7_function_choice(sc, caddr(expr)) == g_mul_env_direct)
 		return(indirect_outa_2_env);
 
-	      if (s7_function_returns_temp(caddr(expr)))
+	      if (s7_function_returns_temp(sc, caddr(expr)))
 		return(indirect_outa_2_temp);
 	      return(indirect_outa_2);
 	    }

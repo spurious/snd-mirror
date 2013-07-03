@@ -1434,7 +1434,7 @@ static s7_pointer vct_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	      (s7_function_choice_is_direct(sc, arg3)))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
-	      if (s7_function_returns_temp(arg3))
+	      if (s7_function_returns_temp(sc, arg3))
 		return(vct_set_temp);
 	      return(vct_set_direct);
 	    }

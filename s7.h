@@ -589,7 +589,7 @@ bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree);
 s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
 void s7_function_set_returns_temp(s7_pointer f);
 void s7_function_set_step_safe(s7_pointer f);
-bool s7_function_returns_temp(s7_pointer f);
+bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f);
 s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr);
 s7_pointer s7_value(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_car_value(s7_scheme *sc, s7_pointer lst);
