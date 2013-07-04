@@ -1060,7 +1060,8 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
       if (enved_max_fft_size < transform_size(ss)) enved_max_fft_size = transform_size(ss);
       if (enved_max_fft_size < active_channel->transform_size) enved_max_fft_size = active_channel->transform_size;
       
-#if USE_MOTIF
+#if USE_MOTIF 
+      /* uses fft_pix etc in chan_info */
       if ((active_channel->transform_graph_type == GRAPH_AS_SONOGRAM) &&
 	  (active_channel->graph_transform_p))
 	{
@@ -1091,7 +1092,34 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 	}
       else display_enved_spectrum(active_channel, make_enved_spectrum(active_channel), gray_ap);
 #else
-      display_enved_spectrum(active_channel, make_enved_spectrum(active_channel), gray_ap);
+      /* for gtk, we need to redisplay the sonogram? 
+       */
+#if CAIRO_HAS_RECORDING_SURFACE && (0)
+      /*
+      fprintf(stderr, "%p %d %d %d\n",
+	      (active_channel->fft_pix),
+	      (active_channel->fft_pix_ready),
+	      (active_channel->transform_graph_type == GRAPH_AS_SONOGRAM),
+	      (active_channel->graph_transform_p));
+      */
+      if ((active_channel->fft_pix) &&
+	  (active_channel->fft_pix_ready) &&
+	  (active_channel->transform_graph_type == GRAPH_AS_SONOGRAM) &&
+	  (active_channel->graph_transform_p))
+	{
+	  cairo_t *lcr, *old_cr;
+	  old_cr = ss->cr;
+	  lcr = gdk_cairo_create(gray_ap->ax->wn);
+	  ss->cr = lcr;
+
+	  cairo_set_source_surface(lcr, active_channel->fft_pix, 0.0, 0.0);
+	  cairo_paint(lcr);
+	  cairo_destroy(lcr);
+	  ss->cr = old_cr;
+	}
+      else 
+#endif
+	display_enved_spectrum(active_channel, make_enved_spectrum(active_channel), gray_ap);
 #endif
     }
   else

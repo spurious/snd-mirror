@@ -2574,6 +2574,9 @@ static void make_sonogram(chan_info *cp)
   sono_info *si;
   static unsigned int *sono_js = NULL;
   static unsigned int sono_js_size = 0;
+#if CAIRO_HAS_RECORDING_SURFACE && (0)
+  cairo_t *lcr = NULL;
+#endif
 
   if (chan_fft_in_progress(cp)) return;
   si = cp->sonogram_data;
@@ -2618,6 +2621,23 @@ static void make_sonogram(chan_info *cp)
 	    }
 	  cp->fft_pix_ready = false;
 	}
+#else
+#if CAIRO_HAS_RECORDING_SURFACE && (0)
+      if (cp->fft_pix_ready)
+	{
+	  if (cp->fft_pix)
+	    cairo_surface_destroy(cp->fft_pix);
+	  cp->fft_pix = NULL;
+	  cp->fft_pix_ready = false;
+	}
+      if ((enved_dialog_is_active()) &&  /*   or we want to see the sonogram as the enved background */
+	  (enved_target(ss) == ENVED_SPECTRUM) &&
+	  (enved_wave_p(ss)))
+	{
+	  cp->fft_pix = cairo_recording_surface_create(CAIRO_CONTENT_COLOR, NULL);
+	  lcr = cairo_create(cp->fft_pix);
+	}
+#endif
 #endif
 
       if (sono_js_size != (unsigned int)color_map_size(ss))
@@ -2723,6 +2743,20 @@ static void make_sonogram(chan_info *cp)
 	    }
 	  for (; i < color_map_size(ss); i++)
 	    if (sono_js[i] != 0) draw_sono_rectangles(ax, i, sono_js[i]);
+
+#if CAIRO_HAS_RECORDING_SURFACE && (0)
+	  if ((cp->fft_pix) &&
+	      (lcr))
+	    {
+	      cairo_t *old_cr;
+	      old_cr = ss->cr;
+	      ss->cr = lcr;
+	      for (i = 0; i < color_map_size(ss); i++)
+		if (sono_js[i] != 0) 
+		  draw_sono_rectangles(ax, i, sono_js[i]);
+	      ss->cr = old_cr;
+	    }
+#endif
 	}
 
 #if USE_MOTIF
@@ -2732,6 +2766,14 @@ static void make_sonogram(chan_info *cp)
 	   (enved_target(ss) == ENVED_SPECTRUM) &&
 	   (enved_wave_p(ss))))
 	save_fft_pix(cp, ax, fwidth, fheight, fap->x_axis_x0, fap->y_axis_y1);
+#else
+#if CAIRO_HAS_RECORDING_SURFACE && (0)
+      if (cp->fft_pix)
+	{
+	  cp->fft_pix_ready = true;
+	  cairo_destroy(lcr);
+	}
+#endif
 #endif
 
       if (cp->printing) ps_reset_color();
@@ -3838,8 +3880,8 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 
 static void draw_sonogram_cursor(chan_info *cp);
 static void draw_graph_cursor(chan_info *cp);
-static void show_inset_graph(chan_info *cp, graphics_context *ax);
 static void show_smpte_label(chan_info *cp, graphics_context *ax);
+static void show_inset_graph(chan_info *cp, graphics_context *cur_ax);
 
 
 static void display_channel_data_with_size(chan_info *cp, 
@@ -6090,6 +6132,7 @@ static void make_point_arrays(inset_graph_info_t *info, int size, vct *v1)
   info->data_size = size;
 }
 #endif
+
 
 
 static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)

@@ -13,7 +13,7 @@
 
 #define WITH_SKETCH 1 /* (!HAVE_GTK_3) see below */
 
-/* PERHAPS: thumbnail graph: save the points? split the idler? g_source_remove if overlap?
+/* if thumbnail graph display is too slow: save the points? split the idler? g_source_remove if overlap?
  *
  * In gtk2, if we have a file selected, then some other process writes a file in the 
  *   current directory (emacs autosaving), the file chooser gets confused as

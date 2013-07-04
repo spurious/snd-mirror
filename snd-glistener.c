@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: now the view menu says "Open listener" when the listener is open
+ */
+
 static GtkWidget *listener_text = NULL;
 static GtkTextBuffer *listener_buffer = NULL;
 
@@ -650,6 +653,9 @@ int listener_height(void)
     return(0);
   hgt = widget_height(SOUND_PANE(ss));
   pos = gtk_paned_get_position(GTK_PANED(SOUND_PANE(ss)));
+  /* even if the listener is active and displayed, this returns pos=0, hgt=1 the first time it's called?!?
+   * PERHAPS: remove view_listener menu item?
+   */
   return(hgt - pos);
 #else
   if ((listener_text) && (widget_is_active(listener_text)))

@@ -857,9 +857,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       gtk_box_pack_start(GTK_BOX(cw[W_bottom_scrollers]), cw[W_sx], true, true, 0);
       set_user_data(G_OBJECT(adjs[W_sx_adj]), (gpointer)cp);
       SG_SIGNAL_CONNECT(adjs[W_sx_adj], "value_changed", sx_valuechanged_callback, cp);
-#if HAVE_GTK_3
-      widget_modify_bg(cw[W_sx], GTK_STATE_NORMAL, ss->position_color);
-#endif
       gtk_widget_show(cw[W_sx]);
       gtk_widget_set_name(cw[W_sx], "sx_slider");
 
@@ -868,9 +865,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       gtk_box_pack_start(GTK_BOX(cw[W_bottom_scrollers]), cw[W_zx], true, true, 0);
       set_user_data(G_OBJECT(adjs[W_zx_adj]), (gpointer)cp);
       SG_SIGNAL_CONNECT(adjs[W_zx_adj], "value_changed", zx_valuechanged_callback, cp);
-#if HAVE_GTK_3
-      widget_modify_bg(cw[W_zx], GTK_STATE_NORMAL, ss->zoom_color);
-#endif
       gtk_widget_set_name(cw[W_zx], "zx_slider");
       gtk_widget_show(cw[W_zx]);
 
@@ -925,9 +919,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 		       2, 0);
       set_user_data(G_OBJECT(adjs[W_zy_adj]), (gpointer)cp);
       SG_SIGNAL_CONNECT(adjs[W_zy_adj], "value_changed", zy_valuechanged_callback, cp);
-#if HAVE_GTK_3
-      widget_modify_bg(cw[W_zy], GTK_STATE_NORMAL, ss->zoom_color);
-#endif
       gtk_widget_show(cw[W_zy]);
       gtk_widget_set_name(cw[W_zy], "zy_slider");
 
@@ -940,9 +931,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 		       2, 0);
       set_user_data(G_OBJECT(adjs[W_sy_adj]), (gpointer)cp);
       SG_SIGNAL_CONNECT(adjs[W_sy_adj], "value_changed", sy_valuechanged_callback, cp);
-#if HAVE_GTK_3
-      widget_modify_bg(cw[W_sy], GTK_STATE_NORMAL, ss->position_color);
-#endif
       gtk_widget_show(cw[W_sy]);
       gtk_widget_set_name(cw[W_sy], "sy_slider");
 
@@ -1303,6 +1291,7 @@ void color_unselected_graphs(color_t color)
 
 void color_chan_components(color_t color, slider_choice_t which_component)
 {
+#if (!HAVE_GTK_3)
   int i;
   for (i = 0; i < ss->max_sounds; i++)
     {
@@ -1321,31 +1310,18 @@ void color_chan_components(color_t color, slider_choice_t which_component)
 		    /* in gtk3 this sets the slider color when dragged, and it looks bad
 		     * in gtk2 it sets the background (the trough, not the slider)
 		     */
-#if (!HAVE_GTK_3)
 		    widget_modify_bg(channel_sx(cp), GTK_STATE_ACTIVE, color);
 		    widget_modify_bg(channel_sy(cp), GTK_STATE_ACTIVE, color);
-#else
-		    /* (gtk_widget_override_background_color ((channel-widgets) 3) GTK_STATE_NORMAL (GDK_RGBA (make-color 1 0 0))) ; sets entire scroller
-		     *    the scrollbar is neither a bin nor a container, so how to get at the slider?
-		    */
-		    /* this sets both the trough and the slider color -- not really what I'd like */
-		    widget_modify_bg(channel_sx(cp), GTK_STATE_NORMAL, color);  
-		    widget_modify_bg(channel_sy(cp), GTK_STATE_NORMAL, color);  
-#endif
 		  }
 		else
 		  {
-#if (!HAVE_GTK_3)
 		    widget_modify_bg(channel_zx(cp), GTK_STATE_ACTIVE, color);
 		    widget_modify_bg(channel_zy(cp), GTK_STATE_ACTIVE, color);
-#else
-		    widget_modify_bg(channel_zx(cp), GTK_STATE_NORMAL, color);  
-		    widget_modify_bg(channel_zy(cp), GTK_STATE_NORMAL, color);  
-#endif
 		  }
 	      }
 	  }
     }
+#endif
 }
 
 
@@ -1431,5 +1407,7 @@ leaves the drawing area (graph pane) of the given channel."
   mouse_leave_graph_hook = XEN_DEFINE_HOOK(S_mouse_leave_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_leave_graph_hook);
 }
 
-/* TODO: apparently in gtk 3.8.n the sliders are invisible until you try to move them.
+/* apparently in gtk 3.8.n the sliders are invisible until you try to move them.
+ *   I can't find any info about this, and can't find any way to fix it. 
+ *   Nothing works.
  */

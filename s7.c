@@ -42968,7 +42968,7 @@ static s7_pointer tree_copy(s7_scheme *sc, s7_pointer tree)
 
 static s7_pointer g_unoptimize(s7_scheme *sc, s7_pointer args)
 {
-  #define H_unoptimize "(unoptimize code) erases all the optimizer info in code"
+  #define H_unoptimize "(unoptimize code) erases some of the optimizer info in code"
   s7_pointer code;
   code = car(args);
 
@@ -42978,11 +42978,6 @@ static s7_pointer g_unoptimize(s7_scheme *sc, s7_pointer args)
   return(s7_unoptimize(sc, tree_copy(sc, code)));
 }
 
-/* PERHAPS: doc/test unoptimize
- */
-
-/* 
- */
 
 
 
@@ -45732,7 +45727,6 @@ static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code)
       if (fcdr(code) == (s7_pointer)g_equal_s_ic)
 	{
 	  set_optimize_data(code, HOP_SAFE_C_SC); /* so the dox init section will pass us the cadr slot */
-	  /* TODO: but now fcdr is bogus! */
 	  return(end_dox_equal_s_ic);
 	}					
       if (fcdr(code) == (s7_pointer)g_or_all_x)
