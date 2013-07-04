@@ -1353,9 +1353,9 @@ void save_fft_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, 
       cp->fft_pix_y0 = y1;
       cp->fft_pix_cutoff = cp->spectrum_end;
       cp->fft_pix = XCreatePixmap(ax->dp,
-				       RootWindowOfScreen(XtScreen(channel_graph(cp))),
-				       fwidth, fheight,
-				       DefaultDepthOfScreen(XtScreen(channel_graph(cp))));
+				  RootWindowOfScreen(XtScreen(channel_graph(cp))),
+				  fwidth, fheight,
+				  DefaultDepthOfScreen(XtScreen(channel_graph(cp))));
     }
   XCopyArea(ax->dp,
 	    ax->wn,

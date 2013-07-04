@@ -2060,7 +2060,12 @@ below the cutoff are displayed in the background color"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_color_cutoff, "a number");
   set_color_cutoff(mus_fclamp(0.0,
 			      XEN_TO_C_DOUBLE(val),
-			      0.25)); 
+#if USE_MOTIF
+			      0.25
+#else
+			      1.0
+#endif
+			      )); 
   return(C_TO_XEN_DOUBLE(color_cutoff(ss)));
 }
 

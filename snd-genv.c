@@ -2,6 +2,36 @@
 
 /* envelope editor and viewer */
 
+/* TODO: the "flt" case shows the normal fft even when we're displaying the sonogram
+ *  perhaps, set up dummy chan_info, draw it via make_sonogram?
+ *  motif side saves the screen, then copies it into the editor
+ *  "recording-surface"?
+cairo_t *cr;
+cr = cairo_create (target);
+cairo_set_source_surface (cr, recording_surface, 0.0, 0.0);
+cairo_paint (cr);
+cairo_destroy (cr);
+
+surface = cairo_recording_surface_create(content, extents[ = NULL])
+...
+cairo_surface_destroy(surface)
+static cairo_t *
+record_create (cairo_t *target)
+{
+    cairo_surface_t *surface;
+    cairo_t *cr;
+
+    surface = cairo_recording_surface_create (cairo_surface_get_content (cairo_get_target (target)), NULL);
+    cr = cairo_create (surface);
+    cairo_surface_destroy (surface);
+
+    return cr;
+}
+
+so fft_pix = surface, set it up and record in snd-chn make sonogram, (free previous I guess)
+draw here
+can it be made to fit enved window?
+ */
 
 static GtkWidget *enved_dialog = NULL;
 static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB = NULL, *resetB, *firB = NULL;

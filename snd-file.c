@@ -2385,9 +2385,12 @@ static char *quoted_filename(const char *filename, bool *new_name)
       name = (char *)calloc(len * 2, sizeof(char));
       for (i = 0, j = 0; i < len; i++)
 	{
-	  if ((filename[i] == ' ') || 
+	  if ((filename[i] == ' ')  || 
 	      (filename[i] == '\'') || 
-	      (filename[i] == '*') || 
+	      (filename[i] == '*')  || 
+	      (filename[i] == '\'') || 
+	      (filename[i] == '(')  || 
+	      (filename[i] == ')')  || 
 	      (filename[i] == '?'))
 	    name[j++] = '\\';
 	  name[j++] = filename[i];

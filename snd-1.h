@@ -269,6 +269,8 @@ typedef struct chan_info {
   GdkCursor *current_cursor;
   slist *edhist_list;
   color_info *combined_data_color;
+  cairo_surface_t *fft_pix;
+  bool fft_pix_ready;
 #endif
 #if USE_MOTIF
   Widget *chan_widgets;

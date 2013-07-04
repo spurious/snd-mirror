@@ -2152,11 +2152,6 @@ void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
 bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_pair(f)) && (is_optimized(f)) && (ecdr(f)) && (returns_temp(ecdr(f))));}
 
 #define c_call(f)                     ((s7_function)(fcdr(f)))
-#if 0
-  #define c_call(f) c_call_1(sc, f)
-  void add_expr(s7_scheme *sc, s7_pointer expr);
-  s7_function c_call_1(s7_scheme *sc, s7_pointer f) {add_expr(sc, f); return(((s7_function)(fcdr(f))));}
-#endif
 #define set_c_function(f, X)          do {set_ecdr(f, X); set_fcdr(f, (s7_pointer)(c_function_call(ecdr(f))));} while (0)
 
 #define is_c_macro(p)                 (type(p) == T_C_MACRO)
@@ -65826,7 +65821,7 @@ s7_scheme *s7_init(void)
  *   (xor a b) -> a if a & not b, b if b & not a, #f otherwise -- not quite the same as or because if a and b, we get #f (and no short-circuit)
  */
 
-/* ideally we'd replace strcpy with strcopy throughout Snd, and strcat with strlcat or some equivalent
+/* ideally we'd replace strcpy with strcopy throughout Snd, and strcat with strappend or some equivalent
  *   also openbsd audio is broken in Snd -- see aucat.c I guess.
  */
 

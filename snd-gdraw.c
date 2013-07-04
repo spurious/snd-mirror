@@ -583,18 +583,25 @@ void set_color_map(int val)
 }
 
 
+#define CUTOFF_BASE 2.5
 static void cutoff_color_callback(GtkAdjustment *adj, gpointer context)
 {
-  in_set_color_cutoff(ADJUSTMENT_VALUE(adj));
+  in_set_color_cutoff(pow(ADJUSTMENT_VALUE(adj), CUTOFF_BASE));
   check_color_hook();
   for_each_chan(update_graph_setting_fft_changed);
+}
+
+
+static gchar* scale_pow_double_format_callback(GtkScale *w, gdouble val, gpointer data)
+{
+  return(g_strdup_printf(" %.*f ", gtk_scale_get_digits(w), pow(val, CUTOFF_BASE)));   /* not %g! */
 }
 
 
 void set_color_cutoff(mus_float_t val)
 {
   in_set_color_cutoff(val);
-  if (ccd_dialog) ADJUSTMENT_SET_VALUE(ccd_cutoff_adj, val);
+  if (ccd_dialog) ADJUSTMENT_SET_VALUE(ccd_cutoff_adj, pow(val, 1.0 / CUTOFF_BASE));
   check_color_hook();
   if (!(ss->graph_hook_active)) for_each_chan(update_graph_setting_fft_changed);
 }
@@ -1045,11 +1052,11 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       ccd_cutoff = gtk_hscale_new(GTK_ADJUSTMENT(ccd_cutoff_adj));
       UNSET_CAN_FOCUS(ccd_cutoff);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(ccd_cutoff)), GTK_UPDATE_CONTINUOUS);
-      gtk_scale_set_digits(GTK_SCALE(ccd_cutoff), 3);
+      gtk_scale_set_digits(GTK_SCALE(ccd_cutoff), 4);
       gtk_scale_set_value_pos(GTK_SCALE(ccd_cutoff), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(ccd_cutoff), true);
       SG_SIGNAL_CONNECT(ccd_cutoff_adj, "value_changed", cutoff_color_callback, NULL);
-      SG_SIGNAL_CONNECT(ccd_cutoff, "format-value", scale_double_format_callback, NULL);
+      SG_SIGNAL_CONNECT(ccd_cutoff, "format-value", scale_pow_double_format_callback, NULL);
       gtk_box_pack_start(GTK_BOX(cutoff_box), ccd_cutoff, true, true, 0);
       gtk_widget_show(ccd_cutoff);
 
