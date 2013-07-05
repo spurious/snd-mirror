@@ -246,6 +246,7 @@ indented and on a sort of brownish background.
       <li><a href="#replrescue">begin_hook to the rescue!</a>
       <li><a href="#glistener">glistener.c</a>
       <li><a href="#gsl">GSL</a>
+      <li><a href="#gdb">gdb</a>
   </ul>
 
   <li class="li_header"><a href="#s7examples">s7 examples</a>
@@ -9937,6 +9938,62 @@ would have to know how the C stuff fits together.  The other libraries
 work out better in this regard because they don't expose internal structs
 and types unnecessarily.
 </p>
+
+
+
+
+<div class="header" id="gdb"><h4>gdb</h4></div>
+
+<p>It is possible to make a mistake while writing C code.
+I switched from Common Lisp to Scheme a long time ago
+partly because it was so painful to debug FFI troubles in Common Lisp, and I
+chose Guile partly because at that time it appeared that gdb would have native support
+for it.  As far as I know it is still impossible to debug CL FFI troubles, 20 years later!
+And gdb apparently has replaced Guile with Python.  Anyway, say you have hit a segfault
+and find yourself staring at a stackful of opaque pointers.  Print statements are your
+friend, of course, and at the gdb command level, the main one in this context is
+s7_object_to_c_string.  Here are some commands (intended for your .gdbinit file)
+that can speed up the process.  They assume the s7_scheme pointer is named "sc".
+</p>
+
+<pre class="indented">
+define s7print
+print s7_object_to_c_string(sc, $arg0)
+end
+document s7print
+interpret the argument as an s7 value and display it
+end
+
+define s7eval
+print s7_object_to_c_string(sc, s7_eval_c_string(sc, $arg0))
+end
+document s7eval
+eval the argument (a string)
+end
+
+define s7cur_code
+print s7_object_to_c_string(sc, sc-&gt;cur_code)
+end
+# sc-&gt;cur_code can be confused by the optimizer, but it is
+#   often correct.
+document s7cur_code
+show the expression s7 thinks it is currently evaluating
+end
+
+define s7error
+print s7_object_to_c_string(sc, s7_environment_to_list(sc, sc-&gt;error_env))
+end
+document s7error
+display the current error environment
+end
+
+define s7stack
+print s7_object_to_c_string(sc, s7_stacktrace(sc))
+end
+document s7stack
+display the currently active local environments
+end
+</pre>
 
 <br><br>
 

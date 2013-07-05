@@ -2568,7 +2568,7 @@ static int skew_color(mus_float_t x)
 }
 
 
-static void make_sonogram(chan_info *cp)
+void make_sonogram(chan_info *cp)
 { 
   #define SAVE_FFT_SIZE 4096
   sono_info *si;

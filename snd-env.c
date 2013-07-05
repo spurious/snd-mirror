@@ -1118,6 +1118,18 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 	  ss->cr = old_cr;
 	}
       else 
+#else
+	/* this is not so slow as to be an annoyance, so maybe it's ok */
+      if ((active_channel->transform_graph_type == GRAPH_AS_SONOGRAM) &&
+	  (active_channel->graph_transform_p))
+	{
+	  axis_info *old_ap;
+	  old_ap = active_channel->axis;
+	  active_channel->axis = gray_ap;
+	  make_sonogram(active_channel);
+	  active_channel->axis = old_ap;
+	}
+      else
 #endif
 	display_enved_spectrum(active_channel, make_enved_spectrum(active_channel), gray_ap);
 #endif

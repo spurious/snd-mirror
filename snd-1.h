@@ -271,9 +271,10 @@ typedef struct chan_info {
   color_info *combined_data_color;
 #if CAIRO_HAS_RECORDING_SURFACE && (0)
   cairo_surface_t *fft_pix;
-#endif
   bool fft_pix_ready;
 #endif
+#endif
+
 #if USE_MOTIF
   Widget *chan_widgets;
   Pixmap fft_pix;
@@ -1400,6 +1401,7 @@ void set_show_mix_waveforms(bool val);
 void clear_inset_graph(chan_info *cp);
 void free_inset_graph(chan_info *cp);
 void draw_inset_line_cursor(chan_info *cp, graphics_context *ax);
+void make_sonogram(chan_info *cp);
 
 void g_init_chn(void);
 XEN make_graph_data(chan_info *cp, int edit_pos, mus_long_t losamp, mus_long_t hisamp);
