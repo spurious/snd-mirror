@@ -4419,34 +4419,6 @@ static void erase_cursor(chan_info *cp)
 #if USE_MOTIF
   draw_cursor(cp);
 #endif
-#if USE_GTK
-  {
-    /* SOMEDAY: in gtk, cursor redisplay needs work -- save the actual points? (it's ok if dots)
-     */
-    color_t old_cursor_color;
-    int ccy;
-
-    old_cursor_color = ss->cursor_color;
-    cp->cursor_size++;
-    ss->cursor_color = cp->ax->gc->bg_color;
-
-    draw_cursor(cp);
-
-    ss->cursor_color = old_cursor_color;
-    cp->cursor_size--;
-
-    /* we draw at (cp->cx, cp->cy), so presumably... */
-    if (cp->just_zero)
-      ccy = cp->old_cy;
-    else ccy = cp->cy;
-
-    /* make_partial_graph doesn't quite do the right thing here.  We may have to
-     *    save the actual points around the cursor and redraw them by hand.
-     */
-    draw_dot(cp->ax, cp->cx + 0.5, ccy + 0.5, 1);
-    /* this isn't perfect (it slightly erases any lines it contacts), but it's ok */
-  }
-#endif
 }
 
 
@@ -4607,8 +4579,13 @@ void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
 	{
 	  if (cp->cursor_on) 
 	    {
+#if USE_MOTIF
 	      draw_graph_cursor(cp);
 	      draw_sonogram_cursor(cp);
+#endif
+#if USE_GTK
+	      update_graph(cp);
+#endif
 	    }
 	}
     }

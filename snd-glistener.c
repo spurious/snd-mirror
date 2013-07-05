@@ -1,7 +1,5 @@
 #include "snd.h"
-
-/* TODO: now the view menu says "Open listener" when the listener is open
- */
+#include "snd-menu.h"
 
 static GtkWidget *listener_text = NULL;
 static GtkTextBuffer *listener_buffer = NULL;
@@ -614,12 +612,15 @@ void color_listener_text(color_info *pix)
 
 void handle_listener(bool open)
 {
-  if ((open) && (!listener_text))
+  if (!open) return;
+  if (!listener_text)
     {
       make_listener_widget(100);
 
       color_listener(ss->listener_color);
       color_listener_text(ss->listener_text_color);
+
+      gtk_widget_hide(view_listener_menu);
     }
 
   if ((SOUND_PANE(ss)) && /* might be run -separate with no sound open */
@@ -627,14 +628,10 @@ void handle_listener(bool open)
     {
       int hgt;
       hgt = widget_height(SOUND_PANE(ss));
-      if (open)
-	{
-	  if (hgt > 100) /* we can get here before the sound window has opened, but with one pending.
-			  *   the position is in terms of current size, which is useless in this case.
-			  */
-	    gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), (gint)(hgt * .75));
-	}
-      else gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), hgt);
+      if (hgt > 100) /* we can get here before the sound window has opened, but with one pending.
+		      *   the position is in terms of current size, which is useless in this case.
+		      */
+	gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), (gint)(hgt * .75));
     }
 }
 
@@ -647,29 +644,17 @@ bool listener_exists(void)
 
 int listener_height(void) 
 {
-#if HAVE_GTK_3
-  int hgt, pos;
   if (!listener_text) 
     return(0);
-  hgt = widget_height(SOUND_PANE(ss));
-  pos = gtk_paned_get_position(GTK_PANED(SOUND_PANE(ss)));
-  /* even if the listener is active and displayed, this returns pos=0, hgt=1 the first time it's called?!?
-   * PERHAPS: remove view_listener menu item?
-   */
-  return(hgt - pos);
-#else
-  if ((listener_text) && (widget_is_active(listener_text)))
-    return(widget_height(listener_text));
-  else return(0);
-#endif
+  return(100);
 }
 
 
 int listener_width(void) 
 {
-  if ((listener_text) && (widget_is_active(listener_text)))
-    return(widget_width(listener_text)); 
-  else return(0);
+  if (!listener_text)
+    return(0);
+  return(500);
 }
 
 

@@ -9947,9 +9947,9 @@ and types unnecessarily.
 <p>It is possible to make a mistake while writing C code.
 I switched from Common Lisp to Scheme a long time ago
 partly because it was so painful to debug FFI troubles in Common Lisp, and I
-chose Guile partly because at that time it appeared that gdb would have native support
+chose Guile at that time partly because I thought gdb would have native support
 for it.  As far as I know it is still impossible to debug CL FFI troubles, 20 years later!
-And gdb apparently has replaced Guile with Python.  Anyway, say you have hit a segfault
+And in gdb Python has muscled Guile aside.  Anyway, say you have hit a segfault
 and find yourself staring at a stackful of opaque pointers.  Print statements are your
 friend, of course, and at the gdb command level, the main one in this context is
 s7_object_to_c_string.  Here are some commands (intended for your .gdbinit file)

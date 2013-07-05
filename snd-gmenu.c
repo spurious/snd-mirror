@@ -194,8 +194,8 @@ static void view_inset_callback(GtkWidget *w, gpointer info)
 }
 #endif
 
-#if HAVE_EXTENSION_LANGUAGE
-static void view_listener_callback(GtkWidget *w, gpointer info) {handle_listener(!(listener_is_visible()));}
+#if HAVE_EXTENSION_LANGUAGE 
+static void view_listener_callback(GtkWidget *w, gpointer info) {handle_listener(true);}
 #endif
 
 static void view_mix_dialog_callback(GtkWidget *w, gpointer info) {make_mix_dialog();}

@@ -117,7 +117,7 @@ void view_menu_update(void)
   set_sensitive(view_all_axes_unlabelled_menu,    show_axes(ss) != SHOW_ALL_AXES_UNLABELLED);
   set_sensitive(view_bare_x_axis_menu,            show_axes(ss) != SHOW_BARE_X_AXIS);
 
-#if HAVE_EXTENSION_LANGUAGE
+#if HAVE_EXTENSION_LANGUAGE && USE_MOTIF
   /* make sure listener menu option label correctly reflects current listener state */
   set_menu_label(view_listener_menu, (listener_is_visible()) ? "Hide listener" : "Show listener");
 #endif
