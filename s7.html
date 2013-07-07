@@ -6319,7 +6319,7 @@ the current environment, so defines happen in the enclosing environment.
 ;;   (imagine what will happen when r8rs stumbles on the zoo of continued fraction algorithms!)
 ;;
 ;; get-environment-variable is a bad name: "environment" is already in use, and "get-"
-;;   in any name should raise a red flag.
+;;   in any name should raise a red flag.  What about "home-environment"?
 ;;   if <a href="#cload">cload.scm</a> is loaded:
 (define get-environment-variable (let () (define-c-function '(char* getenv (char*))) getenv))
 
@@ -6514,6 +6514,7 @@ The examples that follow show:
 <li><a href="#replrescue">begin_hook to the rescue!</a>
 <li><a href="#glistener">glistener.c</a>
 <li><a href="#gsl">GSL</a>
+<li><a href="#gdb">gdb</a>
 </ul>
 
 

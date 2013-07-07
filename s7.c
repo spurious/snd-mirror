@@ -1805,7 +1805,8 @@ static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
 
 static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int line) 
 {
-  if (is_global(symbol)) fprintf(stderr, "\n%s%s%s in %s\n", BOLD_TEXT, DISPLAY(symbol), UNBOLD_TEXT, DISPLAY_80(sc->cur_code));
+  if (is_global(symbol)) 
+    fprintf(stderr, "%s[%d]: %s%s%s in %s\n", func, line, BOLD_TEXT, DISPLAY(symbol), UNBOLD_TEXT, DISPLAY_80(sc->cur_code));
   typeflag(symbol) = (typeflag(symbol) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC));
 }
 #define set_local(Symbol) set_local_1(sc, Symbol, __func__, __LINE__)
@@ -57934,6 +57935,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_LET_O_P:
+      /* hooboy, both fcdrs here can be NULL!  But it requires a grim determination to screw up
+       *   no matter what.  A macro that defines two functions in for-each, each of which shares code,
+       *   and one is called before the other gets to be optimized.  Has this ever happened
+       *   in real life?  Call tree-copy and move on.
+       */
       push_stack(sc, OP_LET_O3, fcdr(cdr(sc->code)), cadr(sc->code));
       sc->code = fcdr(sc->code);
       goto EVAL; 
@@ -65811,8 +65817,16 @@ s7_scheme *s7_init(void)
  */
 
 /* add empty? (or nil? or generic null? or zero-length?) 
- *              typeq? -- but methods make this less than ideal (env-as-vector -- but they can override!)
+ *   typeq? 
  *   (xor a b) -> a if a & not b, b if b & not a, #f otherwise -- not quite the same as or because if a and b, we get #f (and no short-circuit)
+ * home-environment for the $HOME environment variables?
+ *   but the variables themselves are strings?  HOME? and windows?
+ *
+ *   envs could be managed externally as data-bases (redis etc) but we need a way to serialize all types (and GC?)
+ *   each value as raw bytes, but pointers are matched when read, so 
+ *   '(1 2) is #x123[pair:1 #x321] and #x321[pair:2] where the reader fixes up the refs
+ *   then checkpt: all s7_scheme state (heap/stack/etc) and globals, each cell=48 bytes, so these are potentially huge files
+ *     and how to handle permanently alloc'd stuff?  Ideally we'd read/write everything.
  */
 
 /* ideally we'd replace strcpy with strcopy throughout Snd, and strcat with strappend or some equivalent
@@ -65820,5 +65834,12 @@ s7_scheme *s7_init(void)
  */
 
 /* names like #<closure> and #<macro> are useless -- could we include at least the arglist? or body truncated?
+ */
+
+/* TODO: cload -> environment (library) wrapping up everything in a shared library
+ *    we need a database of lib times so we can just load an existing linkage
+ *    perhaps swig has the header data in a readable form?
+ * then getenv is treated as part of a library (like delete-file also) and is not a built-in
+ *   also char-position = tie into libc?
  */
 
