@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 22
-#define SNDLIB_REVISION 1
-#define SNDLIB_DATE "16-July-12"
+#define SNDLIB_REVISION 3
+#define SNDLIB_DATE "7-Jul-13"
 
 #include <mus-config.h>
 

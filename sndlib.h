@@ -1,9 +1,10 @@
+/* sndlib.h.  Generated from sndlib.h.in by configure.  */
 #ifndef SNDLIB_H
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 22
-#define SNDLIB_REVISION 2
-#define SNDLIB_DATE "23-Nov-12"
+#define SNDLIB_REVISION 3
+#define SNDLIB_DATE "7-Jul-13"
 
 
 #ifndef mus_float_t
