@@ -1044,10 +1044,10 @@ void snd_load_init_file(bool no_global, bool no_init)
 #endif
 
 #define SND_INIT_FILE_ENVIRONMENT_NAME "SND_INIT_FILE"
-#if (!HAVE_WINDOZE)
-  #define INIT_FILE_NAME "~/.snd"
-#else
+#if (defined(_MSC_VER) || __CYGWIN__)
   #define INIT_FILE_NAME "snd-init"
+#else
+  #define INIT_FILE_NAME "~/.snd"
 #endif
 
   #define SND_CONF "/etc/snd.conf"

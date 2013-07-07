@@ -129,23 +129,6 @@ XEN c_to_xen_off_t(off_t val)
 }
 
 
-int64_t xen_to_c_int64_t_or_else(XEN obj, int64_t fallback)
-{
-  if (XEN_LONG_LONG_P(obj))
-    return(XEN_TO_C_LONG_LONG(obj));
-  else
-    if (XEN_NUMBER_P(obj))
-      return((int64_t)XEN_TO_C_DOUBLE(obj));
-  return(fallback);
-}
-
-
-int64_t xen_to_c_int64_t(XEN obj)
-{
-  return(XEN_TO_C_LONG_LONG(obj));
-}
-
-
 int xen_to_c_int_or_else(XEN obj, int fallback)
 {
   /* don't want errors about floats with non-zero fractions etc */
@@ -1359,20 +1342,6 @@ XEN c_to_xen_off_t(off_t obj)
 }
 
 
-int64_t xen_to_c_int64_t_or_else(XEN obj, int64_t fallback)
-{
-  if (XEN_NUMBER_P(obj))
-    return(fth_long_long_ref(obj));
-  return(fallback);
-}
-
-
-int64_t xen_to_c_int64_t(XEN obj)
-{
-  return(fth_long_long_ref(obj));
-}
-
-
 static ficlWord *snd_exit_xt; 
 
 static void fth_snd_exit(int n) 
@@ -1665,9 +1634,8 @@ static XEN g_file_exists_p(XEN name)
 
 static bool directory_p(const char *filename)
 {
-#if HAVE_WINDOZE
+#if (defined(_MSC_VER) || __CYGWIN__)
   return(false);
-
 #else
   /* from snd-file.c */
 #ifdef S_ISDIR
@@ -1990,18 +1958,6 @@ off_t xen_to_c_off_t(XEN obj)
 XEN c_to_xen_off_t(off_t val)
 {
   return(XEN_ZERO);
-}
-
-
-int64_t xen_to_c_int64_t_or_else(XEN obj, int64_t fallback)
-{
-  return(0);
-}
-
-
-int64_t xen_to_c_int64_t(XEN obj)
-{
-  return(0);
 }
 
 

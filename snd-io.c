@@ -88,7 +88,7 @@ int snd_open(const char *filename, int flags, mode_t mode)
   ss->local_errno = 0;
   ss->local_open_errno = 0;
   errno = 0;
-#if HAVE_WINDOZE
+#if (defined(_MSC_VER) || __CYGWIN__)
   result = open(filename, flags);
 #else
   result = open(filename, flags, mode);

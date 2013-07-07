@@ -33,7 +33,7 @@
 
 #define POSITION_SLIDER_WIDTH 13
 #define ZOOM_SLIDER_WIDTH 10
-#if (!HAVE_LINUX)
+#if (!__linux__) && (!_LINUX__)
   #define TOGGLE_SIZE 0
 #else
   #define TOGGLE_SIZE 15

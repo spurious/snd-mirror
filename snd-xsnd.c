@@ -709,7 +709,7 @@ void set_filter_text(snd_info *sp, const char *str)
     XmTextSetString(FILTER_COEFFS_TEXT(sp), (char *)str);
 }
 
-#if HAVE_OSX
+#ifdef __APPLE__
 static int press_x, press_y;
 #endif
 
@@ -719,7 +719,7 @@ static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *eve
   snd_info *sp = (snd_info *)context;
   XMotionEvent *ev = (XMotionEvent *)event;
   env_editor *edp;
-#if HAVE_OSX
+#ifdef __APPLE__
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
   edp = sp->flt;
@@ -736,7 +736,7 @@ static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *even
   XButtonEvent *ev = (XButtonEvent *)event;
   env_editor *edp;
   if (!(sp->filter_control_envelope)) return;
-#if HAVE_OSX
+#ifdef __APPLE__
   press_x = ev->x;
   press_y = ev->y;
 #endif

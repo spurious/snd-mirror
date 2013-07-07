@@ -5371,7 +5371,7 @@ static int fft_axis_start = 0;
 #endif
 static chan_info *dragged_cp;
 
-#if HAVE_OSX
+#ifdef __APPLE__
 static int press_x, press_y;
 #endif
 
@@ -5439,7 +5439,7 @@ void graph_button_press_callback(chan_info *cp, void *ev, int x, int y, int key_
     }
 
   mouse_down_time = time;
-#if HAVE_OSX
+#ifdef __APPLE__
   press_x = x;
   press_y = y;
 #endif
@@ -5754,7 +5754,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
   mouse_time = time;
   if ((mouse_time - mouse_down_time) < ss->click_time) return;
 
-#if HAVE_OSX
+#ifdef __APPLE__
   /* on the Mac, we seem to get motion events even without any motion, and the times seem very short */
   if ((x == press_x) && (y == press_y)) return;
 #endif

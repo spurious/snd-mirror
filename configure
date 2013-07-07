@@ -1925,82 +1925,6 @@ $as_echo "$ac_res" >&6; }
 
 } # ac_fn_c_check_type
 
-# ac_fn_c_find_intX_t LINENO BITS VAR
-# -----------------------------------
-# Finds a signed integer type with width BITS, setting cache variable VAR
-# accordingly.
-ac_fn_c_find_intX_t ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for int$2_t" >&5
-$as_echo_n "checking for int$2_t... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  eval "$3=no"
-     # Order is important - never check a type that is potentially smaller
-     # than half of the expected target width.
-     for ac_type in int$2_t 'int' 'long int' \
-	 'long long int' 'short int' 'signed char'; do
-       cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$ac_includes_default
-	     enum { N = $2 / 2 - 1 };
-int
-main ()
-{
-static int test_array [1 - 2 * !(0 < ($ac_type) ((((($ac_type) 1 << N) << N) - 1) * 2 + 1))];
-test_array [0] = 0;
-return test_array [0];
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$ac_includes_default
-	        enum { N = $2 / 2 - 1 };
-int
-main ()
-{
-static int test_array [1 - 2 * !(($ac_type) ((((($ac_type) 1 << N) << N) - 1) * 2 + 1)
-		 < ($ac_type) ((((($ac_type) 1 << N) << N) - 1) * 2 + 2))];
-test_array [0] = 0;
-return test_array [0];
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-else
-  case $ac_type in #(
-  int$2_t) :
-    eval "$3=yes" ;; #(
-  *) :
-    eval "$3=\$ac_type" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-       if eval test \"x\$"$3"\" = x"no"; then :
-
-else
-  break
-fi
-     done
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_find_intX_t
-
 # ac_fn_c_compute_int LINENO EXPR VAR INCLUDES
 # --------------------------------------------
 # Tries to find the compile-time value of EXPR in a program that includes
@@ -4541,17 +4465,6 @@ _ACEOF
 
 fi
 
-ac_fn_c_find_intX_t "$LINENO" "64" "ac_cv_c_int64_t"
-case $ac_cv_c_int64_t in #(
-  no|yes) ;; #(
-  *)
-
-cat >>confdefs.h <<_ACEOF
-#define int64_t $ac_cv_c_int64_t
-_ACEOF
-;;
-esac
-
 
 # new form of this macro from autoconf 2.62 makes the Mac case a real headache
 #  so this is a call on the old form
@@ -5131,39 +5044,6 @@ _ACEOF
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
 # declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
 # This bug is HP SR number 8606223364.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of int64_t" >&5
-$as_echo_n "checking size of int64_t... " >&6; }
-if ${ac_cv_sizeof_int64_t+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (int64_t))" "ac_cv_sizeof_int64_t"        "$ac_includes_default"; then :
-
-else
-  if test "$ac_cv_type_int64_t" = yes; then
-     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error 77 "cannot compute sizeof (int64_t)
-See \`config.log' for more details" "$LINENO" 5; }
-   else
-     ac_cv_sizeof_int64_t=0
-   fi
-fi
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_int64_t" >&5
-$as_echo "$ac_cv_sizeof_int64_t" >&6; }
-
-
-
-cat >>confdefs.h <<_ACEOF
-#define SIZEOF_INT64_T $ac_cv_sizeof_int64_t
-_ACEOF
-
-
-# The cast to long int works around a bug in the HP C Compiler
-# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
-# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
-# This bug is HP SR number 8606223364.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking size of ssize_t" >&5
 $as_echo_n "checking size of ssize_t... " >&6; }
 if ${ac_cv_sizeof_ssize_t+:} false; then :
@@ -5673,38 +5553,6 @@ $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-
-
-case "$host" in
-    *-*-linux*)
-	$as_echo "#define HAVE_LINUX 1" >>confdefs.h
-
-	;;
-    *-*-sunos4*)
-        $as_echo "#define HAVE_SUN 1" >>confdefs.h
-
-        ;;
-    *-*-solaris*)
-	$as_echo "#define HAVE_SUN 1" >>confdefs.h
-
-        ;;
-    *-*-netbsd*)
-        $as_echo "#define HAVE_NETBSD 1" >>confdefs.h
-
-        ;;
-    *-*-cygwin*)
-        $as_echo "#define HAVE_WINDOZE 1" >>confdefs.h
-
-	;;
-    *-*-mingw*)
-	$as_echo "#define HAVE_WINDOZE 1" >>confdefs.h
-
-	;;
-    *-apple-*)
-        $as_echo "#define HAVE_OSX 1" >>confdefs.h
-
-	;;
-esac
 
 
 

@@ -65486,7 +65486,7 @@ s7_scheme *s7_init(void)
 #ifdef __APPLE__
   s7_provide(sc, "osx");
 #endif
-#ifdef __linux__
+#ifdef __linux__ || __LINUX__
   s7_provide(sc, "linux");
 #endif
 #ifdef __OpenBSD__

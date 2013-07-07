@@ -665,7 +665,7 @@ int mus_file_set_chans(int tfd, int chans)
 int mus_file_open_read(const char *arg) 
 {
   int fd;
-#if HAVE_WINDOZE
+#if (defined(_MSC_VER) || __CYGWIN__)
   fd = OPEN(arg, O_RDONLY | O_BINARY, 0);
 #else
   fd = OPEN(arg, O_RDONLY, 0);
@@ -696,7 +696,7 @@ bool mus_file_probe(const char *arg)
 int mus_file_open_write(const char *arg)
 {
   int fd;
-#if HAVE_WINDOZE
+#if (defined(_MSC_VER) || __CYGWIN__)
   if ((fd = OPEN(arg, O_RDWR | O_BINARY, 0)) == -1)
     fd = CREAT(arg, S_IREAD | S_IWRITE);               /* 0x0100 | 0x0080 */
 #else
@@ -710,7 +710,7 @@ int mus_file_open_write(const char *arg)
 
 int mus_file_create(const char *arg) 
 { 
-#if HAVE_WINDOZE 
+#if (defined(_MSC_VER ) || __CYGWIN__)
   return(CREAT(arg, S_IREAD | S_IWRITE)); 
 #else 
   return(CREAT(arg, 0666)); 
@@ -721,7 +721,7 @@ int mus_file_create(const char *arg)
 int mus_file_reopen_write(const char *arg)
 {
   int fd;
-#if HAVE_WINDOZE
+#if (defined(_MSC_VER) || __CYGWIN__)
   fd = OPEN(arg, O_RDWR | O_BINARY, 0);
 #else
   fd = OPEN(arg, O_RDWR, 0);
@@ -2007,7 +2007,7 @@ void mus_reset_io_c(void)
 }
 
 
-#if !(defined(HAVE_WINDOZE) && (!(defined(__CYGWIN__))))
+#if !(defined(_MSC_VER) && (!(defined(__CYGWIN__))))
 static int sndlib_strlen(const char *str)
 {
   /* strlen(NULL) -> seg fault! */
@@ -2039,7 +2039,7 @@ char *mus_getcwd(void)
     {
       if (pwd) free(pwd);
       pwd = (char *)calloc(i, sizeof(char));
-#ifdef _MSC_VER
+#if (defined(_MSC_VER) || __CYGWIN__)
       res = _getcwd(pwd, i);
 #else
       res = getcwd(pwd, i);
@@ -2055,7 +2055,7 @@ char *mus_getcwd(void)
 char *mus_expand_filename(const char *filename)
 {
   /* fill out under-specified library pathnames etc */
-#if defined(HAVE_WINDOZE) && (!(defined(__CYGWIN__)))
+#if defined(_MSC_VER) && (!(defined(__CYGWIN__)))
   return(mus_strdup(filename));
 #else
   char *file_name_buf = NULL;

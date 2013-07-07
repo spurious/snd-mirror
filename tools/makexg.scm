@@ -2405,7 +2405,7 @@
 
 (hey "#define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))~%")
 (hey "#define XLI(a, b) ((int)XEN_TO_C_INT(XEN_LIST_REF(a, b)))~%")
-(hey "#define XLL(a, b) (XEN_TO_C_INT64_T(XEN_LIST_REF(a, b)))~%")
+(hey "#define XLL(a, b) (XEN_TO_C_OFF_T(XEN_LIST_REF(a, b)))~%")
 (hey "#define XLG(a, b) XEN_TO_C_GType(XEN_LIST_REF(a, b))~%")
 (hey "#define XLT(a, b) XEN_TO_C_GtkTextTag_(XEN_LIST_REF(a, b))~%")
 (hey "#define XLA(a, b) ((XEN_INTEGER_P(XEN_LIST_REF(a, b))) ? ((gpointer)XLL(a, b)) : ((XEN_STRING_P(XEN_LIST_REF(a, b))) ? ((gpointer)XLS(a, b)) : ((gpointer)XLG(a, b))))~%~%")

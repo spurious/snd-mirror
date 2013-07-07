@@ -160,7 +160,6 @@ AC_TYPE_SIZE_T
 # AC_TYPE_SSIZE_T -- in the docs, but apparently doesn't actually work
 AC_CHECK_TYPE(ssize_t, int)
 AC_TYPE_PID_T
-AC_TYPE_INT64_T
 
 # new form of this macro from autoconf 2.62 makes the Mac case a real headache
 #  so this is a call on the old form
@@ -175,7 +174,6 @@ AC_CHECK_SIZEOF(unsigned long)
 AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(int)
-AC_CHECK_SIZEOF(int64_t)
 AC_CHECK_SIZEOF(ssize_t)
 
 AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline difftime gettimeofday)
@@ -227,31 +225,6 @@ AC_LINK_IFELSE(
    AC_MSG_RESULT(yes)
   ],
   [AC_MSG_RESULT(no)])
-
-
-case "$host" in
-    *-*-linux*) 
-	AC_DEFINE(HAVE_LINUX)
-	;;
-    *-*-sunos4*) 
-        AC_DEFINE(HAVE_SUN)
-        ;;
-    *-*-solaris*) 
-	AC_DEFINE(HAVE_SUN)
-        ;;
-    *-*-netbsd*) 
-        AC_DEFINE(HAVE_NETBSD)
-        ;;
-    *-*-cygwin*)
-        AC_DEFINE(HAVE_WINDOZE)
-	;;
-    *-*-mingw*)
-	AC_DEFINE(HAVE_WINDOZE)
-	;;
-    *-apple-*)
-        AC_DEFINE(HAVE_OSX)
-	;;
-esac
 
 
 

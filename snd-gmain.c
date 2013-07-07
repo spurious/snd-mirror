@@ -441,7 +441,7 @@ void snd_doit(int argc, char **argv)
   gtk_init(&argc, &argv);
 
 #if (!HAVE_GTK_3)
-#ifndef HAVE_OSX
+#if (!__APPLE__)
   gdk_set_locale();
 #endif
 #endif

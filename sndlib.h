@@ -1,4 +1,3 @@
-/* sndlib.h.  Generated from sndlib.h.in by configure.  */
 #ifndef SNDLIB_H
 #define SNDLIB_H
 
@@ -36,7 +35,11 @@
 #endif
 
 
-#if HAVE_WINDOZE
+#if defined(__sun) && defined(__SVR4)
+  #define HAVE_SUN 1
+#endif
+
+#ifdef _MSC_VER
   /* I got these from gmp.h */
   #if defined (__GNUC__)
     #define MUS_EXPORT  __declspec(__dllexport__)

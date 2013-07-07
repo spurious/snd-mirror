@@ -31,7 +31,7 @@
 #define mus_long_t long long int
 #endif
 
-#if HAVE_WINDOZE
+#ifdef _MSC_VER
   /* I got these from gmp.h */
   #if defined (__GNUC__)
     #define MUS_EXPORT  __declspec(__dllexport__)
@@ -196,7 +196,11 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 /* keep this list in sync with mus_error_names in sound.c and snd-test.scm|rb */
 
 
-#if HAVE_WINDOZE
+#if defined(__sun) && defined(__SVR4)
+  #define HAVE_SUN 1
+#endif
+
+#ifdef _MSC_VER
   #ifdef FOPEN
     #undef FOPEN
   #endif

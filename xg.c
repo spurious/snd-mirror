@@ -1041,7 +1041,7 @@ XM_TYPE_NO_P_2(cairo_region_overlap_t, cairo_region_overlap_t)
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
 #define XLI(a, b) ((int)XEN_TO_C_INT(XEN_LIST_REF(a, b)))
-#define XLL(a, b) (XEN_TO_C_INT64_T(XEN_LIST_REF(a, b)))
+#define XLL(a, b) (XEN_TO_C_OFF_T(XEN_LIST_REF(a, b)))
 #define XLG(a, b) XEN_TO_C_GType(XEN_LIST_REF(a, b))
 #define XLT(a, b) XEN_TO_C_GtkTextTag_(XEN_LIST_REF(a, b))
 #define XLA(a, b) ((XEN_INTEGER_P(XEN_LIST_REF(a, b))) ? ((gpointer)XLL(a, b)) : ((XEN_STRING_P(XEN_LIST_REF(a, b))) ? ((gpointer)XLS(a, b)) : ((gpointer)XLG(a, b))))
@@ -29208,14 +29208,6 @@ static XEN gxg_gtk_container_get_focus_hadjustment(XEN container)
   return(C_TO_XEN_GtkAdjustment_(gtk_container_get_focus_hadjustment(XEN_TO_C_GtkContainer_(container))));
 }
 
-static XEN gxg_gtk_container_resize_children(XEN container)
-{
-  #define H_gtk_container_resize_children "void gtk_container_resize_children(GtkContainer* container)"
-  XEN_ASSERT_TYPE(XEN_GtkContainer__P(container), container, 1, "gtk_container_resize_children", "GtkContainer*");
-  gtk_container_resize_children(XEN_TO_C_GtkContainer_(container));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_assistant_commit(XEN assistant)
 {
   #define H_gtk_assistant_commit "void gtk_assistant_commit(GtkAssistant* assistant)"
@@ -39352,7 +39344,6 @@ XEN_NARGIFY_2(gxg_gtk_container_set_focus_vadjustment_w, gxg_gtk_container_set_f
 XEN_NARGIFY_1(gxg_gtk_container_get_focus_vadjustment_w, gxg_gtk_container_get_focus_vadjustment)
 XEN_NARGIFY_2(gxg_gtk_container_set_focus_hadjustment_w, gxg_gtk_container_set_focus_hadjustment)
 XEN_NARGIFY_1(gxg_gtk_container_get_focus_hadjustment_w, gxg_gtk_container_get_focus_hadjustment)
-XEN_NARGIFY_1(gxg_gtk_container_resize_children_w, gxg_gtk_container_resize_children)
 XEN_NARGIFY_1(gxg_gtk_assistant_commit_w, gxg_gtk_assistant_commit)
 XEN_NARGIFY_1(gxg_gtk_im_multicontext_get_context_id_w, gxg_gtk_im_multicontext_get_context_id)
 XEN_NARGIFY_2(gxg_gtk_im_multicontext_set_context_id_w, gxg_gtk_im_multicontext_set_context_id)
@@ -43560,7 +43551,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_container_get_focus_vadjustment_w gxg_gtk_container_get_focus_vadjustment
 #define gxg_gtk_container_set_focus_hadjustment_w gxg_gtk_container_set_focus_hadjustment
 #define gxg_gtk_container_get_focus_hadjustment_w gxg_gtk_container_get_focus_hadjustment
-#define gxg_gtk_container_resize_children_w gxg_gtk_container_resize_children
 #define gxg_gtk_assistant_commit_w gxg_gtk_assistant_commit
 #define gxg_gtk_im_multicontext_get_context_id_w gxg_gtk_im_multicontext_get_context_id
 #define gxg_gtk_im_multicontext_set_context_id_w gxg_gtk_im_multicontext_set_context_id
@@ -47775,7 +47765,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_container_get_focus_vadjustment, gxg_gtk_container_get_focus_vadjustment_w, 1, 0, 0, H_gtk_container_get_focus_vadjustment);
   XG_DEFINE_PROCEDURE(gtk_container_set_focus_hadjustment, gxg_gtk_container_set_focus_hadjustment_w, 2, 0, 0, H_gtk_container_set_focus_hadjustment);
   XG_DEFINE_PROCEDURE(gtk_container_get_focus_hadjustment, gxg_gtk_container_get_focus_hadjustment_w, 1, 0, 0, H_gtk_container_get_focus_hadjustment);
-  XG_DEFINE_PROCEDURE(gtk_container_resize_children, gxg_gtk_container_resize_children_w, 1, 0, 0, H_gtk_container_resize_children);
   XG_DEFINE_PROCEDURE(gtk_assistant_commit, gxg_gtk_assistant_commit_w, 1, 0, 0, H_gtk_assistant_commit);
   XG_DEFINE_PROCEDURE(gtk_im_multicontext_get_context_id, gxg_gtk_im_multicontext_get_context_id_w, 1, 0, 0, H_gtk_im_multicontext_get_context_id);
   XG_DEFINE_PROCEDURE(gtk_im_multicontext_set_context_id, gxg_gtk_im_multicontext_set_context_id_w, 2, 0, 0, H_gtk_im_multicontext_set_context_id);
@@ -50776,7 +50765,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("12-Jun-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("07-Jul-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

@@ -528,7 +528,7 @@ static void enved_display_point_label(mus_float_t x, mus_float_t y)
 }
 
 
-#if HAVE_OSX
+#ifdef __APPLE__
 static int press_x, press_y;
 #endif
 
@@ -540,7 +540,7 @@ static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boo
   if (!showing_all_envs)
     {
       mus_float_t x, y;
-#if HAVE_OSX
+#ifdef __APPLE__
       if ((ev->x == press_x) && (ev->y == press_y)) return;
 #endif
       env_editor_button_motion_with_xy(ss->enved, ev->x, ev->y, ev->time, active_env, &x, &y);
@@ -554,7 +554,7 @@ static void drawer_button_press(Widget w, XtPointer context, XEvent *event, Bool
 {
   XButtonEvent *ev = (XButtonEvent *)event;
   int pos;
-#if HAVE_OSX
+#ifdef __APPLE__
   press_x = ev->x;
   press_y = ev->y;
 #endif
