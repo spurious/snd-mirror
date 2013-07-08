@@ -22253,6 +22253,7 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_XmClipboardInquireLength_w gxm_XmClipboardInquireLength
   #define gxm_XmClipboardInquirePendingItems_w gxm_XmClipboardInquirePendingItems
   #define gxm_XmClipboardRegisterFormat_w gxm_XmClipboardRegisterFormat
+  #define gxm_XmGetXmScreen_w gxm_XmGetXmScreen
   #define gxm_XmCreateScrollBar_w gxm_XmCreateScrollBar
   #define gxm_XmScrollBarGetValues_w gxm_XmScrollBarGetValues
   #define gxm_XmScrollBarSetValues_w gxm_XmScrollBarSetValues

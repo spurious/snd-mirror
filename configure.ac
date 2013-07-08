@@ -22,9 +22,6 @@ PACKAGE=Snd
 VERSION=13.9
 AC_DEFINE_UNQUOTED(SND_PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(SND_VERSION, "$VERSION")
-AC_SUBST(SND_PACKAGE)
-AC_SUBST(SND_VERSION)
-
 AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 
 #--------------------------------------------------------------------------------
@@ -133,7 +130,7 @@ AC_CHECK_LIB(c,main)
 # AC_CHECK_LIB(dl,main)
 
 AC_CHECK_HEADERS(unistd.h sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h)
-AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h pthread.h stdint.h dirent.h)
+AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h pthread.h dirent.h)
 
 AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
 				        #include <sys/param.h>
@@ -722,42 +719,6 @@ else
           fi
 
         AC_CHECK_LIB(m, g_file_monitor_directory, [AC_DEFINE(HAVE_G_FILE_MONITOR_DIRECTORY)], ,$GTK_LIBS)
-
-	# for 2.13.0
-	AC_CHECK_LIB(m, gtk_test_widget_click, [AC_DEFINE(HAVE_GTK_TEST_WIDGET_CLICK)], ,$GTK_LIBS)
-	# for 2.13.6 (uses 2134)
-	AC_CHECK_LIB(m, gtk_adjustment_get_upper, [AC_DEFINE(HAVE_GTK_ADJUSTMENT_GET_UPPER)], ,$GTK_LIBS)
-	# for 2.15.0|1|2|3 and 2.16.0 (uses 2150)
-	AC_CHECK_LIB(m, gtk_scale_add_mark, [AC_DEFINE(HAVE_GTK_SCALE_ADD_MARK)], ,$GTK_LIBS)
-	# for 2.15.1 up to 2.17.2
-	AC_CHECK_LIB(m, gtk_info_bar_new, [AC_DEFINE(HAVE_GTK_INFO_BAR_NEW)], ,$GTK_LIBS)	
-	# for 2.17.3|4|5|6
-	AC_CHECK_LIB(m, gtk_status_icon_get_title, [AC_DEFINE(HAVE_GTK_STATUS_ICON_GET_TITLE)], ,$GTK_LIBS)
-	# for 2.17.7, 2.18.n
-	AC_CHECK_LIB(m, gtk_widget_get_visible, [AC_DEFINE(HAVE_GTK_WIDGET_GET_VISIBLE)], ,$GTK_LIBS)
-	# for 2.19.n
-	AC_CHECK_LIB(m, gtk_widget_get_mapped, [AC_DEFINE(HAVE_GTK_WIDGET_GET_MAPPED)], ,$GTK_LIBS)
-	# for 2.9n.n
-	AC_CHECK_LIB(m, gtk_grid_new, [AC_DEFINE(HAVE_GTK_GRID_NEW)], ,$GTK_LIBS)
-
-	AC_CHECK_LIB(m, gtk_combo_box_new_with_area,
-                          [AC_DEFINE(HAVE_GTK_COMBO_BOX_NEW_WITH_AREA)
-                          ], ,
-			  $GTK_LIBS)
-  
-        # for 3.1.10
-        AC_CHECK_LIB(m, gtk_adjustment_get_minimum_increment, [AC_DEFINE(HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT)], ,$GTK_LIBS)
-        # for 3.1.90
-        AC_CHECK_LIB(m, gtk_font_chooser_get_font_size, [AC_DEFINE(HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE)], ,$GTK_LIBS)
-	# for 3.3.6
-        AC_CHECK_LIB(m, gtk_application_window_new, [AC_DEFINE(HAVE_GTK_APPLICATION_WINDOW_NEW)], ,$GTK_LIBS)
-	# for 3.3.16
-        AC_CHECK_LIB(m, gtk_color_chooser_dialog_new, [AC_DEFINE(HAVE_GTK_COLOR_CHOOSER_DIALOG_NEW)], ,$GTK_LIBS)
-	# for 3.5.8
-        AC_CHECK_LIB(m, gtk_level_bar_new, [AC_DEFINE(HAVE_GTK_LEVEL_BAR_NEW)], ,$GTK_LIBS)
-	# for 3.9.0
-        AC_CHECK_LIB(m, gtk_header_bar_new, [AC_DEFINE(HAVE_GTK_HEADER_BAR_NEW)], ,$GTK_LIBS)
-
 	AC_CHECK_LIB(cairo, cairo_glyph_allocate, [AC_DEFINE(HAVE_CAIRO_GLYPH_ALLOCATE)], ,$GTK_LIBS)
 	AC_CHECK_LIB(cairo, cairo_region_xor, [AC_DEFINE(HAVE_CAIRO_REGION_XOR)], ,$GTK_LIBS)
 

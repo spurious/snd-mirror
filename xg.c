@@ -87,6 +87,23 @@
 
 #include <mus-config.h>
 
+#define HAVE_GTK_3 (GTK_MAJOR_VERSION == 3)
+#define HAVE_GTK_TEST_WIDGET_CLICK                GTK_CHECK_VERSION(2, 14, 0)
+#define HAVE_GTK_ADJUSTMENT_GET_UPPER             GTK_CHECK_VERSION(2, 14, 0)
+#define HAVE_GTK_SCALE_ADD_MARK                   GTK_CHECK_VERSION(2, 16, 0)
+#define HAVE_GTK_INFO_BAR_NEW                     GTK_CHECK_VERSION(2, 18, 0)
+#define HAVE_GTK_STATUS_ICON_GET_TITLE            GTK_CHECK_VERSION(2, 18, 0)
+#define HAVE_GTK_WIDGET_GET_VISIBLE               GTK_CHECK_VERSION(2, 18, 0)
+#define HAVE_GTK_WIDGET_GET_MAPPED                GTK_CHECK_VERSION(2, 19, 0)
+#define HAVE_GTK_COMBO_BOX_NEW_WITH_AREA          GTK_CHECK_VERSION(3, 0, 0)
+#define HAVE_GTK_GRID_NEW                         GTK_CHECK_VERSION(3, 0, 0)
+#define HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT GTK_CHECK_VERSION(3, 11, 0)
+#define HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE       GTK_CHECK_VERSION(3, 2, 0)
+#define HAVE_GTK_APPLICATION_WINDOW_NEW           GTK_CHECK_VERSION(3, 4, 0)
+#define HAVE_GTK_COLOR_CHOOSER_DIALOG_NEW         GTK_CHECK_VERSION(3, 4, 0)
+#define HAVE_GTK_LEVEL_BAR_NEW                    GTK_CHECK_VERSION(3, 6, 0)
+#define HAVE_GTK_HEADER_BAR_NEW                   GTK_CHECK_VERSION(3, 9, 0)
+
 #if HAVE_EXTENSION_LANGUAGE
 
 #if UNDEF_USE_SND
@@ -50765,7 +50782,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("07-Jul-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("08-Jul-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

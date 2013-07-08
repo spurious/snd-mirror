@@ -6,9 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#if HAVE_STDINT_H
-  #include <stdint.h>
-#endif
 #include <math.h>
 #include <time.h>
 

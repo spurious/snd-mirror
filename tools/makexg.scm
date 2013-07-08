@@ -2200,6 +2200,23 @@
 
 (hey "#include <mus-config.h>~%~%")
 
+(hey "#define HAVE_GTK_3 (GTK_MAJOR_VERSION == 3)~%")
+(hey "#define HAVE_GTK_TEST_WIDGET_CLICK                GTK_CHECK_VERSION(2, 14, 0)~%")
+(hey "#define HAVE_GTK_ADJUSTMENT_GET_UPPER             GTK_CHECK_VERSION(2, 14, 0)~%")
+(hey "#define HAVE_GTK_SCALE_ADD_MARK                   GTK_CHECK_VERSION(2, 16, 0)~%")
+(hey "#define HAVE_GTK_INFO_BAR_NEW                     GTK_CHECK_VERSION(2, 18, 0)~%")
+(hey "#define HAVE_GTK_STATUS_ICON_GET_TITLE            GTK_CHECK_VERSION(2, 18, 0)~%")
+(hey "#define HAVE_GTK_WIDGET_GET_VISIBLE               GTK_CHECK_VERSION(2, 18, 0)~%")
+(hey "#define HAVE_GTK_WIDGET_GET_MAPPED                GTK_CHECK_VERSION(2, 19, 0)~%")
+(hey "#define HAVE_GTK_COMBO_BOX_NEW_WITH_AREA          GTK_CHECK_VERSION(3, 0, 0)~%")
+(hey "#define HAVE_GTK_GRID_NEW                         GTK_CHECK_VERSION(3, 0, 0)~%")
+(hey "#define HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT GTK_CHECK_VERSION(3, 11, 0)~%")
+(hey "#define HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE       GTK_CHECK_VERSION(3, 2, 0)~%")
+(hey "#define HAVE_GTK_APPLICATION_WINDOW_NEW           GTK_CHECK_VERSION(3, 4, 0)~%")
+(hey "#define HAVE_GTK_COLOR_CHOOSER_DIALOG_NEW         GTK_CHECK_VERSION(3, 4, 0)~%")
+(hey "#define HAVE_GTK_LEVEL_BAR_NEW                    GTK_CHECK_VERSION(3, 6, 0)~%")
+(hey "#define HAVE_GTK_HEADER_BAR_NEW                   GTK_CHECK_VERSION(3, 9, 0)~%~%")
+
 (hey "#if HAVE_EXTENSION_LANGUAGE~%~%")
 
 (hey "#if UNDEF_USE_SND~%  #undef USE_SND~%  #define USE_SND 0~%#endif~%~%")
