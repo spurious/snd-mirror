@@ -44,9 +44,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
-#if HAVE_STRING_H
-  #include <string.h>
-#endif
+#include <string.h>
 #if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
   #include <libc.h>
 #else

@@ -2399,7 +2399,7 @@ static XEN g_mus_set_max_table_size(XEN val)
 }
 
 
-#if MUS_MAC_OSX
+#if __APPLE__
 #define S_mus_audio_output_properties_mutable "mus-audio-output-properties-mutable"
 static XEN g_mus_audio_output_properties_mutable(XEN mut)
 {
@@ -2507,7 +2507,7 @@ XEN_NARGIFY_1(g_mus_alsa_set_squelch_warning_w, g_mus_alsa_set_squelch_warning)
   XEN_NARGIFY_0(g_mus_audio_reinitialize_w, g_mus_audio_reinitialize)
 #endif
 
-#if MUS_MAC_OSX
+#if __APPLE__
 XEN_NARGIFY_1(g_mus_audio_output_properties_mutable_w, g_mus_audio_output_properties_mutable)
 #endif
 
@@ -2611,7 +2611,7 @@ XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 #if HAVE_OSS
   #define g_mus_audio_reinitialize_w g_mus_audio_reinitialize
 #endif
-#if MUS_MAC_OSX
+#if __APPLE__
   #define g_mus_audio_output_properties_mutable_w g_mus_audio_output_properties_mutable
 #endif
 
@@ -2627,7 +2627,7 @@ XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 static size_t c_object_value_location, c_object_type_location, cell_type_location;
 static int c_object_built_in_type;
 
-#if (SIZEOF_INT == SIZEOF_VOID_P)
+#if (SIZEOF_VOID_P == 4)
   #define C_OBJECT_VALUE_LOCATION 12
 #else
   #define C_OBJECT_VALUE_LOCATION 16
@@ -3119,7 +3119,7 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_sound_data_to_vector, g_sound_data_to_vector /* no _w! */, 1, 0, 0, H_sound_data_to_vector);
 #endif
 
-#if MUS_MAC_OSX
+#if __APPLE__
   XEN_DEFINE_PROCEDURE(S_mus_audio_output_properties_mutable, g_mus_audio_output_properties_mutable_w, 1, 0, 0, H_mus_audio_output_properties_mutable);
 #endif
 

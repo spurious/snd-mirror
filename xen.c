@@ -1591,10 +1591,7 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist)
 #endif
 
 #include <sys/stat.h>
-
-#if HAVE_FCNTL_H
-  #include <fcntl.h>
-#endif
+#include <fcntl.h>
 
 
 static XEN g_getpid(void)

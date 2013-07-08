@@ -7,13 +7,9 @@
 #include <stddef.h>
 #include <math.h>
 #include <stdio.h>
-#if HAVE_FCNTL_H
-  #include <fcntl.h>
-#endif
+#include <fcntl.h>
 #include <signal.h>
-#if HAVE_LIMITS_H
-  #include <limits.h>
-#endif
+#include <limits.h>
 #include <errno.h>
 #include <stdlib.h>
 #if HAVE_LIBC_H && (!HAVE_UNISTD_H)
@@ -23,9 +19,7 @@
     #include <unistd.h>
   #endif
 #endif
-#if HAVE_STRING_H
-  #include <string.h>
-#endif
+#include <string.h>
 #include <stdarg.h>
 #include <time.h>
 #include <sys/types.h>
@@ -65,7 +59,7 @@
 
 #include "snd-strings.h"
 
-#define SND_DATE "8-July-13"
+#define SND_DATE "9-July-13"
 #ifndef SND_VERSION
 #define SND_VERSION "13.9"
 #endif

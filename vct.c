@@ -53,9 +53,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-#if HAVE_STRING_H
-  #include <string.h>
-#endif
+#include <string.h>
 
 #include "_sndlib.h"
 #include "xen.h"
@@ -636,7 +634,7 @@ static XEN g_vct_ref(XEN obj, XEN pos)
 static size_t c_object_value_location, c_object_type_location, cell_type_location;
 static int c_object_built_in_type;
 
-#if (SIZEOF_INT == SIZEOF_VOID_P)
+#if (SIZEOF_VOID_P == 4)
   #define C_OBJECT_VALUE_LOCATION 12
 #else
   #define C_OBJECT_VALUE_LOCATION 16

@@ -132,7 +132,7 @@ AC_CHECK_LIB(m,main)
 AC_CHECK_LIB(c,main)
 # AC_CHECK_LIB(dl,main)
 
-AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h)
+AC_CHECK_HEADERS(unistd.h sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h)
 AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h pthread.h stdint.h dirent.h)
 
 AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
@@ -167,13 +167,9 @@ AC_OLD_BIGENDIAN
 
 AC_SYS_LARGEFILE
 AC_TYPE_OFF_T
+
 AC_CHECK_SIZEOF(off_t)
-AC_CHECK_SIZEOF(long)
-AC_CHECK_SIZEOF(long long)
-AC_CHECK_SIZEOF(unsigned long)
-AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(void *)
-AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(ssize_t)
 
 AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline difftime gettimeofday)
@@ -588,150 +584,6 @@ else
 	  TEST_LIBS="$TEST_LIBS -lXpm"
 	  AC_SUBST(XLIBS)
 	  AC_SUBST(XFLAGS)
-
-          AC_MSG_CHECKING(for XmDataField)
-          AC_LINK_IFELSE(
-	    [AC_LANG_PROGRAM(
-        	[#include <Xm/XmAll.h>
-                 #include <Xm/DataF.h>],
-		[ Widget w;
-                  w = XmCreateDataField(NULL, "data-field", NULL, 0)
-                ])],
-            [
- 	     AC_DEFINE(HAVE_XmCreateDataField)
-	     AC_MSG_RESULT(yes)
-    	    ],
-	    [AC_MSG_RESULT(no)])
-
-          AC_MSG_CHECKING(for XmButtonBox)
-          AC_LINK_IFELSE(
-	    [AC_LANG_PROGRAM(
-        	[#include <Xm/XmAll.h>
-                 #include <Xm/ButtonBox.h>],
-		[ Widget w; int i; i = XmIconTop;
-                  w = XmCreateButtonBox(NULL, "button-box", NULL, 0)
-                ])],
-            [
- 	     AC_DEFINE(HAVE_XmCreateButtonBox)
-	     AC_MSG_RESULT(yes)
-    	    ],
-	    [AC_MSG_RESULT(no)])
-
-          AC_MSG_CHECKING(for XmTabStack)
-          AC_LINK_IFELSE(
-	    [AC_LANG_PROGRAM(
-        	[#include <Xm/XmAll.h>
-                 #include <Xm/TabStack.h>],
-		[ Widget w, w1, w2; 
-                  w = XmCreateTabStack(NULL, "tab-stack", NULL, 0);
-                  /* w1 = XmTabStackXYToWidget(w, 0, 0); */
-		  w2 = XmTabStackIndexToWidget(w, 0)
-                ])],
-            [
- 	     AC_DEFINE(HAVE_XmCreateTabStack)
-	     AC_MSG_RESULT(yes)
-    	    ],
-	    [AC_MSG_RESULT(no)])
-
-          AC_MSG_CHECKING(for XmTabStackXYToWidget)
-          AC_LINK_IFELSE(
-	    [AC_LANG_PROGRAM(
-        	[#include <Xm/XmAll.h>
-                 #include <Xm/TabStack.h>],
-		[ Widget w, w1, w2; 
-                  w = XmCreateTabStack(NULL, "tab-stack", NULL, 0);
-                  w1 = XmTabStackXYToWidget(w, 0, 0)
-                ])],
-            [
- 	     AC_DEFINE(HAVE_XmTabStackXYToWidget)
-	     AC_MSG_RESULT(yes)
-    	    ],
-	    [AC_MSG_RESULT(no)])
-
-          AC_MSG_CHECKING(for XmColumn)
-          AC_LINK_IFELSE(
-	    [AC_LANG_PROGRAM(
-        	[#include <Xm/XmAll.h>
-                 #include <Xm/Column.h>],
-		[ Widget w;
-                  w = XmCreateColumn(NULL, "column", NULL, 0)
-                  /* w = XmColumnGetChildLabel(w) */
-                ])],
-            [
- 	     AC_DEFINE(HAVE_XmCreateColumn)
-	     AC_MSG_RESULT(yes)
-    	    ],
-	    [AC_MSG_RESULT(no)])
-
-          AC_MSG_CHECKING(for XmColumnGetChildLabel)
-          AC_LINK_IFELSE(
-	    [AC_LANG_PROGRAM(
-        	[#include <Xm/XmAll.h>
-                 #include <Xm/Column.h>],
-		[ Widget w;
-                  w = XmCreateColumn(NULL, "column", NULL, 0);
-                  w = XmColumnGetChildLabel(w)
-                ])],
-            [
- 	     AC_DEFINE(HAVE_XmColumnGetChildLabel)
-	     AC_MSG_RESULT(yes)
-    	    ],
-	    [AC_MSG_RESULT(no)])
-
-          AC_MSG_CHECKING(for XmDropDown)
-          AC_LINK_IFELSE(
-	    [AC_LANG_PROGRAM(
-        	[#include <Xm/XmAll.h>
-                 #include <Xm/DropDown.h>],
-		[ Widget w;
-                  w = XmCreateDropDown(NULL, "drop-down", NULL, 0)
-                ])],
-            [
- 	     AC_DEFINE(HAVE_XmCreateDropDown)
-	     AC_MSG_RESULT(yes)
-    	    ],
-	    [AC_MSG_RESULT(no)])
-
-          AC_MSG_CHECKING(for XmCreateFontSelector)
-          AC_LINK_IFELSE(
-	    [AC_LANG_PROGRAM(
-        	[#include <Xm/XmAll.h>
-                 #include <Xm/FontS.h>],
-		[ Widget w;
-                  w = XmCreateFontSelector(NULL, "font-selector", NULL, 0)
-                ])],
-            [
- 	     AC_DEFINE(HAVE_XmCreateFontSelector)
-	     AC_MSG_RESULT(yes)
-    	    ],
-	    [AC_MSG_RESULT(no)])
-
-          AC_MSG_CHECKING(for XmCreateColorSelector)
-          AC_LINK_IFELSE(
-	    [AC_LANG_PROGRAM(
-        	[#include <Xm/XmAll.h>
-                 #include <Xm/ColorS.h>],
-		[ Widget w;
-                  w = XmCreateColorSelector(NULL, "color-selector", NULL, 0)
-                ])],
-            [
- 	     AC_DEFINE(HAVE_XmCreateColorSelector)
-	     AC_MSG_RESULT(yes)
-    	    ],
-	    [AC_MSG_RESULT(no)])
-
-          AC_MSG_CHECKING(for XmToolTipGetLabel)
-          AC_LINK_IFELSE(
-	    [AC_LANG_PROGRAM(
-        	[#include <Xm/XmAll.h>],
-		[ Widget w = NULL;
-                  w = XmToolTipGetLabel(w)
-                ])],
-            [
- 	     AC_DEFINE(HAVE_XmToolTipGetLabel)
-	     AC_MSG_RESULT(yes)
-    	    ],
-	    [AC_MSG_RESULT(no)])
 
 	  AC_MSG_CHECKING([whether sashes support relative panes])
 	  AC_COMPILE_IFELSE(
@@ -1410,7 +1262,6 @@ case "$host" in
 # if __SUNPRO_C we could add -xO3
         ;;
     *-*-hpux*) 
-        AC_DEFINE(MUS_HPUX)
 	AUDIO_SYSTEM=Hpux
 	LDSO_FLAGS="+z -Ae +DA1.1"
 	if test "$GCC" = yes ; then
@@ -1436,7 +1287,6 @@ case "$host" in
         fi
 	;;
     *-*-openbsd*) 
-        AC_DEFINE(MUS_OPENBSD)
 	AUDIO_SYSTEM=OpenBSD
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
@@ -1444,7 +1294,6 @@ case "$host" in
         fi
         ;;
     *-*-netbsd*) 
-        AC_DEFINE(MUS_NETBSD)
 	AUDIO_SYSTEM=NetBSD
 	if test "$GCC" = yes ; then
 	  SO_LD="$CC"
@@ -1454,19 +1303,16 @@ case "$host" in
         ;;
     *-*-cygwin*)
 	if test "$with_jack" != yes ; then 
-	    AC_DEFINE(MUS_WINDOZE)
-	    AUDIO_SYSTEM=Windoze
+	    AUDIO_SYSTEM=Windows
 	fi
 	;;
     *-*-mingw*)
-	AC_DEFINE(MUS_WINDOZE)
-	audio_system=Windoze
+	audio_system=Windows
 	LIBS="$LIBS -lwinmm -lwsock32"
 	;;
     *-apple-*)
 	if test "$with_jack" != yes ; then 
 
-	    AC_DEFINE(MUS_MAC_OSX)
 	    AUDIO_SYSTEM=MacOSX
 	    AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
 
@@ -1480,28 +1326,6 @@ case "$host" in
         			AudioDeviceDestroyIOProcID(device, procId)
 			       ])],
 	      [AC_DEFINE(HAVE_AUDIODEVICEDESTROYIOPROCID)
-	       AC_MSG_RESULT(yes)],
-	      [AC_MSG_RESULT(no)])
-
-	    AC_MSG_CHECKING([for kAudioDevicePropertyDeviceManufacturer])
-	    AC_COMPILE_IFELSE(
-              [AC_LANG_PROGRAM([#include <CoreServices/CoreServices.h>
-                                #include <CoreAudio/CoreAudio.h>],
-			       [AudioDeviceID deviceID; 
-			        UInt32 trans_size = 0, trans;
-      			        trans_size = sizeof(UInt32);
-     			        AudioDeviceGetProperty(deviceID, 0, true, kAudioDevicePropertyTransportType, &trans_size, &trans)
-			       ])],
-	      [AC_DEFINE(HAVE_KAUDIODEVICEPROPERTYTRANSPORTTYPE)
-	       AC_MSG_RESULT(yes)],
-	      [AC_MSG_RESULT(no)])
-
-	    AC_MSG_CHECKING([for kLinearPCMFormatFlagIsNonInterleaved])
-	    AC_COMPILE_IFELSE(
-              [AC_LANG_PROGRAM([#include <CoreServices/CoreServices.h>
-                                #include <CoreAudio/CoreAudio.h>],
-			       [int i; i = kLinearPCMFormatFlagIsNonInterleaved])],
-	      [AC_DEFINE(HAVE_KLINEARPCMFORMATFLAGISNONINTERLEAVED)
 	       AC_MSG_RESULT(yes)],
 	      [AC_MSG_RESULT(no)])
         else

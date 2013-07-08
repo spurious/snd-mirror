@@ -19,7 +19,7 @@
 #define CANNOT_SAVE      XEN_ERROR_TYPE("cannot-save")
 #define CANT_UPDATE_FILE XEN_ERROR_TYPE("cant-update-file")
 
-#if (SIZEOF_INT == SIZEOF_VOID_P)
+#if (SIZEOF_VOID_P == 4)
   typedef int pointer_or_int_t;
 #else
   typedef long long int pointer_or_int_t;
@@ -416,7 +416,7 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #if (HAVE_OSS || HAVE_ALSA)
   #define DEFAULT_DAC_SIZE 256
 #else
-  #if MUS_MAC_OSX
+  #if __APPLE__
     #define DEFAULT_DAC_SIZE 64
   #else
     #define DEFAULT_DAC_SIZE 1024

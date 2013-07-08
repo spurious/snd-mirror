@@ -36,7 +36,7 @@
 
 #include <mus-config.h>
 
-#if USE_SND && MUS_MAC_OSX && USE_MOTIF
+#if USE_SND && __APPLE__ && USE_MOTIF
   #undef USE_MOTIF
   #define USE_NO_GUI 1
   /* Xt's Boolean (/usr/include/X11/Intrinsic.h = char) collides with MacTypes.h Boolean, (actually,
@@ -46,7 +46,7 @@
    */
 #endif
 
-#if USE_SND && MUS_MAC_OSX && HAVE_RUBY
+#if USE_SND && __APPLE__ && HAVE_RUBY
   /* if using Ruby, OpenTransport.h T_* definitions collide with Ruby's -- it isn't needed here, so... */
   #define REDEFINE_HAVE_RUBY 1
   #undef HAVE_RUBY
@@ -59,7 +59,7 @@
   #define LABEL_BUFFER_SIZE 64
 #endif
 
-#if USE_SND && MUS_MAC_OSX
+#if USE_SND && __APPLE__
   #define USE_MOTIF 1
   #undef USE_NO_GUI
   #if REDEFINE_HAVE_RUBY
@@ -69,9 +69,7 @@
 
 #include <math.h>
 #include <stdio.h>
-#if HAVE_FCNTL_H
-  #include <fcntl.h>
-#endif
+#include <fcntl.h>
 #include <errno.h>
 #include <stdlib.h>
 #if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
@@ -81,11 +79,9 @@
     #include <unistd.h>
   #endif
 #endif
-#if HAVE_STRING_H
-  #include <string.h>
-#endif
+#include <string.h>
 
-#ifdef MUS_MAC_OSX
+#ifdef __APPLE__
 #include <CoreServices/CoreServices.h>
 #include <CoreAudio/CoreAudio.h>
 /* these pull in stdbool.h apparently, so they have to precede sndlib.h */
@@ -2287,7 +2283,7 @@ static int alsa_formats(int ur_dev, int chan, int *val)
 
 /* apparently input other than 8000 is 16-bit, 8000 is (?) mulaw */
 
-#if (defined(MUS_SUN) || defined(MUS_OPENBSD)) && (!(defined(AUDIO_OK)))
+#if (defined(MUS_SUN) || defined(__OpenBSD__)) && (!(defined(AUDIO_OK)))
 #define AUDIO_OK 1
 
 #include <sys/types.h>
@@ -2307,7 +2303,7 @@ static int alsa_formats(int ur_dev, int chan, int *val)
 
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 
-#ifdef MUS_OPENBSD
+#ifdef __OpenBSD__
   #include <sys/ioctl.h>
   #define DAC_NAME "/dev/sound"
 #else
@@ -2387,7 +2383,7 @@ static int to_sun_format(int format)
 #else
     case MUS_BSHORT: 
 #endif
-#ifdef MUS_OPENBSD
+#ifdef __OpenBSD__
       return(AUDIO_ENCODING_PCM16); 
 #else
       return(AUDIO_ENCODING_LINEAR); 
@@ -2397,7 +2393,7 @@ static int to_sun_format(int format)
 #if defined(AUDIO_ENCODING_LINEAR8)
       return(AUDIO_ENCODING_LINEAR8); break;
 #else
-  #ifdef MUS_OPENBSD
+  #ifdef __OpenBSD__
       return(AUDIO_ENCODING_PCM8); 
   #else
       return(AUDIO_ENCODING_LINEAR);
@@ -2714,7 +2710,7 @@ static char *sun_volume_name(float vol, int balance, int chans)
 
 /* ------------------------------- WINDOZE ----------------------------------------- */
 
-#if defined(MUS_WINDOZE) && (!(defined(__CYGWIN__)))
+#if defined(_MSC_VER) && (!(defined(__CYGWIN__)))
 #define AUDIO_OK 1
 
 #include <windows.h>
@@ -3172,7 +3168,7 @@ int mus_audio_read(int line, char *buf, int bytes)
  *   and to a much lesser extent, coreaudio.pdf and the HAL/Daisy examples.
  */
 
-#ifdef MUS_MAC_OSX
+#ifdef __APPLE__
 #define AUDIO_OK 1
 
 /*
@@ -4723,7 +4719,7 @@ char *jack_mus_audio_moniker(void)
  * Sun version changed 28-Jan-99
  */
 
-#if defined(MUS_HPUX) && (!(defined(AUDIO_OK)))
+#if defined(__hpux) && (!(defined(AUDIO_OK)))
 #define AUDIO_OK 1
 #include <sys/audio.h>
 
@@ -4888,7 +4884,7 @@ int mus_audio_read(int line, char *buf, int bytes)
 
 /* ------------------------------- NETBSD ----------------------------------------- */
 
-#if defined(MUS_NETBSD) && (!(defined(AUDIO_OK)))
+#if defined(__NetBSD__) && (!(defined(AUDIO_OK)))
 #define AUDIO_OK 1
 
 /* started from Xanim a long time ago..., bugfixes from Thomas Klausner 30-Jul-05, worked into better shape Aug-05 */
@@ -5610,7 +5606,7 @@ int mus_audio_device_format(int dev) /* snd-dac */
   mixer_vals[2] = MUS_MULAW;
 #endif
 
-#if MUS_MAC_OSX
+#if __APPLE__
   mixer_vals[0] = 1;
 #if MUS_LITTLE_ENDIAN
   mixer_vals[1] = MUS_LFLOAT;
@@ -5619,7 +5615,7 @@ int mus_audio_device_format(int dev) /* snd-dac */
 #endif
 #endif
 
-#if MUS_NETBSD
+#if __NetBSD__
   netbsd_formats(dev, mixer_vals);
 #endif
 

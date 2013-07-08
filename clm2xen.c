@@ -21,9 +21,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <limits.h>
-#if HAVE_STRING_H
-  #include <string.h>
-#endif
+#include <string.h>
 #include <stdarg.h>
 
 #if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
@@ -100,7 +98,7 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 static size_t c_object_value_location, c_object_type_location, cell_type_location;
 static int c_object_built_in_type;
 
-#if (SIZEOF_INT == SIZEOF_VOID_P)
+#if (SIZEOF_VOID_P == 4)
   #define C_OBJECT_VALUE_LOCATION 12
 #else
   #define C_OBJECT_VALUE_LOCATION 16

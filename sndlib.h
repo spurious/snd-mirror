@@ -66,13 +66,13 @@
 
 #ifndef MUS_AUDIO_COMPATIBLE_FORMAT
   #if WORDS_BIGENDIAN
-    #if MUS_MAC_OSX
+    #if __APPLE__
       #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_BFLOAT
     #else
       #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_BSHORT
     #endif
   #else
-    #if MUS_MAC_OSX
+    #if __APPLE__
       #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_LFLOAT
     #else
       #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_LSHORT
@@ -97,7 +97,7 @@ enum {MUS_UNSUPPORTED, MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RF64, MUS_BICSF, MUS_NI
       MUS_COVOX, MUS_AVI, MUS_OMF, MUS_QUICKTIME, MUS_ASF, MUS_YAMAHA_SY99, MUS_KURZWEIL_2000,
       MUS_AIFF, MUS_PAF, MUS_CSL, MUS_FILE_SAMP, MUS_PVF, MUS_SOUNDFORGE, MUS_TWINVQ, MUS_AKAI4,
       MUS_IMPULSETRACKER, MUS_KORG, MUS_NVF, MUS_CAFF, MUS_MAUI, MUS_SDIF, MUS_OGG, MUS_FLAC, MUS_SPEEX, MUS_MPEG,
-      MUS_SHORTEN, MUS_TTA, MUS_WAVPACK,  MUS_SOX,
+      MUS_SHORTEN, MUS_TTA, MUS_WAVPACK, MUS_SOX,
       MUS_NUM_HEADER_TYPES};
 
 
@@ -258,8 +258,8 @@ MUS_EXPORT char *mus_audio_moniker(void);
 MUS_EXPORT int mus_audio_api(void);
 MUS_EXPORT int mus_audio_compatible_format(int dev);
 
+#if HAVE_OSS || HAVE_ALSA
 MUS_EXPORT void mus_oss_set_buffers(int num, int size);
-
 MUS_EXPORT char *mus_alsa_playback_device(void);
 MUS_EXPORT char *mus_alsa_set_playback_device(const char *name);
 MUS_EXPORT char *mus_alsa_capture_device(void);
@@ -272,6 +272,11 @@ MUS_EXPORT int mus_alsa_buffers(void);
 MUS_EXPORT int mus_alsa_set_buffers(int num);
 MUS_EXPORT bool mus_alsa_squelch_warning(void);
 MUS_EXPORT bool mus_alsa_set_squelch_warning(bool val);
+#endif
+
+#if __APPLE__
+  MUS_EXPORT bool mus_audio_output_properties_mutable(bool mut);
+#endif
 
 MUS_EXPORT int mus_audio_device_channels(int dev);
 MUS_EXPORT int mus_audio_device_format(int dev);

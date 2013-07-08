@@ -1568,8 +1568,8 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
   #define XEN_WRAPPED_C_POINTER_P(a)      s7_is_c_pointer(a)
 #else
 
-  #if (SIZEOF_VOID_P == SIZEOF_UNSIGNED_LONG) 
-    #define XEN_WRAP_C_POINTER(a)         ((XEN)(C_TO_XEN_ULONG((unsigned long)a))) 
+  #if (SIZEOF_VOID_P == 4) 
+    #define XEN_WRAP_C_POINTER(a)         ((XEN)(C_TO_XEN_ULONG((unsigned int)a))) 
     #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG(a) 
   #else 
     #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_ULONG_LONG((unsigned long long int)(a)) 

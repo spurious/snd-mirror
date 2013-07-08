@@ -40,20 +40,14 @@
 #undef _FILE_OFFSET_BITS
 #undef _LARGE_FILES
 #undef HAVE___FUNC__
+
 #undef SIZEOF_OFF_T
-#undef SIZEOF_LONG
-#undef SIZEOF_LONG_LONG
-#undef SIZEOF_UNSIGNED_LONG
-#undef SIZEOF_UNSIGNED_LONG_LONG
 #undef SIZEOF_VOID_P
-#undef SIZEOF_INT
 #undef SIZEOF_SSIZE_T
+
 #undef HAVE_READLINE
 #undef HAVE_NESTED_FUNCTIONS
 
-#undef HAVE_FCNTL_H
-#undef HAVE_LIMITS_H
-#undef HAVE_STRING_H
 #undef HAVE_UNISTD_H
 #undef HAVE_STDBOOL_H
 #undef HAVE_DLFCN_H
@@ -84,18 +78,10 @@
 
 #undef MUS_LINUX
 #undef MUS_SUN
-#undef MUS_OPENBSD
-#undef MUS_NETBSD
-#undef MUS_WINDOZE
 #undef HAVE_OSS
 #undef HAVE_ALSA
 #undef HAVE_JACK_IN_LINUX
 #undef MUS_JACK
-#undef MUS_MAC_OSX
-#undef MUS_HPUX
-#undef MUS_AUDIOFILE_VERSION
-#undef HAVE_KAUDIODEVICEPROPERTYTRANSPORTTYPE
-#undef HAVE_KLINEARPCMFORMATFLAGISNONINTERLEAVED
 #undef HAVE_AUDIODEVICEDESTROYIOPROCID
 #undef MUS_JACK_VERSION
 #undef MUS_PULSEAUDIO
@@ -131,14 +117,6 @@
 #undef USE_NO_GUI
 
 #undef HAVE_X
-#undef HAVE_XmToolTipGetLabel
-#undef HAVE_XmCreateDataField
-#undef HAVE_XmCreateButtonBox
-#undef HAVE_XmCreateTabStack
-#undef HAVE_XmCreateDropDown
-#undef HAVE_XmCreateColumn
-#undef HAVE_XmCreateFontSelector
-#undef HAVE_XmCreateColorSelector
 #undef MUS_WITH_EDITRES
 #undef HAVE_XSHAPEQUERYEXTENSION
 

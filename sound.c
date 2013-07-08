@@ -20,9 +20,7 @@
   #if (!(defined(_MSC_VER)))
     #include <unistd.h>
   #endif
-  #if HAVE_STRING_H
-    #include <string.h>
-  #endif
+  #include <string.h>
 #endif
 
 #include "_sndlib.h"

@@ -11,12 +11,8 @@
 
 #include <math.h>
 #include <stdio.h>
-#if HAVE_FCNTL_H
-  #include <fcntl.h>
-#endif
-#if HAVE_LIMITS_H
-  #include <limits.h>
-#endif
+#include <fcntl.h>
+#include <limits.h>
 #include <errno.h>
 #include <stdlib.h>
 
@@ -27,9 +23,7 @@
     #include <unistd.h>
   #endif
 #endif
-#if HAVE_STRING_H
-  #include <string.h>
-#endif
+#include <string.h>
 #include <stdarg.h>
 
 #ifdef _MSC_VER

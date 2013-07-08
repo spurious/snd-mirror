@@ -17,10 +17,10 @@
   #include <string.h>
 #endif
 
-#if MUS_MAC_OSX
+#if __APPLE__
   #define BUFFER_SIZE 256
 #else
-#if MUS_WINDOZE
+#ifdef _MSC_VER
   /* this setting from Scott Middleton (actually used 8096) */
   #define BUFFER_SIZE 8192
 #else
@@ -28,7 +28,7 @@
 #endif
 #endif
 
-#if MUS_MAC_OSX
+#if __APPLE__
   #define OutSample float
   #define MUS_CONVERT(samp) (float)(samp)
 #else
@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
 		    }
 		}
 	    }
-#if MUS_MAC_OSX
+#if __APPLE__
 	  if (include_mutate == 1)
 	    mus_audio_output_properties_mutable(mutate);
 #endif
