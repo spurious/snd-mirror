@@ -5,14 +5,6 @@
 #define SNDLIB_REVISION 3
 #define SNDLIB_DATE "7-Jul-13"
 
-
-#ifndef mus_float_t
-#define mus_float_t double
-#define mus_long_t long long int
-#endif
-
-#define mus_sample_t mus_float_t /* backwards compatibility */
-
 #include <stdio.h>
 /* need FILE */
 
@@ -34,6 +26,8 @@
 #endif
 #endif
 
+typedef double mus_float_t;
+typedef long long int mus_long_t;
 
 #if defined(__sun) && defined(__SVR4)
   #define HAVE_SUN 1

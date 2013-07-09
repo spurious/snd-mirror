@@ -993,7 +993,15 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #include "s7.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern s7_scheme *s7;  /* s7 is a pointer to the current scheme */
+#ifdef __cplusplus
+}
+#endif
+
 
 #define XEN                                        s7_pointer
 #define XEN_FILE_EXTENSION                         "scm"

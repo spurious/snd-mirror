@@ -9,6 +9,12 @@
 #include <math.h>
 #include <time.h>
 
+#ifdef _MSC_VER
+  #include <io.h>
+  #include <process.h>
+  #pragma warning(disable: 4244)
+#endif
+
 #include "xen.h"
 
 #define S_gc_off "gc-off"

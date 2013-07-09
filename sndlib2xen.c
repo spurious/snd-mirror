@@ -23,6 +23,11 @@
 #include <string.h>
 #include <errno.h>
 
+
+#ifdef _MSC_VER
+  #pragma warning(disable: 4244)
+#endif
+
 #include "_sndlib.h"
 #include "sndlib-strings.h"
 #include "vct.h"

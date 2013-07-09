@@ -16,6 +16,9 @@
 
 #ifndef _MSC_VER
   #include <unistd.h>
+#else
+  #include <io.h>
+  #pragma warning(disable: 4244)
 #endif
 #include <string.h>
 

@@ -22,11 +22,6 @@
 #endif
 #endif
 
-#ifndef mus_float_t
-#define mus_float_t double
-#define mus_long_t long long int
-#endif
-
 #ifdef _MSC_VER
   /* I got these from gmp.h */
   #if defined (__GNUC__)

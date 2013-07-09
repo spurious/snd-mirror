@@ -55,6 +55,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#if _MSC_VER
+  #pragma warning(disable: 4244)
+#endif
+
 #include "_sndlib.h"
 #include "xen.h"
 #include "clm.h"

@@ -373,6 +373,9 @@
   #define NAN (INFINITY / INFINITY)
 #endif
 
+#if (_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))
+  #define __func__ __FUNCTION__
+#endif
 
 #define DISPLAY(Obj) s7_object_to_c_string(sc, Obj)
 #define DISPLAY_80(Obj) object_to_truncated_string(sc, Obj, 80)
@@ -21232,7 +21235,9 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
 static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_size, const char *caller)
 {
   s7_pointer port;
+#ifndef _MSC_VER
   long size;
+#endif
   int port_loc;
   char *content = NULL;
 
