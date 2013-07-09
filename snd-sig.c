@@ -3926,7 +3926,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	{
 	  s7_set_car(arg_list, s7_make_real(s7, read_sample(sf)));
 	  if (kp == 0)
-	    res = s7_call_with_location(s7, proc, arg_list, c__FUNCTION__, __FILE__, __LINE__);
+	    res = s7_call_with_location(s7, proc, arg_list, __func__, __FILE__, __LINE__);
 	  else res = s7_apply_function(s7, proc, arg_list);
 	}
       else
@@ -4319,7 +4319,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	{
 	  s7_set_car(arg_list, s7_make_real(s7, read_sample(sf)));
 	  if (kp == 0)
-	    res = s7_call_with_location(s7, proc, arg_list, c__FUNCTION__, __FILE__, __LINE__);
+	    res = s7_call_with_location(s7, proc, arg_list, __func__, __FILE__, __LINE__);
 	  else res = s7_apply_function(s7, proc, arg_list);
 	}
       else

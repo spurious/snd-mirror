@@ -2586,7 +2586,7 @@
 			       (hey "XEN_CADR((XEN)func_info),~%")))
 			 args)
 			(hey (substring "                                                                      " 0 castlen))
-			(hey "c__FUNCTION__)")
+			(hey "__func__)")
 			(if void?
 			    (hey ";~%")
 			    (hey "));~%")))
@@ -2607,7 +2607,7 @@
 (hey "                                     C_TO_XEN_GtkWidget_(w),~%")
 (hey "                                     C_TO_XEN_GdkEventAny_(ev),~%")
 (hey "                                     XEN_CADR((XEN)data),~%")
-(hey "                                     c__FUNCTION__)));~%")
+(hey "                                     __func__)));~%")
 (hey "}~%")
 (hey "~%static gboolean gxg_func4(GtkPrintOperation *op, GtkPrintContext *context, gint page_nr, gpointer data)~%")
 (hey "{~%")
@@ -2616,7 +2616,7 @@
 (hey "                                     C_TO_XEN_GtkPrintContext_(context),~%")
 (hey "                                     C_TO_XEN_INT(page_nr),~%")
 (hey "                                     XEN_CADR((XEN)data),~%")
-(hey "                                     c__FUNCTION__)));~%")
+(hey "                                     __func__)));~%")
 (hey "}~%~%")
 
 

@@ -910,7 +910,7 @@ static void deferred_region_to_temp_file(region *r)
   else
     {
       io_error_t io_err = IO_NO_ERROR;
-      hdr = make_temp_header(r->filename, r->srate, r->chans, 0, (char *)c__FUNCTION__);
+      hdr = make_temp_header(r->filename, r->srate, r->chans, 0, (char *)__func__);
       ofd = open_temp_file(r->filename, r->chans, hdr, &io_err);
       if (ofd == -1)
 	snd_error("%s region temp file %s: %s", 

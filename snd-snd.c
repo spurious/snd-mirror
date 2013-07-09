@@ -1673,7 +1673,7 @@ static bool apply_controls(apply_state *ap)
 	  /* apply_beg = 0; */
 	  ap->ofile = NULL;
 	  ap->ofile = snd_tempnam();
-	  ap->hdr = make_temp_header(ap->ofile, SND_SRATE(sp), sp->nchans, 0, (char *)c__FUNCTION__);
+	  ap->hdr = make_temp_header(ap->ofile, SND_SRATE(sp), sp->nchans, 0, (char *)__func__);
 
 	  switch (ss->apply_choice)
 	    {

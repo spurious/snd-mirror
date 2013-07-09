@@ -746,17 +746,17 @@ static XEN xen_rb_hook_initialize(int argc, XEN *argv, XEN hook)
 {
   XEN name, arity, help;
   rb_scan_args(argc, argv, "12", &name, &arity, &help);
-  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ARG_1, c__FUNCTION__, "a char* or symbol");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ARG_1, __func__, "a char* or symbol");
   if (XEN_SYMBOL_P(name))
     name = XEN_SYMBOL_TO_STRING(name);
   if (arity != Qnil)
     {
-      XEN_ASSERT_TYPE(XEN_INTEGER_P(arity), arity, XEN_ARG_2, c__FUNCTION__, "an integer");
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(arity), arity, XEN_ARG_2, __func__, "an integer");
     }
   else arity = INT2NUM(0);
   if (help != Qnil)
     {
-      XEN_ASSERT_TYPE(XEN_STRING_P(help), help, XEN_ARG_3, c__FUNCTION__, "a char*");
+      XEN_ASSERT_TYPE(XEN_STRING_P(help), help, XEN_ARG_3, __func__, "a char*");
       XEN_SET_OBJECT_HELP(name, help);
     }
   else help = rb_str_new2("");
@@ -826,9 +826,9 @@ static XEN xen_rb_hook_add_hook(int argc, XEN *argv, XEN hook)
   int args;
   args = XEN_TO_C_INT(rb_iv_get(hook, "@arity"));
   rb_scan_args(argc, argv, "1&", &name, &func);
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, c__FUNCTION__, "a char*");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, __func__, "a char*");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func) && xen_rb_arity_ok(XEN_TO_C_INT(XEN_ARITY(func)), args),
-		  func, XEN_ARG_2, c__FUNCTION__, "a procedure");
+		  func, XEN_ARG_2, __func__, "a procedure");
   rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, name, func));
   return(hook);
 }
@@ -1096,7 +1096,7 @@ static XEN xen_rb_make_hook(int argc, XEN *argv, XEN klass)
       name = C_TO_XEN_STRING(temp);
       if (temp) free(temp);
     }
-  XEN_ASSERT_TYPE(RB_STR_LEN(name) >= 2, name, XEN_ARG_1, c__FUNCTION__, "a char*, len >= 2"); 
+  XEN_ASSERT_TYPE(RB_STR_LEN(name) >= 2, name, XEN_ARG_1, __func__, "a char*, len >= 2"); 
   return(rb_gv_set(XEN_TO_C_STRING(name), hook)); 
 }
 

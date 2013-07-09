@@ -160,17 +160,6 @@ AC_CHECK_FUNCS(vsnprintf vasprintf strftime memmove lstat strcasecmp pathconf)
 AC_LIB_PROG_LD
 # this is needed for the -export-dynamic check below (export dynamic is needed to get the xm.so module loadable at run-time)
 
-AC_MSG_CHECKING(for __func__)
-AC_LINK_IFELSE(
-  [AC_LANG_PROGRAM(,
-    [ char *s; 
-      s = (char *)__func__
-    ])],
-  [AC_DEFINE(HAVE___FUNC__)
-   AC_MSG_RESULT(yes)
-  ],
-  [AC_MSG_RESULT(no)])
-
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 
 

@@ -103,10 +103,10 @@ char *strerror(int errnum)
 #endif
 
 #define MUS_STANDARD_ERROR(Error_Type, Error_Message) \
-  mus_print("%s\n  [%s[%d] %s]", Error_Message, __FILE__, __LINE__, c__FUNCTION__)
+  mus_print("%s\n  [%s[%d] %s]", Error_Message, __FILE__, __LINE__, __func__)
 
 #define MUS_STANDARD_IO_ERROR(Error_Type, IO_Func, IO_Name) \
-  mus_print("%s %s: %s\n  [%s[%d] %s]", IO_Func, IO_Name, strerror(errno), __FILE__, __LINE__, c__FUNCTION__)
+  mus_print("%s %s: %s\n  [%s[%d] %s]", IO_Func, IO_Name, strerror(errno), __FILE__, __LINE__, __func__)
 
 
 static char *version_name = NULL;
@@ -172,12 +172,12 @@ static bool audio_initialized = false;
          { \
            mus_print("%s\n  [%s[%d] %s]", \
                      Message, \
-                     __FILE__, __LINE__, c__FUNCTION__); \
+                     __FILE__, __LINE__, __func__); \
            free(Message); \
          } \
        else mus_print("%s\n  [%s[%d] %s]", \
                       mus_error_type_to_string(Message_Type), \
-                      __FILE__, __LINE__, c__FUNCTION__); \
+                      __FILE__, __LINE__, __func__); \
        return(MUS_ERROR); \
      } while (false)
 
@@ -338,7 +338,7 @@ static int oss_mus_audio_initialize(void)
 		{
 		  mus_print("%s is busy: can't access it [%s[%d] %s]", 
 			    dname,
-			    __FILE__, __LINE__, c__FUNCTION__); 
+			    __FILE__, __LINE__, __func__); 
 		  nmix++;
 		  continue;
 		}
@@ -1868,7 +1868,7 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
   
   if (alsa_trace) 
     mus_print("%s: %x rate=%d, chans=%d, format=%d:%s, size=%d", 
-	      c__FUNCTION__, ur_dev, srate, chans, format, 
+	      __func__, ur_dev, srate, chans, format, 
 	      mus_data_format_to_string(format), size);
 
   /* card = MUS_AUDIO_SYSTEM(ur_dev); */
@@ -2041,7 +2041,7 @@ static int alsa_mus_audio_close(int id)
   int err = 0;
   xrun_warned = false;
   if (id == MUS_ERROR) return(MUS_ERROR);
-  if (alsa_trace) mus_print( "%s: %d", c__FUNCTION__, id); 
+  if (alsa_trace) mus_print( "%s: %d", __func__, id); 
   if (handles[id]) 
     {
       err = snd_pcm_drain(handles[id]);
@@ -2069,7 +2069,7 @@ static int recover_from_xrun(int id)
   err = snd_pcm_status(handles[id], status);
   if (err < 0) 
     {
-      mus_print("%s: snd_pcm_status: %s", c__FUNCTION__, snd_strerror(err));
+      mus_print("%s: snd_pcm_status: %s", __func__, snd_strerror(err));
       return(MUS_ERROR);
     }
   state = snd_pcm_status_get_state(status);
@@ -2085,7 +2085,7 @@ static int recover_from_xrun(int id)
 	mus_print("snd_pcm_prepare: %s", snd_strerror(err));
       else return(MUS_NO_ERROR);
     }
-  else mus_print("%s: error, current state is %s", c__FUNCTION__, snd_pcm_state_name(state));
+  else mus_print("%s: error, current state is %s", __func__, snd_pcm_state_name(state));
   return(MUS_ERROR);
 }
 

@@ -8406,7 +8406,7 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
 		}
 	    }
 	  s7_set_car(as_needed_arglist, (direction == 1) ? xen_one : xen_minus_one);
-	  result = XEN_TO_C_DOUBLE(s7_call_with_location(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist, c__FUNCTION__, __FILE__, __LINE__));
+	  result = XEN_TO_C_DOUBLE(s7_call_with_location(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist, __func__, __FILE__, __LINE__));
 
 	  gn->vcts[MUS_INPUT_DATA] = XEN_TRUE;
 	  mus_generator_set_feeder(gn->gen, as_needed_input_any);

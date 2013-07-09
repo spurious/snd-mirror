@@ -37,9 +37,6 @@
 #undef HAVE_SPECIAL_FUNCTIONS
 #undef WORDS_BIGENDIAN
 
-#undef HAVE___FUNC__
-/* surely this can be based on the compiler */
-
 #undef SIZEOF_VOID_P
 #undef SIZEOF_SSIZE_T
 

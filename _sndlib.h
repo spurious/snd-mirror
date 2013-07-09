@@ -83,16 +83,8 @@
 #endif
 
 
-#ifndef c__FUNCTION__
-#if (HAVE___FUNC__) || (defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L))
-  #define c__FUNCTION__ __func__
-#else
-#ifdef __GNUC__
-  #define c__FUNCTION__ __FUNCTION__
-#else
-  #define c__FUNCTION__ ""
-#endif
-#endif
+#if (_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))
+  #define __func__ __FUNCTION__
 #endif
 
 #if (!defined(M_PI))
