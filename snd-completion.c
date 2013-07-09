@@ -476,7 +476,7 @@ void add_srate_to_completion_list(int srate)
 
   init_srate_list();
   str = (char *)calloc(16, sizeof(char));
-  mus_snprintf(str, 16, "%d", srate);
+  snprintf(str, 16, "%d", srate);
 
   for (i = 0; i < srate_info->num_values; i++)
     if (mus_strcmp(srate_info->values[i], str))

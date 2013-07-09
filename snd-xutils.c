@@ -555,7 +555,7 @@ void widget_int_to_text(Widget w, int val)
 {
   char *str;
   str = (char *)calloc(8, sizeof(char));
-  mus_snprintf(str, 8, "%d", val);
+  snprintf(str, 8, "%d", val);
   XmTextFieldSetString(w, str);
   free(str);
 }
@@ -565,7 +565,7 @@ void widget_mus_long_t_to_text(Widget w, mus_long_t val)
 {
   char *str;
   str = (char *)calloc(32, sizeof(char));
-  mus_snprintf(str, 32, "%lld", val);
+  snprintf(str, 32, "%lld", val);
   XmTextFieldSetString(w, str);
   free(str);
 }

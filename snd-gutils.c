@@ -809,7 +809,7 @@ void widget_int_to_text(GtkWidget *w, int val)
 {
   char *str;
   str = (char *)calloc(8, sizeof(char));
-  mus_snprintf(str, 8, "%d", val);
+  snprintf(str, 8, "%d", val);
   gtk_entry_set_text(GTK_ENTRY(w), str);
   free(str);
 }
@@ -819,7 +819,7 @@ void widget_mus_long_t_to_text(GtkWidget *w, mus_long_t val)
 {
   char *str;
   str = (char *)calloc(8, sizeof(char));
-  mus_snprintf(str, 8, "%lld", val);
+  snprintf(str, 8, "%lld", val);
   gtk_entry_set_text(GTK_ENTRY(w), str);
   free(str);
 }

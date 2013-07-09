@@ -288,7 +288,7 @@ static bool post_sound_info(file_dialog_info *fd, const char *filename, bool wit
 	snprintf(lenstr, 128, "%d samples", (int)mus_sound_samples(filename));
       else snprintf(lenstr, 128, "%.3f seconds", mus_sound_duration(filename));
 
-      mus_snprintf(buf, 1924, "%s%s%d chan%s, %d Hz, %s\n%s, %s%s%s",
+      snprintf(buf, 1924, "%s%s%d chan%s, %d Hz, %s\n%s, %s%s%s",
 
 		   (with_filename) ? filename_without_directory(filename) : "",
 		   (with_filename) ? ": " : "", 
@@ -1870,7 +1870,7 @@ static void make_auto_comment(file_dialog_info *fd)
 		}
 
 	      comment = (char *)calloc(len, sizeof(char));
-	      mus_snprintf(comment, len, "%ssaved %s from %s with edits:\n", 
+	      snprintf(comment, len, "%ssaved %s from %s with edits:\n", 
 			   (fdat->saved_comment) ? "\n" : "",
 			   snd_local_time(),
 			   sp->filename);
@@ -2992,7 +2992,7 @@ static char *new_file_dialog_filename(int header_type)
     case MUS_CAFF: extension = 4;  break;
     default:       extension = 5;  break;
     }
-  mus_snprintf(filename, 64, "new-%d.%s", new_file_dialog_file_ctr++, extensions[extension]);
+  snprintf(filename, 64, "new-%d.%s", new_file_dialog_file_ctr++, extensions[extension]);
 
   return(filename);
 }
@@ -3243,14 +3243,14 @@ static char *make_header_dialog_title(edhead_info *ep, snd_info *sp)
       (sp->file_read_only == FILE_READ_ONLY))
     {
       if (sp->hdr->type == MUS_RAW)
-	mus_snprintf(str, PRINT_BUFFER_SIZE, "Add header to (write-protected) %s", sp->short_filename);
-      else mus_snprintf(str, PRINT_BUFFER_SIZE, "Edit header of (write-protected) %s", sp->short_filename);
+	snprintf(str, PRINT_BUFFER_SIZE, "Add header to (write-protected) %s", sp->short_filename);
+      else snprintf(str, PRINT_BUFFER_SIZE, "Edit header of (write-protected) %s", sp->short_filename);
     }
   else 
     {
       if (sp->hdr->type == MUS_RAW)
-	mus_snprintf(str, PRINT_BUFFER_SIZE, "Add header to %s", sp->short_filename);
-      else mus_snprintf(str, PRINT_BUFFER_SIZE, "Edit header of %s", sp->short_filename);
+	snprintf(str, PRINT_BUFFER_SIZE, "Add header to %s", sp->short_filename);
+      else snprintf(str, PRINT_BUFFER_SIZE, "Edit header of %s", sp->short_filename);
     }
   return(str);
 }

@@ -31,7 +31,7 @@ static void print_cancel_callback(Widget w, XtPointer context, XtPointer info)
 static int lpr(char *name)
 {
   /* make some desultory effort to print the file */
-  mus_snprintf(print_string, PRINT_BUFFER_SIZE, "lpr %s", name);
+  snprintf(print_string, PRINT_BUFFER_SIZE, "lpr %s", name);
   return(system(print_string));
 }
 
@@ -115,7 +115,7 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	{
 	  plab = XmStringCreateLocalized((char *)I_STOP);
 	  nsp = any_selected_sound();
-	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, "printing %s", nsp->short_filename);
+	  snprintf(print_string, PRINT_BUFFER_SIZE, "printing %s", nsp->short_filename);
 	  slab = XmStringCreateLocalized(print_string);
 	  XtVaSetValues(print_dialog, 
 			XmNokLabelString, plab, 
@@ -180,7 +180,7 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
   if (ss->print_choice == PRINT_SND)
     {
       plab = XmStringCreateLocalized((char *)"Print");
-      mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->short_filename);
+      snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->short_filename);
       slab = XmStringCreateLocalized(print_string);
       XtVaSetValues(print_dialog, 
 		    XmNokLabelString, plab, 
@@ -333,7 +333,7 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       snd_info *nsp;
       nsp = any_selected_sound();
       if (!nsp) return;
-      mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->short_filename);
+      snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->short_filename);
       xmstr4 = XmStringCreateLocalized(print_string);
     }
   else xmstr4 = XmStringCreateLocalized((char *)"print env");

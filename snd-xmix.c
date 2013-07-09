@@ -179,7 +179,7 @@ static mus_float_t scrollbar_to_amp(int val)
 static int amp_to_scrollbar(Widget amp_number, mus_float_t amp)
 {
   char sfs[6];
-  mus_snprintf(sfs, 6, "%.2f", amp);
+  snprintf(sfs, 6, "%.2f", amp);
   set_label(amp_number, sfs);
   return(amp_to_scroll(amp_control_min(ss), amp, amp_control_max(ss)));
 }
@@ -190,7 +190,7 @@ static void change_mix_amp(int mix_id, mus_float_t val)
   char sfs[6];
   mix_set_amp_edit(mix_id, val);
   syncd_mix_set_amp(mix_id, val);
-  mus_snprintf(sfs, 6, "%.2f", val);
+  snprintf(sfs, 6, "%.2f", val);
   set_label(w_amp_number, sfs);
 }
 
@@ -864,7 +864,7 @@ Widget make_mix_dialog(void)
       free(n2);
 
       n = 0;
-      mus_snprintf(amplab, LABEL_BUFFER_SIZE, "%s", "amp:");
+      snprintf(amplab, LABEL_BUFFER_SIZE, "%s", "amp:");
       s1 = XmStringCreateLocalized(amplab);
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
@@ -1084,7 +1084,7 @@ void reflect_mix_change(int mix_id)
 	      
 	      beg = mix_position_from_id(mix_dialog_id);
 	      len = mix_length_from_id(mix_dialog_id);
-	      mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f%s",
+	      snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f%s",
 			   (float)((double)beg / (float)SND_SRATE(cp->sound)),
 			   (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)),
 			   (mix_is_active(mix_dialog_id)) ? "" : " (locked)");

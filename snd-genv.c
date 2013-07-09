@@ -2,12 +2,6 @@
 
 /* envelope editor and viewer */
 
-/* the "flt" case shows the normal fft even when we're displaying the sonogram
- *    tried a recording_surface, but nothing is displayed!  I can't see anything wrong, no way to debug it.  
- *    pfui!
- * would an image_surface work here?
- */
-
 static GtkWidget *enved_dialog = NULL;
 static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB = NULL, *resetB, *firB = NULL;
 static GtkWidget *revertB, *undoB, *redoB, *brktxtL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB;
@@ -477,8 +471,8 @@ static char brkpt_buf[LABEL_BUFFER_SIZE];
 static void enved_display_point_label(mus_float_t x, mus_float_t y)
 {
   if ((enved_in_dB(ss)) && (min_dB(ss) < -60))
-    mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);
-  else mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.3f", x, y);
+    snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);
+  else snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.3f", x, y);
   gtk_label_set_text(GTK_LABEL(brktxtL), brkpt_buf);
 }
 
@@ -743,7 +737,7 @@ static void make_base_label(mus_float_t bval)
   if (len < 32) len = 32;
 
   sfs = (char *)calloc(len, sizeof(char));
-  mus_snprintf(sfs, len, "%.3f", bval);
+  snprintf(sfs, len, "%.3f", bval);
 
   scale_len = (int)(enved_power(ss) + 3);
   if (scale_len < 32) scale_len = 32;

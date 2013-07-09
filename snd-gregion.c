@@ -115,25 +115,25 @@ static void make_region_labels(file_info *hdr)
   char *str;
   if (hdr == NULL) return;
   str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str, PRINT_BUFFER_SIZE, "srate: %d", hdr->srate);
+  snprintf(str, PRINT_BUFFER_SIZE, "srate: %d", hdr->srate);
 #if (!HAVE_GTK_3)
   set_label(srate_text, str);
 #else
   set_button_label(srate_text, str);
 #endif
-  mus_snprintf(str, PRINT_BUFFER_SIZE, "chans: %d", hdr->chans);
+  snprintf(str, PRINT_BUFFER_SIZE, "chans: %d", hdr->chans);
 #if (!HAVE_GTK_3)
   set_label(chans_text, str);
 #else
   set_button_label(chans_text, str);
 #endif
-  mus_snprintf(str, PRINT_BUFFER_SIZE, "length: %.3f", (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
+  snprintf(str, PRINT_BUFFER_SIZE, "length: %.3f", (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
 #if (!HAVE_GTK_3)
   set_label(length_text, str);
 #else
   set_button_label(length_text, str);
 #endif
-  mus_snprintf(str, PRINT_BUFFER_SIZE, "maxamp: %.3f", region_maxamp(region_list_position_to_id(current_region)));
+  snprintf(str, PRINT_BUFFER_SIZE, "maxamp: %.3f", region_maxamp(region_list_position_to_id(current_region)));
 #if (!HAVE_GTK_3)
   set_label(maxamp_text, str);
 #else

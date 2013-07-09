@@ -614,7 +614,7 @@ static mus_float_t scroll_to_amp(snd_info *sp, mus_float_t val)
 	  else sp->amp_control = (val * (1.0 - sp->amp_control_min) / (0.5 * 0.9)) + sp->amp_control_min;
 	}
     }
-  mus_snprintf(amp_number_buffer, 6, "%.3f", sp->amp_control);
+  snprintf(amp_number_buffer, 6, "%.3f", sp->amp_control);
   gtk_label_set_text(GTK_LABEL(AMP_LABEL(sp)), amp_number_buffer);
   return(val);
 }
@@ -816,7 +816,7 @@ static mus_float_t scroll_to_expand(snd_info *sp, mus_float_t val)
       else sp->expand_control = exp((val * (log(sp->expand_control_max) - log(sp->expand_control_min)) / 0.9) + log(sp->expand_control_min));
     }
   if (sp->playing) dac_set_expand(sp, sp->expand_control);
-  mus_snprintf(expand_number_buffer, 6, "%.3f", sp->expand_control);
+  snprintf(expand_number_buffer, 6, "%.3f", sp->expand_control);
   gtk_label_set_text(GTK_LABEL(EXPAND_LABEL(sp)), expand_number_buffer);
   return(val);
 }
@@ -896,7 +896,7 @@ static mus_float_t scroll_to_contrast(snd_info *sp, mus_float_t val)
 {
   char contrast_number_buffer[6];
   sp->contrast_control = sp->contrast_control_min + val * (sp->contrast_control_max - sp->contrast_control_min) / 0.9;
-  mus_snprintf(contrast_number_buffer, 6, "%.3f", sp->contrast_control);
+  snprintf(contrast_number_buffer, 6, "%.3f", sp->contrast_control);
   gtk_label_set_text(GTK_LABEL(CONTRAST_LABEL(sp)), contrast_number_buffer);
   return(val);
 }
@@ -986,7 +986,7 @@ static mus_float_t scroll_to_revscl(snd_info *sp, mus_float_t val)
       else sp->reverb_control_scale = cube((val * (pow(sp->reverb_control_scale_max, 0.333) - pow(sp->reverb_control_scale_min, 0.333)) / 0.9) + 
 					   pow(sp->reverb_control_scale_min, 0.333));
     }
-  mus_snprintf(revscl_number_buffer, 7, "%.4f", sp->reverb_control_scale);
+  snprintf(revscl_number_buffer, 7, "%.4f", sp->reverb_control_scale);
   gtk_label_set_text(GTK_LABEL(REVSCL_LABEL(sp)), revscl_number_buffer);
   return(val);
 }
@@ -1048,7 +1048,7 @@ static mus_float_t scroll_to_revlen(snd_info *sp, mus_float_t val)
   char revlen_number_buffer[5];
   sp->reverb_control_length = sp->reverb_control_length_min + 
     (sp->reverb_control_length_max - sp->reverb_control_length_min) * (mus_float_t)val / 0.9;
-  mus_snprintf(revlen_number_buffer, 5, "%.2f", sp->reverb_control_length);
+  snprintf(revlen_number_buffer, 5, "%.2f", sp->reverb_control_length);
   gtk_label_set_text(GTK_LABEL(REVLEN_LABEL(sp)), revlen_number_buffer);
   return(val);
 }
@@ -2005,7 +2005,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
     {
       title = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
+      snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
       gtk_window_set_title(GTK_WINDOW(sp->dialog), title);
       free(title);
     }

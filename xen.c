@@ -459,8 +459,8 @@ char *xen_version(void)
 #else
   sprintf(buf, "Ruby: %s (%s), Xen: %s", 
 #endif
-#ifdef MUS_RUBY_VERSION
-	  MUS_RUBY_VERSION,
+#ifdef RUBY_VERSION
+	  RUBY_VERSION,
 	  RUBY_RELEASE_DATE,
 #else
 	  XEN_TO_C_STRING(XEN_EVAL_C_STRING("RUBY_VERSION")),
@@ -804,7 +804,7 @@ XEN xen_rb_hook_c_new(char *name, int arity, char *help)
   etc.
 */
 
-#ifdef MUS_RUBY_VERSION
+#ifdef RUBY_VERSION
   #define XEN_RUBY_RELEASE_DATE  RUBY_RELEASE_DATE
 #else
   #define XEN_RUBY_RELEASE_DATE  XEN_TO_C_STRING(XEN_EVAL_C_STRING("RUBY_RELEASE_DATE"))

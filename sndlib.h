@@ -159,12 +159,10 @@ extern "C" {
   MUS_EXPORT int mus_error(int error, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
   MUS_EXPORT void mus_print(const char *format, ...)           __attribute__ ((format (printf, 1, 2)));
   MUS_EXPORT char *mus_format(const char *format, ...)         __attribute__ ((format (printf, 1, 2)));
-  MUS_EXPORT void mus_snprintf(char *buffer, int buffer_len, const char *format, ...)  __attribute__ ((format (printf, 3, 4)));
 #else
   MUS_EXPORT int mus_error(int error, const char *format, ...);
   MUS_EXPORT void mus_print(const char *format, ...);
   MUS_EXPORT char *mus_format(const char *format, ...);
-  MUS_EXPORT void mus_snprintf(char *buffer, int buffer_len, const char *format, ...);
 #endif
 
 typedef void mus_error_handler_t(int type, char *msg);

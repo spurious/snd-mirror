@@ -6646,15 +6646,15 @@ char *sampler_to_string(snd_fd *fd)
 	}
       if (name == NULL) name = "unknown source";
       if (fd->at_eof)
-	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sampler: %s at eof or freed>",
+	snprintf(desc, PRINT_BUFFER_SIZE, "#<sampler: %s at eof or freed>",
 		     name);
       else 
 	{
 	  if (cp)
-	    mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sampler: %s[%d: %d] from %lld, at %lld, %s>",
+	    snprintf(desc, PRINT_BUFFER_SIZE, "#<sampler: %s[%d: %d] from %lld, at %lld, %s>",
 			 name, cp->chan, fd->edit_ctr, fd->initial_samp, current_location(fd), 
 			 (fd->direction == READ_BACKWARD) ? "backward" : "forward");
-	  else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sampler: %s from %lld, at %lld, %s>",
+	  else snprintf(desc, PRINT_BUFFER_SIZE, "#<sampler: %s from %lld, at %lld, %s>",
 			    name, fd->initial_samp, current_location(fd),
 			    (fd->direction == READ_BACKWARD) ? "backward" : "forward");
 	}
@@ -8708,7 +8708,7 @@ static char *snd_to_sample_describe(mus_any *ptr)
 	  }
     }
   snd_to_sample_buf = (char *)calloc(len, sizeof(char));
-  mus_snprintf(snd_to_sample_buf, len, "%s reading %s (%d chan%s) at %lld:[", 
+  snprintf(snd_to_sample_buf, len, "%s reading %s (%d chan%s) at %lld:[", 
 	       mus_name(ptr),
 	       spl->sp->short_filename, 
 	       spl->chans, 

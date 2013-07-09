@@ -543,7 +543,7 @@ region_state *region_report(void)
       char *reg_buf;
       r = regions[i];
       reg_buf = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(reg_buf, LABEL_BUFFER_SIZE, "%d: %s (%s:%s)", r->id, r->name, r->start, r->end);
+      snprintf(reg_buf, LABEL_BUFFER_SIZE, "%d: %s (%s:%s)", r->id, r->name, r->start, r->end);
       rs->name[i] = reg_buf;
     }
   return(rs);

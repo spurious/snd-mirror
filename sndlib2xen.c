@@ -1468,11 +1468,11 @@ static char *sound_data_to_string(sound_data *sd)
       int i, chn;
       for (chn = 0; chn < chans; chn++)
 	{
-	  mus_snprintf(flt, 24, "\n    (%.3f", sd->data[chn][0]);
+	  snprintf(flt, 24, "\n    (%.3f", sd->data[chn][0]);
 	  strcat(buf, flt);
 	  for (i = 1; i < len; i++)
 	    {
-	      mus_snprintf(flt, 24, " %.3f", sd->data[chn][i]);
+	      snprintf(flt, 24, " %.3f", sd->data[chn][i]);
 	      strcat(buf, flt);
 	    }
 	  if (sd->length > mus_vct_print_length())

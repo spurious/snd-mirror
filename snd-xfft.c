@@ -159,7 +159,7 @@ static void widget_float_to_text(Widget w, mus_float_t val)
 {
   char *str;
   str = (char *)calloc(16, sizeof(char));
-  mus_snprintf(str, 16, "%.2f", val);
+  snprintf(str, 16, "%.2f", val);
   XmTextFieldSetString(w, str);
   free(str);
 }
@@ -741,7 +741,7 @@ static void alpha_drag_callback(Widget w, XtPointer context, XtPointer info)
   in_set_fft_window_alpha(alpha);
   chans_field(FCP_ALPHA, alpha);
 
-  mus_snprintf(alpha_number_buffer, 11, "alpha:%.3f", alpha);
+  snprintf(alpha_number_buffer, 11, "alpha:%.3f", alpha);
   set_label(alpha_number, alpha_number_buffer);
 
   if (fft_window_alpha_in_use(fft_window(ss)))
@@ -757,7 +757,7 @@ static void set_alpha_scale(mus_float_t val)
 {
   char alpha_number_buffer[11];
   XtVaSetValues(alpha_scale, XmNvalue, (int)(val * 90), NULL);
-  mus_snprintf(alpha_number_buffer, 11, "alpha:%.3f", val);
+  snprintf(alpha_number_buffer, 11, "alpha:%.3f", val);
   set_label(alpha_number, alpha_number_buffer);
 }
 
@@ -790,7 +790,7 @@ static void beta_drag_callback(Widget w, XtPointer context, XtPointer info)
   in_set_fft_window_beta(beta);
   chans_field(FCP_BETA, beta);
 
-  mus_snprintf(beta_number_buffer, 11, "beta: %.3f", beta);
+  snprintf(beta_number_buffer, 11, "beta: %.3f", beta);
   set_label(beta_number, beta_number_buffer);
 
   if (fft_window_beta_in_use(fft_window(ss)))
@@ -807,7 +807,7 @@ static void set_beta_scale(mus_float_t val)
 {
   char beta_number_buffer[11];
   XtVaSetValues(beta_scale, XmNvalue, (int)(val * 90), NULL);
-  mus_snprintf(beta_number_buffer, 11, "beta: %.3f", val);
+  snprintf(beta_number_buffer, 11, "beta: %.3f", val);
   set_label(beta_number, beta_number_buffer);
 }
 
@@ -841,7 +841,7 @@ static void set_spectrum_start_scale(mus_float_t val)
 {
   char start_number_buffer[11];
   XtVaSetValues(start_scale, XmNvalue, (int)(val * 90), NULL);
-  mus_snprintf(start_number_buffer, 11, "start:%.3f", val);
+  snprintf(start_number_buffer, 11, "start:%.3f", val);
   set_label(start_number, start_number_buffer);
 }
 
@@ -877,7 +877,7 @@ static void start_drag_callback(Widget w, XtPointer context, XtPointer info)
   mus_float_t start;
   
   start = (((XmScrollBarCallbackStruct *)info)->value) / 90.0;
-  mus_snprintf(start_number_buffer, 11, "start:%.3f", start);
+  snprintf(start_number_buffer, 11, "start:%.3f", start);
   set_label(start_number, start_number_buffer);
 
   in_set_spectrum_start(start);
@@ -891,7 +891,7 @@ static void set_spectrum_end_scale(mus_float_t val)
 {
   char end_number_buffer[11];
   XtVaSetValues(end_scale, XmNvalue, (int)(val * 90), NULL);
-  mus_snprintf(end_number_buffer, 11, "end:  %.3f", val);
+  snprintf(end_number_buffer, 11, "end:  %.3f", val);
   set_label(end_number, end_number_buffer);
 }
 
@@ -925,7 +925,7 @@ static void end_drag_callback(Widget w, XtPointer context, XtPointer info)
   mus_float_t end;
 
   end = (((XmScrollBarCallbackStruct *)info)->value) / 90.0;
-  mus_snprintf(end_number_buffer, 11, "end:  %.3f", end);
+  snprintf(end_number_buffer, 11, "end:  %.3f", end);
   set_label(end_number, end_number_buffer);
 
   in_set_spectrum_end(end);

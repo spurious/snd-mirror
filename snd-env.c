@@ -85,10 +85,10 @@ char *env_to_string(env *e)
 	{
 	  if (fabs(e->data[j + 1]) < .0000001) e->data[j + 1] = 0.0; /* try to get rid of -0.000 */
 #if HAVE_RUBY
-	  mus_snprintf(expr_buf, PRINT_BUFFER_SIZE, "%s%.3f, %.3f", (first) ? "" : ", ", e->data[j], e->data[j + 1]);
+	  snprintf(expr_buf, PRINT_BUFFER_SIZE, "%s%.3f, %.3f", (first) ? "" : ", ", e->data[j], e->data[j + 1]);
 #endif
 #if HAVE_SCHEME || HAVE_FORTH
-	  mus_snprintf(expr_buf, PRINT_BUFFER_SIZE, "%s%.3f %.3f", (first) ? "" : " ", e->data[j], e->data[j + 1]);
+	  snprintf(expr_buf, PRINT_BUFFER_SIZE, "%s%.3f %.3f", (first) ? "" : " ", e->data[j], e->data[j + 1]);
 #endif
 	  news = mus_strcat(news, expr_buf, &len);
 	  first = false;
@@ -1503,7 +1503,7 @@ void add_or_edit_symbol(const char *name, env *val)
   tmpstr = env_to_string(val);
   len = mus_strlen(tmpstr) + mus_strlen(name) + 32;
   buf = (char *)calloc(len, sizeof(char));
-  mus_snprintf(buf, len, "%s = %s", name, tmpstr);
+  snprintf(buf, len, "%s = %s", name, tmpstr);
   if (tmpstr) free(tmpstr);
 
   snd_catch_any(eval_str_wrapper, buf, buf);
@@ -1556,7 +1556,7 @@ env *get_env(XEN e, const char *origin) /* list in e */
 	XEN msg;
 	char *buf;
 	buf = (char *)calloc(1024, sizeof(char));
-	mus_snprintf(buf, 1024, "%s: env at breakpoint %d: x axis value %f > %f", origin, i / 2, new_env->data[i - 2], new_env->data[i]);
+	snprintf(buf, 1024, "%s: env at breakpoint %d: x axis value %f > %f", origin, i / 2, new_env->data[i - 2], new_env->data[i]);
 	msg = C_TO_XEN_STRING(buf);
 	free(buf);
 	free_env(new_env);

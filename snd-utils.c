@@ -313,7 +313,7 @@ char *shorter_tempnam(const char *udir, const char *prefix)
   if ((udir == NULL) || (mus_strlen(udir) == 0)) 
     tmpdir = get_tmpdir(); /* incoming dir could be "" */
   else tmpdir = mus_strdup(udir);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, "%s/%s%d_%d.snd", tmpdir, (prefix) ? prefix : "snd_", (int)getpid(), sect_ctr++);
+  snprintf(str, PRINT_BUFFER_SIZE, "%s/%s%d_%d.snd", tmpdir, (prefix) ? prefix : "snd_", (int)getpid(), sect_ctr++);
   if (tmpdir) free(tmpdir);
   tmpdir = mus_strdup(str);
   free(str);

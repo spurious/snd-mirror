@@ -476,7 +476,7 @@ static char listener_prompt_buffer[LABEL_BUFFER_SIZE];
 
 static char *listener_prompt_with_cr(void)
 {
-  mus_snprintf(listener_prompt_buffer, LABEL_BUFFER_SIZE, "\n%s", listener_prompt(ss));
+  snprintf(listener_prompt_buffer, LABEL_BUFFER_SIZE, "\n%s", listener_prompt(ss));
   return(listener_prompt_buffer);
 }
 

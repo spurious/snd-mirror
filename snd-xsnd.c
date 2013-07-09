@@ -152,7 +152,7 @@ static int scroll_to_amp(snd_info *sp, int val)
 	  else sp->amp_control = (val * (1.0 - sp->amp_control_min) / (0.5 * 0.9 * SCROLLBAR_MAX)) + sp->amp_control_min;
 	}
     }
-  mus_snprintf(amp_number_buffer, 6, "%.3f", sp->amp_control);
+  snprintf(amp_number_buffer, 6, "%.3f", sp->amp_control);
   set_label(AMP_LABEL(sp), amp_number_buffer);
   return(val);
 }
@@ -338,7 +338,7 @@ static int scroll_to_expand(snd_info *sp, int val)
     }
 
   if (sp->playing) dac_set_expand(sp, sp->expand_control);
-  mus_snprintf(expand_number_buffer, 6, "%.3f", sp->expand_control);
+  snprintf(expand_number_buffer, 6, "%.3f", sp->expand_control);
   set_label(EXPAND_LABEL(sp), expand_number_buffer);
   return(val);
 }
@@ -416,7 +416,7 @@ static int scroll_to_contrast(snd_info *sp, int val)
 {
   char contrast_number_buffer[6];
   sp->contrast_control = sp->contrast_control_min + val * (sp->contrast_control_max - sp->contrast_control_min) / (0.9 * SCROLLBAR_MAX);
-  mus_snprintf(contrast_number_buffer, 6, "%.3f", sp->contrast_control);
+  snprintf(contrast_number_buffer, 6, "%.3f", sp->contrast_control);
   set_label(CONTRAST_LABEL(sp), contrast_number_buffer);
   return(val);
 }
@@ -506,7 +506,7 @@ static int scroll_to_revscl(snd_info *sp, int val)
 					   pow(sp->reverb_control_scale_min, 0.333));
     }
 
-  mus_snprintf(revscl_number_buffer, 7, "%.4f", sp->reverb_control_scale);
+  snprintf(revscl_number_buffer, 7, "%.4f", sp->reverb_control_scale);
   set_label(REVSCL_LABEL(sp), revscl_number_buffer);
   return(val);
 }
@@ -567,7 +567,7 @@ static int scroll_to_revlen(snd_info *sp, int val)
 
   sp->reverb_control_length = sp->reverb_control_length_min + 
     (sp->reverb_control_length_max - sp->reverb_control_length_min) * (mus_float_t)val / (0.9 * SCROLLBAR_MAX);
-  mus_snprintf(revlen_number_buffer, 5, "%.2f", sp->reverb_control_length);
+  snprintf(revlen_number_buffer, 5, "%.2f", sp->reverb_control_length);
   set_label(REVLEN_LABEL(sp), revlen_number_buffer);
   return(val);
 }
@@ -1480,7 +1480,7 @@ static char *bits_to_string(const char **icon)
   /* show first few lines */
   char *buf;
   buf = (char *)calloc(128, sizeof(char));
-  mus_snprintf(buf, 128, "\n%s\n%s\n%s...", icon[0], icon[1], icon[2]);
+  snprintf(buf, 128, "\n%s\n%s\n%s...", icon[0], icon[1], icon[2]);
   return(buf);
 }
 
@@ -1695,7 +1695,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{
 	  title = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
+	  snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
 	  if (sp->dialog == NULL)
 	    {
 	      n = 0;
@@ -2628,7 +2628,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{
 	  title = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
+	  snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
 	  XtVaSetValues(sp->dialog, XmNtitle, title, NULL);
 	  free(title);
 	  if (!XtIsManaged(sp->dialog)) XtManageChild(sp->dialog);

@@ -2610,7 +2610,7 @@ static char *mark_sync_name(int cur_sync)
 {
   char *result;
   result = (char *)calloc(SYNC_NAME_SIZE, sizeof(char));
-  mus_snprintf(result, SYNC_NAME_SIZE, "%s%d", SYNC_BASE, cur_sync);
+  snprintf(result, SYNC_NAME_SIZE, "%s%d", SYNC_BASE, cur_sync);
   return(result);
 }
 

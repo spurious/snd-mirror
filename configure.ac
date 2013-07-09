@@ -136,16 +136,9 @@ AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
 				        #include <sys/param.h>
 				        #endif
 				       ])
-# this still screws up in netBSD!
 
-AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(MUS_HAVE_USR_LOCAL_LIB_OSS)])
-AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(MUS_HAVE_USR_LIB_OSS)])
-AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(MUS_HAVE_OPT_OSS)])
-AC_CHECK_HEADER(/var/lib/oss/include/sys/soundcard.h,[AC_DEFINE(MUS_HAVE_VAR_LIB_OSS)])
-AC_CHECK_HEADER(gnu/libc-version.h,[AC_DEFINE(HAVE_GNU_LIBC_VERSION_H)])
 AC_CHECK_HEADER(alsa/asoundlib.h,[AC_DEFINE(HAVE_ALSA_ASOUNDLIB_H)])
 
-AC_CHECK_DECLS(hypot,,,[#include <math.h>]) 
 AC_CHECK_DECLS(isnan,,,[#include <math.h>])
 
 AC_SEARCH_LIBS([dlopen], [c, dl], [AC_DEFINE([HAVE_DLOPEN], [1])]) 
@@ -170,7 +163,7 @@ AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(ssize_t)
 
 AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline difftime gettimeofday)
-AC_CHECK_FUNCS(vsnprintf vasprintf snprintf strftime memmove lstat strcasecmp pathconf)
+AC_CHECK_FUNCS(vsnprintf vasprintf strftime memmove lstat strcasecmp pathconf)
 
 AC_LIB_PROG_LD
 # this is needed for the -export-dynamic check below (export dynamic is needed to get the xm.so module loadable at run-time)
@@ -705,8 +698,6 @@ else
               GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
             fi
           fi
-          pango_version="`$PKG_CONFIG pango --modversion`"
-          AC_DEFINE_UNQUOTED(MUS_PANGO_VERSION,"${pango_version}")
         fi
 
       	AC_SUBST(GTK_LD_LIBS)
@@ -714,8 +705,6 @@ else
 	if test x$PKG_CONFIG != xno ; then
           CAIRO_CFLAGS="`$PKG_CONFIG cairo --cflags-only-I`"
       	  AC_SUBST(CAIRO_CFLAGS)
-	  cairo_version="`$PKG_CONFIG cairo --modversion`"
-          AC_DEFINE_UNQUOTED(MUS_CAIRO_VERSION,"${cairo_version}")
           fi
 
         AC_CHECK_LIB(m, g_file_monitor_directory, [AC_DEFINE(HAVE_G_FILE_MONITOR_DIRECTORY)], ,$GTK_LIBS)
@@ -901,8 +890,8 @@ AC_DEFUN([AC_CHECK_RUBY],
     AC_MSG_RESULT([no])
     [$3]
   fi
-  AC_SUBST([RUBY_VERSION])
-  AC_SUBST([RUBY_RELEASE_DATE])
+#  AC_SUBST([RUBY_VERSION])
+#  AC_SUBST([RUBY_RELEASE_DATE])
   AC_SUBST([RUBY_SEARCH_PATH])
   AC_SUBST([RUBY_CFLAGS])
   AC_SUBST([RUBY_LIBS])

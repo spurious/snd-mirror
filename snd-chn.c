@@ -1353,8 +1353,8 @@ static void display_channel_id(chan_info *cp, graphics_context *ax, int height, 
       x0 = 5;
       y0 = height + CHN_LABEL_OFFSET;
       if (cp->edit_ctr == 0)
-	mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%d]", cp->chan + 1);
-      else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%d]: %d", cp->chan + 1, cp->edit_ctr);
+	snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%d]", cp->chan + 1);
+      else snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%d]: %d", cp->chan + 1, cp->edit_ctr);
 
       if (cp == selected_channel())
 	{
@@ -1386,7 +1386,7 @@ static void display_selection_transform_size(chan_info *cp, axis_info *fap, grap
   if (cp->printing) ps_set_tiny_numbers_font();
   y0 = fap->height + fap->y_offset + SELECTION_FFT_LABEL_OFFSET;
   x0 = fap->x_axis_x0 + 20;
-  mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, 
+  snprintf(chn_id_str, LABEL_BUFFER_SIZE, 
 	       "(len: %lld/%lld)", 
 	       selection_len(), 
 	       cp->selection_transform_size);
@@ -2152,8 +2152,8 @@ static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data,
 	      if (with_amps)
 		{
 		  if ((fft_data) && (cp->fft_log_magnitude))
-		    mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.1f", in_dB(cp->min_dB, cp->lin_dB, peak_freqs[i].amp));
-		  else mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.*f", amp_strlen, peak_freqs[i].amp);
+		    snprintf(ampstr, LABEL_BUFFER_SIZE, "%.1f", in_dB(cp->min_dB, cp->lin_dB, peak_freqs[i].amp));
+		  else snprintf(ampstr, LABEL_BUFFER_SIZE, "%.*f", amp_strlen, peak_freqs[i].amp);
 		  draw_string(ax, amp_col, row, ampstr, strlen(ampstr));
 		  if (cp->printing) 
 		    ps_draw_string(fap, amp_col, row, ampstr);
@@ -2191,8 +2191,8 @@ static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data,
 	  if (with_amps)
 	    {
 	      if ((fft_data) && (cp->fft_log_magnitude))
-		mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.1f", in_dB(cp->min_dB, cp->lin_dB, peak_freqs[i].amp));
-	      else mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.*f", amp_strlen, peak_freqs[i].amp);
+		snprintf(ampstr, LABEL_BUFFER_SIZE, "%.1f", in_dB(cp->min_dB, cp->lin_dB, peak_freqs[i].amp));
+	      else snprintf(ampstr, LABEL_BUFFER_SIZE, "%.*f", amp_strlen, peak_freqs[i].amp);
 	      draw_string(ax, amp_col, row, ampstr, strlen(ampstr));
 	      if (cp->printing) 
 		ps_draw_string(fap, amp_col, row, ampstr);
@@ -4746,14 +4746,14 @@ void show_cursor_info(chan_info *cp)
   expr_str = (char *)calloc(len, sizeof(char));
 
   if (sp->nchans == 1)
-    mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample %lld) = %s",
+    snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample %lld) = %s",
 		 s1 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp)),
 		 samp,
 		 s2 = prettyf(y, digits));
   else
     {
       if (sp->sync == 0)
-	mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "chan %d, cursor at %s (sample %lld) = %s",
+	snprintf(expr_str, PRINT_BUFFER_SIZE, "chan %d, cursor at %s (sample %lld) = %s",
 		     cp->chan + 1,
 		     s1 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp)),
 		     samp,
@@ -4762,7 +4762,7 @@ void show_cursor_info(chan_info *cp)
 	{
 	  /* in this case, assume we show all on chan 0 and ignore the call otherwise (see above) */
 	  /* "cursor at..." then list of values */
-	  mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample %lld): %s",
+	  snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample %lld): %s",
 		       s1 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp)),
 		       samp,
 		       s2 = prettyf(y, digits));

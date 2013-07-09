@@ -522,8 +522,8 @@ static void enved_display_point_label(mus_float_t x, mus_float_t y)
 {
   char brkpt_buf[LABEL_BUFFER_SIZE];
   if ((enved_in_dB(ss)) && (min_dB(ss) < -60))
-    mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);
-  else mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.3f", x, y);
+    snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);
+  else snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.3f", x, y);
   set_button_label(brkptL, brkpt_buf);
 }
 
@@ -757,7 +757,7 @@ static void make_base_label(mus_float_t bval)
   len = (int)(enved_power(ss) * 4);
   if (len < 32) len = 32;
   sfs = (char *)calloc(len, sizeof(char));
-  mus_snprintf(sfs, len, "%.3f", bval);
+  snprintf(sfs, len, "%.3f", bval);
   scale_len = (int)(enved_power(ss) + 3);
   if (scale_len < 32) scale_len = 32;
   buf = (char *)calloc(scale_len, sizeof(char));
@@ -1005,7 +1005,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNmarginHeight, 0); n++;
       XtSetArg(args[n], XmNmarginBottom, 0); n++;
-      mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", enved_filter_order(ss));
+      snprintf(str, LABEL_BUFFER_SIZE, "%d", enved_filter_order(ss));
       XtSetArg(args[n], XmNvalue, str); n++;
       orderL = make_textfield_widget("orderL", mainform, args, n, ACTIVATABLE, NO_COMPLETER);
       XtAddCallback(orderL, XmNactivateCallback, order_activate_callback, NULL);

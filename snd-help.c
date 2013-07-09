@@ -27,7 +27,7 @@ static char *snd_itoa(int n)
 	}
     }
   str = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", n);
+  snprintf(str, LABEL_BUFFER_SIZE, "%d", n);
   snd_itoa_strs[snd_itoa_ctr++] = str;
   return(str);
 }
@@ -121,10 +121,6 @@ static void main_snd_help(const char *subject, ...)
   #include <X11/xpm.h>
 #endif
 
-#if HAVE_GNU_LIBC_VERSION_H
-  #include <gnu/libc-version.h>
-#endif
-
 #if HAVE_LADSPA && HAVE_DLFCN_H && HAVE_DIRENT_H && HAVE_DLOPEN
   #include <ladspa.h>
 #endif
@@ -179,7 +175,7 @@ static char *xm_version(void)
     {
       char *version = NULL;
       version = (char *)calloc(32, sizeof(char));
-      mus_snprintf(version, 32, "\n    %s: %s", 
+      snprintf(version, 32, "\n    %s: %s", 
 #if USE_MOTIF
 		   "xm",
 #else
@@ -223,7 +219,7 @@ static char *gl_version(void)
     {
       char *version = NULL;
       version = (char *)calloc(32, sizeof(char));
-      mus_snprintf(version, 32, " (snd gl: %s)", XEN_TO_C_STRING(gl_val));
+      snprintf(version, 32, " (snd gl: %s)", XEN_TO_C_STRING(gl_val));
       if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
       return(version);
     }
@@ -248,13 +244,13 @@ static char *glx_version(void)
   if (ss->cx)
     {
       glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(ss->mainshell), ss->cx);
-      mus_snprintf(version, VERSION_SIZE, " %s", glGetString(GL_VERSION));
+      snprintf(version, VERSION_SIZE, " %s", glGetString(GL_VERSION));
     }
   else 
     {
       int major = 0, minor = 0;
       glXQueryVersion(MAIN_DISPLAY(ss), &major, &minor);
-      mus_snprintf(version, VERSION_SIZE, " %d.%d", major, minor);
+      snprintf(version, VERSION_SIZE, " %d.%d", major, minor);
     }
   if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
   return(version);
@@ -312,11 +308,15 @@ char *version_info(void)
 	  ", Glib ",     snd_itoa(GLIB_MAJOR_VERSION), ".", 
                          snd_itoa(GLIB_MINOR_VERSION), ".", 
                          snd_itoa(GLIB_MICRO_VERSION),
-  #ifdef MUS_PANGO_VERSION
-	  ", Pango ", MUS_PANGO_VERSION,
+  #ifdef PANGO_VERSION_MAJOR
+	  ", Pango ", snd_itoa(PANGO_VERSION_MAJOR), ".",
+	              snd_itoa(PANGO_VERSION_MINOR), ".", 
+                      snd_itoa(PANGO_VERSION_MICRO),
   #endif
-  #ifdef MUS_CAIRO_VERSION
-	  ", Cairo ", MUS_CAIRO_VERSION,
+  #ifdef CAIRO_VERSION_MAJOR
+	  ", Cairo ", snd_itoa(CAIRO_VERSION_MAJOR), ".",
+	              snd_itoa(CAIRO_VERSION_MINOR), ".", 
+                      snd_itoa(CAIRO_VERSION_MICRO),
   #endif
 #endif
 	  xm_version(), /* omitted if --version/--help because the init procs haven't run at that point */
@@ -365,10 +365,6 @@ char *version_info(void)
 #ifdef __SUNPRO_C
 	  "\n    Forte C ",
 #endif
-#endif
-#if HAVE_GNU_LIBC_VERSION_H
-	  "\n    Libc: ", gnu_get_libc_version(), ".", 
-                          gnu_get_libc_release(),
 #endif
 #ifdef SND_HOST
 	  "\n    host: ", SND_HOST,
@@ -1386,7 +1382,7 @@ static void show_key_help(int key, int state, bool cx, char *help)
       char buf[1024];
       char cbuf[256];
       make_key_name(cbuf, 256, key, state, cx);
-      mus_snprintf(buf, 1024, "\n%s: %s", cbuf, help);
+      snprintf(buf, 1024, "\n%s: %s", cbuf, help);
 #if USE_GTK
       snd_help_append_monospace(buf);
 #else
@@ -3567,7 +3563,7 @@ and its value is returned."
 		str = (char *)calloc(256, sizeof(char));
 		/* unavoidable memleak I guess -- we could use a backup statically allocated buffer here */
 		if (s7_is_null(s7, e))
-		  mus_snprintf(str, 256, "this function appears to come from eval or eval-string?");
+		  snprintf(str, 256, "this function appears to come from eval or eval-string?");
 		else
 		  {
 		    /* (cdr (assoc '__func__ (environment->list (procedure-environment func)))) => (name file line) or name */
@@ -3578,13 +3574,13 @@ and its value is returned."
 			subject = (char *)s7_symbol_name(s7_car(x));
 			url = snd_url(subject);
 			if (url)
-			  mus_snprintf(str, 256, "%s is defined at line %lld of %s, and documented at %s",
+			  snprintf(str, 256, "%s is defined at line %lld of %s, and documented at %s",
 				       subject, 
 				       (long long int)s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
 				       s7_string(s7_car(s7_cdr(x))),
 				       url);
 			else 
-			  mus_snprintf(str, 256, "%s is defined at line %lld of %s",
+			  snprintf(str, 256, "%s is defined at line %lld of %s",
 				       subject, 
 				       (long long int)s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
 				       s7_string(s7_car(s7_cdr(x))));

@@ -1681,7 +1681,7 @@ static void draw_mix_tag(mix_info *md, int x, int y)
   else
     {
       lab = (char *)calloc(16, sizeof(char));
-      mus_snprintf(lab, 16, "%d", md->id);
+      snprintf(lab, 16, "%d", md->id);
     }
   draw_string(ax, x - width / 2, y - height / 2 + STRING_Y_OFFSET, lab, strlen(lab));
   if (cp->printing) ps_draw_string(cp->axis, x - width / 2, y - height / 2 + STRING_Y_OFFSET, lab);
@@ -3518,7 +3518,7 @@ static char *mix_sampler_to_string(mix_fd *fd)
 	{
 	  mix_info *md;
 	  md = fd->md;
-	  mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sampler mix %d, (from %lld, at %lld%s): %s>",
+	  snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sampler mix %d, (from %lld, at %lld%s): %s>",
 		       md->id,
 		       fd->sf->initial_samp,
 		       fd->sf->loc,

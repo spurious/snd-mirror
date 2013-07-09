@@ -890,7 +890,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   make_row_middle_separator(hb);
   
   str = (char *)calloc(12, sizeof(char));
-  mus_snprintf(str, 12, "%.3f", current_value);
+  snprintf(str, 12, "%.3f", current_value);
   prf->text = make_row_text(prf, str, 6, hb);
   free(str);
 

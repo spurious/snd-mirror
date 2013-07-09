@@ -1201,7 +1201,7 @@ mus_float_t speed_changed(mus_float_t val, char *srcbuf, speed_style_t style, in
       {
 	int num, den;
 	snd_rationalize(val, &num, &den);
-	mus_snprintf(srcbuf, srcbuf_size, "%d/%d", num, den);
+	snprintf(srcbuf, srcbuf_size, "%d/%d", num, den);
 	return((mus_float_t)num / (mus_float_t)den);
       }
 #else
@@ -1210,12 +1210,12 @@ mus_float_t speed_changed(mus_float_t val, char *srcbuf, speed_style_t style, in
 	  break;
       if ((rat_values[i] - val) < (val - rat_values[i - 1]))
 	{
-	  mus_snprintf(srcbuf, srcbuf_size, "%s", rat_names[i]);
+	  snprintf(srcbuf, srcbuf_size, "%s", rat_names[i]);
 	  return(rat_values[i]);
 	}
       else
 	{
-	  mus_snprintf(srcbuf, srcbuf_size, "%s", rat_names[i - 1]);
+	  snprintf(srcbuf, srcbuf_size, "%s", rat_names[i - 1]);
 	  return(rat_values[i - 1]);
 	}
 #endif
@@ -1226,7 +1226,7 @@ mus_float_t speed_changed(mus_float_t val, char *srcbuf, speed_style_t style, in
       semi = snd_round(log(val) * ((mus_float_t)tones / log(2.0)));
       /* space until (-) num (-52 to 52 is its range if 12-tone) */
       for (i = 0; i < srcbuf_size; i++) srcbuf[i] = ' '; 
-      mus_snprintf(numbuf, 16, "%d", semi);
+      snprintf(numbuf, 16, "%d", semi);
       j = strlen(numbuf) - 1;
       for (i = 3; (i >= 0) && (j >= 0); i--, j--) 
 	srcbuf[i] = numbuf[j];
@@ -1235,7 +1235,7 @@ mus_float_t speed_changed(mus_float_t val, char *srcbuf, speed_style_t style, in
       break;
 
     default: 
-      mus_snprintf(srcbuf, srcbuf_size, "%.3f", val);
+      snprintf(srcbuf, srcbuf_size, "%.3f", val);
       return(val);
       break;
     }
@@ -1250,7 +1250,7 @@ char *shortname(snd_info *sp)
 {
   if (link_p(sp->filename))
     {
-      mus_snprintf(sname, PRINT_BUFFER_SIZE, "(%s)", sp->short_filename);
+      snprintf(sname, PRINT_BUFFER_SIZE, "(%s)", sp->short_filename);
       return(sname);
     }
   return(sp->short_filename);
@@ -1262,8 +1262,8 @@ char *shortname_indexed(snd_info *sp)
   if (show_indices(ss))
     {
       if (link_p(sp->filename))
-	mus_snprintf(sname, PRINT_BUFFER_SIZE, "%d: (%s)", sp->index, sp->short_filename); /* don't try to share sname */
-      else mus_snprintf(sname, PRINT_BUFFER_SIZE, "%d: %s", sp->index, sp->short_filename);
+	snprintf(sname, PRINT_BUFFER_SIZE, "%d: (%s)", sp->index, sp->short_filename); /* don't try to share sname */
+      else snprintf(sname, PRINT_BUFFER_SIZE, "%d: %s", sp->index, sp->short_filename);
       return(sname);
     }
   return(shortname(sp));

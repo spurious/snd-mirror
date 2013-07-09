@@ -205,7 +205,7 @@ static void reflect_mix_amp(mus_float_t val)
   char sfs[6];
   ADJUSTMENT_SET_VALUE(w_amp_adj, amp_to_scroll(amp_control_min(ss), val, amp_control_max(ss)));
   /* gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_amp_adj)); */
-  mus_snprintf(sfs, 6, "%.2f", val);
+  snprintf(sfs, 6, "%.2f", val);
   gtk_label_set_text(GTK_LABEL(w_amp_number), sfs);
 }
 
@@ -843,7 +843,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(w_amp_event);
       SG_SIGNAL_CONNECT(w_amp_event, "button_press_event", mix_amp_click_callback, NULL);
       
-      mus_snprintf(amplab, LABEL_BUFFER_SIZE, "%s", "amp:");
+      snprintf(amplab, LABEL_BUFFER_SIZE, "%s", "amp:");
 #if (!HAVE_GTK_3)
       w_amp_label = gtk_label_new(amplab);
 #else
@@ -992,7 +992,7 @@ void reflect_mix_change(int mix_id)
 
 	      beg = mix_position_from_id(mix_dialog_id);
 	      len = mix_length_from_id(mix_dialog_id);
-	      mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f%s",
+	      snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f%s",
 			   (float)((double)beg / (float)SND_SRATE(cp->sound)),
 			   (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)),
 			   (mix_is_active(mix_dialog_id)) ? "" : " (locked)");

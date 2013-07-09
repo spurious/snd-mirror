@@ -4,7 +4,7 @@ static void int_to_textfield(widget_t w, int val)
 {
   char *str;
   str = (char *)calloc(16, sizeof(char));
-  mus_snprintf(str, 16, "%d", val);
+  snprintf(str, 16, "%d", val);
   SET_TEXT(w, str);
   free(str);
 }
@@ -14,7 +14,7 @@ static void mus_long_t_to_textfield(widget_t w, mus_long_t val)
 {
   char *str;
   str = (char *)calloc(32, sizeof(char));
-  mus_snprintf(str, 32, "%lld", val);
+  snprintf(str, 32, "%lld", val);
   SET_TEXT(w, str);
   free(str);
 }
@@ -24,7 +24,7 @@ static void float_to_textfield(widget_t w, mus_float_t val)
 {
   char *str;
   str = (char *)calloc(12, sizeof(char));
-  mus_snprintf(str, 12, "%.3f", val);
+  snprintf(str, 12, "%.3f", val);
   SET_TEXT(w, str);
   free(str);
 }
@@ -34,7 +34,7 @@ static void float_1_to_textfield(widget_t w, mus_float_t val)
 {
   char *str;
   str = (char *)calloc(12, sizeof(char));
-  mus_snprintf(str, 12, "%.1f", val);
+  snprintf(str, 12, "%.1f", val);
   SET_TEXT(w, str);
   free(str);
 }

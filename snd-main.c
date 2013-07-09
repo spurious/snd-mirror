@@ -641,28 +641,28 @@ void global_control_panel_state(void)
   char *buf;
   snd_help_append("\n\nCurrent control panel defaults:\n\n");
   buf = (char *)calloc(1024, sizeof(char));
-  mus_snprintf(buf, 1024, "amp bounds: %.3f to %.3f\n", 
+  snprintf(buf, 1024, "amp bounds: %.3f to %.3f\n", 
 	       amp_control_min(ss), amp_control_max(ss));
   snd_help_append(buf);
-  mus_snprintf(buf, 1024, "speed bounds: %.3f to %.3f, tones: %d, style: %s\n",
+  snprintf(buf, 1024, "speed bounds: %.3f to %.3f, tones: %d, style: %s\n",
 	       speed_control_min(ss), speed_control_max(ss),
 	       speed_control_tones(ss),
 	       speed_control_style_name(speed_control_style(ss)));
   snd_help_append(buf);
-  mus_snprintf(buf, 1024, "expand bounds: %.3f to %.3f, ramp: %.3f, hop: %.3f, length: %.3f, jitter: %.3f\n",
+  snprintf(buf, 1024, "expand bounds: %.3f to %.3f, ramp: %.3f, hop: %.3f, length: %.3f, jitter: %.3f\n",
 	       expand_control_min(ss), expand_control_max(ss),
 	       expand_control_ramp(ss), expand_control_hop(ss), expand_control_length(ss), expand_control_jitter(ss));
   snd_help_append(buf);
-  mus_snprintf(buf, 1024, "contrast bounds: %.3f to %.3f, amp: %.3f\n",
+  snprintf(buf, 1024, "contrast bounds: %.3f to %.3f, amp: %.3f\n",
 	       contrast_control_min(ss), contrast_control_max(ss),
 	       contrast_control_amp(ss));
   snd_help_append(buf);
-  mus_snprintf(buf, 1024, "reverb scale: %.3f to %.3f, length: %.3f to %.3f, feedbacl: %.3f, lowpass: %.3f, decay: %.3f\n",
+  snprintf(buf, 1024, "reverb scale: %.3f to %.3f, length: %.3f to %.3f, feedbacl: %.3f, lowpass: %.3f, decay: %.3f\n",
 	       reverb_control_scale_min(ss), reverb_control_scale_max(ss),
 	       reverb_control_length_min(ss), reverb_control_length_max(ss),
 	       reverb_control_feedback(ss), reverb_control_lowpass(ss), reverb_control_decay(ss));
   snd_help_append(buf);
-  mus_snprintf(buf, 1024, "filter order: %d, in dB: %s, in Hz: %s\n",
+  snprintf(buf, 1024, "filter order: %d, in dB: %s, in Hz: %s\n",
 	       filter_control_order(ss),
 	       b2s(filter_control_in_dB(ss)),
 	       b2s(filter_control_in_hz(ss)));
@@ -677,20 +677,20 @@ void global_fft_state(void)
   char *buf;
   snd_help_append("\n\nCurrent FFT defaults:\n\n");
   buf = (char *)calloc(1024, sizeof(char));
-  mus_snprintf(buf, 1024, "fft size: %lld\n    type: %s\n    window: %s (alpha: %.3f, beta: %.3f)\n",
+  snprintf(buf, 1024, "fft size: %lld\n    type: %s\n    window: %s (alpha: %.3f, beta: %.3f)\n",
 	       transform_size(ss), 
 	       TO_VAR_NAME(transform_program_name(transform_type(ss))),
 	       TO_VAR_NAME(mus_fft_window_xen_name(fft_window(ss))),
 	       fft_window_alpha(ss),
 	       fft_window_beta(ss));
   snd_help_append(buf);
-  mus_snprintf(buf, 1024, "    graph-type: %s\n    show-peaks: %s (max: %d)\n    show-selection-fft: %s\n",
+  snprintf(buf, 1024, "    graph-type: %s\n    show-peaks: %s (max: %d)\n    show-selection-fft: %s\n",
 	       transform_graph_type_name(transform_graph_type(ss)),
 	       b2s(show_transform_peaks(ss)),
 	       max_transform_peaks(ss),
 	       b2s(show_selection_transform(ss)));
   snd_help_append(buf);
-  mus_snprintf(buf, 1024, "    log freq: %s (start: %.3f)\n    dB: %s, min-dB: %.3f\n    normalization: %s\n",
+  snprintf(buf, 1024, "    log freq: %s (start: %.3f)\n    dB: %s, min-dB: %.3f\n    normalization: %s\n",
 	       b2s(fft_log_frequency(ss)),
 	       log_freq_start(ss),
 	       b2s(fft_log_magnitude(ss)),	       

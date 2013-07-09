@@ -1503,7 +1503,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 
 char *make_key_name(char *buf, int buf_size, int key, int state, bool extended)
 {
-  mus_snprintf(buf, buf_size, "%s%s%s",
+  snprintf(buf, buf_size, "%s%s%s",
 	       (extended) ? "C-x " : "",
 	       (state & snd_ControlMask) ? ((state & snd_MetaMask) ? "CM-" : "C-") : ((state & snd_MetaMask) ? "M-" : ""),
 	       (key == snd_K_less) ? "<" : 

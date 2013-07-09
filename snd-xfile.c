@@ -1326,7 +1326,7 @@ static void post_sound_info(Widget info1, Widget info2, const char *filename, bo
   XmString label;
   char *buf;
   buf = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s%s%d chan%s, %d Hz, %.3f secs",
+  snprintf(buf, LABEL_BUFFER_SIZE, "%s%s%d chan%s, %d Hz, %.3f secs",
 	       (with_filename) ? filename_without_directory(filename) : "",
 	       (with_filename) ? ": " : "",
 	       mus_sound_chans(filename),
@@ -1338,7 +1338,7 @@ static void post_sound_info(Widget info1, Widget info2, const char *filename, bo
 		XmNlabelString, label, 
 		NULL);
   XmStringFree(label);
-  mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s, %s%s",
+  snprintf(buf, LABEL_BUFFER_SIZE, "%s, %s%s",
 	       mus_header_type_name(mus_sound_header_type(filename)),
 	       short_data_format_name(mus_sound_data_format(filename), filename),
 	       snd_strftime(", %d-%b-%Y", mus_sound_write_date(filename)));
@@ -3003,7 +3003,7 @@ static void make_auto_comment(save_as_dialog_info *sd)
 		}
 
 	      comment = (char *)calloc(len, sizeof(char));
-	      mus_snprintf(comment, len, "%s%ssaved %s from %s with edits:\n", 
+	      snprintf(comment, len, "%s%ssaved %s from %s with edits:\n", 
 			   (fd->saved_comment) ? fd->saved_comment : "",
 			   (fd->saved_comment) ? "\n" : "",
 			   snd_local_time(),
@@ -3068,14 +3068,14 @@ void reflect_save_as_sound_selection(const char *sound_name)
       char *file_string;
       file_string = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
       if (sound_name)
-	mus_snprintf(file_string, PRINT_BUFFER_SIZE, "save %s", sound_name);
+	snprintf(file_string, PRINT_BUFFER_SIZE, "save %s", sound_name);
       else 
 	{
 	  snd_info *sp;
 	  sp = any_selected_sound();
 	  if (sp)
-	    mus_snprintf(file_string, PRINT_BUFFER_SIZE, "save %s", sp->short_filename);
-	  else mus_snprintf(file_string, PRINT_BUFFER_SIZE, "nothing to save!");
+	    snprintf(file_string, PRINT_BUFFER_SIZE, "save %s", sp->short_filename);
+	  else snprintf(file_string, PRINT_BUFFER_SIZE, "nothing to save!");
 	}
       xmstr2 = XmStringCreateLocalized(file_string);
       XtVaSetValues(save_sound_as->dialog, XmNdialogTitle, xmstr2, NULL);
@@ -3636,7 +3636,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
 
       file_string = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(file_string, PRINT_BUFFER_SIZE, "save %s", sound_name);
+      snprintf(file_string, PRINT_BUFFER_SIZE, "save %s", sound_name);
 
       xmstr2 = XmStringCreateLocalized(file_string);
       XtSetArg(args[n], XmNdialogTitle, xmstr2); n++;
@@ -3792,7 +3792,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
     {
       XmString xmstr2;
       file_string = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(file_string, PRINT_BUFFER_SIZE, "save %s", sound_name);
+      snprintf(file_string, PRINT_BUFFER_SIZE, "save %s", sound_name);
       xmstr2 = XmStringCreateLocalized(file_string);
       XtVaSetValues(sd->dialog, 
 		    XmNdialogTitle, xmstr2, 
@@ -4137,7 +4137,7 @@ static char *new_file_dialog_filename(int header_type)
     case MUS_CAFF: extension = "caf";  break;
     default:       extension = "snd";  break;
     }
-  mus_snprintf(filename, 64, "new-%d.%s", new_file_dialog_file_ctr++, extension);
+  snprintf(filename, 64, "new-%d.%s", new_file_dialog_file_ctr++, extension);
   return(filename);
 }
 
@@ -4401,16 +4401,16 @@ static XmString make_header_dialog_title(edhead_info *ep, snd_info *sp)
       (sp->file_read_only == FILE_READ_ONLY))
     {
       if (sp->hdr->type == MUS_RAW)
-	mus_snprintf(str, PRINT_BUFFER_SIZE, "Add header to (write-protected) %s", sp->short_filename);
-      else mus_snprintf(str, PRINT_BUFFER_SIZE, "Edit header of (write-protected) %s", sp->short_filename);
+	snprintf(str, PRINT_BUFFER_SIZE, "Add header to (write-protected) %s", sp->short_filename);
+      else snprintf(str, PRINT_BUFFER_SIZE, "Edit header of (write-protected) %s", sp->short_filename);
       if (ep->dialog)
 	set_sensitive(MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON), (sp->hdr->type == MUS_RAW));
     }
   else 
     {
       if (sp->hdr->type == MUS_RAW)
-	mus_snprintf(str, PRINT_BUFFER_SIZE, "Add header to %s", sp->short_filename);
-      else mus_snprintf(str, PRINT_BUFFER_SIZE, "Edit header of %s", sp->short_filename);
+	snprintf(str, PRINT_BUFFER_SIZE, "Add header to %s", sp->short_filename);
+      else snprintf(str, PRINT_BUFFER_SIZE, "Edit header of %s", sp->short_filename);
       if (ep->dialog)
 	set_sensitive(MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON), ep->panel_changed);
     }
@@ -7624,7 +7624,7 @@ static void vf_set_amp(view_files_info *vdat, mus_float_t val)
 {
   char sfs[6];
   vdat->amp = val;
-  mus_snprintf(sfs, 6, "%.2f", val);
+  snprintf(sfs, 6, "%.2f", val);
   set_label(vdat->amp_number, sfs);
   XtVaSetValues(vdat->amp_scrollbar, 
 		XmNvalue, amp_to_scroll(amp_control_min(ss), val, amp_control_max(ss)), 

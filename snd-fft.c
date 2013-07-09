@@ -719,10 +719,6 @@ typedef struct fft_state {
 } fft_state;
 
 
-#if (!HAVE_DECL_HYPOT)
-static double hypot(double r, double i) {return(sqrt(r * r + i * i));}
-#endif
-
 
 void fourier_spectrum(snd_fd *sf, mus_float_t *fft_data, mus_long_t fft_size, mus_long_t data_len, mus_float_t *window, chan_info *cp)
 {

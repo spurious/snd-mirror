@@ -241,7 +241,7 @@ void find_dialog_find(char *str, read_direction_t direction, chan_info *cp)
       ss->search_proc_loc = snd_protect(proc);
 
       buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(buf, PRINT_BUFFER_SIZE, "%s %s", I_find, str);
+      snprintf(buf, PRINT_BUFFER_SIZE, "%s %s", I_find, str);
       find_dialog_set_label(buf);
       free(buf);
     }

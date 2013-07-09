@@ -182,7 +182,7 @@ static char *mus_vct_to_string(vct *v)
       strcat(buf, ":");
       for (i = 0; i < len; i++)
 	{
-	  mus_snprintf(flt, VCT_PRINT_BUFFER_SIZE, " %.3f", v->data[i]);
+	  snprintf(flt, VCT_PRINT_BUFFER_SIZE, " %.3f", v->data[i]);
 	  strcat(buf, flt);
 	}
       if (v->length > vct_print_length)
@@ -213,10 +213,10 @@ char *mus_vct_to_readable_string(vct *v)
   for (i = 0; i < len; i++)
     {
 #if HAVE_SCHEME || HAVE_FORTH
-      mus_snprintf(flt, VCT_PRINT_BUFFER_SIZE, " %.3f", v->data[i]);
+      snprintf(flt, VCT_PRINT_BUFFER_SIZE, " %.3f", v->data[i]);
 #endif
 #if HAVE_RUBY
-      mus_snprintf(flt, VCT_PRINT_BUFFER_SIZE, "%.3f%s", v->data[i], i + 1 < len ? ", " : "");
+      snprintf(flt, VCT_PRINT_BUFFER_SIZE, "%.3f%s", v->data[i], i + 1 < len ? ", " : "");
 #endif
       strcat(buf, flt);
     }

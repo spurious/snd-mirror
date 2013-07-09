@@ -101,7 +101,7 @@ char *strerror(int errnum)
 {
   char *strerrbuf;
   strerrbuf = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(strerrbuf, LABEL_BUFFER_SIZE, "io err %d", errnum);
+  snprintf(strerrbuf, LABEL_BUFFER_SIZE, "io err %d", errnum);
   return(strerrbuf);
 }
 #endif
@@ -134,32 +134,13 @@ static bool audio_initialized = false;
 
 #include <sys/ioctl.h>
 
-/* the system version of the soundcard header file may have no relation to the current OSS actually loaded */
-/* sys/soundcard.h is usually just a pointer to linux/soundcard.h */
-
-#if MUS_HAVE_USR_LIB_OSS
-  #include "/usr/lib/oss/include/sys/soundcard.h"
+#if HAVE_SYS_SOUNDCARD_H
+  #include <sys/soundcard.h>
 #else
-  #if MUS_HAVE_USR_LOCAL_LIB_OSS
-    #include "/usr/local/lib/oss/include/sys/soundcard.h"
+  #if HAVE_MACHINE_SOUNDCARD_H
+    #include <machine/soundcard.h>
   #else
-    #if MUS_HAVE_OPT_OSS
-      #include "/opt/oss/include/sys/soundcard.h"
-    #else
-      #if MUS_HAVE_VAR_LIB_OSS
-        #include "/var/lib/oss/include/sys/soundcard.h"
-      #else
-        #if (HAVE_SYS_SOUNDCARD_H || MUS_LINUX)
-          #include <sys/soundcard.h>
-        #else
-          #if HAVE_MACHINE_SOUNDCARD_H
-            #include <machine/soundcard.h>
-          #else
-            #include <soundcard.h>
-          #endif
-        #endif
-      #endif
-    #endif
+    #include <soundcard.h>
   #endif
 #endif
 
@@ -239,11 +220,11 @@ static char *oss_mus_audio_moniker(void)
   if (version_name == NULL) version_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
   if (SOUND_VERSION < 361)
     {
-      mus_snprintf(version, LABEL_BUFFER_SIZE, "%d", SOUND_VERSION);
-      mus_snprintf(version_name, LABEL_BUFFER_SIZE, "OSS %c.%c.%c", version[0], version[1], version[2]);
+      snprintf(version, LABEL_BUFFER_SIZE, "%d", SOUND_VERSION);
+      snprintf(version_name, LABEL_BUFFER_SIZE, "OSS %c.%c.%c", version[0], version[1], version[2]);
     }
   else
-    mus_snprintf(version_name, LABEL_BUFFER_SIZE, "OSS %x.%x.%x", 
+    snprintf(version_name, LABEL_BUFFER_SIZE, "OSS %x.%x.%x", 
 		 (SOUND_VERSION >> 16) & 0xff, 
 		 (SOUND_VERSION >> 8) & 0xff, 
 		 SOUND_VERSION & 0xff);
@@ -254,7 +235,7 @@ static char *dac_name(int sys, int offset)
 {
   if ((sys < sound_cards) && (audio_mixer[sys] >= -1))
     {
-      mus_snprintf(dev_name, LABEL_BUFFER_SIZE, "%s%d", DAC_NAME, audio_dsp[sys] + offset);
+      snprintf(dev_name, LABEL_BUFFER_SIZE, "%s%d", DAC_NAME, audio_dsp[sys] + offset);
       return(dev_name);
     }
   return((char *)DAC_NAME);
@@ -353,7 +334,7 @@ static int oss_mus_audio_initialize(void)
 	   *   open next unchecked dsp, try to set volume, read current, if different we found a match -- set and go on.
 	   *     if no change, move to next dsp and try again, if no more dsps, quit (checking for null case as before)
 	   */
-	  mus_snprintf(dname, LABEL_BUFFER_SIZE, "%s%d", MIXER_NAME, nmix);
+	  snprintf(dname, LABEL_BUFFER_SIZE, "%s%d", MIXER_NAME, nmix);
 	  md = open(dname, O_RDWR, 0);
 	  if (md == -1)
 	    {
@@ -367,7 +348,7 @@ static int oss_mus_audio_initialize(void)
 		}
 	      else break;
 	    }
-	  mus_snprintf(dname, LABEL_BUFFER_SIZE, "%s%d", DAC_NAME, ndsp);
+	  snprintf(dname, LABEL_BUFFER_SIZE, "%s%d", DAC_NAME, ndsp);
 	  fd = open(dname, O_RDWR | O_NONBLOCK, 0);
 	  if (fd == -1) fd = open(dname, O_RDONLY | O_NONBLOCK, 0);
  	  if (fd == -1) fd = open(dname, O_WRONLY | O_NONBLOCK, 0); /* some output devices need this */
@@ -1441,7 +1422,7 @@ static void alsa_mus_oss_set_buffers(int num, int size)
 static char *alsa_mus_audio_moniker(void)
 {
   if (version_name == NULL) version_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(version_name, LABEL_BUFFER_SIZE, "ALSA %s", SND_LIB_VERSION_STR);
+  snprintf(version_name, LABEL_BUFFER_SIZE, "ALSA %s", SND_LIB_VERSION_STR);
   return(version_name);
 }
 
@@ -2352,23 +2333,23 @@ char *mus_audio_moniker(void)
 #endif
 #ifndef AUDIO_DEV_AMD
   #if HAVE_SYS_MIXER_H
-    mus_snprintf(version_name, PRINT_BUFFER_SIZE, 
+    snprintf(version_name, PRINT_BUFFER_SIZE, 
 		 "audio: %s (%s), %s %s %s", 
 		 ad.name, ad.version,
 		 MIXER_NAME, MIXER_VERSION, MIXER_CONFIGURATION);
   #else
-    mus_snprintf(version_name, LABEL_BUFFER_SIZE, "audio: %s (%s)", ad.name, ad.version);
+    snprintf(version_name, LABEL_BUFFER_SIZE, "audio: %s (%s)", ad.name, ad.version);
   #endif
 #else
   switch (ad)
     {
-    case AUDIO_DEV_AMD:        mus_snprintf(version_name, LABEL_BUFFER_SIZE, "audio: amd");        break;
+    case AUDIO_DEV_AMD:        snprintf(version_name, LABEL_BUFFER_SIZE, "audio: amd");        break;
   #ifdef AUDIO_DEV_CS4231
-    case AUDIO_DEV_CS4231:     mus_snprintf(version_name, LABEL_BUFFER_SIZE, "audio: cs4231");     break;
+    case AUDIO_DEV_CS4231:     snprintf(version_name, LABEL_BUFFER_SIZE, "audio: cs4231");     break;
   #endif
-    case AUDIO_DEV_SPEAKERBOX: mus_snprintf(version_name, LABEL_BUFFER_SIZE, "audio: speakerbox"); break;
-    case AUDIO_DEV_CODEC:      mus_snprintf(version_name, LABEL_BUFFER_SIZE, "audio: codec");      break;
-    default:                   mus_snprintf(version_name, LABEL_BUFFER_SIZE, "audio: unknown");    break;
+    case AUDIO_DEV_SPEAKERBOX: snprintf(version_name, LABEL_BUFFER_SIZE, "audio: speakerbox"); break;
+    case AUDIO_DEV_CODEC:      snprintf(version_name, LABEL_BUFFER_SIZE, "audio: codec");      break;
+    default:                   snprintf(version_name, LABEL_BUFFER_SIZE, "audio: unknown");    break;
     }
 #endif
   return(version_name);
@@ -2694,10 +2675,10 @@ static char *sun_volume_name(float vol, int balance, int chans)
 {
   if (sun_vol_name == NULL) sun_vol_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
   if (chans != 2)
-    mus_snprintf(sun_vol_name, LABEL_BUFFER_SIZE, "%.3f", vol);
+    snprintf(sun_vol_name, LABEL_BUFFER_SIZE, "%.3f", vol);
   else 
     {
-      mus_snprintf(sun_vol_name, LABEL_BUFFER_SIZE, "%.3f %.3f",
+      snprintf(sun_vol_name, LABEL_BUFFER_SIZE, "%.3f %.3f",
 		   vol * (float)(AUDIO_RIGHT_BALANCE - balance) / (float)AUDIO_RIGHT_BALANCE,
 		   vol * (float)balance / (float)AUDIO_RIGHT_BALANCE);
     }
@@ -2753,7 +2734,7 @@ static void win_mus_print(char *msg)
       if (win_in_err) 
 	waveInGetErrorText(win_in_err, getstr, PRINT_BUFFER_SIZE);
       else waveOutGetErrorText(win_out_err, getstr, PRINT_BUFFER_SIZE);
-      mus_snprintf(errstr, PRINT_BUFFER_SIZE, "%s [%s]", msg, getstr);
+      snprintf(errstr, PRINT_BUFFER_SIZE, "%s [%s]", msg, getstr);
       (*old_handler)(errstr);
     }
 }

@@ -682,7 +682,7 @@ void reflect_file_change_in_title(void)
     }
 
   title_buffer = (char *)calloc(len, sizeof(char));
-  mus_snprintf(title_buffer, len, "%s%s", 
+  snprintf(title_buffer, len, "%s%s", 
 	       ss->startup_title, 
 	       ((alist->active_sounds > 0) ? ": " : ""));
 
@@ -784,7 +784,7 @@ static file_info *translate_file(const char *filename, int type)
   len = strlen(filename);
   loops = mus_sound_loop_info(filename); /* allocated anew */
   newname = (char *)calloc(len + 5, sizeof(char));
-  mus_snprintf(newname, len + 5, "%s.snd", filename);
+  snprintf(newname, len + 5, "%s.snd", filename);
 
   /* too many special cases to do anything smart here -- I'll just tack on '.snd' */
   /* before calling the translator we need to check for write-access to the current directory,
@@ -921,7 +921,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
       {
 	char *str;
 	str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-	mus_snprintf(str, PRINT_BUFFER_SIZE, "No header found for %s", filename_without_directory(fullname));
+	snprintf(str, PRINT_BUFFER_SIZE, "No header found for %s", filename_without_directory(fullname));
 	raw_data_dialog_to_file_info(fullname, str, NULL, read_only, selected); /* dialog frees str */
       }
 #else
@@ -1074,7 +1074,7 @@ static char *opened_sound_file_name(snd_info *sp)
   int len;
   len = strlen(sp->filename);
   newname = (char *)calloc(len + 32, sizeof(char));
-  mus_snprintf(newname, len + 32, "%s.%s", sp->filename, XEN_FILE_EXTENSION);
+  snprintf(newname, len + 32, "%s.%s", sp->filename, XEN_FILE_EXTENSION);
   return(newname);
 }
 
@@ -1085,7 +1085,7 @@ static char *remembered_sound_file_name(snd_info *sp)
   int len;
   len = strlen(sp->filename);
   newname = (char *)calloc(len + 32, sizeof(char));
-  mus_snprintf(newname, len + 32, "remembered-%s.%s", sp->short_filename, XEN_FILE_EXTENSION);
+  snprintf(newname, len + 32, "remembered-%s.%s", sp->short_filename, XEN_FILE_EXTENSION);
   return(newname);
 }
 
@@ -2739,7 +2739,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   /* srate */
   ok = ((original_srate >= 8000) && 
 	(original_srate <= 100000));
-  mus_snprintf(reason_str, len, "srate%s: %d", (ok) ? "" : " looks wrong", original_srate);
+  snprintf(reason_str, len, "srate%s: %d", (ok) ? "" : " looks wrong", original_srate);
   if (!ok)
     {
       ns = (int)swap_int(original_srate);
@@ -2748,7 +2748,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
       if ((ns > 4000) && (ns < 100000))
 	{
 	  better_srate = ns;
-	  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
+	  snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
 	  reason_str = mus_strcat(reason_str, tmp_str, &len);
 	}
     }
@@ -2756,7 +2756,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   /* chans */
   ok = ((original_chans > 0) && 
 	(original_chans < 1000));
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nchans%s: %d", (ok) ? "" : " looks wrong", original_chans);
+  snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nchans%s: %d", (ok) ? "" : " looks wrong", original_chans);
   reason_str = mus_strcat(reason_str, tmp_str, &len);
   if (!ok)
     {
@@ -2766,13 +2766,13 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
       if ((ns > 0) && (ns <= 8))
 	{
 	  better_chans = ns;
-	  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
+	  snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
 	  reason_str = mus_strcat(reason_str, tmp_str, &len);
 	}
     }
 
   /* header type */
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ntype: %s", mus_header_type_name(hdr->type));
+  snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ntype: %s", mus_header_type_name(hdr->type));
   reason_str = mus_strcat(reason_str, tmp_str, &len);
 
   /* data format */
@@ -2783,13 +2783,13 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
 	format_info = (char *)mus_data_format_name(original_format);
       else format_info = (char *)mus_header_original_format_name(mus_sound_original_format(filename), 
 								 hdr->type);
-      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat looks bogus: %s", format_info);
+      snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat looks bogus: %s", format_info);
     }
-  else mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s", (char *)mus_data_format_name(original_format));
+  else snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s", (char *)mus_data_format_name(original_format));
   reason_str = mus_strcat(reason_str, tmp_str, &len);
 
   /* samples */
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (%lld samples, %lld bytes total)",
+  snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (%lld samples, %lld bytes total)",
 	       (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)),
 	       hdr->samples,
 	       mus_sound_length(filename));
@@ -2797,11 +2797,11 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   nsamp = swap_mus_long_t(hdr->samples);
   if (nsamp < mus_sound_length(filename))
     {
-      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %lld" , nsamp);
+      snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %lld" , nsamp);
       reason_str = mus_strcat(reason_str, tmp_str, &len);
       if ((better_chans) && (better_srate))
 	{
-	  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE,
+	  snprintf(tmp_str, LABEL_BUFFER_SIZE,
 		       ", swapped length: %.3f / sample-size-in-bytes)",
 		       (float)((double)nsamp / (float)(better_chans * better_srate)));
 	  reason_str = mus_strcat(reason_str, tmp_str, &len);
@@ -2810,18 +2810,18 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
     }
 
   /* data location */
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ndata location: %lld", hdr->data_location);
+  snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ndata location: %lld", hdr->data_location);
   reason_str = mus_strcat(reason_str, tmp_str, &len);
   nsamp = swap_mus_long_t(hdr->data_location);
   if ((nsamp > 0) && 
       (nsamp <= 1024)) 
     {
-      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %lld)", nsamp);
+      snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %lld)", nsamp);
       reason_str = mus_strcat(reason_str, tmp_str, &len);
     }
   (*info) = reason_str;
   file_string = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(file_string, PRINT_BUFFER_SIZE,
+  snprintf(file_string, PRINT_BUFFER_SIZE,
 	       "Bad header found on %s", 
 	       filename_without_directory(filename));
   free(tmp_str);
@@ -2871,7 +2871,7 @@ static char *display_file_maxamps(const char *filename, int chans)
   ampstr = (char *)calloc(len, sizeof(char));
   vals = (mus_float_t *)calloc(chans, sizeof(mus_float_t));
   times = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
-  mus_snprintf(ampstr, len, "maxamp%s: ", (chans > 1) ? "s" : "");
+  snprintf(ampstr, len, "maxamp%s: ", (chans > 1) ? "s" : "");
   mus_sound_maxamps(filename, chans, vals, times);
   for (i = 0; i < chans; i++)
     {
@@ -2890,7 +2890,7 @@ static char *display_sound_maxamps(snd_info *sp)
   int i, len;
   len = sp->nchans * 32;
   ampstr = (char *)calloc(len, sizeof(char));
-  mus_snprintf(ampstr, len, "maxamp%s: ", (sp->nchans > 1) ? "s" : "");
+  snprintf(ampstr, len, "maxamp%s: ", (sp->nchans > 1) ? "s" : "");
   for (i = 0; i < sp->nchans; i++)
     {
       ampstr = mus_strcat(ampstr, prettyf(channel_maxamp(sp->chans[i], AT_CURRENT_EDIT_POSITION), 3), &len);
@@ -2912,7 +2912,7 @@ void display_info(snd_info *sp)
       hdr = sp->hdr;
       buffer = (char *)calloc(INFO_BUFFER_SIZE, sizeof(char));
 
-      mus_snprintf(buffer, INFO_BUFFER_SIZE, 
+      snprintf(buffer, INFO_BUFFER_SIZE, 
 		   "srate: %d\nchans: %d\nlength: %.3f (%lld %s)\n%s\n",
 		   SND_SRATE(sp),
 		   sp->nchans,
@@ -2944,10 +2944,10 @@ void display_info(snd_info *sp)
 #endif
 	}
 
-      mus_snprintf(buffer, INFO_BUFFER_SIZE, "\n----------------------------------------\n%s:", sp->filename);
+      snprintf(buffer, INFO_BUFFER_SIZE, "\n----------------------------------------\n%s:", sp->filename);
       post_it_append(buffer);
 
-      mus_snprintf(buffer, INFO_BUFFER_SIZE, "\n    type: %s\n    format: %s\n    written: %s\n",
+      snprintf(buffer, INFO_BUFFER_SIZE, "\n    type: %s\n    format: %s\n    written: %s\n",
 		   mus_header_type_name(hdr->type),
 		   mus_data_format_name(hdr->format),
 		   snd_strftime(STRFTIME_FORMAT, sp->write_date));
@@ -2955,13 +2955,13 @@ void display_info(snd_info *sp)
 
       if (hdr->srate != SND_SRATE(sp))
 	{
-	  mus_snprintf(buffer, INFO_BUFFER_SIZE, "    original srate: %d\n", hdr->srate);
+	  snprintf(buffer, INFO_BUFFER_SIZE, "    original srate: %d\n", hdr->srate);
 	  post_it_append(buffer);
 	}
 
       if (hdr->chans != sp->nchans)
 	{
-	  mus_snprintf(buffer, INFO_BUFFER_SIZE, "    original chans: %d\n", hdr->chans);
+	  snprintf(buffer, INFO_BUFFER_SIZE, "    original chans: %d\n", hdr->chans);
 	  post_it_append(buffer);
 	}
 
@@ -2974,7 +2974,7 @@ void display_info(snd_info *sp)
 	comment++;
       if ((comment) && (*comment))
 	{
-	  mus_snprintf(buffer, INFO_BUFFER_SIZE, "    comment: \"%s\"\n", comment);
+	  snprintf(buffer, INFO_BUFFER_SIZE, "    comment: \"%s\"\n", comment);
 	  post_it_append(buffer);
 	}
 
@@ -2993,7 +2993,7 @@ void display_info(snd_info *sp)
 	      ampstr = display_file_maxamps(sp->filename, sp->nchans);
 	      if (ampstr)
 		{
-		  mus_snprintf(buffer, INFO_BUFFER_SIZE, "    original %s\n", ampstr);
+		  snprintf(buffer, INFO_BUFFER_SIZE, "    original %s\n", ampstr);
 		  post_it_append(buffer);
 		  free(ampstr);
 		}

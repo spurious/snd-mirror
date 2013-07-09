@@ -112,13 +112,13 @@ static void make_region_labels(file_info *hdr)
   char *str;
   if (hdr == NULL) return;
   str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str, PRINT_BUFFER_SIZE, "srate: %d", hdr->srate);
+  snprintf(str, PRINT_BUFFER_SIZE, "srate: %d", hdr->srate);
   set_label(reg_srtxt, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, "chans: %d", hdr->chans);
+  snprintf(str, PRINT_BUFFER_SIZE, "chans: %d", hdr->chans);
   set_label(reg_chntxt, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, "length: %.3f", (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
+  snprintf(str, PRINT_BUFFER_SIZE, "length: %.3f", (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
   set_label(reg_lentxt, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, "maxamp: %.3f", region_maxamp(region_list_position_to_id(current_region)));
+  snprintf(str, PRINT_BUFFER_SIZE, "maxamp: %.3f", region_maxamp(region_list_position_to_id(current_region)));
   set_label(reg_maxtxt, str);
   free(str);
 }

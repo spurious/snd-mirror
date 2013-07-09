@@ -42,14 +42,14 @@ static ssize_t snd_checked_write(int fd, unsigned char *buf, ssize_t bytes, cons
   kfree = disk_kspace(filename);
   if (kfree < 0) 
     {
-      mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
+      snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
 		   "no space left on device: %s",
 		   snd_io_strerror()); 
       return(MUS_ERROR);
     }
   if (kfree < (bytes >> 10))
     { 
-      mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
+      snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
 		   "only %lld" " bytes left on device (we need " SSIZE_TD " bytes)",
 		   kfree << 10, bytes);
       return(MUS_ERROR);
@@ -57,7 +57,7 @@ static ssize_t snd_checked_write(int fd, unsigned char *buf, ssize_t bytes, cons
   bytes_written = write(fd, buf, bytes);
   if (bytes_written != bytes)
     {
-      mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
+      snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
 		   "write error (wrote " SSIZE_TD " of requested " SSIZE_TD " bytes): %s",
 		   bytes_written, bytes, snd_io_strerror());
       return(MUS_ERROR);
