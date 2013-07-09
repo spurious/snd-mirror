@@ -16,12 +16,8 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
-  #include <libc.h>
-#else
-  #if (!(defined(_MSC_VER)))
-    #include <unistd.h>
-  #endif
+#ifndef _MSC_VER
+  #include <unistd.h>
 #endif
 #include <string.h>
 #include <stdarg.h>
@@ -2147,20 +2143,6 @@ char *mus_expand_filename(const char *filename)
   free(orig);
   return(file_name_buf);
 #endif
-}
-
-
-void mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
-{
-  va_list ap;
-  va_start(ap, format);
-#if HAVE_VSNPRINTF
-  vsnprintf(buffer, buffer_len, format, ap);
-#else
-  if (vsprintf(buffer, format, ap) >= buffer_len) 
-    buffer[buffer_len - 1] = '\0'; 
-#endif
-  va_end(ap);
 }
 
 

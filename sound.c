@@ -14,14 +14,10 @@
 #include <time.h>
 #include <stdarg.h>
 
-#if (HAVE_LIBC_H && (!HAVE_UNISTD_H))
-  #include <libc.h>
-#else
-  #if (!(defined(_MSC_VER)))
-    #include <unistd.h>
-  #endif
-  #include <string.h>
+#ifndef _MSC_VER
+  #include <unistd.h>
 #endif
+#include <string.h>
 
 #include "_sndlib.h"
 #include "sndlib-strings.h"

@@ -11,7 +11,8 @@
    Info and Raw
 */
 
-#define WITH_SKETCH 1 /* (!HAVE_GTK_3) see below */
+#define HAVE_G_FILE_MONITOR_DIRECTORY 1 /* (GLIB_CHECK_VERSION(2, 18, 1) but it might be much older */
+#define WITH_SKETCH 1                   /* (!HAVE_GTK_3) see below */
 
 /* if thumbnail graph display is too slow: save the points? split the idler? g_source_remove if overlap?
  *

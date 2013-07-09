@@ -10489,7 +10489,8 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 	      if (ix > 0)
 		{
 		  s7_Double fx;
-#if (__ANDROID__) || (MS_WINDOWS)
+#if (__ANDROID__) || (MS_WINDOWS) || ((__GNUC__) && ((__GNUC__ < 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ <= 4))))
+		  /* just a guess -- log2 gets a warning in gcc 4.3.2, but not in 4.4.4 */
 		  fx = log((double)ix) / log(2.0);
 #else
 		  fx = log2((double)ix);

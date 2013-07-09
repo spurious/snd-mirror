@@ -72,12 +72,8 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdlib.h>
-#if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
-  #include <libc.h>
-#else
-  #if (!(defined(_MSC_VER)))
-    #include <unistd.h>
-  #endif
+#ifndef _MSC_VER
+  #include <unistd.h>
 #endif
 #include <string.h>
 
@@ -2264,7 +2260,7 @@ static int alsa_formats(int ur_dev, int chan, int *val)
 
 /* apparently input other than 8000 is 16-bit, 8000 is (?) mulaw */
 
-#if (defined(MUS_SUN) || defined(__OpenBSD__)) && (!(defined(AUDIO_OK)))
+#if (defined(__sun) || defined(__SVR4) || defined(__OpenBSD__)) && (!(defined(AUDIO_OK)))
 #define AUDIO_OK 1
 
 #include <sys/types.h>
@@ -4687,7 +4683,7 @@ int jack_mus_audio_read(int line, char *buf, int bytes){
 
 char *jack_mus_audio_moniker(void) 
 {
-  return((char *)MUS_JACK_VERSION);
+  return((char *)"Jack");
 }
 #endif
  
@@ -5377,7 +5373,7 @@ void mus_reset_audio_c(void)
 {
   audio_initialized = false;
   version_name = NULL;
-#ifdef MUS_SUN
+#if defined(__sun) || defined(__SVR4)
   sun_vol_name = NULL;
 #endif
 }

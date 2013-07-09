@@ -12,12 +12,8 @@
 #include <limits.h>
 #include <errno.h>
 #include <stdlib.h>
-#if HAVE_LIBC_H && (!HAVE_UNISTD_H)
-  #include <libc.h>
-#else
-  #ifndef _MSC_VER
-    #include <unistd.h>
-  #endif
+#ifndef _MSC_VER
+  #include <unistd.h>
 #endif
 #include <string.h>
 #include <stdarg.h>

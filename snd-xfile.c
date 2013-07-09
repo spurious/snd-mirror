@@ -202,11 +202,7 @@ typedef struct {
   mus_long_t beg;
 
   int dirs_size;
-#if HAVE_G_FILE_MONITOR_DIRECTORY
-  GFileMonitor **dirs;
-#else
   void *dirs;
-#endif
   char **dir_names;
   bool need_update;
 

@@ -30,6 +30,8 @@ char *xen_strdup(const char *str)
 
 #if HAVE_RUBY
 
+#define HAVE_RB_PROC_NEW ((RUBY_MAJOR_VERSION >= 1) && (RUBY_MINOR_VERSION >= 8))
+
 #if USE_SND
 void snd_rb_raise(XEN type, XEN info); /* XEN_ERROR */
 #endif
@@ -94,11 +96,7 @@ void xen_initialize(void)
 off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 {
   if (XEN_OFF_T_P(obj))
-#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
     return(XEN_TO_C_LONG_LONG(obj));
-#else
-    return(XEN_TO_C_INT(obj));
-#endif
   else
     if (XEN_NUMBER_P(obj))
       return((off_t)XEN_TO_C_DOUBLE(obj));
@@ -108,21 +106,13 @@ off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 
 off_t xen_to_c_off_t(XEN obj)
 {
-#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
   return(XEN_TO_C_LONG_LONG(obj));
-#else
-  return(XEN_TO_C_INT(obj));
-#endif
 }
 
 
 XEN c_to_xen_off_t(off_t val)
 {
-#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
     return(C_TO_XEN_LONG_LONG(val));
-#else
-    return(C_TO_XEN_INT(val));
-#endif
 }
 
 
@@ -1447,9 +1437,7 @@ void xen_repl(int argc, char **argv)
 	    {
 	      char *temp;
 	      temp = (char *)malloc(len + 128);
-	      sprintf(temp, 
-		      "(write %s)",
-		      buffer);           /* use write, not display so that strings are in double quotes */
+	      snprintf(temp, len + 128, "(write %s)", buffer);    /* use write, not display so that strings are in double quotes */
 	      XEN_EVAL_C_STRING(temp);
 	      free(temp);
 	    }
@@ -1575,12 +1563,8 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist)
 
 /* add various file functions that everyone else implements */
 
-#if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
-  #include <libc.h>
-#else
-  #if (!(defined(_MSC_VER)))
-    #include <unistd.h>
-  #endif
+#ifndef _MSC_VER
+  #include <unistd.h>
 #endif
 
 #if HAVE_SYS_TIME_H

@@ -1,7 +1,7 @@
 #ifndef MUS_CONFIG_H_LOADED
 #define MUS_CONFIG_H_LOADED
 
-/* Define to `int' or something if <sys/types.h> doesn't define.  */
+/* Define to `int' or something if <sys/types.h> doesn't define. These are now stupid */
 #undef mode_t
 #undef pid_t
 #undef size_t
@@ -17,9 +17,11 @@
 #undef HAVE_ACCESS
 #undef HAVE_OPENDIR
 #undef HAVE_SIGNAL
+
 #undef USE_STATVFS
 #undef USE_STATFS
-#undef HAVE_DIFFTIME
+/* these two pertain to linux/bsd -- vfs for the former? */
+
 #undef HAVE_GETTIMEOFDAY
 #undef HAVE_VSNPRINTF
 #undef HAVE_VASPRINTF
@@ -27,7 +29,6 @@
 #undef HAVE_LSTAT
 #undef HAVE_STRCASECMP
 #undef HAVE_PATHCONF
-#undef HAVE_DECL_ISNAN
 #undef HAVE_DLOPEN
 
 #undef HAVE_COMPLEX_TRIG
@@ -35,44 +36,61 @@
 
 #undef HAVE_SPECIAL_FUNCTIONS
 #undef WORDS_BIGENDIAN
-#undef _FILE_OFFSET_BITS
-#undef _LARGE_FILES
-#undef HAVE___FUNC__
 
-#undef SIZEOF_OFF_T
+#undef HAVE___FUNC__
+/* surely this can be based on the compiler */
+
 #undef SIZEOF_VOID_P
 #undef SIZEOF_SSIZE_T
 
 #undef HAVE_READLINE
+/* this is only used in ruby xen_rb_repl xen.c -- make -D as --with-ruby? */
+
 #undef HAVE_NESTED_FUNCTIONS
 
 #undef HAVE_UNISTD_H
+/* everywhere except windows but not included in gnulib's list? */
+
 #undef HAVE_STDBOOL_H
+/* everywhere but windows, and fallback code does not work in that case */
+
 #undef HAVE_DLFCN_H
 #undef HAVE_SYS_SOUNDCARD_H
 #undef HAVE_MACHINE_SOUNDCARD_H
+
 #undef HAVE_SYS_MIXER_H
-#undef HAVE_LIBC_H
+/* solaris case -- do we care anymore? */
+
 #undef HAVE_SETJMP_H
+
 #undef HAVE_SYS_PARAM_H
-#undef HAVE_SYS_MOUNT_H
+/* everyone but windows? */
+
 #undef HAVE_ALSA_ASOUNDLIB_H
+/* alsa.pc? */
+
 #undef HAVE_BYTESWAP_H
+/* not osx or windows */
+
 #undef HAVE_SYS_TIME_H
+/* everyone but windows? */
+
 #undef HAVE_DIRENT_H
-#undef FGREP_PROG
+/* windows uses direct.h, everyone else dirent.h [io.c, xen.c] */
+
 #undef HAVE_PTHREAD_H
 
 #undef SND_HOST
+/* this can be getenv in linux: HOSTTYPE  or OSTYPE+MACHTYPE */
 
-#undef MUS_LINUX
-#undef MUS_SUN
 #undef HAVE_OSS
 #undef HAVE_ALSA
 #undef HAVE_JACK_IN_LINUX
 #undef MUS_JACK
+
 #undef HAVE_AUDIODEVICEDESTROYIOPROCID
-#undef MUS_JACK_VERSION
+/* this was old OSX -- can we use OS version? */
+
 #undef MUS_PULSEAUDIO
 #undef MUS_PORTAUDIO
 #undef WITH_AUDIO
@@ -81,27 +99,46 @@
 #undef WITH_GMP
 
 #undef HAVE_GSL
-#undef MUS_GSL_VERSION
+/* gls.pc */
+
 #undef HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
+/* strange -- there's disagreement as to whether this function exists in 1.15? */
 
 #undef HAVE_SCHEME
 #undef HAVE_RUBY
 #undef HAVE_FORTH
 #undef HAVE_EXTENSION_LANGUAGE
+/* these can be arg choices via -D */
 
 #undef HAVE_GL
+/* gl.pc */
+
 #undef JUST_GL
+/* maybe put the gl scm stuff under the autoloader so we don't need this switch
+ */
+
 #undef HAVE_GLU
+/* glu.pc */
+
 #undef WITH_GL2PS
+/* obsolete? no -- 1.3.8, but this is on an explicit switch 
+ */
 
 #undef MUS_DEFAULT_TEMP_DIR
 #undef MUS_DEFAULT_SAVE_DIR
 #undef MUS_DEFAULT_DOC_DIR
+/* these are explicit args */
+
 #undef MUS_TRAP_SEGFAULT
+/* not needed anymore? default is true in snd-0.h but I always run with it false
+ */
+
 #undef SND_AS_WIDGET
 #undef HAVE_LADSPA
 
 #undef USE_GTK
+/* gtk-2.0.pc etc */
+
 #undef USE_MOTIF
 #undef USE_NO_GUI
 
@@ -110,16 +147,16 @@
 #undef HAVE_XSHAPEQUERYEXTENSION
 
 #undef RUBY_SEARCH_PATH
-#undef HAVE_RB_PROC_NEW
+/* why this? */
 
 #undef WITH_RELATIVE_PANES
+/* based on XmSashP.h  */
+
 #undef HAVE_MAKE_RATIO
 #undef HAVE_MAKE_RECTANGULAR
-#undef WITH_SYSTEM_EXTRAS
 
-#undef HAVE_G_FILE_MONITOR_DIRECTORY
-#undef HAVE_CAIRO_GLYPH_ALLOCATE
-#undef HAVE_CAIRO_REGION_XOR
+#undef WITH_SYSTEM_EXTRAS
+/* this is an s7 switch, used also in xen.c, but it should be an autoloaded library in s7, like getenv, so this switch is almost obsolete */
 
 #undef XM_DISABLE_DEPRECATED
 #undef CLM_DISABLE_DEPRECATED
@@ -127,10 +164,13 @@
 #undef XEN_DISABLE_DEPRECATED
 #undef S7_DISABLE_DEPRECATED
 #undef SND_DISABLE_DEPRECATED
+/* these are all on an explicit switch */
 
 #undef HAVE_OGG
 #undef PATH_OGGDEC
 #undef PATH_OGGENC
+/* ogg.pc, exec_prefix/bin/ogg* */
+
 #undef HAVE_FLAC
 #undef PATH_FLAC
 #undef HAVE_SPEEX
@@ -142,10 +182,16 @@
 #undef PATH_TIMIDITY
 #undef HAVE_MPG321
 #undef PATH_MPG321
+
 #undef HAVE_SHORTEN
 #undef PATH_SHORTEN
+/* obsolete? -- is this still in snd-trans? yes -- abandoned in mar-2007, defunct used only by Grateful Dead fans!
+ */
+
 #undef HAVE_TTA
 #undef PATH_TTA
+/* what is this? */
+
 #undef HAVE_WAVPACK
 #undef PATH_WAVPACK
 #undef PATH_WVUNPACK

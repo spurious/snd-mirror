@@ -257,6 +257,9 @@ static char *glx_version(void)
 }
 #endif
 
+#if HAVE_GSL
+  #include <gsl/gsl_version.h>
+#endif
 
 char *version_info(void)
 {
@@ -282,9 +285,9 @@ char *version_info(void)
 	                snd_itoa(MUS_REVISION), " (", 
                         MUS_DATE, ")",
 #if HAVE_GSL
-	  "\n    GSL",
-  #ifdef MUS_GSL_VERSION
-          " ", MUS_GSL_VERSION,
+	  "\n    GSL", 
+  #ifdef GSL_VERSION
+          " ", GSL_VERSION,
   #endif
 #endif
 #if HAVE_FFTW3
@@ -2972,13 +2975,12 @@ static char *call_grep(const char *defstr, const char *name, const char *endstr,
 {
   int err;
   char *command;
-#if (!HAVE_SUN)
+#ifndef __sun
   /* Gnu fgrep: -s switch to fgrep = "silent", I guess (--no-messages) [OSX uses Gnu fgrep] */
-  /* configure script looks for grep -F or fgrep, setting FGREP_PROG (fgrep is supposedly obsolete) */
-  command = mus_format(FGREP_PROG " -s \"%s%s%s\" %s/*." XEN_FILE_EXTENSION " --line-number > %s", defstr, name, endstr, path, tempfile);
+  command = mus_format("grep -F -s \"%s%s%s\" %s/*." XEN_FILE_EXTENSION " --line-number > %s", defstr, name, endstr, path, tempfile);
 #else
   /* Sun fgrep: here -s means -q and --line-number prints an error message */
-  command = mus_format(FGREP_PROG " \"%s%s%s\" %s/*." XEN_FILE_EXTENSION " > %s", defstr, name, endstr, path, tempfile);
+  command = mus_format("grep -F \"%s%s%s\" %s/*." XEN_FILE_EXTENSION " > %s", defstr, name, endstr, path, tempfile);
 #endif
   err = system(command);
   free(command);
@@ -3014,8 +3016,6 @@ static char *snd_finder(const char *name, bool got_help)
   #define TRAILER ""
   const char *defines[NUM_DEFINES] = {": ", "instrument: ", "event: "};
 #endif
-
-  if (mus_strlen(FGREP_PROG) == 0) return(NULL); /* configure didn't find a plausible fgrep */
 
   is_defined = XEN_DEFINED_P(name);
   url = snd_url(name);

@@ -127,10 +127,9 @@ esac
 LIBS=""
 AC_CHECK_LIB(m,main)
 AC_CHECK_LIB(c,main)
-# AC_CHECK_LIB(dl,main)
 
 AC_CHECK_HEADERS(unistd.h sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h)
-AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h pthread.h dirent.h)
+AC_CHECK_HEADERS(sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h pthread.h dirent.h)
 
 AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
 				        #include <sys/param.h>
@@ -139,38 +138,27 @@ AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
 
 AC_CHECK_HEADER(alsa/asoundlib.h,[AC_DEFINE(HAVE_ALSA_ASOUNDLIB_H)])
 
-AC_CHECK_DECLS(isnan,,,[#include <math.h>])
-
 AC_SEARCH_LIBS([dlopen], [c, dl], [AC_DEFINE([HAVE_DLOPEN], [1])]) 
 # If this macro finds dlopen, HAVE_DLOPEN is defined (for use eg. in 
 # snd-xen.c), if a lib is required, the macro adds it silently to LIBS
 
 AC_TYPE_MODE_T
 AC_TYPE_SIZE_T
-# AC_TYPE_SSIZE_T -- in the docs, but apparently doesn't actually work
 AC_CHECK_TYPE(ssize_t, int)
 AC_TYPE_PID_T
 
 # new form of this macro from autoconf 2.62 makes the Mac case a real headache
 #  so this is a call on the old form
 AC_OLD_BIGENDIAN
-
-AC_SYS_LARGEFILE
 AC_TYPE_OFF_T
-
-AC_CHECK_SIZEOF(off_t)
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(ssize_t)
 
-AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline difftime gettimeofday)
+AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline gettimeofday)
 AC_CHECK_FUNCS(vsnprintf vasprintf strftime memmove lstat strcasecmp pathconf)
 
 AC_LIB_PROG_LD
 # this is needed for the -export-dynamic check below (export dynamic is needed to get the xm.so module loadable at run-time)
-
-AC_PROG_FGREP
-AC_DEFINE_UNQUOTED(FGREP_PROG, "$FGREP")
-
 
 AC_MSG_CHECKING(for __func__)
 AC_LINK_IFELSE(
@@ -397,7 +385,6 @@ if test "$with_gsl" != no; then
     OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gsl"
   
     AC_DEFINE(HAVE_GSL)
-    AC_DEFINE_UNQUOTED(MUS_GSL_VERSION,"${gsl_version}")
   
     SAVELIBS=$LIBS
     LIBS="$LIBS $GSL_LIBS"
@@ -707,10 +694,6 @@ else
       	  AC_SUBST(CAIRO_CFLAGS)
           fi
 
-        AC_CHECK_LIB(m, g_file_monitor_directory, [AC_DEFINE(HAVE_G_FILE_MONITOR_DIRECTORY)], ,$GTK_LIBS)
-	AC_CHECK_LIB(cairo, cairo_glyph_allocate, [AC_DEFINE(HAVE_CAIRO_GLYPH_ALLOCATE)], ,$GTK_LIBS)
-	AC_CHECK_LIB(cairo, cairo_region_xor, [AC_DEFINE(HAVE_CAIRO_REGION_XOR)], ,$GTK_LIBS)
-
 	XLIBS=""
       	XFLAGS=""
       	AC_SUBST(XLIBS)
@@ -917,8 +900,6 @@ AC_ARG_WITH(ruby,
            AC_CHECK_RUBY([1.8.0],
                          [AC_DEFINE(HAVE_RUBY)
                           AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
-                          AC_DEFINE_UNQUOTED(MUS_RUBY_VERSION,  "$RUBY_VERSION")
-                          AC_DEFINE_UNQUOTED(RUBY_RELEASE_DATE, "$RUBY_RELEASE_DATE")
                           AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,  "$RUBY_SEARCH_PATH")
                           XEN_CFLAGS="$XEN_CFLAGS $RUBY_CFLAGS"
                           XEN_LIBS="$XEN_LIBS $RUBY_LIBS" 
@@ -933,26 +914,6 @@ AC_ARG_WITH(ruby,
                           LIBS="$XEN_LIBS $LIBS -lm"
                           OLD_CFLAGS="$CFLAGS"
                           CFLAGS="$XEN_CFLAGS $CFLAGS"
-                          AC_MSG_CHECKING([for rb_proc_new])
-
-                          AC_RUN_IFELSE( 
-                           [AC_LANG_PROGRAM([@%:@include <ruby.h> 
-                                            VALUE proc_call(VALUE args, VALUE id) {return(rb_apply(rb_mKernel, (ID)id, args));} 
-                                            ], 
-                                            [VALUE proc; 
-                                             ruby_init(); 
-@%:@ifdef __cplusplus 
-                                             proc = rb_proc_new((VALUE (*)(...))proc_call, rb_intern("hi")) 
-@%:@else 
-                                             proc = rb_proc_new(proc_call, rb_intern("hi")) 
-@%:@endif 
-                           ]) 
-                                            ], 
-                           [AC_DEFINE(HAVE_RB_PROC_NEW) 
-                            AC_MSG_RESULT(yes) 
-                           ], 
-                           AC_MSG_RESULT(no) 
-                           ) 
 
                           AC_MSG_CHECKING([for ruby_vsnprintf]) 
                           AC_RUN_IFELSE( 
@@ -1111,8 +1072,6 @@ if test "$with_jack" = yes ; then
                AUDIO_SYSTEM=JACK
 	       AC_DEFINE(MUS_JACK)
 	       if test x$PKG_CONFIG != xno ; then
-                   jack_version="`$PKG_CONFIG jack --modversion`"
-                   AC_DEFINE_UNQUOTED(MUS_JACK_VERSION, "Jack: ${jack_version}")
           	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
           	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
 		   JACK_LIBS="$JACK_LIBS `$PKG_CONFIG samplerate --libs`"
@@ -1124,7 +1083,6 @@ fi
 
 case "$host" in
     *-*-linux*) 
-	AC_DEFINE(MUS_LINUX)
         LDSO_FLAGS="-shared"
         LIBS="$LIBS -lm"
 #
@@ -1199,12 +1157,10 @@ case "$host" in
 	esac
 	;;
     *-*-sunos4*) 
-        AC_DEFINE(MUS_SUN)
 	LIBS="$LIBS -lm"
 	AUDIO_SYSTEM=Sun
         ;;
     *-*-solaris*) 
-	AC_DEFINE(MUS_SUN)
 #	LIBS="$LIBS -lm -ldl"
 # odd... this causes an error in the sndlib configure (can't find libdl) but is needed here?
 	AUDIO_SYSTEM=Sun

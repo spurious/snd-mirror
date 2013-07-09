@@ -680,7 +680,6 @@ GMP_LIBS
 FFTW_CFLAGS
 FFTW_LIBS
 PKG_CONFIG
-FGREP
 INSTALL_DATA
 INSTALL_SCRIPT
 INSTALL_PROGRAM
@@ -769,7 +768,6 @@ with_temp_dir
 with_save_dir
 with_doc_dir
 with_snd_as_widget
-enable_largefile
 with_gnu_ld
 with_x
 enable_readline
@@ -1406,7 +1404,6 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --disable-largefile     omit support for large files
   --enable-readline      include readline (the default)
   --disable-deprecated	  do not include any deprecated stuff from gtk, s7, motif, clm, snd, or sndlib
 
@@ -1820,52 +1817,6 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_c_check_header_compile
-
-# ac_fn_c_check_decl LINENO SYMBOL VAR INCLUDES
-# ---------------------------------------------
-# Tests whether SYMBOL is declared in INCLUDES, setting cache variable VAR
-# accordingly.
-ac_fn_c_check_decl ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  as_decl_name=`echo $2|sed 's/ *(.*//'`
-  as_decl_use=`echo $2|sed -e 's/(/((/' -e 's/)/) 0&/' -e 's/,/) 0& (/g'`
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $as_decl_name is declared" >&5
-$as_echo_n "checking whether $as_decl_name is declared... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main ()
-{
-#ifndef $as_decl_name
-#ifdef __cplusplus
-  (void) $as_decl_use;
-#else
-  (void) $as_decl_name;
-#endif
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  eval "$3=yes"
-else
-  eval "$3=no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_decl
 
 # ac_fn_c_check_type LINENO TYPE VAR INCLUDES
 # -------------------------------------------
@@ -4227,7 +4178,6 @@ _ACEOF
 
 fi
 
-# AC_CHECK_LIB(dl,main)
 
 # On IRIX 5.3, sys/types and inttypes.h are conflicting.
 for ac_header in sys/types.h sys/stat.h stdlib.h string.h memory.h strings.h \
@@ -4259,7 +4209,7 @@ fi
 
 done
 
-for ac_header in libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h pthread.h dirent.h
+for ac_header in sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h pthread.h dirent.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -4290,19 +4240,6 @@ if test "x$ac_cv_header_alsa_asoundlib_h" = xyes; then :
 
 fi
 
-
-
-ac_fn_c_check_decl "$LINENO" "isnan" "ac_cv_have_decl_isnan" "#include <math.h>
-"
-if test "x$ac_cv_have_decl_isnan" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_ISNAN $ac_have_decl
-_ACEOF
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlopen" >&5
@@ -4387,7 +4324,6 @@ _ACEOF
 
 fi
 
-# AC_TYPE_SSIZE_T -- in the docs, but apparently doesn't actually work
 ac_fn_c_check_type "$LINENO" "ssize_t" "ac_cv_type_ssize_t" "$ac_includes_default"
 if test "x$ac_cv_type_ssize_t" = xyes; then :
 
@@ -4542,207 +4478,6 @@ $as_echo "#define WORDS_BIGENDIAN 1" >>confdefs.h
 presetting ac_cv_c_bigendian=no (or yes) will help" "$LINENO" 5 ;;
 esac
 
-
-# Check whether --enable-largefile was given.
-if test "${enable_largefile+set}" = set; then :
-  enableval=$enable_largefile;
-fi
-
-if test "$enable_largefile" != no; then
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for special C compiler options needed for large files" >&5
-$as_echo_n "checking for special C compiler options needed for large files... " >&6; }
-if ${ac_cv_sys_largefile_CC+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_cv_sys_largefile_CC=no
-     if test "$GCC" != yes; then
-       ac_save_CC=$CC
-       while :; do
-	 # IRIX 6.2 and later do not support large files by default,
-	 # so use the C compiler's -n32 option if that helps.
-	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
- /* Check that off_t can represent 2**63 - 1 correctly.
-    We can't simply define LARGE_OFF_T to be 9223372036854775807,
-    since some C++ compilers masquerading as C compilers
-    incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-  int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
-		       && LARGE_OFF_T % 2147483647 == 1)
-		      ? 1 : -1];
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-	 if ac_fn_c_try_compile "$LINENO"; then :
-  break
-fi
-rm -f core conftest.err conftest.$ac_objext
-	 CC="$CC -n32"
-	 if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_sys_largefile_CC=' -n32'; break
-fi
-rm -f core conftest.err conftest.$ac_objext
-	 break
-       done
-       CC=$ac_save_CC
-       rm -f conftest.$ac_ext
-    fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sys_largefile_CC" >&5
-$as_echo "$ac_cv_sys_largefile_CC" >&6; }
-  if test "$ac_cv_sys_largefile_CC" != no; then
-    CC=$CC$ac_cv_sys_largefile_CC
-  fi
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for _FILE_OFFSET_BITS value needed for large files" >&5
-$as_echo_n "checking for _FILE_OFFSET_BITS value needed for large files... " >&6; }
-if ${ac_cv_sys_file_offset_bits+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  while :; do
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
- /* Check that off_t can represent 2**63 - 1 correctly.
-    We can't simply define LARGE_OFF_T to be 9223372036854775807,
-    since some C++ compilers masquerading as C compilers
-    incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-  int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
-		       && LARGE_OFF_T % 2147483647 == 1)
-		      ? 1 : -1];
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_sys_file_offset_bits=no; break
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#define _FILE_OFFSET_BITS 64
-#include <sys/types.h>
- /* Check that off_t can represent 2**63 - 1 correctly.
-    We can't simply define LARGE_OFF_T to be 9223372036854775807,
-    since some C++ compilers masquerading as C compilers
-    incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-  int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
-		       && LARGE_OFF_T % 2147483647 == 1)
-		      ? 1 : -1];
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_sys_file_offset_bits=64; break
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  ac_cv_sys_file_offset_bits=unknown
-  break
-done
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sys_file_offset_bits" >&5
-$as_echo "$ac_cv_sys_file_offset_bits" >&6; }
-case $ac_cv_sys_file_offset_bits in #(
-  no | unknown) ;;
-  *)
-cat >>confdefs.h <<_ACEOF
-#define _FILE_OFFSET_BITS $ac_cv_sys_file_offset_bits
-_ACEOF
-;;
-esac
-rm -rf conftest*
-  if test $ac_cv_sys_file_offset_bits = unknown; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for _LARGE_FILES value needed for large files" >&5
-$as_echo_n "checking for _LARGE_FILES value needed for large files... " >&6; }
-if ${ac_cv_sys_large_files+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  while :; do
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
- /* Check that off_t can represent 2**63 - 1 correctly.
-    We can't simply define LARGE_OFF_T to be 9223372036854775807,
-    since some C++ compilers masquerading as C compilers
-    incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-  int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
-		       && LARGE_OFF_T % 2147483647 == 1)
-		      ? 1 : -1];
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_sys_large_files=no; break
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#define _LARGE_FILES 1
-#include <sys/types.h>
- /* Check that off_t can represent 2**63 - 1 correctly.
-    We can't simply define LARGE_OFF_T to be 9223372036854775807,
-    since some C++ compilers masquerading as C compilers
-    incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-  int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
-		       && LARGE_OFF_T % 2147483647 == 1)
-		      ? 1 : -1];
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_sys_large_files=1; break
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  ac_cv_sys_large_files=unknown
-  break
-done
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sys_large_files" >&5
-$as_echo "$ac_cv_sys_large_files" >&6; }
-case $ac_cv_sys_large_files in #(
-  no | unknown) ;;
-  *)
-cat >>confdefs.h <<_ACEOF
-#define _LARGE_FILES $ac_cv_sys_large_files
-_ACEOF
-;;
-esac
-rm -rf conftest*
-  fi
-
-
-fi
-
 ac_fn_c_check_type "$LINENO" "off_t" "ac_cv_type_off_t" "$ac_includes_default"
 if test "x$ac_cv_type_off_t" = xyes; then :
 
@@ -4753,40 +4488,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 fi
-
-
-# The cast to long int works around a bug in the HP C Compiler
-# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
-# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
-# This bug is HP SR number 8606223364.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of off_t" >&5
-$as_echo_n "checking size of off_t... " >&6; }
-if ${ac_cv_sizeof_off_t+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (off_t))" "ac_cv_sizeof_off_t"        "$ac_includes_default"; then :
-
-else
-  if test "$ac_cv_type_off_t" = yes; then
-     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error 77 "cannot compute sizeof (off_t)
-See \`config.log' for more details" "$LINENO" 5; }
-   else
-     ac_cv_sizeof_off_t=0
-   fi
-fi
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_off_t" >&5
-$as_echo "$ac_cv_sizeof_off_t" >&6; }
-
-
-
-cat >>confdefs.h <<_ACEOF
-#define SIZEOF_OFF_T $ac_cv_sizeof_off_t
-_ACEOF
-
 
 # The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
@@ -4855,7 +4556,7 @@ _ACEOF
 
 
 
-for ac_func in getcwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline difftime gettimeofday
+for ac_func in getcwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline gettimeofday
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -4994,79 +4695,6 @@ with_gnu_ld=$acl_cv_prog_gnu_ld
 
 
 # this is needed for the -export-dynamic check below (export dynamic is needed to get the xm.so module loadable at run-time)
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for fgrep" >&5
-$as_echo_n "checking for fgrep... " >&6; }
-if ${ac_cv_path_FGREP+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if echo 'ab*c' | $GREP -F 'ab*c' >/dev/null 2>&1
-   then ac_cv_path_FGREP="$GREP -F"
-   else
-     if test -z "$FGREP"; then
-  ac_path_FGREP_found=false
-  # Loop through the user's path and test for each of PROGNAME-LIST
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH$PATH_SEPARATOR/usr/xpg4/bin
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_prog in fgrep; do
-    for ac_exec_ext in '' $ac_executable_extensions; do
-      ac_path_FGREP="$as_dir/$ac_prog$ac_exec_ext"
-      as_fn_executable_p "$ac_path_FGREP" || continue
-# Check for GNU ac_path_FGREP and select it if it is found.
-  # Check for GNU $ac_path_FGREP
-case `"$ac_path_FGREP" --version 2>&1` in
-*GNU*)
-  ac_cv_path_FGREP="$ac_path_FGREP" ac_path_FGREP_found=:;;
-*)
-  ac_count=0
-  $as_echo_n 0123456789 >"conftest.in"
-  while :
-  do
-    cat "conftest.in" "conftest.in" >"conftest.tmp"
-    mv "conftest.tmp" "conftest.in"
-    cp "conftest.in" "conftest.nl"
-    $as_echo 'FGREP' >> "conftest.nl"
-    "$ac_path_FGREP" FGREP < "conftest.nl" >"conftest.out" 2>/dev/null || break
-    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
-    as_fn_arith $ac_count + 1 && ac_count=$as_val
-    if test $ac_count -gt ${ac_path_FGREP_max-0}; then
-      # Best one so far, save it but keep looking for a better one
-      ac_cv_path_FGREP="$ac_path_FGREP"
-      ac_path_FGREP_max=$ac_count
-    fi
-    # 10*(2^10) chars as input seems more than enough
-    test $ac_count -gt 10 && break
-  done
-  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
-esac
-
-      $ac_path_FGREP_found && break 3
-    done
-  done
-  done
-IFS=$as_save_IFS
-  if test -z "$ac_cv_path_FGREP"; then
-    as_fn_error $? "no acceptable fgrep could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" "$LINENO" 5
-  fi
-else
-  ac_cv_path_FGREP=$FGREP
-fi
-
-   fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_path_FGREP" >&5
-$as_echo "$ac_cv_path_FGREP" >&6; }
- FGREP="$ac_cv_path_FGREP"
-
-
-cat >>confdefs.h <<_ACEOF
-#define FGREP_PROG "$FGREP"
-_ACEOF
-
-
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __func__" >&5
 $as_echo_n "checking for __func__... " >&6; }
@@ -5726,10 +5354,6 @@ $as_echo "$gsl_version" >&6; }
     OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gsl"
 
     $as_echo "#define HAVE_GSL 1" >>confdefs.h
-
-    cat >>confdefs.h <<_ACEOF
-#define MUS_GSL_VERSION "${gsl_version}"
-_ACEOF
 
 
     SAVELIBS=$LIBS
@@ -7330,130 +6954,6 @@ $as_echo "$as_me: WARNING: trouble with gtk (we need version 2.12.0 or later) --
 
           fi
 
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for g_file_monitor_directory in -lm" >&5
-$as_echo_n "checking for g_file_monitor_directory in -lm... " >&6; }
-if ${ac_cv_lib_m_g_file_monitor_directory+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lm $GTK_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char g_file_monitor_directory ();
-int
-main ()
-{
-return g_file_monitor_directory ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_m_g_file_monitor_directory=yes
-else
-  ac_cv_lib_m_g_file_monitor_directory=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_g_file_monitor_directory" >&5
-$as_echo "$ac_cv_lib_m_g_file_monitor_directory" >&6; }
-if test "x$ac_cv_lib_m_g_file_monitor_directory" = xyes; then :
-  $as_echo "#define HAVE_G_FILE_MONITOR_DIRECTORY 1" >>confdefs.h
-
-fi
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for cairo_glyph_allocate in -lcairo" >&5
-$as_echo_n "checking for cairo_glyph_allocate in -lcairo... " >&6; }
-if ${ac_cv_lib_cairo_cairo_glyph_allocate+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lcairo $GTK_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char cairo_glyph_allocate ();
-int
-main ()
-{
-return cairo_glyph_allocate ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_cairo_cairo_glyph_allocate=yes
-else
-  ac_cv_lib_cairo_cairo_glyph_allocate=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_cairo_cairo_glyph_allocate" >&5
-$as_echo "$ac_cv_lib_cairo_cairo_glyph_allocate" >&6; }
-if test "x$ac_cv_lib_cairo_cairo_glyph_allocate" = xyes; then :
-  $as_echo "#define HAVE_CAIRO_GLYPH_ALLOCATE 1" >>confdefs.h
-
-fi
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for cairo_region_xor in -lcairo" >&5
-$as_echo_n "checking for cairo_region_xor in -lcairo... " >&6; }
-if ${ac_cv_lib_cairo_cairo_region_xor+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lcairo $GTK_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char cairo_region_xor ();
-int
-main ()
-{
-return cairo_region_xor ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_cairo_cairo_region_xor=yes
-else
-  ac_cv_lib_cairo_cairo_region_xor=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_cairo_cairo_region_xor" >&5
-$as_echo "$ac_cv_lib_cairo_cairo_region_xor" >&6; }
-if test "x$ac_cv_lib_cairo_cairo_region_xor" = xyes; then :
-  $as_echo "#define HAVE_CAIRO_REGION_XOR 1" >>confdefs.h
-
-fi
-
-
 	XLIBS=""
       	XFLAGS=""
 
@@ -7747,14 +7247,6 @@ $as_echo "use \$LOAD_PATH" >&6; }
                           $as_echo "#define HAVE_EXTENSION_LANGUAGE 1" >>confdefs.h
 
                           cat >>confdefs.h <<_ACEOF
-#define MUS_RUBY_VERSION "$RUBY_VERSION"
-_ACEOF
-
-                          cat >>confdefs.h <<_ACEOF
-#define RUBY_RELEASE_DATE "$RUBY_RELEASE_DATE"
-_ACEOF
-
-                          cat >>confdefs.h <<_ACEOF
 #define RUBY_SEARCH_PATH "$RUBY_SEARCH_PATH"
 _ACEOF
 
@@ -7810,51 +7302,6 @@ fi
                           LIBS="$XEN_LIBS $LIBS -lm"
                           OLD_CFLAGS="$CFLAGS"
                           CFLAGS="$XEN_CFLAGS $CFLAGS"
-                          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rb_proc_new" >&5
-$as_echo_n "checking for rb_proc_new... " >&6; }
-
-                          if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <ruby.h>
-                                            VALUE proc_call(VALUE args, VALUE id) {return(rb_apply(rb_mKernel, (ID)id, args));}
-
-int
-main ()
-{
-VALUE proc;
-                                             ruby_init();
-#ifdef __cplusplus
-                                             proc = rb_proc_new((VALUE (*)(...))proc_call, rb_intern("hi"))
-#else
-                                             proc = rb_proc_new(proc_call, rb_intern("hi"))
-#endif
-
-  ;
-  return 0;
-}
-
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  $as_echo "#define HAVE_RB_PROC_NEW 1" >>confdefs.h
-
-                            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
 
                           { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ruby_vsnprintf" >&5
 $as_echo_n "checking for ruby_vsnprintf... " >&6; }
@@ -8396,11 +7843,6 @@ fi
 	       $as_echo "#define MUS_JACK 1" >>confdefs.h
 
 	       if test x$PKG_CONFIG != xno ; then
-                   jack_version="`$PKG_CONFIG jack --modversion`"
-                   cat >>confdefs.h <<_ACEOF
-#define MUS_JACK_VERSION "Jack: ${jack_version}"
-_ACEOF
-
           	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
           	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
 		   JACK_LIBS="$JACK_LIBS `$PKG_CONFIG samplerate --libs`"
@@ -8412,8 +7854,6 @@ fi
 
 case "$host" in
     *-*-linux*)
-	$as_echo "#define MUS_LINUX 1" >>confdefs.h
-
         LDSO_FLAGS="-shared"
         LIBS="$LIBS -lm"
 #
@@ -8543,14 +7983,10 @@ $as_echo "$alsa_ok" >&6; }
 	esac
 	;;
     *-*-sunos4*)
-        $as_echo "#define MUS_SUN 1" >>confdefs.h
-
 	LIBS="$LIBS -lm"
 	AUDIO_SYSTEM=Sun
         ;;
     *-*-solaris*)
-	$as_echo "#define MUS_SUN 1" >>confdefs.h
-
 #	LIBS="$LIBS -lm -ldl"
 # odd... this causes an error in the sndlib configure (can't find libdl) but is needed here?
 	AUDIO_SYSTEM=Sun

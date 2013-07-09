@@ -18,7 +18,7 @@
   #include <sys/param.h>
 #endif
 
-#if (HAVE_SYS_MOUNT_H && __APPLE__) || __bsdi__ || __NetBSD__
+#if __bsdi__ || __NetBSD__
   #include <sys/mount.h>
 #endif
 

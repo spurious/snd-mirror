@@ -5647,6 +5647,8 @@ static mus_float_t check_src_envelope(int pts, mus_float_t *data, int *error)
 }
 
 
+static bool is_NaN(double x) {return(x != x);}
+
 static XEN g_src_channel(XEN ratio_or_env, XEN beg_n, XEN dur_n, XEN snd, XEN chn_n, XEN edpos)
 {
   #define H_src_channel "(" S_src_channel " ratio-or-env :optional (beg 0) (dur len) snd chn edpos): \
@@ -5685,7 +5687,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
       if ((pos == cp->edit_ctr) &&
 	  ((ratio == 0.0) || (ratio == 1.0)))
 	return(XEN_FALSE);
-      if ((isnan(ratio)) ||
+      if ((is_NaN(ratio)) ||
 	  (fabs(ratio) < 1.0e-10)) /* dur > 0 here */
 	XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, ratio_or_env, "too small (resultant sound will be too large)");
     }
@@ -5751,7 +5753,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
       mus_float_t ratio;
 
       ratio = XEN_TO_C_DOUBLE(ratio_or_env);
-      if ((isnan(ratio)) || (isinf(ratio)))
+      if ((is_NaN(ratio)) || (isinf(ratio)))
 	XEN_OUT_OF_RANGE_ERROR(caller, 1, ratio_or_env, "src ratio must be a normal number");
 
       if (ratio != 1.0)

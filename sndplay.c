@@ -8,14 +8,10 @@
 
 #include "_sndlib.h"
 
-#if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
-  #include <libc.h>
-#else
-  #if (!(defined(_MSC_VER)))
-    #include <unistd.h>
-  #endif
-  #include <string.h>
+#ifndef _MSC_VER
+  #include <unistd.h>
 #endif
+#include <string.h>
 
 #if __APPLE__
   #define BUFFER_SIZE 256

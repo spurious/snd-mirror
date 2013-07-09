@@ -864,6 +864,8 @@ static void set_y_bounds(axis_info *ap)
 }
 
 
+static bool is_NaN(double x) {return(x != x);}
+
 void set_x_bounds(axis_info *ap)
 {
   double range;
@@ -874,9 +876,7 @@ void set_x_bounds(axis_info *ap)
     }
   range = ap->zx * ap->x_ambit;
   ap->x0 = ap->xmin + ap->sx * ap->x_ambit;
-#if HAVE_DECL_ISNAN
-  if (isnan(ap->x0)) ap->x0 = 0.0;
-#endif
+  if (is_NaN(ap->x0)) ap->x0 = 0.0;
   ap->x1 = (ap->x0 + range);
   if (ap->x1 > ap->xmax)
     {
@@ -962,9 +962,7 @@ static void set_x_axis_x0(chan_info *cp, mus_long_t left)
 	  double x1x0;
 	  x1x0 = ap->x1 - ap->x0; 
 	  ap->x0 = (double)left / (double)SND_SRATE(cp->sound); 
-#if HAVE_DECL_ISNAN
-	  if (isnan(ap->x0)) ap->x0 = 0.0;
-#endif
+	  if (is_NaN(ap->x0)) ap->x0 = 0.0;
 	  set_x_axis_x0x1(cp, ap->x0, ap->x0 + x1x0);
 	}
     }
@@ -1197,9 +1195,7 @@ void focus_x_axis_change(chan_info *cp, int focus_style)
 	  break;
 	}
 
-#if HAVE_DECL_ISNAN
-      if (isnan(ap->x0)) ap->x0 = 0.0;
-#endif
+      if (is_NaN(ap->x0)) ap->x0 = 0.0;
       if (ap->x0 < 0.0) ap->x0 = 0.0;
       if (ap->x_ambit != 0.0)
 	ap->sx = (double)(ap->x0 - ap->xmin) / (double)(ap->x_ambit);
