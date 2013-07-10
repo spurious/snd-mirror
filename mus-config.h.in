@@ -1,12 +1,6 @@
 #ifndef MUS_CONFIG_H_LOADED
 #define MUS_CONFIG_H_LOADED
 
-/* Define to `int' or something if <sys/types.h> doesn't define. These are now stupid */
-#undef mode_t
-#undef pid_t
-#undef size_t
-#undef ssize_t
-
 #undef HAVE_GETCWD
 #undef HAVE_STRFTIME
 #undef HAVE_STRERROR
@@ -38,7 +32,6 @@
 #undef WORDS_BIGENDIAN
 
 #undef SIZEOF_VOID_P
-#undef SIZEOF_SSIZE_T
 
 #undef HAVE_READLINE
 /* this is only used in ruby xen_rb_repl xen.c -- make -D as --with-ruby? */
@@ -75,8 +68,6 @@
 #undef HAVE_DIRENT_H
 /* windows uses direct.h, everyone else dirent.h [io.c, xen.c] */
 
-#undef HAVE_PTHREAD_H
-
 #undef SND_HOST
 /* this can be getenv in linux: HOSTTYPE  or OSTYPE+MACHTYPE */
 
@@ -98,13 +89,10 @@
 #undef HAVE_GSL
 /* gls.pc */
 
-#undef HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
-/* strange -- there's disagreement as to whether this function exists in 1.15? */
-
 #undef HAVE_SCHEME
 #undef HAVE_RUBY
 #undef HAVE_FORTH
-#undef HAVE_EXTENSION_LANGUAGE
+#define HAVE_EXTENSION_LANGUAGE (HAVE_SCHEME || HAVE_RUBY || HAVE_FORTH)
 /* these can be arg choices via -D */
 
 #undef HAVE_GL

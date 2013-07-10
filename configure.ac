@@ -129,7 +129,7 @@ AC_CHECK_LIB(m,main)
 AC_CHECK_LIB(c,main)
 
 AC_CHECK_HEADERS(unistd.h sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h)
-AC_CHECK_HEADERS(sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h pthread.h dirent.h)
+AC_CHECK_HEADERS(sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h dirent.h)
 
 AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
 				        #include <sys/param.h>
@@ -142,23 +142,11 @@ AC_SEARCH_LIBS([dlopen], [c, dl], [AC_DEFINE([HAVE_DLOPEN], [1])])
 # If this macro finds dlopen, HAVE_DLOPEN is defined (for use eg. in 
 # snd-xen.c), if a lib is required, the macro adds it silently to LIBS
 
-AC_TYPE_MODE_T
-AC_TYPE_SIZE_T
-AC_CHECK_TYPE(ssize_t, int)
-AC_TYPE_PID_T
-
-# new form of this macro from autoconf 2.62 makes the Mac case a real headache
-#  so this is a call on the old form
 AC_OLD_BIGENDIAN
-AC_TYPE_OFF_T
 AC_CHECK_SIZEOF(void *)
-AC_CHECK_SIZEOF(ssize_t)
 
 AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline gettimeofday)
 AC_CHECK_FUNCS(vsnprintf vasprintf strftime memmove lstat strcasecmp pathconf)
-
-AC_LIB_PROG_LD
-# this is needed for the -export-dynamic check below (export dynamic is needed to get the xm.so module loadable at run-time)
 
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 
@@ -372,26 +360,9 @@ if test "$with_gsl" != no; then
     gsl_version="`$GSL_CONFIG --version`"
     AC_MSG_RESULT($gsl_version)
     OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gsl"
-  
     AC_DEFINE(HAVE_GSL)
-  
-    SAVELIBS=$LIBS
-    LIBS="$LIBS $GSL_LIBS"
-    AC_MSG_CHECKING(for gsl_eigen_nonsymmv_workspace)
-    AC_LINK_IFELSE(
-      [AC_LANG_PROGRAM(
-         [#include <gsl/gsl_math.h>
-          #include <gsl/gsl_eigen.h>],
-         [     gsl_eigen_nonsymmv_workspace *w = gsl_eigen_nonsymmv_alloc(4)
-         ])],
-      [
-       AC_DEFINE(HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE)
-       AC_MSG_RESULT(yes)
-      ],
-      [AC_MSG_RESULT(no)])
-    LIBS=$SAVELIBS
-    fi
   fi
+fi
 AC_SUBST(GSL_LIBS)
 AC_SUBST(GSL_CFLAGS)
 
@@ -862,8 +833,7 @@ AC_DEFUN([AC_CHECK_RUBY],
     AC_MSG_RESULT([no])
     [$3]
   fi
-#  AC_SUBST([RUBY_VERSION])
-#  AC_SUBST([RUBY_RELEASE_DATE])
+
   AC_SUBST([RUBY_SEARCH_PATH])
   AC_SUBST([RUBY_CFLAGS])
   AC_SUBST([RUBY_LIBS])
@@ -888,7 +858,6 @@ AC_ARG_WITH(ruby,
         if test "$with_ruby" = yes ; then
            AC_CHECK_RUBY([1.8.0],
                          [AC_DEFINE(HAVE_RUBY)
-                          AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
                           AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,  "$RUBY_SEARCH_PATH")
                           XEN_CFLAGS="$XEN_CFLAGS $RUBY_CFLAGS"
                           XEN_LIBS="$XEN_LIBS $RUBY_LIBS" 
@@ -934,7 +903,6 @@ AC_ARG_WITH(forth,
 	[  --with-forth	  	  use Forth as the extension language],
   	if test "$with_forth" = yes ; then
 	   FTH_CHECK_LIB([AC_DEFINE(HAVE_FORTH)
- 	                  AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
 			  if test "$FTH_HAVE_COMPLEX" = yes ; then
      	      		     AC_DEFINE(HAVE_COMPLEX_TRIG)
      	      		     AC_DEFINE(HAVE_MAKE_COMPLEX)
@@ -965,7 +933,6 @@ fi
 if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
     AC_DEFINE(HAVE_SCHEME)	
     ac_snd_have_extension_language=yes
-    AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
     AC_DEFINE(HAVE_MAKE_RATIO)
     AC_DEFINE(WITH_SYSTEM_EXTRAS)
     AC_CHECK_HEADER(complex.h, 
@@ -1427,7 +1394,6 @@ AC_ARG_ENABLE(deprecated,
     AC_DEFINE(XEN_DISABLE_DEPRECATED)
     AC_DEFINE(S7_DISABLE_DEPRECATED)
     AC_DEFINE(SND_DISABLE_DEPRECATED)
-    VL_PROG_CC_WARNINGS()
   fi)
 
 if test "$enable_snd_debug" = yes ; then
@@ -1465,7 +1431,7 @@ ORIGINAL_LDFLAGS="$LDFLAGS"
 
 if test "$with_snd_as_widget" != yes ; then
   if test "$ac_cv_header_dlfcn_h" = yes ; then
-    if test "$with_gnu_ld" = yes ; then
+    if test "$CC" = "gcc" || test "$CC" = "g++" ; then
       LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
       # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
       #   that ends up generating endless dumb warnings in gcc

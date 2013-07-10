@@ -164,6 +164,10 @@
 #include <X11/extensions/shape.h>
 #endif
 
+#if (_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))
+  #define __func__ __FUNCTION__
+#endif
+
 /* compile-time flags are HAVE_RUBY|SCHEME MUS_WITH_EDITRES */
 
 /* if you're using g++ and it complains about XmRemoveFromPostFromList, update Motif (you need 2.1.30) */

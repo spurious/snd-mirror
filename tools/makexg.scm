@@ -2220,6 +2220,10 @@
 (hey "#define HAVE_CAIRO_GLYPH_ALLOCATE                 ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 8))~%")
 (hey "#define HAVE_CAIRO_REGION_XOR                     ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 9) && (CAIRO_VERSION_MICRO >= 12))~%~%")
 
+(hey "#if (_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))~%")
+(hey "  #define __func__ __FUNCTION__~%")
+(hey "#endif~%~%")
+
 (hey "#if HAVE_EXTENSION_LANGUAGE~%~%")
 
 (hey "#if UNDEF_USE_SND~%  #undef USE_SND~%  #define USE_SND 0~%#endif~%~%")

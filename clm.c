@@ -13358,9 +13358,14 @@ bool mus_fft_window_p(int val)
   return(false);
 }
 
-#if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
-  #include <gsl/gsl_math.h>
-  #include <gsl/gsl_eigen.h>
+
+#if HAVE_GSL
+  #include <gsl/gsl_version.h>
+  #if ((GSL_MAJOR_VERSION >= 1) && (GSL_MINOR_VERSION >= 9))
+    #include <gsl/gsl_math.h>
+    #include <gsl/gsl_eigen.h>
+    #define HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE 1
+  #endif
 #endif
 
 

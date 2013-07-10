@@ -10,30 +10,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#ifndef __cplusplus
-#if HAVE_STDBOOL_H
-  #include <stdbool.h>
-#else
-#ifndef true
-  #define bool	int
-  #define true	1
-  #define false	0
-#endif
-#endif
-#endif
-
-#ifdef _MSC_VER
-  /* I got these from gmp.h */
-  #if defined (__GNUC__)
-    #define MUS_EXPORT  __declspec(__dllexport__)
-  #else
-    #define MUS_EXPORT  __declspec(dllexport)
-  #endif
-#else
-  #define MUS_EXPORT
-#endif
-
-#if (SIZEOF_SSIZE_T == 4)
+#if (SIZEOF_VOID_P == 4)
   #if __APPLE__
     #define SSIZE_TD "%ld"
   #else
@@ -42,41 +19,6 @@
 #else
   #define SSIZE_TD "%lld"
 #endif
-
-
-/* these used to be in configure.ac,  but the 2.62 change to AC_C_BIGENDIAN ruins that */
-#ifndef MUS_LITTLE_ENDIAN
-  #if WORDS_BIGENDIAN
-    #define MUS_LITTLE_ENDIAN 0
-  #else
-    #define MUS_LITTLE_ENDIAN 1
-  #endif
-#endif
-
-#ifndef MUS_AUDIO_COMPATIBLE_FORMAT
-  #if WORDS_BIGENDIAN
-    #if __APPLE__
-      #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_BFLOAT
-    #else
-      #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_BSHORT
-    #endif
-  #else
-    #if __APPLE__
-      #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_LFLOAT
-    #else
-      #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_LSHORT
-    #endif
-  #endif
-#endif
-
-#ifndef MUS_OUT_FORMAT
-  #if WORDS_BIGENDIAN
-    #define MUS_OUT_FORMAT MUS_BDOUBLE
-  #else
-    #define MUS_OUT_FORMAT MUS_LDOUBLE
-  #endif
-#endif
-
 
 #if (_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))
   #define __func__ __FUNCTION__

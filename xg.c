@@ -107,6 +107,10 @@
 #define HAVE_CAIRO_GLYPH_ALLOCATE                 ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 8))
 #define HAVE_CAIRO_REGION_XOR                     ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 9) && (CAIRO_VERSION_MICRO >= 12))
 
+#if (_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))
+  #define __func__ __FUNCTION__
+#endif
+
 #if HAVE_EXTENSION_LANGUAGE
 
 #if UNDEF_USE_SND
@@ -50785,7 +50789,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("09-Jul-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("10-Jul-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

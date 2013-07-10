@@ -2143,6 +2143,13 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
 }
 
 
+#if HAVE_GSL
+  #include <gsl/gsl_version.h>
+  #if ((GSL_MAJOR_VERSION >= 1) && (GSL_MINOR_VERSION >= 9))
+    #define HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE 1
+  #endif
+#endif
+
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
 
 /* eignevector/values, from gsl/doc/examples/eigen_nonsymm.c */
@@ -2873,3 +2880,4 @@ void g_xen_initialize(void)
   XEN_PROVIDE("snd" SND_MAJOR_VERSION);
   XEN_PROVIDE("snd-" SND_MAJOR_VERSION "." SND_MINOR_VERSION);
 }
+
