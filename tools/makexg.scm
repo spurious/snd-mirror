@@ -162,9 +162,9 @@
 (define all-types '())
 
 ;;; preset some types that are getting confused
-(set! types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "gboolean*"
+(set! types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "gboolean*" "GtkStateType"
 		  "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
-(set! all-types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" 
+(set! all-types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "GtkStateType"
 		      "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
 
 (define idlers (list "g_source_remove" "g_idle_remove_by_data"
