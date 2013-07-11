@@ -37,7 +37,7 @@ The configure script has a bunch of arguments:
   
      --with-gtk                use Gtk+
   
-     --with-no-gui             make Snd without any graphics support
+     --with-gui                make Snd with graphics support (actually intended for use as --without-gui)
   
      --with-gl                 include support for OpenGL (default: no, Motif only)
        --with-just-gl          same but omit extension language bindings in gl.c (default: no)

@@ -420,7 +420,6 @@ set_listener_font "9x15"
 set_axis_numbers_font "9x15"
 
 set_show_mix_waveforms true
-set_trap_segfault false
 set_listener_prompt ":"
 set_show_listener true
 
@@ -570,7 +569,6 @@ lambda: &lt;{ ins beg dur -- }&gt; $" %14s: %5.2f %5.2f" '( ins beg dur ) clm-me
 *snd-home* "/sound"        $+ set-open-file-dialog-directory drop
 "/usr/gnu/cvs/snd"            set-html-dir                   drop
 "BROWSER" getenv "firefox" || set-html-program               drop
-#t                	      set-trap-segfault              drop
 #t                            set-show-listener              drop
 0.0               	      set-auto-update-interval       drop
 "rev"           	      add-sound-file-extension       drop
@@ -820,7 +818,7 @@ Graphics choices:
     --with-gtk               use Gtk+ to build Snd (Gtk+ version 2.0 or later)
     --with-motif             use Motif (version 2.0 or later) to build Snd (the default), Lesstif is not supported
     --with-motif-prefix=PFX  where Motif is installed (--with-motif-prefix=/usr/X11R6)
-    --with-no-gui            make Snd without any graphics support
+    --with-gui               make Snd with graphics support (--without-gui is the intended use)
     --with-gl                include OpenGL support (spectrogram, etc, Motif only)
     --with-just-gl           include OpenGL support, but omit the GL/s7/Ruby/Forth bindings (Motif only)
     --with-gl2ps             include gl2ps (GL to Postscript code, Motif only)
@@ -885,7 +883,7 @@ snd-ladspa     LADSPA loaded (--with-ladspa, but also the default in Linux if la
 sndlib         sndlib module (always included)
 <em class="noem" id="sndmotiffeature">snd-motif</em>      Motif used as GUI toolkit (--with-motif, usually the default if Motif can be found)
 snd-gtk        Gtk+ used as GUI toolkit (--with-gtk)
-snd-nogui      No GUI built-in (--with-no-gui, or neither Motif nor Gtk+ found)
+snd-nogui      No GUI built-in (--without-gui, or neither Motif nor Gtk+ found)
 snd-forth      Forth as extension language (--with-forth)
 snd-ruby       Ruby as extension language (--with-ruby)
 snd-s7         s7 as extension language (--with-s7)
@@ -1558,7 +1556,7 @@ friends:
 <div class="innerheader" id="sndwithnogui">Snd with no GUI and as scripting engine</div>
 
 <p>If Snd is built without a graphical user interface (by specifying
---with-no-gui to configure),
+--without-gui to configure),
 it runs the extension language's read-eval-print loop, with input from stdin.  All
 the non-interface related functions are available, so you can do things
 like:
@@ -1846,7 +1844,6 @@ set_listener_font "9x15"
 set_axis_numbers_font "9x15"
 
 set_show_mix_waveforms true
-set_trap_segfault false
 set_show_indices true
 
 set_listener_prompt ":"

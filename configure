@@ -629,7 +629,6 @@ ORIGINAL_LDFLAGS
 PATH_WVUNPACK
 PATH_WAVPACK
 PATH_TTA
-PATH_SHORTEN
 PATH_TIMIDITY
 PATH_FLAC
 PATH_SPEEXENC
@@ -746,7 +745,7 @@ with_alsa
 with_oss
 with_jack
 with_gtk
-with_no_gui
+with_gui
 with_gl
 with_just_gl
 with_gl2ps
@@ -1413,7 +1412,7 @@ Optional Packages:
   --with-oss		  use OSS
   --with-jack		  use JACK
   --with-gtk		  use Gtk+ to build Snd
-  --with-no-gui  	  make Snd without any graphics support
+  --with-gui  	  make Snd with graphics support
   --with-gl		  include OpenGL support, Motif only
   --with-just-gl	  include OpenGL support, but omit the extension language bindings, Motif only
   --with-gl2ps		  include gl2ps, Motif only
@@ -3797,18 +3796,6 @@ GRAPHICS_TOOLKIT="None"
 
 PACKAGE=Snd
 VERSION=13.9
-cat >>confdefs.h <<_ACEOF
-#define SND_PACKAGE "$PACKAGE"
-_ACEOF
-
-cat >>confdefs.h <<_ACEOF
-#define SND_VERSION "$VERSION"
-_ACEOF
-
-cat >>confdefs.h <<_ACEOF
-#define SND_HOST "$host"
-_ACEOF
-
 
 #--------------------------------------------------------------------------------
 # configuration options
@@ -3822,7 +3809,7 @@ _ACEOF
 #   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, s7, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
-#   --with-no-gui         make Snd without any graphics support
+#   --with-gui            make Snd with(out) any graphics support
 #   --with-motif-prefix   set location of Motif
 #   --with-forth          use Forth as the extension language
 #   --with-ruby           use Ruby as the extension language
@@ -3869,9 +3856,9 @@ if test "${with_gtk+set}" = set; then :
 fi
 
 
-# Check whether --with-no-gui was given.
-if test "${with_no_gui+set}" = set; then :
-  withval=$with_no_gui;
+# Check whether --with-gui was given.
+if test "${with_gui+set}" = set; then :
+  withval=$with_gui;
 fi
 
 
@@ -4140,7 +4127,7 @@ fi
 done
 
 
-for ac_header in unistd.h sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h
+for ac_header in sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -4409,19 +4396,7 @@ _ACEOF
 
 
 
-for ac_func in getcwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline gettimeofday
-do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-done
-
-for ac_func in vsnprintf vasprintf strftime memmove lstat strcasecmp pathconf
+for ac_func in readlink setlocale access opendir sleep signal statvfs statfs getline vasprintf lstat
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -4635,43 +4610,6 @@ fi
 fi
 
 fi
-
-
-
-# look for nested function support
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether nested functions work" >&5
-$as_echo_n "checking whether nested functions work... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
- double bar;
-      double foo(double a, double b)
-       {
-        auto double square (double z);
-        double square (double z) {return(z * z);}
-        return(square(a) + square(b));
-       }
-     bar = foo(1.0, 2.0)
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  $as_echo "#define HAVE_NESTED_FUNCTIONS 1" >>confdefs.h
-
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
 
 
 
@@ -5785,7 +5723,7 @@ fi
 
 
 if test "$with_motif" = no && test "$with_gtk" = no ; then
-  with_no_gui=yes
+  with_gui=no
 fi
 
 if test "$with_motif" = yes && test "$with_gtk" = yes ; then
@@ -5794,7 +5732,7 @@ if test "$with_motif" = yes && test "$with_gtk" = yes ; then
 $as_echo "$as_me: WARNING: You asked for both Motif and Gtk -- Motif will be used" >&2;}
 fi
 
-if test "$with_no_gui" = yes ; then
+if test "$with_gui" = no ; then
 
   $as_echo "#define USE_NO_GUI 1" >>confdefs.h
 
@@ -5814,7 +5752,7 @@ else
     $as_echo "#define HAVE_X 1" >>confdefs.h
 
     XFLAGS="$X_CFLAGS"
-    X_POST_LIBS="-lX11 $X_EXTRA_LIBS"
+    X_POST_LIBS="-lX11 $X_EXTRA_LIBS -lXext"
 
     case "$host" in
       *-apple-*)
@@ -5826,53 +5764,6 @@ else
     TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
     TEST_POST_LIBS="$X_POST_LIBS"
     TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XShapeQueryExtension in -lXext" >&5
-$as_echo_n "checking for XShapeQueryExtension in -lXext... " >&6; }
-if ${ac_cv_lib_Xext_XShapeQueryExtension+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXext $TEST_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XShapeQueryExtension ();
-int
-main ()
-{
-return XShapeQueryExtension ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_Xext_XShapeQueryExtension=yes
-else
-  ac_cv_lib_Xext_XShapeQueryExtension=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Xext_XShapeQueryExtension" >&5
-$as_echo "$ac_cv_lib_Xext_XShapeQueryExtension" >&6; }
-if test "x$ac_cv_lib_Xext_XShapeQueryExtension" = xyes; then :
-
-       X_POST_LIBS="$X_POST_LIBS -lXext"
-       TEST_POST_LIBS="$TEST_POST_LIBS -lXext"
-       TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
-       $as_echo "#define HAVE_XSHAPEQUERYEXTENSION 1" >>confdefs.h
-
-
-fi
-
 
     # search for libXp and libXm may need libXft so...
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XftFontOpen in -lXft" >&5
@@ -6973,47 +6864,6 @@ fi
                           fi
 
 
-                          OLD_LIBS="$LIBS"
-                          LIBS="$XEN_LIBS $LIBS -lm"
-                          OLD_CFLAGS="$CFLAGS"
-                          CFLAGS="$XEN_CFLAGS $CFLAGS"
-
-                          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ruby_vsnprintf" >&5
-$as_echo_n "checking for ruby_vsnprintf... " >&6; }
-                          if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <ruby.h>
-int
-main ()
-{
-ruby_init(); ruby_vsnprintf(0, 0, 0, 0); return(0)
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  $as_echo "#define HAVE_VSNPRINTF 0" >>confdefs.h
-
-                             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-                          LIBS="$OLD_LIBS"
-                          CFLAGS="$OLD_CFLAGS"
                           LOCAL_LANGUAGE="Ruby"
                           ac_snd_have_extension_language=yes
     else
@@ -7627,8 +7477,6 @@ $as_echo "$alsa_ok" >&6; }
 	    	    AUDIO_LIB="-lasound"
 		    if test "$with_jack" = yes ; then
 		      AUDIO_LIB="-lasound -lsamplerate"
-		      $as_echo "#define HAVE_JACK_IN_LINUX 1" >>confdefs.h
-
 		    fi
  		else
          	    AUDIO_SYSTEM=OSS
@@ -7637,8 +7485,6 @@ $as_echo "$alsa_ok" >&6; }
  		fi
  		;;
 	    JACK)
-		$as_echo "#define HAVE_JACK_IN_LINUX 1" >>confdefs.h
-
 		$as_echo "#define HAVE_OSS 1" >>confdefs.h
 
 		JACK_LIBS="$JACK_LIBS -lpthread"
@@ -7778,7 +7624,7 @@ fi
 
 
 #--------------------------------------------------------------------------------
-# OGG, Flac, Speex, Mpeg, Timidity, Shorten, TTA, Wavpack
+# OGG, Flac, Speex, Mpeg, Timidity, TTA, Wavpack
 # --------------------------------------------------------------------------------
 
 # Extract the first word of "oggdec", so it can be a program name with args.
@@ -8189,58 +8035,6 @@ _ACEOF
 fi
 
 
-# Extract the first word of "shorten", so it can be a program name with args.
-set dummy shorten; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_PATH_SHORTEN+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $PATH_SHORTEN in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PATH_SHORTEN="$PATH_SHORTEN" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PATH_SHORTEN="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_PATH_SHORTEN" && ac_cv_path_PATH_SHORTEN="no"
-  ;;
-esac
-fi
-PATH_SHORTEN=$ac_cv_path_PATH_SHORTEN
-if test -n "$PATH_SHORTEN"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PATH_SHORTEN" >&5
-$as_echo "$PATH_SHORTEN" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-
-if test "$PATH_SHORTEN" != "no" ; then
-  $as_echo "#define HAVE_SHORTEN 1" >>confdefs.h
-
-  cat >>confdefs.h <<_ACEOF
-#define PATH_SHORTEN "${PATH_SHORTEN}"
-_ACEOF
-
-fi
-
-
 # Extract the first word of "ttaenc", so it can be a program name with args.
 set dummy ttaenc; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -8479,41 +8273,6 @@ fi
 
 
 #--------------------------------------------------------------------------------
-# sigsetjmp special case
-#--------------------------------------------------------------------------------
-
-# look for sigsetjmp for segfault trap
-if test "$enable_snd_debug" != yes ; then
-  trap_segfault=no
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sigsetjmp" >&5
-$as_echo_n "checking for sigsetjmp... " >&6; }
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <setjmp.h>
-int
-main ()
-{
-sigjmp_buf hi; sigsetjmp(hi,1)
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  trap_segfault=yes
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  if test $trap_segfault = yes; then
-    $as_echo "#define MUS_TRAP_SEGFAULT 1" >>confdefs.h
-
-  fi
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $trap_segfault" >&5
-$as_echo "$trap_segfault" >&6; }
-fi
-
-
-
-#--------------------------------------------------------------------------------
 # debugging stuff
 #--------------------------------------------------------------------------------
 
@@ -8521,17 +8280,7 @@ fi
 if test "${enable_deprecated+set}" = set; then :
   enableval=$enable_deprecated; if test "$enable_deprecated" = no ; then
     CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED -DGSEAL_ENABLE -DGTK_DISABLE_SINGLE_INCLUDES -Wall $CFLAGS"
-    $as_echo "#define XM_DISABLE_DEPRECATED 1" >>confdefs.h
-
-    $as_echo "#define CLM_DISABLE_DEPRECATED 1" >>confdefs.h
-
-    $as_echo "#define SNDLIB_DISABLE_DEPRECATED 1" >>confdefs.h
-
-    $as_echo "#define XEN_DISABLE_DEPRECATED 1" >>confdefs.h
-
-    $as_echo "#define S7_DISABLE_DEPRECATED 1" >>confdefs.h
-
-    $as_echo "#define SND_DISABLE_DEPRECATED 1" >>confdefs.h
+    $as_echo "#define DISABLE_DEPRECATED 1" >>confdefs.h
 
   fi
 fi
@@ -8570,15 +8319,19 @@ fi
 
 ORIGINAL_LDFLAGS="$LDFLAGS"
 
-if test "$with_snd_as_widget" != yes ; then
-  if test "$ac_cv_header_dlfcn_h" = yes ; then
-    if test "$CC" = "gcc" || test "$CC" = "g++" ; then
-      LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
-      # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
-      #   that ends up generating endless dumb warnings in gcc
+case "$host" in
+  *-*-linux* | *-*-bsdi* | *-*-freebsd* | *-*-openbsd* | *-*-netbsd*)
+    if test "$with_snd_as_widget" != yes ; then
+      if test "$ac_cv_header_dlfcn_h" = yes ; then
+        if test "$CC" = "gcc" || test "$CC" = "g++" ; then
+          LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
+          # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
+          #   that ends up generating endless dumb warnings in gcc
+        fi
+      fi
     fi
-  fi
-fi
+esac
+
 
 
 #--------------------------------------------------------------------------------

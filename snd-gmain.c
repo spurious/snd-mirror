@@ -123,16 +123,6 @@ void auto_update_restart(void)
 #if HAVE_SETJMP_H
 #include <setjmp.h>
 
-#if MUS_TRAP_SEGFAULT
-/* stolen from scwm.c */
-static sigjmp_buf envHandleEventsLoop;
-
-static void segv(int ignored)
-{
-  siglongjmp(envHandleEventsLoop, 1);
-}
-#endif
-
 static jmp_buf top_level_jump;
 
 void top_level_catch(int ignore);
@@ -363,10 +353,6 @@ static void startup_funcs(void)
       if (auto_update_interval(ss) > 0.0)
 	g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL, NULL);
     }
-
-#if MUS_TRAP_SEGFAULT
-  if (trap_segfault(ss)) signal(SIGSEGV, segv);
-#endif
 
   if ((ss->sounds) &&
       (ss->selected_sound == NO_SELECTION))
@@ -654,18 +640,6 @@ void snd_doit(int argc, char **argv)
   startup_funcs();
   
 #if HAVE_SETJMP_H
-#if MUS_TRAP_SEGFAULT
-  if (sigsetjmp(envHandleEventsLoop, 1))
-    {
-      if (!(ss->exiting))
-	snd_error_without_format("Caught seg fault (will try to continue):\n");
-      else
-	{
-	  snd_error_without_format("Caught seg fault while trying to exit.\n");
-	  exit(0);
-	}
-    }
-#endif
   if (setjmp(top_level_jump))
     {
       if (!(ss->jump_ok))

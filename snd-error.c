@@ -164,12 +164,7 @@ void snd_warning(const char *format, ...)
 
   /* can't use vasprintf here -- we may jump anywhere leaving unclaimed memory behind 
    */
-
-#if HAVE_VSNPRINTF
   bytes_needed = vsnprintf(snd_error_buffer, snd_error_buffer_size, format, ap);
-#else
-  bytes_needed = vsprintf(snd_error_buffer, format, ap);
-#endif
   va_end(ap);
 
   if (bytes_needed >= snd_error_buffer_size)
@@ -177,12 +172,9 @@ void snd_warning(const char *format, ...)
       snd_error_buffer_size = bytes_needed * 2;
       free(snd_error_buffer);
       snd_error_buffer = (char *)calloc(snd_error_buffer_size, sizeof(char));
+
       va_start(ap, format);
-#if HAVE_VSNPRINTF
       vsnprintf(snd_error_buffer, snd_error_buffer_size, format, ap);
-#else
-      vsprintf(snd_error_buffer, format, ap);
-#endif
       va_end(ap);
     }
   snd_warning_1(snd_error_buffer);
@@ -201,24 +193,19 @@ void snd_error(const char *format, ...)
   va_list ap;
   if (snd_error_buffer == NULL) 
     snd_error_buffer = (char *)calloc(snd_error_buffer_size, sizeof(char));
+
   va_start(ap, format);
-#if HAVE_VSNPRINTF
   bytes_needed = vsnprintf(snd_error_buffer, snd_error_buffer_size, format, ap);
-#else
-  bytes_needed = vsprintf(snd_error_buffer, format, ap);
-#endif
   va_end(ap);
+
   if (bytes_needed > snd_error_buffer_size)
     {
       snd_error_buffer_size = bytes_needed * 2;
       free(snd_error_buffer);
       snd_error_buffer = (char *)calloc(snd_error_buffer_size, sizeof(char));
+
       va_start(ap, format);
-#if HAVE_VSNPRINTF
       vsnprintf(snd_error_buffer, snd_error_buffer_size, format, ap);
-#else
-      vsprintf(snd_error_buffer, format, ap);
-#endif
       va_end(ap);
     }
   snd_error_1(snd_error_buffer, true);

@@ -707,13 +707,13 @@ static int header_write(int fd, unsigned char *buf, int chars)
 {
   if (chars > 0)
     {
-      ssize_t bytes;
-      bytes = write(fd, buf, chars);
+      long long int bytes;
+      bytes = (long long int)write(fd, buf, chars);
       if (bytes != chars)
 	{
 	  char *errstr = NULL;
 	  errstr = STRERROR(errno);
-	  return(mus_error(MUS_WRITE_ERROR, "header_write: wrote " SSIZE_TD " of %d bytes, %s", 
+	  return(mus_error(MUS_WRITE_ERROR, "header_write: wrote %lld of %d bytes, %s", 
 			   bytes, chars, (errstr) ? errstr : "unknown error?"));
 	}
     }
@@ -725,13 +725,13 @@ static int header_read(int fd, unsigned char *buf, int chars)
 {
   if (chars > 0)
     {
-      ssize_t bytes;
-      bytes = read(fd, buf, chars);
+      long long int bytes;
+      bytes = (long long int)read(fd, buf, chars);
       if (bytes != chars) 
 	{
 	  char *errstr = NULL;
 	  errstr = STRERROR(errno);
-	  return(mus_error(MUS_READ_ERROR, "header_read: read " SSIZE_TD " of %d bytes, %s", 
+	  return(mus_error(MUS_READ_ERROR, "header_read: read %lld of %d bytes, %s", 
 			   bytes, chars, (errstr) ? errstr : "unknown error?"));
 	}
     }
@@ -900,7 +900,7 @@ static void double_to_ieee_80(double val, unsigned char *p)
 
 static mus_long_t update_form_size, update_frames_location, update_ssnd_location, update_rf64_location;
 
-static ssize_t seek_and_read(int fd, unsigned char *buf, mus_long_t offset, int nbytes)
+static long long int seek_and_read(int fd, unsigned char *buf, mus_long_t offset, int nbytes)
 {
   if (offset < 0) return(-1);
   lseek(fd, offset, SEEK_SET);
@@ -2688,8 +2688,8 @@ static int read_soundfont_header(const char *filename, int fd)
 	      lseek(fd, ckoff, SEEK_SET);
 	      while (srate == 0)
 		{
-		  ssize_t bytes;
-		  bytes = read(fd, hdrbuf, 8);
+		  long long int bytes;
+		  bytes = (long long int)read(fd, hdrbuf, 8);
 		  if (bytes == 0)
 		    {
 		      happy = false;
@@ -2901,10 +2901,10 @@ static int read_nist_header(const char *filename, int fd)
       n++;
       if (n >= hend)
 	{
-	  ssize_t read_bytes;
+	  long long int read_bytes;
 	  curbase += hend;
 	  n = 0;
-	  read_bytes = read(fd, hdrbuf, HDRBUFSIZ);
+	  read_bytes = (long long int)read(fd, hdrbuf, HDRBUFSIZ);
 	  if (read_bytes < HDRBUFSIZ)
 	    return(mus_error(MUS_HEADER_READ_FAILED, "%s NIST header truncated?", filename));
 	  hend = HDRBUFSIZ;
@@ -3868,7 +3868,7 @@ static int read_esps_header(const char *filename, int fd)
   bool happy = true;
   mus_long_t curbase, hend;
   int k, j, n, chars, floats, shorts, doubles;
-  ssize_t bytes;
+  long long int bytes;
   bool little;
   little = (hdrbuf[18] == 0);
   if (little)
@@ -5554,7 +5554,7 @@ static int mus_header_read_1(const char *filename, int fd)
 
   /* returns 0 on success (at least to the extent that we can report the header type), -1 for error */
   int i, loc = 0;
-  ssize_t bytes;
+  long long int bytes;
 
   header_type = MUS_UNSUPPORTED;
   data_format = MUS_UNKNOWN;
@@ -5569,7 +5569,7 @@ static int mus_header_read_1(const char *filename, int fd)
       loop_modes[1] = 0;
     }
 
-  bytes = read(fd, hdrbuf, INITIAL_READ_SIZE);
+  bytes = (long long int)read(fd, hdrbuf, INITIAL_READ_SIZE);
   /* if it's a 0 length file we need to get out */
   if (bytes < 0) 
     return(mus_error(MUS_HEADER_READ_FAILED, "%s: %s", filename, (errno) ? STRERROR(errno) : "bytes read < 0?"));
@@ -5595,7 +5595,7 @@ static int mus_header_read_1(const char *filename, int fd)
       (match_four_chars((unsigned char *)hdrbuf, I_DECN)))
     {
       if (bytes < 24) 
-	return(mus_error(MUS_HEADER_READ_FAILED, "%s NeXT header truncated? found only " SSIZE_TD " bytes", filename, bytes));
+	return(mus_error(MUS_HEADER_READ_FAILED, "%s NeXT header truncated? found only %lld bytes", filename, bytes));
       header_type = MUS_NEXT;
       return(read_next_header(filename, fd));
     }
@@ -5604,7 +5604,7 @@ static int mus_header_read_1(const char *filename, int fd)
     {
       /* next 4 bytes are apparently the file size or something equally useless */
       if (bytes < 12) 
-	return(mus_error(MUS_HEADER_READ_FAILED, "%s AIFF header truncated? found only " SSIZE_TD " bytes", filename, bytes));
+	return(mus_error(MUS_HEADER_READ_FAILED, "%s AIFF header truncated? found only %lld bytes", filename, bytes));
 
       if (match_four_chars((unsigned char *)(hdrbuf + 8), I_AIFF))
 	{ 
@@ -5650,7 +5650,7 @@ static int mus_header_read_1(const char *filename, int fd)
       (match_four_chars((unsigned char *)hdrbuf, I_RIFX)))
     {
       if (bytes < 12) 
-	return(mus_error(MUS_HEADER_READ_FAILED, "%s RIFF header truncated? found only " SSIZE_TD " bytes", filename, bytes));
+	return(mus_error(MUS_HEADER_READ_FAILED, "%s RIFF header truncated? found only %lld bytes", filename, bytes));
 
       if (match_four_chars((unsigned char *)(hdrbuf + 8), I_WAVE))
 	{
@@ -5677,7 +5677,7 @@ static int mus_header_read_1(const char *filename, int fd)
     { 
       header_type = MUS_RF64;
       if (bytes < 28) 
-	return(mus_error(MUS_HEADER_READ_FAILED, "%s RF64 header truncated? found only " SSIZE_TD " bytes", filename, bytes));
+	return(mus_error(MUS_HEADER_READ_FAILED, "%s RF64 header truncated? found only %lld bytes", filename, bytes));
       if ((mus_char_to_lint((unsigned char *)(hdrbuf + 4)) != -1) ||
 	  (!(match_four_chars((unsigned char *)(hdrbuf + 8), I_WAVE))))
 	return(mus_error(MUS_HEADER_READ_FAILED, "%s: messed up RF64 header", filename));
@@ -5690,7 +5690,7 @@ static int mus_header_read_1(const char *filename, int fd)
       (equal_big_or_little_endian((unsigned char *)hdrbuf, I_IRCAM_NEXT)))
     {
       if (bytes < 24) 
-	return(mus_error(MUS_HEADER_READ_FAILED, "%s IRCAM header truncated? found only " SSIZE_TD " bytes", filename, bytes));
+	return(mus_error(MUS_HEADER_READ_FAILED, "%s IRCAM header truncated? found only %lld bytes", filename, bytes));
       header_type = MUS_IRCAM;
       return(read_ircam_header(filename, fd));
     }
@@ -5704,7 +5704,7 @@ static int mus_header_read_1(const char *filename, int fd)
   if (match_four_chars((unsigned char *)hdrbuf, I_caff))
     {
       if (bytes < 32) /* INITIAL_READ_SIZE */
-	return(mus_error(MUS_HEADER_READ_FAILED, "%s CAFF header truncated? found only " SSIZE_TD " bytes", filename, bytes));
+	return(mus_error(MUS_HEADER_READ_FAILED, "%s CAFF header truncated? found only %lld bytes", filename, bytes));
       header_type = MUS_CAFF;
       return(read_caff_header(fd));
     }
@@ -5713,7 +5713,7 @@ static int mus_header_read_1(const char *filename, int fd)
       (match_four_chars((unsigned char *)(hdrbuf + 4), I_AB_5)))
     {
       if (bytes < 128) /* INITIAL_READ_SIZE=256 */
-	return(mus_error(MUS_HEADER_READ_FAILED, "%s Matlab header truncated? found only " SSIZE_TD " bytes", filename, bytes));
+	return(mus_error(MUS_HEADER_READ_FAILED, "%s Matlab header truncated? found only %lld bytes", filename, bytes));
       header_type = MUS_MATLAB;
       return(read_matlab_5_header(filename, fd));
     }
@@ -5746,7 +5746,7 @@ static int mus_header_read_1(const char *filename, int fd)
       (match_four_chars((unsigned char *)(hdrbuf + 4), I_VOC1)))
     {
       if (bytes < 24) 
-	return(mus_error(MUS_HEADER_READ_FAILED, "%s VOC header truncated? found only " SSIZE_TD " bytes", filename, bytes));
+	return(mus_error(MUS_HEADER_READ_FAILED, "%s VOC header truncated? found only %lld bytes", filename, bytes));
       header_type = MUS_VOC;
       return(read_voc_header(filename, fd));
     }
@@ -6509,7 +6509,7 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
       if (header_type != new_type)
 	{
 	  int ofd, ifd;
-	  ssize_t nbytes;
+	  long long int nbytes;
 	  mus_long_t loc, len = 0;
 	  unsigned char *buf = NULL;
 	  char *new_file, *comment = NULL;
@@ -6713,7 +6713,7 @@ int mus_header_change_comment(const char *filename, int type, const char *new_co
 	  char *new_file;
 	  int ofd, ifd;
 	  mus_long_t loc;
-	  ssize_t nbytes;
+	  long long int nbytes;
 	  unsigned char *buf = NULL;
 	  new_file = (char *)calloc(strlen(filename) + 5, sizeof(char));
 	  sprintf(new_file, "%s.tmp", filename);
@@ -6926,12 +6926,12 @@ const char *mus_header_original_format_name(int format, int type)
 bool mus_header_no_header(const char *filename)
 {
   int fd;
-  ssize_t bytes;
+  long long int bytes;
   bool ok = false;
   fd = mus_file_open_read(filename);
   if (fd == -1) 
     return(mus_error(MUS_CANT_OPEN_FILE, "mus_header: can't open %s: %s", filename, STRERROR(errno)));
-  bytes = read(fd, hdrbuf, INITIAL_READ_SIZE);
+  bytes = (long long int)read(fd, hdrbuf, INITIAL_READ_SIZE);
   CLOSE(fd, filename);
   if (bytes > 4) 
     ok = ((match_four_chars((unsigned char *)hdrbuf, I_DSND)) || 

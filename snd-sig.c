@@ -6040,7 +6040,7 @@ frequency whistles leaking through."
 }
 
 
-#if HAVE_NESTED_FUNCTIONS
+#if __GNUC__ && (!__cplusplus) && (__GNUC__ >= 4) && __linux__
 
 #define S_find_min_peak_phases "find-min-peak-phases"
 
@@ -6902,10 +6902,12 @@ XEN_ARGIFY_3(g_filter_selection_w, g_filter_selection)
 XEN_ARGIFY_8(g_clm_channel_w, g_clm_channel)
 XEN_NARGIFY_0(g_sinc_width_w, g_sinc_width)
 XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
-#if HAVE_NESTED_FUNCTIONS
+
+#if __GNUC__ && (!__cplusplus) && (__GNUC__ >= 4) && __linux__
 XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
 XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
 #endif
+
 #else
 #define g_scan_chan_w g_scan_chan
 #define g_map_chan_w g_map_chan
@@ -6947,10 +6949,12 @@ XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
 #define g_clm_channel_w g_clm_channel
 #define g_sinc_width_w g_sinc_width
 #define g_set_sinc_width_w g_set_sinc_width
-#if HAVE_NESTED_FUNCTIONS
+
+#if __GNUC__ && (!__cplusplus) && (__GNUC__ >= 4) && __linux__
 #define g_find_min_peak_phases_w g_find_min_peak_phases
 #define g_fpsap_w g_fpsap
 #endif
+
 #endif
 
 void g_init_sig(void)
@@ -6999,11 +7003,13 @@ void g_init_sig(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sinc_width, g_sinc_width_w, H_sinc_width,
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
-#if HAVE_NESTED_FUNCTIONS
+
+#if __GNUC__ && (!__cplusplus) && (__GNUC__ >= 4) && __linux__
   XEN_DEFINE_PROCEDURE(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
   XEN_DEFINE_PROCEDURE(S_fpsap, g_fpsap_w, 3, 2, 0, H_fpsap);
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("phases-get-peak", g_phases_get_peak, 3, 0, 0, "");
 #endif
 #endif
+
 }

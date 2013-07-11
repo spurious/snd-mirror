@@ -2533,6 +2533,10 @@ XEN_NARGIFY_0(g_snd_glx_context_w, g_snd_glx_context)
 
 void g_xen_initialize(void)
 {
+#if HAVE_RUBY
+  rb_gc_disable();
+#endif
+
   add_source_file_extension(XEN_FILE_EXTENSION);
 #if HAVE_SCHEME
   add_source_file_extension("cl");
@@ -2766,7 +2770,7 @@ void g_xen_initialize(void)
                       end");
 #endif
 
-#if (!CLM_DISABLE_DEPRECATED)
+#if (!DISABLE_DEPRECATED)
 #if HAVE_SCHEME
   XEN_EVAL_C_STRING("(define (clm-print . args) \"(clm-print . args) applies format to args and prints the result via snd-print\" \
                        (snd-print (apply format #f args)))");
@@ -2853,6 +2857,7 @@ void g_xen_initialize(void)
       char *str, *buf;
       int i, j = 0, len;
       str = (char *)(RUBY_SEARCH_PATH);
+
       len = mus_strlen(str);
       buf = (char *)calloc(len + 1, sizeof(char));
       for (i = 0; i < len; i++)
@@ -2879,5 +2884,10 @@ void g_xen_initialize(void)
   XEN_PROVIDE("snd");
   XEN_PROVIDE("snd" SND_MAJOR_VERSION);
   XEN_PROVIDE("snd-" SND_MAJOR_VERSION "." SND_MINOR_VERSION);
+
+#if HAVE_RUBY
+  rb_gc_enable();
+#endif
+
 }
 

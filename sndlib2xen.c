@@ -874,7 +874,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 }
 
 
-#if (!HAVE_UNISTD_H) || (_MSC_VER)
+#if _MSC_VER
 #ifndef STDIN_FILENO
 #define STDIN_FILENO 0
 #endif

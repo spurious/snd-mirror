@@ -287,18 +287,6 @@ static bool noglob = false, noinit = false, nostdin = false;
 #if HAVE_SETJMP_H
 #include <setjmp.h>
 
-#if MUS_TRAP_SEGFAULT
-/* stolen from scwm.c */
-static sigjmp_buf envHandleEventsLoop;
-
-
-static void segv(int ignored)
-{
-  siglongjmp(envHandleEventsLoop, 1);
-}
-#endif
-
-
 static jmp_buf top_level_jump;
 void top_level_catch(int ignore);
 void top_level_catch(int ignore)
@@ -700,26 +688,10 @@ void snd_doit(int argc, char **argv)
   while (auto_open_ctr < auto_open_files)
     auto_open_ctr = handle_next_startup_arg(auto_open_ctr, auto_open_file_names, false, auto_open_files);
 
-#if MUS_TRAP_SEGFAULT
-  if (trap_segfault(ss)) signal(SIGSEGV, segv);
-#endif
-
   if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse == SOUND_NORMAL))
     select_channel(ss->sounds[0], 0);
 
 #if HAVE_SETJMP_H
-#if MUS_TRAP_SEGFAULT
-  if (sigsetjmp(envHandleEventsLoop, 1))
-    {
-      if (!(ss->exiting))
-	snd_error_without_format("Caught seg fault (will try to continue):\n");
-      else
-	{
-	  snd_error_without_format("Caught seg fault while trying to exit.\n");
-	  exit(0);
-	}
-    }
-#endif
   if (setjmp(top_level_jump))
     {
       if (!(ss->jump_ok))

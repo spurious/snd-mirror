@@ -1,6 +1,6 @@
 /* translate various special case sound files to something we can edit 
  * 
- * I'm ignoring proprietary or licensed schemes even where the code is publicly available (Rockwell ADPCM, shorten, etc)
+ * I'm ignoring proprietary or licensed schemes even where the code is publicly available (Rockwell ADPCM, etc)
  *
  * currently supported:
  *   IEEE text
@@ -33,13 +33,13 @@ short mus_char_to_lshort(const unsigned char *inp);
 
 static char write_error_buffer[PRINT_BUFFER_SIZE];
 
-static ssize_t snd_checked_write(int fd, unsigned char *buf, ssize_t bytes, const char *filename)
+static long long int snd_checked_write(int fd, unsigned char *buf, long long int bytes, const char *filename)
 {
   /* io.c checked_write assumes its file descriptors are around */
   /* can't call mus_error here because we need to clean up first in case of error */
-  ssize_t bytes_written;
+  long long int bytes_written;
   mus_long_t kfree;
-  kfree = disk_kspace(filename);
+  kfree = (long long int)disk_kspace(filename);
   if (kfree < 0) 
     {
       snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
@@ -50,7 +50,7 @@ static ssize_t snd_checked_write(int fd, unsigned char *buf, ssize_t bytes, cons
   if (kfree < (bytes >> 10))
     { 
       snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   "only %lld" " bytes left on device (we need " SSIZE_TD " bytes)",
+		   "only %lld bytes left on device (we need %lld bytes)",
 		   kfree << 10, bytes);
       return(MUS_ERROR);
     }
@@ -58,7 +58,7 @@ static ssize_t snd_checked_write(int fd, unsigned char *buf, ssize_t bytes, cons
   if (bytes_written != bytes)
     {
       snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   "write error (wrote " SSIZE_TD " of requested " SSIZE_TD " bytes): %s",
+		   "write error (wrote %lld of requested %lld bytes): %s",
 		   bytes_written, bytes, snd_io_strerror());
       return(MUS_ERROR);
     }
@@ -1604,7 +1604,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
       break;
  
     case MUS_OGG: case MUS_SPEEX: case MUS_FLAC: case MUS_MIDI: case MUS_MPEG:
-    case MUS_SHORTEN: case MUS_TTA: case MUS_WAVPACK:
+    case MUS_TTA: case MUS_WAVPACK:
     default:
       if (snd_decode(type, oldname, newname) == 0)
 	err = MUS_NO_ERROR;

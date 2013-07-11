@@ -848,7 +848,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
 
 
 
-#if (!S7_DISABLE_DEPRECATED)
+#if (!DISABLE_DEPRECATED)
 #define s7_F(Sc)           s7_f(Sc)
 #define s7_T(Sc)           s7_t(Sc)
 #define s7_NIL(Sc)         s7_nil(Sc)

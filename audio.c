@@ -83,6 +83,8 @@
 /* these pull in stdbool.h apparently, so they have to precede sndlib.h */
 #endif
 
+#define HAVE_JACK_IN_LINUX (MUS_JACK && __linux__)
+
 #include "_sndlib.h"
 #include "sndlib-strings.h"
 
@@ -91,16 +93,6 @@ enum {MUS_AUDIO_DEFAULT_0, MUS_AUDIO_DUPLEX_DEFAULT, MUS_AUDIO_LINE_OUT,
       MUS_AUDIO_DAC_OUT, MUS_AUDIO_MIXER, MUS_AUDIO_AUX_OUTPUT
 };
 
-
-#if (!HAVE_STRERROR)
-char *strerror(int errnum)
-{
-  char *strerrbuf;
-  strerrbuf = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
-  snprintf(strerrbuf, LABEL_BUFFER_SIZE, "io err %d", errnum);
-  return(strerrbuf);
-}
-#endif
 
 #define MUS_STANDARD_ERROR(Error_Type, Error_Message) \
   mus_print("%s\n  [%s[%d] %s]", Error_Message, __FILE__, __LINE__, __func__)

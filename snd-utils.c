@@ -92,33 +92,22 @@ mus_float_t in_dB(mus_float_t min_dB, mus_float_t lin_dB, mus_float_t val)
 #endif
 
 
-#if HAVE_STRFTIME
 #define TIME_STR_SIZE 64
 static char time_buf[TIME_STR_SIZE];
-#endif
-
 
 char *snd_local_time(void)
 {
-#if HAVE_STRFTIME
   time_t ts;
   time(&ts);
   strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
   return(time_buf);
-#else
-  return(" ");
-#endif
 }
 
 
 char *snd_strftime(const char *format, time_t date)
 {
-#if HAVE_STRFTIME
   strftime(time_buf, TIME_STR_SIZE, format, localtime(&date));
   return(time_buf);
-#else
-  return(" ");
-#endif
 }
 
 
@@ -236,11 +225,7 @@ char *vstr(const char *format, va_list ap)
   int len;
   len = mus_strlen(format) + PRINT_BUFFER_SIZE;
   buf = (char *)calloc(len, sizeof(char));
- #if HAVE_VSNPRINTF
   vsnprintf(buf, len, format, ap);
- #else
-  vsprintf(buf, format, ap);
- #endif
 #endif
   return(buf);
 }

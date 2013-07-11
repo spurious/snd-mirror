@@ -49,7 +49,8 @@
   #define HAVE_SINCOS 0
 #endif
 
-#if (!HAVE_MEMMOVE)
+#if 0
+/* if you're running a truly ancient system, set that switch to 1 */
 static void *memmove (char *dest, const char *source, unsigned int length)
 { /* from libit */
   char *d0 = dest;

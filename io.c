@@ -1596,8 +1596,8 @@ mus_long_t mus_file_read_chans(int tfd, mus_long_t beg, mus_long_t end, int chan
 
 static int checked_write(int tfd, char *buf, mus_long_t chars)
 {
-  ssize_t bytes;
-  bytes = write(tfd, buf, chars);
+  long long int bytes;
+  bytes = (long long int)write(tfd, buf, chars);
   if (bytes != chars) 
     {
       io_fd *fd;
@@ -1610,7 +1610,7 @@ static int checked_write(int tfd, char *buf, mus_long_t chars)
 			 fd->name));
       else
 	return(mus_error(MUS_WRITE_ERROR,
-			 "mus_write: write error for %s%s%s: only " SSIZE_TD " of %lld" " bytes written",
+			 "mus_write: write error for %s%s%s: only %lld of %lld" " bytes written",
 			 fd->name, (errno) ? ": " : "", (errno) ? STRERROR(errno) : "",
 			 bytes, chars));
     }
@@ -2016,7 +2016,7 @@ char *mus_getcwd(void)
   int i, path_max = 0;
   char *pwd = NULL, *res = NULL;
   if (saved_cwd) return(saved_cwd);
-#if HAVE_PATHCONF
+#ifndef _MSC_VER
   path_max = pathconf("/", _PC_PATH_MAX);
 #endif
   if (path_max < 1024)
@@ -2027,7 +2027,6 @@ char *mus_getcwd(void)
       if (path_max < 1024) 
 	path_max = 1024;
     }
-#if HAVE_GETCWD
   for (i = path_max;; i *= 2)
     {
       if (pwd) free(pwd);
@@ -2039,7 +2038,6 @@ char *mus_getcwd(void)
 #endif
       if (res) break;    /* NULL is returned if failure, but what about success? should I check errno=ERANGE? */
     }
-#endif
   saved_cwd = pwd;
   return(pwd);
 }
@@ -2164,24 +2162,14 @@ char *mus_format(const char *format, ...)
   return(result);
 #else
 
-#if HAVE_VSNPRINTF
   #define MUS_FORMAT_BUFFER_SIZE 256
-#else
-  #define MUS_FORMAT_BUFFER_SIZE 8192
-#endif
-
   char *buf = NULL;
   int needed_bytes = 0;
   va_list ap;
   buf = (char *)calloc(MUS_FORMAT_BUFFER_SIZE, sizeof(char));
+
   va_start(ap, format);
-
-#if HAVE_VSNPRINTF
   needed_bytes = vsnprintf(buf, MUS_FORMAT_BUFFER_SIZE, format, ap);
-#else
-  needed_bytes = vsprintf(buf, format, ap);
-#endif
-
   va_end(ap);
 
   if (needed_bytes >= MUS_FORMAT_BUFFER_SIZE) /* "=" here because we need room for the trailing 0 */
@@ -2189,11 +2177,7 @@ char *mus_format(const char *format, ...)
       free(buf);
       buf = (char *)calloc(needed_bytes + 1, sizeof(char));
       va_start(ap, format);
-#if HAVE_VSNPRINTF
       vsnprintf(buf, needed_bytes + 1, format, ap);
-#else
-      vsprintf(buf, format, ap); /* argh -- we already clobbered memory, I presume */
-#endif
       va_end(ap);
     }
   return(buf);

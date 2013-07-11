@@ -1002,9 +1002,6 @@
     (set! (transform-type) (transform-type))
     (if (not (equal? (transform-type)  fourier-transform )) 
 	(snd-display #__line__ ";transform-type set def: ~A" (transform-type)))
-    (set! (trap-segfault) (trap-segfault))
-    (if (not (equal? (trap-segfault)  #t)) 
-	(snd-display #__line__ ";trap-segfault set def: ~A" (trap-segfault)))
     (set! (with-file-monitor) (with-file-monitor))
     (if (not (equal? (with-file-monitor)  #t)) 
 	(snd-display #__line__ ";with-file-monitor set def: ~A" (with-file-monitor)))
@@ -2207,7 +2204,7 @@
 		       'tracking-cursor-style 'transform->vct
 		       'transform-dialog 'transform-frames 'transform-graph 'transform-graph-style 'transform-graph-type
 		       'transform-graph? 'transform-normalization 'transform-sample 'transform-size 'transform-type
-		       'transform? 'trap-segfault 'triangle-wave 'triangle-wave? 'tukey-window
+		       'transform? 'triangle-wave 'triangle-wave? 'tukey-window
 		       'two-pole 'two-pole? 'two-zero 'two-zero? 'ultraspherical-window
 		       'unbind-key  'undo 'undo-edit 'undo-hook 'unselect-all 'update-hook 'update-lisp-graph
 		       'update-sound 'update-time-graph 'update-transform-graph 'variable-graph? 'vct
@@ -46237,7 +46234,7 @@ EDITS: 1
 					;start-playing 
 		     start-progress-report stop-player stop-playing swap-channels syncd-marks sync sync-max sound-properties sound-property temp-dir
 		     text-focus-color tiny-font region-sampler? transform-dialog transform-sample
-		     transform->vct transform-frames transform-type trap-segfault with-file-monitor unbind-key undo
+		     transform->vct transform-frames transform-type with-file-monitor unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound clm-table-size clm-default-frequency
 		     with-verbose-cursor view-sound wavelet-type with-inset-graph with-interrupts with-pointer-focus with-smpte-label
 		     with-toolbar with-tooltips with-menu-icons save-as-dialog-src save-as-dialog-auto-comment
@@ -46348,7 +46345,7 @@ EDITS: 1
 			 show-y-zero show-grid show-sonogram-cursor sinc-width spectrum-end spectro-hop spectrum-start spectro-x-angle  grid-density
 			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 			 speed-control-style speed-control-tones squelch-update sync sound-properties sound-property temp-dir text-focus-color tiny-font y-bounds
-			 transform-type trap-segfault with-file-monitor with-verbose-cursor 
+			 transform-type with-file-monitor with-verbose-cursor 
 			 with-inset-graph with-interrupts with-pointer-focus wavelet-type x-bounds with-smpte-label
 			 with-toolbar with-tooltips with-menu-icons save-as-dialog-src save-as-dialog-auto-comment
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style sync-style
@@ -47102,7 +47099,7 @@ EDITS: 1
 			  selected-channel selected-data-color selected-graph-color 
 			  selected-sound selection-creates-region show-controls show-indices show-listener
 			  show-selection-transform sinc-width temp-dir text-focus-color tiny-font
-			  trap-segfault with-file-monitor unbind-key with-verbose-cursor 
+			  with-file-monitor unbind-key with-verbose-cursor 
 			  with-inset-graph with-interrupts with-pointer-focus window-height beats-per-measure with-smpte-label
 			  with-toolbar with-tooltips with-menu-icons remember-sound-state save-as-dialog-src save-as-dialog-auto-comment
 			  window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height

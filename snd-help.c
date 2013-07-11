@@ -369,9 +369,6 @@ char *version_info(void)
 	  "\n    Forte C ",
 #endif
 #endif
-#ifdef SND_HOST
-	  "\n    host: ", SND_HOST,
-#endif
 	  "\n",
 	  NULL);
   free_snd_itoa();

@@ -640,7 +640,6 @@
 #define S_transform_to_integer          "transform->integer"
 #define S_transform_to_vct              "transform->vct"
 #define S_transform_type                "transform-type"
-#define S_trap_segfault                 "trap-segfault"
 #define S_unbind_key                    "unbind-key"  
 #define S_undo                          "undo"
 #define S_undo_hook                     "undo-hook"

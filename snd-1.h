@@ -452,7 +452,7 @@ typedef struct snd_state {
   char *Eps_File, *Temp_Dir, *Save_Dir, *Ladspa_Dir, *Peak_Env_Dir;
   char *Listener_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
   char *orig_listener_font, *orig_axis_label_font, *orig_axis_numbers_font, *orig_tiny_font, *orig_peaks_font, *orig_bold_peaks_font;
-  bool Verbose_Cursor, Trap_Segfault, With_Inset_Graph, With_Pointer_Focus, With_Smpte_Label, With_Interrupts;
+  bool Verbose_Cursor, With_Inset_Graph, With_Pointer_Focus, With_Smpte_Label, With_Interrupts;
   int Enved_Filter_Order;
   mus_float_t Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size, Log_Freq_Start;
   mus_float_t Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle;

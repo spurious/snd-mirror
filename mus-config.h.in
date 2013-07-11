@@ -1,48 +1,88 @@
 #ifndef MUS_CONFIG_H_LOADED
 #define MUS_CONFIG_H_LOADED
 
-#undef HAVE_GETCWD
-#undef HAVE_STRFTIME
-#undef HAVE_STRERROR
+/* --disable-deprecated */
+#undef DISABLE_DEPRECATED
+
+/* --with-temp-dir */
+#undef MUS_DEFAULT_TEMP_DIR
+
+/* --with-save-dir */
+#undef MUS_DEFAULT_SAVE_DIR
+
+/* --with-doc-dir */
+#undef MUS_DEFAULT_DOC_DIR
+
+/* --with-editres */
+#undef MUS_WITH_EDITRES
+
+/* --with-snd-as-widget */
+#undef SND_AS_WIDGET
+
+/* --with-gmp */
+#undef WITH_GMP
+
+/* --with-gl2ps */
+#undef WITH_GL2PS
+
+/* --with-pulseaudio */
+#undef MUS_PULSEAUDIO
+
+/* --with-portaudio -- obsolete?
+ */
+#undef MUS_PORTAUDIO
+
+
+
+
+#undef HAVE_LADSPA
+/* --with-ladspa or it finds ladspa.h?
+ *   just linux I think
+ */
+
+#undef HAVE_ACCESS
+#undef HAVE_VASPRINTF
+#undef HAVE_LSTAT
+#undef HAVE_SIGNAL
+/* not windows, everywhere else
+ */
+
+
 #undef HAVE_READLINK
 #undef HAVE_GETLINE
 #undef HAVE_SETLOCALE
 #undef HAVE_SLEEP
-#undef HAVE_ACCESS
 #undef HAVE_OPENDIR
-#undef HAVE_SIGNAL
 
 #undef USE_STATVFS
 #undef USE_STATFS
 /* these two pertain to linux/bsd -- vfs for the former? */
 
-#undef HAVE_GETTIMEOFDAY
-#undef HAVE_VSNPRINTF
-#undef HAVE_VASPRINTF
-#undef HAVE_MEMMOVE
-#undef HAVE_LSTAT
-#undef HAVE_STRCASECMP
-#undef HAVE_PATHCONF
 #undef HAVE_DLOPEN
 
-#undef HAVE_COMPLEX_TRIG
-#undef WITH_COMPLEX
-
 #undef HAVE_SPECIAL_FUNCTIONS
+/* libc version? */
+
 #undef WORDS_BIGENDIAN
 
-#undef SIZEOF_VOID_P
+#ifdef __SIZEOF__POINTER__
+  #define SIZEOF_VOID_P __SIZEOF_POINTER__
+#else
+  #undef SIZEOF_VOID_P
+#endif
+
 
 #undef HAVE_READLINE
 /* this is only used in ruby xen_rb_repl xen.c -- make -D as --with-ruby? */
 
-#undef HAVE_NESTED_FUNCTIONS
-
-#undef HAVE_UNISTD_H
-/* everywhere except windows but not included in gnulib's list? */
-
+#undef HAVE_SYS_TIME_H
 #undef HAVE_STDBOOL_H
-/* everywhere but windows, and fallback code does not work in that case */
+#undef HAVE_SYS_PARAM_H
+/* is s7, just include this if not windows -- similarly for stdbool if not c++ */
+#undef HAVE_SETJMP_H
+#undef HAVE_DIRENT_H
+/* everyone but windows? */
+
 
 #undef HAVE_DLFCN_H
 #undef HAVE_SYS_SOUNDCARD_H
@@ -51,40 +91,22 @@
 #undef HAVE_SYS_MIXER_H
 /* solaris case -- do we care anymore? */
 
-#undef HAVE_SETJMP_H
-
-#undef HAVE_SYS_PARAM_H
-/* everyone but windows? */
-
 #undef HAVE_ALSA_ASOUNDLIB_H
 /* alsa.pc? */
 
 #undef HAVE_BYTESWAP_H
 /* not osx or windows */
 
-#undef HAVE_SYS_TIME_H
-/* everyone but windows? */
-
-#undef HAVE_DIRENT_H
-/* windows uses direct.h, everyone else dirent.h [io.c, xen.c] */
-
-#undef SND_HOST
-/* this can be getenv in linux: HOSTTYPE  or OSTYPE+MACHTYPE */
-
 #undef HAVE_OSS
 #undef HAVE_ALSA
-#undef HAVE_JACK_IN_LINUX
 #undef MUS_JACK
 
 #undef HAVE_AUDIODEVICEDESTROYIOPROCID
-/* this was old OSX -- can we use OS version? */
+/* this was old OSX -- can we use OS version? where is it? */
 
-#undef MUS_PULSEAUDIO
-#undef MUS_PORTAUDIO
 #undef WITH_AUDIO
 
 #undef HAVE_FFTW3
-#undef WITH_GMP
 
 #undef HAVE_GSL
 /* gls.pc */
@@ -92,64 +114,72 @@
 #undef HAVE_SCHEME
 #undef HAVE_RUBY
 #undef HAVE_FORTH
-#define HAVE_EXTENSION_LANGUAGE (HAVE_SCHEME || HAVE_RUBY || HAVE_FORTH)
 /* these can be arg choices via -D */
 
+#define HAVE_EXTENSION_LANGUAGE (HAVE_SCHEME || HAVE_RUBY || HAVE_FORTH)
+
 #undef HAVE_GL
-/* gl.pc */
+/* gl.pc -- explicit arg
+ */
 
 #undef JUST_GL
 /* maybe put the gl scm stuff under the autoloader so we don't need this switch
+ *   try this everywhere and see if it is even needed anymore
  */
 
 #undef HAVE_GLU
-/* glu.pc */
-
-#undef WITH_GL2PS
-/* obsolete? no -- 1.3.8, but this is on an explicit switch 
+/* glu.pc -- why this? (gl.c and snd-chn.c) -- it's for graph cursor handling I think
  */
 
-#undef MUS_DEFAULT_TEMP_DIR
-#undef MUS_DEFAULT_SAVE_DIR
-#undef MUS_DEFAULT_DOC_DIR
-/* these are explicit args */
-
-#undef MUS_TRAP_SEGFAULT
-/* not needed anymore? default is true in snd-0.h but I always run with it false
- */
-
-#undef SND_AS_WIDGET
-#undef HAVE_LADSPA
 
 #undef USE_GTK
 /* gtk-2.0.pc etc */
 
 #undef USE_MOTIF
 #undef USE_NO_GUI
+/* --without-gui or get it from the others
+ */
 
 #undef HAVE_X
-#undef MUS_WITH_EDITRES
-#undef HAVE_XSHAPEQUERYEXTENSION
+/* surely !_MSC_VER! -- no there's the OSX case */
 
 #undef RUBY_SEARCH_PATH
-/* why this? */
+/* why this?
+ *   used in snd-xen.c to set up .rb search paths I think, could be handled at runtime as
+ *   ruby -e 'puts $:.join(":")'
+ * but is there a ruby function for this? rb_gv_get("$:")
+
+      fprintf(stderr, "search: %s\n", RUBY_SEARCH_PATH);
+      {
+	XEN s;
+	s = rb_gv_get("$:");
+	fprintf(stderr, "got: %s\n", XEN_AS_STRING(s));
+      }
+
+search: /usr/local/lib/ruby/site_ruby/2.0.0:/usr/local/lib/ruby/site_ruby/2.0.0/x86_64-linux:/usr/local/lib/ruby/site_ruby:/usr/local/lib/ruby/vendor_ruby/2.0.0:/usr/local/lib/ruby/vendor_ruby/2.0.0/x86_64-linux:/usr/local/lib/ruby/vendor_ruby:/usr/local/lib/ruby/2.0.0:/usr/local/lib/ruby/2.0.0/x86_64-linux
+got: ["/home/bil/ruby-snd", "/usr/local/share/snd", "/usr/local/lib/ruby/site_ruby/2.0.0", "/usr/local/lib/ruby/site_ruby/2.0.0/x86_64-linux", "/usr/local/lib/ruby/site_ruby", "/usr/local/lib/ruby/vendor_ruby/2.0.0", "/usr/local/lib/ruby/vendor_ruby/2.0.0/x86_64-linux", "/usr/local/lib/ruby/vendor_ruby", "/usr/local/lib/ruby/2.0.0", "/usr/local/lib/ruby/2.0.0/x86_64-linux"]
+
+see xen_rb_add_to_load_path in xen.c
+ */
 
 #undef WITH_RELATIVE_PANES
-/* based on XmSashP.h  */
+/* based on XmSashP.h -- Xm version? */
 
+
+#undef HAVE_COMPLEX_TRIG
+#undef WITH_COMPLEX
 #undef HAVE_MAKE_RATIO
 #undef HAVE_MAKE_RECTANGULAR
+ /* these are language dependent I think -- just make them explicit 
+  *   but both are undef'd in windows
+  * make_rec: maybe s7 (complex.h??) || maybe forth (complex in fth)
+  * make_rat: s7 || maybe-forth (FTH_MAKE_RATIO (fth_ratio_floor)
+  */
 
 #undef WITH_SYSTEM_EXTRAS
-/* this is an s7 switch, used also in xen.c, but it should be an autoloaded library in s7, like getenv, so this switch is almost obsolete */
-
-#undef XM_DISABLE_DEPRECATED
-#undef CLM_DISABLE_DEPRECATED
-#undef SNDLIB_DISABLE_DEPRECATED
-#undef XEN_DISABLE_DEPRECATED
-#undef S7_DISABLE_DEPRECATED
-#undef SND_DISABLE_DEPRECATED
-/* these are all on an explicit switch */
+/* this is an s7 switch, used also in xen.c, but it should be an autoloaded library in s7, like getenv, so this switch is almost obsolete 
+   why is it here at all?
+ */
 
 #undef HAVE_OGG
 #undef PATH_OGGDEC
@@ -167,16 +197,8 @@
 #undef PATH_TIMIDITY
 #undef HAVE_MPG321
 #undef PATH_MPG321
-
-#undef HAVE_SHORTEN
-#undef PATH_SHORTEN
-/* obsolete? -- is this still in snd-trans? yes -- abandoned in mar-2007, defunct used only by Grateful Dead fans!
- */
-
 #undef HAVE_TTA
 #undef PATH_TTA
-/* what is this? */
-
 #undef HAVE_WAVPACK
 #undef PATH_WAVPACK
 #undef PATH_WVUNPACK

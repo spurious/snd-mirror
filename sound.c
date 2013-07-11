@@ -56,12 +56,7 @@ int mus_error(int error, const char *format, ...)
   /* can't use vasprintf here or below because the error handler may jump anywhere,
    *   leaving unfreed memory behind.
    */
-
-#if HAVE_VSNPRINTF
   bytes_needed = vsnprintf(mus_error_buffer, mus_error_buffer_size, format, ap);
-#else
-  bytes_needed = vsprintf(mus_error_buffer, format, ap);
-#endif
   va_end(ap);
 
   if (bytes_needed >= mus_error_buffer_size)
@@ -69,12 +64,9 @@ int mus_error(int error, const char *format, ...)
       mus_error_buffer_size = bytes_needed * 2;
       free(mus_error_buffer);
       mus_error_buffer = (char *)calloc(mus_error_buffer_size, sizeof(char));
+
       va_start(ap, format);
-#if HAVE_VSNPRINTF
       vsnprintf(mus_error_buffer, mus_error_buffer_size, format, ap);
-#else
-      vsprintf(mus_error_buffer, format, ap);
-#endif
       va_end(ap);
     }
 
@@ -113,23 +105,17 @@ void mus_print(const char *format, ...)
 	mus_error_buffer = (char *)calloc(mus_error_buffer_size, sizeof(char));
 
       va_start(ap, format);
-#if HAVE_VSNPRINTF
       bytes_needed = vsnprintf(mus_error_buffer, mus_error_buffer_size, format, ap);
-#else
-      bytes_needed = vsprintf(mus_error_buffer, format, ap);
-#endif
       va_end(ap);
+
       if (bytes_needed >= mus_error_buffer_size)
 	{
 	  mus_error_buffer_size = bytes_needed * 2;
 	  free(mus_error_buffer);
 	  mus_error_buffer = (char *)calloc(mus_error_buffer_size, sizeof(char));
+
 	  va_start(ap, format);
-#if HAVE_VSNPRINTF
 	  vsnprintf(mus_error_buffer, mus_error_buffer_size, format, ap);
-#else
-	  vsprintf(mus_error_buffer, format, ap);
-#endif
 	  va_end(ap);
 	}
 
@@ -488,13 +474,7 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 
   date = sf->write_date;
   if (date != 0)
-    {
-#if HAVE_STRFTIME
-      strftime(timestr, TIME_BUFFER_SIZE, "%a %d-%b-%Y %H:%M:%S", localtime(&date));
-#else
-      snprintf(timestr, TIME_BUFFER_SIZE, "%d", (int)date);
-#endif
-    }
+    strftime(timestr, TIME_BUFFER_SIZE, "%a %d-%b-%Y %H:%M:%S", localtime(&date));
   else snprintf(timestr, TIME_BUFFER_SIZE, "(date cleared)");
 
   fprintf(fp, "  %s: %s, chans: %d, srate: %d, type: %s, format: %s, samps: %lld",

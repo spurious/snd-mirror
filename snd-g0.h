@@ -1,6 +1,9 @@
 #ifndef SND_G0_H
 #define SND_G0_H
 
+/* TODO: look into all the GTK_STOCK_* stuff -- all deprecated now!
+ */
+
 #include <gtk/gtk.h>
 
 #define HAVE_GTK_3 (GTK_MAJOR_VERSION == 3)

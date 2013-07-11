@@ -6704,7 +6704,6 @@ static XEN g_env_interp(XEN x, XEN env1) /* "env" causes trouble in Objective-C!
 }
 
 
-#if (!HAVE_NESTED_FUNCTIONS) || __cplusplus
 
 /* mus_env_any calls the C function itself, so we pass it connect_func,
  *   connect_func uses the function passed as an argument to g_env_any.
@@ -6738,33 +6737,6 @@ static XEN g_env_any(XEN e, XEN func)
   return(val);
 }
 
-#else
-
-static XEN g_env_any(XEN e, XEN func)
-{
-  #define H_env_any "(" S_env_any " e func) uses 'func' to connect the dots in the env 'e'"
-
-  auto mus_float_t connect_func(mus_float_t val); 
-  /* this is apparently how you declare these nested functions!
-   *   without that line, the compiler sez: clm2xen.c:5252: warning: no previous prototype for 'connect_func'
-   *   if you try to use "static":          clm2xen.c:5251: error: invalid storage class for function 'connect_func'
-   *   if nothing:                          clm2xen.c:5257: error: static declaration of 'connect_func' follows non-static declaration
-   * but isn't "auto" simply the default?
-   */
-  mus_float_t connect_func(mus_float_t val)
-  {
-    return(XEN_TO_C_DOUBLE(XEN_CALL_1(func,
-				      C_TO_XEN_DOUBLE(val),
-				      S_env_any " connect function")));
-  }
-
-  XEN_ASSERT_TYPE((MUS_XEN_P(e)) && (mus_env_p(XEN_TO_MUS_ANY(e))), e, XEN_ARG_1, S_env_any, "an env generator");
-  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(func)) && (XEN_REQUIRED_ARGS_OK(func, 1)), func, XEN_ARG_2, S_env_any, "a function of one arg");
-  
-  return(C_TO_XEN_DOUBLE(mus_env_any(XEN_TO_MUS_ANY(e), connect_func)));
-}
-
-#endif
 
 
 #define S_envelope_interp "envelope-interp"
@@ -9410,7 +9382,7 @@ static XEN g_mus_irandom(XEN val) {return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(
 
 
 #if HAVE_SCHEME
-#if HAVE_GETTIMEOFDAY && HAVE_SYS_TIME_H && (!_MSC_VER)
+#if HAVE_SYS_TIME_H && (!_MSC_VER)
 
 #include <time.h>
 #include <sys/time.h>
@@ -18940,10 +18912,7 @@ XEN_NARGIFY_3(g_out_bank_w, g_out_bank)
 static void mus_xen_init(void)
 {
   mus_initialize();
-
-#if (!HAVE_NESTED_FUNCTIONS) || __cplusplus
   current_connect_func = XEN_FALSE;
-#endif
 
 #if HAVE_SCHEME
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<generator>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, 
@@ -19477,7 +19446,7 @@ static void mus_xen_init(void)
   }
 #endif
 
-#if HAVE_SCHEME && HAVE_GETTIMEOFDAY && HAVE_SYS_TIME_H && (!_MSC_VER)
+#if HAVE_SCHEME && HAVE_SYS_TIME_H && (!_MSC_VER)
   XEN_DEFINE_SAFE_PROCEDURE(S_get_internal_real_time, g_get_internal_real_time_w, 0, 0, 0, H_get_internal_real_time);
   XEN_DEFINE_CONSTANT(S_internal_time_units_per_second, 1, "units used by " S_get_internal_real_time);
 #endif
@@ -19571,7 +19540,7 @@ XEN_EVAL_C_STRING("<'> fth-print alias clm-print ( fmt args -- )");
     free(clm_version);
   }
 
-#if HAVE_SCHEME && HAVE_GETTIMEOFDAY && HAVE_SYS_TIME_H && (!_MSC_VER)
+#if HAVE_SCHEME && HAVE_SYS_TIME_H && (!_MSC_VER)
   {
     struct timezone z0;
     gettimeofday(&overall_start_time, &z0);

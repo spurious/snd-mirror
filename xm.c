@@ -6,6 +6,10 @@
 #include <mus-config.h>
 #include <stdlib.h>
 
+#define HAVE_XSHAPEQUERYEXTENSION 1
+/* this dates from X11 R6.4 -- set to 0 if you're running a 20 year old version of X
+ */
+
 #define XM_DATE "7-Jul-13"
 
 /* HISTORY: 

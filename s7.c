@@ -110,10 +110,6 @@
  *
  * s7.h includes stdbool.h if HAVE_STDBOOL_H is 1 and we're not in C++.
  * 
- * The *gc-stats* output includes timing info if HAVE_GETTIMEOFDAY.  In this
- *   case we also assume we can include <time.h> and <sys/time.h>.
- *
- *
  * Complex number support (which is problematic in C++, Solaris, and netBSD)
  *   is on the WITH_COMPLEX switch. On a Mac, or in Linux, if you're not using C++,
  *   you can use:
@@ -155,7 +151,7 @@
  *
  * so the incoming (non-s7-specific) compile-time switches are
  *     WITH_COMPLEX, WITH_COMPLEX_TRIG, HAVE_STDBOOL_H, HAVE_SYS_PARAM_H, SIZEOF_VOID_P, 
- *     HAVE_GETTIMEOFDAY, HAVE_LSTAT, HAVE_DIRENT_H
+ *     HAVE_LSTAT, HAVE_DIRENT_H
  *
  * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__, __clang__, __bfin__, __ANDROID__,
  *     __OpenBSD__, (and __FreeBSD_version if HAVE_SYS_PARAM_H)
@@ -3700,7 +3696,7 @@ void s7_mark_object(s7_pointer p)
 #define GC_TRIGGER_SIZE 64
 
 
-#if HAVE_GETTIMEOFDAY && (!MS_WINDOWS)
+#ifndef _MSC_VER
   #include <time.h>
   #include <sys/time.h>
   static struct timeval start_time;
@@ -3716,7 +3712,7 @@ static int gc(s7_scheme *sc)
   if (sc->gc_stats)
     {
       fprintf(stdout, "gc ");
-#if HAVE_GETTIMEOFDAY && (!MS_WINDOWS)
+#ifndef _MSC_VER
       gettimeofday(&start_time, &z0);
 #endif
     }
@@ -3891,7 +3887,7 @@ static int gc(s7_scheme *sc)
 
   if (sc->gc_stats)
     {
-#if HAVE_GETTIMEOFDAY && (!MS_WINDOWS)
+#ifndef _MSC_VER
       struct timeval t0;
       double secs;
       gettimeofday(&t0, &z0);
@@ -36550,7 +36546,7 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
       sc->strbuf[0] = ':';
       return(TOKEN_ATOM);
 
-#if (!S7_DISABLE_DEPRECATED)
+#if (!DISABLE_DEPRECATED)
       /* block comments in #! ... !# */
     case '!':
       {

@@ -29,7 +29,7 @@
   #define STRFTIME_FORMAT "%a %d-%b-%Y %H:%M %Z"
 #endif
 
-#if HAVE_STRCASECMP
+#ifndef _MSC_VER
   #define STRCMP(a, b) strcasecmp(a, b)
   #define STRNCMP(a, b, c) strncasecmp(a, b, c)
 #else
@@ -494,10 +494,6 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define fft_window(ss) ss->Fft_Window
 #define in_set_fft_window_1(a) ss->Fft_Window = a
 #define DEFAULT_FFT_WINDOW MUS_BLACKMAN2_WINDOW
-
-#define trap_segfault(ss) ss->Trap_Segfault
-#define set_trap_segfault(a) ss->Trap_Segfault = a
-#define DEFAULT_TRAP_SEGFAULT true
 
 #define log_freq_start(ss) ss->Log_Freq_Start
 #define in_set_log_freq_start(a) ss->Log_Freq_Start = a

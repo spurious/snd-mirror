@@ -3,22 +3,12 @@
 
 #include <mus-config.h>
 
-#if HAVE_UNISTD_H && (!(defined(_MSC_VER)))
+#ifndef _MSC_VER
   #include <unistd.h>
 #endif
 
 #include <sys/types.h>
 #include <stdio.h>
-
-#if (SIZEOF_VOID_P == 4)
-  #if __APPLE__
-    #define SSIZE_TD "%ld"
-  #else
-    #define SSIZE_TD "%d"
-  #endif
-#else
-  #define SSIZE_TD "%lld"
-#endif
 
 #if (_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))
   #define __func__ __FUNCTION__
@@ -92,10 +82,6 @@
 #define MUS_ALSA_API 0
 #define MUS_OSS_API 1
 #define MUS_JACK_API 2
-
-#if (!HAVE_STRERROR)
-  MUS_EXPORT char *strerror(int errnum);
-#endif
 
 #include "sndlib.h"
 #include "xen.h"

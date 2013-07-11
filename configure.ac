@@ -20,9 +20,6 @@ GRAPHICS_TOOLKIT="None"
 
 PACKAGE=Snd
 VERSION=13.9
-AC_DEFINE_UNQUOTED(SND_PACKAGE, "$PACKAGE")
-AC_DEFINE_UNQUOTED(SND_VERSION, "$VERSION")
-AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 
 #--------------------------------------------------------------------------------
 # configuration options
@@ -36,7 +33,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, s7, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
-#   --with-no-gui         make Snd without any graphics support
+#   --with-gui            make Snd with(out) any graphics support
 #   --with-motif-prefix   set location of Motif
 #   --with-forth          use Forth as the extension language
 #   --with-ruby           use Ruby as the extension language
@@ -62,7 +59,7 @@ AC_ARG_WITH(alsa,        [  --with-alsa		  use ALSA])
 AC_ARG_WITH(oss,         [  --with-oss		  use OSS])
 AC_ARG_WITH(jack,        [  --with-jack		  use JACK])
 AC_ARG_WITH(gtk,         [  --with-gtk		  use Gtk+ to build Snd])
-AC_ARG_WITH(no-gui,      [  --with-no-gui  	  make Snd without any graphics support])
+AC_ARG_WITH(gui,         [  --with-gui  	  make Snd with graphics support])
 AC_ARG_WITH(gl,          [  --with-gl		  include OpenGL support, Motif only])
 AC_ARG_WITH(just-gl,     [  --with-just-gl	  include OpenGL support, but omit the extension language bindings, Motif only])
 AC_ARG_WITH(gl2ps,       [  --with-gl2ps		  include gl2ps, Motif only])
@@ -128,7 +125,7 @@ LIBS=""
 AC_CHECK_LIB(m,main)
 AC_CHECK_LIB(c,main)
 
-AC_CHECK_HEADERS(unistd.h sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h)
+AC_CHECK_HEADERS(sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h)
 AC_CHECK_HEADERS(sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h dirent.h)
 
 AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
@@ -145,8 +142,7 @@ AC_SEARCH_LIBS([dlopen], [c, dl], [AC_DEFINE([HAVE_DLOPEN], [1])])
 AC_OLD_BIGENDIAN
 AC_CHECK_SIZEOF(void *)
 
-AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline gettimeofday)
-AC_CHECK_FUNCS(vsnprintf vasprintf strftime memmove lstat strcasecmp pathconf)
+AC_CHECK_FUNCS(readlink setlocale access opendir sleep signal statvfs statfs getline vasprintf lstat)
 
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 
@@ -157,26 +153,6 @@ AC_CHECK_LIB(m, jn,
     [AC_CHECK_LIB(m, lgamma,
       [AC_CHECK_LIB(m, erf, 
         [AC_DEFINE(HAVE_SPECIAL_FUNCTIONS)])])])])
-
-
-# look for nested function support
-AC_MSG_CHECKING(whether nested functions work)
-AC_LINK_IFELSE(
-  [AC_LANG_PROGRAM(,
-    [ double bar;
-      double foo(double a, double b)
-       {
-        auto double square (double z);
-        double square (double z) {return(z * z);}
-        return(square(a) + square(b));
-       }
-     bar = foo(1.0, 2.0)
-    ])],
-  [AC_DEFINE(HAVE_NESTED_FUNCTIONS)
-   AC_MSG_RESULT(yes)
-  ],
-  [AC_MSG_RESULT(no)])
-
 
 
 
@@ -393,7 +369,7 @@ ac_snd_have_gui=no
 AC_PATH_XTRA
 
 if test "$with_motif" = no && test "$with_gtk" = no ; then
-  with_no_gui=yes
+  with_gui=no
 fi
 
 if test "$with_motif" = yes && test "$with_gtk" = yes ; then
@@ -401,7 +377,7 @@ if test "$with_motif" = yes && test "$with_gtk" = yes ; then
   AC_MSG_WARN([You asked for both Motif and Gtk -- Motif will be used])
 fi
 
-if test "$with_no_gui" = yes ; then
+if test "$with_gui" = no ; then
 
   AC_DEFINE(USE_NO_GUI)
   XLIBS=""
@@ -419,7 +395,7 @@ else
 
     AC_DEFINE(HAVE_X)
     XFLAGS="$X_CFLAGS"
-    X_POST_LIBS="-lX11 $X_EXTRA_LIBS"
+    X_POST_LIBS="-lX11 $X_EXTRA_LIBS -lXext"
 
     case "$host" in
       *-apple-*)
@@ -431,14 +407,6 @@ else
     TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
     TEST_POST_LIBS="$X_POST_LIBS"
     TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
-
-    AC_CHECK_LIB(Xext, XShapeQueryExtension, 
-      [
-       X_POST_LIBS="$X_POST_LIBS -lXext"
-       TEST_POST_LIBS="$TEST_POST_LIBS -lXext"
-       TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
-       AC_DEFINE(HAVE_XSHAPEQUERYEXTENSION)
-      ], , $TEST_LIBS)
 
     # search for libXp and libXm may need libXft so...
     AC_CHECK_LIB(Xft, XftFontOpen, [
@@ -868,22 +836,6 @@ AC_ARG_WITH(ruby,
                           fi
                           AC_SUBST(XEN_LIBS)
                           AC_SUBST(XEN_CFLAGS)
-                          OLD_LIBS="$LIBS"
-                          LIBS="$XEN_LIBS $LIBS -lm"
-                          OLD_CFLAGS="$CFLAGS"
-                          CFLAGS="$XEN_CFLAGS $CFLAGS"
-
-                          AC_MSG_CHECKING([for ruby_vsnprintf]) 
-                          AC_RUN_IFELSE( 
-                            [AC_LANG_PROGRAM([@%:@include <ruby.h>], 
-                                             [ruby_init(); ruby_vsnprintf(0, 0, 0, 0); return(0)])], 
-                            [AC_DEFINE(HAVE_VSNPRINTF, 0) 
-                             AC_MSG_RESULT(yes) 
-                            ], 
-                            AC_MSG_RESULT(no) 
-                            ) 
-                          LIBS="$OLD_LIBS"
-                          CFLAGS="$OLD_CFLAGS"
                           LOCAL_LANGUAGE="Ruby"
                           ac_snd_have_extension_language=yes])
         fi)
@@ -1092,7 +1044,6 @@ case "$host" in
 	    	    AUDIO_LIB="-lasound"
 		    if test "$with_jack" = yes ; then 
 		      AUDIO_LIB="-lasound -lsamplerate"
-		      AC_DEFINE(HAVE_JACK_IN_LINUX)
 		    fi
  		else
          	    AUDIO_SYSTEM=OSS
@@ -1100,7 +1051,6 @@ case "$host" in
  		fi
  		;;
 	    JACK)
-		AC_DEFINE(HAVE_JACK_IN_LINUX)
 		AC_DEFINE(HAVE_OSS)
 		JACK_LIBS="$JACK_LIBS -lpthread"
 # added -lpthread 21-May-10 for FC13 (Bill S)
@@ -1217,7 +1167,7 @@ AC_SUBST(SO_LD)
 
 
 #--------------------------------------------------------------------------------
-# OGG, Flac, Speex, Mpeg, Timidity, Shorten, TTA, Wavpack
+# OGG, Flac, Speex, Mpeg, Timidity, TTA, Wavpack
 # --------------------------------------------------------------------------------
 
 AC_PATH_PROG(PATH_OGGDEC, oggdec, no) # OGG read
@@ -1274,14 +1224,6 @@ AC_PATH_PROG(PATH_TIMIDITY, timidity, no) # Timidity for .mid -> .wav
 if test "$PATH_TIMIDITY" != "no" ; then
   AC_DEFINE(HAVE_TIMIDITY)
   AC_DEFINE_UNQUOTED(PATH_TIMIDITY, "${PATH_TIMIDITY}")
-fi
-
-
-AC_PATH_PROG(PATH_SHORTEN, shorten, no)
-
-if test "$PATH_SHORTEN" != "no" ; then
-  AC_DEFINE(HAVE_SHORTEN)
-  AC_DEFINE_UNQUOTED(PATH_SHORTEN, "${PATH_SHORTEN}")
 fi
 
 
@@ -1362,25 +1304,6 @@ fi
 
 
 #--------------------------------------------------------------------------------
-# sigsetjmp special case
-#--------------------------------------------------------------------------------
-
-# look for sigsetjmp for segfault trap
-if test "$enable_snd_debug" != yes ; then
-  trap_segfault=no
-  AC_MSG_CHECKING([for sigsetjmp])
-  AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <setjmp.h>],
-                                  [sigjmp_buf hi; sigsetjmp(hi,1)])],
-                 trap_segfault=yes)
-  if test $trap_segfault = yes; then
-    AC_DEFINE(MUS_TRAP_SEGFAULT,1)
-  fi
-  AC_MSG_RESULT($trap_segfault)
-fi
-
-
-
-#--------------------------------------------------------------------------------
 # debugging stuff
 #--------------------------------------------------------------------------------
 
@@ -1388,12 +1311,7 @@ AC_ARG_ENABLE(deprecated,
   [  --disable-deprecated	  do not include any deprecated stuff from gtk, s7, motif, clm, snd, or sndlib],
   if test "$enable_deprecated" = no ; then
     CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED -DGSEAL_ENABLE -DGTK_DISABLE_SINGLE_INCLUDES -Wall $CFLAGS"
-    AC_DEFINE(XM_DISABLE_DEPRECATED)
-    AC_DEFINE(CLM_DISABLE_DEPRECATED)
-    AC_DEFINE(SNDLIB_DISABLE_DEPRECATED)
-    AC_DEFINE(XEN_DISABLE_DEPRECATED)
-    AC_DEFINE(S7_DISABLE_DEPRECATED)
-    AC_DEFINE(SND_DISABLE_DEPRECATED)
+    AC_DEFINE(DISABLE_DEPRECATED)
   fi)
 
 if test "$enable_snd_debug" = yes ; then
@@ -1429,15 +1347,19 @@ fi
 
 ORIGINAL_LDFLAGS="$LDFLAGS"
 
-if test "$with_snd_as_widget" != yes ; then
-  if test "$ac_cv_header_dlfcn_h" = yes ; then
-    if test "$CC" = "gcc" || test "$CC" = "g++" ; then
-      LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
-      # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
-      #   that ends up generating endless dumb warnings in gcc
+case "$host" in
+  *-*-linux* | *-*-bsdi* | *-*-freebsd* | *-*-openbsd* | *-*-netbsd*) 
+    if test "$with_snd_as_widget" != yes ; then
+      if test "$ac_cv_header_dlfcn_h" = yes ; then
+        if test "$CC" = "gcc" || test "$CC" = "g++" ; then
+          LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
+          # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
+          #   that ends up generating endless dumb warnings in gcc
+        fi
+      fi
     fi
-  fi
-fi
+esac
+
 
 
 #--------------------------------------------------------------------------------
