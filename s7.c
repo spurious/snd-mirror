@@ -142,7 +142,7 @@
  * if WITH_SYSTEM_EXTRAS is 1 (default is 0), various OS and file related functions are included.
  *
  * so the incoming (non-s7-specific) compile-time switches are
- *     HAVE_COMPLEX_NUMBERS_TRIG, SIZEOF_VOID_P, HAVE_LSTAT
+ *     HAVE_COMPLEX_NUMBERS_TRIG, SIZEOF_VOID_P
  *
  * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__, __clang__, __bfin__, __ANDROID__,
  *     __OpenBSD__
@@ -317,16 +317,14 @@
 #ifndef _MSC_VER
   #include <unistd.h>
   #include <sys/param.h> 
+  #include <strings.h>
+  #include <errno.h>
 #else
   #include <io.h>
   #pragma warning(disable: 4244)
 #endif
 #include <limits.h>
 #include <ctype.h>
-#ifndef _MSC_VER
-  #include <strings.h>
-  #include <errno.h>
-#endif
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -21330,13 +21328,8 @@ static bool is_directory(const char *filename)
 #if (!MS_WINDOWS)
   #ifdef S_ISDIR
     struct stat statbuf;
-    #if HAVE_LSTAT
-      return((lstat(filename, &statbuf) >= 0) &&
-	     (S_ISDIR(statbuf.st_mode)));
-    #else
-      return((stat(filename, &statbuf) == 0) && 
-	     (S_ISDIR(statbuf.st_mode)));
-    #endif
+    return((lstat(filename, &statbuf) >= 0) &&
+	   (S_ISDIR(statbuf.st_mode)));
   #endif
 #endif
   return(false);

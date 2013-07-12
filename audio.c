@@ -121,16 +121,7 @@ static bool audio_initialized = false;
 #define AUDIO_OK 1
 
 #include <sys/ioctl.h>
-
-#if HAVE_SYS_SOUNDCARD_H
-  #include <sys/soundcard.h>
-#else
-  #if HAVE_MACHINE_SOUNDCARD_H
-    #include <machine/soundcard.h>
-  #else
-    #include <soundcard.h>
-  #endif
-#endif
+#include <sys/soundcard.h>
 
 #if ((SOUND_VERSION > 360) && (defined(OSS_SYSINFO)))
   #define NEW_OSS 1
@@ -978,7 +969,7 @@ static int probe_api(void)
 
 #include <sys/ioctl.h>
 
-#if HAVE_ALSA_ASOUNDLIB_H
+#if HAVE_ALSA
   #include <alsa/asoundlib.h>
 #else
   #include <sys/asoundlib.h>
@@ -2266,8 +2257,9 @@ static int alsa_formats(int ur_dev, int chan, int *val)
 #else
 #include <sys/audioio.h>
 #endif
-#if HAVE_SYS_MIXER_H
-#include <sys/mixer.h>
+
+#if (!__OpenBSD__)
+  #include <sys/mixer.h>
 #endif
 
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
@@ -2314,13 +2306,13 @@ char *mus_audio_moniker(void)
       return("sun?");
     }
   mus_audio_close(audio_fd);
-#if HAVE_SYS_MIXER_H
+#if (!__OpenBSD__)
   if (version_name == NULL) version_name = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 #else
   if (version_name == NULL) version_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
 #endif
 #ifndef AUDIO_DEV_AMD
-  #if HAVE_SYS_MIXER_H
+#if (!__OpenBSD__)
     snprintf(version_name, PRINT_BUFFER_SIZE, 
 		 "audio: %s (%s), %s %s %s", 
 		 ad.name, ad.version,
@@ -3139,6 +3131,9 @@ int mus_audio_read(int line, char *buf, int bytes)
 
 #ifdef __APPLE__
 #define AUDIO_OK 1
+
+#include <AvailabilityMacros.h>
+#define HAVE_AUDIODEVICEDESTROYIOPROCID (defined(MAC_OS_X_VERSION_10_5))
 
 /*
 #include <CoreServices/CoreServices.h>

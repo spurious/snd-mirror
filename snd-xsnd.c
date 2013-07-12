@@ -1351,7 +1351,7 @@ static void add_sash_watchers(Widget w)
 
 static bool cant_write(char *name)
 {
-#if HAVE_ACCESS
+#ifndef _MSC_VER
   return((access(name, W_OK)) != 0);
 #else
   return(false);

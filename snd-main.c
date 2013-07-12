@@ -389,7 +389,7 @@ static void save_options(FILE *fd)
 {
   char *locale = NULL;
 
-#if HAVE_SETLOCALE && HAVE_SCHEME
+#if (!_MSC_VER) && HAVE_SCHEME
   locale = mus_strdup(setlocale(LC_NUMERIC, "C")); 
   /* must use decimal point in floats */
 #endif
@@ -625,7 +625,7 @@ static void save_options(FILE *fd)
   fprintf(fd, "%s end of snd options\n", XEN_COMMENT_STRING);
   if (locale)
     {
-#if HAVE_SETLOCALE
+#ifndef _MSC_VER
       setlocale(LC_NUMERIC, locale);
 #endif
       free(locale);
@@ -1202,7 +1202,7 @@ void save_state(const char *save_state_name)
       return;
     }
 
-#if HAVE_SETLOCALE
+#ifndef _MSC_VER
   locale = mus_strdup(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
   save_options(save_fd);                            /* options = user-settable global state variables */
@@ -1305,7 +1305,7 @@ void save_state(const char *save_state_name)
   
   if (locale)
     {
-#if HAVE_SETLOCALE
+#ifndef _MSC_VER
       setlocale(LC_NUMERIC, locale);
 #endif
       free(locale);

@@ -5,41 +5,17 @@
 
 /* -------------------------------- basic file attributes -------------------------------- */
 
-#if USE_STATVFS
-  #include <sys/statvfs.h>
-#endif
+#ifdef _MSC_VER
+  mus_long_t disk_kspace(const char *filename) {return(1234567);}
+#else
 
-#ifndef _MSC_VER
+  #include <sys/statvfs.h>
   #include <sys/param.h>
   #include <dirent.h>
-#endif
 
 #if __bsdi__ || __NetBSD__
   #include <sys/mount.h>
 #endif
-
-
-#if (!USE_STATVFS)
-
-#if USE_STATFS
-mus_long_t disk_kspace(const char *filename)
-{
-  struct statfs buf;
-  int err;
-  err = statfs(filename, &buf);
-  if (err == 0)
-    {
-      if (buf.f_bsize == 1024) 
-	return(buf.f_bavail);
-      return((mus_long_t)(buf.f_bsize * ((double)(buf.f_bavail) / 1024.0)));
-    }
-  return(err);
-}
-#else
-mus_long_t disk_kspace(const char *filename) {return(1234567);}
-#endif
-
-#else
 
 mus_long_t disk_kspace(const char *filename)
 {
@@ -67,7 +43,7 @@ bool link_p(const char *filename)
   return(false);
 #else 
   struct stat statbuf;
-#if HAVE_LSTAT
+#ifndef _MSC_VER
   return((lstat(filename, &statbuf) >= 0) &&
 	 (S_ISLNK(statbuf.st_mode)));
 #else
@@ -81,7 +57,7 @@ bool link_p(const char *filename)
 bool directory_p(const char *filename)
 {
   struct stat statbuf;
-#if HAVE_LSTAT
+#ifndef _MSC_VER
   return((lstat(filename, &statbuf) >= 0) &&
 	 (S_ISDIR(statbuf.st_mode)));
 #else
@@ -385,7 +361,7 @@ static bool not_directory_p(const char *name)
 
 dir_info *find_files_in_dir(const char *name)
 {
-#if (!HAVE_OPENDIR)
+#ifdef _MSC_VER
   return(NULL);
 #else
   DIR *dpos;
@@ -415,7 +391,7 @@ static bool filter_xen(const char *name)
 dir_info *find_filtered_files_in_dir(const char *name, int filter_choice)
 {
   bool (*filter)(const char *filename);
-#if (!HAVE_OPENDIR)
+#ifdef _MSC_VER
   return(NULL);
 #else
   DIR *dpos;
@@ -1115,7 +1091,7 @@ static void remember_sound_file(snd_info *sp)
       snd_error("remember sound state can't write %s: %s", newname, snd_io_strerror());
       return;
     }
-#if HAVE_SETLOCALE
+#ifndef _MSC_VER
   locale = mus_strdup(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
 
@@ -1125,7 +1101,7 @@ static void remember_sound_file(snd_info *sp)
 
   if (locale)
     {
-#if HAVE_SETLOCALE
+#ifndef _MSC_VER
       setlocale(LC_NUMERIC, locale);
 #endif
       free(locale);
@@ -2599,7 +2575,7 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
       snd_error("%s is write-protected", sp->filename);
       return(false);
     }
-#if HAVE_ACCESS
+#ifndef _MSC_VER
   if (!(ss->file_monitor_ok))
     if (access(sp->filename, W_OK) < 0)
       {

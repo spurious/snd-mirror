@@ -40,30 +40,20 @@
  *   just linux I think
  */
 
-#undef HAVE_ACCESS
-#undef HAVE_VASPRINTF
-#undef HAVE_LSTAT
-#undef HAVE_SIGNAL
-/* not windows, everywhere else
- */
-
-
-#undef HAVE_READLINK
-#undef HAVE_GETLINE
-#undef HAVE_SETLOCALE
-#undef HAVE_SLEEP
-#undef HAVE_OPENDIR
-
-#undef USE_STATVFS
-#undef USE_STATFS
-/* these two pertain to linux/bsd -- vfs for the former? */
-
-#undef HAVE_DLOPEN
-
-#undef HAVE_SPECIAL_FUNCTIONS
-/* libc version? */
 
 #undef WORDS_BIGENDIAN
+/* __LITTLE_ENDIAN__ = 1 if gcc osx, but not linux __x86_64?
+in autoconf:
+ #include <sys/types.h>
+ #include <sys/param.h>
+ int main ()
+ {
+ #if BYTE_ORDER != BIG_ENDIAN
+  not big endian
+ #endif
+ linux: #define __BYTE_ORDER __LITTLE_ENDIAN
+
+ */
 
 #ifdef __SIZEOF__POINTER__
   #define SIZEOF_VOID_P __SIZEOF_POINTER__
@@ -72,41 +62,9 @@
 #endif
 
 
-#undef HAVE_READLINE
-/* this is only used in ruby xen_rb_repl xen.c -- make -D as --with-ruby? 
-   on the explicit --enable-readline switch already (for disable case)
-   then checks for libreadline, adds that and -lncurses
-   linux=yes
-   TODO: try ruby in openbsd, freebsd, mac, assume windows=no
- */
-
-#undef HAVE_DLFCN_H
-/* linux/bsd? (not windows I think, not osx if c++?) 
-   TODO: dlfcn in freebsd?  in osx in c?
- */
-
-#undef HAVE_SYS_SOUNDCARD_H
-#undef HAVE_MACHINE_SOUNDCARD_H
-/* sys in fc11 linux --where in fc19?, which in bsd? (neither in openbsd) 
- */
-
-#undef HAVE_SYS_MIXER_H
-/* solaris case -- do we care anymore? */
-
-#undef HAVE_ALSA_ASOUNDLIB_H
-/* alsa.pc? */
-
-#undef HAVE_BYTESWAP_H
-/* not osx or windows -- TODO check osx c here
- */
-
-
 #undef HAVE_OSS
 #undef HAVE_ALSA
 #undef MUS_JACK
-
-#undef HAVE_AUDIODEVICEDESTROYIOPROCID
-/* this was old OSX -- can we use OS version? where is it? */
 
 #undef WITH_AUDIO
 /* meant for --without-audio but how to fit in?
@@ -117,7 +75,7 @@
  */
 
 #undef HAVE_GSL
-/* gls.pc */
+/* gsl.pc */
 
 #undef HAVE_SCHEME
 #undef HAVE_RUBY
@@ -126,13 +84,6 @@
 
 #undef HAVE_GL
 /* gl.pc -- explicit arg
- */
-
-#undef JUST_GL
-/* maybe put the gl scm stuff under the autoloader so we don't need this switch
- *   TODO: try this everywhere and see if it is even needed anymore
- *      linux:no, windows:no, 
- *   if so, maybe remove makegl.scm gl.c gldata.scm, or make them explicitly cloaded (not ruby or forth in that case)
  */
 
 #undef HAVE_GLU
@@ -207,7 +158,7 @@ see xen_rb_add_to_load_path in xen.c
 
 #define HAVE_COMPLEX_NUMBERS    ((!_MSC_VER) && ((!HAVE_FORTH) || HAVE_COMPLEX))   /* the latter defined in fth-lib.h I think */
 #define HAVE_COMPLEX_TRIG       ((!_MSC_VER) && (!__cplusplus) && (!__FreeBSD__))  /* this assumes sys/param.h has been included */
-#define HAVE_MAKE_RATIO ((HAVE_SCHEME) || (HAVE_FORTH))
+#define HAVE_MAKE_RATIO         ((HAVE_SCHEME) || (HAVE_FORTH))
 
 /* TODO: forth might be 0 here and in the complex cases, fth_make_complex and fth_ratio_floor
  *   can we use a version number? ratio after 1.2.9: 1.3.6? complex always from 1.3.1?

@@ -8,6 +8,8 @@
 #include "snd.h"
 #include "clm2xen.h"
 
+#define HAVE_SPECIAL_FUNCTIONS (!_MSC_VER)
+
 /* Snd defines its own exit and delay
  *
  *   In Ruby, rand is kernel_rand.
@@ -1332,7 +1334,7 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
 
 
 
-#if HAVE_SCHEME && HAVE_DLFCN_H && HAVE_DLOPEN
+#if HAVE_SCHEME && (!_MSC_VER)
 #include <dlfcn.h>
 /* these are included because libtool's dlopen is incredibly stupid */
 
@@ -2371,7 +2373,7 @@ static char *find_source_file(const char *orig)
  */
 
 #ifdef XEN_ARGIFY_1
-#if HAVE_SCHEME && HAVE_DLFCN_H && HAVE_DLOPEN
+#if HAVE_SCHEME && (!_MSC_VER)
   XEN_ARGIFY_2(g_dlopen_w, g_dlopen)
   XEN_NARGIFY_1(g_dlclose_w, g_dlclose)
   XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
@@ -2427,7 +2429,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #else
 /* not argify */
 
-#if HAVE_SCHEME && HAVE_DLFCN_H && HAVE_DLOPEN
+#if HAVE_SCHEME && (!_MSC_VER)
   #define g_dlopen_w g_dlopen
   #define g_dlclose_w g_dlclose
   #define g_dlerror_w g_dlerror
@@ -2487,7 +2489,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   void Init_libxg(void);
 #endif
 
-#if HAVE_GL && (!JUST_GL)
+#if HAVE_GL
  void Init_libgl(void);
 #endif
 
@@ -2655,7 +2657,7 @@ void g_xen_initialize(void)
 #endif
 
 
-#if HAVE_SCHEME && HAVE_DLFCN_H && HAVE_DLOPEN
+#if HAVE_SCHEME && (!_MSC_VER)
   XEN_DEFINE_PROCEDURE("dlopen",  g_dlopen_w,  1, 1 ,0, H_dlopen);
   XEN_DEFINE_PROCEDURE("dlclose", g_dlclose_w, 1, 0 ,0, H_dlclose);
   XEN_DEFINE_PROCEDURE("dlerror", g_dlerror_w, 0, 0 ,0, H_dlerror);
@@ -2667,7 +2669,7 @@ void g_xen_initialize(void)
   XEN_DEFINE_CONSTANT("RTLD_GLOBAL", RTLD_GLOBAL, "dlopen flag");
 #endif
 
-#if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE && HAVE_DLFCN_H && HAVE_DLOPEN
+#if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE
   g_ladspa_to_snd();
 #endif
 
@@ -2795,7 +2797,7 @@ void g_xen_initialize(void)
   #endif
 #endif
 
-#if (HAVE_GL) && (!JUST_GL)
+#if HAVE_GL
   Init_libgl();
 #endif
 

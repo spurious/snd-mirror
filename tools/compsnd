@@ -50,42 +50,6 @@ cp tools/ffitest.c .
 gcc -o ffitest ffitest.c -g3 -Wall s7.o -lm -I. -ldl
 ffitest
 
-echo ' -------------------------------- no strftime -------------------------------- '
-
-sed mus-config.h -e 's/#define HAVE_STRFTIME 1/#define HAVE_STRFTIME 0/' > tmp
-mv tmp mus-config.h
-make
-
-echo ' -------------------------------- no readlink -------------------------------- '
-
-sed mus-config.h -e 's/#define HAVE_READLINK 1/#define HAVE_READLINK 0/' > tmp
-mv tmp mus-config.h
-make
-
-echo ' -------------------------------- no lstat -------------------------------- '
-
-sed mus-config.h -e 's/#define HAVE_LSTAT 1/#define HAVE_LSTAT 0/' > tmp
-mv tmp mus-config.h
-make
-
-echo ' -------------------------------- no access -------------------------------- '
-
-sed mus-config.h -e 's/#define HAVE_ACCESS 1/#define HAVE_ACCESS 0/' > tmp
-mv tmp mus-config.h
-make
-
-echo ' -------------------------------- no strcasecmp -------------------------------- '
-
-sed mus-config.h -e 's/#define HAVE_STRCASECMP 1/#define HAVE_STRCASECMP 0/' > tmp
-mv tmp mus-config.h
-make
-
-echo ' -------------------------------- no snprintf -------------------------------- '
-
-sed mus-config.h -e 's/#define HAVE_SNPRINTF 1/#define HAVE_SNPRINTF 0/' > tmp
-mv tmp mus-config.h
-make
-
 make clmclean
 make sndinfo
 make sndplay
@@ -133,9 +97,9 @@ rm -f config.cache
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-no-gui                                         ----  '
+echo ' -----                --without-gui                                         ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-no-gui
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --without-gui
 make
 echo ' '
 echo ' '
@@ -161,9 +125,9 @@ rm -f config.cache
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-no-gui --with-oss                              ----  '
+echo ' -----                --without-gui --with-oss                              ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-no-gui --with-oss
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --without-gui --with-oss
 make
 echo ' '
 echo ' '
@@ -175,9 +139,9 @@ rm -f snd
 rm -f config.cache
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-no-gui --with-gmp                              ----  '
+echo ' -----                --without-gui --with-gmp                              ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-no-gui --with-gmp
+./configure --quiet --without-gui --with-gmp
 make
 echo ' '
 echo ' '
@@ -191,9 +155,9 @@ rm -f config.cache
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 -with-no-gui --without-ladspa                         ----  '
+echo ' ----                 -without-gui --without-ladspa                         ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-no-gui --without-ladspa
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --without-gui --without-ladspa
 make
 echo ' '
 echo ' '
@@ -286,9 +250,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-forth --with-no-gui                              --- '
+echo ' -----                --with-forth --without-gui                              --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-forth --with-no-gui LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet --with-forth --without-gui LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-forth 'snd-nogui"
@@ -533,9 +497,9 @@ rm -f snd
 rm -f config.cache
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --with-ruby --with-no-gui --without-fftw                --- '
+echo ' ----                 --with-ruby --without-gui --without-fftw                --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby --with-no-gui --without-fftw
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby --without-gui --without-fftw
 make
 echo ' '
 echo ' '
@@ -544,9 +508,9 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-ruby --with-no-gui           ---- '
+echo ' -----                --with-ruby --without-gui           ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby --with-no-gui 
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby --without-gui 
 make
 echo ' '
 echo ' '
@@ -555,9 +519,9 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                g++ --with-ruby --with-no-gui        ---- '
+echo ' ----                g++ --with-ruby --without-gui        ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby --with-no-gui 
+./configure --quiet CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby --without-gui 
 make
 echo ' '
 echo ' '
@@ -594,9 +558,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                g++ --with-no-gui                                       ---- '
+echo ' ----                g++ --without-gui                                       ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet CC=g++ --with-no-gui
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet CC=g++ --without-gui
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-nogui 'snd-s7"
@@ -640,9 +604,9 @@ echo ' '
 echo ' '
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --with-no-gui                                          ---- '
+echo ' ----                 --without-gui                                          ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-no-gui
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --without-gui
 make
 echo ' '
 echo ' '
@@ -680,9 +644,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-no-gui --without-extension-language          ----- '
+echo ' -----                --without-gui --without-extension-language          ----- '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --with-no-gui --without-extension-language --quiet
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --without-gui --without-extension-language --quiet
 make
 ./snd --version
 make allclean

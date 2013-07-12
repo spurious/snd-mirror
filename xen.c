@@ -467,11 +467,6 @@ char *xen_version(void)
 }
 
 
-#if HAVE_READLINE
-  #include <readline/readline.h>
-  #include <readline/history.h>
-#endif
-
 static XEN xen_rb_report_error(XEN nada, XEN err_info)
 {
   /* backtrace info: */
@@ -489,35 +484,17 @@ static XEN xen_rb_rep(XEN ig)
 {
   XEN val;
   char *str;
-#if HAVE_READLINE
-  char *line_read = NULL;
-  line_read = readline(rb_prompt);
-  if ((line_read) && (*line_read))
-    {
-      add_history(line_read);
-      val = xen_rb_eval_string_with_error(line_read);
-      str = XEN_AS_STRING(val);
-      fprintf(stdout, "%s\n", (str) ? str : "nil");
-      free(line_read);
-      line_read = NULL;
-    }
-#else
   size_t size = 512;
   char **buffer = NULL;
   buffer = (char **)calloc(1, sizeof(char *));
   buffer[0] = (char *)calloc(size, sizeof(char));
   fprintf(stdout, rb_prompt);
-#if HAVE_GETLINE
-  getline(buffer, &size, stdin);
-#else
   fgets(buffer[0], size, stdin);
-#endif
   val = xen_rb_eval_string_with_error(buffer[0]);
   str = XEN_AS_STRING(val);
   fprintf(stdout, "%s\n", (str) ? str : "nil");
   free(buffer[0]);
   free(buffer);
-#endif
   return(ig);
 }
 
@@ -1588,8 +1565,7 @@ static XEN g_getpid(void)
 #if (!WITH_SYSTEM_EXTRAS)
 static bool file_probe(const char *arg)
 {
-  /* from io.c */
-#if HAVE_ACCESS
+#ifndef _MSC_VER
   return(access(arg, F_OK) == 0);
 #else
   int fd;
@@ -1618,17 +1594,11 @@ static bool directory_p(const char *filename)
 #if (defined(_MSC_VER) || __CYGWIN__)
   return(false);
 #else
-  /* from snd-file.c */
 #ifdef S_ISDIR
   struct stat statbuf;
-#if HAVE_LSTAT
   return((lstat(filename, &statbuf) >= 0) &&
 	 (S_ISDIR(statbuf.st_mode)));
   return(false);
-#else
-  return((stat(filename, &statbuf) == 0) && 
-	 (S_ISDIR(statbuf.st_mode)));
-#endif
 #endif
 #endif
 }

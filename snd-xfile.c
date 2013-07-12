@@ -21,7 +21,7 @@ static void snd_sort(int sorter, sort_info **data, int len);
 
 static mus_long_t file_bytes(const char *filename)
 {
-#if HAVE_LSTAT
+#ifndef _MSC_VER
   struct stat statbuf;
   if (lstat(filename, &statbuf) >= 0) 
     return(statbuf.st_size);
@@ -1379,7 +1379,7 @@ static void unpost_file_info(file_dialog_info *fd)
 
 static bool empty_file_p(const char *filename)
 {
-#if HAVE_LSTAT
+#ifndef _MSC_VER
   struct stat statbuf;
   if (lstat(filename, &statbuf) >= 0) 
     return(statbuf.st_size == (mus_long_t)0);
@@ -3527,7 +3527,7 @@ static void save_as_file_exists_check(Widget w, XtPointer context, XtPointer inf
       if ((mus_file_probe(filename)) && 
 	  (!directory_p(filename)))
 	{
-#if HAVE_ACCESS
+#ifndef _MSC_VER
 	  if (access(filename, W_OK) < 0)
 	    s1 = XmStringCreateLocalized((char *)"save as (file write-protected?):");
 	  else

@@ -747,7 +747,6 @@ with_jack
 with_gtk
 with_gui
 with_gl
-with_just_gl
 with_gl2ps
 with_motif
 with_editres
@@ -758,17 +757,15 @@ with_portaudio
 with_gsl
 with_fftw
 with_gmp
+with_audio
 with_s7
 with_extension_language
-with_directfb
-with_audio
 with_motif_prefix
 with_temp_dir
 with_save_dir
 with_doc_dir
 with_snd_as_widget
 with_x
-enable_readline
 with_ruby_prefix
 with_ruby
 with_forth
@@ -1402,7 +1399,6 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-readline      include readline (the default)
   --disable-deprecated	  do not include any deprecated stuff from gtk, s7, motif, clm, snd, or sndlib
 
 Optional Packages:
@@ -1414,7 +1410,6 @@ Optional Packages:
   --with-gtk		  use Gtk+ to build Snd
   --with-gui  	  make Snd with graphics support
   --with-gl		  include OpenGL support, Motif only
-  --with-just-gl	  include OpenGL support, but omit the extension language bindings, Motif only
   --with-gl2ps		  include gl2ps, Motif only
   --with-motif	  	  use libXm to build Snd
   --with-editres	  include editres in xm
@@ -1425,10 +1420,9 @@ Optional Packages:
   --with-gsl		  use GSL, default=yes
   --with-fftw		  use fftw, default=yes
   --with-gmp		  include multiprecision arithmetic via gmp, mpfr, and mpc, default=no
+  --without-audio       don't include any audio functionality
   --with-s7  	          use S7, default=yes
   --with-extension-language	use some extension language, default=yes
-  --with-directfb	  use directfb config scripts, rather than gtk, default=no
-  --without-audio       don't include any audio functionality
   --with-motif-prefix=PFX where Motif is installed
   --with-temp-dir	  directory to use for temp files
   --with-save-dir	  directory to use for saved-state files
@@ -2517,7 +2511,7 @@ host_os=$*
 IFS=$ac_save_IFS
 case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
-
+ # needed by case $host below
 ac_config_headers="$ac_config_headers mus-config.h"
 
 ac_config_files="$ac_config_files makefile"
@@ -3691,7 +3685,7 @@ if test $ac_cv_header_stdc = yes; then
 $as_echo "#define STDC_HEADERS 1" >>confdefs.h
 
 fi
- # this needs to precede AC_CHECK_HEADER! (is this the case in 2.60?)
+    # this needs to precede AC_CHECK_HEADER!
 # Find a good install program.  We prefer a C program (faster),
 # so one script is as good as another.  But avoid the broken or
 # incompatible versions:
@@ -3787,7 +3781,6 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 
 MAKE_TARGET="snd"
-
 AUDIO_SYSTEM="None"
 RANDOM_FEATURES=""
 OPTIONAL_LIBRARIES=""
@@ -3820,7 +3813,6 @@ VERSION=13.9
 #   --with-save-dir       directory to use for saved-state files
 #   --with-doc-dir        directory to search for documentation
 #   --with-gl             include OpenGL support (default=no, Motif only)
-#   --with-just-gl        include OpenGL support but omit the extension language bindings (default=no, Motif only)
 #   --with-gl2ps          include gl2ps (Motif only)
 #   --with-editres 	  include EditRes in xm
 #   --without-gsl         omit GSL even if it exists
@@ -3865,12 +3857,6 @@ fi
 # Check whether --with-gl was given.
 if test "${with_gl+set}" = set; then :
   withval=$with_gl;
-fi
-
-
-# Check whether --with-just-gl was given.
-if test "${with_just_gl+set}" = set; then :
-  withval=$with_just_gl;
 fi
 
 
@@ -3936,6 +3922,12 @@ if test "${with_gmp+set}" = set; then :
 fi
 
 
+# Check whether --with-audio was given.
+if test "${with_audio+set}" = set; then :
+  withval=$with_audio;
+fi
+
+
 
 # Check whether --with-s7 was given.
 if test "${with_s7+set}" = set; then :
@@ -3948,19 +3940,6 @@ if test "${with_extension_language+set}" = set; then :
   withval=$with_extension_language;
 fi
 
-
-# an experiment
-
-# Check whether --with-directfb was given.
-if test "${with_directfb+set}" = set; then :
-  withval=$with_directfb;
-fi
-
-
-# Check whether --with-audio was given.
-if test "${with_audio+set}" = set; then :
-  withval=$with_audio;
-fi
 
 
 
@@ -4127,26 +4106,12 @@ fi
 done
 
 
-for ac_header in sys/soundcard.h machine/soundcard.h sys/mixer.h
+for ac_header in sys/statvfs.h
 do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/statvfs.h" "ac_cv_header_sys_statvfs_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_statvfs_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-for ac_header in sys/statvfs.h dlfcn.h byteswap.h
-do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+#define HAVE_SYS_STATVFS_H 1
 _ACEOF
 
 fi
@@ -4164,74 +4129,6 @@ if test "x$ac_cv_header_sys_mount_h" = xyes; then :
 fi
 
 
-
-ac_fn_c_check_header_mongrel "$LINENO" "alsa/asoundlib.h" "ac_cv_header_alsa_asoundlib_h" "$ac_includes_default"
-if test "x$ac_cv_header_alsa_asoundlib_h" = xyes; then :
-  $as_echo "#define HAVE_ALSA_ASOUNDLIB_H 1" >>confdefs.h
-
-fi
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlopen" >&5
-$as_echo_n "checking for library containing dlopen... " >&6; }
-if ${ac_cv_search_dlopen+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char dlopen ();
-int
-main ()
-{
-return dlopen ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' c, dl; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_dlopen=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_dlopen+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_dlopen+:} false; then :
-
-else
-  ac_cv_search_dlopen=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dlopen" >&5
-$as_echo "$ac_cv_search_dlopen" >&6; }
-ac_res=$ac_cv_search_dlopen
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-  $as_echo "#define HAVE_DLOPEN 1" >>confdefs.h
-
-fi
-
-# If this macro finds dlopen, HAVE_DLOPEN is defined (for use eg. in
-# snd-xen.c), if a lib is required, the macro adds it silently to LIBS
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether byte ordering is bigendian" >&5
 $as_echo_n "checking whether byte ordering is bigendian... " >&6; }
@@ -4395,20 +4292,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-
-for ac_func in readlink setlocale access opendir sleep signal statvfs statfs getline vasprintf lstat
-do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-done
-
-
 # Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -4449,167 +4332,6 @@ else
 $as_echo "no" >&6; }
 fi
 
-
-
-
-# look for special functions in libm
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for jn in -lm" >&5
-$as_echo_n "checking for jn in -lm... " >&6; }
-if ${ac_cv_lib_m_jn+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lm  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char jn ();
-int
-main ()
-{
-return jn ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_m_jn=yes
-else
-  ac_cv_lib_m_jn=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_jn" >&5
-$as_echo "$ac_cv_lib_m_jn" >&6; }
-if test "x$ac_cv_lib_m_jn" = xyes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for yn in -lm" >&5
-$as_echo_n "checking for yn in -lm... " >&6; }
-if ${ac_cv_lib_m_yn+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lm  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char yn ();
-int
-main ()
-{
-return yn ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_m_yn=yes
-else
-  ac_cv_lib_m_yn=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_yn" >&5
-$as_echo "$ac_cv_lib_m_yn" >&6; }
-if test "x$ac_cv_lib_m_yn" = xyes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for lgamma in -lm" >&5
-$as_echo_n "checking for lgamma in -lm... " >&6; }
-if ${ac_cv_lib_m_lgamma+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lm  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char lgamma ();
-int
-main ()
-{
-return lgamma ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_m_lgamma=yes
-else
-  ac_cv_lib_m_lgamma=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_lgamma" >&5
-$as_echo "$ac_cv_lib_m_lgamma" >&6; }
-if test "x$ac_cv_lib_m_lgamma" = xyes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for erf in -lm" >&5
-$as_echo_n "checking for erf in -lm... " >&6; }
-if ${ac_cv_lib_m_erf+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lm  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char erf ();
-int
-main ()
-{
-return erf ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_m_erf=yes
-else
-  ac_cv_lib_m_erf=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_erf" >&5
-$as_echo "$ac_cv_lib_m_erf" >&6; }
-if test "x$ac_cv_lib_m_erf" = xyes; then :
-  $as_echo "#define HAVE_SPECIAL_FUNCTIONS 1" >>confdefs.h
-
-fi
-
-fi
-
-fi
-
-fi
 
 
 
@@ -6351,17 +6073,9 @@ $as_echo "$as_me: WARNING: trouble with gtk (we need version 2.12.0 or later) --
 	GTK_LD_LIBS="$GTK_LIBS"
 	if test x$PKG_CONFIG != xno ; then
           if $PKG_CONFIG gtk+-3.0 --exists ; then
-            if test "$with_directfb" = yes ; then
-              GTK_LD_LIBS="`$PKG_CONFIG gtk+-directfb-3.0 --libs-only-L` `$PKG_CONFIG gtk+-directfb-3.0 --libs-only-l`"
-            else
-              GTK_LD_LIBS="`$PKG_CONFIG gtk+-3.0 --libs-only-L` `$PKG_CONFIG gtk+-3.0 --libs-only-l`"
-            fi
+            GTK_LD_LIBS="`$PKG_CONFIG gtk+-3.0 --libs-only-L` `$PKG_CONFIG gtk+-3.0 --libs-only-l`"
           else
-            if test "$with_directfb" = yes ; then
-              GTK_LD_LIBS="`$PKG_CONFIG gtk+-directfb-2.0 --libs-only-L` `$PKG_CONFIG gtk+-directfb-2.0 --libs-only-l`"
-            else
-              GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
-            fi
+            GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
           fi
         fi
 
@@ -6406,7 +6120,7 @@ GL_LIBS=""
 GL_FILES=""
 GL_FLAGS=""
 have_gl=no
-if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
+if test "$with_gl" = yes ; then
   if test "$with_motif" = yes ; then
     ac_fn_c_check_header_mongrel "$LINENO" "GL/gl.h" "ac_cv_header_GL_gl_h" "$ac_includes_default"
 if test "x$ac_cv_header_GL_gl_h" = xyes; then :
@@ -6473,38 +6187,12 @@ if test "$have_gl" = yes ; then
     $as_echo "#define WITH_GL2PS 1" >>confdefs.h
 
     RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
-    GL_FILES="gl2ps.o"
-  fi
-  if test "$with_just_gl" = yes ; then
-    $as_echo "#define JUST_GL 1" >>confdefs.h
-
+    GL_FILES="gl.o gl2ps.o"
   else
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <GL/gl.h>
-int
-main ()
-{
-int i; i = GL_TEXTURE_BINDING_3D
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  GL_FILES="$GL_FILES gl.o"
-else
-  $as_echo "#define JUST_GL 1" >>confdefs.h
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    GL_FILES="gl.o"
   fi
   case "$host" in
     *-apple-*)
-
-#      GL_LIBS="-framework OpenGL"
-# is this in place of or in addition to -lGL etc?
-#   on OSX 10.5 we need the following:
-
        GL_LIBS="-L/usr/X11/lib -lGLU -lGL -Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib -framework OpenGL"
       ;;
   esac
@@ -6528,12 +6216,6 @@ ac_snd_have_extension_language=no
 
 
 # AC_CHECK_RUBY
-
-# readline (for Ruby)
-# Check whether --enable-readline was given.
-if test "${enable_readline+set}" = set; then :
-  enableval=$enable_readline;
-fi
 
 
 
@@ -6668,50 +6350,6 @@ _ACEOF
 
                           XEN_CFLAGS="$XEN_CFLAGS $RUBY_CFLAGS"
                           XEN_LIBS="$XEN_LIBS $RUBY_LIBS"
-                          if test "$enable_readline" != no ; then
-                            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for readline in -lreadline" >&5
-$as_echo_n "checking for readline in -lreadline... " >&6; }
-if ${ac_cv_lib_readline_readline+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lreadline "-lncurses" $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char readline ();
-int
-main ()
-{
-return readline ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_readline_readline=yes
-else
-  ac_cv_lib_readline_readline=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_readline_readline" >&5
-$as_echo "$ac_cv_lib_readline_readline" >&6; }
-if test "x$ac_cv_lib_readline_readline" = xyes; then :
-  $as_echo "#define HAVE_READLINE 1" >>confdefs.h
-
-                                          XEN_LIBS="$XEN_LIBS -lreadline -lncurses"
-fi
-
-                          fi
 
 
                           LOCAL_LANGUAGE="Ruby"
@@ -7213,13 +6851,7 @@ fi
 case "$host" in
     *-*-linux*)
         LDSO_FLAGS="-shared"
-        LIBS="$LIBS -lm"
-#
-# -ldl is now handled by LIBS
-#	if test "$ac_cv_header_dlfcn_h" = yes ; then
-#	  LDFLAGS="$LDFLAGS -ldl"
-#	fi
-#
+        LIBS="$LIBS -lm -ldl"
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
@@ -7229,7 +6861,6 @@ case "$host" in
           AUDIO_SYSTEM=OSS
 	else
 
-          if test "$ac_cv_header_alsa_asoundlib_h" = yes ; then
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lasound" >&5
 $as_echo_n "checking for main in -lasound... " >&6; }
 if ${ac_cv_lib_asound_main+:} false; then :
@@ -7267,11 +6898,6 @@ else
 $as_echo "$as_me: WARNING: can't find the ALSA library" >&2;}
 fi
 
-          else
-            { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find the ALSA header files" >&5
-$as_echo "$as_me: WARNING: can't find the ALSA header files" >&2;}
-	    AUDIO_SYSTEM=OSS
-          fi
 	fi
 
 	if test "$with_jack" = yes ; then
@@ -7400,38 +7026,8 @@ $as_echo "$alsa_ok" >&6; }
 	;;
     *-apple-*)
 	if test "$with_jack" != yes ; then
-
 	    AUDIO_SYSTEM=MacOSX
 	    AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
-
-	    # OSX 10.5, deprecating earlier AudioDeviceRemoveIOProc
-	    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for AudioDeviceDestroyIOProcID" >&5
-$as_echo_n "checking for AudioDeviceDestroyIOProcID... " >&6; }
-	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <CoreServices/CoreServices.h>
-                                #include <CoreAudio/CoreAudio.h>
-int
-main ()
-{
-AudioDeviceIOProcID procId;
-			        AudioDeviceID device = kAudioDeviceUnknown;
-        			AudioDeviceDestroyIOProcID(device, procId)
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  $as_echo "#define HAVE_AUDIODEVICEDESTROYIOPROCID 1" >>confdefs.h
-
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
         else
             AUDIO_SYSTEM=JACK
 	    JACK_LIBS="-framework CoreAudio -framework CoreServices -framework AudioUnit -L/usr/local/lib -ljack -lsamplerate"
@@ -8029,86 +7625,6 @@ fi
 
 
 
-#--------------------------------------------------------------------------------
-# statvfs
-#--------------------------------------------------------------------------------
-
-statvfs_ok=0
-if test "$ac_cv_func_statvfs" = yes ; then
-  if test "$ac_cv_header_sys_statvfs_h" = yes ; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for statvfs" >&5
-$as_echo_n "checking for statvfs... " >&6; }
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/statvfs.h>
-int
-main ()
-{
-struct statvfs buf; statvfs("test.snd", &buf)
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  $as_echo "#define USE_STATVFS 1" >>confdefs.h
-
-      statvfs_ok=1
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-    if test $statvfs_ok = 1 ; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-    else
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-    fi
-  fi
-fi
-
-statfs_ok=0
-if test $statvfs_ok = 0 ; then
-  if test "$ac_cv_func_statfs" = yes ; then
-    if test "$ac_cv_header_sys_param_h" = yes ; then
-      if test "$ac_cv_header_sys_mount_h" = yes ; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for statfs" >&5
-$as_echo_n "checking for statfs... " >&6; }
-        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/param.h>
-                           #include <sys/mount.h>
-
-int
-main ()
-{
-struct statfs buf;
-                           int size = 0;
-  			   statfs("test.snd", &buf);
-                           if (buf.f_bsize = 1024)
-			     size = (int)(buf.f_bavail)
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  $as_echo "#define USE_STATFS 1" >>confdefs.h
-
-          statfs_ok=1
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-        if test $statfs_ok = 1 ; then
-          { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-        else
-          { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-        fi
-      fi
-    fi
-  fi
-fi
-
-
 
 #--------------------------------------------------------------------------------
 # debugging stuff
@@ -8160,12 +7676,10 @@ ORIGINAL_LDFLAGS="$LDFLAGS"
 case "$host" in
   *-*-linux* | *-*-bsdi* | *-*-freebsd* | *-*-openbsd* | *-*-netbsd*)
     if test "$with_snd_as_widget" != yes ; then
-      if test "$ac_cv_header_dlfcn_h" = yes ; then
-        if test "$CC" = "gcc" || test "$CC" = "g++" ; then
-          LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
-          # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
-          #   that ends up generating endless dumb warnings in gcc
-        fi
+      if test "$CC" = "gcc" || test "$CC" = "g++" ; then
+        LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
+        # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
+        #   that ends up generating endless dumb warnings in gcc
       fi
     fi
 esac
@@ -8183,21 +7697,6 @@ if test "$ac_snd_have_extension_language" = yes ; then
     fi
   fi
 fi
-
-if test "$ac_snd_have_extension_language" = no ; then
-  if test "$ac_snd_have_gui" = no ; then
-#    if test "$ac_cv_header_dlfcn_h" = yes ; then
-#      LDFLAGS="$LDFLAGS -ldl"
-#    fi
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Snd needs either an extension language (s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless." >&5
-$as_echo "$as_me: WARNING: Snd needs either an extension language (s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless." >&2;}
-  fi
-fi
-
-# if test "$ac_snd_have_extension_language" = yes && test "$with_audio" = no && test "$ac_cv_header_dlfcn_h" = yes ; then
-#   LDFLAGS="$LDFLAGS -ldl"
-# fi
-
 
 
 

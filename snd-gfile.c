@@ -107,7 +107,7 @@ static void sp_file_changed(GFileMonitor *mon, GFile *file, GFile *other, GFileM
 	    snd_update(sp);
 	  else start_bomb(sp);
 	}
-#if HAVE_ACCESS
+#ifndef _MSC_VER
       else
 	{
 	  int err;
@@ -289,7 +289,7 @@ static bool post_sound_info(file_dialog_info *fd, const char *filename, bool wit
 	snprintf(lenstr, 128, "%d samples", (int)mus_sound_samples(filename));
       else snprintf(lenstr, 128, "%.3f seconds", mus_sound_duration(filename));
 
-      snprintf(buf, 1924, "%s%s%d chan%s, %d Hz, %s\n%s, %s%s%s",
+      snprintf(buf, 1024, "%s%s%d chan%s, %d Hz, %s\n%s, %s%s%s",
 
 		   (with_filename) ? filename_without_directory(filename) : "",
 		   (with_filename) ? ": " : "", 
@@ -3304,7 +3304,7 @@ static void watch_file_read_only(GFileMonitor *mon, GFile *file, GFile *other, G
   switch (ev)
     {
     case G_FILE_MONITOR_EVENT_CHANGED:
-#if HAVE_ACCESS
+#ifndef _MSC_VER
       {
 	int err;
 	char *title;

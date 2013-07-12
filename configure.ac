@@ -3,15 +3,14 @@
 AC_INIT(snd, 13.9, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-13.tar.gz)
 
 AC_CONFIG_SRCDIR(snd.c)
-AC_CANONICAL_HOST
+AC_CANONICAL_HOST # needed by case $host below
 AC_CONFIG_HEADERS(mus-config.h)
 AC_CONFIG_FILES(makefile)
 AC_PROG_CC
-AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER! (is this the case in 2.60?)
+AC_HEADER_STDC    # this needs to precede AC_CHECK_HEADER!
 AC_PROG_INSTALL
 
 MAKE_TARGET="snd"
-
 AUDIO_SYSTEM="None"
 RANDOM_FEATURES=""
 OPTIONAL_LIBRARIES=""
@@ -44,7 +43,6 @@ VERSION=13.9
 #   --with-save-dir       directory to use for saved-state files
 #   --with-doc-dir        directory to search for documentation
 #   --with-gl             include OpenGL support (default=no, Motif only)
-#   --with-just-gl        include OpenGL support but omit the extension language bindings (default=no, Motif only)
 #   --with-gl2ps          include gl2ps (Motif only)
 #   --with-editres 	  include EditRes in xm
 #   --without-gsl         omit GSL even if it exists
@@ -61,7 +59,6 @@ AC_ARG_WITH(jack,        [  --with-jack		  use JACK])
 AC_ARG_WITH(gtk,         [  --with-gtk		  use Gtk+ to build Snd])
 AC_ARG_WITH(gui,         [  --with-gui  	  make Snd with graphics support])
 AC_ARG_WITH(gl,          [  --with-gl		  include OpenGL support, Motif only])
-AC_ARG_WITH(just-gl,     [  --with-just-gl	  include OpenGL support, but omit the extension language bindings, Motif only])
 AC_ARG_WITH(gl2ps,       [  --with-gl2ps		  include gl2ps, Motif only])
 AC_ARG_WITH(motif,	 [  --with-motif	  	  use libXm to build Snd])
 AC_ARG_WITH(editres,     [  --with-editres	  include editres in xm])
@@ -74,13 +71,11 @@ AC_ARG_WITH(portaudio,   [  --with-portaudio 		  use portaudio, default=no])
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
 AC_ARG_WITH(fftw,        [  --with-fftw		  use fftw, default=yes])
 AC_ARG_WITH(gmp,         [  --with-gmp		  include multiprecision arithmetic via gmp, mpfr, and mpc, default=no])
+AC_ARG_WITH(audio,       [  --without-audio       don't include any audio functionality])
 
 AC_ARG_WITH(s7,          [  --with-s7  	          use S7, default=yes])
 AC_ARG_WITH(extension-language, [  --with-extension-language	use some extension language, default=yes])
 
-# an experiment
-AC_ARG_WITH(directfb,    [  --with-directfb	  use directfb config scripts, rather than gtk, default=no])
-AC_ARG_WITH(audio,       [  --without-audio       don't include any audio functionality])
 
 
 AC_ARG_WITH(motif-prefix,[  --with-motif-prefix=PFX where Motif is installed],
@@ -125,34 +120,16 @@ LIBS=""
 AC_CHECK_LIB(m,main)
 AC_CHECK_LIB(c,main)
 
-AC_CHECK_HEADERS(sys/soundcard.h machine/soundcard.h sys/mixer.h)
-AC_CHECK_HEADERS(sys/statvfs.h dlfcn.h byteswap.h)
+AC_CHECK_HEADERS(sys/statvfs.h)
 
 AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
 				        #include <sys/param.h>
 				        #endif
 				       ])
 
-AC_CHECK_HEADER(alsa/asoundlib.h,[AC_DEFINE(HAVE_ALSA_ASOUNDLIB_H)])
-
-AC_SEARCH_LIBS([dlopen], [c, dl], [AC_DEFINE([HAVE_DLOPEN], [1])]) 
-# If this macro finds dlopen, HAVE_DLOPEN is defined (for use eg. in 
-# snd-xen.c), if a lib is required, the macro adds it silently to LIBS
-
 AC_OLD_BIGENDIAN
 AC_CHECK_SIZEOF(void *)
-
-AC_CHECK_FUNCS(readlink setlocale access opendir sleep signal statvfs statfs getline vasprintf lstat)
-
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-
-
-# look for special functions in libm
-AC_CHECK_LIB(m, jn, 
-  [AC_CHECK_LIB(m, yn, 
-    [AC_CHECK_LIB(m, lgamma,
-      [AC_CHECK_LIB(m, erf, 
-        [AC_DEFINE(HAVE_SPECIAL_FUNCTIONS)])])])])
 
 
 
@@ -516,17 +493,9 @@ else
 	GTK_LD_LIBS="$GTK_LIBS"
 	if test x$PKG_CONFIG != xno ; then
           if $PKG_CONFIG gtk+-3.0 --exists ; then
-            if test "$with_directfb" = yes ; then
-              GTK_LD_LIBS="`$PKG_CONFIG gtk+-directfb-3.0 --libs-only-L` `$PKG_CONFIG gtk+-directfb-3.0 --libs-only-l`"
-            else
-              GTK_LD_LIBS="`$PKG_CONFIG gtk+-3.0 --libs-only-L` `$PKG_CONFIG gtk+-3.0 --libs-only-l`"
-            fi
+            GTK_LD_LIBS="`$PKG_CONFIG gtk+-3.0 --libs-only-L` `$PKG_CONFIG gtk+-3.0 --libs-only-l`"
           else
-            if test "$with_directfb" = yes ; then
-              GTK_LD_LIBS="`$PKG_CONFIG gtk+-directfb-2.0 --libs-only-L` `$PKG_CONFIG gtk+-directfb-2.0 --libs-only-l`"
-            else
-              GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
-            fi
+            GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
           fi
         fi
 
@@ -570,7 +539,7 @@ GL_LIBS=""
 GL_FILES=""
 GL_FLAGS=""
 have_gl=no
-if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
+if test "$with_gl" = yes ; then
   if test "$with_motif" = yes ; then
     AC_CHECK_HEADER(GL/gl.h,
       [have_gl=yes],
@@ -609,24 +578,12 @@ if test "$have_gl" = yes ; then
   if test "$with_gl2ps" = yes ; then
     AC_DEFINE(WITH_GL2PS)
     RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
-    GL_FILES="gl2ps.o"
-  fi
-  if test "$with_just_gl" = yes ; then
-    AC_DEFINE(JUST_GL)
+    GL_FILES="gl.o gl2ps.o"
   else
-    AC_COMPILE_IFELSE(
-      [AC_LANG_PROGRAM([#include <GL/gl.h>], 
-                       [int i; i = GL_TEXTURE_BINDING_3D])],
-      [GL_FILES="$GL_FILES gl.o"],
-      [AC_DEFINE(JUST_GL)])
-  fi   
+    GL_FILES="gl.o"
+  fi
   case "$host" in
     *-apple-*)
-
-#      GL_LIBS="-framework OpenGL"
-# is this in place of or in addition to -lGL etc?
-#   on OSX 10.5 we need the following:
-
        GL_LIBS="-L/usr/X11/lib -lGLU -lGL -Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib -framework OpenGL"
       ;;
   esac
@@ -722,9 +679,6 @@ AC_DEFUN([AC_CHECK_RUBY],
   AC_SUBST([RUBY_LIBS])
 ])# AC_CHECK_RUBY
 
-# readline (for Ruby)
-AC_ARG_ENABLE(readline,
-  [  --enable-readline      include readline (the default)], ,)
 
 AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
                 ruby_prefix="$withval"
@@ -744,11 +698,6 @@ AC_ARG_WITH(ruby,
                           AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,  "$RUBY_SEARCH_PATH")
                           XEN_CFLAGS="$XEN_CFLAGS $RUBY_CFLAGS"
                           XEN_LIBS="$XEN_LIBS $RUBY_LIBS" 
-                          if test "$enable_readline" != no ; then
-                            AC_CHECK_LIB(readline, readline,
-                                         [AC_DEFINE(HAVE_READLINE)
-                                          XEN_LIBS="$XEN_LIBS -lreadline -lncurses"], ,"-lncurses")
-                          fi
                           AC_SUBST(XEN_LIBS)
                           AC_SUBST(XEN_CFLAGS)
                           LOCAL_LANGUAGE="Ruby"
@@ -901,13 +850,7 @@ fi
 case "$host" in
     *-*-linux*) 
         LDSO_FLAGS="-shared"
-        LIBS="$LIBS -lm"
-#
-# -ldl is now handled by LIBS
-#	if test "$ac_cv_header_dlfcn_h" = yes ; then 
-#	  LDFLAGS="$LDFLAGS -ldl" 
-#	fi 
-#
+        LIBS="$LIBS -lm -ldl"
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
@@ -917,14 +860,9 @@ case "$host" in
           AUDIO_SYSTEM=OSS
 	else
 
-          if test "$ac_cv_header_alsa_asoundlib_h" = yes ; then
             AC_CHECK_LIB(asound, main,
                AUDIO_SYSTEM=ALSA,
                [AC_MSG_WARN(can't find the ALSA library)])
-          else
-            AC_MSG_WARN(can't find the ALSA header files)
-	    AUDIO_SYSTEM=OSS
-          fi
 	fi
 
 	if test "$with_jack" = yes ; then 
@@ -1033,22 +971,8 @@ case "$host" in
 	;;
     *-apple-*)
 	if test "$with_jack" != yes ; then 
-
 	    AUDIO_SYSTEM=MacOSX
 	    AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
-
-	    # OSX 10.5, deprecating earlier AudioDeviceRemoveIOProc
-	    AC_MSG_CHECKING([for AudioDeviceDestroyIOProcID])
-	    AC_COMPILE_IFELSE(
-              [AC_LANG_PROGRAM([#include <CoreServices/CoreServices.h>
-                                #include <CoreAudio/CoreAudio.h>],
-			       [AudioDeviceIOProcID procId;
-			        AudioDeviceID device = kAudioDeviceUnknown;
-        			AudioDeviceDestroyIOProcID(device, procId)
-			       ])],
-	      [AC_DEFINE(HAVE_AUDIODEVICEDESTROYIOPROCID)
-	       AC_MSG_RESULT(yes)],
-	      [AC_MSG_RESULT(no)])
         else
             AUDIO_SYSTEM=JACK
 	    JACK_LIBS="-framework CoreAudio -framework CoreServices -framework AudioUnit -L/usr/local/lib -ljack -lsamplerate"
@@ -1161,56 +1085,6 @@ fi
 
 
 
-#--------------------------------------------------------------------------------
-# statvfs
-#--------------------------------------------------------------------------------
-
-statvfs_ok=0
-if test "$ac_cv_func_statvfs" = yes ; then
-  if test "$ac_cv_header_sys_statvfs_h" = yes ; then
-    AC_MSG_CHECKING([for statvfs])
-    AC_COMPILE_IFELSE(
-      [AC_LANG_PROGRAM([#include <sys/statvfs.h>],
-                       [struct statvfs buf; statvfs("test.snd", &buf)])], 
-      AC_DEFINE(USE_STATVFS)
-      statvfs_ok=1)
-    if test $statvfs_ok = 1 ; then
-      AC_MSG_RESULT(yes)
-    else
-      AC_MSG_RESULT(no)
-    fi
-  fi
-fi
-
-statfs_ok=0
-if test $statvfs_ok = 0 ; then
-  if test "$ac_cv_func_statfs" = yes ; then
-    if test "$ac_cv_header_sys_param_h" = yes ; then
-      if test "$ac_cv_header_sys_mount_h" = yes ; then
-        AC_MSG_CHECKING([for statfs])
-        AC_COMPILE_IFELSE(
-         [AC_LANG_PROGRAM([#include <sys/param.h>
-                           #include <sys/mount.h>
-                          ],
-                          [struct statfs buf;
-                           int size = 0;
-  			   statfs("test.snd", &buf);
-                           if (buf.f_bsize = 1024)
-			     size = (int)(buf.f_bavail)
-			  ])],
-          AC_DEFINE(USE_STATFS)
-          statfs_ok=1)
-        if test $statfs_ok = 1 ; then
-          AC_MSG_RESULT(yes)
-        else
-          AC_MSG_RESULT(no)
-        fi
-      fi
-    fi
-  fi
-fi
-
-
 
 #--------------------------------------------------------------------------------
 # debugging stuff
@@ -1259,12 +1133,10 @@ ORIGINAL_LDFLAGS="$LDFLAGS"
 case "$host" in
   *-*-linux* | *-*-bsdi* | *-*-freebsd* | *-*-openbsd* | *-*-netbsd*) 
     if test "$with_snd_as_widget" != yes ; then
-      if test "$ac_cv_header_dlfcn_h" = yes ; then
-        if test "$CC" = "gcc" || test "$CC" = "g++" ; then
-          LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
-          # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
-          #   that ends up generating endless dumb warnings in gcc
-        fi
+      if test "$CC" = "gcc" || test "$CC" = "g++" ; then
+        LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
+        # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
+        #   that ends up generating endless dumb warnings in gcc
       fi
     fi
 esac
@@ -1282,20 +1154,6 @@ if test "$ac_snd_have_extension_language" = yes ; then
     fi
   fi
 fi
-
-if test "$ac_snd_have_extension_language" = no ; then
-  if test "$ac_snd_have_gui" = no ; then
-#    if test "$ac_cv_header_dlfcn_h" = yes ; then
-#      LDFLAGS="$LDFLAGS -ldl"
-#    fi
-    AC_MSG_WARN([Snd needs either an extension language (s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless.])
-  fi
-fi
-
-# if test "$ac_snd_have_extension_language" = yes && test "$with_audio" = no && test "$ac_cv_header_dlfcn_h" = yes ; then
-#   LDFLAGS="$LDFLAGS -ldl"
-# fi
-
 
 AC_SUBST(CFLAGS)
 AC_SUBST(ORIGINAL_LDFLAGS)

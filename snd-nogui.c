@@ -678,7 +678,7 @@ void snd_doit(int argc, char **argv)
     }
   snd_load_init_file(noglob, noinit);
 
-#if HAVE_SIGNAL && !__MINGW32__ 
+#if (!_MSC_VER) && !__MINGW32__ 
   signal(SIGTTIN, SIG_IGN);
   signal(SIGTTOU, SIG_IGN);
 #endif

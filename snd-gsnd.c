@@ -1405,7 +1405,7 @@ void color_filter_waveform(color_info *color)
 
 static int cant_write(char *name)
 {
-#if HAVE_ACCESS
+#ifndef _MSC_VER
   return((access(name, W_OK)) != 0);
 #else
   return(0);

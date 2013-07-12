@@ -218,7 +218,7 @@ char *file_to_string(const char *filename)
 char *vstr(const char *format, va_list ap)
 {
   char *buf;
-#if HAVE_VASPRINTF
+#ifndef _MSC_VER
   if (vasprintf(&buf, format, ap) == -1)
     return(NULL);
 #else

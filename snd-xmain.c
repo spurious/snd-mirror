@@ -240,7 +240,7 @@ static void startup_funcs(void)
   snd_load_init_file(noglob, noinit);
 #endif
 
-#if HAVE_SIGNAL && HAVE_EXTENSION_LANGUAGE && !__MINGW32__
+#if (!_MSC_VER) && HAVE_EXTENSION_LANGUAGE && !__MINGW32__
   if (!nostdin)
     {
       signal(SIGTTIN, SIG_IGN);

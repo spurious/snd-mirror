@@ -876,9 +876,7 @@ static void Tab_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 	  if (matches != 1)
 	    {
 	      XmUpdateDisplay(w);
-#if HAVE_SLEEP
 	      sleep(1);
-#endif
 	      XtVaSetValues(w, XmNforeground, old_color, NULL);
 	      XmUpdateDisplay(w);
 	    }

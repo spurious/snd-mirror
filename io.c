@@ -33,6 +33,8 @@
 
 #include "_sndlib.h"
 
+#define HAVE_BYTESWAP_H __linux__
+
 
 /* ---------------------------------------- */
 /* in io.c but not in _sndlib.h (these are now internal to sndlib, but I don't like the C-oid "_" prefix): */
@@ -669,7 +671,7 @@ int mus_file_open_read(const char *arg)
 
 bool mus_file_probe(const char *arg) 
 {
-#if HAVE_ACCESS
+#ifndef _MSC_VER
   if (!arg) return(false);
   return(access(arg, F_OK) == 0);
 #else
@@ -2150,7 +2152,7 @@ char *mus_expand_filename(const char *filename)
 char *mus_format(const char *format, ...)
 {
   /* caller should free result */
-#if HAVE_VASPRINTF
+#ifndef _MSC_VER
   va_list ap;
   int bytes;
   char *result = NULL;

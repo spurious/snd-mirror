@@ -207,7 +207,7 @@ need a String or Symbol, not %s"
   $stop_playing_hook            = Hook.new("$stop_playing_hook", 1)
   $stop_playing_selection_hook  = Hook.new("$stop_playing_selection_hook", 0)
   $update_hook                  = Hook.new("$update_hook", 1)
-  # unless --with-no-gui
+  # unless --without-gui
   $color_hook                   = Hook.new("$color_hook", 0)
 end
 

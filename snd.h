@@ -14,15 +14,13 @@
 #include <stdlib.h>
 #ifndef _MSC_VER
   #include <unistd.h>
+  #include <locale.h>
 #endif
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#if HAVE_SETLOCALE
-  #include <locale.h>
-#endif
 
 #include "_sndlib.h"
 #include "xen.h"

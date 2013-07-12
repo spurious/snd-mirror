@@ -40,8 +40,7 @@ struct glistener {
   bool (*keyer)(glistener *g, GtkWidget *w, GdkEventKey *e);
 };
 
-
-#if (HAVE_GTK_2)
+#if (HAVE_GTK_2) && (!defined(GDK_KEY_Return))
   #define GDK_KEY_BackSpace GDK_BackSpace
   #define GDK_KEY_Down      GDK_Down
   #define GDK_KEY_Left      GDK_Left

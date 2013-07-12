@@ -121,7 +121,7 @@ static void main_snd_help(const char *subject, ...)
   #include <X11/xpm.h>
 #endif
 
-#if HAVE_LADSPA && HAVE_DLFCN_H && HAVE_DLOPEN
+#if HAVE_LADSPA
   #include <ladspa.h>
 #endif
 
@@ -190,16 +190,12 @@ static char *xm_version(void)
 
 
 #if HAVE_GL
-#if (!JUST_GL)
- void Init_libgl(void);
-#endif
+void Init_libgl(void);
+
 static char *gl_version(void)
 {
   XEN gl_val = XEN_FALSE;
-
-#if (!JUST_GL)
   Init_libgl(); /* define the version string, if ./snd --version */
-#endif
 
 #if HAVE_SCHEME
   gl_val = XEN_EVAL_C_STRING("(and (provided? 'gl) gl-version)"); /* this refers to gl.c, not the GL library */
@@ -338,7 +334,7 @@ char *version_info(void)
                         snd_itoa(XpmVersion), ".", 
                         snd_itoa(XpmRevision),
 #endif
-#if HAVE_LADSPA && HAVE_DLFCN_H && HAVE_DLOPEN
+#if HAVE_LADSPA
 	  "\n    LADSPA: ",
   #ifdef LADSPA_HINT_DEFAULT_MASK
 	  "1.1",

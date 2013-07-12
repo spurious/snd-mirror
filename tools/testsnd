@@ -27,12 +27,12 @@ make
 ./snd -l snd-test 0
 make allclean
 
-echo ' -------------------------------- with-no-gui -------------------------------- '
+echo ' -------------------------------- without-gui -------------------------------- '
 make allclean
 rm -f snd
 rm -f config.cache
-echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-no-gui '
-./configure --quiet CFLAGS="-Wall" --with-no-gui
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" --without-gui '
+./configure --quiet CFLAGS="-Wall" --without-gui
 make
 echo ' '
 echo ' '
@@ -40,12 +40,12 @@ echo ' '
 ./snd -l snd-test 2
 ./snd -l snd-test 28
 
-echo ' -------------------------------- with-no-gui/ladspa -------------------------------- '
+echo ' -------------------------------- without-gui/ladspa -------------------------------- '
 make allclean
 rm -f snd
 rm -f config.cache
-echo ' CFLAGS="-Wall" --with-no-gui --without-ladspa '
-./configure --quiet CFLAGS="-Wall" --with-no-gui --without-ladspa
+echo ' CFLAGS="-Wall" --without-gui --without-ladspa '
+./configure --quiet CFLAGS="-Wall" --without-gui --without-ladspa
 make
 echo ' '
 echo ' '
@@ -213,22 +213,22 @@ echo ' -------------------------------- ruby test (no gui) ---------------------
 make allclean
 rm -f snd
 rm -f config.cache
-echo ' CFLAGS="-Wall" --with-ruby --with-no-gui --without-fftw '
-./configure --quiet CFLAGS="-Wall" --with-ruby --with-no-gui --without-fftw
+echo ' CFLAGS="-Wall" --with-ruby --without-gui --without-fftw '
+./configure --quiet CFLAGS="-Wall" --with-ruby --without-gui --without-fftw
 make
 echo ' '
 echo ' '
 ./snd --version
 make allclean
-echo ' CFLAGS="-Wall" --with-ruby --with-no-gui '
-./configure --quiet CFLAGS="-Wall" --with-ruby --with-no-gui 
+echo ' CFLAGS="-Wall" --with-ruby --without-gui '
+./configure --quiet CFLAGS="-Wall" --with-ruby --without-gui 
 make
 echo ' '
 echo ' '
 ./snd --version
 make allclean
-echo ' CC=g++ CFLAGS="-Wall" --with-ruby --with-no-gui '
-./configure --quiet CC=g++ CFLAGS="-Wall" --with-ruby --with-no-gui 
+echo ' CC=g++ CFLAGS="-Wall" --with-ruby --without-gui '
+./configure --quiet CC=g++ CFLAGS="-Wall" --with-ruby --without-gui 
 make
 
 echo ' '
@@ -258,8 +258,8 @@ make
 make allclean
 echo ' '
 echo ' '
-echo ' CC=g++ --with-no-gui '
-./configure --quiet CC=g++ --with-no-gui
+echo ' CC=g++ --without-gui '
+./configure --quiet CC=g++ --without-gui
 make
 ./snd --version
 ./snd -l snd-test 6
@@ -283,8 +283,8 @@ date
 echo ' -------------------------------- no-gui test -------------------------------- '
 make allclean
 rm -f snd
-echo ' CFLAGS="-Wall" --with-no-gui '
-./configure --quiet CFLAGS="-Wall" --with-no-gui
+echo ' CFLAGS="-Wall" --without-gui '
+./configure --quiet CFLAGS="-Wall" --without-gui
 make
 ./snd --version
 ./snd -l snd-test 20
@@ -298,8 +298,8 @@ make allclean
 echo ' -------------------------------- s7 gc tests -------------------------------- '
 make allclean
 rm -f snd
-echo ' CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1024" --with-no-gui '
-./configure --quiet CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1024" --with-no-gui
+echo ' CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1024" --without-gui '
+./configure --quiet CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1024" --without-gui
 make
 ./snd -l snd-test 29
 echo ' '
@@ -307,8 +307,8 @@ echo ' '
 date
 rm s7.o
 
-echo ' CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1824" --with-no-gui '
-./configure --quiet CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1824" --with-no-gui
+echo ' CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1824" --without-gui '
+./configure --quiet CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1824" --without-gui
 make
 ./snd -l snd-test 29
 echo ' '
@@ -316,8 +316,8 @@ echo ' '
 date
 rm s7.o
 
-echo ' CFLAGS="-Wall -DINITIAL_HEAP_SIZE=736" --with-no-gui '
-./configure --quiet CFLAGS="-Wall -DINITIAL_HEAP_SIZE=736" --with-no-gui
+echo ' CFLAGS="-Wall -DINITIAL_HEAP_SIZE=736" --without-gui '
+./configure --quiet CFLAGS="-Wall -DINITIAL_HEAP_SIZE=736" --without-gui
 make
 ./snd -l snd-test 29
 echo ' '

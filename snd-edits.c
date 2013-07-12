@@ -5456,7 +5456,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
       cp->axis = free_axis_info(cp->axis);
     }
 
-#if (HAVE_ACCESS)
+#ifndef _MSC_VER
   if (access(sp->filename, W_OK))
     {
       sa = free_axes_data(sa);

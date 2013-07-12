@@ -87,6 +87,7 @@ typedef double s7_Double;
 
 
 #include <stdio.h>
+
 #ifndef __cplusplus
 #ifndef _MSC_VER
   #include <stdbool.h>

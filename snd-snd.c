@@ -1278,7 +1278,7 @@ void add_sound_data(char *filename, snd_info *sp, channel_graph_t graphed)
 }
 
 
-#if HAVE_READLINK
+#ifndef _MSC_VER
 static char *linked_file(const char *link_name)
 {
   char *link_file;
@@ -1326,7 +1326,7 @@ char *sp_name_click(snd_info *sp) /* caller should free returned string */
 			       mus_data_format_to_string(hdr->format),
 			       snd_strftime("%d-%b-%Y %H:%M", sp->write_date),
 			       (linked) ? ", (link to " : "",
-#if HAVE_READLINK
+#ifndef _MSC_VER
 			       (linked) ? str = linked_file(sp->filename) : "",
 #else
 			       (linked) ? "?" : "",

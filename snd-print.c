@@ -54,7 +54,7 @@ static int start_ps_graph(const char *output, const char *title)
   bbx = 0;
   bby = 0;
 
-#if HAVE_SETLOCALE
+#ifndef _MSC_VER
   previous_locale = mus_strdup(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since PostScript assumes that format */
 #endif
 
@@ -102,7 +102,7 @@ static void end_ps_graph(void)
   snd_close(ps_fd, "eps file");
   if (previous_locale)
     {
-#if HAVE_SETLOCALE
+#ifndef _MSC_VER
       setlocale(LC_NUMERIC, previous_locale);
 #endif
       free(previous_locale);
@@ -652,7 +652,7 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
   chan_info *cp;
   int state = GL2PS_OVERFLOW, buffsize = 1024 * 1024, type = 0;
 
-#if HAVE_SETLOCALE
+#ifndef _MSC_VER
   char *old_locale = NULL;
 #endif
 
@@ -672,7 +672,7 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
   if ((type < 0) || (type >= NUM_GL2PS_TYPES))
     XEN_OUT_OF_RANGE_ERROR(S_gl_graph_to_ps, XEN_ARG_2, output_type, "must be between 0 and 5");
 
-#if HAVE_SETLOCALE
+#ifndef _MSC_VER
   old_locale = mus_strdup(setlocale(LC_NUMERIC, "C"));
 #endif
   
@@ -702,7 +702,7 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
 	}
     }
   fclose(fp);
-#if HAVE_SETLOCALE
+#ifndef _MSC_VER
   setlocale(LC_NUMERIC, old_locale);
   if (old_locale) free(old_locale);
 #endif
