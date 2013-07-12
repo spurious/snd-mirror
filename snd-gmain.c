@@ -120,7 +120,7 @@ void auto_update_restart(void)
 
 
 
-#if HAVE_SETJMP_H
+#ifndef _MSC_VER
 #include <setjmp.h>
 
 static jmp_buf top_level_jump;
@@ -639,7 +639,7 @@ void snd_doit(int argc, char **argv)
   else gdk_window_resize(WIDGET_TO_WINDOW(MAIN_SHELL(ss)), INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT);
   startup_funcs();
   
-#if HAVE_SETJMP_H
+#ifndef _MSC_VER
   if (setjmp(top_level_jump))
     {
       if (!(ss->jump_ok))

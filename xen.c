@@ -93,7 +93,7 @@ void xen_initialize(void)
 
   ruby_init();
   ruby_init_loadpath();
-  ruby_script("xen");        /* necessary in ruby 1.9 (else segfault in rb_raise) */
+  ruby_script("xen");        /* necessary in ruby 1.9 (else segfault in rb_raise -- is this the rb GC bug (see snd-xen.c)?) */
 
   Init_Hook();
 }
@@ -1571,9 +1571,6 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist)
 
 #ifndef _MSC_VER
   #include <unistd.h>
-#endif
-
-#if HAVE_SYS_TIME_H
   #include <sys/time.h>
 #endif
 

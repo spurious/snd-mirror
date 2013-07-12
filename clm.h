@@ -9,8 +9,11 @@
 
 #include "sndlib.h"
 
-#if HAVE_COMPLEX_TRIG && (!__cplusplus)
-#include <complex.h>
+#ifndef _MSC_VER
+  #include <sys/param.h>
+#endif
+#if HAVE_COMPLEX_TRIG
+  #include <complex.h>
 #endif
 
 #if(!defined(M_PI))
@@ -127,8 +130,8 @@ MUS_EXPORT mus_float_t mus_ring_modulate(mus_float_t s1, mus_float_t s2);
 MUS_EXPORT mus_float_t mus_amplitude_modulate(mus_float_t s1, mus_float_t s2, mus_float_t s3);
 MUS_EXPORT mus_float_t mus_contrast_enhancement(mus_float_t sig, mus_float_t index);
 MUS_EXPORT mus_float_t mus_dot_product(mus_float_t *data1, mus_float_t *data2, mus_long_t size);
-#if HAVE_COMPLEX_TRIG && (!__cplusplus)
-MUS_EXPORT complex double mus_edot_product(complex double freq, complex double *data, mus_long_t size);
+#if HAVE_COMPLEX_TRIG
+  MUS_EXPORT complex double mus_edot_product(complex double freq, complex double *data, mus_long_t size);
 #endif
 
 MUS_EXPORT void mus_clear_array(mus_float_t *arr, mus_long_t size);

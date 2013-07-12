@@ -154,7 +154,7 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 #endif
 
 
-#if HAVE_SETJMP_H
+#ifndef _MSC_VER
 #include <setjmp.h>
 
 static jmp_buf top_level_jump;
@@ -887,7 +887,7 @@ void snd_doit(int argc, char **argv)
   if (with_toolbar(ss)) show_toolbar();
   startup_funcs();
 
-#if HAVE_SETJMP_H
+#ifndef _MSC_VER
   if (setjmp(top_level_jump))
     {
       if (!(ss->jump_ok))

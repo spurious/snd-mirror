@@ -699,7 +699,7 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
 }
 
 
-#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
+#if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS
 #define S_edot_product "edot-product"
 
 static XEN g_edot_product(XEN val1, XEN val2) 
@@ -9382,7 +9382,7 @@ static XEN g_mus_irandom(XEN val) {return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(
 
 
 #if HAVE_SCHEME
-#if HAVE_SYS_TIME_H && (!_MSC_VER)
+#ifndef _MSC_VER
 
 #include <time.h>
 #include <sys/time.h>
@@ -18243,7 +18243,7 @@ XEN_NARGIFY_2(g_ring_modulate_w, g_ring_modulate)
 XEN_NARGIFY_3(g_amplitude_modulate_w, g_amplitude_modulate)
 XEN_ARGIFY_2(g_contrast_enhancement_w, g_contrast_enhancement)
 XEN_ARGIFY_3(g_dot_product_w, g_dot_product)
-#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
+#if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS
 XEN_NARGIFY_2(g_edot_product_w, g_edot_product)
 #endif
 XEN_NARGIFY_1(g_clear_array_w, g_clear_array)
@@ -18579,7 +18579,7 @@ XEN_NARGIFY_3(g_out_bank_w, g_out_bank)
 #define g_amplitude_modulate_w g_amplitude_modulate
 #define g_contrast_enhancement_w g_contrast_enhancement
 #define g_dot_product_w g_dot_product
-#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
+#if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS
 #define g_edot_product_w g_edot_product
 #endif
 #define g_clear_array_w g_clear_array
@@ -19010,7 +19010,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_REAL_PROCEDURE(S_amplitude_modulate,   g_amplitude_modulate_w,   3, 0, 0, H_amplitude_modulate);
   XEN_DEFINE_REAL_PROCEDURE(S_contrast_enhancement, g_contrast_enhancement_w, 1, 1, 0, H_contrast_enhancement);
   XEN_DEFINE_REAL_PROCEDURE(S_dot_product,          g_dot_product_w,          2, 1, 0, H_dot_product);
-#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
+#if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS
   XEN_DEFINE_SAFE_PROCEDURE(S_edot_product,         g_edot_product_w,         2, 0, 0, H_edot_product);
 #endif
   XEN_DEFINE_SAFE_PROCEDURE(S_clear_array,          g_clear_array_w,          1, 0, 0, H_clear_array);
@@ -19446,7 +19446,7 @@ static void mus_xen_init(void)
   }
 #endif
 
-#if HAVE_SCHEME && HAVE_SYS_TIME_H && (!_MSC_VER)
+#if HAVE_SCHEME && (!_MSC_VER)
   XEN_DEFINE_SAFE_PROCEDURE(S_get_internal_real_time, g_get_internal_real_time_w, 0, 0, 0, H_get_internal_real_time);
   XEN_DEFINE_CONSTANT(S_internal_time_units_per_second, 1, "units used by " S_get_internal_real_time);
 #endif
@@ -19540,7 +19540,7 @@ XEN_EVAL_C_STRING("<'> fth-print alias clm-print ( fmt args -- )");
     free(clm_version);
   }
 
-#if HAVE_SCHEME && HAVE_SYS_TIME_H && (!_MSC_VER)
+#if HAVE_SCHEME && (!_MSC_VER)
   {
     struct timezone z0;
     gettimeofday(&overall_start_time, &z0);

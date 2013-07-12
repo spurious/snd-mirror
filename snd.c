@@ -19,7 +19,7 @@ static bool ignore_mus_error(int type, char *msg)
   return(XEN_TRUE_P(result));
 }
 
-#if HAVE_SETJMP_H
+#ifndef _MSC_VER
   void top_level_catch(int ignore);
 #endif
 
@@ -42,7 +42,7 @@ static void mus_error_to_snd(int type, char *msg)
 		     XEN_LIST_1(C_TO_XEN_STRING(msg)));
 #endif
       snd_error("%s: %s", mus_error_type_to_string(type), msg);
-#if HAVE_SETJMP_H
+#ifndef _MSC_VER
       ss->jump_ok = true;
       top_level_catch(1); /* sigh -- try to keep going */
 #endif

@@ -134,7 +134,7 @@
 
 #ifndef __cplusplus
 #include <sys/types.h>
-#if HAVE_STDBOOL_H
+#ifndef _MSC_VER
   #include <stdbool.h>
 #else
 #ifndef true
@@ -773,7 +773,7 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_TO_C_DOUBLE(a)              fth_float_ref(a)
 #define XEN_TO_C_DOUBLE_OR_ELSE(a, b)   fth_float_ref_or_else(a, b)
 
-#if HAVE_MAKE_COMPLEX || HAVE_MAKE_RECTANGULAR
+#if HAVE_MAKE_COMPLEX
 # define XEN_COMPLEX_P(Arg)             FTH_NUMBER_P(Arg) 
 # define C_TO_XEN_COMPLEX(a)            fth_make_complex(a)
 # define XEN_TO_C_COMPLEX(a)            fth_complex_ref(a)
@@ -1101,7 +1101,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          ((double)s7_number_to_real(s7, Arg))
 #define C_TO_XEN_DOUBLE(Arg)                       s7_make_real(s7, Arg)
 
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
   #define XEN_HAVE_COMPLEX_NUMBERS                 1
   #define XEN_COMPLEX_P(Arg)                       s7_is_complex(Arg)
   #define XEN_TO_C_COMPLEX(a)                      (s7_real_part(a) + s7_imag_part(a) * _Complex_I)

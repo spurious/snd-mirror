@@ -1,6 +1,8 @@
 #ifndef SND_1_H
 #define SND_1_H
 
+#define WITH_RELATIVE_PANES (USE_MOTIF && (XmVERSION > 1))
+
 #define ASSERT_SOUND(Origin, Snd, Offset) \
   if (!((XEN_INTEGER_P(Snd)) || (XEN_SOUND_P(Snd)) || (XEN_FALSE_P(Snd)) || (XEN_NOT_BOUND_P(Snd)))) \
     XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "a sound object, an integer (sound index), or " PROC_FALSE);

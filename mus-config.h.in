@@ -28,7 +28,7 @@
 /* --with-pulseaudio */
 #undef MUS_PULSEAUDIO
 
-/* --with-portaudio -- obsolete?
+/* --with-portaudio -- obsolete? hard to tell from the website
  */
 #undef MUS_PORTAUDIO
 
@@ -73,20 +73,22 @@
 
 
 #undef HAVE_READLINE
-/* this is only used in ruby xen_rb_repl xen.c -- make -D as --with-ruby? */
-
-#undef HAVE_SYS_TIME_H
-#undef HAVE_STDBOOL_H
-#undef HAVE_SYS_PARAM_H
-/* is s7, just include this if not windows -- similarly for stdbool if not c++ */
-#undef HAVE_SETJMP_H
-#undef HAVE_DIRENT_H
-/* everyone but windows? */
-
+/* this is only used in ruby xen_rb_repl xen.c -- make -D as --with-ruby? 
+   on the explicit --enable-readline switch already (for disable case)
+   then checks for libreadline, adds that and -lncurses
+   linux=yes
+   TODO: try ruby in openbsd, freebsd, mac, assume windows=no
+ */
 
 #undef HAVE_DLFCN_H
+/* linux/bsd? (not windows I think, not osx if c++?) 
+   TODO: dlfcn in freebsd?  in osx in c?
+ */
+
 #undef HAVE_SYS_SOUNDCARD_H
 #undef HAVE_MACHINE_SOUNDCARD_H
+/* sys in fc11 linux --where in fc19?, which in bsd? (neither in openbsd) 
+ */
 
 #undef HAVE_SYS_MIXER_H
 /* solaris case -- do we care anymore? */
@@ -95,7 +97,9 @@
 /* alsa.pc? */
 
 #undef HAVE_BYTESWAP_H
-/* not osx or windows */
+/* not osx or windows -- TODO check osx c here
+ */
+
 
 #undef HAVE_OSS
 #undef HAVE_ALSA
@@ -105,8 +109,12 @@
 /* this was old OSX -- can we use OS version? where is it? */
 
 #undef WITH_AUDIO
+/* meant for --without-audio but how to fit in?
+ */
 
 #undef HAVE_FFTW3
+/* can be either fftw.pc or (locally built?) fftw3.pc
+ */
 
 #undef HAVE_GSL
 /* gls.pc */
@@ -116,15 +124,15 @@
 #undef HAVE_FORTH
 /* these can be arg choices via -D */
 
-#define HAVE_EXTENSION_LANGUAGE (HAVE_SCHEME || HAVE_RUBY || HAVE_FORTH)
-
 #undef HAVE_GL
 /* gl.pc -- explicit arg
  */
 
 #undef JUST_GL
 /* maybe put the gl scm stuff under the autoloader so we don't need this switch
- *   try this everywhere and see if it is even needed anymore
+ *   TODO: try this everywhere and see if it is even needed anymore
+ *      linux:no, windows:no, 
+ *   if so, maybe remove makegl.scm gl.c gldata.scm, or make them explicitly cloaded (not ruby or forth in that case)
  */
 
 #undef HAVE_GLU
@@ -162,20 +170,6 @@ got: ["/home/bil/ruby-snd", "/usr/local/share/snd", "/usr/local/lib/ruby/site_ru
 see xen_rb_add_to_load_path in xen.c
  */
 
-#undef WITH_RELATIVE_PANES
-/* based on XmSashP.h -- Xm version? */
-
-
-#undef HAVE_COMPLEX_TRIG
-#undef WITH_COMPLEX
-#undef HAVE_MAKE_RATIO
-#undef HAVE_MAKE_RECTANGULAR
- /* these are language dependent I think -- just make them explicit 
-  *   but both are undef'd in windows
-  * make_rec: maybe s7 (complex.h??) || maybe forth (complex in fth)
-  * make_rat: s7 || maybe-forth (FTH_MAKE_RATIO (fth_ratio_floor)
-  */
-
 #undef WITH_SYSTEM_EXTRAS
 /* this is an s7 switch, used also in xen.c, but it should be an autoloaded library in s7, like getenv, so this switch is almost obsolete 
    why is it here at all?
@@ -203,9 +197,22 @@ see xen_rb_add_to_load_path in xen.c
 #undef PATH_WAVPACK
 #undef PATH_WVUNPACK
 
+/* ---------------------------------------- */
+
 #ifndef USE_SND
   #define USE_SND 1
 #endif
+
+#define HAVE_EXTENSION_LANGUAGE (HAVE_SCHEME || HAVE_RUBY || HAVE_FORTH)
+
+#define HAVE_COMPLEX_NUMBERS    ((!_MSC_VER) && ((!HAVE_FORTH) || HAVE_COMPLEX))   /* the latter defined in fth-lib.h I think */
+#define HAVE_COMPLEX_TRIG       ((!_MSC_VER) && (!__cplusplus) && (!__FreeBSD__))  /* this assumes sys/param.h has been included */
+#define HAVE_MAKE_RATIO ((HAVE_SCHEME) || (HAVE_FORTH))
+
+/* TODO: forth might be 0 here and in the complex cases, fth_make_complex and fth_ratio_floor
+ *   can we use a version number? ratio after 1.2.9: 1.3.6? complex always from 1.3.1?
+ *   but FTH_VERSION is a function call, and FTH_PACKAGE_VERSION is a string
+ */
 
 #ifdef _MSC_VER
   #define ssize_t int 
@@ -217,5 +224,4 @@ see xen_rb_add_to_load_path in xen.c
     #define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
   #endif
 #endif
-
 #endif

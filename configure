@@ -4127,7 +4127,7 @@ fi
 done
 
 
-for ac_header in sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h
+for ac_header in sys/soundcard.h machine/soundcard.h sys/mixer.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -4140,7 +4140,7 @@ fi
 
 done
 
-for ac_header in sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h dirent.h
+for ac_header in sys/statvfs.h dlfcn.h byteswap.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -4675,94 +4675,6 @@ fi
 
 
 
-#--------------------------------------------------------------------------------
-# complex trig
-#--------------------------------------------------------------------------------
-
-# having <complex.h> + a cacos declaration is not enough: C++ dies with a complaint about a "deprecated header"
-#
-#  I'm also using cexp and in xen creal, cimag, and _Complex_I
-#  I'm currently using the data type "complex double" though the header seems to prefer "double complex" and
-#  the gcc documentation mentions _Complex double.
-#
-# in C++, we want to set these to WITH_COMPLEX 1 and HAVE_COMPLEX_TRIG 0 no matter what
-#
-LIBS="$LIBS -lm"
-
-if test "$CC" = "g++" ; then
-  $as_echo "#define WITH_COMPLEX 1" >>confdefs.h
-
-  ac_snd_have_complex_trig=no
-else
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for complex numbers" >&5
-$as_echo_n "checking for complex numbers... " >&6; }
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <complex.h>
-int
-main ()
-{
- double complex val;
-                  double rl, im;
-                  val = 1.0 + 0.5 * _Complex_I;
-                  rl = creal(val);
-                  im = cimag(val);
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-
- 	 $as_echo "#define WITH_COMPLEX 1" >>confdefs.h
-
-	 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-
-
-  ac_snd_have_complex_trig=no
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for complex trig" >&5
-$as_echo_n "checking for complex trig... " >&6; }
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <complex.h>
-int
-main ()
-{
- _Complex double val;
-                  double rl, im;
-                  val = 1.0 + 0.5 * _Complex_I;
-                  rl = creal(val);
-                  im = cimag(val);
-                  val = ccosh(cacosh(1.5) / 100.0)
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-
- 	 $as_echo "#define HAVE_COMPLEX_TRIG 1" >>confdefs.h
-
-	 ac_snd_have_complex_trig=yes
-	 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-fi
 
 
 #--------------------------------------------------------------------------------
@@ -6048,68 +5960,6 @@ if test "x$ac_cv_lib_m_XmCreateForm" = xyes; then :
 
 
 
-	  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether sashes support relative panes" >&5
-$as_echo_n "checking whether sashes support relative panes... " >&6; }
-	  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <Xm/SashP.h>
-int
-main ()
-{
- Widget w; int happy = 0;
-                                SashCallData call_data;
-                                if ((XtIsSubclass(w, xmSashWidgetClass)) &&
-                                    (strcmp(call_data->params[0], "Start") == 0)) {happy = 1;}
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-	     $as_echo "#define WITH_RELATIVE_PANES 1" >>confdefs.h
-
-	     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-            # perhaps the user hasn't installed the Motif headers?
-             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Motif headers" >&5
-$as_echo_n "checking for Motif headers... " >&6; }
-	     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <Xm/XmAll.h>
-int
-main ()
-{
- Widget w;
-				   w = XmCreateForm(NULL, "form", NULL, 0)
-
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find the Motif headers! These are in openmotif-devel or some such package, or perhaps you need to include the --with-motif-prefix switch: --with-motif-prefix=/usr/pkg for example -- I will look for Gtk" >&5
-$as_echo "$as_me: WARNING: can't find the Motif headers! These are in openmotif-devel or some such package, or perhaps you need to include the --with-motif-prefix switch: --with-motif-prefix=/usr/pkg for example -- I will look for Gtk" >&2;}
-               with_gtk=yes
-	       with_motif=no
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
 else
 
 	 { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find the Motif library! -- will look for Gtk" >&5
@@ -7043,8 +6893,6 @@ fi
 
      	      		     $as_echo "#define HAVE_MAKE_COMPLEX 1" >>confdefs.h
 
-     	      		     $as_echo "#define HAVE_MAKE_RECTANGULAR 1" >>confdefs.h
-
 			  fi
 			  if test "$FTH_HAVE_RATIO" = yes ; then
      	      		     $as_echo "#define HAVE_MAKE_RATIO 1" >>confdefs.h
@@ -7092,16 +6940,6 @@ if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_s
     $as_echo "#define HAVE_MAKE_RATIO 1" >>confdefs.h
 
     $as_echo "#define WITH_SYSTEM_EXTRAS 1" >>confdefs.h
-
-    ac_fn_c_check_header_mongrel "$LINENO" "complex.h" "ac_cv_header_complex_h" "$ac_includes_default"
-if test "x$ac_cv_header_complex_h" = xyes; then :
-
-         $as_echo "#define HAVE_MAKE_RECTANGULAR 1" >>confdefs.h
-
-
-fi
-
-
 
     LOCAL_LANGUAGE="s7"
     S7_LIB="s7.o"

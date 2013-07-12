@@ -6188,7 +6188,7 @@ that give a minimum peak amplitude when the signals are added together."
 #endif
 
 
-#if HAVE_SYS_TIME_H
+#ifndef _MSC_VER
   #include <sys/time.h>
 #endif
 
@@ -6627,7 +6627,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     return(false);
   }
 
-#if HAVE_SYS_TIME_H
+#ifndef _MSC_VER
   {
     struct timeval tm;
     struct timezone tz;

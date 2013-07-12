@@ -503,7 +503,7 @@ char *srate_completer(widget_t w, const char *text, void * data)
 }
 
 
-#if HAVE_DIRENT_H
+#ifndef _MSC_VER
   #include <dirent.h>
 #endif
 

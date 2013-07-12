@@ -108,25 +108,22 @@
  * The compile-time switches involve booleans, complex numbers, and multiprecision arithmetic.
  * Currently we assume we have setjmp.h (used by the error handlers).
  *
- * s7.h includes stdbool.h if HAVE_STDBOOL_H is 1 and we're not in C++.
- * 
- * Complex number support (which is problematic in C++, Solaris, and netBSD)
- *   is on the WITH_COMPLEX switch. On a Mac, or in Linux, if you're not using C++,
- *   you can use:
+ * Complex number support which is problematic in C++, Solaris, and netBSD
+ *   is on the HAVE_COMPLEX_NUMBERS switch. On a Mac, or in Linux, if you're not using C++,
+ *   I use:
  *
- *   #define WITH_COMPLEX 1
+ *   #define HAVE_COMPLEX_NUMBERS 1
  *   #define HAVE_COMPLEX_TRIG 1
  *
- *   Define the first if your compiler has any support for complex numbers.
- *   Define the second if functions like csin are defined in the math library.
+ *   In C++ I use:
  *
- *   In C++ use:
- *
- *   #define WITH_COMPLEX 1
+ *   #define HAVE_COMPLEX_NUMBERS 1
  *   #define HAVE_COMPLEX_TRIG 0
  *
+ *   In windows, both are 0.
+ *
  *   Some systems (FreeBSD) have complex.h, but some random subset of the trig funcs, so
- *   WITH_COMPLEX means we can find
+ *   HAVE_COMPLEX_NUMBERS means we can find
  *
  *      cimag creal cabs csqrt carg conj
  *
@@ -134,14 +131,9 @@
  *
  *      cacos cacosh casin casinh catan catanh ccos ccosh cexp clog cpow csin csinh ctan ctanh
  * 
- *   except in FreeBSD where HAVE_SYS_PARAM_H needs to be defined so we can find the 
- *   FreeBSD version number.
- *
- * When WITH_COMPLEX is 0 or undefined, the complex functions are stubs that simply return their
+ * When HAVE_COMPLEX_NUMBERS is 0 or undefined, the complex functions are stubs that simply return their
  *   argument -- this will be very confusing for the s7 user because, for example, (sqrt -2)
  *   will return something bogus (it will not signal an error).
- *
- * Snd's configure.ac has m4 code to handle WITH_COMPLEX and HAVE_COMPLEX_TRIG.
  *
  *
  * To get multiprecision arithmetic, set WITH_GMP to 1.
@@ -150,11 +142,10 @@
  * if WITH_SYSTEM_EXTRAS is 1 (default is 0), various OS and file related functions are included.
  *
  * so the incoming (non-s7-specific) compile-time switches are
- *     WITH_COMPLEX, WITH_COMPLEX_TRIG, HAVE_STDBOOL_H, HAVE_SYS_PARAM_H, SIZEOF_VOID_P, 
- *     HAVE_LSTAT, HAVE_DIRENT_H
+ *     HAVE_COMPLEX_NUMBERS_TRIG, SIZEOF_VOID_P, HAVE_LSTAT
  *
  * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__, __clang__, __bfin__, __ANDROID__,
- *     __OpenBSD__, (and __FreeBSD_version if HAVE_SYS_PARAM_H)
+ *     __OpenBSD__
  *
  * if SIZEOF_VOID_P is not defined, we look for __SIZEOF_POINTER__ instead
  *   the default is to assume that we're running on a 64-bit machine.
@@ -314,8 +305,8 @@
  */
 
 #if __cplusplus
-  #ifndef WITH_COMPLEX
-    #define WITH_COMPLEX 1
+  #ifndef HAVE_COMPLEX_NUMBERS
+    #define HAVE_COMPLEX_NUMBERS 1
   #endif
   #ifndef HAVE_COMPLEX_TRIG
     #define HAVE_COMPLEX_TRIG 0
@@ -325,6 +316,7 @@
 
 #ifndef _MSC_VER
   #include <unistd.h>
+  #include <sys/param.h> 
 #else
   #include <io.h>
   #pragma warning(disable: 4244)
@@ -348,7 +340,7 @@
   #include <math.h>
 #endif
 
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
   #if __cplusplus
     #include <complex>
   #else
@@ -2251,7 +2243,7 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 
 #define baffle_key(p)                 (p)->object.baffle_key
 
-#if __cplusplus && WITH_COMPLEX
+#if __cplusplus && HAVE_COMPLEX_NUMBERS
   using namespace std;
   typedef complex<s7_Double> s7_Complex;
   static s7_Double Real(complex<s7_Double> x) {return(real(x));} /* protect the C++ name */
@@ -2266,7 +2258,7 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define inverted_fraction(p)          (((long double)denominator(p)) / ((long double)numerator(p)))
 #define real_part(p)                  p->object.number.complex_value.rl
 #define imag_part(p)                  p->object.number.complex_value.im
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
   #define as_c_complex(p)             (real_part(p) + (imag_part(p) * _Complex_I))
 #endif
 
@@ -7090,7 +7082,7 @@ static bool isinf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}
 
 #endif
 
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
 
 #if __cplusplus
   #define _Complex_I (complex<s7_Double>(0.0, 1.0))
@@ -7134,12 +7126,6 @@ static s7_Complex csqrt(s7_Complex z)
 
 
 #if (!HAVE_COMPLEX_TRIG)
-
-#if HAVE_SYS_PARAM_H 
-  /* needed in FreeBSD */
-  #include <sys/param.h> 
-#endif 
-
 
 #if (!__cplusplus)
 #if (!defined(__FreeBSD_version)) || (__FreeBSD_version < 1000000)
@@ -7260,7 +7246,7 @@ static s7_Complex catanh(s7_Complex z)
 #endif
 
 #else
-/* not WITH_COMPLEX */
+/* not HAVE_COMPLEX_NUMBERS */
   typedef double s7_Complex;
   #define _Complex_I 1
   #define creal(x) x
@@ -10426,7 +10412,7 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
       return(make_real(sc, exp(real(x))));
 
     case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, cexp(as_c_complex(x))));
       /* this is inaccurate for large arguments:
        *   (exp 0+1e20i) -> -0.66491178990701-0.74692189125949i, not 7.639704044417283004001468027378811228331E-1-6.45251285265780844205811711312523007406E-1i
@@ -10578,7 +10564,7 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
       return(make_real(sc, sin((s7_Double)(fraction(x)))));
 
     case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, csin(as_c_complex(x))));
 #else
       return(out_of_range(sc, sc->SIN, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
@@ -10615,7 +10601,7 @@ s7_pointer s7_sin(s7_scheme *sc, s7_pointer x)
       return(make_real(sc, sin((s7_Double)(fraction(x)))));
 
     case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, csin(as_c_complex(x))));
 #endif
 
@@ -10644,7 +10630,7 @@ static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
       return(make_real(sc, cos((s7_Double)(fraction(x)))));
 
     case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, ccos(as_c_complex(x))));
 #else
       return(out_of_range(sc, sc->COS, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
@@ -10670,7 +10656,7 @@ s7_pointer s7_cos(s7_scheme *sc, s7_pointer x)
       return(make_real(sc, cos((s7_Double)(fraction(x)))));
 
     case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, ccos(as_c_complex(x))));
 #endif
 
@@ -10699,7 +10685,7 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
       return(make_real(sc, tan((s7_Double)(fraction(x)))));
 
     case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
       if (imag_part(x) > 350.0)
 	return(s7_make_complex(sc, 0.0, 1.0));
       if (imag_part(x) < -350.0)
@@ -10749,7 +10735,7 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
       }
 
     case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
       /* if either real or imag part is very large, use explicit formula, not casin */
       /*   this code taken from sbcl's src/code/irrat.lisp */
       /* break is around x+70000000i */
@@ -10807,7 +10793,7 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
       }
 
     case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
       /* if either real or imag part is very large, use explicit formula, not cacos */
       /*   this code taken from sbcl's src/code/irrat.lisp */
 
@@ -10854,7 +10840,7 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
 	  return(make_real(sc, atan(number_to_real(x))));
 
 	case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
 	  return(s7_from_c_complex(sc, catan(as_c_complex(x))));
 #else
       return(out_of_range(sc, sc->ATAN, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
@@ -10897,7 +10883,7 @@ static s7_pointer g_sinh(s7_scheme *sc, s7_pointer args)
       return(make_real(sc, sinh(number_to_real(x))));
 
     case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, csinh(as_c_complex(x))));
 #else
       return(out_of_range(sc, sc->SINH, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
@@ -10934,7 +10920,7 @@ static s7_pointer g_cosh(s7_scheme *sc, s7_pointer args)
       return(make_real(sc, cosh(number_to_real(x))));
 
     case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, ccosh(as_c_complex(x))));
 #else
       return(out_of_range(sc, sc->COSH, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
@@ -10963,7 +10949,7 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
       return(make_real(sc, tanh(number_to_real(x))));
 
     case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
       if (real_part(x) > 350.0)
 	return(real_one);               /* closer than 0.0 which is what ctanh is about to return! */
       if (real_part(x) < -350.0)
@@ -10996,7 +10982,7 @@ static s7_pointer g_asinh(s7_scheme *sc, s7_pointer args)
       return(make_real(sc, asinh(number_to_real(x))));
 
     case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, casinh(as_c_complex(x))));
 #else
       return(out_of_range(sc, sc->ASINH, small_int(1), x, "a real number (no complex numbers in this version of s7)"));
@@ -11026,7 +11012,7 @@ static s7_pointer g_acosh(s7_scheme *sc, s7_pointer args)
 	return(make_real(sc, acosh(number_to_real(x))));
 
     case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, cacosh(s7_complex(x)))); /* not as_c_complex because x might not be complex */
 #else
       /* since we can fall through to this branch, we need a better error message than "must be a number, not 0.0" */
@@ -11061,7 +11047,7 @@ static s7_pointer g_atanh(s7_scheme *sc, s7_pointer args)
        *    (atanh 92233720368547758/92233720368547757) -> inf.0
        */
     case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, catanh(s7_complex(x))));
 #else
       return(out_of_range(sc, sc->ATANH, small_int(1), x, "a number between -1.0 and 1.0 (no complex numbers in this version of s7)"));
@@ -11122,7 +11108,7 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, csqrt(as_c_complex(n))));
       break;
 #else
@@ -11322,7 +11308,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  break;
 
 	case T_COMPLEX:
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
 	  if ((s7_real_part(n) == 0.0) &&
 	      ((s7_imag_part(n) == 1.0) ||
 	       (s7_imag_part(n) == -1.0)))
@@ -25069,7 +25055,7 @@ static s7_pointer g_system(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if HAVE_DIRENT_H
+#ifndef _MSC_VER
 #include <dirent.h>
 
 static s7_pointer g_directory_to_list(s7_scheme *sc, s7_pointer args)
@@ -65051,7 +65037,7 @@ s7_scheme *s7_init(void)
   sc->DELETE_FILE =           s7_define_safe_function(sc, "delete-file",             g_delete_file,            1, 0, false, H_delete_file);
   sc->GETENV =                s7_define_safe_function(sc, "getenv",                  g_getenv_1,               1, 0, false, H_getenv);
   sc->SYSTEM =                s7_define_safe_function(sc, "system",                  g_system,                 1, 0, false, H_system);
-#if HAVE_DIRENT_H
+#ifndef _MSC_VER
   sc->DIRECTORY_TO_LIST =     s7_define_safe_function(sc, "directory->list",         g_directory_to_list,      1, 0, false, H_directory_to_list);
 #endif
 #endif
@@ -65481,7 +65467,7 @@ s7_scheme *s7_init(void)
 #if DEBUGGING
   s7_provide(sc, "debugging");
 #endif
-#if WITH_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
   s7_provide(sc, "complex-numbers");
 #endif
 #if WITH_C_LOADER

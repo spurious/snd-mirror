@@ -284,7 +284,7 @@ static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
 static bool noglob = false, noinit = false, nostdin = false;
 
-#if HAVE_SETJMP_H
+#ifndef _MSC_VER
 #include <setjmp.h>
 
 static jmp_buf top_level_jump;
@@ -691,7 +691,7 @@ void snd_doit(int argc, char **argv)
   if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse == SOUND_NORMAL))
     select_channel(ss->sounds[0], 0);
 
-#if HAVE_SETJMP_H
+#ifndef _MSC_VER
   if (setjmp(top_level_jump))
     {
       if (!(ss->jump_ok))

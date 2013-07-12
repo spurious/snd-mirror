@@ -2,11 +2,6 @@
 #include "snd-file.h"
 #include "sndlib-strings.h"
 
-#if HAVE_DIRENT_H
-  #include <dirent.h>
-#endif
-
-
 
 /* -------------------------------- basic file attributes -------------------------------- */
 
@@ -14,8 +9,9 @@
   #include <sys/statvfs.h>
 #endif
 
-#if __bsdi__ || HAVE_SYS_PARAM_H
+#ifndef _MSC_VER
   #include <sys/param.h>
+  #include <dirent.h>
 #endif
 
 #if __bsdi__ || __NetBSD__

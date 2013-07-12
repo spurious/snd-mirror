@@ -8,7 +8,6 @@
 #include <string.h>
 #include <stdarg.h>
 
-#define HAVE_STDBOOL_H 1
 #include "s7.h"
 
 #define TO_STR(x) s7_object_to_c_string(sc, x)

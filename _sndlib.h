@@ -20,7 +20,6 @@
 #endif
 
 #define POWER_OF_2_P(x)	((((x) - 1) & (x)) == 0)
-/* from sys/param.h */
 
 #define MUS_MAX_MALLOC_DEFAULT (1 << 26)
 #define MUS_MAX_TABLE_SIZE_DEFAULT (1024 * 1024 * 20) /* delay line allocation etc */

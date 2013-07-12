@@ -15,7 +15,7 @@
 
 /* not sure how to handle this one cleanly: */
 #ifndef __cplusplus
-#if HAVE_STDBOOL_H
+#ifndef _MSC_VER
   #include <stdbool.h>
 #else
 #ifndef true

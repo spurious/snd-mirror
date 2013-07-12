@@ -13049,7 +13049,7 @@ mus_float_t mus_granulate(mus_any *ptr, mus_float_t (*input)(void *arg, int dire
 
 static void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is);
 
-#if HAVE_FFTW3 && HAVE_COMPLEX_TRIG && (!__cplusplus)
+#if HAVE_FFTW3 && HAVE_COMPLEX_TRIG
 
 static fftw_complex *c_in_data = NULL, *c_out_data = NULL;
 static fftw_plan c_r_plan, c_i_plan;  
@@ -15545,7 +15545,7 @@ void mus_initialize(void)
   array_print_length = MUS_DEFAULT_ARRAY_PRINT_LENGTH;
   clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
 
-#if HAVE_FFTW3 && HAVE_COMPLEX_TRIG && (!__cplusplus)
+#if HAVE_FFTW3 && HAVE_COMPLEX_TRIG
   last_c_fft_size = 0;
   /* is there a problem if the caller built fftw with --enable-threads?  
    *   How to tell via configure that we need to initialize the thread stuff in libfftw?

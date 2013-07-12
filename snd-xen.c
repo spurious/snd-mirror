@@ -2221,7 +2221,7 @@ static XEN g_gsl_eigenvectors(XEN matrix)
 #endif
 
 
-#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
+#if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS
 #include <gsl/gsl_poly.h>
 #include <complex.h>
 
@@ -2419,7 +2419,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   XEN_NARGIFY_1(g_gsl_eigenvectors_w, g_gsl_eigenvectors)
 #endif
 
-  #if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
+  #if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS
     XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
   #endif
 #endif
@@ -2473,7 +2473,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
     #define g_gsl_eigenvectors_w g_gsl_eigenvectors
   #endif
-  #if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
+  #if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS
     #define g_gsl_roots_w g_gsl_roots
   #endif
 #endif
@@ -2605,7 +2605,7 @@ void g_xen_initialize(void)
   XEN_DEFINE_SAFE_PROCEDURE("gsl-eigenvectors", g_gsl_eigenvectors_w, 1, 0, 0, "returns eigenvalues and eigenvectors");
 #endif
 
-#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
+#if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS
   XEN_DEFINE_SAFE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
 #endif
 
@@ -2667,7 +2667,7 @@ void g_xen_initialize(void)
   XEN_DEFINE_CONSTANT("RTLD_GLOBAL", RTLD_GLOBAL, "dlopen flag");
 #endif
 
-#if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE && HAVE_DLFCN_H && HAVE_DIRENT_H && HAVE_DLOPEN
+#if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE && HAVE_DLFCN_H && HAVE_DLOPEN
   g_ladspa_to_snd();
 #endif
 

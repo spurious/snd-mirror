@@ -125,8 +125,8 @@ LIBS=""
 AC_CHECK_LIB(m,main)
 AC_CHECK_LIB(c,main)
 
-AC_CHECK_HEADERS(sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h)
-AC_CHECK_HEADERS(sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h dirent.h)
+AC_CHECK_HEADERS(sys/soundcard.h machine/soundcard.h sys/mixer.h)
+AC_CHECK_HEADERS(sys/statvfs.h dlfcn.h byteswap.h)
 
 AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
 				        #include <sys/param.h>
@@ -195,61 +195,6 @@ AC_SUBST(FFTW_LIBS)
 AC_SUBST(FFTW_CFLAGS)
 
 
-#--------------------------------------------------------------------------------
-# complex trig
-#--------------------------------------------------------------------------------
-
-# having <complex.h> + a cacos declaration is not enough: C++ dies with a complaint about a "deprecated header"
-#
-#  I'm also using cexp and in xen creal, cimag, and _Complex_I
-#  I'm currently using the data type "complex double" though the header seems to prefer "double complex" and
-#  the gcc documentation mentions _Complex double.
-#
-# in C++, we want to set these to WITH_COMPLEX 1 and HAVE_COMPLEX_TRIG 0 no matter what
-#
-LIBS="$LIBS -lm"
-
-if test "$CC" = "g++" ; then
-  AC_DEFINE(WITH_COMPLEX)
-  ac_snd_have_complex_trig=no
-else
-
-  AC_MSG_CHECKING(for complex numbers)
-  AC_LINK_IFELSE(
-  	[AC_LANG_PROGRAM(
-        	[#include <complex.h>],
-		[ double complex val; 
-                  double rl, im;
-                  val = 1.0 + 0.5 * _Complex_I;
-                  rl = creal(val);
-                  im = cimag(val);
-                ])],
-        [
- 	 AC_DEFINE(WITH_COMPLEX)
-	 AC_MSG_RESULT(yes)
-    	],
-	[AC_MSG_RESULT(no)])
-
-
-  ac_snd_have_complex_trig=no
-  AC_MSG_CHECKING(for complex trig)
-  AC_LINK_IFELSE(
-  	[AC_LANG_PROGRAM(
-        	[#include <complex.h>],
-		[ _Complex double val; 
-                  double rl, im;
-                  val = 1.0 + 0.5 * _Complex_I;
-                  rl = creal(val);
-                  im = cimag(val);
-                  val = ccosh(cacosh(1.5) / 100.0)
-                ])],
-        [
- 	 AC_DEFINE(HAVE_COMPLEX_TRIG)
-	 ac_snd_have_complex_trig=yes
-	 AC_MSG_RESULT(yes)
-    	],
-	[AC_MSG_RESULT(no)])
-fi
 
 
 #--------------------------------------------------------------------------------
@@ -489,36 +434,6 @@ else
 	  TEST_LIBS="$TEST_LIBS -lXpm"
 	  AC_SUBST(XLIBS)
 	  AC_SUBST(XFLAGS)
-
-	  AC_MSG_CHECKING([whether sashes support relative panes])
-	  AC_COMPILE_IFELSE(
-            [AC_LANG_PROGRAM([#include <Xm/SashP.h>],
-			     [[ Widget w; int happy = 0;
-                                SashCallData call_data;
-                                if ((XtIsSubclass(w, xmSashWidgetClass)) && 
-                                    (strcmp(call_data->params[0], "Start") == 0)) {happy = 1;}
-			     ]])],
-	    [
-	     AC_DEFINE(WITH_RELATIVE_PANES)
-	     AC_MSG_RESULT(yes)
-	    ],
-	    [AC_MSG_RESULT(no)
-
-            # perhaps the user hasn't installed the Motif headers? 
-             AC_MSG_CHECKING([for Motif headers])
-	     AC_COMPILE_IFELSE(
-               [AC_LANG_PROGRAM([#include <Xm/XmAll.h>],
-			        [[ Widget w; 
-				   w = XmCreateForm(NULL, "form", NULL, 0)
-			        ]]
-                               )],
-	      [AC_MSG_RESULT(yes)],
-	      [AC_MSG_RESULT(no)
-	       AC_MSG_WARN([can't find the Motif headers! These are in openmotif-devel or some such package, or perhaps you need to include the --with-motif-prefix switch: --with-motif-prefix=/usr/pkg for example -- I will look for Gtk])
-               with_gtk=yes
-	       with_motif=no
-              ])
-	    ])
           ],
 	[
 	 AC_MSG_WARN([can't find the Motif library! -- will look for Gtk])
@@ -858,7 +773,6 @@ AC_ARG_WITH(forth,
 			  if test "$FTH_HAVE_COMPLEX" = yes ; then
      	      		     AC_DEFINE(HAVE_COMPLEX_TRIG)
      	      		     AC_DEFINE(HAVE_MAKE_COMPLEX)
-     	      		     AC_DEFINE(HAVE_MAKE_RECTANGULAR)
 			  fi
 			  if test "$FTH_HAVE_RATIO" = yes ; then
      	      		     AC_DEFINE(HAVE_MAKE_RATIO)
@@ -887,11 +801,6 @@ if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_s
     ac_snd_have_extension_language=yes
     AC_DEFINE(HAVE_MAKE_RATIO)
     AC_DEFINE(WITH_SYSTEM_EXTRAS)
-    AC_CHECK_HEADER(complex.h, 
-        [
-         AC_DEFINE(HAVE_MAKE_RECTANGULAR)
-	])
-
     LOCAL_LANGUAGE="s7"
     S7_LIB="s7.o"
 fi
