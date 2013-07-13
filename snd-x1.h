@@ -110,10 +110,6 @@ color_t get_in_between_color(color_t fg, color_t bg);
 void auto_update_restart(void);
 void save_colors(FILE *Fp);
 
-#ifdef SND_AS_WIDGET
-  void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn);
-#endif
-
 
 
 /* -------- snd-xfft.c -------- */

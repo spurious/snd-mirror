@@ -16,9 +16,6 @@
 /* --with-editres */
 #undef MUS_WITH_EDITRES
 
-/* --with-snd-as-widget */
-#undef SND_AS_WIDGET
-
 /* --with-gmp */
 #undef WITH_GMP
 
@@ -101,25 +98,6 @@ in autoconf:
 
 #undef HAVE_X
 /* surely !_MSC_VER! -- no there's the OSX case */
-
-#undef RUBY_SEARCH_PATH
-/* why this?
- *   used in snd-xen.c to set up .rb search paths I think, could be handled at runtime as
- *   ruby -e 'puts $:.join(":")'
- * but is there a ruby function for this? rb_gv_get("$:")
-
-      fprintf(stderr, "search: %s\n", RUBY_SEARCH_PATH);
-      {
-	XEN s;
-	s = rb_gv_get("$:");
-	fprintf(stderr, "got: %s\n", XEN_AS_STRING(s));
-      }
-
-search: /usr/local/lib/ruby/site_ruby/2.0.0:/usr/local/lib/ruby/site_ruby/2.0.0/x86_64-linux:/usr/local/lib/ruby/site_ruby:/usr/local/lib/ruby/vendor_ruby/2.0.0:/usr/local/lib/ruby/vendor_ruby/2.0.0/x86_64-linux:/usr/local/lib/ruby/vendor_ruby:/usr/local/lib/ruby/2.0.0:/usr/local/lib/ruby/2.0.0/x86_64-linux
-got: ["/home/bil/ruby-snd", "/usr/local/share/snd", "/usr/local/lib/ruby/site_ruby/2.0.0", "/usr/local/lib/ruby/site_ruby/2.0.0/x86_64-linux", "/usr/local/lib/ruby/site_ruby", "/usr/local/lib/ruby/vendor_ruby/2.0.0", "/usr/local/lib/ruby/vendor_ruby/2.0.0/x86_64-linux", "/usr/local/lib/ruby/vendor_ruby", "/usr/local/lib/ruby/2.0.0", "/usr/local/lib/ruby/2.0.0/x86_64-linux"]
-
-see xen_rb_add_to_load_path in xen.c
- */
 
 #undef WITH_SYSTEM_EXTRAS
 /* this is an s7 switch, used also in xen.c, but it should be an autoloaded library in s7, like getenv, so this switch is almost obsolete 

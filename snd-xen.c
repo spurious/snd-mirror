@@ -2853,34 +2853,17 @@ void g_xen_initialize(void)
 #if HAVE_RUBY
   XEN_PROVIDE("snd-ruby");
   /* we need to set up the search path so that load and require will work as in the program irb */
-  #ifdef RUBY_SEARCH_PATH
-    {
-      /* this code stolen from ruby.c */
-      char *str, *buf;
-      int i, j = 0, len;
-      str = (char *)(RUBY_SEARCH_PATH);
-
-      len = mus_strlen(str);
-      buf = (char *)calloc(len + 1, sizeof(char));
-      for (i = 0; i < len; i++)
-	if (str[i] == ':')
-	  {
-	    buf[j] = 0;
-	    if (j > 0)
-	      {
-		XEN_ADD_TO_LOAD_PATH(buf);
-	      }
-	    j = 0;
-	  }
-	else buf[j++] = str[i];
-      if (j > 0)
-	{
-	  buf[j] = 0;
-	  XEN_ADD_TO_LOAD_PATH(buf);
-	}
-      free(buf);
-    }
-  #endif
+  {
+    XEN paths;
+    int i, len;
+    paths = rb_gv_get("$:");
+    /* this is printed as 
+     *   ["/home/bil/ruby-snd", "/usr/local/share/snd", "/usr/local/lib/ruby/site_ruby/2.0.0", ...]
+     */
+    len = XEN_VECTOR_LENGTH(paths);
+    for (i = 0; i < len; i++)
+      XEN_ADD_TO_LOAD_PATH(XEN_TO_C_STRING(XEN_VECTOR_REF(paths, i)));
+  }
 #endif
 
   XEN_PROVIDE("snd");

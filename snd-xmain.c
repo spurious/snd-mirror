@@ -51,14 +51,11 @@
 #define INITIAL_WINDOW_HEIGHT 300
 
 
-#ifndef SND_AS_WIDGET
 static void window_close(Widget w, XtPointer context, XtPointer info)
 {
   /* this is called from the window manager close event, not (exit) or the File:Exit item */
   snd_exit_cleanly(EXIT_FORCED);
 }
-#endif
-
 
 
 static XtIntervalId auto_update_proc = 0;
@@ -89,7 +86,6 @@ void auto_update_restart(void)
 
 
 
-#ifndef SND_AS_WIDGET
 /* handle iconification */
 static Widget *iconify_active_dialogs = NULL;
 
@@ -151,7 +147,6 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 	}
     }
 }
-#endif
 
 
 #ifndef _MSC_VER
@@ -205,17 +200,14 @@ static void get_stdin_string(XtPointer context, int *fd, XtInputId *id)
 
 static void startup_funcs(void)
 {
-#ifndef SND_AS_WIDGET
   Atom wm_delete_window;
   Display *dpy;
   Widget shell;
-#endif
   snd_info *sp;
   static int auto_open_ctr = 0;
 
   ss->file_monitor_ok = initialize_file_monitor();
 
-#ifndef SND_AS_WIDGET
   shell = ss->mainshell;
   dpy = MAIN_DISPLAY(ss);
 
@@ -227,7 +219,6 @@ static void startup_funcs(void)
   wm_delete_window = XmInternAtom(dpy, (char *)"WM_DELETE_WINDOW", false);
   XmAddWMProtocolCallback(shell, wm_delete_window, window_close, NULL);
   XtAddEventHandler(shell, StructureNotifyMask, false, minify_maxify_window, NULL);
-#endif
 
   ss->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
   ss->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_watch);
@@ -290,7 +281,6 @@ static void startup_funcs(void)
 }
 
 
-#ifndef SND_AS_WIDGET
 #include <X11/xpm.h>
 
 static void SetupIcon(Widget shell)
@@ -310,22 +300,11 @@ static void SetupIcon(Widget shell)
   if (mask) XFreePixmap(dpy, mask);
   XtVaSetValues(shell, XmNiconPixmap, pix, NULL);
 }
-#endif
 
 
-#ifndef SND_AS_WIDGET
 static void muffle_warning(char *name, char *type, char *klass, char *defaultp, char **params, unsigned int *num_params)
 {
-#if 0
-  int i;
-  fprintf(stderr, "Xt warning: %s, %s: %s", type, name, defaultp);
-  if (num_params) /* can be null! */
-    for (i = 0; i < (int)(*num_params); i++)
-      fprintf(stderr, " %s", params[i]);
-  fprintf(stderr, "\n");
-#endif
 }
-#endif
 
 
 static void notebook_page_changed_callback(Widget w, XtPointer context, XtPointer info)
@@ -491,13 +470,6 @@ void save_colors(FILE *Fp)
 }
 
 
-#ifdef SND_AS_WIDGET
-
-void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn)
-{
-
-#else
-
 static char *fallbacks[] = {
   (char *)"*fontList: " DEFAULT_FONTLIST,
   (char *)"*enableEtchedInMenu: True",
@@ -511,7 +483,6 @@ static char *fallbacks[] = {
 void snd_doit(int argc, char **argv)
 {
   XtAppContext app;     
-#endif
   Widget shell;
   Display *dpy;
   Drawable wn;
@@ -521,17 +492,11 @@ void snd_doit(int argc, char **argv)
   XGCValues gv;
   char *app_title = NULL;
 
-#ifdef SND_AS_WIDGET
-  ss = snd_main(argc, argv);
-#else
   int err = 0;
   XtSetLanguageProc(NULL, NULL, NULL);
-#endif
 
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;
   ss->Graph_Cursor = DEFAULT_GRAPH_CURSOR;
-
-#ifndef SND_AS_WIDGET
 
 #ifndef __alpha__
   XtSetArg(args[0], XtNwidth, INITIAL_WINDOW_WIDTH);
@@ -550,11 +515,6 @@ void snd_doit(int argc, char **argv)
   XtVaGetValues(shell, XmNkeyboardFocusPolicy, &err, NULL);
   if (err != XmEXPLICIT)
     XtVaSetValues(shell, XmNkeyboardFocusPolicy, XmEXPLICIT, NULL);
-
-#else 
-  /* SND_AS_WIDGET */
-  shell = parent;
-#endif
 
   auto_open_files = argc - 1;
   if (argc > 1) auto_open_file_names = (char **)(argv + 1);
@@ -617,7 +577,7 @@ void snd_doit(int argc, char **argv)
   ss->toggle_size = TOGGLE_SIZE;
   ss->click_time = (oclock_t)XtGetMultiClickTime(dpy);
 
-#if (HAVE_GL) && (!SND_AS_WIDGET)
+#if HAVE_GL
   {
     /* this taken from glxmotif.c from xjournal/sgi */
     XVisualInfo *vi = NULL;
@@ -653,9 +613,7 @@ void snd_doit(int argc, char **argv)
   }
 #endif
 
-#ifndef SND_AS_WIDGET
   XtAppSetWarningMsgHandler(app, muffle_warning);
-#endif
 
   ss->mainapp = app;
   ss->mainshell = shell;
@@ -737,15 +695,12 @@ void snd_doit(int argc, char **argv)
 
   XtVaSetValues(shell, XmNbackground, ss->basic_color, NULL);
 
-#ifndef SND_AS_WIDGET
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNallowResize, true); n++;
   ss->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, shell, args, n);
-#else
-  ss->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, parent, caller_args, caller_argn);
-#endif
+
   menu = add_menu();
 
   n = 0;
@@ -807,12 +762,10 @@ void snd_doit(int argc, char **argv)
       break;
     }
 
-#ifndef SND_AS_WIDGET
   SetupIcon(shell);
   XtRealizeWidget(shell);
   if (auto_resize(ss) != AUTO_RESIZE_DEFAULT) 
     XtVaSetValues(shell, XmNallowShellResize, auto_resize(ss), NULL);
-#endif
 
   wn = XtWindow(shell);
   gv.background = ss->graph_color;
@@ -903,7 +856,5 @@ void snd_doit(int argc, char **argv)
       ss->startup_errors = NULL;
     }
 
-#ifndef SND_AS_WIDGET
   XtAppMainLoop(app);
-#endif
 }

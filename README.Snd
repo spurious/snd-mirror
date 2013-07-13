@@ -40,12 +40,6 @@ The configure script has a bunch of arguments:
      --with-gui                make Snd with graphics support (actually intended for use as --without-gui)
   
      --with-gl                 include support for OpenGL (default: no, Motif only)
-       --with-just-gl          same but omit extension language bindings in gl.c (default: no)
-                                 The gl module is only useful if you want to write
-                                 code to add your own OpenGL graphics to Snd.
-                                 --with-just-gl will give you the GL spectrograms
-                                 without any extras.
-  
        --with-gl2ps            include gl2ps (postscript output from OpenGL graphics)
   
 
@@ -70,15 +64,9 @@ The configure script has a bunch of arguments:
 
      --with-ladspa             include LADSPA plugin support (default: yes in Linux)
   
-     --with-snd-as-widget      make Snd a loadable widget, not a standalone program
-
      --with-temp-dir           directory to use for temp files (default: ".")
      --with-save-dir           directory to use for saved-state files (default: ".")
      --with-doc-dir            directory to search for documentation
-
-     --with-shared-sndlib      try to use libsndlib.so (default: no).  The path to
-                                 sndlib-config can be specified via SNDLIB_CONFIG_path.
-  			         Normally, sndlib is built into Snd at compile time.
 
 
 If the configure/make process fails, please send me

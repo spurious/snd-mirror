@@ -2526,11 +2526,11 @@ void mus_vct_init(void)
 
 #ifndef _MSC_VER
   c_object_value_location = s7_c_object_value_offset(s7);
-  if (c_object_value_location != C_OBJECT_VALUE_LOCATION) fprintf(stderr, "value location: %ld %d\n", c_object_value_location, C_OBJECT_VALUE_LOCATION);
+  if (c_object_value_location != C_OBJECT_VALUE_LOCATION) fprintf(stderr, "value location: %ld %d\n", (long int)c_object_value_location, C_OBJECT_VALUE_LOCATION);
   c_object_type_location = s7_c_object_type_offset(s7);
-  if (c_object_type_location != C_OBJECT_TYPE_LOCATION) fprintf(stderr, "object type location: %ld %d\n", c_object_type_location, C_OBJECT_TYPE_LOCATION);
+  if (c_object_type_location != C_OBJECT_TYPE_LOCATION) fprintf(stderr, "object type location: %ld %d\n", (long int)c_object_type_location, C_OBJECT_TYPE_LOCATION);
   cell_type_location = s7_type_offset(s7);
-  if (cell_type_location != CELL_TYPE_LOCATION) fprintf(stderr, "cell type location: %ld %d\n", cell_type_location, CELL_TYPE_LOCATION);
+  if (cell_type_location != CELL_TYPE_LOCATION) fprintf(stderr, "cell type location: %ld %d\n", (long int)cell_type_location, CELL_TYPE_LOCATION);
   c_object_built_in_type = s7_c_object_built_in_type(s7);
   if (c_object_built_in_type != C_OBJECT_BUILT_IN_TYPE) fprintf(stderr, "object type: %d %d\n", c_object_built_in_type, C_OBJECT_BUILT_IN_TYPE);
 #endif

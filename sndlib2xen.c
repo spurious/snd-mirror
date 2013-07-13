@@ -3176,14 +3176,14 @@ void mus_sndlib_xen_initialize(void)
 
 #ifndef _MSC_VER
   sound_data_number_location = s7_number_offset(s7);
-  if (sound_data_number_location != SOUND_DATA_NUMBER_LOCATION) fprintf(stderr, "number location: %d %d\n", sound_data_number_location, SOUND_DATA_NUMBER_LOCATION);
+  if (sound_data_number_location != SOUND_DATA_NUMBER_LOCATION) fprintf(stderr, "number location: %ld %d\n", (long int)sound_data_number_location, SOUND_DATA_NUMBER_LOCATION);
 
   c_object_value_location = s7_c_object_value_offset(s7);
-  if (c_object_value_location != C_OBJECT_VALUE_LOCATION) fprintf(stderr, "value location: %ld %d\n", c_object_value_location, C_OBJECT_VALUE_LOCATION);
+  if (c_object_value_location != C_OBJECT_VALUE_LOCATION) fprintf(stderr, "value location: %ld %d\n", (long int)c_object_value_location, C_OBJECT_VALUE_LOCATION);
   c_object_type_location = s7_c_object_type_offset(s7);
-  if (c_object_type_location != C_OBJECT_TYPE_LOCATION) fprintf(stderr, "object type location: %ld %d\n", c_object_type_location, C_OBJECT_TYPE_LOCATION);
+  if (c_object_type_location != C_OBJECT_TYPE_LOCATION) fprintf(stderr, "object type location: %ld %d\n", (long int)c_object_type_location, C_OBJECT_TYPE_LOCATION);
   cell_type_location = s7_type_offset(s7);
-  if (cell_type_location != CELL_TYPE_LOCATION) fprintf(stderr, "cell type location: %ld %d\n", cell_type_location, CELL_TYPE_LOCATION);
+  if (cell_type_location != CELL_TYPE_LOCATION) fprintf(stderr, "cell type location: %ld %d\n", (long int)cell_type_location, CELL_TYPE_LOCATION);
   c_object_built_in_type = s7_c_object_built_in_type(s7);
   if (c_object_built_in_type != C_OBJECT_BUILT_IN_TYPE) fprintf(stderr, "object type: %d %d\n", c_object_built_in_type, C_OBJECT_BUILT_IN_TYPE);
 #else

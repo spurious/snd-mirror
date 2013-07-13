@@ -366,9 +366,7 @@ void check_for_event(void)
 
 void set_title(const char *title)
 {
-#ifndef SND_AS_WIDGET
   gtk_window_set_title(GTK_WINDOW(MAIN_SHELL(ss)), title);
-#endif
 }
 
 

@@ -19561,16 +19561,16 @@ void Init_sndlib(void)
     fprintf(stderr, "clm slot-value location: %d %d\n", (int)s7_slot_value_offset(s7), XEN_S7_SLOT_VALUE_LOCATION);
 
   c_object_value_location = s7_c_object_value_offset(s7);
-  if (c_object_value_location != C_OBJECT_VALUE_LOCATION) fprintf(stderr, "value location: %ld %d\n", c_object_value_location, C_OBJECT_VALUE_LOCATION);
+  if (c_object_value_location != C_OBJECT_VALUE_LOCATION) fprintf(stderr, "value location: %ld %d\n", (long int)c_object_value_location, C_OBJECT_VALUE_LOCATION);
   c_object_type_location = s7_c_object_type_offset(s7);
-  if (c_object_type_location != C_OBJECT_TYPE_LOCATION) fprintf(stderr, "object type location: %ld %d\n", c_object_type_location, C_OBJECT_TYPE_LOCATION);
+  if (c_object_type_location != C_OBJECT_TYPE_LOCATION) fprintf(stderr, "object type location: %ld %d\n", (long int)c_object_type_location, C_OBJECT_TYPE_LOCATION);
   cell_type_location = s7_type_offset(s7);
-  if (cell_type_location != CELL_TYPE_LOCATION) fprintf(stderr, "cell type location: %ld %d\n", cell_type_location, CELL_TYPE_LOCATION);
+  if (cell_type_location != CELL_TYPE_LOCATION) fprintf(stderr, "cell type location: %ld %d\n", (long int)cell_type_location, CELL_TYPE_LOCATION);
   c_object_built_in_type = s7_c_object_built_in_type(s7);
   if (c_object_built_in_type != C_OBJECT_BUILT_IN_TYPE) fprintf(stderr, "object type: %d %d\n", c_object_built_in_type, C_OBJECT_BUILT_IN_TYPE);
 
-  if (xen_s7_number_location != XEN_S7_NUMBER_LOCATION) fprintf(stderr, "number location: %ld %d\n", xen_s7_number_location, XEN_S7_NUMBER_LOCATION);
-  if (xen_s7_denominator_location != XEN_S7_DENOMINATOR_LOCATION) fprintf(stderr, "denominator location: %ld %d\n", xen_s7_denominator_location, XEN_S7_DENOMINATOR_LOCATION);
+  if (xen_s7_number_location != XEN_S7_NUMBER_LOCATION) fprintf(stderr, "number location: %ld %d\n", (long int)xen_s7_number_location, XEN_S7_NUMBER_LOCATION);
+  if (xen_s7_denominator_location != XEN_S7_DENOMINATOR_LOCATION) fprintf(stderr, "denominator location: %ld %d\n", (long int)xen_s7_denominator_location, XEN_S7_DENOMINATOR_LOCATION);
 #else
   XEN_S7_SLOT_VALUE_LOCATION = s7_slot_value_offset(s7); /* set in xen.c */
   XEN_S7_NUMBER_LOCATION = xen_s7_number_location;

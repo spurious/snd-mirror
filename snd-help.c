@@ -347,9 +347,6 @@ char *version_info(void)
 	      ", mpfr: ", mpfr_get_version(), 
 	      ", mpc: ",  mpc_get_version(),
 #endif
-#if SND_AS_WIDGET
-	  "\n    compiled as a widget",
-#endif
 #ifdef __DATE__
 	  "\n    Compiled ", __DATE__, " ", __TIME__,
 #endif

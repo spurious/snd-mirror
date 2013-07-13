@@ -645,17 +645,11 @@ JACK_LIBS
 AUDIO_LIB
 S7_LIB
 FTH
-FTH_HAVE_RATIO
-FTH_HAVE_COMPLEX
-FTH_LIBS
-FTH_CFLAGS
-FTH_VERSION
 XEN_CFLAGS
 XEN_LIBS
 RUBY
 RUBY_LIBS
 RUBY_CFLAGS
-RUBY_SEARCH_PATH
 GL_FLAGS
 GL_FILES
 GL_LIBS
@@ -663,8 +657,8 @@ GX_HEADERS
 GX_FILES
 CAIRO_CFLAGS
 GTK_LD_LIBS
-GTK_LIBS
 GTK_CFLAGS
+GTK_LIBS
 XFLAGS
 XLIBS
 X_EXTRA_LIBS
@@ -4130,24 +4124,61 @@ fi
 
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether byte ordering is bigendian" >&5
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether byte ordering is bigendian" >&5
 $as_echo_n "checking whether byte ordering is bigendian... " >&6; }
 if ${ac_cv_c_bigendian+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  # See if sys/param.h defines the BYTE_ORDER macro.
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  ac_cv_c_bigendian=unknown
+    # See if we're dealing with a universal compiler.
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifndef __APPLE_CC__
+	       not a universal capable compiler
+	     #endif
+	     typedef int dummy;
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+	# Check for potential -arch flags.  It is not universal unless
+	# there are at least two -arch flags with different values.
+	ac_arch=
+	ac_prev=
+	for ac_word in $CC $CFLAGS $CPPFLAGS $LDFLAGS; do
+	 if test -n "$ac_prev"; then
+	   case $ac_word in
+	     i?86 | x86_64 | ppc | ppc64)
+	       if test -z "$ac_arch" || test "$ac_arch" = "$ac_word"; then
+		 ac_arch=$ac_word
+	       else
+		 ac_cv_c_bigendian=universal
+		 break
+	       fi
+	       ;;
+	   esac
+	   ac_prev=
+	 elif test "x$ac_word" = "x-arch"; then
+	   ac_prev=arch
+	 fi
+       done
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    if test $ac_cv_c_bigendian = unknown; then
+      # See if sys/param.h defines the BYTE_ORDER macro.
+      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <sys/types.h>
-#include <sys/param.h>
+	     #include <sys/param.h>
 
 int
 main ()
 {
-#if  ! (defined BYTE_ORDER && defined BIG_ENDIAN && defined LITTLE_ENDIAN \
-	&& BYTE_ORDER && BIG_ENDIAN && LITTLE_ENDIAN)
- bogus endian macros
-#endif
+#if ! (defined BYTE_ORDER && defined BIG_ENDIAN \
+		     && defined LITTLE_ENDIAN && BYTE_ORDER && BIG_ENDIAN \
+		     && LITTLE_ENDIAN)
+	      bogus endian macros
+	     #endif
 
   ;
   return 0;
@@ -4155,17 +4186,17 @@ main ()
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   # It does; now see whether it defined to BIG_ENDIAN or not.
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <sys/types.h>
-#include <sys/param.h>
+		#include <sys/param.h>
 
 int
 main ()
 {
 #if BYTE_ORDER != BIG_ENDIAN
- not big endian
-#endif
+		 not big endian
+		#endif
 
   ;
   return 0;
@@ -4177,39 +4208,94 @@ else
   ac_cv_c_bigendian=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-else
-  # It does not; compile a test program.
-if test "$cross_compiling" = yes; then :
-  # try to guess the endianness by grepping values into an object file
-  ac_cv_c_bigendian=unknown
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    fi
+    if test $ac_cv_c_bigendian = unknown; then
+      # See if <limits.h> defines _LITTLE_ENDIAN or _BIG_ENDIAN (e.g., Solaris).
+      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-short int ascii_mm[] = { 0x4249, 0x4765, 0x6E44, 0x6961, 0x6E53, 0x7953, 0 };
-short int ascii_ii[] = { 0x694C, 0x5454, 0x656C, 0x6E45, 0x6944, 0x6E61, 0 };
-void _ascii () { char *s = (char *) ascii_mm; s = (char *) ascii_ii; }
-short int ebcdic_ii[] = { 0x89D3, 0xE3E3, 0x8593, 0x95C5, 0x89C4, 0x9581, 0 };
-short int ebcdic_mm[] = { 0xC2C9, 0xC785, 0x95C4, 0x8981, 0x95E2, 0xA8E2, 0 };
-void _ebcdic () { char *s = (char *) ebcdic_mm; s = (char *) ebcdic_ii; }
+#include <limits.h>
+
 int
 main ()
 {
- _ascii (); _ebcdic ();
+#if ! (defined _LITTLE_ENDIAN || defined _BIG_ENDIAN)
+	      bogus endian macros
+	     #endif
+
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  if grep BIGenDianSyS conftest.$ac_objext >/dev/null ; then
+  # It does; now see whether it defined to _BIG_ENDIAN or not.
+	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <limits.h>
+
+int
+main ()
+{
+#ifndef _BIG_ENDIAN
+		 not big endian
+		#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
   ac_cv_c_bigendian=yes
+else
+  ac_cv_c_bigendian=no
 fi
-if grep LiTTleEnDian conftest.$ac_objext >/dev/null ; then
-  if test "$ac_cv_c_bigendian" = unknown; then
-    ac_cv_c_bigendian=no
-  else
-    # finding both strings is unlikely to happen, but who knows?
-    ac_cv_c_bigendian=unknown
-  fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    fi
+    if test $ac_cv_c_bigendian = unknown; then
+      # Compile a test program.
+      if test "$cross_compiling" = yes; then :
+  # Try to guess by grepping values from an object file.
+	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+short int ascii_mm[] =
+		  { 0x4249, 0x4765, 0x6E44, 0x6961, 0x6E53, 0x7953, 0 };
+		short int ascii_ii[] =
+		  { 0x694C, 0x5454, 0x656C, 0x6E45, 0x6944, 0x6E61, 0 };
+		int use_ascii (int i) {
+		  return ascii_mm[i] + ascii_ii[i];
+		}
+		short int ebcdic_ii[] =
+		  { 0x89D3, 0xE3E3, 0x8593, 0x95C5, 0x89C4, 0x9581, 0 };
+		short int ebcdic_mm[] =
+		  { 0xC2C9, 0xC785, 0x95C4, 0x8981, 0x95E2, 0xA8E2, 0 };
+		int use_ebcdic (int i) {
+		  return ebcdic_mm[i] + ebcdic_ii[i];
+		}
+		extern int foo;
+
+int
+main ()
+{
+return use_ascii (foo) == use_ebcdic (foo);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  if grep BIGenDianSyS conftest.$ac_objext >/dev/null; then
+	      ac_cv_c_bigendian=yes
+	    fi
+	    if grep LiTTleEnDian conftest.$ac_objext >/dev/null ; then
+	      if test "$ac_cv_c_bigendian" = unknown; then
+		ac_cv_c_bigendian=no
+	      else
+		# finding both strings is unlikely to happen, but who knows?
+		ac_cv_c_bigendian=unknown
+	      fi
+	    fi
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 else
@@ -4220,14 +4306,14 @@ int
 main ()
 {
 
-  /* Are we little or big endian?  From Harbison&Steele.  */
-  union
-  {
-    long int l;
-    char c[sizeof (long int)];
-  } u;
-  u.l = 1;
-  return u.c[sizeof (long int) - 1] == 1;
+	     /* Are we little or big endian?  From Harbison&Steele.  */
+	     union
+	     {
+	       long int l;
+	       char c[sizeof (long int)];
+	     } u;
+	     u.l = 1;
+	     return u.c[sizeof (long int) - 1] == 1;
 
   ;
   return 0;
@@ -4242,22 +4328,25 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_bigendian" >&5
 $as_echo "$ac_cv_c_bigendian" >&6; }
-case $ac_cv_c_bigendian in
-  yes)
+ case $ac_cv_c_bigendian in #(
+   yes)
+     $as_echo "#define WORDS_BIGENDIAN 1" >>confdefs.h
+;; #(
+   no)
+      ;; #(
+   universal)
 
-$as_echo "#define WORDS_BIGENDIAN 1" >>confdefs.h
- ;;
-  no)
-     ;;
-  *)
-    as_fn_error $? "unknown endianness
-presetting ac_cv_c_bigendian=no (or yes) will help" "$LINENO" 5 ;;
-esac
+$as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
+
+     ;; #(
+   *)
+     as_fn_error $? "unknown endianness
+ presetting ac_cv_c_bigendian=no (or yes) will help" "$LINENO" 5 ;;
+ esac
 
 # The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
@@ -5712,348 +5801,6 @@ fi
 #--------------------------------------------------------------------------------
 
   if test "$with_gtk" = yes ; then
-
-    if test x$PKG_CONFIG != xno ; then
-      if $PKG_CONFIG gtk+-3.0 --exists ; then
-
-          pkg_config_args=gtk+-3.0
-  for module in .
-  do
-      case "$module" in
-         gthread)
-             pkg_config_args="$pkg_config_args gthread-3.0"
-         ;;
-      esac
-  done
-
-  no_gtk=""
-
-  # Extract the first word of "pkg-config", so it can be a program name with args.
-set dummy pkg-config; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_PKG_CONFIG+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $PKG_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
-  ;;
-esac
-fi
-PKG_CONFIG=$ac_cv_path_PKG_CONFIG
-if test -n "$PKG_CONFIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
-$as_echo "$PKG_CONFIG" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-
-  if test x$PKG_CONFIG != xno ; then
-    if pkg-config --atleast-pkgconfig-version 0.7 ; then
-      :
-    else
-      echo *** pkg-config too old; version 0.7 or better required.
-      no_gtk=yes
-      PKG_CONFIG=no
-    fi
-  else
-    no_gtk=yes
-  fi
-
-  min_gtk_version=2.90.0
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK+ - version >= $min_gtk_version" >&5
-$as_echo_n "checking for GTK+ - version >= $min_gtk_version... " >&6; }
-
-  if test x$PKG_CONFIG != xno ; then
-    ## don't try to run the test against uninstalled libtool libs
-    if $PKG_CONFIG --uninstalled $pkg_config_args; then
-	  echo "Will use uninstalled version of GTK+ found in PKG_CONFIG_PATH"
-    fi
-
-    if $PKG_CONFIG --atleast-version $min_gtk_version $pkg_config_args; then
-	  :
-    else
-	  no_gtk=yes
-    fi
-  fi
-
-  if test x"$no_gtk" = x ; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-    GTK_CFLAGS=`$PKG_CONFIG $pkg_config_args --cflags`
-    GTK_LIBS=`$PKG_CONFIG $pkg_config_args --libs`
-    gtk_config_major_version=`$PKG_CONFIG --modversion gtk+-3.0 | \
-           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\1/'`
-    gtk_config_minor_version=`$PKG_CONFIG --modversion gtk+-3.0 | \
-           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\2/'`
-    gtk_config_micro_version=`$PKG_CONFIG --modversion gtk+-3.0 | \
-           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\3/'`
-
-	    with_gtk=yes
-
-
-
-  else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-    	    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: trouble with gtk -- will try to make Snd without any GUI" >&5
-$as_echo "$as_me: WARNING: trouble with gtk -- will try to make Snd without any GUI" >&2;}
-      	    with_gtk=no
-
-  fi
-
-      else
-
-
-  pkg_config_args=gtk+-2.0
-  for module in .
-  do
-      case "$module" in
-         gthread)
-             pkg_config_args="$pkg_config_args gthread-2.0"
-         ;;
-      esac
-  done
-
-  no_gtk=""
-
-  # Extract the first word of "pkg-config", so it can be a program name with args.
-set dummy pkg-config; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_PKG_CONFIG+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $PKG_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
-  ;;
-esac
-fi
-PKG_CONFIG=$ac_cv_path_PKG_CONFIG
-if test -n "$PKG_CONFIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
-$as_echo "$PKG_CONFIG" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-
-  if test x$PKG_CONFIG != xno ; then
-    if pkg-config --atleast-pkgconfig-version 0.7 ; then
-      :
-    else
-      echo *** pkg-config too old; version 0.7 or better required.
-      no_gtk=yes
-      PKG_CONFIG=no
-    fi
-  else
-    no_gtk=yes
-  fi
-
-  min_gtk_version=2.12.0
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK+ - version >= $min_gtk_version" >&5
-$as_echo_n "checking for GTK+ - version >= $min_gtk_version... " >&6; }
-
-  if test x$PKG_CONFIG != xno ; then
-    ## don't try to run the test against uninstalled libtool libs
-    if $PKG_CONFIG --uninstalled $pkg_config_args; then
-	  echo "Will use uninstalled version of GTK+ found in PKG_CONFIG_PATH"
-    fi
-
-    if $PKG_CONFIG --atleast-version $min_gtk_version $pkg_config_args; then
-	  :
-    else
-	  no_gtk=yes
-    fi
-  fi
-
-  if test x"$no_gtk" = x ; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-    GTK_CFLAGS=`$PKG_CONFIG $pkg_config_args --cflags`
-    GTK_LIBS=`$PKG_CONFIG $pkg_config_args --libs`
-    gtk_config_major_version=`$PKG_CONFIG --modversion gtk+-2.0 | \
-           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\1/'`
-    gtk_config_minor_version=`$PKG_CONFIG --modversion gtk+-2.0 | \
-           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\2/'`
-    gtk_config_micro_version=`$PKG_CONFIG --modversion gtk+-2.0 | \
-           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\3/'`
-
-	    with_gtk=yes
-
-
-
-  else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-    	    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: trouble with gtk (we need version 2.12.0 or later) -- will try to make Snd without any GUI" >&5
-$as_echo "$as_me: WARNING: trouble with gtk (we need version 2.12.0 or later) -- will try to make Snd without any GUI" >&2;}
-      	    with_gtk=no
-
-  fi
-
-      fi
-
-    else
-
-
-  pkg_config_args=gtk+-2.0
-  for module in .
-  do
-      case "$module" in
-         gthread)
-             pkg_config_args="$pkg_config_args gthread-2.0"
-         ;;
-      esac
-  done
-
-  no_gtk=""
-
-  # Extract the first word of "pkg-config", so it can be a program name with args.
-set dummy pkg-config; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_PKG_CONFIG+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $PKG_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
-  ;;
-esac
-fi
-PKG_CONFIG=$ac_cv_path_PKG_CONFIG
-if test -n "$PKG_CONFIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
-$as_echo "$PKG_CONFIG" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-
-  if test x$PKG_CONFIG != xno ; then
-    if pkg-config --atleast-pkgconfig-version 0.7 ; then
-      :
-    else
-      echo *** pkg-config too old; version 0.7 or better required.
-      no_gtk=yes
-      PKG_CONFIG=no
-    fi
-  else
-    no_gtk=yes
-  fi
-
-  min_gtk_version=2.12.0
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK+ - version >= $min_gtk_version" >&5
-$as_echo_n "checking for GTK+ - version >= $min_gtk_version... " >&6; }
-
-  if test x$PKG_CONFIG != xno ; then
-    ## don't try to run the test against uninstalled libtool libs
-    if $PKG_CONFIG --uninstalled $pkg_config_args; then
-	  echo "Will use uninstalled version of GTK+ found in PKG_CONFIG_PATH"
-    fi
-
-    if $PKG_CONFIG --atleast-version $min_gtk_version $pkg_config_args; then
-	  :
-    else
-	  no_gtk=yes
-    fi
-  fi
-
-  if test x"$no_gtk" = x ; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-    GTK_CFLAGS=`$PKG_CONFIG $pkg_config_args --cflags`
-    GTK_LIBS=`$PKG_CONFIG $pkg_config_args --libs`
-    gtk_config_major_version=`$PKG_CONFIG --modversion gtk+-2.0 | \
-           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\1/'`
-    gtk_config_minor_version=`$PKG_CONFIG --modversion gtk+-2.0 | \
-           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\2/'`
-    gtk_config_micro_version=`$PKG_CONFIG --modversion gtk+-2.0 | \
-           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\3/'`
-
-	    with_gtk=yes
-
-
-
-  else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-    	    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: trouble with gtk (we need version 2.12.0 or later) -- will try to make Snd without any GUI" >&5
-$as_echo "$as_me: WARNING: trouble with gtk (we need version 2.12.0 or later) -- will try to make Snd without any GUI" >&2;}
-      	    with_gtk=no
-
-  fi
-
-    fi
-
-    if test "$with_gtk" = yes ; then
      	GX_FILES="GTK_O_FILES"
       	GX_HEADERS="SND_G_HEADERS"
 
@@ -6073,36 +5820,41 @@ $as_echo "$as_me: WARNING: trouble with gtk (we need version 2.12.0 or later) --
 	GTK_LD_LIBS="$GTK_LIBS"
 	if test x$PKG_CONFIG != xno ; then
           if $PKG_CONFIG gtk+-3.0 --exists ; then
+            GTK_CFLAGS="`$PKG_CONFIG gtk+-3.0 --cflags`"
+            GTK_LIBS="`$PKG_CONFIG gtk+-3.0 --libs`"
+            GTK_LIBS="`$PKG_CONFIG gtk+-3.0 --libs`"
             GTK_LD_LIBS="`$PKG_CONFIG gtk+-3.0 --libs-only-L` `$PKG_CONFIG gtk+-3.0 --libs-only-l`"
           else
+            GTK_CFLAGS="`$PKG_CONFIG gtk+-2.0 --cflags`"
+            GTK_LIBS="`$PKG_CONFIG gtk+-2.0 --libs`"
             GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
           fi
         fi
 
 
 
+
+
 	if test x$PKG_CONFIG != xno ; then
           CAIRO_CFLAGS="`$PKG_CONFIG cairo --cflags-only-I`"
 
-          fi
+        fi
 
 	XLIBS=""
       	XFLAGS=""
 
 
-     fi
   fi
 
   if test "$with_gtk" != yes && test "$with_motif" != yes ; then
+    $as_echo "#define USE_NO_GUI 1" >>confdefs.h
 
-  $as_echo "#define USE_NO_GUI 1" >>confdefs.h
-
-  XLIBS=""
-  XFLAGS=""
+    XLIBS=""
+    XFLAGS=""
 
 
-  GX_FILES="NO_GUI_O_FILES"
-  GX_HEADERS="NO_GUI_HEADERS"
+    GX_FILES="NO_GUI_O_FILES"
+    GX_HEADERS="NO_GUI_HEADERS"
   fi
 
 fi
@@ -6286,8 +6038,6 @@ done
 test -n "$RUBY" || RUBY="no"
 
   RUBY_VERSION=""
-  RUBY_RELEASE_DATE=""
-  RUBY_SEARCH_PATH=""
   RUBY_CFLAGS=""
   RUBY_LIBS=""
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Ruby" >&5
@@ -6298,8 +6048,6 @@ $as_echo_n "checking for Ruby... " >&6; }
     if `$RUBY -e "exit(RUBY_VERSION >= '$minimum_version' ? 0 : 1)"` ; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RUBY_VERSION" >&5
 $as_echo "$RUBY_VERSION" >&6; }
-      RUBY_RELEASE_DATE=`$RUBY -e 'puts RUBY_RELEASE_DATE'`
-      RUBY_SEARCH_PATH=`$RUBY -e 'puts $:.join(":")'`
       ruby_ldflags=""
       ruby_libs=""
       if `$RUBY -e "exit(RUBY_VERSION < '1.9.0' ? 0 : 1)"` ; then
@@ -6368,7 +6116,6 @@ $as_echo "no" >&6; }
 
 
 
-
         fi
 fi
 
@@ -6389,8 +6136,7 @@ fi
 # Check whether --with-forth was given.
 if test "${with_forth+set}" = set; then :
   withval=$with_forth; if test "$with_forth" = yes ; then
-
-  # Extract the first word of "fth", so it can be a program name with args.
+          # Extract the first word of "fth", so it can be a program name with args.
 set dummy fth; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -6431,128 +6177,27 @@ $as_echo "no" >&6; }
 fi
 
 
-  FTH_VERSION=""
-  FTH_CFLAGS=""
-  FTH_LIBS=""
-  FTH_HAVE_COMPLEX=no
-  FTH_HAVE_RATIO=no
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Forth" >&5
+          FTH_CFLAGS=""
+          FTH_LIBS=""
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Forth" >&5
 $as_echo_n "checking for Forth... " >&6; }
-  if test "${FTH}" != no ; then
-    FTH_VERSION=`${FTH} --no-init-file --eval .version`
-    FTH_CFLAGS=`${FTH} --no-init-file --eval .cflags`
-    FTH_LIBS=`${FTH} --no-init-file --eval .libs`
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: FTH version ${FTH_VERSION}" >&5
-$as_echo "FTH version ${FTH_VERSION}" >&6; }
+          if test "${FTH}" != no ; then
+            FTH_CFLAGS=`${FTH} --no-init-file --eval .cflags`
+            FTH_LIBS=`${FTH} --no-init-file --eval .libs`
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	    $as_echo "#define HAVE_FORTH 1" >>confdefs.h
 
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether FTH supports complex numbers" >&5
-$as_echo_n "checking whether FTH supports complex numbers... " >&6; }
-if ${ac_cv_lib_fth_fth_make_complex+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  fth_check_lib_save_LIBS=$LIBS
-		  LIBS="-lfth ${FTH_LIBS} $LIBS"
-		  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
+            XEN_CFLAGS=$FTH_CFLAGS
 
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char fth_make_complex ();
-int
-main ()
-{
-return fth_make_complex ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_fth_fth_make_complex=yes
-else
-  ac_cv_lib_fth_fth_make_complex=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-		  LIBS=$fth_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_fth_fth_make_complex" >&5
-$as_echo "$ac_cv_lib_fth_fth_make_complex" >&6; }
-  if test $ac_cv_lib_fth_fth_make_complex = yes; then :
-  FTH_HAVE_COMPLEX=yes
-fi
+            XEN_LIBS=$FTH_LIBS
 
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether FTH supports rational numbers" >&5
-$as_echo_n "checking whether FTH supports rational numbers... " >&6; }
-if ${ac_cv_lib_fth_fth_ratio_floor+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  fth_check_lib_save_LIBS=$LIBS
-		  LIBS="-lfth ${FTH_LIBS} $LIBS"
-		  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char fth_ratio_floor ();
-int
-main ()
-{
-return fth_ratio_floor ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_fth_fth_ratio_floor=yes
-else
-  ac_cv_lib_fth_fth_ratio_floor=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-		  LIBS=$fth_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_fth_fth_ratio_floor" >&5
-$as_echo "$ac_cv_lib_fth_fth_ratio_floor" >&6; }
-  if test $ac_cv_lib_fth_fth_ratio_floor = yes; then :
-  FTH_HAVE_RATIO=yes
-fi
-    $as_echo "#define HAVE_FORTH 1" >>confdefs.h
-
-			  if test "$FTH_HAVE_COMPLEX" = yes ; then
-     	      		     $as_echo "#define HAVE_COMPLEX_TRIG 1" >>confdefs.h
-
-     	      		     $as_echo "#define HAVE_MAKE_COMPLEX 1" >>confdefs.h
-
-			  fi
-			  if test "$FTH_HAVE_RATIO" = yes ; then
-     	      		     $as_echo "#define HAVE_MAKE_RATIO 1" >>confdefs.h
-
-			  fi
-               		  XEN_CFLAGS=$FTH_CFLAGS
-
-               		  XEN_LIBS=$FTH_LIBS
-
- 	      		  LOCAL_LANGUAGE="Forth"
- 	      		  ac_snd_have_extension_language=yes
-  else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ 	    LOCAL_LANGUAGE="Forth"
+ 	    ac_snd_have_extension_language=yes
+          else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-
-  fi
-
-
-
-
-
-
+	  fi
 	fi
 fi
 
@@ -6560,7 +6205,7 @@ fi
 
 
 #--------------------------------------------------------------------------------
-# S7 (the default)
+# s7 (the default)
 #--------------------------------------------------------------------------------
 
 S7_LIB=""
@@ -7687,7 +7332,7 @@ esac
 
 
 #--------------------------------------------------------------------------------
-# error checks, output
+# output
 #--------------------------------------------------------------------------------
 
 if test "$ac_snd_have_extension_language" = yes ; then
@@ -7809,6 +7454,7 @@ done
 LIBOBJS=$ac_libobjs
 
 LTLIBOBJS=$ac_ltlibobjs
+
 
 
 

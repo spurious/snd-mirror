@@ -482,11 +482,8 @@ Widget add_menu(void)
   XtSetArg(high_args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(high_args[n], XmNrightAttachment, XmATTACH_FORM); n++;
 
-#ifdef SND_AS_WIDGET
-  main_menu = XtCreateWidget("mb", xmRowColumnWidgetClass, MAIN_PANE(ss), high_args, n);
-#else
   main_menu = XmCreateMenuBar(MAIN_PANE(ss), (char *)"menuBar", high_args, n);
-#endif
+
 
   /* FILE MENU */
   XtSetArg(main_args[main_n], XmNuserData, (XtPointer)0);
@@ -911,9 +908,7 @@ Widget add_menu(void)
   XtAddCallback(edit_cascade_menu, XmNcascadingCallback, edit_menu_update_1, NULL);
   XtAddCallback(view_cascade_menu, XmNcascadingCallback, view_menu_update_1, NULL);
 
-#ifndef SND_AS_WIDGET
   XtManageChild(main_menu);
-#endif
   return(main_menu);
 }
 

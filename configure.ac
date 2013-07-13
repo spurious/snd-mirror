@@ -28,7 +28,6 @@ VERSION=13.9
 #   --with-oss            use OSS 
 #   --with-jack           use Jack
 #   --without-audio       stub out all audio
-#   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 #   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, s7, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
@@ -96,13 +95,6 @@ AC_ARG_WITH(doc-dir,
 	    AC_DEFINE_UNQUOTED(MUS_DEFAULT_DOC_DIR, "${withval}")
 	)
 
-AC_ARG_WITH(snd-as-widget,
-	[  --with-snd-as-widget	  make Snd a loadable widget, not a standalone program],
-  	if test "$with_snd_as_widget" = yes ; then
-	   AC_DEFINE(SND_AS_WIDGET)
-	   MAKE_TARGET=widget
-	fi)
-
 # if mingw add -mwindows to the load flags (I think this means we're trying to build a GUI app, not just a console app??)
 case "$host" in
   *-*-mingw*)
@@ -127,7 +119,7 @@ AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
 				        #endif
 				       ])
 
-AC_OLD_BIGENDIAN
+AC_C_BIGENDIAN
 AC_CHECK_SIZEOF(void *)
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 
@@ -438,43 +430,6 @@ else
 #--------------------------------------------------------------------------------
 
   if test "$with_gtk" = yes ; then
-
-    if test x$PKG_CONFIG != xno ; then
-      if $PKG_CONFIG gtk+-3.0 --exists ; then
-
-        AM_PATH_GTK_3_0(2.90.0,
-          [
-	    with_gtk=yes
-          ],
-          [
-    	    AC_MSG_WARN([trouble with gtk -- will try to make Snd without any GUI])
-      	    with_gtk=no
-          ])
-      else
-
-        AM_PATH_GTK_2_0(2.12.0,
-          [
-	    with_gtk=yes
-          ],
-          [
-    	    AC_MSG_WARN([trouble with gtk (we need version 2.12.0 or later) -- will try to make Snd without any GUI])
-      	    with_gtk=no
-          ])
-      fi
-
-    else
-
-        AM_PATH_GTK_2_0(2.12.0,
-          [
-	    with_gtk=yes
-          ],
-          [
-    	    AC_MSG_WARN([trouble with gtk (we need version 2.12.0 or later) -- will try to make Snd without any GUI])
-      	    with_gtk=no
-          ])
-    fi
-
-    if test "$with_gtk" = yes ; then
      	GX_FILES="GTK_O_FILES"
       	GX_HEADERS="SND_G_HEADERS"
 
@@ -493,35 +448,40 @@ else
 	GTK_LD_LIBS="$GTK_LIBS"
 	if test x$PKG_CONFIG != xno ; then
           if $PKG_CONFIG gtk+-3.0 --exists ; then
+            GTK_CFLAGS="`$PKG_CONFIG gtk+-3.0 --cflags`"
+            GTK_LIBS="`$PKG_CONFIG gtk+-3.0 --libs`"
+            GTK_LIBS="`$PKG_CONFIG gtk+-3.0 --libs`"
             GTK_LD_LIBS="`$PKG_CONFIG gtk+-3.0 --libs-only-L` `$PKG_CONFIG gtk+-3.0 --libs-only-l`"
           else
+            GTK_CFLAGS="`$PKG_CONFIG gtk+-2.0 --cflags`"
+            GTK_LIBS="`$PKG_CONFIG gtk+-2.0 --libs`"
             GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
           fi
         fi
 
+      	AC_SUBST(GTK_LIBS)
+      	AC_SUBST(GTK_CFLAGS)
       	AC_SUBST(GTK_LD_LIBS)
 
 	if test x$PKG_CONFIG != xno ; then
           CAIRO_CFLAGS="`$PKG_CONFIG cairo --cflags-only-I`"
       	  AC_SUBST(CAIRO_CFLAGS)
-          fi
+        fi
 
 	XLIBS=""
       	XFLAGS=""
       	AC_SUBST(XLIBS)
       	AC_SUBST(XFLAGS)
-     fi
   fi
 
   if test "$with_gtk" != yes && test "$with_motif" != yes ; then
-
-  AC_DEFINE(USE_NO_GUI)
-  XLIBS=""
-  XFLAGS=""
-  AC_SUBST(XLIBS)
-  AC_SUBST(XFLAGS)
-  GX_FILES="NO_GUI_O_FILES"
-  GX_HEADERS="NO_GUI_HEADERS"
+    AC_DEFINE(USE_NO_GUI)
+    XLIBS=""
+    XFLAGS=""
+    AC_SUBST(XLIBS)
+    AC_SUBST(XFLAGS)
+    GX_FILES="NO_GUI_O_FILES"
+    GX_HEADERS="NO_GUI_HEADERS"
   fi
 
 fi
@@ -608,8 +568,6 @@ ac_snd_have_extension_language=no
 dnl AC_CHECK_RUBY([MINIMUM-VERSION [, ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl Test for Ruby, defines
 dnl   RUBY_VERSION
-dnl   RUBY_RELEASE_DATE
-dnl   RUBY_SEARCH_PATH
 dnl   RUBY_CFLAGS
 dnl   RUBY_LIBS
 
@@ -617,8 +575,6 @@ AC_DEFUN([AC_CHECK_RUBY],
 [
   [AC_PATH_PROGS([RUBY], [$RUBY ruby], [no])]
   RUBY_VERSION=""
-  RUBY_RELEASE_DATE=""
-  RUBY_SEARCH_PATH=""
   RUBY_CFLAGS=""
   RUBY_LIBS=""
   AC_MSG_CHECKING([for Ruby])
@@ -627,8 +583,6 @@ AC_DEFUN([AC_CHECK_RUBY],
     RUBY_VERSION=`$RUBY -e 'puts RUBY_VERSION'`
     if `$RUBY -e "exit(RUBY_VERSION >= '$minimum_version' ? 0 : 1)"` ; then
       AC_MSG_RESULT([$RUBY_VERSION])
-      RUBY_RELEASE_DATE=`$RUBY -e 'puts RUBY_RELEASE_DATE'`
-      RUBY_SEARCH_PATH=`$RUBY -e 'puts $:.join(":")'`
       ruby_ldflags=""
       ruby_libs=""
       if `$RUBY -e "exit(RUBY_VERSION < '1.9.0' ? 0 : 1)"` ; then
@@ -674,7 +628,6 @@ AC_DEFUN([AC_CHECK_RUBY],
     [$3]
   fi
 
-  AC_SUBST([RUBY_SEARCH_PATH])
   AC_SUBST([RUBY_CFLAGS])
   AC_SUBST([RUBY_LIBS])
 ])# AC_CHECK_RUBY
@@ -718,24 +671,28 @@ fi
 AC_ARG_WITH(forth,
 	[  --with-forth	  	  use Forth as the extension language],
   	if test "$with_forth" = yes ; then
-	   FTH_CHECK_LIB([AC_DEFINE(HAVE_FORTH)
-			  if test "$FTH_HAVE_COMPLEX" = yes ; then
-     	      		     AC_DEFINE(HAVE_COMPLEX_TRIG)
-     	      		     AC_DEFINE(HAVE_MAKE_COMPLEX)
-			  fi
-			  if test "$FTH_HAVE_RATIO" = yes ; then
-     	      		     AC_DEFINE(HAVE_MAKE_RATIO)
-			  fi
-               		  AC_SUBST(XEN_CFLAGS, $FTH_CFLAGS)
-               		  AC_SUBST(XEN_LIBS,   $FTH_LIBS)
- 	      		  LOCAL_LANGUAGE="Forth"
- 	      		  ac_snd_have_extension_language=yes])
+          [AC_PATH_PROG([FTH], [fth], [no])]
+          FTH_CFLAGS=""
+          FTH_LIBS=""
+          AC_MSG_CHECKING([for Forth])
+          if test "${FTH}" != no ; then
+            FTH_CFLAGS=`${FTH} --no-init-file --eval .cflags`
+            FTH_LIBS=`${FTH} --no-init-file --eval .libs`
+            AC_MSG_RESULT([yes])
+	    AC_DEFINE(HAVE_FORTH)
+            AC_SUBST(XEN_CFLAGS, $FTH_CFLAGS)
+            AC_SUBST(XEN_LIBS, $FTH_LIBS)
+ 	    LOCAL_LANGUAGE="Forth"
+ 	    ac_snd_have_extension_language=yes
+          else
+            AC_MSG_RESULT([no])
+	  fi
 	fi)
 
 
 
 #--------------------------------------------------------------------------------
-# S7 (the default)
+# s7 (the default)
 #--------------------------------------------------------------------------------
 
 S7_LIB=""
@@ -1132,19 +1089,17 @@ ORIGINAL_LDFLAGS="$LDFLAGS"
 
 case "$host" in
   *-*-linux* | *-*-bsdi* | *-*-freebsd* | *-*-openbsd* | *-*-netbsd*) 
-    if test "$with_snd_as_widget" != yes ; then
-      if test "$CC" = "gcc" || test "$CC" = "g++" ; then
-        LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
-        # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
-        #   that ends up generating endless dumb warnings in gcc
-      fi
+    if test "$CC" = "gcc" || test "$CC" = "g++" ; then
+      LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
+      # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
+      #   that ends up generating endless dumb warnings in gcc
     fi
 esac
 
 
 
 #--------------------------------------------------------------------------------
-# error checks, output
+# output
 #--------------------------------------------------------------------------------
 
 if test "$ac_snd_have_extension_language" = yes ; then

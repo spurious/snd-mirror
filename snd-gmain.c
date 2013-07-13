@@ -44,7 +44,6 @@
 #define INITIAL_WINDOW_HEIGHT 300
 
 
-#ifndef SND_AS_WIDGET
 static gint window_close(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   if (snd_exit_cleanly(EXIT_FORCED))
@@ -93,8 +92,6 @@ static gint window_iconify(GtkWidget *w, GdkEventWindowState *event, gpointer co
     }
   return(false);
 }
-#endif
-
 
 
 static guint auto_update_proc = 0;
@@ -300,12 +297,10 @@ static void startup_funcs(void)
   static int auto_open_ctr = 0;
   ss->file_monitor_ok = true;
 
-#ifndef SND_AS_WIDGET
   /* trap outer-level Close for cleanup check */
   SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "delete_event", window_close, NULL);
   /* when iconified, we need to hide any dialogs as well */
   SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "window_state_event", window_iconify, NULL);
-#endif
 
   ss->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
   ss->wait_cursor = gdk_cursor_new(GDK_WATCH);
@@ -341,12 +336,10 @@ static void startup_funcs(void)
   while (auto_open_ctr < auto_open_files)
     auto_open_ctr = handle_next_startup_arg(auto_open_ctr, auto_open_file_names, true, auto_open_files);
 
-#ifndef SND_AS_WIDGET
   if ((ss->init_window_width > 0) && (ss->init_window_height > 0))
     set_widget_size(GTK_WIDGET(MAIN_SHELL(ss)), ss->init_window_width, ss->init_window_height);
   if ((ss->init_window_x != DEFAULT_INIT_WINDOW_X) && (ss->init_window_y != DEFAULT_INIT_WINDOW_Y))
     set_widget_position(GTK_WIDGET(MAIN_SHELL(ss)), ss->init_window_x, ss->init_window_y);
-#endif
 
   if (!(ss->file_monitor_ok))
     {
@@ -367,12 +360,10 @@ static void startup_funcs(void)
 }
 
 
-#ifndef SND_AS_WIDGET
 static void set_up_icon(void)
 {
   gtk_window_set_icon(GTK_WINDOW(MAIN_SHELL(ss)), gdk_pixbuf_new_from_xpm_data(snd_icon_bits()));
 }
-#endif
 
 
 color_t get_in_between_color(color_t fg, color_t bg)
@@ -408,39 +399,22 @@ static void notebook_switch_page(GtkNotebook *w, GtkWidget *page_widget, gint pa
 }
 
 
-#ifdef SND_AS_WIDGET
-GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_func)(const char *msg))
-{
-
-#else
-
 void snd_doit(int argc, char **argv)
 {
-#endif
   GtkWidget *shell;
   int i;
 
-#ifdef SND_AS_WIDGET
-  set_error_display(error_func);
-  ss = snd_main(argc, argv);
-#else
   gtk_init(&argc, &argv);
 
-#if (!HAVE_GTK_3)
-#if (!__APPLE__)
+#if (!HAVE_GTK_3) && (!__APPLE__)
   gdk_set_locale();
-#endif
-#endif
-
 #endif
 
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;
   ss->Graph_Cursor = DEFAULT_GRAPH_CURSOR;
 
-#ifndef SND_AS_WIDGET
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   sg_make_resizable(shell);
-#endif
 
   auto_open_files = argc-1;
   if (argc > 1) auto_open_file_names = (char **)(argv + 1);
@@ -582,13 +556,9 @@ void snd_doit(int argc, char **argv)
   init_gtk();
 #endif
   
-#ifdef SND_AS_WIDGET
-  MAIN_SHELL(ss) = parent;
-  shell = MAIN_PANE(ss);
-#else
   MAIN_SHELL(ss) = shell;
   gtk_container_add(GTK_CONTAINER(MAIN_SHELL(ss)), MAIN_PANE(ss));
-#endif
+
   add_menu(); /* adds menubar to MAIN_PANE (via box_pack_start) */
   if (with_toolbar(ss)) show_toolbar();
 
@@ -624,14 +594,10 @@ void snd_doit(int argc, char **argv)
   gtk_widget_show(MAIN_PANE(ss));
   gtk_widget_show(MAIN_SHELL(ss));
   
-#ifndef SND_AS_WIDGET
 #if HAVE_GTK_ADJUSTMENT_GET_UPPER
   MAIN_WINDOW(ss) = gtk_widget_get_window(MAIN_SHELL(ss));
 #else
   MAIN_WINDOW(ss) = MAIN_SHELL(ss)->window;
-#endif
-#else
-  MAIN_WINDOW(ss) = gtk_widget_get_parent_window(MAIN_SHELL(ss));
 #endif
   
   setup_gcs();
@@ -666,11 +632,7 @@ void snd_doit(int argc, char **argv)
       (!(ss->sounds[0])))
     handle_listener(true);
 
-#ifndef SND_AS_WIDGET
   set_up_icon();
   gtk_main();
-#else
-  return(shell);
-#endif
 }
 

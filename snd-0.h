@@ -1,10 +1,6 @@
 #ifndef SND_0_H
 #define SND_0_H
 
-#if defined(__bsdi__) && (!HAVE_DECL_ISNAN)
-  #define HAVE_DECL_ISNAN 1
-#endif
-
 #if HAVE_RUBY
   #undef _
 #endif

@@ -38,16 +38,6 @@ void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd)
 }
 
 
-#ifdef SND_AS_WIDGET
-static void (*snd_error_display)(const char *msg);
-
-void set_error_display(void (*func)(const char *msg))
-{
-  snd_error_display = func;
-}
-#endif
-
-
 void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), void *data)
 {
   ss->snd_error_handler = handler;
@@ -84,13 +74,6 @@ static void snd_error_1(const char *msg, bool with_redirection_and_hook)
     {
       if (ss->batch_mode)
 	fprintf(stderr, "%s", msg);
-#ifdef SND_AS_WIDGET
-      if (snd_error_display) 
-	{
-	  snd_error_display(msg);
-	  return;
-	}
-#endif
 #if ((!HAVE_EXTENSION_LANGUAGE) && (!USE_NO_GUI))
       {
 	snd_info *sp;

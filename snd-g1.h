@@ -90,10 +90,6 @@ void snd_doit(int argc, char **argv);
 void auto_update_restart(void);
 void save_colors(FILE *Fp);
 
-#ifdef SND_AS_WIDGET
-  GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_func)(const char *));
-#endif
-
 
 
 /* -------- snd-gmenu.c -------- */

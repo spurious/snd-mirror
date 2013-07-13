@@ -322,12 +322,10 @@ char *snd_tempnam(void)
 
 void snd_exit(int val)
 {
-#ifndef SND_AS_WIDGET
 #if MUS_PORTAUDIO
   Pa_Terminate();
 #endif
   exit(val);
-#endif
 }
 
 

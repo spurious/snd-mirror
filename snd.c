@@ -349,11 +349,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 #endif
 
 
-#if SND_AS_WIDGET
-  snd_state *snd_main(int argc, char **argv)
-#else
-  int main(int argc, char **argv)
-#endif
+int main(int argc, char **argv)
 {
   int i;
 
@@ -441,12 +437,8 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
   initialize_load_path(); /* merge SND_PATH entries into the load-path */
 
-#ifdef SND_AS_WIDGET
-  return(ss); 
-#else
   snd_doit(argc, argv);
   return(0);
-#endif
 }
 
 

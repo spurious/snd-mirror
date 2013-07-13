@@ -284,9 +284,9 @@ make sndinfo
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --without-extension-language --with-just-gl         ------  '
+echo ' ----                 --without-extension-language --with-gl         ------  '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-extension-language --with-just-gl
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-extension-language --with-gl
 make
 echo ' '
 echo ' '
@@ -664,9 +664,9 @@ echo ' '
 echo ' '
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                 --with-just-gl --with-gl2ps         ------ '
+echo ' -----                 --with-gl --with-gl2ps         ------ '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include"  --with-just-gl --quiet --with-gl2ps
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include"  --with-gl --quiet --with-gl2ps
 make
 ./snd --version
 ./snd -noinit --features "'clm 'xm 'gl2ps"

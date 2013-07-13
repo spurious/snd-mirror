@@ -14905,7 +14905,7 @@ enum {
   GXM_Drawing, GXM_Drawn, GXM_Drop_Finish, GXM_Drop_Proc, GXM_DropSite_Enter, GXM_DropSite_Leave, GXM_Drop_Start,
   GXM_File, GXM_List, GXM_Notebook, GXM_Operation, GXM_Popup, GXM_PushButton, GXM_RowColumn, GXM_Scale,
   GXM_ScrollBar, GXM_Selection, GXM_SpinBox, GXM_ToggleButton, GXM_TopLevel_Enter, GXM_TopLevel_Leave,
-  GXM_Traverse, GXM_Verify, GXM_DataField, GXM_TabStack
+  GXM_Traverse, GXM_Verify
 };
 
 static XEN wrap_callback_struct(int type, XtPointer info)

@@ -803,9 +803,6 @@ void snd_warning_without_format(const char *msg);
 bool run_snd_error_hook(const char *msg);
 void g_init_errors(void);
 
-#ifdef SND_AS_WIDGET
-  void set_error_display(void (*func)(const char *msg));
-#endif
 void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), void *data);
 void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd), void *data);
 
@@ -1753,9 +1750,6 @@ int snd_translate(const char *oldname, const char *newname, int type);
 /* -------- snd.c -------- */
 
 void snd_set_global_defaults(bool need_cleanup);
-#if SND_AS_WIDGET
-  snd_state *snd_main(int argc, char **argv);
-#endif
 void g_init_base(void);
 
 
