@@ -738,11 +738,10 @@ with_alsa
 with_oss
 with_jack
 with_ladspa
-with_float_samples
 with_pulseaudio
 with_portaudio
-with_s7
 with_extension_language
+with_s7
 with_forth
 with_ruby
 with_gsl
@@ -1389,7 +1388,7 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-gtk		  use Gtk+ to build Snd
-  --with-gui  	  make Snd with graphics support
+  --with-gui  	      	  make Snd with graphics support
   --with-gl		  include OpenGL support, Motif only
   --with-gl2ps		  include gl2ps, Motif only
   --with-motif	  	  use libXm to build Snd
@@ -1398,17 +1397,16 @@ Optional Packages:
   --with-oss		  use OSS
   --with-jack		  use JACK
   --with-ladspa  	  include support for LADSPA plugins, Linux only
-  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes
-  --with-pulseaudio 		  use PulseAudio, default=no
-  --with-portaudio 		  use portaudio, default=no
+  --with-pulseaudio 	  use PulseAudio, default=no
+  --with-portaudio 	  use portaudio, default=no
+  --with-extension-language use some extension language, default=yes
   --with-s7  	          use S7, default=yes
-  --with-extension-language	use some extension language, default=yes
   --with-forth	  	  use Forth as the extension language
-  --with-ruby            use Ruby as the extension language
+  --with-ruby             use Ruby as the extension language
   --with-gsl		  use GSL, default=yes
   --with-fftw		  use fftw, default=yes
   --with-gmp		  include multiprecision arithmetic via gmp, mpfr, and mpc, default=no
-  --without-audio       don't include any audio functionality
+  --without-audio         don't include any audio functionality
   --with-temp-dir	  directory to use for temp files
   --with-save-dir	  directory to use for saved-state files
   --with-doc-dir	  directory to search for documentation
@@ -3206,8 +3204,8 @@ OPTIONAL_LIBRARIES=""
 LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
-# PACKAGE=Snd
-# VERSION=13.9
+PACKAGE=Snd
+VERSION=13.9
 
 #--------------------------------------------------------------------------------
 # configuration options
@@ -3299,12 +3297,6 @@ if test "${with_ladspa+set}" = set; then :
 fi
 
 
-# Check whether --with-float-samples was given.
-if test "${with_float_samples+set}" = set; then :
-  withval=$with_float_samples;
-fi
-
-
 # Check whether --with-pulseaudio was given.
 if test "${with_pulseaudio+set}" = set; then :
   withval=$with_pulseaudio;
@@ -3318,15 +3310,15 @@ fi
 
 
 
-# Check whether --with-s7 was given.
-if test "${with_s7+set}" = set; then :
-  withval=$with_s7;
-fi
-
-
 # Check whether --with-extension-language was given.
 if test "${with_extension_language+set}" = set; then :
   withval=$with_extension_language;
+fi
+
+
+# Check whether --with-s7 was given.
+if test "${with_s7+set}" = set; then :
+  withval=$with_s7;
 fi
 
 
@@ -3342,7 +3334,6 @@ if test "${with_ruby+set}" = set; then :
 fi
 
 
-# these are primarily for testing
 
 # Check whether --with-gsl was given.
 if test "${with_gsl+set}" = set; then :
@@ -3402,12 +3393,6 @@ if test "${enable_deprecated+set}" = set; then :
 fi
 
 
-
-
-
-# LIBS=""
-# AC_CHECK_LIB(m,main)
-# AC_CHECK_LIB(c,main)
 
 
 ac_ext=c
@@ -4927,7 +4912,7 @@ fi
 fi
 
 
-  XFLAGS="$X_CFLAGS"
+  GTK_FLAGS="$X_CFLAGS"
   X_POST_LIBS="-lX11 $X_EXTRA_LIBS -lXext"
   case "$host" in
     *-apple-*)
@@ -4937,13 +4922,7 @@ fi
       X_POST_LIBS="$X_POST_LIBS -lSM -lICE -lXft"
       ;;
   esac
-
-  if test x$motif_prefix != x ; then
-    X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt"
-    XFLAGS="-I$motif_prefix/include $XFLAGS"
-  else
-    X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
-  fi
+  X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
 
   GX_FILES="MOTIF_O_FILES"
   GX_HEADERS="SND_X_HEADERS"
@@ -4955,7 +4934,7 @@ fi
     X_PRE_LIBS="$X_PRE_LIBS -lXmu"
   fi
 
-  XLIBS="$X_PRE_LIBS $X_POST_LIBS -lXpm"
+  GTK_LIBS="$X_PRE_LIBS $X_POST_LIBS -lXpm"
   $as_echo "#define USE_MOTIF 1" >>confdefs.h
 
   GRAPHICS_TOOLKIT="Motif"
@@ -5035,7 +5014,7 @@ fi
 GL_LIBS=""
 GL_FILES=""
 GL_FLAGS=""
-have_gl=no
+
 if test "$with_gl" = yes ; then
   if test "$with_motif" = yes ; then
     if test x$PKG_CONFIG != xno ; then
@@ -5069,6 +5048,7 @@ fi
 
 
 
+
 #--------------------------------------------------------------------------------
 # language
 #--------------------------------------------------------------------------------
@@ -5093,7 +5073,7 @@ if test "$with_ruby" = yes ; then
       $as_echo "#define HAVE_RUBY 1" >>confdefs.h
 
       XEN_CFLAGS="`$PKG_CONFIG ruby-2.0 --cflags`"
-      XEN_LIBS="`$PKG_CONFIG ruby-2.0 --libs`"
+      XEN_LIBS="`$PKG_CONFIG ruby-2.0 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
       LOCAL_LANGUAGE="Ruby"
       ac_snd_extension_language=Ruby
     else
@@ -5101,7 +5081,7 @@ if test "$with_ruby" = yes ; then
         $as_echo "#define HAVE_RUBY 1" >>confdefs.h
 
         XEN_CFLAGS="`$PKG_CONFIG ruby-1.9 --cflags`"
-        XEN_LIBS="`$PKG_CONFIG ruby-1.9 --libs`"
+        XEN_LIBS="`$PKG_CONFIG ruby-1.9 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
         LOCAL_LANGUAGE="Ruby"
         ac_snd_extension_language=Ruby
       else
@@ -5109,7 +5089,7 @@ if test "$with_ruby" = yes ; then
           $as_echo "#define HAVE_RUBY 1" >>confdefs.h
 
           XEN_CFLAGS="`$PKG_CONFIG ruby-1.8 --cflags`"
-          XEN_LIBS="`$PKG_CONFIG ruby-1.8 --libs`"
+          XEN_LIBS="`$PKG_CONFIG ruby-1.8 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
           LOCAL_LANGUAGE="Ruby"
           ac_snd_extension_language=Ruby
         fi

@@ -23,8 +23,8 @@ OPTIONAL_LIBRARIES=""
 LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
-# PACKAGE=Snd
-# VERSION=13.9
+PACKAGE=Snd
+VERSION=13.9
 
 #--------------------------------------------------------------------------------
 # configuration options
@@ -55,7 +55,7 @@ GRAPHICS_TOOLKIT="None"
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 
 AC_ARG_WITH(gtk,         [  --with-gtk		  use Gtk+ to build Snd])
-AC_ARG_WITH(gui,         [  --with-gui  	  make Snd with graphics support])
+AC_ARG_WITH(gui,         [  --with-gui  	      	  make Snd with graphics support])
 AC_ARG_WITH(gl,          [  --with-gl		  include OpenGL support, Motif only])
 AC_ARG_WITH(gl2ps,       [  --with-gl2ps		  include gl2ps, Motif only])
 AC_ARG_WITH(motif,	 [  --with-motif	  	  use libXm to build Snd])
@@ -65,20 +65,18 @@ AC_ARG_WITH(alsa,        [  --with-alsa		  use ALSA])
 AC_ARG_WITH(oss,         [  --with-oss		  use OSS])
 AC_ARG_WITH(jack,        [  --with-jack		  use JACK])
 AC_ARG_WITH(ladspa,	 [  --with-ladspa  	  include support for LADSPA plugins, Linux only])
-AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
-AC_ARG_WITH(pulseaudio,  [  --with-pulseaudio 		  use PulseAudio, default=no])
-AC_ARG_WITH(portaudio,   [  --with-portaudio 		  use portaudio, default=no])
+AC_ARG_WITH(pulseaudio,  [  --with-pulseaudio 	  use PulseAudio, default=no])
+AC_ARG_WITH(portaudio,   [  --with-portaudio 	  use portaudio, default=no])
 
+AC_ARG_WITH(extension-language, [  --with-extension-language use some extension language, default=yes])
 AC_ARG_WITH(s7,          [  --with-s7  	          use S7, default=yes])
-AC_ARG_WITH(extension-language, [  --with-extension-language	use some extension language, default=yes])
 AC_ARG_WITH(forth,       [  --with-forth	  	  use Forth as the extension language])
-AC_ARG_WITH(ruby,        [  --with-ruby            use Ruby as the extension language])
+AC_ARG_WITH(ruby,        [  --with-ruby             use Ruby as the extension language])
 
-# these are primarily for testing
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
 AC_ARG_WITH(fftw,        [  --with-fftw		  use fftw, default=yes])
 AC_ARG_WITH(gmp,         [  --with-gmp		  include multiprecision arithmetic via gmp, mpfr, and mpc, default=no])
-AC_ARG_WITH(audio,       [  --without-audio       don't include any audio functionality])
+AC_ARG_WITH(audio,       [  --without-audio         don't include any audio functionality])
 
 AC_ARG_WITH(temp-dir,    [  --with-temp-dir	  directory to use for temp files], AC_DEFINE_UNQUOTED(MUS_DEFAULT_TEMP_DIR, "${withval}"))
 AC_ARG_WITH(save-dir,    [  --with-save-dir	  directory to use for saved-state files], AC_DEFINE_UNQUOTED(MUS_DEFAULT_SAVE_DIR, "${withval}"))
@@ -86,12 +84,6 @@ AC_ARG_WITH(doc-dir,     [  --with-doc-dir	  directory to search for documentati
 
 AC_ARG_ENABLE(deprecated,[  --disable-deprecated	  do not include any deprecated stuff from gtk, s7, motif, clm, snd, or sndlib])
 
-
-
-
-# LIBS=""
-# AC_CHECK_LIB(m,main)
-# AC_CHECK_LIB(c,main)
 
 AC_C_BIGENDIAN
 AC_CHECK_SIZEOF(void *)
@@ -225,7 +217,7 @@ fi
 if test "$with_motif" = yes ; then
   AC_PATH_XTRA
 
-  XFLAGS="$X_CFLAGS"
+  GTK_FLAGS="$X_CFLAGS"
   X_POST_LIBS="-lX11 $X_EXTRA_LIBS -lXext"
   case "$host" in
     *-apple-*)
@@ -235,13 +227,7 @@ if test "$with_motif" = yes ; then
       X_POST_LIBS="$X_POST_LIBS -lSM -lICE -lXft"
       ;;
   esac
-
-  if test x$motif_prefix != x ; then
-    X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt"
-    XFLAGS="-I$motif_prefix/include $XFLAGS"
-  else
-    X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
-  fi
+  X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
 
   GX_FILES="MOTIF_O_FILES"
   GX_HEADERS="SND_X_HEADERS"
@@ -252,7 +238,7 @@ if test "$with_motif" = yes ; then
     X_PRE_LIBS="$X_PRE_LIBS -lXmu"
   fi
 
-  XLIBS="$X_PRE_LIBS $X_POST_LIBS -lXpm"
+  GTK_LIBS="$X_PRE_LIBS $X_POST_LIBS -lXpm"
   AC_DEFINE(USE_MOTIF)
   GRAPHICS_TOOLKIT="Motif"
   ac_snd_gui_choice=Motif
@@ -328,7 +314,7 @@ AC_SUBST(GTK_LD_LIBS)
 GL_LIBS=""
 GL_FILES=""
 GL_FLAGS=""
-have_gl=no
+
 if test "$with_gl" = yes ; then
   if test "$with_motif" = yes ; then
     if test x$PKG_CONFIG != xno ; then
@@ -354,6 +340,7 @@ if test "$with_gl" = yes ; then
     fi
   fi
 fi
+
 AC_SUBST(GL_LIBS)
 AC_SUBST(GL_FILES)
 AC_SUBST(GL_FLAGS)
@@ -383,21 +370,21 @@ if test "$with_ruby" = yes ; then
     if $PKG_CONFIG ruby-2.0 --exists ; then
       AC_DEFINE(HAVE_RUBY)
       XEN_CFLAGS="`$PKG_CONFIG ruby-2.0 --cflags`"
-      XEN_LIBS="`$PKG_CONFIG ruby-2.0 --libs`"
+      XEN_LIBS="`$PKG_CONFIG ruby-2.0 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
       LOCAL_LANGUAGE="Ruby"
       ac_snd_extension_language=Ruby
     else
       if $PKG_CONFIG ruby-1.9 --exists ; then
         AC_DEFINE(HAVE_RUBY)
         XEN_CFLAGS="`$PKG_CONFIG ruby-1.9 --cflags`"
-        XEN_LIBS="`$PKG_CONFIG ruby-1.9 --libs`"
+        XEN_LIBS="`$PKG_CONFIG ruby-1.9 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
         LOCAL_LANGUAGE="Ruby"
         ac_snd_extension_language=Ruby
       else
         if $PKG_CONFIG ruby-1.8 --exists ; then
           AC_DEFINE(HAVE_RUBY)
           XEN_CFLAGS="`$PKG_CONFIG ruby-1.8 --cflags`"
-          XEN_LIBS="`$PKG_CONFIG ruby-1.8 --libs`"
+          XEN_LIBS="`$PKG_CONFIG ruby-1.8 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
           LOCAL_LANGUAGE="Ruby"
           ac_snd_extension_language=Ruby
         fi

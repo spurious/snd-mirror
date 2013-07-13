@@ -30,8 +30,10 @@ The configure script has a bunch of arguments:
 
    Graphics:
 
-     --with-motif              use Motif (the default, if it exists)
-  
+     --with-motif              use Motif (the default, if it exists).  If it's in some odd
+                                 location, you can pass configure the LDFLAGS and CFLAGS values:
+                                 ./configure LDFLAGS="-L /usr/X11R6/lib" CFLAGS="-I /usr/X11R6/include" --with-motif
+
      --with-gtk                use Gtk+
   
      --with-gui                make Snd with graphics support (actually intended for use as --without-gui)
@@ -46,8 +48,7 @@ The configure script has a bunch of arguments:
 
      --with-oss                use OSS (not tested in a long time)
   
-     --with-jack               use the Jack library (can be used in conjunction
-                                 with --with-alsa, needs libsamplerate).
+     --with-jack               use the Jack library which needs libsamplerate
 
      --with-pulseaudio         use PulseAudio (untested)
 
