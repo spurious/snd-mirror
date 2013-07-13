@@ -6,9 +6,12 @@
 #include <mus-config.h>
 #include <stdlib.h>
 
+
 #define HAVE_XSHAPEQUERYEXTENSION 1
 /* this dates from X11 R6.4 -- set to 0 if you're running a 20 year old version of X
  */
+#define HAVE_XP 0
+
 
 #define XM_DATE "7-Jul-13"
 
@@ -172,7 +175,7 @@
   #define __func__ __FUNCTION__
 #endif
 
-/* compile-time flags are HAVE_RUBY|SCHEME MUS_WITH_EDITRES */
+/* compile-time flags are HAVE_RUBY|SCHEME WITH_EDITRES */
 
 /* if you're using g++ and it complains about XmRemoveFromPostFromList, update Motif (you need 2.1.30) */
 
@@ -201,7 +204,7 @@
 #endif
 
 #include <X11/xpm.h>
-#if MUS_WITH_EDITRES
+#if WITH_EDITRES
   #include <X11/Xmu/Editres.h>
 #endif
 
@@ -16798,7 +16801,7 @@ static XEN gxm_set_npixels(XEN ptr, XEN val)
 }
 
 
-#if MUS_WITH_EDITRES
+#if WITH_EDITRES
 static XEN gxm_XEditResCheckMessages(XEN widget, XEN data, XEN event, XEN cont)
 {
   Boolean flag;
@@ -21097,7 +21100,7 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_1(XEN_XpmImage_p_w, XEN_XpmImage_p)
   XEN_NARGIFY_1(XEN_XpmColorSymbol_p_w, XEN_XpmColorSymbol_p)
 
-#if MUS_WITH_EDITRES
+#if WITH_EDITRES
   XEN_NARGIFY_4(gxm_XEditResCheckMessages_w, gxm_XEditResCheckMessages)
 #endif
 
@@ -22644,7 +22647,7 @@ static XEN gxm_page_number(XEN ptr)
   #define XEN_XpmImage_p_w XEN_XpmImage_p
   #define XEN_XpmColorSymbol_p_w XEN_XpmColorSymbol_p
 
-#if MUS_WITH_EDITRES
+#if WITH_EDITRES
   #define gxm_XEditResCheckMessages_w gxm_XEditResCheckMessages
 #endif
 
@@ -24258,7 +24261,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE("->Atoms", c_to_xen_atoms_w, 2, 0, 0, H_to_Atoms);
   XEN_DEFINE_PROCEDURE("->XRectangles", c_to_xen_xrectangles_w, 2, 0, 0, H_to_XRectangles);
 #endif
-#if MUS_WITH_EDITRES
+#if WITH_EDITRES
   XM_DEFINE_PROCEDURE(_XEditResCheckMessages, gxm_XEditResCheckMessages_w, 4, 0, 0, NULL);
 #endif
 

@@ -1,4 +1,9 @@
 # Configuration script for Snd
+#
+# we now depend completely on pc (pkgconfig) files.
+#   Motif apparently has none.
+#   gmp, mpfr, and mpc deliberately have none!
+
 
 AC_INIT(snd, 13.9, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-13.tar.gz)
 
@@ -7,8 +12,9 @@ AC_CANONICAL_HOST # needed by case $host below
 AC_CONFIG_HEADERS(mus-config.h)
 AC_CONFIG_FILES(makefile)
 AC_PROG_CC
-AC_HEADER_STDC    # this needs to precede AC_CHECK_HEADER!
-AC_PROG_INSTALL
+
+# AC_HEADER_STDC
+# AC_PROG_INSTALL
 
 MAKE_TARGET="snd"
 AUDIO_SYSTEM="None"
@@ -17,8 +23,8 @@ OPTIONAL_LIBRARIES=""
 LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
-PACKAGE=Snd
-VERSION=13.9
+# PACKAGE=Snd
+# VERSION=13.9
 
 #--------------------------------------------------------------------------------
 # configuration options
@@ -32,10 +38,8 @@ VERSION=13.9
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, s7, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
 #   --with-gui            make Snd with(out) any graphics support
-#   --with-motif-prefix   set location of Motif
 #   --with-forth          use Forth as the extension language
 #   --with-ruby           use Ruby as the extension language
-#   --with-ruby-prefix    set location of Ruby
 #   --with-s7             use S7 as the extension language (default = yes)
 #   --with-extension-language use some extension language (default=yes)
 #   --with-temp-dir       directory to use for temp files
@@ -50,21 +54,25 @@ VERSION=13.9
 #   --with-portaudio      use portaudio
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 
-#--------------------------------------------------------------------------------
-
-AC_ARG_WITH(alsa,        [  --with-alsa		  use ALSA])
-AC_ARG_WITH(oss,         [  --with-oss		  use OSS])
-AC_ARG_WITH(jack,        [  --with-jack		  use JACK])
 AC_ARG_WITH(gtk,         [  --with-gtk		  use Gtk+ to build Snd])
 AC_ARG_WITH(gui,         [  --with-gui  	  make Snd with graphics support])
 AC_ARG_WITH(gl,          [  --with-gl		  include OpenGL support, Motif only])
 AC_ARG_WITH(gl2ps,       [  --with-gl2ps		  include gl2ps, Motif only])
 AC_ARG_WITH(motif,	 [  --with-motif	  	  use libXm to build Snd])
 AC_ARG_WITH(editres,     [  --with-editres	  include editres in xm])
+
+AC_ARG_WITH(alsa,        [  --with-alsa		  use ALSA])
+AC_ARG_WITH(oss,         [  --with-oss		  use OSS])
+AC_ARG_WITH(jack,        [  --with-jack		  use JACK])
 AC_ARG_WITH(ladspa,	 [  --with-ladspa  	  include support for LADSPA plugins, Linux only])
 AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
 AC_ARG_WITH(pulseaudio,  [  --with-pulseaudio 		  use PulseAudio, default=no])
 AC_ARG_WITH(portaudio,   [  --with-portaudio 		  use portaudio, default=no])
+
+AC_ARG_WITH(s7,          [  --with-s7  	          use S7, default=yes])
+AC_ARG_WITH(extension-language, [  --with-extension-language	use some extension language, default=yes])
+AC_ARG_WITH(forth,       [  --with-forth	  	  use Forth as the extension language])
+AC_ARG_WITH(ruby,        [  --with-ruby            use Ruby as the extension language])
 
 # these are primarily for testing
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
@@ -72,57 +80,22 @@ AC_ARG_WITH(fftw,        [  --with-fftw		  use fftw, default=yes])
 AC_ARG_WITH(gmp,         [  --with-gmp		  include multiprecision arithmetic via gmp, mpfr, and mpc, default=no])
 AC_ARG_WITH(audio,       [  --without-audio       don't include any audio functionality])
 
-AC_ARG_WITH(s7,          [  --with-s7  	          use S7, default=yes])
-AC_ARG_WITH(extension-language, [  --with-extension-language	use some extension language, default=yes])
+AC_ARG_WITH(temp-dir,    [  --with-temp-dir	  directory to use for temp files], AC_DEFINE_UNQUOTED(MUS_DEFAULT_TEMP_DIR, "${withval}"))
+AC_ARG_WITH(save-dir,    [  --with-save-dir	  directory to use for saved-state files], AC_DEFINE_UNQUOTED(MUS_DEFAULT_SAVE_DIR, "${withval}"))
+AC_ARG_WITH(doc-dir,     [  --with-doc-dir	  directory to search for documentation], AC_DEFINE_UNQUOTED(MUS_DEFAULT_DOC_DIR, "${withval}"))
+
+AC_ARG_ENABLE(deprecated,[  --disable-deprecated	  do not include any deprecated stuff from gtk, s7, motif, clm, snd, or sndlib])
 
 
 
-AC_ARG_WITH(motif-prefix,[  --with-motif-prefix=PFX where Motif is installed],
-            motif_prefix="$withval", motif_prefix="")
 
-AC_ARG_WITH(temp-dir,
-	[  --with-temp-dir	  directory to use for temp files],
-	    AC_DEFINE_UNQUOTED(MUS_DEFAULT_TEMP_DIR, "${withval}")
-	)
-
-AC_ARG_WITH(save-dir,
-	[  --with-save-dir	  directory to use for saved-state files],
-	    AC_DEFINE_UNQUOTED(MUS_DEFAULT_SAVE_DIR, "${withval}")
-	)
-
-AC_ARG_WITH(doc-dir,
-	[  --with-doc-dir	  directory to search for documentation],
-	    AC_DEFINE_UNQUOTED(MUS_DEFAULT_DOC_DIR, "${withval}")
-	)
-
-# if mingw add -mwindows to the load flags (I think this means we're trying to build a GUI app, not just a console app??)
-case "$host" in
-  *-*-mingw*)
-    LDFLAGS="$LDFLAGS -mwindows"
-    ;;
-esac
-
-
-
-#--------------------------------------------------------------------------------
-# standard libraries, header files, functions, OSS special cases
-#--------------------------------------------------------------------------------
-
-LIBS=""
-AC_CHECK_LIB(m,main)
-AC_CHECK_LIB(c,main)
-
-AC_CHECK_HEADERS(sys/statvfs.h)
-
-AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
-				        #include <sys/param.h>
-				        #endif
-				       ])
+# LIBS=""
+# AC_CHECK_LIB(m,main)
+# AC_CHECK_LIB(c,main)
 
 AC_C_BIGENDIAN
 AC_CHECK_SIZEOF(void *)
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-
 
 
 
@@ -144,20 +117,6 @@ if test "$with_fftw" != no; then
     else
       AC_MSG_RESULT(no)
     fi
-  else
-    SAVELIBS=$LIBS
-    LIBS="$LIBS -lfftw3 -lm"
-    AC_MSG_CHECKING([for fftw-3])
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fftw3.h>],
-		                [fftw_plan plan; fftw_execute(plan)])],
-		[AC_MSG_RESULT(yes)
-		 AC_DEFINE(HAVE_FFTW3)
-                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fftw3"
-		 FFTW_LIBS="-lfftw3"],
-		[AC_MSG_RESULT(no)
-                 LIBS=$SAVELIBS
-		])
-    LIBS=$SAVELIBS
   fi
 fi
 AC_SUBST(FFTW_LIBS)
@@ -170,62 +129,14 @@ AC_SUBST(FFTW_CFLAGS)
 # GMP, MPFR, MPC
 #--------------------------------------------------------------------------------
 
+# no pc files -- deliberately! We'll just add the libraries and let the chips fall...
+
 GMP_LIBS=""
-GMP_CFLAGS=""
-LOCAL_GMP_LIBS=""
-ac_snd_have_gmp=no
 
 if test "$with_gmp" = yes ; then
-  # look for gmp, mpfr, and mpc 
-
-  SAVELIBS=$LIBS
-  LIBS="$LIBS -lgmp -lm"
-  AC_CHECK_LIB(gmp, __gmpz_init,
-             [
-	       LOCAL_GMP_LIBS="-lgmp"
-  	       ac_snd_have_gmp=yes
-	     ],
-             [AC_MSG_ERROR(libgmp not found)])
-
-  if test "$ac_snd_have_gmp" != no ; then
-    LIBS="$LIBS -lmpfr"
-    AC_MSG_CHECKING(for libmpfr)
-    LOCAL_GMP_LIBS="$LOCAL_GMP_LIBS -lmpfr"
-    AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM(
-                [#include <mpfr.h>],
-                [mpfr_t x;  mpfr_init(x) ; mpfr_clear(x);]
-        )],
-        [AC_MSG_RESULT(yes)],
-        [
-	  AC_MSG_RESULT(no)
-	  ac_snd_have_gmp=no
-	])
-  fi
-
-  if test "$ac_snd_have_gmp" != no ; then
-    LIBS="$LIBS -lmpc"
-    AC_MSG_CHECKING(for libmpc)
-    LOCAL_GMP_LIBS="$LOCAL_GMP_LIBS -lmpc"
-    AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM(
-                [#include <mpc.h>],
-                [mpc_t x;  mpc_init2(x, 53); mpc_clear(x);  mpc_asin(x, x, MPC_RNDNN);] 
-        )],
-        [AC_MSG_RESULT(yes)
-         AC_CHECK_LIB(mpc, mpc_arg, 
-                [
-		 AC_DEFINE(WITH_GMP)
-		 GMP_LIBS="$LOCAL_GMP_LIBS"
-                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gmp mpfr mpc"
-		], 
-                [AC_MSG_ERROR(libmpc too old)], 
-                $GMP_LIBS)
-	],
-        [AC_MSG_RESULT(no)])
-  fi
-
-  LIBS=$SAVELIBS
+  GMP_LIBS="-lgmp -lmpfr -lmpc -lm"  
+  AC_DEFINE(WITH_GMP)
+  OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gmp mpfr mpc"
 fi
 
 AC_SUBST(GMP_LIBS)
@@ -238,21 +149,22 @@ AC_SUBST(GMP_LIBS)
 
 GSL_LIBS=""
 GSL_CFLAGS=""
+
 if test "$with_gsl" != no; then
-  AC_PATH_PROG(GSL_CONFIG, gsl-config, no)
-  AC_MSG_CHECKING(for GSL)
-  if test "$GSL_CONFIG" = "no" ; then
-    AC_MSG_RESULT(no)
-  else
-    GSL_CFLAGS=`$GSL_CONFIG --cflags`
-    GSL_PREFIX=`$GSL_CONFIG --prefix`
-    GSL_LIBS=`$GSL_CONFIG --libs`
-    gsl_version="`$GSL_CONFIG --version`"
-    AC_MSG_RESULT($gsl_version)
-    OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gsl"
-    AC_DEFINE(HAVE_GSL)
+  AC_MSG_CHECKING(for gsl)
+  if test x$PKG_CONFIG != xno ; then
+    if $PKG_CONFIG gsl --exists ; then
+      GSL_LIBS="`$PKG_CONFIG gsl --libs`"
+      GSL_CFLAGS="`$PKG_CONFIG gsl --cflags`"
+      AC_DEFINE(HAVE_GSL)
+      OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gsl"
+      AC_MSG_RESULT(yes)
+    else
+      AC_MSG_RESULT(no)
+    fi
   fi
 fi
+
 AC_SUBST(GSL_LIBS)
 AC_SUBST(GSL_CFLAGS)
 
@@ -262,15 +174,45 @@ AC_SUBST(GSL_CFLAGS)
 # Ladspa
 #--------------------------------------------------------------------------------
 
-if test "$with_ladspa" != no ; then
-  # we also need dlfcn.h and dirent.h here, but presumably this is on Linux
-  AC_CHECK_HEADER(ladspa.h, 
-		  [AC_DEFINE(HAVE_LADSPA)
-                   RANDOM_FEATURES="$RANDOM_FEATURES ladspa"
-                  ],
-		  if test "$with_ladspa" = yes ; then
-		   AC_MSG_WARN([can't find ladspa.h!])
-		  fi)
+if test "$with_ladspa" = yes ; then
+  AC_DEFINE(HAVE_LADSPA)
+  RANDOM_FEATURES="$RANDOM_FEATURES ladspa"
+fi
+
+
+
+#--------------------------------------------------------------------------------
+# graphics
+#--------------------------------------------------------------------------------
+
+# graphics: motif chosen if --with-motif
+#           no gui chosen if --without-gui
+#           gtk chosen if neither of above and we can find gtk-2.0.pc or gtk-3.0.pc
+#           else no gui
+
+XLIBS=""
+XFLAGS=""
+
+GX_FILES=""
+GX_HEADERS=""
+
+GTK_FILES=""
+GTK_HEADERS=""
+GTK_CFLAGS=""
+GTK_LIBS=""
+GTK_LD_LIBS=""
+
+ac_snd_gui_choice=none
+
+if test "$with_motif" = no && test "$with_gtk" = no ; then
+  with_gui=no
+fi
+
+if test "$with_gui" = no ; then
+  AC_DEFINE(USE_NO_GUI)
+  GX_FILES="NO_GUI_O_FILES"
+  GX_HEADERS="NO_GUI_HEADERS"
+  ac_snd_gui_choice=no
 fi
 
 
@@ -278,216 +220,104 @@ fi
 # X/Motif
 #--------------------------------------------------------------------------------
 
-ac_snd_have_gui=no
+# here as in the gmp case, we simply set up the libs/flags and hope for the best
 
-AC_PATH_XTRA
+if test "$with_motif" = yes ; then
+  AC_PATH_XTRA
 
-if test "$with_motif" = no && test "$with_gtk" = no ; then
-  with_gui=no
-fi
+  XFLAGS="$X_CFLAGS"
+  X_POST_LIBS="-lX11 $X_EXTRA_LIBS -lXext"
+  case "$host" in
+    *-apple-*)
+      X_POST_LIBS="$X_POST_LIBS -lSM -lICE"
+      ;;
+    *-*-linux*) 
+      X_POST_LIBS="$X_POST_LIBS -lSM -lICE -lXft"
+      ;;
+  esac
 
-if test "$with_motif" = yes && test "$with_gtk" = yes ; then
-  with_gtk=no
-  AC_MSG_WARN([You asked for both Motif and Gtk -- Motif will be used])
-fi
-
-if test "$with_gui" = no ; then
-
-  AC_DEFINE(USE_NO_GUI)
-  XLIBS=""
-  XFLAGS=""
-  AC_SUBST(XLIBS)
-  AC_SUBST(XFLAGS)
-  GX_FILES="NO_GUI_O_FILES"
-  GX_HEADERS="NO_GUI_HEADERS"
-
-else
-
-  # can we have gtk without X in mingw? -- depend on fixup around line 1030, I guess
-
-  if test "$no_x" != yes; then
-
-    AC_DEFINE(HAVE_X)
-    XFLAGS="$X_CFLAGS"
-    X_POST_LIBS="-lX11 $X_EXTRA_LIBS -lXext"
-
-    case "$host" in
-      *-apple-*)
-        X_POST_LIBS="$X_POST_LIBS -lSM -lICE"
-        ;;
-    esac
-
-    # this needs to precede the Xm check
-    TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
-    TEST_POST_LIBS="$X_POST_LIBS"
-    TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
-
-    # search for libXp and libXm may need libXft so...
-    AC_CHECK_LIB(Xft, XftFontOpen, [
-	         X_PRE_LIBS="$X_PRE_LIBS -lXft"
-	         TEST_PRE_LIBS="$TEST_PRE_LIBS -lXft"
-                 TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
-		 ], , $TEST_LIBS)
-
-    if test x$motif_prefix != x ; then
-      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt"
-      XFLAGS="-I$motif_prefix/include $XFLAGS"
-    else
-      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
-    fi
-
-    TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
-    TEST_POST_LIBS="$X_POST_LIBS"
-    TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
-
-    GX_FILES="MOTIF_O_FILES"
-    GX_HEADERS="SND_X_HEADERS"
-
-  fi
-
-  if test "$with_gtk" != yes && test "$with_motif" != no ; then
-
-    SAVELIBS=$LIBS
-    SAVEFLAGS=$CFLAGS
-
-    # search for libXm will fail with Xp complaints in Linux, so we need to search for -lXp first
-    AC_CHECK_LIB(Xp, XpGetDocumentData, [
-	         X_PRE_LIBS="$X_PRE_LIBS -lXp"
-	         TEST_PRE_LIBS="$TEST_PRE_LIBS -lXp"
-                 TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
-	         ], , $TEST_LIBS)
-
-    LIBS="$LIBS $X_PRE_LIBS $X_POST_LIBS"
-    CFLAGS="$CFLAGS $XFLAGS"
-
-    AC_MSG_CHECKING([whether libXm requires libpng etc])
-    AC_TRY_LINK_FUNC(XmCreateForm,
-	AC_MSG_RESULT(no),
-	[
-	  AC_MSG_RESULT(yes)
-	  X_PRE_LIBS="$X_PRE_LIBS -lXmu -L/usr/local/lib -liconv -lpng -ljpeg"
-	  TEST_PRE_LIBS="$TEST_PRE_LIBS -lXmu -L/usr/local/lib -liconv -lpng -ljpeg"
-	],
-	$TEST_LIBS)
-
-    if test "$with_editres" = yes ; then
-	AC_CHECK_LIB(Xmu, _XEditResCheckMessages, 
-			[AC_DEFINE(MUS_WITH_EDITRES)
-	                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES editres"
-			 X_PRE_LIBS="$X_PRE_LIBS -lXmu"
-   		         TEST_PRE_LIBS="$TEST_PRE_LIBS -lXmu"
-			])
-    else
-        # need to check for -lXmu required by (buggy) libXm.a (openmotif 2.2.2)
-	AC_MSG_CHECKING([whether libXm requires libXmu])
-	AC_TRY_LINK_FUNC(XmCreateForm,
-		AC_MSG_RESULT(no),
-		[
-		  AC_MSG_RESULT(yes)
-		  X_PRE_LIBS="$X_PRE_LIBS -lXmu"
-		  TEST_PRE_LIBS="$TEST_PRE_LIBS -lXmu"
-		],
-		$TEST_LIBS)
-    fi
-
-    XLIBS="$X_PRE_LIBS $X_POST_LIBS"
-    TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
-
-    AC_CHECK_LIB(m, XmCreateForm, 
-          # was Xm here but that introduces a bogus -lXm into the load list
-	[
-	  with_motif=yes
-	  ac_snd_have_gui=yes
-
-  	  XLIBS="$XLIBS -lXpm"
-	  TEST_LIBS="$TEST_LIBS -lXpm"
-	  AC_SUBST(XLIBS)
-	  AC_SUBST(XFLAGS)
-          ],
-	[
-	 AC_MSG_WARN([can't find the Motif library! -- will look for Gtk])
-         with_gtk=yes
-	 with_motif=no
-        ],
-	$TEST_LIBS)
-    LIBS=$SAVELIBS
-    CFLAGS=$SAVEFLAGS
-
+  if test x$motif_prefix != x ; then
+    X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt"
+    XFLAGS="-I$motif_prefix/include $XFLAGS"
   else
-    if test "$with_gtk" != no ; then
-      with_gtk=yes
-    fi
+    X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
   fi
 
-  if test "$with_motif" = yes ; then
-    AC_DEFINE(USE_MOTIF)
-    GRAPHICS_TOOLKIT="Motif"
+  GX_FILES="MOTIF_O_FILES"
+  GX_HEADERS="SND_X_HEADERS"
+
+  if test "$with_editres" = yes ; then
+    AC_DEFINE(WITH_EDITRES)
+    OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES editres"
+    X_PRE_LIBS="$X_PRE_LIBS -lXmu"
   fi
+
+  XLIBS="$X_PRE_LIBS $X_POST_LIBS -lXpm"
+  AC_DEFINE(USE_MOTIF)
+  GRAPHICS_TOOLKIT="Motif"
+  ac_snd_gui_choice=Motif
+fi
 
 
 #--------------------------------------------------------------------------------
 # Gtk
 #--------------------------------------------------------------------------------
 
-  if test "$with_gtk" = yes ; then
-     	GX_FILES="GTK_O_FILES"
-      	GX_HEADERS="SND_G_HEADERS"
-
-	case "$host" in
-	  *-*-solaris*) 
-	    GTK_LIBS="$GTK_LIBS -lX11"
-	    ;; 
-	esac
-
-      	AC_SUBST(GTK_LIBS)
-      	AC_SUBST(GTK_CFLAGS)
-      	AC_DEFINE(USE_GTK)
-        GRAPHICS_TOOLKIT="Gtk"
-        ac_snd_have_gui=yes
-
-	GTK_LD_LIBS="$GTK_LIBS"
-	if test x$PKG_CONFIG != xno ; then
-          if $PKG_CONFIG gtk+-3.0 --exists ; then
-            GTK_CFLAGS="`$PKG_CONFIG gtk+-3.0 --cflags`"
-            GTK_LIBS="`$PKG_CONFIG gtk+-3.0 --libs`"
-            GTK_LIBS="`$PKG_CONFIG gtk+-3.0 --libs`"
-            GTK_LD_LIBS="`$PKG_CONFIG gtk+-3.0 --libs-only-L` `$PKG_CONFIG gtk+-3.0 --libs-only-l`"
-          else
-            GTK_CFLAGS="`$PKG_CONFIG gtk+-2.0 --cflags`"
-            GTK_LIBS="`$PKG_CONFIG gtk+-2.0 --libs`"
-            GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
-          fi
-        fi
-
-      	AC_SUBST(GTK_LIBS)
-      	AC_SUBST(GTK_CFLAGS)
-      	AC_SUBST(GTK_LD_LIBS)
-
-	if test x$PKG_CONFIG != xno ; then
-          CAIRO_CFLAGS="`$PKG_CONFIG cairo --cflags-only-I`"
-      	  AC_SUBST(CAIRO_CFLAGS)
-        fi
-
-	XLIBS=""
-      	XFLAGS=""
-      	AC_SUBST(XLIBS)
-      	AC_SUBST(XFLAGS)
+if test "$ac_snd_gui_choice" = none ; then
+  if test x$PKG_CONFIG != xno ; then
+    if $PKG_CONFIG gtk+-3.0 --exists ; then
+      GTK_CFLAGS="`$PKG_CONFIG gtk+-3.0 --cflags`"
+      GTK_LIBS="`$PKG_CONFIG gtk+-3.0 --libs`"
+      GTK_LD_LIBS="`$PKG_CONFIG gtk+-3.0 --libs-only-L` `$PKG_CONFIG gtk+-3.0 --libs-only-l`"
+      ac_snd_gui_choice=gtk
+    else
+      if $PKG_CONFIG gtk+-2.0 --exists ; then
+        GTK_CFLAGS="`$PKG_CONFIG gtk+-2.0 --cflags`"
+        GTK_LIBS="`$PKG_CONFIG gtk+-2.0 --libs`"
+        GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
+        ac_snd_gui_choice=gtk
+      fi
+    fi
   fi
+  if test "$ac_snd_gui_choice" = gtk ; then  
+    GX_FILES="GTK_O_FILES"
+    GX_HEADERS="SND_G_HEADERS"
+    AC_DEFINE(USE_GTK)
+    GRAPHICS_TOOLKIT="Gtk"
 
-  if test "$with_gtk" != yes && test "$with_motif" != yes ; then
-    AC_DEFINE(USE_NO_GUI)
-    XLIBS=""
-    XFLAGS=""
-    AC_SUBST(XLIBS)
-    AC_SUBST(XFLAGS)
-    GX_FILES="NO_GUI_O_FILES"
-    GX_HEADERS="NO_GUI_HEADERS"
+    if test x$PKG_CONFIG != xno ; then
+      CAIRO_CFLAGS="`$PKG_CONFIG cairo --cflags-only-I`"
+      AC_SUBST(CAIRO_CFLAGS)
+    fi
   fi
-
 fi
+
+
+if test "$ac_snd_gui_choice" = none ; then
+  AC_DEFINE(USE_NO_GUI)
+  GX_FILES="NO_GUI_O_FILES"
+  GX_HEADERS="NO_GUI_HEADERS"
+fi
+
+
+# fallback on no-gui
+if test "$with_gui" = no ; then
+  AC_DEFINE(USE_NO_GUI)
+  GX_FILES="NO_GUI_O_FILES"
+  GX_HEADERS="NO_GUI_HEADERS"
+  ac_snd_gui_choice=no
+fi
+
+AC_SUBST(XLIBS)
+AC_SUBST(XFLAGS)
 
 AC_SUBST(GX_FILES)
 AC_SUBST(GX_HEADERS)
+
+AC_SUBST(GTK_LIBS)
+AC_SUBST(GTK_CFLAGS)
+AC_SUBST(GTK_LD_LIBS)
+
 
 
 
@@ -501,56 +331,28 @@ GL_FLAGS=""
 have_gl=no
 if test "$with_gl" = yes ; then
   if test "$with_motif" = yes ; then
-    AC_CHECK_HEADER(GL/gl.h,
-      [have_gl=yes],
-      [
-       OLD_CFLAGS="$CFLAGS"
-       CFLAGS="-I/usr/X11R6/include $CFLAGS"
-       # can't use AC_CHECK_HEADER here (GL/gl.h includes GL/glext.h, so the -I business has to be set up first)
+    if test x$PKG_CONFIG != xno ; then
+      if $PKG_CONFIG gl --exists ; then
 
-       AC_MSG_CHECKING([for /usr/X11R6/include/GL/gl.h])
-       AC_COMPILE_IFELSE(
-         [AC_LANG_PROGRAM([#include <GL/gl.h>],
-		          [int i; i = GL_TRUE])],
-           [have_gl=yes
-            GL_FLAGS="-I/usr/X11R6/include"
-            CFLAGS="$OLD_CFLAGS"
-            AC_MSG_RESULT(yes)
-           ],
-         [AC_MSG_WARN(can't find GL headers)])])
+        GL_CFLAGS="`$PKG_CONFIG gl --cflags`"
+        GL_LIBS="`$PKG_CONFIG gl --libs`"
+        GL_FILES="gl.o"
+        AC_DEFINE(HAVE_GL)	    
+        OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES openGL"
 
-    # in FC5 glu.h and libGLU are missing by default -- do they come from Mesa?
-    if test "$have_gl" = yes ; then
-      AC_CHECK_HEADER(GL/glu.h, 
-	  [AC_DEFINE(HAVE_GLU)
-           GL_LIBS="$GL_LIBS -lGLU"
-          ])
-      GL_LIBS="$GL_LIBS -lGL"
+        if $PKG_CONFIG glu --exists ; then
+            GL_CFLAGS="$GL_CFLAGS `$PKG_CONFIG glu --cflags`"
+            GL_LIBS="$GL_LIBS `$PKG_CONFIG glu --libs`"
+        fi
+
+        if test "$with_gl2ps" = yes ; then
+          AC_DEFINE(WITH_GL2PS)
+          RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
+          GL_FILES="$GL_FILES gl2ps.o"
+        fi
+      fi
     fi
-  else
-    AC_MSG_WARN([GL only works with Motif])
   fi
-fi
-
-if test "$have_gl" = yes ; then
-  AC_DEFINE(HAVE_GL)
-  OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES openGL"
-  if test "$with_gl2ps" = yes ; then
-    AC_DEFINE(WITH_GL2PS)
-    RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
-    GL_FILES="gl.o gl2ps.o"
-  else
-    GL_FILES="gl.o"
-  fi
-  case "$host" in
-    *-apple-*)
-       GL_LIBS="-L/usr/X11/lib -lGLU -lGL -Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib -framework OpenGL"
-      ;;
-  esac
-else
-  GL_LIBS=""
-  GL_FILES=""
-  GL_FLAGS=""
 fi
 AC_SUBST(GL_LIBS)
 AC_SUBST(GL_FILES)
@@ -558,402 +360,89 @@ AC_SUBST(GL_FLAGS)
 
 
 
-ac_snd_have_extension_language=no
+#--------------------------------------------------------------------------------
+# language
+#--------------------------------------------------------------------------------
+
+# language choice: ruby if --with-ruby and we can find one of ruby-2.0.pc, ruby-1.9.pc, or ruby-1.8.pc
+#                  forth if --with-forth
+#                  none if --without-extension-language
+#                  s7 otherwise
+
+XEN_LIBS=""
+XEN_CFLAGS=""
+ac_snd_extension_language=none
 
 
 #--------------------------------------------------------------------------------
 # Ruby
 #--------------------------------------------------------------------------------
 
-dnl AC_CHECK_RUBY([MINIMUM-VERSION [, ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
-dnl Test for Ruby, defines
-dnl   RUBY_VERSION
-dnl   RUBY_CFLAGS
-dnl   RUBY_LIBS
-
-AC_DEFUN([AC_CHECK_RUBY],
-[
-  [AC_PATH_PROGS([RUBY], [$RUBY ruby], [no])]
-  RUBY_VERSION=""
-  RUBY_CFLAGS=""
-  RUBY_LIBS=""
-  AC_MSG_CHECKING([for Ruby])
-  if test "$RUBY" != no ; then
-    minimum_version=ifelse([$1], [], [1.8.0], [$1])
-    RUBY_VERSION=`$RUBY -e 'puts RUBY_VERSION'`
-    if `$RUBY -e "exit(RUBY_VERSION >= '$minimum_version' ? 0 : 1)"` ; then
-      AC_MSG_RESULT([$RUBY_VERSION])
-      ruby_ldflags=""
-      ruby_libs=""
-      if `$RUBY -e "exit(RUBY_VERSION < '1.9.0' ? 0 : 1)"` ; then
-        ruby_hdrdir=`$RUBY -rrbconfig -e [["puts Config::CONFIG['archdir']"]]`
-        AC_MSG_CHECKING([for ruby.h])
-        if test -e "$ruby_hdrdir/ruby.h" ; then
-          RUBY_CFLAGS="-I$ruby_hdrdir"
-          AC_MSG_RESULT([$ruby_hdrdir/ruby.h])
-        else
-          RUBY_CFLAGS=`$RUBY -e 'puts "-I" + $:.join(" -I")'`
-          AC_MSG_RESULT([use \$LOAD_PATH])
-        fi
-        ruby_ldflags=`$RUBY -rrbconfig -e [["puts Config::CONFIG['LIBRUBYARG']"]]`
-        ruby_libs=`$RUBY -rrbconfig -e [["puts Config::CONFIG['LIBS']"]]`
-      else
-        ruby_hdrdir=`$RUBY -rrbconfig -e [["puts RbConfig::CONFIG['rubyhdrdir']"]]`
-        ruby_arch=`$RUBY -rrbconfig -e [["puts RbConfig::CONFIG['arch']"]]`
-        AC_MSG_CHECKING([for ruby.h])
-        if test -e "$ruby_hdrdir/ruby.h" ; then
-          RUBY_CFLAGS="-I$ruby_hdrdir -I$ruby_hdrdir/$ruby_arch"
-          AC_MSG_RESULT([$ruby_hdrdir/ruby.h])
-        else
-          ruby_hdrdir=`$RUBY -rrbconfig -e [["puts RbConfig::CONFIG['archdir']"]]`
-          if test -e "$ruby_hdrdir/ruby.h" ; then
-            RUBY_CFLAGS="-I$ruby_hdrdir"
-            AC_MSG_RESULT([$ruby_hdrdir/ruby.h])
-	  else
-            RUBY_CFLAGS=`$RUBY -e 'puts "-I" + $:.join(" -I")'`
-            AC_MSG_RESULT([use \$LOAD_PATH])
-	  fi
-        fi
-        ruby_ldflags=`$RUBY -rrbconfig -e [["puts RbConfig::CONFIG['LIBRUBYARG']"]]`
-        ruby_libs=`$RUBY -rrbconfig -e [["puts RbConfig::CONFIG['LIBS']"]]`
-      fi
-      RUBY_LIBS="$ruby_ldflags $ruby_libs"
-      [$2]
+if test "$with_ruby" = yes ; then
+  if test x$PKG_CONFIG != xno ; then
+    if $PKG_CONFIG ruby-2.0 --exists ; then
+      AC_DEFINE(HAVE_RUBY)
+      XEN_CFLAGS="`$PKG_CONFIG ruby-2.0 --cflags`"
+      XEN_LIBS="`$PKG_CONFIG ruby-2.0 --libs`"
+      LOCAL_LANGUAGE="Ruby"
+      ac_snd_extension_language=Ruby
     else
-      AC_MSG_RESULT([Ruby version $RUBY_VERSION < $minimum_version])
-      [$3]
+      if $PKG_CONFIG ruby-1.9 --exists ; then
+        AC_DEFINE(HAVE_RUBY)
+        XEN_CFLAGS="`$PKG_CONFIG ruby-1.9 --cflags`"
+        XEN_LIBS="`$PKG_CONFIG ruby-1.9 --libs`"
+        LOCAL_LANGUAGE="Ruby"
+        ac_snd_extension_language=Ruby
+      else
+        if $PKG_CONFIG ruby-1.8 --exists ; then
+          AC_DEFINE(HAVE_RUBY)
+          XEN_CFLAGS="`$PKG_CONFIG ruby-1.8 --cflags`"
+          XEN_LIBS="`$PKG_CONFIG ruby-1.8 --libs`"
+          LOCAL_LANGUAGE="Ruby"
+          ac_snd_extension_language=Ruby
+        fi
+      fi
     fi
-  else
-    AC_MSG_RESULT([no])
-    [$3]
   fi
-
-  AC_SUBST([RUBY_CFLAGS])
-  AC_SUBST([RUBY_LIBS])
-])# AC_CHECK_RUBY
-
-
-AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
-                ruby_prefix="$withval"
-                RUBY="$ruby_prefix/bin/ruby",
-                ruby_prefix="/usr/local")
-
-if test "$with_ruby" = yes && test "$ac_snd_have_extension_language" = yes ; then
-  with_ruby=no
-  AC_MSG_WARN([You asked for both Ruby and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
 fi
-
-AC_ARG_WITH(ruby,
-        [  --with-ruby            use Ruby as the extension language],
-        if test "$with_ruby" = yes ; then
-           AC_CHECK_RUBY([1.8.0],
-                         [AC_DEFINE(HAVE_RUBY)
-                          AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,  "$RUBY_SEARCH_PATH")
-                          XEN_CFLAGS="$XEN_CFLAGS $RUBY_CFLAGS"
-                          XEN_LIBS="$XEN_LIBS $RUBY_LIBS" 
-                          AC_SUBST(XEN_LIBS)
-                          AC_SUBST(XEN_CFLAGS)
-                          LOCAL_LANGUAGE="Ruby"
-                          ac_snd_have_extension_language=yes])
-        fi)
-
 
 
 #--------------------------------------------------------------------------------
 # Forth
 #--------------------------------------------------------------------------------
 
-if test "$with_forth" = yes && test "$ac_snd_have_extension_language" = yes ; then
-  with_forth=no
-  AC_MSG_WARN([You asked for both Forth and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
+if test "$with_forth" = yes ; then
+  AC_PATH_PROG([FTH], [fth], [no])
+  AC_MSG_CHECKING([for Forth])
+  if test "${FTH}" != no ; then
+    XEN_CFLAGS=`${FTH} --no-init-file --eval .cflags`
+    XEN_LIBS=`${FTH} --no-init-file --eval .libs`
+    AC_MSG_RESULT([yes])
+    AC_DEFINE(HAVE_FORTH)
+    LOCAL_LANGUAGE="Forth"
+    ac_snd_extension_language=Forth
+  else
+    AC_MSG_RESULT([no])
+  fi
 fi
-
-AC_ARG_WITH(forth,
-	[  --with-forth	  	  use Forth as the extension language],
-  	if test "$with_forth" = yes ; then
-          [AC_PATH_PROG([FTH], [fth], [no])]
-          FTH_CFLAGS=""
-          FTH_LIBS=""
-          AC_MSG_CHECKING([for Forth])
-          if test "${FTH}" != no ; then
-            FTH_CFLAGS=`${FTH} --no-init-file --eval .cflags`
-            FTH_LIBS=`${FTH} --no-init-file --eval .libs`
-            AC_MSG_RESULT([yes])
-	    AC_DEFINE(HAVE_FORTH)
-            AC_SUBST(XEN_CFLAGS, $FTH_CFLAGS)
-            AC_SUBST(XEN_LIBS, $FTH_LIBS)
- 	    LOCAL_LANGUAGE="Forth"
- 	    ac_snd_have_extension_language=yes
-          else
-            AC_MSG_RESULT([no])
-	  fi
-	fi)
-
 
 
 #--------------------------------------------------------------------------------
 # s7 (the default)
 #--------------------------------------------------------------------------------
 
-S7_LIB=""
-
-if test "$with_s7" = yes && test "$ac_snd_have_extension_language" = yes ; then
-  with_s7=no
-  AC_MSG_WARN([You asked for both s7 and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
+if test "$with_s7" != no && test "$ac_snd_extension_language" = none ; then
+  AC_DEFINE(HAVE_SCHEME)	
+  ac_snd_extension_language=s7
+  LOCAL_LANGUAGE="s7"
+  S7_LIB="s7.o"
+  AC_SUBST(S7_LIB)
 fi
 
-if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
-    AC_DEFINE(HAVE_SCHEME)	
-    ac_snd_have_extension_language=yes
-    AC_DEFINE(HAVE_MAKE_RATIO)
-    AC_DEFINE(WITH_SYSTEM_EXTRAS)
-    LOCAL_LANGUAGE="s7"
-    S7_LIB="s7.o"
-fi
-
-AC_SUBST(S7_LIB)
+AC_SUBST(XEN_LIBS)
+AC_SUBST(XEN_CFLAGS)
 
 
-
-#--------------------------------------------------------------------------------
-# Audio library
-#--------------------------------------------------------------------------------
-
-AUDIO_LIB=""
-LDSO_FLAGS=""
-SO_FLAGS=""
-SO_LD="ld"
-
-JACK_LIBS=""
-JACK_FLAGS=""
-
-
-if test "$with_audio" != no ; then
-
-# we need the sndlib.h equivalents to try to find the native sound support (see config.guess)
-# this only matters for those cases where we've implemented the audio code in audio.c
-# test for ALSA courtesy of Paul Davis
-# test for BSD courtesy of Steven Schultz
-# test for Jack courtesy of Kjetil S. Matheussen
-
-if test "$with_pulseaudio" = yes ; then
-  AC_CHECK_LIB(pulse-simple, main, [
-    AC_CHECK_HEADER(pulse/simple.h,
-       [AC_DEFINE(MUS_PULSEAUDIO)
-	if test x$PKG_CONFIG != xno ; then
-          AUDIO_LIB="`$PKG_CONFIG libpulse-simple --libs`"
-        else 
-          AUDIO_LIB="-lpulse-simple"
-        fi
-        AUDIO_SYSTEM=pulseaudio
-       ],
-      [AC_MSG_WARN(can't find the pulseaudio header files)])],
-    [AC_MSG_WARN(can't find the pulseaudio library)])
-fi
-
-
-if test "$with_portaudio" = yes ; then
-  AC_CHECK_LIB(portaudio, main, [
-    AC_CHECK_HEADER(portaudio.h, [
-          AUDIO_SYSTEM=portaudio
-	  AC_DEFINE(MUS_PORTAUDIO)
-	if test x$PKG_CONFIG != xno ; then
-          AUDIO_LIB="`$PKG_CONFIG portaudio-2.0 --libs`"
-        else 
-	  AUDIO_LIB="-lportaudio"
-        fi
-	],
-      [AC_MSG_WARN(can't find the portaudio header file)])],
-    [AC_MSG_WARN(can't find the portaudio library)])
-fi
-
-
-if test "$AUDIO_SYSTEM" != None ; then
-  AC_MSG_RESULT(Using the $AUDIO_SYSTEM audio system)
-else
-
-if test "$with_alsa" = yes && test "$with_oss" = yes ; then
-  with_oss=no
-  AC_MSG_WARN([You asked for both ALSA and OSS -- ALSA will be used])
-fi
-
-if test "$with_jack" = yes ; then 
-            AC_CHECK_LIB(jack, main, [ 
-	      AC_CHECK_HEADER(jack/jack.h, ,
-   	          [with_jack=no
-                   AC_MSG_WARN(can't find the JACK header files)])],
-              [with_jack=no
-	       AC_MSG_WARN(can't find the JACK library)])
-            AC_CHECK_LIB(samplerate, main,[ 
-	      AC_CHECK_HEADER(samplerate.h, ,
-   	          [with_jack=no
-                   AC_MSG_WARN(can't find the samplerate header files. JACK will not be used.)])],
-              [with_jack=no
-	       AC_MSG_WARN(can't find the samplerate library. JACK will not be used.)])
-            if test $with_jack = yes ; then
-               JACK_LIBS="-ljack -lsamplerate"
-               AUDIO_SYSTEM=JACK
-	       AC_DEFINE(MUS_JACK)
-	       if test x$PKG_CONFIG != xno ; then
-          	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
-          	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
-		   JACK_LIBS="$JACK_LIBS `$PKG_CONFIG samplerate --libs`"
-		   JACK_FLAGS="$JACK_FLAGS `$PKG_CONFIG samplerate --cflags`"
-               fi
-            fi
-fi
-
-
-case "$host" in
-    *-*-linux*) 
-        LDSO_FLAGS="-shared"
-        LIBS="$LIBS -lm -ldl"
-	if test "$GCC" = yes ; then
-	  SO_FLAGS="-fPIC $SO_FLAGS"
-        fi
-
-        AUDIO_SYSTEM=ALSA
-	if test "$with_oss" = yes ; then 
-          AUDIO_SYSTEM=OSS
-	else
-
-            AC_CHECK_LIB(asound, main,
-               AUDIO_SYSTEM=ALSA,
-               [AC_MSG_WARN(can't find the ALSA library)])
-	fi
-
-	if test "$with_jack" = yes ; then 
-	       if test "$with_alsa" != yes ; then
-                 AUDIO_SYSTEM=JACK
-               fi
-	fi
-
-	case $AUDIO_SYSTEM in
-	    ALSA)
-                # if alsa version < 1.0 complain and use OSS
-		alsa_ok=yes
-		AC_MSG_CHECKING([for ALSA 1.0 or later])
-		AC_COMPILE_IFELSE(
-                  [AC_LANG_PROGRAM([#include <alsa/asoundlib.h>],
-			           [
-			  	    #if (SND_LIB_MAJOR < 1)
-				      #error too old
-				    #endif
-				   ])],
-		  alsa_ok=yes,
-	          alsa_ok=no)
-		AC_MSG_RESULT($alsa_ok)
-		if test "$alsa_ok" = yes ; then
-	    	    AC_DEFINE(HAVE_ALSA)
-	    	    AUDIO_LIB="-lasound"
-		    if test "$with_jack" = yes ; then 
-		      AUDIO_LIB="-lasound -lsamplerate"
-		    fi
- 		else
-         	    AUDIO_SYSTEM=OSS
- 		    AC_DEFINE(HAVE_OSS)
- 		fi
- 		;;
-	    JACK)
-		AC_DEFINE(HAVE_OSS)
-		JACK_LIBS="$JACK_LIBS -lpthread"
-# added -lpthread 21-May-10 for FC13 (Bill S)
-		AUDIO_LIB="-lsamplerate"
-		;;
-	    OSS)
-		AC_DEFINE(HAVE_OSS)
-		AUDIO_SYSTEM=OSS
-		;;
-	esac
-	;;
-    *-*-sunos4*) 
-	LIBS="$LIBS -lm"
-	AUDIO_SYSTEM=Sun
-        ;;
-    *-*-solaris*) 
-#	LIBS="$LIBS -lm -ldl"
-# odd... this causes an error in the sndlib configure (can't find libdl) but is needed here?
-	AUDIO_SYSTEM=Sun
-	LDSO_FLAGS="-G"
-# if __SUNPRO_C we could add -xO3
-        ;;
-    *-*-hpux*) 
-	AUDIO_SYSTEM=Hpux
-	LDSO_FLAGS="+z -Ae +DA1.1"
-	if test "$GCC" = yes ; then
-	  SO_FLAGS="-fPIC $SO_FLAGS"
-        fi
-        ;;
-    *-*-bsdi*) 
-	AC_DEFINE(HAVE_OSS)
-	LIBS="$LIBS -lm"
-	AUDIO_SYSTEM=OSS
-	if test "$GCC" = yes ; then
-	  SO_FLAGS="-fPIC $SO_FLAGS"
-        fi
-        ;;
-    *-*-freebsd*)
-	AC_DEFINE(HAVE_OSS)
-	LIBS="$LIBS -lm"
-	AUDIO_SYSTEM=OSS
-	if test "$GCC" = yes ; then
-	  SO_LD="$CC"
-	  SO_FLAGS="-fPIC $SO_FLAGS"
-          LDSO_FLAGS="-shared"
-        fi
-	;;
-    *-*-openbsd*) 
-	AUDIO_SYSTEM=OpenBSD
-	if test "$GCC" = yes ; then
-	  SO_FLAGS="-fPIC $SO_FLAGS"
-          CFLAGS="-ftrampolines $CFLAGS"
-        fi
-        ;;
-    *-*-netbsd*) 
-	AUDIO_SYSTEM=NetBSD
-	if test "$GCC" = yes ; then
-	  SO_LD="$CC"
-	  SO_FLAGS="-fPIC $SO_FLAGS"
-          LDSO_FLAGS="-shared"
-        fi
-        ;;
-    *-*-cygwin*)
-	if test "$with_jack" != yes ; then 
-	    AUDIO_SYSTEM=Windows
-	fi
-	;;
-    *-*-mingw*)
-	audio_system=Windows
-	LIBS="$LIBS -lwinmm -lwsock32"
-	;;
-    *-apple-*)
-	if test "$with_jack" != yes ; then 
-	    AUDIO_SYSTEM=MacOSX
-	    AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
-        else
-            AUDIO_SYSTEM=JACK
-	    JACK_LIBS="-framework CoreAudio -framework CoreServices -framework AudioUnit -L/usr/local/lib -ljack -lsamplerate"
-            JACK_FLAGS="-I/usr/local/include"
-	fi
-	;;
-esac
-AC_MSG_CHECKING([for audio system])
-AC_MSG_RESULT($AUDIO_SYSTEM)
-fi
-fi
-
-if test "$AUDIO_SYSTEM" != None ; then
-  AC_DEFINE(WITH_AUDIO)
-fi
-
-AC_SUBST(AUDIO_LIB)
-AC_SUBST(JACK_LIBS)
-AC_SUBST(JACK_FLAGS)
-
-
-AC_SUBST(LDSO_FLAGS)
-AC_SUBST(SO_FLAGS)
-AC_SUBST(SO_LD)
 
 
 #--------------------------------------------------------------------------------
@@ -1035,56 +524,210 @@ if test "$PATH_WAVPACK" != "no" ; then
     AC_DEFINE_UNQUOTED(PATH_WVUNPACK, "${PATH_WVUNPACK}")
   fi
 fi
+
+
+
+
+#--------------------------------------------------------------------------------
+# Audio
+#--------------------------------------------------------------------------------
+
+AUDIO_LIB=""
+JACK_LIBS=""
+JACK_FLAGS=""
+
+if test "$with_audio" != no ; then
+
+  if test "$with_pulseaudio" = yes ; then
+    AC_DEFINE(MUS_PULSEAUDIO)
+    AUDIO_LIB="-lpulse-simple"
+    AUDIO_SYSTEM=pulseaudio
+  fi
   
-# other decoders that I've looked at aren't acceptable in this context because they put various
-#   special restrictions on use, or hide source code, or are just nuts.
+  if test "$with_portaudio" = yes ; then
+    AC_DEFINE(MUS_PORTAUDIO)
+    AUDIO_SYSTEM=portaudio
+    AUDIO_LIB="-lportaudio"
+  fi
 
-
-
-
-
-#--------------------------------------------------------------------------------
-# debugging stuff
-#--------------------------------------------------------------------------------
-
-AC_ARG_ENABLE(deprecated,
-  [  --disable-deprecated	  do not include any deprecated stuff from gtk, s7, motif, clm, snd, or sndlib],
-  if test "$enable_deprecated" = no ; then
-    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED -DGSEAL_ENABLE -DGTK_DISABLE_SINGLE_INCLUDES -Wall $CFLAGS"
-    AC_DEFINE(DISABLE_DEPRECATED)
-  fi)
-
-if test "$enable_snd_debug" = yes ; then
-  CFLAGS="-I. $CFLAGS"
-  if test "$GCC" = yes ; then
-    if test "$LOCAL_LANGUAGE" = "Ruby" ; then
-      if test "$CC" = "g++" ; then
-        CFLAGS="$CFLAGS -O -g3 -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall -Winit-self -Wsequence-point -Wmissing-field-initializers -Wmissing-prototypes"
+  if test "$with_jack" = yes ; then 
+    AUDIO_SYSTEM=JACK
+    AC_DEFINE(MUS_JACK)
+    if test x$PKG_CONFIG != xno ; then
+      if $PKG_CONFIG jack --exists ; then    
+        JACK_LIBS="`$PKG_CONFIG jack --libs`"
+        JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
+        if $PKG_CONFIG samplerate --exists ; then    
+  	  JACK_LIBS="$JACK_LIBS `$PKG_CONFIG samplerate --libs`"
+  	  JACK_FLAGS="$JACK_FLAGS `$PKG_CONFIG samplerate --cflags`"
+        else
+          JACK_LIBS="$JACK_LIBS -lsamplerate"
+        fi
       else
-        CFLAGS="$CFLAGS -O -g3 -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall -Winit-self -Wsequence-point -Wmissing-field-initializers -Wmissing-prototypes"
+        JACK_LIBS="-ljack -lsamplerate"
       fi
     else
-      if test "$CC" = "g++" ; then
-        CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall -Winit-self -Wsequence-point -Wmissing-field-initializers -Wmissing-prototypes"
-      else
-        CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall -Winit-self -Wsequence-point -Wmissing-field-initializers -Wmissing-prototypes"
-      fi
+      JACK_LIBS="-ljack -lsamplerate"
     fi
   fi
-else
-  CFLAGS="-O2 -I. $CFLAGS"
+
+  if test "$with_alsa" = yes ; then
+    AC_DEFINE(HAVE_ALSA)
+    AUDIO_LIB="-lasound"
+    AUDIO_SYSTEM=ALSA
+  fi
+
+  if test "$with_oss" = yes ; then
+    AC_DEFINE(HAVE_OSS)
+    AUDIO_SYSTEM=OSS
+  fi
+
+  if test "$AUDIO_SYSTEM" = None ; then
+    case "$host" in
+      *-*-linux*) 
+        AUDIO_SYSTEM=ALSA
+        AC_DEFINE(HAVE_ALSA)
+        AUDIO_LIB="-lasound"
+	;;
+      *-*-sunos4*) 
+	AUDIO_SYSTEM=Sun
+        ;;
+      *-*-solaris*) 
+	AUDIO_SYSTEM=Sun
+        ;;
+      *-*-hpux*) 
+	AUDIO_SYSTEM=Hpux
+        ;;
+      *-*-bsdi*) 
+	AC_DEFINE(HAVE_OSS)
+	AUDIO_SYSTEM=OSS
+        ;;
+      *-*-freebsd*)
+	AC_DEFINE(HAVE_OSS)
+	AUDIO_SYSTEM=OSS
+	;;
+      *-*-openbsd*) 
+	AUDIO_SYSTEM=OpenBSD
+        ;;
+      *-*-netbsd*) 
+	AUDIO_SYSTEM=NetBSD
+        ;;
+      *-*-cygwin*)
+	if test "$with_jack" != yes ; then 
+	  AUDIO_SYSTEM=Windows
+	fi
+	;;
+      *-*-mingw*)
+	audio_system=Windows
+	;;
+      *-apple-*)
+	if test "$with_jack" != yes ; then 
+	    AUDIO_SYSTEM=MacOSX
+	    AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
+        else
+            AUDIO_SYSTEM=JACK
+	    JACK_LIBS="-framework CoreAudio -framework CoreServices -framework AudioUnit -L/usr/local/lib -ljack -lsamplerate"
+            JACK_FLAGS="-I/usr/local/include"
+	fi
+	;;
+    esac
+  fi
 fi
 
-# -ffast-math appears to make exp about twice as fast, but slows down filtering by the same amount -- kinda strange
-#   timing tests using -O3 -ffast-math indicate an overall speedup of maybe 4-5% in Snd, 1951 -> 1936 in s7test
-#
-# I also tried -ftree-vectorize but didn't see any big improvement
+AC_MSG_CHECKING([for audio system])
+AC_MSG_RESULT($AUDIO_SYSTEM)
+
+if test "$AUDIO_SYSTEM" != None ; then
+  AC_DEFINE(WITH_AUDIO)
+fi
+
+AC_SUBST(AUDIO_LIB)
+AC_SUBST(JACK_LIBS)
+AC_SUBST(JACK_FLAGS)
+
+
+
+#--------------------------------------------------------------------------------
+# compiler/loader flags
+#--------------------------------------------------------------------------------
+
+LIBS=""
+LDSO_FLAGS=""
+SO_FLAGS=""
+SO_LD="ld"
+
+case "$host" in
+  *-*-linux*) 
+    LDSO_FLAGS="-shared"
+    LIBS="$LIBS -lm -ldl"
+    if test "$GCC" = yes ; then
+      SO_FLAGS="-fPIC $SO_FLAGS"
+    fi
+    ;;
+
+  *-*-sunos4*) 
+    LIBS="$LIBS -lm"
+    ;;
+
+  *-*-solaris*) 
+    LDSO_FLAGS="-G"
+    ;;
+
+  *-*-hpux*) 
+    LDSO_FLAGS="+z -Ae +DA1.1"
+    if test "$GCC" = yes ; then
+      SO_FLAGS="-fPIC $SO_FLAGS"
+    fi
+    ;;
+
+  *-*-bsdi*) 
+    LIBS="$LIBS -lm"
+    if test "$GCC" = yes ; then
+      SO_FLAGS="-fPIC $SO_FLAGS"
+    fi
+    ;;
+
+  *-*-freebsd*)
+    LIBS="$LIBS -lm"
+    if test "$GCC" = yes ; then
+      SO_LD="$CC"
+      SO_FLAGS="-fPIC $SO_FLAGS"
+      LDSO_FLAGS="-shared"
+    fi
+    ;;
+
+  *-*-openbsd*) 
+    if test "$GCC" = yes ; then
+      SO_FLAGS="-fPIC $SO_FLAGS"
+      CFLAGS="-ftrampolines $CFLAGS"
+    fi
+    ;;
+
+  *-*-netbsd*) 
+    if test "$GCC" = yes ; then
+      SO_LD="$CC"
+      SO_FLAGS="-fPIC $SO_FLAGS"
+      LDSO_FLAGS="-shared"
+    fi
+    ;;
+
+  *-*-mingw*)
+    LIBS="$LIBS -lwinmm -lwsock32"
+    LDFLAGS="$LDFLAGS -mwindows"
+    ;;
+esac
+
+AC_SUBST(LDSO_FLAGS)
+AC_SUBST(SO_FLAGS)
+AC_SUBST(SO_LD)
+
 
 
 #--------------------------------------------------------------------------------
 # export-dynamic
 #--------------------------------------------------------------------------------
 
+CFLAGS="-O2 -I. $CFLAGS"
 ORIGINAL_LDFLAGS="$LDFLAGS"
 
 case "$host" in
@@ -1097,26 +740,26 @@ case "$host" in
 esac
 
 
+#--------------------------------------------------------------------------------
+# disable-deprecated
+#--------------------------------------------------------------------------------
+
+if test "$enable_deprecated" = no ; then
+  CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED -DGSEAL_ENABLE -DGTK_DISABLE_SINGLE_INCLUDES -Wall $CFLAGS"
+  AC_DEFINE(DISABLE_DEPRECATED)
+fi
+
+
 
 #--------------------------------------------------------------------------------
 # output
 #--------------------------------------------------------------------------------
-
-if test "$ac_snd_have_extension_language" = yes ; then
-  if test "$ac_snd_have_gui" = yes ; then
-    if test "$ac_cv_header_pthread_h" = yes ; then
-      LDFLAGS="$LDFLAGS -lpthread"
-    fi
-  fi
-fi
 
 AC_SUBST(CFLAGS)
 AC_SUBST(ORIGINAL_LDFLAGS)
 AC_SUBST(LDFLAGS)
 AC_SUBST(MAKE_TARGET)
 AC_OUTPUT
-
-# borrowed from gnucash
 
 AC_MSG_RESULT([
   Options selected

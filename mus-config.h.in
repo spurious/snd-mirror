@@ -13,14 +13,8 @@
 /* --with-doc-dir */
 #undef MUS_DEFAULT_DOC_DIR
 
-/* --with-editres */
-#undef MUS_WITH_EDITRES
-
 /* --with-gmp */
 #undef WITH_GMP
-
-/* --with-gl2ps */
-#undef WITH_GL2PS
 
 /* --with-pulseaudio */
 #undef MUS_PULSEAUDIO
@@ -29,27 +23,91 @@
  */
 #undef MUS_PORTAUDIO
 
-
-
-
+/* --with-ladspa */
 #undef HAVE_LADSPA
-/* --with-ladspa or it finds ladspa.h?
- *   just linux I think
- */
+
+/* --with-fftw or if fftw.pc exists */
+#undef HAVE_FFTW3
+
+/* --with-gsl or if gsl.pc exists */
+#undef HAVE_GSL
+
+/* --with-gl, also glu if glu.pc exists */
+#undef HAVE_GL
+#undef HAVE_GLU
+
+/* --with-gl2ps */
+#undef WITH_GL2PS
+
+/* the default or --with-s7 */
+#undef HAVE_SCHEME
+
+/* --with-ruby */
+#undef HAVE_RUBY
+
+/* --with-forth */
+#undef HAVE_FORTH
+
+/* the default or --with-gtk */
+#undef USE_GTK
+
+/* --with-motif */
+#undef USE_MOTIF
+
+/* --with-editres (requires --with-motif) */
+#undef WITH_EDITRES
+
+/* --without-gui */
+#undef USE_NO_GUI
+
+/* --with-oss */
+#undef HAVE_OSS
+
+/* --with-alsa and default in linux */
+#undef HAVE_ALSA
+
+/* --with-jack */
+#undef MUS_JACK
+
+/* --without-audio */
+#undef WITH_AUDIO
+
+
+
+/* paths to various audio decoders */
+#undef HAVE_OGG
+#undef PATH_OGGDEC
+#undef PATH_OGGENC
+/* ogg.pc, exec_prefix/bin/ogg* */
+
+#undef HAVE_FLAC
+#undef PATH_FLAC
+
+#undef HAVE_SPEEX
+#undef PATH_SPEEXDEC
+#undef PATH_SPEEXENC
+
+#undef HAVE_TIMIDITY
+#undef PATH_TIMIDITY
+
+#undef HAVE_MPEG
+#undef PATH_MPG123
+#undef HAVE_MPG321
+#undef PATH_MPG321
+
+#undef HAVE_TTA
+#undef PATH_TTA
+
+#undef HAVE_WAVPACK
+#undef PATH_WAVPACK
+#undef PATH_WVUNPACK
+
 
 
 #undef WORDS_BIGENDIAN
 /* __LITTLE_ENDIAN__ = 1 if gcc osx, but not linux __x86_64?
-in autoconf:
- #include <sys/types.h>
- #include <sys/param.h>
- int main ()
- {
- #if BYTE_ORDER != BIG_ENDIAN
-  not big endian
- #endif
- linux: #define __BYTE_ORDER __LITTLE_ENDIAN
-
+   I think it's worth a try to simple use __BIG_ENDIAN__ here
+   it won't work on a PDP-7 but who cares?
  */
 
 #ifdef __SIZEOF__POINTER__
@@ -59,77 +117,16 @@ in autoconf:
 #endif
 
 
-#undef HAVE_OSS
-#undef HAVE_ALSA
-#undef MUS_JACK
 
-#undef WITH_AUDIO
-/* meant for --without-audio but how to fit in?
- */
-
-#undef HAVE_FFTW3
-/* can be either fftw.pc or (locally built?) fftw3.pc
- */
-
-#undef HAVE_GSL
-/* gsl.pc */
-
-#undef HAVE_SCHEME
-#undef HAVE_RUBY
-#undef HAVE_FORTH
-/* these can be arg choices via -D */
-
-#undef HAVE_GL
-/* gl.pc -- explicit arg
- */
-
-#undef HAVE_GLU
-/* glu.pc -- why this? (gl.c and snd-chn.c) -- it's for graph cursor handling I think
- */
-
-
-#undef USE_GTK
-/* gtk-2.0.pc etc */
-
-#undef USE_MOTIF
-#undef USE_NO_GUI
-/* --without-gui or get it from the others
- */
-
-#undef HAVE_X
-/* surely !_MSC_VER! -- no there's the OSX case */
-
-#undef WITH_SYSTEM_EXTRAS
-/* this is an s7 switch, used also in xen.c, but it should be an autoloaded library in s7, like getenv, so this switch is almost obsolete 
-   why is it here at all?
- */
-
-#undef HAVE_OGG
-#undef PATH_OGGDEC
-#undef PATH_OGGENC
-/* ogg.pc, exec_prefix/bin/ogg* */
-
-#undef HAVE_FLAC
-#undef PATH_FLAC
-#undef HAVE_SPEEX
-#undef PATH_SPEEXDEC
-#undef PATH_SPEEXENC
-#undef HAVE_MPEG
-#undef PATH_MPG123
-#undef HAVE_TIMIDITY
-#undef PATH_TIMIDITY
-#undef HAVE_MPG321
-#undef PATH_MPG321
-#undef HAVE_TTA
-#undef PATH_TTA
-#undef HAVE_WAVPACK
-#undef PATH_WAVPACK
-#undef PATH_WVUNPACK
 
 /* ---------------------------------------- */
 
 #ifndef USE_SND
   #define USE_SND 1
+#endif
+
+#if HAVE_SCHEME
+  #define WITH_SYSTEM_EXTRAS 1
 #endif
 
 #define HAVE_EXTENSION_LANGUAGE (HAVE_SCHEME || HAVE_RUBY || HAVE_FORTH)

@@ -21,7 +21,6 @@ The configure script has a bunch of arguments:
      --with-s7                 use s7 (the default, a version of Scheme).
 
      --with-ruby               use Ruby as the extension language
-       --with-ruby-prefix      set location of Ruby
   
      --with-forth              use Forth (Mike Scholz's FTH) as the extension language.
   
@@ -32,8 +31,6 @@ The configure script has a bunch of arguments:
    Graphics:
 
      --with-motif              use Motif (the default, if it exists)
-       --with-motif-prefix     set Motif location (will append lib and include)
-                               on my machine: --with-motif-prefix=/usr/X11R6
   
      --with-gtk                use Gtk+
   
