@@ -24,15 +24,17 @@ The configure script has a bunch of arguments:
   
      --with-forth              use Forth (Mike Scholz's FTH) as the extension language.
   
-
-     To build Snd without any extension language, use --without-extension-language
+     --without-extension-language  build Snd without any extension language
   
 
    Graphics:
 
-     --with-motif              use Motif (the default, if it exists).  If it's in some odd
-                                 location, you can pass configure the LDFLAGS and CFLAGS values:
-                                 ./configure LDFLAGS="-L /usr/X11R6/lib" CFLAGS="-I /usr/X11R6/include" --with-motif
+     --with-motif              use Motif.  If it's in some odd location, you can provide that info:
+                                 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --with-motif
+
+                                 in FC19, install the motif, motif-devel, and libXpm-devel packages.
+                                 in FreeBSD, go to /usr/ports/x11-toolkits/open-motif, and make install clean
+                                 in OpenBSD, it's the same process but /usr/ports/x11/openmotif.
 
      --with-gtk                use Gtk+
   
@@ -69,7 +71,9 @@ The configure script has a bunch of arguments:
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files mus-config.h, config.log, and makefile,
-created (or updated) by configure.
+created (or updated) by configure.  In general, if some switch is ignored,
+check that you have installed the "devel" package.  For example, --with-ruby
+won't work unless you have installed the ruby-devel package.
 
 Snd comes with s7, but if you insist on building Snd without any extension 
 language, you'll find that it's severely limited in what it can do.  

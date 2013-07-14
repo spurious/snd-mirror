@@ -52,7 +52,6 @@ VERSION=13.9
 #   --without-fftw        omit FFTW even if it exists
 #   --with-pulseaudio     use PulseAudio
 #   --with-portaudio      use portaudio
-#   SNDLIB_CONFIG_path    where to look for sndlib-config
 
 AC_ARG_WITH(gtk,         [  --with-gtk		  use Gtk+ to build Snd])
 AC_ARG_WITH(gui,         [  --with-gui  	      	  make Snd with graphics support])
@@ -374,19 +373,27 @@ if test "$with_ruby" = yes ; then
       LOCAL_LANGUAGE="Ruby"
       ac_snd_extension_language=Ruby
     else
-      if $PKG_CONFIG ruby-1.9 --exists ; then
+      if $PKG_CONFIG ruby --exists ; then
         AC_DEFINE(HAVE_RUBY)
-        XEN_CFLAGS="`$PKG_CONFIG ruby-1.9 --cflags`"
-        XEN_LIBS="`$PKG_CONFIG ruby-1.9 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
+        XEN_CFLAGS="`$PKG_CONFIG ruby --cflags`"
+        XEN_LIBS="`$PKG_CONFIG ruby --libs-only-L` -lruby-static `$PKG_CONFIG ruby --libs-only-l`"
         LOCAL_LANGUAGE="Ruby"
         ac_snd_extension_language=Ruby
       else
-        if $PKG_CONFIG ruby-1.8 --exists ; then
+        if $PKG_CONFIG ruby-1.9 --exists ; then
           AC_DEFINE(HAVE_RUBY)
-          XEN_CFLAGS="`$PKG_CONFIG ruby-1.8 --cflags`"
-          XEN_LIBS="`$PKG_CONFIG ruby-1.8 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
+          XEN_CFLAGS="`$PKG_CONFIG ruby-1.9 --cflags`"
+          XEN_LIBS="`$PKG_CONFIG ruby-1.9 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
           LOCAL_LANGUAGE="Ruby"
           ac_snd_extension_language=Ruby
+        else
+          if $PKG_CONFIG ruby-1.8 --exists ; then
+            AC_DEFINE(HAVE_RUBY)
+            XEN_CFLAGS="`$PKG_CONFIG ruby-1.8 --cflags`"
+            XEN_LIBS="`$PKG_CONFIG ruby-1.8 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
+            LOCAL_LANGUAGE="Ruby"
+            ac_snd_extension_language=Ruby
+	  fi
         fi
       fi
     fi
@@ -609,12 +616,12 @@ if test "$with_audio" != no ; then
 	;;
       *-apple-*)
 	if test "$with_jack" != yes ; then 
-	    AUDIO_SYSTEM=MacOSX
-	    AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
+	  AUDIO_SYSTEM=MacOSX
+	  AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
         else
-            AUDIO_SYSTEM=JACK
-	    JACK_LIBS="-framework CoreAudio -framework CoreServices -framework AudioUnit -L/usr/local/lib -ljack -lsamplerate"
-            JACK_FLAGS="-I/usr/local/include"
+          AUDIO_SYSTEM=JACK
+	  JACK_LIBS="-framework CoreAudio -framework CoreServices -framework AudioUnit -L/usr/local/lib -ljack -lsamplerate"
+          JACK_FLAGS="-I/usr/local/include"
 	fi
 	;;
     esac
@@ -642,6 +649,7 @@ LIBS=""
 LDSO_FLAGS=""
 SO_FLAGS=""
 SO_LD="ld"
+# the SO_* stuff here is for consistency with the sndlib configure script
 
 case "$host" in
   *-*-linux*) 
@@ -649,6 +657,7 @@ case "$host" in
     LIBS="$LIBS -lm -ldl"
     if test "$GCC" = yes ; then
       SO_FLAGS="-fPIC $SO_FLAGS"
+      SO_LD="$CC"
     fi
     ;;
 
@@ -685,6 +694,7 @@ case "$host" in
 
   *-*-openbsd*) 
     if test "$GCC" = yes ; then
+      SO_LD="$CC"
       SO_FLAGS="-fPIC $SO_FLAGS"
       CFLAGS="-ftrampolines $CFLAGS"
     fi
@@ -701,6 +711,13 @@ case "$host" in
   *-*-mingw*)
     LIBS="$LIBS -lwinmm -lwsock32"
     LDFLAGS="$LDFLAGS -mwindows"
+    SO_INSTALL=":"
+    SO_LD=":"
+    ;;
+
+  *-apple-*)
+    SO_LD="$CC"	
+    LDSO_FLAGS="-dynamic -bundle -undefined suppress -flat_namespace"
     ;;
 esac
 
