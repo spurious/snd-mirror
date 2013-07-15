@@ -2209,7 +2209,7 @@
 (hey "#define HAVE_GTK_WIDGET_GET_VISIBLE               GTK_CHECK_VERSION(2, 18, 0)~%")
 (hey "#define HAVE_GTK_WIDGET_GET_MAPPED                GTK_CHECK_VERSION(2, 19, 0)~%")
 (hey "#define HAVE_GTK_COMBO_BOX_NEW_WITH_AREA          GTK_CHECK_VERSION(3, 0, 0)~%")
-(hey "#define HAVE_GTK_GRID_NEW                         GTK_CHECK_VERSION(3, 0, 0)~%")
+(hey "/* #define HAVE_GTK_GRID_NEW                         GTK_CHECK_VERSION(3, 0, 0) */~%")
 (hey "#define HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT GTK_CHECK_VERSION(3, 11, 0)~%")
 (hey "#define HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE       GTK_CHECK_VERSION(3, 2, 0)~%")
 (hey "#define HAVE_GTK_APPLICATION_WINDOW_NEW           GTK_CHECK_VERSION(3, 4, 0)~%")
@@ -2220,7 +2220,7 @@
 (hey "#define HAVE_CAIRO_GLYPH_ALLOCATE                 ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 8))~%")
 (hey "#define HAVE_CAIRO_REGION_XOR                     ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 9) && (CAIRO_VERSION_MICRO >= 12))~%~%")
 
-(hey "#if (_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))~%")
+(hey "#if ((!__NetBSD__) && ((_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))))~%")
 (hey "  #define __func__ __FUNCTION__~%")
 (hey "#endif~%~%")
 

@@ -14,7 +14,7 @@ AC_CONFIG_FILES(makefile)
 AC_PROG_CC
 
 # AC_HEADER_STDC
-# AC_PROG_INSTALL
+AC_PROG_INSTALL
 
 MAKE_TARGET="snd"
 AUDIO_SYSTEM="None"
@@ -759,6 +759,7 @@ fi
 # output
 #--------------------------------------------------------------------------------
 
+AC_SUBST(INSTALL)
 AC_SUBST(CFLAGS)
 AC_SUBST(ORIGINAL_LDFLAGS)
 AC_SUBST(LDFLAGS)

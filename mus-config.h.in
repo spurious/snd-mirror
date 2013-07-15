@@ -106,7 +106,7 @@
 
 #undef WORDS_BIGENDIAN
 /* __LITTLE_ENDIAN__ = 1 if gcc osx, but not linux __x86_64?
-   I think it's worth a try to simple use __BIG_ENDIAN__ here
+   I think it's worth a try to simply use __BIG_ENDIAN__ here
    it won't work on a PDP-7 but who cares?
  */
 

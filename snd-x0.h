@@ -10,8 +10,6 @@
 #include <GL/glx.h>
 #endif
 
-#define HAVE_MOTIF true
-
 #define xm_font_t XmRenderTable
 #define XM_FONT_RESOURCE XmNrenderTable
 #define XM_FONT_FREE XmRenderTableFree

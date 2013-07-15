@@ -36,7 +36,8 @@ char *xen_strdup(const char *str)
 
 #if HAVE_RUBY
 
-#define HAVE_RB_PROC_NEW ((RUBY_MAJOR_VERSION >= 1) && (RUBY_MINOR_VERSION >= 8))
+#define HAVE_RB_PROC_NEW 1
+/* As the README says, only versions of ruby 1.8 or later will work */
 
 #if USE_SND
 void snd_rb_raise(XEN type, XEN info); /* XEN_ERROR */
@@ -450,19 +451,7 @@ char *xen_version(void)
 {
   char *buf;
   buf = (char *)calloc(128, sizeof(char));
-#if HAVE_SNPRINTF
-  snprintf(buf, 128, "Ruby: %s (%s), Xen: %s", 
-#else
-  sprintf(buf, "Ruby: %s (%s), Xen: %s", 
-#endif
-#ifdef RUBY_VERSION
-	  RUBY_VERSION,
-	  RUBY_RELEASE_DATE,
-#else
-	  XEN_TO_C_STRING(XEN_EVAL_C_STRING("RUBY_VERSION")),
-	  XEN_TO_C_STRING(XEN_EVAL_C_STRING("RUBY_RELEASE_DATE")),
-#endif
-	  XEN_VERSION);
+  snprintf(buf, "Ruby");
   return(buf);
 }
 
@@ -488,7 +477,7 @@ static XEN xen_rb_rep(XEN ig)
   char **buffer = NULL;
   buffer = (char **)calloc(1, sizeof(char *));
   buffer[0] = (char *)calloc(size, sizeof(char));
-  fprintf(stdout, rb_prompt);
+  fprintf(stdout, "%s", rb_prompt);
   fgets(buffer[0], size, stdin);
   val = xen_rb_eval_string_with_error(buffer[0]);
   str = XEN_AS_STRING(val);

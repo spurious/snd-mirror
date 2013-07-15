@@ -362,7 +362,7 @@
   #define NAN (INFINITY / INFINITY)
 #endif
 
-#if (_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))
+#if ((!__NetBSD__) && ((_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))))
   #define __func__ __FUNCTION__
 #endif
 
@@ -65826,4 +65826,3 @@ s7_scheme *s7_init(void)
  * then getenv is treated as part of a library (like delete-file also) and is not a built-in
  *   also char-position = tie into libc?
  */
-

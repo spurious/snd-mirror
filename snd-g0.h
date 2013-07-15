@@ -16,9 +16,6 @@
 
 #include "glistener.h"
 
-#define HAVE_GTK true
-/* I keep using this form (not USE_GTK) by mistake */
-
 #define HAVE_GTK_TEST_WIDGET_CLICK                GTK_CHECK_VERSION(2, 14, 0)
 #define HAVE_GTK_ADJUSTMENT_GET_UPPER             GTK_CHECK_VERSION(2, 14, 0)
 #define HAVE_GTK_SCALE_ADD_MARK                   GTK_CHECK_VERSION(2, 16, 0)

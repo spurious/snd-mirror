@@ -122,8 +122,6 @@ sndlib.html, sndclm.html, fm.html, s7.html, and libxm.html.
 
 A brief change log is in HISTORY.Snd.
 
-Dave Phillips has written a tutorial: see the tutorial directory.
-
 
 The mailing list for Snd is the same as that for Common Music:
 cmdist@ccrma.stanford.edu.  To subscribe, visit
@@ -182,8 +180,8 @@ Plus many other contributions from
 
 
 In terms of number of lines, the languages used in Snd/Sndlib are:
-C, Scheme, Ruby, Forth, m4, Emacs Lisp, javascript,
-Fortran, and postscript (altogether about 700k lines).
+C, Scheme, Ruby, Forth, Emacs Lisp, javascript,
+Fortran, Lua, m4, and postscript (altogether about 750k lines).
 
 
 ----------------------------------------------------------------
@@ -303,20 +301,13 @@ broken.
 Only Motif 2.n is supported.  Be sure to get the Motif development
 package if you want to build Snd (you need the Motif headers).
 
-If you have installed Motif in some weird place, use the --with-motif-prefix
-configure argument.
-
-In Fedora 7 and later, openMotif will need /usr/include/X11/extensions/Print.h
-/usr/include/X11/bitmaps/gray, and /usr/X11R6/lib/libXp.so.  I copy these
-from old machines, but there must be a better way...
-
 On 64-bit machines, use motif 2.3.2 or later.
 
 
 
 ---- Gtk+: ----
 
-Only Gtk 2.12 or later is supported.  
+Only Gtk 2.13 or later is supported.  
 
 If you get an error like:
 
@@ -333,10 +324,6 @@ In some cases, if you installed gtk from an RPM file, you
 also need to install gtk-devel.
 
 
-Gtk is changing rapidly these days, moving toward Gtk 3. Snd is struggling
-to keep pace, but expect trouble! 
-
-
 
 
 ---- Mac OSX: ---- 
@@ -349,10 +336,9 @@ ordinary shell, use the open-x11 command:
 or (in later versions of OSX) just start snd, and X should start automatically.
 
 To install X11, first, install the X11SDK and X11User packages.  
-The first is in one of the Installer directories, the second (in 10.4) 
+The first is in one of the Installer directories, the second (in OSX 10.4) 
 is on the first install disk under System/Installation/Packages/X11User.pkg 
 or some such name.  These give you the X11 server and its header files.
-
 
 There are several ways to go from here; the simplest is probably
 to use Darwin Ports as outlined by Hans Fugal:
@@ -385,17 +371,7 @@ If the openmotif package forgot to include libXm.a (Motif), a version is
 at ccrma-ftp.  If the Mac loader complains that it it out of date,
 run ranlib: ranlib libXm.a (you may need to admin privileges to do this).
 
-
-On my OSX 10.4 Mac, the configuration command I use is:
-
-./configure --with-motif-prefix=/usr/OpenMotif
-
-So, I believe all the rest of these instructions are obsolete,
-but if the simple case above fails, they may help you get going.
-
-
 See also the cmdist archives for tips from Juan Pampin and others.
-
 Here's some info from Josh Mattoon:
 
     "It turns out everything required for snd is now in fink! 
@@ -497,7 +473,7 @@ process moved the previous X11R6 directory to X11R6 1, which is untypable).
 
 In OSX 10.6.8, Ludger Brummer suggests:
 
-  ./configure CFLAGS="-arch i386 -I/sw/include" LDFLAGS="-L/sw/lib -lmx -bind_at_load" --with-motif --with-motif-prefix=/sw 
+  ./configure CFLAGS="-arch i386 -I/sw/include" LDFLAGS="-L/sw/lib -lmx -bind_at_load" --with-motif
 
 
 Here's a note from Brooke Mitchell:

@@ -974,4 +974,9 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define set_play_arrow_size(a) ss->Play_Arrow_Size = a
 #define DEFAULT_PLAY_ARROW_SIZE 10
 
+
+#define HAVE_GTK use USE_GTK not HAVE!
+#define HAVE_MOTIF use USE_MOTIF not HAVE!
+/* I keep using these HAVE_* forms by mistake */
+
 #endif

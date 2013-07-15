@@ -1872,7 +1872,7 @@
 (CFNC "void gtk_drag_set_icon_widget GdkDragContext* context GtkWidget* widget gint hot_x gint hot_y")
 (CFNC-gtk2 "void gtk_drag_set_icon_pixmap GdkDragContext* context GdkColormap* colormap GdkPixmap* pixmap GdkBitmap* mask gint hot_x gint hot_y")
 (CFNC "void gtk_drag_set_icon_pixbuf GdkDragContext* context GdkPixbuf* pixbuf gint hot_x gint hot_y")
-(CFNC "void gtk_drag_set_icon_stock GdkDragContext* context gchar* stock_id gint hot_x gint hot_y")
+;;; (CFNC "void gtk_drag_set_icon_stock GdkDragContext* context gchar* stock_id gint hot_x gint hot_y")
 (CFNC "void gtk_drag_set_icon_default GdkDragContext* context")
 (CFNC "gboolean gtk_drag_check_threshold GtkWidget* widget gint start_x gint start_y gint current_x gint current_y")
 (CCAST "GTK_DRAWING_AREA(obj)" "GtkDrawingArea*")

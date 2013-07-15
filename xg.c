@@ -96,7 +96,7 @@
 #define HAVE_GTK_WIDGET_GET_VISIBLE               GTK_CHECK_VERSION(2, 18, 0)
 #define HAVE_GTK_WIDGET_GET_MAPPED                GTK_CHECK_VERSION(2, 19, 0)
 #define HAVE_GTK_COMBO_BOX_NEW_WITH_AREA          GTK_CHECK_VERSION(3, 0, 0)
-#define HAVE_GTK_GRID_NEW                         GTK_CHECK_VERSION(3, 0, 0)
+/* #define HAVE_GTK_GRID_NEW                         GTK_CHECK_VERSION(3, 0, 0) */
 #define HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT GTK_CHECK_VERSION(3, 11, 0)
 #define HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE       GTK_CHECK_VERSION(3, 2, 0)
 #define HAVE_GTK_APPLICATION_WINDOW_NEW           GTK_CHECK_VERSION(3, 4, 0)
@@ -107,7 +107,7 @@
 #define HAVE_CAIRO_GLYPH_ALLOCATE                 ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 8))
 #define HAVE_CAIRO_REGION_XOR                     ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 9) && (CAIRO_VERSION_MICRO >= 12))
 
-#if (_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))
+#if ((!__NetBSD__) && ((_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))))
   #define __func__ __FUNCTION__
 #endif
 
@@ -5325,18 +5325,6 @@ gint hot_x, gint hot_y)"
   XEN_ASSERT_TYPE(XEN_gint_P(hot_x), hot_x, 3, "gtk_drag_set_icon_pixbuf", "gint");
   XEN_ASSERT_TYPE(XEN_gint_P(hot_y), hot_y, 4, "gtk_drag_set_icon_pixbuf", "gint");
   gtk_drag_set_icon_pixbuf(XEN_TO_C_GdkDragContext_(context), XEN_TO_C_GdkPixbuf_(pixbuf), XEN_TO_C_gint(hot_x), XEN_TO_C_gint(hot_y));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_drag_set_icon_stock(XEN context, XEN stock_id, XEN hot_x, XEN hot_y)
-{
-  #define H_gtk_drag_set_icon_stock "void gtk_drag_set_icon_stock(GdkDragContext* context, gchar* stock_id, \
-gint hot_x, gint hot_y)"
-  XEN_ASSERT_TYPE(XEN_GdkDragContext__P(context), context, 1, "gtk_drag_set_icon_stock", "GdkDragContext*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(stock_id), stock_id, 2, "gtk_drag_set_icon_stock", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(hot_x), hot_x, 3, "gtk_drag_set_icon_stock", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(hot_y), hot_y, 4, "gtk_drag_set_icon_stock", "gint");
-  gtk_drag_set_icon_stock(XEN_TO_C_GdkDragContext_(context), XEN_TO_C_gchar_(stock_id), XEN_TO_C_gint(hot_x), XEN_TO_C_gint(hot_y));
   return(XEN_FALSE);
 }
 
@@ -35262,7 +35250,6 @@ XEN_NARGIFY_2(gxg_gtk_drag_source_set_icon_pixbuf_w, gxg_gtk_drag_source_set_ico
 XEN_NARGIFY_5(gxg_gtk_drag_begin_w, gxg_gtk_drag_begin)
 XEN_NARGIFY_4(gxg_gtk_drag_set_icon_widget_w, gxg_gtk_drag_set_icon_widget)
 XEN_NARGIFY_4(gxg_gtk_drag_set_icon_pixbuf_w, gxg_gtk_drag_set_icon_pixbuf)
-XEN_NARGIFY_4(gxg_gtk_drag_set_icon_stock_w, gxg_gtk_drag_set_icon_stock)
 XEN_NARGIFY_1(gxg_gtk_drag_set_icon_default_w, gxg_gtk_drag_set_icon_default)
 XEN_NARGIFY_5(gxg_gtk_drag_check_threshold_w, gxg_gtk_drag_check_threshold)
 XEN_NARGIFY_0(gxg_gtk_drawing_area_new_w, gxg_gtk_drawing_area_new)
@@ -39292,7 +39279,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_drag_begin_w gxg_gtk_drag_begin
 #define gxg_gtk_drag_set_icon_widget_w gxg_gtk_drag_set_icon_widget
 #define gxg_gtk_drag_set_icon_pixbuf_w gxg_gtk_drag_set_icon_pixbuf
-#define gxg_gtk_drag_set_icon_stock_w gxg_gtk_drag_set_icon_stock
 #define gxg_gtk_drag_set_icon_default_w gxg_gtk_drag_set_icon_default
 #define gxg_gtk_drag_check_threshold_w gxg_gtk_drag_check_threshold
 #define gxg_gtk_drawing_area_new_w gxg_gtk_drawing_area_new
@@ -43329,7 +43315,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_drag_begin, gxg_gtk_drag_begin_w, 5, 0, 0, H_gtk_drag_begin);
   XG_DEFINE_PROCEDURE(gtk_drag_set_icon_widget, gxg_gtk_drag_set_icon_widget_w, 4, 0, 0, H_gtk_drag_set_icon_widget);
   XG_DEFINE_PROCEDURE(gtk_drag_set_icon_pixbuf, gxg_gtk_drag_set_icon_pixbuf_w, 4, 0, 0, H_gtk_drag_set_icon_pixbuf);
-  XG_DEFINE_PROCEDURE(gtk_drag_set_icon_stock, gxg_gtk_drag_set_icon_stock_w, 4, 0, 0, H_gtk_drag_set_icon_stock);
   XG_DEFINE_PROCEDURE(gtk_drag_set_icon_default, gxg_gtk_drag_set_icon_default_w, 1, 0, 0, H_gtk_drag_set_icon_default);
   XG_DEFINE_PROCEDURE(gtk_drag_check_threshold, gxg_gtk_drag_check_threshold_w, 5, 0, 0, H_gtk_drag_check_threshold);
   XG_DEFINE_PROCEDURE(gtk_drawing_area_new, gxg_gtk_drawing_area_new_w, 0, 0, 0, H_gtk_drawing_area_new);
@@ -48684,7 +48669,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("11-Jul-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("15-Jul-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
