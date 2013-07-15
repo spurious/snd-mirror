@@ -446,12 +446,18 @@ XEN xen_rb_list_set(XEN obj, int index, XEN value)
   return(value);
 }
 
+#include <ruby/version.h>
 
 char *xen_version(void)
 {
+  /* there is no macro we can depend on for the version number (its name changes unpredictably),
+   *   and ruby/version.h tries to be funny about how unreliable their semi-functional access is.
+   *   Maybe use <ruby/version.h> and ruby_version here (a const char*).
+   *   Humph!
+   */
   char *buf;
   buf = (char *)calloc(128, sizeof(char));
-  snprintf(buf, 128, "%s", "Ruby");
+  snprintf(buf, 128, "%s %s", "Ruby", ruby_version);
   return(buf);
 }
 

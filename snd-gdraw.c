@@ -83,9 +83,9 @@ void fill_rectangle(graphics_context *ax, int x0, int y0, int width, int height)
   else
     {
       mus_float_t grad;
+      cairo_pattern_t *pat;
       grad = ss->bg_gradient;
       /* try gradient background: looks ok, but display is slow */
-      cairo_pattern_t *pat;
       /* this is shaded toward the right
 	 pat = cairo_pattern_create_linear(0, 0, width, height);
       */
@@ -122,9 +122,10 @@ void erase_rectangle(chan_info *cp, graphics_context *ax, int x0, int y0, int wi
   else
     {
       mus_float_t grad;
+      cairo_pattern_t *pat;
+
       grad = ss->bg_gradient;
       /* try gradient background: looks ok, but display is slow */
-      cairo_pattern_t *pat;
       /* this is shaded toward the right
 	 pat = cairo_pattern_create_linear(0, 0, width, height);
       */

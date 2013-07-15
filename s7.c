@@ -65824,5 +65824,5 @@ s7_scheme *s7_init(void)
  *    we need a database of lib times so we can just load an existing linkage
  *    perhaps swig has the header data in a readable form?
  * then getenv is treated as part of a library (like delete-file also) and is not a built-in
- *   also char-position = tie into libc?
+ * but I can't see how to do this and save anything unless we have separate files floating around, and that we don't want!
  */

@@ -604,10 +604,11 @@ static mus_float_t **make_prism_colormap(int size, XEN ignored)
 static void prism_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   int k;
-  k = ((int)(x * color_map_size(ss))) % 6;
   mus_float_t rs[6] = {1.0, 1.0, 1.0, 0.0, 0.0, 0.6667};
   mus_float_t gs[6] = {0.0, 0.5, 1.0, 1.0, 0.0, 0.0};
   mus_float_t bs[6] = {0.0, 0.0, 0.0, 0.0, 1.0, 1.0};
+
+  k = ((int)(x * color_map_size(ss))) % 6;
   (*r) = rs[k];
   (*g) = gs[k];
   (*b) = bs[k];

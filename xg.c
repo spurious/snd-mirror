@@ -834,7 +834,7 @@ XM_TYPE_PTR(GFile_, GFile*)
 #if HAVE_GTK_SCALE_ADD_MARK
 #define XEN_TO_C_GtkEntryIconPosition(Arg) (GtkEntryIconPosition)(XEN_TO_C_INT(Arg))
 #define XEN_GtkEntryIconPosition_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GIcon_, GIcon*)
+XM_TYPE_PTR_1(GIcon_, GIcon*)
 #endif
 
 #if HAVE_GTK_INFO_BAR_NEW

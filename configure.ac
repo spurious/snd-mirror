@@ -366,34 +366,42 @@ ac_snd_extension_language=none
 
 if test "$with_ruby" = yes ; then
   if test x$PKG_CONFIG != xno ; then
-    if $PKG_CONFIG ruby-2.0 --exists ; then
+    if $PKG_CONFIG ruby-2.1 --exists ; then
       AC_DEFINE(HAVE_RUBY)
-      XEN_CFLAGS="`$PKG_CONFIG ruby-2.0 --cflags`"
-      XEN_LIBS="`$PKG_CONFIG ruby-2.0 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
+      XEN_CFLAGS="`$PKG_CONFIG ruby-2.1 --cflags`"
+      XEN_LIBS="`$PKG_CONFIG ruby-2.1 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.1 --libs-only-l`"
       LOCAL_LANGUAGE="Ruby"
       ac_snd_extension_language=Ruby
     else
-      if $PKG_CONFIG ruby --exists ; then
+      if $PKG_CONFIG ruby-2.0 --exists ; then
         AC_DEFINE(HAVE_RUBY)
-        XEN_CFLAGS="`$PKG_CONFIG ruby --cflags`"
-        XEN_LIBS="`$PKG_CONFIG ruby --libs-only-L` -lruby-static `$PKG_CONFIG ruby --libs-only-l`"
+        XEN_CFLAGS="`$PKG_CONFIG ruby-2.0 --cflags`"
+        XEN_LIBS="`$PKG_CONFIG ruby-2.0 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
         LOCAL_LANGUAGE="Ruby"
         ac_snd_extension_language=Ruby
       else
-        if $PKG_CONFIG ruby-1.9 --exists ; then
+        if $PKG_CONFIG ruby --exists ; then
           AC_DEFINE(HAVE_RUBY)
-          XEN_CFLAGS="`$PKG_CONFIG ruby-1.9 --cflags`"
-          XEN_LIBS="`$PKG_CONFIG ruby-1.9 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
+          XEN_CFLAGS="`$PKG_CONFIG ruby --cflags`"
+          XEN_LIBS="`$PKG_CONFIG ruby --libs-only-L` -lruby-static `$PKG_CONFIG ruby --libs-only-l`"
           LOCAL_LANGUAGE="Ruby"
           ac_snd_extension_language=Ruby
         else
-          if $PKG_CONFIG ruby-1.8 --exists ; then
+          if $PKG_CONFIG ruby-1.9 --exists ; then
             AC_DEFINE(HAVE_RUBY)
-            XEN_CFLAGS="`$PKG_CONFIG ruby-1.8 --cflags`"
-            XEN_LIBS="`$PKG_CONFIG ruby-1.8 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
+            XEN_CFLAGS="`$PKG_CONFIG ruby-1.9 --cflags`"
+            XEN_LIBS="`$PKG_CONFIG ruby-1.9 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
             LOCAL_LANGUAGE="Ruby"
             ac_snd_extension_language=Ruby
-	  fi
+          else
+            if $PKG_CONFIG ruby-1.8 --exists ; then
+              AC_DEFINE(HAVE_RUBY)
+              XEN_CFLAGS="`$PKG_CONFIG ruby-1.8 --cflags`"
+              XEN_LIBS="`$PKG_CONFIG ruby-1.8 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
+              LOCAL_LANGUAGE="Ruby"
+              ac_snd_extension_language=Ruby
+            fi
+  	  fi
         fi
       fi
     fi

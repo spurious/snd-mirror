@@ -44,7 +44,11 @@ echo ' '
 ./snd --version
 ./snd -noinit --features "'clm 'snd-s7 'snd-motif 'sndlib"
 ./snd tools/check-help.scm
-# ./snd generators.scm peak-phases.scm -e "(begin (test-peak-phases) (exit))"
+
+
+echo ' -------------------------------------------------------------------------------- '
+echo ' ----                 ffitest                                               ----- '
+echo ' -------------------------------------------------------------------------------- '
 
 cp tools/ffitest.c .
 gcc -o ffitest ffitest.c -g3 -Wall s7.o -lm -I. -ldl
@@ -291,6 +295,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
+make allclean
 
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --without-extension-language g++                      ----  '
@@ -380,20 +385,6 @@ echo ' -----                g++                                    ---- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure LDFLAGS="-L/usr/X11R6/lib" --quiet CC=g++  CFLAGS="-I/usr/X11R6/include"
 make
-
-make allclean
-rm -f snd
-rm -f config.cache
-
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --with-snd-as-widget                                   ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-snd-as-widget
-make
-echo ' '
-echo ' '
-./snd --version
-./snd -noinit --features "'clm"
 
 make allclean
 rm -f snd

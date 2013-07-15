@@ -135,18 +135,6 @@ make
 echo ' '
 echo ' '
 date
-echo ' -------------------------------- snd-as-widget test -------------------------------- '
-make allclean
-rm -f snd
-rm -f config.cache
-echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-snd-as-widget '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-snd-as-widget --without-gsl LDFLAGS="-L/usr/X11R6/lib"
-make
-gcc -c saw.c -I. -g -O2 -I/usr/local/include -I/usr/X11R6/include -o saw.o
-gcc saw.o snd_widget.o -o saw -L/usr/X11R6/lib -lSM -lICE -lXm -lXt -lXp -lX11 -lXext -lXpm -L/usr/local/lib -lfftw3 -lm
-echo ' '
-echo ' '
-date
 echo ' -------------------------------- gtk test -------------------------------- '
 make allclean
 rm -f snd
