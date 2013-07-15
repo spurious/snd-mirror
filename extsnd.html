@@ -5435,7 +5435,7 @@ a #-reader that sees something like "#m12" and expands that into (integer-&gt;ma
     (cons (cons #\m (lambda (str)
                       (integer-&gt;mark (string-&gt;number (substring str 1)))))
           *#readers*))
-((#\m . #&lt;closure&gt;))
+((#\m . #&lt;lambda (str)&gt;))
 &gt; #m1
 #&lt;mark 1&gt;
 &gt; (mark-sample #m1)

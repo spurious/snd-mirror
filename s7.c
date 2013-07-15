@@ -22876,6 +22876,7 @@ static s7_pointer find_closure(s7_scheme *sc, s7_pointer closure, s7_pointer cur
 static const char *c_closure_name(s7_scheme *sc, s7_pointer closure, int *nlen)
 {
   s7_pointer x;
+  char *args;
   x = find_closure(sc, closure, closure_environment(closure));
 
   if (is_symbol(x))
@@ -22883,8 +22884,15 @@ static const char *c_closure_name(s7_scheme *sc, s7_pointer closure, int *nlen)
       (*nlen) = symbol_name_length(x);
       return(symbol_name(x));
     }
-  (*nlen) = 10;
-  return("#<closure>");
+
+  /* names like #<closure> and #<macro> are useless -- try to be a bit more informative
+   *   #<lambda|* args> #<m|bacro|* args> (args truncated if long)
+   * despite the name "c_closure..." this function refers to T_CLOSURE and T_CLOSURE_STAR objects only
+   */
+  args = object_to_truncated_string(sc, closure_args(closure), 20);
+  (*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<lambda%s %s>", (type(closure) == T_CLOSURE) ? "" : "*", args);
+  free(args);
+  return(sc->strbuf);
 }
 
 
@@ -23743,6 +23751,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
       else port_write_string(port)(sc, character_name(obj), character_name_length(obj), port);
       break;
 
+      /* TODO: macro/bacro with args etc -- see c_closure_name */
     case T_MACRO:
       port_write_string(port)(sc, "#<macro>", 8, port);
       break;
@@ -65815,9 +65824,6 @@ s7_scheme *s7_init(void)
 
 /* ideally we'd replace strcpy with strcopy throughout Snd, and strcat with strappend or some equivalent
  *   also openbsd audio is broken in Snd -- see aucat.c I guess.
- */
-
-/* names like #<closure> and #<macro> are useless -- could we include at least the arglist? or body truncated?
  */
 
 /* TODO: cload -> environment (library) wrapping up everything in a shared library

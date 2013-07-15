@@ -4109,7 +4109,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   snd_fd *sf;
   XEN errstr;
   mus_long_t kp, num;
-  int rpt = 0, rpt4;
+  int rpt = 0, rpt4 = 0;
   bool reporting = false;
   int counts = 0, pos;
   char *errmsg;

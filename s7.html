@@ -1572,7 +1572,7 @@ value passed to set!:
 &gt; (set! (procedure-setter cadr) 
         (lambda (lst val) 
           (set! (car (cdr lst)) val)))
-#&lt;closure&gt;
+#&lt;lambda (lst val)&gt;
 &gt; (procedure-source (procedure-setter cadr))
 (lambda (lst val) (set! (car (cdr lst)) val))
 &gt; (let ((lst (list 1 2 3))) 
@@ -3004,7 +3004,7 @@ v1
        (cons 'add (lambda (obj) 
                     (with-environment obj
                       (+ 1 a (* 2 b))))))
-#&lt;class-1: (a 1) (b 2) (add #&lt;closure&gt;)&gt;
+#&lt;class-1: (a 1) (b 2) (add #&lt;lambda (obj)&gt;)&gt;
 &gt; (add v1)
 6
 &gt; (add v)                       ; other class-1 instances are not affected
@@ -3017,8 +3017,10 @@ v1
 class-3
 &gt; ((class-3 'multiply) class-3 10)
 180                               ; (* 10 (* 1 2 3) (+ 1 2))
+&gt; (define v3 (make-class-3))
+v3
 &gt; (all-methods v3 'multiply)
-(#&lt;closure&gt; #&lt;closure&gt;)
+(#&lt;lambda (obj num)&gt; #&lt;lambda (obj)&gt;)
 &gt; (for-each (lambda (p) (format #t "~A~%" (procedure-source p))) (all-methods v3 'multiply))
 (lambda (obj num) (* num ((class-2 'multiply) obj) (add obj)))
 (lambda (obj) (with-environment obj (* a b c)))
@@ -3885,7 +3887,7 @@ h
 &gt; (add-to-hook h (lambda (hook) 
                    (set! (hook 'result) 
                          (format #f "a: ~A, b: ~A" (hook 'a) (hook 'b)))))
-(#&lt;closure&gt;)
+(#&lt;lambda (hook)&gt;)
 &gt; (h 1 2)
 "a: 1, b: 2"
 &gt; (h)
@@ -3947,14 +3949,14 @@ h
 &gt; (set! (hook-functions h) ; these are the 'body' functions
         (list (lambda (hook) 
                 (set! (hook 'result) (+ (hook 'x) 1.0)))))
-(#&lt;closure&gt;)
+(#&lt;lambda (hook)&gt;)
 &gt; (h 2.5)
 3.5
 &gt; (set! ((procedure-environment h) 'init) 
         (list (lambda (hook) ; if x is a string, convert it to a number
                 (if (string? (hook 'x)) 
                     (set! (hook 'x) (string-&gt;number (hook 'x)))))))
-(#&lt;closure&gt;)
+(#&lt;lambda (hook)&gt;)
 &gt; (h "2.5")
 3.5
 </pre>
@@ -4082,7 +4084,7 @@ Here'a an example that adds trace and local variable info for debugging:
 &gt; (define (hi a) (let ((b 12)) (+ b a)))
 hi
 &gt; (procedure-annotate hi)
-#&lt;closure&gt;
+#&lt;(lambda (a)&gt;
 &gt; (let ((x 32)) (+ 1 (hi x)))
 45
 ;; printing: 
@@ -4656,7 +4658,7 @@ dalliance with symbol-macros!
                              ;; status-report is a Snd function that (in this case)
 		             ;;   sends the data to the Snd listener.	       
                              )))))))
-(#&lt;closure&gt; #&lt;closure&gt;)
+(#&lt;lambda (hook)&gt;)
 &gt; (let ((a "hi") (b 2)) (+ a b)) ; hit an error on purpose
 ;+ argument 1, "hi", is a string but should be a number
 ;    (+ a b)
@@ -4667,7 +4669,7 @@ dalliance with symbol-macros!
     (list (lambda (hook)
             (if (eq? (hook 'variable) 'hiho)
                 (set! (hook 'result) (sin (random 1.0))))))) ; hiho -&gt; sins of some number
-(&lt;closure&gt;)
+(&lt;lambda (hook)&gt;)
 &gt; hiho
 0.46727567824396
 &gt; hiho
@@ -4952,7 +4954,7 @@ I need to know where something unexpected happened.  So:
 </p>
 <pre class="indented">
 &gt; (set! *#readers* (cons (cons #\; (lambda (str) (if (string=? str ";") (read)) (values))) *#readers*))
-((#\; . #&lt;closure&gt;))
+((#\; . #&lt;lambda (str)&gt;))
 &gt; (+ 1 #;(* 2 3) 4)
 5
 </pre>
@@ -8060,7 +8062,7 @@ int main(int argc, char **argv)
 
 /* 
  *    &gt; test-hook
- *    #&lt;closure&gt;
+ *    #&lt;lambda (hook)&gt;
  *    
  *    &gt; (hook-functions test-hook)
  *    (my-hook-function)

@@ -256,12 +256,20 @@ static char *glx_version(void)
 #if HAVE_GSL
   #include <gsl/gsl_version.h>
 #endif
+#if __linux__
+  #include <sys/utsname.h>
+#endif
 
 char *version_info(void)
 {
   char *result, *xversion = NULL, *consistent = NULL;
 #if HAVE_GL && WITH_GL2PS
   char *gl2ps_name = NULL;
+#endif
+#if __linux__
+  int uname_ok;
+  struct utsname uts;
+  uname_ok = uname(&uts); /* 0=success */
 #endif
   snd_itoa_ctr = 0;
   xversion = xen_version();
@@ -363,6 +371,15 @@ char *version_info(void)
 #endif
 #endif
 	  "\n",
+#if __linux__
+	  (uname_ok == 0) ? "    " : "",
+	  (uname_ok == 0) ? uts.sysname : "",
+	  (uname_ok == 0) ? " " : "",
+	  (uname_ok == 0) ? uts.release : "",
+	  (uname_ok == 0) ? " " : "",
+	  (uname_ok == 0) ? uts.machine : "",
+	  (uname_ok == 0) ? "\n" : "",
+#endif
 	  NULL);
   free_snd_itoa();
   if (xversion) free(xversion); /* calloc in xen.c */

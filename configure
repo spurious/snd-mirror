@@ -5164,22 +5164,30 @@ ac_snd_extension_language=none
 
 if test "$with_ruby" = yes ; then
   if test x$PKG_CONFIG != xno ; then
-    if $PKG_CONFIG ruby-2.1 --exists ; then
-      $as_echo "#define HAVE_RUBY 1" >>confdefs.h
 
-      XEN_CFLAGS="`$PKG_CONFIG ruby-2.1 --cflags`"
-      XEN_LIBS="`$PKG_CONFIG ruby-2.1 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.1 --libs-only-l`"
-      LOCAL_LANGUAGE="Ruby"
-      ac_snd_extension_language=Ruby
-    else
-      if $PKG_CONFIG ruby-2.0 --exists ; then
-        $as_echo "#define HAVE_RUBY 1" >>confdefs.h
+      if test "$ac_snd_extension_language" = none ; then
+        if $PKG_CONFIG ruby-2.1 --exists ; then
+          $as_echo "#define HAVE_RUBY 1" >>confdefs.h
 
-        XEN_CFLAGS="`$PKG_CONFIG ruby-2.0 --cflags`"
-        XEN_LIBS="`$PKG_CONFIG ruby-2.0 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
-        LOCAL_LANGUAGE="Ruby"
-        ac_snd_extension_language=Ruby
-      else
+          XEN_CFLAGS="`$PKG_CONFIG ruby-2.1 --cflags`"
+          XEN_LIBS="`$PKG_CONFIG ruby-2.1 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.1 --libs-only-l`"
+          LOCAL_LANGUAGE="Ruby"
+          ac_snd_extension_language=Ruby
+        fi
+      fi
+
+      if test "$ac_snd_extension_language" = none ; then
+        if $PKG_CONFIG ruby-2.0 --exists ; then
+          $as_echo "#define HAVE_RUBY 1" >>confdefs.h
+
+          XEN_CFLAGS="`$PKG_CONFIG ruby-2.0 --cflags`"
+          XEN_LIBS="`$PKG_CONFIG ruby-2.0 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
+          LOCAL_LANGUAGE="Ruby"
+          ac_snd_extension_language=Ruby
+        fi
+      fi
+
+      if test "$ac_snd_extension_language" = none ; then
         if $PKG_CONFIG ruby --exists ; then
           $as_echo "#define HAVE_RUBY 1" >>confdefs.h
 
@@ -5187,27 +5195,31 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby --libs-only-L` -lruby-static `$PKG_CONFIG ruby --libs-only-l`"
           LOCAL_LANGUAGE="Ruby"
           ac_snd_extension_language=Ruby
-        else
-          if $PKG_CONFIG ruby-1.9 --exists ; then
-            $as_echo "#define HAVE_RUBY 1" >>confdefs.h
-
-            XEN_CFLAGS="`$PKG_CONFIG ruby-1.9 --cflags`"
-            XEN_LIBS="`$PKG_CONFIG ruby-1.9 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
-            LOCAL_LANGUAGE="Ruby"
-            ac_snd_extension_language=Ruby
-          else
-            if $PKG_CONFIG ruby-1.8 --exists ; then
-              $as_echo "#define HAVE_RUBY 1" >>confdefs.h
-
-              XEN_CFLAGS="`$PKG_CONFIG ruby-1.8 --cflags`"
-              XEN_LIBS="`$PKG_CONFIG ruby-1.8 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
-              LOCAL_LANGUAGE="Ruby"
-              ac_snd_extension_language=Ruby
-            fi
-  	  fi
         fi
       fi
-    fi
+
+      if test "$ac_snd_extension_language" = none ; then
+        if $PKG_CONFIG ruby-1.9 --exists ; then
+          $as_echo "#define HAVE_RUBY 1" >>confdefs.h
+
+          XEN_CFLAGS="`$PKG_CONFIG ruby-1.9 --cflags`"
+          XEN_LIBS="`$PKG_CONFIG ruby-1.9 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-1.9 --libs-only-l`"
+          LOCAL_LANGUAGE="Ruby"
+          ac_snd_extension_language=Ruby
+        fi
+      fi
+
+      if test "$ac_snd_extension_language" = none ; then
+        if $PKG_CONFIG ruby-1.8 --exists ; then
+          $as_echo "#define HAVE_RUBY 1" >>confdefs.h
+
+          XEN_CFLAGS="`$PKG_CONFIG ruby-1.8 --cflags`"
+          XEN_LIBS="`$PKG_CONFIG ruby-1.8 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-1.8 --libs-only-l`"
+          LOCAL_LANGUAGE="Ruby"
+          ac_snd_extension_language=Ruby
+        fi
+      fi
+
   fi
 fi
 
