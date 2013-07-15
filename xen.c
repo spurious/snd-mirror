@@ -451,7 +451,7 @@ char *xen_version(void)
 {
   char *buf;
   buf = (char *)calloc(128, sizeof(char));
-  snprintf(buf, "Ruby");
+  snprintf(buf, 128, "%s", "Ruby");
   return(buf);
 }
 
