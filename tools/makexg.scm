@@ -248,7 +248,7 @@
 	"GdkEventKey*" "GtkColorChooser*"
 
 	"GtkLevelBar*" "GtkMenuButton*" "GNormalizeMode"
-	"GIcon*"
+;	"GIcon*"
 	))
 
 (define no-xen-p 
