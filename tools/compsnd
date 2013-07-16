@@ -234,7 +234,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-forth  --with-editres --with-gl ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-forth  --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet --with-forth  --with-motif --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-forth 'xm 'gl"
@@ -290,7 +290,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --without-extension-language --with-gl         ------  '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-extension-language --with-gl
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-extension-language --with-motif --with-gl
 make
 echo ' '
 echo ' '
@@ -429,7 +429,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-ruby  --with-gl --with-alsa '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby  --with-gl --with-alsa
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby  --with-motif --with-gl --with-alsa
 make
 echo ' '
 echo ' '
@@ -647,7 +647,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --without-extension-language  --with-gl - '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --without-extension-language  --with-gl --quiet
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --without-extension-language  --with-motif --with-gl --quiet
 make
 ./snd --version
 make allclean
@@ -657,7 +657,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                 --with-gl --with-gl2ps         ------ '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include"  --with-gl --quiet --with-gl2ps
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include"  --with-motif --with-gl --quiet --with-gl2ps
 make
 ./snd --version
 ./snd -noinit --features "'clm 'xm 'gl2ps"

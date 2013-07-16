@@ -154,13 +154,19 @@ XL_TYPE_PTR_1(GLvoid_, GLvoid*)
 XL_TYPE_PTR(void_, void*)
 XL_TYPE_PTR_1(GLuint_, GLuint*)
 XL_TYPE_PTR_1(GLboolean_, GLboolean*)
+#if HAVE_GLU
 XL_TYPE_PTR(GLUnurbs_, GLUnurbs*)
+#endif
 #ifdef GLU_VERSION_1_2
 XL_TYPE_PTR(GLUtesselator_, GLUtesselator*)
 #endif
+#if HAVE_GLU
 XL_TYPE_PTR(GLUquadric_, GLUquadric*)
+#endif
 XL_TYPE_PTR_1(GLint_, GLint*)
+#if HAVE_GLU
 XL_TYPE(_GLUfuncptr, _GLUfuncptr)
+#endif
 
 
 /* ---------------------------------------- state readback confusion ---------------------------------------- */
@@ -5939,8 +5945,8 @@ void Init_libgl(void)
     {
       define_integers();
       define_functions();
-      XEN_YES_WE_HAVE("gl");
-      XEN_DEFINE("gl-version", C_TO_XEN_STRING("06-Apr-11"));
+      XEN_PROVIDE("gl");
+      XEN_DEFINE("gl-version", C_TO_XEN_STRING("16-Jul-13"));
       gl_already_inited = true;
     }
 }

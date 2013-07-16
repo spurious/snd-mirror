@@ -256,7 +256,7 @@ static char *glx_version(void)
 #if HAVE_GSL
   #include <gsl/gsl_version.h>
 #endif
-#if __linux__
+#ifndef _MSC_VER
   #include <sys/utsname.h>
 #endif
 
@@ -266,7 +266,7 @@ char *version_info(void)
 #if HAVE_GL && WITH_GL2PS
   char *gl2ps_name = NULL;
 #endif
-#if __linux__
+#ifndef _MSC_VER
   int uname_ok;
   struct utsname uts;
   uname_ok = uname(&uts); /* 0=success */
@@ -298,10 +298,6 @@ char *version_info(void)
 	  "\n    ", fftw_version,
 #endif
 #if USE_MOTIF
-  #ifdef LESSTIF_VERSION
-	  "\n    Lesstif ", snd_itoa(LESSTIF_VERSION), ".", 
-                            snd_itoa(LESSTIF_REVISION), " ",
-  #endif
 	  "\n    Motif ", snd_itoa(XmVERSION), ".", 
                           snd_itoa(XmREVISION), ".", 
                           snd_itoa(XmUPDATE_LEVEL),
@@ -343,11 +339,11 @@ char *version_info(void)
                         snd_itoa(XpmRevision),
 #endif
 #if HAVE_LADSPA
-	  "\n    LADSPA: ",
-  #ifdef LADSPA_HINT_DEFAULT_MASK
-	  "1.1",
+	  "\n    Ladspa: ",
+  #ifdef LADSPA_VERSION
+	  LADSPA_VERSION,
   #else
-	  "1.0",
+	  "1.0", 
   #endif
 #endif
 #if WITH_GMP
@@ -365,13 +361,9 @@ char *version_info(void)
 	  "\n    C++: ",
   #endif
 	  __VERSION__,
-#else
-#ifdef __SUNPRO_C
-	  "\n    Forte C ",
-#endif
 #endif
 	  "\n",
-#if __linux__
+#ifndef _MSC_VER
 	  (uname_ok == 0) ? "    " : "",
 	  (uname_ok == 0) ? uts.sysname : "",
 	  (uname_ok == 0) ? " " : "",

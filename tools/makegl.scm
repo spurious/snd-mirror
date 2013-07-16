@@ -328,7 +328,10 @@
 		     (string=? type "XVisualInfo*")
 		     (string=? type "GLXContext"))) ; Snd g_snd_glx_context (snd-xmain.c) calls this a pointer
 	    (begin
-	      (if (member type glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
+	      (if (member type glu-1-2) 
+		  (hey "#ifdef GLU_VERSION_1_2~%")
+		  (if (member type (list "GLUnurbs*" "GLUtesselator*" "GLUquadric*" "_GLUfuncptr"))
+		      (hey "#if HAVE_GLU~%")))
 	      (hey "XL_TYPE~A~A(~A, ~A)~%" 
 		   (if (has-stars type) "_PTR" "")
 		   (if (member type (list "int*" "Pixmap" "Font" "GLubyte*" 
@@ -342,7 +345,9 @@
 			   ""))
 		   (no-stars type)
 		   type)
-	      (if (member type glu-1-2) (hey "#endif~%")))
+	      (if (or (member type glu-1-2) 
+		      (member type (list "GLUnurbs*" "GLUtesselator*" "GLUquadric*" "_GLUfuncptr")))
+		  (hey "#endif~%")))
 	    (if (string=? type "Display*")
 		(hey "XL_TYPE_PTR(Display, Display*)~%")
 		(if (string=? type "XVisualInfo*")

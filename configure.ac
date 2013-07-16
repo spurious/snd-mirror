@@ -326,6 +326,7 @@ if test "$with_gl" = yes ; then
         OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES openGL"
 
         if $PKG_CONFIG glu --exists ; then
+            AC_DEFINE(HAVE_GLU)
             GL_CFLAGS="$GL_CFLAGS `$PKG_CONFIG glu --cflags`"
             GL_LIBS="$GL_LIBS `$PKG_CONFIG glu --libs`"
         fi
@@ -350,7 +351,7 @@ AC_SUBST(GL_FLAGS)
 # language
 #--------------------------------------------------------------------------------
 
-# language choice: ruby if --with-ruby and we can find one of ruby-2.0.pc, ruby-1.9.pc, or ruby-1.8.pc
+# language choice: ruby if --with-ruby and we can find a ruby pc file
 #                  forth if --with-forth
 #                  none if --without-extension-language
 #                  s7 otherwise
@@ -720,8 +721,6 @@ case "$host" in
   *-*-linux* | *-*-bsdi* | *-*-freebsd* | *-*-openbsd* | *-*-netbsd*) 
     if test "$CC" = "gcc" || test "$CC" = "g++" ; then
       LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
-      # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
-      #   that ends up generating endless dumb warnings in gcc
     fi
 esac
 

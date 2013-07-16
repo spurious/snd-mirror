@@ -20,7 +20,8 @@ The configure script has a bunch of arguments:
 
      --with-s7                 use s7 (the default, a version of Scheme).
 
-     --with-ruby               use Ruby as the extension language
+     --with-ruby               use Ruby as the extension language.  If you build Ruby from the sources,
+     			         remember to use the --enable-shared switch.  Otherwise ruby.pc is messed up.
   
      --with-forth              use Forth (Mike Scholz's FTH) as the extension language.
   

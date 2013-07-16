@@ -65825,10 +65825,3 @@ s7_scheme *s7_init(void)
 /* ideally we'd replace strcpy with strcopy throughout Snd, and strcat with strappend or some equivalent
  *   also openbsd audio is broken in Snd -- see aucat.c I guess.
  */
-
-/* TODO: cload -> environment (library) wrapping up everything in a shared library
- *    we need a database of lib times so we can just load an existing linkage
- *    perhaps swig has the header data in a readable form?
- * then getenv is treated as part of a library (like delete-file also) and is not a built-in
- * but I can't see how to do this and save anything unless we have separate files floating around, and that we don't want!
- */
