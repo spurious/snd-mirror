@@ -372,7 +372,8 @@ if test "$with_ruby" = yes ; then
         if $PKG_CONFIG ruby_version --exists ; then
           AC_DEFINE(HAVE_RUBY)
           XEN_CFLAGS="`$PKG_CONFIG ruby_version --cflags`"
-          XEN_LIBS="`$PKG_CONFIG ruby_version --libs-only-L` -lruby-static `$PKG_CONFIG ruby_version --libs-only-l`"
+          # this depends on building ruby itself with the --enable-shared flag
+          XEN_LIBS="`$PKG_CONFIG ruby_version --libs`"
           LOCAL_LANGUAGE="Ruby"
           ac_snd_extension_language=Ruby
         fi

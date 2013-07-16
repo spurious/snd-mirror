@@ -6180,6 +6180,9 @@ the current environment, so defines happen in the enclosing environment.
        
        ',new-type)))
 
+;;; srfi 111:
+(define-record-type box-type (box value) box? (value unbox set-box!))
+
 
 ;; case-lambda       
 (define-macro (case-lambda . choices)
@@ -6382,23 +6385,14 @@ the current environment, so defines happen in the enclosing environment.
     (cons 'get-environment-variable getenv)
     (cons 'get-environment-variables getenvs)))
 
-;; command-line is problematic: s7 has no access to the caller's "main" function, and
-;;   outside Windows, there's no reasonable way to get these arguments.
-
-;; other minor differences: 
-;;  in s7, single-quote can occur in a name
-;;  s7 doesn't currently implement #\xxxx characters
-</pre>
-
-<!-- implementation library (srfi-112):
-
+;;; srfi 112
 (let ((e (current-environment)))
   (define-c-function '((in-C "static struct utsname buf; \
-                              static char *os_type(void) {uname(&buf); return(buf.sysname);} \
-                              static char *cpu_arch(void) {uname(&buf); return(buf.machine);} \
-                              static char *sys_ins(void) {uname(&buf); return(buf.nodename);} \
-                              static char *os_version(void) {uname(&buf); return(buf.version);} \
-                              static char *os_release(void) {uname(&buf); return(buf.release);} \
+                              static char *os_type(void) {uname(&amp;buf); return(buf.sysname);} \
+                              static char *cpu_arch(void) {uname(&amp;buf); return(buf.machine);} \
+                              static char *sys_ins(void) {uname(&amp;buf); return(buf.nodename);} \
+                              static char *os_version(void) {uname(&amp;buf); return(buf.version);} \
+                              static char *os_release(void) {uname(&amp;buf); return(buf.release);} \
                              ")
 		       (char* os_type (void))
 		       (char* cpu_arch (void))
@@ -6412,9 +6406,16 @@ the current environment, so defines happen in the enclosing environment.
     (cons 'system-instance sys_ins)
     (cons 'os-version (lambda () (string-append (os_version) " " (os_release))))
     (cons 'implementation-name (lambda () "s7"))
-    (cons 'implementation-version s7-version)
+    (cons 'implementation-version (lambda () (substring (s7-version) 3 7)))
     (cons 'c-memory-model #f)))
--->
+
+;; command-line is problematic: s7 has no access to the caller's "main" function, and
+;;   outside Windows, there's no reasonable way to get these arguments.
+
+;; other minor differences: 
+;;  in s7, single-quote can occur in a name
+;;  s7 doesn't currently implement #\xxxx characters
+</pre>
 
 </div>
 

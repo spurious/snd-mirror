@@ -5170,7 +5170,8 @@ if test "$with_ruby" = yes ; then
           $as_echo "#define HAVE_RUBY 1" >>confdefs.h
 
           XEN_CFLAGS="`$PKG_CONFIG ruby-2.1 --cflags`"
-          XEN_LIBS="`$PKG_CONFIG ruby-2.1 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.1 --libs-only-l`"
+          # this depends on building ruby itself with the --enable-shared flag
+          XEN_LIBS="`$PKG_CONFIG ruby-2.1 --libs`"
           LOCAL_LANGUAGE="Ruby"
           ac_snd_extension_language=Ruby
         fi
@@ -5181,7 +5182,8 @@ if test "$with_ruby" = yes ; then
           $as_echo "#define HAVE_RUBY 1" >>confdefs.h
 
           XEN_CFLAGS="`$PKG_CONFIG ruby-2.0 --cflags`"
-          XEN_LIBS="`$PKG_CONFIG ruby-2.0 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-2.0 --libs-only-l`"
+          # this depends on building ruby itself with the --enable-shared flag
+          XEN_LIBS="`$PKG_CONFIG ruby-2.0 --libs`"
           LOCAL_LANGUAGE="Ruby"
           ac_snd_extension_language=Ruby
         fi
@@ -5192,7 +5194,8 @@ if test "$with_ruby" = yes ; then
           $as_echo "#define HAVE_RUBY 1" >>confdefs.h
 
           XEN_CFLAGS="`$PKG_CONFIG ruby --cflags`"
-          XEN_LIBS="`$PKG_CONFIG ruby --libs-only-L` -lruby-static `$PKG_CONFIG ruby --libs-only-l`"
+          # this depends on building ruby itself with the --enable-shared flag
+          XEN_LIBS="`$PKG_CONFIG ruby --libs`"
           LOCAL_LANGUAGE="Ruby"
           ac_snd_extension_language=Ruby
         fi
@@ -5203,7 +5206,8 @@ if test "$with_ruby" = yes ; then
           $as_echo "#define HAVE_RUBY 1" >>confdefs.h
 
           XEN_CFLAGS="`$PKG_CONFIG ruby-1.9 --cflags`"
-          XEN_LIBS="`$PKG_CONFIG ruby-1.9 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-1.9 --libs-only-l`"
+          # this depends on building ruby itself with the --enable-shared flag
+          XEN_LIBS="`$PKG_CONFIG ruby-1.9 --libs`"
           LOCAL_LANGUAGE="Ruby"
           ac_snd_extension_language=Ruby
         fi
@@ -5214,7 +5218,8 @@ if test "$with_ruby" = yes ; then
           $as_echo "#define HAVE_RUBY 1" >>confdefs.h
 
           XEN_CFLAGS="`$PKG_CONFIG ruby-1.8 --cflags`"
-          XEN_LIBS="`$PKG_CONFIG ruby-1.8 --libs-only-L` -lruby-static `$PKG_CONFIG ruby-1.8 --libs-only-l`"
+          # this depends on building ruby itself with the --enable-shared flag
+          XEN_LIBS="`$PKG_CONFIG ruby-1.8 --libs`"
           LOCAL_LANGUAGE="Ruby"
           ac_snd_extension_language=Ruby
         fi
