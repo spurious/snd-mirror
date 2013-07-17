@@ -345,6 +345,9 @@
     #include <complex.h>
   #endif
 #endif
+/* in opensolaris, complex.h exists, and apparently defines _Complex_I but then I have
+ *   to #define _Complex_I 1.0fi?
+ */
 
 #include <setjmp.h>
 

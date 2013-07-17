@@ -53,6 +53,7 @@ VERSION=13.9
 #   --with-pulseaudio     use PulseAudio
 #   --with-portaudio      use portaudio
 
+
 AC_ARG_WITH(gtk,         [  --with-gtk		  use Gtk+ to build Snd])
 AC_ARG_WITH(gui,         [  --with-gui  	      	  make Snd with graphics support])
 AC_ARG_WITH(gl,          [  --with-gl		  include OpenGL support, Motif only])
@@ -360,6 +361,11 @@ XEN_LIBS=""
 XEN_CFLAGS=""
 ac_snd_extension_language=none
 
+if test "$with_extension_language" = no ; then
+  ac_snd_extension_language=no
+  LOCAL_LANGUAGE = "None"
+fi
+
 
 #--------------------------------------------------------------------------------
 # Ruby
@@ -649,6 +655,7 @@ case "$host" in
     ;;
 
   *-*-solaris*) 
+    LIBS="$LIBS -lm"
     LDSO_FLAGS="-G"
     ;;
 

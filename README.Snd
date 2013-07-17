@@ -39,6 +39,7 @@ The configure script has a bunch of arguments:
                                  in FC19, install the motif, motif-devel, and libXpm-devel packages.
                                  in FreeBSD, go to /usr/ports/x11-toolkits/open-motif, and make install clean
                                  in OpenBSD, it's the same process but /usr/ports/x11/openmotif.
+                                 in Debian, apt-get install libmotif4, libmotif-dev, libxt-dev, libxpm-dev
 
      --with-gtk                use Gtk+
   

@@ -36,6 +36,8 @@
 
 #include <mus-config.h>
 
+#if WITH_AUDIO
+
 #if USE_SND && __APPLE__ && USE_MOTIF
   #undef USE_MOTIF
   #define USE_NO_GUI 1
@@ -2312,14 +2314,7 @@ char *mus_audio_moniker(void)
   if (version_name == NULL) version_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
 #endif
 #ifndef AUDIO_DEV_AMD
-#if (!__OpenBSD__)
-    snprintf(version_name, PRINT_BUFFER_SIZE, 
-		 "audio: %s (%s), %s %s %s", 
-		 ad.name, ad.version,
-		 MIXER_NAME, MIXER_VERSION, MIXER_CONFIGURATION);
-  #else
-    snprintf(version_name, LABEL_BUFFER_SIZE, "audio: %s (%s)", ad.name, ad.version);
-  #endif
+  snprintf(version_name, LABEL_BUFFER_SIZE, "audio: %s (%s)", ad.name, ad.version);
 #else
   switch (ad)
     {
@@ -5341,6 +5336,7 @@ char *mus_audio_moniker(void)
 
 
 
+
 /* ------------------------------- STUBS ----------------------------------------- */
 
 #ifndef AUDIO_OK
@@ -5360,7 +5356,7 @@ void mus_reset_audio_c(void)
 {
   audio_initialized = false;
   version_name = NULL;
-#if defined(__sun) || defined(__SVR4)
+#if (defined(__sun) || defined(__SVR4))
   sun_vol_name = NULL;
 #endif
 }
@@ -5608,3 +5604,21 @@ int mus_audio_device_format(int dev) /* snd-dac */
 }
 
 
+#else
+/* not WITH_AUDIO */
+
+int mus_audio_open_output(int dev, int srate, int chans, int format, int size) {return(-1);}
+int mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(-1);}
+int mus_audio_write(int line, char *buf, int bytes) {return(-1);}
+int mus_audio_close(int line) {return(-1);}
+int mus_audio_read(int line, char *buf, int bytes) {return(-1);}
+int mus_audio_initialize(void) {return(-1);}
+char *mus_audio_moniker(void) {return((char *)"no audio support");}
+
+void mus_reset_audio_c(void) {}
+
+int mus_audio_device_channels(int dev)   {return(0);}
+int mus_audio_compatible_format(int dev) {return(0);}
+int mus_audio_device_format(int dev)     {return(0);}
+
+#endif
