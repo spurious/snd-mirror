@@ -367,7 +367,7 @@ ac_snd_extension_language=none
 
 if test "$with_ruby" = yes ; then
   if test x$PKG_CONFIG != xno ; then
-    m4_foreach([ruby_version], [[ruby-2.1], [ruby-2.0], [ruby], [ruby-1.9], [ruby-1.8]],
+    m4_foreach([ruby_version], [[ruby-2.1], [ruby-2.0], [ruby], [ruby-1.9.3], [ruby-1.9], [ruby-1.8]],
       [
       if test "$ac_snd_extension_language" = none ; then
         if $PKG_CONFIG ruby_version --exists ; then
@@ -676,10 +676,12 @@ case "$host" in
     ;;
 
   *-*-openbsd*) 
+    LIBS="$LIBS -lm"
     if test "$GCC" = yes ; then
       SO_LD="$CC"
       SO_FLAGS="-fPIC $SO_FLAGS"
       CFLAGS="-ftrampolines $CFLAGS"
+      LDSO_FLAGS="-shared"
     fi
     ;;
 

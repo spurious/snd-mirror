@@ -97,7 +97,7 @@
 #define HAVE_GTK_WIDGET_GET_MAPPED                GTK_CHECK_VERSION(2, 19, 0)
 #define HAVE_GTK_COMBO_BOX_NEW_WITH_AREA          GTK_CHECK_VERSION(3, 0, 0)
 /* #define HAVE_GTK_GRID_NEW                         GTK_CHECK_VERSION(3, 0, 0) */
-#define HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT GTK_CHECK_VERSION(3, 11, 0)
+#define HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT GTK_CHECK_VERSION(3, 2, 0)
 #define HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE       GTK_CHECK_VERSION(3, 2, 0)
 #define HAVE_GTK_APPLICATION_WINDOW_NEW           GTK_CHECK_VERSION(3, 4, 0)
 #define HAVE_GTK_COLOR_CHOOSER_DIALOG_NEW         GTK_CHECK_VERSION(3, 4, 0)
@@ -48669,7 +48669,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("15-Jul-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("16-Jul-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

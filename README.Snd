@@ -22,6 +22,9 @@ The configure script has a bunch of arguments:
 
      --with-ruby               use Ruby as the extension language.  If you build Ruby from the sources,
      			         remember to use the --enable-shared switch.  Otherwise ruby.pc is messed up.
+                                 If ruby.pc (or equivalent) is missing, tools/make-config-pc.rb can make one:
+                                 make-config-pc.rb > ruby.pc
+                                 mv ruby.pc /usr/local/lib/pkgconfig/ruby.pc
   
      --with-forth              use Forth (Mike Scholz's FTH) as the extension language.
   

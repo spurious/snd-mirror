@@ -35,7 +35,7 @@ rm -f config.cache
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 basic configure test                                  ----- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib" 
+./configure --quiet --with-motif CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib" 
 make allclean
 make
 echo ' '
@@ -59,7 +59,7 @@ make sndinfo
 make sndplay
 make allclean
 
-./configure --quiet CFLAGS="-I/usr/X11R6/include -Wextra -Wdeclaration-after-statement -Wlogical-op" LDFLAGS="-L/usr/X11R6/lib"
+./configure --quiet --with-motif CFLAGS="-I/usr/X11R6/include -Wextra -Wdeclaration-after-statement -Wlogical-op" LDFLAGS="-L/usr/X11R6/lib"
 make allclean
 make
 echo ' '
@@ -223,7 +223,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-forth                                           ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-forth
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-motif --with-forth
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-forth 'snd-motif"
@@ -232,7 +232,7 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-forth  --with-editres --with-gl ---- '
+echo ' -----                --with-forth  --with-motif --with-editres --with-gl ---- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet --with-forth  --with-motif --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
@@ -341,7 +341,7 @@ rm -f config.cache
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                --with-gsl                           ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-gsl
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-motif --with-gsl
 make
 echo ' '
 echo ' '
@@ -374,7 +374,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                  editres                              ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --with-editres --disable-deprecated
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --with-motif --with-editres --disable-deprecated
 make
 make allclean
 
@@ -383,7 +383,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                g++                                    ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" --quiet CC=g++  CFLAGS="-I/usr/X11R6/include"
+./configure --with-motif LDFLAGS="-L/usr/X11R6/lib" --quiet CC=g++  CFLAGS="-I/usr/X11R6/include"
 make
 
 make allclean
@@ -409,7 +409,7 @@ rm -f config.cache
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-ruby                                            ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby --with-motif 
 make
 echo ' '
 echo ' '
@@ -481,7 +481,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
+./snd -noinit --features ":clm, :snd-gtk, :xg"
 
 make allclean
 rm -f snd
@@ -526,7 +526,7 @@ rm -f config.cache
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                g++                                                      --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet --with-motif CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-s7 'snd-motif 'snd-ladspa 'sndlib"

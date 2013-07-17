@@ -4,7 +4,7 @@ echo ' -------------------------------- basic configure test -------------------
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall"  '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
+./configure --quiet --with-motif CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make allclean
 make
 echo ' '
@@ -21,7 +21,7 @@ make sndplay
 echo ' -------------------------------- basic configure -------------------------------- '
 make allclean
 echo ' CFLAGS="-Wall -I/usr/X11R6/include" '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
+./configure --quiet --with-motif CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make
 ./snd --version
 ./snd -l snd-test 0
@@ -112,7 +112,7 @@ rm -f snd
 rm -f sndinfo
 rm -f config.cache
 echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-gsl '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-gsl LDFLAGS="-L/usr/X11R6/lib"
+./configure --quiet --with-motif CFLAGS="-Wall -I/usr/X11R6/include" --with-gsl LDFLAGS="-L/usr/X11R6/lib"
 make
 echo ' '
 echo ' '
@@ -121,13 +121,13 @@ echo ' '
 echo ' -------------------------------- that was full snd-test with-motif -------------------------------- '
 rm xm.o
 echo ' CC=g++ '
-./configure --quiet CC=g++ CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
+./configure --quiet --with-motif CC=g++ CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 ./snd --version
 ./snd -l snd-test 12
 
 make allclean
 echo ' CFLAGS="-Wall -I/usr/X11R6/include" '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
+./configure --quiet --with-motif CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make
 ./snd --version
 ./snd -l snd-test 8
@@ -155,7 +155,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby LDFLAGS="-L/usr/X11R6/lib"
+./configure --quiet --with-motif CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby LDFLAGS="-L/usr/X11R6/lib"
 make
 echo ' '
 echo ' '
@@ -165,7 +165,7 @@ echo ' '
 # ./snd -l snd-test.rb -- libxm problem here stops entire sequence
 make allclean
 echo ' CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby '
-./configure --quiet CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby LDFLAGS="-L/usr/X11R6/lib"
+./configure --quiet --with-motif CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby LDFLAGS="-L/usr/X11R6/lib"
 make
 echo ' '
 echo ' '
@@ -227,7 +227,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 echo ' CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" '
-./configure --quiet CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
+./configure --quiet --with-motif CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make
 make sndinfo
 make sndplay

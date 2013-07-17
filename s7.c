@@ -36534,8 +36534,13 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
       sc->strbuf[0] = ':';
       return(TOKEN_ATOM);
 
-#if (!DISABLE_DEPRECATED)
       /* block comments in #! ... !# */
+      /* this is needed when an input file is treated as a script:
+	 #!/home/bil/cl/snd
+	 !#
+	 (format #t "a test~%")
+	 (exit)
+      */
     case '!':
       {
 	char last_char;
@@ -36552,7 +36557,6 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 		   list_1(sc, make_protected_string(sc, "unexpected end of input while reading #!")));
 	return(token(sc));
       }
-#endif
       
       /* block comments in #| ... |# 
        *   since we ignore everything until the |#, internal semicolon comments are ignored,
@@ -65811,15 +65815,6 @@ s7_scheme *s7_init(void)
 
 /* add empty? (or nil? or generic null? or zero-length?) 
  *   typeq? 
- *   (xor a b) -> a if a & not b, b if b & not a, #f otherwise -- not quite the same as or because if a and b, we get #f (and no short-circuit)
- * home-environment for the $HOME environment variables?
- *   but the variables themselves are strings?  HOME? and windows?
- *
- *   envs could be managed externally as data-bases (redis etc) but we need a way to serialize all types (and GC?)
- *   each value as raw bytes, but pointers are matched when read, so 
- *   '(1 2) is #x123[pair:1 #x321] and #x321[pair:2] where the reader fixes up the refs
- *   then checkpt: all s7_scheme state (heap/stack/etc) and globals, each cell=48 bytes, so these are potentially huge files
- *     and how to handle permanently alloc'd stuff?  Ideally we'd read/write everything.
  */
 
 /* ideally we'd replace strcpy with strcopy throughout Snd, and strcat with strappend or some equivalent
