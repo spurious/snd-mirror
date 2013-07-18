@@ -343,11 +343,12 @@
     #include <complex>
   #else
     #include <complex.h>
+    #if defined(__sun) && defined(__SVR4)
+      #undef _Complex_I
+      #define _Complex_I 1.0fi
+    #endif
   #endif
 #endif
-/* in opensolaris, complex.h exists, and apparently defines _Complex_I but then I have
- *   to #define _Complex_I 1.0fi?
- */
 
 #include <setjmp.h>
 

@@ -3,10 +3,19 @@
 # ruby make-config-pc.rb > ruby.pc 
 
 require "rbconfig" 
-include RbConfig 
+if RUBY_VERSION < "1.9"
+   include Config 
+else
+	include RbConfig 
+end
 version = CONFIG["ruby_version"] 
 arch = CONFIG["arch"] 
-rubyhdrdir = CONFIG["rubyhdrdir"].chomp("/") 
+rubyhdrdir = CONFIG["rubyhdrdir"]
+if rubyhdrdir.nil?
+   rubyhdrdir = CONFIG["rubylibdir"]
+else
+	rubyhdrdir.chomp("/")
+end
 dldflags = CONFIG["DLDFLAGS"] 
 librubyarg = CONFIG["LIBRUBYARG"] 
 libs = CONFIG["LIBS"] 

@@ -257,7 +257,7 @@
 #define XEN_TO_C_INT_OR_ELSE(a, b)      xen_rb_to_c_int_or_else(a, b)
 
 /* apparently no complex numbers (built-in) in Ruby? */
-#define XEN_COMPLEX_P(Arg)              0
+#define XEN_COMPLEX_P(Arg)              1
 #define C_TO_XEN_COMPLEX(a)             XEN_ZERO
 #define XEN_TO_C_COMPLEX(a)             0.0
 
@@ -271,18 +271,30 @@
   #define C_TO_XEN_ULONG(a)             UINT2NUM((unsigned long)a)
 #endif
 
-#ifndef OFFT2NUM
-  #define OFFT2NUM(a)                   INT2NUM(a)
-#endif
-#ifndef NUM2OFFT
-  #define NUM2OFFT(a)                   NUM2LONG(a)
-#endif
-#define C_TO_XEN_LONG_LONG(a)           OFFT2NUM(a)
-#define XEN_TO_C_LONG_LONG(a)           NUM2OFFT(a)
+#ifdef NUM2ULL
+/* ruby 1.9.3 */
+  #define C_TO_XEN_LONG_LONG(a)           LL2NUM(a)
+  #define XEN_TO_C_LONG_LONG(a)           NUM2LL(a)
 
-#define XEN_ULONG_LONG_P(Arg)           XEN_ULONG_P(Arg) 
-#define XEN_TO_C_ULONG_LONG(Arg)        NUM2ULONG(Arg)
-#define C_TO_XEN_ULONG_LONG(Arg)        INT2NUM(Arg)
+  #define XEN_ULONG_LONG_P(Arg)           XEN_INTEGER_P(Arg) 
+  #define XEN_TO_C_ULONG_LONG(Arg)        NUM2ULL(Arg) /* NUM2ULONG(Arg) */
+  #define C_TO_XEN_ULONG_LONG(Arg)        ULL2NUM(Arg) /* INT2NUM(Arg) */
+#else
+/* older versions -- no dependable version number in ruby -- these macros may not work on a 64-bit machine */
+
+  #ifndef OFFT2NUM
+    #define OFFT2NUM(a)                   INT2NUM(a)
+  #endif
+  #ifndef NUM2OFFT
+    #define NUM2OFFT(a)                   NUM2LONG(a)
+  #endif
+  #define C_TO_XEN_LONG_LONG(a)           OFFT2NUM(a)
+  #define XEN_TO_C_LONG_LONG(a)           NUM2OFFT(a)
+
+  #define XEN_ULONG_LONG_P(Arg)           XEN_INTEGER_P(Arg) 
+  #define XEN_TO_C_ULONG_LONG(Arg)        NUM2OFFT(Arg)
+  #define C_TO_XEN_ULONG_LONG(Arg)        OFFT2NUM(Arg)
+#endif
 
 /* ---- strings ---- */
 #define XEN_STRING_P(Arg)               ((TYPE(Arg) == T_STRING) && (!SYMBOL_P(Arg)))
@@ -1577,7 +1589,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
     #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG_LONG(a) 
   #endif
 
-  #define XEN_WRAPPED_C_POINTER_P(a)   XEN_EXACT_P(a)
+  #define XEN_WRAPPED_C_POINTER_P(a)      XEN_EXACT_P(a)
 #endif
 
 #ifdef __cplusplus

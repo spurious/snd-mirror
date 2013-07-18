@@ -2102,7 +2102,11 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  break;
 
 		case MIX_EDIT:
-		  fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d", ed->origin, cp->chan);
+#if HAVE_SCHEME
+		  fprintf(fd, "(lambda (snd chn ignore) %s) sfile %d", ed->origin, cp->chan);
+#else
+		  fprintf(fd, "%s" ed->origin); /* TODO: this can't work */
+#endif
 		  break;
 
 		case CHANGE_MIX_EDIT:

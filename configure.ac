@@ -693,6 +693,7 @@ case "$host" in
     ;;
 
   *-*-netbsd*) 
+    LIBS="$LIBS -lm"
     if test "$GCC" = yes ; then
       SO_LD="$CC"
       SO_FLAGS="-fPIC $SO_FLAGS"
