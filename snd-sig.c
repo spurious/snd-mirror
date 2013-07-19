@@ -5740,6 +5740,10 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 }
 
 
+#if defined(__sun) && defined(__SVR4)
+  static bool isinf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}
+#endif
+
 static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, const char *caller, bool over_selection)
 {
   chan_info *cp;

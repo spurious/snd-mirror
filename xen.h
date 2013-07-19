@@ -15,7 +15,7 @@
 
 /* HISTORY:
  *
- *  7-Jul-13:  removed int64 stuff (it was not used anywhere).
+ *  7-Jul-13:  removed int64 stuff (it was not used anywhere). Made various Ruby changes (NUM2ULL etc).
  *  -------- 
  *  5-Nov:     minor s7-related changes.
  *  9-July:    XEN_VECTOR_ELEMENTS and XEN_VECTOR_COPY.
@@ -786,7 +786,7 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_TO_C_DOUBLE(a)              fth_float_ref(a)
 #define XEN_TO_C_DOUBLE_OR_ELSE(a, b)   fth_float_ref_or_else(a, b)
 
-#if HAVE_MAKE_COMPLEX
+#if HAVE_COMPLEX_NUMBERS
 # define XEN_COMPLEX_P(Arg)             FTH_NUMBER_P(Arg) 
 # define C_TO_XEN_COMPLEX(a)            fth_make_complex(a)
 # define XEN_TO_C_COMPLEX(a)            fth_complex_ref(a)

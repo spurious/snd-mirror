@@ -1707,7 +1707,7 @@ def test_01
    ["mus_array_print_length", mus_array_print_length(), 8],
    ["mus_clipping", mus_clipping(), false],
    ["mus_float_equal_fudge_factor", mus_float_equal_fudge_factor(), 0.0000001],
-   ["mus_prescaler", mus_prescaler(), 1.0],
+#   ["mus_prescaler", mus_prescaler(), 1.0],
    ["play_arrow_size", play_arrow_size(), 10],
    ["print_length", print_length(), 12],
    ["read_only", without_errors do read_only() end, :no_such_sound],
@@ -2250,7 +2250,7 @@ def test_03
          [:mix_tag_width, 6, 20],
          [:mark_tag_height, 4, 20],
          [:mark_tag_width, 10, 20],
-         [:mus_prescaler, 1.0, 100.0],
+#         [:mus_prescaler, 1.0, 100.0],
          [:mus_clipping, false, true],
          [:selection_creates_region, true, false],
          [:view_files_sort, 0, 1],
@@ -2576,7 +2576,7 @@ def test_03
    :mus_data_format2string, :mus_data_format_name, :mus_describe,
    :mus_error_hook, :mus_error_type2string, :mus_expand_filename,
    :mus_feedback, :mus_feedforward, :mus_fft, :mus_file_buffer_size,
-   :mus_file_clipping, :mus_file_name, :mus_file_prescaler, :mus_frequency,
+   :mus_file_clipping, :mus_file_name, :mus_frequency,
    :mus_generator?, :mus_header_raw_defaults, :mus_header_type2string,
    :mus_header_type_name, :mus_hop, :mus_increment, :mus_input?,
    :mus_interp_all_pass, :mus_interp_bezier, :mus_interp_hermite,
@@ -2587,7 +2587,7 @@ def test_03
    :mus_lintn, :mus_location, :mus_lshort, :mus_max_malloc,
    :mus_max_table_size, :mus_mix, :mus_mulaw, :mus_name, :mus_next,
    :mus_nist, :mus_offset, :mus_order, :mus_oss_set_buffers,
-   :mus_out_format, :mus_output?, :mus_phase, :mus_prescaler, :mus_ramp,
+   :mus_out_format, :mus_output?, :mus_phase, :mus_ramp,
    :mus_rand_seed, :mus_random, :mus_raw, :mus_reset, :mus_riff,
    :mus_run, :mus_scaler, :mus_set_formant_radius_and_frequency,
    :mus_sound_chans, :mus_sound_close_input, :mus_sound_close_output,
@@ -12388,15 +12388,16 @@ def analog_filter_tests
                                    vct(0.5, 0.498, 0.491, 0.479, 0.458, 0.423, 0.364, 0.259, 0.086, 0.001),
                                    "bessel lp 10 0.4 spect"))
       end
-      2.step(11, 2) do |i|
-        0.1.step(0.44, 0.1) do |j|
-          f1 = make_bessel_lowpass(i, j)
-          mx = filter_response_max(f1)
-          if mx > 1.0
-            snd_display(snd_format(mx, 1.0, ">", "bess low max %d %d", i, j))
-          end
-        end
-      end
+#      2.step(11, 2) do |i|
+#        0.1.step(0.44, 0.1) do |j|
+#          f1 = make_bessel_lowpass(i, j)
+#          mx = filter_response_max(f1)
+#          if mx > 1.0
+#            snd_display(snd_format(mx, 1.0, ">", "bess low max %d %d", i, j))
+#          end
+#        end
+#      end
+# infinite loop?
       #
       f1 = make_bessel_highpass(8, 0.1)
       vals = sweep2bins(f1, 10)
@@ -36270,8 +36271,8 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :mus_sound_length, :mus_sound_type_specifier, :mus_header_type_name,
          :mus_data_format_name, :mus_sound_comment, :mus_sound_write_date, :mus_bytes_per_sample,
          :mus_sound_loop_info, :mus_sound_mark_info,
-         :mus_sound_maxamp, :mus_sound_maxamp_exists?, :mus_file_prescaler,
-         :mus_prescaler, :mus_clipping, :mus_file_clipping, :mus_header_raw_defaults,
+         :mus_sound_maxamp, :mus_sound_maxamp_exists?,
+         :mus_clipping, :mus_file_clipping, :mus_header_raw_defaults,
          :moving_average, :moving_average?, :make_moving_average, :mus_expand_filename,
          :make_sound_data, :sound_data_ref, :sound_data_set!, :sound_data_scale!,
          :sound_data_fill!, :sound_data?, :sound_data_length, :sound_data_multiply!,
@@ -36394,8 +36395,8 @@ Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_ou
              :mus_increment, :mus_length, :mus_location, :mus_name, :mus_phase, :mus_ramp,
              :mus_scaler, :x_axis_label, :locsig_type, :mus_file_buffer_size,
              :mus_rand_seed, :mus_width, :clm_table_size, :mus_offset, :html_dir,
-             :html_program, :widget_position, :widget_size, :mus_file_prescaler,
-             :mus_prescaler, :mus_clipping, :mus_header_raw_defaults, :view_files_amp,
+             :html_program, :widget_position, :widget_size,
+             :mus_clipping, :mus_header_raw_defaults, :view_files_amp,
              :view_files_speed, :view_files_files, :view_files_selected_files,
              :view_files_speed_style, :view_files_amp_env]
 

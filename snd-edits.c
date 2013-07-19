@@ -2105,7 +2105,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 #if HAVE_SCHEME
 		  fprintf(fd, "(lambda (snd chn ignore) %s) sfile %d", ed->origin, cp->chan);
 #else
-		  fprintf(fd, "%s", ed->origin); /* TODO: this can't work */
+		  fprintf(fd, "func = lambda do |snd, chn, ignore|\n        %s\n        end\n      func(sfile, %d", ed->origin, cp->chan);
 #endif
 		  break;
 

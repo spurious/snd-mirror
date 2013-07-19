@@ -18,60 +18,60 @@ The configure script has a bunch of arguments:
 
    Extension language:
 
-     --with-s7                 use s7 (the default, a version of Scheme).
+     --with-s7         use s7 (the default, a version of Scheme).
 
-     --with-ruby               use Ruby as the extension language.  If you build Ruby from the sources,
-     			         remember to use the --enable-shared switch.  Otherwise ruby.pc is messed up.
-                                 If ruby.pc (or equivalent) is missing, tools/make-config-pc.rb can make one:
-                                 make-config-pc.rb > ruby.pc
-                                 mv ruby.pc /usr/local/lib/pkgconfig/ruby.pc
+     --with-ruby       use Ruby as the extension language.  If you build Ruby from the sources,
+     			 remember to use the --enable-shared switch.  Otherwise ruby.pc is messed up.
+                         If ruby.pc (or equivalent) is missing, tools/make-config-pc.rb can make one:
+                         make-config-pc.rb > ruby.pc
+                         mv ruby.pc /usr/local/lib/pkgconfig/ruby.pc
   
-     --with-forth              use Forth (Mike Scholz's FTH) as the extension language.
+     --with-forth      use Forth (Mike Scholz's FTH) as the extension language.
   
      --without-extension-language  build Snd without any extension language
   
 
    Graphics:
 
-     --with-motif              use Motif.  If it's in some odd location, you can provide that info:
-                                 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --with-motif
+     --with-motif      use Motif.  If it's in some odd location, you can provide that info:
+                         ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --with-motif
 
-                                 in FC19, install the motif, motif-devel, and libXpm-devel packages.
-                                 in FreeBSD, go to /usr/ports/x11-toolkits/open-motif, and make install clean
-                                 in OpenBSD, it's the same process but /usr/ports/x11/openmotif.
-                                 in Debian, apt-get install libmotif4, libmotif-dev, libxt-dev, libxpm-dev
+                         in FC19, install the motif, motif-devel, and libXpm-devel packages.
+                         in FreeBSD, go to /usr/ports/x11-toolkits/open-motif, and make install clean
+                         in OpenBSD, it's the same process but /usr/ports/x11/openmotif.
+                         in Debian, apt-get install libmotif4, libmotif-dev, libxt-dev, libxpm-dev
 
-     --with-gtk                use Gtk+
+     --with-gtk        use Gtk+
   
-     --with-gui                make Snd with graphics support (actually intended for use as --without-gui)
+     --with-gui        make Snd with graphics support (actually intended for use as --without-gui)
   
-     --with-gl                 include support for OpenGL (default: no, Motif only)
-       --with-gl2ps            include gl2ps (postscript output from OpenGL graphics)
+     --with-gl         include support for OpenGL (default: no, Motif only)
+       --with-gl2ps    include gl2ps (postscript output from OpenGL graphics)
   
 
    Audio:
 
-     --with-alsa               use ALSA if possible (the default in Linux)
+     --with-alsa       use ALSA if possible (the default in Linux)
 
-     --with-oss                use OSS (not tested in a long time)
+     --with-oss        use OSS (not tested in a long time)
   
-     --with-jack               use the Jack library which needs libsamplerate
+     --with-jack       use the Jack library which needs libsamplerate
 
-     --with-pulseaudio         use PulseAudio (untested)
+     --with-pulseaudio use PulseAudio (untested)
 
-     --without-audio           do not include audio support.  This also affects the
-                                 GUI (play buttons are omitted).
+     --without-audio   do not include audio support.  This also affects the
+                         GUI (play buttons are omitted).
 
 
    Other options:
 
-     --with-gmp                use gmp, mpfr, and mpc to implement multiprecision arithmetic
+     --with-gmp        use gmp, mpfr, and mpc to implement multiprecision arithmetic
 
-     --with-ladspa             include LADSPA plugin support (default: yes in Linux)
+     --with-ladspa     include LADSPA plugin support (default: yes in Linux)
   
-     --with-temp-dir           directory to use for temp files (default: ".")
-     --with-save-dir           directory to use for saved-state files (default: ".")
-     --with-doc-dir            directory to search for documentation
+     --with-temp-dir   directory to use for temp files (default: ".")
+     --with-save-dir   directory to use for saved-state files (default: ".")
+     --with-doc-dir    directory to search for documentation
 
 
 If the configure/make process fails, please send me

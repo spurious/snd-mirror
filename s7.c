@@ -7084,6 +7084,12 @@ static bool isinf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}
 
 #endif
 
+
+#if defined(__sun) && defined(__SVR4)
+  static bool isinf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}
+#endif
+
+
 #if HAVE_COMPLEX_NUMBERS
 
 #if __cplusplus

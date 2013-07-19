@@ -700,6 +700,12 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
 
 
 #if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS
+
+#if defined(__sun) && defined(__SVR4)
+  #undef _Complex_I
+  #define _Complex_I 1.0fi
+#endif
+
 #define S_edot_product "edot-product"
 
 static XEN g_edot_product(XEN val1, XEN val2) 
