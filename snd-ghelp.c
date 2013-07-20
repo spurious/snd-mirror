@@ -216,7 +216,7 @@ static void create_help_monolog(void)
   gtk_window_resize(GTK_WINDOW(help_dialog), HELP_COLUMNS * 9, HELP_ROWS * 40);
   gtk_widget_realize(help_dialog);
 
-  ok_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
+  ok_button = button_new_with_icon(ICON_QUIT);
   gtk_widget_set_name(ok_button, "dialog_button");
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(help_dialog)), ok_button, false, true, 20);
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_help_dialog, NULL);

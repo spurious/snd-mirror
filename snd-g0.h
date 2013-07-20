@@ -526,4 +526,89 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #define snd_K_Tab       GDK_Tab
 #endif
 
+
+#if GTK_CHECK_VERSION(3, 10, 0)
+#define ICON_ADD             "Add"
+#define ICON_APPLY           "Apply"
+#define ICON_CANCEL          "Cancel"
+#define ICON_CLEAR           "Clear"
+#define ICON_CLOSE           "Close"
+#define ICON_COPY            "Copy"
+#define ICON_CUT             "Cut"
+#define ICON_EDIT            "Edit"
+#define ICON_FIND            "Find"
+#define ICON_FULLSCREEN      "Full screen"
+#define ICON_GOTO_FIRST      "Go to start"
+#define ICON_GOTO_LAST       "Go to end"
+#define ICON_GO_BACK         "Backward"
+#define ICON_GO_FORWARD      "Forward"
+#define ICON_HELP            "Help"
+#define ICON_MEDIA_FORWARD   "Fast forward"
+#define ICON_MEDIA_PLAY      "Play"
+#define ICON_MEDIA_STOP      "Stop"
+#define ICON_NEW             "New"
+#define ICON_OK              "Ok"
+#define ICON_OPEN            "Open"
+#define ICON_PASTE           "Paste"
+#define ICON_PREFERENCES     "Preferences"
+#define ICON_PRINT           "Print"
+#define ICON_QUIT            "Quit"
+#define ICON_REDO            "Redo"
+#define ICON_REFRESH         "Refresh"
+#define ICON_REVERT_TO_SAVED "Revert"
+#define ICON_SAVE            "Save"
+#define ICON_SAVE_AS         "Save as"
+#define ICON_SELECT_ALL      "Select all"
+#define ICON_SELECT_COLOR    "Select color"
+#define ICON_UNDO            "Undo"
+#define ICON_ZOOM_IN         "Zoom in"
+#define ICON_ZOOM_OUT        "Zoom out"
+
+#define button_new_with_icon(Icon)      gtk_button_new_with_label(Icon)
+#define tool_button_new_with_icon(Icon) gtk_tool_button_new(NULL, Icon)
+#define image_new_with_icon(Icon, Size) gtk_image_new_from_icon_name(Icon, Size)
+
+#else
+#define ICON_ADD             GTK_STOCK_ADD
+#define ICON_APPLY           GTK_STOCK_APPLY
+#define ICON_CANCEL          GTK_STOCK_CANCEL
+#define ICON_CLEAR           GTK_STOCK_CLEAR
+#define ICON_CLOSE           GTK_STOCK_CLOSE
+#define ICON_COPY            GTK_STOCK_COPY
+#define ICON_CUT             GTK_STOCK_CUT
+#define ICON_EDIT            GTK_STOCK_EDIT
+#define ICON_FIND            GTK_STOCK_FIND
+#define ICON_FULLSCREEN      GTK_STOCK_FULLSCREEN
+#define ICON_GOTO_FIRST      GTK_STOCK_GOTO_FIRST
+#define ICON_GOTO_LAST       GTK_STOCK_GOTO_LAST
+#define ICON_GO_BACK         GTK_STOCK_GO_BACK
+#define ICON_GO_FORWARD      GTK_STOCK_GO_FORWARD
+#define ICON_HELP            GTK_STOCK_HELP
+#define ICON_MEDIA_FORWARD   GTK_STOCK_MEDIA_FORWARD
+#define ICON_MEDIA_PLAY      GTK_STOCK_MEDIA_PLAY
+#define ICON_MEDIA_STOP      GTK_STOCK_MEDIA_STOP
+#define ICON_NEW             GTK_STOCK_NEW
+#define ICON_OK              GTK_STOCK_OK
+#define ICON_OPEN            GTK_STOCK_OPEN
+#define ICON_PASTE           GTK_STOCK_PASTE
+#define ICON_PREFERENCES     GTK_STOCK_PREFERENCES
+#define ICON_PRINT           GTK_STOCK_PRINT
+#define ICON_QUIT            GTK_STOCK_QUIT
+#define ICON_REDO            GTK_STOCK_REDO
+#define ICON_REFRESH         GTK_STOCK_REFRESH
+#define ICON_REVERT_TO_SAVED GTK_STOCK_REVERT_TO_SAVED
+#define ICON_SAVE            GTK_STOCK_SAVE
+#define ICON_SAVE_AS         GTK_STOCK_SAVE_AS
+#define ICON_SELECT_ALL      GTK_STOCK_SELECT_ALL
+#define ICON_SELECT_COLOR    GTK_STOCK_SELECT_COLOR
+#define ICON_UNDO            GTK_STOCK_UNDO
+#define ICON_ZOOM_IN         GTK_STOCK_ZOOM_IN
+#define ICON_ZOOM_OUT        GTK_STOCK_ZOOM_OUT
+
+#define button_new_with_icon(Icon)      gtk_button_new_from_stock(Icon)
+#define tool_button_new_with_icon(Icon) gtk_tool_button_new_from_stock(Icon)
+#define image_new_with_icon(Icon, Size) gtk_image_new_from_stock(Icon, Size)
+
+#endif
+
 #endif

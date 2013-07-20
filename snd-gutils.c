@@ -855,14 +855,14 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
 }
 
 
-GtkWidget *sg_button_new_from_stock_with_label(const char *text, const gchar *stock_id)
+GtkWidget *sg_button_new_with_label_and_icon(const char *text, const gchar *stock_id)
 {
   /* borrowed from gtk/gtkbutton.c */
   GtkWidget *button, *image, *label, *hbox, *align;
 
   button = gtk_button_new();
   label = gtk_label_new(text);
-  image = (GtkWidget *)g_object_ref(gtk_image_new_from_stock(stock_id, GTK_ICON_SIZE_BUTTON));
+  image = (GtkWidget *)g_object_ref(image_new_with_icon(stock_id, GTK_ICON_SIZE_BUTTON));
   hbox = gtk_hbox_new(false, 2);
   align = gtk_alignment_new (0.5, 0.5, 0.0, 0.0);
 

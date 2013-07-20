@@ -40,6 +40,8 @@ The configure script has a bunch of arguments:
                          in FreeBSD, go to /usr/ports/x11-toolkits/open-motif, and make install clean
                          in OpenBSD, it's the same process but /usr/ports/x11/openmotif.
                          in Debian, apt-get install libmotif4, libmotif-dev, libxt-dev, libxpm-dev
+                           you may have to add "non-free" after "main" in /etc/apt/sources_list,
+                           then run apt-get update.  Motif is free.
 
      --with-gtk        use Gtk+
   

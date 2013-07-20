@@ -115,16 +115,16 @@ static void make_edit_find_dialog(bool managed, chan_info *cp)
       gtk_window_resize(GTK_WINDOW(edit_find_dialog), 350, 120);
       gtk_widget_realize(edit_find_dialog);
 
-      help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
+      help_button = button_new_with_icon(ICON_HELP);
       gtk_widget_set_name(help_button, "dialog_button");
 
-      cancelB = sg_button_new_from_stock_with_label(I_GO_AWAY, GTK_STOCK_QUIT);
+      cancelB = sg_button_new_with_label_and_icon(I_GO_AWAY, ICON_QUIT);
       gtk_widget_set_name(cancelB, "dialog_button");
 
-      previous_button = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
+      previous_button = button_new_with_icon(ICON_GO_BACK);
       gtk_widget_set_name(previous_button, "dialog_button");
 
-      next_button = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
+      next_button = button_new_with_icon(ICON_GO_FORWARD);
       gtk_widget_set_name(next_button, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(edit_find_dialog)), next_button, true, true, 10);

@@ -9963,6 +9963,10 @@ end
 document s7print
 interpret the argument as an s7 value and display it
 end
+# the current expression is sc-&gt;cur_code
+# the current environment is sc-&gt;envir
+# the error environment is sc-&gt;error_env
+# so for example, to see the current local variables, s7p sc-&gt;envir
 
 define s7eval
 print s7_object_to_c_string(sc, s7_eval_c_string(sc, $arg0))
@@ -9971,27 +9975,18 @@ document s7eval
 eval the argument (a string)
 end
 
-define s7cur_code
-print s7_object_to_c_string(sc, sc-&gt;cur_code)
-end
-# sc-&gt;cur_code can be confused by the optimizer, but it is
-#   often correct.
-document s7cur_code
-show the expression s7 thinks it is currently evaluating
-end
-
-define s7error
-print s7_object_to_c_string(sc, s7_environment_to_list(sc, sc-&gt;error_env))
-end
-document s7error
-display the current error environment
-end
-
 define s7stack
 print s7_object_to_c_string(sc, s7_stacktrace(sc))
 end
 document s7stack
 display the currently active local environments
+end
+
+define s7value
+print s7_object_to_c_string(sc, s7_name_to_value(sc, $arg0))
+end
+document s7value
+print the value of the variable passed by its print name: s7v "*features*"
 end
 </pre>
 

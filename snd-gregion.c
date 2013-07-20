@@ -558,20 +558,20 @@ static void make_region_dialog(void)
   gtk_window_resize(GTK_WINDOW(region_dialog), 400, 500);
   gtk_widget_realize(region_dialog);
 
-  help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
+  help_button = button_new_with_icon(ICON_HELP);
   gtk_widget_set_name(help_button, "dialog_button");
 
-  dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
+  dismiss_button = button_new_with_icon(ICON_QUIT);
   gtk_widget_set_name(dismiss_button, "dialog_button");
   set_stock_button_label(dismiss_button, I_GO_AWAY);
 
-  insert_button = sg_button_new_from_stock_with_label("Insert", GTK_STOCK_PASTE);
+  insert_button = sg_button_new_with_label_and_icon("Insert", ICON_PASTE);
   gtk_widget_set_name(insert_button, "dialog_button");
 
-  mix_button = sg_button_new_from_stock_with_label("Mix", GTK_STOCK_ADD);
+  mix_button = sg_button_new_with_label_and_icon("Mix", ICON_ADD);
   gtk_widget_set_name(mix_button, "dialog_button");
 
-  save_as_button = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
+  save_as_button = button_new_with_icon(ICON_SAVE_AS);
   gtk_widget_set_name(save_as_button, "dialog_button");
 
 #if HAVE_GTK_3

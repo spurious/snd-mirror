@@ -317,7 +317,7 @@ static GtkWidget *add_menu_item(GtkWidget *menu, const char *label, const char *
   else w = gtk_menu_item_new_with_label(label);
   gtk_menu_shell_append(GTK_MENU_SHELL(menu), w);
   if (icon)
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(w), gtk_image_new_from_stock(icon, GTK_ICON_SIZE_MENU));
+    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(w), image_new_with_icon(icon, GTK_ICON_SIZE_MENU));
   if (callback)
     SG_SIGNAL_CONNECT(w, "activate", callback, NULL);
   gtk_widget_show(w);
@@ -383,13 +383,13 @@ GtkWidget *add_menu(void)
   ml[f_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(file_menu), file_cascade_menu);
 
-  file_open_menu = add_menu_item(file_cascade_menu, "Open", GTK_STOCK_OPEN, (GCallback)file_open_callback);
+  file_open_menu = add_menu_item(file_cascade_menu, "Open", ICON_OPEN, (GCallback)file_open_callback);
   ml[f_open_menu] = "Open";
 #if WITH_MENU_ACCELERATORS
   gtk_widget_add_accelerator (file_open_menu, "activate", accel_group, GDK_O, GDK_HYPER_MASK | GDK_SHIFT_MASK, GTK_ACCEL_VISIBLE);
 #endif
 
-  file_open_recent_menu = add_menu_item(file_cascade_menu, "Open recent", GTK_STOCK_OPEN, (GCallback)file_open_recent_callback);
+  file_open_recent_menu = add_menu_item(file_cascade_menu, "Open recent", ICON_OPEN, (GCallback)file_open_recent_callback);
   ml[f_open_recent_menu] = "Open recent";
   gtk_widget_hide(file_open_recent_menu);
   
@@ -398,44 +398,44 @@ GtkWidget *add_menu(void)
   ml[f_open_recent_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(file_open_recent_menu), file_open_recent_cascade_menu);
 
-  file_close_menu = add_insensitive_menu_item(file_cascade_menu, "Close", GTK_STOCK_CLOSE, (GCallback)file_close_callback);
+  file_close_menu = add_insensitive_menu_item(file_cascade_menu, "Close", ICON_CLOSE, (GCallback)file_close_callback);
   ml[f_close_menu] = "Close";
   
-  file_close_all_menu = add_menu_item(file_cascade_menu, "Close all", GTK_STOCK_CLOSE, (GCallback)file_close_all_callback);
+  file_close_all_menu = add_menu_item(file_cascade_menu, "Close all", ICON_CLOSE, (GCallback)file_close_all_callback);
   ml[f_close_all_menu] = "Close all";
   gtk_widget_hide(file_close_all_menu);
   
-  file_save_menu = add_insensitive_menu_item(file_cascade_menu, "Save", GTK_STOCK_SAVE, (GCallback)file_save_callback);
+  file_save_menu = add_insensitive_menu_item(file_cascade_menu, "Save", ICON_SAVE, (GCallback)file_save_callback);
   ml[f_save_menu] = "Save";
   
-  file_save_as_menu = add_insensitive_menu_item(file_cascade_menu, "Save as", GTK_STOCK_SAVE_AS, (GCallback)file_save_as_callback);
+  file_save_as_menu = add_insensitive_menu_item(file_cascade_menu, "Save as", ICON_SAVE_AS, (GCallback)file_save_as_callback);
   ml[f_save_as_menu] = "Save as";
   
-  file_revert_menu = add_insensitive_menu_item(file_cascade_menu, "Revert", GTK_STOCK_REVERT_TO_SAVED, (GCallback)file_revert_callback);
+  file_revert_menu = add_insensitive_menu_item(file_cascade_menu, "Revert", ICON_REVERT_TO_SAVED, (GCallback)file_revert_callback);
   ml[f_revert_menu] = "Revert";
   
-  file_mix_menu = add_insensitive_menu_item(file_cascade_menu, "Mix", GTK_STOCK_ADD, (GCallback)file_mix_callback_1);
+  file_mix_menu = add_insensitive_menu_item(file_cascade_menu, "Mix", ICON_ADD, (GCallback)file_mix_callback_1);
   ml[f_mix_menu] = "Mix";
 
-  file_insert_menu = add_insensitive_menu_item(file_cascade_menu, "Insert", GTK_STOCK_PASTE, (GCallback)file_insert_callback_1);
+  file_insert_menu = add_insensitive_menu_item(file_cascade_menu, "Insert", ICON_PASTE, (GCallback)file_insert_callback_1);
   ml[f_insert_menu] = "Insert";
 
-  file_update_menu = add_insensitive_menu_item(file_cascade_menu, "Update", GTK_STOCK_REFRESH, (GCallback)file_update_callback);
+  file_update_menu = add_insensitive_menu_item(file_cascade_menu, "Update", ICON_REFRESH, (GCallback)file_update_callback);
   ml[f_update_menu] = "Update";
 
-  file_new_menu = add_menu_item(file_cascade_menu, "New", GTK_STOCK_NEW, (GCallback)file_new_callback);
+  file_new_menu = add_menu_item(file_cascade_menu, "New", ICON_NEW, (GCallback)file_new_callback);
   ml[f_new_menu] = "New";
 
-  file_view_menu = add_menu_item(file_cascade_menu, "View", GTK_STOCK_OPEN, (GCallback)file_view_callback);
+  file_view_menu = add_menu_item(file_cascade_menu, "View", ICON_OPEN, (GCallback)file_view_callback);
   ml[f_view_menu] = "View";
 
-  file_print_menu = add_insensitive_menu_item(file_cascade_menu, "Print", GTK_STOCK_PRINT, (GCallback)file_print_callback_1);
+  file_print_menu = add_insensitive_menu_item(file_cascade_menu, "Print", ICON_PRINT, (GCallback)file_print_callback_1);
   ml[f_print_menu] = "Print";
 
   file_sep_menu = add_menu_separator(file_cascade_menu);
   ml[f_sep_menu] = NULL;
 
-  file_exit_menu = add_menu_item(file_cascade_menu, "Exit", GTK_STOCK_QUIT, (GCallback)file_exit_callback);
+  file_exit_menu = add_menu_item(file_cascade_menu, "Exit", ICON_QUIT, (GCallback)file_exit_callback);
   ml[f_exit_menu] = "Exit";
 
 
@@ -452,41 +452,41 @@ GtkWidget *add_menu(void)
   ml[e_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(edit_menu), edit_cascade_menu);
   
-  edit_undo_menu = add_insensitive_menu_item(edit_cascade_menu, "Undo", GTK_STOCK_UNDO, (GCallback)edit_undo_callback);
+  edit_undo_menu = add_insensitive_menu_item(edit_cascade_menu, "Undo", ICON_UNDO, (GCallback)edit_undo_callback);
   ml[e_undo_menu] = "Undo";
 
-  edit_redo_menu = add_insensitive_menu_item(edit_cascade_menu, "Redo", GTK_STOCK_REDO, (GCallback)edit_redo_callback);
+  edit_redo_menu = add_insensitive_menu_item(edit_cascade_menu, "Redo", ICON_REDO, (GCallback)edit_redo_callback);
   ml[e_redo_menu] = "Redo";
 
 #if HAVE_EXTENSION_LANGUAGE
-  edit_find_menu = add_insensitive_menu_item(edit_cascade_menu, I_FIND, GTK_STOCK_FIND, (GCallback)edit_find_callback_1);
+  edit_find_menu = add_insensitive_menu_item(edit_cascade_menu, I_FIND, ICON_FIND, (GCallback)edit_find_callback_1);
   ml[e_find_menu] = I_FIND;
 #endif
 
   edit_select_sep_menu = add_menu_separator(edit_cascade_menu);
   ml[e_select_sep_menu] = NULL;
 
-  edit_cut_menu = add_insensitive_menu_item(edit_cascade_menu, "Delete selection", GTK_STOCK_CUT, (GCallback)edit_cut_callback);
+  edit_cut_menu = add_insensitive_menu_item(edit_cascade_menu, "Delete selection", ICON_CUT, (GCallback)edit_cut_callback);
   ml[e_cut_menu] = "Delete Selection";
 
-  edit_paste_menu = add_insensitive_menu_item(edit_cascade_menu, "Insert selection", GTK_STOCK_PASTE, (GCallback)edit_paste_callback);
+  edit_paste_menu = add_insensitive_menu_item(edit_cascade_menu, "Insert selection", ICON_PASTE, (GCallback)edit_paste_callback);
   ml[e_paste_menu] = "Insert Selection";
 
-  edit_mix_menu = add_insensitive_menu_item(edit_cascade_menu, "Mix selection", GTK_STOCK_ADD, (GCallback)edit_mix_callback);
+  edit_mix_menu = add_insensitive_menu_item(edit_cascade_menu, "Mix selection", ICON_ADD, (GCallback)edit_mix_callback);
   ml[e_mix_menu] = "Mix Selection";
 
 #if WITH_AUDIO
-  edit_play_menu = add_insensitive_menu_item(edit_cascade_menu, "Play selection", GTK_STOCK_MEDIA_PLAY, (GCallback)edit_play_callback);
+  edit_play_menu = add_insensitive_menu_item(edit_cascade_menu, "Play selection", ICON_MEDIA_PLAY, (GCallback)edit_play_callback);
   ml[e_play_menu] = "Play Selection";
 #endif
 
-  edit_save_as_menu = add_insensitive_menu_item(edit_cascade_menu, "Save selection", GTK_STOCK_SAVE_AS, (GCallback)edit_save_as_callback);
+  edit_save_as_menu = add_insensitive_menu_item(edit_cascade_menu, "Save selection", ICON_SAVE_AS, (GCallback)edit_save_as_callback);
   ml[e_save_as_menu] = "Save Selection";
 
-  edit_select_all_menu = add_insensitive_menu_item(edit_cascade_menu, "Select all", GTK_STOCK_SELECT_ALL, (GCallback)edit_select_all_callback);
+  edit_select_all_menu = add_insensitive_menu_item(edit_cascade_menu, "Select all", ICON_SELECT_ALL, (GCallback)edit_select_all_callback);
   ml[e_select_all_menu] = "Select all";
 
-  edit_unselect_menu = add_insensitive_menu_item(edit_cascade_menu, "Unselect all", GTK_STOCK_CLEAR, (GCallback)edit_unselect_callback);
+  edit_unselect_menu = add_insensitive_menu_item(edit_cascade_menu, "Unselect all", ICON_CLEAR, (GCallback)edit_unselect_callback);
   ml[e_unselect_menu] = "Unselect all";
 
   edit_edit_sep_menu = add_menu_separator(edit_cascade_menu);
@@ -495,7 +495,7 @@ GtkWidget *add_menu(void)
   edit_env_menu = add_menu_item(edit_cascade_menu, "Edit envelope", NULL, (GCallback)edit_envelope_callback);
   ml[e_env_menu] = "Edit Envelope";
 
-  edit_header_menu = add_insensitive_menu_item(edit_cascade_menu, "Edit header", GTK_STOCK_EDIT, (GCallback)edit_header_callback_1);
+  edit_header_menu = add_insensitive_menu_item(edit_cascade_menu, "Edit header", ICON_EDIT, (GCallback)edit_header_callback_1);
   ml[e_header_menu] = "Edit Header";
 
 
@@ -523,7 +523,7 @@ GtkWidget *add_menu(void)
   view_region_menu = add_insensitive_menu_item(view_cascade_menu, "Regions", NULL, (GCallback)view_region_callback_1);
   ml[v_region_menu] = "Regions";
 
-  view_color_orientation_menu = add_menu_item(view_cascade_menu, "Color/Orientation", GTK_STOCK_SELECT_COLOR, (GCallback)view_color_orientation_callback_1);
+  view_color_orientation_menu = add_menu_item(view_cascade_menu, "Color/Orientation", ICON_SELECT_COLOR, (GCallback)view_color_orientation_callback_1);
   ml[v_color_orientation_menu] = "Color/Orientation";
 
   view_controls_menu = add_menu_item(view_cascade_menu, "Show controls", NULL, (GCallback)view_controls_callback);
@@ -701,7 +701,7 @@ GtkWidget *add_menu(void)
   add_menu_separator(options_cascade_menu);
   ml[o_sep_menu] = NULL;
 
-  options_preferences_menu = add_menu_item(options_cascade_menu, "Preferences", GTK_STOCK_PREFERENCES, (GCallback)options_preferences_callback);
+  options_preferences_menu = add_menu_item(options_cascade_menu, "Preferences", ICON_PREFERENCES, (GCallback)options_preferences_callback);
   ml[o_preferences_menu] = "Preferences";
 
 
@@ -1259,7 +1259,7 @@ void add_tooltip(GtkWidget *w, const char *tip)
 static GtkWidget *add_to_toolbar(GtkWidget *bar, const gchar *stock, const char *tip, GCallback callback)
 {
   GtkToolItem *w;
-  w = gtk_tool_button_new_from_stock(stock);
+  w = tool_button_new_with_icon(stock);
   add_toolbar_style(GTK_WIDGET(w)); 
   gtk_toolbar_insert(GTK_TOOLBAR(bar), w, -1); /* -1 = at end */
   add_tooltip(GTK_WIDGET(w), tip);
@@ -1441,7 +1441,7 @@ static gboolean save_selected_tooltip(GtkWidget *w, gint x, gint y, gboolean key
   return(true);
 }
 
-
+#if 0
 static gboolean save_as_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
 {
   snd_info *sp;
@@ -1456,7 +1456,7 @@ static gboolean save_as_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_
   else gtk_tooltip_set_text(tooltip, "save the current sound in a new file");
   return(true);
 }
-
+#endif
 
 static gboolean revert_selected_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
 {
@@ -1509,7 +1509,7 @@ static gboolean undo_selected_tooltip(GtkWidget *w, gint x, gint y, gboolean key
   return(true);
 }
 
-
+#if 0
 static gboolean redo_selected_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
 {
   chan_info *cp;
@@ -1543,7 +1543,7 @@ static gboolean redo_selected_tooltip(GtkWidget *w, gint x, gint y, gboolean key
   else gtk_tooltip_set_text(tooltip, "redo one edit in the current channel");
   return(true);
 }
-
+#endif
 
 #if WITH_AUDIO
 static gboolean play_selected_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
@@ -1692,7 +1692,7 @@ static gboolean go_forward_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboa
   return(true);
 }
 
-
+#if 0
 static gboolean unselect_all_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
 {
   if (selection_is_active())
@@ -1700,7 +1700,7 @@ static gboolean unselect_all_tooltip(GtkWidget *w, gint x, gint y, gboolean keyb
   else gtk_tooltip_set_text(tooltip, "when something is selected, this unselects it");
   return(true);
 }
-
+#endif
 
 static gboolean delete_selection_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
 {
@@ -1751,82 +1751,82 @@ void show_toolbar(void)
       gtk_box_reorder_child(GTK_BOX(MAIN_PANE(ss)), toolbar, 1);            /* put toolbar just under the top level menubar */
 
 
-      add_to_toolbar(toolbar, GTK_STOCK_NEW,                 "open a new sound",           (GCallback)file_new_callback);
-      add_to_toolbar(toolbar, GTK_STOCK_OPEN,                "open a sound",               (GCallback)file_open_callback);
+      add_to_toolbar(toolbar, ICON_NEW,                 "open a new sound",           (GCallback)file_new_callback);
+      add_to_toolbar(toolbar, ICON_OPEN,                "open a sound",               (GCallback)file_open_callback);
 
-      w = add_to_toolbar(toolbar, GTK_STOCK_SAVE,            "save current sound, overwriting", (GCallback)file_save_callback);
+      w = add_to_toolbar(toolbar, ICON_SAVE,            "save current sound, overwriting", (GCallback)file_save_callback);
       g_signal_connect(w, "query-tooltip", G_CALLBACK(save_selected_tooltip), NULL);
-
-      w = add_to_toolbar(toolbar, GTK_STOCK_SAVE_AS,         "save selected sound in new file", (GCallback)file_save_as_callback);
+#if 0
+      w = add_to_toolbar(toolbar, ICON_SAVE_AS,         "save selected sound in new file", (GCallback)file_save_as_callback);
       g_signal_connect(w, "query-tooltip", G_CALLBACK(save_as_tooltip), NULL);
-
-      w = add_to_toolbar(toolbar, GTK_STOCK_REVERT_TO_SAVED, "revert to saved",            (GCallback)file_revert_callback);
+#endif
+      w = add_to_toolbar(toolbar, ICON_REVERT_TO_SAVED, "revert to saved",            (GCallback)file_revert_callback);
       g_signal_connect(w, "query-tooltip", G_CALLBACK(revert_selected_tooltip), NULL);
 
-      w = add_to_toolbar(toolbar, GTK_STOCK_UNDO,            "undo edit",                  (GCallback)edit_undo_callback);
+      w = add_to_toolbar(toolbar, ICON_UNDO,            "undo edit",                  (GCallback)edit_undo_callback);
       g_signal_connect(w, "query-tooltip", G_CALLBACK(undo_selected_tooltip), NULL);
-
-      w = add_to_toolbar(toolbar, GTK_STOCK_REDO,            "redo last (undone) edit",    (GCallback)edit_redo_callback);
+#if 0
+      w = add_to_toolbar(toolbar, ICON_REDO,            "redo last (undone) edit",    (GCallback)edit_redo_callback);
       g_signal_connect(w, "query-tooltip", G_CALLBACK(redo_selected_tooltip), NULL);
-
-      w = add_to_toolbar(toolbar, GTK_STOCK_CLOSE,           "close selected sound",       (GCallback)file_close_callback);
+#endif
+      w = add_to_toolbar(toolbar, ICON_CLOSE,           "close selected sound",       (GCallback)file_close_callback);
       g_signal_connect(w, "query-tooltip", G_CALLBACK(close_selected_tooltip), NULL);
       add_separator_to_toolbar(toolbar);
 
 
 #if WITH_AUDIO
-      w = add_to_toolbar(toolbar, GTK_STOCK_MEDIA_PLAY,      "play from the start",        (GCallback)play_from_start_callback);
+      w = add_to_toolbar(toolbar, ICON_MEDIA_PLAY,      "play from the start",        (GCallback)play_from_start_callback);
       g_signal_connect(w, "query-tooltip", G_CALLBACK(play_selected_tooltip), NULL);
       
-      w = add_to_toolbar(toolbar, GTK_STOCK_MEDIA_FORWARD,   "play from the cursor",       (GCallback)play_from_cursor_callback);      
+      w = add_to_toolbar(toolbar, ICON_MEDIA_FORWARD,   "play from the cursor",       (GCallback)play_from_cursor_callback);      
       g_signal_connect(w, "query-tooltip", G_CALLBACK(play_selected_from_cursor_tooltip), NULL);
 
-      add_to_toolbar(toolbar, GTK_STOCK_MEDIA_STOP,          "stop playing",               (GCallback)stop_playing_callback);      
+      add_to_toolbar(toolbar, ICON_MEDIA_STOP,          "stop playing",               (GCallback)stop_playing_callback);      
       add_separator_to_toolbar(toolbar);
 #endif
 
  
-      w = add_to_toolbar(toolbar, GTK_STOCK_FULLSCREEN,      "show full sound",            (GCallback)full_dur_callback);      
+      w = add_to_toolbar(toolbar, ICON_FULLSCREEN,      "show full sound",            (GCallback)full_dur_callback);      
       g_signal_connect(w, "query-tooltip", G_CALLBACK(full_dur_tooltip), NULL);
 
-      w = add_to_toolbar(toolbar, GTK_STOCK_ZOOM_OUT,        "zoom out",                   (GCallback)zoom_out_callback);      
+      w = add_to_toolbar(toolbar, ICON_ZOOM_OUT,        "zoom out",                   (GCallback)zoom_out_callback);      
       g_signal_connect(w, "query-tooltip", G_CALLBACK(zoom_out_tooltip), NULL);
 
-      w = add_to_toolbar(toolbar, GTK_STOCK_ZOOM_IN,         "zoom in",                    (GCallback)zoom_in_callback);      
+      w = add_to_toolbar(toolbar, ICON_ZOOM_IN,         "zoom in",                    (GCallback)zoom_in_callback);      
       g_signal_connect(w, "query-tooltip", G_CALLBACK(zoom_in_tooltip), NULL);
 
-      w = add_to_toolbar(toolbar, GTK_STOCK_GOTO_FIRST,      "go to start of sound",       (GCallback)goto_start_callback);      
+      w = add_to_toolbar(toolbar, ICON_GOTO_FIRST,      "go to start of sound",       (GCallback)goto_start_callback);      
       g_signal_connect(w, "query-tooltip", G_CALLBACK(goto_start_tooltip), NULL);
 
-      w = add_to_toolbar(toolbar, GTK_STOCK_GO_BACK,         "go back a window",           (GCallback)go_back_callback);      
+      w = add_to_toolbar(toolbar, ICON_GO_BACK,         "go back a window",           (GCallback)go_back_callback);      
       g_signal_connect(w, "query-tooltip", G_CALLBACK(go_back_tooltip), NULL);
 
-      w = add_to_toolbar(toolbar, GTK_STOCK_GO_FORWARD,      "go forward a window",        (GCallback)go_forward_callback);      
+      w = add_to_toolbar(toolbar, ICON_GO_FORWARD,      "go forward a window",        (GCallback)go_forward_callback);      
       g_signal_connect(w, "query-tooltip", G_CALLBACK(go_forward_tooltip), NULL);
 
-      w = add_to_toolbar(toolbar, GTK_STOCK_GOTO_LAST,       "go to end of sound",         (GCallback)goto_end_callback);      
+      w = add_to_toolbar(toolbar, ICON_GOTO_LAST,       "go to end of sound",         (GCallback)goto_end_callback);      
       g_signal_connect(w, "query-tooltip", G_CALLBACK(goto_end_tooltip), NULL);
       add_separator_to_toolbar(toolbar);
 
+#if 0
+      add_to_toolbar(toolbar, ICON_SELECT_ALL,          "select all of the current sound",(GCallback)edit_select_all_callback);
 
-      add_to_toolbar(toolbar, GTK_STOCK_SELECT_ALL,          "select all of the current sound",(GCallback)edit_select_all_callback);
-      
-      w = add_to_toolbar(toolbar, GTK_STOCK_CLEAR,           "unselect everything",        (GCallback)edit_unselect_callback);  
+      w = add_to_toolbar(toolbar, ICON_CLEAR,           "unselect everything",        (GCallback)edit_unselect_callback);  
       g_signal_connect(w, "query-tooltip", G_CALLBACK(unselect_all_tooltip), NULL);
-
-      w = add_to_toolbar(toolbar, GTK_STOCK_CUT,             "delete the selected portion",(GCallback)edit_cut_callback);      
+#endif      
+      w = add_to_toolbar(toolbar, ICON_CUT,             "delete the selected portion",(GCallback)edit_cut_callback);      
       g_signal_connect(w, "query-tooltip", G_CALLBACK(delete_selection_tooltip), NULL);
 
-      w = add_to_toolbar(toolbar, GTK_STOCK_PASTE,               "insert the selection at the cursor", (GCallback)edit_paste_callback);      
+      w = add_to_toolbar(toolbar, ICON_PASTE,               "insert the selection at the cursor", (GCallback)edit_paste_callback);      
       g_signal_connect(w, "query-tooltip", G_CALLBACK(insert_selection_tooltip), NULL);
       add_separator_to_toolbar(toolbar);
 
 
 #if (!WITH_AUDIO)
-      add_to_toolbar(toolbar, GTK_STOCK_PREFERENCES,         "open the preferences dialog",(GCallback)options_preferences_callback);
+      add_to_toolbar(toolbar, ICON_PREFERENCES,         "open the preferences dialog",(GCallback)options_preferences_callback);
 #endif
-      add_to_toolbar(toolbar, GTK_STOCK_CANCEL,              "stop everything",            (GCallback)stop_everything_callback);
-      add_to_toolbar(toolbar, GTK_STOCK_QUIT,                "exit Snd",                   (GCallback)file_exit_callback);
+      add_to_toolbar(toolbar, ICON_CANCEL,              "stop everything",            (GCallback)stop_everything_callback);
+      add_to_toolbar(toolbar, ICON_QUIT,                "exit Snd",                   (GCallback)file_exit_callback);
     }
 
   gtk_widget_show(toolbar);

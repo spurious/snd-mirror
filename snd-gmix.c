@@ -681,7 +681,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_window_resize(GTK_WINDOW(mix_dialog), 560, 280);
       gtk_widget_realize(mix_dialog);
       
-      help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
+      help_button = button_new_with_icon(ICON_HELP);
       gtk_widget_set_name(help_button, "dialog_button");
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), help_button, true, true, 10);
       SG_SIGNAL_CONNECT(help_button, "clicked", mix_dialog_help_callback, NULL);
@@ -690,7 +690,7 @@ GtkWidget *make_mix_dialog(void)
 #endif
       gtk_widget_show(help_button);
 
-      copy_button = sg_button_new_from_stock_with_label("Copy mix", GTK_STOCK_COPY);
+      copy_button = sg_button_new_with_label_and_icon("Copy mix", ICON_COPY);
       gtk_widget_set_name(copy_button, "dialog_button");
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), copy_button, false, true, 10);
       SG_SIGNAL_CONNECT(copy_button, "clicked", copy_mix_callback, NULL);
@@ -699,7 +699,7 @@ GtkWidget *make_mix_dialog(void)
 #endif
       gtk_widget_show(copy_button);
 
-      dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
+      dismiss_button = button_new_with_icon(ICON_QUIT);
       gtk_widget_set_name(dismiss_button, "dialog_button");
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), dismiss_button, false, true, 10);
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_mix_dialog, NULL);
@@ -709,7 +709,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(dismiss_button);
       set_stock_button_label(dismiss_button, I_GO_AWAY);
 
-      apply_button = sg_button_new_from_stock_with_label("Apply Env", GTK_STOCK_APPLY);
+      apply_button = sg_button_new_with_label_and_icon("Apply Env", ICON_APPLY);
       gtk_widget_set_name(apply_button, "dialog_button");
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), apply_button, false, true, 10);
       SG_SIGNAL_CONNECT(apply_button, "clicked", apply_env_callback, NULL);
@@ -769,7 +769,7 @@ GtkWidget *make_mix_dialog(void)
       SG_SIGNAL_CONNECT(mix_play_pix, DRAW_SIGNAL, mix_play_pix_expose, NULL);
 #endif
 
-      nextb = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
+      nextb = button_new_with_icon(ICON_GO_FORWARD);
       gtk_widget_set_name(nextb, "dialog_button");
       gtk_box_pack_end(GTK_BOX(rc), nextb, false, true, 6);
 #if HAVE_GTK_3
@@ -779,7 +779,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(nextb);
       set_stock_button_label(nextb, I_NEXT);
 
-      previousb = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
+      previousb = button_new_with_icon(ICON_GO_BACK);
       gtk_widget_set_name(previousb, "dialog_button");
       gtk_box_pack_end(GTK_BOX(rc), previousb, false, true, 6);
 #if HAVE_GTK_3

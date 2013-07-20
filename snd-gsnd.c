@@ -1610,7 +1610,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 #endif
       add_tooltip(CLOSE_BUTTON(sp), "close current sound");
       gtk_button_set_relief(GTK_BUTTON(CLOSE_BUTTON(sp)), GTK_RELIEF_NONE);
-      gtk_button_set_image(GTK_BUTTON(CLOSE_BUTTON(sp)), gtk_image_new_from_stock(GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
+      gtk_button_set_image(GTK_BUTTON(CLOSE_BUTTON(sp)), image_new_with_icon(ICON_CLOSE, GTK_ICON_SIZE_MENU));
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), CLOSE_BUTTON(sp), false, false, 8);
       SG_SIGNAL_CONNECT(CLOSE_BUTTON(sp), "clicked", close_button_callback, sp);
       g_signal_connect(CLOSE_BUTTON(sp), "query-tooltip", G_CALLBACK(close_button_tooltip), (gpointer)sp);
@@ -2369,14 +2369,14 @@ void make_controls_dialog(void)
       gtk_widget_realize(controls_dialog);
       gtk_window_resize(GTK_WINDOW(controls_dialog), 400, 500);
 
-      help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
+      help_button = button_new_with_icon(ICON_HELP);
       gtk_widget_set_name(help_button, "dialog_button");
 
-      dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
+      dismiss_button = button_new_with_icon(ICON_QUIT);
       gtk_widget_set_name(dismiss_button, "dialog_button");
       set_stock_button_label(dismiss_button, I_GO_AWAY);
 
-      reset_button = gtk_button_new_from_stock(GTK_STOCK_REVERT_TO_SAVED);
+      reset_button = button_new_with_icon(ICON_REVERT_TO_SAVED);
       gtk_widget_set_name(reset_button, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(controls_dialog)), help_button, false, true, 10);

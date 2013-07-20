@@ -2906,7 +2906,7 @@ def test_04_00
   mus_sound_forget(lfname)
   delete_file(lfname)
   #
-  with_file("forest.aiff") do |fsnd|
+  with_file($sf_dir + "forest.aiff") do |fsnd|
     file_copy("fsnd", "fmv.snd")
     ind = open_sound("fmv.snd")
     snd_test_neq(sound_loop_info(ind), mus_sound_loop_info(fsnd), "loop_info")

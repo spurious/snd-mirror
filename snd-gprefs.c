@@ -1614,21 +1614,21 @@ widget_t make_preferences_dialog(void)
       (STARTUP_HEIGHT < gdk_screen_height()))
     gtk_window_resize(GTK_WINDOW(preferences_dialog), STARTUP_WIDTH, STARTUP_HEIGHT);
 
-  helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
+  helpB = button_new_with_icon(ICON_HELP);
   gtk_widget_set_name(helpB, "dialog_button");
 
 #if HAVE_EXTENSION_LANGUAGE
-  saveB = gtk_button_new_from_stock(GTK_STOCK_SAVE);
+  saveB = button_new_with_icon(ICON_SAVE);
   gtk_widget_set_name(saveB, "dialog_button");
 #endif
 
-  revertB = gtk_button_new_from_stock(GTK_STOCK_REVERT_TO_SAVED);
+  revertB = button_new_with_icon(ICON_REVERT_TO_SAVED);
   gtk_widget_set_name(revertB, "dialog_button");
 
-  clearB = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
+  clearB = button_new_with_icon(ICON_CLEAR);
   gtk_widget_set_name(clearB, "dialog_button");
 
-  dismissB = gtk_button_new_from_stock(GTK_STOCK_QUIT);
+  dismissB = button_new_with_icon(ICON_QUIT);
   gtk_widget_set_name(dismissB, "dialog_button");
   set_stock_button_label(dismissB, I_GO_AWAY);
 

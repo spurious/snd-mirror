@@ -886,19 +886,19 @@ GtkWidget *create_envelope_editor(void)
       gc_set_background(ggc, ss->white);
       gc_set_foreground(ggc, ss->enved_waveform_color);
 
-      helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
+      helpB = button_new_with_icon(ICON_HELP);
       gtk_widget_set_name(helpB, "dialog_button");
 
-      cancelB = sg_button_new_from_stock_with_label(I_GO_AWAY, GTK_STOCK_QUIT);
+      cancelB = sg_button_new_with_label_and_icon(I_GO_AWAY, ICON_QUIT);
       gtk_widget_set_name(cancelB, "dialog_button");
 
-      applyB = gtk_button_new_from_stock(GTK_STOCK_APPLY);
+      applyB = button_new_with_icon(ICON_APPLY);
       gtk_widget_set_name(applyB, "dialog_button");
 
-      apply2B = sg_button_new_from_stock_with_label("Undo&Apply", GTK_STOCK_UNDO);
+      apply2B = sg_button_new_with_label_and_icon("Undo&Apply", ICON_UNDO);
       gtk_widget_set_name(apply2B, "dialog_button");
 
-      resetB = sg_button_new_from_stock_with_label("Clear graph", GTK_STOCK_REFRESH);
+      resetB = sg_button_new_with_label_and_icon("Clear graph", ICON_REFRESH);
       gtk_widget_set_name(resetB, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), helpB, false, true, 10);
