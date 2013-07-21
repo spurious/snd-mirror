@@ -9990,6 +9990,35 @@ print the value of the variable passed by its print name: s7v "*features*"
 end
 </pre>
 
+<p>See also gdb-s7.scm in the s7 tarball.  This is a hack (I'm working on it!) that can
+annotate gdb output so that pointers that represent s7 values include
+the s7 value in the output.  You'll also need xdotool (it mimics a very industrious typist getting
+the s7 values we need).
+</p>
+
+<pre class="indented">
+gdb program | gdb-s7.scm
+</pre>
+
+<p>then use gdb
+normally, but when an s7 pointer goes by (in a stack trace for example),
+what would have been printed as (for example):
+</p>
+
+<pre class="indented">
+#2  0x00000000004b3174 in g_numerator (sc=0xd950b0, args=0xda1c50) at s7.c:16929
+</pre>
+
+<p>is instead printed:
+</p>
+
+<pre class="indented">
+#2  0x00000000004b3174 in g_numerator (sc=0xd950b0, args<b>[(1/12)]</b>=0xda1c50) at s7.c:16929
+</pre>
+
+<p>In this case "args" is a list holding the ratio 1/12.
+</p>
+
 <br><br>
 
 

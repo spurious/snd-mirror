@@ -22054,7 +22054,7 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
 {
-  #define H_read_line "(read-line port (with-eol #f)) returns the next line from port, or #<eof> (use the function eof-object?).\
+  #define H_read_line "(read-line port (with-eol #f)) returns the next line from port, or #<eof>.\
 If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
 
   s7_pointer port;
@@ -22941,10 +22941,20 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
   return(buf);
 }
 
+
 bool s7_is_valid_pointer(s7_pointer arg)
 {
   return((arg) &&
 	 (type(arg) > T_FREE) && (type(arg) < NUM_TYPES));
+}
+
+bool s7_is_valid(s7_scheme *sc, s7_pointer arg)
+{
+  /* new name because the function above might be in use */
+  return((arg) &&
+	 (type(arg) > T_FREE) && (type(arg) < NUM_TYPES) &&
+	 ((arg->hloc == -1) ||
+	  ((arg->hloc >= 0) && (arg->hloc < sc->heap_size) && (sc->heap[arg->hloc] == arg))));
 }
 
 
@@ -48952,8 +48962,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_DO_UNCHECKED:
-      /* fprintf(stderr, "do %s\n", DISPLAY(sc->code)); */
-
       if (is_null(car(sc->code)))                           /* (do () ...) -- (let ((i 0)) (do () ((= i 1)) (set! i 1))) */
 	{
 	  sc->envir = new_frame_in_env(sc, sc->envir); 
@@ -65829,4 +65837,7 @@ s7_scheme *s7_init(void)
 
 /* ideally we'd replace strcpy with strcopy throughout Snd, and strcat with strappend or some equivalent
  *   also openbsd audio is broken in Snd -- see aucat.c I guess.
+ */
+/* gdb-helper as shell code
+ * xdotool for snd-test GUI stuff
  */

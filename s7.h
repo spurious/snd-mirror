@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.26"
-#define S7_DATE "26-June-13"
+#define S7_VERSION "2.27"
+#define S7_DATE "21-July-13"
 
 
 typedef long long int s7_Int;
@@ -135,6 +135,7 @@ bool s7_is_null(s7_scheme *sc, s7_pointer p);                        /* null? */
    */
 
 bool s7_is_valid_pointer(s7_pointer arg);                            /* does 'arg' look like an s7 object? */
+bool s7_is_valid(s7_scheme *sc, s7_pointer arg);                     /* does 'arg' look like an s7 object? */
 bool s7_is_c_pointer(s7_pointer arg);
 void *s7_c_pointer(s7_pointer p);
 s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr);
@@ -889,6 +890,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 21-Jul:    s7_is_valid.
  * 24-Jun:    some bool-related changes for Windows Visual C++, including change to s7_begin_hook.
  * 3-June:    s7_autoload.
  * 28-May:    export s7_is_provided.  Added s7_scheme* arg to s7_procedure_environment.
