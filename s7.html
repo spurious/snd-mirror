@@ -6403,11 +6403,10 @@ the current environment, so defines happen in the enclosing environment.
   (augment-environment! e 
     (cons 'os-type os_type)
     (cons 'cpu-architecture cpu_arch)
-    (cons 'system-instance sys_ins)
+    (cons 'machine-name sys_ins)
     (cons 'os-version (lambda () (string-append (os_version) " " (os_release))))
     (cons 'implementation-name (lambda () "s7"))
-    (cons 'implementation-version (lambda () (substring (s7-version) 3 7)))
-    (cons 'c-memory-model #f)))
+    (cons 'implementation-version (lambda () (substring (s7-version) 3 7)))))
 
 ;; command-line is problematic: s7 has no access to the caller's "main" function, and
 ;;   outside Windows, there's no reasonable way to get these arguments.

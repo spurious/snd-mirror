@@ -22942,19 +22942,53 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 }
 
 
+#if (!DISABLE_DEPRECATED)
 bool s7_is_valid_pointer(s7_pointer arg)
 {
   return((arg) &&
 	 (type(arg) > T_FREE) && (type(arg) < NUM_TYPES));
 }
+#endif
+
+
+#if TRAP_SEGFAULT
+#include <signal.h>
+static sigjmp_buf senv;
+static volatile sig_atomic_t can_jump = 0;
+static void segv(int ignored) {if (can_jump) siglongjmp(senv, 1);}
+#endif
 
 bool s7_is_valid(s7_scheme *sc, s7_pointer arg)
 {
-  /* new name because the function above might be in use */
-  return((arg) &&
-	 (type(arg) > T_FREE) && (type(arg) < NUM_TYPES) &&
-	 ((arg->hloc == -1) ||
-	  ((arg->hloc >= 0) && (arg->hloc < sc->heap_size) && (sc->heap[arg->hloc] == arg))));
+  bool result;
+  /* new name because the function above might be in use 
+   */
+  if (!arg) return(false);
+  /* we might also check that (arg & 0x7) == 0, but see unaligned access above */
+
+  /* this trap does not behave correctly in gdb because gdb notices the segfault 
+   *   and the gdb-s7.scm pipe hangs awaiting kbd input.
+   */
+
+#if TRAP_SEGFAULT
+  if (sigsetjmp(senv, 1) == 0)
+    {
+      void (*old_segv)(int sig);
+      can_jump = 1;
+      old_segv = signal(SIGSEGV, segv);
+#endif
+
+  result = ((type(arg) > T_FREE) && (type(arg) < NUM_TYPES) &&
+	    ((arg->hloc == -1) ||
+	     ((arg->hloc >= 0) && (arg->hloc < sc->heap_size) && (sc->heap[arg->hloc] == arg))));
+
+#if TRAP_SEGFAULT
+  signal(SIGSEGV, old_segv);
+    }
+  can_jump = 0;
+#endif
+
+  return(result);
 }
 
 

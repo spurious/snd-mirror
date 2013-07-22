@@ -134,7 +134,6 @@ bool s7_is_null(s7_scheme *sc, s7_pointer p);                        /* null? */
    *   so they can be safely assigned to C global variables if desired. 
    */
 
-bool s7_is_valid_pointer(s7_pointer arg);                            /* does 'arg' look like an s7 object? */
 bool s7_is_valid(s7_scheme *sc, s7_pointer arg);                     /* does 'arg' look like an s7 object? */
 bool s7_is_c_pointer(s7_pointer arg);
 void *s7_c_pointer(s7_pointer p);
@@ -857,6 +856,8 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
 #define s7_UNDEFINED(Sc)   s7_undefined(Sc)
 #define s7_UNSPECIFIED(Sc) s7_unspecified(Sc)
 #define s7_EOF_OBJECT(Sc)  s7_eof_object(Sc)
+
+bool s7_is_valid_pointer(s7_pointer arg); 
 #endif
 
 /* the following Scheme functions are not currently exported to C:
@@ -890,7 +891,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
- * 21-Jul:    s7_is_valid.
+ * 21-Jul:    s7_is_valid (replaces deprecated s7_is_valid_pointer).
  * 24-Jun:    some bool-related changes for Windows Visual C++, including change to s7_begin_hook.
  * 3-June:    s7_autoload.
  * 28-May:    export s7_is_provided.  Added s7_scheme* arg to s7_procedure_environment.

@@ -465,8 +465,13 @@ int main(int argc, char **argv)
   if (s7_is_equal(sc, s7_eof_object(sc), s7_undefined(sc)))
     {fprintf(stderr, "%d: (equal? %s %s) -> #t?\n", __LINE__, s1 = TO_STR(s7_eof_object(sc)), s2 = TO_STR(s7_undefined(sc))); free(s1); free(s2);}
 
+#if (!DISABLE_DEPRECATED)
   if (!s7_is_valid_pointer(s7_t(sc)))
     {fprintf(stderr, "%d: %s is not a valid pointer?\n", __LINE__, s1 = TO_STR(s7_t(sc))); free(s1);}
+#endif
+
+  if (!s7_is_valid(sc, s7_t(sc)))
+    {fprintf(stderr, "%d: %s is not valid?\n", __LINE__, s1 = TO_STR(s7_t(sc))); free(s1);}
 
   if (s7_is_c_pointer(s7_t(sc)))
     {fprintf(stderr, "%d: %s is a raw c pointer?\n", __LINE__, s1 = TO_STR(s7_t(sc))); free(s1);}
