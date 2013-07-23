@@ -1338,6 +1338,7 @@ struct s7_scheme {
   s7_pointer *safe_lists;
   const char **autoload_names;
   int autoload_names_size;
+  bool autoload_ours;
 };
 
 #define NUM_SAFE_LISTS 16
@@ -22301,7 +22302,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
       s7_close_input_port(sc, port);
     }
 
-  return(sc->UNSPECIFIED);
+  return(sc->value);
 }
 
 
@@ -22501,11 +22502,64 @@ static s7_pointer g_load_path_set(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* an experiment */
 void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
 {
-  sc->autoload_names = names;
-  sc->autoload_names_size = size;
+  /* PERHAPS: if autoload_names not null, combine and re-sort (just run through both resetting locs)
+   *
+   * the idea here is that by sticking to string constants we can handle 90% of the work at compile-time,
+   *   with less start-up memory.  Then eventually we'll add C libraries a la xg (gtk) as environments
+   *   and every name in that library will come as an import once dlopen has picked up the library.
+   *   So, hopefully, we can pre-declare as many names as we want from as many libraries as we want,
+   *   without a bloated mess of a run-time image.  And new libraries are easy to accommodate --
+   *   add the names to be auto-exported to this list with the name of the scheme file that cloads
+   *   the library and exports the given name. So, we'll need a separate such file for each library?
+   *
+   * the environment variable could use the library base name in *: *libm* or *libgtk*
+   *   (*libm* 'j0)
+   * why not just predeclare these libraries?  The caller could import what he wants via require.
+   * So the autoloader need only know which libraries, but this doesn't fit the current use of gtk in xg
+   * In fact, we only need to see *libm* -> libm.so etc, but we still need the arg/return types of each function, etc
+   * And libgtk is enormous -- seems too bad to tie-in everything via the FFI when we need less than 1% of it.
+   * Perhaps each module as an environment within the main one: ((*libgtk* *gtkwidget*) 'gtk_widget_new)?
+   * But that requires inside knowlege of the library, and changes without notice.
+   *
+   * Also we need to decide how to handle name collisions.
+   */
+  if (sc->autoload_names == NULL)
+    {
+      sc->autoload_names = names;
+      sc->autoload_names_size = size;
+      sc->autoload_ours = false;
+    }
+  else
+    {
+      int new_i, old_i = 0, cur_i = 0, new_size, comp;
+      const char **old_names;
+      old_names = sc->autoload_names;
+      new_size = (size + sc->autoload_names_size) * 2;
+      sc->autoload_names = (const char **)malloc(new_size * sizeof(const char *));
+      for (new_i = 0; new_i < new_size; new_i += 2)
+	{
+	  comp = strcmp(old_names[old_i], names[cur_i]);
+	  if (comp <= 0)
+	    {
+	      if (comp == 0)
+		fprintf(stderr, "name collision: %s\n", old_names[old_i]);
+	      sc->autoload_names[new_i] = old_names[old_i];
+	      sc->autoload_names[new_i + 1] = old_names[old_i + 1];
+	      old_i += 2;
+	    }
+	  else
+	    {
+	      sc->autoload_names[new_i] = names[cur_i];
+	      sc->autoload_names[new_i + 1] = names[cur_i + 1];
+	      cur_i += 2;
+	    }
+	}
+      if (sc->autoload_ours) free(old_names);
+      sc->autoload_ours = true;
+      sc->autoload_names_size = new_size;
+    }
 }
 
 
@@ -37183,8 +37237,20 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	  file = find_autoload_name(sc, sym);
 	  if (file)
 	    {
-	      s7_load(sc, file);
+	      s7_pointer e;
+	      e = s7_load(sc, file);
 	      result = s7_symbol_value(sc, sym); /* calls find_symbol, does not trigger unbound_variable search */
+	      if ((result == sc->UNDEFINED) &&
+		  (is_environment(e)))
+		{
+		  result = s7_environment_ref(sc, e, sym);
+		  /* I think to be consistent we should add '(sym . result) to the global env
+		   */
+		  if (result != sc->UNDEFINED)
+		    {
+		      s7_define(sc, sc->NIL, sym, result);
+		    }
+		}
 	    }
 	}
 

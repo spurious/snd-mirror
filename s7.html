@@ -207,7 +207,8 @@ indented and on a sort of brownish background.
   <li><a href="#procedureinfo">procedure info</a>
   <li><a href="#evalstring">eval</a>
   <li><a href="#IO">IO and other OS functions</a>
-  <li><a href="#errors">errors, autoload</a>
+  <li><a href="#errors">errors</a>
+  <li><a href="#autoload">autoload</a>
   <li><a href="#constants">define-constant, symbol-access</a>
   <li><a href="#miscellanea">miscellaneous:</a> 
 
@@ -4361,7 +4362,7 @@ a more direct approach.
 
 
 
-<div class="header" id="errors"><h4>error handling and autoload</h4></div>
+<div class="header" id="errors"><h4>error handling</h4></div>
 
 <pre class="indented">
 (error tag . info)           ; signal an error of type tag with addition information
@@ -4601,6 +4602,17 @@ There is a break macro defined in Snd (snd-xen.c)
 which allows you to stop at some point, then evaluate arbitrary expressions in that context.
 </p>
 
+
+<div class="indented">
+<p>The s7-built-in catch tags are 'wrong-type-arg, 'syntax-error, 'read-error, 
+'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  
+</p>
+</div>
+
+
+
+<div class="header" id="autoload"><h4>autoload</h4></div>
+
 <!-- INDEX autoload:autoload -->
 <p id="autoload">
 If s7 encounters an unbound variable, it first looks to see if it has any autoload information about it.
@@ -4632,6 +4644,16 @@ If after running *unbound-variable-hook*, the symbol is still unbound,
 s7 calls the error handler.
 </p>
 
+<p>The autoloader knows about s7 environments used as libraries, so, for example,
+you can <code>(autoload 'j0 "libm.scm")</code>, then use j0 in scheme code. The first
+time s7 encounters j0, j0 is undefined, so
+s7 loads libm.scm.  That load returns the C math library as the environment *libm*.
+s7 then automatically looks for j0 in *libm*, and defines it for you.
+So the result is the same as if you had defined j0 yourself in C code.
+You can use the r7rs library mechanism here, or with-environment, or
+whatever you want! 
+</p>
+<br>
 
 <blockquote>
 <div class="indented">
@@ -4676,12 +4698,6 @@ dalliance with symbol-macros!
 </pre>
 </div>
 
-
-<div class="indented">
-<p>The s7-built-in catch tags are 'wrong-type-arg, 'syntax-error, 'read-error, 
-'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  
-</p>
-</div>
 </blockquote>
 
 
@@ -6531,9 +6547,9 @@ static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
 {
   /* all added functions have this form, args is a list, 
    *    s7_car(args) is the first arg, etc 
+   * The exit function is now built-in, but it's a simple example.
    */
   exit(1);
-  return(s7_nil(sc)); /* never executed, but makes the compiler happier */
 }
 
 int main(int argc, char **argv)
@@ -6565,11 +6581,11 @@ int main(int argc, char **argv)
 /* make mus-config.h (it can be empty), then
  *
  *   gcc -c s7.c -I.
- *   gcc -o doc7 doc7.c s7.o -lm -I. -ldl
+ *   gcc -o repl repl.c s7.o -lm -I. -ldl
  *
  * run it:
  *
- *    doc7
+ *    repl
  *    &gt; (+ 1 2)
  *    3
  *    &gt; (define (add1 x) (+ 1 x))
@@ -6577,6 +6593,9 @@ int main(int argc, char **argv)
  *    &gt; (add1 2)
  *    3
  *    &gt; (exit)
+ *
+ * for long-term happiness, include the export-dynamic flag:
+ *   gcc -o repl repl.c s7.o -Wl,-export-dynamic -lm -I. -ldl
  */
 </pre>
 </div>
@@ -6680,11 +6699,9 @@ static bool is_not_white(std::string str);
 int main(int argc, const char* argv[])
 {
   s7_scheme* s7 = s7_init();
-  
-  s7_define_function(s7, "exit", main_quit, 0, 0, false, "(exit) quits the program");
-  
   s7_pointer val;
   std::string str;
+
   try 
     {
       while (true)
@@ -9776,7 +9793,7 @@ what would have been printed as (for example):
 
 <div class="topheader" id="s7examples">s7 examples</div>
 
-<p>Currently, three scheme files are included in the s7 tarball: s7test.scm,
+<p>The s7 tarball includes several scheme files including s7test.scm,
 lint.scm, and cload.scm.  s7test.scm is a regression test for s7, lint.scm
 is the s7 equivalent of the ancient C program named lint, and cload.scm
 is a wrapper for the FFI stuff described above.

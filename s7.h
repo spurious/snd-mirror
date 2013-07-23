@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.27"
-#define S7_DATE "21-July-13"
+#define S7_VERSION "2.28"
+#define S7_DATE "23-July-13"
 
 
 typedef long long int s7_Int;
@@ -894,6 +894,7 @@ bool s7_is_valid_pointer(s7_pointer arg);
  * 
  *        s7 changes
  *		
+ * 23-Jul:    s7_autoload_set_names.
  * 21-Jul:    s7_is_valid (replaces deprecated s7_is_valid_pointer).
  * 24-Jun:    some bool-related changes for Windows Visual C++, including change to s7_begin_hook.
  * 3-June:    s7_autoload.
