@@ -103,13 +103,15 @@
 			;;   could we ask gdb if the pointer can be derefenced?  perhaps try to
 			;;   print *ptr and look for an error message?
 			;; or alternatively, in s7_is_valid, trap segfault then read the cell?
-			;;   would this confuse gdb?
+			;;   would this confuse gdb? unfortunately yes.
 
 		       (system (format #f "xdotool type \"p s7_is_valid(~A, ~A)\"" s7-name name))
 		       (system "xdotool key Return")
 		       (let ((answer (gdb-output)))
 			 (if (string-position "true" answer)
 			     (begin
+
+			       ;; get the s7 value of the pointed-to object
 			       (system (format #f "xdotool type \"p s7_object_to_c_string(~A, ~A)\"" s7-name name))
 			       (system "xdotool key Return")
 			       (let ((value (gdb-output)))

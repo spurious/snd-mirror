@@ -1,9 +1,6 @@
 #ifndef SND_G0_H
 #define SND_G0_H
 
-/* TODO: look into all the GTK_STOCK_* stuff -- all deprecated now!
- */
-
 #include <gtk/gtk.h>
 
 #define HAVE_GTK_3 (GTK_MAJOR_VERSION == 3)
@@ -16,21 +13,11 @@
 
 #include "glistener.h"
 
-#define HAVE_GTK_TEST_WIDGET_CLICK                GTK_CHECK_VERSION(2, 14, 0)
-#define HAVE_GTK_ADJUSTMENT_GET_UPPER             GTK_CHECK_VERSION(2, 14, 0)
-#define HAVE_GTK_SCALE_ADD_MARK                   GTK_CHECK_VERSION(2, 16, 0)
-#define HAVE_GTK_INFO_BAR_NEW                     GTK_CHECK_VERSION(2, 18, 0)
-#define HAVE_GTK_STATUS_ICON_GET_TITLE            GTK_CHECK_VERSION(2, 18, 0)
-#define HAVE_GTK_WIDGET_GET_VISIBLE               GTK_CHECK_VERSION(2, 18, 0)
-#define HAVE_GTK_WIDGET_GET_MAPPED                GTK_CHECK_VERSION(2, 19, 0)
-#define HAVE_GTK_COMBO_BOX_NEW_WITH_AREA          GTK_CHECK_VERSION(3, 0, 0)
-#define HAVE_GTK_GRID_NEW                         GTK_CHECK_VERSION(3, 0, 0)
-#define HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT GTK_CHECK_VERSION(3, 2, 0)
-#define HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE       GTK_CHECK_VERSION(3, 2, 0)
-#define HAVE_GTK_APPLICATION_WINDOW_NEW           GTK_CHECK_VERSION(3, 4, 0)
-#define HAVE_GTK_COLOR_CHOOSER_DIALOG_NEW         GTK_CHECK_VERSION(3, 4, 0)
-#define HAVE_GTK_LEVEL_BAR_NEW                    GTK_CHECK_VERSION(3, 6, 0)
-#define HAVE_GTK_HEADER_BAR_NEW                   GTK_CHECK_VERSION(3, 9, 0)
+#define HAVE_GTK_ADJUSTMENT_GET_UPPER GTK_CHECK_VERSION(2, 14, 0)
+#define HAVE_GTK_WIDGET_GET_VISIBLE   GTK_CHECK_VERSION(2, 18, 0)
+#define HAVE_GTK_WIDGET_GET_MAPPED    GTK_CHECK_VERSION(2, 19, 0)
+#define HAVE_GTK_GRID_NEW             GTK_CHECK_VERSION(3, 0, 0)
+#define HAVE_GTK_HEADER_BAR_NEW       GTK_CHECK_VERSION(3, 9, 0)
 
 #include <cairo/cairo.h>
 
@@ -65,7 +52,7 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 /* no accessors: */
 #define EVENT_WINDOW(Ev)      (Ev)->window
 #define EVENT_BUTTON(Ev)      (Ev)->button
-#define EVENT_TYPE(Ev)        (Ev)->type
+/* #define EVENT_TYPE(Ev)        (Ev)->type */
 #define EVENT_KEYVAL(Ev)      (Ev)->keyval
 #define EVENT_IS_HINT(Ev)     (Ev)->is_hint
 

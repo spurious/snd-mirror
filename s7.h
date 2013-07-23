@@ -488,7 +488,6 @@ s7_pointer s7_slot(s7_scheme *sc, s7_pointer symbol);
 s7_pointer s7_slot_value(s7_pointer slot);
 s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value);
 s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value);
-s7_Double s7_slot_value_to_real(s7_scheme *sc, s7_pointer slot);
 
 s7_pointer s7_global_environment(s7_scheme *sc);                            /* (global-environment) */
 s7_pointer s7_current_environment(s7_scheme *sc);                           /* (current-environment) */
@@ -749,6 +748,10 @@ void s7_function_set_looped(s7_pointer f, s7_pointer c);
 void s7_function_set_let_looped(s7_pointer f, s7_pointer c);
 s7_pointer s7_local_slot(s7_scheme *sc, s7_pointer symbol);
 s7_pointer s7_is_local_variable(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
+
+void s7_autoload_set_names(s7_scheme *sc, const char **names, int size);
+
+
 
   /* These functions create a new Scheme object type.  There is a simple example in s7.html.
    *

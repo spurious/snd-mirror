@@ -1831,1636 +1831,1403 @@ static const char *Reverb_urls[] = {
 
 
 #if HAVE_SCHEME
+
+static const char *snd_names[2780] = {
+    "*clm-array-print-length*", "ws.scm",
+    "*clm-channels*", "ws.scm",
+    "*clm-clipped*", "ws.scm",
+    "*clm-data-format*", "ws.scm",
+    "*clm-default-frequency*", "ws.scm",
+    "*clm-delete-reverb*", "ws.scm",
+    "*clm-file-buffer-size*", "ws.scm",
+    "*clm-file-name*", "ws.scm",
+    "*clm-header-type*", "ws.scm",
+    "*clm-locsig-type*", "ws.scm",
+    "*clm-notehook*", "ws.scm",
+    "*clm-play*", "ws.scm",
+    "*clm-player*", "ws.scm",
+    "*clm-reverb*", "ws.scm",
+    "*clm-reverb-channels*", "ws.scm",
+    "*clm-reverb-data*", "ws.scm",
+    "*clm-search-list*", "ws.scm",
+    "*clm-srate*", "ws.scm",
+    "*clm-statistics*", "ws.scm",
+    "*clm-table-size*", "ws.scm",
+    "*clm-verbose*", "ws.scm",
+    "*clm-with-sound-depth*", "ws.scm",
+    "*default-player*", "ws.scm",
+    "*definstrument-hook*", "ws.scm",
+    "*to-snd*", "ws.scm",
+    "->frequency", "ws.scm",
+    "->sample", "ws.scm",
+    "->x", "musglyphs.scm",
+    "->y", "musglyphs.scm",
+    "Ci", "numerics.scm",
+    "Si", "numerics.scm",
+    "a-cricket", "animals.scm",
+    "a-frog", "animals.scm",
+    "abcos", "generators.scm",
+    "absin", "generators.scm",
+    "acadian-flycatcher", "animals.scm",
+    "acorn-woodpecker", "animals.scm",
+    "add-envelopes", "env.scm",
+    "add-hook!", "snd11.scm",
+    "add-notes", "examp.scm",
+    "add-to-all-hook-ends", "hooks.scm",
+    "add-to-all-hook-inits", "hooks.scm",
+    "add-watcher", "snd11.scm",
+    "addenv", "jcvoi.scm",
+    "adjustable-oscil", "generators.scm",
+    "adjustable-sawtooth-wave", "generators.scm",
+    "adjustable-square-wave", "generators.scm",
+    "adjustable-triangle-wave", "generators.scm",
+    "adsat", "dsp.scm",
+    "all-chans", "examp.scm",
+    "am", "examp.scm",
+    "amargosa-toad", "animals.scm",
+    "ambisonics-channels", "dlocsig.scm",
+    "american-crow", "animals.scm",
+    "american-crow-no-formants", "animals.scm",
+    "american-robin", "animals.scm",
+    "american-toad", "animals.scm",
+    "analog->digital", "analog-filter.scm",
+    "angles-in-degree", "dlocsig.scm",
+    "angles-in-radians", "dlocsig.scm",
+    "angles-in-turns", "dlocsig.scm",
+    "anoi", "clm-ins.scm",
+    "any-env-channel", "extensions.scm",
+    "any-random", "dsp.scm",
+    "aref", "jcvoi.scm",
+    "arrange-speakers", "dlocsig.scm",
+    "array-set!", "maxf.scm",
+    "ash-throated-flycatcher", "animals.scm",
+    "asyfm-I", "generators.scm",
+    "asyfm-J", "generators.scm",
+    "attack-point", "noise.scm",
+    "attract", "clm-ins.scm",
+    "auto-dot", "examp.scm",
+    "auto-save", "autosave.scm",
+    "aux-f", "numerics.scm",
+    "aux-g", "numerics.scm",
+    "b-american-widgeon", "bird.scm",
+    "b-audubons-warbler", "bird.scm",
+    "b-bachmans-sparrow", "bird.scm",
+    "b-bairds-sparrow", "bird.scm",
+    "b-black-chinned-sparrow", "bird.scm",
+    "b-black-necked-stilt", "bird.scm",
+    "b-black-throated-gray-warbler", "bird.scm",
+    "b-black-throated-sparrow", "bird.scm",
+    "b-blue-gray-gnatcatcher", "bird.scm",
+    "b-bobwhite", "bird.scm",
+    "b-cassins-kingbird", "bird.scm",
+    "b-cedar-waxwing", "bird.scm",
+    "b-cerulean-warbler", "bird.scm",
+    "b-chestnut-sided-warbler", "bird.scm",
+    "b-chipping-sparrow", "bird.scm",
+    "b-chuck-wills-widow", "bird.scm",
+    "b-eastern-bluebird", "bird.scm",
+    "b-eastern-phoebe", "bird.scm",
+    "b-golden-crowned-sparrow", "bird.scm",
+    "b-grasshopper-sparrow", "bird.scm",
+    "b-great-horned-owl", "bird.scm",
+    "b-hooded-warbler", "bird.scm",
+    "b-indigo-bunting", "bird.scm",
+    "b-kentucky-warbler", "bird.scm",
+    "b-lark-bunting", "bird.scm",
+    "b-louisiana-waterthrush", "bird.scm",
+    "b-nashville-warbler", "bird.scm",
+    "b-orchard-oriole", "bird.scm",
+    "b-painted-bunting", "bird.scm",
+    "b-pigeon-hawk", "bird.scm",
+    "b-prothonotary-warbler", "bird.scm",
+    "b-robin", "bird.scm",
+    "b-rufous-sided-towhee", "bird.scm",
+    "b-scissor-tailed-flycatcher", "bird.scm",
+    "b-solitary-vireo", "bird.scm",
+    "b-swamp-sparrow", "bird.scm",
+    "b-western-flycatcher", "bird.scm",
+    "b-western-meadowlark", "bird.scm",
+    "b-yellow-warbler", "bird.scm",
+    "bachmans-sparrow", "animals.scm",
+    "balance", "clm-ins.scm",
+    "balance-avg", "clm-ins.scm",
+    "bald-eagle", "animals.scm",
+    "barking-tree-frog", "animals.scm",
+    "barn-owl", "animals.scm",
+    "barred-owl-1", "animals.scm",
+    "bernoulli-poly", "numerics.scm",
+    "bernoulli3", "numerics.scm",
+    "bes-fm", "clm-ins.scm",
+    "bes-i1", "numerics.scm",
+    "bes-in", "numerics.scm",
+    "bess", "generators.scm",
+    "bessel-prototype", "analog-filter.scm",
+    "bezier-3d", "dlocsig.scm",
+    "bezier-bx", "dlocsig.scm",
+    "bezier-by", "dlocsig.scm",
+    "bezier-bz", "dlocsig.scm",
+    "bezier-curvature", "dlocsig.scm",
+    "bezier-error", "dlocsig.scm",
+    "bezier-path", "dlocsig.scm",
+    "bezier-polar", "dlocsig.scm",
+    "bezier-render", "dlocsig.scm",
+    "bezier-v", "dlocsig.scm",
+    "bezier-x", "dlocsig.scm",
+    "bezier-y", "dlocsig.scm",
+    "bezier-z", "dlocsig.scm",
+    "big-amplitude-modulate", "big-gens.scm",
+    "big-array-clear", "big-gens.scm",
+    "big-array-interp", "big-gens.scm",
+    "big-array-normalize", "big-gens.scm",
+    "big-contrast-enhancement", "big-gens.scm",
+    "big-db->linear", "big-gens.scm",
+    "big-degrees->radians", "big-gens.scm",
+    "big-dot-product", "big-gens.scm",
+    "big-hz->radians", "big-gens.scm",
+    "big-linear->db", "big-gens.scm",
+    "big-maraca", "maraca.scm",
+    "big-multiply-arrays", "big-gens.scm",
+    "big-ncos", "big-gens.scm",
+    "big-nsin", "big-gens.scm",
+    "big-one-pole", "big-gens.scm",
+    "big-one-zero", "big-gens.scm",
+    "big-oscil", "big-gens.scm",
+    "big-polar->rectangular", "big-gens.scm",
+    "big-polynomial", "big-gens.scm",
+    "big-radians->degrees", "big-gens.scm",
+    "big-radians->hz", "big-gens.scm",
+    "big-rectangular->polar", "big-gens.scm",
+    "big-samples->seconds", "big-gens.scm",
+    "big-seconds->samples", "big-gens.scm",
+    "big-table-lookup", "big-gens.scm",
+    "bigbird", "bird.scm",
+    "binomial", "dsp.scm",
+    "binomial", "numerics.scm",
+    "binomial-direct", "numerics.scm",
+    "bird", "bird.scm",
+    "black-billed-cuckoo", "animals.scm",
+    "black-chinned-sparrow", "animals.scm",
+    "black-crowned-night-heron", "animals.scm",
+    "black-horned-tree-cricket", "animals.scm",
+    "black-necked-stilt", "animals.scm",
+    "black-phoebe", "animals.scm",
+    "black-rail", "animals.scm",
+    "black-throated-blue-warbler", "animals.scm",
+    "black-throated-sparrow", "animals.scm",
+    "blackman4-env", "generators.scm",
+    "blackman4-env-channel", "extensions.scm",
+    "blackman4-ramp", "extensions.scm",
+    "blue-grosbeak", "animals.scm",
+    "bobwhite", "animals.scm",
+    "bouncy", "generators.scm",
+    "bow", "strad.scm",
+    "bowstr", "prc95.scm",
+    "bowtable", "prc95.scm",
+    "brass", "prc95.scm",
+    "brassy", "generators.scm",
+    "brighten-slightly", "dsp.scm",
+    "brighten-slightly-1", "dsp.scm",
+    "broad-winged-tree-cricket", "animals.scm",
+    "brown-crested-flycatcher-1", "animals.scm",
+    "brown-crested-flycatcher-2", "animals.scm",
+    "brown-jay", "animals.scm",
+    "brown-noise", "generators.scm",
+    "bullfrog", "animals.scm",
+    "bump", "generators.scm",
+    "burrowing-owl", "animals.scm",
+    "bushtit", "animals.scm",
+    "butterworth-prototype", "analog-filter.scm",
+    "calculate-fit", "dlocsig.scm",
+    "california-quail", "animals.scm",
+    "california-towhee", "animals.scm",
+    "calling-all-animals", "animals.scm",
+    "calling-all-birds", "animals.scm",
+    "calling-all-frogs", "animals.scm",
+    "calling-all-generators", "generators.scm",
+    "calling-all-insects", "animals.scm",
+    "calling-all-mammals", "animals.scm",
+    "canada-goose", "animals.scm",
+    "canada-goose-1", "animals.scm",
+    "canada-goose-2", "animals.scm",
+    "canada-goose-3", "animals.scm",
+    "cancel-auto-save", "autosave.scm",
+    "canter", "clm-ins.scm",
+    "cape-may-warbler", "animals.scm",
+    "cardinal", "animals.scm",
+    "carolina-grasshopper", "animals.scm",
+    "carolina-wren", "animals.scm",
+    "cascade->canonical", "dsp.scm",
+    "cassins-sparrow", "animals.scm",
+    "cassins-vireo", "animals.scm",
+    "cedar-waxwing", "animals.scm",
+    "cellon", "clm-ins.scm",
+    "chain-dsps", "examp.scm",
+    "channel-average-power", "dsp.scm",
+    "channel-clipped?", "examp.scm",
+    "channel-distance", "dsp.scm",
+    "channel-envelope", "enved.scm",
+    "channel-lp", "dsp.scm",
+    "channel-lp-inf", "dsp.scm",
+    "channel-mean", "dsp.scm",
+    "channel-norm", "dsp.scm",
+    "channel-polynomial", "dsp.scm",
+    "channel-rms", "dsp.scm",
+    "channel-sync", "extensions.scm",
+    "channel-total-energy", "dsp.scm",
+    "channel-variance", "dsp.scm",
+    "channel2-angle", "dsp.scm",
+    "channel2-coefficient-of-projection", "dsp.scm",
+    "channel2-inner-product", "dsp.scm",
+    "channel2-orthogonal?", "dsp.scm",
+    "channels-equal?", "extensions.scm",
+    "channels=?", "extensions.scm",
+    "cheby-hka", "dsp.scm",
+    "chebyshev", "numerics.scm",
+    "chebyshev-polynomial", "numerics.scm",
+    "chebyshev-prototype", "analog-filter.scm",
+    "check-freq", "clean.scm",
+    "check-mix-tags", "mix.scm",
+    "checkpt", "jcvoi.scm",
+    "chestnut-sided-warbler", "animals.scm",
+    "chipping-sparrow", "animals.scm",
+    "chordalize", "dsp.scm",
+    "chorus", "dsp.scm",
+    "chuck-wills-widow", "animals.scm",
+    "circle", "musglyphs.scm",
+    "cis", "dlocsig.scm",
+    "clamp-rxycos-r", "generators.scm",
+    "clarinet", "prc95.scm",
+    "clean-channel", "clean.scm",
+    "clean-sound", "clean.scm",
+    "click-middle-button-to-open-next-file-in-directory", "examp.scm",
+    "click-to-sync", "marks.scm",
+    "clm-display-globals", "ws.scm",
+    "clm-expsrc", "clm-ins.scm",
+    "clm-find-file", "ws.scm",
+    "clm-load", "ws.scm",
+    "cnvrev", "clm-ins.scm",
+    "cnvtest", "examp.scm",
+    "color-mixes", "mix.scm",
+    "color-samples", "draw.scm",
+    "comb-chord", "examp.scm",
+    "comb-filter", "examp.scm",
+    "common-gull", "animals.scm",
+    "common-loon-1", "animals.scm",
+    "common-loon-2", "animals.scm",
+    "common-pauraque", "animals.scm",
+    "common-yellowthroat", "animals.scm",
+    "compand", "examp.scm",
+    "compute-string", "dsp.scm",
+    "compute-uniform-circular-string", "dsp.scm",
+    "concatenate-envelopes", "env.scm",
+    "confused-ground-cricket", "animals.scm",
+    "constant-velocity", "dlocsig.scm",
+    "contrast-channel", "extensions.scm",
+    "contrast-sound", "extensions.scm",
+    "copy-frame-reader", "frame.scm",
+    "crawfish-frog", "animals.scm",
+    "create-initial-envelopes", "enved.scm",
+    "crested-caracara", "animals.scm",
+    "cross-correlate", "snddiff.scm",
+    "cross-fade", "fade.scm",
+    "cross-synthesis", "examp.scm",
+    "cursor-follows-play", "snd11.scm",
+    "curveto", "musglyphs.scm",
+    "dark-eyed-junco", "animals.scm",
+    "davis-tree-cricket", "animals.scm",
+    "db-envelope", "grani.scm",
+    "dblsum", "generators.scm",
+    "dc-block", "prc95.scm",
+    "defgenerator", "generators.scm",
+    "define-selection-via-marks", "marks.scm",
+    "definstrument", "ws.scm",
+    "delay-channel-mixes", "mix.scm",
+    "delayl", "prc95.scm",
+    "delete-from-out-to-in", "spokenword.scm",
+    "delete-mix", "mix.scm",
+    "delete-watcher", "snd11.scm",
+    "describe", "dlocsig.scm",
+    "describe-hook", "hooks.scm",
+    "describe-mark", "marks.scm",
+    "dht", "dsp.scm",
+    "differ", "peak-phases.scm",
+    "display-bark-fft", "dsp.scm",
+    "display-colored-samples", "draw.scm",
+    "display-correlation", "examp.scm",
+    "display-db", "examp.scm",
+    "display-energy", "examp.scm",
+    "display-previous-edits", "draw.scm",
+    "display-samples-in-color", "draw.scm",
+    "dissolve-fade", "fade.scm",
+    "distance", "dlocsig.scm",
+    "distances-in-feet", "dlocsig.scm",
+    "distances-in-meters", "dlocsig.scm",
+    "dither-channel", "extensions.scm",
+    "dither-sound", "extensions.scm",
+    "do-all-chans", "examp.scm",
+    "do-chans", "examp.scm",
+    "do-it-again-button-color", "snd11.scm",
+    "do-it-button-color", "snd11.scm",
+    "do-sound-chans", "examp.scm",
+    "dog-day-cicada", "animals.scm",
+    "dolph", "dsp.scm",
+    "dolph-1", "dsp.scm",
+    "down-oct", "dsp.scm",
+    "draw", "musglyphs.scm",
+    "draw-128th-rest", "cmn-glyphs.lisp",
+    "draw-16th-rest", "cmn-glyphs.lisp",
+    "draw-32nd-rest", "cmn-glyphs.lisp",
+    "draw-64th-rest", "cmn-glyphs.lisp",
+    "draw-8th-flag-down", "cmn-glyphs.lisp",
+    "draw-8th-flag-up", "cmn-glyphs.lisp",
+    "draw-8th-rest", "cmn-glyphs.lisp",
+    "draw-a-note", "musglyphs.scm",
+    "draw-accent", "cmn-glyphs.lisp",
+    "draw-arpeggio", "cmn-glyphs.lisp",
+    "draw-arpeggios", "cmn-glyphs.lisp",
+    "draw-bass-clef", "cmn-glyphs.lisp",
+    "draw-breath-mark", "cmn-glyphs.lisp",
+    "draw-c-clef", "cmn-glyphs.lisp",
+    "draw-caesura", "cmn-glyphs.lisp",
+    "draw-circled-x", "cmn-glyphs.lisp",
+    "draw-coda", "cmn-glyphs.lisp",
+    "draw-common-time", "cmn-glyphs.lisp",
+    "draw-cut-time", "cmn-glyphs.lisp",
+    "draw-diamond", "cmn-glyphs.lisp",
+    "draw-diamond-1", "cmn-glyphs.lisp",
+    "draw-double-flat", "cmn-glyphs.lisp",
+    "draw-double-mordent", "cmn-glyphs.lisp",
+    "draw-double-sharp", "cmn-glyphs.lisp",
+    "draw-double-whole-note", "cmn-glyphs.lisp",
+    "draw-double-whole-rest", "cmn-glyphs.lisp",
+    "draw-down-bow", "cmn-glyphs.lisp",
+    "draw-eight", "cmn-glyphs.lisp",
+    "draw-extend-flag-down", "cmn-glyphs.lisp",
+    "draw-extend-flag-up", "cmn-glyphs.lisp",
+    "draw-f", "cmn-glyphs.lisp",
+    "draw-fermata", "cmn-glyphs.lisp",
+    "draw-filled-diamond-1", "cmn-glyphs.lisp",
+    "draw-five", "cmn-glyphs.lisp",
+    "draw-flat", "cmn-glyphs.lisp",
+    "draw-four", "cmn-glyphs.lisp",
+    "draw-half-note", "cmn-glyphs.lisp",
+    "draw-half-rest", "cmn-glyphs.lisp",
+    "draw-left-paren", "cmn-glyphs.lisp",
+    "draw-lig-p", "cmn-glyphs.lisp",
+    "draw-lower-bracket", "cmn-glyphs.lisp",
+    "draw-m", "cmn-glyphs.lisp",
+    "draw-measure-rest", "cmn-glyphs.lisp",
+    "draw-mordent", "cmn-glyphs.lisp",
+    "draw-mslash", "cmn-glyphs.lisp",
+    "draw-n", "cmn-glyphs.lisp",
+    "draw-natural", "cmn-glyphs.lisp",
+    "draw-niente", "cmn-glyphs.lisp",
+    "draw-nine", "cmn-glyphs.lisp",
+    "draw-one", "cmn-glyphs.lisp",
+    "draw-p", "cmn-glyphs.lisp",
+    "draw-ped", "cmn-glyphs.lisp",
+    "draw-pedal-off", "cmn-glyphs.lisp",
+    "draw-percussion-clef", "cmn-glyphs.lisp",
+    "draw-plus", "cmn-glyphs.lisp",
+    "draw-quarter-note", "cmn-glyphs.lisp",
+    "draw-quarter-rest", "cmn-glyphs.lisp",
+    "draw-r", "cmn-glyphs.lisp",
+    "draw-repeat-sign", "cmn-glyphs.lisp",
+    "draw-rhythmX", "cmn-glyphs.lisp",
+    "draw-right-paren", "cmn-glyphs.lisp",
+    "draw-s", "cmn-glyphs.lisp",
+    "draw-segno", "cmn-glyphs.lisp",
+    "draw-seven", "cmn-glyphs.lisp",
+    "draw-sharp", "cmn-glyphs.lisp",
+    "draw-six", "cmn-glyphs.lisp",
+    "draw-slash", "cmn-glyphs.lisp",
+    "draw-square", "cmn-glyphs.lisp",
+    "draw-staff", "musglyphs.scm",
+    "draw-subito", "cmn-glyphs.lisp",
+    "draw-three", "cmn-glyphs.lisp",
+    "draw-tnecca", "cmn-glyphs.lisp",
+    "draw-tr", "cmn-glyphs.lisp",
+    "draw-treble-clef", "cmn-glyphs.lisp",
+    "draw-triangle", "cmn-glyphs.lisp",
+    "draw-trill-section", "cmn-glyphs.lisp",
+    "draw-trill-sections", "cmn-glyphs.lisp",
+    "draw-turn", "cmn-glyphs.lisp",
+    "draw-two", "cmn-glyphs.lisp",
+    "draw-up-bow", "cmn-glyphs.lisp",
+    "draw-upper-bracket", "cmn-glyphs.lisp",
+    "draw-upside-down-fermata", "cmn-glyphs.lisp",
+    "draw-wedge", "cmn-glyphs.lisp",
+    "draw-whole-note", "cmn-glyphs.lisp",
+    "draw-whole-rest", "cmn-glyphs.lisp",
+    "draw-z", "cmn-glyphs.lisp",
+    "draw-zero", "cmn-glyphs.lisp",
+    "drone", "clm-ins.scm",
+    "dusky-flycatcher", "animals.scm",
+    "eared-grebe", "animals.scm",
+    "eastern-bluebird", "animals.scm",
+    "eastern-meadowlark", "animals.scm",
+    "eastern-wood-pewee-1", "animals.scm",
+    "eastern-wood-pewee-2", "animals.scm",
+    "echo", "examp.scm",
+    "eliminate-hum", "dsp.scm",
+    "elliptic-prototype", "analog-filter.scm",
+    "env-expt-channel", "extensions.scm",
+    "env-mixes", "mix.scm",
+    "env-sound-interp", "examp.scm",
+    "env-squared-channel", "extensions.scm",
+    "envelope-exp", "env.scm",
+    "envelope-last-x", "env.scm",
+    "envelope-or-number", "grani.scm",
+    "enveloped-mix", "extensions.scm",
+    "enveloping-key-press", "enved.scm",
+    "eoddcos", "generators.scm",
+    "ercos", "generators.scm",
+    "ercoser", "generators.scm",
+    "erssb", "generators.scm",
+    "evening-grosbeak", "animals.scm",
+    "every-sample?", "examp.scm",
+    "exp-envelope", "grani.scm",
+    "exp-snd", "clm-ins.scm",
+    "expandn", "expandn.scm",
+    "expandn", "clm-ins.scm",
+    "expfil", "clm-ins.scm",
+    "explode-sf2", "examp.scm",
+    "exponentially-weighted-moving-average", "generators.scm",
+    "expsnd", "examp.scm",
+    "expsrc", "examp.scm",
+    "factorial", "numerics.scm",
+    "factorize", "primes.scm",
+    "fast-calling-tree-cricket", "animals.scm",
+    "fft-cancel", "examp.scm",
+    "fft-edit", "examp.scm",
+    "fft-env-data", "examp.scm",
+    "fft-env-edit", "examp.scm",
+    "fft-env-interp", "examp.scm",
+    "fft-peak", "examp.scm",
+    "fft-smoother", "examp.scm",
+    "fft-squelch", "examp.scm",
+    "field-sparrow", "animals.scm",
+    "file->sound-data", "frame.scm",
+    "file->vct", "examp.scm",
+    "file->vct", "frame.scm",
+    "files-popdown-info", "nb.scm",
+    "files-popup-info", "nb.scm",
+    "fill-in", "musglyphs.scm",
+    "fillfnc", "jcvoi.scm",
+    "filter-fft", "examp.scm",
+    "filter-selection-and-smooth", "selection.scm",
+    "filtered-env", "examp.scm",
+    "final-direction", "dlocsig.scm",
+    "find-click", "examp.scm",
+    "find-mix", "mix.scm",
+    "find-noddsin-max", "generators.scm",
+    "find-nxysin-max", "generators.scm",
+    "find-other-mins", "peak-phases.scm",
+    "find-pitch", "examp.scm",
+    "find-sine", "dsp.scm",
+    "finfo", "examp.scm",
+    "finish-with-sound", "ws.scm",
+    "first-mark-in-window-at-left", "examp.scm",
+    "fit-path", "dlocsig.scm",
+    "fit-selection-between-marks", "marks.scm",
+    "flammulated-owl", "animals.scm",
+    "flash-selected-data", "examp.scm",
+    "flatten-partials", "dsp.scm",
+    "flecho", "examp.scm",
+    "flipxy", "jcvoi.scm",
+    "float64_to_int32", "binary-io.scm",
+    "float64_to_int64", "binary-io.scm",
+    "flocsig", "generators.scm",
+    "fltit-1", "dsp.scm",
+    "flute", "prc95.scm",
+    "fm-bell", "clm-ins.scm",
+    "fm-cancellation", "generators.scm",
+    "fm-cascade-component", "dsp.scm",
+    "fm-complex-component", "dsp.scm",
+    "fm-drum", "clm-ins.scm",
+    "fm-insect", "clm-ins.scm",
+    "fm-noise", "noise.scm",
+    "fm-parallel-component", "dsp.scm",
+    "fm-trumpet", "clm-ins.scm",
+    "fm-violin", "v.scm",
+    "fm-voice", "jcvoi.scm",
+    "fm2", "clm-ins.scm",
+    "fmssb", "generators.scm",
+    "fncval", "jcvoi.scm",
+    "focus-follows-mouse", "snd11.scm",
+    "fofins", "clm-ins.scm",
+    "for-each-sound-file", "extensions.scm",
+    "formant-filter", "examp.scm",
+    "formants", "examp.scm",
+    "four-spotted-tree-cricket", "animals.scm",
+    "fourth", "dlocsig.scm",
+    "fox-sparrow", "animals.scm",
+    "fp", "examp.scm",
+    "fpmc", "generators.scm",
+    "fractional-fourier-transform", "dsp.scm",
+    "frame->sound", "frame.scm",
+    "frame->sound-data", "frame.scm",
+    "frame->vct", "frame.scm",
+    "frame-reader-at-end?", "frame.scm",
+    "frame-reader-chans", "frame.scm",
+    "frame-reader-home", "frame.scm",
+    "frame-reader-position", "frame.scm",
+    "frame-reader?", "frame.scm",
+    "frame-sampler?", "frame.scm",
+    "free-frame-reader", "frame.scm",
+    "freeverb", "freeverb.scm",
+    "freqdiv", "dsp.scm",
+    "frequency->note-octave-and-accidental", "musglyphs.scm",
+    "fullmix", "fullmix.scm",
+    "fullmix", "clm-ins.scm",
+    "g-mustext", "musglyphs.scm",
+    "gain", "clm-ins.scm",
+    "gain-avg", "clm-ins.scm",
+    "gambels-quail", "animals.scm",
+    "gaussian-distribution", "dsp.scm",
+    "gaussian-envelope", "dsp.scm",
+    "gegenbauer", "numerics.scm",
+    "generator-clamp-r", "generators.scm",
+    "generic-write", "pretty-print.scm",
+    "get-best", "peak-phases.scm",
+    "get-speaker-configuration", "dlocsig.scm",
+    "glassy", "generators.scm",
+    "goertzel", "dsp.scm",
+    "goertzel-channel", "clean.scm",
+    "golden-crowned-sparrow", "animals.scm",
+    "gong", "clm-ins.scm",
+    "gran-synth", "clm-ins.scm",
+    "grani", "grani.scm",
+    "granulated-sound-interp", "examp.scm",
+    "graphEq", "clm-ins.scm",
+    "grasshopper-sparrow", "animals.scm",
+    "gray-crowned-rosy-finch", "animals.scm",
+    "gray-vireo", "animals.scm",
+    "gray-vireo-1", "animals.scm",
+    "gray-vireo-2", "animals.scm",
+    "gray-vireo-3", "animals.scm",
+    "gray-vireo-4", "animals.scm",
+    "gray-vireo-5", "animals.scm",
+    "great-crested-flycatcher", "animals.scm",
+    "great-horned-owl", "animals.scm",
+    "great-kiskadee", "animals.scm",
+    "great-plains-narrow-mouthed-toad", "animals.scm",
+    "greater-pewee", "animals.scm",
+    "greater-roadrunner", "animals.scm",
+    "green-noise", "generators.scm",
+    "green-noise-interp", "generators.scm",
+    "green-tailed-towhee", "animals.scm",
+    "green-toad", "animals.scm",
+    "green-tree-frog", "animals.scm",
+    "groove-billed-ani", "animals.scm",
+    "group-id", "dlocsig.scm",
+    "group-matrix", "dlocsig.scm",
+    "group-size", "dlocsig.scm",
+    "group-speakers", "dlocsig.scm",
+    "group-vertices", "dlocsig.scm",
+    "hairy-woodpecker", "animals.scm",
+    "hammondoid", "clm-ins.scm",
+    "hammonds-flycatcher", "animals.scm",
+    "handsome-trig", "animals.scm",
+    "hard-clipped", "dsp.scm",
+    "harmonicizer", "dsp.scm",
+    "hello-dentist", "examp.scm",
+    "help-button-color", "snd11.scm",
+    "henslows-sparrow", "animals.scm",
+    "hermit-thrush", "animals.scm",
+    "hermite", "numerics.scm",
+    "hermite-polynomial", "numerics.scm",
+    "hook->list", "snd11.scm",
+    "hook-empty?", "snd11.scm",
+    "hook-functions", "snd11.scm",
+    "hook-member", "hooks.scm",
+    "house-finch", "animals.scm",
+    "house-sparrow-1", "animals.scm",
+    "html", "index.scm",
+    "huttons-vireo", "animals.scm",
+    "hz->2pi", "dsp.scm",
+    "if-cursor-follows-play-it-stays-where-play-stopped", "spokenword.scm",
+    "if-cursor-follows-play-it-stays-where-play-stopped", "examp.scm",
+    "inca-dove-1", "animals.scm",
+    "inca-dove-2", "animals.scm",
+    "indri", "animals.scm",
+    "init-with-sound", "ws.scm",
+    "initial-direction", "dlocsig.scm",
+    "insert-channel", "extensions.scm",
+    "insert-frame", "frame.scm",
+    "insert-sound-data", "frame.scm",
+    "insert-vct", "frame.scm",
+    "int_to_float32", "binary-io.scm",
+    "int_to_float64", "binary-io.scm",
+    "integrate-envelope", "env.scm",
+    "inverse-chebyshev-prototype", "analog-filter.scm",
+    "inverse-integrate", "dsp.scm",
+    "invert-filter", "dsp.scm",
+    "invert-matrix", "mixer.scm",
+    "io-read-string", "binary-io.scm",
+    "io-write-string", "binary-io.scm",
+    "izcos", "generators.scm",
+    "j0evencos", "generators.scm",
+    "j0j1cos", "generators.scm",
+    "j2cos", "generators.scm",
+    "jc-reverb", "jcrev.scm",
+    "jettable", "prc95.scm",
+    "jjcos", "generators.scm",
+    "jl-reverb", "clm-ins.scm",
+    "jncos", "generators.scm",
+    "jpcos", "generators.scm",
+    "jycos", "generators.scm",
+    "k2cos", "generators.scm",
+    "k2sin", "generators.scm",
+    "k2ssb", "generators.scm",
+    "k3sin", "generators.scm",
+    "kalman-filter-channel", "dsp.scm",
+    "killdeer", "animals.scm",
+    "kirtlands-warbler", "animals.scm",
+    "knudsens-frog", "animals.scm",
+    "krksin", "generators.scm",
+    "lag?", "snddiff.scm",
+    "laguerre", "numerics.scm",
+    "laguerre-polynomial", "numerics.scm",
+    "last", "dlocsig.scm",
+    "lbj-piano", "clm-ins.scm",
+    "least-bittern", "animals.scm",
+    "least-flycatcher", "animals.scm",
+    "legendre", "numerics.scm",
+    "legendre-polynomial", "numerics.scm",
+    "lesser-nighthawk", "animals.scm",
+    "linear-src-channel", "dsp.scm",
+    "lineto", "musglyphs.scm",
+    "linnaeus-cicada", "animals.scm",
+    "lip", "prc95.scm",
+    "lip-set-freq", "prc95.scm",
+    "list??", "dlocsig.scm",
+    "listp", "dlocsig.scm",
+    "literal-3d", "dlocsig.scm",
+    "literal-points", "dlocsig.scm",
+    "literal-polar", "dlocsig.scm",
+    "literal-render", "dlocsig.scm",
+    "little-grass-frog", "animals.scm",
+    "local-data", "spokenword.scm",
+    "local-peak", "spokenword.scm",
+    "local-rms", "spokenword.scm",
+    "local-smooth", "spokenword.scm",
+    "locate-zero", "examp.scm",
+    "log10", "dsp.scm",
+    "loggerhead-shrike-1", "animals.scm",
+    "loggerhead-shrike-2", "animals.scm",
+    "long-eared-owl", "animals.scm",
+    "long-spurred-meadow-katydid", "animals.scm",
+    "loop-between-marks", "play.scm",
+    "lpc-coeffs", "dsp.scm",
+    "lpc-predict", "dsp.scm",
+    "lucys-warbler", "animals.scm",
+    "lutish", "generators.scm",
+    "lyric-cicada", "animals.scm",
+    "macgillivrays-warbler", "animals.scm",
+    "machine1", "generators.scm",
+    "magnolia-warbler", "animals.scm",
+    "make-a-even", "dlocsig.scm",
+    "make-a-odd", "dlocsig.scm",
+    "make-array", "maxf.scm",
+    "make-bandpass", "dsp.scm",
+    "make-bandstop", "dsp.scm",
+    "make-bessel-bandpass", "analog-filter.scm",
+    "make-bessel-bandstop", "analog-filter.scm",
+    "make-bessel-highpass", "analog-filter.scm",
+    "make-bessel-lowpass", "analog-filter.scm",
+    "make-bezier-1", "musglyphs.scm",
+    "make-bezier-path", "dlocsig.scm",
+    "make-biquad", "strad.scm",
+    "make-biquad", "dsp.scm",
+    "make-birds", "bird.scm",
+    "make-blackman", "generators.scm",
+    "make-bowtable", "prc95.scm",
+    "make-butter-band-pass", "dsp.scm",
+    "make-butter-band-reject", "dsp.scm",
+    "make-butter-bp", "dsp.scm",
+    "make-butter-bs", "dsp.scm",
+    "make-butter-high-pass", "dsp.scm",
+    "make-butter-hp", "dsp.scm",
+    "make-butter-low-pass", "dsp.scm",
+    "make-butter-lp", "dsp.scm",
+    "make-butterworth-bandpass", "analog-filter.scm",
+    "make-butterworth-bandstop", "analog-filter.scm",
+    "make-butterworth-highpass", "analog-filter.scm",
+    "make-butterworth-lowpass", "analog-filter.scm",
+    "make-chebyshev-bandpass", "analog-filter.scm",
+    "make-chebyshev-bandstop", "analog-filter.scm",
+    "make-chebyshev-highpass", "analog-filter.scm",
+    "make-chebyshev-lowpass", "analog-filter.scm",
+    "make-closed-path", "dlocsig.scm",
+    "make-current-window-display", "snd11.scm",
+    "make-db-env", "grani.scm",
+    "make-dc-block", "prc95.scm",
+    "make-delayl", "prc95.scm",
+    "make-differentiator", "dsp.scm",
+    "make-dlocsig", "dlocsig.scm",
+    "make-eliminate-hum", "dsp.scm",
+    "make-elliptic-bandpass", "analog-filter.scm",
+    "make-elliptic-bandstop", "analog-filter.scm",
+    "make-elliptic-highpass", "analog-filter.scm",
+    "make-elliptic-lowpass", "analog-filter.scm",
+    "make-fm-noise", "noise.scm",
+    "make-fm2", "clm-ins.scm",
+    "make-frame-reader", "frame.scm",
+    "make-gr-env", "grani.scm",
+    "make-group", "dlocsig.scm",
+    "make-highpass", "dsp.scm",
+    "make-hilbert-transform", "dsp.scm",
+    "make-iir-band-pass-2", "dsp.scm",
+    "make-iir-band-stop-2", "dsp.scm",
+    "make-iir-high-pass-2", "dsp.scm",
+    "make-iir-low-pass-2", "dsp.scm",
+    "make-inverse-chebyshev-bandpass", "analog-filter.scm",
+    "make-inverse-chebyshev-bandstop", "analog-filter.scm",
+    "make-inverse-chebyshev-highpass", "analog-filter.scm",
+    "make-inverse-chebyshev-lowpass", "analog-filter.scm",
+    "make-list-1", "dlocsig.scm",
+    "make-literal-path", "dlocsig.scm",
+    "make-literal-polar-path", "dlocsig.scm",
+    "make-lowpass", "dsp.scm",
+    "make-moog-filter", "moog.scm",
+    "make-ncos2", "generators.scm",
+    "make-ncos4", "generators.scm",
+    "make-noid", "generators.scm",
+    "make-notch-frequency-response", "dsp.scm",
+    "make-octaves-env", "grani.scm",
+    "make-onep", "prc95.scm",
+    "make-onezero", "prc95.scm",
+    "make-open-bezier-path", "dlocsig.scm",
+    "make-path", "dlocsig.scm",
+    "make-peaking-2", "dsp.scm",
+    "make-pink-noise", "generators.scm",
+    "make-polar-path", "dlocsig.scm",
+    "make-polygon", "musglyphs.scm",
+    "make-power-env", "env.scm",
+    "make-pvocoder", "pvoc.scm",
+    "make-ramp", "examp.scm",
+    "make-reed", "prc95.scm",
+    "make-region-frame-reader", "frame.scm",
+    "make-rmsgain", "clm-ins.scm",
+    "make-savitzky-golay-filter", "dsp.scm",
+    "make-selection", "selection.scm",
+    "make-selection-frame-reader", "frame.scm",
+    "make-semitones-env", "grani.scm",
+    "make-sine-summation", "snd11.scm",
+    "make-sound-interp", "examp.scm",
+    "make-speaker-config", "dlocsig.scm",
+    "make-spencer-filter", "dsp.scm",
+    "make-spiral-path", "dlocsig.scm",
+    "make-ssb-fm", "clm-ins.scm",
+    "make-sum-of-cosines", "snd11.scm",
+    "make-sum-of-sines", "snd11.scm",
+    "make-sync-frame-reader", "frame.scm",
+    "make-table-lookup-with-env", "generators.scm",
+    "make-volterra-filter", "dsp.scm",
+    "make-wave-train-with-env", "generators.scm",
+    "make-waveshape", "generators.scm",
+    "make-zipper", "zip.scm",
+    "map-envelopes", "env.scm",
+    "map-sound", "frame.scm",
+    "map-sound-files", "extensions.scm",
+    "maraca", "maraca.scm",
+    "mark-click-info", "marks.scm",
+    "mark-explode", "marks.scm",
+    "mark-in", "spokenword.scm",
+    "mark-loops", "examp.scm",
+    "mark-name->id", "marks.scm",
+    "mark-out", "spokenword.scm",
+    "marsh-meadow-grasshopper", "animals.scm",
+    "match-sound-files", "extensions.scm",
+    "max-envelope", "env.scm",
+    "maxfilter", "maxf.scm",
+    "metal", "clm-ins.scm",
+    "min-envelope", "env.scm",
+    "mirror-path", "dlocsig.scm",
+    "mix->vct", "mix.scm",
+    "mix-channel", "extensions.scm",
+    "mix-click-info", "mix.scm",
+    "mix-click-sets-amp", "mix.scm",
+    "mix-frame", "frame.scm",
+    "mix-maxamp", "mix.scm",
+    "mix-name->id", "mix.scm",
+    "mix-notelists", "ws.scm",
+    "mix-sound", "mix.scm",
+    "mix-sound-data", "frame.scm",
+    "mixer-copy", "mixer.scm",
+    "mixer-determinant", "mixer.scm",
+    "mixer-diagonal?", "mixer.scm",
+    "mixer-inverse", "mixer.scm",
+    "mixer-poly", "mixer.scm",
+    "mixer-solve", "mixer.scm",
+    "mixer-trace", "mixer.scm",
+    "mixer-transpose", "mixer.scm",
+    "mixes-length", "mix.scm",
+    "mixes-maxamp", "mix.scm",
+    "mono->stereo", "extensions.scm",
+    "mono-files->stereo", "extensions.scm",
+    "montezuma-quail", "animals.scm",
+    "moog-filter", "moog.scm",
+    "moog-frequency", "moog.scm",
+    "mosquito", "animals.scm",
+    "mountain-quail", "animals.scm",
+    "mourning-dove", "animals.scm",
+    "mouse-drag-envelope", "enved.scm",
+    "mouse-press-envelope", "enved.scm",
+    "mouse-release-envelope", "enved.scm",
+    "move-mixes", "mix.scm",
+    "move-syncd-marks", "marks.scm",
+    "moveto", "musglyphs.scm",
+    "moving-autocorrelation", "generators.scm",
+    "moving-fft", "generators.scm",
+    "moving-formant", "examp.scm",
+    "moving-length", "generators.scm",
+    "moving-pitch", "generators.scm",
+    "moving-rms", "generators.scm",
+    "moving-scentroid", "generators.scm",
+    "moving-spectrum", "generators.scm",
+    "moving-sum", "generators.scm",
+    "moving-variance", "generators.scm",
+    "mpg", "examp.scm",
+    "multi-expt-env", "generators.scm",
+    "multiply-envelopes", "env.scm",
+    "music-font", "musglyphs.scm",
+    "mvmfilt", "maxf.scm",
+    "n-choose-k", "numerics.scm",
+    "n1cos", "generators.scm",
+    "narrow-winged-tree-cricket", "animals.scm",
+    "nashville-warbler", "animals.scm",
+    "nb", "nb.scm",
+    "nchoosekcos", "generators.scm",
+    "ncos2", "generators.scm",
+    "ncos4", "generators.scm",
+    "nearest-point", "dlocsig.scm",
+    "next-frame", "frame.scm",
+    "next-peak", "examp.scm",
+    "next-phrase", "spokenword.scm",
+    "nkssb", "generators.scm",
+    "nkssb-interp", "generators.scm",
+    "nkssber", "generators.scm",
+    "noddcos", "generators.scm",
+    "noddsin", "generators.scm",
+    "noddssb", "generators.scm",
+    "noid", "generators.scm",
+    "noid?", "generators.scm",
+    "normalize-envelope", "env.scm",
+    "normalize-sound", "extensions.scm",
+    "normalized-mix", "extensions.scm",
+    "northern-beardless-tyrannulet", "animals.scm",
+    "northern-goshawk", "animals.scm",
+    "northern-leopard-frog-1", "animals.scm",
+    "northern-leopard-frog-2", "animals.scm",
+    "not-fitted", "dlocsig.scm",
+    "not-parsed", "dlocsig.scm",
+    "not-rendered", "dlocsig.scm",
+    "not-transformed", "dlocsig.scm",
+    "notch-channel", "dsp.scm",
+    "notch-filter", "examp.scm",
+    "notch-selection", "dsp.scm",
+    "notch-sound", "dsp.scm",
+    "note-data->pitch", "musglyphs.scm",
+    "npcos", "generators.scm",
+    "nrcos", "generators.scm",
+    "nrcos->polywave", "animals.scm",
+    "nrev", "nrev.scm",
+    "nrev", "clm-ins.scm",
+    "nrsin", "generators.scm",
+    "nrssb", "generators.scm",
+    "nrssb-interp", "generators.scm",
+    "nsincos", "generators.scm",
+    "nssb", "generators.scm",
+    "nxy1cos", "generators.scm",
+    "nxy1sin", "generators.scm",
+    "nxycos", "generators.scm",
+    "nxysin", "generators.scm",
+    "oak-titmouse", "animals.scm",
+    "oak-toad", "animals.scm",
+    "oboish", "generators.scm",
+    "octaves-envelope", "grani.scm",
+    "offset-channel", "extensions.scm",
+    "offset-sound", "extensions.scm",
+    "old-play", "snd11.scm",
+    "olive-sided-flycatcher", "animals.scm",
+    "one-turn-is", "dlocsig.scm",
+    "open-next-file-in-directory", "examp.scm",
+    "open-play-output", "play.scm",
+    "orange-crowned-warbler", "animals.scm",
+    "organish", "generators.scm",
+    "ornate-chorus-frog", "animals.scm",
+    "osc-formants", "examp.scm",
+    "output-type", "musglyphs.scm",
+    "overlay-rms-env", "draw.scm",
+    "overlay-sounds", "draw.scm",
+    "p", "piano.scm",
+    "pacific-chorus-frog", "animals.scm",
+    "pacific-slope-flycatcher", "animals.scm",
+    "pad-marks", "marks.scm",
+    "pad-sound", "extensions.scm",
+    "pan-mix", "mix.scm",
+    "pan-mix-region", "mix.scm",
+    "pan-mix-selection", "mix.scm",
+    "pan-mix-vct", "mix.scm",
+    "pareto-distribution", "dsp.scm",
+    "parse-cartesian-coordinates", "dlocsig.scm",
+    "parse-polar-coordinates", "dlocsig.scm",
+    "partials->waveshape", "generators.scm",
+    "path-rt", "dlocsig.scm",
+    "path-rv", "dlocsig.scm",
+    "path-rx", "dlocsig.scm",
+    "path-ry", "dlocsig.scm",
+    "path-rz", "dlocsig.scm",
+    "path-time", "dlocsig.scm",
+    "path-tt", "dlocsig.scm",
+    "path-tx", "dlocsig.scm",
+    "path-ty", "dlocsig.scm",
+    "path-tz", "dlocsig.scm",
+    "path-x", "dlocsig.scm",
+    "path-y", "dlocsig.scm",
+    "path-z", "dlocsig.scm",
+    "periodogram", "dsp.scm",
+    "phainopepla", "animals.scm",
+    "philadelphia-vireo", "animals.scm",
+    "phrase-start?", "spokenword.scm",
+    "phrase?", "spokenword.scm",
+    "pianoy", "generators.scm",
+    "pianoy1", "generators.scm",
+    "pianoy2", "generators.scm",
+    "pileated-woodpecker", "animals.scm",
+    "pine-tree-cricket", "animals.scm",
+    "pine-warbler", "animals.scm",
+    "pinewoods-tree-frog", "animals.scm",
+    "pins", "clm-ins.scm",
+    "pinyon-jay", "animals.scm",
+    "place-sound", "examp.scm",
+    "plain-chacalaca", "animals.scm",
+    "plains-spadefoot", "animals.scm",
+    "play-ac3", "examp.scm",
+    "play-and-wait", "snd11.scm",
+    "play-between-marks", "marks.scm",
+    "play-channel", "snd11.scm",
+    "play-mix", "snd11.scm",
+    "play-mixes", "mix.scm",
+    "play-often", "play.scm",
+    "play-panned", "enved.scm",
+    "play-preview", "spokenword.scm",
+    "play-region", "snd11.scm",
+    "play-region-forever", "play.scm",
+    "play-selection", "snd11.scm",
+    "play-sine", "play.scm",
+    "play-sines", "play.scm",
+    "play-sound", "play.scm",
+    "play-syncd-marks", "marks.scm",
+    "play-until-c-g", "play.scm",
+    "play-with-amps", "play.scm",
+    "play-with-envs", "enved.scm",
+    "plgndr", "numerics.scm",
+    "pluck", "clm-ins.scm",
+    "plucky", "prc95.scm",
+    "plumbeous-vireo-1", "animals.scm",
+    "plumbeous-vireo-2", "animals.scm",
+    "poly*", "poly.scm",
+    "poly+", "poly.scm",
+    "poly-as-vector*", "poly.scm",
+    "poly-as-vector+", "poly.scm",
+    "poly-as-vector-derivative", "poly.scm",
+    "poly-as-vector-discriminant", "poly.scm",
+    "poly-as-vector-eval", "poly.scm",
+    "poly-as-vector-gcd", "poly.scm",
+    "poly-as-vector-reduce", "poly.scm",
+    "poly-as-vector-resultant", "poly.scm",
+    "poly-as-vector-roots", "poly.scm",
+    "poly-as-vector/", "poly.scm",
+    "poly-derivative", "poly.scm",
+    "poly-discriminant", "poly.scm",
+    "poly-gcd", "poly.scm",
+    "poly-reduce", "poly.scm",
+    "poly-resultant", "poly.scm",
+    "poly-roots", "poly.scm",
+    "poly/", "poly.scm",
+    "polyoid", "generators.scm",
+    "polyoid-env", "generators.scm",
+    "polyoid?", "generators.scm",
+    "powenv-channel", "env.scm",
+    "power-env", "env.scm",
+    "power-env-channel", "env.scm",
+    "pprint", "pretty-print.scm",
+    "pqw", "clm-ins.scm",
+    "pqw-vox", "clm-ins.scm",
+    "pretty-print", "pretty-print.scm",
+    "pretty-print-with-keys", "pretty-print.scm",
+    "previous-frame", "frame.scm",
+    "previous-phrase", "spokenword.scm",
+    "prototype->highpass", "analog-filter.scm",
+    "prune-db", "nb.scm",
+    "pulse-voice", "examp.scm",
+    "purple-finch", "animals.scm",
+    "pushed-button-button-color", "snd11.scm",
+    "pvoc", "pvoc.scm",
+    "pvocoder", "pvoc.scm",
+    "pygmy-nuthatch", "animals.scm",
+    "quit-button-color", "snd11.scm",
+    "r2k!cos", "generators.scm",
+    "r2k2cos", "generators.scm",
+    "r2k2cos-norm", "generators.scm",
+    "raised-cosine", "grani.scm",
+    "ramp", "examp.scm",
+    "ramp-expt", "extensions.scm",
+    "ramp-squared", "extensions.scm",
+    "rcos", "generators.scm",
+    "read-aif-header", "binary-io.scm",
+    "read-ascii", "examp.scm",
+    "read-au-header", "binary-io.scm",
+    "read-bfloat32", "binary-io.scm",
+    "read-bfloat64", "binary-io.scm",
+    "read-bfloat80->int", "binary-io.scm",
+    "read-bint16", "binary-io.scm",
+    "read-bint32", "binary-io.scm",
+    "read-bint64", "binary-io.scm",
+    "read-chars", "binary-io.scm",
+    "read-flac", "examp.scm",
+    "read-frame", "frame.scm",
+    "read-lfloat32", "binary-io.scm",
+    "read-lfloat64", "binary-io.scm",
+    "read-lint16", "binary-io.scm",
+    "read-lint32", "binary-io.scm",
+    "read-lint64", "binary-io.scm",
+    "read-ogg", "examp.scm",
+    "read-speex", "examp.scm",
+    "red-breasted-nuthatch", "animals.scm",
+    "red-eyed-vireo", "animals.scm",
+    "red-shouldered-hawk", "animals.scm",
+    "red-spotted-toad", "animals.scm",
+    "redo-channel", "extensions.scm",
+    "reedtable", "prc95.scm",
+    "region->frame", "frame.scm",
+    "region->sound-data", "frame.scm",
+    "region-play-list", "examp.scm",
+    "region-play-sequence", "examp.scm",
+    "region-rms", "examp.scm",
+    "remove-clicks", "examp.scm",
+    "remove-hook!", "snd11.scm",
+    "remove-if", "extensions.scm",
+    "remove-pops", "clean.scm",
+    "remove-single-sample-clicks", "clean.scm",
+    "render-path", "dlocsig.scm",
+    "repeat-envelope", "env.scm",
+    "replace-with-selection", "selection.scm",
+    "report-mark-names", "marks.scm",
+    "reset-all-hooks", "hooks.scm",
+    "reset-button-color", "snd11.scm",
+    "reset-fit", "dlocsig.scm",
+    "reset-hook!", "snd11.scm",
+    "reset-rendering", "dlocsig.scm",
+    "reset-transformation", "dlocsig.scm",
+    "resflt", "clm-ins.scm",
+    "reson", "clm-ins.scm",
+    "reverse-by-blocks", "examp.scm",
+    "reverse-envelope", "env.scm",
+    "reverse-string-append", "pretty-print.scm",
+    "reverse-within-blocks", "examp.scm",
+    "rhodey", "clm-ins.scm",
+    "ring-mod", "examp.scm",
+    "river-frog", "animals.scm",
+    "rk!cos", "generators.scm",
+    "rk!ssb", "generators.scm",
+    "rkcos", "generators.scm",
+    "rkoddssb", "generators.scm",
+    "rksin", "generators.scm",
+    "rkssb", "generators.scm",
+    "rlineto", "musglyphs.scm",
+    "rmoveto", "musglyphs.scm",
+    "rms", "clm-ins.scm",
+    "rms-envelope", "env.scm",
+    "rotate-path", "dlocsig.scm",
+    "rotate-phase", "dsp.scm",
+    "round-interp", "generators.scm",
+    "rssb", "generators.scm",
+    "rssb-interp", "generators.scm",
+    "rubber-sound", "rubber.scm",
+    "ruby-crowned-kinglet", "animals.scm",
+    "ruffed-grouse", "animals.scm",
+    "run-hook", "snd11.scm",
+    "run-with-fm-and-pm", "generators.scm",
+    "rxycos", "generators.scm",
+    "rxysin", "generators.scm",
+    "safe-rxycos", "generators.scm",
+    "safe-srate", "zip.scm",
+    "sage-sparrow", "animals.scm",
+    "samples->sound-data", "play.scm",
+    "samples-via-colormap", "draw.scm",
+    "sandhill-crane", "animals.scm",
+    "savannah-sparrow", "animals.scm",
+    "save-mark-properties", "marks.scm",
+    "save-mixes", "mix.scm",
+    "says-phoebe", "animals.scm",
+    "scale-envelope", "env.scm",
+    "scale-mixes", "mix.scm",
+    "scale-path", "dlocsig.scm",
+    "scale-sound", "extensions.scm",
+    "scale-tempo", "mix.scm",
+    "scaled-quail", "animals.scm",
+    "scan-sound", "frame.scm",
+    "scentroid", "dsp.scm",
+    "scotts-oriole", "animals.scm",
+    "scramble-channel", "examp.scm",
+    "scramble-channels", "examp.scm",
+    "scratch", "clm-ins.scm",
+    "scrub-euphonia", "animals.scm",
+    "search-for-click", "examp.scm",
+    "secs->samples", "spokenword.scm",
+    "selection->sound-data", "frame.scm",
+    "selection-members", "selection.scm",
+    "selection-rms", "examp.scm",
+    "semitones-envelope", "grani.scm",
+    "set-coeffs", "maxf.scm",
+    "set-gain", "prc95.scm",
+    "set-mixes-tag-y", "mix.scm",
+    "set-pole", "prc95.scm",
+    "set-speaker-configuration", "dlocsig.scm",
+    "setf-aref", "jcvoi.scm",
+    "shift-channel-pitch", "dsp.scm",
+    "show-digits-of-pi-starting-at-digit", "numerics.scm",
+    "show-mins", "peak-phases.scm",
+    "showall", "peak-phases.scm",
+    "showdiff", "peak-phases.scm",
+    "showodd", "peak-phases.scm",
+    "signum", "dsp.scm",
+    "silence-all-mixes", "mix.scm",
+    "silence-mixes", "mix.scm",
+    "silence?", "spokenword.scm",
+    "simplify-complex", "poly.scm",
+    "simplify-envelope", "env.scm",
+    "simultaneous-zero-crossing", "frame.scm",
+    "sin-m*pi/n", "numerics.scm",
+    "sin-nx-peak", "numerics.scm",
+    "sinc-train", "generators.scm",
+    "sine-bank", "pvoc.scm",
+    "sine-env", "generators.scm",
+    "sine-env-channel", "extensions.scm",
+    "sine-ramp", "extensions.scm",
+    "singer", "singer.scm",
+    "slightly-musical-conehead", "animals.scm",
+    "smooth-vct", "clean.scm",
+    "snap-mark-to-beat", "marks.scm",
+    "snap-marks", "marks.scm",
+    "snap-mix-1", "mix.scm",
+    "snap-mix-to-beat", "mix.scm",
+    "snap-syncd-mixes-1", "mix.scm",
+    "snap-syncd-mixes-to-beat", "mix.scm",
+    "snd-hooks", "hooks.scm",
+    "snd-msg", "maxf.scm",
+    "snddiff", "snddiff.scm",
+    "snddiff-1", "snddiff.scm",
+    "snddiff-2", "snddiff.scm",
+    "sndwarp", "sndwarp.scm",
+    "snowy-tree-cricket", "animals.scm",
+    "soft-clipped", "dsp.scm",
+    "song-sparrow", "animals.scm",
+    "sonoran-desert-toad", "animals.scm",
+    "sora", "animals.scm",
+    "sort-samples", "examp.scm",
+    "sound->frame", "frame.scm",
+    "sound->sound-data", "frame.scm",
+    "sound-data->file", "frame.scm",
+    "sound-data->frame", "frame.scm",
+    "sound-data->sound", "frame.scm",
+    "sound-interp", "examp.scm",
+    "sound-let", "ws.scm",
+    "southeastern-field-cricket", "animals.scm",
+    "southern-cricket-frog", "animals.scm",
+    "southern-mole-cricket", "animals.scm",
+    "southwestern-toad", "animals.scm",
+    "speaker-config-coords", "dlocsig.scm",
+    "speaker-config-delays", "dlocsig.scm",
+    "speaker-config-dimension", "dlocsig.scm",
+    "speaker-config-groups", "dlocsig.scm",
+    "speaker-config-map", "dlocsig.scm",
+    "speaker-config-number", "dlocsig.scm",
+    "spectra", "clm-ins.scm",
+    "spectral-polynomial", "dsp.scm",
+    "spectrum->coeffs", "dsp.scm",
+    "sphagnum-ground-cricket", "animals.scm",
+    "spike", "dsp.scm",
+    "spiral-distance", "dlocsig.scm",
+    "spiral-height", "dlocsig.scm",
+    "spiral-render", "dlocsig.scm",
+    "spiral-start-angle", "dlocsig.scm",
+    "spiral-step-angle", "dlocsig.scm",
+    "spiral-total-angle", "dlocsig.scm",
+    "spiral-turns", "dlocsig.scm",
+    "spiral-velocity", "dlocsig.scm",
+    "spot-freq", "dsp.scm",
+    "spring-peeper", "animals.scm",
+    "square-env", "generators.scm",
+    "squelch-vowels", "examp.scm",
+    "squirrel-tree-frog", "animals.scm",
+    "src-duration", "dsp.scm",
+    "src-fit-envelope", "dsp.scm",
+    "src-mixes", "mix.scm",
+    "ssb-bank", "dsp.scm",
+    "ssb-bank-env", "dsp.scm",
+    "ssb-fm", "clm-ins.scm",
+    "start-dac", "play.scm",
+    "start-enveloping", "enved.scm",
+    "start-sync", "marks.scm",
+    "stellers-jay", "animals.scm",
+    "stereo->mono", "extensions.scm",
+    "stereo-flute", "clm-ins.scm",
+    "stochastic", "stochastic.scm",
+    "stop-enveloping", "enved.scm",
+    "stop-sync", "marks.scm",
+    "stretch-envelope", "env.scm",
+    "stretch-sound-via-dft", "dsp.scm",
+    "stringy", "generators.scm",
+    "striped-ground-cricket", "animals.scm",
+    "sub-matrix", "mixer.scm",
+    "summer-tanager", "animals.scm",
+    "superimpose-ffts", "examp.scm",
+    "swainsons-thrush", "animals.scm",
+    "swap-selection-channels", "selection.scm",
+    "sync-all-mixes", "mix.scm",
+    "sync-everything", "examp.scm",
+    "syncd-mixes", "mix.scm",
+    "syncup", "marks.scm",
+    "tanhsin", "generators.scm",
+    "test-grani", "grani.scm",
+    "test-notch-hum", "clean.scm",
+    "test-remove-DC", "clean.scm",
+    "test-remove-pops", "clean.scm",
+    "test-remove-single-clicks", "clean.scm",
+    "test-sv", "generators.scm",
+    "texas-toad", "animals.scm",
+    "third", "dlocsig.scm",
+    "times->samples", "ws.scm",
+    "tinkling-ground-cricket", "animals.scm",
+    "touch-tone", "clm-ins.scm",
+    "townsends-solitaire", "animals.scm",
+    "transform-path", "dlocsig.scm",
+    "translate-path", "dlocsig.scm",
+    "transpose-mixes", "mix.scm",
+    "tree-for-each", "mix.scm",
+    "tree-for-each-reversed", "mix.scm",
+    "trumpeter-swan-1", "animals.scm",
+    "tstall", "peak-phases.scm",
+    "tstallderiv", "peak-phases.scm",
+    "tstallf", "peak-phases.scm",
+    "tsteven", "peak-phases.scm",
+    "tstodd", "peak-phases.scm",
+    "tstoddderiv", "peak-phases.scm",
+    "tstprime", "peak-phases.scm",
+    "tubebell", "clm-ins.scm",
+    "tufted-titmouse", "animals.scm",
+    "tvf-channel", "clean.scm",
+    "two-tab", "clm-ins.scm",
+    "unb", "nb.scm",
+    "unclip-channel", "dsp.scm",
+    "unclip-sound", "dsp.scm",
+    "uncolor-samples", "draw.scm",
+    "unconvolve", "snddiff.scm",
+    "unconvolve-1", "snddiff.scm",
+    "undisplay-bark-fft", "dsp.scm",
+    "undo-channel", "extensions.scm",
+    "update-graphs", "examp.scm",
+    "varied-thrush", "animals.scm",
+    "various-gull-cries-from-end-of-colony-5", "bird.scm",
+    "vct->file", "frame.scm",
+    "vct->frame", "frame.scm",
+    "vct-polynomial", "dsp.scm",
+    "vct-size", "snddiff.scm",
+    "vector-add!", "poly.scm",
+    "vector-copy", "poly.scm",
+    "vector-scale!", "poly.scm",
+    "vector-synthesis", "play.scm",
+    "verdin", "animals.scm",
+    "vermillion-flycatcher", "animals.scm",
+    "vibro", "examp.scm",
+    "virginia-rail", "animals.scm",
+    "voiced->unvoiced", "examp.scm",
+    "volterra-filter", "dsp.scm",
+    "vox", "clm-ins.scm",
+    "warbling-vireo", "animals.scm",
+    "weighted-moving-average", "generators.scm",
+    "western-meadowlark", "animals.scm",
+    "western-tanager", "animals.scm",
+    "western-toad", "animals.scm",
+    "western-wood-pewee-1", "animals.scm",
+    "western-wood-pewee-2", "animals.scm",
+    "whip-poor-will", "animals.scm",
+    "white-breasted-nuthatch", "animals.scm",
+    "white-eyed-vireo", "animals.scm",
+    "white-headed-woodpecker", "animals.scm",
+    "white-throated-sparrow", "animals.scm",
+    "white-tipped-dove", "animals.scm",
+    "whooping-crane", "animals.scm",
+    "willet", "animals.scm",
+    "willow-flycatcher", "animals.scm",
+    "wilsons-warbler", "animals.scm",
+    "window-envelope", "env.scm",
+    "window-rms", "examp.scm",
+    "window-samples", "examp.scm",
+    "with-full-sound", "ws.scm",
+    "with-local-hook", "hooks.scm",
+    "with-marked-sound", "ws.scm",
+    "with-mix-file-extension", "snd11.scm",
+    "with-mix-find-file-with-extensions", "snd11.scm",
+    "with-mixed-sound", "ws.scm",
+    "with-mixed-sound->notelist", "ws.scm",
+    "with-mixed-sound-mix-info", "ws.scm",
+    "with-simple-sound", "ws.scm",
+    "with-simple-sound-helper", "ws.scm",
+    "with-sound", "ws.scm",
+    "with-sound-helper", "ws.scm",
+    "with-temp-sound", "ws.scm",
+    "with-temporary-selection", "selection.scm",
+    "wood-duck", "animals.scm",
+    "wrentit", "animals.scm",
+    "write-au-header", "binary-io.scm",
+    "write-bfloat32", "binary-io.scm",
+    "write-bfloat64", "binary-io.scm",
+    "write-bint16", "binary-io.scm",
+    "write-bint32", "binary-io.scm",
+    "write-bint64", "binary-io.scm",
+    "write-chars", "binary-io.scm",
+    "write-flac", "examp.scm",
+    "write-int->bfloat80", "binary-io.scm",
+    "write-lfloat32", "binary-io.scm",
+    "write-lfloat64", "binary-io.scm",
+    "write-lint16", "binary-io.scm",
+    "write-lint32", "binary-io.scm",
+    "write-lint64", "binary-io.scm",
+    "write-ogg", "examp.scm",
+    "write-speex", "examp.scm",
+    "ws-save-state", "ws.scm",
+    "wsdat-play", "ws.scm",
+    "wurley", "clm-ins.scm",
+    "x-norm", "dlocsig.scm",
+    "xe-envelope", "xm-enved.scm",
+    "xparse-path", "dlocsig.scm",
+    "yellow-bellied-flycatcher", "animals.scm",
+    "yellow-green-vireo", "animals.scm",
+    "yellow-rumped-warbler", "animals.scm",
+    "yellow-warbler", "animals.scm",
+    "z-transform", "dsp.scm",
+    "za", "clm-ins.scm",
+    "zc", "clm-ins.scm",
+    "zcomb", "examp.scm",
+    "zecho", "examp.scm",
+    "zero+", "examp.scm",
+    "zero-phase", "dsp.scm",
+    "zip-sound", "zip.scm",
+    "zipper", "zip.scm",
+    "zn", "clm-ins.scm",
+    "zone-tailed-hawk", "animals.scm",
+    "zoom-spectrum", "examp.scm",
+};
+
 static void autoload_info(s7_scheme *sc)
 {
-  int gloc;
-  s7_pointer str;
-  str = s7_make_string(sc, "nb.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "files-popdown-info"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "files-popup-info"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "prune-db"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "unb"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nb"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "zip.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "zip-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "zipper"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-zipper"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "safe-srate"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "mix.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "check-mix-tags"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "delay-channel-mixes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pan-mix-vct"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pan-mix-region"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pan-mix-selection"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pan-mix"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-mixes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "syncd-mixes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sync-all-mixes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "env-mixes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "save-mixes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mixes-length"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "scale-tempo"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mixes-maxamp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "set-mixes-tag-y"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "color-mixes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "transpose-mixes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "src-mixes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "move-mixes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "silence-mixes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "scale-mixes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "delete-mix"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mix-name->id"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mix-click-info"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mix-click-sets-amp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "snap-syncd-mixes-to-beat"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "snap-syncd-mixes-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "snap-mix-to-beat"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "snap-mix-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mix-maxamp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mix->vct"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "find-mix"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "silence-all-mixes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mix-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "tree-for-each-reversed"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "tree-for-each"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "v.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "fm-violin"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "strad.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "bow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-biquad"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "maxf.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "maxfilter"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "array-set!"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-array"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "set-coeffs"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mvmfilt"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "snd-msg"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "spokenword.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "if-cursor-follows-play-it-stays-where-play-stopped"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-preview"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "delete-from-out-to-in"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mark-in"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mark-out"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "previous-phrase"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "next-phrase"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "phrase-start?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "phrase?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "silence?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "local-smooth"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "local-peak"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "local-rms"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "local-data"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "secs->samples"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "sndwarp.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "sndwarp"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "jcrev.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "jc-reverb"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "index.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "html"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "snddiff.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "snddiff"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "snddiff-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "unconvolve"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "unconvolve-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "vct-size"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "snddiff-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "lag?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cross-correlate"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "fullmix.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "fullmix"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "freeverb.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "freeverb"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "singer.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "singer"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "selection.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "filter-selection-and-smooth"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "with-temporary-selection"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-selection"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "selection-members"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "replace-with-selection"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "swap-selection-channels"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "expandn.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "expandn"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "rubber.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "rubber-sound"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "examp.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "sync-everything"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel-clipped?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "reverse-within-blocks"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "reverse-by-blocks"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "scramble-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "scramble-channels"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "if-cursor-follows-play-it-stays-where-play-stopped"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "chain-dsps"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "click-middle-button-to-open-next-file-in-directory"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "open-next-file-in-directory"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "explode-sf2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "region-play-sequence"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "region-play-list"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "add-notes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "file->vct"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "find-pitch"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "next-peak"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "zero+"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "search-for-click"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "remove-clicks"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "find-click"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "filtered-env"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "granulated-sound-interp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "env-sound-interp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sound-interp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-sound-interp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "locate-zero"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cnvtest"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pulse-voice"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "voiced->unvoiced"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cross-synthesis"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "expsnd"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "expsrc"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "compand"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "hello-dentist"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "vibro"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "am"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ring-mod"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "flecho"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "zecho"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "echo"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "osc-formants"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "moving-formant"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "formants"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "formant-filter"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "notch-filter"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "zcomb"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "comb-chord"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "comb-filter"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fft-smoother"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "filter-fft"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fft-env-interp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fft-env-edit"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fft-env-data"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "squelch-vowels"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-ramp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ramp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fft-cancel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fft-squelch"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fft-edit"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "place-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sort-samples"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "every-sample?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "do-sound-chans"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "do-chans"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "update-graphs"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "do-all-chans"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "all-chans"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mark-loops"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "flash-selected-data"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "first-mark-in-window-at-left"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "auto-dot"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-ascii"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-ac3"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-flac"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-flac"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-speex"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-speex"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-ogg"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-ogg"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mpg"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "superimpose-ffts"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "zoom-spectrum"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "display-correlation"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "finfo"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fft-peak"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "window-rms"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "display-db"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "display-energy"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "window-samples"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "region-rms"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "selection-rms"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "enved.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-panned"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-with-envs"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "stop-enveloping"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "start-enveloping"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "enveloping-key-press"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mouse-release-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mouse-drag-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mouse-press-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "create-initial-envelopes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel-envelope"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "pretty-print.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "pprint"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pretty-print-with-keys"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pretty-print"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "reverse-string-append"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "generic-write"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "mixer.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "mixer-inverse"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mixer-solve"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "invert-matrix"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mixer-trace"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mixer-poly"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mixer-determinant"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sub-matrix"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mixer-transpose"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mixer-diagonal?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mixer-copy"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "clean.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "clean-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "clean-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "tvf-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "test-remove-DC"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "test-notch-hum"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "test-remove-pops"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "remove-pops"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "smooth-vct"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "test-remove-single-clicks"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "remove-single-sample-clicks"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "check-freq"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "goertzel-channel"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "dsp.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "flatten-partials"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cheby-hka"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fm-cascade-component"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fm-complex-component"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fm-parallel-component"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "soft-clipped"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "hard-clipped"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-savitzky-golay-filter"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "kalman-filter-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "unclip-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "unclip-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "lpc-predict"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "lpc-coeffs"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "undisplay-bark-fft"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "display-bark-fft"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "linear-src-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "harmonicizer"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "volterra-filter"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-volterra-filter"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "invert-filter"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "scentroid"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "spectral-polynomial"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel-polynomial"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "vct-polynomial"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ssb-bank-env"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ssb-bank"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "hz->2pi"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "shift-channel-pitch"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "periodogram"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel-distance"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel2-coefficient-of-projection"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel2-orthogonal?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel2-angle"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel2-inner-product"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel-lp-inf"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel-lp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel-norm"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel-variance"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel-rms"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel-average-power"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel-total-energy"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel-mean"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "gaussian-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "inverse-integrate"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pareto-distribution"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "gaussian-distribution"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "any-random"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-spencer-filter"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "goertzel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "find-sine"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "dht"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "z-transform"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fractional-fourier-transform"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "notch-selection"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "notch-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "notch-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-notch-frequency-response"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-butter-bs"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-butter-bp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-butter-hp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-butter-lp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cascade->canonical"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-peaking-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "eliminate-hum"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-eliminate-hum"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-iir-band-stop-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-iir-band-pass-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-iir-high-pass-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-iir-low-pass-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-biquad"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-butter-band-reject"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-butter-band-pass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-butter-low-pass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-butter-high-pass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-differentiator"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-bandstop"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-bandpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-lowpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-highpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-hilbert-transform"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fltit-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "spectrum->coeffs"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "brighten-slightly-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "brighten-slightly"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "signum"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rotate-phase"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "zero-phase"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "chordalize"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "chorus"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "spot-freq"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "spike"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "adsat"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "freqdiv"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "compute-string"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "compute-uniform-circular-string"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "stretch-sound-via-dft"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "down-oct"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "dolph-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "dolph"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "src-fit-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "src-duration"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "log10"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "binomial"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "bird.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-birds"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "various-gull-cries-from-end-of-colony-5"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-black-chinned-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-black-throated-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-blue-gray-gnatcatcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-chuck-wills-widow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-eastern-bluebird"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-lark-bunting"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-audubons-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-prothonotary-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-rufous-sided-towhee"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-kentucky-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-bairds-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-cedar-waxwing"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-bachmans-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-western-flycatcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-painted-bunting"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-eastern-phoebe"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-nashville-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-cerulean-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-pigeon-hawk"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-solitary-vireo"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-robin"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-louisiana-waterthrush"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-american-widgeon"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-hooded-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-indigo-bunting"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-golden-crowned-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-swamp-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-grasshopper-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-chestnut-sided-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-black-necked-stilt"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-yellow-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-black-throated-gray-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-great-horned-owl"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-scissor-tailed-flycatcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-western-meadowlark"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-bobwhite"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-chipping-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-cassins-kingbird"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "b-orchard-oriole"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bird"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bigbird"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "nrev.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "nrev"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "env.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "simplify-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "normalize-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rms-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "envelope-exp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "powenv-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "power-env-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-power-env"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "power-env"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "repeat-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "concatenate-envelopes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "reverse-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "scale-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "stretch-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "envelope-last-x"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "integrate-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "min-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "max-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "add-envelopes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "multiply-envelopes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "map-envelopes"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "window-envelope"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "analog-filter.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-elliptic-bandstop"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-elliptic-bandpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-elliptic-highpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-elliptic-lowpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "elliptic-prototype"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-bessel-bandstop"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-bessel-bandpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-bessel-highpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-bessel-lowpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bessel-prototype"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-inverse-chebyshev-bandstop"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-inverse-chebyshev-bandpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-inverse-chebyshev-highpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-inverse-chebyshev-lowpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "inverse-chebyshev-prototype"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-chebyshev-bandstop"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-chebyshev-bandpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-chebyshev-highpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-chebyshev-lowpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "chebyshev-prototype"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-butterworth-bandstop"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-butterworth-bandpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-butterworth-highpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-butterworth-lowpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "butterworth-prototype"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "prototype->highpass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "analog->digital"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "xm-enved.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "xe-envelope"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "musglyphs.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-a-note"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-staff"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "note-data->pitch"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "frequency->note-octave-and-accidental"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "output-type"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "g-mustext"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "music-font"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "circle"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fill-in"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rlineto"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "lineto"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "curveto"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rmoveto"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "moveto"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "->y"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "->x"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-bezier-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-polygon"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "moog.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "moog-filter"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "moog-frequency"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-moog-filter"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "stochastic.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "stochastic"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "marks.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "mark-click-info"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "save-mark-properties"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mark-explode"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "snap-mark-to-beat"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "define-selection-via-marks"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "snap-marks"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "report-mark-names"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-between-marks"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-syncd-marks"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pad-marks"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fit-selection-between-marks"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "syncup"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "click-to-sync"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "stop-sync"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "start-sync"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "describe-mark"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "move-syncd-marks"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mark-name->id"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "maraca.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-maraca"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "maraca"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "jcvoi.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "fm-voice"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fncval"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fillfnc"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "aref"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "setf-aref"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "checkpt"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "addenv"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "flipxy"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "grani.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "test-grani"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "grani"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "raised-cosine"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-gr-env"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "envelope-or-number"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-octaves-env"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "octaves-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-semitones-env"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "semitones-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-db-env"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "db-envelope"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "exp-envelope"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "frame.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "simultaneous-zero-crossing"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "map-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "scan-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mix-sound-data"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mix-frame"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "insert-sound-data"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "insert-frame"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "insert-vct"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "selection->sound-data"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "region->sound-data"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sound-data->file"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "file->sound-data"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "vct->file"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "file->vct"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-selection-frame-reader"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-sync-frame-reader"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-region-frame-reader"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-frame"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "previous-frame"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "next-frame"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "copy-frame-reader"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "free-frame-reader"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "frame-reader-chans"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "frame-reader-home"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "frame-reader-position"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "frame-reader-at-end?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "frame-reader?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-frame-reader"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "frame-sampler?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sound-data->sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sound->sound-data"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "region->frame"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "frame->sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sound->frame"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sound-data->frame"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "frame->sound-data"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "vct->frame"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "frame->vct"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "fade.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "dissolve-fade"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cross-fade"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "hooks.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "hook-member"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "with-local-hook"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "describe-hook"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "add-to-all-hook-ends"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "add-to-all-hook-inits"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "reset-all-hooks"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "snd-hooks"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "pvoc.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "pvoc"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pvocoder"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sine-bank"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-pvocoder"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "prc95.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "flute"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "clarinet"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "brass"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bowstr"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "plucky"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "delayl"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-delayl"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "dc-block"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-dc-block"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "lip"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "lip-set-freq"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "set-gain"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "set-pole"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-onep"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-onezero"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "jettable"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bowtable"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-bowtable"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "reedtable"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-reed"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "draw.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "samples-via-colormap"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "overlay-sounds"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "display-previous-edits"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "uncolor-samples"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "color-samples"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "display-samples-in-color"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "display-colored-samples"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "overlay-rms-env"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "poly.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-roots"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-as-vector-roots"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-as-vector-gcd"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-gcd"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "simplify-complex"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-discriminant"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-as-vector-discriminant"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-resultant"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-as-vector-resultant"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-derivative"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-as-vector-derivative"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly/"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-as-vector/"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-as-vector*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly+"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-as-vector+"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-reduce"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-as-vector-reduce"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "poly-as-vector-eval"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "vector-copy"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "vector-scale!"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "vector-add!"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "dlocsig.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-dlocsig"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "constant-velocity"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mirror-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rotate-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "translate-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "scale-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "transform-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "render-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "spiral-render"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "literal-render"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bezier-render"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-spiral-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "spiral-velocity"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "spiral-height"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "spiral-distance"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "spiral-turns"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "spiral-step-angle"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "spiral-total-angle"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "spiral-start-angle"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-literal-polar-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-literal-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "literal-polar"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "literal-3d"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "literal-points"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fit-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "reset-fit"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "not-fitted"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "calculate-fit"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-a-odd"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-a-even"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nearest-point"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "distance"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "xparse-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "parse-polar-coordinates"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "parse-cartesian-coordinates"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "not-parsed"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-closed-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-polar-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-open-bezier-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "final-direction"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "initial-direction"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-bezier-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bezier-curvature"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bezier-error"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bezier-bz"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bezier-by"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bezier-bx"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bezier-v"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bezier-z"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bezier-y"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bezier-x"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bezier-polar"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bezier-3d"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bezier-path"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "path-time"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "path-z"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "path-y"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "path-x"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "list??"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "reset-rendering"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "reset-transformation"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "not-transformed"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "not-rendered"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "describe"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "path-tt"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "path-tz"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "path-ty"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "path-tx"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "path-rt"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "path-rv"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "path-rz"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "path-ry"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "path-rx"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ambisonics-channels"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "get-speaker-configuration"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "set-speaker-configuration"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "arrange-speakers"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-list-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "listp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "last"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fourth"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "third"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cis"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "speaker-config-map"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "speaker-config-delays"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "speaker-config-groups"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "speaker-config-coords"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "speaker-config-dimension"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "speaker-config-number"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-speaker-config"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "group-matrix"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "group-speakers"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "group-vertices"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "group-size"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "group-id"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-group"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "distances-in-feet"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "distances-in-meters"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "angles-in-turns"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "angles-in-radians"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "angles-in-degree"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "one-turn-is"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "x-norm"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "play.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-sines"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-sine"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-with-amps"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "vector-synthesis"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "start-dac"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "loop-between-marks"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-region-forever"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-until-c-g"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-often"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "open-play-output"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "samples->sound-data"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "clm-ins.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "fullmix"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cnvrev"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "expandn"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "balance-avg"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "gain-avg"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "balance"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "gain"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rms"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-rmsgain"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fm2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-fm2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ssb-fm"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-ssb-fm"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bes-fm"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "anoi"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "graphEq"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "expfil"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "exp-snd"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "clm-expsrc"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "za"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "zn"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "zc"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pins"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "scratch"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "resflt"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "lbj-piano"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "two-tab"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "spectra"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "touch-tone"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "gran-synth"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "jl-reverb"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cellon"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "reson"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nrev"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "canter"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "drone"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "metal"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "hammondoid"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rhodey"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "wurley"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "tubebell"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pqw"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "attract"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "gong"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fm-drum"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fm-insect"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fm-bell"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "stereo-flute"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pqw-vox"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fm-trumpet"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fofins"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "vox"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pluck"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "piano.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "p"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "peak-phases.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "show-mins"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "find-other-mins"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "differ"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "showdiff"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "showodd"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "showall"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "get-best"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "tstallderiv"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "tstprime"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "tsteven"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "tstallf"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "tstall"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "tstoddderiv"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "tstodd"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "primes.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "factorize"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "big-gens.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-one-pole"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-one-zero"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-table-lookup"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-nsin"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-ncos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-oscil"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-contrast-enhancement"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-amplitude-modulate"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-dot-product"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-polynomial"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-multiply-arrays"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-array-interp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-array-normalize"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-array-clear"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-polar->rectangular"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-rectangular->polar"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-samples->seconds"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-seconds->samples"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-radians->degrees"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-degrees->radians"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-linear->db"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-db->linear"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-radians->hz"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "big-hz->radians"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "numerics.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "sin-nx-peak"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "show-digits-of-pi-starting-at-digit"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sin-m*pi/n"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bernoulli-poly"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bernoulli3"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "Ci"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "Si"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "aux-g"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "aux-f"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bes-in"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bes-i1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "laguerre"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "laguerre-polynomial"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "hermite"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "hermite-polynomial"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "chebyshev"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "chebyshev-polynomial"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "gegenbauer"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "legendre"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "legendre-polynomial"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "plgndr"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "binomial"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "n-choose-k"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "binomial-direct"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "factorial"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "binary-io.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-aif-header"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-au-header"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-au-header"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-int->bfloat80"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-bfloat80->int"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-lfloat64"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-bfloat64"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "float64_to_int64"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-lfloat64"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-bfloat64"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "int_to_float64"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-lfloat32"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-bfloat32"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "float64_to_int32"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-lfloat32"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-bfloat32"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "int_to_float32"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-lint64"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-bint64"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-lint64"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-bint64"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-lint32"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-bint32"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-lint32"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-bint32"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-lint16"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-bint16"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-lint16"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-bint16"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "write-chars"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "read-chars"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "io-write-string"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "io-read-string"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "noise.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-fm-noise"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fm-noise"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "attack-point"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "autosave.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "auto-save"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cancel-auto-save"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "animals.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "calling-all-animals"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "calling-all-birds"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "calling-all-insects"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "calling-all-mammals"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "calling-all-frogs"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "brown-crested-flycatcher-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "brown-crested-flycatcher-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "greater-pewee"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "scrub-euphonia"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "black-crowned-night-heron"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "philadelphia-vireo"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "willet"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "white-eyed-vireo"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "wood-duck"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "kirtlands-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cape-may-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "black-throated-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pine-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "canada-goose"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "canada-goose-3"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "canada-goose-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "canada-goose-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "townsends-solitaire"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cedar-waxwing"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "western-wood-pewee-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "western-wood-pewee-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "wrentit"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "trumpeter-swan-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "crested-caracara"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "red-eyed-vireo"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "zone-tailed-hawk"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "white-tipped-dove"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "verdin"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mountain-quail"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "montezuma-quail"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "scaled-quail"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "gambels-quail"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "house-sparrow-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "great-crested-flycatcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "black-throated-blue-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "yellow-bellied-flycatcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "chestnut-sided-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "great-kiskadee"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "inca-dove-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "inca-dove-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "dusky-flycatcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pacific-slope-flycatcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "hairy-woodpecker"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sage-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "virginia-rail"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "gray-crowned-rosy-finch"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sandhill-crane"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "whooping-crane"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "summer-tanager"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "long-eared-owl"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "barn-owl"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "hammonds-flycatcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "common-pauraque"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "groove-billed-ani"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "dark-eyed-junco"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "evening-grosbeak"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "greater-roadrunner"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "eastern-bluebird"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "magnolia-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "yellow-green-vireo"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "eastern-meadowlark"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bald-eagle"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "gray-vireo"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "gray-vireo-5"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "gray-vireo-4"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "gray-vireo-3"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "gray-vireo-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "gray-vireo-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "burrowing-owl"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "song-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "flammulated-owl"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pygmy-nuthatch"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "white-breasted-nuthatch"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "red-breasted-nuthatch"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bushtit"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "black-necked-stilt"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "willow-flycatcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "wilsons-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "scotts-oriole"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "northern-beardless-tyrannulet"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "western-meadowlark"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "huttons-vireo"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "macgillivrays-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "oak-titmouse"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "killdeer"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sora"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pinyon-jay"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "black-rail"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "stellers-jay"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cassins-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "common-yellowthroat"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "red-shouldered-hawk"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "olive-sided-flycatcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "lesser-nighthawk"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "acorn-woodpecker"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "blue-grosbeak"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "brown-jay"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "eared-grebe"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "black-billed-cuckoo"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "plain-chacalaca"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cassins-vireo"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "lucys-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "green-tailed-towhee"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ruby-crowned-kinglet"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "house-finch"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "golden-crowned-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "phainopepla"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "white-headed-woodpecker"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ash-throated-flycatcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "common-gull"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "northern-goshawk"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "purple-finch"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "yellow-rumped-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "says-phoebe"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "barred-owl-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "yellow-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "black-phoebe"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cardinal"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "vermillion-flycatcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "california-quail"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "loggerhead-shrike-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "loggerhead-shrike-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "orange-crowned-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "american-crow-no-formants"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "american-crow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nrcos->polywave"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "least-bittern"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "plumbeous-vireo-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "plumbeous-vireo-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ruffed-grouse"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nashville-warbler"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "varied-thrush"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "whip-poor-will"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pileated-woodpecker"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "western-tanager"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "great-horned-owl"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "warbling-vireo"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bobwhite"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mourning-dove"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "black-chinned-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "california-towhee"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "chuck-wills-widow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "hermit-thrush"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "common-loon-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "common-loon-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "american-robin"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "grasshopper-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bachmans-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "carolina-wren"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "swainsons-thrush"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "acadian-flycatcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "least-flycatcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "chipping-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "savannah-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "tufted-titmouse"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "field-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "eastern-wood-pewee-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "eastern-wood-pewee-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "henslows-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "white-throated-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fox-sparrow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "four-spotted-tree-cricket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "narrow-winged-tree-cricket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "black-horned-tree-cricket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "davis-tree-cricket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pine-tree-cricket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "slightly-musical-conehead"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "snowy-tree-cricket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "southeastern-field-cricket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sphagnum-ground-cricket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "striped-ground-cricket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "carolina-grasshopper"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "marsh-meadow-grasshopper"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "tinkling-ground-cricket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "confused-ground-cricket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "lyric-cicada"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "linnaeus-cicada"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "dog-day-cicada"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fast-calling-tree-cricket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "handsome-trig"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "long-spurred-meadow-katydid"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "broad-winged-tree-cricket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "southern-mole-cricket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mosquito"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "indri"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "amargosa-toad"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sonoran-desert-toad"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "little-grass-frog"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "green-toad"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "red-spotted-toad"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pacific-chorus-frog"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "great-plains-narrow-mouthed-toad"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "southwestern-toad"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "western-toad"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "barking-tree-frog"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "plains-spadefoot"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "american-toad"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "texas-toad"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bullfrog"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "river-frog"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "crawfish-frog"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "spring-peeper"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ornate-chorus-frog"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "squirrel-tree-frog"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pinewoods-tree-frog"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "green-tree-frog"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "northern-leopard-frog-2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "northern-leopard-frog-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "southern-cricket-frog"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "oak-toad"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "a-cricket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "knudsens-frog"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "a-frog"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "snd11.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "delete-watcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "add-watcher"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pushed-button-button-color"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "do-it-again-button-color"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "do-it-button-color"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "help-button-color"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "reset-button-color"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "quit-button-color"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "old-play"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-and-wait"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-mix"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-selection"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "play-region"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-current-window-display"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "focus-follows-mouse"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "with-mix-file-extension"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "with-mix-find-file-with-extensions"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-sine-summation"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-sum-of-cosines"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-sum-of-sines"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "remove-hook!"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "add-hook!"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "hook->list"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "run-hook"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "reset-hook!"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "hook-empty?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "hook-functions"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "cursor-follows-play"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "extensions.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "stereo->mono"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mono-files->stereo"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mono->stereo"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channels-equal?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channels=?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "normalize-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "scale-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "contrast-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "contrast-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "dither-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "dither-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pad-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "offset-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "offset-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "env-expt-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ramp-expt"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "env-squared-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ramp-squared"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "blackman4-env-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "blackman4-ramp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sine-env-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sine-ramp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "any-env-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "undo-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "redo-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "insert-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mix-channel"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "match-sound-files"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "for-each-sound-file"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "map-sound-files"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "enveloped-mix"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "normalized-mix"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "remove-if"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "channel-sync"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "generators.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "calling-all-generators"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "flocsig"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "moving-pitch"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "moving-autocorrelation"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "moving-scentroid"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "test-sv"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "moving-spectrum"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "moving-fft"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "tanhsin"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "partials->waveshape"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-waveshape"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "noid?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "noid"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-noid"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "polyoid-env"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "polyoid"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "polyoid?"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "exponentially-weighted-moving-average"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "weighted-moving-average"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "moving-length"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "moving-rms"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "moving-variance"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "moving-sum"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "green-noise-interp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "green-noise"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "brown-noise"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-pink-noise"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sinc-train"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nchoosekcos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "run-with-fm-and-pm"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "multi-expt-env"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "blackman4-env"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "square-env"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sine-env"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "round-interp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-wave-train-with-env"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-table-lookup-with-env"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "adjustable-oscil"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "adjustable-sawtooth-wave"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "adjustable-triangle-wave"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "adjustable-square-wave"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "organish"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "izcos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "k3sin"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fm-cancellation"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "machine1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fpmc"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "fmssb"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-blackman"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "jycos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "j0j1cos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "jncos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "jpcos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "j2cos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "j0evencos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "jjcos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bess"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "asyfm-I"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "asyfm-J"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "r2k2cos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "r2k2cos-norm"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "absin"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "abcos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "krksin"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "glassy"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rkoddssb"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "dblsum"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "k2ssb"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "k2cos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "k2sin"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pianoy2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pianoy1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "pianoy"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "r2k!cos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "brassy"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bouncy"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rk!ssb"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rk!cos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rkssb"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rksin"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rkcos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "eoddcos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "erssb"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ercoser"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ercos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "safe-rxycos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "clamp-rxycos-r"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rxycos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rxysin"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "bump"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rssb-interp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rssb"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "stringy"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "rcos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "n1cos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nsincos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nkssber"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nkssb-interp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nkssb"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "oboish"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nrssb-interp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nrssb"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "lutish"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nrcos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nrsin"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "generator-clamp-r"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "npcos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ncos4"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-ncos4"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ncos2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "make-ncos2"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "noddssb"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "noddcos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "noddsin"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "find-noddsin-max"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nxy1sin"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nxy1cos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nxycos"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nxysin"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "find-nxysin-max"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "nssb"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "defgenerator"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "ws.scm");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "with-simple-sound-helper"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "mix-notelists"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "clm-find-file"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "clm-display-globals"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "->sample"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "->frequency"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "ws-save-state"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "wsdat-play"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "finish-with-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "init-with-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "with-mixed-sound->notelist"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "with-mixed-sound-mix-info"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "clm-load"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "with-sound-helper"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "times->samples"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*default-player*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*definstrument-hook*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-search-list*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*to-snd*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-delete-reverb*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-default-frequency*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-with-sound-depth*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-notehook*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-player*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-array-print-length*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-clipped*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-locsig-type*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-file-buffer-size*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-table-size*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-reverb-data*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-reverb-channels*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-reverb*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-statistics*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-play*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-verbose*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-header-type*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-data-format*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-channels*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-file-name*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "*clm-srate*"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "definstrument"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "sound-let"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "with-simple-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "with-marked-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "with-temp-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "with-full-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "with-mixed-sound"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "with-sound"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
-  str = s7_make_string(sc, "cmn-glyphs.lisp");
-  gloc = s7_gc_protect(sc, str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-double-whole-rest"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-measure-rest"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-128th-rest"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-64th-rest"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-32nd-rest"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-16th-rest"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-8th-rest"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-quarter-rest"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-half-rest"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-whole-rest"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-extend-flag-down"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-8th-flag-down"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-extend-flag-up"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-8th-flag-up"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-square"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-triangle"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-mslash"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-slash"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-circled-x"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-rhythmX"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-filled-diamond-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-diamond-1"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-diamond"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-quarter-note"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-half-note"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-whole-note"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-double-whole-note"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-r"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-s"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-z"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-subito"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-niente"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-n"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-m"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-lig-p"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-p"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-f"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-double-flat"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-natural"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-double-sharp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-flat"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-sharp"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-plus"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-cut-time"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-common-time"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-nine"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-eight"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-seven"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-six"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-five"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-four"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-three"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-two"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-one"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-zero"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-up-bow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-down-bow"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-wedge"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-right-paren"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-left-paren"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-ped"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-pedal-off"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-coda"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-segno"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-lower-bracket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-upper-bracket"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-repeat-sign"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-upside-down-fermata"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-fermata"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-caesura"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-breath-mark"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-tnecca"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-accent"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-tr"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-arpeggios"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-arpeggio"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-trill-sections"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-trill-section"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-double-mordent"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-mordent"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-turn"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-bass-clef"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-c-clef"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-percussion-clef"), str);
-  s7_autoload(sc, s7_make_symbol(sc, "draw-treble-clef"), str);
-  s7_gc_unprotect_at(sc, gloc);
-
+  s7_autoload_set_names(sc, snd_names, 1390);
 }
 #endif
 

@@ -611,21 +611,29 @@
   
   (apropos-1 (reverse (environment->list (global-environment))))
   
-  (call-with-output-file "indexer.data"
-    (lambda (p)
-      (let ((hti (make-hash-table-iterator names)))
-	(format p "static void autoload_info(s7_scheme *sc)~%{~%  int gloc;~%  s7_pointer str;~%")
-	(do ((ns (hti) (hti)))
-	    ((null? ns))
-	  (let ((file (car ns))
-		(symbols (cdr ns)))
-	    (format p "  str = s7_make_string(sc, ~S);~%  gloc = s7_gc_protect(sc, str);~%" file)
-	    (for-each 
-	     (lambda (symbol)
-	       (format p "  s7_autoload(sc, s7_make_symbol(sc, \"~S\"), str);~%" symbol))
-	     symbols)
-	    (format p "  s7_gc_unprotect_at(sc, gloc);~%~%")))
-	(format p "}~%")))))
+  (let ((syms ())
+	(size 0))
+    (call-with-output-file "indexer.data"
+      (lambda (p)
+	(let ((hti (make-hash-table-iterator names)))
+	  (do ((ns (hti) (hti)))
+	      ((null? ns))
+	    (let ((file (car ns))
+		  (symbols (cdr ns)))
+	      (set! size (+ size (length symbols)))
+	      (for-each
+	       (lambda (symbol)
+		 (set! syms (cons (cons (symbol->string symbol) file) syms)))
+	       symbols)))
+	  (set! syms (sort! syms (lambda (a b) (string<? (car a) (car b)))))
+	  (format p "~%static const char *snd_names[~D] = {" (* size 2))
+	  (for-each
+	   (lambda (sf)
+	     (format p "~%    ~S, ~S," (car sf) (cdr sf)))
+	   syms)
+	  (format p "~%};~%"))
+	(format p "~%static void autoload_info(s7_scheme *sc)~%{~%  s7_autoload_set_names(sc, snd_names, ~D);~%}~%" size)))
+  ))
   
 
 

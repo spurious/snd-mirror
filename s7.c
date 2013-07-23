@@ -1336,6 +1336,8 @@ struct s7_scheme {
 
   s7_pointer autoload_table;
   s7_pointer *safe_lists;
+  const char **autoload_names;
+  int autoload_names_size;
 };
 
 #define NUM_SAFE_LISTS 16
@@ -5849,12 +5851,6 @@ s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value)
 {
   slot_set_value(slot, value);
   return(value);
-}
-
-
-s7_Double s7_slot_value_to_real(s7_scheme *sc, s7_pointer slot)
-{
-  return(s7_number_to_real(sc, slot_value(slot)));
 }
 
 
@@ -11086,6 +11082,12 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 	  if ((ix * ix) == integer(n))
 	    return(make_integer(sc, ix));
 	  return(make_real(sc, sqx));
+	  /* Mark Weaver notes that 
+	   *     (zero? (- (sqrt 9007199136250226) 94906265.0)) -> #t
+	   * but (* 94906265 94906265) -> 9007199136250225 -- oops
+	   * at least we return a real here, not an incorrect integer and
+	   *     (sqrt 9007199136250225) -> 94906265
+	   */
 	}
       sqx = (s7_Double)integer(n); /* we're trying to protect against (sqrt -9223372036854775808) where we can't negate the integer argument */
       return(s7_make_complex(sc, 0.0, sqrt((s7_Double)(-sqx))));
@@ -22496,6 +22498,41 @@ static s7_pointer g_load_path_set(s7_scheme *sc, s7_pointer args)
 	return(cadr(args));
     }
   return(sc->ERROR);
+}
+
+
+/* an experiment */
+void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
+{
+  sc->autoload_names = names;
+  sc->autoload_names_size = size;
+}
+
+
+const char *find_autoload_name(s7_scheme *sc, s7_pointer symbol)
+{
+  int l = 0, u, pos = -1, comp;
+  const char *name, *this_name;
+
+  name = symbol_name(symbol);
+  u = sc->autoload_names_size - 1;
+
+  while (true)
+    {
+      if (u < l) break;
+      pos = (l + u) / 2;
+      this_name = sc->autoload_names[pos * 2];
+      comp = strcmp(this_name, name);
+      if (comp == 0)
+	{
+	  /* fprintf(stderr, "found %s in %s\n", name,  sc->autoload_names[pos * 2 + 1]); */
+	  return(sc->autoload_names[pos * 2 + 1]);
+	}
+      if (comp < 0) 
+	l = pos + 1;
+      else u = pos - 1;
+    }
+  return(NULL);
 }
 
 
@@ -37097,9 +37134,10 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
   if (safe_strcmp(symbol_name(sym), "|#") == 0)
     return(read_error(sc, "unmatched |#"));
 
-  /* check *autoload*, then *unbound-variable-hook* 
+  /* check *autoload*, autoload_names, then *unbound-variable-hook* 
    */
-  if ((is_hash_table(sc->autoload_table)) ||
+  if ((sc->autoload_names) ||
+      (is_hash_table(sc->autoload_table)) ||
       (is_not_null(s7_hook_functions(sc, sc->unbound_variable_hook))))
     {
       int cur_code_loc, value_loc, args_loc, code_loc;
@@ -37136,31 +37174,52 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       cur_code_loc = s7_gc_protect(sc, cur_code);   /* we need to save this because it has the file/line number of the unbound symbol */
 
       SAVE_X_Y_Z(save_x, save_y, save_z); /* this is needed to protect entire expression context */
-      if (is_hash_table(sc->autoload_table))
+      /* -------- */
+
+      /* check sc->autoload_names */
+      if (sc->autoload_names)
 	{
-	  s7_pointer val;
-	  /* it was possible to get in a loop here: missing paren in x.scm, checks last symbol, sees
-	   *   autoload sym -> x.scm, loads x.scm, missing paren...
-	   */
-	  val = s7_hash_table_ref(sc, sc->autoload_table, sym);
-	  if (is_string(val))
+	  const char *file;
+	  file = find_autoload_name(sc, sym);
+	  if (file)
 	    {
-	      /* val should be a filename. *load-path* is searched if necessary. */
-	      s7_load(sc, string_value(val));
+	      s7_load(sc, file);
+	      result = s7_symbol_value(sc, sym); /* calls find_symbol, does not trigger unbound_variable search */
 	    }
-	  else
-	    {
-	      if (is_closure(val))
-		{
-		  /* val should be a function of one argument, the current (calling) environment. */
-		  s7_call(sc, val, s7_cons(sc, sc->envir, sc->NIL));
-		}
-	    }
-	  result = s7_symbol_value(sc, sym); /* calls find_symbol, does not trigger unbound_variable search */
 	}
 
       if (result == sc->UNDEFINED)
-	result = s7_call(sc, sc->unbound_variable_hook, list_1(sc, sym)); /* not s7_apply_function */
+	{
+	  /* check the *autoload* hash table */
+	  if (is_hash_table(sc->autoload_table))
+	    {
+	      s7_pointer val;
+	      /* it was possible to get in a loop here: missing paren in x.scm, checks last symbol, sees
+	       *   autoload sym -> x.scm, loads x.scm, missing paren...
+	       */
+	      val = s7_hash_table_ref(sc, sc->autoload_table, sym);
+	      if (is_string(val))
+		{
+		  /* val should be a filename. *load-path* is searched if necessary. */
+		  s7_load(sc, string_value(val));
+		}
+	      else
+		{
+		  if (is_closure(val))
+		    {
+		      /* val should be a function of one argument, the current (calling) environment. */
+		      s7_call(sc, val, s7_cons(sc, sc->envir, sc->NIL));
+		    }
+		}
+	      result = s7_symbol_value(sc, sym); /* calls find_symbol, does not trigger unbound_variable search */
+	    }
+	  
+	  /* check *unbound-variable-hook* */
+	  if (result == sc->UNDEFINED)
+	    result = s7_call(sc, sc->unbound_variable_hook, list_1(sc, sym)); /* not s7_apply_function */
+	}
+
+      /* -------- */
       RESTORE_X_Y_Z(save_x, save_y, save_z);
 
       sc->value = value;
@@ -64556,6 +64615,8 @@ s7_scheme *s7_init(void)
   sc->begin_hook = NULL;
   sc->default_rng = NULL;
   sc->autoload_table = sc->NIL;
+  sc->autoload_names = NULL;
+  sc->autoload_names_size = 0;
   
   sc->heap_size = INITIAL_HEAP_SIZE;
   if ((sc->heap_size % 32) != 0)
@@ -65871,7 +65932,4 @@ s7_scheme *s7_init(void)
 
 /* ideally we'd replace strcpy with strcopy throughout Snd, and strcat with strappend or some equivalent
  *   also openbsd audio is broken in Snd -- see aucat.c I guess.
- */
-/* gdb-helper as shell code
- * xdotool for snd-test GUI stuff
  */

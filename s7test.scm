@@ -13913,14 +13913,14 @@ so anything that quotes ` is not going to equal quote quasiquote
 (test (object->string +) "+")
 (test (object->string +) "+")
 (test (object->string '''2) "''2")
-(test (object->string (lambda () #f)) "#<closure>")
+(test (object->string (lambda () #f)) "#<lambda ()>") ;"#<closure>"
 (test (call-with-exit (lambda (return) (object->string return))) "#<goto>")
 (test (call/cc (lambda (return) (object->string return))) "#<continuation>")
 (test (let () (define-macro (hi a) `(+ 1 ,a)) (object->string hi)) "#<macro>")
 (test (let () (define (hi a) (+ 1 a)) (object->string hi)) "hi")
 (test (let () (define* (hi a) (+ 1 a)) (object->string hi)) "hi")
 (test (object->string dynamic-wind) "dynamic-wind")
-(test (object->string (make-procedure-with-setter (lambda () 1) (lambda (val) val))) "#<closure>")
+(test (object->string (make-procedure-with-setter (lambda () 1) (lambda (val) val))) "#<lambda ()>") ;"#<closure>"
 (test (object->string object->string) "object->string")
 (test (object->string 'if) "if")
 (test (object->string begin) "begin")
@@ -58408,6 +58408,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (sqrt 144) 12)
 (num-test (sqrt 9000000000000000000) 3000000000)
 ;; but unfortunately in non-gmp, 9400000000000000000 -> -9046744073709551616
+
+(test (and (integer? (sqrt 9007199136250226)) (exact? (sqrt 9007199136250226))) #f)
+(test (and (integer? (sqrt 9007199136250225)) (exact? (sqrt 9007199136250225))) #t)
 
 (if (integer? (sqrt 4))
     (begin

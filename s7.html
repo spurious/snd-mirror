@@ -242,7 +242,6 @@ indented and on a sort of brownish background.
       <li><a href="#gmpex">gmp and friends</a>
       <li><a href="#gtkrepl">Gtk-based REPL</a>
       <li><a href="#gtkschemerepl">Gtk/Scheme-based REPL</a>
-      <li><a href="#s7inathread">s7 running in a separate thread</a>
       <li><a href="#replrescue">begin_hook to the rescue!</a>
       <li><a href="#glistener">glistener.c</a>
       <li><a href="#gsl">GSL</a>
@@ -6508,7 +6507,6 @@ The examples that follow show:
 <li><a href="#gmpex">gmp and friends</a>
 <li><a href="#gtkrepl">Gtk-based REPL</a>
 <li><a href="#gtkschemerepl">Gtk/Scheme-based REPL</a>
-<li><a href="#s7inathread">s7 running in a separate thread</a>
 <li><a href="#replrescue">begin_hook to the rescue!</a>
 <li><a href="#glistener">glistener.c</a>
 <li><a href="#gsl">GSL</a>
@@ -8726,260 +8724,17 @@ There are several things that may change once Gtk settles down.
 	(gtk_main)))))
 
 ;; build gtkex as above, then run it and it will load/run this code
-</pre></div>
+</pre>
 
 
-
-
-
-<div class="header" id="s7inathread"><h4>s7 and pthreads</h4></div>
-
-<p>There is one major flaw in the two preceding REPLs; if s7 gets caught in an infinite loop (via
+<p>There is one major flaw in these two REPLs; if s7 gets caught in an infinite loop (via
 <code>(do () ())</code> for example), you have to kill the main program to stop it.  We could use
 Unix interrupts as in the <a href="#signal">signal</a> example earlier, but surely in a modern
 GUI-based program, we'd like to avoid such brute-force stuff.  In particular, we want our interface
-to keep running while we clean up the s7 problem.  So, in the next example, we use a separate
-thread for the s7 evaluation:
-</p>
-
-
-<div class="indented">
-<pre>
-#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;string.h&gt;
-<em class=red>/* changes from the Gtk/C REPL above are in red */
-#include &lt;pthread.h&gt;</em>
-#include &lt;gtk/gtk.h&gt;
-
-#if HAVE_GTK_3
-  #include &lt;gdk/gdk.h&gt;
-  #define Return_Key GDK_KEY_Return
-<em class=red>  #define C_Key GDK_KEY_C
-  #define c_Key GDK_KEY_c</em>
-#else
-  #include &lt;gdk/gdkkeysyms.h&gt;
-  #define Return_Key GDK_Return
-<em class=red>  #define C_Key GDK_C
-  #define c_Key GDK_c</em>
-#endif
-
-#include "s7.h"
-
-#define S7_PROMPT "s7&gt; "
-#define S7_PROMPT_LENGTH 4
-
-static GtkWidget* repl;                        /* the REPL text widget */
-static GtkTextBuffer *repl_buf;                /* its text buffer */
-static GtkTextTag *prompt_not_editable = NULL; /* a tag to make sure the prompt can't be erased */
-<em class=red>static GdkCursor *arrow, *spinner;</em>
-
-static gint quit_repl(GtkWidget *w, GdkEvent *event, gpointer context) {exit(0);}
-
-<em class=red>static s7_scheme *s7;
-static s7_pointer s7_result;
-static bool just_quit = false, s7_is_running = false;
-static pthread_t *s7_thread;
-
-static void *run_s7_thread(void *obj)
-{
-  /* make sure we can stop this thread */
-  pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-
-  s7_result = s7_eval_c_string(s7, (const char *)obj);
-  s7_is_running = false;
-  return(NULL);
-}</em>
-
-static void evaluate_expression(s7_scheme *sc, char *expression)
-{
-  /* evaluate expression, display result, catching and displaying any errors */
-  if ((expression) &amp;&amp;
-      (*expression))
-    {
-      if ((strlen(expression) &gt; 1) || 
-	  (expression[0] != '\n'))
-	{
-	  const char *errmsg = NULL;
-	  int gc_loc;
-	  s7_pointer old_port;
-	  GtkTextIter pos;
-
-	  /* open a port to catch error info */
-	  old_port = s7_set_current_error_port(sc, s7_open_output_string(sc));
-	  gc_loc = s7_gc_protect(sc, old_port);
-
-<em class=red>	  /* evaluate the expression in a separate thread */
-	  s7_thread = (pthread_t *)calloc(1, sizeof(pthread_t));
-	  just_quit = false;
-	  s7_is_running = true;
-	  gdk_window_set_cursor(gtk_text_view_get_window(GTK_TEXT_VIEW(repl), GTK_TEXT_WINDOW_TEXT), spinner);
-
-	  pthread_create(s7_thread, NULL, run_s7_thread, (void *)expression);
-
-	  while (s7_is_running)
-	    gtk_main_iteration();   /* make sure the GUI is responsive */
-
-	  if (!just_quit)
-	    {
-	      pthread_join(*s7_thread, NULL);
-	      free(s7_thread);
-	      s7_thread = NULL;
-	      gdk_window_set_cursor(gtk_text_view_get_window(GTK_TEXT_VIEW(repl), GTK_TEXT_WINDOW_TEXT), arrow);
-	      errmsg = s7_get_output_string(sc, s7_current_error_port(sc));
-	    }
-	  else errmsg = "\ngot C-C!";</em>
-
-	  /* if error, display it, else display result of evaluation */
-	  gtk_text_buffer_get_end_iter(repl_buf, &amp;pos);
-	  
-	  if ((errmsg) &amp;&amp; (*errmsg))
-	    gtk_text_buffer_insert(repl_buf, &amp;pos, errmsg, strlen(errmsg));
-	  else 
-	    {
-	      char *result_as_string;
-	      result_as_string = s7_object_to_c_string(sc, s7_result);
-	      if (result_as_string)
-		{
-		  gtk_text_buffer_insert(repl_buf, &amp;pos, "\n", 1);
-		  gtk_text_buffer_insert(repl_buf, &amp;pos, result_as_string, strlen(result_as_string));
-		  free(result_as_string);
-		}
-	    }
-	  s7_close_output_port(sc, s7_current_error_port(sc));
-	  s7_set_current_error_port(sc, old_port);
-	  s7_gc_unprotect_at(sc, gc_loc);
-	}
-      g_free(expression);
-    }
-}
-
-static char *get_current_expression(void)
-{
-  GtkTextIter pos, previous, next, temp;
-  GtkTextMark *m;
-
-  m = gtk_text_buffer_get_insert(repl_buf);
-  gtk_text_buffer_get_iter_at_mark(repl_buf, &amp;pos, m);
-
-  if (gtk_text_iter_backward_search(&amp;pos, S7_PROMPT, 0, &amp;temp, &amp;previous, NULL))
-    {
-      if (!gtk_text_iter_forward_search(&amp;pos, S7_PROMPT, 0, &amp;next, &amp;temp, NULL))
-	{
-	  gtk_text_buffer_get_end_iter(repl_buf, &amp;next);
-	  return(gtk_text_buffer_get_text(repl_buf, &amp;previous, &amp;next, true));
-	}
-      gtk_text_iter_backward_search(&amp;next, "\n", 0, &amp;pos, &amp;temp, NULL);     
-      gtk_text_iter_backward_search(&amp;pos, "\n", 0, &amp;next, &amp;temp, NULL);      
-      return(gtk_text_buffer_get_text(repl_buf, &amp;previous, &amp;next, true));
-    }
-  return(NULL);
-}
-
-static void prompt(GtkWidget *w)
-{
-  GtkTextIter pos;
-
-  gtk_text_buffer_get_end_iter(repl_buf, &amp;pos);
-  gtk_text_buffer_insert_with_tags(repl_buf, &amp;pos, "\n" S7_PROMPT, 1 + S7_PROMPT_LENGTH, prompt_not_editable, NULL);
-
-  gtk_text_buffer_place_cursor(repl_buf, &amp;pos);
-  gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(repl), gtk_text_buffer_get_insert(repl_buf));
-
-  g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
-}
-
-static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer scheme)
-{
-  /* called when you type anything in the text widget.
-   */
-  guint key, state;
-  key = event-&gt;keyval;
-<em class=red>  state = event-&gt;state;</em>
-
-  if (key == Return_Key)
-    {
-      if (!s7_is_running)
-	evaluate_expression((s7_scheme *)scheme, get_current_expression());
-      prompt(w);
-    }
-<em class=red>
-  /* if C-C typed, and s7 is running, we're trying to break out of a loop */
-  if (((key == C_Key) || (key == c_Key)) &amp;&amp;
-      ((state & GDK_CONTROL_MASK) != 0) &amp;&amp;
-      (s7_is_running))
-    {
-      just_quit = true;
-      pthread_cancel(*s7_thread);
-      pthread_detach(*s7_thread);
-      s7_is_running = false;
-      s7_quit(s7);
-      free(s7_thread);
-      s7_thread = NULL;
-      gdk_window_set_cursor(gtk_text_view_get_window(GTK_TEXT_VIEW(repl), GTK_TEXT_WINDOW_TEXT), arrow);
-      prompt(w);
-    }
-</em>
-  return(false);
-}
-
-int main(int argc, char **argv)
-{
-  GtkWidget *shell, *scrolled_window;
-  GtkTextIter pos;
-
-  s7 = s7_init();  
-
-  /* make a window with a scrolled text widget */
-  gtk_init(&amp;argc, &amp;argv);
-  <em class=red>
-  spinner = gdk_cursor_new(GDK_WATCH);
-  arrow = gdk_cursor_new(GDK_LEFT_PTR);
-  </em>
-  shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  g_signal_connect(G_OBJECT(shell), "delete_event", G_CALLBACK(quit_repl), NULL);
-
-  scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_container_add(GTK_CONTAINER(shell), scrolled_window);
-
-  repl = gtk_text_view_new();
-  repl_buf = gtk_text_buffer_new(NULL);
-  gtk_container_add(GTK_CONTAINER(scrolled_window), repl);
-
-  gtk_text_view_set_buffer(GTK_TEXT_VIEW(repl), repl_buf);
-  gtk_text_view_set_editable(GTK_TEXT_VIEW(repl), true);
-  gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(repl), GTK_WRAP_NONE);
-  gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(repl), true);
-  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(repl), 4);
-
-  /* whenever a key is pressed, call repl_key_press */
-  gtk_widget_set_events(repl, GDK_ALL_EVENTS_MASK);
-  g_signal_connect(G_OBJECT(repl), "key_press_event", G_CALLBACK(repl_key_press), (void *)s7);
-
-  gtk_widget_show(repl);
-  gtk_widget_show(scrolled_window);
-  gtk_widget_show(shell);
-
-  /* start with a boldface '&gt;' prompt that can't be stepped on */
-  prompt_not_editable = gtk_text_buffer_create_tag(repl_buf, "prompt_not_editable", 
-						   "editable", false, 
-						   "weight", PANGO_WEIGHT_BOLD,
-						   NULL);
-  gtk_text_buffer_get_end_iter(repl_buf, &amp;pos);
-  gtk_text_buffer_insert_with_tags(repl_buf, &amp;pos, S7_PROMPT, S7_PROMPT_LENGTH, prompt_not_editable, NULL);
-
-  /* make the initial window size reasonable */
-  gdk_window_resize(gtk_widget_get_window(shell), 400, 200);
-  gtk_main();
-}
-</pre></div>
-
-
-
-<p>This code still has a flaw.  Any GUI callback can
-call s7_call or s7_eval_c_string directly.  In the code above, if the listener
+to keep running while we clean up the s7 problem.  On first thought, we might try to use a separate
+thread for the s7 evaluation, but that won't solve the problem.
+Any GUI callback can
+call s7_call or s7_eval_c_string directly.  If the listener
 starts a long evaluation (or falls into an infinite loop), and we start idly poking around 
 with the mouse, waiting for the evaluation to finish, a mouse or menu callback can trigger
 a call on the same s7 interpreter that is currently running in the listener.
@@ -8988,7 +8743,7 @@ get depends on where s7 notices the problem.  If the evaluator senses that it is
 it will raise some confusing error; otherwise the s7 stack will cause a segfault.
 We need the GUI to stay active so that we can interrupt computation by typing C-C.
 We can't sort through all the events dispatching only the C-C, because that
-confuses subsequent GUI actions, and the whole idea here is to keep the interface
+confuses subsequent GUI actions, and the whole idea is to keep the interface
 alive.  We can put the listener's s7_eval_c_string in a separate s7 thread
 so that the multiple evaluations can be interleaved, but those evaluations
 can still make calls into Gtk or Motif, and
@@ -8996,9 +8751,7 @@ unfortunately, neither GUI toolkit is thread-safe. If two threads invoke
 a GUI function, you get a segfault or some other bizarre screwup.
 So...
 </p>
-
-
-
+</div>
 
 
 <div class="header" id="replrescue"><h4>begin-hook</h4></div>
