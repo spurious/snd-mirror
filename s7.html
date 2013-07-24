@@ -6543,37 +6543,22 @@ The examples that follow show:
 #include &lt;string.h&gt;
 #include "s7.h"
 
-static s7_pointer our_exit(s7_scheme *sc, s7_pointer args) 
-{
-  /* all added functions have this form, args is a list, 
-   *    s7_car(args) is the first arg, etc 
-   * The exit function is now built-in, but it's a simple example.
-   */
-  exit(1);
-}
-
 int main(int argc, char **argv)
 {
   s7_scheme *s7;
   char buffer[512];
   char response[1024];
 
-  s7 = <em class=red>s7_init</em>();                     /* initialize the interpreter */
-  <em class=red>s7_define_function</em>(s7, "exit", our_exit, 0, 0, false, "(exit) exits the program");
-                                      /* add the function "exit" to the interpreter.
-                                       *   0, 0, false -&gt; no required args,
-				       *                  no optional args,
-				       *                  no "rest" arg
-				       */
-  while (1)                           /* fire up a REPL */
+  s7 = <em class=red>s7_init</em>();  /* initialize the interpreter */
+  while (1)                           /* fire up a read-eval-print loop */
     {
-      fprintf(stdout, "\n&gt; ");        /* prompt for input */
+      fprintf(stdout, "\n&gt; ");     /* prompt for input */
       fgets(buffer, 512, stdin);
       if ((buffer[0] != '\n') || 
 	  (strlen(buffer) &gt; 1))
-	{                            
+	{                             /* evaluate the input and print the result */
 	  sprintf(response, "(write %s)", buffer);
-	  <em class=red>s7_eval_c_string</em>(s7, response); /* evaluate input and write the result */
+	  <em class=red>s7_eval_c_string</em>(s7, response); 
 	}
     }
 }
@@ -6594,8 +6579,12 @@ int main(int argc, char **argv)
  *    3
  *    &gt; (exit)
  *
- * for long-term happiness, include the export-dynamic flag:
+ * for long-term happiness in linux use:
  *   gcc -o repl repl.c s7.o -Wl,-export-dynamic -lm -I. -ldl
+ * freebsd:
+ *   gcc -o repl repl.c s7.o -Wl,-export-dynamic -lm -I.
+ * osx:
+ *   gcc -o repl repl.c s7.o -lm -I.
  */
 </pre>
 </div>
@@ -6807,6 +6796,9 @@ static bool is_not_white(std::string str)
 
 static s7_pointer add1(s7_scheme *sc, s7_pointer args)
 {
+  /* all added functions have this form, args is a list, 
+   *    s7_car(args) is the first arg, etc 
+   */
   if (<em class=red>s7_is_integer</em>(s7_car(args)))
     return(<em class=red>s7_make_integer</em>(sc, 1 + <em class=red>s7_integer</em>(s7_car(args))));
   return(s7_wrong_type_arg_error(sc, "add1", 1, s7_car(args), "an integer"));
@@ -6818,10 +6810,15 @@ int main(int argc, char **argv)
   char buffer[512];
   char response[1024];
 
-  s7 = s7_init();                     /* initialize the interpreter */
+  s7 = s7_init();
   
   s7_define_function(s7, "add1", add1, 1, 0, false, "(add1 int) adds 1 to int");
-  <em class=red>s7_define_variable</em>(s7, "my-pi", <em class=red>s7_make_real</em>(s7, 3.14159265));
+                                      /* add the function "add1" to the interpreter.
+                                       *   1, 0, false -&gt; one required arg,
+				       *                  no optional args,
+				       *                  no "rest" arg
+				       */
+ <em class=red>s7_define_variable</em>(s7, "my-pi", <em class=red>s7_make_real</em>(s7, 3.14159265));
 
   while (1)                           /* fire up a "repl" */
     {
@@ -8589,7 +8586,7 @@ int main(int argc, char **argv)
 }
 
 /*   gcc -c s7.c -I. 
- *   gcc -o listener listener.c s7.o -lm -ldl -I. &lt;insert all the gtk flags and libraries here&gt;
+ *   gcc -o listener listener.c s7.o -I. `pkg-config --libs gtk+-3.0 --cflags` -lm -ldl
  */
 
 </pre></div>

@@ -65999,3 +65999,11 @@ s7_scheme *s7_init(void)
 /* ideally we'd replace strcpy with strcopy throughout Snd, and strcat with strappend or some equivalent
  *   also openbsd audio is broken in Snd -- see aucat.c I guess.
  */
+
+/* other often-used libraries: c glib/gio/gobject/gmodule dl ncurses? gsl? GL/GLU? pcre? readline? tecla? pthread? gdbm?
+ * possible autoload additions: sndlib? xm? libX* fftw? gmp/mpfr/mpc? 
+ * libm: should remquo et al return multiple-values or a list? can this be automated in cload?
+ */
+
+/* gdb-s7 might check for 0xnnnn "asdf" to avoid strings
+ */

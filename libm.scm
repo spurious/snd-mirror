@@ -3,6 +3,7 @@
 ;;; tie the math library into the *libm* environment
 
 (if (not (provided? 'cload.scm)) (load "cload.scm"))
+(provide 'libm.scm)
 
 (if (not (defined? '*libm*))
     (define-constant *libm*
@@ -18,9 +19,8 @@
 			     (double ceil (double))
 			     (double nearbyint (double))
 			     (double rint (double))
-			     (int lrint (double))
-			     (double round (double))
-			     (int lround (double))
+			     (int llrint (double))
+			     (int llround (double))
 			     (double trunc (double))
 			     (double fmod (double double))
 			     (double ldexp (double int))
@@ -42,6 +42,37 @@
 			     (double nan (char*))
 			     (double nextafter (double double))
 			     (double nexttoward (double double))
+
+			     (int fpclassify (double))
+			     (int isfinite (double))
+			     (int isinf (double))
+			     (int isnan (double))
+			     (int isnormal (double))
+			     (int signbit (double))
+
+			     ;; exporting these will overwrite the built-in versions
+			     (double floor (double))
+			     (double round (double))
+			     (double remainder (double double))
+			     (double exp (double))
+			     (double log (double))
+			     (double sqrt (double))
+			     (double cos (double))
+			     (double sin (double))
+			     (double tan (double))
+			     (double cosh (double))
+			     (double sinh (double))
+			     (double tanh (double))
+			     (double acos (double))
+			     (double asin (double))
+			     (double atan (double))
+			     (double atan2 (double double))
+			     (double acosh (double))
+			     (double asinh (double))
+			     (double atanh  (double))
+
+			     (int (FP_NAN FP_INFINITE FP_ZERO FP_SUBNORMAL FP_NORMAL))
+			     (double (M_E M_LOG2E M_LOG10E M_LN2 M_LN10 M_PI M_PI_2 M_PI_4 M_1_PI M_2_PI M_2_SQRTPI M_SQRT2 M_SQRT1_2))
 			     )
 	  "" "math.h")
     
@@ -52,24 +83,18 @@
 
 
 #|
-names collide:
-double floor double
-double remainder double
-double exp double
-double log double
-double sqrt double
-also cos sin tan cosh sinh tanh acos asin atan atan2 acosh asinh atanh and all the complex cases if complex.h
-
 special:
-double remoquo double *int?
-double frexp double *int
-double modf double *double
+double remquo double double [int]?
+double frexp double [int]
+double modf double [double]
 
 ridiculous:
 double fmax double double
 double fmin double double
 int isgreater double double (etc)
 
-gnu_c additions?
+rand/srand?
+
+gnu_c additions? jn y0 y1 yn
 complex cases aren't handled in cload I think
 |#
