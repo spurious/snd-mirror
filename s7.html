@@ -6549,14 +6549,14 @@ int main(int argc, char **argv)
   char buffer[512];
   char response[1024];
 
-  s7 = <em class=red>s7_init</em>();  /* initialize the interpreter */
-  while (1)                           /* fire up a read-eval-print loop */
+  s7 = <em class=red>s7_init</em>();                 /* initialize the interpreter */
+  while (1)                       /* fire up a read-eval-print loop */
     {
-      fprintf(stdout, "\n&gt; ");     /* prompt for input */
+      fprintf(stdout, "\n&gt; ");    /* prompt for input */
       fgets(buffer, 512, stdin);
       if ((buffer[0] != '\n') || 
 	  (strlen(buffer) &gt; 1))
-	{                             /* evaluate the input and print the result */
+	{                         /* evaluate the input and print the result */
 	  sprintf(response, "(write %s)", buffer);
 	  <em class=red>s7_eval_c_string</em>(s7, response); 
 	}

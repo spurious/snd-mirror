@@ -83,6 +83,29 @@
 
 
 #|
+perhaps include the gcc math macros if they are defined:
+need in-C but in the init function where we could use
+
+#ifdef __DBL_MIN_EXP__
+  s7_define(sc, cur_env, s7_make_symbol(sc, "__DBL_MIN_EXP__"), s7_make_real(sc, (s7_Double)__DBL_MIN_EXP__));
+#endif
+
+#define __DBL_MIN_EXP__ (-1021)
+#define __DBL_MAX_EXP__ 1024
+#define __DBL_DENORM_MIN__ 4.9406564584124654e-324
+#define __DBL_MIN_10_EXP__ (-307)
+#define __DBL_MAX_10_EXP__ 308
+#define __DBL_DIG__ 15
+#define __DBL_MANT_DIG__ 53
+#define __DBL_MAX__ 1.7976931348623157e+308
+#define __DBL_MIN__ 2.2250738585072014e-308
+#define __DBL_EPSILON__ 2.2204460492503131e-16
+
+#define __SIZEOF_DOUBLE__ 8
+#define __SIZEOF_LONG_LONG__ 8
+
+#define __LONG_LONG_MAX__ 9223372036854775807LL
+
 special:
 double remquo double double [int]?
 double frexp double [int]
