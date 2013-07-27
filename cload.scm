@@ -195,6 +195,7 @@
 	 (c-file-name (string-append file-name ".c"))
 	 (functions ())
 	 (constants ())
+	 (macros ())
 	 (p #f))
 
     (define (initialize-c-file)
@@ -294,6 +295,17 @@
 	       (set! constants (cons (list c-type (symbol->string c)) constants)))
 	     name))))
 
+
+    (define (add-one-macro type name)
+      ;; C macro (with definition check) -> scheme
+      (let ((c-type (if (pair? type) (cadr type) type)))
+	(if (symbol? name)
+	    (set! macros (cons (list c-type (symbol->string name)) macros))
+	    (for-each 
+	     (lambda (c)
+	       (set! macros (cons (list c-type (symbol->string c)) macros)))
+	     name))))
+
   
     (define (end-c-file)
       ;; now the init function
@@ -324,6 +336,24 @@
 			   c-name)))
 	       constants)))
 
+	;; C macros -- need #ifdef name #endif wrapper
+	(if (pair? macros)
+	    (begin
+	      (format p "~%")
+	      (for-each
+	       (lambda (c)
+		 (let* ((type (c 0))
+			(c-name (c 1))
+			(scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") c-name)))
+		   (format p "#ifdef ~A~%" c-name)
+		   (format p "  s7_define(sc, cur_env, s7_make_symbol(sc, ~S), ~A(sc, (~A)~A));~%" 
+			   scheme-name
+			   (C->s7 type)
+			   (C->s7-cast type)
+			   c-name)
+		   (format p "#endif~%")))
+	       macros)))
+
 	;; functions
 	(for-each
 	 (lambda (f)
@@ -351,7 +381,7 @@
 	      (system (format #f "gcc -c ~A ~A" c-file-name cflags))
 	      (system (format #f "gcc ~A -o ~A -dynamic -bundle -undefined suppress -flat_namespace ~A" o-file-name so-file-name ldflags)))
 	    (begin
-	      (system (format #f "gcc -c -fPIC ~A ~A" c-file-name cflags))
+	      (system (format #f "gcc -fPIC -c ~A ~A" c-file-name cflags))
 	      (system (format #f "gcc ~A -shared -o ~A ~A" o-file-name so-file-name ldflags))))
 
 	(let ((new-env (augment-environment
@@ -375,14 +405,18 @@
 	    (apply add-one-function function-info)
 	    (if (eq? (car function-info) 'in-C)
 		(format p "~A~%" (cadr function-info))
-		(apply add-one-constant function-info)))
+		(if (eq? (car function-info) 'C-macro)
+		    (apply add-one-macro (cadr function-info))
+		    (apply add-one-constant function-info))))
 	(for-each
 	 (lambda (func)
 	   (if (= (length func) 3)
 	       (apply add-one-function func)
 	       (if (eq? (car func) 'in-C)
 		   (format p "~A~%" (cadr func))
-		   (apply add-one-constant func))))
+		   (if (eq? (car func) 'C-macro)
+		       (apply add-one-macro (cadr func))
+		       (apply add-one-constant func)))))
 	 function-info))
 
     (end-c-file)))

@@ -133,7 +133,7 @@
 
 #define HAVE_COMPLEX_NUMBERS    ((!_MSC_VER) && ((!HAVE_FORTH) || HAVE_COMPLEX))   /* the latter defined in fth-lib.h I think */
 #define HAVE_COMPLEX_TRIG       ((!_MSC_VER) && (!__cplusplus) && (!__FreeBSD__))  /* this assumes sys/param.h has been included */
-#define HAVE_MAKE_RATIO         ((HAVE_SCHEME) || (HAVE_FORTH))
+#define HAVE_MAKE_RATIO         (HAVE_SCHEME)
 
 /* TODO: forth might be 0 here and in the complex cases, fth_make_complex and fth_ratio_floor
  *   can we use a version number? ratio after 1.2.9: 1.3.6? complex always from 1.3.1?

@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.28"
-#define S7_DATE "23-July-13"
+#define S7_VERSION "2.29"
+#define S7_DATE "27-July-13"
 
 
 typedef long long int s7_Int;
@@ -507,8 +507,8 @@ s7_pointer s7_symbol_table_find_name(s7_scheme *sc, const char *name);
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val);
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env);
-void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data);
-void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer value, void *data), void *data);
+bool s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data);
+bool s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer value, void *data), void *data);
   
   /* these access the current environment and symbol table, providing
    *   a symbol's current binding (s7_name_to_value takes the symbol name as a char*,
@@ -521,6 +521,8 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
    *   symbol, passing the symbol name, its current binding, and the uninterpreted
    *   'data' pointer.  s7_for_each_symbol_name is similar, but does not include
    *   the current binding.
+   *
+   * The for-each loop stops if the symbol_func returns true, or at the end of the table.
    */
 
   /* in Scheme, you can use the symbol-table function.  In the next example, we scan the symbol table

@@ -2807,3 +2807,6 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
  * 28-May:    added checker function.
  * 21-May-13: changed HAVE_GTK_3 to HAVE_GTK_2.
  */
+
+/* C-s/r could prompt in the status area if it were a text entry, not a label widget -- is that possible?
+ */

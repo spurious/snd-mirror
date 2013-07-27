@@ -4451,7 +4451,7 @@ static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
 }
 
 
-void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
+bool s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
 {
   /* this includes the special constants #<unspecified> and so on for simplicity -- are there any others?
    */
@@ -4461,19 +4461,19 @@ void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symb
   for (i = 0; i < vector_length(sc->symbol_table); i++) 
     for (x  = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
       if (symbol_func(symbol_name(car(x)), data))
-	return;
+	return(true);
 
-  if (symbol_func("#t", data)) return;
-  if (symbol_func("#f", data)) return;
-  if (symbol_func("#true", data)) return; /* for r7rs */
-  if (symbol_func("#false", data)) return;
-  if (symbol_func("#<unspecified>", data)) return;
-  if (symbol_func("#<undefined>", data)) return;
-  symbol_func("#<eof>", data);
+  return((symbol_func("#t", data))             ||
+	 (symbol_func("#f", data))             ||
+	 (symbol_func("#<unspecified>", data)) ||
+	 (symbol_func("#<undefined>", data))   ||
+	 (symbol_func("#<eof>", data))         ||
+	 (symbol_func("#true", data))          ||
+	 (symbol_func("#false", data))); /* these 2 for r7rs */
 }
 
 
-void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer value, void *data), void *data)
+bool s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer value, void *data), void *data)
 {
   int i; 
   s7_pointer x; 
@@ -4481,7 +4481,9 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
   for (i = 0; i < vector_length(sc->symbol_table); i++) 
     for (x  = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
       if (symbol_func(symbol_name(car(x)), cdr(x), data))
-	return;
+	return(true);
+
+  return(false);
 }
 
 /* (for-each
@@ -23071,7 +23073,7 @@ bool s7_is_valid(s7_scheme *sc, s7_pointer arg)
 
   result = ((type(arg) > T_FREE) && (type(arg) < NUM_TYPES) &&
 	    ((arg->hloc == -1) ||
-	     ((arg->hloc >= 0) && (arg->hloc < sc->heap_size) && (sc->heap[arg->hloc] == arg))));
+	     ((arg->hloc >= 0) && (arg->hloc < (int)sc->heap_size) && (sc->heap[arg->hloc] == arg))));
 
 #if TRAP_SEGFAULT
   signal(SIGSEGV, old_segv);
