@@ -29,7 +29,9 @@
 ;;;    The entity is placed in the current s7 environment under the name (string-append prefix ":" name)
 ;;;    where the ":" is omitted if the prefix is null.  So in the j0 example, we get in s7 the function m:j0.
 ;;;
-;;; this function really ought to be named something like define-c-stuff.
+;;; this function really ought to be named something like c-define.
+;;; TODO: write to and later check for a particular c/so file.
+;;;
 ;;; some examples:
 ;;;
 ;;;  (define-c-function '((double j0 (double)) 

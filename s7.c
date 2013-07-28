@@ -1289,7 +1289,7 @@ struct s7_scheme {
   s7_pointer BIGNUM, BIGNUM_PRECISION;
 #endif
 #if WITH_SYSTEM_EXTRAS
-  s7_pointer DIRECTORYP, FILE_EXISTSP, DELETE_FILE, GETENV, SYSTEM, DIRECTORY_TO_LIST;
+  s7_pointer DIRECTORYP, FILE_EXISTSP, DELETE_FILE, GETENV, SYSTEM, DIRECTORY_TO_LIST, FILE_MTIME;
 #endif
 
   /* these are the associated functions, not symbols */
@@ -25231,6 +25231,29 @@ static s7_pointer g_directory_to_list(s7_scheme *sc, s7_pointer args)
   result = sc->w;
   sc->w = sc->NIL;
   return(result);
+}
+
+
+static s7_pointer g_file_mtime(s7_scheme *sc, s7_pointer args)
+{
+  #define H_file_mtime "(file-mtime file): return the write date of file"
+
+  struct stat statbuf;
+  int err;
+  s7_pointer name;
+
+  name = car(args);
+  if (!is_string(name))
+    {
+      CHECK_METHOD(sc, name, sc->FILE_MTIME, args);
+      return(simple_wrong_type_argument(sc, sc->FILE_MTIME, name, T_STRING));
+    }
+
+  err = stat(string_value(name), &statbuf);
+  if (err < 0) 
+    return(file_error(sc, "file-mtime", strerror(errno), string_value(name)));
+
+  return(s7_make_integer(sc, (s7_Int)(statbuf.st_mtime)));
 }
 #endif
 
@@ -65226,6 +65249,7 @@ s7_scheme *s7_init(void)
   sc->SYSTEM =                s7_define_safe_function(sc, "system",                  g_system,                 1, 0, false, H_system);
 #ifndef _MSC_VER
   sc->DIRECTORY_TO_LIST =     s7_define_safe_function(sc, "directory->list",         g_directory_to_list,      1, 0, false, H_directory_to_list);
+  sc->FILE_MTIME =            s7_define_safe_function(sc, "file-mtime",              g_file_mtime,             1, 0, false, H_file_mtime);
 #endif
 #endif
   
@@ -65994,8 +66018,9 @@ s7_scheme *s7_init(void)
  *    make-real|integer|rational|-vector is not quite right -- we want make-float|int|byte-vector
  */
 
-/* add empty? (or nil? or generic null? or zero-length?) 
+/* add empty? (or nil? or generic null? or zero-length?)
  *   typeq? 
+ *   (null? c-pointer) -- C null?
  */
 
 /* ideally we'd replace strcpy with strcopy throughout Snd, and strcat with strappend or some equivalent
@@ -66003,6 +66028,7 @@ s7_scheme *s7_init(void)
  */
 
 /* other often-used libraries: c glib/gio/gobject/gmodule dl ncurses? gsl? GL/GLU? pcre? readline? tecla? pthread? gdbm?
+ *    none of these is easy to tie in, and what would we gain?
  * possible autoload additions: sndlib? xm? libX* fftw? gmp/mpfr/mpc? 
  * libm: should remquo et al return multiple-values or a list? can this be automated in cload?
  */

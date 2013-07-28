@@ -2731,12 +2731,13 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
   if (initializations)
     initializations(g, g->text);
 
-  SIGNAL_CONNECT(g->text, "key_press_event", glistener_key_press, (gpointer)g);
-  SIGNAL_CONNECT(g->text, "key_release_event", glistener_key_release, (gpointer)g);
+  SIGNAL_CONNECT(g->text, "key_press_event",      glistener_key_press,      (gpointer)g);
+  SIGNAL_CONNECT(g->text, "key_release_event",    glistener_key_release,    (gpointer)g);
   SIGNAL_CONNECT(g->text, "button_release_event", glistener_button_release, (gpointer)g);
-  SIGNAL_CONNECT_AFTER(g->buffer, "insert-text", text_insert, (gpointer)g);
-  SIGNAL_CONNECT_AFTER(g->text, "cut-clipboard", check_for_empty_listener, (gpointer)g);
-  SIGNAL_CONNECT_AFTER(g->buffer, "changed", colorize_listener, (gpointer)g);
+
+  SIGNAL_CONNECT_AFTER(g->buffer, "insert-text",   text_insert,              (gpointer)g);
+  SIGNAL_CONNECT_AFTER(g->buffer, "changed",       colorize_listener,        (gpointer)g);
+  SIGNAL_CONNECT_AFTER(g->text,   "cut-clipboard", check_for_empty_listener, (gpointer)g);
 
   if (!g->prompt)
     {
@@ -2809,4 +2810,5 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
  */
 
 /* C-s/r could prompt in the status area if it were a text entry, not a label widget -- is that possible?
+ *    there's also gtk_overlay (see gtk-demo/overlay.c) in 3.9.8 -- but it says "static position".
  */

@@ -90,6 +90,7 @@ special:
 double remquo double double [int]?
 double frexp double [int]
 double modf double [double]
+here the ref args need to have the right C type
 
 ridiculous:
 double fmax double double
