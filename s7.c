@@ -66006,9 +66006,6 @@ s7_scheme *s7_init(void)
  * calls           275  207  175  115   89   71   53   53
  */
 
-/* TODO: (env env) in clm should be an error
- */
-
 /* vector: void *elements, int element_type(?) or s7_pointer default_element [so ref if not elements -> default]
  *         so a vector need not have a size!  (make-vector #f 1.0) -> 1.0 no matter what index or combination of indices
  *         getter|setter for each vector (or hash-table?)
@@ -66021,17 +66018,15 @@ s7_scheme *s7_init(void)
 /* add empty? (or nil? or generic null? or zero-length?)
  *   typeq? 
  *   (null? c-pointer) -- C null?
- */
-
-/* ideally we'd replace strcpy with strcopy throughout Snd, and strcat with strappend or some equivalent
- *   also openbsd audio is broken in Snd -- see aucat.c I guess.
- */
-
-/* other often-used libraries: c glib/gio/gobject/gmodule dl ncurses? gsl? GL/GLU? pcre? readline? tecla? pthread? gdbm?
- *    none of these is easy to tie in, and what would we gain?
+ *
+ * also openbsd audio is broken in Snd -- see aucat.c I guess.
+ *
+ * other often-used libraries: c glib/gio/gobject/gmodule dl ncurses? gsl? GL/GLU? pcre? readline? tecla? pthread? gdbm?
+ *    libpthread.scm for partial pthread case, but how is this to be used?
+ *    TODO: finish libm
+ *    TODO: gdbm using fth names (fth/examples/dbm/fth-dbm.c) /usr/include/gdbm.h
+ *    TODO: add r7rs tests to s7libtest
+ * TODO: (env env) in clm should be an error
  * possible autoload additions: sndlib? xm? libX* fftw? gmp/mpfr/mpc? 
- * libm: should remquo et al return multiple-values or a list? can this be automated in cload?
- */
-
-/* gdb-s7 might check for 0xnnnn "asdf" to avoid strings
+ * gdb-s7 might check for 0xnnnn "asdf" to avoid strings
  */

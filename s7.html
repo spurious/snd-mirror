@@ -4632,7 +4632,7 @@ loads that file; if a function, it is called with one argument, the current (cal
 	  (lambda (e)
 	    (if (not (provided? 'cload.scm))
 		(load "cload.scm"))
-	    (define-c-function '(double j0 (double)) "" "math.h")
+	    (c-define '(double j0 (double)) "" "math.h")
 	    (augment-environment! e (cons 'j0 j0))))
 </pre>
 
@@ -7821,7 +7821,7 @@ called:
 </p>
 
 <pre class="indented">
-(define-c-function '(double j0 (double)) "m" "math.h")
+(c-define '(double j0 (double)) "m" "math.h")
 </pre>
 
 <p>This links the s7 function m:j0 to the math library
@@ -9415,15 +9415,15 @@ Scheme code.  If any is found, it runs s7 and then lint over it, reporting troub
 
 <div class="header" id="cload"><h4>cload.scm</h4></div>
 
-<p>cload.scm defines the macro define-c-function that reduces the overhead
+<p>cload.scm defines the macro c-define that reduces the overhead
 involved in (dynamically) linking C entities into s7.
 </p>
 
 <pre class="indented">
-(<em class=def id="definecfunction">define-c-function</em> c-info (prefix "") (headers ()) (cflags "") (ldflags ""))
+(<em class=def id="definecfunction">c-define</em> c-info (prefix "") (headers ()) (cflags "") (ldflags ""))
 </pre>
 
-<p>For example, <code>(define-c-function '(double j0 (double)) "m" "math.h")</code>
+<p>For example, <code>(c-define '(double j0 (double)) "m" "math.h")</code>
 links the C math library function j0 into s7 under the name m:j0, 
 passing it a double argument and getting a double result (a real in s7).
 </p>
@@ -9475,7 +9475,7 @@ to construct the corresponding symbol.
 
 <p>The entity is placed in the current s7 environment under the name <code>(string-append prefix ":" name)</code>
 where the ":" is omitted if the prefix is null.  So in the j0 example, we get in s7 the function m:j0.
-define-c-function returns #t if it thinks the load worked, and #f otherwise.
+c-define returns #t if it thinks the load worked, and #f otherwise.
 </p>
 
 <p>There are times when the only straightforward approach is to write the desired
@@ -9485,51 +9485,51 @@ Here are some examples:
 
 <pre class="indented">
 ;;; various math library functions
-(define-c-function '((double j0 (double)) 
-                     (double j1 (double)) 
-                     (double erf (double)) 
-                     (double erfc (double))
-                     (double lgamma (double)))
-                    "m" "math.h")
+(c-define '((double j0 (double)) 
+            (double j1 (double)) 
+            (double erf (double)) 
+            (double erfc (double))
+            (double lgamma (double)))
+          "m" "math.h")
 
 
 ;;; getenv and setenv
-(define-c-function '(char* getenv (char*)))
-(define-c-function '(int setenv (char* char* int)))
+(c-define '(char* getenv (char*)))
+(c-define '(int setenv (char* char* int)))
 
 
 ;;; file-exists? and delete-file
 (define file-exists? (let () ; define F_OK and access only within this let
-                       (define-c-function '((int F_OK) (int access (char* int))) "" "unistd.h") 
+                       (c-define '((int F_OK) (int access (char* int))) "" "unistd.h") 
                        (lambda (arg) (= (access arg F_OK) 0))))
 
 (define delete-file (let () 
-                      (define-c-function '(int unlink (char*)) "" "unistd.h") 
+                      (c-define '(int unlink (char*)) "" "unistd.h") 
                       (lambda (file) (= (unlink file) 0)))) ; 0=success
 
 
 ;;; examples from Snd:
-(define-c-function '(char* version_info ()) "" "snd.h" "-I.")
+(c-define '(char* version_info ()) "" "snd.h" "-I.")
 
-(define-c-function '(mus_float_t mus_degrees_to_radians (mus_float_t)) "" "snd.h" "-I.")
+(c-define '(mus_float_t mus_degrees_to_radians (mus_float_t)) "" "snd.h" "-I.")
 
-(define-c-function '(snd_info* any_selected_sound ()) "" "snd.h" "-I.")
-(define-c-function '(void select_channel (snd_info* int)) "" "snd.h" "-I.")
+(c-define '(snd_info* any_selected_sound ()) "" "snd.h" "-I.")
+(c-define '(void select_channel (snd_info* int)) "" "snd.h" "-I.")
 
-(define-c-function '(((graph_style_t int) (GRAPH_LINES GRAPH_DOTS GRAPH_FILLED GRAPH_DOTS_AND_LINES GRAPH_LOLLIPOPS)) 
-                      (void set_graph_style ((graph_style_t int)))) 
-                   "" "snd.h" "-I.")
+(c-define '(((graph_style_t int) (GRAPH_LINES GRAPH_DOTS GRAPH_FILLED GRAPH_DOTS_AND_LINES GRAPH_LOLLIPOPS)) 
+            (void set_graph_style ((graph_style_t int)))) 
+          "" "snd.h" "-I.")
    
 
 ;;; getcwd, strftime
-(define-c-function '(char* getcwd (char* size_t)) "" "unistd.h")
+(c-define '(char* getcwd (char* size_t)) "" "unistd.h")
 
-(define-c-function (list '(void* calloc (size_t size_t))
-	                 '(void free (void*))
-	                 '(void time (time_t*)) ; ignore returned value
-	                 (list (symbol "struct tm*") 'localtime '(time_t*))
-                         (list 'size_t 'strftime (list 'char* 'size_t 'char* (symbol "struct tm*"))))
-                   "" "time.h")
+(c-define (list '(void* calloc (size_t size_t))
+	        '(void free (void*))
+	        '(void time (time_t*)) ; ignore returned value
+	        (list (symbol "struct tm*") 'localtime '(time_t*))
+                (list 'size_t 'strftime (list 'char* 'size_t 'char* (symbol "struct tm*"))))
+          "" "time.h")
 
 &gt; (let ((p (calloc 1 8)) 
         (str (make-string 32)))
@@ -9541,16 +9541,16 @@ Here are some examples:
 
 
 ;;; opendir, read_dir, closedir
-(define-c-function '((int closedir (DIR*))
-		     (DIR* opendir (char*))
-		     (in-C "static char *read_dir(DIR *p)  \
-                            {                              \
-                             struct dirent *dirp;          \
-                             dirp = readdir(p);            \
-                             if (!dirp) return(NULL);      \
-                             return(dirp-&gt;d_name);         \
-                            }")
-		     (char* read_dir (DIR*)))
+(c-define '((int closedir (DIR*))
+	    (DIR* opendir (char*))
+	    (in-C "static char *read_dir(DIR *p)  \
+                   {                              \
+                     struct dirent *dirp;          \
+                     dirp = readdir(p);            \
+                     if (!dirp) return(NULL);      \
+                     return(dirp-&gt;d_name);         \
+                   }")
+	    (char* read_dir (DIR*)))
   "" '("sys/types.h" "dirent.h"))
 
 (let ((dir (opendir "/home/bil/gtk-snd")))
@@ -9570,8 +9570,8 @@ gcc -c s7.c -I.
 gcc -o ex1 ex1.c s7.o -lm -I. -ldl -Wl,-export-dynamic
 ex1
 &gt; (load "cload.scm")
-define-c-function-1
-&gt; (define-c-function '(double j0 (double)) "m" "math.h")
+c-define-1
+&gt; (c-define '(double j0 (double)) "m" "math.h")
 #t
 &gt; (m:j0 0.5)
 0.93846980724081

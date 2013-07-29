@@ -571,6 +571,8 @@
 	     (hash-table-set! names file (cons symbol cur-names))
 	     (hash-table-set! names file (list symbol))))))
    (list 
+    (list '*libm* "libm.scm")
+
     (list 'with-sound "ws.scm")
     (list 'with-mixed-sound "ws.scm")
     (list 'with-full-sound "ws.scm")

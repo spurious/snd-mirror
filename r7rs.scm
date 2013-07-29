@@ -296,17 +296,17 @@
 ;; get-environment-variable is a bad name: "environment" is already in use, and "get-"
 ;;   in any name should raise a red flag.  What about "home-environment"?
 ;;   if <a href="#cload">cload.scm</a> is loaded:
-(define get-environment-variable (let () (define-c-function '(char* getenv (char*))) getenv))
+(define get-environment-variable (let () (c-define '(char* getenv (char*))) getenv))
 
 ;; similarly:
 (define file-exists? (let ()
-                       (define-c-function '((int F_OK) (int access (char* int))) "" "unistd.h") 
+                       (c-define '((int F_OK) (int access (char* int))) "" "unistd.h") 
                        (lambda (arg) 
                          (= (access arg F_OK) 0))))
 
 
 (let ((e (current-environment)))
-  (define-c-function 
+  (c-define 
     '((in-C "static int g_time(void) {return((int)time(NULL));} \n\
              static struct timeval overall_start_time;  \n\
              static bool time_set_up = false;           \n\
@@ -330,34 +330,35 @@
 
 
 (let ((e (current-environment)))
-  (define-c-function 
+  (c-define 
     '((char* getenv (char*))
-      (in-C "s7_scheme *s7; extern char **environ;              \n\
-             static s7_pointer getenvs(void)                    \n\
-             {                                                  \n\
-               s7_pointer p;                                    \n\
-               int i;                                           \n\
-               p = s7_nil(s7);                                  \n\
-               for (i = 0; environ[i]; i++)                     \n\
-                 {                                              \n\
-                  const char *eq;                               \n\
-                  s7_pointer name, value;                       \n\
-                  eq = strchr((const char *)environ[i], (int)'=');                   \n\
-                  name = s7_make_string_with_length(s7, environ[i], eq - environ[i]);\n\
-                  value = s7_make_string(s7, (char *)(eq + 1)); \n\
-                  p = s7_cons(s7, s7_cons(s7, name, value), p); \n\
-                 }                                              \n\
-               return(p);                                       \n\
+      (in-C "extern char **environ;                                    \n\
+             static s7_pointer getenvs(s7_scheme *sc, s7_pointer args) \n\
+             {                                                         \n\
+               s7_pointer p;                                           \n\
+               int i;                                                  \n\
+               p = s7_nil(sc);                                         \n\
+               for (i = 0; environ[i]; i++)                            \n\
+                 {                                                     \n\
+                  const char *eq;                                      \n\
+                  s7_pointer name, value;                              \n\
+                  eq = strchr((const char *)environ[i], (int)'=');     \n\
+                  name = s7_make_string_with_length(sc, environ[i], eq - environ[i]);\n\
+                  value = s7_make_string(sc, (char *)(eq + 1));        \n\
+                  p = s7_cons(sc, s7_cons(sc, name, value), p);        \n\
+                 }                                                     \n\
+               return(p);                                              \n\
               }")
-      (s7_pointer getenvs (void)))
+      (C-function ("getenvs" getenvs getenvs 0)))
     "" '("unistd.h"))
   (augment-environment! e
     (cons 'get-environment-variable getenv)
     (cons 'get-environment-variables getenvs)))
 
+
 ;;; srfi 112
 (let ((e (current-environment)))
-  (define-c-function '((in-C "static struct utsname buf; \
+  (c-define '((in-C "static struct utsname buf; \
                               static char *os_type(void) {uname(&buf); return(buf.sysname);} \
                               static char *cpu_arch(void) {uname(&buf); return(buf.machine);} \
                               static char *sys_ins(void) {uname(&buf); return(buf.nodename);} \

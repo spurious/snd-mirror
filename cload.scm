@@ -2,10 +2,10 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;; automatically link a C function into s7 (there are a bunch of examples below)
-;;;     (define-c-function '(double j0 (double)) "m" "math.h")
+;;;     (c-define '(double j0 (double)) "m" "math.h")
 ;;; means link the name m:j0 to the math library function j0 passing a double arg and getting a double result (reals in s7)
 ;;;
-;;; (define-c-function c-info prefix headers cflags ldflags)
+;;; (c-define c-info prefix headers cflags ldflags)
 ;;;    prefix is some arbitrary prefix (it can be "") that you want prepended to various names.
 ;;;    headers is a list of headers (as strings) that the c-info relies on, (("math.h") for example).
 ;;;    cflags are any special C compiler flags that are needed ("-I." in particular).
@@ -29,66 +29,65 @@
 ;;;    The entity is placed in the current s7 environment under the name (string-append prefix ":" name)
 ;;;    where the ":" is omitted if the prefix is null.  So in the j0 example, we get in s7 the function m:j0.
 ;;;
-;;; this function really ought to be named something like c-define.
 ;;; TODO: write to and later check for a particular c/so file.
 ;;;
 ;;; some examples:
 ;;;
-;;;  (define-c-function '((double j0 (double)) 
-;;;                       (double j1 (double)) 
-;;;                       (double erf (double)) 
-;;;                       (double erfc (double))
-;;;                       (double lgamma (double)))
-;;;                      "m" "math.h")
+;;;  (c-define '((double j0 (double)) 
+;;;              (double j1 (double)) 
+;;;              (double erf (double)) 
+;;;              (double erfc (double))
+;;;              (double lgamma (double)))
+;;;             "m" "math.h")
 ;;; 
 ;;;
-;;; (define-c-function '(char* getenv (char*)))
-;;; (define-c-function '(int setenv (char* char* int)))
-;;; (define get-environment-variable (let () (define-c-function '(char* getenv (char*))) getenv))
+;;; (c-define '(char* getenv (char*)))
+;;; (c-define '(int setenv (char* char* int)))
+;;; (define get-environment-variable (let () (c-define '(char* getenv (char*))) getenv))
 ;;;
-;;; (define file-exists? (let () (define-c-function '((int F_OK) (int access (char* int))) "" "unistd.h") (lambda (arg) (= (access arg F_OK) 0))))
-;;; (define delete-file (let () (define-c-function '(int unlink (char*)) "" "unistd.h") (lambda (file) (= (unlink file) 0)))) ; 0=success, -1=failure
+;;; (define file-exists? (let () (c-define '((int F_OK) (int access (char* int))) "" "unistd.h") (lambda (arg) (= (access arg F_OK) 0))))
+;;; (define delete-file (let () (c-define '(int unlink (char*)) "" "unistd.h") (lambda (file) (= (unlink file) 0)))) ; 0=success, -1=failure
 ;;;
 ;;;
 ;;; these pick up Snd stuff:
-;;;   (define-c-function '(char* version_info ()) "" "snd.h" "-I.")
-;;;   (define-c-function '(mus_float_t mus_degrees_to_radians (mus_float_t)) "" "snd.h" "-I.")
+;;;   (c-define '(char* version_info ()) "" "snd.h" "-I.")
+;;;   (c-define '(mus_float_t mus_degrees_to_radians (mus_float_t)) "" "snd.h" "-I.")
 ;;;
-;;;   (define-c-function '(snd_info* any_selected_sound ()) "" "snd.h" "-I.")
-;;;   (define-c-function '(void select_channel (snd_info* int)) "" "snd.h" "-I.")
-;;;   (define-c-function '(((graph_style_t int) (GRAPH_LINES GRAPH_DOTS GRAPH_FILLED GRAPH_DOTS_AND_LINES GRAPH_LOLLIPOPS)) 
-;;;                        (void set_graph_style ((graph_style_t int)))) 
-;;;                      "" "snd.h" "-I.")
+;;;   (c-define '(snd_info* any_selected_sound ()) "" "snd.h" "-I.")
+;;;   (c-define '(void select_channel (snd_info* int)) "" "snd.h" "-I.")
+;;;   (c-define '(((graph_style_t int) (GRAPH_LINES GRAPH_DOTS GRAPH_FILLED GRAPH_DOTS_AND_LINES GRAPH_LOLLIPOPS)) 
+;;;               (void set_graph_style ((graph_style_t int)))) 
+;;;             "" "snd.h" "-I.")
 ;;;   
 ;;;
-;;;  (define-c-function '(char* getcwd (char* size_t)) "" "unistd.h")
+;;;  (c-define '(char* getcwd (char* size_t)) "" "unistd.h")
 ;;;    :(let ((str (make-string 32))) (getcwd str 32) str)
 ;;;    "/home/bil/cl\x00                   "
 ;;;    so it works in a sense -- there is a memory leak here
 ;;; 
 ;;;
-;;; (define-c-function (list '(void* calloc (size_t size_t))
-;;;		             '(void* malloc (size_t))
-;;;		             '(void free (void*))
-;;;		             '(void* realloc(void* size_t))
-;;;		             '(void time (time_t*)) ; ignore returned value
-;;;		             (list (symbol "struct tm*") 'localtime '(time_t*))
-;;;                          (list 'size_t 'strftime (list 'char* 'size_t 'char* (symbol "struct tm*"))))
-;;;                    "" "time.h")
+;;; (c-define (list '(void* calloc (size_t size_t))
+;;;		    '(void* malloc (size_t))
+;;;		    '(void free (void*))
+;;;		    '(void* realloc(void* size_t))
+;;;		    '(void time (time_t*)) ; ignore returned value
+;;;		    (list (symbol "struct tm*") 'localtime '(time_t*))
+;;;                 (list 'size_t 'strftime (list 'char* 'size_t 'char* (symbol "struct tm*"))))
+;;;          "" "time.h")
 ;;;   > (let ((p (calloc 1 8)) (str (make-string 32))) (time p) (strftime str 32 "%a %d-%b-%Y %H:%M %Z" (localtime p)) (free p) str)
 ;;;   "Sat 11-Aug-2012 08:55 PDT\x00      "
 ;;;
 ;;;
-;;; (define-c-function '((int closedir (DIR*))
-;;; 		         (DIR* opendir (char*))
-;;; 		         (in-C "static char *read_dir(DIR *p) \
-;;;                             {                             \
-;;;                              struct dirent *dirp;         \
-;;;                              dirp = readdir(p);           \
-;;;                              if (!dirp) return(NULL);     \
-;;;                              else return(dirp->d_name);   \
-;;;                             }")
-;;; 		         (char* read_dir (DIR*)))
+;;; (c-define '((int closedir (DIR*))
+;;; 	        (DIR* opendir (char*))
+;;; 		(in-C "static char *read_dir(DIR *p) \
+;;;                    {                             \
+;;;                      struct dirent *dirp;         \
+;;;                      dirp = readdir(p);           \
+;;;                      if (!dirp) return(NULL);     \
+;;;                      else return(dirp->d_name);   \
+;;;                     }")
+;;; 	        (char* read_dir (DIR*)))
 ;;;   "" '("sys/types.h" "dirent.h"))
 ;;; 
 ;;; (let ((dir (opendir "/home/bil/gtk-snd")))
@@ -104,15 +103,15 @@
   `(if (not (defined? ',name)) 
        (define ,name ,value)))
 
-(defvar define-c-function-output-file-counter 0)   ; ugly, but I can't find a way around this (dlopen/dlsym stupidity)
+(defvar c-define-output-file-counter 0)   ; ugly, but I can't find a way around this (dlopen/dlsym stupidity)
 
 
 ;;; to place the new function in the caller's current environment, we need to pass the environment in explicitly:
-(define-macro (define-c-function . args) 
-  `(define-c-function-1 (current-environment) ,@args))
+(define-macro (c-define . args) 
+  `(c-define-1 (current-environment) ,@args))
 
 
-(define* (define-c-function-1 cur-env function-info (prefix "") (headers ()) (cflags "") (ldflags ""))
+(define* (c-define-1 cur-env function-info (prefix "") (headers ()) (cflags "") (ldflags "") output-name)
   ;; write a C shared library module that links in the functions in function-info
   ;;    function info is either a list: (return-type c-name arg-type) or a list thereof
   ;;    the new functions are placed in cur-env
@@ -190,11 +189,15 @@
   (define (checker type)
     (find-handler (C-type->s7-type type) cadr))
 
-  (set! define-c-function-output-file-counter (+ define-c-function-output-file-counter 1))
+  (set! c-define-output-file-counter (+ c-define-output-file-counter 1))
 
-
-  (let* ((file-name (format "temp-s7-output-~D" define-c-function-output-file-counter))
+  (let* ((file-name (or output-name (format "temp-s7-output-~D" c-define-output-file-counter)))
 	 (c-file-name (string-append file-name ".c"))
+	 (o-file-name (string-append file-name ".o"))
+	 (so-file-name (string-append file-name ".so"))
+	 (init-name (if output-name
+			(string-append output-name "_init")
+			(string-append "init_" (number->string c-define-output-file-counter))))
 	 (functions ())
 	 (constants ())
 	 (macros ())
@@ -312,114 +315,126 @@
     (define (end-c-file)
       ;; now the init function
       ;;   the new scheme variables and functions are placed in the current environment
-	
-      (let ((o-file-name (string-append file-name ".o"))
-	    (so-file-name (string-append file-name ".so"))
-	    (base-name (string-append (number->string define-c-function-output-file-counter) "_init")))
-	(format p "void init_~A(s7_scheme *sc);~%" base-name)
-	(format p "void init_~A(s7_scheme *sc)~%" base-name)
-	(format p "{~%")
-	(format p "  s7_pointer cur_env;~%")
-	(format p "  cur_env = s7_outer_environment(s7_current_environment(sc));~%") ; this must exist because we pass load the env ourselves
-	
-	;; "constants" -- actually variables in s7 because we want them to be local to the current environment
-	(if (pair? constants)
-	    (begin
-	      (format p "~%")
-	      (for-each
-	       (lambda (c)
-		 (let* ((type (c 0))
-			(c-name (c 1))
-			(scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") c-name)))
-		   (format p "  s7_define(sc, cur_env, s7_make_symbol(sc, ~S), ~A(sc, (~A)~A));~%" 
-			   scheme-name
-			   (C->s7 type)
-			   (C->s7-cast type)
-			   c-name)))
-	       constants)))
 
-	;; C macros -- need #ifdef name #endif wrapper
-	(if (pair? macros)
-	    (begin
-	      (format p "~%")
-	      (for-each
-	       (lambda (c)
-		 (let* ((type (c 0))
-			(c-name (c 1))
-			(scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") c-name)))
-		   (format p "#ifdef ~A~%" c-name)
-		   (format p "  s7_define(sc, cur_env, s7_make_symbol(sc, ~S), ~A(sc, (~A)~A));~%" 
-			   scheme-name
-			   (C->s7 type)
-			   (C->s7-cast type)
-			   c-name)
-		   (format p "#endif~%")))
-	       macros)))
-
-	;; functions
-	(for-each
-	 (lambda (f)
-	   (let ((scheme-name (f 0))
-		 (base-name   (f 1))
-		 (func-name   (f 2))
-		 (num-args    (f 3)))
-	     (format p "~%  s7_define(sc, cur_env,~%")
-	     (format p "            s7_make_symbol(sc, ~S),~%" scheme-name)
-	     (format p "            s7_make_function(sc, ~S, ~A, ~D, 0, false, \"dloaded ~A\"));~%"
-		     scheme-name
-		     base-name
-		     num-args
-		     func-name)))
-	 functions)
-
-	(format p "}~%")
-	(close-output-port p)
-  
-	;; now we have the module .c file -- make it into a shared object, load it, delete the temp files
-	
-	(if (provided? 'osx)
-	    (begin
-	      ;; I assume the caller is also compiled with these flags?
-	      (system (format #f "gcc -c ~A ~A" c-file-name cflags))
-	      (system (format #f "gcc ~A -o ~A -dynamic -bundle -undefined suppress -flat_namespace ~A" o-file-name so-file-name ldflags)))
-	    (begin
-	      (system (format #f "gcc -fPIC -c ~A ~A" c-file-name cflags))
-	      (system (format #f "gcc ~A -shared -o ~A ~A" o-file-name so-file-name ldflags))))
-
-	(let ((new-env (augment-environment
-			   cur-env
-			 (cons 'init_func (string->symbol (string-append "init_" base-name))))))
-	  (let ((result (load so-file-name new-env)))
-
-	    ;;(delete-file c-file-name)
-	    (delete-file o-file-name)
-	    (delete-file so-file-name)
-
-	    result))))
+      (format p "void ~A(s7_scheme *sc);~%" init-name)
+      (format p "void ~A(s7_scheme *sc)~%" init-name)
+      (format p "{~%")
+      (format p "  s7_pointer cur_env;~%")
+      (format p "  cur_env = s7_outer_environment(s7_current_environment(sc));~%") ; this must exist because we pass load the env ourselves
+      
+      ;; "constants" -- actually variables in s7 because we want them to be local to the current environment
+      (if (pair? constants)
+	  (begin
+	    (format p "~%")
+	    (for-each
+	     (lambda (c)
+	       (let* ((type (c 0))
+		      (c-name (c 1))
+		      (scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") c-name)))
+		 (format p "  s7_define(sc, cur_env, s7_make_symbol(sc, ~S), ~A(sc, (~A)~A));~%" 
+			 scheme-name
+			 (C->s7 type)
+			 (C->s7-cast type)
+			 c-name)))
+	     constants)))
+      
+      ;; C macros -- need #ifdef name #endif wrapper
+      (if (pair? macros)
+	  (begin
+	    (format p "~%")
+	    (for-each
+	     (lambda (c)
+	       (let* ((type (c 0))
+		      (c-name (c 1))
+		      (scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") c-name)))
+		 (format p "#ifdef ~A~%" c-name)
+		 (format p "  s7_define(sc, cur_env, s7_make_symbol(sc, ~S), ~A(sc, (~A)~A));~%" 
+			 scheme-name
+			 (C->s7 type)
+			 (C->s7-cast type)
+			 c-name)
+		 (format p "#endif~%")))
+	     macros)))
+      
+      ;; functions
+      (for-each
+       (lambda (f)
+	 (let ((scheme-name (f 0))
+	       (base-name   (f 1))
+	       (func-name   (f 2))
+	       (num-args    (f 3)))
+	   (format p "~%  s7_define(sc, cur_env,~%")
+	   (format p "            s7_make_symbol(sc, ~S),~%" scheme-name)
+	   (format p "            s7_make_function(sc, ~S, ~A, ~D, 0, false, \"dloaded ~A\"));~%"
+		   scheme-name
+		   base-name
+		   num-args
+		   func-name)))
+       functions)
+      
+      (format p "}~%")
+      (close-output-port p)
+      
+      ;; now we have the module .c file -- make it into a shared object, load it, delete the temp files
+      
+      (if (provided? 'osx)
+	  (begin
+	    ;; I assume the caller is also compiled with these flags?
+	    (system (format #f "gcc -c ~A ~A" c-file-name cflags))
+	    (system (format #f "gcc ~A -o ~A -dynamic -bundle -undefined suppress -flat_namespace ~A" o-file-name so-file-name ldflags)))
+	  (begin
+	    (system (format #f "gcc -fPIC -c ~A ~A" c-file-name cflags))
+	    (system (format #f "gcc ~A -shared -o ~A ~A" o-file-name so-file-name ldflags)))))
 
 
-    ;; this is the body of define-c-function
-    (initialize-c-file)
+    (define (handle-declaration func)
+      ;; functions
+      (if (= (length func) 3)
+	  (apply add-one-function func)
+	  ;; (in-C ...)
+	  (if (eq? (car func) 'in-C)
+	      (format p "~A~%" (cadr func))
+	      ;; (C-macro ...)
+	      (if (eq? (car func) 'C-macro)
+		  (apply add-one-macro (cadr func))
+		  ;; (C-function ...)
+		  (if (eq? (car func) 'C-function)
+		      (set! functions (cons (cadr func) functions))
+		      ;; variable
+		      (apply add-one-constant func))))))
 
-    (if (and (pair? (cdr function-info))
-	     (symbol? (cadr function-info)))
-	(if (= (length function-info) 3)
-	    (apply add-one-function function-info)
-	    (if (eq? (car function-info) 'in-C)
-		(format p "~A~%" (cadr function-info))
-		(if (eq? (car function-info) 'C-macro)
-		    (apply add-one-macro (cadr function-info))
-		    (apply add-one-constant function-info))))
-	(for-each
-	 (lambda (func)
-	   (if (= (length func) 3)
-	       (apply add-one-function func)
-	       (if (eq? (car func) 'in-C)
-		   (format p "~A~%" (cadr func))
-		   (if (eq? (car func) 'C-macro)
-		       (apply add-one-macro (cadr func))
-		       (apply add-one-constant func)))))
-	 function-info))
 
-    (end-c-file)))
+    ;; this is the body of c-define
+    (if (or (not output-name)
+	    (not (file-exists? c-file-name))
+	    (not (file-exists? so-file-name))
+	    (not (provided? 'system-extras))
+	    (< (file-mtime so-file-name) (file-mtime c-file-name))) ; they are equal on my linux system
+	(begin
+	  (format *stderr* "writing ~A~%" c-file-name)
+	  ;; write a new C file and compile it
+	  (initialize-c-file)
 
+	  (if (and (pair? (cdr function-info))
+		   (symbol? (cadr function-info)))
+	      (handle-declaration function-info)
+	      (for-each handle-declaration function-info))
+	  
+	  (end-c-file)
+	  (delete-file o-file-name)))
+
+    ;; load the obejct file, clean up
+    (let ((new-env (augment-environment
+		       cur-env
+		     (cons 'init_func (string->symbol init-name)))))
+      (format *stderr* "loading ~A~%" so-file-name)
+      (load so-file-name new-env))))
+
+
+
+;;; backwards compatibility
+(define define-c-function c-define)
+
+
+
+;;; TODO: doc C-macro and C-function, output handling and arg

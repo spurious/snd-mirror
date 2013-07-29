@@ -896,7 +896,7 @@ bool s7_is_valid_pointer(s7_pointer arg);
  * 
  *        s7 changes
  *		
- * 23-Jul:    s7_autoload_set_names.
+ * 23-Jul:    s7_autoload_set_names, libm.scm, r7rs.scm, s7libtest.scm, gdb-s7.scm.
  * 21-Jul:    s7_is_valid (replaces deprecated s7_is_valid_pointer).
  * 24-Jun:    some bool-related changes for Windows Visual C++, including change to s7_begin_hook.
  * 3-June:    s7_autoload.

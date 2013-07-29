@@ -70808,13 +70808,13 @@ etc
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; cload define-c-function tests
+;;; cload c-define tests
 
 (if (provided? 'snd)
     (begin
       (load "cload.scm")
       
-      (define-c-function '((double j0 (double)) 
+      (c-define '((double j0 (double)) 
 			   (double j1 (double)) 
 			   (double erf (double)) 
 			   (double erfc (double))
@@ -70829,24 +70829,24 @@ etc
       (num-test (m:lgamma 2/3) 0.30315027514752)
       
       (let ()
-	(define-c-function '(char* getenv (char*)))
-	(define-c-function '(int setenv (char* char* int)))
+	(c-define '(char* getenv (char*)))
+	(c-define '(int setenv (char* char* int)))
 	(test (string? (getenv "HOST")) #t))
       
       (test (defined? 'setenv) #f)
       
       (let ()
 	(define local-file-exists? (let () ; define F_OK and access only within this let
-				     (define-c-function '((int F_OK) (int access (char* int))) "" "unistd.h") 
+				     (c-define '((int F_OK) (int access (char* int))) "" "unistd.h") 
 				     (lambda (arg) (= (access arg F_OK) 0))))
 	
 	(define delete-file (let () 
-			      (define-c-function '(int unlink (char*)) "" "unistd.h") 
+			      (c-define '(int unlink (char*)) "" "unistd.h") 
 			      (lambda (file) (= (unlink file) 0)))) ; 0=success
 	
 	(test (local-file-exists? "s7test.scm") #t))
 
-      (define-c-function 
+      (c-define 
 	'((in-C "static struct timeval overall_start_time;  \n\
            static bool time_set_up = false;           \n\
            static double get_internal_real_time(void) \n\
