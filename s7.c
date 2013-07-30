@@ -139,7 +139,7 @@
  * To get multiprecision arithmetic, set WITH_GMP to 1.
  *   You'll also need libgmp, libmpfr, and libmpc (version 0.8.0 or later)
  *
- * if WITH_SYSTEM_EXTRAS is 1 (default is 0), various OS and file related functions are included.
+ * if WITH_SYSTEM_EXTRAS is 1 (default is 1 unless _MSC_VER), various OS and file related functions are included.
  *
  * so the incoming (non-s7-specific) compile-time switches are
  *     HAVE_COMPLEX_NUMBERS_TRIG, SIZEOF_VOID_P
@@ -222,14 +222,14 @@
 #endif
 
 #ifndef WITH_SYSTEM_EXTRAS
-  #define WITH_SYSTEM_EXTRAS 0
+  #define WITH_SYSTEM_EXTRAS (!_MSC_VER)
   /* this adds several functions that access file info, directories, times, etc
    *    this may be replaced by the cload business below
    */
 #endif
 
 #ifndef WITH_C_LOADER
-#define WITH_C_LOADER WITH_GCC
+  #define WITH_C_LOADER WITH_GCC
   /* (load file.so [e]) looks for (e 'init_func) and if found, calls it
    *   as the shared object init function.  If WITH_SYSTEM_EXTRAS is 0, the caller
    *   needs to supply system and delete-file so that cload.scm works.
@@ -66021,10 +66021,9 @@ s7_scheme *s7_init(void)
  *
  * also openbsd audio is broken in Snd -- see aucat.c I guess.
  *
- * other often-used libraries: c glib/gio/gobject/gmodule dl ncurses? gsl? GL/GLU? pcre? readline? tecla? pthread? gdbm?
+ * other often-used libraries: c glib/gio/gobject/gmodule dl ncurses? gsl? GL/GLU? pcre? readline? tecla?
  *    libpthread.scm for partial pthread case, but how is this to be used?
- *    TODO: finish libm
- *    TODO: gdbm using fth names (fth/examples/dbm/fth-dbm.c) /usr/include/gdbm.h
+ *    SOMEDAY: libmgdbm tests and setopt support
  *    TODO: add r7rs tests to s7libtest
  * TODO: (env env) in clm should be an error
  * possible autoload additions: sndlib? xm? libX* fftw? gmp/mpfr/mpc? 

@@ -9479,7 +9479,10 @@ c-define returns #t if it thinks the load worked, and #f otherwise.
 </p>
 
 <p>There are times when the only straightforward approach is to write the desired
-C code directly.  To insert C code on the fly, use (in-C "code..."). 
+C code directly.  To insert C code on the fly, use (in-C "code..."). Two more such
+cases that come up all the time: C-function for linkage to functions written
+directly in s7 style using in-C, and C-macro for macros in the C header file that
+need to be wrapped in #ifdefs.
 Here are some examples:
 </p>
 
@@ -9577,8 +9580,8 @@ c-define-1
 0.93846980724081
 </pre>
 
-<p>See also libm.scm which loads the math library into an environment named *libm*
-(a library in r7rs parlance).
+<p>See also r7rs.scm, libm.scm (the math library), and
+and libgdbm.scm (the data base library).
 </p>
 
 </body>

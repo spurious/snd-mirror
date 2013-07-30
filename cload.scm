@@ -29,8 +29,6 @@
 ;;;    The entity is placed in the current s7 environment under the name (string-append prefix ":" name)
 ;;;    where the ":" is omitted if the prefix is null.  So in the j0 example, we get in s7 the function m:j0.
 ;;;
-;;; TODO: write to and later check for a particular c/so file.
-;;;
 ;;; some examples:
 ;;;
 ;;;  (c-define '((double j0 (double)) 
@@ -409,7 +407,9 @@
 	    (not (file-exists? c-file-name))
 	    (not (file-exists? so-file-name))
 	    (not (provided? 'system-extras))
-	    (< (file-mtime so-file-name) (file-mtime c-file-name))) ; they are equal on my linux system
+	    (< (file-mtime so-file-name) (file-mtime c-file-name))   ; they are equal on my linux system
+	    (and (file-exists? (port-filename (current-input-port))) ; we're actually loading a file
+		 (< (file-mtime so-file-name) (file-mtime (port-filename (current-input-port))))))
 	(begin
 	  (format *stderr* "writing ~A~%" c-file-name)
 	  ;; write a new C file and compile it
@@ -437,4 +437,4 @@
 
 
 
-;;; TODO: doc C-macro and C-function, output handling and arg
+;;; TODO: doc output handling and arg

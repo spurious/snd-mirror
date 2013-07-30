@@ -77,6 +77,49 @@
 		    (C-macro (double (__DBL_DENORM_MIN__ __DBL_MAX__ __DBL_MIN__ __DBL_EPSILON__)))
 		    (C-macro (int (__DBL_MIN_10_EXP__ __DBL_MAX_10_EXP__ __DBL_DIG__ __DBL_MANT_DIG__ __DBL_MIN_EXP__ __DBL_MAX_EXP__ 
 						      __SIZEOF_DOUBLE__ __SIZEOF_LONG_LONG__ __LONG_LONG_MAX__)))
+		    
+		    ;; these have arg by reference, return list in s7
+		    (in-C "
+static s7_pointer g_remquo(s7_scheme *sc, s7_pointer args)                           \n\
+{                                                                                    \n\
+  if (s7_is_real(s7_car(args)))                                                      \n\
+    {                                                                                \n\
+      if (s7_is_real(s7_cadr(args)))                                                 \n\
+        {                                                                            \n\
+          int quo = 0;                                                               \n\
+          double rem;                                                                \n\
+          rem = remquo(s7_number_to_real(sc, s7_car(args)), s7_number_to_real(sc, s7_cadr(args)), &quo); \n\
+          return(s7_list(sc, 2, s7_make_real(sc, rem), s7_make_integer(sc, quo)));   \n\
+        }                                                                            \n\
+      return(s7_wrong_type_arg_error(sc, \"remquo\", 2, s7_cadr(args), \"a real\")); \n\
+     }                                                                               \n\
+  return(s7_wrong_type_arg_error(sc, \"remquo\", 1, s7_car(args), \"a real\"));      \n\
+}                                                                                    \n\
+static s7_pointer g_frexp(s7_scheme *sc, s7_pointer args)                            \n\
+{                                                                                    \n\
+  if (s7_is_real(s7_car(args)))                                                      \n\
+    {                                                                                \n\
+      int ex = 0;                                                                    \n\
+      double frac;                                                                   \n\
+      frac = frexp(s7_number_to_real(sc, s7_car(args)), &ex);                        \n\
+      return(s7_list(sc, 2, s7_make_real(sc, frac), s7_make_integer(sc, ex)));       \n\
+     }                                                                               \n\
+  return(s7_wrong_type_arg_error(sc, \"frexp\", 1, s7_car(args), \"a real\"));       \n\
+}                                                                                    \n\
+static s7_pointer g_modf(s7_scheme *sc, s7_pointer args)                             \n\
+{                                                                                    \n\
+  if (s7_is_real(s7_car(args)))                                                      \n\
+    {                                                                                \n\
+      double frac, ip = 0.0;                                                         \n\
+      frac = modf(s7_number_to_real(sc, s7_car(args)), &ip);                         \n\
+      return(s7_list(sc, 2, s7_make_real(sc, frac), s7_make_real(sc, ip)));          \n\
+     }                                                                               \n\
+  return(s7_wrong_type_arg_error(sc, \"modf\", 1, s7_car(args), \"a real\"));        \n\
+}                                                                                    \n\
+")
+                    (C-function ("remquo" g_remquo remquo 2))
+                    (C-function ("frexp" g_frexp frexp 1))
+                    (C-function ("modf" g_modf modf 1))
 		    )
 		  "" "math.h" "" "" "libm_s7")
 	
@@ -87,19 +130,6 @@
 
 
 #|
-special:
-double remquo double double [int]?
-double frexp double [int]
-double modf double [double]
-here the ref args need to have the right C type
-
-ridiculous:
-double fmax double double
-double fmin double double
-int isgreater double double (etc)
-
 rand/srand?
-
-gnu_c additions? jn y0 y1 yn
 complex cases aren't handled in cload I think
 |#
