@@ -572,6 +572,7 @@
 	     (hash-table-set! names file (list symbol))))))
    (list 
     (list '*libm* "libm.scm")
+    (list '*libgdbm* "libgdbm.scm")
 
     (list 'with-sound "ws.scm")
     (list 'with-mixed-sound "ws.scm")

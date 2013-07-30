@@ -1065,7 +1065,7 @@ typedef struct s7_cell {
 	struct {
 	  s7_pointer function;     /* __func__ (code) if this is a closure environment */
 	  unsigned int line, file; /* __func__ location if it is known */
-	} fnc;
+	} efnc;
 	struct {
 	  s7_pointer dox1, dox2;   /* do loop variables */
 	} dox;
@@ -2066,9 +2066,9 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {syntax_
 #define is_environment(p)             (type(p) == T_ENVIRONMENT)
 #define environment_slots(p)          (p)->object.envr.slots
 #define next_environment(p)           (p)->object.envr.nxt
-#define environment_function(p)       (p)->object.envr.edat.fnc.function
-#define environment_line(p)           (p)->object.envr.edat.fnc.line
-#define environment_file(p)           (p)->object.envr.edat.fnc.file
+#define environment_function(p)       (p)->object.envr.edat.efnc.function
+#define environment_line(p)           (p)->object.envr.edat.efnc.line
+#define environment_file(p)           (p)->object.envr.edat.efnc.file
 #define environment_dox1(p)           (p)->object.envr.edat.dox.dox1
 #define environment_dox2(p)           (p)->object.envr.edat.dox.dox2
 
@@ -4359,9 +4359,17 @@ static void increase_stack_size(s7_scheme *sc)
     }  
 
 
-static s7_pointer g_stack_size(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_stack_top(s7_scheme *sc, s7_pointer args)
 {
   return(s7_make_integer(sc, (sc->stack_end - sc->stack_start) / 4));
+}
+
+
+static s7_pointer g_stack(s7_scheme *sc, s7_pointer args)
+{
+  int loc;
+  loc = (int)(s7_integer(car(args)) + 1) * 4 - 1;
+  return(list_3(sc, stack_code(sc->stack, loc), stack_args(sc->stack, loc), stack_environment(sc->stack, loc)));
 }
 
 
@@ -5599,6 +5607,18 @@ static s7_pointer g_environment_to_list(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer g_environment_function(s7_scheme *sc, s7_pointer args)
+{
+  /* an experiment -- maybe we can func info in the stacktrace */
+  s7_pointer e;
+  e = car(args);
+  if (is_function_env(e))
+    return(environment_function(e));
+  return(sc->F);
+}
+  
+
+
 s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 {
   s7_pointer x, y;
@@ -6810,7 +6830,7 @@ static bool call_with_current_continuation(s7_scheme *sc)
   sc->stack_start = vector_elements(sc->stack);
   sc->stack_end = (s7_pointer *)(sc->stack_start + continuation_stack_top(c));
   sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
-  
+
   {
     int i, top;
     top = continuation_op_loc(c);
@@ -65177,6 +65197,7 @@ s7_scheme *s7_init(void)
   sc->OBJECT_ENVIRONMENT =    s7_define_safe_function(sc, "object-environment",      g_object_environment,     1, 0, false, H_object_environment);
   sc->ENVIRONMENT_REF =       s7_define_safe_function(sc, "environment-ref",         g_environment_ref,        2, 0, false, H_environment_ref);
   sc->ENVIRONMENT_SET =       s7_define_safe_function(sc, "environment-set!",        g_environment_set,        3, 0, false, H_environment_set);
+  s7_define_safe_function(sc, "environment-function", g_environment_function, 1, 0, false, "an experiment");
 
   sc->PROVIDEDP =             s7_define_safe_function(sc, "provided?",               g_is_provided,            1, 0, false, H_is_provided);
   sc->PROVIDE =               s7_define_safe_function(sc, "provide",                 g_provide,                1, 0, false, H_provide);
@@ -65655,8 +65676,10 @@ s7_scheme *s7_init(void)
 				g_symbol_table_is_locked, 0, 0, 
 				g_set_symbol_table_is_locked, 1, 0, 
 				H_symbol_table_is_locked);
-  s7_define_safe_function(sc, "-s7-stack-size", g_stack_size, 0, 0, false, "current stack size");
 
+  s7_define_safe_function(sc, "*stack-top*", g_stack_top, 0, 0, false, "current stack top");
+  s7_define_safe_function(sc, "*stack*", g_stack, 1, 0, false, "an experiment");
+  
 
   /* *features* */
   s7_provide(sc, "s7");
@@ -65903,12 +65926,75 @@ s7_scheme *s7_init(void)
 		                             (cons (traverse (car clause))                                  \n\
 			                           (if (null? (cdr clause)) '(#f) (cdr clause))))           \n\
 		                          clauses))))");
-
+#if 0
   s7_eval_c_string(sc, "(define (stacktrace)                                                        \n\
                           (let ((str \"\"))                                                         \n\
                             (do ((e (outer-environment (error-environment)) (outer-environment e))) \n\
                                 ((eq? e (global-environment)) str)                                  \n\
-                              (set! str (string-append str (format #f \"~{~A ~}~%\" e))))))");
+                              (set! str (string-append str (if (environment-function e)             \n\
+                                                               (format #f \"~A: ~{~A ~}~%\" (environment-function e) e) \n\
+                                                               (format #f \"~{~A ~}~%\" e)))))))");
+#else
+  s7_eval_c_string(sc, "        \n\
+(define (stacktrace)        \n\
+  (let ((str \"\")        \n\
+	(top (*stack-top*))        \n\
+	(first-frame #t)        \n\
+	(syms '())        \n\
+	(line-max 40))        \n\
+    (do ((loc (- top 3) (- loc 1)))        \n\
+	((<= loc 0) str)        \n\
+      (let* ((stack-info (*stack* loc))        \n\
+	     (code (stack-info 0)))        \n\
+	(if (pair? code)        \n\
+	    (let ((codestr (object->string code)))        \n\
+	      (if (and (not (string=? codestr \"(result)\"))        \n\
+		       (not (string=? codestr \"(#f)\")))        \n\
+		  (let ((envir (stack-info 2))        \n\
+			(notes \"\"))        \n\
+        \n\
+		    (define (find-caller e)        \n\
+		      (do ((cur-env e (outer-environment cur-env))        \n\
+			   (result #f))        \n\
+			  ((or (not (environment? cur-env))        \n\
+			       (set! result (environment-function cur-env)))        \n\
+			   result)))        \n\
+		            \n\
+		    (define (walker lst)        \n\
+		      (if (symbol? lst)        \n\
+			  (if (and (not (memq lst syms))        \n\
+				   (defined? lst envir)        \n\
+				   (not (defined? lst (global-environment))))        \n\
+			      (let ((val (symbol->value lst envir)))        \n\
+				(if (and (not (procedure? val))        \n\
+					 (not (macro? val)))        \n\
+				    (let ((objstr (object->string val)))        \n\
+				      (if (> (length objstr) line-max)        \n\
+					  (set! objstr (string-append (substring objstr 0 (- line-max 4)) \"...\")))        \n\
+				      (set! syms (cons lst syms))        \n\
+				      (if (> (length notes) 0)        \n\
+					  (set! notes (string-append notes \", \"))        \n\
+					  (set! notes \" ; \"))        \n\
+				      (set! notes (string-append notes (symbol->string lst) \": \" objstr))))))        \n\
+			  (if (pair? lst)        \n\
+			      (begin        \n\
+				(walker (car lst))        \n\
+				(walker (cdr lst))))))        \n\
+		            \n\
+		    (if (environment? envir)        \n\
+			(walker code))        \n\
+		    (if first-frame        \n\
+			(let ((f (find-caller envir)))        \n\
+			  (set! first-frame #f)        \n\
+			  (set! codestr (string-append (string (codestr 0))         \n\
+						       (if f (string-append \"[\" (symbol->string f) \"]\") \"\")         \n\
+						       \" ... \"         \n\
+						       (substring codestr 1)))))        \n\
+		    (if (> (length codestr) line-max)        \n\
+			(set! codestr (string-append (substring codestr 0 (- line-max 4)) \"...\")))        \n\
+		    (set! str (string-append str (string #\\newline) codestr notes))))))))))        \n\
+");
+#endif
 
 
   /* ---------------- hooks ---------------- */
@@ -66021,7 +66107,7 @@ s7_scheme *s7_init(void)
  *
  * also openbsd audio is broken in Snd -- see aucat.c I guess.
  *
- * other often-used libraries: c glib/gio/gobject/gmodule dl ncurses? gsl? GL/GLU? pcre? readline? tecla?
+ * other often-used libraries: c glib/gio/gobject/gmodule dl ncurses? gsl? GL/GLU? pcre? tecla?
  *    libpthread.scm for partial pthread case, but how is this to be used?
  *    SOMEDAY: libmgdbm tests and setopt support
  *    TODO: add r7rs tests to s7libtest
