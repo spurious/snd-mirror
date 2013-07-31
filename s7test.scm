@@ -28519,8 +28519,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 ;;; stacktrace
 
 (test (string? (stacktrace)) #t)
-(test (stacktrace 123) 'error)
-
+;(test (stacktrace 123) 'error)
+;; TODO: stacktrace tests!
 
 
 
@@ -71746,3 +71746,121 @@ in non-gmp,
 ;;; ok (tested) up to 10000000 
 |#
 	  
+
+#|
+;;; this is the scheme version of stacktrace
+
+(define* (stacktrace (frames-max 30) (code-cols 50) (total-cols 80) (notes-start-col 50))
+  (let ((str "")
+	(top (*stack-top*))
+	(syms '())
+	(code-max code-cols)
+	(notes-max (- total-cols notes-start-col))
+	(frames 0)
+	(spaces "                                                                                "))
+
+    (define (find-caller e)
+      (and (environment? e)
+	   (or (environment-function e)
+	       (and (not (eq? e (global-environment)))
+		    (find-caller (outer-environment e))))))
+		    
+    (define (find-environment target loc)
+      (and (> loc 0)
+	   (or (and (pair? (*stack* loc))
+		    (eq? (cadr (*stack* loc)) target))
+	       (find-environment target (- loc 1)))))
+
+    (define (in-error-handler?)
+      (let ((cur-env (outer-environment (error-environment))))
+	(or (eq? cur-env (current-environment))
+	    (find-environment cur-env top))))
+
+    (define (walker code envir)
+      (let ((notes "")
+	    (notes-last-line-len 0))
+	(define (walker-1 lst)
+	  (if (symbol? lst)
+	      (if (and (not (memq lst syms))
+		       (defined? lst envir)
+		       (not (defined? lst (global-environment))))
+		  (let ((val (symbol->value lst envir)))
+		    (if (and (not (procedure? val))
+			     (not (macro? val)))
+			(let* ((objstr (object->string val))
+			       (objlen (length objstr)))
+			  (if (> objlen notes-max)
+			      (begin
+				(set! objstr (string-append (substring objstr 0 (- notes-max 4)) "..."))
+				(set! objlen notes-max)))
+			  (set! syms (cons lst syms))
+			  
+			  (let ((new-note-len (+ 2 (length (symbol->string lst)) objlen)))
+			    (if (> notes-last-line-len 0)
+				(begin
+				  (if (> (+ notes-last-line-len new-note-len) notes-max)
+				      (begin
+					(set! notes (string-append notes (string #\newline) (substring spaces 0 notes-start-col) "; "))
+					(set! notes-last-line-len 0))
+				      (set! notes (string-append notes ", "))))
+				(if (< notes-start-col code-cols) 
+				    (set! notes (string-append (string #\newline) (substring spaces 0 notes-start-col) "; "))
+				    (set! notes "; ")))
+			    (set! notes-last-line-len (+ notes-last-line-len new-note-len))
+			    (set! notes (string-append notes (symbol->string lst) ": " objstr)))))))
+	      (if (pair? lst)
+		  (begin
+		    (walker-1 (car lst))
+		    (walker-1 (cdr lst))))))
+	(walker-1 code)
+	notes))
+
+    (if (in-error-handler?)
+	(let ((err-code ((error-environment) 'error-code)))
+	  (if err-code
+	      (let* ((errstr (object->string err-code))
+		     (cur-env (outer-environment (error-environment)))
+		     (f (find-caller cur-env))
+		     (notes (and (environment? cur-env)
+				 (not (eq? cur-env (global-environment)))
+				 (walker err-code cur-env))))
+
+		(if f 
+		    (set! errstr (format #f "([~A] ... ~A)" f errstr))
+		    (set! errstr (format #f "( ... ~A)" errstr)))
+		(let ((errlen (length errstr)))
+		  (if (> errlen code-max)
+		      (set! errstr (string-append (substring errstr 0 (- code-max 4)) "... "))
+		      (set! errstr (string-append errstr (substring spaces 0 (- code-max errlen)))))
+		  (set! str (format #f "~%~A~A~%" errstr (or notes ""))))))))
+      
+    (do ((loc (- top 2) (- loc 1))) ; was -3 -- skip at least the do and the let
+	((<= loc 0) str)
+      (let* ((stack-info (*stack* loc))
+	     (code (car stack-info)))
+
+	(if (pair? code)
+	    (let ((codestr (object->string code)))
+	      (if (and (not (string=? codestr "(result)"))
+		       (not (string=? codestr "(#f)")))
+		  (let* ((envir (cadr stack-info))
+			 (f (find-caller envir)))
+
+		    (if (not (memq f (hook-functions *error-hook*)))
+			(let ((notes ""))
+			  (set! frames (+ frames 1))
+			  (if (> frames frames-max)
+			      (set! loc 0))
+			  (if (environment? envir)
+			      (set! notes (walker code envir)))
+			  (if (pair? (car code))
+			      (let ((f (find-caller envir)))
+				(if f 
+				    (set! codestr (format #f "([~A] ... ~A)" f codestr))
+				    (set! codestr (format #f "( ... ~A)" codestr)))))
+			  (let ((codelen (length codestr)))
+			    (if (> codelen code-max)
+				(set! codestr (string-append (substring codestr 0 (- code-max 4)) "... "))
+				(set! codestr (string-append codestr (substring spaces 0 (- code-max codelen))))))
+			  (set! str (string-append str codestr notes (string #\newline)))))))))))))
+|#
