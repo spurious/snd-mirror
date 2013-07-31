@@ -8798,6 +8798,17 @@
 + gint          gtk_widget_get_scale_factor (GtkWidget *widget);
 + void     gtk_window_close         (GtkWindow *window);
 
+
+3.9.10:
++ void           gtk_info_bar_set_show_close_button  (GtkInfoBar     *info_bar,
++                                                     gboolean        setting);
++ gboolean       gtk_info_bar_get_show_close_button  (GtkInfoBar     *info_bar);
++ void gtk_tree_model_rows_reordered_with_length (GtkTreeModel *tree_model,
++ 						GtkTreePath  *path,
++ 						GtkTreeIter  *iter,
++ 						gint         *new_order,
++ 						gint          length);
+
 |#
  
 

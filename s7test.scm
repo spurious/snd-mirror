@@ -9147,20 +9147,22 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;;; hook-functions
 ;;; --------------------------------------------------------------------------------
 
-(for-each
- (lambda (arg)
-   (test (set! *unbound-variable-hook* arg) 'error)
-   (test (set! *load-hook* arg) 'error)
-   
-   (test (set! (hook-functions *unbound-variable-hook*) arg) 'error)
-   (test (set! (hook-functions *error-hook*) arg) 'error)
-   (test (set! (hook-functions *load-hook*) arg) 'error)
-   
-   (test (set! (hook-functions *unbound-variable-hook*) (list arg)) 'error)
-   (test (set! (hook-functions *error-hook*) (list arg)) 'error)
-   (test (set! (hook-functions *load-hook*) (list arg)) 'error)
-   )
- (list -1 #\a '#(1 2 3) 3.14 3/4 1.0+1.0i 'hi :hi #<eof> #(1 2 3) '#(()) "hi" '(1 . 2) '(1 2 3)))
+(let ((old-hook (hook-functions *error-hook*)))
+  (for-each
+   (lambda (arg)
+     (test (set! *unbound-variable-hook* arg) 'error)
+     (test (set! *load-hook* arg) 'error)
+     
+     (test (set! (hook-functions *unbound-variable-hook*) arg) 'error)
+     (test (set! (hook-functions *error-hook*) arg) 'error)
+     (test (set! (hook-functions *load-hook*) arg) 'error)
+     
+     (test (set! (hook-functions *unbound-variable-hook*) (list arg)) 'error)
+     (test (set! (hook-functions *error-hook*) (list arg)) 'error)
+     (test (set! (hook-functions *load-hook*) (list arg)) 'error)
+     )
+   (list -1 #\a '#(1 2 3) 3.14 3/4 1.0+1.0i 'hi :hi #<eof> #(1 2 3) '#(()) "hi" '(1 . 2) '(1 2 3)))
+  (set! (hook-functions *error-hook*) old-hook))
 
 (let ((old-hook (hook-functions *unbound-variable-hook*))
       (hook-val #f))
