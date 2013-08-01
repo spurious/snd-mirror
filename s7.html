@@ -4564,7 +4564,8 @@ To list all the local bindings from the error outward:
   (format #t "~{~A ~}~%" e))
 </pre>
 
-<p>
+<p>To see the current s7 stack, <code>(stacktrace)</code>.  You'll probably
+want to use this in conjunction with *error-hook*.
 To evaluate the error handler in the environment of the error:
 </p>
 
@@ -9323,7 +9324,7 @@ define s7stack
 print s7_object_to_c_string(sc, s7_stacktrace(sc))
 end
 document s7stack
-display the currently active local environments
+display the current stack
 end
 
 define s7value

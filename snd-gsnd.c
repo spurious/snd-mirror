@@ -2045,7 +2045,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   
 #if HAVE_GTK_3
   if (listener_exists())
-    gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), 300);
+    gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), 50);
   /* actually we haven't reached full size here at start-up */
 #endif
   return(sp);

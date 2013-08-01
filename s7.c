@@ -33781,11 +33781,20 @@ static bool stacktrace_find_environment(s7_scheme *sc, int loc, s7_pointer e)
 	  (stacktrace_find_environment(sc, loc - 4, e))));
 }
 
+static int stacktrace_find_error_hook_quit(s7_scheme *sc)
+{
+  int i;
+  for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
+    if (stack_op(sc->stack, i) == OP_ERROR_HOOK_QUIT)
+      return(i);
+  return(-1);
+}
+
 static bool stacktrace_in_error_handler(s7_scheme *sc, int loc)
 {
   return((next_environment(sc->error_env) == sc->envir) ||
-	 (stacktrace_find_environment(sc, loc * 4, next_environment(sc->error_env))));
-	 
+	 (stacktrace_find_environment(sc, loc * 4, next_environment(sc->error_env))) ||
+	 (stacktrace_find_error_hook_quit(sc) > 0));
 }
 
 static bool direct_memq(s7_pointer symbol, s7_pointer symbols);
@@ -33988,6 +33997,11 @@ static char *stacktrace_1(s7_scheme *sc, int frames_max, int code_cols, int tota
 	  str = stacktrace_add_func(sc, f, err_code, errstr, notes, code_cols, as_comment);
 	  free(errstr);
 	}
+
+      /* now if OP_ERROR_HOOK_QUIT is in the stack, jump past it!
+       */
+      loc = stacktrace_find_error_hook_quit(sc);
+      if (loc > 0) top = (loc + 1) / 4;
     }
      
   for (loc = top - 1; loc > 0; loc--)
@@ -34006,6 +34020,7 @@ static char *stacktrace_1(s7_scheme *sc, int frames_max, int code_cols, int tota
 	    {
 	      if ((strcmp(codestr, "(result)") != 0) &&
 		  (strcmp(codestr, "(#f)") != 0) &&
+		  (strstr(codestr, "(stacktrace)") == NULL) &&
 		  (strstr(codestr, "(stacktrace ") == NULL))
 		{
 		  s7_pointer e, f;
@@ -34110,9 +34125,6 @@ line to be preceded by a semicolon."
 	}
       else return(wrong_type_argument(sc, sc->STACKTRACE, small_int(1), car(args), T_INTEGER));
     }
-
-  /* TODO: doc, test, valgrind for memleaks
-   */
   return(make_string_uncopied(sc, stacktrace_1(sc, max_frames, code_cols, total_cols, notes_start_col, as_comment)));
 }
 
@@ -35058,9 +35070,10 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
       if (error_port != sc->F)
 	{
 	  char *errstr;
-	  errstr = stacktrace_1(sc, 30, 45, 80, 45, true);
+	  errstr = stacktrace_1(sc, 3, 45, 80, 45, true);
 	  if (errstr)
 	    {
+	      port_write_string(error_port)(sc, ";\n", 2, error_port);
 	      port_write_string(error_port)(sc, errstr, strlen(errstr), error_port);
 	      free(errstr);
 	      port_write_character(error_port)(sc, '\n', error_port);
@@ -66387,10 +66400,11 @@ s7_scheme *s7_init(void)
  *
  * also openbsd audio is broken in Snd -- see aucat.c I guess.
  *
- * other often-used libraries: c glib/gio/gobject/gmodule dl ncurses? gsl? GL/GLU? pcre? tecla?
+ * other often-used libraries: c glib/gio/gobject/gmodule ncurses? gsl? GL/GLU? pcre? tecla? readline?
  *    libpthread.scm for partial pthread case, but how is this to be used?
- *    SOMEDAY: libmgdbm tests and setopt support
+ *    SOMEDAY: libgdbm tests and setopt support, libdl tests and autoload in Snd
  *    TODO: add r7rs tests to s7libtest
+ *    TODO: stacktrace tests in s7test
  * TODO: (env env) in clm should be an error
  * possible autoload additions: sndlib? xm? libX* fftw? gmp/mpfr/mpc? 
  * gdb-s7 might check for 0xnnnn "asdf" to avoid strings
