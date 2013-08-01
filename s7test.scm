@@ -75,6 +75,7 @@
 (define (ok? otst ola oexp)
   (let ((result (catch #t ola
 		       (lambda args
+			 (stacktrace)
 			 ;(show-error args)
 			 (if (not (eq? oexp 'error)) 
 			     (begin (display args) (newline)))
@@ -71864,3 +71865,6 @@ in non-gmp,
 				(set! codestr (string-append codestr (substring spaces 0 (- code-max codelen))))))
 			  (set! str (string-append str codestr notes (string #\newline)))))))))))))
 |#
+
+
+;;; TODO: gtk3 -noinit open-sound clobbers listener

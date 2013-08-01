@@ -1758,6 +1758,22 @@
 }
 
 {
+   s71abcd
+   Memcheck:Leak
+   fun:calloc
+   fun:s7_make_function
+   fun:*
+}
+
+{
+   s71abcde
+   Memcheck:Leak
+   fun:calloc
+   fun:make_permanent_string
+   fun:*
+}
+
+{
    s71abc
    Memcheck:Leak
    fun:calloc

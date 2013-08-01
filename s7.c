@@ -1276,7 +1276,7 @@ struct s7_scheme {
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTER_ENVIRONMENT, OUTPUT_PORTP, PAIRP, PAIR_LINE_NUMBER, PEEK_CHAR, PORT_CLOSEDP, PORT_FILENAME, PORT_LINE_NUMBER;
   s7_pointer POSITIVEP, PROCEDUREP, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, PROCEDURE_ENVIRONMENT, PROCEDURE_NAME, PROCEDURE_SOURCE, PROVIDE;
   s7_pointer PROVIDEDP, QUOTIENT, RANDOM, RANDOM_STATEP, RANDOM_STATE_TO_LIST, RATIONALIZE, RATIONALP, READ, READ_BYTE, READ_CHAR, READ_LINE, REALP;
-  s7_pointer READ_STRING, REAL_PART, REMAINDER, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STRING, STRING_LEQ, STRING_LT, STRING_EQ;
+  s7_pointer READ_STRING, REAL_PART, REMAINDER, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STACKTRACE, STRING, STRING_LEQ, STRING_LT, STRING_EQ;
   s7_pointer STRING_GEQ, STRING_GT, STRINGP, STRING_POSITION, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND, STRING_CI_LEQ, STRING_CI_LT;
   s7_pointer STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_COPY, STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
   s7_pointer SYMBOL_ACCESS, SYMBOLP, SYMBOL_TO_KEYWORD, SYMBOL_TO_STRING, SYMBOL_TO_DYNAMIC_VALUE, SYMBOL_TO_VALUE;
@@ -2904,6 +2904,8 @@ s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc)
 
   return(obj);
 }
+
+#define gc_protected_at(Sc, Loc) vector_element(Sc->protected_objects, Loc)
 
 
 static void (*mark_function[NUM_TYPES])(s7_pointer p);
@@ -33759,6 +33761,363 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 
 
 
+/* ---------------- stacktrace ---------------- */
+
+static s7_pointer stacktrace_find_caller(s7_scheme *sc, s7_pointer e)
+{
+  if ((is_environment(e)) && (e != sc->global_env))
+    {
+      if (is_function_env(e))
+	return(environment_function(e));
+      return(stacktrace_find_caller(sc, next_environment(e)));
+    }
+  return(sc->F);
+}
+
+static bool stacktrace_find_environment(s7_scheme *sc, int loc, s7_pointer e)
+{
+  return((loc > 0) &&
+	 ((stack_environment(sc->stack, loc) == e) ||
+	  (stacktrace_find_environment(sc, loc - 4, e))));
+}
+
+static bool stacktrace_in_error_handler(s7_scheme *sc, int loc)
+{
+  return((next_environment(sc->error_env) == sc->envir) ||
+	 (stacktrace_find_environment(sc, loc * 4, next_environment(sc->error_env))));
+	 
+}
+
+static bool direct_memq(s7_pointer symbol, s7_pointer symbols);
+
+static bool stacktrace_error_hook_function(s7_scheme *sc, s7_pointer sym)
+{
+  if (is_symbol(sym))
+    {
+      s7_pointer f;
+      f = s7_symbol_value(sc, sym);
+      return((is_procedure(f)) &&
+	     (is_procedure(sc->error_hook)) &&
+	     (is_pair(s7_hook_functions(sc, sc->error_hook))) &&
+	     (direct_memq(f, s7_hook_functions(sc, sc->error_hook))));
+    }
+  return(false);
+}
+
+static char *stacktrace_walker(s7_scheme *sc, s7_pointer code, s7_pointer e, 
+			       char *notes, int gc_syms,
+			       int code_cols, int total_cols, int notes_start_col, 
+			       bool as_comment)
+{
+  s7_pointer syms;
+  syms = gc_protected_at(sc, gc_syms);
+
+  if (is_symbol(code))
+    {
+      if ((!direct_memq(code, syms)) &&
+	  (global_slot(code) == sc->UNDEFINED))
+	{
+	  s7_pointer val;
+
+	  syms = cons(sc, code, syms);
+	  gc_protected_at(sc, gc_syms) = syms;
+
+	  val = s7_symbol_local_value(sc, code, e);
+	  if ((val != sc->UNDEFINED) &&
+	      (!is_any_macro(val)))
+	    {
+	      int typ;
+
+	      typ = type(val);
+	      if ((typ != T_CLOSURE)      &&
+		  (typ != T_CLOSURE_STAR) &&
+		  (typ < T_C_FUNCTION)    &&
+		  (typ != T_GOTO)         &&
+		  (typ != T_CONTINUATION))
+		{
+		  char *objstr, *str;
+		  const char *spaces;
+		  int objlen, new_note_len, notes_max, cur_line_len = 0, spaces_len;
+		  bool new_notes_line = false;
+
+		  spaces = "                                                                                ";
+		  spaces_len = strlen(spaces);
+
+		  notes_max = total_cols - notes_start_col;
+		  objstr = s7_object_to_c_string(sc, val);
+		  objlen = strlen(objstr);
+		  if (objlen > notes_max)
+		    {
+		      objstr[notes_max - 4] = '.';
+		      objstr[notes_max - 3] = '.';
+		      objstr[notes_max - 2] = '.';
+		      objstr[notes_max - 1] = '\0';
+		      objlen = notes_max;
+		    }
+
+		  new_note_len = symbol_name_length(code) + 3 + objlen;
+		  /* we want to append this much info to the notes, but does it need a new line?
+		   */
+		  if (notes_start_col < code_cols)
+		    new_notes_line = true;
+		  else
+		    {
+		      if (notes)
+			{
+			  char *last_newline;
+			  last_newline = strrchr(notes, (int)'\n'); /* returns ptr to end if none = nil if not found? */
+			  if (last_newline)
+			    cur_line_len = strlen(notes) - strlen(last_newline);
+			  else cur_line_len = strlen(notes);
+			  new_notes_line = ((cur_line_len + new_note_len) > notes_max);
+			}
+		    }
+
+		  if (new_notes_line)
+		    {
+		      new_note_len += (4 + notes_start_col + ((notes) ? strlen(notes) : 0));
+		      str = (char *)calloc(new_note_len, sizeof(char));
+		      snprintf(str, new_note_len, "%s\n%s%s%s%s: %s", 
+			       (notes) ? notes : "", 
+			       (as_comment) ? "; " : "",
+			       (char *)(spaces + spaces_len - notes_start_col),
+			       (as_comment) ? "" : " ; ",
+			       symbol_name(code), 
+			       objstr);
+		    }
+		  else
+		    {
+		      new_note_len += ((notes) ? strlen(notes) : 0) + 4;
+		      str = (char *)calloc(new_note_len, sizeof(char));
+		      snprintf(str, new_note_len, "%s%s%s: %s", 
+			       (notes) ? notes : "", 
+			       (notes) ? ", " : " ; ",
+			       symbol_name(code), 
+			       objstr);
+		    }
+		  free(objstr);
+		  if (notes) free(notes);
+		  return(str);
+		}
+	    }
+	}
+      return(notes);
+    }
+  if (is_pair(code))
+    {
+      notes = stacktrace_walker(sc, car(code), e, notes, gc_syms, code_cols, total_cols, notes_start_col, as_comment);
+      return(stacktrace_walker(sc, cdr(code), e, notes, gc_syms, code_cols, total_cols, notes_start_col, as_comment));
+    }
+  return(notes);
+}
+
+static char *stacktrace_add_func(s7_scheme *sc, s7_pointer f, s7_pointer code, char *errstr, char *notes, int code_max, bool as_comment)
+{
+  int newlen, errlen, spaces_len;
+  char *newstr, *str;
+  const char *spaces;
+
+  spaces = "                                                                                ";
+  spaces_len = strlen(spaces);
+  errlen = strlen(errstr);
+
+  if ((is_symbol(f)) &&
+      (f != car(code)))
+    {
+      newlen = symbol_name_length(f) + errlen + 10;
+      newstr = (char *)calloc(newlen, sizeof(char));
+      /* errlen = snprintf(newstr, newlen, "([%s] ... %s)", symbol_name(f), errstr); */
+      errlen = snprintf(newstr, newlen, "%s: %s", symbol_name(f), errstr);
+    }
+  else
+    {
+      newlen = errlen + 8;
+      newstr = (char *)calloc(newlen, sizeof(char));
+      if ((errlen > 2) && (errstr[2] == '('))
+	errlen = snprintf(newstr, newlen, "  %s", errstr);
+      else errlen = snprintf(newstr, newlen, "%s", errstr);
+    }
+
+  newlen = code_max + 8 + ((notes) ? strlen(notes) : 0);
+  str = (char *)calloc(newlen, sizeof(char));
+
+  if (errlen >= code_max)
+    {
+      newstr[code_max - 4] = '.';
+      newstr[code_max - 3] = '.';
+      newstr[code_max - 2] = '.';
+      newstr[code_max - 1] = '\0';
+      snprintf(str, newlen, "%s%s%s\n", (as_comment) ? "; " : "", newstr, (notes) ? notes : "");
+    }
+  else
+    {
+      snprintf(str, newlen, "%s%s%s%s\n", (as_comment) ? "; " : "", newstr, 
+	       (char *)(spaces + spaces_len - code_max + errlen + 1), 
+	       (notes) ? notes : "");
+    }
+  free(newstr);
+
+  return(str);
+}
+
+
+static char *stacktrace_1(s7_scheme *sc, int frames_max, int code_cols, int total_cols, int notes_start_col, bool as_comment)
+{
+  char *str;
+  int loc, top, frames = 0, gc_syms;
+
+  gc_syms = s7_gc_protect(sc, sc->NIL);
+  str = NULL;
+  top = (sc->stack_end - sc->stack_start) / 4; /* g_stack_top, not s7_stack_top! */
+  
+  if (stacktrace_in_error_handler(sc, top))
+    {
+      s7_pointer err_code;
+      err_code = slot_value(sc->error_code);
+      if (is_pair(err_code))
+	{
+	  char *errstr, *notes = NULL;
+	  s7_pointer cur_env, f;
+
+	  errstr = s7_object_to_c_string(sc, err_code);
+	  cur_env = next_environment(sc->error_env);
+	  f = stacktrace_find_caller(sc, cur_env); /* this is a symbol */
+	  if ((is_environment(cur_env)) &&
+	      (cur_env != sc->global_env))
+	    notes = stacktrace_walker(sc, err_code, cur_env, NULL, gc_syms, code_cols, total_cols, notes_start_col, as_comment);
+	  str = stacktrace_add_func(sc, f, err_code, errstr, notes, code_cols, as_comment);
+	  free(errstr);
+	}
+    }
+     
+  for (loc = top - 1; loc > 0; loc--)
+    {
+      s7_pointer code;
+      int true_loc;
+
+      true_loc = (int)(loc + 1) * 4 - 1;
+      code = stack_code(sc->stack, true_loc);
+      
+      if (is_pair(code))
+	{
+	  char *codestr;
+	  codestr = s7_object_to_c_string(sc, code);
+	  if (codestr)
+	    {
+	      if ((strcmp(codestr, "(result)") != 0) &&
+		  (strcmp(codestr, "(#f)") != 0) &&
+		  (strstr(codestr, "(stacktrace ") == NULL))
+		{
+		  s7_pointer e, f;
+
+		  e = stack_environment(sc->stack, true_loc);
+		  f = stacktrace_find_caller(sc, e);
+		  if (!stacktrace_error_hook_function(sc, f))
+		    {
+		      char *notes = NULL, *newstr;
+		      int newlen;
+
+		      frames++;
+		      if (frames > frames_max)
+			{
+			  free(codestr);
+			  s7_gc_unprotect_at(sc, gc_syms);
+			  return(str);
+			}
+
+		      if ((is_environment(e)) && (e != sc->global_env))
+			notes = stacktrace_walker(sc, code, e, NULL, gc_syms, code_cols, total_cols, notes_start_col, as_comment);
+		      newstr = stacktrace_add_func(sc, f, code, codestr, notes, code_cols, as_comment);
+		      free(codestr);
+		      if (notes) free(notes);
+
+		      newlen = strlen(newstr) + 1 + ((str) ? strlen(str) : 0);
+		      codestr = (char *)calloc(newlen, sizeof(char));
+		      snprintf(codestr, newlen, "%s%s", (str) ? str : "", newstr);
+		      if (str) free(str);
+		      free(newstr);
+		      str = codestr;
+		      codestr = NULL;
+		    }
+		  else free(codestr);
+		}
+	      else free(codestr);
+	    }
+	}
+    }
+
+  s7_gc_unprotect_at(sc, gc_syms);      
+  return(str);
+}
+
+
+s7_pointer s7_stacktrace(s7_scheme *sc)
+{
+  return(make_string_uncopied(sc, stacktrace_1(sc, 30, 45, 80, 45, false)));
+}
+
+
+static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
+{
+  #define H_stacktrace "(stacktrace (max-frames 30) (code-cols 50) (total-cols 80) (note-col 50) as-comment) returns \
+a stacktrace as a string.  Each line has two portions, the code being evaluated and a note giving \
+the value of local variables in that code.  The first argument sets how many lines are displayed. \
+The next three arguments set the length and layout of those lines.  'as-comment' if #t causes each \
+line to be preceded by a semicolon."
+
+  int max_frames = 30, code_cols = 50, total_cols = 80, notes_start_col = 50;
+  bool as_comment = false;
+
+  if (!is_null(args))
+    {
+      if (is_integer(car(args)))
+	{
+	  max_frames = integer(car(args));
+	  args = cdr(args);
+	  if (!is_null(args))
+	    {
+	      if (is_integer(car(args)))
+		{
+		  code_cols = integer(car(args));
+		  args = cdr(args);
+		  if (!is_null(args))
+		    {
+		      if (is_integer(car(args)))
+			{
+			  total_cols = integer(car(args));
+			  args = cdr(args);
+			  if (!is_null(args))
+			    {
+			      if (is_integer(car(args)))
+				{
+				  notes_start_col = integer(car(args));
+				  args = cdr(args);
+				  if (!is_null(args))
+				    {
+				      if (s7_is_boolean(car(args)))
+					as_comment = s7_boolean(sc, car(args));
+				      else return(wrong_type_argument(sc, sc->STACKTRACE, small_int(5), car(args), T_BOOLEAN));
+				    }
+				}
+			      else return(wrong_type_argument(sc, sc->STACKTRACE, small_int(4), car(args), T_INTEGER));
+			    }
+			}
+		      else return(wrong_type_argument(sc, sc->STACKTRACE, small_int(3), car(args), T_INTEGER));
+		    }
+		}
+	      else return(wrong_type_argument(sc, sc->STACKTRACE, small_int(2), car(args), T_INTEGER));
+	    }
+	}
+      else return(wrong_type_argument(sc, sc->STACKTRACE, small_int(1), car(args), T_INTEGER));
+    }
+
+  /* TODO: doc, test, valgrind for memleaks
+   */
+  return(make_string_uncopied(sc, stacktrace_1(sc, max_frames, code_cols, total_cols, notes_start_col, as_comment)));
+}
+
+
+
 /* -------- error handlers -------- */
 
 static const char *make_type_name(const char *name, int article)
@@ -34684,40 +35043,34 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	}
       s7_newline(sc, error_port);
       
-      if (is_pair(slot_value(sc->error_code)))
+      if (is_string(slot_value(sc->error_file)))
 	{
-	  format_to_port(sc, error_port, ";    ~S", list_1(sc, slot_value(sc->error_code)), NULL, false, 7);
+	  format_to_port(sc, error_port, ";    ~S, line ~D",
+			 list_2(sc, 
+				slot_value(sc->error_file),
+				slot_value(sc->error_line)),
+			 NULL, false, 16);
 	  s7_newline(sc, error_port);
-	  
-	  if (is_string(slot_value(sc->error_file)))
-	    {
-	      format_to_port(sc, error_port, ";    [~S, line ~D]",
-			     list_2(sc, 
-				    slot_value(sc->error_file),
-				    slot_value(sc->error_line)),
-			     NULL, false, 18);
-	      s7_newline(sc, error_port);
-	    }
 	}
       
       /* look for __func__ in the error environment etc
        */
       if (error_port != sc->F)
 	{
-	  s7_pointer env;
-	  env = find_closure_environment(sc, sc->error_env);
-	  if ((is_environment(env)) &&
-	      (is_symbol(environment_function(env))))
+	  char *errstr;
+	  errstr = stacktrace_1(sc, 30, 45, 80, 45, true);
+	  if (errstr)
 	    {
-	      s7_display(sc, make_protected_string(sc, ";    "), error_port);
-	      s7_display(sc, symbol_name_cell(environment_function(env)), error_port);
-	      if (has_line_number(env))
-		{
-		  s7_display(sc, chars[' '], error_port);
-		  s7_display(sc, file_names[environment_file(env)], error_port);
-		  s7_display(sc, chars[' '], error_port);
-		  s7_display(sc, make_integer(sc, environment_line(env)), error_port);
-		}
+	      port_write_string(error_port)(sc, errstr, strlen(errstr), error_port);
+	      free(errstr);
+	      port_write_character(error_port)(sc, '\n', error_port);
+	    }
+	}
+      else
+	{
+	  if (is_pair(slot_value(sc->error_code)))
+	    {
+	      format_to_port(sc, error_port, ";    ~S", list_1(sc, slot_value(sc->error_code)), NULL, false, 7);
 	      s7_newline(sc, error_port);
 	    }
 	}
@@ -35114,294 +35467,6 @@ static void improper_arglist_error(s7_scheme *sc)
 		list_2(sc,
 		       make_protected_string(sc, "improper list of arguments: ~S"),
 		       append_in_place(sc, safe_reverse_in_place(sc, sc->args), sc->code)));
-}
-
-
-
-/* ---------------- stacktrace ---------------- */
-
-static s7_pointer stacktrace_find_caller(s7_scheme *sc, s7_pointer e)
-{
-  if ((is_environment(e)) && (e != sc->global_env))
-    {
-      if (is_function_env(e))
-	return(environment_function(e));
-      return(stacktrace_find_caller(sc, next_environment(e)));
-    }
-  return(sc->F);
-}
-
-static bool stacktrace_find_environment(s7_scheme *sc, int loc, s7_pointer e)
-{
-  return((loc > 0) &&
-	 ((stack_environment(sc->stack, loc) == e) ||
-	  (stacktrace_find_environment(sc, loc - 1, e))));
-}
-
-static bool stacktrace_in_error_handler(s7_scheme *sc, int loc)
-{
-  return((next_environment(sc->error_env) == sc->envir) ||
-	 (stacktrace_find_environment(sc, loc * 4, next_environment(sc->error_env))));
-	 
-}
-
-static bool direct_memq(s7_pointer symbol, s7_pointer symbols);
-
-static bool stacktrace_error_hook_function(s7_scheme *sc, s7_pointer sym)
-{
-  if (is_symbol(sym))
-    {
-      s7_pointer f;
-      f = s7_symbol_value(sc, sym);
-      return((is_procedure(f)) &&
-	     (is_procedure(sc->error_hook)) &&
-	     (is_pair(s7_hook_functions(sc, sc->error_hook))) &&
-	     (direct_memq(f, s7_hook_functions(sc, sc->error_hook))));
-    }
-  return(false);
-}
-
-static char *stacktrace_walker_1(s7_scheme *sc, s7_pointer code, s7_pointer e, char *notes, s7_pointer *syms, int code_cols, int total_cols, int notes_start_col)
-{
-  if (is_symbol(code))
-    {
-      if ((!direct_memq(code, *syms)) &&
-	  (global_slot(code) == sc->UNDEFINED))
-	{
-	  s7_pointer val;
-
-	  (*syms) = cons(sc, code, (*syms));
-	  val = s7_symbol_local_value(sc, code, e);
-	  if ((val != sc->UNDEFINED) &&
-	      (!is_any_macro(val)))
-	    {
-	      int typ;
-
-	      typ = type(val);
-	      if ((typ != T_CLOSURE)      &&
-		  (typ != T_CLOSURE_STAR) &&
-		  (typ < T_C_FUNCTION)    &&
-		  (typ != T_GOTO)         &&
-		  (typ != T_CONTINUATION))
-		{
-		  char *objstr, *str, *spaces;
-		  int objlen, new_note_len, notes_max, cur_line_len = 0, spaces_len;
-		  bool new_notes_line = false;
-
-		  spaces = "                                                                                ";
-		  spaces_len = strlen(spaces);
-
-		  notes_max = total_cols - notes_start_col;
-		  objstr = s7_object_to_c_string(sc, val);
-		  objlen = strlen(objstr);
-		  if (objlen > notes_max)
-		    {
-		      objstr[notes_max - 4] = '.';
-		      objstr[notes_max - 3] = '.';
-		      objstr[notes_max - 2] = '.';
-		      objstr[notes_max - 1] = '\0';
-		      objlen = notes_max;
-		    }
-
-		  new_note_len = symbol_name_length(code) + 3 + objlen;
-		  /* we want to append this much info to the notes, but does it need a new line?
-		   */
-		  if (notes_start_col < code_cols)
-		    new_notes_line = true;
-		  else
-		    {
-		      if (notes)
-			{
-			  char *last_newline;
-			  last_newline = strrchr(notes, (int)'\n'); /* returns ptr to end if none?? somebody is lying! */
-			  if (last_newline)
-			    cur_line_len = strlen(notes) - strlen(last_newline);
-			  else cur_line_len = strlen(notes);
-			  new_notes_line = ((cur_line_len + new_note_len) > notes_max);
-			}
-		    }
-
-		  if (new_notes_line)
-		    {
-		      new_note_len += (4 + notes_start_col + ((notes) ? strlen(notes) : 0));
-		      str = (char *)calloc(new_note_len, sizeof(char));
-		      snprintf(str, new_note_len, "%s\n%s; %s: %s", 
-			       (notes) ? notes : "", 
-			       (char *)(spaces + spaces_len - notes_start_col),
-			       symbol_name(code), 
-			       objstr);
-		    }
-		  else
-		    {
-		      new_note_len += ((notes) ? strlen(notes) : 0) + 4;
-		      str = (char *)calloc(new_note_len, sizeof(char));
-		      snprintf(str, new_note_len, "%s%s%s: %s", 
-			       (notes) ? notes : "", 
-			       (notes) ? ", " : " ; ",
-			       symbol_name(code), 
-			       objstr);
-		    }
-		  free(objstr);
-		  if (notes) free(notes);
-		  return(str);
-		}
-	    }
-	}
-      return(notes);
-    }
-  if (is_pair(code))
-    {
-      notes = stacktrace_walker_1(sc, car(code), e, notes, syms, code_cols, total_cols, notes_start_col);
-      return(stacktrace_walker_1(sc, cdr(code), e, notes, syms, code_cols, total_cols, notes_start_col));
-    }
-  return(notes);
-}
-
-static char *stacktrace_walker(s7_scheme *sc, s7_pointer code, s7_pointer e, int code_cols, int total_cols, int notes_start_col)
-{
-  s7_pointer syms;
-  syms = sc->NIL;
-  return(stacktrace_walker_1(sc, code, e, NULL, &syms, code_cols, total_cols, notes_start_col));
-}
-
-static char *stacktrace_add_func(s7_scheme *sc, s7_pointer f, s7_pointer code, char *errstr, char *notes, int code_max)
-{
-  int newlen, errlen, spaces_len;
-  char *newstr, *str, *spaces;
-
-  spaces = "                                                                                ";
-  spaces_len = strlen(spaces);
-  errlen = strlen(errstr);
-
-  if ((is_symbol(f)) &&
-      (f != car(code)))
-    {
-      newlen = symbol_name_length(f) + errlen + 10;
-      newstr = (char *)calloc(newlen, sizeof(char));
-      errlen = snprintf(newstr, newlen, "([%s] ... %s)", symbol_name(f), errstr);
-    }
-  else
-    {
-      newlen = errlen + 8;
-      newstr = (char *)calloc(newlen, sizeof(char));
-      if ((errlen > 2) && (errstr[2] == '('))
-	errlen = snprintf(newstr, newlen, "( ... %s)", errstr);
-      else errlen = snprintf(newstr, newlen, "%s", errstr);
-    }
-
-  newlen = code_max + 3 + ((notes) ? strlen(notes) : 0);
-  str = (char *)calloc(newlen, sizeof(char));
-
-  if (errlen >= code_max)
-    {
-      newstr[code_max - 4] = '.';
-      newstr[code_max - 3] = '.';
-      newstr[code_max - 2] = '.';
-      newstr[code_max - 1] = '\0';
-      snprintf(str, newlen, "%s%s\n", newstr, (notes) ? notes : "");
-    }
-  else
-    {
-      snprintf(str, newlen, "%s%s%s\n", newstr, (char *)(spaces + spaces_len - code_max + errlen + 1), (notes) ? notes : "");
-    }
-  free(newstr);
-
-  return(str);
-}
-
-
-static char *stacktrace_1(s7_scheme *sc, int frames_max, int code_cols, int total_cols, int notes_start_col)
-{
-  char *str;
-  int loc, top, frames = 0;
-  s7_pointer syms;
-
-  str = NULL;
-  syms = sc->NIL;
-  top = (sc->stack_end - sc->stack_start) / 4; /* g_stack_top, not s7_stack_top! */
-  
-  if (stacktrace_in_error_handler(sc, top))
-    {
-      s7_pointer err_code;
-      err_code = slot_value(sc->error_code);
-      if (is_pair(err_code))
-	{
-	  char *errstr, *notes = NULL;
-	  s7_pointer cur_env, f;
-
-	  errstr = s7_object_to_c_string(sc, err_code);
-	  cur_env = next_environment(sc->error_env);
-	  f = stacktrace_find_caller(sc, cur_env); /* this is a symbol */
-	  if ((is_environment(cur_env)) &&
-	      (cur_env != sc->global_env))
-	    notes = stacktrace_walker(sc, err_code, cur_env, code_cols, total_cols, notes_start_col);
-	  str = stacktrace_add_func(sc, f, err_code, errstr, notes, code_cols);
-	  free(errstr);
-	  /* top -= 1; */
-	}
-    }
-     
-  for (loc = top - 2; loc > 0; loc--)
-    {
-      s7_pointer code;
-      int true_loc;
-      true_loc = (int)(loc + 1) * 4 - 1;
-      code = stack_code(sc->stack, true_loc);
-      if (is_pair(code))
-	{
-	  char *codestr;
-	  codestr = s7_object_to_c_string(sc, code);
-	  if (codestr)
-	    {
-	      if ((strcmp(codestr, "(result)") != 0) &&
-		  (strcmp(codestr, "(#f)") != 0))
-		{
-		  s7_pointer e, f;
-		  e = stack_environment(sc->stack, true_loc);
-		  f = stacktrace_find_caller(sc, e);
-		  if (!stacktrace_error_hook_function(sc, f))
-		    {
-		      char *notes = NULL, *newstr;
-		      int newlen;
-
-		      frames++;
-		      if (frames > frames_max)
-			{
-			  free(codestr);
-			  return(str);
-			}
-		      if ((is_environment(e)) && (e != sc->global_env))
-			notes = stacktrace_walker(sc, code, e, code_cols, total_cols, notes_start_col);
-		      newstr = stacktrace_add_func(sc, f, code, codestr, notes, code_cols);
-		      free(codestr);
-
-		      newlen = strlen(newstr) + 1 + ((str) ? strlen(str) : 0);
-		      codestr = (char *)calloc(newlen, sizeof(char));
-		      snprintf(codestr, newlen, "%s%s", (str) ? str : "", newstr);
-		      if (str) free(str);
-		      free(newstr);
-		      str = codestr;
-		    }
-		  else free(codestr);
-		}
-	      else free(codestr);
-	    }
-	}
-    }
-      
-  return(str);
-}
-
-
-s7_pointer s7_stacktrace(s7_scheme *sc)
-{
-  return(make_string_uncopied(sc, stacktrace_1(sc, 30, 50, 80, 50)));
-}
-
-
-static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
-{
-  return(make_string_uncopied(sc, stacktrace_1(sc, 30, 50, 80, 50)));
 }
 
 
@@ -65961,8 +66026,8 @@ s7_scheme *s7_init(void)
 				H_symbol_table_is_locked);
 
   s7_define_safe_function(sc, "*stack-top*", g_stack_top, 0, 0, false, "current stack top");
-  s7_define_safe_function(sc, "*stack*", g_stack, 1, 0, false, "an experiment");
-  s7_define_safe_function(sc, "stacktrace", g_stacktrace, 0, 4, false, "an experiment");
+  s7_define_safe_function(sc, "*stack*", g_stack, 1, 0, false, "current stack entry");
+  sc->STACKTRACE = s7_define_safe_function(sc, "stacktrace", g_stacktrace, 0, 5, false, H_stacktrace);
   
 
   /* *features* */
