@@ -5783,7 +5783,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
 	    {
 	      XEN data;
 	      data = mus_array_to_list(e->data, 0, e->pts * 2);
-	      if (e) {free_env(e); e = NULL;}
+	      free_env(e);
 	      if (error == SRC_ENV_HIT_ZERO)
 		XEN_OUT_OF_RANGE_ERROR(caller, 1, data, "envelope hits 0.0");
 	      else XEN_OUT_OF_RANGE_ERROR(caller, 1, data, "envelope passes through 0.0");
@@ -5791,7 +5791,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
 	  else
 	    {
 	      src_env_or_num(cp, e, e_ratio, false, caller, over_selection, NULL, edpos, 5);
-	      if (e) free_env(e);
+	      free_env(e);
 	    }
 	}
       else

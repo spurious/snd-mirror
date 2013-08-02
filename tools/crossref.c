@@ -1,4 +1,4 @@
-/* gcc -o crossref crossref.c -O2 */
+/* gcc -o crossref crossref.c -O2 -Wall */
 
 #include <ctype.h>
 #include <stddef.h>
@@ -8,7 +8,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdbool.h>
-
+#include <unistd.h>
 
 char **names;
 char **hnames;
@@ -203,7 +203,7 @@ static int greater_compare(const void *a, const void *b)
 
 int main(int argc, char **argv)
 {
-  int i, j, fd, curfile, chars, k, in_comment = 0, in_white = 0, calls = 0, in_parens = 0, in_quotes = 0, in_define = 0, in_curly = 0, in_enum = 0;
+  int i, j, fd, chars, k, in_comment = 0, in_white = 0, calls = 0, in_parens = 0, in_quotes = 0, in_define = 0, in_curly = 0, in_enum = 0;
   int maxc[NAME_SIZE], maxf[NAME_SIZE], maxg[NAME_SIZE], mcalls[NAME_SIZE];
   qdata **qs;
   char input[MAX_CHARS];
@@ -305,6 +305,7 @@ int main(int argc, char **argv)
   add_file("snd-xchn.c");
   add_file("snd-xsnd.c");
   add_file("snd-xregion.c");
+  add_file("snd-xref.c");
   add_file("snd-xdrop.c");
   add_file("snd-xmain.c");
   add_file("snd-xmix.c");

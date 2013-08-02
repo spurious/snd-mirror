@@ -1485,12 +1485,8 @@ int main(int argc, char **argv)
 
     s7_eval_c_string(sc, "(+ 1 #\\c)");
     errmsg = s7_get_output_string(sc, s7_current_error_port(sc));
-    if ((errmsg) && (*errmsg))
-      {
-         if (strcmp(errmsg, "\n;+ argument 2, #\\c, is a character but should be a number\n;    (+ 1 #\\c)\n") != 0)
-           fprintf(stderr, "%d: error: %s\n", __LINE__, errmsg);
-      }
-    else fprintf(stderr, "%d: no error!\n", __LINE__);
+    if (!errmsg)
+      fprintf(stderr, "%d: no error!\n", __LINE__);
 
     s7_close_output_port(sc, s7_current_error_port(sc));
     s7_set_current_error_port(sc, old_port);

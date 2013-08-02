@@ -192,6 +192,7 @@ void edit_find_callback(GtkWidget *w, gpointer context)
 
 void find_dialog(chan_info *cp)
 {
+  /* used in snd-kbd.c */
   make_edit_find_dialog(true, cp);
 }
 

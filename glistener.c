@@ -2622,10 +2622,7 @@ static void glistener_colorizer_callback(glistener *g)
       gtk_text_iter_forward_char(&scan_iter);
     }
   if (atom_awaits)
-    {
-      g->colorizer(g, GLISTENER_ATOM, end_space_pos + 1, end_pos);
-      atom_awaits = false;
-    }
+    g->colorizer(g, GLISTENER_ATOM, end_space_pos + 1, end_pos);
 }
 
 

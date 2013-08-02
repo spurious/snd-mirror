@@ -723,9 +723,9 @@ file_info *copy_header(const char *fullname, file_info *ohdr)
   hdr = (file_info *)calloc(1, sizeof(file_info));
   hdr->name = mus_strdup(fullname);
   hdr->comment = NULL;
-  hdr->samples = ohdr->samples;
   if (ohdr)
     {
+      hdr->samples = ohdr->samples;
       hdr->data_location = ohdr->data_location;
       hdr->srate = ohdr->srate;
       hdr->chans = ohdr->chans;
@@ -2345,7 +2345,6 @@ static char *quoted_filename(const char *filename, bool *new_name)
 	  if ((filename[i] == ' ')  || 
 	      (filename[i] == '\'') || 
 	      (filename[i] == '*')  || 
-	      (filename[i] == '\'') || 
 	      (filename[i] == '(')  || 
 	      (filename[i] == ')')  || 
 	      (filename[i] == '?'))

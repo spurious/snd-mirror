@@ -16670,16 +16670,16 @@ static XEN gxg_g_idle_remove_by_data(XEN data)
 {
   #define H_g_idle_remove_by_data "gboolean g_idle_remove_by_data(gpointer data)"
   XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 1, "g_idle_remove_by_data", "gpointer");
-  return(C_TO_XEN_gboolean(g_idle_remove_by_data(XEN_TO_C_gpointer(data))));
   xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(data)));
+  return(C_TO_XEN_gboolean(g_idle_remove_by_data(XEN_TO_C_gpointer(data))));
 }
 
 static XEN gxg_g_source_remove(XEN tag)
 {
   #define H_g_source_remove "gboolean g_source_remove(guint tag)"
   XEN_ASSERT_TYPE(XEN_guint_P(tag), tag, 1, "g_source_remove", "guint");
-  return(C_TO_XEN_gboolean(g_source_remove(XEN_TO_C_guint(tag))));
   xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(tag)));
+  return(C_TO_XEN_gboolean(g_source_remove(XEN_TO_C_guint(tag))));
 }
 
 static XEN gxg_gtk_file_filter_new(void)
@@ -48669,7 +48669,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("16-Jul-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("02-Aug-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

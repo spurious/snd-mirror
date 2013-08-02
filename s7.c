@@ -21262,7 +21262,6 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
   long size;
 #endif
   int port_loc;
-  char *content = NULL;
 
   NEW_CELL(sc, port);
   port_loc = s7_gc_protect(sc, port);
@@ -21294,6 +21293,8 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
       ((max_size < 0) || (size < max_size)))
     {
       size_t bytes;
+      char *content;
+
       content = (char *)malloc((size + 2) * sizeof(char));
       bytes = fread(content, sizeof(char), size, fp);
       if (bytes != (size_t)size)
@@ -29091,7 +29092,7 @@ static s7_pointer g_multivector(s7_scheme *sc, s7_Int dims, s7_pointer data)
    * also should we let an empty vector have any number of dimensions? currently ndims is an int.
    */
   s7_pointer vec, x;
-  int i, total_size = 1, vec_loc, err;
+  int i, vec_loc, err;
   int *sizes;
   
   /* (#2d((1 2 3) (4 5 6)) 0 0) -> 1
@@ -29115,7 +29116,6 @@ static s7_pointer g_multivector(s7_scheme *sc, s7_Int dims, s7_pointer data)
   for (x = data, i = 0; i < dims; i++)
     {
       sizes[i] = safe_list_length(sc, x);
-      total_size *= sizes[i];
       sc->w = cons(sc, make_integer(sc, sizes[i]), sc->w);
       x = car(x);
       if ((i < (dims - 1)) && 
@@ -33935,7 +33935,6 @@ static char *stacktrace_add_func(s7_scheme *sc, s7_pointer f, s7_pointer code, c
     {
       newlen = symbol_name_length(f) + errlen + 10;
       newstr = (char *)calloc(newlen, sizeof(char));
-      /* errlen = snprintf(newstr, newlen, "([%s] ... %s)", symbol_name(f), errstr); */
       errlen = snprintf(newstr, newlen, "%s: %s", symbol_name(f), errstr);
     }
   else
@@ -55493,7 +55492,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case T_C_MACRO: 	                    /* -------- C-based macro -------- */
 	  {
-	    unsigned int len;
+	    int len;
 	    
 	    if (is_pair(car(sc->args)))            /* normally args is ((mac-name ...)) */
 	      {                                    /*   but in a case like (call-with-exit quasiquote), args is (#<goto>) */
@@ -55514,12 +55513,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(s7_error(sc, sc->SYNTAX_ERROR, 
 			      list_3(sc, make_protected_string(sc, "~A: improper list of arguments: ~S"), sc->code, sc->args)));
 	    
-	    if (len < c_macro_required_args(sc->code))
+	    if (len < (int)c_macro_required_args(sc->code))
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
 	    
-	    if (c_macro_all_args(sc->code) < len)
+	    if ((int)c_macro_all_args(sc->code) < len)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));

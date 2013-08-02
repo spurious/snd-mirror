@@ -350,6 +350,12 @@
       (set! (str i) (char-upcase (name i))))
     str))
 
+(define (remove-if p l)
+  (cond ((null? l) ())
+	((p (car l)) (remove-if p (cdr l)))
+	(else (cons (car l) 
+		    (remove-if p (cdr l))))))
+
 (define (ref-arg? arg)
   (and (= (length arg) 3)
        (string? (caddr arg))))
@@ -2813,6 +2819,7 @@
 		    (hey "  {~%")
 		    (hey "    XEN result = XEN_FALSE;~%")))
 	      (hey-start)
+
 	      (if (not (eq? spec 'etc))
 		  (if (not (string=? return-type "void"))
 		      (if (= refargs 0)
@@ -2820,9 +2827,17 @@
 			      (hey-on "  {~%   ~A result;~%   XEN rtn;~%   result = " return-type)
 			      (if (eq? spec 'const-return)
 				  (hey "    return(C_TO_XEN_~A((~A)" (no-stars return-type) return-type)
-				  (hey-on "  return(C_TO_XEN_~A(" (no-stars return-type))))
+				  (begin
+				    (if (member name idlers)
+					(begin
+					  (if (string=? name "gtk_idle_remove")
+					      (hey "  xm_unprotect_idler(XEN_TO_C_guint(~A));~%" (cadr (car args)))
+					      (hey "  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(~A)));~%" (cadr (car args))))
+					  (set! idlers (remove-if (lambda (x) (string=? x name)) idlers))))
+				  (hey-on "  return(C_TO_XEN_~A(" (no-stars return-type)))))
 			  (hey-on "    result = C_TO_XEN_~A(" (no-stars return-type)))
 		      (hey-on "  ")))))
+
 	;; pass args
 	(if (eq? spec 'etc)
 	    (begin
@@ -2898,6 +2913,7 @@
 			  (hey "-1); break;~%")
 			  (hey "); break;~%"))))
 		(hey "      }~%")
+
 		(if (not (string=? return-type "void"))
 		    (hey "    return(C_TO_XEN_~A(result));~%" (no-stars return-type))
 		    (hey "    return(XEN_FALSE);~%"))

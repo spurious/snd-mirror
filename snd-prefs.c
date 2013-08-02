@@ -270,13 +270,14 @@ static void save_prefs(void)
 
   fullname = mus_expand_filename(filename);
   fd = FOPEN(fullname, "a");
-  fprintf(fd, "\n");
 
   if (fd)
     {
       char **current_dirs = NULL;
       int i, current_dirs_len = 0;
       char *unchecked_load_path = NULL;
+
+      fprintf(fd, "\n");
 
       /* LOAD_PATH has the current load-path list,
        *   GET_TEXT(load_path_text_widget) has the current text (independent of activation)

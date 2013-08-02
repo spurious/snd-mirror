@@ -643,7 +643,7 @@ static char *oss_unsrc(int srcbit)
       buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
       if (srcbit & SOUND_MASK_MIC) {need_and = true; strcat(buf, "mic");}
       if (srcbit & SOUND_MASK_LINE) {if (need_and) strcat(buf, " and "); need_and = true; strcat(buf, "line in");}
-      if (srcbit & SOUND_MASK_CD) {if (need_and) strcat(buf, " and "); need_and = true; strcat(buf, "cd");}
+      if (srcbit & SOUND_MASK_CD) {if (need_and) strcat(buf, " and "); strcat(buf, "cd");}
       return(buf);
     }
 }

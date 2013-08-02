@@ -1416,8 +1416,11 @@ static int cant_write(char *name)
 static gint close_sound_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
-  if (sp) snd_close_file(sp);
-  gtk_widget_hide(sp->dialog); 
+  if (sp) 
+    {
+      snd_close_file(sp);
+      gtk_widget_hide(sp->dialog); 
+    }
   return(true);
 } 
 
