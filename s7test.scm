@@ -28520,7 +28520,6 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (test (string? (stacktrace)) #t)
 ;(test (stacktrace 123) 'error)
-;; TODO: stacktrace tests!
 
 
 

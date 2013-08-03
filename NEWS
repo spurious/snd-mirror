@@ -1,23 +1,29 @@
-Snd 13.8.
+Snd 13.9:
 
-s7: added autoload (actually moved it from Snd to s7).
-    ffitest.c
+sndlib now can be built by premake4, thanks to Rick.
 
+added --with-audio switch to sndlib configure script.
+  innumerable other changes to the configure stuff in snd, sndlib, libxm, clm.
+  old switch --with-no-gui is now --without-gui.
+  removed --with-just-gl, --enable-readline, snd-as-widget, 
+          --with-motif-prefix and --with-ruby-prefix.
+  Gtk is now the default GUI toolkit, not Motif.
 
-Snd: listener-colorized, syntax highlighting in glistener.
-     colorizer-colors.
+  added make-config-pc.rb to Snd/tools, sndlib, libxm
+    this is a script Mike Scholz wrote to create a ruby.pc file if
+    your Ruby package omitted it by mistake.
 
-     removed the view files dialog from the gtk version, including all the
-       related extension language functions, and view-files-select-hook.
+  cload.scm: changed define-c-function to c-define.
+  added libm.scm to dynamically load the math library functions.
+        libgdbm.scm to load the gdbm library.
+        libdl.scm for libdl.
+        tools/gdb-s7.scm: some unfinished gdb hackery.
 
-     The various file open/save dialogs now (sigh) use gtk's filechooser.
+removed trap-segfault.
 
-     the file-sorter functions now apply only to the Motif case.
+ported Snd to OpenIndiana (solaris).
 
+checked: gtk 3.9.6|8|10, sbcl 1.1.9|10, gl2ps 1.3.8, Linux Mint 15 (Debian),
+	 gsl 1.16.
 
-cmn: Lispworks port thanks to Anders Vinjar.
-clm: sbcl bugfix thanks to Michael Edwards.
-
-checked: gtk 3.9.2, sbcl 1.1.8, openbsd 5.3 and FC 19 (via VirtualBox)
-
-Thanks!: Victor Gerasimov, Mike Scholz, Anders Vinjar, Michael Edwards, Rick Taube.
+Thanks!: Nando, Rick, Mike, Orm Finnendahl.

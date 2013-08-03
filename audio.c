@@ -36,8 +36,6 @@
 
 #include <mus-config.h>
 
-#if WITH_AUDIO
-
 #if USE_SND && __APPLE__ && USE_MOTIF
   #undef USE_MOTIF
   #define USE_NO_GUI 1
@@ -89,6 +87,8 @@
 
 #include "_sndlib.h"
 #include "sndlib-strings.h"
+
+#if WITH_AUDIO
 
 enum {MUS_AUDIO_DEFAULT_0, MUS_AUDIO_DUPLEX_DEFAULT, MUS_AUDIO_LINE_OUT,
       MUS_AUDIO_LINE_IN, MUS_AUDIO_MICROPHONE, MUS_AUDIO_SPEAKERS, MUS_AUDIO_DIGITAL_OUT,
@@ -2294,7 +2294,7 @@ char *mus_audio_moniker(void)
   char *dev_name;
   if (getenv(AUDIODEV_ENV) != NULL) 
     dev_name = getenv(AUDIODEV_ENV); 
-  else dev_name = DAC_NAME;
+  else dev_name = (char *)DAC_NAME;
   audio_fd = open(dev_name, O_RDONLY | O_NONBLOCK, 0);
   if (audio_fd == -1) 
     {
@@ -2378,7 +2378,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
 				 mus_data_format_name(format)));
   if (getenv(AUDIODEV_ENV) != NULL) 
     dev_name = getenv(AUDIODEV_ENV); 
-  else dev_name = DAC_NAME;
+  else dev_name = (char *)DAC_NAME;
   if (dev != MUS_AUDIO_DUPLEX_DEFAULT)
     audio_fd = open(dev_name, O_WRONLY, 0);
   else audio_fd = open(dev_name, O_RDWR, 0);
@@ -2493,7 +2493,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 				 mus_data_format_name(format)));
   if (getenv(AUDIODEV_ENV) != NULL) 
     dev_name = getenv(AUDIODEV_ENV); 
-  else dev_name = DAC_NAME;
+  else dev_name = (char *)DAC_NAME;
   if (dev != MUS_AUDIO_DUPLEX_DEFAULT)
     audio_fd = open(dev_name, O_RDONLY, 0);
   else audio_fd = open(dev_name, O_RDWR, 0);
@@ -2585,9 +2585,10 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   return(audio_fd);
 }
 
+#if 0
 /* pause can be implemented with play.pause and record.pause */
 
-static char *sun_format_name(int format)
+static const char *sun_format_name(int format)
 {
   switch (format)
     {
@@ -2621,7 +2622,7 @@ static char *sun_format_name(int format)
   return("unknown");
 }
 
-static char *sun_in_device_name(int dev)
+static const char *sun_in_device_name(int dev)
 {
   if (dev == AUDIO_MICROPHONE) return("microphone");
   if (dev == AUDIO_LINE_IN) return("line in");
@@ -2633,7 +2634,7 @@ static char *sun_in_device_name(int dev)
   return("unknown");
 }
 
-static char *sun_out_device_name(int dev)
+static const char *sun_out_device_name(int dev)
 {
   if (dev == AUDIO_SPEAKER) return("speakers");
   if (dev == AUDIO_LINE_OUT) return("line out");
@@ -2644,6 +2645,7 @@ static char *sun_out_device_name(int dev)
   if (dev == (AUDIO_LINE_OUT | AUDIO_HEADPHONE)) return("line out + headphones");
   return("unknown");
 }
+
 
 static char *sun_vol_name = NULL;
 static char *sun_volume_name(float vol, int balance, int chans)
@@ -2660,6 +2662,7 @@ static char *sun_volume_name(float vol, int balance, int chans)
   return(sun_vol_name);
 }
 
+#endif
 #endif
 
 
@@ -5356,9 +5359,6 @@ void mus_reset_audio_c(void)
 {
   audio_initialized = false;
   version_name = NULL;
-#if (defined(__sun) || defined(__SVR4))
-  sun_vol_name = NULL;
-#endif
 }
 
 

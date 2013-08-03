@@ -120,7 +120,7 @@ static mark *map_over_marks_with_int(chan_info *cp, mark *(*func)(chan_info *ncp
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
-  if (ed->marks)
+  if ((ed) && (ed->marks))
     {
       int marks;
       mark **mps;
@@ -471,7 +471,8 @@ static void sort_marks(chan_info *cp)
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
-  qsort((void *)(ed->marks), ed->mark_ctr + 1, sizeof(mark *), compare_mark_samps);
+  if (ed)
+    qsort((void *)(ed->marks), ed->mark_ctr + 1, sizeof(mark *), compare_mark_samps);
 }
 
 

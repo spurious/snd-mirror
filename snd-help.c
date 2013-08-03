@@ -409,11 +409,11 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+3-Aug-13: Snd 13.9.\n\
 30-Jun-13: Snd 13.8.\n\
 11-Jun: removed the view files dialog from the gtk version, including all the\n\
            related extension language functions, and view-files-select-hook.\n\
 24-May-13: Snd 13.7.\n\
-23-Apr-13: Snd 13.6.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",
