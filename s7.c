@@ -22532,9 +22532,7 @@ static s7_pointer g_load_path_set(s7_scheme *sc, s7_pointer args)
 
 void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
 {
-  /* PERHAPS: if autoload_names not null, combine and re-sort (just run through both resetting locs)
-   *
-   * the idea here is that by sticking to string constants we can handle 90% of the work at compile-time,
+  /* the idea here is that by sticking to string constants we can handle 90% of the work at compile-time,
    *   with less start-up memory.  Then eventually we'll add C libraries a la xg (gtk) as environments
    *   and every name in that library will come as an import once dlopen has picked up the library.
    *   So, hopefully, we can pre-declare as many names as we want from as many libraries as we want,
@@ -22552,6 +22550,7 @@ void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
    * But that requires inside knowlege of the library, and changes without notice.
    *
    * Also we need to decide how to handle name collisions.
+   * And (lastly?) how to handle different library versions?
    */
   if (sc->autoload_names == NULL)
     {
@@ -66373,7 +66372,7 @@ s7_scheme *s7_init(void)
  * we need integer_length everywhere! These fixups are ignored by the optimized cases.
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
  *
- * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7 13.9
+ * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7 13.10
  * bench    42736 8752 8051 7725 6515 5194 4364 3989 3997 3997
  * lint           9328 8140 7887 7736 7300 7180 7051 7078
  * index    44300 3291 3005 2742 2078 1643 1435 1363 1365 1335
@@ -66402,8 +66401,6 @@ s7_scheme *s7_init(void)
  * other often-used libraries: c glib/gio/gobject/gmodule ncurses? gsl? GL/GLU? pcre? tecla? readline?
  *    libpthread.scm for partial pthread case, but how is this to be used?
  *    SOMEDAY: libgdbm tests and setopt support, libdl tests and autoload in Snd
- *    TODO: add r7rs tests to s7libtest
- *    TODO: stacktrace tests in s7test
  * TODO: (env env) in clm should be an error
  * possible autoload additions: sndlib? xm? libX* fftw? gmp/mpfr/mpc? 
  * gdb-s7 might check for 0xnnnn "asdf" to avoid strings

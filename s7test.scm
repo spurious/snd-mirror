@@ -28521,6 +28521,116 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (string? (stacktrace)) #t)
 ;(test (stacktrace 123) 'error)
 
+(let ((str ""))
+
+  (define testtrace (lambda () (set! str (stacktrace 3))))
+  (define (hi1 a) (testtrace))
+  (define (hi2 b) (string-append (hi1 b) ""))
+  (define (hi3 c) (string-append (hi2 c) ""))
+  (define (hi4 d) (string-append (hi3 d) ""))
+  (define (hi5 e) (string-append (hi4 e) ""))
+  (define (hi6 f) (string-append (hi5 f) ""))
+  (hi6 12)
+  (test str "hi2: (string-append (hi1 b) \"\")                   ; b: 12
+hi3: (string-append (hi2 c) \"\")                   ; c: 12
+hi4: (string-append (hi3 d) \"\")                   ; d: 12
+"))
+
+(let ((str ""))
+  (define testtrace (lambda () (set! str (stacktrace 5))))
+  (define (hi1 a) (testtrace))
+  (define (hi2 b) (string-append (hi1 b) ""))
+  (define (hi3 c) (string-append (hi2 c) ""))
+  (define (hi4 d) (string-append (hi3 d) ""))
+  (define (hi5 e) (string-append (hi4 e) ""))
+  (define (hi6 f) (string-append (hi5 f) ""))
+  (hi6 12)
+  (test str "hi2: (string-append (hi1 b) \"\")                   ; b: 12
+hi3: (string-append (hi2 c) \"\")                   ; c: 12
+hi4: (string-append (hi3 d) \"\")                   ; d: 12
+hi5: (string-append (hi4 e) \"\")                   ; e: 12
+hi6: (string-append (hi5 f) \"\")                   ; f: 12
+"))
+
+(let ((str ""))
+  (define testtrace (lambda () (set! str (stacktrace 5 20 40 20))))
+  (define (hi1 a) (testtrace))
+  (define (hi2 b) (string-append (hi1 b) ""))
+  (define (hi3 c) (string-append (hi2 c) ""))
+  (define (hi4 d) (string-append (hi3 d) ""))
+  (define (hi5 e) (string-append (hi4 e) ""))
+  (define (hi6 f) (string-append (hi5 f) ""))
+  (hi6 12)
+  (test str "hi2: (string-app... ; b: 12
+hi3: (string-app... ; c: 12
+hi4: (string-app... ; d: 12
+hi5: (string-app... ; e: 12
+hi6: (string-app... ; f: 12
+"))
+
+(let ((str ""))
+  (define testtrace (lambda () (set! str (stacktrace 5 20 40 8))))
+  (define (hi1 a) (testtrace))
+  (define (hi2 b) (string-append (hi1 b) ""))
+  (define (hi3 c) (string-append (hi2 c) ""))
+  (define (hi4 d) (string-append (hi3 d) ""))
+  (define (hi5 e) (string-append (hi4 e) ""))
+  (define (hi6 f) (string-append (hi5 f) ""))
+  (hi6 12)
+  (test str "hi2: (string-app...
+         ; b: 12
+hi3: (string-app...
+         ; c: 12
+hi4: (string-app...
+         ; d: 12
+hi5: (string-app...
+         ; e: 12
+hi6: (string-app...
+         ; f: 12
+"))
+
+(let ((str ""))
+  (define testtrace (lambda () (set! str (stacktrace 5 20 40 8 #t))))
+  (define (hi1 a) (testtrace))
+  (define (hi2 b) (string-append (hi1 b) ""))
+  (define (hi3 c) (string-append (hi2 c) ""))
+  (define (hi4 d) (string-append (hi3 d) ""))
+  (define (hi5 e) (string-append (hi4 e) ""))
+  (define (hi6 f) (string-append (hi5 f) ""))
+  (hi6 12)
+  (test str "; hi2: (string-app...
+;         b: 12
+; hi3: (string-app...
+;         c: 12
+; hi4: (string-app...
+;         d: 12
+; hi5: (string-app...
+;         e: 12
+; hi6: (string-app...
+;         f: 12
+"))
+
+(let ((str ""))
+  (define testtrace (lambda () (set! str (stacktrace 5 40 80 8 #t))))
+  (define (hi1 a) (testtrace))
+  (define (hi2 b) (string-append (hi1 b) ""))
+  (define (hi3 c) (string-append (hi2 c) ""))
+  (define (hi4 d) (string-append (hi3 d) ""))
+  (define (hi5 e) (string-append (hi4 e) ""))
+  (define (hi6 f) (string-append (hi5 f) ""))
+  (hi6 12)
+  (test str "; hi2: (string-append (hi1 b) \"\")        
+;         b: 12
+; hi3: (string-append (hi2 c) \"\")        
+;         c: 12
+; hi4: (string-append (hi3 d) \"\")        
+;         d: 12
+; hi5: (string-append (hi4 e) \"\")        
+;         e: 12
+; hi6: (string-append (hi5 f) \"\")        
+;         f: 12
+"))
+
 
 
 

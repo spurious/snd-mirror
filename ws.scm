@@ -598,6 +598,7 @@ finish-with-sound to complete the process."
 	(start (if statistics (get-internal-real-time)))
 	(output-to-file (string? output))
 	(reverb-to-file (and reverb (string? revfile))))
+    (set! (mus-srate) srate)
     (if output-to-file
 	(if continue-old-file
 	    (begin
