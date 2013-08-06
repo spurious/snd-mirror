@@ -702,4 +702,14 @@ void snd_doit(int argc, char **argv)
 
   if (!nostdin)
     xen_repl(1, argv);
+
+  /* one way to make this less tedious is to use libtecla's enhance:
+   *
+   *    enhance snd
+   *
+   * Even better would be to use libtecla internally so we can get reasonable completions
+   * but that means we need a .pc file for it.  (tecla is confusing in this context because
+   * it sees something like open-sound "/home/bil/cl/obo<TAB> and complains about a missing 
+   * directory).
+   */
 }

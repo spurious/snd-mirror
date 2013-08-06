@@ -159,7 +159,7 @@
 		((string-position "bool" type-name) 
 		 'boolean)
 		
-;		((string-position "complex")
+;		((string-position "complex" type-name)
 ;		 'complex)
 
 		((or (string-position "float" type-name) 
@@ -438,3 +438,4 @@
 
 
 ;;; TODO: doc output handling and arg
+;;; TODO: add ifdef trailing arg

@@ -1334,15 +1334,16 @@ struct s7_scheme {
   s7_pointer SIMPLE_DO_P, DOTIMES_P, SIMPLE_DO_FOREVER, SIMPLE_DO_A;
   s7_pointer DOX;
 
+  s7_pointer *safe_lists; /* prebuilt evaluator arg lists */
+
   s7_pointer autoload_table;
-  s7_pointer *safe_lists;
-  const char **autoload_names;
-  int autoload_names_size;
-  bool autoload_ours;
+  const char ***autoload_names;
+  int *autoload_names_sizes;
+  int autoload_names_loc, autoload_names_top;
 };
 
 #define NUM_SAFE_LISTS 16
-
+#define INITIAL_AUTOLOAD_NAMES_SIZE 4
 
 /* is_c_function can be array lookup
  *  the array lookup has exactly the same computational cost as the bit check
@@ -22530,6 +22531,8 @@ static s7_pointer g_load_path_set(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* ---------------- autoload ---------------- */
+
 void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
 {
   /* the idea here is that by sticking to string constants we can handle 90% of the work at compile-time,
@@ -22549,69 +22552,76 @@ void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
    * Perhaps each module as an environment within the main one: ((*libgtk* *gtkwidget*) 'gtk_widget_new)?
    * But that requires inside knowlege of the library, and changes without notice.
    *
-   * Also we need to decide how to handle name collisions.
+   * Also we need to decide how to handle name collisions (by order of autoload lib setup)
    * And (lastly?) how to handle different library versions?
+   *
+   *
+   * so autoload known libs here in s7 so we're indepentdent of snd
+   *   (currently these are included in make-index.scm[line 575] -> snd-xref.c)
+   * for each module, include an env in the lib env (*libgtk* 'gtkwidget.h) or whatever that has the names in that header
+   * in autoload below, don't sort! -- just build a list of autoload tables and check each in order at autoload time (we want startup to be fast)
+   * for versions, include wrapper macro at end of each c-define choice
+   * in the xg case, there's no savings in delaying the defines
+   *
    */
   if (sc->autoload_names == NULL)
     {
-      sc->autoload_names = names;
-      sc->autoload_names_size = size;
-      sc->autoload_ours = false;
+      sc->autoload_names = (const char ***)calloc(INITIAL_AUTOLOAD_NAMES_SIZE, sizeof(const char **));
+      sc->autoload_names_sizes = (int *)calloc(INITIAL_AUTOLOAD_NAMES_SIZE, sizeof(int));
+      sc->autoload_names_top = INITIAL_AUTOLOAD_NAMES_SIZE;
+      sc->autoload_names_loc = 0;
     }
   else
     {
-      int new_i, old_i = 0, cur_i = 0, new_size, comp;
-      const char **old_names;
-      old_names = sc->autoload_names;
-      new_size = (size + sc->autoload_names_size) * 2;
-      sc->autoload_names = (const char **)malloc(new_size * sizeof(const char *));
-      for (new_i = 0; new_i < new_size; new_i += 2)
+      if (sc->autoload_names_loc >= sc->autoload_names_top)
 	{
-	  comp = strcmp(old_names[old_i], names[cur_i]);
-	  if (comp <= 0)
+	  int i;
+	  sc->autoload_names_top *= 2;
+	  sc->autoload_names = (const char ***)realloc(sc->autoload_names, sc->autoload_names_top);
+	  sc->autoload_names_sizes = (int *)realloc(sc->autoload_names_sizes, sc->autoload_names_top);
+	  for (i = sc->autoload_names_loc; i < sc->autoload_names_top; i++)
 	    {
-	      if (comp == 0)
-		fprintf(stderr, "name collision: %s\n", old_names[old_i]);
-	      sc->autoload_names[new_i] = old_names[old_i];
-	      sc->autoload_names[new_i + 1] = old_names[old_i + 1];
-	      old_i += 2;
-	    }
-	  else
-	    {
-	      sc->autoload_names[new_i] = names[cur_i];
-	      sc->autoload_names[new_i + 1] = names[cur_i + 1];
-	      cur_i += 2;
+	      sc->autoload_names[i] = NULL;
+	      sc->autoload_names_sizes[i] = 0;
 	    }
 	}
-      if (sc->autoload_ours) free(old_names);
-      sc->autoload_ours = true;
-      sc->autoload_names_size = new_size;
     }
+     
+  sc->autoload_names[sc->autoload_names_loc] = names;
+  sc->autoload_names_sizes[sc->autoload_names_loc] = size;
+  sc->autoload_names_loc++;
 }
 
 
-const char *find_autoload_name(s7_scheme *sc, s7_pointer symbol)
+static const char *find_autoload_name(s7_scheme *sc, s7_pointer symbol)
 {
-  int l = 0, u, pos = -1, comp;
+  int l = 0, u, pos = -1, comp, lib, libs;
   const char *name, *this_name;
+  const char **names;
 
   name = symbol_name(symbol);
-  u = sc->autoload_names_size - 1;
+  libs = sc->autoload_names_loc;
 
-  while (true)
+  for (lib = 0; lib < libs; lib++)
     {
-      if (u < l) break;
-      pos = (l + u) / 2;
-      this_name = sc->autoload_names[pos * 2];
-      comp = strcmp(this_name, name);
-      if (comp == 0)
+      u = sc->autoload_names_sizes[lib] - 1;
+      names = sc->autoload_names[lib];
+      
+      while (true)
 	{
-	  /* fprintf(stderr, "found %s in %s\n", name,  sc->autoload_names[pos * 2 + 1]); */
-	  return(sc->autoload_names[pos * 2 + 1]);
+	  if (u < l) break;
+	  pos = (l + u) / 2;
+	  this_name = names[pos * 2];
+	  comp = strcmp(this_name, name);
+	  if (comp == 0)
+	    {
+	      /* fprintf(stderr, "found %s in %s\n", name,  sc->autoload_names[pos * 2 + 1]); */
+	      return(names[pos * 2 + 1]);
+	    }
+	  if (comp < 0) 
+	    l = pos + 1;
+	  else u = pos - 1;
 	}
-      if (comp < 0) 
-	l = pos + 1;
-      else u = pos - 1;
     }
   return(NULL);
 }
@@ -37642,7 +37652,9 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	  if (file)
 	    {
 	      s7_pointer e;
-	      e = s7_load(sc, file);
+	      if (file[0] == '(')                /* if "file" looks like scheme code, evaluate it -- maybe a bad idea! */
+		e = s7_eval_c_string(sc, file);
+	      else e = s7_load(sc, file);
 	      result = s7_symbol_value(sc, sym); /* calls find_symbol, does not trigger unbound_variable search */
 	      if ((result == sc->UNDEFINED) &&
 		  (is_environment(e)))
@@ -65084,9 +65096,11 @@ s7_scheme *s7_init(void)
 
   sc->begin_hook = NULL;
   sc->default_rng = NULL;
+
   sc->autoload_table = sc->NIL;
   sc->autoload_names = NULL;
-  sc->autoload_names_size = 0;
+  sc->autoload_names_sizes = NULL;
+  sc->autoload_names_loc = 0;
   
   sc->heap_size = INITIAL_HEAP_SIZE;
   if ((sc->heap_size % 32) != 0)
@@ -66392,16 +66406,21 @@ s7_scheme *s7_init(void)
  *    make-real|integer|rational|-vector is not quite right -- we want make-float|int|byte-vector
  */
 
-/* add empty? (or nil? or generic null? or zero-length?)
- *   typeq? 
- *   (null? c-pointer) -- C null?
- *
+/* add empty? (or nil? or generic null? or zero-length? typeq? (null? c-pointer) -- C null?
  * also openbsd audio is broken in Snd -- see aucat.c I guess.
- *
  * other often-used libraries: c glib/gio/gobject/gmodule ncurses? gsl? GL/GLU? pcre? tecla? readline?
  *    libpthread.scm for partial pthread case, but how is this to be used?
  *    SOMEDAY: libgdbm tests and setopt support, libdl tests and autoload in Snd
+ *    there are about 2000 entities in libc, maybe a similar number in SDL
+ *    posix lib -> enhance in scheme for the gdb fix?
  * TODO: (env env) in clm should be an error
  * possible autoload additions: sndlib? xm? libX* fftw? gmp/mpfr/mpc? 
  * gdb-s7 might check for 0xnnnn "asdf" to avoid strings
+ * PERHAPS: try __restrict__ if gcc (not g++) and gnu_c
+ *   initial tests aren't very impressive
+ * readline in xen.c xen_repl -- can it do completions
+ *   (or ncurses -> syntax highlights and help!)
+ *   there is no readline.pc, so I guess we just trust --with-readline
+ *   maybe start with libreadline.scm
+ * write-readably: check how close we are to this, then checkpoint?
  */

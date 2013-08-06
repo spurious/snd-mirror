@@ -752,6 +752,7 @@ with_gsl
 with_fftw
 with_gmp
 with_audio
+with_readline
 with_temp_dir
 with_save_dir
 with_doc_dir
@@ -1411,6 +1412,7 @@ Optional Packages:
   --with-fftw		  use fftw, default=yes
   --with-gmp		  include multiprecision arithmetic via gmp, mpfr, and mpc, default=no
   --without-audio         don't include any audio functionality
+  --with-readline         use readline in the repl if no gui
   --with-temp-dir	  directory to use for temp files
   --with-save-dir	  directory to use for saved-state files
   --with-doc-dir	  directory to search for documentation
@@ -3329,6 +3331,7 @@ VERSION=13.10
 #   --without-fftw        omit FFTW even if it exists
 #   --with-pulseaudio     use PulseAudio
 #   --with-portaudio      use portaudio
+#   --with-readline       use readline in the repl if --without-gui
 
 
 
@@ -3452,6 +3455,12 @@ fi
 # Check whether --with-audio was given.
 if test "${with_audio+set}" = set; then :
   withval=$with_audio;
+fi
+
+
+# Check whether --with-readline was given.
+if test "${with_readline+set}" = set; then :
+  withval=$with_readline;
 fi
 
 
@@ -6130,6 +6139,20 @@ case "$host" in
       LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
     fi
 esac
+
+
+
+#--------------------------------------------------------------------------------
+# readline
+#--------------------------------------------------------------------------------
+
+if test "$with_readline" = yes ; then
+  LIBS="$LIBS -lreadline -lncurses"
+  $as_echo "#define WITH_READLINE 1" >>confdefs.h
+
+  OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES readline ncurses"
+fi
+
 
 
 #--------------------------------------------------------------------------------

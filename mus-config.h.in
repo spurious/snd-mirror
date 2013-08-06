@@ -72,6 +72,9 @@
 /* --without-audio */
 #undef WITH_AUDIO
 
+/* --with-readline */
+#undef WITH_READLINE
+
 
 
 /* paths to various audio decoders */
