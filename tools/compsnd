@@ -114,6 +114,19 @@ echo ' '
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
+echo ' -----                --without-gui --with-readline                         ----  '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --without-gui --with-readline
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -noinit --features "'clm 'snd-nogui"
+
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --without-audio                                         ----  '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --without-audio
@@ -185,9 +198,9 @@ rm -f config.cache
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 -without-gui --without-ladspa                         ----  '
+echo ' ----                 -without-gui --without-ladspa --without-readline      ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --without-gui --without-ladspa
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --without-gui --without-ladspa --without-readline
 make
 echo ' '
 echo ' '
@@ -352,7 +365,7 @@ rm -f config.cache
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                GTK_DISABLE_DEPRECATED G_DISABLE_DEPRECATED GDK_DISABLE_DEPRECATED --with-gtk  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --disable-deprecated CFLAGS="-Wall -I/usr/X11R6/include -D_FORTIFY_SOURCE" --with-gtk 
+./configure --quiet --disable-deprecated CFLAGS="-Wall -I/usr/X11R6/include -D_FORTIFY_SOURCE=2" --with-gtk 
 make
 echo ' '
 echo ' '
@@ -502,7 +515,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                GTK_DISABLE_DEPRECATED G_DISABLE_DEPRECATED GDK_DISABLE_DEPRECATED --with-ruby  --with-gtk '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --disable-deprecated LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -D_FORTIFY_SOURCE" --with-ruby  --with-gtk
+./configure --quiet --disable-deprecated LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -D_FORTIFY_SOURCE=2" --with-ruby  --with-gtk
 make
 echo ' '
 echo ' '
@@ -525,9 +538,9 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-ruby --without-gui           ---- '
+echo ' -----                --with-ruby --without-gui --with-readline              ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby --without-gui 
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby --without-gui --with-readline
 make
 echo ' '
 echo ' '
@@ -566,7 +579,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                g++ --with-gtk                                          ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CC=g++ --with-gtk CFLAGS="-Wall"
+./configure --quiet --with-readline CC=g++ --with-gtk CFLAGS="-Wall"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gtk"

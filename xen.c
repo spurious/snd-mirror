@@ -1472,6 +1472,8 @@ static char **xen_completion(const char *text, int start, int end)
   complete_data = NULL;
   return(matches);
 }
+
+#include <curses.h>
 #endif
 
 
@@ -1480,6 +1482,16 @@ void xen_repl(int argc, char **argv)
 #if (WITH_READLINE)
   rl_readline_name = "xen";
   rl_attempted_completion_function = xen_completion;
+  rl_initialize(); /* get the current COLS value */
+  if (COLS > 80)
+    {
+      char *str;
+      str = (char *)calloc(128, sizeof(char));
+      snprintf(str, 128, "(with-environment *stacktrace* (set! code-cols %d) (set! total-cols %d) (set! notes-start-col %d))",
+	       COLS - 45, COLS, COLS - 45);
+      s7_eval_c_string(s7, str);
+      free(str);
+    }
 #else
   int size = 512;
   bool expr_ok = true;
@@ -1491,6 +1503,7 @@ void xen_repl(int argc, char **argv)
     {
 #if WITH_READLINE
       char *line_read = NULL, *temp;
+
       line_read = readline(xen_s7_repl_prompt);
       if (line_read)
 	{
@@ -1900,7 +1913,7 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 
 s7_scheme *s7_xen_initialize(s7_scheme *sc)
 {
-  xen_s7_repl_prompt = xen_strdup(">");
+  xen_s7_repl_prompt = xen_strdup("> ");
   if (!sc)
     {
       s7 = s7_init();

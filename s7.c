@@ -193,7 +193,6 @@
 #define WITH_GCC (defined(__GNUC__) || defined(__clang__))
 
 
-
 /* ---------------- scheme choices ---------------- */
 
 #ifndef WITH_GMP
@@ -365,6 +364,9 @@
 #ifndef NAN
   #define NAN (INFINITY / INFINITY)
 #endif
+
+#define WRITE_REAL_PRECISION 16
+
 
 #if ((!__NetBSD__) && ((_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))))
   #define __func__ __FUNCTION__
@@ -1167,6 +1169,8 @@ struct s7_scheme {
   
   s7_pointer *op_stack, *op_stack_now, *op_stack_end;
   unsigned int op_stack_size;
+
+  s7_pointer stacktrace_env;
 
   s7_cell **heap, **free_heap, **free_heap_top, **free_heap_trigger, **previous_free_heap_top;
   unsigned int heap_size;
@@ -7695,7 +7699,7 @@ static s7_pointer make_permanent_real(s7_Double n)
   heap_location(x) = NOT_IN_HEAP;
   real(x) = n;
 
-  str = number_to_string_base_10(x, 0, 14, 'g', &nlen);
+  str = number_to_string_base_10(x, 0, WRITE_REAL_PRECISION, 'g', &nlen);
   set_print_name(x, str, nlen);
 
   return(x);
@@ -8674,7 +8678,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 	  s7_Double val;
 	  val = fabs(s7_real(x));
 	  if ((val < (S7_LONG_MAX / 4)) && (val > 1.0e-6))
-	    size = 14;
+	    size = WRITE_REAL_PRECISION;
 	}
       else
 	{
@@ -8684,7 +8688,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 	    {
 	      im = fabs(s7_imag_part(x));
 	      if ((im < (S7_LONG_MAX / 4)) && (im > 1.0e-6))
-		size = 14;
+		size = WRITE_REAL_PRECISION;
 	    }
 	}
     }
@@ -23846,7 +23850,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
       else
 	{
 	  nlen = 0;
-	  str = number_to_string_base_10(obj, 0, 14, 'g', &nlen);
+	  str = number_to_string_base_10(obj, 0, WRITE_REAL_PRECISION, 'g', &nlen); /* was 14 */
 	  if (nlen > 0)
 	    {
 	      set_print_name(obj, str, nlen);
@@ -23876,7 +23880,8 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 
     case T_SYMBOL:
       /* I think this is the only place we print a symbol's name */
-      if (needs_slashification(symbol_name(obj), symbol_name_length(obj)))
+      if ((symbol_name(obj)[0] == '#') ||                 /* otherwise the reader thinks there's a #-reader problem */
+	  (needs_slashification(symbol_name(obj), symbol_name_length(obj))))
 	{
 	  char *symstr;
 	  str = slashify_string(symbol_name(obj), symbol_name_length(obj), NOT_IN_QUOTES, &nlen);
@@ -35078,7 +35083,12 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
       if (error_port != sc->F)
 	{
 	  char *errstr;
-	  errstr = stacktrace_1(sc, 3, 45, 80, 45, true);
+	  errstr = stacktrace_1(sc, 
+				s7_integer(s7_environment_ref(sc, sc->stacktrace_env, s7_make_symbol(sc, "max-frames"))),
+				s7_integer(s7_environment_ref(sc, sc->stacktrace_env, s7_make_symbol(sc, "code-cols"))),
+				s7_integer(s7_environment_ref(sc, sc->stacktrace_env, s7_make_symbol(sc, "total-cols"))),
+				s7_integer(s7_environment_ref(sc, sc->stacktrace_env, s7_make_symbol(sc, "notes-start-col"))),
+				s7_boolean(sc, s7_environment_ref(sc, sc->stacktrace_env, s7_make_symbol(sc, "as-comment"))));
 	  if (errstr)
 	    {
 	      port_write_string(error_port)(sc, ";\n", 2, error_port);
@@ -37602,6 +37612,30 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
   if (safe_strcmp(symbol_name(sym), "|#") == 0)
     return(read_error(sc, "unmatched |#"));
 
+
+  /* this is probably the wrong place to handle this but for now...
+   *   (we're writing these names, so they ought to be readable)
+   *
+   * but the complex cases are endless!
+   */
+  if (symbol_name_length(sym) == 5)
+    {
+      if (safe_strcmp(symbol_name(sym), "nan.0") == 0)
+	return(real_NaN);
+      if (safe_strcmp(symbol_name(sym), "inf.0") == 0)
+	return(make_real(sc, INFINITY));
+    }
+  else
+    {
+      if (symbol_name_length(sym) == 6)
+	{
+	  if (safe_strcmp(symbol_name(sym), "-nan.0") == 0)
+	    return(real_NaN);
+	  if (safe_strcmp(symbol_name(sym), "-inf.0") == 0)
+	    return(make_real(sc, -INFINITY));
+	}
+    }
+
   /* check *autoload*, autoload_names, then *unbound-variable-hook* 
    */
   if ((sc->autoload_names) ||
@@ -37957,15 +37991,15 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 	    }
 	  else
 	    {
-	      if (is_keyword(car(sc->y)))
+	      if ((is_pair(cdr(sc->y))) &&
+		  (is_keyword(car(sc->y))))
 		{
 		  /* char *name; */                      /* found a keyword, check the lambda args via the corresponding symbol */
 		  s7_pointer sym;
 		  sym = keyword_symbol(car(sc->y));
 		  
 		  
-		  if ((is_null(cdr(sc->y))) ||
-		      (lambda_star_argument_set_value(sc, sym, car(cdr(sc->y))) == sc->NO_VALUE))
+		  if (lambda_star_argument_set_value(sc, sym, car(cdr(sc->y))) == sc->NO_VALUE)
 		    {
 		      /* if default value is a key, go ahead and use this value.
 		       *    (define* (f (a :b)) a) (f :c) 
@@ -66053,8 +66087,16 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "*stack-top*", g_stack_top, 0, 0, false, "current stack top");
   s7_define_safe_function(sc, "*stack*", g_stack, 1, 0, false, "current stack entry");
   sc->STACKTRACE = s7_define_safe_function(sc, "stacktrace", g_stacktrace, 0, 5, false, H_stacktrace);
-  
+  sc->stacktrace_env = s7_augment_environment(sc, sc->global_env, 
+					      s7_list(sc, 5, 
+						      cons(sc, s7_make_symbol(sc, "max-frames"), small_int(3)),
+						      cons(sc, s7_make_symbol(sc, "code-cols"), small_int(45)),
+						      cons(sc, s7_make_symbol(sc, "total-cols"), small_int(80)),
+						      cons(sc, s7_make_symbol(sc, "notes-start-col"), small_int(45)),
+						      cons(sc, s7_make_symbol(sc, "as-comment"), sc->T)));
+  s7_define_constant(sc, "*stacktrace*", sc->stacktrace_env);
 
+				
   /* *features* */
   s7_provide(sc, "s7");
   s7_provide(sc, "s7-" S7_VERSION);
@@ -66418,9 +66460,6 @@ s7_scheme *s7_init(void)
  * gdb-s7 might check for 0xnnnn "asdf" to avoid strings
  * PERHAPS: try __restrict__ if gcc (not g++) and gnu_c
  *   initial tests aren't very impressive
- * readline in xen.c xen_repl -- can it do completions
- *   (or ncurses -> syntax highlights and help!)
- *   there is no readline.pc, so I guess we just trust --with-readline
- *   maybe start with libreadline.scm
- * write-readably: check how close we are to this, then checkpoint?
+ * write-readably: check how close we are to this, then checkpoint? and pretty-print for s7
+ * cload: settable C variables (via symbol_access as here?)
  */

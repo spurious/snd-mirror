@@ -306,7 +306,7 @@ void snd_doit(int argc, char **argv)
   ss->axis_color_set = false;
 
 #if HAVE_SCHEME
-  xen_s7_set_repl_prompt("snd>");
+  xen_s7_set_repl_prompt("snd> ");
 #endif
 
   XEN_DEFINE_VARIABLE("black-and-white-colormap", colormap_temp[0], C_TO_XEN_INT(0));

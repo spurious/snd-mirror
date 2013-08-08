@@ -1103,6 +1103,8 @@
 (test (morally-equal? 3.0 3.0) #t)
 (test (morally-equal? 3-4i 3-4i) #t)
 (test (morally-equal? 1/0 0/0) #t)
+(test (morally-equal? 1/0 (- 1/0)) #t) ; but they print as nan.0 and -nan.0 (this is C based I think), and equal? here is #f
+(test (morally-equal? (real-part (log 0)) (- (real-part (log 0)))) #f)
 (test (morally-equal? (log 0) (log 0)) #t)
 (test (morally-equal? 0/0+i 0/0+i) #t)
 (test (morally-equal? 0/0+i 0/0-i) #f)
@@ -3094,6 +3096,7 @@
 (test (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string=? s1 s2)) #f)
 (test (let ((s1 "1234") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string=? s1 s2)) #t)
 (test (let ((s1 "1234") (s2 "124")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string=? s1 s2)) #f)
+(test (string=? (make-string 3 #\space) (let ((s (make-string 4 #\space))) (set! (s 3) #\null) s)) #f)
 (test "\x3012" "012")
 
 (for-each
@@ -23501,12 +23504,12 @@ who says the continuation has to restart the map from the top?
 (test ((lambda* (:rest a b ) (list a b)) 1 1) '((1 1) 1))
 (test ((lambda* (:rest a :rest b ) (list a b)) :a 1) '((:a 1) (1)))
 (test ((lambda* (:allow-other-keys) #f) :c 1) #f)
-(test ((lambda* (a :allow-other-keys) a) :a) #f) ; now that has to be wrong
-;; why does ((lambda* (a) a) :a) get unknown key: (:a) in (:a)?
+(test ((lambda* (a :allow-other-keys) a) :a) :a)
+(test ((lambda* (a) a) :a) :a)
 (test ((lambda* (a :allow-other-keys) a) :a 1 :a 2) 1) ; this is very tricky to catch
 (test ((lambda* (a :allow-other-keys) a) :c :c :c :c) #f)
-(test ((lambda* (a :allow-other-keys) a) :c) #f)
-(test ((lambda* (a b :allow-other-keys ) (list a b)) :b :a :c 1 :a) '(#f :a))
+(test ((lambda* (a :allow-other-keys) a) :c) :c)
+(test ((lambda* (a b :allow-other-keys ) (list a b)) :b :a :c 1) '(#f :a))
 
 (test ((lambda* (a :allow-other-keys ) a) :c 1 1) 1) ; ??
 (test ((lambda* (:rest b (a 1)) (list a b))) '(1 ()))
@@ -25399,6 +25402,15 @@ func
 (test ((eval-string "(lambda (a) (+ a 1))") 2) 3)
 (test (eval ((eval-string "(lambda (a) (list '+ a 1))") 2)) 3)
 (test (eval-string "(+ 1 (eval (list '+ 1 2)))") 4)
+
+(test (eq? (eval-string "else") else) #t)
+(test (eq? (with-input-from-string "else" (lambda () (read))) else) #f)
+(test (eq? (with-input-from-string "lambda" (lambda () (read))) lambda) #f)
+(test (eq? (eval-string "lambda") lambda) #t)
+(test (((eval-string "lambda") () (+ 1 2))) 3)
+(test (symbol? (eval-string "lambda")) #f)
+(test (symbol? (with-input-from-string "lambda" (lambda () (read)))) #t)
+(test (eq? (with-input-from-string "else" (lambda () (eval (read)))) else) #t)
 
 (for-each
  (lambda (arg)
