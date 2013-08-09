@@ -687,6 +687,7 @@ static XEN g_listener_selection(void)
 
 void set_listener_text_font(void)
 {
+  /* (set! (listener-font) "Monospace 12") */
   glistener_set_font(ss->listener, LISTENER_FONT(ss));
 }
 

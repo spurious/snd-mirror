@@ -1832,7 +1832,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[2782] = {
+static const char *snd_names[2784] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -1857,6 +1857,7 @@ static const char *snd_names[2782] = {
     "*clm-with-sound-depth*", "ws.scm",
     "*default-player*", "ws.scm",
     "*definstrument-hook*", "ws.scm",
+    "*libgdbm*", "libgdbm.scm",
     "*libm*", "libm.scm",
     "*to-snd*", "ws.scm",
     "->frequency", "ws.scm",
@@ -2389,7 +2390,6 @@ static const char *snd_names[2782] = {
     "gaussian-envelope", "dsp.scm",
     "gegenbauer", "numerics.scm",
     "generator-clamp-r", "generators.scm",
-    "generic-write", "pretty-print.scm",
     "get-best", "peak-phases.scm",
     "get-speaker-configuration", "dlocsig.scm",
     "glassy", "generators.scm",
@@ -2855,11 +2855,10 @@ static const char *snd_names[2782] = {
     "powenv-channel", "env.scm",
     "power-env", "env.scm",
     "power-env-channel", "env.scm",
-    "pprint", "pretty-print.scm",
+    "pp", "write.scm",
     "pqw", "clm-ins.scm",
     "pqw-vox", "clm-ins.scm",
-    "pretty-print", "pretty-print.scm",
-    "pretty-print-with-keys", "pretty-print.scm",
+    "pretty-print", "write.scm",
     "previous-frame", "frame.scm",
     "previous-phrase", "spokenword.scm",
     "prototype->highpass", "analog-filter.scm",
@@ -2928,7 +2927,6 @@ static const char *snd_names[2782] = {
     "reson", "clm-ins.scm",
     "reverse-by-blocks", "examp.scm",
     "reverse-envelope", "env.scm",
-    "reverse-string-append", "pretty-print.scm",
     "reverse-within-blocks", "examp.scm",
     "rhodey", "clm-ins.scm",
     "ring-mod", "examp.scm",
@@ -3097,10 +3095,12 @@ static const char *snd_names[2782] = {
     "tanhsin", "generators.scm",
     "test-grani", "grani.scm",
     "test-notch-hum", "clean.scm",
+    "test-pretty-print", "write.scm",
     "test-remove-DC", "clean.scm",
     "test-remove-pops", "clean.scm",
     "test-remove-single-clicks", "clean.scm",
     "test-sv", "generators.scm",
+    "test-write-readably", "write.scm",
     "texas-toad", "animals.scm",
     "third", "dlocsig.scm",
     "times->samples", "ws.scm",
@@ -3201,6 +3201,7 @@ static const char *snd_names[2782] = {
     "write-lint32", "binary-io.scm",
     "write-lint64", "binary-io.scm",
     "write-ogg", "examp.scm",
+    "write-readably", "write.scm",
     "write-speex", "examp.scm",
     "ws-save-state", "ws.scm",
     "wsdat-play", "ws.scm",
@@ -3228,7 +3229,7 @@ static const char *snd_names[2782] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 1391);
+  s7_autoload_set_names(sc, snd_names, 1392);
 }
 #endif
 

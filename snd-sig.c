@@ -6046,6 +6046,8 @@ frequency whistles leaking through."
 
 #define HAVE_NESTED_FUNCTIONS (__GNUC__ && (!__cplusplus) && (!__clang__) && (__GNUC__ >= 4) && __linux__)
 
+/* in OSX, we need the -fnested-functions compiler flag */
+
 #if HAVE_NESTED_FUNCTIONS
 
 #define S_find_min_peak_phases "find-min-peak-phases"

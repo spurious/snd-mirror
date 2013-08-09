@@ -1,5 +1,6 @@
 Snd change log
 
+ 9-Aug:     write.scm, removed pretty-print.scm.
  3-Aug:     Snd 13.9.
  17-Jul:    many changes to the configure script, added tools/make-config-pc.rb.
  30-Jun:    Snd 13.8.

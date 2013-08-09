@@ -927,6 +927,7 @@ typedef struct c_object_t {
   s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
   s7_pointer (*ref_2)(s7_scheme *sc, void *val, s7_pointer index);
   s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value);
+  char *(*print_readably)(void *value);
   unsigned int min_args, max_args;
   size_t length_loc, data_loc;
   bool has_array;
@@ -2232,6 +2233,7 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 /* the pointless unsigned char* cast is needed in g++ and clang */
 #define c_object_has_array(p)         ((typeflag(p) & T_GENSYM) != 0)
 #define c_object_print(p)             c_object_info(p)->print
+#define c_object_print_readably(p)    c_object_info(p)->print_readably
 #define c_object_length(p)            c_object_info(p)->length
 #define c_object_equal(p)             c_object_info(p)->equal
 #define c_object_fill(p)              c_object_info(p)->fill
@@ -23439,6 +23441,33 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
 }
 
 
+static s7_pointer make_list(s7_scheme *sc, int len, s7_pointer init);
+static s7_pointer g_collect_recurrent_structures(s7_scheme *sc, s7_pointer args)
+{
+  /* (let ((lst (list 1 2 3))) (set! (cdr (cdr lst)) lst) (collect-recurrent-structures lst)) -> (#1=(1 2 . #1#)) 
+   * (let ((lst (list 1 (list 2 4) 3))) (set! (car (cadr lst)) lst) (collect-recurrent-structures lst)) -> (#1=(1 (#1# 4) 3))
+   */
+  #define H_collect_recurrent_structures "an experiment"
+  shared_info *ci;
+  s7_pointer obj, lst, p;
+  int i;
+
+  obj = car(args);
+  if ((!has_structure(obj)) ||
+      (obj == sc->global_env))
+    return(sc->NIL);
+
+  ci = make_shared_info(sc, obj);
+  if (!ci)
+    return(sc->NIL);
+ 
+  lst = make_list(sc, ci->top, sc->F);
+  for (i = 0, p = lst; i < ci->top; i++, p = cdr(p))
+    car(p) = ci->objs[i];
+  return(lst);
+}
+
+
 #define WITH_ELLIPSES false
 
 static int circular_list_entries(s7_pointer lst)
@@ -30864,7 +30893,7 @@ bool s7_is_macro(s7_scheme *sc, s7_pointer x)
 
 static s7_pointer g_is_macro(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_macro "(macro? arg) returns #t if 'arg' is a macro"
+  #define H_is_macro "(macro? arg) returns #t if 'arg' is a macro or a bacro"
   s7_pointer p;
   p = car(args);
   if (s7_is_macro(sc, p)) return(sc->T);
@@ -30874,6 +30903,13 @@ static s7_pointer g_is_macro(s7_scheme *sc, s7_pointer args)
   /* it would be more consistent (with procedure? for example) if this returned #f for a symbol,
    *   but fully-expand expects this version.
    */
+}
+
+
+static s7_pointer g_is_bacro(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_bacro "(bacro? arg) returns #t if 'arg' is a bacro"
+  return(make_boolean(sc, is_bacro(car(args))));
 }
 
 
@@ -31345,6 +31381,12 @@ void s7_set_object_ref_2(int type, s7_pointer (*ref_2)(s7_scheme *sc, void *val,
 void s7_set_object_set_3(int type, s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value))
 {
   object_types[type]->set_3 = set_3;
+}
+
+
+void s7_set_object_print_readably(int type, char *(*printer)(void *val))
+{
+  object_types[type]->print_readably = printer;
 }
 
 
@@ -65611,6 +65653,7 @@ s7_scheme *s7_init(void)
   sc->DEFINEDP =              s7_define_safe_function(sc, "defined?",                g_is_defined,             1, 1, false, H_is_defined);
   sc->CONSTANTP =             s7_define_safe_function(sc, "constant?",               g_is_constant,            1, 0, false, H_is_constant);
   sc->MACROP =                s7_define_safe_function(sc, "macro?",                  g_is_macro,               1, 0, false, H_is_macro);
+                              s7_define_safe_function(sc, "bacro?",                  g_is_bacro,               1, 0, false, H_is_bacro);
 
   sc->KEYWORDP =              s7_define_safe_function(sc, "keyword?",                g_is_keyword,             1, 0, false, H_is_keyword);
   sc->MAKE_KEYWORD =          s7_define_safe_function(sc, "make-keyword",            g_make_keyword,           1, 0, false, H_make_keyword);
@@ -65904,6 +65947,8 @@ s7_scheme *s7_init(void)
   sc->REVERSE =               s7_define_safe_function(sc, "reverse",                 g_reverse,                1, 0, false, H_reverse);
   sc->REVERSEB =              s7_define_function(sc,      "reverse!",                g_reverse_in_place,       1, 0, false, H_reverse_in_place); /* used by Snd code */
   sc->SORT =                  s7_define_function(sc,      "sort!",                   g_sort,                   2, 0, false, H_sort);
+
+  s7_define_function(sc, "collect-recurrent-structures", g_collect_recurrent_structures, 1, 0, false, H_collect_recurrent_structures); /* an experiment */
   
 
   sc->LIST_TO_VECTOR =        s7_define_safe_function(sc, "list->vector",            g_list_to_vector,         1, 0, false, H_list_to_vector);

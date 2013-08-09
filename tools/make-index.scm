@@ -458,7 +458,7 @@
 					;(load "popup.scm")
 (load "dsp.scm")		   
 (load "prc95.scm")
-(load "pretty-print.scm")
+(load "write.scm")
 					; (load "edit-menu.scm")	   
 (load "primes.scm")
 					; (load "effects-utils.scm")	   

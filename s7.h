@@ -744,6 +744,7 @@ void s7_set_object_ref_2(int type, s7_pointer (*ref_2)(s7_scheme *sc, void *val,
 void s7_set_object_set_3(int type, s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value));
 void s7_set_object_array_info(int type, size_t length_loc, size_t data_loc);
 void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_args);
+void s7_set_object_print_readably(int type, char *(*printer)(void *val));
 
   /* experiments */
 void s7_function_set_looped(s7_pointer f, s7_pointer c);
