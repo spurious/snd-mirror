@@ -1262,7 +1262,7 @@ struct s7_scheme {
    */
   s7_pointer MINUS, MULTIPLY, ADD, DIVIDE, LT, LEQ, EQ, GT, GEQ, ABS, ACOS, ACOSH;
   s7_pointer ANGLE, APPEND, APPLY, ARITABLEP, ARITY, ASH, ASIN, ASINH, ASSOC, ASSQ, ASSV, ATAN, ATANH;
-  s7_pointer AUGMENT_ENVIRONMENT, AUGMENT_ENVIRONMENTB, AUTOLOAD, BOOLEANP, BYTEVECTOR, CAAAAR, CAAADR, CAAAR, CAADAR, CAADDR;
+  s7_pointer AUGMENT_ENVIRONMENT, AUGMENT_ENVIRONMENTB, AUTOLOAD, AUTOLOADER, BOOLEANP, BYTEVECTOR, CAAAAR, CAAADR, CAAAR, CAADAR, CAADDR;
   s7_pointer CAADR, CAAR, CADAAR, CADADR, CADAR, CADDAR, CADDDR, CADDR, CADR, CALL_CC, CALL_WITH_EXIT;
   s7_pointer CALL_WITH_INPUT_FILE, CALL_WITH_INPUT_STRING, CALL_WITH_OUTPUT_FILE, CALL_WITH_OUTPUT_STRING, CAR, CATCH, CDAAAR;
   s7_pointer CDAADR, CDAAR, CDADAR, CDADDR, CDADR, CDAR, CDDAAR, CDDADR, CDDAR, CDDDAR, CDDDDR, CDDDR, CDDR, CDR, CEILING;
@@ -1280,7 +1280,7 @@ struct s7_scheme {
   s7_pointer NOT, NULLP, NUMBERP, NUMBER_TO_STRING, NUMERATOR, OBJECT_ENVIRONMENT, OBJECT_TO_STRING, ODDP, OPEN_ENVIRONMENT, OPEN_ENVIRONMENTP, OPEN_INPUT_FILE;
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTER_ENVIRONMENT, OUTPUT_PORTP, PAIRP, PAIR_LINE_NUMBER, PEEK_CHAR, PORT_CLOSEDP, PORT_FILENAME, PORT_LINE_NUMBER;
   s7_pointer POSITIVEP, PROCEDUREP, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, PROCEDURE_ENVIRONMENT, PROCEDURE_NAME, PROCEDURE_SOURCE, PROVIDE;
-  s7_pointer PROVIDEDP, QUOTIENT, RANDOM, RANDOM_STATEP, RANDOM_STATE_TO_LIST, RATIONALIZE, RATIONALP, READ, READ_BYTE, READ_CHAR, READ_LINE, REALP;
+  s7_pointer PROVIDEDP, QUOTIENT, RANDOM, RANDOM_STATEP, RANDOM_STATE_TO_LIST, RATIONALIZE, RATIONALP, RAW_POINTERP, READ, READ_BYTE, READ_CHAR, READ_LINE, REALP;
   s7_pointer READ_STRING, REAL_PART, REMAINDER, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STACKTRACE, STRING, STRING_LEQ, STRING_LT, STRING_EQ;
   s7_pointer STRING_GEQ, STRING_GT, STRINGP, STRING_POSITION, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND, STRING_CI_LEQ, STRING_CI_LT;
   s7_pointer STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_COPY, STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
@@ -2223,6 +2223,13 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define c_object_array(p)             (p)->object.c_obj.array
 #define c_object_array_length(p)      (p)->object.c_obj.array_length
 
+static c_object_t **object_types = NULL;
+static int object_types_size = 0;
+static int num_types = 0;
+/* ideally these would be specific to the current s7, but I did not pass the s7_scheme pointer
+ *   to s7_new_type and friends.
+ */
+
 #define c_object_info(p)              object_types[c_object_type(p)]
 #define c_object_ref(p)               c_object_info(p)->ref
 #define c_object_set(p)               c_object_info(p)->set
@@ -2439,7 +2446,6 @@ static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list);
 static s7_pointer cons_unchecked(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type);
 static void free_object(s7_pointer a);
-static char *object_print(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol, bool with_error);
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
 static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args);
@@ -4467,7 +4473,12 @@ static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, int
 static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_table "(symbol-table) returns the s7 symbol table (a vector)"
-  return(s7_vector_copy(sc, sc->symbol_table));
+
+  /* this is trouble -- we can't protect it by copying its vector elements into an s7 vector
+   *   because the symbol-table is outside the gc's protection!  Not sure now what to do --
+   *   maybe copy every list?!?
+   */
+  return(sc->symbol_table);
 }
 
 
@@ -6442,6 +6453,13 @@ s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr)
   set_type(x, T_C_POINTER);
   raw_pointer(x) = ptr;
   return(x);
+}
+
+
+static s7_pointer g_is_raw_pointer(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_raw_pointer "(raw-pointer? obj) returns #t if obj is a raw C pointer being held in s7."
+  return(make_boolean(sc, type(car(args)) == T_C_POINTER));
 }
 
 
@@ -17742,6 +17760,16 @@ static char *print_rng(s7_scheme *sc, void *val)
 }
 
 
+static char *print_rng_readably(void *val)
+{
+  char *buf;
+  s7_rng_t *r = (s7_rng_t *)val;
+  buf = (char *)malloc(64 * sizeof(char));
+  snprintf(buf, 64, "(make-random-state %d %d)", (unsigned int)(r->ran_seed), (unsigned int)(r->ran_carry));
+  return(buf);
+}
+
+
 static void free_rng(void *val)
 {
   free(val);
@@ -17761,7 +17789,7 @@ static bool equal_rng(void *val1, void *val2)
 
 s7_pointer s7_make_random_state(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_random_state "(make-random-state seed) returns a new random number state initialized with 'seed'. \
+  #define H_make_random_state "(make-random-state seed (carry plausible-default)) returns a new random number state initialized with 'seed'. \
 Pass this as the second argument to 'random' to get a repeatable random number sequence:\n\
     (let ((seed (make-random-state 1234))) (random 1.0 seed))"
 
@@ -22637,11 +22665,7 @@ s7_pointer s7_autoload(s7_scheme *sc, s7_pointer symbol, s7_pointer file_or_func
 {
   /* add '(symbol . file) to s7's autoload table */
   if (is_null(sc->autoload_table))
-    {
-      /* make a hash table, set global_slot(*autoload*) to it */
-      sc->autoload_table = s7_make_hash_table(sc, 511);
-      slot_set_value(global_slot(s7_make_symbol(sc, "*autoload*")), sc->autoload_table);
-    }
+    sc->autoload_table = s7_make_hash_table(sc, 511);
   
   s7_hash_table_set(sc, sc->autoload_table, symbol, file_or_function);
   return(file_or_function);
@@ -22672,6 +22696,31 @@ in the file, or by the function."
     return(s7_autoload(sc, sym, value));
 
   return(s7_wrong_type_arg_error(sc, "autoload", 2, value, "a string (file-name) or a thunk"));
+}
+
+
+static s7_pointer g_autoloader(s7_scheme *sc, s7_pointer args)
+{
+  #define H_autoloader "(*autoload* sym) returns the autoload info for the symbol sym, or #f."
+  s7_pointer sym;
+
+  sym = car(args);
+  if (!is_symbol(sym))
+    {
+      CHECK_METHOD(sc, sym, sc->AUTOLOADER, args);
+      return(s7_wrong_type_arg_error(sc, "*autoload*", 1, sym, "a symbol"));
+    }
+  if (sc->autoload_names)
+    {
+      const char *file;
+      file = find_autoload_name(sc, sym);
+      if (file)
+	return(s7_make_string(sc, file));
+    }
+  if (is_hash_table(sc->autoload_table))
+    return(s7_hash_table_ref(sc, sc->autoload_table, sym));
+
+  return(sc->F);
 }
 
 
@@ -24036,8 +24085,12 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
       port_write_string(port)(sc, "#<dynamic-wind>", 15, port);
       break;
   
-    case T_C_OBJECT: 
-      str = object_print(sc, obj);
+    case T_C_OBJECT:
+      /* 9-Aug-13: if object supports readable write, use that if use_write above */
+      if ((use_write) &&
+	  (c_object_print_readably(obj)))
+	str = ((*(c_object_print_readably(obj)))(c_object_value(obj)));
+      else str = ((*(c_object_print(obj)))(sc, c_object_value(obj)));
       port_display(port)(sc, str, port);
       free(str);
       break;
@@ -31176,10 +31229,6 @@ static s7_pointer closure_name(s7_scheme *sc, s7_pointer closure)
 
 /* -------------------------------- new types -------------------------------- */
 
-static c_object_t **object_types = NULL;
-static int object_types_size = 0;
-static int num_types = 0;
-
 static char *fallback_print(s7_scheme *sc, void *val) /* obj is c_object_value(s7_pointer_obj) */
 {
   return(copy_string("#<unprintable object>"));
@@ -31323,12 +31372,6 @@ int s7_new_type_x(const char *name,
   object_types[tag]->reverse = reverse;
   object_types[tag]->fill = fill;
   return(tag);
-}
-
-
-static char *object_print(s7_scheme *sc, s7_pointer a)
-{
-  return((*(c_object_print(a)))(sc, c_object_value(a))); /* assume allocation here (so we'll free the string later) */
 }
 
 
@@ -37728,9 +37771,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	  if (file)
 	    {
 	      s7_pointer e;
-	      if (file[0] == '(')                /* if "file" looks like scheme code, evaluate it -- maybe a bad idea! */
-		e = s7_eval_c_string(sc, file);
-	      else e = s7_load(sc, file);
+	      e = s7_load(sc, file);
 	      result = s7_symbol_value(sc, sym); /* calls find_symbol, does not trigger unbound_variable search */
 	      if ((result == sc->UNDEFINED) &&
 		  (is_environment(e)))
@@ -65659,6 +65700,8 @@ s7_scheme *s7_init(void)
   sc->MAKE_KEYWORD =          s7_define_safe_function(sc, "make-keyword",            g_make_keyword,           1, 0, false, H_make_keyword);
   sc->SYMBOL_TO_KEYWORD =     s7_define_safe_function(sc, "symbol->keyword",         g_symbol_to_keyword,      1, 0, false, H_symbol_to_keyword);
   sc->KEYWORD_TO_SYMBOL =     s7_define_safe_function(sc, "keyword->symbol",         g_keyword_to_symbol,      1, 0, false, H_keyword_to_symbol);
+
+  sc->RAW_POINTERP =          s7_define_safe_function(sc, "raw-pointer?",            g_is_raw_pointer,         1, 0, false, H_is_raw_pointer);
   
 
   sc->PORT_LINE_NUMBER =      s7_define_safe_function(sc, "port-line-number",        g_port_line_number,       0, 1, false, H_port_line_number);
@@ -65797,6 +65840,7 @@ s7_scheme *s7_init(void)
   sc->INTEGER_DECODE_FLOAT =  s7_define_safe_function(sc, "integer-decode-float",    g_integer_decode_float,   1, 0, false, H_integer_decode_float);
 
   rng_tag = s7_new_type_x("<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL, NULL, copy_random_state, NULL, NULL);
+  s7_set_object_print_readably(rng_tag, print_rng_readably);
   sc->RANDOM_STATEP =         s7_define_safe_function(sc, "random-state?",           g_is_random_state,        1, 0, false, H_is_random_state);
   sc->RANDOM_STATE_TO_LIST =  s7_define_safe_function(sc, "random-state->list",      s7_random_state_to_list,  0, 1, false, H_random_state_to_list);
 
@@ -65981,7 +66025,7 @@ s7_scheme *s7_init(void)
   
   s7_define_safe_function(sc, "hash-table-index", g_hash_table_index, 1, 0, false, "an experiment");
 
-  ht_iter_tag = s7_new_type_x("hash-table-iterator", print_ht_iter, free_ht_iter, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
+  ht_iter_tag = s7_new_type_x("<hash-table-iterator>", print_ht_iter, free_ht_iter, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
   sc->MAKE_HASH_TABLE_ITERATOR = s7_define_safe_function(sc, "make-hash-table-iterator", g_make_hash_table_iterator, 1, 0, false, H_make_hash_table_iterator);
   sc->HASH_TABLE_ITERATORP =    s7_define_safe_function(sc, "hash-table-iterator?",  g_is_hash_table_iterator, 1, 0, false, H_is_hash_table_iterator);
 
@@ -66110,8 +66154,11 @@ s7_scheme *s7_init(void)
 			      s7_make_function(sc, "(set *load-path*)", g_load_path_set, 2, 0, false, "called if *load-path* is set"), 
 			      s7_make_function(sc, "(bind *load-path*)", g_load_path_set, 2, 0, false, "called if *load-path* is bound")));
 
-  /* -------- *autoload* -------- */
-  s7_define_constant(sc, "*autoload*", sc->NIL);
+  /* -------- *autoload* -------- 
+   * this pretends to be a hash-table or environment, but it's actually a function
+   */
+  sc->AUTOLOADER = s7_define_function(sc, "*autoload*", g_autoloader, 1, 0, false, H_autoloader);
+  
 
   /* -------- *#readers* -------- */
   s7_define_variable(sc, "*#readers*", sc->NIL);
@@ -66507,4 +66554,6 @@ s7_scheme *s7_init(void)
  *   initial tests aren't very impressive
  * write-readably: check how close we are to this, then checkpoint? and pretty-print for s7
  * cload: settable C variables (via symbol_access as here?)
+ * *stacktrace* could include hook-style func for caller-access to it
  */
+

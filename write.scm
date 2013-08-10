@@ -1,225 +1,288 @@
 (provide 'write.scm)
 
-(set! (listener-font) "Monospace 11")
+;;; write-readably: write object to port in such a way that a subsequent (eval (read port)) returns the same object
+;;; pretty-print:   the usual pretty printer, intended for s7
+;;; checkpoint:     use write-readably to save the current runtime state of s7 as a loadable scheme file
 
-#|
-;; at start get self-references if struct
-;;   if none, just get line breaks etc
-;;   else set up a let and get the basic case for each ref
-;;   refs -> alist (orig . cur-name)
-;; most are easy, list:
 
-(let ((self (make-list 2)))
-  (set! (self 0) 1)
-  (set! (self 1) 2)
-  (set-cdr! (list-tail self 1) self)
-  self)
 
--> #1=(1 2 . #1#)
-|#
+;;; -------------------------------- write-readably --------------------------------
 
 (define* (write-readably obj (port (current-output-port)))
-  (cond ((number? obj)
-	 (if (real? obj)
-	     (write obj port)
-	     (let ((rp (if (infinite? (real-part obj))
-			   (if (negative? (real-part obj))
-			       "-inf.0"
-			       "inf.0")
-			   (if (nan? (real-part obj))
-			       "nan.0"
-			       #f)))
-		   (ip (if (infinite? (imag-part obj))
-			   (if (negative? (imag-part obj))
-			       "-inf.0"
-			       "inf.0")
-			   (if (nan? (imag-part obj))
-			       "nan.0"
-			       #f))))
-	       (if (or rp ip)
-		   (format port "(make-rectangular ~A ~A)" 
-			   (or rp (number->string (real-part obj)))
-			   (or ip (number->string (imag-part obj))))
-		   (write obj port)))))
 
-	((symbol? obj)
-	 (if (not (keyword? obj))
-	     (if (or (char=? ((symbol->string obj) 0) #\#)
-		     (char-position #\\ (symbol->string obj)))
-		 (format port "~A" obj)
-		 (format port "'~A" obj))
-	     (write obj port)))
+  (define (replacement obj info)
+    (let ((data (assq obj info)))
+      (and data (cadr data))))
 
-	((pair? obj)
-	 (let ((len (length obj)))
-	   (if (negative? len)
-	       (begin
-		 (do ((lst obj (cdr lst)))
-		     ((not (pair? lst))
-		      (write-readably lst port))
-		   (format port "(cons ")
-		   (write-readably (car lst) port)
-		   (if (pair? lst) (format port " ")))
-		 (do ((i 0 (+ i 1)))
-		     ((= i (- len)))
-		   (format port ")")))
-	       (begin
-		 (format port "(list")
-		 (do ((lst obj (cdr lst)))
-		     ((not (pair? lst)))
-		   (format port " ")
-		   (write-readably (car lst) port))
-		 (format port ")")))))
+  (define (needs-definition? obj info)
+    (let ((data (assq obj info)))
+      (and data (not (caddr data)))))
 
-	((vector? obj)
-	 (let ((dims (vector-dimensions obj))
-	       (len (length obj)))
-	   (if (= (length dims) 1)
-	       (begin
-		 (format port "(vector")
-		 (do ((i 0 (+ i 1)))
-		     ((= i len)
-		      (format port ")"))
-		   (format port " ")
-		   (write-readably (obj i) port)))
+  (define (circle-length obj lst init)
+    (if (eq? lst obj)
+	init
+	(circle-length obj (cdr lst) (+ init 1))))
 
-	       ;; if self-reference, just like above but subsititute #f and save index if ref found, then at end do the sets
+  (define (write-readably-1 obj port structs)
 
-	       (let ((indices (make-list (length dims) 0)))
-		 (format port "(let ((v (make-vector '~A)))" dims) ; do we need a gensym here?
-		 (do ((i 0 (+ i 1)))
-		     ((= i len))
-		   (format port " (set! (v ~{~A~^ ~}) " indices)
-		   (let ((nobj (apply obj indices)))
-		     (if (eq? nobj obj)
-			 (format port "v")
-			 (write-readably nobj port)))
-		   (format port ")")
-		   (call-with-exit
-		    (lambda (done)
-		      (do ((k (- (length indices) 1) (- k 1)))
-			  ((< k 0))
-			(set! (indices k) (+ (indices k) 1))
-			(if (= (indices k) (dims k))
-			    (set! (indices k) 0)
-			    (done))))))
-		 (format port " v)")))))
+    (cond ((number? obj)
+	   (if (real? obj)
+	       (write obj port)
+	       (let ((rp (if (infinite? (real-part obj))
+			     (if (negative? (real-part obj))
+				 "-inf.0"
+				 "inf.0")
+			     (if (nan? (real-part obj))
+				 "nan.0"
+				 #f)))
+		     (ip (if (infinite? (imag-part obj))
+			     (if (negative? (imag-part obj))
+				 "-inf.0"
+				 "inf.0")
+			     (if (nan? (imag-part obj))
+				 "nan.0"
+				 #f))))
+		 (if (or rp ip)
+		     (format port "(make-rectangular ~A ~A)" 
+			     (or rp (number->string (real-part obj)))
+			     (or ip (number->string (imag-part obj))))
+		     (write obj port)))))
+	  
+	  ((symbol? obj)
+	   (if (not (keyword? obj))
+	       (if (or (char=? ((symbol->string obj) 0) #\#)
+		       (char-position #\\ (symbol->string obj)))
+		   (format port "~A" obj)
+		   (format port "'~A" obj))
+	       (write obj port)))
+	  
+	  ((pair? obj)
+	   (let ((len (length obj)))
 
-	((hash-table? obj)
-	 (let ((iter (make-hash-table-iterator obj))
-	       (len (length obj)))
-	   (format port "(let ((ht (make-hash-table ~D)))" len)
-	   (do ((key&value (iter) (iter)))
-	       ((null? key&value)
-		(format port " ht)"))
-	     (format port " (set! (ht ")
-	     (let ((key (car key&value))
-		   (val (cdr key&value)))
-	       (if (eq? key obj)
-		   (format port "ht")
-		   (write-readably key port))
-	       (format port ") ")
-	       (if (eq? val obj)
-		   (format port "ht")
-		   (write-readably val port)))
-	     (format port ")"))))
-
-	((environment? obj)
-	 (let ((lst (environment->list obj)))
-	   (format port "(environment")
-	   (for-each
-	    (lambda (kv)
-	      (format port " (cons ")
-	      (write-readably (car kv) port)
-	      (format port " " )
-	      (write-readably (cdr kv) port)
-	      (format port ")"))
-	    lst)
-	   (format port ")")))
-
-	((procedure? obj)
-	 (let ((f (procedure-source obj))
-	       (e (procedure-environment obj))
-	       (elist #f))
-
-	   (define (env-memq e ce)
-	     (and ce
-		  (not (eq? ce (global-environment)))
-		  (or (eq? e ce)
-		      (env-memq e (outer-environment ce)))))
-
-	   (define (tree-env-match source envir)
-	     (if (pair? source)
-		 (or (tree-env-match (car source) envir)
-		     (tree-env-match (cdr source) envir))
-		 (and (symbol? source)
-		      (member source 
-			      (or elist
-				  (set! elist (environment->list envir)))
-			      (lambda (a b) (eq? a (car b)))))))
-
-	   (let ((e-ok (or (null? f)
-			   (eq? e (global-environment))
-			   (env-memq e (current-environment))
-			   (not (tree-env-match f e)))))
-	     (if (not e-ok)
+	     ;; dotted list
+	     (if (negative? len)
 		 (begin
-		   ;; (write-readably (let ((a 1)) (lambda (b) (+ a b)))) -> (let ((a 1)) (lambda (b) (+ a b)))
+		   (do ((lst obj (cdr lst)))
+		       ((not (pair? lst))
+			(write-readably-1 lst port structs))
+		     (format port "(cons ")
+		     (write-readably-1 (car lst) port structs)
+		     (if (pair? lst) (format port " ")))
+		   (do ((i 0 (+ i 1)))
+		       ((= i (- len)))
+		     (format port ")")))
 
-		   ;; TODO: restrict to used vars, and climb the entire chain
+		 ;; circular list
+		 (if (infinite? len)
+		     (let ((sym (replacement obj structs))
+			   (define? (needs-definition? obj structs)))
+		       ;; (wr (let ((lst (list 1 2 3))) (set! (cdr (cdr lst)) lst) lst))
 
-		   (format port "(let (")
-		   (for-each 
-		    (lambda (slot)
-		      (format port "(~A ~A)" (car slot) (cdr slot)))
-		    elist)
-		   (format port ") ")))
+		       (if define?
+			   (let ((clen (circle-length obj (cdr obj) 1)))
+			     (format port "(let () (set! ~A (list" sym)
+			     (do ((i 0 (+ i 1)))
+				 ((= i clen))
+			       (format port " ~S" (obj i)))
+			     (format port " #f)) (set-cdr! (list-tail ~A ~D) ~A) ~A" sym (- clen 1) sym sym)
+			     (let ((data (assq obj structs)))
+			       (set-car! (cddr data) #t)))
+			   (format port "~A" sym)))
 
-	     (if (pair? f)
-		 (write f port)
-		 (write obj port))
+		     ;; normal list
+		     (begin
+		       (format port "(list")
+		       (do ((lst obj (cdr lst)))
+			   ((not (pair? lst)))
+			 (format port " ")
+			 (write-readably-1 (car lst) port structs))
+		       (format port ")"))))))
+	  
+	  ((vector? obj)
+	   (let ((dims (vector-dimensions obj))
+		 (len (length obj)))
+	     (if (= (length dims) 1)
+		 (begin
+		   (format port "(vector")
+		   (do ((i 0 (+ i 1)))
+		       ((= i len)
+			(format port ")"))
+		     (format port " ")
+		     (write-readably-1 (obj i) port structs)))
+		 
+		 ;; if self-reference, just like above but subsititute #f and save index if ref found, then at end do the sets
+		 
+		 (let ((indices (make-list (length dims) 0)))
+		   (format port "(let ((v (make-vector '~A)))" dims) ; do we need a gensym here?
+		   (do ((i 0 (+ i 1)))
+		       ((= i len))
+		     (format port " (set! (v ~{~A~^ ~}) " indices)
+		     (let ((nobj (apply obj indices)))
+		       (if (eq? nobj obj)
+			   (format port "v")
+			   (write-readably-1 nobj port structs)))
+		     (format port ")")
+		     (call-with-exit
+		      (lambda (done)
+			(do ((k (- (length indices) 1) (- k 1)))
+			    ((< k 0))
+			  (set! (indices k) (+ (indices k) 1))
+			  (if (= (indices k) (dims k))
+			      (set! (indices k) 0)
+			      (done))))))
+		   (format port " v)")))))
+	  
+	  ((hash-table? obj)
+	   (let ((iter (make-hash-table-iterator obj))
+		 (len (length obj)))
+	     (format port "(let ((ht (make-hash-table ~D)))" len)
+	     (do ((key&value (iter) (iter)))
+		 ((null? key&value)
+		  (format port " ht)"))
+	       (format port " (set! (ht ")
+	       (let ((key (car key&value))
+		     (val (cdr key&value)))
+		 (if (eq? key obj)
+		     (format port "ht")
+		     (write-readably-1 key port structs))
+		 (format port ") ")
+		 (if (eq? val obj)
+		     (format port "ht")
+		     (write-readably-1 val port structs)))
+	       (format port ")"))))
+	  
+	  ((environment? obj)
+	   (let ((lst (environment->list obj)))
+	     (format port "(environment")
+	     (for-each
+	      (lambda (kv)
+		(format port " (cons ")
+		(write-readably-1 (car kv) port structs)
+		(format port " " )
+		(write-readably-1 (cdr kv) port structs)
+		(format port ")"))
+	      lst)
+	     (format port ")")))
+	  
+	  ((procedure? obj)
+	   (let ((f (procedure-source obj))
+		 (e (procedure-environment obj))
+		 (elist #f))
+	     
+	     (define (env-memq e ce)
+	       (and ce
+		    (not (eq? ce (global-environment)))
+		    (or (eq? e ce)
+			(env-memq e (outer-environment ce)))))
+	     
+	     (define (tree-env-match source envir)
+	       (if (pair? source)
+		   (or (tree-env-match (car source) envir)
+		       (tree-env-match (cdr source) envir))
+		   (and (symbol? source)
+			(member source 
+				(or elist
+				    (set! elist (environment->list envir)))
+				(lambda (a b) (eq? a (car b)))))))
+	     
+	     (let ((e-ok (or (null? f)
+			     (eq? e (global-environment))
+			     (env-memq e (current-environment))
+			     (not (tree-env-match f e)))))
+	       (if (not e-ok)
+		   (begin
+		     ;; (write-readably (let ((a 1)) (lambda (b) (+ a b)))) -> (let ((a 1)) (lambda (b) (+ a b)))
+		     
+		     ;; TODO: restrict to used vars, and climb the entire chain
+		     
+		     (format port "(let (")
+		     (for-each 
+		      (lambda (slot)
+			(format port "(~A ~A)" (car slot) (cdr slot)))
+		      elist)
+		     (format port ") ")))
+	       
+	       (if (pair? f)
+		   (write f port)
+		   (write obj port))
+	       
+	       (if (not e-ok)
+		   (format port ")")))))
+	  
+	  ((macro? obj)
+	   (let* ((source (procedure-source obj))
+		  (arglist (cadar (cdaddr source)))
+		  (body (cddar (cdaddr source)))
+		  (starred (eq? (caar (cdaddr source)) 'lambda*)))
+	     (format port "(symbol->value (define-~Aacro~A (_m_" (if (bacro? obj) "b" "m") (if starred "*" ""))
+	     (if (symbol? arglist)
+		 (format port " . ~A" arglist)
+		 (if (not (null? arglist))
+		     (begin
+		       (format port " ")
+		       (for-each (lambda (p) (write p port)) arglist))))
+	     (format port ") ")
+	     (for-each (lambda (p) (write p port)) body)
+	     (format port "))")))
+	  
+	  ((input-port? obj)
+	   (if (eq? obj *stdin*)
+	       (format port "*stdin*")
+	       (if (port-closed? obj)
+		   (format port "(call-with-input-string \"\" (lambda (p) p))")
+		   (error 'write-readably "can't write ~A readably" obj))))
+	  
+	  ((output-port? obj)
+	   (if (eq? obj *stdout*)
+	       (format port "*stdout*")
+	       (if (eq? obj *stderr*)
+		   (format port "*stderr*")
+		   (if (port-closed? obj)
+		       (format port "(let ((p #f)) (call-with-output-string (lambda (np) (set! p np))) p)")
+		       (error 'write-readably "can't write ~A readably" obj)))))
+	  
+	  ;; if open/file: ftell for loc, then lseek to return, need also the mode if write
+	  ;;    but input file if internal string has these numbers already and can be reset to that place in C
+	  ;;    so how to save/restore here?
+	  ;;    (file-position f) settable?
+	  ;; in the others, no hope I think -- can there be a global string port? yes but it's closed
 
-	     (if (not e-ok)
-		 (format port ")")))))
+	  ((raw-pointer? obj)
+	   (error 'write-readably "can't write ~A readably" obj))
 
-	((macro? obj)
-	 (let* ((source (procedure-source obj))
-		(arglist (cadar (cdaddr source)))
-		(body (cddar (cdaddr source)))
-		(starred (eq? (caar (cdaddr source)) 'lambda*)))
-	   (format port "(symbol->value (define-~Aacro~A (_m_" (if (bacro? obj) "b" "m") (if starred "*" ""))
-	   (if (not (null? arglist))
-	       (begin
-		 (format port " ")
-		 (for-each (lambda (p) (write p port)) arglist)))
-	   (format port ") ")
-	   (for-each (lambda (p) (write p port)) body)
-	   (format port "))")))
+	  (else 
+	   ;; it's hard to catch errors here because things like #<eof> come through this branch
+	   (write obj port))))
+  
 
-	((input-port? obj)
-	 (if (eq? obj *stdin*)
-	     (format port "*stdin*")
-	     (if (port-closed? obj)
-		 (format port "(call-with-input-string \"\" (lambda (p) p))")
-		 (error 'write-readably "can't write ~A readably" obj))))
+  ;; main function
+  (let ((structs (collect-recurrent-structures obj))  ; watch out for circles, etc
+	(info ()))
+    
+    ;; if structs, change it into an alist: ((orig-obj . new-name) ...)
+    (if (not (null? structs))
+	(begin
+	  (format port "(let (")
+	  (for-each
+	   (lambda (orig-obj)
+	     (let ((new-sym (gensym "wr")))
+	       (set! info (cons (list orig-obj new-sym #f) info))
+	       (format port "(~A #f)" new-sym)))
+	   structs)
+	  (format port ")")))
+    (write-readably-1 obj port info)
+    (if (not (null? structs))
+	(format port "))"))
+    ))
 
-	((output-port? obj)
-	 (if (eq? obj *stdout*)
-	     (format port "*stdout*")
-	     (if (eq? obj *stderr*)
-		 (format port "*stderr*")
-		 (if (port-closed? obj)
-		     (format port "(let ((p #f)) (call-with-output-string (lambda (np) (set! p np))) p)")
-		     (error 'write-readably "can't write ~A readably" obj)))))
-	 
-	;; if open/file: ftell for loc, then lseek to return, need also the mode if write
-	;;    but input file if internal string has these numbers already and can be reset to that place in C
-	;;    so how to save/restore here?
-	;;    (file-position f) settable?
-	;; in the others, no hope I think -- can there be a global string port? yes but it's closed
+;;; (wr (let ((lst (list 1 2 3))) (set! (cdr (cdr lst)) lst) lst))
+;;;   ;structs: (#1=(1 2 . #1#))
 
-	(else 
-	 (write obj port))))
+(define (wr obj)
+  (with-output-to-string
+    (lambda ()
+      (write-readably obj))))
+
 
 ;; TODO: object field: readable_string, see c_object_t in s7.c 915
 ;;  we now have this connection, but how to ask for it in s7?
@@ -505,7 +568,9 @@ c"
 (test-write-readably)
 
 
-;; TODO: check list/vector sizes
+;;; -------------------------------- pretty-print --------------------------------
+
+;; TODO: check list/vector sizes, do var incr if complex
 
 (define* (pretty-print obj (port (current-output-port)) (column 0))
 
@@ -616,19 +681,35 @@ c"
 		 (write-char #\) port)))))
 
 	((let let* letrec letrec*)
-	 (if (symbol? (cadr obj))
-	     (begin
-	       (format port "(~A ~A (" (car obj) (cadr obj))
-	       (stacked-split-list (caddr obj) (+ column (length (symbol->string (car obj))) (length (symbol->string (cadr obj))) 4)))
-	     (begin
-	       (format port "(~A (" (car obj))
-	       (stacked-split-list (cadr obj) (+ column (length (symbol->string (car obj))) 3))))
-	 (write-char #\) port)
-	 (spaces (+ column 2))
-	 (stacked-list (if (symbol? (cadr obj)) (cdddr obj) (cddr obj)) (+ column 2))
-	 (write-char #\) port))
+	 (let ((head-len (length (symbol->string (car obj)))))
+	   (if (symbol? (cadr obj))
+	       (begin
+		 (format port "(~A ~A (" (car obj) (cadr obj))
+		 (stacked-split-list (caddr obj) (+ column head-len (length (symbol->string (cadr obj))) 4)))
+	       (begin
+		 (format port "(~A (" (car obj))
+		 (stacked-split-list (cadr obj) (+ column head-len 3))))
+	   (write-char #\) port)
+	   (spaces (+ column 2))
+	   (stacked-list (if (symbol? (cadr obj)) (cdddr obj) (cddr obj)) (+ column 2))
+	   (write-char #\) port)))
 
-	(else (write obj port)))))
+	((set!)
+	 (let ((str (object->string obj)))
+	   (if (> (length str) 60)
+	       (let ((settee (object->string (cadr obj))))
+		 (format port "(set! ~A" settee)
+		 (if (> (length settee) 20)
+		     (begin
+		       (spaces (+ column 6))
+		       (pretty-print (caddr obj) port (+ column 6)))
+		     (begin
+		       (write-char #\space port)
+		       (pretty-print (caddr obj) port (+ column 7 (length settee))))))
+	       (display str port))))
+
+	(else 
+	 (write obj port)))))
 
 
 (define (pp obj)
@@ -638,22 +719,75 @@ c"
 
 (define (test-pretty-print)
 
-  (if (not (string=? (pp '(lambda* (a b) (+ a b) (* 1 2)))
-		     "(lambda* (a b)\n  (+ a b)\n  (* 1 2))"))
+  (if (not (string=? (pp '(lambda* (a b) (+ a b) (* 1 2))) "(lambda* (a b)\n  (+ a b)\n  (* 1 2))"))
       (format *stderr* "pp 1"))
 
-  (if (not (string=? (pp '(let ((a 1) (b 2)) (+ a b)))
-		     "(let ((a 1)\n      (b 2))\n  (+ a b))"))
+  (if (not (string=? (pp '(let ((a 1) (b 2)) (+ a b))) "(let ((a 1)\n      (b 2))\n  (+ a b))"))
       (format *stderr* "pp 2"))
 
-  (if (not (string=? (pp '(let () (+ a b)))
-		     "(let ()\n  (+ a b))"))
+  (if (not (string=? (pp '(let () (+ a b))) "(let ()\n  (+ a b))"))
       (format *stderr* "pp 2a"))
 
-  (if (not (string=? (pp '(begin (+ 1 2) (* 2 3)))
-		     "(begin\n  (+ 1 2)\n  (* 2 3))"))
+  (if (not (string=? (pp '(begin (+ 1 2) (* 2 3))) "(begin\n  (+ 1 2)\n  (* 2 3))"))
       (format *stderr* "pp 3"))
-  
+
+  (if (not (string=? (pp '(case a ((a b c) 1) ((d) 2) (else 3))) "(case a\n  ((a b c) 1)\n  ((d) 2)\n  (else 3))"))
+      (format *stderr* "pp 4"))
+
+  (if (not (string=? (pp '(cond ((> a 1) 2) ((< a 3) 3) (#t 4))) "(cond ((> a 1) 2)\n      ((< a 3) 3)\n      (#t 4))"))
+      (format *stderr* "pp 5"))
+
+  (if (not (string=? (pp '(if a '(1 2 3))) "(if a '(1 2 3))"))
+      (format *stderr* "pp7"))
   )
 
 (test-pretty-print)
+;;; TODO: stacked-list cond, pp fm-violin/with-sound and all else (animals) via st
+;;; TODO: for-each/map 1 space?
+
+
+;;; -------------------------------- checkpoint --------------------------------
+
+(define* (checkpoint (file "checkpoint-s7.scm"))
+  (call-with-output-file file
+    (lambda (p)
+      (let ((st (symbol-table)))
+	(do ((i 0 (+ i 1))) 
+	    ((= i (vector-length st)))
+	  (for-each
+	   (lambda (sym)
+	     (if (defined? sym)
+		 (let ((choice (*autoload* sym)))
+		   (if (string? choice)
+		       (format p "(if (not (defined? '~A)) (load ~S))~%" sym choice)
+		       (if (procedure? choice)
+			   (format p "(if (not (defined? '~A)) ((~S) (current-environment)))~%" sym choice))))))
+	   (st i)))
+
+      ;; now presumably we've loaded all the findable files, and called the autoload functions
+      ;; run through the table again checking for diffs or absences -- will this cover all the s7 settings?
+
+	(do ((i 0 (+ i 1))) 
+	    ((= i (vector-length st)))
+	  (for-each
+	   (lambda (sym)
+	     (if (and (defined? sym)
+		      (not (constant? sym))
+		      (not (memq sym '(i st p file multiple-value-bind letrec* *load-path* macroexpand *safety*
+					 *#readers* *vector-print-length* *gc-stats* multiple-value-set! cond-expand
+					 *features*
+					 ))))
+		 ;; here we need to leave out built-in functions like abs 
+		 (let ((choice (*autoload* sym)))
+		   (if (and (not choice)
+			    (not (string=? (object->string (symbol->value sym)) (object->string sym))))
+		       (begin
+			 (format p "(if (not (defined? '~A)) (define ~A " sym sym)
+			 (write-readably (symbol->value sym) p)
+			 (format p ")~%"))))))
+	   (st i)))
+
+	;; now look for changes?  This probably can't work for macros/functions (not equal? anyway)
+
+      )))
+  #f)

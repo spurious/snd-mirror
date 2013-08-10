@@ -458,7 +458,6 @@
 					;(load "popup.scm")
 (load "dsp.scm")		   
 (load "prc95.scm")
-(load "write.scm")
 					; (load "edit-menu.scm")	   
 (load "primes.scm")
 					; (load "effects-utils.scm")	   
@@ -518,6 +517,10 @@
 (load "musglyphs.scm")	   
 (load "zip.scm")
 (load "nb.scm")
+
+(load "write.scm")
+(load "lint.scm")
+(load "r7rs.scm")
 
 
 (let ((names (make-hash-table)))

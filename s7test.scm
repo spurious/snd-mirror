@@ -7605,25 +7605,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 (test (vector? (symbol-table)) #t)
-(let* ((st (symbol-table))
-       (len (length st))
-       (loc -1))
-  (do ((i 0 (+ i 1)))
-      ((or (>= loc 0) 
-	   (= i len)))
-    (if (pair? (st i))
-	(set! loc i)))
-  (if (>= loc 0)
-      (begin
-	(test (symbol? (((symbol-table) loc) 0)) #t)
-	(let ((old-table (symbol-table))
-	      (old-list ((symbol-table) loc)))
-	  ;; try to clobber it...
-	  (vector-fill! (symbol-table) #())
-	  (set! ((symbol-table) loc) 1)
-	  (test (list? ((symbol-table) loc)) #t)
-	  (test (symbol? (((symbol-table) loc) 0)) #t)
-	  (test (equal? old-list ((symbol-table) loc)) #t)))))
 
 (let ((v (make-vector 3 (vector 1 2))))
   (test (equal? (v 0) (v 1)) #t)
@@ -22448,7 +22429,6 @@ who says the continuation has to restart the map from the top?
 (test (sort! '(3 2 1) (lambda (a) #f)) 'error)
 (test (sort! '(3 2 1) (lambda* (a) #f)) 'error)
 (test (sort! '(3 1 2 4) (lambda args (< (car args) (cadr args)))) '(1 2 3 4))
-;(test (vector? (sort! (symbol-table) (lambda (a b) (< (length a) (length b))))) #t) ; (symbol-table) copies the table
 (test (sort! (global-environment) <) 'error)
 (test (sort! () #f) 'error)
 
@@ -67724,7 +67704,7 @@ but it's the printout that is at fault:
 (test (nan? (random 1/0)) #t)
 (test (zero? (random 1e-30)) #f)
 
-(test ((object->string (make-random-state 1234)) 1) #\<)
+(test ((object->string (make-random-state 1234)) 1) #\m) ; print-readably here
 (test (make-random-state 1.0) 'error)
 (test (make-random-state 1+i) 'error)
 (test (make-random-state 3/4) 'error)
@@ -67764,7 +67744,7 @@ but it's the printout that is at fault:
   (test (equal? r1 r2) #t)
   (test (eq? r2 r2) #t)
   (test (equal? r1 r1) #t)
-  (test ((object->string r1) 1) #\<)
+  (test ((object->string r1 #f) 1) #\<) ; display, not write
   (let ((val1 (random 10000000 r1))
 	(val2 (random 10000000 r2)))
     (test val1 val2)))

@@ -4637,7 +4637,7 @@ loads that file; if a function, it is called with one argument, the current (cal
 	    (augment-environment! e (cons 'j0 j0))))
 </pre>
 
-<p>The hash-table that holds the autoload info is named *autoload*.
+<p>The entity (hash-table or environment probably) that holds the autoload info is named *autoload*.
 If after checking autoload, the symbol is still unbound, s7 calls
 <em class=def id="unboundvariablehook">*unbound-variable-hook*</em>.
 The offending symbol is named 'variable in the hook environment.
