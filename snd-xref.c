@@ -1832,7 +1832,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[2888] = {
+static const char *snd_names[2886] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -2329,7 +2329,6 @@ static const char *snd_names[2888] = {
     "file->vct", "examp.scm",
     "file->vct", "frame.scm",
     "file-error?", "r7rs.scm",
-    "file-exists?", "r7rs.scm",
     "files-popdown-info", "nb.scm",
     "files-popup-info", "nb.scm",
     "fill-in", "musglyphs.scm",
@@ -2902,6 +2901,9 @@ static const char *snd_names[2888] = {
     "r2k!cos", "generators.scm",
     "r2k2cos", "generators.scm",
     "r2k2cos-norm", "generators.scm",
+    "r7rs-file-exists?", "r7rs.scm",
+    "r7rs-string-copy", "r7rs.scm",
+    "r7rs-vector-fill!", "r7rs.scm",
     "raised-cosine", "grani.scm",
     "ramp", "examp.scm",
     "ramp-expt", "extensions.scm",
@@ -3116,10 +3118,8 @@ static const char *snd_names[2888] = {
     "stretch-sound-via-dft", "dsp.scm",
     "string->utf8", "r7rs.scm",
     "string->vector", "r7rs.scm",
-    "string-copy", "r7rs.scm",
     "string-copy!", "r7rs.scm",
     "string-downcase", "r7rs.scm",
-    "string-fill!", "r7rs.scm",
     "string-foldcase", "r7rs.scm",
     "string-map", "r7rs.scm",
     "string-upcase", "r7rs.scm",
@@ -3189,7 +3189,6 @@ static const char *snd_names[2888] = {
     "vector-copy", "r7rs.scm",
     "vector-copy", "poly.scm",
     "vector-copy!", "r7rs.scm",
-    "vector-fill!", "r7rs.scm",
     "vector-map", "r7rs.scm",
     "vector-scale!", "poly.scm",
     "vector-synthesis", "play.scm",
@@ -3281,7 +3280,7 @@ static const char *snd_names[2888] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 1444);
+  s7_autoload_set_names(sc, snd_names, 1443);
 }
 #endif
 

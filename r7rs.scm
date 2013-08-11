@@ -26,11 +26,11 @@
   (let ((stop (or end (length v)))) 
     (copy v (make-vector (- stop start)) start stop)))
 
-(define* (string-copy s (start 0) end) 
+(define* (r7rs-string-copy s (start 0) end) 
   (let ((stop (or end (length s)))) 
     (copy s (make-string (- stop start)) start stop)))
 
-(define* (vector-fill! seq fill start end)
+(define* (r7rs-vector-fill! seq fill start end)
   (if (not start)
       (fill! seq fill)
       (let ((len (or end (length seq))))
@@ -38,7 +38,7 @@
 	    ((= i len) seq)
 	  (set! (seq i) fill)))))
 
-(define string-fill! vector-fill!)
+(define r7rs-string-fill! vector-fill!)
 
 (define* (vector-copy! dest at src (start 0) end)
   (let ((len (or end (length src))))
@@ -299,7 +299,7 @@
 (define get-environment-variable (let () (c-define '(char* getenv (char*))) getenv))
 
 ;; similarly:
-(define file-exists? (let ()
+(define r7rs-file-exists? (let ()
                        (c-define '((int F_OK) (int access (char* int))) "" "unistd.h") 
                        (lambda (arg) 
                          (= (access arg F_OK) 0))))

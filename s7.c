@@ -66555,5 +66555,10 @@ s7_scheme *s7_init(void)
  * write-readably: check how close we are to this, then checkpoint? and pretty-print for s7
  * cload: settable C variables (via symbol_access as here?)
  * *stacktrace* could include hook-style func for caller-access to it
+ *
+ * perhaps the keyword confusion could be fixed by evaluating a keyword to something
+ *   that prints as a keyword and is one, but has a "value" flag on -- then a key passed
+ *   as a symbol won't be confused with the same thing naming a following arg.
+ *   Diffs: :key != ':key -- any others? 
  */
 
