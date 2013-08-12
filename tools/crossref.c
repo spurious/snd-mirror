@@ -245,8 +245,6 @@ int main(int argc, char **argv)
   add_header("snd-g1.h");
   add_header("snd-nogui0.h");
   add_header("snd-nogui1.h");
-  add_header("xen.h");
-  add_header("mus-config.h.in");
   add_header("libclm.def");
   add_header("snd-menu.h");
   add_header("snd-file.h");
@@ -256,6 +254,10 @@ int main(int argc, char **argv)
 
   /* add_file("xen.h"); */
   /* add_file("snd.h"); */
+
+  /* these need to be last */
+  add_header("xen.h");
+  add_header("mus-config.h.in");
 
   add_file("glistener.c");
   add_file("headers.c");
@@ -395,6 +397,9 @@ int main(int argc, char **argv)
 			  if (k < ID_SIZE)
 			    curname[k] = 0;
 			  else fprintf(stderr, "1: curname overflow: %s[%d]: %s\n", headers[i], j, curname);
+
+			  /* fprintf(stderr, "%s name: %s %d %d %d\n", headers[i], curname, k, in_parens, in_quotes); */
+
 			  if ((k > 0) && (in_parens == 0) && (in_quotes == 0))
 			    {
 			      int loc;

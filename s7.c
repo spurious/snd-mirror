@@ -1306,7 +1306,7 @@ struct s7_scheme {
   s7_pointer WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO, WTA1, WTA2, WTA3, WTA4, WTA5;
   s7_pointer SIMPLE_WRONG_TYPE_ARG_INFO, SIMPLE_OUT_OF_RANGE_INFO, DIVISION_BY_ZERO, DIVISION_BY_ZERO_ERROR;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR, TOO_MANY_ARGUMENTS, NOT_ENOUGH_ARGUMENTS;
-  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, KEY_ALLOW_OTHER_KEYS;
+  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, KEY_ALLOW_OTHER_KEYS, KEY_READABLE;
   s7_pointer __FUNC__;
   s7_pointer Object_Set, Object_Set_3; /* applicable object set method */
   s7_pointer FEED_TO;                  /* => */
@@ -19383,20 +19383,36 @@ static s7_pointer g_substring_to_temp(s7_scheme *sc, s7_pointer args)
  */
 
 
-#define USE_WRITE true
-#define USE_DISPLAY false
+typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_write_t;
+
+static use_write_t write_choice(s7_scheme *sc, s7_pointer arg)
+{
+  if (arg == sc->F) return(USE_DISPLAY);
+  if (arg == sc->T) return(USE_WRITE);
+  if (arg == sc->KEY_READABLE) return(USE_READABLE_WRITE);
+  return(USE_WRITE_WRONG);
+}
+
+static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t use_write, int *nlen);
 
 static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 {
-  #define H_object_to_string "(object->string obj (write true)) returns a string representation of obj."
-  
+  #define H_object_to_string "(object->string obj (write #t)) returns a string representation of obj."
+  use_write_t choice = USE_WRITE;
+  char *str;
+
   if (is_not_null(cdr(args)))
     {
-      if (s7_is_boolean(cadr(args)))
-	return(s7_object_to_string(sc, car(args), s7_boolean(sc, cadr(args))));
-      return(wrong_type_argument(sc, sc->OBJECT_TO_STRING, small_int(2), cadr(args), T_BOOLEAN));
+      choice = write_choice(sc, cadr(args));
+      if (choice == USE_WRITE_WRONG)
+	return(wrong_type_argument(sc, sc->OBJECT_TO_STRING, small_int(2), cadr(args), T_BOOLEAN));
     }
-  return(s7_object_to_string(sc, car(args), USE_WRITE));
+  /* can't use s7_object_to_string here anymore because it assumes use_write arg is a boolean
+   */
+  str = s7_object_to_c_string_1(sc, car(args), choice, NULL);
+  if (str)
+    return(make_string_uncopied(sc, str));
+  return(s7_make_string_with_length(sc, "", 0)); 
 }
 
 
@@ -23534,11 +23550,11 @@ static int circular_list_entries(s7_pointer lst)
 }
 
 
-static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_pointer port, bool use_write, bool to_file, shared_info *ci);
+static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci);
 
 static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port, 
 			       int out_len, int flat_ref, int dimension, int dimensions, bool *last, 
-			       bool use_write, bool to_file, shared_info *ci)
+			       use_write_t use_write, bool to_file, shared_info *ci)
 {
   int i;
 
@@ -23581,7 +23597,7 @@ static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
 }
 
 
-static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, bool use_write, bool to_file, shared_info *ci)
+static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
   s7_Int i, len, nlen;
   bool too_long = false;
@@ -23656,7 +23672,7 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, bool
 }
 
 
-static void bytevector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, bool use_write, bool to_file)
+static void bytevector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write, bool to_file)
 {
   s7_Int i, len, plen;
   bool too_long = false;
@@ -23699,7 +23715,7 @@ static void bytevector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, 
 }
 
 
-static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, bool use_write, bool to_file, shared_info *ci)
+static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
   s7_pointer x;
   int i, len, true_len, start = 0;
@@ -23792,7 +23808,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, bool us
 }
 
 
-static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, bool use_write, bool to_file, shared_info *ci)
+static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
   int i, len, gc_iter;
   bool too_long = false;
@@ -23844,7 +23860,7 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
 }
 
 
-static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool use_write, bool to_file, shared_info *ci)
+static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
   int nlen = 0;
   char *str;
@@ -23985,7 +24001,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 	    {
 	      /* this used to check for length > 1<<24 -- is that still necessary?
 	       */
-	      if (!use_write)
+	      if (use_write == USE_DISPLAY)
 		port_write_string(port)(sc, string_value(obj), string_length(obj), port);
 	      else
 		{
@@ -24004,14 +24020,14 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 	    }
 	  else
 	    {
-	      if (use_write)
+	      if (use_write != USE_DISPLAY)
 		port_write_string(port)(sc, "\"\"", 2, port);
 	    }
 	}
       break;
 
     case T_CHARACTER:
-      if (!use_write) 
+      if (use_write == USE_DISPLAY) 
 	port_write_character(port)(sc, character(obj), port);
       else port_write_string(port)(sc, character_name(obj), character_name_length(obj), port);
       break;
@@ -24086,11 +24102,16 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
       break;
   
     case T_C_OBJECT:
-      /* 9-Aug-13: if object supports readable write, use that if use_write above */
-      if ((use_write) &&
+      /* 9-Aug-13: if object supports readable write, use that if use_write above.
+       *   but that screws up in the listener -- we don't want to write an entire vct!
+       *   so change use_write to an enum.
+       */
+
+      if ((use_write == USE_READABLE_WRITE) &&
 	  (c_object_print_readably(obj)))
 	str = ((*(c_object_print_readably(obj)))(c_object_value(obj)));
       else str = ((*(c_object_print(obj)))(sc, c_object_value(obj)));
+
       port_display(port)(sc, str, port);
       free(str);
       break;
@@ -24204,7 +24225,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 }
 
 
-static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_pointer port, bool use_write, bool to_file, shared_info *ci)
+static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
   if ((ci) &&
       (has_structure(vr)))
@@ -24233,12 +24254,12 @@ static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_po
 }
 
 
-static s7_pointer write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool use_write)
+static s7_pointer write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write)
 {
   shared_info *ci = NULL;
 
   if (port_is_closed(port))
-    return(s7_wrong_type_arg_error(sc, (use_write) ? "write" : "display", 2, port, "an open input port"));
+    return(s7_wrong_type_arg_error(sc, (use_write != USE_DISPLAY) ? "write" : "display", 2, port, "an open input port"));
 
   if (has_structure(obj))
     {
@@ -24251,7 +24272,7 @@ static s7_pointer write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer por
 }
 
 
-static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_write, int *nlen)
+static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t use_write, int *nlen)
 {
   shared_info *ci = NULL;
   char *str;
@@ -24289,7 +24310,7 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 {
   char *str;
 
-  str = s7_object_to_c_string_1(sc, obj, use_write, NULL);
+  str = s7_object_to_c_string_1(sc, obj, (use_write) ? USE_WRITE : USE_DISPLAY, NULL);
   if (str)
     return(make_string_uncopied(sc, str));
 
@@ -35374,9 +35395,9 @@ and applies it to the rest of the arguments."
 }
 
 
-static char *truncate_string(char *form, int len, bool use_write, int *form_len)
+static char *truncate_string(char *form, int len, use_write_t use_write, int *form_len)
 {
-  if (use_write)
+  if (use_write != USE_DISPLAY)
     {
       /* I guess we need to protect the outer double quotes in this case */
       int i;
@@ -65598,6 +65619,7 @@ s7_scheme *s7_init(void)
   sc->KEY_OPTIONAL =         s7_make_keyword(sc, "optional");
   sc->KEY_ALLOW_OTHER_KEYS = s7_make_keyword(sc, "allow-other-keys");
   sc->KEY_REST =             s7_make_keyword(sc, "rest");
+  sc->KEY_READABLE =         s7_make_keyword(sc, "readable");
 
   sc->__FUNC__ = make_symbol(sc, "__func__");
 
@@ -66556,9 +66578,7 @@ s7_scheme *s7_init(void)
  * cload: settable C variables (via symbol_access as here?)
  * *stacktrace* could include hook-style func for caller-access to it
  *
- * perhaps the keyword confusion could be fixed by evaluating a keyword to something
- *   that prints as a keyword and is one, but has a "value" flag on -- then a key passed
- *   as a symbol won't be confused with the same thing naming a following arg.
- *   Diffs: :key != ':key -- any others? 
+ * instead of direct access to symbol-table, perhaps symbol-table-iterator?
+ * ~W in format using :readable?
  */
 

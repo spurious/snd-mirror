@@ -67704,7 +67704,8 @@ but it's the printout that is at fault:
 (test (nan? (random 1/0)) #t)
 (test (zero? (random 1e-30)) #f)
 
-(test ((object->string (make-random-state 1234)) 1) #\m) ; print-readably here
+(test ((object->string (make-random-state 1234) :readable) 1) #\m) ; print-readably here
+(test ((object->string (make-random-state 1234)) 1) #\<) ; write (#t as default) here
 (test (make-random-state 1.0) 'error)
 (test (make-random-state 1+i) 'error)
 (test (make-random-state 3/4) 'error)

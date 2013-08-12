@@ -1490,6 +1490,54 @@ static char *sound_data_to_string(sound_data *sd)
 }
 
 
+static char *sound_data_to_readable_string(void *obj)
+{
+  sound_data *sd = (sound_data *)obj;
+  char **chan_strs;
+  char *str;
+  char buf[32];
+  int i, len, total = 128, chans; /* len=print length */
+  vct *v;
+
+  if (sd == NULL) return(NULL);
+  len = sd->length;
+  chans = sd->chans;
+  chan_strs = (char **)calloc(chans, sizeof(char *));
+
+  v = (vct *)malloc(sizeof(vct));
+  v->length = len;
+  v->dont_free = true;
+
+  for (i = 0; i < chans; i++)
+    {
+      v->data = sd->data[i];
+      chan_strs[i] = mus_vct_to_readable_string(v);
+      total += (strlen(chan_strs[i]) + 32);
+    }
+  free(v);
+
+  str = (char *)calloc(total, sizeof(char));
+  snprintf(str, total, "(let ((sd (make-sound-data %d %d)))", chans, len);
+  for (i = 0; i < chans; i++)
+    {
+      strcat(str, "\n  (vct->sound-data ");
+      strcat(str, chan_strs[i]);
+      strcat(str, " sd ");
+      snprintf(buf, 32, "%d", i);
+      strcat(str, buf);
+      strcat(str, ")");
+      free(chan_strs[i]);
+    }
+  strcat(str, "\n  sd)");
+
+  free(chan_strs);
+  return(str);
+}
+
+/* (object->string (make-sound-data 2 4))
+ */
+
+
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(sound_data, print_sound_data, sound_data_to_string)
 
 
@@ -2928,6 +2976,7 @@ void mus_sndlib_xen_initialize(void)
 
   sound_data_tag = XEN_MAKE_OBJECT_TYPE("<sound-data>", print_sound_data, free_sound_data, s7_equalp_sound_data, NULL, 
 					sound_data_apply, s7_sound_data_set, s7_sound_data_length, s7_sound_data_copy, NULL, s7_sound_data_fill);
+  s7_set_object_print_readably(sound_data_tag, sound_data_to_readable_string);
 #else
   sound_data_tag = XEN_MAKE_OBJECT_TYPE("SoundData", sizeof(sound_data));
 #endif

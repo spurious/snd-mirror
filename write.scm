@@ -6,6 +6,7 @@
 
 
 
+
 ;;; -------------------------------- write-readably --------------------------------
 
 (define* (write-readably obj (port (current-output-port)))
@@ -252,7 +253,8 @@
 
 	  (else 
 	   ;; it's hard to catch errors here because things like #<eof> come through this branch
-	   (write obj port))))
+	   (let ((str (object->string obj :readable)))
+	     (display str port)))))
   
 
   ;; main function
@@ -625,6 +627,11 @@ c"
 		  (messy-number (real-part z))
 		  (if (negative? (imag-part z)) "-" "+")
 		  (messy-number (abs (imag-part z))))))
+
+    (define (any-keyword? lst)
+      (and (pair? lst)
+	   (or (keyword? (car lst))
+	       (any-keyword? (cdr lst)))))
     
     (cond ((number? obj)
 	   (if (rational? obj)
@@ -751,27 +758,31 @@ c"
 			      (< lstlen 2))
 			  (display objstr port)
 			  (let* ((carstr (object->string (car obj)))
-				 (strlen (length carstr)))
+				 (carstrlen (length carstr)))
 			    (format port "(~A" carstr)
-			    (if (> lstlen 8)
-				(let ((lst (cdr obj)))
-				  (do ((i 1 (+ i 8)))
-				      ((>= i lstlen))
-				    (do ((k 0 (+ k 1)))
-					((or (null? lst)
-					     (= k 8)))
-				      (format port " ~A" (car lst))
-				      (set! lst (cdr lst)))
-				    (if (not (null? lst))
-					(spaces (+ column strlen 2)))))
+			    (if (any-keyword? (cdr obj))
 				(begin
-				  (if (< strlen 20)
+				  (spaces (+ column 2))
+				  (stacked-list (cdr obj) (+ column 2)))
+				(let ((line-len (ceiling (/ (- strlen carstrlen) 40))))
+				  (if (= lstlen 2)
 				      (begin
 					(write-char #\space port)
-					(stacked-list (cdr obj) (+ column strlen 2)))
-				      (begin
-					(spaces (+ column 2))
-					(stacked-list (cdr obj) (+ column 2))))))))))))))
+					(pretty-print-1 (cadr obj) port (+ column 2 carstrlen)))
+				      (if (< lstlen 5)
+					  (begin
+					    (write-char #\space port)
+					    (stacked-list (cdr obj) (+ column 2 carstrlen)))
+					  (let ((lst (cdr obj)))
+					    (do ((i 1 (+ i line-len)))
+						((>= i lstlen))
+					      (do ((k 0 (+ k 1)))
+						  ((or (null? lst)
+						       (= k line-len)))
+						(format port " ~A" (car lst))
+						(set! lst (cdr lst)))
+					      (if (not (null? lst))
+						  (spaces (+ column carstrlen 2)))))))))))))))))
 	  (else
 	   (write obj port))))
   
