@@ -5280,9 +5280,12 @@ static XEN g_peak_env_info_to_vcts(peak_env_info *ep, int len)
   int i, j, lim;
   vct *vmax, *vmin;
   int loc;
+
   if ((len == 0) || (len > ep->peak_env_size))
     lim = ep->peak_env_size;
   else lim = len;
+  if (lim <= 0) return(XEN_EMPTY_LIST);
+
   res = XEN_LIST_2(xen_make_vct(lim, (mus_float_t *)calloc(lim, sizeof(mus_float_t))),
 		   xen_make_vct(lim, (mus_float_t *)calloc(lim, sizeof(mus_float_t))));
   loc = snd_protect(res);

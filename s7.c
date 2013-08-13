@@ -1347,6 +1347,8 @@ struct s7_scheme {
   int autoload_names_loc, autoload_names_top;
 };
 
+typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_write_t;
+
 #define NUM_SAFE_LISTS 16
 #define INITIAL_AUTOLOAD_NAMES_SIZE 4
 
@@ -2433,7 +2435,7 @@ static int safe_strcmp(const char *s1, const char *s2)
 
 
 /* forward decls */
-static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen);
+static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen, use_write_t choice);
 static bool is_proper_list(s7_scheme *sc, s7_pointer lst);
 static bool is_all_x_safe(s7_scheme *sc, s7_pointer p);
 static void annotate_args(s7_scheme *sc, s7_pointer args);
@@ -4379,16 +4381,18 @@ static s7_pointer g_stack_top(s7_scheme *sc, s7_pointer args)
   return(s7_make_integer(sc, (sc->stack_end - sc->stack_start) / 4));
 }
 
-
+#if 0
 static s7_pointer g_stack(s7_scheme *sc, s7_pointer args)
 {
   int loc;
+  /* if this is ever exported, check here for wrong type arg */
   loc = (int)(s7_integer(car(args)) + 1) * 4 - 1;
   /* stack op is not a valid s7_pointer (it's the op enum), and args can be invalid
    *   since it is not always set and might have been gc'd previously.
    */
   return(list_2(sc, stack_code(sc->stack, loc), stack_environment(sc->stack, loc)));
 }
+#endif
 
 
 
@@ -5630,6 +5634,7 @@ static s7_pointer g_environment_to_list(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if 0
 static s7_pointer g_environment_function(s7_scheme *sc, s7_pointer args)
 {
   /* an experiment -- maybe we can func info in the stacktrace */
@@ -5639,7 +5644,7 @@ static s7_pointer g_environment_function(s7_scheme *sc, s7_pointer args)
     return(environment_function(e));
   return(sc->F);
 }
-  
+#endif
 
 
 s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
@@ -7094,6 +7099,16 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 static bool is_NaN(s7_Double x) {return(x != x);}
 /* callgrind says this is faster than isnan, I think (very confusing data...) */
 
+/* in c++11 I think we'll have to #define is_inf(x) std::isinf(x) or some such subterfuge
+ *   does std::isinf work in all earlier versions?
+ *   Another possibility: (x * 0) != 0
+ */
+#if __cplusplus
+  #define is_inf(x) std::isinf(x)
+#else
+  #define is_inf(x) isinf(x)
+#endif
+
 #if MS_WINDOWS
 /* need to provide inverse hyperbolic trig funcs and cbrt */
 
@@ -7129,13 +7144,13 @@ double cbrt(double x)
   return(-pow(-x, 1.0 / 3.0));
 }
 
-static bool isinf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}
+static bool is_inf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}
 
 #endif
 
 
 #if defined(__sun) && defined(__SVR4)
-  static bool isinf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}
+  static bool is_inf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}
 #endif
 
 
@@ -7719,7 +7734,7 @@ static s7_pointer make_permanent_real(s7_Double n)
   heap_location(x) = NOT_IN_HEAP;
   real(x) = n;
 
-  str = number_to_string_base_10(x, 0, WRITE_REAL_PRECISION, 'g', &nlen);
+  str = number_to_string_base_10(x, 0, WRITE_REAL_PRECISION, 'g', &nlen, USE_WRITE);
   set_print_name(x, str, nlen);
 
   return(x);
@@ -7861,7 +7876,7 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x, bool with_error)
 	s7_Double val;
 
 	val = s7_real(x);
-	if ((isinf(val)) || (is_NaN(val)))
+	if ((is_inf(val)) || (is_NaN(val)))
 	  {
 	    if (with_error)
 	      return(simple_wrong_type_argument_with_type(sc, sc->INEXACT_TO_EXACT, x, A_NORMAL_REAL));
@@ -8413,7 +8428,7 @@ static char *integer_to_string_base_10_no_width(s7_pointer obj, int *nlen) /* do
 static int num_to_str_size = 0;
 static char *num_to_str = NULL;
 
-static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen) /* don't free result */
+static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen, use_write_t choice) /* don't free result */
 {
   int len;
   len = 256 + width;
@@ -8488,21 +8503,64 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
       
     default:
       {
-	const char *frmt;
-	if (sizeof(double) >= sizeof(s7_Double))
+	if ((choice == USE_READABLE_WRITE) &&
+	    ((is_NaN(real_part(obj))) || (is_NaN(imag_part(obj))) || ((is_inf(real_part(obj))) || (is_inf(imag_part(obj))))))
 	  {
-	    if (imag_part(obj) >= 0.0)
-	      frmt = (float_choice == 'g') ? "%.*g+%.*gi" : ((float_choice == 'f') ? "%.*f+%.*fi" : "%.*e+%.*ei"); 
-	    else frmt = (float_choice == 'g') ? "%.*g%.*gi" : ((float_choice == 'f') ? "%.*f-%.*fi" :"%.*e-%.*ei");
+	    char rbuf[128], ibuf[128];
+	    char *rp, *ip;
+	    if (is_NaN(real_part(obj)))
+	      rp = (char *)"nan.0";
+	    else
+	      {
+		if (is_inf(real_part(obj)))
+		  {
+		    if (real_part(obj) < 0.0)
+		      rp = (char *)"-inf.0";
+		    else rp = (char *)"inf.0";
+		  }
+		else
+		  {
+		    snprintf(rbuf, 128, "%.*g", precision, real_part(obj));
+		    rp = rbuf;
+		  }
+	      }
+	    if (is_NaN(imag_part(obj)))
+	      ip = (char *)"nan.0";
+	    else
+	      {
+		if (is_inf(imag_part(obj)))
+		  {
+		    if (imag_part(obj) < 0.0)
+		      ip = (char *)"-inf.0";
+		    else ip = (char *)"inf.0";
+		  }
+		else
+		  {
+		    snprintf(ibuf, 128, "%.*g", precision, imag_part(obj));
+		    ip = ibuf;
+		  }
+	      }
+	    len = snprintf(num_to_str, num_to_str_size, "(make-rectangular %s %s)", rp, ip);
 	  }
-	else 
+	else
 	  {
-	    if (imag_part(obj) >= 0.0)
-	      frmt = (float_choice == 'g') ? "%.*Lg+%.*Lgi" : ((float_choice == 'f') ? "%.*Lf+%.*Lfi" : "%.*Le+%.*Lei");
-	    else frmt = (float_choice == 'g') ? "%.*Lg%.*Lgi" : ((float_choice == 'f') ? "%.*Lf-%.*Lfi" : "%.*Le-%.*Lei");
+	    const char *frmt;
+	    if (sizeof(double) >= sizeof(s7_Double))
+	      {
+		if (imag_part(obj) >= 0.0)
+		  frmt = (float_choice == 'g') ? "%.*g+%.*gi" : ((float_choice == 'f') ? "%.*f+%.*fi" : "%.*e+%.*ei"); 
+		else frmt = (float_choice == 'g') ? "%.*g%.*gi" : ((float_choice == 'f') ? "%.*f%.*fi" :"%.*e%.*ei"); /* minus sign comes with the imag_part */
+	      }
+	    else 
+	      {
+		if (imag_part(obj) >= 0.0)
+		  frmt = (float_choice == 'g') ? "%.*Lg+%.*Lgi" : ((float_choice == 'f') ? "%.*Lf+%.*Lfi" : "%.*Le+%.*Lei");
+		else frmt = (float_choice == 'g') ? "%.*Lg%.*Lgi" : ((float_choice == 'f') ? "%.*Lf%.*Lfi" : "%.*Le%.*Lei");
+	      }
+	    
+	    len = snprintf(num_to_str, num_to_str_size, frmt, precision, real_part(obj), precision, imag_part(obj));
 	  }
 
-	len = snprintf(num_to_str, num_to_str_size, frmt, precision, real_part(obj), precision, imag_part(obj));
 	if (width > len)  /* (format #f "~20g" 1+i) */
 	  {
 	    int spaces;
@@ -8542,7 +8600,7 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 #endif
 
   if (radix == 10)
-    return(copy_string(number_to_string_base_10(obj, width, precision, float_choice, nlen)));
+    return(copy_string(number_to_string_base_10(obj, width, precision, float_choice, nlen, USE_WRITE)));
 
   switch (type(obj))
     {
@@ -8578,7 +8636,7 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 
 	if (is_NaN(x))
 	  return(copy_string_with_len("nan.0", 5));
-	if (isinf(x))
+	if (is_inf(x))
 	  {
 	    if (x < 0.0)
 	      return(copy_string_with_len("-inf.0", 6));    
@@ -8715,7 +8773,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 
   if (radix != 10)
     res = number_to_string_with_radix(sc, x, radix, 0, (radix == 10) ? size : 20, 'g', &nlen);
-  else res = copy_string(number_to_string_base_10(x, 0, size, 'g', &nlen));
+  else res = copy_string(number_to_string_base_10(x, 0, size, 'g', &nlen, USE_WRITE));
   
   return(make_string_uncopied(sc, res));
 }
@@ -8859,12 +8917,12 @@ static bool is_abnormal(s7_pointer x)
       return(false);
 
     case T_REAL:
-      return(isinf(real(x)) || 
+      return(is_inf(real(x)) || 
 	     is_NaN(real(x)));
 
     case T_COMPLEX:
-      return(((isinf(s7_real_part(x)))  || 
-	      (isinf(s7_imag_part(x)))  ||
+      return(((is_inf(s7_real_part(x)))  || 
+	      (is_inf(s7_imag_part(x)))  ||
 	      (is_NaN(s7_real_part(x))) || 
 	      (is_NaN(s7_imag_part(x)))));
 
@@ -8874,12 +8932,12 @@ static bool is_abnormal(s7_pointer x)
       return(false);
       
     case T_BIG_REAL:
-      return((isinf(s7_real_part(x))) || 
+      return((is_inf(s7_real_part(x))) || 
 	     (is_NaN(s7_real_part(x))));
 
     case T_BIG_COMPLEX:
-      return((isinf(s7_real_part(x))) || 
-	     (isinf(s7_imag_part(x))) ||
+      return((is_inf(s7_real_part(x))) || 
+	     (is_inf(s7_imag_part(x))) ||
 	     (is_NaN(s7_real_part(x))) || 
 	     (is_NaN(s7_imag_part(x))));
 #endif
@@ -10232,7 +10290,7 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 
 	rat = s7_number_to_real(sc, x);
 
-	if ((is_NaN(rat)) || (isinf(rat)))
+	if ((is_NaN(rat)) || (is_inf(rat)))
 	  return(wrong_type_argument_with_type(sc, sc->RATIONALIZE, small_int(1), x, A_NORMAL_REAL));
 
 	if (err >= fabs(rat)) 
@@ -10294,7 +10352,7 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 	  ang = real(y);
 	  if (ang == 0.0) return(x);
 	  if (is_NaN(ang)) return(y);
-	  if (isinf(ang)) return(real_NaN);
+	  if (is_inf(ang)) return(real_NaN);
 	  if ((ang == M_PI) || (ang == -M_PI)) return(make_integer(sc, -integer(x)));
 	  mag = (s7_Double)integer(x);
 	  break;
@@ -10323,7 +10381,7 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 	  ang = real(y);
 	  if (ang == 0.0) return(x);
 	  if (is_NaN(ang)) return(y);
-	  if (isinf(ang)) return(real_NaN);
+	  if (is_inf(ang)) return(real_NaN);
 	  if ((ang == M_PI) || (ang == -M_PI)) return(s7_make_ratio(sc, -numerator(x), denominator(x)));
 	  mag = fraction(x);
 	  break;
@@ -10354,7 +10412,7 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 	  ang = real(y);
 	  if (ang == 0.0) return(x);
 	  if (is_NaN(ang)) return(y);
-	  if (isinf(ang)) return(real_NaN);
+	  if (is_inf(ang)) return(real_NaN);
 	  break;
 
 	default:
@@ -11590,7 +11648,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 	case T_REAL:
 	  if (real(y) == 0.0) 
 	    return(division_by_zero_error(sc, sc->QUOTIENT, args));
-	  if ((isinf(real(y))) || (is_NaN(real(y))))
+	  if ((is_inf(real(y))) || (is_NaN(real(y))))
 	    return(wrong_type_argument_with_type(sc, sc->QUOTIENT, small_int(2), y, A_NORMAL_REAL));
 	  return(s7_truncate(sc, sc->QUOTIENT, (s7_Double)integer(x) / real(y)));
 
@@ -11634,7 +11692,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 	case T_REAL:
 	  if (real(y) == 0.0) 
 	    return(division_by_zero_error(sc, sc->QUOTIENT, args));
-	  if ((isinf(real(y))) || (is_NaN(real(y))))
+	  if ((is_inf(real(y))) || (is_NaN(real(y))))
 	    return(wrong_type_argument_with_type(sc, sc->QUOTIENT, small_int(2), y, A_NORMAL_REAL));
 	  return(s7_truncate(sc, sc->QUOTIENT, (s7_Double)fraction(x) / real(y)));
 
@@ -11644,7 +11702,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 	}
 
     case T_REAL:
-      if ((isinf(real(x))) || (is_NaN(real(x))))
+      if ((is_inf(real(x))) || (is_NaN(real(x))))
 	return(wrong_type_argument_with_type(sc, sc->QUOTIENT, small_int(1), x, A_NORMAL_REAL));
 
       /* if infs allowed we need to return infs/nans, else:
@@ -11665,7 +11723,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 	case T_REAL:
 	  if (real(y) == 0.0) 
 	    return(division_by_zero_error(sc, sc->QUOTIENT, args));
-	  if ((isinf(real(y))) || (is_NaN(real(y))))
+	  if ((is_inf(real(y))) || (is_NaN(real(y))))
 	    return(wrong_type_argument_with_type(sc, sc->QUOTIENT, small_int(2), y, A_NORMAL_REAL));
 	  return(s7_truncate(sc, sc->QUOTIENT, real(x) / real(y)));
 
@@ -11716,7 +11774,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	case T_REAL:
 	  if (real(y) == 0.0) 
 	    return(division_by_zero_error(sc, sc->REMAINDER, args));
-	  if ((isinf(real(y))) || (is_NaN(real(y))))
+	  if ((is_inf(real(y))) || (is_NaN(real(y))))
 	    return(wrong_type_argument_with_type(sc, sc->REMAINDER, small_int(2), y, A_NORMAL_REAL));
 
 	  pre_quo = (s7_Double)integer(x) / real(y);
@@ -11785,7 +11843,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	    s7_Double frac;
 	    if (real(y) == 0.0) 
 	      return(division_by_zero_error(sc, sc->REMAINDER, args));
-	    if ((isinf(real(y))) || (is_NaN(real(y))))
+	    if ((is_inf(real(y))) || (is_NaN(real(y))))
 	      return(wrong_type_argument_with_type(sc, sc->REMAINDER, small_int(2), y, A_NORMAL_REAL));
 	    frac = fraction(x);
 	    pre_quo = frac / real(y);
@@ -11801,7 +11859,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	}
 
     case T_REAL:
-      if ((isinf(real(x))) || (is_NaN(real(x))))
+      if ((is_inf(real(x))) || (is_NaN(real(x))))
 	return(wrong_type_argument_with_type(sc, sc->REMAINDER, small_int(1), x, A_NORMAL_REAL));
 
       switch (type(y))
@@ -11832,7 +11890,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	case T_REAL:
 	  if (real(y) == 0.0) 
 	    return(division_by_zero_error(sc, sc->REMAINDER, args));
-	  if ((isinf(real(y))) || (is_NaN(real(y))))
+	  if ((is_inf(real(y))) || (is_NaN(real(y))))
 	    return(wrong_type_argument_with_type(sc, sc->REMAINDER, small_int(2), y, A_NORMAL_REAL));
 
 	  pre_quo = real(x) / real(y);
@@ -11897,7 +11955,7 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
 	z = real(x);
 	if (is_NaN(z))
 	  return(simple_out_of_range(sc, sc->FLOOR, x, "argument is NaN"));
-	if ((isinf(z)) ||
+	if ((is_inf(z)) ||
 	    (z > REAL_TO_INT_LIMIT) ||
 	    (z < -REAL_TO_INT_LIMIT))
 	  return(simple_out_of_range(sc, sc->FLOOR, x, "argument is too large"));
@@ -11941,7 +11999,7 @@ static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
 	z = real(x);
 	if (is_NaN(z))
 	  return(simple_out_of_range(sc, sc->CEILING, x, "argument is NaN"));
-	if ((isinf(z)) ||
+	if ((is_inf(z)) ||
 	    (z > REAL_TO_INT_LIMIT) ||
 	    (z < -REAL_TO_INT_LIMIT))
 	  return(simple_out_of_range(sc, sc->CEILING, x, "argument is too large"));
@@ -11976,7 +12034,7 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
 	z = real(x);
 	if (is_NaN(z))
 	  return(simple_out_of_range(sc, sc->TRUNCATE, x, "argument is NaN"));
-	if (isinf(z))
+	if (is_inf(z))
 	  return(simple_out_of_range(sc, sc->TRUNCATE, x, "argument is infinite"));
 	return(s7_truncate(sc, sc->TRUNCATE, real(x))); 
       }
@@ -12042,7 +12100,7 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
 	z = real(x);
 	if (is_NaN(z))
 	  return(simple_out_of_range(sc, sc->ROUND, x, "argument is NaN"));
-	if ((isinf(z)) ||
+	if ((is_inf(z)) ||
 	    (z > REAL_TO_INT_LIMIT) ||
 	    (z < -REAL_TO_INT_LIMIT))
 	  return(simple_out_of_range(sc, sc->ROUND, x, "argument is too large"));
@@ -12139,7 +12197,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	  b = real(y);
 	  if (b == 0.0) return(x);
 	  if (is_NaN(b)) return(y);
-	  if (isinf(b)) return(real_NaN);
+	  if (is_inf(b)) return(real_NaN);
 	  a = (s7_Double)integer(x);
 	  return(make_real(sc, a - b * (s7_Int)floor(a / b)));
 
@@ -12217,7 +12275,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	  b = real(y);
 	  if (b == 0.0) return(x);
 	  if (is_NaN(b)) return(y);
-	  if (isinf(b)) return(real_NaN);
+	  if (is_inf(b)) return(real_NaN);
 	  a = fraction(x);
 	  return(make_real(sc, a - b * (s7_Int)floor(a / b)));
 
@@ -12233,24 +12291,24 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	{
 	case T_INTEGER:
 	  if (is_NaN(a)) return(x);
-	  if (isinf(a)) return(real_NaN);
+	  if (is_inf(a)) return(real_NaN);
 	  if (integer(y) == 0) return(x);
 	  b = (s7_Double)integer(y);
 	  return(make_real(sc, a - b * (s7_Int)floor(a / b)));	  
 
 	case T_RATIO:
 	  if (is_NaN(a)) return(x);
-	  if (isinf(a)) return(real_NaN);
+	  if (is_inf(a)) return(real_NaN);
 	  b = fraction(y);
 	  return(make_real(sc, a - b * (s7_Int)floor(a / b)));	  
 
 	case T_REAL:
 	  if (is_NaN(a)) return(x);
-	  if (isinf(a)) return(real_NaN);
+	  if (is_inf(a)) return(real_NaN);
 	  b = real(y);
 	  if (b == 0.0) return(x);
 	  if (is_NaN(b)) return(y);
-	  if (isinf(b)) return(real_NaN);
+	  if (is_inf(b)) return(real_NaN);
 	  return(make_real(sc, a - b * (s7_Int)floor(a / b)));
 
 	default:
@@ -12289,7 +12347,7 @@ static s7_pointer g_mod_si(s7_scheme *sc, s7_pointer args)
       s7_Double a, b;
       a = real(x);
       if (is_NaN(a)) return(x);
-      if (isinf(a)) return(real_NaN);
+      if (is_inf(a)) return(real_NaN);
       b = (s7_Double)y;
       return(make_real(sc, a - b * (s7_Int)floor(a / b)));	  
     }
@@ -17091,10 +17149,10 @@ static s7_pointer g_is_infinite(s7_scheme *sc, s7_pointer args)
       return(sc->F);
 
     case T_REAL:
-      return(make_boolean(sc, isinf(real(x))));
+      return(make_boolean(sc, is_inf(real(x))));
 
     case T_COMPLEX:
-      return(make_boolean(sc, (isinf(real_part(x))) || (isinf(imag_part(x)))));
+      return(make_boolean(sc, (is_inf(real_part(x))) || (is_inf(imag_part(x)))));
 
 #if WITH_GMP
     case T_BIG_INTEGER:
@@ -17555,7 +17613,7 @@ sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
       {
 	decode_float_t num;
 	num.value.real_value = s7_number_to_real(sc, x);
-	if ((is_NaN(num.value.real_value)) || (isinf(num.value.real_value)))   /* (integer-decode-float (bignum "1e310")) */
+	if ((is_NaN(num.value.real_value)) || (is_inf(num.value.real_value)))   /* (integer-decode-float (bignum "1e310")) */
 	  return(simple_out_of_range(sc, sc->INTEGER_DECODE_FLOAT, x, "a real that s7_Double can handle"));
 	ix = num.value.integer_value;
 	break;
@@ -19382,8 +19440,6 @@ static s7_pointer g_substring_to_temp(s7_scheme *sc, s7_pointer args)
  * (string=? (substring...) str) or reverse is very common 
  */
 
-
-typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_write_t;
 
 static use_write_t write_choice(s7_scheme *sc, s7_pointer arg)
 {
@@ -23506,7 +23562,7 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
 }
 
 
-static s7_pointer make_list(s7_scheme *sc, int len, s7_pointer init);
+#if 0
 static s7_pointer g_collect_recurrent_structures(s7_scheme *sc, s7_pointer args)
 {
   /* (let ((lst (list 1 2 3))) (set! (cdr (cdr lst)) lst) (collect-recurrent-structures lst)) -> (#1=(1 2 . #1#)) 
@@ -23531,6 +23587,7 @@ static s7_pointer g_collect_recurrent_structures(s7_scheme *sc, s7_pointer args)
     car(p) = ci->objs[i];
   return(lst);
 }
+#endif
 
 
 #define WITH_ELLIPSES false
@@ -23944,7 +24001,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       else
 	{
 	  nlen = 0;
-	  str = number_to_string_base_10(obj, 0, WRITE_REAL_PRECISION, 'g', &nlen); /* was 14 */
+	  str = number_to_string_base_10(obj, 0, WRITE_REAL_PRECISION, 'g', &nlen, use_write); /* was 14 */
 	  if (nlen > 0)
 	    {
 	      set_print_name(obj, str, nlen);
@@ -23985,7 +24042,13 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	  port_write_string(port)(sc, symstr, nlen, port);
 	  free(symstr);
 	}
-      else port_write_string(port)(sc, symbol_name(obj), symbol_name_length(obj), port);
+      else 
+	{
+	  if ((use_write == USE_READABLE_WRITE) &&
+	      (!is_keyword(obj)))
+	    port_write_character(port)(sc, '\'', port);
+	  port_write_string(port)(sc, symbol_name(obj), symbol_name_length(obj), port);
+	}
       break;
 
     case T_SYNTAX:
@@ -24080,6 +24143,10 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
   
     case T_C_POINTER:
+      /* TODO: if readable, complain?? or error? or output to port "(error 'write \"can't write a raw C pointer readably\")"?
+	 if (use_write == USE_READABLE_WRITE)
+      */
+
       nlen = snprintf(buf, 64, "#<c_pointer %p>", raw_pointer(obj));
       port_write_string(port)(sc, buf, nlen, port);
       break;
@@ -24097,16 +24164,11 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_DYNAMIC_WIND:
-      /* this can happen now because *stack* can involve dynamic-wind markers */
+      /* this can happen (or could while *stack* was tied in) because *stack* can involve dynamic-wind markers */
       port_write_string(port)(sc, "#<dynamic-wind>", 15, port);
       break;
   
     case T_C_OBJECT:
-      /* 9-Aug-13: if object supports readable write, use that if use_write above.
-       *   but that screws up in the listener -- we don't want to write an entire vct!
-       *   so change use_write to an enum.
-       */
-
       if ((use_write == USE_READABLE_WRITE) &&
 	  (c_object_print_readably(obj)))
 	str = ((*(c_object_print_readably(obj)))(c_object_value(obj)));
@@ -24661,6 +24723,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
   format_data *fdat = NULL;
   s7_pointer deferred_port = sc->F;
   bool port_is_string;
+  use_write_t choice;
 
   if ((!with_result) &&
       (port == sc->F))
@@ -24908,17 +24971,26 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	      }
 	      break;
 	      
-	    case 'A': case 'a': 
+
+	    case 'W': case 'w':
+	      choice = USE_READABLE_WRITE;
+	      goto OBJSTR;
+
 	    case 'S': case 's':
+	      choice = USE_WRITE;
+	      goto OBJSTR;
+
+	    case 'A': case 'a': 
+	      choice = USE_DISPLAY;
+	    OBJSTR:
 	      /* object->string */
 	      {
 		s7_pointer obj;
 
-		i++;
-
 		if (is_null(fdat->args))
 		  return(format_error(sc, "missing argument", str, args, fdat));
 
+		i++;
 		obj = car(fdat->args);
 		/* for the column check, we need to know the length of the object->string output
 		 */
@@ -24927,14 +24999,14 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		  {
 		    if ((has_structure(obj)) &&
 			(obj != sc->global_env))
-		      object_to_port_with_circle_check(sc, obj, port, (str[i] == 'S') || (str[i] == 's'), is_file_port(port), make_shared_info(sc, obj));
-		    else object_to_port(sc, obj, port, (str[i] == 'S') || (str[i] == 's'), is_file_port(port), NULL);
+		      object_to_port_with_circle_check(sc, obj, port, choice, is_file_port(port), make_shared_info(sc, obj));
+		    else object_to_port(sc, obj, port, choice, is_file_port(port), NULL);
 		  }
 		else
 		  {
 		    char *s;
 		    int nlen = 0;
-		    s = s7_object_to_c_string_1(sc, obj, (str[i] == 'S') || (str[i] == 's'), &nlen);
+		    s = s7_object_to_c_string_1(sc, obj, choice, &nlen);
 		    if (nlen > 0)
 		      format_append_string(sc, fdat, s, nlen, port);
 		    free(s);
@@ -29613,7 +29685,7 @@ static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
 
 static int hash_float_location(s7_Double x)
 {
-  if ((isinf(x)) || (is_NaN(x)))
+  if ((is_inf(x)) || (is_NaN(x)))
     return(0);
 
   if (x < 0.0)
@@ -34199,32 +34271,40 @@ the value of local variables in that code.  The first argument sets how many lin
 The next three arguments set the length and layout of those lines.  'as-comment' if #t causes each \
 line to be preceded by a semicolon."
 
-  int max_frames = 30, code_cols = 50, total_cols = 80, notes_start_col = 50;
+  s7_Int max_frames = 30, code_cols = 50, total_cols = 80, notes_start_col = 50;
   bool as_comment = false;
 
   if (!is_null(args))
     {
-      if (is_integer(car(args)))
+      if (s7_is_integer(car(args)))
 	{
-	  max_frames = integer(car(args));
+	  max_frames = s7_integer(car(args));
+	  if ((max_frames <= 0) || (max_frames > S7_LONG_MAX))
+	    max_frames = 30;
 	  args = cdr(args);
 	  if (!is_null(args))
 	    {
-	      if (is_integer(car(args)))
+	      if (s7_is_integer(car(args)))
 		{
-		  code_cols = integer(car(args));
+		  code_cols = s7_integer(car(args));
+		  if ((code_cols <= 8) || (code_cols > S7_LONG_MAX))
+		    code_cols = 50;
 		  args = cdr(args);
 		  if (!is_null(args))
 		    {
-		      if (is_integer(car(args)))
+		      if (s7_is_integer(car(args)))
 			{
-			  total_cols = integer(car(args));
+			  total_cols = s7_integer(car(args));
+			  if ((total_cols <= code_cols) || (total_cols > S7_LONG_MAX))
+			    total_cols = 80;
 			  args = cdr(args);
 			  if (!is_null(args))
 			    {
-			      if (is_integer(car(args)))
+			      if (s7_is_integer(car(args)))
 				{
-				  notes_start_col = integer(car(args));
+				  notes_start_col = s7_integer(car(args));
+				  if ((notes_start_col <= 0) || (notes_start_col > S7_LONG_MAX))
+				    notes_start_col = 50;
 				  args = cdr(args);
 				  if (!is_null(args))
 				    {
@@ -34244,7 +34324,7 @@ line to be preceded by a semicolon."
 	}
       else return(wrong_type_argument(sc, sc->STACKTRACE, small_int(1), car(args), T_INTEGER));
     }
-  return(make_string_uncopied(sc, stacktrace_1(sc, max_frames, code_cols, total_cols, notes_start_col, as_comment)));
+  return(make_string_uncopied(sc, stacktrace_1(sc, (int)max_frames, (int)code_cols, (int)total_cols, (int)notes_start_col, as_comment)));
 }
 
 
@@ -35464,7 +35544,7 @@ static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len)
   s = s7_object_to_c_string(sc, p);
   s_len = safe_strlen(s);
   if (s_len > len)
-    return(truncate_string(s, len, false, &s_len));
+    return(truncate_string(s, len, USE_DISPLAY, &s_len));
   return(s);
 }
 
@@ -65709,7 +65789,6 @@ s7_scheme *s7_init(void)
   sc->OBJECT_ENVIRONMENT =    s7_define_safe_function(sc, "object-environment",      g_object_environment,     1, 0, false, H_object_environment);
   sc->ENVIRONMENT_REF =       s7_define_safe_function(sc, "environment-ref",         g_environment_ref,        2, 0, false, H_environment_ref);
   sc->ENVIRONMENT_SET =       s7_define_safe_function(sc, "environment-set!",        g_environment_set,        3, 0, false, H_environment_set);
-  s7_define_safe_function(sc, "environment-function", g_environment_function, 1, 0, false, "an experiment");
 
   sc->PROVIDEDP =             s7_define_safe_function(sc, "provided?",               g_is_provided,            1, 0, false, H_is_provided);
   sc->PROVIDE =               s7_define_safe_function(sc, "provide",                 g_provide,                1, 0, false, H_provide);
@@ -66014,9 +66093,6 @@ s7_scheme *s7_init(void)
   sc->REVERSEB =              s7_define_function(sc,      "reverse!",                g_reverse_in_place,       1, 0, false, H_reverse_in_place); /* used by Snd code */
   sc->SORT =                  s7_define_function(sc,      "sort!",                   g_sort,                   2, 0, false, H_sort);
 
-  s7_define_function(sc, "collect-recurrent-structures", g_collect_recurrent_structures, 1, 0, false, H_collect_recurrent_structures); /* an experiment */
-  
-
   sc->LIST_TO_VECTOR =        s7_define_safe_function(sc, "list->vector",            g_list_to_vector,         1, 0, false, H_list_to_vector);
   sc->VECTOR_TO_LIST =        s7_define_safe_function(sc, "vector->list",            g_vector_to_list,         1, 2, false, H_vector_to_list);
   sc->VECTORP =               s7_define_safe_function(sc, "vector?",                 g_is_vector,              1, 0, false, H_is_vector);
@@ -66199,7 +66275,6 @@ s7_scheme *s7_init(void)
 				H_symbol_table_is_locked);
 
   s7_define_safe_function(sc, "*stack-top*", g_stack_top, 0, 0, false, "current stack top");
-  s7_define_safe_function(sc, "*stack*", g_stack, 1, 0, false, "current stack entry");
   sc->STACKTRACE = s7_define_safe_function(sc, "stacktrace", g_stacktrace, 0, 5, false, H_stacktrace);
   sc->stacktrace_env = s7_augment_environment(sc, sc->global_env, 
 					      s7_list(sc, 5, 
@@ -66577,8 +66652,10 @@ s7_scheme *s7_init(void)
  * write-readably: check how close we are to this, then checkpoint? and pretty-print for s7
  * cload: settable C variables (via symbol_access as here?)
  * *stacktrace* could include hook-style func for caller-access to it
- *
+ * (sound-data ((...) (...))? or use #nD?
  * instead of direct access to symbol-table, perhaps symbol-table-iterator?
  * ~W in format using :readable?
+ * TODO: hash-table-set printout problem in t456
+ * TODO: max USE_WRITE READABLE_WRITE in all circle writes
  */
 

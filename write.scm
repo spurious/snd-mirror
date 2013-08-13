@@ -11,6 +11,8 @@
 
 (define* (write-readably obj (port (current-output-port)))
 
+  ;; I'm currently moving this into s7.c using :readable as 2nd object->string arg, or format with ~W
+
   (define (replacement obj info)
     (let ((data (assq obj info)))
       (and data (cadr data))))
@@ -26,38 +28,7 @@
 
   (define (write-readably-1 obj port structs)
 
-    (cond ((number? obj)
-	   (if (real? obj)
-	       (write obj port)
-	       (let ((rp (if (infinite? (real-part obj))
-			     (if (negative? (real-part obj))
-				 "-inf.0"
-				 "inf.0")
-			     (if (nan? (real-part obj))
-				 "nan.0"
-				 #f)))
-		     (ip (if (infinite? (imag-part obj))
-			     (if (negative? (imag-part obj))
-				 "-inf.0"
-				 "inf.0")
-			     (if (nan? (imag-part obj))
-				 "nan.0"
-				 #f))))
-		 (if (or rp ip)
-		     (format port "(make-rectangular ~A ~A)" 
-			     (or rp (number->string (real-part obj)))
-			     (or ip (number->string (imag-part obj))))
-		     (write obj port)))))
-	  
-	  ((symbol? obj)
-	   (if (not (keyword? obj))
-	       (if (or (char=? ((symbol->string obj) 0) #\#)
-		       (char-position #\\ (symbol->string obj)))
-		   (format port "~A" obj)
-		   (format port "'~A" obj))
-	       (write obj port)))
-	  
-	  ((pair? obj)
+    (cond ((pair? obj)
 	   (let ((len (length obj)))
 
 	     ;; dotted list
@@ -258,7 +229,7 @@
   
 
   ;; main function
-  (let ((structs (collect-recurrent-structures obj))  ; watch out for circles, etc
+  (let ((structs ()) ; (collect-recurrent-structures obj))  ; watch out for circles, etc
 	(info ()))
     
     ;; if structs, change it into an alist: ((orig-obj . new-name) ...)

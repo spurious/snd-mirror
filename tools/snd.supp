@@ -1774,6 +1774,14 @@
 }
 
 {
+   s71abcdef
+   Memcheck:Leak
+   fun:calloc
+   fun:s7_make_permanent_string
+   fun:*
+}
+
+{
    s71abc
    Memcheck:Leak
    fun:calloc
