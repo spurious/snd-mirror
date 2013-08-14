@@ -1051,9 +1051,9 @@ hi
 &gt; (define-macro (hi a) `(+ 1 ,@a))
 hi
 &gt; (procedure-source hi)
-(lambda ({defmac}-17) (apply (lambda (a) <em class=red>({list} '+ 1 ({apply} {values} a)))</em> (cdr {defmac}-17)))
+(lambda ({defmac}-17) (apply (lambda (a) <em class=red>({list} '+ 1 ({apply_values} a)))</em> (cdr {defmac}-17)))
 
-;; same: (define-macro (hi a) ({list} + 1 ({apply} {values} a)))
+;; same: (define-macro (hi a) ({list} + 1 ({apply_values} a)))
 
 &gt; (define-macro (hi a) ``(+ 1 ,,a))
 hi
@@ -1062,8 +1062,8 @@ hi
 </pre>
 
 <p>and so on.  "{list}" is a special version of "list" to avoid name collisions
-and handle a few tricky details (similarly for "{values}" and "{apply}").  There is no unquote-splicing
-macro in s7;  ",@(...)" becomes "(unquote ({apply} {values} ...))" at read-time.  There shouldn't be any unquote
+and handle a few tricky details (similarly for "{apply_values}").  There is no unquote-splicing
+macro in s7;  ",@(...)" becomes "(unquote ({apply_values} ...))" at read-time.  There shouldn't be any unquote
 either.  In Scheme the reader turns ,x into (unquote x), so:
 </p>
 
@@ -3687,6 +3687,7 @@ it is continuing from the point of the error, but then fails to do so.
 ~F        float to string, (format #f "~F" 100.1) -&gt; "100.100000",   (%f in C)
 ~G        float to string, (format #f "~G" 100.1) -&gt; "100.1",        (%g in C)
 ~T        insert spaces (padding)
+~W        object-&gt;string with :readable (write readably)
 </pre>
 
 <p>The last eight take the usual numeric arguments to specify field width and precision.
@@ -3751,7 +3752,10 @@ floats in the "~X" case.  So in s7,
 
 </blockquote>
 
-<p>object-&gt;string returns the string representation of its argument:
+<p>object-&gt;string returns the string representation of its argument.  Its optional second argument
+can be #f (use display), #t (the default, use write), or :readable.  In the latter case, object-&gt;string
+tries to produce a string that can be evaluated via eval-string to return an object equal to the
+original. (This only partly works currently).
 </p>
 
 <pre class="indented">

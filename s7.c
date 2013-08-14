@@ -19449,6 +19449,8 @@ static use_write_t write_choice(s7_scheme *sc, s7_pointer arg)
   return(USE_WRITE_WRONG);
 }
 
+#define DONT_USE_DISPLAY(Choice) ((Choice == USE_DISPLAY) ? USE_WRITE : Choice)
+
 static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t use_write, int *nlen);
 
 static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
@@ -23615,10 +23617,23 @@ static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
 {
   int i;
 
-  if (*last)
-    port_write_string(port)(sc, " (", 2, port);
-  else port_write_character(port)(sc, '(', port);
-  (*last) = false;
+  if (use_write == USE_READABLE_WRITE)
+    {
+      /* (object->string #2d((1 2 3) (4 5 6)) :readable) 
+       *   returns "(copy (apply vector (append (append (list 1 2 3)(list 4 5 6)))) (make-vector '(2 3 )))"
+       *   which is slightly verbose (redundant appends).
+       */
+      if (dimension != (dimensions - 1))
+	port_write_string(port)(sc, "(append ", 8, port);
+      else port_write_string(port)(sc, "(list ", 6, port);
+    }
+  else
+    {
+      if (*last)
+	port_write_string(port)(sc, " (", 2, port);
+      else port_write_character(port)(sc, '(', port);
+      (*last) = false;
+    }
 
   for (i = 0; i < vector_dimension(vec, dimension); i++)
     {
@@ -23626,7 +23641,7 @@ static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
 	{
 	  if (flat_ref < out_len)
 	    {
-	      object_to_port_with_circle_check(sc, vector_element(vec, flat_ref), port, USE_WRITE, to_file, ci); 
+	      object_to_port_with_circle_check(sc, vector_element(vec, flat_ref), port, DONT_USE_DISPLAY(use_write), to_file, ci); 
 	      flat_ref++;
 	    }
 	  else
@@ -23640,7 +23655,7 @@ static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
       else 
 	{
 	  if (flat_ref < out_len)
-	    flat_ref = multivector_to_port(sc, vec, port, out_len, flat_ref, dimension + 1, dimensions, last, USE_WRITE, to_file, ci);
+	    flat_ref = multivector_to_port(sc, vec, port, out_len, flat_ref, dimension + 1, dimensions, last, DONT_USE_DISPLAY(use_write), to_file, ci);
 	  else 
 	    {
 	      port_write_string(port)(sc, "...)", 4, port);
@@ -23672,7 +23687,8 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
       return;
     }
   
-  if (!to_file)
+  if ((!to_file) &&
+      (use_write != USE_READABLE_WRITE))
     {
       int plen;
       /* if to_file we ignore *vector-print-length* so a subsequent read will be ok
@@ -23702,30 +23718,65 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	}
     }
 
-  if (vector_is_multidimensional(vect))
+  if (use_write == USE_READABLE_WRITE)
     {
-      bool last = false;
-      if (vector_ndims(vect) > 1)
+      if (vector_is_multidimensional(vect))
 	{
-	  nlen = snprintf(buf, 32, "#%dD", vector_ndims(vect));
-	  port_write_string(port)(sc, buf, nlen, port);
+	  bool last = false;
+	  int i;
+
+	  port_write_string(port)(sc, "(copy (apply vector (append ", 28, port);
+	  multivector_to_port(sc, vect, port, len, 0, 0, vector_ndims(vect), &last, use_write, to_file, ci);
+	  port_write_string(port)(sc, ")) (make-vector '(", 18, port);
+	  for (i = 0; i < vector_ndims(vect); i++)
+	    {
+	      char buf[32];
+	      int plen;
+	      plen = snprintf(buf, 32, "%lld ", vector_dimension(vect, i));
+	      port_write_string(port)(sc, buf, plen, port);
+	    }
+	  port_write_string(port)(sc, ")))", 4, port);
 	}
-      else port_write_character(port)(sc, '#', port);
-      multivector_to_port(sc, vect, port, len, 0, 0, vector_ndims(vect), &last, use_write, to_file, ci);
-      return;
+      else
+	{
+	  port_write_string(port)(sc, "(vector ", 8, port);
+	  for (i = 0; i < len - 1; i++)
+	    {
+	      object_to_port_with_circle_check(sc, vector_element(vect, i), port, use_write, to_file, ci);
+	      port_write_character(port)(sc, ' ', port);
+	    }
+	  object_to_port_with_circle_check(sc, vector_element(vect, len - 1), port, use_write, to_file, ci);
+	  port_write_character(port)(sc, ')', port);
+	}
     }
-
-  port_write_string(port)(sc, "#(", 2, port);
-  for (i = 0; i < len - 1; i++)
+  else
     {
-      object_to_port_with_circle_check(sc, vector_element(vect, i), port, USE_WRITE, to_file, ci);
-      port_write_character(port)(sc, ' ', port);
+      if (vector_is_multidimensional(vect))
+	{
+	  bool last = false;
+	  if (vector_ndims(vect) > 1)
+	    {
+	      nlen = snprintf(buf, 32, "#%dD", vector_ndims(vect));
+	      port_write_string(port)(sc, buf, nlen, port);
+	    }
+	  else port_write_character(port)(sc, '#', port);
+	  multivector_to_port(sc, vect, port, len, 0, 0, vector_ndims(vect), &last, use_write, to_file, ci);
+	}
+      else
+	{
+	  port_write_string(port)(sc, "#(", 2, port);
+	  for (i = 0; i < len - 1; i++)
+	    {
+	      object_to_port_with_circle_check(sc, vector_element(vect, i), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	      port_write_character(port)(sc, ' ', port);
+	    }
+	  object_to_port_with_circle_check(sc, vector_element(vect, len - 1), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+      
+	  if (too_long)
+	    port_write_string(port)(sc, " ...)", 5, port);
+	  else port_write_character(port)(sc, ')', port);
+	}
     }
-  object_to_port_with_circle_check(sc, vector_element(vect, len - 1), port, USE_WRITE, to_file, ci);
-
-  if (too_long)
-    port_write_string(port)(sc, " ...)", 5, port);
-  else port_write_character(port)(sc, ')', port);
 }
 
 
@@ -23735,7 +23786,9 @@ static void bytevector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, 
   bool too_long = false;
 
   len = string_length(vect);
-  plen = s7_vector_print_length(sc);
+  if (use_write == USE_READABLE_WRITE)
+    plen = len;
+  else plen = s7_vector_print_length(sc);
 
   if (len == 0)
     port_write_string(port)(sc, "#u8()", 5, port);
@@ -23775,7 +23828,7 @@ static void bytevector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, 
 static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
   s7_pointer x;
-  int i, len, true_len, start = 0;
+  int i, len, true_len;
 
   true_len = s7_list_length(sc, lst);
   if (true_len < 0)                    /* a dotted list -- handle cars, then final cdr */
@@ -23823,7 +23876,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
        */
 
       port_write_character(port)(sc, '\'', port);
-      object_to_port_with_circle_check(sc, cadr(lst), port, USE_WRITE, to_file, ci);
+      object_to_port_with_circle_check(sc, cadr(lst), port, DONT_USE_DISPLAY(use_write), to_file, ci);
       return;
     }
   else port_write_character(port)(sc, '(', port);
@@ -23831,37 +23884,126 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
   if (is_multiple_value(lst))
     port_write_string(port)(sc, "values ", 7, port);
 
-  for (x = lst, i = start; (is_pair(x)) && (i < len); i++, x = cdr(x))
+  if (use_write == USE_READABLE_WRITE)
     {
-      if (is_pair(x))
+      if (ci) 
 	{
-	  if ((ci) && (i != 0) && (peek_shared_ref(ci, x) != 0))
+	  /* currently (object->string (let ((lst (list 1 2))) (set! (cdr (cdr lst)) lst) lst) :readable) -> "#1=(cons 1 (cons 2 #1#)"
+	   *   (letrec (({1} (cons 1 (cons 2 '{1})))
+	   *            ({f} (lambda (x) 
+	   *                   (if (pair? x) 
+	   *                     (begin 
+	   *                       (if (eq? (car x) '{1}) (set-car! x {1}) (walk f (car x)))
+	   *                       (if (eq? (cdr x) '{1}) (set-cdr! x {1}) (walk f (cdr x)))))))
+	   *    (walk f {1}))
+	   *
+	   * but we'd need vector/env/hash-table checks as well.
+	   *
+	   *  (let (({1} (cons 1 (cons 2 '{1}))))
+	   *    (set! (cdr (cdr {1})) {1})
+	   *    {1})
+	   *
+	   * where the sets! are collected by a walker in C, but these happen within exprs so
+	   *
+	   *  (let (({1} #f))
+	   *    (let (({top} (set! {1} (cons 1 (cons 2 #f)))))
+	   *    (set! (cdr (cdr {1})) {1})
+	   *    {top}))
+	   * so:
+	   *   collect let name for each #n case
+	   *   as #n= encountered, replace with (set! {n} ...)
+	   *   as #n# encountered, replace with '{n}
+	   *      how to get the address here for the saved (set! <address> {n})?
+	   *   for every {n} occurrence, we'll need access to the top-level of whatever it is in, and a set of it
+	   *     for each object, check first for top-level occurrence of {n}, it any found, wrap:
+	   *     let (({n} #f)) (set! {n} ...) then use immediate address and {orig} and return {n})
+	   *   return {top}
+	   * yow:
+	   * (let ((lst (list 1 (list 2 3)))) (set! (car (car (cdr lst))) lst) lst)
+           *    #1=(1 (#1# 3))
+	   * (let (({1} #f) ({e} #f)) 
+	   *   (set! {e} (current-environment)) 
+	   *   (set! {1} (cons 1 (cons (begin 
+	   *                             (augment-environment! {e} '({2} #f))
+	   *                             (set! {2} (cons #f (cons 3 ()))))
+	   *                           ())))
+	   *   (set! (car {2}) {1}) 
+	   *   {1})
+	   *    #1=(1 (#1# 3))
+	   *
+	   * so it can be done in one pass -- use augment-environment! to add names as they are needed,
+	   *   save the top-level sets (so all addrs are doable)
+	   *   start with {n} {e} and {top} in a let
+	   *   run through with sets, augmentations, saving sets
+	   *   output saved sets and {top}
+	   * will need to gc-protect the saved sets as we go? -- save locs?
+	   *
+	   * all the #n guys happen in object_to_port_with_circle_check
+	   * set up the let and break it down at the top (object->port?) -- wherever the shared refs are collected
+	   *   there are 3 cases: write_or_display, format+~W, and s7_object_to_c_string_1
+	   */
+	     
+	  port_write_string(port)(sc, "cons ", 5, port);
+	  object_to_port_with_circle_check(sc, car(lst), port, use_write, to_file, ci);
+	  for (x = cdr(lst), i = 0; (is_pair(x)) && (i < len) && ((!ci) || (i == 0) || (peek_shared_ref(ci, x) == 0)); i++, x = cdr(x))
 	    {
-	      port_write_string(port)(sc, ". ", 2, port);
-	      object_to_port_with_circle_check(sc, x, port, USE_WRITE, to_file, ci);
-	      port_write_character(port)(sc, ')', port);
-	      return;
+	      port_write_character(port)(sc, ' ', port);
+	      port_write_string(port)(sc, "(cons ", 6, port);
+	      object_to_port_with_circle_check(sc, car(x), port, use_write, to_file, ci);
 	    }
-	  else object_to_port_with_circle_check(sc, car(x), port, USE_WRITE, to_file, ci);
+	  port_write_character(port)(sc, ' ', port);
+	  object_to_port_with_circle_check(sc, x, port, use_write, to_file, ci);
+	  for (i = 1; i < len; i++)
+	    port_write_character(port)(sc, ')', port);
 	}
-      else 
+      else
 	{
-	  port_write_string(port)(sc, ". ", 2, port);
-	  object_to_port_with_circle_check(sc, x, port, USE_WRITE, to_file, ci);
-	  port_write_character(port)(sc, ')', port);
-	  return;
+	  /* the easier cases: no circles or shared refs to patch up */
+	  if (true_len > 0)
+	    {
+	      port_write_string(port)(sc, "list", 4, port);
+	      for (x = lst; is_pair(x); x = cdr(x))
+		{
+		  port_write_character(port)(sc, ' ', port);
+		  object_to_port_with_circle_check(sc, car(x), port, use_write, to_file, ci);
+		}
+	      port_write_character(port)(sc, ')', port);
+	    }
+	  else
+	    {
+	      port_write_string(port)(sc, "cons ", 5, port);
+	      object_to_port_with_circle_check(sc, car(lst), port, use_write, to_file, ci);
+	      for (x = cdr(lst); is_pair(x); x = cdr(x))
+		{
+		  port_write_character(port)(sc, ' ', port);
+		  port_write_string(port)(sc, "(cons ", 6, port);
+		  object_to_port_with_circle_check(sc, car(x), port, use_write, to_file, ci);
+		}
+	      port_write_character(port)(sc, ' ', port);
+	      object_to_port_with_circle_check(sc, x, port, use_write, to_file, ci);
+	      for (i = 1; i < len; i++)
+		port_write_character(port)(sc, ')', port);
+	    }
 	}
-      if (i < (len - 1)) port_write_character(port)(sc, ' ', port);
     }
-  
-  if (is_not_null(x))
+  else
     {
-      if (true_len == 0) 
-	port_write_string(port)(sc, " . ", 3, port);
-      else port_write_string(port)(sc, ". ", 2, port);
-      object_to_port_with_circle_check(sc, x, port, USE_WRITE, to_file, ci);
+      for (x = lst, i = 0; (is_pair(x)) && (i < len) && ((!ci) || (i == 0) || (peek_shared_ref(ci, x) == 0)); i++, x = cdr(x))
+	{
+	  object_to_port_with_circle_check(sc, car(x), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	  if (i < (len - 1)) 
+	    port_write_character(port)(sc, ' ', port);
+	}
+      if (is_not_null(x))
+	{
+	  if ((true_len == 0) &&
+	      (i == len))
+	    port_write_string(port)(sc, " . ", 3, port);
+	  else port_write_string(port)(sc, ". ", 2, port);
+	  object_to_port_with_circle_check(sc, x, port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	}
+      port_write_character(port)(sc, ')', port);
     }
-  port_write_character(port)(sc, ')', port);
 }
 
 
@@ -23873,16 +24015,21 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
   
   /* if hash is a member of ci, just print its number
    * (let ((ht (hash-table '(a . 1)))) (hash-table-set! ht 'b ht))
+   *
+   * since equal? does not care about the hash-table lengths, we can ignore that complication in the :readable case
    */
 
   len = hash_table_entries(hash);
   if (len == 0)
     {
-      port_write_string(port)(sc, "#<hash-table>", 13, port);
+      if (use_write == USE_READABLE_WRITE)
+	port_write_string(port)(sc, "(hash-table)", 12, port);
+      else port_write_string(port)(sc, "#<hash-table>", 13, port);
       return;
     }
 
-  if (!to_file)
+  if ((use_write != USE_READABLE_WRITE) &&
+      (!to_file))
     {
       int plen;
       plen = s7_vector_print_length(sc);
@@ -23901,21 +24048,186 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
   iterator = g_make_hash_table_iterator(sc, list_1(sc, hash));
   gc_iter = s7_gc_protect(sc, iterator);
 
-  port_write_string(port)(sc, "#<hash-table ", 13, port);
-  for (i = 0; i < len - 1; i++)
+  if (use_write == USE_READABLE_WRITE)
     {
-      object_to_port_with_circle_check(sc, hash_table_iterate(sc, iterator), port, USE_WRITE, to_file, ci);
-      port_write_character(port)(sc, ' ', port);
+      port_write_string(port)(sc, "(hash-table ", 12, port);
+      for (i = 0; i < len; i++)
+	{
+	  s7_pointer key_val;
+	  key_val = hash_table_iterate(sc, iterator);
+	  port_write_string(port)(sc, "(cons ", 6, port);
+	  object_to_port_with_circle_check(sc, car(key_val), port, use_write, to_file, ci);
+	  port_write_character(port)(sc, ' ', port);
+	  object_to_port_with_circle_check(sc, cdr(key_val), port, use_write, to_file, ci);
+	  port_write_character(port)(sc, ')', port);
+	}
+      port_write_character(port)(sc, ')', port);
     }
-  object_to_port_with_circle_check(sc, hash_table_iterate(sc, iterator), port, USE_WRITE, to_file, ci);
+  else 
+    {
+      port_write_string(port)(sc, "#<hash-table ", 13, port);
+      for (i = 0; i < len - 1; i++)
+	{
+	  object_to_port_with_circle_check(sc, hash_table_iterate(sc, iterator), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	  port_write_character(port)(sc, ' ', port);
+	}
+      object_to_port_with_circle_check(sc, hash_table_iterate(sc, iterator), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+      if (too_long)
+	port_write_string(port)(sc, " ...>", 5, port);
+      else port_write_character(port)(sc, '>', port);
+    }
 
   s7_gc_unprotect_at(sc, gc_iter);
-
-  if (too_long)
-    port_write_string(port)(sc, " ...>", 5, port);
-  else port_write_character(port)(sc, '>', port);
 }
 
+
+static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci);
+
+static void write_macro_readably(s7_scheme *sc, s7_pointer obj, s7_pointer port)
+{
+  s7_pointer arglist, body, expr;
+  bool starred;
+
+  body = cadar(closure_body(obj));
+  arglist = cadr(body);
+  starred = (car(body) == sc->LAMBDA_STAR);
+  body = cddr(body);
+
+  port_write_string(port)(sc, "(symbol->value (define-", 23, port);
+  port_write_string(port)(sc, (type(obj) == T_MACRO) ? "macro" : "bacro", 5, port); 
+  if (starred)
+    port_write_character(port)(sc, '*', port);
+  port_write_string(port)(sc, " (_m_", 5, port);
+  if (is_symbol(arglist))
+    {
+      port_write_string(port)(sc, " . ", 3, port);
+      port_write_string(port)(sc, symbol_name(arglist), symbol_name_length(arglist), port);
+    }
+  else
+    {
+      if (is_pair(arglist))
+	{
+	  for (expr = arglist; is_pair(expr); expr = cdr(expr))
+	    {
+	      port_write_character(port)(sc, ' ', port);
+	      object_to_port(sc, car(expr), port, USE_WRITE, false, NULL);
+	    }
+	  if (!is_null(expr))
+	    {
+	      port_write_string(port)(sc, " . ", 3, port);
+	      object_to_port(sc, expr, port, USE_WRITE, false, NULL);
+	    }
+	}
+    }
+  port_write_string(port)(sc, ") ", 2, port);
+  for (expr = body; is_pair(expr); expr = cdr(expr))
+    object_to_port(sc, car(expr), port, USE_WRITE, false, NULL);
+  port_write_string(port)(sc, "))", 2, port);
+}
+
+
+static s7_pointer match_symbol(s7_scheme *sc, s7_pointer symbol, s7_pointer e)
+{
+  s7_pointer y, le;
+  for (le = e; is_environment(le) && (le != sc->global_env); le = next_environment(le))
+    for (y = environment_slots(le); is_slot(y); y = next_slot(y))
+      if (slot_symbol(y) == symbol)
+	return(y);
+  return(NULL);
+}
+
+static bool car_memq(s7_pointer symbol, s7_pointer symbols)
+{
+  s7_pointer x;
+  for (x = symbols; is_pair(x); x = cdr(x))
+    if (slot_symbol(x) == symbol)
+      return(x);
+  return(NULL);
+}
+
+
+static void collect_locals(s7_scheme *sc, s7_pointer body, s7_pointer e, int gc_loc)
+{
+  if (is_pair(body))
+    {
+      collect_locals(sc, car(body), e, gc_loc);
+      collect_locals(sc, cdr(body), e, gc_loc);
+    }
+  else
+    {
+      if (is_symbol(body))
+	{
+	  if (!car_memq(body, gc_protected_at(sc, gc_loc)))
+	    {
+	      s7_pointer slot;
+	      slot = match_symbol(sc, body, e);
+	      if (slot)
+		gc_protected_at(sc, gc_loc) = cons(sc, slot, gc_protected_at(sc, gc_loc));
+	    }
+	}
+    }
+}
+
+static s7_pointer write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write);
+
+static void write_closure_readably(s7_scheme *sc, s7_pointer obj, s7_pointer port)
+{
+  s7_pointer body, arglist, pe, local_slots, p;
+  int gc_loc;
+
+  body = closure_body(obj);
+  arglist = closure_args(obj);
+  pe = next_environment(closure_environment(obj));
+  gc_loc = s7_gc_protect(sc, sc->NIL);
+  collect_locals(sc, body, pe, gc_loc);
+  local_slots = gc_protected_at(sc, gc_loc);
+  
+  if (!is_null(local_slots))
+    {
+      s7_pointer x, slot;
+      port_write_string(port)(sc, "(let (", 6, port);
+      for (x = local_slots; is_pair(x); x = cdr(x))
+	{
+	  slot = car(x);
+	  port_write_character(port)(sc, '(', port);
+	  port_write_string(port)(sc, symbol_name(slot_symbol(slot)), symbol_name_length(slot_symbol(slot)), port);
+	  port_write_character(port)(sc, ' ', port);
+	  write_or_display(sc, slot_value(slot), port, USE_WRITE);
+	  port_write_character(port)(sc, ')', port);
+	}
+      port_write_string(port)(sc, ") ", 2, port);
+    }
+
+  port_write_string(port)(sc, "(lambda", 7, port);
+  if (type(obj) == T_CLOSURE_STAR)
+    port_write_character(port)(sc, '*', port);
+  port_write_character(port)(sc, ' ', port);
+  write_or_display(sc, arglist, port, USE_WRITE); /* here we just want the straight output (a b) not (list 'a 'b) */
+  
+  port_write_character(port)(sc, ' ', port);
+  for (p = body; is_pair(p); p = cdr(p))
+    write_or_display(sc, car(p), port, USE_WRITE);
+  port_write_character(port)(sc, ')', port);
+  
+  if (!is_null(local_slots))
+    port_write_character(port)(sc, ')', port);
+  s7_gc_unprotect_at(sc, gc_loc);
+}
+
+static void write_readably_error(s7_scheme *sc, const char *type)
+{
+  s7_error(sc, make_symbol(sc, "io-error"), 
+	   list_2(sc, 
+		  make_protected_string(sc, "can't write ~A readably"),
+		  make_protected_string(sc, type)));
+}
+
+
+/* TODO: build circular structure from #n info
+ * TODO: write closure readably (following envs if needed)
+ * TODO: use names like *stdin*? *autoload*? etc
+ * TODO: various tests for ~W
+ */
 
 static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
@@ -23944,6 +24256,13 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_INPUT_PORT:
+      /* TODO: can these be written readably? if string port,
+       *   (open-input-string "<chars-from-point>")
+       *   (let ((op (open-output-string))) (write <get-output-string> op) op)
+       *   same for in|output file (but "a" if out), and go to current loc somehow? 
+       *   perhaps -- add arg for loc -- if not 0, lseek
+       */
+
       if (obj == sc->standard_input)
 	port_write_string(port)(sc, port_filename(obj), port_filename_length(obj), port);
       else
@@ -23968,11 +24287,15 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_COUNTER:
+      if (use_write == USE_READABLE_WRITE)
+	write_readably_error(sc, "an internal for-each descriptor");
       nlen = snprintf(buf, 64, "#<counter: %lld>", counter_count(obj));
       port_write_string(port)(sc, buf, nlen, port);
       break;
 
     case T_BAFFLE:
+      if (use_write == USE_READABLE_WRITE)
+	write_readably_error(sc, "an internal with-baffle descriptor");
       nlen = snprintf(buf, 64, "#<baffle: %d>", baffle_key(obj));
       port_write_string(port)(sc, buf, nlen, port);
       break;
@@ -24020,6 +24343,8 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
     case T_BIG_RATIO:
     case T_BIG_REAL:
     case T_BIG_COMPLEX:
+      /* TODO: in readable case, how are NaNs and infs handled here?
+       */
       nlen = 0;
       str = big_number_to_string_with_radix(obj, BASE_10, 0, &nlen);
       if (nlen > 0)
@@ -24095,15 +24420,19 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       else port_write_string(port)(sc, character_name(obj), character_name_length(obj), port);
       break;
 
-      /* TODO: macro/bacro with args etc -- see c_closure_name */
+      /* TODO: macro/bacro with args etc -- see c_closure_name */	     
     case T_MACRO:
-      port_write_string(port)(sc, "#<macro>", 8, port);
+      if (use_write == USE_READABLE_WRITE)
+	write_macro_readably(sc, obj, port);
+      else port_write_string(port)(sc, "#<macro>", 8, port);
       break;
 
     case T_BACRO:
-      port_write_string(port)(sc, "#<bacro>", 8, port);
+      if (use_write == USE_READABLE_WRITE)
+	write_macro_readably(sc, obj, port);
+      else port_write_string(port)(sc, "#<bacro>", 8, port);
       break;
-  
+
     case T_CLOSURE:
     case T_CLOSURE_STAR:
       if (has_methods(obj))
@@ -24122,12 +24451,15 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	      break;
 	    }
 	}
-      {
-	const char *p;
-	p = c_closure_name(sc, obj, &nlen);
-	if (nlen > 0)
-	  port_write_string(port)(sc, p, nlen, port);
-      }
+      if (use_write == USE_READABLE_WRITE)
+	write_closure_readably(sc, obj, port);
+      else
+	{
+	  const char *p;
+	  p = c_closure_name(sc, obj, &nlen);
+	  if (nlen > 0)
+	    port_write_string(port)(sc, p, nlen, port);
+	}
       break;
   
     case T_C_OPT_ARGS_FUNCTION:
@@ -24143,28 +24475,34 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
   
     case T_C_POINTER:
-      /* TODO: if readable, complain?? or error? or output to port "(error 'write \"can't write a raw C pointer readably\")"?
-	 if (use_write == USE_READABLE_WRITE)
-      */
-
+      if (use_write == USE_READABLE_WRITE)
+	write_readably_error(sc, "a raw-pointer");
       nlen = snprintf(buf, 64, "#<c_pointer %p>", raw_pointer(obj));
       port_write_string(port)(sc, buf, nlen, port);
       break;
   
     case T_CONTINUATION:
+      if (use_write == USE_READABLE_WRITE)
+	write_readably_error(sc, "a continuation");
       port_write_string(port)(sc, "#<continuation>", 15, port);
       break;
   
     case T_GOTO:
+      if (use_write == USE_READABLE_WRITE)
+	write_readably_error(sc, "a call-with-exit goto");
       port_write_string(port)(sc, "#<goto>", 7, port);
       break;
   
     case T_CATCH:
+      if (use_write == USE_READABLE_WRITE)
+	write_readably_error(sc, "an internal catch descriptor");
       port_write_string(port)(sc, "#<catch>", 8, port);
       break;
 
     case T_DYNAMIC_WIND:
       /* this can happen (or could while *stack* was tied in) because *stack* can involve dynamic-wind markers */
+      if (use_write == USE_READABLE_WRITE)
+	write_readably_error(sc, "an internal dynamic-wind descriptor");
       port_write_string(port)(sc, "#<dynamic-wind>", 15, port);
       break;
   
@@ -24173,12 +24511,14 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	  (c_object_print_readably(obj)))
 	str = ((*(c_object_print_readably(obj)))(c_object_value(obj)));
       else str = ((*(c_object_print(obj)))(sc, c_object_value(obj)));
-
       port_display(port)(sc, str, port);
       free(str);
       break;
 
     case T_SLOT:
+      if (use_write == USE_READABLE_WRITE)
+	write_readably_error(sc, "an internal slot");
+
       port_write_string(port)(sc, "#<slot: ", 8, port);
       port_write_string(port)(sc, symbol_name(slot_symbol(obj)), symbol_name_length(slot_symbol(obj)), port);
       port_write_character(port)(sc, ' ', port);
@@ -24197,6 +24537,8 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	      /* what needs to be protected here? */
 	      push_stack(sc, OP_NO_OP, sc->temp_cell_2, sc->temp_cell_3);
 	      p = s7_apply_function(sc, print_func, list_1(sc, obj));
+	      /* TODO: here we need to pass at least the write choice
+	       */
 	      sc->temp_cell_2 = main_stack_args(sc);
 	      sc->temp_cell_3 = main_stack_code(sc);
 	      pop_main_stack(sc);
@@ -24207,24 +24549,48 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	    }
 	}
       if (obj == sc->global_env)
-	port_write_string(port)(sc, "#<global-environment>", 21, port);
+	{
+	  if (use_write == USE_READABLE_WRITE)
+	    port_write_string(port)(sc, "(global-environment)", 20, port);
+	  else port_write_string(port)(sc, "#<global-environment>", 21, port);
+	}
       else
 	{
-	  /* here circles are not uncommon: 
+	  /* circles can happen here: 
 	   *    (let ()
 	   *      (let ((b (current-environment)))
 	   *        (current-environment)))
 	   *    #<environment
 	   *      #<slot: b #<environment>>>
+	   *
+	   * TODO: if *error-env* -> "(error-environment)" and others like this (*stacktrace* sc->envir?)
+	   * TODO: how to display a class instance readably? -- use method above somehow?
 	   */
 	  s7_pointer x;
-	  port_write_string(port)(sc, "#<environment", 13, port);
-	  for (x = environment_slots(obj); is_slot(x); x = next_slot(x))
+
+	  if (use_write == USE_READABLE_WRITE)
 	    {
-	      port_write_string(port)(sc, "\n  ", 3, port);
-	      object_to_port_with_circle_check(sc, x, port, use_write, to_file, ci);
+	      port_write_string(port)(sc, "(apply environment (reverse (list ", 34, port);
+	      for (x = environment_slots(obj); is_slot(x); x = next_slot(x))
+		{
+		  port_write_string(port)(sc, "(cons ", 6, port);
+		  object_to_port(sc, slot_symbol(x), port, use_write, to_file, ci);
+		  port_write_character(port)(sc, ' ', port);
+		  object_to_port_with_circle_check(sc, slot_value(x), port, use_write, to_file, ci);
+		  port_write_character(port)(sc, ')', port);
+		}
+	      port_write_string(port)(sc, ")))", 3, port);
 	    }
-	  port_write_character(port)(sc, '>', port);
+	  else
+	    {
+	      port_write_string(port)(sc, "#<environment", 13, port);
+	      for (x = environment_slots(obj); is_slot(x); x = next_slot(x))
+		{
+		  port_write_string(port)(sc, "\n  ", 3, port);
+		  object_to_port_with_circle_check(sc, x, port, use_write, to_file, ci);
+		}
+	      port_write_character(port)(sc, '>', port);
+	    }
 	}
       break;
 
@@ -24300,13 +24666,25 @@ static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_po
 	  int nlen;
 	  if (ref > 0)
 	    {
-	      nlen = snprintf(buf, 32, "#%d=", ref);
-	      port_write_string(port)(sc, buf, nlen, port);
-	      object_to_port(sc, vr, port, USE_WRITE, WITH_ELLIPSES, ci);
+	      if (use_write == USE_READABLE_WRITE)
+		{
+		  nlen = snprintf(buf, 32, "(set! {%d} ", ref);
+		  port_write_string(port)(sc, buf, nlen, port);
+		  object_to_port(sc, vr, port, DONT_USE_DISPLAY(use_write), WITH_ELLIPSES, ci);
+		  port_write_character(port)(sc, ')', port);
+		}
+	      else
+		{
+		  nlen = snprintf(buf, 32, "#%d=", ref);
+		  port_write_string(port)(sc, buf, nlen, port);
+		  object_to_port(sc, vr, port, DONT_USE_DISPLAY(use_write), WITH_ELLIPSES, ci);
+		}
 	    }
 	  else
 	    {
-	      nlen = snprintf(buf, 32, "#%d#", -ref);
+	      if (use_write == USE_READABLE_WRITE)
+		nlen = snprintf(buf, 32, "'{%d}", -ref);
+	      else nlen = snprintf(buf, 32, "#%d#", -ref);
 	      port_write_string(port)(sc, buf, nlen, port);
 	    }
 	  return;
@@ -24368,7 +24746,7 @@ char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
 }
 
 
-s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj, bool use_write)
+s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj, bool use_write) /* unavoidable backwards compatibility rigidity here */
 {
   char *str;
 
@@ -33989,6 +34367,7 @@ static bool stacktrace_in_error_handler(s7_scheme *sc, int loc)
 	 (stacktrace_find_error_hook_quit(sc) > 0));
 }
 
+
 static bool direct_memq(s7_pointer symbol, s7_pointer symbols);
 
 static bool stacktrace_error_hook_function(s7_scheme *sc, s7_pointer sym)
@@ -36949,7 +37328,7 @@ static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
     return(args);
 
   /* this is not maximally efficient, but it's not important:
-   *   we've hit the rare special case where ({apply} {values} '())) needs to be ignored
+   *   we've hit the rare special case where ({apply_values} '())) needs to be ignored
    *   in the splicing process (i.e. the arglist acts as if the thing never happened)
    */
   px = sc->NIL;
@@ -36976,25 +37355,9 @@ static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_qq_values(s7_scheme *sc, s7_pointer args)
-{
-  #define H_qq_values "(apply {values} arg) is the quasiquote internal form for \",@arg\""
-
-  /* for quasiquote handling: (apply values car(args)) if args not nil, else nil
-   *    (values) -> #<unspecified> which is not wanted in this context.
-   */
-  if (is_null(args))
-    {
-      sc->no_values++;
-      return(sc->NO_VALUE);
-    }
-  return(g_values(sc, args));
-}
-
-
 static s7_pointer g_apply_values(s7_scheme *sc, s7_pointer args)
 {
-  #define H_apply_values "({apply} {values} var) applies values to var.  This is an internal function."
+  #define H_apply_values "({apply_values} var) applies values to var.  This is an internal function."
   s7_pointer x;
 
   if (is_null(args))
@@ -37011,8 +37374,12 @@ static s7_pointer g_apply_values(s7_scheme *sc, s7_pointer args)
 		    list_2(sc, 
 			   make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
 			   args)));
-
-  return(g_qq_values(sc, x));
+  if (is_null(x))
+    {
+      sc->no_values++;
+      return(sc->NO_VALUE);
+    }
+  return(g_values(sc, x));
 }
 
 /* (apply values ...) replaces (unquote_splicing ...)
@@ -37114,9 +37481,9 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
 		(cadr(orig) == sc->UNQUOTE))
 	      {
 		/* `(1 . ,(+ 1 1)) -> '(1 unquote (+ 1 1)) -> '(1 . 2) 
-		 * `(1 . ,@'((2 3))) -> (1 unquote ({apply} {values} '((2 3)))) -> ({append} ({list} 1) ({apply} {values} '((2 3)))) -> '(1 2 3)
+		 * `(1 . ,@'((2 3))) -> (1 unquote ({apply_values} '((2 3)))) -> ({append} ({list} 1) ({apply_values} '((2 3)))) -> '(1 2 3)
 		 * this used to be `(1 . ,@('(2 3))).  
-		 *     This now becomes (1 unquote ({apply} {values} ('(2 3)))) -> ({append} ({list} 1) ({apply} {values} ('(2 3)))) -> error
+		 *     This now becomes (1 unquote ({apply_values} ('(2 3)))) -> ({append} ({list} 1) ({apply_values} ('(2 3)))) -> error
 		 * `(1 . (,@'(2 3))) works in both cases, and `(1 . (,(+ 1 1)))
 		 * so do we actually need this block? `(1 ,@'(2 3)) if undotted
 		 */
@@ -37797,30 +38164,6 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
   
   if (safe_strcmp(symbol_name(sym), "|#") == 0)
     return(read_error(sc, "unmatched |#"));
-
-
-  /* this is probably the wrong place to handle this but for now...
-   *   (we're writing these names, so they ought to be readable)
-   *
-   * but the complex cases are endless!
-   */
-  if (symbol_name_length(sym) == 5)
-    {
-      if (safe_strcmp(symbol_name(sym), "nan.0") == 0)
-	return(real_NaN);
-      if (safe_strcmp(symbol_name(sym), "inf.0") == 0)
-	return(make_real(sc, INFINITY));
-    }
-  else
-    {
-      if (symbol_name_length(sym) == 6)
-	{
-	  if (safe_strcmp(symbol_name(sym), "-nan.0") == 0)
-	    return(real_NaN);
-	  if (safe_strcmp(symbol_name(sym), "-inf.0") == 0)
-	    return(make_real(sc, -INFINITY));
-	}
-    }
 
   /* check *autoload*, autoload_names, then *unbound-variable-hook* 
    */
@@ -60554,7 +60897,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_READ_QUASIQUOTE_VECTOR:
       /* this works only if the quasiquoted list elements can be evaluated in the read-time environment.
        *
-       *    `#(1 ,@(list 1 2) 4) -> (apply vector ({list} 1 ({apply} {values} (list 1 2)) 4)) -> #(1 1 2 4)
+       *    `#(1 ,@(list 1 2) 4) -> (apply vector ({list} 1 ({apply_values} (list 1 2)) 4)) -> #(1 1 2 4)
        *
        * Originally, I used:
        *
@@ -66156,8 +66499,7 @@ s7_scheme *s7_init(void)
   sc->ERROR =                 s7_define_function(sc,      "error",                   g_error,                  0, 0, true,  H_error);
 
   /* these are internal for quasiquote's use -- they are values, not symbols */
-                              s7_define_constant_function(sc, "{values}",            g_qq_values,              0, 0, true,  H_qq_values);
-  sc->QQ_Apply_Values =       s7_define_constant_function(sc, "{apply} {values}",    g_apply_values,           0, 0, true,  H_apply_values);
+  sc->QQ_Apply_Values =       s7_define_constant_function(sc, "{apply_values}",      g_apply_values,           0, 0, true,  H_apply_values);
   sc->QQ_Append =             s7_define_constant_function(sc, "{append}",            g_append,                 0, 0, true,  H_append);
   sc->Multivector =           s7_define_constant_function(sc, "{multivector}",       g_qq_multivector,         1, 0, true,  H_qq_multivector);
   sc->QQ_List =               s7_define_constant_function(sc, "{list}",              g_qq_list,                0, 0, true,  H_qq_list);
@@ -66284,6 +66626,12 @@ s7_scheme *s7_init(void)
 						      cons(sc, s7_make_symbol(sc, "notes-start-col"), small_int(45)),
 						      cons(sc, s7_make_symbol(sc, "as-comment"), sc->T)));
   s7_define_constant(sc, "*stacktrace*", sc->stacktrace_env);
+
+  /* sigh... I don't like these! */
+  s7_define_variable(sc, "nan.0", real_NaN);
+  s7_define_variable(sc, "-nan.0", real_NaN);
+  s7_define_variable(sc, "inf.0", make_permanent_real(INFINITY));
+  s7_define_variable(sc, "-inf.0", make_permanent_real(-INFINITY));
 
 				
   /* *features* */
@@ -66654,8 +67002,6 @@ s7_scheme *s7_init(void)
  * *stacktrace* could include hook-style func for caller-access to it
  * (sound-data ((...) (...))? or use #nD?
  * instead of direct access to symbol-table, perhaps symbol-table-iterator?
- * ~W in format using :readable?
  * TODO: hash-table-set printout problem in t456
- * TODO: max USE_WRITE READABLE_WRITE in all circle writes
  */
 

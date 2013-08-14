@@ -11766,6 +11766,7 @@ a2" 3) "132")
 (test (format #f "~W" (make-rectangular inf.0 1/0)) "(make-rectangular inf.0 nan.0)")
 (test (format #f "~W" (log 0)) "(make-rectangular -inf.0 3.141592653589793)")
 
+;; see also object->string with :readable
 
 (test (format #f "~000000000000000000000000000000000000000000003F" 123.123456789) "123.123457")
 (test (format #f "~922337203685477580F" 123.123) 'error)   ; numeric argument too large
@@ -14039,6 +14040,240 @@ this prints:
 (test (string->list (object->string #(1 2) #f)) '(#\# #\( #\1 #\space #\2 #\)))
 (test (string->list (object->string #(1 #\a (3)) #f)) '(#\# #\( #\1 #\space #\# #\\ #\a #\space #\( #\3 #\) #\)))
 (test (reverse (object->string #2D((1 2) (3 4)) #f))  "))4 3( )2 1((D2#")
+
+;; write readably (this affects ~W in format as well)
+;; :readable special things
+(for-each
+ (lambda (n)
+   (let ((str (object->string n :readable)))
+     (let ((obj (with-input-from-string str
+		  (lambda ()
+		    (eval (read))))))
+       (if (not (eq? n obj))
+	   (format *stderr* "~A not eq? ~A (~S)~%" n obj str)))))
+ (list #<eof> #<undefined> #<unspecified> #t #f #true #false else ()
+       lambda lambda* begin case if do quote set! let let* letrec
+       cond and or define define* define-constant define-macro
+       defmacro define-macro* define-bacro define-bacro*
+       with-baffle with-environment
+       *stdin* *stdout* *stderr*))
+
+;; :readable characters
+(do ((i 0 (+ i 1)))
+    ((= i 256))
+  (let ((c (integer->char i)))
+    (let ((str (object->string c :readable)))
+      (let ((nc (with-input-from-string str
+		  (lambda ()
+		    (eval (read)))))) ; no need for eval here or in some other cases, but might as well be consistent
+	(if (not (eq? c nc))
+	    (format *stderr* "~C (~D) != ~C (~S)~%" c i nc str))))))
+
+;; :readable integers
+(for-each
+ (lambda (n)
+   (let ((str (object->string n :readable)))
+     (let ((nn (with-input-from-string str
+		 (lambda ()
+		   (eval (read))))))
+       (if (or (not (integer? n))
+	       (not (integer? nn))
+	       (not (= n nn)))
+	   (format *stderr* "~D != ~D (~S)~%" n nn str)))))
+ (list 0 1 3 most-positive-fixnum -0 -1 -3 most-negative-fixnum
+       -9223372036854775808 9223372036854775807))
+;; but unless gmp at read end we'll fail with most-positive-fixnum+1
+;; -> check *features* at start of read
+
+;; :readable ratios
+(for-each
+ (lambda (n)
+   (let ((str (object->string n :readable)))
+     (let ((nn (with-input-from-string str
+		 (lambda ()
+		   (eval (read))))))
+       (if (or (not (rational? n))
+	       (not (rational? nn))
+	       (not (= n nn)))
+	   (format *stderr* "~A != ~A (~S)~%" n nn str)))))
+ (list 1/2 -1/2 123456789/2 -2/123456789 2147483647/2147483646 312689/99532
+       -9223372036854775808/3 9223372036854775807/2  1/1428571428571429 1/1152921504606846976))
+
+;; :readable reals
+(for-each
+ (lambda (n)
+   (let ((str (object->string n :readable)))
+     (let ((nn (with-input-from-string str
+		 (lambda ()
+		   (eval (read))))))
+       (if (or (not (real? n))
+	       (not (real? nn))
+	       (not (morally-equal? n nn)))
+	   (format *stderr* "~A != ~A (~S)~%" n nn str)))))
+ (list 1.0 0.0 -0.0 pi 0.1 -0.1 0.9999999995 9007199254740993.1 (sqrt 2) 1/100000000000
+       1.5e-16 1.5e16 3.141592653589793238462643383279502884197169399375105820 1e-300 8.673617379884e-19
+       1/0 (- 1/0) (real-part (log 0)) (- (real-part (log 0)))))
+
+;; :readable complex
+(for-each
+ (lambda (n)
+   (let ((str (object->string n :readable)))
+     (let ((nn (with-input-from-string str
+		 (lambda ()
+		   (eval (read))))))
+       (if (or (not (complex? n))
+	       (not (complex? nn))
+	       (not (morally-equal? n nn)))
+	   (format *stderr* "~A != ~A (~S)~%" n nn str)))))
+ (list 0+i 0-i 1+i 1.4+i 3.0+1.5i
+       (log 0) (- (log 0)) 
+       (make-rectangular 1/0 1.0) (make-rectangular 1/0 1/0) (make-rectangular 1.0 1/0) ; default: nan+1i nannani 1nani!
+       (make-rectangular 1/0 (real-part (log 0))) (make-rectangular (real-part (log 0)) 1/0) 
+       1e-14+1e14i 0+1e-16i (make-rectangular pi pi)))
+
+;; :readable strings/bytevectors
+(for-each
+ (lambda (n)
+   (let ((str (object->string n :readable)))
+     (let ((obj (with-input-from-string str
+		  (lambda ()
+		    (eval (read))))))
+       (if (or (not (string? n))
+	       (not (string? obj))
+	       (not (string=? n obj))
+	       (and (bytevector? n)
+		    (not (bytevector? obj))))
+	   (format *stderr* "~S not string=? ~S (~S)~%" n obj str)))))
+ (list "" "abc" (string #\newline) "#<abc>" "a\"b\"c" "a\\b\nc" "aBc"
+       (let ((s (make-string 4 #\space))) (set! (s 3) #\null) s) ; writes as "   \x00"
+       "ab
+c"
+       (string #\a #\b #\null #\c #\escape #\newline)
+       (string #\x (integer->char #xf0) #\x)
+       (string #\null)
+       #u8() #u8(0 1 2 3) 
+       (let ((str (make-string 256 #\null)))
+	 (do ((i 0 (+ i 1)))
+	     ((= i 256) str)
+	   (set! (str i) (integer->char i))))))
+
+;; :readable symbols/keywords
+(for-each
+ (lambda (n)
+   (let ((str (object->string n :readable)))
+     (let ((obj (with-input-from-string str
+		  (lambda ()
+		    (eval (read))))))
+       (if (or (not (symbol? n))
+	       (not (symbol? obj))
+	       (not (eq? n obj)))
+	   (format *stderr* "~A not eq? ~A (~S)~%" n obj str)))))
+ (list 'abc :abc abc:
+       (symbol "a") (symbol "#<>")
+       (gensym "|") (gensym "#<>") (gensym "}")
+       :: ':abc
+       (gensym "\\")))
+  
+;; :readable environments
+(for-each
+ (lambda (n)
+   (let ((str (object->string n :readable)))
+     (let ((obj (with-input-from-string str
+		  (lambda ()
+		    (eval (read))))))
+       (if (or (not (environment? n))
+	       (not (environment? obj))
+	       (not (equal? n obj)))
+	   (format *stderr* "~A not equal?~%~A~%    (~S)~%" n obj str)))))
+ (list (environment '(a . 1))
+       (environment)
+       (global-environment)
+       (environment (cons 't12 "12") (cons (symbol "#<") 12))))
+
+;; :readable hash-tables
+(for-each
+ (lambda (n)
+   (let ((str (object->string n :readable)))
+     (let ((obj (with-input-from-string str
+		  (lambda ()
+		    (eval (read))))))
+       (if (or (not (hash-table? n))
+	       (not (hash-table? obj))
+	       (not (equal? n obj)))
+	   (format *stderr* "~A not equal? ~A (~S)~%" n obj str)))))
+ (list (hash-table '(a . 1))
+       (hash-table '(a . 1) (cons 'b "hi"))
+       (let ((ht (make-hash-table 31)))
+	 (set! (ht 1) 321)
+	 (set! (ht 2) 123)
+	 ht)
+       (hash-table)))
+  
+;; :readable vectors
+(for-each
+ (lambda (n)
+   (let ((str (object->string n :readable)))
+     (let ((obj (with-input-from-string str
+		  (lambda ()
+		    (eval (read))))))
+       (if (or (not (vector? n))
+	       (not (vector? obj))
+	       (not (equal? n obj)))
+	   (format *stderr* "'~A not equal? '~A (~S)~%" n obj str)))))
+ (list #() #(1) #(1 #(2)) #2d((1 2) (3 4))
+       #3d(((1 2 3) (4 5 6) (7 8 9)) ((9 8 7) (6 5 4) (3 2 1)))
+       #2d()))
+  
+;; :readable lists (circular, dotted)
+(for-each
+ (lambda (n)
+   (let ((str (object->string n :readable)))
+     (let ((obj (with-input-from-string str
+		  (lambda ()
+		    (eval (read))))))
+       (if (or (not (pair? n))
+	       (not (pair? obj))
+	       (not (equal? n obj)))
+	   (format *stderr* "'~A not equal? '~A (~S)~%" n obj str)))))
+ (list '(1) '(1 . 2) '((1 ()) 3)
+       '(1 2 . 3) '(1 2 3 . 4) '(())
+       ))
+
+;; :readable macros
+(let ()
+  (define-macro (mac1) `(+ 1 2))
+  (test ((eval-string (object->string mac1 :readable))) 3)
+  (define-macro (mac2 a) `(+ ,a 2))
+  (test ((eval-string (object->string mac2 :readable)) 1) 3)
+  (define-macro* (mac3 (a 1)) `(+ ,a 2))
+  (test ((eval-string (object->string mac3 :readable))) 3)
+  (define-macro (mac4 . a) `(+ ,@a 2))
+  (test ((eval-string (object->string mac4 :readable)) 1 3) 6)
+  (define-macro (mac5 a b . c) `(+ ,a ,b ,@c 2))
+  (test ((eval-string (object->string mac5 :readable)) 1 5 3 4) 15)
+  (define-macro (mac7 a) (let ((b (+ a 1))) `(+ ,b ,a)))
+  (test ((eval-string (object->string mac7 :readable)) 2) 5)
+  )
+
+;; closures/functions/built-in (C) functions + the setters thereof
+(for-each
+ (lambda (n)
+   (let ((str (object->string n :readable)))
+     (let ((obj (with-input-from-string str
+		  (lambda ()
+		    (eval (read))))))
+       (if (or (not (procedure? n))
+	       (not (procedure? obj))
+	       (not (equal? (procedure-source n) (procedure-source obj))))
+	   (format *stderr* "'~A not equal? '~A (~S)~%" n obj str)))))
+ (list abs
+       (lambda () 1)
+       (lambda (a) (+ a 1))
+       (lambda args (display args) (cdr args))
+       (lambda* (a b) (or a b))
+       (let ((a 1)) (lambda (b) (+ a b)))
+       ))
+
 
 
 
@@ -21758,16 +21993,16 @@ who says the continuation has to restart the map from the top?
 (test (begin . `''1) ''1)
 					;(test (`,@''1) 1) 
 					;  (syntax-error ("attempt to apply the ~A ~S to ~S?" "symbol" quote (1))) ??
-					;  (({apply} {values} ''values 1)) got error but expected 1
+					;  (({apply_values} ''values 1)) got error but expected 1
 					;(test (`,@ `'1) 1)
-					;  (({apply} {values} ''values 1)) got error but expected 1
+					;  (({apply_values} ''values 1)) got error but expected 1
 					;(test (`,@''.'.) '.'.)
-					;  (({apply} {values} ''values .'.)) got error but expected .'.
+					;  (({apply_values} ''values .'.)) got error but expected .'.
 (test #(`,1) #(1))
 (test `#(,@'(1)) #(1))
 (test `#(,`,@''1) #(quote 1))
 (test `#(,@'(1 2 3)) #(1 2 3))
-(test `#(,`,@'(1 2 3)) #(1 2 3)) ; but #(`,@'(1 2 3)) -> #(({apply} {values} '(1 2 3)))
+(test `#(,`,@'(1 2 3)) #(1 2 3)) ; but #(`,@'(1 2 3)) -> #(({apply_values} '(1 2 3)))
 (test `#(,`#(1 2 3)) #(#(1 2 3)))
 (test `#(,`#(1 ,(+ 2 3))) #(#(1 5)))
 (test (quasiquote #(,`#(1 ,(+ 2 3)))) #(#(1 5)))
@@ -21800,9 +22035,6 @@ who says the continuation has to restart the map from the top?
 (test (defined? '{list}) #t)
 (test (let () (set! {list} 2)) 'error)
 (test (let (({list} 2)) {list}) 'error)
-(test (defined? '{values}) #t)
-(test (let () (set! {values} 2)) 'error)
-(test (let (({values} 2)) {values}) 'error)
 ;(test (defined? '{apply}) #t)
 ;(test (let () (set! {apply} 2)) 'error)
 ;(test (let (({apply} 2)) {apply}) 'error)
@@ -21844,18 +22076,18 @@ who says the continuation has to restart the map from the top?
 (test #(,1) #(1))
 (test #(,,,1) #(1))
 (test #(`'`1) #(''1))
-(test `#(,@(list 1 2 3)) #(1 2 3)) ; but #(,@(list 1 2 3)) -> #((unquote ({apply} {values} (list 1 2 3))))
+(test `#(,@(list 1 2 3)) #(1 2 3)) ; but #(,@(list 1 2 3)) -> #((unquote ({apply_values} (list 1 2 3))))
 (test (',- 1) '-) ; this is implicit indexing
 
 #|
 (',,= 1) -> (unquote =)
 (test (equal? (car (',,= 1)) 'unquote) #t) ; but that's kinda horrible
 
-(',@1 1) -> ({apply} {values} 1)
-#(,@1) -> #((unquote ({apply} {values} 1)))
-(quasiquote #(,@(list 1 2 3))) -> #((unquote ({apply} {values} (list 1 2 3))))
+(',@1 1) -> ({apply_values} 1)
+#(,@1) -> #((unquote ({apply_values} 1)))
+(quasiquote #(,@(list 1 2 3))) -> #((unquote ({apply_values} (list 1 2 3))))
 
-(quote ,@(for-each)) -> (unquote ({apply} {values} (for-each)))
+(quote ,@(for-each)) -> (unquote ({apply_values} (for-each)))
 ;;; when is (quote ...) not '...?
 |#
 
