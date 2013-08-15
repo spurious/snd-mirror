@@ -14259,7 +14259,7 @@ c"
   (test ((eval-string (object->string mac7 :readable)) 2) 5)
   )
 
-;; closures/functions/built-in (C) functions + the setters thereof
+;; :readable closures/functions/built-in (C) functions + the setters thereof
 (for-each
  (lambda (n)
    (let ((str (object->string n :readable)))
@@ -14293,7 +14293,53 @@ c"
        (let ((b 2)) (let ((a 1)) (lambda* (c . d) (+ a b c))))
        ))
 
+;; :readable ports
+(for-each
+ (lambda (n)
+   (let ((str (object->string n :readable)))
+     (let ((obj (with-input-from-string str
+		  (lambda ()
+		    (eval (read))))))
+       (if (or (not (input-port? n))
+	       (not (input-port? obj))
+	       (not (equal? (port-closed? n) (port-closed? obj))))
+	   (format *stderr* "~A not equal? ~A (~S)~%" n obj str)
+	   (if (and (not (port-closed? n))
+		    (not (eq? n *stdin*))
+		    (not (eq? n (current-input-port))))
+	       (let ((c1 (read-char n))
+		     (c2 (read-char obj)))
+		 (if (not (equal? c1 c2))
+		     (format *stderr* "read-char results ~A not equal? ~A (~S)~%" c1 c2 str)))))
+       (if (and (not (eq? n *stdin*))
+		(not (eq? n (current-input-port))))
+	   (begin
+	     (close-input-port n)
+	     (close-input-port obj))))))
+ (list *stdin*
+       (open-input-string "a test")
+       (call-with-input-string "a test" (lambda (p) p))
+       (let ((p (open-input-string "a test"))) (read-char p) p)
+       (call-with-input-file "s7test.scm" (lambda (p) p))
+       (open-input-file "write.scm")
+       (let ((p (open-input-file "write.scm"))) (read-char p) p)))
 
+;; :readable environments
+(for-each
+ (lambda (n)
+   (let ((str (object->string n :readable)))
+     (let ((obj (with-input-from-string str
+		  (lambda ()
+		    (eval (read))))))
+       (if (or (not (environment? n))
+	       (not (environment? obj))
+	       (not (equal? n obj)))
+	   (format *stderr* "~A not equal? ~A (~S)~%" n obj str)))))
+ (list (global-environment)
+       (error-environment)
+       *stacktrace*
+       (let ((a 1)) (current-environment))
+       (let ((a 1) (b 2)) (current-environment))))
 
 
 

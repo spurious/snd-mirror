@@ -23,7 +23,7 @@ typedef double s7_Double;
    *   is a regression test for s7 -- it still turns up a few problems.  More tests are certainly welcome!  
    *   Extended examples of s7 usage are:
    *
-   *   Snd: ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-13.tar.gz (a sound editor)
+   *   Snd: ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-14.tar.gz (a sound editor)
    *     which includes:
    *       libxm: libxm.tar.gz (X, Motif, Gtk, Cairo, and openGL bindings)
    *       sndlib: sndlib.tar.gz (sound file, audio port, and CLM bindings plus an optimizer (run))

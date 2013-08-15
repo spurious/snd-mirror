@@ -24100,8 +24100,19 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
 }
 
 
+static void write_readably_error(s7_scheme *sc, const char *type)
+{
+  s7_error(sc, make_symbol(sc, "io-error"), 
+	   list_2(sc, 
+		  make_protected_string(sc, "can't write ~A readably"),
+		  make_protected_string(sc, type)));
+}
+
+
 static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
+  /* if outer env points to (say) method list, the object needs to specialize object->string itself
+   */
   if (has_methods(obj))
     {
       s7_pointer print_func;
@@ -24132,29 +24143,46 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
   else
     {
       /* circles can happen here: 
-       *    (let ()
-       *      (let ((b (current-environment)))
-       *        (current-environment)))
-       *    #<environment
-       *      #<slot: b #<environment>>>
+       *    (let () (let ((b (current-environment))) (current-environment)))
+       *    #<environment #<slot: b #<environment>>>
+       * or (let ((b #f)) (set! b (current-environment)) (current-environment))
+       *    #1=#<environment #<slot: b #1#>>
        *
-       * TODO: if *error-env* -> "(error-environment)" and others like this (*stacktrace* sc->envir?)
        * TODO: how to display a class instance readably? -- use method above somehow?
        */
       s7_pointer x;
       
       if (use_write == USE_READABLE_WRITE)
 	{
-	  port_write_string(port)(sc, "(apply environment (reverse (list ", 34, port);
-	  for (x = environment_slots(obj); is_slot(x); x = next_slot(x))
+	  if (obj == sc->error_env)
+	    port_write_string(port)(sc, "(error-environment)", 19, port);
+	  else
 	    {
-	      port_write_string(port)(sc, "(cons ", 6, port);
-	      object_to_port(sc, slot_symbol(x), port, use_write, to_file, ci);
-	      port_write_character(port)(sc, ' ', port);
-	      object_to_port_with_circle_check(sc, slot_value(x), port, use_write, to_file, ci);
-	      port_write_character(port)(sc, ')', port);
+	      if (obj == sc->stacktrace_env)
+		port_write_string(port)(sc, "*stacktrace*", 12, port);
+	      else
+		{
+		  port_write_string(port)(sc, "(apply environment (reverse (list ", 34, port);
+		  for (x = environment_slots(obj); is_slot(x); x = next_slot(x))
+		    {
+		      port_write_string(port)(sc, "(cons ", 6, port);
+		      object_to_port(sc, slot_symbol(x), port, use_write, to_file, ci);
+		      port_write_character(port)(sc, ' ', port);
+		      if (slot_value(x) == obj)
+			{
+			  int plen, ref;
+			  char buf[128];
+			  ref = -shared_ref(ci, obj);
+			  port_write_string(port)(sc, "#f", 2, port);
+			  plen = snprintf(buf, 128, "(environment-set! {%d} '%s {%d})", ref, symbol_name(slot_symbol(x)), ref);
+			  shared_info_strcat(ci, (const char *)buf, plen);
+			}
+		      else object_to_port_with_circle_check(sc, slot_value(x), port, use_write, to_file, ci);
+		      port_write_character(port)(sc, ')', port);
+		    }
+		  port_write_string(port)(sc, ")))", 3, port);
+		}
 	    }
-	  port_write_string(port)(sc, ")))", 3, port);
 	}
       else
 	{
@@ -24302,18 +24330,6 @@ static void write_closure_readably(s7_scheme *sc, s7_pointer obj, s7_pointer por
   s7_gc_unprotect_at(sc, gc_loc);
 }
 
-static void write_readably_error(s7_scheme *sc, const char *type)
-{
-  s7_error(sc, make_symbol(sc, "io-error"), 
-	   list_2(sc, 
-		  make_protected_string(sc, "can't write ~A readably"),
-		  make_protected_string(sc, type)));
-}
-
-
-/* TODO: build circular structure from #n info
- * TODO: use names like *stdin*? *autoload*? etc
- */
 
 static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
@@ -24346,33 +24362,85 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_INPUT_PORT:
-      /* TODO: can these be written readably? if string port,
-       *   (open-input-string "<chars-from-point>")
-       *   (let ((op (open-output-string))) (write <get-output-string> op) op)
-       *   same for in|output file (but "a" if out), and go to current loc somehow? 
-       *   perhaps -- add arg for loc -- if not 0, lseek
-       */
-
       if (obj == sc->standard_input)
 	port_write_string(port)(sc, port_filename(obj), port_filename_length(obj), port);
       else
 	{
-	  nlen = snprintf(buf, 64, "<input-%s-port%s>", 
-			  (is_file_port(obj)) ? "file" : ((is_string_port(obj)) ? "string" : "function"), 
-			  (port_is_closed(obj)) ? " (closed)" : "");
+	  if (use_write == USE_READABLE_WRITE)
+	    {
+	      if (port_is_closed(obj))
+		port_write_string(port)(sc, "(call-with-input-string \"\" (lambda (p) p))", 42, port);
+	      else
+		{
+		  if (is_function_port(obj))
+		    write_readably_error(sc, "a function input port");
+		  else
+		    {
+		      if (port_read_character(port) == file_read_char)
+			write_readably_error(sc, "a very large file input port");
+		      else
+			{
+			  if (port_string_point(obj) != 0)
+			    port_write_string(port)(sc, "(let ((p ", 9, port);
+			  if (port_filename(obj) != NULL)
+			    {
+			      /* try to avoid storing enormous in-core strings */
+			      port_write_string(port)(sc, "(open-input-file \"", 18, port);
+			      port_write_string(port)(sc, port_filename(obj), port_filename_length(obj), port);
+			      port_write_string(port)(sc, "\")", 2, port);
+			    }
+			  else
+			    {
+			      char *str;
+			      int nlen = 0;
+			      port_write_string(port)(sc, "(open-input-string ", 19, port);
+			      /* not port_write_string here because there might be embedded double-quotes */
+			      str = slashify_string(port_string(obj), port_string_length(obj), IN_QUOTES, &nlen);
+			      port_write_string(port)(sc, str, nlen, port);
+			      port_write_character(port)(sc, ')', port);
+			    }
+			  if (port_string_point(obj) != 0)
+			    {
+			      char buf[64];
+			      int plen;
+			      port_write_string(port)(sc, ")) (do ((i 0 (+ i 1))) ((= i ", 29, port);
+			      plen = snprintf(buf, 64, "%d) p) (read-char p)))", port_string_point(obj));
+			      port_write_string(port)(sc, buf, plen, port);
+			    }
+			}
+		    }
+		}
+	    }
+	  else
+	    {
+	      nlen = snprintf(buf, 64, "<input-%s-port%s>", 
+			      (is_file_port(obj)) ? "file" : ((is_string_port(obj)) ? "string" : "function"), 
+			      (port_is_closed(obj)) ? " (closed)" : "");
+	    }
 	  port_write_string(port)(sc, buf, nlen, port);
 	}
       break;
 
     case T_OUTPUT_PORT:
-      if ((obj == sc->standard_output) || (obj == sc->standard_error))
+      if ((obj == sc->standard_output) || 
+	  (obj == sc->standard_error))
 	port_write_string(port)(sc, port_filename(obj), port_filename_length(obj), port);
       else
 	{
-	  nlen = snprintf(buf, 64, "<output-%s-port%s>", 
-			  (is_file_port(obj)) ? "file" : ((is_string_port(obj)) ? "string" : "function"), 
-			  (port_is_closed(obj)) ? " (closed)" : "");
-	  port_write_string(port)(sc, buf, nlen, port);
+	  if (use_write == USE_READABLE_WRITE)
+	    {
+	      if (port_is_closed(obj))
+		port_write_string(port)(sc, "(let ((p (open-output-string))) (close-output-port p) p)", 56, port);
+	      else write_readably_error(sc, "an output port");
+	      /* there's nothing safe or even modestly foolproof that we can do here */
+	    }
+	  else
+	    {
+	      nlen = snprintf(buf, 64, "<output-%s-port%s>", 
+			      (is_file_port(obj)) ? "file" : ((is_string_port(obj)) ? "string" : "function"), 
+			      (port_is_closed(obj)) ? " (closed)" : "");
+	      port_write_string(port)(sc, buf, nlen, port);
+	    }
 	}
       break;
 
@@ -24478,8 +24546,6 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	  if (string_length(obj) > 0)
 	    {
 	      /* this used to check for length > 1<<24 -- is that still necessary?
-	       *   TODO: if :readable how to handle giant string port strings?
-	       *
 	       * since string_length is a scheme length, not C, this write can embed nulls from C's point of view 
 	       */
 	      if (use_write == USE_DISPLAY)
@@ -67089,7 +67155,7 @@ s7_scheme *s7_init(void)
  * instead of direct access to symbol-table, perhaps symbol-table-iterator?
  * TODO: hash-table-set printout problem in t456
  * perhaps split the readable code out -- it's becoming a big mess (already 500 lines! -- but not slower)
- *   still to do: ports, more tests, circular envs, hash-tables, lists.  clm gens. xm obj?
+ *   still to do: more tests, circular hash-tables, lists.  clm gens. xm obj?
  * how to access a vector with temporary dimensions?
  */
 
