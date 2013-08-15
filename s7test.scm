@@ -14222,7 +14222,11 @@ c"
 	   (format *stderr* "'~A not equal? '~A (~S)~%" n obj str)))))
  (list #() #(1) #(1 #(2)) #2d((1 2) (3 4))
        #3d(((1 2 3) (4 5 6) (7 8 9)) ((9 8 7) (6 5 4) (3 2 1)))
-       #2d()))
+       #2d()
+       (let ((v (vector 1 2 3))) (set! (v 1) v) v)
+       (let ((v (vector 1 #(2) 3))) (set! ((v 1) 0) v) v)
+       (let ((v #2d((1 2 3) (4 5 6)))) (set! (v 1 1) v) v)
+       ))
   
 ;; :readable lists (circular, dotted)
 (for-each
@@ -14272,7 +14276,23 @@ c"
        (lambda args (display args) (cdr args))
        (lambda* (a b) (or a b))
        (let ((a 1)) (lambda (b) (+ a b)))
+       (let ((b 2)) (let ((a 1)) (lambda* (c . d) (display (+ a b c) *stdout*) d)))
        ))
+
+(for-each
+ (lambda (n)
+   (let ((str (object->string n :readable)))
+     (let ((obj (with-input-from-string str
+		  (lambda ()
+		    (eval (read))))))
+       (test ((eval-string str) 21) (n 21)))))
+ (list (lambda (a) (+ a 1))
+       (lambda args (cdr args))
+       (lambda* (a b) (or a b))
+       (let ((a 1)) (lambda (b) (+ a b)))
+       (let ((b 2)) (let ((a 1)) (lambda* (c . d) (+ a b c))))
+       ))
+
 
 
 

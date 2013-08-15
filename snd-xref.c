@@ -1832,7 +1832,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[2886] = {
+static const char *snd_names[2880] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -3142,7 +3142,6 @@ static const char *snd_names[2886] = {
     "test-remove-pops", "clean.scm",
     "test-remove-single-clicks", "clean.scm",
     "test-sv", "generators.scm",
-    "test-write-readably", "write.scm",
     "texas-toad", "animals.scm",
     "textual-port?", "r7rs.scm",
     "third", "dlocsig.scm",
@@ -3235,7 +3234,6 @@ static const char *snd_names[2886] = {
     "with-temp-sound", "ws.scm",
     "with-temporary-selection", "selection.scm",
     "wood-duck", "animals.scm",
-    "wr", "write.scm",
     "wrentit", "animals.scm",
     "write-au-header", "binary-io.scm",
     "write-bfloat32", "binary-io.scm",
@@ -3252,7 +3250,6 @@ static const char *snd_names[2886] = {
     "write-lint32", "binary-io.scm",
     "write-lint64", "binary-io.scm",
     "write-ogg", "examp.scm",
-    "write-readably", "write.scm",
     "write-speex", "examp.scm",
     "ws-save-state", "ws.scm",
     "wsdat-play", "ws.scm",
@@ -3280,7 +3277,7 @@ static const char *snd_names[2886] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 1443);
+  s7_autoload_set_names(sc, snd_names, 1440);
 }
 #endif
 

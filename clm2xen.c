@@ -18227,6 +18227,11 @@ static void init_choosers(s7_scheme *sc)
 /* -------------------------------------------------------------------------------- */
 
 
+static char *mus_generator_to_readable_string(void *obj)
+{
+  return(mus_describe(((mus_xen *)obj)->gen));
+}
+
 
 /* ---------------- export ---------------- */
 
@@ -18925,6 +18930,7 @@ static void mus_xen_init(void)
 				     mus_xen_apply, s7_mus_set, s7_mus_length, s7_mus_copy, s7_mus_reverse, s7_mus_fill);
   as_needed_arglist = XEN_LIST_1(XEN_ZERO);
   XEN_PROTECT_FROM_GC(as_needed_arglist);
+  s7_set_object_print_readably(mus_xen_tag, mus_generator_to_readable_string);
 #else
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));
 #endif
