@@ -75,14 +75,14 @@ XEN rb_set_documentation(XEN name, XEN help)
 
 static XEN g_add_help(XEN name, XEN help)
 {
-#define H_add_help S_add_help"(name, help)  add help to topic or function name (String or Symbol)"
+#define H_add_help S_add_help "(name, help)  add help to topic or function name (String or Symbol)"
   return(rb_set_documentation(name, help));
 }
 
 
 static XEN g_get_help(XEN name)
 {
-#define H_get_help S_get_help "([name=:"S_get_help"])  \
+#define H_get_help S_get_help "([name=:" S_get_help "])  \
 return help associated with name (String or Symbol) or false"
   if (XEN_NOT_BOUND_P(name))
     return(C_TO_XEN_STRING(H_get_help));

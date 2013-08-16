@@ -315,7 +315,7 @@
 					 *features* call-with-values
 
 					 ;; snd
-					 *snd-opened-sound* break break-ok break-exit undo-edit redo-edit
+					 *snd-opened-sound* break break-ok break-enter break-exit undo-edit redo-edit
 					 ))))
 		 ;; here we need to leave out built-in functions like abs 
 		 (let ((choice (*autoload* sym)))

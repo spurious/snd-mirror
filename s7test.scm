@@ -14207,6 +14207,12 @@ c"
 	 (set! (ht 1) 321)
 	 (set! (ht 2) 123)
 	 ht)
+       (let ((ht (make-hash-table)))
+	 (set! (ht 'b) 1)
+	 (set! (ht 'a) ht)
+	 ht)
+       ;(let ((ht (make-hash-table))) (set! (ht ht) 123) ht) 
+       ;(let ((ht (make-hash-table))) (set! (ht ht) ht)  ht)
        (hash-table)))
   
 ;; :readable vectors
@@ -14239,8 +14245,11 @@ c"
 	       (not (pair? obj))
 	       (not (equal? n obj)))
 	   (format *stderr* "'~A not equal? '~A (~S)~%" n obj str)))))
- (list '(1) '(1 . 2) '((1 ()) 3)
+ (list '(1) '(1 . 2) '((1 ()) 3) '((1 2) (3 4))
        '(1 2 . 3) '(1 2 3 . 4) '(())
+       (let ((lst (cons 1 2))) (set-cdr! lst lst) lst)
+       (let ((lst (list 1 2 3))) (set-cdr! (cddr lst) lst) lst)
+       (let ((lst (list 1 2 3))) (set-car! (cddr lst) lst) lst)
        ))
 
 ;; :readable macros
