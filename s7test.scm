@@ -7018,6 +7018,24 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (eval-string "#-9223372036854775808D()") 'error)
 
 
+(test (let ((v1 #2d((1 2 3) (4 5 6)))) (let ((v2 (make-shared-vector v1 '(6)))) v2)) #(1 2 3 4 5 6))
+(test (let ((v1 #(1 2 3 4 5 6))) (let ((v2 (make-shared-vector v1 '(3 2)))) v2)) #2D((1 2) (3 4) (5 6)))
+(test (make-shared-vector #2d() '(0)) #())
+(test (make-shared-vector '(1) '(1)) 'error)
+(test (make-shared-vector #(1) '(2)) 'error)
+(test (make-shared-vector #(1) '(1 2)) 'error)
+(test (make-shared-vector #(1 2 3 4) '()) 'error)
+(test (make-shared-vector #(1 2 3 4) '(2)) #(1 2))
+(test (make-shared-vector #(1 2 3 4) '(2 1)) #2D((1) (2)))
+(test (make-shared-vector #(1 2 3 4) '(0)) #())
+(for-each
+ (lambda (arg)
+   (test (make-shared-vector arg) 'error)
+   (test (make-shared-vector #(1 2 3) arg) 'error))
+ (list #\a () -1 #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
+       3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1))))
+
+
 
 
 
@@ -10806,7 +10824,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (call-with-output-file "tmp1.r5rs" (lambda (p) (write arg p)))
-   (test (call-with-input-file "tmp1.r5rs" (lambda (p) (read p))) arg))
+   (if (not (morally-equal? (call-with-input-file "tmp1.r5rs" (lambda (p) (read p))) arg))
+       (format *stderr* "~A different after write~%" arg)))
  (list "hi" -1 #\a 1 'a-symbol (make-vector 3 0) 3.14 3/4 .6 1.0+1.0i #f #t (list 1 2 3) (cons 1 2)
        '(1 2 . 3) '() '((1 2) (3 . 4)) '(()) (list (list 'a "hi") #\b 3/4) ''a
        (string #\a #\null #\b) "" "\"hi\""
@@ -11758,13 +11777,17 @@ a2" 3) "132")
 (test (format #f "~W" 3) "3")
 (test (format #f "~W" 3/4) "3/4")
 (test (format #f "~W" 3.4) "3.4")
-(test (format #f "~W" pi) "3.141592653589793")
+(if with-bignums
+    (test (format #f "~W" pi) "3.141592653589793238462643383279502884195E0")
+    (test (format #f "~W" pi) "3.141592653589793"))
 (test (format #f "~W" 3+4i) "3+4i")
 (test (format #f "~W" 3-4i) "3-4i")
-(test (format #f "~W" (make-rectangular 1/0 0)) "nan.0")
-(test (format #f "~W" (make-rectangular 1/0 1)) "(make-rectangular nan.0 1)")
-(test (format #f "~W" (make-rectangular inf.0 1/0)) "(make-rectangular inf.0 nan.0)")
-(test (format #f "~W" (log 0)) "(make-rectangular -inf.0 3.141592653589793)")
+(if (not with-bignums)
+    (begin
+      (test (format #f "~W" (make-rectangular 1/0 0)) "nan.0")
+      (test (format #f "~W" (make-rectangular 1/0 1)) "(make-rectangular nan.0 1)")
+      (test (format #f "~W" (make-rectangular inf.0 1/0)) "(make-rectangular inf.0 nan.0)")
+      (test (format #f "~W" (log 0)) "(make-rectangular -inf.0 3.141592653589793)")))
 
 ;; see also object->string with :readable
 
@@ -14349,6 +14372,14 @@ c"
        *stacktrace*
        (let ((a 1)) (current-environment))
        (let ((a 1) (b 2)) (current-environment))))
+
+;; not :readable
+(for-each
+ (lambda (n)
+   (test (object->string n :readable) 'error))
+ (list (open-output-string) (call-with-exit (lambda (g) g)) (call/cc (lambda (g) g))
+       (let ((ht (hash-table))) (make-hash-table-iterator ht))))
+
 
 
 

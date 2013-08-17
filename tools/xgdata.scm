@@ -8721,7 +8721,6 @@
 (CFNC "gchar* gtk_file_chooser_get_current_name GtkFileChooser* chooser")
 
 
-;;;; 3.9.8:
 ;  Wholly deprecated as part of this effort:
 ;  GtkIconFactory, GtkIconSet, GtkIconSource, GtkImageMenuItem,
 ;  GtkAction, GtkUIManager
@@ -8732,83 +8731,32 @@
 ;  menu popup delay settings,  gtk-menu-bar-accel,  keynav tweaks,  gtk-touchscreen-mode,  gtk-icon-sizes,  im style tweaks,
 ;  gtk-file-chooser-backend,  gtk-enable-tooltips,  gtk-visible-focus,  tooltip timeout tweaks,  toolbar style tweaks
 
-+ cairo_surface_t * gdk_cairo_surface_create_from_pixbuf      (const GdkPixbuf *pixbuf,
-+                                                              int scale,
-+                                                              GdkWindow *for_window);
-+ void     gdk_device_get_position_double (GdkDevice         *device,
-+                                          GdkScreen        **screen,
-+                                          gdouble           *x,
-+                                          gdouble           *y);
-+ GdkWindow *
-+          gdk_device_get_window_at_position_double
-+                                  (GdkDevice         *device,
-+                                   gdouble           *win_x,
-+                                   gdouble           *win_y);
-+ gint          gdk_screen_get_monitor_scale_factor (GdkScreen *screen,
-+                                                    gint       monitor_num);
-+ gint          gdk_window_get_scale_factor  (GdkWindow     *window);
-+ GdkWindow *   gdk_window_get_device_position_double (GdkWindow       *window,
-+                                                      GdkDevice       *device,
-+                                                      gdouble         *x,
-+                                                      gdouble         *y,
-+                                                      GdkModifierType *mask);
-+ cairo_surface_t *
-+               gdk_window_create_similar_image_surface (GdkWindow *window,
-+ 						       cairo_format_t format,
-+ 						       int            width,
-+ 						       int            height,
-+ 						       int            scale);
-+ GtkIconInfo * gtk_icon_theme_lookup_icon_for_scale (GtkIconTheme                *icon_theme,
-+                                                     const gchar                 *icon_name,
-+                                                     gint                         size,
-+                                                     gint                         scale,
-+                                                     GtkIconLookupFlags           flags);
-+ GtkIconInfo * gtk_icon_theme_choose_icon_for_scale (GtkIconTheme                *icon_theme,
-+ 						    const gchar                 *icon_names[],
-+ 						    gint                         size,
-+                                                     gint                         scale,
-+ 						    GtkIconLookupFlags           flags);
-+ GdkPixbuf *   gtk_icon_theme_load_icon_for_scale   (GtkIconTheme                *icon_theme,
-+                                                     const gchar                 *icon_name,
-+                                                     gint                         size,
-+                                                     gint                         scale,
-+                                                     GtkIconLookupFlags           flags,
-+                                                     GError                     **error);
-+ cairo_surface_t * gtk_icon_theme_load_surface      (GtkIconTheme        *icon_theme,
-+ 						    const gchar         *icon_name,
-+ 						    gint                 size,
-+ 						    gint                 scale,
-+ 						    GdkWindow           *for_window,
-+ 						    GtkIconLookupFlags   flags,
-+ 						    GError             **error);
-+ GtkIconInfo * gtk_icon_theme_lookup_by_gicon_for_scale (GtkIconTheme             *icon_theme,
-+                                                         GIcon                    *icon,
-+                                                         gint                      size,
-+                                                         gint                      scale,
-+                                                         GtkIconLookupFlags        flags);
-+ gint                  gtk_icon_info_get_base_scale     (GtkIconInfo   *icon_info);
-+ cairo_surface_t *     gtk_icon_info_load_surface       (GtkIconInfo   *icon_info,
-+ 							GdkWindow     *for_window,
-+ 							GError       **error);
-+ GtkWidget* gtk_image_new_from_surface   (cairo_surface_t *surface);
-+ GtkWidget* gtk_image_new_from_surface   (cairo_surface_t *surface);
-+ void gtk_image_set_from_surface   (GtkImage        *image,
-+ 				   cairo_surface_t *surface);
-+ gint       gtk_list_box_row_get_index     (GtkListBoxRow *row);
-+ gint          gtk_widget_get_scale_factor (GtkWidget *widget);
-+ void     gtk_window_close         (GtkWindow *window);
-
+;;;; 3.9.8:
+(CFNC "cairo_surface_t* gdk_cairo_surface_create_from_pixbuf GdkPixbuf* pixbuf int scale GdkWindow* for_window")
+(CFNC "void gdk_device_get_position_double GdkDevice* device GdkScreen* [screen] gdouble* [x] gdouble* [y]")
+(CFNC "GdkWindow* gdk_device_get_window_at_position_double GdkDevice* device gdouble* [win_x] gdouble* [win_y]")
+(CFNC "gint gdk_screen_get_monitor_scale_factor GdkScreen* screen gint monitor_num")
+(CFNC "gint gdk_window_get_scale_factor GdkWindow* window")
+(CFNC "GdkWindow* gdk_window_get_device_position_double GdkWindow* window GdkDevice* device gdouble* [x] gdouble* [y] GdkModifierType* [mask]")
+(CFNC "cairo_surface_t* gdk_window_create_similar_image_surface GdkWindow* window cairo_format_t format int width int height int scale")
+(CFNC "GtkIconInfo* gtk_icon_theme_lookup_icon_for_scale GtkIconTheme* icon_theme gchar* icon_name gint size gint scale GtkIconLookupFlags flags" 'const)
+;(CFNC "GtkIconInfo* gtk_icon_theme_choose_icon_for_scale GtkIconTheme* icon_theme gchar* icon_names[] gint size gint scale GtkIconLookupFlags flags" 'const)
+(CFNC "GdkPixbuf* gtk_icon_theme_load_icon_for_scale GtkIconTheme* icon_theme gchar* icon_name gint size gint scale GtkIconLookupFlags flags GError** [error]" 'const)
+(CFNC "cairo_surface_t* gtk_icon_theme_load_surface GtkIconTheme* icon_theme gchar* icon_name gint size gint scale GdkWindow* for_window GtkIconLookupFlags flags GError** [error]" 'const)
+(CFNC "GtkIconInfo* gtk_icon_theme_lookup_by_gicon_for_scale GtkIconTheme* icon_theme GIcon* icon gint size gint scale GtkIconLookupFlags flags")
+(CFNC "gint gtk_icon_info_get_base_scale GtkIconInfo* icon_info")
+(CFNC "cairo_surface_t* gtk_icon_info_load_surface GtkIconInfo* icon_info GdkWindow* for_window GError** [error]")
+(CFNC "GtkWidget* gtk_image_new_from_surface cairo_surface_t* surface")
+(CFNC "GtkWidget* gtk_image_new_from_surface cairo_surface_t* surface")
+(CFNC "void gtk_image_set_from_surface GtkImage* image cairo_surface_t* surface")
+(CFNC "gint gtk_list_box_row_get_index GtkListBoxRow* row")
+(CFNC "gint gtk_widget_get_scale_factor GtkWidget* widget")
+(CFNC "void gtk_window_close GtkWindow* window")
 
 3.9.10:
-+ void           gtk_info_bar_set_show_close_button  (GtkInfoBar     *info_bar,
-+                                                     gboolean        setting);
-+ gboolean       gtk_info_bar_get_show_close_button  (GtkInfoBar     *info_bar);
-+ void gtk_tree_model_rows_reordered_with_length (GtkTreeModel *tree_model,
-+ 						GtkTreePath  *path,
-+ 						GtkTreeIter  *iter,
-+ 						gint         *new_order,
-+ 						gint          length);
-
+(CFNC "void gtk_info_bar_set_show_close_button GtkInfoBar* info_bar gboolean setting")
+(CFNC "gboolean gtk_info_bar_get_show_close_button GtkInfoBar* info_bar")
+(CFNC "void gtk_tree_model_rows_reordered_with_length GtkTreeModel* tree_model GtkTreePath* path GtkTreeIter* iter gint* new_order gint length")
 |#
  
 

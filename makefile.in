@@ -42,8 +42,7 @@ top_srcdir = @top_srcdir@
 
 datarootdir = ${prefix}/share
 pkgdatadir = ${datarootdir}/snd
-# index.scm looks for the documentation in /usr/local/share/doc/snd-14 -- perhaps it should be pkgdatadir? or passed at compile time
-DEFS = -DSCRIPTS_DIR=\"$(pkgdatadir)\" @DEFS@
+DEFS = -DSCRIPTS_DIR=\"$(pkgdatadir)\"
 
 GX_FILES = $(@GX_FILES@)
 GX_HEADERS = $(@GX_HEADERS@)

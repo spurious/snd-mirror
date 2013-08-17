@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.29"
-#define S7_DATE "27-July-13"
+#define S7_VERSION "2.30"
+#define S7_DATE "16-Aug-13"
 
 
 typedef long long int s7_Int;
@@ -525,23 +525,6 @@ bool s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
    * The for-each loop stops if the symbol_func returns true, or at the end of the table.
    */
 
-  /* in Scheme, you can use the symbol-table function.  In the next example, we scan the symbol table
-   *   for any function that doesn't have documentation:
-   *
-       (let ((st (symbol-table)))
-         (do ((i 0 (+ i 1))) 
-             ((= i (vector-length st)))
-           (let ((lst (vector-ref st i)))
-             (for-each 
-               (lambda (sym)
-       	         (if (defined? sym)
-	             (let ((val (symbol->value sym)))
-	               (if (and (procedure? val)
-			        (string=? "" (procedure-documentation val)))
-		           (format #t "~A " sym)))))
-               lst))))
-  */
-
 
 void s7_define(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value);
 bool s7_is_defined(s7_scheme *sc, const char *name);
@@ -744,7 +727,7 @@ void s7_set_object_ref_2(int type, s7_pointer (*ref_2)(s7_scheme *sc, void *val,
 void s7_set_object_set_3(int type, s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value));
 void s7_set_object_array_info(int type, size_t length_loc, size_t data_loc);
 void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_args);
-void s7_set_object_print_readably(int type, char *(*printer)(void *val));
+void s7_set_object_print_readably(int type, char *(*printer)(s7_scheme *sc, void *val));
 
   /* experiments */
 void s7_function_set_looped(s7_pointer f, s7_pointer c);
@@ -897,6 +880,7 @@ bool s7_is_valid_pointer(s7_pointer arg);
  * 
  *        s7 changes
  *		
+ * 16-Aug:    ~W directive in format, make-shared-vector.
  * 23-Jul:    s7_autoload_set_names, libm.scm, r7rs.scm, s7libtest.scm, gdb-s7.scm.
  * 21-Jul:    s7_is_valid (replaces deprecated s7_is_valid_pointer).
  * 24-Jun:    some bool-related changes for Windows Visual C++, including change to s7_begin_hook.

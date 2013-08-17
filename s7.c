@@ -927,7 +927,7 @@ typedef struct c_object_t {
   s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
   s7_pointer (*ref_2)(s7_scheme *sc, void *val, s7_pointer index);
   s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value);
-  char *(*print_readably)(void *value);
+  char *(*print_readably)(s7_scheme *sc, void *value);
   unsigned int min_args, max_args;
   size_t length_loc, data_loc;
   bool has_array;
@@ -1276,7 +1276,7 @@ struct s7_scheme {
   s7_pointer INFINITEP, INPUT_PORTP, INTEGERP, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, KEYWORDP, KEYWORD_TO_SYMBOL, LCM, LENGTH;
   s7_pointer LIST, LISTP, LIST_TO_STRING, LIST_TO_VECTOR, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBITP, LOGIOR, LOGNOT, LOGXOR;
   s7_pointer MACROP, MAGNITUDE, MAKE_BYTEVECTOR, MAKE_HASH_TABLE, MAKE_HASH_TABLE_ITERATOR, MAKE_KEYWORD, MAKE_LIST, MAKE_POLAR, MAKE_RANDOM_STATE;
-  s7_pointer MAKE_RECTANGULAR, MAKE_STRING, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, MORALLY_EQUALP, NANP, NEGATIVEP, NEWLINE;
+  s7_pointer MAKE_RECTANGULAR, MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, MORALLY_EQUALP, NANP, NEGATIVEP, NEWLINE;
   s7_pointer NOT, NULLP, NUMBERP, NUMBER_TO_STRING, NUMERATOR, OBJECT_ENVIRONMENT, OBJECT_TO_STRING, ODDP, OPEN_ENVIRONMENT, OPEN_ENVIRONMENTP, OPEN_INPUT_FILE;
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTER_ENVIRONMENT, OUTPUT_PORTP, PAIRP, PAIR_LINE_NUMBER, PEEK_CHAR, PORT_CLOSEDP, PORT_FILENAME, PORT_LINE_NUMBER;
   s7_pointer POSITIVEP, PROCEDUREP, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, PROCEDURE_ENVIRONMENT, PROCEDURE_NAME, PROCEDURE_SOURCE, PROVIDE;
@@ -4182,49 +4182,6 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 }
 
 
-/* permanent memory for objects that we know will not (normally) be deallocated 
- *
- *   this does not work as is if run on a system that requires aligned accesses
- *   so we need a compile-time switch.
- *
- * timing tests here if we force 4-byte boundaries found no difference on x86,
- *  so I think I'll disable this optimization.
- */
-
-/* also use calloc here if -O3 in gcc */
-#if (__bfin__ || __ANDROID__ || (1))
-  #define permanent_calloc(Bytes) calloc(1, Bytes)
-  #define PERMANENT_HEAP_SIZE 8
-  static unsigned char *permanent_heap = NULL, *permanent_heap_top = NULL;
-#else
-
-#define PERMANENT_HEAP_SIZE 65536
-static unsigned char *permanent_heap = NULL, *permanent_heap_top = NULL;
-
-static unsigned char *permanent_calloc(int bytes)
-{
-  unsigned char *cur;
-  if (bytes >= PERMANENT_HEAP_SIZE)
-    {
-      /* this actually can happen!  I wrote a file unwittingly that had gmp's output from (ash 1 92233720360)
-       *   or some big number like that -- 16 million digits.  During a subsequent load, s7 decided it was a 
-       *   symbol name(!) and tried to store it permanently in the symbol table.  segfault.
-       */
-      return((unsigned char *)calloc(bytes, sizeof(unsigned char)));
-    }
-  if ((permanent_heap + bytes) >= permanent_heap_top)
-    {
-      permanent_heap = (unsigned char *)calloc(PERMANENT_HEAP_SIZE, sizeof(unsigned char));
-      permanent_heap_top = (unsigned char *)(permanent_heap + PERMANENT_HEAP_SIZE);
-    }
-  cur = permanent_heap;
-  permanent_heap += bytes;
-  return(cur);
-}
-
-#endif
-
-
 
 /* -------------------------------- stacks -------------------------------- */
 
@@ -7038,7 +6995,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 /* -------------------------------- numbers -------------------------------- */
 
 #if WITH_GMP
-  static char *big_number_to_string_with_radix(s7_pointer p, int radix, int width, int *nlen);
+static char *big_number_to_string_with_radix(s7_pointer p, int radix, int width, int *nlen, use_write_t use_write);
   static bool big_numbers_are_eqv(s7_pointer a, s7_pointer b);
   static s7_pointer string_to_either_integer(s7_scheme *sc, const char *str, int radix);
   static s7_pointer string_to_either_ratio(s7_scheme *sc, const char *nstr, const char *dstr, int radix);
@@ -8570,7 +8527,7 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 
 #if WITH_GMP
   if (s7_is_bignum(obj))
-    return(big_number_to_string_with_radix(obj, radix, width, nlen));
+    return(big_number_to_string_with_radix(obj, radix, width, nlen, USE_WRITE));
   /* this ignores precision because it's way too hard to get the mpfr string to look like
    *   C's output -- we either have to call mpfr_get_str twice (the first time just to 
    *   find out what the exponent is and how long the string actually is), or we have
@@ -8723,7 +8680,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 
 #if WITH_GMP
   if (s7_is_bignum(x))
-    return(make_string_uncopied(sc, big_number_to_string_with_radix(x, radix, 0, &nlen)));
+    return(make_string_uncopied(sc, big_number_to_string_with_radix(x, radix, 0, &nlen, USE_WRITE)));
 #endif
 
   if (!is_rational(x))
@@ -8767,10 +8724,10 @@ static void init_ctables(void)
 {
   int i;
 
-  exponent_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
-  slashify_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
-  char_ok_in_a_name = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
-  white_space = (bool *)permanent_calloc((CTABLE_SIZE + 1) * sizeof(bool));
+  exponent_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
+  slashify_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
+  char_ok_in_a_name = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
+  white_space = (bool *)calloc(CTABLE_SIZE + 1, sizeof(bool));
   white_space++;    /* leave white_space[-1] false for white_space[EOF] */
   
   for (i = 1; i < CTABLE_SIZE; i++)
@@ -8817,7 +8774,7 @@ static void init_ctables(void)
   slashify_table['"'] = true;
   slashify_table['\n'] = false;
 
-  digits = (int *)permanent_calloc(CTABLE_SIZE * sizeof(int));
+  digits = (int *)calloc(CTABLE_SIZE, sizeof(int));
   for (i = 0; i < CTABLE_SIZE; i++)
     digits[i] = 256;
 
@@ -17798,7 +17755,7 @@ static char *print_rng(s7_scheme *sc, void *val)
 }
 
 
-static char *print_rng_readably(void *val)
+static char *print_rng_readably(s7_scheme *sc, void *val)
 {
   char *buf;
   s7_rng_t *r = (s7_rng_t *)val;
@@ -18915,7 +18872,7 @@ static char *make_permanent_string(const char *str)
   char *x;
   int len;
   len = safe_strlen(str);
-  x = (char *)permanent_calloc((len + 1) * sizeof(char)); 
+  x = (char *)calloc(len + 1, sizeof(char)); 
   memcpy((void *)x, (void *)str, len);
   return(x);
 }
@@ -18931,7 +18888,7 @@ s7_pointer s7_make_permanent_string(const char *str)
   if (str)
     {
       string_length(x) = safe_strlen(str);
-      string_value(x) = (char *)permanent_calloc((string_length(x) + 1) * sizeof(char)); 
+      string_value(x) = (char *)calloc(string_length(x) + 1, sizeof(char)); 
       memcpy((void *)string_value(x), (void *)str, string_length(x)); 
     }
   else 
@@ -21553,7 +21510,7 @@ static void make_standard_ports(s7_scheme *sc)
   x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   set_type(x, T_OUTPUT_PORT | T_IMMUTABLE);
-  port_port(x) = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
+  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_filename_length(x) = 8;
@@ -21573,7 +21530,7 @@ static void make_standard_ports(s7_scheme *sc)
   x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   set_type(x, T_OUTPUT_PORT | T_IMMUTABLE);
-  port_port(x) = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
+  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_filename_length(x) = 8;
@@ -21593,7 +21550,7 @@ static void make_standard_ports(s7_scheme *sc)
   x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   set_type(x, T_INPUT_PORT | T_IMMUTABLE);
-  port_port(x) = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
+  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_original_input_string(x) = sc->NIL;
@@ -23126,7 +23083,6 @@ static s7_pointer find_closure(s7_scheme *sc, s7_pointer closure, s7_pointer cur
 static const char *c_closure_name(s7_scheme *sc, s7_pointer closure, int *nlen)
 {
   s7_pointer x;
-  char *args;
   x = find_closure(sc, closure, closure_environment(closure));
 
   if (is_symbol(x))
@@ -23139,9 +23095,27 @@ static const char *c_closure_name(s7_scheme *sc, s7_pointer closure, int *nlen)
    *   #<lambda|* args> #<m|bacro|* args> (args truncated if long)
    * despite the name "c_closure..." this function refers to T_CLOSURE and T_CLOSURE_STAR objects only
    */
-  args = object_to_truncated_string(sc, closure_args(closure), 20);
-  (*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<lambda%s %s>", (type(closure) == T_CLOSURE) ? "" : "*", args);
-  free(args);
+  if (is_null(closure_args(closure)))
+    (*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<lambda%s ()>", (type(closure) == T_CLOSURE) ? "" : "*");
+  else
+    {
+      if (is_symbol(closure_args(closure)))
+	(*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<lambda%s %s>", (type(closure) == T_CLOSURE) ? "" : "*", symbol_name(closure_args(closure)));
+      else
+	{
+	  x = closure_args(closure);
+	  if (is_null(cdr(x)))
+	    (*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<lambda%s (%s)>", 
+			       (type(closure) == T_CLOSURE) ? "" : "*", 
+			       (is_pair(car(x))) ? symbol_name(caar(x)) : symbol_name(car(x)));
+	  else (*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<lambda%s (%s %s%s%s>", 
+				  (type(closure) == T_CLOSURE) ? "" : "*", 
+				  (is_pair(car(x))) ? symbol_name(caar(x)) : symbol_name(car(x)),
+				  (is_pair(cdr(x))) ? "" : ". ",
+				  (is_pair(cdr(x))) ? ((is_pair(cadr(x))) ? symbol_name(caadr(x)) : symbol_name(cadr(x))) : symbol_name(cdr(x)),
+				  ((is_pair(cdr(x))) && (!is_null(cddr(x)))) ? " ..." : ")");
+	}
+    }
   return(sc->strbuf);
 }
 
@@ -24453,10 +24427,8 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
     case T_BIG_RATIO:
     case T_BIG_REAL:
     case T_BIG_COMPLEX:
-      /* TODO: in readable case, how are NaNs and infs handled here?
-       */
       nlen = 0;
-      str = big_number_to_string_with_radix(obj, BASE_10, 0, &nlen);
+      str = big_number_to_string_with_radix(obj, BASE_10, 0, &nlen, use_write);
       if (nlen > 0)
 	port_write_string(port)(sc, str, nlen, port);
       else port_display(port)(sc, str, port);
@@ -24620,7 +24592,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
     case T_C_OBJECT:
       if ((use_write == USE_READABLE_WRITE) &&
 	  (c_object_print_readably(obj)))
-	str = ((*(c_object_print_readably(obj)))(c_object_value(obj)));
+	str = ((*(c_object_print_readably(obj)))(sc, c_object_value(obj)));
       else str = ((*(c_object_print(obj)))(sc, c_object_value(obj)));
       port_display(port)(sc, str, port);
       free(str);
@@ -29060,6 +29032,67 @@ static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_di
 }
 
 
+static s7_pointer g_make_shared_vector(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_shared_vector "(make-shared-vector original-vector new-dimensions) returns \
+a vector that points to the same elements as the original-vector but with different dimensional info."
+
+  /* (let ((v1 #2d((1 2 3) (4 5 6)))) (let ((v2 (make-shared-vector v1 '(6)))) v2)) -> #(1 2 3 4 5 6)
+   * (let ((v1 #(1 2 3 4 5 6))) (let ((v2 (make-shared-vector v1 '(3 2)))) v2)) -> #2D((1 2) (3 4) (5 6))
+   * this is most useful in generic functions -- they can still use (v n) as the accessor.
+   *
+   * do we want an offset from the origin also?
+   */
+  s7_pointer orig, dims, y, x;
+  s7_vdims_t *v;
+  int i;
+  s7_Int offset = 1;
+
+  orig = car(args);
+  if (!s7_is_vector(orig))
+    {
+      CHECK_METHOD(sc, orig, sc->MAKE_SHARED_VECTOR, args);
+      return(wrong_type_argument(sc, sc->MAKE_SHARED_VECTOR, small_int(1), orig, T_VECTOR));
+    }
+
+  dims = cadr(args);
+  if (!is_pair(dims))
+    return(wrong_type_argument(sc, sc->MAKE_SHARED_VECTOR, small_int(2), dims, T_PAIR));
+  
+  v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
+  v->ndims = safe_list_length(sc, dims);
+  v->dims = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
+  v->offsets = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
+  v->original = orig;
+
+  for (i = 0, y = dims; is_pair(y); i++, y = cdr(y))
+    v->dims[i] = s7_integer(car(y));
+
+  for (i = v->ndims - 1; i >= 0; i--)
+    {
+      v->offsets[i] = offset;
+      offset *= v->dims[i];
+    }
+
+  if (offset > vector_length(orig))
+    {
+      free(v->dims);
+      free(v->offsets);
+      free(v);
+      return(out_of_range(sc, sc->MAKE_SHARED_VECTOR, small_int(2), dims, "a shared vector has to fit in the original vector"));
+    }
+
+  NEW_CELL(sc, x);
+  set_type(x, T_VECTOR | T_SAFE_PROCEDURE);
+  vector_dimension_info(x) = v;
+  vector_length(x) = offset;                 /* might be less than original length */
+  vector_elements(x) = vector_elements(orig);
+  add_vector(sc, x);
+
+  return(x);
+}
+
+
 static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indices)
 {
   s7_Int index = 0;
@@ -30960,6 +30993,13 @@ static void mark_ht_iter(void *val)
 }
 
 
+static char *write_ht_iter_readably(s7_scheme *sc, void *val)
+{
+  write_readably_error(sc, "a hash-table-iterator");
+  return(NULL);
+}
+
+
 static s7_pointer copy_ht_iter(s7_scheme *sc, s7_pointer obj)
 {
   ht_iter *new_iter, *old_iter;
@@ -31230,7 +31270,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
 
-  ptr = (c_proc_t *)permanent_calloc(sizeof(c_proc_t));
+  ptr = (c_proc_t *)calloc(1, sizeof(c_proc_t));
   if (required_args == 0)
     {
       if (rest_arg)
@@ -31986,7 +32026,7 @@ void s7_set_object_set_3(int type, s7_pointer (*set_3)(s7_scheme *sc, void *val,
 }
 
 
-void s7_set_object_print_readably(int type, char *(*printer)(void *val))
+void s7_set_object_print_readably(int type, char *(*printer)(s7_scheme *sc, void *val))
 {
   object_types[type]->print_readably = printer;
 }
@@ -61079,6 +61119,7 @@ mpfr_t *s7_big_real(s7_pointer x)    {return(&big_real(x));}
 mpz_t  *s7_big_integer(s7_pointer x) {return(&big_integer(x));}
 mpq_t  *s7_big_ratio(s7_pointer x)   {return(&big_ratio(x));}
 mpc_t  *s7_big_complex(s7_pointer x) {return(&big_complex(x));}
+
 static char *mpfr_to_string(mpfr_t val, int radix)
 {
   char *str, *tmp, *str1;
@@ -61087,6 +61128,15 @@ static char *mpfr_to_string(mpfr_t val, int radix)
 
   if (mpfr_zero_p(val))
     return(copy_string("0.0"));
+
+  if (mpfr_nan_p(val))
+    return(copy_string("nan.0"));
+  if (mpfr_inf_p(val))
+    {
+      if (mpfr_signbit(val) == 0)
+	return(copy_string("inf.0"));
+      return(copy_string("-inf.0"));
+    }
 
   str1 = mpfr_get_str(NULL, &expptr, radix, 0, val, GMP_RNDN);
   /* 0 -> full precision, but it's too hard to make this look like C formatted output.
@@ -61156,21 +61206,25 @@ static char *mpfr_to_string(mpfr_t val, int radix)
 }
 
 
-static char *mpc_to_string(mpc_t val, int radix)
+static char *mpc_to_string(mpc_t val, int radix, use_write_t use_write)
 {
   char *rl, *im, *tmp;
   int len;
-  mpfr_t r;
+  mpfr_t a, b;
 
-  mpfr_init(r);
-  mpc_real(r, val, GMP_RNDN);
-  rl = mpfr_to_string(r, radix);
-  mpc_imag(r, val, GMP_RNDN);
-  im = mpfr_to_string(r, radix);
+  mpfr_init(a);
+  mpc_real(a, val, GMP_RNDN);
+  rl = mpfr_to_string(a, radix);
+  mpfr_init(b);
+  mpc_imag(b, val, GMP_RNDN);
+  im = mpfr_to_string(b, radix);
 
   len = safe_strlen(rl) + safe_strlen(im) + 128;
   tmp = (char *)malloc(len * sizeof(char));
-  snprintf(tmp, len, "%s%s%si", rl, (im[0] == '-') ? "" : "+", im);
+  
+  if (use_write == USE_READABLE_WRITE)
+    snprintf(tmp, len, "(make-rectangular %s %s)", rl, im);
+  else snprintf(tmp, len, "%s%s%si", rl, (im[0] == '-') ? "" : "+", im); 
 
   free(rl);
   free(im);
@@ -61178,7 +61232,7 @@ static char *mpc_to_string(mpc_t val, int radix)
 }
 
 
-static char *big_number_to_string_with_radix(s7_pointer p, int radix, int width, int *nlen)
+static char *big_number_to_string_with_radix(s7_pointer p, int radix, int width, int *nlen, use_write_t use_write)
 {
   char *str = NULL;
 
@@ -61197,7 +61251,7 @@ static char *big_number_to_string_with_radix(s7_pointer p, int radix, int width,
       break;
 
     default:
-      str = mpc_to_string(big_complex(p), radix);
+      str = mpc_to_string(big_complex(p), radix, use_write);
       break;
     }
 
@@ -65268,9 +65322,11 @@ static bool equal_big_rng(void *val1, void *val2)
   
 static s7_pointer make_big_random_state(s7_scheme *sc, s7_pointer args)
 {
+#ifndef H_make_random_state
   #define H_make_random_state "(make-random-state seed) returns a new random number state initialized with 'seed'. \
 Pass this as the second argument to 'random' to get a repeatable random number sequence:\n\
     (let ((seed (make-random-state 1234))) (random 1.0 seed))"
+#endif
 
   s7_big_rng_t *r;
   s7_pointer seed;
@@ -65772,9 +65828,6 @@ s7_scheme *s7_init(void)
       }
   }
 
-  permanent_heap = (unsigned char *)calloc(PERMANENT_HEAP_SIZE, sizeof(unsigned char));
-  permanent_heap_top = (unsigned char *)(permanent_heap + PERMANENT_HEAP_SIZE);
-  
   /* this has to precede s7_make_* allocations */
   sc->protected_objects_size = INITIAL_PROTECTED_OBJECTS_SIZE;
   sc->protected_objects_loc = 0;
@@ -66534,6 +66587,7 @@ s7_scheme *s7_init(void)
   sc->VECTOR_SET =            s7_define_safe_function(sc, "vector-set!",             g_vector_set,             3, 0, true,  H_vector_set);
   sc->VECTOR_DIMENSIONS =     s7_define_safe_function(sc, "vector-dimensions",       g_vector_dimensions,      1, 0, false, H_vector_dimensions);
   sc->MAKE_VECTOR =           s7_define_safe_function(sc, "make-vector",             g_make_vector,            1, 1, false, H_make_vector);
+  sc->MAKE_SHARED_VECTOR =    s7_define_safe_function(sc, "make-shared-vector",      g_make_shared_vector,     2, 0, false, H_make_shared_vector);
   sc->VECTOR =                s7_define_safe_function(sc, "vector",                  g_vector,                 0, 0, true,  H_vector);
   set_setter(sc->VECTOR); /* ?? */
   sc->Vector = s7_symbol_value(sc, sc->VECTOR);
@@ -66557,6 +66611,7 @@ s7_scheme *s7_init(void)
   ht_iter_tag = s7_new_type_x("<hash-table-iterator>", print_ht_iter, free_ht_iter, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
   sc->MAKE_HASH_TABLE_ITERATOR = s7_define_safe_function(sc, "make-hash-table-iterator", g_make_hash_table_iterator, 1, 0, false, H_make_hash_table_iterator);
   sc->HASH_TABLE_ITERATORP =    s7_define_safe_function(sc, "hash-table-iterator?",  g_is_hash_table_iterator, 1, 0, false, H_is_hash_table_iterator);
+  s7_set_object_print_readably(ht_iter_tag, write_ht_iter_readably);
 
 
   sc->CALL_CC =               s7_define_function(sc,      "call/cc",                 g_call_cc,                1, 0, false, H_call_cc);
@@ -67048,12 +67103,8 @@ s7_scheme *s7_init(void)
 }
 
 
-
-/* use new generic_ff in methods opt case 
- * we need integer_length everywhere! These fixups are ignored by the optimized cases.
- * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
- *
- * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7 13.10
+/*
+ * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7 14.0
  * bench    42736 8752 8051 7725 6515 5194 4364 3989 3997 3997
  * lint           9328 8140 7887 7736 7300 7180 7051 7078
  * index    44300 3291 3005 2742 2078 1643 1435 1363 1365 1335
@@ -67073,7 +67124,11 @@ s7_scheme *s7_init(void)
  *    make-real|integer|rational|-vector is not quite right -- we want make-float|int|byte-vector
  */
 
-/* add empty? (or nil? or generic null? or zero-length? typeq? (null? c-pointer) -- C null?
+/* use new generic_ff in methods opt case 
+ * we need integer_length everywhere! These fixups are ignored by the optimized cases.
+ * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
+ *
+ * add empty? (or nil? or generic null? or zero-length? typeq? (null? c-pointer) -- C null?
  * also openbsd audio is broken in Snd -- see aucat.c I guess.
  * other often-used libraries: c glib/gio/gobject/gmodule ncurses? gsl? GL/GLU? pcre? tecla? readline?
  *    libpthread.scm for partial pthread case, but how is this to be used?
@@ -67083,14 +67138,11 @@ s7_scheme *s7_init(void)
  * TODO: (env env) in clm should be an error
  * possible autoload additions: sndlib? xm? libX* fftw? gmp/mpfr/mpc? 
  * gdb-s7 might check for 0xnnnn "asdf" to avoid strings
- * PERHAPS: try __restrict__ if gcc (not g++) and gnu_c
- *   initial tests aren't very impressive
- * write-readably: check how close we are to this, then checkpoint? and pretty-print for s7
+ * PERHAPS: try __restrict__ if gcc (not g++) and gnu_c:  initial tests aren't very impressive
+ * checkpoint?
  * cload: settable C variables (via symbol_access as here?)
- * *stacktrace* could include hook-style func for caller-access to it
  * (sound-data ((...) (...))? or use #nD?
- * instead of direct access to symbol-table, perhaps symbol-table-iterator?
- * TODO: hash-table-set printout problem in t456
- * how to access a vector with temporary dimensions?
+ * truncated format? or object->string?
+ * the default object print_readable function should give an error, not mimic write
  */
 

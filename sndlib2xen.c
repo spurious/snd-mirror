@@ -1489,8 +1489,8 @@ static char *sound_data_to_string(sound_data *sd)
   return(buf);
 }
 
-
-static char *sound_data_to_readable_string(void *obj)
+#if HAVE_SCHEME
+static char *sound_data_to_readable_string(s7_scheme *sc, void *obj)
 {
   sound_data *sd = (sound_data *)obj;
   char **chan_strs;
@@ -1536,6 +1536,7 @@ static char *sound_data_to_readable_string(void *obj)
 
 /* (object->string (make-sound-data 2 4))
  */
+#endif
 
 
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(sound_data, print_sound_data, sound_data_to_string)

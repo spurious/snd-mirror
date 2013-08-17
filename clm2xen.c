@@ -18226,11 +18226,12 @@ static void init_choosers(s7_scheme *sc)
 
 /* -------------------------------------------------------------------------------- */
 
-
-static char *mus_generator_to_readable_string(void *obj)
+#if HAVE_SCHEME
+static char *mus_generator_to_readable_string(s7_scheme *sc, void *obj)
 {
   return(mus_describe(((mus_xen *)obj)->gen));
 }
+#endif
 
 
 /* ---------------- export ---------------- */

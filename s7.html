@@ -2092,6 +2092,22 @@ vector-dimensions returns a list of the dimensions.
 6
 </pre>
 
+<p>To access a vector's elements with different dimensions, use 
+<code>(make-shared-vector original-vector new-dimensions)</code>:
+</p>
+
+<pre class="indented">
+&gt; (let ((v1 #2d((1 2 3) (4 5 6)))) 
+    (let ((v2 (make-shared-vector v1 '(6)))) 
+      v2))
+#(1 2 3 4 5 6)
+
+&gt; (let ((v1 #(1 2 3 4 5 6))) 
+    (let ((v2 (make-shared-vector v1 '(3 2)))) 
+      v2))
+#2D((1 2) (3 4) (5 6))
+</pre>
+
 
 <blockquote>
 
@@ -3687,7 +3703,7 @@ it is continuing from the point of the error, but then fails to do so.
 ~F        float to string, (format #f "~F" 100.1) -&gt; "100.100000",   (%f in C)
 ~G        float to string, (format #f "~G" 100.1) -&gt; "100.1",        (%g in C)
 ~T        insert spaces (padding)
-~W        object-&gt;string with :readable (write readably)
+~W        object-&gt;string with :readable (write readably; s7 is the intended reader)
 </pre>
 
 <p>The last eight take the usual numeric arguments to specify field width and precision.

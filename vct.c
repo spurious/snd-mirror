@@ -233,6 +233,13 @@ char *mus_vct_to_readable_string(vct *v)
   return(buf);
 }
 
+#if HAVE_SCHEME
+static char *s7_vct_to_readable_string(s7_scheme *sc, void *v)
+{
+  return(mus_vct_to_readable_string((vct *)v));
+}
+#endif
+
 
 static XEN g_vct_to_readable_string(XEN obj)
 {
@@ -2342,6 +2349,7 @@ void mus_vct_init(void)
   s7_set_object_set_3(vct_tag, s7_vct_set_3);
   s7_set_object_array_info(vct_tag, offsetof(vct, length), offsetof(vct, data));
   s7_set_object_ref_arity(vct_tag, 1, 1);
+  s7_set_object_print_readably(vct_tag, s7_vct_to_readable_string);
 #else
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));
 #endif
