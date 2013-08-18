@@ -1832,7 +1832,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[2880] = {
+static const char *snd_names[2882] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -3028,6 +3028,7 @@ static const char *snd_names[2880] = {
     "showall", "peak-phases.scm",
     "showdiff", "peak-phases.scm",
     "showodd", "peak-phases.scm",
+    "showphases", "peak-phases.scm",
     "signum", "dsp.scm",
     "silence-all-mixes", "mix.scm",
     "silence-mixes", "mix.scm",
@@ -3277,7 +3278,7 @@ static const char *snd_names[2880] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 1440);
+  s7_autoload_set_names(sc, snd_names, 1441);
 }
 #endif
 

@@ -89,8 +89,8 @@
 #include <mus-config.h>
 
 #define HAVE_GTK_3 (GTK_MAJOR_VERSION == 3)
-#define HAVE_CAIRO_GLYPH_ALLOCATE                 ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 8))
-#define HAVE_CAIRO_REGION_XOR                     ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 9) && (CAIRO_VERSION_MICRO >= 12))
+#define HAVE_CAIRO_1_8    ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 8))
+#define HAVE_CAIRO_1_9_12 ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 9) && (CAIRO_VERSION_MICRO >= 12))
 
 #if ((!__NetBSD__) && ((_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))))
   #define __func__ __FUNCTION__
@@ -1006,7 +1006,7 @@ XM_TYPE_PTR(cairo_path_t_, cairo_path_t*)
 #define XEN_cairo_filter_t_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(void_, void*)
 XM_TYPE_PTR(cairo_rectangle_list_t_, cairo_rectangle_list_t*)
-#if HAVE_CAIRO_GLYPH_ALLOCATE
+#if HAVE_CAIRO_1_8
 XM_TYPE_PTR(cairo_text_cluster_t_, cairo_text_cluster_t*)
 XM_TYPE_1(cairo_text_cluster_flags_t, cairo_text_cluster_flags_t)
 XM_TYPE_PTR_1(cairo_glyph_t__, cairo_glyph_t**)
@@ -1015,7 +1015,7 @@ XM_TYPE_PTR_1(cairo_text_cluster_flags_t_, cairo_text_cluster_flags_t*)
 #define C_TO_XEN_cairo_bool_t(Arg) C_TO_XEN_INT(Arg)
 #endif
 
-#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
+#if HAVE_CAIRO_1_9_12 && GTK_CHECK_VERSION(3, 0, 0)
 XM_TYPE_PTR(cairo_device_t_, cairo_device_t*)
 XM_TYPE_PTR_1(cairo_rectangle_t_, cairo_rectangle_t*)
 XM_TYPE_PTR_1(double_, double*)
@@ -29566,15 +29566,6 @@ static XEN gxg_gtk_entry_get_input_hints(XEN entry)
   return(C_TO_XEN_GtkInputHints(gtk_entry_get_input_hints(XEN_TO_C_GtkEntry_(entry))));
 }
 
-static XEN gxg_gtk_menu_button_set_menu(XEN menu_button, XEN menu)
-{
-  #define H_gtk_menu_button_set_menu "void gtk_menu_button_set_menu(GtkMenuButton* menu_button, GtkWidget* menu)"
-  XEN_ASSERT_TYPE(XEN_GtkMenuButton__P(menu_button), menu_button, 1, "gtk_menu_button_set_menu", "GtkMenuButton*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(menu), menu, 2, "gtk_menu_button_set_menu", "GtkWidget*");
-  gtk_menu_button_set_menu(XEN_TO_C_GtkMenuButton_(menu_button), XEN_TO_C_GtkWidget_(menu));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_menu_button_get_popup(XEN menu_button)
 {
   #define H_gtk_menu_button_get_popup "GtkMenu* gtk_menu_button_get_popup(GtkMenuButton* menu_button)"
@@ -34311,7 +34302,7 @@ char* filename)"
   return(C_TO_XEN_cairo_status_t(cairo_surface_write_to_png(XEN_TO_C_cairo_surface_t_(surface), (const char*)XEN_TO_C_char_(filename))));
 }
 
-#if HAVE_CAIRO_GLYPH_ALLOCATE
+#if HAVE_CAIRO_1_8
 static XEN gxg_cairo_glyph_allocate(XEN num_glyphs)
 {
   #define H_cairo_glyph_allocate "cairo_glyph_t* cairo_glyph_allocate(int num_glyphs)"
@@ -34461,7 +34452,7 @@ static XEN gxg_cairo_surface_has_show_text_glyphs(XEN surface)
 
 #endif
 
-#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
+#if HAVE_CAIRO_1_9_12 && GTK_CHECK_VERSION(3, 0, 0)
 static XEN gxg_cairo_in_clip(XEN cr, XEN x, XEN y)
 {
   #define H_cairo_in_clip "cairo_bool_t cairo_in_clip(cairo_t* cr, double x, double y)"
@@ -38696,7 +38687,6 @@ XEN_NARGIFY_2(gxg_gtk_entry_set_input_purpose_w, gxg_gtk_entry_set_input_purpose
 XEN_NARGIFY_1(gxg_gtk_entry_get_input_purpose_w, gxg_gtk_entry_get_input_purpose)
 XEN_NARGIFY_2(gxg_gtk_entry_set_input_hints_w, gxg_gtk_entry_set_input_hints)
 XEN_NARGIFY_1(gxg_gtk_entry_get_input_hints_w, gxg_gtk_entry_get_input_hints)
-XEN_NARGIFY_2(gxg_gtk_menu_button_set_menu_w, gxg_gtk_menu_button_set_menu)
 XEN_NARGIFY_1(gxg_gtk_menu_button_get_popup_w, gxg_gtk_menu_button_get_popup)
 XEN_NARGIFY_2(gxg_gtk_text_view_set_input_purpose_w, gxg_gtk_text_view_set_input_purpose)
 XEN_NARGIFY_1(gxg_gtk_text_view_get_input_purpose_w, gxg_gtk_text_view_get_input_purpose)
@@ -39222,7 +39212,7 @@ XEN_NARGIFY_1(gxg_cairo_surface_show_page_w, gxg_cairo_surface_show_page)
 XEN_NARGIFY_2(gxg_cairo_format_stride_for_width_w, gxg_cairo_format_stride_for_width)
 XEN_NARGIFY_1(gxg_cairo_image_surface_create_from_png_w, gxg_cairo_image_surface_create_from_png)
 XEN_NARGIFY_2(gxg_cairo_surface_write_to_png_w, gxg_cairo_surface_write_to_png)
-#if HAVE_CAIRO_GLYPH_ALLOCATE
+#if HAVE_CAIRO_1_8
 XEN_NARGIFY_1(gxg_cairo_glyph_allocate_w, gxg_cairo_glyph_allocate)
 XEN_NARGIFY_1(gxg_cairo_glyph_free_w, gxg_cairo_glyph_free)
 XEN_NARGIFY_1(gxg_cairo_text_cluster_allocate_w, gxg_cairo_text_cluster_allocate)
@@ -39239,7 +39229,7 @@ XEN_ARGIFY_3(gxg_cairo_surface_get_fallback_resolution_w, gxg_cairo_surface_get_
 XEN_NARGIFY_1(gxg_cairo_surface_has_show_text_glyphs_w, gxg_cairo_surface_has_show_text_glyphs)
 #endif
 
-#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
+#if HAVE_CAIRO_1_9_12 && GTK_CHECK_VERSION(3, 0, 0)
 XEN_NARGIFY_3(gxg_cairo_in_clip_w, gxg_cairo_in_clip)
 XEN_NARGIFY_1(gxg_cairo_device_reference_w, gxg_cairo_device_reference)
 XEN_NARGIFY_1(gxg_cairo_device_status_w, gxg_cairo_device_status)
@@ -42794,7 +42784,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_entry_get_input_purpose_w gxg_gtk_entry_get_input_purpose
 #define gxg_gtk_entry_set_input_hints_w gxg_gtk_entry_set_input_hints
 #define gxg_gtk_entry_get_input_hints_w gxg_gtk_entry_get_input_hints
-#define gxg_gtk_menu_button_set_menu_w gxg_gtk_menu_button_set_menu
 #define gxg_gtk_menu_button_get_popup_w gxg_gtk_menu_button_get_popup
 #define gxg_gtk_text_view_set_input_purpose_w gxg_gtk_text_view_set_input_purpose
 #define gxg_gtk_text_view_get_input_purpose_w gxg_gtk_text_view_get_input_purpose
@@ -43320,7 +43309,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_cairo_format_stride_for_width_w gxg_cairo_format_stride_for_width
 #define gxg_cairo_image_surface_create_from_png_w gxg_cairo_image_surface_create_from_png
 #define gxg_cairo_surface_write_to_png_w gxg_cairo_surface_write_to_png
-#if HAVE_CAIRO_GLYPH_ALLOCATE
+#if HAVE_CAIRO_1_8
 #define gxg_cairo_glyph_allocate_w gxg_cairo_glyph_allocate
 #define gxg_cairo_glyph_free_w gxg_cairo_glyph_free
 #define gxg_cairo_text_cluster_allocate_w gxg_cairo_text_cluster_allocate
@@ -43337,7 +43326,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_cairo_surface_has_show_text_glyphs_w gxg_cairo_surface_has_show_text_glyphs
 #endif
 
-#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
+#if HAVE_CAIRO_1_9_12 && GTK_CHECK_VERSION(3, 0, 0)
 #define gxg_cairo_in_clip_w gxg_cairo_in_clip
 #define gxg_cairo_device_reference_w gxg_cairo_device_reference
 #define gxg_cairo_device_status_w gxg_cairo_device_status
@@ -46899,7 +46888,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_entry_get_input_purpose, gxg_gtk_entry_get_input_purpose_w, 1, 0, 0, H_gtk_entry_get_input_purpose);
   XG_DEFINE_PROCEDURE(gtk_entry_set_input_hints, gxg_gtk_entry_set_input_hints_w, 2, 0, 0, H_gtk_entry_set_input_hints);
   XG_DEFINE_PROCEDURE(gtk_entry_get_input_hints, gxg_gtk_entry_get_input_hints_w, 1, 0, 0, H_gtk_entry_get_input_hints);
-  XG_DEFINE_PROCEDURE(gtk_menu_button_set_menu, gxg_gtk_menu_button_set_menu_w, 2, 0, 0, H_gtk_menu_button_set_menu);
   XG_DEFINE_PROCEDURE(gtk_menu_button_get_popup, gxg_gtk_menu_button_get_popup_w, 1, 0, 0, H_gtk_menu_button_get_popup);
   XG_DEFINE_PROCEDURE(gtk_text_view_set_input_purpose, gxg_gtk_text_view_set_input_purpose_w, 2, 0, 0, H_gtk_text_view_set_input_purpose);
   XG_DEFINE_PROCEDURE(gtk_text_view_get_input_purpose, gxg_gtk_text_view_get_input_purpose_w, 1, 0, 0, H_gtk_text_view_get_input_purpose);
@@ -47425,7 +47413,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(cairo_format_stride_for_width, gxg_cairo_format_stride_for_width_w, 2, 0, 0, H_cairo_format_stride_for_width);
   XG_DEFINE_PROCEDURE(cairo_image_surface_create_from_png, gxg_cairo_image_surface_create_from_png_w, 1, 0, 0, H_cairo_image_surface_create_from_png);
   XG_DEFINE_PROCEDURE(cairo_surface_write_to_png, gxg_cairo_surface_write_to_png_w, 2, 0, 0, H_cairo_surface_write_to_png);
-#if HAVE_CAIRO_GLYPH_ALLOCATE
+#if HAVE_CAIRO_1_8
   XG_DEFINE_PROCEDURE(cairo_glyph_allocate, gxg_cairo_glyph_allocate_w, 1, 0, 0, H_cairo_glyph_allocate);
   XG_DEFINE_PROCEDURE(cairo_glyph_free, gxg_cairo_glyph_free_w, 1, 0, 0, H_cairo_glyph_free);
   XG_DEFINE_PROCEDURE(cairo_text_cluster_allocate, gxg_cairo_text_cluster_allocate_w, 1, 0, 0, H_cairo_text_cluster_allocate);
@@ -47442,7 +47430,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(cairo_surface_has_show_text_glyphs, gxg_cairo_surface_has_show_text_glyphs_w, 1, 0, 0, H_cairo_surface_has_show_text_glyphs);
 #endif
 
-#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
+#if HAVE_CAIRO_1_9_12 && GTK_CHECK_VERSION(3, 0, 0)
   XG_DEFINE_PROCEDURE(cairo_in_clip, gxg_cairo_in_clip_w, 3, 0, 0, H_cairo_in_clip);
   XG_DEFINE_PROCEDURE(cairo_device_reference, gxg_cairo_device_reference_w, 1, 0, 0, H_cairo_device_reference);
   XG_DEFINE_PROCEDURE(cairo_device_status, gxg_cairo_device_status_w, 1, 0, 0, H_cairo_device_status);
@@ -49471,7 +49459,7 @@ static void define_integers(void)
   DEFINE_INTEGER(CAIRO_FILTER_NEAREST);
   DEFINE_INTEGER(CAIRO_FILTER_BILINEAR);
   DEFINE_INTEGER(CAIRO_FILTER_GAUSSIAN);
-#if HAVE_CAIRO_GLYPH_ALLOCATE
+#if HAVE_CAIRO_1_8
   DEFINE_INTEGER(CAIRO_STATUS_FONT_TYPE_MISMATCH);
   DEFINE_INTEGER(CAIRO_STATUS_USER_FONT_IMMUTABLE);
   DEFINE_INTEGER(CAIRO_STATUS_USER_FONT_ERROR);
@@ -49481,7 +49469,7 @@ static void define_integers(void)
   DEFINE_INTEGER(CAIRO_STATUS_INVALID_WEIGHT);
 #endif
 
-#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
+#if HAVE_CAIRO_1_9_12 && GTK_CHECK_VERSION(3, 0, 0)
   DEFINE_INTEGER(CAIRO_STATUS_INVALID_SIZE);
   DEFINE_INTEGER(CAIRO_STATUS_USER_FONT_NOT_IMPLEMENTED);
   DEFINE_INTEGER(CAIRO_STATUS_DEVICE_TYPE_MISMATCH);
@@ -49605,7 +49593,7 @@ static void define_strings(void)
   DEFINE_STRING(GTK_STYLE_CLASS_VERTICAL);
 #endif
 
-#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
+#if HAVE_CAIRO_1_9_12 && GTK_CHECK_VERSION(3, 0, 0)
   DEFINE_STRING(CAIRO_MIME_TYPE_JPEG);
   DEFINE_STRING(CAIRO_MIME_TYPE_PNG);
   DEFINE_STRING(CAIRO_MIME_TYPE_JP2);

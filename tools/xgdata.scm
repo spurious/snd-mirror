@@ -8430,7 +8430,7 @@
 (CFNC-3.6 "GtkInputPurpose gtk_entry_get_input_purpose GtkEntry* entry")
 (CFNC-3.6 "void gtk_entry_set_input_hints GtkEntry* entry GtkInputHints hints")
 (CFNC-3.6 "GtkInputHints gtk_entry_get_input_hints GtkEntry* entry")
-(CFNC-3.6 "void gtk_menu_button_set_menu GtkMenuButton* menu_button GtkWidget* menu")
+;;; ?? (CFNC-3.6 "void gtk_menu_button_set_menu GtkMenuButton* menu_button GtkWidget* menu")
 (CFNC-3.6 "GtkMenu* gtk_menu_button_get_popup GtkMenuButton* menu_button")
 (CFNC-3.6 "void gtk_text_view_set_input_purpose GtkTextView* text_view GtkInputPurpose purpose")
 (CFNC-3.6 "GtkInputPurpose gtk_text_view_get_input_purpose GtkTextView* text_view")

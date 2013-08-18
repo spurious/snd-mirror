@@ -1849,12 +1849,12 @@
   )
 
 (define (with-cairo-810 dpy thunk)
-  (dpy "#if HAVE_CAIRO_GLYPH_ALLOCATE~%")
+  (dpy "#if HAVE_CAIRO_1_8~%")
   (thunk)
   (dpy "#endif~%~%"))
 
 (define (with-cairo-912 dpy thunk)
-  (dpy "#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA~%")
+  (dpy "#if HAVE_CAIRO_1_9_12 && GTK_CHECK_VERSION(3, 0, 0)~%")
   (thunk)
   (dpy "#endif~%~%"))
 
@@ -2013,8 +2013,8 @@
 (hey "#include <mus-config.h>~%~%")
 
 (hey "#define HAVE_GTK_3 (GTK_MAJOR_VERSION == 3)~%")
-(hey "#define HAVE_CAIRO_GLYPH_ALLOCATE                 ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 8))~%")
-(hey "#define HAVE_CAIRO_REGION_XOR                     ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 9) && (CAIRO_VERSION_MICRO >= 12))~%~%")
+(hey "#define HAVE_CAIRO_1_8    ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 8))~%")
+(hey "#define HAVE_CAIRO_1_9_12 ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 9) && (CAIRO_VERSION_MICRO >= 12))~%~%")
 
 (hey "#if ((!__NetBSD__) && ((_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))))~%")
 (hey "  #define __func__ __FUNCTION__~%")

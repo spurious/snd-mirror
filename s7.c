@@ -155,6 +155,9 @@
  *   Currently the unaligned access code is turned off, so this switch can be ignored.
  *
  * in openBSD I think you need to include -ftrampolines in CFLAGS.
+ *
+ * if you want this file to compile into a stand-alone interpreter, define WITH_MAIN (this assumes access to readline)
+ *   then load it with -lreadline -ldl -lm, etc.
  */
 
 
@@ -67105,6 +67108,140 @@ s7_scheme *s7_init(void)
 }
 
 
+/* -------------------------------- repl -------------------------------- */
+
+#if WITH_MAIN
+/* this code extracted from xen.c in sndlib
+ */
+#include <readline/readline.h>
+#include <curses.h> 
+
+static s7_scheme *s7;
+
+typedef struct {int loc, size, len; const char *text; const char **matches;} completions;
+
+static bool find_match(const char *symbol_name, void *udata)
+{
+  completions *data = (completions *)udata;
+  if (strncmp(data->text, symbol_name, data->len) == 0)
+    {
+      if (data->matches == NULL)
+	{
+	  data->matches = (const char **)calloc(8, sizeof(char *));
+	  data->size = 8;
+	  data->loc = 0;
+	}
+      else
+	{
+	  if (data->loc >= data->size)
+	    {
+	      int i;
+	      data->size *= 2;
+	      data->matches = (const char **)realloc(data->matches, data->size * sizeof(char *));
+	      for (i = data->loc; i < data->size; i++) data->matches[i] = NULL;
+	    }
+	}
+      data->matches[data->loc] = symbol_name;
+      data->loc++;
+    }
+  return(false);
+}
+
+static int complete_loc = 0;
+static completions *complete_data = NULL;
+static char *copy_match(const char *text, int state)
+{
+  if (complete_loc < complete_data->loc)
+    {
+      char *result;
+      int len;
+      len = strlen(complete_data->matches[complete_loc]);
+      result = calloc(len + 1, sizeof(char));
+      memcpy((void *)result, (void *)complete_data->matches[complete_loc], len);
+      complete_loc++;
+      return(result);
+    }
+  return(NULL);
+}
+
+static char **completion(const char *text, int start, int end)
+{
+  completions *data; 
+  char **matches = NULL;
+  /* start and end are indices into the original line buffer, we just want text here */
+
+  if (!text) return(NULL);
+
+  data = (completions *)calloc(1, sizeof(completions));
+  data->len = strlen(text);
+  data->text = text;
+		
+  s7_for_each_symbol_name(s7, find_match, (void *)data);
+  
+  /* now to make readline happy, we apparently have to give it copies of everything! */
+  if (data->matches)
+    {
+      complete_data = data;
+      complete_loc = 0;
+      matches = rl_completion_matches(text, copy_match);
+      free(data->matches);
+    }
+
+  free(data);
+  complete_data = NULL;
+  return(matches);
+}
+
+
+int main(int argc, char **argv)
+{
+  s7 = s7_init();  
+
+  rl_readline_name = "s7";
+  rl_attempted_completion_function = completion;
+  rl_initialize(); /* get the current COLS value */
+  if (COLS > 80)
+    {
+      char *str;
+      str = (char *)calloc(128, sizeof(char));
+      snprintf(str, 128, "(with-environment *stacktrace* (set! code-cols %d) (set! total-cols %d) (set! notes-start-col %d))",
+	       COLS - 45, COLS, COLS - 45);
+      s7_eval_c_string(s7, str);
+      free(str);
+    }
+
+  while (true)
+    {
+      char *line_read = NULL, *temp;
+
+      line_read = readline("s7> ");
+      if (line_read)
+	{
+	  char *str;
+	  str = line_read;
+	  while ((str) && (isspace(str[0]))) str++;
+	  if (*str)
+	    {
+	      int len;
+	      s7_pointer result;
+	      len = strlen(str);
+	      add_history(str);
+	      result = s7_eval_c_string(s7, str);
+	      s7_write(s7, result, s7_current_output_port(s7));   /* use write, not display so that strings are in double quotes */
+	      s7_newline(s7, s7_current_output_port(s7));
+	    }
+	  free(line_read);
+	}
+    }
+}
+
+/* in Linux: gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -ldl -lm
+ */
+#endif
+
+
+/* -------------------------------------------------------------------------------- */
+
 /*
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7 14.0
  * bench    42736 8752 8051 7725 6515 5194 4364 3989 3997 3997
@@ -67147,4 +67284,3 @@ s7_scheme *s7_init(void)
  * truncated format? or object->string?
  * the default object print_readable function should give an error, not mimic write
  */
-
