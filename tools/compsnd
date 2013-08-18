@@ -238,9 +238,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                g++ --with-gtk                                         ---  '
+echo ' -----                g++ --with-gtk --std=c++11                             ---  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CC=g++ --with-gtk CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet CC=g++ --with-gtk CFLAGS="-std=c++11 -Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gtk"

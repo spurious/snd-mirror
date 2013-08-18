@@ -3723,6 +3723,8 @@ static int gc(s7_scheme *sc)
     {
       fprintf(stdout, "gc ");
 #ifndef _MSC_VER
+      /* this is apparently deprecated in favor of clock_gettime -- what compile-time switch to use here?
+       */
       gettimeofday(&start_time, &z0);
 #endif
     }
@@ -21418,7 +21420,7 @@ static bool is_directory(const char *filename)
 #if (!MS_WINDOWS)
   #ifdef S_ISDIR
     struct stat statbuf;
-    return((lstat(filename, &statbuf) >= 0) &&
+    return((stat(filename, &statbuf) >= 0) &&
 	   (S_ISDIR(statbuf.st_mode)));
   #endif
 #endif

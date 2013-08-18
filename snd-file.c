@@ -44,7 +44,7 @@ bool link_p(const char *filename)
 #else 
   struct stat statbuf;
 #ifndef _MSC_VER
-  return((lstat(filename, &statbuf) >= 0) &&
+  return((stat(filename, &statbuf) >= 0) &&
 	 (S_ISLNK(statbuf.st_mode)));
 #else
   return((stat(filename, &statbuf) == 0) && 
@@ -58,7 +58,7 @@ bool directory_p(const char *filename)
 {
   struct stat statbuf;
 #ifndef _MSC_VER
-  return((lstat(filename, &statbuf) >= 0) &&
+  return((stat(filename, &statbuf) >= 0) &&
 	 (S_ISDIR(statbuf.st_mode)));
 #else
   return((stat(filename, &statbuf) == 0) && 

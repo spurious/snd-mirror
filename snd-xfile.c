@@ -23,7 +23,7 @@ static mus_long_t file_bytes(const char *filename)
 {
 #ifndef _MSC_VER
   struct stat statbuf;
-  if (lstat(filename, &statbuf) >= 0) 
+  if (stat(filename, &statbuf) >= 0) 
     return(statbuf.st_size);
   return(0);
 #else
@@ -1381,7 +1381,7 @@ static bool empty_file_p(const char *filename)
 {
 #ifndef _MSC_VER
   struct stat statbuf;
-  if (lstat(filename, &statbuf) >= 0) 
+  if (stat(filename, &statbuf) >= 0) 
     return(statbuf.st_size == (mus_long_t)0);
 #endif
   return(false);

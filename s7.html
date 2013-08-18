@@ -2296,7 +2296,7 @@ one dimensional vector, so the two are not inverses.
 #(#(1 2) #(3 4))      
 </pre>
 
-<p>Perhaps I should add an optional number-of-dimensions argument?
+<p>
 This also affects format and sort!:
 </p>
 
@@ -2306,6 +2306,14 @@ This also affects format and sort!:
 
 &gt; (sort! #2d((1 4) (3 2)) &gt;) 
 #2D((4 3) (2 1))
+</pre>
+
+<p>Perhaps make-shared-vector can help:
+</p>
+
+<pre class="indented">
+&gt;(make-shared-vector (list->vector '(1 2 3 4)) '(2 2))
+#2D((1 2) (3 4))
 </pre>
 
 </div>

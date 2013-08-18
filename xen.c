@@ -1729,7 +1729,7 @@ static bool directory_p(const char *filename)
 #else
 #ifdef S_ISDIR
   struct stat statbuf;
-  return((lstat(filename, &statbuf) >= 0) &&
+  return((stat(filename, &statbuf) >= 0) &&
 	 (S_ISDIR(statbuf.st_mode)));
   return(false);
 #endif

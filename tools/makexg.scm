@@ -25,115 +25,86 @@
 (define struct-fields '())
 (define settable-struct-fields '())
 
-(define funcs-213 '())
-(define strings-213 '())
-(define ints-213 '())
-(define names-213 '())
-(define types-213 '())
-(define casts-213 '())
-(define checks-213 '())
-(define ulongs-213 '())
+(define funcs-2.14 '())
+(define strings-2.14 '())
+(define ints-2.14 '())
+(define names-2.14 '())
+(define types-2.14 '())
+(define casts-2.14 '())
+(define checks-2.14 '())
+(define ulongs-2.14 '())
 
-(define funcs-2134 '())
-(define strings-2134 '())
-(define ints-2134 '())
-(define names-2134 '())
-(define types-2134 '())
-(define casts-2134 '())
-(define checks-2134 '())
-(define ulongs-2134 '())
+(define funcs-2.16 '())
+(define strings-2.16 '())
+(define ints-2.16 '())
+(define names-2.16 '())
+(define types-2.16 '())
+(define casts-2.16 '())
+(define checks-2.16 '())
+(define ulongs-2.16 '())
 
-(define funcs-2150 '())
-(define strings-2150 '())
-(define ints-2150 '())
-(define names-2150 '())
-(define types-2150 '())
-(define casts-2150 '())
-(define checks-2150 '())
-(define ulongs-2150 '())
+(define funcs-2.18 '())
+(define ints-2.18 '())
+(define names-2.18 '())
+(define types-2.18 '())
+(define casts-2.18 '())
+(define checks-2.18 '())
+(define ulongs-2.18 '())
 
-(define funcs-2172 '())
-(define ints-2172 '())
-(define names-2172 '())
-(define types-2172 '())
-(define casts-2172 '())
-(define checks-2172 '())
+(define funcs-2.20 '())
+(define casts-2.20 '())
+(define checks-2.20 '())
+(define names-2.20 '())
+(define types-2.20 '())
 
-(define funcs-2173 '())
-(define ints-2173 '())
-(define names-2173 '())
-(define types-2173 '())
-(define casts-2173 '())
-(define checks-2173 '())
-(define ulongs-2173 '())
+(define funcs-3.0 '())
+(define casts-3.0 '())
+(define checks-3.0 '())
+(define names-3.0 '())
+(define types-3.0 '())
+(define ints-3.0 '())
+(define strings-3.0 '())
+(define make-structs-3.0 '()) ; these have a xg-specific make function
 
-(define funcs-2177 '())
-(define ints-2177 '())
-(define names-2177 '())
-(define types-2177 '())
+(define funcs-3.2 '())
+(define casts-3.2 '())
+(define checks-3.2 '())
+(define names-3.2 '())
+(define types-3.2 '())
+(define ints-3.2 '())
+(define strings-3.2 '())
 
-(define funcs-2190 '())
-(define casts-2190 '())
-(define checks-2190 '())
-(define names-2190 '())
-(define types-2190 '())
+(define funcs-3.4 '())
+(define casts-3.4 '())
+(define checks-3.4 '())
+(define names-3.4 '())
+(define types-3.4 '())
+(define ints-3.4 '())
+(define strings-3.4 '())
 
-(define funcs-300 '())
-(define casts-300 '())
-(define checks-300 '())
-(define names-300 '())
-(define types-300 '())
-(define ints-300 '())
-(define strings-300 '())
-(define make-structs-300 '()) ; these have a xg-specific make function
+(define funcs-3.6 '())
+(define casts-3.6 '())
+(define checks-3.6 '())
+(define names-3.6 '())
+(define types-3.6 '())
+(define ints-3.6 '())
+(define strings-3.6 '())
 
-(define funcs-310 '())
-(define casts-310 '())
-(define checks-310 '())
-(define names-310 '())
-(define types-310 '())
-(define ints-310 '())
-(define strings-310 '())
+(define funcs-3.8 '())
+(define casts-3.8 '())
+(define checks-3.8 '())
+(define names-3.8 '())
+(define types-3.8 '())
+(define ints-3.8 '())
+(define strings-3.8 '())
 
-(define funcs-312 '())
-(define casts-312 '())
-(define checks-312 '())
-(define names-312 '())
-(define types-312 '())
-(define ints-312 '())
-(define strings-312 '())
-
-(define funcs-336 '())
-(define casts-336 '())
-(define checks-336 '())
-(define names-336 '())
-(define types-336 '())
-(define ints-336 '())
-(define strings-336 '())
-
-(define funcs-3316 '())
-(define casts-3316 '())
-(define checks-3316 '())
-(define names-3316 '())
-(define types-3316 '())
-(define ints-3316 '())
-(define strings-3316 '())
-
-(define funcs-358 '())
-(define casts-358 '())
-(define checks-358 '())
-(define names-358 '())
-(define types-358 '())
-(define ints-358 '())
-(define strings-358 '())
-
-(define funcs-390 '())
-(define casts-390 '())
-(define checks-390 '())
-(define names-390 '())
-(define types-390 '())
-(define ints-390 '())
-(define strings-390 '())
+(define funcs-3.10 '())
+(define casts-3.10 '())
+(define checks-3.10 '())
+(define names-3.10 '())
+(define types-3.10 '())
+(define ints-3.10 '())
+(define strings-3.10 '())
 
 (define funcs-gtk2 '())
 (define casts-gtk2 '())
@@ -488,26 +459,22 @@
 			    (begin
 			      (set! all-types (cons type all-types))
 			      (case extra
-				((213 callback-213)   (set! types-213 (cons type types-213)))
-				((2134 callback-2134) (set! types-2134 (cons type types-2134)))
-				((2150 callback-2150) (set! types-2150 (cons type types-2150)))
-				((2172 callback-2172) (set! types-2172 (cons type types-2172)))
-				((2173 callback-2173) (set! types-2173 (cons type types-2173)))
-				((2177 callback-2177) (set! types-2177 (cons type types-2177)))
-				((2190)               (set! types-2190 (cons type types-2190)))
-				((300)                (set! types-300 (cons type types-300)))
-				((310)                (set! types-310 (cons type types-310)))
-				((312)                (set! types-312 (cons type types-312)))
-				((336)                (set! types-336 (cons type types-336)))
-				((3316)               (set! types-3316 (cons type types-3316)))
-				((358)                (set! types-358 (cons type types-358)))
-				((390)                (set! types-390 (cons type types-390)))
-				((gtk2)               (set! types-gtk2 (cons type types-gtk2)))
-				((cairo)              (set! cairo-types (cons type cairo-types)))
-				((cairo-810)          (set! cairo-types-810 (cons type cairo-types-810)))
-				((cairo-912)          (set! cairo-types-912 (cons type cairo-types-912)))
-				(else   	      (if (not (member type types))
-							  (set! types (cons type types)))))))
+				((g-2.14)     (set! types-2.14 (cons type types-2.14)))
+				((g-2.16)     (set! types-2.16 (cons type types-2.16)))
+				((g-2.18)     (set! types-2.18 (cons type types-2.18)))
+				((g-2.20)     (set! types-2.20 (cons type types-2.20)))
+				((g-3.0)      (set! types-3.0 (cons type types-3.0)))
+				((g-3.2)      (set! types-3.2 (cons type types-3.2)))
+				((g-3.4)      (set! types-3.4 (cons type types-3.4)))
+				((g-3.6)      (set! types-3.6 (cons type types-3.6)))
+				((g-3.8)      (set! types-3.8 (cons type types-3.8)))
+				((g-3.10)     (set! types-3.10 (cons type types-3.10)))
+				((gtk2)       (set! types-gtk2 (cons type types-gtk2)))
+				((cairo)      (set! cairo-types (cons type cairo-types)))
+				((cairo-810)  (set! cairo-types-810 (cons type cairo-types-810)))
+				((cairo-912)  (set! cairo-types-912 (cons type cairo-types-912)))
+				(else  	      (if (not (member type types))
+						  (set! types (cons type types)))))))
 			(set! type #f))
 		      (if (> i (+ 1 sp))
 			  (set! type (substring args (+ 1 sp) i))))
@@ -732,10 +699,10 @@
 			))
 
 
-(define (callback-name func) (car func))
-(define (callback-type func) (cadr func))
-(define (callback-func func) (caddr func))
-(define (callback-args func) (cadddr func))
+(define callback-name car)
+(define callback-type cadr)
+(define callback-func caddr)
+(define callback-args cadddr)
 (define (callback-gc func) (func 4))
 
 (define (find-callback test)
@@ -1087,231 +1054,155 @@
 (define (CFNC-23-PA data min-len max-len types)
   (CFNC data 'etc (list min-len max-len types)))
 
-(define* (CFNC-22 data)
+(define* (CFNC-2.14 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
-	(no-way "~A CFNC-22~%" name)
-	(let ((type (car-str data)))
-	  (if (not (member type all-types)) 
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-22 (cons type types-22))))
-	  (let ((strs (parse-args args 22)))
-	    (set! funcs-22 (cons (list name type strs args) funcs-22))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
-(define* (CFNC-213 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-213: ~A~%" (list name data))
+	(no-way "CFNC-2.14: ~A~%" (list name data))
 	(let ((type (car-str data)))
 	  (if (not (member type all-types))
 	      (begin
 		(set! all-types (cons type all-types))
-		(set! types-213 (cons type types-213))))
-	  (let ((strs (parse-args args 213)))
+		(set! types-2.14 (cons type types-2.14))))
+	  (let ((strs (parse-args args 'g-2.14)))
 	    (if spec
-		(set! funcs-213 (cons (list name type strs args spec) funcs-213))
-		(set! funcs-213 (cons (list name type strs args) funcs-213)))
+		(set! funcs-2.14 (cons (list name type strs args spec) funcs-2.14))
+		(set! funcs-2.14 (cons (list name type strs args) funcs-2.14)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-2134 data spec)
+(define* (CFNC-2.16 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
-	(no-way "CFNC-2134: ~A~%" (list name data))
+	(no-way "CFNC-2.16: ~A~%" (list name data))
 	(let ((type (car-str data)))
 	  (if (not (member type all-types))
 	      (begin
 		(set! all-types (cons type all-types))
-		(set! types-2134 (cons type types-2134))))
-	  (let ((strs (parse-args args 2134)))
+		(set! types-2.16 (cons type types-2.16))))
+	  (let ((strs (parse-args args 'g-2.16)))
 	    (if spec
-		(set! funcs-2134 (cons (list name type strs args spec) funcs-2134))
-		(set! funcs-2134 (cons (list name type strs args) funcs-2134)))
+		(set! funcs-2.16 (cons (list name type strs args spec) funcs-2.16))
+		(set! funcs-2.16 (cons (list name type strs args) funcs-2.16)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-2150 data spec)
+(define* (CFNC-2.18 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
-	(no-way "CFNC-2150: ~A~%" (list name data))
+	(no-way "CFNC-2.18: ~A~%" (list name data))
 	(let ((type (car-str data)))
 	  (if (not (member type all-types))
 	      (begin
 		(set! all-types (cons type all-types))
-		(set! types-2150 (cons type types-2150))))
-	  (let ((strs (parse-args args 2150)))
+		(set! types-2.18 (cons type types-2.18))))
+	  (let ((strs (parse-args args 'g-2.18)))
 	    (if spec
-		(set! funcs-2150 (cons (list name type strs args spec) funcs-2150))
-		(set! funcs-2150 (cons (list name type strs args) funcs-2150)))
+		(set! funcs-2.18 (cons (list name type strs args spec) funcs-2.18))
+		(set! funcs-2.18 (cons (list name type strs args) funcs-2.18)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-2172 data spec)
+(define* (CFNC-2.20 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
-	(no-way "CFNC-2172: ~A~%" (list name data))
+	(no-way "CFNC-2.20: ~A~%" (list name data))
 	(let ((type (car-str data)))
 	  (if (not (member type all-types))
 	      (begin
 		(set! all-types (cons type all-types))
-		(set! types-2172 (cons type types-2172))))
-	  (let ((strs (parse-args args 2172)))
+		(set! types-2.20 (cons type types-2.20))))
+	  (let ((strs (parse-args args 'g-2.20)))
 	    (if spec
-		(set! funcs-2172 (cons (list name type strs args spec) funcs-2172))
-		(set! funcs-2172 (cons (list name type strs args) funcs-2172)))
+		(set! funcs-2.20 (cons (list name type strs args spec) funcs-2.20))
+		(set! funcs-2.20 (cons (list name type strs args) funcs-2.20)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-2173 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-2173: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types))
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-2173 (cons type types-2173))))
-	  (let ((strs (parse-args args 2173)))
-	    (if spec
-		(set! funcs-2173 (cons (list name type strs args spec) funcs-2173))
-		(set! funcs-2173 (cons (list name type strs args) funcs-2173)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
-(define* (CFNC-2177 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-2177: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types))
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-2177 (cons type types-2177))))
-	  (let ((strs (parse-args args 2177)))
-	    (if spec
-		(set! funcs-2177 (cons (list name type strs args spec) funcs-2177))
-		(set! funcs-2177 (cons (list name type strs args) funcs-2177)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
-(define* (CFNC-2190 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-2190: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types))
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-2190 (cons type types-2190))))
-	  (let ((strs (parse-args args 2190)))
-	    (if spec
-		(set! funcs-2190 (cons (list name type strs args spec) funcs-2190))
-		(set! funcs-2190 (cons (list name type strs args) funcs-2190)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
-(define* (CFNC-300 data spec)
+(define* (CFNC-3.0 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
 					;    (if (assoc name names)
-					;	(no-way "CFNC-300: ~A~%" (list name data))
+					;	(no-way "CFNC-3.0: ~A~%" (list name data))
 					; this does not apply because gtk2-only funcs may be on the list
     (let ((type (car-str data)))
       (if (not (member type all-types))
 	  (begin
 	    (set! all-types (cons type all-types))
-	    (set! types-300 (cons type types-300))))
-      (let ((strs (parse-args args 300)))
+	    (set! types-3.0 (cons type types-3.0))))
+      (let ((strs (parse-args args 'g-3.0)))
 	(if spec
-	    (set! funcs-300 (cons (list name type strs args spec) funcs-300))
-	    (set! funcs-300 (cons (list name type strs args) funcs-300)))
+	    (set! funcs-3.0 (cons (list name type strs args spec) funcs-3.0))
+	    (set! funcs-3.0 (cons (list name type strs args) funcs-3.0)))
 	(set! names (cons (cons name (func-type strs)) names))))))
 
-(define* (CFNC-310 data spec)
+(define* (CFNC-3.2 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (let ((type (car-str data)))
       (if (not (member type all-types))
 	  (begin
 	    (set! all-types (cons type all-types))
-	    (set! types-310 (cons type types-310))))
-      (let ((strs (parse-args args 310)))
+	    (set! types-3.2 (cons type types-3.2))))
+      (let ((strs (parse-args args 'g-3.2)))
 	(if spec
-	    (set! funcs-310 (cons (list name type strs args spec) funcs-310))
-	    (set! funcs-310 (cons (list name type strs args) funcs-310)))
+	    (set! funcs-3.2 (cons (list name type strs args spec) funcs-3.2))
+	    (set! funcs-3.2 (cons (list name type strs args) funcs-3.2)))
 	(set! names (cons (cons name (func-type strs)) names))))))
 
-(define* (CFNC-312 data spec)
+(define* (CFNC-3.4 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (let ((type (car-str data)))
       (if (not (member type all-types))
 	  (begin
 	    (set! all-types (cons type all-types))
-	    (set! types-312 (cons type types-312))))
-      (let ((strs (parse-args args 312)))
+	    (set! types-3.4 (cons type types-3.4))))
+      (let ((strs (parse-args args 'g-3.4)))
 	(if spec
-	    (set! funcs-312 (cons (list name type strs args spec) funcs-312))
-	    (set! funcs-312 (cons (list name type strs args) funcs-312)))
+	    (set! funcs-3.4 (cons (list name type strs args spec) funcs-3.4))
+	    (set! funcs-3.4 (cons (list name type strs args) funcs-3.4)))
 	(set! names (cons (cons name (func-type strs)) names))))))
 
-(define* (CFNC-336 data spec)
+(define* (CFNC-3.6 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (let ((type (car-str data)))
       (if (not (member type all-types))
 	  (begin
 	    (set! all-types (cons type all-types))
-	    (set! types-336 (cons type types-336))))
-      (let ((strs (parse-args args 336)))
+	    (set! types-3.6 (cons type types-3.6))))
+      (let ((strs (parse-args args 'g-3.6)))
 	(if spec
-	    (set! funcs-336 (cons (list name type strs args spec) funcs-336))
-	    (set! funcs-336 (cons (list name type strs args) funcs-336)))
+	    (set! funcs-3.6 (cons (list name type strs args spec) funcs-3.6))
+	    (set! funcs-3.6 (cons (list name type strs args) funcs-3.6)))
 	(set! names (cons (cons name (func-type strs)) names))))))
 
-(define* (CFNC-3316 data spec)
+(define* (CFNC-3.8 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (let ((type (car-str data)))
       (if (not (member type all-types))
 	  (begin
 	    (set! all-types (cons type all-types))
-	    (set! types-3316 (cons type types-3316))))
-      (let ((strs (parse-args args 3316)))
+	    (set! types-3.8 (cons type types-3.8))))
+      (let ((strs (parse-args args 'g-3.8)))
 	(if spec
-	    (set! funcs-3316 (cons (list name type strs args spec) funcs-3316))
-	    (set! funcs-3316 (cons (list name type strs args) funcs-3316)))
+	    (set! funcs-3.8 (cons (list name type strs args spec) funcs-3.8))
+	    (set! funcs-3.8 (cons (list name type strs args) funcs-3.8)))
 	(set! names (cons (cons name (func-type strs)) names))))))
 
-(define* (CFNC-358 data spec)
+(define* (CFNC-3.10 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (let ((type (car-str data)))
       (if (not (member type all-types))
 	  (begin
 	    (set! all-types (cons type all-types))
-	    (set! types-358 (cons type types-358))))
-      (let ((strs (parse-args args 358)))
+	    (set! types-3.10 (cons type types-3.10))))
+      (let ((strs (parse-args args 'g-3.10)))
 	(if spec
-	    (set! funcs-358 (cons (list name type strs args spec) funcs-358))
-	    (set! funcs-358 (cons (list name type strs args) funcs-358)))
-	(set! names (cons (cons name (func-type strs)) names))))))
-
-(define* (CFNC-390 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (let ((type (car-str data)))
-      (if (not (member type all-types))
-	  (begin
-	    (set! all-types (cons type all-types))
-	    (set! types-390 (cons type types-390))))
-      (let ((strs (parse-args args 390)))
-	(if spec
-	    (set! funcs-390 (cons (list name type strs args spec) funcs-390))
-	    (set! funcs-390 (cons (list name type strs args) funcs-390)))
+	    (set! funcs-3.10 (cons (list name type strs args spec) funcs-3.10))
+	    (set! funcs-3.10 (cons (list name type strs args) funcs-3.10)))
 	(set! names (cons (cons name (func-type strs)) names))))))
 
 (define* (CFNC-gtk2 data spec)
@@ -1443,68 +1334,61 @@
 	(set! strings (cons name strings))
 	(set! names (cons (cons name 'string) names)))))
 
-(define (CSTR-213 name)
-  (if (assoc name names-213)
-      (no-way "~A CSTR-213~%" name)
+(define (CSTR-2.14 name)
+  (if (assoc name names-2.14)
+      (no-way "~A CSTR-2.14~%" name)
       (begin
-	(set! strings-213 (cons name strings-213))
-	(set! names-213 (cons (cons name 'string) names-213)))))
+	(set! strings-2.14 (cons name strings-2.14))
+	(set! names-2.14 (cons (cons name 'string) names-2.14)))))
 
-(define (CSTR-2150 name)
-  (if (assoc name names-2150)
-      (no-way "~A CSTR-2150~%" name)
+(define (CSTR-2.16 name)
+  (if (assoc name names-2.16)
+      (no-way "~A CSTR-2.16~%" name)
       (begin
-	(set! strings-2150 (cons name strings-2150))
-	(set! names-2150 (cons (cons name 'string) names-2150)))))
+	(set! strings-2.16 (cons name strings-2.16))
+	(set! names-2.16 (cons (cons name 'string) names-2.16)))))
 
-(define (CSTR-300 name)
-  (if (assoc name names-300)
-      (no-way "~A CSTR-300~%" name)
+(define (CSTR-3.0 name)
+  (if (assoc name names-3.0)
+      (no-way "~A CSTR-3.0~%" name)
       (begin
-	(set! strings-300 (cons name strings-300))
-	(set! names-300 (cons (cons name 'string) names-300)))))
+	(set! strings-3.0 (cons name strings-3.0))
+	(set! names-3.0 (cons (cons name 'string) names-3.0)))))
 
-(define (CSTR-310 name)
-  (if (assoc name names-310)
-      (no-way "~A CSTR-310~%" name)
+(define (CSTR-3.2 name)
+  (if (assoc name names-3.2)
+      (no-way "~A CSTR-3.2~%" name)
       (begin
-	(set! strings-310 (cons name strings-310))
-	(set! names-310 (cons (cons name 'string) names-310)))))
+	(set! strings-3.2 (cons name strings-3.2))
+	(set! names-3.2 (cons (cons name 'string) names-3.2)))))
 
-(define (CSTR-312 name)
-  (if (assoc name names-312)
-      (no-way "~A CSTR-312~%" name)
+(define (CSTR-3.4 name)
+  (if (assoc name names-3.4)
+      (no-way "~A CSTR-3.4~%" name)
       (begin
-	(set! strings-312 (cons name strings-312))
-	(set! names-312 (cons (cons name 'string) names-312)))))
+	(set! strings-3.4 (cons name strings-3.4))
+	(set! names-3.4 (cons (cons name 'string) names-3.4)))))
 
-(define (CSTR-336 name)
-  (if (assoc name names-336)
-      (no-way "~A CSTR-336~%" name)
+(define (CSTR-3.6 name)
+  (if (assoc name names-3.6)
+      (no-way "~A CSTR-3.6~%" name)
       (begin
-	(set! strings-336 (cons name strings-336))
-	(set! names-336 (cons (cons name 'string) names-336)))))
+	(set! strings-3.6 (cons name strings-3.6))
+	(set! names-3.6 (cons (cons name 'string) names-3.6)))))
 
-(define (CSTR-3316 name)
-  (if (assoc name names-3316)
-      (no-way "~A CSTR-3316~%" name)
+(define (CSTR-3.8 name)
+  (if (assoc name names-3.8)
+      (no-way "~A CSTR-3.8~%" name)
       (begin
-	(set! strings-3316 (cons name strings-3316))
-	(set! names-3316 (cons (cons name 'string) names-3316)))))
+	(set! strings-3.8 (cons name strings-3.8))
+	(set! names-3.8 (cons (cons name 'string) names-3.8)))))
 
-(define (CSTR-358 name)
-  (if (assoc name names-358)
-      (no-way "~A CSTR-358~%" name)
+(define (CSTR-3.10 name)
+  (if (assoc name names-3.10)
+      (no-way "~A CSTR-3.10~%" name)
       (begin
-	(set! strings-358 (cons name strings-358))
-	(set! names-358 (cons (cons name 'string) names-358)))))
-
-(define (CSTR-390 name)
-  (if (assoc name names-390)
-      (no-way "~A CSTR-390~%" name)
-      (begin
-	(set! strings-390 (cons name strings-390))
-	(set! names-390 (cons (cons name 'string) names-390)))))
+	(set! strings-3.10 (cons name strings-3.10))
+	(set! names-3.10 (cons (cons name 'string) names-3.10)))))
 
 
 (define (CDBL name)
@@ -1536,20 +1420,20 @@
 	(set! ulongs-gtk2 (cons (list name type spec-name) ulongs-gtk2))
 	(set! names (cons (cons name 'ulong) names)))))
 
-(define* (CLNG-213 name type spec-name)
+(define* (CLNG-2.14 name type spec-name)
   (save-declared-type type)
   (if (assoc name names)
-      (no-way "~A CLNG-213~%" name)
+      (no-way "~A CLNG-2.14~%" name)
       (begin
-	(set! ulongs-213 (cons (list name type spec-name) ulongs-213))
+	(set! ulongs-2.14 (cons (list name type spec-name) ulongs-2.14))
 	(set! names (cons (cons name 'ulong) names)))))
 
-(define* (CLNG-2173 name type spec-name)
+(define* (CLNG-2.18 name type spec-name)
   (save-declared-type type)
   (if (assoc name names)
-      (no-way "~A CLNG-2173~%" name)
+      (no-way "~A CLNG-2.18~%" name)
       (begin
-	(set! ulongs-2173 (cons (list name type spec-name) ulongs-2173))
+	(set! ulongs-2.18 (cons (list name type spec-name) ulongs-2.18))
 	(set! names (cons (cons name 'ulong) names)))))
 
 (define* (CINT name type)
@@ -1560,108 +1444,76 @@
 	(set! ints (cons name ints))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-213 name type)
+(define* (CINT-2.14 name type)
   (save-declared-type type)
   (if (assoc name names)
-      (no-way "~A CINT-213~%" name)
+      (no-way "~A CINT-2.14~%" name)
       (begin
-	(set! ints-213 (cons name ints-213))
+	(set! ints-2.14 (cons name ints-2.14))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-2134 name type)
+(define* (CINT-2.16 name type)
   (save-declared-type type)
   (if (assoc name names)
-      (no-way "~A CINT-2134~%" name)
+      (no-way "~A CINT-2.16~%" name)
       (begin
-	(set! ints-2134 (cons name ints-2134))
+	(set! ints-2.16 (cons name ints-2.16))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-2150 name type)
+(define* (CINT-2.18 name type)
   (save-declared-type type)
   (if (assoc name names)
-      (no-way "~A CINT-2150~%" name)
+      (no-way "~A CINT-2.18~%" name)
       (begin
-	(set! ints-2150 (cons name ints-2150))
+	(set! ints-2.18 (cons name ints-2.18))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-2172 name type)
+(define* (CINT-3.0 name type)
   (save-declared-type type)
   (if (assoc name names)
-      (no-way "~A CINT-2172~%" name)
+      (no-way "~A CINT-3.0~%" name)
       (begin
-	(set! ints-2172 (cons name ints-2172))
+	(set! ints-3.0 (cons name ints-3.0))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-2173 name type)
+(define* (CINT-3.2 name type)
   (save-declared-type type)
   (if (assoc name names)
-      (no-way "~A CINT-2173~%" name)
+      (no-way "~A CINT-3.2~%" name)
       (begin
-	(set! ints-2173 (cons name ints-2173))
+	(set! ints-3.2 (cons name ints-3.2))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-2177 name type)
+(define* (CINT-3.4 name type)
   (save-declared-type type)
   (if (assoc name names)
-      (no-way "~A CINT-2177~%" name)
+      (no-way "~A CINT-3.4~%" name)
       (begin
-	(set! ints-2177 (cons name ints-2177))
+	(set! ints-3.4 (cons name ints-3.4))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-300 name type)
+(define* (CINT-3.6 name type)
   (save-declared-type type)
   (if (assoc name names)
-      (no-way "~A CINT-300~%" name)
+      (no-way "~A CINT-3.6~%" name)
       (begin
-	(set! ints-300 (cons name ints-300))
+	(set! ints-3.6 (cons name ints-3.6))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-310 name type)
+(define* (CINT-3.8 name type)
   (save-declared-type type)
   (if (assoc name names)
-      (no-way "~A CINT-310~%" name)
+      (no-way "~A CINT-3.8~%" name)
       (begin
-	(set! ints-310 (cons name ints-310))
+	(set! ints-3.8 (cons name ints-3.8))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-312 name type)
+(define* (CINT-3.10 name type)
   (save-declared-type type)
   (if (assoc name names)
-      (no-way "~A CINT-312~%" name)
+      (no-way "~A CINT-3.10~%" name)
       (begin
-	(set! ints-312 (cons name ints-312))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-336 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-336~%" name)
-      (begin
-	(set! ints-336 (cons name ints-336))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-3316 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-3316~%" name)
-      (begin
-	(set! ints-3316 (cons name ints-3316))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-358 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-358~%" name)
-      (begin
-	(set! ints-358 (cons name ints-358))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-390 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-390~%" name)
-      (begin
-	(set! ints-390 (cons name ints-390))
+	(set! ints-3.10 (cons name ints-3.10))
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CINT-gtk2 name type)
@@ -1713,81 +1565,67 @@
 	(set! casts (cons (list name type) casts))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCAST-213 name type)
+(define (CCAST-2.14 name type)
   (if (assoc name names)
-      (no-way "~A CCAST-213~%" name)
+      (no-way "~A CCAST-2.14~%" name)
       (begin
-	(set! casts-213 (cons (list name type) casts-213))
+	(set! casts-2.14 (cons (list name type) casts-2.14))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCAST-2172 name type)
+(define (CCAST-2.18 name type)
   (if (assoc name names)
-      (no-way "~A CCAST-2172~%" name)
+      (no-way "~A CCAST-2.18~%" name)
       (begin
-	(set! casts-2172 (cons (list name type) casts-2172))
+	(set! casts-2.18 (cons (list name type) casts-2.18))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCAST-2173 name type)
+(define (CCAST-2.20 name type)
   (if (assoc name names)
-      (no-way "~A CCAST-2173~%" name)
+      (no-way "~A CCAST-2.20~%" name)
       (begin
-	(set! casts-2173 (cons (list name type) casts-2173))
+	(set! casts-2.20 (cons (list name type) casts-2.20))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCAST-2190 name type)
+(define (CCAST-3.0 name type)
   (if (assoc name names)
-      (no-way "~A CCAST-2190~%" name)
+      (no-way "~A CCAST-3.0~%" name)
       (begin
-	(set! casts-2190 (cons (list name type) casts-2190))
+	(set! casts-3.0 (cons (list name type) casts-3.0))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCAST-300 name type)
+(define (CCAST-3.2 name type)
   (if (assoc name names)
-      (no-way "~A CCAST-300~%" name)
+      (no-way "~A CCAST-3.2~%" name)
       (begin
-	(set! casts-300 (cons (list name type) casts-300))
+	(set! casts-3.2 (cons (list name type) casts-3.2))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCAST-310 name type)
+(define (CCAST-3.4 name type)
   (if (assoc name names)
-      (no-way "~A CCAST-310~%" name)
+      (no-way "~A CCAST-3.4~%" name)
       (begin
-	(set! casts-310 (cons (list name type) casts-310))
+	(set! casts-3.4 (cons (list name type) casts-3.4))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCAST-312 name type)
+(define (CCAST-3.6 name type)
   (if (assoc name names)
-      (no-way "~A CCAST-312~%" name)
+      (no-way "~A CCAST-3.6~%" name)
       (begin
-	(set! casts-312 (cons (list name type) casts-312))
+	(set! casts-3.6 (cons (list name type) casts-3.6))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCAST-336 name type)
+(define (CCAST-3.8 name type)
   (if (assoc name names)
-      (no-way "~A CCAST-336~%" name)
+      (no-way "~A CCAST-3.8~%" name)
       (begin
-	(set! casts-336 (cons (list name type) casts-336))
+	(set! casts-3.8 (cons (list name type) casts-3.8))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCAST-3316 name type)
+(define (CCAST-3.10 name type)
   (if (assoc name names)
-      (no-way "~A CCAST-3316~%" name)
+      (no-way "~A CCAST-3.10~%" name)
       (begin
-	(set! casts-3316 (cons (list name type) casts-3316))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-358 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-358~%" name)
-      (begin
-	(set! casts-358 (cons (list name type) casts-358))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-390 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-390~%" name)
-      (begin
-	(set! casts-390 (cons (list name type) casts-390))
+	(set! casts-3.10 (cons (list name type) casts-3.10))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCAST-gtk2 name type)
@@ -1804,81 +1642,67 @@
 	(set! checks (cons (list name type) checks))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCHK-213 name type)
+(define (CCHK-2.14 name type)
   (if (assoc name names)
-      (no-way "~A CCHK-213~%" name)
+      (no-way "~A CCHK-2.14~%" name)
       (begin
-	(set! checks-213 (cons (list name type) checks-213))
+	(set! checks-2.14 (cons (list name type) checks-2.14))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCHK-2172 name type)
+(define (CCHK-2.18 name type)
   (if (assoc name names)
-      (no-way "~A CCHK-2172~%" name)
+      (no-way "~A CCHK-2.18~%" name)
       (begin
-	(set! checks-2172 (cons (list name type) checks-2172))
+	(set! checks-2.18 (cons (list name type) checks-2.18))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCHK-2173 name type)
+(define (CCHK-2.20 name type)
   (if (assoc name names)
-      (no-way "~A CCHK-2173~%" name)
+      (no-way "~A CCHK-2.20~%" name)
       (begin
-	(set! checks-2173 (cons (list name type) checks-2173))
+	(set! checks-2.20 (cons (list name type) checks-2.20))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCHK-2190 name type)
+(define (CCHK-3.0 name type)
   (if (assoc name names)
-      (no-way "~A CCHK-2190~%" name)
+      (no-way "~A CCHK-3.0~%" name)
       (begin
-	(set! checks-2190 (cons (list name type) checks-2190))
+	(set! checks-3.0 (cons (list name type) checks-3.0))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCHK-300 name type)
+(define (CCHK-3.2 name type)
   (if (assoc name names)
-      (no-way "~A CCHK-300~%" name)
+      (no-way "~A CCHK-3.2~%" name)
       (begin
-	(set! checks-300 (cons (list name type) checks-300))
+	(set! checks-3.2 (cons (list name type) checks-3.2))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCHK-310 name type)
+(define (CCHK-3.4 name type)
   (if (assoc name names)
-      (no-way "~A CCHK-310~%" name)
+      (no-way "~A CCHK-3.4~%" name)
       (begin
-	(set! checks-310 (cons (list name type) checks-310))
+	(set! checks-3.4 (cons (list name type) checks-3.4))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCHK-312 name type)
+(define (CCHK-3.6 name type)
   (if (assoc name names)
-      (no-way "~A CCHK-312~%" name)
+      (no-way "~A CCHK-3.6~%" name)
       (begin
-	(set! checks-312 (cons (list name type) checks-312))
+	(set! checks-3.6 (cons (list name type) checks-3.6))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCHK-336 name type)
+(define (CCHK-3.8 name type)
   (if (assoc name names)
-      (no-way "~A CCHK-336~%" name)
+      (no-way "~A CCHK-3.8~%" name)
       (begin
-	(set! checks-336 (cons (list name type) checks-336))
+	(set! checks-3.8 (cons (list name type) checks-3.8))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCHK-3316 name type)
+(define (CCHK-3.10 name type)
   (if (assoc name names)
-      (no-way "~A CCHK-3316~%" name)
+      (no-way "~A CCHK-3.10~%" name)
       (begin
-	(set! checks-3316 (cons (list name type) checks-3316))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-358 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-358~%" name)
-      (begin
-	(set! checks-358 (cons (list name type) checks-358))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-390 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-390~%" name)
-      (begin
-	(set! checks-390 (cons (list name type) checks-390))
+	(set! checks-3.10 (cons (list name type) checks-3.10))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCHK-gtk2 name type)
@@ -1913,9 +1737,9 @@
   (STRUCT data)
   (set! make-structs (cons (car-str data) make-structs)))
 
-(define (STRUCT-300-make data)
+(define (STRUCT-3.0-make data)
   (STRUCT data)
-  (set! make-structs-300 (cons (car-str data) make-structs-300)))
+  (set! make-structs-3.0 (cons (car-str data) make-structs-3.0)))
 
 (define (CAIRO-STRUCT-make data)
   (STRUCT data) ; fields not needed currently
@@ -1960,73 +1784,53 @@
  types)
 
 
-(define (with-213 dpy thunk)
-  (dpy "#if HAVE_GTK_TEST_WIDGET_CLICK~%")
+(define (with-2.14 dpy thunk)
+  (dpy "#if GTK_CHECK_VERSION(2, 14, 0)~%")
   (thunk)
   (dpy "#endif~%~%"))
 
-(define (with-2134 dpy thunk)
-  (dpy "#if HAVE_GTK_ADJUSTMENT_GET_UPPER~%")
+(define (with-2.16 dpy thunk)
+  (dpy "#if GTK_CHECK_VERSION(2, 16, 0)~%")
   (thunk)
   (dpy "#endif~%~%"))
 
-(define (with-2150 dpy thunk)
-  (dpy "#if HAVE_GTK_SCALE_ADD_MARK~%")
+(define (with-2.18 dpy thunk)
+  (dpy "#if GTK_CHECK_VERSION(2, 18, 0)~%")
   (thunk)
   (dpy "#endif~%~%"))
 
-(define (with-2172 dpy thunk)
-  (dpy "#if HAVE_GTK_INFO_BAR_NEW~%")
+(define (with-2.20 dpy thunk)
+  (dpy "#if GTK_CHECK_VERSION(2, 20, 0)~%")
   (thunk)
   (dpy "#endif~%~%"))
 
-(define (with-2173 dpy thunk)
-  (dpy "#if HAVE_GTK_STATUS_ICON_GET_TITLE~%")
+(define (with-3.0 dpy thunk)
+  (dpy "#if GTK_CHECK_VERSION(3, 0, 0)~%")
   (thunk)
   (dpy "#endif~%~%"))
 
-(define (with-2177 dpy thunk)
-  (dpy "#if HAVE_GTK_WIDGET_GET_VISIBLE~%")
+(define (with-3.2 dpy thunk)
+  (dpy "#if GTK_CHECK_VERSION(3, 2, 0)~%")
   (thunk)
   (dpy "#endif~%~%"))
 
-(define (with-2190 dpy thunk)
-  (dpy "#if HAVE_GTK_WIDGET_GET_MAPPED~%")
+(define (with-3.4 dpy thunk)
+  (dpy "#if GTK_CHECK_VERSION(3, 4, 0)~%")
   (thunk)
   (dpy "#endif~%~%"))
 
-(define (with-300 dpy thunk)
-  (dpy "#if HAVE_GTK_COMBO_BOX_NEW_WITH_AREA~%")
+(define (with-3.6 dpy thunk)
+  (dpy "#if GTK_CHECK_VERSION(3, 6, 0)~%")
   (thunk)
   (dpy "#endif~%~%"))
 
-(define (with-310 dpy thunk)
-  (dpy "#if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT~%")
+(define (with-3.8 dpy thunk)
+  (dpy "#if GTK_CHECK_VERSION(3, 8, 0)~%")
   (thunk)
   (dpy "#endif~%~%"))
 
-(define (with-312 dpy thunk)
-  (dpy "#if HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-336 dpy thunk)
-  (dpy "#if HAVE_GTK_APPLICATION_WINDOW_NEW~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-3316 dpy thunk)
-  (dpy "#if HAVE_GTK_COLOR_CHOOSER_DIALOG_NEW~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-358 dpy thunk)
-  (dpy "#if HAVE_GTK_LEVEL_BAR_NEW~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-390 dpy thunk)
-  (dpy "#if HAVE_GTK_HEADER_BAR_NEW~%")
+(define (with-3.10 dpy thunk)
+  (dpy "#if GTK_CHECK_VERSION(3, 10, 0)~%~%")
   (thunk)
   (dpy "#endif~%~%"))
 
@@ -2056,44 +1860,44 @@
 
 
 
-(define all-types (list types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 
-			types-300 types-310 types-312 types-336 types-3316 types-358 types-390 types-gtk2
+(define all-types (list types-2.14 types-2.16 types-2.18 types-2.20 
+			types-3.0 types-3.2 types-3.4 types-3.6 types-3.8 types-3.10 types-gtk2
 			cairo-types cairo-types-810 cairo-types-912))
-(define all-type-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 
-			     with-300 with-310 with-312 with-336 with-3316 with-358 with-390 with-gtk2
+(define all-type-withs (list with-2.14 with-2.16 with-2.18 with-2.20 
+			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-gtk2
 			     with-cairo with-cairo-810 with-cairo-912))
 
-(define all-funcs (list funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 
-			funcs-300 funcs-310 funcs-312 funcs-336 funcs-3316 funcs-358 funcs-390 funcs-gtk2
+(define all-funcs (list funcs-2.14 funcs-2.16 funcs-2.18 funcs-2.20 
+			funcs-3.0 funcs-3.2 funcs-3.4 funcs-3.6 funcs-3.8 funcs-3.10 funcs-gtk2
 			cairo-funcs cairo-png-funcs cairo-funcs-810 cairo-funcs-912))
-(define all-func-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 
-			     with-300 with-310 with-312 with-336 with-3316 with-358 with-390 with-gtk2
+(define all-func-withs (list with-2.14 with-2.16 with-2.18 with-2.20 
+			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-gtk2
 			     with-cairo with-cairo-png with-cairo-810 with-cairo-912))
 
-(define all-ints (list ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177 
-		       ints-300 ints-310 ints-312 ints-336 ints-3316 ints-358 ints-390 ints-gtk2
+(define all-ints (list ints-2.14 ints-2.16 ints-2.18  
+		       ints-3.0 ints-3.2 ints-3.4 ints-3.6 ints-3.8 ints-3.10 ints-gtk2
 		       cairo-ints cairo-ints-810 cairo-ints-912))
-(define all-int-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 
-			    with-300 with-310 with-312 with-336 with-3316 with-358 with-390 with-gtk2
+(define all-int-withs (list with-2.14 with-2.16 with-2.18 
+			    with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-gtk2
 			    with-cairo with-cairo-810 with-cairo-912))
 
-(define all-casts (list casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 
-			casts-300 casts-310 casts-312 casts-336 casts-3316 casts-358 casts-390 casts-gtk2))
-(define all-cast-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2190 
-			     with-300 with-310 with-312 with-336 with-3316 with-358 with-390 with-gtk2))
+(define all-casts (list casts-2.14 casts-2.16 casts-2.18 casts-2.20 
+			casts-3.0 casts-3.2 casts-3.4 casts-3.6 casts-3.8 casts-3.10 casts-gtk2))
+(define all-cast-withs (list with-2.14 with-2.16 with-2.18 with-2.20 
+			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-gtk2))
 
-(define all-checks (list checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 
-			 checks-300 checks-310 checks-312 checks-336 checks-3316 checks-358 checks-390 checks-gtk2))
-(define all-check-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2190 
-			      with-300 with-310 with-312 with-336 with-3316 with-358 with-390 with-gtk2))
+(define all-checks (list checks-2.14 checks-2.16 checks-2.18 checks-2.20 
+			 checks-3.0 checks-3.2 checks-3.4 checks-3.6 checks-3.8 checks-3.10 checks-gtk2))
+(define all-check-withs (list with-2.14 with-2.16 with-2.18 with-2.20 
+			      with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-gtk2))
 
-(define all-strings (list strings-213 strings-2134 strings-2150 
-			  strings-300 strings-310 strings-312 strings-336 strings-3316 strings-358 strings-390 cairo-strings-912))
-(define all-string-withs (list with-213 with-2134 with-2150 
-			       with-300 with-310 with-312 with-336 with-3316 with-358 with-390 with-cairo-912))
+(define all-strings (list strings-2.14 strings-2.16 
+			  strings-3.0 strings-3.2 strings-3.4 strings-3.6 strings-3.8 strings-3.10 cairo-strings-912))
+(define all-string-withs (list with-2.14 with-2.16 
+			       with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-cairo-912))
 
-(define all-ulongs (list ulongs-213 ulongs-2134 ulongs-2150 ulongs-2173 ulongs-gtk2))
-(define all-ulong-withs (list with-213 with-2134 with-2150 with-2173 with-gtk2))
+(define all-ulongs (list ulongs-2.14 ulongs-2.16 ulongs-2.18 ulongs-gtk2))
+(define all-ulong-withs (list with-2.14 with-2.16 with-2.18 with-gtk2))
 
 
 
@@ -2145,6 +1949,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     18-Aug:    changed the gtk version macros to reflect the version number.~%")
 (hey " *     7-Jun-13:  added mixed arg types to the ... arg lists.~%")
 (hey " *     --------~%")
 (hey " *     19-Aug-10: removed lots of Gdk stuff -- we assume Gtk 2.9 and cairo now.~%")
@@ -2156,7 +1961,7 @@
 (hey " *     1-Sep:     s7 support.~%")
 (hey " *     8-Jul-08:  started removing all struct accessors (for Gtk 3).~%")
 (hey " *     --------~%")
-(hey " *     9-Mar:     removed all *_get_type functions (nearly 300!).~%")
+(hey " *     9-Mar:     removed all *_get_type functions (nearly 3.0!).~%")
 (hey " *     5-Mar-07:  cairo and more gtkprint.~%")
 (hey " *     --------~%")
 (hey " *     26-Aug:    removed --with-x11, WITH_GTK_AND_X11, xg-x11.h.~%")
@@ -2208,22 +2013,6 @@
 (hey "#include <mus-config.h>~%~%")
 
 (hey "#define HAVE_GTK_3 (GTK_MAJOR_VERSION == 3)~%")
-(hey "#define HAVE_GTK_TEST_WIDGET_CLICK                GTK_CHECK_VERSION(2, 14, 0)~%")
-(hey "#define HAVE_GTK_ADJUSTMENT_GET_UPPER             GTK_CHECK_VERSION(2, 14, 0)~%")
-(hey "#define HAVE_GTK_SCALE_ADD_MARK                   GTK_CHECK_VERSION(2, 16, 0)~%")
-(hey "#define HAVE_GTK_INFO_BAR_NEW                     GTK_CHECK_VERSION(2, 18, 0)~%")
-(hey "#define HAVE_GTK_STATUS_ICON_GET_TITLE            GTK_CHECK_VERSION(2, 18, 0)~%")
-(hey "#define HAVE_GTK_WIDGET_GET_VISIBLE               GTK_CHECK_VERSION(2, 18, 0)~%")
-(hey "#define HAVE_GTK_WIDGET_GET_MAPPED                GTK_CHECK_VERSION(2, 19, 0)~%")
-(hey "#define HAVE_GTK_COMBO_BOX_NEW_WITH_AREA          GTK_CHECK_VERSION(3, 0, 0)~%")
-(hey "/* #define HAVE_GTK_GRID_NEW                         GTK_CHECK_VERSION(3, 0, 0) */~%")
-(hey "#define HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT GTK_CHECK_VERSION(3, 2, 0)~%")
-(hey "#define HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE       GTK_CHECK_VERSION(3, 2, 0)~%")
-(hey "#define HAVE_GTK_APPLICATION_WINDOW_NEW           GTK_CHECK_VERSION(3, 4, 0)~%")
-(hey "#define HAVE_GTK_COLOR_CHOOSER_DIALOG_NEW         GTK_CHECK_VERSION(3, 4, 0)~%")
-(hey "#define HAVE_GTK_LEVEL_BAR_NEW                    GTK_CHECK_VERSION(3, 6, 0)~%")
-(hey "#define HAVE_GTK_HEADER_BAR_NEW                   GTK_CHECK_VERSION(3, 9, 0)~%~%")
-
 (hey "#define HAVE_CAIRO_GLYPH_ALLOCATE                 ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 8))~%")
 (hey "#define HAVE_CAIRO_REGION_XOR                     ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 9) && (CAIRO_VERSION_MICRO >= 12))~%~%")
 
@@ -3429,8 +3218,8 @@
 		(lambda () 
 		  (for-each define-struct (reverse cairo-make-structs)))))
 
-(with-300 hey (lambda ()
-		(for-each define-struct (reverse make-structs-300))))
+(with-3.0 hey (lambda ()
+		(for-each define-struct (reverse make-structs-3.0))))
 
 
 
@@ -3521,13 +3310,13 @@
 	       (reverse cairo-make-structs))))
 (hey "~%")
 
-(with-300 hey (lambda ()
+(with-3.0 hey (lambda ()
 		(for-each (lambda (struct) 
 			    (let ((s (find-struct struct)))
 			      (if (> (length (cadr s)) 0)
 				  (hey "XEN_VARGIFY(gxg_make_~A_w, gxg_make_~A)~%" struct struct)
 				  (hey "XEN_NARGIFY_0(gxg_make_~A_w, gxg_make_~A)~%" struct struct))))
-			  (reverse make-structs-300))
+			  (reverse make-structs-3.0))
 		(hey "~%")))
 
 
@@ -3592,10 +3381,10 @@
 		   (reverse cairo-make-structs)))))
 (hey "~%")
 
-(with-300 hey (lambda ()
+(with-3.0 hey (lambda ()
 		(for-each (lambda (struct) 
 			    (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct))
-			  (reverse make-structs-300))
+			  (reverse make-structs-3.0))
 		(hey "~%")))
 
 
@@ -3712,7 +3501,7 @@
 			    (if (> (length (cadr s)) 0) " ..." "")
 			    struct)))
 		   (reverse cairo-make-structs)))))
-(with-300 hey (lambda ()
+(with-3.0 hey (lambda ()
 		(for-each (lambda (struct)
 			    (let ((s (find-struct struct)))
 			      (hey "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, \"(~A~A): a new ~A struct\");~%" 
@@ -3722,7 +3511,7 @@
 				   struct
 				   (if (> (length (cadr s)) 0) " ..." "")
 				   struct)))
-			  (reverse make-structs-300))))
+			  (reverse make-structs-3.0))))
 
 (hey "}~%~%")
 
