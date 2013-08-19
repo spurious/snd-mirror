@@ -36,156 +36,156 @@
 		    ;(int gdbm_export ((GDBM_FILE c_pointer) char* int int))
 		    ;(int gdbm_import ((GDBM_FILE c_pointer) char* int))
 
-		    (in-C "\n\
-static s7_pointer g_gdbm_firstkey(s7_scheme *sc, s7_pointer args)\n\
-{\n\
-  if (s7_is_c_pointer(s7_car(args)))\n\
-    {\n\
-      datum key;\n\
-      key = gdbm_firstkey((GDBM_FILE)s7_c_pointer(s7_car(args)));\n\
-      return(s7_make_string_with_length(sc, key.dptr, key.dsize));\n\
-    }\n\
-  return(s7_wrong_type_arg_error(sc, \"gdbm_firstkey\", 0, s7_car(args), \"a gdbm file\"));\n\
-}\n\
-\n\
-static s7_pointer g_gdbm_exists(s7_scheme *sc, s7_pointer args)\n\
-{\n\
-  if (s7_is_c_pointer(s7_car(args)))\n\
-    {\n\
-      if (s7_is_string(s7_cadr(args)))\n\
-        {
-          datum key;\n\
-          key.dptr = (char *)s7_string(s7_cadr(args));\n\
-          key.dsize = (int)s7_string_length(s7_cadr(args));\n\
-          return(s7_make_integer(sc, gdbm_exists((GDBM_FILE)s7_c_pointer(s7_car(args)), key)));\n\
-	}\n\
-      return(s7_wrong_type_arg_error(sc, \"gdbm_exists\", 2, s7_cadr(args), \"a string\"));\n\
-    }\n\
-  return(s7_wrong_type_arg_error(sc, \"gdbm_exists\", 1, s7_car(args), \"a gdbm file\"));\n\
-}\n\
-\n\
-static s7_pointer g_gdbm_delete(s7_scheme *sc, s7_pointer args)\n\
-{\n\
-  if (s7_is_c_pointer(s7_car(args)))\n\
-    {\n\
-      if (s7_is_string(s7_cadr(args)))\n\
-        {
-          datum key;\n\
-          key.dptr = (char *)s7_string(s7_cadr(args));\n\
-          key.dsize = (int)s7_string_length(s7_cadr(args));\n\
-          return(s7_make_integer(sc, gdbm_delete((GDBM_FILE)s7_c_pointer(s7_car(args)), key)));\n\
-	}\n\
-      return(s7_wrong_type_arg_error(sc, \"gdbm_delete\", 2, s7_cadr(args), \"a string\"));\n\
-    }\n\
-  return(s7_wrong_type_arg_error(sc, \"gdbm_delete\", 1, s7_car(args), \"a gdbm file\"));\n\
-}\n\
-\n\
-static s7_pointer g_gdbm_nextkey(s7_scheme *sc, s7_pointer args)\n\
-{\n\
-  if (s7_is_c_pointer(s7_car(args)))\n\
-    {\n\
-      if (s7_is_string(s7_cadr(args)))\n\
-        {
-          datum key, rtn;\n\
-          key.dptr = (char *)s7_string(s7_cadr(args));\n\
-          key.dsize = (int)s7_string_length(s7_cadr(args));\n\
-          rtn = gdbm_nextkey((GDBM_FILE)s7_c_pointer(s7_car(args)), key);\n\
-          return(s7_make_string_with_length(sc, rtn.dptr, rtn.dsize));\n\
-	}\n\
-      return(s7_wrong_type_arg_error(sc, \"gdbm_nextkey\", 2, s7_cadr(args), \"a string\"));\n\
-    }\n\
-  return(s7_wrong_type_arg_error(sc, \"gdbm_nextkey\", 1, s7_car(args), \"a gdbm file\"));\n\
-}\n\
-\n\
-static s7_pointer g_gdbm_fetch(s7_scheme *sc, s7_pointer args)\n\
-{\n\
-  if (s7_is_c_pointer(s7_car(args)))\n\
-    {\n\
-      if (s7_is_string(s7_cadr(args)))\n\
-        {
-          datum key, rtn;\n\
-          key.dptr = (char *)s7_string(s7_cadr(args));\n\
-          key.dsize = (int)s7_string_length(s7_cadr(args));\n\
-          rtn = gdbm_fetch((GDBM_FILE)s7_c_pointer(s7_car(args)), key);\n\
-          return(s7_make_string_with_length(sc, rtn.dptr, rtn.dsize));\n\
-	}\n\
-      return(s7_wrong_type_arg_error(sc, \"gdbm_fetch\", 2, s7_cadr(args), \"a string\"));\n\
-    }\n\
-  return(s7_wrong_type_arg_error(sc, \"gdbm_fetch\", 1, s7_car(args), \"a gdbm file\"));\n\
-}\n\
-static s7_pointer g_gdbm_store(s7_scheme *sc, s7_pointer args)\n\
-{\n\
-  if (s7_is_c_pointer(s7_car(args)))\n\
-    {\n\
-      if (s7_is_string(s7_cadr(args)))\n\
-        {
-          if (s7_is_string(s7_caddr(args)))\n\
-            {
-              if (s7_is_integer(s7_cadddr(args)))\n\
-                {
-                  datum key, val;\n\
-                  key.dptr = (char *)s7_string(s7_cadr(args));\n\
-                  key.dsize = (int)s7_string_length(s7_cadr(args));\n\
-                  val.dptr = (char *)s7_string(s7_caddr(args));\n\
-                  val.dsize = (int)s7_string_length(s7_caddr(args));\n\
+		    (in-C "                                                                                             \n\
+static s7_pointer g_gdbm_firstkey(s7_scheme *sc, s7_pointer args)                                                       \n\
+{                                                                                                                       \n\
+  if (s7_is_c_pointer(s7_car(args)))                                                                                    \n\
+    {                                                                                                                   \n\
+      datum key;                                                                                                        \n\
+      key = gdbm_firstkey((GDBM_FILE)s7_c_pointer(s7_car(args)));                                                       \n\
+      return(s7_make_string_with_length(sc, key.dptr, key.dsize));                                                      \n\
+    }                                                                                                                   \n\
+  return(s7_wrong_type_arg_error(sc, \"gdbm_firstkey\", 0, s7_car(args), \"a gdbm file\"));                             \n\
+}                                                                                                                       \n\
+                                                                                                                        \n\
+static s7_pointer g_gdbm_exists(s7_scheme *sc, s7_pointer args)                                                         \n\
+{                                                                                                                       \n\
+  if (s7_is_c_pointer(s7_car(args)))                                                                                    \n\
+    {                                                                                                                   \n\
+      if (s7_is_string(s7_cadr(args)))                                                                                  \n\
+        {                                                                                                               \n\
+          datum key;                                                                                                    \n\
+          key.dptr = (char *)s7_string(s7_cadr(args));                                                                  \n\
+          key.dsize = (int)s7_string_length(s7_cadr(args));                                                             \n\
+          return(s7_make_integer(sc, gdbm_exists((GDBM_FILE)s7_c_pointer(s7_car(args)), key)));                         \n\
+	}                                                                                                               \n\
+      return(s7_wrong_type_arg_error(sc, \"gdbm_exists\", 2, s7_cadr(args), \"a string\"));                             \n\
+    }                                                                                                                   \n\
+  return(s7_wrong_type_arg_error(sc, \"gdbm_exists\", 1, s7_car(args), \"a gdbm file\"));                               \n\
+}                                                                                                                       \n\
+                                                                                                                        \n\
+static s7_pointer g_gdbm_delete(s7_scheme *sc, s7_pointer args)                                                         \n\
+{                                                                                                                       \n\
+  if (s7_is_c_pointer(s7_car(args)))                                                                                    \n\
+    {                                                                                                                   \n\
+      if (s7_is_string(s7_cadr(args)))                                                                                  \n\
+        {                                                                                                               \n\
+          datum key;                                                                                                    \n\
+          key.dptr = (char *)s7_string(s7_cadr(args));                                                                  \n\
+          key.dsize = (int)s7_string_length(s7_cadr(args));                                                             \n\
+          return(s7_make_integer(sc, gdbm_delete((GDBM_FILE)s7_c_pointer(s7_car(args)), key)));                         \n\
+	}                                                                                                               \n\
+      return(s7_wrong_type_arg_error(sc, \"gdbm_delete\", 2, s7_cadr(args), \"a string\"));                             \n\
+    }                                                                                                                   \n\
+  return(s7_wrong_type_arg_error(sc, \"gdbm_delete\", 1, s7_car(args), \"a gdbm file\"));                               \n\
+}                                                                                                                       \n\
+                                                                                                                        \n\
+static s7_pointer g_gdbm_nextkey(s7_scheme *sc, s7_pointer args)                                                        \n\
+{                                                                                                                       \n\
+  if (s7_is_c_pointer(s7_car(args)))                                                                                    \n\
+    {                                                                                                                   \n\
+      if (s7_is_string(s7_cadr(args)))                                                                                  \n\
+        {                                                                                                               \n\
+          datum key, rtn;                                                                                               \n\
+          key.dptr = (char *)s7_string(s7_cadr(args));                                                                  \n\
+          key.dsize = (int)s7_string_length(s7_cadr(args));                                                             \n\
+          rtn = gdbm_nextkey((GDBM_FILE)s7_c_pointer(s7_car(args)), key);                                               \n\
+          return(s7_make_string_with_length(sc, rtn.dptr, rtn.dsize));                                                  \n\
+	}                                                                                                               \n\
+      return(s7_wrong_type_arg_error(sc, \"gdbm_nextkey\", 2, s7_cadr(args), \"a string\"));                            \n\
+    }                                                                                                                   \n\
+  return(s7_wrong_type_arg_error(sc, \"gdbm_nextkey\", 1, s7_car(args), \"a gdbm file\"));                              \n\
+}                                                                                                                       \n\
+                                                                                                                        \n\
+static s7_pointer g_gdbm_fetch(s7_scheme *sc, s7_pointer args)                                                          \n\
+{                                                                                                                       \n\
+  if (s7_is_c_pointer(s7_car(args)))                                                                                    \n\
+    {                                                                                                                   \n\
+      if (s7_is_string(s7_cadr(args)))                                                                                  \n\
+        {                                                                                                               \n\
+          datum key, rtn;                                                                                               \n\
+          key.dptr = (char *)s7_string(s7_cadr(args));                                                                  \n\
+          key.dsize = (int)s7_string_length(s7_cadr(args));                                                             \n\
+          rtn = gdbm_fetch((GDBM_FILE)s7_c_pointer(s7_car(args)), key);                                                 \n\
+          return(s7_make_string_with_length(sc, rtn.dptr, rtn.dsize));                                                  \n\
+	}                                                                                                               \n\
+      return(s7_wrong_type_arg_error(sc, \"gdbm_fetch\", 2, s7_cadr(args), \"a string\"));                              \n\
+    }                                                                                                                   \n\
+  return(s7_wrong_type_arg_error(sc, \"gdbm_fetch\", 1, s7_car(args), \"a gdbm file\"));                                \n\
+}                                                                                                                       \n\
+static s7_pointer g_gdbm_store(s7_scheme *sc, s7_pointer args)                                                          \n\
+{                                                                                                                       \n\
+  if (s7_is_c_pointer(s7_car(args)))                                                                                    \n\
+    {                                                                                                                   \n\
+      if (s7_is_string(s7_cadr(args)))                                                                                  \n\
+        {                                                                                                               \n\
+          if (s7_is_string(s7_caddr(args)))                                                                             \n\
+            {                                                                                                           \n\
+              if (s7_is_integer(s7_cadddr(args)))                                                                       \n\
+                {                                                                                                       \n\
+                  datum key, val;                                                                                       \n\
+                  key.dptr = (char *)s7_string(s7_cadr(args));                                                          \n\
+                  key.dsize = (int)s7_string_length(s7_cadr(args));                                                     \n\
+                  val.dptr = (char *)s7_string(s7_caddr(args));                                                         \n\
+                  val.dsize = (int)s7_string_length(s7_caddr(args));                                                    \n\
                   return(s7_make_integer(sc, gdbm_store((GDBM_FILE)s7_c_pointer(s7_car(args)), key, val, (int)s7_integer(s7_cadddr(args)))));\n\
-                }\n\
-              return(s7_wrong_type_arg_error(sc, \"gdbm_fetch\", 4, s7_cadddr(args), \"an integer (flag)\"));\n\
-	    }\n\
-          return(s7_wrong_type_arg_error(sc, \"gdbm_fetch\", 3, s7_caddr(args), \"a string\"));\n\
-	}\n\
-      return(s7_wrong_type_arg_error(sc, \"gdbm_fetch\", 2, s7_cadr(args), \"a string\"));\n\
-    }\n\
-  return(s7_wrong_type_arg_error(sc, \"gdbm_fetch\", 1, s7_car(args), \"a gdbm file\"));\n\
-}\n\
-static s7_pointer open_error_func = NULL;\n\
-static s7_scheme *open_error_s7 = NULL;\n\
-static void gdbm_open_error(const char *name)\n\
-{\n\
-  if (open_error_func)\n\
-    s7_apply_function(open_error_s7, open_error_func, s7_list(open_error_s7, 1, s7_make_string(open_error_s7, name)));\n\
-}\n\
-static s7_pointer g_gdbm_open(s7_scheme *sc, s7_pointer args)\n\
-{\n\
-  if (s7_is_string(s7_car(args)))\n\
-    {\n\
-      char *name;\n\
-      name = (char *)s7_string(s7_car(args));\n\
-      args = s7_cdr(args);\n\
-      if (s7_is_integer(s7_car(args)))\n\
-        {\n\
-	  int block_size;\n\
-          block_size = (int)s7_integer(s7_car(args));\n\
-          args = s7_cdr(args);\n\
-          if (s7_is_integer(s7_car(args)))\n\
-            {\n\
-	      int flags;\n\
-              flags = (int)s7_integer(s7_car(args));\n\
-              args = s7_cdr(args);\n\
-              if (s7_is_integer(s7_car(args)))\n\
-                {\n\
-	          int mode;\n\
-                  mode = (int)s7_integer(s7_car(args));\n\
-		  if (s7_is_procedure(s7_cadr(args)))\n\
-		    {\n\
-                      open_error_func = s7_cadr(args);\n\
-                      open_error_s7 = sc;\n\
-                    }\n\
-                  else\n\
-		    {\n\
-                      open_error_func = NULL;\n\
-                      open_error_s7 = NULL;\n\
-                    }\n\
-                  return(s7_make_c_pointer(sc, (void *)gdbm_open(name, block_size, flags, mode, gdbm_open_error)));\n\
-                }\n\
-              return(s7_wrong_type_arg_error(sc, \"gdbm_open\", 4, s7_car(args), \"an integer (mode)\"));\n\
-            }\n\
-          return(s7_wrong_type_arg_error(sc, \"gdbm_open\", 3, s7_car(args), \"an integer (flags)\"));\n\
-        }\n\
-      return(s7_wrong_type_arg_error(sc, \"gdbm_open\", 2, s7_car(args), \"an integer (block_size)\"));\n\
-    }\n\
-  return(s7_wrong_type_arg_error(sc, \"gdbm_open\", 1, s7_car(args), \"a string (file name)\"));\n\
-}\n\
+                }                                                                                                       \n\
+              return(s7_wrong_type_arg_error(sc, \"gdbm_fetch\", 4, s7_cadddr(args), \"an integer (flag)\"));           \n\
+	    }                                                                                                           \n\
+          return(s7_wrong_type_arg_error(sc, \"gdbm_fetch\", 3, s7_caddr(args), \"a string\"));                         \n\
+	}                                                                                                               \n\
+      return(s7_wrong_type_arg_error(sc, \"gdbm_fetch\", 2, s7_cadr(args), \"a string\"));                              \n\
+    }                                                                                                                   \n\
+  return(s7_wrong_type_arg_error(sc, \"gdbm_fetch\", 1, s7_car(args), \"a gdbm file\"));                                \n\
+}                                                                                                                       \n\
+static s7_pointer open_error_func = NULL;                                                                               \n\
+static s7_scheme *open_error_s7 = NULL;                                                                                 \n\
+static void gdbm_open_error(const char *name)                                                                           \n\
+{                                                                                                                       \n\
+  if (open_error_func)                                                                                                  \n\
+    s7_apply_function(open_error_s7, open_error_func, s7_list(open_error_s7, 1, s7_make_string(open_error_s7, name)));  \n\
+}                                                                                                                       \n\
+static s7_pointer g_gdbm_open(s7_scheme *sc, s7_pointer args)                                                           \n\
+{                                                                                                                       \n\
+  if (s7_is_string(s7_car(args)))                                                                                       \n\
+    {                                                                                                                   \n\
+      char *name;                                                                                                       \n\
+      name = (char *)s7_string(s7_car(args));                                                                           \n\
+      args = s7_cdr(args);                                                                                              \n\
+      if (s7_is_integer(s7_car(args)))                                                                                  \n\
+        {                                                                                                               \n\
+	  int block_size;                                                                                               \n\
+          block_size = (int)s7_integer(s7_car(args));                                                                   \n\
+          args = s7_cdr(args);                                                                                          \n\
+          if (s7_is_integer(s7_car(args)))                                                                              \n\
+            {                                                                                                           \n\
+	      int flags;                                                                                                \n\
+              flags = (int)s7_integer(s7_car(args));                                                                    \n\
+              args = s7_cdr(args);                                                                                      \n\
+              if (s7_is_integer(s7_car(args)))                                                                          \n\
+                {                                                                                                       \n\
+	          int mode;                                                                                             \n\
+                  mode = (int)s7_integer(s7_car(args));                                                                 \n\
+		  if (s7_is_procedure(s7_cadr(args)))                                                                   \n\
+		    {                                                                                                   \n\
+                      open_error_func = s7_cadr(args);                                                                  \n\
+                      open_error_s7 = sc;                                                                               \n\
+                    }                                                                                                   \n\
+                  else                                                                                                  \n\
+		    {                                                                                                   \n\
+                      open_error_func = NULL;                                                                           \n\
+                      open_error_s7 = NULL;                                                                             \n\
+                    }                                                                                                   \n\
+                  return(s7_make_c_pointer(sc, (void *)gdbm_open(name, block_size, flags, mode, gdbm_open_error)));     \n\
+                }                                                                                                       \n\
+              return(s7_wrong_type_arg_error(sc, \"gdbm_open\", 4, s7_car(args), \"an integer (mode)\"));               \n\
+            }                                                                                                           \n\
+          return(s7_wrong_type_arg_error(sc, \"gdbm_open\", 3, s7_car(args), \"an integer (flags)\"));                  \n\
+        }                                                                                                               \n\
+      return(s7_wrong_type_arg_error(sc, \"gdbm_open\", 2, s7_car(args), \"an integer (block_size)\"));                 \n\
+    }                                                                                                                   \n\
+  return(s7_wrong_type_arg_error(sc, \"gdbm_open\", 1, s7_car(args), \"a string (file name)\"));                        \n\
+}                                                                                                                       \n\
 ")
                     (C-function ("gdbm_firstkey" g_gdbm_firstkey gdbm_firstkey 1))
                     (C-function ("gdbm_exists" g_gdbm_exists gdbm_exists 2))

@@ -1,6 +1,6 @@
 ;;; libdl.scm
 ;;;
-;;; tie the math library into the *libdl* environment
+;;; tie the dynamic loader library into the *libdl* environment
 
 (if (not (provided? 'cload.scm)) (load "cload.scm"))
 (provide 'libdl.scm)
