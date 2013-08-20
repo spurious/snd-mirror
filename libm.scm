@@ -117,9 +117,9 @@ static s7_pointer g_modf(s7_scheme *sc, s7_pointer args)                        
   return(s7_wrong_type_arg_error(sc, \"modf\", 1, s7_car(args), \"a real\"));        \n\
 }                                                                                    \n\
 ")
-                    (C-function ("remquo" g_remquo remquo 2))
-                    (C-function ("frexp" g_frexp frexp 1))
-                    (C-function ("modf" g_modf modf 1))
+                    (C-function ("remquo" g_remquo "(remquo x y) returns a list: (remainder messed-up-quotient)" 2))
+                    (C-function ("frexp" g_frexp "(frexp x) returns a list: (fraction exponent)" 1))
+                    (C-function ("modf" g_modf "(modf x) returns a list: (int-part frac-part) -- this is not the same as fmod!" 1))
 		    )
 		  "" "math.h" "" "" "libm_s7")
 	

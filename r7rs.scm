@@ -349,7 +349,7 @@
                  }                                                     \n\
                return(p);                                              \n\
               }")
-      (C-function ("getenvs" getenvs getenvs 0)))
+      (C-function ("getenvs" getenvs "(getenvs) returns all the environment variables in an alist" 0)))
     "" '("unistd.h"))
   (augment-environment! e
     (cons 'get-environment-variable getenv)

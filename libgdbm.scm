@@ -23,9 +23,9 @@
 				   GDBM_FILE_STAT_ERROR GDBM_FILE_EOF)))
 
 		    (in-C "static s7_pointer g_gdbm_version(s7_scheme *sc, s7_pointer args) {return(s7_make_string(sc, gdbm_version));}")
-		    (C-function ("gdbm_version" g_gdbm_version gdbm_version 0))
+		    (C-function ("gdbm_version" g_gdbm_version "(gdbm_version) returns the current gbdm version" 0))
 		    (in-C "static s7_pointer g_gdbm_errno(s7_scheme *sc, s7_pointer args) {return(s7_make_integer(sc, gdbm_errno));}")
-		    (C-function ("gdbm_errno" g_gdbm_errno gdbm_errno 0))
+		    (C-function ("gdbm_errno" g_gdbm_errno "(gdbm_errno) returns the current gdbm error number" 0))
 		    (char* gdbm_strerror (int))
 
 		    (int gdbm_fdesc ((GDBM_FILE c_pointer)))
@@ -187,13 +187,13 @@ static s7_pointer g_gdbm_open(s7_scheme *sc, s7_pointer args)                   
   return(s7_wrong_type_arg_error(sc, \"gdbm_open\", 1, s7_car(args), \"a string (file name)\"));                        \n\
 }                                                                                                                       \n\
 ")
-                    (C-function ("gdbm_firstkey" g_gdbm_firstkey gdbm_firstkey 1))
-                    (C-function ("gdbm_exists" g_gdbm_exists gdbm_exists 2))
-                    (C-function ("gdbm_delete" g_gdbm_delete gdbm_delete 2))
-                    (C-function ("gdbm_nextkey" g_gdbm_nextkey gdbm_nextkey 2))
-                    (C-function ("gdbm_fetch" g_gdbm_fetch gdbm_fetch 2))
-                    (C-function ("gdbm_store" g_gdbm_store gdbm_store 4))
-                    (C-function ("gdbm_open" g_gdbm_open gdbm_open 5))
+                    (C-function ("gdbm_firstkey" g_gdbm_firstkey "(gdbm_firstkey gdbm)" 1))
+                    (C-function ("gdbm_exists" g_gdbm_exists "(gdbm_exists gdbm key)" 2))
+                    (C-function ("gdbm_delete" g_gdbm_delete "(gdbm_delete gdbm key)" 2))
+                    (C-function ("gdbm_nextkey" g_gdbm_nextkey "(gdbm_nextkey gdbm prev)" 2))
+                    (C-function ("gdbm_fetch" g_gdbm_fetch "(gdbm_fetch gdbm key)" 2))
+                    (C-function ("gdbm_store" g_gdbm_store "(gdbm_store gdbm key context flag)" 4))
+                    (C-function ("gdbm_open" g_gdbm_open "(gdbm_open filename size flags mode func) opens a gdbm data base" 5))
 
 		    )
 		  "" "gdbm.h" "" "-lgdbm" "libgdbm_s7")

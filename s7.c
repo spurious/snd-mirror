@@ -67270,7 +67270,6 @@ int main(int argc, char **argv)
  * add empty? (or nil? or generic null? or zero-length? typeq? (null? c-pointer) -- C null?
  * also openbsd audio is broken in Snd -- see aucat.c I guess.
  * other often-used libraries: c glib/gio/gobject/gmodule ncurses? gsl? GL/GLU? pcre? tecla? readline?
- *    libpthread.scm for partial pthread case, but how is this to be used?
  *    SOMEDAY: libgdbm tests and setopt support, libdl tests and autoload in Snd
  *    there are about 2000 entities in libc, maybe a similar number in SDL
  *    posix lib -> enhance in scheme for the gdb fix?
@@ -67280,6 +67279,7 @@ int main(int argc, char **argv)
  * PERHAPS: try __restrict__ if gcc (not g++) and gnu_c:  initial tests aren't very impressive
  * checkpoint?
  * cload: settable C variables (via symbol_access as here?)
+ * doc/test the lib*.scm files.
  * (sound-data ((...) (...))? or use #nD?
  * truncated format? or object->string?
  * the default object print_readable function should give an error, not mimic write

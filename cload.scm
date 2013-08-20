@@ -359,17 +359,17 @@
        (lambda (f)
 	 (let ((scheme-name (f 0))
 	       (base-name   (f 1))
-	       (func-name   (f 2))
+	       (help        (f 2))
 	       (num-args    (f 3))
 	       (opt-args    (if (= (length f) 5) (f 4) 0)))
 	   (format p "~%  s7_define(sc, cur_env,~%")
 	   (format p "            s7_make_symbol(sc, ~S),~%" scheme-name)
-	   (format p "            s7_make_function(sc, ~S, ~A, ~D, ~D, false, \"dloaded ~A\"));~%"
+	   (format p "            s7_make_function(sc, ~S, ~A, ~D, ~D, false, ~S));~%"
 		   scheme-name
 		   base-name
 		   num-args
 		   opt-args
-		   func-name)))
+		   help)))
        functions)
       
       (format p "}~%")
