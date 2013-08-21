@@ -2490,8 +2490,8 @@
 (CFNC "GtkWidget* gtk_menu_get_attach_widget GtkMenu* menu")
 ;;; 3.3.2 (CFNC "void gtk_menu_set_tearoff_state GtkMenu* menu gboolean torn_off")
 ;;; 3.3.2 (CFNC "gboolean gtk_menu_get_tearoff_state GtkMenu* menu")
-(CFNC "void gtk_menu_set_title GtkMenu* menu gchar* title")
-(CFNC "gchar* gtk_menu_get_title GtkMenu* menu")
+;;; 3.10 (CFNC "void gtk_menu_set_title GtkMenu* menu gchar* title")
+;;; 3.10 (CFNC "gchar* gtk_menu_get_title GtkMenu* menu")
 (CFNC "void gtk_menu_reorder_child GtkMenu* menu GtkWidget* child gint position")
 (CFNC "void gtk_menu_set_monitor GtkMenu* menu gint monitor_num")
 (CCAST "GTK_MENU_ITEM(obj)" "GtkMenuItem*")
@@ -5801,8 +5801,8 @@
 (CFNC "void gtk_clipboard_request_rich_text GtkClipboard* clipboard GtkTextBuffer* buffer GtkClipboardRichTextReceivedFunc func lambda_data #func_info")
 (CFNC "guint8* gtk_clipboard_wait_for_rich_text GtkClipboard* clipboard GtkTextBuffer* buffer GdkAtom* format gsize* [length]")
 (CFNC "gboolean gtk_clipboard_wait_is_rich_text_available GtkClipboard* clipboard GtkTextBuffer* buffer")
-(CFNC "gchar* gtk_combo_box_get_title GtkComboBox* combo_box") ; 'const
-(CFNC "void gtk_combo_box_set_title GtkComboBox* combo_box gchar* title")
+;;; 3.10 (CFNC "gchar* gtk_combo_box_get_title GtkComboBox* combo_box") ; 'const
+;;; 3.10 (CFNC "void gtk_combo_box_set_title GtkComboBox* combo_box gchar* title")
 (CFNC "void gtk_drag_dest_set_track_motion GtkWidget* widget gboolean track_motion")
 (CFNC "gboolean gtk_drag_dest_get_track_motion GtkWidget* widget")
 ;(CFNC "GtkBorder* gtk_entry_get_inner_border GtkEntry* entry") ; 'const
@@ -8730,7 +8730,7 @@
 ;  menu popup delay settings,  gtk-menu-bar-accel,  keynav tweaks,  gtk-touchscreen-mode,  gtk-icon-sizes,  im style tweaks,
 ;  gtk-file-chooser-backend,  gtk-enable-tooltips,  gtk-visible-focus,  tooltip timeout tweaks,  toolbar style tweaks
 
-;;;; 3.9.8:
+;;; 3.9.8:
 (CFNC-3.10 "cairo_surface_t* gdk_cairo_surface_create_from_pixbuf GdkPixbuf* pixbuf int scale GdkWindow* for_window")
 (CFNC-3.10 "void gdk_device_get_position_double GdkDevice* device GdkScreen* [screen] gdouble* [x] gdouble* [y]")
 (CFNC-3.10 "GdkWindow* gdk_device_get_window_at_position_double GdkDevice* device gdouble* [win_x] gdouble* [win_y]")
@@ -8752,12 +8752,26 @@
 (CFNC-3.10 "gint gtk_widget_get_scale_factor GtkWidget* widget")
 (CFNC-3.10 "void gtk_window_close GtkWindow* window")
 
-3.9.10:
+;;; 3.9.10:
 (CFNC-3.10 "void gtk_info_bar_set_show_close_button GtkInfoBar* info_bar gboolean setting")
 (CFNC-3.10 "gboolean gtk_info_bar_get_show_close_button GtkInfoBar* info_bar")
 (CFNC-3.10 "void gtk_tree_model_rows_reordered_with_length GtkTreeModel* tree_model GtkTreePath* path GtkTreeIter* iter gint* new_order gint length")
 
- 
+
+;;; 3.9.12:
+
+(CFNC-3.10 "GdkCursor* gdk_cursor_new_from_surface GdkDisplay* display cairo_surface_t* surface gdouble x gdouble y")
+(CFNC-3.10 "cairo_surface_t* gdk_cursor_get_surface GdkCursor* cursor gdouble* [x_hot] gdouble* [y_hot]")
+(CFNC-3.10 "GdkEventType gdk_event_get_event_type GdkEvent* event" 'const)
+(CFNC-3.10 "GtkWidget* gtk_button_new_from_icon_name gchar* icon_name GtkIconSize size" 'const)
+(CFNC-3.10 "void gtk_entry_set_tabs GtkEntry* entry PangoTabArray* tabs")
+(CFNC-3.10 "PangoTabArray* gtk_entry_get_tabs GtkEntry* entry")
+(CFNC-3.10 "gboolean gtk_header_bar_get_show_close_button GtkHeaderBar* bar")
+(CFNC-3.10 "void gtk_header_bar_set_show_close_button GtkHeaderBar* bar gboolean setting")
+(CFNC-3.10 "void gtk_list_box_prepend GtkListBox* list_box GtkWidget* child")
+(CFNC-3.10 "void gtk_list_box_insert GtkListBox* list_box GtkWidget* child gint position")
+
+
 
 
 ;;; --------------------------------------------------------------------------------

@@ -1271,8 +1271,8 @@ struct s7_scheme {
   s7_pointer CDAADR, CDAAR, CDADAR, CDADDR, CDADR, CDAR, CDDAAR, CDDADR, CDDAR, CDDDAR, CDDDDR, CDDDR, CDDR, CDR, CEILING;
   s7_pointer CHAR_LEQ, CHAR_LT, CHAR_EQ, CHAR_GEQ, CHAR_GT, CHARP, CHAR_POSITION, CHAR_TO_INTEGER, CHAR_ALPHABETICP, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ;
   s7_pointer CHAR_CI_GEQ, CHAR_CI_GT, CHAR_DOWNCASE, CHAR_LOWER_CASEP, CHAR_NUMERICP, CHAR_READYP, CHAR_UPCASE, CHAR_UPPER_CASEP;
-  s7_pointer CHAR_WHITESPACEP, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, COMPLEXP, CONS, CONSTANTP, CONTINUATIONP, COPY, COS, COSH, DEFINEDP;
-  s7_pointer DENOMINATOR, DISPLAY, DYNAMIC_WIND, ENVIRONMENTP, ENVIRONMENT, ENVIRONMENT_REF, ENVIRONMENT_SET, ENVIRONMENT_TO_LIST;
+  s7_pointer CHAR_WHITESPACEP, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, COMPLEXP, CONS, CONSTANTP, CONTINUATIONP, COPY, COS, COSH, C_POINTER, C_POINTERP;
+  s7_pointer DEFINEDP, DENOMINATOR, DISPLAY, DYNAMIC_WIND, ENVIRONMENTP, ENVIRONMENT, ENVIRONMENT_REF, ENVIRONMENT_SET, ENVIRONMENT_TO_LIST;
   s7_pointer EOF_OBJECTP, EQP, EQUALP, EQVP, ERROR, EVAL, EVAL_STRING, EVENP, EXACTP;
   s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, GET_OUTPUT_STRING, HASH_TABLE;
   s7_pointer HASH_TABLEP, HASH_TABLE_ITERATORP, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_SIZE, HELP, IMAG_PART, INEXACTP, INEXACT_TO_EXACT;
@@ -1283,7 +1283,7 @@ struct s7_scheme {
   s7_pointer NOT, NULLP, NUMBERP, NUMBER_TO_STRING, NUMERATOR, OBJECT_ENVIRONMENT, OBJECT_TO_STRING, ODDP, OPEN_ENVIRONMENT, OPEN_ENVIRONMENTP, OPEN_INPUT_FILE;
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTER_ENVIRONMENT, OUTPUT_PORTP, PAIRP, PAIR_LINE_NUMBER, PEEK_CHAR, PORT_CLOSEDP, PORT_FILENAME, PORT_LINE_NUMBER;
   s7_pointer POSITIVEP, PROCEDUREP, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, PROCEDURE_ENVIRONMENT, PROCEDURE_NAME, PROCEDURE_SOURCE, PROVIDE;
-  s7_pointer PROVIDEDP, QUOTIENT, RANDOM, RANDOM_STATEP, RANDOM_STATE_TO_LIST, RATIONALIZE, RATIONALP, RAW_POINTERP, READ, READ_BYTE, READ_CHAR, READ_LINE, REALP;
+  s7_pointer PROVIDEDP, QUOTIENT, RANDOM, RANDOM_STATEP, RANDOM_STATE_TO_LIST, RATIONALIZE, RATIONALP, READ, READ_BYTE, READ_CHAR, READ_LINE, REALP;
   s7_pointer READ_STRING, REAL_PART, REMAINDER, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STACKTRACE, STRING, STRING_LEQ, STRING_LT, STRING_EQ;
   s7_pointer STRING_GEQ, STRING_GT, STRINGP, STRING_POSITION, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND, STRING_CI_LEQ, STRING_CI_LT;
   s7_pointer STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_COPY, STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
@@ -1348,6 +1348,13 @@ struct s7_scheme {
   const char ***autoload_names;
   int *autoload_names_sizes;
   int autoload_names_loc, autoload_names_top;
+
+  unsigned int port_heap_size, port_heap_loc;
+  s7_port_t **port_heap;
+
+  int format_depth;
+  int slash_str_size;
+  char *slash_str;
 };
 
 typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_write_t;
@@ -2941,33 +2948,31 @@ static void mark_symbol(s7_pointer p)
 
 /* ports can be alloc'd and freed at a frightening pace, so I think I'll make a special free_heap for them.
  */
-static unsigned int port_heap_size = 0, port_heap_loc = 0;
-static s7_port_t **port_heap = NULL;
 
-static s7_port_t *alloc_port(void)
+static s7_port_t *alloc_port(s7_scheme *sc)
 {
-  if (port_heap_loc > 0)
-    return(port_heap[--port_heap_loc]);
+  if (sc->port_heap_loc > 0)
+    return(sc->port_heap[--sc->port_heap_loc]);
   return((s7_port_t *)calloc(1, sizeof(s7_port_t)));
 }
 
 
-static void free_port(s7_port_t *p)
+static void free_port(s7_scheme *sc, s7_port_t *p)
 {
-  if (port_heap_loc == port_heap_size)
+  if (sc->port_heap_loc == sc->port_heap_size)
     {
-      if (port_heap_size == 0)
+      if (sc->port_heap_size == 0)
 	{
-	  port_heap_size = 8;
-	  port_heap = (s7_port_t **)malloc(port_heap_size * sizeof(s7_port_t *));
+	  sc->port_heap_size = 8;
+	  sc->port_heap = (s7_port_t **)malloc(sc->port_heap_size * sizeof(s7_port_t *));
 	}
       else
 	{
-	  port_heap_size *= 2;
-	  port_heap = (s7_port_t **)realloc(port_heap, port_heap_size * sizeof(s7_port_t *));
+	  sc->port_heap_size *= 2;
+	  sc->port_heap = (s7_port_t **)realloc(sc->port_heap, sc->port_heap_size * sizeof(s7_port_t *));
 	}
     }
-  port_heap[port_heap_loc++] = p;
+  sc->port_heap[sc->port_heap_loc++] = p;
 }
 
 
@@ -3116,7 +3121,7 @@ static void sweep(s7_scheme *sc)
 		  free(port_filename(a));
 		  port_filename(a) = NULL;
 		}
-	      free_port(port_port(a));
+	      free_port(sc, port_port(a));
 	    }
 	  else sc->input_ports[j++] = sc->input_ports[i];
 	}
@@ -3130,7 +3135,7 @@ static void sweep(s7_scheme *sc)
 	  if (type(sc->output_ports[i]) == 0)
 	    {
 	      s7_close_output_port(sc, sc->output_ports[i]);
-	      free_port(port_port(sc->output_ports[i]));
+	      free_port(sc, port_port(sc->output_ports[i]));
 	    }
 	  else sc->output_ports[j++] = sc->output_ports[i];
 	}
@@ -6403,10 +6408,19 @@ s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr)
 }
 
 
-static s7_pointer g_is_raw_pointer(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_is_c_pointer(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_raw_pointer "(raw-pointer? obj) returns #t if obj is a raw C pointer being held in s7."
+  #define H_is_c_pointer "(c-pointer? obj) returns #t if obj is a C pointer being held in s7."
   return(make_boolean(sc, type(car(args)) == T_C_POINTER));
+}
+
+
+static s7_pointer g_c_pointer(s7_scheme *sc, s7_pointer args)
+{
+  #define H_c_pointer "(c-pointer int) returns a c-pointer object."
+  if (!s7_is_integer(car(args)))
+    return(wrong_type_argument(sc, sc->C_POINTER, small_int(1), car(args), T_INTEGER));
+  return(s7_make_c_pointer(sc, (void *)s7_integer(car(args))));
 }
 
 
@@ -21320,7 +21334,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
   NEW_CELL(sc, port);
   port_loc = s7_gc_protect(sc, port);
   set_type(port, T_INPUT_PORT);
-  port_port(port) = alloc_port();
+  port_port(port) = alloc_port(sc);
   port_is_closed(port) = false;
   port_original_input_string(port) = sc->NIL;
   port_write_character(port) = input_write_char;
@@ -21607,7 +21621,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   NEW_CELL(sc, x);
   set_type(x, T_OUTPUT_PORT);
   
-  port_port(x) = alloc_port();
+  port_port(x) = alloc_port(sc);
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_filename_length(x) = safe_strlen(name);
@@ -21657,7 +21671,7 @@ static s7_pointer open_input_string(s7_scheme *sc, const char *input_string, int
   NEW_CELL(sc, x);
   set_type(x, T_INPUT_PORT);
   
-  port_port(x) = alloc_port();
+  port_port(x) = alloc_port(sc);
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
   port_original_input_string(x) = sc->NIL;
@@ -21711,7 +21725,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   NEW_CELL(sc, x);
   set_type(x, T_OUTPUT_PORT);
   
-  port_port(x) = alloc_port();
+  port_port(x) = alloc_port(sc);
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
   port_string_length(x) = STRING_PORT_INITIAL_LENGTH;
@@ -21765,7 +21779,7 @@ s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_schem
   NEW_CELL(sc, x);
   set_type(x, T_INPUT_PORT);
   
-  port_port(x) = alloc_port();
+  port_port(x) = alloc_port(sc);
   port_type(x) = FUNCTION_PORT;
   port_is_closed(x) = false;
   port_original_input_string(x) = sc->NIL;
@@ -21787,7 +21801,7 @@ s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc
   NEW_CELL(sc, x);
   set_type(x, T_OUTPUT_PORT);
   
-  port_port(x) = alloc_port();
+  port_port(x) = alloc_port(sc);
   port_type(x) = FUNCTION_PORT;
   port_is_closed(x) = false;
   port_needs_free(x) = false;
@@ -22970,10 +22984,7 @@ static bool needs_slashification(const char *str, int len)
 #define IN_QUOTES true
 #define NOT_IN_QUOTES false
 
-static int slash_str_size = 0;
-static char *slash_str = NULL;
-
-static char *slashify_string(const char *p, int len, bool quoted, int *nlen) /* do not free result */
+static char *slashify_string(s7_scheme *sc, const char *p, int len, bool quoted, int *nlen) /* do not free result */
 {
   int j = 0, cur_size, size;
   char *s;
@@ -22982,14 +22993,14 @@ static char *slashify_string(const char *p, int len, bool quoted, int *nlen) /* 
   pend = (unsigned char *)(p + len);
   cur_size = len + 256;
   size = cur_size + 2;
-  if (size > slash_str_size)
+  if (size > sc->slash_str_size)
     {
-      if (slash_str) free(slash_str);
-      slash_str_size = size;
-      slash_str = (char *)malloc(size);
+      if (sc->slash_str) free(sc->slash_str);
+      sc->slash_str_size = size;
+      sc->slash_str = (char *)malloc(size);
     }
-  memset((void *)slash_str, 0, size);
-  s = slash_str;
+  memset((void *)sc->slash_str, 0, size);
+  s = sc->slash_str;
 
   if (quoted) s[j++] = '"';
 
@@ -23042,8 +23053,8 @@ static char *slashify_string(const char *p, int len, bool quoted, int *nlen) /* 
 	  int k;
 	  cur_size *= 2;
 	  size = cur_size + 2;
-	  slash_str = (char *)realloc(slash_str, size * sizeof(char));
-	  s = slash_str;
+	  sc->slash_str = (char *)realloc(sc->slash_str, size * sizeof(char));
+	  s = sc->slash_str;
 	  for (k = j; k < size; k++) s[k] = 0;
 	}
     }
@@ -24052,9 +24063,9 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
 	  s7_pointer p;
 	  /* what needs to be protected here? */
 	  push_stack(sc, OP_NO_OP, sc->temp_cell_2, sc->temp_cell_3);
-	  p = s7_apply_function(sc, print_func, list_1(sc, obj));
-	  /* TODO: here we need to pass at least the write choice
-	   */
+	  if (use_write == USE_WRITE)
+	    p = s7_apply_function(sc, print_func, list_1(sc, obj));
+	  else p = s7_apply_function(sc, print_func, list_2(sc, obj, (use_write == USE_DISPLAY) ? sc->F : sc->KEY_READABLE));
 	  sc->temp_cell_2 = main_stack_args(sc);
 	  sc->temp_cell_3 = main_stack_code(sc);
 	  pop_main_stack(sc);
@@ -24326,7 +24337,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 			      int nlen = 0;
 			      port_write_string(port)(sc, "(open-input-string ", 19, port);
 			      /* not port_write_string here because there might be embedded double-quotes */
-			      str = slashify_string(port_string(obj), port_string_length(obj), IN_QUOTES, &nlen);
+			      str = slashify_string(sc, port_string(obj), port_string_length(obj), IN_QUOTES, &nlen);
 			      port_write_string(port)(sc, str, nlen, port);
 			      port_write_character(port)(sc, ')', port);
 			    }
@@ -24447,7 +24458,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	  (needs_slashification(symbol_name(obj), symbol_name_length(obj))))
 	{
 	  char *symstr;
-	  str = slashify_string(symbol_name(obj), symbol_name_length(obj), NOT_IN_QUOTES, &nlen);
+	  str = slashify_string(sc, symbol_name(obj), symbol_name_length(obj), NOT_IN_QUOTES, &nlen);
 	  nlen += 16;
 	  symstr = (char *)calloc(nlen, sizeof(char));
 	  nlen = snprintf(symstr, nlen, "(symbol \"%s\")", str);
@@ -24489,7 +24500,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 		    }
 		  else
 		    {
-		      str = slashify_string(string_value(obj), string_length(obj), IN_QUOTES, &nlen);
+		      str = slashify_string(sc, string_value(obj), string_length(obj), IN_QUOTES, &nlen);
 		      port_write_string(port)(sc, str, nlen, port);
 		    }
 		}
@@ -24508,7 +24519,6 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       else port_write_string(port)(sc, character_name(obj), character_name_length(obj), port);
       break;
 
-      /* TODO: macro/bacro with args etc -- see c_closure_name */	     
     case T_MACRO:
       if (use_write == USE_READABLE_WRITE)
 	write_macro_readably(sc, obj, port);
@@ -24564,8 +24574,12 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
   
     case T_C_POINTER:
       if (use_write == USE_READABLE_WRITE)
-	write_readably_error(sc, "a raw-pointer");
-      nlen = snprintf(buf, 64, "#<c_pointer %p>", raw_pointer(obj));
+	{
+	  if ((long long int)raw_pointer(obj) < 2) /* 0 = NULL is the main case, -1 is used in some libraries */
+	    nlen = snprintf(buf, 64, "(c-pointer %lld)", (long long int)raw_pointer(obj));
+	  else write_readably_error(sc, "raw c pointer");
+	}
+      else nlen = snprintf(buf, 64, "#<c_pointer %p>", raw_pointer(obj));
       port_write_string(port)(sc, buf, nlen, port);
       break;
   
@@ -24994,7 +25008,6 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 /* -------------------------------- format -------------------------------- */
 
 static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj);
-static int format_depth = -1;
 
 static s7_pointer format_error(s7_scheme *sc, const char *msg, const char *str, s7_pointer args, format_data *fdat)
 {
@@ -25175,21 +25188,21 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
     }
   else str_len = len;
 
-  format_depth++;
-  if (format_depth >= sc->num_fdats)
+  sc->format_depth++;
+  if (sc->format_depth >= sc->num_fdats)
     {
       int i, new_num_fdats;
-      new_num_fdats = format_depth * 2;
+      new_num_fdats = sc->format_depth * 2;
       sc->fdats = (format_data **)realloc(sc->fdats, sizeof(format_data *) * new_num_fdats);
       for (i = sc->num_fdats; i < new_num_fdats; i++) sc->fdats[i] = NULL;
       sc->num_fdats = new_num_fdats;
     }
 
-  fdat = sc->fdats[format_depth];
+  fdat = sc->fdats[sc->format_depth];
   if (!fdat)
     {
       fdat = (format_data *)malloc(sizeof(format_data));
-      sc->fdats[format_depth] = fdat;
+      sc->fdats[sc->format_depth] = fdat;
       fdat->curly_len = 0;
       fdat->curly_str = NULL;
     }
@@ -25640,7 +25653,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
   if (i < str_len)
     format_append_char(sc, fdat, str[i], port);    /* possible trailing ~ is sent out */
 
-  format_depth--;
+  sc->format_depth--;
 
   if (with_result)
     {
@@ -33932,9 +33945,9 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
       {
 	s7_pointer ns;
 	ns = s7_make_string_with_length(sc, string_value(obj), string_length(obj));
-      if (is_bytevector(obj))
-	set_bytevector(ns);
-      return(ns);
+	if (is_bytevector(obj))
+	  set_bytevector(ns);
+	return(ns);
       }
 
     case T_C_OBJECT:
@@ -35620,7 +35633,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
   call_name = sc->s7_call_name;
   /* sc->s7_call_name = NULL; */
   sc->no_values = 0; 
-  format_depth = -1;
+  sc->format_depth = -1;
   s7_gc_on(sc, true);  /* this is in case we were triggered from the sort function -- clumsy! */
 
   slot_set_value(sc->error_type, type);
@@ -52958,7 +52971,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if ((index < vector_length(v)) &&
 			(index >= 0))
 		      {
-			sc->value = vector_elements(v)[index];
+			sc->value = vector_element(v, index);
 			goto START;
 		      }
 		  }
@@ -52989,7 +53002,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if ((index < vector_length(v)) &&
 			    (index >= 0))
 			  {
-			    sc->value = vector_elements(v)[index];
+			    sc->value = vector_element(v, index);
 			    goto START;
 			  }
 			out_of_range(sc, sc->VECTOR_REF, small_int(1), cadr(code), "between 0 and vector length");
@@ -53019,7 +53032,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if ((index < vector_length(v)) &&
 			(index >= 0))
 		      {
-			sc->value = vector_elements(v)[index];
+			sc->value = vector_element(v, index);
 			goto START;
 		      }
 		    out_of_range(sc, sc->VECTOR_REF, small_int(1), cadr(code), "between 0 and vector length");
@@ -56466,7 +56479,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if ((index >= 0) &&
 		  (index < vector_length(sc->code)))
 		{
-		  sc->value = vector_elements(sc->code)[index];
+		  sc->value = vector_element(sc->code, index);
 		  goto START;
 		}
 	      else out_of_range(sc, sc->VECTOR_REF, small_int(2), car(sc->args), "should be between 0 and the vector length");
@@ -65652,6 +65665,10 @@ s7_scheme *s7_init(void)
   sc->strbuf_size = INITIAL_STRBUF_SIZE;
   sc->strbuf = (char *)calloc(sc->strbuf_size, sizeof(char));
   sc->print_width = MAX_STRING_LENGTH;
+
+  sc->format_depth = -1;
+  sc->slash_str_size = 0;
+  sc->slash_str = NULL;
   
   sc->read_line_buf = NULL;
   sc->read_line_buf_size = 0;
@@ -65811,6 +65828,10 @@ s7_scheme *s7_init(void)
   sc->autoload_names = NULL;
   sc->autoload_names_sizes = NULL;
   sc->autoload_names_loc = 0;
+
+  sc->port_heap_size = 0;
+  sc->port_heap_loc = 0;
+  sc->port_heap = NULL;
   
   sc->heap_size = INITIAL_HEAP_SIZE;
   if ((sc->heap_size % 32) != 0)
@@ -66291,8 +66312,8 @@ s7_scheme *s7_init(void)
   sc->SYMBOL_TO_KEYWORD =     s7_define_safe_function(sc, "symbol->keyword",         g_symbol_to_keyword,      1, 0, false, H_symbol_to_keyword);
   sc->KEYWORD_TO_SYMBOL =     s7_define_safe_function(sc, "keyword->symbol",         g_keyword_to_symbol,      1, 0, false, H_keyword_to_symbol);
 
-  sc->RAW_POINTERP =          s7_define_safe_function(sc, "raw-pointer?",            g_is_raw_pointer,         1, 0, false, H_is_raw_pointer);
-  
+  sc->C_POINTERP =            s7_define_safe_function(sc, "c-pointer?",              g_is_c_pointer,           1, 0, false, H_is_c_pointer);
+  sc->C_POINTER =             s7_define_safe_function(sc, "c-pointer",               g_c_pointer,              1, 0, false, H_c_pointer);  
 
   sc->PORT_LINE_NUMBER =      s7_define_safe_function(sc, "port-line-number",        g_port_line_number,       0, 1, false, H_port_line_number);
   sc->PORT_FILENAME =         s7_define_safe_function(sc, "port-filename",           g_port_filename,          0, 1, false, H_port_filename);
@@ -67266,9 +67287,7 @@ int main(int argc, char **argv)
 /* use new generic_ff in methods opt case 
  * we need integer_length everywhere! These fixups are ignored by the optimized cases.
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
- *
  * add empty? (or nil? or generic null? or zero-length? typeq? (null? c-pointer) -- C null?
- * also openbsd audio is broken in Snd -- see aucat.c I guess.
  * other often-used libraries: c glib/gio/gobject/gmodule ncurses? gsl? GL/GLU? pcre? tecla? readline?
  *    SOMEDAY: libgdbm tests and setopt support, libdl tests and autoload in Snd
  *    there are about 2000 entities in libc, maybe a similar number in SDL
@@ -67276,11 +67295,18 @@ int main(int argc, char **argv)
  * TODO: (env env) in clm should be an error
  * possible autoload additions: sndlib? xm? libX* fftw? gmp/mpfr/mpc? 
  * gdb-s7 might check for 0xnnnn "asdf" to avoid strings
- * PERHAPS: try __restrict__ if gcc (not g++) and gnu_c:  initial tests aren't very impressive
  * checkpoint?
  * cload: settable C variables (via symbol_access as here?)
  * doc/test the lib*.scm files.
  * (sound-data ((...) (...))? or use #nD?
  * truncated format? or object->string?
  * the default object print_readable function should give an error, not mimic write
+ *
+ *
+ * remaining globals: environment_number, baffle_ctr, chars, real_zero et al, c_object type data
+ *                    file_names|_size|top, senv (trap_segfault), big|rng_tag, small_ints?, num_to_str|_size?
+ *                    all the optimization addrs (geq_2 etc), compare_sc|func|args, ht_iter_tag, add|equal_class?
+ *                    add_max?
+ *    there are also globals now in clm2xen: gf_free_list, clm_input|output_gen etc
+ *    but pthreads can't be used with s7 so I'm not sure it matters.
  */
