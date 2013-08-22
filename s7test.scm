@@ -87,6 +87,8 @@
   ;;                     (eval ',tst) works here, but eval-string is problematic
   ;; `(ok? ',tst (lambda () (eval-string (format #f "~S" ',tst))) ,expected))
   `(ok? ',tst (lambda () ,tst) ,expected))
+
+;;  `(ok? ',tst (lambda () (eval-string (object->string ,tst :readable))) ,expected))
 #|
   `(ok? ',tst (let () 
 		(define (tster) ,tst)
@@ -12034,7 +12036,10 @@ a2" 3) "132")
 (test (format #f "asb~{ . ~}asd" '(1 2 3)) 'error)
 (test (format #f "asb~{ hiho~~~}asd" '(1 2 3)) 'error)
 
-(test (format #f "~12C" #\a) 'error)
+(test (format #f "~12C" #\a) "aaaaaaaaaaaa")
+(test (format #f ".~0C." #\a) "..")
+(test (format #f "~10C" #\space) "          ")
+
 (test (format #f "~12P" #\a) 'error)
 (test (format #f "~12*" #\a) 'error)
 (test (format #f "~12%" #\a) 'error)

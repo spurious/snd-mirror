@@ -521,6 +521,7 @@
 (load "write.scm")
 (load "lint.scm")
 (load "r7rs.scm")
+(load "cload.scm")
 
 
 (let ((names (make-hash-table)))
@@ -576,6 +577,7 @@
    (list 
     (list '*libm* "libm.scm")
     (list '*libgdbm* "libgdbm.scm")
+    (list '*libdl* "libdl.scm")
 
     (list 'with-sound "ws.scm")
     (list 'with-mixed-sound "ws.scm")
@@ -614,6 +616,25 @@
     (list '*to-snd* "ws.scm")
     (list '*clm-search-list* "ws.scm")
     (list '*definstrument-hook* "ws.scm")))
+
+  ;; alternate: (autoload sym (lambda (e) (let ((m (load file))) (augment-environment! (global-environment) (cons sym (m sym))))))
+  (for-each
+   (lambda (sym&file)
+     (let ((e (car sym&file))
+	   (file (cadr sym&file)))
+       (let ((ce (load file)))
+	 (let ((flst (or (hash-table-ref names file) ())))
+	   (for-each
+	    (lambda (slot)
+	      (let ((name (car slot)))
+		(if (not (defined? name))
+		    (set! flst (cons name flst)))))
+	    ce)
+	   (hash-table-set! names file flst)))))
+   (list
+    (list '*libm* "libm.scm")
+    (list '*libgdbm* "libgdbm.scm")
+    (list '*libdl* "libdl.scm")))
   
   (apropos-1 (reverse (environment->list (global-environment))))
   

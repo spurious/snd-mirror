@@ -2312,7 +2312,7 @@ This also affects format and sort!:
 </p>
 
 <pre class="indented">
-&gt;(make-shared-vector (list->vector '(1 2 3 4)) '(2 2))
+&gt;(make-shared-vector (list-&gt;vector '(1 2 3 4)) '(2 2))
 #2D((1 2) (3 4))
 </pre>
 
@@ -2862,11 +2862,17 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 
 		  ;; add an object-&gt;string method for this class (this is already a generic function).
 		  (list (cons 'object-&gt;string (lambda* (obj (use-write #t))
-				       (format #f "#&lt;~A: ~{~A~^ ~}&gt;" 
-					       ',class-name
-					       (map (lambda (slot)
-						      (list (car slot) (cdr slot)))
-						    (environment-&gt;list obj))))))
+				       (if (eq? use-write :readable)    ; write readably
+					   (format #f "(make-~A~{ :~A ~W~^~})" 
+						   ',class-name 
+						   (map (lambda (slot)
+							  (values (car slot) (cdr slot)))
+							(environment-&gt;list obj)))
+				           (format #f "#&lt;~A: ~{~A~^ ~}&gt;" 
+					           ',class-name
+					           (map (lambda (slot)
+						          (list (car slot) (cdr slot)))
+						        (environment-&gt;list obj)))))))
 		  (reverse! new-methods)))           ; the inherited methods, shadowed automatically
 
     (let ((new-class (open-environment
@@ -3699,7 +3705,7 @@ it is continuing from the point of the error, but then fails to do so.
 ~}        end iteration
 ~^        jump out of iteration
 ~*        ignore the current argument
-~C        print as character
+~C        print character (numeric argument = how many times to print it)
 ~P        insert 's' if current argument is not 1 or 1.0 (use ~@P for "ies" or "y")
 ~A        object-&gt;string as in display
 ~S        object-&gt;string as in write
@@ -4680,7 +4686,10 @@ s7 loads libm.scm.  That load returns the C math library as the environment *lib
 s7 then automatically looks for j0 in *libm*, and defines it for you.
 So the result is the same as if you had defined j0 yourself in C code.
 You can use the r7rs library mechanism here, or with-environment, or
-whatever you want! 
+whatever you want! (In Snd, libm, libdl, and libgdbm are automatically
+tied into s7 via autoload, so if you call, for example, frexp, libm.scm
+is loaded, and frexp is exported from the *libm* environment, then the
+evaluator carries on, as if frexp had always been defined in s7).
 </p>
 <br>
 

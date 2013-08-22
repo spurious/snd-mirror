@@ -96,7 +96,13 @@
  * Documentation is in s7.h and s7.html.  
  * s7test.scm is a regression test.
  * glistener.c is a listener.
+ * cload.scm and lib*.scm tie in various C libraries.
+ * lint.scm checks Scheme code for infelicities.
+ * r7rs.scm implements some of r7rs (small).
+ * write.scm currrenly has pretty-print and other half-written stuff.
+ * s7.c has more than 115000 e's!
  *
+ * 
  *
  * ---------------- compile time switches ---------------- 
  */
@@ -142,7 +148,7 @@
  * if WITH_SYSTEM_EXTRAS is 1 (default is 1 unless _MSC_VER), various OS and file related functions are included.
  *
  * so the incoming (non-s7-specific) compile-time switches are
- *     HAVE_COMPLEX_NUMBERS_TRIG, SIZEOF_VOID_P
+ *     HAVE_COMPLEX_NUMBERS, HAVE_COMPLEX_TRIG, SIZEOF_VOID_P
  *
  * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__, __clang__, __bfin__, __ANDROID__,
  *     __OpenBSD__
@@ -301,6 +307,7 @@
  *    eval
  *    multiprecision arithmetic
  *    initialization
+ *    repl
  *
  * naming conventions: s7_* usually are C accessible (s7.h), g_* are scheme accessible (FFI), H_* are documentation strings,
  *   *_1 are auxilliary functions, big_* refer to gmp and friends, scheme "?" corresponds to C "_is_", scheme "->" to C "_to_".
@@ -24088,8 +24095,6 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
        *    #<environment #<slot: b #<environment>>>
        * or (let ((b #f)) (set! b (current-environment)) (current-environment))
        *    #1=#<environment #<slot: b #1#>>
-       *
-       * TODO: how to display a class instance readably? -- use method above somehow?
        */
       s7_pointer x;
       
@@ -25396,26 +25401,6 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	      
 	    case '}':
 	      return(format_error(sc, "unmatched '}'", str, args, fdat));
-	      
-	    case 'C': case 'c':
-	      {
-		s7_pointer obj;
-		
-		if (is_null(fdat->args))
-		  return(format_error(sc, "~~C: missing argument", str, args, fdat));
-		/* the "~~" here and below protects against "~C" being treated as a directive */
-		i++;
-		obj = car(fdat->args);
-		
-		if (!s7_is_character(obj))
-		  return(format_error(sc, "'C' directive requires a character argument", str, args, fdat));
-		
-		/* here use_write is false, so we just add the char, not its name */
-		format_append_char(sc, fdat, character(obj), port);
-		fdat->args = cdr(fdat->args);
-	      }
-	      break;
-	      
 
 	    case 'W': case 'w':
 	      choice = USE_READABLE_WRITE;
@@ -25486,6 +25471,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	    case 'X': case 'x':
 	      
 	    case 'T': case 't':
+	    case 'C': case 'c':
 	      {
 		int width = -1, precision = -1;
 		char pad = ' ';
@@ -25523,9 +25509,11 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		
 		switch (str[i])
 		  {
-		    /* -------- pad to column -------- */
-		    /*   are columns numbered from 1 or 0?  there seems to be disagreement about this directive */
-		    /*   does "space over to" mean including? */
+		    /* -------- pad to column -------- 
+		     *   are columns numbered from 1 or 0?  there seems to be disagreement about this directive
+		     *   does "space over to" mean including?
+		     */
+
 		  case 'T': case 't':
 		    if (width == -1) width = 0;
 		    if (precision == -1) precision = 0;
@@ -25546,7 +25534,32 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 			  format_append_char(sc, fdat, pad, port);
 		      }
 		    break;
-		    
+
+		  case 'C': case 'c':
+		    {
+		      s7_pointer obj;
+		      
+		      if (is_null(fdat->args))
+			return(format_error(sc, "~~C: missing argument", str, args, fdat));
+		      /* the "~~" here and below protects against "~C" being treated as a directive */
+		      /* i++; */
+		      obj = car(fdat->args);
+		      
+		      if (!s7_is_character(obj))
+			return(format_error(sc, "'C' directive requires a character argument", str, args, fdat));
+		      
+		      /* here use_write is false, so we just add the char, not its name */
+		      if (width == -1)
+			format_append_char(sc, fdat, character(obj), port);
+		      else
+			{
+			  int j;
+			  for (j = 0; j < width; j++)
+			    format_append_char(sc, fdat, character(obj), port);
+			}
+		      fdat->args = cdr(fdat->args);
+		    }
+		    break;
 		    
 		    /* -------- numbers -------- */
 		  case 'F': case 'f':
@@ -67282,13 +67295,15 @@ int main(int argc, char **argv)
  *         set, compatible_set?
  *         mark, copy, fill, reverse, etc print
  *    make-real|integer|rational|-vector is not quite right -- we want make-float|int|byte-vector
+ *    internal type T_FLOAT|INTEGER|BYTE_VECTOR, from vector with initial element?
+ *    union of elements field for data, how to indicate coerce set or error if unfit?
  */
 
 /* use new generic_ff in methods opt case 
  * we need integer_length everywhere! These fixups are ignored by the optimized cases.
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
  * add empty? (or nil? or generic null? or zero-length? typeq? (null? c-pointer) -- C null?
- * other often-used libraries: c glib/gio/gobject/gmodule ncurses? gsl? GL/GLU? pcre? tecla? readline?
+ * other often-used libraries: c glib/gio/gobject/gmodule ncurses? gsl? GL/GLU? pcre? tecla? readline? asound? sndlib-for-s7?
  *    SOMEDAY: libgdbm tests and setopt support, libdl tests and autoload in Snd
  *    there are about 2000 entities in libc, maybe a similar number in SDL
  *    posix lib -> enhance in scheme for the gdb fix?

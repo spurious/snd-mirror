@@ -15,7 +15,6 @@
 
 #define HAVE_GTK_ADJUSTMENT_GET_UPPER  GTK_CHECK_VERSION(2, 14, 0)
 #define HAVE_GTK_WIDGET_GET_VISIBLE    GTK_CHECK_VERSION(2, 18, 0)
-#define HAVE_GTK_STATUS_ICON_GET_TITLE GTK_CHECK_VERSION(2, 18, 0)
 #define HAVE_GTK_WIDGET_GET_MAPPED     GTK_CHECK_VERSION(2, 19, 0)
 #define HAVE_GTK_GRID_NEW              GTK_CHECK_VERSION(3, 0, 0)
 #define HAVE_GTK_HEADER_BAR_NEW        GTK_CHECK_VERSION(3, 9, 0)
@@ -174,8 +173,7 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
   #define DRAW_SIGNAL "expose_event"
 #endif
 
-#if HAVE_GTK_STATUS_ICON_GET_TITLE
-  /* 2.17... */
+#if GTK_CHECK_VERSION(2, 18, 0)
   #define SET_CAN_FOCUS(Wid) gtk_widget_set_can_focus(Wid, true)
   #define UNSET_CAN_FOCUS(Wid) gtk_widget_set_can_focus(Wid, false)
 #else
