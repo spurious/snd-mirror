@@ -1351,7 +1351,7 @@ struct s7_scheme {
 
   s7_pointer *safe_lists; /* prebuilt evaluator arg lists */
 
-  s7_pointer autoload_table;
+  s7_pointer autoload_table, libraries;
   const char ***autoload_names;
   int *autoload_names_sizes;
   int autoload_names_loc, autoload_names_top;
@@ -5195,7 +5195,7 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
    */
   int i;
   s7_pointer *inits;
-  s7_pointer x;
+  s7_pointer x, sym;
 
   sc->w = new_frame_in_env(sc, sc->envir);
   inits = vector_elements(sc->initial_env);
@@ -5203,17 +5203,19 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
   for (i = 0; (i < INITIAL_ENV_ENTRIES) && (is_slot(inits[i])); i++)
     {
       x = slot_value(inits[i]);
+      sym = slot_symbol(inits[i]);
       if (is_procedure(x))
 	{
-	  if ((!is_global(slot_symbol(inits[i]))) ||                   /* it's shadowed locally */
-	      (x != slot_value(global_slot(slot_symbol(inits[i])))))   /* it's not shadowed, but has been changed globally */
-	    s7_make_slot(sc, sc->w, slot_symbol(inits[i]), x);
+	  if (((!is_global(sym)) &&                  /* it might be shadowed locally */
+	       (s7_symbol_local_value(sc, sym, sc->envir) != slot_value(global_slot(sym)))) ||
+	      (x != slot_value(global_slot(sym))))   /* it's not shadowed, but has been changed globally */
+	    s7_make_slot(sc, sc->w, sym, x);
 	}
       else
 	{
 	  if ((is_syntax(x)) &&
-	      (local_slot(slot_symbol(inits[i])) != sc->NIL))
-	    s7_make_slot(sc, sc->w, slot_symbol(inits[i]), x);
+	      (local_slot(sym) != sc->NIL))
+	    s7_make_slot(sc, sc->w, sym, x);
 	}
     }
   /* if (set! + -) then + needs to be overridden, but the local bit isn't set,
@@ -38300,6 +38302,16 @@ static s7_pointer read_expression(s7_scheme *sc)
 
 /* ---------------- *unbound-variable-hook* ---------------- */
 
+static s7_pointer loaded_library(s7_scheme *sc, const char *file)
+{
+  s7_pointer p;
+  for (p = slot_value(sc->libraries); is_pair(p); p = cdr(p))
+    if (strcmp(file, string_value(caar(p))) == 0)
+      return(cdar(p));
+  return(sc->NIL);
+}
+
+
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 {
   /* this always occurs in a context where we're trying to find anything, so I'll move a couple of those checks here
@@ -38374,7 +38386,12 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	  if (file)
 	    {
 	      s7_pointer e;
-	      e = s7_load(sc, file);
+	      /* if we've already loaded this file, we can get the library (e) from a table [(file lib) ...]
+	       */
+	      e = loaded_library(sc, file);
+	      if (!is_environment(e))
+		e = s7_load(sc, file);
+
 	      result = s7_symbol_value(sc, sym); /* calls find_symbol, does not trigger unbound_variable search */
 	      if ((result == sc->UNDEFINED) &&
 		  (is_environment(e)))
@@ -66780,6 +66797,8 @@ s7_scheme *s7_init(void)
    * this pretends to be a hash-table or environment, but it's actually a function
    */
   sc->AUTOLOADER = s7_define_function(sc, "*autoload*", g_autoloader, 1, 0, false, H_autoloader);
+  s7_define_variable(sc, "*libraries*", sc->NIL);
+  sc->libraries = global_slot(make_symbol(sc, "*libraries*"));
   
 
   /* -------- *#readers* -------- */

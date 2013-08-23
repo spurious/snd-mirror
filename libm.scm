@@ -9,6 +9,8 @@
     (define-constant *libm*
       (with-environment (initial-environment)
 	
+	(set! *libraries* (cons (cons "libm.scm" (current-environment)) *libraries*))
+
 	(c-define '((double j0 (double)) 
 		    (double j1 (double)) 
 		    (double erf (double)) 
@@ -80,42 +82,42 @@
 		    
 		    ;; these have arg by reference, return list in s7
 		    (in-C "
-static s7_pointer g_remquo(s7_scheme *sc, s7_pointer args)                           \n\
-{                                                                                    \n\
-  if (s7_is_real(s7_car(args)))                                                      \n\
-    {                                                                                \n\
-      if (s7_is_real(s7_cadr(args)))                                                 \n\
-        {                                                                            \n\
-          int quo = 0;                                                               \n\
-          double rem;                                                                \n\
-          rem = remquo(s7_number_to_real(sc, s7_car(args)), s7_number_to_real(sc, s7_cadr(args)), &quo); \n\
-          return(s7_list(sc, 2, s7_make_real(sc, rem), s7_make_integer(sc, quo)));   \n\
-        }                                                                            \n\
-      return(s7_wrong_type_arg_error(sc, \"remquo\", 2, s7_cadr(args), \"a real\")); \n\
-     }                                                                               \n\
-  return(s7_wrong_type_arg_error(sc, \"remquo\", 1, s7_car(args), \"a real\"));      \n\
-}                                                                                    \n\
-static s7_pointer g_frexp(s7_scheme *sc, s7_pointer args)                            \n\
-{                                                                                    \n\
-  if (s7_is_real(s7_car(args)))                                                      \n\
-    {                                                                                \n\
-      int ex = 0;                                                                    \n\
-      double frac;                                                                   \n\
-      frac = frexp(s7_number_to_real(sc, s7_car(args)), &ex);                        \n\
-      return(s7_list(sc, 2, s7_make_real(sc, frac), s7_make_integer(sc, ex)));       \n\
-     }                                                                               \n\
-  return(s7_wrong_type_arg_error(sc, \"frexp\", 1, s7_car(args), \"a real\"));       \n\
-}                                                                                    \n\
-static s7_pointer g_modf(s7_scheme *sc, s7_pointer args)                             \n\
-{                                                                                    \n\
-  if (s7_is_real(s7_car(args)))                                                      \n\
-    {                                                                                \n\
-      double frac, ip = 0.0;                                                         \n\
-      frac = modf(s7_number_to_real(sc, s7_car(args)), &ip);                         \n\
-      return(s7_list(sc, 2, s7_make_real(sc, frac), s7_make_real(sc, ip)));          \n\
-     }                                                                               \n\
-  return(s7_wrong_type_arg_error(sc, \"modf\", 1, s7_car(args), \"a real\"));        \n\
-}                                                                                    \n\
+static s7_pointer g_remquo(s7_scheme *sc, s7_pointer args)
+{
+  if (s7_is_real(s7_car(args)))
+    {
+      if (s7_is_real(s7_cadr(args)))
+        {
+          int quo = 0;
+          double rem;
+          rem = remquo(s7_number_to_real(sc, s7_car(args)), s7_number_to_real(sc, s7_cadr(args)), &quo);
+          return(s7_list(sc, 2, s7_make_real(sc, rem), s7_make_integer(sc, quo)));
+        }
+      return(s7_wrong_type_arg_error(sc, \"remquo\", 2, s7_cadr(args), \"a real\"));
+     }
+  return(s7_wrong_type_arg_error(sc, \"remquo\", 1, s7_car(args), \"a real\"));
+}
+static s7_pointer g_frexp(s7_scheme *sc, s7_pointer args)
+{
+  if (s7_is_real(s7_car(args)))
+    {
+      int ex = 0;
+      double frac;
+      frac = frexp(s7_number_to_real(sc, s7_car(args)), &ex);
+      return(s7_list(sc, 2, s7_make_real(sc, frac), s7_make_integer(sc, ex)));
+     }
+  return(s7_wrong_type_arg_error(sc, \"frexp\", 1, s7_car(args), \"a real\"));
+}
+static s7_pointer g_modf(s7_scheme *sc, s7_pointer args)
+{
+  if (s7_is_real(s7_car(args)))
+    {
+      double frac, ip = 0.0;
+      frac = modf(s7_number_to_real(sc, s7_car(args)), &ip);
+      return(s7_list(sc, 2, s7_make_real(sc, frac), s7_make_real(sc, ip)));
+     }
+  return(s7_wrong_type_arg_error(sc, \"modf\", 1, s7_car(args), \"a real\"));
+}
 ")
                     (C-function ("remquo" g_remquo "(remquo x y) returns a list: (remainder messed-up-quotient)" 2))
                     (C-function ("frexp" g_frexp "(frexp x) returns a list: (fraction exponent)" 1))
@@ -130,6 +132,5 @@ static s7_pointer g_modf(s7_scheme *sc, s7_pointer args)                        
 
 
 #|
-rand/srand?
 complex cases aren't handled in cload I think
 |#

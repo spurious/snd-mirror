@@ -114,6 +114,13 @@
   ;;    function info is either a list: (return-type c-name arg-type) or a list thereof
   ;;    the new functions are placed in cur-env
 
+  (define collides?
+    (let ((all-names ()))
+      (lambda (name)
+	(if (memq name all-names) 
+	    (format *stderr* "~A twice?~%" name)
+	    (set! all-names (cons name all-names)))
+	name)))
 
   (define handlers (list '(integer s7_is_integer s7_integer s7_make_integer s7_Int)
 			 '(boolean s7_is_boolean s7_boolean s7_make_boolean bool)
@@ -217,8 +224,9 @@
   
 
     (define (add-one-function return-type name arg-types)
+      ;; (format *stderr* "~A ~A ~A~%" return-type name arg-types)
       ;; C function -> scheme
-      (let* ((func-name (symbol->string name))
+      (let* ((func-name (symbol->string (collides? name)))
 	     (num-args (length arg-types))
 	     (base-name (string-append (if (> (length prefix) 0) prefix "s7_dl") "_" func-name)) ; not "g" -- collides with glib
 	     (scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") func-name)))
@@ -292,10 +300,10 @@
       ;; C constant -> scheme
       (let ((c-type (if (pair? type) (cadr type) type)))
 	(if (symbol? name)
-	    (set! constants (cons (list c-type (symbol->string name)) constants))
+	    (set! constants (cons (list c-type (symbol->string (collides? name))) constants))
 	    (for-each 
 	     (lambda (c)
-	       (set! constants (cons (list c-type (symbol->string c)) constants)))
+	       (set! constants (cons (list c-type (symbol->string (collides? c))) constants)))
 	     name))))
 
 
@@ -303,10 +311,10 @@
       ;; C macro (with definition check) -> scheme
       (let ((c-type (if (pair? type) (cadr type) type)))
 	(if (symbol? name)
-	    (set! macros (cons (list c-type (symbol->string name)) macros))
+	    (set! macros (cons (list c-type (symbol->string (collides? name))) macros))
 	    (for-each 
 	     (lambda (c)
-	       (set! macros (cons (list c-type (symbol->string c)) macros)))
+	       (set! macros (cons (list c-type (symbol->string (collides? c))) macros)))
 	     name))))
 
   
@@ -399,7 +407,9 @@
 		  (apply add-one-macro (cadr func))
 		  ;; (C-function ...)
 		  (if (eq? (car func) 'C-function)
-		      (set! functions (cons (cadr func) functions))
+		      (begin
+			(collides? (caadr func))
+			(set! functions (cons (cadr func) functions)))
 		      ;; variable
 		      (apply add-one-constant func))))))
 

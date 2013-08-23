@@ -330,52 +330,20 @@
 
 
 (let ((e (current-environment)))
-  (c-define 
-    '((char* getenv (char*))
-      (in-C "extern char **environ;                                    \n\
-             static s7_pointer getenvs(s7_scheme *sc, s7_pointer args) \n\
-             {                                                         \n\
-               s7_pointer p;                                           \n\
-               int i;                                                  \n\
-               p = s7_nil(sc);                                         \n\
-               for (i = 0; environ[i]; i++)                            \n\
-                 {                                                     \n\
-                  const char *eq;                                      \n\
-                  s7_pointer name, value;                              \n\
-                  eq = strchr((const char *)environ[i], (int)'=');     \n\
-                  name = s7_make_string_with_length(sc, environ[i], eq - environ[i]);\n\
-                  value = s7_make_string(sc, (char *)(eq + 1));        \n\
-                  p = s7_cons(sc, s7_cons(sc, name, value), p);        \n\
-                 }                                                     \n\
-               return(p);                                              \n\
-              }")
-      (C-function ("getenvs" getenvs "(getenvs) returns all the environment variables in an alist" 0)))
-    "" '("unistd.h"))
+  (if (not (provided? 'libc.scm)) (load "libc.scm"))
   (augment-environment! e
-    (cons 'get-environment-variable getenv)
-    (cons 'get-environment-variables getenvs)))
+    (cons 'get-environment-variable ((*libc* 'getenv)))
+    (cons 'get-environment-variables ((*libc* 'getenvs)))))
 
 
 ;;; srfi 112
 (let ((e (current-environment)))
-  (c-define '((in-C "static struct utsname buf; \
-                              static char *os_type(void) {uname(&buf); return(buf.sysname);} \
-                              static char *cpu_arch(void) {uname(&buf); return(buf.machine);} \
-                              static char *sys_ins(void) {uname(&buf); return(buf.nodename);} \
-                              static char *os_version(void) {uname(&buf); return(buf.version);} \
-                              static char *os_release(void) {uname(&buf); return(buf.release);} \
-                             ")
-		       (char* os_type (void))
-		       (char* cpu_arch (void))
-		       (char* sys_ins (void))
-		       (char* os_version (void))
-		       (char* os_release (void)))
-    "" '("sys/utsname.h"))
+  (if (not (provided? 'libc.scm)) (load "libc.scm"))
   (augment-environment! e 
-    (cons 'os-type os_type)
-    (cons 'cpu-architecture cpu_arch)
-    (cons 'machine-name sys_ins)
-    (cons 'os-version (lambda () (string-append (os_version) " " (os_release))))
+    (cons 'os-type (lambda () (car ((*libc* 'uname)))))
+    (cons 'cpu-architecture (lambda () (cadr ((*libc* 'uname)))))
+    (cons 'machine-name (lambda () (caddr ((*libc* 'uname)))))
+    (cons 'os-version (lambda () (string-append (list-ref ((*libc* 'uname)) 3) " " (list-ref ((*libc* 'uname)) 4))))
     (cons 'implementation-name (lambda () "s7"))
     (cons 'implementation-version (lambda () (substring (s7-version) 3 7)))))
 

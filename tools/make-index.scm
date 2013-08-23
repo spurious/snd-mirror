@@ -578,6 +578,7 @@
     (list '*libm* "libm.scm")
     (list '*libgdbm* "libgdbm.scm")
     (list '*libdl* "libdl.scm")
+    (list '*libc* "libc.scm")
 
     (list 'with-sound "ws.scm")
     (list 'with-mixed-sound "ws.scm")
@@ -634,8 +635,10 @@
    (list
     (list '*libm* "libm.scm")
     (list '*libgdbm* "libgdbm.scm")
-    (list '*libdl* "libdl.scm")))
-  
+    (list '*libdl* "libdl.scm")
+    (list '*libc* "libc.scm")
+    ))
+
   (apropos-1 (reverse (environment->list (global-environment))))
   
   (let ((syms ())

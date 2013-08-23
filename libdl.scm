@@ -8,6 +8,7 @@
 (if (not (defined? '*libdl*))
     (define-constant *libdl*
       (with-environment (initial-environment)
+	(set! *libraries* (cons (cons "libdl.scm" (current-environment)) *libraries*))
 	(c-define '((void* dlopen (char* int))
 		    (int dlclose (void*))
 		    (void* dlsym (void* char*))
