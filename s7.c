@@ -67335,7 +67335,7 @@ int main(int argc, char **argv)
  * (sound-data ((...) (...))? or use #nD?
  * truncated format? or object->string?
  * the default object print_readable function should give an error, not mimic write
- *
+ * build-in #+/- handling
  *
  * remaining globals: environment_number, baffle_ctr, chars, real_zero et al, c_object type data
  *                    file_names|_size|top, senv (trap_segfault), big|rng_tag, small_ints?, num_to_str|_size?

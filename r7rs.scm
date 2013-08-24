@@ -295,15 +295,6 @@
 ;;
 ;; get-environment-variable is a bad name: "environment" is already in use, and "get-"
 ;;   in any name should raise a red flag.  What about "home-environment"?
-;;   if <a href="#cload">cload.scm</a> is loaded:
-(define get-environment-variable (let () (c-define '(char* getenv (char*))) getenv))
-
-;; similarly:
-(define r7rs-file-exists? (let ()
-                       (c-define '((int F_OK) (int access (char* int))) "" "unistd.h") 
-                       (lambda (arg) 
-                         (= (access arg F_OK) 0))))
-
 
 (let ((e (current-environment)))
   (c-define 
@@ -332,8 +323,9 @@
 (let ((e (current-environment)))
   (if (not (provided? 'libc.scm)) (load "libc.scm"))
   (augment-environment! e
-    (cons 'get-environment-variable ((*libc* 'getenv)))
-    (cons 'get-environment-variables ((*libc* 'getenvs)))))
+    (cons 'get-environment-variable (*libc* 'getenv))
+    (cons 'get-environment-variables (*libc* 'getenvs))
+    (cons 'r7rs-file-exists? (lambda (arg) (= ((*libc* 'access) arg (*libc* 'F_OK)) 0)))))
 
 
 ;;; srfi 112
@@ -353,8 +345,6 @@
 ;; other minor differences: 
 ;;  in s7, single-quote can occur in a name
 ;;  s7 doesn't currently implement #\xxxx characters
-
-
 
 
 (define-bacro* (define-class class-name inherited-classes (slots ()) (methods ()))

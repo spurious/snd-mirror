@@ -1,8 +1,8 @@
 ;;; make-index.scm translated from index.cl
 ;;;   run this -noinit so that loads in ~/.snd_s7 don't confuse matters
 
-;(set! (hook-functions *load-hook*) (list (lambda (filename) (format #t "loading ~S~%" filename))))
-(set! (hook-functions *unbound-variable-hook*) '())
+;(set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S~%" (hook 'name)))))
+(set! (hook-functions *unbound-variable-hook*) ())
 
 (define scheme-variable-names
   (let ((h (make-hash-table)))
@@ -623,7 +623,7 @@
    (lambda (sym&file)
      (let ((e (car sym&file))
 	   (file (cadr sym&file)))
-       (let ((ce (load file)))
+       (let ((ce (if (not (defined? e)) (load file) (symbol->value e))))
 	 (let ((flst (or (hash-table-ref names file) ())))
 	   (for-each
 	    (lambda (slot)
