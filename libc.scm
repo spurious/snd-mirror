@@ -122,6 +122,11 @@
 		    (int fesetenv (fenv_t*) )
 		    (int feupdateenv (fenv_t*) )
 
+		    
+		    ;; -------- fnmatch.h --------
+		    (C-macro (int (FNM_PATHNAME FNM_NOESCAPE FNM_PERIOD FNM_FILE_NAME FNM_LEADING_DIR FNM_CASEFOLD FNM_EXTMATCH FNM_NOMATCH)))
+		    (int fnmatch (char* char* int))
+
 
 		    ;; -------- string.h --------
 		    (void* memcpy (void* void* size_t))
@@ -583,6 +588,8 @@
                              {return(s7_make_integer(sc, ((struct stat *)s7_c_pointer(s7_car(args)))->st_mtime));}
                            static s7_pointer g_st_ctime(s7_scheme *sc, s7_pointer args) 
                              {return(s7_make_integer(sc, ((struct stat *)s7_c_pointer(s7_car(args)))->st_ctime));}
+                           static s7_pointer g_stat_make(s7_scheme *sc, s7_pointer args)
+                             {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(struct stat))));}
                            ")
 
 		    (C-function ("S_ISDIR" g_isdir "" 1))
@@ -606,6 +613,7 @@
 		    (C-function ("stat.st_atime" g_st_atime "" 1))
 		    (C-function ("stat.st_mtime" g_st_mtime "" 1))
 		    (C-function ("stat.st_ctime" g_st_ctime "" 1))
+		    (C-function ("stat.make" g_stat_make "" 0))
 
 
                     ;; -------- time.h sys/time.h --------
@@ -618,6 +626,8 @@
 		    (tm* gmtime (time_t*))
 		    (char* ctime (time_t*))
 		    (tm* localtime (time_t*))
+
+		    ;; TODO: time.make?
 
 		    (in-C "static s7_pointer g_mktime(s7_scheme *sc, s7_pointer args) 
                            {
@@ -649,30 +659,46 @@
                            }
                            static s7_pointer g_clock_getres(s7_scheme *sc, s7_pointer args)
                            {
+                             #if (!__APPLE__)
                              struct timespec t0;
                              int res;
                              res = clock_getres(s7_integer(s7_car(args)), &t0);
                              return(s7_list(sc, 3, s7_make_integer(sc, res), s7_make_integer(sc, t0.tv_sec), s7_make_integer(sc, t0.tv_nsec)));
+                             #else
+                             return(s7_make_integer(sc, -1));
+                             #endif
                            }
                            static s7_pointer g_clock_gettime(s7_scheme *sc, s7_pointer args)
                            {
+                             #if (!__APPLE__)
                              struct timespec t0;
                              int res;
                              res = clock_gettime(s7_integer(s7_car(args)), &t0);
                              return(s7_list(sc, 3, s7_make_integer(sc, res), s7_make_integer(sc, t0.tv_sec), s7_make_integer(sc, t0.tv_nsec)));
+                             #else
+                             return(s7_make_integer(sc, -1));
+                             #endif
                            }
                            static s7_pointer g_clock_settime(s7_scheme *sc, s7_pointer args)
                            {
+                             #if (!__APPLE__)
                              struct timespec t0;
                              t0.tv_sec = (time_t)s7_integer(s7_cadr(args));
                              t0.tv_nsec = (long)s7_integer(s7_caddr(args));
                              return(s7_make_integer(sc, clock_settime(s7_integer(s7_car(args)), &t0)));
+                             #else
+                             return(s7_make_integer(sc, -1));
+                             #endif
                            }
                            static s7_pointer g_clock_getcpuclockid(s7_scheme *sc, s7_pointer args)
                            {
+                             #if __linux__
                              clockid_t c = 0;
                              clock_getcpuclockid((pid_t)s7_integer(s7_car(args)), &c);
                              return(s7_make_integer(sc, (s7_Int)c));
+                             #else
+                             return(s7_make_integer(sc, -1));
+                             #endif
                            }
                            static s7_pointer g_clock_nanosleep(s7_scheme *sc, s7_pointer args)
                            {
@@ -753,6 +779,8 @@
                              p = (struct termios *)s7_c_pointer(s7_caddr(args));
                              return(s7_make_integer(sc, tcsetattr(s7_integer(s7_car(args)), s7_integer(s7_cadr(args)), p)));
                            }
+                           static s7_pointer g_termios_make(s7_scheme *sc, s7_pointer args)
+                             {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(struct termios))));}
                            ")
 
 		    (C-function ("cfgetospeed" g_cfgetospeed "" 1))
@@ -761,6 +789,7 @@
 		    (C-function ("cfsetispeed" g_cfsetispeed "" 2))
 		    (C-function ("tcgetattr" g_tcgetattr "" 2))
 		    (C-function ("tcsetattr" g_tcsetattr "" 3))
+		    (C-function ("termios.make" g_termios_make "" 0))
 
 
 		    ;; -------- grp.h --------
@@ -823,12 +852,157 @@
 		    ;; ((*libc* 'passwd.pw_name) ((*libc* 'getpwnam) "bil")) -> "bil"
 
 
+		    ;; -------- wordexp.h --------
+		    (int (WRDE_DOOFFS WRDE_APPEND WRDE_NOCMD WRDE_REUSE WRDE_SHOWERR WRDE_UNDEF 
+			  WRDE_NOSPACE WRDE_BADCHAR WRDE_BADVAL WRDE_CMDSUB WRDE_SYNTAX))
+		    (int wordexp (char* wordexp_t* int))
+		    (void wordfree (wordexp_t*))
+		    (in-C "static s7_pointer g_wordexp_make(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(wordexp_t))));}
+                           static s7_pointer g_wordexp_we_wordc(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((wordexp_t *)s7_c_pointer(s7_car(args)))->we_wordc));}
+                           static s7_pointer g_wordexp_we_wordv(s7_scheme *sc, s7_pointer args)
+                           {
+                             s7_pointer p;
+                             int i;
+                             wordexp_t *g;
+                             g = (wordexp_t *)s7_c_pointer(s7_car(args));
+                             p = s7_nil(sc);
+                             for (i = 0; i < g->we_wordc; i++)
+                               p = s7_cons(sc, s7_make_string(sc, g->we_wordv[i]), p);
+                             return(p);
+                           }")
+		    (C-function ("wordexp.make" g_wordexp_make "" 0))
+		    (C-function ("wordexp.we_wordc" g_wordexp_we_wordc "" 1))
+		    (C-function ("wordexp.we_wordv" g_wordexp_we_wordv "" 1))
+		    ;; (with-environment *libc* (let ((w (wordexp.make))) (wordexp "~/cl/snd-gdraw" w 0) (wordexp.we_wordv w))) -> ("/home/bil/cl/snd-gdraw")
+
+
+		    ;; -------- glob.h --------
+		    ;; does any of this work in openbsd?
+		    (C-macro (int (GLOB_ERR GLOB_MARK GLOB_NOSORT GLOB_DOOFFS GLOB_NOCHECK GLOB_APPEND GLOB_NOESCAPE GLOB_PERIOD 
+				   GLOB_MAGCHAR GLOB_ALTDIRFUNC GLOB_BRACE GLOB_NOMAGIC GLOB_TILDE GLOB_ONLYDIR GLOB_TILDE_CHECK 
+				   GLOB_NOSPACE GLOB_ABORTED GLOB_NOMATCH GLOB_NOSYS)))
+		    (void globfree (glob_t*))
+		    (in-C "static s7_pointer g_glob_make(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(glob_t))));}
+                           static s7_pointer g_glob_gl_pathc(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((glob_t *)s7_c_pointer(s7_car(args)))->gl_pathc));}
+                           static s7_pointer g_glob(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, glob(s7_string(s7_car(args)), s7_integer(s7_cadr(args)), NULL, (glob_t *)s7_c_pointer(s7_caddr(args)))));}
+                           static s7_pointer g_glob_gl_pathv(s7_scheme *sc, s7_pointer args)
+                           {
+                             s7_pointer p;
+                             int i;
+                             glob_t *g;
+                             g = (glob_t *)s7_c_pointer(s7_car(args));
+                             p = s7_nil(sc);
+                             for (i = 0; i < g->gl_pathc; i++)
+                               p = s7_cons(sc, s7_make_string(sc, g->gl_pathv[i]), p);
+                             return(p);
+                           }")
+		    (C-function ("glob.make" g_wordexp_make "" 0))
+		    (C-function ("glob.gl_pathc" g_glob_gl_pathc "" 1))
+		    (C-function ("glob.gl_pathv" g_glob_gl_pathv "" 1))
+		    (C-function ("glob" g_glob "" 3))
+		    
+		    
+		    ;; -------- signal.h sys/wait.h --------
+		    (C-macro (int (SIGHUP SIGINT SIGQUIT SIGILL SIGTRAP SIGABRT SIGIOT SIGBUS SIGFPE 
+				   SIGKILL SIGUSR1 SIGSEGV SIGUSR2 SIGPIPE SIGALRM SIGTERM SIGSTKFLT 
+				   SIGCLD SIGCHLD SIGCONT SIGSTOP SIGTSTP SIGTTIN SIGTTOU SIGURG 
+				   SIGXCPU SIGXFSZ SIGVTALRM SIGPROF SIGWINCH SIGPOLL SIGIO SIGPWR SIGSYS 
+				   SIGUNUSED WNOHANG WUNTRACED WSTOPPED WEXITED WCONTINUED WNOWAIT
+				   RLIMIT_CPU RLIMIT_FSIZE RLIMIT_DATA RLIMIT_STACK RLIMIT_CORE RLIMIT_RSS 
+				   RLIMIT_NOFILE RLIMIT_OFILE RLIMIT_AS RLIMIT_NPROC RLIMIT_MEMLOCK RLIMIT_LOCKS 
+				   RLIMIT_SIGPENDING RLIMIT_MSGQUEUE RLIMIT_NICE RLIMIT_RTPRIO RLIMIT_NLIMITS 
+				   RLIM_NLIMITS RLIM_INFINITYRLIM_SAVED_MAXRLIM_SAVED_CURRUSAGE_SELF 
+				   RUSAGE_CHILDREN RUSAGE_THREAD RUSAGE_LWP 
+				   PRIO_MIN PRIO_MAX PRIO_PROCESS PRIO_PGRP PRIO_USER
+				   )))
+
+		    (int kill (int int))
+		    (int raise (int))
+		    (int sigemptyset (sigset_t*))
+		    (int sigfillset (sigset_t*))
+		    (int sigaddset (sigset_t* int))
+		    (int sigdelset (sigset_t* int))
+		    (int sigismember (sigset_t* int))
+		    (int sigprocmask (int sigset_t* sigset_t*))
+		    (int sigsuspend (sigset_t*))
+		    (int sigpending (sigset_t*))
+		    (int getpriority (int int))
+		    (int setpriority (int int int)) 
+
+		    (in-C "static s7_pointer g_rlimit_make(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(struct rlimit))));}
+                           static s7_pointer g_rlimit_rlim_cur(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct rlimit *)s7_c_pointer(s7_car(args)))->rlim_cur));}
+                           static s7_pointer g_rlimit_rlim_max(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct rlimit *)s7_c_pointer(s7_car(args)))->rlim_max));}
+                           static s7_pointer g_rusage_make(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(struct rusage))));}
+                           static s7_pointer g_rusage_ru_maxrss(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct rusage *)s7_c_pointer(s7_car(args)))->ru_maxrss));}
+                           static s7_pointer g_rusage_ru_minflt(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct rusage *)s7_c_pointer(s7_car(args)))->ru_minflt));}
+                           static s7_pointer g_rusage_ru_majflt(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct rusage *)s7_c_pointer(s7_car(args)))->ru_majflt));}
+                           static s7_pointer g_rusage_ru_inblock(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct rusage *)s7_c_pointer(s7_car(args)))->ru_inblock));}
+                           static s7_pointer g_rusage_ru_oublock(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct rusage *)s7_c_pointer(s7_car(args)))->ru_oublock));}
+                           static s7_pointer g_rusage_ru_nvcsw(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct rusage *)s7_c_pointer(s7_car(args)))->ru_nvcsw));}
+                           static s7_pointer g_rusage_ru_nivcsw(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct rusage *)s7_c_pointer(s7_car(args)))->ru_nivcsw));}
+                           static s7_pointer g_rusage_ru_utime(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_c_pointer(sc, &(((struct rusage *)s7_c_pointer(s7_car(args)))->ru_utime)));}
+                           static s7_pointer g_rusage_ru_stime(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_c_pointer(sc, &(((struct rusage *)s7_c_pointer(s7_car(args)))->ru_stime)));}
+                           static s7_pointer g_WEXITSTATUS(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, WEXITSTATUS(s7_integer(s7_car(args)))));}
+                           static s7_pointer g_WTERMSIG(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, WTERMSIG(s7_integer(s7_car(args)))));}
+                           static s7_pointer g_WSTOPSIG(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, WSTOPSIG(s7_integer(s7_car(args)))));}
+                           static s7_pointer g_WIFEXITED(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, WIFEXITED(s7_integer(s7_car(args)))));}
+                           static s7_pointer g_WIFSIGNALED(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, WIFSIGNALED(s7_integer(s7_car(args)))));}
+                           static s7_pointer g_WIFSTOPPED(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, WIFSTOPPED(s7_integer(s7_car(args)))));}
+                           ")
+		    (C-function ("rlimit.make" g_rlimit_make "" 0))
+		    (C-function ("rlimit.rlim_cur" g_rlimit_rlim_cur "" 1))
+		    (C-function ("rlimit.rlim_max" g_rlimit_rlim_max "" 1))
+		    (C-function ("rusage.make" g_rusage_make "" 0))
+		    (C-function ("rusage.ru_maxrss" g_rusage_ru_maxrss "" 1))
+		    (C-function ("rusage.ru_minflt" g_rusage_ru_minflt "" 1))
+		    (C-function ("rusage.ru_majflt" g_rusage_ru_majflt "" 1))
+		    (C-function ("rusage.ru_inblock" g_rusage_ru_inblock "" 1))
+		    (C-function ("rusage.ru_oublock" g_rusage_ru_oublock "" 1))
+		    (C-function ("rusage.ru_nvcsw" g_rusage_ru_nvcsw "" 1))
+		    (C-function ("rusage.ru_nivcsw" g_rusage_ru_nivcsw "" 1))
+		    (C-function ("rusage.ru_utime" g_rusage_ru_utime "" 1))
+		    (C-function ("rusage.ru_stime" g_rusage_ru_stime "" 1))
+		    (C-function ("WEXITSTATUS" g_WEXITSTATUS "" 1))
+		    (C-function ("WTERMSIG" g_WTERMSIG "" 1))
+		    (C-function ("WSTOPSIG" g_WSTOPSIG "" 1))
+		    (C-function ("WIFEXITED" g_WIFEXITED "" 1))
+		    (C-function ("WIFSIGNALED" g_WIFSIGNALED "" 1))
+		    (C-function ("WIFSTOPPED" g_WIFSTOPPED "" 1))
+
+		    (int getrlimit (int void*))
+		    (int setrlimit (int void*))
+		    (int getrusage (int void*))
+
 		    )
 	
 		  "" 
 		  (list "limits.h" "ctype.h" "errno.h" "float.h" "stdint.h" "locale.h" "stdlib.h" "string.h" "fcntl.h" 
                         "fenv.h" "stdio.h" "sys/utsname.h" "unistd.h" "dirent.h" "ftw.h" "sys/stat.h" "time.h" "sys/time.h"
-                        "utime.h" "termios.h" "grp.h" "pwd.h")
+                        "utime.h" "termios.h" "grp.h" "pwd.h" "fnmatch.h" "wordexp.h" "glob.h" "signal.h" "sys/wait.h")
 		  "" "" "libc_s7")
 	
 	(current-environment))))
@@ -836,9 +1010,24 @@
 *libc*
 
 
-;; signal.h sys/wait [netinet->dir?] netdb
+;; net/ and netinet/ netdb
+
 
 #|
+ signal needs s7 access as in ftw
+		    (int wait (int*))
+(int waitpid (int int* int)REF
+int waitid (idtype_t idtype, id_t id, siginfo_t *infop,     int options)
+pid_t wait3 (WAIT_STATUS stat_loc, int options, struct rusage * usage)
+sighandler_t (signal, (int sig, sighandler_t handler), sysv_signal)
+int sigaction (int sig, const struct sigaction *restrict act, struct sigaction *restrict oact)
+int sigwait (const sigset_t *restrict set, int *restrict sig)
+int sigwaitinfo (const sigset_t *restrict set, siginfo_t *restrict info)
+int sigtimedwait (const sigset_t *restrict set,  siginfo_t *restrict info, const struct timespec *restrict timeout)
+int sigqueue (pid_t pid, int sig, const union sigval val)
 
+#define SIG_ERR ((sighandler_t) -1)  /* Error return.  */
+#define SIG_DFL ((sighandler_t) 0)  /* Default action.  */
+#define SIG_IGN ((sighandler_t) 1)  /* Ignore signal.  */
 |#
 

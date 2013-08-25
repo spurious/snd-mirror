@@ -24582,8 +24582,13 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
     case T_C_POINTER:
       if (use_write == USE_READABLE_WRITE)
 	{
+#if (SIZEOF_VOID_P == 4)
+	  if ((long)raw_pointer(obj) < 2) /* 0 = NULL is the main case, -1 is used in some libraries */
+	    nlen = snprintf(buf, 64, "(c-pointer %ld)", (long)raw_pointer(obj));
+#else
 	  if ((long long int)raw_pointer(obj) < 2) /* 0 = NULL is the main case, -1 is used in some libraries */
 	    nlen = snprintf(buf, 64, "(c-pointer %lld)", (long long int)raw_pointer(obj));
+#endif
 	  else write_readably_error(sc, "raw c pointer");
 	}
       else nlen = snprintf(buf, 64, "#<c_pointer %p>", raw_pointer(obj));
