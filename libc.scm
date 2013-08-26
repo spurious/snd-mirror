@@ -919,6 +919,8 @@
 				   RLIM_NLIMITS RLIM_INFINITYRLIM_SAVED_MAXRLIM_SAVED_CURRUSAGE_SELF 
 				   RUSAGE_CHILDREN RUSAGE_THREAD RUSAGE_LWP 
 				   PRIO_MIN PRIO_MAX PRIO_PROCESS PRIO_PGRP PRIO_USER
+				   SA_NOCLDSTOP SA_NOCLDWAIT SA_SIGINFO SA_ONSTACK SA_RESTART SA_NODEFER SA_RESETHAND SA_NOMASK SA_ONESHOT SA_STACK 
+				   SIG_BLOCK SIG_UNBLOCK SIG_SETMASK
 				   )))
 
 		    (int kill (int int))
@@ -940,6 +942,10 @@
                            {return(s7_make_integer(sc, ((struct rlimit *)s7_c_pointer(s7_car(args)))->rlim_cur));}
                            static s7_pointer g_rlimit_rlim_max(s7_scheme *sc, s7_pointer args)
                            {return(s7_make_integer(sc, ((struct rlimit *)s7_c_pointer(s7_car(args)))->rlim_max));}
+
+                           static s7_pointer g_sigset_make(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(sigset_t))));}
+
                            static s7_pointer g_rusage_make(s7_scheme *sc, s7_pointer args)
                            {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(struct rusage))));}
                            static s7_pointer g_rusage_ru_maxrss(s7_scheme *sc, s7_pointer args)
@@ -960,6 +966,7 @@
                            {return(s7_make_c_pointer(sc, &(((struct rusage *)s7_c_pointer(s7_car(args)))->ru_utime)));}
                            static s7_pointer g_rusage_ru_stime(s7_scheme *sc, s7_pointer args)
                            {return(s7_make_c_pointer(sc, &(((struct rusage *)s7_c_pointer(s7_car(args)))->ru_stime)));}
+
                            static s7_pointer g_WEXITSTATUS(s7_scheme *sc, s7_pointer args)
                            {return(s7_make_integer(sc, WEXITSTATUS(s7_integer(s7_car(args)))));}
                            static s7_pointer g_WTERMSIG(s7_scheme *sc, s7_pointer args)
@@ -972,10 +979,165 @@
                            {return(s7_make_integer(sc, WIFSIGNALED(s7_integer(s7_car(args)))));}
                            static s7_pointer g_WIFSTOPPED(s7_scheme *sc, s7_pointer args)
                            {return(s7_make_integer(sc, WIFSTOPPED(s7_integer(s7_car(args)))));}
+                           static s7_pointer g_wait(s7_scheme *sc, s7_pointer args)
+                           {
+                             int status, result;
+                             result = wait(&status);
+                             return(s7_list(sc, 2, s7_make_integer(sc, result), s7_make_integer(sc, status)));
+                           }
+                           static s7_pointer g_waitpid(s7_scheme *sc, s7_pointer args)
+                           {
+                             int status, result;
+                             result = waitpid((pid_t)s7_integer(s7_car(args)), &status, s7_integer(s7_cadr(args)));
+                             return(s7_list(sc, 2, s7_make_integer(sc, result), s7_make_integer(sc, status)));
+                           }
+                           static s7_pointer g_sigqueue(s7_scheme *sc, s7_pointer args)
+                           {
+                             union sigval val;
+                             if (s7_is_integer(s7_caddr(args)))
+                               val.sival_int = (int)s7_integer(s7_caddr(args));
+                             else val.sival_ptr = (void *)s7_c_pointer(s7_caddr(args));
+                             return(s7_make_integer(sc, sigqueue((pid_t)s7_integer(s7_car(args)), s7_integer(s7_cadr(args)), val)));
+                           }
+                           static s7_pointer g_sigwait(s7_scheme *sc, s7_pointer args)
+                           {
+                             int status, result;
+                             result = sigwait((const sigset_t *)s7_c_pointer(s7_car(args)), &status);
+                             return(s7_list(sc, 2, s7_make_integer(sc, result), s7_make_integer(sc, status)));
+                           }
+                           static s7_pointer g_sigtimedwait(s7_scheme *sc, s7_pointer args)
+                           {
+                              return(s7_make_integer(sc, sigtimedwait((const sigset_t *)s7_c_pointer(s7_car(args)), 
+                           					   (siginfo_t *)s7_c_pointer(s7_cadr(args)),
+                                                                      (const struct timespec *)s7_c_pointer(s7_caddr(args)))));
+                           }
+
+                           static s7_pointer g_siginfo_make(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(siginfo_t))));}
+                           static s7_pointer g_siginfo_si_signo(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_signo));}
+                           static s7_pointer g_siginfo_si_errno(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_errno));}
+                           static s7_pointer g_siginfo_si_code(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_code));}
+                           static s7_pointer g_siginfo_si_pid(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_pid));}
+                           static s7_pointer g_siginfo_si_uid(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_uid));}
+                           static s7_pointer g_siginfo_si_status(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_status));}
+                           static s7_pointer g_siginfo_si_utime(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_utime));}
+                           static s7_pointer g_siginfo_si_stime(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_stime));}
+                           static s7_pointer g_siginfo_si_value(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_c_pointer(sc, &(((struct siginfo *)s7_c_pointer(s7_car(args)))->si_value)));}
+                           static s7_pointer g_siginfo_si_int(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_int));}
+                           static s7_pointer g_siginfo_si_overrun(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_overrun));}
+                           static s7_pointer g_siginfo_si_timerid(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_timerid));}
+                           static s7_pointer g_siginfo_si_band(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_band));}
+                           static s7_pointer g_siginfo_si_fd(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_fd));}
+                           static s7_pointer g_siginfo_si_ptr(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_c_pointer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_ptr));}
+                           static s7_pointer g_siginfo_si_addr(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_c_pointer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_addr));}
+
+                           static s7_pointer g_timespec_make(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(struct timespec))));}
+                           static s7_pointer g_timespec_tv_sec(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct timespec *)s7_c_pointer(s7_car(args)))->tv_sec));}
+                           static s7_pointer g_timespec_tv_nsec(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct timespec *)s7_c_pointer(s7_car(args)))->tv_nsec));}
+
+                           static s7_pointer g_sigaction_make(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(sigaction))));}
+                           static s7_pointer g_sigaction_sa_flags(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_integer(sc, ((struct sigaction *)s7_c_pointer(s7_car(args)))->sa_flags));}
+                           static s7_pointer g_sigaction_set_sa_flags(s7_scheme *sc, s7_pointer args)
+                           {((struct sigaction *)s7_c_pointer(s7_car(args)))->sa_flags = s7_integer(s7_cadr(args)); return(s7_cadr(args));}
+                           static s7_pointer g_sigaction_sa_mask(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_c_pointer(sc, (void *)(&(((struct sigaction *)s7_c_pointer(s7_car(args)))->sa_mask))));}
+                           static s7_pointer g_sigaction_sa_handler(s7_scheme *sc, s7_pointer args)
+                           {return(s7_make_c_pointer(sc, (void *)(((struct sigaction *)s7_c_pointer(s7_car(args)))->sa_handler)));}
+
+                           static s7_pointer sighandlers = NULL;
+                           static s7_scheme *sighandlers_s7 = NULL;
+                           static void s7_signal_handler(int sig)
+                           {
+                             if (sighandlers)
+                               {
+                                 s7_pointer handler;
+                                 handler = s7_vector_ref(sighandlers_s7, sighandlers, sig);
+                                 if (handler != s7_f(sighandlers_s7))
+                                    s7_call(sighandlers_s7, handler, s7_cons(sighandlers_s7, s7_make_integer(sighandlers_s7, sig), s7_nil(sighandlers_s7)));
+                                }
+                           }
+                           static s7_pointer g_sigaction_set_sa_handler(s7_scheme *sc, s7_pointer args)
+                           {
+                             /* (sigaction.set_sa_handler ptr handler) */
+                             if (!sighandlers)
+                               {
+                                 sighandlers_s7 = sc;
+                                 sighandlers = s7_make_and_fill_vector(sc, SIGUNUSED + 1, s7_f(sc));
+                                 s7_gc_protect(sc, sighandlers);
+                               }
+                             if (s7_c_pointer(s7_cadr(args)) == (void *)SIG_DFL)
+                                ((struct sigaction *)s7_c_pointer(s7_car(args)))->sa_handler = SIG_DFL;
+                             else
+                               {
+                                 if (s7_c_pointer(s7_cadr(args)) == (void *)SIG_IGN)
+                                    ((struct sigaction *)s7_c_pointer(s7_car(args)))->sa_handler = SIG_IGN;
+                                 else 
+                                   {
+                                     ((struct sigaction *)s7_c_pointer(s7_car(args)))->sa_handler = s7_signal_handler;
+                                     s7_vector_set(sighandlers_s7, sighandlers, SIGUNUSED, 
+                                       s7_cons(sc, s7_cons(sc, s7_car(args), s7_cadr(args)), s7_vector_ref(sighandlers_s7, sighandlers, SIGUNUSED)));
+                                   }
+                               }
+                             return(s7_cadr(args));
+                           }
+                         static s7_pointer g_sigaction(s7_scheme *sc, s7_pointer args)
+                         {
+                           int sig;
+                           const struct sigaction *new_act;
+                           struct sigaction *old_act;
+                           s7_pointer handler;
+                           sig = (int)s7_integer(s7_car(args));
+                           new_act = (const struct sigaction *)s7_c_pointer(s7_cadr(args));
+                           old_act = (struct sigaction *)s7_c_pointer(s7_caddr(args));
+                           handler = s7_assq(sc, s7_cadr(args), s7_vector_ref(sighandlers_s7, sighandlers, SIGUNUSED));
+                           if (s7_is_pair(handler))
+                             s7_vector_set(sighandlers_s7, sighandlers, sig, s7_cdr(handler));
+                           return(s7_make_integer(sc, sigaction(sig, new_act, old_act)));
+                         }
+                         static s7_pointer g_signal(s7_scheme *sc, s7_pointer args)
+                         {
+                           int sig;
+                             if (!sighandlers)
+                               {
+                                 sighandlers_s7 = sc;
+                                 sighandlers = s7_make_and_fill_vector(sc, SIGUNUSED + 1, s7_f(sc));
+                                 s7_gc_protect(sc, sighandlers);
+                               }
+                           sig = s7_integer(s7_car(args));
+                           if (s7_c_pointer(s7_cadr(args)) == (void *)SIG_DFL)
+                              return(s7_make_c_pointer(sc, signal(sig, SIG_DFL)));
+                           if (s7_c_pointer(s7_cadr(args)) == (void *)SIG_IGN)
+                              return(s7_make_c_pointer(sc, signal(sig, SIG_IGN)));
+                           s7_vector_set(sc, sighandlers, sig, s7_cadr(args));
+                           return(s7_make_c_pointer(sc, signal(sig, s7_signal_handler)));
+                         }
                            ")
+
 		    (C-function ("rlimit.make" g_rlimit_make "" 0))
 		    (C-function ("rlimit.rlim_cur" g_rlimit_rlim_cur "" 1))
 		    (C-function ("rlimit.rlim_max" g_rlimit_rlim_max "" 1))
+
 		    (C-function ("rusage.make" g_rusage_make "" 0))
 		    (C-function ("rusage.ru_maxrss" g_rusage_ru_maxrss "" 1))
 		    (C-function ("rusage.ru_minflt" g_rusage_ru_minflt "" 1))
@@ -986,6 +1148,36 @@
 		    (C-function ("rusage.ru_nivcsw" g_rusage_ru_nivcsw "" 1))
 		    (C-function ("rusage.ru_utime" g_rusage_ru_utime "" 1))
 		    (C-function ("rusage.ru_stime" g_rusage_ru_stime "" 1))
+
+		    (C-function ("siginfo.make" g_siginfo_make "" 0))
+		    (C-function ("siginfo.si_signo" g_siginfo_si_signo "" 1))
+		    (C-function ("siginfo.si_errno" g_siginfo_si_errno "" 1))
+		    (C-function ("siginfo.si_code" g_siginfo_si_code "" 1))
+		    (C-function ("siginfo.si_pid" g_siginfo_si_pid "" 1))
+		    (C-function ("siginfo.si_uid" g_siginfo_si_uid "" 1))
+		    (C-function ("siginfo.si_status" g_siginfo_si_status "" 1))
+		    (C-function ("siginfo.si_utime" g_siginfo_si_utime "" 1))
+		    (C-function ("siginfo.si_stime" g_siginfo_si_stime "" 1))
+		    (C-function ("siginfo.si_value" g_siginfo_si_value "" 1))
+		    (C-function ("siginfo.si_int" g_siginfo_si_int "" 1))
+		    (C-function ("siginfo.si_overrun" g_siginfo_si_overrun "" 1))
+		    (C-function ("siginfo.si_timerid" g_siginfo_si_timerid "" 1))
+		    (C-function ("siginfo.si_band" g_siginfo_si_band "" 1))
+		    (C-function ("siginfo.si_fd" g_siginfo_si_fd "" 1))
+		    (C-function ("siginfo.si_ptr" g_siginfo_si_ptr "" 1))
+		    (C-function ("siginfo.si_addr" g_siginfo_si_addr "" 1))
+
+		    (C-function ("timespec.make" g_timespec_make "" 0))
+		    (C-function ("timespec.tv_sec" g_timespec_tv_sec "" 1))
+		    (C-function ("timespec.tv_nsec" g_timespec_tv_nsec "" 1))
+
+		    (C-function ("sigaction.make" g_sigaction_make "" 0))
+		    (C-function ("sigaction.sa_handler" g_sigaction_sa_handler "" 1))
+		    (C-function ("sigaction.sa_flags" g_sigaction_sa_flags "" 1))
+		    (C-function ("sigaction.sa_mask" g_sigaction_sa_mask "" 1))
+		    (C-function ("sigaction.set_sa_handler" g_sigaction_set_sa_handler "" 2))
+		    (C-function ("sigaction.set_sa_flags" g_sigaction_set_sa_flags "" 2))
+
 		    (C-function ("WEXITSTATUS" g_WEXITSTATUS "" 1))
 		    (C-function ("WTERMSIG" g_WTERMSIG "" 1))
 		    (C-function ("WSTOPSIG" g_WSTOPSIG "" 1))
@@ -993,41 +1185,233 @@
 		    (C-function ("WIFSIGNALED" g_WIFSIGNALED "" 1))
 		    (C-function ("WIFSTOPPED" g_WIFSTOPPED "" 1))
 
+		    (C-function ("wait" g_wait "" 0))
+		    (C-function ("waitpid" g_waitpid "" 2))
+		    (C-function ("sigqueue" g_sigqueue "" 3))
+		    (C-function ("sigwait" g_sigwait "" 1))
+		    (C-function ("sigaction" g_sigaction "" 3))
+		    (C-function ("sigtimedwait" g_sigtimedwait "" 3))
+		    (C-function ("sigset.make" g_sigset_make "" 0))
+
+		    (C-function ("signal" g_signal "" 2))
+
 		    (int getrlimit (int void*))
 		    (int setrlimit (int void*))
 		    (int getrusage (int void*))
+		    (int sigwaitinfo (sigset_t* siginfo_t*))
+		    (int waitid (int int siginfo_t* int))
+		    (c-pointer (SIG_ERR SIG_DFL SIG_IGN))
 
+
+		    ;; -------- netdb.h --------
+		    (int (IPPORT_ECHO IPPORT_DISCARD IPPORT_SYSTAT IPPORT_DAYTIME IPPORT_NETSTAT IPPORT_FTP IPPORT_TELNET IPPORT_SMTP
+			  IPPORT_TIMESERVER IPPORT_NAMESERVER IPPORT_WHOIS IPPORT_MTP IPPORT_TFTP IPPORT_RJE IPPORT_FINGER IPPORT_TTYLINK
+			  IPPORT_SUPDUP IPPORT_EXECSERVER IPPORT_LOGINSERVER IPPORT_CMDSERVER IPPORT_EFSSERVER IPPORT_BIFFUDP
+			  IPPORT_WHOSERVER IPPORT_ROUTESERVER IPPORT_RESERVED IPPORT_USERRESERVED))
+
+		    (C-macro (int (AI_PASSIVE AI_CANONNAME AI_NUMERICHOST AI_V4MAPPED AI_ALL AI_ADDRCONFIG AI_NUMERICSERV
+				   EAI_BADFLAGS EAI_NONAME EAI_AGAIN EAI_FAIL EAI_FAMILY EAI_SOCKTYPE EAI_SERVICE EAI_MEMORY
+				   EAI_SYSTEM EAI_OVERFLOW
+				   NI_NUMERICHOST NI_NUMERICSERV NI_NOFQDN NI_NAMEREQD NI_DGRAM
+				   SOCK_STREAM SOCK_DGRAM SOCK_RAW SOCK_RDM SOCK_SEQPACKET SOCK_DCCP SOCK_PACKET SOCK_CLOEXEC SOCK_NONBLOCK
+				   _PATH_HEQUIV_PATH_HOSTS _PATH_NETWORKS _PATH_NSSWITCH_CONF _PATH_PROTOCOLS _PATH_SERVICES
+				   PF_UNSPEC PF_LOCAL PF_UNIX PF_FILE PF_INET PF_AX25 PF_IPX PF_APPLETALK PF_NETROM PF_BRIDGE
+				   PF_ATMPVC PF_X25 PF_INET6 PF_ROSE PF_DECnet PF_NETBEUI PF_SECURITY PF_KEY PF_NETLINK PF_ROUTE
+				   PF_PACKET PF_ASH PF_ECONET PF_ATMSVC PF_RDS PF_SNA PF_IRDA PF_PPPOX PF_WANPIPE PF_LLC PF_CAN
+				   PF_TIPC PF_BLUETOOTH PF_IUCV PF_RXRPC PF_ISDN PF_PHONET PF_IEEE802154 PF_MAX
+				   AF_UNSPEC AF_LOCAL AF_UNIX AF_FILE AF_INET AF_AX25 AF_IPX AF_APPLETALK AF_NETROM AF_BRIDGE
+				   AF_ATMPVC AF_X25 AF_INET6 AF_ROSE AF_DECnet AF_NETBEUI AF_SECURITY AF_KEY AF_NETLINK AF_ROUTE
+				   AF_PACKET AF_ASH AF_ECONET AF_ATMSVC AF_RDS AF_SNA AF_IRDA AF_PPPOX AF_WANPIPE AF_LLC
+				   AF_CAN AF_TIPC AF_BLUETOOTH AF_IUCV AF_RXRPC AF_ISDN AF_PHONET AF_IEEE802154 AF_MAX
+				   MSG_OOB MSG_PEEK MSG_DONTROUTE MSG_CTRUNC MSG_PROXY MSG_TRUNC MSG_DONTWAIT MSG_EOR MSG_WAITFORONE
+				   MSG_WAITALL MSG_FIN MSG_SYN MSG_CONFIRM MSG_RST MSG_ERRQUEUE MSG_NOSIGNAL MSG_MORE MSG_CMSG_CLOEXEC
+				   IPPROTO_IP IPPROTO_HOPOPTS IPPROTO_ICMP IPPROTO_IGMP IPPROTO_IPIP IPPROTO_TCP IPPROTO_EGP IPPROTO_PUP
+				   IPPROTO_UDP IPPROTO_IDP IPPROTO_TP IPPROTO_DCCP IPPROTO_IPV6 IPPROTO_ROUTING IPPROTO_FRAGMENT
+				   IPPROTO_RSVP IPPROTO_GRE IPPROTO_ESP IPPROTO_AH IPPROTO_ICMPV6 IPPROTO_NONE IPPROTO_DSTOPTS
+				   IPPROTO_MTP IPPROTO_ENCAP IPPROTO_PIM IPPROTO_COMP IPPROTO_SCTP IPPROTO_UDPLITE IPPROTO_RAW
+				   SOL_RAW SOL_DECNET SOL_X25 SOL_PACKET SOL_ATM SOL_AAL SOL_IRDA
+				   SHUT_RD SHUT_WR SHUT_RDWR
+
+
+				   )))
+
+		    (void sethostent (int))
+		    (void endhostent (void))
+		    (void* gethostent (void))
+
+		    (void setservent (int))
+		    (void endservent (void))
+		    (void* getservent (void))
+
+		    (void setprotoent (int))
+		    (void endprotoent (void))
+		    (void* getprotoent (void))
+
+		    (void setnetent (int))
+		    (void endnetent (void))
+		    (void* getnetent (void))
+
+		    (int socket (int int int))
+		    (int listen (int int))
+		    (int shutdown (int int))
+
+		    (void* gethostbyname (char*))
+		    (void* getnetbyname (char*))
+		    (void* getservbyname (char* char*))
+		    (void* getservbyport (int char*))
+		    (void* getprotobyname (char*))
+		    (void* getprotobynumber (int))
+
+		    (in-C "static s7_pointer g_ntohl(s7_scheme *sc, s7_pointer args) {return(s7_make_integer(sc, ntohl(s7_integer(s7_car(args)))));}
+                           static s7_pointer g_ntohs(s7_scheme *sc, s7_pointer args) {return(s7_make_integer(sc, ntohs(s7_integer(s7_car(args)))));}
+                           static s7_pointer g_htonl(s7_scheme *sc, s7_pointer args) {return(s7_make_integer(sc, htonl(s7_integer(s7_car(args)))));}
+                           static s7_pointer g_htons(s7_scheme *sc, s7_pointer args) {return(s7_make_integer(sc, htons(s7_integer(s7_car(args)))));}
+                          ")
+		    (C-function ("htonl" g_htonl "" 1))
+		    (C-function ("htons" g_htons "" 1))
+		    (C-function ("ntohl" g_ntohl "" 1))
+		    (C-function ("ntohs" g_ntohs "" 1))
 		    )
 	
 		  "" 
 		  (list "limits.h" "ctype.h" "errno.h" "float.h" "stdint.h" "locale.h" "stdlib.h" "string.h" "fcntl.h" 
                         "fenv.h" "stdio.h" "sys/utsname.h" "unistd.h" "dirent.h" "ftw.h" "sys/stat.h" "time.h" "sys/time.h"
-                        "utime.h" "termios.h" "grp.h" "pwd.h" "fnmatch.h" "wordexp.h" "glob.h" "signal.h" "sys/wait.h")
+                        "utime.h" "termios.h" "grp.h" "pwd.h" "fnmatch.h" "wordexp.h" "glob.h" "signal.h" "sys/wait.h"
+			"netdb.h")
 		  "" "" "libc_s7")
-	
+
 	(current-environment))))
 
 *libc*
 
+#|
+struct hostent *gethostbyaddr (void *__addr, __socklen_t __len, int __type)
+struct netent *getnetbyaddr (uint32_t __net, int __type)
+int getaddrinfo (char * __name, char * __service, struct addrinfo * __req, struct addrinfo ** __pai)
+void freeaddrinfo (struct addrinfo *__ai) 
+char *gai_strerror (int __ecode) 
+int getnameinfo (struct sockaddr * __sa, socklen_t __salen, char * __host, socklen_t __hostlen, char * __serv, socklen_t __servlen, unsigned int __flags)
+int bind (int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len)
+(int socketpair (int int int int __fds[2]) 
+int getsockname (int __fd, __SOCKADDR_ARG __addr, socklen_t * __len) 
+int connect (int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len)
+int getpeername (int __fd, __SOCKADDR_ARG __addr, socklen_t * __len) 
+ssize_t send (int __fd, void *__buf, size_t __n, int __flags)
+ssize_t recv (int __fd, void *__buf, size_t __n, int __flags)
+ssize_t sendto (int __fd, void *__buf, size_t __n, int __flags, __CONST_SOCKADDR_ARG __addr,   socklen_t __addr_len)
+ssize_t recvfrom (int __fd, void * __buf, size_t __n, int __flags, __SOCKADDR_ARG __addr, socklen_t * __addr_len)
+ssize_t sendmsg (int __fd, struct msghdr *__message, int __flags)
+ssize_t recvmsg (int __fd, struct msghdr *__message, int __flags)
+int getsockopt (int __fd, int __level, int __optname, void * __optval, socklen_t * __optlen) 
+int setsockopt (int __fd, int __level, int __optname, void *__optval, socklen_t __optlen) 
+int accept (int __fd, __SOCKADDR_ARG __addr,  socklen_t * __addr_len)
+int recvmmsg (int __fd, struct mmsghdr *__vmessages,  unsigned int __vlen, int __flags,  struct timespec *__tmo)
+struct cmsghdr *__cmsg_nxthdr (struct msghdr *__mhdr,   struct cmsghdr *__cmsg) 
 
-;; net/ and netinet/ netdb
+struct netent
+{
+ char *n_name
+ char **n_aliases 
+ int n_addrtype 
+ uint32_t n_net 
+}
+
+struct hostent
+{
+ char *h_name 
+ char **h_aliases
+ int h_addrtype 
+ int h_length 
+ char **h_addr_list 
+}
+
+struct servent
+{
+ char *s_name 
+ char **s_aliases 
+ int s_port 
+ char *s_proto
+}
+
+struct protoent
+{
+ char *p_name 
+ char **p_aliases 
+ int p_proto 
+}
+
+struct addrinfo
+{
+ int ai_flags 
+ int ai_family 
+ int ai_socktype 
+ int ai_protocol 
+ socklen_t ai_addrlen 
+ struct sockaddr *ai_addr
+ char *ai_canonname 
+ struct addrinfo *ai_next 
+}
+
+typedef unsigned short int sa_family_t
+struct sockaddr { __SOCKADDR_COMMON (sa_) char sa_data[14] }
+struct sockaddr_storage { __SOCKADDR_COMMON (ss_) __ss_aligntype __ss_align char __ss_padding[_SS_PADSIZE] }
+
+struct msghdr
+ {
+ void *msg_name 
+ socklen_t msg_namelen 
+ struct iovec *msg_iov 
+ size_t msg_iovlen 
+ void *msg_control 
+ size_t msg_controllen 
+ int msg_flags 
+ }
+
+struct cmsghdr { size_t cmsg_len int cmsg_level  int cmsg_type }
+
+#define CMSG_DATA(cmsg) ((unsigned char *) ((struct cmsghdr *) (cmsg) + 1))
+#define CMSG_NXTHDR(mhdr, cmsg) __cmsg_nxthdr (mhdr, cmsg)
+#define CMSG_FIRSTHDR(mhdr) \
+#define CMSG_ALIGN(len) (((len) + sizeof (size_t) - 1) \
+#define CMSG_SPACE(len) (CMSG_ALIGN (len) \
+#define CMSG_LEN(len) (CMSG_ALIGN (sizeof (struct cmsghdr)) + (len))
+
+struct linger { int l_onoff  int l_linger  }
+typedef uint32_t in_addr_t
+struct in_addr { in_addr_t s_addr }
+struct in6_addr { uint8_t __u6_addr8[16]#define s6_addr __in6_u.__u6_addr8 }
+const struct in6_addr in6addr_any
+const struct in6_addr in6addr_loopback
+#define IN6ADDR_ANY_INIT { { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } } }
+#define IN6ADDR_LOOPBACK_INIT { { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 } } }
+
+struct sockaddr_in
+ {
+ __SOCKADDR_COMMON (sin_)
+ in_port_t sin_port 
+ struct in_addr sin_addr
+ unsigned char sin_zero[sizeof (struct sockaddr) -
+  __SOCKADDR_COMMON_SIZE -
+  sizeof (in_port_t) -
+  sizeof (struct in_addr)]
+ }
+
+struct sockaddr_in6
+ {
+ __SOCKADDR_COMMON (sin6_)
+ in_port_t sin6_port 
+ uint32_t sin6_flowinfo
+ struct in6_addr sin6_addr
+ uint32_t sin6_scope_id 
+ }
+|#
 
 
 #|
- signal needs s7 access as in ftw
-		    (int wait (int*))
-(int waitpid (int int* int)REF
-int waitid (idtype_t idtype, id_t id, siginfo_t *infop,     int options)
-pid_t wait3 (WAIT_STATUS stat_loc, int options, struct rusage * usage)
-sighandler_t (signal, (int sig, sighandler_t handler), sysv_signal)
-int sigaction (int sig, const struct sigaction *restrict act, struct sigaction *restrict oact)
-int sigwait (const sigset_t *restrict set, int *restrict sig)
-int sigwaitinfo (const sigset_t *restrict set, siginfo_t *restrict info)
-int sigtimedwait (const sigset_t *restrict set,  siginfo_t *restrict info, const struct timespec *restrict timeout)
-int sigqueue (pid_t pid, int sig, const union sigval val)
-
-#define SIG_ERR ((sighandler_t) -1)  /* Error return.  */
-#define SIG_DFL ((sighandler_t) 0)  /* Default action.  */
-#define SIG_IGN ((sighandler_t) 1)  /* Ignore signal.  */
+(define sa ((*libc* 'sigaction.make)))
+((*libc* 'sigemptyset) ((*libc* 'sigaction.sa_mask) sa))
+((*libc* 'sigaction.set_sa_flags) sa 0)
+((*libc* 'sigaction.set_sa_handler) sa (lambda (i) (format *stderr* "i: ~A~%" i)))
+((*libc* 'sigaction) (*libc* 'SIGINT) sa (*libc* 'NULL))
+now type C-C to snd and it prints "i: 2"!!
 |#
-
