@@ -328,11 +328,6 @@ static void colorizer(glistener *g, glistener_colorizer_t type, int start, int e
 static void completer(glistener *g, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
 {
   s7_for_each_symbol_name(s7, symbol_func, data);
-  
-  /* PERHAPS: if a match not found, could we search backwards through the current glistener text for one?
-   *   but compare_names in glistener.c returns true when ambiguity is found, not exact match, so how
-   *   to decide that a backwards search is a good idea?
-   */
 }
 
 

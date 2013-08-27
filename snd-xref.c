@@ -1832,7 +1832,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[5788] = {
+static const char *snd_names[5848] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -2940,6 +2940,7 @@ static const char *snd_names[5788] = {
     "abcos", "generators.scm",
     "absin", "generators.scm",
     "acadian-flycatcher", "animals.scm",
+    "accept", "libc.scm",
     "access", "libc.scm",
     "acorn-woodpecker", "animals.scm",
     "add-envelopes", "env.scm",
@@ -2949,6 +2950,16 @@ static const char *snd_names[5788] = {
     "add-to-all-hook-inits", "hooks.scm",
     "add-watcher", "snd11.scm",
     "addenv", "jcvoi.scm",
+    "addrinfo.ai_canonname", "libc.scm",
+    "addrinfo.ai_family", "libc.scm",
+    "addrinfo.ai_flags", "libc.scm",
+    "addrinfo.ai_protocol", "libc.scm",
+    "addrinfo.ai_socktype", "libc.scm",
+    "addrinfo.make", "libc.scm",
+    "addrinfo.set_ai_family", "libc.scm",
+    "addrinfo.set_ai_flags", "libc.scm",
+    "addrinfo.set_ai_protocol", "libc.scm",
+    "addrinfo.set_ai_socktype", "libc.scm",
     "adjustable-oscil", "generators.scm",
     "adjustable-sawtooth-wave", "generators.scm",
     "adjustable-square-wave", "generators.scm",
@@ -3079,6 +3090,7 @@ static const char *snd_names[5788] = {
     "big-table-lookup", "big-gens.scm",
     "bigbird", "bird.scm",
     "binary-port?", "r7rs.scm",
+    "bind", "libc.scm",
     "binomial", "dsp.scm",
     "binomial", "numerics.scm",
     "binomial-direct", "numerics.scm",
@@ -3230,6 +3242,7 @@ static const char *snd_names[5788] = {
     "concatenate-envelopes", "env.scm",
     "confstr", "libc.scm",
     "confused-ground-cricket", "animals.scm",
+    "connect", "libc.scm",
     "constant-velocity", "dlocsig.scm",
     "contrast-channel", "extensions.scm",
     "contrast-sound", "extensions.scm",
@@ -3545,6 +3558,7 @@ static const char *snd_names[5788] = {
     "fread", "libc.scm",
     "free", "libc.scm",
     "free-frame-reader", "frame.scm",
+    "freeaddrinfo", "libc.scm",
     "freeverb", "freeverb.scm",
     "freopen", "libc.scm",
     "freqdiv", "dsp.scm",
@@ -3561,6 +3575,7 @@ static const char *snd_names[5788] = {
     "funlockfile", "libc.scm",
     "fwrite", "libc.scm",
     "g-mustext", "musglyphs.scm",
+    "gai_strerror", "libc.scm",
     "gain", "clm-ins.scm",
     "gain-avg", "clm-ins.scm",
     "gambels-quail", "animals.scm",
@@ -3585,6 +3600,7 @@ static const char *snd_names[5788] = {
     "get-best", "peak-phases.scm",
     "get-output-bytevector", "r7rs.scm",
     "get-speaker-configuration", "dlocsig.scm",
+    "getaddrinfo", "libc.scm",
     "getc", "libc.scm",
     "getchar", "libc.scm",
     "getegid", "libc.scm",
@@ -3594,11 +3610,15 @@ static const char *snd_names[5788] = {
     "getgrgid", "libc.scm",
     "getgrnam", "libc.scm",
     "getgroups", "libc.scm",
+    "gethostbyaddr", "libc.scm",
     "gethostbyname", "libc.scm",
     "gethostent", "libc.scm",
     "getlogin", "libc.scm",
+    "getnameinfo", "libc.scm",
+    "getnetbyaddr", "libc.scm",
     "getnetbyname", "libc.scm",
     "getnetent", "libc.scm",
+    "getpeername", "libc.scm",
     "getpgid", "libc.scm",
     "getppid", "libc.scm",
     "getpriority", "libc.scm",
@@ -3614,6 +3634,8 @@ static const char *snd_names[5788] = {
     "getservbyport", "libc.scm",
     "getservent", "libc.scm",
     "getsid", "libc.scm",
+    "getsockname", "libc.scm",
+    "getsockopt", "libc.scm",
     "gettimeofday", "libc.scm",
     "getuid", "libc.scm",
     "glassy", "generators.scm",
@@ -4225,6 +4247,9 @@ static const char *snd_names[5788] = {
     "read_dir", "libc.scm",
     "realloc", "libc.scm",
     "realpath", "libc.scm",
+    "recv", "libc.scm",
+    "recvfrom", "libc.scm",
+    "recvmsg", "libc.scm",
     "red-breasted-nuthatch", "animals.scm",
     "red-eyed-vireo", "animals.scm",
     "red-shouldered-hawk", "animals.scm",
@@ -4332,6 +4357,9 @@ static const char *snd_names[5788] = {
     "selection-members", "selection.scm",
     "selection-rms", "examp.scm",
     "semitones-envelope", "grani.scm",
+    "send", "libc.scm",
+    "sendmsg", "libc.scm",
+    "sendto", "libc.scm",
     "set-box!", "r7rs.scm",
     "set-coeffs", "maxf.scm",
     "set-gain", "prc95.scm",
@@ -4354,6 +4382,7 @@ static const char *snd_names[5788] = {
     "setrlimit", "libc.scm",
     "setservent", "libc.scm",
     "setsid", "libc.scm",
+    "setsockopt", "libc.scm",
     "setstate", "libc.scm",
     "setuid", "libc.scm",
     "setvbuf", "libc.scm",
@@ -4436,6 +4465,7 @@ static const char *snd_names[5788] = {
     "sndwarp", "sndwarp.scm",
     "snowy-tree-cricket", "animals.scm",
     "socket", "libc.scm",
+    "socketpair", "libc.scm",
     "soft-clipped", "dsp.scm",
     "song-sparrow", "animals.scm",
     "sonoran-desert-toad", "animals.scm",
@@ -4731,7 +4761,7 @@ static const char *snd_names[5788] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 2894);
+  s7_autoload_set_names(sc, snd_names, 2924);
 }
 #endif
 

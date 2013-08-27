@@ -394,7 +394,7 @@ enum {OP_NO_OP,
       OP_LETREC, OP_LETREC1, OP_COND, OP_COND1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
       OP_AND, OP_AND1, OP_OR, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR,
       OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
-      OP_CASE, OP_CASE1, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
+      OP_CASE, OP_CASE1, OP_READ_LIST, OP_READ_NEXT, OP_READ_DOT, OP_READ_QUOTE, 
       OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_APPLY_VALUES,
       OP_READ_VECTOR, OP_READ_BYTEVECTOR, OP_READ_DONE, 
       OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_DONE,
@@ -496,7 +496,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "letrec", "letrec", "cond", "cond", "cond", "cond",
    "and", "and", "or", "or", "defmacro", "defmacro*",
    "define-macro", "define-macro*", "define-expansion",
-   "case", "case", "read-list", "read-dot", "read-quote", 
+   "case", "case", "read-list", "read-list", "read-dot", "read-quote", 
    "read-quasiquote", "read-quasiquote-vector", "read-unquote", "read-apply-values",
    "read-vector", "read-bytevector", "read-done", 
    "load", "load", "eval-string", "eval",
@@ -576,7 +576,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_LETREC", "OP_LETREC1", "OP_COND", "OP_COND1", "OP_COND_SIMPLE", "OP_COND1_SIMPLE",
   "OP_AND", "OP_AND1", "OP_OR", "OP_OR1", "OP_DEFMACRO", "OP_DEFMACRO_STAR",
   "OP_DEFINE_MACRO", "OP_DEFINE_MACRO_STAR", "OP_DEFINE_EXPANSION",
-  "OP_CASE", "OP_CASE1", "OP_READ_LIST", "OP_READ_DOT", "OP_READ_QUOTE", 
+  "OP_CASE", "OP_CASE1", "OP_READ_LIST", "OP_READ_NEXT", "OP_READ_DOT", "OP_READ_QUOTE", 
   "OP_READ_QUASIQUOTE", "OP_READ_QUASIQUOTE_VECTOR", "OP_READ_UNQUOTE", "OP_READ_APPLY_VALUES",
   "OP_READ_VECTOR", "OP_READ_BYTEVECTOR", "OP_READ_DONE", 
   "OP_LOAD_RETURN_IF_EOF", "OP_LOAD_CLOSE_AND_POP_IF_EOF", "OP_EVAL_STRING", "OP_EVAL_DONE",
@@ -47796,20 +47796,28 @@ static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
 static void annotate_expansion(s7_scheme *sc, s7_pointer p)
 {
   s7_pointer x;
-  if ((is_symbol(car(p))) &&
-      (is_pair(cdr(p))))
+  /* p might not be a pair:
+   *   (define-expansion (whatever->zero . whatever) 0)
+   *   (+ 1 (whatever->zero 2 3) 4)
+   *   5
+   */
+  if (is_pair(p))
     {
-      set_ecdr(cdr(p), p);
-      set_overlay(cdr(p));
+      if ((is_symbol(car(p))) &&
+	  (is_pair(cdr(p))))
+	{
+	  set_ecdr(cdr(p), p);
+	  set_overlay(cdr(p));
+	}
+      else
+	{
+	  if (is_pair(car(p)))
+	    annotate_expansion(sc, car(p));
+	}
+      for (x = cdr(p); is_pair(x); x = cdr(x))
+	if (is_pair(car(x)))
+	  annotate_expansion(sc, car(x));
     }
-  else
-    {
-      if (is_pair(car(p)))
-	annotate_expansion(sc, car(p));
-    }
-  for (x = cdr(p); is_pair(x); x = cdr(x))
-    if (is_pair(car(x)))
-      annotate_expansion(sc, car(x));
 }
 
 
@@ -60070,9 +60078,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_EXPANSION:
-      /* after the expander has finished, we need to add some annotations
+      /* after the expander has finished, if a list was returned, we need to add some annotations.
+       *   if the expander returned (values), the list-in-progress vanishes! (This mimics map and *#readers*).
        */
-      annotate_expansion(sc, sc->value);
+      if (sc->value == sc->NO_VALUE)
+	sc->stack_end[-1] = (s7_pointer)OP_READ_NEXT;
+      else annotate_expansion(sc, sc->value);
       goto START;
 
 
@@ -60788,6 +60799,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->args = x;
       }
       
+    case OP_READ_NEXT:
       /* sc->tok = token(sc); */
       /* this is 75% of the token calls, so expanding it saves lots of time */
       {
@@ -67014,19 +67026,19 @@ s7_scheme *s7_init(void)
 
   /* letrec* -- the less said the better...
    */
-  s7_eval_c_string(sc, "(define-macro (letrec* bindings . body)                            \n\
-                          (if (null? body)                                                 \n\
-                              (error 'syntax-error \"letrec* has no body\")                \n\
-                              (if (not (list? bindings))                                   \n\
+  s7_eval_c_string(sc, "(define-macro (letrec* bindings . body)                             \n\
+                          (if (null? body)                                                  \n\
+                              (error 'syntax-error \"letrec* has no body\")                 \n\
+                              (if (not (list? bindings))                                    \n\
                                   (error 'syntax-error \"letrec* variables are messed up\") \n\
-                                  `(let (,@(map (lambda (var&init)                         \n\
-                                                  (list (car var&init) #<undefined>))      \n\
-                                                bindings))                                 \n\
-                                     ,@(map (lambda (var&init)                             \n\
-                                              (if (not (null? (cddr var&init)))            \n\
+                                  `(let (,@(map (lambda (var&init)                          \n\
+                                                  (list (car var&init) #<undefined>))       \n\
+                                                bindings))                                  \n\
+                                     ,@(map (lambda (var&init)                              \n\
+                                              (if (not (null? (cddr var&init)))             \n\
                                                   (error 'syntax-error \"letrec* variable has more than one value\")) \n\
-                                              (list 'set! (car var&init) (cadr var&init))) \n\
-                                             bindings)                                     \n\
+                                              (list 'set! (car var&init) (cadr var&init)))  \n\
+                                             bindings)                                      \n\
                                      ,@body))))");
 
   /* minor bug here: (letrec* ((x 1) (x 2)) ...) complains: duplicate identifier in let, but it should say letrec*, might use:
@@ -67046,27 +67058,27 @@ s7_scheme *s7_init(void)
   /* (multiple-value-bind (a b) (values 1 2) (+ a b)) */
   /*   named "receive" in srfi-8 which strikes me as perverse */
 
-  s7_eval_c_string(sc, "(define-macro (multiple-value-set! vars expr . body)   \n\
-                          (let ((local-vars (map (lambda (n) (gensym)) vars))) \n\
-                            `((lambda ,local-vars                              \n\
-                                ,@(map (lambda (n ln)                          \n\
-                                         `(set! ,n ,ln))                       \n\
-                                       vars local-vars)                        \n\
-                                ,@body)                                        \n\
+  s7_eval_c_string(sc, "(define-macro (multiple-value-set! vars expr . body)                                  \n\
+                          (let ((local-vars (map (lambda (n) (gensym)) vars)))                                \n\
+                            `((lambda ,local-vars                                                             \n\
+                                ,@(map (lambda (n ln)                                                         \n\
+                                         `(set! ,n ,ln))                                                      \n\
+                                       vars local-vars)                                                       \n\
+                                ,@body)                                                                       \n\
                               ,expr)))");
 
 
   /* ---------------- make-procedure-with-setter ---------------- */
 
-  s7_eval_c_string(sc, "(define (make-procedure-with-setter g s)                                               \n\
-                          \"(make-procedure-with-setter g s) returns a function (g) whose setter is s.\"       \n\
-                          (if (or (not (procedure? g)) (not (procedure? s)))                                   \n\
-                              (error 'wrong-type-arg \"procedure-with-setter takes 2 procedures: ~A ~A\" g s)  \n\
-                              (set! (procedure-setter g) s))                                                   \n\
+  s7_eval_c_string(sc, "(define (make-procedure-with-setter g s)                                              \n\
+                          \"(make-procedure-with-setter g s) returns a function (g) whose setter is s.\"      \n\
+                          (if (or (not (procedure? g)) (not (procedure? s)))                                  \n\
+                              (error 'wrong-type-arg \"procedure-with-setter takes 2 procedures: ~A ~A\" g s) \n\
+                              (set! (procedure-setter g) s))                                                  \n\
                           g)");
 
-  s7_eval_c_string(sc, "(define (procedure-with-setter? obj)                                                \n\
-                          \"(procedure-with-setter? obj) returns #t if obj is a procedure with setter.\"    \n\
+  s7_eval_c_string(sc, "(define (procedure-with-setter? obj)                                                  \n\
+                          \"(procedure-with-setter? obj) returns #t if obj is a procedure with setter.\"      \n\
                           (and (procedure? obj) (procedure? (procedure-setter obj))))");
 
 
@@ -67074,46 +67086,79 @@ s7_scheme *s7_init(void)
 
   /* cond-expand (uses *features*) 
    */
-  s7_eval_c_string(sc, "(define-macro (cond-expand . clauses)                                               \n\
-                          (letrec ((traverse (lambda (tree)                                                 \n\
-		                               (if (pair? tree)                                             \n\
-			                            (cons (traverse (car tree))                             \n\
-				                          (if (null? (cdr tree)) () (traverse (cdr tree)))) \n\
-			                            (if (memq tree '(and or not else)) tree                 \n\
-			                                (and (symbol? tree) (provided? tree)))))))          \n\
-                            `(cond ,@(map (lambda (clause)                                                  \n\
-		                             (cons (traverse (car clause))                                  \n\
-			                           (if (null? (cdr clause)) '(#f) (cdr clause))))           \n\
+  s7_eval_c_string(sc, "(define-macro (cond-expand . clauses)                                                 \n\
+                          (letrec ((traverse (lambda (tree)                                                   \n\
+		                               (if (pair? tree)                                               \n\
+			                            (cons (traverse (car tree))                               \n\
+				                          (if (null? (cdr tree)) () (traverse (cdr tree))))   \n\
+			                            (if (memq tree '(and or not else)) tree                   \n\
+			                                (and (symbol? tree) (provided? tree)))))))            \n\
+                            `(cond ,@(map (lambda (clause)                                                    \n\
+		                             (cons (traverse (car clause))                                    \n\
+			                           (if (null? (cdr clause)) '(#f) (cdr clause))))             \n\
 		                          clauses))))");
+
+  s7_eval_c_string(sc, "(define-expansion (reader-expand . clauses)                                           \n\
+                          (letrec ((traverse (lambda (tree)                                                   \n\
+		                               (if (pair? tree)                                               \n\
+			                           (cons (traverse (car tree))                                \n\
+				                         (if (null? (cdr tree)) () (traverse (cdr tree))))    \n\
+			                           (if (memq tree '(and or not else)) tree                    \n\
+			                               (and (symbol? tree) (provided? tree)))))))             \n\
+                            (call-with-exit                                                                   \n\
+                              (lambda (return)                                                                \n\
+                                (for-each                                                                     \n\
+	                          (lambda (clause)                                                            \n\
+	                            (if (eval (traverse (car clause)))                                        \n\
+	                                (if (null? (cddr clause))                                             \n\
+                                            (return (cadr clause))                                            \n\
+                                            (return `(begin ,@(cdr clause))))))                               \n\
+	                          clauses)                                                                    \n\
+                                (values)))))");
+
+  s7_eval_c_string(sc, "(define-expansion (reader-cond . clauses)                                             \n\
+                          (call-with-exit                                                                     \n\
+                            (lambda (return)                                                                  \n\
+                              (for-each                                                                       \n\
+                                (lambda (clause)                                                              \n\
+	                          (if (eval (car clause))                                                     \n\
+	                              (if (null? (cddr clause))                                               \n\
+                                          (return (cadr clause))                                              \n\
+                                          (return `(begin ,@(cdr clause))))))                                 \n\
+                                clauses)                                                                      \n\
+                              (values))))");
+  /* TODO: doc/test reader-cond and reader-expand
+   *   (what happens if the read-time eval hits an error?)
+   */
 
 
   /* ---------------- hooks ---------------- */
 
-  s7_eval_c_string(sc, "(define (make-hook . args)                                         \n\
-                          (let ((init ())                                                  \n\
-	                        (body ())                                                  \n\
-	                        (end ()))                                                  \n\
-                            (apply lambda* args                                            \n\
-                              '(let ((result #<unspecified>))                              \n\
-                                 (let ((e (current-environment)))                          \n\
-                                   (dynamic-wind                                           \n\
-	                             (lambda () (for-each (lambda (f) (f e)) init))        \n\
-	                             (lambda () (for-each (lambda (f) (f e)) body) result) \n\
-	                             (lambda () (for-each (lambda (f) (f e)) end)))))      \n\
+  s7_eval_c_string(sc, "(define (make-hook . args)                                                            \n\
+                          (let ((init ())                                                                     \n\
+	                        (body ())                                                                     \n\
+	                        (end ()))                                                                     \n\
+                            (apply lambda* args                                                               \n\
+                              '(let ((result #<unspecified>))                                                 \n\
+                                 (let ((e (current-environment)))                                             \n\
+                                   (dynamic-wind                                                              \n\
+	                             (lambda () (for-each (lambda (f) (f e)) init))                           \n\
+	                             (lambda () (for-each (lambda (f) (f e)) body) result)                    \n\
+	                             (lambda () (for-each (lambda (f) (f e)) end)))))                         \n\
                               ())))");
 
-  s7_eval_c_string(sc, "(define hook-functions                                             \n\
-                          (make-procedure-with-setter                                      \n\
-                            (lambda (hook)                                                 \n\
-                              ((procedure-environment hook) 'body))                        \n\
-                            (lambda (hook lst)                                             \n\
-                              (if (or (null? lst)                                          \n\
-                                      (and (pair? lst)                                     \n\
-                                           (apply and (map (lambda (f)                     \n\
-                                                             (and (procedure? f)           \n\
-                                                                  (aritable? f 1)))        \n\
-                                                           lst))))                         \n\
-                                  (set! ((procedure-environment hook) 'body) lst)          \n\
+  s7_eval_c_string(sc, "(define hook-functions                                                                \n\
+                          (make-procedure-with-setter                                                         \n\
+                            (lambda (hook)                                                                    \n\
+                              ((procedure-environment hook) 'body))                                           \n\
+                            (lambda (hook lst)                                                                \n\
+                              (if (or (null? lst)                                                             \n\
+                                      (and (pair? lst)                                                        \n\
+                                           (apply and (map (lambda (f)                                        \n\
+                                                             (and (procedure? f)                              \n\
+                                                                  (aritable? f 1)))                           \n\
+                                                           lst))))                                            \n\
+                                  (set! ((procedure-environment hook) 'body) lst)                             \n\
                                   (error 'wrong-type-arg \"hook-functions must be a list of functions, each accepting one argument: ~S\" lst)))))");
 
   /* if the error checks are removed, s7test will be very unhappy 
@@ -67340,7 +67385,6 @@ int main(int argc, char **argv)
  * (sound-data ((...) (...))? or use #nD?
  * truncated format? or object->string?
  * the default object print_readable function should give an error, not mimic write
- * build-in #+/- handling
  *
  * remaining globals: environment_number, baffle_ctr, chars, real_zero et al, c_object type data
  *                    file_names|_size|top, senv (trap_segfault), big|rng_tag, small_ints?, num_to_str|_size?

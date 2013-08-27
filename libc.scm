@@ -25,8 +25,16 @@
 
 	;; -------- assert.h --------
 	;; assert macro
-	;; we could make a #reader for this so that the assertion really does disappear if not debugging
-	;; or better use #+debugging (assert expr) and move the #+ code into s7
+#|
+	(define-expansion (assert assertion)
+	  (reader-cond ((not (defined? 'NDEBUG))
+	                `(if (not ,assertion) 
+			    (error 'assert-failure "~S[~D]: ~A failed~%"
+				   (port-filename) (port-line-number) ',assertion)))
+	               (#t (values))))
+        (define (hiho a) (assert (> a 2)) (+ a 1))
+|#
+
 
 	;; -------- setjmp.h --------
 	;; longjmp etc
@@ -102,9 +110,8 @@
 		    (int open (char* int))
 		    (int creat (char* (mode_t int)))
 		    (int lockf (int int int))
-		    ;; (not in openbsd) (int posix_fadvise (int int int int))
-		    ;; (not in openbsd) (int posix_fallocate (int int int))
-		    ;; #-openbsd would be nicer, and the reader in s7.html works -- perhaps move it to s7.c?
+		    (reader-expand (linux (int posix_fadvise (int int int int))))
+		    (reader-expand (linux (int posix_fallocate (int int int))))
 
 		    
 		    ;; -------- fenv.h --------
@@ -170,7 +177,7 @@
 		    (char* tempnam (char* char*))
 		    (int fclose (FILE*))
 		    (int fflush (FILE*))
-		    ;; (not in openbsd) (int fcloseall (void))
+		    (reader-expand (linux (int fcloseall (void))))
 		    (FILE* fopen (char* char*))
 		    (FILE* freopen (char*  char* FILE*))
 		    (FILE* fdopen (int char*))
@@ -202,7 +209,7 @@
 		    (FILE* popen (char* char*))
 		    (int pclose (FILE*))
 		    (char* ctermid (char*))
-		    ;; (char* cuserid (char*))
+;;		    (reader-expand (linux (char* cuserid (char*))))
 		    (void flockfile (FILE*))
 		    (int ftrylockfile (FILE*))
 		    (void funlockfile (FILE*))
@@ -627,12 +634,11 @@
 		    (char* ctime (time_t*))
 		    (tm* localtime (time_t*))
 
-		    ;; TODO: time.make?
-
 		    (in-C "static s7_pointer g_mktime(s7_scheme *sc, s7_pointer args) 
                            {
                              return(s7_make_integer(sc, (s7_Int)mktime((struct tm *)s7_c_pointer(s7_car(args)))));
                            }
+                           static s7_pointer g_time_make(s7_scheme *sc, s7_pointer args) {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(time_t))));}
                            static s7_pointer g_strftime(s7_scheme *sc, s7_pointer args) 
                            {
                              return(s7_make_integer(sc, (s7_Int)strftime((char *)s7_string(s7_car(args)), 
@@ -702,12 +708,17 @@
                            }
                            static s7_pointer g_clock_nanosleep(s7_scheme *sc, s7_pointer args)
                            {
+                             #if (!__APPLE__)
                              struct timespec t0;
                              t0.tv_sec = (time_t)s7_integer(s7_caddr(args));
                              t0.tv_nsec = (long)s7_integer(s7_cadddr(args));
                              return(s7_make_integer(sc, clock_nanosleep((clockid_t)s7_integer(s7_car(args)), (int)s7_integer(s7_cadr(args)), &t0, NULL)));
+                             #else
+                             return(s7_make_integer(sc, -1));
+                             #endif
                            }
                            ")
+		    (C-function ("time.make" g_time_make "" 0))
 		    (C-function ("mktime" g_mktime "" 1))
 		    (C-function ("asctime" g_asctime "" 1))
 		    (C-function ("strftime" g_strftime "" 4))
@@ -853,6 +864,7 @@
 
 
 		    ;; -------- wordexp.h --------
+		    ;; not in openbsd
 		    (int (WRDE_DOOFFS WRDE_APPEND WRDE_NOCMD WRDE_REUSE WRDE_SHOWERR WRDE_UNDEF 
 			  WRDE_NOSPACE WRDE_BADCHAR WRDE_BADVAL WRDE_CMDSUB WRDE_SYNTAX))
 		    (int wordexp (char* wordexp_t* int))
@@ -912,7 +924,8 @@
 				   SIGKILL SIGUSR1 SIGSEGV SIGUSR2 SIGPIPE SIGALRM SIGTERM SIGSTKFLT 
 				   SIGCLD SIGCHLD SIGCONT SIGSTOP SIGTSTP SIGTTIN SIGTTOU SIGURG 
 				   SIGXCPU SIGXFSZ SIGVTALRM SIGPROF SIGWINCH SIGPOLL SIGIO SIGPWR SIGSYS 
-				   SIGUNUSED WNOHANG WUNTRACED WSTOPPED WEXITED WCONTINUED WNOWAIT
+				   (reader-expand ((not osx) SIGUNUSED))
+                                   WNOHANG WUNTRACED WSTOPPED WEXITED WCONTINUED WNOWAIT
 				   RLIMIT_CPU RLIMIT_FSIZE RLIMIT_DATA RLIMIT_STACK RLIMIT_CORE RLIMIT_RSS 
 				   RLIMIT_NOFILE RLIMIT_OFILE RLIMIT_AS RLIMIT_NPROC RLIMIT_MEMLOCK RLIMIT_LOCKS 
 				   RLIMIT_SIGPENDING RLIMIT_MSGQUEUE RLIMIT_NICE RLIMIT_RTPRIO RLIMIT_NLIMITS 
@@ -936,6 +949,7 @@
 		    (int getpriority (int int))
 		    (int setpriority (int int int)) 
 
+		    ;; rlimit and rusage not in openbsd
 		    (in-C "static s7_pointer g_rlimit_make(s7_scheme *sc, s7_pointer args)
                            {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(struct rlimit))));}
                            static s7_pointer g_rlimit_rlim_cur(s7_scheme *sc, s7_pointer args)
@@ -967,6 +981,7 @@
                            static s7_pointer g_rusage_ru_stime(s7_scheme *sc, s7_pointer args)
                            {return(s7_make_c_pointer(sc, &(((struct rusage *)s7_c_pointer(s7_car(args)))->ru_stime)));}
 
+                           #if __linux__
                            static s7_pointer g_WEXITSTATUS(s7_scheme *sc, s7_pointer args)
                            {return(s7_make_integer(sc, WEXITSTATUS(s7_integer(s7_car(args)))));}
                            static s7_pointer g_WTERMSIG(s7_scheme *sc, s7_pointer args)
@@ -979,6 +994,8 @@
                            {return(s7_make_integer(sc, WIFSIGNALED(s7_integer(s7_car(args)))));}
                            static s7_pointer g_WIFSTOPPED(s7_scheme *sc, s7_pointer args)
                            {return(s7_make_integer(sc, WIFSTOPPED(s7_integer(s7_car(args)))));}
+                           #endif
+
                            static s7_pointer g_wait(s7_scheme *sc, s7_pointer args)
                            {
                              int status, result;
@@ -993,11 +1010,13 @@
                            }
                            static s7_pointer g_sigqueue(s7_scheme *sc, s7_pointer args)
                            {
+                             #if (!__APPLE__)
                              union sigval val;
                              if (s7_is_integer(s7_caddr(args)))
                                val.sival_int = (int)s7_integer(s7_caddr(args));
                              else val.sival_ptr = (void *)s7_c_pointer(s7_caddr(args));
                              return(s7_make_integer(sc, sigqueue((pid_t)s7_integer(s7_car(args)), s7_integer(s7_cadr(args)), val)));
+                             #endif
                            }
                            static s7_pointer g_sigwait(s7_scheme *sc, s7_pointer args)
                            {
@@ -1007,11 +1026,13 @@
                            }
                            static s7_pointer g_sigtimedwait(s7_scheme *sc, s7_pointer args)
                            {
+                             #if (!__APPLE__)
                               return(s7_make_integer(sc, sigtimedwait((const sigset_t *)s7_c_pointer(s7_car(args)), 
                            					   (siginfo_t *)s7_c_pointer(s7_cadr(args)),
                                                                       (const struct timespec *)s7_c_pointer(s7_caddr(args)))));
+                             #endif
                            }
-
+                           #if __linux__
                            static s7_pointer g_siginfo_make(s7_scheme *sc, s7_pointer args)
                            {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(siginfo_t))));}
                            static s7_pointer g_siginfo_si_signo(s7_scheme *sc, s7_pointer args)
@@ -1046,6 +1067,7 @@
                            {return(s7_make_c_pointer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_ptr));}
                            static s7_pointer g_siginfo_si_addr(s7_scheme *sc, s7_pointer args)
                            {return(s7_make_c_pointer(sc, ((struct siginfo *)s7_c_pointer(s7_car(args)))->si_addr));}
+                           #endif
 
                            static s7_pointer g_timespec_make(s7_scheme *sc, s7_pointer args)
                            {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(struct timespec))));}
@@ -1077,6 +1099,9 @@
                                     s7_call(sighandlers_s7, handler, s7_cons(sighandlers_s7, s7_make_integer(sighandlers_s7, sig), s7_nil(sighandlers_s7)));
                                 }
                            }
+                           #ifndef SIGUNUSED
+                             #define SIGUNUSED 65
+                           #endif
                            static s7_pointer g_sigaction_set_sa_handler(s7_scheme *sc, s7_pointer args)
                            {
                              /* (sigaction.set_sa_handler ptr handler) */
@@ -1149,23 +1174,23 @@
 		    (C-function ("rusage.ru_utime" g_rusage_ru_utime "" 1))
 		    (C-function ("rusage.ru_stime" g_rusage_ru_stime "" 1))
 
-		    (C-function ("siginfo.make" g_siginfo_make "" 0))
-		    (C-function ("siginfo.si_signo" g_siginfo_si_signo "" 1))
-		    (C-function ("siginfo.si_errno" g_siginfo_si_errno "" 1))
-		    (C-function ("siginfo.si_code" g_siginfo_si_code "" 1))
-		    (C-function ("siginfo.si_pid" g_siginfo_si_pid "" 1))
-		    (C-function ("siginfo.si_uid" g_siginfo_si_uid "" 1))
-		    (C-function ("siginfo.si_status" g_siginfo_si_status "" 1))
-		    (C-function ("siginfo.si_utime" g_siginfo_si_utime "" 1))
-		    (C-function ("siginfo.si_stime" g_siginfo_si_stime "" 1))
-		    (C-function ("siginfo.si_value" g_siginfo_si_value "" 1))
-		    (C-function ("siginfo.si_int" g_siginfo_si_int "" 1))
-		    (C-function ("siginfo.si_overrun" g_siginfo_si_overrun "" 1))
-		    (C-function ("siginfo.si_timerid" g_siginfo_si_timerid "" 1))
-		    (C-function ("siginfo.si_band" g_siginfo_si_band "" 1))
-		    (C-function ("siginfo.si_fd" g_siginfo_si_fd "" 1))
-		    (C-function ("siginfo.si_ptr" g_siginfo_si_ptr "" 1))
-		    (C-function ("siginfo.si_addr" g_siginfo_si_addr "" 1))
+		    (reader-expand (linux (C-function ("siginfo.make" g_siginfo_make "" 0))))
+		    (reader-expand (linux (C-function ("siginfo.si_signo" g_siginfo_si_signo "" 1))))
+		    (reader-expand (linux (C-function ("siginfo.si_errno" g_siginfo_si_errno "" 1))))
+		    (reader-expand (linux (C-function ("siginfo.si_code" g_siginfo_si_code "" 1))))
+		    (reader-expand (linux (C-function ("siginfo.si_pid" g_siginfo_si_pid "" 1))))
+		    (reader-expand (linux (C-function ("siginfo.si_uid" g_siginfo_si_uid "" 1))))
+		    (reader-expand (linux (C-function ("siginfo.si_status" g_siginfo_si_status "" 1))))
+		    (reader-expand (linux (C-function ("siginfo.si_utime" g_siginfo_si_utime "" 1))))
+		    (reader-expand (linux (C-function ("siginfo.si_stime" g_siginfo_si_stime "" 1))))
+		    (reader-expand (linux (C-function ("siginfo.si_value" g_siginfo_si_value "" 1))))
+		    (reader-expand (linux (C-function ("siginfo.si_int" g_siginfo_si_int "" 1))))
+		    (reader-expand (linux (C-function ("siginfo.si_overrun" g_siginfo_si_overrun "" 1))))
+		    (reader-expand (linux (C-function ("siginfo.si_timerid" g_siginfo_si_timerid "" 1))))
+		    (reader-expand (linux (C-function ("siginfo.si_band" g_siginfo_si_band "" 1))))
+		    (reader-expand (linux (C-function ("siginfo.si_fd" g_siginfo_si_fd "" 1))))
+		    (reader-expand (linux (C-function ("siginfo.si_ptr" g_siginfo_si_ptr "" 1))))
+		    (reader-expand (linux (C-function ("siginfo.si_addr" g_siginfo_si_addr "" 1))))
 
 		    (C-function ("timespec.make" g_timespec_make "" 0))
 		    (C-function ("timespec.tv_sec" g_timespec_tv_sec "" 1))
@@ -1178,12 +1203,19 @@
 		    (C-function ("sigaction.set_sa_handler" g_sigaction_set_sa_handler "" 2))
 		    (C-function ("sigaction.set_sa_flags" g_sigaction_set_sa_flags "" 2))
 
-		    (C-function ("WEXITSTATUS" g_WEXITSTATUS "" 1))
-		    (C-function ("WTERMSIG" g_WTERMSIG "" 1))
-		    (C-function ("WSTOPSIG" g_WSTOPSIG "" 1))
-		    (C-function ("WIFEXITED" g_WIFEXITED "" 1))
-		    (C-function ("WIFSIGNALED" g_WIFSIGNALED "" 1))
-		    (C-function ("WIFSTOPPED" g_WIFSTOPPED "" 1))
+		    ;; (define sa ((*libc* 'sigaction.make)))
+		    ;; ((*libc* 'sigemptyset) ((*libc* 'sigaction.sa_mask) sa))
+		    ;; ((*libc* 'sigaction.set_sa_flags) sa 0)
+		    ;; ((*libc* 'sigaction.set_sa_handler) sa (lambda (i) (format *stderr* "i: ~A~%" i)))
+		    ;; ((*libc* 'sigaction) (*libc* 'SIGINT) sa (*libc* 'NULL))
+		    ;; now type C-C to snd and it prints "i: 2"!!
+
+		    (reader-expand (linux (C-function ("WEXITSTATUS" g_WEXITSTATUS "" 1))))
+		    (reader-expand (linux (C-function ("WTERMSIG" g_WTERMSIG "" 1))))
+		    (reader-expand (linux (C-function ("WSTOPSIG" g_WSTOPSIG "" 1))))
+		    (reader-expand (linux (C-function ("WIFEXITED" g_WIFEXITED "" 1))))
+		    (reader-expand (linux (C-function ("WIFSIGNALED" g_WIFSIGNALED "" 1))))
+		    (reader-expand (linux (C-function ("WIFSTOPPED" g_WIFSTOPPED "" 1))))
 
 		    (C-function ("wait" g_wait "" 0))
 		    (C-function ("waitpid" g_waitpid "" 2))
@@ -1198,20 +1230,20 @@
 		    (int getrlimit (int void*))
 		    (int setrlimit (int void*))
 		    (int getrusage (int void*))
-		    (int sigwaitinfo (sigset_t* siginfo_t*))
-		    (int waitid (int int siginfo_t* int))
+		    (reader-expand ((not osx) (int sigwaitinfo (sigset_t* siginfo_t*))))
+		    (reader-expand ((not osx) (int waitid (int int siginfo_t* int))))
 		    (c-pointer (SIG_ERR SIG_DFL SIG_IGN))
 
 
 		    ;; -------- netdb.h --------
-		    (int (IPPORT_ECHO IPPORT_DISCARD IPPORT_SYSTAT IPPORT_DAYTIME IPPORT_NETSTAT IPPORT_FTP IPPORT_TELNET IPPORT_SMTP
-			  IPPORT_TIMESERVER IPPORT_NAMESERVER IPPORT_WHOIS IPPORT_MTP IPPORT_TFTP IPPORT_RJE IPPORT_FINGER IPPORT_TTYLINK
-			  IPPORT_SUPDUP IPPORT_EXECSERVER IPPORT_LOGINSERVER IPPORT_CMDSERVER IPPORT_EFSSERVER IPPORT_BIFFUDP
-			  IPPORT_WHOSERVER IPPORT_ROUTESERVER IPPORT_RESERVED IPPORT_USERRESERVED))
+		    (reader-expand (linux
+				    (int (IPPORT_ECHO IPPORT_DISCARD IPPORT_SYSTAT IPPORT_DAYTIME IPPORT_NETSTAT IPPORT_FTP IPPORT_TELNET IPPORT_SMTP
+					  IPPORT_TIMESERVER IPPORT_NAMESERVER IPPORT_WHOIS IPPORT_MTP IPPORT_TFTP IPPORT_RJE IPPORT_FINGER IPPORT_TTYLINK
+					  IPPORT_SUPDUP IPPORT_EXECSERVER IPPORT_LOGINSERVER IPPORT_CMDSERVER IPPORT_EFSSERVER IPPORT_BIFFUDP
+					  IPPORT_WHOSERVER IPPORT_ROUTESERVER IPPORT_RESERVED IPPORT_USERRESERVED))))
 
 		    (C-macro (int (AI_PASSIVE AI_CANONNAME AI_NUMERICHOST AI_V4MAPPED AI_ALL AI_ADDRCONFIG AI_NUMERICSERV
-				   EAI_BADFLAGS EAI_NONAME EAI_AGAIN EAI_FAIL EAI_FAMILY EAI_SOCKTYPE EAI_SERVICE EAI_MEMORY
-				   EAI_SYSTEM EAI_OVERFLOW
+				   EAI_BADFLAGS EAI_NONAME EAI_AGAIN EAI_FAIL EAI_FAMILY EAI_SOCKTYPE EAI_SERVICE EAI_MEMORY EAI_SYSTEM EAI_OVERFLOW
 				   NI_NUMERICHOST NI_NUMERICSERV NI_NOFQDN NI_NAMEREQD NI_DGRAM
 				   SOCK_STREAM SOCK_DGRAM SOCK_RAW SOCK_RDM SOCK_SEQPACKET SOCK_DCCP SOCK_PACKET SOCK_CLOEXEC SOCK_NONBLOCK
 				   _PATH_HEQUIV_PATH_HOSTS _PATH_NETWORKS _PATH_NSSWITCH_CONF _PATH_PROTOCOLS _PATH_SERVICES
@@ -1230,10 +1262,7 @@
 				   IPPROTO_RSVP IPPROTO_GRE IPPROTO_ESP IPPROTO_AH IPPROTO_ICMPV6 IPPROTO_NONE IPPROTO_DSTOPTS
 				   IPPROTO_MTP IPPROTO_ENCAP IPPROTO_PIM IPPROTO_COMP IPPROTO_SCTP IPPROTO_UDPLITE IPPROTO_RAW
 				   SOL_RAW SOL_DECNET SOL_X25 SOL_PACKET SOL_ATM SOL_AAL SOL_IRDA
-				   SHUT_RD SHUT_WR SHUT_RDWR
-
-
-				   )))
+				   SHUT_RD SHUT_WR SHUT_RDWR)))
 
 		    (void sethostent (int))
 		    (void endhostent (void))
@@ -1256,21 +1285,202 @@
 		    (int shutdown (int int))
 
 		    (void* gethostbyname (char*))
+		    (void* gethostbyaddr (void* int int))
 		    (void* getnetbyname (char*))
+		    (void* getnetbyaddr (int int))
 		    (void* getservbyname (char* char*))
 		    (void* getservbyport (int char*))
 		    (void* getprotobyname (char*))
 		    (void* getprotobynumber (int))
 
+		    (void freeaddrinfo (void*))
+		    (char* gai_strerror (int))
+
+		    (int bind (int void* int))
+		    (int connect (int void* int))
+		    (int send (int void* int int))
+		    (int recv (int void* int int))
+		    (int sendto (int void* int int void* int))
+		    (int sendmsg (int void* int))
+		    (int recvmsg (int void* int))
+
 		    (in-C "static s7_pointer g_ntohl(s7_scheme *sc, s7_pointer args) {return(s7_make_integer(sc, ntohl(s7_integer(s7_car(args)))));}
                            static s7_pointer g_ntohs(s7_scheme *sc, s7_pointer args) {return(s7_make_integer(sc, ntohs(s7_integer(s7_car(args)))));}
                            static s7_pointer g_htonl(s7_scheme *sc, s7_pointer args) {return(s7_make_integer(sc, htonl(s7_integer(s7_car(args)))));}
                            static s7_pointer g_htons(s7_scheme *sc, s7_pointer args) {return(s7_make_integer(sc, htons(s7_integer(s7_car(args)))));}
+
+                           static s7_pointer g_addrinfo_make(s7_scheme *sc, s7_pointer args) 
+                           {
+                             return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(struct addrinfo))));
+                           }
+
+                           static s7_pointer g_addrinfo_ai_flags(s7_scheme *sc, s7_pointer args) 
+                           {
+                             return(s7_make_integer(sc, ((struct addrinfo *)s7_c_pointer(s7_car(args)))->ai_flags));
+                           }
+                           static s7_pointer g_addrinfo_set_ai_flags(s7_scheme *sc, s7_pointer args) 
+                           {
+                             ((struct addrinfo *)s7_c_pointer(s7_car(args)))->ai_flags = (int)s7_integer(s7_cadr(args));
+                             return(s7_cadr(args));
+                           }
+
+                           static s7_pointer g_addrinfo_ai_family(s7_scheme *sc, s7_pointer args) 
+                           {
+                             return(s7_make_integer(sc, ((struct addrinfo *)s7_c_pointer(s7_car(args)))->ai_family));
+                           }
+                           static s7_pointer g_addrinfo_set_ai_family(s7_scheme *sc, s7_pointer args) 
+                           {
+                             ((struct addrinfo *)s7_c_pointer(s7_car(args)))->ai_family = (int)s7_integer(s7_cadr(args));
+                             return(s7_cadr(args));
+                           }
+
+                           static s7_pointer g_addrinfo_ai_socktype(s7_scheme *sc, s7_pointer args) 
+                           {
+                             return(s7_make_integer(sc, ((struct addrinfo *)s7_c_pointer(s7_car(args)))->ai_socktype));
+                           }
+                           static s7_pointer g_addrinfo_set_ai_socktype(s7_scheme *sc, s7_pointer args) 
+                           {
+                             ((struct addrinfo *)s7_c_pointer(s7_car(args)))->ai_socktype = (int)s7_integer(s7_cadr(args));
+                             return(s7_cadr(args));
+                           }
+
+                           static s7_pointer g_addrinfo_ai_protocol(s7_scheme *sc, s7_pointer args) 
+                           {
+                             return(s7_make_integer(sc, ((struct addrinfo *)s7_c_pointer(s7_car(args)))->ai_protocol));
+                           }
+                           static s7_pointer g_addrinfo_set_ai_protocol(s7_scheme *sc, s7_pointer args) 
+                           {
+                             ((struct addrinfo *)s7_c_pointer(s7_car(args)))->ai_protocol = (int)s7_integer(s7_cadr(args));
+                             return(s7_cadr(args));
+                           }
+
+                           static s7_pointer g_addrinfo_ai_canonname(s7_scheme *sc, s7_pointer args) 
+                           {
+                             return(s7_make_string(sc, ((struct addrinfo *)s7_c_pointer(s7_car(args)))->ai_canonname));
+                           }
+
+                           static s7_pointer g_getaddrinfo(s7_scheme *sc, s7_pointer args) 
+                           {
+                              struct addrinfo *result;
+                              int err;
+                              err = getaddrinfo(s7_string(s7_car(args)), 
+                           		     s7_string(s7_cadr(args)),
+                           		     (const struct addrinfo *)s7_c_pointer(s7_caddr(args)),
+                                                &result);
+                             return(s7_list(sc, 2, s7_make_integer(sc, err), s7_make_c_pointer(sc, (void *)result)));
+                           }
+
+                           static s7_pointer g_getnameinfo(s7_scheme *sc, s7_pointer args) 
+                           {
+                             #ifndef NI_MAXHOST
+                               #define NI_MAXHOST 1025
+                             #endif
+                             #ifndef NI_MAXSERV
+                               #define NI_MAXSERV 32
+                             #endif
+                             char *host, *service;
+                             int err;
+                             host = (char *)calloc(NI_MAXHOST, sizeof(char));
+                             service = (char *)calloc(NI_MAXSERV, sizeof(char));
+                             err = getnameinfo((const struct sockaddr *)s7_c_pointer(s7_car(args)), s7_integer(s7_cadr(args)),
+                           		    host, NI_MAXHOST,
+                           		    service, NI_MAXSERV,
+                           		    s7_integer(s7_caddr(args)));
+                             return(s7_list(sc, 3, s7_make_integer(sc, err), s7_make_string(sc, host), s7_make_string(sc, service)));
+                           }
+                           
+                           static s7_pointer g_socketpair(s7_scheme *sc, s7_pointer args) 
+                           {
+                             int fds[2];
+                             int err;
+                             err = socketpair(s7_integer(s7_car(args)), s7_integer(s7_cadr(args)), s7_integer(s7_caddr(args)), fds);
+                             return(s7_list(sc, 3, s7_make_integer(sc, err), s7_make_integer(sc, fds[0]), s7_make_integer(sc, fds[1])));
+                           }
+                           
+                           static s7_pointer g_getsockname(s7_scheme *sc, s7_pointer args) 
+                           {
+                             int fds[2];
+                             int err, res;
+                             res = s7_integer(s7_caddr(args));
+                             err = getsockname(s7_integer(s7_car(args)), (struct sockaddr *)s7_c_pointer(s7_cadr(args)), &res);
+                             return(s7_list(sc, 2, s7_make_integer(sc, err), s7_make_integer(sc, res)));
+                           }
+                           static s7_pointer g_getpeername(s7_scheme *sc, s7_pointer args) 
+                           {
+                             int fds[2];
+                             int err, res;
+                             res = s7_integer(s7_caddr(args));
+                             err = getpeername(s7_integer(s7_car(args)), (struct sockaddr *)s7_c_pointer(s7_cadr(args)), &res);
+                             return(s7_list(sc, 2, s7_make_integer(sc, err), s7_make_integer(sc, res)));
+                           }
+                           static s7_pointer g_accept(s7_scheme *sc, s7_pointer args) 
+                           {
+                             int fds[2];
+                             int err, res;
+                             res = s7_integer(s7_caddr(args));
+                             err = accept(s7_integer(s7_car(args)), (struct sockaddr *)s7_c_pointer(s7_cadr(args)), &res);
+                             return(s7_list(sc, 2, s7_make_integer(sc, err), s7_make_integer(sc, res)));
+                           }
+                           static s7_pointer g_getsockopt(s7_scheme *sc, s7_pointer args) 
+                           {
+                             int fds[2];
+                             int err;
+                             socklen_t res;
+                             res = (socklen_t)s7_integer(s7_list_ref(sc, args, 4));
+                             err = getsockopt(s7_integer(s7_car(args)), s7_integer(s7_cadr(args)), s7_integer(s7_caddr(args)), s7_c_pointer(s7_cadddr(args)), &res);
+                             return(s7_list(sc, 2, s7_make_integer(sc, err), s7_make_integer(sc, (s7_Int)res)));
+                           }
+                           static s7_pointer g_setsockopt(s7_scheme *sc, s7_pointer args) 
+                           {
+                             int fds[2];
+                             int err;
+                             socklen_t res;
+                             res = (socklen_t)s7_integer(s7_list_ref(sc, args, 4));
+                             return(s7_make_integer(sc, setsockopt(s7_integer(s7_car(args)), s7_integer(s7_cadr(args)), 
+                                    s7_integer(s7_caddr(args)), s7_c_pointer(s7_cadddr(args)), res)));
+                           }
+                           static s7_pointer g_recvfrom(s7_scheme *sc, s7_pointer args) 
+                           {
+                             int fds[2];
+                             int err;
+                             socklen_t res;
+                             res = (socklen_t)s7_integer(s7_list_ref(sc, args, 5));
+                             err = recvfrom(s7_integer(s7_car(args)), 
+                           		 s7_c_pointer(s7_cadr(args)), 
+                           		 s7_integer(s7_caddr(args)), 
+                           		 s7_integer(s7_cadddr(args)), 
+                           		 (struct sockaddr *)s7_c_pointer(s7_list_ref(sc, args, 4)),
+                           		 &res);
+                             return(s7_list(sc, 2, s7_make_integer(sc, err), s7_make_integer(sc, (s7_Int)res)));
+                           }
+
                           ")
 		    (C-function ("htonl" g_htonl "" 1))
 		    (C-function ("htons" g_htons "" 1))
 		    (C-function ("ntohl" g_ntohl "" 1))
 		    (C-function ("ntohs" g_ntohs "" 1))
+
+                    (C-function ("getaddrinfo" g_getaddrinfo "" 3))
+                    (C-function ("getnameinfo" g_getnameinfo "" 3))
+		    (C-function ("addrinfo.make" g_addrinfo_make "" 0))
+		    (C-function ("addrinfo.ai_flags" g_addrinfo_ai_flags "" 1))
+		    (C-function ("addrinfo.set_ai_flags" g_addrinfo_set_ai_flags "" 2))
+		    (C-function ("addrinfo.ai_family" g_addrinfo_ai_family "" 1))
+		    (C-function ("addrinfo.set_ai_family" g_addrinfo_set_ai_family "" 2))
+		    (C-function ("addrinfo.ai_socktype" g_addrinfo_ai_socktype "" 1))
+		    (C-function ("addrinfo.set_ai_socktype" g_addrinfo_set_ai_socktype "" 2))
+		    (C-function ("addrinfo.ai_protocol" g_addrinfo_ai_protocol "" 1))
+		    (C-function ("addrinfo.set_ai_protocol" g_addrinfo_set_ai_protocol "" 2))
+		    (C-function ("addrinfo.ai_canonname" g_addrinfo_ai_canonname "" 1))
+		    ;; TODO: need the ai_next field to move through the list 
+
+		    (C-function ("socketpair" g_socketpair "" 3))
+		    (C-function ("getsockname" g_getsockname "" 3))
+		    (C-function ("getpeername" g_getpeername "" 3))
+		    (C-function ("accept" g_accept "" 3))
+		    (C-function ("getsockopt" g_getsockopt "" 5))
+		    (C-function ("setsockopt" g_setsockopt "" 5))
+		    (C-function ("recvfrom" g_recvfrom "" 6))
 		    )
 	
 		  "" 
@@ -1285,29 +1495,22 @@
 *libc*
 
 #|
-struct hostent *gethostbyaddr (void *__addr, __socklen_t __len, int __type)
-struct netent *getnetbyaddr (uint32_t __net, int __type)
-int getaddrinfo (char * __name, char * __service, struct addrinfo * __req, struct addrinfo ** __pai)
-void freeaddrinfo (struct addrinfo *__ai) 
-char *gai_strerror (int __ecode) 
-int getnameinfo (struct sockaddr * __sa, socklen_t __salen, char * __host, socklen_t __hostlen, char * __serv, socklen_t __servlen, unsigned int __flags)
-int bind (int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len)
-(int socketpair (int int int int __fds[2]) 
-int getsockname (int __fd, __SOCKADDR_ARG __addr, socklen_t * __len) 
-int connect (int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len)
-int getpeername (int __fd, __SOCKADDR_ARG __addr, socklen_t * __len) 
-ssize_t send (int __fd, void *__buf, size_t __n, int __flags)
-ssize_t recv (int __fd, void *__buf, size_t __n, int __flags)
-ssize_t sendto (int __fd, void *__buf, size_t __n, int __flags, __CONST_SOCKADDR_ARG __addr,   socklen_t __addr_len)
-ssize_t recvfrom (int __fd, void * __buf, size_t __n, int __flags, __SOCKADDR_ARG __addr, socklen_t * __addr_len)
-ssize_t sendmsg (int __fd, struct msghdr *__message, int __flags)
-ssize_t recvmsg (int __fd, struct msghdr *__message, int __flags)
-int getsockopt (int __fd, int __level, int __optname, void * __optval, socklen_t * __optlen) 
-int setsockopt (int __fd, int __level, int __optname, void *__optval, socklen_t __optlen) 
-int accept (int __fd, __SOCKADDR_ARG __addr,  socklen_t * __addr_len)
-int recvmmsg (int __fd, struct mmsghdr *__vmessages,  unsigned int __vlen, int __flags,  struct timespec *__tmo)
-struct cmsghdr *__cmsg_nxthdr (struct msghdr *__mhdr,   struct cmsghdr *__cmsg) 
+TODO: get the remaining needed netdb makers/accessors
+TODO: all the help strings!
 
+struct addrinfo
+{
+ int ai_flags 
+ int ai_family 
+ int ai_socktype 
+ int ai_protocol 
+ socklen_t ai_addrlen 
+ struct sockaddr *ai_addr
+ char *ai_canonname 
+ struct addrinfo *ai_next 
+}
+
+/* these could all share accessors */
 struct netent
 {
  char *n_name
@@ -1340,18 +1543,6 @@ struct protoent
  int p_proto 
 }
 
-struct addrinfo
-{
- int ai_flags 
- int ai_family 
- int ai_socktype 
- int ai_protocol 
- socklen_t ai_addrlen 
- struct sockaddr *ai_addr
- char *ai_canonname 
- struct addrinfo *ai_next 
-}
-
 typedef unsigned short int sa_family_t
 struct sockaddr { __SOCKADDR_COMMON (sa_) char sa_data[14] }
 struct sockaddr_storage { __SOCKADDR_COMMON (ss_) __ss_aligntype __ss_align char __ss_padding[_SS_PADSIZE] }
@@ -1366,15 +1557,6 @@ struct msghdr
  size_t msg_controllen 
  int msg_flags 
  }
-
-struct cmsghdr { size_t cmsg_len int cmsg_level  int cmsg_type }
-
-#define CMSG_DATA(cmsg) ((unsigned char *) ((struct cmsghdr *) (cmsg) + 1))
-#define CMSG_NXTHDR(mhdr, cmsg) __cmsg_nxthdr (mhdr, cmsg)
-#define CMSG_FIRSTHDR(mhdr) \
-#define CMSG_ALIGN(len) (((len) + sizeof (size_t) - 1) \
-#define CMSG_SPACE(len) (CMSG_ALIGN (len) \
-#define CMSG_LEN(len) (CMSG_ALIGN (sizeof (struct cmsghdr)) + (len))
 
 struct linger { int l_onoff  int l_linger  }
 typedef uint32_t in_addr_t
@@ -1407,11 +1589,3 @@ struct sockaddr_in6
 |#
 
 
-#|
-(define sa ((*libc* 'sigaction.make)))
-((*libc* 'sigemptyset) ((*libc* 'sigaction.sa_mask) sa))
-((*libc* 'sigaction.set_sa_flags) sa 0)
-((*libc* 'sigaction.set_sa_handler) sa (lambda (i) (format *stderr* "i: ~A~%" i)))
-((*libc* 'sigaction) (*libc* 'SIGINT) sa (*libc* 'NULL))
-now type C-C to snd and it prints "i: 2"!!
-|#

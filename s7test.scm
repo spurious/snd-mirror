@@ -27319,6 +27319,12 @@ func
 (test '(_expansion_ 3) (quote (_expansion_ 3)))
 (test (_expansion_ (+ (_expansion_ 1) 2)) 5)
 
+(define-expansion (whatever->zero . whatever) 0)
+(let ((val (+ 1 (whatever->zero 2 3) 4)))
+  (if (not (= val 5))
+      (format *stderr* "whatever->zero: ~A?" val)))
+
+
 
 ;;; define-constant
 (test (let () (define-constant __c1__ 32) __c1__) 32)

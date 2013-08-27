@@ -3571,7 +3571,7 @@ static void gl2psPDFgroupListInit(void)
         !gl2psSameColor(tmpt.vertex[0].rgba, lastt.vertex[0].rgba);
       if(lasttype == p->type && tmpt.prop == lastt.prop &&
          lastTriangleWasNotSimpleWithSameColor){
-        /* TODO Check here for last alpha */
+        /* Check here for last alpha */
         gl2psListAdd(gro.ptrlist, &p);
       }
       else{
