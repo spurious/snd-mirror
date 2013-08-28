@@ -5443,7 +5443,7 @@ This should be named define-reader-macro.
 <li>remove even? and odd?
 <li>remove string-length, vector-length, and hash-table-size.
 <li>remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!, set-car!|cdr!, and set-current-output|input|error-port.
-<li>change file-exists? to file?
+<li>change file-exists? to file? (or omit it and assume use of libc.scm &mdash; why reinvent the wheel?).
 <li>change with-output-to-* and with-input-from-* to omit the pointless lambda.
 <li>remove all the conversion and copy functions like vector-&gt;list and vector-copy (use copy).
 <li>add typeq? and perhaps make null? generic.
@@ -5454,11 +5454,22 @@ This should be named define-reader-macro.
 same kind of name (or +pi+ to show it is a constant?).  
 All the environment function names are bad &mdash; "environment" by itself
 is annoying. 
-get-output-string should be current-output-string.
-"cond-expand" is bad &mdash; we're not expanding anything, and the macro's point is to make it easy to
+get-output-string should be current-output-string. write-char behaves like display, not write.  symbol-access is not ideal.
+</p>
+
+<p>
+The name "cond-expand" is bad &mdash; we're not expanding anything, and the macro's point is to make it easy to
 operate with the *features* list; perhaps "cond-provided"?  Not only is cond-expand poorly named, but the whole
-idea is clumsy: use #+ and #-.
-write-char behaves like display, not write.  symbol-access is not ideal.
+idea is clumsy &mdash; no-one has ever said "I'll use cond-expand!" with a happy heart.
+I'd say "use #+ and #-", but that's not quite the right thing either.  Why assume that
+the *features* list is the only thing of interest at read time?  
+Why restrict where a read-time decision can occur?
+I'm currently toying with "reader-expand" (similar to cond-expand, but the code choice happens at read-time),
+and "reader-cond" (similar again, but the decision is based on a normal evaluation, not something tied to *features*).
+In the latter cases, if the macro returns (values), nothing is placed in the output.  See libc.scm for examples.
+</p>
+
+<p>
 Better ideas are always welcome!
 </p>
 </div>

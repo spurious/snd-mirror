@@ -1832,7 +1832,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[5848] = {
+static const char *snd_names[5888] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -2953,6 +2953,7 @@ static const char *snd_names[5848] = {
     "addrinfo.ai_canonname", "libc.scm",
     "addrinfo.ai_family", "libc.scm",
     "addrinfo.ai_flags", "libc.scm",
+    "addrinfo.ai_next", "libc.scm",
     "addrinfo.ai_protocol", "libc.scm",
     "addrinfo.ai_socktype", "libc.scm",
     "addrinfo.make", "libc.scm",
@@ -3444,6 +3445,7 @@ static const char *snd_names[5848] = {
     "false", "libc.scm",
     "fast-calling-tree-cricket", "animals.scm",
     "fclose", "libc.scm",
+    "fcloseall", "libc.scm",
     "fcntl", "libc.scm",
     "fdim", "libm.scm",
     "fdopen", "libc.scm",
@@ -3698,6 +3700,10 @@ static const char *snd_names[5848] = {
     "hook-empty?", "snd11.scm",
     "hook-functions", "snd11.scm",
     "hook-member", "hooks.scm",
+    "hostent.h_addrtype", "libc.scm",
+    "hostent.h_aliases", "libc.scm",
+    "hostent.h_length", "libc.scm",
+    "hostent.h_name", "libc.scm",
     "house-finch", "animals.scm",
     "house-sparrow-1", "animals.scm",
     "html", "index.scm",
@@ -4019,6 +4025,10 @@ static const char *snd_names[5848] = {
     "ncos4", "generators.scm",
     "nearbyint", "libm.scm",
     "nearest-point", "dlocsig.scm",
+    "netent.n_addrtype", "libc.scm",
+    "netent.n_aliases", "libc.scm",
+    "netent.n_name", "libc.scm",
+    "netent.n_net", "libc.scm",
     "next-frame", "frame.scm",
     "next-peak", "examp.scm",
     "next-phrase", "spokenword.scm",
@@ -4188,6 +4198,8 @@ static const char *snd_names[5848] = {
     "polyoid?", "generators.scm",
     "popen", "libc.scm",
     "port?", "r7rs.scm",
+    "posix_fadvise", "libc.scm",
+    "posix_fallocate", "libc.scm",
     "pow", "libm.scm",
     "powenv-channel", "env.scm",
     "power-env", "env.scm",
@@ -4199,6 +4211,9 @@ static const char *snd_names[5848] = {
     "pretty-print", "write.scm",
     "previous-frame", "frame.scm",
     "previous-phrase", "spokenword.scm",
+    "protoent.p_aliases", "libc.scm",
+    "protoent.p_name", "libc.scm",
+    "protoent.p_proto", "libc.scm",
     "prototype->highpass", "analog-filter.scm",
     "prune-db", "nb.scm",
     "pulse-voice", "examp.scm",
@@ -4360,6 +4375,10 @@ static const char *snd_names[5848] = {
     "send", "libc.scm",
     "sendmsg", "libc.scm",
     "sendto", "libc.scm",
+    "servent.s_aliases", "libc.scm",
+    "servent.s_name", "libc.scm",
+    "servent.s_port", "libc.scm",
+    "servent.s_proto", "libc.scm",
     "set-box!", "r7rs.scm",
     "set-coeffs", "maxf.scm",
     "set-gain", "prc95.scm",
@@ -4607,6 +4626,7 @@ static const char *snd_names[5848] = {
     "tgamma", "libm.scm",
     "third", "dlocsig.scm",
     "time", "libc.scm",
+    "time.make", "libc.scm",
     "times->samples", "ws.scm",
     "timespec.make", "libc.scm",
     "timespec.tv_nsec", "libc.scm",
@@ -4761,7 +4781,7 @@ static const char *snd_names[5848] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 2924);
+  s7_autoload_set_names(sc, snd_names, 2944);
 }
 #endif
 

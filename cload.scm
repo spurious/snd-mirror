@@ -223,7 +223,7 @@
       (format p "#include \"s7.h\"~%~%"))
   
 
-    (define (add-one-function return-type name arg-types)
+    (define* (add-one-function return-type name arg-types doc)
       ;; (format *stderr* "~A ~A ~A~%" return-type name arg-types)
       ;; C function -> scheme
       (let* ((func-name (symbol->string (collides? name)))
@@ -293,7 +293,7 @@
 	      (format p ";~%  return(s7_unspecified(sc));~%"))
 	  (format p "}~%~%"))
 
-	(set! functions (cons (list scheme-name base-name func-name num-args) functions))))
+	(set! functions (cons (list scheme-name base-name (or doc func-name) num-args) functions))))
 
     
     (define (add-one-constant type name)
@@ -397,7 +397,7 @@
 
     (define (handle-declaration func)
       ;; functions
-      (if (= (length func) 3)
+      (if (>= (length func) 3)
 	  (apply add-one-function func)
 	  ;; (in-C ...)
 	  (if (eq? (car func) 'in-C)

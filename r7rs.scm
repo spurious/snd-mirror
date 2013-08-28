@@ -136,6 +136,7 @@
          files)))
 
 (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
+;; I prefer (define-expansion (comment . stuff) (reader-cond (#t (values))))
 
 
 (define-macro (when test . forms) `(if ,test (begin ,@forms)))         ; or `(cond (,test ,@forms))

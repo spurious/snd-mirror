@@ -11,7 +11,7 @@
 	
 	(set! *libraries* (cons (cons "libm.scm" (current-environment)) *libraries*))
 
-	(c-define '((double j0 (double)) 
+	(c-define '((double j0 (double) "Bessel j0") 
 		    (double j1 (double)) 
 		    (double erf (double)) 
 		    (double erfc (double))
@@ -132,5 +132,6 @@ static s7_pointer g_modf(s7_scheme *sc, s7_pointer args)
 
 
 #|
+TODO: help strings (also for libdl and libgdbm)
 complex cases aren't handled in cload I think
 |#

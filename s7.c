@@ -67385,6 +67385,14 @@ int main(int argc, char **argv)
  * (sound-data ((...) (...))? or use #nD?
  * truncated format? or object->string?
  * the default object print_readable function should give an error, not mimic write
+ * direct access to FILE* in s7 port (for libc)? (port-file) 
+ * do we need a finalization or gc-time function for c-pointers?
+ *   what about a type-name field for c-pointers (better debugging output)
+ *   (make-c-pointer val "char**" free) s7_make_c_pointer_with_free?
+ * could we use glob or equivalent in the glistener filename completer?
+ * to make real use of malloc we need sizeof at least for s7_Int|Double
+ *   if a hash-table or something of (type . size), then the *.make functions wouldn't be needed
+ *   how to collect these types?
  *
  * remaining globals: environment_number, baffle_ctr, chars, real_zero et al, c_object type data
  *                    file_names|_size|top, senv (trap_segfault), big|rng_tag, small_ints?, num_to_str|_size?
