@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.30"
-#define S7_DATE "16-Aug-13"
+#define S7_VERSION "3.0"
+#define S7_DATE "28-Aug-13"
 
 
 typedef long long int s7_Int;
@@ -361,7 +361,10 @@ s7_Int s7_vector_length(s7_pointer vec);                                    /* (
 int s7_vector_rank(s7_pointer vect);                                        /* number of dimensions in vect */
 s7_Int *s7_vector_dimensions(s7_pointer vec);                               /* dimensions */
 s7_Int *s7_vector_offsets(s7_pointer vec);                                  /* precalculated offsets to speed-up addressing */
+
 s7_pointer *s7_vector_elements(s7_pointer vec);                             /* a pointer to the array of s7_pointers */
+s7_Int *s7_int_vector_elements(s7_pointer vec);
+s7_Double *s7_float_vector_elements(s7_pointer vec);
 
 s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_Int index);                            /* (vector-ref vec index) */
 s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer a);              /* (vector-set! vec index a) */
@@ -369,6 +372,8 @@ s7_pointer s7_vector_ref_n(s7_scheme *sc, s7_pointer vector, int indices, ...); 
 s7_pointer s7_vector_set_n(s7_scheme *sc, s7_pointer vector, s7_pointer value, int indices, ...); /* multidimensional vector-set! */
 
 s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len);                                 /* (make-vector len) */
+s7_pointer s7_make_int_vector(s7_scheme *sc, s7_Int len);
+s7_pointer s7_make_float_vector(s7_scheme *sc, s7_Int len);
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill);       /* (make-vector len fill) */
 
 void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj);                   /* (vector-fill! vec obj) */
@@ -880,8 +885,9 @@ bool s7_is_valid_pointer(s7_pointer arg);
  * 
  *        s7 changes
  *		
+ * 28-Aug:    s7_int|float_vector_elements (homogenous vectors), libc.scm.
  * 16-Aug:    ~W directive in format, make-shared-vector.
- * 23-Jul:    s7_autoload_set_names, libm.scm, r7rs.scm, s7libtest.scm, gdb-s7.scm.
+ * 23-Jul:    s7_autoload_set_names, libm.scm, libdl.scm, libgdbm.scm, r7rs.scm, s7libtest.scm, gdb-s7.scm.
  * 21-Jul:    s7_is_valid (replaces deprecated s7_is_valid_pointer).
  * 24-Jun:    some bool-related changes for Windows Visual C++, including change to s7_begin_hook.
  * 3-June:    s7_autoload.

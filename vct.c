@@ -652,7 +652,7 @@ static int c_object_built_in_type;
 #endif
 #define C_OBJECT_TYPE_LOCATION 8
 #define CELL_TYPE_LOCATION 0
-#define C_OBJECT_BUILT_IN_TYPE 23
+#define C_OBJECT_BUILT_IN_TYPE 17
 
 
 static void *imported_s7_object_value_checked(s7_pointer obj, int type)

@@ -1006,9 +1006,14 @@ typedef struct s7_cell {
 
     struct {
       s7_Int length;
-      s7_pointer *elements;
+      union {
+	s7_pointer *objects;
+	s7_Int *ints;
+	s7_Double *floats;
+      } elements;
       s7_vdims_t *dim_info;
-      unsigned int fill_ptr;           /* used only in global env (a vector) */
+      s7_pointer (*vget)(s7_scheme *sc, s7_pointer vec, s7_Int loc);
+      s7_pointer (*vset)(s7_scheme *sc, s7_pointer vec, s7_Int loc, s7_pointer val);
     } vector;
     
     struct {
@@ -1208,6 +1213,7 @@ struct s7_scheme {
   
   s7_pointer symbol_table;            /* symbol table */
   s7_pointer global_env;              /* global environment */
+  s7_Int global_env_entries;
   s7_pointer initial_env;             /* original bindings of predefined functions */
   
   s7_pointer input_port;              /* current-input-port */
@@ -1418,34 +1424,36 @@ typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_w
 
 #define T_STRING              15
 #define T_PAIR                16
-#define T_CLOSURE             17
-#define T_CLOSURE_STAR        18
-#define T_CONTINUATION        19
-#define T_VECTOR              20
-#define T_MACRO               21
-#define T_BACRO               22
-#define T_C_OBJECT            23
-#define T_GOTO                24
-#define T_CATCH               25
-#define T_DYNAMIC_WIND        26
-#define T_HASH_TABLE          27
-#define T_ENVIRONMENT         28
-#define T_STACK               29
-#define T_COUNTER             30
-#define T_SLOT                31
-#define T_C_POINTER           32
-#define T_C_MACRO             33
-#define T_OUTPUT_PORT         34
-#define T_INPUT_PORT          35
-#define T_BAFFLE              36
+#define T_C_OBJECT            17
+#define T_CLOSURE             18
+#define T_CLOSURE_STAR        19
+#define T_CONTINUATION        20
+#define T_VECTOR              21
+#define T_INT_VECTOR          22
+#define T_FLOAT_VECTOR        23
+#define T_MACRO               24
+#define T_BACRO               25
+#define T_GOTO                26
+#define T_CATCH               27
+#define T_DYNAMIC_WIND        28
+#define T_HASH_TABLE          29
+#define T_ENVIRONMENT         30
+#define T_STACK               31
+#define T_COUNTER             32
+#define T_SLOT                33
+#define T_C_POINTER           34
+#define T_C_MACRO             35
+#define T_OUTPUT_PORT         36
+#define T_INPUT_PORT          37
+#define T_BAFFLE              38
 
-#define T_C_FUNCTION          37
-#define T_C_ANY_ARGS_FUNCTION 38
-#define T_C_OPT_ARGS_FUNCTION 39
-#define T_C_RST_ARGS_FUNCTION 40
-#define T_C_LST_ARGS_FUNCTION 41
+#define T_C_FUNCTION          39
+#define T_C_ANY_ARGS_FUNCTION 40
+#define T_C_OPT_ARGS_FUNCTION 41
+#define T_C_RST_ARGS_FUNCTION 42
+#define T_C_LST_ARGS_FUNCTION 43
 
-#define NUM_TYPES        42
+#define NUM_TYPES        44
 
 static s7_pointer prepackaged_type_names[NUM_TYPES];
 
@@ -1455,6 +1463,7 @@ static bool t_big_number_p[NUM_TYPES];
 static bool t_structure_p[NUM_TYPES];
 static bool t_any_macro_p[NUM_TYPES];
 static bool t_sequence_p[NUM_TYPES];
+static bool t_vector_p[NUM_TYPES];
 static bool t_applicable_p[NUM_TYPES];
 static bool t_catchable_p[OP_MAX_DEFINED];
 
@@ -1470,6 +1479,7 @@ static void init_types(void)
       t_structure_p[i] = false;
       t_any_macro_p[i] = false;
       t_sequence_p[i] = false;
+      t_vector_p[i] = false;
       t_applicable_p[i] = false;
     }
   t_number_p[T_INTEGER] = true;
@@ -1499,13 +1509,21 @@ static void init_types(void)
   t_sequence_p[T_PAIR] = true;
   t_sequence_p[T_STRING] = true;
   t_sequence_p[T_VECTOR] = true;
+  t_sequence_p[T_INT_VECTOR] = true;
+  t_sequence_p[T_FLOAT_VECTOR] = true;
   t_sequence_p[T_HASH_TABLE] = true;
   t_sequence_p[T_ENVIRONMENT] = true;
   t_sequence_p[T_C_OBJECT] = true;
 
+  t_vector_p[T_VECTOR] = true;
+  t_vector_p[T_INT_VECTOR] = true;
+  t_vector_p[T_FLOAT_VECTOR] = true;
+
   t_applicable_p[T_PAIR] = true;
   t_applicable_p[T_STRING] = true;
   t_applicable_p[T_VECTOR] = true;
+  t_applicable_p[T_INT_VECTOR] = true;
+  t_applicable_p[T_FLOAT_VECTOR] = true;
   t_applicable_p[T_HASH_TABLE] = true;
   t_applicable_p[T_ENVIRONMENT] = true;
   t_applicable_p[T_C_OBJECT] = true;
@@ -2097,9 +2115,16 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {syntax_
 #define unique_name_length(p)         (p)->object.unq.len
 
 #define vector_length(p)              ((p)->object.vector.length)
-#define vector_element(p, i)          ((p)->object.vector.elements[i])
-#define vector_elements(p)            (p)->object.vector.elements
-#define vector_fill_pointer(p)        ((p)->object.vector.fill_ptr)
+#define vector_element(p, i)          ((p)->object.vector.elements.objects[i])
+#define vector_elements(p)            (p)->object.vector.elements.objects
+#define vector_getter(p)              (p)->object.vector.vget
+#define vector_setter(p)              (p)->object.vector.vset
+#define int_vector_element(p, i)      ((p)->object.vector.elements.ints[i])
+#define int_vector_elements(p)        (p)->object.vector.elements.ints
+#define float_vector_element(p, i)    ((p)->object.vector.elements.floats[i])
+#define float_vector_elements(p)      (p)->object.vector.elements.floats
+#define is_int_vector(p)              (type(p) == T_INT_VECTOR)
+#define is_float_vector(p)            (type(p) == T_FLOAT_VECTOR)
 
 #define vector_ndims(p)               ((p)->object.vector.dim_info->ndims)
 #define vector_dimension(p, i)        ((p)->object.vector.dim_info->dims[i])
@@ -2484,6 +2509,8 @@ static s7_pointer find_environment(s7_scheme *sc, s7_pointer obj);
 static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator);
 static s7_pointer g_make_hash_table_iterator(s7_scheme *sc, s7_pointer args);
 static bool call_begin_hook(s7_scheme *sc);
+static s7_pointer default_vector_setter(s7_scheme *sc, s7_pointer vec, s7_Int loc, s7_pointer val);
+static s7_pointer default_vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc);
 
 static s7_pointer simple_wrong_type_arg_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg, s7_pointer typnam, s7_pointer descr);
 static s7_pointer wrong_type_arg_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg_n, s7_pointer arg, s7_pointer typnam, s7_pointer descr);
@@ -3071,7 +3098,7 @@ static void sweep(s7_scheme *sc)
 		    {
 		      free(vector_dimensions(a));
 		      free(vector_offsets(a));
-		      free(vector_elements(a));
+		      free(vector_elements(a)); /* I think this will work for any vector (int/float too) */
 		    }
 		  free(vector_dimension_info(a));
 		}
@@ -3662,6 +3689,8 @@ static void init_mark_functions(void)
   mark_function[T_CHARACTER]           = mark_noop;
   mark_function[T_INPUT_PORT]          = mark_input_port;
   mark_function[T_VECTOR]              = mark_vector;
+  mark_function[T_INT_VECTOR]          = just_mark;
+  mark_function[T_FLOAT_VECTOR]        = just_mark;
   mark_function[T_MACRO]               = mark_closure;
   mark_function[T_BACRO]               = mark_closure;
   mark_function[T_C_OBJECT]            = mark_c_object;
@@ -3704,7 +3733,7 @@ static void mark_global_env(s7_scheme *sc)
 
   ge = sc->global_env;
   tmp = vector_elements(ge);
-  top = (s7_pointer *)(tmp + vector_fill_pointer(ge));
+  top = (s7_pointer *)(tmp + sc->global_env_entries);
 
   set_mark(ge);
 
@@ -4134,7 +4163,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_VECTOR:
       {
 	s7_Int i;
-	/* this can happen if a global function has an explicit vector constant.  (The vector remain in the sc->vectors
+	/* this can happen if a global function has an explicit vector constant.  (The vector remains in the sc->vectors
 	 *    array forever -- also in the gensym case below).
 	 */
 	heap_location(x) = NOT_IN_HEAP;
@@ -5022,7 +5051,7 @@ static int environment_length(s7_scheme *sc, s7_pointer e)
   s7_pointer p;
 
   if (e == sc->global_env)
-    return(vector_fill_pointer(e));
+    return(sc->global_env_entries);
 
   if (has_methods(e))
     {
@@ -5058,13 +5087,13 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
 
       ge = sc->global_env;
       slot = permanent_slot(symbol, value);
-      vector_element(ge, vector_fill_pointer(ge)++) = slot;
-      if (vector_fill_pointer(ge) >= vector_length(ge))
+      vector_element(ge, sc->global_env_entries++) = slot;
+      if (sc->global_env_entries >= vector_length(ge))
 	{
 	  int i;
 	  vector_length(ge) *= 2;
 	  vector_elements(ge) = (s7_pointer *)realloc(vector_elements(ge), vector_length(ge) * sizeof(s7_pointer));
-	  for (i = vector_fill_pointer(ge); i < vector_length(ge); i++)
+	  for (i = sc->global_env_entries; i < vector_length(ge); i++)
 	    vector_element(ge, i) = sc->NIL;
 	}
       global_slot(symbol) = slot;
@@ -5147,6 +5176,8 @@ static void save_initial_environment(s7_scheme *sc)
   set_type(sc->initial_env, T_VECTOR);
   vector_length(sc->initial_env) = INITIAL_ENV_ENTRIES;
   vector_elements(sc->initial_env) = (s7_pointer *)malloc(INITIAL_ENV_ENTRIES * sizeof(s7_pointer));
+  vector_getter(sc->initial_env) = default_vector_getter;
+  vector_setter(sc->initial_env) = default_vector_setter;
   inits = vector_elements(sc->initial_env);
   s7_vector_fill(sc, sc->initial_env, sc->NIL);
   heap_location(sc->initial_env) = NOT_IN_HEAP;
@@ -5243,6 +5274,8 @@ static void save_null_environment(s7_scheme *sc)
   set_type(sc->null_env, T_VECTOR);
   vector_length(sc->null_env) = NULL_ENV_SIZE;
   vector_elements(sc->null_env) = (s7_pointer *)malloc(NULL_ENV_SIZE * sizeof(s7_pointer));
+  vector_getter(sc->null_env) = default_vector_getter;
+  vector_setter(sc->null_env) = default_vector_setter;
   nulls = vector_elements(sc->null_env);
   heap_location(sc->null_env) = NOT_IN_HEAP;
 
@@ -5561,7 +5594,7 @@ s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env)
   if (env == sc->global_env)
     {
       unsigned int i;
-      for (i = 0; i < vector_fill_pointer(env); i++)
+      for (i = 0; i < sc->global_env_entries; i++)
 	sc->w = cons(sc, cons(sc, slot_symbol(vector_element(env, i)), slot_value(vector_element(env, i))), sc->w);
     }
   else
@@ -8393,6 +8426,22 @@ static char *integer_to_string_base_10_no_width(s7_pointer obj, int *nlen) /* do
 static int num_to_str_size = 0;
 static char *num_to_str = NULL;
 
+static char *floatify(char *str, int *nlen)
+{
+  if ((strchr(str, 'e') == NULL) &&
+      (strchr(str, '.') == NULL))
+    {
+      int len;
+      len = *nlen;
+      str[len]='.';
+      str[len + 1]='0';
+      str[len + 2]='\0';
+      (*nlen) = len + 2;
+    }
+  return(str);
+}
+
+
 static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen, use_write_t choice) /* don't free result */
 {
   int len;
@@ -8436,7 +8485,6 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
       
     case T_REAL:
       {
-	int i, loc = -1;
 	const char *frmt;
 
 	if (sizeof(double) >= sizeof(s7_Double))
@@ -8445,24 +8493,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 
 	len = snprintf(num_to_str, num_to_str_size, frmt, width, precision, s7_real(obj));
 	(*nlen) = len;
-	for (i = 0; i < len; i++) /* does it have an exponent (if so, it's already a float) */
-	  if (num_to_str[i] == 'e')
-	    {
-	      loc = i;
-	      break;
-	    }
-	if (loc == -1)            /* no, so make it explicitly a float! */
-	  {
-	    for (i = 0; i < len; i++)  
-	      if (num_to_str[i] == '.') break;
-	    if (i == len)
-	      {
-		num_to_str[i]='.';
-		num_to_str[i + 1]='0';
-		num_to_str[i + 2]='\0';
-		(*nlen) = i + 2;
-	      }
-	  }
+	floatify(num_to_str, nlen);
       }
       break;
       
@@ -15381,6 +15412,8 @@ static s7_pointer g_equal_length_ic(s7_scheme *sc, s7_pointer args)
     case T_NIL:
       return(make_boolean(sc, ilen == 0));
 
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       return(make_boolean(sc, vector_length(val) == ilen));
 
@@ -16383,6 +16416,8 @@ static s7_pointer g_less_length_ic(s7_scheme *sc, s7_pointer args)
     case T_NIL:
       return(make_boolean(sc, ilen > 0));
 
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       return(make_boolean(sc, vector_length(val) < ilen));
 
@@ -17326,6 +17361,8 @@ static s7_pointer g_is_negative_length(s7_scheme *sc, s7_pointer args)
     case T_PAIR:
       return(make_boolean(sc, s7_list_length(sc, val) < 0));
 
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
     case T_NIL:
     case T_STRING:
@@ -23493,6 +23530,9 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
     {
       if (s7_is_vector(top))
 	{
+	  if (type(top) != T_VECTOR)
+	    return(NULL);
+
 	  for (i = 0; i < vector_length(top); i++)
 	    if (has_structure(vector_element(top, i)))
 	      {
@@ -23602,10 +23642,10 @@ static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
 	{
 	  if (flat_ref < out_len)
 	    {
+	      int plen;
+	      char buf[128];
 	      if (use_write == USE_READABLE_WRITE)
 		{
-		  int plen;
-		  char buf[128];
 		  char *indices;
 		  /* need to translate flat_ref into a set of indices
 		   */
@@ -23614,7 +23654,23 @@ static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
 		  port_write_string(port)(sc, buf, plen, port);
 		  free(indices);
 		}
-	      object_to_port_with_circle_check(sc, vector_element(vec, flat_ref), port, DONT_USE_DISPLAY(use_write), to_file, ci); 
+
+	      if (is_int_vector(vec))
+		{
+		  plen = snprintf(buf, 128, "%lld", int_vector_element(vec, flat_ref));
+		  port_write_string(port)(sc, buf, plen, port);
+		}
+	      else
+		{
+		  if (is_float_vector(vec))
+		    {
+		      plen = snprintf(buf, 128, "%.*g", WRITE_REAL_PRECISION, float_vector_element(vec, flat_ref));
+		      floatify(buf, &plen);
+		      port_write_string(port)(sc, buf, plen, port);
+		    }
+		  else object_to_port_with_circle_check(sc, vector_element(vec, flat_ref), port, DONT_USE_DISPLAY(use_write), to_file, ci); 
+		}
+
 	      if (use_write == USE_READABLE_WRITE)
 		port_write_string(port)(sc, ") ", 2, port);
 	      flat_ref++;
@@ -23648,7 +23704,7 @@ static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
 
 static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
-  s7_Int i, len, nlen;
+  s7_Int i, len;
   int plen;
   bool too_long = false;
   char buf[128];
@@ -23658,8 +23714,8 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
     {
       if (vector_is_multidimensional(vect))
 	{
-	  nlen = snprintf(buf, 32, "#%dD()", vector_ndims(vect));
-	  port_write_string(port)(sc, buf, nlen, port);
+	  plen = snprintf(buf, 32, "#%dD()", vector_ndims(vect));
+	  port_write_string(port)(sc, buf, plen, port);
 	}
       else port_write_string(port)(sc, "#()", 3, port);
       return;
@@ -23681,8 +23737,8 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	{
 	  if (vector_is_multidimensional(vect))
 	    {
-	      nlen = snprintf(buf, 32, "#%dD(...)", vector_ndims(vect));
-	      port_write_string(port)(sc, buf, nlen, port);
+	      plen = snprintf(buf, 32, "#%dD(...)", vector_ndims(vect));
+	      port_write_string(port)(sc, buf, plen, port);
 	    }
 	  else port_write_string(port)(sc, "#(...)", 6, port);
 	  return;
@@ -23734,7 +23790,23 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	      port_write_string(port)(sc, "(set! ({v} ", 11, port);
 	      plen = snprintf(buf, 128, "%lld) ", i);
 	      port_write_string(port)(sc, buf, plen, port);
-	      object_to_port_with_circle_check(sc, vector_element(vect, i), port, use_write, to_file, ci);
+
+	      if (is_int_vector(vect))
+		{
+		  plen = snprintf(buf, 128, "%lld", int_vector_element(vect, i));
+		  port_write_string(port)(sc, buf, plen, port);
+		}
+	      else
+		{
+		  if (is_float_vector(vect))
+		    {
+		      plen = snprintf(buf, 128, "%.*g", WRITE_REAL_PRECISION, float_vector_element(vect, i));
+		      floatify(buf, &plen);
+		      port_write_string(port)(sc, buf, plen, port);
+		    }
+		  else object_to_port_with_circle_check(sc, vector_element(vect, i), port, use_write, to_file, ci);
+		}
+
 	      port_write_string(port)(sc, ") ", 2, port);
 	    }
 	}
@@ -23747,8 +23819,8 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	  bool last = false;
 	  if (vector_ndims(vect) > 1)
 	    {
-	      nlen = snprintf(buf, 32, "#%dD", vector_ndims(vect));
-	      port_write_string(port)(sc, buf, nlen, port);
+	      plen = snprintf(buf, 32, "#%dD", vector_ndims(vect));
+	      port_write_string(port)(sc, buf, plen, port);
 	    }
 	  else port_write_character(port)(sc, '#', port);
 	  multivector_to_port(sc, vect, port, len, 0, 0, vector_ndims(vect), &last, use_write, to_file, ci);
@@ -23756,13 +23828,41 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
       else
 	{
 	  port_write_string(port)(sc, "#(", 2, port);
-	  for (i = 0; i < len - 1; i++)
+	  if (is_int_vector(vect))
 	    {
-	      object_to_port_with_circle_check(sc, vector_element(vect, i), port, DONT_USE_DISPLAY(use_write), to_file, ci);
-	      port_write_character(port)(sc, ' ', port);
+	      for (i = 0; i < len - 1; i++)
+		{
+		  plen = snprintf(buf, 128, "%lld ", int_vector_element(vect, i));
+		  port_write_string(port)(sc, buf, plen, port);
+		}
+	      plen = snprintf(buf, 128, "%lld", int_vector_element(vect, i));
+	      port_write_string(port)(sc, buf, plen, port);
 	    }
-	  object_to_port_with_circle_check(sc, vector_element(vect, len - 1), port, DONT_USE_DISPLAY(use_write), to_file, ci);
-      
+	  else
+	    {
+	      if (is_float_vector(vect))
+		{
+		  plen = snprintf(buf, 128, "%.*g", WRITE_REAL_PRECISION, float_vector_element(vect, 0));
+		  floatify(buf, &plen);
+		  port_write_string(port)(sc, buf, plen, port);
+		  for (i = 1; i < len; i++)
+		    {
+		      plen = snprintf(buf, 128, " %.*g", WRITE_REAL_PRECISION, float_vector_element(vect, i));
+		      floatify(buf, &plen);
+		      port_write_string(port)(sc, buf, plen, port);
+		    }
+		}
+	      else
+		{
+		  for (i = 0; i < len - 1; i++)
+		    {
+		      object_to_port_with_circle_check(sc, vector_element(vect, i), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+		      port_write_character(port)(sc, ' ', port);
+		    }
+		  object_to_port_with_circle_check(sc, vector_element(vect, i), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+		}
+	    }
+
 	  if (too_long)
 	    port_write_string(port)(sc, " ...)", 5, port);
 	  else port_write_character(port)(sc, ')', port);
@@ -24288,6 +24388,8 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
   
   switch (type(obj))
     {
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       vector_to_port(sc, obj, port, use_write, to_file, ci);
       break;
@@ -28565,13 +28667,48 @@ static s7_pointer append_in_place(s7_scheme *sc, s7_pointer a, s7_pointer b)
 
 bool s7_is_vector(s7_pointer p)    
 { 
-  return(type(p) == T_VECTOR);
+  return(t_vector_p[type(p)]);
 }
+
+
+static s7_pointer default_vector_setter(s7_scheme *sc, s7_pointer vec, s7_Int loc, s7_pointer val)
+{
+  vector_element(vec, loc) = val;
+  return(val);
+}
+
+static s7_pointer default_vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc) 
+{
+  return(vector_element(vec, loc));
+}
+
+static s7_pointer int_vector_setter(s7_scheme *sc, s7_pointer vec, s7_Int loc, s7_pointer val)
+{
+  int_vector_element(vec, loc) = s7_number_to_integer(sc, val);
+  return(val);
+}
+
+static s7_pointer int_vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc) 
+{
+  return(s7_make_integer(sc, int_vector_element(vec, loc)));
+}
+
+static s7_pointer float_vector_setter(s7_scheme *sc, s7_pointer vec, s7_Int loc, s7_pointer val)
+{
+  float_vector_element(vec, loc) = s7_number_to_real(sc, val);
+  return(val);
+}
+
+static s7_pointer float_vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc) 
+{
+  return(s7_make_real(sc, float_vector_element(vec, loc)));
+}
+
 
 #define FILLED true
 #define NOT_FILLED false
 
-static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled) 
+static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, int typ) 
 {
   s7_pointer x;
   if (len > 134217728)
@@ -28591,23 +28728,44 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
 	    return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), "should be less than about 2^28 probably"));
 	}
     }
+  if (len == 0) typ = T_VECTOR; /* all empty vectors are the same type */
 
   /* this has to follow the error checks!  (else garbage in free_heap temps portion confuses GC when "vector" is finalized) */
-
   NEW_CELL(sc, x);
   vector_length(x) = 0;
   vector_elements(x) = NULL;
-  set_type(x, T_VECTOR | T_SAFE_PROCEDURE); /* (v 0) as vector-ref is safe */
+  set_type(x, typ | T_SAFE_PROCEDURE); /* (v 0) as vector-ref is safe */
 
   if (len > 0)
     {
-      vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
+      if (typ == T_VECTOR)
+	{
+	  vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
+	  vector_getter(x) = default_vector_getter;
+	  vector_setter(x) = default_vector_setter;
+	}
+      else
+	{
+	  if (typ == T_INT_VECTOR)
+	    {
+	      int_vector_elements(x) = (s7_Int *)malloc(len * sizeof(s7_Int));
+	      vector_getter(x) = int_vector_getter;
+	      vector_setter(x) = int_vector_setter;
+	    }
+	  else 
+	    {
+	      float_vector_elements(x) = (s7_Double *)malloc(len * sizeof(s7_Double));
+	      vector_getter(x) = float_vector_getter;
+	      vector_setter(x) = float_vector_setter;
+	    }
+	}
       if (!(vector_elements(x)))
 	return(s7_error(sc, make_symbol(sc, "out-of-memory"), 
 			list_1(sc, make_protected_string(sc, "make-vector allocation failed!"))));
 
       vector_length(x) = len;
-      if (filled) s7_vector_fill(sc, x, sc->NIL); /* make_hash_table assumes nil as the default value */
+      /* make_hash_table assumes nil as the default value */
+      if (filled) s7_vector_fill(sc, x, ((typ == T_VECTOR) ? sc->NIL : ((typ == T_INT_VECTOR) ? small_int(0) : real_zero)));
     }
 
   vector_dimension_info(x) = NULL;
@@ -28618,7 +28776,19 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
 
 s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len)
 {
-  return(make_vector_1(sc, len, FILLED));
+  return(make_vector_1(sc, len, FILLED, T_VECTOR));
+}
+
+
+s7_pointer s7_make_int_vector(s7_scheme *sc, s7_Int len)
+{
+  return(make_vector_1(sc, len, FILLED, T_INT_VECTOR));
+}
+
+
+s7_pointer s7_make_float_vector(s7_scheme *sc, s7_Int len)
+{
+  return(make_vector_1(sc, len, FILLED, T_FLOAT_VECTOR));
 }
 
 
@@ -28663,47 +28833,83 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 #endif
 {
   s7_Int len, i, left;
-  s7_pointer *orig;
 
   len = vector_length(vec);
   if (len == 0) return;
-
-  orig = vector_elements(vec);
-  orig[0] = obj;
-
-#if 0
-  i = 1;
-  while (i < len)
-    {
-      cur = (s7_pointer *)(orig + i);
-      left = len - i;
-      if (left < i)
-	memcpy((void *)cur, (void *)orig, sizeof(s7_pointer) * left);
-      else memcpy((void *)cur, (void *)orig, sizeof(s7_pointer) * i);
-      /* is there a faster way to do this?  This is twice as fast as
-       * the equivalent for loop: for (i = 0; i < len; i++) orig[i] = obj;
-       * and 3 times as fast as:  for (i = len - 1; i >= 0; i--) orig[i] = obj;
-       * but it's 1/3 slower than the unrolled loop below.
-       */
-      i *= 2;
-    }
-#else
   left = len - 8;
   i = 0;
-  while (i <= left)
+
+  if (is_int_vector(vec))
     {
-      orig[i++] = obj;
-      orig[i++] = obj;
-      orig[i++] = obj;
-      orig[i++] = obj;
-      orig[i++] = obj;
-      orig[i++] = obj;
-      orig[i++] = obj;
-      orig[i++] = obj;
+      s7_Int k;
+      k = s7_number_to_integer(sc, obj);
+      if (k == 0)
+	memset((void *)int_vector_elements(vec), 0, len * sizeof(s7_Int));
+      else
+	{
+	  s7_Int* orig;
+	  orig = int_vector_elements(vec);
+	  while (i <= left)
+	    {
+	      orig[i++] = k;
+	      orig[i++] = k;
+	      orig[i++] = k;
+	      orig[i++] = k;
+	      orig[i++] = k;
+	      orig[i++] = k;
+	      orig[i++] = k;
+	      orig[i++] = k;
+	    }
+	  for (; i< len; i++)
+	    orig[i] = k;
+	}
     }
-  for (; i< len; i++)
-    orig[i] = obj;
-#endif
+  else
+    {
+      if (is_float_vector(vec))
+	{
+	  s7_Double x;
+	  x = s7_number_to_real(sc, obj);
+	  if (x == 0.0)
+	    memset((void *)float_vector_elements(vec), 0, len * sizeof(s7_Double));
+	  else
+	    {
+	      s7_Double *orig;
+	      orig = float_vector_elements(vec);
+	      while (i <= left)
+		{
+		  orig[i++] = x;
+		  orig[i++] = x;
+		  orig[i++] = x;
+		  orig[i++] = x;
+		  orig[i++] = x;
+		  orig[i++] = x;
+		  orig[i++] = x;
+		  orig[i++] = x;
+		}
+	      for (; i< len; i++)
+		orig[i] = x;
+	    }
+	}
+      else
+	{
+	  s7_pointer *orig;
+	  orig = vector_elements(vec);
+	  while (i <= left)
+	    {
+	      orig[i++] = obj;
+	      orig[i++] = obj;
+	      orig[i++] = obj;
+	      orig[i++] = obj;
+	      orig[i++] = obj;
+	      orig[i++] = obj;
+	      orig[i++] = obj;
+	      orig[i++] = obj;
+	    }
+	  for (; i< len; i++)
+	    orig[i] = obj;
+	}
+    }
 }
 
 
@@ -28747,7 +28953,7 @@ s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_Int index)
   if (index >= vector_length(vec))
     return(out_of_range(sc, sc->VECTOR_REF, small_int(2), make_integer(sc, index), "should be less than vector length"));
 
-  return(vector_element(vec, index));
+  return(vector_getter(vec)(sc, vec, index));
 }
 
 
@@ -28756,7 +28962,7 @@ s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer
   if (index >= vector_length(vec))
     return(out_of_range(sc, sc->VECTOR_SET, small_int(2), make_integer(sc, index), "should be less than vector length"));
 
-  vector_element(vec, index) = a;
+  vector_setter(vec)(sc, vec, index, a);
   return(a);
 }
 
@@ -28764,6 +28970,18 @@ s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer
 s7_pointer *s7_vector_elements(s7_pointer vec)
 {
   return(vector_elements(vec));
+}
+
+
+s7_Int *s7_int_vector_elements(s7_pointer vec)
+{
+  return(int_vector_elements(vec));
+}
+
+
+s7_Double *s7_float_vector_elements(s7_pointer vec)
+{
+  return(float_vector_elements(vec));
 }
 
 
@@ -28794,10 +29012,10 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
   #define H_vector_append "(vector-append . vectors) returns a new (1-dimensional) vector containing the elements of its vector arguments."
   s7_Int i = 0, j, len = 0, source_len;
   s7_pointer p, v, x;
-  s7_pointer *dest, *source;
+  int result_type = -1;
 
   if (is_null(args))
-    return(make_vector_1(sc, 0, false));
+    return(make_vector_1(sc, 0, false, T_VECTOR));
 
   for (p = args; is_pair(p); p = cdr(p))
     {
@@ -28808,17 +29026,56 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 	  return(wrong_type_argument_n(sc, sc->VECTOR_APPEND, position_of(p, args), x, T_VECTOR));
 	}
       len += vector_length(x);
+      if (result_type == -1)
+	result_type = type(x);
+      else
+	{
+	  if (result_type != type(x))
+	    result_type = T_VECTOR;
+	}
     }
   
-  v = make_vector_1(sc, len, false);
-  dest = vector_elements(v);
-  for (p = args; is_pair(p); p = cdr(p))
+  v = make_vector_1(sc, len, false, result_type);
+  if (result_type == T_VECTOR)
     {
-      x = car(p);
-      source = vector_elements(x);
-      source_len = vector_length(x);
-      for (j = 0; j < source_len; j++, i++)
-	dest[i] = source[j];
+      s7_pointer *dest;
+      dest = vector_elements(v);
+      for (p = args; is_pair(p); p = cdr(p))
+	{
+	  x = car(p);
+	  source_len = vector_length(x);
+	  for (j = 0; j < source_len; j++, i++)
+	    dest[i] = vector_getter(x)(sc, x, j);
+	}
+    }
+  else
+    {
+      if (result_type == T_INT_VECTOR)
+	{
+	  s7_Int *dest, *source;
+	  dest = int_vector_elements(v);
+	  for (p = args; is_pair(p); p = cdr(p))
+	    {
+	      x = car(p);
+	      source = int_vector_elements(x);
+	      source_len = vector_length(x);
+	      for (j = 0; j < source_len; j++, i++)
+		dest[i] = source[j];
+	    }
+	}
+      else
+	{
+	  s7_Double *dest, *source;
+	  dest = float_vector_elements(v);
+	  for (p = args; is_pair(p); p = cdr(p))
+	    {
+	      x = car(p);
+	      source = float_vector_elements(x);
+	      source_len = vector_length(x);
+	      for (j = 0; j < source_len; j++, i++)
+		dest[i] = source[j];
+	    }
+	}
     }
 
   return(v);
@@ -28846,10 +29103,8 @@ s7_pointer s7_vector_ref_n(s7_scheme *sc, s7_pointer vector, int indices, ...)
       else
 	{
 	  int i;
-	  s7_pointer *elements;
 	  s7_Int *offsets, *dimensions;
 
-	  elements = s7_vector_elements(vector);
 	  dimensions = s7_vector_dimensions(vector);
 	  offsets = s7_vector_offsets(vector);
 
@@ -28866,7 +29121,7 @@ s7_pointer s7_vector_ref_n(s7_scheme *sc, s7_pointer vector, int indices, ...)
 	      index += (ind * offsets[i]);
 	    }
 	  va_end(ap);
-	  return(elements[index]);
+	  return(vector_getter(vector)(sc, vector, index));
 	}
     }
   return(s7_wrong_number_of_args_error(sc, "s7_vector_ref_n: wrong number of indices: ~A", s7_make_integer(sc, indices)));
@@ -28895,10 +29150,8 @@ s7_pointer s7_vector_set_n(s7_scheme *sc, s7_pointer vector, s7_pointer value, i
       else
 	{
 	  int i;
-	  s7_pointer *elements;
 	  s7_Int *offsets, *dimensions;
 
-	  elements = s7_vector_elements(vector);
 	  dimensions = s7_vector_dimensions(vector);
 	  offsets = s7_vector_offsets(vector);
 
@@ -28915,7 +29168,7 @@ s7_pointer s7_vector_set_n(s7_scheme *sc, s7_pointer vector, s7_pointer value, i
 	      index += (ind * offsets[i]);
 	    }
 	  va_end(ap);
-	  elements[index] = value;
+	  vector_setter(vector)(sc, vector, index, value);
 	  return(value);
 	}
     }
@@ -28934,15 +29187,15 @@ s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
 
   if (len < (sc->free_heap_top - sc->free_heap))
     {
-      sc->w = cons(sc, vector_element(vect, len - 1), sc->NIL);
+      sc->w = cons(sc, vector_getter(vect)(sc, vect, len - 1), sc->NIL);
       for (i = len - 2; i >= 0; i--)
-	sc->w = cons_unchecked(sc, vector_element(vect, i), sc->w);
+	sc->w = cons_unchecked(sc, vector_getter(vect)(sc, vect, i), sc->w);
     }
   else
     {
       sc->w = sc->NIL;
       for (i = len - 1; i >= 0; i--)
-	sc->w = cons(sc, vector_element(vect, i), sc->w);
+	sc->w = cons(sc, vector_getter(vect)(sc, vect, i), sc->w);
     }
   p = sc->w;
   sc->w = sc->NIL;
@@ -28974,8 +29227,7 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
 
   sc->w = sc->NIL;
   for (i = end - 1; i >= start; i--)
-    sc->w = cons(sc, vector_element(vec, i), sc->w);
-
+    sc->w = cons(sc, vector_getter(vec)(sc, vec, i), sc->w);
   p = sc->w;
   sc->w = sc->NIL;
   return(p);
@@ -28985,7 +29237,7 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill)
 {
   s7_pointer vect;
-  vect = make_vector_1(sc, len, NOT_FILLED);
+  vect = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
   s7_vector_fill(sc, vect, fill);
   return(vect);
 }
@@ -28998,7 +29250,7 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
   s7_pointer vec;
   
   len = s7_list_length(sc, args);
-  vec = make_vector_1(sc, len, NOT_FILLED);
+  vec = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
   if (len > 0)
     {
       s7_pointer x;
@@ -29053,10 +29305,11 @@ static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_di
   NEW_CELL(sc, x);
   vector_length(x) = 0;
   vector_elements(x) = NULL;
-  set_type(x, T_VECTOR | T_SAFE_PROCEDURE);
+  set_type(x, type(vect) | T_SAFE_PROCEDURE);
+  vector_getter(x) = vector_getter(vect);
+  vector_setter(x) = vector_setter(vect);
 
   v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
- 
   v->ndims = vector_ndims(vect) - skip_dims;
   v->dims = (s7_Int *)(vector_dimensions(vect) + skip_dims);
   v->offsets = (s7_Int *)(vector_offsets(vect) + skip_dims);
@@ -29064,7 +29317,14 @@ static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_di
   vector_dimension_info(x) = v;
 
   vector_length(x) = vector_offset(vect, skip_dims - 1);
-  vector_elements(x) = (s7_pointer *)(vector_elements(vect) + index);
+  if (is_int_vector(vect))
+    int_vector_elements(x) = (s7_Int *)(int_vector_elements(vect) + index);
+  else
+    {
+      if (is_float_vector(vect))
+	float_vector_elements(x) = (s7_Double *)(float_vector_elements(vect) + index);
+      else vector_elements(x) = (s7_pointer *)(vector_elements(vect) + index);
+    }
   add_vector(sc, x);
   return(x);
 }
@@ -29121,10 +29381,19 @@ a vector that points to the same elements as the original-vector but with differ
     }
 
   NEW_CELL(sc, x);
-  set_type(x, T_VECTOR | T_SAFE_PROCEDURE);
+  set_type(x, type(orig) | T_SAFE_PROCEDURE);
   vector_dimension_info(x) = v;
   vector_length(x) = offset;                 /* might be less than original length */
-  vector_elements(x) = vector_elements(orig);
+  vector_getter(x) = vector_getter(orig);
+  vector_setter(x) = vector_setter(orig);
+  if (is_int_vector(orig))
+    int_vector_elements(x) = int_vector_elements(orig);
+  else
+    {
+      if (is_float_vector(orig))
+	float_vector_elements(x) = float_vector_elements(orig);
+      else vector_elements(x) = vector_elements(orig);
+    }
   add_vector(sc, x);
 
   return(x);
@@ -29177,7 +29446,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	return(implicit_index(sc, vector_element(vect, index), cdr(indices)));
     }
 
-  return(vector_element(vect, index));
+  return((vector_getter(vect))(sc, vect, index));
 }
 
 
@@ -29220,7 +29489,7 @@ static s7_pointer g_vector_ref_ic(s7_scheme *sc, s7_pointer args)
   if (vector_is_multidimensional(vec))
     return(make_shared_vector(sc, vec, 1, index));
 
-  return(vector_element(vec, index));
+  return(vector_getter(vec)(sc,vec, index));
 }
 
 static s7_pointer vector_ref_gs;
@@ -29247,7 +29516,7 @@ static s7_pointer g_vector_ref_gs(s7_scheme *sc, s7_pointer args)
   if (vector_is_multidimensional(vec))
     return(make_shared_vector(sc, vec, 1, index));
 
-  return(vector_element(vec, index));
+  return(vector_getter(vec)(sc, vec, index));
 }
 
 /* this is marginal */
@@ -29282,7 +29551,7 @@ static s7_pointer g_vector_ref_ggs(s7_scheme *sc, s7_pointer args)
       (index >= vector_length(vec2)))
     return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), "should be between 0 and the vector length"));
 
-  x = vector_element(vec2, index);
+  x = vector_getter(vec2)(sc, vec2, index);
   if (!s7_is_integer(x))
     return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), x, T_INTEGER));
   index = s7_integer(x);
@@ -29293,7 +29562,7 @@ static s7_pointer g_vector_ref_ggs(s7_scheme *sc, s7_pointer args)
   if (vector_is_multidimensional(vec1))
     return(make_shared_vector(sc, vec1, 1, index));
 
-  return(vector_element(vec1, index));
+  return(vector_getter(vec1)(sc, vec1, index));
 }
 
 static s7_pointer vector_ref_add1;
@@ -29323,7 +29592,7 @@ static s7_pointer g_vector_ref_add1(s7_scheme *sc, s7_pointer args)
 
   if (func != sc->UNDEFINED)
     return(s7_apply_function(sc, func, list_2(sc, vec, s7_make_integer(sc, index))));
-  return(vector_element(vec, index));
+  return(vector_getter(vec)(sc, vec, index));
 }
 
 static s7_pointer vector_ref_2;
@@ -29349,7 +29618,7 @@ static s7_pointer g_vector_ref_2(s7_scheme *sc, s7_pointer args)
       (index >= vector_length(vec)))
     return(out_of_range(sc, sc->VECTOR_REF, small_int(2), ind, "should be between 0 and the vector length"));
 
-  return(vector_element(vec, index));
+  return(vector_getter(vec)(sc, vec, index));
 }
 
 
@@ -29409,14 +29678,14 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 
       if (is_not_null(cdddr(args)))
 	{
-	  car(sc->temp_cell_4) = vector_element(vec, index);
+	  car(sc->temp_cell_4) = vector_getter(vec)(sc, vec, index);
 	  cdr(sc->temp_cell_4) = cddr(args);
 	  return(g_vector_set(sc, sc->temp_cell_4));
 	}
       val = caddr(args);
     }
   
-  vector_element(vec, index) = val;
+  vector_setter(vec)(sc, vec, index, val);
   return(val);
 }
 
@@ -29441,7 +29710,7 @@ static s7_pointer g_vector_set_ic(s7_scheme *sc, s7_pointer args)
     return(out_of_range(sc, sc->VECTOR_SET, small_int(2), cadr(args), "should be less than vector length"));
 
   val = finder(sc, caddr(args));
-  vector_element(vec, index) = val;
+  vector_setter(vec)(sc, vec, index, val);
   return(val);
 }
 
@@ -29474,7 +29743,7 @@ static s7_pointer g_vector_set_vref(s7_scheme *sc, s7_pointer args)
   if (index2 >= vector_length(vec))
     return(out_of_range(sc, sc->VECTOR_REF, small_int(2), val, "should be less than vector length"));
 
-  vector_element(vec, index1) = vector_element(vec, index2);
+  vector_setter(vec)(sc, vec, index1, vector_getter(vec)(sc, vec, index2));
   return(val);
 }
 
@@ -29502,7 +29771,7 @@ static s7_pointer g_vector_set_3(s7_scheme *sc, s7_pointer args)
     return(out_of_range(sc, sc->VECTOR_SET, small_int(2), ind, "should be between 0 and the vector length"));
 
   val = caddr(args);
-  vector_element(vec, index) = val;
+  vector_setter(vec)(sc, vec, index, val);
   return(val);
 }
 
@@ -29539,92 +29808,33 @@ static s7_pointer g_vector_set_ssc_looped(s7_scheme *sc, s7_pointer args)
     return(out_of_range(sc, sc->VECTOR_SET, small_int(2), ind, "should be less than the vector length"));
 
   val = cadddr(args);
-  for (; pos < end; pos++)
-    vector_element(vec, pos) = val;
+  if (is_int_vector(vec))
+    {
+      s7_Int k;
+      k = s7_number_to_integer(sc, val);
+      for (; pos < end; pos++)
+	int_vector_element(vec, pos) = k;
+    }
+  else
+    {
+      if (is_float_vector(vec))
+	{
+	  s7_Double x;
+	  x = s7_number_to_real(sc, val);
+	  for (; pos < end; pos++)
+	    float_vector_element(vec, pos) = x;
+	}
+      else
+	{
+	  for (; pos < end; pos++)
+	    vector_element(vec, pos) = val;
+	}
+    }
   numerator(stepper) = end;
 
   return(val);
 }
 
-
-typedef struct {
-  s7_pointer i_slot, val_slot, val;
-  s7_Int v_len;
-  s7_pointer *v_els;
-} vset_ex;
-
-static void vset_s(void *p)
-{
-  vset_ex *data = (vset_ex *)p;
-  s7_Int pos;
-  pos = s7_integer(slot_value(data->i_slot));
-  if (pos < data->v_len)
-    data->v_els[pos] = slot_value(data->val_slot);
-  /* else out_of_range(sc, sc->VECTOR_SET, small_int(2), slot_value(data->i_slot), "should be less than the vector length");
-   *   but where is sc? 
-   */
-}
-
-static void vset_c(void *p)
-{
-  vset_ex *data = (vset_ex *)p;
-  s7_Int pos;
-  pos = s7_integer(slot_value(data->i_slot));
-  if (pos < data->v_len)
-    data->v_els[pos] = data->val;
-}
-
-static void vset_free(void *p)
-{
-  free(p);
-}
-
-static s7_ex *vector_set_ex_parser(s7_scheme *sc, s7_pointer expr)
-{
-  if ((is_symbol(cadr(expr))) &&
-      (is_symbol(caddr(expr))))
-    {
-      s7_pointer v, loc, val;
-      v = finder(sc, cadr(expr));
-      loc = s7_local_slot(sc, caddr(expr));
-      if ((loc) &&
-	  (is_integer(slot_value(loc))) &&
-	  (s7_is_vector(v)) &&
-	  (!s7_local_slot(sc, cadr(expr))))
-	{
-	  val = cadddr(expr);
-	  if (!s7_is_pair(val))
-	    {
-	      vset_ex *p;
-	      s7_ex *e;
-	      p = (vset_ex *)malloc(sizeof(vset_ex));
-	      e = (s7_ex *)malloc(sizeof(s7_ex));
-	      e->ex_free = vset_free;
-	      e->ex_data = p;
-	      p->v_els = vector_elements(v);
-	      p->v_len = vector_length(v);
-	      p->i_slot = loc;
-	      if (is_symbol(cadddr(expr)))
-		{
-		  e->ex_vf = vset_s;
-		  p->val_slot = s7_local_slot(sc, s7_cadddr(expr));
-		}
-	      else
-		{
-		  e->ex_vf = vset_c;
-		  p->val = val;
-		}
-	      return(e);
-	    }
-	}
-    }
-
-  /* fprintf(stderr, "vector-set ex: %s\n", DISPLAY(expr)); */
-  /*
-    
-   */
-  return(NULL);
-}
 
 /* other standard cases (fft-related): (+|- (vector-ref ...) s) -- actually (vector-set! v i (+|- (vector-ref v i) s))
  *                                     (+|- (* s (vector-ref ...)) (* s (vector-ref ...)))
@@ -29639,13 +29849,16 @@ static s7_ex *vector_set_ex_parser(s7_scheme *sc, s7_pointer expr)
 
 static s7_pointer g_make_vector(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_vector "(make-vector len (value #f)) returns a vector of len elements initialized to value. \
+  #define H_make_vector "(make-vector len (value #f) (homogenous #f)) returns a vector of len elements initialized to value. \
 To create a multidimensional vector, put the dimension bounds in a list (this is to avoid ambiguities such as \
 (make-vector 1 2) where it's not clear whether the '2' is an initial value or a dimension size).  (make-vector '(2 3) 1.0) \
-returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
+returns a 2 dimensional vector of 6 total elements, all initialized to 1.0.  If homogenous is #t, and value is either an integer \
+or a real, the vector can only hold numbers of that type (s7_Int or s7_Double)."
 
   s7_Int len;
   s7_pointer x, fill, vec;
+  int result_type = T_VECTOR;
+
   fill = sc->UNSPECIFIED;
 
   x = car(args);
@@ -29690,10 +29903,32 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
 	}
     }
 
-  if (is_not_null(cdr(args))) 
-    fill = cadr(args);
+  if (is_not_null(cdr(args)))
+    {
+      fill = cadr(args);
+      if (is_not_null(cddr(args)))
+	{
+	  if (caddr(args) == sc->T)
+	    {
+	      if (s7_is_integer(fill))
+		result_type = T_INT_VECTOR;
+	      else
+		{
+		  if (s7_is_real(fill))
+		    result_type = T_FLOAT_VECTOR;
+		  else return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(2), fill,
+							    make_protected_string(sc, "an integer or a real since 'homogenous' is #t")));
+		}
+	    }
+	  else 
+	    {
+	      if (caddr(args) != sc->F)
+		return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(3), caddr(args), make_protected_string(sc, "a boolean")));
+	    }
+	}
+    }
 
-  vec = make_vector_1(sc, len, NOT_FILLED);
+  vec = make_vector_1(sc, len, NOT_FILLED, result_type);
   if (len > 0) s7_vector_fill(sc, vec, fill);
 
   if ((is_pair(x)) &&
@@ -29786,7 +30021,7 @@ static int traverse_vector_data(s7_scheme *sc, s7_pointer vec, int flat_ref, int
 	return(MV_NOT_ENOUGH_ELEMENTS);
 
       if (dimension == (dimensions - 1))
-	vector_element(vec, flat_ref++) = car(x);
+	vector_setter(vec)(sc, vec, flat_ref++, car(x));
       else 
 	{
 	  flat_ref = traverse_vector_data(sc, vec, flat_ref, dimension + 1, dimensions, sizes, car(x));
@@ -29884,11 +30119,17 @@ s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
 
   if (vector_is_multidimensional(old_vect))
     new_vect = g_make_vector(sc, list_1(sc, g_vector_dimensions(sc, list_1(sc, old_vect))));
-  else new_vect = make_vector_1(sc, len, NOT_FILLED);
+  else new_vect = make_vector_1(sc, len, NOT_FILLED, type(old_vect));
 
   /* here and in vector-fill! we have a problem with bignums -- should new bignums be allocated? (copy_list also) */
-
-  memcpy((void *)(vector_elements(new_vect)), (void *)(vector_elements(old_vect)), len * sizeof(s7_pointer));
+  if (is_int_vector(old_vect))
+    memcpy((void *)(int_vector_elements(new_vect)), (void *)(int_vector_elements(old_vect)), len * sizeof(s7_Int));
+  else
+    {
+      if (is_float_vector(old_vect))
+	memcpy((void *)(float_vector_elements(new_vect)), (void *)(float_vector_elements(old_vect)), len * sizeof(s7_Double));
+      else memcpy((void *)(vector_elements(new_vect)), (void *)(vector_elements(old_vect)), len * sizeof(s7_pointer));
+    }
   return(new_vect);
 }
 
@@ -30145,15 +30386,25 @@ If its first argument is a list, the list is copied (despite the '!')."
       car(args) = g_vector(sc, data);
       break;
 
-    case T_VECTOR:
-      /* (sort! (symbol-table) (lambda (a b) (< (length a) (length b)))) 
-       * but this is harmless because (symbol-table) copies the vector -- are there any other cases?
-       *
-       * if (is_immutable(data)) 
-       *   return(wrong_type_argument_with_type(sc, sc->SORT, small_int(1), data, make_protected_string(sc, "a mutable vector")));
-       */
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
       len = vector_length(data);
+      if (compare_func)
+	{
+	  int i, gc_loc;
+	  s7_pointer vec;
+	  vec = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
+	  gc_loc = s7_gc_protect(sc, vec);	  
+	  for (i = 0; i < len; i++)
+	    vector_element(vec, i) = vector_getter(data)(sc, data, i);
+	  qsort((void *)s7_vector_elements(vec), len, sizeof(s7_pointer), sort_func);
+	  s7_gc_unprotect_at(sc, gc_loc);
+	  return(vec);
+	}
+      break;
 
+    case T_VECTOR:
+      len = vector_length(data);
       if (compare_func)
 	{
 	  qsort((void *)s7_vector_elements(data), len, sizeof(s7_pointer), sort_func);
@@ -30277,6 +30528,8 @@ static int hash_loc(s7_scheme *sc, s7_pointer key)
       return(character(key));
 
     case T_HASH_TABLE:
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       return(vector_length(key));
 
@@ -32637,6 +32890,8 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 	return(s7_cons(sc, make_integer(sc, c_object_min_args(x)), make_integer(sc, c_object_max_args(x))));
       return(sc->F);
 
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       if (vector_length(x) == 0)
 	return(sc->F);
@@ -32792,6 +33047,8 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
 
     case T_HASH_TABLE:
     case T_PAIR:
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       return(args > 0);
 
@@ -33165,6 +33422,8 @@ static bool s7_is_equal_tracking_circles(s7_scheme *sc, s7_pointer x, s7_pointer
       return(counter_count(x) == counter_count(y)); /* ?? not in s7_is_equal because it only occurs in a structure?? */
 
     case T_ENVIRONMENT:
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
     case T_HASH_TABLE:
     case T_PAIR:
@@ -33226,21 +33485,24 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
   /* here we know x and y are pointers to the same type of structure */
   int ref_x, ref_y;
 
-  ref_x = peek_shared_ref(ci, x);
-  ref_y = peek_shared_ref(ci, y);
-
-  if ((ref_x != 0) && (ref_y != 0))
-    return(ref_x == ref_y);
-  
-  if ((ref_x != 0) || (ref_y != 0))
+  if (ci)
     {
-      /* try to harmonize the new guy -- there can be more than one structure equal to the current one */
-      if (ref_x != 0)
-	add_shared_ref(ci, y, ref_x);
-      else add_shared_ref(ci, x, ref_y);
-    }
-  else add_equal_ref(ci, x, y);
+      ref_x = peek_shared_ref(ci, x);
+      ref_y = peek_shared_ref(ci, y);
+
+      if ((ref_x != 0) && (ref_y != 0))
+	return(ref_x == ref_y);
   
+      if ((ref_x != 0) || (ref_y != 0))
+	{
+	  /* try to harmonize the new guy -- there can be more than one structure equal to the current one */
+	  if (ref_x != 0)
+	    add_shared_ref(ci, y, ref_x);
+	  else add_shared_ref(ci, x, ref_y);
+	}
+      else add_equal_ref(ci, x, y);
+    }
+
   /* now compare the elements of the structures. */
   switch (type(x))
     {
@@ -33251,6 +33513,8 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
     case T_HASH_TABLE:
       return(hash_tables_are_equal(sc, x, y, ci));
 
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       {
 	s7_Int i, len;
@@ -33272,7 +33536,28 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
 	  for (j = 0; j < x_dims; j++)
 	    if (vector_dimension(x, j) != vector_dimension(y, j))
 	      return(false);
-	
+
+	if (is_int_vector(x))
+	  {
+	    for (i = 0; i < len; i++)
+	      if (int_vector_element(x, i) != int_vector_element(y, i))
+		return(false);
+	    return(true);
+	  }
+
+	if (is_float_vector(x))
+	  {
+	    s7_Double z;
+	    for (i = 0; i < len; i++)
+	      {
+		z = float_vector_element(x, i);
+		if ((is_NaN(z)) ||
+		    (z != float_vector_element(y, i)))
+		  return(false);
+	      }
+	    return(true);
+	  }
+
 	for (i = 0; i < len; i++)
 	  if (!(s7_is_equal_tracking_circles(sc, vector_element(x, i), vector_element(y, i), ci)))
 	    return(false);
@@ -33384,9 +33669,11 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	}
       return(false);
 
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       return((vector_length(x) == vector_length(y)) &&
-	     (structures_are_equal(sc, x, y, new_shared_info(sc))));
+	     (structures_are_equal(sc, x, y, (type(x) == T_VECTOR) ? new_shared_info(sc) : NULL)));
 
     case T_HASH_TABLE:
       return(hash_tables_are_equal(sc, x, y, new_shared_info(sc)));
@@ -33502,6 +33789,22 @@ static bool hash_tables_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointe
 }
 
 
+#define FLOATING_EPSILON 1e-15
+
+static bool floats_are_morally_equal(s7_Double x, s7_Double y)
+{
+  if (is_NaN(x))
+    return(is_NaN(y));
+
+  return((!is_NaN(y)) &&
+	 ((x == y) ||
+	  (fabs(x - y) <= FLOATING_EPSILON)));
+}
+
+/* TODO: (morally-equal? (make-vector 3 0 #t) (make-vector 3 0)) -> #f
+ *   but perhaps it should be #t?
+ */
+
 static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   /* here we know x and y are pointers to the same type of structure */
@@ -33532,6 +33835,8 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
     case T_HASH_TABLE:
       return(hash_tables_are_morally_equal(sc, x, y, ci));
 
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       {
 	s7_Int i, len;
@@ -33553,7 +33858,22 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
 	  for (j = 0; j < x_dims; j++)
 	    if (vector_dimension(x, j) != vector_dimension(y, j))
 	      return(false);
-	
+
+	if (is_int_vector(x))
+	  {
+	    for (i = 0; i < len; i++)
+	      if (int_vector_element(x, i) != int_vector_element(y, i))
+		return(false);
+	    return(true);
+	  }
+	if (is_float_vector(x))
+	  {
+	    for (i = 0; i < len; i++)
+	      if (!floats_are_morally_equal(float_vector_element(x, i), int_vector_element(y, i)))
+		return(false);
+	    return(true);
+	  }
+
 	for (i = 0; i < len; i++)
 	  if (!(s7_is_morally_equal_1(sc, vector_element(x, i), vector_element(y, i), ci)))
 	    return(false);
@@ -33598,8 +33918,6 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
 
 static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
-  #define FLOATING_EPSILON 1e-15
-
   if (x == y) 
     return(true);
 
@@ -33656,12 +33974,14 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
        */
       return(structures_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc)));
 
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       if (vector_length(x) == vector_length(y))
 	{
 	  if (vector_length(x) == 0)   /* all empty vectors are morally equal */
 	    return(true);
-	  return(structures_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc)));
+	  return(structures_are_morally_equal(sc, x, y, (ci) ? ci : ((type(x) == T_VECTOR) ? new_shared_info(sc) : NULL)));
 	}
       return(false);
 
@@ -33727,8 +34047,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	  return(fabs(fraction(x) - fraction(y)) <= FLOATING_EPSILON);
 
 	case T_REAL:
-	  return((!is_NaN(real(y))) &&
-		 (fabs(fraction(x) - real(y)) <= FLOATING_EPSILON));
+	  return(floats_are_morally_equal(fraction(x), real(y)));
 
 	case T_COMPLEX:
 	  return((!is_NaN(real_part(y))) &&
@@ -33760,12 +34079,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 		 (fabs(real(x) - fraction(y)) <= FLOATING_EPSILON));
 
 	case T_REAL:
-	  if (is_NaN(real(x)))
-	    return(is_NaN(real(y)));
-
-	  return((!is_NaN(real(y))) &&
-		 ((real(x) == real(y)) || /* might be inf! */
-		  (fabs(real(x) - real(y)) <= FLOATING_EPSILON)));
+	  return(floats_are_morally_equal(real(x), real(y)));
 
 	case T_COMPLEX:
 	  if (is_NaN(real(x)))
@@ -33925,6 +34239,8 @@ list has infinite length."
     case T_NIL:
       return(small_int(0));
 
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       return(make_integer(sc, vector_length(lst)));
 
@@ -33984,6 +34300,8 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
       CHECK_METHOD(sc, obj, sc->COPY, list_1(sc, obj));
       return(obj);
 
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       return(s7_vector_copy(sc, obj)); /* "shallow" copy */
 
@@ -34040,17 +34358,6 @@ static s7_pointer list_getter(s7_scheme *sc, s7_pointer lst, s7_Int loc)
   s7_pointer p;
   for (p = lst, i = 0; i < loc; i++, p = cdr(p));
   return(car(p));
-}
-
-static s7_pointer vector_setter(s7_scheme *sc, s7_pointer vec, s7_Int loc, s7_pointer val)
-{
-  vector_element(vec, loc) = val;
-  return(val);
-}
-
-static s7_pointer vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc) 
-{
-  return(vector_element(vec, loc));
 }
 
 static s7_pointer c_object_setter(s7_scheme *sc, s7_pointer obj, s7_Int loc, s7_pointer val)
@@ -34119,9 +34426,11 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
       if (end < 0) end = -end; 
       break; 
 
-    case T_VECTOR:   get = vector_getter;   end = vector_length(source);            break;
-    case T_STRING:   get = string_getter;   end = string_length(source);            break;
-    case T_C_OBJECT: get = c_object_getter; end = object_length_to_int(sc, source); break;
+    case T_INT_VECTOR:   
+    case T_FLOAT_VECTOR: 
+    case T_VECTOR:       get = vector_getter(source); end = vector_length(source);            break;
+    case T_STRING:       get = string_getter;         end = string_length(source);            break;
+    case T_C_OBJECT:     get = c_object_getter;       end = object_length_to_int(sc, source); break;
     default: 
       if (!is_null(cddr(args))) /* (copy () () ()) */
 	{
@@ -34152,9 +34461,11 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
       if (dest_len < 0) dest_len = -dest_len;
       break;
 
-    case T_VECTOR:   set = vector_setter;   dest_len = vector_length(dest);            break;
-    case T_STRING:   set = string_setter;   dest_len = string_length(dest);            break;
-    case T_C_OBJECT: set = c_object_setter; dest_len = object_length_to_int(sc, dest); break;
+    case T_INT_VECTOR:   
+    case T_FLOAT_VECTOR: 
+    case T_VECTOR:       set = vector_setter(dest); dest_len = vector_length(dest);            break;
+    case T_STRING:       set = string_setter;       dest_len = string_length(dest);            break;
+    case T_C_OBJECT:     set = c_object_setter;     dest_len = object_length_to_int(sc, dest); break;
     default: return(dest);
     }
   
@@ -34199,6 +34510,18 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 	  /* ignore possible dimensional mismatch */
 	  for (i = start, j = 0; i < end; i++, j++)
 	    vector_element(dest, j) = vector_element(source, i);
+	  return(dest);
+
+	case T_INT_VECTOR:
+	  /* ignore possible dimensional mismatch */
+	  for (i = start, j = 0; i < end; i++, j++)
+	    int_vector_element(dest, j) = int_vector_element(source, i);
+	  return(dest);
+
+	case T_FLOAT_VECTOR:
+	  /* ignore possible dimensional mismatch */
+	  for (i = start, j = 0; i < end; i++, j++)
+	    float_vector_element(dest, j) = float_vector_element(source, i);
 	  return(dest);
 
 	case T_STRING:
@@ -34296,16 +34619,36 @@ also accepts a string or vector argument."
       }
       break;
 
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       {
 	s7_Int i, j, len;
 	len = vector_length(p);
 	if (vector_is_multidimensional(p))
 	  np = g_make_vector(sc, list_1(sc, g_vector_dimensions(sc, list_1(sc, p))));
-	else np = make_vector_1(sc, len, NOT_FILLED);
+	else np = make_vector_1(sc, len, NOT_FILLED, type(p));
 	if (len > 0)
-	  for (i = 0, j = len - 1; i < len; i++, j--)
-	    vector_element(np, i) = vector_element(p, j);
+	  {
+	    if (is_int_vector(p))
+	      {
+		for (i = 0, j = len - 1; i < len; i++, j--)
+		  int_vector_element(np, i) = int_vector_element(p, j);
+	      }
+	    else
+	      {
+		if (is_float_vector(p))
+		  {
+		    for (i = 0, j = len - 1; i < len; i++, j--)
+		      float_vector_element(np, i) = float_vector_element(p, j);
+		  }
+		else
+		  {
+		    for (i = 0, j = len - 1; i < len; i++, j--)
+		      vector_element(np, i) = vector_element(p, j);
+		  }
+	      }
+	  }
       }
       break;
 
@@ -34381,6 +34724,8 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
 	return(wrong_type_argument(sc, sc->FILL, small_int(2), cadr(args), T_NIL));
       return(hash_table_clear(sc, p));
 
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       return(g_vector_fill(sc, args));
 
@@ -34423,6 +34768,8 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 {
   switch (type(obj))
     {
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       return(s7_vector_to_list(sc, obj));
 
@@ -34918,6 +35265,8 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
   static const char *macros[3] =        {"macro",              "the macro",               "a macro"};
   static const char *bacros[3] =        {"bacro",              "the bacro",               "a bacro"};
   static const char *vectors[3] =       {"vector",             "the vector",              "a vector"};
+  static const char *int_vectors[3] =   {"int-vector",         "the int-vector",          "an int-vector"};
+  static const char *float_vectors[3] = {"float-vector",       "the float-vector",        "a float-vector"};
   static const char *c_pointers[3] =    {"C pointer",          "the raw C pointer",       "a raw C pointer"};
   static const char *counters[3] =      {"internal counter",   "the internal counter",    "an internal counter"};
   static const char *baffles[3] =       {"baffle",             "the baffle",              "a baffle"};
@@ -34957,6 +35306,8 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
     case T_C_POINTER:    return(c_pointers[article]);
     case T_CHARACTER:    return(characters[article]);
     case T_VECTOR:       return(vectors[article]);
+    case T_INT_VECTOR:   return(int_vectors[article]);
+    case T_FLOAT_VECTOR: return(float_vectors[article]);
     case T_BACRO:        return(bacros[article]);
     case T_CATCH:        return(catches[article]); /* are these 2 possible? */
     case T_DYNAMIC_WIND: return(dynamic_winds[article]);
@@ -35763,7 +36114,8 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
       /* now display location at end */
       
       if ((is_input_port(sc->input_port)) &&
-	  (port_file(sc->input_port) != stdin))
+	  (port_file(sc->input_port) != stdin) &&
+	  (!port_is_closed(sc->input_port)))
 	{
 	  const char *filename = NULL;
 	  int line;
@@ -36572,6 +36924,8 @@ static s7_Int applicable_length(s7_scheme *sc, s7_pointer obj)
     case T_STRING:
       return(string_length(obj));
 
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
     case T_VECTOR:
       return(vector_length(obj));
 
@@ -36622,8 +36976,10 @@ static bool next_for_each(s7_scheme *sc)
 	  car(y) = cdr(car_y);
 	  break;
 	  
+	case T_INT_VECTOR:
+	case T_FLOAT_VECTOR:
 	case T_VECTOR:
-	  car(x) = vector_element(car_y, loc); 
+	  car(x) = vector_getter(car_y)(sc, car_y, loc); 
 	  break;
 	  
 	case T_STRING:
@@ -37028,8 +37384,10 @@ static bool next_map(s7_scheme *sc)
 	  car(y) = cdr(car_y);
 	  break;
 	  
+	case T_INT_VECTOR:
+	case T_FLOAT_VECTOR:
 	case T_VECTOR:
-	  x = vector_element(car_y, loc); 
+	  x = vector_getter(car_y)(sc, car_y, loc); 
 	  break;
 
 	case T_STRING:
@@ -40965,8 +41323,6 @@ static void init_choosers(s7_scheme *sc)
 
   vector_set_ssc_looped = make_function_with_class(sc, f, "vector-set!", g_vector_set_ssc_looped, 3, 0, false, "vector-set! optimization");
   s7_function_set_looped(vector_set_ssc, vector_set_ssc_looped);
-
-  s7_function_set_ex_parser(f, vector_set_ex_parser);
 
 
 
@@ -49186,8 +49542,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				  {
 				    if ((start < 0) || (lim > vector_length(obj)))
 				      out_of_range(sc, sc->VECTOR_SET, end_val, obj, "index should be between 0 and the vector length");
-				    for (i = start; i < lim; i++)
-				      vector_element(obj, i) = new_val;
+				    if (is_int_vector(obj))
+				      {
+					s7_Int k;
+					k = s7_number_to_integer(sc, new_val);
+					for (i = start; i < lim; i++)
+					  int_vector_element(obj, i) = k;
+				      }
+				    else
+				      {
+					if (is_float_vector(obj))
+					  {
+					    s7_Double x;
+					    x = s7_number_to_real(sc, new_val);
+					    for (i = start; i < lim; i++)
+					      float_vector_element(obj, i) = x;
+					  }
+					else
+					  {
+					    for (i = start; i < lim; i++)
+					      vector_element(obj, i) = new_val;
+					  }
+				      }
 				    goto SAFE_DO_DONE;
 				  }
 				else
@@ -53014,7 +53390,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if ((index < vector_length(v)) &&
 			(index >= 0))
 		      {
-			sc->value = vector_element(v, index);
+			sc->value = vector_getter(v)(sc, v, index);
 			goto START;
 		      }
 		  }
@@ -53045,7 +53421,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if ((index < vector_length(v)) &&
 			    (index >= 0))
 			  {
-			    sc->value = vector_element(v, index);
+			    sc->value = vector_getter(v)(sc, v, index);
 			    goto START;
 			  }
 			out_of_range(sc, sc->VECTOR_REF, small_int(1), cadr(code), "between 0 and vector length");
@@ -53075,7 +53451,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if ((index < vector_length(v)) &&
 			(index >= 0))
 		      {
-			sc->value = vector_element(v, index);
+			sc->value = vector_getter(v)(sc, v, index);
 			goto START;
 		      }
 		    out_of_range(sc, sc->VECTOR_REF, small_int(1), cadr(code), "between 0 and vector length");
@@ -56507,6 +56883,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	  }
 	  
+
+	case T_INT_VECTOR:
+	case T_FLOAT_VECTOR:
 	case T_VECTOR:                            /* -------- vector as applicable object -------- */
 	  /* sc->code is the vector, sc->args is the list of indices 
 	   */
@@ -56522,7 +56901,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if ((index >= 0) &&
 		  (index < vector_length(sc->code)))
 		{
-		  sc->value = vector_element(sc->code, index);
+		  sc->value = vector_getter(sc->code)(sc, sc->code, index);
 		  goto START;
 		}
 	      else out_of_range(sc, sc->VECTOR_REF, small_int(2), car(sc->args), "should be between 0 and the vector length");
@@ -57079,6 +57458,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	    /* some of these are wasteful -- we know the object type! (list hash-table)
 	     */
+	  case T_INT_VECTOR:
+	  case T_FLOAT_VECTOR:
 	  case T_VECTOR:
 #if WITH_GMP
 	    car(sc->T3_1) = obj;
@@ -57103,7 +57484,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  eval_error(sc, "vector-set!: index must not be negative: ~S", sc->code);
 		if (index >= vector_length(obj))
 		  eval_error(sc, "vector-set!: index must not be less than vector length: ~S", sc->code);
-		vector_element(obj, index) = value;
+		vector_setter(obj)(sc, obj, index, value);
 		sc->value = value;
 	      }
 #endif
@@ -57844,6 +58225,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      break;
 	      
+	    case T_INT_VECTOR:
+	    case T_FLOAT_VECTOR:
 	    case T_VECTOR:
 	      {
 		/* sc->x is the vector, sc->code is expr without the set! */
@@ -57887,7 +58270,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			if (is_symbol(val))
 			  val = finder(sc, val);
-			vector_element(sc->x, ind) = val;
+			vector_setter(sc->x)(sc, sc->x, ind, val);
 			sc->value = val;
 			goto START;
 		      }
@@ -62330,18 +62713,20 @@ static s7_pointer copy_and_promote_number(s7_scheme *sc, int type, s7_pointer x)
 
 void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj) 
 {
-  s7_Int i, len;
-  s7_pointer *tp;
-  len = vector_length(vec);
-  tp = (s7_pointer *)(vector_elements(vec));
-
   /* if the same bignum object is assigned to each element, different vector elements
    *    are actually the same -- we need to make a copy of obj for each one
    */
-
   if (is_big_number(obj))
     {
       int gc_loc;
+      s7_Int i, len;
+      s7_pointer *tp;
+
+      if (type(vec) != T_VECTOR)
+	wrong_type_argument_with_type(sc, sc->VECTOR_FILL, small_int(1), vec, make_protected_string(sc, "a normal vector"));
+
+      len = vector_length(vec);
+      tp = (s7_pointer *)(vector_elements(vec));
 
       /* we'll be calling new_cell below, hence the GC, so make sure the elements are markable,
        *   and the vector itself is GC protected (we can be called within make-vector).
@@ -65923,6 +66308,8 @@ s7_scheme *s7_init(void)
   set_type(sc->symbol_table, T_VECTOR);
   vector_length(sc->symbol_table) = SYMBOL_TABLE_SIZE;
   vector_elements(sc->symbol_table) = (s7_pointer *)malloc(SYMBOL_TABLE_SIZE * sizeof(s7_pointer));
+  vector_getter(sc->symbol_table) = default_vector_getter;
+  vector_setter(sc->symbol_table) = default_vector_setter;
   s7_vector_fill(sc, sc->symbol_table, sc->NIL);
   heap_location(sc->symbol_table) = NOT_IN_HEAP;
   
@@ -65943,7 +66330,7 @@ s7_scheme *s7_init(void)
 
   sc->global_env = s7_make_vector(sc, 512);
   type(sc->global_env) = T_ENVIRONMENT;
-  vector_fill_pointer(sc->global_env) = 0;
+  sc->global_env_entries = 0;
   for (i = 0; i < 512; i++)
     vector_element(sc->global_env, i) = sc->NIL;
   sc->envir = sc->NIL;
@@ -66659,7 +67046,7 @@ s7_scheme *s7_init(void)
   sc->VECTOR_REF =            s7_define_safe_function(sc, "vector-ref",              g_vector_ref,             2, 0, true,  H_vector_ref);
   sc->VECTOR_SET =            s7_define_safe_function(sc, "vector-set!",             g_vector_set,             3, 0, true,  H_vector_set);
   sc->VECTOR_DIMENSIONS =     s7_define_safe_function(sc, "vector-dimensions",       g_vector_dimensions,      1, 0, false, H_vector_dimensions);
-  sc->MAKE_VECTOR =           s7_define_safe_function(sc, "make-vector",             g_make_vector,            1, 1, false, H_make_vector);
+  sc->MAKE_VECTOR =           s7_define_safe_function(sc, "make-vector",             g_make_vector,            1, 2, false, H_make_vector);
   sc->MAKE_SHARED_VECTOR =    s7_define_safe_function(sc, "make-shared-vector",      g_make_shared_vector,     2, 0, false, H_make_shared_vector);
   sc->VECTOR =                s7_define_safe_function(sc, "vector",                  g_vector,                 0, 0, true,  H_vector);
   set_setter(sc->VECTOR); /* ?? */
@@ -67357,17 +67744,6 @@ int main(int argc, char **argv)
  * calls           275  207  175  115   89   71   53   53
  */
 
-/* vector: void *elements, int element_type(?) or s7_pointer default_element [so ref if not elements -> default]
- *         so a vector need not have a size!  (make-vector #f 1.0) -> 1.0 no matter what index or combination of indices
- *         getter|setter for each vector (or hash-table?)
- *         void *(*ref_1)(s7_pointer vector, s7_Int i)
- *         set, compatible_set?
- *         mark, copy, fill, reverse, etc print
- *    make-real|integer|rational|-vector is not quite right -- we want make-float|int|byte-vector
- *    internal type T_FLOAT|INTEGER|BYTE_VECTOR, from vector with initial element?
- *    union of elements field for data, how to indicate coerce set or error if unfit?
- */
-
 /* use new generic_ff in methods opt case 
  * we need integer_length everywhere! These fixups are ignored by the optimized cases.
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
@@ -67393,6 +67769,7 @@ int main(int argc, char **argv)
  * to make real use of malloc we need sizeof at least for s7_Int|Double
  *   if a hash-table or something of (type . size), then the *.make functions wouldn't be needed
  *   how to collect these types?
+ * TODO: gsl_error somehow screws up sc->input_port causing a segfault in safe_strlen of port_filename(sc->input_port)
  *
  * remaining globals: environment_number, baffle_ctr, chars, real_zero et al, c_object type data
  *                    file_names|_size|top, senv (trap_segfault), big|rng_tag, small_ints?, num_to_str|_size?

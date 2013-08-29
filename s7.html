@@ -9050,13 +9050,7 @@ int main(int argc, char **argv)
 </div>
 
 <p>Here is a sketch of a connection to the GSL linear algebra functions,
-using objects that look like vectors in s7.  
-An object returned by s7_make_object can have an environment,
-accessible in scheme via object-environment.  It can hold whatever
-methods the object responds to.  Below,
-we implement the basic
-generic functions via s7_new_type_x, and vector? via an open_environment.
-The rest of the vector functions could be added in that section.
+using float vectors.
 </p>
 
 <div class="indented">
@@ -9083,159 +9077,36 @@ static void g_gsl_error(const char *reason, const char *file, int line, int gsl_
 		   s7_make_integer(s7, line)));
 }
 
-typedef struct {
-  size_t size;
-  double *data;
-} g_block;    
-
-static int g_block_type = 0;
-static s7_pointer g_block_methods;
-
-static s7_pointer g_make_block(s7_scheme *sc, s7_pointer args)
-{
-  #define g_make_block_help "(make-block size) returns a new block of the given size"
-  g_block *g;
-  s7_pointer new_g;
-  g = (g_block *)calloc(1, sizeof(g_block));
-  g-&gt;size = (size_t)s7_integer(s7_car(args));
-  g-&gt;data = (double *)calloc(g-&gt;size, sizeof(double));
-  new_g = s7_make_object(sc, g_block_type, (void *)g);
-  <em class=red>s7_object_set_environment</em>(new_g, g_block_methods);
-  <em class=red>s7_open_environment</em>(new_g);
-  return(new_g);
-}
-
-static s7_pointer g_to_block(s7_scheme *sc, s7_pointer args)
-{
-  #define g_block_help "(block ...) returns a block object with the arguments as its contents."
-  s7_pointer p, b;
-  size_t i, len;
-  g_block *gb;
-  len = s7_list_length(sc, args);
-  b = g_make_block(sc, s7_cons(sc, s7_make_integer(sc, len), s7_nil(sc)));
-  gb = (g_block *)s7_object_value(b);
-  for (i = 0, p = args; i &lt; len; i++, p = s7_cdr(p))
-    gb-&gt;data[i] = s7_number_to_real(sc, s7_car(p));
-  return(b);
-}
-
-static char *g_block_display(s7_scheme *sc, void *value)
-{
-  return(strdup("#&lt;block&gt;"));
-}
-
-static void g_block_free(void *value)
-{
-  g_block *g = (g_block *)value;
-  free(g-&gt;data);
-  free(g);
-}
-
-static bool g_block_is_equal(void *val1, void *val2)
-{
-  return(val1 == val2);
-}
-
-static void g_block_mark(void *val)
-{
-  /* nothing to mark */
-}
-
-static s7_pointer g_block_ref(s7_scheme *sc, s7_pointer obj, s7_pointer args)
-{
-  g_block *g = (g_block *)s7_object_value(obj);
-  size_t index;
-  index = (size_t)s7_integer(s7_car(args));
-  if ((index &gt;= 0) &amp;&amp; (index &lt; g-&gt;size))
-    return(s7_make_real(sc, g-&gt;data[index]));
-  return(s7_out_of_range_error(sc, "block-ref", 2, s7_car(args), "should be less than block length"));
-}
-
-static s7_pointer g_block_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
-{
-  g_block *g = (g_block *)s7_object_value(obj);
-  s7_Int index;
-  index = s7_integer(s7_car(args));
-  if ((index &gt;= 0) &amp;&amp; (index &lt; g-&gt;size))
-    {
-      g-&gt;data[index] = s7_number_to_real(sc, s7_cadr(args));
-      return(s7_cadr(args));
-    }
-  return(s7_out_of_range_error(sc, "block-set", 2, s7_car(args), "should be less than block length"));
-}
-
-static s7_pointer g_block_length(s7_scheme *sc, s7_pointer obj)
-{
-  g_block *g = (g_block *)s7_object_value(obj);
-  return(s7_make_integer(sc, g-&gt;size));
-}
-
-static s7_pointer g_block_copy(s7_scheme *sc, s7_pointer obj)
-{
-  g_block *g = (g_block *)s7_object_value(obj);
-  g_block *g1;
-  s7_pointer new_g;
-  new_g = g_make_block(sc, s7_cons(sc, s7_make_integer(sc, g-&gt;size), s7_nil(sc)));
-  g1 = (g_block *)s7_object_value(new_g);
-  memcpy((void *)(g1-&gt;data), (void *)(g-&gt;data), g-&gt;size * sizeof(double));
-  return(new_g);
-}
-
-static s7_pointer g_block_reverse(s7_scheme *sc, s7_pointer obj)
-{
-  size_t i, j;
-  g_block *g = (g_block *)s7_object_value(obj);
-  g_block *g1;
-  s7_pointer new_g;
-  new_g = g_make_block(sc, s7_cons(sc, s7_make_integer(sc, g-&gt;size), s7_nil(sc)));
-  g1 = (g_block *)s7_object_value(new_g);
-  for (i = 0, j = g-&gt;size - 1; i &lt; g-&gt;size; i++, j--)
-    g1-&gt;data[i] = g-&gt;data[j];
-  return(new_g);
-}
-
-static s7_pointer g_block_fill(s7_scheme *sc, s7_pointer obj, s7_pointer args)
-{
-  size_t i;
-  double fill_val;
-  g_block *g = (g_block *)s7_object_value(obj);
-  fill_val = s7_number_to_real(sc, s7_car(args));
-  for (i = 0; i &lt; g-&gt;size; i++)
-    g-&gt;data[i] = fill_val;
-  return(obj);
-}
-
-
 /* this example comes from the GSL documentation: doc/examples/linalgu.c */
 
 static s7_pointer g_solve(s7_scheme *sc, s7_pointer args)
 {
-  #define g_solve_help "(solve A b) solves Ax = b, A is a matrix, b a vector, solve returns the vector x."
+  #define g_solve_help "(solve A b) solves A * x = b, A is a matrix, b a vector, solve returns the vector x."
   gsl_matrix_view m;
   gsl_vector_view b;
   gsl_vector *x; 
   gsl_permutation *p;
-  int s;
+  int s = 0;
   size_t i, len;
   s7_pointer result;
-  g_block *gx, *gA, *gb;
+  double *gA, *gb, *gx;
 
-  gA = (g_block *)s7_object_value(s7_car(args));
-  gb = (g_block *)s7_object_value(s7_cadr(args));
-  len = gb-&gt;size;
+  gA = s7_float_vector_elements(s7_car(args));
+  gb = s7_float_vector_elements(s7_cadr(args));
+  len = s7_vector_length(s7_cadr(args));
 
-  m = gsl_matrix_view_array(gA-&gt;data, len, len);
-  b = gsl_vector_view_array(gb-&gt;data, len);
+  m = gsl_matrix_view_array(gA, len, len);
+  b = gsl_vector_view_array(gb, len);
   x = gsl_vector_alloc(len);
   p = gsl_permutation_alloc(len);
 
-  gsl_linalg_LU_decomp (&amp;m.matrix, p, &amp;s);
-  gsl_linalg_LU_solve (&amp;m.matrix, p, &amp;b.vector, x);
+  gsl_linalg_LU_decomp (&amp;m.matrix, p, &samp;);
+  gsl_linalg_LU_solve (&mamp;.matrix, p, &bamp;.vector, x);
 
-  result = g_make_block(sc, s7_cons(sc, s7_make_integer(sc, len), s7_nil(sc)));
-  gx = (g_block *)s7_object_value(result);
+  result = s7_make_float_vector(sc, len);
+  gx = s7_float_vector_elements(result);
   for (i = 0; i &lt; len; i++)
-    gx-&gt;data[i] = gsl_vector_get(x, i);
+    gx[i] = gsl_vector_get(x, i);
 
   gsl_permutation_free (p);
   gsl_vector_free(x);
@@ -9243,27 +9114,19 @@ static s7_pointer g_solve(s7_scheme *sc, s7_pointer args)
   return(result);
 }
 
-
 int main(int argc, char **argv)
 {
   gsl_set_error_handler(g_gsl_error);
 
   s7 = s7_init();  
-
-  g_block_type = <em class=red>s7_new_type_x</em>("#&lt;block&gt;", 
-			       g_block_display, g_block_free, 
-			       g_block_is_equal, g_block_mark,
-			       g_block_ref, g_block_set, g_block_length, 
-			       g_block_copy, g_block_reverse, g_block_fill);
-
-  s7_define_function(s7, "make-block", g_make_block, 1, 0, false, g_make_block_help);
-  s7_define_function(s7, "block", g_to_block, 0, 0, true, g_block_help);
-
-  g_block_methods = s7_eval_c_string(s7, "(environment (cons 'vector? (lambda (p) #t)))");
-  /* here load up all the methods ... */
-  s7_gc_protect(s7, g_block_methods);
-
   s7_define_function(s7, "solve", g_solve, 2, 0, false, g_solve_help);
+
+  s7_eval_c_string(s7, "(define (float-vector . args)                   \
+                          (let ((v (make-vector (length args) 0.0 #t))) \
+                            (do ((i 0 (+ i 1))                          \
+                                 (arg args (cdr arg)))                  \
+                                ((null? arg) v)                         \
+                              (set! (v i) (car arg)))))");
 
   if (argc == 2)
     {
@@ -9290,48 +9153,17 @@ int main(int argc, char **argv)
 }
 
 /* gcc -c s7.c -I.
- * gcc -o ex14 ex14.c s7.o -I. -lm -ldl -lgsl -lgslcblas
- *
- *  &gt; (define g (make-block 32))
- *  g
- *  &gt; (length g)
- *  32
- *  &gt; (g 2)
- *  0.0
- *  &gt; (set! (g 2) 1.5)
- *  1.5
- *  &gt; (g 2)
- *  1.5
- *  &gt; g         
- *  #&lt;block&gt;
- *  &gt; (vector? g)
- *  #t
- *  &gt; (define b (block 1.0 2.0 3.0 4.0))
- *  b
- *  &gt; (define A (block 0.18 0.60 0.57 0.96  
- *                     0.41 0.24 0.99 0.58  
- *                     0.14 0.30 0.97 0.66  
- *                     0.51 0.13 0.19 0.85))
- *  A
- *  (define x (solve A b))
- *  &gt; (format #f "~{~A~^ ~}" x)
- *  "-4.052050229574 -12.605611395907 1.6609116267088 8.6937669287952"
+ * gcc -o ex14 ex14.c s7.o -I. -lm -lgsl -lgslcblas -ldl
+ * 
+ * (define b (float-vector 1.0 2.0 3.0 4.0))
+ * b
+ * (define A (float-vector 0.18 0.60 0.57 0.96  0.41 0.24 0.99 0.58  0.14 0.30 0.97 0.66  0.51 0.13 0.19 0.85))
+ * A
+ * (solve A b)
+ * #(-4.052050229573974 -12.60561139590691 1.660911626708842 8.693766928795229)
  */
 </pre>
 </div>
-
-<p>I have toyed with adding a set of GSL bindings, along the lines of the
-current Motif/Gtk/OpenGL bindings in Snd, but I think the situation here
-is different.  If you look at the examples in the GSL doc/examples directory,
-or snd-xen.c in Snd, it's evident that GSL users will want to write 
-their own C code, then bind that into Scheme (blithely assuming they
-would rather use Scheme than Matlab!).  If we provide GSL-level bindings,
-the Scheme code becomes a forest of opaque C pointers, and the (human) reader
-would have to know how the C stuff fits together.  The other libraries
-work out better in this regard because they don't expose internal structs
-and types unnecessarily.
-</p>
-
 
 
 

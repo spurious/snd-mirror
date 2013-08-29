@@ -5406,6 +5406,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (test (length '((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((0))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))) 1)
 
+(test (length (make-vector 3 0 #t)) 3)
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -5475,6 +5477,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (test (reverse arg) 'error))
  (list (integer->char 65) #f 'a-symbol abs quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
+
 
 
 
@@ -6969,6 +6972,12 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (set! (avect i j) (cons i j))))
   (set! check-shared-vector-after-gc (avect 3)))
 
+(test (vector? (make-vector 3 1 #t)) #t)
+(test (vector? (make-vector 3 pi #t)) #t)
+(test (vector? (make-vector 3 pi #f)) #t)
+(test (vector? (make-shared-vector (make-vector '(2 3) 0 #t) '(3 2))) #t)
+
+
 
 
 
@@ -6990,6 +6999,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (make-vector 3/1 (make-vector 1 (make-vector 1 'hi))) '#(#(#(hi)) #(#(hi)) #(#(hi))))
 
 (test (let ((v (make-vector 3 0))) (set! (vector-ref v 1) 32) v) #(0 32 0))
+(test (let ((v (make-vector 3 0 #t))) (set! (vector-ref v 1) 0) v) (make-vector 3 0 #t))
 
 (for-each
  (lambda (arg)
@@ -7008,6 +7018,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (make-vector '(2 3 . 4)) 'error)
 (test (make-vector '(2 (3))) 'error)
 (test (make-vector most-negative-fixnum) 'error)
+(test (make-vector 3 0 #f 1) 'error)
 
 (for-each
  (lambda (arg)
@@ -7153,6 +7164,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (vector->list #(1) most-negative-fixnum) 'error)
 (test (vector->list #(1) 2) 'error)
 
+(test (vector->list (make-vector 3 0 #t)) '(0 0 0))
+(test (vector->list (make-vector 3 0.0 #t)) '(0.0 0.0 0.0))
+
 (for-each
  (lambda (arg)
    (test (vector->list #(0 1 2 3 4 5) arg) 'error)
@@ -7175,6 +7189,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (vector-length (vector 1 2 3 4)) 4)
 (test (vector-length (let ((v (vector 1 2))) (vector-set! v 1 v) v)) 2)
 (test (vector-length (let ((v (vector 1 2))) (vector-set! v 1 v) (vector-ref v 1))) 2)
+(test (vector-length (make-vector 3 0 #t)) 3)
+(test (vector-length (make-vector 3 pi #t)) 3)
+(test (vector-length (make-vector '(2 3) pi #t)) 6)
 
 (test (vector-length) 'error)
 (test (vector-length #(1) #(2)) 'error)
@@ -7202,6 +7219,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (vector-ref '#(#()) 0) '#())
 (test (vector-ref (vector-ref (vector-ref '#(1 (2) #(3 (4) #(5))) 2) 2) 0) 5)
 (test (let ((v (vector 1 2))) (vector-set! v 1 v) (eq? (vector-ref v 1) v)) #t)
+(test (let ((v (make-vector 3 0 #t))) (vector-ref v 1)) 0)
+(test (let ((v (make-vector 3 0 #f))) (vector-ref v 1)) 0)
+(test (let ((v (make-vector 3 1.0 #t))) (vector-ref v 1)) 1.0)
+(test (let ((v (make-vector 6 0 #t))) (vector-set! v 3 32) (let ((v1 (make-shared-vector v '(2 3)))) (vector-ref v1 1 0))) 32)
 
 (test (vector-ref) 'error)
 (test (vector-ref #(1)) 'error)
@@ -7357,6 +7378,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((v (vector 1 2 3))) (vector-set! v 1 0) v) '#(1 0 3))
 (test (let ((v (vector #f))) (vector-set! v 0 (vector)) v) '#(#()))
 (test (let ((v (vector 1 (list 2) (vector 1 2 3)))) (vector-set! (vector-ref v 2) 0 21) v) '#(1 (2) #(21 2 3)))
+(test (let ((v (make-vector 3 0 #t))) (vector-set! v 1 32) (vector->list v)) '(0 32 0))
+(test (let ((v (make-vector 3 0 #t))) (set! (v 1) 32) (vector->list v)) '(0 32 0))
 
 (test (vector-set! (vector 1 2) 0 4) 4)
 (test (vector-set!) 'error)
@@ -7536,6 +7559,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((v (vector 1 2 3 4 5))) (vector-fill! v 21 2 3) v) #(1 2 21 4 5))
 (test (let ((v (vector 1 2 3 4 5))) (vector-fill! v 21 3 3) v) #(1 2 3 4 5))
 
+(test (let ((v (make-vector 3 1 #t))) (vector-fill! v 2) (vector->list v)) '(2 2 2))
+(test (let ((v (make-vector 3 pi #t))) (vector-fill! v 0.0) (vector->list v)) '(0.0 0.0 0.0))
+(test (let ((v (make-vector 3 1 #t))) (vector-fill! v "2.5")) 'error)
+(test (let ((v (make-vector 3 pi #t))) (vector-fill! v #\a)) 'error)
 
 
 
@@ -7550,6 +7577,12 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (vector-append #(1) #(2 3) #() #(4)) #(1 2 3 4))
 (test (vector-append #(1) #2d((2 3) (4 5)) #3d()) #(1 2 3 4 5))
 (test (vector-append #2d((1 2) (3 4)) #3d(((5 6) (7 8)) ((9 10) (11 12)))) #(1 2 3 4 5 6 7 8 9 10 11 12))
+
+(test (vector-append (vector 1 2) (make-vector 1 3 #t) #(4)) #(1 2 3 4))
+(test (vector-append (vector 1 2) (make-vector 1 0.0 #t) #(4)) #(1 2 0.0 4))
+(test (vector->list (vector-append (make-vector 1 3 #t) (make-vector 2 1 #t))) '(3 1 1))
+(test (vector->list (vector-append (make-vector 1 0.0 #t) (make-vector 2 1.0 #t))) '(0.0 1.0 1.0))
+(test (vector->list (vector-append (make-vector 1 3 #t) (make-vector 2 1.0 #t) (make-vector 1 0.0 #f))) '(3 1.0 1.0 0.0))
 
 (for-each
  (lambda (arg)
@@ -7623,6 +7656,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (call/cc (lambda (return) (map (lambda (n) (return "oops")) (vector 1 2 3)))) "oops")
 (test (call/cc (lambda (return) (map (lambda (n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) 8)
 
+(test (map (lambda (x) x) (make-vector 3 0 #t)) '(0 0 0))
+(test (map (lambda (x) x) (let ((v (make-vector 3 0 #t))) (set! (v 1) 1) (set! (v 2) 2) v)) '(0 1 2))
+(test (map (lambda (x) x) (make-vector 3 0.0 #t)) '(0.0 0.0 0.0))
+(test (let ((lst ())) (for-each (lambda (n) (set! lst (cons n lst))) (let ((v (make-vector 3 0 #t))) (set! (v 1) 1) v)) lst) '(0 1 0))
 
 (test (vector? (symbol-table)) #t)
 
@@ -7643,7 +7680,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test ((((v 0) 0) 0) 1) 2))
 
 (test (make-vector 1 (make-vector 1 (make-vector 1 0))) #(#(#(0))))
-
+(test (vector->list (let ((v (make-vector 3 0 #t))) (set! (v 0) 32) (set! (v 1) -1) (set! (v 2) 2) (sort! v <))) '(-1 2 32))
 
 (let ((v1 (make-vector 3 1)))
   (num-test (v1 1) 1)
@@ -7693,16 +7730,38 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (vector-dimensions (vector-ref #3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 2))) 0 1)) '(3))
 (test (set! (vector-dimensions #(1 2)) 1) 'error)
 (test (let ((v #(1 2 3))) (set! (car (vector-dimensions v)) 0) v) #(1 2 3))
+(test (vector-dimensions (make-vector '(2 3) 0 #t)) '(2 3))
 
 (let ((old-len *vector-print-length*))
   (let ((vect1 #3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 2))))
 	(vect2 #2d((1 2 3 4 5 6) (7 8 9 10 11 12)))
 	(vect3 #(1 2 3 4 5 6 7 8 9 10 11 12 13 14))
-	(vect4 #3D(((1 2) (3 4) (5 6)) ((7 8) (9 10) (11 12)))))
+	(vect4 #3D(((1 2) (3 4) (5 6)) ((7 8) (9 10) (11 12))))
+	(vect1t (make-vector '(2 2 3) 0 #t)))
+    (let ((v (make-shared-vector vect1t '(12))))
+      (set! (v 0) 1) (set! (v 1) 2) (set! (v 2) 3) (set! (v 3) 3) (set! (v 4) 4) (set! (v 5) 5) 
+      (set! (v 6) 5) (set! (v 7) 6) (set! (v 8) 1) (set! (v 9) 7) (set! (v 10) 8) (set! (v 11) 2))
     (do ((i 1 (+ i 1)))
 	((= i 15))
       (set! *vector-print-length* i)
       (let ((str (object->string vect1)))
+	(test str (case i
+		    ((1) "#3D(((1 ...)...)...)")
+		    ((2) "#3D(((1 2 ...)...)...)")
+		    ((3) "#3D(((1 2 3)...)...)")
+		    ((4) "#3D(((1 2 3) (3 ...))...)")
+		    ((5) "#3D(((1 2 3) (3 4 ...))...)")
+		    ((6) "#3D(((1 2 3) (3 4 5))...)")
+		    ((7) "#3D(((1 2 3) (3 4 5)) ((5 ...)...))")
+		    ((8) "#3D(((1 2 3) (3 4 5)) ((5 6 ...)...))")
+		    ((9) "#3D(((1 2 3) (3 4 5)) ((5 6 1)...))")
+		    ((10) "#3D(((1 2 3) (3 4 5)) ((5 6 1) (7 ...)))")
+		    ((11) "#3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 ...)))")
+		    ((12) "#3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 2)))")
+		    ((13) "#3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 2)))")
+		    ((14) "#3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 2)))"))))
+
+      (let ((str (object->string vect1t)))
 	(test str (case i
 		    ((1) "#3D(((1 ...)...)...)")
 		    ((2) "#3D(((1 2 ...)...)...)")
@@ -7801,6 +7860,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
   (set! *vector-print-length* old-len))
   
+(test (object->string (make-vector 3 0 #t)) "#(0 0 0)")
+
 (let ((v (make-vector '(2 2))))
   (set! (v 0 0) 1)
   (set! (v 0 1) 2)
@@ -7824,6 +7885,11 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (v 1 2 0) 1)
   (test (v 1 2 0 0) 'error)
   (test (object->string v) "#2D(((0 0) (0 1) (0 2)) ((1 0) (1 1) (1 2)))"))
+
+(test (object->string (make-vector 3 1.0 #t)) "#(1.0 1.0 1.0)")
+(test (object->string (make-vector 3 -1.5 #t)) "#(-1.5 -1.5 -1.5)")
+(test (object->string (make-vector 0 0 #t)) "#()")
+(test (object->string (make-vector '(3 2 0) 0.0 #t)) "#3D()")
 
 (test (let ((v1 (make-vector '(3 2) 1))
 	    (v2 (make-vector '(3 2) 2))
@@ -7885,6 +7951,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (make-vector (cons 1 2) "hi") 'error)
 (test (equal? (make-vector 0) (vector)) #t)
 (test (equal? #() (vector)) #t)
+(test (equal? (make-vector 0 0 #t) (make-vector 0 0 #t)) #t)
+(test (equal? #() (make-vector 0 0 #t)) #t)
+(test (equal? (make-vector '(2 0)) (make-vector '(2 0) 0 #t)) #t)
+(test (equal? (make-vector '(2 0)) (make-vector '(0 2) 0 #t)) #f)
 
 (let ((v (make-vector '(2 3) 0)))
   (num-test (vector-length v) 6)
@@ -24716,7 +24786,7 @@ who says the continuation has to restart the map from the top?
 (test (arity letrec)                                                 '(2 . 536870912))
 (test (arity symbol->string)                                         '(1 . 1))
 (test (arity procedure-environment)                                  '(1 . 1))
-(test (arity make-vector)                                            '(1 . 2))
+(test (arity make-vector)                                            '(1 . 3))
 (test (arity member)                                                 '(2 . 3))
 (test (arity string-fill!)                                           '(2 . 4))
 (test (arity hook-functions)                                         '(1 . 1))
@@ -29303,6 +29373,7 @@ hi6: (string-app...
 (test (copy '(1 2 3) (make-vector 2) 1) #(2 3))
 (test (copy #(1 2 3) (make-vector 2) 1) #(2 3))
 (test (copy #(1 2 3) (make-list 2) 1) '(2 3))
+(test (copy (make-vector 3 0 #t)) (make-vector 3 0 #t))
 
 
 (if with-bignums
@@ -29387,6 +29458,7 @@ hi6: (string-app...
 (test (reverse #2D((1 2) (3 4))) #2D((4 3) (2 1)))
 (test (reverse (string #\a #\null #\b)) "b\x00a")
 (test (reverse abs) 'error)
+(test (vector->list (reverse (let ((v (make-vector 3 0 #t))) (set! (v 1) 1) (set! (v 2) 2) v))) '(2 1 0))
 
 
 
@@ -29439,6 +29511,7 @@ hi6: (string-app...
 (test (fill! (global-environment) 3) 'error)
 (test (fill! (current-environment) 3) 'error)
 (test (fill! "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" #f) 'error)
+(let ((v (make-vector 3 0 #t))) (fill! v 32) (test v (make-vector 3 32 #t)))
 
 (for-each
  (lambda (arg)
