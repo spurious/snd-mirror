@@ -2092,13 +2092,21 @@ vector-dimensions returns a list of the dimensions.
 6
 </pre>
 
-<p>To access a vector's elements with different dimensions, use 
+<p>make-vector also takes an optional fourth argument.  If it is #t, and the initial-value
+is either an integer or a real, make-vector produces a homogenous vector, a vector that
+can only hold elements of the same type as the initial value (either s7_Int or s7_Double
+internally).  Homogenous vectors are mostly useful in conjunction with C code; see the
+<a href="#gsl">GSL</a> example below.
+</p>
+
+
+<p>To access a vector's elements with different dimensions than the original had, use 
 <code>(make-shared-vector original-vector new-dimensions)</code>:
 </p>
 
 <pre class="indented">
 &gt; (let ((v1 #2d((1 2 3) (4 5 6)))) 
-    (let ((v2 (make-shared-vector v1 '(6)))) 
+    (let ((v2 (make-shared-vector v1 '(6)))) ; flatten the original
       v2))
 #(1 2 3 4 5 6)
 
@@ -2278,6 +2286,12 @@ Perhaps we could use different colors?  Or different size parentheses?
 #2D<em class=green>(</em><em class=red>(</em>(0) (0) ((0))<em class=red>)</em> <em class=red>(</em>(0) 0 ((0))<em class=red>)</em><em class=green>)</em>
 #2D<em class="bigger">(</em><em class="big">(</em>(0) (0) ((0))<em class="big">)</em> <em class="big">(</em>(0) 0 ((0))<em class="big">)</em><em class="bigger">)</em>
 </pre>
+
+<p>A similar problem afflicts homogenous vectors.  We need some reasonable way to express
+such a vector even when it has more than one dimension.  My first thought was <code>#(...)#</code>,
+but that makes <code>(let ((b1 0)) (#(1 2)#b1))</code> ambiguous.
+</p>
+
 </div>
 
 
@@ -5460,7 +5474,7 @@ get-output-string should be current-output-string. write-char behaves like displ
 <p>
 The name "cond-expand" is bad &mdash; we're not expanding anything, and the macro's point is to make it easy to
 operate with the *features* list; perhaps "cond-provided"?  Not only is cond-expand poorly named, but the whole
-idea is clumsy &mdash; no-one has ever said "I'll use cond-expand!" with a happy heart.
+idea is clumsy &mdash; no-one has ever exclaimed "I'll use cond-expand!" with a happy heart.
 I'd say "use #+ and #-", but that's not quite the right thing either.  Why assume that
 the *features* list is the only thing of interest at read time?  
 Why restrict where a read-time decision can occur?
@@ -9461,7 +9475,7 @@ c-define-1
 0.93846980724081
 </pre>
 
-<p>See also r7rs.scm, libc.scm, libm.scm, libdl.scm, and libgdbm.scm.
+<p>See also r7rs.scm, libc.scm, libgsl.scm, libm.scm, libdl.scm, and libgdbm.scm.
 </p>
 
 </body>

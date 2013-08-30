@@ -861,13 +861,15 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
 
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
-	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR, TOKEN_BYTEVECTOR} token_t;
+	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, 
+	      TOKEN_VECTOR, TOKEN_BYTEVECTOR} token_t;
 
 #if 0
 #define NUM_TOKENS 13
 static const char *token_names[NUM_TOKENS] = {
   "token_eof", "token_left_paren", "token_right_paren", "token_dot", "token_atom", "token_quote", "token_double_quote", 
-  "token_back_quote", "token_comma", "token_at_mark", "token_sharp_const", "token_vector", "token_bytevector"};
+  "token_back_quote", "token_comma", "token_at_mark", "token_sharp_const", 
+  "token_vector", "token_bytevector"};
 #endif
 
 
@@ -917,6 +919,7 @@ typedef struct {               /* call/cc */
 
 typedef struct s7_vdims_t {
   unsigned int ndims;
+  bool elements_allocated, dimensions_allocated;
   s7_Int *dims, *offsets;
   s7_pointer original;
 } s7_vdims_t;
@@ -2135,6 +2138,8 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {syntax_
 #define vector_dimension_info(p)      ((p)->object.vector.dim_info)
 #define shared_vector(p)              ((p)->object.vector.dim_info->original)
 #define vector_rank(p)                ((vector_dimension_info(p)) ? vector_ndims(p) : 1)
+#define vector_elements_allocated(p)  ((p)->object.vector.dim_info->elements_allocated)
+#define vector_dimensions_allocated(p) ((p)->object.vector.dim_info->dimensions_allocated)
 
 #define is_hash_table(p)              (type(p) == T_HASH_TABLE)
 #define hash_table_length(p)          (p)->object.hasher.length
@@ -3094,17 +3099,18 @@ static void sweep(s7_scheme *sc)
 	      /* a multidimensional empty vector can have dimension info */
 	      if (vector_dimension_info(a))
 		{
-		  if (shared_vector(a) == sc->F)
+		  if (vector_dimensions_allocated(a))
 		    {
 		      free(vector_dimensions(a));
 		      free(vector_offsets(a));
-		      free(vector_elements(a)); /* I think this will work for any vector (int/float too) */
 		    }
+		  if (vector_elements_allocated(a))
+		    free(vector_elements(a));      /* I think this will work for any vector (int/float too) */
 		  free(vector_dimension_info(a));
 		}
-	      else 
+	      else
 		{
-		  if (vector_length(a) > 0)
+		  if (vector_length(a) != 0)
 		    free(vector_elements(a));
 		}
 	    }
@@ -23763,11 +23769,25 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	      plen = snprintf(buf, 128, "%lld ", vector_dimension(vect, dim));
 	      port_write_string(port)(sc, buf, plen, port);
 	    }
-	  port_write_string(port)(sc, ")))) ", 5, port);
+	  if (is_int_vector(vect))
+	    port_write_string(port)(sc, ") 0 #t))) ", 10, port);
+	  else
+	    {
+	      if (is_float_vector(vect))
+		port_write_string(port)(sc, ") 0.0 #t))) ", 12, port);
+	      else port_write_string(port)(sc, ")))) ", 5, port);
+	    }
 	}
       else
 	{
-	  plen = snprintf(buf, 128, "%lld))) ", vector_length(vect));
+	  if (is_int_vector(vect))
+	    plen = snprintf(buf, 128, "%lld 0 #t))) ", vector_length(vect));
+	  else
+	    {
+	      if (is_float_vector(vect))
+		plen = snprintf(buf, 128, "%lld 0.0 #t))) ", vector_length(vect));
+	      else plen = snprintf(buf, 128, "%lld))) ", vector_length(vect));
+	    }
 	  port_write_string(port)(sc, buf, plen, port);
 	}
 
@@ -28731,7 +28751,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, int typ)
   if (len == 0) typ = T_VECTOR; /* all empty vectors are the same type */
 
   /* this has to follow the error checks!  (else garbage in free_heap temps portion confuses GC when "vector" is finalized) */
-  NEW_CELL(sc, x);
+  NEW_CELL(sc, x);                     
   vector_length(x) = 0;
   vector_elements(x) = NULL;
   set_type(x, typ | T_SAFE_PROCEDURE); /* (v 0) as vector-ref is safe */
@@ -29314,9 +29334,14 @@ static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_di
   v->dims = (s7_Int *)(vector_dimensions(vect) + skip_dims);
   v->offsets = (s7_Int *)(vector_offsets(vect) + skip_dims);
   v->original = vect;
+  v->elements_allocated = false;
+  v->dimensions_allocated = false;
   vector_dimension_info(x) = v;
 
-  vector_length(x) = vector_offset(vect, skip_dims - 1);
+  if (skip_dims > 0)
+    vector_length(x) = vector_offset(vect, skip_dims - 1);
+  else vector_length(x) = vector_length(vect);
+
   if (is_int_vector(vect))
     int_vector_elements(x) = (s7_Int *)(int_vector_elements(vect) + index);
   else
@@ -29361,6 +29386,8 @@ a vector that points to the same elements as the original-vector but with differ
   v->ndims = safe_list_length(sc, dims);
   v->dims = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
   v->offsets = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
+  v->dimensions_allocated = true;
+  v->elements_allocated = false;
   v->original = orig;
 
   for (i = 0, y = dims; is_pair(y); i++, y = cdr(y))
@@ -29944,6 +29971,8 @@ or a real, the vector can only hold numbers of that type (s7_Int or s7_Double)."
       v->dims = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
       v->offsets = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
       v->original = sc->F;
+      v->dimensions_allocated = true;
+      v->elements_allocated = (len > 0);
 
       for (i = 0, y = x; is_not_null(y); i++, y = cdr(y))
 	v->dims[i] = s7_integer(car(y));
@@ -38563,7 +38592,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  sc->tok = TOKEN_LEFT_PAREN;
 	  break;
 
-	case TOKEN_VECTOR:  /* already read #( -- TOKEN_VECTOR is triggered by #( */
+	case TOKEN_VECTOR:         /* already read #( -- TOKEN_VECTOR is triggered by #( */
 	    push_stack_no_code(sc, OP_READ_VECTOR, sc->w);   /* sc->w is the dimensions */
 	    /* fall through */
 	  
@@ -38597,7 +38626,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	case TOKEN_BACK_QUOTE:
 	  sc->tok = token(sc);
 #if WITH_QUASIQUOTE_VECTOR
-	  if (sc->tok == TOKEN_VECTOR) 
+	  if (sc->tok == TOKEN_VECTOR)
 	    {
 	      push_stack_no_code(sc, OP_READ_QUASIQUOTE_VECTOR, sc->w);
 	      sc->tok = TOKEN_LEFT_PAREN; 
@@ -67748,9 +67777,9 @@ int main(int argc, char **argv)
  * we need integer_length everywhere! These fixups are ignored by the optimized cases.
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
  * add empty? (or nil? or generic null? or zero-length? typeq? (null? c-pointer) -- C null?
- * other often-used libraries: c glib/gio/gobject/gmodule ncurses? gsl? GL/GLU? pcre? tecla? readline? asound? sndlib-for-s7?
+ * other often-used libraries: glib/gio/gobject/gmodule ncurses? GL/GLU? pcre? tecla? readline? asound? sndlib-for-s7?
  *    SOMEDAY: libgdbm tests and setopt support, libdl tests and autoload in Snd
- *    there are about 2000 entities in libc, maybe a similar number in SDL
+ *    there are about 2000 entities in SDL
  *    posix lib -> enhance in scheme for the gdb fix?
  * TODO: (env env) in clm should be an error
  * possible autoload additions: sndlib? xm? libX* fftw? gmp/mpfr/mpc? 
@@ -67758,7 +67787,6 @@ int main(int argc, char **argv)
  * checkpoint?
  * cload: settable C variables (via symbol_access as here?)
  * doc/test the lib*.scm files.
- * (sound-data ((...) (...))? or use #nD?
  * truncated format? or object->string?
  * the default object print_readable function should give an error, not mimic write
  * direct access to FILE* in s7 port (for libc)? (port-file) 
@@ -67769,7 +67797,9 @@ int main(int argc, char **argv)
  * to make real use of malloc we need sizeof at least for s7_Int|Double
  *   if a hash-table or something of (type . size), then the *.make functions wouldn't be needed
  *   how to collect these types?
- * TODO: gsl_error somehow screws up sc->input_port causing a segfault in safe_strlen of port_filename(sc->input_port)
+ * #[...] for int/float vectors?  or (float-vector ...)
+ * we need s7_make_vector_wrapper where we use separately allocated data array -- also will need possible dim info etc
+ *   shared-vector currently assumes it can piggy-back on the original vector's info
  *
  * remaining globals: environment_number, baffle_ctr, chars, real_zero et al, c_object type data
  *                    file_names|_size|top, senv (trap_segfault), big|rng_tag, small_ints?, num_to_str|_size?

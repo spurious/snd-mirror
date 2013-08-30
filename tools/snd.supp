@@ -1758,6 +1758,14 @@
 }
 
 {
+   s71af
+   Memcheck:Leak
+   fun:calloc
+   fun:store_choices
+   fun:*
+}
+
+{
    s71abcd
    Memcheck:Leak
    fun:calloc

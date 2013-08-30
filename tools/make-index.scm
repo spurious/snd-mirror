@@ -579,6 +579,7 @@
     (list '*libgdbm* "libgdbm.scm")
     (list '*libdl* "libdl.scm")
     (list '*libc* "libc.scm")
+    (list '*libgsl* "libgsl.scm")
 
     (list 'with-sound "ws.scm")
     (list 'with-mixed-sound "ws.scm")
@@ -637,6 +638,7 @@
     (list '*libgdbm* "libgdbm.scm")
     (list '*libdl* "libdl.scm")
     (list '*libc* "libc.scm")
+    (list '*libgsl* "libgsl.scm")
     ))
 
   (apropos-1 (reverse (environment->list (global-environment))))

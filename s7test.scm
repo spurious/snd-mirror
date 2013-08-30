@@ -14330,6 +14330,9 @@ c"
        (let ((v (vector 1 2 3))) (set! (v 1) v) v)
        (let ((v (vector 1 #(2) 3))) (set! ((v 1) 0) v) v)
        (let ((v #2d((1 2 3) (4 5 6)))) (set! (v 1 1) v) v)
+       (make-vector 3 0 #t)
+       (make-vector 3 0.0 #t)
+       (make-vector '(2 3) 1 #t)
        ))
   
 ;; :readable lists (circular, dotted)
@@ -39247,6 +39250,7 @@ hi6: (string-app...
 (test (negative? -0) #f )
 (test (negative? 0.0) #f )
 (test (negative? -0.0) #f )
+(test (negative? (- 0.0)) #f )
 (test (negative? (expt -0.0 1)) #f)
 (test (negative? (/ -0.0 1.0)) #f)
 (test (negative? (* -0.0 1.0)) #f)
