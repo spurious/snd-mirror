@@ -76,9 +76,15 @@
 		    (int (FP_NAN FP_INFINITE FP_ZERO FP_SUBNORMAL FP_NORMAL))
 		    (double (M_E M_LOG2E M_LOG10E M_LN2 M_LN10 M_PI M_PI_2 M_PI_4 M_1_PI M_2_PI M_2_SQRTPI M_SQRT2 M_SQRT1_2))
 		    
-		    (C-macro (double (__DBL_DENORM_MIN__ __DBL_MAX__ __DBL_MIN__ __DBL_EPSILON__)))
-		    (C-macro (int (__DBL_MIN_10_EXP__ __DBL_MAX_10_EXP__ __DBL_DIG__ __DBL_MANT_DIG__ __DBL_MIN_EXP__ __DBL_MAX_EXP__ 
-						      __SIZEOF_DOUBLE__ __SIZEOF_LONG_LONG__ __LONG_LONG_MAX__)))
+		    (C-macro (char* __VERSION__))
+		    (C-macro (int (__SIZEOF_LONG_LONG__ __SIZEOF_INT__ __SIZEOF_POINTER__ __SIZEOF_LONG__ __SIZEOF_LONG_DOUBLE__ __SIZEOF_SIZE_T__ 
+				   __SIZEOF_FLOAT__ __SIZEOF_SHORT__ __SIZEOF_DOUBLE__ __CHAR_BIT__ __DBL_MIN_EXP__ __DBL_MIN_10_EXP__ __LDBL_MAX_EXP__ 
+				   __DBL_DIG__ __DECIMAL_DIG__ __BIGGEST_ALIGNMENT__ __DBL_MAX_EXP__ __LONG_LONG_MAX__ __FLT_MIN_EXP__ __FLT_MANT_DIG__ 
+				   __FLT_RADIX__ __FLT_MAX_10_EXP__ __LONG_MAX__ __LDBL_MANT_DIG__ __FLT_DIG__ __INT_MAX__ __FLT_MAX_EXP__ 
+				   __DBL_MANT_DIG__ __LDBL_MIN_EXP__ __LDBL_MAX_10_EXP__ __INTMAX_MAX__ __FLT_MIN_10_EXP__ __DBL_MAX_10_EXP__ 
+				   __LDBL_MIN_10_EXP__ __LDBL_DIG__)))
+		    (C-macro (double (__FLT_MIN__ __DBL_DENORM_MIN__ __LDBL_MAX__ __FLT_EPSILON__ __LDBL_MIN__ __DBL_MAX__ __DBL_MIN__ 
+				      __LDBL_EPSILON__ __DBL_EPSILON__ __FLT_DENORM_MIN__ __FLT_MAX__ __LDBL_DENORM_MIN__)))
 		    
 		    ;; these have arg by reference, return list in s7
 		    (in-C "

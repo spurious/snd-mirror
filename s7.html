@@ -245,7 +245,6 @@ indented and on a sort of brownish background.
       <li><a href="#gtkschemerepl">Gtk/Scheme-based REPL</a>
       <li><a href="#replrescue">begin_hook to the rescue!</a>
       <li><a href="#glistener">glistener.c</a>
-      <li><a href="#gsl">GSL</a>
       <li><a href="#gdb">gdb</a>
   </ul>
 
@@ -2095,8 +2094,7 @@ vector-dimensions returns a list of the dimensions.
 <p>make-vector also takes an optional fourth argument.  If it is #t, and the initial-value
 is either an integer or a real, make-vector produces a homogenous vector, a vector that
 can only hold elements of the same type as the initial value (either s7_Int or s7_Double
-internally).  Homogenous vectors are mostly useful in conjunction with C code; see the
-<a href="#gsl">GSL</a> example below.
+internally).  Homogenous vectors are mostly useful in conjunction with C code.
 </p>
 
 
@@ -5474,7 +5472,7 @@ get-output-string should be current-output-string. write-char behaves like displ
 <p>
 The name "cond-expand" is bad &mdash; we're not expanding anything, and the macro's point is to make it easy to
 operate with the *features* list; perhaps "cond-provided"?  Not only is cond-expand poorly named, but the whole
-idea is clumsy &mdash; no-one has ever exclaimed "I'll use cond-expand!" with a happy heart.
+idea is clumsy &mdash; no-one has ever exclaimed "Let's use cond-expand!" with a happy heart.
 I'd say "use #+ and #-", but that's not quite the right thing either.  Why assume that
 the *features* list is the only thing of interest at read time?  
 Why restrict where a read-time decision can occur?
@@ -6167,7 +6165,6 @@ The examples that follow show:
 <li><a href="#gtkschemerepl">Gtk/Scheme-based REPL</a>
 <li><a href="#replrescue">begin_hook to the rescue!</a>
 <li><a href="#glistener">glistener.c</a>
-<li><a href="#gsl">GSL</a>
 <li><a href="#gdb">gdb</a>
 </ul>
 
@@ -8947,238 +8944,6 @@ assuming we have the usual Scheme-to-C linkages (see snd-glistener.c):
     #f (list "weight" PANGO_WEIGHT_BOLD "foreground" "red")))
 </pre>
 </div>
-
-
-<div class="header" id="gsl"><h4>GSL</h4></div>
-
-<p>
-The next example provides access to the GSL functions gsl_sf_bessel_J0 and
-gsl_sf_bessel_J0_e.  In the latter case, we return multiple values (in the
-Scheme sense): the J0 value and an error estimate.  When using GSL, it
-is important to replace the default gsl error handler &mdash; it simply
-aborts the main program upon error!
-</p>
-
-<div class="indented">
-<pre>
-#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;string.h&gt;
-
-#include &lt;gsl/gsl_sf.h&gt;
-#include &lt;gsl/gsl_errno.h&gt;
-
-#include "s7.h"
-static s7_scheme *s7;
-
-static void g_gsl_error(const char *reason, const char *file, int line, int gsl_errno)
-{ 
-  /* this is our replacement error handler */
-  s7_error(s7, s7_make_symbol(s7, "gsl-error"),
-	   s7_list(s7, 5, 
-		   s7_make_string(s7, "GSL: ~A, ~A in ~A line ~A"),
-		   s7_make_string(s7, gsl_strerror(gsl_errno)),
-		   s7_make_string(s7, reason),
-		   s7_make_string(s7, file),
-		   s7_make_integer(s7, line)));
-}
-
-static s7_pointer g_J0(s7_scheme *sc, s7_pointer args)
-{
-  #define J0_help "(J0 x) returns the bessel function value J0(x)"
-  s7_pointer x;
-  x = s7_car(args);
-  if (!s7_is_real(x))
-    return(s7_wrong_type_arg_error(sc, "J0", 0, x, "a real number"));
-  return(s7_make_real(sc, gsl_sf_bessel_J0(s7_number_to_real(sc, x))));
-}
-
-static s7_pointer g_J0_e(s7_scheme *sc, s7_pointer args)
-{
-  #define J0_e_help "(J0_e x) returns the bessel function value J0(x) and an error estimate"
-  s7_pointer x;
-  double jx;
-  gsl_sf_result r;     /* r.val and r.err are returned */
-  int err;
-
-  x = s7_car(args);
-  if (!s7_is_real(x))
-    return(s7_wrong_type_arg_error(sc, "J0", 0, x, "a real number"));
-
-  err = gsl_sf_bessel_J0_e(s7_number_to_real(sc, x), &amp;r);
-  if (err != GSL_SUCCESS)
-    return(s7_error(sc, s7_make_symbol(sc, "gsl-error"),
-		    s7_list(sc, 2,
-			    s7_make_string(sc, "GSL: ~A"),
-			    s7_make_string(sc, gsl_strerror(err)))));
-
-  return(s7_values(sc, 2, s7_make_real(sc, r.val), s7_make_real(sc, r.err)));
-}
-
-int main(int argc, char **argv)
-{
-  gsl_set_error_handler(g_gsl_error); /* use our error handler */
-
-  s7 = s7_init();  
-  s7_define_function(s7, "J0", g_J0, 1, 0, false, J0_help);
-  s7_define_function(s7, "J0_e", g_J0_e, 1, 0, false, J0_e_help);
-
-  /* and now the usual repl */
-  if (argc == 2)
-    {
-      fprintf(stderr, "load %s\n", argv[1]);
-      s7_load(s7, argv[1]);
-    }
-  else
-    {
-      char buffer[512];
-      char response[1024];
-      while (1) 
-	{
-	  fprintf(stdout, "\n&gt; ");
-	  fgets(buffer, 512, stdin);
-	  
-	  if ((buffer[0] != '\n') || 
-	      (strlen(buffer) &gt; 1))
-	    {                            
-	      sprintf(response, "(write %s)", buffer);
-	      s7_eval_c_string(s7, response);
-	    }
-	}
-    }
-}
-
-/* 
- *  gcc -c s7.c -I.
- *  gcc -o ex14 ex14.c s7.o -I. -lm -ldl -lgsl -lgslcblas
- *
- *  &gt; (J0 1.0)
- *  0.76519768655797
- *  &gt; (J0 0.0)
- *  1.0
- *  &gt; (list (J0_e 1.0))
- *  (0.76519768655797 6.7261301656723e-16)
- */
-             
-</pre>
-</div>
-
-<p>Here is a sketch of a connection to the GSL linear algebra functions,
-using float vectors.
-</p>
-
-<div class="indented">
-<pre>
-#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;string.h&gt;
-
-#include &lt;gsl/gsl_math.h&gt;
-#include &lt;gsl/gsl_errno.h&gt;
-#include &lt;gsl/gsl_linalg.h&gt;
-
-#include "s7.h"
-static s7_scheme *s7;
-
-static void g_gsl_error(const char *reason, const char *file, int line, int gsl_errno)
-{
-  s7_error(s7, s7_make_symbol(s7, "gsl-error"),
-	   s7_list(s7, 5, 
-		   s7_make_string(s7, "GSL: ~A, ~A in ~A line ~A"),
-		   s7_make_string(s7, gsl_strerror(gsl_errno)),
-		   s7_make_string(s7, reason),
-		   s7_make_string(s7, file),
-		   s7_make_integer(s7, line)));
-}
-
-/* this example comes from the GSL documentation: doc/examples/linalgu.c */
-
-static s7_pointer g_solve(s7_scheme *sc, s7_pointer args)
-{
-  #define g_solve_help "(solve A b) solves A * x = b, A is a matrix, b a vector, solve returns the vector x."
-  gsl_matrix_view m;
-  gsl_vector_view b;
-  gsl_vector *x; 
-  gsl_permutation *p;
-  int s = 0;
-  size_t i, len;
-  s7_pointer result;
-  double *gA, *gb, *gx;
-
-  gA = s7_float_vector_elements(s7_car(args));
-  gb = s7_float_vector_elements(s7_cadr(args));
-  len = s7_vector_length(s7_cadr(args));
-
-  m = gsl_matrix_view_array(gA, len, len);
-  b = gsl_vector_view_array(gb, len);
-  x = gsl_vector_alloc(len);
-  p = gsl_permutation_alloc(len);
-
-  gsl_linalg_LU_decomp (&amp;m.matrix, p, &samp;);
-  gsl_linalg_LU_solve (&mamp;.matrix, p, &bamp;.vector, x);
-
-  result = s7_make_float_vector(sc, len);
-  gx = s7_float_vector_elements(result);
-  for (i = 0; i &lt; len; i++)
-    gx[i] = gsl_vector_get(x, i);
-
-  gsl_permutation_free (p);
-  gsl_vector_free(x);
-
-  return(result);
-}
-
-int main(int argc, char **argv)
-{
-  gsl_set_error_handler(g_gsl_error);
-
-  s7 = s7_init();  
-  s7_define_function(s7, "solve", g_solve, 2, 0, false, g_solve_help);
-
-  s7_eval_c_string(s7, "(define (float-vector . args)                   \
-                          (let ((v (make-vector (length args) 0.0 #t))) \
-                            (do ((i 0 (+ i 1))                          \
-                                 (arg args (cdr arg)))                  \
-                                ((null? arg) v)                         \
-                              (set! (v i) (car arg)))))");
-
-  if (argc == 2)
-    {
-      fprintf(stderr, "load %s\n", argv[1]);
-      s7_load(s7, argv[1]);
-    }
-  else
-    {
-      char buffer[512];
-      char response[1024];
-      while (1) 
-	{
-	  fprintf(stdout, "\n&gt; ");
-	  fgets(buffer, 512, stdin);
-	  
-	  if ((buffer[0] != '\n') || 
-	      (strlen(buffer) &gt; 1))
-	    {                            
-	      sprintf(response, "(write %s)", buffer);
-	      s7_eval_c_string(s7, response);
-	    }
-	}
-    }
-}
-
-/* gcc -c s7.c -I.
- * gcc -o ex14 ex14.c s7.o -I. -lm -lgsl -lgslcblas -ldl
- * 
- * (define b (float-vector 1.0 2.0 3.0 4.0))
- * b
- * (define A (float-vector 0.18 0.60 0.57 0.96  0.41 0.24 0.99 0.58  0.14 0.30 0.97 0.66  0.51 0.13 0.19 0.85))
- * A
- * (solve A b)
- * #(-4.052050229573974 -12.60561139590691 1.660911626708842 8.693766928795229)
- */
-</pre>
-</div>
-
 
 
 <div class="header" id="gdb"><h4>gdb</h4></div>

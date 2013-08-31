@@ -28812,6 +28812,44 @@ s7_pointer s7_make_float_vector(s7_scheme *sc, s7_Int len)
 }
 
 
+s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *data, int dims, int *dim_info)
+{
+  /* this wraps up a C-allocated/freed double array as an s7 vector.
+   */
+  s7_pointer x;
+  s7_vdims_t *v;
+  int i;
+  s7_Int offset = 1;
+
+  v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
+  v->ndims = dims;
+  v->elements_allocated = false;
+  v->dimensions_allocated = true;
+  v->original = sc->F;
+  v->dims = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
+  v->offsets = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
+
+  for (i = 0; i < dims; i++)
+    v->dims[i] = dim_info[i];
+  for (i = v->ndims - 1; i >= 0; i--)
+    {
+      v->offsets[i] = offset;
+      offset *= v->dims[i];
+    }
+
+  NEW_CELL(sc, x);                     
+  set_type(x, T_FLOAT_VECTOR | T_SAFE_PROCEDURE);
+  float_vector_elements(x) = data;
+  vector_getter(x) = float_vector_getter;
+  vector_setter(x) = float_vector_setter;
+  vector_length(x) = len;
+  vector_dimension_info(x) = v;
+  add_vector(sc, x);
+
+  return(x);
+}
+
+
 s7_Int s7_vector_length(s7_pointer vec)
 {
   return(vector_length(vec));
@@ -38735,7 +38773,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       (is_not_null(s7_hook_functions(sc, sc->unbound_variable_hook))))
     {
       int cur_code_loc, value_loc, args_loc, code_loc;
-      s7_pointer result, cur_code, value, code, args;
+      s7_pointer result, cur_code, value, code, args, cur_env;
       int save_x = -1, save_y = -1, save_z = -1;
       
       /* sc->args and sc->code are pushed on the stack by s7_call, then
@@ -38744,7 +38782,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
        *   call can tell where the error occurred, and we need sc->value because it might
        *   be awaiting addition to sc->args in e.g. OP_EVAL_ARGS5, and then be clobbered
        *   by the hook function.  (+ 1 asdf) will end up evaluating (+ asdf asdf) if sc->value
-       *   is not protected.
+       *   is not protected.  We also need to save/restore sc->envir in case s7_load is called.
        */
 
       args = sc->args;
@@ -38754,6 +38792,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       value = sc->value;
       value_loc = s7_gc_protect(sc, value);
       cur_code = sc->cur_code;
+      cur_env = sc->envir;
       result = sc->UNDEFINED;
 
       if (!is_pair(cur_code))
@@ -38783,7 +38822,6 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	      e = loaded_library(sc, file);
 	      if (!is_environment(e))
 		e = s7_load(sc, file);
-
 	      result = s7_symbol_value(sc, sym); /* calls find_symbol, does not trigger unbound_variable search */
 	      if ((result == sc->UNDEFINED) &&
 		  (is_environment(e)))
@@ -38840,6 +38878,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       sc->args = args;
       s7_gc_unprotect_at(sc, args_loc);
       sc->code = code;
+      sc->envir = cur_env;
       s7_gc_unprotect_at(sc, code_loc);
 
       if ((result != sc->UNDEFINED) &&
@@ -67763,12 +67802,12 @@ int main(int argc, char **argv)
 
 /*
  * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7 14.0
- * bench    42736 8752 8051 7725 6515 5194 4364 3989 3997 3997
+ * bench    42736 8752 8051 7725 6515 5194 4364 3989 3997
  * lint           9328 8140 7887 7736 7300 7180 7051 7078
- * index    44300 3291 3005 2742 2078 1643 1435 1363 1365 1335
+ * index    44300 3291 3005 2742 2078 1643 1435 1363 1365
  * s7test    1721 1358 1297 1244  977  961  957  960  943
  * t455|6     265   89   55   31   14   14    9 9155 8998
- * lat        229   63   52   47   42   40   34   31   29   29
+ * lat        229   63   52   47   42   40   34   31   29
  * t502        90   43   39   36   29   23   20   14   14
  * calls           275  207  175  115   89   71   53   53
  */
@@ -67794,17 +67833,8 @@ int main(int argc, char **argv)
  *   what about a type-name field for c-pointers (better debugging output)
  *   (make-c-pointer val "char**" free) s7_make_c_pointer_with_free?
  * could we use glob or equivalent in the glistener filename completer?
- * to make real use of malloc we need sizeof at least for s7_Int|Double
- *   if a hash-table or something of (type . size), then the *.make functions wouldn't be needed
- *   how to collect these types?
- * #[...] for int/float vectors?  or (float-vector ...)
- * we need s7_make_vector_wrapper where we use separately allocated data array -- also will need possible dim info etc
- *   shared-vector currently assumes it can piggy-back on the original vector's info
- *
- * remaining globals: environment_number, baffle_ctr, chars, real_zero et al, c_object type data
- *                    file_names|_size|top, senv (trap_segfault), big|rng_tag, small_ints?, num_to_str|_size?
- *                    all the optimization addrs (geq_2 etc), compare_sc|func|args, ht_iter_tag, add|equal_class?
- *                    add_max?
- *    there are also globals now in clm2xen: gf_free_list, clm_input|output_gen etc
- *    but pthreads can't be used with s7 so I'm not sure it matters.
+ * #[...] for int/float vectors?  or (float-vector ...), or perhaps #nf() #1f() and same for #ni? #float()? #int()?
+ * (float-vector '(a b c) '(d e f)) is not ambiguous -- this would be '(2 3) dims (or an error)
+ * callgrind libgsl write process -- maybe something obvious
+ * 2-stage load in cload for gslbug (fc19)?
  */

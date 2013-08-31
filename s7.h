@@ -2,7 +2,7 @@
 #define S7_H
 
 #define S7_VERSION "3.0"
-#define S7_DATE "28-Aug-13"
+#define S7_DATE "2-Sep-13"
 
 
 typedef long long int s7_Int;
@@ -12,7 +12,7 @@ typedef long long int s7_Int;
 
 typedef double s7_Double;
 /* similarly for doubles (reals in Scheme) -- only "double" works in C++, and
- *    integer-decode-float assumes s7_Double is double.
+ *    integer-decode-float assumes s7_Double is double, as do all the homogenous float vector functions.
  */
 
 
@@ -374,6 +374,7 @@ s7_pointer s7_vector_set_n(s7_scheme *sc, s7_pointer vector, s7_pointer value, i
 s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len);                                 /* (make-vector len) */
 s7_pointer s7_make_int_vector(s7_scheme *sc, s7_Int len);
 s7_pointer s7_make_float_vector(s7_scheme *sc, s7_Int len);
+s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *data, int dims, int *dim_info);
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill);       /* (make-vector len fill) */
 
 void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj);                   /* (vector-fill! vec obj) */

@@ -205,7 +205,8 @@
 			(string-append "init_" (number->string c-define-output-file-counter))))
 	 (functions ())
 	 (constants ())
-	 (macros ())
+	 (macros ())     ; these are protected by #ifdef ... #endif
+	 (inits ())      ; C code (a string in s7) inserted in the library initialization function
 	 (p #f))
 
     (define (initialize-c-file)
@@ -328,6 +329,12 @@
       (format p "  s7_pointer cur_env;~%")
       (format p "  cur_env = s7_outer_environment(s7_current_environment(sc));~%") ; this must exist because we pass load the env ourselves
       
+      ;; send out any special initialization code
+      (for-each
+       (lambda (init-str)
+	 (format p "  ~A~%" init-str))
+       (reverse inits))
+
       ;; "constants" -- actually variables in s7 because we want them to be local to the current environment
       (if (pair? constants)
 	  (begin
@@ -370,8 +377,7 @@
 	       (help        (f 2))
 	       (num-args    (f 3))
 	       (opt-args    (if (= (length f) 5) (f 4) 0)))
-	   (format p "~%  s7_define(sc, cur_env,~%")
-	   (format p "            s7_make_symbol(sc, ~S),~%" scheme-name)
+	   (format p "~%  s7_define(sc, cur_env,~%            s7_make_symbol(sc, ~S),~%" scheme-name)
 	   (format p "            s7_make_function(sc, ~S, ~A, ~D, ~D, false, ~S));~%"
 		   scheme-name
 		   base-name
@@ -399,19 +405,12 @@
       ;; functions
       (if (>= (length func) 3)
 	  (apply add-one-function func)
-	  ;; (in-C ...)
-	  (if (eq? (car func) 'in-C)
-	      (format p "~A~%" (cadr func))
-	      ;; (C-macro ...)
-	      (if (eq? (car func) 'C-macro)
-		  (apply add-one-macro (cadr func))
-		  ;; (C-function ...)
-		  (if (eq? (car func) 'C-function)
-		      (begin
-			(collides? (caadr func))
-			(set! functions (cons (cadr func) functions)))
-		      ;; variable
-		      (apply add-one-constant func))))))
+	  (case (car func)
+	    ((in-C)       (format p "~A~%" (cadr func)))
+	    ((C-init)     (set! inits (cons (cadr func) inits)))
+	    ((C-macro)    (apply add-one-macro (cadr func)))
+	    ((C-function) (collides? (caadr func)) (set! functions (cons (cadr func) functions)))
+	    (else         (apply add-one-constant func)))))
 
 
     ;; this is the body of c-define

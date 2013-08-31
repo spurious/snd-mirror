@@ -1481,8 +1481,6 @@ static XEN g_fmod(XEN a, XEN b)
 #endif
 
 
-/* ---------------------------------------- use libm ---------------------------------------- */
-
 #if HAVE_SCHEME && WITH_GMP && HAVE_SPECIAL_FUNCTIONS
 
 #include <gmp.h>
@@ -2101,6 +2099,7 @@ static XEN g_gsl_ellipj(XEN u, XEN m)
 }
 
 
+#if (!HAVE_SCHEME)
 #include <gsl/gsl_dht.h>
 
 static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
@@ -2143,7 +2142,7 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
     }
   return(data);
 }
-
+#endif
 
 #if HAVE_GSL
   #include <gsl/gsl_version.h>
@@ -2416,7 +2415,9 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 
   XEN_NARGIFY_1(g_gsl_ellipk_w, g_gsl_ellipk)
   XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
+#if (!HAVE_SCHEME)
   XEN_NARGIFY_4(g_gsl_dht_w, g_gsl_dht)
+#endif
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
   XEN_NARGIFY_1(g_gsl_eigenvectors_w, g_gsl_eigenvectors)
 #endif
@@ -2471,7 +2472,9 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   #define g_kn_w g_kn
   #define g_gsl_ellipk_w g_gsl_ellipk
   #define g_gsl_ellipj_w g_gsl_ellipj
+#if (!HAVE_SCHEME)
   #define g_gsl_dht_w g_gsl_dht
+#endif
   #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
     #define g_gsl_eigenvectors_w g_gsl_eigenvectors
   #endif
@@ -2545,6 +2548,7 @@ void g_xen_initialize(void)
   add_source_file_extension("lisp");
   add_source_file_extension("init");  /* for slib */
 #endif
+
 #if HAVE_FORTH
   add_source_file_extension("fth");
   add_source_file_extension("fsm");
@@ -2602,7 +2606,10 @@ void g_xen_initialize(void)
 
   XEN_DEFINE_SAFE_PROCEDURE("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
   XEN_DEFINE_SAFE_PROCEDURE("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
+#if (!HAVE_SCHEME)
   XEN_DEFINE_SAFE_PROCEDURE("gsl-dht",    g_gsl_dht_w,    4, 0, 0, H_gsl_dht);
+#endif
+
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
   XEN_DEFINE_SAFE_PROCEDURE("gsl-eigenvectors", g_gsl_eigenvectors_w, 1, 0, 0, "returns eigenvalues and eigenvectors");
 #endif
@@ -2610,7 +2617,17 @@ void g_xen_initialize(void)
 #if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS
   XEN_DEFINE_SAFE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
 #endif
+#endif
 
+#if HAVE_SCHEME
+  /* (gsl-dht 16 (make-vector 16 1.0 #t) 1.0 1.0)
+   */
+  s7_eval_c_string(s7, "(define (gsl-dht size in-data nu xmax) \
+                          (let ((dp (gsl_dht_new size nu xmax)) \
+                                (out-data (make-vector size 0.0 #t))) \
+                            (gsl_dht_apply dp (double* in-data) (double* out-data)) \
+                            (gsl_dht_free dp) \
+                            out-data))");
 #endif
 
 #if HAVE_SCHEME && WITH_GMP
@@ -2790,11 +2807,13 @@ void g_xen_initialize(void)
   #endif
 #endif
 
+#if 1
 #if USE_GTK
   Init_libxg();
   #if HAVE_FORTH
     fth_add_loaded_files("libxg.so");
   #endif
+#endif
 #endif
 
 #if HAVE_GL
