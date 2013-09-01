@@ -1,11 +1,7 @@
 #ifndef VCT_H
 #define VCT_H
 
-typedef struct {
-  mus_long_t length;
-  mus_float_t *data;
-  bool dont_free;
-} vct;
+typedef struct vct vct;
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,6 +29,9 @@ MUS_EXPORT XEN g_vct_peak(XEN obj);
 #define XEN_TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
 #define MUS_VCT_P(arg) mus_vct_p(arg)
 
+MUS_EXPORT mus_long_t mus_vct_length(vct *v);
+MUS_EXPORT mus_float_t *mus_vct_data(vct *v);
+MUS_EXPORT vct *mus_vct_wrap(mus_long_t len, mus_float_t *data);
 
 #ifdef __cplusplus
 }

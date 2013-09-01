@@ -7852,13 +7852,15 @@ static mus_float_t *g_floats_to_samples(XEN obj, int *size, const char *caller, 
 	  if (MUS_VCT_P(obj))
 	    {
 	      vct *v;
+	      mus_float_t *vdata;
 	      v = XEN_TO_VCT(obj);
-	      num = v->length; 
+	      vdata = mus_vct_data(v);
+	      num = mus_vct_length(v); 
 	      if (((*size) > 0) && (num > (*size)))
 		num = (*size);
 	      vals = (mus_float_t *)malloc(num * sizeof(mus_float_t));
 	      for (i = 0; i < num; i++) 
-		vals[i] = (v->data[i]);
+		vals[i] = (vdata[i]);
 	    }
 	  else XEN_ASSERT_TYPE(0, obj, position, caller, "a vct, vector, or list");
 	}
@@ -8075,8 +8077,8 @@ the new data's end."
 	{
 	  vct *v;
 	  v = XEN_TO_VCT(vect);
-	  if (len > v->length) len = v->length;
-	  change_samples(beg, len, v->data, cp, caller, pos, -1.0);
+	  if (len > mus_vct_length(v)) len = mus_vct_length(v);
+	  change_samples(beg, len, mus_vct_data(v), cp, caller, pos, -1.0);
 	}
       else
 	{
@@ -8166,7 +8168,7 @@ set snd's channel chn's samples starting at beg for dur samps from vct data"
     {
       vct *v1;
       v1 = XEN_TO_VCT(v);
-      dur = C_TO_XEN_INT(v1->length);
+      dur = C_TO_XEN_INT(mus_vct_length(v1));
     }
   if (XEN_NOT_BOUND_P(origin))
     caller = S_vct_to_channel;
@@ -8188,7 +8190,7 @@ vct *run_samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos)
     {
       mus_float_t *fvals;
       v = mus_vct_make(len);
-      fvals = v->data;
+      fvals = mus_vct_data(v);
 
       if (len < (1 << 30))
 	{
@@ -8535,9 +8537,9 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
 	{
 	  vct *v;
 	  v = XEN_TO_VCT(vect);
-	  if (len > v->length) len = v->length;
+	  if (len > mus_vct_length(v)) len = mus_vct_length(v);
 	  if (!origin) origin = mus_strdup(TO_PROC_NAME(S_insert_samples));
-	  insert_samples(beg, len, v->data, cp, origin, pos);
+	  insert_samples(beg, len, mus_vct_data(v), cp, origin, pos);
 	}
       else
 	{

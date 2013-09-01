@@ -2154,8 +2154,8 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
 	return(XEN_FALSE);
       if (v1)
 	{
-	  data = v1->data;
-	  if (len > v1->length) len = v1->length;
+	  data = mus_vct_data(v1);
+	  if (len > mus_vct_length(v1)) len = mus_vct_length(v1);
 	}
       else 
 	{

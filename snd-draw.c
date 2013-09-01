@@ -733,9 +733,9 @@ data in the recipient's graph between points low and high in the drawing mode gr
   draw_graph_data(cp, 
 		  XEN_TO_C_LONG_LONG_OR_ELSE(lo, -1),
 		  XEN_TO_C_LONG_LONG_OR_ELSE(hi, -1),
-		  v0->length,
-		  v0->data,
-		  (v1) ? (v1->data) : NULL,
+		  mus_vct_length(v0),
+		  mus_vct_data(v0),
+		  (v1) ? (mus_vct_data(v1)) : NULL,
 		  get_ax(cp, XEN_TO_C_INT_OR_ELSE(ax, (int)CHAN_GC), S_graph_data, xcr),
 		  (graph_style_t)XEN_TO_C_INT_OR_ELSE(style, (int)(cp->time_graph_style)));
   return(data);

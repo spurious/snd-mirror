@@ -1938,9 +1938,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 	  vct *v;
 	  char *vstr = NULL;
 
-	  v = (vct *)calloc(1, sizeof(vct));
-	  v->length = order;
-	  v->data = precalculated_coeffs;
+	  v = mus_vct_wrap(order, precalculated_coeffs);
 	  vstr = mus_vct_to_readable_string(v);
 
 #if HAVE_FORTH
@@ -1955,7 +1953,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 				       TO_PROC_NAME(S_filter_channel), vstr, order, beg, dur);
 #endif
 	  if (vstr) free(vstr);
-	  free(v); /* not mus_vct_free because we don't own the data array */
+	  mus_vct_free(v);
 	}
       else
 	{
@@ -3651,10 +3649,16 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 		      if (MUS_VCT_P(res))
 			{
 			  vct *v;
+			  mus_long_t vlen;
+			  mus_float_t *vdata;
+
 			  v = XEN_TO_VCT(res);
-			  for (i = 0; i < v->length; i++) 
+			  vlen = mus_vct_length(v);
+			  vdata = mus_vct_data(v);
+
+			  for (i = 0; i < vlen; i++) 
 			    {
-			      data[0][j++] = v->data[i];
+			      data[0][j++] = vdata[i];
 			      if (j == MAX_BUFFER_SIZE)
 				{
 				  err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -3662,7 +3666,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 				  if (err != MUS_NO_ERROR) break;
 				}
 			    }
-			  samps += v->length - 1;
+			  samps += vlen - 1;
 			}
 		      else
 			{
@@ -3958,15 +3962,21 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 		  if (MUS_VCT_P(res))
 		    {
 		      vct *v;
+		      mus_long_t vlen;
+		      mus_float_t *vdata;
+
 		      v = XEN_TO_VCT(res);
-		      for (i = 0; i < v->length; i++)
+		      vlen = mus_vct_length(v);
+		      vdata = mus_vct_data(v);
+
+		      for (i = 0; i < vlen; i++)
 			{
 			  if (data_pos >= cur_size)
 			    {
 			      cur_size *= 2;
 			      data = (mus_float_t *)realloc(data, cur_size * sizeof(mus_float_t));
 			    }
-			  data[data_pos++] = v->data[i];
+			  data[data_pos++] = vdata[i];
 			}
 		    }
 		  else
@@ -4904,7 +4914,7 @@ static mus_float_t *load_mus_float_ts(XEN scalers, int *result_len, const char *
       if (MUS_VCT_P(scalers))
 	{
 	  v = XEN_TO_VCT(scalers);
-	  len = v->length;
+	  len = mus_vct_length(v);
 	}
       else
 	{
@@ -4925,7 +4935,7 @@ static mus_float_t *load_mus_float_ts(XEN scalers, int *result_len, const char *
   
   scls = (mus_float_t *)calloc(len, sizeof(mus_float_t));
   if (v)
-    memcpy((void *)scls, (void *)(v->data), len * sizeof(mus_float_t));
+    memcpy((void *)scls, (void *)(mus_vct_data(v)), len * sizeof(mus_float_t));
   else
     {
       if (XEN_LIST_P(scalers))
@@ -5396,14 +5406,14 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
   v1 = XEN_TO_VCT(reals);
   v2 = XEN_TO_VCT(imag);
 
-  n = v1->length;
-  if (v2->length < n) n = v2->length;
+  n = mus_vct_length(v1);
+  if (mus_vct_length(v2) < n) n = mus_vct_length(v2);
   if (n == 0) return(XEN_ZERO);
   if (POWER_OF_2_P(n))
     {
       n2 = n;
-      rl = v1->data;
-      im = v2->data;
+      rl = mus_vct_data(v1);
+      im = mus_vct_data(v2);
     }
   else
     {
@@ -5413,16 +5423,16 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
       rl = (mus_float_t *)calloc(n2, sizeof(mus_float_t));
       im = (mus_float_t *)calloc(n2, sizeof(mus_float_t));
       need_free = true;
-      memcpy((void *)rl, (void *)(v1->data), n * sizeof(mus_float_t));
-      memcpy((void *)im, (void *)(v2->data), n * sizeof(mus_float_t));
+      memcpy((void *)rl, (void *)(mus_vct_data(v1)), n * sizeof(mus_float_t));
+      memcpy((void *)im, (void *)(mus_vct_data(v2)), n * sizeof(mus_float_t));
     }
 
   mus_fft(rl, im, n2, isign);
 
   if (need_free)
     {
-      memcpy((void *)(v1->data), (void *)rl, n * sizeof(mus_float_t));
-      memcpy((void *)(v2->data), (void *)im, n * sizeof(mus_float_t));
+      memcpy((void *)(mus_vct_data(v1)), (void *)rl, n * sizeof(mus_float_t));
+      memcpy((void *)(mus_vct_data(v2)), (void *)im, n * sizeof(mus_float_t));
       free(rl);
       free(im);
     }
@@ -5450,8 +5460,8 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalized), normalized, XEN_ARG_7, S_snd_spectrum, "a boolean");
 
   v = XEN_TO_VCT(data);
-  n = XEN_TO_C_INT_OR_ELSE(len, v->length);
-  if (n > v->length) n = v->length;
+  n = XEN_TO_C_INT_OR_ELSE(len, mus_vct_length(v));
+  if (n > mus_vct_length(v)) n = mus_vct_length(v);
   if (n <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 3, len, "length <= 0 or vct length == 0?");
 
@@ -5468,12 +5478,14 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
 
   if (!in_data)
     {
+      mus_float_t *vdata;
+      vdata = mus_vct_data(v);
       rdat = (mus_float_t *)malloc(n * sizeof(mus_float_t));
-      if (n < v->length)
-	for (i = 0; i < n; i++) rdat[i] = v->data[i];
-      else memcpy((void *)rdat, (void *)(v->data), v->length * sizeof(mus_float_t));
+      if (n < mus_vct_length(v))
+	for (i = 0; i < n; i++) rdat[i] = vdata[i];
+      else memcpy((void *)rdat, (void *)vdata, mus_vct_length(v) * sizeof(mus_float_t));
     }
-  else rdat = v->data;
+  else rdat = mus_vct_data(v);
 
   if (wtype != (int)MUS_RECTANGULAR_WINDOW)
     {
@@ -5884,8 +5896,8 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   else 
     {
       v = XEN_TO_VCT(e);
-      coeffs = v->data;
-      if (order_1 == 0) order_1 = v->length;
+      coeffs = mus_vct_data(v);
+      if (order_1 == 0) order_1 = mus_vct_length(v);
     }
   if (XEN_STRING_P(origin))
     caller = XEN_TO_C_STRING(origin);
@@ -5943,13 +5955,13 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
 	  vct *v;
 	  char *new_origin = NULL, *estr = NULL;
 	  v = XEN_TO_VCT(e);
-	  if (len > v->length) 
+	  if (len > mus_vct_length(v)) 
 	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order > length coeffs");
 	  else
 	    {
-	      if (len == 0) len = v->length;
+	      if (len == 0) len = mus_vct_length(v);
 	    }
-	  if ((!origin) && (v->length < 16))
+	  if ((!origin) && (mus_vct_length(v) < 16))
 	    {
 	      estr = mus_vct_to_readable_string(v);
 #if HAVE_FORTH
@@ -5964,7 +5976,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
 #endif
 	    }
 	  else new_origin = mus_strdup(origin);
-	  apply_filter(cp, len, NULL, caller, new_origin, over_selection, v->data, NULL, edpos, 5, truncate);
+	  apply_filter(cp, len, NULL, caller, new_origin, over_selection, mus_vct_data(v), NULL, edpos, 5, truncate);
 	  if (estr) free(estr);
 	  if (new_origin) free(new_origin);
 	}
@@ -6135,8 +6147,8 @@ that give a minimum peak amplitude when the signals are added together."
       vct *v;
       current_max[i] = 0.0;
       v = XEN_TO_VCT(XEN_LIST_REF(arglist, i));
-      sines[i] = v->data;
-      sizes[i] = v->length;
+      sines[i] = mus_vct_data(v);
+      sizes[i] = mus_vct_length(v);
       if (sizes[i] > size)
 	size = sizes[i];
     }

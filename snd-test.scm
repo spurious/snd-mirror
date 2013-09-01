@@ -36305,16 +36305,13 @@ EDITS: 1
 	    (begin
 	      (add-transform "Hankel" "Hankel" 0.0 1.0
 			     (lambda (n rd)
-			       (let ((v (make-vct n)))
-				 (do ((i 0 (+ i 1))) ((= i n)) (vct-set! v i (rd)))
+			       (let ((v (make-vector n 0.0 #t)))
+				 (do ((i 0 (+ i 1))) ((= i n)) (set! v i (rd)))
 				 (gsl-dht n v 1.0 1.0)
 				 v)))
 	      (let* ((n 16) 
-		     (v (make-vct n)))
-		(do ((i 0 (+ i 1))) ((= i n)) (vct-set! v i 1.0))
-		(gsl-dht n v 1.0 1.0))
-	      (let ((tag (catch #t (lambda () (gsl-dht -1 (make-vct 3) 1.0 1.0)) (lambda args args))))
-		(if (not (eq? (car tag) 'out-of-range)) (snd-display #__line__ ";gsl-dht bad size: ~A" tag)))))
+		     (v (make-vector n 1.0 #t)))
+		(gsl-dht n v 1.0 1.0))))
 	
 	(let ((ind1 (open-sound "oboe.snd")))
 	  (set! (time-graph-style ind1 0) graph-lollipops)

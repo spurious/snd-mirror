@@ -306,7 +306,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --without-extension-language                          ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --quiet --without-extension-language
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-extension-language
 make
 echo ' '
 echo ' '
@@ -316,7 +316,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --without-extension-language --with-gtk               ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --without-extension-language --with-gtk  CFLAGS="-Wall"
+./configure --quiet --without-extension-language --with-gtk
 make
 echo ' '
 echo ' '
@@ -329,7 +329,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --without-extension-language --with-gl         ------  '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --quiet --without-extension-language --with-motif --with-gl
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-extension-language --with-motif --with-gl
 make
 echo ' '
 echo ' '
@@ -339,7 +339,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --without-extension-language g++                      ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --without-extension-language  CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet --without-extension-language  CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include"
 make
 echo ' '
 echo ' '
@@ -599,7 +599,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                g++ --without-extension-language                     ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --quiet CC=g++ --without-extension-language
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet CC=g++ --without-extension-language
 make
 ./snd --version
 make allclean
@@ -676,7 +676,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --without-gui --without-extension-language          ----- '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --without-gui --without-extension-language --quiet
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --without-gui --without-extension-language --quiet
 make
 ./snd --version
 make allclean
@@ -684,9 +684,9 @@ echo ' '
 echo ' '
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --without-extension-language  --with-gl - '
+echo ' ----                 --without-extension-language  --with-gl '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --without-extension-language  --with-motif --with-gl --quiet
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --without-extension-language  --with-motif --with-gl --quiet
 make
 ./snd --version
 make allclean

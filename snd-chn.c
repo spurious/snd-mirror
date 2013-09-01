@@ -6230,6 +6230,7 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 	      XEN data;
 	      double data_max = 0.0, data_scaler, step;
 	      vct *v0 = NULL, *v1 = NULL;
+	      mus_float_t *v0data = NULL, *v1data = NULL;
 	      int data_len;
 #if HAVE_SCHEME
 	      int gc_loc;
@@ -6246,6 +6247,10 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 		  v0 = xen_to_vct(XEN_CAR(data));
 		  v1 = xen_to_vct(XEN_CADR(data));
 		}
+
+	      v0data = mus_vct_data(v0);
+	      if (v1) v1data = mus_vct_data(v1);
+
 	      data_max = mus_vct_peak(v0);
 	      if (v1)
 		{
@@ -6259,7 +6264,7 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 	      else data_scaler = 0.0;
 	      info->maxamp = data_max;
 
-	      data_len = v0->length;
+	      data_len = mus_vct_length(v0);
 	      step = (double)data_len / (double)width;
 
 	      if (data_scaler < 0.00000001)
@@ -6296,12 +6301,12 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 			{
 			  if (v1)
 			    {
-			      if (v1->data[i] > max_y) max_y = v1->data[i];
-			      if (v0->data[i] < min_y) min_y = v0->data[i];
+			      if (v1data[i] > max_y) max_y = v1data[i];
+			      if (v0data[i] < min_y) min_y = v0data[i];
 			    }
 			  else
 			    {
-			      if (v0->data[i] > max_y) max_y = v0->data[i];
+			      if (v0data[i] > max_y) max_y = v0data[i];
 			    }
 			  stepper += 1.0;
 			  if (stepper >= step)
@@ -6347,12 +6352,12 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 			{
 			  info->data0[i].x = snd_round(xj);
 			  if (!v1)
-			    info->data0[i].y = snd_round(y_offset - data_scaler * v0->data[i]);
+			    info->data0[i].y = snd_round(y_offset - data_scaler * v0data[i]);
 			  else
 			    {
-			      info->data0[i].y = snd_round(y_offset - data_scaler * v1->data[i]);
+			      info->data0[i].y = snd_round(y_offset - data_scaler * v1data[i]);
 			      info->data1[i].x = info->data0[i].x;
-			      info->data1[i].x = snd_round(y_offset - data_scaler * v0->data[i]);
+			      info->data1[i].x = snd_round(y_offset - data_scaler * v0data[i]);
 			    }
 			}
 		    }
@@ -7391,7 +7396,7 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
 	return(C_TO_XEN_LONG_LONG(mus_sound_data_length(XEN_TO_SOUND_DATA(snd))));
 
       if (MUS_VCT_P(snd))                        /* vct-length */
-	return(C_TO_XEN_LONG_LONG((XEN_TO_VCT(snd))->length));
+	return(C_TO_XEN_LONG_LONG(mus_vct_length(XEN_TO_VCT(snd))));
 
       if (XEN_MIX_P(snd))                        /* mix-length */
 	return(g_mix_length(snd));
@@ -9360,14 +9365,14 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	    data = XEN_LIST_REF(ldata, graph);
 	  else data = ldata;
 	  v = XEN_TO_VCT(data);
-	  len = v->length;
+	  len = mus_vct_length(v);
 	  if (lg->len[graph] != len)
 	    {
 	      if (lg->data[graph]) free(lg->data[graph]);
 	      lg->data[graph] = (mus_float_t *)calloc(len, sizeof(mus_float_t));
 	      lg->len[graph] = len;
 	    }
-	  memcpy((void *)(lg->data[graph]), (void *)(v->data), len * sizeof(mus_float_t));
+	  memcpy((void *)(lg->data[graph]), (void *)mus_vct_data(v), len * sizeof(mus_float_t));
 	  if ((!XEN_NUMBER_P(y0)) || 
 	      (!XEN_NUMBER_P(y1)))
 	    {
@@ -9434,12 +9439,12 @@ data and passes it to openGL.  See snd-gl.scm for an example."
   si->active_slices = XEN_VECTOR_LENGTH(data);
   si->data = (mus_float_t **)calloc(si->active_slices, sizeof(mus_float_t *));
   v = xen_to_vct(XEN_VECTOR_REF(data, 0));
-  si->target_bins = v->length;
+  si->target_bins = mus_vct_length(v);
   si->scale = XEN_TO_C_DOUBLE(scale);
   for (i = 0; i < si->active_slices; i++)
     {
       v = xen_to_vct(XEN_VECTOR_REF(data, i));
-      si->data[i] = v->data;
+      si->data[i] = mus_vct_data(v);
     }
   gl_spectrogram(si, 
 		 XEN_TO_C_INT(gl_list),

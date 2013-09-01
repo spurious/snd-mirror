@@ -5279,6 +5279,7 @@ static XEN g_peak_env_info_to_vcts(peak_env_info *ep, int len)
   XEN res;
   int i, j, lim;
   vct *vmax, *vmin;
+  mus_float_t *maxdata, *mindata;
   int loc;
 
   if ((len == 0) || (len > ep->peak_env_size))
@@ -5289,14 +5290,18 @@ static XEN g_peak_env_info_to_vcts(peak_env_info *ep, int len)
   res = XEN_LIST_2(xen_make_vct(lim, (mus_float_t *)calloc(lim, sizeof(mus_float_t))),
 		   xen_make_vct(lim, (mus_float_t *)calloc(lim, sizeof(mus_float_t))));
   loc = snd_protect(res);
+
   vmin = xen_to_vct(XEN_CAR(res));
   vmax = xen_to_vct(XEN_CADR(res));
+  mindata = mus_vct_data(vmin);
+  maxdata = mus_vct_data(vmax);
+
   if (ep->peak_env_size == lim)
     {
       for (i = 0; i < lim; i++)
 	{
-	  vmin->data[i] = ep->data_min[i];
-	  vmax->data[i] = ep->data_max[i];
+	  mindata[i] = ep->data_min[i];
+	  maxdata[i] = ep->data_max[i];
 	}
     }
   else
@@ -5305,8 +5310,8 @@ static XEN g_peak_env_info_to_vcts(peak_env_info *ep, int len)
       incr = (mus_float_t)(ep->peak_env_size - 1) / (mus_float_t)lim; /* make extra room on left */
       cmax = ep->fmin;
       cmin = ep->fmax;
-      vmin->data[0] = ep->data_min[0];
-      vmax->data[0] = ep->data_max[0];
+      mindata[0] = ep->data_min[0];
+      maxdata[0] = ep->data_max[0];
       for (i = 1, j = 1, x = 0.0; i < ep->peak_env_size; i++)
 	{
 	  if (ep->data_max[i] > cmax) cmax = ep->data_max[i];
@@ -5314,8 +5319,8 @@ static XEN g_peak_env_info_to_vcts(peak_env_info *ep, int len)
 	  x += 1.0;
 	  if (x >= incr)
 	    {
-	      vmin->data[j] = cmin;
-	      vmax->data[j++] = cmax;
+	      mindata[j] = cmin;
+	      maxdata[j++] = cmax;
 	      x -= incr;
 	      cmax = ep->fmin;
 	      cmin = ep->fmax;

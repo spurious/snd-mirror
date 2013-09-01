@@ -365,7 +365,7 @@ ac_snd_extension_language=none
 
 if test "$with_extension_language" = no ; then
   ac_snd_extension_language=no
-  LOCAL_LANGUAGE = "None"
+  LOCAL_LANGUAGE="None"
 fi
 
 

@@ -67834,7 +67834,7 @@ int main(int argc, char **argv)
  *   (make-c-pointer val "char**" free) s7_make_c_pointer_with_free?
  * could we use glob or equivalent in the glistener filename completer?
  * #[...] for int/float vectors?  or (float-vector ...), or perhaps #nf() #1f() and same for #ni? #float()? #int()?
- * (float-vector '(a b c) '(d e f)) is not ambiguous -- this would be '(2 3) dims (or an error)
- * callgrind libgsl write process -- maybe something obvious
+ *   (float-vector '(a b c) '(d e f)) is not ambiguous -- this would be '(2 3) dims (or an error)
  * 2-stage load in cload for gslbug (fc19)?
+ * TODO: make gsl-header-diffs script
  */

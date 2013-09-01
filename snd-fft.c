@@ -859,8 +859,8 @@ static void apply_fft(fft_state *fs)
 	if (MUS_VCT_P(res))
 	  {
 	    v = XEN_TO_VCT(res);
-	    len = v->length;
-	    memcpy((void *)fft_data, (void *)(v->data), len * sizeof(mus_float_t));
+	    len = mus_vct_length(v);
+	    memcpy((void *)fft_data, (void *)(mus_vct_data(v)), len * sizeof(mus_float_t));
 	  }
 	snd_unprotect_at(gc_loc);
 	snd_unprotect_at(sf_loc);
@@ -2038,7 +2038,7 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
 	  fp = cp->fft;
 	  len = fp->current_size;
 	  if (v1)
-	    fvals = v1->data;
+	    fvals = mus_vct_data(v1);
 	  else fvals = (mus_float_t *)malloc(len * sizeof(mus_float_t));
 	  memcpy((void *)fvals, (void *)(fp->data), len * sizeof(mus_float_t));
 	  if (v1)
@@ -2057,7 +2057,7 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
 	      bins = si->target_bins;
 	      len = bins * slices;
 	      if (v1)
-		fvals = v1->data;
+		fvals = mus_vct_data(v1);
 	      else fvals = (mus_float_t *)calloc(len, sizeof(mus_float_t));
 	      for (i = 0, k = 0; i < slices; i++)
 		for (j = 0; j < bins; j++, k++)
@@ -2245,9 +2245,9 @@ display.  'type' is a transform object such as " S_fourier_transform "; 'data' i
 'choice' is the wavelet to use."
 
   int trf, hnt;
-  mus_long_t i, j, n2;
+  mus_long_t i, j, n2, vlen;
   vct *v;
-  mus_float_t *dat;
+  mus_float_t *dat, *vdata;
 
   XEN_ASSERT_TYPE(XEN_TRANSFORM_P(type), type, XEN_ARG_1, "snd-transform", "a transform object");
   XEN_ASSERT_TYPE(MUS_VCT_P(data), data, XEN_ARG_2, "snd-transform", "a vct");
@@ -2257,19 +2257,21 @@ display.  'type' is a transform object such as " S_fourier_transform "; 'data' i
     XEN_OUT_OF_RANGE_ERROR("snd-transform", 1, type, "invalid transform choice");
 
   v = XEN_TO_VCT(data);
+  vlen = mus_vct_length(v);
+  vdata = mus_vct_data(v);
 
   switch (trf)
     {
     case FOURIER: 
-      n2 = v->length / 2;
-      dat = (mus_float_t *)calloc(v->length, sizeof(mus_float_t));
-      mus_fft(v->data, dat, v->length, 1);
-      v->data[0] *= v->data[0];
-      v->data[n2] *= v->data[n2];
-      for (i = 1, j = v->length - 1; i < n2; i++, j--)
+      n2 = vlen / 2;
+      dat = (mus_float_t *)calloc(vlen, sizeof(mus_float_t));
+      mus_fft(vdata, dat, vlen, 1);
+      vdata[0] *= vdata[0];
+      vdata[n2] *= vdata[n2];
+      for (i = 1, j = vlen - 1; i < n2; i++, j--)
 	{
-	  v->data[i] = v->data[i] * v->data[i] + dat[i] * dat[i];
-	  v->data[j] = v->data[i];
+	  vdata[i] = vdata[i] * vdata[i] + dat[i] * dat[i];
+	  vdata[j] = vdata[i];
 	}
       free(dat);
       break;
@@ -2277,23 +2279,23 @@ display.  'type' is a transform object such as " S_fourier_transform "; 'data' i
     case WAVELET:
       hnt = XEN_TO_C_INT(hint);
       if (hnt < NUM_WAVELETS)
-	wavelet_transform(v->data, v->length, wavelet_data[hnt], wavelet_sizes[hnt]);
+	wavelet_transform(vdata, vlen, wavelet_data[hnt], wavelet_sizes[hnt]);
       break;
 
     case HAAR:
-      haar_transform(v->data, v->length);
+      haar_transform(vdata, vlen);
       break;
 
     case CEPSTRUM:
-      mus_cepstrum(v->data, v->length);
+      mus_cepstrum(vdata, vlen);
       break;
 
     case WALSH:
-      walsh_transform(v->data, v->length);
+      walsh_transform(vdata, vlen);
       break;
 
     case AUTOCORRELATION:
-      mus_autocorrelate(v->data, v->length);
+      mus_autocorrelate(vdata, vlen);
       break;
     }
   return(data);

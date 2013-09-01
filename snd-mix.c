@@ -2,17 +2,18 @@
 
 static bool mix_vct_untagged(vct *v, chan_info *cp, mus_long_t beg, const char *origin)
 {
-  mus_float_t *data;
+  mus_float_t *data, *vdata;
   int i, len;
   snd_fd *sf;
   bool result = false;
 
-  len = v->length;
+  len = mus_vct_length(v);
+  vdata = mus_vct_data(v);
   data = (mus_float_t *)calloc(len, sizeof(mus_float_t)); /* don't add into v->data! */
 
   sf = init_sample_read(beg, cp, READ_FORWARD);
   for (i = 0; i < len; i++)
-    data[i] = read_sample_to_mus_sample(sf) + (v->data[i]);
+    data[i] = read_sample_to_mus_sample(sf) + (vdata[i]);
   sf = free_snd_fd(sf);
 
   result = change_samples(beg, len, data, cp, origin, cp->edit_ctr, -1.0); /* cp->edit_ctr since mix-vct has no edpos arg, similarly mix */
@@ -3244,7 +3245,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
 
   bg = beg_to_sample(beg, S_mix_vct);
   v = XEN_TO_VCT(obj);
-  len = v->length;
+  len = mus_vct_length(v);
 
   with_mixer = virtual_mix_ok(cp, cp->edit_ctr);
   if (with_mixer)
@@ -3257,7 +3258,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
   if (!with_mixer)
     return(C_TO_XEN_BOOLEAN(mix_vct_untagged(v, cp, bg, edname)));
 
-  data = v->data;
+  data = mus_vct_data(v);
   
   /* make_snd_data_buffer copies the data array, so we don't need GC protection */
   /*    we can't use v->data directly because the user might change it */

@@ -66,6 +66,15 @@
 #include "clm2xen.h"
 #include "vct.h"
 
+struct vct {
+  mus_long_t length;
+  mus_float_t *data;
+  bool dont_free;
+};
+
+mus_long_t mus_vct_length(vct *v) {return(v->length);}
+mus_float_t *mus_vct_data(vct *v) {return(v->data);}
+
 #define S_make_vct       "make-vct"
 #define S_vct_addB       "vct-add!"
 #define S_vct_subtractB  "vct-subtract!"
@@ -412,6 +421,17 @@ vct *mus_vct_make(mus_long_t len)
     new_vct->data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
   else new_vct->data = NULL;
   new_vct->dont_free = false;
+  return(new_vct);
+}
+
+
+vct *mus_vct_wrap(mus_long_t len, mus_float_t *data)
+{
+  vct *new_vct;
+  new_vct = (vct *)malloc(sizeof(vct));
+  new_vct->length = len;
+  new_vct->data =data;
+  new_vct->dont_free = true;
   return(new_vct);
 }
 

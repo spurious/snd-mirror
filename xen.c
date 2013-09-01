@@ -1437,7 +1437,7 @@ static char *copy_match(const char *text, int state)
       char *result;
       int len;
       len = strlen(complete_data->matches[complete_loc]);
-      result = calloc(len + 1, sizeof(char));
+      result = (char *)calloc(len + 1, sizeof(char));
       memcpy((void *)result, (void *)complete_data->matches[complete_loc], len);
       complete_loc++;
       return(result);
@@ -1502,7 +1502,7 @@ void xen_repl(int argc, char **argv)
   while (true)
     {
 #if WITH_READLINE
-      char *line_read = NULL, *temp;
+      char *line_read = NULL;
 
       line_read = readline(xen_s7_repl_prompt);
       if (line_read)

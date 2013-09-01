@@ -253,6 +253,7 @@ static mus_float_t **make_xen_colormap(int size, XEN lambda)
   else
     {
       vct *xr, *xg, *xb;
+      mus_float_t *xrdata, *xgdata, *xbdata;
       int i, gc_loc;
 
       /* user-defined colormap func returns a list of 3 vcts (r g b) */
@@ -264,19 +265,22 @@ static mus_float_t **make_xen_colormap(int size, XEN lambda)
 			     xrgb));
 
       xr = XEN_TO_VCT(XEN_LIST_REF(xrgb, 0));
-      if (xr->length < size)
+      xrdata = mus_vct_data(xr);
+      if (mus_vct_length(xr) < size)
 	XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
 		  XEN_LIST_2(C_TO_XEN_STRING(S_add_colormap ": function did not return a list of vcts of the correct size: ~A"),
 			     xrgb));
 
       xg = XEN_TO_VCT(XEN_LIST_REF(xrgb, 1));
+      xgdata = mus_vct_data(xg);
       xb = XEN_TO_VCT(XEN_LIST_REF(xrgb, 2));
+      xbdata = mus_vct_data(xb);
       rgb = make_base_rgb(size);
       for (i = 0; i < size; i++)
 	{
-	  rgb[0][i] = xr->data[i];
-	  rgb[1][i] = xg->data[i];
-	  rgb[2][i] = xb->data[i];
+	  rgb[0][i] = xrdata[i];
+	  rgb[1][i] = xgdata[i];
+	  rgb[2][i] = xbdata[i];
 	}
 
       snd_unprotect_at(gc_loc);

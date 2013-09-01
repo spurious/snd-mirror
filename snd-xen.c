@@ -2120,6 +2120,7 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
       double *indata, *outdata;
       int i;
       vct *v;
+      mus_float_t *vdata;
 
       gsl_dht *t = gsl_dht_new(n, XEN_TO_C_DOUBLE(nu), XEN_TO_C_DOUBLE(xmax));
 
@@ -2127,13 +2128,15 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
       outdata = (double *)calloc(n, sizeof(double));
 
       v = XEN_TO_VCT(data);
+      vdata = mus_vct_data(v);
+
       for (i = 0; i < n; i++)
-	indata[i] = v->data[i];
+	indata[i] = vdata[i];
 
       gsl_dht_apply(t, indata, outdata);
 
       for (i = 0; i < n; i++)
-	v->data[i] = outdata[i];
+	vdata[i] = outdata[i];
 
       gsl_dht_free(t);
 
