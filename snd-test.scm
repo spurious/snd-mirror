@@ -318,25 +318,32 @@
 	       (return #f))))))))
        
 (define (vequal v0 v1)
-  (let ((old-fudge (mus-float-equal-fudge-factor)))
-    (set! (mus-float-equal-fudge-factor) .001)
-    (let ((result (equal? v0 v1)))
-      (set! (mus-float-equal-fudge-factor) old-fudge)
-      result)))
+;  (format *stderr* "~A ~A~%" v0 v1)
+  (let ((len (length v0)))
+    (call-with-exit
+     (lambda (return)
+       (do ((j 0 (+ j 1)))
+	   ((= j len) #t)
+	 (if (> (abs (- (v0 j) (v1 j))) .001)
+	     (return #f)))))))
 
 (define (vequal1 v0 v1)
-  (let ((old-fudge (mus-float-equal-fudge-factor)))
-    (set! (mus-float-equal-fudge-factor) .01)
-    (let ((result (equal? v0 v1)))
-      (set! (mus-float-equal-fudge-factor) old-fudge)
-      result)))
+  (let ((len (length v0)))
+    (call-with-exit
+     (lambda (return)
+       (do ((j 0 (+ j 1)))
+	   ((= j len) #t)
+	 (if (> (abs (- (v0 j) (v1 j))) .01)
+	     (return #f)))))))
 
 (define (vvequal v0 v1)
-  (let ((old-fudge (mus-float-equal-fudge-factor)))
-    (set! (mus-float-equal-fudge-factor) .00002)
-    (let ((result (equal? v0 v1)))
-      (set! (mus-float-equal-fudge-factor) old-fudge)
-      result)))
+  (let ((len (length v0)))
+    (call-with-exit
+     (lambda (return)
+       (do ((j 0 (+ j 1)))
+	   ((= j len) #t)
+	 (if (> (abs (- (v0 j) (v1 j))) .00002)
+	     (return #f)))))))
 
 (define (vmaxdiff v0 v1)
   (vct-peak (vct-subtract! (vct-copy v0) v1)))
@@ -2190,8 +2197,8 @@
 		       'snd-print 'snd-spectrum 'snd-tempnam 'snd-url
 		       'snd-urls 'snd-version 'snd-warning 'snd-warning-hook 'sound-data->sound-data
 		       'sound-data->vct 'sound-data-chans 'sound-data-length 'sound-data-maxamp 'sound-data-ref 'sound-data-peak
-		       'sound-data-set! 'sound-data-scale! 'sound-data-fill! 'sound-data? 
-		       'sound-data-multiply! 'sound-data-add! 'sound-data-offset! 'sound-data* 'sound-data+ 'sound-data-copy 'sound-data-reverse!
+		       'sound-data-set! 'sound-data-scale! 'sound-data? 
+		       'sound-data-multiply! 'sound-data-add! 'sound-data-offset! 'sound-data* 'sound-data+ 'sound-data-reverse!
 		       'sound-file-extensions 'sound-file? 'sound-files-in-directory
 		       'sound-loop-info 'sound-properties 'sound-property 'sound-widgets 'sound? 'soundfont-info
 		       'sounds 'spectrum-end 'spectro-hop 'spectrum-start 'spectro-x-angle
@@ -2214,8 +2221,8 @@
 		       'unbind-key  'undo 'undo-edit 'undo-hook 'unselect-all 'update-hook 'update-lisp-graph
 		       'update-sound 'update-time-graph 'update-transform-graph 'variable-graph? 'vct
 		       'vct* 'vct+ 'vct->channel 'vct->list 'vct->sound-data
-		       'vct->string 'vct->vector 'vct-add! 'vct-copy
-		       'vct-fill! 'vct-length 'vct-max 'vct-min 'vct-move!
+		       'vct->string 'vct->vector 'vct-add!
+		       'vct-length 'vct-max 'vct-min 'vct-move!
 		       'vct-multiply! 'vct-offset! 'vct-peak 'vct-ref 'vct-reverse!
 		       'vct-scale! 'vct-set! 'vct-subseq 'vct-subtract! 'vct?
 		       'vector->vct 'walsh-transform
@@ -8330,11 +8337,11 @@ EDITS: 5
 	      (if (= i 1)
 		  (delete-samples 50 100)
 		  (if (= i 2)
-		      (insert-samples 300 100 (vct-fill! (make-vct 100) 0.5))
+		      (insert-samples 300 100 (make-vct 100 0.5))
 		      (if (= i 3)
 			  (scale-channel 0.0 1000 1000)
 			  (if (= i 4)
-			      (vct->channel (vct-fill! (make-vct 100) .5) 500 100)
+			      (vct->channel (make-vct 100 .5) 500 100)
 			      (if (= i 6)
 				  (env-sound '(0 1 1 0) 10000 2000))))))
 	      (let ((reader (make-sampler (- (frames) 1) ind 0 -1)))
@@ -9498,11 +9505,8 @@ EDITS: 2
 	       (str (format #f "~A" v2))
 	       (str1 (format #f "~A" (make-vct 32))))
 	  (if (not (vct? (vector->vct (make-vector 0)))) (snd-display #__line__ ";vector->vct empty vect: ~A" (vector->vct (make-vector 0))))
-	  (if (not (string=? str "#<vct[len=4]: 0.000 1.000 2.000 3.000>"))
+	  (if (not (string=? str "#(0.0 1.0 2.0 3.0)"))
 	      (snd-display #__line__ ";vct print: ~%  ~A~%  ~A?" str v2))
-	  (if (and (= (print-length) 12)
-		   (not (string=? str1 "#<vct[len=32]: 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 ...>")))
-	      (snd-display #__line__ ";vct(32) print: ~%  ~A~%" str1))
 	  (if (not (vequal v123 v2)) (snd-display #__line__ ";vector->vct: ~A" v2))
 	  (if (not (equal? (vct->vector v123) vect)) (snd-display #__line__ ";vct->vector: ~A ~A" vect (vct->vector v123)))
 	  (if (not (equal? v3 v2)) (snd-display #__line__ ";vct=? ~A ~A?" v2 v3))
@@ -30081,7 +30085,7 @@ EDITS: 2
 	
 	(if (not (= (default-output-chans) 1)) (set! (default-output-chans) 1))
 	(let ((ind (new-sound "fmv.snd"))
-	      (v0 (vct-fill! (make-vct 20) 1.0)))
+	      (v0 (make-vct 20 1.0)))
 	  (vct->channel v0)
 	  (if (not (= (frames) 20)) (snd-display #__line__ ";vct->channel new 20: ~A" (frames)))
 	  (if (fneq (maxamp) 1.0) (snd-display #__line__ ";vct 1->new: ~A" (maxamp)))
@@ -30761,7 +30765,7 @@ EDITS: 2
 	(for-each
 	 (lambda (dur)
 	   (let* ((i1 (new-sound))
-		  (v (vct-fill! (make-vct dur) 1.0)))
+		  (v (make-vct dur 1.0)))
 	     (define (check-env name r e)
 	       (let ((v0 (make-vct dur))
 		     (v1 (make-vct dur)))
@@ -30876,14 +30880,14 @@ EDITS: 2
 			      (* val val)))))
 	     (undo 2)
 	     (env-sound '(0 0 1 1))
-	     (let ((v1 (vct-fill! (make-vct 3) 1.0)))
+	     (let ((v1 (make-vct 3 1.0)))
 	       (vct->channel v1 3 3)
 	       (let ((vals (channel->vct 0 10)))
 		 (if (not (vequal vals (vct 0.0 (/ 1.111 dur) (/ 2.222 dur) 1 1 1 (/ 6.66  dur) (/ 7.77  dur) (/ 8.88  dur) (/ 10.0 dur))))
 		     (snd-display #__line__ "; 1 vals: ~A" vals))))
 	     (undo 2)
 	     (env-sound '(0 0 1 1))
-	     (let ((v1 (vct-fill! (make-vct 3) 1.0)))
+	     (let ((v1 (make-vct 3 1.0)))
 	       (delete-samples 3 3)
 	       (insert-samples 3 3 v1)
 	       (let ((vals (channel->vct 0 10)))
@@ -30891,13 +30895,13 @@ EDITS: 2
 		     (snd-display #__line__ "; 2 vals: ~A" vals))))
 	     (undo 3)
 	     (env-sound '(0 0 1 1))
-	     (let ((v1 (vct-fill! (make-vct 3) 1.0)))
+	     (let ((v1 (make-vct 3 1.0)))
 	       (insert-samples 3 3 v1)
 	       (delete-samples 3 3))
 	     (check-env '5-ramp (make-sampler 0) (make-env '(0 0 1 1) :length dur))
 	     (undo 3)
 	     (env-sound '(0 0 1 1 2 0))
-	     (let ((v1 (vct-fill! (make-vct 3) 1.0)))
+	     (let ((v1 (make-vct 3 1.0)))
 	       (if (= dur 10)
 		   (begin
 		     (vct->channel v1 3 3)
@@ -30914,7 +30918,7 @@ EDITS: 2
 	     (if (= dur 10)
 		 (begin
 		   (env-sound '(0 0 1 1 2 0))
-		   (let ((v1 (vct-fill! (make-vct 3) 1.0)))
+		   (let ((v1 (make-vct 3 1.0)))
 		     (delete-samples 3 3)
 		     (insert-samples 3 3 v1)
 		     (let ((vals (channel->vct 0 10)))
@@ -30922,14 +30926,14 @@ EDITS: 2
 			   (snd-display #__line__ "; 2 vals: ~A" vals))))
 		   (undo 3)
 		   (env-sound '(0 0 1 1 2 0))
-		   (let ((v1 (vct-fill! (make-vct 3) 1.0)))
+		   (let ((v1 (make-vct 3 1.0)))
 		     (vct->channel v1 0 3)
 		     (let ((vals (channel->vct 0 10)))
 		       (if (not (vequal vals (vct 1.000 1.000 1.000 0.600 0.800 1.000 0.750 0.500 0.250 0.000)))
 			   (snd-display #__line__ "; 4 vals: ~A" vals))))
 		   (undo 2)
 		   (env-sound '(0 0 1 1 2 0))
-		   (let ((v1 (vct-fill! (make-vct 3) 1.0)))
+		   (let ((v1 (make-vct 3 1.0)))
 		     (vct->channel v1 7 3)
 		     (let ((vals (channel->vct 0 10)))
 		       (if (not (vequal vals (vct 0.000 0.200 0.400 0.600 0.800 1.000 0.750 1.000 1.000 1.000)))
@@ -31064,7 +31068,7 @@ EDITS: 2
 	  (if (fneq (sample 0) -1.0) (snd-display #__line__ ";sample at end: ~A" (sample 0)))
 	  (if (not (= (frames) 1)) (snd-display #__line__ ";length at end: ~A" (frames)))
 	  (check-edit-tree '((0 2 0 0 1.0 0.0 0.0 0) (1 -2 0 0 0.0 0.0 0.0 0))
-			   (vct-fill! (make-vct 1) -1.0) "at end")
+			   (make-vct 1 -1.0) "at end")
 	  (close-sound ind))
 	
 	;; a special case that catches the round-off problem
@@ -31148,7 +31152,7 @@ EDITS: 2
 	 (lambda (dur)
 	   (let* ((i1 (new-sound))
 		  (i2 (new-sound "fmv1.snd" mus-next mus-bfloat 44100 2))
-		  (v (vct-fill! (make-vct dur) 1.0)))
+		  (v (make-vct dur 1.0)))
 	     (define (check-env name r e)
 	       (let ((v0 (make-vct dur))
 		     (v1 (make-vct dur)))
@@ -31203,7 +31207,7 @@ EDITS: 2
 				 (* val val))))))
 	     (undo 2)
 	     (env-sound '(0 0 1 1))
-	     (let ((v1 (vct-fill! (make-vct 3) 1.0)))
+	     (let ((v1 (make-vct 3 1.0)))
 	       (vct->channel v1 3 3 i1)
 	       (vct->channel v1 3 3 i2 0)
 	       (vct->channel v1 3 3 i2 1)
@@ -31247,7 +31251,7 @@ EDITS: 2
 						 (lambda () (map-channel (lambda (y) (* y 2.0))))
 						 (lambda () (scan-channel (lambda (y) (> y 1.0))))
 						 (lambda () (pad-channel 0 2000))
-						 (lambda () (vct->channel (vct-fill! (make-vct 1000) .1) 0 1000))
+						 (lambda () (vct->channel (make-vct 1000 .1) 0 1000))
 						 (lambda () (clm-channel (make-two-zero .5 .5)))
 						 (lambda () (mix "pistol.snd" 12345))
 						 (lambda () (src-channel 2.0))
@@ -31292,9 +31296,9 @@ EDITS: 2
 					   (lambda () (pad-channel 0 2000))
 					   (lambda () (pad-channel 1336909605 297671280))
 					   (lambda () (insert-silence (+ (frames ind) 100) 100))
-					   (lambda () (vct->channel (vct-fill! (make-vct 1000) .1) 0 1000))
-					   (lambda () (vct->channel (vct-fill! (make-vct 1000) .1) (/ (frames ind) 2) 1000))
-					   (lambda () (vct->channel (vct-fill! (make-vct 1000) .1) (- (frames ind) 2000) 1000))
+					   (lambda () (vct->channel (make-vct 1000 .1) 0 1000))
+					   (lambda () (vct->channel (make-vct 1000 .1) (/ (frames ind) 2) 1000))
+					   (lambda () (vct->channel (make-vct 1000 .1) (- (frames ind) 2000) 1000))
 					   (lambda () (mix "pistol.snd" 12345))
 					   (lambda () (delete-samples 10 200))
 					   (lambda () (delete-samples 1336909605 297671280))
@@ -46157,6 +46161,7 @@ EDITS: 1
       (let* ((delay-32 (make-delay 32))
 	     (color-95 (make-color-with-catch .95 .95 .95))
 	     (vector-0 (make-vector 0))
+	     (str-3 "/hiho")
 	     (vct-3 (make-vct 3))
 	     (vct-5 (make-vct 5))
 	     (car-main (if with-gui (car (main-widgets)) #f))
@@ -46254,8 +46259,8 @@ EDITS: 1
 		     mus-clipping mus-file-clipping mus-header-raw-defaults 
 		     moving-average moving-average? make-moving-average moving-max moving-max? make-moving-max
 		     mus-expand-filename 
-		     make-sound-data sound-data-ref sound-data-set! sound-data-scale! sound-data-fill! sound-data? sound-data-length
-		     sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ sound-data-copy sound-data-reverse!
+		     make-sound-data sound-data-ref sound-data-set! sound-data-scale! sound-data? sound-data-length
+		     sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ sound-data-reverse!
 		     sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data sound-data-peak
 		     all-pass all-pass? amplitude-modulate
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm? sound-data->sound-data
@@ -46287,7 +46292,7 @@ EDITS: 1
 		     spectrum square-wave square-wave? src src? ncos nsin ssb-am
 		     ncos? nsin? ssb-am? table-lookup table-lookup? tap tap? triangle-wave triangle-wave? two-pole two-pole? two-zero
 		     two-zero? wave-train wave-train?  make-vct vct-add! vct-subtract!  vct-copy
-		     vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! vct-peak vct-max vct-min
+		     vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-set! vct-peak vct-max vct-min
 		     vct? list->vct vct->list vector->vct vct->vector vct-move! vct-reverse! vct-subseq vct little-endian? vct->string
 		     clm-channel env-channel env-channel-with-base map-channel scan-channel
 		     reverse-channel seconds->samples samples->seconds
@@ -46561,7 +46566,7 @@ EDITS: 1
 						(lambda args (car args)))))
 				    (if (not (eq? tag 'wrong-type-arg))
 					(snd-display #__line__ ";vct 0 wrong-type-arg ~A: ~A ~A" n tag arg))))
-				(list make-vct vct-copy vct-length vct->list vct-peak vct-max vct-min)))
+				(list make-vct vct-length vct->list vct-peak vct-max vct-min)))
 		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) #(0 1) delay-32))
 	  
 	  (for-each (lambda (arg1)
@@ -46576,7 +46581,7 @@ EDITS: 1
 							     (eq? tag 'wrong-number-of-args)
 							     (eq? tag 'mus-error)))
 						    (snd-display #__line__ ";vct 1 wrong-whatever ~A: ~A ~A ~A" n tag arg1 arg2))))
-					    (list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill!)))
+					    (list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale!)))
 				(list vct-5 "hiho" 0+i 1.5 (list 1 0) #(0 1) delay-32)))
 		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) #(0 1) delay-32))
 	  
@@ -46589,7 +46594,7 @@ EDITS: 1
 						(lambda args (car args)))))
 				    (if (not (eq? tag 'wrong-type-arg))
 					(snd-display #__line__ ";vct 2 wrong-type-arg ~A: ~A" n tag))))
-				(list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill!)))
+				(list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale!)))
 		    (list (make-vector 1) "hiho" 0+i (list 1 0) #(0 1) delay-32))
 	  
 	  (let ((tag
@@ -47467,7 +47472,7 @@ EDITS: 1
 			  (lambda () (n arg1 arg2))
 			  (lambda args (car args))))
 		 make-procs))
-	      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
+	      (list 1.5 str-3 (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
 	   keyargs)
 	  
 	  (if (and all-args (= test-28 0))
@@ -47484,9 +47489,9 @@ EDITS: 1
 				   (lambda () (n arg1 arg2 arg3))
 				   (lambda args (car args))))
 			  make-procs))
-		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
+		       (list 1.5 str-3 (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
 		    keyargs))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t () vector-0 delay-32))
+		 (list 1.5 str-3 (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t () vector-0 delay-32))
 		
 		(for-each
 		 (lambda (arg1)
@@ -47503,9 +47508,9 @@ EDITS: 1
 				      (lambda args (car args))))
 			     make-procs))
 			  keyargs))
-		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
+		       (list 1.5 str-3 (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
 		    keyargs))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t () vector-0 delay-32))))
+		 (list 1.5 str-3 (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t () vector-0 delay-32))))
 
 	  (if all-args (snd-display #__line__ ";args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time)))))
 	  
@@ -47521,7 +47526,7 @@ EDITS: 1
 	   procs0)
 	  (dismiss-all-dialogs)
 	  
-	  (let* ((main-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  #(0 1) 3/4 'mus-error 0+i delay-32
+	  (let* ((main-args (list 1.5 str-3 (list 0 1) 1234 vct-3 color-95  #(0 1) 3/4 'mus-error 0+i delay-32
 				  (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 -1.0 
 				  () '3 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 				  (lambda (a) #f) abs
@@ -47531,9 +47536,9 @@ EDITS: 1
 				  "" (make-hash-table 256)
 				  #<undefined> #<unspecified> #<eof>
 				  (make-random-state 1234) (vct) (vector)))
-		 (few-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 #(0 1) 3/4 -1.0 (vct) (vector) (list) (string)
+		 (few-args (list 1.5 str-3 (list 0 1) 1234 vct-3 color-95 #(0 1) 3/4 -1.0 (vct) (vector) (list) (string)
 				 0+i delay-32 :feedback -1 0 1 'hi (lambda (a) (+ a 1)) -64 #f #t vector-0))
-		 (fewer-args (list "/hiho" 1234 vct-3 -1.0 0+i delay-32 -1 0 1 #f #t (vct) "" ()))
+		 (fewer-args (list str-3 1234 vct-3 -1.0 0+i delay-32 -1 0 1 #f #t (vct) "" ()))
 		 (less-args (if all-args main-args few-args)))
 	    
 	    ;; ---------------- 1 Arg
@@ -47593,7 +47598,7 @@ EDITS: 1
 		   set-procs1))
 		main-args))
 	     main-args)
-	    
+
 	    ;; ---------------- set! 2 Args
 	    (for-each 
 	     (lambda (arg1)
@@ -47765,12 +47770,12 @@ EDITS: 1
 					 (if (eq? err 'wrong-number-of-args)
 					     (snd-display #__line__ ";procs6: ~A ~A" err (procedure-documentation n)))))
 				     procs6))
-				  (list 1.5 "/hiho" -1234 -1 0 #f #t () vct-3 delay-32)))
-			       (list 1.5 "/hiho" -1234 0 vct-5 #f #t delay-32)))
-			    (list 1.5 "/hiho" -1234 vct-3 #f #t delay-32)))
-			 (list 1.5 "/hiho" -1234 vct-3 -1 #f #t delay-32)))
+				  (list 1.5 str-3 -1234 -1 0 #f #t () vct-3 delay-32)))
+			       (list 1.5 str-3 -1234 0 vct-5 #f #t delay-32)))
+			    (list 1.5 str-3 -1234 vct-3 #f #t delay-32)))
+			 (list 1.5 str-3 -1234 vct-3 -1 #f #t delay-32)))
 		      (list 1.5 -1234 vct-3 vct-5 -1 0 #f #t delay-32)))
-		   (list 1.5 "/hiho" -1234 #f #t vct-5 delay-32))
+		   (list 1.5 str-3 -1234 #f #t vct-5 delay-32))
 		  
 		  (snd-display #__line__ ";8 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 		  
@@ -47800,13 +47805,13 @@ EDITS: 1
 						   (snd-display #__line__ ";procs8: ~A ~A" err (procedure-documentation n)))))
 					   procs8))
 					(list 1.5 -1 1234 #f () delay-32)))
-				     (list "/hiho" -1 1234 () vct-5 delay-32)))
+				     (list str-3 -1 1234 () vct-5 delay-32)))
 				  (list #t #f -1 1234 () vct-3 delay-32)))
 			       (list 0+i 1234 0 -1 () delay-32)))
 			    (list 1.5 -1 #f 1234 vct-3 () delay-32)))
 			 (list 2 #f #t 1234 vct-5 -1 delay-32)))
 		      (list #f #t -1 1234 vct-3 delay-32)))
-		   (list 1.5 -1 () 1234 "/hiho" delay-32))
+		   (list 1.5 -1 () 1234 str-3 delay-32))
 		  
 		  (snd-display #__line__ ";10 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 		  
@@ -47840,13 +47845,13 @@ EDITS: 1
 							 (snd-display #__line__ ";procs10: ~A ~A" err (procedure-documentation n)))))
 						 procs10))
 					      (list 1.5 -1 #f 1234 delay-32)))
-					   (list "/hiho" -1 1234 delay-32)))
+					   (list str-3 -1 1234 delay-32)))
 					(list #t #f vct-3 1234 delay-32)))
 				     (list 0+i #f -1 vct-5 delay-32)))
 				  (list 1.5 #f -1 1234 () delay-32)))
 			       (list -2 #f 1234 vct-3 delay-32)))
 			    (list #f #t () 1234 vct-5 delay-32)))
-			 (list 1.5 -1 "/hiho" () delay-32)))
+			 (list 1.5 -1 str-3 () delay-32)))
 		      (list 1.5 -1 () delay-32)))
 		   (list #f -1 1234 delay-32))
 		  ))))

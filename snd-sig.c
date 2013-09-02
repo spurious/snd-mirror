@@ -1952,8 +1952,11 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 	  else new_origin = mus_format("%s" PROC_OPEN "%s" PROC_SEP "%d" PROC_SEP "%lld" PROC_SEP "%lld", 
 				       TO_PROC_NAME(S_filter_channel), vstr, order, beg, dur);
 #endif
+
 	  if (vstr) free(vstr);
+#if (!HAVE_SCHEME)
 	  mus_vct_free(v);
+#endif
 	}
       else
 	{
@@ -5872,7 +5875,12 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, S_filter_channel, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_9, S_filter_channel, "a string");
 
-  if (XEN_INTEGER_P(order)) order_1 = XEN_TO_C_INT(order);
+  if (XEN_INTEGER_P(order)) 
+    {
+      order_1 = XEN_TO_C_INT(order);
+      if (order_1 < 0) 
+	XEN_OUT_OF_RANGE_ERROR(S_filter_channel, 2, order, "order should not be negative");
+    }
   ASSERT_CHANNEL(S_filter_channel, snd, chn_n, 5);
   cp = get_cp(snd, chn_n, S_filter_channel);
   if (!cp) return(XEN_FALSE);

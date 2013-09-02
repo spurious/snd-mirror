@@ -1,7 +1,11 @@
 #ifndef VCT_H
 #define VCT_H
 
+#if HAVE_SCHEME
+  typedef struct s7_cell vct;
+#else
 typedef struct vct vct;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,7 +30,12 @@ MUS_EXPORT XEN xen_make_vct(mus_long_t len, mus_float_t *data);
 MUS_EXPORT XEN xen_make_vct_wrapper(mus_long_t len, mus_float_t *data);
 MUS_EXPORT XEN g_vct_peak(XEN obj);
 
-#define XEN_TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
+#if HAVE_SCHEME
+  #define XEN_TO_VCT(Obj) (vct *)Obj
+#else
+  #define XEN_TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
+#endif
+
 #define MUS_VCT_P(arg) mus_vct_p(arg)
 
 MUS_EXPORT mus_long_t mus_vct_length(vct *v);

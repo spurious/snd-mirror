@@ -28857,7 +28857,6 @@ s7_pointer s7_make_float_vector(s7_scheme *sc, s7_Int len, int dims, s7_Int *dim
   return(p);
 }
 
-
 s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *data, int dims, s7_Int *dim_info)
 {
   /* this wraps up a C-allocated/freed double array as an s7 vector.
@@ -28870,7 +28869,9 @@ s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *da
   vector_getter(x) = float_vector_getter;
   vector_setter(x) = float_vector_setter;
   vector_length(x) = len;
-  vector_dimension_info(x) = make_vdims(sc, false, dims, dim_info);
+  if (dim_info)
+    vector_dimension_info(x) = make_vdims(sc, false, dims, dim_info);
+  else vector_dimension_info(x) = NULL;
   add_vector(sc, x);
 
   return(x);
@@ -67875,9 +67876,8 @@ int main(int argc, char **argv)
  * could we use glob or equivalent in the glistener filename completer?
  * #[...] for int/float vectors?  or (float-vector ...), or perhaps #nf() #1f() and same for #ni? #float()? #int()?
  *   (float-vector '(a b c) '(d e f)) is not ambiguous -- this would be '(2 3) dims (or an error)
+ *   better: (float-vector (float-vector ...) (float-vector ...))?
  * 2-stage load in cload for gslbug (fc19)?
- * TODO: make gsl-header-diffs script
- * TODO: change docs for sound-data, change to vector wherever possible, remove more from scheme sndlib2xen (synonyms)
- *   also same replacement process for vct, frame, mixer, mus-data, snd-snd:sound? transform? colormap? 
- *   are there int vectors currently in snd?
+ * TODO: change docs for sound-data/vct, change to vector wherever possible, remove more from scheme sndlib2xen/vct (synonyms) [frame.scm?]
+ *   also same replacement process for frame, mixer? 
  */

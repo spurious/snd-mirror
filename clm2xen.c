@@ -11152,8 +11152,7 @@ static gf *fixup_array_interp(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	{
 	  s7_pointer obj;
 	  obj = s7_value(sc, arg1);
-	  if ((s7_is_object(obj)) &&
-	      (mus_vct_p(obj)))
+	  if (mus_vct_p(obj))
 	    {
 	      int typ;
 	      double x;
@@ -11165,7 +11164,7 @@ static gf *fixup_array_interp(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	      if (typ == GF_G)
 		{
 		  vct *v;
-		  v = (vct *)s7_object_value(obj);
+		  v = (vct *)obj;
 		  g = gf_alloc();
 		  g->i1 = s7_integer(arg3);
 		  g->gen = (void *)(mus_vct_data(v));
@@ -12546,7 +12545,7 @@ gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
       vct *v;
       p = gf_alloc();            /* (v i) where v is a vct */
       p->func = gf_vct_ref;
-      v = (vct *)s7_object_value(op);
+      v = (vct *)op;
       p->gen = (void *)v;
       p->rx1 = mus_vct_data(v);
       p->s1 = s7_slot(sc, cadr(expr));

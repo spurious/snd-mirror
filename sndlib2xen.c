@@ -2736,9 +2736,6 @@ static s7_pointer sound_data_set_direct, sound_data_set_four;
 static s7_pointer g_sound_data_set_direct(s7_scheme *sc, s7_pointer args)
 {
   sound_data *sd;
-  /*
-  sd = (sound_data *)imported_s7_object_value_checked(s7_car_value(sc, args), sound_data_tag);
-  */
   sd = (sound_data *)s7_car_value(sc, args);
   if (sd)
     {
@@ -2775,9 +2772,6 @@ static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
   /* fprintf(stderr, "args: %s\n", DISPLAY(args)); */
   
   vc = s7_cadr_value(sc, args);                      /* (0 sd k i (...)) or possibly (0 sdata i 1 0.1) etc */
-  /*
-  sd = (sound_data *)imported_s7_object_value_checked(vc, sound_data_tag);
-  */
   sd = (sound_data *)vc;
   if (sd)
     {
@@ -2940,9 +2934,6 @@ static s7_pointer sound_data_ref_three;
 static s7_pointer g_sound_data_ref_three(s7_scheme *sc, s7_pointer args)
 {
   sound_data *sd;
-  /*
-  sd = (sound_data *)imported_s7_object_value_checked(s7_car_value(sc, args), sound_data_tag);
-  */
   sd = (sound_data *)s7_car_value(sc, args);
   if (sd)
     {
