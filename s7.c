@@ -28691,6 +28691,18 @@ bool s7_is_vector(s7_pointer p)
 }
 
 
+bool s7_is_float_vector(s7_pointer p)    
+{ 
+  return(type(p) == T_FLOAT_VECTOR);
+}
+
+
+bool s7_is_int_vector(s7_pointer p)    
+{ 
+  return(type(p) == T_INT_VECTOR);
+}
+
+
 static s7_pointer default_vector_setter(s7_scheme *sc, s7_pointer vec, s7_Int loc, s7_pointer val)
 {
   vector_element(vec, loc) = val;
@@ -28800,30 +28812,15 @@ s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len)
 }
 
 
-s7_pointer s7_make_int_vector(s7_scheme *sc, s7_Int len)
+static s7_vdims_t *make_vdims(s7_scheme *sc, bool elements_allocated, int dims, s7_Int *dim_info)
 {
-  return(make_vector_1(sc, len, FILLED, T_INT_VECTOR));
-}
-
-
-s7_pointer s7_make_float_vector(s7_scheme *sc, s7_Int len)
-{
-  return(make_vector_1(sc, len, FILLED, T_FLOAT_VECTOR));
-}
-
-
-s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *data, int dims, int *dim_info)
-{
-  /* this wraps up a C-allocated/freed double array as an s7 vector.
-   */
-  s7_pointer x;
   s7_vdims_t *v;
   int i;
   s7_Int offset = 1;
 
   v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
   v->ndims = dims;
-  v->elements_allocated = false;
+  v->elements_allocated = elements_allocated;
   v->dimensions_allocated = true;
   v->original = sc->F;
   v->dims = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
@@ -28836,6 +28833,36 @@ s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *da
       v->offsets[i] = offset;
       offset *= v->dims[i];
     }
+  
+  return(v);
+}
+
+
+s7_pointer s7_make_int_vector(s7_scheme *sc, s7_Int len, int dims, s7_Int *dim_info)
+{
+  s7_pointer p;
+  p = make_vector_1(sc, len, FILLED, T_INT_VECTOR);
+  if (dim_info)
+    vector_dimension_info(p) = make_vdims(sc, true, dims, dim_info);
+  return(p);
+}
+
+
+s7_pointer s7_make_float_vector(s7_scheme *sc, s7_Int len, int dims, s7_Int *dim_info)
+{
+  s7_pointer p;
+  p = make_vector_1(sc, len, FILLED, T_FLOAT_VECTOR);
+  if (dim_info)
+    vector_dimension_info(p) = make_vdims(sc, true, dims, dim_info);
+  return(p);
+}
+
+
+s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *data, int dims, s7_Int *dim_info)
+{
+  /* this wraps up a C-allocated/freed double array as an s7 vector.
+   */
+  s7_pointer x;
 
   NEW_CELL(sc, x);                     
   set_type(x, T_FLOAT_VECTOR | T_SAFE_PROCEDURE);
@@ -28843,7 +28870,7 @@ s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *da
   vector_getter(x) = float_vector_getter;
   vector_setter(x) = float_vector_setter;
   vector_length(x) = len;
-  vector_dimension_info(x) = v;
+  vector_dimension_info(x) = make_vdims(sc, false, dims, dim_info);
   add_vector(sc, x);
 
   return(x);
@@ -30182,20 +30209,33 @@ s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
 {
   s7_Int len;
   s7_pointer new_vect;
+
   len = vector_length(old_vect);
-
-  if (vector_is_multidimensional(old_vect))
-    new_vect = g_make_vector(sc, list_1(sc, g_vector_dimensions(sc, list_1(sc, old_vect))));
-  else new_vect = make_vector_1(sc, len, NOT_FILLED, type(old_vect));
-
-  /* here and in vector-fill! we have a problem with bignums -- should new bignums be allocated? (copy_list also) */
   if (is_int_vector(old_vect))
-    memcpy((void *)(int_vector_elements(new_vect)), (void *)(int_vector_elements(old_vect)), len * sizeof(s7_Int));
+    {
+      if (vector_is_multidimensional(old_vect))
+	new_vect = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, old_vect)), small_int(0), sc->T));
+      else new_vect = make_vector_1(sc, len, NOT_FILLED, T_INT_VECTOR);
+      memcpy((void *)(int_vector_elements(new_vect)), (void *)(int_vector_elements(old_vect)), len * sizeof(s7_Int));
+    }
   else
     {
       if (is_float_vector(old_vect))
-	memcpy((void *)(float_vector_elements(new_vect)), (void *)(float_vector_elements(old_vect)), len * sizeof(s7_Double));
-      else memcpy((void *)(vector_elements(new_vect)), (void *)(vector_elements(old_vect)), len * sizeof(s7_pointer));
+	{
+	  if (vector_is_multidimensional(old_vect))
+	    new_vect = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, old_vect)), real_zero, sc->T));
+	  else new_vect = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR);
+	  memcpy((void *)(float_vector_elements(new_vect)), (void *)(float_vector_elements(old_vect)), len * sizeof(s7_Double));
+	}
+      else
+	{
+	  if (vector_is_multidimensional(old_vect))
+	    new_vect = g_make_vector(sc, list_1(sc, g_vector_dimensions(sc, list_1(sc, old_vect))));
+	  else new_vect = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
+
+	  /* here and in vector-fill! we have a problem with bignums -- should new bignums be allocated? (copy_list also) */
+	  memcpy((void *)(vector_elements(new_vect)), (void *)(vector_elements(old_vect)), len * sizeof(s7_pointer));
+	}
     }
   return(new_vect);
 }
@@ -67837,4 +67877,7 @@ int main(int argc, char **argv)
  *   (float-vector '(a b c) '(d e f)) is not ambiguous -- this would be '(2 3) dims (or an error)
  * 2-stage load in cload for gslbug (fc19)?
  * TODO: make gsl-header-diffs script
+ * TODO: change docs for sound-data, change to vector wherever possible, remove more from scheme sndlib2xen (synonyms)
+ *   also same replacement process for vct, frame, mixer, mus-data, snd-snd:sound? transform? colormap? 
+ *   are there int vectors currently in snd?
  */

@@ -181,24 +181,25 @@ static char *mus_vct_to_string(vct *v)
   int len;
   char *buf;
   char flt[VCT_PRINT_BUFFER_SIZE];
+  mus_float_t *d;
 
   if (v == NULL) return(NULL);
   len = vct_print_length;
-  if (len > v->length) len = v->length;
-
+  if (len > mus_vct_length(v)) len = mus_vct_length(v);
+  d = mus_vct_data(v);
   buf = (char *)calloc((len + 1) * VCT_PRINT_BUFFER_SIZE, sizeof(char));
 
-  sprintf(buf, "#<vct[len=%lld" "]", v->length);
-  if ((len > 0) && (v->data != NULL))
+  sprintf(buf, "#<vct[len=%lld" "]", mus_vct_length(v));
+  if ((len > 0) && (d != NULL))
     {
       int i;
       strcat(buf, ":");
       for (i = 0; i < len; i++)
 	{
-	  snprintf(flt, VCT_PRINT_BUFFER_SIZE, " %.3f", v->data[i]);
+	  snprintf(flt, VCT_PRINT_BUFFER_SIZE, " %.3f", d[i]);
 	  strcat(buf, flt);
 	}
-      if (v->length > vct_print_length)
+      if (mus_vct_length(v) > vct_print_length)
 	strcat(buf, " ...");
     }
   strcat(buf, ">");
@@ -211,10 +212,12 @@ char *mus_vct_to_readable_string(vct *v)
   int i, len;
   char *buf;
   char flt[VCT_PRINT_BUFFER_SIZE];
+  mus_float_t *d;
 
   if (v == NULL) return(NULL);
-  len = (int)(v->length);
+  len = (int)(mus_vct_length(v));
   buf = (char *)calloc((len + 1) * VCT_PRINT_BUFFER_SIZE, sizeof(char));
+  d = mus_vct_data(v);
 
 #if HAVE_SCHEME
   sprintf(buf, "(vct");
@@ -226,10 +229,10 @@ char *mus_vct_to_readable_string(vct *v)
   for (i = 0; i < len; i++)
     {
 #if HAVE_SCHEME || HAVE_FORTH
-      snprintf(flt, VCT_PRINT_BUFFER_SIZE, " %.3f", v->data[i]);
+      snprintf(flt, VCT_PRINT_BUFFER_SIZE, " %.3f", d[i]);
 #endif
 #if HAVE_RUBY
-      snprintf(flt, VCT_PRINT_BUFFER_SIZE, "%.3f%s", v->data[i], i + 1 < len ? ", " : "");
+      snprintf(flt, VCT_PRINT_BUFFER_SIZE, "%.3f%s", d[i], i + 1 < len ? ", " : "");
 #endif
       strcat(buf, flt);
     }
@@ -268,10 +271,10 @@ static XEN g_vct_to_readable_string(XEN obj)
 bool mus_vct_equalp(vct *v1, vct *v2)
 {
   if (v1 == v2) return(true);
-  return((v1->length == v2->length) &&
-	 (mus_arrays_are_equal(v1->data, v2->data, 
+  return((mus_vct_length(v1) == mus_vct_length(v2)) &&
+	 (mus_arrays_are_equal(mus_vct_data(v1), mus_vct_data(v2), 
 			       mus_float_equal_fudge_factor(),
-			       v1->length)));
+			       mus_vct_length(v1))));
 }
 
 static XEN g_vct_fill(XEN obj, XEN val);
@@ -305,7 +308,7 @@ static XEN s7_mus_vct_apply(s7_scheme *sc, XEN obj, XEN args)
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index < 0?");
-  if (loc >= v->length)
+  if (loc >= mus_vct_length(v))
     XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index too high?");
 
   return(C_TO_XEN_DOUBLE(v->data[loc]));
@@ -333,7 +336,7 @@ static XEN s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index < 0?");
-  if (loc >= v->length)
+  if (loc >= mus_vct_length(v))
     XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index too high?");
 
   val = XEN_CADR(args);
@@ -354,7 +357,7 @@ static XEN s7_vct_ref_2(s7_scheme *sc, void *obj, s7_pointer index)
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, index, "index < 0?");
-  if (loc >= v->length)
+  if (loc >= mus_vct_length(v))
     XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, index, "index too high?");
 
   return(C_TO_XEN_DOUBLE(v->data[loc]));
@@ -370,7 +373,7 @@ static XEN s7_vct_set_3(s7_scheme *sc, void *obj, s7_pointer index, s7_pointer v
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, index, "index < 0?");
-  if (loc >= v->length)
+  if (loc >= mus_vct_length(v))
     XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, index, "index too high?");
 
   /* XEN_ASSERT_TYPE(XEN_NUMBER_P(value), value, XEN_ARG_3, S_vct_setB, "a real"); */
@@ -449,10 +452,10 @@ vct *mus_vct_copy(vct *vc)
   mus_long_t len;
   if (vc)
     {
-      len = vc->length;
+      len = mus_vct_length(vc);
       v = mus_vct_make(len);
       if (len > 0)
-	memcpy((void *)(v->data), (void *)(vc->data), (len * sizeof(mus_float_t)));
+	memcpy((void *)(mus_vct_data(v)), (void *)(mus_vct_data(vc)), (len * sizeof(mus_float_t)));
     }
   return(v);
 }
@@ -539,11 +542,11 @@ static XEN g_vct_copy(XEN obj)
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_copy, "a vct");
 
   v = XEN_TO_VCT(obj);
-  len = v->length;
+  len = mus_vct_length(v);
   if (len > 0)
     {
       copied_data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
-      memcpy((void *)copied_data, (void *)(v->data), (len * sizeof(mus_float_t)));
+      memcpy((void *)copied_data, (void *)(mus_vct_data(v)), (len * sizeof(mus_float_t)));
     }
   return(xen_make_vct(len, copied_data));
 }
@@ -555,6 +558,7 @@ static XEN g_vct_move(XEN obj, XEN newi, XEN oldi, XEN backwards)
 v[new--] = v[old--] if backwards is " PROC_FALSE "."
   vct *v;
   mus_long_t i, j, ni, nj;
+  mus_float_t *d;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_moveB, "a vct");
   XEN_ASSERT_TYPE(XEN_LONG_LONG_P(newi), newi, XEN_ARG_2, S_vct_moveB, "an integer");
@@ -562,18 +566,19 @@ v[new--] = v[old--] if backwards is " PROC_FALSE "."
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(backwards), backwards, XEN_ARG_4, S_vct_moveB, "a boolean");
 
   v = XEN_TO_VCT(obj);
+  d = mus_vct_data(v);
   ni = XEN_TO_C_LONG_LONG(newi);
   nj = XEN_TO_C_LONG_LONG(oldi);
 
   if ((XEN_BOOLEAN_P(backwards)) && 
       (XEN_NOT_FALSE_P(backwards)))
     {
-      if (ni >= v->length) 
+      if (ni >= mus_vct_length(v)) 
 	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 2, newi, "new-index too high");
-      if (nj >= v->length)
+      if (nj >= mus_vct_length(v))
 	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 3, oldi, "old-index too high");
       for (i = ni, j = nj; (j >= 0) && (i >= 0); i--, j--) 
-	v->data[i] = v->data[j];
+	d[i] = d[j];
     }
   else
     {
@@ -581,8 +586,8 @@ v[new--] = v[old--] if backwards is " PROC_FALSE "."
 	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 2, newi, "new-index < 0?");
       if (nj < 0)
 	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 3, oldi, "old-index < 0?");
-      for (i = ni, j = nj; (j < v->length) && (i < v->length); i++, j++) 
-	v->data[i] = v->data[j];
+      for (i = ni, j = nj; (j < mus_vct_length(v)) && (i < mus_vct_length(v)); i++, j++) 
+	d[i] = d[j];
     }
   return(obj);
 }
@@ -594,7 +599,7 @@ static XEN g_vct_length(XEN obj)
   vct *v;
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_length, "a vct");
   v = XEN_TO_VCT(obj);
-  return(C_TO_XEN_LONG_LONG(v->length));
+  return(C_TO_XEN_LONG_LONG(mus_vct_length(v)));
 }
 
 
@@ -612,7 +617,7 @@ static XEN g_vct_ref(XEN obj, XEN pos)
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index < 0?");
-  if (loc >= v->length)
+  if (loc >= mus_vct_length(v))
     XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index too high?");
 
   return(C_TO_XEN_DOUBLE(v->data[loc]));
@@ -674,7 +679,7 @@ static s7_pointer g_vct_ref_two(s7_scheme *sc, s7_pointer args)
     {
       mus_long_t loc;
       loc = s7_number_to_integer(sc, cadr(args));
-      if ((loc < 0) || (loc >= v->length))
+      if ((loc < 0) || (loc >= mus_vct_length(v)))
 	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, cadr(args), "index out of range");
       return(s7_make_real(sc, v->data[loc]));
     }
@@ -691,7 +696,7 @@ static s7_pointer g_vct_ref_ss(s7_scheme *sc, s7_pointer args)
     {
       mus_long_t loc;
       loc = s7_number_to_integer(sc, s7_cadr_value(sc, args));
-      if ((loc < 0) || (loc>= v->length))
+      if ((loc < 0) || (loc>= mus_vct_length(v)))
 	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, cadr(args), "index out of range");
       return(s7_make_real(sc, v->data[loc]));
     }
@@ -727,7 +732,7 @@ static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
       s7_pointer val;
 
       loc = s7_number_to_integer(sc, cadr(args));
-      if ((loc < 0) || (loc>= v->length))
+      if ((loc < 0) || (loc>= mus_vct_length(v)))
 	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, cadr(args), "index out of range");
 
       val = caddr(args);
@@ -771,7 +776,7 @@ static s7_pointer g_vct_set_vector_ref(s7_scheme *sc, s7_pointer args)
       vect = s7_car_value(sc, val);
       vect_index = s7_cadr_value(sc, val);
       loc = s7_number_to_integer(sc, s7_vector_ref(sc, vect, s7_integer(vect_index)));
-      if ((loc < 0) || (loc>= v->length))
+      if ((loc < 0) || (loc>= mus_vct_length(v)))
 	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, cadr(args), "index out of range");
 
       v->data[loc] = s7_number_to_real(sc, val = s7_car_value(sc, cddr(args)));
@@ -796,6 +801,9 @@ static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
   if (v)
     {
       mus_long_t dist;
+      mus_float_t *d;
+
+      d = mus_vct_data(v);
       val = s7_car_value(sc, cdddr(args));
       x = s7_number_to_real(sc, val);
 
@@ -820,17 +828,17 @@ static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
       dist = end - 4;
       while (pos < dist)
 	{
-	  v->data[s7_cell_integer(vec_el[pos])] = x;
+	  d[s7_cell_integer(vec_el[pos])] = x;
 	  pos++;
-	  v->data[s7_cell_integer(vec_el[pos])] = x;
+	  d[s7_cell_integer(vec_el[pos])] = x;
 	  pos++;
-	  v->data[s7_cell_integer(vec_el[pos])] = x;
+	  d[s7_cell_integer(vec_el[pos])] = x;
 	  pos++;
-	  v->data[s7_cell_integer(vec_el[pos])] = x;
+	  d[s7_cell_integer(vec_el[pos])] = x;
 	  pos++;
 	}
       for (; pos < end; pos++)
-	v->data[s7_cell_integer(vec_el[pos])] = x;
+	d[s7_cell_integer(vec_el[pos])] = x;
 
       (*step) = end;
       return(args);
@@ -851,7 +859,7 @@ static s7_pointer g_vct_set_direct(s7_scheme *sc, s7_pointer args)
       s7_pointer val;
 
       loc = s7_number_to_integer(sc, s7_cadr_value(sc, args));
-      if ((loc < 0) || (loc>= v->length))
+      if ((loc < 0) || (loc>= mus_vct_length(v)))
 	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, cadr(args), "index out of range");
 
       val = s7_call_direct(sc, caddr(args));
@@ -873,7 +881,7 @@ static s7_pointer g_vct_set_temp(s7_scheme *sc, s7_pointer args)
       s7_pointer val;
 
       loc = s7_number_to_integer(sc, s7_cadr_value(sc, args));
-      if ((loc < 0) || (loc>= v->length))
+      if ((loc < 0) || (loc>= mus_vct_length(v)))
 	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, cadr(args), "index out of range");
 
       val = s7_call_direct(sc, caddr(args));
@@ -895,7 +903,7 @@ static s7_pointer g_vct_set_ssf(s7_scheme *sc, s7_pointer args)
       mus_long_t loc;
 
       loc = s7_number_to_integer(sc, s7_cadr_value(sc, args));
-      if ((loc < 0) || (loc>= v->length))
+      if ((loc < 0) || (loc>= mus_vct_length(v)))
 	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, cadr(args), "index out of range");
 
       v->data[loc] = s7_cell_real(caddr(args));
@@ -923,6 +931,9 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
   v = (vct *)imported_s7_object_value_checked(vc, vct_tag);
   if (v)
     {
+      mus_float_t *d;
+
+      d = mus_vct_data(v);
       stepper = car(args);
       locsym = caddr(args);
       if (!s7_is_symbol(locsym))
@@ -937,7 +948,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
       end = (*stop);
 
       if ((pos < 0) ||
-	  (end > v->length))
+	  (end > mus_vct_length(v)))
 	XEN_OUT_OF_RANGE_ERROR("vct-set!", 2, caddr(args), "index out of range");
 
       val = cadddr(args);
@@ -946,7 +957,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	  double x;
 	  x = s7_number_to_real(sc, val);
 	  for (; pos < end; pos++) 
-	    v->data[pos] = x;
+	    d[pos] = x;
 	  (*step) = end;
 	  return(args);
 	}
@@ -965,13 +976,13 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	      dist = end - 4;
 	      while (pos < dist)
 		{
-		  v->data[pos++] = func(gen);
-		  v->data[pos++] = func(gen);
-		  v->data[pos++] = func(gen);
-		  v->data[pos++] = func(gen);
+		  d[pos++] = func(gen);
+		  d[pos++] = func(gen);
+		  d[pos++] = func(gen);
+		  d[pos++] = func(gen);
 		}
 	      for (; pos < end; pos++) 
-		v->data[pos] = func(gen);
+		d[pos] = func(gen);
 	      (*step) = end;
 	      gf_free(gf1);
 	      return(args);
@@ -981,7 +992,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	      for (; pos < end; pos++)
 		{
 		  (*step) = pos;
-		  v->data[pos] = gf1->func(gf1);
+		  d[pos] = gf1->func(gf1);
 		}
 	      (*step) = end;
 	      gf_free(gf1);
@@ -998,7 +1009,7 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 	  for (; pos < end; pos++)
 	    {
 	      (*step) = pos; /* in case val expr depends on the step var */
-	      v->data[pos] = s7_number_to_real(sc, s7_call_direct(sc, val));
+	      d[pos] = s7_number_to_real(sc, s7_call_direct(sc, val));
 	    }
 	  (*step) = end;
 	  return(args);
@@ -1019,7 +1030,7 @@ static mus_float_t wrapped_vct_ref(void *p)
   s7_Int k;
   v = (vct *)(g->gen);
   k = s7_cell_integer(s7_cell_slot_value(g->s1));
-  if ((k >= 0) && (k < v->length))
+  if ((k >= 0) && (k < mus_vct_length(v)))
     return(v->data[k]);
   return(0.0);
 }
@@ -1161,8 +1172,8 @@ static s7_ex *vct_set_ex_parser(s7_scheme *sc, s7_pointer expr)
       e = (s7_ex *)malloc(sizeof(s7_ex));
       e->ex_free = vcset_free;
       e->ex_data = p;
-      p->v_len = v->length;
-      p->v_data = v->data;
+      p->v_len = mus_vct_length(v);
+      p->v_data = mus_vct_data(v);
       p->i_slot = i_slot;
       p->sc = sc;
       if (s7_is_symbol(val_arg))
@@ -1206,8 +1217,8 @@ static s7_ex *vct_set_ex_parser(s7_scheme *sc, s7_pointer expr)
 		      e = (s7_ex *)malloc(sizeof(s7_ex));
 		      e->ex_free = vcset_free;
 		      e->ex_data = p;
-		      p->v_len = v->length;
-		      p->v_data = v->data;
+		      p->v_len = mus_vct_length(v);
+		      p->v_data = mus_vct_data(v);
 		      p->i_slot = i_slot;
 		      p->val_slot = x_slot;
 		      p->x1 = x1;
@@ -1227,8 +1238,8 @@ static s7_ex *vct_set_ex_parser(s7_scheme *sc, s7_pointer expr)
       e = (s7_ex *)malloc(sizeof(s7_ex));
       e->ex_free = vcset_free;
       e->ex_data = p;
-      p->v_len = v->length;
-      p->v_data = v->data;
+      p->v_len = mus_vct_length(v);
+      p->v_data = mus_vct_data(v);
       p->i_slot = i_slot;
 
       if (gf1->func_1)
@@ -1266,6 +1277,7 @@ static s7_pointer g_vct_set_let_looped(s7_scheme *sc, s7_pointer args)
   s7_pointer stepper, callee, loc, letp, lets, vars, let, body, locsym, old_e, vc;
   s7_Int *step, *stop;
   vct *v;
+  mus_float_t *d;
 
   /* args (harmonicizer in dsp.scm): (40 (let* ((sig (bandpass bp (vct-ref indata k))) ...)) #<environment ...>)
    *     (harmonicizer 550.0 (list 1 .5 2 .3 3 .2) 10)
@@ -1293,6 +1305,7 @@ static s7_pointer g_vct_set_let_looped(s7_scheme *sc, s7_pointer args)
 
   vc = s7_car_value(sc, loc); 
   v = (vct *)imported_s7_object_value_checked(vc, vct_tag);
+  d = mus_vct_data(v);
   callee = caddr(loc);
 
   num_vars = s7_list_length(sc, vars);
@@ -1331,7 +1344,7 @@ static s7_pointer g_vct_set_let_looped(s7_scheme *sc, s7_pointer args)
 	      (*step) = pos;
 	      (*x1r) = lf1->func(lf1);
 	      (*x2r) = lf2->func(lf2);
-	      v->data[pos] = bg->func(bg);
+	      d[pos] = bg->func(bg);
 	    }
 	  gf_free(lf1);
 	  gf_free(lf2);
@@ -1368,7 +1381,7 @@ static s7_pointer g_vct_set_let_looped(s7_scheme *sc, s7_pointer args)
 	  {
 	    (*step) = pos;
 	    (*ry) = lg->func(lg);
-	    v->data[pos] = bg->func(bg);
+	    d[pos] = bg->func(bg);
 	  }
 	gf_free(lg);
 	gf_free(bg);
@@ -1470,7 +1483,7 @@ static XEN g_vct_set(XEN obj, XEN pos, XEN val)
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index < 0?"); 
-  if (loc >= v->length)
+  if (loc >= mus_vct_length(v))
     XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index >= vct-length?");
 
   v->data[loc] = x;
@@ -1483,14 +1496,17 @@ static XEN g_vct_multiply(XEN obj1, XEN obj2)
   #define H_vct_multiplyB "(" S_vct_multiplyB " v1 v2): element-wise multiply of vcts v1 and v2: v1[i] *= v2[i], returns v1"
   mus_long_t i, lim;
   vct *v1, *v2;
+  mus_float_t *d1, *d2;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_multiplyB, "a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(obj2), obj2, XEN_ARG_2, S_vct_multiplyB, "a vct");
 
   v1 = XEN_TO_VCT(obj1);
   v2 = XEN_TO_VCT(obj2);
-  lim = MIN(v1->length, v2->length);
-  for (i = 0; i < lim; i++) v1->data[i] *= v2->data[i];
+  d1 = mus_vct_data(v1);
+  d2 = mus_vct_data(v2);
+  lim = MIN(mus_vct_length(v1), mus_vct_length(v2));
+  for (i = 0; i < lim; i++) d1[i] *= d2[i];
   return(obj1);
 }
 
@@ -1500,6 +1516,7 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
   #define H_vct_addB "(" S_vct_addB " v1 v2 :optional (offset 0)): element-wise add of vcts v1 and v2: v1[i + offset] += v2[i], returns v1"
   mus_long_t i, lim, j;
   vct *v1, *v2;
+  mus_float_t *d1, *d2;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_addB, "a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(obj2), obj2, XEN_ARG_2, S_vct_addB, "a vct");
@@ -1507,7 +1524,9 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
 
   v1 = XEN_TO_VCT(obj1);
   v2 = XEN_TO_VCT(obj2);
-  lim = MIN(v1->length, v2->length);
+  d1 = mus_vct_data(v1);
+  d2 = mus_vct_data(v2);
+  lim = MIN(mus_vct_length(v1), mus_vct_length(v2));
   if (lim == 0) return(obj1);
 
   if (XEN_LONG_LONG_P(offs))
@@ -1516,41 +1535,38 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
       if (j < 0) 
 	XEN_OUT_OF_RANGE_ERROR(S_vct_addB, 3, offs, "offset < 0?");
 
-      if ((j + lim) > v1->length)
-	lim = (v1->length - j);
+      if ((j + lim) > mus_vct_length(v1))
+	lim = (mus_vct_length(v1) - j);
 
       for (i = 0; i < lim; i++, j++) 
-	v1->data[j] += v2->data[i];
+	d1[j] += d2[i];
     }
   else
     {
       mus_long_t lim8;
       lim8 = lim - 8;
       i = 0;
-      /* this form (explicit v->data indexing) is faster than using *data++!
-       *   counting down to 0 here was bizarrely slower??
-       */
       while (i <= lim8)
 	{
-	  v1->data[i] += v2->data[i];
+	  d1[i] += d2[i];
 	  i++;
-	  v1->data[i] += v2->data[i];
+	  d1[i] += d2[i];
 	  i++;
-	  v1->data[i] += v2->data[i];
+	  d1[i] += d2[i];
 	  i++;
-	  v1->data[i] += v2->data[i];
+	  d1[i] += d2[i];
 	  i++;
-	  v1->data[i] += v2->data[i];
+	  d1[i] += d2[i];
 	  i++;
-	  v1->data[i] += v2->data[i];
+	  d1[i] += d2[i];
 	  i++;
-	  v1->data[i] += v2->data[i];
+	  d1[i] += d2[i];
 	  i++;
-	  v1->data[i] += v2->data[i];
+	  d1[i] += d2[i];
 	  i++;
 	}
       for (; i < lim; i++) 
-	v1->data[i] += v2->data[i];
+	d1[i] += d2[i];
     }
   return(obj1);
 }
@@ -1561,29 +1577,32 @@ static XEN g_vct_subtract(XEN obj1, XEN obj2)
   #define H_vct_subtractB "(" S_vct_subtractB " v1 v2): element-wise subtract of vcts v1 and v2: v1[i] -= v2[i], returns v1"
   mus_long_t i, lim, lim4;
   vct *v1, *v2;
+  mus_float_t *d1, *d2;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_subtractB, "a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(obj2), obj2, XEN_ARG_2, S_vct_subtractB, "a vct");
 
   v1 = XEN_TO_VCT(obj1);
   v2 = XEN_TO_VCT(obj2);
-  lim = MIN(v1->length, v2->length);
+  d1 = mus_vct_data(v1);
+  d2 = mus_vct_data(v2);
+  lim = MIN(mus_vct_length(v1), mus_vct_length(v2));
   lim4 = lim - 4;
 
   i = 0;
   while (i <= lim4)
     {
-      v1->data[i] -= v2->data[i];
+      d1[i] -= d2[i];
       i++;
-      v1->data[i] -= v2->data[i];
+      d1[i] -= d2[i];
       i++;
-      v1->data[i] -= v2->data[i];
+      d1[i] -= d2[i];
       i++;
-      v1->data[i] -= v2->data[i];
+      d1[i] -= d2[i];
       i++;
     }
   for (; i < lim; i++) 
-    v1->data[i] -= v2->data[i];
+    d1[i] -= d2[i];
 
   return(obj1);
 }
@@ -1595,32 +1614,34 @@ static XEN g_vct_scale(XEN obj1, XEN obj2)
   mus_long_t i;
   vct *v1;
   mus_float_t scl;
+  mus_float_t *d;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_scaleB, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_vct_scaleB, "a number");
 
   v1 = XEN_TO_VCT(obj1);
-  if (v1->length == 0) return(obj1);
+  if (mus_vct_length(v1) == 0) return(obj1);
+  d = mus_vct_data(v1);
 
   scl = XEN_TO_C_DOUBLE(obj2);
   if (scl == 0.0)
-    memset((void *)(v1->data), 0, v1->length * sizeof(mus_float_t));
+    memset((void *)d, 0, mus_vct_length(v1) * sizeof(mus_float_t));
   else
     {
       if (scl != 1.0)
 	{
 	  mus_long_t lim4;
-	  lim4 = v1->length - 4;
+	  lim4 = mus_vct_length(v1) - 4;
 	  i = 0;
 	  while (i <= lim4)
 	    {
-	      v1->data[i++] *= scl;
-	      v1->data[i++] *= scl;
-	      v1->data[i++] *= scl;
-	      v1->data[i++] *= scl;
+	      d[i++] *= scl;
+	      d[i++] *= scl;
+	      d[i++] *= scl;
+	      d[i++] *= scl;
 	    }
-	  for (; i < v1->length; i++) 
-	    v1->data[i] *= scl;
+	  for (; i < mus_vct_length(v1); i++) 
+	    d[i] *= scl;
 	}
     }
   return(obj1);
@@ -1633,16 +1654,19 @@ static XEN g_vct_offset(XEN obj1, XEN obj2)
   mus_long_t i;
   vct *v1;
   mus_float_t scl;
+  mus_float_t *d;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_offsetB, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_vct_offsetB, "a number");
 
   v1 = XEN_TO_VCT(obj1);
-  if (v1->length == 0) return(obj1);
+  if (mus_vct_length(v1) == 0) return(obj1);
+  d = mus_vct_data(v1);
 
   scl = XEN_TO_C_DOUBLE(obj2);
   if (scl != 0.0)
-    for (i = 0; i < v1->length; i++) v1->data[i] += scl;
+    for (i = 0; i < mus_vct_length(v1); i++) 
+      d[i] += scl;
   return(obj1);
 }
 
@@ -1653,22 +1677,22 @@ static XEN g_vct_fill(XEN obj1, XEN obj2)
   mus_long_t i; /* unsigned int is much slower */
   vct *v1;
   mus_float_t scl;
+  mus_float_t *d;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_fillB, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_vct_fillB, "a number");
 
   v1 = XEN_TO_VCT(obj1);
-  if (v1->length == 0) return(obj1);
+  if (mus_vct_length(v1) == 0) return(obj1);
+  d = mus_vct_data(v1);
 
   scl = XEN_TO_C_DOUBLE(obj2);
   if (scl == 0.0)
-    memset((void *)(v1->data), 0, v1->length * sizeof(mus_float_t));
+    memset((void *)d, 0, mus_vct_length(v1) * sizeof(mus_float_t));
   else 
     {
       mus_long_t lim8;
-      mus_float_t *d;
-      d = v1->data;
-      lim8 = v1->length - 8;
+      lim8 = mus_vct_length(v1) - 8;
       i = 0;
       while (i <= lim8)
 	{
@@ -1681,8 +1705,8 @@ static XEN g_vct_fill(XEN obj1, XEN obj2)
 	  d[i++] = scl;
 	  d[i++] = scl;
 	}
-      for (; i < v1->length; i++) 
-	v1->data[i] = scl;
+      for (; i < mus_vct_length(v1); i++) 
+	d[i] = scl;
     }
   return(obj1);
 }
@@ -1694,10 +1718,10 @@ double mus_vct_peak(vct *v)
   mus_float_t *d;
   mus_long_t i, lim4;
 
-  if (v->length == 0) return(0.0);
-  lim4 = v->length - 4;
+  if (mus_vct_length(v) == 0) return(0.0);
+  lim4 = mus_vct_length(v) - 4;
   i = 1;
-  d = (mus_float_t *)(v->data);
+  d = mus_vct_data(v);
   val = fabs(d[0]);
 
   while (i <= lim4)
@@ -1711,7 +1735,7 @@ double mus_vct_peak(vct *v)
       absv = fabs(d[i++]);
       if (absv > val) val = absv;
     }
-  for (; i < v->length; i++)
+  for (; i < mus_vct_length(v); i++)
     {
       absv = fabs(d[i]);
       if (absv > val) val = absv;
@@ -1737,13 +1761,15 @@ static XEN g_vct_peak_and_location(XEN obj)
   mus_float_t val = 0.0, absv;
   mus_long_t i, loc = 0;
   vct *v;
+  mus_float_t *d;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_peak, "a vct");
   v = XEN_TO_VCT(obj);
+  d = mus_vct_data(v);
 
-  for (i = 0; i < v->length; i++)
+  for (i = 0; i < mus_vct_length(v); i++)
     {
-      absv = fabs(v->data[i]);
+      absv = fabs(d[i]);
       if (absv > val) 
 	{
 	  val = absv;
@@ -1758,6 +1784,7 @@ static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
 {
   #define H_vct_subseq "(" S_vct_subseq " v start :optional end vnew): v[start..end], placed in vnew if given or new vct"
   vct *vold, *vnew;
+  mus_float_t *dnew, *dold;
   XEN res;
   mus_long_t i, old_len, new_len, j, istart, iend;
 
@@ -1770,7 +1797,7 @@ static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
     XEN_OUT_OF_RANGE_ERROR(S_vct_subseq, 2, start, "start < 0?");
 
   vold = XEN_TO_VCT(vobj);
-  old_len = vold->length;
+  old_len = mus_vct_length(vold);
 
   if (XEN_LONG_LONG_P(end))
     {
@@ -1790,10 +1817,14 @@ static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
     res = newv;
   else res = xen_make_vct(new_len, (mus_float_t *)calloc(new_len, sizeof(mus_float_t)));
   vnew = XEN_TO_VCT(res);
-  if (new_len > vnew->length) 
-    new_len = vnew->length;
+
+  if (new_len > mus_vct_length(vnew)) 
+    new_len = mus_vct_length(vnew);
+  dnew = mus_vct_data(vnew);
+  dold = mus_vct_data(vold);
+
   for (i = istart, j = 0; (j < new_len) && (i < old_len); i++, j++)
-    vnew->data[j] = vold->data[i];
+    dnew[j] = dold[i];
 
   return(res);
 }
@@ -1804,6 +1835,7 @@ XEN xen_list_to_vct(XEN lst)
   #define H_list_to_vct "(" S_list_to_vct " lst): returns a new vct filled with elements of list lst"
   mus_long_t len = 0, i;
   vct *v;
+  mus_float_t *d;
   XEN scv, lst1;
 
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(lst, len), lst, XEN_ONLY_ARG, S_list_to_vct, "a list");
@@ -1813,10 +1845,11 @@ XEN xen_list_to_vct(XEN lst)
   else scv = xen_make_vct(0, NULL);
 
   v = XEN_TO_VCT(scv);
+  d = mus_vct_data(v);
   for (i = 0, lst1 = XEN_COPY_ARG(lst); i < len; i++, lst1 = XEN_CDR(lst1)) 
     {
       if (XEN_NUMBER_P(XEN_CAR(lst1)))
-	v->data[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_CAR(lst1));
+	d[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_CAR(lst1));
       else XEN_WRONG_TYPE_ARG_ERROR(S_list_to_vct, i, XEN_CAR(lst1), "a number");
     }
 
@@ -1848,10 +1881,10 @@ static XEN g_vct_to_list(XEN vobj)
   XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_to_list, "a vct");
 
   v = XEN_TO_VCT(vobj);
-  if (v->length == 0)
+  if (mus_vct_length(v) == 0)
     return(XEN_EMPTY_LIST);
 
-  return(mus_array_to_list(v->data, 0, v->length));
+  return(mus_array_to_list(mus_vct_data(v), 0, mus_vct_length(v)));
 }
 
 
@@ -1860,6 +1893,7 @@ static XEN g_vector_to_vct(XEN vect)
   #define H_vector_to_vct "(" S_vector_to_vct " vect): returns a new vct with the elements of vector vect"
   mus_long_t len, i;
   vct *v;
+  mus_float_t *d;
   XEN scv;
 #if HAVE_SCHEME
   int gc_loc;
@@ -1876,8 +1910,9 @@ static XEN g_vector_to_vct(XEN vect)
 #endif
 
   v = XEN_TO_VCT(scv);
+  d = mus_vct_data(v);
   for (i = 0; i < len; i++) 
-    v->data[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vect, i));
+    d[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vect, i));
 
 #if HAVE_SCHEME
   s7_gc_unprotect_at(s7, gc_loc);
@@ -1890,6 +1925,7 @@ static XEN g_vct_to_vector(XEN vobj)
 {
   #define H_vct_to_vector "(" S_vct_to_vector " vct): returns a new vector with the elements of vct"
   vct *v;
+  mus_float_t *d;
   mus_long_t i, len;
   XEN new_vect;
 #if HAVE_SCHEME
@@ -1899,7 +1935,7 @@ static XEN g_vct_to_vector(XEN vobj)
   XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_to_vector, "a vct");
 
   v = XEN_TO_VCT(vobj);
-  len = v->length;
+  len = mus_vct_length(v);
   new_vect = XEN_MAKE_VECTOR(len, C_TO_XEN_DOUBLE(0.0));
 
 #if HAVE_SCHEME
@@ -1913,8 +1949,9 @@ static XEN g_vct_to_vector(XEN vobj)
    */
 #endif
 
+  d = mus_vct_data(v);
   for (i = 0; i < len; i++) 
-    XEN_VECTOR_SET(new_vect, i, C_TO_XEN_DOUBLE(v->data[i]));
+    XEN_VECTOR_SET(new_vect, i, C_TO_XEN_DOUBLE(d[i]));
 
 #if HAVE_SCHEME
   s7_gc_unprotect_at(s7, gc_loc);
@@ -1932,17 +1969,21 @@ static XEN g_vct_max(XEN vobj)
 {
   #define H_vct_max "(" S_vct_max " vct): returns the maximum element of vct"
   vct *v;
+  mus_float_t *d;
   mus_long_t i, len;
   mus_float_t mx = 0.0;
+
   XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_max, "a vct");
   v = XEN_TO_VCT(vobj);
-  len = v->length;
+
+  len = mus_vct_length(v);
   if (len > 0)
     {
-      mx = v->data[0];
+      d = mus_vct_data(v);
+      mx = d[0];
       for (i = 1; i < len; i++)
-	if (v->data[i] > mx)
-	  mx = v->data[i];
+	if (d[i] > mx)
+	  mx = d[i];
     }
   return(C_TO_XEN_DOUBLE(mx));
 }
@@ -1953,17 +1994,21 @@ static XEN g_vct_min(XEN vobj)
 {
   #define H_vct_min "(" S_vct_min " vct): returns the minimum element of vct"
   vct *v;
+  mus_float_t *d;
   mus_long_t i, len;
   mus_float_t mx = 0.0;
+
   XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_min, "a vct");
   v = XEN_TO_VCT(vobj);
-  len = v->length;
+
+  len = mus_vct_length(v);
   if (len > 0)
     {
-      mx = v->data[0];
+      d = mus_vct_data(v);
+      mx = d[0];
       for (i = 1; i < len; i++)
-	if (v->data[i] < mx)
-	  mx = v->data[i];
+	if (d[i] < mx)
+	  mx = d[i];
     }
   return(C_TO_XEN_DOUBLE(mx));
 }
@@ -1973,6 +2018,7 @@ static XEN g_vct_reverse(XEN vobj, XEN size)
 {
   #define H_vct_reverse "(" S_vct_reverse " vct len): in-place reversal of vct contents"
   vct *v;
+  mus_float_t *d;
   mus_long_t i, j, len = -1;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ARG_1, S_vct_to_vector, "a vct");
@@ -1981,16 +2027,17 @@ static XEN g_vct_reverse(XEN vobj, XEN size)
   v = XEN_TO_VCT(vobj);
   if (XEN_LONG_LONG_P(size))
     len = XEN_TO_C_LONG_LONG(size);
-  if ((len <= 0) || (len > v->length))
-    len = v->length;
+  if ((len <= 0) || (len > mus_vct_length(v)))
+    len = mus_vct_length(v);
   if (len == 1) return(vobj);
+  d = mus_vct_data(v);
 
   for (i = 0, j = len - 1; i < j; i++, j--)
     {
       mus_float_t temp;
-      temp = v->data[i];
-      v->data[i] = v->data[j];
-      v->data[j] = temp;
+      temp = d[i];
+      d[i] = d[j];
+      d[j] = temp;
     }
   return(vobj);
 }
@@ -2026,9 +2073,13 @@ static XEN g_vct_each(XEN obj)
 {
   mus_long_t i;
   vct *v;
+  mus_float_t *d;
+
   v = XEN_TO_VCT(obj);
-  for (i = 0; i < v->length; i++)
-    rb_yield(C_TO_XEN_DOUBLE(v->data[i]));
+  d = mus_vct_data(v);
+
+  for (i = 0; i < mus_vct_length(v); i++)
+    rb_yield(C_TO_XEN_DOUBLE(d[i]));
   return(obj);
 }
 
@@ -2037,19 +2088,24 @@ static XEN g_vct_compare(XEN vr1, XEN vr2)
 {
   mus_long_t i, len;
   vct *v1, *v2;
+  mus_float_t *d1, *d2;
+
   if ((MUS_VCT_P(vr1)) && (MUS_VCT_P(vr2)))
     {
       v1 = XEN_TO_VCT(vr1);
       v2 = XEN_TO_VCT(vr2);
-      len = v1->length;
-      if (len > v2->length) len = v2->length;
+      d1 = mus_vct_data(v1);
+      d2 = mus_vct_data(v2);
+
+      len = mus_vct_length(v1);
+      if (len > mus_vct_length(v2)) len = mus_vct_length(v2);
       for (i = 0; i < len; i++) 
-	if (v1->data[i] < v2->data[i])
+	if (d1[i] < d2[i])
 	  return(C_TO_XEN_INT(-1));
 	else
-	  if (v1->data[i] > v2->data[i])
+	  if (d1[i] > d2[i])
 	    return(C_TO_XEN_INT(1));
-      len = v1->length - v2->length;
+      len = mus_vct_length(v1) - mus_vct_length(v2);
       if (len == 0) return(C_TO_XEN_INT(0));
       if (len > 0) return(C_TO_XEN_INT(1));
     }
@@ -2082,26 +2138,38 @@ static XEN g_rb_make_vct(int argc, XEN *argv, XEN self)
 
 static XEN g_vct_map(XEN obj)
 {
-  if (rb_block_given_p()) {
-    mus_long_t i;
-    vct *v = XEN_TO_VCT(obj);
-    mus_float_t *buffer = (mus_float_t *)calloc(v->length, sizeof(mus_float_t));
-    for (i = 0; i < v->length; i++)
-      buffer[i] = XEN_TO_C_DOUBLE(rb_yield(C_TO_XEN_DOUBLE(v->data[i])));
-    return xen_make_vct(v->length, buffer);
-  }
+  if (rb_block_given_p()) 
+    {
+      mus_long_t i;
+      vct *v;
+      mus_float_t *d;
+      
+      v = XEN_TO_VCT(obj);
+      d = mus_vct_data(v);
+      mus_float_t *buffer = (mus_float_t *)calloc(mus_vct_length(v), sizeof(mus_float_t));
+
+      for (i = 0; i < mus_vct_length(v); i++)
+	buffer[i] = XEN_TO_C_DOUBLE(rb_yield(C_TO_XEN_DOUBLE(d[i])));
+      return xen_make_vct(mus_vct_length(v), buffer);
+    }
   return obj;
 }
 
 
 static XEN g_vct_map_store(XEN obj)
 {
-  if (rb_block_given_p()) {
-    mus_long_t i;
-    vct *v = XEN_TO_VCT(obj);
-    for (i = 0; i < v->length; i++)
-      v->data[i] = XEN_TO_C_DOUBLE(rb_yield(C_TO_XEN_DOUBLE(v->data[i])));
-  }
+  if (rb_block_given_p()) 
+    {
+      mus_long_t i;
+      vct *v;
+      mus_float_t *d;
+
+      v = XEN_TO_VCT(obj);
+      d = mus_vct_data(v);
+
+      for (i = 0; i < mus_vct_length(v); i++)
+	d[i] = XEN_TO_C_DOUBLE(rb_yield(C_TO_XEN_DOUBLE(d[i])));
+    }
   return obj;
 }
 
@@ -2222,13 +2290,13 @@ static XEN rb_set_vct_first(XEN obj, XEN val)
 
 static XEN rb_vct_last(XEN obj)
 {
-  return g_vct_ref(obj, C_TO_XEN_INT(XEN_TO_VCT(obj)->length - 1));
+  return g_vct_ref(obj, C_TO_XEN_INT(mus_vct_length(XEN_TO_VCT(obj)) - 1));
 }
 
 
 static XEN rb_set_vct_last(XEN obj, XEN val)
 {
-  return g_vct_set(obj, C_TO_XEN_INT(XEN_TO_VCT(obj)->length - 1), val);
+  return g_vct_set(obj, C_TO_XEN_INT(mus_vct_length(XEN_TO_VCT(obj)) - 1), val);
 }
 #endif
 

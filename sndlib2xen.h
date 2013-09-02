@@ -11,7 +11,11 @@
 #define NO_DATA              XEN_ERROR_TYPE("no-data")
 #define BAD_HEADER           XEN_ERROR_TYPE("bad-header")
 
-typedef struct sound_data sound_data;
+#if HAVE_SCHEME
+  typedef struct s7_cell sound_data;
+#else
+  typedef struct sound_data sound_data;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,7 +30,11 @@ MUS_EXPORT int mus_sound_data_chans(sound_data *sd);
 MUS_EXPORT mus_long_t mus_sound_data_length(sound_data *sd);
 MUS_EXPORT void mus_sound_data_add_frame(sound_data *sd, mus_long_t pos, mus_float_t *data);
 
+#if HAVE_SCHEME
+#define XEN_TO_SOUND_DATA(Obj) (sound_data *)Obj
+#else
 #define XEN_TO_SOUND_DATA(Obj) (sound_data *)XEN_OBJECT_REF(Obj)
+#endif
 
 MUS_EXPORT XEN g_mus_sound_srate(XEN filename);
 MUS_EXPORT XEN g_mus_sound_chans(XEN filename);

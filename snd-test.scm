@@ -305,6 +305,18 @@
 	  #f
 	  (fveql a (cdr b) (+ i 1)))))
 
+(define (sd-equal sd0 sd1)
+  (let ((chans (sound-data-chans sd0))
+	(frames (sound-data-length sd0)))
+    (call-with-exit
+     (lambda (return)
+       (do ((i 0 (+ i 1)))
+	   ((= i chans) #t)
+	 (do ((j 0 (+ j 1)))
+	     ((= j frames))
+	   (if (> (abs (- (sd0 i j) (sd1 i j))) .001)
+	       (return #f))))))))
+       
 (define (vequal v0 v1)
   (let ((old-fudge (mus-float-equal-fudge-factor)))
     (set! (mus-float-equal-fudge-factor) .001)
@@ -328,13 +340,6 @@
 
 (define (vmaxdiff v0 v1)
   (vct-peak (vct-subtract! (vct-copy v0) v1)))
-
-(define (sd-equal v0 v1)
-  (let ((old-fudge (mus-float-equal-fudge-factor)))
-    (set! (mus-float-equal-fudge-factor) .001)
-    (let ((result (equal? v0 v1)))
-      (set! (mus-float-equal-fudge-factor) old-fudge)
-      result)))
 
 (define (string-=? a b)
   (or (string=? a b)
@@ -3091,9 +3096,10 @@
 	  (do ((i 0 (+ i 1)))
 	      ((= i 100))
 	    (sound-data-set! sdata 0 i (* i .01)))
-	  (if (not (string-=? "#<sound-data[chans=1, length=100]:\n    (0.000 0.010 0.020 0.030 0.040 0.050 0.060 0.070 0.080 0.090 0.100 0.110 ...)>"
-			      (format #f "~A" sdata)))
-	      (snd-display #__line__ ";print sound-data: ~A?" (format #f "~A" sdata)))
+;	  (if (not (string-=? "#<sound-data[chans=1, length=100]:\n    (0.000 0.010 0.020 0.030 0.040 0.050 0.060 0.070 0.080 0.090 0.100 0.110 ...)>"
+;			      (format #f "~A" sdata)))
+;	      (snd-display #__line__ ";print sound-data: ~A?" (format #f "~A" sdata)))
+
 	  (let ((edat sdata)
 		(edat1 (make-sound-data 1 100))
 		(edat2 (make-sound-data 2 100)))
@@ -3156,7 +3162,7 @@
 	  (mus-sound-read fd 0 10 1 sdata)
 	  (if (fneq (sdata 0 0) .2) (snd-display #__line__ ";2 mus-sound-seek: ~A?" (sdata 0 0)))
 	  (mus-sound-close-input fd))
-	
+
 	(let ((sd (make-sound-data 2 10)))
 	  (vct->sound-data (make-vct 10 .25) sd 0)  
 	  (vct->sound-data (make-vct 10 .5) sd 1)
@@ -3202,10 +3208,6 @@
 	  (let ((sd1 (copy sd)))
 	    (if (not (equal? sd sd1)) (snd-display #__line__ ";copy sd: ~A ~A" sd sd1))))
 	
-;	(set! ((procedure-environment open-raw-sound-hook) 'end) (list (lambda (hook) (format *stderr* ";open-raw-sound-hook: ~A~%" (hook 'result)))))
-;	(set! ((procedure-environment bad-header-hook) 'end) (list (lambda (hook) (format *stderr* ";bad-header-hook: ~A~%" (hook 'result)))))
-;	(set! ((procedure-environment open-hook) 'end) (list (lambda (hook) (format *stderr* ";open-hook: ~A~%" (hook 'result)))))
-;	(set! ((procedure-environment after-open-hook) 'end) (list (lambda (hook) (format *stderr* ";after-open-hook: ~A~%" (hook 'result)))))
 	(for-each
 	 (lambda (file)
 	   (let ((tag (catch #t
@@ -3285,7 +3287,6 @@
 				sd1)))
 	      (snd-display #__line__ ";sound-data set (3) not equal: ~A" sd)))
 	
-	
 	(for-each 
 	 (lambda (chans)
 	   (for-each 
@@ -3314,8 +3315,9 @@
 			(snd-display #__line__ ";mus-sound-seek-frame(100): ~A ~A (~A ~A ~A)?" 
 				     pos (frame->byte "fmv5.snd" 100) chans (mus-header-type-name (cadr df-ht)) (mus-data-format-name (car df-ht)))))
 		  (mus-sound-close-input fd)
-		  (if (not (vequal sdata ndata))
-		      (snd-display #__line__ ";read-write trouble: ~A ~A (~A != ~A)"
+		  (if (not (sd-equal sdata ndata))
+		      (snd-display #__line__ ";~D read-write trouble: ~A ~A (~A != ~A)"
+				   chans
 				   (mus-data-format-name (car df-ht))
 				   (mus-header-type-name (cadr df-ht))
 				   sdata ndata)))))
@@ -3340,7 +3342,6 @@
 		  (list mus-ulshort mus-next)
 		  (list mus-ubshort mus-next))))
 	 (list 1 2 4 8))
-	
 	
 	(let ((fd (mus-sound-open-output "fmv.snd" 22050 1 mus-bshort mus-next "no comment"))
 	      (sdata (make-sound-data 1 10)))
@@ -29116,7 +29117,7 @@ EDITS: 2
 	    (if (not (= (length vc) 4)) (snd-display #__line__ ";length of vector: ~A" (length vc)))
 	    (if (not (= (length lst) 5)) (snd-display #__line__ ";length of list: ~A" (length lst)))
 	    (if (not (= (length str) 6)) (snd-display #__line__ ";length of string: ~A" (length str)))
-	    (if (not (= (length sd) 10)) (snd-display #__line__ ";length of sound-data: ~A" (length sd)))
+	    (if (not (= (sound-data-length sd) 10)) (snd-display #__line__ ";length of sound-data: ~A" (sound-data-length sd)))
 	    (if (not (>= (length hsh) 100)) (snd-display #__line__ ";length of hash-table: ~A" (length hsh)))
 	    (if (not (= (length fr) 2)) (snd-display #__line__ ";length of frame: ~A" (length fr)))
 	    (if (not (= (length mx) 2)) (snd-display #__line__ ";length of mixer: ~A" (length mx)))
@@ -38049,11 +38050,11 @@ EDITS: 1
 	      (sdata2 (file->sound-data "2a.snd")))
 	  (if (not (equal? sdata1 (sound->sound-data 0 #f ind1)))
 	      (snd-display #__line__ ";sfile->sound-data 1a.snd"))
-	  (if (not (equal? sdata2 (sound->sound-data 0 #f ind2)))
+	  (if (not (sd-equal sdata2 (sound->sound-data 0 #f ind2)))
 	      (snd-display #__line__ ";file->sound-data 2a.snd"))
 	  (sound-data->file sdata1 "tmp.snd")
 	  (let ((ind3 (open-sound "tmp.snd")))
-	    (if (not (equal? sdata1 (sound->sound-data 0 #f ind3)))
+	    (if (not (sd-equal sdata1 (sound->sound-data 0 #f ind3)))
 		(snd-display #__line__ ";sound-data->file 1a"))
 	    (close-sound ind3))
 	  (mus-sound-forget "tmp.snd")
