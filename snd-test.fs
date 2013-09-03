@@ -2354,7 +2354,7 @@ black-and-white-colormap constant *better-colormap*
      'smooth-selection 'smooth-sound 'snd->sample 'snd->sample? 'snd-error
      'snd-error-hook 'snd-exit ( added ) 'snd-gcs 'snd-help 'snd-font
      'snd-color 'snd-print 'snd-spectrum 'snd-tempnam 'snd-url 'snd-urls
-     'snd-version 'snd-warning 'snd-warning-hook 'sound-data->sound-data
+     'snd-version 'snd-warning 'snd-warning-hook
      'sound-data->vct 'sound-data-chans 'sound-data-length 'sound-data-maxamp 
      'sound-data-ref 'sound-data-peak 'sound-data-set! 'sound-data-scale!
      'sound-data-fill! 'sound-data? 'sound-data-multiply! 'sound-data-add!
@@ -3389,37 +3389,6 @@ black-and-white-colormap constant *better-colormap*
     ind close-sound drop
   then
   open-raw-sound-hook reset-hook!
-  \ 
-  1 32 make-sound-data to sd1
-  2 64 make-sound-data { sd2 }
-  32 0 do
-    sd1 0 i i 0.01 f* sound-data-set! drop
-  loop
-  64 0 do
-    sd2 0 i i 0.1 f* sound-data-set! drop
-    sd2 1 i i 0.2 f* sound-data-set! drop
-  loop
-  sd2 sd1 3 6 32 sound-data->sound-data drop
-  sd1 0  0 sound-data-ref 0.00 "sound-data->sound-data 0" #() snd-test-neq
-  sd1 0  2 sound-data-ref 0.02 "sound-data->sound-data 2" #() snd-test-neq
-  sd1 0  3 sound-data-ref 0.00 "sound-data->sound-data 3" #() snd-test-neq
-  sd1 0  6 sound-data-ref 0.30 "sound-data->sound-data 6" #() snd-test-neq
-  sd1 0 10 sound-data-ref 0.10 "sound-data->sound-data 10" #() snd-test-neq
-  sd1 sd2 0 10 32 sound-data->sound-data drop
-  sd2 0  5 sound-data-ref 0.20 "sound-data->sound-data 2 5" #() snd-test-neq
-  1 32 make-sound-data { sdi }
-  1 32 make-sound-data { sdo }
-  sdi sdo 10 32 10 sound-data->sound-data to res
-  res  2 "sound-data->sound-data wrap around" #() snd-test-neq
-  sdi sdo 10 32 32 sound-data->sound-data to res
-  res 10 "sound-data->sound-data wrap around" #() snd-test-neq
-  \ 
-  sdi sdo -1 10 10 <'> sound-data->sound-data snd-test-catch to res
-  res car 'out-of-range "sound-data->sound-data start" #() snd-test-neq
-  sdi sdo 0 -1 10 <'> sound-data->sound-data snd-test-catch to res
-  res car 'out-of-range "sound-data->sound-data frames" #() snd-test-neq
-  sdi sdo 0 128 10 <'> sound-data->sound-data snd-test-catch to res
-  res car 'out-of-range "sound-data->sound-data frames" #() snd-test-neq
   \ 
   1 1 make-sound-data to sd
   sd 0 0 sound-data-ref 0.0 "sound-data ref" #() snd-test-neq
@@ -6966,7 +6935,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> sound-data-chans <'> sound-data->vct <'> vct->sound-data
    <'> sound-data-peak <'> all-pass <'> all-pass? <'> amplitude-modulate
    <'> array->file <'> array-interp <'> mus-interpolate <'> asymmetric-fm
-   <'> asymmetric-fm?  <'> sound-data->sound-data <'> clear-array <'> comb
+   <'> asymmetric-fm?  <'> clear-array <'> comb
    <'> comb?  <'> filtered-comb <'> filtered-comb? <'> contrast-enhancement
    <'> convolution <'> convolve <'> convolve? <'> db->linear 
    <'> degrees->radians <'> delay <'> delay? <'> dot-product <'> env 

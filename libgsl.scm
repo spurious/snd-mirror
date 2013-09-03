@@ -827,7 +827,7 @@
 		    (double gsl_stats_lag1_autocorrelation (double* size_t size_t))
 		    (double gsl_stats_covariance (double* size_t double* size_t size_t))
 		    (double gsl_stats_correlation (double* size_t double* size_t size_t))
-		    (double gsl_stats_spearman (double* size_t double* size_t size_t double*))
+;; 1.16?	    (double gsl_stats_spearman (double* size_t double* size_t size_t double*))
 		    (double gsl_stats_variance_m (double* size_t size_t double))
 		    (double gsl_stats_sd_m (double* size_t size_t double))
 		    (double gsl_stats_absdev_m (double* size_t size_t double))
@@ -1146,9 +1146,12 @@
 		 "gsl/gsl_wavelet2d.h"
 		 )
 		 
-		 "-I/usr/local/include" "-lgsl -lgslcblas" "libgsl_s7")
+		 "-I/usr/local/include -DGSL_DISABLE_DEPRECATED" "-lgsl -lgslcblas" "libgsl_s7")
 	
 (current-environment))))
 
 *libgsl*
 ;; the loader will return *libgsl*
+
+;; the GSL_DISABLE_DEPRECATED switch is needed to avoid a name collision (dating from version 1.7!!)
+

@@ -2661,7 +2661,7 @@ def test_03
    :smooth_sound, :snd2sample, :snd2sample?, :snd_error, :snd_error_hook,
    :snd_gcs, :snd_help, :snd_font, :snd_color, :snd_print, :snd_spectrum,
    :snd_tempnam, :snd_url, :snd_urls, :snd_version, :snd_warning,
-   :snd_warning_hook, :sound_data2sound_data, :sound_data2vct,
+   :snd_warning_hook, :sound_data2vct,
    :sound_data_chans, :sound_data_length, :sound_data_maxamp,
    :sound_data_ref, :sound_data_peak, :sound_data_set!,
    :sound_data_scale!, :sound_data_fill!, :sound_data?,
@@ -3656,48 +3656,6 @@ def test_04_01
     close_sound(ind)
   end
   $open_raw_sound_hook.reset_hook!
-  #
-  sd1 = SoundData.new(1, 32)
-  sd2 = SoundData.new(2, 64)
-  32.times do |i|
-    sd1[0, i] = i * 0.01
-  end
-  64.times do |i|
-    sd2[0, i] = i * 0.1
-    sd2[1, i] = i * 0.2
-  end
-  sound_data2sound_data(sd2, sd1, 3, 6, 32)
-  [[0, 0.00],
-   [2, 0.02],
-   [3, 0.00],
-   [6, 0.30],
-   [10, 0.1]].each do |idx, val|
-    snd_test_neq(sd1[0, idx], val, "sound_data2sound_data %d", idx)
-  end
-  sound_data2sound_data(sd1, sd2, 0, 10, 32)
-  snd_test_neq(sd2[0, 5], 0.2, "sound_data2sound_data 2 5")
-  #
-  sdi = SoundData.new(1, 32)
-  sdo = SoundData.new(1, 32)
-  snd_test_neq(sound_data2sound_data(sdi, sdo, 10, 32, 10),  2,
-    "sound_data2sound_data wrap around")
-  snd_test_neq(sound_data2sound_data(sdi, sdo, 10, 32, 32), 10,
-    "sound_data2sound_data wrap around")
-  if (res = Snd.catch do
-        sound_data2sound_data(sdi, sdo, -1, 10, 10)
-      end).first != :out_of_range
-    snd_display("sound_data2sound_data start: %s", res)
-  end
-  if (res = Snd.catch do
-        sound_data2sound_data(sdi, sdo, 0, -1, 10)
-      end).first != :out_of_range
-    snd_display("sound_data2sound_data frames: %s", res)
-  end
-  if (res = Snd.catch do
-        sound_data2sound_data(sdi, sdo, 0, 128, 10)
-      end).first != :out_of_range
-    snd_display("sound_data2sound_data frames: %s", res)
-  end
   #
   sd = SoundData.new(1, 1)
   snd_test_neq(sd[0, 0], 0.0, "sound_data_ref")
@@ -36280,7 +36238,7 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :sound_data_maxamp, :sound_data_chans, :sound_data2vct, :vct2sound_data,
          :sound_data_peak, :all_pass, :all_pass?, :amplitude_modulate, :array2file,
          :array_interp, :mus_interpolate, :asymmetric_fm, :asymmetric_fm?,
-         :sound_data2sound_data, :clear_array, :comb, :comb?, :filtered_comb,
+         :clear_array, :comb, :comb?, :filtered_comb,
          :filtered_comb?, :contrast_enhancement, :convolution, :convolve, :convolve?,
          :db2linear, :degrees2radians, :delay, :delay?, :dot_product, :env, :env_interp,
          :env?, :file2array, :file2frame, :file2frame?, :file2sample, :file2sample?,

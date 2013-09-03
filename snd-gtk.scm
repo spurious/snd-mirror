@@ -748,7 +748,7 @@
     (hook-push dac-hook 
 	       (lambda (hook)
 		 (let* ((sdobj (hook 'data))
-			(maxes (sound-data-maxamp sdobj)))
+			(maxes (map vct-peak sdobj)))
 		   (for-each
 		    (lambda (meter)
 		      (if (null? maxes)
@@ -869,6 +869,8 @@
 
   (define (widget? w) (and (list? w) (= (length w) 2) (eq? (car w) 'GtkWidget_)))
 
+  ;; (let ((wid1 (make-variable-display "do-loop" "i*1" 'spectrum))) (variable-display 0.1 wid1))
+
   (if (widget? widget)
       (if (GTK_IS_LABEL widget)
 	  (begin
@@ -880,10 +882,10 @@
 		  (sound? (car widget)))
 	      ;; graph/spectrum -- does this need an explicit update?
 	      (let* ((snd (car widget))
-		     (data (cadr widget))
+		     (data (caadr widget))
 		     (len (length data))
 		     (loc (cursor snd 0)))
-		(sound-data-set! data 0 loc var)
+		(set! (data loc) var)
 		(if (time-graph? snd) (update-time-graph snd))
 		(if (transform-graph? snd) (update-transform-graph snd))
 		(if (= (+ loc 1) len)

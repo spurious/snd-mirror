@@ -129,9 +129,9 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 
 #define XEN_WRAP_WIDGET(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWidget_"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
 #define XEN_WRAP_WINDOW(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkWindow_"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
-#define XEN_UNWRAP_WIDGET(Value) (XEN_LIST_P(Value) ? (GtkWidget *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value))) : NULL)
-#define XEN_WIDGET_P(Value)      (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                                  (strcmp("GtkWidget_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+#define XEN_UNWRAP_WIDGET(Value) (XEN_PAIR_P(Value) ? (GtkWidget *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value))) : NULL)
+#define XEN_WIDGET_P(Value)      (XEN_PAIR_P(Value) && (XEN_CAR(Value) == C_STRING_TO_XEN_SYMBOL("GtkWidget_")))
+
 #define NULL_WIDGET NULL
 #define SG_SIGNAL_CONNECT(Widget, Signal, Function, Data) g_signal_connect(G_OBJECT(Widget), Signal, G_CALLBACK(Function), (gpointer)Data)
 #define SG_SIGNAL_CONNECT_AFTER(Widget, Signal, Function, Data) g_signal_connect_after(G_OBJECT(Widget), Signal, G_CALLBACK(Function), (gpointer)Data)

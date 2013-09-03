@@ -9470,7 +9470,12 @@ given channel.  Currently, this must be a channel (sound) created by " S_make_va
   ASSERT_CHANNEL(S_channel_data, snd, chn, 1);
 
   cp = get_cp(snd, chn, S_channel_data);
-  if ((cp) && (cp->sound) && (cp->sound->inuse == SOUND_WRAPPER))
+  if ((cp) && 
+      (cp->sound) && 
+      (cp->sound->inuse == SOUND_WRAPPER) &&
+      (cp->sounds) &&
+      (cp->sounds[0]) &&
+      (cp->sounds[0]->buffered_data))
     return(wrap_sound_data(1, cp->edits[0]->samples, &(cp->sounds[0]->buffered_data)));
   return(XEN_FALSE);
 }

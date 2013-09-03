@@ -445,7 +445,6 @@
 					;(load "bess.scm")		  
 (load "numerics.scm")
 (load "big-gens.scm")	  
-					;(load "oscope.scm")
 (load "bird.scm")		   
 (load "clean.scm")	
 (load "peak-phases.scm")

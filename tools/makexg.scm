@@ -1860,10 +1860,10 @@
 
 
 
-(define all-types (list types-2.14 types-2.16 types-2.18 types-2.20 
+(define all-ntypes (list types-2.14 types-2.16 types-2.18 types-2.20 
 			types-3.0 types-3.2 types-3.4 types-3.6 types-3.8 types-3.10 types-gtk2
 			cairo-types cairo-types-810 cairo-types-912))
-(define all-type-withs (list with-2.14 with-2.16 with-2.18 with-2.20 
+(define all-ntype-withs (list with-2.14 with-2.16 with-2.18 with-2.20 
 			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-gtk2
 			     with-cairo with-cairo-810 with-cairo-912))
 
@@ -1949,6 +1949,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     3-Sep:     use symbol directly in type checks, not the symbol name.~%")
 (hey " *     18-Aug:    changed the gtk version macros to reflect the version number.~%")
 (hey " *     7-Jun-13:  added mixed arg types to the ... arg lists.~%")
 (hey " *     --------~%")
@@ -2120,45 +2121,77 @@
 (hey "#endif~%")
 (hey "~%")
 
-(hey "#define WRAP_FOR_XEN(Name, Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(Name), XEN_WRAP_C_POINTER(Value))~%")
-(hey "#define WRAP_P(Name, Value) (XEN_LIST_P(Value) && \\~%")
-(hey "                            (XEN_LIST_LENGTH(Value) >= 2) && \\~%")
-(hey "                            (XEN_SYMBOL_P(XEN_CAR(Value))) && \\~%")
-(hey "                            (strcmp(Name, XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))~%")
+(hey "static XEN xg_~A_symbol" (no-stars (car all-types)))
+(for-each
+ (lambda (typ)
+   (hey ", xg_~A_symbol" (no-stars typ)))
+ (cdr all-types))
+
+(define other-types 
+  (list 'GFile_ 'GIcon_ 'GdkBitmap_ 'GdkColor_ 'GdkColormap_ 'GdkDevice_ 'GdkDrawable_ 'GdkEventButton_ 'GdkEventConfigure_ 'GdkEventCrossing_ 
+	'GdkEventDND_ 'GdkEventExpose_ 'GdkEventFocus_ 'GdkEventNoExpose_ 'GdkEventProperty_ 'GdkEventProximity_ 'GdkEventScroll_ 'GdkEventSelection_ 
+	'GdkEventSetting_ 'GdkEventVisibility_ 'GdkEventWindowState_ 'GdkPixmap_ 'GtkAccelMap 'GtkAccessible_ 'GtkCalendarDetailFunc 'GtkCellRendererAccel_ 
+	'GtkCellRendererCombo_ 'GtkCellRendererPixbuf_ 'GtkCellRendererProgress_ 'GtkCellRendererSpin_ 'GtkCellRendererSpinner_ 'GtkCheckButton_ 
+	'GtkColorButton_ 'GtkDrawingArea_ 'GtkEntryBuffer_ 'GtkFileChooserDialog_ 'GtkFileChooserWidget_ 'GtkFontSelectionDialog_ 
+	'GtkFontSelection_ 'GtkInfoBar_ 'GtkInvisible_ 'GtkObject_ 'GtkRcStyle_ 'GtkRecentChooserDialog_ 'GtkRecentChooserWidget_ 
+	'GtkRequisition_ 'GtkScaleButton_ 'GtkScrollbar_ 'GtkSeparatorMenuItem_ 'GtkSeparator_ 'GtkSpinner_ 'GtkStyle_ 'GtkToolItemGroup_ 
+	'GtkToolPaletteDragTargets 'GtkToolPalette_ 'cairo_destroy_func_t 'cairo_font_extents_t_ 'cairo_font_face_t_ 'cairo_glyph_t_ 'cairo_glyph_t__
+	'cairo_matrix_t_ 'cairo_path_t_ 'cairo_pattern_t_ 'cairo_rectangle_list_t_ 'cairo_scaled_font_t_ 'cairo_surface_t_ 
+	'cairo_text_cluster_flags_t_ 'cairo_text_cluster_t_ 'cairo_text_cluster_t__ 'cairo_text_extents_t_ 'cairo_user_data_key_t_ 'idler 'void_
+	'cairo_text_cluster_flags_t
+	'GdkModifierType_ 'GdkDeviceManager_ 'GtkMessageDialog_ 'cairo_region_t_ 'cairo_region_t_ 'GtkContainerClass_ 'GtkAlign 'GtkAlign 
+	'GtkComboBoxText_ 'GdkRGBA_ 'GdkRGBA_ 'GtkGrid_ 'GtkScrollable_ 'GtkSwitch_ 'GtkBorder_ 'GtkBorder_ 'GtkActivatable_ 'GtkCellArea_ 
+	'GtkOrientable_ 'GtkWindowGroup_ 'GtkWindowGroup_ 'GtkToolShell_ 'GdkScreen__ 'GtkWidgetPath_ 'GtkOverlay_ 'GtkFontChooser_ 'guint__ 
+	'GMenuModel_ 'GMenuModel_ 'GtkApplication_ 'GVariant_ 'GtkApplicationWindow_ 'GtkColorChooser_ 'GtkComboBoxText_ 'GtkGrid_ 'GtkScrollable_ 
+	'GdkRGBA_ 'GtkSwitch_ 'GtkActivatable_ 'GtkOrientable_ 'GtkWindowGroup_ 'GtkToolShell_ 'GtkOverlay_ 'GtkFontChooser_ 'GtkFontChooserDialog_ 
+	'GtkFontChooserWidget_ 'GtkApplicationWindow_ 'GtkColorChooserDialog_ 'GtkColorWidget_ 
+	'gboolean_
+	))
+
+(for-each
+ (lambda (typ)
+   (hey ", xg_~A_symbol" typ))
+ other-types)
+ 
+(hey ";~%~%")
+
+
+(hey "#define WRAP_FOR_XEN(Name, Value) XEN_LIST_2(xg_ ## Name ## _symbol, XEN_WRAP_C_POINTER(Value))~%")
+(hey "#define WRAP_P(Name, Value) (XEN_PAIR_P(Value) && (XEN_CAR(Value) == xg_ ## Name ## _symbol))~%")
 (hey "~%")
 (hey "#define XM_TYPE(Name, XType) \\~%")
 ;; these are not pointers, so should not use wrap_c_pointer and friends 
-(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(#Name), C_TO_XEN_ULONG(val)));} \\~%")
+(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(XEN_LIST_2(xg_ ## Name ## _symbol, C_TO_XEN_ULONG(val)));} \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
-(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
+(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(Name, val));}~%")
 (hey "~%")
 (hey "#define XM_TYPE_1(Name, XType) \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
-(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
+(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(Name, val));}~%")
 (hey "~%")
 					;(hey "#define XM_TYPE_NO_P(Name, XType) \\~%")
-					;(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \\~%")
+					;(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(Name, val));} \\~%")
 					;(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
 					;(hey "~%")
 (hey "#define XM_TYPE_NO_P_2(Name, XType) \\~%")
-(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));}~%")
+(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(Name, val));}~%")
 (hey "~%")
 (hey "#define XM_TYPE_PTR(Name, XType) \\~%")
-(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \\~%")
+(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(Name, val)); return(XEN_FALSE);} \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
-(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
+(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(Name, val));}~%")
 (hey "~%")
 (hey "#define XM_TYPE_PTR_CONST(Name, XType) \\~%")
-(hey "  static XEN C_TO_XEN_ ## Name (const XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \\~%")
+(hey "  static XEN C_TO_XEN_ ## Name (const XType val) {if (val) return(WRAP_FOR_XEN(Name, val)); return(XEN_FALSE);} \\~%")
 (hey "  static const XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((const XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
-(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
+(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(Name, val));}~%")
 (hey "~%")
 (hey "#define XM_TYPE_PTR_1(Name, XType) \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
-(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
+(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(Name, val));}~%")
 (hey "~%")
 (hey "#define XM_TYPE_PTR_2(Name, XType) \\~%")
-(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \\~%")
+(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(Name, val)); return(XEN_FALSE);} \\~%")
 (hey "~%")
 (hey "/* type checks for callback wrappers */~%")
 
@@ -2186,13 +2219,13 @@
 (hey "#define XEN_lambda_data_P(Arg) 1~%")
 
 ;; needed if func returns func of this type
-(hey "#define C_TO_XEN_GtkTreeViewSearchPositionFunc(Arg) WRAP_FOR_XEN(\"GtkTreeViewSearchPositionFunc\", Arg)~%")
-(hey "#define C_TO_XEN_GtkTreeViewSearchEqualFunc(Arg) WRAP_FOR_XEN(\"GtkTreeViewSearchEqualFunc\", Arg)~%")
-					;(hey "#define C_TO_XEN_GtkLinkButtonUriFunc(Arg) WRAP_FOR_XEN(\"GtkLinkButtonUriFunc\", Arg)~%")
-					;(hey "#define C_TO_XEN_GtkTreeIterCompareFunc(Arg) WRAP_FOR_XEN(\"GtkTreeViewSearchEqualFunc\", Arg)~%")
-					;(hey "#define C_TO_XEN_GtkTreeSelectionFunc(Arg) WRAP_FOR_XEN(\"GtkTreeSelectionFunc\", Arg)~%")
-					;(hey "#define C_TO_XEN_GtkMenuPositionFunc(Arg) WRAP_FOR_XEN(\"GtkMenuPositionFunc\", Arg)~%")
-					;(hey "#define C_TO_XEN_GtkDestroyNotify(Arg) WRAP_FOR_XEN(\"GtkDestroyNotify\", Arg)~%")
+(hey "#define C_TO_XEN_GtkTreeViewSearchPositionFunc(Arg) WRAP_FOR_XEN(GtkTreeViewSearchPositionFunc, Arg)~%")
+(hey "#define C_TO_XEN_GtkTreeViewSearchEqualFunc(Arg) WRAP_FOR_XEN(GtkTreeViewSearchEqualFunc, Arg)~%")
+					;(hey "#define C_TO_XEN_GtkLinkButtonUriFunc(Arg) WRAP_FOR_XEN(GtkLinkButtonUriFunc, Arg)~%")
+					;(hey "#define C_TO_XEN_GtkTreeIterCompareFunc(Arg) WRAP_FOR_XEN(GtkTreeViewSearchEqualFunc, Arg)~%")
+					;(hey "#define C_TO_XEN_GtkTreeSelectionFunc(Arg) WRAP_FOR_XEN(GtkTreeSelectionFunc, Arg)~%")
+					;(hey "#define C_TO_XEN_GtkMenuPositionFunc(Arg) WRAP_FOR_XEN(GtkMenuPositionFunc, Arg)~%")
+					;(hey "#define C_TO_XEN_GtkDestroyNotify(Arg) WRAP_FOR_XEN(GtkDestroyNotify, Arg)~%")
 (hey "#define XEN_TO_C_GdkFilterReturn(Arg) (GdkFilterReturn)XEN_TO_C_INT(Arg)~%")
 
 (hey "#define XEN_TO_C_String(Arg) ((XEN_STRING_P(Arg)) ? XEN_TO_C_STRING(Arg) : NULL)~%")
@@ -2220,7 +2253,7 @@
    (if (not (null? type-list)) 
        (with-func hey (lambda () 
 			(for-each type-it (reverse type-list))))))
- all-types all-type-withs)
+ all-ntypes all-ntype-withs)
 
 
 (hey "#define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))~%")
@@ -2290,8 +2323,7 @@
 (hey "      if ((XEN_LIST_P(cur)) && (XEN_LIST_LENGTH(cur) == 3) && (XEN_LIST_P(XEN_CADDR(cur))))~%")
 (hey "        {~%")
 (hey "          idler = XEN_CADDR(cur);~%")
-(hey "          if ((XEN_SYMBOL_P(XEN_CAR(idler))) &&~%")
-(hey "              (strcmp(\"idler\", XEN_SYMBOL_TO_C_STRING(XEN_CAR(idler))) == 0) &&~%")
+(hey "          if ((XEN_CAR(idler) == xg_idler_symbol) &&~%")
 (hey "              (id == (guint)(XEN_TO_C_INT(XEN_CADR(idler)))))~%")
 (hey "            {~%")
 (hey "              velts[i] = XEN_FALSE;~%")
@@ -2747,7 +2779,7 @@
 			      (hey "    xm_unprotect_at(loc);~%"))
 			  (if (and callback-data
 				   (eq? (callback-gc callback-data) 'semi-permanent))
-			      (hey "    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(\"idler\"), ~A, C_TO_XEN_INT(loc)));~%"
+			      (hey "    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(xg_idler_symbol, ~A, C_TO_XEN_INT(loc)));~%"
 				   (if (string=? return-type "void") "XEN_FALSE" "result")))
 			  (if using-result
 			      (hey "    return(result);~%")
@@ -2852,10 +2884,10 @@
     (let ((cast-name (car cast))
 	  (cast-type (cadr cast)))
       (hey "static XEN gxg_~A(XEN obj)" (no-arg cast-name))
-      (hey " {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(~S), XEN_CADR(obj)) : XEN_FALSE);}~%" (no-stars cast-type)))))
+      (hey " {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(xg_~A_symbol, XEN_CADR(obj)) : XEN_FALSE);}~%" (no-stars cast-type)))))
 
 (hey "static XEN gxg_GPOINTER(XEN obj)")
-(hey " {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(\"gpointer\"), (WRAPPED_OBJECT_P(obj)) ? XEN_CADR(obj) : XEN_WRAP_C_POINTER(obj)));}~%")
+(hey " {return(XEN_LIST_2(xg_gpointer_symbol, (WRAPPED_OBJECT_P(obj)) ? XEN_CADR(obj) : XEN_WRAP_C_POINTER(obj)));}~%")
 
 (for-each cast-it (reverse casts))
 (for-each
@@ -2977,7 +3009,7 @@
 (hey "  #endif~%")
 
 (define (array->list type)
-  (hey "  if (strcmp(ctype, ~S) == 0)~%" (no-stars type))
+  (hey "  if (ctype == xg_~A_symbol)~%" (no-stars type))
   (hey "    {~%")
   (hey "      ~A arr; arr = (~A)XEN_UNWRAP_C_POINTER(XEN_CADR(val)); ~%" type type)
   (hey "      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}~%")
@@ -2985,25 +3017,24 @@
   (hey "    }~%"))
 
 (define (list->array type)
-  (hey "  if (strcmp(ctype, ~S) == 0)~%" type)
+  (hey "  if (type == xg_~A_symbol)~%" (no-stars type))
   (hey "    {~%")
   (hey "      ~A arr; arr = (~A)calloc(len + 1, sizeof(~A));~%" type type (deref-type (list type)))
   (hey "      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_~A(XEN_CAR(val));~%" (no-stars (deref-type (list type))))
-  (hey "      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(~S), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));~%" (no-stars type))
+  (hey "      return(XEN_LIST_3(xg_~A_symbol, XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));~%" (no-stars type))
   (hey "    }~%"))
 
 (hey "/* conversions */~%")
 (hey "static XEN c_array_to_xen_list(XEN val_1, XEN clen)~%")
 (hey "{~%")
 (hey "  XEN result = XEN_EMPTY_LIST;~%")
-(hey "  XEN val;~%")
+(hey "  XEN val, ctype;~%")
 (hey "  int i, len = -1;~%")
-(hey "  const char *ctype;~%")
 (hey "  if (XEN_INTEGER_P(clen))~%")
 (hey "    len = XEN_TO_C_INT(clen);~%")
 (hey "  if (!(XEN_LIST_P(val_1))) return(XEN_FALSE); /* type:location cons */~%")
 (hey "  val = XEN_COPY_ARG(val_1); /* protect Ruby arg */~%")
-(hey "  ctype = XEN_SYMBOL_TO_C_STRING(XEN_CAR(val));~%")
+(hey "  ctype = XEN_CAR(val);~%")
 (for-each array->list listable-types)
 (for-each
  (lambda (type)
@@ -3016,7 +3047,7 @@
  types)
 
 ;;; gotta handle GList* by hand
-(hey "  if (strcmp(ctype, \"GList_\") == 0)~%")
+(hey "  if (ctype == xg_GList__symbol)~%")
 (hey "    { /* tagging these pointers is currently up to the caller */~%")
 (hey "      GList* lst;~%")
 (hey "      lst = (GList*)XEN_UNWRAP_C_POINTER(XEN_CADR(val));~%")
@@ -3063,9 +3094,8 @@
 (hey "static XEN xen_list_to_c_array(XEN val, XEN type)~%")
 (hey "{~%")
 (hey "  int i, len;~%")
-(hey "  const char *ctype;~%")
 (hey "  len = XEN_LIST_LENGTH(val);~%")
-(hey "  ctype = XEN_TO_C_STRING(type);~%")
+
 (for-each list->array listable-types)
 (for-each
  (lambda (type)
@@ -3599,6 +3629,22 @@
 (hey "}~%~%")
 
 
+(hey "/* -------------------------------- symbols -------------------------------- */~%")
+(hey "~%")
+(hey "static void define_symbols(void)~%")
+(hey "{~%")
+
+(for-each
+ (lambda (typ)
+   (hey "  xg_~A_symbol = C_STRING_TO_XEN_SYMBOL(\"~A\");~%" (no-stars typ) (no-stars typ)))
+ all-types)
+(for-each
+ (lambda (typ)
+   (hey "  xg_~A_symbol = C_STRING_TO_XEN_SYMBOL(\"~A\");~%" typ typ))
+ other-types)
+(hey "}~%~%")
+
+
 (hey "/* -------------------------------- strings -------------------------------- */~%")
 (hey "~%")
 (hey "static void define_strings(void)~%")
@@ -3629,6 +3675,7 @@
 (hey "{~%")
 (hey "  if (!xg_already_inited)~%")
 (hey "    {~%")
+(hey "      define_symbols();~%")
 (hey "      define_xm_obj();~%")
 (hey "      define_integers();~%")
 (hey "      define_doubles();~%")

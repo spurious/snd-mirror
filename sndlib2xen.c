@@ -1702,10 +1702,16 @@ static XEN make_sound_data(int chans, mus_long_t frames)
 
 XEN wrap_sound_data(int chans, mus_long_t frames, mus_float_t **data)
 {
-  s7_Int di[2];
-  di[0] = chans;
-  di[1] = frames;
-  return(s7_make_float_vector_wrapper(s7, chans * frames, (s7_Double *)data, 2, di));
+  /* data here is not necessarily continguous (dac_buffers, io_state)
+   */
+  s7_Int di[1];
+  int i;
+  s7_pointer lst;
+  di[0] = frames;
+  lst = s7_nil(s7);
+  for (i = chans - 1; i >= 0; i--)
+    lst = s7_cons(s7, s7_make_float_vector_wrapper(s7, frames, (s7_Double *)data[i], 1, di), lst);
+  return(lst);
 }
 
 #else
@@ -2261,79 +2267,6 @@ static void *mus_long_t_memmove(char *dest, const char *source, mus_long_t lengt
 }
 
 
-#define S_sound_data_to_sound_data "sound-data->sound-data"
-
-static XEN g_sound_data_to_sound_data(XEN sd_in, XEN sd_out, XEN start, XEN frames, XEN cycle_length)
-{
-  #define H_sound_data_to_sound_data "(" S_sound_data_to_sound_data " sd-in sd-out start frames cycle-length): \
-copies sound-data sd-in's data from 0 for 'frames' frames into 'sd-out' starting at 'start', wrapping around if sd-out's end (or cycle-length) is reached."
-
-  sound_data *sdi, *sdo;
-  int i, chans;
-  mus_long_t j = 0, len, beg, olen, ilen, cycle;
-
-  XEN_ASSERT_TYPE(SOUND_DATA_P(sd_in), sd_in, XEN_ARG_1, S_sound_data_to_sound_data, "a sound-data object");
-  XEN_ASSERT_TYPE(SOUND_DATA_P(sd_out), sd_out, XEN_ARG_2, S_sound_data_to_sound_data, "a sound-data object");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(start), start, XEN_ARG_3, S_sound_data_to_sound_data, "an integer");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(frames), frames, XEN_ARG_4, S_sound_data_to_sound_data, "an integer");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(cycle_length), cycle_length, XEN_ARG_5, S_sound_data_to_sound_data, "an integer");
-
-  sdi = XEN_TO_SOUND_DATA(sd_in);
-  sdo = XEN_TO_SOUND_DATA(sd_out);
-
-  ilen = mus_sound_data_length(sdi);
-  olen = mus_sound_data_length(sdo);
-
-  beg = XEN_TO_C_LONG_LONG(start);
-  if (beg < 0)
-    XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
-	      XEN_LIST_2(C_TO_XEN_STRING(S_sound_data_to_sound_data ": start: ~A < 0"),
-			 start));
-  if (beg >= olen) beg = 0;
-
-  len = XEN_TO_C_LONG_LONG(frames);
-  if ((len < 0) || (len > ilen))
-    XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
-	      XEN_LIST_2(C_TO_XEN_STRING(S_sound_data_to_sound_data ": frames: ~A?"),
-			 frames));
-
-  cycle = XEN_TO_C_LONG_LONG(cycle_length);
-  if (beg >= cycle) beg = 0;
-  if (cycle > olen) cycle = olen;
-
-  chans = mus_sound_data_chans(sdo);
-  if (chans > mus_sound_data_chans(sdi))
-    chans = mus_sound_data_chans(sdi);
-
-  if ((beg + len) < cycle)
-    {
-      for (i = 0; i < chans; i++)
-	mus_long_t_memmove((char *)(mus_sound_data_channel_data(sdo, i) + beg), 
-			   (const char *)(mus_sound_data_channel_data(sdi, i)), 
-			   len * sizeof(mus_float_t));
-      j = beg + len;
-    }
-  else
-    {
-      for (i = 0; i < chans; i++)
-	{
-	  mus_long_t k;
-	  mus_float_t *od, *id;
-
-	  od = mus_sound_data_channel_data(sdo, i);
-	  id = mus_sound_data_channel_data(sdi, i);
-	  j = beg;
-	  for (k = 0; k < len; k++)
-	    {
-	      od[j++] = id[k];
-	      if (j == cycle) j = 0;
-	    }
-	}
-    }
-  return(C_TO_XEN_LONG_LONG(j));
-}
-
-
 #if HAVE_FORTH
 #define S_sound_data_to_vector          "sound-data->vector"
 
@@ -2511,7 +2444,6 @@ XEN_NARGIFY_1(g_sound_data_peak_w, g_sound_data_peak)
 XEN_NARGIFY_2(g_sound_data_scaleB_w, g_sound_data_scaleB)
 XEN_NARGIFY_1(g_sound_data_reverseB_w, g_sound_data_reverseB)
 XEN_ARGIFY_3(g_sound_data_to_vct_w, g_sound_data_to_vct)
-XEN_NARGIFY_5(g_sound_data_to_sound_data_w, g_sound_data_to_sound_data)
 XEN_ARGIFY_3(g_vct_to_sound_data_w, g_vct_to_sound_data)
 XEN_NARGIFY_1(g_mus_sound_samples_w, g_mus_sound_samples)
 XEN_NARGIFY_2(g_mus_sound_set_samples_w, g_mus_sound_set_samples)
@@ -2619,7 +2551,6 @@ XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 #define g_sound_data_scaleB_w g_sound_data_scaleB
 #define g_sound_data_reverseB_w g_sound_data_reverseB
 #define g_sound_data_to_vct_w g_sound_data_to_vct
-#define g_sound_data_to_sound_data_w g_sound_data_to_sound_data
 #define g_vct_to_sound_data_w g_vct_to_sound_data
 #define g_mus_sound_samples_w g_mus_sound_samples
 #define g_mus_sound_set_samples_w g_mus_sound_set_samples
@@ -3115,7 +3046,6 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_scaleB,        g_sound_data_scaleB_w,          2, 0, 0, H_sound_data_scaleB);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_reverseB,      g_sound_data_reverseB_w,        1, 0, 0, H_sound_data_reverseB);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_to_vct,        g_sound_data_to_vct_w,          1, 2, 0, H_sound_data_to_vct);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_to_sound_data, g_sound_data_to_sound_data_w,   5, 0, 0, H_sound_data_to_sound_data);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_to_sound_data,        g_vct_to_sound_data_w,          1, 2, 0, H_vct_to_sound_data);
 
   /* TODO: in s7 sound-data->vct and vct->sound-data can just be make-shared-vector? or do we assume it's new? (use copy first)

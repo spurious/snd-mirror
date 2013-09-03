@@ -530,9 +530,6 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#numericsdoc">numerics</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(numerics_doc_tip)">various numerical functions</td></tr>
 
-<tr><td><a href="sndscm.html#oscopedoc">oscope</a></td>
-    <td onmouseout="UnTip()" onmouseover="Tip(oscope_doc_tip)">an oscilloscope/spectrum analysis dialog</td></tr>
-
 <tr><td><a href="sndscm.html#peakphasesdoc">peak-phases</a></td>
     <td>phases for the unpulse-train</td></tr>
 
@@ -2168,7 +2165,7 @@ See <a href="sndscm.html#startwaterfall">start-waterfall</a> in snd-gl.scm.
 <em class=def id="dachook">dac-hook</em> (data) 
 </pre>
 
-<p>This hook is called just before data is sent to DAC; 'data' is a <a href="#sndsounddata">sound-data</a> object. 
+<p>This hook is called just before data is sent to DAC; 'data' is a list of float vectors.
 See <a href="sndscm.html#withlevelmeters">with-level-meters</a> in snd-motif.scm.
 </p>
 <div class="spacer"></div>
@@ -4538,18 +4535,6 @@ In s7 you can use generalized set:
 </pre>
 
 <p>sound-data? returns #t if obj is a sound-data object.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data->sound-data -->
-<pre class="indented">
-<em class=def id="sounddatatosounddata">sound-data-&gt;sound-data</em> sd-in sd-out beg dur cycle
-</pre>
-
-<p>sound-data-&gt;sound-data copies sound-data sd-in's
-data from 0 for dur frames into sound-data sd-out starting at beg, wrapping around if sd-out's end is reached.
-This is an experimental function currently used in the oscilloscope (oscope.scm).
 </p>
 <div class="spacer"></div>
 
@@ -8622,7 +8607,6 @@ and add-amp-controls in <a href="sndscm.html#sndmotifdoc">snd-motif.scm</a>.
 
 <p>make-variable-graph is a part of the <a href="sndscm.html#variabledisplay">variable-display</a> mechanism in snd-motif.scm.  It creates the
 sound/channel pair that displays a graph or spectrum of the arbitrary data accessed via <a href="#channeldata">channel-data</a>.
-See oscope.scm.
 </p>
 <div class="separator"></div>
 

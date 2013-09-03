@@ -8200,8 +8200,8 @@
 ;;; 3.1.12:
 (CCAST-3.2 "GTK_FONT_CHOOSER" "GtkFontChooser*")
 (CCHK-3.2 "GTK_IS_FONT_CHOOSER" "GtkFontChooser*")
-(CCAST-3.2 "GTK_FONT_CHOOSER_DIALOG" "GtkFontChooserDiaalog*")
-(CCHK-3.2 "GTK_IS_FONT_CHOOSER_DIALOG" "GtkFontChooserDiaalog*")
+(CCAST-3.2 "GTK_FONT_CHOOSER_DIALOG" "GtkFontChooserDialog*")
+(CCHK-3.2 "GTK_IS_FONT_CHOOSER_DIALOG" "GtkFontChooserDialog*")
 
 ;;; typedef gboolean (*GtkFontFilterFunc) (const PangoFontFamily *family, const PangoFontFace *face, gpointer data);
 ;;; void gtk_font_chooser_set_filter_func(GtkFontChooser *fontchooser, GtkFontFilterFunc filter, gpointer data, GDestroyNotify destroy);
@@ -8771,6 +8771,11 @@
 (CFNC-3.10 "void gtk_list_box_prepend GtkListBox* list_box GtkWidget* child")
 (CFNC-3.10 "void gtk_list_box_insert GtkListBox* list_box GtkWidget* child gint position")
 
+;;; 3.9.14:
+
+(CFNC-3.10 "void gdk_window_set_opaque_region GdkWindow* window cairo_region_t* region")
+(CFNC-3.10 "void gtk_label_set_lines GtkLabel* label gint lines")
+(CFNC-3.10 "gint gtk_label_get_lines GtkLabel* label")
 
 
 

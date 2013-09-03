@@ -1845,12 +1845,10 @@ static int fill_dac_buffers(int write_ok)
     {
       if (XEN_FALSE_P(sdobj))
 	{
-	  sdobj = wrap_sound_data(snd_dacp->channels, snd_dacp->frames, dac_buffers);
+	  sdobj = XEN_LIST_1(wrap_sound_data(snd_dacp->channels, snd_dacp->frames, dac_buffers));
 	  sdobj_loc = snd_protect(sdobj);
 	}
-    run_hook(dac_hook, 
-	     XEN_LIST_1(sdobj),
-	     S_dac_hook);
+      run_hook(dac_hook, sdobj, S_dac_hook);
     }
   /* dac-hook might have forced stop-dac, so snd_dacp might be invalid here */
   if (snd_dacp)

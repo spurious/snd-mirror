@@ -1675,7 +1675,7 @@
 	       meter-list)))
     (hook-push dac-hook 
 	       (lambda (hook)
-		 (let ((maxes (sound-data-maxamp (hook 'data))))
+		 (let ((maxes (map vct-peak (hook 'data))))
 		   (for-each
 		    (lambda (meter)
 		      (if (null? maxes)
@@ -2580,10 +2580,10 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 		  (sound? (car widget)))
 	      ;; graph/spectrum -- does this need an explicit update?
 	      (let* ((snd (car widget))
-		     (data (cadr widget))
+		     (data (caadr widget))
 		     (len (length data))
 		     (loc (cursor snd 0)))
-		(sound-data-set! data 0 loc var)
+		(set! (data loc) var)
 		(if (time-graph? snd) (update-time-graph snd))
 		(if (transform-graph? snd) (update-transform-graph snd))
 		(if (= (+ loc 1) len)

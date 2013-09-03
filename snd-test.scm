@@ -2195,7 +2195,7 @@
 		       'smooth-channel 'smooth-selection 'smooth-sound 'snd->sample 'snd->sample?
 		       'snd-error 'snd-error-hook 'snd-gcs 'snd-help 'snd-font 'snd-color
 		       'snd-print 'snd-spectrum 'snd-tempnam 'snd-url
-		       'snd-urls 'snd-version 'snd-warning 'snd-warning-hook 'sound-data->sound-data
+		       'snd-urls 'snd-version 'snd-warning 'snd-warning-hook 
 		       'sound-data->vct 'sound-data-chans 'sound-data-length 'sound-data-maxamp 'sound-data-ref 'sound-data-peak
 		       'sound-data-set! 'sound-data-scale! 'sound-data? 
 		       'sound-data-multiply! 'sound-data-add! 'sound-data-offset! 'sound-data* 'sound-data+ 'sound-data-reverse!
@@ -3234,46 +3234,6 @@
 	      (snd-display #__line__ ";open raw: ~A ~A ~A ~A ~A" (data-format ind) (chans ind) (srate ind) (data-location ind) (frames ind)))
 	  (set! (hook-functions open-raw-sound-hook) ())
 	  (close-sound ind))
-	
-	(let ((sd1 (make-sound-data 1 32))
-	      (sd2 (make-sound-data 2 64)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 32))
-	    (sound-data-set! sd1 0 i (* .01 i)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 64))
-	    (sound-data-set! sd2 0 i (* .1 i))
-	    (sound-data-set! sd2 1 i (* .2 i)))
-	  (sound-data->sound-data sd2 sd1 3 6 32)
-	  (if (fneq (sd1 0 0) 0.0) (snd-display #__line__ ";sound-data->sound-data 0: ~A" (sd1 0 0)))
-	  (if (fneq (sd1 0 2) 0.02) (snd-display #__line__ ";sound-data->sound-data 2: ~A" (sd1 0 2)))
-	  (if (fneq (sd1 0 3) 0.0) (snd-display #__line__ ";sound-data->sound-data 3: ~A" (sd1 0 3)))
-	  (if (fneq (sd1 0 6) 0.3) (snd-display #__line__ ";sound-data->sound-data 6: ~A" (sd1 0 6)))
-	  (if (fneq (sd1 0 10) 0.1) (snd-display #__line__ ";sound-data->sound-data 10: ~A" (sd1 0 10)))
-	  (sound-data->sound-data sd1 sd2 0 10 32)
-	  (if (fneq (sd2 0 5) 0.2) (snd-display #__line__ ";sound-data->sound-data 2 5: ~A" (sd2 0 5))))
-	(let ((sdi (make-sound-data 1 32))
-	      (sdo (make-sound-data 1 32)))
-	  (let ((j (sound-data->sound-data sdi sdo 10 32 10)))
-	    (if (not (= j 2)) (snd-display #__line__ ";sound-data->sound-data wrap around 2: ~A" j)))
-	  (let ((j (sound-data->sound-data sdi sdo 10 32 32)))
-	    (if (not (= j 10)) (snd-display #__line__ ";sound-data->sound-data wrap around 10: ~A" j)))
-	  (let ((tag (catch #t
-			    (lambda () (sound-data->sound-data sdi sdo -1 10 10))
-			    (lambda args (car args)))))
-	    (if (not (eq? tag 'out-of-range))
-		(snd-display #__line__ ";sound-data->sound-data start: ~A" tag)))
-	  (let ((tag (catch #t
-			    (lambda () (sound-data->sound-data sdi sdo 0 -1 10))
-			    (lambda args (car args)))))
-	    (if (not (eq? tag 'out-of-range))
-		(snd-display #__line__ ";sound-data->sound-data frames: ~A" tag)))
-	  (let ((tag (catch #t
-			    (lambda () (sound-data->sound-data sdi sdo 0 128 10))
-			    (lambda args (car args)))))
-	    (if (not (eq? tag 'out-of-range))
-		(snd-display #__line__ ";sound-data->sound-data frames: ~A" tag))))
-	
 	
 	(let ((sd (make-sound-data 1 1)))
 	  (if (fneq (sd 0 0) 0.0) (snd-display #__line__ ";sound-data ref: ~A" (sd 0 0)))
@@ -9696,7 +9656,6 @@ EDITS: 2
 	  (set! ctr 0)
 	  (set! (speed-control) 1.5)
 	  (apply-controls)
-					;		(if (fneq (sample 28245) 0.0) (snd-display #__line__ ";dac-hook stop apply-controls? ~A" (sample 28245)))
 	  (set! (hook-functions dac-hook) ())
 	  (revert-sound)
 	  (set! (speed-control) 1.5)
@@ -26067,12 +26026,12 @@ EDITS: 2
 		     (set! ph #t)))
 	(hook-push dac-hook
 		   (lambda (hook)
-		     (let ((n (hook 'data)))
-		       (if (not (sound-data? n))
+		     (let ((n (car (hook 'data))))
+		       (if (not (vector? n))
 			   (snd-display #__line__ ";dac-hook data: ~A?" n))
-		       (if (and (< (sound-data-length n) 128)
+		       (if (and (< (length n) 128)
 				(not (= (sound-data-length n) 64))) ; mac case
-			   (snd-display #__line__ ";dac-hook data length: ~A?" (sound-data-length n)))
+			   (snd-display #__line__ ";dac-hook data length: ~A?" (length n)))
 		       (set! ph1 #t))))
 	
 	(set! (expand-control? ind) #t)
@@ -46264,7 +46223,7 @@ EDITS: 1
 		     sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ sound-data-reverse!
 		     sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data sound-data-peak
 		     all-pass all-pass? amplitude-modulate
-		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm? sound-data->sound-data
+		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm?
 		     clear-array comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
 		     delay delay? dot-product env env-interp env? file->array file->frame file->frame?  file->sample
 		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant-bank? formant? frame* frame+ firmant firmant?
