@@ -365,6 +365,8 @@ s7_Int *s7_vector_offsets(s7_pointer vec);                                  /* p
 s7_pointer *s7_vector_elements(s7_pointer vec);                             /* a pointer to the array of s7_pointers */
 s7_Int *s7_int_vector_elements(s7_pointer vec);
 s7_Double *s7_float_vector_elements(s7_pointer vec);
+bool s7_is_float_vector(s7_pointer p);                                    
+bool s7_is_int_vector(s7_pointer p);                                      
 
 s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_Int index);                            /* (vector-ref vec index) */
 s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer a);              /* (vector-set! vec index a) */
@@ -372,9 +374,9 @@ s7_pointer s7_vector_ref_n(s7_scheme *sc, s7_pointer vector, int indices, ...); 
 s7_pointer s7_vector_set_n(s7_scheme *sc, s7_pointer vector, s7_pointer value, int indices, ...); /* multidimensional vector-set! */
 
 s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len);                                 /* (make-vector len) */
-s7_pointer s7_make_int_vector(s7_scheme *sc, s7_Int len);
-s7_pointer s7_make_float_vector(s7_scheme *sc, s7_Int len);
-s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *data, int dims, int *dim_info);
+s7_pointer s7_make_int_vector(s7_scheme *sc, s7_Int len, int dims, s7_Int *dim_info);
+s7_pointer s7_make_float_vector(s7_scheme *sc, s7_Int len, int dims, s7_Int *dim_info);
+s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *data, int dims, s7_Int *dim_info);
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill);       /* (make-vector len fill) */
 
 void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj);                   /* (vector-fill! vec obj) */
@@ -729,10 +731,6 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value);
 void s7_mark_object(s7_pointer p);
 s7_pointer s7_object_environment(s7_pointer obj);
 s7_pointer s7_object_set_environment(s7_pointer obj, s7_pointer e);
-void s7_set_object_ref_2(int type, s7_pointer (*ref_2)(s7_scheme *sc, void *val, s7_pointer index));
-void s7_set_object_set_3(int type, s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value));
-void s7_set_object_array_info(int type, size_t length_loc, size_t data_loc);
-void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_args);
 void s7_set_object_print_readably(int type, char *(*printer)(s7_scheme *sc, void *val));
 
   /* experiments */

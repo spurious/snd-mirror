@@ -221,11 +221,6 @@ bool mus_vct_p(XEN obj)
   return((s7_is_float_vector(obj)) &&
 	 (s7_vector_rank(obj) == 1));
 }
-
-static char *s7_vct_to_readable_string(s7_scheme *sc, void *v)
-{
-  return(mus_vct_to_readable_string((vct *)v));
-}
 #endif
 
 

@@ -3118,6 +3118,13 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_to_sound_data, g_sound_data_to_sound_data_w,   5, 0, 0, H_sound_data_to_sound_data);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_to_sound_data,        g_vct_to_sound_data_w,          1, 2, 0, H_vct_to_sound_data);
 
+  /* TODO: in s7 sound-data->vct and vct->sound-data can just be make-shared-vector? or do we assume it's new? (use copy first)
+   *   similarly for sound-data|vct->vector and vice versa if these exist
+   *   also clean up the ifdefs here and in vct.c
+   *   sound-data-chans as dim[1]
+   *   (vct...) -> (float-vector...)?
+   */
+
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_frames,         g_mus_sound_frames_w,           1, 0, 0, H_mus_sound_frames);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_duration,       g_mus_sound_duration_w,         1, 0, 0, H_mus_sound_duration);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_datum_size,     g_mus_sound_datum_size_w,       1, 0, 0, H_mus_sound_datum_size);
