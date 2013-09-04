@@ -10487,7 +10487,7 @@ EDITS: 2
     "(make-dpss-window size w) returns a prolate spheriodal (slepian) window of the given size"
     ;; from Verma, Bilbao, Meng, "The Digital Prolate Spheroidal Window"
     ;; output checked using Julius Smith's dpssw.m, although my "w" is different
-    (let ((mat (make-mixer! n))
+    (let ((mat (make-vector (list n n) 0.0 #t))
 	  (cw (cos (* 2 pi w))))
       (do ((i 0 (+ i 1)))
 	  ((= i n))

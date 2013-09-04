@@ -65,48 +65,16 @@ MUS_EXPORT mus_any_class *mus_make_generator(int type, char *name,
 					     int (*release)(mus_any *ptr), 
 					     char *(*describe)(mus_any *ptr), 
 					     bool (*equalp)(mus_any *gen1, mus_any *gen2));
-MUS_EXPORT void mus_generator_set_release(mus_any_class *p, int (*release)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_describe(mus_any_class *p, char *(*describe)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_equalp(mus_any_class *p, bool (*equalp)(mus_any *gen1, mus_any *gen2));
-MUS_EXPORT void mus_generator_set_data(mus_any_class *p, mus_float_t *(*data)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_set_data(mus_any_class *p, mus_float_t *(*set_data)(mus_any *ptr, mus_float_t *new_data));
+
 MUS_EXPORT void mus_generator_set_length(mus_any_class *p, mus_long_t (*length)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_set_length(mus_any_class *p, mus_long_t (*set_length)(mus_any *ptr, mus_long_t new_length));
-MUS_EXPORT void mus_generator_set_frequency(mus_any_class *p, mus_float_t (*frequency)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_set_frequency(mus_any_class *p, mus_float_t (*set_frequency)(mus_any *ptr, mus_float_t new_freq));
-MUS_EXPORT void mus_generator_set_phase(mus_any_class *p, mus_float_t (*phase)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_set_phase(mus_any_class *p, mus_float_t (*set_phase)(mus_any *ptr, mus_float_t new_phase));
 MUS_EXPORT void mus_generator_set_scaler(mus_any_class *p, mus_float_t (*scaler)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_set_scaler(mus_any_class *p, mus_float_t (*set_scaler)(mus_any *ptr, mus_float_t val));
-MUS_EXPORT void mus_generator_set_increment(mus_any_class *p, mus_float_t (*increment)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_set_increment(mus_any_class *p, mus_float_t (*set_increment)(mus_any *ptr, mus_float_t val));
-MUS_EXPORT void mus_generator_set_run(mus_any_class *p, mus_float_t (*run)(mus_any *gen, mus_float_t arg1, mus_float_t arg2));
-MUS_EXPORT void mus_generator_set_closure(mus_any_class *p, void *(*closure)(mus_any *gen));
 MUS_EXPORT void mus_generator_set_channels(mus_any_class *p, int (*channels)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_offset(mus_any_class *p, mus_float_t (*offset)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_set_offset(mus_any_class *p, mus_float_t (*set_offset)(mus_any *ptr, mus_float_t val));
-MUS_EXPORT void mus_generator_set_width(mus_any_class *p, mus_float_t (*width)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_set_width(mus_any_class *p, mus_float_t (*set_width)(mus_any *ptr, mus_float_t val));
-MUS_EXPORT void mus_generator_set_xcoeff(mus_any_class *p, mus_float_t (*xcoeff)(mus_any *ptr, int index));
-MUS_EXPORT void mus_generator_set_set_xcoeff(mus_any_class *p, mus_float_t (*set_xcoeff)(mus_any *ptr, int index, mus_float_t val));
-MUS_EXPORT void mus_generator_set_hop(mus_any_class *p, mus_long_t (*hop)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_set_hop(mus_any_class *p, mus_long_t (*set_hop)(mus_any *ptr, mus_long_t new_length));
-MUS_EXPORT void mus_generator_set_ramp(mus_any_class *p, mus_long_t (*ramp)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_set_ramp(mus_any_class *p, mus_long_t (*set_ramp)(mus_any *ptr, mus_long_t new_length));
-MUS_EXPORT void mus_generator_set_read_sample(mus_any_class *p, mus_float_t (*read_sample)(mus_any *ptr, mus_long_t samp, int chan));
-MUS_EXPORT void mus_generator_set_write_sample(mus_any_class *p, mus_float_t (*write_sample)(mus_any *ptr, mus_long_t samp, int chan, mus_float_t data));
-MUS_EXPORT void mus_generator_set_file_name(mus_any_class *p, char *(*file_name)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_end(mus_any_class *p, int (*end)(mus_any *ptr));
 MUS_EXPORT void mus_generator_set_location(mus_any_class *p, mus_long_t (*location)(mus_any *ptr));
 MUS_EXPORT void mus_generator_set_set_location(mus_any_class *p, mus_long_t (*set_location)(mus_any *ptr, mus_long_t loc));
 MUS_EXPORT void mus_generator_set_channel(mus_any_class *p, int (*channel)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_ycoeff(mus_any_class *p, mus_float_t (*ycoeff)(mus_any *ptr, int index));
-MUS_EXPORT void mus_generator_set_set_ycoeff(mus_any_class *p, mus_float_t (*set_ycoeff)(mus_any *ptr, int index, mus_float_t val));
-MUS_EXPORT void mus_generator_set_xcoeffs(mus_any_class *p, mus_float_t *(*xcoeffs)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_ycoeffs(mus_any_class *p, mus_float_t *(*ycoeffs)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_reset(mus_any_class *p, void (*reset)(mus_any *ptr));
-MUS_EXPORT void mus_generator_set_set_closure(mus_any_class *p, void *(*set_closure)(mus_any *gen, void *e));
+MUS_EXPORT void mus_generator_set_file_name(mus_any_class *p, char *(*file_name)(mus_any *ptr));
 MUS_EXPORT void mus_generator_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type);
+MUS_EXPORT void mus_generator_set_read_sample(mus_any_class *p, mus_float_t (*read_sample)(mus_any *ptr, mus_long_t samp, int chan));
 
 MUS_EXPORT void mus_generator_set_feeder(mus_any *g, mus_float_t (*feed)(void *arg, int direction));
 

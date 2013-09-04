@@ -2248,25 +2248,6 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
 }
 
 
-static void *mus_long_t_memmove(char *dest, const char *source, mus_long_t length)
-{
-  /* not void, as in gnulib, because that makes C++ unhappy! */
-  char *d0 = dest;
-  if (source < dest)
-    /* Moving from low mem to hi mem; start at end.  */
-    for (source += length, dest += length; length; --length)
-      *--dest = *--source;
-  else 
-    if (source != dest)
-      {
-	/* Moving from hi mem to low mem; start at beginning.  */
-	for (; length; --length)
-	  *dest++ = *source++;
-      }
-  return((void *)d0);
-}
-
-
 #if HAVE_FORTH
 #define S_sound_data_to_vector          "sound-data->vector"
 

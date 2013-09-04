@@ -2168,6 +2168,11 @@ static XEN g_gsl_eigenvectors(XEN matrix)
   int i, j, len;
   XEN values = XEN_FALSE, vectors = XEN_FALSE;
 
+#if HAVE_SCHEME
+  XEN_ASSERT_TYPE(s7_is_float_vector(matrix), matrix, XEN_ONLY_ARG, "gsl-eigenvectors", "a float vector");
+  len = (int)sqrt(s7_vector_length(matrix));
+  data = (double *)s7_float_vector_elements(matrix);
+#else
   XEN_ASSERT_TYPE(mus_xen_p(matrix), matrix, XEN_ONLY_ARG, "gsl-eigenvectors", "a mixer (matrix)");
   u1 = XEN_TO_MUS_ANY(matrix);
   if (!mus_mixer_p(u1)) return(XEN_FALSE);
@@ -2177,6 +2182,7 @@ static XEN g_gsl_eigenvectors(XEN matrix)
   for (i = 0; i < len; i++)
     for (j = 0; j < len; j++)
       data[i * len + j] = mus_mixer_ref(u1, i, j);
+#endif
 
   {
     gsl_matrix_view m = gsl_matrix_view_array(data, len, len);
@@ -2219,7 +2225,9 @@ static XEN g_gsl_eigenvectors(XEN matrix)
     gsl_matrix_complex_free(evec);
   }
 
+#if (!HAVE_SCHEME)
   free(data);
+#endif
   return(XEN_LIST_2(values, vectors));
 }
 #endif

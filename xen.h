@@ -10,8 +10,8 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 16
-#define XEN_VERSION "3.16"
+#define XEN_MINOR_VERSION 17
+#define XEN_VERSION "3.17"
 
 /* HISTORY:
  *

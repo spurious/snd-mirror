@@ -449,4 +449,3 @@
 
 
 ;;; TODO: doc output handling and arg
-;;; TODO: add ifdef trailing arg

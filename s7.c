@@ -2260,8 +2260,6 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define c_object_value(p)             (p)->object.c_obj.value
 #define c_object_type(p)              (p)->object.c_obj.type
 #define c_object_environment(p)       (p)->object.c_obj.e
-#define c_object_array(p)             (p)->object.c_obj.array
-#define c_object_array_length(p)      (p)->object.c_obj.array_length
 
 static c_object_t **object_types = NULL;
 static int object_types_size = 0;
@@ -67618,14 +67616,10 @@ int main(int argc, char **argv)
  * the default object print_readable function should give an error, not mimic write
  * direct access to FILE* in s7 port (for libc)? (port-file) 
  *   if -export-dynamic, can't s7 funcs be tied in as well via cload?
- * do we need a finalization or gc-time function for c-pointers?
- *   what about a type-name field for c-pointers (better debugging output)
- *   (make-c-pointer val "char**" free) s7_make_c_pointer_with_free? T_TYPED_C_POINTER with name/type/free/print/equal? fields [need mark]
  * could we use glob or equivalent in the glistener filename completer?
  * #[...] for int/float vectors?  or (float-vector ...), or perhaps #nf() #1f() and same for #ni? #float()? #int()?
  *   (float-vector '(a b c) '(d e f)) is not ambiguous -- this would be '(2 3) dims (or an error)
  *   better: (float-vector (float-vector ...) (float-vector ...))?
- * 2-stage load in cload for gslbug (fc19)?
  * TODO: change docs for sound-data/vct, change to vector wherever possible, remove more from scheme sndlib2xen/vct (synonyms) [frame.scm?]
  *   what about vector-ref/set loop opts? from vct/sound-data code
  * TODO: split the apply code for the various vector types -- maybe opt this as HOP_FLOAT_VECTOR_SS (opCq C S see t502 comment above)
@@ -67633,5 +67627,5 @@ int main(int argc, char **argv)
  *  can we split out the multidim stuff in unknown_op?
  *  the other side is a set op -- set_pair_p_3?
  *
- * TODO: remove sound-data ws output option
+ * remove sound-data ws output option
  */
