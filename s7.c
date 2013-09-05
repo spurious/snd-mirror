@@ -58054,12 +58054,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    val = cadr(sc->code);
 		    if (!is_pair(val))
 		      {
-			s7_pointer obj;
-			obj = sc->x;
-
 			if (is_symbol(val))
 			  val = finder(sc, val);
-
 			car(sc->T2_1) = index;
 			car(sc->T2_2) = val;
 			sc->value = (*(c_object_set(sc->x)))(sc, sc->x, sc->T2_1);
@@ -67620,12 +67616,15 @@ int main(int argc, char **argv)
  * #[...] for int/float vectors?  or (float-vector ...), or perhaps #nf() #1f() and same for #ni? #float()? #int()?
  *   (float-vector '(a b c) '(d e f)) is not ambiguous -- this would be '(2 3) dims (or an error)
  *   better: (float-vector (float-vector ...) (float-vector ...))?
+ *   (make-shared-vector '(a b) (float-vector ...))
  * TODO: change docs for sound-data/vct, change to vector wherever possible, remove more from scheme sndlib2xen/vct (synonyms) [frame.scm?]
  *   what about vector-ref/set loop opts? from vct/sound-data code
  * TODO: split the apply code for the various vector types -- maybe opt this as HOP_FLOAT_VECTOR_SS (opCq C S see t502 comment above)
  *  can we see dot-products and the like?
  *  can we split out the multidim stuff in unknown_op?
  *  the other side is a set op -- set_pair_p_3?
- *
+ * check dac-hook in ruby/forth
  * remove sound-data ws output option
+ * libgsl tests could use s7test+rename (let ((sin gsl_complex_sin)) (load "s7test.scm" (current-environment))) etc)
+ * vct_set_let_looped is a major part of the de-opt
  */

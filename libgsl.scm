@@ -11,6 +11,27 @@
 	
 	(set! *libraries* (cons (cons "libgsl.scm" (current-environment)) *libraries*))
 
+	(define GSL_REAL real-part)
+	(define GSL_IMAG imag-part)
+	(define GSL_COMPLEX_EQ equal?)
+	(define GSL_COMPLEX_ONE 1.0)
+	(define GSL_COMPLEX_ZERO 0.0)
+	(define GSL_COMPLEX_NEGONE -1.0)
+	(define gsl_complex_polar make-polar)
+	(define gsl_complex_rect make-rectangular)
+	(define GSL_IS_ODD odd?)
+	(define GSL_IS_EVEN even?)
+	(define (GSL_IS_REAL n) (and (number? n) (not (nan? n)) (not (infinite? n))))
+	(define (GSL_SIGN x) (if (negative? x) -1 1))
+	(define GSL_MAX max)
+	(define GSL_MIN min)
+	(define GSL_MAX_INT max)
+	(define GSL_MIN_INT min)
+	(define GSL_MAX_DBL max)
+	(define GSL_MIN_DBL min)
+	(define gsl_max max)
+	(define gsl_min min)
+
 	(c-define '((C-macro (double (GSL_CONST_CGS_SPEED_OF_LIGHT GSL_CONST_CGS_GRAVITATIONAL_CONSTANT GSL_CONST_CGS_PLANCKS_CONSTANT_H 
 				      GSL_CONST_CGS_PLANCKS_CONSTANT_HBAR GSL_CONST_CGS_ASTRONOMICAL_UNIT GSL_CONST_CGS_LIGHT_YEAR 
 				      GSL_CONST_CGS_PARSEC GSL_CONST_CGS_GRAV_ACCEL GSL_CONST_CGS_ELECTRON_VOLT GSL_CONST_CGS_MASS_ELECTRON 
@@ -140,6 +161,7 @@
 		    (C-macro (double (GSL_SF_GAMMA_XMAX
 				      GSL_POSINF GSL_NEGINF GSL_NAN GSL_POSZERO GSL_NEGZERO)))
 
+		    (C-macro (char* GSL_VERSION))
 
 		    ;; redirect GSL errors to s7_error
 		    (in-C "static s7_scheme *gsl_error_s7;
@@ -1021,137 +1043,335 @@
 		    (double gsl_rng_uniform_pos (gsl_rng*))
 		    (int gsl_rng_uniform_int (gsl_rng* int))
 
-		)
-		 "" (list
-		 "gsl/gsl_blas.h"
-		 "gsl/gsl_blas_types.h"
-		 "gsl/gsl_block.h"
-		 "gsl/gsl_block_complex_double.h"
-		 "gsl/gsl_block_double.h"
-		 "gsl/gsl_bspline.h"
-		 "gsl/gsl_cblas.h"
-		 "gsl/gsl_cdf.h"
-		 "gsl/gsl_chebyshev.h"
-		 "gsl/gsl_check_range.h"
-		 "gsl/gsl_combination.h"
-		 "gsl/gsl_complex.h"
-		 "gsl/gsl_complex_math.h"
-		 "gsl/gsl_const.h"
-		 "gsl/gsl_const_cgs.h"
-		 "gsl/gsl_const_cgsm.h"
-		 "gsl/gsl_const_mks.h"
-		 "gsl/gsl_const_mksa.h"
-		 "gsl/gsl_const_num.h"
-		 "gsl/gsl_deriv.h"
-		 "gsl/gsl_dft_complex.h"
-		 "gsl/gsl_dht.h"
-		 "gsl/gsl_diff.h"
-		 "gsl/gsl_eigen.h"
-		 "gsl/gsl_errno.h"
-		 "gsl/gsl_fft.h"
-		 "gsl/gsl_fft_complex.h"
-		 "gsl/gsl_fft_real.h"
-		 "gsl/gsl_fit.h"
-		 "gsl/gsl_heapsort.h"
-		 "gsl/gsl_histogram.h"
-		 "gsl/gsl_histogram2d.h"
-		 "gsl/gsl_ieee_utils.h"
-		 "gsl/gsl_inline.h"
-		 "gsl/gsl_integration.h"
-		 "gsl/gsl_interp.h"
-		 "gsl/gsl_linalg.h"
-		 "gsl/gsl_machine.h"
-		 "gsl/gsl_math.h"
-		 "gsl/gsl_matrix.h"
-		 "gsl/gsl_matrix_complex_double.h"
-		 "gsl/gsl_matrix_double.h"
-		 "gsl/gsl_message.h"
-		 "gsl/gsl_min.h"
-		 "gsl/gsl_minmax.h"
-		 "gsl/gsl_mode.h"
-		 "gsl/gsl_monte.h"
-		 "gsl/gsl_monte_miser.h"
-		 "gsl/gsl_monte_plain.h"
-		 "gsl/gsl_monte_vegas.h"
-		 "gsl/gsl_multifit.h"
-		 "gsl/gsl_multifit_nlin.h"
-		 "gsl/gsl_multimin.h"
-		 "gsl/gsl_multiroots.h"
-		 "gsl/gsl_multiset.h"
-		 "gsl/gsl_nan.h"
-		 "gsl/gsl_ntuple.h"
-		 "gsl/gsl_odeiv.h"
-		 "gsl/gsl_odeiv2.h"
-		 "gsl/gsl_permutation.h"
-		 "gsl/gsl_permute.h"
-		 "gsl/gsl_permute_complex_double.h"
-		 "gsl/gsl_permute_double.h"
-		 "gsl/gsl_permute_vector.h"
-		 "gsl/gsl_permute_vector_complex_double.h"
-		 "gsl/gsl_permute_vector_double.h"
-		 "gsl/gsl_poly.h"
-		 "gsl/gsl_pow_int.h"
-		 "gsl/gsl_precision.h"
-		 "gsl/gsl_qrng.h"
-		 "gsl/gsl_randist.h"
-		 "gsl/gsl_rng.h"
-		 "gsl/gsl_roots.h"
-		 "gsl/gsl_sf.h"
-		 "gsl/gsl_sf_airy.h"
-		 "gsl/gsl_sf_bessel.h"
-		 "gsl/gsl_sf_clausen.h"
-		 "gsl/gsl_sf_coulomb.h"
-		 "gsl/gsl_sf_coupling.h"
-		 "gsl/gsl_sf_dawson.h"
-		 "gsl/gsl_sf_debye.h"
-		 "gsl/gsl_sf_dilog.h"
-		 "gsl/gsl_sf_elementary.h"
-		 "gsl/gsl_sf_ellint.h"
-		 "gsl/gsl_sf_elljac.h"
-		 "gsl/gsl_sf_erf.h"
-		 "gsl/gsl_sf_exp.h"
-		 "gsl/gsl_sf_expint.h"
-		 "gsl/gsl_sf_fermi_dirac.h"
-		 "gsl/gsl_sf_gamma.h"
-		 "gsl/gsl_sf_gegenbauer.h"
-		 "gsl/gsl_sf_hyperg.h"
-		 "gsl/gsl_sf_laguerre.h"
-		 "gsl/gsl_sf_lambert.h"
-		 "gsl/gsl_sf_legendre.h"
-		 "gsl/gsl_sf_log.h"
-		 "gsl/gsl_sf_mathieu.h"
-		 "gsl/gsl_sf_pow_int.h"
-		 "gsl/gsl_sf_psi.h"
-		 "gsl/gsl_sf_result.h"
-		 "gsl/gsl_sf_synchrotron.h"
-		 "gsl/gsl_sf_transport.h"
-		 "gsl/gsl_sf_trig.h"
-		 "gsl/gsl_sf_zeta.h"
-		 "gsl/gsl_siman.h"
-		 "gsl/gsl_sort.h"
-		 "gsl/gsl_sort_double.h"
-		 "gsl/gsl_sort_vector.h"
-		 "gsl/gsl_sort_vector_double.h"
-		 "gsl/gsl_specfunc.h"
-		 "gsl/gsl_spline.h"
-		 "gsl/gsl_statistics.h"
-		 "gsl/gsl_statistics_double.h"
-		 "gsl/gsl_sum.h"
-		 "gsl/gsl_sys.h"
-		 "gsl/gsl_vector.h"
-		 "gsl/gsl_vector_complex.h"
-		 "gsl/gsl_vector_double.h"
-		 "gsl/gsl_version.h"
-		 "gsl/gsl_wavelet.h"
-		 "gsl/gsl_wavelet2d.h"
-		 )
+		    ;; gsl_complex
+		    (in-C "#define S7_TO_GSL_COMPLEX(sg, g) GSL_SET_COMPLEX(&g, s7_real_part(sg), s7_imag_part(sg))
+                           #define GSL_TO_S7_COMPLEX(sc, g) s7_make_complex(sc, GSL_REAL(g), GSL_IMAG(g))
+                           
+                           static s7_pointer s7_gsl_c_c(s7_scheme *sc, s7_pointer arg1, gsl_complex (*callee)(gsl_complex a))
+                           {
+                             gsl_complex g, g1;
+                             S7_TO_GSL_COMPLEX(arg1, g1);
+                             g = callee(g1);
+                             return(GSL_TO_S7_COMPLEX(sc, g));
+                           }
+                           
+                           static s7_pointer s7_gsl_r_c(s7_scheme *sc, s7_pointer arg1, gsl_complex (*callee)(double a))
+                           {
+                             gsl_complex g;
+                             g = callee(s7_number_to_real(sc, arg1));
+                             return(GSL_TO_S7_COMPLEX(sc, g));
+                           }
+                           
+                           static s7_pointer s7_gsl_c_r(s7_scheme *sc, s7_pointer arg1, double (*callee)(gsl_complex a))
+                           {
+                             gsl_complex g1;
+                             S7_TO_GSL_COMPLEX(arg1, g1);
+                             return(s7_make_real(sc, callee(g1)));
+                           }
+                           
+                           static s7_pointer s7_gsl_cc_c(s7_scheme *sc, s7_pointer arg1, s7_pointer arg2, gsl_complex (*callee)(gsl_complex a, gsl_complex b))
+                           {
+                             gsl_complex g, g1, g2;
+                             S7_TO_GSL_COMPLEX(arg1, g1);
+                             S7_TO_GSL_COMPLEX(arg2, g2);
+                             g = callee(g1, g2);
+                             return(GSL_TO_S7_COMPLEX(sc, g));
+                           }
+                           
+                           static s7_pointer s7_gsl_cr_c(s7_scheme *sc, s7_pointer arg1, s7_pointer arg2, gsl_complex (*callee)(gsl_complex a, double b))
+                           {
+                             gsl_complex g, g1;
+                             S7_TO_GSL_COMPLEX(arg1, g1);
+                             g = callee(g1, s7_number_to_real(sc, arg2));
+                             return(GSL_TO_S7_COMPLEX(sc, g));
+                           }
+                           
+                           static s7_pointer g_gsl_complex_arg(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_r(sc, s7_car(args), gsl_complex_arg));}
+                           static s7_pointer g_gsl_complex_abs(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_r(sc, s7_car(args), gsl_complex_abs));}
+                           static s7_pointer g_gsl_complex_abs2(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_r(sc, s7_car(args), gsl_complex_abs2));}
+                           static s7_pointer g_gsl_complex_logabs(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_r(sc, s7_car(args), gsl_complex_logabs));}
+                           
+                           static s7_pointer g_gsl_complex_conjugate(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_conjugate));}
+                           static s7_pointer g_gsl_complex_inverse(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_inverse));}
+                           static s7_pointer g_gsl_complex_negative(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_negative));}
+                           static s7_pointer g_gsl_complex_sqrt(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_sqrt));}
+                           static s7_pointer g_gsl_complex_exp(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_exp));}
+                           static s7_pointer g_gsl_complex_log(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_log));}
+                           static s7_pointer g_gsl_complex_log10(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_log10));}
+                           static s7_pointer g_gsl_complex_sin(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_sin));}
+                           static s7_pointer g_gsl_complex_cos(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_cos));}
+                           static s7_pointer g_gsl_complex_sec(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_sec));}
+                           static s7_pointer g_gsl_complex_csc(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_csc));}
+                           static s7_pointer g_gsl_complex_tan(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_tan));}
+                           static s7_pointer g_gsl_complex_cot(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_cot));}
+                           static s7_pointer g_gsl_complex_sinh(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_sinh));}
+                           static s7_pointer g_gsl_complex_cosh(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_cosh));}
+                           static s7_pointer g_gsl_complex_sech(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_sech));}
+                           static s7_pointer g_gsl_complex_csch(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_csch));}
+                           static s7_pointer g_gsl_complex_tanh(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_tanh));}
+                           static s7_pointer g_gsl_complex_coth(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_coth));}
+                           static s7_pointer g_gsl_complex_arctan(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_arctan));}
+                           static s7_pointer g_gsl_complex_arccot(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_arccot));}
+                           static s7_pointer g_gsl_complex_arcsinh(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_arcsinh));}
+                           static s7_pointer g_gsl_complex_arcsech(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_arcsech));}
+                           static s7_pointer g_gsl_complex_arccsch(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_arccsch));}
+                           static s7_pointer g_gsl_complex_arccoth(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_arccoth));}
+                           static s7_pointer g_gsl_complex_arcsin(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_arcsin));}
+                           static s7_pointer g_gsl_complex_arccos(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_arccos));}
+                           static s7_pointer g_gsl_complex_arcsec(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_arcsec));}
+                           static s7_pointer g_gsl_complex_arccsc(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_arccsc));}
+                           static s7_pointer g_gsl_complex_arccosh(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_arccosh));}
+                           static s7_pointer g_gsl_complex_arctanh(s7_scheme *sc, s7_pointer args) {return(s7_gsl_c_c(sc, s7_car(args), gsl_complex_arctanh));}
+                           
+                           static s7_pointer g_gsl_complex_sqrt_real(s7_scheme *sc, s7_pointer args) {return(s7_gsl_r_c(sc, s7_car(args), gsl_complex_sqrt_real));}
+                           static s7_pointer g_gsl_complex_arcsin_real(s7_scheme *sc, s7_pointer args) {return(s7_gsl_r_c(sc, s7_car(args), gsl_complex_arcsin_real));}
+                           static s7_pointer g_gsl_complex_arccos_real(s7_scheme *sc, s7_pointer args) {return(s7_gsl_r_c(sc, s7_car(args), gsl_complex_arccos_real));}
+                           static s7_pointer g_gsl_complex_arcsec_real(s7_scheme *sc, s7_pointer args) {return(s7_gsl_r_c(sc, s7_car(args), gsl_complex_arcsec_real));}
+                           static s7_pointer g_gsl_complex_arccsc_real(s7_scheme *sc, s7_pointer args) {return(s7_gsl_r_c(sc, s7_car(args), gsl_complex_arccsc_real));}
+                           static s7_pointer g_gsl_complex_arccosh_real(s7_scheme *sc, s7_pointer args) {return(s7_gsl_r_c(sc, s7_car(args), gsl_complex_arccosh_real));}
+                           static s7_pointer g_gsl_complex_arctanh_real(s7_scheme *sc, s7_pointer args) {return(s7_gsl_r_c(sc, s7_car(args), gsl_complex_arctanh_real));}
+                           
+                           static s7_pointer g_gsl_complex_add(s7_scheme *sc, s7_pointer args) {return(s7_gsl_cc_c(sc, s7_car(args), s7_cadr(args), gsl_complex_add));}
+                           static s7_pointer g_gsl_complex_sub(s7_scheme *sc, s7_pointer args) {return(s7_gsl_cc_c(sc, s7_car(args), s7_cadr(args), gsl_complex_sub));}
+                           static s7_pointer g_gsl_complex_mul(s7_scheme *sc, s7_pointer args) {return(s7_gsl_cc_c(sc, s7_car(args), s7_cadr(args), gsl_complex_mul));}
+                           static s7_pointer g_gsl_complex_div(s7_scheme *sc, s7_pointer args) {return(s7_gsl_cc_c(sc, s7_car(args), s7_cadr(args), gsl_complex_div));}
+                           static s7_pointer g_gsl_complex_log_b(s7_scheme *sc, s7_pointer args) {return(s7_gsl_cc_c(sc, s7_car(args), s7_cadr(args), gsl_complex_log_b));}
+                           static s7_pointer g_gsl_complex_pow(s7_scheme *sc, s7_pointer args) {return(s7_gsl_cc_c(sc, s7_car(args), s7_cadr(args), gsl_complex_pow));}
+                           
+                           static s7_pointer g_gsl_complex_add_real(s7_scheme *sc, s7_pointer args) {return(s7_gsl_cr_c(sc, s7_car(args), s7_cadr(args), gsl_complex_add_real));}
+                           static s7_pointer g_gsl_complex_sub_real(s7_scheme *sc, s7_pointer args) {return(s7_gsl_cr_c(sc, s7_car(args), s7_cadr(args), gsl_complex_sub_real));}
+                           static s7_pointer g_gsl_complex_mul_real(s7_scheme *sc, s7_pointer args) {return(s7_gsl_cr_c(sc, s7_car(args), s7_cadr(args), gsl_complex_mul_real));}
+                           static s7_pointer g_gsl_complex_div_real(s7_scheme *sc, s7_pointer args) {return(s7_gsl_cr_c(sc, s7_car(args), s7_cadr(args), gsl_complex_div_real));}
+                           static s7_pointer g_gsl_complex_add_imag(s7_scheme *sc, s7_pointer args) {return(s7_gsl_cr_c(sc, s7_car(args), s7_cadr(args), gsl_complex_add_imag));}
+                           static s7_pointer g_gsl_complex_sub_imag(s7_scheme *sc, s7_pointer args) {return(s7_gsl_cr_c(sc, s7_car(args), s7_cadr(args), gsl_complex_sub_imag));}
+                           static s7_pointer g_gsl_complex_mul_imag(s7_scheme *sc, s7_pointer args) {return(s7_gsl_cr_c(sc, s7_car(args), s7_cadr(args), gsl_complex_mul_imag));}
+                           static s7_pointer g_gsl_complex_div_imag(s7_scheme *sc, s7_pointer args) {return(s7_gsl_cr_c(sc, s7_car(args), s7_cadr(args), gsl_complex_div_imag));}
+                           static s7_pointer g_gsl_complex_pow_real(s7_scheme *sc, s7_pointer args) {return(s7_gsl_cr_c(sc, s7_car(args), s7_cadr(args), gsl_complex_pow_real));}
+                           ")
+
+		    (C-function ("gsl_complex_arg" g_gsl_complex_arg "" 1))
+		    (C-function ("gsl_complex_abs" g_gsl_complex_abs "" 1))
+		    (C-function ("gsl_complex_abs2" g_gsl_complex_abs2 "" 1))
+		    (C-function ("gsl_complex_logabs" g_gsl_complex_logabs "" 1))
+		    
+		    (C-function ("gsl_complex_conjugate" g_gsl_complex_conjugate "" 1))
+		    (C-function ("gsl_complex_inverse" g_gsl_complex_inverse "" 1))
+		    (C-function ("gsl_complex_negative" g_gsl_complex_negative "" 1))
+		    (C-function ("gsl_complex_sqrt" g_gsl_complex_sqrt "" 1))
+		    (C-function ("gsl_complex_exp" g_gsl_complex_exp "" 1))
+		    (C-function ("gsl_complex_log" g_gsl_complex_log "" 1))
+		    (C-function ("gsl_complex_log10" g_gsl_complex_log10 "" 1))
+		    (C-function ("gsl_complex_sin" g_gsl_complex_sin "" 1))
+		    (C-function ("gsl_complex_cos" g_gsl_complex_cos "" 1))
+		    (C-function ("gsl_complex_sec" g_gsl_complex_sec "" 1))
+		    (C-function ("gsl_complex_csc" g_gsl_complex_csc "" 1))
+		    (C-function ("gsl_complex_tan" g_gsl_complex_tan "" 1))
+		    (C-function ("gsl_complex_cot" g_gsl_complex_cot "" 1))
+		    (C-function ("gsl_complex_sinh" g_gsl_complex_sinh "" 1))
+		    (C-function ("gsl_complex_cosh" g_gsl_complex_cosh "" 1))
+		    (C-function ("gsl_complex_sech" g_gsl_complex_sech "" 1))
+		    (C-function ("gsl_complex_csch" g_gsl_complex_csch "" 1))
+		    (C-function ("gsl_complex_tanh" g_gsl_complex_tanh "" 1))
+		    (C-function ("gsl_complex_coth" g_gsl_complex_coth "" 1))
+		    (C-function ("gsl_complex_arctan" g_gsl_complex_arctan "" 1))
+		    (C-function ("gsl_complex_arccot" g_gsl_complex_arccot "" 1))
+		    (C-function ("gsl_complex_arcsinh" g_gsl_complex_arcsinh "" 1))
+		    (C-function ("gsl_complex_arcsech" g_gsl_complex_arcsech "" 1))
+		    (C-function ("gsl_complex_arccsch" g_gsl_complex_arccsch "" 1))
+		    (C-function ("gsl_complex_arccoth" g_gsl_complex_arccoth "" 1))
+		    (C-function ("gsl_complex_arcsin" g_gsl_complex_arcsin "" 1))
+		    (C-function ("gsl_complex_arccos" g_gsl_complex_arccos "" 1))
+		    (C-function ("gsl_complex_arcsec" g_gsl_complex_arcsec "" 1))
+		    (C-function ("gsl_complex_arccsc" g_gsl_complex_arccsc "" 1))
+		    (C-function ("gsl_complex_arccosh" g_gsl_complex_arccosh "" 1))
+		    (C-function ("gsl_complex_arctanh" g_gsl_complex_arctanh "" 1))
+		    
+		    (C-function ("gsl_complex_sqrt_real" g_gsl_complex_sqrt_real "" 1))
+		    (C-function ("gsl_complex_arcsin_real" g_gsl_complex_arcsin_real "" 1))
+		    (C-function ("gsl_complex_arccos_real" g_gsl_complex_arccos_real "" 1))
+		    (C-function ("gsl_complex_arcsec_real" g_gsl_complex_arcsec_real "" 1))
+		    (C-function ("gsl_complex_arccsc_real" g_gsl_complex_arccsc_real "" 1))
+		    (C-function ("gsl_complex_arccosh_real" g_gsl_complex_arccosh_real "" 1))
+		    (C-function ("gsl_complex_arctanh_real" g_gsl_complex_arctanh_real "" 1))
+		    
+		    (C-function ("gsl_complex_add" g_gsl_complex_add "" 2))
+		    (C-function ("gsl_complex_sub" g_gsl_complex_sub "" 2))
+		    (C-function ("gsl_complex_mul" g_gsl_complex_mul "" 2))
+		    (C-function ("gsl_complex_div" g_gsl_complex_div "" 2))
+		    (C-function ("gsl_complex_log_b" g_gsl_complex_log_b "" 2))
+		    (C-function ("gsl_complex_pow" g_gsl_complex_pow "" 2))
+		    
+		    (C-function ("gsl_complex_add_real" g_gsl_complex_add_real "" 2))
+		    (C-function ("gsl_complex_sub_real" g_gsl_complex_sub_real "" 2))
+		    (C-function ("gsl_complex_mul_real" g_gsl_complex_mul_real "" 2))
+		    (C-function ("gsl_complex_div_real" g_gsl_complex_div_real "" 2))
+		    (C-function ("gsl_complex_add_imag" g_gsl_complex_add_imag "" 2))
+		    (C-function ("gsl_complex_sub_imag" g_gsl_complex_sub_imag "" 2))
+		    (C-function ("gsl_complex_mul_imag" g_gsl_complex_mul_imag "" 2))
+		    (C-function ("gsl_complex_div_imag" g_gsl_complex_div_imag "" 2))
+		    (C-function ("gsl_complex_pow_real" g_gsl_complex_pow_real "" 2))
+
+
+		    ;; cheb
+		    (gsl_cheb_series* gsl_cheb_alloc (size_t))
+		    (void gsl_cheb_free (gsl_cheb_series*))
+		    (size_t gsl_cheb_order (gsl_cheb_series*))
+		    (size_t gsl_cheb_size (gsl_cheb_series*))
+		    (double* gsl_cheb_coeffs (gsl_cheb_series*))
+		    (double gsl_cheb_eval (gsl_cheb_series* double))
+		    (int gsl_cheb_eval_err (gsl_cheb_series* double double* double*))
+		    (double gsl_cheb_eval_n (gsl_cheb_series* size_t double))
+		    (int gsl_cheb_eval_n_err (gsl_cheb_series* size_t double double* double*))
+		    (double gsl_cheb_eval_mode (gsl_cheb_series* double int))
+		    (int gsl_cheb_eval_mode_e (gsl_cheb_series* double int double* double*))
+		    (int gsl_cheb_calc_deriv (gsl_cheb_series* gsl_cheb_series*))
+		    (int gsl_cheb_calc_integ (gsl_cheb_series* gsl_cheb_series*))
+
+		    ;; gsl_function is a struct with double function(double void*) and void* params
+		    (in-C "static s7_scheme *gsl_f_s7;
+                           static double gsl_f_caller(double x, void *p) 
+                           {
+                             return(s7_real(s7_call(gsl_f_s7, (s7_pointer)p, s7_cons(gsl_f_s7, s7_make_real(gsl_f_s7, x), s7_nil(gsl_f_s7)))));
+                           }
+                           static s7_pointer g_gsl_cheb_init(s7_scheme *sc, s7_pointer args)
+                           {
+                             gsl_function gsl_f;
+                             gsl_f.function = gsl_f_caller;
+                             gsl_f.params = (void *)s7_cadr(args);
+                             gsl_f_s7 = sc;
+                             return(s7_make_integer(sc, gsl_cheb_init((gsl_cheb_series *)s7_c_pointer(s7_car(args)),
+                                                                      &gsl_f, s7_real(s7_caddr(args)), s7_real(s7_cadddr(args)))));
+                           }
+                           ")
+		    (C-function ("gsl_cheb_init" g_gsl_cheb_init "" 4))
+		    
+		    )
+		  "" (list "gsl/gsl_blas.h"
+			   "gsl/gsl_blas_types.h"
+			   "gsl/gsl_block.h"
+			   "gsl/gsl_block_complex_double.h"
+			   "gsl/gsl_block_double.h"
+			   "gsl/gsl_bspline.h"
+			   "gsl/gsl_cblas.h"
+			   "gsl/gsl_cdf.h"
+			   "gsl/gsl_chebyshev.h"
+			   "gsl/gsl_check_range.h"
+			   "gsl/gsl_combination.h"
+			   "gsl/gsl_complex.h"
+			   "gsl/gsl_complex_math.h"
+			   "gsl/gsl_const.h"
+			   "gsl/gsl_const_cgs.h"
+			   "gsl/gsl_const_cgsm.h"
+			   "gsl/gsl_const_mks.h"
+			   "gsl/gsl_const_mksa.h"
+			   "gsl/gsl_const_num.h"
+			   "gsl/gsl_deriv.h"
+			   "gsl/gsl_dft_complex.h"
+			   "gsl/gsl_dht.h"
+			   "gsl/gsl_diff.h"
+			   "gsl/gsl_eigen.h"
+			   "gsl/gsl_errno.h"
+			   "gsl/gsl_fft.h"
+			   "gsl/gsl_fft_complex.h"
+			   "gsl/gsl_fft_real.h"
+			   "gsl/gsl_fit.h"
+			   "gsl/gsl_heapsort.h"
+			   "gsl/gsl_histogram.h"
+			   "gsl/gsl_histogram2d.h"
+			   "gsl/gsl_ieee_utils.h"
+			   "gsl/gsl_inline.h"
+			   "gsl/gsl_integration.h"
+			   "gsl/gsl_interp.h"
+			   "gsl/gsl_linalg.h"
+			   "gsl/gsl_machine.h"
+			   "gsl/gsl_math.h"
+			   "gsl/gsl_matrix.h"
+			   "gsl/gsl_matrix_complex_double.h"
+			   "gsl/gsl_matrix_double.h"
+			   "gsl/gsl_message.h"
+			   "gsl/gsl_min.h"
+			   "gsl/gsl_minmax.h"
+			   "gsl/gsl_mode.h"
+			   "gsl/gsl_monte.h"
+			   "gsl/gsl_monte_miser.h"
+			   "gsl/gsl_monte_plain.h"
+			   "gsl/gsl_monte_vegas.h"
+			   "gsl/gsl_multifit.h"
+			   "gsl/gsl_multifit_nlin.h"
+			   "gsl/gsl_multimin.h"
+			   "gsl/gsl_multiroots.h"
+			   "gsl/gsl_multiset.h"
+			   "gsl/gsl_nan.h"
+			   "gsl/gsl_ntuple.h"
+			   "gsl/gsl_odeiv.h"
+			   "gsl/gsl_odeiv2.h"
+			   "gsl/gsl_permutation.h"
+			   "gsl/gsl_permute.h"
+			   "gsl/gsl_permute_complex_double.h"
+			   "gsl/gsl_permute_double.h"
+			   "gsl/gsl_permute_vector.h"
+			   "gsl/gsl_permute_vector_complex_double.h"
+			   "gsl/gsl_permute_vector_double.h"
+			   "gsl/gsl_poly.h"
+			   "gsl/gsl_pow_int.h"
+			   "gsl/gsl_precision.h"
+			   "gsl/gsl_qrng.h"
+			   "gsl/gsl_randist.h"
+			   "gsl/gsl_rng.h"
+			   "gsl/gsl_roots.h"
+			   "gsl/gsl_sf.h"
+			   "gsl/gsl_sf_airy.h"
+			   "gsl/gsl_sf_bessel.h"
+			   "gsl/gsl_sf_clausen.h"
+			   "gsl/gsl_sf_coulomb.h"
+			   "gsl/gsl_sf_coupling.h"
+			   "gsl/gsl_sf_dawson.h"
+			   "gsl/gsl_sf_debye.h"
+			   "gsl/gsl_sf_dilog.h"
+			   "gsl/gsl_sf_elementary.h"
+			   "gsl/gsl_sf_ellint.h"
+			   "gsl/gsl_sf_elljac.h"
+			   "gsl/gsl_sf_erf.h"
+			   "gsl/gsl_sf_exp.h"
+			   "gsl/gsl_sf_expint.h"
+			   "gsl/gsl_sf_fermi_dirac.h"
+			   "gsl/gsl_sf_gamma.h"
+			   "gsl/gsl_sf_gegenbauer.h"
+			   "gsl/gsl_sf_hyperg.h"
+			   "gsl/gsl_sf_laguerre.h"
+			   "gsl/gsl_sf_lambert.h"
+			   "gsl/gsl_sf_legendre.h"
+			   "gsl/gsl_sf_log.h"
+			   "gsl/gsl_sf_mathieu.h"
+			   "gsl/gsl_sf_pow_int.h"
+			   "gsl/gsl_sf_psi.h"
+			   "gsl/gsl_sf_result.h"
+			   "gsl/gsl_sf_synchrotron.h"
+			   "gsl/gsl_sf_transport.h"
+			   "gsl/gsl_sf_trig.h"
+			   "gsl/gsl_sf_zeta.h"
+			   "gsl/gsl_siman.h"
+			   "gsl/gsl_sort.h"
+			   "gsl/gsl_sort_double.h"
+			   "gsl/gsl_sort_vector.h"
+			   "gsl/gsl_sort_vector_double.h"
+			   "gsl/gsl_specfunc.h"
+			   "gsl/gsl_spline.h"
+			   "gsl/gsl_statistics.h"
+			   "gsl/gsl_statistics_double.h"
+			   "gsl/gsl_sum.h"
+			   "gsl/gsl_sys.h"
+			   "gsl/gsl_vector.h"
+			   "gsl/gsl_vector_complex.h"
+			   "gsl/gsl_vector_double.h"
+			   "gsl/gsl_version.h"
+			   "gsl/gsl_wavelet.h"
+			   "gsl/gsl_wavelet2d.h"
+			   )
 		 
 		 "-I/usr/local/include -DGSL_DISABLE_DEPRECATED" "-lgsl -lgslcblas" "libgsl_s7")
-	
-(current-environment))))
+					; GSL_DISABLE_DEPRECATED is needed to avoid a name collision (dating from version 1.7!!)
+	(current-environment))))
 
 *libgsl*
-;; the loader will return *libgsl*
-
-;; the GSL_DISABLE_DEPRECATED switch is needed to avoid a name collision (dating from version 1.7!!)
 
