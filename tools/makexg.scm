@@ -2128,24 +2128,14 @@
  (cdr all-types))
 
 (define other-types 
-  (list 'GFile_ 'GIcon_ 'GdkBitmap_ 'GdkColor_ 'GdkColormap_ 'GdkDevice_ 'GdkDrawable_ 'GdkEventButton_ 'GdkEventConfigure_ 'GdkEventCrossing_ 
-	'GdkEventDND_ 'GdkEventExpose_ 'GdkEventFocus_ 'GdkEventNoExpose_ 'GdkEventProperty_ 'GdkEventProximity_ 'GdkEventScroll_ 'GdkEventSelection_ 
-	'GdkEventSetting_ 'GdkEventVisibility_ 'GdkEventWindowState_ 'GdkPixmap_ 'GtkAccelMap 'GtkAccessible_ 'GtkCalendarDetailFunc 'GtkCellRendererAccel_ 
-	'GtkCellRendererCombo_ 'GtkCellRendererPixbuf_ 'GtkCellRendererProgress_ 'GtkCellRendererSpin_ 'GtkCellRendererSpinner_ 'GtkCheckButton_ 
-	'GtkColorButton_ 'GtkDrawingArea_ 'GtkEntryBuffer_ 'GtkFileChooserDialog_ 'GtkFileChooserWidget_ 'GtkFontSelectionDialog_ 
-	'GtkFontSelection_ 'GtkInfoBar_ 'GtkInvisible_ 'GtkObject_ 'GtkRcStyle_ 'GtkRecentChooserDialog_ 'GtkRecentChooserWidget_ 
-	'GtkRequisition_ 'GtkScaleButton_ 'GtkScrollbar_ 'GtkSeparatorMenuItem_ 'GtkSeparator_ 'GtkSpinner_ 'GtkStyle_ 'GtkToolItemGroup_ 
-	'GtkToolPaletteDragTargets 'GtkToolPalette_ 'cairo_destroy_func_t 'cairo_font_extents_t_ 'cairo_font_face_t_ 'cairo_glyph_t_ 'cairo_glyph_t__
-	'cairo_matrix_t_ 'cairo_path_t_ 'cairo_pattern_t_ 'cairo_rectangle_list_t_ 'cairo_scaled_font_t_ 'cairo_surface_t_ 
-	'cairo_text_cluster_flags_t_ 'cairo_text_cluster_t_ 'cairo_text_cluster_t__ 'cairo_text_extents_t_ 'cairo_user_data_key_t_ 'idler 'void_
-	'cairo_text_cluster_flags_t
-	'GdkModifierType_ 'GdkDeviceManager_ 'GtkMessageDialog_ 'cairo_region_t_ 'cairo_region_t_ 'GtkContainerClass_ 'GtkAlign 'GtkAlign 
-	'GtkComboBoxText_ 'GdkRGBA_ 'GdkRGBA_ 'GtkGrid_ 'GtkScrollable_ 'GtkSwitch_ 'GtkBorder_ 'GtkBorder_ 'GtkActivatable_ 'GtkCellArea_ 
-	'GtkOrientable_ 'GtkWindowGroup_ 'GtkWindowGroup_ 'GtkToolShell_ 'GdkScreen__ 'GtkWidgetPath_ 'GtkOverlay_ 'GtkFontChooser_ 'guint__ 
-	'GMenuModel_ 'GMenuModel_ 'GtkApplication_ 'GVariant_ 'GtkApplicationWindow_ 'GtkColorChooser_ 'GtkComboBoxText_ 'GtkGrid_ 'GtkScrollable_ 
-	'GdkRGBA_ 'GtkSwitch_ 'GtkActivatable_ 'GtkOrientable_ 'GtkWindowGroup_ 'GtkToolShell_ 'GtkOverlay_ 'GtkFontChooser_ 'GtkFontChooserDialog_ 
-	'GtkFontChooserWidget_ 'GtkApplicationWindow_ 'GtkColorChooserDialog_ 'GtkColorWidget_ 
-	'gboolean_
+  (list 'idler 'GtkCellRendererPixbuf_ 'GtkCheckButton_ 'GtkDrawingArea_ 'GtkScrollbar_ 'GtkSeparator_ 'GtkSeparatorMenuItem_
+	'GdkEventExpose_ 'GdkEventNoExpose_ 'GdkEventVisibility_ 'GdkEventButton_ 'GdkEventScroll_ 'GdkEventCrossing_
+	'GdkEventFocus_ 'GdkEventConfigure_ 'GdkEventProperty_ 'GdkEventSelection_ 'GdkEventProximity_ 'GdkEventSetting_
+	'GdkEventWindowState_ 'GdkEventDND_ 'GtkFileChooserDialog_ 'GtkFileChooserWidget_ 'GtkColorButton_ 'GtkAccelMap
+	'GtkCellRendererCombo_ 'GtkCellRendererProgress_ 'GtkCellRendererAccel_ 'GtkCellRendererSpin_ 'GtkRecentChooserDialog_
+	'GtkRecentChooserWidget_ 'GtkCellRendererSpinner_ 'gboolean_
+	'GtkFontChooserDialog_ 'GtkFontChooserWidget_ 'GtkColorChooserDialog_ 'GtkColorChooserWidget_ 'GtkColorWidget_
+
 	))
 
 (for-each

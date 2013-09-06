@@ -1512,9 +1512,7 @@ void xen_repl(int argc, char **argv)
 	  while ((str) && (isspace(str[0]))) str++;
 	  if (*str)
 	    {
-	      int len;
 	      s7_pointer result;
-	      len = strlen(str);
 	      add_history(str);
 	      result = XEN_EVAL_C_STRING(str);
 	      s7_write(s7, result, s7_current_output_port(s7));   /* use write, not display so that strings are in double quotes */

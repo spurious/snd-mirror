@@ -4862,9 +4862,9 @@ int mus_audio_initialize(void)
 char *mus_audio_moniker(void) 
 {
 #if __NetBSD__
-  return("NetBSD audio");
+  return((char *)"NetBSD audio");
 #else
-  return("OpenBSD audio");
+  return((char *)"OpenBSD audio");
 #endif
 }
 
@@ -4972,7 +4972,6 @@ static int netbsd_formats(int ur_dev, int *val)
 {
   int i, audio_fd, err, dev;
   audio_info_t info;
-  bool ok = true;
   audio_encoding_t e_info;
 
   dev = MUS_AUDIO_DEVICE(ur_dev);

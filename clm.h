@@ -1,9 +1,9 @@
 #ifndef CLM_H
 #define CLM_H
 
-#define MUS_VERSION 6
-#define MUS_REVISION 0
-#define MUS_DATE "4-Sep-13"
+#define MUS_VERSION 5
+#define MUS_REVISION 15
+#define MUS_DATE "5-Sep-13"
 
 /* isn't mus_env_interp backwards? */
 
@@ -579,18 +579,6 @@ MUS_EXPORT mus_float_t mus_ssb_am(mus_any *ptr, mus_float_t insig, mus_float_t f
 MUS_EXPORT void mus_clear_sinc_tables(void);
 MUS_EXPORT void *mus_environ(mus_any *gen);
 MUS_EXPORT void *mus_set_environ(mus_any *gen, void *e);
-
-
-  /* clm.c experiment */
-MUS_EXPORT double *mus_doubles_add(int size, double *f1, double *f2, double *res);
-MUS_EXPORT double *mus_doubles_multiply(int size, double *f1, double *f2, double *res);
-MUS_EXPORT double *mus_doubles_scale(int size, double *f1, double scl, double *res);
-MUS_EXPORT double *mus_doubles_offset(int size, double *f1, double off, double *res);
-MUS_EXPORT double *mus_sample_to_doubles(int size, double *f, mus_float_t in, double *out);
-MUS_EXPORT mus_float_t mus_doubles_to_sample(int size, double *f, double *in);
-MUS_EXPORT double *mus_doubles_to_file(mus_any *ptr, mus_long_t samp, int chans, double *data);
-MUS_EXPORT double *mus_M_times_f(int in_size, int out_size, double *m1, double *f1, double *res);
-MUS_EXPORT double *mus_f_times_M(int in_size, int out_size, double *f1, double *m1, double *res);
 
 
 /* used only in run.lisp */

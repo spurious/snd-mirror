@@ -724,7 +724,7 @@
 		    (double gsl_fdiv (double double))
 		    (double gsl_coerce_double (double))
 		    (double gsl_ldexp (double int))
-		    (double gsl_frexp (double int*))
+		    (double gsl_frexp (double int*)) ; TODO: isn't this by ref?
 		    (int gsl_fcmp (double double double))
 		    (double gsl_pow_2 (double))
 		    (double gsl_pow_3 (double))
@@ -1244,7 +1244,315 @@
                            }
                            ")
 		    (C-function ("gsl_cheb_init" g_gsl_cheb_init "" 4))
+
+		    ;; (define cs ((*libgsl* 'gsl_cheb_alloc) 40))
+		    ;; ((*libgsl* 'gsl_cheb_init) cs (lambda (x) x) -1.0 1.0)
+		    ;; (do ((x -1.0 (+ x .1))) ((>= x 1.0)) (format #t "~A~%" ((*libgsl* 'gsl_cheb_eval) cs x)))
+		    ;; ((*libgsl* 'gsl_cheb_free) cs)
+
 		    
+		    ;; interp
+
+		    (gsl_interp_accel* gsl_interp_accel_alloc (void))
+		    (int gsl_interp_accel_reset (gsl_interp_accel*))
+		    (void gsl_interp_accel_free (gsl_interp_accel*))
+		    (gsl_interp* gsl_interp_alloc (gsl_interp_type* size_t))
+		    (int gsl_interp_init (gsl_interp* double* double* size_t))
+		    (char* gsl_interp_name (gsl_interp*))
+		    (int gsl_interp_min_size (gsl_interp*))
+		    (int gsl_interp_type_min_size (gsl_interp_type*))
+		    (int gsl_interp_eval_e (gsl_interp* double* double* double gsl_interp_accel* double*))
+		    (double gsl_interp_eval (gsl_interp* double* double* double gsl_interp_accel*))
+		    (int gsl_interp_eval_deriv_e (gsl_interp* double* double* double gsl_interp_accel* double*))
+		    (double gsl_interp_eval_deriv (gsl_interp* double* double* double gsl_interp_accel*))
+		    (int gsl_interp_eval_deriv2_e (gsl_interp* double* double* double gsl_interp_accel* double*))
+		    (double gsl_interp_eval_deriv2 (gsl_interp* double* double* double gsl_interp_accel*))
+		    (int gsl_interp_eval_integ_e (gsl_interp* double* double* double double gsl_interp_accel* double*))
+		    (double gsl_interp_eval_integ (gsl_interp* double* double* double double gsl_interp_accel*))
+		    (void gsl_interp_free (gsl_interp*))
+		    (size_t gsl_interp_bsearch (double* double size_t size_t))
+		    (size_t gsl_interp_accel_find (gsl_interp_accel* double* size_t double))
+
+
+		    ;; spline
+
+		    (gsl_spline* gsl_spline_alloc (gsl_interp_type* size_t))
+		    (int gsl_spline_init (gsl_spline* double* double* size_t))
+		    (char* gsl_spline_name (gsl_spline*))
+		    (int gsl_spline_min_size (gsl_spline*))
+		    (int gsl_spline_eval_e (gsl_spline* double gsl_interp_accel* double*))
+		    (double gsl_spline_eval (gsl_spline* double gsl_interp_accel*))
+		    (int gsl_spline_eval_deriv_e (gsl_spline* double gsl_interp_accel* double*))
+		    (double gsl_spline_eval_deriv (gsl_spline* double gsl_interp_accel*))
+		    (int gsl_spline_eval_deriv2_e (gsl_spline* double gsl_interp_accel* double*))
+		    (double gsl_spline_eval_deriv2 (gsl_spline* double gsl_interp_accel*))
+		    (int gsl_spline_eval_integ_e (gsl_spline* double double gsl_interp_accel* double*))
+		    (double gsl_spline_eval_integ (gsl_spline* double double gsl_interp_accel*))
+		    (void gsl_spline_free (gsl_spline*))
+		    
+
+		    ;; bspline
+
+		    (gsl_bspline_workspace* gsl_bspline_alloc (size_t size_t))
+		    (void gsl_bspline_free (gsl_bspline_workspace*))
+		    (size_t gsl_bspline_ncoeffs (gsl_bspline_workspace*))
+		    (size_t gsl_bspline_order (gsl_bspline_workspace*))
+		    (size_t gsl_bspline_nbreak (gsl_bspline_workspace*))
+		    (double gsl_bspline_breakpoint (size_t gsl_bspline_workspace*))
+		    (double gsl_bspline_greville_abscissa (size_t gsl_bspline_workspace*))
+		    (int gsl_bspline_knots (gsl_vector* gsl_bspline_workspace*))
+		    (int gsl_bspline_knots_uniform (double double gsl_bspline_workspace*))
+		    (int gsl_bspline_knots_greville (gsl_vector* gsl_bspline_workspace* double*))
+		    (int gsl_bspline_eval (double gsl_vector* gsl_bspline_workspace*))
+		    (int gsl_bspline_eval_nonzero (double gsl_vector* size_t* size_t* gsl_bspline_workspace*))
+		    (gsl_bspline_deriv_workspace* gsl_bspline_deriv_alloc (size_t))
+		    (void gsl_bspline_deriv_free (gsl_bspline_deriv_workspace*))
+		    (int gsl_bspline_deriv_eval (double size_t gsl_matrix* gsl_bspline_workspace* gsl_bspline_deriv_workspace*))
+		    (int gsl_bspline_deriv_eval_nonzero (double size_t gsl_matrix* size_t* size_t* gsl_bspline_workspace* gsl_bspline_deriv_workspace*))
+
+
+		    ;; sort
+		    ;; TODO: size_t* -> int vector?
+
+		    (void gsl_sort (double* size_t size_t))
+		    (void gsl_sort2 (double* size_t double* size_t size_t))
+		    (void gsl_sort_index (size_t* double* size_t size_t))
+		    (int gsl_sort_smallest (double* size_t double* size_t size_t))
+		    (int gsl_sort_smallest_index (size_t* size_t double* size_t size_t))
+		    (int gsl_sort_largest (double* size_t double* size_t size_t))
+		    (int gsl_sort_largest_index (size_t* size_t double* size_t size_t))
+		    (void gsl_sort_vector (gsl_vector*))
+		    (void gsl_sort_vector2 (gsl_vector* gsl_vector*))
+		    (int gsl_sort_vector_index (gsl_permutation* gsl_vector*))
+		    (int gsl_sort_vector_smallest (double* size_t gsl_vector*))
+		    (int gsl_sort_vector_largest (double* size_t gsl_vector*))
+		    (int gsl_sort_vector_smallest_index (size_t* size_t gsl_vector*))
+		    (int gsl_sort_vector_largest_index (size_t* size_t gsl_vector*))
+
+
+		    ;; poly
+
+		    (double gsl_poly_eval (double* int double))
+		    (int gsl_poly_eval_derivs (double* size_t double double* size_t))
+		    (int gsl_poly_dd_init (double* double* double* size_t))
+		    (double gsl_poly_dd_eval (double* double* size_t double))
+		    (int gsl_poly_dd_taylor (double* double double* double* size_t double*))
+		    (int gsl_poly_dd_hermite_init (double* double* double* double* double* size_t))
+		    (void gsl_poly_complex_workspace_free (gsl_poly_complex_workspace*))
+		    (gsl_poly_complex_workspace* gsl_poly_complex_workspace_alloc (size_t))
+
+		    (in-C "static s7_pointer g_gsl_poly_complex_eval(s7_scheme *sc, s7_pointer args)
+                           {
+                             gsl_complex z, rz;
+                             S7_TO_GSL_COMPLEX(s7_caddr(args), z);
+                             rz = gsl_poly_complex_eval((double *)s7_c_pointer(s7_car(args)), (int)s7_integer(s7_cadr(args)), z);
+                             return(GSL_TO_S7_COMPLEX(sc, rz));
+                           }
+                           
+                           static s7_pointer g_gsl_complex_poly_complex_eval(s7_scheme *sc, s7_pointer args)
+                           {
+                             gsl_complex *z;
+                             gsl_complex rz, x;
+                             int i, n;
+                             s7_pointer v, result;
+                             v = s7_car(args);
+                             n = s7_integer(s7_cadr(args));
+                             z = (gsl_complex *)calloc(n, sizeof(gsl_complex));
+                             for (i = 0; i < n; i++)
+                               S7_TO_GSL_COMPLEX(s7_vector_ref(sc, v, i), z[i]);
+                             S7_TO_GSL_COMPLEX(s7_caddr(args), x);
+                             rz = gsl_complex_poly_complex_eval(z, n, x);
+                             free(z);
+                             return(GSL_TO_S7_COMPLEX(sc, rz));
+                           }
+                           
+                           static s7_pointer g_gsl_poly_complex_solve_quadratic(s7_scheme *sc, s7_pointer args)
+                           {
+                             gsl_complex z0, z1;
+                             int result;
+                             s7_pointer res;
+                           
+                             res = s7_cadddr(args);
+                             result = gsl_poly_complex_solve_quadratic(s7_number_to_real(sc, s7_car(args)), s7_number_to_real(sc, s7_cadr(args)), 
+                                                                       s7_number_to_real(sc, s7_caddr(args)), &z0, &z1);
+                             s7_vector_set(sc, res, 0, GSL_TO_S7_COMPLEX(sc, z0));
+                             s7_vector_set(sc, res, 1, GSL_TO_S7_COMPLEX(sc, z1));
+                           
+                             return(s7_make_integer(sc, result));
+                           }
+                           
+                           static s7_pointer g_gsl_poly_complex_solve_cubic(s7_scheme *sc, s7_pointer args)
+                           {
+                             /* trailing args are by ref, but I think I'll mimic the real solver above */
+                             gsl_complex z0, z1, z2;
+                             int result;
+                             s7_pointer res;
+                           
+                             result = gsl_poly_complex_solve_cubic(s7_number_to_real(sc, s7_car(args)), s7_number_to_real(sc, s7_cadr(args)), 
+                                                                   s7_number_to_real(sc, s7_caddr(args)), &z0, &z1, &z2);
+                             res = s7_cadddr(args);
+                             s7_vector_set(sc, res, 0, GSL_TO_S7_COMPLEX(sc, z0));
+                             s7_vector_set(sc, res, 1, GSL_TO_S7_COMPLEX(sc, z1));
+                             s7_vector_set(sc, res, 2, GSL_TO_S7_COMPLEX(sc, z2));
+                           
+                             return(s7_make_integer(sc, result));
+                           }
+                           
+                           static s7_pointer g_gsl_poly_complex_solve(s7_scheme *sc, s7_pointer args)
+                           {
+                             /* trailing args are by ref, but I think I'll mimic the real solver above */
+                             double *z;
+                             gsl_poly_complex_workspace *w;
+                             int result, i, size;
+                             s7_pointer res;
+                           
+                             size = s7_integer(s7_cadr(args));
+                             res = s7_cadddr(args);
+                           
+                             z = (double *)calloc(size * 2, sizeof(double));
+                             w = gsl_poly_complex_workspace_alloc(size);
+                             result = gsl_poly_complex_solve((double *)s7_c_pointer(s7_car(args)), size, w, (gsl_complex_packed_ptr)z);
+                             gsl_poly_complex_workspace_free(w);
+                           
+                             for (i = 0; i < size; i++)
+                               s7_vector_set(sc, res, i, s7_make_complex(sc, z[2 * i], z[2 * i + 1]));
+                             free(z);
+                           
+                             return(s7_make_integer(sc, result));
+                           }
+                           
+                           static s7_pointer g_gsl_poly_solve_quadratic(s7_scheme *sc, s7_pointer args)
+                           {
+                             double x0, x1;
+                             int result;
+                             double *res;
+                             res = (double *)s7_c_pointer(s7_cadddr(args));
+                             result = gsl_poly_solve_quadratic(s7_number_to_real(sc, s7_car(args)), s7_number_to_real(sc, s7_cadr(args)), 
+                                                               s7_number_to_real(sc, s7_caddr(args)), &x0, &x1);
+                             res[0] = x0;
+                             res[1] = x1;
+                             return(s7_make_integer(sc, result));
+                           }
+                           
+                           static s7_pointer g_gsl_poly_solve_cubic(s7_scheme *sc, s7_pointer args)
+                           {
+                             double x0, x1, x2;
+                             int result;
+                             double *res;
+                             res = (double *)s7_c_pointer(s7_cadddr(args));
+                             result = gsl_poly_solve_cubic(s7_number_to_real(sc, s7_car(args)), s7_number_to_real(sc, s7_cadr(args)), 
+                                                           s7_number_to_real(sc, s7_caddr(args)), &x0, &x1, &x2);
+                             res[0] = x0;
+                             res[1] = x1;
+                             res[2] = x2;
+                             return(s7_make_integer(sc, result));
+                           }
+                           ")
+
+		    (C-function ("gsl_poly_complex_eval" g_gsl_poly_complex_eval "" 3))
+		    (C-function ("gsl_complex_poly_complex_eval" g_gsl_complex_poly_complex_eval "" 3))
+		    (C-function ("gsl_poly_complex_solve_quadratic" g_gsl_poly_complex_solve_quadratic "" 4))
+		    (C-function ("gsl_poly_complex_solve_cubic" g_gsl_poly_complex_solve_cubic "" 4))
+		    (C-function ("gsl_poly_complex_solve" g_gsl_poly_complex_solve "" 3))
+                           
+		    (C-function ("gsl_poly_solve_quadratic" g_gsl_poly_solve_quadratic "" 4))
+		    (C-function ("gsl_poly_solve_cubic" g_gsl_poly_solve_cubic "" 4))
+
+		    
+		    ;; block -- I can't see any use for this
+		    ;; (gsl_block_complex* gsl_block_complex_alloc (size_t))
+		    ;; (gsl_block_complex* gsl_block_complex_calloc (size_t))
+		    ;; (void gsl_block_complex_free (gsl_block_complex*))
+		    ;; (int gsl_block_complex_fread (FILE* gsl_block_complex*))
+		    ;; (int gsl_block_complex_fwrite (FILE* gsl_block_complex*))
+		    ;; (int gsl_block_complex_fscanf (FILE* gsl_block_complex*))
+		    ;; (int gsl_block_complex_fprintf (FILE* gsl_block_complex* char*))
+		    ;; (int gsl_block_complex_raw_fread (FILE* double* size_t size_t))
+		    ;; (int gsl_block_complex_raw_fwrite (FILE* double* size_t size_t))
+		    ;; (int gsl_block_complex_raw_fscanf (FILE* double* size_t size_t))
+		    ;; (int gsl_block_complex_raw_fprintf (FILE* double* size_t size_t char*))
+		    ;; (size_t gsl_block_complex_size (gsl_block_complex*))
+		    ;; (double* gsl_block_complex_data (gsl_block_complex*))
+		    ;; (gsl_block* gsl_block_alloc (size_t))
+		    ;; (gsl_block* gsl_block_calloc (size_t))
+		    ;; (void gsl_block_free (gsl_block*))
+		    ;; (int gsl_block_fread (FILE* gsl_block*))
+		    ;; (int gsl_block_fwrite (FILE* gsl_block*))
+		    ;; (int gsl_block_fscanf (FILE* gsl_block*))
+		    ;; (int gsl_block_fprintf (FILE* gsl_block* char*))
+		    ;; (int gsl_block_raw_fread (FILE* double* size_t size_t))
+		    ;; (int gsl_block_raw_fwrite (FILE* double* size_t size_t))
+		    ;; (int gsl_block_raw_fscanf (FILE* double* size_t size_t))
+		    ;; (int gsl_block_raw_fprintf (FILE* double* size_t size_t char*))
+		    ;; (size_t gsl_block_size (gsl_block*))
+		    ;; (double* gsl_block_data (gsl_block*))
+
+		    ;; vector
+		    (in-C "static s7_pointer g_float_to_gsl_vector(s7_scheme *sc, s7_pointer args)
+                           {
+                              gsl_vector *g;
+                              int size;
+                              s7_pointer v;
+                              v = s7_car(args);
+                              size = s7_vector_length(v);
+                              g = (gsl_vector *)s7_c_pointer(s7_cadr(args));
+                              memcpy((void *)(g->data), (void *)s7_float_vector_elements(v), size * sizeof(double));
+                              return(s7_cadr(args));
+                           }
+                           static s7_pointer g_gsl_to_float_vector(s7_scheme *sc, s7_pointer args)
+                           {
+                              gsl_vector *g;
+                              int size;
+                              s7_pointer v;
+                              v = s7_cadr(args);
+                              size = s7_vector_length(v);
+                              g = (gsl_vector *)s7_c_pointer(s7_car(args));
+                              memcpy((void *)s7_float_vector_elements(v), (void *)(g->data), size * sizeof(double));
+                              return(s7_make_c_pointer(sc, (void *)g));
+                           }
+                           ")
+		    (C-function ("float->gsl_vector" g_float_to_gsl_vector "" 2))
+		    (C-function ("gsl->float-vector" g_gsl_to_float_vector "" 2))
+
+		    (gsl_vector* gsl_vector_alloc (size_t))
+		    (gsl_vector* gsl_vector_calloc (size_t))
+		    ;; (gsl_vector* gsl_vector_alloc_from_block (gsl_block* size_t size_t size_t))
+		    (gsl_vector* gsl_vector_alloc_from_vector (gsl_vector* size_t size_t size_t))
+		    (void gsl_vector_free (gsl_vector*))
+		    (void gsl_vector_set_zero (gsl_vector*))
+		    (void gsl_vector_set_all (gsl_vector* double))
+		    (int gsl_vector_set_basis (gsl_vector* size_t))
+		    (int gsl_vector_fread (FILE* gsl_vector*))
+		    (int gsl_vector_fwrite (FILE* gsl_vector*))
+		    (int gsl_vector_fscanf (FILE* gsl_vector*))
+		    (int gsl_vector_fprintf (FILE* gsl_vector* char*))
+		    (int gsl_vector_memcpy (gsl_vector* gsl_vector*))
+		    (int gsl_vector_reverse (gsl_vector*))
+		    (int gsl_vector_swap (gsl_vector* gsl_vector*))
+		    (int gsl_vector_swap_elements (gsl_vector* size_t size_t))
+		    (double gsl_vector_max (gsl_vector*))
+		    (double gsl_vector_min (gsl_vector*))
+		    (size_t gsl_vector_max_index (gsl_vector*))
+		    (size_t gsl_vector_min_index (gsl_vector*))
+		    (int gsl_vector_add (gsl_vector* gsl_vector*))
+		    (int gsl_vector_sub (gsl_vector* gsl_vector*))
+		    (int gsl_vector_mul (gsl_vector* gsl_vector*))
+		    (int gsl_vector_div (gsl_vector* gsl_vector*))
+		    (int gsl_vector_scale (gsl_vector* double))
+		    (int gsl_vector_add_constant (gsl_vector* double))
+		    (int gsl_vector_equal (gsl_vector* gsl_vector*))
+		    (int gsl_vector_isnull (gsl_vector*))
+		    (int gsl_vector_ispos (gsl_vector*))
+		    (int gsl_vector_isneg (gsl_vector*))
+		    (int gsl_vector_isnonneg (gsl_vector*))
+		    (double gsl_vector_get (gsl_vector* size_t))
+		    (void gsl_vector_set (gsl_vector* size_t double))
+		    (double* gsl_vector_ptr (gsl_vector* size_t))
+		    (double* gsl_vector_const_ptr (gsl_vector* size_t))
+		    (void gsl_vector_minmax (gsl_vector* double* double*)) ; by ref
+		    (void gsl_vector_minmax_index (gsl_vector* size_t* size_t*)) ; by ref 
+
+
 		    )
 		  "" (list "gsl/gsl_blas.h"
 			   "gsl/gsl_blas_types.h"

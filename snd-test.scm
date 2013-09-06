@@ -24882,15 +24882,6 @@ EDITS: 2
 	(define-envelope test-ramp '(0 1 1 0))
 	(if (not (equal? test-ramp '(0 1 1 0))) (snd-display #__line__ ";re-define-envelope test-ramp: ~A" test-ramp))
 	
-	(if (or (provided? 'xm) (and (provided? 'xg) (defined? 'gtk_box_new)))
-	    (begin
-	      (load "oscope.scm")
-	      ;; oscope exists
-	      (if (not (sound-data? (cadr oscope))) (snd-display #__line__ ";oscope: ~A" oscope))
-	      (if (provided? 'snd-motif)
-		  (XtUnmanageChild oscope-dialog)
-		  (gtk_widget_hide oscope-dialog))))
-	
 	(if with-motif
 	    (let ((dialog (view-files-dialog #f)))
 	      (let ((vfamp (view-files-amp dialog))

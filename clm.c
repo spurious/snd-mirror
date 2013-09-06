@@ -8989,16 +8989,7 @@ mus_float_t mus_pulsed_env_unmodulated(mus_any *g)
 
 /* frame = vector, mixer = (square) matrix, but "vector" is in use already, and "matrix" sounds too techy */
 
-/* in scheme, I want frames and mixers to be float-vectors, not clm gens (see vct/sound-data for examples),
- *   but I need to maintain the old form since there might be C-code (in a parallel universe?) that cares.
- *   So, I think I'll split each frame/mixer function into the outer call (the original clm-gen case),
- *   and an inner one that only knows about contiguous blocks of doubles, then tie that into the s7
- *   vectors in clm2xen.
- *
- * to deal with: file->frame, mus_mix uses frames passed in
- *               move-sound uses (internal?) frames, as does locsig
- *               clm.h entries, clm2xen side
- *               frame.scm (others?) has code that makes little sense if all the types are the same
+/* someday frames and vcts should be combined, and mixers/sound-data
  */
 
 typedef struct {
@@ -9147,15 +9138,6 @@ mus_any *mus_make_frame(int chans, ...)
 }
 
 
-double *mus_doubles_add(int size, double *f1, double *f2, double *res)
-{
-  int i;
-  for (i = 0; i < size; i++) 
-    res[i] = f1[i] + f2[i];
-  return(res);
-}
-
-
 mus_any *mus_frame_add(mus_any *uf1, mus_any *uf2, mus_any *ures)
 {
   int chans, i;
@@ -9173,15 +9155,6 @@ mus_any *mus_frame_add(mus_any *uf1, mus_any *uf2, mus_any *ures)
   for (i = 0; i < chans; i++) 
     res->vals[i] = f1->vals[i] + f2->vals[i];
   return((mus_any *)res);
-}
-
-
-double *mus_doubles_multiply(int size, double *f1, double *f2, double *res)
-{
-  int i;
-  for (i = 0; i < size; i++) 
-    res[i] = f1[i] * f2[i];
-  return(res);
 }
 
 
@@ -9206,15 +9179,6 @@ mus_any *mus_frame_multiply(mus_any *uf1, mus_any *uf2, mus_any *ures)
 }
 
 
-double *mus_doubles_scale(int size, double *f1, double scl, double *res)
-{
-  int i;
-  for (i = 0; i < size; i++) 
-    res[i] = f1[i] * scl;
-  return(res);
-}
-
-
 mus_any *mus_frame_scale(mus_any *uf1, mus_float_t scl, mus_any *ures)
 {
   int chans, i;
@@ -9231,15 +9195,6 @@ mus_any *mus_frame_scale(mus_any *uf1, mus_float_t scl, mus_any *ures)
   for (i = 0; i < chans; i++) 
     res->vals[i] = f1->vals[i] * scl;
   return((mus_any *)res);
-}
-
-
-double *mus_doubles_offset(int size, double *f1, double off, double *res)
-{
-  int i;
-  for (i = 0; i < size; i++) 
-    res[i] = f1[i] + off;
-  return(res);
 }
 
 
@@ -9569,19 +9524,6 @@ mus_float_t mus_mixer_set(mus_any *uf, int in, int out, mus_float_t val)
 }
 
 
-double *mus_f_times_M(int in_size, int out_size, double *f1, double *m1, double *res)
-{
-  int i, j;
-  for (i = 0; i < out_size; i++)
-    {
-      res[i] = 0.0;
-      for (j = 0; j < in_size; j++)
-	res[i] += (f1[j] * m1[(j * out_size) + i]);
-    }
-  return(res);
-}
-
-
 static mus_any *frame_to_frame_right(mus_any *arg1, mus_any *arg2, mus_any *arg_out)
 {
   /* (frame->frame frame mixer frame) = frame * mixer -> frame -- this is the original form */
@@ -9608,19 +9550,6 @@ static mus_any *frame_to_frame_right(mus_any *arg1, mus_any *arg2, mus_any *arg_
 	out->vals[i] += (frame->vals[j] * mix->vals[j][i]);
     }
   return((mus_any *)out); /* not arg_out since out may be allocated above, and clm2xen.c expects this to be legit */
-}
-
-
-double *mus_M_times_f(int in_size, int out_size, double *m1, double *f1, double *res)
-{
-  int i, j, k;
-  for (i = 0, k = 0; i < out_size; i++, k += out_size)
-    {
-      res[i] = 0.0;
-      for (j = 0; j < in_size; j++)
-	res[i] += (m1[k + j] * f1[j]);
-    }
-  return(res);
 }
 
 
@@ -9658,15 +9587,6 @@ mus_any *mus_frame_to_frame(mus_any *arg1, mus_any *arg2, mus_any *arg_out)
   if (mus_mixer_p(arg2))
     return(frame_to_frame_right(arg1, arg2, arg_out));
   return(frame_to_frame_left(arg1, arg2, arg_out));
-}
-
-
-double *mus_sample_to_doubles(int size, double *f, mus_float_t in, double *out)
-{
-  int i;
-  for (i = 0; i < size; i++)
-    out[i] = (in * f[i]);
-  return(out);
 }
 
 
@@ -9711,16 +9631,6 @@ mus_any *mus_sample_to_frame(mus_any *f, mus_float_t in, mus_any *uout)
 }
 
 
-mus_float_t mus_doubles_to_sample(int size, double *f, double *in)
-{
-  int i;
-  mus_float_t val = 0.0;
-  for (i = 0; i < size; i++)
-    val += (in[i] * f[i]);
-  return(val);
-}
-
-
 mus_float_t mus_frame_to_sample(mus_any *f, mus_any *uin)
 {
   int i, chans;
@@ -9753,8 +9663,6 @@ mus_float_t mus_frame_to_sample(mus_any *f, mus_any *uin)
   return(val);
 }
 
-
-/* for the doubles case, just use the preceding functions with the full (as if 1D) vector size */
 
 mus_any *mus_mixer_add(mus_any *uf1, mus_any *uf2, mus_any *ures)
 {
@@ -11102,15 +11010,6 @@ bool mus_frame_to_file_p(mus_any *ptr)
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_FRAME_TO_FILE));
-}
-
-
-double *mus_doubles_to_file(mus_any *ptr, mus_long_t samp, int chans, double *data)
-{
-  int i;
-  for (i = 0; i < chans; i++) 
-    mus_out_any_to_file(ptr, samp, i, data[i]);
-  return(data);
 }
 
 

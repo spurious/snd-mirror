@@ -1526,7 +1526,7 @@ void add_or_edit_symbol(const char *name, env *val)
   XEN e;
   if (!val) return;
   if (XEN_DEFINED_P(name))
-    e = XEN_VARIABLE_SET(name, env_to_xen(val));
+    XEN_VARIABLE_SET(name, env_to_xen(val));
   else XEN_DEFINE_VARIABLE(name, e, env_to_xen(val));
 #endif
 }

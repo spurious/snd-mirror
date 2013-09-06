@@ -8436,7 +8436,7 @@
 (CFNC-3.6 "GtkInputPurpose gtk_text_view_get_input_purpose GtkTextView* text_view")
 (CFNC-3.6 "void gtk_text_view_set_input_hints GtkTextView* text_view GtkInputHints hints")
 (CFNC-3.6 "GtkInputHints gtk_text_view_get_input_hints GtkTextView* text_view")
-(CFNC-3.6 "void gtk_widget_insert_action_group GtkWidget* widget gchar* name GActionGroup* group" 'const)
+;(CFNC-3.6 "void gtk_widget_insert_action_group GtkWidget* widget gchar* name GActionGroup* group" 'const)
 
 (CINT-3.6 "GTK_INPUT_PURPOSE_FREE_FORM" "GtkInputPurpose")
 (CINT-3.6 "GTK_INPUT_PURPOSE_ALPHA" "GtkInputPurpose")

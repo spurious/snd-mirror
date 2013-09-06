@@ -1292,7 +1292,8 @@ struct s7_scheme {
   s7_pointer MACROP, MAGNITUDE, MAKE_BYTEVECTOR, MAKE_HASH_TABLE, MAKE_HASH_TABLE_ITERATOR, MAKE_KEYWORD, MAKE_LIST, MAKE_POLAR, MAKE_RANDOM_STATE;
   s7_pointer MAKE_RECTANGULAR, MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, MORALLY_EQUALP, NANP, NEGATIVEP, NEWLINE;
   s7_pointer NOT, NULLP, NUMBERP, NUMBER_TO_STRING, NUMERATOR, OBJECT_ENVIRONMENT, OBJECT_TO_STRING, ODDP, OPEN_ENVIRONMENT, OPEN_ENVIRONMENTP, OPEN_INPUT_FILE;
-  s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTER_ENVIRONMENT, OUTPUT_PORTP, PAIRP, PAIR_LINE_NUMBER, PEEK_CHAR, PORT_CLOSEDP, PORT_FILENAME, PORT_LINE_NUMBER;
+  s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTER_ENVIRONMENT, OUTPUT_PORTP, PAIRP, PAIR_LINE_NUMBER, PEEK_CHAR;
+  s7_pointer PORT_CLOSEDP, PORT_FILE, PORT_FILENAME, PORT_LINE_NUMBER;
   s7_pointer POSITIVEP, PROCEDUREP, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, PROCEDURE_ENVIRONMENT, PROCEDURE_NAME, PROCEDURE_SOURCE, PROVIDE;
   s7_pointer PROVIDEDP, QUOTIENT, RANDOM, RANDOM_STATEP, RANDOM_STATE_TO_LIST, RATIONALIZE, RATIONALP, READ, READ_BYTE, READ_CHAR, READ_LINE, REALP;
   s7_pointer READ_STRING, REAL_PART, REMAINDER, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STACKTRACE, STRING, STRING_LEQ, STRING_LT, STRING_EQ;
@@ -20366,6 +20367,20 @@ static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if 0
+static s7_pointer g_port_file(s7_scheme *sc, s7_pointer args)
+{
+  #define H_port_file "(port-file file-port) returns the current FILE* stream (as a raw c-pointer) for port"
+  s7_pointer p;
+  p = car(args);
+
+  if (is_file_port(p))
+    return(s7_make_c_pointer(sc, (void *)port_file(p)));
+  return(sc->F);
+}
+#endif
+
+
 bool s7_is_input_port(s7_scheme *sc, s7_pointer p)   
 { 
   return(is_input_port(p));
@@ -24729,8 +24744,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
   
     case T_C_OBJECT:
-      if ((use_write == USE_READABLE_WRITE) &&
-	  (c_object_print_readably(obj)))
+      if (use_write == USE_READABLE_WRITE)
 	str = ((*(c_object_print_readably(obj)))(sc, c_object_value(obj)));
       else str = ((*(c_object_print(obj)))(sc, c_object_value(obj)));
       port_display(port)(sc, str, port);
@@ -32214,9 +32228,15 @@ static s7_pointer closure_name(s7_scheme *sc, s7_pointer closure)
 
 /* -------------------------------- new types -------------------------------- */
 
-static char *fallback_print(s7_scheme *sc, void *val) /* obj is c_object_value(s7_pointer_obj) */
+static char *fallback_print(s7_scheme *sc, void *val)
 {
   return(copy_string("#<unprintable object>"));
+}
+
+static char *fallback_print_readably(s7_scheme *sc, void *val) 
+{
+  eval_error(sc, "can't print this object readably", sc->F);
+  return(NULL);
 }
 
 static void fallback_free(void *value)
@@ -32303,7 +32323,8 @@ int s7_new_type(const char *name,
   object_types[tag]->copy = NULL;
   object_types[tag]->reverse = NULL;
   object_types[tag]->fill = NULL;
-  
+  object_types[tag]->print_readably = fallback_print_readably;
+
   return(tag);
 }
 
@@ -66602,6 +66623,7 @@ s7_scheme *s7_init(void)
 
   sc->PORT_LINE_NUMBER =      s7_define_safe_function(sc, "port-line-number",        g_port_line_number,       0, 1, false, H_port_line_number);
   sc->PORT_FILENAME =         s7_define_safe_function(sc, "port-filename",           g_port_filename,          0, 1, false, H_port_filename);
+  /* sc->PORT_FILE =          s7_define_safe_function(sc, "port-file",               g_port_file,              1, 0, false, H_port_file); */
   sc->PAIR_LINE_NUMBER =      s7_define_safe_function(sc, "pair-line-number",        g_pair_line_number,       1, 0, false, H_pair_line_number);
   
   sc->INPUT_PORTP =           s7_define_safe_function(sc, "input-port?",             g_is_input_port,          1, 0, false, H_is_input_port);
@@ -67609,22 +67631,16 @@ int main(int argc, char **argv)
  * cload: settable C variables (via symbol_access as here?)
  * doc/test the lib*.scm files.
  * truncated format? or object->string?
- * the default object print_readable function should give an error, not mimic write
- * direct access to FILE* in s7 port (for libc)? (port-file) 
  *   if -export-dynamic, can't s7 funcs be tied in as well via cload?
- * could we use glob or equivalent in the glistener filename completer?
- * #[...] for int/float vectors?  or (float-vector ...), or perhaps #nf() #1f() and same for #ni? #float()? #int()?
- *   (float-vector '(a b c) '(d e f)) is not ambiguous -- this would be '(2 3) dims (or an error)
- *   better: (float-vector (float-vector ...) (float-vector ...))?
- *   (make-shared-vector '(a b) (float-vector ...))
+ * #[...] for int/float vectors?  or (float-vector ...), (make-shared-vector '(a b) (float-vector ...))
  * TODO: change docs for sound-data/vct, change to vector wherever possible, remove more from scheme sndlib2xen/vct (synonyms) [frame.scm?]
  *   what about vector-ref/set loop opts? from vct/sound-data code
  * TODO: split the apply code for the various vector types -- maybe opt this as HOP_FLOAT_VECTOR_SS (opCq C S see t502 comment above)
- *  can we see dot-products and the like?
- *  can we split out the multidim stuff in unknown_op?
- *  the other side is a set op -- set_pair_p_3?
- * check dac-hook in ruby/forth
+ *   can we see dot-products and the like?
+ *   can we split out the multidim stuff in unknown_op?
+ *   the other side is a set op -- set_pair_p_3?
  * remove sound-data ws output option
+ * TODO: dac_hook in snd-xm.rb needs list not sd, and one sd case in snd-test.rb
  * libgsl tests could use s7test+rename (let ((sin gsl_complex_sin)) (load "s7test.scm" (current-environment))) etc)
  * vct_set_let_looped is a major part of the de-opt
  */

@@ -1293,10 +1293,6 @@ var noise_doc_tip = "This ancient noise instrument can produce those all-importa
 
 var numerics_doc_tip = "Various numerical functions: factorial, plgndr, gegenbaur, etc";
 
-var oscope_doc_tip = "oscope.scm sets up a dialog with a Snd channel window<br>" +
-                     " (time domain, fft etc) that displays data read from the<br>" +
-                     " microphone in real time.";
-
 var piano_doc_tip = "Scott van Duyne's piano model that includes multiple coupled strings,<br>" +
                     " a nonlinear hammer, and an arbitrarily large soundboard and enclosure";
 

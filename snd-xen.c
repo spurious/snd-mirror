@@ -2164,7 +2164,6 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
 static XEN g_gsl_eigenvectors(XEN matrix)
 {
   double *data;
-  mus_any *u1;
   int i, j, len;
   XEN values = XEN_FALSE, vectors = XEN_FALSE;
 
@@ -2173,6 +2172,7 @@ static XEN g_gsl_eigenvectors(XEN matrix)
   len = (int)sqrt(s7_vector_length(matrix));
   data = (double *)s7_float_vector_elements(matrix);
 #else
+  mus_any *u1;
   XEN_ASSERT_TYPE(mus_xen_p(matrix), matrix, XEN_ONLY_ARG, "gsl-eigenvectors", "a mixer (matrix)");
   u1 = XEN_TO_MUS_ANY(matrix);
   if (!mus_mixer_p(u1)) return(XEN_FALSE);

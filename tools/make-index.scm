@@ -496,8 +496,6 @@
 (load "jcvoi.scm")		   
 (load "sndwarp.scm")
 
-					; (load "kmenu.scm")	
-
 					; (load "special-menu.scm")
 (load "maraca.scm")		   
 (load "spectr.scm")
