@@ -267,7 +267,9 @@
 			(format p "  else return(s7_wrong_type_arg_error(sc, ~S, ~D, s7_car(arg), ~S));~%"
 				func-name 
 				(if (= num-args 1) 0 (+ i 1))
-				(symbol->string s7-type))))
+				(if (symbol? s7-type) 
+				    (symbol->string s7-type) 
+				    (error 'bad-arg (format #f "in ~S, ~S is not a symbol~%" name s7-type))))))
 		  (if (< i (- num-args 1))
 		      (format p "  arg = s7_cdr(arg);~%"))))))
 	
