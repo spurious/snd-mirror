@@ -1,5 +1,6 @@
 Snd change log
 
+ 11-Sep:    Snd 14.0.  Homogenous vectors, write readably, libc.scm, libgsl.scm.
  5-Sep:     removed kmenu.scm and oscope.scm.
  9-Aug:     write.scm, removed pretty-print.scm.
  3-Aug:     Snd 13.9.

@@ -88,6 +88,7 @@
  *        member and assoc accept an optional third argument, the comparison function
  *        morally-equal?
  *        unicode (utf8)
+ *        homogenous float or int vectors
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -33843,9 +33844,6 @@ static bool floats_are_morally_equal(s7_Double x, s7_Double y)
 	  (fabs(x - y) <= FLOATING_EPSILON)));
 }
 
-/* TODO: (morally-equal? (make-vector 3 0 #t) (make-vector 3 0)) -> #f
- *   but perhaps it should be #t?
- */
 
 static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
@@ -33958,15 +33956,43 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
 }
 
 
+static bool unmatched_vectors_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
+{
+  /* (morally-equal? (make-vector 3 0 #t) (make-vector 3 0)) -> #t
+   * (morally-equal? (make-vector 3 1.0 #t) (vector 1 1 1)) -> #t
+   * (morally-equal? (make-vector 0 1.0 #t) (vector)) -> #t
+   */
+  s7_Int len;
+  len = vector_length(x);
+  if (len == vector_length(y))
+    {
+      s7_Int i;
+      if (len == 0)   /* all empty vectors are morally equal */
+	return(true);
+      for (i = 0; i < len; i++)
+	if (!s7_is_morally_equal_1(sc, vector_getter(x)(sc, x, i), vector_getter(y)(sc, y, i), NULL))
+	  return(false);
+      return(true);
+    }
+  return(false);
+}
+
+
 static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   if (x == y) 
     return(true);
 
-  if ((type(x) != type(y)) &&
-      (!is_number(x)) && 
-      (!is_big_number(x)))
-    return(false);
+  if (type(x) != type(y))
+    {
+      if ((s7_is_vector(x)) &&
+	  (s7_is_vector(y)))
+	return(unmatched_vectors_are_morally_equal(sc, x, y));
+
+      if ((!is_number(x)) && 
+	  (!is_big_number(x)))
+	return(false);
+    }
 
   switch (type(x))
     {

@@ -729,7 +729,17 @@
 		    (double gsl_fdiv (double double))
 		    (double gsl_coerce_double (double))
 		    (double gsl_ldexp (double int))
-		    (double gsl_frexp (double int*)) ; TODO: isn't this by ref?
+
+		    (in-C "static s7_pointer g_gsl_frexp(s7_scheme *sc, s7_pointer args)
+                           {
+                             int e = 0;
+                             double res;
+                             res = gsl_frexp(s7_real(s7_car(args)), &e);
+                             return(s7_list(sc, 2, s7_make_real(sc, res), s7_make_integer(sc, e)));
+                           }
+                           ")
+		    (C-function ("gsl_frexp" g_gsl_frexp "" 1))
+
 		    (int gsl_fcmp (double double double))
 		    (double gsl_pow_2 (double))
 		    (double gsl_pow_3 (double))
@@ -1560,6 +1570,7 @@
 
 		    ;; --------------------------------------------------------------------------------
 		    ;; all the rest unchecked 
+
 ;;		    (int gsl_blas_sdsdot (float gsl_vector_float* gsl_vector_float* float*))
 		    (int gsl_blas_dsdot (gsl_vector_float* gsl_vector_float* double*))
 ;;		    (int gsl_blas_sdot (gsl_vector_float* gsl_vector_float* float*))
@@ -2531,7 +2542,7 @@
 		    (int gsl_odeiv2_driver_apply (gsl_odeiv2_driver* double* double double*))
 		    (int gsl_odeiv2_driver_apply_fixed_step (gsl_odeiv2_driver* double* double int double*))
 		    (int gsl_odeiv2_driver_reset (gsl_odeiv2_driver*))
-		    (int gsl_odeiv2_driver_reset_hstart (gsl_odeiv2_driver* double))
+;; 1.16?		    (int gsl_odeiv2_driver_reset_hstart (gsl_odeiv2_driver* double))
 		    (void gsl_odeiv2_driver_free (gsl_odeiv2_driver*))
 		    (gsl_permutation* gsl_permutation_alloc (size_t))
 		    (gsl_permutation* gsl_permutation_calloc (size_t))
