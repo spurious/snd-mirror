@@ -1801,7 +1801,7 @@ static bool apply_controls(apply_state *ap)
 		}
 	      ap->i += len;
 	      if (ap->i >= apply_dur) ap->slice++;
-	      check_for_event();
+	      /* check_for_event(); */
 	      /* if C-G, stop_applying called which cancels and backs out */
 	      if ((ss->stopped_explicitly) || (!(sp->active)))
 		ap->slice++;
@@ -6131,3 +6131,6 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   XEN_DEFINE_SAFE_PROCEDURE(S_integer_to_sound,         g_integer_to_sound_w,         1, 0, 0, H_integer_to_sound);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_to_integer,         g_sound_to_integer_w,         1, 0, 0, H_sound_to_integer);
 }
+
+/* TODO: remove apply-controls
+ */

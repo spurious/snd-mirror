@@ -13,7 +13,7 @@ fgrep maake *.html
 fgrep accomoda *.c
 fgrep decrip *.scm
 fgrep accomoda *.scm
-# fgrep -e " #(" *.scm
+fgrep -e "'#(" *.scm
 fgrep -e "the the " *.c
 fgrep -e "the the " *.html
 fgrep udpate *.c
@@ -29,14 +29,16 @@ grep ' \-\-$' *.html
 /home/bil/cl/snd tools/va.scm
 # tools/check-gtk.scm
 
+echo ' '
+echo ' '
 rm -f snd
 rm -f config.cache
 
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 basic configure test                                  ----- '
 echo ' -------------------------------------------------------------------------------- '
+
 ./configure --quiet --with-motif CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib" 
-make allclean
 make
 echo ' '
 echo ' '
@@ -44,7 +46,7 @@ echo ' '
 ./snd --version
 ./snd -noinit --features "'clm 'snd-s7 'snd-motif 'sndlib"
 ./snd tools/check-help.scm
-
+./snd -e '(begin (load "cload.scm") (set! *cload-cflags* "-Wall"))' libm.scm libc.scm libgdbm.scm libdl.scm libgsl.scm -e '(exit)'
 
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 ffitest                                               ----- '
@@ -53,6 +55,8 @@ echo ' -------------------------------------------------------------------------
 cp tools/ffitest.c .
 gcc -o ffitest ffitest.c -g3 -Wall s7.o -lm -I. -ldl
 ffitest
+
+gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -ldl -lm
 
 make clmclean
 make sndinfo

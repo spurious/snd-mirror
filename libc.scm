@@ -178,7 +178,7 @@
 		    (char* tempnam (char* char*))
 		    (int fclose (FILE*))
 		    (int fflush (FILE*))
-		    (reader-expand (linux (int fcloseall (void))))
+;;		    (reader-expand (linux (int fcloseall (void))))
 		    (FILE* fopen (char* char*))
 		    (FILE* freopen (char*  char* FILE*))
 		    (FILE* fdopen (int char*))
@@ -1403,31 +1403,30 @@
                            
                            static s7_pointer g_getsockname(s7_scheme *sc, s7_pointer args) 
                            {
-                             int fds[2];
-                             int err, res;
+                             int err;
+                             socklen_t res;
                              res = s7_integer(s7_caddr(args));
                              err = getsockname(s7_integer(s7_car(args)), (struct sockaddr *)s7_c_pointer(s7_cadr(args)), &res);
                              return(s7_list(sc, 2, s7_make_integer(sc, err), s7_make_integer(sc, res)));
                            }
                            static s7_pointer g_getpeername(s7_scheme *sc, s7_pointer args) 
                            {
-                             int fds[2];
-                             int err, res;
+                             int err;
+                             socklen_t res;
                              res = s7_integer(s7_caddr(args));
                              err = getpeername(s7_integer(s7_car(args)), (struct sockaddr *)s7_c_pointer(s7_cadr(args)), &res);
                              return(s7_list(sc, 2, s7_make_integer(sc, err), s7_make_integer(sc, res)));
                            }
                            static s7_pointer g_accept(s7_scheme *sc, s7_pointer args) 
                            {
-                             int fds[2];
-                             int err, res;
+                             int err;
+                             socklen_t res;
                              res = s7_integer(s7_caddr(args));
                              err = accept(s7_integer(s7_car(args)), (struct sockaddr *)s7_c_pointer(s7_cadr(args)), &res);
                              return(s7_list(sc, 2, s7_make_integer(sc, err), s7_make_integer(sc, res)));
                            }
                            static s7_pointer g_getsockopt(s7_scheme *sc, s7_pointer args) 
                            {
-                             int fds[2];
                              int err;
                              socklen_t res;
                              res = (socklen_t)s7_integer(s7_list_ref(sc, args, 4));
@@ -1436,8 +1435,6 @@
                            }
                            static s7_pointer g_setsockopt(s7_scheme *sc, s7_pointer args) 
                            {
-                             int fds[2];
-                             int err;
                              socklen_t res;
                              res = (socklen_t)s7_integer(s7_list_ref(sc, args, 4));
                              return(s7_make_integer(sc, setsockopt(s7_integer(s7_car(args)), s7_integer(s7_cadr(args)), 
@@ -1445,7 +1442,6 @@
                            }
                            static s7_pointer g_recvfrom(s7_scheme *sc, s7_pointer args) 
                            {
-                             int fds[2];
                              int err;
                              socklen_t res;
                              res = (socklen_t)s7_integer(s7_list_ref(sc, args, 5));

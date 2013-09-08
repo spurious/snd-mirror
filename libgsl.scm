@@ -1003,9 +1003,9 @@
 		    (double gsl_ran_lognormal_pdf (double double double))
 		    (int gsl_ran_logarithmic (gsl_rng* double))
 		    (double gsl_ran_logarithmic_pdf (int double))
-		    (void gsl_ran_multinomial (gsl_rng* size_t int double* int*))
-		    (double gsl_ran_multinomial_pdf (size_t double* int*))
-		    (double gsl_ran_multinomial_lnpdf (size_t double* int*))
+		    (void gsl_ran_multinomial (gsl_rng* size_t int double* int*)) ; unsigned int*
+		    (double gsl_ran_multinomial_pdf (size_t double* int*))        ; unsigned int*
+		    (double gsl_ran_multinomial_lnpdf (size_t double* int*))      ; unsigned int*
 		    (int gsl_ran_negative_binomial (gsl_rng* double double))
 		    (double gsl_ran_negative_binomial_pdf (int double double))
 		    (int gsl_ran_pascal (gsl_rng* double int))
@@ -1013,7 +1013,7 @@
 		    (double gsl_ran_pareto (gsl_rng* double double))
 		    (double gsl_ran_pareto_pdf (double double double))
 		    (int gsl_ran_poisson (gsl_rng* double))
-		    (void gsl_ran_poisson_array (gsl_rng* size_t int* double))
+		    (void gsl_ran_poisson_array (gsl_rng* size_t int* double))   ; unsigned int*
 		    (double gsl_ran_poisson_pdf (int double))
 		    (double gsl_ran_rayleigh (gsl_rng* double))
 		    (double gsl_ran_rayleigh_pdf (double double))
@@ -1502,8 +1502,13 @@
 		    ;; (size_t gsl_block_size (gsl_block*))
 		    ;; (double* gsl_block_data (gsl_block*))
 
+		    ;; (gsl_matrix_complex* gsl_matrix_complex_alloc_from_block (gsl_block_complex* size_t size_t size_t size_t))
+		    ;; (gsl_vector* gsl_vector_alloc_from_block (gsl_block* size_t size_t size_t))
+		    ;; (gsl_matrix* gsl_matrix_alloc_from_block (gsl_block* size_t size_t size_t size_t))
+
+
 		    ;; vector
-		    (in-C "static s7_pointer g_float_to_gsl_vector(s7_scheme *sc, s7_pointer args)
+		    (in-C "static s7_pointer g_float_vector_to_gsl_vector(s7_scheme *sc, s7_pointer args)
                            {
                               gsl_vector *g;
                               int size;
@@ -1514,7 +1519,7 @@
                               memcpy((void *)(g->data), (void *)s7_float_vector_elements(v), size * sizeof(double));
                               return(s7_cadr(args));
                            }
-                           static s7_pointer g_gsl_to_float_vector(s7_scheme *sc, s7_pointer args)
+                           static s7_pointer g_gsl_vector_to_float_vector(s7_scheme *sc, s7_pointer args)
                            {
                               gsl_vector *g;
                               int size;
@@ -1526,12 +1531,11 @@
                               return(s7_make_c_pointer(sc, (void *)g));
                            }
                            ")
-		    (C-function ("float->gsl_vector" g_float_to_gsl_vector "" 2))
-		    (C-function ("gsl->float-vector" g_gsl_to_float_vector "" 2))
+		    (C-function ("float-vector->gsl_vector" g_float_vector_to_gsl_vector "" 2))
+		    (C-function ("gsl-vector->float-vector" g_gsl_vector_to_float_vector "" 2))
 
 		    (gsl_vector* gsl_vector_alloc (size_t))
 		    (gsl_vector* gsl_vector_calloc (size_t))
-		    ;; (gsl_vector* gsl_vector_alloc_from_block (gsl_block* size_t size_t size_t))
 		    (gsl_vector* gsl_vector_alloc_from_vector (gsl_vector* size_t size_t size_t))
 		    (void gsl_vector_free (gsl_vector*))
 		    (void gsl_vector_set_zero (gsl_vector*))
@@ -1566,6 +1570,81 @@
 		    (double* gsl_vector_const_ptr (gsl_vector* size_t))
 		    (void gsl_vector_minmax (gsl_vector* double* double*)) ; by ref
 		    (void gsl_vector_minmax_index (gsl_vector* size_t* size_t*)) ; by ref 
+
+
+		    ;; matrix
+		    (in-C "static s7_pointer g_float_vector_to_gsl_matrix(s7_scheme *sc, s7_pointer args)
+                           {
+                              gsl_matrix *g;
+                              int size;
+                              s7_pointer v;
+                              v = s7_car(args);
+                              size = s7_vector_length(v);
+                              g = (gsl_matrix *)s7_c_pointer(s7_cadr(args));
+                              memcpy((void *)(g->data), (void *)s7_float_vector_elements(v), size * sizeof(double));
+                              return(s7_cadr(args));
+                           }
+                           static s7_pointer g_gsl_matrix_to_float_vector(s7_scheme *sc, s7_pointer args)
+                           {
+                              gsl_matrix *g;
+                              int size;
+                              s7_pointer v;
+                              v = s7_cadr(args);
+                              size = s7_vector_length(v);
+                              g = (gsl_matrix *)s7_c_pointer(s7_car(args));
+                              memcpy((void *)s7_float_vector_elements(v), (void *)(g->data), size * sizeof(double));
+                              return(s7_make_c_pointer(sc, (void *)g));
+                           }
+                           ")
+		    (C-function ("float-vector->gsl_matrix" g_float_vector_to_gsl_matrix "" 2))
+		    (C-function ("gsl_matrix->float-vector" g_gsl_matrix_to_float_vector "" 2))
+
+		    (gsl_matrix* gsl_matrix_alloc (size_t size_t))
+		    (gsl_matrix* gsl_matrix_calloc (size_t size_t))
+		    (gsl_matrix* gsl_matrix_alloc_from_matrix (gsl_matrix* size_t size_t size_t size_t))
+		    (gsl_vector* gsl_vector_alloc_row_from_matrix (gsl_matrix* size_t))
+		    (gsl_vector* gsl_vector_alloc_col_from_matrix (gsl_matrix* size_t))
+		    (void gsl_matrix_free (gsl_matrix*))
+		    (void gsl_matrix_set_zero (gsl_matrix*))
+		    (void gsl_matrix_set_identity (gsl_matrix*))
+		    (void gsl_matrix_set_all (gsl_matrix* double))
+		    (int gsl_matrix_fread (FILE* gsl_matrix*) )
+		    (int gsl_matrix_fwrite (FILE* gsl_matrix*) )
+		    (int gsl_matrix_fscanf (FILE* gsl_matrix*))
+		    (int gsl_matrix_fprintf (FILE* gsl_matrix* char*))
+		    (int gsl_matrix_memcpy (gsl_matrix* gsl_matrix*))
+		    (int gsl_matrix_swap (gsl_matrix* gsl_matrix*))
+		    (int gsl_matrix_swap_rows (gsl_matrix* size_t size_t))
+		    (int gsl_matrix_swap_columns (gsl_matrix* size_t size_t))
+		    (int gsl_matrix_swap_rowcol (gsl_matrix* size_t size_t))
+		    (int gsl_matrix_transpose (gsl_matrix*))
+		    (int gsl_matrix_transpose_memcpy (gsl_matrix* gsl_matrix*))
+		    (double gsl_matrix_max (gsl_matrix*))
+		    (double gsl_matrix_min (gsl_matrix*))
+		    (void gsl_matrix_minmax (gsl_matrix* double* double*))
+		    (void gsl_matrix_max_index (gsl_matrix* size_t* size_t*))
+		    (void gsl_matrix_min_index (gsl_matrix* size_t* size_t*))
+		    (void gsl_matrix_minmax_index (gsl_matrix* size_t* size_t* size_t* size_t*))
+		    (int gsl_matrix_equal (gsl_matrix* gsl_matrix*))
+		    (int gsl_matrix_isnull (gsl_matrix*))
+		    (int gsl_matrix_ispos (gsl_matrix*))
+		    (int gsl_matrix_isneg (gsl_matrix*))
+		    (int gsl_matrix_isnonneg (gsl_matrix*))
+		    (int gsl_matrix_add (gsl_matrix* gsl_matrix*))
+		    (int gsl_matrix_sub (gsl_matrix* gsl_matrix*))
+		    (int gsl_matrix_mul_elements (gsl_matrix* gsl_matrix*))
+		    (int gsl_matrix_div_elements (gsl_matrix* gsl_matrix*))
+		    (int gsl_matrix_scale (gsl_matrix* double))
+		    (int gsl_matrix_add_constant (gsl_matrix* double))
+		    (int gsl_matrix_add_diagonal (gsl_matrix* double))
+		    (int gsl_matrix_get_row (gsl_vector* gsl_matrix* size_t))
+		    (int gsl_matrix_get_col (gsl_vector* gsl_matrix* size_t))
+		    (int gsl_matrix_set_row (gsl_matrix* size_t gsl_vector*))
+		    (int gsl_matrix_set_col (gsl_matrix* size_t gsl_vector*))
+		    (double gsl_matrix_get (gsl_matrix* size_t size_t))
+		    (void gsl_matrix_set (gsl_matrix* size_t size_t double))
+		    (double* gsl_matrix_ptr (gsl_matrix* size_t size_t))
+		    (double* gsl_matrix_const_ptr (gsl_matrix* size_t size_t))
 
 
 		    ;; --------------------------------------------------------------------------------
@@ -1903,7 +1982,7 @@
 		    (int gsl_schur_gen_eigvals (gsl_matrix* gsl_matrix* double* double* double* double* double*))
 		    (int gsl_schur_solve_equation (double gsl_matrix* double double double gsl_vector* gsl_vector* double* double* double))
 		    (int gsl_schur_solve_equation_z (double gsl_matrix* gsl_complex* double double gsl_vector_complex* gsl_vector_complex* double* double* double))
-		    (int gsl_eigen_jacobi (gsl_matrix* gsl_vector* gsl_matrix* int int*))
+		    (int gsl_eigen_jacobi (gsl_matrix* gsl_vector* gsl_matrix* int int*)) ; unsigned int*
 		    (int gsl_eigen_invert_jacobi (gsl_matrix* gsl_matrix* int))
 		    (void gsl_error (char* char* int int))
 		    (void gsl_stream_printf (char* char* int char*))
@@ -2225,7 +2304,6 @@
 		    (int gsl_linalg_balance_columns (gsl_matrix* gsl_vector*))
 		    (gsl_matrix_complex* gsl_matrix_complex_alloc (size_t size_t))
 		    (gsl_matrix_complex* gsl_matrix_complex_calloc (size_t size_t))
-;;		    (gsl_matrix_complex* gsl_matrix_complex_alloc_from_block (gsl_block_complex* size_t size_t size_t size_t))
 		    (gsl_matrix_complex* gsl_matrix_complex_alloc_from_matrix (gsl_matrix_complex* size_t size_t size_t size_t))
 		    (gsl_vector_complex* gsl_vector_complex_alloc_row_from_matrix (gsl_matrix_complex* size_t))
 		    (gsl_vector_complex* gsl_vector_complex_alloc_col_from_matrix (gsl_matrix_complex* size_t))
@@ -2307,53 +2385,6 @@
 		    (int gsl_matrix_complex_set_col (gsl_matrix_complex* size_t gsl_vector_complex*))
 		    (gsl_complex* gsl_matrix_complex_ptr (gsl_matrix_complex* size_t size_t))
 		    (gsl_complex* gsl_matrix_complex_const_ptr (gsl_matrix_complex* size_t size_t))
-		    (gsl_matrix* gsl_matrix_alloc (size_t size_t))
-		    (gsl_matrix* gsl_matrix_calloc (size_t size_t))
-;;		    (gsl_matrix* gsl_matrix_alloc_from_block (gsl_block* size_t size_t size_t size_t))
-		    (gsl_matrix* gsl_matrix_alloc_from_matrix (gsl_matrix* size_t size_t size_t size_t))
-		    (gsl_vector* gsl_vector_alloc_row_from_matrix (gsl_matrix* size_t))
-		    (gsl_vector* gsl_vector_alloc_col_from_matrix (gsl_matrix* size_t))
-		    (void gsl_matrix_free (gsl_matrix*))
-		    (void gsl_matrix_set_zero (gsl_matrix*))
-		    (void gsl_matrix_set_identity (gsl_matrix*))
-		    (void gsl_matrix_set_all (gsl_matrix* double))
-		    (int gsl_matrix_fread (FILE* gsl_matrix*) )
-		    (int gsl_matrix_fwrite (FILE* gsl_matrix*) )
-		    (int gsl_matrix_fscanf (FILE* gsl_matrix*))
-		    (int gsl_matrix_fprintf (FILE* gsl_matrix* char*))
-		    (int gsl_matrix_memcpy (gsl_matrix* gsl_matrix*))
-		    (int gsl_matrix_swap (gsl_matrix* gsl_matrix*))
-		    (int gsl_matrix_swap_rows (gsl_matrix* size_t size_t))
-		    (int gsl_matrix_swap_columns (gsl_matrix* size_t size_t))
-		    (int gsl_matrix_swap_rowcol (gsl_matrix* size_t size_t))
-		    (int gsl_matrix_transpose (gsl_matrix*))
-		    (int gsl_matrix_transpose_memcpy (gsl_matrix* gsl_matrix*))
-		    (double gsl_matrix_max (gsl_matrix*))
-		    (double gsl_matrix_min (gsl_matrix*))
-		    (void gsl_matrix_minmax (gsl_matrix* double* double*))
-		    (void gsl_matrix_max_index (gsl_matrix* size_t* size_t*))
-		    (void gsl_matrix_min_index (gsl_matrix* size_t* size_t*))
-		    (void gsl_matrix_minmax_index (gsl_matrix* size_t* size_t* size_t* size_t*))
-		    (int gsl_matrix_equal (gsl_matrix* gsl_matrix*))
-		    (int gsl_matrix_isnull (gsl_matrix*))
-		    (int gsl_matrix_ispos (gsl_matrix*))
-		    (int gsl_matrix_isneg (gsl_matrix*))
-		    (int gsl_matrix_isnonneg (gsl_matrix*))
-		    (int gsl_matrix_add (gsl_matrix* gsl_matrix*))
-		    (int gsl_matrix_sub (gsl_matrix* gsl_matrix*))
-		    (int gsl_matrix_mul_elements (gsl_matrix* gsl_matrix*))
-		    (int gsl_matrix_div_elements (gsl_matrix* gsl_matrix*))
-		    (int gsl_matrix_scale (gsl_matrix* double))
-		    (int gsl_matrix_add_constant (gsl_matrix* double))
-		    (int gsl_matrix_add_diagonal (gsl_matrix* double))
-		    (int gsl_matrix_get_row (gsl_vector* gsl_matrix* size_t))
-		    (int gsl_matrix_get_col (gsl_vector* gsl_matrix* size_t))
-		    (int gsl_matrix_set_row (gsl_matrix* size_t gsl_vector*))
-		    (int gsl_matrix_set_col (gsl_matrix* size_t gsl_vector*))
-		    (double gsl_matrix_get (gsl_matrix* size_t size_t))
-		    (void gsl_matrix_set (gsl_matrix* size_t size_t double))
-		    (double* gsl_matrix_ptr (gsl_matrix* size_t size_t))
-		    (double* gsl_matrix_const_ptr (gsl_matrix* size_t size_t))
 		    (void gsl_message (char* char* int int))
 		    (gsl_min_fminimizer* gsl_min_fminimizer_alloc (gsl_min_fminimizer_type*) )
 		    (void gsl_min_fminimizer_free (gsl_min_fminimizer*))

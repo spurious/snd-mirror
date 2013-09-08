@@ -24260,7 +24260,7 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
 	  port_write_string(port)(sc, "#<environment", 13, port);
 	  for (x = environment_slots(obj); is_slot(x); x = next_slot(x))
 	    {
-	      port_write_string(port)(sc, "\n  ", 3, port);
+	      port_write_character(port)(sc, ' ', port);
 	      object_to_port_with_circle_check(sc, x, port, use_write, to_file, ci);
 	    }
 	  port_write_character(port)(sc, '>', port);
@@ -29518,7 +29518,11 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	  index += n * vector_offset(vect, i);
 	}
       if (is_not_null(x))
-	return(implicit_index(sc, vector_element(vect, index), x));
+	{
+	  if (type(vect) != T_VECTOR)
+	    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), indices, "too many indices"));
+	  return(implicit_index(sc, vector_element(vect, index), x));
+	}
 
       /* if not enough indices, return a shared vector covering whatever is left */
       if (i < vector_ndims(vect))
@@ -29537,7 +29541,11 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	return(out_of_range(sc, sc->VECTOR_REF, small_int(2), car(indices), "should be between 0 and the vector length"));
       
       if (is_not_null(cdr(indices)))                /* (let ((L '#(#(1 2 3) #(4 5 6)))) (vector-ref L 1 2)) */
-	return(implicit_index(sc, vector_element(vect, index), cdr(indices)));
+	{
+	  if (type(vect) != T_VECTOR)
+	    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), indices, "too many indices"));
+	  return(implicit_index(sc, vector_element(vect, index), cdr(indices)));
+	}
     }
 
   return((vector_getter(vect))(sc, vect, index));
@@ -30497,19 +30505,28 @@ If its first argument is a list, the list is copied (despite the '!')."
 
     case T_INT_VECTOR:
     case T_FLOAT_VECTOR:
-      len = vector_length(data);
-      if (compare_func)
-	{
-	  int i, gc_loc;
-	  s7_pointer vec;
-	  vec = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
-	  gc_loc = s7_gc_protect(sc, vec);	  
-	  for (i = 0; i < len; i++)
-	    vector_element(vec, i) = vector_getter(data)(sc, data, i);
-	  qsort((void *)s7_vector_elements(vec), len, sizeof(s7_pointer), sort_func);
-	  s7_gc_unprotect_at(sc, gc_loc);
-	  return(vec);
-	}
+      {
+	int i;
+	s7_pointer vec;
+	
+	/* currently we have to make the ordinary vector here even if not compare_func
+	 *   because the sorter uses vector_element to access sort args (see SORT_DATA in eval).
+	 */
+	len = vector_length(data);
+	vec = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
+	for (i = 0; i < len; i++)
+	  vector_element(vec, i) = vector_getter(data)(sc, data, i);
+
+	if (compare_func)
+	  {
+	    int gc_loc;
+	    gc_loc = s7_gc_protect(sc, vec);	  
+	    qsort((void *)s7_vector_elements(vec), len, sizeof(s7_pointer), sort_func);
+	    s7_gc_unprotect_at(sc, gc_loc);
+	    return(vec);
+	  }
+	car(args) = vec;
+      }
       break;
 
     case T_VECTOR:
@@ -34665,35 +34682,41 @@ also accepts a string or vector argument."
       break;
 
     case T_INT_VECTOR:
+      {
+	s7_Int i, j, len;
+	len = vector_length(p);
+	if (vector_is_multidimensional(p))
+	  np = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, p)), small_int(0), sc->T));
+	else np = make_vector_1(sc, len, NOT_FILLED, T_INT_VECTOR);
+	if (len > 0)
+	  for (i = 0, j = len - 1; i < len; i++, j--)
+	    int_vector_element(np, i) = int_vector_element(p, j);
+      }
+      break;
+
     case T_FLOAT_VECTOR:
+      {
+	s7_Int i, j, len;
+	len = vector_length(p);
+	if (vector_is_multidimensional(p))
+	  np = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, p)), real_zero, sc->T));
+	else np = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR);
+	if (len > 0)
+	  for (i = 0, j = len - 1; i < len; i++, j--)
+	    float_vector_element(np, i) = float_vector_element(p, j);
+      }
+      break;
+
     case T_VECTOR:
       {
 	s7_Int i, j, len;
 	len = vector_length(p);
 	if (vector_is_multidimensional(p))
 	  np = g_make_vector(sc, list_1(sc, g_vector_dimensions(sc, list_1(sc, p))));
-	else np = make_vector_1(sc, len, NOT_FILLED, type(p));
+	else np = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
 	if (len > 0)
-	  {
-	    if (is_int_vector(p))
-	      {
-		for (i = 0, j = len - 1; i < len; i++, j--)
-		  int_vector_element(np, i) = int_vector_element(p, j);
-	      }
-	    else
-	      {
-		if (is_float_vector(p))
-		  {
-		    for (i = 0, j = len - 1; i < len; i++, j--)
-		      float_vector_element(np, i) = float_vector_element(p, j);
-		  }
-		else
-		  {
-		    for (i = 0, j = len - 1; i < len; i++, j--)
-		      vector_element(np, i) = vector_element(p, j);
-		  }
-	      }
-	  }
+	  for (i = 0, j = len - 1; i < len; i++, j--)
+	    vector_element(np, i) = vector_element(p, j);
       }
       break;
 
@@ -39075,6 +39098,7 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
   /* get the current args, re-setting args that have explicit values */
   sc->x = closure_args(sc->code);
   sc->y = sc->args; 
+
   sc->z = sc->NIL;
   while ((is_pair(sc->x)) &&
 	 (is_pair(sc->y)))
@@ -67669,4 +67693,6 @@ int main(int argc, char **argv)
  * TODO: dac_hook in snd-xm.rb needs list not sd, and one sd case in snd-test.rb
  * libgsl tests could use s7test+rename (let ((sin gsl_complex_sin)) (load "s7test.scm" (current-environment))) etc)
  * vct_set_let_looped is a major part of the de-opt
+ *
+ * should (lambda * (a) a) be different from (lambda* (a) a)?  yes -- it's * as arg list: s7test this and let * define * etc
  */
