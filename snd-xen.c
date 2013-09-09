@@ -2617,8 +2617,18 @@ void g_xen_initialize(void)
 
   XEN_DEFINE_SAFE_PROCEDURE("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
   XEN_DEFINE_SAFE_PROCEDURE("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
+
 #if (!HAVE_SCHEME)
   XEN_DEFINE_SAFE_PROCEDURE("gsl-dht",    g_gsl_dht_w,    4, 0, 0, H_gsl_dht);
+#else
+  /* (gsl-dht 16 (make-vector 16 1.0 #t) 1.0 1.0)
+   */
+  s7_eval_c_string(s7, "(define (gsl-dht size in-data nu xmax) \
+                          (let ((dp (gsl_dht_new size nu xmax)) \
+                                (out-data (make-vector size 0.0 #t))) \
+                            (gsl_dht_apply dp (double* in-data) (double* out-data)) \
+                            (gsl_dht_free dp) \
+                            out-data))");
 #endif
 
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
@@ -2628,17 +2638,6 @@ void g_xen_initialize(void)
 #if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS
   XEN_DEFINE_SAFE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
 #endif
-#endif
-
-#if HAVE_SCHEME
-  /* (gsl-dht 16 (make-vector 16 1.0 #t) 1.0 1.0)
-   */
-  s7_eval_c_string(s7, "(define (gsl-dht size in-data nu xmax) \
-                          (let ((dp (gsl_dht_new size nu xmax)) \
-                                (out-data (make-vector size 0.0 #t))) \
-                            (gsl_dht_apply dp (double* in-data) (double* out-data)) \
-                            (gsl_dht_free dp) \
-                            out-data))");
 #endif
 
 #if HAVE_SCHEME && WITH_GMP

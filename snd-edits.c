@@ -7899,7 +7899,11 @@ return sample samp in snd's channel chn (this is a slow access -- use samplers f
       loc = snd_protect(lst);
       
       for (i = 0; i < sp->nchans; i++)
-	lst = XEN_CONS(C_TO_XEN_DOUBLE(chn_sample(beg, sp->chans[i], pos)), lst);
+	{
+	  if (pos > sp->chans[i]->edit_ctr)
+	    lst = XEN_CONS(C_TO_XEN_DOUBLE(chn_sample(beg, sp->chans[i], sp->chans[i]->edit_ctr)), lst);
+	  else lst = XEN_CONS(C_TO_XEN_DOUBLE(chn_sample(beg, sp->chans[i], pos)), lst);
+	}
 
       snd_unprotect_at(loc);
       return(lst);
@@ -8413,6 +8417,9 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
     {
       int fchn;
       fchn = XEN_TO_C_INT(file_chn);
+      if (fchn < 0)
+	XEN_ERROR(NO_SUCH_CHANNEL, XEN_LIST_2(C_TO_XEN_STRING(S_insert_sound ": file channel: ~D"), file_chn));
+
       if (fchn < nc)
 	{
 #if HAVE_FORTH

@@ -3982,6 +3982,9 @@ open file assuming the data matches the attributes indicated unless the file act
     {
       file = mus_optkey_to_string(keys[0], S_open_raw_sound, orig_arg[0], NULL);
       oc = mus_optkey_to_int(keys[1], S_open_raw_sound, orig_arg[1], oc);
+      if ((oc < 0) ||
+	  (oc > 256))
+	XEN_OUT_OF_RANGE_ERROR(S_open_raw_sound, 2, args[orig_arg[1]], "too many channels requested");
       if (!(XEN_KEYWORD_P(keys[1]))) set_fallback_chans(oc);
       os = mus_optkey_to_int(keys[2], S_open_raw_sound, orig_arg[2], os);
       if (!(XEN_KEYWORD_P(keys[2]))) set_fallback_srate(os);

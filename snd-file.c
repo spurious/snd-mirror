@@ -709,6 +709,12 @@ static file_info *make_file_info_1(const char *fullname)
   if (hdr->srate <= 0) {if (fallback_srate > 0) hdr->srate = fallback_srate; else hdr->srate = 1;}
   if (hdr->chans <= 0) {if (fallback_chans > 0) hdr->chans = fallback_chans; else hdr->chans = 1;}
   hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
+  if ((hdr->samples == 0) &&
+      (hdr->chans > 128))
+    {
+      snd_warning("no samples, but %d chans?", hdr->chans);
+      hdr->chans = 1;
+    }
   hdr->data_location = mus_sound_data_location(fullname);
   hdr->comment = mus_sound_comment(fullname);
   hdr->loops = mus_sound_loop_info(fullname);
@@ -867,6 +873,12 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
       hdr->chans = mus_sound_chans(fullname);
       hdr->format = mus_sound_data_format(fullname);
       hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
+      if ((hdr->samples == 0) &&
+	  (hdr->chans > 8))
+	{
+	  snd_warning("no samples, but %d chans?", hdr->chans);
+	  hdr->chans = 1;
+	}
       hdr->data_location = mus_sound_data_location(fullname);
       hdr->comment = NULL;
       return(hdr);

@@ -3360,7 +3360,8 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   if (XEN_INTEGER_P(file_chn))
     {
       file_channel = XEN_TO_C_INT(file_chn);
-      if (file_channel >= chans)
+      if ((file_channel >= chans) ||
+	  (file_channel < 0))
 	{
 	  XEN_ERROR(NO_SUCH_CHANNEL,
 		    XEN_LIST_4(C_TO_XEN_STRING(S_mix ": chan: ~A, but ~S chans: ~A"),
@@ -3445,7 +3446,8 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 
 	    data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
 	    len = mus_file_to_array(name, file_channel, 0, len, data); 
-	    id = mix_buffer_with_tag(cp, data, beg, len, origin);
+	    if (len > 0)
+	      id = mix_buffer_with_tag(cp, data, beg, len, origin);
 	    free(data);
 
 	    if (delete_file == DELETE_ME)
@@ -3473,7 +3475,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 
   update_graph(cp);
 
-  if (id == -1) return(XEN_FALSE);
+  if (id == NO_MIX_TAG) return(XEN_FALSE);
   return(XEN_LIST_1(new_xen_mix(id)));
 }
 

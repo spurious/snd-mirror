@@ -1394,7 +1394,8 @@ mus_long_t mus_file_to_array(const char *filename, int chan, mus_long_t start, m
   if (ifd == MUS_ERROR) return(MUS_ERROR);
 
   chans = mus_sound_chans(filename);
-  if (chan >= chans) 
+  if ((chan >= chans) ||
+      (chan < 0))
     {
       mus_sound_close_input(ifd);      
       return(mus_error(MUS_NO_SUCH_CHANNEL, "mus_file_to_array can't read %s channel %d (file has %d chans)", filename, chan, chans));

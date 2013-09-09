@@ -57433,7 +57433,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (index < 0)
 		  eval_error(sc, "vector-set!: index must not be negative: ~S", sc->code);
 		if (index >= vector_length(obj))
-		  eval_error(sc, "vector-set!: index must not be less than vector length: ~S", sc->code);
+		  eval_error(sc, "vector-set!: index must be less than vector length: ~S", sc->code);
 		vector_setter(obj)(sc, obj, index, value);
 		sc->value = value;
 	      }
@@ -57455,7 +57455,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (index < 0)
 		eval_error(sc, "string-set!: index must not be negative: ~S", sc->code);
 	      if (index >= string_length(obj))
-		eval_error(sc, "string-set!: index must not be less than string length: ~S", sc->code);
+		eval_error(sc, "string-set!: index must be less than string length: ~S", sc->code);
 	      if (s7_is_character(value))
 		{
 		  string_value(obj)[index] = (char)s7_character(value);
