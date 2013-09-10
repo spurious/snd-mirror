@@ -472,9 +472,13 @@
                                return(s7_make_integer(sc, getgroups(0, NULL)));
                              gds = (gid_t *)calloc(size, sizeof(gid_t));
                              res = getgroups(size, gds);
-                             lst = s7_nil(sc);
-                             for (i = 0; i < size; i++)
-                               lst = s7_cons(sc, s7_make_integer(sc, gds[i]), lst);
+                             if (res != -1)
+                               {
+                                 lst = s7_nil(sc);
+                                 for (i = 0; i < size; i++)
+                                   lst = s7_cons(sc, s7_make_integer(sc, gds[i]), lst);
+                               }
+                             else lst = s7_make_integer(sc, -1);
                              free(gds);
                              return(lst);
                            }

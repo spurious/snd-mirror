@@ -67621,27 +67621,34 @@ int main(int argc, char **argv)
       free(str);
     }
 
-  while (true)
+  if (argc == 2)
     {
-      char *line_read = NULL, *temp;
-
-      line_read = readline("s7> ");
-      if (line_read)
+      fprintf(stderr, "load %s\n", argv[1]);
+      s7_load(s7, argv[1]);
+    }
+  else
+    {
+      while (true)
 	{
-	  char *str;
-	  str = line_read;
-	  while ((str) && (isspace(str[0]))) str++;
-	  if (*str)
+	  char *line_read = NULL, *temp;
+	  line_read = readline("s7> ");
+	  if (line_read)
 	    {
-	      int len;
-	      s7_pointer result;
-	      len = strlen(str);
-	      add_history(str);
-	      result = s7_eval_c_string(s7, str);
-	      s7_write(s7, result, s7_current_output_port(s7));   /* use write, not display so that strings are in double quotes */
-	      s7_newline(s7, s7_current_output_port(s7));
+	      char *str;
+	      str = line_read;
+	      while ((str) && (isspace(str[0]))) str++;
+	      if (*str)
+		{
+		  int len;
+		  s7_pointer result;
+		  len = strlen(str);
+		  add_history(str);
+		  result = s7_eval_c_string(s7, str);
+		  s7_write(s7, result, s7_current_output_port(s7));   /* use write, not display so that strings are in double quotes */
+		  s7_newline(s7, s7_current_output_port(s7));
+		}
+	      free(line_read);
 	    }
-	  free(line_read);
 	}
     }
 }
@@ -67692,7 +67699,7 @@ int main(int argc, char **argv)
  * remove sound-data ws output option
  * TODO: dac_hook in snd-xm.rb needs list not sd, and one sd case in snd-test.rb
  * libgsl tests could use s7test+rename (let ((sin gsl_complex_sin)) (load "s7test.scm" (current-environment))) etc)
- * vct_set_let_looped is a major part of the de-opt
- *
- * should (lambda * (a) a) be different from (lambda* (a) a)?  yes -- it's * as arg list: s7test this and let * define * etc
+ * vct_set_let_looped is a major part of the de-opt [check this again -- array fudge check might have counted]
+ * TODO: (let ((v (make-vector 3 0.0 #t))) (vector-fill! v 1+i) v) -> #(1.0 1.0 1.0)! -- s7_number_to_real returns real_part!
+ *   similar troubles for int-vect: (let ((v (make-vector 3 0 #t))) (vector-fill! v 4/3) v) -> #(1 1 1)
  */

@@ -1,317 +1,286 @@
 #!/bin/csh -f
 
-echo ' -------------------------------- basic configure test -------------------------------- '
+echo ' -------------------------------- without-gui -------------------------------- '
 rm -f snd
 rm -f config.cache
-echo ' CFLAGS="-Wall"  '
-./configure --quiet --with-motif CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
-make allclean
+./configure --quiet CFLAGS="-Wall" --without-gui
 make
 echo ' '
 echo ' '
 ./snd --version
-./snd -l snd-test 0
+./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was snd-test without-gui (also s7test) -------------------------------- '
+echo ' '
+echo ' '
+
+valgrind ./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was valgrind without-gui (also s7test) -------------------------------- '
+echo ' '
+echo ' '
+
+gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -ldl -lm 
+./repl tools/t456.scm
+echo ' '
+echo ' '
+echo ' -------------------------------- that was s7 t456 -------------------------------- '
+echo ' '
+echo ' '
+
+echo ' -------------------------------- without-gui CC=g++ --disable-deprecated -------------------------------- '
+make allclean
+rm -f snd
+rm -f config.cache
+./configure --quiet CFLAGS="-Wall" --without-gui --disable-deprecated CC=g++
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was snd-test g++/disable-deprecated -------------------------------- '
+echo ' '
+echo ' '
+
+valgrind ./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was valgrind g++ -------------------------------- '
+echo ' '
+echo ' '
+
+echo ' -------------------------------- without-gui --with-gmp -------------------------------- '
+make allclean
+rm -f snd
+rm -f config.cache
+./configure --quiet CFLAGS="-Wall" --without-gui --with-gmp --disable-deprecated
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was snd-test --with-gmp -------------------------------- '
+echo ' '
+echo ' '
+
+valgrind ./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was valgrind --with-gmp -------------------------------- '
+echo ' '
+echo ' '
+
+echo ' -------------------------------- with-gtk -------------------------------- '
+make allclean
+rm -f snd
+rm -f config.cache
+./configure --quiet CFLAGS="-Wall" --with-gtk --disable-deprecated
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was snd-test --with-gtk -------------------------------- '
+echo ' '
+echo ' '
+
+valgrind ./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was valgrind --with-gtk -------------------------------- '
+echo ' '
+echo ' '
+
+echo ' -------------------------------- motif -------------------------------- '
+make allclean
+rm -f snd
+rm -f config.cache
+./configure --quiet --with-motif CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -l snd-test 25
+./snd -l snd-test
 make clmclean
 make sndinfo
 ./sndinfo oboe.snd
 make sndplay
 ./sndplay oboe.snd
+echo ' '
+echo ' '
+echo ' -------------------------------- that was motif? and test 25 -------------------------------- '
+echo ' '
+echo ' '
 
+valgrind ./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was valgrind --with-motif? -------------------------------- '
+echo ' '
+echo ' '
 
-echo ' -------------------------------- basic configure -------------------------------- '
 make allclean
-echo ' CFLAGS="-Wall -I/usr/X11R6/include" '
-./configure --quiet --with-motif CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
+rm -f snd
+rm -f config.cache
+./configure --quiet CC=/home/bil/test/llvm-3.1.src/build/Release+Asserts/bin/clang CFLAGS="-Wall" 
 make
 ./snd --version
-./snd -l snd-test 0
-make allclean
+.snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was clang? -------------------------------- '
+echo ' '
+echo ' '
+
+
+cp snd-test.scm orig-snd-test.scm
+sed snd-test.scm -e 's/(define tests 1)/(define tests 7)/g' > tmp
+mv tmp snd-test.scm
 
 echo ' -------------------------------- without-gui -------------------------------- '
 make allclean
 rm -f snd
 rm -f config.cache
-echo ' CFLAGS="-Wall -I/usr/X11R6/include" --without-gui '
 ./configure --quiet CFLAGS="-Wall" --without-gui
 make
 echo ' '
 echo ' '
 ./snd --version
-./snd -l snd-test 2
-./snd -l snd-test 28
+./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was snd-test mult without-gui -------------------------------- '
+echo ' '
+echo ' '
 
-echo ' -------------------------------- without-gui/ladspa -------------------------------- '
-make allclean
-rm -f snd
-rm -f config.cache
-echo ' CFLAGS="-Wall" --without-gui --without-ladspa '
-./configure --quiet CFLAGS="-Wall" --without-gui --without-ladspa
-make
+valgrind ./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was valgrind mult -------------------------------- '
+echo ' '
+echo ' '
+
+
+cp orig-snd-test.scm snd-test.scm
+sed snd-test.scm -e 's/(define tests-at-random 0)/(define tests-at-random 300)/g' > tmp
+mv tmp snd-test.scm
+
 echo ' '
 echo ' '
 ./snd --version
-./snd -l snd-test 3
+./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was snd-test at-random without-gui -------------------------------- '
+echo ' '
+echo ' '
 
-echo ' -------------------------------- gtk -------------------------------- '
-make allclean
-rm -f snd
-rm -f config.cache
-echo ' CFLAGS="-Wall" --with-gtk '
-./configure --quiet CFLAGS="-Wall" --with-gtk
-make
+valgrind ./snd -l snd-test
 echo ' '
 echo ' '
-./snd --version 2
-./snd --version 8
-./snd -l snd-test 10
-rm xg.o
-echo ' CC=g++ CFLAGS="-Wall" --with-gtk '
-./configure --quiet CC=g++ CFLAGS="-Wall" --with-gtk --disable-deprecated
-make allclean
-echo ' CC=g++ --with-gtk CFLAGS="-Wall" '
-./configure --quiet CC=g++ --with-gtk CFLAGS="-Wall"
-make
-./snd --version
-./snd -l snd-test 9
+echo ' -------------------------------- that was valgrind at-random -------------------------------- '
+echo ' '
+echo ' '
 
-echo ' '
-echo ' -------------------------------- configure --with-gtk test -------------------------------- '
-make allclean
-rm -f snd
-rm -f config.cache
-echo ' CFLAGS="-Wall"  --with-gtk '
-./configure --quiet CFLAGS="-Wall"  --with-gtk
-make
+
+cp orig-snd-test.scm snd-test.scm
+sed snd-test.scm -e 's/(define all-args #f)/(define all-args #t)/g' > tmp
+mv tmp snd-test.scm
+
 echo ' '
 echo ' '
 ./snd --version
-./snd -l snd-test 7
+./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was snd-test full without-gui -------------------------------- '
+echo ' '
+echo ' '
+
+valgrind ./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was valgrind full -------------------------------- '
+echo ' '
+echo ' '
+
 make allclean
 rm -f snd
 rm -f config.cache
-echo ' CFLAGS="-Wall"  --with-gtk '
-./configure --quiet CFLAGS="-Wall"  --with-gtk
+./configure --quiet CFLAGS="-Wall" CC=g++
 make
 echo ' '
 echo ' '
 ./snd --version
 ./snd -l snd-test
-echo ' -------------------------------- that was full snd-test with-gtk -------------------------------- '
-make allclean
-echo ' CFLAGS="-Wall -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED" --with-gtk '
-./configure --quiet --disable-deprecated CFLAGS="-Wall" --with-gtk
-make
-./snd --version
-./snd -l snd-test 11
 echo ' '
 echo ' '
-date
-echo ' -------------------------------- motif test -------------------------------- '
+echo ' -------------------------------- that was snd-test full g++ -------------------------------- '
+echo ' '
+echo ' '
+
 make allclean
 rm -f snd
-rm -f sndinfo
 rm -f config.cache
-echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-gsl '
-./configure --quiet --with-motif CFLAGS="-Wall -I/usr/X11R6/include" --with-gsl LDFLAGS="-L/usr/X11R6/lib"
+./configure --quiet CFLAGS="-Wall" --with-gtk --without-ladspa --without-audio
 make
 echo ' '
 echo ' '
 ./snd --version
 ./snd -l snd-test
-echo ' -------------------------------- that was full snd-test with-motif -------------------------------- '
-rm xm.o
-echo ' CC=g++ '
-./configure --quiet --with-motif CC=g++ CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
-./snd --version
-./snd -l snd-test 12
+echo ' '
+echo ' '
+echo ' -------------------------------- that was snd-test full gtk -------------------------------- '
+echo ' '
+echo ' '
 
 make allclean
-echo ' CFLAGS="-Wall -I/usr/X11R6/include" '
-./configure --quiet --with-motif CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
+rm -f snd
+rm -f config.cache
+./configure --quiet CFLAGS="-Wall" --with-gmp --without-gui
 make
+echo ' '
+echo ' '
 ./snd --version
-./snd -l snd-test 8
+./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was snd-test full gmp -------------------------------- '
+echo ' '
+echo ' '
 
-echo ' '
-echo ' '
-date
-echo ' -------------------------------- gtk test -------------------------------- '
-make allclean
-rm -f snd
-rm -f config.cache
-echo ' CFLAGS="-Wall" --with-gtk --with-gsl '
-./configure --quiet CFLAGS="-Wall" --with-gtk --with-gsl
-make
-echo ' '
-echo ' '
-./snd --version
-./snd -l snd-test 14
+sed snd-test.scm -e 's/(define tests 1)/(define tests 7)/g' > tmp
+mv tmp snd-test.scm
 
-echo ' '
-echo ' '
-date
-echo ' -------------------------------- ruby test (Motif) -------------------------------- '
 make allclean
 rm -f snd
 rm -f config.cache
-echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby '
-./configure --quiet --with-motif CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby LDFLAGS="-L/usr/X11R6/lib"
-make
-echo ' '
-echo ' '
-echo ' '
-echo ' '
-./snd --version
-# ./snd -l snd-test.rb -- libxm problem here stops entire sequence
-make allclean
-echo ' CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby '
-./configure --quiet --with-motif CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby LDFLAGS="-L/usr/X11R6/lib"
-make
-echo ' '
-echo ' '
-echo ' -------------------------------- ruby test (Gtk) -------------------------------- '
-make allclean
-rm -f snd
-rm -f config.cache
-echo ' CFLAGS="-Wall" --with-ruby --with-gtk '
-./configure --quiet CFLAGS="-Wall" --with-ruby --with-gtk
-make
-echo ' '
-echo ' '
-./snd --version
-make allclean
-echo ' CC=g++ --with-ruby --with-gtk '
-./configure --quiet CC=g++ --with-ruby --with-gtk
-make
-echo ' '
-echo ' '
-make allclean
-echo ' CFLAGS="-Wall" --with-ruby --with-gtk --without-gsl '
-./configure --quiet CFLAGS="-Wall" --with-ruby --with-gtk --without-gsl
-make
-echo ' '
-echo ' '
-./snd --version
-make allclean
-echo ' CFLAGS="-Wall -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED" --with-ruby --with-gtk '
-./configure --quiet --disable-deprecated CFLAGS="-Wall" --with-ruby --with-gtk
-make
-echo ' '
-echo ' -------------------------------- ruby test (no gui) -------------------------------- '
-make allclean
-rm -f snd
-rm -f config.cache
-echo ' CFLAGS="-Wall" --with-ruby --without-gui --without-fftw '
-./configure --quiet CFLAGS="-Wall" --with-ruby --without-gui --without-fftw
-make
-echo ' '
-echo ' '
-./snd --version
-make allclean
-echo ' CFLAGS="-Wall" --with-ruby --without-gui '
-./configure --quiet CFLAGS="-Wall" --with-ruby --without-gui 
-make
-echo ' '
-echo ' '
-./snd --version
-make allclean
-echo ' CC=g++ CFLAGS="-Wall" --with-ruby --without-gui '
-./configure --quiet CC=g++ CFLAGS="-Wall" --with-ruby --without-gui 
-make
-
-echo ' '
-echo ' '
-date
-echo ' -------------------------------- g++ test -------------------------------- '
-make allclean
-rm -f snd
-rm -f config.cache
-echo ' CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" '
-./configure --quiet --with-motif CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
-make
-make sndinfo
-make sndplay
-./sndinfo test.snd
-./snd --version
-./snd -l snd-test 16
-make allclean
-echo ' '
-echo ' '
-echo ' CC=g++ --with-gtk '
-./configure --quiet CC=g++ --with-gtk
-make
-./snd --version
-./snd -l snd-test 17
-./snd -l snd-test 20
-make allclean
-echo ' '
-echo ' '
-echo ' CC=g++ --without-gui '
-./configure --quiet CC=g++ --without-gui
-make
-./snd --version
-./snd -l snd-test 6
-make allclean
-echo ' '
-echo ' '
-date
-echo ' -------------------------------- sndlib test -------------------------------- '
-make allclean
-rm -f snd
-rm -f config.cache
-rm -f sndinfo
-echo ' CFLAGS="-Wall" '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
-make sndinfo
-./sndinfo oboe.snd
-
-echo ' '
-echo ' '
-date
-echo ' -------------------------------- no-gui test -------------------------------- '
-make allclean
-rm -f snd
-echo ' CFLAGS="-Wall" --without-gui '
 ./configure --quiet CFLAGS="-Wall" --without-gui
 make
-./snd --version
-./snd -l snd-test 20
-./snd -l snd-test 8
 echo ' '
 echo ' '
-date
-make allclean
+./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was snd-test full mult no-gui -------------------------------- '
+echo ' '
+echo ' '
 
+valgrind ./snd -l snd-test
 
-echo ' -------------------------------- s7 gc tests -------------------------------- '
-make allclean
-rm -f snd
-echo ' CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1024" --without-gui '
-./configure --quiet CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1024" --without-gui
-make
-./snd -l snd-test 29
 echo ' '
 echo ' '
-date
-rm s7.o
-
-echo ' CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1824" --without-gui '
-./configure --quiet CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1824" --without-gui
-make
-./snd -l snd-test 29
+echo ' -------------------------------- that was valgrind full mult no-gui -------------------------------- '
 echo ' '
 echo ' '
-date
-rm s7.o
 
-echo ' CFLAGS="-Wall -DINITIAL_HEAP_SIZE=736" --without-gui '
-./configure --quiet CFLAGS="-Wall -DINITIAL_HEAP_SIZE=736" --without-gui
-make
-./snd -l snd-test 29
-echo ' '
-echo ' '
-date
-make allclean
-
-
-
+cp orig-snd-test.scm snd-test.scm

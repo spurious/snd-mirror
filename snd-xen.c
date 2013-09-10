@@ -2099,59 +2099,9 @@ static XEN g_gsl_ellipj(XEN u, XEN m)
 }
 
 
-#if (!HAVE_SCHEME)
-#include <gsl/gsl_dht.h>
-
-static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
-{
-  #define H_gsl_dht "(gsl-dht size data nu xmax): Hankel transform of data (a vct)"
-  int n;
-
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_1, "gsl-dht", "an integer");
-  XEN_ASSERT_TYPE(MUS_VCT_P(data), data, XEN_ARG_2, "gsl-dht", "a vct");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(nu), nu, XEN_ARG_3, "gsl-dht", "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(xmax), xmax, XEN_ARG_4, "gsl-dht", "a number");
-
-  n = XEN_TO_C_INT(size);
-  if (n <= 0)
-    XEN_OUT_OF_RANGE_ERROR("gsl-dht", XEN_ARG_1, size, "must be > 0");
-  else
-    {
-      double *indata, *outdata;
-      int i;
-      vct *v;
-      mus_float_t *vdata;
-
-      gsl_dht *t = gsl_dht_new(n, XEN_TO_C_DOUBLE(nu), XEN_TO_C_DOUBLE(xmax));
-
-      indata = (double *)calloc(n, sizeof(double));
-      outdata = (double *)calloc(n, sizeof(double));
-
-      v = XEN_TO_VCT(data);
-      vdata = mus_vct_data(v);
-
-      for (i = 0; i < n; i++)
-	indata[i] = vdata[i];
-
-      gsl_dht_apply(t, indata, outdata);
-
-      for (i = 0; i < n; i++)
-	vdata[i] = outdata[i];
-
-      gsl_dht_free(t);
-
-      free(indata);
-      free(outdata);
-    }
-  return(data);
-}
-#endif
-
-#if HAVE_GSL
-  #include <gsl/gsl_version.h>
-  #if ((GSL_MAJOR_VERSION >= 1) && (GSL_MINOR_VERSION >= 9))
-    #define HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE 1
-  #endif
+#include <gsl/gsl_version.h>
+#if ((GSL_MAJOR_VERSION >= 1) && (GSL_MINOR_VERSION >= 9))
+  #define HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE 1
 #endif
 
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
@@ -2426,9 +2376,6 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 
   XEN_NARGIFY_1(g_gsl_ellipk_w, g_gsl_ellipk)
   XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
-#if (!HAVE_SCHEME)
-  XEN_NARGIFY_4(g_gsl_dht_w, g_gsl_dht)
-#endif
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
   XEN_NARGIFY_1(g_gsl_eigenvectors_w, g_gsl_eigenvectors)
 #endif
@@ -2483,9 +2430,6 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   #define g_kn_w g_kn
   #define g_gsl_ellipk_w g_gsl_ellipk
   #define g_gsl_ellipj_w g_gsl_ellipj
-#if (!HAVE_SCHEME)
-  #define g_gsl_dht_w g_gsl_dht
-#endif
   #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
     #define g_gsl_eigenvectors_w g_gsl_eigenvectors
   #endif
@@ -2617,19 +2561,6 @@ void g_xen_initialize(void)
 
   XEN_DEFINE_SAFE_PROCEDURE("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
   XEN_DEFINE_SAFE_PROCEDURE("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
-
-#if (!HAVE_SCHEME)
-  XEN_DEFINE_SAFE_PROCEDURE("gsl-dht",    g_gsl_dht_w,    4, 0, 0, H_gsl_dht);
-#else
-  /* (gsl-dht 16 (make-vector 16 1.0 #t) 1.0 1.0)
-   */
-  s7_eval_c_string(s7, "(define (gsl-dht size in-data nu xmax) \
-                          (let ((dp (gsl_dht_new size nu xmax)) \
-                                (out-data (make-vector size 0.0 #t))) \
-                            (gsl_dht_apply dp (double* in-data) (double* out-data)) \
-                            (gsl_dht_free dp) \
-                            out-data))");
-#endif
 
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
   XEN_DEFINE_SAFE_PROCEDURE("gsl-eigenvectors", g_gsl_eigenvectors_w, 1, 0, 0, "returns eigenvalues and eigenvectors");
