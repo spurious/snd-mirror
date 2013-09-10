@@ -100,7 +100,7 @@ Version info:
   in Linux, if ALSA, then ALSA 1.0 or later
   if Ruby, Ruby 1.8.0 or later.  
   if Forth, any version
-  if s7, version 1.93 or later (it comes with Snd).
+  if s7, version 3.0 or later (it comes with Snd).
   if GSL, version 1.0 or later
 
 
@@ -190,7 +190,7 @@ Plus many other contributions from
 
 In terms of number of lines, the languages used in Snd/Sndlib are:
 C, Scheme, Ruby, Forth, Emacs Lisp, javascript,
-Fortran, Lua, m4, and postscript (altogether about 750k lines).
+Fortran, Lua, and postscript (altogether about 750k lines).
 
 
 ----------------------------------------------------------------
@@ -521,34 +521,6 @@ edit makefile. add to line 19: ORIGINAL_LDFLAGS = /usr/OpenMotif/lib
 make 
 sudo make install 
 
-
-
-
--------- Ruby 1.9.2 --------
-
-The CFLAGS setting is messed up (not to mention all the directory names).
-After running configure, add 
-
--I/usr/local/include/ruby-1.9.1/x86_64-linux -I/usr/local/include/ruby-1.9.1/ruby -I/usr/local/include/ruby-1.9.1
- to XEN_CFLAGS in makefile, then define all the RB_* macros in mus-config.h:
-
-#define HAVE_RB_GC_DISABLE 1
-#define HAVE_RB_ARY_DUP 1
-#define HAVE_REASONABLE_RB_GC_MARK 1
-#define RB_FIND_FILE_TAKES_VALUE 1
-#define HAVE_RB_ERRINFO 1
-#define HAVE_RB_GET_LOAD_PATH 1
-
-and also change HAVE_VSNPRINTF to 0 -- Ruby's version of vsnprintf segfaults
-when passed %lld and 64-bit ints.
-
-
-
-On LADSPA, Dave Phillips adds: "I have used the LADSPA plugins as standalone 
-effects processing modules. The Help texts for the LADSPA effects are courtesy 
-Steve Harris, with edits and emendations from yours truly. You will need the 
-latest plugin sets from www.ladspa.org and plugin.org.uk to make full use of 
-the LADSPA effects in Snd."
 
 
 

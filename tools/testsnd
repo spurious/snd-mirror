@@ -134,7 +134,7 @@ rm -f config.cache
 ./configure --quiet CC=/home/bil/test/llvm-3.1.src/build/Release+Asserts/bin/clang CFLAGS="-Wall" 
 make
 ./snd --version
-.snd -l snd-test
+./snd -l snd-test
 echo ' '
 echo ' '
 echo ' -------------------------------- that was clang? -------------------------------- '
@@ -171,7 +171,7 @@ echo ' '
 
 
 cp orig-snd-test.scm snd-test.scm
-sed snd-test.scm -e 's/(define tests-at-random 0)/(define tests-at-random 300)/g' > tmp
+sed snd-test.scm -e 's/(define test-at-random 0)/(define test-at-random 300)/g' > tmp
 mv tmp snd-test.scm
 
 echo ' '

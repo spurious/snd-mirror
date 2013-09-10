@@ -7820,7 +7820,8 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
 
   return(x);
 }
-
+/* TODO: in fc19 a /= divisor can abort with floating exception if leastfix/mostfix -- how to catch this and go on?
+ */
 
 
 static s7_pointer exact_to_inexact(s7_scheme *sc, s7_pointer x)
@@ -67702,4 +67703,5 @@ int main(int argc, char **argv)
  * vct_set_let_looped is a major part of the de-opt [check this again -- array fudge check might have counted]
  * TODO: (let ((v (make-vector 3 0.0 #t))) (vector-fill! v 1+i) v) -> #(1.0 1.0 1.0)! -- s7_number_to_real returns real_part!
  *   similar troubles for int-vect: (let ((v (make-vector 3 0 #t))) (vector-fill! v 4/3) v) -> #(1 1 1)
+ * apparently in solaris, it's NaN.0 not nan.0?  
  */
