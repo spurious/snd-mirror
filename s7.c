@@ -256,16 +256,6 @@
 #endif
 
 
-/* we could add WITH_PURE_S7 or something like that to get rid of remaining bad ideas:
- *      inexact/exact and #i #e
- *      `#() special cases (on the switch WITH_QUASIQUOTE_VECTOR)
- *      call-with-values etc
- *      char-ready? and eof-object? [s7-slib-init.scm currently says we have char-ready? otherwise only occurs in s7test.scm]
- *      dfls exponents (WITH_EXTRA_EXPONENT_MARKERS currently)
- *      unquote (on the switch WITH_IMMUTABLE_UNQUOTE currently)
- */
-
-
 #ifndef DEBUGGING
   #define DEBUGGING 0
 #endif
@@ -7827,7 +7817,8 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
 
   return(x);
 }
-/* TODO: in fc19 a /= divisor can abort with floating exception if leastfix/mostfix -- how to catch this and go on?
+/* in fc19 as a guest running in virtualbox on OSX, the line  a /= divisor can abort with an arithmetic exception (SIGFPE)
+ *    if leastfix/mostfix -- apparently this is a bug in virtualbox.
  */
 
 
@@ -29489,7 +29480,7 @@ a vector that points to the same elements as the original-vector but with differ
   s7_pointer orig, dims, y, x;
   s7_vdims_t *v;
   int i;
-  s7_Int offset = 1;
+  s7_Int offset = 1, orig_len;
 
   orig = car(args);
   if (!s7_is_vector(orig))
@@ -29497,11 +29488,18 @@ a vector that points to the same elements as the original-vector but with differ
       CHECK_METHOD(sc, orig, sc->MAKE_SHARED_VECTOR, args);
       return(wrong_type_argument(sc, sc->MAKE_SHARED_VECTOR, small_int(1), orig, T_VECTOR));
     }
+  orig_len = vector_length(orig);
 
   dims = cadr(args);
-  if (!is_pair(dims))
+  if ((is_null(dims)) ||
+      (!is_proper_list(sc, dims)))
     return(wrong_type_argument(sc, sc->MAKE_SHARED_VECTOR, small_int(2), dims, T_PAIR));
-  
+  for (y = dims; is_pair(y); y = cdr(y))
+    if ((!s7_is_integer(car(y)))        ||       /* (make-shared-vector v '((1 2) (3 4))) */
+	(s7_integer(car(y)) > orig_len) ||
+	(s7_integer(car(y)) < 0))
+      return(s7_error(sc, sc->WRONG_TYPE_ARG, list_1(sc, make_protected_string(sc, "a list of integers that fits the original vector"))));
+
   v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
   v->ndims = safe_list_length(sc, dims);
   v->dims = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
@@ -29519,7 +29517,7 @@ a vector that points to the same elements as the original-vector but with differ
       offset *= v->dims[i];
     }
 
-  if (offset > vector_length(orig))
+  if ((offset < 0) || (offset > vector_length(orig)))
     {
       free(v->dims);
       free(v->offsets);
@@ -67489,9 +67487,6 @@ s7_scheme *s7_init(void)
                                           (return `(begin ,@(cdr clause))))))                                 \n\
                                 clauses)                                                                      \n\
                               (values))))");
-  /* TODO: doc/test reader-cond and reader-expand
-   *   (what happens if the read-time eval hits an error?)
-   */
 
 
   /* ---------------- hooks ---------------- */
@@ -67707,8 +67702,9 @@ int main(int argc, char **argv)
     }
 }
 
-/* in Linux:       gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -ldl -lm
- * in OSX/OpenBSD: gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -lm
+/* in Linux:       gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -lrt -ldl -lm -Wl,-export-dynamic
+ * in OpenBSD:     gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -lm -Wl,-export-dynamic
+ * in OSX:         gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -lm
  */
 #endif
 
@@ -67721,7 +67717,7 @@ int main(int argc, char **argv)
  * lint           9328 8140 7887 7736 7300 7180 7051 7078
  * index    44300 3291 3005 2742 2078 1643 1435 1363 1365
  * s7test    1721 1358 1297 1244  977  961  957  960  943
- * t455|6     265   89   55   31   14   14    9 9155 8998
+ * t455|6     265   89   55   31   14   14    9    9    9
  * lat        229   63   52   47   42   40   34   31   29
  * t502        90   43   39   36   29   23   20   14   14
  * calls           275  207  175  115   89   71   53   53
@@ -67742,7 +67738,7 @@ int main(int argc, char **argv)
  * cload: settable C variables (via symbol_access as here?)
  * doc/test the lib*.scm files.
  * truncated format? or object->string?
- *   if -export-dynamic, can't s7 funcs be tied in as well via cload? (the obvious thing does not work here)
+ *   if -export-dynamic, can't s7 funcs be tied in as well via cload?
  * #[...] for int/float vectors?  or (float-vector ...), (make-shared-vector '(a b) (float-vector ...))
  * TODO: change docs for sound-data/vct, change to vector wherever possible, remove more from scheme sndlib2xen/vct (synonyms) [frame.scm?]
  *   what about vector-ref/set loop opts? from vct/sound-data code
@@ -67757,4 +67753,18 @@ int main(int argc, char **argv)
  *    c_function_let_looped is local name -- need a corresponding one for float-vector set?
  * apparently in solaris, it's NaN.0 not nan.0?  
  * someday get apply-controls out of the effects code and everywhere else, maybe (controls) -> function
+ *
+ * WITH_PURE_S7 or something like that to get rid of remaining bad ideas:
+ *      inexact/exact and #i #e
+ *      `#() special cases (on the switch WITH_QUASIQUOTE_VECTOR)
+ *      call-with-values etc
+ *      char-ready? and eof-object? [s7-slib-init.scm currently says we have char-ready? otherwise only occurs in s7test.scm]
+ *      dfls exponents (WITH_EXTRA_EXPONENT_MARKERS currently)
+ *      unquote (on the switch WITH_IMMUTABLE_UNQUOTE currently)
+ *      make-complex, no make-polar|rectangular (would need a *features* tag for this)
+ *
+ * TODO: doc/test reader-cond and reader-expand
+ *   (what happens if the read-time eval hits an error?)
  */
+
+

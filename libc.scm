@@ -730,7 +730,7 @@
 		    (C-function ("gettimeofday" g_gettimeofday "" 0))
 		    (C-function ("nanosleep" g_nanosleep "" 2))
 		    (C-function ("clock_getres" g_clock_getres "" 1))
-		    (C-function ("clock_gettime" g_clock_gettime "" 1))
+		    (C-function ("clock_gettime" g_clock_gettime "" 1)) ; these need -lrt
 		    (C-function ("clock_settime" g_clock_settime "" 3))
 		    (C-function ("clock_getcpuclockid" g_clock_getcpuclockid "" 1))
 		    (C-function ("clock_nanosleep" g_clock_nanosleep "" 4))
@@ -1016,11 +1016,13 @@
                            static s7_pointer g_sigqueue(s7_scheme *sc, s7_pointer args)
                            {
                              #if (__linux__)
-                             union sigval val;
-                             if (s7_is_integer(s7_caddr(args)))
-                               val.sival_int = (int)s7_integer(s7_caddr(args));
-                             else val.sival_ptr = (void *)s7_c_pointer(s7_caddr(args));
-                             return(s7_make_integer(sc, sigqueue((pid_t)s7_integer(s7_car(args)), s7_integer(s7_cadr(args)), val)));
+                               union sigval val;
+                               if (s7_is_integer(s7_caddr(args)))
+                                 val.sival_int = (int)s7_integer(s7_caddr(args));
+                               else val.sival_ptr = (void *)s7_c_pointer(s7_caddr(args));
+                               return(s7_make_integer(sc, sigqueue((pid_t)s7_integer(s7_car(args)), s7_integer(s7_cadr(args)), val)));
+                             #else
+                               return(s7_f(sc));
                              #endif
                            }
                            static s7_pointer g_sigwait(s7_scheme *sc, s7_pointer args)
@@ -1035,6 +1037,8 @@
                               return(s7_make_integer(sc, sigtimedwait((const sigset_t *)s7_c_pointer(s7_car(args)), 
                            					   (siginfo_t *)s7_c_pointer(s7_cadr(args)),
                                                                       (const struct timespec *)s7_c_pointer(s7_caddr(args)))));
+                             #else
+                               return(s7_f(sc));
                              #endif
                            }
                            #if __linux__
@@ -1581,7 +1585,10 @@
 			"sys/resource.h"
 			(reader-expand ((not openbsd) "wordexp.h"))
 			)
-		  "" "" "libc_s7")
+		  "" 
+		  (if (provided? 'linux) "-lrt" 
+		      (if (provided? 'openbsd) "-pthread" ""))
+		  "libc_s7")
 
 	(current-environment))))
 

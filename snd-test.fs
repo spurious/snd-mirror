@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Wed Jun 12 17:12:07 CEST 2013
+\ Changed: Thu Sep 12 13:06:27 CEST 2013
 
 \ Commentary:
 \ 
@@ -10,7 +10,7 @@
 \        XXX   - info marker
 \ 
 \ Tested with:
-\   Snd 13.x
+\   Snd 14.x
 \   Fth 1.3.x
 \ 
 \ The most Gtk tests will be skipped if not gtk3.
@@ -139,7 +139,7 @@ save-dir *home* "/zap/snd" $+ || value original-save-dir
 temp-dir *home* "/zap/tmp" $+ || value original-temp-dir
 sound-file-extensions value original-sound-file-extensions
 listener-prompt value original-prompt
-65536 value default-file-buffer-size
+mus-file-buffer-size value default-file-buffer-size
 8 value *info-array-print-length*
 
 "/home/bil/sf1/" value sf-dir
@@ -1048,7 +1048,6 @@ SIGINT lambda: { sig -- }
      #( <'> peak-env-dir "" )
      #( <'> tiny-font tiny-font-string )
      #( <'> transform-type fourier-transform )
-     #( <'> trap-segfault #t )
      #( <'> with-file-monitor #t )
      #( <'> clm-table-size 512 )
      #( <'> clm-default-frequency 0.0 )
@@ -2151,7 +2150,7 @@ black-and-white-colormap constant *better-colormap*
      'channel->vct 'channel-amp-envs 'channel-data 'channel-properties 
      'channel-property 'channel-style 'channel-widgets 'channels
      'channels-combined 'channels-separate 'channels-superimposed 
-     'chans 'clear-array 'clear-listener 'clear-sincs 'clip-hook
+     'chans 'clear-array 'clear-listener 'clip-hook
      'clipping 'clm-channel 'clm-table-size 
      'clm-default-frequency 'close-hook 'close-sound 'color->list
      'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted
@@ -2161,7 +2160,7 @@ black-and-white-colormap constant *better-colormap*
      'contrast-control 'contrast-control-amp 'contrast-control-bounds
      'contrast-control? 'contrast-enhancement 'controls->channel
      'convolution 'convolve 'convolve-files 'convolve-selection-with
-     'convolve-with 'convolve? 'copy-context 'copy-sampler 'count-matches
+     'convolve-with 'convolve? 'copy-context 'copy-sampler
      'current-edit-position 'current-font 'cursor 'cursor-color
      'cursor-context 'cursor-cross 'cursor-in-middle 'cursor-in-view
      'cursor-line 'cursor-location-offset 'cursor-on-left 'cursor-on-right
@@ -2196,10 +2195,13 @@ black-and-white-colormap constant *better-colormap*
      'filtered-comb 'filtered-comb? 'filter-channel 'filter-control-coeffs
      'filter-control-envelope 'filter-control-in-dB 'filter-control-in-hz
      'filter-control-order 'filter-control-waveform-color 'filter-control?
-     'filter-selection 'filter-sound 'filter?  'find-channel 'find-dialog
+     'filter-selection 'filter-sound 'filter? 'find-dialog
      'find-mark 'find-sound 'finish-progress-report 'fir-filter 'fir-filter?
      'flat-top-window 'focus-widget 'foreground-color 'forget-region 
-     'formant 'formant-bank 'formant? 'firmant 'firmant? 'fourier-transform
+     'formant 'formant-bank 'formant-bank? 'formant? 'firmant 'firmant?
+     'comb-bank 'comb-bank? 'all-pass-bank 'all-pass-bank? 'filtered-comb-bank
+     'filtered-comb-bank? 'make-comb-bank 'make-all-pass-bank
+     'make-filtered-comb-bank 'fourier-transform
      'frame 'frame* 'frame+ 'frame->file 'frame->file? 'frame->frame 
      'frame->list 'frame->sample 'frame-ref 'frame-set! 'frame? 'frames 
      'free-player 'free-sampler 'gaussian-window 'gc-off 'gc-on 
@@ -2226,18 +2228,20 @@ black-and-white-colormap constant *better-colormap*
      'locsig-reverb-ref 'locsig-reverb-set! 'locsig-set! 'locsig-type
      'locsig? 'log-freq-start 'main-menu 'main-widgets 'make-all-pass
      'make-asymmetric-fm 'make-moving-average 'make-moving-max
-     'make-bezier 'make-color
-     'make-comb 'make-filtered-comb 'make-convolve 'make-delay 'make-env
-     'make-fft-window 'make-file->frame 'make-file->sample 'make-filter
-     'make-fir-coeffs 'make-fir-filter 'make-formant 'make-firmant
+     'make-bezier 'make-color 'make-comb 'make-filtered-comb 'make-convolve
+     'make-delay 'make-env 'make-fft-window 'make-file->frame
+     'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter
+     'make-formant 'make-firmant 'make-formant-bank
      'make-frame 'make-frame->file 'make-granulate 'make-graph-data
      'make-iir-filter 'make-locsig 'make-mix-sampler 'make-mixer 
-     'make-move-sound 'make-notch 'make-one-pole 'make-one-zero
+     'make-move-sound 'make-notch 'make-one-pole
+     'make-one-pole-all-pass 'make-one-zero
      'make-oscil 'make-phase-vocoder 'make-player 'make-polyshape 
      'make-polywave 'make-pulse-train 'make-rand 'make-rand-interp
      'make-readin 'make-region 'make-region-sampler 'make-sample->file
      'make-sampler 'make-sawtooth-wave 'make-scalar-mixer 'make-nrxysin
-     'make-nrxycos 'make-snd->sample 'make-sound-data 'make-square-wave 
+     'make-nrxycos 'make-rxyk!cos 'make-rxyk!sin
+     'make-snd->sample 'make-sound-data 'make-square-wave 
      'make-src 'make-ssb-am 'make-ncos 'make-nsin 'make-table-lookup
      'make-triangle-wave 'make-two-pole 'make-two-zero
      'make-variable-graph 'make-vct 'make-wave-train 'map-chan
@@ -2258,7 +2262,7 @@ black-and-white-colormap constant *better-colormap*
      'mouse-leave-graph-hook 'mouse-leave-label-hook
      'mouse-leave-listener-hook 'mouse-leave-text-hook 
      'mouse-press-hook 'move-locsig 'move-sound 'move-sound?
-     'moving-average 'moving-average?
+     'moving-average 'moving-average? 'moving-max 'moving-max?
      'multiply-arrays 'mus-aifc 'mus-aiff 'mus-alaw 'mus-alsa-buffer-size
      'mus-alsa-buffers 'mus-alsa-capture-device 'mus-alsa-device
      'mus-alsa-playback-device 'mus-alsa-squelch-warning 'mus-apply
@@ -2300,7 +2304,8 @@ black-and-white-colormap constant *better-colormap*
      'mus-ycoeffs 'name-click-hook 'new-sound 'new-sound-dialog 'new-sound-hook
      'new-widget-hook 'next-sample 'normalize-by-channel 'normalize-by-sound
      'normalize-channel 'normalize-globally 'notch 'notch? 'one-pole
-     'one-pole? 'one-zero 'one-zero? 'open-file-dialog
+     'one-pole? 'one-pole-all-pass 'one-pole-all-pass?
+     'one-zero 'one-zero? 'open-file-dialog
      'open-file-dialog-directory 'open-hook 'open-raw-sound 
      'open-raw-sound-hook 'open-sound 'orientation-hook 'oscil
      'oscil? 'out-any 'outa 'outb 'outc 'outd 'output-comment-hook
@@ -2316,7 +2321,7 @@ black-and-white-colormap constant *better-colormap*
      'position-color 'preferences-dialog 'previous-sample 'print-dialog
      'print-length 'progress-report 'pulse-train 'pulse-train?
      'radians->degrees 'radians->hz 'ramp-channel 'rand 'rand-interp
-     'rand-interp? 'rand?  'read-hook 'read-mix-sample 'read-only 
+     'rand-interp? 'rand? 'read-mix-sample 'read-only 
      'read-region-sample 'read-sample 'readin 'readin? 
      'rectangular->magnitudes 'rectangular->polar 'rectangular-window
      'redo 'redo-edit 'region->vct 'region-chans 'region-home 
@@ -2350,15 +2355,16 @@ black-and-white-colormap constant *better-colormap*
      'show-mix-waveforms 'show-no-axes 'show-selection
      'show-selection-transform 'show-sonogram-cursor 'show-transform-peaks
      'show-widget 'show-x-axis 'show-x-axis-unlabelled 'show-y-zero
-     'sinc-width 'nrxysin 'nrxysin? 'nrxycos 'nrxycos? 'smooth-channel
+     'sinc-width 'nrxysin 'nrxysin? 'nrxycos 'nrxycos? 'rxyk!cos 'rxyk!cos?
+     'rxyk!sin 'rxyk!sin? 'smooth-channel
      'smooth-selection 'smooth-sound 'snd->sample 'snd->sample? 'snd-error
      'snd-error-hook 'snd-exit ( added ) 'snd-gcs 'snd-help 'snd-font
      'snd-color 'snd-print 'snd-spectrum 'snd-tempnam 'snd-url 'snd-urls
      'snd-version 'snd-warning 'snd-warning-hook
      'sound-data->vct 'sound-data-chans 'sound-data-length 'sound-data-maxamp 
      'sound-data-ref 'sound-data-peak 'sound-data-set! 'sound-data-scale!
-     'sound-data-fill! 'sound-data? 'sound-data-multiply! 'sound-data-add!
-     'sound-data-offset!  'sound-data* 'sound-data+ 'sound-data-copy
+     'sound-data? 'sound-data-multiply! 'sound-data-add!
+     'sound-data-offset!  'sound-data* 'sound-data+
      'sound-data-reverse! 'sound-file-extensions 'sound-file? 
      'sound-files-in-directory 'sound-loop-info 'sound-properties 
      'sound-property 'sound-widgets 'sound? 'soundfont-info 'sounds
@@ -2373,29 +2379,28 @@ black-and-white-colormap constant *better-colormap*
      'stop-dac-hook 'stop-player 'stop-playing 'stop-playing-hook 
      'stop-playing-selection-hook 'ncos 'ncos? 'nsin 'nsin?  'swap-channels
      'sync 'sync-style 'sync-none 'sync-all 'sync-by-sound 'sync-max
-     'syncd-marks 'table-lookup 'table-lookup? 'tap 'temp-dir
+     'syncd-marks 'table-lookup 'table-lookup? 'tap 'tap? 'temp-dir
      'text-focus-color 'time-graph 'time-graph-style 'time-graph-type 
      'time-graph? 'tiny-font 'tracking-cursor-style 'transform->vct
      'transform-dialog 'transform-frames 'transform-graph 'transform-graph-style
      'transform-graph-type 'transform-graph? 'transform-normalization
      'transform-sample 'transform-size 'transform-type 'transform? 
-     'trap-segfault 'triangle-wave 'triangle-wave? 'tukey-window 
+     'triangle-wave 'triangle-wave? 'tukey-window 
      'two-pole 'two-pole? 'two-zero 'two-zero? 'ultraspherical-window
      'unbind-key  'undo 'undo-edit 'undo-hook 'unselect-all 'update-hook
      'update-lisp-graph 'update-sound 'update-time-graph
      'update-transform-graph 'variable-graph? 'vct 'vct* 'vct+
      'vct->channel 'vct->list 'vct->sound-data 'vct->string 'vct->vector
-     'vct-add! 'vct-copy 'vct-fill!  'vct-length 'vct-move! 'vct-multiply!
-     'vct-offset! 'vct-peak 'vct-ref 'vct-reverse!  'vct-scale! 'vct-set!
-     'vct-subseq 'vct-subtract! 'vct? 'vector->vct 'view-mixes-dialog
-     'view-regions-dialog 'view-sound 'walsh-transform 'wave-train
-     'wave-train? 'wavelet-transform 'wavelet-type 'wavo-hop 'wavo-trace
-     'welch-window 'widget-position 'widget-size 'widget-text 'window-height
-     'window-width 'window-x 'window-y 'with-background-processes
-     'with-file-monitor 'with-gl 'with-mix-tags 'with-relative-panes
-     'with-tracking-cursor 'with-verbose-cursor 'with-inset-graph
-     'with-interrupts 'with-pointer-focus 'with-smpte-label 'with-toolbar
-     'with-tooltips 'with-menu-icons 'save-as-dialog-src
+     'vct-add! 'vct-length 'vct-max 'vct-min 'vct-move!
+     'vct-multiply! 'vct-offset! 'vct-peak 'vct-ref 'vct-reverse! 'vct-scale!
+     'vct-set! 'vct-subseq 'vct-subtract! 'vct? 'vector->vct 'walsh-transform
+     'wave-train 'wave-train? 'wavelet-transform 'wavelet-type 'wavo-hop
+     'wavo-trace 'welch-window 'widget-position 'widget-size 'widget-text
+     'window-height 'window-width 'window-x 'window-y
+     'with-background-processes 'with-file-monitor 'with-gl 'with-mix-tags
+     'with-relative-panes 'with-tracking-cursor 'with-verbose-cursor
+     'with-inset-graph 'with-interrupts 'with-pointer-focus 'with-smpte-label
+     'with-toolbar 'with-tooltips 'with-menu-icons 'save-as-dialog-src
      'save-as-dialog-auto-comment 'x->position 'x-axis-as-clock
      'x-axis-as-percentage 'x-axis-in-beats 'x-axis-in-measures 
      'x-axis-in-samples 'x-axis-in-seconds 'x-axis-label 'x-axis-style
@@ -2750,25 +2755,6 @@ black-and-white-colormap constant *better-colormap*
     mal car 24971 "oboe: mus-sound-maxamp at" #() snd-test-neq
   then
   \ 
-  oboe-snd '( 1234 0.5 ) set-mus-sound-maxamp drop
-  oboe-snd mus-sound-maxamp to mal
-  mal cadr 0.5 "oboe: set-mus-sound-maxamp" #() snd-test-neq
-  mal car 1234 "oboe: set-mus-sound-maxamp at" #() snd-test-neq
-  \ 
-  "4.aiff" mus-sound-maxamp to mal
-  *clmtest* 0= if
-    mal
-    vct( 810071 0.245 810071 0.490 810071 0.735 810071 0.980 )
-    "mus-sound-maxamp 4.aiff" #() snd-test-neq
-  then
-  "4.aiff" '( 1234 0.5 54321 0.2 0 0.1 9999 0.01 ) set-mus-sound-maxamp drop
-  "4.aiff" mus-sound-maxamp ( mal )
-  vct( 1234 0.5 54321 0.2 0 0.1 9999 0.01 )
-  "set-mus-sound-maxamp 4.aiff" #() snd-test-neq
-  oboe-snd '( 1234 ) <'> set-mus-sound-maxamp snd-test-catch to res
-  res car 'wrong-type-arg <> if
-    "set-mus-sound-maxamp bad arg: %s?" #( res ) snd-display
-  then
   oboe-snd mus-sound-type-specifier to res
   \ 0x646e732e little endian reader
   \ 0x2e736e64 big endian reader
@@ -2780,7 +2766,6 @@ black-and-white-colormap constant *better-colormap*
   "15-Oct-2006 04:34"
   "oboe: file-write-date" #() snd-test-neq
   oboe-snd play-sound-1
-  oboe-snd mus-sound-forget drop
   \ 
   0 { lasth }
   begin
@@ -3303,7 +3288,7 @@ black-and-white-colormap constant *better-colormap*
   v0 1 vct-ref 0.2 "sound-data->vct[2]" #() snd-test-neq
   v0 sdata2 0 vct->sound-data drop
   sdata2 0 1 sound-data-ref 0.2 "vct->sound-data[2]" #() snd-test-neq
-  v0 0.3 vct-fill! drop
+  10 0.3 make-vct to v0
   v0 sdata2 1 vct->sound-data drop
   sdata2 1 1 sound-data-ref 0.3 "vct->sound-data[3]" #() snd-test-neq
   v sdata2 0 vct->sound-data drop
@@ -3329,13 +3314,6 @@ black-and-white-colormap constant *better-colormap*
   sd 0 sound-data->vct 10 0.5 make-vct "sound-data-scale! chan 0" #()
     snd-test-neq
   sd 1 sound-data->vct 10 1.0 make-vct "sound-data-scale! chan 1" #()
-    snd-test-neq
-  \ 
-  2 10 make-sound-data to sd
-  sd 2.0 sound-data-fill! drop
-  sd 0 sound-data->vct 10 2.0 make-vct "sound-data-fill! chan 0" #()
-    snd-test-neq
-  sd 1 sound-data->vct 10 2.0 make-vct "sound-data-fill! chan 1" #()
     snd-test-neq
   \ 
   "fmv.snd" 22050 -1 mus-bshort mus-aiff "no comment"
@@ -3429,7 +3407,7 @@ black-and-white-colormap constant *better-colormap*
      #( mus-ldouble mus-next )
      #( mus-ulshort mus-next )
      #( mus-ubshort mus-next ) ) to formats
-  nil nil nil nil nil nil { df ht samps ndata sda nda }
+  nil nil nil nil { df ht samps ndata }
   #( 1 2 4 8 ) each to chns
     formats each to vals
       vals 0 array-ref to df
@@ -3449,7 +3427,7 @@ black-and-white-colormap constant *better-colormap*
       chns samps make-sound-data to ndata
       chns 0 do
         samps 0 do
-          sdata j ( chn ) i ( samp ) 2.0 random 1.0 f- sound-data-set! drop
+          sdata j ( chn ) i ( samp ) 1.0 mus-random sound-data-set! drop
         loop
       loop
       fd 0 samps 1- chns sdata mus-sound-write drop
@@ -3462,20 +3440,13 @@ black-and-white-colormap constant *better-colormap*
       "fmv5.snd" 100 frame->byte pos "mus-sound-seek-frame(100)" #()
         snd-test-neq
       fd mus-sound-close-input drop
-      #f ( flag )
       chns 0 do
-        samps 0 do
-          sdata j ( chn ) i ( samp ) sound-data-ref to sda
-          ndata j ( chn ) i ( samp ) sound-data-ref to nda
-          sda nda fneq if
-            sda nda "read-write trouble: format %s header %s "
-              #( df mus-data-format-name
-                 ht mus-header-type-name ) snd-test-neq
-            not ( toggle flag )
-            leave
-          then
-        loop dup ( check flag ) ?leave
-      loop ( flag ) drop
+        sdata i ( chn ) undef sound-data->vct
+          ndata i ( chn ) undef sound-data->vct
+          "read-write trouble: format %s header %s "
+          #( df mus-data-format-name
+             ht mus-header-type-name ) snd-test-neq
+        loop
     end-each
   end-each
   \ 
@@ -3516,7 +3487,7 @@ black-and-white-colormap constant *better-colormap*
   \ ;; check clipping choices
   "oboe.snd" view-sound to ind
   #f set-clipping drop
-  <'> sndlib-test-map-10-times-cb 0 ind 0 undef frames ind 0 map-channel drop
+  10.0 0 ind 0 undef frames ind 0 undef scale-channel drop
   "test.snd" ind mus-next mus-bfloat save-sound-as drop
   1 ind 0 undo drop
   "test.snd" open-sound { ind1 }
@@ -4050,7 +4021,12 @@ black-and-white-colormap constant *better-colormap*
   "tmp.snd" mus-riff mus-l24int 22050 1 :size 100000 new-sound to ind
   selection-creates-region { old-selection-creates-region }
   #t set-selection-creates-region drop
-  -0.5 undef undef undef frames 1/f sndlib-test-map-x-cb map-channel drop
+  undef undef undef frames to len
+  len 1/f { incr }
+  -0.5 ( x )
+  len 0.0 make-vct map!
+    ( x ) incr f+ dup
+  end-map ( data ) 0 len undef undef undef "" vct->channel drop ( x ) drop
   save-sound drop
   ind close-sound drop
   "tmp.snd" open-sound to ind
@@ -4885,7 +4861,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
      32
      '( 1 2 ) ) { random-args }
   #( <'> make-all-pass <'> make-asymmetric-fm <'> make-moving-average
-     <'> make-table-lookup <'> make-triangle-wave <'> make-comb
+     <'> make-moving-max <'> make-comb
      <'> make-delay <'> make-env <'> make-fft-window <'> make-filter
      <'> make-filtered-comb <'> make-fir-filter <'> make-formant
      <'> make-frame <'> make-iir-filter <'> make-locsig <'> make-mixer
@@ -6815,7 +6791,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> expand-control-bounds <'> contrast-control-bounds
    <'> reverb-control-length-bounds <'> reverb-control-scale-bounds
    <'> cursor-update-interval <'> cursor-location-offset 
-   <'> auto-update-interval <'> count-matches <'> cursor 
+   <'> auto-update-interval <'> cursor 
    <'> with-tracking-cursor <'> cursor-size <'> cursor-style
    <'> tracking-cursor-style <'> dac-combines-channels <'> dac-size
    <'> clipping <'> data-format <'> data-location <'> data-size
@@ -6839,7 +6815,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> filter-control-in-dB <'> filter-control-envelope
    <'> enved-filter-order <'> enved-filter <'> filter-control-in-hz
    <'> filter-control-order <'> filter-selection <'> filter-channel
-   <'> filter-control? <'> find-channel <'> find-mark <'> find-sound
+   <'> filter-control? <'> find-mark <'> find-sound
    <'> finish-progress-report <'> frames <'> free-sampler <'> graph
    <'> transform? <'> delete-transform <'> graph-cursor <'> graph->ps
    <'> gl-graph->ps <'> graph-style <'> lisp-graph? <'>  graphs-horizontal
@@ -6900,7 +6876,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> sync <'> sync-max <'> sound-properties <'> sound-property
    <'> temp-dir <'>  region-sampler?  <'> transform-sample 
    <'> transform->vct <'> transform-frames <'> transform-type
-   <'> trap-segfault <'> with-file-monitor <'> undo 
+   <'> with-file-monitor <'> undo 
    <'> update-transform-graph <'> update-time-graph 
    <'> update-lisp-graph <'> update-sound <'> clm-table-size 
    <'> with-verbose-cursor <'> view-sound <'> wavelet-type
@@ -6928,10 +6904,10 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> mus-file-clipping <'> mus-header-raw-defaults <'> moving-average
    <'> moving-average? <'> make-moving-average <'> mus-expand-filename
    <'> make-sound-data <'> sound-data-ref <'> sound-data-set!
-   <'> sound-data-scale! <'> sound-data-fill! <'> sound-data?
+   <'> sound-data-scale! <'> sound-data?
    <'> sound-data-length <'> sound-data-multiply! <'> sound-data-add!
    <'> sound-data-offset! <'> sound-data* <'> sound-data+
-   <'> sound-data-copy <'> sound-data-reverse! <'> sound-data-maxamp 
+   <'> sound-data-reverse! <'> sound-data-maxamp 
    <'> sound-data-chans <'> sound-data->vct <'> vct->sound-data
    <'> sound-data-peak <'> all-pass <'> all-pass? <'> amplitude-modulate
    <'> array->file <'> array-interp <'> mus-interpolate <'> asymmetric-fm
@@ -6979,9 +6955,9 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> table-lookup <'> table-lookup? <'> tap <'> triangle-wave 
    <'> triangle-wave? <'> two-pole <'> two-pole? <'> two-zero
    <'> two-zero? <'> wave-train <'> wave-train?  <'> make-vct 
-   <'> vct-add! <'> vct-subtract!  <'> vct-copy <'> vct-length
+   <'> vct-add! <'> vct-subtract! <'> vct-length
    <'> vct-multiply! <'> vct-offset!  <'> vct-ref <'> vct-scale!
-   <'> vct-fill! <'> vct-set!  <'> vct-peak <'> vct? <'> list->vct
+   <'> vct-set!  <'> vct-peak <'> vct? <'> list->vct
    <'> vct->list <'> vector->vct <'> vct->vector <'> vct-move!
    <'> vct-reverse! <'> vct-subseq <'> vct <'> little-endian? 
    <'> vct->string <'> clm-channel <'> env-channel <'> map-channel
@@ -7056,7 +7032,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> spectro-z-angle <'> spectro-z-scale <'> speed-control
    <'> speed-control-style <'> speed-control-tones <'> squelch-update
    <'> sync <'> sound-properties <'> sound-property <'> temp-dir
-   <'> y-bounds <'> transform-type <'> trap-segfault <'> with-file-monitor 
+   <'> y-bounds <'> transform-type <'> with-file-monitor 
    <'> with-verbose-cursor <'> with-inset-graph <'> with-interrupts
    <'> with-pointer-focus <'> wavelet-type <'> x-bounds <'> with-smpte-label
    <'> with-toolbar <'> with-tooltips <'> with-menu-icons
@@ -7153,17 +7129,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
  does> { x self -- f }
   x fabs self @ @ ( mx ) fmax self @ !
   #f
-;
-
-: mc-1-cb { scl -- prc; y self -- val }
-  1 proc-create scl , 0.0 ( mx ) , ( prc )
- does> { y self -- val }
-  y 0.4 f> if
-    0.0 self cell+ !
-    self cell+ ( addr-of-mx ) sc-1-cb scan-channel drop
-    self cell+ @ 1/f self ! ( scl = 1/mx )
-  then
-  self @ ( scl ) y f*
 ;
 
 : mc-2-cb { ind -- prc; y self -- val }
@@ -7304,8 +7269,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   end-each
   ind close-sound drop
   args-1 each to arg
-    #( <'> make-vct <'> vct-copy <'> vct-length
-       <'> vct->list <'> vct-peak ) each to prc
+    #( <'> make-vct <'> vct-length <'> vct->list <'> vct-peak ) each to prc
       arg prc snd-test-catch to tag
       tag if
         tag car 'wrong-type-arg <> if
@@ -7315,7 +7279,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   #( <'> vct-add! <'> vct-subtract! <'> vct-multiply!
-     <'> vct-ref <'> vct-scale! <'> vct-fill! ) { vct-prcs-2 }
+     <'> vct-ref <'> vct-scale! ) { vct-prcs-2 }
   nil nil { arg1 arg2 }
   args-1 each to arg1
     args-1 each to arg2
@@ -7535,14 +7499,14 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   end-each
   "/bad/baddy" mus-sound-forget drop
-  #( <'> channel-widgets <'> count-matches <'> cursor <'> channel-properties
+  #( <'> channel-widgets <'> cursor <'> channel-properties
      <'> channel-property <'> cursor-position
      <'> cursor-size <'> cursor-style <'> tracking-cursor-style
      <'> delete-sample <'> display-edits <'> dot-size <'> edit-fragment 
      <'> edit-position <'> edit-tree <'> edits <'> fft-window-alpha
      <'> fft-window-beta <'> fft-log-frequency <'> fft-log-magnitude
      <'> fft-with-phases <'> transform-size <'> transform-graph-type
-     <'> fft-window <'> transform-graph? <'> find-channel <'> graph
+     <'> fft-window <'> transform-graph? <'> graph
      <'> graph-style <'> lisp-graph? <'> insert-sound <'> time-graph-style
      <'> lisp-graph-style <'> transform-graph-style
      <'> left-sample <'> make-graph-data <'> map-chan <'> max-transform-peaks
@@ -7840,7 +7804,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> selected-data-color <'> selected-graph-color <'> selected-sound 
      <'> selection-creates-region <'> show-controls <'> show-indices
      <'> show-listener <'> show-selection-transform <'> sinc-width <'> temp-dir
-     <'> text-focus-color <'> tiny-font <'> trap-segfault <'> with-file-monitor
+     <'> text-focus-color <'> tiny-font <'> with-file-monitor
      <'> unbind-key <'> with-verbose-cursor
      <'> with-inset-graph <'> with-interrupts <'> with-pointer-focus
      <'> window-height <'> beats-per-measure <'> with-smpte-label 
@@ -7911,8 +7875,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   20 integer->transform 4 0.0 make-vct <'> snd-transform 'out-of-range 
     check-error-tag
   sf-dir "bad_chans.snd" $+ <'> mus-sound-maxamp 'bad-header check-error-tag
-  sf-dir "bad_chans.snd" $+ #( 0.0 0.0 ) <'> set-mus-sound-maxamp 'bad-header
-    check-error-tag
   :order 32 :ycoeffs 4 0.0 make-vct <'> make-iir-filter 'mus-error 
     check-error-tag
   :coeffs 4 0 make-vct :ycoeffs 4 0 make-vct <'> make-iir-filter 'mus-error
@@ -8040,8 +8002,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   <'> noop 3 make-proc <'> set-search-procedure 'bad-arity check-error-tag
   <'> noop 3 make-proc <'> map-chan 'bad-arity check-error-tag
   <'> noop 1 make-proc ind 0 <'> set-cursor-style 'bad-arity check-error-tag
-  <'> noop 0 make-proc <'> find-channel 'bad-arity check-error-tag
-  <'> noop 0 make-proc <'> count-matches 'bad-arity check-error-tag
   0 0 1 1 ind 0 1234 <'> draw-line 'no-such-graphics-context check-error-tag
   ind 0 1234 <'> foreground-color 'no-such-graphics-context check-error-tag
   ind 0 1234 <'> current-font 'no-such-graphics-context check-error-tag
@@ -8395,16 +8355,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   loop
   \ 
   "oboe.snd" open-sound to ind
-  1.0 { scl }
   100 0.5 ind 0 set-sample drop
-  scl mc-1-cb map-channel drop
   100 ind 0 sample { s100 }
-  s100 1.0 fneq if
-    "scan + map 100: %s" #( s100 ) snd-display
-  then
-  ind revert-sound drop
-  \ 
-  100 0.5 ind 0 set-sample drop
   ind mc-2-cb map-channel drop
   100 ind 0 sample to s100
   s100 0.5 fneq if
