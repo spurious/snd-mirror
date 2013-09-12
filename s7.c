@@ -44,7 +44,6 @@
  *        format
  *        error handling using error and catch
  *        no invidious distinction between built-in and "foreign"
- *          (this makes it easy to extend built-in operators like "+" -- see s7.html for a simple example)
  *        lists, strings, vectors, hash-tables, and environments are (set-)applicable objects
  *        true multiple-values
  *        multidimensional vectors
@@ -3590,11 +3589,19 @@ static void mark_vector(s7_pointer p)
 
       if ((vector_is_multidimensional(p)) &&
 	  (s7_is_vector(shared_vector(p))))
-	{
-	  /* set_mark(shared_vector(p)); */
-	  S7_MARK(shared_vector(p));
-	}
+	mark_vector(shared_vector(p));
       mark_vector_1(p, vector_length(p));
+    }
+}
+
+static void mark_int_or_float_vector(s7_pointer p)
+{
+  if (!is_marked(p)) 
+    {
+      if ((vector_is_multidimensional(p)) &&
+	  (s7_is_vector(shared_vector(p))))
+	mark_int_or_float_vector(shared_vector(p));
+      set_mark(p);
     }
 }
 
@@ -3682,8 +3689,8 @@ static void init_mark_functions(void)
   mark_function[T_CHARACTER]           = mark_noop;
   mark_function[T_INPUT_PORT]          = mark_input_port;
   mark_function[T_VECTOR]              = mark_vector;
-  mark_function[T_INT_VECTOR]          = just_mark;
-  mark_function[T_FLOAT_VECTOR]        = just_mark;
+  mark_function[T_INT_VECTOR]          = mark_int_or_float_vector;
+  mark_function[T_FLOAT_VECTOR]        = mark_int_or_float_vector; /* need to track the shared vector case, else just_mark would work here */
   mark_function[T_MACRO]               = mark_closure;
   mark_function[T_BACRO]               = mark_closure;
   mark_function[T_C_OBJECT]            = mark_c_object;
@@ -22249,6 +22256,8 @@ static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
   chars = s7_integer(k);
   if (chars < 0)
     return(wrong_type_argument_with_type(sc, sc->READ_STRING, small_int(1), k, A_NON_NEGATIVE_INTEGER));
+  if (chars > MAX_STRING_LENGTH)
+    return(out_of_range(sc, sc->READ_STRING, small_int(1), k, "a reasonable integer!"));
 
   if (!is_null(cdr(args)))
     {
@@ -28929,54 +28938,64 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 
   if (is_int_vector(vec))
     {
-      s7_Int k;
-      k = s7_number_to_integer(sc, obj);
-      if (k == 0)
-	memset((void *)int_vector_elements(vec), 0, len * sizeof(s7_Int));
+      if (!is_integer(obj))
+	s7_wrong_type_arg_error(sc, "(int) vector-fill!", 2, obj, "an integer");
       else
 	{
-	  s7_Int* orig;
-	  orig = int_vector_elements(vec);
-	  while (i <= left)
+	  s7_Int k;
+	  k = s7_integer(obj);
+	  if (k == 0)
+	    memset((void *)int_vector_elements(vec), 0, len * sizeof(s7_Int));
+	  else
 	    {
-	      orig[i++] = k;
-	      orig[i++] = k;
-	      orig[i++] = k;
-	      orig[i++] = k;
-	      orig[i++] = k;
-	      orig[i++] = k;
-	      orig[i++] = k;
-	      orig[i++] = k;
+	      s7_Int* orig;
+	      orig = int_vector_elements(vec);
+	      while (i <= left)
+		{
+		  orig[i++] = k;
+		  orig[i++] = k;
+		  orig[i++] = k;
+		  orig[i++] = k;
+		  orig[i++] = k;
+		  orig[i++] = k;
+		  orig[i++] = k;
+		  orig[i++] = k;
+		}
+	      for (; i< len; i++)
+		orig[i] = k;
 	    }
-	  for (; i< len; i++)
-	    orig[i] = k;
 	}
     }
   else
     {
       if (is_float_vector(vec))
 	{
-	  s7_Double x;
-	  x = s7_number_to_real(sc, obj);
-	  if (x == 0.0)
-	    memset((void *)float_vector_elements(vec), 0, len * sizeof(s7_Double));
+	  if (!is_real(obj))
+	    s7_wrong_type_arg_error(sc, "(float) vector-fill!", 2, obj, "a real");
 	  else
 	    {
-	      s7_Double *orig;
-	      orig = float_vector_elements(vec);
-	      while (i <= left)
+	      s7_Double x;
+	      x = s7_number_to_real(sc, obj);
+	      if (x == 0.0)
+		memset((void *)float_vector_elements(vec), 0, len * sizeof(s7_Double));
+	      else
 		{
-		  orig[i++] = x;
-		  orig[i++] = x;
-		  orig[i++] = x;
-		  orig[i++] = x;
-		  orig[i++] = x;
-		  orig[i++] = x;
-		  orig[i++] = x;
-		  orig[i++] = x;
+		  s7_Double *orig;
+		  orig = float_vector_elements(vec);
+		  while (i <= left)
+		    {
+		      orig[i++] = x;
+		      orig[i++] = x;
+		      orig[i++] = x;
+		      orig[i++] = x;
+		      orig[i++] = x;
+		      orig[i++] = x;
+		      orig[i++] = x;
+		      orig[i++] = x;
+		    }
+		  for (; i< len; i++)
+		    orig[i] = x;
 		}
-	      for (; i< len; i++)
-		orig[i] = x;
 	    }
 	}
       else
@@ -29029,8 +29048,41 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
   else
     {
       s7_Int i;
-      for (i = start; i < end; i++)
-	vector_element(x, i) = fill;
+      if (type(x) == T_VECTOR)
+	{
+	  for (i = start; i < end; i++)
+	    vector_element(x, i) = fill;
+	}
+      else
+	{
+	  if (is_int_vector(x))
+	    {
+	      if (!is_integer(fill))
+		s7_wrong_type_arg_error(sc, "(int) vector-fill!", 2, fill, "an integer");
+	      else
+		{
+		  s7_Int k;
+		  k = s7_integer(fill);
+		  for (i = start; i < end; i++)
+		    int_vector_element(x, i) = k;
+		}
+	    }
+	  else
+	    {
+	      if (is_float_vector(x))
+		{
+		  if (!is_real(fill))
+		    s7_wrong_type_arg_error(sc, "(float) vector-fill!", 2, fill, "a real");
+		  else
+		    {
+		      s7_Double y;
+		      y = s7_number_to_real(sc, fill);
+		      for (i = start; i < end; i++)
+			float_vector_element(x, i) = y;
+		    }
+		}
+	    }
+	}
     }
   return(fill);
 }
@@ -34470,7 +34522,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
   #define H_copy "(copy obj) returns a copy of obj, (copy src dest) copies src into dest, (copy src dest start end) copies src from start to end."
   #define COPY_CIRCLE_LEN 2147483641
   s7_pointer source, dest;
-  s7_Int i, j, dest_len, start = 0, end, source_len;
+  s7_Int i, j, dest_len, start, end, source_len;
   s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_Int loc, s7_pointer val);
   s7_pointer (*get)(s7_scheme *sc, s7_pointer obj, s7_Int loc);
   bool have_indices;
@@ -34513,6 +34565,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
       return(dest);
     }
 
+  start = 0;
   if (have_indices)
     start_and_end(sc, sc->COPY, cddr(args), 3, &start, &end);
 
@@ -67663,7 +67716,7 @@ int main(int argc, char **argv)
 /* -------------------------------------------------------------------------------- */
 
 /*
- * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7 14.0
+ * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7 14.1
  * bench    42736 8752 8051 7725 6515 5194 4364 3989 3997
  * lint           9328 8140 7887 7736 7300 7180 7051 7078
  * index    44300 3291 3005 2742 2078 1643 1435 1363 1365
@@ -67689,7 +67742,7 @@ int main(int argc, char **argv)
  * cload: settable C variables (via symbol_access as here?)
  * doc/test the lib*.scm files.
  * truncated format? or object->string?
- *   if -export-dynamic, can't s7 funcs be tied in as well via cload?
+ *   if -export-dynamic, can't s7 funcs be tied in as well via cload? (the obvious thing does not work here)
  * #[...] for int/float vectors?  or (float-vector ...), (make-shared-vector '(a b) (float-vector ...))
  * TODO: change docs for sound-data/vct, change to vector wherever possible, remove more from scheme sndlib2xen/vct (synonyms) [frame.scm?]
  *   what about vector-ref/set loop opts? from vct/sound-data code
@@ -67701,7 +67754,7 @@ int main(int argc, char **argv)
  * TODO: dac_hook in snd-xm.rb needs list not sd, and one sd case in snd-test.rb
  * libgsl tests could use s7test+rename (let ((sin gsl_complex_sin)) (load "s7test.scm" (current-environment))) etc)
  * vct_set_let_looped is a major part of the de-opt [check this again -- array fudge check might have counted]
- * TODO: (let ((v (make-vector 3 0.0 #t))) (vector-fill! v 1+i) v) -> #(1.0 1.0 1.0)! -- s7_number_to_real returns real_part!
- *   similar troubles for int-vect: (let ((v (make-vector 3 0 #t))) (vector-fill! v 4/3) v) -> #(1 1 1)
+ *    c_function_let_looped is local name -- need a corresponding one for float-vector set?
  * apparently in solaris, it's NaN.0 not nan.0?  
+ * someday get apply-controls out of the effects code and everywhere else, maybe (controls) -> function
  */

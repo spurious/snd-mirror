@@ -46,30 +46,28 @@
      
      (let ((c-args (vector-ref arglists args-now)))
        (copy args c-args)
-#|
-       (do ((i 0 (+ i 1)))
-	   ((= i args-now))
-	 (list-set! c-args i (args i)))
-|#
-       
-       (if (= args-left 1)
-	   (for-each
-	    (lambda (c)
-	      (catch #t 
-		(lambda () 
-		  (list-set! c-args args-now c)
-		  ;(format *stderr* "~A " c-args)
-		  (let ((val (apply func c-args)))
-		    (if val
-			(format data-file "(~S ~{~S~^ ~}) -> ~S~%" func c-args val))))
+
+       (let ((p (list-tail c-args args-now)))
+	 (if (= args-left 1)
+	     (for-each
+	      (lambda (c)
+		(catch #t 
+		  (lambda () 
+		    (set-car! p c)
+		    ;;(list-set! c-args args-now c)
+		    ;;(format *stderr* "~A " c-args)
+		    (let ((val (apply func c-args)))
+		      (if val
+			  (format data-file "(~S ~{~S~^ ~}) -> ~S~%" func c-args val))))
 		(lambda any 'error)))
 	    constants)
 	   
 	   (for-each
 	    (lambda (c)
-	      (list-set! c-args args-now c)
+	      (set-car! p c)
+	      ;;(list-set! c-args args-now c)
 	      (autotest func c-args (+ args-now 1) (- args-left 1)))
-	    constants))))))
+	    constants)))))))
 
 (let ((st (symbol-table)))
   (do ((i 0 (+ i 1))) 

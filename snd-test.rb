@@ -33507,21 +33507,6 @@ def test_20_01
     snd_display("after delete_transform %s -> %s?", ftype, res)
   end
   close_sound(ind)
-  #
-  if defined? gsl_dht
-    add_transform("Hankel", "Hankel", 0.0, 1.0,
-                  lambda do |n, rd|
-                    v = make_vct!(n) do rd.call end
-                    gsl_dht(n, v, 1.0, 1.0)
-                  end)
-    n = 16
-    v = make_vct(n, 1.0)
-    gsl_dht(n, v, 1.0, 1.0)
-    if (res = Snd.catch do gsl_dht(-1, Vct.new(3), 1.0, 1.0) end).first != :out_of_range
-      snd_display("gsl_dht bad size: %s?", res.inspect)
-    end
-  end
-  #
   ind1 = open_sound("oboe.snd")
   set_time_graph_style(Graph_lollipops, ind1, 0)
   graph2ps("aaa.eps")

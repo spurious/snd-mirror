@@ -24,6 +24,7 @@ echo ' '
 
 gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -ldl -lm 
 ./repl tools/t456.scm
+# valgrind repl tools/t456.scm
 echo ' '
 echo ' '
 echo ' -------------------------------- that was s7 t456 -------------------------------- '
