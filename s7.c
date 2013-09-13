@@ -29386,10 +29386,32 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer x;
       for (x = args, i = 0; is_pair(x); x = cdr(x), i++) 
-	vector_element(vec, i) =  car(x);
+	vector_element(vec, i) = car(x);
     }
   return(vec);
 }
+
+#if 0
+static s7_pointer g_float_vector(s7_scheme *sc, s7_pointer args)
+{
+  #define H_float_vector "(float-vector ...) returns an homogenous float vector whose elements are the arguments"
+  s7_Int i, len;
+  s7_pointer vec, x;
+  
+  len = s7_list_length(sc, args);
+  if (len == 0)
+    return(make_vector_1(sc, 0, NOT_FILLED, T_VECTOR));
+
+  vec = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR);
+  for (x = args, i = 0; is_pair(x); x = cdr(x), i++) 
+    {
+      if (is_real(car(x)))
+	float_vector_element(vec, i) = s7_number_to_real(sc, car(x));
+      else return(simple_wrong_type_argument(sc, sc->FLOAT_VECTOR, args, T_REAL));
+    }
+  return(vec);
+}
+#endif
 
 
 static s7_pointer g_list_to_vector(s7_scheme *sc, s7_pointer args)
@@ -34509,11 +34531,55 @@ static s7_pointer c_object_getter(s7_scheme *sc, s7_pointer obj, s7_Int loc)
   return((*(c_object_ref(obj)))(sc, obj, sc->T1_1));
 }
 
+static s7_pointer env_getter(s7_scheme *sc, s7_pointer e, s7_Int loc) 
+{
+  int i;
+  s7_pointer p;
+  for (p = environment_slots(e), i = 0; i < loc; i++, p = next_slot(p));
+  return(s7_cons(sc, slot_symbol(p), slot_value(p)));
+}
 
-/* hash_table? -- not so good because what is the key? 
- * environment? -- same problem here -- what is the symbol?
- *   it might make sense to support env/ht -> vector/list but then you'd expect the reverse to work as well (ambiguous?)
- */
+static s7_pointer env_setter(s7_scheme *sc, s7_pointer e, s7_Int loc, s7_pointer val)
+{
+  /* loc is irrelevant here
+   * val has to be of the form (cons symbol value)
+   * if symbol is already in e, its value is changed, otherwise a new slot is added to e
+   */
+  if ((!is_pair(val)) ||
+      (!is_symbol(car(val))))
+    return(wrong_type_argument_with_type(sc, sc->COPY, small_int(3), e, make_protected_string(sc, "(cons symbol value)"))); 
+  return(s7_environment_set(sc, e, car(val), cdr(val)));
+}
+
+static s7_pointer hash_table_getter(s7_scheme *sc, s7_pointer e, s7_Int loc) 
+{
+  int i, count, len;
+  s7_pointer p;
+  s7_pointer *elements;
+
+  len = hash_table_length(e);
+  elements = hash_table_elements(e);
+
+  for (i = 0, count = 0; i < len; i++)
+    for (p = elements[i]; is_pair(p); p = cdr(p))
+      {
+	if (count == loc)
+	  return(car(p));
+	count++;
+      }
+  return(sc->NIL);
+}
+
+static s7_pointer hash_table_setter(s7_scheme *sc, s7_pointer e, s7_Int loc, s7_pointer val)
+{
+  /* loc is irrelevant here
+   * val has to be of the form (cons key value)
+   * if key is already in e, its value is changed, otherwise a new slot is added to e
+   */
+  if (!is_pair(val))
+    return(wrong_type_argument_with_type(sc, sc->COPY, small_int(3), e, A_LIST));
+  return(s7_hash_table_set(sc, e, car(val), cdr(val)));
+}
 
 static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 {
@@ -34550,17 +34616,19 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
     case T_FLOAT_VECTOR: 
     case T_VECTOR:       get = vector_getter(source); end = vector_length(source);            break;
     case T_STRING:       get = string_getter;         end = string_length(source);            break;
+    case T_ENVIRONMENT:  get = env_getter;            end = environment_length(sc, source);   break;
+    case T_HASH_TABLE:   get = hash_table_getter;     end = hash_table_entries(source);       break;
     case T_C_OBJECT:     get = c_object_getter;       end = object_length_to_int(sc, source); break;
+    case T_NIL: 
+      if (is_sequence(dest))
+	break;
     default: 
-      if (!is_null(cddr(args))) /* (copy () () ()) */
-	{
-	  if (!s7_is_integer(caddr(args)))
-	    return(wrong_type_argument_n(sc, sc->COPY, 3, caddr(args), T_INTEGER));
-	  if ((!is_null(cdddr(args))) &&
-	      (!s7_is_integer(cadddr(args))))
-	    return(wrong_type_argument_n(sc, sc->COPY, 4, cadddr(args), T_INTEGER));
-	}
-      return(dest);
+      return(wrong_type_argument_with_type(sc, sc->COPY, small_int(1), source, make_protected_string(sc, "a sequence")));
+      /* copy doesn't have to duplicate fill!, so (copy 1 #(...)) need not be supported */
+
+      /* 
+       * TODO: add cloaded c_obj to s7test
+       */
     }
 
   start = 0;
@@ -34578,7 +34646,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
     case T_PAIR:     
       set = list_setter;     
       dest_len = s7_list_length(sc, dest); 
-      if (dest_len == 0) dest_len = COPY_CIRCLE_LEN; 
+      if (dest_len == 0) dest_len = circular_list_entries(dest);
       if (dest_len < 0) dest_len = -dest_len;
       break;
 
@@ -34586,14 +34654,20 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
     case T_FLOAT_VECTOR: 
     case T_VECTOR:       set = vector_setter(dest); dest_len = vector_length(dest);            break;
     case T_STRING:       set = string_setter;       dest_len = string_length(dest);            break;
+    case T_ENVIRONMENT:  set = env_setter;          dest_len = source_len;                     break; /* grows via set, so dest_len isn't relevant */
+    case T_HASH_TABLE:   set = hash_table_setter;   dest_len = source_len;                     break; /* same */
     case T_C_OBJECT:     set = c_object_setter;     dest_len = object_length_to_int(sc, dest); break;
-    default: return(dest);
+    case T_NIL:
+      return(sc->NIL);
+    default: 
+      return(wrong_type_argument_with_type(sc, sc->COPY, small_int(2), dest, make_protected_string(sc, "a sequence")));
     }
   
   if (dest_len == 0)
     return(dest);
-  if (dest_len < source_len) 
-    end = dest_len - start;
+  /* end is source_len if not set explicitly */
+  if (dest_len < (end - start))
+    end = dest_len + start;
 
   if ((source != dest) &&
       (type(source) == type(dest)))
@@ -34634,13 +34708,11 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 	  return(dest);
 
 	case T_INT_VECTOR:
-	  /* ignore possible dimensional mismatch */
 	  for (i = start, j = 0; i < end; i++, j++)
 	    int_vector_element(dest, j) = int_vector_element(source, i);
 	  return(dest);
 
 	case T_FLOAT_VECTOR:
-	  /* ignore possible dimensional mismatch */
 	  for (i = start, j = 0; i < end; i++, j++)
 	    float_vector_element(dest, j) = float_vector_element(source, i);
 	  return(dest);
@@ -34651,6 +34723,8 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 	  return(dest);
 	  
 	case T_C_OBJECT:
+	case T_ENVIRONMENT:
+	case T_HASH_TABLE:
 	  break;
 
 	default:
@@ -67702,9 +67776,9 @@ int main(int argc, char **argv)
     }
 }
 
-/* in Linux:       gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -lrt -ldl -lm -Wl,-export-dynamic
- * in OpenBSD:     gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -lm -Wl,-export-dynamic
- * in OSX:         gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -lm
+/* in Linux:    gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -lrt -ldl -lm -Wl,-export-dynamic
+ * in *BSD:     gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -lm -Wl,-export-dynamic
+ * in OSX:      gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -lm
  */
 #endif
 
@@ -67728,18 +67802,13 @@ int main(int argc, char **argv)
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
  * add empty? (or nil? or generic null? or zero-length? typeq? (null? c-pointer) -- C null?
  * other often-used libraries: glib/gio/gobject/gmodule ncurses? GL/GLU? pcre? tecla? readline? asound? sndlib-for-s7?
- *    SOMEDAY: libgdbm tests and setopt support, libdl tests and autoload in Snd
+ *    SOMEDAY: libgdbm tests and setopt support, libdl tests
  *    there are about 2000 entities in SDL
- *    posix lib -> enhance in scheme for the gdb fix?
  * TODO: (env env) in clm should be an error
  * possible autoload additions: sndlib? xm? libX* fftw? gmp/mpfr/mpc? 
- * gdb-s7 might check for 0xnnnn "asdf" to avoid strings
+ * gdb-s7 might check for 0xnnnn "asdf" to avoid strings (finish the gdb code!)
  * checkpoint?
- * cload: settable C variables (via symbol_access as here?)
- * doc/test the lib*.scm files.
- * truncated format? or object->string?
- *   if -export-dynamic, can't s7 funcs be tied in as well via cload?
- * #[...] for int/float vectors?  or (float-vector ...), (make-shared-vector '(a b) (float-vector ...))
+ * (float-vector ...), (make-shared-vector (float-vector ...) '(a b))
  * TODO: change docs for sound-data/vct, change to vector wherever possible, remove more from scheme sndlib2xen/vct (synonyms) [frame.scm?]
  *   what about vector-ref/set loop opts? from vct/sound-data code
  * TODO: split the apply code for the various vector types -- maybe opt this as HOP_FLOAT_VECTOR_SS (opCq C S see t502 comment above)
@@ -67749,22 +67818,10 @@ int main(int argc, char **argv)
  * remove sound-data ws output option
  * TODO: dac_hook in snd-xm.rb needs list not sd, and one sd case in snd-test.rb
  * libgsl tests could use s7test+rename (let ((sin gsl_complex_sin)) (load "s7test.scm" (current-environment))) etc)
- * vct_set_let_looped is a major part of the de-opt [check this again -- array fudge check might have counted]
+ *    doc/test the lib*.scm files.
+ * vct_set_let_looped is a major part of the de-opt 
  *    c_function_let_looped is local name -- need a corresponding one for float-vector set?
- * apparently in solaris, it's NaN.0 not nan.0?  
  * someday get apply-controls out of the effects code and everywhere else, maybe (controls) -> function
- *
- * WITH_PURE_S7 or something like that to get rid of remaining bad ideas:
- *      inexact/exact and #i #e
- *      `#() special cases (on the switch WITH_QUASIQUOTE_VECTOR)
- *      call-with-values etc
- *      char-ready? and eof-object? [s7-slib-init.scm currently says we have char-ready? otherwise only occurs in s7test.scm]
- *      dfls exponents (WITH_EXTRA_EXPONENT_MARKERS currently)
- *      unquote (on the switch WITH_IMMUTABLE_UNQUOTE currently)
- *      make-complex, no make-polar|rectangular (would need a *features* tag for this)
- *
- * TODO: doc/test reader-cond and reader-expand
- *   (what happens if the read-time eval hits an error?)
  */
 
 

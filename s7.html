@@ -6305,9 +6305,14 @@ int main(int argc, char **argv)
 </pre></div>
 </blockquote>
 
-<p>A repl that uses readline instead is built into s7.  Include the compiler flag -DWITH_MAIN,
-and add -lreadline, -lncurses, and -lrt (in linux) to the loader flags.
+<p>A repl that uses readline instead is built into s7.  Include the compiler flag -DWITH_MAIN:
 </p>
+
+<pre class="indented">
+in Linux: gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -lrt -ldl -lm -Wl,-export-dynamic
+in *BSD:  gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -lm -Wl,-export-dynamic
+in OSX:   gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -lm
+</pre>
 
 <p>If you prefer C++, here's a C++ version of the listener, extracted from Rick Taube's
 Common Music package:
