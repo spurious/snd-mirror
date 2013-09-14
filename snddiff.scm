@@ -29,7 +29,7 @@
     (if (<= (vct-peak diff) maxdiff)
 	'no-difference
 	(let ((diffs 0)
-	      (diff-data '())
+	      (diff-data ())
 	      (len (min (length v0) (length v1))))
 	  (do ((i 0 (+ i 1)))
 	      ((or (> diffs 10)
@@ -83,7 +83,7 @@
 	     (begin
 	       (vct-move! v0 0 trim)
 	       (vct-move! v1 0 trim)))
-	 (let ((result (unconvolve-1 v0 (vct-copy v1) '())))
+	 (let ((result (unconvolve-1 v0 (vct-copy v1) ())))
 	   (if (not (null? result))
 	       (list 'filter (reverse result))
 	       #f)))))

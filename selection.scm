@@ -19,8 +19,8 @@
 
 (if (not (defined? 'all-chans))
     (define (all-chans)
-      (let ((sndlist '())
-	    (chnlist '()))
+      (let ((sndlist ())
+	    (chnlist ()))
 	(for-each (lambda (snd)
 		    (do ((i (- (channels snd) 1) (- i 1)))
 			((< i 0))
@@ -55,7 +55,7 @@
       (if (= (selection-chans) 2)
 	  (let* ((beg (selection-position))
 		 (len (selection-frames))
-		 (snd-chn0 (find-selection-sound '()))
+		 (snd-chn0 (find-selection-sound ()))
 		 (snd-chn1 (find-selection-sound snd-chn0)))
 	    (if snd-chn1
 		(swap-channels (car snd-chn0) (cadr snd-chn0) (car snd-chn1) (cadr snd-chn1) beg len)
@@ -82,7 +82,7 @@
 
 (define (selection-members)
   "(selection-members) -> list of lists of (snd chn) indicating the channels participating in the current selection."
-  (let ((sndlist '()))
+  (let ((sndlist ()))
     (if (selection?)
 	(map (lambda (snd)
 	       (do ((i (- (channels snd) 1) (- i 1)))

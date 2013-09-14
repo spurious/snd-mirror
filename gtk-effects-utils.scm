@@ -4,8 +4,8 @@
 
 (if (not (defined? 'all-chans))
     (define (all-chans)
-      (let ((sndlist '())
-	    (chnlist '()))
+      (let ((sndlist ())
+	    (chnlist ()))
 	(for-each (lambda (snd)
 		    (do ((i (- (channels snd) 1) (- i 1)))
 			((< i 0))

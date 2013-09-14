@@ -12,7 +12,7 @@
 (define *clm-statistics* #f)
 (define *clm-reverb* #f)
 (define *clm-reverb-channels* 1)
-(define *clm-reverb-data* '())
+(define *clm-reverb-data* ())
 (define *clm-table-size* 512)
 (define *clm-file-buffer-size* 65536)
 (define *clm-locsig-type* mus-interp-linear)
@@ -296,7 +296,7 @@
 ;;; (with-sound () (sound-let ((a () (fm-violin 0 .1 440 .1))) (mus-mix "test.snd" a)))
 
 (defmacro sound-let (snds . body) 
-  `(let ((temp-files '()))
+  `(let ((temp-files ()))
      (begin
        (let ((val (let ,(map (lambda (arg) 
 			       (if (> (length arg) 2)

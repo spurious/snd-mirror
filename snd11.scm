@@ -6,7 +6,7 @@
   (null? (hook-functions hook)))
 
 (define (reset-hook! hook) 
-  (set! (hook-functions hook) '()))
+  (set! (hook-functions hook) ()))
 
 (define (run-hook . args) 
   (hook-apply (car args) (cdr args)))
@@ -22,7 +22,7 @@
 (define (remove-hook! hook func)
   (set! (hook-functions hook)
 	(let loop ((l (hook-functions hook))
-		   (result '()))
+		   (result ()))
 	  (cond ((null? l) (reverse! result))
 		((eq? func (car l)) (loop (cdr l) result))
 		(else (loop (cdr l) (cons (car l) result)))))))
@@ -160,7 +160,7 @@
 						     (if (and (> (channels *output*) 1)
 							      (not (member :channels ',options)))
 							 (list :channels (channels *output*))
-							 '())
+							 ())
 						     ',options))))
 				 (set! *to-snd* old-to-snd)
 				 (mus-mix *output* new-sound beg)

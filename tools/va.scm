@@ -100,9 +100,9 @@
 	    ((pred (car l)) (car l))
 	    (else (find-if pred (cdr l))))))
   
-(let ((tip-list '())
-      (new-tip-list '())
-      (warned-list '()))
+(let ((tip-list ())
+      (new-tip-list ())
+      (warned-list ()))
 
   (call-with-input-file "wz_data.js"
     (lambda (file)
@@ -350,7 +350,7 @@
 #|
 (format #t "--------------------------------------------------------------------------------~%")
 (let ((png-files (directory->list "/home/bil/cl/pix"))
-      (baddies '()))
+      (baddies ()))
   (for-each
    (lambda (file)
      (if (and (not (directory? file))

@@ -927,7 +927,7 @@ typedef struct c_object_t {
   s7_pointer (*length)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*reverse)(s7_scheme *sc, s7_pointer obj);
-  s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
+  s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer val);
   char *(*print_readably)(s7_scheme *sc, void *value);
 } c_object_t;
 
@@ -29144,6 +29144,7 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
   s7_Int i = 0, j, len = 0, source_len;
   s7_pointer p, v, x;
   int result_type = -1;
+  bool parlous_gc = false;
 
   if (is_null(args))
     return(make_vector_1(sc, 0, false, T_VECTOR));
@@ -29157,6 +29158,8 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 	  return(wrong_type_argument_n(sc, sc->VECTOR_APPEND, position_of(p, args), x, T_VECTOR));
 	}
       len += vector_length(x);
+      if ((!parlous_gc) && (type(x) != T_VECTOR)) 
+	parlous_gc = true;    /* might create a new object during append, gc possible: new vector needs fill and gc-protect */
       if (result_type == -1)
 	result_type = type(x);
       else
@@ -29166,10 +29169,14 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 	}
     }
   
-  v = make_vector_1(sc, len, false, result_type);
   if (result_type == T_VECTOR)
     {
       s7_pointer *dest;
+      int gc_loc;
+
+      /* here the gc might be called since float_vector_getter makes a new real */
+      v = make_vector_1(sc, len, parlous_gc, result_type);
+      if (parlous_gc) gc_loc = s7_gc_protect(sc, v);
       dest = vector_elements(v);
       for (p = args; is_pair(p); p = cdr(p))
 	{
@@ -29178,9 +29185,11 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 	  for (j = 0; j < source_len; j++, i++)
 	    dest[i] = vector_getter(x)(sc, x, j);
 	}
+      if (parlous_gc) s7_gc_unprotect_at(sc, gc_loc);
     }
   else
     {
+      v = make_vector_1(sc, len, false, result_type);
       if (result_type == T_INT_VECTOR)
 	{
 	  s7_Int *dest, *source;
@@ -34548,7 +34557,9 @@ static s7_pointer env_setter(s7_scheme *sc, s7_pointer e, s7_Int loc, s7_pointer
   if ((!is_pair(val)) ||
       (!is_symbol(car(val))))
     return(wrong_type_argument_with_type(sc, sc->COPY, small_int(3), e, make_protected_string(sc, "(cons symbol value)"))); 
-  return(s7_environment_set(sc, e, car(val), cdr(val)));
+  if (s7_environment_set(sc, e, car(val), cdr(val)) != cdr(val))
+    s7_make_slot(sc, e, car(val), cdr(val));
+  return(val);
 }
 
 static s7_pointer hash_table_getter(s7_scheme *sc, s7_pointer e, s7_Int loc) 
@@ -34616,17 +34627,26 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
     case T_FLOAT_VECTOR: 
     case T_VECTOR:       get = vector_getter(source); end = vector_length(source);            break;
     case T_STRING:       get = string_getter;         end = string_length(source);            break;
-    case T_ENVIRONMENT:  get = env_getter;            end = environment_length(sc, source);   break;
     case T_HASH_TABLE:   get = hash_table_getter;     end = hash_table_entries(source);       break;
     case T_C_OBJECT:     get = c_object_getter;       end = object_length_to_int(sc, source); break;
+
+    case T_ENVIRONMENT:  
+      if (source == sc->global_env)
+	return(wrong_type_argument_with_type(sc, sc->COPY, small_int(1), source, make_protected_string(sc, "a sequence other than the global environment")));
+      get = env_getter;            
+      end = environment_length(sc, source);   
+      break;
+
     case T_NIL: 
+      end = 0;
       if (is_sequence(dest))
 	break;
+
     default: 
       return(wrong_type_argument_with_type(sc, sc->COPY, small_int(1), source, make_protected_string(sc, "a sequence")));
       /* copy doesn't have to duplicate fill!, so (copy 1 #(...)) need not be supported */
 
-      /* 
+      /* TODO: global-env needs special handling here and below
        * TODO: add cloaded c_obj to s7test
        */
     }
@@ -34654,11 +34674,19 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
     case T_FLOAT_VECTOR: 
     case T_VECTOR:       set = vector_setter(dest); dest_len = vector_length(dest);            break;
     case T_STRING:       set = string_setter;       dest_len = string_length(dest);            break;
-    case T_ENVIRONMENT:  set = env_setter;          dest_len = source_len;                     break; /* grows via set, so dest_len isn't relevant */
-    case T_HASH_TABLE:   set = hash_table_setter;   dest_len = source_len;                     break; /* same */
+    case T_HASH_TABLE:   set = hash_table_setter;   dest_len = source_len;                     break;
     case T_C_OBJECT:     set = c_object_setter;     dest_len = object_length_to_int(sc, dest); break;
+
+    case T_ENVIRONMENT:  
+      if (source == sc->global_env)
+	return(wrong_type_argument_with_type(sc, sc->COPY, small_int(2), dest, make_protected_string(sc, "a sequence other than the global environment")));
+      set = env_setter;          
+      dest_len = source_len;                     /* grows via set, so dest_len isn't relevant */
+      break; 
+
     case T_NIL:
       return(sc->NIL);
+
     default: 
       return(wrong_type_argument_with_type(sc, sc->COPY, small_int(2), dest, make_protected_string(sc, "a sequence")));
     }
@@ -67776,9 +67804,9 @@ int main(int argc, char **argv)
     }
 }
 
-/* in Linux:    gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -lrt -ldl -lm -Wl,-export-dynamic
- * in *BSD:     gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -lm -Wl,-export-dynamic
- * in OSX:      gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -lm
+/* in Linux:    gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lreadline -lncurses -lrt -ldl -lm -Wl,-export-dynamic
+ * in *BSD:     gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lreadline -lncurses -lm -Wl,-export-dynamic
+ * in OSX:      gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lreadline -lncurses -lm
  */
 #endif
 

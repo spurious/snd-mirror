@@ -148,7 +148,7 @@
   (define match-sound-files
     (lambda args
       (let ((func (car args))
-	    (matches '()))
+	    (matches ()))
 	(for-each
 	 (lambda (file)
 	   (if (func file)
@@ -272,7 +272,7 @@
 		(or (sound-property 'save-state-ignore snd)
 		    (list 'save-state-ignore))))
     (set! (sound-property 'dragger snd)
-	  (let ((calls '()))
+	  (let ((calls ()))
 	    (do ((chn 0 (+ 1 chn)))
 		((= chn (channels snd)))
 	      (let* ((zy ((channel-widgets snd chn) 6))
@@ -315,22 +315,22 @@
 
 ;;; -------- add our own pane to the channel section --------
 
-(define* (add-channel-pane snd chn name type (args '()))
-  "(add-channel-pane snd chn name type (args '())) adds a pane to the channel section"
+(define* (add-channel-pane snd chn name type (args ()))
+  "(add-channel-pane snd chn name type (args ())) adds a pane to the channel section"
   (XtCreateManagedWidget name type (XtParent (XtParent ((channel-widgets snd chn) 7))) args))
 
 
 ;;; -------- add our own pane to the sound section (underneath the controls in this case) --------
 
-(define* (add-sound-pane snd name type (args '()))
-  "(add-sound-pane snd name type (args '())) adds a pane to the sound section (underneath the control panel)"
+(define* (add-sound-pane snd name type (args ()))
+  "(add-sound-pane snd name type (args ())) adds a pane to the sound section (underneath the control panel)"
   (XtCreateManagedWidget name type (car (sound-widgets snd)) args))
 
 
 ;;; -------- add our own pane to the overall Snd window (underneath the listener in this case) --------
 
-(define* (add-main-pane name type (args '()))
-  "(add-main-pane name type (args '())) adds a pane to Snd (underneath the listener)"
+(define* (add-main-pane name type (args ()))
+  "(add-main-pane name type (args ())) adds a pane to Snd (underneath the listener)"
   (XtCreateManagedWidget name type (or ((main-widgets) 5) ((main-widgets) 3)) args))
 
 
@@ -732,7 +732,7 @@
   (let* ((mass 1.0)
 	 (xspring 0.1)
 	 (damp 0.0)
-	 (bounds '())
+	 (bounds ())
 	 (pts0 #f)
 	 (pts1 #f)
 	 (playing #f)
@@ -1005,7 +1005,7 @@
 	#f))
 
   (define mark-list-length
-    (let ((mark-list-lengths '()))
+    (let ((mark-list-lengths ()))
       (define (remove-mark-list snd chn)
 	(set! mark-list-lengths (remove-if 
 				 (lambda (n) 
@@ -1021,7 +1021,7 @@
 	 (set! mark-list-lengths (cons (list snd chn len) mark-list-lengths))))))
 
   (define mark-list
-    (let ((mark-lists '()))
+    (let ((mark-lists ()))
       (make-procedure-with-setter
        (lambda (snd chn)
 	 (let ((dat (find-mark-list snd chn mark-lists)))
@@ -1168,7 +1168,7 @@
 
 (define select-file
 
-  (let ((file-selector-dialogs '()))
+  (let ((file-selector-dialogs ()))
     ;; (list (list widget inuse func title help) ...)
     (define (find-free-dialog ds)
       (if (null? ds)
@@ -1329,7 +1329,7 @@
     (let ((gc (XCreateGC (XtDisplay shell) 
 			 (XtWindow shell) 
 			 (logior GCForeground GCBackground GCFont) gv))
-	  (sound-buttons '()))
+	  (sound-buttons ()))
 
       ;; button data list handlers
       (define sound-button-gc
@@ -1445,7 +1445,7 @@
 	     (xm-clean-string (file-name file))
 	     chn))
    (sound-files-in-directory dir)
-   '()))
+   ()))
 
 
     
@@ -1661,7 +1661,7 @@
 			 XmNbackground    (basic-color)
 			 XmNfractionBase  (* n 10)
 			 XmNpaneMinimum   height)))
-	 (meter-list '()))
+	 (meter-list ()))
     (do ((i 0 (+ i 1)))
 	((= i n))
       (set! meter-list 
@@ -1779,7 +1779,7 @@
 (define showing-disk-space #f) ; for prefs dialog
 
 (define show-disk-space
-  (let ((labelled-snds '()))
+  (let ((labelled-snds ()))
     (define (kmg num)
       (if (<= num 0)
 	  "disk full!"
@@ -2192,7 +2192,7 @@
 	(new-selected-mark-color (list 'Pixel (logxor (cadr (selected-graph-color))
 						      (cadr (get-color new-color))))))
     (if (not (null? (hook-functions draw-mark-hook)))
-	(set! (hook-functions draw-mark-hook) '()))
+	(set! (hook-functions draw-mark-hook) ()))
     (hook-push draw-mark-hook
 	       (lambda (hook)
 		 (if (> (sync (hook 'id)) 0)
@@ -2451,7 +2451,7 @@
 
 (define variables-dialog #f)
 (define variables-notebook #f)
-(define variables-pages '())
+(define variables-pages ())
 
 (define (make-variables-dialog)
   "(make-variables-dialog) makes a variable-display dialog"
@@ -2498,7 +2498,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
   ;; rowColumn widget gets confused by drawingareas, so I'll split them out into separate panes
   (let ((page-info (assoc page-name variables-pages)))
     (if (not page-info)
-	(let* ((panes (XtCreateManagedWidget page-name xmPanedWindowWidgetClass variables-notebook '()))
+	(let* ((panes (XtCreateManagedWidget page-name xmPanedWindowWidgetClass variables-notebook ()))
 	       (simple-cases (XtCreateManagedWidget page-name xmRowColumnWidgetClass panes
 						    (list XmNorientation XmVERTICAL
 							  XmNpaneMinimum 30
@@ -2544,7 +2544,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	       (width 210))
 	   (XtCreateManagedWidget var-label xmLabelWidgetClass row-pane
 				  (list XmNbackground  (basic-color)))
-	   (make-level-meter row-pane width height '() #f)))
+	   (make-level-meter row-pane width height () #f)))
 	((graph)
 	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane 
 					     (list XmNpaneMinimum 100)))
@@ -2626,7 +2626,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 |#
 
 (define with-minmax-button
-  (let ((maxed-snds '()))
+  (let ((maxed-snds ()))
     (lambda (snd)
       (let ((previous-minmax (find-if (lambda (n) (equal? (car n) snd)) maxed-snds)))
 	(if (not previous-minmax)

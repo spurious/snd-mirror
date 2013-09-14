@@ -93,7 +93,7 @@
   (let* ((mass 1.0)
 	 (xspring 0.1)
 	 (damp 0.0)
-	 (bounds '())
+	 (bounds ())
 	 (pts1 #f)
 	 (ax0 0) (ax1 0) (ay0 0) (ay1 0)
 	 (gc (car (snd-gcs)))
@@ -414,7 +414,7 @@
 ;;; adds a label to the status-area area showing the current free space 
 
 (define show-disk-space
-  (let ((labelled-snds '()))
+  (let ((labelled-snds ()))
 
     (define (kmg num)
       (if (<= num 0)
@@ -564,7 +564,7 @@
 
 (define select-file
 
-  (let ((file-selector-dialogs '()))
+  (let ((file-selector-dialogs ()))
     ;; (list (list widget inuse func title help) ...)
 
     (define (find-free-dialog ds)
@@ -738,7 +738,7 @@
 	 (parent-width (cadr (gdk_drawable_get_size ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window parent)))))
 	 (width (floor (/ parent-width n)))
 	 (meters (gtk_box_new GTK_ORIENTATION_HORIZONTAL 4))
-	 (meter-list '()))
+	 (meter-list ()))
     (gtk_box_pack_start (GTK_BOX parent) meters #f #f 4)
     (gtk_widget_set_size_request meters width height)
     (gtk_widget_show meters)
@@ -780,7 +780,7 @@
 
 (define variables-dialog #f)
 (define variables-notebook #f)
-(define variables-pages '())
+(define variables-pages ())
 
 (define (make-variables-dialog)
   (let ((dismiss-button (gtk_button_new_with_label "Go Away")))

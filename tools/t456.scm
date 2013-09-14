@@ -56,8 +56,6 @@
 		(catch #t 
 		  (lambda () 
 		    (set-car! p c)
-		    ;;(list-set! c-args args-now c)
-		    ;;(format *stderr* "~A " c-args)
 		    (let ((val (apply func c-args)))
 		      (if val
 			  (format data-file "(~S ~{~S~^ ~}) -> ~S~%" func c-args val))))
@@ -67,7 +65,6 @@
 	   (for-each
 	    (lambda (c)
 	      (set-car! p c)
-	      ;;(list-set! c-args args-now c)
 	      (autotest func c-args (+ args-now 1) (- args-left 1)))
 	    constants)))))))
 
