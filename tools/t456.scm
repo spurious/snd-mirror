@@ -25,6 +25,7 @@
 			(make-vector '(2 3) "hi") #("hiho" "hi" "hoho") (make-shared-vector (make-vector '(2 3) 1 #t) '(6))
 			(make-shared-vector (make-shared-vector (make-vector '(2 3) 1.0 #t) '(6)) '(2 2))
 			(vector-ref #2d((#(1 2 3)) (#(3 4 5))) 0 0)
+			(c-pointer 0)
 			))
 
 (define low 0)

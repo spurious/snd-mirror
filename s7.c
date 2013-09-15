@@ -5633,6 +5633,9 @@ s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
    * ((global-environment) 'abs) 
    */
 
+  if (!is_symbol(symbol))
+    return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, symbol, A_SYMBOL));
+
   if (environment_id(env) == symbol_id(symbol))
     return(slot_value(local_slot(symbol)));
 
@@ -5664,6 +5667,8 @@ s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, 
       return(value);
     }
   */
+  if (!is_symbol(symbol))
+    return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_SET, symbol, A_SYMBOL));
 
   if (env == sc->global_env)
     {
@@ -5690,17 +5695,13 @@ s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, 
 static s7_pointer g_environment_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_environment_ref "(environment-ref env sym) returns the value of the symbol sym in the environment env"
-  s7_pointer e, sym;
+  s7_pointer e;
 
   e = car(args);
   if (!is_environment(e))
     return(s7_wrong_type_arg_error(sc, "environment-ref", 1, e, "an environment"));
 
-  sym = cadr(args);
-  if (!is_symbol(sym))
-    return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, sym, A_SYMBOL));
-
-  return(s7_environment_ref(sc, e, sym));
+  return(s7_environment_ref(sc, e, cadr(args)));
 }
 
 
@@ -5708,17 +5709,13 @@ static s7_pointer g_environment_set(s7_scheme *sc, s7_pointer args)
 {
   /* (let ((a 1)) (set! ((current-environment) 'a) 32) a) */
   #define H_environment_set "(environment-set! env sym val) sets the symbol sym's value in the environment env to val"
-  s7_pointer e, sym;
+  s7_pointer e;
 
   e = car(args);
   if (!is_environment(e))
     return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_SET, e, AN_ENVIRONMENT));
 
-  sym = cadr(args);
-  if (!is_symbol(sym))
-    return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_SET, sym, A_SYMBOL));
-
-  return(s7_environment_set(sc, e, sym, caddr(args)));
+  return(s7_environment_set(sc, e, cadr(args), caddr(args)));
 }
 
 
@@ -34488,6 +34485,9 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
     case T_BIG_COMPLEX:
       return(mpc_to_big_complex(sc, big_complex(obj)));
 #endif
+
+    case T_C_POINTER:
+      return(s7_make_c_pointer(sc, s7_c_pointer(obj)));
     }
   return(obj);
 }
@@ -34554,8 +34554,7 @@ static s7_pointer env_setter(s7_scheme *sc, s7_pointer e, s7_Int loc, s7_pointer
    * val has to be of the form (cons symbol value)
    * if symbol is already in e, its value is changed, otherwise a new slot is added to e
    */
-  if ((!is_pair(val)) ||
-      (!is_symbol(car(val))))
+  if (!is_pair(val))
     return(wrong_type_argument_with_type(sc, sc->COPY, small_int(3), e, make_protected_string(sc, "(cons symbol value)"))); 
   if (s7_environment_set(sc, e, car(val), cdr(val)) != cdr(val))
     s7_make_slot(sc, e, car(val), cdr(val));
@@ -48446,9 +48445,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
       return((*(c_object_ref(obj)))(sc, obj, indices));
 
     case T_ENVIRONMENT:
-      if (is_symbol(car(indices)))
-	obj = s7_environment_ref(sc, obj, car(indices));
-      else return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, car(indices), A_SYMBOL));
+      obj = s7_environment_ref(sc, obj, car(indices));
       if (is_pair(cdr(indices)))
 	return(implicit_index(sc, obj, cdr(indices)));
       return(obj);
@@ -53778,15 +53775,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case OP_ENVIRONMENT_S:
 	    case HOP_ENVIRONMENT_S:
 	      {
-		s7_pointer s, sym;
+		s7_pointer s;
 		s = find_symbol_or_bust(sc, car(code));
 		if (!is_environment(s))
 		  break;
 		
-		sym = find_symbol_or_bust(sc, cadr(code));
-		if (is_symbol(sym))                             /* (env pi) */
-		  sc->value = s7_environment_ref(sc, s, sym);
-		else return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, sym, A_SYMBOL));
+		sc->value = s7_environment_ref(sc, s, find_symbol_or_bust(sc, cadr(code)));
 		goto START;
 	      }
 	      
@@ -53794,15 +53788,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case OP_ENVIRONMENT_Q:
 	    case HOP_ENVIRONMENT_Q:
 	      {
-		s7_pointer s, sym;
+		s7_pointer s;
 		s = find_symbol_or_bust(sc, car(code));
 		if (!is_environment(s))
 		  break;
-		
-		sym = cadr(cadr(code));
-		if (is_symbol(sym))
-		  sc->value = s7_environment_ref(sc, s, sym);
-		else return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, sym, A_SYMBOL));
+
+		sc->value = s7_environment_ref(sc, s, cadr(cadr(code)));
 		goto START;
 	      }
 	      
@@ -57090,10 +57081,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_ENVIRONMENT:                       /* -------- environment as applicable object -------- */
 	  if (is_null(sc->args))
 	    return(s7_wrong_number_of_args_error(sc, "environment as applicable object takes one argument: ~A", sc->args));
-
-	  if (is_symbol(car(sc->args)))
-	    sc->value = s7_environment_ref(sc, sc->code, car(sc->args));
-	  else return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_REF, car(sc->args), A_SYMBOL));
+	  sc->value = s7_environment_ref(sc, sc->code, car(sc->args));
 
 	  if (is_pair(cdr(sc->args)))
 	    sc->value = implicit_index(sc, sc->value, cdr(sc->args));
@@ -67843,13 +67831,13 @@ int main(int argc, char **argv)
  *   can we see dot-products and the like?
  *   can we split out the multidim stuff in unknown_op?
  *   the other side is a set op -- set_pair_p_3?
- * remove sound-data ws output option
  * TODO: dac_hook in snd-xm.rb needs list not sd, and one sd case in snd-test.rb
- * libgsl tests could use s7test+rename (let ((sin gsl_complex_sin)) (load "s7test.scm" (current-environment))) etc)
- *    doc/test the lib*.scm files.
+ * doc/test the lib*.scm files.
  * vct_set_let_looped is a major part of the de-opt 
  *    c_function_let_looped is local name -- need a corresponding one for float-vector set?
  * someday get apply-controls out of the effects code and everywhere else, maybe (controls) -> function
+ * can gf_parse or equivalent handle pure math function bodies in s7? -- a vector of parse trees indexed by arg type?
+ *  or recursion-as-local-goto
  */
 
 
