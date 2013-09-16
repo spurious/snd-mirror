@@ -10146,6 +10146,8 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
       return(x);
 
     case T_REAL:
+      if (is_NaN(real(x)))                  /* (abs -nan.0) -> nan.0, not -nan.0 */
+	return(real_NaN);
       if (real(x) < 0.0)
 	return(make_real(sc, -real(x)));
       return(x);
@@ -10176,6 +10178,8 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
       return(x);
 
     case T_REAL:
+      if (is_NaN(real(x)))                 /* (magnitude -nan.0) -> nan.0, not -nan.0 */
+	return(real_NaN);
       if (real(x) < 0.0)
 	return(make_real(sc, -real(x)));
       return(x);
@@ -22177,12 +22181,14 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
 {
   #define H_write_byte "(write-byte byte (port (current-output-port))): writes byte to the output port"
-  s7_pointer port;
-  
-  if (!s7_is_integer(car(args)))
+  s7_pointer port, b;
+  s7_Int val;
+
+  b = car(args);
+  if (!s7_is_integer(b))
     {
       CHECK_METHOD(sc, car(args), sc->WRITE_BYTE, args);
-      return(wrong_type_argument(sc, sc->WRITE_BYTE, small_int(1), car(args), T_INTEGER));
+      return(wrong_type_argument(sc, sc->WRITE_BYTE, small_int(1), b, T_INTEGER));
     }
   if (is_pair(cdr(args)))
     port = cadr(args);
@@ -22195,7 +22201,10 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument_with_type(sc, sc->WRITE_BYTE, small_int(2), port, make_protected_string(sc, "an output file or function port")));
     }
 
-  s7_write_char(sc, (int)(s7_integer(car(args))), port);
+  val = s7_integer(b);
+  if ((val < 0) || (val > 255))
+    return(wrong_type_argument_with_type(sc, sc->WRITE_BYTE, small_int(1), b, AN_UNSIGNED_BYTE));
+  s7_write_char(sc, (int)(s7_integer(b)), port);
   return(car(args));
 }
 
@@ -29169,7 +29178,7 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
   if (result_type == T_VECTOR)
     {
       s7_pointer *dest;
-      int gc_loc;
+      int gc_loc = 0;
 
       /* here the gc might be called since float_vector_getter makes a new real */
       v = make_vector_1(sc, len, parlous_gc, result_type);
@@ -37204,8 +37213,11 @@ static bool next_for_each(s7_scheme *sc)
 	  break;
 	  
 	case T_STRING:
+	  /* in all these small_int cases, don't cast to unsigned int -- the compiler apparently in some cases, first
+	   *   extends the char to a full integer (-1 possibly), then unsigns that!
+	   */
 	  if (is_bytevector(car_y))
-	    car(x) = small_int((unsigned int)string_value(car_y)[loc]);
+	    car(x) = small_int((unsigned char)string_value(car_y)[loc]);
 	  else car(x) = s7_make_character(sc, ((unsigned char)(string_value(car_y)[loc])));
 	  break;
 	  
@@ -37613,7 +37625,7 @@ static bool next_map(s7_scheme *sc)
 
 	case T_STRING:
 	  if (is_bytevector(car_y))
-	    x = small_int((unsigned int)string_value(car_y)[loc]);
+	    x = small_int((unsigned char)string_value(car_y)[loc]); /* don't cast to unsigned int here! */
 	  else x = s7_make_character(sc, ((unsigned char)(string_value(car_y)[loc])));
 	  break;
 
@@ -53682,7 +53694,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    (index >= 0))
 		  {
 		    if (is_bytevector(s))
-		      sc->value = small_int((unsigned int)string_value(s)[index]);
+		      sc->value = small_int((unsigned char)string_value(s)[index]);
 		    else sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
 		    goto START;
 		  }
@@ -53710,7 +53722,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			(index >= 0))
 		      {
 			if (is_bytevector(s))
-			  sc->value = small_int((unsigned int)string_value(s)[index]);
+			  sc->value = small_int((unsigned char)string_value(s)[index]);
 			else sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
 			goto START;
 		      }
@@ -53737,7 +53749,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    (index >= 0))
 		  {
 		    if (is_bytevector(s))
-		      sc->value = small_int((unsigned int)string_value(s)[index]);
+		      sc->value = small_int((unsigned char)string_value(s)[index]);
 		    else sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
 		    goto START;
 		  }
@@ -57038,7 +57050,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      (index < string_length(sc->code)))
 		    {
 		      if (is_bytevector(sc->code))
-			sc->value = small_int((unsigned int)(string_value(sc->code))[index]);
+			sc->value = small_int((unsigned char)(string_value(sc->code))[index]);
 		      else sc->value = s7_make_character(sc, ((unsigned char *)string_value(sc->code))[index]);
 		      goto START;
 		    }
@@ -67831,13 +67843,14 @@ int main(int argc, char **argv)
  *   can we see dot-products and the like?
  *   can we split out the multidim stuff in unknown_op?
  *   the other side is a set op -- set_pair_p_3?
- * TODO: dac_hook in snd-xm.rb needs list not sd, and one sd case in snd-test.rb
+ * TODO: dac_hook in snd-xm.rb needs list not sd
  * doc/test the lib*.scm files.
  * vct_set_let_looped is a major part of the de-opt 
  *    c_function_let_looped is local name -- need a corresponding one for float-vector set?
  * someday get apply-controls out of the effects code and everywhere else, maybe (controls) -> function
  * can gf_parse or equivalent handle pure math function bodies in s7? -- a vector of parse trees indexed by arg type?
  *  or recursion-as-local-goto
+ * PERHAPS: make-|float|int-vector|? 
  */
 
 
