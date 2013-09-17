@@ -64,10 +64,8 @@
 (define (digit-value c) (and (char-numeric? c) (- (char->integer c) (char->integer #\0))))
 
 
-(define -inf.0 (real-part (log 0.0))) 
-(define +inf.0 (- -inf.0))    ; or (atanh 1.0)
-(define +nan.0 1/0)           ; 1/0 for NaN is just a convenience, not a religious dogma
-(define -nan.0 (- 1/0))
+(define +inf.0 inf.0)
+(define +nan.0 nan.0)
 (define (finite? n) (and (number? n) (not (nan? n)) (not (infinite? n))))
 
 (define exact-integer? integer?)	

@@ -80,37 +80,21 @@
        (lambda (sym)
 	 (if (defined? sym)
 	     (let ((f (symbol->value sym)))
-	       (if (or (aritable? f 0)
-		       (aritable? f 1)
-		       (aritable? f 2)
-		       (aritable? f 3))
-		   (if (procedure? f)
-		       (let ((strname (symbol->string sym)))
-			 (if (or (member (strname 0) '(#\{ #\[ #\())
-				 (member strname '("exit" "emergency-exit" "abort" "unoptimize" "autotest" "delete-file" "system" "set-cdr!" "stacktrace"
-						   "augment-environment!" "make-procedure-with-setter" "open-environment")))
-			     (format data-file ";skip ~A for now~%" sym) ; no time! no time!
-			     (let ((top (if (aritable? f 3) 3
-					    (if (aritable? f 2) 2
-						(if (aritable? f 1) 1 0))))
-				   (bottom (if (aritable? f 0) 0
-					       (if (aritable? f 1) 1
-						   (if (aritable? f 2) 2 3)))))
-			       (format data-file ";whack on ~A...~%" sym)
-			       (set! low bottom)
-			       (if (zero? top)
-				   (let ((val (f)))
-				     (if val (format data-file "(~S) -> ~S~%" sym val)))
-				   (autotest f () 0 top)))))
-		       (begin
-			 (if (or #t (member (symbol->string sym) 
-					    '("do" "begin" "set!" "constants" "st" "i" "lst"
-					      "define" "define*" "define-expansion" "symbol-table"
-					      "define-macro" "define-bacro" "define-macro*" "define-bacro*"
-					      "defmacro" "defmacro*" "define-constant")))
-			     (format data-file ";skip ~A for now~%" sym)
-			     (begin
-			       (format data-file ";whack on ~A...~%" sym)
-			       (set! low 0)
-			       (autotest f '() 0 3)))))))))
+
+	       (let ((argn (and (procedure? f) (arity f))))
+		 (if argn
+		     (let ((bottom (car argn))
+			   (top (min (cdr argn) 3))
+			   (strname (symbol->string sym)))
+		       (if (not (or (member (strname 0) '(#\{ #\[ #\())
+				    (member strname '("exit" "emergency-exit" "abort" "unoptimize" "autotest" "delete-file" "system" "set-cdr!" "stacktrace"
+						      "augment-environment!" "make-procedure-with-setter" "open-environment" "eval"))))
+			   (begin
+			     (format *stderr* ";~A...~%" sym)
+			     (format data-file ";~A...~%" sym)
+			     (set! low bottom)
+			     (if (zero? (cdr argn))
+				 (let ((val (f)))
+				   (if val (format data-file "(~S) -> ~S~%" sym val)))
+				 (autotest f () 0 top))))))))))
        lst))))

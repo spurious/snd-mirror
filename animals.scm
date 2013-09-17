@@ -656,7 +656,7 @@
 	  (pulse-frqf (make-env '(0 0 1 .9 2 1 ) :base .1 :duration pulse-dur :scaler (hz->radians 100))))
 
       (let ((fb (vector frm1 frm2 frm3 frm4))
-	    (fs (vct 0.0 0.0 ampfr3 0.0)))
+	    (fs (float-vector 0.0 0.0 ampfr3 0.0)))
 	(set! fb (make-formant-bank fb fs))
 
 	(do ((i start (+ i pulse-samps)))
@@ -685,9 +685,9 @@
 		(pulse-amp (env ampf))
 		(val-amp (env ampf1)))
 	    
-	    (vct-set! fs 0 (env ampfr1))
-	    (vct-set! fs 1 (env ampfr2))
-	    (vct-set! fs 3 (env ampfr4))
+	    (vector-set! fs 0 (env ampfr1))
+	    (vector-set! fs 1 (env ampfr2))
+	    (vector-set! fs 3 (env ampfr4))
 	    
 	    (do ((k i (+ k 1)))
 		((= k reset-stop))
@@ -1023,7 +1023,7 @@
 	  (intrpf (make-env '(0 1 .6 0 1 1) :offset 1000.0 :scaler 200.0 :duration dur)))
 
       (let ((fb (vector frm1 frm2 frm3))
-	    (fs (vct frm1f frm2f frm3f)))
+	    (fs (float-vector frm1f frm2f frm3f)))
 	(set! fb (make-formant-bank fb fs))
 
 	(do ((i start (+ i 1)))
@@ -1434,11 +1434,11 @@
   ;; rocky 31 1
   ;;  (an experiment with wave-train in place of pulsed env)
   (let* ((wave-len 256)
-	 (pulse (let ((v (make-vct wave-len))
+	 (pulse (let ((v (make-vector wave-len 0.0 #t))
 		      (pulse-ampf (make-env '(0.000 0.000 0.063 0.312 0.277 0.937 0.405 1.000 0.617 0.696 0.929 0.146 2.000 0.000) :length wave-len)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i wave-len))
-		    (vct-set! v i (env pulse-ampf)))
+		    (vector-set! v i (env pulse-ampf)))
 		  v)))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -1841,8 +1841,8 @@
 ;;; Handsome trig
 
 (defanimal (handsome-trig beg dur amp)
-  (let ((freqs (apply vct (map hz->radians (list 6439 6585 6860 6940 7090 7266 7362))))
-	(amps (vct 0.355 0.355 0.089 0.060 0.071 0.035 0.035))
+  (let ((freqs (apply float-vector (map hz->radians (list 6439 6585 6860 6940 7090 7266 7362))))
+	(amps (float-vector 0.355 0.355 0.089 0.060 0.071 0.035 0.035))
 	(pulse-dur .02))
     (let ((num (length freqs)))
       (let ((start (seconds->samples beg))
@@ -1851,7 +1851,7 @@
 	    (pulse-samps (seconds->samples pulse-dur))
 	    (pulse-sep (seconds->samples pulse-dur))
 	    (pulses 0)
-	    (obank (make-oscil-bank freqs (make-vct 7 0.0) amps)))
+	    (obank (make-oscil-bank freqs (make-vector 7 0.0 #t) amps)))
 	(do ((i start (+ i pulse-sep)))
 	    ((>= i stop))
 	  (let ((pulse-stop (+ i pulse-samps)))
@@ -3627,7 +3627,7 @@
 	  (initial-ampf (make-env '(0 0 1 1 10 1 11 0) :duration initial-dur :scaler (* amp initial-amp)))
 	  (initial-gen (make-oscil initial-pitch))
 	  
-	  (buzz-frq-table (let ((v (make-vct buzz-size 0.0))
+	  (buzz-frq-table (let ((v (make-vector buzz-size 0.0 #t))
 				(bfrqf (make-env (if gliss-up 
 						     (list 0 buzz-low .5 buzz-mid 1 buzz-high)
 						     (list 0 buzz-high .5 buzz-mid 1 buzz-low))
@@ -3635,16 +3635,16 @@
 						 :scaler (hz->radians 1.0))))
 			    (do ((i 0 (+ i 1)))
 				((= i buzz-size))
-			      (vct-set! v i (env bfrqf)))
+			      (vector-set! v i (env bfrqf)))
 			    v))
-	  (buzz-amp-table (let ((v (make-vct buzz-size 0.0))
+	  (buzz-amp-table (let ((v (make-vector buzz-size 0.0 #t))
 				(bampf (make-env (if gliss-up
 						     '(0 0 1 1 2.5 .7 3 0 3.5 0)
 						     '(0 0 .5 1 2 1 3 0 3.5 0))
 						 :length buzz-size)))
 			    (do ((i 0 (+ i 1)))
 				((= i buzz-size))
-			      (vct-set! v i (env bampf)))
+			      (vector-set! v i (env bampf)))
 			    v)))
       (let ((buzz-stop (+ initial-stop (seconds->samples buzz-dur)))
 	    (buzz-amp (make-env '(0.000 0.000 0.035 0.190 0.082 0.336 0.168 0.625 0.348 0.743 0.467 0.763 
@@ -4128,10 +4128,10 @@
 				  0.794 0.510 0.831 0.510 0.909 0.494 1.000 0.499)
 			  :duration bump-dur :offset -0.5)))
 
-      (let ((bump-wave (make-vct bump-samps)))
+      (let ((bump-wave (make-vector bump-samps 0.0 #t)))
 	(do ((i 0 (+ i 1)))
 	    ((= i bump-samps))
-	  (vct-set! bump-wave i (env bump)))
+	  (vector-set! bump-wave i (env bump)))
 	(let ((wt (make-wave-train 0.0 0.0 bump-wave)))
 	  (do ((i start (+ i 1)))
 	      ((= i stop))
@@ -4292,7 +4292,7 @@
 
 (define (nrcos->polywave n r scl)
   (let ((lst ())
-	(total (polynomial (make-vct n 1.0) r)))
+	(total (polynomial (make-vector n 1.0 #t) r)))
     (set! scl (/ scl total))
     (do ((i 0 (+ i 1)))
 	((= i n) (reverse lst))
@@ -4321,7 +4321,7 @@
 	  (rnd (make-rand-interp 5000 .007)))
 
       (let ((fb (vector frm1 frm2 frm3))
-	    (fs (vct fr1 fr2 fr3)))
+	    (fs (float-vector fr1 fr2 fr3)))
 	(set! fb (make-formant-bank fb fs))
 
 	(do ((i start (+ i 1)))
@@ -4532,7 +4532,7 @@
 	(fr3 (* 2 5 (sin (hz->radians 5600)))))
 
     (let ((fb (vector frm1 frm2 frm3))
-	  (fs (vct fr1 fr2 fr3)))
+	  (fs (float-vector fr1 fr2 fr3)))
       (set! fb (make-formant-bank fb fs))
     
       (do ((i 0 (+ i 1)))
@@ -4992,7 +4992,7 @@
 	  (rnd2 (make-rand-interp 300 (hz->radians 15))))
 
       (let ((fb (vector frm1 frm2 frm3 frm4))
-	    (fs (vct fr1 fr2 fr3 fr4)))
+	    (fs (float-vector fr1 fr2 fr3 fr4)))
 	(set! fb (make-formant-bank fb fs))
 
 	(do ((i start (+ i 1)))
@@ -5460,7 +5460,7 @@
 	   (vib (make-blackman 50 4))
 	   (vib-index (hz->radians -100)))
       (let ((fb (vector frm1 frm2 frm3))
-	    (fs (vct fr1 fr2 fr3)))
+	    (fs (float-vector fr1 fr2 fr3)))
 	(set! fb (make-formant-bank fb fs))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
@@ -5840,7 +5840,7 @@
 	  (fr4 (* 2 5 (sin (hz->radians 1600))))
 	  (rnd (make-rand-interp 400 (hz->radians 10))))
       (let ((fb (vector frm1 frm2 frm3 frm4))
-	    (fs (vct fr1 fr2 fr3 fr4)))
+	    (fs (float-vector fr1 fr2 fr3 fr4)))
 	(set! fb (make-formant-bank fb fs))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
@@ -7289,16 +7289,16 @@
       (set! (ampfs 4) (make-env '(0.000 0.000 0.159 0.995 0.314 0.997 0.598 0.000 1.000 0.000)
 				:duration dur :scaler .01))
       
-      (let ((frqs (make-vct 5))
-	    (amps (make-vct 5)))
-	(let ((obank (make-oscil-bank frqs (make-vct 5 0.0) amps)))
+      (let ((frqs (make-vector 5 0.0 #t))
+	    (amps (make-vector 5 0.0 #t)))
+	(let ((obank (make-oscil-bank frqs (make-vector 5 0.0 #t) amps)))
 	  (do ((i start (+ i 1)))
 	      ((= i stop))
 	    (let ((frq (env frqf)))
 	      (do ((k 0 (+ k 1)))
 		  ((= k 5))
-		(vct-set! amps k (env (vector-ref ampfs k)))
-		(vct-set! frqs k (* (+ k 1) frq)))
+		(vector-set! amps k (env (vector-ref ampfs k)))
+		(vector-set! frqs k (* (+ k 1) frq)))
 	      (outa i (* (env ampf) (oscil-bank obank)))))))))
   
   ;; part 2
@@ -7958,7 +7958,7 @@
 	  (fr4 (* 2 3 (sin (hz->radians 6000))))
 	  (fr5 (* 2 (sin (hz->radians 7500)))))
       (let ((fb (vector frm1 frm2 frm3 frm4 frm5))
-	    (fs (vct fr1 fr2 fr3 fr4 fr5)))
+	    (fs (float-vector fr1 fr2 fr3 fr4 fr5)))
 	(set! fb (make-formant-bank fb fs))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
@@ -9444,7 +9444,7 @@
 				    0.457 0.310 0.484 0.296 0.514 0.265 0.548 0.307 0.599 0.377 0.641 0.352 0.706 0.346 
 				    0.741 0.338 0.773 0.346 1.000 0.346)
 			    :duration dur :scaler (hz->radians (* 0.5 3140))))
-	    (gen2 (make-polywave 0.0 (vct 2 (* .6 .8) 3 (* .6 .2))))
+	    (gen2 (make-polywave 0.0 (float-vector 2 (* .6 .8) 3 (* .6 .2))))
 	    (gen2a (make-polywave 0.0 (normalize-partials (list  4 .35  5 .19  6 .12  7 .03  8 .02))))
 	    (ampf2a (make-env '(0 1 .6 1 1 0) :duration dur :scaler .4 :base 10))
 	    (gen3 (make-nrxysin :n 12 :r .85 :ratio 1/9))

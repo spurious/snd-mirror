@@ -1275,7 +1275,7 @@ struct s7_scheme {
   s7_pointer CHAR_WHITESPACEP, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, COMPLEXP, CONS, CONSTANTP, CONTINUATIONP, COPY, COS, COSH, C_POINTER, C_POINTERP;
   s7_pointer DEFINEDP, DENOMINATOR, DISPLAY, DYNAMIC_WIND, ENVIRONMENTP, ENVIRONMENT, ENVIRONMENT_REF, ENVIRONMENT_SET, ENVIRONMENT_TO_LIST;
   s7_pointer EOF_OBJECTP, EQP, EQUALP, EQVP, ERROR, EVAL, EVAL_STRING, EVENP, EXACTP;
-  s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, GET_OUTPUT_STRING, HASH_TABLE;
+  s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOAT_VECTOR, FLOAT_VECTORP, FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, GET_OUTPUT_STRING, HASH_TABLE;
   s7_pointer HASH_TABLEP, HASH_TABLE_ITERATORP, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_SIZE, HELP, IMAG_PART, INEXACTP, INEXACT_TO_EXACT;
   s7_pointer INFINITEP, INPUT_PORTP, INTEGERP, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, KEYWORDP, KEYWORD_TO_SYMBOL, LCM, LENGTH;
   s7_pointer LIST, LISTP, LIST_TO_STRING, LIST_TO_VECTOR, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBITP, LOGIOR, LOGNOT, LOGXOR;
@@ -29406,7 +29406,13 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
   return(vec);
 }
 
-#if 0
+
+static s7_pointer g_is_float_vector(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_float_vector "(float-vector? obj) returns #t if obj is an homogenous float vector"
+  return(s7_make_boolean(sc, type(car(args)) == T_FLOAT_VECTOR));
+}
+
 static s7_pointer g_float_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_float_vector "(float-vector ...) returns an homogenous float vector whose elements are the arguments"
@@ -29426,7 +29432,6 @@ static s7_pointer g_float_vector(s7_scheme *sc, s7_pointer args)
     }
   return(vec);
 }
-#endif
 
 
 static s7_pointer g_list_to_vector(s7_scheme *sc, s7_pointer args)
@@ -33955,21 +33960,24 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
   /* here we know x and y are pointers to the same type of structure */
   int ref_x, ref_y;
 
-  ref_x = peek_shared_ref(ci, x);
-  ref_y = peek_shared_ref(ci, y);
-
-  if ((ref_x != 0) && (ref_y != 0))
-    return(ref_x == ref_y);
-  
-  if ((ref_x != 0) || (ref_y != 0))
+  if (ci)
     {
-      /* try to harmonize the new guy -- there can be more than one structure equal to the current one */
-      if (ref_x != 0)
-	add_shared_ref(ci, y, ref_x);
-      else add_shared_ref(ci, x, ref_y);
+      ref_x = peek_shared_ref(ci, x);
+      ref_y = peek_shared_ref(ci, y);
+      
+      if ((ref_x != 0) && (ref_y != 0))
+	return(ref_x == ref_y);
+      
+      if ((ref_x != 0) || (ref_y != 0))
+	{
+	  /* try to harmonize the new guy -- there can be more than one structure equal to the current one */
+	  if (ref_x != 0)
+	    add_shared_ref(ci, y, ref_x);
+	  else add_shared_ref(ci, x, ref_y);
+	}
+      else add_equal_ref(ci, x, y);
     }
-  else add_equal_ref(ci, x, y);
-  
+
   /* now compare the elements of the structures. */
   switch (type(x))
     {
@@ -67117,6 +67125,8 @@ s7_scheme *s7_init(void)
   sc->LIST_TO_VECTOR =        s7_define_safe_function(sc, "list->vector",            g_list_to_vector,         1, 0, false, H_list_to_vector);
   sc->VECTOR_TO_LIST =        s7_define_safe_function(sc, "vector->list",            g_vector_to_list,         1, 2, false, H_vector_to_list);
   sc->VECTORP =               s7_define_safe_function(sc, "vector?",                 g_is_vector,              1, 0, false, H_is_vector);
+  sc->FLOAT_VECTORP =         s7_define_safe_function(sc, "float-vector?",           g_is_float_vector,        1, 0, false, H_is_float_vector);
+  sc->FLOAT_VECTOR =          s7_define_safe_function(sc, "float-vector",            g_float_vector,           0, 0, true,  H_float_vector);
   sc->VECTOR_APPEND =         s7_define_safe_function(sc, "vector-append",           g_vector_append,          0, 0, true,  H_vector_append);
   sc->VECTOR_FILL =           s7_define_safe_function(sc, "vector-fill!",            g_vector_fill,            2, 2, false, H_vector_fill);
   sc->VECTOR_LENGTH =         s7_define_safe_function(sc, "vector-length",           g_vector_length,          1, 0, false, H_vector_length);
@@ -67129,7 +67139,6 @@ s7_scheme *s7_init(void)
   set_setter(sc->VECTOR); /* ?? */
   sc->Vector = s7_symbol_value(sc, sc->VECTOR);
   set_setter(sc->Vector);
-
 
                               s7_define_safe_function(sc, "bytevector?",             g_is_bytevector,          1, 0, false, H_is_bytevector);
   sc->TO_BYTEVECTOR =         s7_define_safe_function(sc, "->bytevector",            g_to_bytevector,          1, 0, false, H_to_bytevector);
@@ -67831,26 +67840,22 @@ int main(int argc, char **argv)
  * add empty? (or nil? or generic null? or zero-length? typeq? (null? c-pointer) -- C null?
  * other often-used libraries: glib/gio/gobject/gmodule ncurses? GL/GLU? pcre? tecla? readline? asound? sndlib-for-s7?
  *    SOMEDAY: libgdbm tests and setopt support, libdl tests
- *    there are about 2000 entities in SDL
  * TODO: (env env) in clm should be an error
  * possible autoload additions: sndlib? xm? libX* fftw? gmp/mpfr/mpc? 
- * gdb-s7 might check for 0xnnnn "asdf" to avoid strings (finish the gdb code!)
  * checkpoint?
- * (float-vector ...), (make-shared-vector (float-vector ...) '(a b))
  * TODO: change docs for sound-data/vct, change to vector wherever possible, remove more from scheme sndlib2xen/vct (synonyms) [frame.scm?]
  *   what about vector-ref/set loop opts? from vct/sound-data code
+ *   need vct->sound-data replacement primarily (audio-write -- is this worth keeping?)
  * TODO: split the apply code for the various vector types -- maybe opt this as HOP_FLOAT_VECTOR_SS (opCq C S see t502 comment above)
  *   can we see dot-products and the like?
  *   can we split out the multidim stuff in unknown_op?
  *   the other side is a set op -- set_pair_p_3?
- * TODO: dac_hook in snd-xm.rb needs list not sd
  * doc/test the lib*.scm files.
  * vct_set_let_looped is a major part of the de-opt 
  *    c_function_let_looped is local name -- need a corresponding one for float-vector set?
- * someday get apply-controls out of the effects code and everywhere else, maybe (controls) -> function
  * can gf_parse or equivalent handle pure math function bodies in s7? -- a vector of parse trees indexed by arg type?
- *  or recursion-as-local-goto
- * PERHAPS: make-|float|int-vector|? 
+ *    or recursion-as-local-goto
+ * loop problem in ~W?
  */
 
 

@@ -229,7 +229,3 @@
 	  (mus-audio-close audio-fd)))))
 
 
-;;; (start-enveloping)
-;;; (open-sound "oboe.snd")
-
-
