@@ -1310,7 +1310,8 @@ env *xen_to_env(XEN res)
 	    }
 	  if (data)
 	    {
-	      rtn = make_envelope(data, len);
+	      if (len > 1)
+		rtn = make_envelope(data, len);
 	      free(data);
 	    }
 	}

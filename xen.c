@@ -1793,12 +1793,16 @@ static XEN g_strftime(XEN format, XEN tm)
   #define H_strftime "(strftime format time) returns a string describing the time: (strftime \"%d-%b %H:%M %Z\" (localtime (current-time)))"
   char *buf;
   XEN result;
+  const struct tm *p;
 
   XEN_ASSERT_TYPE(XEN_STRING_P(format), format, XEN_ARG_1, "strftime", "a string");
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(tm), tm, 2, "strftime", "a localtime struct");
 
+  p = (const struct tm *)XEN_UNWRAP_C_POINTER(tm);
+  XEN_ASSERT_TYPE(p != NULL, tm, 2, "strftime", "a localtime struct");
+
   buf = (char *)calloc(1024, sizeof(char));
-  strftime(buf, 1024, XEN_TO_C_STRING(format), (const struct tm *)XEN_UNWRAP_C_POINTER(tm));
+  strftime(buf, 1024, XEN_TO_C_STRING(format), p);
   result = C_TO_XEN_STRING(buf);
   free(buf);
 

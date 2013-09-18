@@ -99,11 +99,14 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 static s7_pointer g_listener_load_hook(s7_scheme *sc, s7_pointer args)
 {
   /* arg is the hook, (hook 'name) is the file */
-  s7_pointer hook;
+  s7_pointer hook, file;
   if (!(ss->listener)) return(args);
   char msg[128];
   hook = s7_car(args);
-  snprintf(msg, 128, "loading %s", s7_string(s7_environment_ref(s7, hook, s7_make_symbol(s7, "name"))));
+  file = s7_environment_ref(s7, hook, s7_make_symbol(s7, "name"));
+  if (!s7_is_string(file))
+    s7_wrong_type_arg_error(sc, "glistener-load-hook", 1, file, "hook's name field should be the file being loaded");
+  snprintf(msg, 128, "loading %s", s7_string(file));
   glistener_post_status(ss->listener, msg);
   return(args);
 }
@@ -201,7 +204,14 @@ static s7_pointer g_colorizer_colors(s7_scheme *sc, s7_pointer args)
    *
    * default: (colorizer-colors "red" "brown" "orangered" "gray40" "gray20" "blue" "seagreen" "steelblue4" "black")
    */
+  int i;
   s7_pointer p;
+
+  for (p = args, i = 1; s7_is_pair(p); p = s7_cdr(p), i++)
+    {
+      if (!s7_is_string(s7_car(p)))
+	s7_wrong_type_arg_error(sc, "colorizer-colors", i, s7_car(p), "a color name (a string)");
+    }
   p = args;
 
   if (s7_is_pair(p)) {comment_tag =       gtk_text_buffer_create_tag(listener_buffer, NULL, "foreground", s7_string(s7_car(p)), NULL); p = s7_cdr(p);}
@@ -369,16 +379,22 @@ static s7_pointer wrap_glistener(glistener *g)
   return(s7_make_c_pointer(s7, (void *)g));
 }
 
-static glistener *unwrap_glistener(s7_pointer p)
+static glistener *unwrap_glistener(s7_scheme *sc, s7_pointer p)
 {
-  return((glistener *)s7_c_pointer(p));
+  glistener *g;
+  if (!s7_is_c_pointer(p))
+    s7_wrong_type_arg_error(sc, "unwrap_glistener", 1, p, "a c-pointer");
+  g = (glistener *)s7_c_pointer(p);
+  if (!g)
+    s7_wrong_type_arg_error(sc, "unwrap_glistener", 1, p, "a non-null c-pointer");
+  return(g);
 }
 
 static s7_pointer g_evaluate(s7_scheme *sc, s7_pointer args)
 {
   char *str;
   s7_pointer result;
-  str = glistener_evaluate(unwrap_glistener(s7_car(args)));
+  str = glistener_evaluate(unwrap_glistener(sc, s7_car(args)));
   result = s7_make_string(s7, str);
   if (str) g_free(str);
   return(result);
@@ -388,7 +404,7 @@ static s7_pointer g_complete(s7_scheme *sc, s7_pointer args)
 {
   char *str;
   s7_pointer result;
-  str = glistener_complete(unwrap_glistener(s7_car(args)));
+  str = glistener_complete(unwrap_glistener(sc, s7_car(args)));
   result = s7_make_string(s7, str);
   if (str) g_free(str);
   return(result);
@@ -396,41 +412,41 @@ static s7_pointer g_complete(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_append_text(s7_scheme *sc, s7_pointer args)
 {
-  glistener_append_text(unwrap_glistener(s7_car(args)), s7_string(s7_cadr(args)));
+  glistener_append_text(unwrap_glistener(sc, s7_car(args)), s7_string(s7_cadr(args)));
   return(s7_cadr(args));
 }
 
 static s7_pointer g_insert_text(s7_scheme *sc, s7_pointer args)
 {
-  glistener_insert_text(unwrap_glistener(s7_car(args)), s7_string(s7_cadr(args)));
+  glistener_insert_text(unwrap_glistener(sc, s7_car(args)), s7_string(s7_cadr(args)));
   return(s7_cadr(args));
 }
 
 static s7_pointer g_scroll_to_end(s7_scheme *sc, s7_pointer args)
 {
-  glistener_scroll_to_end(unwrap_glistener(s7_car(args)));
+  glistener_scroll_to_end(unwrap_glistener(sc, s7_car(args)));
   return(s7_car(args));
 }
 
 static s7_pointer g_append_prompt(s7_scheme *sc, s7_pointer args)
 {
-  glistener_append_prompt(unwrap_glistener(s7_car(args)));
+  glistener_append_prompt(unwrap_glistener(sc, s7_car(args)));
   return(s7_car(args));
 }
 
 static s7_pointer g_prompt_position(s7_scheme *sc, s7_pointer args)
 {
-  return(s7_make_integer(s7, glistener_prompt_position(unwrap_glistener(s7_car(args)))));
+  return(s7_make_integer(s7, glistener_prompt_position(unwrap_glistener(sc, s7_car(args)))));
 }
 
 static s7_pointer g_cursor_position(s7_scheme *sc, s7_pointer args)
 {
-  return(s7_make_integer(s7, glistener_cursor_position(unwrap_glistener(s7_car(args)))));
+  return(s7_make_integer(s7, glistener_cursor_position(unwrap_glistener(sc, s7_car(args)))));
 }
 
 static s7_pointer g_set_cursor_position(s7_scheme *sc, s7_pointer args)
 {
-  glistener_set_cursor_position(unwrap_glistener(s7_car(args)), s7_integer(s7_cadr(args)));
+  glistener_set_cursor_position(unwrap_glistener(sc, s7_car(args)), s7_integer(s7_cadr(args)));
   return(s7_cadr(args));
 }
 
@@ -438,7 +454,7 @@ static s7_pointer g_text(s7_scheme *sc, s7_pointer args)
 {
   char *str;
   s7_pointer result;
-  str = glistener_text(unwrap_glistener(s7_car(args)), s7_integer(s7_cadr(args)), s7_integer(s7_caddr(args)));
+  str = glistener_text(unwrap_glistener(sc, s7_car(args)), s7_integer(s7_cadr(args)), s7_integer(s7_caddr(args)));
   result = s7_make_string(s7, str);
   if (str) g_free(str);
   return(result);
@@ -446,7 +462,7 @@ static s7_pointer g_text(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_clear(s7_scheme *sc, s7_pointer args)
 {
-  glistener_clear(unwrap_glistener(s7_car(args)));
+  glistener_clear(unwrap_glistener(sc, s7_car(args)));
   return(s7_car(args));
 }
 
@@ -457,7 +473,7 @@ static s7_pointer g_text_widget(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_set_prompt(s7_scheme *sc, s7_pointer args)
 {
-  glistener_set_prompt(unwrap_glistener(s7_car(args)), s7_string(s7_cadr(args)));
+  glistener_set_prompt(unwrap_glistener(sc, s7_car(args)), s7_string(s7_cadr(args)));
   return(s7_cadr(args));
 }
 
@@ -466,10 +482,10 @@ static s7_pointer g_set_prompt_tag(s7_scheme *sc, s7_pointer args)
   /* args: (#<c_pointer 0x2dfbed0> (GtkTextTag_ #<c_pointer 0x2e8f180>))
    */
   GtkTextTag *new_tag = NULL;
-  if (s7_cadr(args) != s7_f(sc))
+  if (s7_is_pair(s7_cadr(args)))
     new_tag = (GtkTextTag *)(s7_c_pointer(s7_cadr(s7_cadr(args))));
 
-  glistener_set_prompt_tag(unwrap_glistener(s7_car(args)), new_tag);
+  glistener_set_prompt_tag(unwrap_glistener(sc, s7_car(args)), new_tag);
   return(s7_cadr(args));
 }
 
@@ -698,7 +714,8 @@ static XEN g_reset_listener_cursor(void)
 
 void clear_listener(void)
 {
-  glistener_clear(ss->listener);
+  if (ss->listener)
+    glistener_clear(ss->listener);
 }
 
 

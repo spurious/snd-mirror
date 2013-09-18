@@ -1,36 +1,34 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [531]
-;;;  test 1: defaults                           [1121]
-;;;  test 2: headers                            [1332]
-;;;  test 3: variables                          [1647]
-;;;  test 4: sndlib                             [2222]
-;;;  test 5: simple overall checks              [4631]
-;;;  test 6: vcts                               [9401]
-;;;  test 7: colors                             [9720]
-;;;  test 8: clm                                [10239]
-;;;  test 9: mix                                [21985]
-;;;  test 10: marks                             [23774]
-;;;  test 11: dialogs                           [24734]
-;;;  test 12: extensions                        [24905]
-;;;  test 13: menus, edit lists, hooks, etc     [25171]
-;;;  test 14: all together now                  [26546]
-;;;  test 15: chan-local vars                   [27424]
-;;;  test 16: regularized funcs                 [29182]
-;;;  test 17: dialogs and graphics              [32793]
-;;;  test 18: enved                             [32892]
-;;;  test 19: save and restore                  [32911]
-;;;  test 20: transforms                        [34525]
-;;;  test 21: new stuff                         [36656]
-;;;  test 22: optimizer                         [38667]
-;;;  test 23: with-sound                        [39191]
-;;;  test 25: X/Xt/Xm                           [42158]
-;;;  test 26:                                   [45840]
-;;;  test 27: GL                                [45846]
-;;;  test 28: errors                            [45970]
-;;;  test 29: s7                                [47557]
-;;;  test all done                              [47629]
-;;;  test the end                               [47812]
+;;;  test 0: constants                          [530]
+;;;  test 1: defaults                           [1120]
+;;;  test 2: headers                            [1331]
+;;;  test 3: variables                          [1646]
+;;;  test 4: sndlib                             [2221]
+;;;  test 5: simple overall checks              [4630]
+;;;  test 6: vcts                               [9400]
+;;;  test 7: colors                             [9719]
+;;;  test 8: clm                                [10238]
+;;;  test 9: mix                                [21984]
+;;;  test 10: marks                             [23773]
+;;;  test 11: dialogs                           [24733]
+;;;  test 12: extensions                        [24904]
+;;;  test 13: menus, edit lists, hooks, etc     [25170]
+;;;  test 14: all together now                  [26545]
+;;;  test 15: chan-local vars                   [27423]
+;;;  test 16: regularized funcs                 [29181]
+;;;  test 17: dialogs and graphics              [32792]
+;;;  test 18: save and restore                  [32903]
+;;;  test 19: transforms                        [34517]
+;;;  test 20: new stuff                         [36635]
+;;;  test 21: optimizer                         [38646]
+;;;  test 22: with-sound                        [39170]
+;;;  test 23: X/Xt/Xm                           [42132]
+;;;  test 24: GL                                [45814]
+;;;  test 25: errors                            [45938]
+;;;  test 26: s7                                [47520]
+;;;  test all done                              [47588]
+;;;  test the end                               [47771]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -148,7 +146,7 @@
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (define full-test (< snd-test 0))
-(define total-tests 29)
+(define total-tests 26)
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
 (define test-number -1)
 
@@ -32795,6 +32793,7 @@ EDITS: 1
 (if (not (provided? 'snd-draw.scm)) (load "draw.scm")) ; needed also in test_21 (color-samples)
 (if with-gui
     (if (not (provided? 'snd-musglyphs.scm)) (load "musglyphs.scm")))
+(if (not (provided? 'snd-enved.scm)) (load "enved.scm"))
 
 (define (snd_test_17)
   
@@ -32884,16 +32883,8 @@ EDITS: 1
 	    (hide-widget (car (channel-widgets)))
 	    (show-widget (car (channel-widgets)))
 	    (close-sound ind1))
-	  (close-sound ind))
+	  (close-sound ind))))
 	
-	)))
-
-
-;;; ---------------- test 18: enved ----------------
-
-(if (not (provided? 'snd-enved.scm)) (load "enved.scm"))
-
-(define (snd_test_18)
   (if with-gui
       (begin
 	(start-enveloping)
@@ -32908,7 +32899,7 @@ EDITS: 1
 	)))
 
 
-;;; ---------------- test 19: save and restore ----------------
+;;; ---------------- test 18: save and restore ----------------
 
 (if (not (provided? 'snd-fade.scm)) (load "fade.scm"))
 
@@ -32918,7 +32909,7 @@ EDITS: 1
 (define* (make-v-mix snd chn)
   (mix-vct (vct .1 .2 .3) 100 snd chn #t "mix-vct (vct .1 .2 .3)"))
 
-(define (snd_test_19)
+(define (snd_test_18)
   
   (define* (hilbert-transform-via-fft snd chn)
     "same as FIR version but use FFT and change phases by hand"
@@ -34522,8 +34513,8 @@ EDITS: 1
     ))
 
 
-;;; ---------------- test 20: transforms ----------------
-(define (snd_test_20)
+;;; ---------------- test 19: transforms ----------------
+(define (snd_test_19)
   
   (define (bes-j0-1 x)				;returns J0(x) for any real x
     (if (< (abs x) 8.0)			;direct rational function fit
@@ -36640,7 +36631,7 @@ EDITS: 1
 
 
 
-;;; ---------------- test 21: new stuff ----------------
+;;; ---------------- test 20: new stuff ----------------
 
 (if (not (defined? 'load-font))
     (define (load-font name) #f))
@@ -36649,7 +36640,7 @@ EDITS: 1
 (if (not (provided? 'snd-snddiff.scm)) (load "snddiff.scm"))
 
 
-(define (snd_test_21)
+(define (snd_test_20)
   
   (define* (add-comment sample comment snd1 chn1)
     (let* ((snd (or snd1 (selected-sound)))
@@ -38651,9 +38642,9 @@ EDITS: 1
       )))
 
 
-;;; ---------------- test 22: optimizer ----------------
+;;; ---------------- test 21: optimizer ----------------
 
-(define (snd_test_22)
+(define (snd_test_21)
   (if all-args
       (let ()
 
@@ -39175,7 +39166,7 @@ EDITS: 1
 
 
 
-;;; ---------------- test 23: with-sound ----------------
+;;; ---------------- test 22: with-sound ----------------
 
 (if (not (provided? 'snd-prc95.scm)) (load "prc95.scm"))
 (if (not (provided? 'snd-jcrev.scm)) (load "jcrev.scm"))
@@ -39262,7 +39253,7 @@ EDITS: 1
       result)))
 
 
-(define (snd_test_23)
+(define (snd_test_22)
   
   (definstrument (green3 start dur freq amp amp-env noise-freq noise-width noise-max-step)
     ;; brownian noise on amp env
@@ -42137,13 +42128,8 @@ EDITS: 1
   )
 
 
-(define (snd_test_24)
-  #f
-  )
-
-
-;;; ---------------- test 25: X/Xt/Xm --------------------
-(define (snd_test_25)
+;;; ---------------- test 23: X/Xt/Xm --------------------
+(define (snd_test_23)
   (define (x->snd-color color-name)
     "(x->snd-color color-name) returns a Snd color object corresponding to the X11 color name 'color-name'"
     (let* ((col (XColor))
@@ -45824,15 +45810,9 @@ EDITS: 1
 
 
 
-;;; ---------------- test 26: --------------------
-;;;   was Gtk (xg) but it became a nightmare to run/maintain
+;;; ---------------- test 24: GL --------------------
 
-(define (snd_test_26) #f)
-
-
-;;; ---------------- test 27: GL --------------------
-
-(define (snd_test_27)
+(define (snd_test_24)
   (if (and (provided? 'snd-motif) 
 	   (provided? 'gl)
 	   (provided? 'xm))
@@ -45954,7 +45934,7 @@ EDITS: 1
 
 
 
-;;; ---------------- test 28: errors ----------------
+;;; ---------------- test 25: errors ----------------
 
 (defmacro simple-time (a) 
   `(let ((start (get-internal-real-time))) 
@@ -45962,7 +45942,7 @@ EDITS: 1
      (- (get-internal-real-time) start)))
 
 
-(define (snd_test_28)
+(define (snd_test_25)
   
   (define (traced a) (+ 2 a))
   
@@ -46293,23 +46273,7 @@ EDITS: 1
 	     (set-procs2 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 3)))) set-procs))
 	     (procs3 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 3)))) procs))
 	     (set-procs3 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 4)))) set-procs))
-	     (procs4 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 4)))) procs))
-	     (set-procs4 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 5)))) set-procs))
-	     (procs5 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 5)))) procs))
-	     (procs6 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 6)))) procs))
-	     (procs7 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 7)))) procs))
-	     (procs8 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 8)))) procs))
-	     (procs10 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 10)))) procs))
 	     )
-	
-	(if all-args
-	    (snd-display #__line__ ";procs 0: ~A ~A, 1: ~A ~A, 2: ~A ~A, 3: ~A ~A, 4: ~A ~A, 5: ~A, 6: ~A, 7: ~A, 8: ~A, 10: ~A"
-			 (length procs0) (length set-procs0) 
-			 (length procs1) (length set-procs1) 
-			 (length procs2) (length set-procs2) 
-			 (length procs3) (length set-procs3) 
-			 (length procs4) (length set-procs4) 
-			 (length procs5) (length procs6) (length procs7) (length procs8) (length procs10)))
 	
 	(reset-all-hooks)
 	
@@ -47536,9 +47500,9 @@ EDITS: 1
 	    )))))
       
       
-;;; ---------------- test 29: s7 ----------------
+;;; ---------------- test 26: s7 ----------------
       
-(define (snd_test_29)
+(define (snd_test_26)
   (load "s7test.scm"))
 
 
@@ -47572,16 +47536,13 @@ EDITS: 1
 (set! (test-funcs 24) snd_test_24)
 (set! (test-funcs 25) snd_test_25)
 (set! (test-funcs 26) snd_test_26)
-(set! (test-funcs 27) snd_test_27)
-(set! (test-funcs 28) snd_test_28)
-(set! (test-funcs 29) snd_test_29)
 
 (if (> test-at-random 0)
     (begin                                       ; run tests in any random order
       (do ((i 0 (+ i 1)))
 	  ((= i test-at-random))
-	(set! snd-test (random 24))
-	(if (> snd-test 23) (set! snd-test 23))
+	(set! snd-test (random 23))
+	(if (> snd-test 22) (set! snd-test 22))
 	(format *stderr* "~%~A: ~A~%" i snd-test)
 	(before-test-hook snd-test)
 	((vector-ref test-funcs snd-test))
@@ -47598,8 +47559,7 @@ EDITS: 1
 	
 	(do ((i 0 (+ i 1)))                       ; run all tests except the irritating ones
 	    ((> i total-tests))
-	  (if (and ;(not (= i 26)) 
-	           (or (< i 24) (> i 26))
+	  (if (and (or (< i 23) (> i 24))
 		   (or full-test 
 		       (and keep-going (<= snd-test i))))
 	      (begin

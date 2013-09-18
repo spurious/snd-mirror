@@ -307,9 +307,9 @@ static XEN xg_GtkIconSize_symbol, xg_GdkEventType_symbol, xg_GdkScreen_symbol, x
 #define C_TO_XEN_GtkTreeViewSearchPositionFunc(Arg) WRAP_FOR_XEN(GtkTreeViewSearchPositionFunc, Arg)
 #define C_TO_XEN_GtkTreeViewSearchEqualFunc(Arg) WRAP_FOR_XEN(GtkTreeViewSearchEqualFunc, Arg)
 #define XEN_TO_C_GdkFilterReturn(Arg) (GdkFilterReturn)XEN_TO_C_INT(Arg)
-#define XEN_TO_C_String(Arg) ((XEN_STRING_P(Arg)) ? XEN_TO_C_STRING(Arg) : NULL)
-#define C_TO_XEN_String(Arg) ((Arg != NULL) ? C_TO_XEN_STRING((char *)Arg) : XEN_FALSE)
-#define XEN_String_P(Arg) ((XEN_FALSE_P(Arg)) || (XEN_STRING_P(Arg)))
+#define XEN_TO_C_String(Arg) XEN_TO_C_STRING(Arg)
+#define C_TO_XEN_String(Arg) C_TO_XEN_STRING((char *)Arg)
+#define XEN_String_P(Arg) XEN_STRING_P(Arg)
 static XEN C_TO_XEN_GError_(GError *err)
 {
   if (err)
@@ -50251,7 +50251,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("05-Sep-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("17-Sep-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

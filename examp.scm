@@ -1604,27 +1604,25 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 ;;;   for things like multi-colored text:
 
 #|
-(define escape (integer->char 27))
-
-(define red-text (format #f "~C[31m" escape))
-(define normal-text (format #f "~C[0m" escape))
+(define red-text (format #f "~C[31m" #\escape))
+(define normal-text (format #f "~C[0m" #\escape))
 
 ;;; there are a bunch of these:
 
-(define black-on-red-text (format #f "~C[30m~C[41m" escape escape))
+(define black-on-red-text (format #f "~C[30m~C[41m" #\escape #\escape))
 
 ;;; or perhaps more convenient:
 
-(define black-fg (format #f "~C[30m" escape))  (define black-bg (format #f "~C[40m" escape))
-(define red-fg (format #f "~C[31m" escape))    (define red-bg (format #f "~C[41m" escape))
-(define green-fg (format #f "~C[32m" escape))  (define green-bg (format #f "~C[42m" escape))
-(define yellow-fg (format #f "~C[33m" escape)) (define yellow-bg (format #f "~C[43m" escape))
-(define blue-fg (format #f "~C[34m" escape))   (define blue-bg (format #f "~C[44m" escape))
+(define black-fg (format #f "~C[30m" #\escape))  (define black-bg (format #f "~C[40m" #\escape))
+(define red-fg (format #f "~C[31m" #\escape))    (define red-bg (format #f "~C[41m" #\escape))
+(define green-fg (format #f "~C[32m" #\escape))  (define green-bg (format #f "~C[42m" #\escape))
+(define yellow-fg (format #f "~C[33m" #\escape)) (define yellow-bg (format #f "~C[43m" #\escape))
+(define blue-fg (format #f "~C[34m" #\escape))   (define blue-bg (format #f "~C[44m" #\escape))
 ;;; etc (magenta: 35 cyan: 36 white: 37 default: 39)
 
-(define bold-text (format #f "~C[1m" escape))       (define unbold-text (format #f "~C[22m" escape))  
-(define underline-text (format #f "~C[4m" escape))  (define ununderline-text (format #f "~C[24m" escape))  
-(define blink-text (format #f "~C[5m" escape))      (define unblink-text (format #f "~C[25m" escape))  
+(define bold-text (format #f "~C[1m" #\escape))       (define unbold-text (format #f "~C[22m" #\escape))  
+(define underline-text (format #f "~C[4m" #\escape))  (define ununderline-text (format #f "~C[24m" #\escape))  
+(define blink-text (format #f "~C[5m" #\escape))      (define unblink-text (format #f "~C[25m" #\escape))  
 |#
 
 

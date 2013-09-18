@@ -5239,7 +5239,10 @@ static XEN g_pink_noise(XEN gens)
 
   XEN_ASSERT_TYPE(MUS_VCT_P(gens), gens, XEN_ARG_1, S_pink_noise, "a vct");
   v = XEN_TO_VCT(gens);
+
   size = mus_vct_length(v);
+  XEN_ASSERT_TYPE((size & 1) == 0, gens, XEN_ARG_1, S_pink_noise, "an even length vct");
+    
   data = mus_vct_data(v);
   amp = (double)(data[0]);
 
@@ -5638,34 +5641,41 @@ static XEN g_chebyshev_tu_sum(XEN x, XEN tn, XEN un)
   #define H_chebyshev_tu_sum "(" S_mus_chebyshev_tu_sum " x tn un) returns the sum of the weighted\
 Chebyshev polynomials Tn and Un (vectors or vcts), with phase x."
 
-  bool need_free;
-  int len;
-  mus_float_t *tdata, *udata;
+  bool need_free = false;
+  int len = 0;
+  mus_float_t *tdata = NULL, *udata = NULL;
   XEN result;
   
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, XEN_ARG_1, S_mus_chebyshev_tu_sum, "a float");
 
-  if (XEN_VECTOR_P(tn))
-    {
-      len = XEN_VECTOR_LENGTH(tn);
-      if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
-      tdata = vector_to_float_array(tn);
-      udata = vector_to_float_array(un);
-      need_free = true;
-    }
-  else
+  if ((MUS_VCT_P(tn)) &&
+      (MUS_VCT_P(un)))
     {
       vct *Tn, *Un;
-      XEN_ASSERT_TYPE(MUS_VCT_P(tn), tn, XEN_ARG_2, S_mus_chebyshev_tu_sum, "a vct");
-      XEN_ASSERT_TYPE(MUS_VCT_P(un), un, XEN_ARG_3, S_mus_chebyshev_tu_sum, "a vct");
-
       Tn = XEN_TO_VCT(tn);
       tdata = mus_vct_data(Tn);
       Un = XEN_TO_VCT(un);
       udata = mus_vct_data(Un);
       len = mus_vct_length(Tn);
       if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
-      need_free = false;
+      if (len != mus_vct_length(Un)) return(C_TO_XEN_DOUBLE(0.0));
+    }
+  else
+    {
+      if ((XEN_VECTOR_P(tn)) && 
+	  (XEN_VECTOR_P(un)))
+	{
+	  len = XEN_VECTOR_LENGTH(tn);
+	  if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
+	  if (len != XEN_VECTOR_LENGTH(un)) return(C_TO_XEN_DOUBLE(0.0));
+	  tdata = vector_to_float_array(tn);
+	  udata = vector_to_float_array(un);
+	  need_free = true;
+	}
+      else
+	{
+	  XEN_ASSERT_TYPE(false, tn, XEN_ARG_1, S_mus_chebyshev_tu_sum, "both arrays should be either vcts or vectors");
+	}
     }
 
   result = C_TO_XEN_DOUBLE(mus_chebyshev_tu_sum(XEN_TO_C_DOUBLE(x), len, tdata, udata));
@@ -5684,30 +5694,31 @@ static XEN g_chebyshev_t_sum(XEN x, XEN tn)
   #define H_chebyshev_t_sum "(" S_mus_chebyshev_t_sum " x tn) returns the sum of the weighted \
 Chebyshev polynomials Tn (a vct)."
 
-  bool need_free;
-  int len;
-  mus_float_t *data;
+  bool need_free = false;
+  int len = 0;
+  mus_float_t *data = NULL;
   XEN result;
   
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, XEN_ARG_1, S_mus_chebyshev_t_sum, "a float");
-  if (XEN_VECTOR_P(tn))
-    {
-      len = XEN_VECTOR_LENGTH(tn);
-      if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
-      data = vector_to_float_array(tn);
-      need_free = true;
-    }
-  else
+  if (MUS_VCT_P(tn))
     {
       vct *Tn;
-      XEN_ASSERT_TYPE(MUS_VCT_P(tn), tn, XEN_ARG_2, S_mus_chebyshev_t_sum, "a vct");
       Tn = XEN_TO_VCT(tn);
       data = mus_vct_data(Tn);
       len = mus_vct_length(Tn);
       if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
-      need_free = false;
     }
-
+  else
+    {
+      if (XEN_VECTOR_P(tn))
+	{
+	  len = XEN_VECTOR_LENGTH(tn);
+	  if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
+	  data = vector_to_float_array(tn);
+	  need_free = true;
+	}
+      else XEN_ASSERT_TYPE(false, tn, XEN_ARG_1, S_mus_chebyshev_t_sum, "a vct or a vector");
+    }
   result = C_TO_XEN_DOUBLE(mus_chebyshev_t_sum(XEN_TO_C_DOUBLE(x), len, data));
   if (need_free)
     free(data);
@@ -5720,31 +5731,32 @@ static XEN g_chebyshev_u_sum(XEN x, XEN un)
   #define H_chebyshev_u_sum "(" S_mus_chebyshev_u_sum " x un) returns the sum of the weighted \
 Chebyshev polynomials Un (a vct)."
 
-  bool need_free;
-  int len;
-  mus_float_t *data;
+  bool need_free = false;
+  int len = 0;
+  mus_float_t *data = NULL;
   XEN result;
 
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, XEN_ARG_1, S_mus_chebyshev_u_sum, "a float");
 
-  if (XEN_VECTOR_P(un))
-    {
-      len = XEN_VECTOR_LENGTH(un);
-      if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
-      data = vector_to_float_array(un);
-      need_free = true;
-    }
-  else
+  if (MUS_VCT_P(un))
     {
       vct *Un;
-      XEN_ASSERT_TYPE(MUS_VCT_P(un), un, XEN_ARG_2, S_mus_chebyshev_u_sum, "a vct");
       Un = XEN_TO_VCT(un);
       len = mus_vct_length(Un);
       if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
       data = mus_vct_data(Un);
-      need_free = false;
     }
-
+  else
+    {
+      if (XEN_VECTOR_P(un))
+	{
+	  len = XEN_VECTOR_LENGTH(un);
+	  if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
+	  data = vector_to_float_array(un);
+	  need_free = true;
+	}
+      else XEN_ASSERT_TYPE(false, un, XEN_ARG_1, S_mus_chebyshev_u_sum, "a vct or a vector");
+    }
   result = C_TO_XEN_DOUBLE(mus_chebyshev_u_sum(XEN_TO_C_DOUBLE(x), len, data));
   if (need_free)
     free(data);
@@ -6784,17 +6796,13 @@ static XEN g_pulsed_env_p(XEN os)
 static XEN g_pulsed_env(XEN g, XEN fm)
 {
   #define H_pulsed_env "(" S_pulsed_env " gen fm) runs a pulsed-env generator."
-  mus_any *pl;
+  mus_any *pl = NULL;
 
-  pl = XEN_TO_MUS_ANY(g);
-  if (mus_pulsed_env_p(pl))
-    {
-      if (XEN_NUMBER_P(fm))
-	return(C_TO_XEN_DOUBLE(mus_pulsed_env(pl, XEN_TO_C_DOUBLE(fm))));
-      return(C_TO_XEN_DOUBLE(mus_pulsed_env_unmodulated(pl)));
-    }
-  XEN_ASSERT_TYPE(false, g, XEN_ARG_1, S_pulsed_env, "a pulsed-env object");
-  return(XEN_ZERO);
+  XEN_ASSERT_TYPE((MUS_XEN_P(g)) && (mus_pulsed_env_p(pl = XEN_TO_MUS_ANY(g))), g, XEN_ARG_1, S_pulsed_env, "a pulsed-env object");
+
+  if (XEN_NUMBER_P(fm))
+    return(C_TO_XEN_DOUBLE(mus_pulsed_env(pl, XEN_TO_C_DOUBLE(fm))));
+  return(C_TO_XEN_DOUBLE(mus_pulsed_env_unmodulated(pl)));
 }
 
 
@@ -7413,6 +7421,7 @@ handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
   mus_xen *gn;
 
   XEN_TO_C_ANY_GENERATOR(obj, gn, g, S_sample_to_file, "an output generator");
+  XEN_ASSERT_TYPE(mus_output_p(g), obj, XEN_ARG_1, S_sample_to_file, "an output generator");
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(samp), samp, XEN_ARG_2, S_sample_to_file, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_sample_to_file, "an integer");
@@ -7432,8 +7441,10 @@ static XEN g_sample_to_file_add(XEN obj1, XEN obj2)
   mus_any *g1 = NULL, *g2 = NULL;
   mus_xen *gn1, *gn2;
 
-  XEN_TO_C_ANY_GENERATOR(obj1, gn1, g1, S_sample_to_file, "an output generator");
-  XEN_TO_C_ANY_GENERATOR(obj2, gn2, g2, S_sample_to_file, "an output generator");
+  XEN_TO_C_ANY_GENERATOR(obj1, gn1, g1, S_sample_to_file_add, "an output generator");
+  XEN_TO_C_ANY_GENERATOR(obj2, gn2, g2, S_sample_to_file_add, "an output generator");
+  XEN_ASSERT_TYPE(mus_output_p(g1), obj1, XEN_ARG_1, S_sample_to_file_add, "an output generator");
+  XEN_ASSERT_TYPE(mus_output_p(g2), obj2, XEN_ARG_2, S_sample_to_file_add, "an output generator");
 
   mus_sample_to_file_add(g1, g2);
   return(obj1);
@@ -7542,8 +7553,7 @@ handled by the output generator 'obj' at frame 'samp'"
   mus_xen *gn, *frm;
 
   gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(obj, mus_xen_tag);
-  if (!gn) XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_frame_to_file, "an output generator");
-
+  XEN_ASSERT_TYPE(((gn) && (mus_output_p(gn->gen))), obj, XEN_ARG_1, S_frame_to_file, "an output generator");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(samp), samp, XEN_ARG_2, S_frame_to_file, "an integer");
 
   frm = (mus_xen *)XEN_OBJECT_REF_CHECKED(val, mus_xen_tag);
@@ -18226,11 +18236,23 @@ static s7_pointer g_mus_arrays_are_equal(s7_scheme *sc, s7_pointer args)
   /* experimental: a1 a2 (err .001) */
   mus_float_t err = 0.001;
   s7_pointer a1, a2;
+  s7_Int len;
+
   a1 = s7_car(args);
+  if (!s7_is_float_vector(a1))
+    return(s7_wrong_type_arg_error(sc, "arrays-equal?", 1, a1, "a float vector"));
+
   a2 = s7_cadr(args);
+  if (!s7_is_float_vector(a2))
+    return(s7_wrong_type_arg_error(sc, "arrays-equal?", 2, a2, "a float vector"));
+  
+  len = s7_vector_length(a1);
+  if (len != s7_vector_length(a2))
+    return(s7_f(sc));
+
   if (s7_is_pair(s7_cddr(args)))
     err = s7_real(s7_caddr(args));
-  return(s7_make_boolean(sc, mus_arrays_are_equal(s7_float_vector_elements(a1), s7_float_vector_elements(a2), err, s7_vector_length(a1))));
+  return(s7_make_boolean(sc, mus_arrays_are_equal(s7_float_vector_elements(a1), s7_float_vector_elements(a2), err, len)));
 }
 #endif
 

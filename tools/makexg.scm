@@ -2218,9 +2218,14 @@
 					;(hey "#define C_TO_XEN_GtkDestroyNotify(Arg) WRAP_FOR_XEN(GtkDestroyNotify, Arg)~%")
 (hey "#define XEN_TO_C_GdkFilterReturn(Arg) (GdkFilterReturn)XEN_TO_C_INT(Arg)~%")
 
+#|
 (hey "#define XEN_TO_C_String(Arg) ((XEN_STRING_P(Arg)) ? XEN_TO_C_STRING(Arg) : NULL)~%")
 (hey "#define C_TO_XEN_String(Arg) ((Arg != NULL) ? C_TO_XEN_STRING((char *)Arg) : XEN_FALSE)~%")
 (hey "#define XEN_String_P(Arg) ((XEN_FALSE_P(Arg)) || (XEN_STRING_P(Arg)))~%")
+|#
+(hey "#define XEN_TO_C_String(Arg) XEN_TO_C_STRING(Arg)~%")
+(hey "#define C_TO_XEN_String(Arg) C_TO_XEN_STRING((char *)Arg)~%")
+(hey "#define XEN_String_P(Arg) XEN_STRING_P(Arg)~%")
 
 (hey "static XEN C_TO_XEN_GError_(GError *err)~%")
 (hey "{~%")

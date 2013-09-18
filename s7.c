@@ -11311,6 +11311,9 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	{                                                      /* (expt 0 a+bi) */
 	  if (real_part(pw) < 0.0)                             /* (expt 0 -1+i) */
 	    return(division_by_zero_error(sc, sc->EXPT, args));  
+	  if ((is_NaN(real_part(pw))) ||                       /* (expt 0 0+1/0i) */
+	      (is_NaN(imag_part(pw))))
+	    return(real_NaN);
 	}
 
       if ((s7_is_integer(n)) && (s7_is_integer(pw)))           /* pw != 0, (expt 0 2312) */
@@ -34615,7 +34618,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
   s7_pointer source, dest;
   s7_Int i, j, dest_len, start, end, source_len;
   s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_Int loc, s7_pointer val);
-  s7_pointer (*get)(s7_scheme *sc, s7_pointer obj, s7_Int loc);
+  s7_pointer (*get)(s7_scheme *sc, s7_pointer obj, s7_Int loc) = NULL;
   bool have_indices;
 
   if (is_null(cdr(args)))                /* (copy obj) -- this works for environments, hash-tables and bignums */
