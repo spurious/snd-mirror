@@ -224,7 +224,6 @@
 ;;; Eared grebe
 ;;; Killdeer
 
-
 (provide 'snd-animals.scm)
 
 (if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
@@ -4291,12 +4290,15 @@
 ;;; American crow
 
 (define (nrcos->polywave n r scl)
-  (let ((lst ())
-	(total (polynomial (make-vector n 1.0 #t) r)))
-    (set! scl (/ scl total))
-    (do ((i 0 (+ i 1)))
-	((= i n) (reverse lst))
-      (set! lst (cons (* scl (expt r i)) (cons (+ i 1) lst))))))
+  (if (and (positive? n)
+	   (< n 8192))
+      (let ((lst ())
+	    (total (polynomial (make-vector n 1.0 #t) r)))
+	(set! scl (/ scl total))
+	(do ((i 0 (+ i 1)))
+	    ((= i n) (reverse lst))
+	  (set! lst (cons (* scl (expt r i)) (cons (+ i 1) lst)))))
+      (error 'out-of-range "nrcos->polywave: too many partials")))
 
 (defanimal (american-crow beg amp)
   (let ((dur 0.27))

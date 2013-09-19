@@ -1428,7 +1428,7 @@ static XEN g_vct_multiply(XEN obj1, XEN obj2)
 static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
 {
   #define H_vct_addB "(" S_vct_addB " v1 v2 :optional (offset 0)): element-wise add of vcts v1 and v2: v1[i + offset] += v2[i], returns v1"
-  mus_long_t i, lim, j;
+  mus_long_t i, lim, j, len1;
   vct *v1, *v2;
   mus_float_t *d1, *d2;
 
@@ -1440,7 +1440,8 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
   v2 = XEN_TO_VCT(obj2);
   d1 = mus_vct_data(v1);
   d2 = mus_vct_data(v2);
-  lim = MIN(mus_vct_length(v1), mus_vct_length(v2));
+  len1 = mus_vct_length(v1);
+  lim = MIN(len1, mus_vct_length(v2));
   if (lim == 0) return(obj1);
 
   if (XEN_LONG_LONG_P(offs))
@@ -1448,9 +1449,11 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
       j = XEN_TO_C_LONG_LONG(offs);
       if (j < 0) 
 	XEN_OUT_OF_RANGE_ERROR(S_vct_addB, 3, offs, "offset < 0?");
+      if (j > len1)
+	XEN_OUT_OF_RANGE_ERROR(S_vct_addB, 3, offs, "offset > length of vct?");
 
-      if ((j + lim) > mus_vct_length(v1))
-	lim = (mus_vct_length(v1) - j);
+      if ((j + lim) > len1)
+	lim = (len1 - j);
 
       for (i = 0; i < lim; i++, j++) 
 	d1[j] += d2[i];

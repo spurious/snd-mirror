@@ -22761,7 +22761,10 @@ s7_pointer s7_autoload(s7_scheme *sc, s7_pointer symbol, s7_pointer file_or_func
 {
   /* add '(symbol . file) to s7's autoload table */
   if (is_null(sc->autoload_table))
-    sc->autoload_table = s7_make_hash_table(sc, 511);
+    {
+      sc->autoload_table = s7_make_hash_table(sc, 511);
+      s7_gc_protect(sc, sc->autoload_table);
+    }
   
   s7_hash_table_set(sc, sc->autoload_table, symbol, file_or_function);
   return(file_or_function);

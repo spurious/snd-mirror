@@ -49,9 +49,9 @@
 #define MIX_FILE_BUFFER_SIZE 2048
 #define PRINT_BUFFER_SIZE 512
 #define LABEL_BUFFER_SIZE 128
-#define REPORTING_SIZE (MAX_BUFFER_SIZE * 8)
-
+#define REPORTING_SIZE (MAX_BUFFER_SIZE * 32)
 /* progress bar (hourglass icon) is displayed if more than this many samples are being processed */
+
 #if (!USE_NO_GUI)
   #define NUM_HOURGLASSES 15
 #else

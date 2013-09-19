@@ -8778,6 +8778,13 @@
 (CFNC-3.10 "gint gtk_label_get_lines GtkLabel* label")
 
 
+;;; 3.9.16:
+
+(CFNC-3.10 "GdkWindow* gdk_event_get_window GdkEvent* event" 'const)
+
+
+
+
 
 ;;; --------------------------------------------------------------------------------
 #|

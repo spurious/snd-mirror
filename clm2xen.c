@@ -6669,8 +6669,13 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	}
       end = dur - 1;
     }
-  if ((dur < 0) && (duration <= 0.0))
+
+  /* (make-env '(0 1 1 0) :duration most-positive-fixnum) -> env linear, pass: 0 (dur: -9223372036854775808)...
+   */
+  if ((end <= 0) && (duration <= 0.0))
     XEN_OUT_OF_RANGE_ERROR(S_make_env, 0, C_TO_XEN_DOUBLE(duration), "duration <= 0.0?");
+  if (duration > (24 * 3600 * 365))
+    XEN_OUT_OF_RANGE_ERROR(S_make_env, 0, C_TO_XEN_DOUBLE(duration), "duration > year?");
 
   {
     mus_error_handler_t *old_error_handler;
@@ -9844,9 +9849,10 @@ static s7_pointer g_formant_two(s7_scheme *sc, s7_pointer args)
 {
   mus_xen *gn;
   gn = (mus_xen *)imported_s7_object_value_checked(car(args), mus_xen_tag);
-  if (gn)
+  if ((gn) &&
+      (gn->type == FORMANT_TAG))
     return(s7_make_real(sc, mus_formant(gn->gen, s7_number_to_real(sc, cadr(args)))));
-  XEN_ASSERT_TYPE(false, car(args), XEN_ARG_1, "formant", "a generator");
+  XEN_ASSERT_TYPE(false, car(args), XEN_ARG_1, "formant", "a formant generator");
   return(s7_f(sc));
 }
 
@@ -13273,6 +13279,8 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 }
 
 #define OUT_LOOP(Chan, Call)						\
+  if ((pos >= 0) && (end >= pos))                                       \
+    {                                                                   \
   if (mus_out_any_is_safe(clm_output_gen))				\
     {									\
       for (; pos < end;)						\
@@ -13297,7 +13305,7 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 	  (*step) = pos;						\
 	  out_any_2(pos, Call, Chan, "outa");				\
 	}								\
-    }
+    }}
 #define OUTA_LOOP(Call) OUT_LOOP(0, Call)
 
 
@@ -14408,7 +14416,7 @@ static s7_pointer g_outa_env_oscil_env_looped(s7_scheme *sc, s7_pointer args)
   return(args);
 }
 #endif
-/* WITH_GMP */
+/* !WITH_GMP */
 
 static s7_pointer *make_choices(s7_pointer mul_c, s7_pointer mul_s, s7_pointer e, s7_pointer mul_c1, s7_pointer mul_s1, s7_pointer e1)
 {

@@ -477,7 +477,7 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
     strftime(timestr, TIME_BUFFER_SIZE, "%a %d-%b-%Y %H:%M:%S", localtime(&date));
   else snprintf(timestr, TIME_BUFFER_SIZE, "(date cleared)");
 
-  fprintf(fp, "  %s: %s, chans: %d, srate: %d, type: %s, format: %s, samps: %lld",
+  fprintf(fp, "  %s: %s, chans: %d, srate: %d, header: %s, data: %s, samps: %lld",
 	  name,
 	  timestr,
 	  sf->chans,
@@ -502,6 +502,7 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 	{
 	  if (lim > 64) 
 	    lim = 64;
+	  fprintf(fp, ", maxamp:");
 	  for (i = 0; i < lim; i++)
 	    {
 	      if (i > 1) fprintf(fp, ", ");

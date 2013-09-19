@@ -194,19 +194,23 @@
   "(poly-as-vector-resultant p1 p2) returns the resultant of polynomials p1 and p2 (vectors)"
   (let* ((m (length p1))
 	 (n (length p2))
-	 (mat (make-mixer (+ n m -2))))
-    ;; load matrix with n-1 rows of m's coeffs then m-1 rows of n's coeffs (reversed in sense), return determinant
-    (do ((i 0 (+ i 1)))
-	((= i (- n 1)))
-      (do ((j 0 (+ j 1)))
-	  ((= j m))
-	(set! (mat i (+ i j)) (p1 (- m j 1)))))
-    (do ((i 0 (+ i 1)))
-	((= i (- m 1)))
-      (do ((j 0 (+ j 1)))
-	  ((= j n))
-	(set! (mat (+ i n -1) (+ i j)) (p2 (- n j 1)))))
-    (mixer-determinant mat)))
+	 (d (+ n m -2))
+	 (mat (make-mixer d)))
+    (if (or (not (vector? p1)) (not (vector? p2)))
+	(error 'wrong-type-arg "poly-as-vector* arguments should be vectors")
+	(begin
+	  ;; load matrix with n-1 rows of m's coeffs then m-1 rows of n's coeffs (reversed in sense), return determinant
+	  (do ((i 0 (+ i 1)))
+	      ((= i (- n 1)))
+	    (do ((j 0 (+ j 1)))
+		((= j m))
+	      (set! (mat i (+ i j)) (p1 (- m j 1)))))
+	  (do ((i 0 (+ i 1)))
+	      ((= i (- m 1)))
+	    (do ((j 0 (+ j 1)))
+		((= j n))
+	      (set! (mat (+ i n -1) (+ i j)) (p2 (- n j 1)))))
+	  (mixer-determinant mat)))))
 
 (define (poly-resultant p1 p2) 
   "(poly-resultant p1 p2) returns the resultant of polynomials p1 and p2 (vcts or vectors)"

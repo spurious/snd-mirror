@@ -16,9 +16,21 @@ snd_info *get_sp(XEN snd)
 {
   if (XEN_SOUND_P(snd))
     return(get_sp_1(xen_sound_to_int(snd)));
-      
+
+#if (!HAVE_SCHEME)      
   if (XEN_INTEGER_P(snd))
     return(get_sp_1(XEN_TO_C_INT(snd)));
+#else
+  if (XEN_INTEGER_P(snd))
+    {
+      s7_Int p;
+      p = s7_integer(snd);
+      if ((p < 0) ||
+	  (p > ss->max_sounds))
+	return(NULL);
+      return(get_sp_1((int)p));
+    }
+#endif
 
   if (XEN_NUMBER_P(snd)) /* actually we only want to accept boolean and #<undefined> here */
     return(NULL);

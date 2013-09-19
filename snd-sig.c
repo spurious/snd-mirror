@@ -3281,6 +3281,10 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
   bool reporting = false;
   io_error_t io_err = IO_NO_ERROR;
   XEN res = XEN_FALSE;
+#if HAVE_SCHEME
+  bool use_apply = false;
+  s7_pointer arg_list;
+#endif
 
   sp = cp->sound;
   reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
@@ -3310,6 +3314,9 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
       s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
       mus_long_t local_samps;
       
+      /* proc might be abs: source is nil
+       */
+
       source = s7_procedure_source(s7, proc);
       if (s7_is_pair(source))
 	{
@@ -3601,19 +3608,26 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 		    }
 		}
 	    }
+
+	  arg = s7_caadar(source);
+	  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
+
+	  gc_loc = s7_gc_protect(s7, e);
+	  slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
+	  if (s7_is_null(s7, s7_cdr(body)))
+	    {
+	      eval = s7_eval_form;
+	      body = s7_car(body);
+	    }
+	  else eval = s7_eval;
 	}
-
-      arg = s7_caadar(source);
-      e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
-
-      gc_loc = s7_gc_protect(s7, e);
-      slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
-      if (s7_is_null(s7, s7_cdr(body)))
+      else
 	{
-	  eval = s7_eval_form;
-	  body = s7_car(body);
+	  /* presumably "proc" is something like abs */
+	  arg_list = XEN_LIST_1(XEN_FALSE);
+	  gc_loc = s7_gc_protect(s7, arg_list);
+	  use_apply = true;
 	}
-      else eval = s7_eval;
 #endif
       
       data = (mus_float_t **)calloc(1, sizeof(mus_float_t *));
@@ -3625,8 +3639,18 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 	{
 	  /* changed here to remove catch 24-Mar-02 */
 #if HAVE_SCHEME
+      if (use_apply)
+	{
+	  s7_set_car(arg_list, s7_make_real(s7, read_sample(sf)));
+	  if (kp == 0)
+	    res = s7_call_with_location(s7, proc, arg_list, __func__, __FILE__, __LINE__);
+	  else res = s7_apply_function(s7, proc, arg_list);
+	}
+      else
+	{
 	  s7_slot_set_value(s7, slot, s7_make_real(s7, read_sample(sf)));
 	  res = eval(s7, body, e);
+	}
 #else
 	  res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
 #endif
@@ -4666,11 +4690,13 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp', then try
 
   pos = to_c_edit_position(cp, edpos, S_delete_samples_and_smooth, 5);
   samp = beg_to_sample(samp_n, S_delete_samples_and_smooth);
-  if (samp > CURRENT_SAMPLES(cp))
+  if (samp > cp->edits[pos]->samples)
     XEN_OUT_OF_RANGE_ERROR(S_delete_samples_and_smooth, 1, samp_n, "beyond end of sound");
 
   len = XEN_TO_C_LONG_LONG_OR_ELSE(samps, 0);
   if (len <= 0) return(XEN_FALSE);
+  if (len > cp->edits[pos]->samples)
+    len = cp->edits[pos]->samples;
 
   cut_and_smooth_1(cp, samp, samp + len - 1, false, pos);
   update_graph(cp);

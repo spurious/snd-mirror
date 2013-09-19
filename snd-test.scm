@@ -16554,7 +16554,7 @@ EDITS: 2
 	(if (fneq (env-interp 0.0 e) 0.0) (snd-display #__line__ ";env-interp 0011 2 at 0: ~A" (env-interp 0.0 e)))
 	(if (fneq (env-interp 0.45 e) 0.6387) (snd-display #__line__ ";env-interp 0011 2 at .45: ~A" (env-interp 0.45 e))))
       
-      (let ((val (let ((e (make-env '(0 0 1 1) :offset 2.0))) (set! (mus-offset e) 3.0) (mus-offset e))))
+      (let ((val (let ((e (make-env '(0 0 1 1) :length 10 :offset 2.0))) (set! (mus-offset e) 3.0) (mus-offset e))))
 	(if (fneq val 3.0) (snd-display #__line__ ";set mus-offset env: ~A" val)))
       
       (let ((e (make-env '(0 0 1 1 2 0) :length 10))
@@ -20984,7 +20984,7 @@ EDITS: 2
     
     (let ((make-procs (list
 		       make-all-pass make-asymmetric-fm make-moving-average make-moving-max
-		       make-comb (lambda () (make-convolve :filter (vct 0 1 2))) make-delay (lambda () (make-env '(0 1 1 0)))
+		       make-comb (lambda () (make-convolve :filter (vct 0 1 2))) make-delay (lambda () (make-env '(0 1 1 0) :length 10))
 		       (lambda () (make-filter :xcoeffs (vct 0 1 2))) (lambda () (make-fir-filter :xcoeffs (vct 0 1 2))) 
 		       (lambda () (make-filtered-comb :filter (make-one-zero .5 .5)))
 		       make-formant (lambda () (make-frame 3)) make-granulate
@@ -47505,8 +47505,6 @@ EDITS: 1
 (define (snd_test_26)
   (load "s7test.scm"))
 
-
-					;(tracing #t)
 
 (define test-funcs (make-vector (+ 1 total-tests)))
 (set! (test-funcs 0) snd_test_0)
