@@ -15,7 +15,6 @@
   (let* ((corr (cross-correlate snd0 chn0 snd1 chn1))
 	 (len (length corr))
 	 (data (vct-peak-and-location corr))
-	 (pk (- (car data) .000001))
 	 (lag (cadr data)))
     (if (= lag -1)
 	0

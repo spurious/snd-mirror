@@ -1856,7 +1856,7 @@ is a physical model of a flute:
 		(let ((mult (make-env '(0 1.0 1.0 0.0) :length attack-size)))
 		  (do ((k 0 (+ k 1)))
 		      ((= k attack-size))
-		    (vct-set! (ramped-attack k) (* (env mult) (readin fil)))))
+		    (vct-set! ramped-attack k (* (env mult) (readin fil)))))
 		(set! start cur-end)))
 	  
 	  (if (< start end)

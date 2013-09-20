@@ -2762,8 +2762,7 @@
   
   (with-sound (:channels 4)
     (let ((loc (make-locsig))
-	  (osc (make-oscil 440.0))
-	  (j 0))
+	  (osc (make-oscil 440.0)))
       (do ((i 0 (+ i 1)))
 	  ((= i 360))
 	(let ((start (* i 1000))

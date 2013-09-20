@@ -442,8 +442,6 @@
 	    (gr-srate 0.0)
 	    (grain-counter 0)
 	    (first-grain #t)
-	    (val1 0.0)
-	    (val2 0.0)
 	    (where 0.0)
 	    (happy #t)
 	    (where-bins-len (if (vct? where-bins) (length where-bins) 0)))

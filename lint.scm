@@ -126,7 +126,7 @@
 		  cddar cdddar cddddr cdddr cddr cdr ceiling char->integer char-alphabetic? char-ci<=? char-ci<? 
 		  char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? char-position char-ready? char-upcase 
 		  char-upper-case? char-whitespace? char<=? char<? char=? char>=? char>? char? complex? cond 
-		  cons constant? continuation? copy cos cosh current-environment current-error-port current-input-port current-output-port 
+		  cons constant? continuation? cos cosh current-environment current-error-port current-input-port current-output-port 
 		  defined? denominator do dynamic-wind 
 		  environment environment-ref environment? eof-object? eq? equal? eqv? error-environment even? exact->inexact exact? exp expt 
 		  floor for-each 
@@ -146,7 +146,7 @@
 		  quasiquote quote quotient 
 		  random random-state? rational? rationalize real-part real? remainder reverse round 
 		  s7-version sin sinh sqrt string string->list string->number string->symbol string-append string-ci<=? string-ci<? 
-		  string-ci=? string-ci>=? string-ci>? string-copy string-length string-position string-ref string<=? string<? string=? string>=? 
+		  string-ci=? string-ci>=? string-ci>? string-length string-position string-ref string<=? string<? string=? string>=? 
 		  string>? string? substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol? symbol=?
 		  tan tanh truncate 
 		  vector vector->list vector-dimensions vector-length vector-ref vector? 
@@ -545,7 +545,7 @@
 			  (cons 'vector->list vector?)
 			  (cons 'vector-append vector?)
 			  (cons 'vector-dimensions vector?)
-			  (cons 'vector-fill! (list vector? non-negative-integer? non-negative-integer?))
+			  (cons 'vector-fill! (list vector?))
 			  (cons 'vector-length vector?)
 			  (cons 'vector-ref (list non-null-vector? non-negative-integer?))
 			  (cons 'vector-set! (list non-null-vector? non-negative-integer?))

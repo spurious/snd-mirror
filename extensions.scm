@@ -357,12 +357,12 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		 (angle 1.0 (- angle incr)))
 		((= i len))
 	      (vct-set! data i (* (next-sample reader) 
-				  (+ rmp1 (* scl (* angle angle)))))))
+				  (+ rmp1 (* scl angle angle))))))
 	  (do ((i 0 (+ i 1))
 	       (angle 0.0 (+ angle incr)))
 	      ((= i len))
 	    (vct-set! data i (* (next-sample reader) 
-				(+ rmp0 (* scl (* angle angle)))))))
+				(+ rmp0 (* scl angle angle))))))
       (vct->channel data beg len snd chn current-edit-position
 		    (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur)))))
 

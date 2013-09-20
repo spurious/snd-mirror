@@ -14,8 +14,8 @@
       (do ((i 0 (+ i 1)))
 	  ((= i len))
 	(two-pole flt (next-sample reader)))
-      (let* ((y1 (two-pole flt (next-sample reader)))
-	     (y0 (two-pole flt (next-sample reader))))
+      (let ((y1 (two-pole flt (next-sample reader)))
+	    (y0 (two-pole flt (next-sample reader))))
 	(magnitude (- y0 (* y1 (exp (make-rectangular 0.0 (- rfreq))))))))))
 
 
