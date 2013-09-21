@@ -6650,7 +6650,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
   int i;
   mus_long_t curlen = 0, newlen = 0;
   char *error = NULL;
-  mus_float_t curamp;
+  mus_float_t curamp, curf;
   mus_float_t newamp[1];
   XEN res = XEN_EMPTY_LIST, errstr;
   if (XEN_TRUE_P(snd))
@@ -6777,7 +6777,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
       break;
 
     case CP_CURSOR_SIZE:
-      cp->cursor_size = XEN_TO_C_INT_OR_ELSE(on, DEFAULT_CURSOR_SIZE);
+      cp->cursor_size = XEN_TO_C_INT(on);
       update_graph(cp); 
       return(C_TO_XEN_INT(cp->cursor_size));
       break;
@@ -6837,7 +6837,10 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
       break;
 
     case CP_GRID_DENSITY:
-      cp->grid_density = XEN_TO_C_DOUBLE(on); 
+      curf = XEN_TO_C_DOUBLE(on); 
+      if (curf >= 0.0)
+	cp->grid_density = curf;
+      else XEN_OUT_OF_RANGE_ERROR(S_setB S_grid_density, 1, on, "density < 0.0?");
       update_graph(cp); 
       return(C_TO_XEN_DOUBLE(cp->grid_density));
       break;
@@ -7359,10 +7362,10 @@ static XEN g_cursor_size(XEN snd, XEN chn_n)
 
 static XEN g_set_cursor_size(XEN on, XEN snd, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_cursor_size, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(on) && (XEN_TO_C_INT(on) > 0), on, XEN_ARG_1, S_setB S_cursor_size, "an integer");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn_n, on, CP_CURSOR_SIZE, S_setB S_cursor_size));
-  set_cursor_size(XEN_TO_C_INT_OR_ELSE(on, DEFAULT_CURSOR_SIZE));
+  set_cursor_size(XEN_TO_C_INT(on));
   return(C_TO_XEN_INT(cursor_size(ss)));
 }
 
@@ -7815,10 +7818,14 @@ static XEN g_grid_density(XEN snd, XEN chn)
 
 static XEN g_set_grid_density(XEN on, XEN snd, XEN chn) 
 {
+  mus_float_t curf;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_grid_density, "a number");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_GRID_DENSITY, S_setB S_grid_density));
-  set_grid_density(XEN_TO_C_DOUBLE(on));
+  curf = XEN_TO_C_DOUBLE(on);
+  if (curf >= 0.0)
+    set_grid_density(curf);
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_grid_density, 1, on, "density < 0.0?");
   return(C_TO_XEN_DOUBLE(grid_density(ss)));
 }
 
@@ -8473,9 +8480,11 @@ be " S_graph_once ", " S_graph_as_sonogram ", or " S_graph_as_spectrogram "."
 static XEN g_set_transform_graph_type(XEN val, XEN snd, XEN chn)
 {
   graph_type_t style;
+  int gt;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_transform_graph_type, "an integer"); 
-  style = (graph_type_t)XEN_TO_C_INT(val);
-  if (style > GRAPH_AS_SPECTROGRAM)
+  gt = XEN_TO_C_INT(val);
+  style = (graph_type_t)gt;
+  if ((gt < 0) || (style > GRAPH_AS_SPECTROGRAM))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_graph_type, 1, val, S_transform_graph_type " should be " S_graph_once ", " S_graph_as_sonogram ", or " S_graph_as_spectrogram);
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_GRAPH_TYPE, S_setB S_transform_graph_type));
@@ -9102,8 +9111,7 @@ WITH_THREE_SETTER_ARGS(g_set_right_sample_reversed, g_set_right_sample)
 static XEN g_channel_properties(XEN snd, XEN chn_n) 
 {
   #define H_channel_properties "(" S_channel_properties " :optional snd chn): \
-A property list associated with the given channel. It is set to '() at the time a sound is opened. \
-The accessor channel-property is provided in extensions." XEN_FILE_EXTENSION "."
+A property list associated with the given channel. It is set to '() at the time a sound is opened."
 
   return(channel_get(snd, chn_n, CP_PROPERTIES, S_channel_properties));
 }
@@ -9141,8 +9149,7 @@ WITH_FOUR_SETTER_ARGS(g_set_channel_property_reversed, g_set_channel_property)
 static XEN g_edit_properties(XEN snd, XEN chn_n, XEN pos) 
 {
   #define H_edit_properties "(" S_edit_properties " :optional snd chn edpos): \
-A property list associated with the given edit. It is set to '() at the time an edit is performed and cleared when that edit is no longer accessible. \
-The accessor edit-property is provided in extensions." XEN_FILE_EXTENSION "."
+A property list associated with the given edit. It is set to '() at the time an edit is performed and cleared when that edit is no longer accessible."
 
   chan_info *cp;
   int edpos;

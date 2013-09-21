@@ -4531,7 +4531,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
       XEN cararg;
       cararg = XEN_CAR(arglist);
       XEN_ASSERT_TYPE(XEN_NUMBER_P(cararg), cararg, XEN_ARG_1, S_make_frame, "a number");
-      size = XEN_TO_C_INT_OR_ELSE(cararg, 0);
+      size = XEN_TO_C_INT(cararg);
       if (size <= 0) 
 	XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, cararg, "chans <= 0?");
       if (len > (size + 1)) 
@@ -5012,7 +5012,7 @@ with chans inputs and outputs, initializing the scalars from the rest of the arg
   if (!(XEN_NUMBER_P(cararg)))
     XEN_WRONG_TYPE_ARG_ERROR(S_make_mixer, 1, cararg, "an integer = number of chans");
 
-  size = XEN_TO_C_INT_OR_ELSE(cararg, 0);
+  size = XEN_TO_C_INT(cararg);
   if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans <= 0?");
   if ((check_size) &&
       (size > MUS_MAX_CHANS))
@@ -7349,7 +7349,7 @@ static XEN g_file_to_sample(XEN obj, XEN samp, XEN chan)
       channel = XEN_TO_C_INT(chan);
     }
   return(C_TO_XEN_DOUBLE(mus_file_to_sample(g,
-					    XEN_TO_C_LONG_LONG_OR_ELSE(samp, 0),
+					    XEN_TO_C_LONG_LONG(samp),
 					    channel)));
 }
 

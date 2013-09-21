@@ -3073,10 +3073,10 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   file_info *hdr;
   int type, len = 0;
   
-  XEN start0 = XEN_UNDEFINED, end0 = XEN_UNDEFINED; 
-  XEN start1 = XEN_UNDEFINED, end1 = XEN_UNDEFINED; 
-  XEN mode0 = XEN_UNDEFINED, mode1 = XEN_UNDEFINED;
-  XEN note = XEN_UNDEFINED, detune = XEN_UNDEFINED;
+  XEN start0 = XEN_ZERO, end0 = XEN_ZERO; 
+  XEN start1 = XEN_ZERO, end1 = XEN_ZERO; 
+  XEN mode0 = XEN_ZERO, mode1 = XEN_ZERO;
+  XEN note = XEN_ZERO, detune = XEN_ZERO;
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vals) || XEN_LIST_P_WITH_LENGTH(vals, len), vals, XEN_ARG_2, S_setB S_sound_loop_info, "a list");
 
   if (XEN_NOT_BOUND_P(vals))
@@ -3106,44 +3106,53 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   if (len > 0) 
     {
       start0 = XEN_LIST_REF(vals, 0);
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(start0), start0, XEN_ARG_2, S_setB S_sound_loop_info, "start0 must be an integer");
       if (len > 1) 
 	{
 	  end0 = XEN_LIST_REF(vals, 1);
+	  XEN_ASSERT_TYPE(XEN_INTEGER_P(end0), end0, XEN_ARG_2, S_setB S_sound_loop_info, "end0 must be an integer");
 	  if (len > 2) 
 	    {
 	      start1 = XEN_LIST_REF(vals, 2);
+	      XEN_ASSERT_TYPE(XEN_INTEGER_P(start1), start1, XEN_ARG_2, S_setB S_sound_loop_info, "start1 must be an integer");
 	      if (len > 3) 
 		{
 		  end1 = XEN_LIST_REF(vals, 3);
+		  XEN_ASSERT_TYPE(XEN_INTEGER_P(end1), end1, XEN_ARG_2, S_setB S_sound_loop_info, "end1 must be an integer");
 		  if (len > 4)
 		    {
 		      note = XEN_LIST_REF(vals, 4);
+		      XEN_ASSERT_TYPE(XEN_INTEGER_P(note), note, XEN_ARG_2, S_setB S_sound_loop_info, "note must be an integer");
 		      if (len > 5) 
 			{
 			  detune = XEN_LIST_REF(vals, 5);
+			  XEN_ASSERT_TYPE(XEN_INTEGER_P(detune), detune, XEN_ARG_2, S_setB S_sound_loop_info, "detune must be an integer");
 			  if (len > 6) 
 			    {
 			      mode0 = XEN_LIST_REF(vals, 6);
+			      XEN_ASSERT_TYPE(XEN_INTEGER_P(mode0), mode0, XEN_ARG_2, S_setB S_sound_loop_info, "mode0 must be an integer");
 			      if (len > 7)
+				{
 				mode1 = XEN_LIST_REF(vals, 7);
-			    }}}}}}}
+				XEN_ASSERT_TYPE(XEN_INTEGER_P(mode1), mode1, XEN_ARG_2, S_setB S_sound_loop_info, "mode1 must be an integer");
+				}}}}}}}}
 
   if (hdr->loops == NULL)
     hdr->loops = (int *)calloc(MUS_LOOP_INFO_SIZE, sizeof(int));
   else memset((void *)(hdr->loops), 0, MUS_LOOP_INFO_SIZE * sizeof(int));
-  hdr->loops[0] = XEN_TO_C_INT_OR_ELSE(start0, 0);
-  hdr->loops[1] = XEN_TO_C_INT_OR_ELSE(end0, 0);
-  hdr->loops[2] = XEN_TO_C_INT_OR_ELSE(start1, 0);
-  hdr->loops[3] = XEN_TO_C_INT_OR_ELSE(end1, 0);
+  hdr->loops[0] = XEN_TO_C_INT(start0);
+  hdr->loops[1] = XEN_TO_C_INT(end0);
+  hdr->loops[2] = XEN_TO_C_INT(start1);
+  hdr->loops[3] = XEN_TO_C_INT(end1);
   if (len > 4)
     {
-      hdr->loops[4] = XEN_TO_C_INT_OR_ELSE(note, 60);
-      hdr->loops[5] = XEN_TO_C_INT_OR_ELSE(detune, 0);
+      hdr->loops[4] = XEN_TO_C_INT(note);
+      hdr->loops[5] = XEN_TO_C_INT(detune);
     }
   if (len > 6)
     {
-      hdr->loops[6] = XEN_TO_C_INT_OR_ELSE(mode0, 0);
-      hdr->loops[7] = XEN_TO_C_INT_OR_ELSE(mode1, 0);
+      hdr->loops[6] = XEN_TO_C_INT(mode0);
+      hdr->loops[7] = XEN_TO_C_INT(mode1);
     }
   else
     {

@@ -2810,8 +2810,7 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
 static XEN g_mark_properties(XEN n)
 {
   mark *m;
-  #define H_mark_properties "(" S_mark_properties " id):  A property list associated with the given mark. \
-The accessor mark-property is provided in mark." XEN_FILE_EXTENSION "."
+  #define H_mark_properties "(" S_mark_properties " id):  A property list associated with the given mark."
 
   XEN_ASSERT_TYPE(XEN_MARK_P(n), n, XEN_ARG_1, S_mark_properties, "a mark");
 

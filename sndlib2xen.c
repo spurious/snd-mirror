@@ -770,7 +770,7 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
 
       for (i = 0, j = 0, lst = XEN_COPY_ARG(vals); i < len; i += 2, j++, lst = XEN_CDDR(lst))
 	{
-	  times[j] = XEN_TO_C_LONG_LONG_OR_ELSE(XEN_CAR(lst), 0);
+	  times[j] = XEN_TO_C_LONG_LONG(XEN_CAR(lst));
 	  mvals[j] = XEN_TO_C_DOUBLE(XEN_CADR(lst));
 	}
 
@@ -1199,10 +1199,10 @@ return the audio line number:\n  " audio_open_example
   XEN_ASSERT_TYPE(XEN_NUMBER_P(size), size, XEN_ARG_5, S_mus_audio_open_output, "a number");
 
   idev = XEN_TO_C_INT(dev);
-  israte = XEN_TO_C_INT_OR_ELSE(srate, 0);
+  israte = XEN_TO_C_INT(srate);
   ichans = XEN_TO_C_INT(chans);
   ifmt = XEN_TO_C_INT(format);
-  isize = XEN_TO_C_INT_OR_ELSE(size, 0);
+  isize = XEN_TO_C_INT(size);
 
   if (!(mus_data_format_p(ifmt)))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 4, format, "invalid data format");
@@ -1233,10 +1233,10 @@ open the audio device ready for input with the indicated attributes; return the 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(size), size, XEN_ARG_5, S_mus_audio_open_input, "a number");
 
   idev = XEN_TO_C_INT(dev);
-  israte = XEN_TO_C_INT_OR_ELSE(srate, 0);
+  israte = XEN_TO_C_INT(srate);
   ichans = XEN_TO_C_INT(chans);
   ifmt = XEN_TO_C_INT(format);
-  isize = XEN_TO_C_INT_OR_ELSE(size, 0);
+  isize = XEN_TO_C_INT(size);
 
   if (!(mus_data_format_p(ifmt)))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 4, format, "invalid data format");

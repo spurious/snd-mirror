@@ -164,6 +164,7 @@ void free_peak_env_state(chan_info *cp)
 
 #define MIN_INIT 1000000.0
 #define MAX_INIT -1000000.0
+#define MAX_ENV_SIZE (1 << 30)
 
 static env_state *make_env_state(chan_info *cp, mus_long_t samples)
 {
@@ -172,6 +173,7 @@ static env_state *make_env_state(chan_info *cp, mus_long_t samples)
   env_state *es;
 
   if (samples <= 0) return(NULL);
+  if (samples > MAX_ENV_SIZE) return(NULL);
   stop_peak_env(cp);
   pos = cp->edit_ctr;
   orig_pos = cp->edits[pos]->edpos; /* don't assume we're editing the preceding state! */
@@ -2798,7 +2800,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
     case SP_NCHANS: 
       if (!(IS_PLAYER_SOUND(sp))) 
 	{
-	  ival = XEN_TO_C_INT_OR_ELSE(val, 1);
+	  ival = XEN_TO_C_INT(val);
 	  if ((ival <= 0) || (ival > 256))
 	    XEN_OUT_OF_RANGE_ERROR(S_setB S_channels, 1, val, "highly unlikely number of channels");
 	  mus_sound_set_chans(sp->filename, ival);
@@ -2950,6 +2952,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
 	  sp->expand_control_length = fval; 
 	  if (sp->playing) dac_set_expand_length(sp, sp->expand_control_length);
 	}
+      else XEN_OUT_OF_RANGE_ERROR(S_setB S_expand_control_length, 1, val, "length <= 0.0?");
       return(C_TO_XEN_DOUBLE(sp->expand_control_length));
       break;
 
@@ -2970,6 +2973,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
 	  sp->expand_control_hop = fval; 
 	  if (sp->playing) dac_set_expand_hop(sp, fval); 
 	}
+      else XEN_OUT_OF_RANGE_ERROR(S_setB S_expand_control_hop, 1, val, "hop <= 0.0?");
       return(C_TO_XEN_DOUBLE(sp->expand_control_hop));
       break;
 
@@ -3254,11 +3258,18 @@ static XEN check_number(XEN val, const char *caller)
 }
 
 
+static XEN check_non_negative_integer(XEN val, const char *caller)
+{
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val) && (XEN_TO_C_INT(val) >= 0), val, XEN_ARG_1, caller, "a non-negative integer");
+  return(val);
+}
+
+
 static XEN g_set_channels(XEN snd, XEN val)
 {
   if (XEN_NOT_BOUND_P(val))
-    return(sound_set(XEN_UNDEFINED, check_number(snd, S_setB S_channels), SP_NCHANS, S_setB S_channels));
-  else return(sound_set(snd, check_number(val, S_setB S_channels), SP_NCHANS, S_setB S_channels));
+    return(sound_set(XEN_UNDEFINED, check_non_negative_integer(snd, S_setB S_channels), SP_NCHANS, S_setB S_channels));
+  else return(sound_set(snd, check_non_negative_integer(val, S_setB S_channels), SP_NCHANS, S_setB S_channels));
 }
 
 
@@ -3297,8 +3308,8 @@ static XEN g_data_location(XEN snd)
 static XEN g_set_data_location(XEN snd, XEN val) 
 {
   if (XEN_NOT_BOUND_P(val))
-    return(sound_set(XEN_UNDEFINED, check_number(snd, S_setB S_data_location), SP_DATA_LOCATION, S_setB S_data_location));
-  else return(sound_set(snd, check_number(val, S_setB S_data_location), SP_DATA_LOCATION, S_setB S_data_location));
+    return(sound_set(XEN_UNDEFINED, check_non_negative_integer(snd, S_setB S_data_location), SP_DATA_LOCATION, S_setB S_data_location));
+  else return(sound_set(snd, check_non_negative_integer(val, S_setB S_data_location), SP_DATA_LOCATION, S_setB S_data_location));
 }
 
 
@@ -3312,8 +3323,8 @@ static XEN g_data_size(XEN snd)
 static XEN g_set_data_size(XEN snd, XEN val) 
 {
   if (XEN_NOT_BOUND_P(val))
-    return(sound_set(XEN_UNDEFINED, check_number(snd, S_setB S_data_size), SP_DATA_SIZE, S_setB S_data_size));
-  else return(sound_set(snd, check_number(val, S_setB S_data_size), SP_DATA_SIZE, S_setB S_data_size));
+    return(sound_set(XEN_UNDEFINED, check_non_negative_integer(snd, S_setB S_data_size), SP_DATA_SIZE, S_setB S_data_size));
+  else return(sound_set(snd, check_non_negative_integer(val, S_setB S_data_size), SP_DATA_SIZE, S_setB S_data_size));
 }
 
 
@@ -3327,8 +3338,8 @@ static XEN g_data_format(XEN snd)
 static XEN g_set_data_format(XEN snd, XEN val) 
 {
   if (XEN_NOT_BOUND_P(val))
-    return(sound_set(XEN_UNDEFINED, check_number(snd, S_setB S_data_format), SP_DATA_FORMAT, S_setB S_data_format));
-  else return(sound_set(snd, check_number(val, S_setB S_data_format), SP_DATA_FORMAT, S_setB S_data_format));
+    return(sound_set(XEN_UNDEFINED, check_non_negative_integer(snd, S_setB S_data_format), SP_DATA_FORMAT, S_setB S_data_format));
+  else return(sound_set(snd, check_non_negative_integer(val, S_setB S_data_format), SP_DATA_FORMAT, S_setB S_data_format));
 }
 
 
@@ -3342,8 +3353,8 @@ static XEN g_header_type(XEN snd)
 static XEN g_set_header_type(XEN snd, XEN val) 
 {
   if (XEN_NOT_BOUND_P(val))
-    return(sound_set(XEN_UNDEFINED, check_number(snd, S_setB S_header_type), SP_HEADER_TYPE, S_setB S_header_type));
-  else return(sound_set(snd, check_number(val, S_setB S_header_type), SP_HEADER_TYPE, S_setB S_header_type));
+    return(sound_set(XEN_UNDEFINED, check_non_negative_integer(snd, S_setB S_header_type), SP_HEADER_TYPE, S_setB S_header_type));
+  else return(sound_set(snd, check_non_negative_integer(val, S_setB S_header_type), SP_HEADER_TYPE, S_setB S_header_type));
 }
 
 
@@ -3712,12 +3723,12 @@ static XEN g_set_selected_channel(XEN snd, XEN chn_n)
     sp->selected_channel = NO_SELECTION;
   else
     {
-      int chan;
+      mus_long_t chan;
       chan = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
       if ((chan >= 0) && 
 	  (chan < sp->nchans)) 
 	{
-	  select_channel(sp, chan);
+	  select_channel(sp, (int)chan);
 	  return(chn_n);
 	}
       return(snd_no_such_channel_error(S_setB S_selected_channel, snd, chn_n));
@@ -5039,7 +5050,7 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   if (sp)
     {
       apply_state *ap;
-      snd_apply_t cur_choice;
+      snd_apply_t cur_choice = APPLY_TO_SOUND;
 
       if (sp->applying)
 	{
@@ -5049,10 +5060,12 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
 
       if (XEN_LONG_LONG_P(beg)) apply_beg = XEN_TO_C_LONG_LONG(beg); else apply_beg = 0;
       if (XEN_LONG_LONG_P(dur)) apply_dur = XEN_TO_C_LONG_LONG(dur); else apply_dur = 0;
-      cur_choice = (snd_apply_t)XEN_TO_C_INT_OR_ELSE(choice, (int)APPLY_TO_SOUND);
 
+      if (XEN_INTEGER_P(choice))
+	cur_choice = (snd_apply_t)XEN_TO_C_INT(choice);
       if (cur_choice > APPLY_TO_SELECTION)
 	XEN_OUT_OF_RANGE_ERROR(S_apply_controls, 2, choice, "choice must be 0=sound, 1=channel, or 2=selection");
+
       ss->apply_choice = cur_choice;
       sp->applying = true;
       ap = (apply_state *)make_apply_state(sp);

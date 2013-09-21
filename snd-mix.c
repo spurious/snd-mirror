@@ -2965,8 +2965,7 @@ static XEN g_set_mix_tag_y(XEN n, XEN val)
 
 static XEN g_mix_properties(XEN n)
 {
-  #define H_mix_properties "(" S_mix_properties " id):  A property list associated with the given mix. \
-The accessor mix-property is provided in mix." XEN_FILE_EXTENSION "."
+  #define H_mix_properties "(" S_mix_properties " id):  A property list associated with the given mix."
 
   mix_info *md;
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, XEN_ARG_1, S_mix_properties, "a mix");

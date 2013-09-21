@@ -335,15 +335,15 @@ static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax, XEN xc
   #define H_draw_dot "(" S_draw_dot " x0 y0 size :optional snd chn (ax " S_time_graph ") cr): draw a dot"
  
   ASSERT_CHANNEL(S_draw_dot, snd, chn, 4);
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_draw_dot, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_2, S_draw_dot, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(size), size, XEN_ARG_3, S_draw_dot, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(x0), x0, XEN_ARG_1, S_draw_dot, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(y0), y0, XEN_ARG_2, S_draw_dot, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_3, S_draw_dot, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_6, S_draw_dot, "an integer such as " S_time_graph);
 
   draw_dot(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dot, xcr),
 	   XEN_TO_C_INT(x0),
 	   XEN_TO_C_INT(y0),
-	   XEN_TO_C_INT_OR_ELSE(size, 1));
+	   XEN_TO_C_INT(size));
   return(XEN_FALSE);
 }
 
@@ -426,8 +426,8 @@ static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
 
   for (i = 0, j = 0; i < len; i++, j += 2)
     {
-      pack_pts[i].x = XEN_TO_C_INT_OR_ELSE(XEN_VECTOR_REF(pts, j), 0);
-      pack_pts[i].y = XEN_TO_C_INT_OR_ELSE(XEN_VECTOR_REF(pts, j + 1), 0);
+      pack_pts[i].x = XEN_TO_C_INT(XEN_VECTOR_REF(pts, j));
+      pack_pts[i].y = XEN_TO_C_INT(XEN_VECTOR_REF(pts, j + 1));
     }
   return(pack_pts);
 }
@@ -687,8 +687,8 @@ return either a vct (if the graph has one trace), or a list of two vcts (the two
   cp = get_cp(snd, chn, S_make_graph_data);
   if (!cp) return(XEN_FALSE);
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(lo), lo, XEN_ARG_4, S_make_graph_data, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(hi), hi, XEN_ARG_5, S_make_graph_data, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(lo), lo, XEN_ARG_4, S_make_graph_data, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(hi), hi, XEN_ARG_5, S_make_graph_data, "an integer");
 
   return(make_graph_data(cp,
 			 to_c_edit_position(cp, edpos, S_make_graph_data, 3),
