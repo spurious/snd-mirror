@@ -338,7 +338,7 @@ static XEN g_file_to_string(XEN name)
 { 
   char *contents;
   XEN val = XEN_FALSE;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_file_to_string, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, S_file_to_string, "a string");
   contents = file_to_string(XEN_TO_C_STRING(name));
   val = C_TO_XEN_STRING(contents);
   free(contents);

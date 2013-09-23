@@ -931,7 +931,7 @@ static XEN g_xen_colormap_to_string(XEN obj)
   XEN result;
   #define S_xen_colormap_to_string "colormap->string"
 
-  XEN_ASSERT_TYPE(XEN_COLORMAP_P(obj), obj, XEN_ONLY_ARG, S_xen_colormap_to_string, "a colormap");
+  XEN_ASSERT_TYPE(XEN_COLORMAP_P(obj), obj, 1, S_xen_colormap_to_string, "a colormap");
 
   vstr = xen_colormap_to_string(XEN_TO_XEN_COLORMAP(obj));
   result = C_TO_XEN_STRING(vstr);
@@ -1034,7 +1034,7 @@ static void init_xen_colormap(void)
 static XEN g_integer_to_colormap(XEN n)
 {
   #define H_integer_to_colormap "(" S_integer_to_colormap " n) returns a colormap object corresponding to the given integer"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_integer_to_colormap, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, 1, S_integer_to_colormap, "an integer");
   return(new_xen_colormap(XEN_TO_C_INT(n)));
 }
 
@@ -1042,7 +1042,7 @@ static XEN g_integer_to_colormap(XEN n)
 static XEN g_colormap_to_integer(XEN n)
 {
   #define H_colormap_to_integer "(" S_colormap_to_integer " id) returns the integer corresponding to the given colormap"
-  XEN_ASSERT_TYPE(XEN_COLORMAP_P(n), n, XEN_ONLY_ARG, S_colormap_to_integer, "a colormap");
+  XEN_ASSERT_TYPE(XEN_COLORMAP_P(n), n, 1, S_colormap_to_integer, "a colormap");
   return(C_TO_XEN_INT(xen_colormap_to_int(n)));
 }
 
@@ -1056,8 +1056,8 @@ static XEN g_colormap_ref(XEN map, XEN pos)
 
   #define H_colormap_ref "(" S_colormap_ref " colormap pos): (list r g b). Pos is between 0.0 and 1.0."
 
-  XEN_ASSERT_TYPE(XEN_COLORMAP_P(map), map, XEN_ARG_1, S_colormap_ref, "a colormap object");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(pos), pos, XEN_ARG_2, S_colormap_ref, "a number between 0.0 and 1.0");
+  XEN_ASSERT_TYPE(XEN_COLORMAP_P(map), map, 1, S_colormap_ref, "a colormap object");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(pos), pos, 2, S_colormap_ref, "a number between 0.0 and 1.0");
 
   index = XEN_COLORMAP_TO_C_INT(map);
   if (!(is_colormap(index)))
@@ -1088,7 +1088,7 @@ static XEN g_set_colormap(XEN val)
 {
   int index;
 
-  XEN_ASSERT_TYPE(XEN_COLORMAP_P(val), val, XEN_ONLY_ARG, S_setB S_colormap, "a colormap"); 
+  XEN_ASSERT_TYPE(XEN_COLORMAP_P(val), val, 1, S_setB S_colormap, "a colormap"); 
 
   index = XEN_COLORMAP_TO_C_INT(val);
   if (!(is_colormap(index)))
@@ -1108,7 +1108,7 @@ static XEN g_set_colormap_size(XEN val)
   int size;
   #define H_colormap_size "(" S_colormap_size "): current colormap size; default is 512."
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_colormap_size, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_colormap_size, "an integer"); 
 
   size = XEN_TO_C_INT(val);
   if (size < 0)
@@ -1128,7 +1128,7 @@ static XEN g_colormap_name(XEN col)
   int map;
   #define H_colormap_name "(" S_colormap_name " colormap) returns the colormap's name (used in the Color/Orientation dialog)."
 
-  XEN_ASSERT_TYPE(XEN_COLORMAP_P(col), col, XEN_ONLY_ARG, S_colormap_name, "a colormap"); 
+  XEN_ASSERT_TYPE(XEN_COLORMAP_P(col), col, 1, S_colormap_name, "a colormap"); 
 
   map = XEN_COLORMAP_TO_C_INT(col);
   if (!(is_colormap(map)))
@@ -1153,7 +1153,7 @@ static XEN g_delete_colormap(XEN col)
   int map;
   #define H_delete_colormap "(" S_delete_colormap " colormap) frees the specified colormap."
 
-  XEN_ASSERT_TYPE(XEN_COLORMAP_P(col), col, XEN_ONLY_ARG, S_delete_colormap, "a colormap"); 
+  XEN_ASSERT_TYPE(XEN_COLORMAP_P(col), col, 1, S_delete_colormap, "a colormap"); 
 
   map = XEN_COLORMAP_TO_C_INT(col);
   if (!(is_colormap(map)))
@@ -1177,8 +1177,8 @@ static XEN g_add_colormap(XEN name, XEN func)
   #define H_add_colormap "(" S_add_colormap " name func) adds the colormap created by func to the colormap table, \
 returning the new colormap. 'name' is the colormap's name in the View:Color/Orientation dialog."
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_colormap, "a string"); 
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func) && (!mus_xen_p(func)), func, XEN_ARG_2, S_add_colormap, "a function of 2 args");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, S_add_colormap, "a string"); 
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func) && (!mus_xen_p(func)), func, 2, S_add_colormap, "a function of 2 args");
 
   if (!(procedure_arity_ok(func, 1)))
     return(snd_bad_arity_error(S_add_colormap, 

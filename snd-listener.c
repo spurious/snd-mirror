@@ -101,7 +101,7 @@ static XEN g_save_listener(XEN filename)
   FILE *fp = NULL;
   const char *name;
   int err = 0;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_save_listener, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, 1, S_save_listener, "a string");
   name = XEN_TO_C_STRING(filename);
   fp = FOPEN(name, "w");
   if (fp) 
@@ -135,7 +135,7 @@ static XEN g_show_listener(void)
 
 static XEN g_set_show_listener(XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_show_listener, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, 1, S_setB S_show_listener, "a boolean");
   handle_listener(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(listener_is_visible()));
 }
@@ -188,7 +188,7 @@ static XEN g_set_listener_prompt(XEN val)
 {
   #define H_listener_prompt "(" S_listener_prompt "): the current lisp listener prompt character ('>') "
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_listener_prompt, "a string"); 
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, 1, S_setB S_listener_prompt, "a string"); 
 
   if (listener_prompt(ss)) free(listener_prompt(ss));
   set_listener_prompt(mus_strdup(XEN_TO_C_STRING(val)));
@@ -203,7 +203,7 @@ static XEN g_snd_completion(XEN text)
   char *str, *temp;
   XEN res;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(text), text, XEN_ONLY_ARG, "snd-completion", "a string"); 
+  XEN_ASSERT_TYPE(XEN_STRING_P(text), text, 1, "snd-completion", "a string"); 
 
   temp = mus_strdup(XEN_TO_C_STRING(text));
   str = expression_completer(NULL_WIDGET, temp, NULL);
@@ -229,7 +229,7 @@ static XEN g_listener_colorized(void)
 static XEN g_listener_set_colorized(XEN val) 
 {
 #if USE_GTK
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_listener_colorized, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, 1, S_setB S_listener_colorized, "a boolean");
   listener_set_colorized(XEN_TO_C_BOOLEAN(val));
 #endif
   return(val);

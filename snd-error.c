@@ -205,7 +205,7 @@ static XEN g_snd_error(XEN msg)
 {
   /* this throws a 'snd-error error; it does not call snd_error_1 or friends above */
   #define H_snd_error "(" S_snd_error " str): throws a 'snd-error error"
-  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_error, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, 1, S_snd_error, "a string");
 
   if (!(run_snd_error_hook(XEN_TO_C_STRING(msg)))) /* have to call this before the throw, else we end up at top level */
     XEN_ERROR(XEN_ERROR_TYPE("snd-error"),
@@ -218,7 +218,7 @@ static XEN g_snd_error(XEN msg)
 static XEN g_snd_warning(XEN msg)
 {
   #define H_snd_warning "(" S_snd_warning " str): reports warning message str (normally in the status area)"
-  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_warning, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, 1, S_snd_warning, "a string");
   snd_warning("%s", XEN_TO_C_STRING(msg));
   return(msg);
 }

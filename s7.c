@@ -63302,7 +63302,7 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer p;
       p = car(x);
-      /* if divisor is 0, gmp throws an exception and halts s7!  add to s7test testsnd (with bignum 0)
+      /* if divisor is 0, gmp throws an exception and halts s7!
        *   I don't think we can trap gmp errors, and the abort is built into the library code.
        */
       if (!is_number(p))

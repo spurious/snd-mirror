@@ -1510,7 +1510,7 @@ static XEN g_xen_region_to_string(XEN obj)
   XEN result;
   #define S_xen_region_to_string "region->string"
 
-  XEN_ASSERT_TYPE(XEN_REGION_P(obj), obj, XEN_ONLY_ARG, S_xen_region_to_string, "a region");
+  XEN_ASSERT_TYPE(XEN_REGION_P(obj), obj, 1, S_xen_region_to_string, "a region");
 
   vstr = xen_region_to_string(XEN_TO_XEN_REGION(obj));
   result = C_TO_XEN_STRING(vstr);
@@ -1602,7 +1602,7 @@ static void init_xen_region(void)
 static XEN g_integer_to_region(XEN n)
 {
   #define H_integer_to_region "(" S_integer_to_region " n) returns a region object corresponding to the given integer"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_integer_to_region, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, 1, S_integer_to_region, "an integer");
   return(new_xen_region(XEN_TO_C_INT(n)));
 }
 
@@ -1610,7 +1610,7 @@ static XEN g_integer_to_region(XEN n)
 static XEN g_region_to_integer(XEN n)
 {
   #define H_region_to_integer "(" S_region_to_integer " id) returns the integer corresponding to the given region"
-  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_region_to_integer, "a region");
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, 1, S_region_to_integer, "a region");
   return(C_TO_XEN_INT(xen_region_to_int(n)));
 }
 
@@ -1631,16 +1631,16 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   region *r;
   int regn;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_1, S_restore_region, "a region id");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_2, S_restore_region, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(len), len, XEN_ARG_3, S_restore_region, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(srate), srate, XEN_ARG_4, S_restore_region, "an integer");
-  XEN_ASSERT_TYPE(XEN_DOUBLE_P(maxamp), maxamp, XEN_ARG_5, S_restore_region, "a double");
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_6, S_restore_region, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(start), start, XEN_ARG_7, S_restore_region, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(end), end, XEN_ARG_8, S_restore_region, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_9, S_restore_region, "a string");
-  XEN_ASSERT_TYPE(XEN_LIST_P(date) && (XEN_LIST_LENGTH(date) == 2), date, XEN_ARG_10, S_restore_region, "a list: '(time bytes)");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, 1, S_restore_region, "a region id");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, 2, S_restore_region, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(len), len, 3, S_restore_region, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(srate), srate, 4, S_restore_region, "an integer");
+  XEN_ASSERT_TYPE(XEN_DOUBLE_P(maxamp), maxamp, 5, S_restore_region, "a double");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 6, S_restore_region, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(start), start, 7, S_restore_region, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(end), end, 8, S_restore_region, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, 9, S_restore_region, "a string");
+  XEN_ASSERT_TYPE(XEN_LIST_P(date) && (XEN_LIST_LENGTH(date) == 2), date, 10, S_restore_region, "a list: '(time bytes)");
 
   check_saved_temp_file("region", filename, date);
 
@@ -1678,8 +1678,8 @@ insert region data into snd's channel chn starting at start-samp"
   mus_long_t samp;
   io_error_t err = IO_NO_ERROR;
 
-  XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, XEN_ARG_1, S_insert_region, "a region id");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_2, S_insert_region, "an integer");
+  XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, 1, S_insert_region, "a region id");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_n), samp_n, 2, S_insert_region, "an integer");
 
   ASSERT_CHANNEL(S_insert_region, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_insert_region);
@@ -1712,7 +1712,7 @@ static XEN g_max_regions(void)
 static XEN g_set_max_regions(XEN n) 
 {
   int regs;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_setB S_max_regions, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, 1, S_setB S_max_regions, "an integer"); 
 
   regs = XEN_TO_C_INT(n);
   if (regs < 0)
@@ -1736,8 +1736,8 @@ XEN g_region_frames(XEN n, XEN chan)
   int rg, chn;
   #define H_region_frames "(" S_region_frames " reg :optional (chan 0)): region length in frames"
 
-  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ARG_1, S_region_frames, "a region");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_region_frames, "an integer");
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, 1, S_region_frames, "a region");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, 2, S_region_frames, "an integer");
 
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
@@ -1760,8 +1760,8 @@ static XEN g_region_position(XEN n, XEN chan)
   int rg, chn = 0;
   #define H_region_position "(" S_region_position " reg :optional (chan 0)): region's position in the original sound"
 
-  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ARG_1, S_region_position, "a region");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_region_position, "an integer");
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, 1, S_region_position, "a region");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, 2, S_region_position, "an integer");
 
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
@@ -1811,7 +1811,7 @@ static XEN region_get(region_field_t field, XEN n, const char *caller)
 XEN g_region_srate(XEN n) 
 {
   #define H_region_srate "(" S_region_srate " reg): region (nominal) srate"
-  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_region_srate, "a region");
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, 1, S_region_srate, "a region");
   return(region_get(REGION_SRATE, n, S_region_srate));
 }
 
@@ -1819,7 +1819,7 @@ XEN g_region_srate(XEN n)
 XEN g_region_chans(XEN n) 
 {
   #define H_region_chans "(" S_region_chans " reg): region channels"
-  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_region_chans, "a region");
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, 1, S_region_chans, "a region");
   return(region_get(REGION_CHANS, n, S_region_chans));
 }
 
@@ -1827,7 +1827,7 @@ XEN g_region_chans(XEN n)
 static XEN g_region_home(XEN n) 
 {
   #define H_region_home "(" S_region_home " reg): a list with the region source sound name and position info"
-  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_region_home, "a region");
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, 1, S_region_home, "a region");
   return(region_get(REGION_HOME, n, S_region_home));
 }
 
@@ -1835,7 +1835,7 @@ static XEN g_region_home(XEN n)
 XEN g_region_maxamp(XEN n) 
 {
   #define H_region_maxamp "(" S_region_maxamp " reg): region maxamp"
-  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_region_maxamp, "a region");
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, 1, S_region_maxamp, "a region");
   return(region_get(REGION_MAXAMP, n, S_region_maxamp));
 }
 
@@ -1843,7 +1843,7 @@ XEN g_region_maxamp(XEN n)
 static XEN g_region_maxamp_position(XEN n) 
 {
   #define H_region_maxamp_position "(" S_region_maxamp_position " reg): first sample where region maxamp occurs"
-  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_region_maxamp_position, "a region");
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, 1, S_region_maxamp_position, "a region");
   return(region_get(REGION_MAXAMP_POSITION, n, S_region_maxamp_position));
 }
 
@@ -1851,7 +1851,7 @@ static XEN g_region_maxamp_position(XEN n)
 static XEN g_forget_region(XEN n) 
 {
   #define H_forget_region "(" S_forget_region " reg): remove region from the region list"
-  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_forget_region, "a region");
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, 1, S_forget_region, "a region");
   return(region_get(REGION_FORGET, n, S_forget_region));
 }
 
@@ -1903,8 +1903,8 @@ selection is used."
       mus_long_t ibeg, iend;
       mus_long_t *ends = NULL;
 
-      XEN_ASSERT_TYPE(XEN_INTEGER_P(beg), beg, XEN_ARG_1, S_make_region, "an integer");
-      XEN_ASSERT_TYPE(XEN_INTEGER_P(end), end, XEN_ARG_2, S_make_region, "an integer");
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(beg), beg, 1, S_make_region, "an integer");
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(end), end, 2, S_make_region, "an integer");
 
       ibeg = beg_to_sample(beg, S_make_region);
       iend = beg_to_sample(end, S_make_region);
@@ -2000,7 +2000,7 @@ using data format (default depends on machine byte order), header type (" S_mus_
   keys[3] = kw_comment;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8; 
 
-  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ARG_1, S_save_region, "a region id");
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, 1, S_save_region, "a region id");
 
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
@@ -2054,9 +2054,9 @@ it returns a list of the new mixes"
   int i, rg, id = -1, reg_chan = 0, reg_chans = 0;
   XEN result = XEN_EMPTY_LIST;
 
-  XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, XEN_ARG_1, S_mix_region, "a region");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_2, S_mix_region, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(reg_chn), reg_chn, XEN_ARG_5, S_mix_region, "an integer or " PROC_TRUE);
+  XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, 1, S_mix_region, "a region");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_samp_n), chn_samp_n, 2, S_mix_region, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(reg_chn), reg_chn, 5, S_mix_region, "an integer or " PROC_TRUE);
   ASSERT_CHANNEL(S_mix_region, snd_n, chn_n, 3);
 
   rg = XEN_REGION_TO_C_INT(reg_n);
@@ -2096,9 +2096,9 @@ static XEN g_region_sample(XEN reg_n, XEN samp_n, XEN chn_n)
   int rg, chan = 0;
   mus_long_t samp;
 
-  XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, XEN_ARG_1, S_region_sample, "a region");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(samp_n), samp_n, XEN_ARG_2, S_region_sample, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, XEN_ARG_3, S_region_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, 1, S_region_sample, "a region");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(samp_n), samp_n, 2, S_region_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, 3, S_region_sample, "an integer");
 
   if (XEN_INTEGER_P(chn_n)) chan = XEN_TO_C_INT(chn_n);
   rg = XEN_REGION_TO_C_INT(reg_n);
@@ -2122,10 +2122,10 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
   mus_long_t len = 0;
   vct *v1 = xen_to_vct(v);
 
-  XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, XEN_ARG_1, S_region_to_vct, "a region");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg_n), beg_n, XEN_ARG_2, S_region_to_vct, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(num), num, XEN_ARG_3, S_region_to_vct, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, XEN_ARG_4, S_region_to_vct, "an integer");
+  XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, 1, S_region_to_vct, "a region");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg_n), beg_n, 2, S_region_to_vct, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(num), num, 3, S_region_to_vct, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, 4, S_region_to_vct, "an integer");
 
   reg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(reg)))
@@ -2181,7 +2181,7 @@ static XEN g_set_region_graph_style(XEN val)
 The " S_region_graph_style " choices are " S_graph_lines ", " S_graph_dots ", " S_graph_filled ", " S_graph_lollipops ", \
 and " S_graph_dots_and_lines "."
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_region_graph_style, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_region_graph_style, "an integer");
 
   style = XEN_TO_C_INT(val);
   if (!(graph_style_p(style)))

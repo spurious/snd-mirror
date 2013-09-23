@@ -1552,9 +1552,9 @@ modifiers.  As in " S_bind_key ", state is the logical 'or' of ctrl=4, meta=8, a
 prefixed with C-x. 'key' can be a character, a key name such as 'Home', or an integer."
   int i, k, s;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(key) || XEN_CHAR_P(key) || XEN_STRING_P(key), key, XEN_ARG_1, S_key_binding, "an integer, character, or string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(state), state, XEN_ARG_2, S_key_binding, "an integer");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_3, S_key_binding, "a boolean");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(key) || XEN_CHAR_P(key) || XEN_STRING_P(key), key, 1, S_key_binding, "an integer, character, or string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(state), state, 2, S_key_binding, "an integer");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, 3, S_key_binding, "a boolean");
 
   k = key_name_to_key(key, S_key_binding);
   s = ((XEN_INTEGER_P(state)) ? XEN_TO_C_INT(state) : 0) & 0xfffe; /* no shift bit */
@@ -1572,12 +1572,12 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
   int args, k = 0, s;
   bool e;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(key) || XEN_STRING_P(key) || XEN_CHAR_P(key), key, XEN_ARG_1, caller, "an integer, char, or string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, caller, "an integer");
-  XEN_ASSERT_TYPE((XEN_FALSE_P(code) || XEN_PROCEDURE_P(code)), code, XEN_ARG_3, caller, PROC_FALSE " or a procedure");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_4, caller, "a boolean");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_5, caller, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(prefs_info), prefs_info, XEN_ARG_6, caller, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(key) || XEN_STRING_P(key) || XEN_CHAR_P(key), key, 1, caller, "an integer, char, or string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, 2, caller, "an integer");
+  XEN_ASSERT_TYPE((XEN_FALSE_P(code) || XEN_PROCEDURE_P(code)), code, 3, caller, PROC_FALSE " or a procedure");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, 4, caller, "a boolean");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 5, caller, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(prefs_info), prefs_info, 6, caller, "a string");
 
   k = key_name_to_key(key, caller);
   s = XEN_TO_C_INT(state) & 0xfffe; /* get rid of shift bit */
@@ -1639,8 +1639,8 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
   chan_info *cp;
   int k, s;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(kbd) || XEN_CHAR_P(kbd) || XEN_STRING_P(kbd), kbd, XEN_ARG_1, S_key, "an integer, character, or string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(buckybits), buckybits, XEN_ARG_2, S_key, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(kbd) || XEN_CHAR_P(kbd) || XEN_STRING_P(kbd), kbd, 1, S_key, "an integer, character, or string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(buckybits), buckybits, 2, S_key, "an integer");
   ASSERT_CHANNEL(S_key, snd, chn, 3);
 
   cp = get_cp(snd, chn, S_key);

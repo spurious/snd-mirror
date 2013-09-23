@@ -53,7 +53,7 @@ void snd_rb_raise(XEN type, XEN info); /* XEN_ERROR */
 
 XEN rb_documentation(XEN name)
 {
-  XEN_ASSERT_TYPE((XEN_STRING_P(name) || XEN_SYMBOL_P(name)), name, XEN_ONLY_ARG, S_get_help, "a char* or symbol");
+  XEN_ASSERT_TYPE((XEN_STRING_P(name) || XEN_SYMBOL_P(name)), name, 1, S_get_help, "a char* or symbol");
   if (XEN_SYMBOL_P(name))
     return(rb_property(XEN_SYMBOL_TO_STRING(name), XEN_DOCUMENTATION_SYMBOL));
   else
@@ -63,8 +63,8 @@ XEN rb_documentation(XEN name)
 
 XEN rb_set_documentation(XEN name, XEN help)
 {
-  XEN_ASSERT_TYPE((XEN_STRING_P(name) || XEN_SYMBOL_P(name)), name, XEN_ARG_1, S_add_help, "a char* or symbol");
-  XEN_ASSERT_TYPE(XEN_STRING_P(help), help, XEN_ARG_2, S_add_help, "a char*");
+  XEN_ASSERT_TYPE((XEN_STRING_P(name) || XEN_SYMBOL_P(name)), name, 1, S_add_help, "a char* or symbol");
+  XEN_ASSERT_TYPE(XEN_STRING_P(help), help, 2, S_add_help, "a char*");
   if (XEN_SYMBOL_P(name))
     rb_set_property(XEN_SYMBOL_TO_STRING(name), XEN_DOCUMENTATION_SYMBOL, help);
   else
@@ -694,17 +694,17 @@ static XEN xen_rb_hook_initialize(int argc, XEN *argv, XEN hook)
 {
   XEN name, arity, help;
   rb_scan_args(argc, argv, "12", &name, &arity, &help);
-  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ARG_1, __func__, "a char* or symbol");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, 1, __func__, "a char* or symbol");
   if (XEN_SYMBOL_P(name))
     name = XEN_SYMBOL_TO_STRING(name);
   if (arity != Qnil)
     {
-      XEN_ASSERT_TYPE(XEN_INTEGER_P(arity), arity, XEN_ARG_2, __func__, "an integer");
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(arity), arity, 2, __func__, "an integer");
     }
   else arity = INT2NUM(0);
   if (help != Qnil)
     {
-      XEN_ASSERT_TYPE(XEN_STRING_P(help), help, XEN_ARG_3, __func__, "a char*");
+      XEN_ASSERT_TYPE(XEN_STRING_P(help), help, 3, __func__, "a char*");
       XEN_SET_OBJECT_HELP(name, help);
     }
   else help = rb_str_new2("");
@@ -774,9 +774,9 @@ static XEN xen_rb_hook_add_hook(int argc, XEN *argv, XEN hook)
   int args;
   args = XEN_TO_C_INT(rb_iv_get(hook, "@arity"));
   rb_scan_args(argc, argv, "1&", &name, &func);
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, __func__, "a char*");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, __func__, "a char*");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func) && xen_rb_arity_ok(XEN_TO_C_INT(XEN_ARITY(func)), args),
-		  func, XEN_ARG_2, __func__, "a procedure");
+		  func, 2, __func__, "a procedure");
   rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, name, func));
   return(hook);
 }
@@ -1045,7 +1045,7 @@ static XEN xen_rb_make_hook(int argc, XEN *argv, XEN klass)
       name = C_TO_XEN_STRING(temp);
       if (temp) free(temp);
     }
-  XEN_ASSERT_TYPE(RB_STR_LEN(name) >= 2, name, XEN_ARG_1, __func__, "a char*, len >= 2"); 
+  XEN_ASSERT_TYPE(RB_STR_LEN(name) >= 2, name, 1, __func__, "a char*, len >= 2"); 
   return(rb_gv_set(XEN_TO_C_STRING(name), hook)); 
 }
 
@@ -1647,7 +1647,7 @@ static bool file_probe(const char *arg)
 static XEN g_file_exists_p(XEN name)
 {
   #define H_file_exists_p "(file-exists? filename): #t if the file exists"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-exists?", "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, "file-exists?", "a string");
   return(C_TO_XEN_BOOLEAN(file_probe(XEN_TO_C_STRING(name))));
 }
 
@@ -1669,14 +1669,14 @@ static bool directory_p(const char *filename)
 static XEN g_directory_p(XEN name)
 {
   #define H_directory_p "(directory? filename): #t if filename names a directory"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "directory?", "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, "directory?", "a string");
   return(C_TO_XEN_BOOLEAN(directory_p(XEN_TO_C_STRING(name)))); /* snd-file.c l 84 */
 }
 
 static XEN g_delete_file(XEN name)
 {
   #define H_delete_file "(delete-file filename): deletes the file"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "delete-file", "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, "delete-file", "a string");
   return(C_TO_XEN_BOOLEAN(unlink(XEN_TO_C_STRING(name))));
 }
 
@@ -1684,7 +1684,7 @@ static XEN g_delete_file(XEN name)
 static XEN g_system(XEN command)
 {
   #define H_system "(system command): execute command"
-  XEN_ASSERT_TYPE(XEN_STRING_P(command), command, XEN_ONLY_ARG, "system", "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(command), command, 1, "system", "a string");
   return(C_TO_XEN_INT(system(XEN_TO_C_STRING(command))));
 }
 
@@ -1692,7 +1692,7 @@ static XEN g_system(XEN command)
 static XEN g_s7_getenv(XEN var) /* "g_getenv" is in use in glib! */
 {
   #define H_getenv "(getenv var): return value of environment variable var"
-  XEN_ASSERT_TYPE(XEN_STRING_P(var), var, XEN_ONLY_ARG, "getenv", "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(var), var, 1, "getenv", "a string");
   return(C_TO_XEN_STRING(getenv(XEN_TO_C_STRING(var))));
 }
 #endif
@@ -1727,7 +1727,7 @@ static XEN g_strftime(XEN format, XEN tm)
   XEN result;
   const struct tm *p;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(format), format, XEN_ARG_1, "strftime", "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(format), format, 1, "strftime", "a string");
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(tm), tm, 2, "strftime", "a localtime struct");
 
   p = (const struct tm *)XEN_UNWRAP_C_POINTER(tm);

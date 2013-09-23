@@ -908,7 +908,7 @@ static XEN g_xen_selection_to_string(XEN obj)
   XEN result;
   #define S_xen_selection_to_string "selection->string"
 
-  XEN_ASSERT_TYPE(XEN_SELECTION_P(obj), obj, XEN_ONLY_ARG, S_xen_selection_to_string, "a selection");
+  XEN_ASSERT_TYPE(XEN_SELECTION_P(obj), obj, 1, S_xen_selection_to_string, "a selection");
 
   vstr = xen_selection_to_string(XEN_TO_XEN_SELECTION(obj));
   result = C_TO_XEN_STRING(vstr);
@@ -1282,13 +1282,13 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
       sync_info *si_out;
 
       ASSERT_CHANNEL(S_insert_selection, snd, chn, 2);
-      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_insert_selection, "an integer");
+      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, 1, S_insert_selection, "an integer");
 
       cp = get_cp(snd, chn, S_insert_selection);
       if ((!cp) || (!(editable_p(cp)))) return(XEN_FALSE);
 
       samp = beg_to_sample(beg, S_insert_selection);
-      if (XEN_NUMBER_P(chn))
+      if (XEN_INTEGER_P(chn))
 	si_out = make_simple_sync(cp, samp); /* ignore sync */
       else si_out = sync_to_chan(cp);
 
@@ -1318,8 +1318,8 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
       XEN result = XEN_EMPTY_LIST;
 
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
-      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_mix_selection, "an integer");
-      XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(sel_chan), sel_chan, XEN_ARG_4, S_mix_selection, "an integer or " PROC_TRUE);
+      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, 1, S_mix_selection, "an integer");
+      XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(sel_chan), sel_chan, 4, S_mix_selection, "an integer or " PROC_TRUE);
 
       cp = get_cp(snd, chn, S_mix_selection);
       if ((!cp) || (!(editable_p(cp)))) return(XEN_FALSE);
@@ -1327,7 +1327,7 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
       obeg = beg_to_sample(beg, S_mix_selection);
       if (XEN_INTEGER_P(sel_chan))
 	selection_chan = XEN_TO_C_INT(sel_chan);
-      if (XEN_NUMBER_P(chn))
+      if (XEN_INTEGER_P(chn))
 	si_out = make_simple_sync(cp, obeg); /* ignore sync */
       else si_out = sync_to_chan(cp);
 
@@ -1451,7 +1451,7 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
   mus_long_t beg;
 
   ASSERT_CHANNEL(S_setB S_selection_position, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_1, S_selection_position, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, 1, S_selection_position, "an integer");
 
   beg = beg_to_sample(pos, S_setB S_selection_position);
   if (XEN_NOT_BOUND_P(snd))
@@ -1510,10 +1510,10 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
   chan_info *cp;
   mus_long_t len;
 
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samps), samps, XEN_ARG_1, S_setB S_selection_frames, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samps), samps, 1, S_setB S_selection_frames, "an integer");
   len = XEN_TO_C_LONG_LONG(samps);
   if (len <= 0)
-    XEN_WRONG_TYPE_ARG_ERROR(S_setB S_selection_frames, XEN_ARG_1, samps, "a positive integer");
+    XEN_WRONG_TYPE_ARG_ERROR(S_setB S_selection_frames, 1, samps, "a positive integer");
   if (XEN_NOT_BOUND_P(snd))
     {
       sync_info *si = NULL;
@@ -1559,7 +1559,7 @@ static XEN g_selection_member(XEN snd, XEN chn)
 
 static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_selection_member, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_selection_member, "a boolean");
   if ((XEN_TRUE_P(snd)) && (XEN_FALSE_P(on)))
     deactivate_selection();
   else

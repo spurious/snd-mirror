@@ -3693,7 +3693,7 @@ XEN g_snd_help(XEN text, int widget_wid)
 
 static XEN g_listener_help(XEN arg, XEN formatted)
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(formatted), formatted, XEN_ARG_2, S_snd_help, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(formatted), formatted, 2, S_snd_help, "a boolean");
   if (XEN_FALSE_P(formatted))
     return(g_snd_help(arg, 0));
   return(g_snd_help(arg, listener_width()));
@@ -3716,7 +3716,7 @@ static XEN g_html_dir(void)
 
 static XEN g_set_html_dir(XEN val) 
 {
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_html_dir, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, 1, S_setB S_html_dir, "a string");
   set_html_dir(mus_strdup(XEN_TO_C_STRING(val))); 
   return(val);
 }
@@ -3731,7 +3731,7 @@ static XEN g_html_program(void)
 
 static XEN g_set_html_program(XEN val) 
 {
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_html_program, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, 1, S_setB S_html_program, "a string");
   if (html_program(ss)) free(html_program(ss));
   set_html_program(mus_strdup(XEN_TO_C_STRING(val))); 
   return(val);
@@ -3742,7 +3742,7 @@ static XEN g_snd_url(XEN name)
 {
   #define H_snd_url "(" S_snd_url " name): url corresponding to 'name'"
   /* given Snd entity ('open-sound) as symbol or string return associated url */
-  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ONLY_ARG, S_snd_url, "a string or symbol");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, 1, S_snd_url, "a string or symbol");
   if (XEN_STRING_P(name))
     return(C_TO_XEN_STRING(snd_url(XEN_TO_C_STRING(name))));
   return(C_TO_XEN_STRING(snd_url(XEN_SYMBOL_TO_C_STRING(name))));
@@ -3770,10 +3770,10 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 {
   #define H_help_dialog "(" S_help_dialog " subject message xrefs urls): start the Help window with subject and message"
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_help_dialog, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_help_dialog, "a string");
-  XEN_ASSERT_TYPE(XEN_LIST_P(xrefs) || XEN_NOT_BOUND_P(xrefs), xrefs, XEN_ARG_3, S_help_dialog, "a list of related references");
-  XEN_ASSERT_TYPE(XEN_LIST_P(xurls) || XEN_NOT_BOUND_P(xurls), xurls, XEN_ARG_4, S_help_dialog, "a list of urls");
+  XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, 1, S_help_dialog, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, 2, S_help_dialog, "a string");
+  XEN_ASSERT_TYPE(XEN_LIST_P(xrefs) || XEN_NOT_BOUND_P(xrefs), xrefs, 3, S_help_dialog, "a list of related references");
+  XEN_ASSERT_TYPE(XEN_LIST_P(xurls) || XEN_NOT_BOUND_P(xurls), xurls, 4, S_help_dialog, "a list of urls");
 
   if (refs) {free(refs); refs = NULL;}
   if (urls) {free(urls); urls = NULL;}

@@ -249,7 +249,7 @@ static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
 static XEN g_file_exists_p(XEN name)
 {
   #define H_file_exists_p "(file-exists? filename): #t if the file exists"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-exists?", "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, "file-exists?", "a string");
   return(C_TO_XEN_BOOLEAN(mus_file_probe(XEN_TO_C_STRING(name))));
 }
 
@@ -258,7 +258,7 @@ XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
 static XEN g_delete_file(XEN name)
 {
   #define H_delete_file "(delete-file filename): deletes the file"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "delete-file", "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, "delete-file", "a string");
   return(C_TO_XEN_BOOLEAN(unlink(XEN_TO_C_STRING(name))));
 }
 

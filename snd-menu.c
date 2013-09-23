@@ -320,7 +320,7 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
 {
   #define H_add_to_main_menu "(" S_add_to_main_menu " label :optional callback): adds label to the main (top-level) menu, returning its index"
   int slot = -1;
-  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_1, S_add_to_main_menu, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, 1, S_add_to_main_menu, "a string");
   slot = make_callback_slot();
   if (XEN_BOUND_P(callback))
     {
@@ -350,10 +350,10 @@ func (a function of no args) when the new menu is activated. Returns the new men
   widget_t result;
   char *errmsg = NULL;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(label) || XEN_FALSE_P(label), label, XEN_ARG_2, S_add_to_menu, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_add_to_menu, "an integer");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(callback) || XEN_FALSE_P(callback), callback, XEN_ARG_3, S_add_to_menu, "a procedure");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(gpos), gpos, XEN_ARG_4, S_add_to_menu, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_P(label) || XEN_FALSE_P(label), label, 2, S_add_to_menu, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, 1, S_add_to_menu, "an integer");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(callback) || XEN_FALSE_P(callback), callback, 3, S_add_to_menu, "a procedure");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(gpos), gpos, 4, S_add_to_menu, "an integer");
 
   /* fprintf(stderr, "add-to-menu %s\n", XEN_AS_STRING(XEN_CAR(callback))); */
 
@@ -404,8 +404,8 @@ static XEN gl_remove_from_menu(XEN menu, XEN label)
   #define H_remove_from_menu "(" S_remove_from_menu " menu label): removes menu item label from menu"
   int m;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, S_remove_from_menu, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_remove_from_menu, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, 2, S_remove_from_menu, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, 1, S_remove_from_menu, "an integer");
 
   m = XEN_TO_C_INT(menu);
   if (m < 0) 
@@ -419,7 +419,7 @@ static XEN g_main_menu(XEN which)
   #define H_main_menu "(" S_main_menu " menu): the top-level menu widget referred to by menu"
   int which_menu;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(which), which, XEN_ONLY_ARG, S_main_menu, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(which), which, 1, S_main_menu, "an integer");
   which_menu = XEN_TO_C_INT(which);
   if ((which_menu < 0) || (which_menu >= MAX_MAIN_MENUS))
     XEN_ERROR(XEN_ERROR_TYPE("no-such-menu"),

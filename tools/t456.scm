@@ -7,7 +7,7 @@
       (format *stderr* "this won't work in Snd!~%")
       (exit)))
 
-(define data-file (open-output-file "output-of-t455"))
+(define data-file #f) ;(open-output-file "output-of-t455"))
 
 (define constants (list #f #t () #\a (/ 1 most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i
 			"hi455" :hi hi: 'hi (list 1) (list 1 2) (cons 1 2) '() (list (list 1 2)) (list (list 1)) (list ()) #() 

@@ -35364,7 +35364,7 @@ static XEN gxg_make_target_entry(XEN lst)
   XEN val;
   int i, len;
   #define H_make_target_entry "(make-target-entry lst): GtkTargetEntry*, each member of 'lst' should be (list target flags info)"
-  XEN_ASSERT_TYPE(XEN_LIST_P(lst), lst, XEN_ONLY_ARG, "make-target-entry", "a list of lists describing each target");
+  XEN_ASSERT_TYPE(XEN_LIST_P(lst), lst, 1, "make-target-entry", "a list of lists describing each target");
   len = XEN_LIST_LENGTH(lst);
   if (len == 0) return(XEN_FALSE);
   targets = (GtkTargetEntry *)calloc(len, sizeof(GtkTargetEntry));

@@ -22,7 +22,7 @@ echo ' -------------------------------- that was valgrind without-gui (also s7te
 echo ' '
 echo ' '
 
-gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -ldl -lm 
+gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -ldl -lm 
 ./repl tools/t456.scm
 # valgrind repl tools/t456.scm
 echo ' '
@@ -69,6 +69,15 @@ echo ' '
 echo ' -------------------------------- that was snd-test --with-gmp -------------------------------- '
 echo ' '
 echo ' '
+
+gcc s7.c -o repl -DWITH_MAIN -I. -g -O2 -lreadline -lncurses -lrt -lgmp -lmpfr -lmpc -ldl -lm -Wl,-export-dynamic
+./repl tools/t456.scm
+echo ' '
+echo ' '
+echo ' -------------------------------- that was s7/gmp t456 -------------------------------- '
+echo ' '
+echo ' '
+
 
 valgrind ./snd -l snd-test
 echo ' '

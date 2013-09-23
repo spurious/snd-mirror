@@ -2003,7 +2003,7 @@ static XEN g_xen_mark_to_string(XEN obj)
   XEN result;
   #define S_xen_mark_to_string "mark->string"
 
-  XEN_ASSERT_TYPE(XEN_MARK_P(obj), obj, XEN_ONLY_ARG, S_xen_mark_to_string, "a mark");
+  XEN_ASSERT_TYPE(XEN_MARK_P(obj), obj, 1, S_xen_mark_to_string, "a mark");
 
   vstr = xen_mark_to_string(XEN_TO_XEN_MARK(obj));
   result = C_TO_XEN_STRING(vstr);
@@ -2102,7 +2102,7 @@ static void init_xen_mark(void)
 static XEN g_integer_to_mark(XEN n)
 {
   #define H_integer_to_mark "(" S_integer_to_mark " n) returns a mark object corresponding to the given integer"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_integer_to_mark, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, 1, S_integer_to_mark, "an integer");
   return(new_xen_mark(XEN_TO_C_INT(n)));
 }
 
@@ -2110,7 +2110,7 @@ static XEN g_integer_to_mark(XEN n)
 static XEN g_mark_to_integer(XEN n)
 {
   #define H_mark_to_integer "(" S_mark_to_integer " id) returns the integer corresponding to the given mark object"
-  XEN_ASSERT_TYPE(XEN_MARK_P(n), n, XEN_ONLY_ARG, S_mark_to_integer, "a mark");
+  XEN_ASSERT_TYPE(XEN_MARK_P(n), n, 1, S_mark_to_integer, "a mark");
   return(C_TO_XEN_INT(xen_mark_to_int(n)));
 }
 
@@ -2217,15 +2217,15 @@ static XEN g_mark_p(XEN id_n)
 static XEN g_mark_sample(XEN mark_n, XEN pos_n) 
 {
   #define H_mark_sample "(" S_mark_sample " id :optional pos): mark's location (sample number) at edit history pos"
-  XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, XEN_ARG_1, S_mark_sample, "a mark");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pos_n), pos_n, XEN_ARG_2, S_mark_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, 1, S_mark_sample, "a mark");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pos_n), pos_n, 2, S_mark_sample, "an integer");
   return(mark_get(mark_n, MARK_SAMPLE, pos_n, S_mark_sample));
 }
 
 static XEN g_set_mark_sample(XEN mark_n, XEN samp_n) 
 {
-  XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, XEN_ARG_1, S_setB S_mark_sample, "a mark");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_2, S_setB S_mark_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, 1, S_setB S_mark_sample, "a mark");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, 2, S_setB S_mark_sample, "an integer");
   return(mark_set(mark_n, samp_n, MARK_SAMPLE, S_setB S_mark_sample));
 }
 
@@ -2233,14 +2233,14 @@ static XEN g_set_mark_sample(XEN mark_n, XEN samp_n)
 XEN g_mark_sync(XEN mark_n)
 {
   #define H_mark_sync "(" S_mark_sync " id): mark's sync value (default: 0)"
-  XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_sync, "a mark");
+  XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, 1, S_mark_sync, "a mark");
   return(mark_get(mark_n, MARK_SYNC, XEN_UNDEFINED, S_mark_sync));
 }
 
 XEN g_set_mark_sync(XEN mark_n, XEN sync_n)
 {
-  XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, XEN_ARG_1, S_setB S_mark_sync, "a mark");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(sync_n), sync_n, XEN_ARG_2, S_setB S_mark_sync, "an integer");
+  XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, 1, S_setB S_mark_sync, "a mark");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(sync_n), sync_n, 2, S_setB S_mark_sync, "an integer");
   return(mark_set(mark_n, sync_n, MARK_SYNC, S_setB S_mark_sync));
 }
 
@@ -2248,14 +2248,14 @@ XEN g_set_mark_sync(XEN mark_n, XEN sync_n)
 static XEN g_mark_name(XEN mark_n) 
 {
   #define H_mark_name "(" S_mark_name " id): mark's name"
-  XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_name, "a mark");
+  XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, 1, S_mark_name, "a mark");
   return(mark_get(mark_n, MARK_NAME, XEN_UNDEFINED, S_mark_name));
 }
 
 static XEN g_set_mark_name(XEN mark_n, XEN name) 
 {
-  XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, XEN_ARG_1, S_setB S_mark_name, "a mark");
-  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_FALSE_P(name), name, XEN_ARG_2, S_setB S_mark_name, "a string");
+  XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, 1, S_setB S_mark_name, "a mark");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_FALSE_P(name), name, 2, S_setB S_mark_name, "a string");
   return(mark_set(mark_n, name, MARK_NAME, S_setB S_mark_name));
 }
 
@@ -2270,7 +2270,7 @@ static XEN g_mark_sync_max(void)
 static XEN g_mark_home(XEN mark_n)
 {
   #define H_mark_home "(" S_mark_home " id): the sound (index) and channel that hold mark id"
-  XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_home, "a mark");
+  XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, 1, S_mark_home, "a mark");
   return(mark_get(mark_n, MARK_HOME, XEN_UNDEFINED, S_mark_home));
 }
 
@@ -2284,7 +2284,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
   int pos;
   chan_info *cp = NULL;
 
-  XEN_ASSERT_TYPE((XEN_LONG_LONG_P(samp_n) || XEN_STRING_P(samp_n) || (XEN_FALSE_P(samp_n))), samp_n, XEN_ARG_1, S_find_mark, "an integer or string or " PROC_FALSE);
+  XEN_ASSERT_TYPE((XEN_LONG_LONG_P(samp_n) || XEN_STRING_P(samp_n) || (XEN_FALSE_P(samp_n))), samp_n, 1, S_find_mark, "an integer or string or " PROC_FALSE);
   ASSERT_CHANNEL(S_find_mark, snd, chn_n, 2); 
 
   cp = get_cp(snd, chn_n, S_find_mark);
@@ -2332,9 +2332,9 @@ static XEN g_add_mark_1(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync, bool
   int msync = 0;
   const char *mname = NULL;
 
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_add_mark, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name) || XEN_FALSE_P(name), name, XEN_ARG_4, S_add_mark, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sync), sync, XEN_ARG_5, S_add_mark, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, 1, S_add_mark, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name) || XEN_FALSE_P(name), name, 4, S_add_mark, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sync), sync, 5, S_add_mark, "an integer");
   ASSERT_CHANNEL(S_add_mark, snd, chn_n, 2);
 
   cp = get_cp(snd, chn_n, S_add_mark);
@@ -2388,7 +2388,7 @@ static XEN g_delete_mark(XEN id_n)
   mark *m;
   int id;
 
-  XEN_ASSERT_TYPE(XEN_MARK_P(id_n), id_n, XEN_ONLY_ARG, S_delete_mark, "a mark");
+  XEN_ASSERT_TYPE(XEN_MARK_P(id_n), id_n, 1, S_delete_mark, "a mark");
   id = XEN_MARK_TO_C_INT(id_n);
 
   m = find_mark_from_id(id, cp, AT_CURRENT_EDIT_POSITION);
@@ -2444,7 +2444,7 @@ static XEN g_syncd_marks(XEN sync)
   int *ids;
   XEN res;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(sync), sync, XEN_ONLY_ARG, S_syncd_marks, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(sync), sync, 1, S_syncd_marks, "an integer");
   ids = syncd_marks(XEN_TO_C_INT(sync));
 
   if (ids == NULL) return(XEN_EMPTY_LIST);
@@ -2463,7 +2463,7 @@ static XEN g_set_mark_tag_width(XEN val)
 {
   #define H_mark_tag_width "(" S_mark_tag_width "): width (pixels) of mark tags (10)"
   int width;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mark_tag_width, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_mark_tag_width, "an integer"); 
   width = mus_iclamp(0, XEN_TO_C_INT(val), LOTSA_PIXELS);
   set_mark_tag_width(width);
   for_each_normal_chan(update_graph);
@@ -2477,7 +2477,7 @@ static XEN g_set_mark_tag_height(XEN val)
 {
   #define H_mark_tag_height "(" S_mark_tag_height "): height (pixels) of mark tags (4)"
   int height;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mark_tag_height, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_mark_tag_height, "an integer"); 
   height = mus_iclamp(0, XEN_TO_C_INT(val), LOTSA_PIXELS);
   set_mark_tag_height(height);
   for_each_normal_chan(update_graph);
@@ -2758,7 +2758,7 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
   XEN res = XEN_FALSE;
 
   ASSERT_SOUND(S_save_marks, snd, 1);
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ARG_2, S_save_marks, "a string");  
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, 2, S_save_marks, "a string");  
 
   sp = get_sp(snd);
   if (sp == NULL) 
@@ -2816,7 +2816,7 @@ static XEN g_mark_properties(XEN n)
   mark *m;
   #define H_mark_properties "(" S_mark_properties " id):  A property list associated with the given mark."
 
-  XEN_ASSERT_TYPE(XEN_MARK_P(n), n, XEN_ARG_1, S_mark_properties, "a mark");
+  XEN_ASSERT_TYPE(XEN_MARK_P(n), n, 1, S_mark_properties, "a mark");
 
   m = find_mark_from_id(XEN_MARK_TO_C_INT(n), NULL, AT_CURRENT_EDIT_POSITION);
   if (m == NULL)
@@ -2834,7 +2834,7 @@ static XEN g_mark_properties(XEN n)
 static XEN g_set_mark_properties(XEN n, XEN val)
 {
   mark *m;
-  XEN_ASSERT_TYPE(XEN_MARK_P(n), n, XEN_ARG_1, S_mark_properties, "a mark");
+  XEN_ASSERT_TYPE(XEN_MARK_P(n), n, 1, S_mark_properties, "a mark");
 
   m = find_mark_from_id(XEN_MARK_TO_C_INT(n), NULL, AT_CURRENT_EDIT_POSITION);
   if (m == NULL)

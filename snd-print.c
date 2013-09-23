@@ -611,7 +611,7 @@ static XEN g_graph_to_ps(XEN filename)
   char *error;
   const char *file;
 
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ONLY_ARG, S_graph_to_ps, "a string (filename)");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, 1, S_graph_to_ps, "a string (filename)");
 
   if (XEN_STRING_P(filename))
     file = XEN_TO_C_STRING(filename);
@@ -656,8 +656,8 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
   char *old_locale = NULL;
 #endif
 
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ARG_1, S_gl_graph_to_ps, "a string (filename)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(output_type), output_type, XEN_ARG_2, S_gl_graph_to_ps, "an integer, 0=eps");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, 1, S_gl_graph_to_ps, "a string (filename)");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(output_type), output_type, 2, S_gl_graph_to_ps, "an integer, 0=eps");
 
   ASSERT_CHANNEL(S_gl_graph_to_ps, snd, chn, 3);
   cp = get_cp(snd, chn, S_gl_graph_to_ps);
@@ -670,7 +670,7 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
   if (XEN_INTEGER_P(output_type))
     type = XEN_TO_C_INT(output_type);
   if ((type < 0) || (type >= NUM_GL2PS_TYPES))
-    XEN_OUT_OF_RANGE_ERROR(S_gl_graph_to_ps, XEN_ARG_2, output_type, "must be between 0 and 5");
+    XEN_OUT_OF_RANGE_ERROR(S_gl_graph_to_ps, 2, output_type, "must be between 0 and 5");
 
 #ifndef _MSC_VER
   old_locale = mus_strdup(setlocale(LC_NUMERIC, "C"));
@@ -732,8 +732,8 @@ void gl2ps_text(const char *msg)
 static XEN g_gl_graph_to_ps(XEN filename, XEN output_type, XEN snd_ignore, XEN chn_ignore)
 {
   #define H_gl_graph_to_ps "gl-graph->ps is a no-op in this version of Snd"
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ARG_1, S_gl_graph_to_ps, "a string (filename)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(output_type), output_type, XEN_ARG_2, S_gl_graph_to_ps, "an integer, 0=eps");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, 1, S_gl_graph_to_ps, "a string (filename)");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(output_type), output_type, 2, S_gl_graph_to_ps, "an integer, 0=eps");
   return(XEN_FALSE);
 }
 #endif
@@ -746,7 +746,7 @@ static XEN g_eps_file(void) {return(C_TO_XEN_STRING(eps_file(ss)));}
 static XEN g_set_eps_file(XEN val) 
 {
   #define H_eps_file "(" S_eps_file "): File:Print and " S_graph_to_ps " file name (snd.eps)"
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_eps_file, "a string"); 
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, 1, S_setB S_eps_file, "a string"); 
   if (eps_file(ss)) free(eps_file(ss));
   set_eps_file(mus_strdup(XEN_TO_C_STRING(val))); 
   return(C_TO_XEN_STRING(eps_file(ss)));
@@ -760,7 +760,7 @@ static XEN g_eps_left_margin(void) {return(C_TO_XEN_DOUBLE(eps_left_margin(ss)))
 static XEN g_set_eps_left_margin(XEN val) 
 {
   #define H_eps_left_margin "(" S_eps_left_margin "): File:Print and " S_graph_to_ps " left margin"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_eps_left_margin, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 1, S_setB S_eps_left_margin, "a number"); 
   set_eps_left_margin(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_EPS_MARGIN));
   return(C_TO_XEN_DOUBLE(eps_left_margin(ss)));
 }
@@ -771,7 +771,7 @@ static XEN g_eps_bottom_margin(void) {return(C_TO_XEN_DOUBLE(eps_bottom_margin(s
 static XEN g_set_eps_bottom_margin(XEN val) 
 {
   #define H_eps_bottom_margin "(" S_eps_bottom_margin "): File:Print and " S_graph_to_ps " bottom margin"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_eps_bottom_margin, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 1, S_setB S_eps_bottom_margin, "a number"); 
   set_eps_bottom_margin(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_EPS_MARGIN));
   return(C_TO_XEN_DOUBLE(eps_bottom_margin(ss)));
 }
@@ -783,7 +783,7 @@ static XEN g_set_eps_size(XEN val)
 {
   #define MAX_EPS_SIZE 1000.0
   #define H_eps_size "(" S_eps_size "): File:Print and " S_graph_to_ps " output size scaler (1.0)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_eps_size, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 1, S_setB S_eps_size, "a number"); 
   set_eps_size(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_EPS_SIZE));
   return(C_TO_XEN_DOUBLE(eps_size(ss)));
 }

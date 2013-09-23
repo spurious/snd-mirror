@@ -1506,24 +1506,11 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #endif
 
 #if (!HAVE_FORTH)
-#define XEN_LONG_LONG_P(Arg) XEN_INTEGER_P(Arg)
+#define XEN_LONG_LONG_P(Arg)            XEN_INTEGER_P(Arg)
 #else
-#define XEN_LONG_LONG_T_P(Arg)          FTH_LONG_LONG_P(Arg)
+#define XEN_LONG_LONG_P(Arg)            FTH_LONG_LONG_P(Arg)
 #endif
 #define XEN_LONG_LONG_IF_BOUND_P(Arg)   ((XEN_NOT_BOUND_P(Arg)) || (XEN_LONG_LONG_P(Arg)))
-
-#define XEN_ONLY_ARG 1
-
-#define XEN_ARG_1    1
-#define XEN_ARG_2    2
-#define XEN_ARG_3    3
-#define XEN_ARG_4    4
-#define XEN_ARG_5    5
-#define XEN_ARG_6    6
-#define XEN_ARG_7    7
-#define XEN_ARG_8    8
-#define XEN_ARG_9    9
-#define XEN_ARG_10   10
 
 #if (!HAVE_SCHEME)
   #define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))

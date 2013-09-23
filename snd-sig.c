@@ -4079,10 +4079,10 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
     caller = XEN_TO_C_STRING(org);
   else caller = fallback_caller;
 
-  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) || (mus_xen_p(proc)), proc, XEN_ARG_1, caller, "a procedure");
-  ASSERT_SAMPLE_TYPE(caller, s_beg, XEN_ARG_2);
-  ASSERT_SAMPLE_TYPE(caller, s_end, XEN_ARG_3);
-  ASSERT_SAMPLE_TYPE(caller, s_dur, XEN_ARG_3);
+  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) || (mus_xen_p(proc)), proc, 1, caller, "a procedure");
+  ASSERT_SAMPLE_TYPE(caller, s_beg, 2);
+  ASSERT_SAMPLE_TYPE(caller, s_end, 3);
+  ASSERT_SAMPLE_TYPE(caller, s_dur, 3);
   ASSERT_CHANNEL(caller, snd, chn, 5); 
 
   cp = get_cp(snd, chn, caller);
@@ -4159,10 +4159,10 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 
   proc = proc_and_list;
 
-  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, caller, "a procedure");
-  ASSERT_SAMPLE_TYPE(caller, s_beg, XEN_ARG_2);
-  ASSERT_SAMPLE_TYPE(caller, s_end, XEN_ARG_3);
-  ASSERT_SAMPLE_TYPE(caller, s_dur, XEN_ARG_3);
+  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, 1, caller, "a procedure");
+  ASSERT_SAMPLE_TYPE(caller, s_beg, 2);
+  ASSERT_SAMPLE_TYPE(caller, s_end, 3);
+  ASSERT_SAMPLE_TYPE(caller, s_dur, 3);
   ASSERT_CHANNEL(caller, snd, chn, 4);
 
   cp = get_cp(snd, chn, caller);
@@ -4558,8 +4558,8 @@ data from start-samp for samps in snd's channel chn"
   chan_info *cp;
   mus_long_t start, samps;
 
-  ASSERT_SAMPLE_TYPE(S_smooth_sound, beg, XEN_ARG_1);
-  ASSERT_SAMPLE_TYPE(S_smooth_sound, num, XEN_ARG_2);
+  ASSERT_SAMPLE_TYPE(S_smooth_sound, beg, 1);
+  ASSERT_SAMPLE_TYPE(S_smooth_sound, num, 2);
   ASSERT_CHANNEL(S_smooth_sound, snd, chn_n, 3);
 
   cp = get_cp(snd, chn_n, S_smooth_sound);
@@ -4581,8 +4581,8 @@ smooth data from beg for dur in snd's channel chn"
   mus_long_t start, num;
   int pos;
 
-  ASSERT_SAMPLE_TYPE(S_smooth_channel, beg, XEN_ARG_1);
-  ASSERT_SAMPLE_TYPE(S_smooth_channel, dur, XEN_ARG_2);
+  ASSERT_SAMPLE_TYPE(S_smooth_channel, beg, 1);
+  ASSERT_SAMPLE_TYPE(S_smooth_channel, dur, 2);
   ASSERT_CHANNEL(S_smooth_channel, snd, chn_n, 3);
 
   cp = get_cp(snd, chn_n, S_smooth_channel);
@@ -4686,8 +4686,8 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp', then try
   int pos;
   mus_long_t samp, len;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(samp_n), samp_n, XEN_ARG_1, S_delete_samples_and_smooth, "an integer");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samps), samps, XEN_ARG_2, S_delete_samples_and_smooth, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(samp_n), samp_n, 1, S_delete_samples_and_smooth, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samps), samps, 2, S_delete_samples_and_smooth, "an integer");
 
   ASSERT_CHANNEL(S_delete_samples_and_smooth, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, S_delete_samples_and_smooth);
@@ -4751,8 +4751,8 @@ static XEN g_reverse_channel(XEN s_beg, XEN s_dur, XEN snd, XEN chn_n, XEN edpos
   int pos;
   snd_fd *sf;
 
-  ASSERT_SAMPLE_TYPE(S_reverse_channel, s_beg, XEN_ARG_1);
-  ASSERT_SAMPLE_TYPE(S_reverse_channel, s_dur, XEN_ARG_2);
+  ASSERT_SAMPLE_TYPE(S_reverse_channel, s_beg, 1);
+  ASSERT_SAMPLE_TYPE(S_reverse_channel, s_dur, 2);
   ASSERT_CHANNEL(S_reverse_channel, snd, chn_n, 3);
 
   cp = get_cp(snd, chn_n, S_reverse_channel);
@@ -4788,8 +4788,8 @@ static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
   chan_info *cp; /* follows sync */
   mus_long_t start = 0, len = 0;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(beg), beg, XEN_ARG_1, S_insert_silence, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_2, S_insert_silence, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(beg), beg, 1, S_insert_silence, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, 2, S_insert_silence, "an integer");
   ASSERT_CHANNEL(S_insert_silence, snd, chn, 3);
 
   cp = get_cp(snd, chn, S_insert_silence);
@@ -4814,8 +4814,8 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
   mus_long_t bg, len;
   int pos;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(beg), beg, XEN_ARG_1, S_pad_channel, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_2, S_pad_channel, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(beg), beg, 1, S_pad_channel, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, 2, S_pad_channel, "an integer");
   ASSERT_CHANNEL(S_pad_channel, snd, chn, 3);
 
   cp = get_cp(snd, chn, S_pad_channel);
@@ -5090,19 +5090,19 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   mus_any *egen;
   char *errmsg = NULL, *caller = NULL;
 
-  ASSERT_SAMPLE_TYPE(S_clm_channel, samp_n, XEN_ARG_2);
-  ASSERT_SAMPLE_TYPE(S_clm_channel, samps, XEN_ARG_3);
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(overlap) || XEN_FALSE_P(overlap) || XEN_NOT_BOUND_P(overlap), overlap, XEN_ARG_7, S_clm_channel, "an integer or " PROC_FALSE);
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_8, S_clm_channel, "a string");
+  ASSERT_SAMPLE_TYPE(S_clm_channel, samp_n, 2);
+  ASSERT_SAMPLE_TYPE(S_clm_channel, samps, 3);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(overlap) || XEN_FALSE_P(overlap) || XEN_NOT_BOUND_P(overlap), overlap, 7, S_clm_channel, "an integer or " PROC_FALSE);
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 8, S_clm_channel, "a string");
   ASSERT_CHANNEL(S_clm_channel, snd, chn_n, 4);
 
   cp = get_cp(snd, chn_n, S_clm_channel);
   if (!cp) return(XEN_FALSE);
-  pos = to_c_edit_position(cp, edpos, S_clm_channel, XEN_ARG_6);
+  pos = to_c_edit_position(cp, edpos, S_clm_channel, 6);
   beg = beg_to_sample(samp_n, S_clm_channel);
-  dur = dur_to_samples(samps, beg, cp, pos, XEN_ARG_3, S_clm_channel);
+  dur = dur_to_samples(samps, beg, cp, pos, 3, S_clm_channel);
   if (dur == 0) return(XEN_FALSE);
-  XEN_ASSERT_TYPE(mus_xen_p(gen), gen, XEN_ARG_1, S_clm_channel, "a clm generator");
+  XEN_ASSERT_TYPE(mus_xen_p(gen), gen, 1, S_clm_channel, "a clm generator");
   egen = XEN_TO_MUS_ANY(gen);
   if (XEN_STRING_P(origin)) caller = mus_strdup(XEN_TO_C_STRING(origin)); else caller = mus_strdup(S_clm_channel);
 
@@ -5148,7 +5148,7 @@ static XEN g_apply_env_1(XEN edata, mus_long_t beg, mus_long_t dur, XEN ebase, c
   else
     {
       mus_any *egen = NULL;
-      XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_env_p(egen = XEN_TO_MUS_ANY(edata))), edata, XEN_ARG_1, caller, "an env generator or a list");
+      XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_env_p(egen = XEN_TO_MUS_ANY(edata))), edata, 1, caller, "an env generator or a list");
       apply_env(cp, NULL, beg, dur, over_selection, caller, egen, edpos, 7);
       return(edata);
     }
@@ -5180,15 +5180,15 @@ either to the end of the sound or for samps samples, with segments interpolating
   int pos;
   chan_info *cp;
 
-  ASSERT_SAMPLE_TYPE(S_env_sound, samp_n, XEN_ARG_2);
-  ASSERT_SAMPLE_TYPE(S_env_sound, samps, XEN_ARG_3);
+  ASSERT_SAMPLE_TYPE(S_env_sound, samp_n, 2);
+  ASSERT_SAMPLE_TYPE(S_env_sound, samps, 3);
   ASSERT_CHANNEL(S_env_sound, snd, chn_n, 5);
 
   cp = get_cp(snd, chn_n, S_env_sound);
   if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_env_sound, 7);
   beg = beg_to_sample(samp_n, S_env_sound);
-  dur = dur_to_samples(samps, beg, cp, pos, XEN_ARG_3, S_env_sound);
+  dur = dur_to_samples(samps, beg, cp, pos, 3, S_env_sound);
 
   return(g_apply_env_1(edata, beg, dur, base, cp, edpos, S_env_sound, OVER_SOUND));
 }
@@ -5205,8 +5205,8 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   int old_sync = 0, pos;
   XEN val;
 
-  ASSERT_SAMPLE_TYPE(S_env_channel, samp_n, XEN_ARG_2);
-  ASSERT_SAMPLE_TYPE(S_env_channel, samps, XEN_ARG_3);
+  ASSERT_SAMPLE_TYPE(S_env_channel, samp_n, 2);
+  ASSERT_SAMPLE_TYPE(S_env_channel, samps, 3);
   ASSERT_CHANNEL(S_env_channel, snd, chn_n, 4);
 
   cp = get_cp(snd, chn_n, S_env_channel);
@@ -5238,8 +5238,8 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   int old_sync = 0, pos;
   XEN val;
 
-  ASSERT_SAMPLE_TYPE(S_env_channel, samp_n, XEN_ARG_2);
-  ASSERT_SAMPLE_TYPE(S_env_channel, samps, XEN_ARG_3);
+  ASSERT_SAMPLE_TYPE(S_env_channel, samp_n, 2);
+  ASSERT_SAMPLE_TYPE(S_env_channel, samps, 3);
   ASSERT_CHANNEL(S_env_channel, snd, chn_n, 4);
 
   cp = get_cp(snd, chn_n, S_env_channel);
@@ -5270,10 +5270,10 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
   int pos;
   double seg0, seg1;
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp0), rmp0, XEN_ARG_1, S_ramp_channel, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp1), rmp1, XEN_ARG_2, S_ramp_channel, "a number");
-  ASSERT_SAMPLE_TYPE(S_ramp_channel, beg, XEN_ARG_3);
-  ASSERT_SAMPLE_TYPE(S_ramp_channel, num, XEN_ARG_4);
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp0), rmp0, 1, S_ramp_channel, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp1), rmp1, 2, S_ramp_channel, "a number");
+  ASSERT_SAMPLE_TYPE(S_ramp_channel, beg, 3);
+  ASSERT_SAMPLE_TYPE(S_ramp_channel, num, 4);
   ASSERT_SOUND(S_ramp_channel, snd, 5);
 
   samp = beg_to_sample(beg, S_ramp_channel);
@@ -5337,11 +5337,11 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
   int pos;
   mus_float_t ebase = 1.0;
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp0), rmp0, XEN_ARG_1, S_xramp_channel, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp1), rmp1, XEN_ARG_2, S_xramp_channel, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(base), base, XEN_ARG_3, S_xramp_channel, "a number");
-  ASSERT_SAMPLE_TYPE(S_xramp_channel, beg, XEN_ARG_4);
-  ASSERT_SAMPLE_TYPE(S_xramp_channel, num, XEN_ARG_5);
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp0), rmp0, 1, S_xramp_channel, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp1), rmp1, 2, S_xramp_channel, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(base), base, 3, S_xramp_channel, "a number");
+  ASSERT_SAMPLE_TYPE(S_xramp_channel, beg, 4);
+  ASSERT_SAMPLE_TYPE(S_xramp_channel, num, 5);
   ASSERT_SOUND(S_xramp_channel, snd, 6);
 
   samp = beg_to_sample(beg, S_xramp_channel);
@@ -5432,9 +5432,9 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
   bool need_free = false;
   mus_float_t *rl = NULL, *im = NULL;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sign), sign, XEN_ARG_3, S_fft, "an integer");
-  XEN_ASSERT_TYPE(MUS_VCT_P(reals), reals, XEN_ARG_1, S_fft, "vct");
-  XEN_ASSERT_TYPE(MUS_VCT_P(imag), imag, XEN_ARG_2, S_fft, "vct");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sign), sign, 3, S_fft, "an integer");
+  XEN_ASSERT_TYPE(MUS_VCT_P(reals), reals, 1, S_fft, "vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(imag), imag, 2, S_fft, "vct");
 
   isign = (XEN_INTEGER_P(sign)) ? XEN_TO_C_INT(sign) : 1;
   v1 = XEN_TO_VCT(reals);
@@ -5485,13 +5485,13 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   mus_float_t *rdat;
   vct *v;
 
-  XEN_ASSERT_TYPE((MUS_VCT_P(data)), data, XEN_ARG_1, S_snd_spectrum, "a vct");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(win), win, XEN_ARG_2, S_snd_spectrum, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(len), len, XEN_ARG_3, S_snd_spectrum, "an integer");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(linear_or_dB), linear_or_dB, XEN_ARG_4, S_snd_spectrum, "a boolean");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beta), beta, XEN_ARG_5, S_snd_spectrum, "a number");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(in_place), in_place, XEN_ARG_6, S_snd_spectrum, "a boolean");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalized), normalized, XEN_ARG_7, S_snd_spectrum, "a boolean");
+  XEN_ASSERT_TYPE((MUS_VCT_P(data)), data, 1, S_snd_spectrum, "a vct");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(win), win, 2, S_snd_spectrum, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(len), len, 3, S_snd_spectrum, "an integer");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(linear_or_dB), linear_or_dB, 4, S_snd_spectrum, "a boolean");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beta), beta, 5, S_snd_spectrum, "a number");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(in_place), in_place, 6, S_snd_spectrum, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalized), normalized, 7, S_snd_spectrum, "a boolean");
 
   v = XEN_TO_VCT(data);
   n = (XEN_INTEGER_P(len)) ? XEN_TO_C_INT(len) : mus_vct_length(v);
@@ -5593,7 +5593,7 @@ static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, co
   mus_float_t amp;
   static char *fname = NULL;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, caller, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, 1, caller, "a string");
 
   if (XEN_NUMBER_P(new_amp)) 
     amp = XEN_TO_C_DOUBLE(new_amp);
@@ -5714,9 +5714,9 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 		  (XEN_LIST_P(ratio_or_env)) ||
 		  ((mus_xen_p(ratio_or_env)) && 
 		   (mus_env_p(egen = XEN_TO_MUS_ANY(ratio_or_env)))),
-		  ratio_or_env, XEN_ARG_1, S_src_channel, "a number, an envelope, or a CLM env generator");
-  ASSERT_SAMPLE_TYPE(S_src_channel, beg_n, XEN_ARG_2);
-  ASSERT_SAMPLE_TYPE(S_src_channel, dur_n, XEN_ARG_3);
+		  ratio_or_env, 1, S_src_channel, "a number, an envelope, or a CLM env generator");
+  ASSERT_SAMPLE_TYPE(S_src_channel, beg_n, 2);
+  ASSERT_SAMPLE_TYPE(S_src_channel, dur_n, 3);
   ASSERT_CHANNEL(S_src_channel, snd, chn_n, 4);
 
   cp = get_cp(snd, chn_n, S_src_channel);
@@ -5843,9 +5843,9 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
       else
 	{
 	  mus_any *egen;
-	  XEN_ASSERT_TYPE(mus_xen_p(ratio_or_env), ratio_or_env, XEN_ARG_1, caller, "a number, list, or env generator");
+	  XEN_ASSERT_TYPE(mus_xen_p(ratio_or_env), ratio_or_env, 1, caller, "a number, list, or env generator");
 	  egen = XEN_TO_MUS_ANY(ratio_or_env);
-	  XEN_ASSERT_TYPE(mus_env_p(egen), ratio_or_env, XEN_ARG_1, caller, "a number, list, or env generator");
+	  XEN_ASSERT_TYPE(mus_env_p(egen), ratio_or_env, 1, caller, "a number, list, or env generator");
 
 	  check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), &error);
 	  if (error != SRC_ENV_NO_ERROR)
@@ -5902,9 +5902,9 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   vct *v = NULL;
   mus_float_t *coeffs = NULL;
 
-  XEN_ASSERT_TYPE(XEN_LIST_P(e) || MUS_VCT_P(e), e, XEN_ARG_1, S_filter_channel, "an envelope or a vct");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, S_filter_channel, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_9, S_filter_channel, "a string");
+  XEN_ASSERT_TYPE(XEN_LIST_P(e) || MUS_VCT_P(e), e, 1, S_filter_channel, "an envelope or a vct");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, 2, S_filter_channel, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 9, S_filter_channel, "a string");
 
   if (XEN_INTEGER_P(order)) 
     {
@@ -5916,11 +5916,11 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   cp = get_cp(snd, chn_n, S_filter_channel);
   if (!cp) return(XEN_FALSE);
 
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, XEN_ARG_8, S_filter_channel, "boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, 8, S_filter_channel, "boolean");
   if (XEN_BOOLEAN_P(truncate)) truncate_1 = XEN_TO_C_BOOLEAN(truncate);
 
-  ASSERT_SAMPLE_TYPE(S_filter_channel, beg, XEN_ARG_3);
-  ASSERT_SAMPLE_TYPE(S_filter_channel, dur, XEN_ARG_4);
+  ASSERT_SAMPLE_TYPE(S_filter_channel, beg, 3);
+  ASSERT_SAMPLE_TYPE(S_filter_channel, dur, 4);
 
   beg_1 = beg_to_sample(beg, S_filter_channel);
   edpos_1 = to_c_edit_position(cp, edpos, S_filter_channel, 7);
@@ -5982,7 +5982,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
   else
     {
       int len = 0;
-      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, caller, "an integer");
+      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, 2, caller, "an integer");
       if (XEN_INTEGER_P(order)) 
 	{
 	  len = XEN_TO_C_INT(order);
@@ -6023,7 +6023,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
 	{
 	  env *ne = NULL;
 	  char *new_origin = NULL, *estr = NULL;
-	  XEN_ASSERT_TYPE(XEN_LIST_P(e), e, XEN_ARG_1, caller, "a list, vct, or env generator");
+	  XEN_ASSERT_TYPE(XEN_LIST_P(e), e, 1, caller, "a list, vct, or env generator");
 	  ne = get_env(e, caller); /* arg here must be a list */
 	  if (!origin)
 	    {
@@ -6055,7 +6055,7 @@ static XEN g_filter_sound(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, XEN o
   #define H_filter_sound "(" S_filter_sound " filter :optional order snd chn edpos origin): \
 applies FIR filter to snd's channel chn. 'filter' is either the frequency response envelope, a CLM filter, or a vct with the actual coefficients"
 
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_6, S_filter_sound, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 6, S_filter_sound, "a string");
   return(g_filter_1(e, order, snd, chn_n, edpos, 
 		    S_filter_sound, (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : NULL, 
 		    OVER_SOUND, false));
@@ -6067,7 +6067,7 @@ static XEN g_filter_selection(XEN e, XEN order, XEN truncate)
   #define H_filter_selection "(" S_filter_selection " filter :optional order (truncate " PROC_TRUE ")): apply filter to selection. If truncate, \
 cut off filter output at end of selection, else mix"
 
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, XEN_ARG_3, S_filter_selection, "boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, 3, S_filter_selection, "boolean");
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_filter_selection));
   return(g_filter_1(e, order, XEN_FALSE, XEN_FALSE, 
@@ -6087,7 +6087,7 @@ src runs.  If you use too low a setting, you can sometimes hear high \
 frequency whistles leaking through."
 
   int len;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_sinc_width, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_sinc_width, "an integer"); 
   len = XEN_TO_C_INT(val);
   if ((len >= 0) && (len <= MUS_MAX_CLM_SINC_WIDTH))
     set_sinc_width(len);

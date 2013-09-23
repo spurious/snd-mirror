@@ -2973,7 +2973,7 @@
 (hey "  XEN val;~%")
 (hey "  int i, len;~%")
 (hey "  #define H_make_target_entry \"(make-target-entry lst): GtkTargetEntry*, each member of 'lst' should be (list target flags info)\"~%")
-(hey "  XEN_ASSERT_TYPE(XEN_LIST_P(lst), lst, XEN_ONLY_ARG, \"make-target-entry\", \"a list of lists describing each target\");~%")
+(hey "  XEN_ASSERT_TYPE(XEN_LIST_P(lst), lst, 1, \"make-target-entry\", \"a list of lists describing each target\");~%")
 (hey "  len = XEN_LIST_LENGTH(lst);~%")
 (hey "  if (len == 0) return(XEN_FALSE);~%")
 (hey "  targets = (GtkTargetEntry *)calloc(len, sizeof(GtkTargetEntry));~%")
@@ -3127,11 +3127,11 @@
 	(hey "~A: not found" field)
 	(begin
 	  (if (= (length vals) 1)
-	      (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr), ptr, XEN_ONLY_ARG, ~S, ~S);~%" 
+	      (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr), ptr, 1, ~S, ~S);~%" 
 		   (caar vals) field 
 		   (caar vals))
 	      (if (= (length vals) 2)
-		  (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr) || XEN_~A__P(ptr), ptr, XEN_ONLY_ARG, ~S, ~S \" or \" ~S);~%" 
+		  (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr) || XEN_~A__P(ptr), ptr, 1, ~S, ~S \" or \" ~S);~%" 
 		       (caar vals) (car (cadr vals)) field 
 		       (caar vals) (car (cadr vals)))))))
     (let ((ctr 0))
@@ -3147,7 +3147,7 @@
 	      (no-stars (cadr val)) (cadr val) (car val) field))
        vals))
     (if (> (length vals) 2)
-	(hey "  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, ~S, \"pointer to struct with ~A field\");~%  return(XEN_FALSE);~%"
+	(hey "  XEN_ASSERT_TYPE(0, ptr, 1, ~S, \"pointer to struct with ~A field\");~%  return(XEN_FALSE);~%"
 	     field field))
     (hey "}~%")
     ))
@@ -3171,11 +3171,11 @@
 	(format #t "(writer) ~A: not found" field)
 	(begin
 	  (if (= (length vals) 1)
-	      (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr), ptr, XEN_ARG_1, ~S, ~S);~%" 
+	      (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr), ptr, 1, ~S, ~S);~%" 
 		   (caar vals) field 
 		   (caar vals))
 	      (if (= (length vals) 2)
-		  (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr) || XEN_~A__P(ptr), ptr, XEN_ARG_1, ~S, ~S \" or \" ~S);~%" 
+		  (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr) || XEN_~A__P(ptr), ptr, 1, ~S, ~S \" or \" ~S);~%" 
 		       (caar vals) (car (cadr vals)) field 
 		       (caar vals) (car (cadr vals)))))))
     (let ((ctr 0))
@@ -3191,7 +3191,7 @@
 	      (car val) field (no-stars (cadr val))))
        vals))
     (if (> (length vals) 2)
-	(hey "  XEN_ASSERT_TYPE(0, ptr, XEN_ARG_1, \"set! ~A\", \"pointer to struct with ~A field\");~% return(XEN_FALSE);~%"
+	(hey "  XEN_ASSERT_TYPE(0, ptr, 1, \"set! ~A\", \"pointer to struct with ~A field\");~% return(XEN_FALSE);~%"
 	     field field))
     (hey "  return(val);~%}~%")
     ))

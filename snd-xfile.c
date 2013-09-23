@@ -8460,7 +8460,7 @@ static widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed)
 static XEN g_view_files_dialog(XEN managed, XEN make_new)
 {
   #define H_view_files_dialog "(" S_view_files_dialog " :optional managed create-new-dialog): start the View Files dialog"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ARG_1, S_view_files_dialog, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, 1, S_view_files_dialog, "a boolean");
   return(XEN_WRAP_WIDGET(make_view_files_dialog(XEN_TO_C_BOOLEAN(managed), XEN_TRUE_P(make_new))));
 }
 
@@ -8469,8 +8469,8 @@ static XEN g_add_directory_to_view_files_list(XEN directory, XEN dialog)
 {
   #define H_add_directory_to_view_files_list "(" S_add_directory_to_view_files_list " dir :optional w): adds any sound files in 'dir' to the View:Files dialog"
   
-  XEN_ASSERT_TYPE(XEN_STRING_P(directory), directory, XEN_ARG_1, S_add_directory_to_view_files_list, "a string");
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog) || XEN_NOT_BOUND_P(dialog), dialog, XEN_ARG_2, S_add_directory_to_view_files_list, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_STRING_P(directory), directory, 1, S_add_directory_to_view_files_list, "a string");
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog) || XEN_NOT_BOUND_P(dialog), dialog, 2, S_add_directory_to_view_files_list, "a view-files dialog widget"); 
 
   if (XEN_NOT_BOUND_P(dialog))
     view_files_add_directory(NULL_WIDGET, XEN_TO_C_STRING(directory));
@@ -8484,8 +8484,8 @@ static XEN g_add_file_to_view_files_list(XEN file, XEN dialog)
   #define H_add_file_to_view_files_list "(" S_add_file_to_view_files_list " file :optional w): adds file to the View:Files dialog's list"
   char *name = NULL;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_add_file_to_view_files_list, "a string");
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog) || XEN_NOT_BOUND_P(dialog), dialog, XEN_ARG_2, S_add_file_to_view_files_list, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, 1, S_add_file_to_view_files_list, "a string");
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog) || XEN_NOT_BOUND_P(dialog), dialog, 2, S_add_file_to_view_files_list, "a view-files dialog widget"); 
 
   name = mus_expand_filename(XEN_TO_C_STRING(file));
   if (mus_file_probe(name))
@@ -8504,7 +8504,7 @@ static XEN g_view_files_sort(XEN dialog)
   #define H_view_files_sort "(" S_view_files_sort " :optional dialog): sort choice in View:files dialog."
   if (XEN_BOUND_P(dialog))
     {
-      XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_sort, "a view-files dialog widget"); 
+      XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_view_files_sort, "a view-files dialog widget"); 
       return(C_TO_XEN_INT(view_files_local_sort((widget_t)(XEN_UNWRAP_WIDGET(dialog)))));
     }
   return(C_TO_XEN_INT(view_files_sort(ss)));
@@ -8517,7 +8517,7 @@ static XEN g_set_view_files_sort(XEN dialog, XEN val)
   XEN sort_choice;
 
   if (XEN_BOUND_P(val)) sort_choice = val; else sort_choice = dialog;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(sort_choice), sort_choice, XEN_ARG_1, S_setB S_view_files_sort, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(sort_choice), sort_choice, 1, S_setB S_view_files_sort, "an integer"); 
 
   choice = XEN_TO_C_INT(sort_choice);
   if ((choice < 0) ||
@@ -8527,7 +8527,7 @@ static XEN g_set_view_files_sort(XEN dialog, XEN val)
   if (XEN_BOUND_P(val))
     {
       widget_t w;
-      XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_1, S_setB S_view_files_sort, "a view-files dialog widget"); 
+      XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_setB S_view_files_sort, "a view-files dialog widget"); 
       w = (widget_t)(XEN_UNWRAP_WIDGET(dialog));
       view_files_set_local_sort(w, choice);
       return(C_TO_XEN_INT((int)view_files_sort(ss)));
@@ -8541,15 +8541,15 @@ static XEN g_set_view_files_sort(XEN dialog, XEN val)
 static XEN g_view_files_amp(XEN dialog)
 {
   #define H_view_files_amp "(" S_view_files_amp " dialog): amp setting in the given View:Files dialog"
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_amp, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_view_files_amp, "a view-files dialog widget"); 
   return(C_TO_XEN_DOUBLE(view_files_amp((widget_t)(XEN_UNWRAP_WIDGET(dialog)))));
 }
 
 
 static XEN g_view_files_set_amp(XEN dialog, XEN amp)
 {
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_1, S_setB S_view_files_amp, "a view-files dialog widget"); 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, XEN_ARG_2, S_setB S_view_files_amp, "a number");
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_setB S_view_files_amp, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, 2, S_setB S_view_files_amp, "a number");
   view_files_set_amp((widget_t)(XEN_UNWRAP_WIDGET(dialog)), XEN_TO_C_DOUBLE(amp));
   return(amp);
 }
@@ -8558,15 +8558,15 @@ static XEN g_view_files_set_amp(XEN dialog, XEN amp)
 static XEN g_view_files_speed(XEN dialog)
 {
   #define H_view_files_speed "(" S_view_files_speed " dialog): speed setting in the given View:Files dialog"
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_speed, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_view_files_speed, "a view-files dialog widget"); 
   return(C_TO_XEN_DOUBLE(view_files_speed((widget_t)(XEN_UNWRAP_WIDGET(dialog)))));
 }
 
 
 static XEN g_view_files_set_speed(XEN dialog, XEN speed)
 {
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_setB S_view_files_speed, "a view-files dialog widget"); 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(speed), speed, XEN_ARG_2, S_setB S_view_files_speed, "a number");
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_setB S_view_files_speed, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(speed), speed, 2, S_setB S_view_files_speed, "a number");
   view_files_set_speed((widget_t)(XEN_UNWRAP_WIDGET(dialog)), XEN_TO_C_DOUBLE(speed));
   return(speed);
 }
@@ -8575,15 +8575,15 @@ static XEN g_view_files_set_speed(XEN dialog, XEN speed)
 static XEN g_view_files_amp_env(XEN dialog)
 {
   #define H_view_files_amp_env "(" S_view_files_amp_env " dialog): amp env breakpoints in the given View:Files dialog"
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_amp_env, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_view_files_amp_env, "a view-files dialog widget"); 
   return(env_to_xen(view_files_amp_env((widget_t)(XEN_UNWRAP_WIDGET(dialog)))));
 }
 
 
 static XEN g_view_files_set_amp_env(XEN dialog, XEN amp_env)
 {
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_setB S_view_files_amp_env, "a view-files dialog widget"); 
-  XEN_ASSERT_TYPE(XEN_LIST_P(amp_env), amp_env, XEN_ARG_2, S_setB S_view_files_amp_env, "an envelope");
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_setB S_view_files_amp_env, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_LIST_P(amp_env), amp_env, 2, S_setB S_view_files_amp_env, "an envelope");
   view_files_set_amp_env((widget_t)(XEN_UNWRAP_WIDGET(dialog)), xen_to_env(amp_env));
   return(amp_env);
 }
@@ -8592,15 +8592,15 @@ static XEN g_view_files_set_amp_env(XEN dialog, XEN amp_env)
 static XEN g_view_files_speed_style(XEN dialog)
 {
   #define H_view_files_speed_style "(" S_view_files_speed_style " dialog): speed_style in use in the given View:Files dialog"
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_speed_style, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_view_files_speed_style, "a view-files dialog widget"); 
   return(C_TO_XEN_INT((int)(view_files_speed_style((widget_t)(XEN_UNWRAP_WIDGET(dialog))))));
 }
 
 
 static XEN g_view_files_set_speed_style(XEN dialog, XEN speed_style)
 {
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_setB S_view_files_speed_style, "a view-files dialog widget"); 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(speed_style), speed_style, XEN_ARG_2, S_setB S_view_files_speed_style, "an int");
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_setB S_view_files_speed_style, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(speed_style), speed_style, 2, S_setB S_view_files_speed_style, "an int");
   view_files_set_speed_style((widget_t)(XEN_UNWRAP_WIDGET(dialog)), (speed_style_t)(XEN_TO_C_INT(speed_style)));
   return(speed_style);
 }
@@ -8613,7 +8613,7 @@ static XEN g_view_files_selected_files(XEN dialog)
   char **selected_files;
   int i, len = 0;
 
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_selected_files, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_view_files_selected_files, "a view-files dialog widget"); 
 
   selected_files = view_files_selected_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), &len);
   if ((selected_files) && (len > 0))
@@ -8634,8 +8634,8 @@ static XEN g_view_files_set_selected_files(XEN dialog, XEN files)
   int i, len;
   char **cfiles = NULL;
 
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_1, S_setB S_view_files_selected_files, "a view-files dialog widget");   
-  XEN_ASSERT_TYPE(XEN_LIST_P(files), files, XEN_ARG_2, S_setB S_view_files_selected_files, "a list of files or directories");
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_setB S_view_files_selected_files, "a view-files dialog widget");   
+  XEN_ASSERT_TYPE(XEN_LIST_P(files), files, 2, S_setB S_view_files_selected_files, "a list of files or directories");
 
   len = XEN_LIST_LENGTH(files);
   if (len > 0)
@@ -8663,7 +8663,7 @@ static XEN g_view_files_files(XEN dialog)
   char **files;
   int i, len = 0;
 
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_files, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_view_files_files, "a view-files dialog widget"); 
 
   files = view_files_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), &len);
   if ((files) && (len > 0))
@@ -8678,8 +8678,8 @@ static XEN g_view_files_set_files(XEN dialog, XEN files)
   int i, len = 0;
   char **cfiles = NULL;
 
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_1, S_setB S_view_files_files, "a view-files dialog widget");   
-  XEN_ASSERT_TYPE(XEN_LIST_P(files), files, XEN_ARG_2, S_setB S_view_files_files, "a list of files or directories");
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, 1, S_setB S_view_files_files, "a view-files dialog widget");   
+  XEN_ASSERT_TYPE(XEN_LIST_P(files), files, 2, S_setB S_view_files_files, "a list of files or directories");
 
   len = XEN_LIST_LENGTH(files);
   if (len > 0)
@@ -8719,8 +8719,8 @@ static bool file_sorter_ok(XEN name, XEN proc, const char *caller)
 {
   char *errmsg;
   XEN errstr;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, caller, "a string");   
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_2, caller, "a procedure of 2 args (file1 and file2)");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, caller, "a string");   
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, 2, caller, "a procedure of 2 args (file1 and file2)");
   errmsg = procedure_ok(proc, 2, caller, "function", 2);
   if (errmsg)
     {
@@ -8768,7 +8768,7 @@ static XEN g_delete_file_sorter(XEN index)
 {
   #define H_delete_file_sorter "(" S_delete_file_sorter " index) -- delete proc with identifier name from file sorter list"
   int pos;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ONLY_ARG, S_delete_file_sorter, "a file-sorter index");   
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, 1, S_delete_file_sorter, "a file-sorter index");   
   pos = XEN_TO_C_INT(index);
   if ((pos >= SORT_XEN) &&
       ((pos - SORT_XEN) < ss->file_sorters_size))

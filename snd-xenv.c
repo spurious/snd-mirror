@@ -1544,7 +1544,7 @@ static XEN g_enved_envelope(void)
 
 static XEN g_set_enved_envelope(XEN e)
 {
-  XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_STRING_P(e) || XEN_SYMBOL_P(e), e, XEN_ONLY_ARG, S_setB S_enved_envelope, "a list, symbol, or string");
+  XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_STRING_P(e) || XEN_SYMBOL_P(e), e, 1, S_setB S_enved_envelope, "a list, symbol, or string");
   if (active_env) active_env = free_env(active_env);
   if ((XEN_STRING_P(e)) || (XEN_SYMBOL_P(e)))
     active_env = name_to_env((XEN_STRING_P(e)) ? XEN_TO_C_STRING(e) : XEN_SYMBOL_TO_C_STRING(e)); /* xen_to_env in name_to_env, so no copy */
@@ -1568,7 +1568,7 @@ static XEN g_enved_filter(void)
 
 static XEN g_set_enved_filter(XEN type)
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(type), type, XEN_ONLY_ARG, S_setB S_enved_filter, "boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(type), type, 1, S_setB S_enved_filter, "boolean");
   FIR_p = XEN_TO_C_BOOLEAN(type);
   if (firB)
     set_label(firB, (FIR_p) ? "fir" : "fft");

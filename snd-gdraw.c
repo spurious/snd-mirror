@@ -1294,7 +1294,7 @@ static XEN g_background_gradient(void) {return(C_TO_XEN_DOUBLE(ss->bg_gradient))
 static XEN g_set_background_gradient(XEN val) 
 {
   #define H_background_gradient "(" S_background_gradient "): channel graph background color gradient"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_background_gradient, "a number between 0 (none) and 1");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 1, S_setB S_background_gradient, "a number between 0 (none) and 1");
 
   ss->bg_gradient = XEN_TO_C_DOUBLE(val);
   for_each_chan(update_graph);

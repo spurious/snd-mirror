@@ -1569,15 +1569,15 @@ static XEN g_in(XEN ms, XEN code)
   #define H_in "(" S_in " msecs thunk): invoke thunk in msecs milliseconds (named call_in in Ruby)"
 
 #if HAVE_EXTENSION_LANGUAGE
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(ms), ms, XEN_ARG_1, S_in, "a number");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(ms), ms, 1, S_in, "a number");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, 2, S_in, "a procedure");
 
   if (XEN_REQUIRED_ARGS_OK(code, 0))
     {
       int secs;
       secs = XEN_TO_C_INT(ms);
       if (secs < 0) 
-	XEN_OUT_OF_RANGE_ERROR(S_in, XEN_ARG_1, ms, "a positive integer");
+	XEN_OUT_OF_RANGE_ERROR(S_in, 1, ms, "a positive integer");
       else
 	{
 	  XEN lst;
@@ -1659,7 +1659,7 @@ static XEN g_graph_cursor(void)
 static XEN g_set_graph_cursor(XEN curs)
 {
   int val;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(curs), curs, XEN_ONLY_ARG, S_setB S_graph_cursor, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(curs), curs, 1, S_setB S_graph_cursor, "an integer");
   /* X11/cursorfont.h has various even-numbered glyphs, but the odd numbers are ok, and XC_num_glyphs is a lie */
   /*   if you use too high a number here, X dies */
   val = XEN_TO_C_INT(curs);

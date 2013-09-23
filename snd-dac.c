@@ -2669,7 +2669,7 @@ static XEN g_xen_player_to_string(XEN obj)
   XEN result;
   #define S_xen_player_to_string "player->string"
 
-  XEN_ASSERT_TYPE(XEN_PLAYER_P(obj), obj, XEN_ONLY_ARG, S_xen_player_to_string, "a player");
+  XEN_ASSERT_TYPE(XEN_PLAYER_P(obj), obj, 1, S_xen_player_to_string, "a player");
 
   vstr = xen_player_to_string(XEN_TO_XEN_PLAYER(obj));
   result = C_TO_XEN_STRING(vstr);
@@ -3018,7 +3018,7 @@ static XEN g_stop_playing(XEN snd)
   #define H_stop_playing "(" S_stop_playing " :optional snd): stop play (DAC output) in progress"
   snd_info *sp = NULL;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd) || XEN_SOUND_P(snd) || XEN_NOT_BOUND_P(snd) || XEN_PLAYER_P(snd), snd, XEN_ONLY_ARG, S_stop_playing, "a sound or player");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd) || XEN_SOUND_P(snd) || XEN_NOT_BOUND_P(snd) || XEN_PLAYER_P(snd), snd, 1, S_stop_playing, "a sound or player");
 
   if (XEN_INTEGER_P(snd) || XEN_SOUND_P(snd))
     {
@@ -3079,7 +3079,7 @@ static XEN g_player_home(XEN player)
   #define H_player_home "(" S_player_home " player): a list of the sound index and channel number associated with player"
   int index;
 
-  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, XEN_ONLY_ARG, S_player_home, "a player");
+  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, 1, S_player_home, "a player");
   index = XEN_PLAYER_TO_C_INT(player);
 
   if ((index > 0) && 
@@ -3116,14 +3116,14 @@ channel number in the sound that contains the channel being played."
   dac_info *dp = NULL;
   int i, ochan = -1;
 
-  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, XEN_ARG_1, S_add_player, "a player");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(start), start, XEN_ARG_2, S_add_player, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(end), end, XEN_ARG_3, S_add_player, "an integer");
+  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, 1, S_add_player, "a player");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(start), start, 2, S_add_player, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(end), end, 3, S_add_player, "an integer");
   XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
 		  (XEN_NOT_BOUND_P(stop_proc)) || 
 		  (XEN_FALSE_P(stop_proc)), 
-		  stop_proc, XEN_ARG_5, S_add_player, "a procedure of 1 arg");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_chan), out_chan, XEN_ARG_6, S_add_player, "an integer");
+		  stop_proc, 5, S_add_player, "a procedure of 1 arg");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_chan), out_chan, 6, S_add_player, "an integer");
 
   index = XEN_PLAYER_TO_C_INT(player);
   if ((index > 0) && (index < players_size)) 
@@ -3141,7 +3141,7 @@ channel number in the sound that contains the channel being played."
 			     player));
 
   cp = sp->chans[player_chans[index]];
-  pos = to_c_edit_position(cp, edpos, S_add_player, XEN_ARG_4);
+  pos = to_c_edit_position(cp, edpos, S_add_player, 4);
   if (XEN_INTEGER_P(out_chan)) ochan = XEN_TO_C_INT(out_chan);
   if (ochan < 0) ochan = cp->chan;
 
@@ -3169,9 +3169,9 @@ If a play-list is waiting, start it."
   int chans = 1, srate = 44100;
   bool back;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(Chans), Chans, XEN_ARG_1, S_start_playing, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(Srate), Srate, XEN_ARG_2, S_start_playing, "an integer");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(In_Background), In_Background, XEN_ARG_3, S_start_playing, "a boolean");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(Chans), Chans, 1, S_start_playing, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(Srate), Srate, 2, S_start_playing, "an integer");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(In_Background), In_Background, 3, S_start_playing, "a boolean");
 
   if (XEN_INTEGER_P(Chans)) chans = XEN_TO_C_INT(Chans);
   if ((chans <= 0) || (chans > 256))
@@ -3193,7 +3193,7 @@ static XEN g_stop_player(XEN player)
   #define H_stop_player "(" S_stop_player " player): stop player and remove its associated sound from the current DAC playlist"
   snd_info *sp = NULL;
 
-  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, XEN_ONLY_ARG, S_stop_player, "a player");
+  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, 1, S_stop_player, "a player");
 
   sp = get_player_sound(player);
   if (sp) 
@@ -3207,7 +3207,7 @@ static XEN g_free_player(XEN player)
   #define H_free_player "(" S_free_player " player): free all resources associated with 'player' and remove it from the current DAC playlist"
   snd_info *sp = NULL;
 
-  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, XEN_ONLY_ARG, S_free_player, "a player");
+  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, 1, S_free_player, "a player");
 
   sp = get_player_sound(player);
   if (sp) 
@@ -3254,7 +3254,7 @@ static XEN g_set_dac_size(XEN val)
 {
   #define H_dac_size "(" S_dac_size "): the current DAC buffer size in frames (256)"
   int len;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_dac_size, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_dac_size, "an integer");
   len = XEN_TO_C_INT(val);
   if (len > 0)
     set_dac_size(len); /* macro in snd-0.h */
@@ -3270,7 +3270,7 @@ static XEN g_set_dac_combines_channels(XEN val)
 That is, if the sound to be played has 4 channels, but the DAC can only handle 2, if this \
 variable is " PROC_TRUE ", the extra channels are mixed into the available ones; otherwise they are ignored."
 
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_dac_combines_channels, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, 1, S_setB S_dac_combines_channels, "a boolean");
   set_dac_combines_channels(XEN_TO_C_BOOLEAN(val)); 
   return(C_TO_XEN_BOOLEAN(dac_combines_channels(ss)));
 }
@@ -3287,7 +3287,7 @@ setting this to " PROC_TRUE " starts them; setting it to " PROC_FALSE " stops ou
 static XEN g_set_playing(XEN on)
 {
   bool starting = false;
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ONLY_ARG, S_setB S_playing, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_playing, "a boolean");
   starting = XEN_TO_C_BOOLEAN(on);
   if (starting)
     start_dac((int)mus_srate(), 1, IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY); /* how to get plausible srate chans here? */
@@ -3305,7 +3305,7 @@ static XEN g_pausing(void)
 
 static XEN g_set_pausing(XEN pause)
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(pause), pause, XEN_ONLY_ARG, S_setB S_pausing, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(pause), pause, 1, S_setB S_pausing, "a boolean");
   dac_pausing = XEN_TO_C_BOOLEAN(pause);
   play_button_pause(dac_pausing);
   return(pause);
@@ -3319,7 +3319,7 @@ static XEN g_set_cursor_update_interval(XEN val)
   mus_float_t ctime;
   #define H_cursor_update_interval "(" S_cursor_update_interval "): time (seconds) between cursor updates if " S_with_tracking_cursor "."
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_cursor_update_interval, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 1, S_setB S_cursor_update_interval, "a number"); 
 
   ctime = XEN_TO_C_DOUBLE(val);
   if ((ctime < 0.0) || (ctime > (24 * 3600)))
@@ -3337,7 +3337,7 @@ static XEN g_set_cursor_location_offset(XEN val)
   int ctime;
   #define H_cursor_location_offset "(" S_cursor_location_offset "): samples added to cursor location if cursor displayed during play."
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_cursor_location_offset, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 1, S_setB S_cursor_location_offset, "an integer"); 
 
   ctime = XEN_TO_C_INT(val);
   set_cursor_location_offset(ctime);
@@ -3354,7 +3354,7 @@ static XEN g_with_tracking_cursor(void)
 
 static XEN g_set_with_tracking_cursor(XEN on) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ONLY_ARG, S_setB S_with_tracking_cursor, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_with_tracking_cursor, "a boolean");
   set_with_tracking_cursor(ss, (XEN_TO_C_BOOLEAN(on)) ? ALWAYS_TRACK : TRACK_IF_ASKED);
   return(C_TO_XEN_BOOLEAN(with_tracking_cursor(ss) == ALWAYS_TRACK));
 }
