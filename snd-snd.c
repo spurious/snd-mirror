@@ -2407,10 +2407,10 @@ static XEN g_select_channel(XEN chn_n)
   #define H_select_channel "(" S_select_channel " :optional (chn 0)): make channel 'chn' of the currently selected sound the default \
 channel for editing."
   snd_info *sp;
-  int chan;
+  int chan = 0;
 
   ASSERT_SOUND(S_select_channel, chn_n, 1);
-  chan = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
+  if (XEN_INTEGER_P(chn_n)) chan = XEN_TO_C_INT(chn_n);
 
   sp = any_selected_sound();
   if ((sp) && 
@@ -2434,7 +2434,7 @@ If more than one such sound exists, 'nth' chooses which one to return."
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_find_sound, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(which), which, XEN_ARG_2, S_find_sound, "an integer");
 
-  sp = find_sound(XEN_TO_C_STRING(filename), XEN_TO_C_INT_OR_ELSE(which, 0));
+  sp = find_sound(XEN_TO_C_STRING(filename), (XEN_INTEGER_P(which)) ? XEN_TO_C_INT(which) : 0);
   if (sp) return(C_INT_TO_XEN_SOUND(sp->index));
 
   return(XEN_FALSE);
@@ -2779,7 +2779,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
     case SP_SRATE:
       if (!(IS_PLAYER_SOUND(sp))) 
 	{
-	  ival = XEN_TO_C_INT_OR_ELSE(val, 44100);
+	  ival = (XEN_INTEGER_P(val)) ? XEN_TO_C_INT(val) : 44100;
 	  if ((ival <= 0) || (ival > 100000000))
 	    XEN_OUT_OF_RANGE_ERROR(S_setB S_srate, 1, val, "impossible srate");
 	  mus_sound_set_srate(sp->filename, ival);
@@ -3723,8 +3723,8 @@ static XEN g_set_selected_channel(XEN snd, XEN chn_n)
     sp->selected_channel = NO_SELECTION;
   else
     {
-      mus_long_t chan;
-      chan = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
+      mus_long_t chan = 0;
+      if (XEN_INTEGER_P(chn_n)) chan = XEN_TO_C_INT(chn_n);
       if ((chan >= 0) && 
 	  (chan < sp->nchans)) 
 	{
@@ -5419,7 +5419,7 @@ return two vcts of length 'size' containing y vals (min and max) of file's chann
 If 'filename' is a sound index or a sound object, 'size' is interpreted as an edit-position, and the current amp envs are returned."
 
   char *fullname = NULL;
-  int len, chn;
+  int len = 0, chn = 0;
   snd_info *sp = NULL;
   chan_info *cp = NULL;
   peak_env_error_t err = PEAK_ENV_NO_ERROR;
@@ -5475,10 +5475,10 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
   /* filename is a string from here down */
 
   fullname = mus_expand_filename(XEN_TO_C_STRING(filename));
-  chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
+  if (XEN_INTEGER_P(chan)) chn = XEN_TO_C_INT(chan);
   if (chn < 0)
     XEN_OUT_OF_RANGE_ERROR(S_channel_amp_envs, XEN_ARG_2, chan, "must be >= 0");
-  len = XEN_TO_C_INT_OR_ELSE(pts, 0);
+  if (XEN_INTEGER_P(pts)) len = XEN_TO_C_INT(pts);
 
   /* look for sp->filename = fullname
      then peak

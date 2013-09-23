@@ -29,14 +29,6 @@
  * 20-Sep-01 changed location of pfInputBuffer to avoid glomming up the stack with a huge array.
  */
 
-/* ideally we'd post a dialog of controls for these guys, but I think that
- *   depends on parsing rdf(?) files -- lrdf in Kjetil's ladspa.scm.  
- *   ladspa.scm unfortunately depended on the gui/real-time code that
- *   was not translated from Guile to s7, mainly because the s7 GC is
- *   not real-time safe, but I wonder if that actually matters.  Someday...
- */
-
-
 /*****************************************************************************/
 
 

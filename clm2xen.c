@@ -281,7 +281,7 @@ mus_long_t mus_optkey_to_mus_long_t(XEN key, const char *caller, int n, mus_long
   if (!(XEN_KEYWORD_P(key)))
     {
       XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, n, caller, "a sample number or size");
-      return(XEN_TO_C_LONG_LONG_OR_ELSE(key, def));
+      return(XEN_TO_C_LONG_LONG(key));
     }
   return(def);
 }
@@ -7371,22 +7371,22 @@ return an output generator writing the sound file 'filename' which is set up to 
 'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter \
 should be sndlib identifiers:\n  " make_sample_to_file_example
 
-  int df;
+  int df = (int)MUS_OUT_FORMAT;
 
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_sample_to_file, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chans), chans, XEN_ARG_2, S_make_sample_to_file, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_format), out_format, XEN_ARG_3, S_make_sample_to_file, "an integer (data format id)");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_type), out_type, XEN_ARG_4, S_make_sample_to_file, "an integer (header type id)");
 
-  df = XEN_TO_C_INT_OR_ELSE(out_format, (int)MUS_OUT_FORMAT);
+  if (XEN_INTEGER_P(out_format)) df = XEN_TO_C_INT(out_format);
   if (mus_data_format_p(df))
     {
-      int ht;
-      ht = XEN_TO_C_INT_OR_ELSE(out_type, (int)MUS_NEXT);
+      int ht = (int)MUS_NEXT;
+      if (XEN_INTEGER_P(out_type)) ht = XEN_TO_C_INT(out_type);
       if (mus_header_type_p(ht))
 	{
-	  int chns;
-	  chns = XEN_TO_C_INT_OR_ELSE(chans, 1);
+	  int chns = 1;
+	  if (XEN_INTEGER_P(chans)) chns = XEN_TO_C_INT(chans);
 	  if (chns > 0)
 	    {
 	      mus_any *rgen;
@@ -7529,9 +7529,9 @@ should be sndlib identifiers:\n  " make_frame_to_file_example
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_type), out_type, XEN_ARG_4, S_make_frame_to_file, "an integer (header-type id)");
 
   fgen = mus_make_frame_to_file_with_comment(XEN_TO_C_STRING(name),
-					     XEN_TO_C_INT_OR_ELSE(chans, 1),
-					     XEN_TO_C_INT_OR_ELSE(out_format, (int)MUS_OUT_FORMAT),
-					     XEN_TO_C_INT_OR_ELSE(out_type, (int)MUS_NEXT),
+					     (XEN_INTEGER_P(chans)) ? XEN_TO_C_INT(chans) : 1,
+					     (XEN_INTEGER_P(out_format)) ? XEN_TO_C_INT(out_format) : (int)MUS_OUT_FORMAT,
+					     (XEN_INTEGER_P(out_type)) ? XEN_TO_C_INT(out_type) : (int)MUS_NEXT,
 					     (XEN_STRING_P(comment)) ? XEN_TO_C_STRING(comment) : NULL);
   if (fgen) return(mus_xen_to_object(mus_any_to_mus_xen(fgen)));
   return(XEN_FALSE);

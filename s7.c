@@ -6419,7 +6419,9 @@ void *s7_c_pointer(s7_pointer p)
 
   if (type(p) != T_C_POINTER)
     {
+#if DEBUGGING
       fprintf(stderr, "s7_c_pointer argument is not a c pointer?");
+#endif
       return(NULL);
     }
 
@@ -30111,11 +30113,12 @@ or a real, the vector can only hold numbers of that type (s7_Int or s7_Double)."
 	{
 	  if (caddr(args) == sc->T)
 	    {
-	      if (s7_is_integer(fill))
+	      /* here bignums can cause confusion, so use is_integer not s7_is_integer etc */
+	      if (is_integer(fill))
 		result_type = T_INT_VECTOR;
 	      else
 		{
-		  if (s7_is_real(fill))
+		  if (is_real(fill))
 		    result_type = T_FLOAT_VECTOR;
 		  else return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(2), fill,
 							    make_protected_string(sc, "an integer or a real since 'homogenous' is #t")));
@@ -34667,10 +34670,6 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
     default: 
       return(wrong_type_argument_with_type(sc, sc->COPY, small_int(1), source, make_protected_string(sc, "a sequence")));
       /* copy doesn't have to duplicate fill!, so (copy 1 #(...)) need not be supported */
-
-      /* TODO: global-env needs special handling here and below
-       * TODO: add cloaded c_obj to s7test
-       */
     }
 
   start = 0;
@@ -63303,6 +63302,9 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer p;
       p = car(x);
+      /* if divisor is 0, gmp throws an exception and halts s7!  add to s7test testsnd (with bignum 0)
+       *   I don't think we can trap gmp errors, and the abort is built into the library code.
+       */
       if (!is_number(p))
 	{
 	  if (!is_big_number(p))
@@ -63313,6 +63315,9 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
 	  else result_type = big_type_to_result_type(result_type, type(p));
 	}
       else result_type = normal_type_to_result_type(result_type, type(p));
+      if ((x != args) &&
+	  (s7_is_zero(p)))
+	return(division_by_zero_error(sc, sc->DIVIDE, args));
     }
 
   if (result_type < T_BIG_INTEGER)
@@ -64123,6 +64128,9 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
       if ((yval < S7_LONG_MAX) &&
 	  (yval > S7_LONG_MIN))
 	{
+	  /* from here yval can fit in an unsigned int 
+	   *    (protect against gmp exception if for example (expt 1/9223372036854775807 -9223372036854775807) 
+	   */
 	  if (s7_is_integer(x))
 	    {
 	      mpz_t n;
@@ -64157,61 +64165,58 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	      mpq_clear(r);
 	      return(p);
 	    }
-	}
 
-      if (s7_is_ratio(x)) /* (here y is an integer) */
-	{
-	  mpz_t n, d;
-	  mpq_t r;
-
-	  if (yval > (S7_LLONG_MAX >> 4)) /* gmp aborts or segfaults if this is too large, but I don't know where the actual boundary is */
-	    return(s7_out_of_range_error(sc, "integer expt exponent", 1, y, "gmp will segfault"));
-
-	  x = promote_number(sc, T_BIG_RATIO, x);
-	  mpz_init_set(n, mpq_numref(big_ratio(x)));
-	  mpz_init_set(d, mpq_denref(big_ratio(x)));
-	  mpq_init(r);
-	  if (yval >= 0)
+	  if (s7_is_ratio(x)) /* (here y is an integer */
 	    {
-	      mpz_pow_ui(n, n, (unsigned int)yval);
-	      mpz_pow_ui(d, d, (unsigned int)yval);
-	      mpq_set_num(r, n);
-	      mpq_set_den(r, d);
-	    }
-	  else
-	    {
-	      yval = -yval;
-	      mpz_pow_ui(n, n, (unsigned int)yval);
-	      mpz_pow_ui(d, d, (unsigned int)yval);
-	      mpq_set_num(r, d);
-	      mpq_set_den(r, n);	      
-	      mpq_canonicalize(r);
-	    }
-	  mpz_clear(n);
-	  mpz_clear(d);
-	  if (mpz_cmp_ui(mpq_denref(r), 1) == 0)
-	    {
-	      mpz_t z;
-	      mpz_init_set(z, mpq_numref(r));
+	      mpz_t n, d;
+	      mpq_t r;
+	      
+	      x = promote_number(sc, T_BIG_RATIO, x);
+	      mpz_init_set(n, mpq_numref(big_ratio(x)));
+	      mpz_init_set(d, mpq_denref(big_ratio(x)));
+	      mpq_init(r);
+	      if (yval >= 0)
+		{
+		  mpz_pow_ui(n, n, (unsigned int)yval);
+		  mpz_pow_ui(d, d, (unsigned int)yval);
+		  mpq_set_num(r, n);
+		  mpq_set_den(r, d);
+		}
+	      else
+		{
+		  yval = -yval;
+		  mpz_pow_ui(n, n, (unsigned int)yval);
+		  mpz_pow_ui(d, d, (unsigned int)yval);
+		  mpq_set_num(r, d);
+		  mpq_set_den(r, n);	      
+		  mpq_canonicalize(r);
+		}
+	      mpz_clear(n);
+	      mpz_clear(d);
+	      if (mpz_cmp_ui(mpq_denref(r), 1) == 0)
+		{
+		  mpz_t z;
+		  mpz_init_set(z, mpq_numref(r));
+		  mpq_clear(r);
+		  p = mpz_to_big_integer(sc, z);
+		  mpz_clear(z);
+		  return(p);
+		}
+	      p = mpq_to_big_ratio(sc, r);
 	      mpq_clear(r);
-	      p = mpz_to_big_integer(sc, z);
-	      mpz_clear(z);
 	      return(p);
 	    }
-	  p = mpq_to_big_ratio(sc, r);
-	  mpq_clear(r);
-	  return(p);
-	}
-
-      if (s7_is_real(x))
-	{
-	  mpfr_t z;
-	  x = promote_number(sc, T_BIG_REAL, x);
-	  mpfr_init_set(z, big_real(x), GMP_RNDN);
-	  mpfr_pow_si(z, z, yval, GMP_RNDN);
-	  p = mpfr_to_big_real(sc, z);
-	  mpfr_clear(z);
-	  return(p);
+	  
+	  if (s7_is_real(x))
+	    {
+	      mpfr_t z;
+	      x = promote_number(sc, T_BIG_REAL, x);
+	      mpfr_init_set(z, big_real(x), GMP_RNDN);
+	      mpfr_pow_si(z, z, yval, GMP_RNDN);
+	      p = mpfr_to_big_real(sc, z);
+	      mpfr_clear(z);
+	      return(p);
+	    }
 	}
     }
 
@@ -64220,7 +64225,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
     {
       if (denominator(y) == 2)
 	return(big_sqrt(sc, args));
-
+      
       if ((s7_is_real(x)) &&
 	  (denominator(y) == 3))
 	{

@@ -25,7 +25,7 @@ static void free_sync_state(sync_state *sc)
 
 int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos)
 {
-  int pos;
+  int pos = AT_CURRENT_EDIT_POSITION;
   /* need to allow #f here for optargs */
   /* also remember that there might be no extension language */
 
@@ -39,6 +39,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
   if (XEN_PROCEDURE_P(edpos))
     {
       char *errmsg = NULL;
+
       errmsg = procedure_ok(edpos, 2, caller, "edit position", arg_pos);
       if (errmsg)
 	{
@@ -49,18 +50,22 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 	  return(cp->edit_ctr);
 	}
 
-      pos = XEN_TO_C_INT_OR_ELSE(XEN_CALL_2(edpos, 
-					    C_INT_TO_XEN_SOUND(cp->sound->index), 
-					    C_TO_XEN_INT(cp->chan),
-					    caller),
-				 AT_CURRENT_EDIT_POSITION);
+      pos = XEN_TO_C_INT(XEN_CALL_2(edpos, 
+				    C_INT_TO_XEN_SOUND(cp->sound->index), 
+				    C_TO_XEN_INT(cp->chan),
+				    caller));
+      
       if (cp->active < CHANNEL_HAS_EDIT_LIST) /* edpos proc clobbered channel somehow... */
 	XEN_ERROR(NO_SUCH_CHANNEL,
 		  XEN_LIST_3(C_TO_XEN_STRING("~A: edpos arg (~A) clobbered the current sound!"),
 			     C_TO_XEN_STRING(caller),
 			     edpos));
     }
-  else pos = XEN_TO_C_INT_OR_ELSE(edpos, AT_CURRENT_EDIT_POSITION);
+  else 
+    {
+      if (XEN_INTEGER_P(edpos))
+	pos = XEN_TO_C_INT(edpos);
+    }
 
   if (pos == AT_CURRENT_EDIT_POSITION)
     return(cp->edit_ctr);
@@ -4682,7 +4687,7 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp', then try
   mus_long_t samp, len;
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(samp_n), samp_n, XEN_ARG_1, S_delete_samples_and_smooth, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(samps), samps, XEN_ARG_2, S_delete_samples_and_smooth, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samps), samps, XEN_ARG_2, S_delete_samples_and_smooth, "an integer");
 
   ASSERT_CHANNEL(S_delete_samples_and_smooth, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, S_delete_samples_and_smooth);
@@ -4693,7 +4698,7 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp', then try
   if (samp > cp->edits[pos]->samples)
     XEN_OUT_OF_RANGE_ERROR(S_delete_samples_and_smooth, 1, samp_n, "beyond end of sound");
 
-  len = XEN_TO_C_LONG_LONG_OR_ELSE(samps, 0);
+  len = XEN_TO_C_LONG_LONG(samps);
   if (len <= 0) return(XEN_FALSE);
   if (len > cp->edits[pos]->samples)
     len = cp->edits[pos]->samples;
@@ -5101,7 +5106,7 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   egen = XEN_TO_MUS_ANY(gen);
   if (XEN_STRING_P(origin)) caller = mus_strdup(XEN_TO_C_STRING(origin)); else caller = mus_strdup(S_clm_channel);
 
-  errmsg = clm_channel(cp, egen, beg, dur, pos, XEN_TO_C_LONG_LONG_OR_ELSE(overlap, 0), caller);
+  errmsg = clm_channel(cp, egen, beg, dur, pos, (XEN_LONG_LONG_P(overlap)) ? XEN_TO_C_LONG_LONG(overlap) : 0, caller);
 
   free(caller);
   if (errmsg)
@@ -5431,7 +5436,7 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
   XEN_ASSERT_TYPE(MUS_VCT_P(reals), reals, XEN_ARG_1, S_fft, "vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(imag), imag, XEN_ARG_2, S_fft, "vct");
 
-  isign = XEN_TO_C_INT_OR_ELSE(sign, 1);
+  isign = (XEN_INTEGER_P(sign)) ? XEN_TO_C_INT(sign) : 1;
   v1 = XEN_TO_VCT(reals);
   v2 = XEN_TO_VCT(imag);
 
@@ -5489,7 +5494,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalized), normalized, XEN_ARG_7, S_snd_spectrum, "a boolean");
 
   v = XEN_TO_VCT(data);
-  n = XEN_TO_C_INT_OR_ELSE(len, mus_vct_length(v));
+  n = (XEN_INTEGER_P(len)) ? XEN_TO_C_INT(len) : mus_vct_length(v);
   if (n > mus_vct_length(v)) n = mus_vct_length(v);
   if (n <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 3, len, "length <= 0 or vct length == 0?");
@@ -5498,7 +5503,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   if (XEN_BOOLEAN_P(in_place)) in_data = XEN_TO_C_BOOLEAN(in_place);
   if (XEN_BOOLEAN_P(normalized)) normed = XEN_TO_C_BOOLEAN(normalized);
 
-  wtype = XEN_TO_C_INT_OR_ELSE(win, (int)MUS_RECTANGULAR_WINDOW);
+  wtype = (XEN_INTEGER_P(win)) ? XEN_TO_C_INT(win) : (int)MUS_RECTANGULAR_WINDOW;
   if (!(mus_fft_window_p(wtype)))
     XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 2, win, "unknown fft window");
 

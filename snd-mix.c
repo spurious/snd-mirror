@@ -3103,8 +3103,8 @@ static XEN g_mix_waveform_height(void)
 static XEN g_set_mix_waveform_height(XEN val) 
 {
   int new_val;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_waveform_height, "a number"); 
-  new_val = mus_iclamp(0, XEN_TO_C_INT_OR_ELSE(val, 0), LOTSA_PIXELS);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_waveform_height, "an integer"); 
+  new_val = mus_iclamp(0, XEN_TO_C_INT(val), LOTSA_PIXELS);
   set_mix_waveform_height(new_val);
   return(C_TO_XEN_INT(mix_waveform_height(ss)));
 }

@@ -340,13 +340,8 @@ static void call_keymap(int hashedsym, int count)
     {
       /* not _NO_CATCH here because the code is not protected at any higher level */
       if (keymap[hashedsym].args == 0)
-	res = (kbd_cursor_t)XEN_TO_C_INT_OR_ELSE(XEN_CALL_0(keymap[hashedsym].func, 
-							    keymap[hashedsym].origin), 
-						 (int)KEYBOARD_NO_ACTION);
-      else res = (kbd_cursor_t)XEN_TO_C_INT_OR_ELSE(XEN_CALL_1(keymap[hashedsym].func, 
-							       C_TO_XEN_INT(count), 
-							       keymap[hashedsym].origin),
-						    (int)KEYBOARD_NO_ACTION);
+	res = (kbd_cursor_t)XEN_TO_C_INT(XEN_CALL_0(keymap[hashedsym].func, keymap[hashedsym].origin));
+      else res = (kbd_cursor_t)XEN_TO_C_INT(XEN_CALL_1(keymap[hashedsym].func, C_TO_XEN_INT(count), keymap[hashedsym].origin));
     }
   handle_cursor(selected_channel(), res);
 }
@@ -1562,7 +1557,7 @@ prefixed with C-x. 'key' can be a character, a key name such as 'Home', or an in
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_3, S_key_binding, "a boolean");
 
   k = key_name_to_key(key, S_key_binding);
-  s = XEN_TO_C_INT_OR_ELSE(state, 0) & 0xfffe; /* no shift bit */
+  s = ((XEN_INTEGER_P(state)) ? XEN_TO_C_INT(state) : 0) & 0xfffe; /* no shift bit */
   check_for_key_error(k, s, S_key_binding);
   i = in_keymap(k, s, XEN_TRUE_P(cx_extended));
   if (i >= 0) 

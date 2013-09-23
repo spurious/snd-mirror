@@ -3148,7 +3148,7 @@ channel number in the sound that contains the channel being played."
   dp = add_channel_to_play_list(cp,
 				sp, /* this is not cp->sound! */
 				beg_to_sample(start, S_add_player),
-				XEN_TO_C_LONG_LONG_OR_ELSE(end, NO_END_SPECIFIED),
+				(XEN_LONG_LONG_P(end)) ? XEN_TO_C_LONG_LONG(end) : NO_END_SPECIFIED,
 				pos,
 				ochan);
   if (dp == NULL) return(XEN_FALSE);
@@ -3166,18 +3166,18 @@ static XEN g_start_playing(XEN Chans, XEN Srate, XEN In_Background)
   #define H_start_playing "(" S_start_playing " :optional (chans 1) (srate 44100) (in-background " PROC_TRUE ")): \
 If a play-list is waiting, start it."
 
-  int chans, srate;
+  int chans = 1, srate = 44100;
   bool back;
 
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(Chans), Chans, XEN_ARG_1, S_start_playing, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(Srate), Srate, XEN_ARG_2, S_start_playing, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(Srate), Srate, XEN_ARG_2, S_start_playing, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(In_Background), In_Background, XEN_ARG_3, S_start_playing, "a boolean");
 
-  chans = XEN_TO_C_INT_OR_ELSE(Chans, 1);
+  if (XEN_INTEGER_P(Chans)) chans = XEN_TO_C_INT(Chans);
   if ((chans <= 0) || (chans > 256))
     XEN_OUT_OF_RANGE_ERROR(S_start_playing, 1, Chans, "chans <= 0 or > 256?");
 
-  srate = XEN_TO_C_INT_OR_ELSE(Srate, 44100);
+  if (XEN_INTEGER_P(Srate)) srate = XEN_TO_C_INT(Srate);
   if (srate <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_start_playing, 2, Srate, "srate <= 0?");
 
@@ -3254,8 +3254,8 @@ static XEN g_set_dac_size(XEN val)
 {
   #define H_dac_size "(" S_dac_size "): the current DAC buffer size in frames (256)"
   int len;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_dac_size, "a number");
-  len = XEN_TO_C_INT_OR_ELSE(val, 0);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_dac_size, "an integer");
+  len = XEN_TO_C_INT(val);
   if (len > 0)
     set_dac_size(len); /* macro in snd-0.h */
   return(C_TO_XEN_INT(dac_size(ss)));

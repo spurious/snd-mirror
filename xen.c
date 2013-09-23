@@ -105,41 +105,6 @@ void xen_initialize(void)
 }
 
 
-off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
-{
-  if (XEN_OFF_T_P(obj))
-    return(XEN_TO_C_LONG_LONG(obj));
-  else
-    if (XEN_NUMBER_P(obj))
-      return((off_t)XEN_TO_C_DOUBLE(obj));
-  return(fallback);
-}
-
-
-off_t xen_to_c_off_t(XEN obj)
-{
-  return(XEN_TO_C_LONG_LONG(obj));
-}
-
-
-XEN c_to_xen_off_t(off_t val)
-{
-    return(C_TO_XEN_LONG_LONG(val));
-}
-
-
-int xen_to_c_int_or_else(XEN obj, int fallback)
-{
-  /* don't want errors about floats with non-zero fractions etc */
-  if (XEN_INTEGER_P(obj))
-    return(XEN_TO_C_INT(obj));
-  else
-    if (XEN_NUMBER_P(obj))
-      return((int)XEN_TO_C_DOUBLE(obj));
-  return(fallback);
-}
-
-
 void xen_gc_mark(XEN val)
 {
   rb_gc_mark(val);
@@ -693,20 +658,6 @@ XEN xen_rb_str_new2(char *arg)
 }
 
 
-double xen_rb_to_c_double_or_else(XEN a, double b) 
-{
-  return(XEN_NUMBER_P(a) ? NUM2DBL(a) : b);
-}
-
-
-int xen_rb_to_c_int_or_else(XEN a, int b) 
-{
-  if (XEN_INTEGER_P(a)) return(FIX2INT(a));
-  if (XEN_NUMBER_P(a)) return((int)(NUM2DBL(a)));
-  return(b);
-}
-
-
 /* class Hook */
  
 static XEN xen_rb_cHook;
@@ -870,10 +821,11 @@ XEN xen_rb_add_hook(XEN hook, VALUE (*func)(), const char *name, const char* doc
    *   this doesn't work in g++ because it thinks the funcs are invalid:
    *   "error: invalid conversion from 'VALUE (*)(VALUE, VALUE)' to 'VALUE (*)(...)'" (snd-file.c etc)
    */ 
-  XEN var; 
+  XEN var, avar; 
   char *temp; 
   temp = xen_scheme_procedure_to_ruby(name); 
-  rb_define_module_function(rb_mKernel, temp, XEN_PROCEDURE_CAST func, XEN_TO_C_INT_OR_ELSE(rb_iv_get(hook, "@arity"), 0)); 
+  avar = rb_iv_get(hook, "@arity");
+  rb_define_module_function(rb_mKernel, temp, XEN_PROCEDURE_CAST func, (XEN_INTEGER_P(avar)) ? XEN_TO_C_INT(avar) : 0); 
   if (doc) C_SET_OBJECT_HELP(temp, doc); 
   var = rb_intern(temp); 
   rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, C_TO_XEN_STRING(temp), var)); 
@@ -1303,26 +1255,6 @@ void xen_gc_mark(XEN val)
 void xen_repl(int argc, char **argv)
 {
   fth_repl(argc, argv);
-}
-
-
-off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
-{
-  if (XEN_NUMBER_P(obj))
-    return(fth_long_long_ref(obj));
-  return(fallback);
-}
-
-
-off_t xen_to_c_off_t(XEN obj)
-{
-  return(fth_long_long_ref(obj));
-}
-
-
-XEN c_to_xen_off_t(off_t obj)
-{
-  return(fth_make_long_long(obj));
 }
 
 
@@ -1873,7 +1805,7 @@ static XEN g_tmpnam(void)
 
 static XEN g_ftell(XEN fd)
 {
-  return(C_TO_XEN_OFF_T(lseek(XEN_TO_C_INT(fd), 0, SEEK_CUR)));
+  return(C_TO_XEN_INT(lseek(XEN_TO_C_INT(fd), 0, SEEK_CUR)));
 }
 
 
@@ -2020,30 +1952,6 @@ void xen_initialize(void)
 
 void xen_gc_mark(XEN val)
 {
-}
-
-
-int xen_to_c_int_or_else(XEN obj, int fallback)
-{
-  return(fallback);
-}
-
-
-off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
-{
-  return(0);
-}
-
-
-off_t xen_to_c_off_t(XEN obj)
-{
-  return(0);
-}
-
-
-XEN c_to_xen_off_t(off_t val)
-{
-  return(XEN_ZERO);
 }
 
 

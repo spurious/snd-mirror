@@ -3446,8 +3446,9 @@ static XEN g_set_default_output_srate(XEN val)
 {
   #define MAX_OUTPUT_SRATE 1000000000
   #define H_default_output_srate "(" S_default_output_srate "): default srate when a new or temporary file is created (22050)" 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_srate, "a number"); 
-  set_default_output_srate(mus_iclamp(1, XEN_TO_C_INT_OR_ELSE(val, 0), MAX_OUTPUT_SRATE));
+
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_srate, "an integer"); 
+  set_default_output_srate(mus_iclamp(1, XEN_TO_C_INT(val), MAX_OUTPUT_SRATE));
   return(C_TO_XEN_INT(default_output_srate(ss)));
 }
 

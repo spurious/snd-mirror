@@ -6509,7 +6509,7 @@ associated with snd's channel chn; the returned value is a list (origin type sta
   cp = get_cp(snd, chn, S_edit_fragment);
   if (!cp) return(XEN_FALSE);
 
-  ctr = XEN_TO_C_INT_OR_ELSE(uctr, cp->edit_ctr);
+  ctr = (XEN_INTEGER_P(uctr)) ? XEN_TO_C_INT(uctr) : cp->edit_ctr;
   if ((ctr < cp->edit_size) && 
       (ctr >= 0))
     {
@@ -6876,7 +6876,7 @@ static XEN g_make_region_sampler(XEN reg, XEN samp_n, XEN chn, XEN dir1)
 return a reader ready to access region's channel chn data starting at start-samp going in direction dir"
 
   snd_fd *fd = NULL;
-  int reg_n, chn_n;
+  int reg_n, chn_n = 0;
   mus_long_t beg;
   int direction = 1;
 
@@ -6891,12 +6891,12 @@ return a reader ready to access region's channel chn data starting at start-samp
 	      XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sampler ": no such region: ~A"),
                          reg));
 
-  chn_n = XEN_TO_C_INT_OR_ELSE(chn, 0);
+  if (XEN_INTEGER_P(chn)) chn_n = XEN_TO_C_INT(chn);
   if ((chn_n < 0) || (chn_n >= region_chans(reg_n)))
     return(snd_no_such_channel_error(S_make_region_sampler, XEN_LIST_1(reg), chn));
 
   beg = beg_to_sample(samp_n, S_make_region_sampler);
-  direction = XEN_TO_C_INT_OR_ELSE(dir1, 1);
+  if (XEN_INTEGER_P(dir1)) direction = XEN_TO_C_INT(dir1);
 
   if (direction == 1)
     fd = init_region_read(beg, reg_n, chn_n, READ_FORWARD);
@@ -6931,7 +6931,7 @@ forward, -1 = backward), reading the version of the data indicated by edpos whic
 snd can be a filename, a mix, a region, or a sound index number."
 
   snd_fd *fd = NULL;
-  int chan, edpos, direction = 1; /* in Scheme 1=forward, -1=backward */
+  int chan = 0, edpos, direction = 1; /* in Scheme 1=forward, -1=backward */
   chan_info *cp;
   const char *filename;
   snd_info *loc_sp = NULL;
@@ -6953,7 +6953,7 @@ snd can be a filename, a mix, a region, or a sound index number."
       if (mus_file_probe(filename))
 	loc_sp = make_sound_readable(filename, false);
       else return(snd_no_such_file_error(S_make_sampler, snd));
-      chan = XEN_TO_C_INT_OR_ELSE(chn, 0);
+      if (XEN_INTEGER_P(chn)) chan = XEN_TO_C_INT(chn);
       if ((chan < 0) || 
 	  (chan >= loc_sp->nchans))
 	{
@@ -6970,7 +6970,7 @@ snd can be a filename, a mix, a region, or a sound index number."
     }
 
   edpos = to_c_edit_position(cp, pos, S_make_sampler, 5);
-  direction = XEN_TO_C_INT_OR_ELSE(dir1, 1);
+  if (XEN_INTEGER_P(dir1)) direction = XEN_TO_C_INT(dir1);
   beg = beg_to_sample(samp_n, S_make_sampler);
 
   if (direction == 1)
@@ -8059,7 +8059,7 @@ the new data's end."
       if (!mus_file_probe(fname))
 	return(snd_no_such_file_error(caller, vect));
 
-      inchan = XEN_TO_C_INT_OR_ELSE(infile_chan, 0);
+      if (XEN_INTEGER_P(infile_chan)) inchan = XEN_TO_C_INT(infile_chan);
       if ((inchan < 0) ||
 	  (inchan >= mus_sound_chans(fname)))
 	XEN_ERROR(NO_SUCH_CHANNEL,
@@ -8330,7 +8330,7 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
 {
   chan_info *cp;
   int pos;
-  mus_long_t beg, len;
+  mus_long_t beg, len = 0;
 
   XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samp_0), samp_0, XEN_ARG_1, S_change_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samps), samps, XEN_ARG_2, S_change_samples_with_origin, "an integer");
@@ -8342,7 +8342,7 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
   if (!cp) return(XEN_FALSE);
 
   beg = beg_to_sample(samp_0, S_change_samples_with_origin);
-  len = XEN_TO_C_LONG_LONG_OR_ELSE(samps, 0);
+  if (XEN_LONG_LONG_P(samps)) len = XEN_TO_C_LONG_LONG(samps);
   if (len <= 0) return(XEN_FALSE);
 
   pos = to_c_edit_position(cp, edpos, S_change_samples_with_origin, 7);
@@ -8807,11 +8807,11 @@ static XEN g_snd_to_sample(XEN os, XEN frame, XEN chan)
 {
   #define H_snd_to_sample "(" S_snd_to_sample " gen frame chan): input sample (via snd->sample gen) at frame in channel chan"
   XEN_ASSERT_TYPE((mus_xen_p(os)) && (snd_to_sample_p(XEN_TO_MUS_ANY(os))), os, XEN_ARG_1, S_snd_to_sample, "a " S_snd_to_sample " gen");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_2, S_snd_to_sample, "a number");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(frame), frame, XEN_ARG_2, S_snd_to_sample, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_3, S_snd_to_sample, "an integer");
   return(C_TO_XEN_DOUBLE(snd_to_sample_read((mus_any *)XEN_TO_MUS_ANY(os), 
 					    XEN_TO_C_LONG_LONG(frame), 
-					    XEN_TO_C_INT_OR_ELSE(chan, 0))));
+					    (XEN_INTEGER_P(chan)) ? XEN_TO_C_INT(chan) : 0)));
 }
 
 

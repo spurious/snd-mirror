@@ -10,11 +10,12 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 17
-#define XEN_VERSION "3.17"
+#define XEN_MINOR_VERSION 18
+#define XEN_VERSION "3.18"
 
 /* HISTORY:
  *
+ *  23-Sep:    removed *_OR_ELSE and OFF_T* macros.
  *  7-Jul-13:  removed int64 stuff (it was not used anywhere). Made various Ruby changes (NUM2ULL etc).
  *  -------- 
  *  5-Nov:     minor s7-related changes.
@@ -196,14 +197,12 @@
   #define XEN_NUMBER_P(Arg)             ({ int _xen_h_8_ = TYPE(Arg);  ((_xen_h_8_ == T_FLOAT) || (_xen_h_8_ == T_FIXNUM) || (_xen_h_8_ == T_BIGNUM)); })
   #define XEN_INTEGER_P(Arg)            ({ int _xen_h_9_ = TYPE(Arg);  ((_xen_h_9_ == T_FIXNUM) || (_xen_h_9_ == T_BIGNUM)); })
   #define XEN_PROCEDURE_P(Arg)          ({ XEN _xen_h_10_ = Arg;       (XEN_BOUND_P(_xen_h_10_) && (rb_obj_is_kind_of(_xen_h_10_, rb_cProc))); })
-  #define XEN_OFF_T_P(Arg)              ({ int _xen_h_11_ = TYPE(Arg); ((_xen_h_11_ == T_FIXNUM) || (_xen_h_11_ == T_BIGNUM)); })
   #define XEN_KEYWORD_P(Obj)            ({ XEN _xen_h_12_ = Obj;       (XEN_BOUND_P(_xen_h_12_) && SYMBOL_P(_xen_h_12_)); })
 #else
   #define XEN_BOOLEAN_P(Arg)            (XEN_TRUE_P(Arg) || XEN_FALSE_P(Arg))
   #define XEN_NUMBER_P(Arg)             ((TYPE(Arg) == T_FLOAT) || (TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
   #define XEN_INTEGER_P(Arg)            ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
   #define XEN_PROCEDURE_P(Arg)          (XEN_BOUND_P(Arg) && (rb_obj_is_kind_of(Arg, rb_cProc)))
-  #define XEN_OFF_T_P(Arg)              ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
   #define XEN_KEYWORD_P(Obj)            (XEN_BOUND_P(Obj) && SYMBOL_P(Obj))
 #endif
 
@@ -247,14 +246,8 @@
 #define XEN_ZERO                        INT2NUM(0)
 #define XEN_DOUBLE_P(Arg)               XEN_NUMBER_P(Arg)
 #define XEN_TO_C_DOUBLE(a)              NUM2DBL(a)
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ({ XEN _xen_h_4_ = a; (XEN_NUMBER_P(_xen_h_4_) ? NUM2DBL(_xen_h_4_) : b); })
-#else
-  #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) xen_rb_to_c_double_or_else(a, b)
-#endif
 #define C_TO_XEN_DOUBLE(a)              rb_float_new(a)
 #define XEN_TO_C_INT(a)                 rb_num2long(a)
-#define XEN_TO_C_INT_OR_ELSE(a, b)      xen_rb_to_c_int_or_else(a, b)
 
 /* apparently no complex numbers (built-in) in Ruby? */
 #define XEN_COMPLEX_P(Arg)              1
@@ -683,8 +676,6 @@ XEN xen_rb_copy_list(XEN val);
 XEN xen_rb_str_new2(char *arg);
 void xen_add_help(char *name, const char *help);
 char *xen_help(char *name);
-double xen_rb_to_c_double_or_else(XEN a, double b);
-int xen_rb_to_c_int_or_else(XEN a, int b);
 /* class Hook */
 bool xen_rb_hook_p(XEN hook);
 bool xen_rb_hook_empty_p(XEN hook);
@@ -767,7 +758,6 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_INTEGER_P(Arg)              FTH_INTEGER_P(Arg)
 #define C_TO_XEN_INT(a)                 fth_make_int(a)
 #define XEN_TO_C_INT(a)                 fth_int_ref(a)
-#define XEN_TO_C_INT_OR_ELSE(a, b)      fth_int_ref_or_else(a, b)
 
 #define XEN_ULONG_P(Arg)                FTH_UNSIGNED_P(Arg)
 #define C_TO_XEN_ULONG(a)               fth_make_unsigned((unsigned long)(a))
@@ -777,14 +767,12 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_TO_C_ULONG_LONG(Arg)        fth_ulong_long_ref(Arg) 
 #define C_TO_XEN_ULONG_LONG(Arg)        fth_make_ulong_long((unsigned long long)Arg) 
 
-#define XEN_OFF_T_P(Arg)                FTH_LONG_LONG_P(Arg)
 #define C_TO_XEN_LONG_LONG(a)           fth_make_long_long(a)
 #define XEN_TO_C_LONG_LONG(a)           fth_long_long_ref(a)
 
 #define XEN_DOUBLE_P(Arg)               FTH_FLOAT_P(Arg)
 #define C_TO_XEN_DOUBLE(a)              fth_make_float(a)
 #define XEN_TO_C_DOUBLE(a)              fth_float_ref(a)
-#define XEN_TO_C_DOUBLE_OR_ELSE(a, b)   fth_float_ref_or_else(a, b)
 
 #if HAVE_COMPLEX_NUMBERS
 # define XEN_COMPLEX_P(Arg)             FTH_NUMBER_P(Arg) 
@@ -1088,7 +1076,6 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_INTEGER_P(Arg)                         s7_is_integer(Arg)
 #define C_TO_XEN_INT(Arg)                          s7_make_integer(s7, Arg)
 #define XEN_TO_C_INT(Arg)                          ((int)s7_number_to_integer(s7, Arg))
-#define XEN_TO_C_INT_OR_ELSE(Arg, Def)             ((XEN_INTEGER_P(Arg)) ? XEN_TO_C_INT(Arg) : Def)
 
 #define XEN_ULONG_P(Arg)                           s7_is_ulong(Arg)
 #define XEN_TO_C_ULONG(Arg)                        s7_ulong(Arg)
@@ -1101,17 +1088,11 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define C_TO_XEN_LONG_LONG(Arg)                    s7_make_integer(s7, Arg)
 #define XEN_TO_C_LONG_LONG(Arg)                    s7_integer(Arg)
 
-#define XEN_OFF_T_P(Arg)                           XEN_INTEGER_P(Arg)
-#define XEN_TO_C_OFF_T_OR_ELSE(Arg, Def)           ((XEN_INTEGER_P(Arg)) ? s7_integer(Arg) : Def)
-#define C_TO_XEN_OFF_T(Arg)                        C_TO_XEN_INT(Arg)
-#define XEN_TO_C_OFF_T(Arg)                        s7_integer(Arg)
-
 #define XEN_NUMBER_P(Arg)                          s7_is_real(Arg) /* !! throughout xen, we're assuming no complex number! -- s7_is_number(Arg) */
 #define XEN_EXACT_P(Arg)                           s7_is_exact(Arg)
 
 #define XEN_DOUBLE_P(Arg)                          s7_is_real(Arg)
 #define XEN_TO_C_DOUBLE(Arg)                       ((double)s7_number_to_real(s7, Arg))
-#define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          ((double)s7_number_to_real(s7, Arg))
 #define C_TO_XEN_DOUBLE(Arg)                       s7_make_real(s7, Arg)
 
 #if HAVE_COMPLEX_NUMBERS
@@ -1357,15 +1338,12 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define C_STRING_TO_XEN_SYMBOL(a) 0
 #define XEN_ZERO 0
 #define XEN_NUMBER_P(Arg) 0
-#define XEN_OFF_T_P(Arg) 0
 #define XEN_DOUBLE_P(Arg) 0
 #define XEN_TO_C_DOUBLE(a) 0.0
-#define XEN_TO_C_DOUBLE_OR_ELSE(a, b) b
 #define C_TO_XEN_DOUBLE(a) 0
 #define XEN_INTEGER_P(Arg) 0
 #define C_TO_XEN_INT(a) a
 #define XEN_TO_C_INT(a) 0
-#define XEN_TO_C_INT_OR_ELSE(a, b) b
 #define XEN_COMPLEX_P(Arg) 0
 #define XEN_TO_C_COMPLEX(a) 0.0
 #define C_TO_XEN_COMPLEX(a) a
@@ -1514,7 +1492,6 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define XEN_BOOLEAN_IF_BOUND_P(Arg)            ({ XEN _xen_h_14_ = Arg; ((XEN_BOOLEAN_P(_xen_h_14_))   || (XEN_NOT_BOUND_P(_xen_h_14_))); })
   #define XEN_INTEGER_IF_BOUND_P(Arg)            ({ XEN _xen_h_15_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_15_)) || (XEN_INTEGER_P(_xen_h_15_))); })
-  #define XEN_OFF_T_IF_BOUND_P(Arg)              ({ XEN _xen_h_15_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_15_)) || (XEN_OFF_T_P(_xen_h_15_))); })
   #define XEN_NUMBER_IF_BOUND_P(Arg)             ({ XEN _xen_h_16_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_16_)) || (XEN_NUMBER_P(_xen_h_16_))); })
   #define XEN_STRING_IF_BOUND_P(Arg)             ({ XEN _xen_h_17_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_17_)) || (XEN_STRING_P(_xen_h_17_))); })
   #define XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ({ XEN _xen_h_18_ = Arg; ((XEN_BOOLEAN_P(_xen_h_18_))   || (XEN_NOT_BOUND_P(_xen_h_18_)) || (XEN_INTEGER_P(_xen_h_18_))); })
@@ -1522,16 +1499,18 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #else
   #define XEN_BOOLEAN_IF_BOUND_P(Arg)            ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)))
   #define XEN_INTEGER_IF_BOUND_P(Arg)            ((XEN_NOT_BOUND_P(Arg)) || (XEN_INTEGER_P(Arg)))
-  #define XEN_OFF_T_IF_BOUND_P(Arg)              ((XEN_NOT_BOUND_P(Arg)) || (XEN_OFF_T_P(Arg)))
   #define XEN_NUMBER_IF_BOUND_P(Arg)             ((XEN_NOT_BOUND_P(Arg)) || (XEN_NUMBER_P(Arg)))
   #define XEN_STRING_IF_BOUND_P(Arg)             ((XEN_NOT_BOUND_P(Arg)) || (XEN_STRING_P(Arg)))
   #define XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)) || (XEN_INTEGER_P(Arg)))
   #define XEN_INTEGER_OR_BOOLEAN_P(Arg)          ((XEN_BOOLEAN_P(Arg))   || (XEN_INTEGER_P(Arg)))
 #endif
 
-#define XEN_LONG_LONG_P(Arg) XEN_OFF_T_P(Arg)
-#define XEN_LONG_LONG_IF_BOUND_P(Arg) XEN_OFF_T_IF_BOUND_P(Arg)
-#define XEN_TO_C_LONG_LONG_OR_ELSE(Arg, Def) XEN_TO_C_OFF_T_OR_ELSE(Arg, Def)
+#if (!HAVE_FORTH)
+#define XEN_LONG_LONG_P(Arg) XEN_INTEGER_P(Arg)
+#else
+#define XEN_LONG_LONG_T_P(Arg)          FTH_LONG_LONG_P(Arg)
+#endif
+#define XEN_LONG_LONG_IF_BOUND_P(Arg)   ((XEN_NOT_BOUND_P(Arg)) || (XEN_LONG_LONG_P(Arg)))
 
 #define XEN_ONLY_ARG 1
 
@@ -1547,9 +1526,6 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define XEN_ARG_10   10
 
 #if (!HAVE_SCHEME)
-  #define XEN_TO_C_OFF_T_OR_ELSE(a, b)   xen_to_c_off_t_or_else(a, b)
-  #define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
-  #define XEN_TO_C_OFF_T(a)             xen_to_c_off_t(a)
   #define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))
   #define XEN_VECTOR_RANK(Vect)         1
 #else
@@ -1597,13 +1573,6 @@ extern "C" {
 #endif
 
 char *xen_strdup(const char *str);
-
-#if (!HAVE_SCHEME)
-  int xen_to_c_int_or_else(XEN obj, int fallback);
-  off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback);
-  off_t xen_to_c_off_t(XEN obj);
-  XEN c_to_xen_off_t(off_t val);
-#endif
 
 char *xen_version(void);
 void xen_repl(int argc, char **argv);

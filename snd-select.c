@@ -1510,8 +1510,8 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
   chan_info *cp;
   mus_long_t len;
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_1, S_setB S_selection_frames, "a number");
-  len = XEN_TO_C_LONG_LONG_OR_ELSE(samps, 0);
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samps), samps, XEN_ARG_1, S_setB S_selection_frames, "an integer");
+  len = XEN_TO_C_LONG_LONG(samps);
   if (len <= 0)
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_selection_frames, XEN_ARG_1, samps, "a positive integer");
   if (XEN_NOT_BOUND_P(snd))

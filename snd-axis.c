@@ -1501,10 +1501,7 @@ static axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
   return(NULL);
 }
 
-#define TO_C_AXIS_INFO(Snd, Chn, Ap, Caller)	\
-  get_ap(get_cp(Snd, Chn, Caller),				     \
-         (axis_info_t)XEN_TO_C_INT_OR_ELSE(Ap, (int)TIME_AXIS_INFO), \
-         Caller)
+#define TO_C_AXIS_INFO(Snd, Chn, Ap, Caller) get_ap(get_cp(Snd, Chn, Caller), (XEN_INTEGER_P(Ap)) ? (axis_info_t)XEN_TO_C_INT(Ap) : (int)TIME_AXIS_INFO, Caller)
 
 
 static XEN g_x_to_position(XEN val, XEN snd, XEN chn, XEN ap)

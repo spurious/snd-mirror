@@ -306,8 +306,8 @@ static graphics_context *get_ax_no_cr(chan_info *cp, int ax_id, const char *call
 #endif
 
 
-#define TO_C_AXIS_CONTEXT(Snd, Chn, Ax, Caller, Cr) get_ax(get_cp(Snd, Chn, Caller), XEN_TO_C_INT_OR_ELSE(Ax, (int)CHAN_GC), Caller, Cr)
-#define TO_C_AXIS_CONTEXT_NO_CR(Snd, Chn, Ax, Caller) get_ax_no_cr(get_cp(Snd, Chn, Caller), XEN_TO_C_INT_OR_ELSE(Ax, (int)CHAN_GC), Caller)
+#define TO_C_AXIS_CONTEXT(Snd, Chn, Ax, Caller, Cr) get_ax(get_cp(Snd, Chn, Caller), (XEN_INTEGER_P(Ax)) ? XEN_TO_C_INT(Ax) : (int)CHAN_GC, Caller, Cr)
+#define TO_C_AXIS_CONTEXT_NO_CR(Snd, Chn, Ax, Caller) get_ax_no_cr(get_cp(Snd, Chn, Caller), (XEN_INTEGER_P(Ax)) ? XEN_TO_C_INT(Ax) : (int)CHAN_GC, Caller)
 
 
 static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax, XEN xcr)
@@ -476,7 +476,7 @@ static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
   draw_points(ax1,
 	      pack_pts, 
 	      vlen,
-	      XEN_TO_C_INT_OR_ELSE(size, 1));
+	      (XEN_INTEGER_P(size)) ? XEN_TO_C_INT(size) : 1);
 
   free(pack_pts);
   return(pts);
@@ -568,7 +568,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   cp = get_cp(snd, chn, S_foreground_color);
   if (!cp) return(XEN_FALSE);
 
-  ax = get_ax_no_cr(cp, XEN_TO_C_INT_OR_ELSE(xax, (int)CHAN_GC), S_foreground_color);
+  ax = get_ax_no_cr(cp, (XEN_INTEGER_P(xax)) ? XEN_TO_C_INT(xax) : (int)CHAN_GC, S_foreground_color);
   return(XEN_WRAP_PIXEL(get_foreground_color(ax)));
 }
 
@@ -584,7 +584,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   cp = get_cp(snd, chn, S_setB S_foreground_color);
   if (!cp) return(XEN_FALSE);
 
-  set_foreground_color(get_ax_no_cr(cp, XEN_TO_C_INT_OR_ELSE(ax, (int)CHAN_GC), S_setB S_foreground_color),
+  set_foreground_color(get_ax_no_cr(cp, (XEN_INTEGER_P(ax)) ? XEN_TO_C_INT(ax) : (int)CHAN_GC, S_setB S_foreground_color),
 		       XEN_UNWRAP_PIXEL(color));
   return(color);
 }
@@ -623,7 +623,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
   cp = get_cp(snd, chn, S_current_font);
   if (!cp) return(XEN_FALSE);
 
-  ax = get_ax_no_cr(cp, XEN_TO_C_INT_OR_ELSE(ax_id, (int)CHAN_GC), S_current_font);
+  ax = get_ax_no_cr(cp, (XEN_INTEGER_P(ax_id)) ? XEN_TO_C_INT(ax_id) : (int)CHAN_GC, S_current_font);
   if (ax->current_font == 0)
     {
       if ((cp->axis) && (cp->axis->ax))
@@ -692,8 +692,8 @@ return either a vct (if the graph has one trace), or a list of two vcts (the two
 
   return(make_graph_data(cp,
 			 to_c_edit_position(cp, edpos, S_make_graph_data, 3),
-			 XEN_TO_C_LONG_LONG_OR_ELSE(lo, -1),
-			 XEN_TO_C_LONG_LONG_OR_ELSE(hi, -1)));
+			 (XEN_LONG_LONG_P(lo)) ? XEN_TO_C_LONG_LONG(lo) : -1,
+			 (XEN_LONG_LONG_P(hi)) ? XEN_TO_C_LONG_LONG(hi) : -1));
 }
 
 
@@ -731,13 +731,13 @@ data in the recipient's graph between points low and high in the drawing mode gr
   else v0 = xen_to_vct(data);
 
   draw_graph_data(cp, 
-		  XEN_TO_C_LONG_LONG_OR_ELSE(lo, -1),
-		  XEN_TO_C_LONG_LONG_OR_ELSE(hi, -1),
+		  (XEN_LONG_LONG_P(lo)) ? XEN_TO_C_LONG_LONG(lo) : -1,
+		  (XEN_LONG_LONG_P(hi)) ? XEN_TO_C_LONG_LONG(hi) : -1,
 		  mus_vct_length(v0),
 		  mus_vct_data(v0),
 		  (v1) ? (mus_vct_data(v1)) : NULL,
-		  get_ax(cp, XEN_TO_C_INT_OR_ELSE(ax, (int)CHAN_GC), S_graph_data, xcr),
-		  (graph_style_t)XEN_TO_C_INT_OR_ELSE(style, (int)(cp->time_graph_style)));
+		  get_ax(cp, (XEN_INTEGER_P(ax)) ? XEN_TO_C_INT(ax) : (int)CHAN_GC, S_graph_data, xcr),
+		  (XEN_INTEGER_P(style)) ? (graph_style_t)XEN_TO_C_INT(style) : cp->time_graph_style);
   return(data);
 }
 

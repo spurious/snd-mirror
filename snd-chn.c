@@ -6607,7 +6607,7 @@ static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
 static int g_imin(int mn, XEN val, int def)
 {
   int nval;
-  nval = XEN_TO_C_INT_OR_ELSE(val, def);
+  if (XEN_INTEGER_P(val)) nval = XEN_TO_C_INT(val); else nval = def;
   if (nval >= mn) return(nval);
   return(mn);
 }
@@ -6616,7 +6616,7 @@ static int g_imin(int mn, XEN val, int def)
 static int g_omin(mus_long_t mn, XEN val, mus_long_t def)
 {
   mus_long_t nval;
-  nval = XEN_TO_C_LONG_LONG_OR_ELSE(val, def);
+  if (XEN_LONG_LONG_P(val)) nval = XEN_TO_C_LONG_LONG(val); else nval = def;
   if (nval >= mn) return(nval);
   return(mn);
 }
@@ -6681,7 +6681,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
     case CP_EDIT_CTR:
       if (cp->editable)
 	{
-	  val = XEN_TO_C_INT_OR_ELSE(on, 0);
+	  if (XEN_INTEGER_P(on)) val = XEN_TO_C_INT(on); else val = 0;
 	  if (cp->edit_ctr < val)
 	    redo_edit(cp, val - cp->edit_ctr);
 	  else undo_edit(cp, cp->edit_ctr - val);
@@ -6705,8 +6705,8 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
 
     case CP_CURSOR:
       {
-	mus_long_t samp;
-	samp = XEN_TO_C_LONG_LONG_OR_ELSE(on, 0);
+	mus_long_t samp = 0;
+	if (XEN_LONG_LONG_P(on)) samp = XEN_TO_C_LONG_LONG(on);
 	if (samp < 0)
 	  {
 	    cp->cursor_on = false;
@@ -6724,9 +6724,9 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
     case CP_EDPOS_CURSOR:
       {
 	int pos;
-	mus_long_t samp;
+	mus_long_t samp = 0;
 	pos = to_c_edit_position(cp, cp_edpos, caller, 3);
-	samp = XEN_TO_C_LONG_LONG_OR_ELSE(on, 0);
+	if (XEN_LONG_LONG_P(on)) samp = XEN_TO_C_LONG_LONG(on);
 	if (samp < 0)
 	  {
 	    cp->cursor_on = false;
@@ -6964,19 +6964,19 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
       break;
 
     case CP_TIME_GRAPH_STYLE:
-      cp->time_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE(on, (int)DEFAULT_GRAPH_STYLE);
+      cp->time_graph_style = (XEN_INTEGER_P(on)) ? (graph_style_t)XEN_TO_C_INT(on) : (int)DEFAULT_GRAPH_STYLE;
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT((int)(cp->time_graph_style)));
       break;
 
     case CP_LISP_GRAPH_STYLE:
-      cp->lisp_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE(on, (int)DEFAULT_GRAPH_STYLE);
+      cp->lisp_graph_style = (XEN_INTEGER_P(on)) ? (graph_style_t)XEN_TO_C_INT(on) : (int)DEFAULT_GRAPH_STYLE;
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT((int)(cp->lisp_graph_style)));
       break;
 
     case CP_TRANSFORM_GRAPH_STYLE:
-      cp->transform_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE(on, (int)DEFAULT_GRAPH_STYLE);
+      cp->transform_graph_style = (XEN_INTEGER_P(on)) ? (graph_style_t)XEN_TO_C_INT(on) : (int)DEFAULT_GRAPH_STYLE;
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT((int)(cp->transform_graph_style)));
       break;
@@ -6989,7 +6989,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
 
     case CP_DOT_SIZE:
       cp->dot_size = mus_iclamp(MIN_DOT_SIZE, 
-				XEN_TO_C_INT_OR_ELSE(on, DEFAULT_DOT_SIZE), 
+				(XEN_INTEGER_P(on)) ? XEN_TO_C_INT(on) : DEFAULT_DOT_SIZE, 
 				MAX_DOT_SIZE); /* size > 17000 -> X segfault! */
       update_graph(cp);
       return(C_TO_XEN_INT(cp->dot_size));
@@ -7013,7 +7013,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
 	  bool need_update = true;
 	  /* if less than current, delete, else zero pad */
 	  curlen = CURRENT_SAMPLES(cp);
-	  newlen = XEN_TO_C_LONG_LONG_OR_ELSE(on, curlen);
+	  newlen = (XEN_LONG_LONG_P(on)) ? XEN_TO_C_LONG_LONG(on) : curlen;
 	  if (newlen < 0)
 	    XEN_OUT_OF_RANGE_ERROR(S_setB S_frames, 1, on, "frames < 0?");
 	  if (curlen > newlen)
@@ -8145,7 +8145,7 @@ static XEN g_set_spectro_hop(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectro_hop, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_SPECTRO_HOP, S_setB S_spectro_hop));
-  set_spectro_hop(XEN_TO_C_INT_OR_ELSE(val, 0));
+  set_spectro_hop((XEN_INTEGER_P(val)) ? XEN_TO_C_INT(val) : 0);
   return(C_TO_XEN_INT(spectro_hop(ss)));
 }
 
@@ -8410,7 +8410,7 @@ static XEN g_set_wavo_hop(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_wavo_hop, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_WAVO_HOP, S_setB S_wavo_hop));
-  set_wavo_hop(XEN_TO_C_INT_OR_ELSE(val, 0));
+  set_wavo_hop((XEN_INTEGER_P(val)) ? XEN_TO_C_INT(val) : 0);
   return(C_TO_XEN_INT(wavo_hop(ss)));
 }
 
@@ -8431,7 +8431,7 @@ static XEN g_set_wavo_trace(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_wavo_trace, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_WAVO_TRACE, S_setB S_wavo_trace));
-  set_wavo_trace(mus_iclamp(1, XEN_TO_C_INT_OR_ELSE(val, DEFAULT_WAVO_TRACE), POINT_BUFFER_SIZE));
+  set_wavo_trace(mus_iclamp(1, (XEN_INTEGER_P(val)) ? XEN_TO_C_INT(val) : DEFAULT_WAVO_TRACE, POINT_BUFFER_SIZE));
   return(C_TO_XEN_INT(wavo_trace(ss)));
 }
 
@@ -8768,7 +8768,7 @@ static XEN g_set_dot_size(XEN size, XEN snd, XEN chn)
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, size, CP_DOT_SIZE, S_setB S_dot_size));
   set_dot_size(mus_iclamp(MIN_DOT_SIZE, 
-			  XEN_TO_C_INT_OR_ELSE(size, DEFAULT_DOT_SIZE), 
+			  (XEN_INTEGER_P(size)) ? XEN_TO_C_INT(size) : DEFAULT_DOT_SIZE, 
 			  MAX_DOT_SIZE));
   return(C_TO_XEN_INT(dot_size(ss)));
 }
@@ -9520,10 +9520,10 @@ to a standard Snd channel graph placed in the widget 'container'."
   XEN_ASSERT_TYPE(XEN_WIDGET_P(container), container, XEN_ARG_1, S_make_variable_graph, "a widget");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name), name, XEN_ARG_2, S_make_variable_graph, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(length), length, XEN_ARG_3, S_make_variable_graph, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(srate), srate, XEN_ARG_4, S_make_variable_graph, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(srate), srate, XEN_ARG_4, S_make_variable_graph, "an integer");
 
-  rate = XEN_TO_C_INT_OR_ELSE(srate, (int)mus_srate());
-  initial_length = XEN_TO_C_INT_OR_ELSE(length, 8192);
+  rate = (XEN_INTEGER_P(srate)) ? XEN_TO_C_INT(srate) : (int)mus_srate();
+  initial_length = (XEN_INTEGER_P(length)) ? XEN_TO_C_INT(length) : 8192;
 
   sp = make_simple_channel_display(rate, initial_length, WITH_FW_BUTTONS, graph_style(ss), 
 				   (widget_t)(XEN_UNWRAP_WIDGET(container)), WITH_EVENTS);

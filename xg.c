@@ -1028,7 +1028,7 @@ XM_TYPE_NO_P_2(cairo_region_overlap_t, cairo_region_overlap_t)
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
 #define XLI(a, b) ((int)XEN_TO_C_INT(XEN_LIST_REF(a, b)))
-#define XLL(a, b) (XEN_TO_C_OFF_T(XEN_LIST_REF(a, b)))
+#define XLL(a, b) (XEN_TO_C_LONG_LONG(XEN_LIST_REF(a, b)))
 #define XLG(a, b) XEN_TO_C_GType(XEN_LIST_REF(a, b))
 #define XLT(a, b) XEN_TO_C_GtkTextTag_(XEN_LIST_REF(a, b))
 #define XLA(a, b) ((XEN_INTEGER_P(XEN_LIST_REF(a, b))) ? ((gpointer)XLL(a, b)) : ((XEN_STRING_P(XEN_LIST_REF(a, b))) ? ((gpointer)XLS(a, b)) : ((gpointer)XLG(a, b))))
@@ -31267,6 +31267,13 @@ static XEN gxg_gtk_label_get_lines(XEN label)
   return(C_TO_XEN_gint(gtk_label_get_lines(XEN_TO_C_GtkLabel_(label))));
 }
 
+static XEN gxg_gdk_event_get_window(XEN event)
+{
+  #define H_gdk_event_get_window "GdkWindow* gdk_event_get_window(GdkEvent* event)"
+  XEN_ASSERT_TYPE(XEN_GdkEvent__P(event), event, 1, "gdk_event_get_window", "GdkEvent*");
+  return(C_TO_XEN_GdkWindow_(gdk_event_get_window(XEN_TO_C_GdkEvent_(event))));
+}
+
 #endif
 
 #if (!HAVE_GTK_3)
@@ -38960,6 +38967,7 @@ XEN_NARGIFY_3(gxg_gtk_list_box_insert_w, gxg_gtk_list_box_insert)
 XEN_NARGIFY_2(gxg_gdk_window_set_opaque_region_w, gxg_gdk_window_set_opaque_region)
 XEN_NARGIFY_2(gxg_gtk_label_set_lines_w, gxg_gtk_label_set_lines)
 XEN_NARGIFY_1(gxg_gtk_label_get_lines_w, gxg_gtk_label_get_lines)
+XEN_NARGIFY_1(gxg_gdk_event_get_window_w, gxg_gdk_event_get_window)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -43065,6 +43073,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gdk_window_set_opaque_region_w gxg_gdk_window_set_opaque_region
 #define gxg_gtk_label_set_lines_w gxg_gtk_label_set_lines
 #define gxg_gtk_label_get_lines_w gxg_gtk_label_get_lines
+#define gxg_gdk_event_get_window_w gxg_gdk_event_get_window
 #endif
 
 #if (!HAVE_GTK_3)
@@ -47177,6 +47186,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_set_opaque_region, gxg_gdk_window_set_opaque_region_w, 2, 0, 0, H_gdk_window_set_opaque_region);
   XG_DEFINE_PROCEDURE(gtk_label_set_lines, gxg_gtk_label_set_lines_w, 2, 0, 0, H_gtk_label_set_lines);
   XG_DEFINE_PROCEDURE(gtk_label_get_lines, gxg_gtk_label_get_lines_w, 1, 0, 0, H_gtk_label_get_lines);
+  XG_DEFINE_PROCEDURE(gdk_event_get_window, gxg_gdk_event_get_window_w, 1, 0, 0, H_gdk_event_get_window);
 #endif
 
 #if (!HAVE_GTK_3)
@@ -50251,7 +50261,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("17-Sep-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("22-Sep-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

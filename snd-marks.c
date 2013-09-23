@@ -2133,7 +2133,7 @@ static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, const char *caller)
   chan_info *ncp[1];
   mark *m = NULL;
 
-  pos = XEN_TO_C_INT_OR_ELSE(pos_n, AT_CURRENT_EDIT_POSITION);
+  pos = (XEN_INTEGER_P(pos_n)) ? XEN_TO_C_INT(pos_n) : AT_CURRENT_EDIT_POSITION;
 
   m = find_mark_from_id(XEN_MARK_TO_C_INT(n), ncp, pos);
   if (m == NULL) 
@@ -2177,7 +2177,7 @@ static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, const char *caller)
     {
     case MARK_SAMPLE: 
       m->samp = mus_oclamp(0, 
-			   XEN_TO_C_LONG_LONG_OR_ELSE(val, 0),
+			   (XEN_LONG_LONG_P(val)) ? XEN_TO_C_LONG_LONG(val) : 0,
 			   CURRENT_SAMPLES(cp[0]));
       sort_marks(cp[0]); /* update and re-sort current mark list */
       run_mark_hook(cp[0], m->id, MARK_MOVE);
@@ -2284,7 +2284,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
   int pos;
   chan_info *cp = NULL;
 
-  XEN_ASSERT_TYPE((XEN_NUMBER_P(samp_n) || XEN_STRING_P(samp_n) || (XEN_FALSE_P(samp_n))), samp_n, XEN_ARG_1, S_find_mark, "a number or string or " PROC_FALSE);
+  XEN_ASSERT_TYPE((XEN_LONG_LONG_P(samp_n) || XEN_STRING_P(samp_n) || (XEN_FALSE_P(samp_n))), samp_n, XEN_ARG_1, S_find_mark, "an integer or string or " PROC_FALSE);
   ASSERT_CHANNEL(S_find_mark, snd, chn_n, 2); 
 
   cp = get_cp(snd, chn_n, S_find_mark);
@@ -2299,7 +2299,11 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
       const char *name = NULL;
       if (XEN_STRING_P(samp_n))
 	name = XEN_TO_C_STRING(samp_n);
-      else samp = XEN_TO_C_LONG_LONG_OR_ELSE(samp_n, 0);
+      else 
+	{
+	  if (XEN_LONG_LONG_P(samp_n))
+	    samp = XEN_TO_C_LONG_LONG(samp_n);
+	}
       if (name)
 	{
 	  for (i = 0; i <= cp->edits[pos]->mark_ctr; i++) 
@@ -2324,7 +2328,7 @@ static XEN g_add_mark_1(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync, bool
   #define H_add_mark "(" S_add_mark " samp :optional snd chn name (sync 0)): add a mark at sample samp returning the mark."
   mark *m = NULL;
   chan_info *cp;
-  mus_long_t loc;
+  mus_long_t loc = 0;
   int msync = 0;
   const char *mname = NULL;
 
@@ -2336,7 +2340,7 @@ static XEN g_add_mark_1(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync, bool
   cp = get_cp(snd, chn_n, S_add_mark);
   if (!cp) return(XEN_FALSE);
 
-  loc = XEN_TO_C_LONG_LONG_OR_ELSE(samp_n, 0);
+  if (XEN_LONG_LONG_P(samp_n)) loc = XEN_TO_C_LONG_LONG(samp_n);
 
   if ((!check_sample) &&
       (loc >= CURRENT_SAMPLES(cp)))

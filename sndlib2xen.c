@@ -820,14 +820,14 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(header_type), header_type, XEN_ARG_5, S_mus_sound_open_output, "a header-type or " PROC_FALSE);
   XEN_ASSERT_TYPE((XEN_STRING_P(comment) || (XEN_NOT_BOUND_P(comment))), comment, XEN_ARG_6, S_mus_sound_open_output, "a string");
 
-  df = XEN_TO_C_INT_OR_ELSE(data_format, (int)MUS_OUT_FORMAT);
+  df = (XEN_INTEGER_P(data_format)) ? XEN_TO_C_INT(data_format) : (int)MUS_OUT_FORMAT;
   if (mus_data_format_p(df))
     {
       int ht;
 #if MUS_LITTLE_ENDIAN
-      ht = XEN_TO_C_INT_OR_ELSE(header_type, (int)MUS_RIFF);
+      ht = (XEN_INTEGER_P(header_type)) ? XEN_TO_C_INT(header_type) : (int)MUS_RIFF;
 #else
-      ht = XEN_TO_C_INT_OR_ELSE(header_type, (int)MUS_NEXT);
+      ht = (XEN_INTEGER_P(header_type)) ? XEN_TO_C_INT(header_type) : (int)MUS_NEXT;
 #endif
       /* now check that data format and header type are ok together */
       if (mus_header_type_p(ht))
@@ -877,7 +877,7 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 				     C_TO_XEN_STRING(mus_data_format_name(df))));
 	    }
 
-	  chns = XEN_TO_C_INT_OR_ELSE(chans, 1);
+	  chns = (XEN_INTEGER_P(chans)) ? XEN_TO_C_INT(chans) : 1;
 	  if (chns > 0)
 	    {
 	      const char *com = NULL;
@@ -888,7 +888,7 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 		  str = mus_expand_filename(str);
 		  if (XEN_STRING_P(comment)) com = XEN_TO_C_STRING(comment);
 		  fd = mus_sound_open_output(str, 
-					     XEN_TO_C_INT_OR_ELSE(srate, 44100),  /* not DEFAULT_OUTPUT_SRATE here because that depends on Snd */
+					     (XEN_INTEGER_P(srate)) ? XEN_TO_C_INT(srate) : 44100,  /* not DEFAULT_OUTPUT_SRATE here because that depends on Snd */
 					     chns, df, ht, com);
 		  if (str) free(str);
 		}
@@ -1012,12 +1012,11 @@ that was opened by " S_mus_sound_open_output " after updating its header (if any
 
   int nfd;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_mus_sound_close_output, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(bytes), bytes, XEN_ARG_2, S_mus_sound_close_output, "a number");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(bytes), bytes, XEN_ARG_2, S_mus_sound_close_output, "an integer");
   nfd = XEN_TO_C_INT(fd);
   if ((nfd < 0) || (nfd == STDIN_FILENO) || (nfd == STDOUT_FILENO) || (nfd == STDERR_FILENO))
     XEN_OUT_OF_RANGE_ERROR(S_mus_sound_close_output, 1, fd, "invalid file number");
-  return(C_TO_XEN_INT(mus_sound_close_output(XEN_TO_C_INT(fd),
-					     XEN_TO_C_LONG_LONG_OR_ELSE(bytes, 0))));
+  return(C_TO_XEN_INT(mus_sound_close_output(XEN_TO_C_INT(fd), XEN_TO_C_LONG_LONG(bytes))));
 }
 
 
@@ -2189,7 +2188,7 @@ static XEN g_sound_data_to_vct(XEN sdobj, XEN chan, XEN vobj)
   sd = XEN_TO_SOUND_DATA(sdobj);
   sdlen = mus_sound_data_length(sd);
 
-  chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
+  chn = (XEN_INTEGER_P(chan)) ? XEN_TO_C_INT(chan) : 0;
   if (chn < 0)
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_to_vct, 2, chan, "invalid channel");
   if (chn >= mus_sound_data_chans(sd))
@@ -2226,7 +2225,7 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_3, S_vct_to_sound_data, "an integer");
 
   v = XEN_TO_VCT(vobj);
-  chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
+  chn = (XEN_INTEGER_P(chan)) ? XEN_TO_C_INT(chan) : 0;
   if (chn < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_to_sound_data, 3, chan, "invalid channel");
   if (!(SOUND_DATA_P(sdobj)))

@@ -1757,7 +1757,7 @@ XEN g_region_frames(XEN n, XEN chan)
 static XEN g_region_position(XEN n, XEN chan) 
 {
   region *r;
-  int rg, chn;
+  int rg, chn = 0;
   #define H_region_position "(" S_region_position " reg :optional (chan 0)): region's position in the original sound"
 
   XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ARG_1, S_region_position, "a region");
@@ -1767,7 +1767,7 @@ static XEN g_region_position(XEN n, XEN chan)
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_region_position, n));
 
-  chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
+  if (XEN_INTEGER_P(chan)) chn = XEN_TO_C_INT(chan);
   if ((chn < 0) || (chn >= region_chans(rg)))
     return(snd_no_such_channel_error(S_region_position, XEN_LIST_1(n), chan));
 
@@ -2093,14 +2093,14 @@ static XEN g_region_sample(XEN reg_n, XEN samp_n, XEN chn_n)
 {
   #define H_region_sample "(" S_region_sample " region samp :optional (chan 0)): region's sample at samp in chan"
 
-  int rg, chan;
+  int rg, chan = 0;
   mus_long_t samp;
 
   XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, XEN_ARG_1, S_region_sample, "a region");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(samp_n), samp_n, XEN_ARG_2, S_region_sample, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, XEN_ARG_3, S_region_sample, "an integer");
 
-  chan = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
+  if (XEN_INTEGER_P(chn_n)) chan = XEN_TO_C_INT(chn_n);
   rg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_region_sample, reg_n));
