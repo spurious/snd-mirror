@@ -15,7 +15,7 @@
 
 /* HISTORY:
  *
- *  23-Sep:    removed *_OR_ELSE and OFF_T* macros.
+ *  23-Sep:    removed *_OR_ELSE, XEN_ARG_*, and OFF_T* macros.
  *  7-Jul-13:  removed int64 stuff (it was not used anywhere). Made various Ruby changes (NUM2ULL etc).
  *  -------- 
  *  5-Nov:     minor s7-related changes.
@@ -1364,7 +1364,6 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define XEN_PROCEDURE_P(Arg) 0
 #define XEN_PROCEDURE_SOURCE(Func) 0
 
-/* error checking ... */
 #define XEN_ARGIFY_1(OutName, InName) static int OutName(void) {return(-1);}
 #define XEN_ARGIFY_2(OutName, InName) static int OutName(void) {return(-2);}
 #define XEN_ARGIFY_3(OutName, InName) static int OutName(void) {return(-3);}
@@ -1560,7 +1559,6 @@ extern "C" {
 #endif
 
 char *xen_strdup(const char *str);
-
 char *xen_version(void);
 void xen_repl(int argc, char **argv);
 void xen_initialize(void);
