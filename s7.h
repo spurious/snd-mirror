@@ -569,7 +569,7 @@ void s7_function_set_chooser(s7_scheme *sc, s7_pointer fnc,  s7_pointer (*choose
 void *s7_function_chooser_data(s7_scheme *sc, s7_pointer f);
 void *s7_function_chooser_data_direct(s7_pointer f);
 void s7_function_chooser_set_data(s7_scheme *sc, s7_pointer f, void *data);
-unsigned int s7_function_class(s7_pointer f);
+  /* unsigned int s7_function_class(s7_pointer f); */
 void s7_function_set_class(s7_pointer f, s7_pointer base_f);
 s7_function s7_function_choice(s7_scheme *sc, s7_pointer expr);
 

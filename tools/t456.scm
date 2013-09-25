@@ -14,7 +14,7 @@
 			1/0+i 0+0/0i 0+1/0i 1+0/0i 0/0+0i 0/0+0/0i 1+1/0i 0/0+i cons ''2 
 			1+i 1+1e10i 1e15+1e15i 0+1e18i 1e18 (integer->char 255) (string (integer->char 255)) 1e308 
 			most-positive-fixnum most-negative-fixnum (- most-positive-fixnum 1) (+ most-negative-fixnum 1)
-			-1 0 0.0 1 1.5 1.0+1.0i 3/4 #\null -63 (make-hash-table) ;(hash-table '(a . 2) '(b .3))
+			-1 0 0.0 1 1.5 1.0+1.0i 3/4 #\null -63 (make-hash-table) (hash-table '(a . 2) '(b .3))
 			'((1 2) (3 4)) '((1 (2)) (((3) 4))) '(()) "" (list #(1) "1") '(1 2 . 3)
 			#(1 2) (vector 1 '(3)) (let ((x 3)) (lambda (y) (+ x y))) abs (lambda args args) (lambda* ((a 3) (b 2)) (+ a b))
 			(augment-environment '() (cons 'a 1)) (current-environment) (global-environment)
@@ -40,8 +40,8 @@
 	 (catch #t 
 	   (lambda () 
 	     (let ((val (apply func args)))
-	       (if val
-		   (format data-file "(~S ~{~S~^ ~}) -> ~S~%" func args val))))
+	       (if (and val data-file)
+		   (format data-file "(~S~{ ~S~}) -> ~S~%" func args val))))
 	   (lambda any
 	     (if (or (eq? (car any) 'wrong-type-arg)
 		     (not (memq func (list map for-each /))))
@@ -58,8 +58,8 @@
 		  (lambda () 
 		    (set-car! p c)
 		    (let ((val (apply func c-args)))
-		      (if val
-			  (format data-file "(~S ~{~S~^ ~}) -> ~S~%" func c-args val))))
+		      (if (and val data-file)
+			  (format data-file "(~S~{ ~S~}) -> ~S~%" func c-args val))))
 		(lambda any 'error)))
 	    constants)
 	   
@@ -72,8 +72,7 @@
 (let ((st (symbol-table)))
   (do ((i 0 (+ i 1))) 
       ((= i (length st))
-       (s7-version)
-       (close-output-port data-file)
+       (if data-file (close-output-port data-file))
        (format #t "~%all done~%"))
     (let ((lst (st i)))
       (for-each 
@@ -95,6 +94,7 @@
 			     (set! low bottom)
 			     (if (zero? (cdr argn))
 				 (let ((val (f)))
-				   (if val (format data-file "(~S) -> ~S~%" sym val)))
+				   (if (and val data-file)
+				       (format data-file "(~S) -> ~S~%" sym val)))
 				 (autotest f () 0 top))))))))))
        lst))))

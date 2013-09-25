@@ -1817,10 +1817,6 @@ bool foreground_color_ok(XEN color, graphics_context *ax);
   void sgl_set_currents(bool with_dialogs);
 #endif
 
-#if USE_GTK
-  void recolor_everything(widget_t w, gpointer color);
-#endif
-
 
 /* -------- snd-ladspa.c -------- */
 #if HAVE_LADSPA

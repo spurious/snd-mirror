@@ -30701,12 +30701,17 @@ static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
 
 static int hash_float_location(s7_Double x)
 {
+  int loc;
   if ((is_inf(x)) || (is_NaN(x)))
     return(0);
 
   if (x < 0.0)
-    return(0.5 - x);
-  return(x + 0.5);
+    loc = 0.5 - x;
+  else loc = x + 0.5;
+
+  if (loc < 0)
+    return(-loc);
+  return(loc);
 }
 
 
@@ -30741,7 +30746,9 @@ static int hash_loc(s7_scheme *sc, s7_pointer key)
        */
 
     case T_RATIO:
-      return(denominator(key)); /* overflow possible */
+      loc = (int)denominator(key); /* overflow possible */
+      if (loc < 0) return(-loc);
+      return(loc);
 
     case T_COMPLEX:
       return(hash_float_location(real_part(key)));
@@ -31644,12 +31651,13 @@ static s7_pointer fallback_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
   return(f);
 }
 
-
+#if 0
 unsigned int s7_function_class(s7_pointer f)
 {
   /* not currently used */
   return(c_function_class(f));
 }
+#endif
 
 void s7_function_set_class(s7_pointer f, s7_pointer base_f)
 {
