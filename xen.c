@@ -1895,7 +1895,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_EVAL_C_STRING("(define (hook-remove hook func) \n\
                        (set! (hook-functions hook)\n\
 	                     (let loop ((l (hook-functions hook))\n\
-		                        (result '()))\n\
+		                        (result ()))\n\
 	                       (cond ((null? l) (reverse! result))\n\
 		                     ((eq? func (car l)) (loop (cdr l) result))\n\
 		                     (else (loop (cdr l) (cons (car l) result)))))))");

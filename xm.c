@@ -261,7 +261,7 @@
  * a sample program
 
 (let* ((shell-app (XtVaOpenApplication 
-		    "Test" 0 '() applicationShellWidgetClass
+		    "Test" 0 () applicationShellWidgetClass
 		    (list XmNallowShellResize #t)))
        (app (cadr shell-app))
        (shell (car shell-app))
@@ -281,7 +281,7 @@
 		  XmNrightAttachment  XmATTACH_FORM
 		  XmNallowResize      #t)))
 	 (button (XtCreateManagedWidget 
-		   "push me" xmPushButtonWidgetClass main-pane '() 0)))
+		   "push me" xmPushButtonWidgetClass main-pane () 0)))
     (XtAddCallback button XmNactivateCallback 
 		    (lambda (widget context event-info)
 		      (display widget)
@@ -306,7 +306,7 @@
  *    XtCallback procedure args are passed by value
  *    various "client data" args are optional
  *    XtCallbackLists are passed as lists of procedure/data pairs
- *    where explicit NULL is needed as arg, use #f (or '() for list args)
+ *    where explicit NULL is needed as arg, use #f (or () for list args)
  *
  * omitted:       
  *
@@ -7774,7 +7774,7 @@ static XEN gxm_XGetVisualInfo(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XGetVisualInfo "XVisualInfo *XGetVisualInfo(display, vinfo_mask, vinfo_template): returns a list of visual \
 structures that have attributes equal to the attributes specified by vinfo_template."
-  /* DIFF: XGetVisualInfo dpy mask template [nitems] -> '() or (list visual...)
+  /* DIFF: XGetVisualInfo dpy mask template [nitems] -> () or (list visual...)
    */
   XVisualInfo *v;
   int len;

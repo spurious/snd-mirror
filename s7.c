@@ -2799,7 +2799,7 @@ s7_pointer s7_eof_object(s7_scheme *sc)          /* returns #<eof> -- not equiva
 
 static s7_pointer g_not(s7_scheme *sc, s7_pointer args)
 {
-  #define H_not "(not obj) returns #t if obj is #f, otherwise #t: (not '()) -> #f"
+  #define H_not "(not obj) returns #t if obj is #f, otherwise #t: (not ()) -> #f"
   return(make_boolean(sc, is_false(sc, car(args))));
 }
 
@@ -2824,7 +2824,7 @@ s7_pointer s7_make_boolean(s7_scheme *sc, bool x)
 
 static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_boolean "(boolean? obj) returns #t if obj is #f or #t: (boolean? '()) -> #f"
+  #define H_is_boolean "(boolean? obj) returns #t if obj is #f or #t: (boolean? ()) -> #f"
   CHECK_BOOLEAN_METHOD(sc, car(args), s7_is_boolean, sc->BOOLEANP, args);
 }
 
@@ -8876,7 +8876,7 @@ static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
 
 static s7_pointer g_sharp_readers_set(s7_scheme *sc, s7_pointer args)
 {
-  /* new value must be either '() or a proper list of conses (char . func) */
+  /* new value must be either () or a proper list of conses (char . func) */
   if (is_null(cadr(args))) return(cadr(args));
   if (is_pair(cadr(args)))
     {
@@ -20136,7 +20136,7 @@ static s7_pointer g_string_1(s7_scheme *sc, s7_pointer args, s7_pointer sym)
 static s7_pointer g_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_string "(string chr...) appends all its character arguments into one string"
-  if (is_null(args))                                /* (string) but not (string '()) */
+  if (is_null(args))                                /* (string) but not (string ()) */
     return(s7_make_string_with_length(sc, "", 0));
   return(g_string_1(sc, args, sc->STRING));
 }
@@ -22648,7 +22648,7 @@ s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir)
 
 static s7_pointer g_load_path_set(s7_scheme *sc, s7_pointer args)
 {
-  /* new value must be either '() or a proper list of strings */
+  /* new value must be either () or a proper list of strings */
   if (is_null(cadr(args))) return(cadr(args));
   if (is_pair(cadr(args)))
     {
@@ -23963,7 +23963,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
     len = (-true_len + 1);
   else
     {
-      if (true_len == 0)               /* either '() or a circular list */
+      if (true_len == 0)               /* either () or a circular list */
 	{
 	  if (is_not_null(lst))
 	    len = circular_list_entries(lst);
@@ -25498,7 +25498,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		 *   (cons 1 2) is applicable: ((cons 1 2) 0) -> 1
 		 *   also there can be applicable objects that won't work in the map context (arg not integer etc)
 		 */
-		if (is_not_null(car(fdat->args)))               /* (format #f "~{~A ~}" '()) -> "" */
+		if (is_not_null(car(fdat->args)))               /* (format #f "~{~A ~}" ()) -> "" */
 		  {
 		    s7_pointer curly_arg;
 		    
@@ -26704,7 +26704,7 @@ s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a)
     }
 
   if (is_not_null(x))
-    p = cons(sc, x, sc->w);    /* ?? this means that (reverse '(1 2 . 3)) returns '(3 2 1) -- we used to return '() here */
+    p = cons(sc, x, sc->w);    /* ?? this means that (reverse '(1 2 . 3)) returns '(3 2 1) -- we used to return () here */
   else p = sc->w;
 
   sc->w = sc->NIL;
@@ -26772,7 +26772,7 @@ static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list) /* "safe
 }
 
 
-/* is this correct? (let ((x (list 1 2))) (eq? x (append '() x))) -> #t
+/* is this correct? (let ((x (list 1 2))) (eq? x (append () x))) -> #t
  */
 
 s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b) 
@@ -28101,7 +28101,7 @@ static s7_pointer g_memq(s7_scheme *sc, s7_pointer args)
 }
 
 /* I think (memq 'c '(a b . c)) should return #f because otherwise
- *   (memq '() ...) would return the '() at the end.
+ *   (memq () ...) would return the () at the end.
  */
 
 
@@ -28647,7 +28647,7 @@ s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
 static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
 {
   #define H_append "(append ...) returns its argument lists appended into one list"
-  /* but weirdly (append '() 1) returns 1 
+  /* but weirdly (append () 1) returns 1 
    */
   s7_pointer x, y;
 
@@ -29641,7 +29641,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	  (index >= vector_length(vect)))
 	return(out_of_range(sc, sc->VECTOR_REF, small_int(2), car(indices), "should be between 0 and the vector length"));
       
-      if (is_not_null(cdr(indices)))                /* (let ((L '#(#(1 2 3) #(4 5 6)))) (vector-ref L 1 2)) */
+      if (is_not_null(cdr(indices)))                /* (let ((L #(#(1 2 3) #(4 5 6)))) (vector-ref L 1 2)) */
 	{
 	  if (type(vect) != T_VECTOR)
 	    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), indices, "too many indices"));
@@ -37362,7 +37362,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
   /* before checking len=0, we need to check that the arguments are all sequences (this is like our handling of args to + for example)
    *   otherwise (for-each = "" 123) -> #<unspecified> 
    * the function may not actually be applicable to its sequence elements, but that isn't an error:
-   *   (map abs "") -> '()
+   *   (map abs "") -> ()
    * and the function's max arity might be less than the number of sequences, but that also isn't an error!
    *   (let ((x 0)) (for-each (lambda* (a) (set! x (+ x a))) (list :a :a :a) (list 1 2 3)) x)
    *   where :a is the keyword argname (hi :a 1) etc
@@ -37833,7 +37833,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	}
     }
 
-  if (len == 0)   /* (map 1 "hi" '()) */
+  if (len == 0)   /* (map 1 "hi" ()) */
     return(sc->NIL);    /* obj has no elements (the circular list case will return S7_LONG_MAX here) */
 
   if (len == S7_LONG_MAX)
@@ -38029,7 +38029,7 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
     }
 
   /* this was sc->NIL until 16-Jun-10, 
-   *   nil is consistent with the implied values call in call/cc (if no args, the continuation function returns '())
+   *   nil is consistent with the implied values call in call/cc (if no args, the continuation function returns ())
    *   hmmm... 
    *   Guile complains ("too few values returned to continuation") in the call/cc case, and
    *   (equal? (if #f #f) (* (values))) complains "Zero values returned to single-valued continuation"
@@ -38048,12 +38048,12 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
    *        (print-concat (apply values (cdr args))))))
    *  
    *  but it's a bit ugly.  I think (values) should be the same as
-   *  (apply values '()). It's currently #<unspecified>, mainly for
+   *  (apply values ()). It's currently #<unspecified>, mainly for
    *  historical reasons (a lot of the code s7 is used with
    *  assumes that behavior).  If (values) simply vanished,
    *  then code like (abs -1 (values)) is not an error.
    *  If it returned nil, you get inconsistencies elsewhere:
-   *  (values) now is the same as (values '()) which is
+   *  (values) now is the same as (values ()) which is
    *  (apply values '(())).  This also affects quasiquote 
    *  (s7 uses (apply values ...) for unquote-splicing).
    *
@@ -38106,7 +38106,7 @@ static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
     return(args);
 
   /* this is not maximally efficient, but it's not important:
-   *   we've hit the rare special case where ({apply_values} '())) needs to be ignored
+   *   we've hit the rare special case where ({apply_values} ())) needs to be ignored
    *   in the splicing process (i.e. the arglist acts as if the thing never happened)
    */
   px = sc->NIL;
@@ -38207,7 +38207,7 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
       if (!is_symbol(form))
 	{
 	  /* things that evaluate to themselves don't need to be quoted. 
-	   *    but this means `() -> () whereas below `(1) -> '(1) -- should nil here return '()?
+	   *    but this means `() -> () whereas below `(1) -> '(1) -- should nil here return ()?
 	   *    (this also affects vector constants since they call g_quasiquote at run time in OP_READ_QUASIQUOTE_VECTOR)
 	   */
 	  return(form);
@@ -39271,7 +39271,7 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
    *   In other words (define* (hi (a 1)) ...) is the same as (define* (hi :key (a 1)) ...) etc.
    *
    * all args are optional, any arg with no default value defaults to #f.
-   *   but the rest arg should default to '().
+   *   but the rest arg should default to ().
    *
    * I later decided to add two warnings: if a parameter is set twice and if
    *   an unknown keyword is seen in a keyword position and there is no rest arg.
@@ -50522,7 +50522,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_true(sc, ((s7_function)fcdr(cdr(sc->code)))(sc, fcdr(sc->code))))
 	  {
 	    /* if no end result exprs, we return nil, but others probably #<unspecified>
-	     *    (let ((x (do ((i 0 (+ i 1))) (#t)))) x) -> '()
+	     *    (let ((x (do ((i 0 (+ i 1))) (#t)))) x) -> ()
 	     */
 	    sc->code = cdadr(sc->code);
 	    goto DO_BEGIN;
@@ -51131,7 +51131,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!is_pair(sc->code))                   /* (begin) -> () */
 	{
 	  if (is_not_null(sc->code))            /* (begin . 1), (cond (#t . 1)) */
-	    eval_error_with_name(sc, "~A: unexpected dot or '() at end of body? ~A", sc->code);
+	    eval_error_with_name(sc, "~A: unexpected dot or () at end of body? ~A", sc->code);
 	  sc->value = sc->NIL;
 	  goto START;
 	}
@@ -51152,7 +51152,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_pair(cdr(code)))
 	      push_stack_no_args(sc, OP_BEGIN1, cdr(code)); 
 	    /* we can't just skip over symbols here because they might normally trigger an error (unbound variable, etc) */
-	    else eval_error_with_name(sc, "~A: unexpected dot or '() at end of body? ~A", code);
+	    else eval_error_with_name(sc, "~A: unexpected dot or () at end of body? ~A", code);
 	  }
 
 	sc->code = car(code);
@@ -58027,7 +58027,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 *   it's possible for the call to change sc->code?  
 	 *   in snd-test: 
 	 *           (set! snd-output (open-sound output-1)) 
-	 *   becomes (set! (hook-functions *error-hook*) '())
+	 *   becomes (set! (hook-functions *error-hook*) ())
 	 *   because open-sound is calling itself safe, but it can call all kinds of hooks and whatnot,
 	 *   and these can hit errors, setting *error-hook*, fallling into s7_call and so on.
 	 */
@@ -58184,16 +58184,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      else eval_error(sc, "list set!: not enough arguments: ~S", sc->code);
 	      goto EVAL;
 	    }
-	  /* timings: old 3.25, new 2.34 (1.93 direct), (12.2): 1.34
-	   *    (time (let ((L '((1 2 3)))) (do ((i 0 (+ i 1))) ((= i 10000000)) (set! ((L 0) 1) i)) L))
-	   */
 	}
       else
 	{
 	  if (s7_is_vector(sc->value))
 	    {
-	      /* (let ((L '#(#(1 2 3) #(4 5 6)))) (set! ((L 1) 0) 32) L)
-	       * bad case when args is nil: (let ((L '#(#(1 2 3) #(4 5 6)))) (set! ((L 1)) 32) L)
+	      /* (let ((L #(#(1 2 3) #(4 5 6)))) (set! ((L 1) 0) 32) L)
+	       * bad case when args is nil: (let ((L #(#(1 2 3) #(4 5 6)))) (set! ((L 1)) 32) L)
 	       */
 	      if (sc->args != sc->NIL)
 		{
@@ -67842,15 +67839,14 @@ int main(int argc, char **argv)
 /* -------------------------------------------------------------------------------- */
 
 /*
- * timing    12.x 13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7 14.1
- * bench    42736 8752 8051 7725 6515 5194 4364 3989 3997
- * lint           9328 8140 7887 7736 7300 7180 7051 7078
- * index    44300 3291 3005 2742 2078 1643 1435 1363 1365
- * s7test    1721 1358 1297 1244  977  961  957  960  943
- * t455|6     265   89   55   31   14   14    9    9    9
- * lat        229   63   52   47   42   40   34   31   29
- * t502        90   43   39   36   29   23   20   14   14
- * calls           275  207  175  115   89   71   53   53
+ * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7|  14.1
+ * bench    42736|  8752 8051 7725 6515 5194 4364 3989 3997|  4220
+ * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725
+ * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995
+ * t455|6     265|    89   55   31   14   14    9    9    9|  19.5
+ * lat        229|    63   52   47   42   40   34   31   29|    29
+ * t502        90|    43   39   36   29   23   20   14   14|  14.7
+ * calls         |   275  207  175  115   89   71   53   53|    55
  */
 
 /* use new generic_ff in methods opt case 
@@ -67858,22 +67854,10 @@ int main(int argc, char **argv)
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
  * add empty? (or nil? or generic null? or zero-length? typeq? (null? c-pointer) -- C null?
  * other often-used libraries: glib/gio/gobject/gmodule ncurses? GL/GLU? pcre? tecla? readline? asound? sndlib-for-s7?
- *    SOMEDAY: libgdbm tests and setopt support, libdl tests
  * TODO: (env env) in clm should be an error
- * possible autoload additions: sndlib? xm? libX* fftw? gmp/mpfr/mpc? 
  * checkpoint?
- * TODO: change docs for sound-data/vct, change to vector wherever possible, remove more from scheme sndlib2xen/vct (synonyms) [frame.scm?]
- *   what about vector-ref/set loop opts? from vct/sound-data code
- *   need vct->sound-data replacement primarily (audio-write -- is this worth keeping?)
- * TODO: split the apply code for the various vector types -- maybe opt this as HOP_FLOAT_VECTOR_SS (opCq C S see t502 comment above)
- *   can we see dot-products and the like?
- *   can we split out the multidim stuff in unknown_op?
- *   the other side is a set op -- set_pair_p_3?
  * doc/test the lib*.scm files.
- * vct_set_let_looped is a major part of the de-opt 
- *    c_function_let_looped is local name -- need a corresponding one for float-vector set?
  * can gf_parse or equivalent handle pure math function bodies in s7? -- a vector of parse trees indexed by arg type?
- *    or recursion-as-local-goto
  * loop problem in ~W?
  */
 

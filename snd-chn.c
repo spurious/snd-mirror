@@ -9109,7 +9109,7 @@ WITH_THREE_SETTER_ARGS(g_set_right_sample_reversed, g_set_right_sample)
 static XEN g_channel_properties(XEN snd, XEN chn_n) 
 {
   #define H_channel_properties "(" S_channel_properties " :optional snd chn): \
-A property list associated with the given channel. It is set to '() at the time a sound is opened."
+A property list associated with the given channel. It is set to () at the time a sound is opened."
 
   return(channel_get(snd, chn_n, CP_PROPERTIES, S_channel_properties));
 }
@@ -9147,7 +9147,7 @@ WITH_FOUR_SETTER_ARGS(g_set_channel_property_reversed, g_set_channel_property)
 static XEN g_edit_properties(XEN snd, XEN chn_n, XEN pos) 
 {
   #define H_edit_properties "(" S_edit_properties " :optional snd chn edpos): \
-A property list associated with the given edit. It is set to '() at the time an edit is performed and cleared when that edit is no longer accessible."
+A property list associated with the given edit. It is set to () at the time an edit is performed and cleared when that edit is no longer accessible."
 
   chan_info *cp;
   int edpos;

@@ -2974,7 +2974,7 @@ on-going list result as the 'state (the empty list is the default).
     (set! (hook 'result) (list 1 44100 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">mus-lshort</a>))))
 </pre>
 
-<p>Return '() to accept all the current raw header defaults; return #f to fallback on the Raw File Dialog.
+<p>Return () to accept all the current raw header defaults; return #f to fallback on the Raw File Dialog.
 The raw header defaults are stereo, 44100 Hz, big endian short data; these values can be changed in the
 Raw File Dialog, by calling <a href="#openrawsound">open-raw-sound</a> with explicit arguments, 
 or via <a href="#musheaderrawdefaults">mus-header-raw-defaults</a>.
@@ -7322,7 +7322,7 @@ the configure argument --without-float-samples).  See make-variable-display in s
 <em class=def id="channelproperties">channel-properties</em> snd chn
 </pre>
 
-<p>channel-properties is a property list associated with a channel.  It is set to '() at the time a sound is opened, so
+<p>channel-properties is a property list associated with a channel.  It is set to () at the time a sound is opened, so
 it provides a relatively simple way to save data about a channel which will automatically be erased when the channel is closed.
 <a href="#channelproperty">channel-property</a> reads and writes this list.  
 </p>
@@ -10107,7 +10107,7 @@ This is similar to <a href="#mussoundloopinfo">mus-sound-loop-info</a> (but it's
 <em class=def id="soundproperties">sound-properties</em> snd
 </pre>
 
-<p>This is a property list associated with the given sound.  It is set to '() at the time a sound is opened.  The accessor
+<p>This is a property list associated with the given sound.  It is set to () at the time a sound is opened.  The accessor
 is <a href="#soundproperty">sound-property</a>.  There are several
 examples of using it in snd-motif.scm and autosave.scm.
 </p>
@@ -10155,8 +10155,8 @@ take the "snd chn" arguments):
 
 <pre class="indented">
 (define (all-chans)
-  (let ((sndlist '())
-        (chnlist '()))
+  (let ((sndlist ())
+        (chnlist ()))
     (for-each (lambda (snd)
                 (do ((i (- (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a> snd) 1) (- i 1)))
                     ((&lt; i 0))
@@ -11032,7 +11032,7 @@ set by 'base'.
 </pre>
 
 <p>This returns (list y0 y1), the current y axis bounds.
-To set the bounds to reflect the channel's maxamp, use (set! (y-bounds) '()).
+To set the bounds to reflect the channel's maxamp, use (set! (y-bounds) ()).
 To set all channels at once using the selected sound's maxamp:
 </p>
 
@@ -14803,13 +14803,13 @@ currently in the time-domain graph:
 (define* (add-comment sample comment snd1 chn1)
   (let* ((snd (or snd1 (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>)))
 	 (chn (or chn1 (<a class=quiet href="#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>)))
-	 (old-comments (or (<a class=quiet href="#channelproperty" onmouseout="UnTip()" onmouseover="Tip(sndscm_channelproperty_tip)">channel-property</a> 'comments snd chn) '())))
+	 (old-comments (or (<a class=quiet href="#channelproperty" onmouseout="UnTip()" onmouseover="Tip(sndscm_channelproperty_tip)">channel-property</a> 'comments snd chn) ())))
     (set! (<a class=quiet href="#channelproperty" onmouseout="UnTip()" onmouseover="Tip(sndscm_channelproperty_tip)">channel-property</a> 'comments snd chn)
 	  (cons (list sample comment)
 		old-comments))))
 	  
 (define (show-comments snd chn)
-  (let ((comments (or (<a class=quiet href="#channelproperty" onmouseout="UnTip()" onmouseover="Tip(sndscm_channelproperty_tip)">channel-property</a> 'comments snd chn) '())))
+  (let ((comments (or (<a class=quiet href="#channelproperty" onmouseout="UnTip()" onmouseover="Tip(sndscm_channelproperty_tip)">channel-property</a> 'comments snd chn) ())))
     (for-each
      (lambda (<a class=quiet href="#comment" onmouseout="UnTip()" onmouseover="Tip(extsnd_comment_tip)">comment</a>)
        (let* ((samp (car comment))

@@ -261,6 +261,7 @@ indented and on a sort of brownish background.
 <p>All numeric types, integers, ratios, reals, and complex numbers are supported.
 The basic integer and real
 types are defined in s7.h, defaulting to long long int and double.  
+A ratio is a pair of integers, and a complex number is a pair of reals.
 pi is predefined, as are
 most-positive-fixnum and most-negative-fixnum.
 s7 can be built with multiprecision support 
@@ -662,7 +663,7 @@ the argument name.
 The last argument
 can be preceded by :rest or a dot to indicate that all other trailing arguments
 should be packaged as a list under that argument's name.  A trailing or rest
-argument's default value is '().
+argument's default value is ().
 You can use
 :optional and :key, but they are ignored.  
 </p>
@@ -2243,7 +2244,7 @@ you can use this same syntax with lists.
 </p>
 
 <pre class="indented">
-&gt; (let ((V '#(#(1 2 3) #(4 5 6)))) 
+&gt; (let ((V #(#(1 2 3) #(4 5 6)))) 
     (V 1 2))              ; same as (vector-ref (vector-ref V 1) 2) or ((V 1) 2)
 6
 
@@ -2257,7 +2258,7 @@ in the latter case, you can't clobber one of the inner vectors.
 </p>
 
 <pre class="indented">
-&gt; (let ((V '#(#(1 2 3) #(4 5 6)))) (set! (V 1) 32) V)
+&gt; (let ((V #(#(1 2 3) #(4 5 6)))) (set! (V 1) 32) V)
 #(#(1 2 3) 32)
 
 &gt; (let ((V #2d((1 2 3) (4 5 6)))) (set! (V 1) 32) V)

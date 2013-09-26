@@ -3076,7 +3076,7 @@ filter 'order'.  A common application cancels 60 Hz hum:
 </p>
 
 <pre class="indented">
-(notch-channel (let ((freqs '())) 
+(notch-channel (let ((freqs ())) 
                  (do ((i 60 (+ i 60))) 
                      ((= i 3000)) 
                    (set! freqs (cons i freqs))) (reverse freqs)))
@@ -3091,7 +3091,7 @@ But, if the hum is not absolutely stable, you'll probably want wider notches:
 </p>
 
 <pre class="indented">
-(notch-channel (let ((freqs '())) 
+(notch-channel (let ((freqs ())) 
                  (do ((i 60 (+ i 60))) 
                      ((= i 3000)) 
                    (set! freqs (cons i freqs))) (reverse freqs)) 1024)
@@ -3319,7 +3319,7 @@ need to know whether to add or subtract the components that foldunder 0.0).
 </p>
 
 <pre class="indented">
-(fm-parallel-component 200 2000.0 (list 2000.0 200.0) (list 0.5 1.0) '() '() #t)
+(fm-parallel-component 200 2000.0 (list 2000.0 200.0) (list 0.5 1.0) () () #t)
 </pre>
 
 <p>To get the same information for FM with a complex index, use fm-compex-component:
@@ -4112,7 +4112,7 @@ resource argument list is 'args'.  The editor's current envelope is accessible
 </p>
 
 <pre class="indented">
-(define outer (add-main-pane "hiho" xmFormWidgetClass '()))
+(define outer (add-main-pane "hiho" xmFormWidgetClass ()))
 (define editor (<em class=red>xe-create-enved</em> "a name" outer 
 			     (list XmNleftAttachment   XmATTACH_FORM
 				   XmNtopAttachment    XmATTACH_FORM
@@ -6470,7 +6470,7 @@ The Ruby version is in clm-ins.rb.
   (reverb-amount 0.01)
   (reverse #f)                            ; if #t, input is read backwards
   (where-to 0)                            ; locsig stuff &mdash; see the full documentation
-  (where-bins '())
+  (where-bins ())
   (grain-distance 1.0)                    ; distance of sound source (<a href="sndclm.html#locsig">locsig</a>)
   (grain-distance-spread 0.0)             ; random spread around 'grain-distance'
   (grain-degree 45.0)
@@ -9021,9 +9021,9 @@ minimum, maximum, and average peaks.  The graph is logarithmic (that is we show
 (set! (with-inset-graph) #f)
 
 ;;; these hooks may be drawing the graph in the upper right corner, which we don't want for now
-(set! (hook-functions after-graph-hook) '())
-(set! (hook-functions mouse-click-hook) '())
-(set! (hook-functions update-hook) '())
+(set! (hook-functions after-graph-hook) ())
+(set! (hook-functions mouse-click-hook) ())
+(set! (hook-functions update-hook) ())
 
 ;;; tell Snd not to try to load the data file
 (set! (script-arg) (+ 1 (script-arg)))
@@ -9124,7 +9124,7 @@ at ems.music.uiuc.edu/beaucham/papers/JASA.01.96.pdf,
 one, much fuss is made of the RMS value, but that value is independent of the
 initial phases, so it is obviously irrelevant).
 -->
-They report good results using the genertic algorithm, so it tried it.
+They report good results using the genetic algorithm, so it tried it.
 I started with 2000 randomly chosen initial points and a search radius
 of 1.0 (= pi).  These are pretty good choices, but after a few months of searching, I reached a point of almost no
 returns.  I tried variants of the basic algorithm and other search methods, but the results were not very good until
@@ -9544,7 +9544,7 @@ case where all the initial phases are 0.0 in black:
 
 <!-- all57:
 
-(define phases '#(0.000000 0.402544 0.873914 0.824224 1.710182 0.183023 0.378574 0.128782 1.816255 1.249608 1.030253 1.030831 0.184699 0.677473 1.528003 1.262679 1.840809 0.082787 1.487290 1.579585 0.150833 0.308197 0.183834 1.435443 0.452047 0.800416 1.697556 1.103318 1.169502 1.438166 1.765331 0.875181 1.049248 1.321068 0.824424 0.599899 1.694664 0.504547 1.583285 1.657047 0.940116 1.788668 1.529808 0.367904 1.371253 0.572088 1.370961 1.371348 0.244247 1.592370 0.135712 0.911345 0.228778 1.543468 1.190091 1.504171 1.491159))
+(define phases #(0.000000 0.402544 0.873914 0.824224 1.710182 0.183023 0.378574 0.128782 1.816255 1.249608 1.030253 1.030831 0.184699 0.677473 1.528003 1.262679 1.840809 0.082787 1.487290 1.579585 0.150833 0.308197 0.183834 1.435443 0.452047 0.800416 1.697556 1.103318 1.169502 1.438166 1.765331 0.875181 1.049248 1.321068 0.824424 0.599899 1.694664 0.504547 1.583285 1.657047 0.940116 1.788668 1.529808 0.367904 1.371253 0.572088 1.370961 1.371348 0.244247 1.592370 0.135712 0.911345 0.228778 1.543468 1.190091 1.504171 1.491159))
 
 (define (make-all-57)
   (set! (with-inset-graph) #f)
@@ -9571,7 +9571,7 @@ case where all the initial phases are 0.0 in black:
   (set! (x-axis-label) "57 harmonics with peak at 7.546")
   )
 
-(define odd-phases '#(0.000000 -0.095905 1.360419 0.638244 0.752436 0.060307 1.680434 0.892474 1.556627 1.342822 1.202039 0.989766 0.747386 1.502768 1.484789 1.280575 -0.299617 0.648918 1.386594 0.570314 0.971680 0.602106 1.411224 0.349887 1.776881 0.686211 -0.138570 0.102115 0.187653 1.480790 0.475407 0.080540 0.078971 0.288194 0.529704 0.929207 1.248880 1.402125 0.332857 1.263541 0.757496 0.254501 0.084949 1.308375 0.041441 0.288389 1.222780 0.362725 1.537117 1.518618 0.267187 0.845609 0.722902 0.451852 0.582589 0.839423 1.817054))
+(define odd-phases #(0.000000 -0.095905 1.360419 0.638244 0.752436 0.060307 1.680434 0.892474 1.556627 1.342822 1.202039 0.989766 0.747386 1.502768 1.484789 1.280575 -0.299617 0.648918 1.386594 0.570314 0.971680 0.602106 1.411224 0.349887 1.776881 0.686211 -0.138570 0.102115 0.187653 1.480790 0.475407 0.080540 0.078971 0.288194 0.529704 0.929207 1.248880 1.402125 0.332857 1.263541 0.757496 0.254501 0.084949 1.308375 0.041441 0.288389 1.222780 0.362725 1.537117 1.518618 0.267187 0.845609 0.722902 0.451852 0.582589 0.839423 1.817054))
 
 (define (make-odd-57)
   (set! (with-inset-graph) #f)
@@ -9599,7 +9599,7 @@ case where all the initial phases are 0.0 in black:
   (set! (x-axis-label) "57 odd harmonics with peak at 7.564")
   )
 
-(define all-99 '#(0.000000 0.597494 1.146001 -0.056648 1.705293 0.247794 1.067079 1.589758 1.638162 1.207186 0.711609 0.710553 -0.195687 0.350442 0.679684 1.653746 -0.460484 -0.156879 1.629420 1.730071 1.077540 0.075860 0.435827 1.574017 0.450715 1.581154 -0.027175 1.502323 1.501097 0.855975 1.269118 1.563924 1.244477 0.428054 1.250656 0.668151 0.672807 0.481658 1.215020 0.229865 0.052263 -0.265466 0.722697 0.484686 1.525745 -0.088395 1.682325 1.764438 0.384531 0.550629 -0.009864 1.443840 0.844832 1.132436 -0.107693 0.137994 0.009887 1.832991 0.076907 0.020473 0.102198 0.283702 1.246352 0.965046 0.026752 1.471014 0.126851 0.144964 0.731028 -0.335345 0.712331 0.471273 1.705158 0.467571 1.388009 0.875431 0.986268 1.669037 0.667955 0.887678 1.688981 -0.459336 1.461469 1.135012 0.449583 0.176052 1.407825 1.801166 0.208742 1.880027 0.895566 1.761286 1.021896 0.520239 1.466186 0.733284 1.188215 1.584263 1.296521))
+(define all-99 #(0.000000 0.597494 1.146001 -0.056648 1.705293 0.247794 1.067079 1.589758 1.638162 1.207186 0.711609 0.710553 -0.195687 0.350442 0.679684 1.653746 -0.460484 -0.156879 1.629420 1.730071 1.077540 0.075860 0.435827 1.574017 0.450715 1.581154 -0.027175 1.502323 1.501097 0.855975 1.269118 1.563924 1.244477 0.428054 1.250656 0.668151 0.672807 0.481658 1.215020 0.229865 0.052263 -0.265466 0.722697 0.484686 1.525745 -0.088395 1.682325 1.764438 0.384531 0.550629 -0.009864 1.443840 0.844832 1.132436 -0.107693 0.137994 0.009887 1.832991 0.076907 0.020473 0.102198 0.283702 1.246352 0.965046 0.026752 1.471014 0.126851 0.144964 0.731028 -0.335345 0.712331 0.471273 1.705158 0.467571 1.388009 0.875431 0.986268 1.669037 0.667955 0.887678 1.688981 -0.459336 1.461469 1.135012 0.449583 0.176052 1.407825 1.801166 0.208742 1.880027 0.895566 1.761286 1.021896 0.520239 1.466186 0.733284 1.188215 1.584263 1.296521))
 
 (define (make-all-99)
   (set! (with-inset-graph) #f)
@@ -9707,9 +9707,9 @@ goof around with them.
    (release-time-margin 0.75) ; extra compute time allowed beyond duration
    (amp .5)                   ; amp scale of noise inputs...
    (detuningFactor 1.0)
-   (detuningFactor-table '())
+   (detuningFactor-table ())
    (stiffnessFactor 1.0)
-   (stiffnessFactor-table '())
+   (stiffnessFactor-table ())
    (pedalPresenceFactor .3)
    (longitudinalMode 10.5)
    (StrikePositionInvFac -0.9)
@@ -12321,7 +12321,7 @@ snd&gt; 0.0 1.0 330.0 0.5 ' simp :play #f :channels 2 with-sound
 (define *clm-statistics*         #f)
 (define *clm-reverb*             #f)
 (define *clm-reverb-channels*    1)
-(define *clm-reverb-data*        '())
+(define *clm-reverb-data*        ())
 (define *clm-table-size*         512)
 (define *clm-default-frequency*  0.0)
 (define *clm-file-buffer-size*   65536)

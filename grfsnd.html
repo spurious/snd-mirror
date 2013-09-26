@@ -2131,7 +2131,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 <pre class="indented">
 (define (analyze-ladspa library label)
   (let* ((descriptor (<em class=red>ladspa-descriptor</em> library label))
-	 (data '())
+	 (data ())
 	 (names (.PortNames descriptor))
 	 (hints (.PortRangeHints descriptor))
 	 (descriptors (.PortDescriptors descriptor))
@@ -2142,7 +2142,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
      (lambda (port ranges port-name)
        (if (and (not (= (logand port LADSPA_PORT_CONTROL) 0))
 		(not (= (logand port LADSPA_PORT_INPUT) 0)))
-	   (let ((ldata '())
+	   (let ((ldata ())
 		 (hint (car ranges))
 		 (lo (cadr ranges))
 		 (hi (caddr ranges)))
