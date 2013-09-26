@@ -1991,8 +1991,6 @@ WITH_FOUR_SETTER_ARGS(g_set_y_bounds_reversed, g_set_y_bounds)
 
   
 
-#ifdef XEN_ARGIFY_1
-
 XEN_ARGIFY_4(g_x_to_position_w, g_x_to_position)
 XEN_ARGIFY_4(g_y_to_position_w, g_y_to_position)
 XEN_ARGIFY_4(g_position_to_x_w, g_position_to_x)
@@ -2009,25 +2007,6 @@ XEN_ARGIFY_3(g_x_bounds_w, g_x_bounds)
 XEN_ARGIFY_4(g_set_x_bounds_w, g_set_x_bounds)
 XEN_ARGIFY_3(g_y_bounds_w, g_y_bounds)
 XEN_ARGIFY_4(g_set_y_bounds_w, g_set_y_bounds)
-
-#else
-
-#define g_x_to_position_w g_x_to_position
-#define g_y_to_position_w g_y_to_position
-#define g_position_to_x_w g_position_to_x
-#define g_position_to_y_w g_position_to_y
-#define g_axis_info_w g_axis_info
-#define g_draw_axes_w g_draw_axes
-#define g_x_axis_label_w g_x_axis_label
-#define g_set_x_axis_label_w g_set_x_axis_label
-#define g_y_axis_label_w g_y_axis_label
-#define g_set_y_axis_label_w g_set_y_axis_label
-#define g_x_bounds_w g_x_bounds
-#define g_set_x_bounds_w g_set_x_bounds
-#define g_y_bounds_w g_y_bounds
-#define g_set_y_bounds_w g_set_y_bounds
-  
-#endif
 
   
 void g_init_axis(void)

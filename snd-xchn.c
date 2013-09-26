@@ -1673,18 +1673,10 @@ static XEN g_set_graph_cursor(XEN curs)
 }
 
 
-#ifdef XEN_ARGIFY_1
 XEN_NARGIFY_2(g_in_w, g_in)
 XEN_NARGIFY_0(g_graph_cursor_w, g_graph_cursor)
 XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
 XEN_ARGIFY_2(g_channel_widgets_w, g_channel_widgets)
-#else
-#define g_in_w g_in
-#define g_graph_cursor_w g_graph_cursor
-#define g_set_graph_cursor_w g_set_graph_cursor
-#define g_channel_widgets_w g_channel_widgets
-#endif
-
 
 void g_init_gxchn(void)
 {

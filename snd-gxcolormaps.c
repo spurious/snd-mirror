@@ -1192,7 +1192,6 @@ returning the new colormap. 'name' is the colormap's name in the View:Color/Orie
 }
 
 
-#ifdef XEN_ARGIFY_1
 XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 XEN_NARGIFY_0(g_colormap_w, g_colormap)
 XEN_NARGIFY_1(g_colormap_p_w, g_colormap_p)
@@ -1204,19 +1203,6 @@ XEN_NARGIFY_1(g_delete_colormap_w, g_delete_colormap)
 XEN_NARGIFY_2(g_add_colormap_w, g_add_colormap)
 XEN_NARGIFY_1(g_integer_to_colormap_w, g_integer_to_colormap)
 XEN_NARGIFY_1(g_colormap_to_integer_w, g_colormap_to_integer)
-#else
-#define g_colormap_ref_w g_colormap_ref
-#define g_colormap_w g_colormap
-#define g_colormap_p_w g_colormap_p
-#define g_set_colormap_w g_set_colormap
-#define g_colormap_size_w g_colormap_size
-#define g_set_colormap_size_w g_set_colormap_size
-#define g_colormap_name_w g_colormap_name
-#define g_delete_colormap_w g_delete_colormap
-#define g_add_colormap_w g_add_colormap
-#define g_integer_to_colormap_w g_integer_to_colormap
-#define g_colormap_to_integer_w g_colormap_to_integer
-#endif
 
 #if (!HAVE_SCHEME)
 static XEN colormap_temp[16]; /* static for Ruby's sake */

@@ -8923,7 +8923,6 @@ static s7_pointer read_sample_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
 #endif
 
 
-#ifdef XEN_ARGIFY_1
 XEN_ARGIFY_5(g_make_sampler_w, g_make_sampler)
 XEN_ARGIFY_4(g_make_region_sampler_w, g_make_region_sampler)
 XEN_NARGIFY_1(g_next_sample_w, g_next_sample)
@@ -8964,49 +8963,6 @@ XEN_ARGIFY_3(g_snd_to_sample_w, g_snd_to_sample)
 XEN_ARGIFY_1(g_make_snd_to_sample_w, g_make_snd_to_sample)
 XEN_ARGIFY_4(g_edit_list_to_function_w, g_edit_list_to_function)
 XEN_NARGIFY_1(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
-#else
-#define g_make_sampler_w g_make_sampler
-#define g_make_region_sampler_w g_make_region_sampler
-#define g_next_sample_w g_next_sample
-#define g_read_sample_w g_read_sample
-#define g_previous_sample_w g_previous_sample
-#define g_free_sampler_w g_free_sampler
-#define g_sampler_home_w g_sampler_home
-#define g_sampler_position_w g_sampler_position
-#define g_sampler_p_w g_sampler_p
-#define g_region_sampler_p_w g_region_sampler_p
-#define g_sampler_at_end_w g_sampler_at_end
-#define g_copy_sampler_w g_copy_sampler
-#define g_save_edit_history_w g_save_edit_history
-#define g_edit_fragment_w g_edit_fragment
-#define g_undo_w g_undo
-#define g_redo_w g_redo
-#define g_as_one_edit_w g_as_one_edit
-#define g_display_edits_w g_display_edits
-#define g_edit_tree_w g_edit_tree
-#define g_delete_sample_w g_delete_sample
-#define g_delete_samples_w g_delete_samples
-#define g_insert_sample_w g_insert_sample
-#define g_insert_samples_w g_insert_samples
-#define g_vct_to_channel_w g_vct_to_channel
-#define g_channel_to_vct_w g_channel_to_vct
-#define g_insert_sound_w g_insert_sound
-#define g_scale_channel_w g_scale_channel
-#define g_normalize_channel_w g_normalize_channel
-#define g_change_samples_with_origin_w g_change_samples_with_origin
-#define g_insert_samples_with_origin_w g_insert_samples_with_origin
-#define g_override_samples_with_origin_w g_override_samples_with_origin
-#define g_sample_w g_sample
-#define g_set_sample_w g_set_sample
-#define g_samples_w g_samples
-#define g_set_samples_w g_set_samples
-#define g_snd_to_sample_p_w g_snd_to_sample_p
-#define g_make_snd_to_sample_w g_make_snd_to_sample
-#define g_snd_to_sample_w g_snd_to_sample
-#define g_edit_list_to_function_w g_edit_list_to_function
-#define g_edit_fragment_type_name_w g_edit_fragment_type_name
-#endif
-
 
 #if HAVE_SCHEME
 #define XEN_DEFINE_DIRECT_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \

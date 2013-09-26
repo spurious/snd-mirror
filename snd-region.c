@@ -2193,7 +2193,6 @@ and " S_graph_dots_and_lines "."
 }
 
 
-#ifdef XEN_ARGIFY_1
 XEN_ARGIFY_10(g_restore_region_w, g_restore_region)
 XEN_ARGIFY_4(g_insert_region_w, g_insert_region)
 XEN_NARGIFY_0(g_regions_w, g_regions)
@@ -2217,31 +2216,6 @@ XEN_NARGIFY_0(g_region_graph_style_w, g_region_graph_style)
 XEN_NARGIFY_1(g_set_region_graph_style_w, g_set_region_graph_style)
 XEN_NARGIFY_1(g_integer_to_region_w, g_integer_to_region)
 XEN_NARGIFY_1(g_region_to_integer_w, g_region_to_integer)
-#else
-#define g_restore_region_w g_restore_region
-#define g_insert_region_w g_insert_region
-#define g_regions_w g_regions
-#define g_region_frames_w g_region_frames
-#define g_region_position_w g_region_position
-#define g_region_srate_w g_region_srate
-#define g_region_chans_w g_region_chans
-#define g_region_home_w g_region_home
-#define g_region_maxamp_w g_region_maxamp
-#define g_region_maxamp_position_w g_region_maxamp_position
-#define g_save_region_w g_save_region
-#define g_forget_region_w g_forget_region
-#define g_make_region_w g_make_region
-#define g_mix_region_w g_mix_region
-#define g_region_sample_w g_region_sample
-#define g_region_to_vct_w g_region_to_vct
-#define g_region_p_w g_region_p
-#define g_max_regions_w g_max_regions
-#define g_set_max_regions_w g_set_max_regions
-#define g_region_graph_style_w g_region_graph_style
-#define g_set_region_graph_style_w g_set_region_graph_style
-#define g_integer_to_region_w g_integer_to_region
-#define g_region_to_integer_w g_region_to_integer
-#endif
 
 void g_init_regions(void)
 {

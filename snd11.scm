@@ -332,14 +332,6 @@ but not anymore.
 	:stop stop-proc :out-channel out-chan :edit-position pos))
 
 
-(define quit-button-color (make-procedure-with-setter (lambda () 'obsolete) (lambda (val) 'obsolete)))
-(define reset-button-color (make-procedure-with-setter (lambda () 'obsolete) (lambda (val) 'obsolete)))
-(define help-button-color (make-procedure-with-setter (lambda () 'obsolete) (lambda (val) 'obsolete)))
-(define do-it-button-color (make-procedure-with-setter (lambda () 'obsolete) (lambda (val) 'obsolete)))
-(define do-it-again-button-color (make-procedure-with-setter (lambda () 'obsolete) (lambda (val) 'obsolete)))
-(define pushed-button-button-color (make-procedure-with-setter (lambda () 'obsolete) (lambda (val) 'obsolete)))
-
-
 ;;; --------------------------------------------------------------------------------
 
 (define (add-watcher func)

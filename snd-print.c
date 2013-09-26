@@ -789,7 +789,6 @@ static XEN g_set_eps_size(XEN val)
 }
 
 
-#ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_graph_to_ps_w, g_graph_to_ps)
 XEN_ARGIFY_4(g_gl_graph_to_ps_w, g_gl_graph_to_ps)
 XEN_NARGIFY_0(g_eps_file_w, g_eps_file)
@@ -800,18 +799,6 @@ XEN_NARGIFY_0(g_eps_size_w, g_eps_size)
 XEN_NARGIFY_1(g_set_eps_size_w, g_set_eps_size)
 XEN_NARGIFY_0(g_eps_bottom_margin_w, g_eps_bottom_margin)
 XEN_NARGIFY_1(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
-#else
-#define g_graph_to_ps_w g_graph_to_ps
-#define g_gl_graph_to_ps_w g_gl_graph_to_ps
-#define g_eps_file_w g_eps_file
-#define g_set_eps_file_w g_set_eps_file
-#define g_eps_left_margin_w g_eps_left_margin
-#define g_set_eps_left_margin_w g_set_eps_left_margin
-#define g_eps_size_w g_eps_size
-#define g_set_eps_size_w g_set_eps_size
-#define g_eps_bottom_margin_w g_eps_bottom_margin
-#define g_set_eps_bottom_margin_w g_set_eps_bottom_margin
-#endif
 
 void g_init_print(void)
 {

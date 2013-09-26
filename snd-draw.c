@@ -1890,7 +1890,6 @@ WITH_THREE_SETTER_ARGS(g_set_combined_data_color_reversed, g_set_combined_data_c
 
 
 
-#ifdef XEN_ARGIFY_1
 XEN_ARGIFY_8(g_draw_line_w, g_draw_line)
 XEN_ARGIFY_7(g_draw_dot_w, g_draw_dot)
 XEN_ARGIFY_5(g_draw_lines_w, g_draw_lines)
@@ -1965,85 +1964,6 @@ XEN_ARGIFY_1(g_mix_color_w, g_mix_color)
 XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
 XEN_NARGIFY_2(g_combined_data_color_w, g_combined_data_color)
 XEN_NARGIFY_3(g_set_combined_data_color_w, g_set_combined_data_color)
-
-#else
-
-#define g_draw_line_w g_draw_line
-#define g_draw_dot_w g_draw_dot
-#define g_draw_lines_w g_draw_lines
-#define g_draw_dots_w g_draw_dots
-#define g_draw_string_w g_draw_string
-#define g_fill_rectangle_w g_fill_rectangle
-#define g_fill_polygon_w g_fill_polygon
-#define g_foreground_color_w g_foreground_color
-#define g_set_foreground_color_w g_set_foreground_color
-#define g_current_font_w g_current_font
-#define g_set_current_font_w g_set_current_font
-#define g_main_widgets_w g_main_widgets
-#define g_dialog_widgets_w g_dialog_widgets
-#define g_widget_size_w g_widget_size
-#define g_set_widget_size_w g_set_widget_size
-#define g_widget_position_w g_widget_position
-#define g_set_widget_position_w g_set_widget_position
-#define g_widget_text_w g_widget_text
-#define g_set_widget_text_w g_set_widget_text
-#define g_hide_widget_w g_hide_widget
-#define g_show_widget_w g_show_widget
-#define g_focus_widget_w g_focus_widget
-#define g_make_graph_data_w g_make_graph_data
-#define g_graph_data_w g_graph_data
-#define g_make_bezier_w g_make_bezier
-#define g_snd_gcs_w g_snd_gcs
-#define g_snd_color_w g_snd_color
-#define g_snd_font_w g_snd_font
-#define g_make_cairo_w g_make_cairo
-#define g_free_cairo_w g_free_cairo
-
-#define g_selection_color_w g_selection_color
-#define g_set_selection_color_w g_set_selection_color
-#define g_zoom_color_w g_zoom_color
-#define g_set_zoom_color_w g_set_zoom_color
-#define g_position_color_w g_position_color
-#define g_set_position_color_w g_set_position_color
-#define g_mark_color_w g_mark_color
-#define g_set_mark_color_w g_set_mark_color
-#define g_listener_color_w g_listener_color
-#define g_set_listener_color_w g_set_listener_color
-#define g_listener_text_color_w g_listener_text_color
-#define g_set_listener_text_color_w g_set_listener_text_color
-#define g_enved_waveform_color_w g_enved_waveform_color
-#define g_set_enved_waveform_color_w g_set_enved_waveform_color
-#define g_filter_control_waveform_color_w g_filter_control_waveform_color
-#define g_set_filter_control_waveform_color_w g_set_filter_control_waveform_color
-#define g_highlight_color_w g_highlight_color
-#define g_set_highlight_color_w g_set_highlight_color
-#define g_cursor_color_w g_cursor_color
-#define g_set_cursor_color_w g_set_cursor_color
-#define g_text_focus_color_w g_text_focus_color
-#define g_set_text_focus_color_w g_set_text_focus_color
-#define g_sash_color_w g_sash_color
-#define g_set_sash_color_w g_set_sash_color
-#define g_data_color_w g_data_color
-#define g_set_data_color_w g_set_data_color
-#define g_graph_color_w g_graph_color
-#define g_set_graph_color_w g_set_graph_color
-#define g_selected_graph_color_w g_selected_graph_color
-#define g_set_selected_graph_color_w g_set_selected_graph_color
-#define g_selected_data_color_w g_selected_data_color
-#define g_set_selected_data_color_w g_set_selected_data_color
-#define g_axis_color_w g_axis_color
-#define g_set_axis_color_w g_set_axis_color
-#define g_basic_color_w g_basic_color
-#define g_set_basic_color_w g_set_basic_color
-#define g_color_p_w g_color_p
-#define g_make_color_w g_make_color
-#define g_color_to_list_w g_color_to_list
-#define g_mix_color_w g_mix_color
-#define g_set_mix_color_w g_set_mix_color
-#define g_combined_data_color_w g_combined_data_color
-#define g_set_combined_data_color_w g_set_combined_data_color
-
-#endif
 
 void g_init_draw(void)
 {

@@ -848,13 +848,7 @@ static XEN reflect_file_in_enved(XEN hook_or_reason)
   return(XEN_FALSE);
 }
 
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_1(reflect_file_in_enved_w, reflect_file_in_enved)
-#else
-  #define reflect_file_in_enved_w reflect_file_in_enved
-#endif
-
-
+XEN_NARGIFY_1(reflect_file_in_enved_w, reflect_file_in_enved)
 
 #define BB_MARGIN 3
 
@@ -1375,17 +1369,10 @@ static XEN g_set_enved_filter(XEN type)
 }
 
 
-#ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_enved_filter_w, g_enved_filter)
 XEN_NARGIFY_1(g_set_enved_filter_w, g_set_enved_filter)
 XEN_NARGIFY_0(g_enved_envelope_w, g_enved_envelope)
 XEN_NARGIFY_1(g_set_enved_envelope_w, g_set_enved_envelope)
-#else
-#define g_enved_filter_w g_enved_filter
-#define g_set_enved_filter_w g_set_enved_filter
-#define g_enved_envelope_w g_enved_envelope
-#define g_set_enved_envelope_w g_set_enved_envelope
-#endif
 
 void g_init_gxenv(void)
 {

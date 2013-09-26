@@ -2030,11 +2030,7 @@ static XEN g_menu_widgets(void)
 }
 
 
-#ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_menu_widgets_w, g_menu_widgets)
-#else
-#define g_menu_widgets_w g_menu_widgets
-#endif
 
 void g_init_gxmenu(void)
 {

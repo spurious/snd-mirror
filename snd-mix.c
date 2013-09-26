@@ -3865,8 +3865,6 @@ bool play_mix_from_id(int mix_id)
 }
 
 
-#ifdef XEN_ARGIFY_1
-
 XEN_NARGIFY_1(g_mix_position_w, g_mix_position)
 XEN_NARGIFY_2(g_set_mix_position_w, g_set_mix_position)
 XEN_NARGIFY_1(g_mix_speed_w, g_mix_speed)
@@ -3914,59 +3912,6 @@ XEN_NARGIFY_2(g_save_mix_w, g_save_mix)
 XEN_NARGIFY_0(g_view_mixes_dialog_w, g_view_mixes_dialog)
 XEN_NARGIFY_0(g_mix_dialog_mix_w, g_mix_dialog_mix)
 XEN_NARGIFY_1(g_set_mix_dialog_mix_w, g_set_mix_dialog_mix)
-
-#else
-
-#define g_mix_position_w g_mix_position
-#define g_set_mix_position_w g_set_mix_position
-#define g_mix_speed_w g_mix_speed
-#define g_set_mix_speed_w g_set_mix_speed
-#define g_mix_amp_w g_mix_amp
-#define g_set_mix_amp_w g_set_mix_amp
-#define g_mix_amp_env_w g_mix_amp_env
-#define g_set_mix_amp_env_w g_set_mix_amp_env
-
-#define g_mix_name_w g_mix_name
-#define g_set_mix_name_w g_set_mix_name
-#define g_mix_tag_y_w g_mix_tag_y
-#define g_set_mix_tag_y_w g_set_mix_tag_y
-#define g_mix_sync_w g_mix_sync
-#define g_set_mix_sync_w g_set_mix_sync
-#define g_mix_sync_max_w g_mix_sync_max
-#define g_mix_length_w g_mix_length
-#define g_integer_to_mix_w g_integer_to_mix
-#define g_mix_to_integer_w g_mix_to_integer
-#define g_mix_home_w g_mix_home
-#define g_mix_properties_w g_mix_properties
-#define g_set_mix_properties_w g_set_mix_properties
-#define g_mix_property_w g_mix_property
-#define g_set_mix_property_w g_set_mix_property
-
-#define g_mix_waveform_height_w g_mix_waveform_height
-#define g_set_mix_waveform_height_w g_set_mix_waveform_height
-#define g_with_mix_tags_w g_with_mix_tags
-#define g_set_with_mix_tags_w g_set_with_mix_tags
-#define g_mix_tag_width_w g_mix_tag_width
-#define g_set_mix_tag_width_w g_set_mix_tag_width
-#define g_mix_tag_height_w g_mix_tag_height
-#define g_set_mix_tag_height_w g_set_mix_tag_height
-
-#define g_mix_p_w g_mix_p
-#define g_mixes_w g_mixes
-#define g_mix_w g_mix
-#define g_mix_vct_w g_mix_vct
-
-#define g_make_mix_sampler_w g_make_mix_sampler
-#define g_read_mix_sample_w g_read_mix_sample
-#define g_mix_sampler_p_w g_mix_sampler_p
-#define g_save_mix_w g_save_mix
-
-#define g_view_mixes_dialog_w g_view_mixes_dialog
-#define g_mix_dialog_mix_w g_mix_dialog_mix
-#define g_set_mix_dialog_mix_w g_set_mix_dialog_mix
-
-#endif
-
 
 void g_init_mix(void)
 {

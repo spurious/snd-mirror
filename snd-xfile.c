@@ -1957,11 +1957,7 @@ static XEN mix_open_file_watcher(XEN hook_or_reason)
   return(XEN_FALSE);
 }
 
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_1(mix_open_file_watcher_w, mix_open_file_watcher)
-#else
-  #define mix_open_file_watcher_w mix_open_file_watcher
-#endif
+XEN_NARGIFY_1(mix_open_file_watcher_w, mix_open_file_watcher)
 
 
 
@@ -2059,11 +2055,7 @@ static XEN insert_open_file_watcher(XEN hook_or_reason)
   return(XEN_FALSE);
 }
 
-#ifdef XEN_ARGIFY_1
-  XEN_ARGIFY_1(insert_open_file_watcher_w, insert_open_file_watcher)
-#else
-  #define insert_open_file_watcher_w insert_open_file_watcher
-#endif
+XEN_ARGIFY_1(insert_open_file_watcher_w, insert_open_file_watcher)
 
 widget_t make_insert_file_dialog(bool managed)
 {
@@ -5405,11 +5397,7 @@ static XEN vf_open_file_watcher(XEN hook_or_reason)
   return(XEN_FALSE);
 }
 
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_1(vf_open_file_watcher_w, vf_open_file_watcher)
-#else
-  #define vf_open_file_watcher_w vf_open_file_watcher
-#endif
+XEN_NARGIFY_1(vf_open_file_watcher_w, vf_open_file_watcher)
 
 
 int view_files_dialog_list_length(void)
@@ -8777,7 +8765,6 @@ static XEN g_delete_file_sorter(XEN index)
   return(index);
 }
 
-#ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_view_files_sort_w, g_view_files_sort)
 XEN_ARGIFY_2(g_set_view_files_sort_w, g_set_view_files_sort)
 XEN_ARGIFY_2(g_add_directory_to_view_files_list_w, g_add_directory_to_view_files_list)
@@ -8797,31 +8784,6 @@ XEN_NARGIFY_2(g_view_files_set_selected_files_w, g_view_files_set_selected_files
 XEN_NARGIFY_2(g_view_files_set_files_w, g_view_files_set_files)
 XEN_NARGIFY_1(g_delete_file_sorter_w, g_delete_file_sorter)
 XEN_NARGIFY_2(g_add_file_sorter_w, g_add_file_sorter)
-#else
-#define g_view_files_sort_w g_view_files_sort
-#define g_set_view_files_sort_w g_set_view_files_sort
-#define g_add_directory_to_view_files_list_w g_add_directory_to_view_files_list
-#define g_add_file_to_view_files_list_w g_add_file_to_view_files_list
-#define g_view_files_dialog_w g_view_files_dialog
-#define g_view_files_amp_w g_view_files_amp
-#define g_view_files_set_amp_w g_view_files_set_amp
-#define g_view_files_amp_env_w g_view_files_amp_env
-#define g_view_files_set_amp_env_w g_view_files_set_amp_env
-#define g_view_files_speed_style_w g_view_files_speed_style
-#define g_view_files_set_speed_style_w g_view_files_set_speed_style
-#define g_view_files_speed_w g_view_files_speed
-#define g_view_files_set_speed_w g_view_files_set_speed
-#define g_view_files_selected_files_w g_view_files_selected_files
-#define g_view_files_files_w g_view_files_files
-#define g_view_files_set_selected_files_w g_view_files_set_selected_files
-#define g_view_files_set_files_w g_view_files_set_files
-#define g_delete_file_sorter_w g_delete_file_sorter
-#define g_add_file_sorter_w g_add_file_sorter
-
-#endif
-
-
-
 
 void g_init_gxfile(void)
 {

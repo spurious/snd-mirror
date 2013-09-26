@@ -3741,7 +3741,6 @@ max and min when it is opened."
 
 
 
-#ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_add_sound_file_extension_w, g_add_sound_file_extension)
 XEN_NARGIFY_0(g_sound_file_extensions_w, g_sound_file_extensions)
 XEN_NARGIFY_1(g_set_sound_file_extensions_w, g_set_sound_file_extensions)
@@ -3802,68 +3801,6 @@ XEN_NARGIFY_0(g_clipping_w, g_clipping)
 XEN_NARGIFY_1(g_set_clipping_w, g_set_clipping)
 XEN_NARGIFY_1(g_delete_file_filter_w, g_delete_file_filter)
 XEN_NARGIFY_2(g_add_file_filter_w, g_add_file_filter)
-#else
-#define g_add_sound_file_extension_w g_add_sound_file_extension
-#define g_sound_file_extensions_w g_sound_file_extensions
-#define g_set_sound_file_extensions_w g_set_sound_file_extensions
-#define g_file_write_date_w g_file_write_date
-#define g_soundfont_info_w g_soundfont_info
-#define g_sound_files_in_directory_w g_sound_files_in_directory
-#define g_sound_loop_info_w g_sound_loop_info
-#define g_set_sound_loop_info_w g_set_sound_loop_info
-#define g_disk_kspace_w g_disk_kspace
-#define g_open_file_dialog_w g_open_file_dialog
-#define g_mix_file_dialog_w g_mix_file_dialog
-#define g_insert_file_dialog_w g_insert_file_dialog
-#define g_edit_header_dialog_w g_edit_header_dialog
-#define g_save_selection_dialog_w g_save_selection_dialog
-#define g_save_region_dialog_w g_save_region_dialog
-#define g_save_sound_dialog_w g_save_sound_dialog
-#define g_new_sound_dialog_w g_new_sound_dialog
-#define g_info_dialog_w g_info_dialog
-#define g_sound_file_p_w g_sound_file_p
-#define g_snd_tempnam_w g_snd_tempnam
-#define g_auto_update_w g_auto_update
-#define g_set_auto_update_w g_set_auto_update
-#define g_auto_update_interval_w g_auto_update_interval
-#define g_set_auto_update_interval_w g_set_auto_update_interval
-#define g_default_output_chans_w g_default_output_chans
-#define g_set_default_output_chans_w g_set_default_output_chans
-#define g_default_output_srate_w g_default_output_srate
-#define g_set_default_output_srate_w g_set_default_output_srate
-#define g_default_output_header_type_w g_default_output_header_type
-#define g_set_default_output_header_type_w g_set_default_output_header_type
-#define g_default_output_data_format_w g_default_output_data_format
-#define g_set_default_output_data_format_w g_set_default_output_data_format
-#define g_ask_before_overwrite_w g_ask_before_overwrite
-#define g_set_ask_before_overwrite_w g_set_ask_before_overwrite
-#define g_with_toolbar_w g_with_toolbar
-#define g_set_with_toolbar_w g_set_with_toolbar
-#define g_with_tooltips_w g_with_tooltips
-#define g_set_with_tooltips_w g_set_with_tooltips
-#define g_with_menu_icons_w g_with_menu_icons
-#define g_set_with_menu_icons_w g_set_with_menu_icons
-#define g_save_as_dialog_src_w g_save_as_dialog_src
-#define g_set_save_as_dialog_src_w g_set_save_as_dialog_src
-#define g_save_as_dialog_auto_comment_w g_save_as_dialog_auto_comment
-#define g_set_save_as_dialog_auto_comment_w g_set_save_as_dialog_auto_comment
-#define g_remember_sound_state_w g_remember_sound_state
-#define g_set_remember_sound_state_w g_set_remember_sound_state
-#define g_ask_about_unsaved_edits_w g_ask_about_unsaved_edits
-#define g_set_ask_about_unsaved_edits_w g_set_ask_about_unsaved_edits
-#define g_show_full_duration_w g_show_full_duration
-#define g_set_show_full_duration_w g_set_show_full_duration
-#define g_show_full_range_w g_show_full_range
-#define g_set_show_full_range_w g_set_show_full_range
-#define g_initial_beg_w g_initial_beg
-#define g_set_initial_beg_w g_set_initial_beg
-#define g_initial_dur_w g_initial_dur
-#define g_set_initial_dur_w g_set_initial_dur
-#define g_clipping_w g_clipping
-#define g_set_clipping_w g_set_clipping
-#define g_delete_file_filter_w g_delete_file_filter
-#define g_add_file_filter_w g_add_file_filter
-#endif
 
 
 void g_init_file(void)

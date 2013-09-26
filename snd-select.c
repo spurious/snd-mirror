@@ -1809,7 +1809,6 @@ static XEN g_unselect_all(void)
 }
 
 
-#ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_selection_position_w, g_selection_position)
 XEN_ARGIFY_3(g_set_selection_position_w, g_set_selection_position)
 XEN_ARGIFY_2(g_selection_frames_w, g_selection_frames)
@@ -1830,28 +1829,6 @@ XEN_ARGIFY_2(g_select_all_w, g_select_all)
 XEN_VARGIFY(g_save_selection_w, g_save_selection)
 XEN_NARGIFY_0(g_show_selection_w, g_show_selection)
 XEN_NARGIFY_0(g_unselect_all_w, g_unselect_all)
-#else
-#define g_selection_position_w g_selection_position
-#define g_set_selection_position_w g_set_selection_position
-#define g_selection_frames_w g_selection_frames
-#define g_set_selection_frames_w g_set_selection_frames
-#define g_selection_member_w g_selection_member
-#define g_set_selection_member_w g_set_selection_member
-#define g_selection_p_w g_selection_p
-#define g_selection_w g_selection
-#define g_selection_chans_w g_selection_chans
-#define g_selection_srate_w g_selection_srate
-#define g_selection_maxamp_w g_selection_maxamp
-#define g_selection_maxamp_position_w g_selection_maxamp_position
-#define g_delete_selection_w g_delete_selection
-#define g_insert_selection_w g_insert_selection
-#define g_mix_selection_w g_mix_selection
-#define g_selection_to_mix_w g_selection_to_mix
-#define g_select_all_w g_select_all
-#define g_save_selection_w g_save_selection
-#define g_show_selection_w g_show_selection
-#define g_unselect_all_w g_unselect_all
-#endif
 
 void g_init_selection(void)
 {

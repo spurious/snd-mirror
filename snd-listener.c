@@ -236,7 +236,6 @@ static XEN g_listener_set_colorized(XEN val)
 }
 
 
-#ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_save_listener_w, g_save_listener)
 XEN_NARGIFY_0(g_clear_listener_w, g_clear_listener);
 XEN_NARGIFY_0(g_show_listener_w, g_show_listener)
@@ -246,17 +245,6 @@ XEN_NARGIFY_1(g_set_listener_prompt_w, g_set_listener_prompt)
 XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 XEN_NARGIFY_0(g_listener_colorized_w, g_listener_colorized)
 XEN_NARGIFY_1(g_listener_set_colorized_w, g_listener_set_colorized)
-#else
-#define g_save_listener_w g_save_listener
-#define g_clear_listener_w g_clear_listener
-#define g_show_listener_w g_show_listener
-#define g_set_show_listener_w g_set_show_listener
-#define g_listener_prompt_w g_listener_prompt
-#define g_set_listener_prompt_w g_set_listener_prompt
-#define g_snd_completion_w g_snd_completion
-#define g_listener_colorized_w g_listener_colorized
-#define g_listener_set_colorized_w g_listener_set_colorized
-#endif
 
 void g_init_listener(void)
 {

@@ -2255,7 +2255,6 @@ vct( 0.5 0.3 0.1 ) .g => #<vct[len=3]: 0.500 0.300 0.100>"
 
 
 
-#ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_make_vct_w, g_make_vct)
 #if (!HAVE_SCHEME)
   XEN_NARGIFY_2(g_vct_fill_w, g_vct_fill)
@@ -2285,38 +2284,6 @@ XEN_NARGIFY_2(g_vct_times_w, g_vct_times)
 XEN_NARGIFY_2(g_vct_plus_w, g_vct_plus)
 XEN_NARGIFY_1(g_vct_max_w, g_vct_max)
 XEN_NARGIFY_1(g_vct_min_w, g_vct_min)
-#else
-#define g_make_vct_w g_make_vct
-#if (!HAVE_SCHEME)
-  #define g_vct_copy_w g_vct_copy
-  #define g_vct_fill_w g_vct_fill
-#endif
-#define g_vct_p_w g_vct_p
-#define g_list_to_vct_w xen_list_to_vct
-#define g_vct_to_list_w g_vct_to_list
-#define g_vector_to_vct_w g_vector_to_vct
-#define g_vct_to_vector_w g_vct_to_vector
-#define g_vct_length_w g_vct_length
-#define g_vct_ref_w g_vct_ref
-#define g_vct_set_w g_vct_set
-#define g_vct_multiply_w g_vct_multiply
-#define g_vct_scale_w g_vct_scale
-#define g_vct_add_w g_vct_add
-#define g_vct_subtract_w g_vct_subtract
-#define g_vct_offset_w g_vct_offset
-#define g_vct_peak_w g_vct_peak
-#define g_vct_peak_and_location_w g_vct_peak_and_location
-#define g_vct_move_w g_vct_move
-#define g_vct_subseq_w g_vct_subseq
-#define g_vct_w g_vct
-#define g_vct_reverse_w g_vct_reverse
-#define g_vct_to_readable_string_w g_vct_to_readable_string
-#define g_vct_times_w g_vct_times
-#define g_vct_plus_w g_vct_plus
-#define g_vct_max_w g_vct_max
-#define g_vct_min_w g_vct_min
-#endif
-
 
 void mus_vct_init(void)
 {

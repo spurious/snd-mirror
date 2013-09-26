@@ -10172,6 +10172,9 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
     case T_INTEGER:
       if (integer(x) < 0)
 	return(make_integer(sc, -integer(x)));
+      /* but what to do here: (magnitude -9223372036854775808) -> -9223372036854775808? 
+       *   same thing happens in abs, lcm and gcd: (gcd -9223372036854775808) -> -9223372036854775808
+       */
       return(x);
 
     case T_RATIO:
@@ -14910,6 +14913,18 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 	  goto MAX_INTEGERS;
 
 	case T_REAL:
+	  /* (max 3/4 nan.0) should probably return NaN */
+	  if (is_NaN(real(y)))
+	    {
+	      for (; is_not_null(p); p = cdr(p))
+		if (!is_real(car(p)))
+		  {
+		    CHECK_METHOD(sc, car(p), sc->MAX, args);
+		    return(wrong_type_argument_n(sc, sc->MAX, position_of(p, args), car(p), T_REAL));
+		  }
+	      return(y);
+	    }
+
 	  if (fraction(x) < real(y))
 	    {
 	      x = y;
@@ -15111,6 +15126,17 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 	  goto MIN_INTEGERS;
 
 	case T_REAL:
+	  /* (min 3/4 nan.0) should probably return NaN */
+	  if (is_NaN(real(y)))
+	    {
+	      for (; is_not_null(p); p = cdr(p))
+		if (!is_real(car(p)))
+		  {
+		    CHECK_METHOD(sc, car(p), sc->MIN, args);
+		    return(wrong_type_argument_n(sc, sc->MIN, position_of(p, args), car(p), T_REAL));
+		  }
+	      return(y);
+	    }
 	  if (fraction(x) > real(y))
 	    {
 	      x = y;
@@ -28366,6 +28392,8 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
    *    (member 1 #(0 1 2) =) ? -- for c_objects (ffi) we would need a substring equivalent
    *      and what would it do for a hash-table? or an environment?
    * also the 3 arg version can implement position, find, etc
+   *
+   * the third arg can be weird: (member #f (list #t) cons) -> (#t)
    */
 
   s7_pointer x, y, obj;
@@ -30710,7 +30738,11 @@ static int hash_float_location(s7_Double x)
   else loc = x + 0.5;
 
   if (loc < 0)
-    return(-loc);
+    {
+      loc = -loc;
+      if (loc < 0)  /* (hash-table-index 1e+18) -> -2147483648 */
+	return(0);
+    }
   return(loc);
 }
 
@@ -33221,6 +33253,10 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
     case T_FLOAT_VECTOR:
     case T_VECTOR:
       return(args > 0);
+      /* but that means 
+       *   (aritable? (1) 9223372036854775807) -> #t
+       *   (aritable? (()) 6) -> #t
+       */
 
     case T_SYNTAX:
       switch (syntax_opcode(x))
@@ -61596,7 +61632,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* --------------- */
     case OP_READ_UNQUOTE:
-      /* here if sc->value is a constant, the unquote is pointless */
+      /* here if sc->value is a constant, the unquote is pointless (what about ,pi?) */
       if ((is_pair(sc->value)) ||
 	  (is_symbol(sc->value)))
 	sc->value = list_2(sc, sc->UNQUOTE, sc->value);
@@ -67843,7 +67879,7 @@ int main(int argc, char **argv)
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989 3997|  4220
  * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725
  * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995
- * t455|6     265|    89   55   31   14   14    9    9    9|  19.5
+ * t455|6     265|    89   55   31   14   14    9    9    9|   7.4
  * lat        229|    63   52   47   42   40   34   31   29|    29
  * t502        90|    43   39   36   29   23   20   14   14|  14.7
  * calls         |   275  207  175  115   89   71   53   53|    55

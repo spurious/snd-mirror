@@ -768,7 +768,6 @@
 
 ;;; ---------------- argify linkages
 
-(hey "#ifdef XEN_ARGIFY_1~%")
 (define (argify-func func)
   (let ((cargs (length (caddr func)))
 	(name (car func))
@@ -797,35 +796,6 @@
 (for-each argify-func (reverse funcs))
 (uncheck-glu)
 
-(hey "~%#else~%~%")
-
-(define (unargify-func func)
-  (let (;(cargs (length (caddr func)))
-	 (name (car func))
-	 ;(refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
-	 ;(args (- cargs refargs))
-	 (if-fnc (and (> (length func) 4)
-		      (eq? (func 4) 'if))))
-
-    (check-glu name)
-    (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
-
-    (if if-fnc
-	(hey "#if HAVE_~A~%" (string-upcase (symbol->string (func 5)))))
-    (hey "#define gxg_~A_w gxg_~A~%" 
-	 (car func) (car func))
-    (if if-fnc
-	(hey "#endif~%"))
-    (if (member (car func) glu-1-2) (hey "#endif~%"))))
-	 
-(hey "#if USE_MOTIF~%")
-(for-each unargify-func (reverse x-funcs))
-(hey "#endif~%")
-
-(for-each unargify-func (reverse funcs))
-(uncheck-glu)
-
-(hey "#endif~%")
 
 
 ;;; ---------------- procedure linkages

@@ -3811,7 +3811,6 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 }
 
 
-#ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_listener_help_w, g_listener_help)
 XEN_NARGIFY_0(g_html_dir_w, g_html_dir)
 XEN_NARGIFY_1(g_set_html_dir_w, g_set_html_dir)
@@ -3820,16 +3819,6 @@ XEN_NARGIFY_1(g_set_html_program_w, g_set_html_program)
 XEN_NARGIFY_1(g_snd_url_w, g_snd_url)
 XEN_NARGIFY_0(g_snd_urls_w, g_snd_urls)
 XEN_ARGIFY_4(g_help_dialog_w, g_help_dialog)
-#else
-#define g_listener_help_w g_listener_help
-#define g_html_dir_w g_html_dir
-#define g_set_html_dir_w g_set_html_dir
-#define g_html_program_w g_html_program
-#define g_set_html_program_w g_set_html_program
-#define g_snd_url_w g_snd_url
-#define g_snd_urls_w g_snd_urls
-#define g_help_dialog_w g_help_dialog
-#endif
 
 void g_init_help(void)
 {

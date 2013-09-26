@@ -1461,12 +1461,7 @@ static XEN reflect_file_close_in_sync(XEN hook_or_reason)
   return(XEN_FALSE);
 }
 
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_1(reflect_file_close_in_sync_w, reflect_file_close_in_sync)
-#else
-  #define reflect_file_close_in_sync_w reflect_file_close_in_sync
-#endif
-
+XEN_NARGIFY_1(reflect_file_close_in_sync_w, reflect_file_close_in_sync)
 
 
 static void close_button_callback(GtkWidget *w, gpointer context)
@@ -2453,12 +2448,7 @@ pane-box (10)name-form"
 }
 
 
-#ifdef XEN_ARGIFY_1
-  XEN_ARGIFY_1(g_sound_widgets_w, g_sound_widgets)
-#else
-  #define g_sound_widgets_w g_sound_widgets
-#endif
-
+XEN_ARGIFY_1(g_sound_widgets_w, g_sound_widgets)
 
 
 /* -------------------------------------------------------------------------------- */

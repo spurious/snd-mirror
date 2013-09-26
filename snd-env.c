@@ -1785,7 +1785,6 @@ static XEN g_enved_dialog(void)
 }
 
 
-#ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_enved_base_w, g_enved_base)
 XEN_NARGIFY_1(g_set_enved_base_w, g_set_enved_base)
 XEN_NARGIFY_0(g_enved_power_w, g_enved_power)
@@ -1805,27 +1804,6 @@ XEN_NARGIFY_1(g_set_enved_filter_order_w, g_set_enved_filter_order)
 XEN_NARGIFY_0(g_enved_dialog_w, g_enved_dialog)
 XEN_ARGIFY_1(g_save_envelopes_w, g_save_envelopes)
 XEN_ARGIFY_3(g_define_envelope_w, g_define_envelope)
-#else
-#define g_enved_base_w g_enved_base
-#define g_set_enved_base_w g_set_enved_base
-#define g_enved_power_w g_enved_power
-#define g_set_enved_power_w g_set_enved_power
-#define g_enved_clip_p_w g_enved_clip_p
-#define g_set_enved_clip_p_w g_set_enved_clip_p
-#define g_enved_style_w g_enved_style
-#define g_set_enved_style_w g_set_enved_style
-#define g_enved_target_w g_enved_target
-#define g_set_enved_target_w g_set_enved_target
-#define g_enved_wave_p_w g_enved_wave_p
-#define g_set_enved_wave_p_w g_set_enved_wave_p
-#define g_enved_in_dB_w g_enved_in_dB
-#define g_set_enved_in_dB_w g_set_enved_in_dB
-#define g_enved_filter_order_w g_enved_filter_order
-#define g_set_enved_filter_order_w g_set_enved_filter_order
-#define g_enved_dialog_w g_enved_dialog
-#define g_save_envelopes_w g_save_envelopes
-#define g_define_envelope_w g_define_envelope
-#endif
 
 void g_init_env(void)
 {

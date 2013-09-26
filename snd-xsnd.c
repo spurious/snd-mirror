@@ -2768,11 +2768,7 @@ static XEN reflect_file_close_in_sync(XEN hook_or_reason)
   return(XEN_FALSE);
 }
 
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_1(reflect_file_close_in_sync_w, reflect_file_close_in_sync)
-#else
-  #define reflect_file_close_in_sync_w reflect_file_close_in_sync
-#endif
+XEN_NARGIFY_1(reflect_file_close_in_sync_w, reflect_file_close_in_sync)
 
 
 void set_sound_pane_file_label(snd_info *sp, const char *str)
@@ -3278,11 +3274,7 @@ widgets: (0)pane (1)name (2)control-panel (3)status area (4)play-button (5)filte
 }
 
 
-#ifdef XEN_ARGIFY_1
-  XEN_ARGIFY_1(g_sound_widgets_w, g_sound_widgets)
-#else
-  #define g_sound_widgets_w g_sound_widgets
-#endif
+XEN_ARGIFY_1(g_sound_widgets_w, g_sound_widgets)
 
 void g_init_gxsnd(void)
 {

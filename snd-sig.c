@@ -6920,7 +6920,6 @@ static s7_pointer g_phases_get_peak(s7_scheme *sc, s7_pointer args)
 
 
 
-#ifdef XEN_ARGIFY_1
 XEN_ARGIFY_6(g_scan_chan_w, g_scan_chan)
 XEN_ARGIFY_7(g_map_chan_w, g_map_chan)
 XEN_ARGIFY_6(g_scan_channel_w, g_scan_channel)
@@ -6965,55 +6964,6 @@ XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
 #if HAVE_NESTED_FUNCTIONS
 XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
 XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
-#endif
-
-#else
-#define g_scan_chan_w g_scan_chan
-#define g_map_chan_w g_map_chan
-#define g_scan_channel_w g_scan_channel
-#define g_map_channel_w g_map_channel
-#define g_find_channel_w g_find_channel
-#define g_count_matches_w g_count_matches
-#define g_smooth_sound_w g_smooth_sound
-#define g_smooth_channel_w g_smooth_channel
-#define g_smooth_selection_w g_smooth_selection
-#define g_delete_selection_and_smooth_w g_delete_selection_and_smooth
-#define g_delete_samples_and_smooth_w g_delete_samples_and_smooth
-#define g_reverse_sound_w g_reverse_sound
-#define g_reverse_channel_w g_reverse_channel
-#define g_reverse_selection_w g_reverse_selection
-#define g_swap_channels_w g_swap_channels
-#define g_insert_silence_w g_insert_silence
-#define g_scale_selection_to_w g_scale_selection_to
-#define g_scale_selection_by_w g_scale_selection_by
-#define g_scale_to_w g_scale_to
-#define g_scale_by_w g_scale_by
-#define g_env_selection_w g_env_selection
-#define g_env_sound_w g_env_sound
-#define g_env_channel_w g_env_channel
-#define g_env_channel_with_base_w g_env_channel_with_base
-#define g_ramp_channel_w g_ramp_channel
-#define g_xramp_channel_w g_xramp_channel
-#define g_fft_w g_fft
-#define g_snd_spectrum_w g_snd_spectrum
-#define g_convolve_with_w g_convolve_with
-#define g_convolve_selection_with_w g_convolve_selection_with
-#define g_src_sound_w g_src_sound
-#define g_src_selection_w g_src_selection
-#define g_src_channel_w g_src_channel
-#define g_pad_channel_w g_pad_channel
-#define g_filter_channel_w g_filter_channel
-#define g_filter_sound_w g_filter_sound
-#define g_filter_selection_w g_filter_selection
-#define g_clm_channel_w g_clm_channel
-#define g_sinc_width_w g_sinc_width
-#define g_set_sinc_width_w g_set_sinc_width
-
-#if HAVE_NESTED_FUNCTIONS
-#define g_find_min_peak_phases_w g_find_min_peak_phases
-#define g_fpsap_w g_fpsap
-#endif
-
 #endif
 
 void g_init_sig(void)

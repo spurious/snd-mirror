@@ -2409,7 +2409,6 @@ static XEN g_mus_audio_output_properties_mutable(XEN mut)
 #endif
 
 
-#ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_sound_data_length_w, g_sound_data_length)
 XEN_NARGIFY_1(g_sound_data_chans_w, g_sound_data_chans)
 #if (!HAVE_SCHEME)
@@ -2516,112 +2515,6 @@ XEN_NARGIFY_1(g_mus_set_max_malloc_w, g_mus_set_max_malloc)
 XEN_NARGIFY_0(g_mus_max_table_size_w, g_mus_max_table_size)
 XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 
-#else
-#define g_sound_data_length_w g_sound_data_length
-#define g_sound_data_chans_w g_sound_data_chans
-#if (!HAVE_SCHEME)
-#define g_sound_data_copy_w g_sound_data_copy
-#define g_sound_data_fillB_w g_sound_data_fillB
-#endif
-#define g_sound_data_addB_w g_sound_data_addB
-#define g_sound_data_add_w g_sound_data_add
-#define g_sound_data_offsetB_w g_sound_data_offsetB
-#define g_sound_data_multiplyB_w g_sound_data_multiplyB
-#define g_sound_data_multiply_w g_sound_data_multiply
-#define g_sound_data_ref_w g_sound_data_ref
-#define g_sound_data_set_w g_sound_data_set
-#define g_make_sound_data_w g_make_sound_data
-#define g_sound_data_p_w g_sound_data_p
-#define g_sound_data_maxamp_w g_sound_data_maxamp
-#define g_sound_data_peak_w g_sound_data_peak
-#define g_sound_data_scaleB_w g_sound_data_scaleB
-#define g_sound_data_reverseB_w g_sound_data_reverseB
-#define g_sound_data_to_vct_w g_sound_data_to_vct
-#define g_vct_to_sound_data_w g_vct_to_sound_data
-#define g_mus_sound_samples_w g_mus_sound_samples
-#define g_mus_sound_set_samples_w g_mus_sound_set_samples
-#define g_mus_sound_frames_w g_mus_sound_frames
-#define g_mus_sound_duration_w g_mus_sound_duration
-#define g_mus_sound_datum_size_w g_mus_sound_datum_size
-#define g_mus_sound_data_location_w g_mus_sound_data_location
-#define g_mus_sound_set_data_location_w g_mus_sound_set_data_location
-#define g_mus_sound_chans_w g_mus_sound_chans
-#define g_mus_sound_set_chans_w g_mus_sound_set_chans
-#define g_mus_sound_srate_w g_mus_sound_srate
-#define g_mus_sound_set_srate_w g_mus_sound_set_srate
-#define g_mus_sound_header_type_w g_mus_sound_header_type
-#define g_mus_sound_set_header_type_w g_mus_sound_set_header_type
-#define g_mus_sound_data_format_w g_mus_sound_data_format
-#define g_mus_sound_set_data_format_w g_mus_sound_set_data_format
-#define g_mus_sound_length_w g_mus_sound_length
-#define g_mus_sound_type_specifier_w g_mus_sound_type_specifier
-#define g_mus_header_type_name_w g_mus_header_type_name
-#define g_mus_header_writable_w g_mus_header_writable
-#define g_mus_data_format_name_w g_mus_data_format_name
-#define g_mus_header_type_to_string_w g_mus_header_type_to_string
-#define g_mus_data_format_to_string_w g_mus_data_format_to_string
-#define g_mus_sound_comment_w g_mus_sound_comment
-#define g_mus_sound_write_date_w g_mus_sound_write_date
-#define g_mus_bytes_per_sample_w g_mus_bytes_per_sample
-#define g_mus_sound_loop_info_w g_mus_sound_loop_info
-#define g_mus_sound_mark_info_w g_mus_sound_mark_info
-#define g_mus_sound_maxamp_w g_mus_sound_maxamp
-#define g_mus_sound_set_maxamp_w g_mus_sound_set_maxamp
-#define g_mus_sound_maxamp_exists_w g_mus_sound_maxamp_exists
-#define g_mus_sound_open_input_w g_mus_sound_open_input
-#define g_mus_sound_close_input_w g_mus_sound_close_input
-
-#define g_mus_audio_close_w g_mus_audio_close
-#define g_mus_audio_write_w g_mus_audio_write
-#define g_mus_audio_read_w g_mus_audio_read
-#define g_mus_audio_open_output_w g_mus_audio_open_output
-#define g_mus_audio_open_input_w g_mus_audio_open_input
-
-#define g_mus_clipping_w g_mus_clipping
-#define g_mus_set_clipping_w g_mus_set_clipping
-#define g_mus_file_clipping_w g_mus_file_clipping
-#define g_mus_file_set_clipping_w g_mus_file_set_clipping
-#define g_mus_header_raw_defaults_w g_mus_header_raw_defaults
-#define g_mus_header_set_raw_defaults_w g_mus_header_set_raw_defaults
-#define g_mus_expand_filename_w g_mus_expand_filename
-#define g_mus_sound_open_output_w g_mus_sound_open_output
-#define g_mus_sound_reopen_output_w g_mus_sound_reopen_output
-#define g_mus_sound_close_output_w g_mus_sound_close_output
-#define g_mus_sound_read_w g_mus_sound_read
-#define g_mus_sound_write_w g_mus_sound_write
-#define g_mus_sound_seek_frame_w g_mus_sound_seek_frame
-#define g_mus_sound_report_cache_w g_mus_sound_report_cache
-#define g_mus_sound_forget_w g_mus_sound_forget
-#define g_mus_sound_prune_w g_mus_sound_prune
-#define g_mus_error_type_to_string_w g_mus_error_type_to_string
-#define g_mus_oss_set_buffers_w g_mus_oss_set_buffers
-#define g_array_to_file_w g_array_to_file
-#define g_file_to_array_w g_file_to_array
-#define g_mus_alsa_buffers_w g_mus_alsa_buffers
-#define g_mus_alsa_set_buffers_w g_mus_alsa_set_buffers
-#define g_mus_alsa_buffer_size_w g_mus_alsa_buffer_size
-#define g_mus_alsa_set_buffer_size_w g_mus_alsa_set_buffer_size
-#define g_mus_alsa_device_w g_mus_alsa_device
-#define g_mus_alsa_set_device_w g_mus_alsa_set_device
-#define g_mus_alsa_playback_device_w g_mus_alsa_playback_device
-#define g_mus_alsa_set_playback_device_w g_mus_alsa_set_playback_device
-#define g_mus_alsa_capture_device_w g_mus_alsa_capture_device
-#define g_mus_alsa_set_capture_device_w g_mus_alsa_set_capture_device
-#define g_mus_alsa_squelch_warning_w g_mus_alsa_squelch_warning
-#define g_mus_alsa_set_squelch_warning_w g_mus_alsa_set_squelch_warning
-#if HAVE_OSS
-  #define g_mus_audio_reinitialize_w g_mus_audio_reinitialize
-#endif
-#if __APPLE__
-  #define g_mus_audio_output_properties_mutable_w g_mus_audio_output_properties_mutable
-#endif
-
-#define g_mus_max_malloc_w g_mus_max_malloc
-#define g_mus_set_max_malloc_w g_mus_set_max_malloc
-#define g_mus_max_table_size_w g_mus_max_table_size
-#define g_mus_set_max_table_size_w g_mus_set_max_table_size
-
-#endif
 
 #if HAVE_SCHEME
 #ifndef _MSC_VER
@@ -3033,13 +2926,6 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_reverseB,      g_sound_data_reverseB_w,        1, 0, 0, H_sound_data_reverseB);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_to_vct,        g_sound_data_to_vct_w,          1, 2, 0, H_sound_data_to_vct);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_to_sound_data,        g_vct_to_sound_data_w,          1, 2, 0, H_vct_to_sound_data);
-
-  /* TODO: in s7 sound-data->vct and vct->sound-data can just be make-shared-vector? or do we assume it's new? (use copy first)
-   *   similarly for sound-data|vct->vector and vice versa if these exist
-   *   also clean up the ifdefs here and in vct.c
-   *   sound-data-chans as dim[1]
-   *   (vct...) -> (float-vector...)?
-   */
 
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_frames,         g_mus_sound_frames_w,           1, 0, 0, H_mus_sound_frames);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_duration,       g_mus_sound_duration_w,         1, 0, 0, H_mus_sound_duration);

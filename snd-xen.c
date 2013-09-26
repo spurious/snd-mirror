@@ -2333,7 +2333,6 @@ static char *find_source_file(const char *orig)
  *   most of this could be done via for-each
  */
 
-#ifdef XEN_ARGIFY_1
 #if HAVE_SCHEME && (!_MSC_VER)
   XEN_ARGIFY_2(g_dlopen_w, g_dlopen)
   XEN_NARGIFY_1(g_dlclose_w, g_dlclose)
@@ -2386,60 +2385,6 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   #endif
 #endif
 
-#else
-/* not argify */
-
-#if HAVE_SCHEME && (!_MSC_VER)
-  #define g_dlopen_w g_dlopen
-  #define g_dlclose_w g_dlclose
-  #define g_dlerror_w g_dlerror
-  #define g_dlinit_w g_dlinit
-  #define g_dlsym_w g_dlsym
-#endif
-#if HAVE_SCHEME
-  #define g_snd_s7_error_handler_w g_snd_s7_error_handler
-#endif
-
-#define g_snd_print_w g_snd_print
-#define g_little_endian_w g_little_endian
-#define g_snd_global_state_w g_snd_global_state
-#define g_add_source_file_extension_w g_add_source_file_extension
-
-#if (!HAVE_SCHEME)
-#define g_fmod_w g_fmod
-#endif
-
-#if HAVE_SPECIAL_FUNCTIONS || HAVE_GSL
-  #define g_j0_w g_j0
-  #define g_j1_w g_j1
-  #define g_jn_w g_jn
-  #define g_y0_w g_y0
-  #define g_y1_w g_y1
-  #define g_yn_w g_yn
-  #define g_erf_w g_erf
-  #define g_erfc_w g_erfc
-  #define g_lgamma_w g_lgamma
-#endif
-
-#define g_i0_w g_i0
-
-#if HAVE_GSL
-  #define g_i1_w g_i1
-  #define g_in_w g_in
-  #define g_k0_w g_k0
-  #define g_k1_w g_k1
-  #define g_kn_w g_kn
-  #define g_gsl_ellipk_w g_gsl_ellipk
-  #define g_gsl_ellipj_w g_gsl_ellipj
-  #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
-    #define g_gsl_eigenvectors_w g_gsl_eigenvectors
-  #endif
-  #if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS
-    #define g_gsl_roots_w g_gsl_roots
-  #endif
-#endif
-#endif
-
 
 
 #if USE_MOTIF
@@ -2480,12 +2425,7 @@ static XEN g_snd_glx_context(void)
 		    XEN_WRAP_C_POINTER(ss->cx)));
 } 
 
-
-#ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_snd_glx_context_w, g_snd_glx_context)
-#else
-#define g_snd_glx_context_w g_snd_glx_context
-#endif
 #endif
 
 

@@ -2352,15 +2352,9 @@ static XEN g_goto_listener_end(void)
 }
 
 
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_0(g_listener_selection_w, g_listener_selection)
-  XEN_NARGIFY_0(g_reset_listener_cursor_w, g_reset_listener_cursor)
-  XEN_NARGIFY_0(g_goto_listener_end_w, g_goto_listener_end)
-#else
-  #define g_listener_selection_w g_listener_selection
-  #define g_reset_listener_cursor_w g_reset_listener_cursor
-  #define g_goto_listener_end_w g_goto_listener_end
-#endif
+XEN_NARGIFY_0(g_listener_selection_w, g_listener_selection)
+XEN_NARGIFY_0(g_reset_listener_cursor_w, g_reset_listener_cursor)
+XEN_NARGIFY_0(g_goto_listener_end_w, g_goto_listener_end)
 
 void g_init_gxlistener(void)
 {

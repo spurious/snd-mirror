@@ -23,7 +23,6 @@
 (define *clm-with-sound-depth* 0) ; for CM, not otherwise used
 (define *clm-default-frequency* 0.0)
 (define *clm-delete-reverb* #f)   ; should with-sound clean up reverb stream
-(define *clm-threads* 4)          ; obsolete, unused
 
 
 (define (times->samples beg dur) 

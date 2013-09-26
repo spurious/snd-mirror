@@ -2865,7 +2865,6 @@ static XEN g_set_mark_property(XEN key, XEN id, XEN val)
 
 
 
-#ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_mark_sample_w, g_mark_sample)
 XEN_NARGIFY_2(g_set_mark_sample_w, g_set_mark_sample)
 XEN_NARGIFY_1(g_mark_sync_w, g_mark_sync)
@@ -2893,35 +2892,6 @@ XEN_NARGIFY_1(g_mark_properties_w, g_mark_properties)
 XEN_NARGIFY_2(g_set_mark_properties_w, g_set_mark_properties)
 XEN_NARGIFY_2(g_mark_property_w, g_mark_property)
 XEN_NARGIFY_3(g_set_mark_property_w, g_set_mark_property)
-#else
-#define g_mark_sample_w g_mark_sample
-#define g_set_mark_sample_w g_set_mark_sample
-#define g_mark_sync_w g_mark_sync
-#define g_set_mark_sync_w g_set_mark_sync
-#define g_mark_name_w g_mark_name
-#define g_set_mark_name_w g_set_mark_name
-#define g_mark_sync_max_w g_mark_sync_max
-#define g_mark_home_w g_mark_home
-#define g_marks_w g_marks
-#define g_add_mark_w g_add_mark
-#define g_add_mark_unchecked_w g_add_mark_unchecked
-#define g_delete_mark_w g_delete_mark
-#define g_delete_marks_w g_delete_marks
-#define g_syncd_marks_w g_syncd_marks
-#define g_mark_tag_width_w g_mark_tag_width
-#define g_set_mark_tag_width_w g_set_mark_tag_width
-#define g_mark_tag_height_w g_mark_tag_height
-#define g_set_mark_tag_height_w g_set_mark_tag_height
-#define g_find_mark_w g_find_mark
-#define g_save_marks_w g_save_marks
-#define g_mark_p_w g_mark_p
-#define g_integer_to_mark_w g_integer_to_mark
-#define g_mark_to_integer_w g_mark_to_integer
-#define g_mark_properties_w g_mark_properties
-#define g_set_mark_properties_w g_set_mark_properties
-#define g_mark_property_w g_mark_property
-#define g_set_mark_property_w g_set_mark_property
-#endif
 
 void g_init_marks(void)
 {

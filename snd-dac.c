@@ -3363,7 +3363,6 @@ static XEN g_set_with_tracking_cursor(XEN on)
 
 
 
-#ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_with_tracking_cursor_w, g_with_tracking_cursor)
 XEN_NARGIFY_1(g_set_with_tracking_cursor_w, g_set_with_tracking_cursor)
 XEN_VARGIFY(g_play_w, g_play)
@@ -3388,32 +3387,6 @@ XEN_NARGIFY_0(g_cursor_update_interval_w, g_cursor_update_interval)
 XEN_NARGIFY_1(g_set_cursor_update_interval_w, g_set_cursor_update_interval)
 XEN_NARGIFY_0(g_cursor_location_offset_w, g_cursor_location_offset)
 XEN_NARGIFY_1(g_set_cursor_location_offset_w, g_set_cursor_location_offset)
-#else
-#define g_with_tracking_cursor_w g_with_tracking_cursor
-#define g_set_with_tracking_cursor_w g_set_with_tracking_cursor
-#define g_play_w g_play
-#define g_stop_playing_w g_stop_playing
-#define g_make_player_w g_make_player
-#define g_add_player_w g_add_player
-#define g_player_home_w g_player_home
-#define g_start_playing_w g_start_playing
-#define g_stop_player_w g_stop_player
-#define g_free_player_w g_free_player
-#define g_players_w g_players
-#define g_player_p_w g_player_p
-#define g_dac_size_w g_dac_size
-#define g_set_dac_size_w g_set_dac_size
-#define g_dac_combines_channels_w g_dac_combines_channels
-#define g_set_dac_combines_channels_w g_set_dac_combines_channels
-#define g_playing_w g_playing
-#define g_set_playing_w g_set_playing
-#define g_pausing_w g_pausing
-#define g_set_pausing_w g_set_pausing
-#define g_cursor_update_interval_w g_cursor_update_interval
-#define g_set_cursor_update_interval_w g_set_cursor_update_interval
-#define g_cursor_location_offset_w g_cursor_location_offset
-#define g_set_cursor_location_offset_w g_set_cursor_location_offset
-#endif
 
 void g_init_dac(void)
 {

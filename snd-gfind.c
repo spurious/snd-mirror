@@ -272,13 +272,8 @@ static XEN g_find_dialog_widgets(void)
 }
 
 
-#ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_find_dialog_w, g_find_dialog)
 XEN_NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
-#else
-#define g_find_dialog_w g_find_dialog
-#define g_find_dialog_widgets_w g_find_dialog_widgets
-#endif
 
 void g_init_gxfind(void)
 {

@@ -1303,13 +1303,8 @@ static XEN g_set_background_gradient(XEN val)
 }
 
 
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_0(g_background_gradient_w, g_background_gradient)
-  XEN_NARGIFY_1(g_set_background_gradient_w, g_set_background_gradient)
-#else
-  #define g_background_gradient_w g_background_gradient
-  #define g_set_background_gradient_w g_set_background_gradient
-#endif
+XEN_NARGIFY_0(g_background_gradient_w, g_background_gradient)
+XEN_NARGIFY_1(g_set_background_gradient_w, g_set_background_gradient)
 
 void g_init_gxdraw(void)
 {

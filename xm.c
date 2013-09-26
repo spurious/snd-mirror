@@ -700,18 +700,11 @@ static XEN gxm_XGCValues(void)
   return(WRAP_FOR_XEN_OBJ("XGCValues", e));
 }
 
-#ifdef XEN_ARGIFY_1
-  #define XM_Make(Name) \
-    static XEN gxm_ ## Name (void) {Name *e; e = (Name *)calloc(1, sizeof(Name)); return(WRAP_FOR_XEN_OBJ(#Name, e));} \
-    XEN_NARGIFY_0(gxm_ ## Name ## _w, gxm_ ## Name)
-  #define XM_Declare(Name) \
-    XEN_DEFINE_PROCEDURE(XM_PREFIX #Name XM_POSTFIX, gxm_ ## Name ## _w, 0, 0, 0, "Make an " #Name " struct")
-#else
-  #define XM_Make(Name) \
-    static XEN gxm_ ## Name (void) {Name *e; e = (Name *)calloc(1, sizeof(Name)); return(WRAP_FOR_XEN_OBJ(#Name, e));}
-  #define XM_Declare(Name) \
-    XEN_DEFINE_PROCEDURE(XM_PREFIX #Name XM_POSTFIX, gxm_ ## Name, 0, 0, 0, "Make an " #Name " struct")
-#endif
+#define XM_Make(Name) \
+  static XEN gxm_ ## Name (void) {Name *e; e = (Name *)calloc(1, sizeof(Name)); return(WRAP_FOR_XEN_OBJ(#Name, e));} \
+  XEN_NARGIFY_0(gxm_ ## Name ## _w, gxm_ ## Name)
+#define XM_Declare(Name) \
+  XEN_DEFINE_PROCEDURE(XM_PREFIX #Name XM_POSTFIX, gxm_ ## Name ## _w, 0, 0, 0, "Make an " #Name " struct")
 
 XM_Make(XmAnyCallbackStruct)
 XM_Make(XmArrowButtonCallbackStruct)
@@ -759,11 +752,7 @@ static XEN gxm_XmTextBlock(void)
   return(WRAP_FOR_XEN_OBJ("XmTextBlock", e));
 }
 
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_0(gxm_XmTextBlock_w, gxm_XmTextBlock)
-#else
-  #define gxm_XmTextBlock_w gxm_XmTextBlock
-#endif
+XEN_NARGIFY_0(gxm_XmTextBlock_w, gxm_XmTextBlock)
   
 static void define_makes(void)
 {
@@ -19970,3104 +19959,1550 @@ static XEN gxm_page_number(XEN ptr)
 }
 
 
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_3(gxm_XtSetArg_w, gxm_XtSetArg)
-  XEN_ARGIFY_2(gxm_XtManageChildren_w, gxm_XtManageChildren)
-  XEN_NARGIFY_1(gxm_XtManageChild_w, gxm_XtManageChild)
-  XEN_ARGIFY_2(gxm_XtUnmanageChildren_w, gxm_XtUnmanageChildren)
-  XEN_NARGIFY_1(gxm_XtUnmanageChild_w, gxm_XtUnmanageChild)
-  XEN_NARGIFY_1(gxm_XtDispatchEvent_w, gxm_XtDispatchEvent)
-  XEN_NARGIFY_2(gxm_XtCallAcceptFocus_w, gxm_XtCallAcceptFocus)
-  XEN_NARGIFY_1(gxm_XtAppPeekEvent_w, gxm_XtAppPeekEvent)
-  XEN_NARGIFY_2(gxm_XtIsSubclass_w, gxm_XtIsSubclass)
-  XEN_NARGIFY_2(gxm_XtAppSetFallbackResources_w, gxm_XtAppSetFallbackResources)
-  XEN_NARGIFY_1(gxm_XtIsObject_w, gxm_XtIsObject)
-  XEN_NARGIFY_1(gxm_XtIsManaged_w, gxm_XtIsManaged)
-  XEN_NARGIFY_1(gxm_XtIsRealized_w, gxm_XtIsRealized)
-  XEN_NARGIFY_1(gxm_XtIsSensitive_w, gxm_XtIsSensitive)
-  XEN_NARGIFY_6(gxm_XtOwnSelection_w, gxm_XtOwnSelection)
-  XEN_NARGIFY_8(gxm_XtOwnSelectionIncremental_w, gxm_XtOwnSelectionIncremental)
-  XEN_NARGIFY_3(gxm_XtMakeResizeRequest_w, gxm_XtMakeResizeRequest)
-  XEN_NARGIFY_3(gxm_XtTranslateCoords_w, gxm_XtTranslateCoords)
-  XEN_NARGIFY_2(gxm_XtKeysymToKeycodeList_w, gxm_XtKeysymToKeycodeList)
-  XEN_NARGIFY_1(gxm_XtParseTranslationTable_w, gxm_XtParseTranslationTable)
-  XEN_NARGIFY_1(gxm_XtParseAcceleratorTable_w, gxm_XtParseAcceleratorTable)
-  XEN_NARGIFY_2(gxm_XtOverrideTranslations_w, gxm_XtOverrideTranslations)
-  XEN_NARGIFY_2(gxm_XtAugmentTranslations_w, gxm_XtAugmentTranslations)
-  XEN_NARGIFY_2(gxm_XtInstallAccelerators_w, gxm_XtInstallAccelerators)
-  XEN_NARGIFY_2(gxm_XtInstallAllAccelerators_w, gxm_XtInstallAllAccelerators)
-  XEN_NARGIFY_1(gxm_XtUninstallTranslations_w, gxm_XtUninstallTranslations)
-  XEN_NARGIFY_2(gxm_XtAppAddActions_w, gxm_XtAppAddActions)
-  XEN_ARGIFY_3(gxm_XtAppAddActionHook_w, gxm_XtAppAddActionHook)
-  XEN_NARGIFY_1(gxm_XtRemoveActionHook_w, gxm_XtRemoveActionHook)
-  XEN_NARGIFY_1(gxm_XtGetActionList_w, gxm_XtGetActionList)
-  XEN_ARGIFY_5(gxm_XtCallActionProc_w, gxm_XtCallActionProc)
-  XEN_NARGIFY_5(gxm_XtRegisterGrabAction_w, gxm_XtRegisterGrabAction)
-  XEN_NARGIFY_2(gxm_XtSetMultiClickTime_w, gxm_XtSetMultiClickTime)
-  XEN_NARGIFY_1(gxm_XtGetMultiClickTime_w, gxm_XtGetMultiClickTime)
-  XEN_NARGIFY_1(gxm_XtGetResourceList_w, gxm_XtGetResourceList)
-  XEN_NARGIFY_1(gxm_XtGetActionKeysym_w, gxm_XtGetActionKeysym)
-  XEN_NARGIFY_3(gxm_XtTranslateKeycode_w, gxm_XtTranslateKeycode)
-  XEN_NARGIFY_3(gxm_XtTranslateKey_w, gxm_XtTranslateKey)
-  XEN_NARGIFY_2(gxm_XtSetKeyTranslator_w, gxm_XtSetKeyTranslator)
-  XEN_NARGIFY_4(gxm_XtRegisterCaseConverter_w, gxm_XtRegisterCaseConverter)
-  XEN_NARGIFY_2(gxm_XtConvertCase_w, gxm_XtConvertCase)
-  XEN_ARGIFY_5(gxm_XtAddEventHandler_w, gxm_XtAddEventHandler)
-  XEN_NARGIFY_5(gxm_XtRemoveEventHandler_w, gxm_XtRemoveEventHandler)
-  XEN_NARGIFY_5(gxm_XtAddRawEventHandler_w, gxm_XtAddRawEventHandler)
-  XEN_NARGIFY_5(gxm_XtRemoveRawEventHandler_w, gxm_XtRemoveRawEventHandler)
-  XEN_NARGIFY_6(gxm_XtInsertEventHandler_w, gxm_XtInsertEventHandler)
-  XEN_NARGIFY_6(gxm_XtInsertRawEventHandler_w, gxm_XtInsertRawEventHandler)
-  XEN_NARGIFY_2(gxm_XtDispatchEventToWidget_w, gxm_XtDispatchEventToWidget)
-  XEN_NARGIFY_1(gxm_XtBuildEventMask_w, gxm_XtBuildEventMask)
-  XEN_NARGIFY_3(gxm_XtAddGrab_w, gxm_XtAddGrab)
-  XEN_NARGIFY_1(gxm_XtRemoveGrab_w, gxm_XtRemoveGrab)
-  XEN_NARGIFY_2(gxm_XtAppProcessEvent_w, gxm_XtAppProcessEvent)
-  XEN_NARGIFY_1(gxm_XtAppMainLoop_w, gxm_XtAppMainLoop)
-  XEN_NARGIFY_2(gxm_XtAddExposureToRegion_w, gxm_XtAddExposureToRegion)
-  XEN_NARGIFY_2(gxm_XtSetKeyboardFocus_w, gxm_XtSetKeyboardFocus)
-  XEN_NARGIFY_1(gxm_XtGetKeyboardFocusWidget_w, gxm_XtGetKeyboardFocusWidget)
-  XEN_NARGIFY_1(gxm_XtLastEventProcessed_w, gxm_XtLastEventProcessed)
-  XEN_NARGIFY_1(gxm_XtLastTimestampProcessed_w, gxm_XtLastTimestampProcessed)
-  XEN_ARGIFY_4(gxm_XtAppAddTimeOut_w, gxm_XtAppAddTimeOut)
-  XEN_NARGIFY_1(gxm_XtRemoveTimeOut_w, gxm_XtRemoveTimeOut)
-  XEN_ARGIFY_5(gxm_XtAppAddInput_w, gxm_XtAppAddInput)
-  XEN_NARGIFY_1(gxm_XtRemoveInput_w, gxm_XtRemoveInput)
-  XEN_NARGIFY_1(gxm_XtAppNextEvent_w, gxm_XtAppNextEvent)
-  XEN_NARGIFY_1(gxm_XtAppPending_w, gxm_XtAppPending)
-  XEN_NARGIFY_1(gxm_XtRealizeWidget_w, gxm_XtRealizeWidget)
-  XEN_NARGIFY_1(gxm_XtUnrealizeWidget_w, gxm_XtUnrealizeWidget)
-  XEN_NARGIFY_1(gxm_XtDestroyWidget_w, gxm_XtDestroyWidget)
-  XEN_NARGIFY_2(gxm_XtSetSensitive_w, gxm_XtSetSensitive)
-  XEN_NARGIFY_2(gxm_XtNameToWidget_w, gxm_XtNameToWidget)
-  XEN_NARGIFY_2(gxm_XtWindowToWidget_w, gxm_XtWindowToWidget)
-  XEN_NARGIFY_4(gxm_XtMergeArgLists_w, gxm_XtMergeArgLists)
-  XEN_NARGIFY_2(gxm_XtVaCreateArgsList_w, gxm_XtVaCreateArgsList)
-  XEN_NARGIFY_1(gxm_XtDisplay_w, gxm_XtDisplay)
-  XEN_NARGIFY_1(gxm_XtDisplayOfObject_w, gxm_XtDisplayOfObject)
-  XEN_NARGIFY_1(gxm_XtScreen_w, gxm_XtScreen)
-  XEN_NARGIFY_1(gxm_XtScreenOfObject_w, gxm_XtScreenOfObject)
-  XEN_NARGIFY_1(gxm_XtWindow_w, gxm_XtWindow)
-  XEN_NARGIFY_1(gxm_XtWindowOfObject_w, gxm_XtWindowOfObject)
-  XEN_NARGIFY_1(gxm_XtName_w, gxm_XtName)
-  XEN_NARGIFY_1(gxm_XtSuperclass_w, gxm_XtSuperclass)
-  XEN_NARGIFY_1(gxm_XtClass_w, gxm_XtClass)
-  XEN_NARGIFY_1(gxm_XtParent_w, gxm_XtParent)
-  XEN_ARGIFY_4(gxm_XtAddCallback_w, gxm_XtAddCallback)
-  XEN_NARGIFY_3(gxm_XtRemoveCallback_w, gxm_XtRemoveCallback)
-  XEN_NARGIFY_3(gxm_XtAddCallbacks_w, gxm_XtAddCallbacks)
-  XEN_NARGIFY_3(gxm_XtRemoveCallbacks_w, gxm_XtRemoveCallbacks)
-  XEN_NARGIFY_2(gxm_XtRemoveAllCallbacks_w, gxm_XtRemoveAllCallbacks)
-  XEN_NARGIFY_3(gxm_XtCallCallbacks_w, gxm_XtCallCallbacks)
-  XEN_NARGIFY_2(gxm_XtHasCallbacks_w, gxm_XtHasCallbacks)
-  XEN_ARGIFY_5(gxm_XtCreatePopupShell_w, gxm_XtCreatePopupShell)
-  XEN_NARGIFY_4(gxm_XtVaCreatePopupShell_w, gxm_XtVaCreatePopupShell)
-  XEN_NARGIFY_2(gxm_XtPopup_w, gxm_XtPopup)
-  XEN_NARGIFY_1(gxm_XtPopupSpringLoaded_w, gxm_XtPopupSpringLoaded)
-  XEN_NARGIFY_3(gxm_XtCallbackNone_w, gxm_XtCallbackNone)
-  XEN_NARGIFY_3(gxm_XtCallbackNonexclusive_w, gxm_XtCallbackNonexclusive)
-  XEN_NARGIFY_3(gxm_XtCallbackExclusive_w, gxm_XtCallbackExclusive)
-  XEN_NARGIFY_1(gxm_XtPopdown_w, gxm_XtPopdown)
-  XEN_NARGIFY_3(gxm_XtCallbackPopdown_w, gxm_XtCallbackPopdown)
-  XEN_ARGIFY_5(gxm_XtCreateWidget_w, gxm_XtCreateWidget)
-  XEN_ARGIFY_5(gxm_XtCreateManagedWidget_w, gxm_XtCreateManagedWidget)
-  XEN_NARGIFY_4(gxm_XtVaCreateWidget_w, gxm_XtVaCreateWidget)
-  XEN_NARGIFY_4(gxm_XtVaCreateManagedWidget_w, gxm_XtVaCreateManagedWidget)
-  XEN_ARGIFY_6(gxm_XtAppCreateShell_w, gxm_XtAppCreateShell)
-  XEN_NARGIFY_5(gxm_XtVaAppCreateShell_w, gxm_XtVaAppCreateShell)
-  XEN_NARGIFY_0(gxm_XtToolkitInitialize_w, gxm_XtToolkitInitialize)
-  XEN_NARGIFY_3(gxm_XtSetLanguageProc_w, gxm_XtSetLanguageProc)
-  XEN_NARGIFY_6(gxm_XtDisplayInitialize_w, gxm_XtDisplayInitialize)
-  XEN_ARGIFY_6(gxm_XtOpenApplication_w, gxm_XtOpenApplication)
-  XEN_ARGIFY_6(gxm_XtVaOpenApplication_w, gxm_XtVaOpenApplication)
-  XEN_ARGIFY_5(gxm_XtAppInitialize_w, gxm_XtAppInitialize)
-  XEN_ARGIFY_5(gxm_XtVaAppInitialize_w, gxm_XtVaAppInitialize)
-  XEN_NARGIFY_6(gxm_XtOpenDisplay_w, gxm_XtOpenDisplay)
-  XEN_NARGIFY_0(gxm_XtCreateApplicationContext_w, gxm_XtCreateApplicationContext)
-  XEN_NARGIFY_1(gxm_XtDestroyApplicationContext_w, gxm_XtDestroyApplicationContext)
-  XEN_NARGIFY_1(gxm_XtInitializeWidgetClass_w, gxm_XtInitializeWidgetClass)
-  XEN_NARGIFY_1(gxm_XtWidgetToApplicationContext_w, gxm_XtWidgetToApplicationContext)
-  XEN_NARGIFY_1(gxm_XtDisplayToApplicationContext_w, gxm_XtDisplayToApplicationContext)
-  XEN_NARGIFY_1(gxm_XtCloseDisplay_w, gxm_XtCloseDisplay)
-  XEN_ARGIFY_3(gxm_XtSetValues_w, gxm_XtSetValues)
-  XEN_NARGIFY_2(gxm_XtVaSetValues_w, gxm_XtVaSetValues)
-  XEN_ARGIFY_3(gxm_XtGetValues_w, gxm_XtGetValues)
-  XEN_NARGIFY_2(gxm_XtVaGetValues_w, gxm_XtVaGetValues)
-  XEN_NARGIFY_2(gxm_XtAppSetErrorMsgHandler_w, gxm_XtAppSetErrorMsgHandler)
-  XEN_NARGIFY_2(gxm_XtAppSetWarningMsgHandler_w, gxm_XtAppSetWarningMsgHandler)
-  XEN_NARGIFY_7(gxm_XtAppErrorMsg_w, gxm_XtAppErrorMsg)
-  XEN_NARGIFY_7(gxm_XtAppWarningMsg_w, gxm_XtAppWarningMsg)
-  XEN_NARGIFY_2(gxm_XtAppSetErrorHandler_w, gxm_XtAppSetErrorHandler)
-  XEN_NARGIFY_2(gxm_XtAppSetWarningHandler_w, gxm_XtAppSetWarningHandler)
-  XEN_NARGIFY_2(gxm_XtAppError_w, gxm_XtAppError)
-  XEN_NARGIFY_1(gxm_XtMalloc_w, gxm_XtMalloc)
-  XEN_NARGIFY_2(gxm_XtCalloc_w, gxm_XtCalloc)
-  XEN_NARGIFY_2(gxm_XtRealloc_w, gxm_XtRealloc)
-  XEN_NARGIFY_1(gxm_XtFree_w, gxm_XtFree)
-  XEN_ARGIFY_3(gxm_XtAppAddWorkProc_w, gxm_XtAppAddWorkProc)
-  XEN_NARGIFY_1(gxm_XtRemoveWorkProc_w, gxm_XtRemoveWorkProc)
-  XEN_NARGIFY_3(gxm_XtGetGC_w, gxm_XtGetGC)
-  XEN_NARGIFY_6(gxm_XtAllocateGC_w, gxm_XtAllocateGC)
-  XEN_NARGIFY_1(gxm_XtDestroyGC_w, gxm_XtDestroyGC)
-  XEN_NARGIFY_2(gxm_XtReleaseGC_w, gxm_XtReleaseGC)
-  XEN_NARGIFY_4(gxm_XtFindFile_w, gxm_XtFindFile)
-  XEN_NARGIFY_8(gxm_XtResolvePathname_w, gxm_XtResolvePathname)
-  XEN_NARGIFY_3(gxm_XtDisownSelection_w, gxm_XtDisownSelection)
-  XEN_NARGIFY_6(gxm_XtGetSelectionValue_w, gxm_XtGetSelectionValue)
-  XEN_NARGIFY_7(gxm_XtGetSelectionValues_w, gxm_XtGetSelectionValues)
-  XEN_NARGIFY_2(gxm_XtAppSetSelectionTimeout_w, gxm_XtAppSetSelectionTimeout)
-  XEN_NARGIFY_1(gxm_XtAppGetSelectionTimeout_w, gxm_XtAppGetSelectionTimeout)
-  XEN_NARGIFY_3(gxm_XtGetSelectionRequest_w, gxm_XtGetSelectionRequest)
-  XEN_NARGIFY_6(gxm_XtGetSelectionValueIncremental_w, gxm_XtGetSelectionValueIncremental)
-  XEN_NARGIFY_7(gxm_XtGetSelectionValuesIncremental_w, gxm_XtGetSelectionValuesIncremental)
-  XEN_NARGIFY_2(gxm_XtCreateSelectionRequest_w, gxm_XtCreateSelectionRequest)
-  XEN_NARGIFY_3(gxm_XtSendSelectionRequest_w, gxm_XtSendSelectionRequest)
-  XEN_NARGIFY_2(gxm_XtCancelSelectionRequest_w, gxm_XtCancelSelectionRequest)
-  XEN_NARGIFY_6(gxm_XtGrabKey_w, gxm_XtGrabKey)
-  XEN_NARGIFY_3(gxm_XtUngrabKey_w, gxm_XtUngrabKey)
-  XEN_NARGIFY_5(gxm_XtGrabKeyboard_w, gxm_XtGrabKeyboard)
-  XEN_NARGIFY_2(gxm_XtUngrabKeyboard_w, gxm_XtUngrabKeyboard)
-  XEN_NARGIFY_9(gxm_XtGrabButton_w, gxm_XtGrabButton)
-  XEN_NARGIFY_3(gxm_XtUngrabButton_w, gxm_XtUngrabButton)
-  XEN_NARGIFY_8(gxm_XtGrabPointer_w, gxm_XtGrabPointer)
-  XEN_NARGIFY_2(gxm_XtUngrabPointer_w, gxm_XtUngrabPointer)
-  XEN_NARGIFY_1(gxm_XtGetApplicationNameAndClass_w, gxm_XtGetApplicationNameAndClass)
-  XEN_NARGIFY_1(gxm_XtGetDisplays_w, gxm_XtGetDisplays)
-  XEN_NARGIFY_0(gxm_XtToolkitThreadInitialize_w, gxm_XtToolkitThreadInitialize)
-  XEN_NARGIFY_1(gxm_XtAppLock_w, gxm_XtAppLock)
-  XEN_NARGIFY_1(gxm_XtAppUnlock_w, gxm_XtAppUnlock)
-  XEN_NARGIFY_1(gxm_XtIsRectObj_w, gxm_XtIsRectObj)
-  XEN_NARGIFY_1(gxm_XtIsWidget_w, gxm_XtIsWidget)
-  XEN_NARGIFY_1(gxm_XtIsComposite_w, gxm_XtIsComposite)
-  XEN_NARGIFY_1(gxm_XtIsConstraint_w, gxm_XtIsConstraint)
-  XEN_NARGIFY_1(gxm_XtIsShell_w, gxm_XtIsShell)
-  XEN_NARGIFY_1(gxm_XtIsOverrideShell_w, gxm_XtIsOverrideShell)
-  XEN_NARGIFY_1(gxm_XtIsWMShell_w, gxm_XtIsWMShell)
-  XEN_NARGIFY_1(gxm_XtIsVendorShell_w, gxm_XtIsVendorShell)
-  XEN_NARGIFY_1(gxm_XtIsTransientShell_w, gxm_XtIsTransientShell)
-  XEN_NARGIFY_1(gxm_XtIsTopLevelShell_w, gxm_XtIsTopLevelShell)
-  XEN_NARGIFY_1(gxm_XtIsApplicationShell_w, gxm_XtIsApplicationShell)
-  XEN_NARGIFY_1(gxm_XtIsSessionShell_w, gxm_XtIsSessionShell)
-  XEN_NARGIFY_1(gxm_XtMapWidget_w, gxm_XtMapWidget)
-  XEN_NARGIFY_1(gxm_XtUnmapWidget_w, gxm_XtUnmapWidget)
+XEN_NARGIFY_3(gxm_XtSetArg_w, gxm_XtSetArg)
+XEN_ARGIFY_2(gxm_XtManageChildren_w, gxm_XtManageChildren)
+XEN_NARGIFY_1(gxm_XtManageChild_w, gxm_XtManageChild)
+XEN_ARGIFY_2(gxm_XtUnmanageChildren_w, gxm_XtUnmanageChildren)
+XEN_NARGIFY_1(gxm_XtUnmanageChild_w, gxm_XtUnmanageChild)
+XEN_NARGIFY_1(gxm_XtDispatchEvent_w, gxm_XtDispatchEvent)
+XEN_NARGIFY_2(gxm_XtCallAcceptFocus_w, gxm_XtCallAcceptFocus)
+XEN_NARGIFY_1(gxm_XtAppPeekEvent_w, gxm_XtAppPeekEvent)
+XEN_NARGIFY_2(gxm_XtIsSubclass_w, gxm_XtIsSubclass)
+XEN_NARGIFY_2(gxm_XtAppSetFallbackResources_w, gxm_XtAppSetFallbackResources)
+XEN_NARGIFY_1(gxm_XtIsObject_w, gxm_XtIsObject)
+XEN_NARGIFY_1(gxm_XtIsManaged_w, gxm_XtIsManaged)
+XEN_NARGIFY_1(gxm_XtIsRealized_w, gxm_XtIsRealized)
+XEN_NARGIFY_1(gxm_XtIsSensitive_w, gxm_XtIsSensitive)
+XEN_NARGIFY_6(gxm_XtOwnSelection_w, gxm_XtOwnSelection)
+XEN_NARGIFY_8(gxm_XtOwnSelectionIncremental_w, gxm_XtOwnSelectionIncremental)
+XEN_NARGIFY_3(gxm_XtMakeResizeRequest_w, gxm_XtMakeResizeRequest)
+XEN_NARGIFY_3(gxm_XtTranslateCoords_w, gxm_XtTranslateCoords)
+XEN_NARGIFY_2(gxm_XtKeysymToKeycodeList_w, gxm_XtKeysymToKeycodeList)
+XEN_NARGIFY_1(gxm_XtParseTranslationTable_w, gxm_XtParseTranslationTable)
+XEN_NARGIFY_1(gxm_XtParseAcceleratorTable_w, gxm_XtParseAcceleratorTable)
+XEN_NARGIFY_2(gxm_XtOverrideTranslations_w, gxm_XtOverrideTranslations)
+XEN_NARGIFY_2(gxm_XtAugmentTranslations_w, gxm_XtAugmentTranslations)
+XEN_NARGIFY_2(gxm_XtInstallAccelerators_w, gxm_XtInstallAccelerators)
+XEN_NARGIFY_2(gxm_XtInstallAllAccelerators_w, gxm_XtInstallAllAccelerators)
+XEN_NARGIFY_1(gxm_XtUninstallTranslations_w, gxm_XtUninstallTranslations)
+XEN_NARGIFY_2(gxm_XtAppAddActions_w, gxm_XtAppAddActions)
+XEN_ARGIFY_3(gxm_XtAppAddActionHook_w, gxm_XtAppAddActionHook)
+XEN_NARGIFY_1(gxm_XtRemoveActionHook_w, gxm_XtRemoveActionHook)
+XEN_NARGIFY_1(gxm_XtGetActionList_w, gxm_XtGetActionList)
+XEN_ARGIFY_5(gxm_XtCallActionProc_w, gxm_XtCallActionProc)
+XEN_NARGIFY_5(gxm_XtRegisterGrabAction_w, gxm_XtRegisterGrabAction)
+XEN_NARGIFY_2(gxm_XtSetMultiClickTime_w, gxm_XtSetMultiClickTime)
+XEN_NARGIFY_1(gxm_XtGetMultiClickTime_w, gxm_XtGetMultiClickTime)
+XEN_NARGIFY_1(gxm_XtGetResourceList_w, gxm_XtGetResourceList)
+XEN_NARGIFY_1(gxm_XtGetActionKeysym_w, gxm_XtGetActionKeysym)
+XEN_NARGIFY_3(gxm_XtTranslateKeycode_w, gxm_XtTranslateKeycode)
+XEN_NARGIFY_3(gxm_XtTranslateKey_w, gxm_XtTranslateKey)
+XEN_NARGIFY_2(gxm_XtSetKeyTranslator_w, gxm_XtSetKeyTranslator)
+XEN_NARGIFY_4(gxm_XtRegisterCaseConverter_w, gxm_XtRegisterCaseConverter)
+XEN_NARGIFY_2(gxm_XtConvertCase_w, gxm_XtConvertCase)
+XEN_ARGIFY_5(gxm_XtAddEventHandler_w, gxm_XtAddEventHandler)
+XEN_NARGIFY_5(gxm_XtRemoveEventHandler_w, gxm_XtRemoveEventHandler)
+XEN_NARGIFY_5(gxm_XtAddRawEventHandler_w, gxm_XtAddRawEventHandler)
+XEN_NARGIFY_5(gxm_XtRemoveRawEventHandler_w, gxm_XtRemoveRawEventHandler)
+XEN_NARGIFY_6(gxm_XtInsertEventHandler_w, gxm_XtInsertEventHandler)
+XEN_NARGIFY_6(gxm_XtInsertRawEventHandler_w, gxm_XtInsertRawEventHandler)
+XEN_NARGIFY_2(gxm_XtDispatchEventToWidget_w, gxm_XtDispatchEventToWidget)
+XEN_NARGIFY_1(gxm_XtBuildEventMask_w, gxm_XtBuildEventMask)
+XEN_NARGIFY_3(gxm_XtAddGrab_w, gxm_XtAddGrab)
+XEN_NARGIFY_1(gxm_XtRemoveGrab_w, gxm_XtRemoveGrab)
+XEN_NARGIFY_2(gxm_XtAppProcessEvent_w, gxm_XtAppProcessEvent)
+XEN_NARGIFY_1(gxm_XtAppMainLoop_w, gxm_XtAppMainLoop)
+XEN_NARGIFY_2(gxm_XtAddExposureToRegion_w, gxm_XtAddExposureToRegion)
+XEN_NARGIFY_2(gxm_XtSetKeyboardFocus_w, gxm_XtSetKeyboardFocus)
+XEN_NARGIFY_1(gxm_XtGetKeyboardFocusWidget_w, gxm_XtGetKeyboardFocusWidget)
+XEN_NARGIFY_1(gxm_XtLastEventProcessed_w, gxm_XtLastEventProcessed)
+XEN_NARGIFY_1(gxm_XtLastTimestampProcessed_w, gxm_XtLastTimestampProcessed)
+XEN_ARGIFY_4(gxm_XtAppAddTimeOut_w, gxm_XtAppAddTimeOut)
+XEN_NARGIFY_1(gxm_XtRemoveTimeOut_w, gxm_XtRemoveTimeOut)
+XEN_ARGIFY_5(gxm_XtAppAddInput_w, gxm_XtAppAddInput)
+XEN_NARGIFY_1(gxm_XtRemoveInput_w, gxm_XtRemoveInput)
+XEN_NARGIFY_1(gxm_XtAppNextEvent_w, gxm_XtAppNextEvent)
+XEN_NARGIFY_1(gxm_XtAppPending_w, gxm_XtAppPending)
+XEN_NARGIFY_1(gxm_XtRealizeWidget_w, gxm_XtRealizeWidget)
+XEN_NARGIFY_1(gxm_XtUnrealizeWidget_w, gxm_XtUnrealizeWidget)
+XEN_NARGIFY_1(gxm_XtDestroyWidget_w, gxm_XtDestroyWidget)
+XEN_NARGIFY_2(gxm_XtSetSensitive_w, gxm_XtSetSensitive)
+XEN_NARGIFY_2(gxm_XtNameToWidget_w, gxm_XtNameToWidget)
+XEN_NARGIFY_2(gxm_XtWindowToWidget_w, gxm_XtWindowToWidget)
+XEN_NARGIFY_4(gxm_XtMergeArgLists_w, gxm_XtMergeArgLists)
+XEN_NARGIFY_2(gxm_XtVaCreateArgsList_w, gxm_XtVaCreateArgsList)
+XEN_NARGIFY_1(gxm_XtDisplay_w, gxm_XtDisplay)
+XEN_NARGIFY_1(gxm_XtDisplayOfObject_w, gxm_XtDisplayOfObject)
+XEN_NARGIFY_1(gxm_XtScreen_w, gxm_XtScreen)
+XEN_NARGIFY_1(gxm_XtScreenOfObject_w, gxm_XtScreenOfObject)
+XEN_NARGIFY_1(gxm_XtWindow_w, gxm_XtWindow)
+XEN_NARGIFY_1(gxm_XtWindowOfObject_w, gxm_XtWindowOfObject)
+XEN_NARGIFY_1(gxm_XtName_w, gxm_XtName)
+XEN_NARGIFY_1(gxm_XtSuperclass_w, gxm_XtSuperclass)
+XEN_NARGIFY_1(gxm_XtClass_w, gxm_XtClass)
+XEN_NARGIFY_1(gxm_XtParent_w, gxm_XtParent)
+XEN_ARGIFY_4(gxm_XtAddCallback_w, gxm_XtAddCallback)
+XEN_NARGIFY_3(gxm_XtRemoveCallback_w, gxm_XtRemoveCallback)
+XEN_NARGIFY_3(gxm_XtAddCallbacks_w, gxm_XtAddCallbacks)
+XEN_NARGIFY_3(gxm_XtRemoveCallbacks_w, gxm_XtRemoveCallbacks)
+XEN_NARGIFY_2(gxm_XtRemoveAllCallbacks_w, gxm_XtRemoveAllCallbacks)
+XEN_NARGIFY_3(gxm_XtCallCallbacks_w, gxm_XtCallCallbacks)
+XEN_NARGIFY_2(gxm_XtHasCallbacks_w, gxm_XtHasCallbacks)
+XEN_ARGIFY_5(gxm_XtCreatePopupShell_w, gxm_XtCreatePopupShell)
+XEN_NARGIFY_4(gxm_XtVaCreatePopupShell_w, gxm_XtVaCreatePopupShell)
+XEN_NARGIFY_2(gxm_XtPopup_w, gxm_XtPopup)
+XEN_NARGIFY_1(gxm_XtPopupSpringLoaded_w, gxm_XtPopupSpringLoaded)
+XEN_NARGIFY_3(gxm_XtCallbackNone_w, gxm_XtCallbackNone)
+XEN_NARGIFY_3(gxm_XtCallbackNonexclusive_w, gxm_XtCallbackNonexclusive)
+XEN_NARGIFY_3(gxm_XtCallbackExclusive_w, gxm_XtCallbackExclusive)
+XEN_NARGIFY_1(gxm_XtPopdown_w, gxm_XtPopdown)
+XEN_NARGIFY_3(gxm_XtCallbackPopdown_w, gxm_XtCallbackPopdown)
+XEN_ARGIFY_5(gxm_XtCreateWidget_w, gxm_XtCreateWidget)
+XEN_ARGIFY_5(gxm_XtCreateManagedWidget_w, gxm_XtCreateManagedWidget)
+XEN_NARGIFY_4(gxm_XtVaCreateWidget_w, gxm_XtVaCreateWidget)
+XEN_NARGIFY_4(gxm_XtVaCreateManagedWidget_w, gxm_XtVaCreateManagedWidget)
+XEN_ARGIFY_6(gxm_XtAppCreateShell_w, gxm_XtAppCreateShell)
+XEN_NARGIFY_5(gxm_XtVaAppCreateShell_w, gxm_XtVaAppCreateShell)
+XEN_NARGIFY_0(gxm_XtToolkitInitialize_w, gxm_XtToolkitInitialize)
+XEN_NARGIFY_3(gxm_XtSetLanguageProc_w, gxm_XtSetLanguageProc)
+XEN_NARGIFY_6(gxm_XtDisplayInitialize_w, gxm_XtDisplayInitialize)
+XEN_ARGIFY_6(gxm_XtOpenApplication_w, gxm_XtOpenApplication)
+XEN_ARGIFY_6(gxm_XtVaOpenApplication_w, gxm_XtVaOpenApplication)
+XEN_ARGIFY_5(gxm_XtAppInitialize_w, gxm_XtAppInitialize)
+XEN_ARGIFY_5(gxm_XtVaAppInitialize_w, gxm_XtVaAppInitialize)
+XEN_NARGIFY_6(gxm_XtOpenDisplay_w, gxm_XtOpenDisplay)
+XEN_NARGIFY_0(gxm_XtCreateApplicationContext_w, gxm_XtCreateApplicationContext)
+XEN_NARGIFY_1(gxm_XtDestroyApplicationContext_w, gxm_XtDestroyApplicationContext)
+XEN_NARGIFY_1(gxm_XtInitializeWidgetClass_w, gxm_XtInitializeWidgetClass)
+XEN_NARGIFY_1(gxm_XtWidgetToApplicationContext_w, gxm_XtWidgetToApplicationContext)
+XEN_NARGIFY_1(gxm_XtDisplayToApplicationContext_w, gxm_XtDisplayToApplicationContext)
+XEN_NARGIFY_1(gxm_XtCloseDisplay_w, gxm_XtCloseDisplay)
+XEN_ARGIFY_3(gxm_XtSetValues_w, gxm_XtSetValues)
+XEN_NARGIFY_2(gxm_XtVaSetValues_w, gxm_XtVaSetValues)
+XEN_ARGIFY_3(gxm_XtGetValues_w, gxm_XtGetValues)
+XEN_NARGIFY_2(gxm_XtVaGetValues_w, gxm_XtVaGetValues)
+XEN_NARGIFY_2(gxm_XtAppSetErrorMsgHandler_w, gxm_XtAppSetErrorMsgHandler)
+XEN_NARGIFY_2(gxm_XtAppSetWarningMsgHandler_w, gxm_XtAppSetWarningMsgHandler)
+XEN_NARGIFY_7(gxm_XtAppErrorMsg_w, gxm_XtAppErrorMsg)
+XEN_NARGIFY_7(gxm_XtAppWarningMsg_w, gxm_XtAppWarningMsg)
+XEN_NARGIFY_2(gxm_XtAppSetErrorHandler_w, gxm_XtAppSetErrorHandler)
+XEN_NARGIFY_2(gxm_XtAppSetWarningHandler_w, gxm_XtAppSetWarningHandler)
+XEN_NARGIFY_2(gxm_XtAppError_w, gxm_XtAppError)
+XEN_NARGIFY_1(gxm_XtMalloc_w, gxm_XtMalloc)
+XEN_NARGIFY_2(gxm_XtCalloc_w, gxm_XtCalloc)
+XEN_NARGIFY_2(gxm_XtRealloc_w, gxm_XtRealloc)
+XEN_NARGIFY_1(gxm_XtFree_w, gxm_XtFree)
+XEN_ARGIFY_3(gxm_XtAppAddWorkProc_w, gxm_XtAppAddWorkProc)
+XEN_NARGIFY_1(gxm_XtRemoveWorkProc_w, gxm_XtRemoveWorkProc)
+XEN_NARGIFY_3(gxm_XtGetGC_w, gxm_XtGetGC)
+XEN_NARGIFY_6(gxm_XtAllocateGC_w, gxm_XtAllocateGC)
+XEN_NARGIFY_1(gxm_XtDestroyGC_w, gxm_XtDestroyGC)
+XEN_NARGIFY_2(gxm_XtReleaseGC_w, gxm_XtReleaseGC)
+XEN_NARGIFY_4(gxm_XtFindFile_w, gxm_XtFindFile)
+XEN_NARGIFY_8(gxm_XtResolvePathname_w, gxm_XtResolvePathname)
+XEN_NARGIFY_3(gxm_XtDisownSelection_w, gxm_XtDisownSelection)
+XEN_NARGIFY_6(gxm_XtGetSelectionValue_w, gxm_XtGetSelectionValue)
+XEN_NARGIFY_7(gxm_XtGetSelectionValues_w, gxm_XtGetSelectionValues)
+XEN_NARGIFY_2(gxm_XtAppSetSelectionTimeout_w, gxm_XtAppSetSelectionTimeout)
+XEN_NARGIFY_1(gxm_XtAppGetSelectionTimeout_w, gxm_XtAppGetSelectionTimeout)
+XEN_NARGIFY_3(gxm_XtGetSelectionRequest_w, gxm_XtGetSelectionRequest)
+XEN_NARGIFY_6(gxm_XtGetSelectionValueIncremental_w, gxm_XtGetSelectionValueIncremental)
+XEN_NARGIFY_7(gxm_XtGetSelectionValuesIncremental_w, gxm_XtGetSelectionValuesIncremental)
+XEN_NARGIFY_2(gxm_XtCreateSelectionRequest_w, gxm_XtCreateSelectionRequest)
+XEN_NARGIFY_3(gxm_XtSendSelectionRequest_w, gxm_XtSendSelectionRequest)
+XEN_NARGIFY_2(gxm_XtCancelSelectionRequest_w, gxm_XtCancelSelectionRequest)
+XEN_NARGIFY_6(gxm_XtGrabKey_w, gxm_XtGrabKey)
+XEN_NARGIFY_3(gxm_XtUngrabKey_w, gxm_XtUngrabKey)
+XEN_NARGIFY_5(gxm_XtGrabKeyboard_w, gxm_XtGrabKeyboard)
+XEN_NARGIFY_2(gxm_XtUngrabKeyboard_w, gxm_XtUngrabKeyboard)
+XEN_NARGIFY_9(gxm_XtGrabButton_w, gxm_XtGrabButton)
+XEN_NARGIFY_3(gxm_XtUngrabButton_w, gxm_XtUngrabButton)
+XEN_NARGIFY_8(gxm_XtGrabPointer_w, gxm_XtGrabPointer)
+XEN_NARGIFY_2(gxm_XtUngrabPointer_w, gxm_XtUngrabPointer)
+XEN_NARGIFY_1(gxm_XtGetApplicationNameAndClass_w, gxm_XtGetApplicationNameAndClass)
+XEN_NARGIFY_1(gxm_XtGetDisplays_w, gxm_XtGetDisplays)
+XEN_NARGIFY_0(gxm_XtToolkitThreadInitialize_w, gxm_XtToolkitThreadInitialize)
+XEN_NARGIFY_1(gxm_XtAppLock_w, gxm_XtAppLock)
+XEN_NARGIFY_1(gxm_XtAppUnlock_w, gxm_XtAppUnlock)
+XEN_NARGIFY_1(gxm_XtIsRectObj_w, gxm_XtIsRectObj)
+XEN_NARGIFY_1(gxm_XtIsWidget_w, gxm_XtIsWidget)
+XEN_NARGIFY_1(gxm_XtIsComposite_w, gxm_XtIsComposite)
+XEN_NARGIFY_1(gxm_XtIsConstraint_w, gxm_XtIsConstraint)
+XEN_NARGIFY_1(gxm_XtIsShell_w, gxm_XtIsShell)
+XEN_NARGIFY_1(gxm_XtIsOverrideShell_w, gxm_XtIsOverrideShell)
+XEN_NARGIFY_1(gxm_XtIsWMShell_w, gxm_XtIsWMShell)
+XEN_NARGIFY_1(gxm_XtIsVendorShell_w, gxm_XtIsVendorShell)
+XEN_NARGIFY_1(gxm_XtIsTransientShell_w, gxm_XtIsTransientShell)
+XEN_NARGIFY_1(gxm_XtIsTopLevelShell_w, gxm_XtIsTopLevelShell)
+XEN_NARGIFY_1(gxm_XtIsApplicationShell_w, gxm_XtIsApplicationShell)
+XEN_NARGIFY_1(gxm_XtIsSessionShell_w, gxm_XtIsSessionShell)
+XEN_NARGIFY_1(gxm_XtMapWidget_w, gxm_XtMapWidget)
+XEN_NARGIFY_1(gxm_XtUnmapWidget_w, gxm_XtUnmapWidget)
 
-  XEN_NARGIFY_2(gxm_XLoadQueryFont_w, gxm_XLoadQueryFont)
-  XEN_NARGIFY_2(gxm_XQueryFont_w, gxm_XQueryFont)
-  XEN_NARGIFY_4(gxm_XGetMotionEvents_w, gxm_XGetMotionEvents)
-  XEN_NARGIFY_3(gxm_XDeleteModifiermapEntry_w, gxm_XDeleteModifiermapEntry)
-  XEN_NARGIFY_1(gxm_XGetModifierMapping_w, gxm_XGetModifierMapping)
-  XEN_NARGIFY_3(gxm_XInsertModifiermapEntry_w, gxm_XInsertModifiermapEntry)
-  XEN_NARGIFY_1(gxm_XNewModifiermap_w, gxm_XNewModifiermap)
-  XEN_VARGIFY(gxm_XCreateImage_w, gxm_XCreateImage)
-  XEN_NARGIFY_8(gxm_XGetImage_w, gxm_XGetImage)
-  XEN_VARGIFY(gxm_XGetSubImage_w, gxm_XGetSubImage)
-  XEN_NARGIFY_1(gxm_XOpenDisplay_w, gxm_XOpenDisplay)
-  XEN_NARGIFY_1(gxm_XFetchBytes_w, gxm_XFetchBytes)
-  XEN_NARGIFY_2(gxm_XFetchBuffer_w, gxm_XFetchBuffer)
-  XEN_NARGIFY_2(gxm_XGetAtomName_w, gxm_XGetAtomName)
-  XEN_NARGIFY_1(gxm_XDisplayName_w, gxm_XDisplayName)
-  XEN_NARGIFY_1(gxm_XKeysymToString_w, gxm_XKeysymToString)
-  XEN_NARGIFY_2(gxm_XSynchronize_w, gxm_XSynchronize)
-  XEN_NARGIFY_2(gxm_XSetAfterFunction_w, gxm_XSetAfterFunction)
-  XEN_NARGIFY_3(gxm_XInternAtom_w, gxm_XInternAtom)
-  XEN_NARGIFY_2(gxm_XCopyColormapAndFree_w, gxm_XCopyColormapAndFree)
-  XEN_NARGIFY_4(gxm_XCreateColormap_w, gxm_XCreateColormap)
-  XEN_NARGIFY_7(gxm_XCreatePixmapCursor_w, gxm_XCreatePixmapCursor)
-  XEN_NARGIFY_7(gxm_XCreateGlyphCursor_w, gxm_XCreateGlyphCursor)
-  XEN_NARGIFY_2(gxm_XCreateFontCursor_w, gxm_XCreateFontCursor)
-  XEN_NARGIFY_2(gxm_XLoadFont_w, gxm_XLoadFont)
-  XEN_NARGIFY_4(gxm_XCreateGC_w, gxm_XCreateGC)
-  XEN_NARGIFY_2(gxm_XFlushGC_w, gxm_XFlushGC)
-  XEN_NARGIFY_5(gxm_XCreatePixmap_w, gxm_XCreatePixmap)
-  XEN_NARGIFY_5(gxm_XCreateBitmapFromData_w, gxm_XCreateBitmapFromData)
-  XEN_NARGIFY_8(gxm_XCreatePixmapFromBitmapData_w, gxm_XCreatePixmapFromBitmapData)
-  XEN_NARGIFY_9(gxm_XCreateSimpleWindow_w, gxm_XCreateSimpleWindow)
-  XEN_NARGIFY_2(gxm_XGetSelectionOwner_w, gxm_XGetSelectionOwner)
-  XEN_VARGIFY(gxm_XCreateWindow_w, gxm_XCreateWindow)
-  XEN_NARGIFY_2(gxm_XListInstalledColormaps_w, gxm_XListInstalledColormaps)
-  XEN_NARGIFY_3(gxm_XListFonts_w, gxm_XListFonts)
-  XEN_NARGIFY_3(gxm_XListFontsWithInfo_w, gxm_XListFontsWithInfo)
-  XEN_NARGIFY_1(gxm_XGetFontPath_w, gxm_XGetFontPath)
-  XEN_NARGIFY_1(gxm_XListExtensions_w, gxm_XListExtensions)
-  XEN_NARGIFY_2(gxm_XListProperties_w, gxm_XListProperties)
+XEN_NARGIFY_2(gxm_XLoadQueryFont_w, gxm_XLoadQueryFont)
+XEN_NARGIFY_2(gxm_XQueryFont_w, gxm_XQueryFont)
+XEN_NARGIFY_4(gxm_XGetMotionEvents_w, gxm_XGetMotionEvents)
+XEN_NARGIFY_3(gxm_XDeleteModifiermapEntry_w, gxm_XDeleteModifiermapEntry)
+XEN_NARGIFY_1(gxm_XGetModifierMapping_w, gxm_XGetModifierMapping)
+XEN_NARGIFY_3(gxm_XInsertModifiermapEntry_w, gxm_XInsertModifiermapEntry)
+XEN_NARGIFY_1(gxm_XNewModifiermap_w, gxm_XNewModifiermap)
+XEN_VARGIFY(gxm_XCreateImage_w, gxm_XCreateImage)
+XEN_NARGIFY_8(gxm_XGetImage_w, gxm_XGetImage)
+XEN_VARGIFY(gxm_XGetSubImage_w, gxm_XGetSubImage)
+XEN_NARGIFY_1(gxm_XOpenDisplay_w, gxm_XOpenDisplay)
+XEN_NARGIFY_1(gxm_XFetchBytes_w, gxm_XFetchBytes)
+XEN_NARGIFY_2(gxm_XFetchBuffer_w, gxm_XFetchBuffer)
+XEN_NARGIFY_2(gxm_XGetAtomName_w, gxm_XGetAtomName)
+XEN_NARGIFY_1(gxm_XDisplayName_w, gxm_XDisplayName)
+XEN_NARGIFY_1(gxm_XKeysymToString_w, gxm_XKeysymToString)
+XEN_NARGIFY_2(gxm_XSynchronize_w, gxm_XSynchronize)
+XEN_NARGIFY_2(gxm_XSetAfterFunction_w, gxm_XSetAfterFunction)
+XEN_NARGIFY_3(gxm_XInternAtom_w, gxm_XInternAtom)
+XEN_NARGIFY_2(gxm_XCopyColormapAndFree_w, gxm_XCopyColormapAndFree)
+XEN_NARGIFY_4(gxm_XCreateColormap_w, gxm_XCreateColormap)
+XEN_NARGIFY_7(gxm_XCreatePixmapCursor_w, gxm_XCreatePixmapCursor)
+XEN_NARGIFY_7(gxm_XCreateGlyphCursor_w, gxm_XCreateGlyphCursor)
+XEN_NARGIFY_2(gxm_XCreateFontCursor_w, gxm_XCreateFontCursor)
+XEN_NARGIFY_2(gxm_XLoadFont_w, gxm_XLoadFont)
+XEN_NARGIFY_4(gxm_XCreateGC_w, gxm_XCreateGC)
+XEN_NARGIFY_2(gxm_XFlushGC_w, gxm_XFlushGC)
+XEN_NARGIFY_5(gxm_XCreatePixmap_w, gxm_XCreatePixmap)
+XEN_NARGIFY_5(gxm_XCreateBitmapFromData_w, gxm_XCreateBitmapFromData)
+XEN_NARGIFY_8(gxm_XCreatePixmapFromBitmapData_w, gxm_XCreatePixmapFromBitmapData)
+XEN_NARGIFY_9(gxm_XCreateSimpleWindow_w, gxm_XCreateSimpleWindow)
+XEN_NARGIFY_2(gxm_XGetSelectionOwner_w, gxm_XGetSelectionOwner)
+XEN_VARGIFY(gxm_XCreateWindow_w, gxm_XCreateWindow)
+XEN_NARGIFY_2(gxm_XListInstalledColormaps_w, gxm_XListInstalledColormaps)
+XEN_NARGIFY_3(gxm_XListFonts_w, gxm_XListFonts)
+XEN_NARGIFY_3(gxm_XListFontsWithInfo_w, gxm_XListFontsWithInfo)
+XEN_NARGIFY_1(gxm_XGetFontPath_w, gxm_XGetFontPath)
+XEN_NARGIFY_1(gxm_XListExtensions_w, gxm_XListExtensions)
+XEN_NARGIFY_2(gxm_XListProperties_w, gxm_XListProperties)
 #if 0
-  XEN_NARGIFY_3(gxm_XKeycodeToKeysym_w, gxm_XKeycodeToKeysym)
+XEN_NARGIFY_3(gxm_XKeycodeToKeysym_w, gxm_XKeycodeToKeysym)
 #endif
-  XEN_NARGIFY_2(gxm_XLookupKeysym_w, gxm_XLookupKeysym)
-  XEN_NARGIFY_3(gxm_XGetKeyboardMapping_w, gxm_XGetKeyboardMapping)
-  XEN_NARGIFY_1(gxm_XStringToKeysym_w, gxm_XStringToKeysym)
-  XEN_NARGIFY_1(gxm_XMaxRequestSize_w, gxm_XMaxRequestSize)
-  XEN_NARGIFY_1(gxm_XExtendedMaxRequestSize_w, gxm_XExtendedMaxRequestSize)
-  XEN_NARGIFY_1(gxm_XDisplayMotionBufferSize_w, gxm_XDisplayMotionBufferSize)
-  XEN_NARGIFY_1(gxm_XVisualIDFromVisual_w, gxm_XVisualIDFromVisual)
-  XEN_NARGIFY_2(gxm_XRootWindow_w, gxm_XRootWindow)
-  XEN_NARGIFY_1(gxm_XDefaultRootWindow_w, gxm_XDefaultRootWindow)
-  XEN_NARGIFY_1(gxm_XRootWindowOfScreen_w, gxm_XRootWindowOfScreen)
-  XEN_NARGIFY_2(gxm_XDefaultVisual_w, gxm_XDefaultVisual)
-  XEN_NARGIFY_1(gxm_XDefaultVisualOfScreen_w, gxm_XDefaultVisualOfScreen)
-  XEN_NARGIFY_2(gxm_XDefaultGC_w, gxm_XDefaultGC)
-  XEN_NARGIFY_1(gxm_XDefaultGCOfScreen_w, gxm_XDefaultGCOfScreen)
-  XEN_NARGIFY_2(gxm_XBlackPixel_w, gxm_XBlackPixel)
-  XEN_NARGIFY_2(gxm_XWhitePixel_w, gxm_XWhitePixel)
-  XEN_NARGIFY_0(gxm_XAllPlanes_w, gxm_XAllPlanes)
-  XEN_NARGIFY_1(gxm_XBlackPixelOfScreen_w, gxm_XBlackPixelOfScreen)
-  XEN_NARGIFY_1(gxm_XWhitePixelOfScreen_w, gxm_XWhitePixelOfScreen)
-  XEN_NARGIFY_1(gxm_XNextRequest_w, gxm_XNextRequest)
-  XEN_NARGIFY_1(gxm_XLastKnownRequestProcessed_w, gxm_XLastKnownRequestProcessed)
-  XEN_NARGIFY_1(gxm_XServerVendor_w, gxm_XServerVendor)
-  XEN_NARGIFY_1(gxm_XDisplayString_w, gxm_XDisplayString)
-  XEN_NARGIFY_2(gxm_XDefaultColormap_w, gxm_XDefaultColormap)
-  XEN_NARGIFY_1(gxm_XDefaultColormapOfScreen_w, gxm_XDefaultColormapOfScreen)
-  XEN_NARGIFY_1(gxm_XDisplayOfScreen_w, gxm_XDisplayOfScreen)
-  XEN_NARGIFY_2(gxm_XScreenOfDisplay_w, gxm_XScreenOfDisplay)
-  XEN_NARGIFY_1(gxm_XDefaultScreenOfDisplay_w, gxm_XDefaultScreenOfDisplay)
-  XEN_NARGIFY_1(gxm_XEventMaskOfScreen_w, gxm_XEventMaskOfScreen)
-  XEN_NARGIFY_1(gxm_XScreenNumberOfScreen_w, gxm_XScreenNumberOfScreen)
-  XEN_NARGIFY_1(gxm_XSetErrorHandler_w, gxm_XSetErrorHandler)
-  XEN_NARGIFY_1(gxm_XSetIOErrorHandler_w, gxm_XSetIOErrorHandler)
-  XEN_NARGIFY_1(gxm_XListPixmapFormats_w, gxm_XListPixmapFormats)
-  XEN_NARGIFY_2(gxm_XListDepths_w, gxm_XListDepths)
-  XEN_NARGIFY_5(gxm_XReconfigureWMWindow_w, gxm_XReconfigureWMWindow)
-  XEN_NARGIFY_2(gxm_XGetWMProtocols_w, gxm_XGetWMProtocols)
-  XEN_NARGIFY_4(gxm_XSetWMProtocols_w, gxm_XSetWMProtocols)
-  XEN_NARGIFY_3(gxm_XIconifyWindow_w, gxm_XIconifyWindow)
-  XEN_NARGIFY_3(gxm_XWithdrawWindow_w, gxm_XWithdrawWindow)
-  XEN_NARGIFY_2(gxm_XGetCommand_w, gxm_XGetCommand)
-  XEN_NARGIFY_2(gxm_XGetWMColormapWindows_w, gxm_XGetWMColormapWindows)
-  XEN_NARGIFY_4(gxm_XSetWMColormapWindows_w, gxm_XSetWMColormapWindows)
-  XEN_NARGIFY_3(gxm_XSetTransientForHint_w, gxm_XSetTransientForHint)
-  XEN_NARGIFY_1(gxm_XActivateScreenSaver_w, gxm_XActivateScreenSaver)
-  XEN_NARGIFY_3(gxm_XAllocColor_w, gxm_XAllocColor)
-  XEN_NARGIFY_5(gxm_XAllocColorCells_w, gxm_XAllocColorCells)
-  XEN_VARGIFY(gxm_XAllocColorPlanes_w, gxm_XAllocColorPlanes)
-  XEN_NARGIFY_5(gxm_XAllocNamedColor_w, gxm_XAllocNamedColor)
-  XEN_NARGIFY_3(gxm_XAllowEvents_w, gxm_XAllowEvents)
-  XEN_NARGIFY_1(gxm_XAutoRepeatOff_w, gxm_XAutoRepeatOff)
-  XEN_NARGIFY_1(gxm_XAutoRepeatOn_w, gxm_XAutoRepeatOn)
-  XEN_NARGIFY_2(gxm_XBell_w, gxm_XBell)
-  XEN_NARGIFY_1(gxm_XBitmapBitOrder_w, gxm_XBitmapBitOrder)
-  XEN_NARGIFY_1(gxm_XBitmapPad_w, gxm_XBitmapPad)
-  XEN_NARGIFY_1(gxm_XBitmapUnit_w, gxm_XBitmapUnit)
-  XEN_NARGIFY_1(gxm_XCellsOfScreen_w, gxm_XCellsOfScreen)
-  XEN_NARGIFY_4(gxm_XChangeActivePointerGrab_w, gxm_XChangeActivePointerGrab)
-  XEN_NARGIFY_4(gxm_XChangeGC_w, gxm_XChangeGC)
-  XEN_NARGIFY_3(gxm_XChangeKeyboardControl_w, gxm_XChangeKeyboardControl)
-  XEN_NARGIFY_5(gxm_XChangeKeyboardMapping_w, gxm_XChangeKeyboardMapping)
-  XEN_NARGIFY_6(gxm_XChangePointerControl_w, gxm_XChangePointerControl)
-  XEN_ARGIFY_8(gxm_XChangeProperty_w, gxm_XChangeProperty)
-  XEN_NARGIFY_4(gxm_XChangeWindowAttributes_w, gxm_XChangeWindowAttributes)
-  XEN_NARGIFY_3(gxm_XCheckIfEvent_w, gxm_XCheckIfEvent)
-  XEN_NARGIFY_2(gxm_XCheckMaskEvent_w, gxm_XCheckMaskEvent)
-  XEN_NARGIFY_2(gxm_XCheckTypedEvent_w, gxm_XCheckTypedEvent)
-  XEN_NARGIFY_3(gxm_XCheckTypedWindowEvent_w, gxm_XCheckTypedWindowEvent)
-  XEN_NARGIFY_3(gxm_XCheckWindowEvent_w, gxm_XCheckWindowEvent)
-  XEN_NARGIFY_3(gxm_XCirculateSubwindows_w, gxm_XCirculateSubwindows)
-  XEN_NARGIFY_2(gxm_XCirculateSubwindowsDown_w, gxm_XCirculateSubwindowsDown)
-  XEN_NARGIFY_2(gxm_XCirculateSubwindowsUp_w, gxm_XCirculateSubwindowsUp)
-  XEN_NARGIFY_7(gxm_XClearArea_w, gxm_XClearArea)
-  XEN_NARGIFY_2(gxm_XClearWindow_w, gxm_XClearWindow)
-  XEN_NARGIFY_1(gxm_XCloseDisplay_w, gxm_XCloseDisplay)
-  XEN_NARGIFY_4(gxm_XConfigureWindow_w, gxm_XConfigureWindow)
-  XEN_NARGIFY_1(gxm_XConnectionNumber_w, gxm_XConnectionNumber)
-  XEN_NARGIFY_6(gxm_XConvertSelection_w, gxm_XConvertSelection)
-  XEN_VARGIFY(gxm_XCopyArea_w, gxm_XCopyArea)
-  XEN_NARGIFY_4(gxm_XCopyGC_w, gxm_XCopyGC)
-  XEN_VARGIFY(gxm_XCopyPlane_w, gxm_XCopyPlane)
-  XEN_NARGIFY_2(gxm_XDefaultDepth_w, gxm_XDefaultDepth)
-  XEN_NARGIFY_1(gxm_XDefaultDepthOfScreen_w, gxm_XDefaultDepthOfScreen)
-  XEN_NARGIFY_1(gxm_XDefaultScreen_w, gxm_XDefaultScreen)
-  XEN_NARGIFY_3(gxm_XDefineCursor_w, gxm_XDefineCursor)
-  XEN_NARGIFY_3(gxm_XDeleteProperty_w, gxm_XDeleteProperty)
-  XEN_NARGIFY_2(gxm_XDestroyWindow_w, gxm_XDestroyWindow)
-  XEN_NARGIFY_2(gxm_XDestroySubwindows_w, gxm_XDestroySubwindows)
-  XEN_NARGIFY_1(gxm_XDoesBackingStore_w, gxm_XDoesBackingStore)
-  XEN_NARGIFY_1(gxm_XDoesSaveUnders_w, gxm_XDoesSaveUnders)
-  XEN_NARGIFY_1(gxm_XDisableAccessControl_w, gxm_XDisableAccessControl)
-  XEN_NARGIFY_2(gxm_XDisplayCells_w, gxm_XDisplayCells)
-  XEN_NARGIFY_2(gxm_XDisplayHeight_w, gxm_XDisplayHeight)
-  XEN_NARGIFY_2(gxm_XDisplayHeightMM_w, gxm_XDisplayHeightMM)
-  XEN_NARGIFY_1(gxm_XDisplayKeycodes_w, gxm_XDisplayKeycodes)
-  XEN_NARGIFY_2(gxm_XDisplayPlanes_w, gxm_XDisplayPlanes)
-  XEN_NARGIFY_2(gxm_XDisplayWidth_w, gxm_XDisplayWidth)
-  XEN_NARGIFY_2(gxm_XDisplayWidthMM_w, gxm_XDisplayWidthMM)
-  XEN_NARGIFY_9(gxm_XDrawArc_w, gxm_XDrawArc)
-  XEN_NARGIFY_5(gxm_XDrawArcs_w, gxm_XDrawArcs)
-  XEN_NARGIFY_7(gxm_XDrawImageString_w, gxm_XDrawImageString)
-  XEN_NARGIFY_7(gxm_XDrawLine_w, gxm_XDrawLine)
-  XEN_NARGIFY_6(gxm_XDrawLines_w, gxm_XDrawLines)
-  XEN_NARGIFY_6(gxm_XDrawLinesDirect_w, gxm_XDrawLinesDirect)
-  XEN_NARGIFY_1(gxm_FreeXPoints_w, gxm_FreeXPoints)
-  XEN_NARGIFY_1(gxm_Vector2XPoints_w, gxm_Vector2XPoints)
-  XEN_NARGIFY_5(gxm_XDrawPoint_w, gxm_XDrawPoint)
-  XEN_NARGIFY_6(gxm_XDrawPoints_w, gxm_XDrawPoints)
-  XEN_NARGIFY_7(gxm_XDrawRectangle_w, gxm_XDrawRectangle)
-  XEN_NARGIFY_5(gxm_XDrawRectangles_w, gxm_XDrawRectangles)
-  XEN_NARGIFY_5(gxm_XDrawSegments_w, gxm_XDrawSegments)
-  XEN_NARGIFY_7(gxm_XDrawString_w, gxm_XDrawString)
-  XEN_ARGIFY_7(gxm_XDrawText_w, gxm_XDrawText)
-  XEN_NARGIFY_1(gxm_XEnableAccessControl_w, gxm_XEnableAccessControl)
-  XEN_NARGIFY_2(gxm_XEventsQueued_w, gxm_XEventsQueued)
-  XEN_NARGIFY_2(gxm_XFetchName_w, gxm_XFetchName)
-  XEN_NARGIFY_9(gxm_XFillArc_w, gxm_XFillArc)
-  XEN_NARGIFY_5(gxm_XFillArcs_w, gxm_XFillArcs)
-  XEN_NARGIFY_7(gxm_XFillPolygon_w, gxm_XFillPolygon)
-  XEN_NARGIFY_7(gxm_XFillRectangle_w, gxm_XFillRectangle)
-  XEN_NARGIFY_5(gxm_XFillRectangles_w, gxm_XFillRectangles)
-  XEN_NARGIFY_1(gxm_XFlush_w, gxm_XFlush)
-  XEN_NARGIFY_2(gxm_XForceScreenSaver_w, gxm_XForceScreenSaver)
-  XEN_NARGIFY_1(gxm_XFree_w, gxm_XFree)
-  XEN_NARGIFY_2(gxm_XFreeColormap_w, gxm_XFreeColormap)
-  XEN_NARGIFY_5(gxm_XFreeColors_w, gxm_XFreeColors)
-  XEN_NARGIFY_2(gxm_XFreeCursor_w, gxm_XFreeCursor)
-  XEN_NARGIFY_1(gxm_XFreeExtensionList_w, gxm_XFreeExtensionList)
-  XEN_NARGIFY_2(gxm_XFreeFont_w, gxm_XFreeFont)
-  XEN_NARGIFY_3(gxm_XFreeFontInfo_w, gxm_XFreeFontInfo)
-  XEN_NARGIFY_1(gxm_XFreeFontNames_w, gxm_XFreeFontNames)
-  XEN_NARGIFY_1(gxm_XFreeFontPath_w, gxm_XFreeFontPath)
-  XEN_NARGIFY_2(gxm_XFreeGC_w, gxm_XFreeGC)
-  XEN_NARGIFY_1(gxm_XFreeModifiermap_w, gxm_XFreeModifiermap)
-  XEN_NARGIFY_2(gxm_XFreePixmap_w, gxm_XFreePixmap)
-  XEN_VARGIFY(gxm_XGeometry_w, gxm_XGeometry)
-  XEN_NARGIFY_4(gxm_XGetErrorText_w, gxm_XGetErrorText)
-  XEN_NARGIFY_2(gxm_XGetFontProperty_w, gxm_XGetFontProperty)
-  XEN_NARGIFY_3(gxm_XGetGCValues_w, gxm_XGetGCValues)
-  XEN_NARGIFY_0(gxm_XGCValues_w, gxm_XGCValues)
-  XEN_ARGIFY_1(gxm_XEvent_w, gxm_XEvent)
-  XEN_NARGIFY_2(gxm_XGetGeometry_w, gxm_XGetGeometry)
-  XEN_NARGIFY_2(gxm_XGetIconName_w, gxm_XGetIconName)
-  XEN_NARGIFY_1(gxm_XGetInputFocus_w, gxm_XGetInputFocus)
-  XEN_NARGIFY_1(gxm_XGetKeyboardControl_w, gxm_XGetKeyboardControl)
-  XEN_NARGIFY_1(gxm_XGetPointerControl_w, gxm_XGetPointerControl)
-  XEN_NARGIFY_3(gxm_XGetPointerMapping_w, gxm_XGetPointerMapping)
-  XEN_NARGIFY_1(gxm_XGetScreenSaver_w, gxm_XGetScreenSaver)
-  XEN_NARGIFY_2(gxm_XGetTransientForHint_w, gxm_XGetTransientForHint)
-  XEN_VARGIFY(gxm_XGetWindowProperty_w, gxm_XGetWindowProperty)
-  XEN_NARGIFY_2(gxm_XGetWindowAttributes_w, gxm_XGetWindowAttributes)
-  XEN_VARGIFY(gxm_XGrabButton_w, gxm_XGrabButton)
-  XEN_NARGIFY_7(gxm_XGrabKey_w, gxm_XGrabKey)
-  XEN_NARGIFY_6(gxm_XGrabKeyboard_w, gxm_XGrabKeyboard)
-  XEN_NARGIFY_9(gxm_XGrabPointer_w, gxm_XGrabPointer)
-  XEN_NARGIFY_1(gxm_XGrabServer_w, gxm_XGrabServer)
-  XEN_NARGIFY_1(gxm_XHeightMMOfScreen_w, gxm_XHeightMMOfScreen)
-  XEN_NARGIFY_1(gxm_XHeightOfScreen_w, gxm_XHeightOfScreen)
-  XEN_NARGIFY_3(gxm_XIfEvent_w, gxm_XIfEvent)
-  XEN_NARGIFY_1(gxm_XImageByteOrder_w, gxm_XImageByteOrder)
-  XEN_NARGIFY_2(gxm_XInstallColormap_w, gxm_XInstallColormap)
-  XEN_NARGIFY_2(gxm_XKeysymToKeycode_w, gxm_XKeysymToKeycode)
-  XEN_NARGIFY_2(gxm_XKillClient_w, gxm_XKillClient)
-  XEN_NARGIFY_5(gxm_XLookupColor_w, gxm_XLookupColor)
-  XEN_NARGIFY_2(gxm_XLowerWindow_w, gxm_XLowerWindow)
-  XEN_NARGIFY_2(gxm_XMapRaised_w, gxm_XMapRaised)
-  XEN_NARGIFY_2(gxm_XMapSubwindows_w, gxm_XMapSubwindows)
-  XEN_NARGIFY_2(gxm_XMapWindow_w, gxm_XMapWindow)
-  XEN_NARGIFY_2(gxm_XMaskEvent_w, gxm_XMaskEvent)
-  XEN_NARGIFY_1(gxm_XMaxCmapsOfScreen_w, gxm_XMaxCmapsOfScreen)
-  XEN_NARGIFY_1(gxm_XMinCmapsOfScreen_w, gxm_XMinCmapsOfScreen)
-  XEN_NARGIFY_6(gxm_XMoveResizeWindow_w, gxm_XMoveResizeWindow)
-  XEN_NARGIFY_4(gxm_XMoveWindow_w, gxm_XMoveWindow)
-  XEN_NARGIFY_1(gxm_XNextEvent_w, gxm_XNextEvent)
-  XEN_NARGIFY_1(gxm_XNoOp_w, gxm_XNoOp)
-  XEN_NARGIFY_4(gxm_XParseColor_w, gxm_XParseColor)
-  XEN_NARGIFY_1(gxm_XParseGeometry_w, gxm_XParseGeometry)
-  XEN_NARGIFY_1(gxm_XPeekEvent_w, gxm_XPeekEvent)
-  XEN_NARGIFY_3(gxm_XPeekIfEvent_w, gxm_XPeekIfEvent)
-  XEN_NARGIFY_1(gxm_XPending_w, gxm_XPending)
-  XEN_NARGIFY_1(gxm_XPlanesOfScreen_w, gxm_XPlanesOfScreen)
-  XEN_NARGIFY_1(gxm_XProtocolRevision_w, gxm_XProtocolRevision)
-  XEN_NARGIFY_1(gxm_XProtocolVersion_w, gxm_XProtocolVersion)
-  XEN_NARGIFY_2(gxm_XPutBackEvent_w, gxm_XPutBackEvent)
-  XEN_VARGIFY(gxm_XPutImage_w, gxm_XPutImage)
-  XEN_NARGIFY_1(gxm_XQLength_w, gxm_XQLength)
-  XEN_NARGIFY_4(gxm_XQueryBestCursor_w, gxm_XQueryBestCursor)
-  XEN_NARGIFY_5(gxm_XQueryBestSize_w, gxm_XQueryBestSize)
-  XEN_NARGIFY_4(gxm_XQueryBestStipple_w, gxm_XQueryBestStipple)
-  XEN_NARGIFY_4(gxm_XQueryBestTile_w, gxm_XQueryBestTile)
-  XEN_NARGIFY_3(gxm_XQueryColor_w, gxm_XQueryColor)
-  XEN_ARGIFY_4(gxm_XQueryColors_w, gxm_XQueryColors)
-  XEN_NARGIFY_2(gxm_XQueryExtension_w, gxm_XQueryExtension)
-  XEN_NARGIFY_1(gxm_XQueryKeymap_w, gxm_XQueryKeymap)
-  XEN_NARGIFY_2(gxm_XQueryPointer_w, gxm_XQueryPointer)
-  XEN_NARGIFY_3(gxm_XQueryTextExtents_w, gxm_XQueryTextExtents)
-  XEN_NARGIFY_2(gxm_XQueryTree_w, gxm_XQueryTree)
-  XEN_NARGIFY_2(gxm_XRaiseWindow_w, gxm_XRaiseWindow)
-  XEN_NARGIFY_3(gxm_XReadBitmapFile_w, gxm_XReadBitmapFile)
-  XEN_NARGIFY_1(gxm_XReadBitmapFileData_w, gxm_XReadBitmapFileData)
-  XEN_NARGIFY_6(gxm_XRebindKeysym_w, gxm_XRebindKeysym)
-  XEN_NARGIFY_4(gxm_XRecolorCursor_w, gxm_XRecolorCursor)
-  XEN_NARGIFY_1(gxm_XRefreshKeyboardMapping_w, gxm_XRefreshKeyboardMapping)
-  XEN_NARGIFY_5(gxm_XReparentWindow_w, gxm_XReparentWindow)
-  XEN_NARGIFY_1(gxm_XResetScreenSaver_w, gxm_XResetScreenSaver)
-  XEN_NARGIFY_4(gxm_XResizeWindow_w, gxm_XResizeWindow)
-  XEN_NARGIFY_3(gxm_XRestackWindows_w, gxm_XRestackWindows)
-  XEN_NARGIFY_2(gxm_XRotateBuffers_w, gxm_XRotateBuffers)
-  XEN_NARGIFY_5(gxm_XRotateWindowProperties_w, gxm_XRotateWindowProperties)
-  XEN_NARGIFY_1(gxm_XScreenCount_w, gxm_XScreenCount)
-  XEN_NARGIFY_3(gxm_XSelectInput_w, gxm_XSelectInput)
-  XEN_NARGIFY_5(gxm_XSendEvent_w, gxm_XSendEvent)
-  XEN_NARGIFY_2(gxm_XSetAccessControl_w, gxm_XSetAccessControl)
-  XEN_NARGIFY_3(gxm_XSetArcMode_w, gxm_XSetArcMode)
-  XEN_NARGIFY_3(gxm_XSetBackground_w, gxm_XSetBackground)
-  XEN_NARGIFY_3(gxm_XSetClipMask_w, gxm_XSetClipMask)
-  XEN_NARGIFY_4(gxm_XSetClipOrigin_w, gxm_XSetClipOrigin)
-  XEN_NARGIFY_7(gxm_XSetClipRectangles_w, gxm_XSetClipRectangles)
-  XEN_NARGIFY_2(gxm_XSetCloseDownMode_w, gxm_XSetCloseDownMode)
-  XEN_NARGIFY_4(gxm_XSetCommand_w, gxm_XSetCommand)
-  XEN_ARGIFY_5(gxm_XSetDashes_w, gxm_XSetDashes)
-  XEN_NARGIFY_3(gxm_XSetFillRule_w, gxm_XSetFillRule)
-  XEN_NARGIFY_3(gxm_XSetFillStyle_w, gxm_XSetFillStyle)
-  XEN_NARGIFY_3(gxm_XSetFont_w, gxm_XSetFont)
-  XEN_NARGIFY_3(gxm_XSetFontPath_w, gxm_XSetFontPath)
-  XEN_NARGIFY_3(gxm_XSetForeground_w, gxm_XSetForeground)
-  XEN_NARGIFY_3(gxm_XSetFunction_w, gxm_XSetFunction)
-  XEN_NARGIFY_3(gxm_XSetGraphicsExposures_w, gxm_XSetGraphicsExposures)
-  XEN_NARGIFY_3(gxm_XSetIconName_w, gxm_XSetIconName)
-  XEN_NARGIFY_4(gxm_XSetInputFocus_w, gxm_XSetInputFocus)
-  XEN_NARGIFY_6(gxm_XSetLineAttributes_w, gxm_XSetLineAttributes)
-  XEN_NARGIFY_2(gxm_XSetModifierMapping_w, gxm_XSetModifierMapping)
-  XEN_NARGIFY_3(gxm_XSetPlaneMask_w, gxm_XSetPlaneMask)
-  XEN_ARGIFY_3(gxm_XSetPointerMapping_w, gxm_XSetPointerMapping)
-  XEN_NARGIFY_5(gxm_XSetScreenSaver_w, gxm_XSetScreenSaver)
-  XEN_NARGIFY_4(gxm_XSetSelectionOwner_w, gxm_XSetSelectionOwner)
-  XEN_NARGIFY_6(gxm_XSetState_w, gxm_XSetState)
-  XEN_NARGIFY_3(gxm_XSetStipple_w, gxm_XSetStipple)
-  XEN_NARGIFY_3(gxm_XSetSubwindowMode_w, gxm_XSetSubwindowMode)
-  XEN_NARGIFY_4(gxm_XSetTSOrigin_w, gxm_XSetTSOrigin)
-  XEN_NARGIFY_3(gxm_XSetTile_w, gxm_XSetTile)
-  XEN_NARGIFY_3(gxm_XSetWindowBackground_w, gxm_XSetWindowBackground)
-  XEN_NARGIFY_3(gxm_XSetWindowBackgroundPixmap_w, gxm_XSetWindowBackgroundPixmap)
-  XEN_NARGIFY_3(gxm_XSetWindowBorder_w, gxm_XSetWindowBorder)
-  XEN_NARGIFY_3(gxm_XSetWindowBorderPixmap_w, gxm_XSetWindowBorderPixmap)
-  XEN_NARGIFY_3(gxm_XSetWindowBorderWidth_w, gxm_XSetWindowBorderWidth)
-  XEN_NARGIFY_3(gxm_XSetWindowColormap_w, gxm_XSetWindowColormap)
-  XEN_NARGIFY_4(gxm_XStoreBuffer_w, gxm_XStoreBuffer)
-  XEN_NARGIFY_3(gxm_XStoreBytes_w, gxm_XStoreBytes)
-  XEN_NARGIFY_3(gxm_XStoreColor_w, gxm_XStoreColor)
-  XEN_NARGIFY_4(gxm_XStoreColors_w, gxm_XStoreColors)
-  XEN_NARGIFY_3(gxm_XStoreName_w, gxm_XStoreName)
-  XEN_NARGIFY_5(gxm_XStoreNamedColor_w, gxm_XStoreNamedColor)
-  XEN_NARGIFY_2(gxm_XSync_w, gxm_XSync)
-  XEN_NARGIFY_3(gxm_XTextExtents_w, gxm_XTextExtents)
-  XEN_NARGIFY_3(gxm_XTextWidth_w, gxm_XTextWidth)
-  XEN_NARGIFY_5(gxm_XTranslateCoordinates_w, gxm_XTranslateCoordinates)
-  XEN_NARGIFY_2(gxm_XUndefineCursor_w, gxm_XUndefineCursor)
-  XEN_NARGIFY_4(gxm_XUngrabButton_w, gxm_XUngrabButton)
-  XEN_NARGIFY_4(gxm_XUngrabKey_w, gxm_XUngrabKey)
-  XEN_NARGIFY_2(gxm_XUngrabKeyboard_w, gxm_XUngrabKeyboard)
-  XEN_NARGIFY_2(gxm_XUngrabPointer_w, gxm_XUngrabPointer)
-  XEN_NARGIFY_1(gxm_XUngrabServer_w, gxm_XUngrabServer)
-  XEN_NARGIFY_2(gxm_XUninstallColormap_w, gxm_XUninstallColormap)
-  XEN_NARGIFY_2(gxm_XUnloadFont_w, gxm_XUnloadFont)
-  XEN_NARGIFY_2(gxm_XUnmapSubwindows_w, gxm_XUnmapSubwindows)
-  XEN_NARGIFY_2(gxm_XUnmapWindow_w, gxm_XUnmapWindow)
-  XEN_NARGIFY_1(gxm_XVendorRelease_w, gxm_XVendorRelease)
-  XEN_NARGIFY_9(gxm_XWarpPointer_w, gxm_XWarpPointer)
-  XEN_NARGIFY_1(gxm_XWidthMMOfScreen_w, gxm_XWidthMMOfScreen)
-  XEN_NARGIFY_1(gxm_XWidthOfScreen_w, gxm_XWidthOfScreen)
-  XEN_NARGIFY_3(gxm_XWindowEvent_w, gxm_XWindowEvent)
-  XEN_NARGIFY_7(gxm_XWriteBitmapFile_w, gxm_XWriteBitmapFile)
-  XEN_NARGIFY_0(gxm_XSupportsLocale_w, gxm_XSupportsLocale)
-  XEN_NARGIFY_1(gxm_XSetLocaleModifiers_w, gxm_XSetLocaleModifiers)
-  XEN_NARGIFY_2(gxm_XCreateFontSet_w, gxm_XCreateFontSet)
-  XEN_NARGIFY_2(gxm_XFreeFontSet_w, gxm_XFreeFontSet)
-  XEN_NARGIFY_1(gxm_XFontsOfFontSet_w, gxm_XFontsOfFontSet)
-  XEN_NARGIFY_1(gxm_XBaseFontNameListOfFontSet_w, gxm_XBaseFontNameListOfFontSet)
-  XEN_NARGIFY_1(gxm_XLocaleOfFontSet_w, gxm_XLocaleOfFontSet)
-  XEN_NARGIFY_1(gxm_XContextDependentDrawing_w, gxm_XContextDependentDrawing)
-  XEN_NARGIFY_1(gxm_XDirectionalDependentDrawing_w, gxm_XDirectionalDependentDrawing)
-  XEN_NARGIFY_1(gxm_XContextualDrawing_w, gxm_XContextualDrawing)
-  XEN_NARGIFY_2(gxm_XFilterEvent_w, gxm_XFilterEvent)
-  XEN_NARGIFY_0(gxm_XAllocIconSize_w, gxm_XAllocIconSize)
-  XEN_NARGIFY_0(gxm_XAllocStandardColormap_w, gxm_XAllocStandardColormap)
-  XEN_NARGIFY_0(gxm_XAllocWMHints_w, gxm_XAllocWMHints)
-  XEN_NARGIFY_1(gxm_XClipBox_w, gxm_XClipBox)
-  XEN_NARGIFY_0(gxm_XCreateRegion_w, gxm_XCreateRegion)
-  XEN_NARGIFY_0(gxm_XDefaultString_w, gxm_XDefaultString)
-  XEN_NARGIFY_3(gxm_XDeleteContext_w, gxm_XDeleteContext)
-  XEN_NARGIFY_1(gxm_XDestroyRegion_w, gxm_XDestroyRegion)
-  XEN_NARGIFY_1(gxm_XEmptyRegion_w, gxm_XEmptyRegion)
-  XEN_NARGIFY_2(gxm_XEqualRegion_w, gxm_XEqualRegion)
-  XEN_NARGIFY_3(gxm_XFindContext_w, gxm_XFindContext)
-  XEN_NARGIFY_2(gxm_XGetIconSizes_w, gxm_XGetIconSizes)
-  XEN_NARGIFY_3(gxm_XGetRGBColormaps_w, gxm_XGetRGBColormaps)
-  XEN_NARGIFY_3(gxm_XGetVisualInfo_w, gxm_XGetVisualInfo)
-  XEN_NARGIFY_2(gxm_XGetWMHints_w, gxm_XGetWMHints)
-  XEN_NARGIFY_3(gxm_XIntersectRegion_w, gxm_XIntersectRegion)
-  XEN_NARGIFY_1(gxm_XConvertCase_w, gxm_XConvertCase)
-  XEN_NARGIFY_1(gxm_XLookupString_w, gxm_XLookupString)
-  XEN_NARGIFY_4(gxm_XMatchVisualInfo_w, gxm_XMatchVisualInfo)
-  XEN_NARGIFY_3(gxm_XOffsetRegion_w, gxm_XOffsetRegion)
-  XEN_NARGIFY_3(gxm_XPointInRegion_w, gxm_XPointInRegion)
-  XEN_NARGIFY_3(gxm_XPolygonRegion_w, gxm_XPolygonRegion)
-  XEN_NARGIFY_5(gxm_XRectInRegion_w, gxm_XRectInRegion)
-  XEN_NARGIFY_4(gxm_XSaveContext_w, gxm_XSaveContext)
-  XEN_NARGIFY_0(gxm_XUniqueContext_w, gxm_XUniqueContext)
-  XEN_NARGIFY_5(gxm_XSetRGBColormaps_w, gxm_XSetRGBColormaps)
-  XEN_NARGIFY_3(gxm_XSetWMHints_w, gxm_XSetWMHints)
-  XEN_NARGIFY_3(gxm_XSetRegion_w, gxm_XSetRegion)
-  XEN_NARGIFY_8(gxm_XSetWMProperties_w, gxm_XSetWMProperties)
-  XEN_NARGIFY_3(gxm_XShrinkRegion_w, gxm_XShrinkRegion)
-  XEN_NARGIFY_3(gxm_XSubtractRegion_w, gxm_XSubtractRegion)
-  XEN_NARGIFY_3(gxm_XUnionRectWithRegion_w, gxm_XUnionRectWithRegion)
-  XEN_NARGIFY_3(gxm_XUnionRegion_w, gxm_XUnionRegion)
-  XEN_NARGIFY_3(gxm_XXorRegion_w, gxm_XXorRegion)
+XEN_NARGIFY_2(gxm_XLookupKeysym_w, gxm_XLookupKeysym)
+XEN_NARGIFY_3(gxm_XGetKeyboardMapping_w, gxm_XGetKeyboardMapping)
+XEN_NARGIFY_1(gxm_XStringToKeysym_w, gxm_XStringToKeysym)
+XEN_NARGIFY_1(gxm_XMaxRequestSize_w, gxm_XMaxRequestSize)
+XEN_NARGIFY_1(gxm_XExtendedMaxRequestSize_w, gxm_XExtendedMaxRequestSize)
+XEN_NARGIFY_1(gxm_XDisplayMotionBufferSize_w, gxm_XDisplayMotionBufferSize)
+XEN_NARGIFY_1(gxm_XVisualIDFromVisual_w, gxm_XVisualIDFromVisual)
+XEN_NARGIFY_2(gxm_XRootWindow_w, gxm_XRootWindow)
+XEN_NARGIFY_1(gxm_XDefaultRootWindow_w, gxm_XDefaultRootWindow)
+XEN_NARGIFY_1(gxm_XRootWindowOfScreen_w, gxm_XRootWindowOfScreen)
+XEN_NARGIFY_2(gxm_XDefaultVisual_w, gxm_XDefaultVisual)
+XEN_NARGIFY_1(gxm_XDefaultVisualOfScreen_w, gxm_XDefaultVisualOfScreen)
+XEN_NARGIFY_2(gxm_XDefaultGC_w, gxm_XDefaultGC)
+XEN_NARGIFY_1(gxm_XDefaultGCOfScreen_w, gxm_XDefaultGCOfScreen)
+XEN_NARGIFY_2(gxm_XBlackPixel_w, gxm_XBlackPixel)
+XEN_NARGIFY_2(gxm_XWhitePixel_w, gxm_XWhitePixel)
+XEN_NARGIFY_0(gxm_XAllPlanes_w, gxm_XAllPlanes)
+XEN_NARGIFY_1(gxm_XBlackPixelOfScreen_w, gxm_XBlackPixelOfScreen)
+XEN_NARGIFY_1(gxm_XWhitePixelOfScreen_w, gxm_XWhitePixelOfScreen)
+XEN_NARGIFY_1(gxm_XNextRequest_w, gxm_XNextRequest)
+XEN_NARGIFY_1(gxm_XLastKnownRequestProcessed_w, gxm_XLastKnownRequestProcessed)
+XEN_NARGIFY_1(gxm_XServerVendor_w, gxm_XServerVendor)
+XEN_NARGIFY_1(gxm_XDisplayString_w, gxm_XDisplayString)
+XEN_NARGIFY_2(gxm_XDefaultColormap_w, gxm_XDefaultColormap)
+XEN_NARGIFY_1(gxm_XDefaultColormapOfScreen_w, gxm_XDefaultColormapOfScreen)
+XEN_NARGIFY_1(gxm_XDisplayOfScreen_w, gxm_XDisplayOfScreen)
+XEN_NARGIFY_2(gxm_XScreenOfDisplay_w, gxm_XScreenOfDisplay)
+XEN_NARGIFY_1(gxm_XDefaultScreenOfDisplay_w, gxm_XDefaultScreenOfDisplay)
+XEN_NARGIFY_1(gxm_XEventMaskOfScreen_w, gxm_XEventMaskOfScreen)
+XEN_NARGIFY_1(gxm_XScreenNumberOfScreen_w, gxm_XScreenNumberOfScreen)
+XEN_NARGIFY_1(gxm_XSetErrorHandler_w, gxm_XSetErrorHandler)
+XEN_NARGIFY_1(gxm_XSetIOErrorHandler_w, gxm_XSetIOErrorHandler)
+XEN_NARGIFY_1(gxm_XListPixmapFormats_w, gxm_XListPixmapFormats)
+XEN_NARGIFY_2(gxm_XListDepths_w, gxm_XListDepths)
+XEN_NARGIFY_5(gxm_XReconfigureWMWindow_w, gxm_XReconfigureWMWindow)
+XEN_NARGIFY_2(gxm_XGetWMProtocols_w, gxm_XGetWMProtocols)
+XEN_NARGIFY_4(gxm_XSetWMProtocols_w, gxm_XSetWMProtocols)
+XEN_NARGIFY_3(gxm_XIconifyWindow_w, gxm_XIconifyWindow)
+XEN_NARGIFY_3(gxm_XWithdrawWindow_w, gxm_XWithdrawWindow)
+XEN_NARGIFY_2(gxm_XGetCommand_w, gxm_XGetCommand)
+XEN_NARGIFY_2(gxm_XGetWMColormapWindows_w, gxm_XGetWMColormapWindows)
+XEN_NARGIFY_4(gxm_XSetWMColormapWindows_w, gxm_XSetWMColormapWindows)
+XEN_NARGIFY_3(gxm_XSetTransientForHint_w, gxm_XSetTransientForHint)
+XEN_NARGIFY_1(gxm_XActivateScreenSaver_w, gxm_XActivateScreenSaver)
+XEN_NARGIFY_3(gxm_XAllocColor_w, gxm_XAllocColor)
+XEN_NARGIFY_5(gxm_XAllocColorCells_w, gxm_XAllocColorCells)
+XEN_VARGIFY(gxm_XAllocColorPlanes_w, gxm_XAllocColorPlanes)
+XEN_NARGIFY_5(gxm_XAllocNamedColor_w, gxm_XAllocNamedColor)
+XEN_NARGIFY_3(gxm_XAllowEvents_w, gxm_XAllowEvents)
+XEN_NARGIFY_1(gxm_XAutoRepeatOff_w, gxm_XAutoRepeatOff)
+XEN_NARGIFY_1(gxm_XAutoRepeatOn_w, gxm_XAutoRepeatOn)
+XEN_NARGIFY_2(gxm_XBell_w, gxm_XBell)
+XEN_NARGIFY_1(gxm_XBitmapBitOrder_w, gxm_XBitmapBitOrder)
+XEN_NARGIFY_1(gxm_XBitmapPad_w, gxm_XBitmapPad)
+XEN_NARGIFY_1(gxm_XBitmapUnit_w, gxm_XBitmapUnit)
+XEN_NARGIFY_1(gxm_XCellsOfScreen_w, gxm_XCellsOfScreen)
+XEN_NARGIFY_4(gxm_XChangeActivePointerGrab_w, gxm_XChangeActivePointerGrab)
+XEN_NARGIFY_4(gxm_XChangeGC_w, gxm_XChangeGC)
+XEN_NARGIFY_3(gxm_XChangeKeyboardControl_w, gxm_XChangeKeyboardControl)
+XEN_NARGIFY_5(gxm_XChangeKeyboardMapping_w, gxm_XChangeKeyboardMapping)
+XEN_NARGIFY_6(gxm_XChangePointerControl_w, gxm_XChangePointerControl)
+XEN_ARGIFY_8(gxm_XChangeProperty_w, gxm_XChangeProperty)
+XEN_NARGIFY_4(gxm_XChangeWindowAttributes_w, gxm_XChangeWindowAttributes)
+XEN_NARGIFY_3(gxm_XCheckIfEvent_w, gxm_XCheckIfEvent)
+XEN_NARGIFY_2(gxm_XCheckMaskEvent_w, gxm_XCheckMaskEvent)
+XEN_NARGIFY_2(gxm_XCheckTypedEvent_w, gxm_XCheckTypedEvent)
+XEN_NARGIFY_3(gxm_XCheckTypedWindowEvent_w, gxm_XCheckTypedWindowEvent)
+XEN_NARGIFY_3(gxm_XCheckWindowEvent_w, gxm_XCheckWindowEvent)
+XEN_NARGIFY_3(gxm_XCirculateSubwindows_w, gxm_XCirculateSubwindows)
+XEN_NARGIFY_2(gxm_XCirculateSubwindowsDown_w, gxm_XCirculateSubwindowsDown)
+XEN_NARGIFY_2(gxm_XCirculateSubwindowsUp_w, gxm_XCirculateSubwindowsUp)
+XEN_NARGIFY_7(gxm_XClearArea_w, gxm_XClearArea)
+XEN_NARGIFY_2(gxm_XClearWindow_w, gxm_XClearWindow)
+XEN_NARGIFY_1(gxm_XCloseDisplay_w, gxm_XCloseDisplay)
+XEN_NARGIFY_4(gxm_XConfigureWindow_w, gxm_XConfigureWindow)
+XEN_NARGIFY_1(gxm_XConnectionNumber_w, gxm_XConnectionNumber)
+XEN_NARGIFY_6(gxm_XConvertSelection_w, gxm_XConvertSelection)
+XEN_VARGIFY(gxm_XCopyArea_w, gxm_XCopyArea)
+XEN_NARGIFY_4(gxm_XCopyGC_w, gxm_XCopyGC)
+XEN_VARGIFY(gxm_XCopyPlane_w, gxm_XCopyPlane)
+XEN_NARGIFY_2(gxm_XDefaultDepth_w, gxm_XDefaultDepth)
+XEN_NARGIFY_1(gxm_XDefaultDepthOfScreen_w, gxm_XDefaultDepthOfScreen)
+XEN_NARGIFY_1(gxm_XDefaultScreen_w, gxm_XDefaultScreen)
+XEN_NARGIFY_3(gxm_XDefineCursor_w, gxm_XDefineCursor)
+XEN_NARGIFY_3(gxm_XDeleteProperty_w, gxm_XDeleteProperty)
+XEN_NARGIFY_2(gxm_XDestroyWindow_w, gxm_XDestroyWindow)
+XEN_NARGIFY_2(gxm_XDestroySubwindows_w, gxm_XDestroySubwindows)
+XEN_NARGIFY_1(gxm_XDoesBackingStore_w, gxm_XDoesBackingStore)
+XEN_NARGIFY_1(gxm_XDoesSaveUnders_w, gxm_XDoesSaveUnders)
+XEN_NARGIFY_1(gxm_XDisableAccessControl_w, gxm_XDisableAccessControl)
+XEN_NARGIFY_2(gxm_XDisplayCells_w, gxm_XDisplayCells)
+XEN_NARGIFY_2(gxm_XDisplayHeight_w, gxm_XDisplayHeight)
+XEN_NARGIFY_2(gxm_XDisplayHeightMM_w, gxm_XDisplayHeightMM)
+XEN_NARGIFY_1(gxm_XDisplayKeycodes_w, gxm_XDisplayKeycodes)
+XEN_NARGIFY_2(gxm_XDisplayPlanes_w, gxm_XDisplayPlanes)
+XEN_NARGIFY_2(gxm_XDisplayWidth_w, gxm_XDisplayWidth)
+XEN_NARGIFY_2(gxm_XDisplayWidthMM_w, gxm_XDisplayWidthMM)
+XEN_NARGIFY_9(gxm_XDrawArc_w, gxm_XDrawArc)
+XEN_NARGIFY_5(gxm_XDrawArcs_w, gxm_XDrawArcs)
+XEN_NARGIFY_7(gxm_XDrawImageString_w, gxm_XDrawImageString)
+XEN_NARGIFY_7(gxm_XDrawLine_w, gxm_XDrawLine)
+XEN_NARGIFY_6(gxm_XDrawLines_w, gxm_XDrawLines)
+XEN_NARGIFY_6(gxm_XDrawLinesDirect_w, gxm_XDrawLinesDirect)
+XEN_NARGIFY_1(gxm_FreeXPoints_w, gxm_FreeXPoints)
+XEN_NARGIFY_1(gxm_Vector2XPoints_w, gxm_Vector2XPoints)
+XEN_NARGIFY_5(gxm_XDrawPoint_w, gxm_XDrawPoint)
+XEN_NARGIFY_6(gxm_XDrawPoints_w, gxm_XDrawPoints)
+XEN_NARGIFY_7(gxm_XDrawRectangle_w, gxm_XDrawRectangle)
+XEN_NARGIFY_5(gxm_XDrawRectangles_w, gxm_XDrawRectangles)
+XEN_NARGIFY_5(gxm_XDrawSegments_w, gxm_XDrawSegments)
+XEN_NARGIFY_7(gxm_XDrawString_w, gxm_XDrawString)
+XEN_ARGIFY_7(gxm_XDrawText_w, gxm_XDrawText)
+XEN_NARGIFY_1(gxm_XEnableAccessControl_w, gxm_XEnableAccessControl)
+XEN_NARGIFY_2(gxm_XEventsQueued_w, gxm_XEventsQueued)
+XEN_NARGIFY_2(gxm_XFetchName_w, gxm_XFetchName)
+XEN_NARGIFY_9(gxm_XFillArc_w, gxm_XFillArc)
+XEN_NARGIFY_5(gxm_XFillArcs_w, gxm_XFillArcs)
+XEN_NARGIFY_7(gxm_XFillPolygon_w, gxm_XFillPolygon)
+XEN_NARGIFY_7(gxm_XFillRectangle_w, gxm_XFillRectangle)
+XEN_NARGIFY_5(gxm_XFillRectangles_w, gxm_XFillRectangles)
+XEN_NARGIFY_1(gxm_XFlush_w, gxm_XFlush)
+XEN_NARGIFY_2(gxm_XForceScreenSaver_w, gxm_XForceScreenSaver)
+XEN_NARGIFY_1(gxm_XFree_w, gxm_XFree)
+XEN_NARGIFY_2(gxm_XFreeColormap_w, gxm_XFreeColormap)
+XEN_NARGIFY_5(gxm_XFreeColors_w, gxm_XFreeColors)
+XEN_NARGIFY_2(gxm_XFreeCursor_w, gxm_XFreeCursor)
+XEN_NARGIFY_1(gxm_XFreeExtensionList_w, gxm_XFreeExtensionList)
+XEN_NARGIFY_2(gxm_XFreeFont_w, gxm_XFreeFont)
+XEN_NARGIFY_3(gxm_XFreeFontInfo_w, gxm_XFreeFontInfo)
+XEN_NARGIFY_1(gxm_XFreeFontNames_w, gxm_XFreeFontNames)
+XEN_NARGIFY_1(gxm_XFreeFontPath_w, gxm_XFreeFontPath)
+XEN_NARGIFY_2(gxm_XFreeGC_w, gxm_XFreeGC)
+XEN_NARGIFY_1(gxm_XFreeModifiermap_w, gxm_XFreeModifiermap)
+XEN_NARGIFY_2(gxm_XFreePixmap_w, gxm_XFreePixmap)
+XEN_VARGIFY(gxm_XGeometry_w, gxm_XGeometry)
+XEN_NARGIFY_4(gxm_XGetErrorText_w, gxm_XGetErrorText)
+XEN_NARGIFY_2(gxm_XGetFontProperty_w, gxm_XGetFontProperty)
+XEN_NARGIFY_3(gxm_XGetGCValues_w, gxm_XGetGCValues)
+XEN_NARGIFY_0(gxm_XGCValues_w, gxm_XGCValues)
+XEN_ARGIFY_1(gxm_XEvent_w, gxm_XEvent)
+XEN_NARGIFY_2(gxm_XGetGeometry_w, gxm_XGetGeometry)
+XEN_NARGIFY_2(gxm_XGetIconName_w, gxm_XGetIconName)
+XEN_NARGIFY_1(gxm_XGetInputFocus_w, gxm_XGetInputFocus)
+XEN_NARGIFY_1(gxm_XGetKeyboardControl_w, gxm_XGetKeyboardControl)
+XEN_NARGIFY_1(gxm_XGetPointerControl_w, gxm_XGetPointerControl)
+XEN_NARGIFY_3(gxm_XGetPointerMapping_w, gxm_XGetPointerMapping)
+XEN_NARGIFY_1(gxm_XGetScreenSaver_w, gxm_XGetScreenSaver)
+XEN_NARGIFY_2(gxm_XGetTransientForHint_w, gxm_XGetTransientForHint)
+XEN_VARGIFY(gxm_XGetWindowProperty_w, gxm_XGetWindowProperty)
+XEN_NARGIFY_2(gxm_XGetWindowAttributes_w, gxm_XGetWindowAttributes)
+XEN_VARGIFY(gxm_XGrabButton_w, gxm_XGrabButton)
+XEN_NARGIFY_7(gxm_XGrabKey_w, gxm_XGrabKey)
+XEN_NARGIFY_6(gxm_XGrabKeyboard_w, gxm_XGrabKeyboard)
+XEN_NARGIFY_9(gxm_XGrabPointer_w, gxm_XGrabPointer)
+XEN_NARGIFY_1(gxm_XGrabServer_w, gxm_XGrabServer)
+XEN_NARGIFY_1(gxm_XHeightMMOfScreen_w, gxm_XHeightMMOfScreen)
+XEN_NARGIFY_1(gxm_XHeightOfScreen_w, gxm_XHeightOfScreen)
+XEN_NARGIFY_3(gxm_XIfEvent_w, gxm_XIfEvent)
+XEN_NARGIFY_1(gxm_XImageByteOrder_w, gxm_XImageByteOrder)
+XEN_NARGIFY_2(gxm_XInstallColormap_w, gxm_XInstallColormap)
+XEN_NARGIFY_2(gxm_XKeysymToKeycode_w, gxm_XKeysymToKeycode)
+XEN_NARGIFY_2(gxm_XKillClient_w, gxm_XKillClient)
+XEN_NARGIFY_5(gxm_XLookupColor_w, gxm_XLookupColor)
+XEN_NARGIFY_2(gxm_XLowerWindow_w, gxm_XLowerWindow)
+XEN_NARGIFY_2(gxm_XMapRaised_w, gxm_XMapRaised)
+XEN_NARGIFY_2(gxm_XMapSubwindows_w, gxm_XMapSubwindows)
+XEN_NARGIFY_2(gxm_XMapWindow_w, gxm_XMapWindow)
+XEN_NARGIFY_2(gxm_XMaskEvent_w, gxm_XMaskEvent)
+XEN_NARGIFY_1(gxm_XMaxCmapsOfScreen_w, gxm_XMaxCmapsOfScreen)
+XEN_NARGIFY_1(gxm_XMinCmapsOfScreen_w, gxm_XMinCmapsOfScreen)
+XEN_NARGIFY_6(gxm_XMoveResizeWindow_w, gxm_XMoveResizeWindow)
+XEN_NARGIFY_4(gxm_XMoveWindow_w, gxm_XMoveWindow)
+XEN_NARGIFY_1(gxm_XNextEvent_w, gxm_XNextEvent)
+XEN_NARGIFY_1(gxm_XNoOp_w, gxm_XNoOp)
+XEN_NARGIFY_4(gxm_XParseColor_w, gxm_XParseColor)
+XEN_NARGIFY_1(gxm_XParseGeometry_w, gxm_XParseGeometry)
+XEN_NARGIFY_1(gxm_XPeekEvent_w, gxm_XPeekEvent)
+XEN_NARGIFY_3(gxm_XPeekIfEvent_w, gxm_XPeekIfEvent)
+XEN_NARGIFY_1(gxm_XPending_w, gxm_XPending)
+XEN_NARGIFY_1(gxm_XPlanesOfScreen_w, gxm_XPlanesOfScreen)
+XEN_NARGIFY_1(gxm_XProtocolRevision_w, gxm_XProtocolRevision)
+XEN_NARGIFY_1(gxm_XProtocolVersion_w, gxm_XProtocolVersion)
+XEN_NARGIFY_2(gxm_XPutBackEvent_w, gxm_XPutBackEvent)
+XEN_VARGIFY(gxm_XPutImage_w, gxm_XPutImage)
+XEN_NARGIFY_1(gxm_XQLength_w, gxm_XQLength)
+XEN_NARGIFY_4(gxm_XQueryBestCursor_w, gxm_XQueryBestCursor)
+XEN_NARGIFY_5(gxm_XQueryBestSize_w, gxm_XQueryBestSize)
+XEN_NARGIFY_4(gxm_XQueryBestStipple_w, gxm_XQueryBestStipple)
+XEN_NARGIFY_4(gxm_XQueryBestTile_w, gxm_XQueryBestTile)
+XEN_NARGIFY_3(gxm_XQueryColor_w, gxm_XQueryColor)
+XEN_ARGIFY_4(gxm_XQueryColors_w, gxm_XQueryColors)
+XEN_NARGIFY_2(gxm_XQueryExtension_w, gxm_XQueryExtension)
+XEN_NARGIFY_1(gxm_XQueryKeymap_w, gxm_XQueryKeymap)
+XEN_NARGIFY_2(gxm_XQueryPointer_w, gxm_XQueryPointer)
+XEN_NARGIFY_3(gxm_XQueryTextExtents_w, gxm_XQueryTextExtents)
+XEN_NARGIFY_2(gxm_XQueryTree_w, gxm_XQueryTree)
+XEN_NARGIFY_2(gxm_XRaiseWindow_w, gxm_XRaiseWindow)
+XEN_NARGIFY_3(gxm_XReadBitmapFile_w, gxm_XReadBitmapFile)
+XEN_NARGIFY_1(gxm_XReadBitmapFileData_w, gxm_XReadBitmapFileData)
+XEN_NARGIFY_6(gxm_XRebindKeysym_w, gxm_XRebindKeysym)
+XEN_NARGIFY_4(gxm_XRecolorCursor_w, gxm_XRecolorCursor)
+XEN_NARGIFY_1(gxm_XRefreshKeyboardMapping_w, gxm_XRefreshKeyboardMapping)
+XEN_NARGIFY_5(gxm_XReparentWindow_w, gxm_XReparentWindow)
+XEN_NARGIFY_1(gxm_XResetScreenSaver_w, gxm_XResetScreenSaver)
+XEN_NARGIFY_4(gxm_XResizeWindow_w, gxm_XResizeWindow)
+XEN_NARGIFY_3(gxm_XRestackWindows_w, gxm_XRestackWindows)
+XEN_NARGIFY_2(gxm_XRotateBuffers_w, gxm_XRotateBuffers)
+XEN_NARGIFY_5(gxm_XRotateWindowProperties_w, gxm_XRotateWindowProperties)
+XEN_NARGIFY_1(gxm_XScreenCount_w, gxm_XScreenCount)
+XEN_NARGIFY_3(gxm_XSelectInput_w, gxm_XSelectInput)
+XEN_NARGIFY_5(gxm_XSendEvent_w, gxm_XSendEvent)
+XEN_NARGIFY_2(gxm_XSetAccessControl_w, gxm_XSetAccessControl)
+XEN_NARGIFY_3(gxm_XSetArcMode_w, gxm_XSetArcMode)
+XEN_NARGIFY_3(gxm_XSetBackground_w, gxm_XSetBackground)
+XEN_NARGIFY_3(gxm_XSetClipMask_w, gxm_XSetClipMask)
+XEN_NARGIFY_4(gxm_XSetClipOrigin_w, gxm_XSetClipOrigin)
+XEN_NARGIFY_7(gxm_XSetClipRectangles_w, gxm_XSetClipRectangles)
+XEN_NARGIFY_2(gxm_XSetCloseDownMode_w, gxm_XSetCloseDownMode)
+XEN_NARGIFY_4(gxm_XSetCommand_w, gxm_XSetCommand)
+XEN_ARGIFY_5(gxm_XSetDashes_w, gxm_XSetDashes)
+XEN_NARGIFY_3(gxm_XSetFillRule_w, gxm_XSetFillRule)
+XEN_NARGIFY_3(gxm_XSetFillStyle_w, gxm_XSetFillStyle)
+XEN_NARGIFY_3(gxm_XSetFont_w, gxm_XSetFont)
+XEN_NARGIFY_3(gxm_XSetFontPath_w, gxm_XSetFontPath)
+XEN_NARGIFY_3(gxm_XSetForeground_w, gxm_XSetForeground)
+XEN_NARGIFY_3(gxm_XSetFunction_w, gxm_XSetFunction)
+XEN_NARGIFY_3(gxm_XSetGraphicsExposures_w, gxm_XSetGraphicsExposures)
+XEN_NARGIFY_3(gxm_XSetIconName_w, gxm_XSetIconName)
+XEN_NARGIFY_4(gxm_XSetInputFocus_w, gxm_XSetInputFocus)
+XEN_NARGIFY_6(gxm_XSetLineAttributes_w, gxm_XSetLineAttributes)
+XEN_NARGIFY_2(gxm_XSetModifierMapping_w, gxm_XSetModifierMapping)
+XEN_NARGIFY_3(gxm_XSetPlaneMask_w, gxm_XSetPlaneMask)
+XEN_ARGIFY_3(gxm_XSetPointerMapping_w, gxm_XSetPointerMapping)
+XEN_NARGIFY_5(gxm_XSetScreenSaver_w, gxm_XSetScreenSaver)
+XEN_NARGIFY_4(gxm_XSetSelectionOwner_w, gxm_XSetSelectionOwner)
+XEN_NARGIFY_6(gxm_XSetState_w, gxm_XSetState)
+XEN_NARGIFY_3(gxm_XSetStipple_w, gxm_XSetStipple)
+XEN_NARGIFY_3(gxm_XSetSubwindowMode_w, gxm_XSetSubwindowMode)
+XEN_NARGIFY_4(gxm_XSetTSOrigin_w, gxm_XSetTSOrigin)
+XEN_NARGIFY_3(gxm_XSetTile_w, gxm_XSetTile)
+XEN_NARGIFY_3(gxm_XSetWindowBackground_w, gxm_XSetWindowBackground)
+XEN_NARGIFY_3(gxm_XSetWindowBackgroundPixmap_w, gxm_XSetWindowBackgroundPixmap)
+XEN_NARGIFY_3(gxm_XSetWindowBorder_w, gxm_XSetWindowBorder)
+XEN_NARGIFY_3(gxm_XSetWindowBorderPixmap_w, gxm_XSetWindowBorderPixmap)
+XEN_NARGIFY_3(gxm_XSetWindowBorderWidth_w, gxm_XSetWindowBorderWidth)
+XEN_NARGIFY_3(gxm_XSetWindowColormap_w, gxm_XSetWindowColormap)
+XEN_NARGIFY_4(gxm_XStoreBuffer_w, gxm_XStoreBuffer)
+XEN_NARGIFY_3(gxm_XStoreBytes_w, gxm_XStoreBytes)
+XEN_NARGIFY_3(gxm_XStoreColor_w, gxm_XStoreColor)
+XEN_NARGIFY_4(gxm_XStoreColors_w, gxm_XStoreColors)
+XEN_NARGIFY_3(gxm_XStoreName_w, gxm_XStoreName)
+XEN_NARGIFY_5(gxm_XStoreNamedColor_w, gxm_XStoreNamedColor)
+XEN_NARGIFY_2(gxm_XSync_w, gxm_XSync)
+XEN_NARGIFY_3(gxm_XTextExtents_w, gxm_XTextExtents)
+XEN_NARGIFY_3(gxm_XTextWidth_w, gxm_XTextWidth)
+XEN_NARGIFY_5(gxm_XTranslateCoordinates_w, gxm_XTranslateCoordinates)
+XEN_NARGIFY_2(gxm_XUndefineCursor_w, gxm_XUndefineCursor)
+XEN_NARGIFY_4(gxm_XUngrabButton_w, gxm_XUngrabButton)
+XEN_NARGIFY_4(gxm_XUngrabKey_w, gxm_XUngrabKey)
+XEN_NARGIFY_2(gxm_XUngrabKeyboard_w, gxm_XUngrabKeyboard)
+XEN_NARGIFY_2(gxm_XUngrabPointer_w, gxm_XUngrabPointer)
+XEN_NARGIFY_1(gxm_XUngrabServer_w, gxm_XUngrabServer)
+XEN_NARGIFY_2(gxm_XUninstallColormap_w, gxm_XUninstallColormap)
+XEN_NARGIFY_2(gxm_XUnloadFont_w, gxm_XUnloadFont)
+XEN_NARGIFY_2(gxm_XUnmapSubwindows_w, gxm_XUnmapSubwindows)
+XEN_NARGIFY_2(gxm_XUnmapWindow_w, gxm_XUnmapWindow)
+XEN_NARGIFY_1(gxm_XVendorRelease_w, gxm_XVendorRelease)
+XEN_NARGIFY_9(gxm_XWarpPointer_w, gxm_XWarpPointer)
+XEN_NARGIFY_1(gxm_XWidthMMOfScreen_w, gxm_XWidthMMOfScreen)
+XEN_NARGIFY_1(gxm_XWidthOfScreen_w, gxm_XWidthOfScreen)
+XEN_NARGIFY_3(gxm_XWindowEvent_w, gxm_XWindowEvent)
+XEN_NARGIFY_7(gxm_XWriteBitmapFile_w, gxm_XWriteBitmapFile)
+XEN_NARGIFY_0(gxm_XSupportsLocale_w, gxm_XSupportsLocale)
+XEN_NARGIFY_1(gxm_XSetLocaleModifiers_w, gxm_XSetLocaleModifiers)
+XEN_NARGIFY_2(gxm_XCreateFontSet_w, gxm_XCreateFontSet)
+XEN_NARGIFY_2(gxm_XFreeFontSet_w, gxm_XFreeFontSet)
+XEN_NARGIFY_1(gxm_XFontsOfFontSet_w, gxm_XFontsOfFontSet)
+XEN_NARGIFY_1(gxm_XBaseFontNameListOfFontSet_w, gxm_XBaseFontNameListOfFontSet)
+XEN_NARGIFY_1(gxm_XLocaleOfFontSet_w, gxm_XLocaleOfFontSet)
+XEN_NARGIFY_1(gxm_XContextDependentDrawing_w, gxm_XContextDependentDrawing)
+XEN_NARGIFY_1(gxm_XDirectionalDependentDrawing_w, gxm_XDirectionalDependentDrawing)
+XEN_NARGIFY_1(gxm_XContextualDrawing_w, gxm_XContextualDrawing)
+XEN_NARGIFY_2(gxm_XFilterEvent_w, gxm_XFilterEvent)
+XEN_NARGIFY_0(gxm_XAllocIconSize_w, gxm_XAllocIconSize)
+XEN_NARGIFY_0(gxm_XAllocStandardColormap_w, gxm_XAllocStandardColormap)
+XEN_NARGIFY_0(gxm_XAllocWMHints_w, gxm_XAllocWMHints)
+XEN_NARGIFY_1(gxm_XClipBox_w, gxm_XClipBox)
+XEN_NARGIFY_0(gxm_XCreateRegion_w, gxm_XCreateRegion)
+XEN_NARGIFY_0(gxm_XDefaultString_w, gxm_XDefaultString)
+XEN_NARGIFY_3(gxm_XDeleteContext_w, gxm_XDeleteContext)
+XEN_NARGIFY_1(gxm_XDestroyRegion_w, gxm_XDestroyRegion)
+XEN_NARGIFY_1(gxm_XEmptyRegion_w, gxm_XEmptyRegion)
+XEN_NARGIFY_2(gxm_XEqualRegion_w, gxm_XEqualRegion)
+XEN_NARGIFY_3(gxm_XFindContext_w, gxm_XFindContext)
+XEN_NARGIFY_2(gxm_XGetIconSizes_w, gxm_XGetIconSizes)
+XEN_NARGIFY_3(gxm_XGetRGBColormaps_w, gxm_XGetRGBColormaps)
+XEN_NARGIFY_3(gxm_XGetVisualInfo_w, gxm_XGetVisualInfo)
+XEN_NARGIFY_2(gxm_XGetWMHints_w, gxm_XGetWMHints)
+XEN_NARGIFY_3(gxm_XIntersectRegion_w, gxm_XIntersectRegion)
+XEN_NARGIFY_1(gxm_XConvertCase_w, gxm_XConvertCase)
+XEN_NARGIFY_1(gxm_XLookupString_w, gxm_XLookupString)
+XEN_NARGIFY_4(gxm_XMatchVisualInfo_w, gxm_XMatchVisualInfo)
+XEN_NARGIFY_3(gxm_XOffsetRegion_w, gxm_XOffsetRegion)
+XEN_NARGIFY_3(gxm_XPointInRegion_w, gxm_XPointInRegion)
+XEN_NARGIFY_3(gxm_XPolygonRegion_w, gxm_XPolygonRegion)
+XEN_NARGIFY_5(gxm_XRectInRegion_w, gxm_XRectInRegion)
+XEN_NARGIFY_4(gxm_XSaveContext_w, gxm_XSaveContext)
+XEN_NARGIFY_0(gxm_XUniqueContext_w, gxm_XUniqueContext)
+XEN_NARGIFY_5(gxm_XSetRGBColormaps_w, gxm_XSetRGBColormaps)
+XEN_NARGIFY_3(gxm_XSetWMHints_w, gxm_XSetWMHints)
+XEN_NARGIFY_3(gxm_XSetRegion_w, gxm_XSetRegion)
+XEN_NARGIFY_8(gxm_XSetWMProperties_w, gxm_XSetWMProperties)
+XEN_NARGIFY_3(gxm_XShrinkRegion_w, gxm_XShrinkRegion)
+XEN_NARGIFY_3(gxm_XSubtractRegion_w, gxm_XSubtractRegion)
+XEN_NARGIFY_3(gxm_XUnionRectWithRegion_w, gxm_XUnionRectWithRegion)
+XEN_NARGIFY_3(gxm_XUnionRegion_w, gxm_XUnionRegion)
+XEN_NARGIFY_3(gxm_XXorRegion_w, gxm_XXorRegion)
 
-  XEN_NARGIFY_1(gxm_DefaultScreen_w, gxm_DefaultScreen)
-  XEN_NARGIFY_1(gxm_DefaultRootWindow_w, gxm_DefaultRootWindow)
-  XEN_NARGIFY_1(gxm_QLength_w, gxm_QLength)
-  XEN_NARGIFY_1(gxm_ScreenCount_w, gxm_ScreenCount)
-  XEN_NARGIFY_1(gxm_ServerVendor_w, gxm_ServerVendor)
-  XEN_NARGIFY_1(gxm_ProtocolVersion_w, gxm_ProtocolVersion)
-  XEN_NARGIFY_1(gxm_ProtocolRevision_w, gxm_ProtocolRevision)
-  XEN_NARGIFY_1(gxm_VendorRelease_w, gxm_VendorRelease)
-  XEN_NARGIFY_1(gxm_DisplayString_w, gxm_DisplayString)
-  XEN_NARGIFY_1(gxm_BitmapUnit_w, gxm_BitmapUnit)
-  XEN_NARGIFY_1(gxm_BitmapBitOrder_w, gxm_BitmapBitOrder)
-  XEN_NARGIFY_1(gxm_BitmapPad_w, gxm_BitmapPad)
-  XEN_NARGIFY_1(gxm_ImageByteOrder_w, gxm_ImageByteOrder)
-  XEN_NARGIFY_1(gxm_NextRequest_w, gxm_NextRequest)
-  XEN_NARGIFY_1(gxm_LastKnownRequestProcessed_w, gxm_LastKnownRequestProcessed)
-  XEN_NARGIFY_1(gxm_DefaultScreenOfDisplay_w, gxm_DefaultScreenOfDisplay)
-  XEN_NARGIFY_1(gxm_DisplayOfScreen_w, gxm_DisplayOfScreen)
-  XEN_NARGIFY_1(gxm_RootWindowOfScreen_w, gxm_RootWindowOfScreen)
-  XEN_NARGIFY_1(gxm_BlackPixelOfScreen_w, gxm_BlackPixelOfScreen)
-  XEN_NARGIFY_1(gxm_WhitePixelOfScreen_w, gxm_WhitePixelOfScreen)
-  XEN_NARGIFY_1(gxm_DefaultColormapOfScreen_w, gxm_DefaultColormapOfScreen)
-  XEN_NARGIFY_1(gxm_DefaultDepthOfScreen_w, gxm_DefaultDepthOfScreen)
-  XEN_NARGIFY_1(gxm_DefaultGCOfScreen_w, gxm_DefaultGCOfScreen)
-  XEN_NARGIFY_1(gxm_DefaultVisualOfScreen_w, gxm_DefaultVisualOfScreen)
-  XEN_NARGIFY_1(gxm_WidthOfScreen_w, gxm_WidthOfScreen)
-  XEN_NARGIFY_1(gxm_HeightOfScreen_w, gxm_HeightOfScreen)
-  XEN_NARGIFY_1(gxm_WidthMMOfScreen_w, gxm_WidthMMOfScreen)
-  XEN_NARGIFY_1(gxm_HeightMMOfScreen_w, gxm_HeightMMOfScreen)
-  XEN_NARGIFY_1(gxm_PlanesOfScreen_w, gxm_PlanesOfScreen)
-  XEN_NARGIFY_1(gxm_CellsOfScreen_w, gxm_CellsOfScreen)
-  XEN_NARGIFY_1(gxm_MinCmapsOfScreen_w, gxm_MinCmapsOfScreen)
-  XEN_NARGIFY_1(gxm_MaxCmapsOfScreen_w, gxm_MaxCmapsOfScreen)
-  XEN_NARGIFY_1(gxm_DoesSaveUnders_w, gxm_DoesSaveUnders)
-  XEN_NARGIFY_1(gxm_DoesBackingStore_w, gxm_DoesBackingStore)
-  XEN_NARGIFY_1(gxm_EventMaskOfScreen_w, gxm_EventMaskOfScreen)
-  XEN_NARGIFY_2(gxm_RootWindow_w, gxm_RootWindow)
-  XEN_NARGIFY_2(gxm_DefaultVisual_w, gxm_DefaultVisual)
-  XEN_NARGIFY_2(gxm_DefaultGC_w, gxm_DefaultGC)
-  XEN_NARGIFY_2(gxm_BlackPixel_w, gxm_BlackPixel)
-  XEN_NARGIFY_2(gxm_WhitePixel_w, gxm_WhitePixel)
-  XEN_NARGIFY_2(gxm_DisplayWidth_w, gxm_DisplayWidth)
-  XEN_NARGIFY_2(gxm_DisplayHeight_w, gxm_DisplayHeight)
-  XEN_NARGIFY_2(gxm_DisplayWidthMM_w, gxm_DisplayWidthMM)
-  XEN_NARGIFY_2(gxm_DisplayHeightMM_w, gxm_DisplayHeightMM)
-  XEN_NARGIFY_2(gxm_DisplayPlanes_w, gxm_DisplayPlanes)
-  XEN_NARGIFY_2(gxm_DisplayCells_w, gxm_DisplayCells)
-  XEN_NARGIFY_2(gxm_DefaultColormap_w, gxm_DefaultColormap)
-  XEN_NARGIFY_2(gxm_ScreenOfDisplay_w, gxm_ScreenOfDisplay)
-  XEN_NARGIFY_2(gxm_DefaultDepth_w, gxm_DefaultDepth)
+XEN_NARGIFY_1(gxm_DefaultScreen_w, gxm_DefaultScreen)
+XEN_NARGIFY_1(gxm_DefaultRootWindow_w, gxm_DefaultRootWindow)
+XEN_NARGIFY_1(gxm_QLength_w, gxm_QLength)
+XEN_NARGIFY_1(gxm_ScreenCount_w, gxm_ScreenCount)
+XEN_NARGIFY_1(gxm_ServerVendor_w, gxm_ServerVendor)
+XEN_NARGIFY_1(gxm_ProtocolVersion_w, gxm_ProtocolVersion)
+XEN_NARGIFY_1(gxm_ProtocolRevision_w, gxm_ProtocolRevision)
+XEN_NARGIFY_1(gxm_VendorRelease_w, gxm_VendorRelease)
+XEN_NARGIFY_1(gxm_DisplayString_w, gxm_DisplayString)
+XEN_NARGIFY_1(gxm_BitmapUnit_w, gxm_BitmapUnit)
+XEN_NARGIFY_1(gxm_BitmapBitOrder_w, gxm_BitmapBitOrder)
+XEN_NARGIFY_1(gxm_BitmapPad_w, gxm_BitmapPad)
+XEN_NARGIFY_1(gxm_ImageByteOrder_w, gxm_ImageByteOrder)
+XEN_NARGIFY_1(gxm_NextRequest_w, gxm_NextRequest)
+XEN_NARGIFY_1(gxm_LastKnownRequestProcessed_w, gxm_LastKnownRequestProcessed)
+XEN_NARGIFY_1(gxm_DefaultScreenOfDisplay_w, gxm_DefaultScreenOfDisplay)
+XEN_NARGIFY_1(gxm_DisplayOfScreen_w, gxm_DisplayOfScreen)
+XEN_NARGIFY_1(gxm_RootWindowOfScreen_w, gxm_RootWindowOfScreen)
+XEN_NARGIFY_1(gxm_BlackPixelOfScreen_w, gxm_BlackPixelOfScreen)
+XEN_NARGIFY_1(gxm_WhitePixelOfScreen_w, gxm_WhitePixelOfScreen)
+XEN_NARGIFY_1(gxm_DefaultColormapOfScreen_w, gxm_DefaultColormapOfScreen)
+XEN_NARGIFY_1(gxm_DefaultDepthOfScreen_w, gxm_DefaultDepthOfScreen)
+XEN_NARGIFY_1(gxm_DefaultGCOfScreen_w, gxm_DefaultGCOfScreen)
+XEN_NARGIFY_1(gxm_DefaultVisualOfScreen_w, gxm_DefaultVisualOfScreen)
+XEN_NARGIFY_1(gxm_WidthOfScreen_w, gxm_WidthOfScreen)
+XEN_NARGIFY_1(gxm_HeightOfScreen_w, gxm_HeightOfScreen)
+XEN_NARGIFY_1(gxm_WidthMMOfScreen_w, gxm_WidthMMOfScreen)
+XEN_NARGIFY_1(gxm_HeightMMOfScreen_w, gxm_HeightMMOfScreen)
+XEN_NARGIFY_1(gxm_PlanesOfScreen_w, gxm_PlanesOfScreen)
+XEN_NARGIFY_1(gxm_CellsOfScreen_w, gxm_CellsOfScreen)
+XEN_NARGIFY_1(gxm_MinCmapsOfScreen_w, gxm_MinCmapsOfScreen)
+XEN_NARGIFY_1(gxm_MaxCmapsOfScreen_w, gxm_MaxCmapsOfScreen)
+XEN_NARGIFY_1(gxm_DoesSaveUnders_w, gxm_DoesSaveUnders)
+XEN_NARGIFY_1(gxm_DoesBackingStore_w, gxm_DoesBackingStore)
+XEN_NARGIFY_1(gxm_EventMaskOfScreen_w, gxm_EventMaskOfScreen)
+XEN_NARGIFY_2(gxm_RootWindow_w, gxm_RootWindow)
+XEN_NARGIFY_2(gxm_DefaultVisual_w, gxm_DefaultVisual)
+XEN_NARGIFY_2(gxm_DefaultGC_w, gxm_DefaultGC)
+XEN_NARGIFY_2(gxm_BlackPixel_w, gxm_BlackPixel)
+XEN_NARGIFY_2(gxm_WhitePixel_w, gxm_WhitePixel)
+XEN_NARGIFY_2(gxm_DisplayWidth_w, gxm_DisplayWidth)
+XEN_NARGIFY_2(gxm_DisplayHeight_w, gxm_DisplayHeight)
+XEN_NARGIFY_2(gxm_DisplayWidthMM_w, gxm_DisplayWidthMM)
+XEN_NARGIFY_2(gxm_DisplayHeightMM_w, gxm_DisplayHeightMM)
+XEN_NARGIFY_2(gxm_DisplayPlanes_w, gxm_DisplayPlanes)
+XEN_NARGIFY_2(gxm_DisplayCells_w, gxm_DisplayCells)
+XEN_NARGIFY_2(gxm_DefaultColormap_w, gxm_DefaultColormap)
+XEN_NARGIFY_2(gxm_ScreenOfDisplay_w, gxm_ScreenOfDisplay)
+XEN_NARGIFY_2(gxm_DefaultDepth_w, gxm_DefaultDepth)
 
-  XEN_NARGIFY_1(gxm_IsKeypadKey_w, gxm_IsKeypadKey)
-  XEN_NARGIFY_1(gxm_IsPrivateKeypadKey_w, gxm_IsPrivateKeypadKey)
-  XEN_NARGIFY_1(gxm_IsCursorKey_w, gxm_IsCursorKey)
-  XEN_NARGIFY_1(gxm_IsPFKey_w, gxm_IsPFKey)
-  XEN_NARGIFY_1(gxm_IsFunctionKey_w, gxm_IsFunctionKey)
-  XEN_NARGIFY_1(gxm_IsMiscFunctionKey_w, gxm_IsMiscFunctionKey)
-  XEN_NARGIFY_1(gxm_IsModifierKey_w, gxm_IsModifierKey)
+XEN_NARGIFY_1(gxm_IsKeypadKey_w, gxm_IsKeypadKey)
+XEN_NARGIFY_1(gxm_IsPrivateKeypadKey_w, gxm_IsPrivateKeypadKey)
+XEN_NARGIFY_1(gxm_IsCursorKey_w, gxm_IsCursorKey)
+XEN_NARGIFY_1(gxm_IsPFKey_w, gxm_IsPFKey)
+XEN_NARGIFY_1(gxm_IsFunctionKey_w, gxm_IsFunctionKey)
+XEN_NARGIFY_1(gxm_IsMiscFunctionKey_w, gxm_IsMiscFunctionKey)
+XEN_NARGIFY_1(gxm_IsModifierKey_w, gxm_IsModifierKey)
 
-  XEN_NARGIFY_1(XEN_XButtonEvent_p_w, XEN_XButtonEvent_p)
-  XEN_NARGIFY_1(XEN_XCirculateEvent_p_w, XEN_XCirculateEvent_p)
-  XEN_NARGIFY_1(XEN_XCirculateRequestEvent_p_w, XEN_XCirculateRequestEvent_p)
-  XEN_NARGIFY_1(XEN_XClientMessageEvent_p_w, XEN_XClientMessageEvent_p)
-  XEN_NARGIFY_1(XEN_XColormapEvent_p_w, XEN_XColormapEvent_p)
-  XEN_NARGIFY_1(XEN_XConfigureEvent_p_w, XEN_XConfigureEvent_p)
-  XEN_NARGIFY_1(XEN_XConfigureRequestEvent_p_w, XEN_XConfigureRequestEvent_p)
-  XEN_NARGIFY_1(XEN_XCreateWindowEvent_p_w, XEN_XCreateWindowEvent_p)
-  XEN_NARGIFY_1(XEN_XCrossingEvent_p_w, XEN_XCrossingEvent_p)
-  XEN_NARGIFY_1(XEN_XDestroyWindowEvent_p_w, XEN_XDestroyWindowEvent_p)
-  XEN_NARGIFY_1(XEN_XErrorEvent_p_w, XEN_XErrorEvent_p)
-  XEN_NARGIFY_1(XEN_XExposeEvent_p_w, XEN_XExposeEvent_p)
-  XEN_NARGIFY_1(XEN_XFocusChangeEvent_p_w, XEN_XFocusChangeEvent_p)
-  XEN_NARGIFY_1(XEN_XGraphicsExposeEvent_p_w, XEN_XGraphicsExposeEvent_p)
-  XEN_NARGIFY_1(XEN_XGravityEvent_p_w, XEN_XGravityEvent_p)
-  XEN_NARGIFY_1(XEN_XKeyEvent_p_w, XEN_XKeyEvent_p)
-  XEN_NARGIFY_1(XEN_XKeymapEvent_p_w, XEN_XKeymapEvent_p)
-  XEN_NARGIFY_1(XEN_XMapEvent_p_w, XEN_XMapEvent_p)
-  XEN_NARGIFY_1(XEN_XMapRequestEvent_p_w, XEN_XMapRequestEvent_p)
-  XEN_NARGIFY_1(XEN_XMappingEvent_p_w, XEN_XMappingEvent_p)
-  XEN_NARGIFY_1(XEN_XMotionEvent_p_w, XEN_XMotionEvent_p)
-  XEN_NARGIFY_1(XEN_XNoExposeEvent_p_w, XEN_XNoExposeEvent_p)
-  XEN_NARGIFY_1(XEN_XPropertyEvent_p_w, XEN_XPropertyEvent_p)
-  XEN_NARGIFY_1(XEN_XReparentEvent_p_w, XEN_XReparentEvent_p)
-  XEN_NARGIFY_1(XEN_XResizeRequestEvent_p_w, XEN_XResizeRequestEvent_p)
-  XEN_NARGIFY_1(XEN_XSelectionClearEvent_p_w, XEN_XSelectionClearEvent_p)
-  XEN_NARGIFY_1(XEN_XSelectionEvent_p_w, XEN_XSelectionEvent_p)
-  XEN_NARGIFY_1(XEN_XSelectionRequestEvent_p_w, XEN_XSelectionRequestEvent_p)
-  XEN_NARGIFY_1(XEN_XSetWindowAttributes_p_w, XEN_XSetWindowAttributes_p)
-  XEN_NARGIFY_1(XEN_XUnmapEvent_p_w, XEN_XUnmapEvent_p)
-  XEN_NARGIFY_1(XEN_XVisibilityEvent_p_w, XEN_XVisibilityEvent_p)
-  XEN_NARGIFY_1(XEN_XIconSize_p_w, XEN_XIconSize_p)
+XEN_NARGIFY_1(XEN_XButtonEvent_p_w, XEN_XButtonEvent_p)
+XEN_NARGIFY_1(XEN_XCirculateEvent_p_w, XEN_XCirculateEvent_p)
+XEN_NARGIFY_1(XEN_XCirculateRequestEvent_p_w, XEN_XCirculateRequestEvent_p)
+XEN_NARGIFY_1(XEN_XClientMessageEvent_p_w, XEN_XClientMessageEvent_p)
+XEN_NARGIFY_1(XEN_XColormapEvent_p_w, XEN_XColormapEvent_p)
+XEN_NARGIFY_1(XEN_XConfigureEvent_p_w, XEN_XConfigureEvent_p)
+XEN_NARGIFY_1(XEN_XConfigureRequestEvent_p_w, XEN_XConfigureRequestEvent_p)
+XEN_NARGIFY_1(XEN_XCreateWindowEvent_p_w, XEN_XCreateWindowEvent_p)
+XEN_NARGIFY_1(XEN_XCrossingEvent_p_w, XEN_XCrossingEvent_p)
+XEN_NARGIFY_1(XEN_XDestroyWindowEvent_p_w, XEN_XDestroyWindowEvent_p)
+XEN_NARGIFY_1(XEN_XErrorEvent_p_w, XEN_XErrorEvent_p)
+XEN_NARGIFY_1(XEN_XExposeEvent_p_w, XEN_XExposeEvent_p)
+XEN_NARGIFY_1(XEN_XFocusChangeEvent_p_w, XEN_XFocusChangeEvent_p)
+XEN_NARGIFY_1(XEN_XGraphicsExposeEvent_p_w, XEN_XGraphicsExposeEvent_p)
+XEN_NARGIFY_1(XEN_XGravityEvent_p_w, XEN_XGravityEvent_p)
+XEN_NARGIFY_1(XEN_XKeyEvent_p_w, XEN_XKeyEvent_p)
+XEN_NARGIFY_1(XEN_XKeymapEvent_p_w, XEN_XKeymapEvent_p)
+XEN_NARGIFY_1(XEN_XMapEvent_p_w, XEN_XMapEvent_p)
+XEN_NARGIFY_1(XEN_XMapRequestEvent_p_w, XEN_XMapRequestEvent_p)
+XEN_NARGIFY_1(XEN_XMappingEvent_p_w, XEN_XMappingEvent_p)
+XEN_NARGIFY_1(XEN_XMotionEvent_p_w, XEN_XMotionEvent_p)
+XEN_NARGIFY_1(XEN_XNoExposeEvent_p_w, XEN_XNoExposeEvent_p)
+XEN_NARGIFY_1(XEN_XPropertyEvent_p_w, XEN_XPropertyEvent_p)
+XEN_NARGIFY_1(XEN_XReparentEvent_p_w, XEN_XReparentEvent_p)
+XEN_NARGIFY_1(XEN_XResizeRequestEvent_p_w, XEN_XResizeRequestEvent_p)
+XEN_NARGIFY_1(XEN_XSelectionClearEvent_p_w, XEN_XSelectionClearEvent_p)
+XEN_NARGIFY_1(XEN_XSelectionEvent_p_w, XEN_XSelectionEvent_p)
+XEN_NARGIFY_1(XEN_XSelectionRequestEvent_p_w, XEN_XSelectionRequestEvent_p)
+XEN_NARGIFY_1(XEN_XSetWindowAttributes_p_w, XEN_XSetWindowAttributes_p)
+XEN_NARGIFY_1(XEN_XUnmapEvent_p_w, XEN_XUnmapEvent_p)
+XEN_NARGIFY_1(XEN_XVisibilityEvent_p_w, XEN_XVisibilityEvent_p)
+XEN_NARGIFY_1(XEN_XIconSize_p_w, XEN_XIconSize_p)
 
-#if USE_MOTIF
-  XEN_ARGIFY_4(gxm_XmCreateMessageBox_w, gxm_XmCreateMessageBox)
-  XEN_ARGIFY_4(gxm_XmCreateMessageDialog_w, gxm_XmCreateMessageDialog)
-  XEN_ARGIFY_4(gxm_XmCreateErrorDialog_w, gxm_XmCreateErrorDialog)
-  XEN_ARGIFY_4(gxm_XmCreateInformationDialog_w, gxm_XmCreateInformationDialog)
-  XEN_ARGIFY_4(gxm_XmCreateQuestionDialog_w, gxm_XmCreateQuestionDialog)
-  XEN_ARGIFY_4(gxm_XmCreateWarningDialog_w, gxm_XmCreateWarningDialog)
-  XEN_ARGIFY_4(gxm_XmCreateWorkingDialog_w, gxm_XmCreateWorkingDialog)
-  XEN_ARGIFY_4(gxm_XmCreateTemplateDialog_w, gxm_XmCreateTemplateDialog)
-  XEN_NARGIFY_2(gxm_XmMessageBoxGetChild_w, gxm_XmMessageBoxGetChild)
-  XEN_ARGIFY_4(gxm_XmCreateArrowButtonGadget_w, gxm_XmCreateArrowButtonGadget)
-  XEN_ARGIFY_4(gxm_XmCreateArrowButton_w, gxm_XmCreateArrowButton)
-  XEN_ARGIFY_4(gxm_XmCreateNotebook_w, gxm_XmCreateNotebook)
-  XEN_NARGIFY_2(gxm_XmNotebookGetPageInfo_w, gxm_XmNotebookGetPageInfo)
-  XEN_NARGIFY_5(gxm_XmTransferSetParameters_w, gxm_XmTransferSetParameters)
-  XEN_NARGIFY_2(gxm_XmTransferDone_w, gxm_XmTransferDone)
-  XEN_NARGIFY_5(gxm_XmTransferValue_w, gxm_XmTransferValue)
-  XEN_NARGIFY_1(gxm_XmTransferStartRequest_w, gxm_XmTransferStartRequest)
-  XEN_NARGIFY_2(gxm_XmTransferSendRequest_w, gxm_XmTransferSendRequest)
-  XEN_ARGIFY_4(gxm_XmCreateComboBox_w, gxm_XmCreateComboBox)
-  XEN_ARGIFY_4(gxm_XmCreateDropDownComboBox_w, gxm_XmCreateDropDownComboBox)
-  XEN_ARGIFY_4(gxm_XmCreateDropDownList_w, gxm_XmCreateDropDownList)
-  XEN_NARGIFY_4(gxm_XmComboBoxAddItem_w, gxm_XmComboBoxAddItem)
-  XEN_NARGIFY_2(gxm_XmComboBoxDeletePos_w, gxm_XmComboBoxDeletePos)
-  XEN_NARGIFY_2(gxm_XmComboBoxSelectItem_w, gxm_XmComboBoxSelectItem)
-  XEN_NARGIFY_2(gxm_XmComboBoxSetItem_w, gxm_XmComboBoxSetItem)
-  XEN_NARGIFY_1(gxm_XmComboBoxUpdate_w, gxm_XmComboBoxUpdate)
-  XEN_ARGIFY_4(gxm_XmCreateContainer_w, gxm_XmCreateContainer)
-  XEN_NARGIFY_2(gxm_XmContainerGetItemChildren_w, gxm_XmContainerGetItemChildren)
-  XEN_NARGIFY_1(gxm_XmContainerRelayout_w, gxm_XmContainerRelayout)
-  XEN_NARGIFY_3(gxm_XmContainerReorder_w, gxm_XmContainerReorder)
-  XEN_NARGIFY_2(gxm_XmContainerCut_w, gxm_XmContainerCut)
-  XEN_NARGIFY_2(gxm_XmContainerCopy_w, gxm_XmContainerCopy)
-  XEN_NARGIFY_1(gxm_XmContainerPaste_w, gxm_XmContainerPaste)
-  XEN_NARGIFY_2(gxm_XmContainerCopyLink_w, gxm_XmContainerCopyLink)
-  XEN_NARGIFY_1(gxm_XmContainerPasteLink_w, gxm_XmContainerPasteLink)
-  XEN_ARGIFY_4(gxm_XmCreateSpinBox_w, gxm_XmCreateSpinBox)
-  XEN_NARGIFY_1(gxm_XmSpinBoxValidatePosition_w, gxm_XmSpinBoxValidatePosition)
-  XEN_ARGIFY_4(gxm_XmCreateSimpleSpinBox_w, gxm_XmCreateSimpleSpinBox)
-  XEN_NARGIFY_3(gxm_XmSimpleSpinBoxAddItem_w, gxm_XmSimpleSpinBoxAddItem)
-  XEN_NARGIFY_2(gxm_XmSimpleSpinBoxDeletePos_w, gxm_XmSimpleSpinBoxDeletePos)
-  XEN_NARGIFY_2(gxm_XmSimpleSpinBoxSetItem_w, gxm_XmSimpleSpinBoxSetItem)
-  XEN_NARGIFY_1(gxm_XmDropSiteRegistered_w, gxm_XmDropSiteRegistered)
-  XEN_NARGIFY_2(gxm_XmTextFieldCopyLink_w, gxm_XmTextFieldCopyLink)
-  XEN_NARGIFY_1(gxm_XmTextFieldPasteLink_w, gxm_XmTextFieldPasteLink)
-  XEN_NARGIFY_1(gxm_XmTextGetCenterline_w, gxm_XmTextGetCenterline)
-  XEN_NARGIFY_3(gxm_XmToggleButtonGadgetSetValue_w, gxm_XmToggleButtonGadgetSetValue)
-  XEN_ARGIFY_4(gxm_XmCreateIconGadget_w, gxm_XmCreateIconGadget)
-  XEN_ARGIFY_4(gxm_XmCreateIconHeader_w, gxm_XmCreateIconHeader)
-  XEN_NARGIFY_3(gxm_XmObjectAtPoint_w, gxm_XmObjectAtPoint)
-  XEN_NARGIFY_4(gxm_XmConvertStringToUnits_w, gxm_XmConvertStringToUnits)
-  XEN_ARGIFY_4(gxm_XmCreateGrabShell_w, gxm_XmCreateGrabShell)
-  XEN_NARGIFY_3(gxm_XmToggleButtonSetValue_w, gxm_XmToggleButtonSetValue)
-  XEN_NARGIFY_1(gxm_XmTextPasteLink_w, gxm_XmTextPasteLink)
-  XEN_NARGIFY_2(gxm_XmTextCopyLink_w, gxm_XmTextCopyLink)
-  XEN_NARGIFY_7(gxm_XmScaleSetTicks_w, gxm_XmScaleSetTicks)
-  XEN_NARGIFY_3(gxm_XmInternAtom_w, gxm_XmInternAtom)
-  XEN_NARGIFY_2(gxm_XmGetAtomName_w, gxm_XmGetAtomName)
-  XEN_ARGIFY_4(gxm_XmCreatePanedWindow_w, gxm_XmCreatePanedWindow)
-  XEN_ARGIFY_4(gxm_XmCreateBulletinBoard_w, gxm_XmCreateBulletinBoard)
-  XEN_ARGIFY_4(gxm_XmCreateBulletinBoardDialog_w, gxm_XmCreateBulletinBoardDialog)
-  XEN_ARGIFY_4(gxm_XmCreateCascadeButtonGadget_w, gxm_XmCreateCascadeButtonGadget)
-  XEN_NARGIFY_2(gxm_XmCascadeButtonGadgetHighlight_w, gxm_XmCascadeButtonGadgetHighlight)
-  XEN_ARGIFY_4(gxm_XmAddProtocols_w, gxm_XmAddProtocols)
-  XEN_ARGIFY_4(gxm_XmRemoveProtocols_w, gxm_XmRemoveProtocols)
-  XEN_NARGIFY_5(gxm_XmAddProtocolCallback_w, gxm_XmAddProtocolCallback)
-  XEN_NARGIFY_5(gxm_XmRemoveProtocolCallback_w, gxm_XmRemoveProtocolCallback)
-  XEN_NARGIFY_3(gxm_XmActivateProtocol_w, gxm_XmActivateProtocol)
-  XEN_NARGIFY_3(gxm_XmDeactivateProtocol_w, gxm_XmDeactivateProtocol)
-  XEN_NARGIFY_7(gxm_XmSetProtocolHooks_w, gxm_XmSetProtocolHooks)
-  XEN_ARGIFY_4(gxm_XmCreateCascadeButton_w, gxm_XmCreateCascadeButton)
-  XEN_NARGIFY_2(gxm_XmCascadeButtonHighlight_w, gxm_XmCascadeButtonHighlight)
-  XEN_ARGIFY_4(gxm_XmCreatePushButtonGadget_w, gxm_XmCreatePushButtonGadget)
-  XEN_ARGIFY_4(gxm_XmCreatePushButton_w, gxm_XmCreatePushButton)
-  XEN_ARGIFY_4(gxm_XmCreateCommand_w, gxm_XmCreateCommand)
-  XEN_NARGIFY_2(gxm_XmCommandGetChild_w, gxm_XmCommandGetChild)
-  XEN_NARGIFY_2(gxm_XmCommandSetValue_w, gxm_XmCommandSetValue)
-  XEN_NARGIFY_2(gxm_XmCommandAppendValue_w, gxm_XmCommandAppendValue)
-  XEN_NARGIFY_2(gxm_XmCommandError_w, gxm_XmCommandError)
-  XEN_ARGIFY_4(gxm_XmCreateCommandDialog_w, gxm_XmCreateCommandDialog)
-  XEN_NARGIFY_2(gxm_XmMenuPosition_w, gxm_XmMenuPosition)
-  XEN_ARGIFY_4(gxm_XmCreateRowColumn_w, gxm_XmCreateRowColumn)
-  XEN_ARGIFY_4(gxm_XmCreateWorkArea_w, gxm_XmCreateWorkArea)
-  XEN_ARGIFY_4(gxm_XmCreateRadioBox_w, gxm_XmCreateRadioBox)
-  XEN_ARGIFY_4(gxm_XmCreateOptionMenu_w, gxm_XmCreateOptionMenu)
-  XEN_NARGIFY_1(gxm_XmOptionLabelGadget_w, gxm_XmOptionLabelGadget)
-  XEN_NARGIFY_1(gxm_XmOptionButtonGadget_w, gxm_XmOptionButtonGadget)
-  XEN_ARGIFY_4(gxm_XmCreateMenuBar_w, gxm_XmCreateMenuBar)
-  XEN_ARGIFY_4(gxm_XmCreatePopupMenu_w, gxm_XmCreatePopupMenu)
-  XEN_ARGIFY_4(gxm_XmCreatePulldownMenu_w, gxm_XmCreatePulldownMenu)
-  XEN_NARGIFY_1(gxm_XmGetPostedFromWidget_w, gxm_XmGetPostedFromWidget)
-  XEN_NARGIFY_1(gxm_XmGetTearOffControl_w, gxm_XmGetTearOffControl)
-  XEN_NARGIFY_2(gxm_XmScaleSetValue_w, gxm_XmScaleSetValue)
-  XEN_NARGIFY_1(gxm_XmScaleGetValue_w, gxm_XmScaleGetValue)
-  XEN_ARGIFY_4(gxm_XmCreateScale_w, gxm_XmCreateScale)
-  XEN_NARGIFY_5(gxm_XmClipboardBeginCopy_w, gxm_XmClipboardBeginCopy)
-  XEN_NARGIFY_6(gxm_XmClipboardStartCopy_w, gxm_XmClipboardStartCopy)
-  XEN_NARGIFY_7(gxm_XmClipboardCopy_w, gxm_XmClipboardCopy)
-  XEN_NARGIFY_3(gxm_XmClipboardEndCopy_w, gxm_XmClipboardEndCopy)
-  XEN_NARGIFY_3(gxm_XmClipboardCancelCopy_w, gxm_XmClipboardCancelCopy)
-  XEN_NARGIFY_3(gxm_XmClipboardWithdrawFormat_w, gxm_XmClipboardWithdrawFormat)
-  XEN_NARGIFY_6(gxm_XmClipboardCopyByName_w, gxm_XmClipboardCopyByName)
-  XEN_NARGIFY_2(gxm_XmClipboardUndoCopy_w, gxm_XmClipboardUndoCopy)
-  XEN_NARGIFY_2(gxm_XmClipboardLock_w, gxm_XmClipboardLock)
-  XEN_NARGIFY_3(gxm_XmClipboardUnlock_w, gxm_XmClipboardUnlock)
-  XEN_NARGIFY_3(gxm_XmClipboardStartRetrieve_w, gxm_XmClipboardStartRetrieve)
-  XEN_NARGIFY_2(gxm_XmClipboardEndRetrieve_w, gxm_XmClipboardEndRetrieve)
-  XEN_NARGIFY_4(gxm_XmClipboardRetrieve_w, gxm_XmClipboardRetrieve)
-  XEN_NARGIFY_2(gxm_XmClipboardInquireCount_w, gxm_XmClipboardInquireCount)
-  XEN_NARGIFY_4(gxm_XmClipboardInquireFormat_w, gxm_XmClipboardInquireFormat)
-  XEN_NARGIFY_3(gxm_XmClipboardInquireLength_w, gxm_XmClipboardInquireLength)
-  XEN_NARGIFY_3(gxm_XmClipboardInquirePendingItems_w, gxm_XmClipboardInquirePendingItems)
-  XEN_NARGIFY_3(gxm_XmClipboardRegisterFormat_w, gxm_XmClipboardRegisterFormat)
-  XEN_NARGIFY_1(gxm_XmGetXmScreen_w, gxm_XmGetXmScreen)
-  XEN_ARGIFY_4(gxm_XmCreateScrollBar_w, gxm_XmCreateScrollBar)
-  XEN_NARGIFY_1(gxm_XmScrollBarGetValues_w, gxm_XmScrollBarGetValues)
-  XEN_NARGIFY_6(gxm_XmScrollBarSetValues_w, gxm_XmScrollBarSetValues)
-  XEN_ARGIFY_4(gxm_XmCreateDialogShell_w, gxm_XmCreateDialogShell)
-  XEN_ARGIFY_4(gxm_XmCreateScrolledWindow_w, gxm_XmCreateScrolledWindow)
-  XEN_NARGIFY_4(gxm_XmScrollVisible_w, gxm_XmScrollVisible)
-  XEN_NARGIFY_2(gxm_XmGetDragContext_w, gxm_XmGetDragContext)
-  XEN_NARGIFY_1(gxm_XmGetXmDisplay_w, gxm_XmGetXmDisplay)
-  XEN_NARGIFY_2(gxm_XmSelectionBoxGetChild_w, gxm_XmSelectionBoxGetChild)
-  XEN_ARGIFY_4(gxm_XmCreateSelectionBox_w, gxm_XmCreateSelectionBox)
-  XEN_ARGIFY_4(gxm_XmCreateSelectionDialog_w, gxm_XmCreateSelectionDialog)
-  XEN_ARGIFY_4(gxm_XmCreatePromptDialog_w, gxm_XmCreatePromptDialog)
-  XEN_ARGIFY_4(gxm_XmDragStart_w, gxm_XmDragStart)
-  XEN_NARGIFY_1(gxm_XmDragCancel_w, gxm_XmDragCancel)
-  XEN_NARGIFY_5(gxm_XmTargetsAreCompatible_w, gxm_XmTargetsAreCompatible)
-  XEN_ARGIFY_4(gxm_XmCreateSeparatorGadget_w, gxm_XmCreateSeparatorGadget)
-  XEN_ARGIFY_4(gxm_XmCreateDragIcon_w, gxm_XmCreateDragIcon)
-  XEN_ARGIFY_4(gxm_XmCreateSeparator_w, gxm_XmCreateSeparator)
-  XEN_ARGIFY_4(gxm_XmCreateDrawingArea_w, gxm_XmCreateDrawingArea)
-  XEN_ARGIFY_4(gxm_XmCreateDrawnButton_w, gxm_XmCreateDrawnButton)
-  XEN_ARGIFY_3(gxm_XmDropSiteRegister_w, gxm_XmDropSiteRegister)
-  XEN_NARGIFY_1(gxm_XmDropSiteUnregister_w, gxm_XmDropSiteUnregister)
-  XEN_NARGIFY_1(gxm_XmDropSiteStartUpdate_w, gxm_XmDropSiteStartUpdate)
-  XEN_ARGIFY_3(gxm_XmDropSiteUpdate_w, gxm_XmDropSiteUpdate)
-  XEN_NARGIFY_1(gxm_XmDropSiteEndUpdate_w, gxm_XmDropSiteEndUpdate)
-  XEN_ARGIFY_3(gxm_XmDropSiteRetrieve_w, gxm_XmDropSiteRetrieve)
-  XEN_NARGIFY_1(gxm_XmDropSiteQueryStackingOrder_w, gxm_XmDropSiteQueryStackingOrder)
-  XEN_NARGIFY_3(gxm_XmDropSiteConfigureStackingOrder_w, gxm_XmDropSiteConfigureStackingOrder)
-  XEN_ARGIFY_3(gxm_XmDropTransferStart_w, gxm_XmDropTransferStart)
-  XEN_NARGIFY_2(gxm_XmDropTransferAdd_w, gxm_XmDropTransferAdd)
-  XEN_NARGIFY_1(gxm_XmTextFieldGetString_w, gxm_XmTextFieldGetString)
-  XEN_NARGIFY_3(gxm_XmTextFieldGetSubstring_w, gxm_XmTextFieldGetSubstring)
-  XEN_NARGIFY_1(gxm_XmTextFieldGetLastPosition_w, gxm_XmTextFieldGetLastPosition)
-  XEN_NARGIFY_2(gxm_XmTextFieldSetString_w, gxm_XmTextFieldSetString)
-  XEN_NARGIFY_4(gxm_XmTextFieldReplace_w, gxm_XmTextFieldReplace)
-  XEN_NARGIFY_3(gxm_XmTextFieldInsert_w, gxm_XmTextFieldInsert)
-  XEN_NARGIFY_2(gxm_XmTextFieldSetAddMode_w, gxm_XmTextFieldSetAddMode)
-  XEN_NARGIFY_1(gxm_XmTextFieldGetAddMode_w, gxm_XmTextFieldGetAddMode)
-  XEN_NARGIFY_1(gxm_XmTextFieldGetEditable_w, gxm_XmTextFieldGetEditable)
-  XEN_NARGIFY_2(gxm_XmTextFieldSetEditable_w, gxm_XmTextFieldSetEditable)
-  XEN_NARGIFY_1(gxm_XmTextFieldGetMaxLength_w, gxm_XmTextFieldGetMaxLength)
-  XEN_NARGIFY_2(gxm_XmTextFieldSetMaxLength_w, gxm_XmTextFieldSetMaxLength)
-  XEN_NARGIFY_1(gxm_XmTextFieldGetCursorPosition_w, gxm_XmTextFieldGetCursorPosition)
-  XEN_NARGIFY_1(gxm_XmTextFieldGetInsertionPosition_w, gxm_XmTextFieldGetInsertionPosition)
-  XEN_NARGIFY_2(gxm_XmTextFieldSetCursorPosition_w, gxm_XmTextFieldSetCursorPosition)
-  XEN_NARGIFY_2(gxm_XmTextFieldSetInsertionPosition_w, gxm_XmTextFieldSetInsertionPosition)
-  XEN_NARGIFY_1(gxm_XmTextFieldGetSelectionPosition_w, gxm_XmTextFieldGetSelectionPosition)
-  XEN_NARGIFY_1(gxm_XmTextFieldGetSelection_w, gxm_XmTextFieldGetSelection)
-  XEN_NARGIFY_1(gxm_XmTextFieldRemove_w, gxm_XmTextFieldRemove)
-  XEN_NARGIFY_2(gxm_XmTextFieldCopy_w, gxm_XmTextFieldCopy)
-  XEN_NARGIFY_2(gxm_XmTextFieldCut_w, gxm_XmTextFieldCut)
-  XEN_NARGIFY_1(gxm_XmTextFieldPaste_w, gxm_XmTextFieldPaste)
-  XEN_NARGIFY_2(gxm_XmTextFieldClearSelection_w, gxm_XmTextFieldClearSelection)
-  XEN_NARGIFY_4(gxm_XmTextFieldSetSelection_w, gxm_XmTextFieldSetSelection)
-  XEN_NARGIFY_3(gxm_XmTextFieldXYToPos_w, gxm_XmTextFieldXYToPos)
-  XEN_NARGIFY_2(gxm_XmTextFieldPosToXY_w, gxm_XmTextFieldPosToXY)
-  XEN_NARGIFY_2(gxm_XmTextFieldShowPosition_w, gxm_XmTextFieldShowPosition)
-  XEN_NARGIFY_4(gxm_XmTextFieldSetHighlight_w, gxm_XmTextFieldSetHighlight)
-  XEN_NARGIFY_1(gxm_XmTextFieldGetBaseline_w, gxm_XmTextFieldGetBaseline)
-  XEN_ARGIFY_4(gxm_XmCreateTextField_w, gxm_XmCreateTextField)
-  XEN_NARGIFY_2(gxm_XmFileSelectionBoxGetChild_w, gxm_XmFileSelectionBoxGetChild)
-  XEN_NARGIFY_2(gxm_XmFileSelectionDoSearch_w, gxm_XmFileSelectionDoSearch)
-  XEN_ARGIFY_4(gxm_XmCreateFileSelectionBox_w, gxm_XmCreateFileSelectionBox)
-  XEN_ARGIFY_4(gxm_XmCreateFileSelectionDialog_w, gxm_XmCreateFileSelectionDialog)
-  XEN_NARGIFY_4(gxm_XmTextSetHighlight_w, gxm_XmTextSetHighlight)
-  XEN_ARGIFY_4(gxm_XmCreateScrolledText_w, gxm_XmCreateScrolledText)
-  XEN_ARGIFY_4(gxm_XmCreateText_w, gxm_XmCreateText)
-  XEN_NARGIFY_3(gxm_XmTextGetSubstring_w, gxm_XmTextGetSubstring)
-  XEN_NARGIFY_1(gxm_XmTextGetString_w, gxm_XmTextGetString)
-  XEN_NARGIFY_1(gxm_XmTextGetLastPosition_w, gxm_XmTextGetLastPosition)
-  XEN_NARGIFY_2(gxm_XmTextSetString_w, gxm_XmTextSetString)
-  XEN_NARGIFY_4(gxm_XmTextReplace_w, gxm_XmTextReplace)
-  XEN_NARGIFY_3(gxm_XmTextInsert_w, gxm_XmTextInsert)
-  XEN_NARGIFY_2(gxm_XmTextSetAddMode_w, gxm_XmTextSetAddMode)
-  XEN_NARGIFY_1(gxm_XmTextGetAddMode_w, gxm_XmTextGetAddMode)
-  XEN_NARGIFY_1(gxm_XmTextGetEditable_w, gxm_XmTextGetEditable)
-  XEN_NARGIFY_2(gxm_XmTextSetEditable_w, gxm_XmTextSetEditable)
-  XEN_NARGIFY_1(gxm_XmTextGetMaxLength_w, gxm_XmTextGetMaxLength)
-  XEN_NARGIFY_2(gxm_XmTextSetMaxLength_w, gxm_XmTextSetMaxLength)
-  XEN_NARGIFY_1(gxm_XmTextGetTopCharacter_w, gxm_XmTextGetTopCharacter)
-  XEN_NARGIFY_2(gxm_XmTextSetTopCharacter_w, gxm_XmTextSetTopCharacter)
-  XEN_NARGIFY_1(gxm_XmTextGetCursorPosition_w, gxm_XmTextGetCursorPosition)
-  XEN_NARGIFY_1(gxm_XmTextGetInsertionPosition_w, gxm_XmTextGetInsertionPosition)
-  XEN_NARGIFY_2(gxm_XmTextSetInsertionPosition_w, gxm_XmTextSetInsertionPosition)
-  XEN_NARGIFY_2(gxm_XmTextSetCursorPosition_w, gxm_XmTextSetCursorPosition)
-  XEN_NARGIFY_1(gxm_XmTextRemove_w, gxm_XmTextRemove)
-  XEN_NARGIFY_2(gxm_XmTextCopy_w, gxm_XmTextCopy)
-  XEN_NARGIFY_2(gxm_XmTextCut_w, gxm_XmTextCut)
-  XEN_NARGIFY_1(gxm_XmTextPaste_w, gxm_XmTextPaste)
-  XEN_NARGIFY_1(gxm_XmTextGetSelection_w, gxm_XmTextGetSelection)
-  XEN_NARGIFY_4(gxm_XmTextSetSelection_w, gxm_XmTextSetSelection)
-  XEN_NARGIFY_2(gxm_XmTextClearSelection_w, gxm_XmTextClearSelection)
-  XEN_NARGIFY_1(gxm_XmTextGetSelectionPosition_w, gxm_XmTextGetSelectionPosition)
-  XEN_NARGIFY_3(gxm_XmTextXYToPos_w, gxm_XmTextXYToPos)
-  XEN_NARGIFY_2(gxm_XmTextPosToXY_w, gxm_XmTextPosToXY)
-  XEN_NARGIFY_1(gxm_XmTextGetSource_w, gxm_XmTextGetSource)
-  XEN_NARGIFY_4(gxm_XmTextSetSource_w, gxm_XmTextSetSource)
-  XEN_NARGIFY_2(gxm_XmTextShowPosition_w, gxm_XmTextShowPosition)
-  XEN_NARGIFY_2(gxm_XmTextScroll_w, gxm_XmTextScroll)
-  XEN_NARGIFY_1(gxm_XmTextGetBaseline_w, gxm_XmTextGetBaseline)
-  XEN_NARGIFY_1(gxm_XmTextDisableRedisplay_w, gxm_XmTextDisableRedisplay)
-  XEN_NARGIFY_1(gxm_XmTextEnableRedisplay_w, gxm_XmTextEnableRedisplay)
-  XEN_NARGIFY_4(gxm_XmTextFindString_w, gxm_XmTextFindString)
-  XEN_ARGIFY_4(gxm_XmCreateForm_w, gxm_XmCreateForm)
-  XEN_ARGIFY_4(gxm_XmCreateFormDialog_w, gxm_XmCreateFormDialog)
-  XEN_ARGIFY_4(gxm_XmCreateFrame_w, gxm_XmCreateFrame)
-  XEN_NARGIFY_1(gxm_XmToggleButtonGadgetGetState_w, gxm_XmToggleButtonGadgetGetState)
-  XEN_NARGIFY_3(gxm_XmToggleButtonGadgetSetState_w, gxm_XmToggleButtonGadgetSetState)
-  XEN_ARGIFY_4(gxm_XmCreateToggleButtonGadget_w, gxm_XmCreateToggleButtonGadget)
-  XEN_NARGIFY_1(gxm_XmToggleButtonGetState_w, gxm_XmToggleButtonGetState)
-  XEN_NARGIFY_3(gxm_XmToggleButtonSetState_w, gxm_XmToggleButtonSetState)
-  XEN_ARGIFY_4(gxm_XmCreateToggleButton_w, gxm_XmCreateToggleButton)
-  XEN_ARGIFY_4(gxm_XmCreateLabelGadget_w, gxm_XmCreateLabelGadget)
-  XEN_ARGIFY_4(gxm_XmCreateLabel_w, gxm_XmCreateLabel)
-  XEN_NARGIFY_1(gxm_XmIsMotifWMRunning_w, gxm_XmIsMotifWMRunning)
-  XEN_NARGIFY_3(gxm_XmListAddItem_w, gxm_XmListAddItem)
-  XEN_NARGIFY_4(gxm_XmListAddItems_w, gxm_XmListAddItems)
-  XEN_NARGIFY_4(gxm_XmListAddItemsUnselected_w, gxm_XmListAddItemsUnselected)
-  XEN_NARGIFY_3(gxm_XmListAddItemUnselected_w, gxm_XmListAddItemUnselected)
-  XEN_NARGIFY_2(gxm_XmListDeleteItem_w, gxm_XmListDeleteItem)
-  XEN_ARGIFY_3(gxm_XmListDeleteItems_w, gxm_XmListDeleteItems)
-  XEN_ARGIFY_3(gxm_XmListDeletePositions_w, gxm_XmListDeletePositions)
-  XEN_NARGIFY_2(gxm_XmListDeletePos_w, gxm_XmListDeletePos)
-  XEN_NARGIFY_3(gxm_XmListDeleteItemsPos_w, gxm_XmListDeleteItemsPos)
-  XEN_NARGIFY_1(gxm_XmListDeleteAllItems_w, gxm_XmListDeleteAllItems)
-  XEN_NARGIFY_4(gxm_XmListReplaceItems_w, gxm_XmListReplaceItems)
-  XEN_NARGIFY_4(gxm_XmListReplaceItemsPos_w, gxm_XmListReplaceItemsPos)
-  XEN_NARGIFY_4(gxm_XmListReplaceItemsUnselected_w, gxm_XmListReplaceItemsUnselected)
-  XEN_NARGIFY_4(gxm_XmListReplaceItemsPosUnselected_w, gxm_XmListReplaceItemsPosUnselected)
-  XEN_NARGIFY_4(gxm_XmListReplacePositions_w, gxm_XmListReplacePositions)
-  XEN_NARGIFY_3(gxm_XmListSelectItem_w, gxm_XmListSelectItem)
-  XEN_NARGIFY_3(gxm_XmListSelectPos_w, gxm_XmListSelectPos)
-  XEN_NARGIFY_2(gxm_XmListDeselectItem_w, gxm_XmListDeselectItem)
-  XEN_NARGIFY_2(gxm_XmListDeselectPos_w, gxm_XmListDeselectPos)
-  XEN_NARGIFY_1(gxm_XmListDeselectAllItems_w, gxm_XmListDeselectAllItems)
-  XEN_NARGIFY_2(gxm_XmListSetPos_w, gxm_XmListSetPos)
-  XEN_NARGIFY_2(gxm_XmListSetBottomPos_w, gxm_XmListSetBottomPos)
-  XEN_NARGIFY_2(gxm_XmListSetItem_w, gxm_XmListSetItem)
-  XEN_NARGIFY_2(gxm_XmListSetBottomItem_w, gxm_XmListSetBottomItem)
-  XEN_NARGIFY_2(gxm_XmListSetAddMode_w, gxm_XmListSetAddMode)
-  XEN_NARGIFY_2(gxm_XmListItemExists_w, gxm_XmListItemExists)
-  XEN_NARGIFY_2(gxm_XmListItemPos_w, gxm_XmListItemPos)
-  XEN_NARGIFY_1(gxm_XmListGetKbdItemPos_w, gxm_XmListGetKbdItemPos)
-  XEN_NARGIFY_2(gxm_XmListSetKbdItemPos_w, gxm_XmListSetKbdItemPos)
-  XEN_NARGIFY_2(gxm_XmListYToPos_w, gxm_XmListYToPos)
-  XEN_NARGIFY_2(gxm_XmListPosToBounds_w, gxm_XmListPosToBounds)
-  XEN_NARGIFY_2(gxm_XmListGetMatchPos_w, gxm_XmListGetMatchPos)
-  XEN_NARGIFY_2(gxm_XmListSetHorizPos_w, gxm_XmListSetHorizPos)
-  XEN_NARGIFY_1(gxm_XmListUpdateSelectedList_w, gxm_XmListUpdateSelectedList)
-  XEN_NARGIFY_2(gxm_XmListPosSelected_w, gxm_XmListPosSelected)
-  XEN_ARGIFY_4(gxm_XmCreateList_w, gxm_XmCreateList)
-  XEN_ARGIFY_4(gxm_XmCreateScrolledList_w, gxm_XmCreateScrolledList)
-  XEN_NARGIFY_3(gxm_XmTranslateKey_w, gxm_XmTranslateKey)
-  XEN_ARGIFY_4(gxm_XmCreateMainWindow_w, gxm_XmCreateMainWindow)
-  XEN_NARGIFY_2(gxm_XmInstallImage_w, gxm_XmInstallImage)
-  XEN_NARGIFY_1(gxm_XmUninstallImage_w, gxm_XmUninstallImage)
-  XEN_NARGIFY_4(gxm_XmGetPixmap_w, gxm_XmGetPixmap)
-  XEN_NARGIFY_5(gxm_XmGetPixmapByDepth_w, gxm_XmGetPixmapByDepth)
-  XEN_NARGIFY_2(gxm_XmDestroyPixmap_w, gxm_XmDestroyPixmap)
-  XEN_NARGIFY_1(gxm_XmUpdateDisplay_w, gxm_XmUpdateDisplay)
-  XEN_NARGIFY_1(gxm_XmWidgetGetBaselines_w, gxm_XmWidgetGetBaselines)
-  XEN_NARGIFY_2(gxm_XmRegisterSegmentEncoding_w, gxm_XmRegisterSegmentEncoding)
-  XEN_NARGIFY_1(gxm_XmMapSegmentEncoding_w, gxm_XmMapSegmentEncoding)
-  XEN_NARGIFY_1(gxm_XmCvtCTToXmString_w, gxm_XmCvtCTToXmString)
-  XEN_NARGIFY_1(gxm_XmCvtXmStringToCT_w, gxm_XmCvtXmStringToCT)
-  XEN_NARGIFY_5(gxm_XmConvertUnits_w, gxm_XmConvertUnits)
-  XEN_ARGIFY_4(gxm_XmCreateSimpleMenuBar_w, gxm_XmCreateSimpleMenuBar)
-  XEN_ARGIFY_4(gxm_XmCreateSimplePopupMenu_w, gxm_XmCreateSimplePopupMenu)
-  XEN_ARGIFY_4(gxm_XmCreateSimplePulldownMenu_w, gxm_XmCreateSimplePulldownMenu)
-  XEN_ARGIFY_4(gxm_XmCreateSimpleOptionMenu_w, gxm_XmCreateSimpleOptionMenu)
-  XEN_ARGIFY_4(gxm_XmCreateSimpleRadioBox_w, gxm_XmCreateSimpleRadioBox)
-  XEN_ARGIFY_4(gxm_XmCreateSimpleCheckBox_w, gxm_XmCreateSimpleCheckBox)
-  XEN_NARGIFY_3(gxm_XmVaCreateSimpleMenuBar_w, gxm_XmVaCreateSimpleMenuBar)
-  XEN_NARGIFY_4(gxm_XmVaCreateSimplePopupMenu_w, gxm_XmVaCreateSimplePopupMenu)
-  XEN_NARGIFY_5(gxm_XmVaCreateSimplePulldownMenu_w, gxm_XmVaCreateSimplePulldownMenu)
-  XEN_NARGIFY_7(gxm_XmVaCreateSimpleOptionMenu_w, gxm_XmVaCreateSimpleOptionMenu)
-  XEN_NARGIFY_5(gxm_XmVaCreateSimpleRadioBox_w, gxm_XmVaCreateSimpleRadioBox)
-  XEN_NARGIFY_4(gxm_XmVaCreateSimpleCheckBox_w, gxm_XmVaCreateSimpleCheckBox)
-  XEN_NARGIFY_3(gxm_XmTrackingEvent_w, gxm_XmTrackingEvent)
-  XEN_NARGIFY_1(gxm_XmSetColorCalculation_w, gxm_XmSetColorCalculation)
-  XEN_NARGIFY_0(gxm_XmGetColorCalculation_w, gxm_XmGetColorCalculation)
-  XEN_NARGIFY_3(gxm_XmGetColors_w, gxm_XmGetColors)
-  XEN_NARGIFY_2(gxm_XmChangeColor_w, gxm_XmChangeColor)
-  XEN_NARGIFY_2(gxm_XmStringCreate_w, gxm_XmStringCreate)
-  XEN_NARGIFY_1(gxm_XmStringCreateLocalized_w, gxm_XmStringCreateLocalized)
-  XEN_NARGIFY_1(gxm_XmStringDirectionCreate_w, gxm_XmStringDirectionCreate)
-  XEN_NARGIFY_0(gxm_XmStringSeparatorCreate_w, gxm_XmStringSeparatorCreate)
-  XEN_NARGIFY_1(gxm_XmStringInitContext_w, gxm_XmStringInitContext)
-  XEN_NARGIFY_1(gxm_XmStringFreeContext_w, gxm_XmStringFreeContext)
-  XEN_NARGIFY_2(gxm_XmStringConcatAndFree_w, gxm_XmStringConcatAndFree)
-  XEN_NARGIFY_1(gxm_XmStringIsVoid_w, gxm_XmStringIsVoid)
-  XEN_NARGIFY_1(gxm_XmStringPeekNextTriple_w, gxm_XmStringPeekNextTriple)
-  XEN_NARGIFY_1(gxm_XmStringGetNextTriple_w, gxm_XmStringGetNextTriple)
-  XEN_NARGIFY_3(gxm_XmStringComponentCreate_w, gxm_XmStringComponentCreate)
-  XEN_NARGIFY_7(gxm_XmStringUnparse_w, gxm_XmStringUnparse)
-  XEN_NARGIFY_7(gxm_XmStringParseText_w, gxm_XmStringParseText)
-  XEN_NARGIFY_2(gxm_XmStringToXmStringTable_w, gxm_XmStringToXmStringTable)
-  XEN_NARGIFY_3(gxm_XmStringTableToXmString_w, gxm_XmStringTableToXmString)
-  XEN_NARGIFY_8(gxm_XmStringTableUnparse_w, gxm_XmStringTableUnparse)
-  XEN_NARGIFY_7(gxm_XmStringTableParseStringArray_w, gxm_XmStringTableParseStringArray)
-  XEN_NARGIFY_1(gxm_XmDirectionToStringDirection_w, gxm_XmDirectionToStringDirection)
-  XEN_NARGIFY_1(gxm_XmStringDirectionToDirection_w, gxm_XmStringDirectionToDirection)
-  XEN_NARGIFY_4(gxm_XmStringGenerate_w, gxm_XmStringGenerate)
-  XEN_NARGIFY_2(gxm_XmStringPutRendition_w, gxm_XmStringPutRendition)
-  XEN_ARGIFY_2(gxm_XmParseMappingCreate_w, gxm_XmParseMappingCreate)
-  XEN_ARGIFY_3(gxm_XmParseMappingSetValues_w, gxm_XmParseMappingSetValues)
-  XEN_ARGIFY_3(gxm_XmParseMappingGetValues_w, gxm_XmParseMappingGetValues)
-  XEN_NARGIFY_1(gxm_XmParseMappingFree_w, gxm_XmParseMappingFree)
-  XEN_ARGIFY_2(gxm_XmParseTableFree_w, gxm_XmParseTableFree)
-  XEN_NARGIFY_5(gxm_XmStringTableProposeTablist_w, gxm_XmStringTableProposeTablist)
-  XEN_NARGIFY_2(gxm_XmTabSetValue_w, gxm_XmTabSetValue)
-  XEN_NARGIFY_1(gxm_XmTabGetValues_w, gxm_XmTabGetValues)
-  XEN_NARGIFY_1(gxm_XmTabFree_w, gxm_XmTabFree)
-  XEN_NARGIFY_1(gxm_XmTabListFree_w, gxm_XmTabListFree)
-  XEN_NARGIFY_5(gxm_XmTabCreate_w, gxm_XmTabCreate)
-  XEN_NARGIFY_1(gxm_XmTabListTabCount_w, gxm_XmTabListTabCount)
-  XEN_ARGIFY_3(gxm_XmTabListRemoveTabs_w, gxm_XmTabListRemoveTabs)
-  XEN_ARGIFY_4(gxm_XmTabListReplacePositions_w, gxm_XmTabListReplacePositions)
-  XEN_NARGIFY_2(gxm_XmTabListGetTab_w, gxm_XmTabListGetTab)
-  XEN_NARGIFY_3(gxm_XmTabListCopy_w, gxm_XmTabListCopy)
-  XEN_NARGIFY_4(gxm_XmTabListInsertTabs_w, gxm_XmTabListInsertTabs)
-  XEN_NARGIFY_3(gxm_XmRenderTableCvtFromProp_w, gxm_XmRenderTableCvtFromProp)
-  XEN_NARGIFY_2(gxm_XmRenderTableCvtToProp_w, gxm_XmRenderTableCvtToProp)
-  XEN_ARGIFY_3(gxm_XmRenditionUpdate_w, gxm_XmRenditionUpdate)
-  XEN_ARGIFY_3(gxm_XmRenditionRetrieve_w, gxm_XmRenditionRetrieve)
-  XEN_NARGIFY_1(gxm_XmRenditionFree_w, gxm_XmRenditionFree)
-  XEN_ARGIFY_4(gxm_XmRenditionCreate_w, gxm_XmRenditionCreate)
-  XEN_ARGIFY_3(gxm_XmRenderTableGetRenditions_w, gxm_XmRenderTableGetRenditions)
-  XEN_NARGIFY_2(gxm_XmRenderTableGetRendition_w, gxm_XmRenderTableGetRendition)
-  XEN_NARGIFY_1(gxm_XmRenderTableGetTags_w, gxm_XmRenderTableGetTags)
-  XEN_NARGIFY_1(gxm_XmRenderTableFree_w, gxm_XmRenderTableFree)
-  XEN_ARGIFY_3(gxm_XmRenderTableCopy_w, gxm_XmRenderTableCopy)
-  XEN_ARGIFY_3(gxm_XmRenderTableRemoveRenditions_w, gxm_XmRenderTableRemoveRenditions)
-  XEN_NARGIFY_4(gxm_XmRenderTableAddRenditions_w, gxm_XmRenderTableAddRenditions)
-  XEN_NARGIFY_2(gxm_XmStringConcat_w, gxm_XmStringConcat)
-  XEN_NARGIFY_1(gxm_XmStringCopy_w, gxm_XmStringCopy)
-  XEN_NARGIFY_2(gxm_XmStringCompare_w, gxm_XmStringCompare)
-  XEN_NARGIFY_1(gxm_XmStringEmpty_w, gxm_XmStringEmpty)
-  XEN_NARGIFY_2(gxm_XmStringHasSubstring_w, gxm_XmStringHasSubstring)
-  XEN_NARGIFY_1(gxm_XmStringFree_w, gxm_XmStringFree)
-  XEN_NARGIFY_2(gxm_XmStringBaseline_w, gxm_XmStringBaseline)
-  XEN_NARGIFY_2(gxm_XmStringWidth_w, gxm_XmStringWidth)
-  XEN_NARGIFY_2(gxm_XmStringHeight_w, gxm_XmStringHeight)
-  XEN_NARGIFY_2(gxm_XmStringExtent_w, gxm_XmStringExtent)
-  XEN_NARGIFY_1(gxm_XmStringLineCount_w, gxm_XmStringLineCount)
-  XEN_VARGIFY(gxm_XmStringDraw_w, gxm_XmStringDraw)
-  XEN_VARGIFY(gxm_XmStringDrawImage_w, gxm_XmStringDrawImage)
-  XEN_VARGIFY(gxm_XmStringDrawUnderline_w, gxm_XmStringDrawUnderline)
+XEN_ARGIFY_4(gxm_XmCreateMessageBox_w, gxm_XmCreateMessageBox)
+XEN_ARGIFY_4(gxm_XmCreateMessageDialog_w, gxm_XmCreateMessageDialog)
+XEN_ARGIFY_4(gxm_XmCreateErrorDialog_w, gxm_XmCreateErrorDialog)
+XEN_ARGIFY_4(gxm_XmCreateInformationDialog_w, gxm_XmCreateInformationDialog)
+XEN_ARGIFY_4(gxm_XmCreateQuestionDialog_w, gxm_XmCreateQuestionDialog)
+XEN_ARGIFY_4(gxm_XmCreateWarningDialog_w, gxm_XmCreateWarningDialog)
+XEN_ARGIFY_4(gxm_XmCreateWorkingDialog_w, gxm_XmCreateWorkingDialog)
+XEN_ARGIFY_4(gxm_XmCreateTemplateDialog_w, gxm_XmCreateTemplateDialog)
+XEN_NARGIFY_2(gxm_XmMessageBoxGetChild_w, gxm_XmMessageBoxGetChild)
+XEN_ARGIFY_4(gxm_XmCreateArrowButtonGadget_w, gxm_XmCreateArrowButtonGadget)
+XEN_ARGIFY_4(gxm_XmCreateArrowButton_w, gxm_XmCreateArrowButton)
+XEN_ARGIFY_4(gxm_XmCreateNotebook_w, gxm_XmCreateNotebook)
+XEN_NARGIFY_2(gxm_XmNotebookGetPageInfo_w, gxm_XmNotebookGetPageInfo)
+XEN_NARGIFY_5(gxm_XmTransferSetParameters_w, gxm_XmTransferSetParameters)
+XEN_NARGIFY_2(gxm_XmTransferDone_w, gxm_XmTransferDone)
+XEN_NARGIFY_5(gxm_XmTransferValue_w, gxm_XmTransferValue)
+XEN_NARGIFY_1(gxm_XmTransferStartRequest_w, gxm_XmTransferStartRequest)
+XEN_NARGIFY_2(gxm_XmTransferSendRequest_w, gxm_XmTransferSendRequest)
+XEN_ARGIFY_4(gxm_XmCreateComboBox_w, gxm_XmCreateComboBox)
+XEN_ARGIFY_4(gxm_XmCreateDropDownComboBox_w, gxm_XmCreateDropDownComboBox)
+XEN_ARGIFY_4(gxm_XmCreateDropDownList_w, gxm_XmCreateDropDownList)
+XEN_NARGIFY_4(gxm_XmComboBoxAddItem_w, gxm_XmComboBoxAddItem)
+XEN_NARGIFY_2(gxm_XmComboBoxDeletePos_w, gxm_XmComboBoxDeletePos)
+XEN_NARGIFY_2(gxm_XmComboBoxSelectItem_w, gxm_XmComboBoxSelectItem)
+XEN_NARGIFY_2(gxm_XmComboBoxSetItem_w, gxm_XmComboBoxSetItem)
+XEN_NARGIFY_1(gxm_XmComboBoxUpdate_w, gxm_XmComboBoxUpdate)
+XEN_ARGIFY_4(gxm_XmCreateContainer_w, gxm_XmCreateContainer)
+XEN_NARGIFY_2(gxm_XmContainerGetItemChildren_w, gxm_XmContainerGetItemChildren)
+XEN_NARGIFY_1(gxm_XmContainerRelayout_w, gxm_XmContainerRelayout)
+XEN_NARGIFY_3(gxm_XmContainerReorder_w, gxm_XmContainerReorder)
+XEN_NARGIFY_2(gxm_XmContainerCut_w, gxm_XmContainerCut)
+XEN_NARGIFY_2(gxm_XmContainerCopy_w, gxm_XmContainerCopy)
+XEN_NARGIFY_1(gxm_XmContainerPaste_w, gxm_XmContainerPaste)
+XEN_NARGIFY_2(gxm_XmContainerCopyLink_w, gxm_XmContainerCopyLink)
+XEN_NARGIFY_1(gxm_XmContainerPasteLink_w, gxm_XmContainerPasteLink)
+XEN_ARGIFY_4(gxm_XmCreateSpinBox_w, gxm_XmCreateSpinBox)
+XEN_NARGIFY_1(gxm_XmSpinBoxValidatePosition_w, gxm_XmSpinBoxValidatePosition)
+XEN_ARGIFY_4(gxm_XmCreateSimpleSpinBox_w, gxm_XmCreateSimpleSpinBox)
+XEN_NARGIFY_3(gxm_XmSimpleSpinBoxAddItem_w, gxm_XmSimpleSpinBoxAddItem)
+XEN_NARGIFY_2(gxm_XmSimpleSpinBoxDeletePos_w, gxm_XmSimpleSpinBoxDeletePos)
+XEN_NARGIFY_2(gxm_XmSimpleSpinBoxSetItem_w, gxm_XmSimpleSpinBoxSetItem)
+XEN_NARGIFY_1(gxm_XmDropSiteRegistered_w, gxm_XmDropSiteRegistered)
+XEN_NARGIFY_2(gxm_XmTextFieldCopyLink_w, gxm_XmTextFieldCopyLink)
+XEN_NARGIFY_1(gxm_XmTextFieldPasteLink_w, gxm_XmTextFieldPasteLink)
+XEN_NARGIFY_1(gxm_XmTextGetCenterline_w, gxm_XmTextGetCenterline)
+XEN_NARGIFY_3(gxm_XmToggleButtonGadgetSetValue_w, gxm_XmToggleButtonGadgetSetValue)
+XEN_ARGIFY_4(gxm_XmCreateIconGadget_w, gxm_XmCreateIconGadget)
+XEN_ARGIFY_4(gxm_XmCreateIconHeader_w, gxm_XmCreateIconHeader)
+XEN_NARGIFY_3(gxm_XmObjectAtPoint_w, gxm_XmObjectAtPoint)
+XEN_NARGIFY_4(gxm_XmConvertStringToUnits_w, gxm_XmConvertStringToUnits)
+XEN_ARGIFY_4(gxm_XmCreateGrabShell_w, gxm_XmCreateGrabShell)
+XEN_NARGIFY_3(gxm_XmToggleButtonSetValue_w, gxm_XmToggleButtonSetValue)
+XEN_NARGIFY_1(gxm_XmTextPasteLink_w, gxm_XmTextPasteLink)
+XEN_NARGIFY_2(gxm_XmTextCopyLink_w, gxm_XmTextCopyLink)
+XEN_NARGIFY_7(gxm_XmScaleSetTicks_w, gxm_XmScaleSetTicks)
+XEN_NARGIFY_3(gxm_XmInternAtom_w, gxm_XmInternAtom)
+XEN_NARGIFY_2(gxm_XmGetAtomName_w, gxm_XmGetAtomName)
+XEN_ARGIFY_4(gxm_XmCreatePanedWindow_w, gxm_XmCreatePanedWindow)
+XEN_ARGIFY_4(gxm_XmCreateBulletinBoard_w, gxm_XmCreateBulletinBoard)
+XEN_ARGIFY_4(gxm_XmCreateBulletinBoardDialog_w, gxm_XmCreateBulletinBoardDialog)
+XEN_ARGIFY_4(gxm_XmCreateCascadeButtonGadget_w, gxm_XmCreateCascadeButtonGadget)
+XEN_NARGIFY_2(gxm_XmCascadeButtonGadgetHighlight_w, gxm_XmCascadeButtonGadgetHighlight)
+XEN_ARGIFY_4(gxm_XmAddProtocols_w, gxm_XmAddProtocols)
+XEN_ARGIFY_4(gxm_XmRemoveProtocols_w, gxm_XmRemoveProtocols)
+XEN_NARGIFY_5(gxm_XmAddProtocolCallback_w, gxm_XmAddProtocolCallback)
+XEN_NARGIFY_5(gxm_XmRemoveProtocolCallback_w, gxm_XmRemoveProtocolCallback)
+XEN_NARGIFY_3(gxm_XmActivateProtocol_w, gxm_XmActivateProtocol)
+XEN_NARGIFY_3(gxm_XmDeactivateProtocol_w, gxm_XmDeactivateProtocol)
+XEN_NARGIFY_7(gxm_XmSetProtocolHooks_w, gxm_XmSetProtocolHooks)
+XEN_ARGIFY_4(gxm_XmCreateCascadeButton_w, gxm_XmCreateCascadeButton)
+XEN_NARGIFY_2(gxm_XmCascadeButtonHighlight_w, gxm_XmCascadeButtonHighlight)
+XEN_ARGIFY_4(gxm_XmCreatePushButtonGadget_w, gxm_XmCreatePushButtonGadget)
+XEN_ARGIFY_4(gxm_XmCreatePushButton_w, gxm_XmCreatePushButton)
+XEN_ARGIFY_4(gxm_XmCreateCommand_w, gxm_XmCreateCommand)
+XEN_NARGIFY_2(gxm_XmCommandGetChild_w, gxm_XmCommandGetChild)
+XEN_NARGIFY_2(gxm_XmCommandSetValue_w, gxm_XmCommandSetValue)
+XEN_NARGIFY_2(gxm_XmCommandAppendValue_w, gxm_XmCommandAppendValue)
+XEN_NARGIFY_2(gxm_XmCommandError_w, gxm_XmCommandError)
+XEN_ARGIFY_4(gxm_XmCreateCommandDialog_w, gxm_XmCreateCommandDialog)
+XEN_NARGIFY_2(gxm_XmMenuPosition_w, gxm_XmMenuPosition)
+XEN_ARGIFY_4(gxm_XmCreateRowColumn_w, gxm_XmCreateRowColumn)
+XEN_ARGIFY_4(gxm_XmCreateWorkArea_w, gxm_XmCreateWorkArea)
+XEN_ARGIFY_4(gxm_XmCreateRadioBox_w, gxm_XmCreateRadioBox)
+XEN_ARGIFY_4(gxm_XmCreateOptionMenu_w, gxm_XmCreateOptionMenu)
+XEN_NARGIFY_1(gxm_XmOptionLabelGadget_w, gxm_XmOptionLabelGadget)
+XEN_NARGIFY_1(gxm_XmOptionButtonGadget_w, gxm_XmOptionButtonGadget)
+XEN_ARGIFY_4(gxm_XmCreateMenuBar_w, gxm_XmCreateMenuBar)
+XEN_ARGIFY_4(gxm_XmCreatePopupMenu_w, gxm_XmCreatePopupMenu)
+XEN_ARGIFY_4(gxm_XmCreatePulldownMenu_w, gxm_XmCreatePulldownMenu)
+XEN_NARGIFY_1(gxm_XmGetPostedFromWidget_w, gxm_XmGetPostedFromWidget)
+XEN_NARGIFY_1(gxm_XmGetTearOffControl_w, gxm_XmGetTearOffControl)
+XEN_NARGIFY_2(gxm_XmScaleSetValue_w, gxm_XmScaleSetValue)
+XEN_NARGIFY_1(gxm_XmScaleGetValue_w, gxm_XmScaleGetValue)
+XEN_ARGIFY_4(gxm_XmCreateScale_w, gxm_XmCreateScale)
+XEN_NARGIFY_5(gxm_XmClipboardBeginCopy_w, gxm_XmClipboardBeginCopy)
+XEN_NARGIFY_6(gxm_XmClipboardStartCopy_w, gxm_XmClipboardStartCopy)
+XEN_NARGIFY_7(gxm_XmClipboardCopy_w, gxm_XmClipboardCopy)
+XEN_NARGIFY_3(gxm_XmClipboardEndCopy_w, gxm_XmClipboardEndCopy)
+XEN_NARGIFY_3(gxm_XmClipboardCancelCopy_w, gxm_XmClipboardCancelCopy)
+XEN_NARGIFY_3(gxm_XmClipboardWithdrawFormat_w, gxm_XmClipboardWithdrawFormat)
+XEN_NARGIFY_6(gxm_XmClipboardCopyByName_w, gxm_XmClipboardCopyByName)
+XEN_NARGIFY_2(gxm_XmClipboardUndoCopy_w, gxm_XmClipboardUndoCopy)
+XEN_NARGIFY_2(gxm_XmClipboardLock_w, gxm_XmClipboardLock)
+XEN_NARGIFY_3(gxm_XmClipboardUnlock_w, gxm_XmClipboardUnlock)
+XEN_NARGIFY_3(gxm_XmClipboardStartRetrieve_w, gxm_XmClipboardStartRetrieve)
+XEN_NARGIFY_2(gxm_XmClipboardEndRetrieve_w, gxm_XmClipboardEndRetrieve)
+XEN_NARGIFY_4(gxm_XmClipboardRetrieve_w, gxm_XmClipboardRetrieve)
+XEN_NARGIFY_2(gxm_XmClipboardInquireCount_w, gxm_XmClipboardInquireCount)
+XEN_NARGIFY_4(gxm_XmClipboardInquireFormat_w, gxm_XmClipboardInquireFormat)
+XEN_NARGIFY_3(gxm_XmClipboardInquireLength_w, gxm_XmClipboardInquireLength)
+XEN_NARGIFY_3(gxm_XmClipboardInquirePendingItems_w, gxm_XmClipboardInquirePendingItems)
+XEN_NARGIFY_3(gxm_XmClipboardRegisterFormat_w, gxm_XmClipboardRegisterFormat)
+XEN_NARGIFY_1(gxm_XmGetXmScreen_w, gxm_XmGetXmScreen)
+XEN_ARGIFY_4(gxm_XmCreateScrollBar_w, gxm_XmCreateScrollBar)
+XEN_NARGIFY_1(gxm_XmScrollBarGetValues_w, gxm_XmScrollBarGetValues)
+XEN_NARGIFY_6(gxm_XmScrollBarSetValues_w, gxm_XmScrollBarSetValues)
+XEN_ARGIFY_4(gxm_XmCreateDialogShell_w, gxm_XmCreateDialogShell)
+XEN_ARGIFY_4(gxm_XmCreateScrolledWindow_w, gxm_XmCreateScrolledWindow)
+XEN_NARGIFY_4(gxm_XmScrollVisible_w, gxm_XmScrollVisible)
+XEN_NARGIFY_2(gxm_XmGetDragContext_w, gxm_XmGetDragContext)
+XEN_NARGIFY_1(gxm_XmGetXmDisplay_w, gxm_XmGetXmDisplay)
+XEN_NARGIFY_2(gxm_XmSelectionBoxGetChild_w, gxm_XmSelectionBoxGetChild)
+XEN_ARGIFY_4(gxm_XmCreateSelectionBox_w, gxm_XmCreateSelectionBox)
+XEN_ARGIFY_4(gxm_XmCreateSelectionDialog_w, gxm_XmCreateSelectionDialog)
+XEN_ARGIFY_4(gxm_XmCreatePromptDialog_w, gxm_XmCreatePromptDialog)
+XEN_ARGIFY_4(gxm_XmDragStart_w, gxm_XmDragStart)
+XEN_NARGIFY_1(gxm_XmDragCancel_w, gxm_XmDragCancel)
+XEN_NARGIFY_5(gxm_XmTargetsAreCompatible_w, gxm_XmTargetsAreCompatible)
+XEN_ARGIFY_4(gxm_XmCreateSeparatorGadget_w, gxm_XmCreateSeparatorGadget)
+XEN_ARGIFY_4(gxm_XmCreateDragIcon_w, gxm_XmCreateDragIcon)
+XEN_ARGIFY_4(gxm_XmCreateSeparator_w, gxm_XmCreateSeparator)
+XEN_ARGIFY_4(gxm_XmCreateDrawingArea_w, gxm_XmCreateDrawingArea)
+XEN_ARGIFY_4(gxm_XmCreateDrawnButton_w, gxm_XmCreateDrawnButton)
+XEN_ARGIFY_3(gxm_XmDropSiteRegister_w, gxm_XmDropSiteRegister)
+XEN_NARGIFY_1(gxm_XmDropSiteUnregister_w, gxm_XmDropSiteUnregister)
+XEN_NARGIFY_1(gxm_XmDropSiteStartUpdate_w, gxm_XmDropSiteStartUpdate)
+XEN_ARGIFY_3(gxm_XmDropSiteUpdate_w, gxm_XmDropSiteUpdate)
+XEN_NARGIFY_1(gxm_XmDropSiteEndUpdate_w, gxm_XmDropSiteEndUpdate)
+XEN_ARGIFY_3(gxm_XmDropSiteRetrieve_w, gxm_XmDropSiteRetrieve)
+XEN_NARGIFY_1(gxm_XmDropSiteQueryStackingOrder_w, gxm_XmDropSiteQueryStackingOrder)
+XEN_NARGIFY_3(gxm_XmDropSiteConfigureStackingOrder_w, gxm_XmDropSiteConfigureStackingOrder)
+XEN_ARGIFY_3(gxm_XmDropTransferStart_w, gxm_XmDropTransferStart)
+XEN_NARGIFY_2(gxm_XmDropTransferAdd_w, gxm_XmDropTransferAdd)
+XEN_NARGIFY_1(gxm_XmTextFieldGetString_w, gxm_XmTextFieldGetString)
+XEN_NARGIFY_3(gxm_XmTextFieldGetSubstring_w, gxm_XmTextFieldGetSubstring)
+XEN_NARGIFY_1(gxm_XmTextFieldGetLastPosition_w, gxm_XmTextFieldGetLastPosition)
+XEN_NARGIFY_2(gxm_XmTextFieldSetString_w, gxm_XmTextFieldSetString)
+XEN_NARGIFY_4(gxm_XmTextFieldReplace_w, gxm_XmTextFieldReplace)
+XEN_NARGIFY_3(gxm_XmTextFieldInsert_w, gxm_XmTextFieldInsert)
+XEN_NARGIFY_2(gxm_XmTextFieldSetAddMode_w, gxm_XmTextFieldSetAddMode)
+XEN_NARGIFY_1(gxm_XmTextFieldGetAddMode_w, gxm_XmTextFieldGetAddMode)
+XEN_NARGIFY_1(gxm_XmTextFieldGetEditable_w, gxm_XmTextFieldGetEditable)
+XEN_NARGIFY_2(gxm_XmTextFieldSetEditable_w, gxm_XmTextFieldSetEditable)
+XEN_NARGIFY_1(gxm_XmTextFieldGetMaxLength_w, gxm_XmTextFieldGetMaxLength)
+XEN_NARGIFY_2(gxm_XmTextFieldSetMaxLength_w, gxm_XmTextFieldSetMaxLength)
+XEN_NARGIFY_1(gxm_XmTextFieldGetCursorPosition_w, gxm_XmTextFieldGetCursorPosition)
+XEN_NARGIFY_1(gxm_XmTextFieldGetInsertionPosition_w, gxm_XmTextFieldGetInsertionPosition)
+XEN_NARGIFY_2(gxm_XmTextFieldSetCursorPosition_w, gxm_XmTextFieldSetCursorPosition)
+XEN_NARGIFY_2(gxm_XmTextFieldSetInsertionPosition_w, gxm_XmTextFieldSetInsertionPosition)
+XEN_NARGIFY_1(gxm_XmTextFieldGetSelectionPosition_w, gxm_XmTextFieldGetSelectionPosition)
+XEN_NARGIFY_1(gxm_XmTextFieldGetSelection_w, gxm_XmTextFieldGetSelection)
+XEN_NARGIFY_1(gxm_XmTextFieldRemove_w, gxm_XmTextFieldRemove)
+XEN_NARGIFY_2(gxm_XmTextFieldCopy_w, gxm_XmTextFieldCopy)
+XEN_NARGIFY_2(gxm_XmTextFieldCut_w, gxm_XmTextFieldCut)
+XEN_NARGIFY_1(gxm_XmTextFieldPaste_w, gxm_XmTextFieldPaste)
+XEN_NARGIFY_2(gxm_XmTextFieldClearSelection_w, gxm_XmTextFieldClearSelection)
+XEN_NARGIFY_4(gxm_XmTextFieldSetSelection_w, gxm_XmTextFieldSetSelection)
+XEN_NARGIFY_3(gxm_XmTextFieldXYToPos_w, gxm_XmTextFieldXYToPos)
+XEN_NARGIFY_2(gxm_XmTextFieldPosToXY_w, gxm_XmTextFieldPosToXY)
+XEN_NARGIFY_2(gxm_XmTextFieldShowPosition_w, gxm_XmTextFieldShowPosition)
+XEN_NARGIFY_4(gxm_XmTextFieldSetHighlight_w, gxm_XmTextFieldSetHighlight)
+XEN_NARGIFY_1(gxm_XmTextFieldGetBaseline_w, gxm_XmTextFieldGetBaseline)
+XEN_ARGIFY_4(gxm_XmCreateTextField_w, gxm_XmCreateTextField)
+XEN_NARGIFY_2(gxm_XmFileSelectionBoxGetChild_w, gxm_XmFileSelectionBoxGetChild)
+XEN_NARGIFY_2(gxm_XmFileSelectionDoSearch_w, gxm_XmFileSelectionDoSearch)
+XEN_ARGIFY_4(gxm_XmCreateFileSelectionBox_w, gxm_XmCreateFileSelectionBox)
+XEN_ARGIFY_4(gxm_XmCreateFileSelectionDialog_w, gxm_XmCreateFileSelectionDialog)
+XEN_NARGIFY_4(gxm_XmTextSetHighlight_w, gxm_XmTextSetHighlight)
+XEN_ARGIFY_4(gxm_XmCreateScrolledText_w, gxm_XmCreateScrolledText)
+XEN_ARGIFY_4(gxm_XmCreateText_w, gxm_XmCreateText)
+XEN_NARGIFY_3(gxm_XmTextGetSubstring_w, gxm_XmTextGetSubstring)
+XEN_NARGIFY_1(gxm_XmTextGetString_w, gxm_XmTextGetString)
+XEN_NARGIFY_1(gxm_XmTextGetLastPosition_w, gxm_XmTextGetLastPosition)
+XEN_NARGIFY_2(gxm_XmTextSetString_w, gxm_XmTextSetString)
+XEN_NARGIFY_4(gxm_XmTextReplace_w, gxm_XmTextReplace)
+XEN_NARGIFY_3(gxm_XmTextInsert_w, gxm_XmTextInsert)
+XEN_NARGIFY_2(gxm_XmTextSetAddMode_w, gxm_XmTextSetAddMode)
+XEN_NARGIFY_1(gxm_XmTextGetAddMode_w, gxm_XmTextGetAddMode)
+XEN_NARGIFY_1(gxm_XmTextGetEditable_w, gxm_XmTextGetEditable)
+XEN_NARGIFY_2(gxm_XmTextSetEditable_w, gxm_XmTextSetEditable)
+XEN_NARGIFY_1(gxm_XmTextGetMaxLength_w, gxm_XmTextGetMaxLength)
+XEN_NARGIFY_2(gxm_XmTextSetMaxLength_w, gxm_XmTextSetMaxLength)
+XEN_NARGIFY_1(gxm_XmTextGetTopCharacter_w, gxm_XmTextGetTopCharacter)
+XEN_NARGIFY_2(gxm_XmTextSetTopCharacter_w, gxm_XmTextSetTopCharacter)
+XEN_NARGIFY_1(gxm_XmTextGetCursorPosition_w, gxm_XmTextGetCursorPosition)
+XEN_NARGIFY_1(gxm_XmTextGetInsertionPosition_w, gxm_XmTextGetInsertionPosition)
+XEN_NARGIFY_2(gxm_XmTextSetInsertionPosition_w, gxm_XmTextSetInsertionPosition)
+XEN_NARGIFY_2(gxm_XmTextSetCursorPosition_w, gxm_XmTextSetCursorPosition)
+XEN_NARGIFY_1(gxm_XmTextRemove_w, gxm_XmTextRemove)
+XEN_NARGIFY_2(gxm_XmTextCopy_w, gxm_XmTextCopy)
+XEN_NARGIFY_2(gxm_XmTextCut_w, gxm_XmTextCut)
+XEN_NARGIFY_1(gxm_XmTextPaste_w, gxm_XmTextPaste)
+XEN_NARGIFY_1(gxm_XmTextGetSelection_w, gxm_XmTextGetSelection)
+XEN_NARGIFY_4(gxm_XmTextSetSelection_w, gxm_XmTextSetSelection)
+XEN_NARGIFY_2(gxm_XmTextClearSelection_w, gxm_XmTextClearSelection)
+XEN_NARGIFY_1(gxm_XmTextGetSelectionPosition_w, gxm_XmTextGetSelectionPosition)
+XEN_NARGIFY_3(gxm_XmTextXYToPos_w, gxm_XmTextXYToPos)
+XEN_NARGIFY_2(gxm_XmTextPosToXY_w, gxm_XmTextPosToXY)
+XEN_NARGIFY_1(gxm_XmTextGetSource_w, gxm_XmTextGetSource)
+XEN_NARGIFY_4(gxm_XmTextSetSource_w, gxm_XmTextSetSource)
+XEN_NARGIFY_2(gxm_XmTextShowPosition_w, gxm_XmTextShowPosition)
+XEN_NARGIFY_2(gxm_XmTextScroll_w, gxm_XmTextScroll)
+XEN_NARGIFY_1(gxm_XmTextGetBaseline_w, gxm_XmTextGetBaseline)
+XEN_NARGIFY_1(gxm_XmTextDisableRedisplay_w, gxm_XmTextDisableRedisplay)
+XEN_NARGIFY_1(gxm_XmTextEnableRedisplay_w, gxm_XmTextEnableRedisplay)
+XEN_NARGIFY_4(gxm_XmTextFindString_w, gxm_XmTextFindString)
+XEN_ARGIFY_4(gxm_XmCreateForm_w, gxm_XmCreateForm)
+XEN_ARGIFY_4(gxm_XmCreateFormDialog_w, gxm_XmCreateFormDialog)
+XEN_ARGIFY_4(gxm_XmCreateFrame_w, gxm_XmCreateFrame)
+XEN_NARGIFY_1(gxm_XmToggleButtonGadgetGetState_w, gxm_XmToggleButtonGadgetGetState)
+XEN_NARGIFY_3(gxm_XmToggleButtonGadgetSetState_w, gxm_XmToggleButtonGadgetSetState)
+XEN_ARGIFY_4(gxm_XmCreateToggleButtonGadget_w, gxm_XmCreateToggleButtonGadget)
+XEN_NARGIFY_1(gxm_XmToggleButtonGetState_w, gxm_XmToggleButtonGetState)
+XEN_NARGIFY_3(gxm_XmToggleButtonSetState_w, gxm_XmToggleButtonSetState)
+XEN_ARGIFY_4(gxm_XmCreateToggleButton_w, gxm_XmCreateToggleButton)
+XEN_ARGIFY_4(gxm_XmCreateLabelGadget_w, gxm_XmCreateLabelGadget)
+XEN_ARGIFY_4(gxm_XmCreateLabel_w, gxm_XmCreateLabel)
+XEN_NARGIFY_1(gxm_XmIsMotifWMRunning_w, gxm_XmIsMotifWMRunning)
+XEN_NARGIFY_3(gxm_XmListAddItem_w, gxm_XmListAddItem)
+XEN_NARGIFY_4(gxm_XmListAddItems_w, gxm_XmListAddItems)
+XEN_NARGIFY_4(gxm_XmListAddItemsUnselected_w, gxm_XmListAddItemsUnselected)
+XEN_NARGIFY_3(gxm_XmListAddItemUnselected_w, gxm_XmListAddItemUnselected)
+XEN_NARGIFY_2(gxm_XmListDeleteItem_w, gxm_XmListDeleteItem)
+XEN_ARGIFY_3(gxm_XmListDeleteItems_w, gxm_XmListDeleteItems)
+XEN_ARGIFY_3(gxm_XmListDeletePositions_w, gxm_XmListDeletePositions)
+XEN_NARGIFY_2(gxm_XmListDeletePos_w, gxm_XmListDeletePos)
+XEN_NARGIFY_3(gxm_XmListDeleteItemsPos_w, gxm_XmListDeleteItemsPos)
+XEN_NARGIFY_1(gxm_XmListDeleteAllItems_w, gxm_XmListDeleteAllItems)
+XEN_NARGIFY_4(gxm_XmListReplaceItems_w, gxm_XmListReplaceItems)
+XEN_NARGIFY_4(gxm_XmListReplaceItemsPos_w, gxm_XmListReplaceItemsPos)
+XEN_NARGIFY_4(gxm_XmListReplaceItemsUnselected_w, gxm_XmListReplaceItemsUnselected)
+XEN_NARGIFY_4(gxm_XmListReplaceItemsPosUnselected_w, gxm_XmListReplaceItemsPosUnselected)
+XEN_NARGIFY_4(gxm_XmListReplacePositions_w, gxm_XmListReplacePositions)
+XEN_NARGIFY_3(gxm_XmListSelectItem_w, gxm_XmListSelectItem)
+XEN_NARGIFY_3(gxm_XmListSelectPos_w, gxm_XmListSelectPos)
+XEN_NARGIFY_2(gxm_XmListDeselectItem_w, gxm_XmListDeselectItem)
+XEN_NARGIFY_2(gxm_XmListDeselectPos_w, gxm_XmListDeselectPos)
+XEN_NARGIFY_1(gxm_XmListDeselectAllItems_w, gxm_XmListDeselectAllItems)
+XEN_NARGIFY_2(gxm_XmListSetPos_w, gxm_XmListSetPos)
+XEN_NARGIFY_2(gxm_XmListSetBottomPos_w, gxm_XmListSetBottomPos)
+XEN_NARGIFY_2(gxm_XmListSetItem_w, gxm_XmListSetItem)
+XEN_NARGIFY_2(gxm_XmListSetBottomItem_w, gxm_XmListSetBottomItem)
+XEN_NARGIFY_2(gxm_XmListSetAddMode_w, gxm_XmListSetAddMode)
+XEN_NARGIFY_2(gxm_XmListItemExists_w, gxm_XmListItemExists)
+XEN_NARGIFY_2(gxm_XmListItemPos_w, gxm_XmListItemPos)
+XEN_NARGIFY_1(gxm_XmListGetKbdItemPos_w, gxm_XmListGetKbdItemPos)
+XEN_NARGIFY_2(gxm_XmListSetKbdItemPos_w, gxm_XmListSetKbdItemPos)
+XEN_NARGIFY_2(gxm_XmListYToPos_w, gxm_XmListYToPos)
+XEN_NARGIFY_2(gxm_XmListPosToBounds_w, gxm_XmListPosToBounds)
+XEN_NARGIFY_2(gxm_XmListGetMatchPos_w, gxm_XmListGetMatchPos)
+XEN_NARGIFY_2(gxm_XmListSetHorizPos_w, gxm_XmListSetHorizPos)
+XEN_NARGIFY_1(gxm_XmListUpdateSelectedList_w, gxm_XmListUpdateSelectedList)
+XEN_NARGIFY_2(gxm_XmListPosSelected_w, gxm_XmListPosSelected)
+XEN_ARGIFY_4(gxm_XmCreateList_w, gxm_XmCreateList)
+XEN_ARGIFY_4(gxm_XmCreateScrolledList_w, gxm_XmCreateScrolledList)
+XEN_NARGIFY_3(gxm_XmTranslateKey_w, gxm_XmTranslateKey)
+XEN_ARGIFY_4(gxm_XmCreateMainWindow_w, gxm_XmCreateMainWindow)
+XEN_NARGIFY_2(gxm_XmInstallImage_w, gxm_XmInstallImage)
+XEN_NARGIFY_1(gxm_XmUninstallImage_w, gxm_XmUninstallImage)
+XEN_NARGIFY_4(gxm_XmGetPixmap_w, gxm_XmGetPixmap)
+XEN_NARGIFY_5(gxm_XmGetPixmapByDepth_w, gxm_XmGetPixmapByDepth)
+XEN_NARGIFY_2(gxm_XmDestroyPixmap_w, gxm_XmDestroyPixmap)
+XEN_NARGIFY_1(gxm_XmUpdateDisplay_w, gxm_XmUpdateDisplay)
+XEN_NARGIFY_1(gxm_XmWidgetGetBaselines_w, gxm_XmWidgetGetBaselines)
+XEN_NARGIFY_2(gxm_XmRegisterSegmentEncoding_w, gxm_XmRegisterSegmentEncoding)
+XEN_NARGIFY_1(gxm_XmMapSegmentEncoding_w, gxm_XmMapSegmentEncoding)
+XEN_NARGIFY_1(gxm_XmCvtCTToXmString_w, gxm_XmCvtCTToXmString)
+XEN_NARGIFY_1(gxm_XmCvtXmStringToCT_w, gxm_XmCvtXmStringToCT)
+XEN_NARGIFY_5(gxm_XmConvertUnits_w, gxm_XmConvertUnits)
+XEN_ARGIFY_4(gxm_XmCreateSimpleMenuBar_w, gxm_XmCreateSimpleMenuBar)
+XEN_ARGIFY_4(gxm_XmCreateSimplePopupMenu_w, gxm_XmCreateSimplePopupMenu)
+XEN_ARGIFY_4(gxm_XmCreateSimplePulldownMenu_w, gxm_XmCreateSimplePulldownMenu)
+XEN_ARGIFY_4(gxm_XmCreateSimpleOptionMenu_w, gxm_XmCreateSimpleOptionMenu)
+XEN_ARGIFY_4(gxm_XmCreateSimpleRadioBox_w, gxm_XmCreateSimpleRadioBox)
+XEN_ARGIFY_4(gxm_XmCreateSimpleCheckBox_w, gxm_XmCreateSimpleCheckBox)
+XEN_NARGIFY_3(gxm_XmVaCreateSimpleMenuBar_w, gxm_XmVaCreateSimpleMenuBar)
+XEN_NARGIFY_4(gxm_XmVaCreateSimplePopupMenu_w, gxm_XmVaCreateSimplePopupMenu)
+XEN_NARGIFY_5(gxm_XmVaCreateSimplePulldownMenu_w, gxm_XmVaCreateSimplePulldownMenu)
+XEN_NARGIFY_7(gxm_XmVaCreateSimpleOptionMenu_w, gxm_XmVaCreateSimpleOptionMenu)
+XEN_NARGIFY_5(gxm_XmVaCreateSimpleRadioBox_w, gxm_XmVaCreateSimpleRadioBox)
+XEN_NARGIFY_4(gxm_XmVaCreateSimpleCheckBox_w, gxm_XmVaCreateSimpleCheckBox)
+XEN_NARGIFY_3(gxm_XmTrackingEvent_w, gxm_XmTrackingEvent)
+XEN_NARGIFY_1(gxm_XmSetColorCalculation_w, gxm_XmSetColorCalculation)
+XEN_NARGIFY_0(gxm_XmGetColorCalculation_w, gxm_XmGetColorCalculation)
+XEN_NARGIFY_3(gxm_XmGetColors_w, gxm_XmGetColors)
+XEN_NARGIFY_2(gxm_XmChangeColor_w, gxm_XmChangeColor)
+XEN_NARGIFY_2(gxm_XmStringCreate_w, gxm_XmStringCreate)
+XEN_NARGIFY_1(gxm_XmStringCreateLocalized_w, gxm_XmStringCreateLocalized)
+XEN_NARGIFY_1(gxm_XmStringDirectionCreate_w, gxm_XmStringDirectionCreate)
+XEN_NARGIFY_0(gxm_XmStringSeparatorCreate_w, gxm_XmStringSeparatorCreate)
+XEN_NARGIFY_1(gxm_XmStringInitContext_w, gxm_XmStringInitContext)
+XEN_NARGIFY_1(gxm_XmStringFreeContext_w, gxm_XmStringFreeContext)
+XEN_NARGIFY_2(gxm_XmStringConcatAndFree_w, gxm_XmStringConcatAndFree)
+XEN_NARGIFY_1(gxm_XmStringIsVoid_w, gxm_XmStringIsVoid)
+XEN_NARGIFY_1(gxm_XmStringPeekNextTriple_w, gxm_XmStringPeekNextTriple)
+XEN_NARGIFY_1(gxm_XmStringGetNextTriple_w, gxm_XmStringGetNextTriple)
+XEN_NARGIFY_3(gxm_XmStringComponentCreate_w, gxm_XmStringComponentCreate)
+XEN_NARGIFY_7(gxm_XmStringUnparse_w, gxm_XmStringUnparse)
+XEN_NARGIFY_7(gxm_XmStringParseText_w, gxm_XmStringParseText)
+XEN_NARGIFY_2(gxm_XmStringToXmStringTable_w, gxm_XmStringToXmStringTable)
+XEN_NARGIFY_3(gxm_XmStringTableToXmString_w, gxm_XmStringTableToXmString)
+XEN_NARGIFY_8(gxm_XmStringTableUnparse_w, gxm_XmStringTableUnparse)
+XEN_NARGIFY_7(gxm_XmStringTableParseStringArray_w, gxm_XmStringTableParseStringArray)
+XEN_NARGIFY_1(gxm_XmDirectionToStringDirection_w, gxm_XmDirectionToStringDirection)
+XEN_NARGIFY_1(gxm_XmStringDirectionToDirection_w, gxm_XmStringDirectionToDirection)
+XEN_NARGIFY_4(gxm_XmStringGenerate_w, gxm_XmStringGenerate)
+XEN_NARGIFY_2(gxm_XmStringPutRendition_w, gxm_XmStringPutRendition)
+XEN_ARGIFY_2(gxm_XmParseMappingCreate_w, gxm_XmParseMappingCreate)
+XEN_ARGIFY_3(gxm_XmParseMappingSetValues_w, gxm_XmParseMappingSetValues)
+XEN_ARGIFY_3(gxm_XmParseMappingGetValues_w, gxm_XmParseMappingGetValues)
+XEN_NARGIFY_1(gxm_XmParseMappingFree_w, gxm_XmParseMappingFree)
+XEN_ARGIFY_2(gxm_XmParseTableFree_w, gxm_XmParseTableFree)
+XEN_NARGIFY_5(gxm_XmStringTableProposeTablist_w, gxm_XmStringTableProposeTablist)
+XEN_NARGIFY_2(gxm_XmTabSetValue_w, gxm_XmTabSetValue)
+XEN_NARGIFY_1(gxm_XmTabGetValues_w, gxm_XmTabGetValues)
+XEN_NARGIFY_1(gxm_XmTabFree_w, gxm_XmTabFree)
+XEN_NARGIFY_1(gxm_XmTabListFree_w, gxm_XmTabListFree)
+XEN_NARGIFY_5(gxm_XmTabCreate_w, gxm_XmTabCreate)
+XEN_NARGIFY_1(gxm_XmTabListTabCount_w, gxm_XmTabListTabCount)
+XEN_ARGIFY_3(gxm_XmTabListRemoveTabs_w, gxm_XmTabListRemoveTabs)
+XEN_ARGIFY_4(gxm_XmTabListReplacePositions_w, gxm_XmTabListReplacePositions)
+XEN_NARGIFY_2(gxm_XmTabListGetTab_w, gxm_XmTabListGetTab)
+XEN_NARGIFY_3(gxm_XmTabListCopy_w, gxm_XmTabListCopy)
+XEN_NARGIFY_4(gxm_XmTabListInsertTabs_w, gxm_XmTabListInsertTabs)
+XEN_NARGIFY_3(gxm_XmRenderTableCvtFromProp_w, gxm_XmRenderTableCvtFromProp)
+XEN_NARGIFY_2(gxm_XmRenderTableCvtToProp_w, gxm_XmRenderTableCvtToProp)
+XEN_ARGIFY_3(gxm_XmRenditionUpdate_w, gxm_XmRenditionUpdate)
+XEN_ARGIFY_3(gxm_XmRenditionRetrieve_w, gxm_XmRenditionRetrieve)
+XEN_NARGIFY_1(gxm_XmRenditionFree_w, gxm_XmRenditionFree)
+XEN_ARGIFY_4(gxm_XmRenditionCreate_w, gxm_XmRenditionCreate)
+XEN_ARGIFY_3(gxm_XmRenderTableGetRenditions_w, gxm_XmRenderTableGetRenditions)
+XEN_NARGIFY_2(gxm_XmRenderTableGetRendition_w, gxm_XmRenderTableGetRendition)
+XEN_NARGIFY_1(gxm_XmRenderTableGetTags_w, gxm_XmRenderTableGetTags)
+XEN_NARGIFY_1(gxm_XmRenderTableFree_w, gxm_XmRenderTableFree)
+XEN_ARGIFY_3(gxm_XmRenderTableCopy_w, gxm_XmRenderTableCopy)
+XEN_ARGIFY_3(gxm_XmRenderTableRemoveRenditions_w, gxm_XmRenderTableRemoveRenditions)
+XEN_NARGIFY_4(gxm_XmRenderTableAddRenditions_w, gxm_XmRenderTableAddRenditions)
+XEN_NARGIFY_2(gxm_XmStringConcat_w, gxm_XmStringConcat)
+XEN_NARGIFY_1(gxm_XmStringCopy_w, gxm_XmStringCopy)
+XEN_NARGIFY_2(gxm_XmStringCompare_w, gxm_XmStringCompare)
+XEN_NARGIFY_1(gxm_XmStringEmpty_w, gxm_XmStringEmpty)
+XEN_NARGIFY_2(gxm_XmStringHasSubstring_w, gxm_XmStringHasSubstring)
+XEN_NARGIFY_1(gxm_XmStringFree_w, gxm_XmStringFree)
+XEN_NARGIFY_2(gxm_XmStringBaseline_w, gxm_XmStringBaseline)
+XEN_NARGIFY_2(gxm_XmStringWidth_w, gxm_XmStringWidth)
+XEN_NARGIFY_2(gxm_XmStringHeight_w, gxm_XmStringHeight)
+XEN_NARGIFY_2(gxm_XmStringExtent_w, gxm_XmStringExtent)
+XEN_NARGIFY_1(gxm_XmStringLineCount_w, gxm_XmStringLineCount)
+XEN_VARGIFY(gxm_XmStringDraw_w, gxm_XmStringDraw)
+XEN_VARGIFY(gxm_XmStringDrawImage_w, gxm_XmStringDrawImage)
+XEN_VARGIFY(gxm_XmStringDrawUnderline_w, gxm_XmStringDrawUnderline)
 
-  XEN_NARGIFY_1(gxm_XmGetDestination_w, gxm_XmGetDestination)
-  XEN_NARGIFY_1(gxm_XmIsTraversable_w, gxm_XmIsTraversable)
-  XEN_NARGIFY_1(gxm_XmGetVisibility_w, gxm_XmGetVisibility)
-  XEN_NARGIFY_1(gxm_XmGetTabGroup_w, gxm_XmGetTabGroup)
-  XEN_NARGIFY_1(gxm_XmGetFocusWidget_w, gxm_XmGetFocusWidget)
-  XEN_NARGIFY_2(gxm_XmProcessTraversal_w, gxm_XmProcessTraversal)
-  XEN_ARGIFY_4(gxm_XmCreateMenuShell_w, gxm_XmCreateMenuShell)
+XEN_NARGIFY_1(gxm_XmGetDestination_w, gxm_XmGetDestination)
+XEN_NARGIFY_1(gxm_XmIsTraversable_w, gxm_XmIsTraversable)
+XEN_NARGIFY_1(gxm_XmGetVisibility_w, gxm_XmGetVisibility)
+XEN_NARGIFY_1(gxm_XmGetTabGroup_w, gxm_XmGetTabGroup)
+XEN_NARGIFY_1(gxm_XmGetFocusWidget_w, gxm_XmGetFocusWidget)
+XEN_NARGIFY_2(gxm_XmProcessTraversal_w, gxm_XmProcessTraversal)
+XEN_ARGIFY_4(gxm_XmCreateMenuShell_w, gxm_XmCreateMenuShell)
 
-  XEN_NARGIFY_1(gxm_XmIsMessageBox_w, gxm_XmIsMessageBox)
-  XEN_NARGIFY_1(gxm_XmIsArrowButtonGadget_w, gxm_XmIsArrowButtonGadget)
-  XEN_NARGIFY_1(gxm_XmIsArrowButton_w, gxm_XmIsArrowButton)
-  XEN_NARGIFY_1(gxm_XmCvtXmStringToByteStream_w, gxm_XmCvtXmStringToByteStream)
-  XEN_NARGIFY_1(gxm_XmCvtByteStreamToXmString_w, gxm_XmCvtByteStreamToXmString)
-  XEN_NARGIFY_1(gxm_XmStringByteStreamLength_w, gxm_XmStringByteStreamLength)
-  XEN_NARGIFY_1(gxm_XmIsNotebook_w, gxm_XmIsNotebook)
-  XEN_NARGIFY_1(gxm_XmIsComboBox_w, gxm_XmIsComboBox)
-  XEN_NARGIFY_1(gxm_XmIsContainer_w, gxm_XmIsContainer)
-  XEN_NARGIFY_1(gxm_XmIsGrabShell_w, gxm_XmIsGrabShell)
-  XEN_NARGIFY_1(gxm_XmIsIconGadget_w, gxm_XmIsIconGadget)
-  XEN_NARGIFY_1(gxm_XmIsIconHeader_w, gxm_XmIsIconHeader)
-  XEN_NARGIFY_1(gxm_XmIsPanedWindow_w, gxm_XmIsPanedWindow)
-  XEN_NARGIFY_1(gxm_XmIsBulletinBoard_w, gxm_XmIsBulletinBoard)
-  XEN_NARGIFY_1(gxm_XmIsPrimitive_w, gxm_XmIsPrimitive)
-  XEN_NARGIFY_1(gxm_XmIsCascadeButtonGadget_w, gxm_XmIsCascadeButtonGadget)
-  XEN_NARGIFY_1(gxm_XmIsCascadeButton_w, gxm_XmIsCascadeButton)
-  XEN_NARGIFY_1(gxm_XmIsPushButtonGadget_w, gxm_XmIsPushButtonGadget)
-  XEN_NARGIFY_1(gxm_XmIsPushButton_w, gxm_XmIsPushButton)
-  XEN_NARGIFY_1(gxm_XmIsCommand_w, gxm_XmIsCommand)
-  XEN_NARGIFY_1(gxm_XmIsRowColumn_w, gxm_XmIsRowColumn)
-  XEN_NARGIFY_1(gxm_XmIsScale_w, gxm_XmIsScale)
-  XEN_NARGIFY_1(gxm_XmIsScreen_w, gxm_XmIsScreen)
-  XEN_NARGIFY_1(gxm_XmIsScrollBar_w, gxm_XmIsScrollBar)
-  XEN_NARGIFY_1(gxm_XmIsDialogShell_w, gxm_XmIsDialogShell)
-  XEN_NARGIFY_1(gxm_XmIsScrolledWindow_w, gxm_XmIsScrolledWindow)
-  XEN_NARGIFY_1(gxm_XmIsDisplay_w, gxm_XmIsDisplay)
-  XEN_NARGIFY_1(gxm_XmIsSelectionBox_w, gxm_XmIsSelectionBox)
-  XEN_NARGIFY_1(gxm_XmIsDragContext_w, gxm_XmIsDragContext)
-  XEN_NARGIFY_1(gxm_XmIsSeparatorGadget_w, gxm_XmIsSeparatorGadget)
-  XEN_NARGIFY_1(gxm_XmIsDragIconObjectClass_w, gxm_XmIsDragIconObjectClass)
-  XEN_NARGIFY_1(gxm_XmIsSeparator_w, gxm_XmIsSeparator)
-  XEN_NARGIFY_1(gxm_XmIsDrawingArea_w, gxm_XmIsDrawingArea)
-  XEN_NARGIFY_1(gxm_XmIsDrawnButton_w, gxm_XmIsDrawnButton)
-  XEN_NARGIFY_1(gxm_XmIsDropSiteManager_w, gxm_XmIsDropSiteManager)
-  XEN_NARGIFY_1(gxm_XmIsDropTransfer_w, gxm_XmIsDropTransfer)
-  XEN_NARGIFY_1(gxm_XmIsTextField_w, gxm_XmIsTextField)
-  XEN_NARGIFY_1(gxm_XmIsFileSelectionBox_w, gxm_XmIsFileSelectionBox)
-  XEN_NARGIFY_1(gxm_XmIsText_w, gxm_XmIsText)
-  XEN_NARGIFY_1(gxm_XmIsForm_w, gxm_XmIsForm)
-  XEN_NARGIFY_1(gxm_XmIsFrame_w, gxm_XmIsFrame)
-  XEN_NARGIFY_1(gxm_XmIsGadget_w, gxm_XmIsGadget)
-  XEN_NARGIFY_1(gxm_XmIsToggleButtonGadget_w, gxm_XmIsToggleButtonGadget)
-  XEN_NARGIFY_1(gxm_XmIsToggleButton_w, gxm_XmIsToggleButton)
-  XEN_NARGIFY_1(gxm_XmIsLabelGadget_w, gxm_XmIsLabelGadget)
-  XEN_NARGIFY_1(gxm_XmIsLabel_w, gxm_XmIsLabel)
-  XEN_NARGIFY_1(gxm_XmIsVendorShell_w, gxm_XmIsVendorShell)
-  XEN_NARGIFY_1(gxm_XmIsList_w, gxm_XmIsList)
-  XEN_NARGIFY_1(gxm_XmIsMainWindow_w, gxm_XmIsMainWindow)
-  XEN_NARGIFY_1(gxm_XmIsManager_w, gxm_XmIsManager)
-  XEN_NARGIFY_1(gxm_XmIsMenuShell_w, gxm_XmIsMenuShell)
-  XEN_NARGIFY_1(gxm_XmListGetSelectedPos_w, gxm_XmListGetSelectedPos)
-  XEN_NARGIFY_1(gxm_XmWidgetGetDisplayRect_w, gxm_XmWidgetGetDisplayRect)
-#endif
+XEN_NARGIFY_1(gxm_XmIsMessageBox_w, gxm_XmIsMessageBox)
+XEN_NARGIFY_1(gxm_XmIsArrowButtonGadget_w, gxm_XmIsArrowButtonGadget)
+XEN_NARGIFY_1(gxm_XmIsArrowButton_w, gxm_XmIsArrowButton)
+XEN_NARGIFY_1(gxm_XmCvtXmStringToByteStream_w, gxm_XmCvtXmStringToByteStream)
+XEN_NARGIFY_1(gxm_XmCvtByteStreamToXmString_w, gxm_XmCvtByteStreamToXmString)
+XEN_NARGIFY_1(gxm_XmStringByteStreamLength_w, gxm_XmStringByteStreamLength)
+XEN_NARGIFY_1(gxm_XmIsNotebook_w, gxm_XmIsNotebook)
+XEN_NARGIFY_1(gxm_XmIsComboBox_w, gxm_XmIsComboBox)
+XEN_NARGIFY_1(gxm_XmIsContainer_w, gxm_XmIsContainer)
+XEN_NARGIFY_1(gxm_XmIsGrabShell_w, gxm_XmIsGrabShell)
+XEN_NARGIFY_1(gxm_XmIsIconGadget_w, gxm_XmIsIconGadget)
+XEN_NARGIFY_1(gxm_XmIsIconHeader_w, gxm_XmIsIconHeader)
+XEN_NARGIFY_1(gxm_XmIsPanedWindow_w, gxm_XmIsPanedWindow)
+XEN_NARGIFY_1(gxm_XmIsBulletinBoard_w, gxm_XmIsBulletinBoard)
+XEN_NARGIFY_1(gxm_XmIsPrimitive_w, gxm_XmIsPrimitive)
+XEN_NARGIFY_1(gxm_XmIsCascadeButtonGadget_w, gxm_XmIsCascadeButtonGadget)
+XEN_NARGIFY_1(gxm_XmIsCascadeButton_w, gxm_XmIsCascadeButton)
+XEN_NARGIFY_1(gxm_XmIsPushButtonGadget_w, gxm_XmIsPushButtonGadget)
+XEN_NARGIFY_1(gxm_XmIsPushButton_w, gxm_XmIsPushButton)
+XEN_NARGIFY_1(gxm_XmIsCommand_w, gxm_XmIsCommand)
+XEN_NARGIFY_1(gxm_XmIsRowColumn_w, gxm_XmIsRowColumn)
+XEN_NARGIFY_1(gxm_XmIsScale_w, gxm_XmIsScale)
+XEN_NARGIFY_1(gxm_XmIsScreen_w, gxm_XmIsScreen)
+XEN_NARGIFY_1(gxm_XmIsScrollBar_w, gxm_XmIsScrollBar)
+XEN_NARGIFY_1(gxm_XmIsDialogShell_w, gxm_XmIsDialogShell)
+XEN_NARGIFY_1(gxm_XmIsScrolledWindow_w, gxm_XmIsScrolledWindow)
+XEN_NARGIFY_1(gxm_XmIsDisplay_w, gxm_XmIsDisplay)
+XEN_NARGIFY_1(gxm_XmIsSelectionBox_w, gxm_XmIsSelectionBox)
+XEN_NARGIFY_1(gxm_XmIsDragContext_w, gxm_XmIsDragContext)
+XEN_NARGIFY_1(gxm_XmIsSeparatorGadget_w, gxm_XmIsSeparatorGadget)
+XEN_NARGIFY_1(gxm_XmIsDragIconObjectClass_w, gxm_XmIsDragIconObjectClass)
+XEN_NARGIFY_1(gxm_XmIsSeparator_w, gxm_XmIsSeparator)
+XEN_NARGIFY_1(gxm_XmIsDrawingArea_w, gxm_XmIsDrawingArea)
+XEN_NARGIFY_1(gxm_XmIsDrawnButton_w, gxm_XmIsDrawnButton)
+XEN_NARGIFY_1(gxm_XmIsDropSiteManager_w, gxm_XmIsDropSiteManager)
+XEN_NARGIFY_1(gxm_XmIsDropTransfer_w, gxm_XmIsDropTransfer)
+XEN_NARGIFY_1(gxm_XmIsTextField_w, gxm_XmIsTextField)
+XEN_NARGIFY_1(gxm_XmIsFileSelectionBox_w, gxm_XmIsFileSelectionBox)
+XEN_NARGIFY_1(gxm_XmIsText_w, gxm_XmIsText)
+XEN_NARGIFY_1(gxm_XmIsForm_w, gxm_XmIsForm)
+XEN_NARGIFY_1(gxm_XmIsFrame_w, gxm_XmIsFrame)
+XEN_NARGIFY_1(gxm_XmIsGadget_w, gxm_XmIsGadget)
+XEN_NARGIFY_1(gxm_XmIsToggleButtonGadget_w, gxm_XmIsToggleButtonGadget)
+XEN_NARGIFY_1(gxm_XmIsToggleButton_w, gxm_XmIsToggleButton)
+XEN_NARGIFY_1(gxm_XmIsLabelGadget_w, gxm_XmIsLabelGadget)
+XEN_NARGIFY_1(gxm_XmIsLabel_w, gxm_XmIsLabel)
+XEN_NARGIFY_1(gxm_XmIsVendorShell_w, gxm_XmIsVendorShell)
+XEN_NARGIFY_1(gxm_XmIsList_w, gxm_XmIsList)
+XEN_NARGIFY_1(gxm_XmIsMainWindow_w, gxm_XmIsMainWindow)
+XEN_NARGIFY_1(gxm_XmIsManager_w, gxm_XmIsManager)
+XEN_NARGIFY_1(gxm_XmIsMenuShell_w, gxm_XmIsMenuShell)
+XEN_NARGIFY_1(gxm_XmListGetSelectedPos_w, gxm_XmListGetSelectedPos)
+XEN_NARGIFY_1(gxm_XmWidgetGetDisplayRect_w, gxm_XmWidgetGetDisplayRect)
 
-  XEN_NARGIFY_4(gxm_XpmCreatePixmapFromData_w, gxm_XpmCreatePixmapFromData)
-  XEN_NARGIFY_4(gxm_XpmCreateDataFromPixmap_w, gxm_XpmCreateDataFromPixmap)
-  XEN_NARGIFY_4(gxm_XpmReadFileToPixmap_w, gxm_XpmReadFileToPixmap)
-  XEN_NARGIFY_1(gxm_XpmReadFileToXpmImage_w, gxm_XpmReadFileToXpmImage)
-  XEN_NARGIFY_5(gxm_XpmWriteFileFromPixmap_w, gxm_XpmWriteFileFromPixmap)
-  XEN_NARGIFY_4(gxm_XpmCreatePixmapFromXpmImage_w, gxm_XpmCreatePixmapFromXpmImage)
-  XEN_NARGIFY_4(gxm_XpmCreateXpmImageFromPixmap_w, gxm_XpmCreateXpmImageFromPixmap)
-  XEN_NARGIFY_1(gxm_XpmGetErrorString_w, gxm_XpmGetErrorString)
+XEN_NARGIFY_4(gxm_XpmCreatePixmapFromData_w, gxm_XpmCreatePixmapFromData)
+XEN_NARGIFY_4(gxm_XpmCreateDataFromPixmap_w, gxm_XpmCreateDataFromPixmap)
+XEN_NARGIFY_4(gxm_XpmReadFileToPixmap_w, gxm_XpmReadFileToPixmap)
+XEN_NARGIFY_1(gxm_XpmReadFileToXpmImage_w, gxm_XpmReadFileToXpmImage)
+XEN_NARGIFY_5(gxm_XpmWriteFileFromPixmap_w, gxm_XpmWriteFileFromPixmap)
+XEN_NARGIFY_4(gxm_XpmCreatePixmapFromXpmImage_w, gxm_XpmCreatePixmapFromXpmImage)
+XEN_NARGIFY_4(gxm_XpmCreateXpmImageFromPixmap_w, gxm_XpmCreateXpmImageFromPixmap)
+XEN_NARGIFY_1(gxm_XpmGetErrorString_w, gxm_XpmGetErrorString)
 
-  XEN_NARGIFY_3(gxm_XGetPixel_w, gxm_XGetPixel)
-  XEN_NARGIFY_1(gxm_XDestroyImage_w, gxm_XDestroyImage)
-  XEN_NARGIFY_4(gxm_XPutPixel_w, gxm_XPutPixel)
-  XEN_NARGIFY_5(gxm_XSubImage_w, gxm_XSubImage)
-  XEN_NARGIFY_2(gxm_XAddPixel_w, gxm_XAddPixel)
+XEN_NARGIFY_3(gxm_XGetPixel_w, gxm_XGetPixel)
+XEN_NARGIFY_1(gxm_XDestroyImage_w, gxm_XDestroyImage)
+XEN_NARGIFY_4(gxm_XPutPixel_w, gxm_XPutPixel)
+XEN_NARGIFY_5(gxm_XSubImage_w, gxm_XSubImage)
+XEN_NARGIFY_2(gxm_XAddPixel_w, gxm_XAddPixel)
 
-  XEN_NARGIFY_1(XEN_XtAppContext_p_w, XEN_XtAppContext_p)
-  XEN_NARGIFY_1(XEN_XtRequestId_p_w, XEN_XtRequestId_p)
-  XEN_NARGIFY_1(XEN_XtWorkProcId_p_w, XEN_XtWorkProcId_p)
-  XEN_NARGIFY_1(XEN_XtInputId_p_w, XEN_XtInputId_p)
-  XEN_NARGIFY_1(XEN_XtIntervalId_p_w, XEN_XtIntervalId_p)
+XEN_NARGIFY_1(XEN_XtAppContext_p_w, XEN_XtAppContext_p)
+XEN_NARGIFY_1(XEN_XtRequestId_p_w, XEN_XtRequestId_p)
+XEN_NARGIFY_1(XEN_XtWorkProcId_p_w, XEN_XtWorkProcId_p)
+XEN_NARGIFY_1(XEN_XtInputId_p_w, XEN_XtInputId_p)
+XEN_NARGIFY_1(XEN_XtIntervalId_p_w, XEN_XtIntervalId_p)
 
-  XEN_NARGIFY_1(XEN_Screen_p_w, XEN_Screen_p)
-  XEN_NARGIFY_1(XEN_XEvent_p_w, XEN_XEvent_p)
-  XEN_NARGIFY_1(XEN_XRectangle_p_w, XEN_XRectangle_p)
-  XEN_NARGIFY_1(XEN_XArc_p_w, XEN_XArc_p)
-  XEN_NARGIFY_1(XEN_XPoint_p_w, XEN_XPoint_p)
-  XEN_NARGIFY_1(XEN_XSegment_p_w, XEN_XSegment_p)
-  XEN_NARGIFY_1(XEN_XColor_p_w, XEN_XColor_p)
-  XEN_NARGIFY_1(XEN_Atom_p_w, XEN_Atom_p)
-  XEN_NARGIFY_1(XEN_Colormap_p_w, XEN_Colormap_p)
-  XEN_NARGIFY_1(XEN_XModifierKeymap_p_w, XEN_XModifierKeymap_p)
-  XEN_NARGIFY_1(XEN_Depth_p_w, XEN_Depth_p)
-  XEN_NARGIFY_1(XEN_Display_p_w, XEN_Display_p)
-  XEN_NARGIFY_1(XEN_Font_p_w, XEN_Font_p)
-  XEN_NARGIFY_1(XEN_GC_p_w, XEN_GC_p)
-  XEN_NARGIFY_1(XEN_KeySym_p_w, XEN_KeySym_p)
-  XEN_NARGIFY_1(XEN_Pixel_p_w, XEN_Pixel_p)
-  XEN_NARGIFY_1(XEN_Pixmap_p_w, XEN_Pixmap_p)
-  XEN_NARGIFY_1(XEN_Region_p_w, XEN_Region_p)
-  XEN_NARGIFY_1(XEN_Time_p_w, XEN_Time_p)
-  XEN_NARGIFY_1(XEN_Visual_p_w, XEN_Visual_p)
-  XEN_NARGIFY_1(XEN_Window_p_w, XEN_Window_p)
-  XEN_NARGIFY_1(XEN_Widget_p_w, XEN_Widget_p)
-  XEN_NARGIFY_1(XEN_XmStringContext_p_w, XEN_XmStringContext_p)
-  XEN_NARGIFY_1(XEN_XFontProp_p_w, XEN_XFontProp_p)
-  XEN_NARGIFY_1(XEN_XFontSet_p_w, XEN_XFontSet_p)
-  XEN_NARGIFY_1(XEN_XFontStruct_p_w, XEN_XFontStruct_p)
-  XEN_NARGIFY_1(XEN_XGCValues_p_w, XEN_XGCValues_p)
-  XEN_NARGIFY_1(XEN_XImage_p_w, XEN_XImage_p)
-  XEN_NARGIFY_1(XEN_XVisualInfo_p_w, XEN_XVisualInfo_p)
-  XEN_NARGIFY_1(XEN_XWMHints_p_w, XEN_XWMHints_p)
-  XEN_NARGIFY_1(XEN_XWindowAttributes_p_w, XEN_XWindowAttributes_p)
-  XEN_NARGIFY_1(XEN_XWindowChanges_p_w, XEN_XWindowChanges_p)
-  XEN_NARGIFY_1(XEN_KeyCode_p_w, XEN_KeyCode_p)
-  XEN_NARGIFY_1(XEN_XContext_p_w, XEN_XContext_p)
-  XEN_NARGIFY_1(XEN_XCharStruct_p_w, XEN_XCharStruct_p)
-  XEN_NARGIFY_1(XEN_XTextItem_p_w, XEN_XTextItem_p)
-  XEN_NARGIFY_1(XEN_XStandardColormap_p_w, XEN_XStandardColormap_p)
-  XEN_NARGIFY_1(XEN_Cursor_p_w, XEN_Cursor_p)
-  XEN_NARGIFY_1(XEN_WidgetClass_p_w, XEN_WidgetClass_p)
-  XEN_NARGIFY_1(XEN_XmString_p_w, XEN_XmString_p)
-  XEN_NARGIFY_1(XEN_XmTab_p_w, XEN_XmTab_p)
-  XEN_NARGIFY_1(XEN_XmRendition_p_w, XEN_XmRendition_p)
-  XEN_NARGIFY_1(XEN_XmRenderTable_p_w, XEN_XmRenderTable_p)
-  XEN_NARGIFY_1(XEN_XmTabList_p_w, XEN_XmTabList_p)
-  XEN_NARGIFY_1(XEN_XmParseMapping_p_w, XEN_XmParseMapping_p)
-  XEN_NARGIFY_1(XEN_XmTextSource_p_w, XEN_XmTextSource_p)
+XEN_NARGIFY_1(XEN_Screen_p_w, XEN_Screen_p)
+XEN_NARGIFY_1(XEN_XEvent_p_w, XEN_XEvent_p)
+XEN_NARGIFY_1(XEN_XRectangle_p_w, XEN_XRectangle_p)
+XEN_NARGIFY_1(XEN_XArc_p_w, XEN_XArc_p)
+XEN_NARGIFY_1(XEN_XPoint_p_w, XEN_XPoint_p)
+XEN_NARGIFY_1(XEN_XSegment_p_w, XEN_XSegment_p)
+XEN_NARGIFY_1(XEN_XColor_p_w, XEN_XColor_p)
+XEN_NARGIFY_1(XEN_Atom_p_w, XEN_Atom_p)
+XEN_NARGIFY_1(XEN_Colormap_p_w, XEN_Colormap_p)
+XEN_NARGIFY_1(XEN_XModifierKeymap_p_w, XEN_XModifierKeymap_p)
+XEN_NARGIFY_1(XEN_Depth_p_w, XEN_Depth_p)
+XEN_NARGIFY_1(XEN_Display_p_w, XEN_Display_p)
+XEN_NARGIFY_1(XEN_Font_p_w, XEN_Font_p)
+XEN_NARGIFY_1(XEN_GC_p_w, XEN_GC_p)
+XEN_NARGIFY_1(XEN_KeySym_p_w, XEN_KeySym_p)
+XEN_NARGIFY_1(XEN_Pixel_p_w, XEN_Pixel_p)
+XEN_NARGIFY_1(XEN_Pixmap_p_w, XEN_Pixmap_p)
+XEN_NARGIFY_1(XEN_Region_p_w, XEN_Region_p)
+XEN_NARGIFY_1(XEN_Time_p_w, XEN_Time_p)
+XEN_NARGIFY_1(XEN_Visual_p_w, XEN_Visual_p)
+XEN_NARGIFY_1(XEN_Window_p_w, XEN_Window_p)
+XEN_NARGIFY_1(XEN_Widget_p_w, XEN_Widget_p)
+XEN_NARGIFY_1(XEN_XmStringContext_p_w, XEN_XmStringContext_p)
+XEN_NARGIFY_1(XEN_XFontProp_p_w, XEN_XFontProp_p)
+XEN_NARGIFY_1(XEN_XFontSet_p_w, XEN_XFontSet_p)
+XEN_NARGIFY_1(XEN_XFontStruct_p_w, XEN_XFontStruct_p)
+XEN_NARGIFY_1(XEN_XGCValues_p_w, XEN_XGCValues_p)
+XEN_NARGIFY_1(XEN_XImage_p_w, XEN_XImage_p)
+XEN_NARGIFY_1(XEN_XVisualInfo_p_w, XEN_XVisualInfo_p)
+XEN_NARGIFY_1(XEN_XWMHints_p_w, XEN_XWMHints_p)
+XEN_NARGIFY_1(XEN_XWindowAttributes_p_w, XEN_XWindowAttributes_p)
+XEN_NARGIFY_1(XEN_XWindowChanges_p_w, XEN_XWindowChanges_p)
+XEN_NARGIFY_1(XEN_KeyCode_p_w, XEN_KeyCode_p)
+XEN_NARGIFY_1(XEN_XContext_p_w, XEN_XContext_p)
+XEN_NARGIFY_1(XEN_XCharStruct_p_w, XEN_XCharStruct_p)
+XEN_NARGIFY_1(XEN_XTextItem_p_w, XEN_XTextItem_p)
+XEN_NARGIFY_1(XEN_XStandardColormap_p_w, XEN_XStandardColormap_p)
+XEN_NARGIFY_1(XEN_Cursor_p_w, XEN_Cursor_p)
+XEN_NARGIFY_1(XEN_WidgetClass_p_w, XEN_WidgetClass_p)
+XEN_NARGIFY_1(XEN_XmString_p_w, XEN_XmString_p)
+XEN_NARGIFY_1(XEN_XmTab_p_w, XEN_XmTab_p)
+XEN_NARGIFY_1(XEN_XmRendition_p_w, XEN_XmRendition_p)
+XEN_NARGIFY_1(XEN_XmRenderTable_p_w, XEN_XmRenderTable_p)
+XEN_NARGIFY_1(XEN_XmTabList_p_w, XEN_XmTabList_p)
+XEN_NARGIFY_1(XEN_XmParseMapping_p_w, XEN_XmParseMapping_p)
+XEN_NARGIFY_1(XEN_XmTextSource_p_w, XEN_XmTextSource_p)
 
-  XEN_NARGIFY_1(XEN_XpmAttributes_p_w, XEN_XpmAttributes_p)
-  XEN_NARGIFY_1(XEN_XpmImage_p_w, XEN_XpmImage_p)
-  XEN_NARGIFY_1(XEN_XpmColorSymbol_p_w, XEN_XpmColorSymbol_p)
+XEN_NARGIFY_1(XEN_XpmAttributes_p_w, XEN_XpmAttributes_p)
+XEN_NARGIFY_1(XEN_XpmImage_p_w, XEN_XpmImage_p)
+XEN_NARGIFY_1(XEN_XpmColorSymbol_p_w, XEN_XpmColorSymbol_p)
 
 #if WITH_EDITRES
-  XEN_NARGIFY_4(gxm_XEditResCheckMessages_w, gxm_XEditResCheckMessages)
+XEN_NARGIFY_4(gxm_XEditResCheckMessages_w, gxm_XEditResCheckMessages)
 #endif
 
 #if HAVE_XSHAPEQUERYEXTENSION
-  XEN_NARGIFY_1(gxm_XShapeQueryExtension_w, gxm_XShapeQueryExtension)
-  XEN_NARGIFY_1(gxm_XShapeQueryVersion_w, gxm_XShapeQueryVersion)
-  XEN_NARGIFY_2(gxm_XShapeQueryExtents_w, gxm_XShapeQueryExtents)
-  XEN_NARGIFY_3(gxm_XShapeGetRectangles_w, gxm_XShapeGetRectangles)
-  XEN_NARGIFY_5(gxm_XShapeOffsetShape_w, gxm_XShapeOffsetShape)
-  XEN_NARGIFY_7(gxm_XShapeCombineRegion_w, gxm_XShapeCombineRegion)
-  XEN_NARGIFY_7(gxm_XShapeCombineMask_w, gxm_XShapeCombineMask)
-  XEN_NARGIFY_8(gxm_XShapeCombineShape_w, gxm_XShapeCombineShape)
-  XEN_NARGIFY_9(gxm_XShapeCombineRectangles_w, gxm_XShapeCombineRectangles)
+XEN_NARGIFY_1(gxm_XShapeQueryExtension_w, gxm_XShapeQueryExtension)
+XEN_NARGIFY_1(gxm_XShapeQueryVersion_w, gxm_XShapeQueryVersion)
+XEN_NARGIFY_2(gxm_XShapeQueryExtents_w, gxm_XShapeQueryExtents)
+XEN_NARGIFY_3(gxm_XShapeGetRectangles_w, gxm_XShapeGetRectangles)
+XEN_NARGIFY_5(gxm_XShapeOffsetShape_w, gxm_XShapeOffsetShape)
+XEN_NARGIFY_7(gxm_XShapeCombineRegion_w, gxm_XShapeCombineRegion)
+XEN_NARGIFY_7(gxm_XShapeCombineMask_w, gxm_XShapeCombineMask)
+XEN_NARGIFY_8(gxm_XShapeCombineShape_w, gxm_XShapeCombineShape)
+XEN_NARGIFY_9(gxm_XShapeCombineRectangles_w, gxm_XShapeCombineRectangles)
 #endif
 
-  XEN_NARGIFY_4(gxm_XSegment_w, gxm_XSegment)
-  XEN_NARGIFY_4(gxm_XRectangle_w, gxm_XRectangle)
-  XEN_ARGIFY_6(gxm_XColor_w, gxm_XColor)
-  XEN_NARGIFY_6(gxm_XArc_w, gxm_XArc)
-  XEN_NARGIFY_7(gxm_XWindowChanges_w, gxm_XWindowChanges)
-  XEN_VARGIFY(gxm_XSetWindowAttributes_w, gxm_XSetWindowAttributes)
-  XEN_NARGIFY_2(gxm_XPoint_w, gxm_XPoint)
-  XEN_NARGIFY_4(gxm_XTextItem_w, gxm_XTextItem)
-  XEN_NARGIFY_1(gxm_pixel_w, gxm_pixel)
-  XEN_NARGIFY_2(gxm_set_pixel_w, gxm_set_pixel)
-  XEN_NARGIFY_1(gxm_red_w, gxm_red)
-  XEN_NARGIFY_2(gxm_set_red_w, gxm_set_red)
-  XEN_NARGIFY_1(gxm_green_w, gxm_green)
-  XEN_NARGIFY_2(gxm_set_green_w, gxm_set_green)
-  XEN_NARGIFY_1(gxm_blue_w, gxm_blue)
-  XEN_NARGIFY_2(gxm_set_blue_w, gxm_set_blue)
-  XEN_NARGIFY_1(gxm_flags_w, gxm_flags)
-  XEN_NARGIFY_2(gxm_set_flags_w, gxm_set_flags)
-  XEN_NARGIFY_1(gxm_pad_w, gxm_pad)
-  XEN_NARGIFY_2(gxm_set_pad_w, gxm_set_pad)
-  XEN_NARGIFY_1(gxm_x_w, gxm_x)
-  XEN_NARGIFY_2(gxm_set_x_w, gxm_set_x)
-  XEN_NARGIFY_1(gxm_y_w, gxm_y)
-  XEN_NARGIFY_2(gxm_set_y_w, gxm_set_y)
-  XEN_NARGIFY_1(gxm_width_w, gxm_width)
-  XEN_NARGIFY_2(gxm_set_width_w, gxm_set_width)
-  XEN_NARGIFY_1(gxm_height_w, gxm_height)
-  XEN_NARGIFY_2(gxm_set_height_w, gxm_set_height)
-  XEN_NARGIFY_1(gxm_angle1_w, gxm_angle1)
-  XEN_NARGIFY_2(gxm_set_angle1_w, gxm_set_angle1)
-  XEN_NARGIFY_1(gxm_angle2_w, gxm_angle2)
-  XEN_NARGIFY_2(gxm_set_angle2_w, gxm_set_angle2)
-  XEN_NARGIFY_1(gxm_x1_w, gxm_x1)
-  XEN_NARGIFY_2(gxm_set_x1_w, gxm_set_x1)
-  XEN_NARGIFY_1(gxm_y1_w, gxm_y1)
-  XEN_NARGIFY_2(gxm_set_y1_w, gxm_set_y1)
-  XEN_NARGIFY_1(gxm_x2_w, gxm_x2)
-  XEN_NARGIFY_2(gxm_set_x2_w, gxm_set_x2)
-  XEN_NARGIFY_1(gxm_y2_w, gxm_y2)
-  XEN_NARGIFY_2(gxm_set_y2_w, gxm_set_y2)
-  XEN_NARGIFY_1(gxm_dashes_w, gxm_dashes)
-  XEN_NARGIFY_2(gxm_set_dashes_w, gxm_set_dashes)
-  XEN_NARGIFY_1(gxm_dash_offset_w, gxm_dash_offset)
-  XEN_NARGIFY_2(gxm_set_dash_offset_w, gxm_set_dash_offset)
-  XEN_NARGIFY_1(gxm_clip_mask_w, gxm_clip_mask)
-  XEN_NARGIFY_2(gxm_set_clip_mask_w, gxm_set_clip_mask)
-  XEN_NARGIFY_1(gxm_clip_y_origin_w, gxm_clip_y_origin)
-  XEN_NARGIFY_2(gxm_set_clip_y_origin_w, gxm_set_clip_y_origin)
-  XEN_NARGIFY_1(gxm_clip_x_origin_w, gxm_clip_x_origin)
-  XEN_NARGIFY_2(gxm_set_clip_x_origin_w, gxm_set_clip_x_origin)
-  XEN_NARGIFY_1(gxm_graphics_exposures_w, gxm_graphics_exposures)
-  XEN_NARGIFY_2(gxm_set_graphics_exposures_w, gxm_set_graphics_exposures)
-  XEN_NARGIFY_1(gxm_subwindow_mode_w, gxm_subwindow_mode)
-  XEN_NARGIFY_2(gxm_set_subwindow_mode_w, gxm_set_subwindow_mode)
-  XEN_NARGIFY_1(gxm_font_w, gxm_font)
-  XEN_NARGIFY_2(gxm_set_font_w, gxm_set_font)
-  XEN_NARGIFY_1(gxm_ts_y_origin_w, gxm_ts_y_origin)
-  XEN_NARGIFY_2(gxm_set_ts_y_origin_w, gxm_set_ts_y_origin)
-  XEN_NARGIFY_1(gxm_ts_x_origin_w, gxm_ts_x_origin)
-  XEN_NARGIFY_2(gxm_set_ts_x_origin_w, gxm_set_ts_x_origin)
-  XEN_NARGIFY_1(gxm_stipple_w, gxm_stipple)
-  XEN_NARGIFY_2(gxm_set_stipple_w, gxm_set_stipple)
-  XEN_NARGIFY_1(gxm_tile_w, gxm_tile)
-  XEN_NARGIFY_2(gxm_set_tile_w, gxm_set_tile)
-  XEN_NARGIFY_1(gxm_arc_mode_w, gxm_arc_mode)
-  XEN_NARGIFY_2(gxm_set_arc_mode_w, gxm_set_arc_mode)
-  XEN_NARGIFY_1(gxm_fill_rule_w, gxm_fill_rule)
-  XEN_NARGIFY_2(gxm_set_fill_rule_w, gxm_set_fill_rule)
-  XEN_NARGIFY_1(gxm_fill_style_w, gxm_fill_style)
-  XEN_NARGIFY_2(gxm_set_fill_style_w, gxm_set_fill_style)
-  XEN_NARGIFY_1(gxm_join_style_w, gxm_join_style)
-  XEN_NARGIFY_2(gxm_set_join_style_w, gxm_set_join_style)
-  XEN_NARGIFY_1(gxm_cap_style_w, gxm_cap_style)
-  XEN_NARGIFY_2(gxm_set_cap_style_w, gxm_set_cap_style)
-  XEN_NARGIFY_1(gxm_line_style_w, gxm_line_style)
-  XEN_NARGIFY_2(gxm_set_line_style_w, gxm_set_line_style)
-  XEN_NARGIFY_1(gxm_line_width_w, gxm_line_width)
-  XEN_NARGIFY_2(gxm_set_line_width_w, gxm_set_line_width)
-  XEN_NARGIFY_1(gxm_background_w, gxm_background)
-  XEN_NARGIFY_2(gxm_set_background_w, gxm_set_background)
-  XEN_NARGIFY_1(gxm_foreground_w, gxm_foreground)
-  XEN_NARGIFY_2(gxm_set_foreground_w, gxm_set_foreground)
-  XEN_NARGIFY_1(gxm_plane_mask_w, gxm_plane_mask)
-  XEN_NARGIFY_2(gxm_set_plane_mask_w, gxm_set_plane_mask)
-  XEN_NARGIFY_1(gxm_function_w, gxm_function)
-  XEN_NARGIFY_2(gxm_set_function_w, gxm_set_function)
-  XEN_NARGIFY_1(gxm_delta_w, gxm_delta)
-  XEN_NARGIFY_2(gxm_set_delta_w, gxm_set_delta)
-  XEN_NARGIFY_1(gxm_nchars_w, gxm_nchars)
-  XEN_NARGIFY_2(gxm_set_nchars_w, gxm_set_nchars)
-  XEN_NARGIFY_1(gxm_chars_w, gxm_chars)
-  XEN_NARGIFY_2(gxm_set_chars_w, gxm_set_chars)
-  XEN_NARGIFY_1(gxm_name_w, gxm_name)
-  XEN_NARGIFY_2(gxm_set_name_w, gxm_set_name)
-  XEN_NARGIFY_1(gxm_depth_w, gxm_depth)
-  XEN_NARGIFY_2(gxm_set_depth_w, gxm_set_depth)
-  XEN_NARGIFY_1(gxm_visual_w, gxm_visual)
-  XEN_NARGIFY_2(gxm_set_visual_w, gxm_set_visual)
+XEN_NARGIFY_4(gxm_XSegment_w, gxm_XSegment)
+XEN_NARGIFY_4(gxm_XRectangle_w, gxm_XRectangle)
+XEN_ARGIFY_6(gxm_XColor_w, gxm_XColor)
+XEN_NARGIFY_6(gxm_XArc_w, gxm_XArc)
+XEN_NARGIFY_7(gxm_XWindowChanges_w, gxm_XWindowChanges)
+XEN_VARGIFY(gxm_XSetWindowAttributes_w, gxm_XSetWindowAttributes)
+XEN_NARGIFY_2(gxm_XPoint_w, gxm_XPoint)
+XEN_NARGIFY_4(gxm_XTextItem_w, gxm_XTextItem)
+XEN_NARGIFY_1(gxm_pixel_w, gxm_pixel)
+XEN_NARGIFY_2(gxm_set_pixel_w, gxm_set_pixel)
+XEN_NARGIFY_1(gxm_red_w, gxm_red)
+XEN_NARGIFY_2(gxm_set_red_w, gxm_set_red)
+XEN_NARGIFY_1(gxm_green_w, gxm_green)
+XEN_NARGIFY_2(gxm_set_green_w, gxm_set_green)
+XEN_NARGIFY_1(gxm_blue_w, gxm_blue)
+XEN_NARGIFY_2(gxm_set_blue_w, gxm_set_blue)
+XEN_NARGIFY_1(gxm_flags_w, gxm_flags)
+XEN_NARGIFY_2(gxm_set_flags_w, gxm_set_flags)
+XEN_NARGIFY_1(gxm_pad_w, gxm_pad)
+XEN_NARGIFY_2(gxm_set_pad_w, gxm_set_pad)
+XEN_NARGIFY_1(gxm_x_w, gxm_x)
+XEN_NARGIFY_2(gxm_set_x_w, gxm_set_x)
+XEN_NARGIFY_1(gxm_y_w, gxm_y)
+XEN_NARGIFY_2(gxm_set_y_w, gxm_set_y)
+XEN_NARGIFY_1(gxm_width_w, gxm_width)
+XEN_NARGIFY_2(gxm_set_width_w, gxm_set_width)
+XEN_NARGIFY_1(gxm_height_w, gxm_height)
+XEN_NARGIFY_2(gxm_set_height_w, gxm_set_height)
+XEN_NARGIFY_1(gxm_angle1_w, gxm_angle1)
+XEN_NARGIFY_2(gxm_set_angle1_w, gxm_set_angle1)
+XEN_NARGIFY_1(gxm_angle2_w, gxm_angle2)
+XEN_NARGIFY_2(gxm_set_angle2_w, gxm_set_angle2)
+XEN_NARGIFY_1(gxm_x1_w, gxm_x1)
+XEN_NARGIFY_2(gxm_set_x1_w, gxm_set_x1)
+XEN_NARGIFY_1(gxm_y1_w, gxm_y1)
+XEN_NARGIFY_2(gxm_set_y1_w, gxm_set_y1)
+XEN_NARGIFY_1(gxm_x2_w, gxm_x2)
+XEN_NARGIFY_2(gxm_set_x2_w, gxm_set_x2)
+XEN_NARGIFY_1(gxm_y2_w, gxm_y2)
+XEN_NARGIFY_2(gxm_set_y2_w, gxm_set_y2)
+XEN_NARGIFY_1(gxm_dashes_w, gxm_dashes)
+XEN_NARGIFY_2(gxm_set_dashes_w, gxm_set_dashes)
+XEN_NARGIFY_1(gxm_dash_offset_w, gxm_dash_offset)
+XEN_NARGIFY_2(gxm_set_dash_offset_w, gxm_set_dash_offset)
+XEN_NARGIFY_1(gxm_clip_mask_w, gxm_clip_mask)
+XEN_NARGIFY_2(gxm_set_clip_mask_w, gxm_set_clip_mask)
+XEN_NARGIFY_1(gxm_clip_y_origin_w, gxm_clip_y_origin)
+XEN_NARGIFY_2(gxm_set_clip_y_origin_w, gxm_set_clip_y_origin)
+XEN_NARGIFY_1(gxm_clip_x_origin_w, gxm_clip_x_origin)
+XEN_NARGIFY_2(gxm_set_clip_x_origin_w, gxm_set_clip_x_origin)
+XEN_NARGIFY_1(gxm_graphics_exposures_w, gxm_graphics_exposures)
+XEN_NARGIFY_2(gxm_set_graphics_exposures_w, gxm_set_graphics_exposures)
+XEN_NARGIFY_1(gxm_subwindow_mode_w, gxm_subwindow_mode)
+XEN_NARGIFY_2(gxm_set_subwindow_mode_w, gxm_set_subwindow_mode)
+XEN_NARGIFY_1(gxm_font_w, gxm_font)
+XEN_NARGIFY_2(gxm_set_font_w, gxm_set_font)
+XEN_NARGIFY_1(gxm_ts_y_origin_w, gxm_ts_y_origin)
+XEN_NARGIFY_2(gxm_set_ts_y_origin_w, gxm_set_ts_y_origin)
+XEN_NARGIFY_1(gxm_ts_x_origin_w, gxm_ts_x_origin)
+XEN_NARGIFY_2(gxm_set_ts_x_origin_w, gxm_set_ts_x_origin)
+XEN_NARGIFY_1(gxm_stipple_w, gxm_stipple)
+XEN_NARGIFY_2(gxm_set_stipple_w, gxm_set_stipple)
+XEN_NARGIFY_1(gxm_tile_w, gxm_tile)
+XEN_NARGIFY_2(gxm_set_tile_w, gxm_set_tile)
+XEN_NARGIFY_1(gxm_arc_mode_w, gxm_arc_mode)
+XEN_NARGIFY_2(gxm_set_arc_mode_w, gxm_set_arc_mode)
+XEN_NARGIFY_1(gxm_fill_rule_w, gxm_fill_rule)
+XEN_NARGIFY_2(gxm_set_fill_rule_w, gxm_set_fill_rule)
+XEN_NARGIFY_1(gxm_fill_style_w, gxm_fill_style)
+XEN_NARGIFY_2(gxm_set_fill_style_w, gxm_set_fill_style)
+XEN_NARGIFY_1(gxm_join_style_w, gxm_join_style)
+XEN_NARGIFY_2(gxm_set_join_style_w, gxm_set_join_style)
+XEN_NARGIFY_1(gxm_cap_style_w, gxm_cap_style)
+XEN_NARGIFY_2(gxm_set_cap_style_w, gxm_set_cap_style)
+XEN_NARGIFY_1(gxm_line_style_w, gxm_line_style)
+XEN_NARGIFY_2(gxm_set_line_style_w, gxm_set_line_style)
+XEN_NARGIFY_1(gxm_line_width_w, gxm_line_width)
+XEN_NARGIFY_2(gxm_set_line_width_w, gxm_set_line_width)
+XEN_NARGIFY_1(gxm_background_w, gxm_background)
+XEN_NARGIFY_2(gxm_set_background_w, gxm_set_background)
+XEN_NARGIFY_1(gxm_foreground_w, gxm_foreground)
+XEN_NARGIFY_2(gxm_set_foreground_w, gxm_set_foreground)
+XEN_NARGIFY_1(gxm_plane_mask_w, gxm_plane_mask)
+XEN_NARGIFY_2(gxm_set_plane_mask_w, gxm_set_plane_mask)
+XEN_NARGIFY_1(gxm_function_w, gxm_function)
+XEN_NARGIFY_2(gxm_set_function_w, gxm_set_function)
+XEN_NARGIFY_1(gxm_delta_w, gxm_delta)
+XEN_NARGIFY_2(gxm_set_delta_w, gxm_set_delta)
+XEN_NARGIFY_1(gxm_nchars_w, gxm_nchars)
+XEN_NARGIFY_2(gxm_set_nchars_w, gxm_set_nchars)
+XEN_NARGIFY_1(gxm_chars_w, gxm_chars)
+XEN_NARGIFY_2(gxm_set_chars_w, gxm_set_chars)
+XEN_NARGIFY_1(gxm_name_w, gxm_name)
+XEN_NARGIFY_2(gxm_set_name_w, gxm_set_name)
+XEN_NARGIFY_1(gxm_depth_w, gxm_depth)
+XEN_NARGIFY_2(gxm_set_depth_w, gxm_set_depth)
+XEN_NARGIFY_1(gxm_visual_w, gxm_visual)
+XEN_NARGIFY_2(gxm_set_visual_w, gxm_set_visual)
 
-  XEN_NARGIFY_1(gxm_display_w, gxm_display)
-  XEN_NARGIFY_1(gxm_root_w, gxm_root)
-  XEN_NARGIFY_1(gxm_mwidth_w, gxm_mwidth)
-  XEN_NARGIFY_1(gxm_mheight_w, gxm_mheight)
-  XEN_NARGIFY_1(gxm_ndepths_w, gxm_ndepths)
-  XEN_NARGIFY_1(gxm_depths_w, gxm_depths)
-  XEN_NARGIFY_1(gxm_root_depth_w, gxm_root_depth)
-  XEN_NARGIFY_1(gxm_root_visual_w, gxm_root_visual)
-  XEN_NARGIFY_1(gxm_default_gc_w, gxm_default_gc)
-  XEN_NARGIFY_1(gxm_cmap_w, gxm_cmap)
-  XEN_NARGIFY_1(gxm_white_pixel_w, gxm_white_pixel)
-  XEN_NARGIFY_1(gxm_black_pixel_w, gxm_black_pixel)
-  XEN_NARGIFY_1(gxm_max_maps_w, gxm_max_maps)
-  XEN_NARGIFY_1(gxm_min_maps_w, gxm_min_maps)
-  XEN_NARGIFY_1(gxm_backing_store_w, gxm_backing_store)
-  XEN_NARGIFY_1(gxm_save_unders_w, gxm_save_unders)
-  XEN_NARGIFY_1(gxm_root_input_mask_w, gxm_root_input_mask)
-  XEN_NARGIFY_1(gxm_type_w, gxm_type)
-  XEN_NARGIFY_1(gxm_serial_w, gxm_serial)
-  XEN_NARGIFY_1(gxm_send_event_w, gxm_send_event)
-  XEN_NARGIFY_1(gxm_window_w, gxm_window)
-  XEN_NARGIFY_1(gxm_subwindow_w, gxm_subwindow)
-  XEN_NARGIFY_1(gxm_time_w, gxm_time)
-  XEN_NARGIFY_1(gxm_x_root_w, gxm_x_root)
-  XEN_NARGIFY_1(gxm_y_root_w, gxm_y_root)
-  XEN_NARGIFY_1(gxm_state_w, gxm_state)
-  XEN_NARGIFY_1(gxm_keycode_w, gxm_keycode)
-  XEN_NARGIFY_1(gxm_same_screen_w, gxm_same_screen)
-  XEN_NARGIFY_1(gxm_button_w, gxm_button)
-  XEN_NARGIFY_1(gxm_is_hint_w, gxm_is_hint)
-  XEN_NARGIFY_1(gxm_mode_w, gxm_mode)
-  XEN_NARGIFY_1(gxm_detail_w, gxm_detail)
-  XEN_NARGIFY_1(gxm_focus_w, gxm_focus)
-  XEN_NARGIFY_1(gxm_key_vector_w, gxm_key_vector)
-  XEN_NARGIFY_1(gxm_count_w, gxm_count)
-  XEN_NARGIFY_1(gxm_drawable_w, gxm_drawable)
-  XEN_NARGIFY_1(gxm_major_code_w, gxm_major_code)
-  XEN_NARGIFY_1(gxm_minor_code_w, gxm_minor_code)
-  XEN_NARGIFY_1(gxm_parent_w, gxm_parent)
-  XEN_NARGIFY_1(gxm_border_width_w, gxm_border_width)
-  XEN_NARGIFY_1(gxm_override_redirect_w, gxm_override_redirect)
-  XEN_NARGIFY_1(gxm_event_w, gxm_event)
-  XEN_NARGIFY_1(gxm_from_configure_w, gxm_from_configure)
-  XEN_NARGIFY_1(gxm_above_w, gxm_above)
-  XEN_NARGIFY_1(gxm_value_mask_w, gxm_value_mask)
-  XEN_NARGIFY_1(gxm_place_w, gxm_place)
-  XEN_NARGIFY_1(gxm_atom_w, gxm_atom)
-  XEN_NARGIFY_1(gxm_selection_w, gxm_selection)
-  XEN_NARGIFY_1(gxm_owner_w, gxm_owner)
-  XEN_NARGIFY_1(gxm_requestor_w, gxm_requestor)
-  XEN_NARGIFY_1(gxm_target_w, gxm_target)
-  XEN_NARGIFY_1(gxm_property_w, gxm_property)
-  XEN_NARGIFY_1(gxm_new_w, gxm_new)
-  XEN_NARGIFY_1(gxm_message_type_w, gxm_message_type)
-  XEN_NARGIFY_1(gxm_format_w, gxm_format)
-  XEN_NARGIFY_1(gxm_request_w, gxm_request)
-  XEN_NARGIFY_1(gxm_first_keycode_w, gxm_first_keycode)
-  XEN_NARGIFY_1(gxm_resourceid_w, gxm_resourceid)
-  XEN_NARGIFY_1(gxm_error_code_w, gxm_error_code)
-  XEN_NARGIFY_1(gxm_request_code_w, gxm_request_code)
-  XEN_NARGIFY_1(gxm_lbearing_w, gxm_lbearing)
-  XEN_NARGIFY_1(gxm_rbearing_w, gxm_rbearing)
-  XEN_NARGIFY_1(gxm_ascent_w, gxm_ascent)
-  XEN_NARGIFY_1(gxm_descent_w, gxm_descent)
-  XEN_NARGIFY_1(gxm_attributes_w, gxm_attributes)
-  XEN_NARGIFY_1(gxm_card32_w, gxm_card32)
-  XEN_NARGIFY_1(gxm_fid_w, gxm_fid)
-  XEN_NARGIFY_1(gxm_properties_w, gxm_properties)
-  XEN_NARGIFY_1(gxm_min_bounds_w, gxm_min_bounds)
-  XEN_NARGIFY_1(gxm_max_bounds_w, gxm_max_bounds)
-  XEN_NARGIFY_1(gxm_per_char_w, gxm_per_char)
-  XEN_NARGIFY_1(gxm_input_w, gxm_input)
-  XEN_NARGIFY_1(gxm_initial_state_w, gxm_initial_state)
-  XEN_NARGIFY_1(gxm_icon_pixmap_w, gxm_icon_pixmap)
-  XEN_NARGIFY_1(gxm_icon_window_w, gxm_icon_window)
-  XEN_NARGIFY_1(gxm_icon_x_w, gxm_icon_x)
-  XEN_NARGIFY_1(gxm_icon_y_w, gxm_icon_y)
-  XEN_NARGIFY_1(gxm_icon_mask_w, gxm_icon_mask)
-  XEN_NARGIFY_1(gxm_window_group_w, gxm_window_group)
-  XEN_NARGIFY_1(gxm_visualid_w, gxm_visualid)
-  XEN_NARGIFY_1(gxm_class_w, gxm_class)
-  XEN_NARGIFY_1(gxm_red_mask_w, gxm_red_mask)
-  XEN_NARGIFY_1(gxm_green_mask_w, gxm_green_mask)
-  XEN_NARGIFY_1(gxm_blue_mask_w, gxm_blue_mask)
-  XEN_NARGIFY_1(gxm_bits_per_rgb_w, gxm_bits_per_rgb)
-  XEN_NARGIFY_1(gxm_map_entries_w, gxm_map_entries)
-  XEN_NARGIFY_1(gxm_colormap_size_w, gxm_colormap_size)
-  XEN_NARGIFY_1(gxm_nvisuals_w, gxm_nvisuals)
-  XEN_NARGIFY_1(gxm_visuals_w, gxm_visuals)
-  XEN_NARGIFY_1(gxm_bits_per_pixel_w, gxm_bits_per_pixel)
-  XEN_NARGIFY_1(gxm_background_pixmap_w, gxm_background_pixmap)
-  XEN_NARGIFY_1(gxm_background_pixel_w, gxm_background_pixel)
-  XEN_NARGIFY_1(gxm_border_pixmap_w, gxm_border_pixmap)
-  XEN_NARGIFY_1(gxm_border_pixel_w, gxm_border_pixel)
-  XEN_NARGIFY_1(gxm_bit_gravity_w, gxm_bit_gravity)
-  XEN_NARGIFY_1(gxm_win_gravity_w, gxm_win_gravity)
-  XEN_NARGIFY_1(gxm_backing_planes_w, gxm_backing_planes)
-  XEN_NARGIFY_1(gxm_backing_pixel_w, gxm_backing_pixel)
-  XEN_NARGIFY_1(gxm_save_under_w, gxm_save_under)
-  XEN_NARGIFY_1(gxm_event_mask_w, gxm_event_mask)
-  XEN_NARGIFY_1(gxm_do_not_propagate_mask_w, gxm_do_not_propagate_mask)
-  XEN_NARGIFY_1(gxm_cursor_w, gxm_cursor)
-  XEN_NARGIFY_1(gxm_map_installed_w, gxm_map_installed)
-  XEN_NARGIFY_1(gxm_map_state_w, gxm_map_state)
-  XEN_NARGIFY_1(gxm_all_event_masks_w, gxm_all_event_masks)
-  XEN_NARGIFY_1(gxm_your_event_mask_w, gxm_your_event_mask)
-  XEN_NARGIFY_1(gxm_screen_w, gxm_screen)
-  XEN_NARGIFY_1(gxm_xoffset_w, gxm_xoffset)
-  XEN_NARGIFY_1(gxm_byte_order_w, gxm_byte_order)
-  XEN_NARGIFY_1(gxm_bitmap_unit_w, gxm_bitmap_unit)
-  XEN_NARGIFY_1(gxm_bitmap_bit_order_w, gxm_bitmap_bit_order)
-  XEN_NARGIFY_1(gxm_bitmap_pad_w, gxm_bitmap_pad)
-  XEN_NARGIFY_1(gxm_bytes_per_line_w, gxm_bytes_per_line)
-  XEN_NARGIFY_1(gxm_obdata_w, gxm_obdata)
-  XEN_NARGIFY_1(gxm_sibling_w, gxm_sibling)
-  XEN_NARGIFY_1(gxm_stack_mode_w, gxm_stack_mode)
+XEN_NARGIFY_1(gxm_display_w, gxm_display)
+XEN_NARGIFY_1(gxm_root_w, gxm_root)
+XEN_NARGIFY_1(gxm_mwidth_w, gxm_mwidth)
+XEN_NARGIFY_1(gxm_mheight_w, gxm_mheight)
+XEN_NARGIFY_1(gxm_ndepths_w, gxm_ndepths)
+XEN_NARGIFY_1(gxm_depths_w, gxm_depths)
+XEN_NARGIFY_1(gxm_root_depth_w, gxm_root_depth)
+XEN_NARGIFY_1(gxm_root_visual_w, gxm_root_visual)
+XEN_NARGIFY_1(gxm_default_gc_w, gxm_default_gc)
+XEN_NARGIFY_1(gxm_cmap_w, gxm_cmap)
+XEN_NARGIFY_1(gxm_white_pixel_w, gxm_white_pixel)
+XEN_NARGIFY_1(gxm_black_pixel_w, gxm_black_pixel)
+XEN_NARGIFY_1(gxm_max_maps_w, gxm_max_maps)
+XEN_NARGIFY_1(gxm_min_maps_w, gxm_min_maps)
+XEN_NARGIFY_1(gxm_backing_store_w, gxm_backing_store)
+XEN_NARGIFY_1(gxm_save_unders_w, gxm_save_unders)
+XEN_NARGIFY_1(gxm_root_input_mask_w, gxm_root_input_mask)
+XEN_NARGIFY_1(gxm_type_w, gxm_type)
+XEN_NARGIFY_1(gxm_serial_w, gxm_serial)
+XEN_NARGIFY_1(gxm_send_event_w, gxm_send_event)
+XEN_NARGIFY_1(gxm_window_w, gxm_window)
+XEN_NARGIFY_1(gxm_subwindow_w, gxm_subwindow)
+XEN_NARGIFY_1(gxm_time_w, gxm_time)
+XEN_NARGIFY_1(gxm_x_root_w, gxm_x_root)
+XEN_NARGIFY_1(gxm_y_root_w, gxm_y_root)
+XEN_NARGIFY_1(gxm_state_w, gxm_state)
+XEN_NARGIFY_1(gxm_keycode_w, gxm_keycode)
+XEN_NARGIFY_1(gxm_same_screen_w, gxm_same_screen)
+XEN_NARGIFY_1(gxm_button_w, gxm_button)
+XEN_NARGIFY_1(gxm_is_hint_w, gxm_is_hint)
+XEN_NARGIFY_1(gxm_mode_w, gxm_mode)
+XEN_NARGIFY_1(gxm_detail_w, gxm_detail)
+XEN_NARGIFY_1(gxm_focus_w, gxm_focus)
+XEN_NARGIFY_1(gxm_key_vector_w, gxm_key_vector)
+XEN_NARGIFY_1(gxm_count_w, gxm_count)
+XEN_NARGIFY_1(gxm_drawable_w, gxm_drawable)
+XEN_NARGIFY_1(gxm_major_code_w, gxm_major_code)
+XEN_NARGIFY_1(gxm_minor_code_w, gxm_minor_code)
+XEN_NARGIFY_1(gxm_parent_w, gxm_parent)
+XEN_NARGIFY_1(gxm_border_width_w, gxm_border_width)
+XEN_NARGIFY_1(gxm_override_redirect_w, gxm_override_redirect)
+XEN_NARGIFY_1(gxm_event_w, gxm_event)
+XEN_NARGIFY_1(gxm_from_configure_w, gxm_from_configure)
+XEN_NARGIFY_1(gxm_above_w, gxm_above)
+XEN_NARGIFY_1(gxm_value_mask_w, gxm_value_mask)
+XEN_NARGIFY_1(gxm_place_w, gxm_place)
+XEN_NARGIFY_1(gxm_atom_w, gxm_atom)
+XEN_NARGIFY_1(gxm_selection_w, gxm_selection)
+XEN_NARGIFY_1(gxm_owner_w, gxm_owner)
+XEN_NARGIFY_1(gxm_requestor_w, gxm_requestor)
+XEN_NARGIFY_1(gxm_target_w, gxm_target)
+XEN_NARGIFY_1(gxm_property_w, gxm_property)
+XEN_NARGIFY_1(gxm_new_w, gxm_new)
+XEN_NARGIFY_1(gxm_message_type_w, gxm_message_type)
+XEN_NARGIFY_1(gxm_format_w, gxm_format)
+XEN_NARGIFY_1(gxm_request_w, gxm_request)
+XEN_NARGIFY_1(gxm_first_keycode_w, gxm_first_keycode)
+XEN_NARGIFY_1(gxm_resourceid_w, gxm_resourceid)
+XEN_NARGIFY_1(gxm_error_code_w, gxm_error_code)
+XEN_NARGIFY_1(gxm_request_code_w, gxm_request_code)
+XEN_NARGIFY_1(gxm_lbearing_w, gxm_lbearing)
+XEN_NARGIFY_1(gxm_rbearing_w, gxm_rbearing)
+XEN_NARGIFY_1(gxm_ascent_w, gxm_ascent)
+XEN_NARGIFY_1(gxm_descent_w, gxm_descent)
+XEN_NARGIFY_1(gxm_attributes_w, gxm_attributes)
+XEN_NARGIFY_1(gxm_card32_w, gxm_card32)
+XEN_NARGIFY_1(gxm_fid_w, gxm_fid)
+XEN_NARGIFY_1(gxm_properties_w, gxm_properties)
+XEN_NARGIFY_1(gxm_min_bounds_w, gxm_min_bounds)
+XEN_NARGIFY_1(gxm_max_bounds_w, gxm_max_bounds)
+XEN_NARGIFY_1(gxm_per_char_w, gxm_per_char)
+XEN_NARGIFY_1(gxm_input_w, gxm_input)
+XEN_NARGIFY_1(gxm_initial_state_w, gxm_initial_state)
+XEN_NARGIFY_1(gxm_icon_pixmap_w, gxm_icon_pixmap)
+XEN_NARGIFY_1(gxm_icon_window_w, gxm_icon_window)
+XEN_NARGIFY_1(gxm_icon_x_w, gxm_icon_x)
+XEN_NARGIFY_1(gxm_icon_y_w, gxm_icon_y)
+XEN_NARGIFY_1(gxm_icon_mask_w, gxm_icon_mask)
+XEN_NARGIFY_1(gxm_window_group_w, gxm_window_group)
+XEN_NARGIFY_1(gxm_visualid_w, gxm_visualid)
+XEN_NARGIFY_1(gxm_class_w, gxm_class)
+XEN_NARGIFY_1(gxm_red_mask_w, gxm_red_mask)
+XEN_NARGIFY_1(gxm_green_mask_w, gxm_green_mask)
+XEN_NARGIFY_1(gxm_blue_mask_w, gxm_blue_mask)
+XEN_NARGIFY_1(gxm_bits_per_rgb_w, gxm_bits_per_rgb)
+XEN_NARGIFY_1(gxm_map_entries_w, gxm_map_entries)
+XEN_NARGIFY_1(gxm_colormap_size_w, gxm_colormap_size)
+XEN_NARGIFY_1(gxm_nvisuals_w, gxm_nvisuals)
+XEN_NARGIFY_1(gxm_visuals_w, gxm_visuals)
+XEN_NARGIFY_1(gxm_bits_per_pixel_w, gxm_bits_per_pixel)
+XEN_NARGIFY_1(gxm_background_pixmap_w, gxm_background_pixmap)
+XEN_NARGIFY_1(gxm_background_pixel_w, gxm_background_pixel)
+XEN_NARGIFY_1(gxm_border_pixmap_w, gxm_border_pixmap)
+XEN_NARGIFY_1(gxm_border_pixel_w, gxm_border_pixel)
+XEN_NARGIFY_1(gxm_bit_gravity_w, gxm_bit_gravity)
+XEN_NARGIFY_1(gxm_win_gravity_w, gxm_win_gravity)
+XEN_NARGIFY_1(gxm_backing_planes_w, gxm_backing_planes)
+XEN_NARGIFY_1(gxm_backing_pixel_w, gxm_backing_pixel)
+XEN_NARGIFY_1(gxm_save_under_w, gxm_save_under)
+XEN_NARGIFY_1(gxm_event_mask_w, gxm_event_mask)
+XEN_NARGIFY_1(gxm_do_not_propagate_mask_w, gxm_do_not_propagate_mask)
+XEN_NARGIFY_1(gxm_cursor_w, gxm_cursor)
+XEN_NARGIFY_1(gxm_map_installed_w, gxm_map_installed)
+XEN_NARGIFY_1(gxm_map_state_w, gxm_map_state)
+XEN_NARGIFY_1(gxm_all_event_masks_w, gxm_all_event_masks)
+XEN_NARGIFY_1(gxm_your_event_mask_w, gxm_your_event_mask)
+XEN_NARGIFY_1(gxm_screen_w, gxm_screen)
+XEN_NARGIFY_1(gxm_xoffset_w, gxm_xoffset)
+XEN_NARGIFY_1(gxm_byte_order_w, gxm_byte_order)
+XEN_NARGIFY_1(gxm_bitmap_unit_w, gxm_bitmap_unit)
+XEN_NARGIFY_1(gxm_bitmap_bit_order_w, gxm_bitmap_bit_order)
+XEN_NARGIFY_1(gxm_bitmap_pad_w, gxm_bitmap_pad)
+XEN_NARGIFY_1(gxm_bytes_per_line_w, gxm_bytes_per_line)
+XEN_NARGIFY_1(gxm_obdata_w, gxm_obdata)
+XEN_NARGIFY_1(gxm_sibling_w, gxm_sibling)
+XEN_NARGIFY_1(gxm_stack_mode_w, gxm_stack_mode)
  
-  XEN_NARGIFY_1(gxm_red_max_w, gxm_red_max)
-  XEN_NARGIFY_1(gxm_red_mult_w, gxm_red_mult)
-  XEN_NARGIFY_1(gxm_green_max_w, gxm_green_max)
-  XEN_NARGIFY_1(gxm_green_mult_w, gxm_green_mult)
-  XEN_NARGIFY_1(gxm_blue_max_w, gxm_blue_max)
-  XEN_NARGIFY_1(gxm_blue_mult_w, gxm_blue_mult)
-  XEN_NARGIFY_1(gxm_base_pixel_w, gxm_base_pixel)
-  XEN_NARGIFY_1(gxm_killid_w, gxm_killid)
-  XEN_NARGIFY_1(gxm_data_w, gxm_data)
+XEN_NARGIFY_1(gxm_red_max_w, gxm_red_max)
+XEN_NARGIFY_1(gxm_red_mult_w, gxm_red_mult)
+XEN_NARGIFY_1(gxm_green_max_w, gxm_green_max)
+XEN_NARGIFY_1(gxm_green_mult_w, gxm_green_mult)
+XEN_NARGIFY_1(gxm_blue_max_w, gxm_blue_max)
+XEN_NARGIFY_1(gxm_blue_mult_w, gxm_blue_mult)
+XEN_NARGIFY_1(gxm_base_pixel_w, gxm_base_pixel)
+XEN_NARGIFY_1(gxm_killid_w, gxm_killid)
+XEN_NARGIFY_1(gxm_data_w, gxm_data)
 
-  XEN_NARGIFY_2(gxm_set_request_code_w, gxm_set_request_code)
-  XEN_NARGIFY_2(gxm_set_error_code_w, gxm_set_error_code)
-  XEN_NARGIFY_2(gxm_set_first_keycode_w, gxm_set_first_keycode)
-  XEN_NARGIFY_2(gxm_set_request_w, gxm_set_request)
-  XEN_NARGIFY_2(gxm_set_resourceid_w, gxm_set_resourceid)
-  XEN_NARGIFY_2(gxm_set_format_w, gxm_set_format)
-  XEN_NARGIFY_2(gxm_set_message_type_w, gxm_set_message_type)
-  XEN_NARGIFY_2(gxm_set_new_w, gxm_set_new)
-  XEN_NARGIFY_2(gxm_set_property_w, gxm_set_property)
-  XEN_NARGIFY_2(gxm_set_display_w, gxm_set_display)
-  XEN_NARGIFY_2(gxm_set_target_w, gxm_set_target)
-  XEN_NARGIFY_2(gxm_set_requestor_w, gxm_set_requestor)
-  XEN_NARGIFY_2(gxm_set_owner_w, gxm_set_owner)
-  XEN_NARGIFY_2(gxm_set_selection_w, gxm_set_selection)
-  XEN_NARGIFY_2(gxm_set_atom_w, gxm_set_atom)
-  XEN_NARGIFY_2(gxm_set_place_w, gxm_set_place)
-  XEN_NARGIFY_2(gxm_set_value_mask_w, gxm_set_value_mask)
-  XEN_NARGIFY_2(gxm_set_above_w, gxm_set_above)
-  XEN_NARGIFY_2(gxm_set_from_configure_w, gxm_set_from_configure)
-  XEN_NARGIFY_2(gxm_set_event_w, gxm_set_event)
-  XEN_NARGIFY_2(gxm_set_override_redirect_w, gxm_set_override_redirect)
-  XEN_NARGIFY_2(gxm_set_border_width_w, gxm_set_border_width)
-  XEN_NARGIFY_2(gxm_set_parent_w, gxm_set_parent)
-  XEN_NARGIFY_2(gxm_set_minor_code_w, gxm_set_minor_code)
-  XEN_NARGIFY_2(gxm_set_major_code_w, gxm_set_major_code)
-  XEN_NARGIFY_2(gxm_set_drawable_w, gxm_set_drawable)
-  XEN_NARGIFY_2(gxm_set_count_w, gxm_set_count)
-  XEN_NARGIFY_2(gxm_set_key_vector_w, gxm_set_key_vector)
-  XEN_NARGIFY_2(gxm_set_focus_w, gxm_set_focus)
-  XEN_NARGIFY_2(gxm_set_detail_w, gxm_set_detail)
-  XEN_NARGIFY_2(gxm_set_mode_w, gxm_set_mode)
-  XEN_NARGIFY_2(gxm_set_is_hint_w, gxm_set_is_hint)
-  XEN_NARGIFY_2(gxm_set_button_w, gxm_set_button)
-  XEN_NARGIFY_2(gxm_set_same_screen_w, gxm_set_same_screen)
-  XEN_NARGIFY_2(gxm_set_keycode_w, gxm_set_keycode)
-  XEN_NARGIFY_2(gxm_set_state_w, gxm_set_state)
-  XEN_NARGIFY_2(gxm_set_y_root_w, gxm_set_y_root)
-  XEN_NARGIFY_2(gxm_set_x_root_w, gxm_set_x_root)
-  XEN_NARGIFY_2(gxm_set_root_w, gxm_set_root)
-  XEN_NARGIFY_2(gxm_set_time_w, gxm_set_time)
-  XEN_NARGIFY_2(gxm_set_subwindow_w, gxm_set_subwindow)
-  XEN_NARGIFY_2(gxm_set_window_w, gxm_set_window)
-  XEN_NARGIFY_2(gxm_set_send_event_w, gxm_set_send_event)
-  XEN_NARGIFY_2(gxm_set_serial_w, gxm_set_serial)
-  XEN_NARGIFY_2(gxm_set_type_w, gxm_set_type)
-  XEN_NARGIFY_1(gxm_colormap_w, gxm_colormap)
-  XEN_NARGIFY_2(gxm_set_colormap_w, gxm_set_colormap)
+XEN_NARGIFY_2(gxm_set_request_code_w, gxm_set_request_code)
+XEN_NARGIFY_2(gxm_set_error_code_w, gxm_set_error_code)
+XEN_NARGIFY_2(gxm_set_first_keycode_w, gxm_set_first_keycode)
+XEN_NARGIFY_2(gxm_set_request_w, gxm_set_request)
+XEN_NARGIFY_2(gxm_set_resourceid_w, gxm_set_resourceid)
+XEN_NARGIFY_2(gxm_set_format_w, gxm_set_format)
+XEN_NARGIFY_2(gxm_set_message_type_w, gxm_set_message_type)
+XEN_NARGIFY_2(gxm_set_new_w, gxm_set_new)
+XEN_NARGIFY_2(gxm_set_property_w, gxm_set_property)
+XEN_NARGIFY_2(gxm_set_display_w, gxm_set_display)
+XEN_NARGIFY_2(gxm_set_target_w, gxm_set_target)
+XEN_NARGIFY_2(gxm_set_requestor_w, gxm_set_requestor)
+XEN_NARGIFY_2(gxm_set_owner_w, gxm_set_owner)
+XEN_NARGIFY_2(gxm_set_selection_w, gxm_set_selection)
+XEN_NARGIFY_2(gxm_set_atom_w, gxm_set_atom)
+XEN_NARGIFY_2(gxm_set_place_w, gxm_set_place)
+XEN_NARGIFY_2(gxm_set_value_mask_w, gxm_set_value_mask)
+XEN_NARGIFY_2(gxm_set_above_w, gxm_set_above)
+XEN_NARGIFY_2(gxm_set_from_configure_w, gxm_set_from_configure)
+XEN_NARGIFY_2(gxm_set_event_w, gxm_set_event)
+XEN_NARGIFY_2(gxm_set_override_redirect_w, gxm_set_override_redirect)
+XEN_NARGIFY_2(gxm_set_border_width_w, gxm_set_border_width)
+XEN_NARGIFY_2(gxm_set_parent_w, gxm_set_parent)
+XEN_NARGIFY_2(gxm_set_minor_code_w, gxm_set_minor_code)
+XEN_NARGIFY_2(gxm_set_major_code_w, gxm_set_major_code)
+XEN_NARGIFY_2(gxm_set_drawable_w, gxm_set_drawable)
+XEN_NARGIFY_2(gxm_set_count_w, gxm_set_count)
+XEN_NARGIFY_2(gxm_set_key_vector_w, gxm_set_key_vector)
+XEN_NARGIFY_2(gxm_set_focus_w, gxm_set_focus)
+XEN_NARGIFY_2(gxm_set_detail_w, gxm_set_detail)
+XEN_NARGIFY_2(gxm_set_mode_w, gxm_set_mode)
+XEN_NARGIFY_2(gxm_set_is_hint_w, gxm_set_is_hint)
+XEN_NARGIFY_2(gxm_set_button_w, gxm_set_button)
+XEN_NARGIFY_2(gxm_set_same_screen_w, gxm_set_same_screen)
+XEN_NARGIFY_2(gxm_set_keycode_w, gxm_set_keycode)
+XEN_NARGIFY_2(gxm_set_state_w, gxm_set_state)
+XEN_NARGIFY_2(gxm_set_y_root_w, gxm_set_y_root)
+XEN_NARGIFY_2(gxm_set_x_root_w, gxm_set_x_root)
+XEN_NARGIFY_2(gxm_set_root_w, gxm_set_root)
+XEN_NARGIFY_2(gxm_set_time_w, gxm_set_time)
+XEN_NARGIFY_2(gxm_set_subwindow_w, gxm_set_subwindow)
+XEN_NARGIFY_2(gxm_set_window_w, gxm_set_window)
+XEN_NARGIFY_2(gxm_set_send_event_w, gxm_set_send_event)
+XEN_NARGIFY_2(gxm_set_serial_w, gxm_set_serial)
+XEN_NARGIFY_2(gxm_set_type_w, gxm_set_type)
+XEN_NARGIFY_1(gxm_colormap_w, gxm_colormap)
+XEN_NARGIFY_2(gxm_set_colormap_w, gxm_set_colormap)
 
-  XEN_NARGIFY_2(gxm_set_input_w, gxm_set_input)
-  XEN_NARGIFY_2(gxm_set_initial_state_w, gxm_set_initial_state)
+XEN_NARGIFY_2(gxm_set_input_w, gxm_set_input)
+XEN_NARGIFY_2(gxm_set_initial_state_w, gxm_set_initial_state)
 
-  XEN_NARGIFY_1(gxm_min_height_w, gxm_min_height)
-  XEN_NARGIFY_1(gxm_max_height_w, gxm_max_height)
-  XEN_NARGIFY_1(gxm_min_width_w, gxm_min_width)
-  XEN_NARGIFY_1(gxm_max_width_w, gxm_max_width)
-  XEN_NARGIFY_1(gxm_height_inc_w, gxm_height_inc)
-  XEN_NARGIFY_1(gxm_width_inc_w, gxm_width_inc)
+XEN_NARGIFY_1(gxm_min_height_w, gxm_min_height)
+XEN_NARGIFY_1(gxm_max_height_w, gxm_max_height)
+XEN_NARGIFY_1(gxm_min_width_w, gxm_min_width)
+XEN_NARGIFY_1(gxm_max_width_w, gxm_max_width)
+XEN_NARGIFY_1(gxm_height_inc_w, gxm_height_inc)
+XEN_NARGIFY_1(gxm_width_inc_w, gxm_width_inc)
 
-  XEN_NARGIFY_2(gxm_set_data_w, gxm_set_data)
-  XEN_NARGIFY_2(gxm_set_backing_store_w, gxm_set_backing_store)
-  XEN_NARGIFY_2(gxm_set_background_pixel_w, gxm_set_background_pixel)
-  XEN_NARGIFY_2(gxm_set_border_pixel_w, gxm_set_border_pixel)
-  XEN_NARGIFY_2(gxm_set_bit_gravity_w, gxm_set_bit_gravity)
-  XEN_NARGIFY_2(gxm_set_save_under_w, gxm_set_save_under)
-  XEN_NARGIFY_2(gxm_set_event_mask_w, gxm_set_event_mask)
-  XEN_NARGIFY_2(gxm_set_cursor_w, gxm_set_cursor)
+XEN_NARGIFY_2(gxm_set_data_w, gxm_set_data)
+XEN_NARGIFY_2(gxm_set_backing_store_w, gxm_set_backing_store)
+XEN_NARGIFY_2(gxm_set_background_pixel_w, gxm_set_background_pixel)
+XEN_NARGIFY_2(gxm_set_border_pixel_w, gxm_set_border_pixel)
+XEN_NARGIFY_2(gxm_set_bit_gravity_w, gxm_set_bit_gravity)
+XEN_NARGIFY_2(gxm_set_save_under_w, gxm_set_save_under)
+XEN_NARGIFY_2(gxm_set_event_mask_w, gxm_set_event_mask)
+XEN_NARGIFY_2(gxm_set_cursor_w, gxm_set_cursor)
 
-  XEN_NARGIFY_2(gxm_set_set_w, gxm_set_set)
-  XEN_NARGIFY_2(gxm_set_click_count_w, gxm_set_click_count)
-  XEN_NARGIFY_2(gxm_set_length_w, gxm_set_length)
-  XEN_NARGIFY_1(gxm_ptr_w, gxm_ptr)
-  XEN_NARGIFY_2(gxm_set_ptr_w, gxm_set_ptr)
-  XEN_NARGIFY_2(gxm_set_reason_w, gxm_set_reason)
-  XEN_NARGIFY_1(gxm_page_number_w, gxm_page_number)
-  XEN_NARGIFY_1(gxm_page_widget_w, gxm_page_widget)
-  XEN_NARGIFY_1(gxm_status_area_widget_w, gxm_status_area_widget)
-  XEN_NARGIFY_1(gxm_major_tab_widget_w, gxm_major_tab_widget)
-  XEN_NARGIFY_1(gxm_minor_tab_widget_w, gxm_minor_tab_widget)
-  XEN_NARGIFY_1(gxm_source_data_w, gxm_source_data)
-  XEN_NARGIFY_1(gxm_location_data_w, gxm_location_data)
-  XEN_NARGIFY_1(gxm_parm_w, gxm_parm)
-  XEN_NARGIFY_1(gxm_parm_format_w, gxm_parm_format)
-  XEN_NARGIFY_1(gxm_parm_length_w, gxm_parm_length)
-  XEN_NARGIFY_1(gxm_parm_type_w, gxm_parm_type)
-  XEN_NARGIFY_1(gxm_transfer_id_w, gxm_transfer_id)
-  XEN_NARGIFY_1(gxm_destination_data_w, gxm_destination_data)
-  XEN_NARGIFY_1(gxm_remaining_w, gxm_remaining)
-  XEN_NARGIFY_1(gxm_item_or_text_w, gxm_item_or_text)
-  XEN_NARGIFY_1(gxm_auto_selection_type_w, gxm_auto_selection_type)
-  XEN_NARGIFY_1(gxm_new_outline_state_w, gxm_new_outline_state)
-  XEN_NARGIFY_1(gxm_prev_page_number_w, gxm_prev_page_number)
-  XEN_NARGIFY_1(gxm_prev_page_widget_w, gxm_prev_page_widget)
-  XEN_NARGIFY_1(gxm_rendition_w, gxm_rendition)
-  XEN_NARGIFY_1(gxm_render_table_w, gxm_render_table)
-  XEN_NARGIFY_1(gxm_crossed_boundary_w, gxm_crossed_boundary)
-  XEN_NARGIFY_1(gxm_client_data_w, gxm_client_data)
-  XEN_NARGIFY_1(gxm_status_w, gxm_status)
-  XEN_NARGIFY_1(gxm_font_name_w, gxm_font_name)
-  XEN_NARGIFY_1(gxm_tag_w, gxm_tag)
-  XEN_NARGIFY_1(gxm_traversal_destination_w, gxm_traversal_destination)
-  XEN_NARGIFY_1(gxm_dragProtocolStyle_w, gxm_dragProtocolStyle)
-  XEN_NARGIFY_1(gxm_direction_w, gxm_direction)
-  XEN_NARGIFY_1(gxm_reason_w, gxm_reason)
-  XEN_NARGIFY_1(gxm_timeStamp_w, gxm_timeStamp)
-  XEN_NARGIFY_1(gxm_operation_w, gxm_operation )
-  XEN_NARGIFY_2(gxm_set_operation_w, gxm_set_operation)
-  XEN_NARGIFY_1(gxm_operations_w, gxm_operations)
-  XEN_NARGIFY_1(gxm_dropSiteStatus_w, gxm_dropSiteStatus )
-  XEN_NARGIFY_2(gxm_set_dropSiteStatus_w, gxm_set_dropSiteStatus)
-  XEN_NARGIFY_1(gxm_dropAction_w, gxm_dropAction)
-  XEN_NARGIFY_1(gxm_iccHandle_w, gxm_iccHandle)
-  XEN_NARGIFY_1(gxm_completionStatus_w, gxm_completionStatus)
-  XEN_NARGIFY_1(gxm_dragContext_w, gxm_dragContext)
-  XEN_NARGIFY_1(gxm_animate_w, gxm_animate)
-  XEN_NARGIFY_1(gxm_length_w, gxm_length)
-  XEN_NARGIFY_1(gxm_click_count_w, gxm_click_count)
-  XEN_NARGIFY_1(gxm_widget_w, gxm_widget)
-  XEN_NARGIFY_1(gxm_item_position_w, gxm_item_position)
-  XEN_NARGIFY_1(gxm_callbackstruct_w, gxm_callbackstruct)
-  XEN_NARGIFY_1(gxm_set_w, gxm_set)
-  XEN_NARGIFY_1(gxm_item_w, gxm_item)
-  XEN_NARGIFY_1(gxm_item_length_w, gxm_item_length)
-  XEN_NARGIFY_1(gxm_selected_items_w, gxm_selected_items)
-  XEN_NARGIFY_1(gxm_selected_item_count_w, gxm_selected_item_count)
-  XEN_NARGIFY_1(gxm_selected_item_positions_w, gxm_selected_item_positions)
-  XEN_NARGIFY_1(gxm_selection_type_w, gxm_selection_type)
-  XEN_NARGIFY_1(gxm_mask_w, gxm_mask)
-  XEN_NARGIFY_1(gxm_mask_length_w, gxm_mask_length)
-  XEN_NARGIFY_1(gxm_dir_w, gxm_dir)
-  XEN_NARGIFY_1(gxm_dir_length_w, gxm_dir_length)
-  XEN_NARGIFY_1(gxm_pattern_w, gxm_pattern)
-  XEN_NARGIFY_1(gxm_pattern_length_w, gxm_pattern_length)
-  XEN_NARGIFY_1(gxm_position_w, gxm_position)
-  XEN_NARGIFY_1(gxm_currInsert_w, gxm_currInsert)
-  XEN_NARGIFY_1(gxm_newInsert_w, gxm_newInsert)
-  XEN_NARGIFY_1(gxm_startPos_w, gxm_startPos)
-  XEN_NARGIFY_1(gxm_endPos_w, gxm_endPos)
-  XEN_NARGIFY_1(gxm_text_w, gxm_text)
-  XEN_NARGIFY_1(gxm_value_w, gxm_value)
-  XEN_NARGIFY_2(gxm_set_value_w, gxm_set_value)
-  XEN_NARGIFY_1(gxm_doit_w, gxm_doit)
-  XEN_NARGIFY_2(gxm_set_doit_w, gxm_set_doit)
-  XEN_NARGIFY_1(gxm_menuToPost_w, gxm_menuToPost)
-  XEN_NARGIFY_2(gxm_set_menuToPost_w, gxm_set_menuToPost)
-  XEN_NARGIFY_1(gxm_postIt_w, gxm_postIt)
-  XEN_NARGIFY_2(gxm_set_postIt_w, gxm_set_postIt)
+XEN_NARGIFY_2(gxm_set_set_w, gxm_set_set)
+XEN_NARGIFY_2(gxm_set_click_count_w, gxm_set_click_count)
+XEN_NARGIFY_2(gxm_set_length_w, gxm_set_length)
+XEN_NARGIFY_1(gxm_ptr_w, gxm_ptr)
+XEN_NARGIFY_2(gxm_set_ptr_w, gxm_set_ptr)
+XEN_NARGIFY_2(gxm_set_reason_w, gxm_set_reason)
+XEN_NARGIFY_1(gxm_page_number_w, gxm_page_number)
+XEN_NARGIFY_1(gxm_page_widget_w, gxm_page_widget)
+XEN_NARGIFY_1(gxm_status_area_widget_w, gxm_status_area_widget)
+XEN_NARGIFY_1(gxm_major_tab_widget_w, gxm_major_tab_widget)
+XEN_NARGIFY_1(gxm_minor_tab_widget_w, gxm_minor_tab_widget)
+XEN_NARGIFY_1(gxm_source_data_w, gxm_source_data)
+XEN_NARGIFY_1(gxm_location_data_w, gxm_location_data)
+XEN_NARGIFY_1(gxm_parm_w, gxm_parm)
+XEN_NARGIFY_1(gxm_parm_format_w, gxm_parm_format)
+XEN_NARGIFY_1(gxm_parm_length_w, gxm_parm_length)
+XEN_NARGIFY_1(gxm_parm_type_w, gxm_parm_type)
+XEN_NARGIFY_1(gxm_transfer_id_w, gxm_transfer_id)
+XEN_NARGIFY_1(gxm_destination_data_w, gxm_destination_data)
+XEN_NARGIFY_1(gxm_remaining_w, gxm_remaining)
+XEN_NARGIFY_1(gxm_item_or_text_w, gxm_item_or_text)
+XEN_NARGIFY_1(gxm_auto_selection_type_w, gxm_auto_selection_type)
+XEN_NARGIFY_1(gxm_new_outline_state_w, gxm_new_outline_state)
+XEN_NARGIFY_1(gxm_prev_page_number_w, gxm_prev_page_number)
+XEN_NARGIFY_1(gxm_prev_page_widget_w, gxm_prev_page_widget)
+XEN_NARGIFY_1(gxm_rendition_w, gxm_rendition)
+XEN_NARGIFY_1(gxm_render_table_w, gxm_render_table)
+XEN_NARGIFY_1(gxm_crossed_boundary_w, gxm_crossed_boundary)
+XEN_NARGIFY_1(gxm_client_data_w, gxm_client_data)
+XEN_NARGIFY_1(gxm_status_w, gxm_status)
+XEN_NARGIFY_1(gxm_font_name_w, gxm_font_name)
+XEN_NARGIFY_1(gxm_tag_w, gxm_tag)
+XEN_NARGIFY_1(gxm_traversal_destination_w, gxm_traversal_destination)
+XEN_NARGIFY_1(gxm_dragProtocolStyle_w, gxm_dragProtocolStyle)
+XEN_NARGIFY_1(gxm_direction_w, gxm_direction)
+XEN_NARGIFY_1(gxm_reason_w, gxm_reason)
+XEN_NARGIFY_1(gxm_timeStamp_w, gxm_timeStamp)
+XEN_NARGIFY_1(gxm_operation_w, gxm_operation )
+XEN_NARGIFY_2(gxm_set_operation_w, gxm_set_operation)
+XEN_NARGIFY_1(gxm_operations_w, gxm_operations)
+XEN_NARGIFY_1(gxm_dropSiteStatus_w, gxm_dropSiteStatus )
+XEN_NARGIFY_2(gxm_set_dropSiteStatus_w, gxm_set_dropSiteStatus)
+XEN_NARGIFY_1(gxm_dropAction_w, gxm_dropAction)
+XEN_NARGIFY_1(gxm_iccHandle_w, gxm_iccHandle)
+XEN_NARGIFY_1(gxm_completionStatus_w, gxm_completionStatus)
+XEN_NARGIFY_1(gxm_dragContext_w, gxm_dragContext)
+XEN_NARGIFY_1(gxm_animate_w, gxm_animate)
+XEN_NARGIFY_1(gxm_length_w, gxm_length)
+XEN_NARGIFY_1(gxm_click_count_w, gxm_click_count)
+XEN_NARGIFY_1(gxm_widget_w, gxm_widget)
+XEN_NARGIFY_1(gxm_item_position_w, gxm_item_position)
+XEN_NARGIFY_1(gxm_callbackstruct_w, gxm_callbackstruct)
+XEN_NARGIFY_1(gxm_set_w, gxm_set)
+XEN_NARGIFY_1(gxm_item_w, gxm_item)
+XEN_NARGIFY_1(gxm_item_length_w, gxm_item_length)
+XEN_NARGIFY_1(gxm_selected_items_w, gxm_selected_items)
+XEN_NARGIFY_1(gxm_selected_item_count_w, gxm_selected_item_count)
+XEN_NARGIFY_1(gxm_selected_item_positions_w, gxm_selected_item_positions)
+XEN_NARGIFY_1(gxm_selection_type_w, gxm_selection_type)
+XEN_NARGIFY_1(gxm_mask_w, gxm_mask)
+XEN_NARGIFY_1(gxm_mask_length_w, gxm_mask_length)
+XEN_NARGIFY_1(gxm_dir_w, gxm_dir)
+XEN_NARGIFY_1(gxm_dir_length_w, gxm_dir_length)
+XEN_NARGIFY_1(gxm_pattern_w, gxm_pattern)
+XEN_NARGIFY_1(gxm_pattern_length_w, gxm_pattern_length)
+XEN_NARGIFY_1(gxm_position_w, gxm_position)
+XEN_NARGIFY_1(gxm_currInsert_w, gxm_currInsert)
+XEN_NARGIFY_1(gxm_newInsert_w, gxm_newInsert)
+XEN_NARGIFY_1(gxm_startPos_w, gxm_startPos)
+XEN_NARGIFY_1(gxm_endPos_w, gxm_endPos)
+XEN_NARGIFY_1(gxm_text_w, gxm_text)
+XEN_NARGIFY_1(gxm_value_w, gxm_value)
+XEN_NARGIFY_2(gxm_set_value_w, gxm_set_value)
+XEN_NARGIFY_1(gxm_doit_w, gxm_doit)
+XEN_NARGIFY_2(gxm_set_doit_w, gxm_set_doit)
+XEN_NARGIFY_1(gxm_menuToPost_w, gxm_menuToPost)
+XEN_NARGIFY_2(gxm_set_menuToPost_w, gxm_set_menuToPost)
+XEN_NARGIFY_1(gxm_postIt_w, gxm_postIt)
+XEN_NARGIFY_2(gxm_set_postIt_w, gxm_set_postIt)
 
-  XEN_NARGIFY_1(gxm_valuemask_w, gxm_valuemask)
-  XEN_NARGIFY_2(gxm_set_valuemask_w, gxm_set_valuemask)
-  XEN_NARGIFY_1(gxm_ncolors_w, gxm_ncolors)
-  XEN_NARGIFY_2(gxm_set_ncolors_w, gxm_set_ncolors)
-  XEN_NARGIFY_1(gxm_cpp_w, gxm_cpp)
-  XEN_NARGIFY_2(gxm_set_cpp_w, gxm_set_cpp)
-  XEN_NARGIFY_1(gxm_numsymbols_w, gxm_numsymbols)
-  XEN_NARGIFY_2(gxm_set_numsymbols_w, gxm_set_numsymbols)
-  XEN_NARGIFY_1(gxm_colorsymbols_w, gxm_colorsymbols)
-  XEN_NARGIFY_2(gxm_set_colorsymbols_w, gxm_set_colorsymbols)
-  XEN_NARGIFY_1(gxm_npixels_w, gxm_npixels)
-  XEN_NARGIFY_2(gxm_set_npixels_w, gxm_set_npixels)
-  XEN_NARGIFY_1(gxm_y_hotspot_w, gxm_y_hotspot)
-  XEN_NARGIFY_2(gxm_set_y_hotspot_w, gxm_set_y_hotspot)
-  XEN_NARGIFY_1(gxm_x_hotspot_w, gxm_x_hotspot)
-  XEN_NARGIFY_2(gxm_set_x_hotspot_w, gxm_set_x_hotspot)
+XEN_NARGIFY_1(gxm_valuemask_w, gxm_valuemask)
+XEN_NARGIFY_2(gxm_set_valuemask_w, gxm_set_valuemask)
+XEN_NARGIFY_1(gxm_ncolors_w, gxm_ncolors)
+XEN_NARGIFY_2(gxm_set_ncolors_w, gxm_set_ncolors)
+XEN_NARGIFY_1(gxm_cpp_w, gxm_cpp)
+XEN_NARGIFY_2(gxm_set_cpp_w, gxm_set_cpp)
+XEN_NARGIFY_1(gxm_numsymbols_w, gxm_numsymbols)
+XEN_NARGIFY_2(gxm_set_numsymbols_w, gxm_set_numsymbols)
+XEN_NARGIFY_1(gxm_colorsymbols_w, gxm_colorsymbols)
+XEN_NARGIFY_2(gxm_set_colorsymbols_w, gxm_set_colorsymbols)
+XEN_NARGIFY_1(gxm_npixels_w, gxm_npixels)
+XEN_NARGIFY_2(gxm_set_npixels_w, gxm_set_npixels)
+XEN_NARGIFY_1(gxm_y_hotspot_w, gxm_y_hotspot)
+XEN_NARGIFY_2(gxm_set_y_hotspot_w, gxm_set_y_hotspot)
+XEN_NARGIFY_1(gxm_x_hotspot_w, gxm_x_hotspot)
+XEN_NARGIFY_2(gxm_set_x_hotspot_w, gxm_set_x_hotspot)
 
-  XEN_NARGIFY_5(gxm_XpmImage_w, gxm_XpmImage)
-  XEN_NARGIFY_3(gxm_XpmColorSymbol_w, gxm_XpmColorSymbol)
-  XEN_NARGIFY_0(gxm_XpmAttributes_w, gxm_XpmAttributes)
+XEN_NARGIFY_5(gxm_XpmImage_w, gxm_XpmImage)
+XEN_NARGIFY_3(gxm_XpmColorSymbol_w, gxm_XpmColorSymbol)
+XEN_NARGIFY_0(gxm_XpmAttributes_w, gxm_XpmAttributes)
 
 #if HAVE_SCHEME
-  XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)
-  XEN_NARGIFY_2(c_to_xen_strings_w, c_to_xen_strings)
-  XEN_NARGIFY_2(c_to_xen_ints_w, c_to_xen_ints)
-  XEN_NARGIFY_2(c_to_xen_atoms_w, c_to_xen_atoms)
-  XEN_NARGIFY_2(c_to_xen_xrectangles_w, c_to_xen_xrectangles)
+XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)
+XEN_NARGIFY_2(c_to_xen_strings_w, c_to_xen_strings)
+XEN_NARGIFY_2(c_to_xen_ints_w, c_to_xen_ints)
+XEN_NARGIFY_2(c_to_xen_atoms_w, c_to_xen_atoms)
+XEN_NARGIFY_2(c_to_xen_xrectangles_w, c_to_xen_xrectangles)
 #endif
-
-#else
-
-/* no argify */
-  #define gxm_XtSetArg_w gxm_XtSetArg
-  #define gxm_XtManageChildren_w gxm_XtManageChildren
-  #define gxm_XtManageChild_w gxm_XtManageChild
-  #define gxm_XtUnmanageChildren_w gxm_XtUnmanageChildren
-  #define gxm_XtUnmanageChild_w gxm_XtUnmanageChild
-  #define gxm_XtDispatchEvent_w gxm_XtDispatchEvent
-  #define gxm_XtCallAcceptFocus_w gxm_XtCallAcceptFocus
-  #define gxm_XtAppPeekEvent_w gxm_XtAppPeekEvent
-  #define gxm_XtIsSubclass_w gxm_XtIsSubclass
-  #define gxm_XtAppSetFallbackResources_w gxm_XtAppSetFallbackResources
-  #define gxm_XtIsObject_w gxm_XtIsObject
-  #define gxm_XtIsManaged_w gxm_XtIsManaged
-  #define gxm_XtIsRealized_w gxm_XtIsRealized
-  #define gxm_XtIsSensitive_w gxm_XtIsSensitive
-  #define gxm_XtOwnSelection_w gxm_XtOwnSelection
-  #define gxm_XtOwnSelectionIncremental_w gxm_XtOwnSelectionIncremental
-  #define gxm_XtMakeResizeRequest_w gxm_XtMakeResizeRequest
-  #define gxm_XtTranslateCoords_w gxm_XtTranslateCoords
-  #define gxm_XtKeysymToKeycodeList_w gxm_XtKeysymToKeycodeList
-  #define gxm_XtParseTranslationTable_w gxm_XtParseTranslationTable
-  #define gxm_XtParseAcceleratorTable_w gxm_XtParseAcceleratorTable
-  #define gxm_XtOverrideTranslations_w gxm_XtOverrideTranslations
-  #define gxm_XtAugmentTranslations_w gxm_XtAugmentTranslations
-  #define gxm_XtInstallAccelerators_w gxm_XtInstallAccelerators
-  #define gxm_XtInstallAllAccelerators_w gxm_XtInstallAllAccelerators
-  #define gxm_XtUninstallTranslations_w gxm_XtUninstallTranslations
-  #define gxm_XtAppAddActions_w gxm_XtAppAddActions
-  #define gxm_XtAppAddActionHook_w gxm_XtAppAddActionHook
-  #define gxm_XtRemoveActionHook_w gxm_XtRemoveActionHook
-  #define gxm_XtGetActionList_w gxm_XtGetActionList
-  #define gxm_XtCallActionProc_w gxm_XtCallActionProc
-  #define gxm_XtRegisterGrabAction_w gxm_XtRegisterGrabAction
-  #define gxm_XtSetMultiClickTime_w gxm_XtSetMultiClickTime
-  #define gxm_XtGetMultiClickTime_w gxm_XtGetMultiClickTime
-  #define gxm_XtGetResourceList_w gxm_XtGetResourceList
-  #define gxm_XtGetActionKeysym_w gxm_XtGetActionKeysym
-  #define gxm_XtTranslateKeycode_w gxm_XtTranslateKeycode
-  #define gxm_XtTranslateKey_w gxm_XtTranslateKey
-  #define gxm_XtSetKeyTranslator_w gxm_XtSetKeyTranslator
-  #define gxm_XtRegisterCaseConverter_w gxm_XtRegisterCaseConverter
-  #define gxm_XtConvertCase_w gxm_XtConvertCase
-  #define gxm_XtAddEventHandler_w gxm_XtAddEventHandler
-  #define gxm_XtRemoveEventHandler_w gxm_XtRemoveEventHandler
-  #define gxm_XtAddRawEventHandler_w gxm_XtAddRawEventHandler
-  #define gxm_XtRemoveRawEventHandler_w gxm_XtRemoveRawEventHandler
-  #define gxm_XtInsertEventHandler_w gxm_XtInsertEventHandler
-  #define gxm_XtInsertRawEventHandler_w gxm_XtInsertRawEventHandler
-  #define gxm_XtDispatchEventToWidget_w gxm_XtDispatchEventToWidget
-  #define gxm_XtBuildEventMask_w gxm_XtBuildEventMask
-  #define gxm_XtAddGrab_w gxm_XtAddGrab
-  #define gxm_XtRemoveGrab_w gxm_XtRemoveGrab
-  #define gxm_XtAppProcessEvent_w gxm_XtAppProcessEvent
-  #define gxm_XtAppMainLoop_w gxm_XtAppMainLoop
-  #define gxm_XtAddExposureToRegion_w gxm_XtAddExposureToRegion
-  #define gxm_XtSetKeyboardFocus_w gxm_XtSetKeyboardFocus
-  #define gxm_XtGetKeyboardFocusWidget_w gxm_XtGetKeyboardFocusWidget
-  #define gxm_XtLastEventProcessed_w gxm_XtLastEventProcessed
-  #define gxm_XtLastTimestampProcessed_w gxm_XtLastTimestampProcessed
-  #define gxm_XtAppAddTimeOut_w gxm_XtAppAddTimeOut
-  #define gxm_XtRemoveTimeOut_w gxm_XtRemoveTimeOut
-  #define gxm_XtAppAddInput_w gxm_XtAppAddInput
-  #define gxm_XtRemoveInput_w gxm_XtRemoveInput
-  #define gxm_XtAppNextEvent_w gxm_XtAppNextEvent
-  #define gxm_XtAppPending_w gxm_XtAppPending
-  #define gxm_XtRealizeWidget_w gxm_XtRealizeWidget
-  #define gxm_XtUnrealizeWidget_w gxm_XtUnrealizeWidget
-  #define gxm_XtDestroyWidget_w gxm_XtDestroyWidget
-  #define gxm_XtSetSensitive_w gxm_XtSetSensitive
-  #define gxm_XtNameToWidget_w gxm_XtNameToWidget
-  #define gxm_XtWindowToWidget_w gxm_XtWindowToWidget
-  #define gxm_XtMergeArgLists_w gxm_XtMergeArgLists
-  #define gxm_XtVaCreateArgsList_w gxm_XtVaCreateArgsList
-  #define gxm_XtDisplay_w gxm_XtDisplay
-  #define gxm_XtDisplayOfObject_w gxm_XtDisplayOfObject
-  #define gxm_XtScreen_w gxm_XtScreen
-  #define gxm_XtScreenOfObject_w gxm_XtScreenOfObject
-  #define gxm_XtWindow_w gxm_XtWindow
-  #define gxm_XtWindowOfObject_w gxm_XtWindowOfObject
-  #define gxm_XtName_w gxm_XtName
-  #define gxm_XtSuperclass_w gxm_XtSuperclass
-  #define gxm_XtClass_w gxm_XtClass
-  #define gxm_XtParent_w gxm_XtParent
-  #define gxm_XtAddCallback_w gxm_XtAddCallback
-  #define gxm_XtRemoveCallback_w gxm_XtRemoveCallback
-  #define gxm_XtAddCallbacks_w gxm_XtAddCallbacks
-  #define gxm_XtRemoveCallbacks_w gxm_XtRemoveCallbacks
-  #define gxm_XtRemoveAllCallbacks_w gxm_XtRemoveAllCallbacks
-  #define gxm_XtCallCallbacks_w gxm_XtCallCallbacks
-  #define gxm_XtHasCallbacks_w gxm_XtHasCallbacks
-  #define gxm_XtCreatePopupShell_w gxm_XtCreatePopupShell
-  #define gxm_XtVaCreatePopupShell_w gxm_XtVaCreatePopupShell
-  #define gxm_XtPopup_w gxm_XtPopup
-  #define gxm_XtPopupSpringLoaded_w gxm_XtPopupSpringLoaded
-  #define gxm_XtCallbackNone_w gxm_XtCallbackNone
-  #define gxm_XtCallbackNonexclusive_w gxm_XtCallbackNonexclusive
-  #define gxm_XtCallbackExclusive_w gxm_XtCallbackExclusive
-  #define gxm_XtPopdown_w gxm_XtPopdown
-  #define gxm_XtCallbackPopdown_w gxm_XtCallbackPopdown
-  #define gxm_XtCreateWidget_w gxm_XtCreateWidget
-  #define gxm_XtCreateManagedWidget_w gxm_XtCreateManagedWidget
-  #define gxm_XtVaCreateWidget_w gxm_XtVaCreateWidget
-  #define gxm_XtVaCreateManagedWidget_w gxm_XtVaCreateManagedWidget
-  #define gxm_XtAppCreateShell_w gxm_XtAppCreateShell
-  #define gxm_XtVaAppCreateShell_w gxm_XtVaAppCreateShell
-  #define gxm_XtToolkitInitialize_w gxm_XtToolkitInitialize
-  #define gxm_XtSetLanguageProc_w gxm_XtSetLanguageProc
-  #define gxm_XtDisplayInitialize_w gxm_XtDisplayInitialize
-  #define gxm_XtOpenApplication_w gxm_XtOpenApplication
-  #define gxm_XtVaOpenApplication_w gxm_XtVaOpenApplication
-  #define gxm_XtAppInitialize_w gxm_XtAppInitialize
-  #define gxm_XtVaAppInitialize_w gxm_XtVaAppInitialize
-  #define gxm_XtOpenDisplay_w gxm_XtOpenDisplay
-  #define gxm_XtCreateApplicationContext_w gxm_XtCreateApplicationContext
-  #define gxm_XtDestroyApplicationContext_w gxm_XtDestroyApplicationContext
-  #define gxm_XtInitializeWidgetClass_w gxm_XtInitializeWidgetClass
-  #define gxm_XtWidgetToApplicationContext_w gxm_XtWidgetToApplicationContext
-  #define gxm_XtDisplayToApplicationContext_w gxm_XtDisplayToApplicationContext
-  #define gxm_XtCloseDisplay_w gxm_XtCloseDisplay
-  #define gxm_XtSetValues_w gxm_XtSetValues
-  #define gxm_XtVaSetValues_w gxm_XtVaSetValues
-  #define gxm_XtGetValues_w gxm_XtGetValues
-  #define gxm_XtVaGetValues_w gxm_XtVaGetValues
-  #define gxm_XtAppSetErrorMsgHandler_w gxm_XtAppSetErrorMsgHandler
-  #define gxm_XtAppSetWarningMsgHandler_w gxm_XtAppSetWarningMsgHandler
-  #define gxm_XtAppErrorMsg_w gxm_XtAppErrorMsg
-  #define gxm_XtAppWarningMsg_w gxm_XtAppWarningMsg
-  #define gxm_XtAppSetErrorHandler_w gxm_XtAppSetErrorHandler
-  #define gxm_XtAppSetWarningHandler_w gxm_XtAppSetWarningHandler
-  #define gxm_XtAppError_w gxm_XtAppError
-  #define gxm_XtMalloc_w gxm_XtMalloc
-  #define gxm_XtCalloc_w gxm_XtCalloc
-  #define gxm_XtRealloc_w gxm_XtRealloc
-  #define gxm_XtFree_w gxm_XtFree
-  #define gxm_XtAppAddWorkProc_w gxm_XtAppAddWorkProc
-  #define gxm_XtRemoveWorkProc_w gxm_XtRemoveWorkProc
-  #define gxm_XtGetGC_w gxm_XtGetGC
-  #define gxm_XtAllocateGC_w gxm_XtAllocateGC
-  #define gxm_XtDestroyGC_w gxm_XtDestroyGC
-  #define gxm_XtReleaseGC_w gxm_XtReleaseGC
-  #define gxm_XtFindFile_w gxm_XtFindFile
-  #define gxm_XtResolvePathname_w gxm_XtResolvePathname
-  #define gxm_XtDisownSelection_w gxm_XtDisownSelection
-  #define gxm_XtGetSelectionValue_w gxm_XtGetSelectionValue
-  #define gxm_XtGetSelectionValues_w gxm_XtGetSelectionValues
-  #define gxm_XtAppSetSelectionTimeout_w gxm_XtAppSetSelectionTimeout
-  #define gxm_XtAppGetSelectionTimeout_w gxm_XtAppGetSelectionTimeout
-  #define gxm_XtGetSelectionRequest_w gxm_XtGetSelectionRequest
-  #define gxm_XtGetSelectionValueIncremental_w gxm_XtGetSelectionValueIncremental
-  #define gxm_XtGetSelectionValuesIncremental_w gxm_XtGetSelectionValuesIncremental
-  #define gxm_XtCreateSelectionRequest_w gxm_XtCreateSelectionRequest
-  #define gxm_XtSendSelectionRequest_w gxm_XtSendSelectionRequest
-  #define gxm_XtCancelSelectionRequest_w gxm_XtCancelSelectionRequest
-  #define gxm_XtGrabKey_w gxm_XtGrabKey
-  #define gxm_XtUngrabKey_w gxm_XtUngrabKey
-  #define gxm_XtGrabKeyboard_w gxm_XtGrabKeyboard
-  #define gxm_XtUngrabKeyboard_w gxm_XtUngrabKeyboard
-  #define gxm_XtGrabButton_w gxm_XtGrabButton
-  #define gxm_XtUngrabButton_w gxm_XtUngrabButton
-  #define gxm_XtGrabPointer_w gxm_XtGrabPointer
-  #define gxm_XtUngrabPointer_w gxm_XtUngrabPointer
-  #define gxm_XtGetApplicationNameAndClass_w gxm_XtGetApplicationNameAndClass
-  #define gxm_XtGetDisplays_w gxm_XtGetDisplays
-  #define gxm_XtToolkitThreadInitialize_w gxm_XtToolkitThreadInitialize
-  #define gxm_XtAppLock_w gxm_XtAppLock
-  #define gxm_XtAppUnlock_w gxm_XtAppUnlock
-  #define gxm_XtIsRectObj_w gxm_XtIsRectObj
-  #define gxm_XtIsWidget_w gxm_XtIsWidget
-  #define gxm_XtIsComposite_w gxm_XtIsComposite
-  #define gxm_XtIsConstraint_w gxm_XtIsConstraint
-  #define gxm_XtIsShell_w gxm_XtIsShell
-  #define gxm_XtIsOverrideShell_w gxm_XtIsOverrideShell
-  #define gxm_XtIsWMShell_w gxm_XtIsWMShell
-  #define gxm_XtIsVendorShell_w gxm_XtIsVendorShell
-  #define gxm_XtIsTransientShell_w gxm_XtIsTransientShell
-  #define gxm_XtIsTopLevelShell_w gxm_XtIsTopLevelShell
-  #define gxm_XtIsApplicationShell_w gxm_XtIsApplicationShell
-  #define gxm_XtIsSessionShell_w gxm_XtIsSessionShell
-  #define gxm_XtMapWidget_w gxm_XtMapWidget
-  #define gxm_XtUnmapWidget_w gxm_XtUnmapWidget
-
-  #define gxm_XLoadQueryFont_w gxm_XLoadQueryFont
-  #define gxm_XQueryFont_w gxm_XQueryFont
-  #define gxm_XGetMotionEvents_w gxm_XGetMotionEvents
-  #define gxm_XDeleteModifiermapEntry_w gxm_XDeleteModifiermapEntry
-  #define gxm_XGetModifierMapping_w gxm_XGetModifierMapping
-  #define gxm_XInsertModifiermapEntry_w gxm_XInsertModifiermapEntry
-  #define gxm_XNewModifiermap_w gxm_XNewModifiermap
-  #define gxm_XCreateImage_w gxm_XCreateImage
-  #define gxm_XGetImage_w gxm_XGetImage
-  #define gxm_XGetSubImage_w gxm_XGetSubImage
-  #define gxm_XOpenDisplay_w gxm_XOpenDisplay
-  #define gxm_XFetchBytes_w gxm_XFetchBytes
-  #define gxm_XFetchBuffer_w gxm_XFetchBuffer
-  #define gxm_XGetAtomName_w gxm_XGetAtomName
-  #define gxm_XDisplayName_w gxm_XDisplayName
-  #define gxm_XKeysymToString_w gxm_XKeysymToString
-  #define gxm_XSynchronize_w gxm_XSynchronize
-  #define gxm_XSetAfterFunction_w gxm_XSetAfterFunction
-  #define gxm_XInternAtom_w gxm_XInternAtom
-  #define gxm_XCopyColormapAndFree_w gxm_XCopyColormapAndFree
-  #define gxm_XCreateColormap_w gxm_XCreateColormap
-  #define gxm_XCreatePixmapCursor_w gxm_XCreatePixmapCursor
-  #define gxm_XCreateGlyphCursor_w gxm_XCreateGlyphCursor
-  #define gxm_XCreateFontCursor_w gxm_XCreateFontCursor
-  #define gxm_XLoadFont_w gxm_XLoadFont
-  #define gxm_XCreateGC_w gxm_XCreateGC
-  #define gxm_XFlushGC_w gxm_XFlushGC
-  #define gxm_XCreatePixmap_w gxm_XCreatePixmap
-  #define gxm_XCreateBitmapFromData_w gxm_XCreateBitmapFromData
-  #define gxm_XCreatePixmapFromBitmapData_w gxm_XCreatePixmapFromBitmapData
-  #define gxm_XCreateSimpleWindow_w gxm_XCreateSimpleWindow
-  #define gxm_XGetSelectionOwner_w gxm_XGetSelectionOwner
-  #define gxm_XCreateWindow_w gxm_XCreateWindow
-  #define gxm_XListInstalledColormaps_w gxm_XListInstalledColormaps
-  #define gxm_XListFonts_w gxm_XListFonts
-  #define gxm_XListFontsWithInfo_w gxm_XListFontsWithInfo
-  #define gxm_XGetFontPath_w gxm_XGetFontPath
-  #define gxm_XListExtensions_w gxm_XListExtensions
-  #define gxm_XListProperties_w gxm_XListProperties
-#if 0
-  #define gxm_XKeycodeToKeysym_w gxm_XKeycodeToKeysym
-#endif
-  #define gxm_XLookupKeysym_w gxm_XLookupKeysym
-  #define gxm_XGetKeyboardMapping_w gxm_XGetKeyboardMapping
-  #define gxm_XStringToKeysym_w gxm_XStringToKeysym
-  #define gxm_XMaxRequestSize_w gxm_XMaxRequestSize
-  #define gxm_XExtendedMaxRequestSize_w gxm_XExtendedMaxRequestSize
-  #define gxm_XDisplayMotionBufferSize_w gxm_XDisplayMotionBufferSize
-  #define gxm_XVisualIDFromVisual_w gxm_XVisualIDFromVisual
-  #define gxm_XRootWindow_w gxm_XRootWindow
-  #define gxm_XDefaultRootWindow_w gxm_XDefaultRootWindow
-  #define gxm_XRootWindowOfScreen_w gxm_XRootWindowOfScreen
-  #define gxm_XDefaultVisual_w gxm_XDefaultVisual
-  #define gxm_XDefaultVisualOfScreen_w gxm_XDefaultVisualOfScreen
-  #define gxm_XDefaultGC_w gxm_XDefaultGC
-  #define gxm_XDefaultGCOfScreen_w gxm_XDefaultGCOfScreen
-  #define gxm_XBlackPixel_w gxm_XBlackPixel
-  #define gxm_XWhitePixel_w gxm_XWhitePixel
-  #define gxm_XAllPlanes_w gxm_XAllPlanes
-  #define gxm_XBlackPixelOfScreen_w gxm_XBlackPixelOfScreen
-  #define gxm_XWhitePixelOfScreen_w gxm_XWhitePixelOfScreen
-  #define gxm_XNextRequest_w gxm_XNextRequest
-  #define gxm_XLastKnownRequestProcessed_w gxm_XLastKnownRequestProcessed
-  #define gxm_XServerVendor_w gxm_XServerVendor
-  #define gxm_XDisplayString_w gxm_XDisplayString
-  #define gxm_XDefaultColormap_w gxm_XDefaultColormap
-  #define gxm_XDefaultColormapOfScreen_w gxm_XDefaultColormapOfScreen
-  #define gxm_XDisplayOfScreen_w gxm_XDisplayOfScreen
-  #define gxm_XScreenOfDisplay_w gxm_XScreenOfDisplay
-  #define gxm_XDefaultScreenOfDisplay_w gxm_XDefaultScreenOfDisplay
-  #define gxm_XEventMaskOfScreen_w gxm_XEventMaskOfScreen
-  #define gxm_XScreenNumberOfScreen_w gxm_XScreenNumberOfScreen
-  #define gxm_XSetErrorHandler_w gxm_XSetErrorHandler
-  #define gxm_XSetIOErrorHandler_w gxm_XSetIOErrorHandler
-  #define gxm_XListPixmapFormats_w gxm_XListPixmapFormats
-  #define gxm_XListDepths_w gxm_XListDepths
-  #define gxm_XReconfigureWMWindow_w gxm_XReconfigureWMWindow
-  #define gxm_XGetWMProtocols_w gxm_XGetWMProtocols
-  #define gxm_XSetWMProtocols_w gxm_XSetWMProtocols
-  #define gxm_XIconifyWindow_w gxm_XIconifyWindow
-  #define gxm_XWithdrawWindow_w gxm_XWithdrawWindow
-  #define gxm_XGetCommand_w gxm_XGetCommand
-  #define gxm_XGetWMColormapWindows_w gxm_XGetWMColormapWindows
-  #define gxm_XSetWMColormapWindows_w gxm_XSetWMColormapWindows
-  #define gxm_XSetTransientForHint_w gxm_XSetTransientForHint
-  #define gxm_XActivateScreenSaver_w gxm_XActivateScreenSaver
-  #define gxm_XAllocColor_w gxm_XAllocColor
-  #define gxm_XAllocColorCells_w gxm_XAllocColorCells
-  #define gxm_XAllocColorPlanes_w gxm_XAllocColorPlanes
-  #define gxm_XAllocNamedColor_w gxm_XAllocNamedColor
-  #define gxm_XAllowEvents_w gxm_XAllowEvents
-  #define gxm_XAutoRepeatOff_w gxm_XAutoRepeatOff
-  #define gxm_XAutoRepeatOn_w gxm_XAutoRepeatOn
-  #define gxm_XBell_w gxm_XBell
-  #define gxm_XBitmapBitOrder_w gxm_XBitmapBitOrder
-  #define gxm_XBitmapPad_w gxm_XBitmapPad
-  #define gxm_XBitmapUnit_w gxm_XBitmapUnit
-  #define gxm_XCellsOfScreen_w gxm_XCellsOfScreen
-  #define gxm_XChangeActivePointerGrab_w gxm_XChangeActivePointerGrab
-  #define gxm_XChangeGC_w gxm_XChangeGC
-  #define gxm_XChangeKeyboardControl_w gxm_XChangeKeyboardControl
-  #define gxm_XChangeKeyboardMapping_w gxm_XChangeKeyboardMapping
-  #define gxm_XChangePointerControl_w gxm_XChangePointerControl
-  #define gxm_XChangeProperty_w gxm_XChangeProperty
-  #define gxm_XChangeWindowAttributes_w gxm_XChangeWindowAttributes
-  #define gxm_XCheckIfEvent_w gxm_XCheckIfEvent
-  #define gxm_XCheckMaskEvent_w gxm_XCheckMaskEvent
-  #define gxm_XCheckTypedEvent_w gxm_XCheckTypedEvent
-  #define gxm_XCheckTypedWindowEvent_w gxm_XCheckTypedWindowEvent
-  #define gxm_XCheckWindowEvent_w gxm_XCheckWindowEvent
-  #define gxm_XCirculateSubwindows_w gxm_XCirculateSubwindows
-  #define gxm_XCirculateSubwindowsDown_w gxm_XCirculateSubwindowsDown
-  #define gxm_XCirculateSubwindowsUp_w gxm_XCirculateSubwindowsUp
-  #define gxm_XClearArea_w gxm_XClearArea
-  #define gxm_XClearWindow_w gxm_XClearWindow
-  #define gxm_XCloseDisplay_w gxm_XCloseDisplay
-  #define gxm_XConfigureWindow_w gxm_XConfigureWindow
-  #define gxm_XConnectionNumber_w gxm_XConnectionNumber
-  #define gxm_XConvertSelection_w gxm_XConvertSelection
-  #define gxm_XCopyArea_w gxm_XCopyArea
-  #define gxm_XCopyGC_w gxm_XCopyGC
-  #define gxm_XCopyPlane_w gxm_XCopyPlane
-  #define gxm_XDefaultDepth_w gxm_XDefaultDepth
-  #define gxm_XDefaultDepthOfScreen_w gxm_XDefaultDepthOfScreen
-  #define gxm_XDefaultScreen_w gxm_XDefaultScreen
-  #define gxm_XDefineCursor_w gxm_XDefineCursor
-  #define gxm_XDeleteProperty_w gxm_XDeleteProperty
-  #define gxm_XDestroyWindow_w gxm_XDestroyWindow
-  #define gxm_XDestroySubwindows_w gxm_XDestroySubwindows
-  #define gxm_XDoesBackingStore_w gxm_XDoesBackingStore
-  #define gxm_XDoesSaveUnders_w gxm_XDoesSaveUnders
-  #define gxm_XDisableAccessControl_w gxm_XDisableAccessControl
-  #define gxm_XDisplayCells_w gxm_XDisplayCells
-  #define gxm_XDisplayHeight_w gxm_XDisplayHeight
-  #define gxm_XDisplayHeightMM_w gxm_XDisplayHeightMM
-  #define gxm_XDisplayKeycodes_w gxm_XDisplayKeycodes
-  #define gxm_XDisplayPlanes_w gxm_XDisplayPlanes
-  #define gxm_XDisplayWidth_w gxm_XDisplayWidth
-  #define gxm_XDisplayWidthMM_w gxm_XDisplayWidthMM
-  #define gxm_XDrawArc_w gxm_XDrawArc
-  #define gxm_XDrawArcs_w gxm_XDrawArcs
-  #define gxm_XDrawImageString_w gxm_XDrawImageString
-  #define gxm_XDrawLine_w gxm_XDrawLine
-  #define gxm_XDrawLines_w gxm_XDrawLines
-  #define gxm_XDrawLinesDirect_w gxm_XDrawLinesDirect
-  #define gxm_FreeXPoints_w gxm_FreeXPoints
-  #define gxm_Vector2XPoints_w gxm_Vector2XPoints
-  #define gxm_XDrawPoint_w gxm_XDrawPoint
-  #define gxm_XDrawPoints_w gxm_XDrawPoints
-  #define gxm_XDrawRectangle_w gxm_XDrawRectangle
-  #define gxm_XDrawRectangles_w gxm_XDrawRectangles
-  #define gxm_XDrawSegments_w gxm_XDrawSegments
-  #define gxm_XDrawString_w gxm_XDrawString
-  #define gxm_XDrawText_w gxm_XDrawText
-  #define gxm_XEnableAccessControl_w gxm_XEnableAccessControl
-  #define gxm_XEventsQueued_w gxm_XEventsQueued
-  #define gxm_XFetchName_w gxm_XFetchName
-  #define gxm_XFillArc_w gxm_XFillArc
-  #define gxm_XFillArcs_w gxm_XFillArcs
-  #define gxm_XFillPolygon_w gxm_XFillPolygon
-  #define gxm_XFillRectangle_w gxm_XFillRectangle
-  #define gxm_XFillRectangles_w gxm_XFillRectangles
-  #define gxm_XFlush_w gxm_XFlush
-  #define gxm_XForceScreenSaver_w gxm_XForceScreenSaver
-  #define gxm_XFree_w gxm_XFree
-  #define gxm_XFreeColormap_w gxm_XFreeColormap
-  #define gxm_XFreeColors_w gxm_XFreeColors
-  #define gxm_XFreeCursor_w gxm_XFreeCursor
-  #define gxm_XFreeExtensionList_w gxm_XFreeExtensionList
-  #define gxm_XFreeFont_w gxm_XFreeFont
-  #define gxm_XFreeFontInfo_w gxm_XFreeFontInfo
-  #define gxm_XFreeFontNames_w gxm_XFreeFontNames
-  #define gxm_XFreeFontPath_w gxm_XFreeFontPath
-  #define gxm_XFreeGC_w gxm_XFreeGC
-  #define gxm_XFreeModifiermap_w gxm_XFreeModifiermap
-  #define gxm_XFreePixmap_w gxm_XFreePixmap
-  #define gxm_XGeometry_w gxm_XGeometry
-  #define gxm_XGetErrorText_w gxm_XGetErrorText
-  #define gxm_XGetFontProperty_w gxm_XGetFontProperty
-  #define gxm_XGetGCValues_w gxm_XGetGCValues
-  #define gxm_XGCValues_w gxm_XGCValues
-  #define gxm_XEvent_w gxm_XEvent
-  #define gxm_XGetGeometry_w gxm_XGetGeometry
-  #define gxm_XGetIconName_w gxm_XGetIconName
-  #define gxm_XGetInputFocus_w gxm_XGetInputFocus
-  #define gxm_XGetKeyboardControl_w gxm_XGetKeyboardControl
-  #define gxm_XGetPointerControl_w gxm_XGetPointerControl
-  #define gxm_XGetPointerMapping_w gxm_XGetPointerMapping
-  #define gxm_XGetScreenSaver_w gxm_XGetScreenSaver
-  #define gxm_XGetTransientForHint_w gxm_XGetTransientForHint
-  #define gxm_XGetWindowProperty_w gxm_XGetWindowProperty
-  #define gxm_XGetWindowAttributes_w gxm_XGetWindowAttributes
-  #define gxm_XGrabButton_w gxm_XGrabButton
-  #define gxm_XGrabKey_w gxm_XGrabKey
-  #define gxm_XGrabKeyboard_w gxm_XGrabKeyboard
-  #define gxm_XGrabPointer_w gxm_XGrabPointer
-  #define gxm_XGrabServer_w gxm_XGrabServer
-  #define gxm_XHeightMMOfScreen_w gxm_XHeightMMOfScreen
-  #define gxm_XHeightOfScreen_w gxm_XHeightOfScreen
-  #define gxm_XIfEvent_w gxm_XIfEvent
-  #define gxm_XImageByteOrder_w gxm_XImageByteOrder
-  #define gxm_XInstallColormap_w gxm_XInstallColormap
-  #define gxm_XKeysymToKeycode_w gxm_XKeysymToKeycode
-  #define gxm_XKillClient_w gxm_XKillClient
-  #define gxm_XLookupColor_w gxm_XLookupColor
-  #define gxm_XLowerWindow_w gxm_XLowerWindow
-  #define gxm_XMapRaised_w gxm_XMapRaised
-  #define gxm_XMapSubwindows_w gxm_XMapSubwindows
-  #define gxm_XMapWindow_w gxm_XMapWindow
-  #define gxm_XMaskEvent_w gxm_XMaskEvent
-  #define gxm_XMaxCmapsOfScreen_w gxm_XMaxCmapsOfScreen
-  #define gxm_XMinCmapsOfScreen_w gxm_XMinCmapsOfScreen
-  #define gxm_XMoveResizeWindow_w gxm_XMoveResizeWindow
-  #define gxm_XMoveWindow_w gxm_XMoveWindow
-  #define gxm_XNextEvent_w gxm_XNextEvent
-  #define gxm_XNoOp_w gxm_XNoOp
-  #define gxm_XParseColor_w gxm_XParseColor
-  #define gxm_XParseGeometry_w gxm_XParseGeometry
-  #define gxm_XPeekEvent_w gxm_XPeekEvent
-  #define gxm_XPeekIfEvent_w gxm_XPeekIfEvent
-  #define gxm_XPending_w gxm_XPending
-  #define gxm_XPlanesOfScreen_w gxm_XPlanesOfScreen
-  #define gxm_XProtocolRevision_w gxm_XProtocolRevision
-  #define gxm_XProtocolVersion_w gxm_XProtocolVersion
-  #define gxm_XPutBackEvent_w gxm_XPutBackEvent
-  #define gxm_XPutImage_w gxm_XPutImage
-  #define gxm_XQLength_w gxm_XQLength
-  #define gxm_XQueryBestCursor_w gxm_XQueryBestCursor
-  #define gxm_XQueryBestSize_w gxm_XQueryBestSize
-  #define gxm_XQueryBestStipple_w gxm_XQueryBestStipple
-  #define gxm_XQueryBestTile_w gxm_XQueryBestTile
-  #define gxm_XQueryColor_w gxm_XQueryColor
-  #define gxm_XQueryColors_w gxm_XQueryColors
-  #define gxm_XQueryExtension_w gxm_XQueryExtension
-  #define gxm_XQueryKeymap_w gxm_XQueryKeymap
-  #define gxm_XQueryPointer_w gxm_XQueryPointer
-  #define gxm_XQueryTextExtents_w gxm_XQueryTextExtents
-  #define gxm_XQueryTree_w gxm_XQueryTree
-  #define gxm_XRaiseWindow_w gxm_XRaiseWindow
-  #define gxm_XReadBitmapFile_w gxm_XReadBitmapFile
-  #define gxm_XReadBitmapFileData_w gxm_XReadBitmapFileData
-  #define gxm_XRebindKeysym_w gxm_XRebindKeysym
-  #define gxm_XRecolorCursor_w gxm_XRecolorCursor
-  #define gxm_XRefreshKeyboardMapping_w gxm_XRefreshKeyboardMapping
-  #define gxm_XReparentWindow_w gxm_XReparentWindow
-  #define gxm_XResetScreenSaver_w gxm_XResetScreenSaver
-  #define gxm_XResizeWindow_w gxm_XResizeWindow
-  #define gxm_XRestackWindows_w gxm_XRestackWindows
-  #define gxm_XRotateBuffers_w gxm_XRotateBuffers
-  #define gxm_XRotateWindowProperties_w gxm_XRotateWindowProperties
-  #define gxm_XScreenCount_w gxm_XScreenCount
-  #define gxm_XSelectInput_w gxm_XSelectInput
-  #define gxm_XSendEvent_w gxm_XSendEvent
-  #define gxm_XSetAccessControl_w gxm_XSetAccessControl
-  #define gxm_XSetArcMode_w gxm_XSetArcMode
-  #define gxm_XSetBackground_w gxm_XSetBackground
-  #define gxm_XSetClipMask_w gxm_XSetClipMask
-  #define gxm_XSetClipOrigin_w gxm_XSetClipOrigin
-  #define gxm_XSetClipRectangles_w gxm_XSetClipRectangles
-  #define gxm_XSetCloseDownMode_w gxm_XSetCloseDownMode
-  #define gxm_XSetCommand_w gxm_XSetCommand
-  #define gxm_XSetDashes_w gxm_XSetDashes
-  #define gxm_XSetFillRule_w gxm_XSetFillRule
-  #define gxm_XSetFillStyle_w gxm_XSetFillStyle
-  #define gxm_XSetFont_w gxm_XSetFont
-  #define gxm_XSetFontPath_w gxm_XSetFontPath
-  #define gxm_XSetForeground_w gxm_XSetForeground
-  #define gxm_XSetFunction_w gxm_XSetFunction
-  #define gxm_XSetGraphicsExposures_w gxm_XSetGraphicsExposures
-  #define gxm_XSetIconName_w gxm_XSetIconName
-  #define gxm_XSetInputFocus_w gxm_XSetInputFocus
-  #define gxm_XSetLineAttributes_w gxm_XSetLineAttributes
-  #define gxm_XSetModifierMapping_w gxm_XSetModifierMapping
-  #define gxm_XSetPlaneMask_w gxm_XSetPlaneMask
-  #define gxm_XSetPointerMapping_w gxm_XSetPointerMapping
-  #define gxm_XSetScreenSaver_w gxm_XSetScreenSaver
-  #define gxm_XSetSelectionOwner_w gxm_XSetSelectionOwner
-  #define gxm_XSetState_w gxm_XSetState
-  #define gxm_XSetStipple_w gxm_XSetStipple
-  #define gxm_XSetSubwindowMode_w gxm_XSetSubwindowMode
-  #define gxm_XSetTSOrigin_w gxm_XSetTSOrigin
-  #define gxm_XSetTile_w gxm_XSetTile
-  #define gxm_XSetWindowBackground_w gxm_XSetWindowBackground
-  #define gxm_XSetWindowBackgroundPixmap_w gxm_XSetWindowBackgroundPixmap
-  #define gxm_XSetWindowBorder_w gxm_XSetWindowBorder
-  #define gxm_XSetWindowBorderPixmap_w gxm_XSetWindowBorderPixmap
-  #define gxm_XSetWindowBorderWidth_w gxm_XSetWindowBorderWidth
-  #define gxm_XSetWindowColormap_w gxm_XSetWindowColormap
-  #define gxm_XStoreBuffer_w gxm_XStoreBuffer
-  #define gxm_XStoreBytes_w gxm_XStoreBytes
-  #define gxm_XStoreColor_w gxm_XStoreColor
-  #define gxm_XStoreColors_w gxm_XStoreColors
-  #define gxm_XStoreName_w gxm_XStoreName
-  #define gxm_XStoreNamedColor_w gxm_XStoreNamedColor
-  #define gxm_XSync_w gxm_XSync
-  #define gxm_XTextExtents_w gxm_XTextExtents
-  #define gxm_XTextWidth_w gxm_XTextWidth
-  #define gxm_XTranslateCoordinates_w gxm_XTranslateCoordinates
-  #define gxm_XUndefineCursor_w gxm_XUndefineCursor
-  #define gxm_XUngrabButton_w gxm_XUngrabButton
-  #define gxm_XUngrabKey_w gxm_XUngrabKey
-  #define gxm_XUngrabKeyboard_w gxm_XUngrabKeyboard
-  #define gxm_XUngrabPointer_w gxm_XUngrabPointer
-  #define gxm_XUngrabServer_w gxm_XUngrabServer
-  #define gxm_XUninstallColormap_w gxm_XUninstallColormap
-  #define gxm_XUnloadFont_w gxm_XUnloadFont
-  #define gxm_XUnmapSubwindows_w gxm_XUnmapSubwindows
-  #define gxm_XUnmapWindow_w gxm_XUnmapWindow
-  #define gxm_XVendorRelease_w gxm_XVendorRelease
-  #define gxm_XWarpPointer_w gxm_XWarpPointer
-  #define gxm_XWidthMMOfScreen_w gxm_XWidthMMOfScreen
-  #define gxm_XWidthOfScreen_w gxm_XWidthOfScreen
-  #define gxm_XWindowEvent_w gxm_XWindowEvent
-  #define gxm_XWriteBitmapFile_w gxm_XWriteBitmapFile
-  #define gxm_XSupportsLocale_w gxm_XSupportsLocale
-  #define gxm_XSetLocaleModifiers_w gxm_XSetLocaleModifiers
-  #define gxm_XCreateFontSet_w gxm_XCreateFontSet
-  #define gxm_XFreeFontSet_w gxm_XFreeFontSet
-  #define gxm_XFontsOfFontSet_w gxm_XFontsOfFontSet
-  #define gxm_XBaseFontNameListOfFontSet_w gxm_XBaseFontNameListOfFontSet
-  #define gxm_XLocaleOfFontSet_w gxm_XLocaleOfFontSet
-  #define gxm_XContextDependentDrawing_w gxm_XContextDependentDrawing
-  #define gxm_XDirectionalDependentDrawing_w gxm_XDirectionalDependentDrawing
-  #define gxm_XContextualDrawing_w gxm_XContextualDrawing
-  #define gxm_XFilterEvent_w gxm_XFilterEvent
-  #define gxm_XAllocIconSize_w gxm_XAllocIconSize
-  #define gxm_XAllocStandardColormap_w gxm_XAllocStandardColormap
-  #define gxm_XAllocWMHints_w gxm_XAllocWMHints
-  #define gxm_XClipBox_w gxm_XClipBox
-  #define gxm_XCreateRegion_w gxm_XCreateRegion
-  #define gxm_XDefaultString_w gxm_XDefaultString
-  #define gxm_XDeleteContext_w gxm_XDeleteContext
-  #define gxm_XDestroyRegion_w gxm_XDestroyRegion
-  #define gxm_XEmptyRegion_w gxm_XEmptyRegion
-  #define gxm_XEqualRegion_w gxm_XEqualRegion
-  #define gxm_XFindContext_w gxm_XFindContext
-  #define gxm_XGetIconSizes_w gxm_XGetIconSizes
-  #define gxm_XGetRGBColormaps_w gxm_XGetRGBColormaps
-  #define gxm_XGetVisualInfo_w gxm_XGetVisualInfo
-  #define gxm_XGetWMHints_w gxm_XGetWMHints
-  #define gxm_XIntersectRegion_w gxm_XIntersectRegion
-  #define gxm_XConvertCase_w gxm_XConvertCase
-  #define gxm_XLookupString_w gxm_XLookupString
-  #define gxm_XMatchVisualInfo_w gxm_XMatchVisualInfo
-  #define gxm_XOffsetRegion_w gxm_XOffsetRegion
-  #define gxm_XPointInRegion_w gxm_XPointInRegion
-  #define gxm_XPolygonRegion_w gxm_XPolygonRegion
-  #define gxm_XRectInRegion_w gxm_XRectInRegion
-  #define gxm_XSaveContext_w gxm_XSaveContext
-  #define gxm_XUniqueContext_w gxm_XUniqueContext
-  #define gxm_XSetRGBColormaps_w gxm_XSetRGBColormaps
-  #define gxm_XSetWMHints_w gxm_XSetWMHints
-  #define gxm_XSetRegion_w gxm_XSetRegion
-  #define gxm_XSetWMProperties_w gxm_XSetWMProperties
-  #define gxm_XShrinkRegion_w gxm_XShrinkRegion
-  #define gxm_XSubtractRegion_w gxm_XSubtractRegion
-  #define gxm_XUnionRectWithRegion_w gxm_XUnionRectWithRegion
-  #define gxm_XUnionRegion_w gxm_XUnionRegion
-  #define gxm_XXorRegion_w gxm_XXorRegion
-
-  #define gxm_DefaultScreen_w gxm_DefaultScreen
-  #define gxm_DefaultRootWindow_w gxm_DefaultRootWindow
-  #define gxm_QLength_w gxm_QLength
-  #define gxm_ScreenCount_w gxm_ScreenCount
-  #define gxm_ServerVendor_w gxm_ServerVendor
-  #define gxm_ProtocolVersion_w gxm_ProtocolVersion
-  #define gxm_ProtocolRevision_w gxm_ProtocolRevision
-  #define gxm_VendorRelease_w gxm_VendorRelease
-  #define gxm_DisplayString_w gxm_DisplayString
-  #define gxm_BitmapUnit_w gxm_BitmapUnit
-  #define gxm_BitmapBitOrder_w gxm_BitmapBitOrder
-  #define gxm_BitmapPad_w gxm_BitmapPad
-  #define gxm_ImageByteOrder_w gxm_ImageByteOrder
-  #define gxm_NextRequest_w gxm_NextRequest
-  #define gxm_LastKnownRequestProcessed_w gxm_LastKnownRequestProcessed
-  #define gxm_DefaultScreenOfDisplay_w gxm_DefaultScreenOfDisplay
-  #define gxm_DisplayOfScreen_w gxm_DisplayOfScreen
-  #define gxm_RootWindowOfScreen_w gxm_RootWindowOfScreen
-  #define gxm_BlackPixelOfScreen_w gxm_BlackPixelOfScreen
-  #define gxm_WhitePixelOfScreen_w gxm_WhitePixelOfScreen
-  #define gxm_DefaultColormapOfScreen_w gxm_DefaultColormapOfScreen
-  #define gxm_DefaultDepthOfScreen_w gxm_DefaultDepthOfScreen
-  #define gxm_DefaultGCOfScreen_w gxm_DefaultGCOfScreen
-  #define gxm_DefaultVisualOfScreen_w gxm_DefaultVisualOfScreen
-  #define gxm_WidthOfScreen_w gxm_WidthOfScreen
-  #define gxm_HeightOfScreen_w gxm_HeightOfScreen
-  #define gxm_WidthMMOfScreen_w gxm_WidthMMOfScreen
-  #define gxm_HeightMMOfScreen_w gxm_HeightMMOfScreen
-  #define gxm_PlanesOfScreen_w gxm_PlanesOfScreen
-  #define gxm_CellsOfScreen_w gxm_CellsOfScreen
-  #define gxm_MinCmapsOfScreen_w gxm_MinCmapsOfScreen
-  #define gxm_MaxCmapsOfScreen_w gxm_MaxCmapsOfScreen
-  #define gxm_DoesSaveUnders_w gxm_DoesSaveUnders
-  #define gxm_DoesBackingStore_w gxm_DoesBackingStore
-  #define gxm_EventMaskOfScreen_w gxm_EventMaskOfScreen
-  #define gxm_RootWindow_w gxm_RootWindow
-  #define gxm_DefaultVisual_w gxm_DefaultVisual
-  #define gxm_DefaultGC_w gxm_DefaultGC
-  #define gxm_BlackPixel_w gxm_BlackPixel
-  #define gxm_WhitePixel_w gxm_WhitePixel
-  #define gxm_DisplayWidth_w gxm_DisplayWidth
-  #define gxm_DisplayHeight_w gxm_DisplayHeight
-  #define gxm_DisplayWidthMM_w gxm_DisplayWidthMM
-  #define gxm_DisplayHeightMM_w gxm_DisplayHeightMM
-  #define gxm_DisplayPlanes_w gxm_DisplayPlanes
-  #define gxm_DisplayCells_w gxm_DisplayCells
-  #define gxm_DefaultColormap_w gxm_DefaultColormap
-  #define gxm_ScreenOfDisplay_w gxm_ScreenOfDisplay
-  #define gxm_DefaultDepth_w gxm_DefaultDepth
-
-  #define gxm_IsKeypadKey_w gxm_IsKeypadKey
-  #define gxm_IsPrivateKeypadKey_w gxm_IsPrivateKeypadKey
-  #define gxm_IsCursorKey_w gxm_IsCursorKey
-  #define gxm_IsPFKey_w gxm_IsPFKey
-  #define gxm_IsFunctionKey_w gxm_IsFunctionKey
-  #define gxm_IsMiscFunctionKey_w gxm_IsMiscFunctionKey
-  #define gxm_IsModifierKey_w gxm_IsModifierKey
-
-  #define XEN_XButtonEvent_p_w XEN_XButtonEvent_p
-  #define XEN_XCirculateEvent_p_w XEN_XCirculateEvent_p
-  #define XEN_XCirculateRequestEvent_p_w XEN_XCirculateRequestEvent_p
-  #define XEN_XClientMessageEvent_p_w XEN_XClientMessageEvent_p
-  #define XEN_XColormapEvent_p_w XEN_XColormapEvent_p
-  #define XEN_XConfigureEvent_p_w XEN_XConfigureEvent_p
-  #define XEN_XConfigureRequestEvent_p_w XEN_XConfigureRequestEvent_p
-  #define XEN_XCreateWindowEvent_p_w XEN_XCreateWindowEvent_p
-  #define XEN_XCrossingEvent_p_w XEN_XCrossingEvent_p
-  #define XEN_XDestroyWindowEvent_p_w XEN_XDestroyWindowEvent_p
-  #define XEN_XErrorEvent_p_w XEN_XErrorEvent_p
-  #define XEN_XExposeEvent_p_w XEN_XExposeEvent_p
-  #define XEN_XFocusChangeEvent_p_w XEN_XFocusChangeEvent_p
-  #define XEN_XGraphicsExposeEvent_p_w XEN_XGraphicsExposeEvent_p
-  #define XEN_XGravityEvent_p_w XEN_XGravityEvent_p
-  #define XEN_XKeyEvent_p_w XEN_XKeyEvent_p
-  #define XEN_XKeymapEvent_p_w XEN_XKeymapEvent_p
-  #define XEN_XMapEvent_p_w XEN_XMapEvent_p
-  #define XEN_XMapRequestEvent_p_w XEN_XMapRequestEvent_p
-  #define XEN_XMappingEvent_p_w XEN_XMappingEvent_p
-  #define XEN_XMotionEvent_p_w XEN_XMotionEvent_p
-  #define XEN_XNoExposeEvent_p_w XEN_XNoExposeEvent_p
-  #define XEN_XPropertyEvent_p_w XEN_XPropertyEvent_p
-  #define XEN_XReparentEvent_p_w XEN_XReparentEvent_p
-  #define XEN_XResizeRequestEvent_p_w XEN_XResizeRequestEvent_p
-  #define XEN_XSelectionClearEvent_p_w XEN_XSelectionClearEvent_p
-  #define XEN_XSelectionEvent_p_w XEN_XSelectionEvent_p
-  #define XEN_XSelectionRequestEvent_p_w XEN_XSelectionRequestEvent_p
-  #define XEN_XSetWindowAttributes_p_w XEN_XSetWindowAttributes_p
-  #define XEN_XUnmapEvent_p_w XEN_XUnmapEvent_p
-  #define XEN_XVisibilityEvent_p_w XEN_XVisibilityEvent_p
-  #define XEN_XIconSize_p_w XEN_XIconSize_p
-
-  #define gxm_XmCreateMessageBox_w gxm_XmCreateMessageBox
-  #define gxm_XmCreateMessageDialog_w gxm_XmCreateMessageDialog
-  #define gxm_XmCreateErrorDialog_w gxm_XmCreateErrorDialog
-  #define gxm_XmCreateInformationDialog_w gxm_XmCreateInformationDialog
-  #define gxm_XmCreateQuestionDialog_w gxm_XmCreateQuestionDialog
-  #define gxm_XmCreateWarningDialog_w gxm_XmCreateWarningDialog
-  #define gxm_XmCreateWorkingDialog_w gxm_XmCreateWorkingDialog
-  #define gxm_XmCreateTemplateDialog_w gxm_XmCreateTemplateDialog
-  #define gxm_XmMessageBoxGetChild_w gxm_XmMessageBoxGetChild
-  #define gxm_XmCreateArrowButtonGadget_w gxm_XmCreateArrowButtonGadget
-  #define gxm_XmCreateArrowButton_w gxm_XmCreateArrowButton
-  #define gxm_XmCreateNotebook_w gxm_XmCreateNotebook
-  #define gxm_XmNotebookGetPageInfo_w gxm_XmNotebookGetPageInfo
-  #define gxm_XmTransferSetParameters_w gxm_XmTransferSetParameters
-  #define gxm_XmTransferDone_w gxm_XmTransferDone
-  #define gxm_XmTransferValue_w gxm_XmTransferValue
-  #define gxm_XmTransferStartRequest_w gxm_XmTransferStartRequest
-  #define gxm_XmTransferSendRequest_w gxm_XmTransferSendRequest
-  #define gxm_XmCreateComboBox_w gxm_XmCreateComboBox
-  #define gxm_XmCreateDropDownComboBox_w gxm_XmCreateDropDownComboBox
-  #define gxm_XmCreateDropDownList_w gxm_XmCreateDropDownList
-  #define gxm_XmComboBoxAddItem_w gxm_XmComboBoxAddItem
-  #define gxm_XmComboBoxDeletePos_w gxm_XmComboBoxDeletePos
-  #define gxm_XmComboBoxSelectItem_w gxm_XmComboBoxSelectItem
-  #define gxm_XmComboBoxSetItem_w gxm_XmComboBoxSetItem
-  #define gxm_XmComboBoxUpdate_w gxm_XmComboBoxUpdate
-  #define gxm_XmCreateContainer_w gxm_XmCreateContainer
-  #define gxm_XmContainerGetItemChildren_w gxm_XmContainerGetItemChildren
-  #define gxm_XmContainerRelayout_w gxm_XmContainerRelayout
-  #define gxm_XmContainerReorder_w gxm_XmContainerReorder
-  #define gxm_XmContainerCut_w gxm_XmContainerCut
-  #define gxm_XmContainerCopy_w gxm_XmContainerCopy
-  #define gxm_XmContainerPaste_w gxm_XmContainerPaste
-  #define gxm_XmContainerCopyLink_w gxm_XmContainerCopyLink
-  #define gxm_XmContainerPasteLink_w gxm_XmContainerPasteLink
-  #define gxm_XmCreateSpinBox_w gxm_XmCreateSpinBox
-  #define gxm_XmSpinBoxValidatePosition_w gxm_XmSpinBoxValidatePosition
-  #define gxm_XmCreateSimpleSpinBox_w gxm_XmCreateSimpleSpinBox
-  #define gxm_XmSimpleSpinBoxAddItem_w gxm_XmSimpleSpinBoxAddItem
-  #define gxm_XmSimpleSpinBoxDeletePos_w gxm_XmSimpleSpinBoxDeletePos
-  #define gxm_XmSimpleSpinBoxSetItem_w gxm_XmSimpleSpinBoxSetItem
-  #define gxm_XmDropSiteRegistered_w gxm_XmDropSiteRegistered
-  #define gxm_XmTextFieldCopyLink_w gxm_XmTextFieldCopyLink
-  #define gxm_XmTextFieldPasteLink_w gxm_XmTextFieldPasteLink
-  #define gxm_XmTextGetCenterline_w gxm_XmTextGetCenterline
-  #define gxm_XmToggleButtonGadgetSetValue_w gxm_XmToggleButtonGadgetSetValue
-  #define gxm_XmCreateIconGadget_w gxm_XmCreateIconGadget
-  #define gxm_XmCreateIconHeader_w gxm_XmCreateIconHeader
-  #define gxm_XmObjectAtPoint_w gxm_XmObjectAtPoint
-  #define gxm_XmConvertStringToUnits_w gxm_XmConvertStringToUnits
-  #define gxm_XmCreateGrabShell_w gxm_XmCreateGrabShell
-  #define gxm_XmToggleButtonSetValue_w gxm_XmToggleButtonSetValue
-  #define gxm_XmTextPasteLink_w gxm_XmTextPasteLink
-  #define gxm_XmTextCopyLink_w gxm_XmTextCopyLink
-  #define gxm_XmScaleSetTicks_w gxm_XmScaleSetTicks
-  #define gxm_XmInternAtom_w gxm_XmInternAtom
-  #define gxm_XmGetAtomName_w gxm_XmGetAtomName
-  #define gxm_XmCreatePanedWindow_w gxm_XmCreatePanedWindow
-  #define gxm_XmCreateBulletinBoard_w gxm_XmCreateBulletinBoard
-  #define gxm_XmCreateBulletinBoardDialog_w gxm_XmCreateBulletinBoardDialog
-  #define gxm_XmCreateCascadeButtonGadget_w gxm_XmCreateCascadeButtonGadget
-  #define gxm_XmCascadeButtonGadgetHighlight_w gxm_XmCascadeButtonGadgetHighlight
-  #define gxm_XmAddProtocols_w gxm_XmAddProtocols
-  #define gxm_XmRemoveProtocols_w gxm_XmRemoveProtocols
-  #define gxm_XmAddProtocolCallback_w gxm_XmAddProtocolCallback
-  #define gxm_XmRemoveProtocolCallback_w gxm_XmRemoveProtocolCallback
-  #define gxm_XmActivateProtocol_w gxm_XmActivateProtocol
-  #define gxm_XmDeactivateProtocol_w gxm_XmDeactivateProtocol
-  #define gxm_XmSetProtocolHooks_w gxm_XmSetProtocolHooks
-  #define gxm_XmCreateCascadeButton_w gxm_XmCreateCascadeButton
-  #define gxm_XmCascadeButtonHighlight_w gxm_XmCascadeButtonHighlight
-  #define gxm_XmCreatePushButtonGadget_w gxm_XmCreatePushButtonGadget
-  #define gxm_XmCreatePushButton_w gxm_XmCreatePushButton
-  #define gxm_XmCreateCommand_w gxm_XmCreateCommand
-  #define gxm_XmCommandGetChild_w gxm_XmCommandGetChild
-  #define gxm_XmCommandSetValue_w gxm_XmCommandSetValue
-  #define gxm_XmCommandAppendValue_w gxm_XmCommandAppendValue
-  #define gxm_XmCommandError_w gxm_XmCommandError
-  #define gxm_XmCreateCommandDialog_w gxm_XmCreateCommandDialog
-  #define gxm_XmMenuPosition_w gxm_XmMenuPosition
-  #define gxm_XmCreateRowColumn_w gxm_XmCreateRowColumn
-  #define gxm_XmCreateWorkArea_w gxm_XmCreateWorkArea
-  #define gxm_XmCreateRadioBox_w gxm_XmCreateRadioBox
-  #define gxm_XmCreateOptionMenu_w gxm_XmCreateOptionMenu
-  #define gxm_XmOptionLabelGadget_w gxm_XmOptionLabelGadget
-  #define gxm_XmOptionButtonGadget_w gxm_XmOptionButtonGadget
-  #define gxm_XmCreateMenuBar_w gxm_XmCreateMenuBar
-  #define gxm_XmCreatePopupMenu_w gxm_XmCreatePopupMenu
-  #define gxm_XmCreatePulldownMenu_w gxm_XmCreatePulldownMenu
-  #define gxm_XmGetPostedFromWidget_w gxm_XmGetPostedFromWidget
-  #define gxm_XmGetTearOffControl_w gxm_XmGetTearOffControl
-  #define gxm_XmScaleSetValue_w gxm_XmScaleSetValue
-  #define gxm_XmScaleGetValue_w gxm_XmScaleGetValue
-  #define gxm_XmCreateScale_w gxm_XmCreateScale
-  #define gxm_XmClipboardBeginCopy_w gxm_XmClipboardBeginCopy
-  #define gxm_XmClipboardStartCopy_w gxm_XmClipboardStartCopy
-  #define gxm_XmClipboardCopy_w gxm_XmClipboardCopy
-  #define gxm_XmClipboardEndCopy_w gxm_XmClipboardEndCopy
-  #define gxm_XmClipboardCancelCopy_w gxm_XmClipboardCancelCopy
-  #define gxm_XmClipboardWithdrawFormat_w gxm_XmClipboardWithdrawFormat
-  #define gxm_XmClipboardCopyByName_w gxm_XmClipboardCopyByName
-  #define gxm_XmClipboardUndoCopy_w gxm_XmClipboardUndoCopy
-  #define gxm_XmClipboardLock_w gxm_XmClipboardLock
-  #define gxm_XmClipboardUnlock_w gxm_XmClipboardUnlock
-  #define gxm_XmClipboardStartRetrieve_w gxm_XmClipboardStartRetrieve
-  #define gxm_XmClipboardEndRetrieve_w gxm_XmClipboardEndRetrieve
-  #define gxm_XmClipboardRetrieve_w gxm_XmClipboardRetrieve
-  #define gxm_XmClipboardInquireCount_w gxm_XmClipboardInquireCount
-  #define gxm_XmClipboardInquireFormat_w gxm_XmClipboardInquireFormat
-  #define gxm_XmClipboardInquireLength_w gxm_XmClipboardInquireLength
-  #define gxm_XmClipboardInquirePendingItems_w gxm_XmClipboardInquirePendingItems
-  #define gxm_XmClipboardRegisterFormat_w gxm_XmClipboardRegisterFormat
-  #define gxm_XmGetXmScreen_w gxm_XmGetXmScreen
-  #define gxm_XmCreateScrollBar_w gxm_XmCreateScrollBar
-  #define gxm_XmScrollBarGetValues_w gxm_XmScrollBarGetValues
-  #define gxm_XmScrollBarSetValues_w gxm_XmScrollBarSetValues
-  #define gxm_XmCreateDialogShell_w gxm_XmCreateDialogShell
-  #define gxm_XmCreateScrolledWindow_w gxm_XmCreateScrolledWindow
-  #define gxm_XmScrollVisible_w gxm_XmScrollVisible
-  #define gxm_XmGetDragContext_w gxm_XmGetDragContext
-  #define gxm_XmGetXmDisplay_w gxm_XmGetXmDisplay
-  #define gxm_XmSelectionBoxGetChild_w gxm_XmSelectionBoxGetChild
-  #define gxm_XmCreateSelectionBox_w gxm_XmCreateSelectionBox
-  #define gxm_XmCreateSelectionDialog_w gxm_XmCreateSelectionDialog
-  #define gxm_XmCreatePromptDialog_w gxm_XmCreatePromptDialog
-  #define gxm_XmDragStart_w gxm_XmDragStart
-  #define gxm_XmDragCancel_w gxm_XmDragCancel
-  #define gxm_XmTargetsAreCompatible_w gxm_XmTargetsAreCompatible
-  #define gxm_XmCreateSeparatorGadget_w gxm_XmCreateSeparatorGadget
-  #define gxm_XmCreateDragIcon_w gxm_XmCreateDragIcon
-  #define gxm_XmCreateSeparator_w gxm_XmCreateSeparator
-  #define gxm_XmCreateDrawingArea_w gxm_XmCreateDrawingArea
-  #define gxm_XmCreateDrawnButton_w gxm_XmCreateDrawnButton
-  #define gxm_XmDropSiteRegister_w gxm_XmDropSiteRegister
-  #define gxm_XmDropSiteUnregister_w gxm_XmDropSiteUnregister
-  #define gxm_XmDropSiteStartUpdate_w gxm_XmDropSiteStartUpdate
-  #define gxm_XmDropSiteUpdate_w gxm_XmDropSiteUpdate
-  #define gxm_XmDropSiteEndUpdate_w gxm_XmDropSiteEndUpdate
-  #define gxm_XmDropSiteRetrieve_w gxm_XmDropSiteRetrieve
-  #define gxm_XmDropSiteQueryStackingOrder_w gxm_XmDropSiteQueryStackingOrder
-  #define gxm_XmDropSiteConfigureStackingOrder_w gxm_XmDropSiteConfigureStackingOrder
-  #define gxm_XmDropTransferStart_w gxm_XmDropTransferStart
-  #define gxm_XmDropTransferAdd_w gxm_XmDropTransferAdd
-  #define gxm_XmTextFieldGetString_w gxm_XmTextFieldGetString
-  #define gxm_XmTextFieldGetSubstring_w gxm_XmTextFieldGetSubstring
-  #define gxm_XmTextFieldGetLastPosition_w gxm_XmTextFieldGetLastPosition
-  #define gxm_XmTextFieldSetString_w gxm_XmTextFieldSetString
-  #define gxm_XmTextFieldReplace_w gxm_XmTextFieldReplace
-  #define gxm_XmTextFieldInsert_w gxm_XmTextFieldInsert
-  #define gxm_XmTextFieldSetAddMode_w gxm_XmTextFieldSetAddMode
-  #define gxm_XmTextFieldGetAddMode_w gxm_XmTextFieldGetAddMode
-  #define gxm_XmTextFieldGetEditable_w gxm_XmTextFieldGetEditable
-  #define gxm_XmTextFieldSetEditable_w gxm_XmTextFieldSetEditable
-  #define gxm_XmTextFieldGetMaxLength_w gxm_XmTextFieldGetMaxLength
-  #define gxm_XmTextFieldSetMaxLength_w gxm_XmTextFieldSetMaxLength
-  #define gxm_XmTextFieldGetCursorPosition_w gxm_XmTextFieldGetCursorPosition
-  #define gxm_XmTextFieldGetInsertionPosition_w gxm_XmTextFieldGetInsertionPosition
-  #define gxm_XmTextFieldSetCursorPosition_w gxm_XmTextFieldSetCursorPosition
-  #define gxm_XmTextFieldSetInsertionPosition_w gxm_XmTextFieldSetInsertionPosition
-  #define gxm_XmTextFieldGetSelectionPosition_w gxm_XmTextFieldGetSelectionPosition
-  #define gxm_XmTextFieldGetSelection_w gxm_XmTextFieldGetSelection
-  #define gxm_XmTextFieldRemove_w gxm_XmTextFieldRemove
-  #define gxm_XmTextFieldCopy_w gxm_XmTextFieldCopy
-  #define gxm_XmTextFieldCut_w gxm_XmTextFieldCut
-  #define gxm_XmTextFieldPaste_w gxm_XmTextFieldPaste
-  #define gxm_XmTextFieldClearSelection_w gxm_XmTextFieldClearSelection
-  #define gxm_XmTextFieldSetSelection_w gxm_XmTextFieldSetSelection
-  #define gxm_XmTextFieldXYToPos_w gxm_XmTextFieldXYToPos
-  #define gxm_XmTextFieldPosToXY_w gxm_XmTextFieldPosToXY
-  #define gxm_XmTextFieldShowPosition_w gxm_XmTextFieldShowPosition
-  #define gxm_XmTextFieldSetHighlight_w gxm_XmTextFieldSetHighlight
-  #define gxm_XmTextFieldGetBaseline_w gxm_XmTextFieldGetBaseline
-  #define gxm_XmCreateTextField_w gxm_XmCreateTextField
-  #define gxm_XmFileSelectionBoxGetChild_w gxm_XmFileSelectionBoxGetChild
-  #define gxm_XmFileSelectionDoSearch_w gxm_XmFileSelectionDoSearch
-  #define gxm_XmCreateFileSelectionBox_w gxm_XmCreateFileSelectionBox
-  #define gxm_XmCreateFileSelectionDialog_w gxm_XmCreateFileSelectionDialog
-  #define gxm_XmTextSetHighlight_w gxm_XmTextSetHighlight
-  #define gxm_XmCreateScrolledText_w gxm_XmCreateScrolledText
-  #define gxm_XmCreateText_w gxm_XmCreateText
-  #define gxm_XmTextGetSubstring_w gxm_XmTextGetSubstring
-  #define gxm_XmTextGetString_w gxm_XmTextGetString
-  #define gxm_XmTextGetLastPosition_w gxm_XmTextGetLastPosition
-  #define gxm_XmTextSetString_w gxm_XmTextSetString
-  #define gxm_XmTextReplace_w gxm_XmTextReplace
-  #define gxm_XmTextInsert_w gxm_XmTextInsert
-  #define gxm_XmTextSetAddMode_w gxm_XmTextSetAddMode
-  #define gxm_XmTextGetAddMode_w gxm_XmTextGetAddMode
-  #define gxm_XmTextGetEditable_w gxm_XmTextGetEditable
-  #define gxm_XmTextSetEditable_w gxm_XmTextSetEditable
-  #define gxm_XmTextGetMaxLength_w gxm_XmTextGetMaxLength
-  #define gxm_XmTextSetMaxLength_w gxm_XmTextSetMaxLength
-  #define gxm_XmTextGetTopCharacter_w gxm_XmTextGetTopCharacter
-  #define gxm_XmTextSetTopCharacter_w gxm_XmTextSetTopCharacter
-  #define gxm_XmTextGetCursorPosition_w gxm_XmTextGetCursorPosition
-  #define gxm_XmTextGetInsertionPosition_w gxm_XmTextGetInsertionPosition
-  #define gxm_XmTextSetInsertionPosition_w gxm_XmTextSetInsertionPosition
-  #define gxm_XmTextSetCursorPosition_w gxm_XmTextSetCursorPosition
-  #define gxm_XmTextRemove_w gxm_XmTextRemove
-  #define gxm_XmTextCopy_w gxm_XmTextCopy
-  #define gxm_XmTextCut_w gxm_XmTextCut
-  #define gxm_XmTextPaste_w gxm_XmTextPaste
-  #define gxm_XmTextGetSelection_w gxm_XmTextGetSelection
-  #define gxm_XmTextSetSelection_w gxm_XmTextSetSelection
-  #define gxm_XmTextClearSelection_w gxm_XmTextClearSelection
-  #define gxm_XmTextGetSelectionPosition_w gxm_XmTextGetSelectionPosition
-  #define gxm_XmTextXYToPos_w gxm_XmTextXYToPos
-  #define gxm_XmTextPosToXY_w gxm_XmTextPosToXY
-  #define gxm_XmTextGetSource_w gxm_XmTextGetSource
-  #define gxm_XmTextSetSource_w gxm_XmTextSetSource
-  #define gxm_XmTextShowPosition_w gxm_XmTextShowPosition
-  #define gxm_XmTextScroll_w gxm_XmTextScroll
-  #define gxm_XmTextGetBaseline_w gxm_XmTextGetBaseline
-  #define gxm_XmTextDisableRedisplay_w gxm_XmTextDisableRedisplay
-  #define gxm_XmTextEnableRedisplay_w gxm_XmTextEnableRedisplay
-  #define gxm_XmTextFindString_w gxm_XmTextFindString
-  #define gxm_XmCreateForm_w gxm_XmCreateForm
-  #define gxm_XmCreateFormDialog_w gxm_XmCreateFormDialog
-  #define gxm_XmCreateFrame_w gxm_XmCreateFrame
-  #define gxm_XmToggleButtonGadgetGetState_w gxm_XmToggleButtonGadgetGetState
-  #define gxm_XmToggleButtonGadgetSetState_w gxm_XmToggleButtonGadgetSetState
-  #define gxm_XmCreateToggleButtonGadget_w gxm_XmCreateToggleButtonGadget
-  #define gxm_XmToggleButtonGetState_w gxm_XmToggleButtonGetState
-  #define gxm_XmToggleButtonSetState_w gxm_XmToggleButtonSetState
-  #define gxm_XmCreateToggleButton_w gxm_XmCreateToggleButton
-  #define gxm_XmCreateLabelGadget_w gxm_XmCreateLabelGadget
-  #define gxm_XmCreateLabel_w gxm_XmCreateLabel
-  #define gxm_XmIsMotifWMRunning_w gxm_XmIsMotifWMRunning
-  #define gxm_XmListAddItem_w gxm_XmListAddItem
-  #define gxm_XmListAddItems_w gxm_XmListAddItems
-  #define gxm_XmListAddItemsUnselected_w gxm_XmListAddItemsUnselected
-  #define gxm_XmListAddItemUnselected_w gxm_XmListAddItemUnselected
-  #define gxm_XmListDeleteItem_w gxm_XmListDeleteItem
-  #define gxm_XmListDeleteItems_w gxm_XmListDeleteItems
-  #define gxm_XmListDeletePositions_w gxm_XmListDeletePositions
-  #define gxm_XmListDeletePos_w gxm_XmListDeletePos
-  #define gxm_XmListDeleteItemsPos_w gxm_XmListDeleteItemsPos
-  #define gxm_XmListDeleteAllItems_w gxm_XmListDeleteAllItems
-  #define gxm_XmListReplaceItems_w gxm_XmListReplaceItems
-  #define gxm_XmListReplaceItemsPos_w gxm_XmListReplaceItemsPos
-  #define gxm_XmListReplaceItemsUnselected_w gxm_XmListReplaceItemsUnselected
-  #define gxm_XmListReplaceItemsPosUnselected_w gxm_XmListReplaceItemsPosUnselected
-  #define gxm_XmListReplacePositions_w gxm_XmListReplacePositions
-  #define gxm_XmListSelectItem_w gxm_XmListSelectItem
-  #define gxm_XmListSelectPos_w gxm_XmListSelectPos
-  #define gxm_XmListDeselectItem_w gxm_XmListDeselectItem
-  #define gxm_XmListDeselectPos_w gxm_XmListDeselectPos
-  #define gxm_XmListDeselectAllItems_w gxm_XmListDeselectAllItems
-  #define gxm_XmListSetPos_w gxm_XmListSetPos
-  #define gxm_XmListSetBottomPos_w gxm_XmListSetBottomPos
-  #define gxm_XmListSetItem_w gxm_XmListSetItem
-  #define gxm_XmListSetBottomItem_w gxm_XmListSetBottomItem
-  #define gxm_XmListSetAddMode_w gxm_XmListSetAddMode
-  #define gxm_XmListItemExists_w gxm_XmListItemExists
-  #define gxm_XmListItemPos_w gxm_XmListItemPos
-  #define gxm_XmListGetKbdItemPos_w gxm_XmListGetKbdItemPos
-  #define gxm_XmListSetKbdItemPos_w gxm_XmListSetKbdItemPos
-  #define gxm_XmListYToPos_w gxm_XmListYToPos
-  #define gxm_XmListPosToBounds_w gxm_XmListPosToBounds
-  #define gxm_XmListGetMatchPos_w gxm_XmListGetMatchPos
-  #define gxm_XmListSetHorizPos_w gxm_XmListSetHorizPos
-  #define gxm_XmListUpdateSelectedList_w gxm_XmListUpdateSelectedList
-  #define gxm_XmListPosSelected_w gxm_XmListPosSelected
-  #define gxm_XmCreateList_w gxm_XmCreateList
-  #define gxm_XmCreateScrolledList_w gxm_XmCreateScrolledList
-  #define gxm_XmTranslateKey_w gxm_XmTranslateKey
-  #define gxm_XmCreateMainWindow_w gxm_XmCreateMainWindow
-  #define gxm_XmInstallImage_w gxm_XmInstallImage
-  #define gxm_XmUninstallImage_w gxm_XmUninstallImage
-  #define gxm_XmGetPixmap_w gxm_XmGetPixmap
-  #define gxm_XmGetPixmapByDepth_w gxm_XmGetPixmapByDepth
-  #define gxm_XmDestroyPixmap_w gxm_XmDestroyPixmap
-  #define gxm_XmUpdateDisplay_w gxm_XmUpdateDisplay
-  #define gxm_XmWidgetGetBaselines_w gxm_XmWidgetGetBaselines
-  #define gxm_XmRegisterSegmentEncoding_w gxm_XmRegisterSegmentEncoding
-  #define gxm_XmMapSegmentEncoding_w gxm_XmMapSegmentEncoding
-  #define gxm_XmCvtCTToXmString_w gxm_XmCvtCTToXmString
-  #define gxm_XmCvtXmStringToCT_w gxm_XmCvtXmStringToCT
-  #define gxm_XmConvertUnits_w gxm_XmConvertUnits
-  #define gxm_XmCreateSimpleMenuBar_w gxm_XmCreateSimpleMenuBar
-  #define gxm_XmCreateSimplePopupMenu_w gxm_XmCreateSimplePopupMenu
-  #define gxm_XmCreateSimplePulldownMenu_w gxm_XmCreateSimplePulldownMenu
-  #define gxm_XmCreateSimpleOptionMenu_w gxm_XmCreateSimpleOptionMenu
-  #define gxm_XmCreateSimpleRadioBox_w gxm_XmCreateSimpleRadioBox
-  #define gxm_XmCreateSimpleCheckBox_w gxm_XmCreateSimpleCheckBox
-  #define gxm_XmVaCreateSimpleMenuBar_w gxm_XmVaCreateSimpleMenuBar
-  #define gxm_XmVaCreateSimplePopupMenu_w gxm_XmVaCreateSimplePopupMenu
-  #define gxm_XmVaCreateSimplePulldownMenu_w gxm_XmVaCreateSimplePulldownMenu
-  #define gxm_XmVaCreateSimpleOptionMenu_w gxm_XmVaCreateSimpleOptionMenu
-  #define gxm_XmVaCreateSimpleRadioBox_w gxm_XmVaCreateSimpleRadioBox
-  #define gxm_XmVaCreateSimpleCheckBox_w gxm_XmVaCreateSimpleCheckBox
-  #define gxm_XmTrackingEvent_w gxm_XmTrackingEvent
-  #define gxm_XmSetColorCalculation_w gxm_XmSetColorCalculation
-  #define gxm_XmGetColorCalculation_w gxm_XmGetColorCalculation
-  #define gxm_XmGetColors_w gxm_XmGetColors
-  #define gxm_XmChangeColor_w gxm_XmChangeColor
-  #define gxm_XmStringCreate_w gxm_XmStringCreate
-  #define gxm_XmStringCreateLocalized_w gxm_XmStringCreateLocalized
-  #define gxm_XmStringDirectionCreate_w gxm_XmStringDirectionCreate
-  #define gxm_XmStringSeparatorCreate_w gxm_XmStringSeparatorCreate
-  #define gxm_XmStringInitContext_w gxm_XmStringInitContext
-  #define gxm_XmStringFreeContext_w gxm_XmStringFreeContext
-  #define gxm_XmStringConcatAndFree_w gxm_XmStringConcatAndFree
-  #define gxm_XmStringIsVoid_w gxm_XmStringIsVoid
-  #define gxm_XmStringPeekNextTriple_w gxm_XmStringPeekNextTriple
-  #define gxm_XmStringGetNextTriple_w gxm_XmStringGetNextTriple
-  #define gxm_XmStringComponentCreate_w gxm_XmStringComponentCreate
-  #define gxm_XmStringUnparse_w gxm_XmStringUnparse
-  #define gxm_XmStringParseText_w gxm_XmStringParseText
-  #define gxm_XmStringToXmStringTable_w gxm_XmStringToXmStringTable
-  #define gxm_XmStringTableToXmString_w gxm_XmStringTableToXmString
-  #define gxm_XmStringTableUnparse_w gxm_XmStringTableUnparse
-  #define gxm_XmStringTableParseStringArray_w gxm_XmStringTableParseStringArray
-  #define gxm_XmDirectionToStringDirection_w gxm_XmDirectionToStringDirection
-  #define gxm_XmStringDirectionToDirection_w gxm_XmStringDirectionToDirection
-  #define gxm_XmStringGenerate_w gxm_XmStringGenerate
-  #define gxm_XmStringPutRendition_w gxm_XmStringPutRendition
-  #define gxm_XmParseMappingCreate_w gxm_XmParseMappingCreate
-  #define gxm_XmParseMappingSetValues_w gxm_XmParseMappingSetValues
-  #define gxm_XmParseMappingGetValues_w gxm_XmParseMappingGetValues
-  #define gxm_XmParseMappingFree_w gxm_XmParseMappingFree
-  #define gxm_XmParseTableFree_w gxm_XmParseTableFree
-  #define gxm_XmStringTableProposeTablist_w gxm_XmStringTableProposeTablist
-  #define gxm_XmTabSetValue_w gxm_XmTabSetValue
-  #define gxm_XmTabGetValues_w gxm_XmTabGetValues
-  #define gxm_XmTabFree_w gxm_XmTabFree
-  #define gxm_XmTabListFree_w gxm_XmTabListFree
-  #define gxm_XmTabCreate_w gxm_XmTabCreate
-  #define gxm_XmTabListTabCount_w gxm_XmTabListTabCount
-  #define gxm_XmTabListRemoveTabs_w gxm_XmTabListRemoveTabs
-  #define gxm_XmTabListReplacePositions_w gxm_XmTabListReplacePositions
-  #define gxm_XmTabListGetTab_w gxm_XmTabListGetTab
-  #define gxm_XmTabListCopy_w gxm_XmTabListCopy
-  #define gxm_XmTabListInsertTabs_w gxm_XmTabListInsertTabs
-  #define gxm_XmRenderTableCvtFromProp_w gxm_XmRenderTableCvtFromProp
-  #define gxm_XmRenderTableCvtToProp_w gxm_XmRenderTableCvtToProp
-  #define gxm_XmRenditionUpdate_w gxm_XmRenditionUpdate
-  #define gxm_XmRenditionRetrieve_w gxm_XmRenditionRetrieve
-  #define gxm_XmRenditionFree_w gxm_XmRenditionFree
-  #define gxm_XmRenditionCreate_w gxm_XmRenditionCreate
-  #define gxm_XmRenderTableGetRenditions_w gxm_XmRenderTableGetRenditions
-  #define gxm_XmRenderTableGetRendition_w gxm_XmRenderTableGetRendition
-  #define gxm_XmRenderTableGetTags_w gxm_XmRenderTableGetTags
-  #define gxm_XmRenderTableFree_w gxm_XmRenderTableFree
-  #define gxm_XmRenderTableCopy_w gxm_XmRenderTableCopy
-  #define gxm_XmRenderTableRemoveRenditions_w gxm_XmRenderTableRemoveRenditions
-  #define gxm_XmRenderTableAddRenditions_w gxm_XmRenderTableAddRenditions
-  #define gxm_XmStringConcat_w gxm_XmStringConcat
-  #define gxm_XmStringCopy_w gxm_XmStringCopy
-  #define gxm_XmStringCompare_w gxm_XmStringCompare
-  #define gxm_XmStringEmpty_w gxm_XmStringEmpty
-  #define gxm_XmStringHasSubstring_w gxm_XmStringHasSubstring
-  #define gxm_XmStringFree_w gxm_XmStringFree
-  #define gxm_XmStringBaseline_w gxm_XmStringBaseline
-  #define gxm_XmStringWidth_w gxm_XmStringWidth
-  #define gxm_XmStringHeight_w gxm_XmStringHeight
-  #define gxm_XmStringExtent_w gxm_XmStringExtent
-  #define gxm_XmStringLineCount_w gxm_XmStringLineCount
-  #define gxm_XmStringDraw_w gxm_XmStringDraw
-  #define gxm_XmStringDrawImage_w gxm_XmStringDrawImage
-  #define gxm_XmStringDrawUnderline_w gxm_XmStringDrawUnderline
-
-  #define gxm_XmGetDestination_w gxm_XmGetDestination
-  #define gxm_XmIsTraversable_w gxm_XmIsTraversable
-  #define gxm_XmGetVisibility_w gxm_XmGetVisibility
-  #define gxm_XmGetTabGroup_w gxm_XmGetTabGroup
-  #define gxm_XmGetFocusWidget_w gxm_XmGetFocusWidget
-  #define gxm_XmProcessTraversal_w gxm_XmProcessTraversal
-  #define gxm_XmCreateMenuShell_w gxm_XmCreateMenuShell
-
-  #define gxm_XmIsMessageBox_w gxm_XmIsMessageBox
-  #define gxm_XmIsArrowButtonGadget_w gxm_XmIsArrowButtonGadget
-  #define gxm_XmIsArrowButton_w gxm_XmIsArrowButton
-  #define gxm_XmCvtXmStringToByteStream_w gxm_XmCvtXmStringToByteStream
-  #define gxm_XmCvtByteStreamToXmString_w gxm_XmCvtByteStreamToXmString
-  #define gxm_XmStringByteStreamLength_w gxm_XmStringByteStreamLength
-  #define gxm_XmIsNotebook_w gxm_XmIsNotebook
-  #define gxm_XmIsComboBox_w gxm_XmIsComboBox
-  #define gxm_XmIsContainer_w gxm_XmIsContainer
-  #define gxm_XmIsGrabShell_w gxm_XmIsGrabShell
-  #define gxm_XmIsIconGadget_w gxm_XmIsIconGadget
-  #define gxm_XmIsIconHeader_w gxm_XmIsIconHeader
-  #define gxm_XmIsPanedWindow_w gxm_XmIsPanedWindow
-  #define gxm_XmIsBulletinBoard_w gxm_XmIsBulletinBoard
-  #define gxm_XmIsPrimitive_w gxm_XmIsPrimitive
-  #define gxm_XmIsCascadeButtonGadget_w gxm_XmIsCascadeButtonGadget
-  #define gxm_XmIsCascadeButton_w gxm_XmIsCascadeButton
-  #define gxm_XmIsPushButtonGadget_w gxm_XmIsPushButtonGadget
-  #define gxm_XmIsPushButton_w gxm_XmIsPushButton
-  #define gxm_XmIsCommand_w gxm_XmIsCommand
-  #define gxm_XmIsRowColumn_w gxm_XmIsRowColumn
-  #define gxm_XmIsScale_w gxm_XmIsScale
-  #define gxm_XmIsScreen_w gxm_XmIsScreen
-  #define gxm_XmIsScrollBar_w gxm_XmIsScrollBar
-  #define gxm_XmIsDialogShell_w gxm_XmIsDialogShell
-  #define gxm_XmIsScrolledWindow_w gxm_XmIsScrolledWindow
-  #define gxm_XmIsDisplay_w gxm_XmIsDisplay
-  #define gxm_XmIsSelectionBox_w gxm_XmIsSelectionBox
-  #define gxm_XmIsDragContext_w gxm_XmIsDragContext
-  #define gxm_XmIsSeparatorGadget_w gxm_XmIsSeparatorGadget
-  #define gxm_XmIsDragIconObjectClass_w gxm_XmIsDragIconObjectClass
-  #define gxm_XmIsSeparator_w gxm_XmIsSeparator
-  #define gxm_XmIsDrawingArea_w gxm_XmIsDrawingArea
-  #define gxm_XmIsDrawnButton_w gxm_XmIsDrawnButton
-  #define gxm_XmIsDropSiteManager_w gxm_XmIsDropSiteManager
-  #define gxm_XmIsDropTransfer_w gxm_XmIsDropTransfer
-  #define gxm_XmIsTextField_w gxm_XmIsTextField
-  #define gxm_XmIsFileSelectionBox_w gxm_XmIsFileSelectionBox
-  #define gxm_XmIsText_w gxm_XmIsText
-  #define gxm_XmIsForm_w gxm_XmIsForm
-  #define gxm_XmIsFrame_w gxm_XmIsFrame
-  #define gxm_XmIsGadget_w gxm_XmIsGadget
-  #define gxm_XmIsToggleButtonGadget_w gxm_XmIsToggleButtonGadget
-  #define gxm_XmIsToggleButton_w gxm_XmIsToggleButton
-  #define gxm_XmIsLabelGadget_w gxm_XmIsLabelGadget
-  #define gxm_XmIsLabel_w gxm_XmIsLabel
-  #define gxm_XmIsVendorShell_w gxm_XmIsVendorShell
-  #define gxm_XmIsList_w gxm_XmIsList
-  #define gxm_XmIsMainWindow_w gxm_XmIsMainWindow
-  #define gxm_XmIsManager_w gxm_XmIsManager
-  #define gxm_XmIsMenuShell_w gxm_XmIsMenuShell
-  #define gxm_XmListGetSelectedPos_w gxm_XmListGetSelectedPos
-  #define gxm_XmWidgetGetDisplayRect_w gxm_XmWidgetGetDisplayRect
-
-  #define gxm_XpmCreatePixmapFromData_w gxm_XpmCreatePixmapFromData
-  #define gxm_XpmCreateDataFromPixmap_w gxm_XpmCreateDataFromPixmap
-  #define gxm_XpmReadFileToPixmap_w gxm_XpmReadFileToPixmap
-  #define gxm_XpmReadFileToXpmImage_w gxm_XpmReadFileToXpmImage
-  #define gxm_XpmWriteFileFromPixmap_w gxm_XpmWriteFileFromPixmap
-  #define gxm_XpmCreatePixmapFromXpmImage_w gxm_XpmCreatePixmapFromXpmImage
-  #define gxm_XpmCreateXpmImageFromPixmap_w gxm_XpmCreateXpmImageFromPixmap
-  #define gxm_XpmGetErrorString_w gxm_XpmGetErrorString
-
-  #define gxm_XGetPixel_w gxm_XGetPixel
-  #define gxm_XDestroyImage_w gxm_XDestroyImage
-  #define gxm_XPutPixel_w gxm_XPutPixel
-  #define gxm_XSubImage_w gxm_XSubImage
-  #define gxm_XAddPixel_w gxm_XAddPixel
-
-  #define XEN_XtAppContext_p_w XEN_XtAppContext_p
-  #define XEN_XtRequestId_p_w XEN_XtRequestId_p
-  #define XEN_XtWorkProcId_p_w XEN_XtWorkProcId_p
-  #define XEN_XtInputId_p_w XEN_XtInputId_p
-  #define XEN_XtIntervalId_p_w XEN_XtIntervalId_p
-  #define XEN_Screen_p_w XEN_Screen_p
-  #define XEN_XEvent_p_w XEN_XEvent_p
-  #define XEN_XRectangle_p_w XEN_XRectangle_p
-  #define XEN_XArc_p_w XEN_XArc_p
-  #define XEN_XPoint_p_w XEN_XPoint_p
-  #define XEN_XSegment_p_w XEN_XSegment_p
-  #define XEN_XColor_p_w XEN_XColor_p
-  #define XEN_Atom_p_w XEN_Atom_p
-  #define XEN_Colormap_p_w XEN_Colormap_p
-  #define XEN_XModifierKeymap_p_w XEN_XModifierKeymap_p
-  #define XEN_Depth_p_w XEN_Depth_p
-  #define XEN_Display_p_w XEN_Display_p
-  #define XEN_Font_p_w XEN_Font_p
-  #define XEN_GC_p_w XEN_GC_p
-  #define XEN_KeySym_p_w XEN_KeySym_p
-  #define XEN_Pixel_p_w XEN_Pixel_p
-  #define XEN_Pixmap_p_w XEN_Pixmap_p
-  #define XEN_Region_p_w XEN_Region_p
-  #define XEN_Time_p_w XEN_Time_p
-  #define XEN_Visual_p_w XEN_Visual_p
-  #define XEN_Window_p_w XEN_Window_p
-  #define XEN_Widget_p_w XEN_Widget_p
-  #define XEN_XmStringContext_p_w XEN_XmStringContext_p
-  #define XEN_XFontProp_p_w XEN_XFontProp_p
-  #define XEN_XFontSet_p_w XEN_XFontSet_p
-  #define XEN_XFontStruct_p_w XEN_XFontStruct_p
-  #define XEN_XGCValues_p_w XEN_XGCValues_p
-  #define XEN_XImage_p_w XEN_XImage_p
-  #define XEN_XVisualInfo_p_w XEN_XVisualInfo_p
-  #define XEN_XWMHints_p_w XEN_XWMHints_p
-  #define XEN_XWindowAttributes_p_w XEN_XWindowAttributes_p
-  #define XEN_XWindowChanges_p_w XEN_XWindowChanges_p
-  #define XEN_KeyCode_p_w XEN_KeyCode_p
-  #define XEN_XContext_p_w XEN_XContext_p
-  #define XEN_XCharStruct_p_w XEN_XCharStruct_p
-  #define XEN_XTextItem_p_w XEN_XTextItem_p
-  #define XEN_XStandardColormap_p_w XEN_XStandardColormap_p
-  #define XEN_Cursor_p_w XEN_Cursor_p
-  #define XEN_WidgetClass_p_w XEN_WidgetClass_p
-  #define XEN_XmString_p_w XEN_XmString_p
-  #define XEN_XmTab_p_w XEN_XmTab_p
-  #define XEN_XmRendition_p_w XEN_XmRendition_p
-  #define XEN_XmRenderTable_p_w XEN_XmRenderTable_p
-  #define XEN_XmTabList_p_w XEN_XmTabList_p
-  #define XEN_XmParseMapping_p_w XEN_XmParseMapping_p
-  #define XEN_XmTextSource_p_w XEN_XmTextSource_p
-
-  #define XEN_XpmAttributes_p_w XEN_XpmAttributes_p
-  #define XEN_XpmImage_p_w XEN_XpmImage_p
-  #define XEN_XpmColorSymbol_p_w XEN_XpmColorSymbol_p
-
-#if WITH_EDITRES
-  #define gxm_XEditResCheckMessages_w gxm_XEditResCheckMessages
-#endif
-
-#if HAVE_XSHAPEQUERYEXTENSION
-  #define gxm_XShapeQueryExtension_w gxm_XShapeQueryExtension
-  #define gxm_XShapeQueryVersion_w gxm_XShapeQueryVersion
-  #define gxm_XShapeQueryExtents_w gxm_XShapeQueryExtents
-  #define gxm_XShapeGetRectangles_w gxm_XShapeGetRectangles
-  #define gxm_XShapeOffsetShape_w gxm_XShapeOffsetShape
-  #define gxm_XShapeCombineRegion_w gxm_XShapeCombineRegion
-  #define gxm_XShapeCombineMask_w gxm_XShapeCombineMask
-  #define gxm_XShapeCombineShape_w gxm_XShapeCombineShape
-  #define gxm_XShapeCombineRectangles_w gxm_XShapeCombineRectangles
-#endif
-
-  #define gxm_XSegment_w gxm_XSegment
-  #define gxm_XRectangle_w gxm_XRectangle
-  #define gxm_XColor_w gxm_XColor
-  #define gxm_XArc_w gxm_XArc
-  #define gxm_XWindowChanges_w gxm_XWindowChanges
-  #define gxm_XSetWindowAttributes_w gxm_XSetWindowAttributes
-  #define gxm_XPoint_w gxm_XPoint
-  #define gxm_XTextItem_w gxm_XTextItem
-  #define gxm_pixel_w gxm_pixel
-  #define gxm_set_pixel_w gxm_set_pixel
-  #define gxm_red_w gxm_red
-  #define gxm_set_red_w gxm_set_red
-  #define gxm_green_w gxm_green
-  #define gxm_set_green_w gxm_set_green
-  #define gxm_blue_w gxm_blue
-  #define gxm_set_blue_w gxm_set_blue
-  #define gxm_flags_w gxm_flags
-  #define gxm_set_flags_w gxm_set_flags
-  #define gxm_pad_w gxm_pad
-  #define gxm_set_pad_w gxm_set_pad
-  #define gxm_x_w gxm_x
-  #define gxm_set_x_w gxm_set_x
-  #define gxm_y_w gxm_y
-  #define gxm_set_y_w gxm_set_y
-  #define gxm_width_w gxm_width
-  #define gxm_set_width_w gxm_set_width
-  #define gxm_height_w gxm_height
-  #define gxm_set_height_w gxm_set_height
-  #define gxm_angle1_w gxm_angle1
-  #define gxm_set_angle1_w gxm_set_angle1
-  #define gxm_angle2_w gxm_angle2
-  #define gxm_set_angle2_w gxm_set_angle2
-  #define gxm_x1_w gxm_x1
-  #define gxm_set_x1_w gxm_set_x1
-  #define gxm_y1_w gxm_y1
-  #define gxm_set_y1_w gxm_set_y1
-  #define gxm_x2_w gxm_x2
-  #define gxm_set_x2_w gxm_set_x2
-  #define gxm_y2_w gxm_y2
-  #define gxm_set_y2_w gxm_set_y2
-  #define gxm_dashes_w gxm_dashes
-  #define gxm_set_dashes_w gxm_set_dashes
-  #define gxm_dash_offset_w gxm_dash_offset
-  #define gxm_set_dash_offset_w gxm_set_dash_offset
-  #define gxm_clip_mask_w gxm_clip_mask
-  #define gxm_set_clip_mask_w gxm_set_clip_mask
-  #define gxm_clip_y_origin_w gxm_clip_y_origin
-  #define gxm_set_clip_y_origin_w gxm_set_clip_y_origin
-  #define gxm_clip_x_origin_w gxm_clip_x_origin
-  #define gxm_set_clip_x_origin_w gxm_set_clip_x_origin
-  #define gxm_graphics_exposures_w gxm_graphics_exposures
-  #define gxm_set_graphics_exposures_w gxm_set_graphics_exposures
-  #define gxm_subwindow_mode_w gxm_subwindow_mode
-  #define gxm_set_subwindow_mode_w gxm_set_subwindow_mode
-  #define gxm_font_w gxm_font
-  #define gxm_set_font_w gxm_set_font
-  #define gxm_ts_y_origin_w gxm_ts_y_origin
-  #define gxm_set_ts_y_origin_w gxm_set_ts_y_origin
-  #define gxm_ts_x_origin_w gxm_ts_x_origin
-  #define gxm_set_ts_x_origin_w gxm_set_ts_x_origin
-  #define gxm_stipple_w gxm_stipple
-  #define gxm_set_stipple_w gxm_set_stipple
-  #define gxm_tile_w gxm_tile
-  #define gxm_set_tile_w gxm_set_tile
-  #define gxm_arc_mode_w gxm_arc_mode
-  #define gxm_set_arc_mode_w gxm_set_arc_mode
-  #define gxm_fill_rule_w gxm_fill_rule
-  #define gxm_set_fill_rule_w gxm_set_fill_rule
-  #define gxm_fill_style_w gxm_fill_style
-  #define gxm_set_fill_style_w gxm_set_fill_style
-  #define gxm_join_style_w gxm_join_style
-  #define gxm_set_join_style_w gxm_set_join_style
-  #define gxm_cap_style_w gxm_cap_style
-  #define gxm_set_cap_style_w gxm_set_cap_style
-  #define gxm_line_style_w gxm_line_style
-  #define gxm_set_line_style_w gxm_set_line_style
-  #define gxm_line_width_w gxm_line_width
-  #define gxm_set_line_width_w gxm_set_line_width
-  #define gxm_background_w gxm_background
-  #define gxm_set_background_w gxm_set_background
-  #define gxm_foreground_w gxm_foreground
-  #define gxm_set_foreground_w gxm_set_foreground
-  #define gxm_plane_mask_w gxm_plane_mask
-  #define gxm_set_plane_mask_w gxm_set_plane_mask
-  #define gxm_function_w gxm_function
-  #define gxm_set_function_w gxm_set_function
-  #define gxm_delta_w gxm_delta
-  #define gxm_set_delta_w gxm_set_delta
-  #define gxm_nchars_w gxm_nchars
-  #define gxm_set_nchars_w gxm_set_nchars
-  #define gxm_chars_w gxm_chars
-  #define gxm_set_chars_w gxm_set_chars
-  #define gxm_name_w gxm_name
-  #define gxm_set_name_w gxm_set_name
-  #define gxm_depth_w gxm_depth
-  #define gxm_set_depth_w gxm_set_depth
-  #define gxm_visual_w gxm_visual
-  #define gxm_set_visual_w gxm_set_visual
-
-  #define gxm_display_w gxm_display
-  #define gxm_root_w gxm_root
-  #define gxm_mwidth_w gxm_mwidth
-  #define gxm_mheight_w gxm_mheight
-  #define gxm_ndepths_w gxm_ndepths
-  #define gxm_depths_w gxm_depths
-  #define gxm_root_depth_w gxm_root_depth
-  #define gxm_root_visual_w gxm_root_visual
-  #define gxm_default_gc_w gxm_default_gc
-  #define gxm_cmap_w gxm_cmap
-  #define gxm_white_pixel_w gxm_white_pixel
-  #define gxm_black_pixel_w gxm_black_pixel
-  #define gxm_max_maps_w gxm_max_maps
-  #define gxm_min_maps_w gxm_min_maps
-  #define gxm_backing_store_w gxm_backing_store
-  #define gxm_save_unders_w gxm_save_unders
-  #define gxm_root_input_mask_w gxm_root_input_mask
-  #define gxm_type_w gxm_type
-  #define gxm_serial_w gxm_serial
-  #define gxm_send_event_w gxm_send_event
-  #define gxm_window_w gxm_window
-  #define gxm_subwindow_w gxm_subwindow
-  #define gxm_time_w gxm_time
-  #define gxm_x_root_w gxm_x_root
-  #define gxm_y_root_w gxm_y_root
-  #define gxm_state_w gxm_state
-  #define gxm_keycode_w gxm_keycode
-  #define gxm_same_screen_w gxm_same_screen
-  #define gxm_button_w gxm_button
-  #define gxm_is_hint_w gxm_is_hint
-  #define gxm_mode_w gxm_mode
-  #define gxm_detail_w gxm_detail
-  #define gxm_focus_w gxm_focus
-  #define gxm_key_vector_w gxm_key_vector
-  #define gxm_count_w gxm_count
-  #define gxm_drawable_w gxm_drawable
-  #define gxm_major_code_w gxm_major_code
-  #define gxm_minor_code_w gxm_minor_code
-  #define gxm_parent_w gxm_parent
-  #define gxm_border_width_w gxm_border_width
-  #define gxm_override_redirect_w gxm_override_redirect
-  #define gxm_event_w gxm_event
-  #define gxm_from_configure_w gxm_from_configure
-  #define gxm_above_w gxm_above
-  #define gxm_value_mask_w gxm_value_mask
-  #define gxm_place_w gxm_place
-  #define gxm_atom_w gxm_atom
-  #define gxm_selection_w gxm_selection
-  #define gxm_owner_w gxm_owner
-  #define gxm_requestor_w gxm_requestor
-  #define gxm_target_w gxm_target
-  #define gxm_property_w gxm_property
-  #define gxm_new_w gxm_new
-  #define gxm_message_type_w gxm_message_type
-  #define gxm_format_w gxm_format
-  #define gxm_request_w gxm_request
-  #define gxm_first_keycode_w gxm_first_keycode
-  #define gxm_resourceid_w gxm_resourceid
-  #define gxm_error_code_w gxm_error_code
-  #define gxm_request_code_w gxm_request_code
-  #define gxm_lbearing_w gxm_lbearing
-  #define gxm_rbearing_w gxm_rbearing
-  #define gxm_ascent_w gxm_ascent
-  #define gxm_descent_w gxm_descent
-  #define gxm_attributes_w gxm_attributes
-  #define gxm_card32_w gxm_card32
-  #define gxm_fid_w gxm_fid
-  #define gxm_properties_w gxm_properties
-  #define gxm_min_bounds_w gxm_min_bounds
-  #define gxm_max_bounds_w gxm_max_bounds
-  #define gxm_per_char_w gxm_per_char
-  #define gxm_input_w gxm_input
-  #define gxm_initial_state_w gxm_initial_state
-  #define gxm_icon_pixmap_w gxm_icon_pixmap
-  #define gxm_icon_window_w gxm_icon_window
-  #define gxm_icon_x_w gxm_icon_x
-  #define gxm_icon_y_w gxm_icon_y
-  #define gxm_icon_mask_w gxm_icon_mask
-  #define gxm_window_group_w gxm_window_group
-  #define gxm_visualid_w gxm_visualid
-  #define gxm_class_w gxm_class
-  #define gxm_red_mask_w gxm_red_mask
-  #define gxm_green_mask_w gxm_green_mask
-  #define gxm_blue_mask_w gxm_blue_mask
-  #define gxm_bits_per_rgb_w gxm_bits_per_rgb
-  #define gxm_map_entries_w gxm_map_entries
-  #define gxm_colormap_size_w gxm_colormap_size
-  #define gxm_nvisuals_w gxm_nvisuals
-  #define gxm_visuals_w gxm_visuals
-  #define gxm_bits_per_pixel_w gxm_bits_per_pixel
-  #define gxm_background_pixmap_w gxm_background_pixmap
-  #define gxm_background_pixel_w gxm_background_pixel
-  #define gxm_border_pixmap_w gxm_border_pixmap
-  #define gxm_border_pixel_w gxm_border_pixel
-  #define gxm_bit_gravity_w gxm_bit_gravity
-  #define gxm_win_gravity_w gxm_win_gravity
-  #define gxm_backing_planes_w gxm_backing_planes
-  #define gxm_backing_pixel_w gxm_backing_pixel
-  #define gxm_save_under_w gxm_save_under
-  #define gxm_event_mask_w gxm_event_mask
-  #define gxm_do_not_propagate_mask_w gxm_do_not_propagate_mask
-  #define gxm_cursor_w gxm_cursor
-  #define gxm_map_installed_w gxm_map_installed
-  #define gxm_map_state_w gxm_map_state
-  #define gxm_all_event_masks_w gxm_all_event_masks
-  #define gxm_your_event_mask_w gxm_your_event_mask
-  #define gxm_screen_w gxm_screen
-  #define gxm_xoffset_w gxm_xoffset
-  #define gxm_byte_order_w gxm_byte_order
-  #define gxm_bitmap_unit_w gxm_bitmap_unit
-  #define gxm_bitmap_bit_order_w gxm_bitmap_bit_order
-  #define gxm_bitmap_pad_w gxm_bitmap_pad
-  #define gxm_bytes_per_line_w gxm_bytes_per_line
-  #define gxm_obdata_w gxm_obdata
-  #define gxm_sibling_w gxm_sibling
-  #define gxm_stack_mode_w gxm_stack_mode
- 
-  #define gxm_red_max_w gxm_red_max
-  #define gxm_red_mult_w gxm_red_mult
-  #define gxm_green_max_w gxm_green_max
-  #define gxm_green_mult_w gxm_green_mult
-  #define gxm_blue_max_w gxm_blue_max
-  #define gxm_blue_mult_w gxm_blue_mult
-  #define gxm_base_pixel_w gxm_base_pixel
-  #define gxm_killid_w gxm_killid
-  #define gxm_data_w gxm_data
-
-  #define gxm_set_request_code_w gxm_set_request_code
-  #define gxm_set_error_code_w gxm_set_error_code
-  #define gxm_set_first_keycode_w gxm_set_first_keycode
-  #define gxm_set_request_w gxm_set_request
-  #define gxm_set_resourceid_w gxm_set_resourceid
-  #define gxm_set_format_w gxm_set_format
-  #define gxm_set_message_type_w gxm_set_message_type
-  #define gxm_set_new_w gxm_set_new
-  #define gxm_set_property_w gxm_set_property
-  #define gxm_set_display_w gxm_set_display
-  #define gxm_set_target_w gxm_set_target
-  #define gxm_set_requestor_w gxm_set_requestor
-  #define gxm_set_owner_w gxm_set_owner
-  #define gxm_set_selection_w gxm_set_selection
-  #define gxm_set_atom_w gxm_set_atom
-  #define gxm_set_place_w gxm_set_place
-  #define gxm_set_value_mask_w gxm_set_value_mask
-  #define gxm_set_above_w gxm_set_above
-  #define gxm_set_from_configure_w gxm_set_from_configure
-  #define gxm_set_event_w gxm_set_event
-  #define gxm_set_override_redirect_w gxm_set_override_redirect
-  #define gxm_set_border_width_w gxm_set_border_width
-  #define gxm_set_parent_w gxm_set_parent
-  #define gxm_set_minor_code_w gxm_set_minor_code
-  #define gxm_set_major_code_w gxm_set_major_code
-  #define gxm_set_drawable_w gxm_set_drawable
-  #define gxm_set_count_w gxm_set_count
-  #define gxm_set_key_vector_w gxm_set_key_vector
-  #define gxm_set_focus_w gxm_set_focus
-  #define gxm_set_detail_w gxm_set_detail
-  #define gxm_set_mode_w gxm_set_mode
-  #define gxm_set_is_hint_w gxm_set_is_hint
-  #define gxm_set_button_w gxm_set_button
-  #define gxm_set_same_screen_w gxm_set_same_screen
-  #define gxm_set_keycode_w gxm_set_keycode
-  #define gxm_set_state_w gxm_set_state
-  #define gxm_set_y_root_w gxm_set_y_root
-  #define gxm_set_x_root_w gxm_set_x_root
-  #define gxm_set_root_w gxm_set_root
-  #define gxm_set_time_w gxm_set_time
-  #define gxm_set_subwindow_w gxm_set_subwindow
-  #define gxm_set_window_w gxm_set_window
-  #define gxm_set_send_event_w gxm_set_send_event
-  #define gxm_set_serial_w gxm_set_serial
-  #define gxm_set_type_w gxm_set_type
-  #define gxm_colormap_w gxm_colormap
-  #define gxm_set_colormap_w gxm_set_colormap
-
-  #define gxm_set_input_w gxm_set_input
-  #define gxm_set_initial_state_w gxm_set_initial_state
-
-  #define gxm_min_height_w gxm_min_height
-  #define gxm_max_height_w gxm_max_height
-  #define gxm_min_width_w gxm_min_width
-  #define gxm_max_width_w gxm_max_width
-  #define gxm_height_inc_w gxm_height_inc
-  #define gxm_width_inc_w gxm_width_inc
-
-  #define gxm_set_data_w gxm_set_data
-  #define gxm_set_backing_store_w gxm_set_backing_store
-  #define gxm_set_background_pixel_w gxm_set_background_pixel
-  #define gxm_set_border_pixel_w gxm_set_border_pixel
-  #define gxm_set_bit_gravity_w gxm_set_bit_gravity
-  #define gxm_set_save_under_w gxm_set_save_under
-  #define gxm_set_event_mask_w gxm_set_event_mask
-  #define gxm_set_cursor_w gxm_set_cursor
-
-  #define gxm_set_set_w gxm_set_set
-  #define gxm_set_click_count_w gxm_set_click_count
-  #define gxm_set_length_w gxm_set_length
-  #define gxm_ptr_w gxm_ptr
-  #define gxm_set_ptr_w gxm_set_ptr
-  #define gxm_set_reason_w gxm_set_reason
-  #define gxm_page_number_w gxm_page_number
-  #define gxm_page_widget_w gxm_page_widget
-  #define gxm_status_area_widget_w gxm_status_area_widget
-  #define gxm_major_tab_widget_w gxm_major_tab_widget
-  #define gxm_minor_tab_widget_w gxm_minor_tab_widget
-  #define gxm_source_data_w gxm_source_data
-  #define gxm_location_data_w gxm_location_data
-  #define gxm_parm_w gxm_parm
-  #define gxm_parm_format_w gxm_parm_format
-  #define gxm_parm_length_w gxm_parm_length
-  #define gxm_parm_type_w gxm_parm_type
-  #define gxm_transfer_id_w gxm_transfer_id
-  #define gxm_destination_data_w gxm_destination_data
-  #define gxm_remaining_w gxm_remaining
-  #define gxm_item_or_text_w gxm_item_or_text
-  #define gxm_auto_selection_type_w gxm_auto_selection_type
-  #define gxm_new_outline_state_w gxm_new_outline_state
-  #define gxm_prev_page_number_w gxm_prev_page_number
-  #define gxm_prev_page_widget_w gxm_prev_page_widget
-  #define gxm_rendition_w gxm_rendition
-  #define gxm_render_table_w gxm_render_table
-  #define gxm_crossed_boundary_w gxm_crossed_boundary
-  #define gxm_client_data_w gxm_client_data
-  #define gxm_status_w gxm_status
-  #define gxm_font_name_w gxm_font_name
-  #define gxm_tag_w gxm_tag
-  #define gxm_traversal_destination_w gxm_traversal_destination
-  #define gxm_dragProtocolStyle_w gxm_dragProtocolStyle
-  #define gxm_direction_w gxm_direction
-  #define gxm_reason_w gxm_reason
-  #define gxm_timeStamp_w gxm_timeStamp
-  #define gxm_operation_w gxm_operation 
-  #define gxm_set_operation_w gxm_set_operation
-  #define gxm_operations_w gxm_operations
-  #define gxm_dropSiteStatus_w gxm_dropSiteStatus 
-  #define gxm_set_dropSiteStatus_w gxm_set_dropSiteStatus
-  #define gxm_dropAction_w gxm_dropAction
-  #define gxm_iccHandle_w gxm_iccHandle
-  #define gxm_completionStatus_w gxm_completionStatus
-  #define gxm_dragContext_w gxm_dragContext
-  #define gxm_animate_w gxm_animate
-  #define gxm_length_w gxm_length
-  #define gxm_click_count_w gxm_click_count
-  #define gxm_widget_w gxm_widget
-  #define gxm_item_position_w gxm_item_position
-  #define gxm_callbackstruct_w gxm_callbackstruct
-  #define gxm_set_w gxm_set
-  #define gxm_item_w gxm_item
-  #define gxm_item_length_w gxm_item_length
-  #define gxm_selected_items_w gxm_selected_items
-  #define gxm_selected_item_count_w gxm_selected_item_count
-  #define gxm_selected_item_positions_w gxm_selected_item_positions
-  #define gxm_selection_type_w gxm_selection_type
-  #define gxm_mask_w gxm_mask
-  #define gxm_mask_length_w gxm_mask_length
-  #define gxm_dir_w gxm_dir
-  #define gxm_dir_length_w gxm_dir_length
-  #define gxm_pattern_w gxm_pattern
-  #define gxm_pattern_length_w gxm_pattern_length
-  #define gxm_position_w gxm_position
-  #define gxm_currInsert_w gxm_currInsert
-  #define gxm_newInsert_w gxm_newInsert
-  #define gxm_startPos_w gxm_startPos
-  #define gxm_endPos_w gxm_endPos
-  #define gxm_text_w gxm_text
-  #define gxm_value_w gxm_value
-  #define gxm_set_value_w gxm_set_value
-  #define gxm_doit_w gxm_doit
-  #define gxm_set_doit_w gxm_set_doit
-  #define gxm_menuToPost_w gxm_menuToPost
-  #define gxm_set_menuToPost_w gxm_set_menuToPost
-  #define gxm_postIt_w gxm_postIt
-  #define gxm_set_postIt_w gxm_set_postIt
-
-  #define gxm_valuemask_w gxm_valuemask
-  #define gxm_set_valuemask_w gxm_set_valuemask
-  #define gxm_ncolors_w gxm_ncolors
-  #define gxm_set_ncolors_w gxm_set_ncolors
-  #define gxm_cpp_w gxm_cpp
-  #define gxm_set_cpp_w gxm_set_cpp
-  #define gxm_numsymbols_w gxm_numsymbols
-  #define gxm_set_numsymbols_w gxm_set_numsymbols
-  #define gxm_colorsymbols_w gxm_colorsymbols
-  #define gxm_set_colorsymbols_w gxm_set_colorsymbols
-  #define gxm_npixels_w gxm_npixels
-  #define gxm_set_npixels_w gxm_set_npixels
-  #define gxm_y_hotspot_w gxm_y_hotspot
-  #define gxm_set_y_hotspot_w gxm_set_y_hotspot
-  #define gxm_x_hotspot_w gxm_x_hotspot
-  #define gxm_set_x_hotspot_w gxm_set_x_hotspot
-
-  #define gxm_XpmImage_w gxm_XpmImage
-  #define gxm_XpmColorSymbol_w gxm_XpmColorSymbol
-  #define gxm_XpmAttributes_w gxm_XpmAttributes
-
-#if HAVE_SCHEME
-  #define c_to_xen_string_w c_to_xen_string
-  #define c_to_xen_strings_w c_to_xen_strings
-  #define c_to_xen_ints_w c_to_xen_ints
-  #define c_to_xen_atoms_w c_to_xen_atoms
-  #define c_to_xen_xrectangles_w c_to_xen_xrectangles
-#endif
-
-#endif
-/* argify */
-
 
 static void define_procedures(void)
 {
@@ -25288,11 +23723,7 @@ The types are defined in xm.c around line 679.  To add XmNhiho as an integer: \n
   return(nam);
 }
 
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_2(g_add_resource_w, g_add_resource)
-#else
-  #define g_add_resource_w g_add_resource
-#endif
+XEN_NARGIFY_2(g_add_resource_w, g_add_resource)
 
 
 /* -------------------------------- integer constants -------------------------------- */

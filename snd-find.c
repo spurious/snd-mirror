@@ -309,13 +309,8 @@ static XEN g_set_search_procedure(XEN proc)
 }
 
 
-#ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_search_procedure_w, g_search_procedure)
 XEN_NARGIFY_1(g_set_search_procedure_w, g_set_search_procedure)
-#else
-#define g_search_procedure_w g_search_procedure
-#define g_set_search_procedure_w g_set_search_procedure
-#endif
 
 void g_init_find(void)
 {

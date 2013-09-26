@@ -429,17 +429,10 @@ static XEN g_main_menu(XEN which)
 }
 
 
-#ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(gl_add_to_main_menu_w, gl_add_to_main_menu)
 XEN_ARGIFY_4(gl_add_to_menu_w, gl_add_to_menu)
 XEN_NARGIFY_2(gl_remove_from_menu_w, gl_remove_from_menu)
 XEN_NARGIFY_1(g_main_menu_w, g_main_menu)
-#else
-#define gl_add_to_main_menu_w gl_add_to_main_menu
-#define gl_add_to_menu_w gl_add_to_menu
-#define gl_remove_from_menu_w gl_remove_from_menu
-#define g_main_menu_w g_main_menu
-#endif
 
 void g_init_menu(void)
 {

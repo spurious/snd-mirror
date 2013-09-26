@@ -1655,21 +1655,10 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
 }
 
 
-#ifdef XEN_ARGIFY_1
-
 XEN_ARGIFY_3(g_key_binding_w, g_key_binding)
 XEN_ARGIFY_6(g_bind_key_w, g_bind_key)
 XEN_ARGIFY_3(g_unbind_key_w, g_unbind_key)
 XEN_ARGIFY_4(g_key_w, g_key)
-
-#else
-
-#define g_key_binding_w g_key_binding
-#define g_bind_key_w g_bind_key
-#define g_unbind_key_w g_unbind_key
-#define g_key_w g_key
-
-#endif
 
 void g_init_kbd(void)
 {

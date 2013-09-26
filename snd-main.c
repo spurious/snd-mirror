@@ -2243,7 +2243,6 @@ static XEN g_abortq(void)
 #endif
 
 
-#ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_save_state_file_w, g_save_state_file)
 XEN_NARGIFY_1(g_set_save_state_file_w, g_set_save_state_file)
 XEN_NARGIFY_0(g_save_dir_w, g_save_dir)
@@ -2327,92 +2326,6 @@ XEN_NARGIFY_0(g_preferences_dialog_w, g_preferences_dialog)
 XEN_NARGIFY_0(g_abort_w, g_abort)
 #if (!HAVE_SCHEME)
 XEN_NARGIFY_0(g_abortq_w, g_abortq)
-#endif
-#else
-#define g_save_state_file_w g_save_state_file
-#define g_set_save_state_file_w g_set_save_state_file
-#define g_save_dir_w g_save_dir
-#define g_set_save_dir_w g_set_save_dir
-#define g_open_file_dialog_directory_w g_open_file_dialog_directory
-#define g_set_open_file_dialog_directory_w g_set_open_file_dialog_directory
-#define g_peak_env_dir_w g_peak_env_dir
-#define g_set_peak_env_dir_w g_set_peak_env_dir
-#define g_temp_dir_w g_temp_dir
-#define g_set_temp_dir_w g_set_temp_dir
-#define g_ladspa_dir_w g_ladspa_dir
-#define g_set_ladspa_dir_w g_set_ladspa_dir
-#define g_save_state_w g_save_state
-#define g_exit_w g_exit
-#define g_script_arg_w g_script_arg
-#define g_set_script_arg_w g_set_script_arg
-#define g_script_args_w g_script_args
-#define g_window_x_w g_window_x
-#define g_set_window_x_w g_set_window_x
-#define g_window_y_w g_window_y
-#define g_set_window_y_w g_set_window_y
-#define g_window_width_w g_window_width
-#define g_set_window_width_w g_set_window_width
-#define g_window_height_w g_window_height
-#define g_set_window_height_w g_set_window_height
-#define g_just_sounds_w g_just_sounds
-#define g_set_just_sounds_w g_set_just_sounds
-#define g_play_arrow_size_w g_play_arrow_size
-#define g_set_play_arrow_size_w g_set_play_arrow_size
-#define g_with_inset_graph_w g_with_inset_graph
-#define g_set_with_inset_graph_w g_set_with_inset_graph
-#define g_with_interrupts_w g_with_interrupts
-#define g_set_with_interrupts_w g_set_with_interrupts
-#define g_with_smpte_label_w g_with_smpte_label
-#define g_set_with_smpte_label_w g_set_with_smpte_label
-#define g_with_pointer_focus_w g_with_pointer_focus
-#define g_set_with_pointer_focus_w g_set_with_pointer_focus
-#define g_audio_output_device_w g_audio_output_device
-#define g_set_audio_output_device_w g_set_audio_output_device
-#define g_audio_input_device_w g_audio_input_device
-#define g_set_audio_input_device_w g_set_audio_input_device
-#define g_auto_resize_w g_auto_resize
-#define g_set_auto_resize_w g_set_auto_resize
-#define g_color_cutoff_w g_color_cutoff
-#define g_set_color_cutoff_w g_set_color_cutoff
-#define g_color_inverted_w g_color_inverted
-#define g_set_color_inverted_w g_set_color_inverted
-#define g_color_scale_w g_color_scale
-#define g_set_color_scale_w g_set_color_scale
-#define g_selection_creates_region_w g_selection_creates_region
-#define g_set_selection_creates_region_w g_set_selection_creates_region
-#define g_print_length_w g_print_length
-#define g_set_print_length_w g_set_print_length
-#define g_show_indices_w g_show_indices
-#define g_set_show_indices_w g_set_show_indices
-#define g_trap_segfault_w g_trap_segfault
-#define g_set_trap_segfault_w g_set_trap_segfault
-#define g_with_relative_panes_w g_with_relative_panes
-#define g_set_with_relative_panes_w g_set_with_relative_panes
-#define g_with_background_processes_w g_with_background_processes
-#define g_set_with_background_processes_w g_set_with_background_processes
-#define g_with_file_monitor_w g_with_file_monitor
-#define g_set_with_file_monitor_w g_set_with_file_monitor
-#define g_tiny_font_w g_tiny_font
-#define g_set_tiny_font_w g_set_tiny_font
-#define g_peaks_font_w g_peaks_font
-#define g_set_peaks_font_w g_set_peaks_font
-#define g_bold_peaks_font_w g_bold_peaks_font
-#define g_set_bold_peaks_font_w g_set_bold_peaks_font
-#define g_axis_label_font_w g_axis_label_font
-#define g_set_axis_label_font_w g_set_axis_label_font
-#define g_axis_numbers_font_w g_axis_numbers_font
-#define g_set_axis_numbers_font_w g_set_axis_numbers_font
-#define g_listener_font_w g_listener_font
-#define g_set_listener_font_w g_set_listener_font
-#define g_snd_version_w g_snd_version
-#define g_color_orientation_dialog_w g_color_orientation_dialog
-#define g_transform_dialog_w g_transform_dialog
-#define g_print_dialog_w g_print_dialog
-#define g_preferences_dialog_w g_preferences_dialog
-#define g_abort_w g_abort
-#if (!HAVE_SCHEME)
-#define g_abortq_w g_abortq
-#endif
 #endif
 
 void g_init_main(void)

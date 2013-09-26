@@ -10333,48 +10333,6 @@ EDITS: 2
 	(vct-scale! v (/ 1.0 pk)))))
   
   ;; ----------------
-  
-  (define mus-a0
-    (make-procedure-with-setter
-     (lambda (gen)
-       "obsolete way to access mus-xcoeff 0"
-       (mus-xcoeff gen 0))
-     (lambda (gen val)
-       (set! (mus-xcoeff gen 0) val))))
-  
-  (define mus-a1
-    (make-procedure-with-setter
-     (lambda (gen)
-       "obsolete way to access mus-xcoeff 1"
-       (mus-xcoeff gen 1))
-     (lambda (gen val)
-       (set! (mus-xcoeff gen 1) val))))
-  
-  (define mus-a2
-    (make-procedure-with-setter
-     (lambda (gen)
-       "obsolete way to access mus-xcoeff 2"
-       (mus-xcoeff gen 2))
-     (lambda (gen val)
-       (set! (mus-xcoeff gen 2) val))))
-  
-  (define mus-b1
-    (make-procedure-with-setter
-     (lambda (gen)
-       "obsolete way to access mus-ycoeff 1"
-       (mus-ycoeff gen 1))
-     (lambda (gen val)
-       (set! (mus-ycoeff gen 1) val))))
-  
-  (define mus-b2
-    (make-procedure-with-setter
-     (lambda (gen)
-       "obsolete way to access mus-ycoeff 2"
-       (mus-ycoeff gen 2))
-     (lambda (gen val)
-       (set! (mus-ycoeff gen 2) val))))
-  
-  ;; ----------------
   (define (test-lpc)
     (define (make-sine n) 
       (let ((data (make-vct n 0.0))
@@ -13700,8 +13658,8 @@ EDITS: 2
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map one-pole: ~A ~A" v0 v1))
       (if (not (one-pole? gen)) (snd-display #__line__ ";~A not one-pole?" gen))
       (if (not (= (mus-order gen) 1)) (snd-display #__line__ ";one-pole order: ~D?" (mus-order gen)))
-      (if (fneq (mus-a0 gen) .4) (snd-display #__line__ ";one-pole a0: ~F?" (mus-a0 gen)))
-      (if (fneq (mus-b1 gen) .7) (snd-display #__line__ ";one-pole b1: ~F?" (mus-b1 gen)))
+      (if (fneq (mus-xcoeff gen 0) .4) (snd-display #__line__ ";one-pole a0: ~F?" (mus-xcoeff gen 0)))
+      (if (fneq (mus-ycoeff gen 1) .7) (snd-display #__line__ ";one-pole b1: ~F?" (mus-ycoeff gen 1)))
       (if (or (fneq (v0 1) 0.120) (fneq (v0 4) 0.275) (fneq (v0 8) 0.245))
 	  (snd-display #__line__ ";one-pole output: ~A" v0))
       (if (fneq (mus-ycoeff gen 1) .7) (snd-display #__line__ ";1p ycoeff 1 .7: ~A" gen))
@@ -13726,8 +13684,8 @@ EDITS: 2
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map one-zero: ~A ~A" v0 v1))
       (if (not (one-zero? gen)) (snd-display #__line__ ";~A not one-zero?" gen))
       (if (not (= (mus-order gen) 1)) (snd-display #__line__ ";one-zero order: ~D?" (mus-order gen)))
-      (if (fneq (mus-a0 gen) .4) (snd-display #__line__ ";one-zero a0: ~F?" (mus-a0 gen)))
-      (if (fneq (mus-a1 gen) .7) (snd-display #__line__ ";one-zero a1: ~F?" (mus-a1 gen)))
+      (if (fneq (mus-xcoeff gen 0) .4) (snd-display #__line__ ";one-zero a0: ~F?" (mus-xcoeff gen 0)))
+      (if (fneq (mus-xcoeff gen 1) .7) (snd-display #__line__ ";one-zero a1: ~F?" (mus-xcoeff gen 1)))
       (if (fneq (v0 1) 1.1) (snd-display #__line__ ";one-zero output: ~A" v0))
       (if (fneq (mus-xcoeff gen 0) .4) (snd-display #__line__ ";1z xcoeff 0 .4: ~A" gen))
       (set! (mus-xcoeff gen 0) .1)
@@ -13747,9 +13705,9 @@ EDITS: 2
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map two-zero: ~A ~A" v0 v1))
       (if (not (two-zero? gen)) (snd-display #__line__ ";~A not two-zero?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";two-zero order: ~D?" (mus-order gen)))
-      (if (fneq (mus-a0 gen) .4) (snd-display #__line__ ";two-zero a0: ~F?" (mus-a0 gen)))
-      (if (fneq (mus-a1 gen) .7) (snd-display #__line__ ";two-zero a1: ~F?" (mus-a1 gen)))
-      (if (fneq (mus-a2 gen) .3) (snd-display #__line__ ";two-zero a2: ~F?" (mus-a2 gen)))
+      (if (fneq (mus-xcoeff gen 0) .4) (snd-display #__line__ ";two-zero a0: ~F?" (mus-xcoeff gen 0)))
+      (if (fneq (mus-xcoeff gen 1) .7) (snd-display #__line__ ";two-zero a1: ~F?" (mus-xcoeff gen 1)))
+      (if (fneq (mus-xcoeff gen 2) .3) (snd-display #__line__ ";two-zero a2: ~F?" (mus-xcoeff gen 2)))
       (if (or (fneq (v0 1) 1.1) (fneq (v0 8) 1.4)) (snd-display #__line__ ";two-zero output: ~A" v0))
       (if (fneq (mus-xcoeff gen 0) .4) (snd-display #__line__ ";2z xcoeff 0 .4: ~A" gen))
       (set! (mus-xcoeff gen 0) .1)
@@ -13763,9 +13721,9 @@ EDITS: 2
 	(if (fneq (mus-scaler gen) .99) (snd-display #__line__ ";set mus-scaler two-zero: ~A" (mus-scaler gen)))
 	(if (ffneq (mus-frequency gen) 500.0) (snd-display #__line__ ";set mus-scaler hit freq two-zero: ~A" (mus-frequency gen)))
 	(let ((g3 (make-two-zero :radius .99 :frequency 500.0)))
-	  (if (or (fneq (mus-a0 gen) (mus-a0 g3))
-		  (fneq (mus-a1 gen) (mus-a1 g3))
-		  (fneq (mus-a2 gen) (mus-a2 g3)))
+	  (if (or (fneq (mus-xcoeff gen 0) (mus-xcoeff g3 0))
+		  (fneq (mus-xcoeff gen 1) (mus-xcoeff g3 1))
+		  (fneq (mus-xcoeff gen 2) (mus-xcoeff g3 2)))
 	      (snd-display #__line__ ";two-zero setters: ~A ~A" gen g3)))))
     
     (let ((gen (make-two-zero .4 .7 .3)))
@@ -13790,9 +13748,9 @@ EDITS: 2
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map two-pole: ~A ~A" v0 v1))
       (if (not (two-pole? gen)) (snd-display #__line__ ";~A not two-pole?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";two-pole order: ~D?" (mus-order gen)))
-      (if (fneq (mus-a0 gen) .4) (snd-display #__line__ ";two-pole a0: ~F?" (mus-a0 gen)))
-      (if (fneq (mus-b1 gen) .7) (snd-display #__line__ ";two-pole b1: ~F?" (mus-b1 gen)))
-      (if (fneq (mus-b2 gen) .3) (snd-display #__line__ ";two-pole b2: ~F?" (mus-b2 gen)))
+      (if (fneq (mus-xcoeff gen 0) .4) (snd-display #__line__ ";two-pole a0: ~F?" (mus-xcoeff gen 0)))
+      (if (fneq (mus-ycoeff gen 1) .7) (snd-display #__line__ ";two-pole b1: ~F?" (mus-ycoeff gen 1)))
+      (if (fneq (mus-ycoeff gen 2) .3) (snd-display #__line__ ";two-pole b2: ~F?" (mus-ycoeff gen 2)))
       (if (or (fneq (v0 1) 0.12) (fneq (v0 8) 0.201)) (snd-display #__line__ ";two-pole output: ~A" v0))
       (if (fneq (mus-ycoeff gen 1) .7) (snd-display #__line__ ";2p ycoeff 1 .7: ~A" gen))
       (set! (mus-ycoeff gen 1) .1)
@@ -13809,9 +13767,9 @@ EDITS: 2
 	(if (fneq (mus-scaler gen) .99) (snd-display #__line__ ";set mus-scaler two-pole: ~A" (mus-scaler gen)))
 	(if (ffneq (mus-frequency gen) 500.0) (snd-display #__line__ ";set mus-scaler hit freq two-pole: ~A" (mus-frequency gen)))
 	(let ((g3 (make-two-pole :radius .99 :frequency 500.0)))
-	  (if (or (fneq (mus-a0 gen) (mus-a0 g3))
-		  (fneq (mus-b1 gen) (mus-b1 g3))
-		  (fneq (mus-b2 gen) (mus-b2 g3)))
+	  (if (or (fneq (mus-xcoeff gen 0) (mus-xcoeff g3 0))
+		  (fneq (mus-ycoeff gen 1) (mus-ycoeff g3 1))
+		  (fneq (mus-ycoeff gen 2) (mus-ycoeff g3 2)))
 	      (snd-display #__line__ ";two-pole setters: ~A ~A" gen g3)))))
     
     (let ((gen (make-two-pole .4 .7 .3)))
@@ -15031,36 +14989,36 @@ EDITS: 2
     (let ((gen (make-two-pole 1200.0 .1)))
       (if (not (two-pole? gen)) (snd-display #__line__ ";~A not 2-polar?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";2-polar order: ~D?" (mus-order gen)))
-      (if (fneq (mus-a0 gen) 1.0) (snd-display #__line__ ";2-polar a0: ~F?" (mus-a0 gen)))
-      (if (fneq (mus-b1 gen) -.188) (snd-display #__line__ ";2-polar b1: ~F?" (mus-b1 gen)))
-      (if (fneq (mus-b2 gen) .01) (snd-display #__line__ ";2-polar b2: ~F?" (mus-b2 gen)))
+      (if (fneq (mus-xcoeff gen 0) 1.0) (snd-display #__line__ ";2-polar a0: ~F?" (mus-xcoeff gen 0)))
+      (if (fneq (mus-ycoeff gen 1) -.188) (snd-display #__line__ ";2-polar b1: ~F?" (mus-ycoeff gen 1)))
+      (if (fneq (mus-ycoeff gen 2) .01) (snd-display #__line__ ";2-polar b2: ~F?" (mus-ycoeff gen 2)))
       (if (fneq (mus-frequency gen) 1200.0) (snd-display #__line__ ";freq 2-polar: ~A" (mus-frequency gen)))
       (if (fneq (mus-scaler gen) 0.1) (snd-display #__line__ ";scaler 2-polar: ~A" (mus-scaler gen))))
     
     (let ((gen (make-two-pole :frequency 1200.0 :radius .1)))
       (if (not (two-pole? gen)) (snd-display #__line__ ";~A not f2-polar?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";f2-polar order: ~D?" (mus-order gen)))
-      (if (fneq (mus-a0 gen) 1.0) (snd-display #__line__ ";f2-polar a0: ~F?" (mus-a0 gen)))
-      (if (fneq (mus-b1 gen) -.188) (snd-display #__line__ ";f2-polar b1: ~F?" (mus-b1 gen)))
-      (if (fneq (mus-b2 gen) .01) (snd-display #__line__ ";f2-polar b2: ~F?" (mus-b2 gen)))
+      (if (fneq (mus-xcoeff gen 0) 1.0) (snd-display #__line__ ";f2-polar a0: ~F?" (mus-xcoeff gen 0)))
+      (if (fneq (mus-ycoeff gen 1) -.188) (snd-display #__line__ ";f2-polar b1: ~F?" (mus-ycoeff gen 1)))
+      (if (fneq (mus-ycoeff gen 2) .01) (snd-display #__line__ ";f2-polar b2: ~F?" (mus-ycoeff gen 2)))
       (if (fneq (mus-frequency gen) 1200.0) (snd-display #__line__ ";freq f2-polar: ~A" (mus-frequency gen)))
       (if (fneq (mus-scaler gen) 0.1) (snd-display #__line__ ";scaler f2-polar: ~A" (mus-scaler gen))))
     
     (let ((gen (make-two-zero :radius .1 :frequency 1200.0)))
       (if (not (two-zero? gen)) (snd-display #__line__ ";~A not 2-zp?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";2-zp order: ~D?" (mus-order gen)))
-      (if (fneq (mus-a0 gen) 1.0) (snd-display #__line__ ";2-zp a0: ~F?" (mus-a0 gen)))
-      (if (fneq (mus-a1 gen) -.188) (snd-display #__line__ ";2-zp a1: ~F?" (mus-a1 gen)))
-      (if (fneq (mus-a2 gen) .01) (snd-display #__line__ ";2-zp a2: ~F?" (mus-a2 gen)))
+      (if (fneq (mus-xcoeff gen 0) 1.0) (snd-display #__line__ ";2-zp a0: ~F?" (mus-xcoeff gen 0)))
+      (if (fneq (mus-xcoeff gen 1) -.188) (snd-display #__line__ ";2-zp a1: ~F?" (mus-xcoeff gen 1)))
+      (if (fneq (mus-xcoeff gen 2) .01) (snd-display #__line__ ";2-zp a2: ~F?" (mus-xcoeff gen 2)))
       (if (fneq (mus-frequency gen) 1200.0) (snd-display #__line__ ";freq 2-zp: ~A" (mus-frequency gen)))
       (if (fneq (mus-scaler gen) 0.1) (snd-display #__line__ ";scaler 2-zp: ~A" (mus-scaler gen))))
     
     (let ((gen (make-two-zero 1200.0 .1)))
       (if (not (two-zero? gen)) (snd-display #__line__ ";~A not f2-zp?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";f2-zp order: ~D?" (mus-order gen)))
-      (if (fneq (mus-a0 gen) 1.0) (snd-display #__line__ ";f2-zp a0: ~F?" (mus-a0 gen)))
-      (if (fneq (mus-a1 gen) -.188) (snd-display #__line__ ";f2-zp a1: ~F?" (mus-a1 gen)))
-      (if (fneq (mus-a2 gen) .01) (snd-display #__line__ ";f2-zp a2: ~F?" (mus-a2 gen)))
+      (if (fneq (mus-xcoeff gen 0) 1.0) (snd-display #__line__ ";f2-zp a0: ~F?" (mus-xcoeff gen 0)))
+      (if (fneq (mus-xcoeff gen 1) -.188) (snd-display #__line__ ";f2-zp a1: ~F?" (mus-xcoeff gen 1)))
+      (if (fneq (mus-xcoeff gen 2) .01) (snd-display #__line__ ";f2-zp a2: ~F?" (mus-xcoeff gen 2)))
       (if (fneq (mus-frequency gen) 1200.0) (snd-display #__line__ ";freq f2-zp: ~A" (mus-frequency gen)))
       (if (fneq (mus-scaler gen) 0.1) (snd-display #__line__ ";scaler f2-zp: ~A" (mus-scaler gen))))
     
@@ -24190,7 +24148,6 @@ EDITS: 2
 	  (set! (selection-member? #t) #f)
 	  (if (selection?) (snd-display #__line__ ";can't clear selection via selection-member?"))
 	  (if (selection) (snd-display #__line__ ";(inactive) selection returns: ~A" (selection)))
-	  (if (selection? sel) (snd-display #__line__ ";(obsolete) selection returns: ~A" (selection? sel)))
 	  (set! (selection-member? ind 0) #t)
 	  (set! (selection-position ind 0) 2000)
 	  (set! (selection-frames ind 0) 1234)

@@ -1198,7 +1198,6 @@ static XEN g_ladspa_connect_port(XEN desc, XEN ptr, XEN port, XEN data)
 
 
 
-#ifdef XEN_ARGIFY_1
 XEN_NARGIFY_2(g_analyse_ladspa_w, g_analyse_ladspa)
 XEN_NARGIFY_2(g_ladspa_descriptor_w, g_ladspa_descriptor)
 XEN_ARGIFY_6(g_apply_ladspa_w, g_apply_ladspa)
@@ -1222,31 +1221,6 @@ XEN_NARGIFY_3(g_ladspa_run_w, g_ladspa_run)
 XEN_NARGIFY_3(g_ladspa_run_adding_w, g_ladspa_run_adding)
 XEN_NARGIFY_3(g_ladspa_set_run_adding_gain_w, g_ladspa_set_run_adding_gain)
 XEN_NARGIFY_4(g_ladspa_connect_port_w, g_ladspa_connect_port)
-#else
-#define g_analyse_ladspa_w g_analyse_ladspa
-#define g_ladspa_descriptor_w g_ladspa_descriptor
-#define g_apply_ladspa_w g_apply_ladspa
-#define g_init_ladspa_w g_init_ladspa
-#define g_list_ladspa_w g_list_ladspa
-#define g_ladspa_Label_w g_ladspa_Label
-#define g_ladspa_Name_w g_ladspa_Name
-#define g_ladspa_Copyright_w g_ladspa_Copyright
-#define g_ladspa_Maker_w g_ladspa_Maker
-#define g_ladspa_Properties_w g_ladspa_Properties
-#define g_ladspa_UniqueID_w g_ladspa_UniqueID
-#define g_ladspa_PortNames_w g_ladspa_PortNames
-#define g_ladspa_PortDescriptors_w g_ladspa_PortDescriptors
-#define g_ladspa_PortRangeHints_w g_ladspa_PortRangeHints
-#define g_ladspa_PortCount_w g_ladspa_PortCount
-#define g_ladspa_instantiate_w g_ladspa_instantiate
-#define g_ladspa_activate_w g_ladspa_activate
-#define g_ladspa_deactivate_w g_ladspa_deactivate
-#define g_ladspa_cleanup_w g_ladspa_cleanup
-#define g_ladspa_run_w g_ladspa_run
-#define g_ladspa_run_adding_w g_ladspa_run_adding
-#define g_ladspa_set_run_adding_gain_w g_ladspa_set_run_adding_gain
-#define g_ladspa_connect_port_w g_ladspa_connect_port
-#endif
 
 void g_ladspa_to_snd(void)
 {

@@ -255,13 +255,8 @@ static bool clip_hook_checker(void)
 
 
  
-#ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_snd_error_w, g_snd_error)
 XEN_NARGIFY_1(g_snd_warning_w, g_snd_warning)
-#else
-#define g_snd_error_w g_snd_error
-#define g_snd_warning_w g_snd_warning
-#endif
 
 void g_init_errors(void)
 {

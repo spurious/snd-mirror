@@ -347,11 +347,7 @@ static XEN reflect_file_in_region_browser(XEN hook_or_reason)
   return(XEN_FALSE);
 }
 
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_1(reflect_file_in_region_browser_w, reflect_file_in_region_browser)
-#else
-  #define reflect_file_in_region_browser_w reflect_file_in_region_browser
-#endif
+XEN_NARGIFY_1(reflect_file_in_region_browser_w, reflect_file_in_region_browser)
 
 
 char *regrow_get_label(void *ur)
@@ -773,12 +769,7 @@ static XEN g_view_regions_dialog(void)
 }
 
 
-#ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_view_regions_dialog_w, g_view_regions_dialog)
-#else
-#define g_view_regions_dialog_w g_view_regions_dialog
-#endif
-
 
 void g_init_gxregion(void)
 {

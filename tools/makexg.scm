@@ -3270,8 +3270,6 @@
     (hey "#define gxg_~A_w gxg_~A~%" 
 	 (car func) (car func))))
 
-(hey "~%#ifdef XEN_ARGIFY_1~%")
-
 (for-each argify-func (reverse funcs))
 (for-each
  (lambda (func-list with-func)
@@ -3345,76 +3343,6 @@
 		(hey "~%")))
 
 
-(hey "~%#else~%")
-(hey "/* not XEN_ARGIFY_1 */~%")
-
-(for-each unargify-func (reverse funcs))
-(for-each
- (lambda (func-list with-func)
-   (if (not (null? func-list)) 
-       (with-func hey (lambda () 
-			(for-each unargify-func (reverse func-list))))))
- all-funcs all-func-withs)
-
-
-(hey "#define gxg_GPOINTER_w gxg_GPOINTER~%")
-(hey "#define c_array_to_xen_list_w c_array_to_xen_list~%")
-(hey "#define xen_list_to_c_array_w xen_list_to_c_array~%")
-(hey "#define gxg_make_target_entry_w gxg_make_target_entry~%")
-(hey "#define c_to_xen_string_w c_to_xen_string~%")
-(hey "#define xg_object_get_w xg_object_get~%")
-(hey "#define xg_object_set_w xg_object_set~%")
-(hey "#define xg_gtk_event_keyval_w xg_gtk_event_keyval~%")
-
-(hey "#define gxg_gtk_init_w gxg_gtk_init~%")
-(hey "#define gxg_gtk_init_check_w gxg_gtk_init_check~%")
-
-(define (ruby-uncast func) (hey "#define gxg_~A_w gxg_~A~%" (no-arg (car func)) (no-arg (car func)))) 
-(for-each ruby-uncast (reverse casts))
-(for-each
- (lambda (cast-list cast-func)
-   (if (not (null? cast-list)) 
-       (cast-func hey (lambda () 
-			(for-each ruby-uncast (reverse cast-list))))))
- all-casts all-cast-withs)
-
-
-(define (ruby-uncheck func) (hey "#define gxg_~A_w gxg_~A~%" (no-arg (car func)) (no-arg (car func))))
-(for-each ruby-uncheck (reverse checks))
-(for-each
- (lambda (check-list check-func)
-   (if (not (null? check-list)) 
-       (check-func hey (lambda () 
-			 (for-each ruby-uncheck (reverse check-list))))))
- all-checks all-check-withs)
-
-(for-each (lambda (field) (hey "#define gxg_~A_w gxg_~A~%" field field)) struct-fields)
-(for-each (lambda (field) (hey "#define gxg_~A_w gxg_~A~%" field field)) settable-struct-fields)
-(for-each (lambda (field) (hey "#define gxg_set_~A_w gxg_set_~A~%" field field)) settable-struct-fields)
-
-(for-each (lambda (struct) 
-	    (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct))
-	  (reverse make-structs))
-(hey "~%")
-
-(if (not (null? cairo-make-structs))
-    (with-cairo hey 
-		(lambda () 
-		  (for-each 
-		   (lambda (struct) 
-		     (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct))
-		   (reverse cairo-make-structs)))))
-(hey "~%")
-
-(with-3.0 hey (lambda ()
-		(for-each (lambda (struct) 
-			    (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct))
-			  (reverse make-structs-3.0))
-		(hey "~%")))
-
-
-
-(hey "~%#endif~%")
 
 ;;; --------------------------------------------------------------------------------
 (hey "  #define XG_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%")

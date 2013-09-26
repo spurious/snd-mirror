@@ -2378,7 +2378,6 @@ static XEN g_delete_transform(XEN type)
 }
 
 
-#ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_transform_frames_w, g_transform_frames)
 XEN_ARGIFY_4(g_transform_sample_w, g_transform_sample)
 XEN_ARGIFY_3(g_transform_to_vct_w, g_transform_to_vct)
@@ -2392,21 +2391,6 @@ XEN_NARGIFY_0(g_show_selection_transform_w, g_show_selection_transform)
 XEN_NARGIFY_1(g_set_show_selection_transform_w, g_set_show_selection_transform)
 XEN_NARGIFY_1(g_integer_to_transform_w, g_integer_to_transform)
 XEN_NARGIFY_1(g_transform_to_integer_w, g_transform_to_integer)
-#else
-#define g_transform_frames_w g_transform_frames
-#define g_transform_sample_w g_transform_sample
-#define g_transform_to_vct_w g_transform_to_vct
-#define g_add_transform_w g_add_transform
-#define g_snd_transform_w g_snd_transform
-#define g_transform_p_w g_transform_p
-#define g_delete_transform_w g_delete_transform
-#define g_log_freq_start_w g_log_freq_start
-#define g_set_log_freq_start_w g_set_log_freq_start
-#define g_show_selection_transform_w g_show_selection_transform
-#define g_set_show_selection_transform_w g_set_show_selection_transform
-#define g_integer_to_transform_w g_integer_to_transform
-#define g_transform_to_integer_w g_transform_to_integer
-#endif
 
 #if (!HAVE_SCHEME)
 static XEN transform_temp[6]; /* static for Ruby's sake */

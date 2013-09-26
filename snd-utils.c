@@ -347,16 +347,9 @@ static XEN g_file_to_string(XEN name)
 #endif
 
 
-#ifdef XEN_ARGIFY_1
 #if HAVE_SCHEME
   XEN_NARGIFY_1(g_file_to_string_w, g_file_to_string)
 #endif
-#else
-#if HAVE_SCHEME
-  #define g_file_to_string_w g_file_to_string
-#endif
-#endif
-
 
 void g_init_utils(void)
 {

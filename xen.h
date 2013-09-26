@@ -15,7 +15,7 @@
 
 /* HISTORY:
  *
- *  23-Sep:    removed *_OR_ELSE, XEN_ARG_*, and OFF_T* macros.
+ *  23-Sep:    removed *_OR_ELSE, XEN_ARG_*, and OFF_T* macros; added XEN_ARGIFY* to the Forth section.
  *  7-Jul-13:  removed int64 stuff (it was not used anywhere). Made various Ruby changes (NUM2ULL etc).
  *  -------- 
  *  5-Nov:     minor s7-related changes.
@@ -982,6 +982,28 @@ XEN xen_assoc(XEN key, XEN alist);
   FTH_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr)
 
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
+
+#define XEN_NARGIFY_0(OutName, InName) static XEN (*OutName)(void) = InName;
+#define XEN_NARGIFY_1(OutName, InName) static XEN (*OutName)(XEN a1) = InName;
+#define XEN_NARGIFY_2(OutName, InName) static XEN (*OutName)(XEN a1, XEN a2) = InName;
+#define XEN_NARGIFY_3(OutName, InName) static XEN (*OutName)(XEN a1, XEN a2, XEN a3) = InName;
+#define XEN_NARGIFY_4(OutName, InName) static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4) = InName;
+#define XEN_NARGIFY_5(OutName, InName) static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4, XEN a5) = InName;
+#define XEN_NARGIFY_6(OutName, InName) static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4, XEN a5, XEN a6) = InName;
+#define XEN_NARGIFY_7(OutName, InName) static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4, XEN a5, XEN a6, XEN a7) = InName;
+#define XEN_NARGIFY_8(OutName, InName) static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4, XEN a5, XEN a6, XEN a7, XEN a8) = InName;
+#define XEN_NARGIFY_9(OutName, InName) static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4, XEN a5, XEN a6, XEN a7, XEN a8, XEN a9) = InName;
+#define XEN_ARGIFY_1(OutName, InName)  static XEN (*OutName)(XEN a1) = InName;
+#define XEN_ARGIFY_2(OutName, InName)  static XEN (*OutName)(XEN a1, XEN a2) = InName;
+#define XEN_ARGIFY_3(OutName, InName)  static XEN (*OutName)(XEN a1, XEN a2, XEN a3) = InName;
+#define XEN_ARGIFY_4(OutName, InName)  static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4) = InName;
+#define XEN_ARGIFY_5(OutName, InName)  static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4, XEN a5) = InName;
+#define XEN_ARGIFY_6(OutName, InName)  static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4, XEN a5, XEN a6) = InName;
+#define XEN_ARGIFY_7(OutName, InName)  static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4, XEN a5, XEN a6, XEN a7) = InName;
+#define XEN_ARGIFY_8(OutName, InName)  static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4, XEN a5, XEN a6, XEN a7, XEN a8) = InName;
+#define XEN_ARGIFY_9(OutName, InName)  static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4, XEN a5, XEN a6, XEN a7, XEN a8, XEN a9) = InName;
+#define XEN_ARGIFY_10(OutName, InName) static XEN (*OutName)(XEN a1, XEN a2, XEN a3, XEN a4, XEN a5, XEN a6, XEN a7, XEN a8, XEN a9, XEN a10) = InName;
+#define XEN_VARGIFY(OutName, InName)   static XEN (*OutName)(XEN a1) = InName;
 
 #endif /* end HAVE_FORTH */
 

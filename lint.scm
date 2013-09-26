@@ -3155,14 +3155,8 @@
 		    ;; ---------------- other schemes ----------------		  
 		    ((define-syntax let-syntax letrec-syntax define-module re-export case-lambda) ; for other's code
 		     env) 
-		    
-		    ;; ---------------- declare ----------------		  
-		    ((declare) 
-		     (lint-format "~A: declare is obsolete: ~A"
-				  name head
-				  (truncated-list->string form))
-		     env)
-		    
+
+		    ;; with-environment
 		    ((with-environment)
 		     (if (< (length form) 3)
 			 (lint-format "with-environment is messed up: ~A" 
