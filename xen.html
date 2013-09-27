@@ -60,11 +60,7 @@ static XEN orig_function(XEN argument)
   return(C_TO_XEN_INT(XEN_TO_C_INT(argument) + 1));
 }
 
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_1(function, orig_function);
-#else
-  #define function orig_function
-#endif
+XEN_NARGIFY_1(function, orig_function);
 
 static XEN variable;
 

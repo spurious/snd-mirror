@@ -1761,12 +1761,14 @@ static int t_optimized = T_OPTIMIZED;
 #define is_mutable(p)                 ((typeflag(p) & T_MUTABLE) != 0)
 /* #define set_mutable(p)             typeflag(p) |= T_MUTABLE */
 #define clear_mutable(p)              typeflag(p) &= (~T_MUTABLE)
+/* used for mutable numbers in clm2xen */
 
 #define T_BYTEVECTOR                  T_ONE_LINER
 #define is_bytevector(p)              ((typeflag(p) & T_BYTEVECTOR) != 0)
 #define set_bytevector(p)             typeflag(p) |= T_BYTEVECTOR
 /* marks a string that the caller considers a bytevector 
 */
+
 
 #define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
 #define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
@@ -11474,9 +11476,10 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
       if (is_NaN(y)) return(pw);
       if (y == 0.0) return(real_one);
 
-      if ((x > 0.0) ||
-	  ((y - floor(y)) < 1.0e-16))
+      if (x > 0.0)
 	return(make_real(sc, pow(x, y)));
+      /* tricky cases abound here: (expt -1 1/9223372036854775807)
+       */
     }
   
   /* (expt 0+i 1e+16) = 0.98156860153485-0.19111012657867i ? 
@@ -12493,7 +12496,11 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  if ((integer_length(num_a) + integer_length(den_a) + integer_length(numerator(x))) >= s7_int_bits)
 	    {
 	      if (is_null(p))
-		return(make_real(sc, num_a + fraction(x)));
+		{
+		  if (num_a == 0)                /* (+ 0 1/9223372036854775807) */
+		    return(x);
+		  return(make_real(sc, num_a + fraction(x)));
+		}
 	      rl_a = (s7_Double)num_a + fraction(x);
 	      goto ADD_REALS;
 	    }
@@ -12504,8 +12511,6 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	   *   (+ 100000 1/142857142857140) -> -832205957599110323/28571428571428
 	   *   (+ 4611686018427387904 3/4) -> 3/4
 	   * see s7test for more
-	   */
-	  /* there's no point in reduce_fraction here -- it can be reduced! 
 	   */
 	  goto ADD_RATIOS;
 	  
@@ -17741,6 +17746,12 @@ order here follows gmp, and is the opposite of the CL convention.  (logbit? int 
   x = car(args);
   y = cadr(args);
 
+  if (!s7_is_integer(x))
+    {
+      CHECK_METHOD(sc, x, sc->LOGBITP, args);
+      return(wrong_type_argument(sc, sc->LOGBITP, small_int(1), x, T_INTEGER));
+    }
+
   if (!s7_is_integer(y))
     {
       CHECK_METHOD(sc, y, sc->LOGBITP, args);
@@ -17763,11 +17774,6 @@ order here follows gmp, and is the opposite of the CL convention.  (logbit? int 
    *   so logbit? has a wider range than the logand/ash shuffle above.
    */
 
-  if (!s7_is_integer(x))
-    {
-      CHECK_METHOD(sc, x, sc->LOGBITP, args);
-      return(wrong_type_argument(sc, sc->LOGBITP, small_int(1), x, T_INTEGER));
-    }
   /* all these long long ints are necessary, else C turns it into an int, gets confused about signs etc */
   return(make_boolean(sc, ((((long long int)(1LL << (long long int)index)) & (long long int)integer(x)) != 0)));
 }
@@ -20693,7 +20699,7 @@ static s7_pointer g_flush_output_port(s7_scheme *sc, s7_pointer args)
       return(simple_wrong_type_argument_with_type(sc, sc->FLUSH_OUTPUT_PORT, pt, AN_OUTPUT_PORT));
     }
   s7_flush_output_port(sc, pt);
-  return(sc->UNSPECIFIED);
+  return(pt);
 }
 
 
@@ -22297,6 +22303,13 @@ static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
 	}
     }
   else port = sc->input_port;
+  /* it is possible to read from the file currently being loaded here! 
+   *   port defaults to (current-input-port) but load is not supposed to affect that port
+   */
+  if ((chars == 0) && 
+      (port == sc->standard_input))
+    return(make_empty_string(sc, 0, 0));
+
   c = port_read_character(port)(sc, port);
   if (c == EOF)
     return(sc->EOF_OBJECT);
@@ -22639,7 +22652,9 @@ defaults to the global environment.  To load into the current environment instea
 
   port = load_file(sc, fp, fname);
   port_file_number(port) = remember_file_name(sc, fname);
-  push_input_port(sc, port);
+  push_input_port(sc, port); 
+  /* the r7rs spec says this is wrong, and it means a subsequent read-string can read the currently loading file
+   */
 
   push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->NIL, sc->NIL);  /* was pushing args and code, but I don't think they're used later */
   push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
@@ -22810,7 +22825,11 @@ in the file, or by the function."
 
   sym = car(args);
   if (is_string(sym))
-    sym = s7_make_symbol(sc, string_value(sym));
+    {
+      if (string_length(sym) == 0)                   /* (autoload "" ...) */
+	return(s7_wrong_type_arg_error(sc, "autoload", 1, sym, "a symbol-name or a symbol"));
+      sym = s7_make_symbol(sc, string_value(sym));
+    }
   if (!is_symbol(sym))
     {
       CHECK_METHOD(sc, sym, sc->AUTOLOAD, args);
@@ -30802,7 +30821,7 @@ static int hash_loc(s7_scheme *sc, s7_pointer key)
 
     case T_PAIR:
       loc = (int)s7_list_length(sc, key);
-      if (loc > 0)
+      if ((loc > 0) && (key != car(key)))      /* avoid infinite loop if #1=(#1#)! */
 	return(loc + hash_loc(sc, car(key)));
       return(0);
 
@@ -31111,7 +31130,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 	  size_arg = car(args);
 	  if (is_not_null(cdr(args)))
 	    eq_arg = cadr(args);
-	  else eq_arg = sc->NIL;
+	  else eq_arg = sc->GC_NIL;
 	}
       else
 	{
@@ -31122,10 +31141,10 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 	      if (!s7_is_integer(size_arg))
 		return(simple_wrong_type_argument(sc, sc->MAKE_HASH_TABLE, size_arg, T_INTEGER));
 	    }
-	  else size_arg = sc->NIL;
+	  else size_arg = sc->GC_NIL;
 	}
 
-      if (is_not_null(size_arg))
+      if (size_arg != sc->GC_NIL)
 	{
 	  size = s7_integer(size_arg);
 	  if (size <= 0)                      /* we need s7_Int here to catch (make-hash-table most-negative-fixnum) etc */
@@ -31133,10 +31152,15 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 	  if (size > MAX_LIST_LENGTH)
 	    return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, size_arg, "should be a reasonable integer"));
 	}
-      if (is_not_null(eq_arg))
+
+      if (eq_arg != sc->GC_NIL)
 	{
 	  s7_pointer ht;
-	  if (!is_procedure(eq_arg))
+	  int typ;
+	  typ = type(eq_arg);
+	  /* true procedure needed here else (make-hash-table ()) will work
+	   */
+	  if ((typ < T_C_FUNCTION) && (typ != T_CLOSURE) && (typ != T_CLOSURE_STAR)) 
 	    {
 	      CHECK_METHOD(sc, eq_arg, sc->MAKE_HASH_TABLE, args);
 	      return(simple_wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, eq_arg, A_PROCEDURE));

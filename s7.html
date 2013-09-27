@@ -261,7 +261,7 @@ indented and on a sort of brownish background.
 <p>All numeric types, integers, ratios, reals, and complex numbers are supported.
 The basic integer and real
 types are defined in s7.h, defaulting to long long int and double.  
-A ratio is a pair of integers, and a complex number is a pair of reals.
+A ratio consists of two integers, a complex number two reals.
 pi is predefined, as are
 most-positive-fixnum and most-negative-fixnum.
 s7 can be built with multiprecision support 
@@ -2507,7 +2507,7 @@ memo-fib
 <pre class="indented">
 (define (glib-fib n)
   (let ((phi (/ (+ 1 (sqrt 5)) 2)))
-    (floor (/ (- (expt phi n) (expt (- 1 phi) n)) (sqrt 5)))))
+    (floor (real-part (/ (- (expt phi n) (expt (- 1 phi) n)) (sqrt 5))))))
 </pre>
 </div>
 
