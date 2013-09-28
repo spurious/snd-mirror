@@ -173,6 +173,7 @@ static void edit_find_callback_1(GtkWidget *w, gpointer info)
 
 /* -------------------------------- VIEW MENU -------------------------------- */
 
+static void view_menu_update_1(GtkWidget *w, gpointer info) {view_menu_update();}
 
 static void view_separate_callback(GtkWidget *w, gpointer info) {set_channel_style(CHANNELS_SEPARATE);}
 static void view_combined_callback(GtkWidget *w, gpointer info) {set_channel_style(CHANNELS_COMBINED);}
@@ -805,6 +806,7 @@ GtkWidget *add_menu(void)
 
   SG_SIGNAL_CONNECT(file_menu, "activate", file_menu_update_1, NULL);
   SG_SIGNAL_CONNECT(edit_menu, "activate", edit_menu_update_1, NULL);
+  SG_SIGNAL_CONNECT(view_menu, "activate", view_menu_update_1, NULL);
 
   return(main_menu);
 }
