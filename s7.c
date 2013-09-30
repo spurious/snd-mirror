@@ -17161,7 +17161,7 @@ static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args)
 
     default:
       CHECK_METHOD(sc, x, sc->NANP, args);
-      return(sc->F);
+      return(simple_wrong_type_argument_with_type(sc, sc->NANP, x, A_NUMBER));
     }
 }
 
@@ -17199,7 +17199,7 @@ static s7_pointer g_is_infinite(s7_scheme *sc, s7_pointer args)
 
     default:
       CHECK_METHOD(sc, x, sc->INFINITEP, args);
-      return(sc->F);
+      return(simple_wrong_type_argument_with_type(sc, sc->INFINITEP, x, A_NUMBER));
     }
 }
 
@@ -17358,6 +17358,7 @@ static s7_pointer g_is_positive(s7_scheme *sc, s7_pointer args)
       return(make_boolean(sc, numerator(x) > 0));
 
     case T_REAL:    
+      /* what about (positive? nan.0)? */
       return(make_boolean(sc, real(x) > 0.0));
 
 #if WITH_GMP
@@ -17436,6 +17437,7 @@ static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
       return(make_boolean(sc, numerator(x) < 0));
 
     case T_REAL:    
+      /* what about (negative? -nan.0)? */
       return(make_boolean(sc, real(x) < 0.0));
 
 #if WITH_GMP
@@ -30769,14 +30771,14 @@ static int hash_float_location(s7_Double x)
 static int hash_loc(s7_scheme *sc, s7_pointer key)
 {
   int loc = 0;
-  const char *c; 
+  const unsigned char *c;  /* need "unsigned" here else (hash-table-index #u8(255 0)) -> -1 */
 
   switch (type(key))
     {
     case T_STRING:
       if (string_hash(key) != 0)
 	return(string_hash(key));
-      for (c = string_value(key); *c; c++)
+      for (c = (const unsigned char *)string_value(key); *c; c++)
 	loc = *c + loc * HASH_MULT;
       string_hash(key) = loc;
       return(loc);
@@ -33278,8 +33280,8 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
     case T_VECTOR:
       return(args > 0);
       /* but that means 
-       *   (aritable? (1) 9223372036854775807) -> #t
-       *   (aritable? (()) 6) -> #t
+       *   (aritable? '(1) 9223372036854775807) -> #t
+       *   (aritable? '(()) 6) -> #t
        */
 
     case T_SYNTAX:
@@ -67919,6 +67921,8 @@ int main(int argc, char **argv)
  * doc/test the lib*.scm files.
  * can gf_parse or equivalent handle pure math function bodies in s7? -- a vector of parse trees indexed by arg type?
  * loop problem in ~W?
+ * xen.h argify* -> something that defines everything needed at the definition point, then somehow collect for init
+ *   need to replace all the s7_apply_n* stuff, internalize all the arg nums and help strings (type checks? defaults?) etc
  */
 
 
