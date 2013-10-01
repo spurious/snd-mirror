@@ -514,6 +514,7 @@ v[new--] = v[old--] if backwards is " PROC_FALSE "."
 }
 
 
+#if (!HAVE_SCHEME)
 static XEN g_vct_length(XEN obj)
 {
   #define H_vct_length "(" S_vct_length " v): length of vct v"
@@ -522,6 +523,7 @@ static XEN g_vct_length(XEN obj)
   v = XEN_TO_VCT(obj);
   return(C_TO_XEN_LONG_LONG(mus_vct_length(v)));
 }
+#endif
 
 
 static XEN g_vct_ref(XEN obj, XEN pos)
@@ -1774,11 +1776,13 @@ XEN xen_list_to_vct(XEN lst)
 }
 
 
+#if (!HAVE_SCHEME)
 static XEN g_vct(XEN args) 
 {
   #define H_vct "(" S_vct " args...): returns a new vct with args as contents; same as " S_list_to_vct ": (vct 1 2 3)"
   return(xen_list_to_vct(args));
 }
+#endif
 
 
 XEN mus_array_to_list(mus_float_t *arr, mus_long_t i, mus_long_t len)
@@ -2259,13 +2263,14 @@ XEN_ARGIFY_2(g_make_vct_w, g_make_vct)
 #if (!HAVE_SCHEME)
   XEN_NARGIFY_2(g_vct_fill_w, g_vct_fill)
   XEN_NARGIFY_1(g_vct_copy_w, g_vct_copy)
+  XEN_VARGIFY(g_vct_w, g_vct)
+  XEN_NARGIFY_1(g_vct_length_w, g_vct_length)
 #endif
 XEN_NARGIFY_1(g_vct_p_w, g_vct_p)
 XEN_NARGIFY_1(g_list_to_vct_w, xen_list_to_vct)
 XEN_NARGIFY_1(g_vct_to_list_w, g_vct_to_list)
 XEN_NARGIFY_1(g_vector_to_vct_w, g_vector_to_vct)
 XEN_NARGIFY_1(g_vct_to_vector_w, g_vct_to_vector)
-XEN_NARGIFY_1(g_vct_length_w, g_vct_length)
 XEN_NARGIFY_2(g_vct_ref_w, g_vct_ref)
 XEN_NARGIFY_3(g_vct_set_w, g_vct_set)
 XEN_NARGIFY_2(g_vct_multiply_w, g_vct_multiply)
@@ -2277,7 +2282,6 @@ XEN_NARGIFY_1(g_vct_peak_w, g_vct_peak)
 XEN_NARGIFY_1(g_vct_peak_and_location_w, g_vct_peak_and_location)
 XEN_ARGIFY_4(g_vct_move_w, g_vct_move)
 XEN_ARGIFY_4(g_vct_subseq_w, g_vct_subseq)
-XEN_VARGIFY(g_vct_w, g_vct)
 XEN_ARGIFY_2(g_vct_reverse_w, g_vct_reverse)
 XEN_NARGIFY_1(g_vct_to_readable_string_w, g_vct_to_readable_string)
 XEN_NARGIFY_2(g_vct_times_w, g_vct_times)
@@ -2354,16 +2358,21 @@ void mus_vct_init(void)
 #if HAVE_SCHEME
   s7_eval_c_string(s7, "(define vct-copy copy)");
   s7_eval_c_string(s7, "(define vct-fill! fill!)");
+  s7_eval_c_string(s7, "(define vct float-vector)");
+  s7_eval_c_string(s7, "(define vct-length length)");
+  /* vct->vector and vector->vct -- can these just be copy? 
+   */
 #else
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_fillB,         g_vct_fill_w,      2, 0, 0, H_vct_fillB);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_copy,          g_vct_copy_w,      1, 0, 0, H_vct_copy);
+  XEN_DEFINE_PROCEDURE(S_vct,                    g_vct_w,           0, 0, 1, H_vct);
+  XEN_DEFINE_SAFE_PROCEDURE(S_vct_length,        g_vct_length_w,    1, 0, 0, H_vct_length);
 #endif
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_p,             g_vct_p_w,         1, 0, 0, H_vct_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_list_to_vct,       g_list_to_vct_w,   1, 0, 0, H_list_to_vct); /* (define (list->vct lst) (apply vct lst)) */
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_to_list,       g_vct_to_list_w,   1, 0, 0, H_vct_to_list);
   XEN_DEFINE_SAFE_PROCEDURE(S_vector_to_vct,     g_vector_to_vct_w, 1, 0, 0, H_vector_to_vct);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_to_vector,     g_vct_to_vector_w, 1, 0, 0, H_vct_to_vector);
-  XEN_DEFINE_SAFE_PROCEDURE(S_vct_length,        g_vct_length_w,    1, 0, 0, H_vct_length);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_multiplyB,     g_vct_multiply_w,  2, 0, 0, H_vct_multiplyB);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_scaleB,        g_vct_scale_w,     2, 0, 0, H_vct_scaleB);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_addB,          g_vct_add_w,       2, 1, 0, H_vct_addB);
@@ -2373,7 +2382,6 @@ void mus_vct_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_peak_and_location, g_vct_peak_and_location_w, 1, 0, 0, H_vct_peak_and_location);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_moveB,         g_vct_move_w,      3, 1, 0, H_vct_moveB);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_subseq,        g_vct_subseq_w,    2, 2, 0, H_vct_subseq);
-  XEN_DEFINE_PROCEDURE(S_vct,                    g_vct_w,           0, 0, 1, H_vct);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_reverse,       g_vct_reverse_w,   1, 1, 0, H_vct_reverse);
 
 #if HAVE_SCHEME || HAVE_FORTH

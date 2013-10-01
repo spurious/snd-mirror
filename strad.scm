@@ -17,8 +17,8 @@
 (define (make-biquad a0 a1 a2 b1 b2)
   "(make-biquad a0 a1 a2 b1 b2) returns a biquad filter (use with the CLM filter gen)"
   (make-filter 3 
-	       (vct a0 a1 a2) 
-	       (vct 0.0 b1 b2)))
+	       (float-vector a0 a1 a2) 
+	       (float-vector 0.0 b1 b2)))
 
 (definstrument (bow beg dur frq amplitude
 		    (bufsize 2205)

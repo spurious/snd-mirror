@@ -641,7 +641,7 @@
 	   :grain-duration '(0 0.02 1 0.1) 
 	   :grain-duration-spread '(0 0 0.5 0.1 1 0)
 	   :where-to grani-to-grain-duration ; from grani.scm
-	   :where-bins (vct 0 0.05 1))
+	   :where-bins (float-vector 0 0.05 1))
     (grani 0 2 1 "oboe.snd" 
 	   :grain-start 0.1 :grain-start-spread 0.01
 	   :amp-envelope '(0 1 1 1) :grain-density 40

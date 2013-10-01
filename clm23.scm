@@ -17,7 +17,7 @@
 ;;; array of gen -> vector (and setf aref to vector-set! in this case)
 ;;; nil -> #f, t -> #t
 ;;; incf, decf to explicit sets
-;;; length sometimes length, vct-length etc
+;;; length sometimes length, length etc
 ;;; make-filter in scm requires coeffs arrays
 ;;; &optional, &key -> define*
 ;;; two-pi -> (* 2 pi)
@@ -1047,7 +1047,7 @@
       (set! (amps i) (/ amp (+ i 2))))
     (do ((i start (+ i 1))) ((= i end))
       (do ((i 0 (+ i 1)))
-	  ((= i (vct-length phases)))
+	  ((= i (length phases)))
 	(set! (phases i) (+ (phases i) (freqs i))))
       (if (not (= (ints 0) 32)) (format #t "int array trouble"))
       (set! (ints 1) 3)
@@ -1944,7 +1944,7 @@
       (outa i (* (env amp-env) (oscil os))))))
 
 (define (make-my-oscil frequency)       ; we want our own oscil!
-  (vct 0.0 (hz->radians frequency)))    ; current phase and frequency-based phase increment
+  (float-vector 0.0 (hz->radians frequency)))    ; current phase and frequency-based phase increment
 
 (define (my-oscil gen fm)     ; the corresponding generator
   (let ((result (sin (gen 0)))) ; return sin(current-phase)
@@ -2117,7 +2117,7 @@
       val)))
 
 (define (sndclmdoc-make-sum-of-odd-sines frequency n)
-  (vct 0.0 (hz->radians frequency) (* 1.0 n)))
+  (float-vector 0.0 (hz->radians frequency) (* 1.0 n)))
 
 (define (sndclmdoc-sum-of-odd-sines gen fm)
   (let* ((angle (gen 0))
@@ -2393,7 +2393,7 @@
 	  (grain #f))
       (set! grain (mus-data grains))
       (file->array grain-file 0 0 grain-size grain)
-      (let ((original-grain (vct-copy grain)))
+      (let ((original-grain (copy grain)))
 	(do ((i beg (+ i 1)))
 	    ((= i end))
 	  (let ((gliss (env frqf)))
@@ -2737,7 +2737,7 @@
     (sndclmdoc-srcer 5 10 10.0   .01 .2 8 "oboe.snd")
     (sndclmdoc-srcer 6 2 1.0   1 3 20 "oboe.snd")) 
   (with-sound () 
-    (sndclmdoc-convins 0 2 (vct 1.0 0.5 0.25 0.125) "oboe.snd") ; same as fir-filter with those coeffs
+    (sndclmdoc-convins 0 2 (float-vector 1.0 0.5 0.25 0.125) "oboe.snd") ; same as fir-filter with those coeffs
     (sndclmdoc-granulate-sound "now.snd" 1 3.0 0 2.0)
     (sndclmdoc-grev 2 100000 2.0 "pistol.snd" 40000)
     (sndclmdoc-simple-pvoc 3 2.0 1.0 512 "oboe.snd")

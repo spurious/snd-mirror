@@ -191,8 +191,8 @@
 	       (im2 (make-vct fftlen)))
 	  (fft rl1 im1 1)
 	  (fft rl2 im2 1)
-	  (let ((tmprl (vct-copy rl1))
-		(tmpim (vct-copy im1))
+	  (let ((tmprl (copy rl1))
+		(tmpim (copy im1))
 		(data3 (make-vct fftlen)))
 	    (vct-multiply! tmprl rl2)     ; (* tempr1 tempr2)
 	    (vct-multiply! tmpim im2)     ; (* tempi1 tempi2)
@@ -683,8 +683,8 @@ then inverse ffts."
 	 (fsize2 (/ fsize 2))
 	 (scaler 1.0))
     (fft rdata idata 1)
-    (let ((vr (vct-copy rdata))
-	  (vi (vct-copy idata)))
+    (let ((vr (copy rdata))
+	  (vi (copy idata)))
       (rectangular->polar vr vi)
       (set! scaler (vct-peak vr)))
     (let ((scl-squelch (* squelch scaler)))
@@ -749,7 +749,7 @@ then inverse ffts."
 
 (define* (make-ramp (size 128))
   "(make-ramp (size 128)) returns a ramp generator"
-  (vct 0.0 size))
+  (float-vector 0.0 size))
 
 
 (define* (squelch-vowels snd chn)
@@ -780,7 +780,7 @@ then inverse ffts."
 			 ;; fancier version checked here ratio of this sum and
 			 ;;   sum of all rl vals, returned vowel if > 0.5
 			 (set! ctr 0)
-			 (vct-fill! im 0.0)))
+			 (fill! im 0.0)))
 		   (let ((rval (- 1.0 (ramp ramper in-vowel))))
 		     ; squelch consonants if just ramp value (not 1.0-val)
 		     ;(and (> rval 0.0) ; if this is included, the vowel-portions are omitted
@@ -1019,7 +1019,7 @@ is: (filter-sound (make-formant 2400 .99))"
 
 (define (osc-formants radius bases amounts freqs) ; changed to call map-channel itself, 21-Apr-05
   "(osc-formants radius bases amounts freqs) set up any number of independently oscillating 
-formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vct 400.0 800.0 1200.0) (vct 4.0 2.0 3.0))"
+formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 1200.0) (float-vector 400.0 800.0 1200.0) (float-vector 4.0 2.0 3.0))"
   (let ((len (length bases)))
     (if (= len 3)
 	;; this way is faster but verbose
@@ -1085,7 +1085,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 
 (define (flecho scaler secs)
   "(flecho scaler secs) returns a low-pass filtered echo maker: (map-channel (flecho .5 .9) 0 75000)"
-  (let ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
+  (let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
 	(del (make-delay  (round (* secs (srate))))))
     (lambda (inval)
       (+ inval 
@@ -1170,7 +1170,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 
 ;;; -------- compand, compand-channel
 
-(define compand-table (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
+(define compand-table (float-vector -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
 			   0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000))
 ;; (we're eye-balling the curve on p55 of Steiglitz's "a DSP Primer")
 
@@ -1744,7 +1744,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
 				   (set! pkloc i))))))
 		      (if (< (abs (- pitch pit)) (/ (srate) (* 2 (transform-size)))) ; uh... why not do it direct?
 			  (set! rtn #t)))))
-	       (vct-fill! data 0.0)))
+	       (fill! data 0.0)))
 	 rtn))))
 
 

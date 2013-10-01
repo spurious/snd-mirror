@@ -13980,7 +13980,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 
 
 static s7_pointer multiply_2, multiply_fs, multiply_sf, multiply_is, multiply_si;
-static s7_pointer multiply_2_temp, multiply_3_temp, multiply_1_any, multiply_s_temp, multiply_temp_s, multiply_s_direct;
+static s7_pointer multiply_2_temp, multiply_3_temp, multiply_1_any, multiply_s_temp, multiply_temp_s, multiply_s_direct, multiply_pi_direct;
 static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, y;
@@ -14223,8 +14223,7 @@ static s7_pointer g_m_s_t(s7_scheme *sc, s7_pointer arg1, s7_pointer arg2, s7_po
 }
 
 
-s7_pointer g_multiply_s_direct(s7_scheme *sc, s7_pointer args);
-s7_pointer g_multiply_s_direct(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_multiply_s_direct(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer arg1, arg2;
 
@@ -14234,6 +14233,14 @@ s7_pointer g_multiply_s_direct(s7_scheme *sc, s7_pointer args)
     return(s7_remake_real(sc, arg2, real(arg1) * real(arg2)));
   
   return(g_m_s_t(sc, arg1, arg2, args));
+}
+
+
+static s7_pointer g_multiply_pi_direct(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer arg2;
+  arg2 = c_call(cadr(args))(sc, cdadr(args));
+  return(s7_remake_real(sc, arg2, M_PI * real(arg2)));
 }
 
 
@@ -29104,6 +29111,7 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 		{
 		  s7_Int k;
 		  k = s7_integer(fill);
+		  /* PERHAPS: unroll this loop? */
 		  for (i = start; i < end; i++)
 		    int_vector_element(x, i) = k;
 		}
@@ -40420,6 +40428,8 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  (s7_function_returns_temp(sc, arg2)))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  if (arg1 == sc->PI)
+	    return(multiply_pi_direct);
 	  return(multiply_s_direct);
 	}
 
@@ -41329,6 +41339,7 @@ static void init_choosers(s7_scheme *sc)
   multiply_s_temp = make_temp_function_with_class(sc, f, "*", g_multiply_s_temp, 2, 0, false, "* optimization");
   multiply_temp_s = make_temp_function_with_class(sc, f, "*", g_multiply_temp_s, 2, 0, false, "* optimization");
   multiply_s_direct = make_temp_function_with_class(sc, f, "*", g_multiply_s_direct, 2, 0, false, "* optimization");
+  multiply_pi_direct = make_temp_function_with_class(sc, f, "*", g_multiply_pi_direct, 2, 0, false, "* optimization");
 
   multiply_is = make_function_with_class(sc, f, "*", g_multiply_is, 2, 0, false, "* optimization");
   multiply_si = make_function_with_class(sc, f, "*", g_multiply_si, 2, 0, false, "* optimization");
@@ -67867,6 +67878,7 @@ int main(int argc, char **argv)
  * xen.h argify* -> something that defines everything needed at the definition point, then somehow collect for init
  *   need to replace all the s7_apply_n* stuff, internalize all the arg nums and help strings (type checks? defaults?) etc
  * morally-equal for c-objects?
+ * TODO: generic reverse!
  */
 
 

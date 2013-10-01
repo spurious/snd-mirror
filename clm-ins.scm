@@ -1871,7 +1871,7 @@ is a physical model of a flute:
 			(vct-set! fdr k (readin fil)))
 		      (vct-multiply! fdr window)
 		      (set! filptr (+ filptr hop))
-		      (vct-fill! fdi 0.0)
+		      (fill! fdi 0.0)
 		      ;; get the fft 
 		      (mus-fft fdr fdi fftsize-1 1)
 		      ;; change to polar coordinates (ignoring phases)
@@ -1880,8 +1880,8 @@ is a physical model of a flute:
 		      
 		      (vct-subseq current-peak-freqs 0 max-oscils last-peak-freqs)
 		      (vct-subseq current-peak-amps 0 max-oscils last-peak-amps)
-		      (vct-fill! current-peak-amps 0.0)
-		      (vct-fill! peak-amps 0.0)
+		      (fill! current-peak-amps 0.0)
+		      (fill! peak-amps 0.0)
 		      
 		      (let ((ra (fdr 0))
 			    (la 0.0)

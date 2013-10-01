@@ -181,7 +181,7 @@
 ;;   (set! snd (new-sound outfile mus-next mus-bshort (mus-srate) chns))
 ;;   (do ((i 0 (+ i 1)))
 ;;       ((= i chns))
-;;     (mix-vct (vct-scale! (vct-copy data) (locsig-ref loc i)) beg snd i #f))
+;;     (mix-vct (vct-scale! (copy data) (locsig-ref loc i)) beg snd i #f))
 ;;   (let* ((beg (floor (* 10 (srate))))
 ;; 	 (len (+ beg (floor (* dur (srate)))))
 ;; 	 (loc (make-locsig :degree (random 3535.0) :channels chns))
@@ -191,7 +191,7 @@
 ;;       (set! (data i) (make-fm-noise len 200)))
 ;;     (do ((i 0 (+ i 1)))
 ;; 	((= i chns))
-;;       (mix-vct (vct-scale! (vct-copy data) (locsig-ref loc i)) beg snd i #f))
+;;       (mix-vct (vct-scale! (copy data) (locsig-ref loc i)) beg snd i #f))
 ;;     (play snd 0)))
 
 ;; noise.scm ends here

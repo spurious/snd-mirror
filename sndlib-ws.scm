@@ -132,7 +132,7 @@
 	   (begin
 	     (if (not continue-old-file)
 		 (if (vct? output-1)
-		     (vct-fill! output-1 0.0)
+		     (fill! output-1 0.0)
 		     (if (sound-data? output-1)
 			 (sound-data-fill! output-1 0.0))))
 	     (set! *output* output-1)))
@@ -149,7 +149,7 @@
 	       (begin
 		 (if (not continue-old-file)
 		     (if (vct? reverb-1)
-			 (vct-fill! reverb-1 0.0)
+			 (fill! reverb-1 0.0)
 			 (if (sound-data? reverb-1)
 			     (sound-data-fill! reverb-1 0.0))))
 		 (set! *reverb* reverb-1))))
@@ -350,7 +350,7 @@ finish-with-sound to complete the process."
 	(begin
 	  (if (not continue-old-file)
 	      (if (vct? output)
-		  (vct-fill! output 0.0)
+		  (fill! output 0.0)
 		  (sound-data-fill! output 0.0)))
 	  (set! *output* output)))
 
@@ -365,7 +365,7 @@ finish-with-sound to complete the process."
 	    (begin
 	      (if (not continue-old-file)
 		  (if (vct? revfile)
-		      (vct-fill! revfile 0.0)
+		      (fill! revfile 0.0)
 		      (sound-data-fill! revfile 0.0)))
 	      (set! *reverb* revfile))))
 

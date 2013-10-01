@@ -27,7 +27,7 @@
 	  (allpasses (make-all-pass-bank (vector allpass1 allpass2 allpass3))))
 
       (if (or amp-env low-pass)
-	  (let ((flt (if low-pass (make-fir-filter 3 (vct 0.25 0.5 0.25)) #f))
+	  (let ((flt (if low-pass (make-fir-filter 3 (float-vector 0.25 0.5 0.25)) #f))
 		(envA (make-env :envelope (or amp-env '(0 1 1 1)) :scaler volume :duration (/ len (mus-srate)))))
 	    (if low-pass
 		(do ((i 0 (+ i 1)))

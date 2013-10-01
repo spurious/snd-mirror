@@ -450,7 +450,7 @@
 
 (define* (effects-flecho-1 scaler secs input-samps-1 beg dur snd chn)
   "(effects-flecho-1 scaler secs input-samps-1 beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
-  (let ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
+  (let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
 	(del (make-delay (round (* secs (srate snd)))))
 	(samp 0)
 	(input-samps (or input-samps-1 dur (frames snd chn))))
@@ -579,7 +579,7 @@
     
     (define flecho-1
       (lambda (scaler secs input-samps)
-	(let ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
+	(let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
 	      (del (make-delay (round (* secs (srate)))))
 	      (samp 0))
 	  (lambda (inval)
@@ -3095,7 +3095,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 (add-to-menu effects-menu "Spiker" (lambda () (spike)))
 
 (define* (effects-compand snd chn)
-  (let ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
+  (let ((tbl (float-vector -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
 		  0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
     (let ((len (frames snd chn)))
       (let ((reader (make-sampler 0 snd chn))

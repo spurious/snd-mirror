@@ -316,7 +316,7 @@
     (vct->channel data)
     (let ((dc (goertzel 0.0))
 	  (sig (goertzel 35.0)))
-      (let ((dcflt (make-filter 2 (vct 1 -1) (vct 0 -0.99))))
+      (let ((dcflt (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.99))))
 	(map-channel (lambda (y) (filter dcflt y)))
 	(let ((ndc (goertzel 0.0))
 	      (nsig (goertzel 35.0)))
@@ -422,7 +422,7 @@
   ;; look for DC
   (let ((dc (check-freq 0.0 snd chn)))
     (if (> dc 30.0)
-	(let ((dcflt (make-filter 2 (vct 1 -1) (vct 0 -0.99))))
+	(let ((dcflt (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.99))))
 	  (map-channel (lambda (y) (filter dcflt y)) 0 (frames snd chn) snd chn)
 	  (format #t "~%; block DC: ~A -> ~A" dc (check-freq 0.0 snd chn)))))
 

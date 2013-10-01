@@ -71,7 +71,7 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 			(set! (frame1 k) (read-sample input1))
 			(set! (frame2 k) (read-sample input2)))
 		      ;; now resample each dependent on location in ramp (samp1 and samp2 are increments)
-		      (vct-fill! frame0 0.0)
+		      (fill! frame0 0.0)
 		      (let ((start-ctr 0.0)
 			    (samp2 (floor (/ frame-samples chunk-len))))
 			(do ((k 0 (+ k 1)))

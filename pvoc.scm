@@ -97,7 +97,7 @@
 	      ((pvoc-analyze pv) pv input)
 	      ;; if no analysis func:
 	      (begin
-		(vct-fill! freqs 0.0)
+		(fill! freqs 0.0)
 		(set-pvoc-output pv 0)
 		(if (not (pvoc-in-data pv))
 		    (begin
@@ -114,7 +114,7 @@
 		(let ((buf (modulo filptr N)))
 		  (if (= buf 0)
 		      (begin
-			(vct-fill! amps 0.0)
+			(fill! amps 0.0)
 			(vct-add! amps (pvoc-in-data pv))
 			(vct-multiply! amps (pvoc-window pv)))
 		      (begin
@@ -293,8 +293,8 @@
 					; it wraps around circularly as time increases in the input
 	      (set! output 0)       ; reset the output sample counter
 	      ;; save the old amplitudes and frequencies
-	      (vct-fill! lastamp 0.0)
-	      (vct-fill! lastfreq 0.0)
+	      (fill! lastamp 0.0)
+	      (fill! lastfreq 0.0)
 	      (vct-add! lastamp fdr)
 	      (vct-add! lastfreq fdi)
 	      (do ((k 0 (+ k 1)))
@@ -312,7 +312,7 @@
 		    (set! in-data-beg filptr)
 		    (set! in-data (channel->vct in-data-beg (* N 2) snd chn))))
 	      ;; no imaginary component input so zero out fdi
-	      (vct-fill! fdi 0.0)
+	      (fill! fdi 0.0)
 	      ;; compute the fft
 	      (mus-fft fdr fdi N 1)
 	      ;; now convert into magnitude and interpolated frequency

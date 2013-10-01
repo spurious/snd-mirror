@@ -166,7 +166,7 @@ calls the fm-violin with the given args and mixes the results into the current s
 	  ((= i len))
 	(set! (out-data i) (v)))
       (if (= (channels) 2)
-	  (let ((bsamps (vct-copy out-data)))
+	  (let ((bsamps (copy out-data)))
 	    (mix-vct (vct-scale! bsamps (locsig-ref loc 1)) beg #f 1 #f)
 	    (mix-vct (vct-scale! out-data (locsig-ref loc 0)) beg #f 0 #f))
 	  (mix-vct out-data beg #f 0 #f))))

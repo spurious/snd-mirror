@@ -170,4 +170,4 @@ the selection, the smooths the edges with a ramp whose duration is 'ramp-dur' (i
 	(env-selection (list 0 1  ramp-dur 0  (- tmp-dur ramp-dur) 0  tmp-dur 1))))
     (mix temp-file (selection-position) #t #f #f #f #f)))
 
-;;; (filter-selection-and-smooth .01 (vct .25 .5 .5 .5 .25))
+;;; (filter-selection-and-smooth .01 (float-vector .25 .5 .5 .5 .25))

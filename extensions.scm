@@ -322,7 +322,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
     (let ((incr (/ pi len))
 	  (data (make-vct len))
 	  (reader (make-sampler beg snd chn 1 edpos))
-	  (coeffs (vct-scale! (vct 0.084037 -.29145 .375696 -.20762 .041194) (- rmp1 rmp0))))
+	  (coeffs (vct-scale! (float-vector 0.084037 -.29145 .375696 -.20762 .041194) (- rmp1 rmp0))))
       (vct-set! coeffs 0 (+ (vct-ref coeffs 0) rmp0))
       (do ((i 0 (+ i 1))
 	   (angle 0.0 (+ angle incr)))

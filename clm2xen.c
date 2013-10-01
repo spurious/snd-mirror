@@ -13212,7 +13212,6 @@ static s7_pointer g_direct_two_pole_2_looped(s7_scheme *sc, s7_pointer args)
 }
 #endif
 
-s7_pointer g_multiply_s_direct(s7_scheme *sc, s7_pointer args);
 
 static s7_pointer outa_ss;
 static s7_pointer g_outa_ss(s7_scheme *sc, s7_pointer args)

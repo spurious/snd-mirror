@@ -8,13 +8,13 @@
 
 
 (define* (make-reed (offset 0.6) (slope -0.8))
-  (vct offset slope))
+  (float-vector offset slope))
 
 (define (reedtable r samp)
   (min 1.0 (+ (r 0) (* (r 1) samp))))
 
 (define* (make-bowtable (offset 0.0) (slope 1.0))
-  (vct offset slope))
+  (float-vector offset slope))
 
 (define (bowtable b samp)
   (max 0.0 (- 1.0 (abs (* (b 1) (+ samp (b 0)))))))
@@ -46,13 +46,13 @@
 
 
 (define (make-dc-block)
-  (vct 0.0 0.0))
+  (float-vector 0.0 0.0))
 
 (define (dc-block b samp)
   (set! (b 1) (+ samp (- (* 0.99 (b 1)) (b 0))))
   (set! (b 0) samp)
   (b 1))
-;; we could also use a filter generator here: (make-filter 2 (vct 1 -1) (vct 0 -0.99))
+;; we could also use a filter generator here: (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.99))
 
 
 ;;; this ia a 0-based versions of the clm delays

@@ -71,8 +71,8 @@
       (do ((i 0 (+ i 2))
 	   (k 0 (+ k 4))) ; c
 	  ((>= i n))
-	(set! a (cons (vct (c (+ k 3)) (c (+ k 2)) (c (+ k 3))) a))
-	(set! b (cons (vct 1.0 (c k) (c (+ k 1))) b)))
+	(set! a (cons (float-vector (c (+ k 3)) (c (+ k 2)) (c (+ k 3))) a))
+	(set! b (cons (float-vector 1.0 (c k) (c (+ k 1))) b)))
 
       (list (vct-scale! (cascade->canonical a) g) ; scale entire numerator because this is the convolved form
 	    (cascade->canonical b)))))

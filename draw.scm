@@ -31,7 +31,7 @@
     ;; flicker a lot to have this data instantly available.
 
     (define (pack-x-info axinf)
-      (vct (axinf 2) ;  x0
+      (float-vector (axinf 2) ;  x0
 	   (axinf 4) ;  x1
 	   (axinf 10) ; x_axis_x0
 	   (axinf 12) ; x_axis_x1
@@ -39,7 +39,7 @@
 	   (- (axinf 10) (* (axinf 2) (axinf 15))))) ; base
 
     (define (pack-y-info axinf)
-      (vct (axinf 3) ;  y0
+      (float-vector (axinf 3) ;  y0
 	   (axinf 5) ;  y1
 	   (axinf 11) ; y_axis_y0
 	   (axinf 13) ; y_axis_y1

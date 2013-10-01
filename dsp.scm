@@ -204,9 +204,9 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	(set! (x0 i) (+ (* p1 (x1 i))
 			(* p2 (+ (circle-ref x1 (- i 1)) (circle-ref x1 (+ i 1))))
 			(* p3 (x2 i)))))
-      (vct-fill! x2 0.0)
+      (fill! x2 0.0)
       (vct-add! x2 x1)
-      (vct-fill! x1 0.0)
+      (fill! x1 0.0)
       (vct-add! x1 x0))))
 
 (define compute-string
@@ -511,12 +511,12 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 (define (fltit-1 order spectr)
   "(fltit-1 order spectrum) creates an FIR filter from spectrum and order and returns a closure that calls it: 
-(map-channel (fltit-1 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0)))"
+(map-channel (fltit-1 10 (float-vector 0 1.0 0 0 0 0 0 0 1.0 0)))"
   (let ((flt (make-fir-filter order (spectrum->coeffs order spectr))))
     (lambda (x)
       (fir-filter flt x))))
 
-;(map-channel (fltit-1 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0)))
+;(map-channel (fltit-1 10 (float-vector 0 1.0 0 0 0 0 0 0 1.0 0)))
 ;
 ;(let ((notched-spectr (make-vct 40)))
 ;  (set! (notched-spectr 2) 1.0)  
@@ -758,8 +758,8 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (c4 (* 2.0 (- r2 1.0) c1))
 	 (c5 (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))
     (make-filter 3
-		 (vct c1 c2 c3)
-		 (vct 0.0 c4 c5))))
+		 (float-vector c1 c2 c3)
+		 (float-vector 0.0 c4 c5))))
 
 (define (make-butter-low-pass fq)
   "(make-butter-low-pass freq) makes a Butterworth filter with low pass cutoff at 'freq'.  The result 
@@ -772,8 +772,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (c4 (* 2.0 (- 1.0 r2) c1))
 	 (c5  (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))
     (make-filter 3
-		 (vct c1 c2 c3)
-		 (vct 0.0 c4 c5))))
+		 (float-vector c1 c2 c3)
+		 (float-vector 0.0 c4 c5))))
 
 (define (make-butter-band-pass fq bw)
   "(make-butter-band-pass freq band) makes a bandpass Butterworth filter with low edge at 'freq' and width 'band'"
@@ -785,8 +785,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (c4 (* (- c) d c1))
 	 (c5 (* (- c 1.0) c1)))
     (make-filter 3
-		 (vct c1 c2 c3)
-		 (vct 0.0 c4 c5))))
+		 (float-vector c1 c2 c3)
+		 (float-vector 0.0 c4 c5))))
 
 (define (make-butter-band-reject fq bw)
   "(make-butter-band-reject freq band) makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
@@ -798,8 +798,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (c4 c2)
 	 (c5 (* (- 1.0 c) c1)))
     (make-filter 3
-		 (vct c1 c2 c3)
-		 (vct 0.0 c4 c5))))
+		 (float-vector c1 c2 c3)
+		 (float-vector 0.0 c4 c5))))
 
 ;;; simplest use is (filter-sound (make-butter-low-pass 500.0))
 ;;; see also effects.scm
@@ -815,8 +815,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define (make-biquad a0 a1 a2 b1 b2)
   "(make-biquad a0 a1 a2 b1 b2) returns a biquad filter (use with the CLM filter gen)"
   (make-filter 3 
-	       (vct a0 a1 a2) 
-	       (vct 0.0 b1 b2)))
+	       (float-vector a0 a1 a2) 
+	       (float-vector 0.0 b1 b2)))
 
 (define* (make-iir-low-pass-2 fc din) ; din=(sqrt 2.0) for example (suggested range 0.2.. 10)
   (let* ((theta (/ (* 2 pi fc) (mus-srate)))
@@ -826,8 +826,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (gamma (* (+ 0.5 beta) (cos theta)))
 	 (alpha (* 0.5 (+ 0.5 beta (- gamma)))))
     (make-filter 3 
-		 (vct alpha (* 2.0 alpha) alpha)
-		 (vct 0.0 (* -2.0 gamma) (* 2.0 beta)))))
+		 (float-vector alpha (* 2.0 alpha) alpha)
+		 (float-vector 0.0 (* -2.0 gamma) (* 2.0 beta)))))
 
 (define* (make-iir-high-pass-2 fc din)
   (let* ((theta (/ (* 2 pi fc) (mus-srate)))
@@ -837,8 +837,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (gamma (* (+ 0.5 beta) (cos theta)))
 	 (alpha (* 0.5 (+ 0.5 beta gamma))))
     (make-filter 3
-		 (vct alpha (* -2.0 alpha) alpha)
-		 (vct 0.0 (* -2.0 gamma) (* 2.0 beta)))))
+		 (float-vector alpha (* -2.0 alpha) alpha)
+		 (float-vector 0.0 (* -2.0 gamma) (* 2.0 beta)))))
 
 (define (make-iir-band-pass-2 f1 f2)
   (let* ((theta (/ (* 2 pi (sqrt (* f1 f2))) (mus-srate)))
@@ -849,8 +849,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (gamma (* (+ 0.5 beta) (cos theta)))
 	 (alpha (- 0.5 beta)))
     (make-filter 3
-		 (vct alpha 0.0 (- alpha))
-		 (vct 0.0 (* -2.0 gamma) (* 2.0 beta)))))
+		 (float-vector alpha 0.0 (- alpha))
+		 (float-vector 0.0 (* -2.0 gamma) (* 2.0 beta)))))
 
 (define (make-iir-band-stop-2 f1 f2)
   (let* ((theta (/ (* 2 pi (sqrt (* f1 f2))) (mus-srate)))
@@ -861,8 +861,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (gamma (* (+ 0.5 beta) (cos theta)))
 	 (alpha (+ 0.5 beta)))
     (make-filter 3
-		 (vct alpha (* -2.0 gamma) alpha)
-		 (vct 0.0 (* -2.0 gamma) (* 2.0 beta)))))
+		 (float-vector alpha (* -2.0 gamma) alpha)
+		 (float-vector 0.0 (* -2.0 gamma) (* 2.0 beta)))))
 
 (define* (make-eliminate-hum (hum-freq 60.0) (hum-harmonics 5) (bandwidth 10))
   (let ((gen (make-vector hum-harmonics)))
@@ -893,8 +893,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (gamma (* (+ 0.5 beta) (cos theta)))
 	 (alpha (- 0.5 beta))
 	 (flt (make-filter 3
-			   (vct alpha 0.0 (- alpha))
-			   (vct 0.0 (* -2.0 gamma) (* 2.0 beta))))
+			   (float-vector alpha 0.0 (- alpha))
+			   (float-vector 0.0 (* -2.0 gamma) (* 2.0 beta))))
 	 (m1 (- m 1.0)))
     (lambda (x) (+ x (* m1 (filter flt x))))))
 
@@ -943,8 +943,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 			     (+ 1.0 (* 0.5 d st)))))
 	     (gamma (* ct (+ 0.5 beta)))
 	     (alpha (* 0.25 (+ 0.5 beta (- gamma)))))
-	(set! xcoeffs (cons (vct (* 2 alpha) (* 4 alpha) (* 2 alpha)) xcoeffs))
-	(set! ycoeffs (cons (vct 1.0 (* -2.0 gamma) (* 2.0 beta)) ycoeffs))))
+	(set! xcoeffs (cons (float-vector (* 2 alpha) (* 4 alpha) (* 2 alpha)) xcoeffs))
+	(set! ycoeffs (cons (float-vector 1.0 (* -2.0 gamma) (* 2.0 beta)) ycoeffs))))
     (make-filter (+ 1 (* 2 M))
 		 (cascade->canonical xcoeffs)
 		 (cascade->canonical ycoeffs))))
@@ -963,8 +963,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 			     (+ 1.0 (* 0.5 d st)))))
 	     (gamma (* ct (+ 0.5 beta)))
 	     (alpha (* 0.25 (+ 0.5 beta gamma))))
-	(set! xcoeffs (cons (vct (* 2 alpha) (* -4 alpha) (* 2 alpha)) xcoeffs))
-	(set! ycoeffs (cons (vct 1.0 (* -2.0 gamma) (* 2.0 beta)) ycoeffs))))
+	(set! xcoeffs (cons (float-vector (* 2 alpha) (* -4 alpha) (* 2 alpha)) xcoeffs))
+	(set! ycoeffs (cons (float-vector 1.0 (* -2.0 gamma) (* 2.0 beta)) ycoeffs))))
     (make-filter (+ 1 (* 2 M))
 		 (cascade->canonical xcoeffs)
 		 (cascade->canonical ycoeffs))))
@@ -997,8 +997,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	     (gammajk (* (+ 0.5 betajk) (cos thetajk)))
 	     (wk2 (/ (- Wk (/ 1.0 Wk)) dk1))
 	     (alphajk (* 0.5 (- 0.5 betajk) (sqrt (+ 1.0 (* wk2 wk2))))))
-	(set! xcoeffs (cons (vct (* 2 alphajk) 0.0 (* -2 alphajk)) xcoeffs))
-	(set! ycoeffs (cons (vct 1.0 (* -2.0 gammajk) (* 2.0 betajk)) ycoeffs))
+	(set! xcoeffs (cons (float-vector (* 2 alphajk) 0.0 (* -2 alphajk)) xcoeffs))
+	(set! ycoeffs (cons (float-vector 1.0 (* -2.0 gammajk) (* 2.0 betajk)) ycoeffs))
 	(if (= j 1)
 	    (set! j 2)
 	    (begin
@@ -1036,8 +1036,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 			       (+ 1.0 (* 0.5 dk1 (sin thetajk))))))
 	     (gammajk (* (+ 0.5 betajk) (cos thetajk)))
 	     (alphajk (* 0.5 (+ 0.5 betajk) (/ (- 1.0 (cos thetajk)) (- 1.0 ct)))))
-	(set! xcoeffs (cons (vct (* 2 alphajk) (* -4 ct alphajk) (* 2 alphajk)) xcoeffs))
-	(set! ycoeffs (cons (vct 1.0 (* -2.0 gammajk) (* 2.0 betajk)) ycoeffs))
+	(set! xcoeffs (cons (float-vector (* 2 alphajk) (* -4 ct alphajk) (* 2 alphajk)) xcoeffs))
+	(set! ycoeffs (cons (float-vector 1.0 (* -2.0 gammajk) (* 2.0 betajk)) ycoeffs))
 	(if (= j 1)
 	    (set! j 2)
 	    (begin
@@ -1124,7 +1124,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   ;; using vector to allow complex sums (z=e^2*pi*i/n -> fourier transform)
   ;;   (z-transform data n (exp (make-rectangular 0.0 (* (/ 2.0 n) pi))))
   "(z-transform data n z) performs a Z transform on data; if z=e^2*pi*j/n you get a Fourier transform; complex results in returned vector"
-  (let ((res (make-vector n)))
+  (let ((res (if (vct? f) (make-vct n) (make-vector n))))
     (do ((w 0 (+ 1 w)))
 	((= w n))
       (let ((sum 0.0)
@@ -1574,8 +1574,8 @@ shift the given channel in pitch without changing its length.  The higher 'order
       coeffs) 
      0 len snd chn #f (format #f "channel-polynomial ~A" (vct->string coeffs)))))
 
-;;; (channel-polynomial (vct 0.0 .5)) = x*.5
-;;; (channel-polynomial (vct 0.0 1.0 1.0 1.0)) = x*x*x + x*x + x
+;;; (channel-polynomial (float-vector 0.0 .5)) = x*.5
+;;; (channel-polynomial (float-vector 0.0 1.0 1.0 1.0)) = x*x*x + x*x + x
 
 ;;; convolution -> * in freq
 
@@ -1596,7 +1596,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	    (set! (new-sound i) (mus-random dither)))))
     (if (> num-coeffs 1)
 	(begin
-	  (vct-add! new-sound (vct-scale! (vct-copy sound) (coeffs 1)))
+	  (vct-add! new-sound (vct-scale! (copy sound) (coeffs 1)))
 	  (if (> num-coeffs 2)
 	      (let ((peak (maxamp snd chn)))
 		(vct-add! (vct-scale! rl1 0.0) sound)
@@ -1604,7 +1604,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 		    ((= i num-coeffs))
 		  (convolution rl1 (vct-add! (vct-scale! rl2 0.0) sound) fft-len)
 		  (let ((pk (vct-peak rl1)))
-		    (vct-add! new-sound (vct-scale! (vct-copy rl1) (/ (* (coeffs i) peak) pk)))))
+		    (vct-add! new-sound (vct-scale! (copy rl1) (/ (* (coeffs i) peak) pk)))))
 		(let ((pk (vct-peak new-sound)))
 		  (vct-scale! new-sound (/ peak pk)))))))
     (vct->channel new-sound 0 (max len (* len (- num-coeffs 1))) snd chn #f (format #f "spectral-polynomial ~A" (vct->string coeffs)))))
@@ -1681,9 +1681,9 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 ;;;
 ;;; invert-filter inverts an FIR filter
 ;;;
-;;; say we previously filtered a sound via (filter-channel (vct .5 .25 .125))
+;;; say we previously filtered a sound via (filter-channel (float-vector .5 .25 .125))
 ;;;   and we want to undo it without using (undo):
-;;;   (filter-channel (invert-filter (vct .5 .25 .125)))
+;;;   (filter-channel (invert-filter (float-vector .5 .25 .125)))
 ;;;
 ;;; there are a million gotchas here.  The primary one is that the inverse filter
 ;;;   can "explode" -- the coefficients can grow without bound.  For example, any
@@ -1744,7 +1744,7 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 	(set! sum (+ sum (* (bs j) (xs i) (xs j))))))
     sum))
 
-;;; (define flt (make-volterra-filter (vct .5 .1) (vct .3 .2 .1)))
+;;; (define flt (make-volterra-filter (float-vector .5 .1) (float-vector .3 .2 .1)))
 ;;; (map-channel (lambda (x) (volterra-filter flt x)))
 
 
@@ -1761,7 +1761,7 @@ and replaces it with the spectrum given in coeffs"
 	(pcoeffs (partials->polynomial coeffs))
 	(avgs (make-vector pairs))
 	(peaks (make-vector pairs))
-	(flt (make-filter 2 (vct 1 -1) (vct 0 -0.9)))
+	(flt (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.9)))
 	(old-mx (maxamp))
 	(startup 40)
 	(len (- (or dur (frames snd chn edpos)) beg)))
@@ -2496,7 +2496,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 	((= i 88200))
       (outa i (* .5 (polyshape gen 0.25))))))
 
-(cheby-hka 1 0.25 (vct 0 .5 .25 .125 .125))
+(cheby-hka 1 0.25 (float-vector 0 .5 .25 .125 .125))
 |#
 
 
@@ -2537,14 +2537,14 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 				(let ((hnum (partials i)))
 				  (if (not (= hnum 0))
 				      (set! (v (- hnum 1)) (partials (+ i 1))))))))
-	 (min-partials (vct-copy original-partials)))
+	 (min-partials (copy original-partials)))
 
     (if (<= topk (log tries 2))
 	(set! tries (floor (expt 2 (- topk 1)))))
 
     (do ((try 0 (+ 1 try)))
 	((= try tries))
-      (let ((new-partials (vct-copy original-partials)))
+      (let ((new-partials (copy original-partials)))
 	(do ((k 0 (+ k 1)))
 	    ((= k topk))
 	  (if (> (random 1.0) 0.5)
@@ -2552,11 +2552,11 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 	(let ((new-sum (cos-fft-to-max topk new-partials)))
 	  (if (< new-sum min-sum)
 	      (begin
-		(set! min-partials (vct-copy new-partials))
+		(set! min-partials (copy new-partials))
 		(set! min-sum new-sum))))))
 
     (let ((new-amps (vct-scale! min-partials (/ original-sum min-sum)))
-	  (new-partials (vct-copy partials)))
+	  (new-partials (copy partials)))
       (do ((i 0 (+ i 2)))
 	  ((>= i len))
 	(let ((hnum (new-partials i)))
@@ -2688,8 +2688,8 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 ;;; #(1+1i -1+1i -1-1i 1-1i)
 ;;; 
 ;;; ;; check against built-in FFT
-;;; > (let ((rl (vct 0.0 1.0 0.0 0.0)) 
-;;;         (im (vct 0.0 1.0 0.0 0.0))) 
+;;; > (let ((rl (float-vector 0.0 1.0 0.0 0.0)) 
+;;;         (im (float-vector 0.0 1.0 0.0 0.0))) 
 ;;;     (mus-fft rl im) 
 ;;;     (map make-rectangular (vct->list rl) (vct->list im)))
 ;;; (1+1i -1+1i -1-1i 1-1i)
