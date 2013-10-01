@@ -1303,7 +1303,7 @@ struct s7_scheme {
 #endif
 
   /* these are the associated functions, not symbols */
-  s7_pointer Vector_Set, String_Set, List_Set, Hash_Table_Set, Environment_Set, Cons; 
+  s7_pointer Vector_Set, String_Set, List_Set, Hash_Table_Set, Environment_Set; /* Cons (see the setter stuff at the end) */
 
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND, BAFFLE;
   s7_pointer SET, QQ_List, QQ_Apply_Values, QQ_Append, Multivector;
@@ -2998,32 +2998,10 @@ static void sweep(s7_scheme *sc)
   int i, j;
   if (sc->strings_loc > 0)
     {
-      s7_pointer s1;
-      int s2;
-      s2 = sc->strings_loc - 2;
-      i = 0;
-      j = 0;
-      while (i <= s2)
+      /* unrolling this loop is not an improvement */
+      for (i = 0, j = 0; i < sc->strings_loc; i++)
 	{
-	  s1 = sc->strings[i];
-	  if (type(s1) == 0)
-	    {
-	      if (string_needs_free(s1))
-		free(string_value(s1));
-	    }
-	  else sc->strings[j++] = s1;
-	  i++;
-	  s1 = sc->strings[i];
-	  if (type(s1) == 0)
-	    {
-	      if (string_needs_free(s1))
-		free(string_value(s1));
-	    }
-	  else sc->strings[j++] = s1;
-	  i++;
-	}
-      if (i < sc->strings_loc)
-	{
+	  s7_pointer s1;
 	  s1 = sc->strings[i];
 	  if (type(s1) == 0)
 	    {
@@ -7786,8 +7764,9 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
 	{
 	  if (a == 1)
 	    return(real_NaN);
-	  /* not an error here because 1/9223372036854775808 might be in a block of unevaluated code */
+	  /* not an error here? we can't get this in the ratio reader, I think, because the denominator is negative */
 	  b = b + 1;
+	  /* so (/ -1 most-negative-fixnum) -> 1/9223372036854775807 -- not ideal, but ... */
 	}
       else
 	{
@@ -20900,7 +20879,7 @@ static s7_pointer string_read_line(s7_scheme *sc, s7_pointer port, bool with_eol
   port_str = port_string(port);
   start = (char *)(port_str + port_start);
 
-  cur = strchr(start, (int)'\n');
+  cur = strchr(start, (int)'\n'); /* this can run off the end making valgrind unhappy, but I think it's innocuous */
   if (cur)
       {
 	port_line_number(port)++;
@@ -21794,14 +21773,20 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
 static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_open_input_string "(open-input-string str) opens an input port reading str"
-  s7_pointer input_string = car(args);
+  s7_pointer input_string, port;
 
+  input_string = car(args);
   if (!is_string(input_string))
     {
       CHECK_METHOD(sc, input_string, sc->OPEN_INPUT_STRING, args);
       return(simple_wrong_type_argument(sc, sc->OPEN_INPUT_STRING, input_string, T_STRING));
     }
-  return(open_input_string(sc, string_value(input_string), string_length(input_string))); /* presumably the caller is protecting the input string?? */
+  port = open_input_string(sc, string_value(input_string), string_length(input_string));
+  /* here we have to make sure we don't depend on the incoming input string (which might change or be GC'd while the port is open) 
+   */
+  port_string(port) = copy_string_with_len(string_value(input_string), string_length(input_string));
+  port_needs_free(port) = true;
+  return(port);
 }
 
 
@@ -24646,7 +24631,9 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 #endif
 
     case T_SYMBOL:
-      /* I think this is the only place we print a symbol's name */
+      /* I think this is the only place we print a symbol's name
+       *   but in the readable case, what about (symbol "1;3")? it actually seems ok!
+       */
       if ((symbol_name(obj)[0] == '#') ||                 /* otherwise the reader thinks there's a #-reader problem */
 	  (needs_slashification(symbol_name(obj), symbol_name_length(obj))))
 	{
@@ -33933,6 +33920,7 @@ static s7_pointer g_booleans_are_eq(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_boolean(x))
     return(sc->F);
+  /* should this be an error? (also symbol=?) */
 
   for (p = cdr(args); is_pair(p); p = cdr(p))
     if (car(p) != x)
@@ -34100,8 +34088,10 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
 	  }
 	if (is_float_vector(x))
 	  {
+	    /* (morally-equal? (make-vector 1 1.0 #t) (make-vector 1 1.0 #t))
+	     */
 	    for (i = 0; i < len; i++)
-	      if (!floats_are_morally_equal(float_vector_element(x, i), int_vector_element(y, i)))
+	      if (!floats_are_morally_equal(float_vector_element(x, i), float_vector_element(y, i)))
 		return(false);
 	    return(true);
 	  }
@@ -34215,7 +34205,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	     (port_is_closed(y)));
 
     case T_HASH_TABLE:
-      return(hash_tables_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc))); 
+      return(structures_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc)));
 
     case T_ENVIRONMENT:
       if (has_methods(x))
@@ -54009,15 +53999,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_C:
-	      /*
-		t502:
-		165375: (outa i couplingFilter-input)
-		108271: (outa i sample-0)
-		81365: (outa i (* pulse-amp (env pulse-ampf) (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf))))) animals
-		50880: (outa k (oscil-bank obank))
-		44999: (env pulsef)
-		etc
-	      */
 	      sc->value = c_call(code)(sc, cdr(code)); /* this includes all safe calls where all args are constants */
 	      goto START;
 
@@ -54846,39 +54827,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_PP:
-	      /* t502:
-		 449803: (+ (* (radii j) (radii-poles j)) (* (target-radii j) (radii-pole-gains j)))
-		 449803: (* (radii j) (radii-poles j))
-		 449803: (* (target-radii j) (radii-pole-gains j))
-		 220500: (+ (dline1 k) (- (dline2 j) x))
-		 220500: (* (coeffs j) (- (dline1 k) x))
-		 211688: (* (radii k) (radii k))
-
-		 snd-test:
-		 224893: (+ (* (radii j) (radii-poles j)) (* (target-radii j) (radii-pole-gains j)))
-		 224893: (* (radii j) (radii-poles j))
-		 224893: (* (target-radii j) (radii-pole-gains j))
-		 193165: (- (wk1 j) (* (wkm k) (wk2 j)))
-		 193165: (- (wk2 (+ j 1)) (* (wkm k) (wk1 (+ j 1))))
-		 193165: (* (wkm k) (wk2 j))
-		 193165: (* (wkm k) (wk1 (+ j 1)))
-		 176400: (* (env ampf) (r2k!cos gen))
-		 160256: (* (fft-window i) (data i))
-		 154343: (* (amps i) (oscil (oscs i)))
-		 132300: (* (amps k) (+ (* even-amp (oscil (vector-ref evens k) (+ even-freq car-mult))) (* odd-amp (oscil (vector-ref odds k) (+ odd-freq car-mult)))))
-		 132300: (* (fm-indices k) (oscil (modulators k)))
-		 132300: (* (amps k) (+ (* even-amp (oscil (vector-ref evens k) (+ even-freq val))) (* odd-amp (oscil (vector-ref odds k) (+ odd-freq val)))))
-		 131068: (make-rectangular (rl i) (im i))
-		 130812: (* (r1) (r2))
-		 110250: (+ (dline1 k) (- (dline2 j) x))
-		 110250: (* (coeffs j) (- (dline1 k) x))
-		 110200: (* (samps k) (sin ka))
-		 110200: (* (camps k) (cos ka))
-		 105848: (* (radii k) (radii k))
-		 101888: (- (freqs k) (lastphases k))
-		 101656: (+ (* (- 1.0 pan) (data1 i)) (* pan (data2 i)))
-		 101656: (* (- 1.0 pan) (data1 i))
-	      */
 	      push_stack(sc, OP_SAFE_C_PP_1, sc->NIL, code);
 	      sc->code = cadr(code);
 	      if (is_optimized(sc->code))
@@ -56076,11 +56024,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* trailers */
 	  sc->cur_code = sc->code;
 
-	  /* t502:
-	     44999: (* pulse-amp (env pulsef) (rk!cos gen1 (env pulse-frqf)))
-	     10580: (make-polywave (* fm1-rat frequency) (list (floor fm1-rat) ...))
-	     and macro expansion
-	  */
 	  {
 	    s7_pointer carc;
 	    carc = car(sc->code);
@@ -67230,7 +67173,7 @@ s7_scheme *s7_init(void)
   sc->HASH_TABLE_SET =        s7_define_safe_function(sc, "hash-table-set!",         g_hash_table_set,         3, 0, false, H_hash_table_set);
   sc->HASH_TABLE_SIZE =       s7_define_safe_function(sc, "hash-table-size",         g_hash_table_size,        1, 0, false, H_hash_table_size);
   
-  s7_define_safe_function(sc, "hash-table-index", g_hash_table_index, 1, 0, false, "an experiment");
+                              s7_define_safe_function(sc, "hash-table-index",        g_hash_table_index,       1, 0, false, "an experiment");
 
   ht_iter_tag = s7_new_type_x("<hash-table-iterator>", print_ht_iter, free_ht_iter, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
   sc->MAKE_HASH_TABLE_ITERATOR = s7_define_safe_function(sc, "make-hash-table-iterator", g_make_hash_table_iterator, 1, 0, false, H_make_hash_table_iterator);
@@ -67299,11 +67242,11 @@ s7_scheme *s7_init(void)
   sc->EQUALP =                s7_define_safe_function(sc, "equal?",                  g_is_equal,               2, 0, false, H_is_equal);
   sc->MORALLY_EQUALP =        s7_define_safe_function(sc, "morally-equal?",          g_is_morally_equal,       2, 0, false, H_is_morally_equal);
   
-  s7_define_safe_function(sc,                             "s7-version",              g_s7_version,             0, 0, false, H_s7_version);
-  s7_define_safe_function(sc,                             "emergency-exit",          g_emergency_exit,         0, 1, false, H_emergency_exit);
-  s7_define_safe_function(sc,                             "exit",                    g_exit,                   0, 1, false, H_exit);
+                              s7_define_safe_function(sc, "s7-version",              g_s7_version,             0, 0, false, H_s7_version);
+                              s7_define_safe_function(sc, "emergency-exit",          g_emergency_exit,         0, 1, false, H_emergency_exit);
+                              s7_define_safe_function(sc, "exit",                    g_exit,                   0, 1, false, H_exit);
 #if DEBUGGING
-  s7_define_function(sc,                                  "abort",                   g_abort,                  0, 0, false, "drop into gdb I hope");
+                              s7_define_function(sc,      "abort",                   g_abort,                  0, 0, false, "drop into gdb I hope");
 #endif
 
   {
@@ -67479,10 +67422,11 @@ s7_scheme *s7_init(void)
   set_setter(sc->Environment_Set);
   set_setter(sc->ENVIRONMENT_SET);
   
-  set_setter(sc->CONS); /* ?? */
+  set_setter(sc->CONS); /* (this blocks an over-eager do loop optimization -- see do-test-15 in s7test) */
+  /*
   sc->Cons = s7_symbol_value(sc, sc->CONS);
   set_setter(sc->Cons); 
-  /* if cons is a setter, what about append? */
+  */
   
   sc->String_Set = s7_symbol_value(sc, sc->STRING_SET);
   set_setter(sc->String_Set);
@@ -67920,9 +67864,9 @@ int main(int argc, char **argv)
  * checkpoint?
  * doc/test the lib*.scm files.
  * can gf_parse or equivalent handle pure math function bodies in s7? -- a vector of parse trees indexed by arg type?
- * loop problem in ~W?
  * xen.h argify* -> something that defines everything needed at the definition point, then somehow collect for init
  *   need to replace all the s7_apply_n* stuff, internalize all the arg nums and help strings (type checks? defaults?) etc
+ * morally-equal for c-objects?
  */
 
 
