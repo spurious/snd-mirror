@@ -702,7 +702,7 @@
   (define compute-uniform-circular-string
     ;; copied from dsp.scm to simplify life
     (lambda (size x0 x1 x2 mass xspring damp)
-      (define circle-vct-ref 
+      (define circle-float-vector-ref 
 	(lambda (v i)
 	  (if (< i 0)
 	      (v (+ size i))
@@ -718,13 +718,13 @@
 	(do ((i 0 (+ i 1)))
 	    ((= i size))
 	  (set! (x0 i) (min (+ (* p1 (x1 i))
-			       (* p2 (+ (circle-vct-ref x1 (- i 1)) (circle-vct-ref x1 (+ i 1))))
+			       (* p2 (+ (circle-float-vector-ref x1 (- i 1)) (circle-float-vector-ref x1 (+ i 1))))
 			       (* p3 (x2 i)))
 			    1000.0)))
 	(fill! x2 0.0)
-	(vct-add! x2 x1)
+	(float-vector-add! x2 x1)
 	(fill! x1 0.0)
-	(vct-add! x1 x0))))
+	(float-vector-add! x1 x0))))
   
   (if (< (window-height) 520) (set! (window-height) 520))
   (set! (mus-srate) 22050.0)
@@ -779,8 +779,8 @@
 	 (size 128)
 	 (tbl (make-table-lookup :size size))
 	 (gx0 (mus-data tbl))
-	 (gx1 (make-vct size))	   
-	 (gx2 (make-vct size))
+	 (gx1 (make-float-vector size))	   
+	 (gx2 (make-float-vector size))
 	 (vect (make-vector (* 2 size)))
 	 (work-proc 0))
     
@@ -925,8 +925,8 @@
 		       (set! size (string->number (cadr (XtGetValues scan-text (list XmNvalue 0)))))
 		       (set! tbl (make-table-lookup :size size))
 		       (set! gx0 (mus-data tbl))
-		       (set! gx1 (make-vct size))	   
-		       (set! gx2 (make-vct size))
+		       (set! gx1 (make-float-vector size))	   
+		       (set! gx2 (make-float-vector size))
 		       (set! vect (make-vector (* size 2)))))
       
       (XtAddCallback freq-scale XmNdragCallback (lambda (w c i) (set! (mus-frequency tbl) (.value i))))
@@ -1675,7 +1675,7 @@
 	       meter-list)))
     (hook-push dac-hook 
 	       (lambda (hook)
-		 (let ((maxes (map vct-peak (hook 'data))))
+		 (let ((maxes (map float-vector-peak (hook 'data))))
 		   (for-each
 		    (lambda (meter)
 		      (if (null? maxes)

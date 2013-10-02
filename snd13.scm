@@ -79,7 +79,7 @@
     (define (tick-audio id)
       ;; background process reads incoming audio data, creates spectrum, displays next trace
       (mus-audio-read input-port input-data (* bins 2))
-      (let ((rl-data (sound-data->vct input-data 0 (data slice))))
+      (let ((rl-data (sound-data->float-vector input-data 0 (data slice))))
 	(snd-spectrum rl-data blackman2-window bins #t 0.0 #t #f)
 	(redraw-graph))
       (set! slice (+ 1 slice))
@@ -99,7 +99,7 @@
 	    (set! input-proc 0)))
       (do ((i 0 (+ 1 i)))
 	  ((= i slices))
-	(vct-scale! (data i) 0.0)))
+	(float-vector-scale! (data i) 0.0)))
     
     (define (start-it)
       (define (add-main-pane name type args)
@@ -137,7 +137,7 @@
 		   (set! input-data (make-sound-data 1 (* bins 2)))
 		   (do ((i 0 (+ 1 i)))
 		       ((= i slices))
-		     (set! (data i) (make-vct bins)))
+		     (set! (data i) (make-float-vector bins)))
 		   (start-it))
 		 (stop-it)))))
 

@@ -64,7 +64,7 @@
   (define compute-uniform-circular-string
     ;; copied from dsp.scm to simplify life
     (lambda (size x0 x1 x2 mass xspring damp)
-      (define circle-vct-ref 
+      (define circle-float-vector-ref 
 	(lambda (v i)
 	  (if (< i 0)
 	      (v (+ size i))
@@ -80,13 +80,13 @@
 	(do ((i 0 (+ i 1)))
 	    ((= i size))
 	  (set! (x0 i) (min (+ (* p1 (x1 i))
-			       (* p2 (+ (circle-vct-ref x1 (- i 1)) (circle-vct-ref x1 (+ i 1))))
+			       (* p2 (+ (circle-float-vector-ref x1 (- i 1)) (circle-float-vector-ref x1 (+ i 1))))
 			       (* p3 (x2 i)))
 			    1000.0)))
 	(fill! x2 0.0)
-	(vct-add! x2 x1)
+	(float-vector-add! x2 x1)
 	(fill! x1 0.0)
-	(vct-add! x1 x0))))
+	(float-vector-add! x1 x0))))
   
   (set! (mus-srate) 22050.0)
   
@@ -130,8 +130,8 @@
 	 (tbl (make-table-lookup :size size))
 	 (amplitude 0.02)
 	 (gx0 (mus-data tbl))
-	 (gx1 (make-vct size))	   
-	 (gx2 (make-vct size))
+	 (gx1 (make-float-vector size))	   
+	 (gx2 (make-float-vector size))
 	 (vect (make-vector (* 2 size)))
 	 (work-proc #f)
 	 (play-button #f)) ; fixed up later -- needed in stop-synthesis
@@ -264,8 +264,8 @@
 			      (set! size (string->number (gtk_entry_get_text (GTK_ENTRY scan-text))))
 			      (set! tbl (make-table-lookup :size size))
 			      (set! gx0 (mus-data tbl))
-			      (set! gx1 (make-vct size))	   
-			      (set! gx2 (make-vct size))
+			      (set! gx1 (make-float-vector size))	   
+			      (set! gx2 (make-float-vector size))
 			      (set! vect (make-vector (* size 2))))
 			    #f))))
     (set! play-button (gtk_check_button_new_with_label "play"))
@@ -748,7 +748,7 @@
     (hook-push dac-hook 
 	       (lambda (hook)
 		 (let* ((sdobj (hook 'data))
-			(maxes (map vct-peak sdobj)))
+			(maxes (map float-vector-peak sdobj)))
 		   (for-each
 		    (lambda (meter)
 		      (if (null? maxes)

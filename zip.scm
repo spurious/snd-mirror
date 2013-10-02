@@ -35,9 +35,9 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
     (make-zdata :low-start 20
 		:frame-loc 0
 		:cursamples 0
-		:frame0 (make-vct max-size)
-		:frame1 (make-vct max-size)
-		:frame2 (make-vct max-size)
+		:frame0 (make-float-vector max-size)
+		:frame1 (make-float-vector max-size)
+		:frame2 (make-float-vector max-size)
 		:fe (or frame-env (make-env (list 0 (* (safe-srate) 0.05)) :length (mus-length ramp-env))) ; a bit of a kludge...
 		:rampe ramp-env)))
 
@@ -79,7 +79,7 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 			  (let* ((ictr (floor start-ctr))
 				 (y0 (frame2 ictr))
 				 (y1 (frame2 (+ ictr 1))))
-			    (vct-set! frame0 k (+ y0 (* (- y1 y0) (- start-ctr ictr))))
+			    (float-vector-set! frame0 k (+ y0 (* (- y1 y0) (- start-ctr ictr))))
 			    (set! start-ctr (+ start-ctr samp2)))))
 		      (let ((start-ctr 0.0)
 			    (samp1 (floor (/ frame-samples (- frame-samples chunk-len)))))
@@ -88,7 +88,7 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 			  (let* ((ictr (floor start-ctr))
 				 (y0 (frame1 ictr))
 				 (y1 (frame1 (+ ictr 1))))
-			    (vct-set! frame0 k (+ y0 (* (- y1 y0) (- start-ctr ictr))))
+			    (float-vector-set! frame0 k (+ y0 (* (- y1 y0) (- start-ctr ictr))))
 			    (set! start-ctr (+ start-ctr samp1)))))))
 		(let ((result (frame0 frame-loc)))
 		  (set! frame-loc (+ frame-loc 1))
@@ -113,13 +113,13 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 
 #|
 (define (ramp-test)
-  (let ((data (make-vct 10000)))
+  (let ((data (make-float-vector 10000)))
     (new-sound "new-0.snd")
     (do ((i 0 (+ i 1))) ((= i 10000)) (set! (data i) (* i .0001)))
-    (vct->channel data 0 10000 0)
+    (float-vector->channel data 0 10000 0)
     (new-sound "new-1.snd")
     (do ((i 0 (+ i 1))) ((= i 10000)) (set! (data i) (- 1.0 (* i .0001))))
-    (vct->channel data 0 10000 1)
+    (float-vector->channel data 0 10000 1)
     (let* ((dur (frames))
 	   (zp (make-zipper (make-env '(0 0 1 1) :length dur)
 			    0.05

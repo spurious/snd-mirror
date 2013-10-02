@@ -107,8 +107,7 @@
 		(let ((fuzz 0.0)
 		      (vib 0.0)
 		      (anoi 1.0)
-		      (inoi 1.0)
-		      (modf 0.0))
+		      (inoi 1.0))
 		  (if easy-case ; no fm-noi here
 		      (do ((i beg (+ i 1)))
 			  ((= i end))
@@ -118,20 +117,20 @@
 			(if ind-noi 
 			    (set! inoi (+ 1.0 (rand-interp ind-noi))))
 			(set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-			(set! modf (+ vib (* inoi (env indf1) (polywave fmosc1 vib))))
-			(locsig locs i (* anoi (oscil carrier modf))))
+			(locsig locs i (* anoi (oscil carrier (+ vib (* inoi (env indf1) (polywave fmosc1 vib)))))))
 		      
 		      (if (or ind-noi amp-noi fm-noi)
 			  (if (not (or ind-noi amp-noi))
 			      (do ((i beg (+ i 1)))
 				  ((= i end))
-				(set! fuzz (rand fm-noi))
-				(set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-				(set! modf (+ vib
-					      (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-					      (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-					      (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))
-				(locsig locs i (* (env ampf) (oscil carrier modf))))
+				(let ((fuzz (rand fm-noi))
+				      (vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
+				  (locsig locs i (* (env ampf) 
+						    (oscil carrier 
+							   (+ vib
+							      (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+							      (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+							      (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))))
 
 			      (do ((i beg (+ i 1)))
 				  ((= i end))
@@ -141,12 +140,12 @@
 				    (set! anoi (env ampf)))
 				(if ind-noi (set! inoi (+ 1.0 (rand-interp ind-noi))))
 				(set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-				(set! modf (+ vib
-					      (* inoi
-						 (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-						    (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-						    (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
-				(locsig locs i (* anoi (oscil carrier modf)))))
+				(locsig locs i (* anoi (oscil carrier 
+							      (+ vib
+								 (* inoi
+								    (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+								       (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+								       (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))))))
 
 			  (do ((i beg (+ i 1)))
 			      ((= i end))

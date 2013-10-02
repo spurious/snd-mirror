@@ -250,10 +250,10 @@
       "frame_multiply"
       (if (string=? scheme-name "frame+")
 	  "frame_add"
-	  (if (string=? scheme-name "vct*")
-	      "vct_multiply"
-	      (if (string=? scheme-name "vct+")
-		  "vct_add"
+	  (if (string=? scheme-name "float-vector*")
+	      "float-vector_multiply"
+	      (if (string=? scheme-name "float-vector+")
+		  "float-vector_add"
 		  (if (string=? scheme-name "mixer*")
 		      "mixer_multiply"
 		      (if (string=? scheme-name "mixer+")
@@ -656,10 +656,14 @@
 	       symbols)))
 	  (set! syms (sort! syms (lambda (a b) (string<? (car a) (car b)))))
 	  (format p "~%static const char *snd_names[~D] = {" (* size 2))
-	  (for-each
-	   (lambda (sf)
-	     (format p "~%    ~S, ~S," (car sf) (cdr sf)))
-	   syms)
+	  (let ((last '("" #f)))
+	    (for-each
+	     (lambda (sf)
+	       (if (string=? (car last) (car sf))
+		   (format *stderr* "duplicate: ~A~%" sf))
+	       (set! last sf)
+	       (format p "~%    ~S, ~S," (car sf) (cdr sf)))
+	     syms))
 	  (format p "~%};~%"))
 	(format p "~%static void autoload_info(s7_scheme *sc)~%{~%  s7_autoload_set_names(sc, snd_names, ~D);~%}~%" size)))
   ))

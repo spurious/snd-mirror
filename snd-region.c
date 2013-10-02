@@ -2248,5 +2248,9 @@ void g_init_regions(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_region_graph_style, g_region_graph_style_w, H_region_graph_style,
 				   S_setB S_region_graph_style, g_set_region_graph_style_w,  0, 0, 1, 0);
+
+#if HAVE_SCHEME
+  s7_eval_c_string(s7, "(define region->float-vector region->vct)");
+#endif
 }
 

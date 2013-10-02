@@ -3941,6 +3941,9 @@ void g_init_mix(void)
 
   XEN_DEFINE_PROCEDURE(S_mix,                    g_mix_w,                    1, 6, 0, H_mix);
   XEN_DEFINE_PROCEDURE(S_mix_vct,                g_mix_vct_w,                1, 5, 0, H_mix_vct);
+#if HAVE_SCHEME
+  s7_eval_c_string(s7, "(define mix-float-vector mix-vct)");
+#endif
   XEN_DEFINE_PROCEDURE(S_mixes,                  g_mixes_w,                  0, 2, 0, H_mixes);
   XEN_DEFINE_PROCEDURE(S_mix_home,               g_mix_home_w,               1, 0, 0, H_mix_home);
   XEN_DEFINE_PROCEDURE(S_mix_p,                  g_mix_p_w,                  1, 0, 0, H_mix_p);

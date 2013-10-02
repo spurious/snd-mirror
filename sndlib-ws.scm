@@ -131,7 +131,7 @@
 		   (set! *output* (make-sample->file output-1 channels data-format header-type comment)))))
 	   (begin
 	     (if (not continue-old-file)
-		 (if (vct? output-1)
+		 (if (float-vector? output-1)
 		     (fill! output-1 0.0)
 		     (if (sound-data? output-1)
 			 (sound-data-fill! output-1 0.0))))
@@ -148,7 +148,7 @@
 		       (set! *reverb* (make-sample->file reverb-1 reverb-channels data-format header-type)))))
 	       (begin
 		 (if (not continue-old-file)
-		     (if (vct? reverb-1)
+		     (if (float-vector? reverb-1)
 			 (fill! reverb-1 0.0)
 			 (if (sound-data? reverb-1)
 			     (sound-data-fill! reverb-1 0.0))))
@@ -173,8 +173,8 @@
 	       (if statistics 
 		   (if reverb-to-file
 		       (set! revmax (cadr (mus-sound-maxamp reverb-1)))
-		       (if (vct? reverb-1)
-			   (set! revmax (vct-peak reverb-1))
+		       (if (float-vector? reverb-1)
+			   (set! revmax (float-vector-peak reverb-1))
 			   (if (sound-data? reverb-1)
 			       (set! revmax (sound-data-peak reverb-1))))))
 	       (if reverb-to-file
@@ -195,7 +195,7 @@
 			   (if (or scaled-to scaled-by)
 			       (substring output-1 0 (- (string-length output-1) 5))
 			       output-1)
-			   (if (vct? output-1) "vct" 
+			   (if (float-vector? output-1) "float-vector" 
 			       (if (sound-data? output-1) "sound-data"
 				   "flush")))
 		       (if (or scaled-to scaled-by) 
@@ -207,8 +207,8 @@
 				 ((>= i (length lst)))
 			       (list-set! lst i (/ (list-ref lst i) (mus-srate))))
 			     lst)
-			   (if (vct? output-1)
-			       (list (vct-peak output-1))
+			   (if (float-vector? output-1)
+			       (list (float-vector-peak output-1))
 			       (if (sound-data? output-1)
 				   (sound-data-maxamp output-1)
 				   0.0)))
@@ -230,12 +230,12 @@
 		   (delete-file output-1)
 		   (set! output-1 (substring output-1 0 (- (string-length output-1) 5))))
 
-		 (if (vct? output-1)
+		 (if (float-vector? output-1)
 		     (if scaled-to
-			 (let ((pk (vct-peak output-1)))
+			 (let ((pk (float-vector-peak output-1)))
 			   (if (> pk 0.0)
-			       (vct-scale! output-1 (/ scaled-to pk))))
-			 (vct-scale! output-1 scaled-by))
+			       (float-vector-scale! output-1 (/ scaled-to pk))))
+			 (float-vector-scale! output-1 scaled-by))
 		     (if (sound-data? output-1)
 			 (if scaled-to
 			     (let ((pk (sound-data-peak output-1)))
@@ -304,7 +304,7 @@
 			     snds)
 		    ,@body)))                         ; sound-let body
 	 (for-each (lambda (file)                     ; clean up all local temps
-		     (if (and (string? file)          ; is it a file? (might be a vct or sound-data object)
+		     (if (and (string? file)          ; is it a file? (might be a float-vector or sound-data object)
 			      (file-exists? file))
 			 (delete-file file)))
 		   temp-files)
@@ -349,7 +349,7 @@ finish-with-sound to complete the process."
 	      (set! *output* (make-sample->file output channels data-format header-type comment))))
 	(begin
 	  (if (not continue-old-file)
-	      (if (vct? output)
+	      (if (float-vector? output)
 		  (fill! output 0.0)
 		  (sound-data-fill! output 0.0)))
 	  (set! *output* output)))
@@ -364,7 +364,7 @@ finish-with-sound to complete the process."
 		  (set! *reverb* (make-sample->file revfile reverb-channels data-format header-type))))
 	    (begin
 	      (if (not continue-old-file)
-		  (if (vct? revfile)
+		  (if (float-vector? revfile)
 		      (fill! revfile 0.0)
 		      (sound-data-fill! revfile 0.0)))
 	      (set! *reverb* revfile))))

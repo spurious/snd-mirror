@@ -9035,6 +9035,11 @@ void g_init_edits(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_scale_channel,          g_scale_channel_w,                1, 5, 0, H_scale_channel);
   XEN_DEFINE_SAFE_PROCEDURE(S_normalize_channel,      g_normalize_channel_w,            1, 5, 0, H_normalize_channel);
 
+#if HAVE_SCHEME
+  s7_eval_c_string(s7, "(define float-vector->channel vct->channel)");
+  s7_eval_c_string(s7, "(define channel->float-vector channel->vct)");
+#endif
+
   XEN_DEFINE_PROCEDURE(S_change_samples_with_origin,   g_change_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
   XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin,   g_insert_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
   XEN_DEFINE_PROCEDURE(S_override_samples_with_origin, g_override_samples_with_origin_w, 5, 1, 0, "internal function used in save-state");

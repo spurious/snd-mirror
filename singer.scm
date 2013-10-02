@@ -73,7 +73,7 @@
 			    data)
 		  init))
 	  (noiseamps (let* ((len (length data))
-			    (v (make-vct len 0.0)))
+			    (v (make-float-vector len 0.0)))
 		       (do ((i 0 (+ i 1)))
 			   ((= i len))
 			 (set! (v i) (exact->inexact ((data i) 5))))
@@ -87,8 +87,8 @@
 	    (noise-env (make-env nfun :duration dur))
 	    (ran-vib (make-rand-interp :frequency 10 :amplitude .02))
 	    
-	    (glot-datai (make-vct (* 2 (length glts)) 0.0))
-	    (glot-datar (make-vct (* 2 (length glts)) 0.0))
+	    (glot-datai (make-float-vector (* 2 (length glts)) 0.0))
+	    (glot-datar (make-float-vector (* 2 (length glts)) 0.0))
 	    
 	    (tractlength+8 (+ tractlength 8))
 	    (tractlength+1 (+ tractlength 1))
@@ -103,7 +103,7 @@
 	    (tong-hump-pole 0.998)
 	    (tong-tip-pole 0.998))
 
-	(let ((shape-data (make-vct (* (length shps) tractlength+8) 0.0))
+	(let ((shape-data (make-float-vector (* (length shps) tractlength+8) 0.0))
 	      
 	      (noselength-1 (- noselength 1))
 	      (noselength-2 (- noselength 2))
@@ -116,10 +116,10 @@
 	      (last-sfd -1)
 	      (last-gfd -1)
 
-	      (glot-table (make-vct (+ 1 table-size) 0.0))
-	      (glot-table2 (make-vct (+ 1 table-size) 0.0))
-	      ;; (gn-table (make-vct (+ 1 table-size) 0.0)) ;(gn-gain 0.0) ;(gn-out 0.0) ;(gn-del (make-vct 4 0.0))
-	      ;; (gn-coeffs (make-vct 4 0.0)) ; in Perry's C code, these were set in setGlotNoiseFilter but it was never called!
+	      (glot-table (make-float-vector (+ 1 table-size) 0.0))
+	      (glot-table2 (make-float-vector (+ 1 table-size) 0.0))
+	      ;; (gn-table (make-float-vector (+ 1 table-size) 0.0)) ;(gn-gain 0.0) ;(gn-out 0.0) ;(gn-del (make-float-vector 4 0.0))
+	      ;; (gn-coeffs (make-float-vector 4 0.0)) ; in Perry's C code, these were set in setGlotNoiseFilter but it was never called!
 	      (table-increment 0.0)
 	      (glot-refl-gain 0.7)
 	      (pitch 400.0)
@@ -130,16 +130,16 @@
 	      (noise-gain 0.0)		;for vocal tract noise generator
 	      (noise-input 0.0)
 	      (noise-output 0.0)
-	      (noisef (make-fir-filter 4 :xcoeffs (make-vct 4)))
+	      (noisef (make-fir-filter 4 :xcoeffs (make-float-vector 4)))
 	      (noisev #f)
 	      (noise-pos 0)
 	      (fnoiseamp 0.0)
 	      (inz1 0.0)
 	      (inz2 0.0)
 	      ;; nasal tract acoustic tube structure
-	      (nose-coeffs (make-vct noselength 0.0))
-	      (nose1 (make-vct noselength 0.0))
-	      (nose2 (make-vct noselength 0.0))
+	      (nose-coeffs (make-float-vector noselength 0.0))
+	      (nose1 (make-float-vector noselength 0.0))
+	      (nose2 (make-float-vector noselength 0.0))
 	      (velum-pos 0.0)
 	      (nose-last-minus-refl 0.0)
 	      (nose-last-plus-refl 0.0)
@@ -174,18 +174,18 @@
 	      (alpha3 0.0)
 	      (noseposition 3)
 
-	      (target-radii (make-vct tractlength+8 0.0))
-	      (radii-poles (make-vct tractlength+8 0.0))
-	      (radii-pole-gains (make-vct tractlength+8 0.0))
-	      (radii (make-vct tractlength+8 0.0))
+	      (target-radii (make-float-vector tractlength+8 0.0))
+	      (radii-poles (make-float-vector tractlength+8 0.0))
+	      (radii-pole-gains (make-float-vector tractlength+8 0.0))
+	      (radii (make-float-vector tractlength+8 0.0))
 					; the radii array contains the vocal tract section radii
 					; (tractlength-1 of them), then glottal reflection gain
 					; then lip reflection gain, then noise position, then noise gain,
 					; then noise pole angle, then noise pole radius, 
 					; then noise pole angle2, then noise pole radius2, then velum opening radius
-	      (coeffs (make-vct tractlength 0.0))
-	      (dline1 (make-vct tractlength 0.0))
-	      (dline2 (make-vct tractlength 0.0)))
+	      (coeffs (make-float-vector tractlength 0.0))
+	      (dline1 (make-float-vector tractlength 0.0))
+	      (dline2 (make-float-vector tractlength 0.0)))
 
 	  (set! noisev (mus-xcoeffs noisef))
 
@@ -196,7 +196,7 @@
 	      (do ((j i (+ j 1))
 		   (m 0 (+ 1 m)))
 		  ((= m (length shp)))
-		(vct-set! shape-data j (shp m)))))
+		(float-vector-set! shape-data j (shp m)))))
 	  
 	  (do ((k 0 (+ k 1))
 	       (i 0 (+ i 2)))
@@ -237,8 +237,8 @@
 	  (let ((harms (floor (glot-datai 1)))
 		(temp1 0.0)
 		(temp 0.0)
-		(sines (make-vct 200 0.0))
-		(cosines (make-vct 200 0.0))
+		(sines (make-float-vector 200 0.0))
+		(cosines (make-float-vector 200 0.0))
 		(one-over-two-pi  0.159154943)
 		(two-pi-over-table-size (/ two-pi table-size))
 		(a (glot-datar 0))
@@ -282,9 +282,9 @@
 		  (do ((k 1 (+ k 1))
 		       (kx x (+ kx x)))
 		      ((> k harms))
-		    (vct-set! glot-table j (+ (vct-ref glot-table j) 
-					    (* (vct-ref cosines k) (cos kx))
-					    (* (vct-ref sines k) (sin kx)))))))))
+		    (float-vector-set! glot-table j (+ (float-vector-ref glot-table j) 
+					    (* (float-vector-ref cosines k) (cos kx))
+					    (* (float-vector-ref sines k) (sin kx)))))))))
 	  (set! s-glot-mix 1.0)
 	  (copy glot-table glot-table2)
 	  ;; ---------------- end make glot ----------------
@@ -333,8 +333,8 @@
 		      (begin
 			(do ((j 0 (+ j 1)))
 			    ((= j tractlength+8))
-			  (vct-set! radii j (+ (* (vct-ref radii j) (vct-ref radii-poles j))
-					     (* (vct-ref target-radii j) (vct-ref radii-pole-gains j)))))))
+			  (float-vector-set! radii j (+ (* (float-vector-ref radii j) (float-vector-ref radii-poles j))
+					     (* (float-vector-ref target-radii j) (float-vector-ref radii-pole-gains j)))))))
 		  ;; set tract shape
 		  (let ((tj 1.0)
 			(tk 0.0))
@@ -436,7 +436,7 @@
 		    (nose-reftemp 0.0))
 		(if (and (= velum-pos 0.0)
 			 (>= time-nose-closed nose-ring-time))
-		    (let ((nose2-1 (vct-ref nose2 1)))
+		    (let ((nose2-1 (float-vector-ref nose2 1)))
 		      (set! nose-reftemp (+ (* alpha1 plussamp) (* alpha2 minussamp) (* alpha3 nose2-1)))
 		      (set! nose-last-minus-refl (- nose-reftemp plussamp))
 		      (set! nose-last-plus-refl (- nose-reftemp minussamp)))

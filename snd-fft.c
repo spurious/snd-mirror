@@ -2486,6 +2486,10 @@ of a moving mark:\n\
 
   XEN_DEFINE_PROCEDURE(S_integer_to_transform, g_integer_to_transform_w, 1, 0, 0, H_integer_to_transform);
   XEN_DEFINE_PROCEDURE(S_transform_to_integer, g_transform_to_integer_w, 1, 0, 0, H_transform_to_integer);
+
+#if HAVE_SCHEME
+  s7_eval_c_string(s7, "(define transform->float-vector transform->vct)");
+#endif
 }
 
 /* display by wavelength is not so useful in the context of sound because

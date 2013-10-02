@@ -1,13 +1,13 @@
 #!/bin/csh -f
 
-set gtkolddir = /home/bil/test/gtk+-3.9.12
-set gtknewdir = /home/bil/test/gtk+-3.9.12
-set pangoolddir = /home/bil/test/pango-1.35.0
-set pangonewdir = /home/bil/test/pango-1.35.2
-set glibolddir = /home/bil/test/glib-2.37.2
-set glibnewdir = /home/bil/test/glib-2.37.6
+set gtkolddir = /home/bil/test/gtk+-3.9.16
+set gtknewdir = /home/bil/test/gtk+-3.10.0
+set pangoolddir = /home/bil/test/pango-1.35.2
+set pangonewdir = /home/bil/test/pango-1.36.0
+set glibolddir = /home/bil/test/glib-2.37.93
+set glibnewdir = /home/bil/test/glib-2.38.0
 set cairoolddir = /home/bil/test/cairo-1.12.14
-set caironewdir = /home/bil/test/cairo-1.12.14
+set caironewdir = /home/bil/test/cairo-1.12.16
 
 set curdir = $cwd
 

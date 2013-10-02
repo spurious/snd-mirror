@@ -539,7 +539,7 @@ static const char *help_names[HELP_NAMES_SIZE] = {
  "two_zero", "two_zero?", "unbind_key", "_unbound_variable_hook_", "unclip_channel", "undo",
  "undo_hook", "unselect_all", "update_graphs", "update_hook", "update_lisp_graph", "update_sound",
  "update_time_graph", "update_transform_graph", "upon_save_yourself", "user_interface_extensions", "variable_display", "variable_graph?",
- "vct", "vct_multiply", "vct_add", "vct2channel", "vct2file", "vct2frame",
+ "vct", "vct_", "vct_", "vct2channel", "vct2file", "vct2frame",
  "vct2list", "vct2sound_data", "vct2string", "vct2vector", "vct_add!", "vct_copy",
  "vct_fill!", "vct_length", "vct_max", "vct_min", "vct_move!", "vct_multiply!",
  "vct_offset!", "vct_peak", "vct_polynomial", "vct_ref", "vct_reverse!", "vct_scale!",
@@ -1829,7 +1829,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11096] = {
+static const char *snd_names[11102] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -4024,8 +4024,6 @@ static const char *snd_names[11096] = {
     "div", "libc.scm",
     "do-all-chans", "examp.scm",
     "do-chans", "examp.scm",
-    "do-it-again-button-color", "snd11.scm",
-    "do-it-button-color", "snd11.scm",
     "do-sound-chans", "examp.scm",
     "dog-day-cicada", "animals.scm",
     "dolph", "dsp.scm",
@@ -4204,8 +4202,9 @@ static const char *snd_names[11096] = {
     "fgetpos", "libc.scm",
     "fgets", "libc.scm",
     "field-sparrow", "animals.scm",
+    "file->float-vector", "examp.scm",
+    "file->float-vector", "frame.scm",
     "file->sound-data", "frame.scm",
-    "file->vct", "examp.scm",
     "file->vct", "frame.scm",
     "file-error?", "r7rs.scm",
     "fileno", "libc.scm",
@@ -4235,8 +4234,12 @@ static const char *snd_names[11096] = {
     "flatten-partials", "dsp.scm",
     "flecho", "examp.scm",
     "flipxy", "jcvoi.scm",
+    "float-vector->file", "frame.scm",
+    "float-vector->frame", "frame.scm",
     "float-vector->gsl_matrix", "libgsl.scm",
     "float-vector->gsl_vector", "libgsl.scm",
+    "float-vector-polynomial", "dsp.scm",
+    "float-vector-size", "snddiff.scm",
     "float64_to_int32", "binary-io.scm",
     "float64_to_int64", "binary-io.scm",
     "flockfile", "libc.scm",
@@ -4278,6 +4281,7 @@ static const char *snd_names[11096] = {
     "fputc", "libc.scm",
     "fputs", "libc.scm",
     "fractional-fourier-transform", "dsp.scm",
+    "frame->float-vector", "frame.scm",
     "frame->sound", "frame.scm",
     "frame->sound-data", "frame.scm",
     "frame->vct", "frame.scm",
@@ -6292,7 +6296,6 @@ static const char *snd_names[11096] = {
     "hard-clipped", "dsp.scm",
     "harmonicizer", "dsp.scm",
     "hello-dentist", "examp.scm",
-    "help-button-color", "snd11.scm",
     "henslows-sparrow", "animals.scm",
     "hermit-thrush", "animals.scm",
     "hermite", "numerics.scm",
@@ -6325,6 +6328,7 @@ static const char *snd_names[11096] = {
     "initstate", "libc.scm",
     "input-port-open?", "r7rs.scm",
     "insert-channel", "extensions.scm",
+    "insert-float-vector", "frame.scm",
     "insert-frame", "frame.scm",
     "insert-sound-data", "frame.scm",
     "insert-vct", "frame.scm",
@@ -6558,6 +6562,7 @@ static const char *snd_names[11096] = {
     "metal", "clm-ins.scm",
     "min-envelope", "env.scm",
     "mirror-path", "dlocsig.scm",
+    "mix->float-vector", "mix.scm",
     "mix->vct", "mix.scm",
     "mix-channel", "extensions.scm",
     "mix-click-info", "mix.scm",
@@ -6702,6 +6707,7 @@ static const char *snd_names[11096] = {
     "pad-marks", "marks.scm",
     "pad-sound", "extensions.scm",
     "pan-mix", "mix.scm",
+    "pan-mix-float-vector", "mix.scm",
     "pan-mix-region", "mix.scm",
     "pan-mix-selection", "mix.scm",
     "pan-mix-vct", "mix.scm",
@@ -6819,7 +6825,6 @@ static const char *snd_names[11096] = {
     "prune-db", "nb.scm",
     "pulse-voice", "examp.scm",
     "purple-finch", "animals.scm",
-    "pushed-button-button-color", "snd11.scm",
     "putc", "libc.scm",
     "putchar", "libc.scm",
     "putenv", "libc.scm",
@@ -6828,7 +6833,6 @@ static const char *snd_names[11096] = {
     "pvocoder", "pvoc.scm",
     "pwrite", "libc.scm",
     "pygmy-nuthatch", "animals.scm",
-    "quit-button-color", "snd11.scm",
     "r2k!cos", "generators.scm",
     "r2k2cos", "generators.scm",
     "r2k2cos-norm", "generators.scm",
@@ -6890,7 +6894,6 @@ static const char *snd_names[11096] = {
     "replace-with-selection", "selection.scm",
     "report-mark-names", "marks.scm",
     "reset-all-hooks", "hooks.scm",
-    "reset-button-color", "snd11.scm",
     "reset-fit", "dlocsig.scm",
     "reset-hook!", "snd11.scm",
     "reset-rendering", "dlocsig.scm",
@@ -7070,6 +7073,7 @@ static const char *snd_names[11096] = {
     "singer", "singer.scm",
     "sleep", "libc.scm",
     "slightly-musical-conehead", "animals.scm",
+    "smooth-float-vector", "clean.scm",
     "smooth-vct", "clean.scm",
     "snap-mark-to-beat", "marks.scm",
     "snap-marks", "marks.scm",
@@ -7283,7 +7287,6 @@ static const char *snd_names[11096] = {
     "vector->string", "r7rs.scm",
     "vector-add!", "poly.scm",
     "vector-copy", "r7rs.scm",
-    "vector-copy", "poly.scm",
     "vector-copy!", "r7rs.scm",
     "vector-map", "r7rs.scm",
     "vector-scale!", "poly.scm",
@@ -7382,7 +7385,7 @@ static const char *snd_names[11096] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5548);
+  s7_autoload_set_names(sc, snd_names, 5551);
 }
 #endif
 

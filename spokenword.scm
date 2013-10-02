@@ -40,7 +40,7 @@
 
 (define local-data
   (lambda (position)
-    (channel->vct (max 0 (- position (* size .5))) size)))
+    (channel->float-vector (max 0 (- position (* size .5))) size)))
 
 (define local-rms
   (lambda  (position)
@@ -50,7 +50,7 @@
 (define local-peak
   (lambda (position)
     (let ((data (local-data position)))
-      (vct-peak data))))
+      (float-vector-peak data))))
 
 (define local-smooth
   (lambda (position)

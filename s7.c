@@ -7393,7 +7393,20 @@ static s7_Int c_gcd(s7_Int u, s7_Int v)
 {
   s7_Int a, b, temp;
   
-  a = s7_Int_abs(u);  /* trouble if either is most-negative-fixnum... */
+  if ((u == S7_LLONG_MIN) || (v == S7_LLONG_MIN))
+    {
+      /* can't take abs of these (below) so do it by hand */
+      s7_Int divisor = 1;
+      while (((u & 1) == 0) && ((v & 1) == 0))
+	{
+	  u /= 2;
+	  v /= 2;
+	  divisor *= 2;
+	}
+      return(divisor);
+    }
+
+  a = s7_Int_abs(u); 
   b = s7_Int_abs(v);
   while (b != 0)
     {
@@ -27839,30 +27852,6 @@ static s7_pointer g_cdddar(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* reverse is in the generic function section */
-static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
-{
-  #define H_reverse_in_place "(reverse! lst) reverses lst in place"
-  s7_pointer p, np;
-  
-  p = car(args);
-  if (is_null(p))
-    return(sc->NIL);
-  
-  if (!is_pair(p))
-    {
-      CHECK_METHOD(sc, p, sc->REVERSEB, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->REVERSEB, p, A_LIST));
-    }
-  
-  np = reverse_in_place(sc, sc->NIL, p);
-  if (is_null(np))
-    return(simple_wrong_type_argument_with_type(sc, sc->REVERSEB, p, A_PROPER_LIST));
-  
-  return(np);
-}
-
-
 s7_pointer s7_assq(s7_scheme *sc, s7_pointer obj, s7_pointer x)
 {
   s7_pointer y;
@@ -30753,12 +30742,9 @@ static int hash_float_location(s7_Double x)
     loc = 0.5 - x;
   else loc = x + 0.5;
 
-  if (loc < 0)
-    {
-      loc = -loc;
-      if (loc < 0)  /* (hash-table-index 1e+18) -> -2147483648 */
-	return(0);
-    }
+  if (loc < 0) /* (hash-table-index 1e+18) -> -2147483648 */
+    return(0);
+
   return(loc);
 }
 
@@ -34858,40 +34844,6 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 }
 
 
-
-/* old form:
-static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
-{
-  #define H_copy "(copy obj) returns a copy of obj"
-  return(s7_copy(sc, car(args)));
-}
-*/
-
-
-#if 0
-static s7_pointer complete_environment_copy(s7_scheme *sc, s7_pointer env)
-{
-  /* copy entire chain of envs */
-  s7_pointer x, new_e;
-  bool old_off;
-  old_off = sc->gc_off;
-  sc->gc_off = true;
-
-  if (is_null(next_environment(env)))
-    new_e = sc->NIL;
-  else new_e = complete_environment_copy(sc, next_environment(env));
-
-  new_e = new_frame_in_env(sc, new_e);
-  for (x = environment_slots(env); is_slot(x); x = next_slot(x))
-    ADD_SLOT(new_e, slot_symbol(x), slot_value(x));
-  environment_slots(new_e) = reverse_slots(sc, environment_slots(new_e));
-
-  sc->gc_off = old_off;
-  return(new_e);
-}
-#endif
-
-
 static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
 {
   #define H_reverse "(reverse lst) returns a list with the elements of lst in reverse order.  reverse \
@@ -34977,6 +34929,99 @@ also accepts a string or vector argument."
   return(np);
 }
 
+
+static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
+{
+  #define H_reverse_in_place "(reverse! lst) reverses lst in place"
+  s7_pointer p;
+
+  p = car(args);
+  switch (type(p))
+    {
+    case T_NIL:
+      return(sc->NIL);
+
+    case T_PAIR:
+      p = reverse_in_place(sc, sc->NIL, p);
+      if (is_null(p))
+	return(simple_wrong_type_argument_with_type(sc, sc->REVERSEB, p, A_PROPER_LIST));
+      break;
+
+    case T_STRING:
+      {
+	int i, j, len;
+	char c;
+	char *str;
+
+	len = string_length(p);
+	str = string_value(p);
+	for (i = 0, j = len - 1; i < j; i++, j--)
+	  {
+	    c = str[i];
+	    str[i] = str[j];
+	    str[j] = c;
+	  }
+      }
+      break;
+
+    case T_INT_VECTOR:
+      {
+	s7_Int i, j, len;
+	s7_Int *d;
+	s7_Int temp;
+
+	len = vector_length(p);
+	d = int_vector_elements(p);
+	for (i = 0, j = len - 1; i < j; i++, j--)
+	  {
+	    temp = d[i];
+	    d[i] = d[j];
+	    d[j] = temp;
+	  }
+      }
+      break;
+
+    case T_FLOAT_VECTOR:
+      {
+	s7_Int i, j, len;
+	s7_Double *d;
+	s7_Double temp;
+
+	len = vector_length(p);
+	d = float_vector_elements(p);
+	for (i = 0, j = len - 1; i < j; i++, j--)
+	  {
+	    temp = d[i];
+	    d[i] = d[j];
+	    d[j] = temp;
+	  }
+      }
+      break;
+
+    case T_VECTOR:
+      {
+	s7_Int i, j, len;
+	s7_pointer *d;
+	s7_pointer temp;
+
+	len = vector_length(p);
+	d = vector_elements(p);
+	for (i = 0, j = len - 1; i < j; i++, j--)
+	  {
+	    temp = d[i];
+	    d[i] = d[j];
+	    d[j] = temp;
+	  }
+      }
+      break;
+
+    default:
+      CHECK_METHOD(sc, p, sc->REVERSEB, args);
+      return(simple_wrong_type_argument_with_type(sc, sc->REVERSEB, p, make_protected_string(sc, "a list, string, or vector")));
+    }
+  
+  return(p);
+}
 
 
 static s7_pointer list_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
@@ -67151,7 +67196,7 @@ s7_scheme *s7_init(void)
   sc->COPY =                  s7_define_safe_function(sc, "copy",                    g_copy,                   1, 3, false, H_copy);
   sc->FILL =                  s7_define_function(sc,      "fill!",                   g_fill,                   2, 0, false, H_fill);
   sc->REVERSE =               s7_define_safe_function(sc, "reverse",                 g_reverse,                1, 0, false, H_reverse);
-  sc->REVERSEB =              s7_define_function(sc,      "reverse!",                g_reverse_in_place,       1, 0, false, H_reverse_in_place); /* used by Snd code */
+  sc->REVERSEB =              s7_define_function(sc,      "reverse!",                g_reverse_in_place,       1, 0, false, H_reverse_in_place);
   sc->SORT =                  s7_define_function(sc,      "sort!",                   g_sort,                   2, 0, false, H_sort);
 
   sc->LIST_TO_VECTOR =        s7_define_safe_function(sc, "list->vector",            g_list_to_vector,         1, 0, false, H_list_to_vector);
@@ -67869,7 +67914,7 @@ int main(int argc, char **argv)
 /* use new generic_ff in methods opt case 
  * we need integer_length everywhere! These fixups are ignored by the optimized cases.
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
- * add empty? (or nil? or generic null? or zero-length? typeq? (null? c-pointer) -- C null?
+ * add empty? (or nil? or generic null? or zero-length? typeq? (null? c-pointer) -- C null? prime?
  * other often-used libraries: glib/gio/gobject/gmodule ncurses? GL/GLU? pcre? tecla? readline? asound? sndlib-for-s7?
  * TODO: (env env) in clm should be an error
  * checkpoint?
@@ -67877,8 +67922,6 @@ int main(int argc, char **argv)
  * can gf_parse or equivalent handle pure math function bodies in s7? -- a vector of parse trees indexed by arg type?
  * xen.h argify* -> something that defines everything needed at the definition point, then somehow collect for init
  *   need to replace all the s7_apply_n* stuff, internalize all the arg nums and help strings (type checks? defaults?) etc
- * morally-equal for c-objects?
- * TODO: generic reverse!
  */
 
 
