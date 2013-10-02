@@ -270,11 +270,11 @@
 	 (fftlen (floor (expt 2 pow2)))
 	 (fftlen2 (/ fftlen 2))
 	 (fftscale (/ 1.0 fftlen))
-	 (rl (channel->vct 0 fftlen snd chn))
-	 (im (make-vct fftlen)))
+	 (rl (channel->float-vector 0 fftlen snd chn))
+	 (im (make-float-vector fftlen)))
     (fft rl im 1)
-    (vct-scale! rl fftscale)
-    (vct-scale! im fftscale)
+    (float-vector-scale! rl fftscale)
+    (float-vector-scale! im fftscale)
     ;; handle 0 case by itself
     (let* ((c1 (make-rectangular (rl 0) (im 0)))
 	   (val (/ (+ (* a c1) b)
@@ -296,7 +296,7 @@
 	(set! (rl k) rval)
 	(set! (im k) (- ival))))
     (fft rl im -1)
-    (vct->channel rl 0 len snd chn #f (format #f "automorph ~A ~A ~A ~A" a b c d))))
+    (float-vector->channel rl 0 len snd chn #f (format #f "automorph ~A ~A ~A ~A" a b c d))))
 |#
 
 

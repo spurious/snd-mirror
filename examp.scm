@@ -38,7 +38,7 @@
 ;;; View: Files dialog chooses which sound is displayed
 ;;; remove-clicks
 ;;; searching examples (zero+, next-peak, find-pitch)
-;;; file->vct and a sort of cue-list, I think, and region-play-list, region-play-sequence
+;;; file->float-vector and a sort of cue-list, I think, and region-play-list, region-play-sequence
 ;;; explode-sf2 -- turn soundfont file into a bunch of files of the form sample-name.aif
 ;;; open-next-file-in-directory -- middle button click closes current file and opens next
 ;;; chain-dsps
@@ -76,7 +76,7 @@
 (define (region-rms reg)
   "(region-rms n) -> rms of region n's data (chan 0)"
   (if (region? reg)
-      (let ((data (region->vct reg 0 0)))
+      (let ((data (region->float-vector reg 0 0)))
 	(sqrt (/ (dot-product data data) (length data))))
       (error 'no-such-region (list "region-rms" reg))))
 
@@ -85,7 +85,7 @@
   "(window-samples snd chn) -> samples in snd channel chn in current graph window"
   (let ((wl (left-sample snd chn))
 	(wr (right-sample snd chn)))
-    (channel->vct wl (+ 1 (- wr wl)) snd chn)))
+    (channel->float-vector wl (+ 1 (- wr wl)) snd chn)))
 
 
 (define (display-energy hook)
@@ -96,12 +96,12 @@
 	 (ls (left-sample snd chn))
 	 (rs (right-sample snd chn))
 	 (datal (make-graph-data snd chn))
-	 (data (if (vct? datal) datal (cadr datal)))
+	 (data (if (float-vector? datal) datal (cadr datal)))
 	 (sr (srate snd))
 	 (y-max (y-zoom-slider snd chn)))
     (if (and data ls rs)
 	(begin
-	  (vct-multiply! data data)
+	  (float-vector-multiply! data data)
 	  (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f)))))
 
 ;(hook-push lisp-graph-hook display-energy)
@@ -114,7 +114,7 @@
 	 (datal (make-graph-data snd chn)))
 
       (if datal
-	  (let* ((data (if (vct? datal) datal (cadr datal)))
+	  (let* ((data (if (float-vector? datal) datal (cadr datal)))
 		 (len (length data))
 		 (sr (srate snd)))
 	    (define (dB val)
@@ -136,7 +136,7 @@
   "(window-rms) -> rms of data in currently selected graph window"
   (let* ((ls (left-sample))
 	 (rs (right-sample))
-	 (data (channel->vct ls (+ 1 (- rs ls))))
+	 (data (channel->float-vector ls (+ 1 (- rs ls))))
 	 (len (length data)))
     (sqrt (/ (dot-product data data) len))))
 
@@ -148,7 +148,7 @@
     (if (and (transform-graph?) 
 	     (= (transform-graph-type) graph-once))
 	(status-report 
-	 (number->string (/ (* 2.0 (vct-peak (transform->vct snd chn))) 
+	 (number->string (/ (* 2.0 (float-vector-peak (transform->float-vector snd chn))) 
 			    (transform-size)))
 	 snd))))
 
@@ -185,24 +185,24 @@
 	       (pow2 (ceiling (log ilen 2)))
 	       (fftlen (floor (expt 2 pow2)))
 	       (fftscale (/ 1.0 fftlen))
-	       (rl1 (channel->vct ls fftlen snd 0))
-	       (rl2 (channel->vct ls fftlen snd 1))
-	       (im1 (make-vct fftlen))
-	       (im2 (make-vct fftlen)))
+	       (rl1 (channel->float-vector ls fftlen snd 0))
+	       (rl2 (channel->float-vector ls fftlen snd 1))
+	       (im1 (make-float-vector fftlen))
+	       (im2 (make-float-vector fftlen)))
 	  (fft rl1 im1 1)
 	  (fft rl2 im2 1)
 	  (let ((tmprl (copy rl1))
 		(tmpim (copy im1))
-		(data3 (make-vct fftlen)))
-	    (vct-multiply! tmprl rl2)     ; (* tempr1 tempr2)
-	    (vct-multiply! tmpim im2)     ; (* tempi1 tempi2)
-	    (vct-multiply! im2 rl1)       ; (* tempr1 tempi2)
-	    (vct-multiply! rl2 im1)       ; (* tempr2 tempi1)
-	    (vct-add! tmprl tmpim)        ; add the first two
-	    (vct-subtract! im2 rl2)       ; subtract the 4th from the 3rd
+		(data3 (make-float-vector fftlen)))
+	    (float-vector-multiply! tmprl rl2)     ; (* tempr1 tempr2)
+	    (float-vector-multiply! tmpim im2)     ; (* tempi1 tempi2)
+	    (float-vector-multiply! im2 rl1)       ; (* tempr1 tempi2)
+	    (float-vector-multiply! rl2 im1)       ; (* tempr2 tempi1)
+	    (float-vector-add! tmprl tmpim)        ; add the first two
+	    (float-vector-subtract! im2 rl2)       ; subtract the 4th from the 3rd
 	    (fft tmprl im2 -1)
-	    (vct-add! data3 tmprl)        ; copy into data3
-	    (vct-scale! data3 fftscale)   ; scale by fftscale
+	    (float-vector-add! data3 tmprl)        ; copy into data3
+	    (float-vector-scale! data3 fftscale)   ; scale by fftscale
 	    (graph data3 "lag time" 0 fftlen)))
 	(status-report "display-correlation wants stereo input"))))
 
@@ -211,10 +211,10 @@
 ;;; The inner let body could also be:
 ;;;
 ;;;	   (graph
-;;;	    (vct-scale! 
-;;;	     (vct-add! data3
-;;;		       (fft (vct-add! (vct-multiply! tmprl rl2) (vct-multiply! tmpim im2))
-;;;			    (vct-subtract! (vct-multiply! im2 rl1) (vct-multiply! rl2 im1))
+;;;	    (float-vector-scale! 
+;;;	     (float-vector-add! data3
+;;;		       (fft (float-vector-add! (float-vector-multiply! tmprl rl2) (float-vector-multiply! tmpim im2))
+;;;			    (float-vector-subtract! (float-vector-multiply! im2 rl1) (float-vector-multiply! rl2 im1))
 ;;;			    -1))
 ;;;	     fftscale) "lag time" 0 fftlen2)))
 
@@ -266,10 +266,10 @@
 		 (lambda (n)
 		   (if (and (= (sync n) (sync snd))
 			    (> (channels n) chn))
-		       (set! ffts (append ffts (let ((fdr (channel->vct ls fftlen n chn))
-						     (fdi (make-vct fftlen))
-						     (spectr (make-vct (/ fftlen 2))))
-						 (list (vct-add! spectr (spectrum fdr fdi #f 2))))))))
+		       (set! ffts (append ffts (let ((fdr (channel->float-vector ls fftlen n chn))
+						     (fdi (make-float-vector fftlen))
+						     (spectr (make-float-vector (/ fftlen 2))))
+						 (list (float-vector-add! spectr (spectrum fdr fdi #f 2))))))))
 		 (sounds))
 		(graph ffts "spectra" 0.0 0.5 y0 y1 snd chn)))))))
 
@@ -416,7 +416,7 @@ read an ASCII sound file"
   (let* ((in-fd (open-input-file in-filename))
 	 (out-fd (new-sound out-filename out-type out-format out-srate 1 (format #f "created by read-ascii: ~A" in-filename)))
 	 (bufsize 512)
-	 (data (make-vct bufsize))
+	 (data (make-float-vector bufsize))
 	 (loc 0)
 	 (frame 0)
 	 (short->float (/ 1.0 32768.0)))
@@ -429,12 +429,12 @@ read an ASCII sound file"
 	       (set! loc (+ loc 1))
 	       (if (= loc bufsize)
 		   (begin
-		     (vct->channel data frame bufsize out-fd 0)
+		     (float-vector->channel data frame bufsize out-fd 0)
 		     (set! frame (+ frame bufsize))
 		     (set! loc 0)))
 	       (loop (read in-fd)))))
        (if (> loc 0)
-	   (vct->channel data frame loc out-fd 0))))
+	   (float-vector->channel data frame loc out-fd 0))))
     (close-input-port in-fd)
     out-fd))
 
@@ -645,8 +645,8 @@ then inverse ffts."
 	 (len (frames snd chn))
 	 (fsize (expt 2 (ceiling (log len 2))))
 	 (fsize2 (/ fsize 2))
-	 (rdata (channel->vct 0 fsize snd chn))
-	 (idata (make-vct fsize))
+	 (rdata (channel->float-vector 0 fsize snd chn))
+	 (idata (make-float-vector fsize))
 	 (lo (round (/ bottom (/ sr fsize))))
 	 (hi (round (/ top (/ sr fsize)))))
     (fft rdata idata 1)
@@ -670,23 +670,23 @@ then inverse ffts."
 	  (set! (idata i) 0.0)
 	  (set! (idata j) 0.0)))
     (fft rdata idata -1)
-    (vct-scale! rdata (/ 1.0 fsize))
-    (vct->channel rdata 0 (- len 1) snd chn #f (format #f "fft-edit ~A ~A" bottom top))))
+    (float-vector-scale! rdata (/ 1.0 fsize))
+    (float-vector->channel rdata 0 (- len 1) snd chn #f (format #f "fft-edit ~A ~A" bottom top))))
 
 
 (define* (fft-squelch squelch snd chn)
   "(fft-squelch squelch snd chn) ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then inverse ffts"
   (let* ((len (frames snd chn))
 	 (fsize (expt 2 (ceiling (log len 2))))
-	 (rdata (channel->vct 0 fsize snd chn))
-	 (idata (make-vct fsize))
+	 (rdata (channel->float-vector 0 fsize snd chn))
+	 (idata (make-float-vector fsize))
 	 (fsize2 (/ fsize 2))
 	 (scaler 1.0))
     (fft rdata idata 1)
     (let ((vr (copy rdata))
 	  (vi (copy idata)))
       (rectangular->polar vr vi)
-      (set! scaler (vct-peak vr)))
+      (set! scaler (float-vector-peak vr)))
     (let ((scl-squelch (* squelch scaler)))
       (if (< (sqrt (+ (* (rdata 0) (rdata 0)) (* (idata 0) (idata 0)))) scl-squelch)
 	  (begin
@@ -703,8 +703,8 @@ then inverse ffts."
 		(set! (idata i) 0.0)
 		(set! (idata j) 0.0)))))
       (fft rdata idata -1)
-      (vct-scale! rdata (/ 1.0 fsize)))
-    (vct->channel rdata 0 (- len 1) snd chn #f (format #f "fft-squelch ~A" squelch))
+      (float-vector-scale! rdata (/ 1.0 fsize)))
+    (float-vector->channel rdata 0 (- len 1) snd chn #f (format #f "fft-squelch ~A" squelch))
     scaler))
 
 
@@ -713,8 +713,8 @@ then inverse ffts."
   (let* ((sr (srate snd))
 	 (len (frames snd chn))
 	 (fsize (expt 2 (ceiling (log len 2))))
-	 (rdata (channel->vct 0 fsize snd chn))
-	 (idata (make-vct fsize)))
+	 (rdata (channel->float-vector 0 fsize snd chn))
+	 (idata (make-float-vector fsize)))
     (fft rdata idata 1)
     (let* ((hz-bin (/ sr fsize))
 	   (lo-bin (round (/ lo-freq hz-bin)))
@@ -727,8 +727,8 @@ then inverse ffts."
 	(set! (rdata j) 0.0)
 	(set! (idata j) 0.0)))
     (fft rdata idata -1)
-    (vct-scale! rdata (/ 1.0 fsize))
-    (vct->channel rdata 0 (- len 1) snd chn #f (format #f "fft-cancel ~A ~A" lo-freq hi-freq))))
+    (float-vector-scale! rdata (/ 1.0 fsize))
+    (float-vector->channel rdata 0 (- len 1) snd chn #f (format #f "fft-cancel ~A ~A" lo-freq hi-freq))))
     
 
 ;;; same idea but used to distinguish vowels (steady-state) from consonants
@@ -756,8 +756,8 @@ then inverse ffts."
   "(squelch-vowels snd chn) suppresses portions of a sound that look like steady-state"
   (let* ((fft-size 32)
 	 (fft-mid (floor (/ fft-size 2)))
-	 (rl (make-vct fft-size))
-	 (im (make-vct fft-size))
+	 (rl (make-float-vector fft-size))
+	 (im (make-float-vector fft-size))
 	 (ramper (make-ramp 256)) ; 512 ok too
 	 (peak (/ (maxamp) fft-mid))
 	 (read-ahead (make-sampler 0 snd chn))
@@ -773,9 +773,9 @@ then inverse ffts."
 		   (if (= ctr fft-size)
 		       (begin
 			 (fft rl im 1)
-			 (vct-multiply! rl rl)
-			 (vct-multiply! im im)
-			 (vct-add! rl im)
+			 (float-vector-multiply! rl rl)
+			 (float-vector-multiply! im im)
+			 (float-vector-add! rl im)
 			 (set! in-vowel (> (+ (rl 0) (rl 1) (rl 2) (rl 3)) peak))
 			 ;; fancier version checked here ratio of this sum and
 			 ;;   sum of all rl vals, returned vowel if > 0.5
@@ -791,11 +791,11 @@ then inverse ffts."
 
 
 (define* (fft-env-data fft-env snd chn)
-  "(fft-env-data fft-env snd chn) applies fft-env as spectral env to current sound, returning vct of new data"
+  "(fft-env-data fft-env snd chn) applies fft-env as spectral env to current sound, returning float-vector of new data"
   (let* ((len (frames snd chn))
 	 (fsize (expt 2 (ceiling (log len 2))))
-	 (rdata (channel->vct 0 fsize snd chn))
-	 (idata (make-vct fsize))
+	 (rdata (channel->float-vector 0 fsize snd chn))
+	 (idata (make-float-vector fsize))
 	 (fsize2 (/ fsize 2))
 	 (e (make-env fft-env :length fsize2)))
     (fft rdata idata 1)
@@ -811,12 +811,12 @@ then inverse ffts."
 	(set! (rdata j) (* val (rdata j)))
 	(set! (idata j) (* val (idata j)))))
     (fft rdata idata -1)
-    (vct-scale! rdata (/ 1.0 fsize))))
+    (float-vector-scale! rdata (/ 1.0 fsize))))
 
 
 (define* (fft-env-edit fft-env snd chn)
   "(fft-env-edit fft-env snd chn) edits (filters) current chan using fft-env"
-  (vct->channel (fft-env-data fft-env snd chn) 0 (- (frames) 1) snd chn #f (format #f "fft-env-edit '~A" fft-env)))
+  (float-vector->channel (fft-env-data fft-env snd chn) 0 (- (frames) 1) snd chn #f (format #f "fft-env-edit '~A" fft-env)))
 
 
 (define* (fft-env-interp env1 env2 interp snd chn)
@@ -825,7 +825,7 @@ spectral envelopes) following interp (an env between 0 and 1)"
   (let* ((data1 (fft-env-data env1 snd chn))
 	 (data2 (fft-env-data env2 snd chn))
 	 (len (frames snd chn))
-	 (new-data (make-vct len))
+	 (new-data (make-float-vector len))
 	 (e (make-env interp :length len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
@@ -833,7 +833,7 @@ spectral envelopes) following interp (an env between 0 and 1)"
 	(set! (new-data i) 
 	      (+ (* (- 1.0 pan) (data1 i))
 		 (* pan (data2 i))))))
-    (vct->channel new-data 0 (- len 1) snd chn #f (format #f "fft-env-interp '~A '~A '~A" env1 env2 interp))))
+    (float-vector->channel new-data 0 (- len 1) snd chn #f (format #f "fft-env-interp '~A '~A '~A" env1 env2 interp))))
 
 
 (define* (filter-fft flt (normalize #t) snd chn)
@@ -844,8 +844,8 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is 
 	 (mx (maxamp snd chn))
 	 (fsize (expt 2 (ceiling (log len 2))))
 	 (fsize2 (/ fsize 2))
-	 (rdata (channel->vct 0 fsize snd chn))
-	 (idata (make-vct fsize))
+	 (rdata (channel->float-vector 0 fsize snd chn))
+	 (idata (make-float-vector fsize))
 	 (spect (snd-spectrum rdata rectangular-window fsize #t 1.0 #f normalize))) ; not in-place!
     (fft rdata idata 1)
     (flt (spect 0))
@@ -868,9 +868,9 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is 
 		  (set! (idata j) (- scl)))))))
     (fft rdata idata -1)
     (if (not (= mx 0.0))
-	(let ((pk (vct-peak rdata)))
-	  (vct->channel (vct-scale! rdata (/ mx pk)) 0 (- len 1) snd chn #f (format #f "filter-fft ~A" flt)))
-	(vct->channel rdata 0 (- len 1) snd chn #f (format #f "filter-fft ~A" flt)))))
+	(let ((pk (float-vector-peak rdata)))
+	  (float-vector->channel (float-vector-scale! rdata (/ mx pk)) 0 (- len 1) snd chn #f (format #f "filter-fft ~A" flt)))
+	(float-vector->channel rdata 0 (- len 1) snd chn #f (format #f "filter-fft ~A" flt)))))
 
 ;; (let ((op (make-one-zero .5 .5))) (filter-fft op))
 ;; (let ((op (make-one-pole .05 .95))) (filter-fft op))
@@ -908,27 +908,27 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is 
 
 (define* (fft-smoother cutoff start samps snd chn)
   "(fft-smoother cutoff start samps snd chn) uses fft-filtering to smooth a 
-section: (vct->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"
+section: (float-vector->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"
   (let* ((fftpts (floor (expt 2 (ceiling (log (+ 1 samps) 2)))))
-	 (rl (channel->vct start fftpts snd chn))
-	 (im (make-vct fftpts))
+	 (rl (channel->float-vector start fftpts snd chn))
+	 (im (make-float-vector fftpts))
 	 (top (floor (* fftpts cutoff))))
     (let ((old0 (rl 0))
 	  (old1 (rl (- samps 1)))
-	  (oldmax (vct-peak rl)))
+	  (oldmax (float-vector-peak rl)))
       (fft rl im 1)
       (do ((i top (+ i 1)))
 	  ((= i fftpts))
 	(set! (rl i) 0.0)
 	(set! (im i) 0.0))
       (fft rl im -1)
-      (vct-scale! rl (/ 1.0 fftpts))
-      (let ((newmax (vct-peak rl)))
+      (float-vector-scale! rl (/ 1.0 fftpts))
+      (let ((newmax (float-vector-peak rl)))
 	(if (= newmax 0.0)
 	    rl
 	    (begin
 	      (if (> (/ oldmax newmax) 1.5)
-		  (vct-scale! rl (/ oldmax newmax)))
+		  (float-vector-scale! rl (/ oldmax newmax)))
 	      (let* ((new0 (rl 0))
 		     (new1 (rl (- samps 1)))
 		     (offset0 (- old0 new0))
@@ -1043,7 +1043,7 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 
 	(let ((frms (make-vector len))
 	      (oscs (make-vector len))
-	      (amps (make-vct len 1.0)))
+	      (amps (make-float-vector len 1.0)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i len))
 	    (set! (frms i) (make-formant (bases i) radius))
@@ -1133,20 +1133,20 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
   (let* ((rn (make-rand-interp :frequency frq :amplitude amp))
 	 (i 0)
 	 (len (frames))
-	 (in-data (channel->vct 0 len snd chn))
+	 (in-data (channel->float-vector 0 len snd chn))
 	 (out-len (round (* len (+ 1.0 (* 2 amp)))))
-	 (out-data (make-vct out-len))
+	 (out-data (make-float-vector out-len))
 	 (rd (make-src :srate 1.0 
 		       :input (lambda (dir) 
 				(let ((val (if (and (>= i 0) (< i len)) 
-					       (vct-ref in-data i) 
+					       (float-vector-ref in-data i) 
 					       0.0)))
 				  (set! i (+ i dir)) 
 				  val)))))
     (do ((i 0 (+ i 1)))
 	((= i out-len))
-      (vct-set! out-data i (src rd (rand-interp rn))))
-    (vct->channel out-data 0 len snd chn #f (format #f "hello-dentist ~A ~A" frq amp))))
+      (float-vector-set! out-data i (src rd (rand-interp rn))))
+    (float-vector->channel out-data 0 len snd chn #f (format #f "hello-dentist ~A ~A" frq amp))))
 
 
 ;;; a very similar function uses oscil instead of rand-interp, giving
@@ -1161,11 +1161,11 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 					 (if (> dir 0)
 					     (next-sample sf)
 					     (previous-sample sf)))))
-	 (out-data (make-vct len)))
+	 (out-data (make-float-vector len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (vct-set! out-data i (src s (* osamp (oscil os)))))
-    (vct->channel out-data 0 len snd chn #f (format #f "fp ~A ~A ~A" sr osamp osfrq))))
+      (float-vector-set! out-data i (src s (* osamp (oscil os)))))
+    (float-vector->channel out-data 0 len snd chn #f (format #f "fp ~A ~A ~A" sr osamp osfrq))))
 	    
 
 ;;; -------- compand, compand-channel
@@ -1194,7 +1194,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 	 (sr (make-src :srate rate))
 	 (vsize 1024)
 	 (vbeg 0)
-	 (v (channel->vct 0 vsize))
+	 (v (channel->float-vector 0 vsize))
 	 (inctr 0))
     (lambda (inval)
       (src sr 0.0
@@ -1207,7 +1207,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 				(begin
 				  (set! vbeg (+ vbeg inctr))
 				  (set! inctr 0)
-				  (set! v (channel->vct vbeg vsize snd chn))))
+				  (set! v (channel->float-vector vbeg vsize snd chn))))
 			    val))))))))
 
 
@@ -1226,14 +1226,14 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 	 (ge (make-env gr-env :duration dur))
 	 (sound-len (round (* (srate snd) dur)))
 	 (len (max sound-len (frames snd chn)))
-	 (out-data (make-vct len)))
+	 (out-data (make-float-vector len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
       (set! (out-data i) 
 	    (let ((val (granulate gr)))
 	      (set! (mus-increment gr) (env ge))
 	      val)))
-    (vct->channel out-data 0 len snd chn #f (format #f "expsnd '~A" gr-env))))
+    (float-vector->channel out-data 0 len snd chn #f (format #f "expsnd '~A" gr-env))))
 
 
 ;;; -------- cross-synthesis
@@ -1244,9 +1244,9 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
   "(cross-synthesis cross-snd amp fftsize r) does cross-synthesis between 'cross-snd' (a sound object) and the currently 
 selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
   (let* ((freq-inc (/ fftsize 2))
-	 (fdr (make-vct fftsize))
-	 (fdi (make-vct fftsize))
-	 (spectr (make-vct freq-inc))
+	 (fdr (make-float-vector fftsize))
+	 (fdi (make-float-vector fftsize))
+	 (spectr (make-float-vector freq-inc))
 	 (inctr 0)
 	 (ctr freq-inc)
 	 (radius (- 1.0 (/ r fftsize)))
@@ -1265,16 +1265,16 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 
     (lambda (inval)
       (if (= ctr freq-inc)
-	  (let ((fdtmp (channel->vct inctr fftsize cross-snd 0)))
+	  (let ((fdtmp (channel->float-vector inctr fftsize cross-snd 0)))
 	    (set! inctr (+ inctr freq-inc))
 	    (spectrum fdtmp fdi #f 2)
-	    (vct-subtract! fdtmp spectr)
-	    (vct-scale! fdtmp (/ 1.0 freq-inc))
-	    (vct-scale! fdr 0.0)
-	    (vct-add! fdr fdtmp)
+	    (float-vector-subtract! fdtmp spectr)
+	    (float-vector-scale! fdtmp (/ 1.0 freq-inc))
+	    (float-vector-scale! fdr 0.0)
+	    (float-vector-add! fdr fdtmp)
 	    (set! ctr 0)))
       (set! ctr (+ ctr 1))
-      (vct-add! spectr fdr)
+      (float-vector-add! spectr fdr)
       (* amp (formant-bank formants inval)))))
 
 
@@ -1284,9 +1284,9 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 (define* (voiced->unvoiced amp fftsize r tempo snd chn)
   "(voiced->unvoiced amp fftsize r tempo snd chn) turns a vocal sound into whispering: (voiced->unvoiced 1.0 256 2.0 2.0)"
   (let* ((freq-inc (/ fftsize 2))
-	 (fdr (make-vct fftsize))
-	 (fdi (make-vct fftsize))
-	 (spectr (make-vct freq-inc))
+	 (fdr (make-float-vector fftsize))
+	 (fdi (make-float-vector fftsize))
+	 (spectr (make-float-vector freq-inc))
 	 (noi (make-rand (/ (srate snd) 3)))
 	 (inctr 0)
 	 (ctr 0)
@@ -1295,7 +1295,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	 (len (frames snd chn))
 	 (outlen (floor (/ len tempo)))
 	 (hop (floor (* freq-inc tempo)))
-	 (out-data (make-vct (max len outlen)))
+	 (out-data (make-float-vector (max len outlen)))
 	 (formants (make-vector freq-inc))
 	 (old-peak-amp 0.0))
 
@@ -1308,24 +1308,24 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	((>= i outlen))
       (set! ctr (min (- outlen i) freq-inc))
 
-      (let ((fdtmp (channel->vct inctr fftsize snd chn)))
-	(let ((pk (vct-peak fdtmp)))
+      (let ((fdtmp (channel->float-vector inctr fftsize snd chn)))
+	(let ((pk (float-vector-peak fdtmp)))
 	  (if (> pk old-peak-amp) (set! old-peak-amp pk)))
 	(spectrum fdtmp fdi #f 2)
 	(set! inctr (+ hop inctr))
-	(vct-subtract! fdtmp spectr)
-	(vct-scale! fdtmp (/ 1.0 freq-inc))
-	(vct-scale! fdr 0.0)
-	(vct-add! fdr fdtmp))
+	(float-vector-subtract! fdtmp spectr)
+	(float-vector-scale! fdtmp (/ 1.0 freq-inc))
+	(float-vector-scale! fdr 0.0)
+	(float-vector-add! fdr fdtmp))
 
       (do ((k 0 (+ k 1))
 	   (j i (+ j 1)))
 	  ((= k ctr))
-	(vct-add! spectr fdr)
-	(vct-set! out-data j (formant-bank formants (rand noi)))))
+	(float-vector-add! spectr fdr)
+	(float-vector-set! out-data j (formant-bank formants (rand noi)))))
 
-    (vct-scale! out-data (* amp (/ old-peak-amp (vct-peak out-data))))
-    (vct->channel out-data 0 (max len outlen) snd chn)))
+    (float-vector-scale! out-data (* amp (/ old-peak-amp (float-vector-peak out-data))))
+    (float-vector->channel out-data 0 (max len outlen) snd chn)))
 
 
 ;;; very similar but use ncos (glottal pulse train?) instead of white noise
@@ -1333,16 +1333,16 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 (define* (pulse-voice cosines (freq 440.0) (amp 1.0) (fftsize 256) (r 2.0) snd chn)
   "(pulse-voice cosines (freq 440) (amp 1.0) (fftsize 256) (r 2.0) snd chn) uses ncos to manipulate speech sounds"
   (let* ((freq-inc (/ fftsize 2))
-	 (fdr (make-vct fftsize))
-	 (fdi (make-vct fftsize))
-	 (spectr (make-vct freq-inc))
+	 (fdr (make-float-vector fftsize))
+	 (fdi (make-float-vector fftsize))
+	 (spectr (make-float-vector freq-inc))
 	 (pulse (make-ncos freq cosines))
 	 (inctr 0)
 	 (ctr 0)
 	 (radius (- 1.0 (/ r fftsize)))
 	 (bin (/ (srate snd) fftsize))
 	 (len (frames snd chn))
-	 (out-data (make-vct len))
+	 (out-data (make-float-vector len))
 	 (formants (make-vector freq-inc))
 	 (old-peak-amp 0.0))
 
@@ -1355,24 +1355,24 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	((>= i len))
       (set! ctr (min (- len i) freq-inc))
 
-      (let ((fdtmp (channel->vct inctr fftsize snd chn)))
-	(let ((pk (vct-peak fdtmp)))
+      (let ((fdtmp (channel->float-vector inctr fftsize snd chn)))
+	(let ((pk (float-vector-peak fdtmp)))
 	  (if (> pk old-peak-amp) (set! old-peak-amp pk)))
 	(spectrum fdtmp fdi #f 2)
 	(set! inctr (+ freq-inc inctr))
-	(vct-subtract! fdtmp spectr)
-	(vct-scale! fdtmp (/ 1.0 freq-inc))
-	(vct-scale! fdr 0.0)
-	(vct-add! fdr fdtmp))
+	(float-vector-subtract! fdtmp spectr)
+	(float-vector-scale! fdtmp (/ 1.0 freq-inc))
+	(float-vector-scale! fdr 0.0)
+	(float-vector-add! fdr fdtmp))
 
       (do ((k 0 (+ k 1))
 	   (j i (+ j 1)))
 	  ((= k ctr))
-	(vct-add! spectr fdr)
+	(float-vector-add! spectr fdr)
 	(set! (out-data j) (formant-bank formants (ncos pulse)))))
 
-    (vct-scale! out-data (* amp (/ old-peak-amp (vct-peak out-data))))
-    (vct->channel out-data 0 len snd chn)))
+    (float-vector-scale! out-data (* amp (/ old-peak-amp (float-vector-peak out-data))))
+    (float-vector->channel out-data 0 len snd chn)))
 
 ;;; (pulse-voice 80 20.0 1.0 1024 0.01)
 ;;; (pulse-voice 80 120.0 1.0 1024 0.2)
@@ -1387,15 +1387,15 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
   "(cnvtest snd0 snd1 amp) convolves snd0 and snd1, scaling by amp, returns new max amp: (cnvtest 0 1 .1)"
   (let* ((flt-len (frames snd0))
 	 (total-len (+ flt-len (frames snd1)))
-	 (cnv (make-convolve :filter (channel->vct 0 flt-len snd0)
+	 (cnv (make-convolve :filter (channel->float-vector 0 flt-len snd0)
 			     :input (make-sampler 0 snd1)))
-	 (out-data (make-vct total-len)))
+	 (out-data (make-float-vector total-len)))
     (do ((i 0 (+ i 1)))
 	((= i total-len))
       (set! (out-data i) (convolve cnv)))
-    (vct-scale! out-data amp)
-    (let ((max-samp (vct-peak out-data)))
-      (vct->channel out-data 0 total-len snd1)
+    (float-vector-scale! out-data amp)
+    (let ((max-samp (float-vector-peak out-data)))
+      (float-vector->channel out-data 0 total-len snd1)
       (if (> max-samp 1.0) (set! (y-bounds snd1) (list (- max-samp) max-samp)))
       max-samp)))
 
@@ -1404,12 +1404,12 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 
 (define (fltit)
   "(fltit) returns a time-varying filter: (map-channel (fltit))"
-  (let* ((coeffs (list .1 .2 .3 .4 .4 .3 .2 .1))
-	 (flt (make-fir-filter 8 (list->vct coeffs)))
+  (let* ((coeffs (float-vector .1 .2 .3 .4 .4 .3 .2 .1))
+	 (flt (make-fir-filter 8 coeffs))
 	 (es (make-vector 8)))
     (do ((i 0 (+ i 1)))
 	((= i 8))
-      (set! (es i) (make-env (list 0 (list-ref coeffs i) 1 0) :length 100)))
+      (set! (es i) (make-env (list 0 (coeffs i) 1 0) :length 100)))
     (set! (es 5) (make-env '(0 .4 1 1) :duration 1.0))
     (lambda (x)
       (let ((val (fir-filter flt x))
@@ -1454,7 +1454,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 
 (define* (make-sound-interp start snd chn)
   "(make-sound-interp start snd chn) -> an interpolating reader for snd's channel chn"
-  (let* ((data (channel->vct 0 #f snd chn))
+  (let* ((data (channel->float-vector 0 #f snd chn))
 	 (size (length data)))
     (lambda (loc)
       (array-interp data loc size))))
@@ -1713,7 +1713,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
       (/ (* 0.5 (- logla logra))
 	 (+ logla logra))))
 
-  (let ((data (make-vct (transform-size)))
+  (let ((data (make-float-vector (transform-size)))
 	(data-loc 0))
     (lambda (n)
       (set! (data data-loc) n)
@@ -1722,7 +1722,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
 	(if (= data-loc (transform-size))
 	    (begin
 	      (set! data-loc 0)
-	      (if (> (vct-peak data) .001) ;ignore noise sections??
+	      (if (> (float-vector-peak data) .001) ;ignore noise sections??
 		  (let ((spectr (snd-spectrum data rectangular-window (transform-size)))
 			(pk 0.0)
 			(pkloc 0))
@@ -1748,13 +1748,13 @@ In most cases, this will be slightly offset from the true beginning of the note"
 	 rtn))))
 
 
-;;; -------- file->vct and a sort of cue-list, I think
+;;; -------- file->float-vector and a sort of cue-list, I think
 
-(define (file->vct file)
-  "(file->vct file) returns a vct with file's data"
+(define (file->float-vector file)
+  "(file->float-vector file) returns a float-vector with file's data"
   (let* ((len (frames file))
 	 (reader (make-sampler 0 file))
-	 (data (make-vct len)))
+	 (data (make-float-vector len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
       (set! (data i) (next-sample reader)))
@@ -1775,7 +1775,7 @@ starting at the cursor in the currently selected channel: (add-notes '((\"oboe.s
 		 (beg (+ start (floor (* (srate snd) offset)))))
 	    (if (and (number? amp)
 		     (not (= amp 1.0)))
-		(mix-vct (vct-scale! (file->vct file) amp) beg snd chn #f "add-notes")
+		(mix-float-vector (float-vector-scale! (file->float-vector file) amp) beg snd chn #f "add-notes")
 		(mix file beg 0 snd chn #f))))
 	notes))
      (format #f "add-notes '~S" notes))))
@@ -2206,7 +2206,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	   (reader (make-sampler 0 name))    ; no need to open the sound and display it
 	   (avg (make-moving-average :size 128))
 	   (lavg (make-moving-average :size 2048)) ; to distinguish between slow pulse train (low horn) and actual silence
-	   (segments (make-vct 100))
+	   (segments (make-float-vector 100))
 	   (segctr 0)
 	   (possible-end 0)
 	   (in-sound #f))

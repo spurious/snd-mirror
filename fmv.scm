@@ -58,10 +58,10 @@ fm-violin takes the value returned by make-fm-violin and returns a new sample ea
 	      :amp-env (let ((e (make-env :envelope '(0 0 1 1 2 0) 
 					  :scaler amp :length dur)))
 			 (lambda () (env e)))))
-	  (data (channel->vct beg dur)))
+	  (data (channel->float-vector beg dur)))
       (do ((i 0 (+ 1 i))) ((= i dur))
 	(set! (data i) (+ (data i) (v))))
-      (vct->channel data beg dur))))"
+      (float-vector->channel data beg dur))))"
 
     (let* ((frq-scl (hz->radians frequency))
 	   (modulate (not (zero? fm-index)))
@@ -128,11 +128,11 @@ fm-violin takes the value returned by make-fm-violin and returns a new sample ea
 					  :scaler amp 
 					  :length dur)))
 			 (lambda () (env e)))))
-	  (data (channel->vct beg dur)))
+	  (data (channel->float-vector beg dur)))
       (do ((i 0 (+ 1 i)))
 	  ((= i dur))
 	(set! (data i) (+ (data i) (v))))
-      (vct->channel data beg dur))))
+      (float-vector->channel data beg dur))))
 
 ;;; (with-sound () (test-v 0 10000 440 .1 '(0 0 1 1 2 0)))
 
@@ -147,11 +147,11 @@ fm-violin takes the value returned by make-fm-violin and returns a new sample ea
 			 (lambda () (env e)))
 	      :fm1-env (let ((osc (make-oscil 100.0)))
 			 (lambda () (oscil osc)))))
-	  (data (channel->vct beg dur)))
+	  (data (channel->float-vector beg dur)))
       (do ((i 0 (+ 1 i)))
 	  ((= i dur))
 	(set! (data i) (+ (data i) (v))))
-      (vct->channel data beg dur))))
+      (float-vector->channel data beg dur))))
 |#
 
 (define* (fm-violin-ins startime dur freq amp (degree #f) (reverb-amount 0.0) (distance 1.0) :rest args)
@@ -160,16 +160,16 @@ calls the fm-violin with the given args and mixes the results into the current s
     (let* ((beg (floor (* startime (srate))))
 	   (len (floor (* dur (srate))))
 	   (loc (make-locsig :channels (channels) :degree (or degree (random 90.0)) :reverb reverb-amount :distance distance))
-	   (out-data (make-vct len))
+	   (out-data (make-float-vector len))
 	   (v (apply make-fm-violin freq amp args)))
       (do ((i 0 (+ 1 i)))
 	  ((= i len))
 	(set! (out-data i) (v)))
       (if (= (channels) 2)
 	  (let ((bsamps (copy out-data)))
-	    (mix-vct (vct-scale! bsamps (locsig-ref loc 1)) beg #f 1 #f)
-	    (mix-vct (vct-scale! out-data (locsig-ref loc 0)) beg #f 0 #f))
-	  (mix-vct out-data beg #f 0 #f))))
+	    (mix-float-vector (float-vector-scale! bsamps (locsig-ref loc 1)) beg #f 1 #f)
+	    (mix-float-vector (float-vector-scale! out-data (locsig-ref loc 0)) beg #f 0 #f))
+	  (mix-float-vector out-data beg #f 0 #f))))
 
 
 			  

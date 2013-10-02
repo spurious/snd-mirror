@@ -124,10 +124,10 @@ whenever they're in the current view."
     (if (and (< left end)
 	     (> right beg))
 	(let ((data (make-graph-data snd chn)))
-	  (if (vct? data)
+	  (if (float-vector? data)
 	      (let* ((samps (- (min right end) (max left beg)))
 		     (offset (max 0 (- beg left)))
-		     (new-data (vct-subseq data offset (+ offset samps))))
+		     (new-data (float-vector-subseq data offset (+ offset samps))))
 		(set! (foreground-color snd chn) color)
 		(graph-data new-data snd chn copy-context (max beg left) (min end right) (time-graph-style snd chn) cr)
 		(set! (foreground-color snd chn) old-color))
@@ -139,8 +139,8 @@ whenever they're in the current view."
 		     (left-bin (floor (/ (* size left-offset) samps)))
 		     (right-offset (- (min end right) left))
 		     (right-bin (floor (/ (* size right-offset) samps)))
-		     (new-low-data (vct-subseq low-data left-bin right-bin))
-		     (new-high-data (vct-subseq high-data left-bin right-bin)))
+		     (new-low-data (float-vector-subseq low-data left-bin right-bin))
+		     (new-high-data (float-vector-subseq high-data left-bin right-bin)))
 		(set! (foreground-color snd chn) color)
 		(graph-data (list new-low-data new-high-data) snd chn copy-context left-bin right-bin (time-graph-style snd chn) cr)
 		(set! (foreground-color snd chn) old-color)))))
@@ -260,7 +260,7 @@ whenever they're in the current view."
 	(set! (foreground-color snd chn) old-color)))
 
     (if data
-	(if (vct? data)
+	(if (float-vector? data)
 	    (samples-1 data)
 	    (begin
 	      (samples-1 (car data))

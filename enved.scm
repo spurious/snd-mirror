@@ -217,10 +217,10 @@
 	  (catch #t
 		 (lambda ()
 		   (do ((res #f (let* ((scaler (env e))
-				       (samps0 (channel->vct samp bufsize))
+				       (samps0 (channel->float-vector samp bufsize))
 				       (samps1 (copy samps0)))
-				  (vct->sound-data (vct-scale! samps0 scaler) data 0)
-				  (vct->sound-data (vct-scale! samps1 (- 1.0 scaler)) data 1)
+				  (float-vector->sound-data (float-vector-scale! samps0 scaler) data 0)
+				  (float-vector->sound-data (float-vector-scale! samps1 (- 1.0 scaler)) data 1)
 				  (mus-audio-write audio-fd data bufsize)
 				  (set! samp (+ samp bufsize))
 				  (>= samp len))))

@@ -947,7 +947,7 @@ using the granulate generator to fix up the selection duration (this still is no
        (let ((len (- (mark-sample mark) start))
               (filename (snd-tempnam)))
          (array->file filename
-                      (channel->vct start len)
+                      (channel->float-vector start len)
                       len (srate) 1)
          (set! start (mark-sample mark))))
      (caar (marks)))))

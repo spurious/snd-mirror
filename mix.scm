@@ -1,6 +1,6 @@
 ;;; various mix related functions
 ;;;
-;;; (mix->vct mix) return mix data in vct
+;;; (mix->float-vector mix) return mix data in float-vector
 ;;; (snap-mix-to-beat) forces dragged mix to end up on a beat
 ;;; (silence-all-mixes) sets all mix amps to 0.0
 ;;; (find-mix sample snd chn) returns the mix at the given sample, or #f
@@ -60,18 +60,20 @@
        #f))))
 
 
-(define (mix->vct id)
-  "(mix->vct mix) returns mix's data in vct"
+(define (mix->float-vector id)
+  "(mix->float-vector mix) returns mix's data in float-vector"
   (if (mix? id)
       (let* ((len (frames id))
-	     (v (make-vct len))
+	     (v (make-float-vector len))
 	     (reader (make-mix-sampler id)))
 	(do ((i 0 (+ 1 i)))
 	    ((= i len))
 	  (set! (v i) (read-mix-sample reader)))
 	(free-sampler reader)
 	v)
-      (error 'no-such-mix (list "mix->vct" id))))
+      (error 'no-such-mix (list "mix->float-vector" id))))
+
+(define mix->vct mix->float-vector)
 
 
 ;;; 12-Nov-09: moved save-mix to C (snd-mix.c)
@@ -336,13 +338,13 @@ last end of the mixes in 'mix-list'"
   "(save-mixes mix-list filename) saves the data of the mixes in 'mix-list' in 'filename'"
   (let* ((len (mixes-length mix-list))
 	 (beg (apply min (map mix-position mix-list)))
-	 (data (make-vct len)))
+	 (data (make-float-vector len)))
     (for-each
      (lambda (m)
-       (vct-add! data (mix->vct m) (- (mix-position m) beg)))
+       (float-vector-add! data (mix->float-vector m) (- (mix-position m) beg)))
      mix-list)
     (let ((fd (mus-sound-open-output filename (srate) 1 #f #f "")))
-      (mus-sound-write fd 0 (- len 1) 1 (vct->sound-data data))
+      (mus-sound-write fd 0 (- len 1) 1 (float-vector->sound-data data))
       (mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length data))))))
 
 
@@ -537,16 +539,18 @@ starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all c
       (pan-mix (save-region reg (snd-tempnam)) beg pan snd #t)))
 
 
-(define* (pan-mix-vct v beg pan snd)
+(define* (pan-mix-float-vector v beg pan snd)
 
-  "(pan-mix-vct v start pan-env snd) mixes the vct data into the sound 'snd' 
+  "(pan-mix-float-vector v start pan-env snd) mixes the float-vector data into the sound 'snd' 
 starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."
 
   (let* ((temp-file (snd-tempnam))
 	 (fd (mus-sound-open-output temp-file (srate snd) 1 #f #f "")))
-    (mus-sound-write fd 0 (- (length v) 1) 1 (vct->sound-data v))
+    (mus-sound-write fd 0 (- (length v) 1) 1 (float-vector->sound-data v))
     (mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length v)))
     (pan-mix temp-file beg pan snd #t)))
+
+(define pan-mix-vct pan-mix-float-vector)
 
 
 

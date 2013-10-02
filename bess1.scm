@@ -5,7 +5,7 @@
 ;; Last: Sun Jun 15 03:50:21 CEST 2003
 ;; changed slightly 14-Jun-06 Bill to match bess.scm, fix pitch problem in make-oscil.
 ;;   then again 18-Dec-09 to use s7 rather than Guile
-;; changed vct-map! to use a loop instead (Bill 4-July-12)
+;; changed float-vector-map! to use a loop instead (Bill 4-July-12)
 
 (if (not (provided? 'snd-motif)) (error "bess1.scm needs motif"))
 
@@ -44,11 +44,11 @@
 ;; called by XtAppAddWorkProc
 (define (rt-send->dac func)
   (if cplay
-      (let ((data (make-vct *clm-rt-bufsize*)))
+      (let ((data (make-float-vector *clm-rt-bufsize*)))
 	(do ((i 0 (+ i 1)))
 	    ((= i *clm-rt-bufsize*))
 	  (set! (data i) (func)))
-	(mus-audio-write *output* (vct->sound-data data (make-sound-data 1 *clm-rt-bufsize*) 0) *clm-rt-bufsize*)
+	(mus-audio-write *output* (float-vector->sound-data data (make-sound-data 1 *clm-rt-bufsize*) 0) *clm-rt-bufsize*)
 	#f)
       (begin
 	(mus-audio-close *output*)
@@ -86,7 +86,7 @@
 (define lim 256)
 
 ;; from clm-2/rt.lisp
-(define* (make-vct-test (srate *clm-srate*)
+(define* (make-float-vector-test (srate *clm-srate*)
 			(bufsize *clm-rt-bufsize*)
 			(data-format *clm-data-format*))
   (let ((vmode (vector 0 12 2 4 14 4 5 5 0 7 7 11 11))
@@ -526,7 +526,7 @@
 			     (set-defaults)
 			     (if (= which-play 0)
 				 (set! func (apply make-agn (or args ())))
-				 (set! func (apply make-vct-test (or args ()))))
+				 (set! func (apply make-float-vector-test (or args ()))))
 			     (set! proc (XtAppAddWorkProc app (lambda (c) (rt-send->dac func)))))
 			   (if proc (XtRemoveWorkProc proc)))))
       (XmToggleButtonSetState play-button cplay #f)

@@ -12,11 +12,11 @@
 ;;; frame->sound-data, sound-data->frame
 ;;; sound->sound-data sound-data->sound
 ;;;   region->sound-data selection->sound-data
-;;; file->vct vct->file
-;;; frame->vct vct->frame
+;;; file->float-vector float-vector->file
+;;; frame->float-vector float-vector->frame
 ;;; file->sound-data sound-data->file
 ;;;
-;;; insert-sound-data insert-frame insert-vct
+;;; insert-sound-data insert-frame insert-float-vector
 ;;; mix-sound-data mix-frame
 ;;; scan-sound map-sound
 ;;;
@@ -59,13 +59,16 @@
 ;;; <frame[3]: [0.800 0.600 0.000]>
 |#
 
-(define* (frame->vct fr v)
-  "(frame->vct fr v) copies frame fr into either vct v or a new vct, returning the vct"
-  (copy fr (or v (make-vct (length fr)))))
+(define* (frame->float-vector fr v)
+  "(frame->float-vector fr v) copies frame fr into either float-vector v or a new float-vector, returning the float-vector"
+  (copy fr (or v (make-float-vector (length fr)))))
 
-(define* (vct->frame v fr)
-  "(vct->frame v fr) copies vct v into either frame fr or a new frame, returning the frame"
+(define* (float-vector->frame v fr)
+  "(float-vector->frame v fr) copies float-vector v into either frame fr or a new frame, returning the frame"
   (copy v (or fr (make-frame (length v)))))
+
+(define frame->vct frame->float-vector)
+(define vct->frame float-vector->frame)
 
 
 (define* (frame->sound-data fr sd (pos 0))
@@ -147,7 +150,7 @@
 	  (do ((i 0 (+ i 1)))
 	      ((= i chns) 
 	       sd)
-	    (vct->sound-data (channel->vct beg len index i) sd i))))))
+	    (float-vector->sound-data (channel->float-vector beg len index i) sd i))))))
 
 (define* (sound-data->sound sd (beg 0) dur snd)
   "(sound-data->sound sd beg dur snd) places the contents of sound-data sd into sound snd starting at position beg for dur frames"
@@ -160,7 +163,7 @@
 	      (do ((i 0 (+ i 1)))
 		  ((= i (channels index)) 
 		   sd)
-		(vct->channel (sound-data->vct sd i) beg ndur index i)))))))
+		(float-vector->channel (sound-data->float-vector sd i) beg ndur index i)))))))
 
 
 
@@ -317,25 +320,30 @@
 			      v)))))
 
 
-(define (file->vct file)
-  "(file->vct file) returns a vct with file's data (channel 0)"
+(define (file->float-vector file)
+  "(file->float-vector file) returns a float-vector with file's data (channel 0)"
   (let* ((len (frames file))
 	 (reader (make-sampler 0 file))
-	 (data (make-vct len)))
+	 (data (make-float-vector len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
       (set! (data i) (next-sample reader)))
     (free-sampler reader)
     data))
 
-(define* (vct->file v file (srate 22050) (comment ""))
-  "(vct->file v file srate comment) writes the data in vct v to the specified sound file"
-  (if (vct? v)
+(define file->vct file->float-vector)
+
+
+(define* (float-vector->file v file (srate 22050) (comment ""))
+  "(float-vector->file v file srate comment) writes the data in float-vector v to the specified sound file"
+  (if (float-vector? v)
       (let ((fd (mus-sound-open-output file srate 1 #f mus-riff comment)))
-	(mus-sound-write fd 0 (- (length v) 1) 1 (vct->sound-data v))
+	(mus-sound-write fd 0 (- (length v) 1) 1 (float-vector->sound-data v))
 	(mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length v)))
 	file)
-      (error 'wrong-type-arg "file->vct: ~A" v)))
+      (error 'wrong-type-arg "file->float-vector: ~A" v)))
+
+(define vct->file float-vector->file)
 
 
 (define (file->sound-data file)
@@ -391,12 +399,15 @@
 
 
 
-(define* (insert-vct v (beg 0) dur snd chn edpos)
-  "(insert-vct v beg dur snd chn edpos) inserts vct v's data into sound snd at beg"
-  (if (not (vct? v))
-      (error 'wrong-type-arg "insert-vct: ~A" v)
+(define* (insert-float-vector v (beg 0) dur snd chn edpos)
+  "(insert-float-vector v beg dur snd chn edpos) inserts float-vector v's data into sound snd at beg"
+  (if (not (float-vector? v))
+      (error 'wrong-type-arg "insert-float-vector: ~A" v)
       (let ((len (or dur (length v))))
-	(insert-samples beg len v snd chn edpos #f (format #f "insert-vct ~A ~A ~A" (vct->string v) beg dur)))))
+	(insert-samples beg len v snd chn edpos #f (format #f "insert-float-vector ~A ~A ~A" (float-vector->string v) beg dur)))))
+
+(define insert-vct insert-float-vector)
+
 
 (define* (insert-frame fr (beg 0) snd edpos)
   "(insert-frame fr beg snd edpos) inserts frame fr's data into sound snd (one sample in each channel) at beg"
@@ -420,10 +431,10 @@
 	    (error 'no-such-sound "insert-sound-data: ~A" snd)
 	    (let* ((chns (min (channels sd) (channels index)))
 		   (len (or dur (sound-data-length sd)))
-		   (v (make-vct len)))
+		   (v (make-float-vector len)))
 	      (do ((chn 0 (+ 1 chn)))
 		  ((= chn chns))
-		(insert-samples beg len (sound-data->vct sd chn v) index chn edpos #f "insert-sound-data")))))))
+		(insert-samples beg len (sound-data->float-vector sd chn v) index chn edpos #f "insert-sound-data")))))))
 
 
 (define* (mix-frame fr (beg 0) snd)
@@ -447,11 +458,11 @@
 	    (error 'no-such-sound "mix-sound-data: ~A" snd)
 	    (let* ((chns (min (channels sd) (channels index)))
 		   (len (or dur (sound-data-length sd)))
-		   (v (make-vct len))
+		   (v (make-float-vector len))
 		   (mix-id #f))
 	      (do ((chn 0 (+ 1 chn)))
 		  ((= chn chns))
-		(let ((id (mix-vct (sound-data->vct sd chn v) beg index chn tagged "mix-sound-data")))
+		(let ((id (mix-float-vector (sound-data->float-vector sd chn v) beg index chn tagged "mix-sound-data")))
 		  (if (not mix-id) (set! mix-id id))))
 	      mix-id)))))
 

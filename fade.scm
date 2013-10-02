@@ -45,7 +45,7 @@
 	(let ((bank2-end (+ bank2-start bank-samps))
 	      (ramp 0.0)
 	      (outval 0.0)
-	      (inputs (make-vct fs 0.0))
+	      (inputs (make-float-vector fs 0.0))
 	      (ifs (/ 1.0 fs))
 	      (mid 0))
 	  
@@ -75,14 +75,14 @@
 		       (do ((k mid (+ k 1))
 			    (ks 1.0 (- ks ifs)))
 			   ((>= k fs))
-			 (vct-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1)))))
+			 (float-vector-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1)))))
 		     (begin
 		       (set! mid (min fs (floor (* 2.0 ramp fs))))
 		       (fill! inputs inval1)
 		       (do ((k 0 (+ k 1))
 			    (ks (* 2.0 ramp) (- ks ifs)))
 			   ((= k mid))
-			 (vct-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
+			 (float-vector-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
 		 (outa i (* amp (formant-bank fs1 inputs))))))
 	    
 	    ((1)
@@ -100,14 +100,14 @@
 		       (do ((k 0 (+ k 1))
 			    (ks r2 (+ ks ifs)))
 			   ((= k mid))
-			 (vct-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1)))))
+			 (float-vector-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1)))))
 		     (begin
 		       (set! mid (ceiling (* (- 1.0 (* 2.0 ramp)) fs)))
 		       (fill! inputs inval1)
 		       (do ((k mid (+ k 1))
 			    (ks 0.0 (+ ks ifs)))
 			   ((>= k fs))
-			 (vct-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
+			 (float-vector-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1))))))
 		 (outa i (* amp (formant-bank fs1 inputs))))))
 	    
 	    (else
@@ -146,8 +146,8 @@
 
 
 
-;;; (vct->channel (with-sound (:output (make-vct 22050)) (cross-fade 0 .1 1 0 1 .01 .01 0 .1 256 2)))
-;;; (vct->channel (with-sound (:output (make-vct 44100)) (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2)))
+;;; (float-vector->channel (with-sound (:output (make-float-vector 22050)) (cross-fade 0 .1 1 0 1 .01 .01 0 .1 256 2)))
+;;; (float-vector->channel (with-sound (:output (make-float-vector 44100)) (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2)))
 ;;; (with-sound (:statistics #t) (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2))
 ;;; (with-sound () (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2))
 ;;; these fades seem more successful to me when done relatively quickly (the opposite of the dissolve below
@@ -164,9 +164,9 @@
 	  (spectr (make-vector freq-inc #f))
 	  (trigger (floor (/ (* dur (mus-srate)) freq-inc)))
 	  (fs (make-vector freq-inc #f))
-	  (amps (make-vct freq-inc amp))
+	  (amps (make-float-vector freq-inc amp))
 	  (ctr 0)
-	  (inputs (make-vct freq-inc 0.0))
+	  (inputs (make-float-vector freq-inc 0.0))
 	  (ramps (make-vector freq-inc -1))
 	  (in2s (make-vector freq-inc #f))
 	  (in2-ctr 0)
@@ -217,7 +217,7 @@
 
 	  (do ((k 0 (+ k 1)))
 	      ((= k in2-ctr))
-	    (vct-set! inputs (vector-ref in2s k) inval2))
+	    (float-vector-set! inputs (vector-ref in2s k) inval2))
 
 	  (if (> ramp-ctr 0)
 	      (let ((rk 0)
@@ -250,7 +250,7 @@
 
 
 ;;; (with-sound (:statistics #t) (dissolve-fade 0 1 1.0 "oboe.snd" "trumpet.snd" 256 2 0 128))
-;;; (vct->channel (with-sound (:output (make-vct 44100)) (dissolve-fade 0 2 1 0 1 4096 2 2 #f)))
+;;; (float-vector->channel (with-sound (:output (make-float-vector 44100)) (dissolve-fade 0 2 1 0 1 4096 2 2 #f)))
 ;;;
 ;;; another neat effect here is to simply let the random changes float along with no
 ;;; direction -- if the hit is 1.0 send it toward 0.0 and vice versa -- strange

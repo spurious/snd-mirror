@@ -17,7 +17,7 @@
   (let ((g 1.0)
 	(Q 1.0)
 	(wc (tan (* pi fz)))
-	(c (make-vct (* 2 n))))
+	(c (make-float-vector (* 2 n))))
 
     (define (cascade->canonical A)
       "(cascade->canonical A) converts cascade filter coeffs to canonical form"
@@ -36,8 +36,8 @@
 	    (set! (y n) sum))))
 
       (let* ((K (length A))
-	     (d (make-vct (+ 1 (* 2 K))))
-	     (a1 (make-vct (+ 1 (* 2 K)))))
+	     (d (make-float-vector (+ 1 (* 2 K))))
+	     (a1 (make-float-vector (+ 1 (* 2 K)))))
 	(set! (a1 0) 1.0)
 	(do ((i 0 (+ i 1)))
 	    ((= i K))
@@ -45,7 +45,7 @@
 	  (let ((end (+ 3 (* 2 i))))
 	    (do ((j 0 (+ j 1)))
 		((= j end))
-	      (vct-set! a1 j (vct-ref d j)))))
+	      (float-vector-set! a1 j (float-vector-ref d j)))))
 	a1))
 
     (do ((i 0 (+ i 2))
@@ -74,13 +74,13 @@
 	(set! a (cons (float-vector (c (+ k 3)) (c (+ k 2)) (c (+ k 3))) a))
 	(set! b (cons (float-vector 1.0 (c k) (c (+ k 1))) b)))
 
-      (list (vct-scale! (cascade->canonical a) g) ; scale entire numerator because this is the convolved form
+      (list (float-vector-scale! (cascade->canonical a) g) ; scale entire numerator because this is the convolved form
 	    (cascade->canonical b)))))
 
 (define (prototype->highpass n num den)
   (let ((g 1.0)
-	(numt (make-vct (length num)))
-	(dent (make-vct (length den))))
+	(numt (make-float-vector (length num)))
+	(dent (make-float-vector (length den))))
     (do ((k 0 (+ k 2))
 	 (i 0 (+ i 3)))
 	((>= k n)) 
@@ -100,8 +100,8 @@
 
 (define (butterworth-prototype n)
   (let* ((len (/ (* n 3) 2))
-	 (num (make-vct len))
-	 (den (make-vct len)))
+	 (num (make-float-vector len))
+	 (den (make-float-vector len)))
     (do ((w 1 (+ w 2))
 	 (j 0 (+ j 3)))
 	((>= w n))
@@ -157,8 +157,8 @@ are (1.0-based) edge freqs: (make-butterworth-bandstop 4 .1 .2)"
   (let* ((e (sqrt (- (expt 10.0 (* 0.1 ripple)) 1.0)))
 	 (v0 (/ (asinh (/ 1.0 e)) n))
 	 (len (/ (* n 3) 2))
-	 (num (make-vct len))
-	 (den (make-vct len)))
+	 (num (make-float-vector len))
+	 (den (make-float-vector len)))
     (do ((l 1.0 (+ l 2.0))
 	 (j 0 (+ j 3)))
 	((>= l n))
@@ -217,8 +217,8 @@ fl and fh = edge freqs (srate = 1.0): (make-chebyshev-bandstop 8 .1 .4 .01)"
   (let* ((e (sqrt (/ 1.0 (- (expt 10.0 (* 0.1 loss-dB)) 1.0))))
 	 (v0 (/ (asinh (/ 1.0 e)) n))
 	 (len (/ (* n 3) 2))
-	 (num (make-vct len))
-	 (den (make-vct len)))
+	 (num (make-float-vector len))
+	 (den (make-float-vector len)))
     (let ((pl 0.0))
       (do ((l 1.0 (+ l 2.0))
 	   (j 0 (+ j 3)))
@@ -241,7 +241,7 @@ fc = cutoff freq (srate = 1.0): (make-inverse-chebyshev-lowpass 10 .4 120)"
   (if (odd? n) (set! n (+ n 1)))
   (let* ((proto (inverse-chebyshev-prototype n loss-dB))
 	 (coeffs (analog->digital n (car proto) (cadr proto) fc)))
-    (make-filter :xcoeffs (vct-scale! (car coeffs) (caddr proto)) :ycoeffs (cadr coeffs))))
+    (make-filter :xcoeffs (float-vector-scale! (car coeffs) (caddr proto)) :ycoeffs (cadr coeffs))))
 
 (define* (make-inverse-chebyshev-highpass n fc (loss-dB 60.0))
   "(make-inverse-chebyshev-highpass n fc (loss-dB 60.0)) returns a highpass inverse-Chebyshev filter; n = order, \
@@ -250,7 +250,7 @@ fc = cutoff freq (srate = 1.0): (make-inverse-chebyshev-highpass 10 .1 120)"
   (let* ((proto (inverse-chebyshev-prototype n loss-dB))
 	 (hproto (prototype->highpass n (car proto) (cadr proto)))
 	 (coeffs (analog->digital n (car hproto) (cadr hproto) fc)))
-    (make-filter :xcoeffs (vct-scale! (car coeffs) (caddr proto)) :ycoeffs (cadr coeffs))))
+    (make-filter :xcoeffs (float-vector-scale! (car coeffs) (caddr proto)) :ycoeffs (cadr coeffs))))
 
 (define* (make-inverse-chebyshev-bandpass n fl fh (loss-dB 60.0))
   "(make-inverse-chebyshev-bandpass n fl fh (loss-dB 60.0)) returns a bandpass inverse-Chebyshev filter; n = order, \
@@ -282,7 +282,7 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
       x))
 ; this form overflows if we don't have bignums
 ;  (define (bessel-i n)
-;    (let ((cs (make-vct (+ n 1))))
+;    (let ((cs (make-float-vector (+ n 1))))
 ;      (do ((i 0 (+ i 1)))
 ;	  ((> i n))
 ;	(set! (cs i) (/ (fact (- (* 2 n) i))
@@ -291,7 +291,7 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
 ;			   (fact (- n i))))))
 ;      cs))
   (define (bessel-i n)
-    (let ((cs (make-vct (+ n 1))))
+    (let ((cs (make-float-vector (+ n 1))))
       (do ((i 0 (+ i 1)))
 	  ((> i n))
 	(let ((val (/ 1.0 (* (fact i) (expt 2 (- n i))))))
@@ -303,10 +303,10 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
       cs))
 
   (let* ((len (/ (* n 3) 2))
-	 (num (make-vct len))
-	 (den (make-vct len))
+	 (num (make-float-vector len))
+	 (den (make-float-vector len))
 	 (b2 (bessel-i n)))
-    (let ((p (gsl-roots (vct->vector b2))))
+    (let ((p (gsl-roots (float-vector->vector b2))))
       (do ((i 0 (+ i 1)))
 	  ((= i n))
 	(set! (p i) (/ (p i) (expt (b2 0) (/ 1.0 n)))))
@@ -360,7 +360,7 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
 
   (define* (minimize-function f xmin xmax arg1 arg2)
     (let* ((n 20)
-	   (x (make-vct n))
+	   (x (make-float-vector n))
 	   (fx (f xmin arg1 arg2)))
       (do ((i 0 (+ i 1)))
 	  ((= i n))
@@ -394,15 +394,15 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
 	 (m 0.0)
 	 (k 0.0)
 	 (len (/ (* n 3) 2))
-	 (num (make-vct len))
-	 (den (make-vct len))
+	 (num (make-float-vector len))
+	 (den (make-float-vector len))
 	 (g 1.0)
 	 (eps 0.0000001))
     (if (> (abs (- 1.0 (* k1p k1p))) eps)
 	(set! kr (* n (/ (gsl-ellipk (* k1 k1)) (gsl-ellipk (* k1p k1p))))))
     (set! m (minimize-function findm 0.001 0.999 kr))
     (set! k (gsl-ellipk m))
-    (let ((cv (make-vct (floor (* 0.5 3 (+ n 1))))))
+    (let ((cv (make-float-vector (floor (* 0.5 3 (+ n 1))))))
       (do ((i 0 (+ i 2))
 	   (j 0 (+ j 3)))
 	  ((>= i n))
@@ -449,7 +449,7 @@ fc = cutoff freq (srate = 1.0): (make-elliptic-lowpass 8 .25 .01 90)"
   (if (odd? n) (set! n (+ n 1)))
   (let* ((proto (elliptic-prototype n ripple loss-dB))
 	 (coeffs (analog->digital n (car proto) (cadr proto) fc)))
-    (make-filter :xcoeffs (vct-scale! (car coeffs) (caddr proto)) :ycoeffs (cadr coeffs))))
+    (make-filter :xcoeffs (float-vector-scale! (car coeffs) (caddr proto)) :ycoeffs (cadr coeffs))))
 
 (define* (make-elliptic-highpass n fc (ripple 1.0) (loss-dB 60.0))
   "(make-elliptic-highpass n fc (ripple 1.0) (loss-dB 60.0)) returns a highpass elliptic filter; n = order, \
@@ -458,7 +458,7 @@ fc = cutoff freq (srate = 1.0): (make-elliptic-highpass 8 .25 .01 90)"
   (let* ((proto (elliptic-prototype n ripple loss-dB))
 	 (hproto (prototype->highpass n (car proto) (cadr proto)))
 	 (coeffs (analog->digital n (car hproto) (cadr hproto) fc)))
-    (make-filter :xcoeffs (vct-scale! (car coeffs) (caddr proto)) :ycoeffs (cadr coeffs))))
+    (make-filter :xcoeffs (float-vector-scale! (car coeffs) (caddr proto)) :ycoeffs (cadr coeffs))))
 
 (define* (make-elliptic-bandpass n fl fh (ripple 1.0) (loss-dB 60.0))
   "(make-elliptic-bandpass n fl fh (ripple 1.0) (loss-dB 60.0)) returns a bandpass elliptic filter; n = order, \

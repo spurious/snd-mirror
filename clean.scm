@@ -41,7 +41,7 @@
 	 (block-size (min len (* 1024 1024))) ; do edits by blocks rather than sample-at-a-time (saves time, memory etc)
 	 (block-ctr 0)
 	 (block-beg 0)
-	 (block (make-vct block-size))
+	 (block (make-float-vector block-size))
 	 (block-changed #f))
      (do ((ctr 0 (+ ctr 1)))
 	 ((= ctr len))
@@ -70,24 +70,24 @@
 	   (begin
 	     (if block-changed
 		 (begin
-		   (vct->channel block block-beg block-size snd chn)
+		   (float-vector->channel block block-beg block-size snd chn)
 		   (set! block-changed #f)))
 	     (set! block-beg (+ block-beg (- block-size 1)))
 	     (set! block-ctr 1)
 	     (set! (block 0) samp2))))
      (if block-changed
-	 (vct->channel block block-beg block-ctr snd chn))
+	 (float-vector->channel block block-beg block-ctr snd chn))
     fixed))
 
 (define (test-remove-single-clicks)
   (let ((test (new-sound "test.snd")))
-    (let ((data (make-vct 1001)))
+    (let ((data (make-float-vector 1001)))
       (do ((i 2 (+ i 30))
 	   (val .9 (- val .05)))
 	  ((>= i 1000))
 	(set! (data i) val))
       (set! (data 1000) .001)
-      (vct->channel data)
+      (float-vector->channel data)
       (remove-single-sample-clicks)
       (let ((mx (maxamp))
 	    (loc (maxamp-position)))
@@ -98,11 +98,11 @@
 	   (ang 0.0 (+ ang .01)))
 	  ((= i 1000))
 	(set! (data i) (+ (data i) (* .2 (sin ang)))))
-      (vct->channel data)
+      (float-vector->channel data)
       (remove-single-sample-clicks)
       (if (fneq (maxamp) .2)
 	  (format #t "~%;remove-single-sample-clicks sin max: ~A" (maxamp)))
-      (let ((cur-data (channel->vct 0))
+      (let ((cur-data (channel->float-vector 0))
 	    (diff 0.0))
 	(do ((i 0 (+ i 1))
 	     (ang 0.0 (+ ang .01)))
@@ -114,7 +114,7 @@
 
 ;;; -------- pops
 
-(define* (smooth-vct data beg dur)
+(define* (smooth-float-vector data beg dur)
   (let* ((y0 (data beg))
 	 (y1 (data (+ beg dur)))
 	 (angle (if (> y1 y0) pi 0.0)) 
@@ -124,6 +124,8 @@
     (do ((i 0 (+ i 1)))
 	((= i dur))
       (set! (data (+ beg i)) (+ off (* scale (cos (+ angle (* i incr)))))))))
+
+(define smooth-vct smooth-float-vector)
 
 (define* (remove-pops (size 8) snd chn)
   (let* ((reader (make-sampler 0 snd chn))
@@ -145,7 +147,7 @@
 	 (block-size (min (+ len pad) (* 1024 1024)))
 	 (block-ctr 0)
 	 (block-beg 0)
-	 (block (make-vct block-size))
+	 (block (make-float-vector block-size))
 	 (block-changed #f))
     
      (let ((check-val 0.0)
@@ -177,7 +179,7 @@
 		     (begin
 		       (set! fixed (+ fixed 1))
 		       (set! checking #f)
-		       (smooth-vct block (- check-start block-beg) (+ size checker))
+		       (smooth-float-vector block (- check-start block-beg) (+ size checker))
 		       (set! block-changed #t)))
 		 (if moving-start
 		     (begin
@@ -206,7 +208,7 @@
 	       (begin
 		 (if block-changed
 		     (begin
-		       (vct->channel block block-beg (- block-ctr pad) snd chn)
+		       (float-vector->channel block block-beg (- block-ctr pad) snd chn)
 		       (set! block-changed #f)))
 		 (set! block-beg (+ block-beg (- block-ctr pad)))
 		 (do ((i 0 (+ i 1))
@@ -216,20 +218,20 @@
 		 (set! block-ctr pad)))))
        
        (if block-changed
-	   (vct->channel block block-beg block-ctr snd chn)))
+	   (float-vector->channel block block-beg block-ctr snd chn)))
 
     fixed))
 
 (define (test-remove-pops)
   (new-sound "test.snd")
-  (let ((data (make-vct 4001)))
+  (let ((data (make-float-vector 4001)))
     (do ((i 100 (+ i 200)))
 	((>= i 3800))
       (let ((size (random 8)))
 	(do ((k 0 (+ k 1)))
 	    ((= k size))
 	  (set! (data (+ i k)) (mus-random 1.0)))))
-    (vct->channel data)
+    (float-vector->channel data)
     (remove-pops)
     (let ((mx (maxamp)))
       (if (> mx .01)
@@ -240,7 +242,7 @@
 	((= i 4000))
       (set! (data i) (+ (data i)
 			(* .2 (sin ang)))))
-    (vct->channel data)
+    (float-vector->channel data)
     (remove-pops)
     (let ((mx (maxamp)))
       (if (fneq mx .2)
@@ -308,12 +310,12 @@
 
 (define (test-remove-DC)
   (let ((test (new-sound "test.snd"))
-	(data (make-vct 4001)))
+	(data (make-float-vector 4001)))
     (do ((i 0 (+ i 1))
 	 (ang 0.0 (+ ang .01)))
 	((= i 4000))
-      (vct-set! data i (+ .1 (mus-random 0.1) (* .2 (sin ang)))))
-    (vct->channel data)
+      (float-vector-set! data i (+ .1 (mus-random 0.1) (* .2 (sin ang)))))
+    (float-vector->channel data)
     (let ((dc (goertzel 0.0))
 	  (sig (goertzel 35.0)))
       (let ((dcflt (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.99))))
@@ -328,7 +330,7 @@
 
 (define* (tvf-channel snd chn)
   (let* ((size (frames snd chn))
-	 (avg-data (make-vct size))
+	 (avg-data (make-float-vector size))
 	 (ctr 0)
 	 (mx (maxamp snd chn))
 	 (avg-size 8192)

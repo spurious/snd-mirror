@@ -84,7 +84,7 @@
   (let ((frq (envelope-interp (/ frequency (* (mus-srate) 0.5)) moog-freqtable)))
     (make-moog :freq frequency 
 	       :Q Q 
-	       :s (make-vct 4) 
+	       :s (make-float-vector 4) 
 	       :y 0.0 
 	       :fc frq
 	       :gain (* Q (array-interp moog-gaintable (+ 99.0 (* frq 99.0)))))))
@@ -110,9 +110,9 @@
 	  (st 0.0))
       (do ((cell 0 (+ 1 cell)))
 	  ((= cell 4))
-	(set! st (vct-ref s cell))
+	(set! st (float-vector-ref s cell))
 	(set! A (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
-	(vct-set! s cell A)
+	(float-vector-set! s cell A)
 	(set! A (min 0.95 (max -0.95 (+ A st)))))
       (set! y (* A gain))
       A)))

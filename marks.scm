@@ -106,7 +106,7 @@
 	      (if (< (car lst-samps) max-samp)
 		  (let ((nsamps (- max-samp (car lst-samps)))
 			(snd-chn (mark-home (car lst-ids))))
-		    (insert-samples 0 nsamps (make-vct nsamps) (car snd-chn) (cadr snd-chn))))
+		    (insert-samples 0 nsamps (make-float-vector nsamps) (car snd-chn) (cadr snd-chn))))
 	      (pad-to-sync (cdr lst-ids) (cdr lst-samps)))))
       (pad-to-sync ids samps))))
 
@@ -127,7 +127,7 @@
 			   m2 (car m2-home) (cadr m2-home)))
 	(let* ((mark-samps (- m2-samp m1-samp))
 	       (selection-samps (selection-frames))
-	       (reg-data (let ((data (make-vct selection-samps))
+	       (reg-data (let ((data (make-float-vector selection-samps))
 			       (rd (make-sampler (selection-position))))
 			   (do ((i 0 (+ 1 i)))
 			       ((= i selection-samps))
@@ -157,7 +157,7 @@
 (define (pad-marks ids secs)
   "(pad-marks marks secs) inserts secs seconds of silence before each mark"
   (let* ((silence-length (floor (* secs (srate))))
-	 (silence-samps (make-vct silence-length)))
+	 (silence-samps (make-float-vector silence-length)))
     (as-one-edit
      (lambda ()
        (for-each 

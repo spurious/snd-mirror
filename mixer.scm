@@ -102,7 +102,7 @@
       (set! x (mixer* mx x)))
     nmx))
 
-;;; (define (vct-norm v1) (sqrt (dot-product v1 v1)))
+;;; (define (float-vector-norm v1) (sqrt (dot-product v1 v1)))
 
 (define (mixer-trace mx)
   "(mixer-trace mx) returns the trace of 'mx'"

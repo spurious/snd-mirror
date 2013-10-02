@@ -52,14 +52,14 @@
 	  np))))
 
 (define (poly-reduce p1)
-  "(poly-reduce p1) removes trailing (high-degree) zeros from the vct p1"
+  "(poly-reduce p1) removes trailing (high-degree) zeros from the float-vector p1"
   (if (= (p1 (- (length p1) 1)) 0.0)
-      (vector->vct (poly-as-vector-reduce (vct->vector p1)))
+      (vector->float-vector (poly-as-vector-reduce (float-vector->vector p1)))
       p1))
 
-;;; (poly-reduce (float-vector 1 2 3)) -> #<vct[len=3]: 1.000 2.000 3.000>
-;;; (poly-reduce (float-vector 1 2 3 0 0 0)) -> #<vct[len=3]: 1.000 2.000 3.000>
-;;; (poly-reduce (float-vector 0 0 0 0 1 0)) -> #<vct[len=5]: 0.000 0.000 0.000 0.000 1.000>
+;;; (poly-reduce (float-vector 1 2 3)) -> #<float-vector[len=3]: 1.000 2.000 3.000>
+;;; (poly-reduce (float-vector 1 2 3 0 0 0)) -> #<float-vector[len=3]: 1.000 2.000 3.000>
+;;; (poly-reduce (float-vector 0 0 0 0 1 0)) -> #<float-vector[len=5]: 0.000 0.000 0.000 0.000 1.000>
 
       
 (define (poly-as-vector+ p1 p2)
@@ -77,15 +77,15 @@
 	v)))
 
 (define (poly+ p1 p2) 
-  "(poly+ p1 p2)  adds vectors or vcts p1 and p2"
-  (vector->vct 
+  "(poly+ p1 p2)  adds vectors or float-vectors p1 and p2"
+  (vector->float-vector 
    (poly-as-vector+ 
-    (if (vct? p1) (vct->vector p1) p1) 
-    (if (vct? p2) (vct->vector p2) p2))))
+    (if (float-vector? p1) (float-vector->vector p1) p1) 
+    (if (float-vector? p2) (float-vector->vector p2) p2))))
 
-;;; (poly+ (float-vector .1 .2 .3) (float-vector 0.0 1.0 2.0 3.0 4.0)) -> #<vct[len=5]: 0.100 1.200 2.300 3.000 4.000>
-;;; (poly+ (float-vector .1 .2 .3) .5) -> #<vct[len=3]: 0.600 0.200 0.300>
-;;; (poly+ .5 (float-vector .1 .2 .3)) -> #<vct[len=3]: 0.600 0.200 0.300>
+;;; (poly+ (float-vector .1 .2 .3) (float-vector 0.0 1.0 2.0 3.0 4.0)) -> #<float-vector[len=5]: 0.100 1.200 2.300 3.000 4.000>
+;;; (poly+ (float-vector .1 .2 .3) .5) -> #<float-vector[len=3]: 0.600 0.200 0.300>
+;;; (poly+ .5 (float-vector .1 .2 .3)) -> #<float-vector[len=3]: 0.600 0.200 0.300>
 
 
 (define (poly-as-vector* p1 p2)
@@ -106,17 +106,17 @@
       (vector-scale! (vector-copy p2) p1)))
 
 (define (poly* p1 p2)
-  "(poly* p1 p2) multiplies the polynomials (vcts or vectors) p1 and p2"
-  (vector->vct 
+  "(poly* p1 p2) multiplies the polynomials (float-vectors or vectors) p1 and p2"
+  (vector->float-vector 
    (poly-as-vector* 
-    (if (vct? p1) (vct->vector p1) p1) 
-    (if (vct? p2) (vct->vector p2) p2))))
+    (if (float-vector? p1) (float-vector->vector p1) p1) 
+    (if (float-vector? p2) (float-vector->vector p2) p2))))
     
-;;; (poly* (float-vector 1 1) (float-vector -1 1)) -> #<vct[len=4]: -1.000 0.000 1.000 0.000>
-;;; (poly* (float-vector -5 1) (float-vector 3 7 2)) -> #<vct[len=5]: -15.000 -32.000 -3.000 2.000 0.000>
-;;; (poly* (float-vector -30 -4 2) (float-vector 0.5 1)) -> #<vct[len=5]: -15.000 -32.000 -3.000 2.000 0.000>
-;;; (poly* (float-vector -30 -4 2) 0.5) -> #<vct[len=3]: -15.000 -2.000 1.000>
-;;; (poly* 2.0 (float-vector -30 -4 2)) -> #<vct[len=3]: -60.000 -8.000 4.000>
+;;; (poly* (float-vector 1 1) (float-vector -1 1)) -> #<float-vector[len=4]: -1.000 0.000 1.000 0.000>
+;;; (poly* (float-vector -5 1) (float-vector 3 7 2)) -> #<float-vector[len=5]: -15.000 -32.000 -3.000 2.000 0.000>
+;;; (poly* (float-vector -30 -4 2) (float-vector 0.5 1)) -> #<float-vector[len=5]: -15.000 -32.000 -3.000 2.000 0.000>
+;;; (poly* (float-vector -30 -4 2) 0.5) -> #<float-vector[len=3]: -15.000 -2.000 1.000>
+;;; (poly* 2.0 (float-vector -30 -4 2)) -> #<float-vector[len=3]: -60.000 -8.000 4.000>
 
 
 (define (poly-as-vector/ p1 p2)
@@ -150,16 +150,16 @@
       (list (vector 0) p2)))
 
 (define (poly/ p1 p2)
-  "(poly/ p1 p2) divides p1 by p2, both polynomials either vcts or vectors"
-  (map vector->vct (poly-as-vector/ (if (vct? p1) (vct->vector p1) p1) 
-				    (if (vct? p2) (vct->vector p2) p2))))
+  "(poly/ p1 p2) divides p1 by p2, both polynomials either float-vectors or vectors"
+  (map vector->float-vector (poly-as-vector/ (if (float-vector? p1) (float-vector->vector p1) p1) 
+				    (if (float-vector? p2) (float-vector->vector p2) p2))))
 
-;;; (poly/ (float-vector -1.0 -0.0 1.0) (vector 1.0 1.0)) -> (#<vct[len=3]: -1.000 1.000 0.000> #<vct[len=3]: 0.000 0.000 0.000>)
-;;; (poly/ (float-vector -15 -32 -3 2) (vector -5 1)) -> (#<vct[len=4]: 3.000 7.000 2.000 0.000> #<vct[len=4]: 0.000 0.000 0.000 0.000>)
-;;; (poly/ (float-vector -15 -32 -3 2) (vector 3 1)) -> (#<vct[len=4]: -5.000 -9.000 2.000 0.000> #<vct[len=4]: 0.000 0.000 0.000 0.000>)
-;;; (poly/ (float-vector -15 -32 -3 2) (vector .5 1)) -> (#<vct[len=4]: -30.000 -4.000 2.000 0.000> #<vct[len=4]: 0.000 0.000 0.000 0.000>)
-;;; (poly/ (float-vector -15 -32 -3 2) (vector 3 7 2)) -> (#<vct[len=4]: -5.000 1.000 0.000 0.000> #<vct[len=4]: 0.000 0.000 0.000 0.000>)
-;;; (poly/ (float-vector -15 -32 -3 2) 2.0) -> (#<vct[len=4]: -7.500 -16.000 -1.500 1.000> #<vct[len=1]: 0.0>)
+;;; (poly/ (float-vector -1.0 -0.0 1.0) (vector 1.0 1.0)) -> (#<float-vector[len=3]: -1.000 1.000 0.000> #<float-vector[len=3]: 0.000 0.000 0.000>)
+;;; (poly/ (float-vector -15 -32 -3 2) (vector -5 1)) -> (#<float-vector[len=4]: 3.000 7.000 2.000 0.000> #<float-vector[len=4]: 0.000 0.000 0.000 0.000>)
+;;; (poly/ (float-vector -15 -32 -3 2) (vector 3 1)) -> (#<float-vector[len=4]: -5.000 -9.000 2.000 0.000> #<float-vector[len=4]: 0.000 0.000 0.000 0.000>)
+;;; (poly/ (float-vector -15 -32 -3 2) (vector .5 1)) -> (#<float-vector[len=4]: -30.000 -4.000 2.000 0.000> #<float-vector[len=4]: 0.000 0.000 0.000 0.000>)
+;;; (poly/ (float-vector -15 -32 -3 2) (vector 3 7 2)) -> (#<float-vector[len=4]: -5.000 1.000 0.000 0.000> #<float-vector[len=4]: 0.000 0.000 0.000 0.000>)
+;;; (poly/ (float-vector -15 -32 -3 2) 2.0) -> (#<float-vector[len=4]: -7.500 -16.000 -1.500 1.000> #<float-vector[len=1]: 0.0>)
 
 
 (define (poly-as-vector-derivative p1)
@@ -172,12 +172,12 @@
       (set! (v i) (* j (p1 j))))))
 
 (define (poly-derivative p1) 
-  "(poly-derivative p1) returns the derivative of p1, either a vct or vector"
-  (vector->vct 
+  "(poly-derivative p1) returns the derivative of p1, either a float-vector or vector"
+  (vector->float-vector 
    (poly-as-vector-derivative 
-    (vct->vector p1))))
+    (float-vector->vector p1))))
 
-;;; (poly-derivative (float-vector 0.5 1.0 2.0 4.0)) -> #<vct[len=3]: 1.000 4.000 12.000>
+;;; (poly-derivative (float-vector 0.5 1.0 2.0 4.0)) -> #<float-vector[len=3]: 1.000 4.000 12.000>
 
 ;;; poly-antiderivative with random number as constant? or max of all coeffs? -- 0.0 seems like a bad idea -- maybe an optional arg 
 ;;; then poly-integrate: (let ((integral (poly-antiderivative p1))) (- (poly-as-vector-eval integral end) (poly-as-vector-eval integral beg)))
@@ -206,10 +206,10 @@
 	  (mixer-determinant mat)))))
 
 (define (poly-resultant p1 p2) 
-  "(poly-resultant p1 p2) returns the resultant of polynomials p1 and p2 (vcts or vectors)"
+  "(poly-resultant p1 p2) returns the resultant of polynomials p1 and p2 (float-vectors or vectors)"
   (poly-as-vector-resultant 
-   (if (vct? p1) (vct->vector p1) p1)
-   (if (vct? p2) (vct->vector p2) p2)))
+   (if (float-vector? p1) (float-vector->vector p1) p1)
+   (if (float-vector? p2) (float-vector->vector p2) p2)))
 
     
 (define (poly-as-vector-discriminant p1)
@@ -217,9 +217,9 @@
   (poly-as-vector-resultant p1 (poly-as-vector-derivative p1)))
 
 (define (poly-discriminant p1)
-  "(poly-discriminant p1) returns the discriminant of polynomial p1 (either a vct or a vector)"
+  "(poly-discriminant p1) returns the discriminant of polynomial p1 (either a float-vector or a vector)"
   (poly-as-vector-discriminant 
-   (if (vct? p1) (vct->vector p1) p1)))
+   (if (float-vector? p1) (float-vector->vector p1) p1)))
 
 
 ;;; (poly-as-vector-resultant (vector -1 0 1) (vector 1 -2 1))  0.0 (x=1 is the intersection)
@@ -251,12 +251,12 @@
 
 
 (define (poly-gcd p1 p2)
-  "(poly-gcd p1 p2) returns the GCD of polynomials p1 and p2 (both vcts)"
+  "(poly-gcd p1 p2) returns the GCD of polynomials p1 and p2 (both float-vectors)"
   (if (< (length p1) (length p2))
       (float-vector 0.0)
       (let ((qr (map poly-reduce (poly/ p1 p2))))
 	(if (= (length (cadr qr)) 1)
-	    (if (= (vct-ref (cadr qr) 0) 0.0)
+	    (if (= (float-vector-ref (cadr qr) 0) 0.0)
 		p2
 		(float-vector 0.0))
 	    (apply poly-gcd qr)))))
@@ -272,14 +272,14 @@
 		(vector 0))
 	    (apply poly-as-vector-gcd qr)))))
 
-;;; (poly-gcd (poly-reduce (poly* (float-vector 2 1) (float-vector -3 1))) (float-vector 2 1)) -> #<vct[len=2]: 2.000 1.000>
-;;; (poly-gcd (poly-reduce (poly* (float-vector 2 1) (float-vector -3 1))) (float-vector 3 1)) -> #<vct[len=1]: 6.000>
-;;; (poly-gcd (poly-reduce (poly* (float-vector 2 1) (float-vector -3 1))) (float-vector -3 1)) -> #<vct[len=2]: -3.000 1.000>
-;;; (poly-gcd (poly-reduce (poly* (float-vector 8 1) (poly* (float-vector 2 1) (float-vector -3 1)))) (float-vector -3 1)) -> #<vct[len=2]: -3.000 1.000>
-;;; (poly-gcd (poly-reduce (poly* (float-vector 8 1) (poly* (float-vector 2 1) (float-vector -3 1)))) (poly-reduce (poly* (float-vector 8 1) (float-vector -3 1)))) -> #<vct[len=3]: -24.000 5.000 1.000>
-;;; (poly-gcd (float-vector -1 0 1) (float-vector 2 -2 -1 1)) -> #<vct[len=1]: 0.000>
-;;; (poly-gcd (float-vector 2 -2 -1 1) (float-vector -1 0 1)) -> #<vct[len=2]: 1.000 -1.000>
-;;; (poly-gcd (float-vector 2 -2 -1 1) (float-vector -2.5 1)) -> #<vct[len=1]: 0.000>
+;;; (poly-gcd (poly-reduce (poly* (float-vector 2 1) (float-vector -3 1))) (float-vector 2 1)) -> #<float-vector[len=2]: 2.000 1.000>
+;;; (poly-gcd (poly-reduce (poly* (float-vector 2 1) (float-vector -3 1))) (float-vector 3 1)) -> #<float-vector[len=1]: 6.000>
+;;; (poly-gcd (poly-reduce (poly* (float-vector 2 1) (float-vector -3 1))) (float-vector -3 1)) -> #<float-vector[len=2]: -3.000 1.000>
+;;; (poly-gcd (poly-reduce (poly* (float-vector 8 1) (poly* (float-vector 2 1) (float-vector -3 1)))) (float-vector -3 1)) -> #<float-vector[len=2]: -3.000 1.000>
+;;; (poly-gcd (poly-reduce (poly* (float-vector 8 1) (poly* (float-vector 2 1) (float-vector -3 1)))) (poly-reduce (poly* (float-vector 8 1) (float-vector -3 1)))) -> #<float-vector[len=3]: -24.000 5.000 1.000>
+;;; (poly-gcd (float-vector -1 0 1) (float-vector 2 -2 -1 1)) -> #<float-vector[len=1]: 0.000>
+;;; (poly-gcd (float-vector 2 -2 -1 1) (float-vector -1 0 1)) -> #<float-vector[len=2]: 1.000 -1.000>
+;;; (poly-gcd (float-vector 2 -2 -1 1) (float-vector -2.5 1)) -> #<float-vector[len=1]: 0.000>
 
 
 (define (poly-as-vector-roots p1)
@@ -489,7 +489,7 @@
 
 (define (poly-roots p1) 
   "(poly-roots p1) returns the roots of polynomial p1"
-  (let* ((v1 (vct->vector (poly-reduce p1)))
+  (let* ((v1 (float-vector->vector (poly-reduce p1)))
 	 (roots (poly-as-vector-roots v1)))
     (for-each
      (lambda (q)
@@ -527,13 +527,13 @@
 				(make-rectangular (mus-random 1.0) (mus-random 1.0)))))
 
 (do ((i 3 (+ i 1))) ((= i 20)) 
-  (let ((v (make-vct i 0.0)))
+  (let ((v (make-float-vector i 0.0)))
     (set! (v 0) (mus-random 1.0))
     (set! (v (- i 1)) 1.0)
     (poly-roots v)))
 
 (do ((i 3 (+ i 2))) ((= i 21)) 
-  (let ((v (make-vct i 0.0)))
+  (let ((v (make-float-vector i 0.0)))
     (set! (v 0) (mus-random 1.0))
     (set! (v (- i 1)) 1.0)
     (set! (v (/ (- i 1) 2)) 1.0)

@@ -18,7 +18,7 @@
     ;;      in-counter ("filptr")
     ;;      hamming window scaled
     ;;      slot for in-coming data ("in-data") (created on first call)
-    ;;      vcts: ampinc amp freqinc phaseinc phase lastphase
+    ;;      float-vectors: ampinc amp freqinc phaseinc phase lastphase
     ;;      funcs: analysize, edit, resynthesize
 
     (list 
@@ -27,16 +27,16 @@
      0                             ;filptr
      N                             ;N
      (let ((window (make-fft-window hamming-window fftsize)))
-       (vct-scale! window (/ 2.0 (* 0.54 fftsize))) ;den = hamming window integrated
+       (float-vector-scale! window (/ 2.0 (* 0.54 fftsize))) ;den = hamming window integrated
        window)                     ; window
      D                             ;D
      #f                            ;in-data (created in pvocoder gen)
-     (make-vct fftsize)            ;ampinc
-     (make-vct fftsize)            ;freqs
-     (make-vct N2)                 ;amps
-     (make-vct N2)                 ;phaseinc
-     (make-vct N2)                 ;phases
-     (make-vct N2)                 ;lastphaseinc
+     (make-float-vector fftsize)            ;ampinc
+     (make-float-vector fftsize)            ;freqs
+     (make-float-vector N2)                 ;amps
+     (make-float-vector N2)                 ;phaseinc
+     (make-float-vector N2)                 ;phases
+     (make-float-vector N2)                 ;lastphaseinc
      analyze
      edit
      synthesize)))
@@ -101,13 +101,13 @@
 		(set-pvoc-output pv 0)
 		(if (not (pvoc-in-data pv))
 		    (begin
-		      (set-pvoc-in-data pv (make-vct N))
+		      (set-pvoc-in-data pv (make-float-vector N))
 		      (do ((i 0 (+ i 1)))
 			  ((= i N))
 			(set! ((pvoc-in-data pv) i) (input))))
 		    (let ((indat (pvoc-in-data pv)))
 		      ;; extra loop here since I find the optimized case confusing (we could dispense with the data move)
-		      (vct-move! indat 0 D)
+		      (float-vector-move! indat 0 D)
 		      (do ((i (- N D) (+ i 1)))
 			  ((= i N))
 			(set! (indat i) (input)))))
@@ -115,8 +115,8 @@
 		  (if (= buf 0)
 		      (begin
 			(fill! amps 0.0)
-			(vct-add! amps (pvoc-in-data pv))
-			(vct-multiply! amps (pvoc-window pv)))
+			(float-vector-add! amps (pvoc-in-data pv))
+			(float-vector-multiply! amps (pvoc-window pv)))
 		      (begin
 			(do ((k 0 (+ k 1)))
 			    ((= k N))
@@ -137,16 +137,16 @@
 		(do ((k 0 (+ k 1)))
 		    ((= k lim))
 		  (let ((phasediff (remainder (- (freqs k) (lp k)) pi2)))
-		    (vct-set! lp k (freqs k))
+		    (float-vector-set! lp k (freqs k))
 		    (if (> phasediff pi) (set! phasediff (- phasediff pi2))
 			(if (< phasediff (- pi)) (set! phasediff (+ phasediff pi2))))
 		    (set! (freqs k) (+ (* pscl phasediff) (* k kscl)))))))
 
 	  (let ((scl (/ 1.0 (pvoc-interp pv))))
-	    (vct-subtract! amps (pvoc-amps pv))
-	    (vct-subtract! freqs (pvoc-phaseinc pv))
-	    (vct-scale! amps scl)
-	    (vct-scale! freqs scl)
+	    (float-vector-subtract! amps (pvoc-amps pv))
+	    (float-vector-subtract! freqs (pvoc-phaseinc pv))
+	    (float-vector-scale! amps scl)
+	    (float-vector-scale! freqs scl)
 	    )))
 
     (set-pvoc-output pv (+ 1 (pvoc-output pv)))
@@ -156,9 +156,9 @@
         ;; if no synthesis func:
 	;; synthesize next sample
 	(begin
-	  (vct-add! (pvoc-amps pv) (pvoc-ampinc pv))
-	  (vct-add! (pvoc-phaseinc pv) (pvoc-freqs pv))
-	  (vct-add! (pvoc-phases pv) (pvoc-phaseinc pv))
+	  (float-vector-add! (pvoc-amps pv) (pvoc-ampinc pv))
+	  (float-vector-add! (pvoc-phaseinc pv) (pvoc-freqs pv))
+	  (float-vector-add! (pvoc-phases pv) (pvoc-phaseinc pv))
 	  (sine-bank (pvoc-amps pv) (pvoc-phases pv))))
     ))
 
@@ -210,13 +210,13 @@
 				   ))
 	   (reader (make-sampler 0))
 	   (len (floor (* time (frames))))
-	   (data (make-vct len))
+	   (data (make-float-vector len))
 	   )
       (do ((i 0 (+ i 1)))
 	  ((= i len))
 	(set! (data i) (phase-vocoder pv (lambda (dir) (next-sample reader)))))
       (free-sampler reader)
-      (vct->channel data 0 len))))
+      (float-vector->channel data 0 len))))
 
 (define test-pv-4
   (lambda (gate)
@@ -228,7 +228,7 @@
 				      (do ((i 0 (+ i 1)))
 					  ((= i N))
 					(if (< ((phase-vocoder-amp-increments v) i) gate)
-					    (vct-set! (phase-vocoder-amp-increments v) i 0.0)))
+					    (float-vector-set! (phase-vocoder-amp-increments v) i 0.0)))
 				      #t))
 				  #f ;no change to synthesis
 				  ))
@@ -266,24 +266,24 @@
 	   (syngate (if (= 0.0 gate) 0.0 (expt 10 (/ (- (abs gate)) 20))))
 	   (poffset (hz->radians hoffset))
 	   (window (make-fft-window hamming-window fftsize))
-	   (fdr (make-vct N))     ; buffer for real fft data
-	   (fdi (make-vct N))     ; buffer for imaginary fft data
-	   (lastphase (make-vct N2)) ;; last phase change
-	   (lastamp (make-vct N2)) ;; last sampled amplitude
-	   (lastfreq (make-vct N2)) ;; last sampled frequency
-	   (ampinc (make-vct N2)) ;; amplitude interpolation increment
-	   (freqinc (make-vct N2)) ;; frequency interpolation increments
+	   (fdr (make-float-vector N))     ; buffer for real fft data
+	   (fdi (make-float-vector N))     ; buffer for imaginary fft data
+	   (lastphase (make-float-vector N2)) ;; last phase change
+	   (lastamp (make-float-vector N2)) ;; last sampled amplitude
+	   (lastfreq (make-float-vector N2)) ;; last sampled frequency
+	   (ampinc (make-float-vector N2)) ;; amplitude interpolation increment
+	   (freqinc (make-float-vector N2)) ;; frequency interpolation increments
 	   ;; expresses the fundamental in terms of radians per output sample
 	   (fundamental (/ pi2 N))
 	   (output interp)      ; count of samples that have been output
 	   ;; (nextpct 10.0)       ; how often to print out the percentage complete message
 	   (outlen (floor (* time len)))
-	   (out-data (make-vct (max len outlen)))
-	   (in-data (channel->vct 0 (* N 2) snd chn))
+	   (out-data (make-float-vector (max len outlen)))
+	   (in-data (channel->float-vector 0 (* N 2) snd chn))
 	   (in-data-beg 0)
-	   (obank (make-oscil-bank lastfreq (make-vct N2 0.0) lastamp)))
+	   (obank (make-oscil-bank lastfreq (make-float-vector N2 0.0) lastamp)))
 
-      (set! window (vct->vector (vct-scale! window (/ 2.0 (* 0.54 fftsize))))) ;den = hamming window integrated
+      (set! window (float-vector->vector (float-vector-scale! window (/ 2.0 (* 0.54 fftsize))))) ;den = hamming window integrated
 
       (do ((i 0 (+ i 1)))
 	  ((>= i outlen))
@@ -295,8 +295,8 @@
 	      ;; save the old amplitudes and frequencies
 	      (fill! lastamp 0.0)
 	      (fill! lastfreq 0.0)
-	      (vct-add! lastamp fdr)
-	      (vct-add! lastfreq fdi)
+	      (float-vector-add! lastamp fdr)
+	      (float-vector-add! lastfreq fdi)
 	      (do ((k 0 (+ k 1)))
 		  ((= k N))
 		;; apply the window and then stuff into the input array
@@ -310,7 +310,7 @@
 	      (if (> filptr (+ in-data-beg N))
 		  (begin
 		    (set! in-data-beg filptr)
-		    (set! in-data (channel->vct in-data-beg (* N 2) snd chn))))
+		    (set! in-data (channel->float-vector in-data-beg (* N 2) snd chn))))
 	      ;; no imaginary component input so zero out fdi
 	      (fill! fdi 0.0)
 	      ;; compute the fft
@@ -349,10 +349,10 @@
 		  ;; interpolating by freqinc
 		  (set! (freqinc k) (/ (- (fdi k) (lastfreq k)) interp))))))
 	;; loop over the partials interpolate frequency and amplitude
-	(vct-add! lastamp ampinc)
-	(vct-add! lastfreq freqinc)
+	(float-vector-add! lastamp ampinc)
+	(float-vector-add! lastfreq freqinc)
 	(set! (out-data i) (oscil-bank obank))
 	(set! output (+ 1 output)))
-      (vct->channel out-data 0 (max len outlen)))))
+      (float-vector->channel out-data 0 (max len outlen)))))
 
 

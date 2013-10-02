@@ -386,7 +386,7 @@
 		       0.0))
 	 
 	 ;; find delay times from specified distances or delays
-	 (times (let ((v (make-vct (length speakers))))
+	 (times (let ((v (make-float-vector (length speakers))))
 		  (do ((i 0 (+ i 1)))
 		      ((= i (length speakers)))
 		    (set! (v i) (let ((distance (and (not (null? distances)) (distances i)))

@@ -2938,7 +2938,7 @@
 
 (do ((i 0 (+ i 1)))
     ((= i 10))
-  (let ((mx (maxamp (with-sound (:clipped #f :output (make-vct 10000))
+  (let ((mx (maxamp (with-sound (:clipped #f :output (make-float-vector 10000))
 		      (let ((gen (make-krksin 20.0 (* i 0.1))))
 			(do ((i 0 (+ i 1)))
 			    ((= i 10000))
@@ -3253,7 +3253,7 @@
  (lambda (index)
    (for-each
     (lambda (r)
-      (let ((peak (maxamp (with-sound (:clipped #f :output (make-vct 1000))
+      (let ((peak (maxamp (with-sound (:clipped #f :output (make-float-vector 1000))
 			    (let ((gen (make-asymmetric-fm 2000.0 :ratio .1 :r r)))
 			      (do ((i 0 (+ i 1)))
 				  ((= i 1000))
@@ -3814,7 +3814,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (do ((i 0 (+ i 1)))
     ((= i 10))
   (let ((pk (maxamp 
-	     (with-sound (:output (make-vct 10000))
+	     (with-sound (:output (make-float-vector 10000))
   	       (let ((gen (make-j0j1cos 100.0 i)))
 		 (do ((i 0 (+ i 1)))
 		     ((= i 10000))
@@ -4672,20 +4672,20 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define* (make-table-lookup-with-env frequency pulse-env size)
   (let* ((len (or size (clm-table-size)))
-	 (ve (make-vct len))
+	 (ve (make-float-vector len))
 	 (e (make-env pulse-env :length len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (vct-set! ve i (env e)))
+      (float-vector-set! ve i (env e)))
     (make-table-lookup frequency 0.0 ve len)))
 
 (define* (make-wave-train-with-env frequency pulse-env size)
   (let* ((len (or size (clm-table-size)))
-	 (ve (make-vct len))
+	 (ve (make-float-vector len))
 	 (e (make-env pulse-env :length len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (vct-set! ve i (env e)))
+      (float-vector-set! ve i (env e)))
     (make-wave-train frequency 0.0 ve len)))
 
 
@@ -4917,7 +4917,7 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 (define* (make-pink-noise (n 1))
-  (let ((v (make-vct (* n 2)))
+  (let ((v (make-float-vector (* n 2)))
 	(amp (/ (* 2.5 (sqrt n)))))
     (set! (v 0) amp)
     (do ((i 2 (+ i 2)))
@@ -4926,7 +4926,7 @@ index 10 (so 10/2 is the bes-jn arg):
       (set! (v (+ i 1)) (random 1.0)))
     v))
 
-(define pink-noise? vct?)
+(define pink-noise? float-vector?)
 
 #|
 (define (pink-noise v)
@@ -5196,7 +5196,7 @@ index 10 (so 10/2 is the bes-jn arg):
     (if (>= absy (mus-scaler dly))
 	(set! (mus-scaler dly) absy)
 	(if (>= mx (mus-scaler dly))
-	    (set! (mus-scaler dly) (vct-peak (mus-data dly)))))
+	    (set! (mus-scaler dly) (float-vector-peak (mus-data dly)))))
     (mus-scaler dly)))
 |#
 
@@ -5407,8 +5407,8 @@ index 10 (so 10/2 is the bes-jn arg):
 						  ((>= i len))
 						(set! n (max n (floor (lst i)))))
 					      n))
-				      (sin-amps (make-vct (+ topk 1) 0.0))
-				      (cos-amps (make-vct (+ topk 1) 0.0)))
+				      (sin-amps (make-float-vector (+ topk 1) 0.0))
+				      (cos-amps (make-float-vector (+ topk 1) 0.0)))
 				 (do ((j 0 (+ j 3)))
 				     ((>= j len))
 				   (let ((n (floor (lst j)))
@@ -5432,11 +5432,11 @@ index 10 (so 10/2 is the bes-jn arg):
 			 (cons 'mus-xcoeff
 			       (make-procedure-with-setter
 				(lambda (g ind) ((g 'tn) ind))
-				(lambda (g ind val) (vct-set! (g 'tn) ind val))))
+				(lambda (g ind val) (float-vector-set! (g 'tn) ind val))))
 			 (cons 'mus-ycoeff
 			       (make-procedure-with-setter
 				(lambda (g ind) ((g 'un) ind))
-				(lambda (g ind val) (vct-set! (g 'un) ind val))))))
+				(lambda (g ind val) (float-vector-set! (g 'un) ind val))))))
   
   (frequency *clm-default-frequency*) (partial-amps-and-phases #f) (angle 0.0)
   (tn #f) (un #f) fm)
@@ -5494,9 +5494,9 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define (test-polyoid n)
   (let* ((res (with-sound (:channels 2 :clipped #f)
-		(let ((freqs (make-vct n))
-		      (phases (make-vct n))           ; for oscil-bank
-		      (cur-phases (make-vct (* 3 n))) ; for polyoid
+		(let ((freqs (make-float-vector n))
+		      (phases (make-float-vector n))           ; for oscil-bank
+		      (cur-phases (make-float-vector (* 3 n))) ; for polyoid
 		      (amp (/ 1.0 n)))
 		  (do ((i 0 (+ i 1))
 		       (j 0 (+ j 3)))
@@ -5919,11 +5919,11 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (moving-fft
 	       :make-wrapper (lambda (g)
 			       (let ((n (g 'n)))
-				 (set! (g 'rl) (make-vct n))
-				 (set! (g 'im) (make-vct n))
-				 (set! (g 'data) (make-vct n))
+				 (set! (g 'rl) (make-float-vector n))
+				 (set! (g 'im) (make-float-vector n))
+				 (set! (g 'data) (make-float-vector n))
 				 (set! (g 'window) (make-fft-window hamming-window n))
-				 (vct-scale! (g 'window) (/ 2.0 (* 0.54 n)))
+				 (float-vector-scale! (g 'window) (/ 2.0 (* 0.54 n)))
 				 (set! (g 'outctr) (+ n 1)) ; first time fill flag
 				 g))
 	       :methods (list
@@ -5950,17 +5950,17 @@ index 10 (so 10/2 is the bes-jn arg):
 		(begin
 		  (do ((i 0 (+ i 1)))
 		      ((= i n))
-		    (vct-set! data i (readin input))))
+		    (float-vector-set! data i (readin input))))
 		(let ((mid (- n hop)))
-		  (vct-move! data 0 hop)
+		  (float-vector-move! data 0 hop)
 		  (do ((i mid (+ i 1)))
 		      ((= i n))
-		    (vct-set! data i (readin input)))))
+		    (float-vector-set! data i (readin input)))))
 	    (set! outctr 0)
 	    (set! new-data #t)
 	    (fill! im 0.0)
-	    (vct-subseq data 0 n rl)
-	    (vct-multiply! rl fft-window)
+	    (float-vector-subseq data 0 n rl)
+	    (float-vector-multiply! rl fft-window)
 	    (mus-fft rl im n 1)
 	    (rectangular->polar rl im)))
       (set! outctr (+ outctr 1))
@@ -5971,13 +5971,13 @@ index 10 (so 10/2 is the bes-jn arg):
 (let* ((snd (new-sound))
        (rd (make-readin "oboe.snd"))
        (ft (make-moving-fft rd))
-       (data (make-vct 256)))
+       (data (make-float-vector 256)))
   (set! (lisp-graph?) #t)
   (do ((i 0 (+ i 1)))
       ((= i 10000))
     (if (moving-fft ft)
 	(begin
-	  (vct-subseq (mus-xcoeffs ft) 0 255 data)
+	  (float-vector-subseq (mus-xcoeffs ft) 0 255 data)
 	  (graph data "fft" 0.0 11025.0 0.0 0.1 snd 0 #t))))
   (close-sound snd))
 |#
@@ -5989,15 +5989,15 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (moving-spectrum
 	       :make-wrapper (lambda (g)
 			       (let ((n (g 'n)))
-				 (set! (g 'amps) (make-vct n))
-				 (set! (g 'phases) (make-vct n))
-				 (set! (g 'amp-incs) (make-vct n))
-				 (set! (g 'freqs) (make-vct n))
-				 (set! (g 'freq-incs) (make-vct n))
-				 (set! (g 'new-freq-incs) (make-vct n))
-				 (set! (g 'data) (make-vct n))
+				 (set! (g 'amps) (make-float-vector n))
+				 (set! (g 'phases) (make-float-vector n))
+				 (set! (g 'amp-incs) (make-float-vector n))
+				 (set! (g 'freqs) (make-float-vector n))
+				 (set! (g 'freq-incs) (make-float-vector n))
+				 (set! (g 'new-freq-incs) (make-float-vector n))
+				 (set! (g 'data) (make-float-vector n))
 				 (set! (g 'fft-window) (make-fft-window hamming-window n))
-				 (vct-scale! (g 'fft-window) (/ 2.0 (* 0.54 n)))
+				 (float-vector-scale! (g 'fft-window) (/ 2.0 (* 0.54 n)))
 				 (set! (g 'outctr) (+ n 1)) ; first time fill flag
 				 g)))
   (input #f) (n 512) (hop 128) 
@@ -6016,12 +6016,12 @@ index 10 (so 10/2 is the bes-jn arg):
 		(begin
 		  (do ((i 0 (+ i 1)))
 		      ((= i n))
-		    (vct-set! data i (readin input))))
+		    (float-vector-set! data i (readin input))))
 		(begin
-		  (vct-move! data 0 hop)
+		  (float-vector-move! data 0 hop)
 		  (do ((i (- n hop) (+ i 1)))
 		      ((= i n))
-		    (vct-set! data i (readin input)))))
+		    (float-vector-set! data i (readin input)))))
 	    
 	    (set! outctr 0) ; -1??
 	    (set! dataloc (modulo dataloc n))
@@ -6040,8 +6040,8 @@ index 10 (so 10/2 is the bes-jn arg):
 	    
 	    (let ((scl (/ 1.0 hop))
 		  (kscl (/ (* 2 pi) n)))
-	      (vct-subtract! amp-incs amps)
-	      (vct-scale! amp-incs scl)
+	      (float-vector-subtract! amp-incs amps)
+	      (float-vector-scale! amp-incs scl)
 	      
 	      (do ((i 0 (+ i 1))
 		   (ks 0.0 (+ ks kscl)))
@@ -6052,14 +6052,14 @@ index 10 (so 10/2 is the bes-jn arg):
 		  (if (< diff (- pi)) (set! diff (+ diff (* 2 pi))))
 		  (set! (new-freq-incs i) (+ (* diff scl) ks))))
 	      
-	      (vct-subtract! new-freq-incs freqs)
-	      (vct-scale! new-freq-incs scl))))
+	      (float-vector-subtract! new-freq-incs freqs)
+	      (float-vector-scale! new-freq-incs scl))))
       
       (set! outctr (+ outctr 1))
       
-      (vct-add! amps amp-incs)
-      (vct-add! freqs new-freq-incs)
-      (vct-add! phases freqs))))
+      (float-vector-add! amps amp-incs)
+      (float-vector-add! freqs new-freq-incs)
+      (float-vector-add! phases freqs))))
 
 
 (define (test-sv)
@@ -6119,8 +6119,8 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (moving-scentroid
 	       :make-wrapper (lambda (g)
 			       (let ((n (g 'size)))
-				 (set! (g 'rl) (make-vct n))
-				 (set! (g 'im) (make-vct n))
+				 (set! (g 'rl) (make-float-vector n))
+				 (set! (g 'im) (make-float-vector n))
 				 (set! (g 'dly) (make-delay n))
 				 (set! (g 'rms) (make-moving-rms n))
 				 (set! (g 'hop) (floor (/ (mus-srate) (g 'rfreq))))
@@ -6148,7 +6148,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		       (numsum 0.0)
 		       (densum 0.0))
 		  (clear-array im)
-		  (vct-subseq data 0 (- n 1) rl)
+		  (float-vector-subseq data 0 (- n 1) rl)
 		  (mus-fft rl im n 1)          ; we can use the delay line contents un-reordered because phases are ignored here
 		  (rectangular->magnitudes rl im)
 		  (do ((k 0 (+ k 1)))
@@ -6170,7 +6170,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	(vals (scentroid "oboe.snd" 0.0 1.1 -40.0 100.0 128))
 	(k 0))
     
-    (let ((data (channel->vct 0 22050 snd 0)))
+    (let ((data (channel->float-vector 0 22050 snd 0)))
       (close-sound snd)
       (do ((i 0 (+ i 1)))
 	  ((= i (scn 'size)))
@@ -6195,9 +6195,9 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (moving-autocorrelation
 	       :make-wrapper (lambda (g)
 			       (let ((n (g 'n)))
-				 (set! (g 'rl) (make-vct n))
-				 (set! (g 'im) (make-vct n))
-				 (set! (g 'data) (make-vct n))
+				 (set! (g 'rl) (make-float-vector n))
+				 (set! (g 'im) (make-float-vector n))
+				 (set! (g 'data) (make-float-vector n))
 				 (set! (g 'outctr) (+ n 1)) ; first time fill flag
 				 g))
 	       :methods (list
@@ -6220,16 +6220,16 @@ index 10 (so 10/2 is the bes-jn arg):
 		(begin
 		  (do ((i 0 (+ i 1)))
 		      ((= i n))
-		    (vct-set! data i (readin input))))
+		    (float-vector-set! data i (readin input))))
 		(begin
-		  (vct-move! data 0 hop)
+		  (float-vector-move! data 0 hop)
 		  (do ((i (- n hop) (+ i 1)))
 		      ((= i n))
-		    (vct-set! data i (readin input)))))
+		    (float-vector-set! data i (readin input)))))
 	    (set! outctr 0)
 	    (set! new-data #t)
 	    (clear-array im)
-	    (vct-subseq data 0 (- n 1) rl)
+	    (float-vector-subseq data 0 (- n 1) rl)
 	    (autocorrelate rl)))
       (set! outctr (+ outctr 1))
       new-data)))
@@ -6303,7 +6303,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (define (abel k)
   ;; sum i from 1 to k (-1)^(i + 1) * (sin i) / i
   (with-sound (:clipped #f :statistics #t) 
-    (let ((harmonics (make-vct (* 2 k))))
+    (let ((harmonics (make-float-vector (* 2 k))))
       (do ((i 1 (+ i 1))
 	   (j 0 (+ j 2))
 	   (n -1 (- n))) 
@@ -6317,7 +6317,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define* (adds num freq e amp v (type mus-chebyshev-first-kind))
   (with-sound (:clipped #f :statistics #t :play #t) 
-    (let ((harmonics (make-vct (* 2 num)))
+    (let ((harmonics (make-float-vector (* 2 num)))
 	  (freqe (make-env e :length num)))
       (do ((i 1 (+ i 1))
 	   (j 0 (+ j 2)))
@@ -6393,8 +6393,8 @@ index 10 (so 10/2 is the bes-jn arg):
 	       ;; assume stereo out/rev 
 	       :make-wrapper (lambda (g)
 			       (set! (g 'maxd) (ceiling (g 'amplitude))) ; was amplitude?
-			       (set! (g 'out1) (make-vct (g 'maxd)))
-			       (set! (g 'out2) (make-vct (g 'maxd)))
+			       (set! (g 'out1) (make-float-vector (g 'maxd)))
+			       (set! (g 'out2) (make-float-vector (g 'maxd)))
 			       (set! (g 'ri) (make-rand-interp 
 					      :frequency (g 'frequency) 
 					      :amplitude (- (g 'amplitude) 1.0)))

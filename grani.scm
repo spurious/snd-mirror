@@ -231,21 +231,21 @@
       (list 0 in 1 in)
       in))
 
-;;; create a vct from an envelope
+;;; create a float-vector from an envelope
 
 (define* (make-gr-env env1 (len 512))
-  (let ((env-vct (make-vct len))
+  (let ((env-float-vector (make-float-vector len))
 	(length-1 (exact->inexact (- len 1))))
     (do ((i 0 (+ 1 i)))
-	((= i len) env-vct)
-      (set! (env-vct i) (envelope-interp (/ i length-1) env1)))))
+	((= i len) env-float-vector)
+      (set! (env-float-vector i) (envelope-interp (/ i length-1) env1)))))
 
 ;;;-----------------------------------------------------------------------------
 ;;; Grain envelopes
 
 (define* (raised-cosine	(duty-cycle 100)
 			(len 128))
-  (let* ((v (make-vct len))
+  (let* ((v (make-float-vector len))
 	 (active (* len duty-cycle 0.01))
 	 (incr (/ pi (- active 1)))
 	 (start (/ (- len active) 2))
@@ -339,7 +339,7 @@
 		      (reverb-amount 0.01)
 		      (reverse #f)
 		      (where-to 0)
-		      (where-bins #f) ; a vct, not a list
+		      (where-bins #f) ; a float-vector, not a list
 		      (grain-distance 1.0)
 		      (grain-distance-spread 0.0)
 		      (grain-degree 45.0)
@@ -399,7 +399,7 @@
 	    ;; grain envelope
 	    (gr-env (make-table-lookup :frequency 1.0
 				       :initial-phase 0.0
-				       :wave (if (vct? grain-envelope)
+				       :wave (if (float-vector? grain-envelope)
 						 grain-envelope
 						 (make-gr-env grain-envelope 
 							      grain-envelope-array-size))))
@@ -407,11 +407,11 @@
 	    (gr-env-end (make-table-lookup :frequency 1.0
 					   :initial-phase 0.0
 					   :wave (if grain-envelope-end
-						     (if (vct? grain-envelope-end)
+						     (if (float-vector? grain-envelope-end)
 							 grain-envelope-end
 							 (make-gr-env grain-envelope-end 
 								      grain-envelope-array-size))
-						     (make-vct 512))))
+						     (make-float-vector 512))))
 	    ;; envelope for transition between grain envelopes
 	    (gr-int-env (make-env (envelope-or-number grain-envelope-transition) :duration duration))
 	    (gr-int-env-1 (make-env (envelope-or-number grain-envelope-transition) :duration duration :offset 1.0 :scaler -1.0))
@@ -444,7 +444,7 @@
 	    (first-grain #t)
 	    (where 0.0)
 	    (happy #t)
-	    (where-bins-len (if (vct? where-bins) (length where-bins) 0)))
+	    (where-bins-len (if (float-vector? where-bins) (length where-bins) 0)))
 	(if (<= where-bins-len 1)
 	    (set! where-bins #f))
 

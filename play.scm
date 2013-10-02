@@ -17,8 +17,8 @@
 
 
 (define* (samples->sound-data (beg 0) num snd chn obj pos (sd-chan 0))
-  (vct->sound-data 
-   (channel->vct beg num snd chn pos) 
+  (float-vector->sound-data 
+   (channel->float-vector beg num snd chn pos) 
    (or obj (make-sound-data 1 (or num (frames snd chn))))
    sd-chan))
 

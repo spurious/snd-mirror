@@ -65,8 +65,8 @@
   (let* ((alpha (cosh (/ (acosh (expt 10.0 gamma)) N)))
 	 (den (/ 1.0 (cosh (* N (acosh alpha)))))
 	 (freq (/ pi N))
-	 (rl (make-vct N))
-	 (im (make-vct N)))
+	 (rl (make-float-vector N))
+	 (im (make-float-vector N)))
     (do ((i 0 (+ i 1))
 	 (phase 0.0 (+ phase freq)))
 	((= i N))
@@ -74,8 +74,8 @@
 	(set! (rl i) (real-part val))
 	(set! (im i) (imag-part val)))) ;this is always essentially 0.0
     (fft rl im -1)            ;direction could also be 1
-    (let ((pk (vct-peak rl)))
-      (vct-scale! rl (/ 1.0 pk)))
+    (let ((pk (float-vector-peak rl)))
+      (float-vector-scale! rl (/ 1.0 pk)))
     (do ((i 0 (+ i 1))
 	 (j (/ N 2)))
 	((= i N))
@@ -86,7 +86,7 @@
 
 
 ;;; this version taken from Julius Smith's "Spectral Audio..." with three changes
-;;;   it does the DFT by hand, and is independent of anything from Snd (fft, vcts etc)
+;;;   it does the DFT by hand, and is independent of anything from Snd (fft, float-vectors etc)
 
 (define (dolph-1 N gamma)
   "(dolph-1 n gamma) produces a Dolph-Chebyshev FFT data window of 'n' points using 'gamma' as the window parameter."
@@ -131,13 +131,13 @@
 	 (fftlen2 (/ fftlen 2))
 	 (fft-1 (- (* n fftlen) 1))
 	 (fftscale (/ 1.0 fftlen))
-	 (rl1 (channel->vct 0 fftlen snd chn))
-	 (im1 (make-vct fftlen)))
+	 (rl1 (channel->float-vector 0 fftlen snd chn))
+	 (im1 (make-float-vector fftlen)))
     (fft rl1 im1 1)
-    (vct-scale! rl1 fftscale)
-    (vct-scale! im1 fftscale)
-    (let ((rl2 (make-vct (* n fftlen)))
-	  (im2 (make-vct (* n fftlen))))
+    (float-vector-scale! rl1 fftscale)
+    (float-vector-scale! im1 fftscale)
+    (let ((rl2 (make-float-vector (* n fftlen)))
+	  (im2 (make-float-vector (* n fftlen))))
       (set! (rl2 0) (rl1 0))
       (set! (im2 0) (im1 0))
       (do ((i 1 (+ i 1)) ; lower half
@@ -149,7 +149,7 @@
 	(set! (im2 i) (im1 i))
 	(set! (im2 j) (im1 k)))
       (fft rl2 im2 -1)
-      (vct->channel rl2 0 (* n len) snd chn #f (format #f "down-oct ~A" n)))))
+      (float-vector->channel rl2 0 (* n len) snd chn #f (format #f "down-oct ~A" n)))))
 
 (define* (stretch-sound-via-dft factor snd chn)
   "(stretch-sound-via-dft factor snd chn) makes the given channel longer ('factor' should be > 1.0) by \
@@ -158,8 +158,8 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   (let* ((n (frames snd chn))
 	 (n2 (floor (/ n 2.0)))
 	 (out-n (round (* n factor)))
-	 (in-data (channel->vct 0 n snd chn))
-	 (out-data (make-vct out-n))
+	 (in-data (channel->float-vector 0 n snd chn))
+	 (out-data (make-float-vector out-n))
 	 (fr (make-vector out-n 0.0))
 	 (freq (/ (* 2 pi) n)))
     (do ((i 0 (+ i 1)))
@@ -173,7 +173,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	((= i out-n))
       ;; inverse DFT
       (set! (out-data i) (real-part (/ (edot-product (* freq 0.0+1.0i i) fr) n))))
-    (vct->channel out-data 0 out-n snd chn #f (format #f "stretch-sound-via-dft ~A" factor))))
+    (float-vector->channel out-data 0 out-n snd chn #f (format #f "stretch-sound-via-dft ~A" factor))))
 
 
 
@@ -205,9 +205,9 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 			(* p2 (+ (circle-ref x1 (- i 1)) (circle-ref x1 (+ i 1))))
 			(* p3 (x2 i)))))
       (fill! x2 0.0)
-      (vct-add! x2 x1)
+      (float-vector-add! x2 x1)
       (fill! x1 0.0)
-      (vct-add! x1 x0))))
+      (float-vector-add! x1 x0))))
 
 (define compute-string
   ;; this is the more general form
@@ -243,17 +243,17 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 (define* (freqdiv n snd chn)
   "(freqdiv n snd chn) repeats each nth sample n times (clobbering the intermediate samples): (freqdiv 8)"
-  (let* ((data (channel->vct 0 #f snd chn))
+  (let* ((data (channel->float-vector 0 #f snd chn))
 	 (len (length data)))
     (if (> n 1)
 	(do ((i 0 (+ i n)))
 	    ((>= i len)
-	     (vct->channel data 0 len snd chn))
+	     (float-vector->channel data 0 len snd chn))
 	  (let ((val (data i))
 		(stop (min len (+ i n))))
 	    (do ((k (+ i 1) (+ k 1)))
 		((= k stop))
-	      (vct-set! data k val)))))))
+	      (float-vector-set! data k val)))))))
 
 
 ;;; -------- "adaptive saturation" -- an effect from sed_sed@my-dejanews.com
@@ -264,24 +264,24 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (adsat size (beg 0) dur snd chn)
   "(adsat size beg dur snd chn) is an 'adaptive saturation' sound effect"
   (let* ((len (if (number? dur) dur (- (frames snd chn) beg)))
-	 (data (make-vct (* size (ceiling (/ len size))))))
+	 (data (make-float-vector (* size (ceiling (/ len size))))))
     (let ((reader (make-sampler beg snd chn))
 	  (mn 0.0)
 	  (mx 0.0)
-	  (vals (make-vct size)))
+	  (vals (make-float-vector size)))
       (do ((i 0 (+ i size)))
 	  ((>= i len))
 	(do ((k 0 (+ k 1)))
 	    ((= k size))
-	  (vct-set! vals k (next-sample reader)))
-	(set! mn (vct-min vals))
-	(set! mx (vct-max vals))
+	  (float-vector-set! vals k (next-sample reader)))
+	(set! mn (float-vector-min vals))
+	(set! mx (float-vector-max vals))
 	(do ((k 0 (+ k 1)))
 	    ((= k size))
-	  (if (negative? (vct-ref vals k))
-	      (vct-set! data (+ i k) mn)
-	      (vct-set! data (+ i k) mx))))
-      (vct->channel data beg len snd chn current-edit-position (format #f "adsat ~A ~A ~A" size beg dur)))))
+	  (if (negative? (float-vector-ref vals k))
+	      (float-vector-set! data (+ i k) mn)
+	      (float-vector-set! data (+ i k) mx))))
+      (float-vector->channel data beg len snd chn current-edit-position (format #f "adsat ~A ~A ~A" size beg dur)))))
 
 
 ;;; -------- spike
@@ -291,7 +291,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (spike snd chn)
   "(spike snd chn) multiplies successive samples together to make a sound more spikey"
   (let* ((len (frames snd chn))
-	 (data (make-vct len))
+	 (data (make-float-vector len))
 	 (amp (maxamp snd chn))) ; keep resultant peak at maxamp
     (let ((reader (make-sampler 0 snd chn))
 	  (x1 0.0)
@@ -300,10 +300,10 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
       (do ((i 0 (+ i 1)))
 	  ((= i len))
 	(let ((x0 (next-sample reader)))
-	  (vct-set! data i (* x0 x1 x2))
+	  (float-vector-set! data i (* x0 x1 x2))
 	  (set! x2 x1)
 	  (set! x1 (abs x0))))
-      (vct->channel (vct-scale! data amp1) 0 len snd chn current-edit-position "spike"))))
+      (float-vector->channel (float-vector-scale! data amp1) 0 len snd chn current-edit-position "spike"))))
 
 ;;; the more successive samples we include in the product, the more we
 ;;;   limit the output to pulses placed at (just after) wave peaks
@@ -315,8 +315,8 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   "(spot-freq samp snd chn) tries to determine the current pitch: (spot-freq (left-sample))"
   (let* ((pow2 (ceiling (log (/ (srate snd) 20.0) 2)))
 	 (fftlen (floor (expt 2 pow2)))
-	 (data (autocorrelate (channel->vct s0 fftlen snd chn)))
-	 (cor-peak (vct-peak data)))
+	 (data (autocorrelate (channel->float-vector s0 fftlen snd chn)))
+	 (cor-peak (float-vector-peak data)))
     (if (= cor-peak 0.0)
 	0.0
 	(call-with-exit
@@ -395,18 +395,18 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (pow2 (ceiling (log len 2)))
 	 (fftlen (floor (expt 2 pow2)))
 	 (fftscale (/ 1.0 fftlen))
-	 (rl (channel->vct 0 fftlen snd chn))
-	 (old-pk (vct-peak rl))
-	 (im (make-vct fftlen)))
+	 (rl (channel->float-vector 0 fftlen snd chn))
+	 (old-pk (float-vector-peak rl))
+	 (im (make-float-vector fftlen)))
     (if (> old-pk 0.0)
 	(begin
 	  (fft rl im 1)
 	  (rectangular->magnitudes rl im)
-	  (vct-scale! rl fftscale)
-	  (vct-scale! im 0.0)
+	  (float-vector-scale! rl fftscale)
+	  (float-vector-scale! im 0.0)
 	  (fft rl im -1)
-	  (let ((pk (vct-peak rl)))
-	    (vct->channel (vct-scale! rl (/ old-pk pk)) 0 len snd chn #f "zero-phase"))))))
+	  (let ((pk (float-vector-peak rl)))
+	    (float-vector->channel (float-vector-scale! rl (/ old-pk pk)) 0 len snd chn #f "zero-phase"))))))
 
 (define* (rotate-phase func snd chn)
   "(rotate-phase func snd chn) calls fft, applies func to each phase, then un-ffts"
@@ -415,14 +415,14 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (fftlen (floor (expt 2 pow2)))
 	 (fftlen2 (floor (/ fftlen 2)))
 	 (fftscale (/ 1.0 fftlen))
-	 (rl (channel->vct 0 fftlen snd chn))
-	 (old-pk (vct-peak rl))
-	 (im (make-vct fftlen)))
+	 (rl (channel->float-vector 0 fftlen snd chn))
+	 (old-pk (float-vector-peak rl))
+	 (im (make-float-vector fftlen)))
     (if (> old-pk 0.0)
 	(begin
 	  (fft rl im 1)
 	  (rectangular->magnitudes rl im)
-	  (vct-scale! rl fftscale)
+	  (float-vector-scale! rl fftscale)
 	  (set! (im 0) 0.0)
 	  (do ((i 1 (+ i 1))
 	       (j (- fftlen 1) (- j 1)))
@@ -432,8 +432,8 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	    (set! (im j) (- (im i))))
 	  (polar->rectangular rl im)
 	  (fft rl im -1)
-	  (let ((pk (vct-peak rl)))
-	    (vct->channel (vct-scale! rl (/ old-pk pk)) 0 len snd chn #f 
+	  (let ((pk (float-vector-peak rl)))
+	    (float-vector->channel (float-vector-scale! rl (/ old-pk pk)) 0 len snd chn #f 
 			  (format #f "rotate-phase ~A" (procedure-source func))))))))
 
 ;(rotate-phase (lambda (x) 0.0)) is the same as (zero-phase)
@@ -458,24 +458,24 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   (let* ((mx (maxamp))
 	 (brt (* 2 pi amount))
 	 (len (frames snd chn))
-	 (data (make-vct len))
+	 (data (make-float-vector len))
 	 (reader (make-sampler 0 snd chn)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (vct-set! data i (sin (* (next-sample reader) brt))))
-    (vct->channel (vct-scale! data (/ mx (vct-peak data))) 0 len snd chn current-edit-position (format #f "brighten-slightly ~A" amount))))
+      (float-vector-set! data i (sin (* (next-sample reader) brt))))
+    (float-vector->channel (float-vector-scale! data (/ mx (float-vector-peak data))) 0 len snd chn current-edit-position (format #f "brighten-slightly ~A" amount))))
 
 (define (brighten-slightly-1 coeffs)
   "(brighten-slightly-1 coeffs) is a form of contrast-enhancement: (brighten-slightly-1 '(1 .5 3 1))"
   (let ((pcoeffs (partials->polynomial coeffs))
 	(mx (maxamp))
 	(len (frames)))
-    (let ((data (make-vct len))
+    (let ((data (make-float-vector len))
 	  (reader (make-sampler 0)))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
-	(vct-set! data i (polynomial pcoeffs (next-sample reader))))
-      (vct->channel (vct-scale! data (/ mx (vct-peak data)))))))
+	(float-vector-set! data i (polynomial pcoeffs (next-sample reader))))
+      (float-vector->channel (float-vector-scale! data (/ mx (float-vector-peak data)))))))
        
 
 
@@ -485,14 +485,14 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;; Snd's (very simple) spectrum->coefficients procedure is:
 
 (define (spectrum->coeffs order spectr)
-  "(spectrum->coeffs order spectr) returns FIR filter coefficients given the filter order and desired spectral envelope (a vct)"
-  (let* ((coeffs (make-vct order))
+  "(spectrum->coeffs order spectr) returns FIR filter coefficients given the filter order and desired spectral envelope (a float-vector)"
+  (let* ((coeffs (make-float-vector order))
 	 (n order)
 	 (m (floor (/ (+ n 1) 2)))
 	 (am (* 0.5 (+ n 1)))
 	 (q (/ (* pi 2.0) n)))
-    (if (not (vct? spectr))
-	(error "spectrum->coeffs spectrum argument should be a vct"))
+    (if (not (float-vector? spectr))
+	(error "spectrum->coeffs spectrum argument should be a float-vector"))
      (do ((j 0 (+ j 1))
 	  (jj (- n 1) (- jj 1)))
 	 ((= j m) coeffs)
@@ -518,7 +518,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 ;(map-channel (fltit-1 10 (float-vector 0 1.0 0 0 0 0 0 0 1.0 0)))
 ;
-;(let ((notched-spectr (make-vct 40)))
+;(let ((notched-spectr (make-float-vector 40)))
 ;  (set! (notched-spectr 2) 1.0)  
 ;  (set! (notched-spectr 37) 1.0)
 ;  (map-channel (fltit-1 40 notched-spectr)))
@@ -529,7 +529,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (make-hilbert-transform (len 30))
   "(make-hilbert-transform (len 30)) makes a Hilbert transform filter"
   (let* ((arrlen (+ 1 (* 2 len)))
-	 (arr (make-vct arrlen))
+	 (arr (make-float-vector arrlen))
 	 (lim (if (even? len) len (+ 1 len))))
      (do ((i (- len) (+ i 1)))
 	 ((= i lim))
@@ -569,8 +569,8 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   ;; same as FIR version but use FFT and change phases by hand
   (let* ((size (frames snd chn))
 	 (len (expt 2 (ceiling (log size 2.0))))
-	 (rl (make-vct len))
-	 (im (make-vct len))
+	 (rl (make-float-vector len))
+	 (im (make-float-vector len))
 	 (rd (make-sampler 0 snd chn))
 	 (pi2 (* 0.5 pi)))
     (do ((i 0 (+ i 1)))
@@ -589,8 +589,8 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	(set! (rl i) (real-part c))
 	(set! (im i) (imag-part c))))
     (mus-fft rl im len -1)
-    (vct-scale! rl (/ 1.0 len))
-    (vct->channel rl 0 len snd chn #f "hilbert-transform-via-fft")))
+    (float-vector-scale! rl (/ 1.0 len))
+    (float-vector->channel rl 0 len snd chn #f "hilbert-transform-via-fft")))
 |#
 
 ;;; -------- highpass filter 
@@ -598,7 +598,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (make-highpass fc (len 30))
   "(make-highpass fc (len 30)) makes an FIR highpass filter"
   (let* ((arrlen (+ 1 (* 2 len)))
-	 (arr (make-vct arrlen)))
+	 (arr (make-float-vector arrlen)))
     (do ((i (- len) (+ i 1)))
 	((= i len))
       (let ((k (+ i len))
@@ -624,7 +624,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (make-lowpass fc (len 30))
   "(make-lowpass fc (len 30)) makes an FIR lowpass filter"
   (let* ((arrlen (+ 1 (* 2 len)))
-	 (arr (make-vct arrlen)))
+	 (arr (make-float-vector arrlen)))
     (do ((i (- len) (+ i 1)))
 	((= i len))
       (let ((k (+ i len))
@@ -649,7 +649,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (make-bandpass flo fhi (len 30))
   "(make-bandpass flo fhi (len 30)) makes an FIR bandpass filter"
   (let* ((arrlen (+ 1 (* 2 len)))
-	 (arr (make-vct arrlen)))
+	 (arr (make-float-vector arrlen)))
     (do ((i (- len) (+ i 1)))
 	((= i len))
       (let ((k (+ i len))
@@ -673,7 +673,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (make-bandpass-2 flo1 fhi1 flo2 fhi2 (len 30))
   (let* ((f1 (make-bandpass flo1 fhi1 len))
 	 (f2 (make-bandpass flo2 fhi2 len)))
-    (vct-add! (mus-xcoeffs f1) (mus-xcoeffs f2))
+    (float-vector-add! (mus-xcoeffs f1) (mus-xcoeffs f2))
     f1))
 
 (let ((ind (new-sound "test.snd")))
@@ -689,7 +689,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (make-bandstop flo fhi (len 30))
   "(make-bandstop flo fhi (len 30)) makes an FIR bandstop (notch) filter"
   (let* ((arrlen (+ 1 (* 2 len)))
-	 (arr (make-vct arrlen)))
+	 (arr (make-float-vector arrlen)))
     (do ((i (- len) (+ i 1)))
 	((= i len))
       (let ((k (+ i len))
@@ -714,7 +714,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (make-differentiator (len 30))
   "(make-differentiator (len 30)) makes an FIR differentiator (highpass) filter"
   (let* ((arrlen (+ 1 (* 2 len)))
-	 (arr (make-vct arrlen)))
+	 (arr (make-float-vector arrlen)))
     (do ((i (- len) (+ i 1)))
 	((= i len))
       (let ((k (+ i len)))
@@ -900,7 +900,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 
 (define (cascade->canonical A)
-  "(cascade->canonical A) converts a list of cascade coeffs (vcts with 3 entries) to canonical form"
+  "(cascade->canonical A) converts a list of cascade coeffs (float-vectors with 3 entries) to canonical form"
   ;; from Orfanidis "Introduction to Signal Processing"
 
   (define (conv M h L x y)
@@ -916,8 +916,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	(set! (y n) sum))))
 
   (let* ((K (length A))
-	 (d (make-vct (+ 1 (* 2 K))))
-	 (a1 (make-vct (+ 1 (* 2 K)))))
+	 (d (make-float-vector (+ 1 (* 2 K))))
+	 (a1 (make-float-vector (+ 1 (* 2 K)))))
     (set! (a1 0) 1.0)
     (do ((i 0 (+ i 1)))
 	((= i K))
@@ -925,7 +925,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
       (let ((end (+ 3 (* 2 i))))
 	(do ((j 0 (+ j 1)))
 	    ((= j end))
-	  (vct-set! a1 j (vct-ref d j)))))
+	  (float-vector-set! a1 j (float-vector-ref d j)))))
     a1))
 
 
@@ -1098,8 +1098,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   "(fractional-fourier-transform real imaginary n angle) performs a fractional Fourier transform on data; if angle=1.0, you get a normal Fourier transform"
   ;; this is the slow (dft) form
   ;; v=1 -> normal fourier transform
-  (let ((hr (make-vct n))
-	(hi (make-vct n))
+  (let ((hr (make-float-vector n))
+	(hi (make-float-vector n))
 	(ph0 (/ (* v 2 pi) n)))
      (do ((w 0 (+ 1 w)))
 	 ((= w n))
@@ -1124,7 +1124,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   ;; using vector to allow complex sums (z=e^2*pi*i/n -> fourier transform)
   ;;   (z-transform data n (exp (make-rectangular 0.0 (* (/ 2.0 n) pi))))
   "(z-transform data n z) performs a Z transform on data; if z=e^2*pi*j/n you get a Fourier transform; complex results in returned vector"
-  (let ((res (if (vct? f) (make-vct n) (make-vector n))))
+  (let ((res (if (float-vector? f) (make-float-vector n) (make-vector n))))
     (do ((w 0 (+ 1 w)))
 	((= w n))
       (let ((sum 0.0)
@@ -1146,7 +1146,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   "(dht data) returns the Hartley transform of 'data'."
   ;; taken from Perry Cook's SignalProcessor.m (the slow version of the Hartley transform)
   (let* ((len (length data)) 
-	 (arr (make-vct len))
+	 (arr (make-float-vector len))
 	 (w (/ (* 2.0 pi) len)))
      (do ((i 0 (+ i 1)))
 	 ((= i len))
@@ -1208,7 +1208,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define (make-spencer-filter)
   "(make-spencer-filter) is a version of make-fir-filter; it returns one of the standard smoothing filters from \
 the era when computers were human beings"
-  (make-fir-filter 15 (apply vct (map (lambda (n) (/ n 320.0)) (list -3 -6 -5 3 21 46 67 74 67 46 21 3 -5 -6 -3)))))
+  (make-fir-filter 15 (apply float-vector (map (lambda (n) (/ n 320.0)) (list -3 -6 -5 3 21 46 67 74 67 46 21 3 -5 -6 -3)))))
 
 
 ;;; -------- any-random
@@ -1263,7 +1263,7 @@ the era when computers were human beings"
   (let* ((e ())
 	 (sum (cadr dist))
 	 (first-sum sum)
-	 (data (make-vct data-size))
+	 (data (make-float-vector data-size))
 	 (x0 (car dist))
 	 (x1 (dist (- (length dist) 2)))
 	 (xincr (/ (- x1 x0) e-size)))
@@ -1410,30 +1410,30 @@ the era when computers were human beings"
 	(N (min (frames s1 c1) (frames s2 c2)))
 	(data1 #f)
 	(data2 #f))
-    (set! data1 (make-vct N))
-    (set! data2 (make-vct N))
+    (set! data1 (make-float-vector N))
+    (set! data2 (make-float-vector N))
     (do ((i 0 (+ i 1)))
 	((= i N))
-      (vct-set! data1 i (next-sample r1)))
+      (float-vector-set! data1 i (next-sample r1)))
     (do ((i 0 (+ i 1)))
 	((= i N))
-      (vct-set! data2 i (next-sample r2)))
-    (vct-subtract! data1 data2)
+      (float-vector-set! data2 i (next-sample r2)))
+    (float-vector-subtract! data1 data2)
     (sqrt (dot-product data1 data1))))
 
 
 (define (periodogram N)
   "(periodogram N) displays an 'N' point Bartlett periodogram of the samples in the current channel"
   (let* ((len (frames))
-	 (average-data (make-vct N))
+	 (average-data (make-float-vector N))
 	 (rd (make-sampler 0))
 	 (N2 (* 2 N))
-	 (rl (make-vct N2))
-	 (im (make-vct N2)))
+	 (rl (make-float-vector N2))
+	 (im (make-float-vector N2)))
      (do ((i 0 (+ i N)))
 	 ((>= i len))
-       (vct-scale! rl 0.0)
-       (vct-scale! im 0.0)
+       (float-vector-scale! rl 0.0)
+       (float-vector-scale! im 0.0)
        (do ((k 0 (+ k 1)))
 	   ((= k N))
 	 (set! (rl k) (rd)))
@@ -1443,9 +1443,9 @@ the era when computers were human beings"
 	 (set! (average-data k) (+ (average-data k) 
 				   (* (rl k) (rl k)) 
 				   (* (im k) (im k))))))
-     ;; perhaps faster -- use vct-add! and vct-multiply!
+     ;; perhaps faster -- use float-vector-add! and float-vector-multiply!
      ;; or add snd-spectrum results
-    (graph (vct-scale! average-data (/ 1.0 (ceiling (/ len N)))))))
+    (graph (float-vector-scale! average-data (/ 1.0 (ceiling (/ len N)))))))
 
 
 ;;; -------- ssb-am friends
@@ -1476,22 +1476,22 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	(set! (bands (- i 1)) (make-bandpass (hz->2pi (- aff bwf)) 
 					     (hz->2pi (+ aff bwf)) 
 					     order))))
-    (let ((data (channel->vct beg dur snd chn edpos)))
+    (let ((data (channel->float-vector beg dur snd chn edpos)))
       (let ((len (length data))
-	    (mx (vct-peak data)))
-	(let ((summer (make-vct len 0.0))
-	      (adder (make-vct len 0.0)))
+	    (mx (float-vector-peak data)))
+	(let ((summer (make-float-vector len 0.0))
+	      (adder (make-float-vector len 0.0)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i pairs))
 	    (let ((gen (vector-ref ssbs i))
 		  (filt (vector-ref bands i)))
 	      (do ((k 0 (+ k 1)))
 		  ((= k len))
-		(vct-set! adder k (ssb-am gen (bandpass filt (vct-ref data k)))))
-	      (vct-add! summer adder)
+		(float-vector-set! adder k (ssb-am gen (bandpass filt (float-vector-ref data k)))))
+	      (float-vector-add! summer adder)
 	      (fill! adder 0.0)))
-	  (vct-scale! summer (/ mx (vct-peak summer)))
-	  (vct->channel summer beg len snd chn current-edit-position
+	  (float-vector-scale! summer (/ mx (float-vector-peak summer)))
+	  (float-vector->channel summer beg len snd chn current-edit-position
 			(format #f "ssb-bank ~A ~A ~A ~A ~A ~A ~A" old-freq new-freq pairs order bw beg dur)))))))
 
 ;;; (let ((ind (open-sound "oboe.snd"))) (ssb-bank 550.0 660.0 10))
@@ -1515,11 +1515,11 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	(set! (frenvs (- i 1)) (make-env freq-env 
 					 :scaler (hz->radians i) 
 					 :length (frames)))))
-    (let ((data (channel->vct beg dur snd chn edpos)))
+    (let ((data (channel->float-vector beg dur snd chn edpos)))
       (let ((len (length data))
-	    (mx (vct-peak data)))
-	(let ((summer (make-vct len 0.0))
-	      (adder (make-vct len 0.0)))
+	    (mx (float-vector-peak data)))
+	(let ((summer (make-float-vector len 0.0))
+	      (adder (make-float-vector len 0.0)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i pairs))
 	    (let ((gen (vector-ref ssbs i))
@@ -1527,11 +1527,11 @@ shift the given channel in pitch without changing its length.  The higher 'order
 		  (e (vector-ref frenvs i)))
 	      (do ((k 0 (+ k 1)))
 		  ((= k len))
-		(vct-set! adder k (ssb-am gen (bandpass filt (vct-ref data k)) (env e))))
-	      (vct-add! summer adder)
+		(float-vector-set! adder k (ssb-am gen (bandpass filt (float-vector-ref data k)) (env e))))
+	      (float-vector-add! summer adder)
 	      (fill! adder 0.0)))
-	  (vct-scale! summer (/ mx (vct-peak summer)))
-	  (vct->channel summer beg len snd chn current-edit-position
+	  (float-vector-scale! summer (/ mx (float-vector-peak summer)))
+	  (float-vector->channel summer beg len snd chn current-edit-position
 			(format #f "ssb-bank-env ~A ~A '~A ~A ~A ~A ~A ~A" old-freq new-freq freq-env pairs order bw beg dur)))))))
 
 ;;; (let ((ind (open-sound "oboe.snd"))) (ssb-bank-env 550 600 '(0 1 1 2) 10))
@@ -1554,25 +1554,28 @@ shift the given channel in pitch without changing its length.  The higher 'order
 |#
 
 
-;;; vct|channel|spectral-polynomial
+;;; float-vector|channel|spectral-polynomial
 
-(define (vct-polynomial v coeffs)
-  ;; Horner's rule applied to entire vct
+(define (float-vector-polynomial v coeffs)
+  ;; Horner's rule applied to entire float-vector
   (let* ((v-len (length v))
 	 (num-coeffs (length coeffs))
-	 (new-v (make-vct v-len (coeffs (- num-coeffs 1)))))
+	 (new-v (make-float-vector v-len (coeffs (- num-coeffs 1)))))
     (do ((i (- num-coeffs 2) (- i 1)))
 	((< i 0))
-      (vct-offset! (vct-multiply! new-v v) (coeffs i)))
+      (float-vector-offset! (float-vector-multiply! new-v v) (coeffs i)))
     new-v))
+
+(define vct-polynomial float-vector-polynomial)
+
 
 (define* (channel-polynomial coeffs snd chn)
   (let ((len (frames snd chn)))
-    (vct->channel 
-     (vct-polynomial 
-      (channel->vct 0 len snd chn) 
+    (float-vector->channel 
+     (float-vector-polynomial 
+      (channel->float-vector 0 len snd chn) 
       coeffs) 
-     0 len snd chn #f (format #f "channel-polynomial ~A" (vct->string coeffs)))))
+     0 len snd chn #f (format #f "channel-polynomial ~A" (float-vector->string coeffs)))))
 
 ;;; (channel-polynomial (float-vector 0.0 .5)) = x*.5
 ;;; (channel-polynomial (float-vector 0.0 1.0 1.0 1.0)) = x*x*x + x*x + x
@@ -1581,14 +1584,14 @@ shift the given channel in pitch without changing its length.  The higher 'order
 
 (define* (spectral-polynomial coeffs snd chn)
   (let* ((len (frames snd chn))
-	 (sound (channel->vct 0 len snd chn))
+	 (sound (channel->float-vector 0 len snd chn))
 	 (num-coeffs (length coeffs))
 	 (fft-len (if (< num-coeffs 2) 
 		      len 
 		      (expt 2 (ceiling (log (* (- num-coeffs 1) len) 2)))))
-	 (rl1 (make-vct fft-len 0.0))
-	 (rl2 (make-vct fft-len 0.0))
-	 (new-sound (make-vct fft-len)))
+	 (rl1 (make-float-vector fft-len 0.0))
+	 (rl2 (make-float-vector fft-len 0.0))
+	 (new-sound (make-float-vector fft-len)))
     (if (> (coeffs 0) 0.0)
 	(let ((dither (coeffs 0)))
 	  (do ((i 0 (+ i 1)))
@@ -1596,18 +1599,18 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	    (set! (new-sound i) (mus-random dither)))))
     (if (> num-coeffs 1)
 	(begin
-	  (vct-add! new-sound (vct-scale! (copy sound) (coeffs 1)))
+	  (float-vector-add! new-sound (float-vector-scale! (copy sound) (coeffs 1)))
 	  (if (> num-coeffs 2)
 	      (let ((peak (maxamp snd chn)))
-		(vct-add! (vct-scale! rl1 0.0) sound)
+		(float-vector-add! (float-vector-scale! rl1 0.0) sound)
 		(do ((i 2 (+ i 1)))
 		    ((= i num-coeffs))
-		  (convolution rl1 (vct-add! (vct-scale! rl2 0.0) sound) fft-len)
-		  (let ((pk (vct-peak rl1)))
-		    (vct-add! new-sound (vct-scale! (copy rl1) (/ (* (coeffs i) peak) pk)))))
-		(let ((pk (vct-peak new-sound)))
-		  (vct-scale! new-sound (/ peak pk)))))))
-    (vct->channel new-sound 0 (max len (* len (- num-coeffs 1))) snd chn #f (format #f "spectral-polynomial ~A" (vct->string coeffs)))))
+		  (convolution rl1 (float-vector-add! (float-vector-scale! rl2 0.0) sound) fft-len)
+		  (let ((pk (float-vector-peak rl1)))
+		    (float-vector-add! new-sound (float-vector-scale! (copy rl1) (/ (* (coeffs i) peak) pk)))))
+		(let ((pk (float-vector-peak new-sound)))
+		  (float-vector-scale! new-sound (/ peak pk)))))))
+    (float-vector->channel new-sound 0 (max len (* len (- num-coeffs 1))) snd chn #f (format #f "spectral-polynomial ~A" (float-vector->string coeffs)))))
 
 
 ;;; ----------------
@@ -1648,25 +1651,25 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 	 (incrsamps (floor (/ fsr rfreq)))
 	 (start (floor (* beg fsr)))
 	 (end (+ start (if dur (floor (* dur fsr)) (- (frames file) beg))))
-	 (fdr (make-vct fftsize))
-	 (fdi (make-vct fftsize))
-	 (scl (make-vct (/ fftsize 2)))
-	 (ones (make-vct (/ fftsize 2) 1.0))
+	 (fdr (make-float-vector fftsize))
+	 (fdi (make-float-vector fftsize))
+	 (scl (make-float-vector (/ fftsize 2)))
+	 (ones (make-float-vector (/ fftsize 2) 1.0))
 	 (windows (+ 1 (floor (/ (- end start) incrsamps))))
-	 (results (make-vct windows))
+	 (results (make-float-vector windows))
 	 (fft2 (floor (/ fftsize 2)))
 	 (binwidth (* 1.0 (/ fsr fftsize)))
 	 (rd (make-readin file)))
     (do ((k 0 (+ k 1)))
 	((= k fft2))
-      (vct-set! scl k (* k binwidth)))
+      (float-vector-set! scl k (* k binwidth)))
     (do ((i start (+ i incrsamps))
 	 (loc 0 (+ 1 loc)))
 	((>= i end))
       (set! (mus-location rd) i)
       (do ((j 0 (+ j 1)))
 	  ((= j fftsize))
-	(vct-set! fdr j (readin rd)))
+	(float-vector-set! fdr j (readin rd)))
       (if (>= (linear->db (sqrt (/ (dot-product fdr fdr) fftsize))) db-floor)
 	  (begin
 	    (clear-array fdi)
@@ -1693,12 +1696,12 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 (define (invert-filter fcoeffs)
   "(invert-filter coeffs) tries to return an inverse filter to undo the effect of the FIR filter coeffs."
   (let* ((flen (length fcoeffs))
-	 (coeffs (make-vct (+ 32 flen))) ; add room for coeffs to die away
+	 (coeffs (make-float-vector (+ 32 flen))) ; add room for coeffs to die away
 	 (order (length coeffs)))
     (do ((i 0 (+ i 1)))
 	((= i flen))
       (set! (coeffs i) (fcoeffs i)))
-    (let ((nfilt (make-vct order)))
+    (let ((nfilt (make-float-vector order)))
       (set! (nfilt 0) (/ 1.0 (coeffs 0)))
       (do ((i 1 (+ i 1)))
 	  ((= i order))
@@ -1723,7 +1726,7 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
   "(make-volterra-filter acoeffs bcoeffs) returns a list for use with volterra-filter, producing one of the standard non-linear filters"
   (list acoeffs 
 	bcoeffs 
-	(make-vct (max (length acoeffs) (length bcoeffs)))))
+	(make-float-vector (max (length acoeffs) (length bcoeffs)))))
 
 (define (volterra-filter flt x)
   "(volterra-filter flt x) takes 'flt', a list returned by make-volterra-filter, and an input 'x', and returns the (non-linear filtered) result"
@@ -1734,7 +1737,7 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 	 (x1len (length as))
 	 (x2len (length bs))
 	 (sum 0.0))
-    (vct-move! xs (- xlen 1) (- xlen 2) #t)
+    (float-vector-move! xs (- xlen 1) (- xlen 2) #t)
     (set! (xs 0) x)
     (set! sum (dot-product as xs x1len))
     (do ((i 0 (+ i 1)))
@@ -1765,9 +1768,9 @@ and replaces it with the spectrum given in coeffs"
 	(old-mx (maxamp))
 	(startup 40)
 	(len (- (or dur (frames snd chn edpos)) beg)))
-    (let ((adder (make-vct len))
-	  (summer (make-vct len))
-	  (indata (channel->vct beg len snd chn edpos)))
+    (let ((adder (make-float-vector len))
+	  (summer (make-float-vector len))
+	  (indata (channel->float-vector beg len snd chn edpos)))
       
       (do ((i 0 (+ i 1)))
 	  ((= i pairs))
@@ -1784,7 +1787,7 @@ and replaces it with the spectrum given in coeffs"
 	(let ((sum 0.0))
 	  (do ((i 0 (+ i 1)))
 	      ((= i pairs))
-	    (let* ((sig (bandpass (vector-ref bands i) (vct-ref indata k)))
+	    (let* ((sig (bandpass (vector-ref bands i) (float-vector-ref indata k)))
 		   (mx (moving-max (vector-ref peaks i) sig)))
 	      (set! sum (+ sum (* mx (polynomial pcoeffs (* sig (moving-average (vector-ref avgs i) (/ (max mx 0.01))))))))))
 	  (filter flt sum)))
@@ -1797,19 +1800,19 @@ and replaces it with the spectrum given in coeffs"
 	  (fill! adder 0.0)
 	  (do ((k startup (+ k 1)))
 	      ((= k len))
-	    (let* ((sig (bandpass bp (vct-ref indata k)))
+	    (let* ((sig (bandpass bp (float-vector-ref indata k)))
 		   (mx (moving-max pk sig)))
-	      (vct-set! adder k (* mx (polynomial pcoeffs (* sig (moving-average avg (/ (max mx 0.01)))))))))
-	  (vct-add! summer adder)))
+	      (float-vector-set! adder k (* mx (polynomial pcoeffs (* sig (moving-average avg (/ (max mx 0.01)))))))))
+	  (float-vector-add! summer adder)))
 
       (do ((k startup (+ k 1)))
 	  ((= k len))
-	(vct-set! summer k (filter flt (vct-ref summer k))))
+	(float-vector-set! summer k (filter flt (float-vector-ref summer k))))
       
-      (let ((nmx (vct-peak summer)))
+      (let ((nmx (float-vector-peak summer)))
 	(if (> nmx 0.0)
-	    (vct-scale! summer (/ old-mx nmx))))
-      (vct->channel summer beg len snd chn))))
+	    (float-vector-scale! summer (/ old-mx nmx))))
+      (float-vector->channel summer beg len snd chn))))
 
 ;;; (harmonicizer 550.0 (list 1 .5 2 .3 3 .2) 10)
 
@@ -1880,36 +1883,36 @@ and replaces it with the spectrum given in coeffs"
 	       (rs (right-sample snd chn))
 	       (fftlen (floor (expt 2 (ceiling (log (+ 1 (- rs ls)) 2))))))
 	  (if (> fftlen 0)
-	      (let ((data (channel->vct ls fftlen snd chn))
+	      (let ((data (channel->float-vector ls fftlen snd chn))
 		    (normalized (not (= (transform-normalization snd chn) dont-normalize)))
 		    (linear #t))                               ; can't currently show lisp graph in dB 
 		;; snd-axis make_axes: WITH_LOG_Y_AXIS, but LINEAR currently in snd-chn.c 3250
-		(if (vct? data)
+		(if (float-vector? data)
 		    (let ((fftdata (snd-spectrum data              ; returns fftlen / 2 data points
 						 (fft-window snd chn) fftlen linear 
 						 (fft-window-beta snd chn) #f normalized)))
-		      (if (vct? fftdata)
+		      (if (float-vector? fftdata)
 			  (let* ((sr (srate snd))
-				 (mx (vct-peak fftdata))
+				 (mx (float-vector-peak fftdata))
 				 (data-len (length fftdata))
 				 
 				 ;; bark settings
 				 (bark-low (floor (bark 20.0)))
 				 (bark-high (ceiling (bark (* 0.5 sr))))
 				 (bark-frqscl (/ data-len (- bark-high bark-low)))
-				 (bark-data (make-vct data-len))
+				 (bark-data (make-float-vector data-len))
 				 
 				 ;; mel settings
 				 (mel-low (floor (mel 20.0)))
 				 (mel-high (ceiling (mel (* 0.5 sr))))
 				 (mel-frqscl (/ data-len (- mel-high mel-low)))
-				 (mel-data (make-vct data-len))
+				 (mel-data (make-float-vector data-len))
 				 
 				 ;; erb settings
 				 (erb-low (floor (erb 20.0)))
 				 (erb-high (ceiling (erb (* 0.5 sr))))
 				 (erb-frqscl (/ data-len (- erb-high erb-low)))
-				 (erb-data (make-vct data-len)))
+				 (erb-data (make-float-vector data-len)))
 			    
 			    (set! bark-fft-size fftlen)
 			    
@@ -1931,15 +1934,15 @@ and replaces it with the spectrum given in coeffs"
 				     (set! (erb-data erb-bin) (+ val (erb-data erb-bin))))))
 			     
 			     (if normalized
-				 (let ((bmx (vct-peak bark-data))
-				       (mmx (vct-peak mel-data))
-				       (emx (vct-peak erb-data)))
+				 (let ((bmx (float-vector-peak bark-data))
+				       (mmx (float-vector-peak mel-data))
+				       (emx (float-vector-peak erb-data)))
 				   (if (> (abs (- mx bmx)) .01)
-				       (vct-scale! bark-data (/ mx bmx)))
+				       (float-vector-scale! bark-data (/ mx bmx)))
 				   (if (> (abs (- mx mmx)) .01)
-				       (vct-scale! mel-data (/ mx mmx)))
+				       (float-vector-scale! mel-data (/ mx mmx)))
 				   (if (> (abs (- mx emx)) .01)
-				       (vct-scale! erb-data (/ mx emx)))))
+				       (float-vector-scale! erb-data (/ mx emx)))))
 			    
 			    (graph (list bark-data mel-data erb-data) 
 				   "ignored" 
@@ -2074,7 +2077,7 @@ and replaces it with the spectrum given in coeffs"
 (define (lpc-coeffs data n m)
   ;; translated and changed to use 0-based arrays from memcof of NRinC
   
-  "(lpc-coeffs data n m) returns 'm' LPC coeffients (in a vector) given 'n' data points in the vct 'data'"
+  "(lpc-coeffs data n m) returns 'm' LPC coeffients (in a vector) given 'n' data points in the float-vector 'data'"
   
   (let ((d (make-vector m 0.0))
 	(wk1 (make-vector n 0.0))
@@ -2117,11 +2120,11 @@ and replaces it with the spectrum given in coeffs"
   ;; incoming coeffs are assumed to be in a vector (from lpc-coeffs)
 
   "(lpc-predict data n coeffs m nf clipped) takes the output of lpc-coeffs ('coeffs', a vector) and the length thereof ('m'), \
-'n' data points of 'data' (a vct), and produces 'nf' new data points (in a vct) as its prediction. If 'clipped' is #t, the new data \
+'n' data points of 'data' (a float-vector), and produces 'nf' new data points (in a float-vector) as its prediction. If 'clipped' is #t, the new data \
 is assumed to be outside -1.0 to 1.0."
 
-  (let ((future (make-vct nf 0.0))
-	(reg (make-vct m 0.0)))
+  (let ((future (make-float-vector nf 0.0))
+	(reg (make-float-vector m 0.0)))
      (do ((i 0 (+ i 1))
 	  (j (- n 1) (- j 1)))
 	 ((= i m))
@@ -2233,21 +2236,21 @@ is assumed to be outside -1.0 to 1.0."
 		       
 		       ;; use LPC to reconstruct going both forwards and backwards
 		       
-		       (let* ((data (channel->vct (- clip-beg forward-data-len) forward-data-len snd chn))
+		       (let* ((data (channel->float-vector (- clip-beg forward-data-len) forward-data-len snd chn))
 			      (future (lpc-predict 
 				       data forward-data-len 
 				       (lpc-coeffs data forward-data-len forward-predict-len)
 				       forward-predict-len
 				       clip-len #f))
 			      
-			      (rdata (vct-reverse! (channel->vct (+ 1 clip-end) backward-data-len snd chn)))
+			      (rdata (reverse! (channel->float-vector (+ 1 clip-end) backward-data-len snd chn)))
 			      (past (lpc-predict 
 				     rdata backward-data-len 
 				     (lpc-coeffs rdata backward-data-len backward-predict-len)
 				     backward-predict-len
 				     clip-len #f))
 			      
-			      (new-data (make-vct clip-len 0.0)))
+			      (new-data (make-float-vector clip-len 0.0)))
 			 
 			 (if (> clip-len 1)
 			     (do ((i 0 (+ i 1))
@@ -2269,7 +2272,7 @@ is assumed to be outside -1.0 to 1.0."
 						    (min (future 0) (past 0)))))
 			 
 			 ;; write reconstruction
-			 (vct->channel new-data clip-beg clip-len snd chn))))))))
+			 (float-vector->channel new-data clip-beg clip-len snd chn))))))))
 	    
 	    (if (> unclipped-max .95) (set! unclipped-max .999))
 	    (scale-channel (/ unclipped-max (maxamp snd chn)) 0 (frames snd chn) snd chn)
@@ -2292,7 +2295,7 @@ is assumed to be outside -1.0 to 1.0."
   ;; translated from http://www.scipy.org/Cookbook/KalmanFiltering by Andrew Straw (but "R" here is a signal)
   (let ((size (frames))
 	(mx (maxamp))
-	(data (channel->vct 0))
+	(data (channel->float-vector 0))
 	(xhat 0.0)
 	(P 1.0) ; any non-zero value ok here
 	(R 0.01) ; first guess
@@ -2321,11 +2324,11 @@ is assumed to be outside -1.0 to 1.0."
 		       (* K (- datum xhatminus))))
 	 (set! P (* (- 1.0 K) Pminus))))
     
-     (vct-scale! data (/ mx (vct-peak data)))
-     (vct->channel data)))
+     (float-vector-scale! data (/ mx (float-vector-peak data)))
+     (float-vector->channel data)))
 
 
-;;; -------- Savitzky-Golay filter coefficients (FIR filter -- returns vct of coeffs centered at vct midpoint)
+;;; -------- Savitzky-Golay filter coefficients (FIR filter -- returns float-vector of coeffs centered at float-vector midpoint)
 ;;;
 ;;; based on Numerical Recipes in C p 652
 ;;; needs mixer-solve in mixer.scm
@@ -2350,7 +2353,7 @@ is assumed to be outside -1.0 to 1.0."
     (let ((b (mixer-solve a (let ((f (make-frame (+ order 1))))
 			      (frame-set! f 0 1.0) ; set others instead for derivative
 			      f)))
-	  (result (make-vct size)))
+	  (result (make-float-vector size)))
       (do ((k (- n) (+ k 1))
 	   (i 0 (+ i 1)))
 	  ((> k n))
@@ -2506,16 +2509,16 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 
   (define (cos-fft-to-max n cur-amps)
     (let* ((size 1024)
-	   (fft-rl (make-vct size))
-	   (fft-im (make-vct size)))
+	   (fft-rl (make-float-vector size))
+	   (fft-im (make-float-vector size)))
       (do ((i 0 (+ i 1))
 	   (bin 2 (+ bin 2)))
 	  ((= i n))
 	(set! (fft-rl bin) (cur-amps i)))
-      (vct-peak (mus-fft fft-rl fft-im size -1))))
+      (float-vector-peak (mus-fft fft-rl fft-im size -1))))
 
   (let* ((partials (if (list? any-partials)
-		       (list->vct any-partials)
+		       (apply float-vector any-partials)
 		       any-partials))
 	 (len (length partials))
 	 (topk 0)
@@ -2531,7 +2534,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 				   (set! topk (max topk hnum))
 				   (set! sum (+ sum amp))))))))
 	 (min-sum original-sum)
-	 (original-partials (let ((v (make-vct topk)))
+	 (original-partials (let ((v (make-float-vector topk)))
 			      (do ((i 0 (+ i 2)))
 				  ((>= i len) v)
 				(let ((hnum (partials i)))
@@ -2555,7 +2558,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 		(set! min-partials (copy new-partials))
 		(set! min-sum new-sum))))))
 
-    (let ((new-amps (vct-scale! min-partials (/ original-sum min-sum)))
+    (let ((new-amps (float-vector-scale! min-partials (/ original-sum min-sum)))
 	  (new-partials (copy partials)))
       (do ((i 0 (+ i 2)))
 	  ((>= i len))
@@ -2691,7 +2694,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 ;;; > (let ((rl (float-vector 0.0 1.0 0.0 0.0)) 
 ;;;         (im (float-vector 0.0 1.0 0.0 0.0))) 
 ;;;     (mus-fft rl im) 
-;;;     (map make-rectangular (vct->list rl) (vct->list im)))
+;;;     (map make-rectangular (vector->list rl) (vector->list im)))
 ;;; (1+1i -1+1i -1-1i 1-1i)
 
 |#
