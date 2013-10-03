@@ -9,7 +9,6 @@
  *   XEN xen_make_vct_wrapper(int len, mus_float_t *data) make a new vct that doesn't free data when garbage collector strikes
  *   vct *xen_to_vct(XEN arg)                   given XEN arg, return vct
  *   void mus_vct_set_print_length(int val)     set vct print length (default 10) (also mus_vct_print_length)
- *   vct *mus_vct_copy(vct *vc)                 return copy of vc
  *
  * Scheme side:
  *   (make-vct len (filler 0.0))      make new vct
@@ -195,12 +194,8 @@ static char *mus_vct_to_string(vct *v)
   if (len > mus_vct_length(v)) len = mus_vct_length(v);
   d = mus_vct_data(v);
   buf = (char *)calloc((len + 1) * VCT_PRINT_BUFFER_SIZE, sizeof(char));
-
-#if HAVE_SCHEME
-  sprintf(buf, "#<float-vector[len=%lld" "]", mus_vct_length(v));
-#else
   sprintf(buf, "#<vct[len=%lld" "]", mus_vct_length(v));
-#endif
+
   if ((len > 0) && (d != NULL))
     {
       int i;
@@ -339,21 +334,6 @@ vct *mus_vct_free(vct *v)
 }
 
 
-vct *mus_vct_copy(vct *vc)
-{
-  vct *v = NULL;
-  mus_long_t len;
-  if (vc)
-    {
-      len = mus_vct_length(vc);
-      v = mus_vct_make(len);
-      if (len > 0)
-	memcpy((void *)(mus_vct_data(v)), (void *)(mus_vct_data(vc)), (len * sizeof(mus_float_t)));
-    }
-  return(v);
-}
-
-
 XEN xen_make_vct(mus_long_t len, mus_float_t *data)
 {
   vct *new_vct;
@@ -389,38 +369,7 @@ XEN vct_to_xen(vct *v)
   XEN_MAKE_AND_RETURN_OBJECT(vct_tag, v, 0, free_vct);
 }
 
-#else /* HAVE_SCHEME */
 
-vct *mus_vct_make(mus_long_t len)
-{
-  s7_Int di[1];
-  di[0] = len;
-  return(s7_make_float_vector(s7, len, 1, di));
-}
-
-XEN xen_make_vct(mus_long_t len, mus_float_t *data)
-{
-  return(s7_make_float_vector_wrapper(s7, len, data, 1, NULL));
-}
-
-XEN xen_make_vct_wrapper(mus_long_t len, mus_float_t *data)
-{
-  s7_Int di[1];
-  di[0] = len;
-  return(s7_make_float_vector_wrapper(s7, len, (s7_Double *)data, 1, di));
-}
-
-vct *mus_vct_wrap(mus_long_t len, mus_float_t *data)
-{
-  return(xen_make_vct_wrapper(len, data));
-}
-
-XEN vct_to_xen(vct *v) {return((XEN)v);}
-
-#endif
-
-
-#if (!HAVE_SCHEME)
 static XEN g_vct_fill(XEN obj, XEN val);
 
 static XEN g_make_vct(XEN len, XEN filler)
@@ -482,7 +431,37 @@ static XEN g_vct_copy(XEN obj)
     }
   return(xen_make_vct(len, copied_data));
 }
+
+#else /* HAVE_SCHEME */
+
+vct *mus_vct_make(mus_long_t len)
+{
+  s7_Int di[1];
+  di[0] = len;
+  return(s7_make_float_vector(s7, len, 1, di));
+}
+
+XEN xen_make_vct(mus_long_t len, mus_float_t *data)
+{
+  return(s7_make_float_vector_wrapper(s7, len, data, 1, NULL));
+}
+
+XEN xen_make_vct_wrapper(mus_long_t len, mus_float_t *data)
+{
+  s7_Int di[1];
+  di[0] = len;
+  return(s7_make_float_vector_wrapper(s7, len, (s7_Double *)data, 1, di));
+}
+
+vct *mus_vct_wrap(mus_long_t len, mus_float_t *data)
+{
+  return(xen_make_vct_wrapper(len, data));
+}
+
+XEN vct_to_xen(vct *v) {return((XEN)v);}
+
 #endif
+
 
 static XEN g_vct_move(XEN obj, XEN newi, XEN oldi, XEN backwards)
 {
@@ -1919,7 +1898,7 @@ static XEN g_vct_min(XEN vobj)
 }
 
 
-#if 0
+#if (!HAVE_SCHEME)
 static XEN g_vct_reverse(XEN vobj, XEN size)
 {
   #define H_vct_reverse "(" S_vct_reverse " vct len): in-place reversal of vct contents"
@@ -2340,32 +2319,6 @@ void mus_vct_init(void)
   rb_define_method(vct_tag, "last=",     XEN_PROCEDURE_CAST rb_set_vct_last, 1);
 #endif
 
-#if HAVE_SCHEME
-  s7_eval_c_string(s7, "(define vct-copy copy)");
-  s7_eval_c_string(s7, "(define vct-fill! fill!)");
-  s7_eval_c_string(s7, "(define vct float-vector)");
-  s7_eval_c_string(s7, "(define vct-length length)");
-  s7_eval_c_string(s7, "(define vct-reverse! reverse!)");  /* slight difference: no optional length arg (use make-shared-vector) */
-  s7_eval_c_string(s7, "(define vct->list vector->list)");
-  s7_eval_c_string(s7, "(define (list->vct x) (apply float-vector x))");
-  s7_eval_c_string(s7, "(define* (make-float-vector len (init 0.0)) (make-vector len init #t))");
-  s7_eval_c_string(s7, "(define make-vct make-float-vector)");
-  s7_eval_c_string(s7, "(define (vector->vct v) (copy v (make-vector (length v) 0.0 #t)))");
-  s7_eval_c_string(s7, "(define (vct->vector v) (copy v (make-vector (length v) 0.0)))");
-  s7_eval_c_string(s7, "(define (vector->float-vector v) (copy v (make-vector (length v) 0.0 #t)))");
-  s7_eval_c_string(s7, "(define (float-vector->vector v) (copy v (make-vector (length v) 0.0)))");
-#else
-  XEN_DEFINE_SAFE_PROCEDURE(S_vct_fillB,         g_vct_fill_w,      2, 0, 0, H_vct_fillB);
-  XEN_DEFINE_SAFE_PROCEDURE(S_vct_copy,          g_vct_copy_w,      1, 0, 0, H_vct_copy);
-  XEN_DEFINE_PROCEDURE(S_vct,                    g_vct_w,           0, 0, 1, H_vct);
-  XEN_DEFINE_SAFE_PROCEDURE(S_vct_length,        g_vct_length_w,    1, 0, 0, H_vct_length);
-  XEN_DEFINE_SAFE_PROCEDURE(S_vct_reverse,       g_vct_reverse_w,   1, 1, 0, H_vct_reverse);
-  XEN_DEFINE_SAFE_PROCEDURE(S_vct_to_list,       g_vct_to_list_w,   1, 0, 0, H_vct_to_list);
-  XEN_DEFINE_SAFE_PROCEDURE(S_list_to_vct,       g_list_to_vct_w,   1, 0, 0, H_list_to_vct);
-  XEN_DEFINE_SAFE_PROCEDURE(S_vector_to_vct,     g_vector_to_vct_w, 1, 0, 0, H_vector_to_vct);
-  XEN_DEFINE_SAFE_PROCEDURE(S_vct_to_vector,     g_vct_to_vector_w, 1, 0, 0, H_vct_to_vector);
-  XEN_DEFINE_SAFE_PROCEDURE(S_make_vct,          g_make_vct_w,      1, 1, 0, H_make_vct);
-#endif
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_p,             g_vct_p_w,         1, 0, 0, H_vct_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_multiplyB,     g_vct_multiply_w,  2, 0, 0, H_vct_multiplyB);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_scaleB,        g_vct_scale_w,     2, 0, 0, H_vct_scaleB);
@@ -2390,29 +2343,51 @@ void mus_vct_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_max,           g_vct_max_w,       1, 0, 0, H_vct_max);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_min,           g_vct_min_w,       1, 0, 0, H_vct_min);
 
-#if HAVE_SCHEME
+#if (!HAVE_SCHEME)
+  XEN_DEFINE_SAFE_PROCEDURE(S_vct_fillB,         g_vct_fill_w,      2, 0, 0, H_vct_fillB);
+  XEN_DEFINE_SAFE_PROCEDURE(S_vct_copy,          g_vct_copy_w,      1, 0, 0, H_vct_copy);
+  XEN_DEFINE_PROCEDURE(S_vct,                    g_vct_w,           0, 0, 1, H_vct);
+  XEN_DEFINE_SAFE_PROCEDURE(S_vct_length,        g_vct_length_w,    1, 0, 0, H_vct_length);
+  XEN_DEFINE_SAFE_PROCEDURE(S_vct_reverse,       g_vct_reverse_w,   1, 1, 0, H_vct_reverse);
+  XEN_DEFINE_SAFE_PROCEDURE(S_vct_to_list,       g_vct_to_list_w,   1, 0, 0, H_vct_to_list);
+  XEN_DEFINE_SAFE_PROCEDURE(S_list_to_vct,       g_list_to_vct_w,   1, 0, 0, H_list_to_vct);
+  XEN_DEFINE_SAFE_PROCEDURE(S_vector_to_vct,     g_vector_to_vct_w, 1, 0, 0, H_vector_to_vct);
+  XEN_DEFINE_SAFE_PROCEDURE(S_vct_to_vector,     g_vct_to_vector_w, 1, 0, 0, H_vct_to_vector);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_vct,          g_make_vct_w,      1, 1, 0, H_make_vct);
+#else
+
+  s7_eval_c_string(s7, "(define vct-copy copy)");
+  s7_eval_c_string(s7, "(define vct-fill! fill!)");
+  s7_eval_c_string(s7, "(define vct float-vector)");
+  s7_eval_c_string(s7, "(define vct-length length)");
+  s7_eval_c_string(s7, "(define vct-reverse! reverse!)");  /* slight difference: no optional length arg (use make-shared-vector) */
+  s7_eval_c_string(s7, "(define vct->list vector->list)");
+  s7_eval_c_string(s7, "(define (list->vct x) (apply float-vector x))");
+  s7_eval_c_string(s7, "(define* (make-float-vector len (init 0.0)) (make-vector len init #t))");
+  s7_eval_c_string(s7, "(define make-vct make-float-vector)");
+  s7_eval_c_string(s7, "(define (vector->vct v) (copy v (make-vector (length v) 0.0 #t)))");
+  s7_eval_c_string(s7, "(define (vct->vector v) (copy v (make-vector (length v) 0.0)))");
+
+  s7_eval_c_string(s7, "(define float-vector? " S_vct_p ")");
+  s7_eval_c_string(s7, "(define float-vector-multiply! " S_vct_multiplyB ")");
+  s7_eval_c_string(s7, "(define float-vector-scale! " S_vct_scaleB ")");
+  s7_eval_c_string(s7, "(define float-vector-add! " S_vct_addB ")");
+  s7_eval_c_string(s7, "(define float-vector-subtract! " S_vct_subtractB ")");
+  s7_eval_c_string(s7, "(define float-vector-offset! " S_vct_offsetB ")");
+  s7_eval_c_string(s7, "(define float-vector-peak " S_vct_peak ")");
+  s7_eval_c_string(s7, "(define float-vector-peak-and-location " S_vct_peak_and_location ")");
+  s7_eval_c_string(s7, "(define float-vector-move! " S_vct_moveB ")");
+  s7_eval_c_string(s7, "(define float-vector-subseq " S_vct_subseq ")");
+  s7_eval_c_string(s7, "(define float-vector-ref " S_vct_ref ")");
+  s7_eval_c_string(s7, "(define float-vector->string " S_vct_to_string ")");
+  s7_eval_c_string(s7, "(define float-vector-set! " S_vct_setB ")");
+  s7_eval_c_string(s7, "(define float-vector* " S_vct_times ")");
+  s7_eval_c_string(s7, "(define float-vector+ " S_vct_plus ")");
+  s7_eval_c_string(s7, "(define float-vector-max " S_vct_max ")");
+  s7_eval_c_string(s7, "(define float-vector-min " S_vct_min ")");
+
   {
     s7_pointer f;
-
-    s7_eval_c_string(s7, "(define float-vector? " S_vct_p ")");
-    s7_eval_c_string(s7, "(define float-vector-multiply! " S_vct_multiplyB ")");
-    s7_eval_c_string(s7, "(define float-vector-scale! " S_vct_scaleB ")");
-    s7_eval_c_string(s7, "(define float-vector-add! " S_vct_addB ")");
-    s7_eval_c_string(s7, "(define float-vector-subtract! " S_vct_subtractB ")");
-    s7_eval_c_string(s7, "(define float-vector-offset! " S_vct_offsetB ")");
-    s7_eval_c_string(s7, "(define float-vector-peak " S_vct_peak ")");
-    s7_eval_c_string(s7, "(define float-vector-peak-and-location " S_vct_peak_and_location ")");
-    s7_eval_c_string(s7, "(define float-vector-move! " S_vct_moveB ")");
-    s7_eval_c_string(s7, "(define float-vector-subseq " S_vct_subseq ")");
-    s7_eval_c_string(s7, "(define float-vector-ref " S_vct_ref ")");
-    s7_eval_c_string(s7, "(define float-vector->string " S_vct_to_string ")");
-    s7_eval_c_string(s7, "(define float-vector-set! " S_vct_setB ")");
-    s7_eval_c_string(s7, "(define float-vector* " S_vct_times ")");
-    s7_eval_c_string(s7, "(define float-vector+ " S_vct_plus ")");
-    s7_eval_c_string(s7, "(define float-vector-max " S_vct_max ")");
-    s7_eval_c_string(s7, "(define float-vector-min " S_vct_min ")");
-
-
 #ifndef _MSC_VER
     if (s7_number_offset(s7) != VCT_NUMBER_LOCATION) fprintf(stderr, "vct number location: %d %d\n", (int)s7_number_offset(s7), VCT_NUMBER_LOCATION);
     if (s7_slot_value_offset(s7) != VCT_SLOT_VALUE_LOCATION) fprintf(stderr, "vct slot-value location: %d %d\n", (int)s7_slot_value_offset(s7), VCT_SLOT_VALUE_LOCATION);

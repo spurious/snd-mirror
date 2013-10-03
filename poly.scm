@@ -7,6 +7,11 @@
 (provide 'snd-poly.scm)
 (if (not (provided? 'snd-mixer.scm)) (load "mixer.scm")) ; need matrix determinant for poly-resultant
 
+
+(define (vector->float-vector v) (copy v (make-vector (length v) 0.0 #t)))
+(define (float-vector->vector v) (copy v (make-vector (length v) 0.0)))
+
+
 ;;; using lists and vectors internally for complex intermediates
 
 (define (vector-add! p1 p2)

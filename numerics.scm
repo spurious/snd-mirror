@@ -46,7 +46,7 @@
       (k n 1)))
 |#
 
-(define (binomial-direct n m) ; "n-choose-m" might be a better name (there are much better ways to compute this -- see below)
+(define (binomial-direct n m) 
   (/ (factorial n)
      (* (factorial m) (factorial (- n m)))))
 
@@ -63,7 +63,6 @@
 		  ((> i mn) cnk)
 		(set! cnk (/ (* cnk (+ mx i)) i))))))))
 
-(define binomial n-choose-k)
 
 
 ;;; --------------------------------------------------------------------------------

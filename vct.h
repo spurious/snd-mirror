@@ -20,7 +20,6 @@ MUS_EXPORT bool mus_vct_equalp(vct *v1, vct *v2);
 MUS_EXPORT char *mus_vct_to_readable_string(vct *v);
 MUS_EXPORT vct *mus_vct_make(mus_long_t len);
 MUS_EXPORT vct *mus_vct_free(vct *v);
-MUS_EXPORT vct *mus_vct_copy(vct *vc);
 MUS_EXPORT double mus_vct_peak(vct *v);
 
 MUS_EXPORT XEN vct_to_xen(vct *v);

@@ -2034,9 +2034,6 @@
 		       'snd-error 'snd-error-hook 'snd-gcs 'snd-help 'snd-font 'snd-color
 		       'snd-print 'snd-spectrum 'snd-tempnam 'snd-url
 		       'snd-urls 'snd-version 'snd-warning 'snd-warning-hook 
-		       'sound-data->float-vector 'sound-data-chans 'sound-data-length 'sound-data-maxamp 'sound-data-ref 'sound-data-peak
-		       'sound-data-set! 'sound-data-scale! 'sound-data? 
-		       'sound-data-multiply! 'sound-data-add! 'sound-data-offset! 'sound-data* 'sound-data+ 'sound-data-reverse!
 		       'sound-file-extensions 'sound-file? 'sound-files-in-directory
 		       'sound-loop-info 'sound-properties 'sound-property 'sound-widgets 'sound? 'soundfont-info
 		       'sounds 'spectrum-end 'spectro-hop 'spectrum-start 'spectro-x-angle
@@ -2059,11 +2056,11 @@
 		       'unbind-key  'undo 'undo-edit 'undo-hook 'unselect-all 'update-hook 'update-lisp-graph
 		       'update-sound 'update-time-graph 'update-transform-graph 'variable-graph? 'float-vector
 		       'float-vector* 'float-vector+ 'float-vector->channel 'float-vector->sound-data
-		       'float-vector->string 'float-vector->vector 'float-vector-add!
+		       'float-vector->string 'float-vector-add!
 		       'length 'float-vector-max 'float-vector-min 'float-vector-move!
 		       'float-vector-multiply! 'float-vector-offset! 'float-vector-peak 'float-vector-ref 'reverse!
 		       'float-vector-scale! 'float-vector-set! 'float-vector-subseq 'float-vector-subtract! 'float-vector?
-		       'vector->float-vector 'walsh-transform
+		       'walsh-transform
 		       'wave-train 'wave-train? 'wavelet-transform 'wavelet-type
 		       'wavo-hop 'wavo-trace 'welch-window 'widget-position
 		       'widget-size 'widget-text 'window-height
@@ -3018,11 +3015,11 @@
 	      (snd-display #__line__ ";sound-data-scale! chan 1: ~A" (sound-data->float-vector sd 1))))
 	
 	(let ((sd (make-sound-data 2 10)))
-	  (sound-data-fill! sd 2.0)
+	  (fill! sd 2.0)
 	  (if (not (vequal (sound-data->float-vector sd 0) (make-float-vector 10 2.0)))
-	      (snd-display #__line__ ";sound-data-fill! chan 0: ~A" (sound-data->float-vector sd 0)))
+	      (snd-display #__line__ ";fill! chan 0: ~A" (sound-data->float-vector sd 0)))
 	  (if (not (vequal (sound-data->float-vector sd 1) (make-float-vector 10 2.0)))
-	      (snd-display #__line__ ";sound-data-fill! chan 1: ~A" (sound-data->float-vector sd 1))))
+	      (snd-display #__line__ ";fill! chan 1: ~A" (sound-data->float-vector sd 1))))
 	
 	(let ((var (catch #t (lambda () (mus-sound-open-output "fmv.snd" 22050 -1 mus-bshort mus-aiff "no comment")) (lambda args args))))
 	  (if (not (eq? (car var) 'out-of-range))
@@ -9289,21 +9286,6 @@ EDITS: 2
 	  (if (fneq (v3 0) 1.0) (snd-display #__line__ ";set! float-vector-ref: ~A" (v3 0))))
 	(set! (vlst 1) .1)
 	(if (not (feql (vector->list vlst) (list 0.0 0.1 0.0))) (snd-display #__line__ ";vector->list: ~A?" (vector->list vlst)))
-	(let* ((vect #(0.0 1.0 2.0 3.0))
-	       (v123 (float-vector 0.0 1.0 2.0 3.0))
-	       (v2 (vector->float-vector vect))
-	       (v3 v2)
-	       (str (format #f "~A" v2)))
-	  (if (not (vector? (vector->float-vector (make-vector 0)))) (snd-display #__line__ ";vector->float-vector empty vect: ~A" (vector->float-vector (make-vector 0))))
-	  (if (not (string=? str "#(0.0 1.0 2.0 3.0)"))
-	      (snd-display #__line__ ";float-vector print: ~%  ~A~%  ~A?" str v2))
-	  (if (not (vequal v123 v2)) (snd-display #__line__ ";vector->float-vector: ~A" v2))
-	  (if (not (equal? (float-vector->vector v123) vect)) (snd-display #__line__ ";float-vector->vector: ~A ~A" vect (float-vector->vector v123)))
-	  (if (not (equal? v3 v2)) (snd-display #__line__ ";float-vector=? ~A ~A?" v2 v3))
-	  (if (not (= (length v2) 4)) (snd-display #__line__ ";vector->float-vector length: ~A?" (length v2)))
-	  (if (fneq (v2 2) 2.0) (snd-display #__line__ ";vector->float-vector: ~A?" v2))
-	  (float-vector-move! v2 0 2)
-	  (if (fneq (v2 0) 2.0) (snd-display #__line__ ";float-vector-move!: ~A?" v2)))
 	(let ((v2 (make-float-vector 4)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i 4))
@@ -10315,8 +10297,9 @@ EDITS: 2
 	      (set! (mat i (+ i 1)) (* 0.5 (+ i 1) (- n 1 i))))
 	  (if (> i 0)
 	      (set! (mat i (- i 1)) (* 0.5 i (- n i))))))
-      (let ((v (vector->float-vector (vector-ref (cadr (gsl-eigenvectors mat)) 0)))
-	    (pk 0.0))
+      (let* ((vc (vector-ref (cadr (gsl-eigenvectors mat)) 0))
+	     (v (copy vc (make-float-vector (length vc))))
+	     (pk 0.0))
 	;; sign of eigenvalue is arbitrary, and eigenvector is scaled to sum to 1.0
 	;;   but we want peak of 1.0 to serve as fft window
 	(do ((i 0 (+ i 1)))
@@ -14028,16 +14011,6 @@ EDITS: 2
 	(if (not (vequal v1 v2))
 	    (snd-display #__line__ ";fm/pm peak diff (1 1): ~A" (float-vector-peak (float-vector-subtract! v1 v2)))))
       
-      (let ((v (with-sound (:output (make-vector 8))
-	         (outa 0 .1)
-		 (outa 2 .2))))
-	(let ((old-fudge (mus-float-equal-fudge-factor)))
-	  (set! (mus-float-equal-fudge-factor) .0001)
-	  (let ((result (equal? (vector->float-vector v) (float-vector 0.1 0.0 0.2 0.0 0.0 0.0 0.0 0.0))))
-	    (set! (mus-float-equal-fudge-factor) old-fudge)
-	    (if (not result)
-		(snd-display #__line__ ";outa to vector: ~A" v)))))
-      
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(let ((ratio (+ 1 (random 4)))
@@ -16133,10 +16106,7 @@ EDITS: 2
 	       (if (not (vequal val1 val2)) (snd-display #__line__ ";ultra/sam 5: ~A ~A" val1 val2)))
 	     (let ((val1 (dolph 16 1.0))
 		   (val2 (make-fft-window dolph-chebyshev-window 16 1.0)))
-	       (if (not (vequal val1 val2)) (snd-display #__line__ ";dolph/dolph 1: ~A ~A" val1 val2)))  
-	     (let ((val1 (vector->float-vector (dolph-1 16 1.0)))
-		   (val2 (make-fft-window dolph-chebyshev-window 16 1.0)))
-	       (if (not (vequal val1 val2)) (snd-display #__line__ ";dolph-1/dolph 1: ~A ~A" val1 val2))))
+	       (if (not (vequal val1 val2)) (snd-display #__line__ ";dolph/dolph 1: ~A ~A" val1 val2))))
 	   (lambda args (snd-display #__line__ ";new windows: ~A" args)))
     
     (if (defined? 'gsl-eigenvectors)
@@ -38266,97 +38236,6 @@ EDITS: 1
 		(snd-display #__line__ ";4:~D map-sound edpos: ~A" chn (edit-position ind chn)))))
 	(close-sound ind))
       
-      (let ((sd (make-sound-data 4 10)))
-	(do ((chn 0 (+ chn 1)))
-	    ((= chn 4))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 10))
-	    (sound-data-set! sd chn i (+ i (* chn 10)))))
-	(let ((sd1 (sound-data-copy sd)))
-	  (if (not (equal? sd sd1))
-	      (snd-display #__line__ ";sound-data-copy not equal? ~A ~A" sd sd1))
-	  (sound-data-scale! sd1 2.0)
-	  (let ((sd2 (make-sound-data 4 10)))
-	    (do ((chn 0 (+ chn 1)))
-		((= chn 4))
-	      (do ((i 0 (+ i 1)))
-		  ((= i 10))
-		(sound-data-set! sd2 chn i (* 2 (+ i (* chn 10))))))
-	    (if (not (equal? sd2 sd1)) (snd-display #__line__ ";sound-data-scale! not equal? ~%    ~A~%    ~A" sd1 sd2))
-	    (if (equal? sd2 sd) (snd-display #__line__ ";sound-data-scale! crosstalk??")))
-	  (sound-data-multiply! sd sd)
-	  (let ((sd2 (make-sound-data 4 10)))
-	    (do ((chn 0 (+ chn 1)))
-		((= chn 4))
-	      (do ((i 0 (+ i 1)))
-		  ((= i 10))
-		(sound-data-set! sd2 chn i (* (+ i (* chn 10)) (+ i (* chn 10))))))
-	    (if (not (equal? sd2 sd)) (snd-display #__line__ ";sound-data-multiply! not equal? ~%    ~A~%     ~A" sd sd2)))
-	  (do ((chn 0 (+ chn 1)))
-	      ((= chn 4))
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (sound-data-set! sd chn i (+ i (* chn 10)))))
-	  (sound-data-offset! sd 1.0)
-	  (let ((sd2 (make-sound-data 4 10)))
-	    (do ((chn 0 (+ chn 1)))
-		((= chn 4))
-	      (do ((i 0 (+ i 1)))
-		  ((= i 10))
-		(sound-data-set! sd2 chn i (+ 1 i (* chn 10)))))
-	    (if (not (equal? sd2 sd)) (snd-display #__line__ ";sound-data-offset! not equal? ~%    ~A~%     ~A" sd sd2)))
-	  (let ((sd3 (sound-data-reverse! (sound-data-copy sd))))
-	    (let ((sd2 (make-sound-data 4 10)))
-	      (do ((chn 0 (+ chn 1)))
-		  ((= chn 4))
-		(do ((i 0 (+ i 1)))
-		    ((= i 10))
-		  (sound-data-set! sd2 chn i (+ 1 (- 9 i) (* chn 10)))))
-	      (if (not (equal? sd2 sd3)) (snd-display #__line__ ";sound-data-reverse! not equal? ~%    ~A~%     ~A" sd3 sd2)))
-	    (sound-data-add! sd sd3)
-	    (do ((chn 0 (+ chn 1)))
-		((= chn 4))
-	      (do ((i 0 (+ i 1)))
-		  ((= i 10))
-		(sound-data-set! sd1 chn i (+ 1 10 (* chn 20)))))
-	    (if (not (equal? sd1 sd)) (snd-display #__line__ ";sound-data-add! not equal? ~%    ~A~%     ~A" sd sd1)))
-	  
-	  (do ((chn 0 (+ chn 1)))
-	      ((= chn 4))
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (sound-data-set! sd chn i (+ i (* chn 10)))
-	      (sound-data-set! sd1 chn i 1)))
-	  (let ((sd2 (sound-data-copy sd)))
-	    (sound-data+ sd 1)
-	    (sound-data-add! sd2 sd1)
-	    (if (not (equal? sd sd2)) (snd-display #__line__ ";sound-data+ sd 1: ~%    ~A~%    ~A" sd sd2))
-	    (sound-data+ 1 sd)
-	    (sound-data-add! sd2 sd1)
-	    (if (not (equal? sd sd2)) (snd-display #__line__ ";sound-data+ 1 sd: ~%    ~A~%    ~A" sd sd2))
-	    (sound-data+ sd sd1)
-	    (sound-data-add! sd2 sd1)
-	    (if (not (equal? sd sd2)) (snd-display #__line__ ";sound-data+ sd sd: ~%    ~A~%    ~A" sd sd2)))
-	  
-	  (do ((chn 0 (+ chn 1)))
-	      ((= chn 4))
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (sound-data-set! sd chn i (+ i (* chn 10)))
-	      (sound-data-set! sd1 chn i 2)))
-	  (let ((sd2 (sound-data-copy sd)))
-	    (if (fneq (sound-data-peak sd) (apply max (sound-data-maxamp sd)))
-		(snd-display #__line__ ";sound-data-peak: ~A ~A" (sound-data-peak sd) (apply max (sound-data-maxamp sd))))
-	    (sound-data* sd 2)
-	    (sound-data-multiply! sd2 sd1)
-	    (if (not (equal? sd sd2)) (snd-display #__line__ ";sound-data* sd 1: ~%    ~A~%    ~A" sd sd2))
-	    (sound-data* 2 sd)
-	    (sound-data-multiply! sd2 sd1)
-	    (if (not (equal? sd sd2)) (snd-display #__line__ ";sound-data* 1 sd: ~%    ~A~%    ~A" sd sd2))
-	    (sound-data* sd sd1)
-	    (sound-data-add! sd2 sd2)
-	    (if (not (equal? sd sd2)) (snd-display #__line__ ";sound-data* sd sd: ~%    ~A~%    ~A" sd sd2)))))
-      
       ;; tests from clean.scm
       (test-remove-single-clicks)
       (test-remove-pops)
@@ -45843,7 +45722,6 @@ EDITS: 1
 	     (float-vector-5 (make-float-vector 5))
 	     (car-main (if with-gui (car (main-widgets)) #f))
 	     (cadr-main (if with-gui (cadr (main-widgets)) #f))
-	     (sound-data-23 (make-sound-data 2 3))
 	     (a-hook (make-hook 'a 'b))
 	     (exts (sound-file-extensions)) ; save across possible set below
 	     
@@ -45936,9 +45814,6 @@ EDITS: 1
 		     mus-clipping mus-file-clipping mus-header-raw-defaults 
 		     moving-average moving-average? make-moving-average moving-max moving-max? make-moving-max
 		     mus-expand-filename 
-		     make-sound-data sound-data-ref sound-data-set! sound-data-scale! sound-data? sound-data-length
-		     sound-data-multiply! sound-data-add! sound-data-offset! sound-data* sound-data+ sound-data-reverse!
-		     sound-data-maxamp sound-data-chans sound-data->float-vector float-vector->sound-data sound-data-peak
 		     all-pass all-pass? amplitude-modulate
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm?
 		     clear-array comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
@@ -45970,7 +45845,7 @@ EDITS: 1
 		     ncos? nsin? ssb-am? table-lookup table-lookup? tap tap? triangle-wave triangle-wave? two-pole two-pole? two-zero
 		     two-zero? wave-train wave-train?  make-float-vector float-vector-add! float-vector-subtract!
 		     float-vector-multiply! float-vector-offset! float-vector-ref float-vector-scale! float-vector-set! float-vector-peak float-vector-max float-vector-min
-		     float-vector? vector->float-vector float-vector->vector float-vector-move! float-vector-subseq float-vector little-endian? float-vector->string
+		     float-vector? float-vector-move! float-vector-subseq float-vector little-endian? float-vector->string
 		     clm-channel env-channel env-channel-with-base map-channel scan-channel
 		     reverse-channel seconds->samples samples->seconds
 		     smooth-channel float-vector->channel channel->float-vector src-channel scale-channel ramp-channel pad-channel normalize-channel
@@ -46034,7 +45909,7 @@ EDITS: 1
 			 read-only right-sample sample samples selected-channel colormap-size colormap?
 			 selected-sound selection-position selection-frames selection-member? sound-loop-info
 			 srate time-graph-type x-position-slider x-zoom-slider
-			 y-position-slider y-zoom-slider sound-data-ref mus-array-print-length mus-float-equal-fudge-factor
+			 y-position-slider y-zoom-slider mus-array-print-length mus-float-equal-fudge-factor
 					;mus-data 
 			 mus-feedback mus-feedforward mus-frequency mus-hop
 			 mus-increment mus-length mus-location mus-name mus-phase mus-ramp mus-scaler x-axis-label
@@ -46089,7 +45964,6 @@ EDITS: 1
 		(set! float-vector-3 (make-notch .1 101))
 		(set! car-main (make-all-pass .4 .5 2))
 		(set! cadr-main (make-table-lookup 101))
-		(set! sound-data-23 (make-square-wave 440))
 		(set! a-hook (make-triangle-wave 220)))
 	      (if (= test-28 2)
 		  (begin
@@ -46098,7 +45972,6 @@ EDITS: 1
 		    (set! vector-0 (make-rand 100))
 		    (set! float-vector-3 (make-rand-interp 100))
 		    (set! car-main (make-asymmetric-fm 100))
-		    (set! sound-data-23 (make-one-zero .1 .1))
 		    (set! a-hook (make-one-pole .1 .1)))
 		  (if (= test-28 3)
 		      (begin
@@ -46108,7 +45981,6 @@ EDITS: 1
 			(set! float-vector-3 (make-polyshape :frequency 300 :partials '(1 1 2 1)))
 			(set! car-main (make-oscil))
 			(set! cadr-main (vector 1 2 3))
-			(set! sound-data-23 (make-wave-train 100))
 			(set! a-hook (make-frame 2 .2 .1)))
 		      (if (= test-28 4)
 			  (begin
@@ -46118,7 +45990,6 @@ EDITS: 1
 			    (set! float-vector-3 (make-ncos))
 			    (set! car-main (make-env '(0 0 1 1) :length 101))
 			    (set! cadr-main (make-nsin 100 4))
-			    (set! sound-data-23 (make-ssb-am 440))
 			    (set! a-hook (make-nsin 100 3)))
 			  (if (= test-28 5)
 			      (begin
@@ -46822,10 +46693,8 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (new-sound "hiho" 123)))
 		(check-error-tag 'out-of-range (lambda () (new-sound "hiho" mus-nist 123)))
 		(check-error-tag 'bad-header (lambda () (new-sound "hiho" mus-nist mus-bfloat)))
-		(check-error-tag 'out-of-range (lambda () (make-sound-data 0 1)))
-		(check-error-tag 'out-of-range (lambda () (make-sound-data -2 1)))
-		(check-error-tag 'out-of-range (lambda () (make-sound-data 1 -1)))
-		(check-error-tag 'out-of-range (lambda () (make-sound-data 1 0)))
+		(check-error-tag 'wrong-type-arg (lambda () (make-sound-data -2 1)))
+		(check-error-tag 'wrong-type-arg (lambda () (make-sound-data 1 -1)))
 		(check-error-tag 'out-of-range (lambda () (mus-sound-close-output 0 1)))
 		(check-error-tag 'out-of-range (lambda () (mus-sound-close-output 1 1)))
 		(check-error-tag 'out-of-range (lambda () (mus-sound-close-output 2 1)))
@@ -47178,7 +47047,7 @@ EDITS: 1
 	  (for-each close-sound (sounds))
 	  
 	  (let* ((main-args (list 1.5 str-3 (list 0 1) 12 float-vector-3 color-95  #(0 1) 3/4 'mus-error 0+i delay-32
-				  (lambda () #t) float-vector-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 -1.0 
+				  (lambda () #t) float-vector-5 :order 0 1 -1 a-hook #f #t #\c 0.0 -1.0 
 				  () '3 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 				  (lambda (a) #f) abs
 				  1.0+1.0i (cons 1 2) '((1 2) (3 4)) '((1 (2)) (((3) 4)))
@@ -47277,7 +47146,6 @@ EDITS: 1
 	    (set! color-95 #f)
 	    (set! vector-0 #f)
 	    (set! float-vector-3 #f)
-	    (set! sound-data-23 #f)
 	    (set! (mus-srate) 22050)
 	    (set! *clm-srate* 22050)
 	    (set! (print-length) 12)

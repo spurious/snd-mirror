@@ -306,7 +306,7 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
 	 (num (make-float-vector len))
 	 (den (make-float-vector len))
 	 (b2 (bessel-i n)))
-    (let ((p (gsl-roots (float-vector->vector b2))))
+    (let ((p (gsl-roots (copy b2 (make-vector (length b2))))))
       (do ((i 0 (+ i 1)))
 	  ((= i n))
 	(set! (p i) (/ (p i) (expt (b2 0) (/ 1.0 n)))))
