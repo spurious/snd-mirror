@@ -238,7 +238,7 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
     <td onmouseout="UnTip()" onmouseover="Tip(fade_doc_tip)">frequency-domain cross-fades</td></tr>
 
 <tr><td><a href="#framedoc">frame</a></td>
-    <td onmouseout="UnTip()" onmouseover="Tip(frame_doc_tip)">frames, vcts, sound-data objects</td></tr>
+    <td onmouseout="UnTip()" onmouseover="Tip(frame_doc_tip)">frames, float-vectors</td></tr>
 
 <tr><td><a href="#freeverbdoc">freeverb</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(freeverb_doc_tip)">a reverb</td></tr>
@@ -5908,20 +5908,8 @@ and a suitably noisy original, strange pitches emerge and submerge.  'fsize' is 
 
 <div class="header" id="framedoc">frame</div>
 
-<p>This file implements a bunch of functions using frames, vcts, and sound-data objects: primarily multichannel sound operations
-where we want to handle all channels in parallel.  I may
-move some of these into C.
+<p>This file implements a bunch of functions using frames and float-vectors.
 </p>
-
-<!-- file->sound-data -->
-<pre class="indented">
-<em class=def id="filetosounddata">file-&gt;sound-data</em> file
-</pre>
-
-<p>file-&gt;sound-data returns the data of the file 'file' in a sound-data object.
-</p>
-<div class="spacer"></div>
-
 
 <!-- file->vct -->
 <pre class="indented">
@@ -5967,16 +5955,6 @@ move some of these into C.
 <div class="spacer"></div>
 
 
-<!-- frame->sound-data -->
-<pre class="indented">
-<em class=def id="frametosounddata">frame-&gt;sound-data</em> fr sd possd
-</pre>
-
-<p>frame-&gt;sound-data places the contents of its frame argument in its sound-data argument at position pos.
-</p>
-<div class="spacer"></div>
-
-
 <!-- frame->vct -->
 <pre class="indented">
 <em class=def id="frametovct">frame-&gt;vct</em> frame vct
@@ -5995,28 +5973,6 @@ if the vct argument is omitted.
 
 <p>insert-frame inserts the frame of samples into sound snd (one sample in each channel) at beg.
 </p>
-<div class="spacer"></div>
-
-
-<!-- insert-sound-data -->
-<pre class="indented">
-<em class=def id="insertsounddata">insert-sound-data</em> sd beg dur snd edpos
-</pre>
-
-<p>insert-sound-data inserts the sound-data (sd) contents into sound snd at beg.  This provides a sound
-insertion function that automatically handles multichannel possibilities (unlike <a href="extsnd.html#insertsamples">insert-samples</a>).
-</p>
-
-<pre class="indented">
-(insert-sound-data 
- (<a class=quiet href="#withtempsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withtempsound_tip)">with-temp-sound</a> (:output (<a class=quiet href="extsnd.html#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> 2 (* 44100 2.0))
-		   :srate 44100
-		   :channels 2)
-   (do ((i 0 (+ 1 i)))    ; 20 fm-violin notes moving from channel 0 to channel 1
-       ((= i 20))
-     (<a class=quiet href="#vdoc">fm-violin</a> (* i .1) .1 440 .1 :degree (* i (/ 90 20))))))
-</pre>
-
 <div class="spacer"></div>
 
 
@@ -6058,42 +6014,12 @@ for <a href="extsnd.html#insertsamples">insert-samples</a> that puts the vct arg
 <div class="spacer"></div>
 
 
-<!-- mix-sound-data -->
-<pre class="indented">
-<em class=def id="mixsounddata">mix-sound-data</em> sd beg dur snd tagged
-</pre>
-
-<p>mix-sound-data mixes the contents of sound-data sd into sound snd at beg.  tagged determines whether
-the resulting mixes have tags.
-See <a href="#insertsounddata">insert-sound-data</a> for an example that could easily be changed to use mixing instead.
-As with mix-vct, we can use <a href="#wsdoc">with-sound</a> to add notelist output as an edit:
-</p>
-
-<pre class="indented">
-(mix-sound-data 
-  (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:output (<a class=quiet href="extsnd.html#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> 2 22050)) 
-    (<a class=quiet href="#fmviolin" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> 0 1 440 .1 :degree 45)))
-</pre>
-
-<div class="spacer"></div>
-
-
 <!-- region->frame -->
 <pre class="indented">
 <em class=def id="regiontoframe">region-&gt;frame</em> reg pos
 </pre>
 
 <p>region-&gt;frame returns a frame containing the contents of the region ref at position pos.
-</p>
-<div class="spacer"></div>
-
-
-<!-- region->sound-data -->
-<pre class="indented">
-<em class=def id="regiontosounddata">region-&gt;sound-data</em> reg
-</pre>
-
-<p>region-&gt;sound-data returns a sound-data object containing the contents of the region 'reg'.
 </p>
 <div class="spacer"></div>
 
@@ -6124,16 +6050,6 @@ If 'with-sync' is #t, the frame read includes all channels currently sync'd to t
 <div class="spacer"></div>
 
 
-<!-- selection->sound-data -->
-<pre class="indented">
-<em class=def id="selectiontosounddata">selection-&gt;sound-data</em> beg
-</pre>
-
-<p>selection-&gt;sound-data returns a sound-data object containing the contents of the current selection.
-</p>
-<div class="spacer"></div>
-
-
 <!-- simultaneous-zero-crossing -->
 <pre class="indented">
 <em class=def id="simultaneouszerocrossing">simultaneous-zero-crossing</em> (beg 0) dur snd
@@ -6141,63 +6057,6 @@ If 'with-sync' is #t, the frame read includes all channels currently sync'd to t
 
 <p>simultaneous-zero-crossing looks through all channels of the sound 'snd' for a zero crossing that happens on the
 same sample in all channels.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data->file -->
-<pre class="indented">
-<em class=def id="sounddatatofile">sound-data-&gt;file</em> sd file (srate 44100) (comment "")
-</pre>
-
-<p>sound-data-&gt;file places the contents of its sound-data argument 'sd' in the newly created sound file 'file'.
-</p>
-
-<pre class="indented">
-(sound-data-&gt;file (sound-&gt;sound-data 44100 44100) "test.snd" 44100)
-</pre>
-
-<p>writes the sound data in the currently selected sound between seconds 1 and 2 to "test.snd".
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data->frame -->
-<pre class="indented">
-<em class=def id="sounddatatoframe">sound-data-&gt;frame</em> sd pos fr
-</pre>
-
-<p>sound-data-&gt;frame places the contents of its sound-data argument at position pos into its frame argument.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound-data->sound -->
-<pre class="indented">
-<em class=def id="sounddatatosound">sound-data-&gt;sound</em> sd beg dur snd
-</pre>
-
-<p>sound-data-&gt;sound places the contents of its sound-data argument sd into the sound snd starting at beg and going for dur frames.
-dur defaults to the sound-data object's length.
-See <a href="#insertsounddata">insert-sound-data</a> for an example that could easily be changed to use this 
-function (and replacement, of course, rather than insertion).
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound->sound-data -->
-<pre class="indented">
-<em class=def id="soundtosounddata">sound-&gt;sound-data</em> beg dur snd
-</pre>
-
-<p>sound-&gt;sound-data returns a sound-data object containing the contents of the sound snd starting from beg for dur frames.
-</p>
-
-<pre class="indented">
-(sound-data-&gt;sound (sound-data* (sound-&gt;sound-data) 2.0))
-</pre>
-
-<p>is yet another way to scale a sound by 2.0.
 </p>
 <div class="spacer"></div>
 
@@ -9877,17 +9736,12 @@ play-sines produces a spectrum given a list of lists of frequency and amplitude:
 <pre class="indented">
 <em class=def id="playsound">play-sound</em> func
 </pre>
-<p>play-sound plays the current sound, calling (func data) on each buffer if 'func' is passed.
+<p>play-sound plays the current sound, calling (func data) on each buffer.
 The following doubles each sample in channel 0 during playback:
 </p>
 
 <pre class="indented">
-(<em class=red>play-sound</em>
- (lambda (data)
-   (let ((len (length data)))
-     (do ((i 0 (+ 1 i)))
-	 ((= i len))
-       (<a class=quiet href="extsnd.html#sounddataset" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddataset_tip)">sound-data-set!</a> data 0 i (* 2.0 (<a class=quiet href="extsnd.html#sounddataref" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddataref_tip)">sound-data-ref</a> data 0 i)))))))
+(<em class=red>play-sound</em> (lambda (data) (float-vector-scale! data 2.0) data))
 </pre>
 
 <div class="spacer"></div>
@@ -9902,45 +9756,6 @@ The following doubles each sample in channel 0 during playback:
 <p>start-dac opens the DAC ready for sound output, and stop-dac closes it.
 </p>
 <div class="spacer"></div>
-
-
-<!-- vector-synthesis -->
-<pre class="indented">
-<em class=emdef>vector-synthesis</em> driver files read-even-when-not-playing
-</pre>
-<p>vector-synthesis cycles through a collection of incoming audio streams, playing whatever
-happens to be on the chosen one, with fade-ins and fade-outs to avoid clicks.
-It uses 'driver', a 
-function of two arguments (the number of files, and the number of samples between calls) to decide which file to play.  If 
-'read-even-when-not-playing' is #t (the default is #f), the input files are constantly 
-read, even if not playing.  'files' is a list of files to be played.
-</p>
-
-<pre class="indented">
-(vector-synthesis 
-  (let ((ctr 0) (file 0)) 
-    (lambda (files bufsize)
-      (if (&gt; ctr 4)
-	  (begin
-	    (set! file (+ 1 file))
-	    (set! ctr 0)
-	    (if (&gt;= file files)
-		(set! file 0)))
-	  (set! ctr (+ 1 ctr)))
-      file))
-  (list "oboe.snd" "pistol.snd") #t)
-</pre>
-
-<p>The vector-synthesis 
-idea (and the weird name) came from a linux-audio-development mailing list.
-Apparently some commercial synths (or software?) provide this.
-</p>
-<div class="spacer"></div>
-
-<div class="seealso">
-see also: &nbsp; <a href="extsnd.html#playexamples">Playing</a> <a href="extsnd.html#extsndlib">Sndlib</a>
-</div>
-
 
 
 
@@ -12164,7 +11979,7 @@ we want to hear an arpeggio from the fm-violin:
 
 
 <p>
-with-sound opens an output object, either a sound file, a vct, a vector, or a sound-data object: (*output*), and
+with-sound opens an output object, either a sound file, a vct, or a vector: (*output*), and
 optionally a reverb output object: *reverb*.  Each instrument uses <a href="sndclm.html#out-any">out-any</a> to add its sounds to the
 *output* results.  with-sound next sets up a variety of variables describing the current
 output, and establishes an environment where various problems can be handled nicely (in Scheme,
@@ -12381,7 +12196,7 @@ To continue adding notes to an existing file, set 'continue-old-file':
 <p id="definstrument">
 The arguments passed to the notehook function are the current instrument name (a string) and all its
 arguments.  definstrument implements the notehook feature. 
-The "output" argument can be a vct, a vector, or a sound-data object, as well as a filename:
+The "output" argument can be a vct, or a vector as well as a filename:
 </p>
 
 <pre class="indented">
@@ -12389,8 +12204,7 @@ The "output" argument can be a vct, a vector, or a sound-data object, as well as
 </pre>
 
 
-<p>See <a href="#fadedoc">fade.scm</a>, snd-test.scm,
-<a href="#insertsounddata">insert-sound-data</a>, <a href="#mixsounddata">mix-sound-data</a> for more examples.
+<p>See <a href="#fadedoc">fade.scm</a>, snd-test.scm.
 </p>
 
 

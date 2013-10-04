@@ -468,7 +468,7 @@ Extensions to Snd can be found in:
     <td onmouseout="UnTip()" onmouseover="Tip(fade_doc_tip)">frequency-domain cross-fades</td></tr>
 
 <tr><td><a href="sndscm.html#framedoc">frame</a></td>
-    <td onmouseout="UnTip()" onmouseover="Tip(frame_doc_tip)">frames, vcts, sound-data objects</td></tr>
+    <td onmouseout="UnTip()" onmouseover="Tip(frame_doc_tip)">frames, float-vectors</td></tr>
 
 <tr><td><a href="sndscm.html#freeverbdoc">freeverb</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(freeverb_doc_tip)">a reverb</td></tr>
@@ -808,8 +808,8 @@ If dac-combines-channels is #f, extra channels are not played.
 <em class=def id="dacsize">dac-size</em> (default: 256)
 </pre>
 
-<p>dac-size is the audio output buffer size;  it is not always meaningful.  See <a href="sndscm.html#playwithenvs">play-with-envs</a> in enved.scm or
-<a href="sndscm.html#playsound">play-sound</a> in play.scm.  When you change the control panel settings during playback, the snappiness of the
+<p>dac-size is the audio output buffer size;  it is not always meaningful.  See <a href="sndscm.html#playwithenvs">play-with-envs</a> in enved.scm.
+When you change the control panel settings during playback, the snappiness of the
 response is set, to some extent, by the dac-size.  The default of 256 gives a stair-case effect in many
 cases, whereas 2048 is smoother.  This also affects the resampling smoothness of playback while dragging the
 mark play triangle.  Some audio choices, ALSA in particular, may ignore dac-size.
@@ -1600,7 +1600,7 @@ the current selection (<a href="#selectionchans">selection-chans</a>),
 </pre>
 
 <p id="genericcopy">copy returns a copy of its argument.
-It works with strings, lists, vectors, hash tables, vcts, sound-data objects, frames, mixers, sounds, the current selection, mixes, marks,
+It works with strings, lists, vectors, hash tables, vcts, frames, mixers, sounds, the current selection, mixes, marks,
 bignums, and the non-gmp random state objects.
 </p>
 <div class="spacer"></div>
@@ -1626,7 +1626,7 @@ as well as handling mixes, regions, samplers, and the regular sound-oriented <a 
 </pre>
 
 <p id="genericfill">fill! fills obj with val (s7 only).
-fill! works with strings, vectors, hash-tables, vcts, lists, sounds, the selection, sound-data objects,
+fill! works with strings, vectors, hash-tables, vcts, lists, sounds, the selection, 
 frames, and mixers.
 </p>
 <div class="spacer"></div>
@@ -3383,7 +3383,7 @@ marks, and mixes.  The sound data itself is accessed through
 a variety of structures and functions, each aimed at a particular
 kind of use.  The accessors from lowest level up are:
 samplers (one sample at a time iterators) and frame-readers (a "frame" is a multichannel sample),
-channel-at-a-time blocks (vcts, map-channel, etc), multichannel blocks (sound-data objects, map-sound, etc),
+channel-at-a-time blocks (vcts, map-channel, etc), multichannel blocks (map-sound, etc),
 a few historical leftovers that follow the "sync" field (scale-to, etc), and finally
 the top-level operations such as save-sound-as (these are used in the File menu, etc).
 In the following sections, I'll start with the lowest level and work upwards, more or less.
@@ -3928,9 +3928,8 @@ copy sampler: <a href="#copysampler">copy-sampler</a><br>
 copy (clone) current sound edit state: <a href="#clonesoundas">clone-sound-as</a><br>
 copy channel data: <a href="#channeltovct">channel-&gt;vct</a>, or <a href="#savesoundas">save-sound-as</a><br>
 copy selection data: <a href="#selection2vct">selection-&gt;vct</a> or <a href="#saveselection">save-selection</a><br>
-copy region data: <a href="#regiontovct">region-&gt;vct</a>, <a href="#regiontovct">region-&gt;vct</a>, <a href="#saveregion">save-region</a>, or <a href="sndscm.html#regiontosounddata">region-&gt;sound-data</a><br>
+copy region data: <a href="#regiontovct">region-&gt;vct</a>, <a href="#regiontovct">region-&gt;vct</a>, <a href="#saveregion">save-region</a>
 copy transform data: <a href="#transformtovct">transform-&gt;vct</a><br>
-copy sound-data: <a href="#sounddatatovct">sound-data-&gt;vct</a><br>
 copy a frame: <a href="sndscm.html#framecopy">frame-copy</a>, <a href="sndscm.html#frametovct">frame-&gt;vct</a><br>
 copy vector: <a href="#vectortovct">vector-&gt;vct</a><br>
 </small></blockquote>
@@ -4155,8 +4154,7 @@ an edit:
 (vct-&gt;channel (<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:output (make-vct 44100)) (<a class=quiet href="sndscm.html#fmviolin" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> 0 1 440 .1)))
 </pre>
 
-<p>To add such a note to whatever is already present, use either <a href="#mixvct">mix-vct</a> or 
-<a href="sndscm.html#mixsounddata">mix-sound-data</a>.
+<p>To add such a note to whatever is already present, use <a href="#mixvct">mix-vct</a>.
 </p>
 <div class="spacer"></div>
 
@@ -4241,7 +4239,6 @@ there are also several functions that create and fill vcts with data:
 <a href="#transformtovct">transform-&gt;vct</a>           fft data to vct
 <a href="#channeltovct">channel-&gt;vct</a>             channel samples to vct
 <a href="sndscm.html#mixtovct">mix-&gt;vct</a>                 mix samples to vct
-<a href="#sounddatatovct">sound-data-&gt;vct</a>          sound-data samples to vct
 <a href="#vectortovct">vector-&gt;vct</a>              vector data to vct (assumed to be floats)
 <a href="#selection2vct">selection-&gt;vct</a>           selected samples to vct
 <a href="sndscm.html#filetovct">file-&gt;vct</a>                file data to vct
@@ -4300,8 +4297,7 @@ true
 
 <p>Another Snd object containing sound samples is the sound-data object; it can be viewed either as an array of vcts, 
 each vct representing one channel's data, or as an array of frames, each frame holding a sample from
-each channel at that position in the sound.  <a href="sndscm.html#framedoc">frame.scm</a> has a number of useful functions that use
-sound-data objects.
+each channel at that position in the sound.
 As with vcts, sound-data objects partake in the Enumerable and Comparable
 classes in Ruby.  In s7, sound-data is just a synonym for float-vector.
 </p>
@@ -6299,7 +6295,6 @@ mix channel: see <a href="sndscm.html#mixchannel">mix-channel</a> in extensions.
 mix region: <a href="extsnd.html#mixregion">mix-region</a><br>
 mix selection: <a href="extsnd.html#mixselection">mix-selection</a><br>
 mix vct: <a href="extsnd.html#mixvct">mix-vct</a><br>
-mix sound-data: <a href="sndscm.html#mixsounddata">mix-sound-data</a><br>
 mix a frame: <a href="sndscm.html#mixframe">mix-frame</a><br>
 enveloped mix: see <a href="sndscm.html#envelopedmix">enveloped-mix</a> in extensions.scm<br>
 read mix samples: <a href="extsnd.html#makemixsampler">make-mix-sampler</a><br>
@@ -6626,7 +6621,6 @@ The region dialog: <a href="snd.html#regionbrowser">region browser</a><br>
 Region rms amp: <a href="sndscm.html#regionrms">region-rms</a><br>
 region-play-list and region-play-sequence in examp.scm<br>
 <a href="sndscm.html#regiontoframe">region-&gt;frame</a><br>
-<a href="sndscm.html#regiontosounddata">region-&gt;sound-data</a><br>
 <a href="sndscm.html#makeregionframereader">make-region-frame-reader</a><br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -8414,7 +8408,6 @@ insert a vct of samples: <a href="extsnd.html#insertsamples">insert-samples</a>,
 insert a sound: <a href="extsnd.html#insertsound">insert-sound</a><br>
 append a sound and silence: <a href="extsnd.html#appendsound">append-sound</a><br>
 insert a frame: <a href="sndscm.html#insertframe">insert-frame</a><br>
-insert sound-data: <a href="sndscm.html#insertsounddata">insert-sound-data</a><br>
 </small></blockquote>
 </td></tr></TABLE>
 <div class="separator"></div>
@@ -9647,7 +9640,6 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (<a class=quiet href="#clmchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_clmchannel_tip)">clm-channel</a> (<a class=quiet href="sndclm.html#make-one-zero" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_one_zero_tip)">make-one-zero</a> :a0 2.0 :a1 0.0))
 (<a class=quiet href="#filterchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterchannel_tip)">filter-channel</a> (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 2.0) 1)
 (<a class=quiet href="#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (<a class=quiet href="#vctscale" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctscale_tip)">vct-scale!</a> (<a class=quiet href="#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a>) 2.0) 0)
-(<a class=quiet href="sndscm.html#sounddatatosound" onmouseout="UnTip()" onmouseover="Tip(sndscm_sounddatatosound_tip)">sound-data-&gt;sound</a> (<a class=quiet href="#sounddata*" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddata_times_tip)">sound-data*</a> (<a class=quiet href="sndscm.html#soundtosounddata" onmouseout="UnTip()" onmouseover="Tip(sndscm_soundtosounddata_tip)">sound-&gt;sound-data</a>) 2.0))
 (begin (<a class=quiet href="#selectall" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectall_tip)">select-all</a>) (<a class=quiet href="#mixselection" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixselection_tip)">mix-selection</a> 0))
 (begin (<a class=quiet href="#selectall" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectall_tip)">select-all</a>) (<a class=quiet href="#scaleselectionby" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleselectionby_tip)">scale-selection-by</a> 2.0))
 (begin (<a class=quiet href="#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> "temp.snd") (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> "temp.snd" 0) (delete-file "temp.snd"))

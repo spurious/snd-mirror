@@ -1716,49 +1716,6 @@ static XEN g_make_sound_data(XEN chans, XEN frames)
   return(make_sound_data(chns, frms));
 }
 
-#else /* scheme */
-
-bool sound_data_p(XEN obj) 
-{
-  return((s7_is_float_vector(obj)) &&
-	 (s7_vector_rank(obj) == 2));
-}
-
-#define SOUND_DATA_P(Obj) sound_data_p(Obj)
-
-static XEN g_sound_data_p(XEN obj) 
-{
-  #define H_sound_data_p "(" S_sound_data_p " obj): is 'obj' is a sound-data object"
-  return(C_TO_XEN_BOOLEAN(sound_data_p(obj)));
-}
-
-
-static XEN make_sound_data(int chans, mus_long_t frames)
-{
-  #define H_make_sound_data "(" S_make_sound_data " chans frames): return a new sound-data object with 'chans' channels, each having 'frames' samples"
-  s7_Int di[2];
-  di[0] = chans;
-  di[1] = frames;
-  return(s7_make_float_vector(s7, chans * frames, 2, di));
-}
-
-XEN wrap_sound_data(int chans, mus_long_t frames, mus_float_t **data)
-{
-  /* data here is not necessarily continguous (dac_buffers, io_state)
-   */
-  s7_Int di[1];
-  int i;
-  s7_pointer lst;
-  di[0] = frames;
-  lst = s7_nil(s7);
-  for (i = chans - 1; i >= 0; i--)
-    lst = s7_cons(s7, s7_make_float_vector_wrapper(s7, frames, (s7_Double *)data[i], 1, di), lst);
-  return(lst);
-}
-
-#endif
-
-
 
 static XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
 {
@@ -1793,6 +1750,32 @@ static XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
 
   return(C_TO_XEN_DOUBLE(mus_sound_data_ref(sd, chn, loc)));
 }
+
+#else /* scheme */
+
+bool sound_data_p(XEN obj) 
+{
+  return((s7_is_float_vector(obj)) &&
+	 (s7_vector_rank(obj) == 2));
+}
+
+#define SOUND_DATA_P(Obj) sound_data_p(Obj)
+
+XEN wrap_sound_data(int chans, mus_long_t frames, mus_float_t **data)
+{
+  /* data here is not necessarily continguous (dac_buffers, io_state)
+   */
+  s7_Int di[1];
+  int i;
+  s7_pointer lst;
+  di[0] = frames;
+  lst = s7_nil(s7);
+  for (i = chans - 1; i >= 0; i--)
+    lst = s7_cons(s7, s7_make_float_vector_wrapper(s7, frames, (s7_Double *)data[i], 1, di), lst);
+  return(lst);
+}
+
+#endif
 
 
 XEN g_sound_data_maxamp(XEN obj)
@@ -1855,7 +1838,6 @@ static XEN g_sound_data_peak(XEN obj)
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, 1, S_sound_data_maxamp, "a sound-data object");
   return(C_TO_XEN_DOUBLE(sound_data_peak(XEN_TO_SOUND_DATA(obj))));
 }
-#endif
 
 
 #if HAVE_FORTH
@@ -1904,7 +1886,7 @@ static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
   return(val);
 }
 
-#if (!HAVE_SCHEME)
+
 static void sound_data_scale(sound_data *sd, mus_float_t scaler)
 {
   int chans, chn;
@@ -1930,7 +1912,6 @@ static void sound_data_scale(sound_data *sd, mus_float_t scaler)
 	  }
     }
 }
-#endif
 
 
 static XEN g_sound_data_scaleB(XEN sdobj, XEN scl)
@@ -1938,19 +1919,13 @@ static XEN g_sound_data_scaleB(XEN sdobj, XEN scl)
   #define H_sound_data_scaleB "(" S_sound_data_scaleB " sd scl): scales (multiplies) sound-data sd's data by scl"
 
   XEN_ASSERT_TYPE(SOUND_DATA_P(sdobj), sdobj, 1, S_sound_data_scaleB, "a sound-data object");
-
-#if HAVE_SCHEME
-  return(s7_float_vector_scale(s7, sdobj, scl));
-#else
   XEN_ASSERT_TYPE(XEN_NUMBER_P(scl), scl, 2, S_sound_data_scaleB, "a number");
 
   sound_data_scale(XEN_TO_SOUND_DATA(sdobj), XEN_TO_C_DOUBLE(scl));
   return(sdobj);
-#endif
 }
 
 
-#if (!HAVE_SCHEME)
 static sound_data *sound_data_fill(sound_data *sd, mus_float_t scaler)
 {
   int chans, chn;
@@ -2170,7 +2145,6 @@ static XEN g_sound_data_multiply(XEN obj1, XEN obj2)
     return(g_sound_data_scaleB(obj2, obj1));
   return(C_TO_XEN_DOUBLE(XEN_TO_C_DOUBLE(obj1) * XEN_TO_C_DOUBLE(obj2)));
 }
-#endif
 
 
 static XEN g_sound_data_to_vct(XEN sdobj, XEN chan, XEN vobj)
@@ -2251,6 +2225,7 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
   memcpy((void *)(mus_sound_data_channel_data(sd, chn)), (void *)(mus_vct_data(v)), len * sizeof(mus_float_t));
   return(obj);
 }
+#endif
 
 
 #if HAVE_FORTH
@@ -2422,14 +2397,15 @@ XEN_NARGIFY_2(g_sound_data_offsetB_w, g_sound_data_offsetB)
 XEN_NARGIFY_2(g_sound_data_multiplyB_w, g_sound_data_multiplyB)
 XEN_NARGIFY_2(g_sound_data_multiply_w, g_sound_data_multiply)
 XEN_NARGIFY_1(g_sound_data_reverseB_w, g_sound_data_reverseB)
-#endif
+XEN_NARGIFY_1(g_sound_data_maxamp_w, g_sound_data_maxamp)
 XEN_NARGIFY_2(g_sound_data_scaleB_w, g_sound_data_scaleB)
 XEN_NARGIFY_3(g_sound_data_ref_w, g_sound_data_ref)
 XEN_NARGIFY_4(g_sound_data_set_w, g_sound_data_set)
 XEN_NARGIFY_1(g_sound_data_p_w, g_sound_data_p)
-XEN_NARGIFY_1(g_sound_data_maxamp_w, g_sound_data_maxamp)
 XEN_ARGIFY_3(g_sound_data_to_vct_w, g_sound_data_to_vct)
 XEN_ARGIFY_3(g_vct_to_sound_data_w, g_vct_to_sound_data)
+#endif
+
 XEN_NARGIFY_1(g_mus_sound_samples_w, g_mus_sound_samples)
 XEN_NARGIFY_2(g_mus_sound_set_samples_w, g_mus_sound_set_samples)
 XEN_NARGIFY_1(g_mus_sound_frames_w, g_mus_sound_frames)
@@ -2515,293 +2491,6 @@ XEN_NARGIFY_1(g_mus_set_max_malloc_w, g_mus_set_max_malloc)
 XEN_NARGIFY_0(g_mus_max_table_size_w, g_mus_max_table_size)
 XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 
-
-#if HAVE_SCHEME
-#ifndef _MSC_VER
-static size_t c_object_value_location, c_object_type_location, cell_type_location;
-static int c_object_built_in_type;
-
-#if (SIZEOF_VOID_P == 4)
-  #define C_OBJECT_VALUE_LOCATION 12
-#else
-  #define C_OBJECT_VALUE_LOCATION 16
-#endif
-#define C_OBJECT_TYPE_LOCATION 8
-#define CELL_TYPE_LOCATION 0
-#define C_OBJECT_BUILT_IN_TYPE 17
-#endif
-
-static int sound_data_number_location;
-
-#ifndef _MSC_VER
-#define SOUND_DATA_NUMBER_LOCATION 8
-#define SOUND_DATA_DENOMINATOR_LOCATION 16
-#else
-static int SOUND_DATA_NUMBER_LOCATION, SOUND_DATA_DENOMINATOR_LOCATION;
-#endif
-
-
-#if (!WITH_GMP)
-static s7_pointer sound_data_set_direct, sound_data_set_four;
-static s7_pointer g_sound_data_set_direct(s7_scheme *sc, s7_pointer args)
-{
-  sound_data *sd;
-  sd = (sound_data *)s7_car_value(sc, args);
-  if (sd)
-    {
-      mus_long_t loc, chan;
-      s7_pointer val;
-      mus_float_t *d;
-
-      chan = s7_number_to_integer(sc, s7_cadr_value(sc, args));
-      if ((chan < 0) || (chan >= mus_sound_data_chans(sd)))
-	XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 2, s7_cadr(args), "channel number out of range");
-
-      loc = s7_number_to_integer(sc, s7_cadr_value(sc, s7_cdr(args)));
-      if ((loc < 0) || (loc>= mus_sound_data_length(sd)))
-	XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 2, s7_caddr(args), "index out of range");
-
-      val = s7_call_direct(sc, s7_cadddr(args));
-      d = mus_sound_data_channel_data(sd, chan);
-      d[loc] = s7_real(val);
-      return(val);
-    }
-  XEN_ASSERT_TYPE(false, s7_car_value(sc, args), 1, "sound-data-set!", "a sound-data object");
-  return(s7_f(sc));
-}
-
-static s7_pointer sound_data_set_direct_looped;
-static s7_pointer g_sound_data_set_direct_looped(s7_scheme *sc, s7_pointer args)
-{
-  s7_Int pos, end, chan;
-  s7_pointer stepper, vc, val, chn, samp;
-  s7_Int *step, *stop;
-  sound_data *sd;
-  gf *gf1;
-
-  /* fprintf(stderr, "args: %s\n", DISPLAY(args)); */
-  
-  vc = s7_cadr_value(sc, args);                      /* (0 sd k i (...)) or possibly (0 sdata i 1 0.1) etc */
-  sd = (sound_data *)vc;
-  if (sd)
-    {
-      s7_pointer chn_slot = NULL, samp_slot = NULL;
-
-      stepper = s7_car(args);
-      /* cadr is the sound-data object */
-      chn = s7_caddr(args);
-      samp = s7_cadddr(args);
-      val = s7_cadddr(s7_cdr(args));
-
-      /* here we might be stepping through the channel which makes things messy 
-       */
-
-      step = ((s7_Int *)((unsigned char *)(stepper) + SOUND_DATA_NUMBER_LOCATION));
-      stop = ((s7_Int *)((unsigned char *)(stepper) + SOUND_DATA_DENOMINATOR_LOCATION));
-      pos = (*step);
-      end = (*stop);
-
-      if (s7_is_symbol(samp))
-	{
-	  samp_slot = s7_slot(sc, samp);
-	  if (!samp_slot) return(NULL);
-	}
-      if (s7_is_symbol(chn))
-	{
-	  chn_slot = s7_slot(sc, chn);
-	  if (!chn_slot) return(NULL);
-	}
-      
-      if ((samp_slot) && 
-	  (s7_slot_value(samp_slot) == stepper) &&
-	  ((!chn_slot) || (s7_slot_value(chn_slot) != stepper)))
-	{
-	  mus_float_t *d;
-	  if ((pos < 0) ||
-	      (end > mus_sound_data_length(sd)))
-	    XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 3, s7_cadddr(args), "index out of range");   
-
-	  if (chn_slot)
-	    chan = s7_number_to_integer(sc, s7_slot_value(chn_slot));
-	  else chan = s7_number_to_integer(sc, chn);
-	  if ((chan < 0) ||
-	      (chan >= mus_sound_data_chans(sd)))
-	    XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 2, chn, "channel number out of range");   
-
-	  d = mus_sound_data_channel_data(sd, chan);
-
-	  if (s7_is_real(val))
-	    {
-	      double x;
-	      x = s7_number_to_real(sc, val);
-	      for (; pos < end; pos++) 
-		d[pos] = x;
-	      (*step) = end;
-	      return(args);
-	    }
-	  
-	  /* ---------------------------------------- */
-	  gf1 = find_gf(sc, val);
-	  if (gf1)
-	    {
-	      if (gf1->func_1)
-		{
-		  void *gen;
-		  mus_float_t (*func)(void *p);
-		  gen = gf1->gen;
-		  func = gf1->func_1;
-		  for (; pos < end; pos++) 
-		    d[pos] = func(gen);
-		  (*step) = end;
-		  gf_free(gf1);
-		  return(args);
-		}
-	      if (gf1->func)
-		{
-		  for (; pos < end; pos++)
-		    {
-		      (*step) = pos;
-		      d[pos] = gf1->func(gf1);
-		    }
-		  (*step) = end;
-		  gf_free(gf1);
-		  return(args);
-		}
-	      gf_free(gf1);
-	    }
-	  /* ---------------------------------------- */
-	  
-	  if (s7_function_choice_is_direct_to_real(sc, val))
-	    {
-	      for (; pos < end; pos++)
-		{
-		  (*step) = pos;
-		  d[pos] = s7_call_direct_to_real_and_free(sc, val);
-		}
-	      (*step) = end;
-	      return(args);
-	    }
-	}
-      else
-	{
-	  s7_Int smp;
-	  mus_float_t *d;
-	  if ((chn_slot) && 
-	      (s7_slot_value(chn_slot) == stepper) &&
-	      ((!samp_slot) || (s7_slot_value(samp_slot) != stepper)))
-	    {
-	      if ((pos < 0) ||
-		  (end > mus_sound_data_chans(sd)))
-		XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 2, s7_cadddr(args), "channel number out of range");   
-
-	      if (samp_slot)
-		smp = s7_number_to_integer(sc, s7_slot_value(samp_slot));
-	      else smp = s7_number_to_integer(sc, samp);
-
-	      if ((smp < 0) ||
-		  (smp >= mus_sound_data_length(sd)))
-		XEN_OUT_OF_RANGE_ERROR("sound-data-set!", 3, chn, "index out of range");   
-
-	      if (s7_is_real(val))
-		{
-		  double x;
-		  x = s7_number_to_real(sc, val);
-		  for (; pos < end; pos++)
-		    {
-		      d = mus_sound_data_channel_data(sd, pos);
-		      d[smp] = x;
-		    }
-		  (*step) = end;
-		  return(args);
-		}
-
-	      /* ---------------------------------------- */
-	      gf1 = find_gf(sc, val);
-	      if (gf1)
-		{
-		  for (; pos < end; pos++)
-		    {
-		      (*step) = pos;
-		      d = mus_sound_data_channel_data(sd, pos);
-		      d[smp] = gf1->func(gf1);
-		    }
-		  (*step) = end;
-		  gf_free(gf1);
-		  return(args);
-		}
-	      gf_free(gf1);
-	    }
-	  /* ---------------------------------------- */
-	}
-      return(NULL);
-    }
-  XEN_ASSERT_TYPE(false, s7_cadr_value(sc, args), 1, "sound-data-set!", "a sound-data object");
-  return(s7_f(sc));
-}
-#endif
-
-static s7_pointer sound_data_ref_three;
-static s7_pointer g_sound_data_ref_three(s7_scheme *sc, s7_pointer args)
-{
-  sound_data *sd;
-  sd = (sound_data *)s7_car_value(sc, args);
-  if (sd)
-    {
-      mus_long_t chn, loc;
-      chn = s7_number_to_integer(sc, s7_cadr_value(sc, args));
-      if ((chn < 0) || 
-	  (chn >= mus_sound_data_chans(sd)))
-	XEN_OUT_OF_RANGE_ERROR("sound-data-ref", 2, s7_cadr_value(sc, args), "channel number out of range");   
-      loc = s7_number_to_integer(sc, s7_cadr_value(sc, s7_cdr(args)));
-      if ((loc < 0) || 
-	  (loc > mus_sound_data_length(sd)))
-	XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 2, s7_cadr_value(sc, s7_cdr(args)), "index out of range");
-      return(s7_make_real(sc, mus_sound_data_channel_data(sd, chn)[loc]));
-    }
-  XEN_ASSERT_TYPE(false, s7_car_value(sc, args), 1, "sound-data-ref", "a sound-data object");
-  return(s7_f(sc));
-}
-
-static s7_pointer sound_data_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if ((args == 3) &&
-      (s7_is_symbol(s7_cadr(expr))) &&
-      (s7_is_symbol(s7_caddr(expr))) &&
-      (s7_is_symbol(s7_cadddr(expr))))
-    {
-      s7_function_choice_set_direct(sc, expr);
-      return(sound_data_ref_three);
-    }
-  return(f);
-}
-
-static s7_pointer sound_data_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if (args == 4)
-    {
-#if (!WITH_GMP)
-      s7_pointer arg1, arg2, arg3, arg4;
-      arg1 = s7_cadr(expr);
-      arg2 = s7_caddr(expr);
-      arg3 = s7_cadddr(expr);
-      arg4 = s7_cadddr(s7_cdr(expr));
-
-      if ((s7_is_symbol(arg1)) &&
-	  (s7_is_symbol(arg2)) &&
-	  (s7_is_symbol(arg3)) &&
-	  (s7_is_pair(arg4)) &&
-	  (s7_function_choice_is_direct(sc, arg4)) &&
-	  (s7_function_returns_temp(sc, arg4)))
-	{
-	  s7_function_choice_set_direct(sc, expr);
-	  return(sound_data_set_direct);
-	}
-      return(sound_data_set_four);
-#endif
-    }
-  return(f);
-}
-#endif
 
 
 void mus_sndlib_xen_initialize(void)
@@ -2904,27 +2593,27 @@ void mus_sndlib_xen_initialize(void)
 				   S_setB S_mus_sound_data_format, g_mus_sound_set_data_format_w, 1, 0, 2, 0);
 
 
+  /* -------------------------------------------------------------------------------- */
+  /* these are obsolete in scheme */
+#if HAVE_SCHEME
+  s7_eval_c_string(s7, "(define sound-data-ref vector-ref)");
+  s7_eval_c_string(s7, "(define sound-data-set! vector-set!)");
+  s7_eval_c_string(s7, "(define sound-data? float-vector?)");
+  s7_eval_c_string(s7, "(define sound-data-copy copy)");
+  s7_eval_c_string(s7, "(define sound-data-fill! fill!)");
+  s7_eval_c_string(s7, "(define (sound-data-chans sd) (car (vector-dimensions sd)))");
+  s7_eval_c_string(s7, "(define (sound-data-length sd) (cadr (vector-dimensions sd)))");
+  s7_eval_c_string(s7, "(define (make-sound-data chans frames) (make-vector (list chans frames) 0.0 #t))");
+#else
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_p,             g_sound_data_p_w,               1, 0, 0, H_sound_data_p);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_maxamp,        g_sound_data_maxamp_w,          1, 0, 0, H_sound_data_maxamp);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_setB,          g_sound_data_set_w,             4, 0, 0, H_sound_data_setB);
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_scaleB,        g_sound_data_scaleB_w,          2, 0, 0, H_sound_data_scaleB);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_data_ref, g_sound_data_ref_w, H_sound_data_ref,
 				   S_setB S_sound_data_ref, g_sound_data_set_w,  3, 0, 4, 0);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_to_vct,        g_sound_data_to_vct_w,          1, 2, 0, H_sound_data_to_vct);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_to_sound_data,        g_vct_to_sound_data_w,          1, 2, 0, H_vct_to_sound_data);
-#if HAVE_SCHEME
-  s7_eval_c_string(s7, "(define sound-data-copy copy)");
-  s7_eval_c_string(s7, "(define sound-data-fill! fill!)");
-  s7_eval_c_string(s7, "(define (sound-data-peak sd) (float-vector-peak (make-shared-vector sd (list (length sd)))))");
-  s7_eval_c_string(s7, "(define (sound-data-chans sd) (car (vector-dimensions sd)))");
-  s7_eval_c_string(s7, "(define (sound-data-length sd) (cadr (vector-dimensions sd)))");
-  s7_eval_c_string(s7, "(define (make-sound-data chans frames) (make-vector (list chans frames) 0.0 #t))");
-
-  s7_eval_c_string(s7, "(define sound-data->float-vector sound-data->vct)");
-  s7_eval_c_string(s7, "(define float-vector->sound-data vct->sound-data)");
-#else
+  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_maxamp,        g_sound_data_maxamp_w,          1, 0, 0, H_sound_data_maxamp);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_sound_data,          g_make_sound_data_w,            2, 0, 0, H_make_sound_data);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_copy,          g_sound_data_copy_w,            1, 0, 0, H_sound_data_copy);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_fillB,         g_sound_data_fillB_w,           2, 0, 0, H_sound_data_fillB);
@@ -2932,7 +2621,7 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_chans,         g_sound_data_chans_w,           1, 0, 0, H_sound_data_chans);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_length,        g_sound_data_length_w,          1, 0, 0, H_sound_data_length);
 
-  /* not (yet) in scheme: */
+  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_scaleB,        g_sound_data_scaleB_w,          2, 0, 0, H_sound_data_scaleB);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_offsetB,       g_sound_data_offsetB_w,         2, 0, 0, H_sound_data_offsetB);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_addB,          g_sound_data_addB_w,            2, 0, 0, H_sound_data_addB);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_add,           g_sound_data_add_w,             2, 0, 0, H_sound_data_add);
@@ -2940,6 +2629,8 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_multiply,      g_sound_data_multiply_w,        2, 0, 0, H_sound_data_multiply);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_reverseB,      g_sound_data_reverseB_w,        1, 0, 0, H_sound_data_reverseB);
 #endif
+  /* -------------------------------------------------------------------------------- */
+
 
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_frames,         g_mus_sound_frames_w,           1, 0, 0, H_mus_sound_frames);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_duration,       g_mus_sound_duration_w,         1, 0, 0, H_mus_sound_duration);
@@ -3022,52 +2713,6 @@ void mus_sndlib_xen_initialize(void)
 #if __APPLE__
   XEN_DEFINE_PROCEDURE(S_mus_audio_output_properties_mutable, g_mus_audio_output_properties_mutable_w, 1, 0, 0, H_mus_audio_output_properties_mutable);
 #endif
-
-#if HAVE_SCHEME
-  {
-    s7_pointer f;
-    /* sound-data-set! */
-    f = s7_name_to_value(s7, "sound-data-set!");
-    s7_function_set_chooser(s7, f, sound_data_set_chooser);
-#if (!WITH_GMP)
-    sound_data_set_direct = s7_make_function(s7, "sound-data-set!", g_sound_data_set_direct, 4, 0, false, "sound-data-set! optimization");
-    s7_function_set_class(sound_data_set_direct, f);
-    
-    sound_data_set_four = s7_make_function(s7, "sound-data-set!", g_sound_data_set_w, 4, 0, false, "sound-data-set! optimization");
-
-    sound_data_set_direct_looped = s7_make_function(s7, "sound-data-set!", g_sound_data_set_direct_looped, 4, 0, false, "sound-data-set! optimization");
-    s7_function_set_class(sound_data_set_direct_looped, f);
-    s7_function_set_looped(sound_data_set_direct, sound_data_set_direct_looped);
-    s7_function_set_looped(sound_data_set_four, sound_data_set_direct_looped);
-#endif
-
-    /* sound-data-ref */
-    f = s7_name_to_value(s7, "sound-data-ref");
-    s7_function_set_chooser(s7, f, sound_data_ref_chooser);
-
-    sound_data_ref_three = s7_make_function(s7, "sound-data-ref", g_sound_data_ref_three, 3, 0, false, "sound-data-ref optimization");
-    s7_function_set_class(sound_data_ref_three, f);
-    s7_function_set_returns_temp(sound_data_ref_three);
-  }
-
-#ifndef _MSC_VER
-  sound_data_number_location = s7_number_offset(s7);
-  if (sound_data_number_location != SOUND_DATA_NUMBER_LOCATION) fprintf(stderr, "number location: %ld %d\n", (long int)sound_data_number_location, SOUND_DATA_NUMBER_LOCATION);
-
-  c_object_value_location = s7_c_object_value_offset(s7);
-  if (c_object_value_location != C_OBJECT_VALUE_LOCATION) fprintf(stderr, "value location: %ld %d\n", (long int)c_object_value_location, C_OBJECT_VALUE_LOCATION);
-  c_object_type_location = s7_c_object_type_offset(s7);
-  if (c_object_type_location != C_OBJECT_TYPE_LOCATION) fprintf(stderr, "object type location: %ld %d\n", (long int)c_object_type_location, C_OBJECT_TYPE_LOCATION);
-  cell_type_location = s7_type_offset(s7);
-  if (cell_type_location != CELL_TYPE_LOCATION) fprintf(stderr, "cell type location: %ld %d\n", (long int)cell_type_location, CELL_TYPE_LOCATION);
-  c_object_built_in_type = s7_c_object_built_in_type(s7);
-  if (c_object_built_in_type != C_OBJECT_BUILT_IN_TYPE) fprintf(stderr, "object type: %d %d\n", c_object_built_in_type, C_OBJECT_BUILT_IN_TYPE);
-#else
-  SOUND_DATA_NUMBER_LOCATION = s7_number_offset(s7);
-  SOUND_DATA_DENOMINATOR_LOCATION = s7_denominator_offset(s7);
-#endif
-#endif
-
 
   #define H_new_sound_hook S_new_sound_hook "(name): called when a new sound file is being created"
   new_sound_hook = XEN_DEFINE_HOOK(S_new_sound_hook, "(make-hook 'name)", 1, H_new_sound_hook);

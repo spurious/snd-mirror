@@ -9,15 +9,11 @@
 ;;;   make-region-frame-reader make-selection-frame-reader
 ;;;   make-sync-frame-reader
 ;;;
-;;; frame->sound-data, sound-data->frame
-;;; sound->sound-data sound-data->sound
-;;;   region->sound-data selection->sound-data
 ;;; file->float-vector float-vector->file
 ;;; frame->float-vector float-vector->frame
-;;; file->sound-data sound-data->file
 ;;;
-;;; insert-sound-data insert-frame insert-float-vector
-;;; mix-sound-data mix-frame
+;;; insert-frame insert-float-vector
+;;; mix-frame
 ;;; scan-sound map-sound
 ;;;
 ;;; simultaneous-zero-crossing
@@ -71,41 +67,6 @@
 (define vct->frame float-vector->frame)
 
 
-(define* (frame->sound-data fr sd (pos 0))
-;;  "(frame->sound-data fr sd pos) copies the contents of frame fr into the sound-data sd at position pos"
-  (if (not (frame? fr))
-      (error 'wrong-type-arg "frame->sound-data: ~A" fr)
-      (if (not (sound-data? sd))
-	  (error 'wrong-type-arg "frame->sound-data: ~A" sd)
-	  (if (>= pos (sound-data-length sd))
-	      (error 'out-of-range "frame->sound-data: ~A" pos)
-	      (let ((len (min (channels fr) 
-			      (channels sd))))
-		(if (= len 1)
-		    (sound-data-set! sd 0 pos (frame-ref fr 0))
-		    (do ((i 0 (+ i 1)))
-			((= i len))
-		      (sound-data-set! sd i pos (frame-ref fr i))))
-		sd)))))
-
-(define (sound-data->frame sd pos fr)
-  "(sound-data->frame sd pos fr) copies sound-data sd's contents at position pos into frame fr"
-  (if (not (frame? fr))
-      (error 'wrong-type-arg "sound-data->frame: ~A" fr)
-      (if (not (sound-data? sd))
-	  (error 'wrong-type-arg "sound-data->frame: ~A" sd)
-	  (if (>= pos (sound-data-length sd))
-	      (error 'out-of-range "sound-data->frame: ~A" pos)
-	      (let ((len (min (channels fr) 
-			      (channels sd))))
-		(if (= len 1)
-		    (frame-set! fr 0 (sound-data-ref sd 0 pos))
-		    (do ((i 0 (+ i 1)))
-			((= i len))
-		      (frame-set! fr i (sound-data-ref sd i pos))))
-		fr)))))
-
-
 (define* (sound->frame (pos 0) snd)
   "(sound->frame pos snd) returns a frame containing the contents of the sound snd at position pos"
   (let ((index (or snd (selected-sound) (car (sounds)))))
@@ -139,33 +100,6 @@
 	  (set! (fr i) (region-sample reg pos i))))))
 
 
-(define* (sound->sound-data (beg 0) dur snd)
-  "(sound->sound-data beg dur snd) returns a sound-data object containing the samples in sound snd starting at position beg for dur frames"
-  (let ((index (or snd (selected-sound) (car (sounds)))))
-    (if (not (sound? index))
-	(error 'no-such-sound "sound->sound-data: ~A" snd)
-	(let* ((chns (channels index))
-	       (len (or dur (max 1 (- (frames index) beg))))
-	       (sd (make-sound-data chns len)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i chns) 
-	       sd)
-	    (float-vector->sound-data (channel->float-vector beg len index i) sd i))))))
-
-(define* (sound-data->sound sd (beg 0) dur snd)
-  "(sound-data->sound sd beg dur snd) places the contents of sound-data sd into sound snd starting at position beg for dur frames"
-  (if (not (sound-data? sd))
-      (error 'wrong-type-arg "sound-data->sound: ~A" sd)
-      (let ((index (or snd (selected-sound) (car (sounds)))))
-	(if (not (sound? index))
-	    (error 'no-such-sound "sound->sound-data: ~A" snd)
-	    (let ((ndur (or dur (sound-data-length sd))))
-	      (do ((i 0 (+ i 1)))
-		  ((= i (channels index)) 
-		   sd)
-		(float-vector->channel (sound-data->float-vector sd i) beg ndur index i)))))))
-
-
 
 ;;; --------------------------------------------------------------------------------
 ;;; frame-readers
@@ -174,7 +108,7 @@
 (defgenerator (frame-sampler 
 	       :methods (list
 			 (cons 'object->string
-			       (lambda (g)
+			       (lambda* (g readable)
 				 (string-append "#<frame-reader "
 						(object->string (g 'snd)) " "
 						(object->string (g 'frm)) " "
@@ -338,65 +272,12 @@
   "(float-vector->file v file srate comment) writes the data in float-vector v to the specified sound file"
   (if (float-vector? v)
       (let ((fd (mus-sound-open-output file srate 1 #f mus-riff comment)))
-	(mus-sound-write fd 0 (- (length v) 1) 1 (float-vector->sound-data v))
+	(mus-sound-write fd 0 (- (length v) 1) 1 (make-shared-vector v (list 1 (length v))))
 	(mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length v)))
 	file)
       (error 'wrong-type-arg "file->float-vector: ~A" v)))
 
 (define vct->file float-vector->file)
-
-
-(define (file->sound-data file)
-  "(file->sound-data file) returns a sound-data object with the contents of file"
-  (let* ((len (frames file))
-	 (chns (channels file))
-	 (reader (make-frame-reader 0 file))
-	 (data (make-sound-data chns len)))
-    (do ((i 0 (+ i 1)))
-	((= i len))
-      (frame->sound-data (read-frame reader) data i))
-    (free-frame-reader reader)
-    data))
-
-(define* (sound-data->file sd file (srate 22050) (comment ""))
-  "(sound-data->file sd file srate comment) writes the contents of sound-data sd to file"
-  (if (sound-data? sd)
-      (let ((fd (mus-sound-open-output file srate (channels sd) #f mus-riff comment)))
-	(mus-sound-write fd 0 (- (sound-data-length sd) 1) (channels sd) sd)
-	(mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (sound-data-length sd) (channels sd)))
-	file)
-      (error 'wrong-type-arg "sound-data->file: ~A" sd)))
-
-
-(define (region->sound-data reg)
-  "(region->sound-data reg) returns a sound-data object with the contents of region reg"
-  (if (region? reg)
-      (let* ((reader (make-region-frame-reader reg 0))
-	     (len (region-frames reg))
-	     (chns (channels reg))
-	     (data (make-sound-data chns len)))
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
-	  (frame->sound-data (read-frame reader) data i))
-	(free-frame-reader reader)
-	data)
-      (error 'no-such-region "region->sound-data: ~A" reg)))
-
-(define* (selection->sound-data (beg 0))
-  "(selection->sound-data beg) returns a sound-data object with the contents of current selection"
-  (if (selection?)
-      (let* ((reader (make-selection-frame-reader beg))
-	     (len (- (selection-frames) beg))
-	     (chns (selection-chans))
-	     (sd (make-sound-data chns len)))
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
-	  (frame->sound-data (read-frame reader) sd i))
-	(free-frame-reader reader)
-	sd)
-      (error 'no-active-selection "selection->sound-data: ~A")))
-
-
 
 
 (define* (insert-float-vector v (beg 0) dur snd chn edpos)
@@ -421,21 +302,6 @@
 		  ((= chn chns))
 		(insert-sample beg (fr chn) index chn edpos)))))))
 
-(define* (insert-sound-data sd (beg 0) dur snd edpos)
-  "(insert-sound-data sd beg dur snd edpos) inserts sound-data sd's contents into sound snd at beg"
-  ;; this should be built-into insert-samples
-  (if (not (sound-data? sd))
-      (error 'wrong-type-arg "insert-sound-data: ~A" sd)
-      (let ((index (or snd (selected-sound) (car (sounds)))))
-	(if (not (sound? index))
-	    (error 'no-such-sound "insert-sound-data: ~A" snd)
-	    (let* ((chns (min (channels sd) (channels index)))
-		   (len (or dur (sound-data-length sd)))
-		   (v (make-float-vector len)))
-	      (do ((chn 0 (+ 1 chn)))
-		  ((= chn chns))
-		(insert-samples beg len (sound-data->float-vector sd chn v) index chn edpos #f "insert-sound-data")))))))
-
 
 (define* (mix-frame fr (beg 0) snd)
   "(mix-frame fr beg snd) mixes frame fr's data into sound snd (one sample in each channel) at beg"
@@ -448,23 +314,6 @@
 	      (do ((chn 0 (+ 1 chn)))
 		  ((= chn chns))
 		(set! (sample beg index chn) (+ (fr chn) (sample beg index chn)))))))))
-
-(define* (mix-sound-data sd (beg 0) dur snd tagged)
-  "(mix-sound-data sd beg dur snd tagged) mixes the contents of sound-data sd into sound snd at beg"
-  (if (not (sound-data? sd))
-      (error 'wrong-type-arg "mix-sound-data: ~A" sd)
-      (let ((index (or snd (selected-sound) (car (sounds)))))
-	(if (not (sound? index))
-	    (error 'no-such-sound "mix-sound-data: ~A" snd)
-	    (let* ((chns (min (channels sd) (channels index)))
-		   (len (or dur (sound-data-length sd)))
-		   (v (make-float-vector len))
-		   (mix-id #f))
-	      (do ((chn 0 (+ 1 chn)))
-		  ((= chn chns))
-		(let ((id (mix-float-vector (sound-data->float-vector sd chn v) beg index chn tagged "mix-sound-data")))
-		  (if (not mix-id) (set! mix-id id))))
-	      mix-id)))))
 
   
 (define* (scan-sound func (beg 0) dur snd with-sync)

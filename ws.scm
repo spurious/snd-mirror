@@ -149,11 +149,9 @@
 		       (delete-file output-1))
 		   (set! *output* (make-sample->file output-1 channels data-format header-type comment)))))
 	   (begin
-	     (if (not continue-old-file)
-		 (if (or (float-vector? output-1)
-			 (sound-data? output-1)
-			 (vector? output-1))
-		     (fill! output-1 0.0)))
+	     (if (and (not continue-old-file)
+		      (vector? output-1))
+		 (fill! output-1 0.0))
 	     (set! *output* output-1)))
        
        (if reverb
@@ -171,11 +169,9 @@
 							     data-format)
 							 header-type)))))
 	       (begin
-		 (if (not continue-old-file)
-		     (if (or (float-vector? reverb-1)
-			     (sound-data? reverb-1)
-			     (vector? reverb-1))
-			 (fill! reverb-1 0.0)))
+		 (if (and (not continue-old-file)
+			  (vector? reverb-1))
+		     (fill! reverb-1 0.0))
 		 (set! *reverb* reverb-1))))
 
        (let ((start (if statistics (get-internal-real-time)))
@@ -210,8 +206,6 @@
 		   (mus-close *reverb*))
 	       (if statistics 
 		   (if (or reverb-to-file
-			   (float-vector? reverb-1)
-			   (sound-data? reverb-1)
 			   (vector? reverb-1))
 		       (set! revmax (maxamp reverb-1))))
 	       (if reverb-to-file
@@ -252,10 +246,7 @@
 			       "~%;~A:~%  maxamp~A:~{ ~,8F~}~%~A  compute time: ~,3F~%")
 			(if output-to-file
 			    output-1
-			    (if (float-vector? output-1) "float-vector" 
-				(if (sound-data? output-1) "sound-data"
-				    (if (vector? output-1) "vector"
-					"flush"))))
+			    (if (vector? output-1) "vector" "flush"))
 			(if (or scaled-to scaled-by) 
 			    " (before scaling)" 
 			    "")
@@ -267,13 +258,9 @@
 				      ((>= i (length lst)))
 				    (set! (lst i) (/ (lst i) (mus-srate))))
 				  lst))
-			    (if (float-vector? output-1)
-				(list (float-vector-peak output-1))
-				(if (sound-data? output-1)
-				    (sound-data-maxamp output-1)
-				    (if (vector? output-1)
-					(list (maxamp output-1))
-					0.0))))
+			    (if (vector? output-1)
+				(list (maxamp output-1))
+				'(0.0)))
 			(if revmax (format #f "  rev max: ~,4F~%" revmax) "")
 			cycles)))
 
@@ -546,7 +533,7 @@
      (set! (hook-functions new-sound-hook)
 	   (list (lambda (hook)       ; save current sound-let temp file list
 		   (let ((file (hook 'name)))
-		     (if (string? file) ; try to ignore float-vectors and sound-data objects
+		     (if (string? file) ; try to ignore float-vectors
 			 (set! temp-files (cons file temp-files)))))))
      (let ((val (let ,(map (lambda (arg) 
 			     (if (> (length arg) 2)
@@ -556,7 +543,7 @@
 			   snds)
 		  ,@body)))                         ; sound-let body
        (for-each (lambda (file)                     ; clean up all local temps
-		   (if (and (string? file)          ; is it a file? (might be a float-vector or sound-data object)
+		   (if (and (string? file)          ; is it a file? (might be a float-vector)
 			    (file-exists? file))
 		       (delete-file file)))
 		 temp-files)
@@ -605,11 +592,9 @@ finish-with-sound to complete the process."
 		  (delete-file output))
 	      (set! *output* (make-sample->file output channels data-format header-type comment))))
 	(begin
-	  (if (not continue-old-file)
-	      (if (or (float-vector? output)
-		      (sound-data? output)
-		      (vector? output))
-		  (fill! output 0.0)))
+	  (if (and (not continue-old-file)
+		   (vector? output))
+	      (fill! output 0.0))
 	  (set! *output* output)))
 
     (if reverb
@@ -621,11 +606,9 @@ finish-with-sound to complete the process."
 		      (delete-file revfile))
 		  (set! *reverb* (make-sample->file revfile reverb-channels data-format header-type))))
 	    (begin
-	      (if (not continue-old-file)
-		  (if (or (float-vector? revfile)
-			  (sound-data? revfile)
-			  (vector? revfile))
-		      (fill! revfile 0.0)))
+	      (if (and (not continue-old-file)
+		       (vector? revfile))
+		  (fill! revfile 0.0))
 	      (set! *reverb* revfile))))
 
     (list 'with-sound-data

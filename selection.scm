@@ -9,7 +9,6 @@
 ;;;
 ;;;
 ;;; see also make-selection-frame-reader (frame.scm)
-;;;          selection->sound-data (frame.scm)
 ;;;          selection-rms (examp.scm)
 ;;;          fit-selection-between-marks (marks.scm)
 ;;;          define-selection-via-marks (marks.scm)

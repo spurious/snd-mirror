@@ -5,30 +5,30 @@
 ;;;  test 2: headers                            [1202]
 ;;;  test 3: variables                          [1517]
 ;;;  test 4: sndlib                             [2086]
-;;;  test 5: simple overall checks              [4495]
-;;;  test 6: float-vectors                      [9258]
-;;;  test 7: colors                             [9552]
-;;;  test 8: clm                                [10071]
-;;;  test 9: mix                                [21759]
-;;;  test 10: marks                             [23548]
-;;;  test 11: dialogs                           [24507]
-;;;  test 12: extensions                        [24678]
-;;;  test 13: menus, edit lists, hooks, etc     [24944]
-;;;  test 14: all together now                  [26319]
-;;;  test 15: chan-local vars                   [27197]
-;;;  test 16: regularized funcs                 [28955]
-;;;  test 17: dialogs and graphics              [32566]
-;;;  test 18: save and restore                  [32677]
-;;;  test 19: transforms                        [34291]
-;;;  test 20: new stuff                         [36406]
-;;;  test 21: optimizer                         [38326]
-;;;  test 22: with-sound                        [38850]
-;;;  test 23: X/Xt/Xm                           [41812]
-;;;  test 24: GL                                [45494]
-;;;  test 25: errors                            [45618]
-;;;  test 26: s7                                [47161]
-;;;  test all done                              [47227]
-;;;  test the end                               [47410]
+;;;  test 5: simple overall checks              [4445]
+;;;  test 6: float-vectors                      [9208]
+;;;  test 7: colors                             [9502]
+;;;  test 8: clm                                [10021]
+;;;  test 9: mix                                [21703]
+;;;  test 10: marks                             [23492]
+;;;  test 11: dialogs                           [24451]
+;;;  test 12: extensions                        [24622]
+;;;  test 13: menus, edit lists, hooks, etc     [24888]
+;;;  test 14: all together now                  [26261]
+;;;  test 15: chan-local vars                   [27139]
+;;;  test 16: regularized funcs                 [28897]
+;;;  test 17: dialogs and graphics              [32508]
+;;;  test 18: save and restore                  [32619]
+;;;  test 19: transforms                        [34235]
+;;;  test 20: new stuff                         [36350]
+;;;  test 21: optimizer                         [37872]
+;;;  test 22: with-sound                        [38396]
+;;;  test 23: X/Xt/Xm                           [41343]
+;;;  test 24: GL                                [45025]
+;;;  test 25: errors                            [45149]
+;;;  test 26: s7                                [46690]
+;;;  test all done                              [46756]
+;;;  test the end                               [46939]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -1932,7 +1932,7 @@
 		       'make-pulse-train 'make-rand 'make-rand-interp 'make-readin
 		       'make-region 'make-region-sampler 'make-sample->file 'make-sampler 'make-sawtooth-wave
 		       'make-scalar-mixer 'make-nrxysin 'make-nrxycos 'make-rxyk!cos 'make-rxyk!sin 
-		       'make-snd->sample 'make-sound-data 'make-square-wave
+		       'make-snd->sample 'make-square-wave
 		       'make-src 'make-ssb-am 'make-ncos 'make-nsin 'make-table-lookup
 		       'make-triangle-wave 'make-two-pole 'make-two-zero
 		       'make-variable-graph 'make-float-vector 'make-wave-train 
@@ -2055,7 +2055,7 @@
 		       'two-pole 'two-pole? 'two-zero 'two-zero? 'ultraspherical-window
 		       'unbind-key  'undo 'undo-edit 'undo-hook 'unselect-all 'update-hook 'update-lisp-graph
 		       'update-sound 'update-time-graph 'update-transform-graph 'variable-graph? 'float-vector
-		       'float-vector* 'float-vector+ 'float-vector->channel 'float-vector->sound-data
+		       'float-vector* 'float-vector+ 'float-vector->channel
 		       'float-vector->string 'float-vector-add!
 		       'length 'float-vector-max 'float-vector-min 'float-vector-move!
 		       'float-vector-multiply! 'float-vector-offset! 'float-vector-peak 'float-vector-ref 'reverse!
@@ -2099,7 +2099,7 @@
 	 (chans (mus-sound-chans file))
 	 (len (mus-sound-frames file))
 	 (bufsize 256)
-	 (data (make-sound-data chans bufsize))
+	 (data (make-vector (list chans bufsize) 0.0 #t))
 	 (bytes (* bufsize chans 2)))
     (mus-sound-read sound-fd 0 (- bufsize 1) chans data)
     (catch #t
@@ -2880,44 +2880,6 @@
 	
 	(for-each close-sound (sounds))
 	
-	(let* ((ob (open-sound (string-append "~/baddy/" home-dir "/cl/oboe.snd")))
-	       (sd (float-vector->sound-data (channel->float-vector)))
-	       (mx (sound-data-maxamp sd)))
-	  (if (not (= (sound-data-length sd) 50828)) (snd-display #__line__ ";oboe->sd: len ~A?" (sound-data-length sd)))
-	  (if (fneq (sd 0 1000) .0328369) (snd-display #__line__ ";oboe->sd[1000]: ~A?" (sd 0 1000)))
-	  (if (not (= (length mx) 1)) (snd-display #__line__ ";sound-data-maxamp oboe.snd: ~A?" mx))
-	  (if (not (= (maxamp ob 0) (car mx))) (snd-display #__line__ ";sound-data-maxamp oboe.snd: ~A ~A?" mx (maxamp ob 0)))
-	  (if (fneq (sound-data-peak sd) (car mx)) (snd-display #__line__ ";sound-data-peak oboe.snd: ~A ~A" (sound-data-peak sd) mx))
-	  
-	  (let ((var (catch #t (lambda () (set! (selected-channel) 1)) (lambda args args))))
-	    (if (not (eq? (car var) 'no-such-channel))
-		(snd-display #__line__ ";set selected-channel bad chan: ~A" var)))
-	  (let ((var (catch #t (lambda () (set! (selected-channel 123456) 1)) (lambda args args))))
-	    (if (not (eq? (car var) 'no-such-sound))
-		(snd-display #__line__ ";set selected-channel bad snd: ~A" var)))
-	  (let ((var (catch #t (lambda () (sd 2 1000)) (lambda args args))))
-	    (if (not (eq? (car var) 'out-of-range))
-		(snd-display #__line__ ";sound-data-ref bad chan: ~A" var)))
-	  (let ((var (catch #t (lambda () (sd -1 1000)) (lambda args args))))
-	    (if (not (eq? (car var) 'out-of-range))
-		(snd-display #__line__ ";sound-data-ref bad chan -1: ~A" var)))
-	  (let ((var (catch #t (lambda () (sd 0 -1)) (lambda args args))))
-	    (if (not (eq? (car var) 'out-of-range))
-		(snd-display #__line__ ";sound-data-ref bad frame: ~A" var)))
-	  (let ((var (catch #t (lambda () (sd 0 10000000)) (lambda args args))))
-	    (if (not (eq? (car var) 'out-of-range))
-		(snd-display #__line__ ";sound-data-ref bad frame high: ~A" var)))
-	  (let ((var (catch #t (lambda () (sound-data-set! sd 2 1000 1)) (lambda args args))))
-	    (if (not (eq? (car var) 'out-of-range))
-		(snd-display #__line__ ";sound-data-set! bad chan: ~A" var)))
-	  (let ((var (catch #t (lambda () (sound-data-set! sd 0 10000000 1)) (lambda args args))))
-	    (if (not (eq? (car var) 'out-of-range))
-		(snd-display #__line__ ";sound-data-set! bad frame: ~A" var)))
-	  (let* ((v (make-float-vector 3))
-		 (var (catch #t (lambda () (float-vector->sound-data v sd 2)) (lambda args args))))
-	    (if (not (eq? (car var) 'out-of-range))
-		(snd-display #__line__ ";float-vector->sound-data-set! bad chan: ~A" var)))
-	  (close-sound ob))
 	(if (selected-sound)
 	    (snd-display #__line__ ";selected-sound ~A ~A" (selected-sound) (sounds)))
 	
@@ -2934,61 +2896,58 @@
 	(if (file-exists? "fmv5.snd") (delete-file "fmv5.snd"))
 	(set! (print-length) 12)
 	(let ((fd (mus-sound-open-output "fmv5.snd" 22050 1 mus-bshort mus-aiff "no comment"))
-	      (sdata (make-sound-data 1 100)))
+	      (sdata (make-vector (list 1 100) 0.0 #t)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i 100))
-	    (sound-data-set! sdata 0 i (* i .01)))
-;	  (if (not (string-=? "#<sound-data[chans=1, length=100]:\n    (0.000 0.010 0.020 0.030 0.040 0.050 0.060 0.070 0.080 0.090 0.100 0.110 ...)>"
-;			      (format #f "~A" sdata)))
-;	      (snd-display #__line__ ";print sound-data: ~A?" (format #f "~A" sdata)))
+	    (vector-set! sdata 0 i (* i .01)))
 
 	  (let ((edat sdata)
-		(edat1 (make-sound-data 1 100))
-		(edat2 (make-sound-data 2 100)))
-	    (if (not (eq? sdata edat)) (snd-display #__line__ ";sound-data not eq? ~A ~A" sdata edat))
-	    (if (not (equal? sdata edat)) (snd-display #__line__ ";sound-data not equal? ~A ~A" sdata edat))
-	    (if (equal? sdata edat1) (snd-display #__line__ ";sound-data 1 equal? ~A ~A" sdata edat1))
-	    (if (equal? edat2 edat1) (snd-display #__line__ ";sound-data 2 equal? ~A ~A" edat2 edat1))
+		(edat1 (make-vector (list 1 100) 0.0 #t))
+		(edat2 (make-vector (list 2 100) 0.0 #t)))
+	    (if (not (eq? sdata edat)) (snd-display #__line__ ";vector2 not eq? ~A ~A" sdata edat))
+	    (if (not (equal? sdata edat)) (snd-display #__line__ ";vector2 not equal? ~A ~A" sdata edat))
+	    (if (equal? sdata edat1) (snd-display #__line__ ";vector2 1 equal? ~A ~A" sdata edat1))
+	    (if (equal? edat2 edat1) (snd-display #__line__ ";vector2 2 equal? ~A ~A" edat2 edat1))
 	    (do ((i 0 (+ i 1)))
 		((= i 100))
 	      (set! (edat1 0 i) (sdata 0 i)))
-	    (if (not (equal? sdata edat1)) (snd-display #__line__ ";sound-data 3 not equal? ~A ~A" sdata edat1)))
+	    (if (not (equal? sdata edat1)) (snd-display #__line__ ";vector2 3 not equal? ~A ~A" sdata edat1)))
 	  (let ((v0 (make-float-vector 100))
 		(v1 (make-float-vector 3)))
-	    (sound-data->float-vector sdata 0 v0) 
-	    (if (fneq (v0 10) .1) (snd-display #__line__ ";sound-data->float-vector: ~A?" v0))
-	    (sound-data->float-vector sdata 0 v1) 
-	    (if (fneq (v1 1) .01) (snd-display #__line__ ";sound-data->(small)float-vector: ~A?" v1))
-	    (float-vector->sound-data v0 sdata 0) 
-	    (if (fneq (sdata 0 10) .1) (snd-display #__line__ ";float-vector->sound-data: ~A?" (sdata 0 10)))
-	    (if (fneq (sdata 0 10) .1) (snd-display #__line__ ";float-vector->sound-data applied: ~A?" (sdata 0 10)))
-	    (let ((var (catch #t (lambda () (sound-data->float-vector sdata 2 v0)) (lambda args args))))
+	    (copy (sdata 0) v0) 
+	    (if (fneq (v0 10) .1) (snd-display #__line__ ";vector2->float-vector: ~A?" v0))
+	    (copy (sdata 0) v1) 
+	    (if (fneq (v1 1) .01) (snd-display #__line__ ";vector2->(small)float-vector: ~A?" v1))
+	    (copy v0 (sdata 0))
+	    (if (fneq (sdata 0 10) .1) (snd-display #__line__ ";copy v2: ~A?" (sdata 0 10)))
+	    (if (fneq (sdata 0 10) .1) (snd-display #__line__ ";copy v2 applied: ~A?" (sdata 0 10)))
+	    (let ((var (catch #t (lambda () (sdata 2 v0)) (lambda args args))))
 	      (if (not (eq? (car var) 'out-of-range))
-		  (snd-display #__line__ ";sound-data->float-vector bad chan: ~A" var)))
-	    (let ((var (catch #t (lambda () (mus-audio-write 1 (make-sound-data 3 3) 123)) (lambda args args))))
+		  (snd-display #__line__ ";vector2->float-vector bad chan: ~A" var)))
+	    (let ((var (catch #t (lambda () (mus-audio-write 1 (make-vector (list 3 3) 0.0 #t) 123)) (lambda args args))))
 	      (if (not (eq? (car var) 'out-of-range))
 		  (snd-display #__line__ ";mus-audio-write bad frames: ~A" var))))
 	  
 	  (let ((v0 (make-float-vector 10))
 		(vx (make-float-vector 3))
-		(sdata2 (make-sound-data 2 10)))
+		(sdata2 (make-vector (list 2 10) 0.0 #t)))
 	    (do ((i 0 (+ i 1)))
 		((= i 10))
-	      (sound-data-set! sdata2 0 i 0.1)
-	      (sound-data-set! sdata2 1 i 0.2))
-	    (sound-data->float-vector sdata2 0 v0) 
-	    (sound-data->float-vector sdata2 0 vx)
-	    (if (fneq (v0 1) .1) (snd-display #__line__ ";sound-data->float-vector[1]: ~A?" v0))
-	    (sound-data->float-vector sdata2 1 v0) 
-	    (if (fneq (v0 1) .2) (snd-display #__line__ ";sound-data->float-vector[2]: ~A?" v0))
-	    (float-vector->sound-data v0 sdata2 0) 
+	      (vector-set! sdata2 0 i 0.1)
+	      (vector-set! sdata2 1 i 0.2))
+	    (copy (sdata2 0) v0) 
+	    (copy (sdata2 0) vx)
+	    (if (fneq (v0 1) .1) (snd-display #__line__ ";vector2->float-vector[1]: ~A?" v0))
+	    (copy (sdata2 1) v0) 
+	    (if (fneq (v0 1) .2) (snd-display #__line__ ";vector2->float-vector[2]: ~A?" v0))
+	    (copy v0 (sdata2 0))
 	    (if (fneq (sdata2 0 1) .2) 
-		(snd-display #__line__ ";float-vector->sound-data[2]: ~A?" (sdata2 0 1)))
+		(snd-display #__line__ ";copy v2[2]: ~A?" (sdata2 0 1)))
 	    (fill! v0 .3)
-	    (float-vector->sound-data v0 sdata2 1) 
+	    (copy v0 (sdata2 1))
 	    (if (fneq (sdata2 1 1) .3) 
-		(snd-display #__line__ ";float-vector->sound-data[3]: ~A?" (sdata2 1 1)))
-	    (float-vector->sound-data vx sdata2 0))
+		(snd-display #__line__ ";copy v2[3]: ~A?" (sdata2 1 1)))
+	    (copy vx (sdata2 0)))
 	  (mus-sound-write fd 0 99 1 sdata)
 	  (mus-sound-close-output fd (* 100 (mus-bytes-per-sample mus-bshort))) ; bshort chosen at open
 	  (set! fd (mus-sound-reopen-output "fmv5.snd" 1 mus-bshort mus-aiff (mus-sound-data-location "fmv5.snd")))
@@ -3005,12 +2964,12 @@
 	  (if (fneq (sdata 0 0) .2) (snd-display #__line__ ";2 mus-sound-seek: ~A?" (sdata 0 0)))
 	  (mus-sound-close-input fd))
 
-	(let ((sd (make-sound-data 2 10)))
+	(let ((sd (make-vector (list 2 10) 0.0 #t)))
 	  (fill! sd 2.0)
-	  (if (not (vequal (sound-data->float-vector sd 0) (make-float-vector 10 2.0)))
-	      (snd-display #__line__ ";fill! chan 0: ~A" (sound-data->float-vector sd 0)))
-	  (if (not (vequal (sound-data->float-vector sd 1) (make-float-vector 10 2.0)))
-	      (snd-display #__line__ ";fill! chan 1: ~A" (sound-data->float-vector sd 1))))
+	  (if (not (vequal (sd 0) (make-float-vector 10 2.0)))
+	      (snd-display #__line__ ";fill! chan 0: ~A" (sd 0)))
+	  (if (not (vequal (sd 1) (make-float-vector 10 2.0)))
+	      (snd-display #__line__ ";fill! chan 1: ~A" (sd 1))))
 	
 	(let ((var (catch #t (lambda () (mus-sound-open-output "fmv.snd" 22050 -1 mus-bshort mus-aiff "no comment")) (lambda args args))))
 	  (if (not (eq? (car var) 'out-of-range))
@@ -3032,12 +2991,12 @@
 	  (if (not (eq? (car var) 'out-of-range))
 	      (snd-display #__line__ ";mus-sound-reopen-output bad type: ~A" var)))
 	
-	(let ((sd (make-sound-data 2 10)))
+	(let ((sd (make-vector (list 2 10) 0.0 #t)))
 	  (fill! sd 1.0)
-	  (if (not (vequal (sound-data->float-vector sd 0) (make-float-vector 10 1.0)))
-	      (snd-display #__line__ ";fill! sd chan 0: ~A" (sound-data->float-vector sd 0)))
-	  (if (not (vequal (sound-data->float-vector sd 1) (make-float-vector 10 1.0)))
-	      (snd-display #__line__ ";fill! sd chan 1: ~A" (sound-data->float-vector sd 1)))
+	  (if (not (vequal (sd 0) (make-float-vector 10 1.0)))
+	      (snd-display #__line__ ";fill! sd chan 0: ~A" (sd 0)))
+	  (if (not (vequal (sd 1) (make-float-vector 10 1.0)))
+	      (snd-display #__line__ ";fill! sd chan 1: ~A" (sd 1)))
 	  (let ((sd1 (copy sd)))
 	    (if (not (equal? sd sd1)) (snd-display #__line__ ";copy sd: ~A ~A" sd sd1))))
 	
@@ -3061,24 +3020,24 @@
 	  (set! (hook-functions open-raw-sound-hook) ())
 	  (close-sound ind))
 	
-	(let ((sd (make-sound-data 1 1)))
-	  (if (fneq (sd 0 0) 0.0) (snd-display #__line__ ";sound-data ref: ~A" (sd 0 0)))
+	(let ((sd (make-vector (list 1 1) 0.0 #t)))
+	  (if (fneq (sd 0 0) 0.0) (snd-display #__line__ ";vector2 ref: ~A" (sd 0 0)))
 	  (set! (sd 0 0) 1.0)
-	  (if (fneq (sd 0 0) 1.0) (snd-display #__line__ ";sound-data set: ~A" (sd 0 0)))
-	  (if (not (equal? sd (let ((sd1 (make-sound-data 1 1))) (sound-data-set! sd1 0 0 1.0) sd1)))
-	      (snd-display #__line__ ";sound-data set not equal: ~A" sd)))
+	  (if (fneq (sd 0 0) 1.0) (snd-display #__line__ ";vector2 set: ~A" (sd 0 0)))
+	  (if (not (equal? sd (let ((sd1 (make-vector (list 1 1) 0.0 #t))) (vector-set! sd1 0 0 1.0) sd1)))
+	      (snd-display #__line__ ";vector2 set not equal: ~A" sd)))
 	
-	(let ((sd (make-sound-data 2 3)))
-	  (if (fneq (sd 0 0) 0.0) (snd-display #__line__ ";sound-data ref (1): ~A" (sd 0 0)))
+	(let ((sd (make-vector (list 2 3) 0.0 #t)))
+	  (if (fneq (sd 0 0) 0.0) (snd-display #__line__ ";vector2 ref (1): ~A" (sd 0 0)))
 	  (set! (sd 1 0) 1.0)
-	  (if (fneq (sd 1 0) 1.0) (snd-display #__line__ ";sound-data set (1 0): ~A" (sd 1 0)))
+	  (if (fneq (sd 1 0) 1.0) (snd-display #__line__ ";vector2 set (1 0): ~A" (sd 1 0)))
 	  (set! (sd 1 2) 2.0)
-	  (if (fneq (sd 1 2) 2.0) (snd-display #__line__ ";sound-data set (1 2): ~A" (sd 1 2)))
-	  (if (not (equal? sd (let ((sd1 (make-sound-data 2 3)))
-				(sound-data-set! sd1 1 0 1.0)
-				(sound-data-set! sd1 1 2 2.0)
+	  (if (fneq (sd 1 2) 2.0) (snd-display #__line__ ";vector2 set (1 2): ~A" (sd 1 2)))
+	  (if (not (equal? sd (let ((sd1 (make-vector (list 2 3) 0.0 #t)))
+				(vector-set! sd1 1 0 1.0)
+				(vector-set! sd1 1 2 2.0)
 				sd1)))
-	      (snd-display #__line__ ";sound-data set (3) not equal: ~A" sd)))
+	      (snd-display #__line__ ";vector2 set (3) not equal: ~A" sd)))
 	
 	(for-each 
 	 (lambda (chans)
@@ -3089,13 +3048,13 @@
 				   1000))))
 		(if (file-exists? "fmv5.snd") (delete-file "fmv5.snd"))
 		(let ((fd (mus-sound-open-output "fmv5.snd" 22050 chans (car df-ht) (cadr df-ht) "no comment"))
-		      (sdata (make-sound-data chans samps))
-		      (ndata (make-sound-data chans samps)))
+		      (sdata (make-vector (list chans samps) 0.0 #t))
+		      (ndata (make-vector (list chans samps) 0.0 #t)))
 		   (do ((k 0 (+ k 1)))
 		       ((= k chans))
 		     (do ((i 0 (+ i 1)))
 			 ((= i samps))
-		       (sound-data-set! sdata k i (mus-random 1.0))))
+		       (vector-set! sdata k i (mus-random 1.0))))
 		   (mus-sound-write fd 0 (- samps 1) chans sdata)
 		  (mus-sound-close-output fd (* samps chans (mus-bytes-per-sample (car df-ht))))
 		  (set! fd (mus-sound-open-input "fmv5.snd"))
@@ -3137,18 +3096,18 @@
 	 (list 1 2 4 8))
 	
 	(let ((fd (mus-sound-open-output "fmv.snd" 22050 1 mus-bshort mus-next "no comment"))
-	      (sdata (make-sound-data 1 10)))
+	      (sdata (make-vector (list 1 10) 0.0 #t)))
 	  (define (sound-data-channel->list sd chan)
 	    (let ((ls ()))
-	      (do ((i (- (sound-data-length sd) 1) (- i 1)))
+	      (do ((i (- (frames sd) 1) (- i 1)))
 		  ((< i 0) ls)
 		(set! ls (cons (sd chan i) ls)))))
 	  (define (sound-data->list sd)
 	    (let ((lst ()))
-	      (do ((i (- (sound-data-chans sd) 1) (- i 1)))
+	      (do ((i (- (channels sd) 1) (- i 1)))
 		  ((< i 0) lst)
 		(set! lst (cons (sound-data-channel->list sd i) lst)))))
-	  (sound-data-set! sdata 0 1 .1)
+	  (vector-set! sdata 0 1 .1)
 	  (mus-sound-write fd 0 9 1 sdata)
 	  (mus-sound-close-output fd 20)
 	  (set! fd (mus-sound-open-input "fmv.snd"))
@@ -3161,12 +3120,12 @@
 	  (mus-sound-close-input fd)  
 	  (set! fd (mus-sound-reopen-output "fmv.snd" 1 mus-bshort mus-next (mus-sound-data-location "fmv.snd")))
 	  (mus-sound-seek-frame fd 0)
-	  (sound-data-set! sdata 0 2 .1)
-	  (sound-data-set! sdata 0 3 .1)
+	  (vector-set! sdata 0 2 .1)
+	  (vector-set! sdata 0 3 .1)
 	  (mus-sound-write fd 0 9 1 sdata)
 	  (mus-sound-close-output fd 20)
 	  (set! fd (mus-sound-open-input "fmv.snd"))
-	  (let ((sdata1 (make-sound-data 1 10)))
+	  (let ((sdata1 (make-vector (list 1 10) 0.0 #t)))
 	    (mus-sound-read fd 0 9 1 sdata1)
 	    (if (or (fneq (sdata1 0 0) 0.0)
 		    (fneq (sdata1 0 1) 0.1)
@@ -3263,7 +3222,7 @@
 	  (let ((old-clip #f)
 		(old-snd #f))
 	    (let* ((data (float-vector 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8))
-		   (sdata (float-vector->sound-data data))
+		   (sdata (make-shared-vector data (list 1 (length data))))
 		   (snd (mus-sound-open-output "test.snd" 22050 1 mus-lshort mus-riff "a comment")))
 	      (set! old-clip (mus-file-clipping snd))
 	      (set! old-snd snd)
@@ -3279,7 +3238,7 @@
 	    (mus-sound-forget "test.snd")
 	  
 	    (let* ((data (float-vector 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8))
-		   (sdata (float-vector->sound-data data))
+		   (sdata (make-shared-vector data (list 1 (length data))))
 		   (snd (mus-sound-open-output "test.snd" 22050 1 mus-lshort mus-riff "a comment")))
 	      (set! (mus-file-clipping snd) #t)
 	      (mus-sound-write snd 0 9 1 sdata)
@@ -3296,7 +3255,7 @@
 	  
 	  (set! (mus-clipping) #f)
 	  (let* ((data (float-vector 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8))
-		 (sdata (float-vector->sound-data data))
+		 (sdata (make-shared-vector data (list 1 (length data))))
 		 (snd (mus-sound-open-output "test.snd" 22050 1 mus-lshort mus-riff "a comment")))
 	    (mus-sound-write snd 0 9 1 sdata)
 	    (mus-sound-close-output snd 40))
@@ -3310,7 +3269,7 @@
 	  
 	  (set! (mus-clipping) #t)
 	  (let* ((data (float-vector 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8))
-		 (sdata (float-vector->sound-data data))
+		 (sdata (make-shared-vector data (list 1 (length data))))
 		 (snd (mus-sound-open-output "test.snd" 22050 1 mus-lshort mus-riff "a comment")))
 	    (mus-sound-write snd 0 9 1 sdata)
 	    (mus-sound-close-output snd 40))
@@ -3323,7 +3282,7 @@
 	  
 	  (set! (mus-clipping) #t)
 	  (let* ((data (float-vector 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8))
-		 (sdata (float-vector->sound-data data))
+		 (sdata (make-shared-vector data (list 1 (length data))))
 		 (snd (mus-sound-open-output "test.snd" 22050 1 mus-lshort mus-riff "a comment")))
 	    (let ((tag (catch #t
 			      (lambda () (mus-sound-write snd 0 10 1 sdata))
@@ -3345,10 +3304,10 @@
 		((= i 3))
 	      (set! com (string-append com com)))
 	    (set! fd (mus-sound-open-output "fmv.snd" 22050 4 mus-lshort mus-riff com)))
-	  (set! sdata (make-sound-data 4 10))
+	  (set! sdata (make-vector (list 4 10) 0.0 #t))
 	  (do ((i 0 (+ i 1)))
 	      ((= i 4))
-	    (sound-data-set! sdata i 1 .1))
+	    (vector-set! sdata i 1 .1))
 	  (mus-sound-write fd 0 9 4 sdata)
 	  (mus-sound-close-output fd 80)
 	  (set! fd (mus-sound-open-input "fmv.snd"))
@@ -3365,12 +3324,12 @@
 	  (mus-sound-seek-frame fd 0)
 	  (do ((i 0 (+ i 1)))
 	      ((= i 4))
-	    (sound-data-set! sdata i 2 .1)
-	    (sound-data-set! sdata i 3 .1))
+	    (vector-set! sdata i 2 .1)
+	    (vector-set! sdata i 3 .1))
 	  (mus-sound-write fd 0 9 4 sdata)
 	  (mus-sound-close-output fd 80)
 	  (set! fd (mus-sound-open-input "fmv.snd"))
-	  (let ((sdata1 (make-sound-data 4 10)))
+	  (let ((sdata1 (make-vector (list 4 10) 0.0 #t)))
 	    (mus-sound-read fd 0 9 4 sdata1)
 	    (do ((i 0 (+ i 1)))
 		((= i 4))
@@ -17749,7 +17708,7 @@ EDITS: 2
 	  (snd-display #__line__ ";outa->float-vector ramp 2: ~A" gen))
       (if (not (= (mus-channels gen) 1)) (snd-display #__line__ ";mus-channels float-vector: ~A" (mus-channels gen))))
     
-    (let ((gen (make-sound-data 4 100)))
+    (let ((gen (make-vector (list 4 100) 0.0 #t)))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(outa i .1 gen)
@@ -17772,7 +17731,7 @@ EDITS: 2
 	    (snd-display #__line__ ";4-chan sd out/in[~A]: ~A ~A ~A ~A?" i (ina i gen) (inb i gen) (in-any i 2 gen) (in-any i 3 gen))))  
       (if (not (= (mus-channels gen) 4)) (snd-display #__line__ ";mus-channels sd 4: ~A" (mus-channels gen))))
     
-    (let ((gen (make-sound-data 4 100)))
+    (let ((gen (make-vector (list 4 100) 0.0 #t)))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(out-any i .1 0 gen)
@@ -17901,11 +17860,10 @@ EDITS: 2
       (if (fneq (float-vector-peak vals) .1)
 	  (snd-display #__line__ ";locsig to float-vector fm-violin peak: ~A" (float-vector-peak vals))))
     
-    (let ((vals (with-sound (:output (make-sound-data 2 4410))
+    (let ((vals (with-sound (:output (make-vector (list 2 4410) 0.0 #t))
 			    (fm-violin 0 .1 440 .1 :degree 30))))
-      (let ((mxs (sound-data-maxamp vals)))
-	(if (or (fneq (car mxs) 0.0666)
-		(fneq (cadr mxs) 0.0333))
+      (let ((mxs (maxamp vals)))
+	(if (fneq mxs 0.0666)
 	    (snd-display #__line__ ";locsig to sound-data fm-violin peak: ~A" mxs))))
     
     (let ((gen (make-frame->file "fmv1.snd" 2 mus-bshort mus-next)))
@@ -18646,7 +18604,7 @@ EDITS: 2
     (print-and-check (make-locsig -40 :channels 2)
 		     "locsig"
 		     "locsig chans 2, outn: [1.000 0.000], interp: linear")
-    (print-and-check (make-locsig 160 :channels 4 :output (make-sound-data 4 10))
+    (print-and-check (make-locsig 160 :channels 4 :output (make-vector (list 4 10) 0.0 #t))
 		     "locsig"
 		     "locsig chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
     (print-and-check (make-locsig 0 :channels 1 :output (make-float-vector 10))
@@ -18830,43 +18788,43 @@ EDITS: 2
      (list 0 1 2 4))
     
     (set! (locsig-type) mus-interp-linear)
-    (let* ((outp (make-sound-data 1 10))
+    (let* ((outp (make-vector (list 1 10) 0.0 #t))
 	   (gen (make-locsig 0.0 :output outp)))
       (if (not (= (mus-channels gen) 1)) (snd-display #__line__ ";make-locsig->sd chans (1): ~A" (mus-channels gen)))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(locsig gen i 1.0))
-      (if (not (vequal (sound-data->float-vector outp 0) (make-float-vector 10 1.0)))
-	  (snd-display #__line__ ";locsig->sd chan 0: ~A" (sound-data->float-vector outp 0))))
+      (if (not (vequal (outp 0) (make-float-vector 10 1.0)))
+	  (snd-display #__line__ ";locsig->sd chan 0: ~A" (outp 0))))
     
-    (let* ((outp (make-sound-data 2 10))
+    (let* ((outp (make-vector (list 2 10) 0.0 #t))
 	   (gen (make-locsig 0.0 :output outp)))
       (if (not (= (mus-channels gen) 2)) (snd-display #__line__ ";make-locsig->sd chans: ~A" (mus-channels gen)))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(locsig gen i 1.0))
-      (if (not (vequal (sound-data->float-vector outp 0) (make-float-vector 10 1.0)))
-	  (snd-display #__line__ ";locsig->sd chan 0: ~A" (sound-data->float-vector outp 0)))
-      (if (not (vequal (sound-data->float-vector outp 1) (make-float-vector 10 0.0)))
-	  (snd-display #__line__ ";locsig->sd chan 1: ~A" (sound-data->float-vector outp 1))))
+      (if (not (vequal (outp 0) (make-float-vector 10 1.0)))
+	  (snd-display #__line__ ";locsig->sd chan 0: ~A" (outp 0)))
+      (if (not (vequal (outp 1) (make-float-vector 10 0.0)))
+	  (snd-display #__line__ ";locsig->sd chan 1: ~A" (outp 1))))
     
-    (let* ((outp (make-sound-data 2 10))
+    (let* ((outp (make-vector (list 2 10) 0.0 #t))
 	   (gen (make-locsig 45.0 :output outp)))
       (if (not (= (mus-channels gen) 2)) (snd-display #__line__ ";make-locsig->sd chans: ~A" (mus-channels gen)))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(locsig gen i 1.0))
-      (if (not (vequal (sound-data->float-vector outp 0) (make-float-vector 10 0.5)))
-	  (snd-display #__line__ ";locsig->sd chan 0 (0.5): ~A (~A)" (sound-data->float-vector outp 0) gen))
-      (if (not (vequal (sound-data->float-vector outp 1) (make-float-vector 10 0.5)))
-	  (snd-display #__line__ ";locsig->sd chan 1 (0.5): ~A" (sound-data->float-vector outp 1)))
+      (if (not (vequal (outp 0) (make-float-vector 10 0.5)))
+	  (snd-display #__line__ ";locsig->sd chan 0 (0.5): ~A (~A)" (outp 0) gen))
+      (if (not (vequal (outp 1) (make-float-vector 10 0.5)))
+	  (snd-display #__line__ ";locsig->sd chan 1 (0.5): ~A" (outp 1)))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(locsig gen i 0.5))
-      (if (not (vequal (sound-data->float-vector outp 0) (make-float-vector 10 0.75)))
-	  (snd-display #__line__ ";locsig->sd chan 0 (0.75) (~A): ~A" (sound-data->float-vector outp 0) gen))
-      (if (not (vequal (sound-data->float-vector outp 1) (make-float-vector 10 0.75)))
-	  (snd-display #__line__ ";locsig->sd chan 1 (0.75): ~A" (sound-data->float-vector outp 1))))
+      (if (not (vequal (outp 0) (make-float-vector 10 0.75)))
+	  (snd-display #__line__ ";locsig->sd chan 0 (0.75) (~A): ~A" (outp 0) gen))
+      (if (not (vequal (outp 1) (make-float-vector 10 0.75)))
+	  (snd-display #__line__ ";locsig->sd chan 1 (0.75): ~A" (outp 1))))
     
     (let* ((outp (make-float-vector 10))
 	   (gen (make-locsig 0.0 :output outp)))
@@ -18896,20 +18854,20 @@ EDITS: 2
       (if (not (vequal outp (make-float-vector 10 0.75)))
 	  (snd-display #__line__ ";locsig(2)->float-vector chan 0: ~A" outp)))
     
-    (let* ((outp (make-sound-data 4 10))
+    (let* ((outp (make-vector (list 4 10) 0.0 #t))
 	   (gen (make-locsig 135.0 :output outp)))
       (if (not (= (mus-channels gen) 4)) (snd-display #__line__ ";make-locsig->sd chans (4): ~A" (mus-channels gen)))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(locsig gen i 1.0))
-      (if (not (vequal (sound-data->float-vector outp 0) (make-float-vector 10 0.0)))
-	  (snd-display #__line__ ";locsig(4)->sd chan 0 (0.5): ~A" (sound-data->float-vector outp 0)))
-      (if (not (vequal (sound-data->float-vector outp 1) (make-float-vector 10 0.5)))
-	  (snd-display #__line__ ";locsig(4)->sd chan 1 (0.5) (~A): ~A" (sound-data->float-vector outp 1) gen))
-      (if (not (vequal (sound-data->float-vector outp 2) (make-float-vector 10 0.5)))
-	  (snd-display #__line__ ";locsig(4)->sd chan 2 (0.5): ~A" (sound-data->float-vector outp 2)))
-      (if (not (vequal (sound-data->float-vector outp 3) (make-float-vector 10 0.0)))
-	  (snd-display #__line__ ";locsig(4)->sd chan 3 (0.5): ~A" (sound-data->float-vector outp 3))))
+      (if (not (vequal (outp 0) (make-float-vector 10 0.0)))
+	  (snd-display #__line__ ";locsig(4)->sd chan 0 (0.5): ~A" (outp 0)))
+      (if (not (vequal (outp 1) (make-float-vector 10 0.5)))
+	  (snd-display #__line__ ";locsig(4)->sd chan 1 (0.5) (~A): ~A" (outp 1) gen))
+      (if (not (vequal (outp 2) (make-float-vector 10 0.5)))
+	  (snd-display #__line__ ";locsig(4)->sd chan 2 (0.5): ~A" (outp 2)))
+      (if (not (vequal (outp 3) (make-float-vector 10 0.0)))
+	  (snd-display #__line__ ";locsig(4)->sd chan 3 (0.5): ~A" (outp 3))))
 
     (set! (mus-array-print-length) 8)
     (let* ((outf1 (make-frame->file "fmv.snd" 1 mus-bshort mus-next))
@@ -19069,7 +19027,7 @@ EDITS: 2
       (if (fneq (float-vector-peak vo) 0.484)
 	  (snd-display #__line__ ";move-sound float-vector output: ~A" (float-vector-peak vo))))
     
-    (let* ((vo (make-sound-data 1 1000))
+    (let* ((vo (make-vector (list 1 1000) 0.0 #t))
 	   (gen1 (make-move-sound (list 0 1000 1 0
 					(make-delay 32) 
 					(make-env '(0 0 1 1) :length 1001) 
@@ -19088,10 +19046,8 @@ EDITS: 2
 	    (set! start i)))
       (if (not (= start 64))
 	  (snd-display #__line__ ";move-sound sd output start: ~A" start))
-      (if (fneq (sound-data-peak vo) 0.484)
-	  (snd-display #__line__ ";move-sound sd peak output: ~A" (sound-data-peak vo)))
-      (if (fneq (apply max (sound-data-maxamp vo)) 0.484)
-	  (snd-display #__line__ ";move-sound sd output: ~A" (sound-data-maxamp vo))))
+      (if (fneq (maxamp vo) 0.484)
+	  (snd-display #__line__ ";move-sound sd output: ~A" (maxamp vo))))
     
     (let* ((vo (make-float-vector 1000))
 	   (gen1 (make-move-sound (list 0 1000 1 0
@@ -19115,7 +19071,7 @@ EDITS: 2
       (if (fneq (float-vector-peak vo) 0.484)
 	  (snd-display #__line__ ";move-sound opt float-vector output: ~A" (float-vector-peak vo))))
     
-    (let* ((vo (make-sound-data 1 1000))
+    (let* ((vo (make-vector (list 1 1000) 0.0 #t))
 	   (gen1 (make-move-sound (list 0 1000 1 0
 					(make-delay 32) 
 					(make-env '(0 0 1 1) :length 1001) 
@@ -19134,9 +19090,8 @@ EDITS: 2
 	     (set! start i)))
       (if (not (= start 64))
 	  (snd-display #__line__ ";move-sound opt sd output start: ~A" start))
-      (if (fneq (apply max (sound-data-maxamp vo)) 0.484)
-	  (snd-display #__line__ ";move-sound opt sd output: ~A" (sound-data-maxamp vo))))
-    
+      (if (fneq (maxamp vo) 0.484)
+	  (snd-display #__line__ ";move-sound opt sd output: ~A" (maxamp vo))))
     
     (let ((gen (make-src :srate 2.0))
 	  (v0 (make-float-vector 10))
@@ -20033,10 +19988,8 @@ EDITS: 2
     
     (let* ((fd (mus-sound-open-input "oboe.snd"))
 	   (chans (mus-sound-chans "oboe.snd"))
-	   (data (make-sound-data chans 2000)))
-      (if (not (sound-data? data)) (snd-display #__line__ ";~A not sound-data?" data))
-      (if (not (= (sound-data-chans data) 1)) (snd-display #__line__ ";sound-data chans: ~A?" (sound-data-chans data)))
-      (if (not (= (sound-data-length data) 2000)) (snd-display #__line__ ";sound-data length: ~A?" (sound-data-length data)))
+	   (data (make-vector (list chans 2000) 0.0 #t)))
+      (if (not (= (channels data) 1)) (snd-display #__line__ ";chans: ~A?" (channels data)))
       (mus-sound-read fd 0 1999 chans data)
       (let ((val (data 0 1497)))
 	(mus-sound-close-input fd)
@@ -20934,11 +20887,11 @@ EDITS: 2
 			 (lambda (arg2)
 			   (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
 			 (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
-			       (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
+			       (lambda () #t) (current-environment) (make-vector (list 2 3) 0.0 #t) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 			       () '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			       )))
 		      (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
-			    (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
+			    (lambda () #t) (current-environment) (make-vector (list 2 3) 0.0 #t) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 			    () '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			    ))
 		     
@@ -20957,7 +20910,7 @@ EDITS: 2
 				       (set! (func gen) arg1)))
 				   (lambda args #f)))
 			       (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #(0 1) 3/4 'mus-error 0+i
-				     (lambda () #t) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
+				     (lambda () #t) (make-vector (list 2 3) 0.0 #t) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 				     () '3 4 64 -64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 				     (lambda (a) a)))
 			      (if (not (equal? (func gen) default-value))
@@ -21324,10 +21277,10 @@ EDITS: 2
 	  (snd-display #__line__ ";outa (float-vector) -1 -> ~A" tag)))
     
     (let ((tag (catch #t
-		      (lambda () (let ((v (with-sound (:output (make-sound-data 1 10)) (outa -1 .1)))) v))
+		      (lambda () (let ((v (with-sound (:output (make-vector (list 1 10) 0.0 #t)) (outa -1 .1)))) v))
 		      (lambda args (car args)))))
       (if (not (eq? tag 'out-of-range))
-	  (snd-display #__line__ ";outa (sound-data) -1 -> ~A" tag)))
+	  (snd-display #__line__ ";outa (vector 2) -1 -> ~A" tag)))
     
     (let ((v (with-sound () (catch #t (lambda () 
 					 (outa -1 .1))
@@ -21344,10 +21297,10 @@ EDITS: 2
 							      (outa -1 .1)) 
 							(lambda args 'error)))))
       (if (> (float-vector-peak v) 0.0) (snd-display #__line__ ";outa to float-vector at -1: ~A" v)))
-    (let ((v (with-sound (:output (make-sound-data 1 10)) (catch #t (lambda () 
+    (let ((v (with-sound (:output (make-vector (list 1 10) 0.0 #t)) (catch #t (lambda () 
 								       (outa -1 .1)) 
 								 (lambda args 'error)))))
-      (if (> (sound-data-peak v) 0.0) (snd-display #__line__ ";outa to sound-data at -1: ~A" v)))
+      (if (> (maxamp v) 0.0) (snd-display #__line__ ";outa to vector1 at -1: ~A" v)))
     
     (if (not (= (signum 0) 0)) (snd-display #__line__ ";signum 0: ~A" (signum 0)))
     (if (not (= (signum 10) 1)) (snd-display #__line__ ";signum 10: ~A" (signum 10)))
@@ -24983,7 +24936,6 @@ EDITS: 2
 	     (in-block (make-float-vector block-size))
 	     (out-block (make-float-vector block-size))
 	     (len (frames))
-	     (data (make-sound-data 1 block-size))
 	     (audio-port (mus-audio-open-output 0 (srate) 1 mus-lshort (* block-size 2)))
 	     (ra (ladspa-run-adding descriptor handle block-size)))
 	(if ra (snd-display #__line__ ";ladspa-run-adding: ~A" ra))
@@ -25010,8 +24962,7 @@ EDITS: 2
 			   ((>= i len))
 			 (set! in-block (channel->float-vector i block-size))
 			 (ladspa-run descriptor handle block-size)
-			 (float-vector->sound-data out-block data 0)
-			 (mus-audio-write audio-port data block-size)))
+			 (mus-audio-write audio-port (make-shared-vector out-block (list 1 block-size)) block-size)))
 		     (lambda args (snd-display #__line__ ";ladspa-it: ~A" args))))
 	    (lambda ()
 	      (ladspa-deactivate descriptor handle)
@@ -25742,7 +25693,7 @@ EDITS: 2
 		       (if (not (vector? n))
 			   (snd-display #__line__ ";dac-hook data: ~A?" n))
 		       (if (and (< (length n) 128)
-				(not (= (sound-data-length n) 64))) ; mac case
+				(not (= (frames n) 64))) ; mac case
 			   (snd-display #__line__ ";dac-hook data length: ~A?" (length n)))
 		       (set! ph1 #t))))
 	
@@ -28772,14 +28723,14 @@ EDITS: 2
 	;; --------------------------------------------------------------------------------
 	;; length as generic function:
 	;;     string-length vector-length hash-table-size length 
-	;;     frames mus-length sound-data-length mix-length region-frames 
+	;;     frames mus-length frames mix-length region-frames 
 	
 	(let ((snd (open-sound "oboe.snd"))
 	      (v (float-vector .1 .2 .3))
 	      (vc (vector .1 .2 .3 .4))
 	      (lst (list 1 2 3 4 5))
 	      (hsh (make-hash-table 100))
-	      (sd (make-sound-data 1 10))
+	      (sd (make-vector (list 1 10) 0.0 #t))
 	      (str "123456")
 	      (fr (frame .1 .2))
 	      (mx (mixer .1 .2 .3 .4)))
@@ -28793,7 +28744,7 @@ EDITS: 2
 	    (if (not (= (length vc) 4)) (snd-display #__line__ ";length of vector: ~A" (length vc)))
 	    (if (not (= (length lst) 5)) (snd-display #__line__ ";length of list: ~A" (length lst)))
 	    (if (not (= (length str) 6)) (snd-display #__line__ ";length of string: ~A" (length str)))
-	    (if (not (= (sound-data-length sd) 10)) (snd-display #__line__ ";length of sound-data: ~A" (sound-data-length sd)))
+	    (if (not (= (frames sd) 10)) (snd-display #__line__ ";length of vector2: ~A" (frames sd)))
 	    (if (not (>= (length hsh) 100)) (snd-display #__line__ ";length of hash-table: ~A" (length hsh)))
 	    (if (not (= (length fr) 2)) (snd-display #__line__ ";length of frame: ~A" (length fr)))
 	    (if (not (= (length mx) 2)) (snd-display #__line__ ";length of mixer: ~A" (length mx)))
@@ -28823,7 +28774,7 @@ EDITS: 2
 	
 	(let ((snd (open-sound "oboe.snd"))
 	      (v (float-vector .1 .2 .3))
-	      (sd (make-sound-data 2 10))
+	      (sd (make-vector (list 2 10) 0.0 #t))
 	      (str "oboe.snd")
 	      (fr (frame .1 .2))
 	      (mx (mixer .1 .2 .3 .4)))
@@ -28834,7 +28785,7 @@ EDITS: 2
 	    (if (not (= (channels snd) 1)) (snd-display #__line__ ";channels of sound: ~A" (channels snd)))
 	    (if (not (= (channels v) 1)) (snd-display #__line__ ";channels of float-vector: ~A" (channels v)))
 	    (if (not (= (channels str) 1)) (snd-display #__line__ ";channels of string: ~A" (channels str)))
-	    (if (not (= (channels sd) 2)) (snd-display #__line__ ";channels of sound-data: ~A" (channels sd)))
+	    (if (not (= (channels sd) 2)) (snd-display #__line__ ";channels of vector2: ~A" (channels sd)))
 	    (if (not (= (channels fr) 2)) (snd-display #__line__ ";channels of frame: ~A" (channels fr)))
 	    (if (not (= (channels mx) 2)) (snd-display #__line__ ";channels of mixer: ~A" (channels mx)))
 	    (if (not (= (channels mxv) 1)) (snd-display #__line__ ";channels of mix: ~A" (channels mxv)))
@@ -28847,7 +28798,7 @@ EDITS: 2
 	
 	(let ((snd (open-sound "oboe.snd"))
 	      (v (float-vector .1 .2 .3))
-	      (sd (make-sound-data 1 10))
+	      (sd (make-vector (list 1 10) 0.0 #t))
 	      (str "oboe.snd")
 	      (fr (frame .1 .2))
 	      (mx (mixer .1 .2 .3 .4)))
@@ -28859,7 +28810,7 @@ EDITS: 2
 	    (if (not (= (frames snd) 50828)) (snd-display #__line__ ";frames of sound: ~A" (frames snd)))
 	    (if (not (= (frames v) 3)) (snd-display #__line__ ";frames of float-vector: ~A" (frames v)))
 	    (if (not (= (frames str) 50828)) (snd-display #__line__ ";frames of string: ~A" (frames str)))
-	    (if (not (= (frames sd) 10)) (snd-display #__line__ ";frames of sound-data: ~A" (frames sd)))
+	    (if (not (= (frames sd) 10)) (snd-display #__line__ ";frames of vector2: ~A" (frames sd)))
 	    (if (not (= (frames fr) 2)) (snd-display #__line__ ";frames of frame: ~A" (frames fr)))
 	    (if (not (= (frames mx) 2)) (snd-display #__line__ ";frames of mixer: ~A" (frames mx)))
 	    (if (not (= (frames mxv) 3)) (snd-display #__line__ ";frames of mix: ~A" (frames mxv)))
@@ -28915,7 +28866,7 @@ EDITS: 2
 	      (v (float-vector .1 .2 .3))
 	      (vc (vector .1 .2 .3 .4))
 	      (lst (list 1 2 3 4 5))
-	      (sd (make-sound-data 1 10))
+	      (sd (make-vector (list 1 10) 0.0 #t))
 	      (str "pistol.snd") ; can't use oboe.snd since we messed with mus-sound-maxamp above
 	      (fr (frame .1 .2)))
 	  (let ((mxv (mix-float-vector v 1000))
@@ -28933,7 +28884,7 @@ EDITS: 2
 	    (if (fneq (maxamp vc) .4) (snd-display #__line__ ";maxamp of vector: ~A" (maxamp vc)))
 	    (if (fneq (maxamp lst) 5.0) (snd-display #__line__ ";maxamp of list: ~A" (maxamp lst)))
 	    (if (fneq (maxamp str) .49267) (snd-display #__line__ ";maxamp of string: ~A" (maxamp str)))
-	    (if (fneq (maxamp sd) 0.1) (snd-display #__line__ ";maxamp of sound-data: ~A" (maxamp sd)))
+	    (if (fneq (maxamp sd) 0.1) (snd-display #__line__ ";maxamp of vector2: ~A" (maxamp sd)))
 	    (if (fneq (maxamp fr) .2) (snd-display #__line__ ";maxamp of frame: ~A" (maxamp fr)))
 	    (if (fneq (maxamp mxv) .3) (snd-display #__line__ ";maxamp of mix: ~A" (maxamp mxv)))
 	    (if (fneq (maxamp reg) .02139) (snd-display #__line__ ";maxamp of region: ~A" (maxamp reg)))
@@ -33269,7 +33220,7 @@ EDITS: 1
 	  (if (not (= (frames ind 0) 97)) (snd-display #__line__ ";save-state backup del+insert len: ~A" (frames ind 0))))
 	
 	)))
-    
+
     ;; ---------------- edit-list->function ----------------
     
     (let ((ind (open-sound "oboe.snd")))
@@ -33599,7 +33550,6 @@ EDITS: 1
 	      (snd-display #__line__ ";edit-list->function 12a: ~A" (procedure-source func))))
 	(revert-sound ind)
 	
-	
 	;; ---- selection stuff
 	(make-selection 1000 11000)
 	(scale-selection-by 2.0)
@@ -33668,8 +33618,7 @@ EDITS: 1
 	  (revert-sound ind)
 	  (func ind 0))
 	(revert-sound ind)
-	
-	
+
 	;; ---- simple reapply
 	(env-channel '(0 0 1 1 2 0))
 	(let ((func (edit-list->function)))
@@ -33739,7 +33688,7 @@ EDITS: 1
 	  (func ind 0)
 	  (if (> (abs (- (frames) 25415)) 2) (snd-display #__line__ ";edit-list->function 18 re-len: ~A" (frames))))
 	(revert-sound ind)
-	
+
 	(src-channel 2.0 1000 500)
 	(let ((func (edit-list->function))
 	      (frs (frames)))
@@ -33777,7 +33726,7 @@ EDITS: 1
 	  (func ind 0)
 	  (if (not (= frs (frames))) (snd-display #__line__ ";edit-list->function 18c re-len: ~A ~A" frs (frames))))
 	(revert-sound)
-	
+
 	;; ---- filter-channel
 	(filter-channel '(0 1 1 0) 10)
 	(let ((func (edit-list->function))
@@ -33817,7 +33766,7 @@ EDITS: 1
 		(snd-display #__line__ ";hilbert via dft: ~A" vals)))
 	  (revert-sound ind)
 	  (map-channel (lambda (y) 1.0))
-	  
+
 	  (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))
 	  (let ((vals (channel->float-vector)))
 	    (if (not (vequal vals (float-vector 0.000 0.107 0.206 0.298 0.384 0.463 0.536 0.605 0.668 0.727 0.781 0.832 0.879 
@@ -33849,6 +33798,7 @@ EDITS: 1
 	  (revert-sound ind)
 	  (map-channel (lambda (y) 1.0))
 	  (env-sound '(0 0 1 1))
+
 	  (let ((m1 (add-mark 10))
 		(m2 (add-mark 20)))
 	    (make-selection 0 9)
@@ -33858,8 +33808,10 @@ EDITS: 1
 					 0.516 0.581 0.645 0.710 0.774 0.839 0.903 0.645 0.677 0.710 0.742 0.774 0.806 
 					 0.839 0.871 0.903 0.935 0.968 1.000)))
 		  (snd-display #__line__ ";fit-selection-between-marks: ~A" vals))))
+
 	  (revert-sound ind)
 	  (map-channel (lambda (y) 1.0))
+
 	  (let ((ramper (make-ramp 10)))
 	    (map-channel (lambda (y) (ramp ramper y)))
 	    (let ((vals (channel->float-vector 0 20)))
@@ -33871,15 +33823,16 @@ EDITS: 1
 	  (if (and (ffneq (maxamp) .142) (ffneq (maxamp) .155)) (snd-display #__line__ ";cross fade maxamp: ~A" (maxamp)))
 	  (revert-sound)
 	  (float-vector->channel (with-sound (:output (make-float-vector 44100)) (dissolve-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 512 2 2 #f)))
+
 	  (let ((new-file-name (file-name ind)))
 	    (close-sound ind)
 	    (if (file-exists? new-file-name) (delete-file new-file-name))))
-	
+
 	(let ((vals (apply float-vector (rms-envelope "oboe.snd" :rfreq 4))))
 	  (if (not (vequal vals (float-vector 0.0 0.0430 0.25 0.0642 0.5 0.0695 0.75 0.0722 1.0 0.0738 1.25 0.0713 
 				     1.5 0.065 1.75 0.0439 2.0 0.01275 2.25 0.0)))
 	      (snd-display #__line__ ";rms-envelope: ~A" vals)))
-	
+
 	(let ((ind (open-sound "2a.snd")))
 	  (hook-push graph-hook display-correlation)
 	  (update-time-graph)
@@ -33905,10 +33858,11 @@ EDITS: 1
 	    (close-sound hi1)
 	    (close-sound hi2))
 	  (close-sound ind))
+
 	(if (file-exists? "hi1.snd") (delete-file "hi1.snd"))
 	(if (file-exists? "hi2.snd") (delete-file "hi2.snd"))
 	(if (file-exists? "ho2.snd") (delete-file "ho2.snd"))
-	
+
 	(let ((ind (new-sound :size 1000)))
 	  (map-channel (lambda (y) 0.5))
 	  (map-channel (vibro 1000.0 .5))
@@ -34000,7 +33954,7 @@ EDITS: 1
 	  (let ((new-file-name (file-name ind)))
 	    (close-sound ind)
 	    (if (file-exists? new-file-name) (delete-file new-file-name))))
-	
+
 	;; ---- *.scm
 	(if (defined? 'effects-squelch-channel)
 	    (begin
@@ -34151,10 +34105,9 @@ EDITS: 1
 		      
 		      )
 		     )))))
-	
 	(close-sound ind)
 	))
-    
+
     
     ;; ---- apply controls edit lists
     (let* ((ind (open-sound "oboe.snd"))
@@ -34274,7 +34227,7 @@ EDITS: 1
       (if (not (string=? (comment ind) "this is a comment"))
 	  (snd-display #__line__ ";save-sound-as with comment: ~A" (comment ind)))
       (close-sound ind))
-    
+
     (mus-sound-prune)
     ))
 
@@ -37366,13 +37319,13 @@ EDITS: 1
 	  (list 'mix-selection (lambda () (begin (select-all) (mix-selection 0))))
 	  (list 'scale-selection (lambda () (begin (select-all) (scale-selection-by 2.0))))
 	  (list 'mix (lambda () (begin (save-sound-as "temp.snd") (mix "temp.snd" 0) (delete-file "temp.snd"))))
-	  (list 'sound-data (lambda ()
-			      (let ((sd (float-vector->sound-data (channel->float-vector)))
+	  (list 'vector2 (lambda ()
+			      (let ((sd (make-shared-vector (channel->float-vector) (list 1 (frames))))
 				    (len (frames)))
 				(do ((i 0 (+ i 1))) 
 				    ((= i len))
-				  (sound-data-set! sd 0 i (* 2.0 (sd 0 i))))
-				(set! (samples 0 len) (sound-data->float-vector sd)))))
+				  (set! (sd 0 i) (* 2.0 (sd 0 i))))
+				(float-vector->channel (sd 0)))))
 	  (list 'convolve (lambda () 
 			    (let ((flt (make-float-vector 8)))
 			      (set! (flt 0) 2.0)
@@ -37466,27 +37419,6 @@ EDITS: 1
 	      (if (not (equal? fr3 (make-frame 10 .1 .2 .3 .4 0 0 0 0 0 0)))
 		  (snd-display #__line__ ";float-vector->frame results: ~A -> ~A" vc1 fr3))))))
       
-      (let ((fr1 (make-frame 2 .1 .2))
-	    (sd1 (make-sound-data 2 5)))
-	(frame->sound-data fr1 sd1 3)
-	(let ((vc1 (sound-data->float-vector sd1 0))
-	      (vc2 (sound-data->float-vector sd1 1)))
-	  (if (or (not (vequal vc1 (float-vector 0 0 0 .1 0)))
-		  (not (vequal vc2 (float-vector 0 0 0 .2 0))))
-	      (snd-display #__line__ ";frame->sound-data: ~A ~A ~A)" sd1 vc1 vc2)))
-	(let ((fr2 (make-frame 2)))
-	  (sound-data->frame sd1 3 fr2)
-	  (if (not (equal? fr1 fr2)) (snd-display #__line__ ";sound-data->frame: ~A ~A" fr1 fr2))
-	  
-	  (let ((tag (catch #t (lambda () (sound-data->frame sd1 0 32)) (lambda args (car args)))))
-	    (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";sound-data->frame bad frame arg: ~A" tag)))
-	  (let ((tag (catch #t (lambda () (sound-data->frame 32 0 fr1)) (lambda args (car args)))))
-	    (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";sound-data->frame bad sound-data arg: ~A" tag)))
-	  (let ((tag (catch #t (lambda () (frame->sound-data fr1 32 0)) (lambda args (car args)))))
-	    (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";frame->sound-data bad sound-data arg: ~A" tag)))
-	  (let ((tag (catch #t (lambda () (frame->sound-data 32 sd1 0)) (lambda args (car args)))))
-	    (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";frame->sound-data bad frame arg: ~A" tag)))))
-      
       (let ((index (new-sound "test.snd" mus-next mus-bfloat 22050 2 "frame->sound test" 100)))
 	(set! (sample 4 index 0) 0.5)
 	(set! (sample 4 index 1) 0.25)
@@ -37528,54 +37460,6 @@ EDITS: 1
 	  (let ((fr8 (sound->frame 8 index)))
 	    (if (not (equal? fr8 (make-frame 1 .1))) (snd-display #__line__ ";sound->frame 1 8: ~A" fr8))))
 	(close-sound index))
-      
-      (let ((index (new-sound "test.snd" mus-next mus-bfloat 22050 1 "frame->sound test" 10)))
-	(set! (sample 4 index 0) 0.5)
-	(let ((sd1 (sound->sound-data 0 10 index))
-	      (sd2 (sound->sound-data 10 2)))
-	  (if (not (equal? sd2 (make-sound-data 1 2))) (snd-display #__line__ ";sound->sound-data 2: ~A" sd2))
-	  (if (not (vequal (sound-data->float-vector sd1 0) (float-vector 0 0 0 0 0.5 0 0 0 0 0)))
-	      (snd-display #__line__ ";sound->sound-data 10: ~A" sd1))
-	  (sound-data-set! sd1 0 0 0.7)
-	  (sound-data->sound sd1 0 10 index)
-	  (if (not (vequal (channel->float-vector 0 10 index 0) (float-vector 0.7 0 0 0 0.5 0 0 0 0 0)))
-	      (snd-display #__line__ ";sound-data->sound 1: ~A" sd1))
-	  (let ((tag (catch #t (lambda () (sound-data->sound 32 0)) (lambda args (car args)))))
-	    (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";sound-data->sound bad sound-data arg: ~A" tag)))
-	  (let ((tag (catch #t (lambda () (sound-data->sound sd1 0 10 -1)) (lambda args (car args)))))
-	    (if (not (eq? tag 'no-such-sound)) (snd-display #__line__ ";sound-data->sound bad sound arg: ~A" tag)))
-	  (close-sound index)))
-      
-      (let ((index (new-sound "test.snd" mus-next mus-bfloat 22050 4 "frame->sound test" 10)))
-	(set! (sample 4 index 0) 0.5)
-	(set! (sample 4 index 1) 0.4)
-	(set! (sample 4 index 2) 0.3)
-	(set! (sample 4 index 3) 0.2)
-	(let ((sd1 (sound->sound-data 0 10 index))
-	      (sd2 (sound->sound-data 10 2)))
-	  (if (not (equal? sd2 (make-sound-data 4 2))) (snd-display #__line__ ";sound->sound-data 4 2: ~A" sd2))
-	  (if (not (vequal (sound-data->float-vector sd1 0) (float-vector 0 0 0 0 0.5 0 0 0 0 0)))
-	      (snd-display #__line__ ";sound->sound-data 4a 10: ~A" (sound-data->float-vector sd1 0)))
-	  (if (not (vequal (sound-data->float-vector sd1 1) (float-vector 0 0 0 0 0.4 0 0 0 0 0)))
-	      (snd-display #__line__ ";sound->sound-data 4b 10: ~A" (sound-data->float-vector sd1 1)))
-	  (if (not (vequal (sound-data->float-vector sd1 2) (float-vector 0 0 0 0 0.3 0 0 0 0 0)))
-	      (snd-display #__line__ ";sound->sound-data 4c 10: ~A" (sound-data->float-vector sd1 2)))
-	  (if (not (vequal (sound-data->float-vector sd1 3) (float-vector 0 0 0 0 0.2 0 0 0 0 0)))
-	      (snd-display #__line__ ";sound->sound-data 4d 10: ~A" (sound-data->float-vector sd1 3)))
-	  (sound-data-set! sd1 0 0 0.7)
-	  (sound-data-set! sd1 1 0 0.8)
-	  (sound-data-set! sd1 2 0 0.9)
-	  (sound-data-set! sd1 3 0 0.6)
-	  (sound-data->sound sd1 0)
-	  (if (not (vequal (channel->float-vector 0 10 index 0) (float-vector 0.7 0 0 0 0.5 0 0 0 0 0)))
-	      (snd-display #__line__ ";sound-data->sound 1 4a: ~A" (sound-data->float-vector sd1 0)))
-	  (if (not (vequal (channel->float-vector 0 10 index 1) (float-vector 0.8 0 0 0 0.4 0 0 0 0 0)))
-	      (snd-display #__line__ ";sound-data->sound 1 4b: ~A" (sound-data->float-vector sd1 1)))
-	  (if (not (vequal (channel->float-vector 0 10 index 2) (float-vector 0.9 0 0 0 0.3 0 0 0 0 0)))
-	      (snd-display #__line__ ";sound-data->sound 1 4c: ~A" (sound-data->float-vector sd1 2)))
-	  (if (not (vequal (channel->float-vector 0 10 index 3) (float-vector 0.6 0 0 0 0.2 0 0 0 0 0)))
-	      (snd-display #__line__ ";sound-data->sound 1 4d: ~A" (sound-data->float-vector sd1 3)))
-	  (close-sound index)))
       
       (for-each
        (lambda (file)
@@ -37698,241 +37582,10 @@ EDITS: 1
 	  (close-sound ind3))
 	(mus-sound-forget "tmp.snd")
 	(let ((tag (catch #t (lambda () (float-vector->file 32 "tmp.snd")) (lambda args (car args)))))
-	  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";float-vector->file bad arg: ~A" tag)))
-	
-	(let ((sdata1 (file->sound-data "1a.snd"))
-	      (sdata2 (file->sound-data "2a.snd")))
-	  (if (not (equal? sdata1 (sound->sound-data 0 #f ind1)))
-	      (snd-display #__line__ ";sfile->sound-data 1a.snd"))
-	  (if (not (sd-equal sdata2 (sound->sound-data 0 #f ind2)))
-	      (snd-display #__line__ ";file->sound-data 2a.snd"))
-	  (sound-data->file sdata1 "tmp.snd")
-	  (let ((ind3 (open-sound "tmp.snd")))
-	    (if (not (sd-equal sdata1 (sound->sound-data 0 #f ind3)))
-		(snd-display #__line__ ";sound-data->file 1a"))
-	    (close-sound ind3))
-	  (mus-sound-forget "tmp.snd")
-	  (sound-data->file sdata2 "tmp.snd" 44100 "another comment")
-	  (let ((ind3 (open-sound "tmp.snd")))
-	    (if (not (string=? (comment ind3) "another comment"))
-		(snd-display #__line__ ";sound-data->file comment: ~A" (comment ind3)))
-	    (if (not (= (srate ind3) 44100))
-		(snd-display #__line__ ";sound-data->file srate: ~A" (srate ind3)))
-	    (close-sound ind3))
-	  (mus-sound-forget "tmp.snd")
-	  (let ((tag (catch #t (lambda () (sound-data->file 32 "tmp.snd")) (lambda args (car args)))))
-	    (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";sound-data->file bad arg: ~A" tag))))
-	(close-sound ind1)
-	(close-sound ind2))
+	  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";float-vector->file bad arg: ~A" tag))))
       
-      (let ((old-create (selection-creates-region)))
-	(set! (selection-creates-region) #t)
-	(for-each
-	 (lambda (file)
-	   (let ((index (open-sound file)))
-	     (set! (selected-sound) index)
-	     (set! (sync index) 1) ; select-all follows sync field
-	     (let* ((reg (select-all))
-		    (reg-sd (region->sound-data reg))
-		    (len (region-frames reg))
-		    (reg-v (region->float-vector reg 0 len 0)))
-	       (if (not (vequal reg-v (sound-data->float-vector reg-sd 0)))
-		   (snd-display #__line__ ";region->sound-data ~A 0 differs" file))
-	       (if (not (vequal reg-v (channel->float-vector 0 len index 0)))
-		   (snd-display #__line__ ";region->sound-data ~A original 0 differs" file))
-	       (if (> (chans index) 1)
-		   (begin
-		     (set! reg-v (region->float-vector reg 0 len 1 reg-v))
-		     (if (not (vequal reg-v (sound-data->float-vector reg-sd 1)))
-			 (snd-display #__line__ ";region->sound-data ~A 1 differs" file))
-		     (if (not (vequal reg-v (channel->float-vector 0 len index 1)))
-			 (snd-display #__line__ ";region->sound-data ~A original 1 differs" file)))))
-	     (close-sound index)))
-	 (list "oboe.snd" "1a.snd" "2a.snd"))
-	(set! (selection-creates-region) old-create))
-      
-      (set! (sync-style) sync-none)
-      (let ((total-chans 0)
-	    (previous-syncs ()))
-	(for-each
-	 (lambda (file)
-	   (let ((index (open-sound file)))
-	     (set! (selected-sound) index)
-	     (if (not (= (sync index) 0)) (snd-display #__line__ ";~A sync before sync-everything: ~A" file (sync index)))
-	     (sync-everything)
-	     (for-each
-	      (lambda (snd)
-		(if (not (sync snd))
-		    (snd-display #__line__ ";sync-everything did not set ~A's sync" file)
-		    (if (member (sync index) previous-syncs)
-			(snd-display #__line__ ";sync-everything not new? ~A ~A" (sync index) previous-syncs))))
-	      (sounds))
-	     (let ((current-syncs (map sync (sounds))))
-	       (if (and (> (length current-syncs) 1)
-			(not (apply = current-syncs)))
-		   (snd-display #__line__ ";sync-everything not the same? ~A" current-syncs))
-	       (set! previous-syncs (cons (sync index) previous-syncs)))
-	     (set! total-chans (+ total-chans (chans index)))
-	     (let ((fd (make-sync-frame-reader 10000)))
-	       (if (not (frame-reader? fd)) (snd-display #__line__ ";~A: sync frame-reader?: ~A" file fd))
-	       (if (frame-reader-at-end? fd) (snd-display #__line__ ";~A: sync frame-reader-at-end?: ~A" file fd))
-	       (if (not (= (frame-reader-position fd) 10000)) 
-		   (snd-display #__line__ ";~A: sync frame-reader: position: ~A ~A" fd (frame-reader-position fd) file))
-	       (if (not (equal? (frame-reader-home fd) index))
-		   (snd-display #__line__ ";~A: sync frame-reader: home: ~A ~A ~A" file fd (frame-reader-home fd) index))
-	       (if (not (= (frame-reader-chans fd) total-chans))
-		   (snd-display #__line__ ";sync frame-reader-chans: ~A ~A" (frame-reader-chans fd) total-chans))
-	       (let ((fr0 (frame-copy (read-frame fd)))
-		     (fr1 (frame-copy (next-frame fd)))
-		     (fr2 (frame-copy (previous-frame fd))))
-		 (for-each
-		  (lambda (snd)
-		    (do ((i 0 (+ i 1)))
-			((= i (chans snd)))
-		      (let ((val0 (sample 10000 snd i))
-			    (val1 (sample 10001 snd i))
-			    (got0 #f)
-			    (got1 #f)
-			    (got2 #f))
-			(do ((j 0 (+ j 1)))
-			    ((or got0
-				 (= j (mus-length fr0))))
-			  (if (< (abs (- (fr0 j) val0)) .001)
-			      (begin
-				(set! (fr0 j) -100.0)
-				(set! got0 #t))))
-			(if (not got0) (snd-display #__line__ ";sync fr0 missed for ~A (~A) ~A" snd (short-file-name snd) i))
-			(do ((j 0 (+ j 1)))
-			    ((or got1
-				 (= j (mus-length fr1))))
-			  (if (< (abs (- (fr1 j) val1)) .001)
-			      (begin
-				(set! (fr1 j) -100.0)
-				(set! got1 #t))))
-			(if (not got1) (snd-display #__line__ ";sync fr1 missed for ~A (~A) ~A" snd (short-file-name snd) i))
-			(do ((j 0 (+ j 1)))
-			    ((or got2
-				 (= j (mus-length fr2))))
-			  (if (< (abs (- (fr2 j) val1)) .001)
-			      (begin
-				(set! (fr2 j) -100.0)
-				(set! got2 #t))))
-			(if (not got2) (snd-display #__line__ ";sync fr2 missed for ~A (~A) ~A" snd (short-file-name snd) i)))))
-		  (sounds)))
-	       (free-frame-reader fd))
-	     (select-all)
-	     
-	     (let ((fd (make-selection-frame-reader 10000)))
-	       (if (not (frame-reader? fd)) (snd-display #__line__ ";~A: selection frame-reader?: ~A" file fd))
-	       (if (frame-reader-at-end? fd) (snd-display #__line__ ";~A: selection frame-reader-at-end?: ~A" file fd))
-	       (if (not (= (frame-reader-position fd) 10000)) 
-		   (snd-display #__line__ ";~A: selection frame-reader: position: ~A ~A" fd (frame-reader-position fd) file))
-	       (if (not (= (frame-reader-home fd) -1))
-		   (snd-display #__line__ ";~A: selection frame-reader: home: ~A ~A ~A" file fd (frame-reader-home fd) index))
-	       (if (not (= (frame-reader-chans fd) total-chans))
-		   (snd-display #__line__ ";selection frame-reader-chans: ~A ~A" (frame-reader-chans fd) total-chans))
-	       (let ((fr0 (frame-copy (read-frame fd)))
-		     (fr1 (frame-copy (next-frame fd)))
-		     (fr2 (frame-copy (previous-frame fd))))
-		 (for-each
-		  (lambda (snd)
-		    (do ((i 0 (+ i 1)))
-			((= i (chans snd)))
-		      (let ((val0 (sample 10000 snd i))
-			    (val1 (sample 10001 snd i))
-			    (got0 #f)
-			    (got1 #f)
-			    (got2 #f))
-			(do ((j 0 (+ j 1)))
-			    ((or got0
-				 (= j (mus-length fr0))))
-			  (if (< (abs (- (fr0 j) val0)) .001)
-			      (begin
-				(set! (fr0 j) -100.0)
-				(set! got0 #t))))
-			(if (not got0) (snd-display #__line__ ";selection fr0 missed for ~A (~A) ~A" snd (short-file-name snd) i))
-			(do ((j 0 (+ j 1)))
-			    ((or got1
-				 (= j (mus-length fr1))))
-			  (if (< (abs (- (fr1 j) val1)) .001)
-			      (begin
-				(set! (fr1 j) -100.0)
-				(set! got1 #t))))
-			(if (not got1) (snd-display #__line__ ";selection fr1 missed for ~A (~A) ~A" snd (short-file-name snd) i))
-			(do ((j 0 (+ j 1)))
-			    ((or got2
-				 (= j (mus-length fr2))))
-			  (if (< (abs (- (fr2 j) val1)) .001)
-			      (begin
-				(set! (fr2 j) -100.0)
-				(set! got2 #t))))
-			(if (not got2) (snd-display #__line__ ";selection fr2 missed for ~A (~A) ~A" snd (short-file-name snd) i)))))
-		  (sounds)))
-	       (free-frame-reader fd))))
-	 (list "oboe.snd" "4.aiff" "2.snd"))
-	(for-each close-sound (sounds)))
-      
-      (let ((index0 (open-sound "oboe.snd"))
-	    (index1 (open-sound "2.snd")))
-	(sync-everything)
-	(make-selection 10000 (+ 10000 9))
-	(if (not (selection?))
-	    (snd-display #__line__ ";make-selection failed?")
-	    (begin
-	      (if (not (= (selection-frames) 10)) 
-		  (snd-display #__line__ ";sync-everything + make-selection length: ~A" (selection-frames)))
-	      (if (not (= (selection-chans) 3))
-		  (snd-display #__line__ ";sync-everything + make-selection chans: ~A" (selection-chans)))
-	      (let ((val0 (selection->sound-data)))
-		(if (not (sound-data? val0))
-		    (snd-display #__line__ ";selection->sound-data 0 result: ~A" val0)
-		    (begin
-		      (if (not (= (sound-data-chans val0) 3)) 
-			  (snd-display #__line__ ";selection->sound-data 0 chans: ~A" (sound-data-chans val0)))
-		      (if (not (= (sound-data-length val0) 10))
-			  (snd-display #__line__ ";selection->sound-data 0 length: ~A" (sound-data-length val0)))
-		      (let ((o0 (channel->float-vector 10000 10 index0))
-			    (t0 (channel->float-vector 10000 10 index1 0))
-			    (t1 (channel->float-vector 10000 10 index1 1))
-			    (s0 (sound-data->float-vector val0 0))
-			    (s1 (sound-data->float-vector val0 1))
-			    (s2 (sound-data->float-vector val0 2)))
-			(if (and (not (vequal o0 s0)) (not (vequal o0 s1)) (not (vequal o0 s2)))
-			    (snd-display #__line__ ";selection->sound-data lost oboe: ~A ~A" o0 val0))
-			(if (and (not (vequal t0 s0)) (not (vequal t0 s1)) (not (vequal t0 s2)))
-			    (snd-display #__line__ ";selection->sound-data lost 2 0: ~A ~A" t0 val0))
-			(if (and (not (vequal t1 s0)) (not (vequal t1 s1)) (not (vequal t1 s2)))
-			    (snd-display #__line__ ";selection->sound-data lost 2 1: ~A ~A" t1 val0))))))
-	      (let ((val1 (selection->sound-data 5)))
-		(if (not (sound-data? val1))
-		    (snd-display #__line__ ";selection->sound-data 1 result: ~A" val1)
-		    (begin
-		      (if (not (= (sound-data-chans val1) 3)) 
-			  (snd-display #__line__ ";selection->sound-data 1 chans: ~A" (sound-data-chans val1)))
-		      (if (not (= (sound-data-length val1) 5))
-			  (snd-display #__line__ ";selection->sound-data 1 length: ~A" (sound-data-length val1)))
-		      (let ((o0 (channel->float-vector 10005 5 index0))
-			    (t0 (channel->float-vector 10005 5 index1 0))
-			    (t1 (channel->float-vector 10005 5 index1 1))
-			    (s0 (sound-data->float-vector val1 0))
-			    (s1 (sound-data->float-vector val1 1))
-			    (s2 (sound-data->float-vector val1 2)))
-			(if (and (not (vequal o0 s0)) (not (vequal o0 s1)) (not (vequal o0 s2)))
-			    (snd-display #__line__ ";selection->sound-data 1 lost oboe: ~A ~A" o0 val1))
-			(if (and (not (vequal t0 s0)) (not (vequal t0 s1)) (not (vequal t0 s2)))
-			    (snd-display #__line__ ";selection->sound-data 1 lost 2 0: ~A ~A" t0 val1))
-			(if (and (not (vequal t1 s0)) (not (vequal t1 s1)) (not (vequal t1 s2)))
-			    (snd-display #__line__ ";selection->sound-data 1 lost 2 1: ~A ~A" t1 val1))))))))
-	(let ((val (scan-sound
-		    (lambda (fr)
-		      (if (not (= (mus-length fr) 3)) (snd-display #__line__ ";with-sync scan-sound chans: ~A" (mus-length fr)))
-		      (and (> (fr 0) .01) (> (fr 1) .01) (> (fr 2) .01)))
-		    0 #f #f #t)))
-	  (if (not (equal? val (list #t 960)))
-	      (snd-display #__line__ ";scan-sound with-sync; ~A" val)))
-	(close-sound index0)
-	(close-sound index1))
-      
+      (for-each close-sound (sounds))
+
       (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "insert-* tests" 10)))
 	(map-channel (lambda (y) 1.0) 0 10 ind 0)
 	(insert-float-vector (make-float-vector 5 .1) 2)
@@ -37970,31 +37623,6 @@ EDITS: 1
 	(let ((vals (channel->float-vector 0 #f ind 0)))
 	  (if (not (vequal vals (float-vector .3 1.5 1 1 .1 .1 .1 .1 .1 1 .2 1 1 1 1 1 1 1 0 0 0 .4)))
 	      (snd-display #__line__ ";insert-frame 2 vals: ~A" vals)))
-	
-	(let ((tag (catch #t (lambda () (insert-sound-data 32)) (lambda args (car args)))))
-	  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";insert-sound-data bad arg: ~A" tag)))
-	
-	(let ((sd (make-sound-data 1 3)))
-	  (sound-data-set! sd 0 0 .23)
-	  (sound-data-set! sd 0 1 .24)
-	  (sound-data-set! sd 0 2 .25)
-	  (insert-sound-data sd 10)
-	  (if (not (= (frames ind) 25)) (snd-display #__line__ ";insert-sound-data len: ~A" (frames ind)))
-	  (let ((vals (channel->float-vector 0 #f ind 0)))
-	    (if (not (vequal vals (float-vector .3 1.5 1 1 .1 .1 .1 .1 .1 1 .23 .24 .25 .2 1 1 1 1 1 1 1 0 0 0 .4)))
-		(snd-display #__line__ ";insert-sound-data vals: ~A" vals)))
-	  
-	  (insert-sound-data sd)
-	  (if (not (= (frames ind) 28)) (snd-display #__line__ ";insert-sound-data 1 len: ~A" (frames ind)))
-	  (let ((vals (channel->float-vector 0 #f ind 0)))
-	    (if (not (vequal vals (float-vector .23 .24 .25 .3 1.5 1 1 .1 .1 .1 .1 .1 1 .23 .24 .25 .2 1 1 1 1 1 1 1 0 0 0 .4)))
-		(snd-display #__line__ ";insert-sound-data 1 vals: ~A" vals)))
-	  
-	  (insert-sound-data sd 30 2 ind)
-	  (if (not (= (frames ind) 32)) (snd-display #__line__ ";insert-sound-data 2 len: ~A" (frames ind)))
-	  (let ((vals (channel->float-vector 0 #f ind 0)))
-	    (if (not (vequal vals (float-vector .23 .24 .25 .3 1.5 1 1 .1 .1 .1 .1 .1 1 .23 .24 .25 .2 1 1 1 1 1 1 1 0 0 0 .4 0 0 .23 .24)))
-		(snd-display #__line__ ";insert-sound-data 2 vals: ~A" vals))))
 	(close-sound ind))
       
       (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 4 "insert-* tests" 5)))
@@ -38060,24 +37688,8 @@ EDITS: 1
 	(map-channel (lambda (y) 0.6) 0 5 ind 2)
 	(map-channel (lambda (y) 0.7) 0 5 ind 3)
 	
-	(let ((sd (make-sound-data 4 10)))
-	  (do ((chn 0 (+ chn 1)))
-	      ((= chn 4))
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (sound-data-set! sd chn i (+ i (* chn 10)))))
-	  (insert-sound-data sd 1 2)
-	  (do ((chn 0 (+ chn 1)))
-	      ((= chn 4))
-	    (if (not (= (frames ind chn) 7)) (snd-display #__line__ ";4chn ~A insert-sound-data len: ~A" chn (frames ind chn)))
-	    (let ((vals (channel->float-vector 0 #f ind chn))
-		  (base-val ((list .4 .5 .6 .7) chn)))
-	      (if (not (vequal vals (float-vector base-val 
-					 (+ 0 (* chn 10)) (+ 1 (* chn 10)) ; insert starts at 0 in sd
-					 base-val base-val base-val base-val)))
-		  (snd-display #__line__ ";4chn ~A insert-sound-data vals: ~A" chn vals)))))
 	(close-sound ind))
-      
+
       (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "mix-frame tests" 5)))
 	(map-channel (lambda (y) 1.0) 0 5 ind 0)
 	
@@ -38096,33 +37708,6 @@ EDITS: 1
 	  (if (not (vequal vals (float-vector 1.3 1 1 1 1 0 0 0 .4)))
 	      (snd-display #__line__ ";mix-frame 1 vals: ~A" vals)))
 	
-	(let ((tag (catch #t (lambda () (mix-sound-data 32)) (lambda args (car args)))))
-	  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";mix-sound-data bad arg: ~A" tag)))
-	
-	(let ((sd (make-sound-data 1 3)))
-	  (sound-data-set! sd 0 0 .23)
-	  (sound-data-set! sd 0 1 .24)
-	  (sound-data-set! sd 0 2 .25)
-	  (mix-sound-data sd)
-	  (if (not (= (frames ind) 9)) (snd-display #__line__ ";mix-sound-data len: ~A" (frames ind)))
-	  (let ((vals (channel->float-vector 0 #f ind 0)))
-	    (if (not (vequal vals (float-vector 1.53 1.24 1.25 1 1 0 0 0 .4)))
-		(snd-display #__line__ ";mix-sound-data vals: ~A" vals)))
-	  
-	  (mix-sound-data sd 7 3)
-	  (if (not (= (frames ind) 10)) (snd-display #__line__ ";mix-sound-data 1 len: ~A" (frames ind)))
-	  (let ((vals (channel->float-vector 0 #f ind 0)))
-	    (if (not (vequal vals (float-vector 1.53 1.24 1.25 1 1 0 0 .23 .64 .25)))
-		(snd-display #__line__ ";mix-sound-data 1 vals: ~A" vals)))
-	  
-	  (let ((mix-id (mix-sound-data sd 0 #f ind #t)))
-	    (if (not (= (frames ind) 10)) (snd-display #__line__ ";mix-sound-data 2 len: ~A" (frames ind)))
-	    (let ((vals (channel->float-vector 0 #f ind 0)))
-	      (if (not (vequal vals (float-vector (+ .23 1.53) (+ .24 1.24) (+ .25 1.25) 1 1 0 0 .23 .64 .25)))
-		  (snd-display #__line__ ";mix-sound-data 2 vals: ~A" vals)))
-	    (if (not (mix? mix-id)) (snd-display #__line__ ";mix-sound-data tagged: ~A" mix-id)))
-	  
-	  )
 	(close-sound ind))
       
       (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 4 "mix-* tests" 5)))
@@ -38158,38 +37743,8 @@ EDITS: 1
 	(map-channel (lambda (y) 0.6) 0 5 ind 2)
 	(map-channel (lambda (y) 0.7) 0 5 ind 3)
 	
-	(let ((sd (make-sound-data 4 10)))
-	  (do ((chn 0 (+ chn 1)))
-	      ((= chn 4))
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (sound-data-set! sd chn i (+ i (* chn 10)))))
-	  (mix-sound-data sd 1 2)
-	  (do ((chn 0 (+ chn 1)))
-	      ((= chn 4))
-	    (let ((vals (channel->float-vector 0 #f ind chn))
-		  (base-val ((list .4 .5 .6 .7) chn)))
-	      (if (not (vequal vals (float-vector base-val 
-					 (+ base-val (* chn 10)) (+ 1 base-val (* chn 10))
-					 base-val base-val)))
-		  (snd-display #__line__ ";4chn ~A mix-sound-data vals: ~A" chn vals))))
-	  
-	  (let ((mix-id (mix-sound-data sd 8 2 ind #t)))
-	    (if (not (mix? mix-id)) (snd-display #__line__ ";4chn mix-sound-data 2nd mix: ~A" mix-id))
-	    (if (not (mix? (integer->mix (+ 1 (mix->integer mix-id))))) (snd-display #__line__ ";4chn mix-sound-data 2nd mix 1: ~A" mix-id))
-	    (do ((chn 0 (+ chn 1)))
-		((= chn 4))
-	      (let ((vals (channel->float-vector 0 #f ind chn))
-		    (base-val ((list .4 .5 .6 .7) chn)))
-		(if (not (vequal vals (float-vector base-val 
-					   (+ base-val (* chn 10)) (+ 1 base-val (* chn 10))
-					   base-val base-val 0 0 0
-					   (+ 0 (* chn 10)) (+ 1 (* chn 10)))))
-		    (snd-display #__line__ ";4chn ~A mix-sound-data 8 vals: ~A" chn vals))))))
-	
 	(close-sound ind))
       
-;      (mus-sound-forget "oboe.snd")
       (let ((ind (open-sound "oboe.snd")))
 	(let ((val (scan-sound 
 		    (lambda (fr)
@@ -39191,21 +38746,6 @@ EDITS: 1
 	(close-sound (find-sound "test.snd")))
     (delete-file "test.snd")
     )
-  
-  (catch #t
-	 (lambda ()
-	   (vector-synthesis (let ((ctr 0) (file 0)) 
-			       (lambda (files bufsize)
-				 (if (> ctr 4)
-				     (begin
-				       (set! file (+ 1 file))
-				       (set! ctr 0)
-				       (if (>= file files)
-					   (set! file 0)))
-				     (set! ctr (+ ctr 1)))
-				 file))
-			     (list "oboe.snd" "pistol.snd") #t))
-	 (lambda args (display args)))
   
   (dismiss-all-dialogs)
   
@@ -40396,31 +39936,31 @@ EDITS: 1
 		    (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
 	(if (fneq (float-vector-peak v1) .2) (snd-display #__line__ ";with-sound -> float-vector fm-violin maxamp (opt 2): ~A" (float-vector-peak v1)))))
   
-    (let ((v1 (with-sound (:output (make-sound-data 1 2210)) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
-      (if (fneq (car (sound-data-maxamp v1)) .1) (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (opt): ~A" (sound-data-maxamp v1)))
-      (let ((v2 (with-sound (:output (make-sound-data 1 2210)) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
-	(if (fneq (car (sound-data-maxamp v2)) .1) (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp: ~A" (sound-data-maxamp v2)))
-	(if (not (sd-equal v1 v2)) (snd-display #__line__ ";with-sound -> sound-data v1 v2 not equal?"))
+    (let ((v1 (with-sound (:output (make-vector (list 1 2210) 0.0 #t)) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+      (if (fneq (maxamp v1) .1) (snd-display #__line__ ";with-sound -> vector2 fm-violin maxamp (opt): ~A" (maxamp v1)))
+      (let ((v2 (with-sound (:output (make-vector (list 1 2210) 0.0 #t)) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	(if (fneq (maxamp v2) .1) (snd-display #__line__ ";with-sound -> vector2 fm-violin maxamp: ~A" (maxamp v2)))
+	(if (not (sd-equal v1 v2)) (snd-display #__line__ ";with-sound -> vector2 v1 v2 not equal?"))
 	(with-sound (:output v1)
 		    (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)
 		    (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
-	(if (fneq (car (sound-data-maxamp v1)) .2) (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
+	(if (fneq (maxamp v1) .2) (snd-display #__line__ ";with-sound -> vector2 fm-violin maxamp (opt 2): ~A" (maxamp v1)))))
   
     (set! (locsig-type) mus-interp-linear)
-    (let ((v1 (with-sound (:output (make-sound-data 2 2210))
+    (let ((v1 (with-sound (:output (make-vector (list 2 2210) 0.0 #t))
 			  (if (not (= (mus-channels *output*) 2)) (snd-display #__line__ ";with-sound *output* chans: ~A" (mus-channels *output*)))
 			  (fm-violin 0 .1 440 .1 :degree 45 :random-vibrato-amplitude 0.0))))
-      (if (fneq (car (sound-data-maxamp v1)) .05) (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (1 opt): ~A" (sound-data-maxamp v1)))
-      (if (fneq (cadr (sound-data-maxamp v1)) .05) (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (2 opt): ~A" (sound-data-maxamp v1)))
-      (let ((v2 (with-sound (:output (make-sound-data 2 2210)) 
+      (if (fneq (maxamp v1) .05) (snd-display #__line__ ";with-sound -> vector2 fm-violin maxamp (1 opt): ~A" (maxamp v1)))
+      (if (fneq (maxamp v1) .05) (snd-display #__line__ ";with-sound -> vector2 fm-violin maxamp (2 opt): ~A" (maxamp v1)))
+      (let ((v2 (with-sound (:output (make-vector (list 2 2210) 0.0 #t)) 
 			    (fm-violin 0 .1 440 .1 :degree 45 :random-vibrato-amplitude 0.0))))
-	(if (fneq (car (sound-data-maxamp v2)) .05) (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (2): ~A" (sound-data-maxamp v2)))
-	(if (fneq (cadr (sound-data-maxamp v2)) .05) (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (2 2): ~A" (sound-data-maxamp v2)))
-	(if (not (sd-equal v1 v2)) (snd-display #__line__ ";with-sound (2 chans) -> sound-data v1 v2 not equal?"))
+	(if (fneq (maxamp v2) .05) (snd-display #__line__ ";with-sound -> vector2 fm-violin maxamp (2): ~A" (maxamp v2)))
+	(if (fneq (maxamp v2) .05) (snd-display #__line__ ";with-sound -> vector2 fm-violin maxamp (2 2): ~A" (maxamp v2)))
+	(if (not (sd-equal v1 v2)) (snd-display #__line__ ";with-sound (2 chans) -> vector2 v1 v2 not equal?"))
 	(with-sound (:output v1)
 		    (fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
 		    (fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0))
-	(if (fneq (car (sound-data-maxamp v1)) .2) (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
+	(if (fneq (maxamp v1) .2) (snd-display #__line__ ";with-sound -> vector2 fm-violin maxamp (opt 2): ~A" (maxamp v1)))))
   
     (let ((v1 (with-sound (:output (make-float-vector 2210) :scaled-to .3) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
       (if (fneq (float-vector-peak v1) .3) 
@@ -40434,38 +39974,38 @@ EDITS: 1
 		    (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
 	(if (fneq (float-vector-peak v1) .4) (snd-display #__line__ ";with-sound -> float-vector fm-violin maxamp (opt 2 scaled-by): ~A" (float-vector-peak v1)))))
   
-    (let ((v1 (with-sound (:output (make-sound-data 1 2210) :scaled-to .5) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
-      (if (fneq (car (sound-data-maxamp v1)) .5) 
-	  (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (opt, scaled-to): ~A" (sound-data-maxamp v1)))
-      (let ((v2 (with-sound (:output (make-sound-data 1 2210) :scaled-to .5) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
-	(if (fneq (car (sound-data-maxamp v2)) .5) 
-	    (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp scaled-to: ~A" (sound-data-maxamp v2)))
-	(if (not (sd-equal v1 v2)) (snd-display #__line__ ";with-sound scaled-to -> sound-data v1 v2 not equal?"))
+    (let ((v1 (with-sound (:output (make-vector (list 1 2210) 0.0 #t) :scaled-to .5) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+      (if (fneq (maxamp v1) .5) 
+	  (snd-display #__line__ ";with-sound -> vector2 fm-violin maxamp (opt, scaled-to): ~A" (maxamp v1)))
+      (let ((v2 (with-sound (:output (make-vector (list 1 2210) 0.0 #t) :scaled-to .5) (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	(if (fneq (maxamp v2) .5) 
+	    (snd-display #__line__ ";with-sound -> vector2 fm-violin maxamp scaled-to: ~A" (maxamp v2)))
+	(if (not (sd-equal v1 v2)) (snd-display #__line__ ";with-sound scaled-to -> vector2 v1 v2 not equal?"))
 	(with-sound (:output v1 :scaled-by 0.5)
 		    (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)
 		    (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
-	(if (fneq (car (sound-data-maxamp v1)) .1) 
-	    (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (opt 2 scaled-by): ~A" (sound-data-maxamp v1)))))
+	(if (fneq (maxamp v1) .1) 
+	    (snd-display #__line__ ";with-sound -> vector2 fm-violin maxamp (opt 2 scaled-by): ~A" (maxamp v1)))))
   
   (let ((stats-string ""))
     (with-sound (:output (make-float-vector 2210) :statistics (lambda (str) (set! stats-string str)))
       (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
-    (if (and (not (string=? stats-string "\n;float-vector:\n  maxamp: 0.1000\n  compute time: 0.000\n"))
-	     (not (string=? stats-string "\n;float-vector:\n  maxamp: 0.1000\n  compute time: 0.001\n"))
-	     (not (string=? stats-string "\n;float-vector:\n  maxamp: 0.1000\n  compute time: 0.002\n"))
-	     (not (string=? stats-string "\n;float-vector:\n  maxamp: 0.1000\n  compute time: 0.010\n"))
-	     (not (string=? stats-string "\n;float-vector:\n  maxamp: 0.1000\n  compute time: 0.180\n")))
+    (if (and (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.000\n"))
+	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.001\n"))
+	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.002\n"))
+	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.010\n"))
+	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.180\n")))
 	(snd-display #__line__ ";with-sound to float-vector stats: [~A]" stats-string))
-    (with-sound (:output (make-sound-data 1 2210) :scaled-to .5 :statistics (lambda (str) (set! stats-string str)))
+    (with-sound (:output (make-vector (list 1 2210) 0.0 #t) :scaled-to .5 :statistics (lambda (str) (set! stats-string str)))
       (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
-    (if (and (not (string=? stats-string "\n;sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.000\n"))
-	     (not (string=? stats-string "\n;sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.001\n"))
-	     (not (string=? stats-string "\n;sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.002\n"))
-	     (not (string=? stats-string "\n;sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.010\n"))
-	     (not (string=? stats-string "\n;sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.009\n")))
-	(snd-display #__line__ ";with-sound to sound-data stats: [~A]" stats-string))
+    (if (and (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.000\n"))
+	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.001\n"))
+	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.002\n"))
+	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.010\n"))
+	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.009\n")))
+	(snd-display #__line__ ";with-sound to float-vector stats: [~A]" stats-string))
     
-    (with-sound (:output (make-sound-data 4 2210) :channels 4 :statistics (lambda (str) (set! stats-string str)))
+    (with-sound (:output (make-vector (list 4 2210) 0.0 #t) :channels 4 :statistics (lambda (str) (set! stats-string str)))
 		(fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
 		(fm-violin 0 .1 440 .2 :degree 90 :random-vibrato-amplitude 0.0)
 		(fm-violin 0 .1 440 .3 :degree 180 :random-vibrato-amplitude 0.0)
@@ -40484,7 +40024,7 @@ EDITS: 1
 			   (fm-violin 0 .1 440 .1 :degree 45 :random-vibrato-amplitude 0.0))))
        (if (fneq (v1 0) 0.0) (snd-display #__line__ ";overwrite float-vector with-sound (4): ~A (~A)" (v1 0) (float-vector-peak v1))))
      
-     (let ((v1 (with-sound (:output (make-sound-data 4 20) :channels 4)
+     (let ((v1 (with-sound (:output (make-vector (list 4 20) 0.0 #t) :channels 4)
 			   (fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
 			   (fm-violin 0 .1 440 .2 :degree 90 :random-vibrato-amplitude 0.0)
 			   (fm-violin 0 .1 440 .3 :degree 180 :random-vibrato-amplitude 0.0)
@@ -40492,7 +40032,7 @@ EDITS: 1
        (do ((i 0 (+ i 1))) ((= i 4))
 	 (if (fneq (v1 i 0) 0.0) (snd-display #__line__ ";overwrite sd ~D with-sound: ~A" i (v1 i 0)))))
      
-     (let ((v1 (with-sound (:output (make-sound-data 2 20) :channels 4)
+     (let ((v1 (with-sound (:output (make-vector (list 2 20) 0.0 #t) :channels 4)
 			   (fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
 			   (fm-violin 0 .1 440 .2 :degree 90 :random-vibrato-amplitude 0.0)
 			   (fm-violin 0 .1 440 .3 :degree 180 :random-vibrato-amplitude 0.0)
@@ -40500,7 +40040,7 @@ EDITS: 1
        (do ((i 0 (+ i 1))) ((= i 2))
 	 (if (fneq (v1 i 0) 0.0) (snd-display #__line__ ";overwrite sd (2) ~D with-sound: ~A" i (v1 i 0)))))
      
-     (let ((v1 (with-sound (:output (make-sound-data 4 20) :channels 1)
+     (let ((v1 (with-sound (:output (make-vector (list 4 20) 0.0 #t) :channels 1)
 			   (fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
 			   (fm-violin 0 .1 440 .2 :degree 90 :random-vibrato-amplitude 0.0)
 			   (fm-violin 0 .1 440 .3 :degree 180 :random-vibrato-amplitude 0.0)
@@ -40528,43 +40068,43 @@ EDITS: 1
 	(if (< (float-vector-peak v1) .28) 
 	    (snd-display #__line__ ";rev with-sound -> float-vector fm-violin maxamp (opt 2): ~A" (float-vector-peak v1)))))
   
-    (let ((v1 (with-sound (:output (make-sound-data 1 44100) :reverb jc-reverb) 
+    (let ((v1 (with-sound (:output (make-vector (list 1 44100) 0.0 #t) :reverb jc-reverb) 
 			  (if (not (= (mus-length *output*) 44100)) (snd-display #__line__ ";ws mus-length sd: ~A" (mus-length *output*)))
 			  (fm-violin 0 .1 440 .1 :reverb-amount 0.9 :random-vibrato-amplitude 0.0)))
-	  (v4 (with-sound (:output (make-sound-data 1 44100)) 
+	  (v4 (with-sound (:output (make-vector (list 1 44100) 0.0 #t)) 
 			  (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
       (if (sd-equal v1 v4) (snd-display #__line__ ";reverb output not written to sd?"))
-      (if (< (car (sound-data-maxamp v1)) .23) 
-	  (snd-display #__line__ ";rev with-sound -> sound-data fm-violin maxamp (opt): ~A" (sound-data-maxamp v1)))
-      (let ((v2 (with-sound (:output (make-sound-data 1 44100) :reverb jc-reverb) (fm-violin 0 .1 440 .1 :reverb-amount 0.9))))
-	(if (< (car (sound-data-maxamp v2)) .23) 
-	    (snd-display #__line__ ";rev with-sound -> sound-data fm-violin maxamp: ~A" (sound-data-maxamp v2)))
+      (if (< (maxamp v1) .23) 
+	  (snd-display #__line__ ";rev with-sound -> vector2 fm-violin maxamp (opt): ~A" (maxamp v1)))
+      (let ((v2 (with-sound (:output (make-vector (list 1 44100) 0.0 #t) :reverb jc-reverb) (fm-violin 0 .1 440 .1 :reverb-amount 0.9))))
+	(if (< (maxamp v2) .23) 
+	    (snd-display #__line__ ";rev with-sound -> vector2 fm-violin maxamp: ~A" (maxamp v2)))
 	(with-sound (:output v1 :reverb jc-reverb)
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
-	(if (< (car (sound-data-maxamp v1)) .52) 
-	    (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
+	(if (< (maxamp v1) .52) 
+	    (snd-display #__line__ ";with-sound -> vector2 fm-violin maxamp (opt 2): ~A" (maxamp v1)))))
   
     (set! (locsig-type) mus-interp-linear)
-    (let ((v1 (with-sound (:output (make-sound-data 2 44100) :reverb jc-reverb)
+    (let ((v1 (with-sound (:output (make-vector (list 2 44100) 0.0 #t) :reverb jc-reverb)
 			  (if (not (= (mus-channels *output*) 2)) 
 			      (snd-display #__line__ ";rev with-sound *output* chans: ~A" (mus-channels *output*)))
 			  (fm-violin 0 .1 440 .1 :degree 45 :reverb-amount 0.9))))
-      (if (< (car (sound-data-maxamp v1)) .23) 
-	  (snd-display #__line__ ";rev with-sound -> sound-data fm-violin maxamp (1 opt): ~A" (sound-data-maxamp v1)))
-      (if (< (cadr (sound-data-maxamp v1)) .23) 
-	  (snd-display #__line__ ";rev with-sound -> sound-data fm-violin maxamp (2 opt): ~A" (sound-data-maxamp v1)))
-      (let ((v2 (with-sound (:output (make-sound-data 2 44100) :reverb jc-reverb) 
+      (if (< (maxamp v1) .23) 
+	  (snd-display #__line__ ";rev with-sound -> vector2 fm-violin maxamp (1 opt): ~A" (maxamp v1)))
+      (if (< (maxamp v1) .23) 
+	  (snd-display #__line__ ";rev with-sound -> vector2 fm-violin maxamp (2 opt): ~A" (maxamp v1)))
+      (let ((v2 (with-sound (:output (make-vector (list 2 44100) 0.0 #t) :reverb jc-reverb) 
 			    (fm-violin 0 .1 440 .1 :degree 45 :reverb-amount 0.9))))
-	(if (< (car (sound-data-maxamp v2)) .23) 
-	    (snd-display #__line__ ";rev with-sound -> sound-data fm-violin maxamp (2): ~A" (sound-data-maxamp v2)))
-	(if (< (cadr (sound-data-maxamp v2)) .23) 
-	    (snd-display #__line__ ";rev with-sound -> sound-data fm-violin maxamp (2 2): ~A" (sound-data-maxamp v2)))
+	(if (< (maxamp v2) .23) 
+	    (snd-display #__line__ ";rev with-sound -> vector2 fm-violin maxamp (2): ~A" (maxamp v2)))
+	(if (< (maxamp v2) .23) 
+	    (snd-display #__line__ ";rev with-sound -> vector2 fm-violin maxamp (2 2): ~A" (maxamp v2)))
 	(with-sound (:output v1 :reverb jc-reverb)
 		    (fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9))
-	(if (< (car (sound-data-maxamp v1)) .5) 
-	    (snd-display #__line__ ";rev with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
+	(if (< (maxamp v1) .5) 
+	    (snd-display #__line__ ";rev with-sound -> vector2 fm-violin maxamp (opt 2): ~A" (maxamp v1)))))
   
     (let ((v1 (with-sound (:output (make-float-vector 44100) :revfile (make-float-vector 44100) :reverb jc-reverb)
 			  (if (not (= (mus-length *output*) 44100)) (snd-display #__line__ ";1 ws mus-length float-vector: ~A" (mus-length *output*)))
@@ -40585,62 +40125,62 @@ EDITS: 1
 	(if (< (float-vector-peak v1) .28) 
 	    (snd-display #__line__ ";1 rev with-sound -> float-vector fm-violin maxamp (opt 2): ~A" (float-vector-peak v1)))))
   
-    (let ((v1 (with-sound (:output (make-sound-data 1 44100) :revfile (make-sound-data 1 44100) :reverb jc-reverb) 
+    (let ((v1 (with-sound (:output (make-vector (list 1 44100) 0.0 #t) :revfile (make-vector (list 1 44100) 0.0 #t) :reverb jc-reverb) 
 			  (if (not (= (mus-length *output*) 44100)) (snd-display #__line__ ";ws mus-length sd: ~A" (mus-length *output*)))
 			  (fm-violin 0 .1 440 .1 :reverb-amount 0.9 :random-vibrato-amplitude 0.0)))
-	  (v4 (with-sound (:output (make-sound-data 1 44100)) 
+	  (v4 (with-sound (:output (make-vector (list 1 44100) 0.0 #t)) 
 			  (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
       (if (sd-equal v1 v4) (snd-display #__line__ ";2 reverb output not written to sd?"))
-      (if (< (car (sound-data-maxamp v1)) .28) 
-	  (snd-display #__line__ ";2 rev with-sound -> sound-data fm-violin maxamp (opt): ~A" (sound-data-maxamp v1)))
-      (let ((v2 (with-sound (:output (make-sound-data 1 44100) :revfile (make-sound-data 1 44100) :reverb jc-reverb) 
+      (if (< (maxamp v1) .28) 
+	  (snd-display #__line__ ";2 rev with-sound -> vector2 fm-violin maxamp (opt): ~A" (maxamp v1)))
+      (let ((v2 (with-sound (:output (make-vector (list 1 44100) 0.0 #t) :revfile (make-vector (list 1 44100) 0.0 #t) :reverb jc-reverb) 
 			    (fm-violin 0 .1 440 .1 :reverb-amount 0.9))))
-	(if (< (car (sound-data-maxamp v2)) .28) 
-	    (snd-display #__line__ ";2 rev with-sound -> sound-data fm-violin maxamp: ~A" (sound-data-maxamp v2)))
+	(if (< (maxamp v2) .28) 
+	    (snd-display #__line__ ";2 rev with-sound -> vector2 fm-violin maxamp: ~A" (maxamp v2)))
 	(with-sound (:output v1 :revfile v2 :reverb jc-reverb)
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
-	(if (< (car (sound-data-maxamp v1)) .5) 
-	    (snd-display #__line__ ";2 with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
+	(if (< (maxamp v1) .5) 
+	    (snd-display #__line__ ";2 with-sound -> vector2 fm-violin maxamp (opt 2): ~A" (maxamp v1)))))
 
-    (let ((v1 (with-sound (:output (make-sound-data 1 44100) :revfile (make-sound-data 1 44100) :reverb jc-reverb) 
+    (let ((v1 (with-sound (:output (make-vector (list 1 44100) 0.0 #t) :revfile (make-vector (list 1 44100) 0.0 #t) :reverb jc-reverb) 
 			  (if (not (= (mus-length *output*) 44100)) (snd-display #__line__ ";ws mus-length sd: ~A" (mus-length *output*)))
 			  (fm-violin 0 .1 440 .1 :reverb-amount 0.9 :random-vibrato-amplitude 0.0)))
-	  (v4 (with-sound (:output (make-sound-data 1 44100)) 
+	  (v4 (with-sound (:output (make-vector (list 1 44100) 0.0 #t)) 
 			  (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
       (if (sd-equal v1 v4) (snd-display #__line__ ";2 reverb output not written to sd?"))
-      (if (< (car (sound-data-maxamp v1)) .28) 
-	  (snd-display #__line__ ";2 rev with-sound -> sound-data fm-violin maxamp (opt): ~A" (sound-data-maxamp v1)))
-      (let ((v2 (with-sound (:output (make-sound-data 1 44100) :revfile (make-sound-data 1 44100) :reverb jc-reverb) 
+      (if (< (maxamp v1) .28) 
+	  (snd-display #__line__ ";2 rev with-sound -> vector2 fm-violin maxamp (opt): ~A" (maxamp v1)))
+      (let ((v2 (with-sound (:output (make-vector (list 1 44100) 0.0 #t) :revfile (make-vector (list 1 44100) 0.0 #t) :reverb jc-reverb) 
 			    (fm-violin 0 .1 440 .1 :reverb-amount 0.9))))
-	(if (< (car (sound-data-maxamp v2)) .28) 
-	    (snd-display #__line__ ";2 rev with-sound -> sound-data fm-violin maxamp: ~A" (sound-data-maxamp v2)))
+	(if (< (maxamp v2) .28) 
+	    (snd-display #__line__ ";2 rev with-sound -> vector2 fm-violin maxamp: ~A" (maxamp v2)))
 	(with-sound (:output v1 :revfile v2 :reverb jc-reverb)
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
-	(if (< (car (sound-data-maxamp v1)) .5) 
-	    (snd-display #__line__ ";2 with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
+	(if (< (maxamp v1) .5) 
+	    (snd-display #__line__ ";2 with-sound -> vector2 fm-violin maxamp (opt 2): ~A" (maxamp v1)))))
   
     (set! (locsig-type) mus-interp-linear)
-    (let ((v1 (with-sound (:output (make-sound-data 2 44100) :revfile (make-sound-data 1 44100) :reverb jc-reverb)
+    (let ((v1 (with-sound (:output (make-vector (list 2 44100) 0.0 #t) :revfile (make-vector (list 1 44100) 0.0 #t) :reverb jc-reverb)
 			  (if (not (= (mus-channels *output*) 2)) 
 			      (snd-display #__line__ ";3 rev with-sound *output* chans: ~A" (mus-channels *output*)))
 			  (fm-violin 0 .1 440 .1 :degree 45 :reverb-amount 0.9))))
-      (if (< (car (sound-data-maxamp v1)) .23) 
-	  (snd-display #__line__ ";3 rev with-sound -> sound-data fm-violin maxamp (1 opt): ~A" (sound-data-maxamp v1)))
-      (if (< (cadr (sound-data-maxamp v1)) .23) 
-	  (snd-display #__line__ ";3 rev with-sound -> sound-data fm-violin maxamp (2 opt): ~A" (sound-data-maxamp v1)))
-      (let ((v2 (with-sound (:output (make-sound-data 2 44100) :revfile (make-sound-data 1 44100) :reverb jc-reverb) 
+      (if (< (maxamp v1) .23) 
+	  (snd-display #__line__ ";3 rev with-sound -> vector2 fm-violin maxamp (1 opt): ~A" (maxamp v1)))
+      (if (< (maxamp v1) .23) 
+	  (snd-display #__line__ ";3 rev with-sound -> vector2 fm-violin maxamp (2 opt): ~A" (maxamp v1)))
+      (let ((v2 (with-sound (:output (make-vector (list 2 44100) 0.0 #t) :revfile (make-vector (list 1 44100) 0.0 #t) :reverb jc-reverb) 
 			    (fm-violin 0 .1 440 .1 :degree 45 :reverb-amount 0.9))))
-	(if (< (car (sound-data-maxamp v2)) .23) 
-	    (snd-display #__line__ ";3 rev with-sound -> sound-data fm-violin maxamp (2): ~A" (sound-data-maxamp v2)))
-	(if (< (cadr (sound-data-maxamp v2)) .23) 
-	    (snd-display #__line__ ";3 rev with-sound -> sound-data fm-violin maxamp (2 2): ~A" (sound-data-maxamp v2)))
+	(if (< (maxamp v2) .23) 
+	    (snd-display #__line__ ";3 rev with-sound -> vector2 fm-violin maxamp (2): ~A" (maxamp v2)))
+	(if (< (maxamp v2) .23) 
+	    (snd-display #__line__ ";3 rev with-sound -> vector2 fm-violin maxamp (2 2): ~A" (maxamp v2)))
 	(with-sound (:output v1 :revfile v2 :reverb jc-reverb)
 		    (fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9))
-	(if (< (car (sound-data-maxamp v1)) .55) 
-	    (snd-display #__line__ ";3 rev with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
+	(if (< (maxamp v1) .55) 
+	    (snd-display #__line__ ";3 rev with-sound -> vector2 fm-violin maxamp (opt 2): ~A" (maxamp v1)))))
   
     (for-each
      (lambda (n)
@@ -40657,17 +40197,17 @@ EDITS: 1
 	     (v6 (with-sound (:output (make-float-vector 400))
 			     (simple-outn 0 .1 440 0.5 0.0 0.0 0.0 0.0 0.0)
 			     (simple-outn 0 .1 440 0.2 0.0 0.0 0.0 0.0 0.0)))
-	     (sd1 (with-sound (:output (make-sound-data 1 44100))
+	     (sd1 (with-sound (:output (make-vector (list 1 44100) 0.0 #t))
 			      (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0)))
-	     (sd2 (with-sound (:output (make-sound-data 4 44100))
+	     (sd2 (with-sound (:output (make-vector (list 4 44100) 0.0 #t))
 			      (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0)))
-	     (sd3 (with-sound (:output (make-sound-data 2 44100))
+	     (sd3 (with-sound (:output (make-vector (list 2 44100) 0.0 #t))
 			      (simple-outn 0 .1 440 0.0 0.0 .3 .4 0.0 0.0)))
-	     (sd4 (with-sound (:output (make-sound-data 4 44100) :reverb simple-in-rev :reverb-channels 2 :reverb-data '(0.0 1.0 1.0 1.0))
+	     (sd4 (with-sound (:output (make-vector (list 4 44100) 0.0 #t) :reverb simple-in-rev :reverb-channels 2 :reverb-data '(0.0 1.0 1.0 1.0))
 			      (simple-outn 0 .1 440 0.0 0.0 0.0 0.0 0.5 0.25)))
-	     (sd5 (with-sound (:output (make-sound-data 4 44100) :reverb simple-in-rev :reverb-channels 1 :reverb-data '(0.0 1.0 1.0 1.0))
+	     (sd5 (with-sound (:output (make-vector (list 4 44100) 0.0 #t) :reverb simple-in-rev :reverb-channels 1 :reverb-data '(0.0 1.0 1.0 1.0))
 			      (simple-outn 0 .1 440 0.0 0.0 0.0 0.0 0.5 0.25)))
-	     (sd6 (with-sound (:output (make-sound-data 4 44100))
+	     (sd6 (with-sound (:output (make-vector (list 4 44100) 0.0 #t))
 			      (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0)
 			      (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0))))
 	 (if (fneq (float-vector-peak v1) 0.1) (snd-display #__line__ ";outa tests 1 ~A: ~A" n (float-vector-peak v1)))
@@ -40677,18 +40217,18 @@ EDITS: 1
 	 (if (fneq (float-vector-peak v5) 0.5) (snd-display #__line__ ";outa tests 5 ~A: ~A" n (float-vector-peak v5)))
 	 (if (fneq (float-vector-peak v6) 0.7) (snd-display #__line__ ";outa tests 11 ~A: ~A" n (float-vector-peak v6)))
 	 
-	 (let ((mx1 (sound-data-maxamp sd1)))
-	   (if (not (feql mx1 (list .1))) (snd-display #__line__ ";outa tests 6 ~A: ~A" n mx1)))	  
-	 (let ((mx2 (sound-data-maxamp sd2)))
-	   (if (not (feql mx2 (list .1 .2 .3 .4))) (snd-display #__line__ ";outa tests 7 ~A: ~A" n mx2)))
-	 (let ((mx3 (sound-data-maxamp sd3)))
-	   (if (not (feql mx3 (list 0.0 0.0))) (snd-display #__line__ ";outa tests 8 ~A: ~A" n mx3)))
-	 (let ((mx4 (sound-data-maxamp sd4)))
-	   (if (not (feql mx4 (list 0.5 0.25 0.0 0.0))) (snd-display #__line__ ";outa tests 9 ~A: ~A" n mx4)))
-	 (let ((mx5 (sound-data-maxamp sd5)))
-	   (if (not (feql mx5 (list 0.5 0.0 0.0 0.0))) (snd-display #__line__ ";outa tests 10 ~A: ~A" n mx5)))
-	 (let ((mx6 (sound-data-maxamp sd6)))
-	   (if (not (feql mx6 (list .2 .4 .6 .8))) (snd-display #__line__ ";outa tests 12 ~A: ~A" n mx6)))
+	 (let ((mx1 (maxamp sd1)))
+	   (if (fneq mx1 .1) (snd-display #__line__ ";outa tests 6 ~A: ~A" n mx1)))	  
+	 (let ((mx2 (maxamp sd2)))
+	   (if (fneq mx2 .4) (snd-display #__line__ ";outa tests 7 ~A: ~A" n mx2)))
+	 (let ((mx3 (maxamp sd3)))
+	   (if (fneq mx3 0.0) (snd-display #__line__ ";outa tests 8 ~A: ~A" n mx3)))
+	 (let ((mx4 (maxamp sd4)))
+	   (if (fneq mx4 0.5) (snd-display #__line__ ";outa tests 9 ~A: ~A" n mx4)))
+	 (let ((mx5 (maxamp sd5)))
+	   (if (fneq mx5 0.5) (snd-display #__line__ ";outa tests 10 ~A: ~A" n mx5)))
+	 (let ((mx6 (maxamp sd6)))
+	   (if (fneq mx6 .8) (snd-display #__line__ ";outa tests 12 ~A: ~A" n mx6)))
 	 
 	 (with-sound (:output v1 :continue-old-file #t)
 		     (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0))
@@ -40696,15 +40236,15 @@ EDITS: 1
 	 
 	 (with-sound (:output sd2 :continue-old-file #t)
 		     (simple-outn 0 .1 440 .1 .2 .3 .4 0.0 0.0))
-	 (let ((mx7 (sound-data-maxamp sd2)))
-	   (if (not (feql mx7 (list .2 .4 .6 .8))) (snd-display #__line__ ";outa tests 14 ~A: ~A" n mx7)))))
+	 (let ((mx7 (maxamp sd2)))
+	   (if (fneq mx7 .8) (snd-display #__line__ ";outa tests 14 ~A: ~A" n mx7)))))
      (list 0 6))
   
   (let* ((file (with-sound ()
 			   (fm-violin 0 .1 880 .1 :random-vibrato-amplitude 0.0)
 			   (let ((v1 (with-temp-sound (:output (make-float-vector 2210))
 						      (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)))
-				 (sd1 (with-temp-sound (:output (make-sound-data 1 2210))
+				 (sd1 (with-temp-sound (:output (make-vector (list 1 2210) 0.0 #t))
 						       (fm-violin 0 .1 660 .1 :random-vibrato-amplitude 0.0))))
 			     (do ((i 0 (+ i 1)))
 				 ((= i 2205))
@@ -40723,7 +40263,7 @@ EDITS: 1
 			   (fm-violin 0 .1 880 .1 :random-vibrato-amplitude 0.0)
 			   (sound-let ((v1 (:output (make-float-vector 2210))
 					   (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
-				       (sd1 (:output (make-sound-data 1 2210))
+				       (sd1 (:output (make-vector (list 1 2210) 0.0 #t))
 					    (fm-violin 0 .1 660 .1 :random-vibrato-amplitude 0.0))
 				       (fs1 ()
 					    (fm-violin 0 .1 110 .1 :random-vibrato-amplitude 0.0)))
@@ -45310,7 +44850,7 @@ EDITS: 1
 		       (lambda args (car args))))
 	      xm-procs1))
 	   (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
-		 (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t () (make-vector 0)))
+		 (lambda () #t) (current-environment) (make-vector (list 2 3) 0.0 #t) :order 0 1 -1 #f #t () (make-vector 0)))
 	  
 	  ;; ---------------- 2 Args
 	  (for-each 
@@ -45812,7 +45352,7 @@ EDITS: 1
 		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant-bank? formant? frame* frame+ firmant firmant?
 		     comb-bank make-comb-bank comb-bank? all-pass-bank make-all-pass-bank all-pass-bank? filtered-comb-bank make-filtered-comb-bank filtered-comb-bank?
 		     frame->file frame->file? frame->frame frame->list frame->sample frame-ref frame-set! frame?
-		     granulate granulate? hz->radians iir-filter iir-filter? linear->db locsig ; in-any ina inb (sound-data arg troubles)
+		     granulate granulate? hz->radians iir-filter iir-filter? linear->db locsig ; in-any ina inb 
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
 		     make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
 		     make-file->sample make-filter make-fir-filter make-formant make-firmant frame make-frame make-frame->file make-granulate
@@ -45976,7 +45516,7 @@ EDITS: 1
 		      (if (= test-28 4)
 			  (begin
 			    (set! delay-32 (make-filter 3 (float-vector 3 1 2 3) (float-vector 3 1 2 3)))
-			    (set! color-95 (make-sound-data 2 1))
+			    (set! color-95 (make-vector (list 2 1) 0.0 #t))
 			    (set! vector-0 (make-iir-filter 3 (float-vector 1 2 3)))
 			    (set! float-vector-3 (make-ncos))
 			    (set! car-main (make-env '(0 0 1 1) :length 101))
@@ -46684,8 +46224,6 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (new-sound "hiho" 123)))
 		(check-error-tag 'out-of-range (lambda () (new-sound "hiho" mus-nist 123)))
 		(check-error-tag 'bad-header (lambda () (new-sound "hiho" mus-nist mus-bfloat)))
-		(check-error-tag 'wrong-type-arg (lambda () (make-sound-data -2 1)))
-		(check-error-tag 'wrong-type-arg (lambda () (make-sound-data 1 -1)))
 		(check-error-tag 'out-of-range (lambda () (mus-sound-close-output 0 1)))
 		(check-error-tag 'out-of-range (lambda () (mus-sound-close-output 1 1)))
 		(check-error-tag 'out-of-range (lambda () (mus-sound-close-output 2 1)))

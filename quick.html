@@ -115,7 +115,6 @@ Snd graphics contexts: <a href="extsnd.html#sndgcs">snd-gcs</a><br>
 <a href="sndclm.html#filetoarray">file-&gt;array</a><br>
 <a href="sndclm.html#filetoframe">file-&gt;frame</a><br>
 <a href="sndclm.html#filetosample">file-&gt;sample</a><br>
-<a href="sndscm.html#filetosounddata">file-&gt;sound-data</a><br>
 <a href="sndscm.html#filetovct">file-&gt;vct</a><br>
 <a href="sndclm.html#frametofile">frame-&gt;file</a><br>
 <a href="sndclm.html#frametolist">frame-&gt;list</a><br>
@@ -124,7 +123,6 @@ Snd graphics contexts: <a href="extsnd.html#sndgcs">snd-gcs</a><br>
 <blockquote><small><br>
 <a href="sndclm.html#frametosample">frame-&gt;sample</a><br>
 <a href="sndscm.html#frametosound">frame-&gt;sound</a><br>
-<a href="sndscm.html#frametosounddata">frame-&gt;sound-data</a><br>
 <a href="sndscm.html#frametovct">frame-&gt;vct</a><br>
 <a href="extsnd.html#glgraphtops">gl-graph-&gt;ps</a><br>
 <a href="extsnd.html#graphtops">graph-&gt;ps</a><br>
@@ -142,25 +140,18 @@ Snd graphics contexts: <a href="extsnd.html#sndgcs">snd-gcs</a><br>
 <a href="sndclm.html#radianstohz">radians-&gt;hz</a><br>
 <a href="sndclm.html#rectangulartopolar">rectangular-&gt;polar</a><br>
 <a href="sndscm.html#regiontoframe">region-&gt;frame</a><br>
-<a href="sndscm.html#regiontosounddata">region-&gt;sound-data</a><br>
 <a href="extsnd.html#regiontovct">region-&gt;vct</a><br>
 <a href="sndclm.html#samplestoseconds">samples-&gt;seconds</a><br>
 <a href="sndclm.html#secondstosamples">seconds-&gt;samples</a><br>
 <a href="sndscm.html#soundtoframe">sound-&gt;frame</a><br>
-<a href="sndscm.html#soundtosounddata">sound-&gt;sound-data</a><br>
-<a href="sndscm.html#sounddatatofile">sound-data-&gt;file</a><br>
-<a href="sndscm.html#sounddatatoframe">sound-data-&gt;frame</a><br>
-<a href="sndscm.html#sounddatatosound">sound-data-&gt;sound</a><br>
 </small></blockquote>
 </td><td>
 <blockquote><small><br>
-<a href="extsnd.html#sounddatatovct">sound-data-&gt;vct</a><br>
 <a href="sndscm.html#stereotomono">strero-&gt;mono</a><br>
 <a href="extsnd.html#transformtovct">transform-&gt;vct</a><br>
 <a href="sndscm.html#vcttofile">vct-&gt;file</a><br>
 <a href="sndscm.html#vcttoframe">vct-&gt;frame</a><br>
 <a href="extsnd.html#vcttolist">vct-&gt;list</a><br>
-<a href="extsnd.html#vcttosounddata">vct-&gt;sound-data</a><br>
 <a href="extsnd.html#vcttostring">vct-&gt;string</a><br>
 <a href="extsnd.html#vcttovector">vct-&gt;vector</a><br>
 <a href="extsnd.html#vectortovct">vector-&gt;vct</a><br>
@@ -180,9 +171,7 @@ copy sampler: <a href="extsnd.html#copysampler">copy-sampler</a><br>
 copy (clone) current sound edit state: <a href="extsnd.html#clonesoundas">clone-sound-as</a><br>
 copy channel data: <a href="extsnd.html#channeltovct">channel-&gt;vct</a>, or <a href="extsnd.html#savesoundas">save-sound-as</a><br>
 copy selection data: <a href="extsnd.html#selection2vct">selection-&gt;vct</a> or <a href="extsnd.html#saveselection">save-selection</a><br>
-copy region data: <a href="extsnd.html#regiontovct">region-&gt;vct</a>, <a href="extsnd.html#regiontovct">region-&gt;vct</a>, <a href="extsnd.html#saveregion">save-region</a>, or <a href="sndscm.html#regiontosounddata">region-&gt;sound-data</a><br>
 copy transform data: <a href="extsnd.html#transformtovct">transform-&gt;vct</a><br>
-copy sound-data: <a href="extsnd.html#sounddatatovct">sound-data-&gt;vct</a><br>
 copy a frame: <a href="sndscm.html#framecopy">frame-copy</a>, <a href="sndscm.html#frametovct">frame-&gt;vct</a><br>
 copy vector: <a href="extsnd.html#vectortovct">vector-&gt;vct</a><br>
 </small></blockquote>
@@ -342,7 +331,6 @@ insert a vct of samples: <a href="extsnd.html#insertsamples">insert-samples</a>,
 insert a sound: <a href="extsnd.html#insertsound">insert-sound</a><br>
 append a sound and silence: <a href="extsnd.html#appendsound">append-sound</a><br>
 insert a frame: <a href="sndscm.html#insertframe">insert-frame</a><br>
-insert sound-data: <a href="sndscm.html#insertsounddata">insert-sound-data</a><br>
 </small></blockquote>
 </td></tr></table>
 
@@ -377,7 +365,6 @@ show mark properties upon click: <a href="sndscm.html#markclickinfo">mark-click-
 Sound file maxamp: <a href="extsnd.html#mussoundmaxamp">mus-sound-maxamp</a><br>
 Region maxamp: <a href="extsnd.html#regionmaxamp">region-maxamp</a><br>
 Selection maxamp: <a href="extsnd.html#selectionmaxamp">selection-maxamp</a><br>
-Sound data object maxamp: <a href="extsnd.html#sounddatamaxamp">sound-data-maxamp</a><br>
 Vct maxamp: <a href="extsnd.html#vctpeak">vct-peak</a><br>
 To set the y axis bounds to reflect the channel's maxamp: <a href="extsnd.html#ybounds">y-bounds</a><br>
 Mix maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
@@ -395,7 +382,6 @@ mix channel: see <a href="sndscm.html#mixchannel">mix-channel</a> in extensions.
 mix region: <a href="extsnd.html#mixregion">mix-region</a><br>
 mix selection: <a href="extsnd.html#mixselection">mix-selection</a><br>
 mix vct: <a href="extsnd.html#mixvct">mix-vct</a><br>
-mix sound-data: <a href="sndscm.html#mixsounddata">mix-sound-data</a><br>
 mix a frame: <a href="sndscm.html#mixframe">mix-frame</a><br>
 enveloped mix: see <a href="sndscm.html#envelopedmix">enveloped-mix</a> in extensions.scm<br>
 read mix samples: <a href="extsnd.html#makemixsampler">make-mix-sampler</a><br>
@@ -474,7 +460,6 @@ The region dialog: <a href="snd.html#regionbrowser">region browser</a><br>
 Region rms amp: <a href="sndscm.html#regionrms">region-rms</a><br>
 region-play-list and region-play-sequence in examp.scm<br>
 <a href="sndscm.html#regiontoframe">region-&gt;frame</a><br>
-<a href="sndscm.html#regiontosounddata">region-&gt;sound-data</a><br>
 <a href="sndscm.html#makeregionframereader">make-region-frame-reader</a><br>
 </small></blockquote>
 </td></tr></table>

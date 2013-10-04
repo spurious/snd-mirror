@@ -589,7 +589,7 @@
 					  (audio-fd (car audio-info))
 					  (outchans (cadr audio-info))
 					  (len (caddr audio-info))
-					  (data (make-sound-data outchans len)))
+					  (data (make-vector (list outchans len) 0.0 #t)))
 				     (if (not (= audio-fd -1))
 					 (begin
 					   (set! running #t)
@@ -600,7 +600,7 @@
 						  (mus-audio-close audio-fd)))
 					     (do ((k 0 (+ k 1)))
 						 ((= k len))
-					       (sound-data-set! data 0 k (v)))
+					       (vector-set! data 0 k (v)))
 					     (mus-audio-write audio-fd data len)))))))))))))
   (XtManageChild fmv-dialog))
 
@@ -942,7 +942,7 @@
 				  (audio-fd (car audio-info))
 				  (outchans (cadr audio-info))
 				  (len (caddr audio-info))
-				  (data (make-sound-data outchans len)))
+				  (data (make-vector (list outchans len) 0.0 #t)))
 			     (set! playing #t)
 			     (if (not (= audio-fd -1))
 				 (do ()
@@ -954,7 +954,7 @@
 				   (tick-synthesis work-proc)
 				   (do ((k 0 (+ k 1)))
 				       ((= k len))
-				     (sound-data-set! data 0 k (* amplitude (table-lookup tbl))))
+				     (vector-set! data 0 k (* amplitude (table-lookup tbl))))
 				   (mus-audio-write audio-fd data len))
 				 (set! playing #f)))))))
     
@@ -2608,7 +2608,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	    (set! (cursor snd 0) 0)
 	    (do ((i 0 (+ i 1)))
 		((= i len))
-	      (sound-data-set! data 0 i 0.0))))))
+	      (vector-set! data 0 i 0.0))))))
 
 
 #|
@@ -2849,7 +2849,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 				    (audio-fd (car audio-info))
 				    (outchans (cadr audio-info))
 				    (len (caddr audio-info))
-				    (data (make-sound-data outchans len)))
+				    (data (make-vector (list outchans len) 0.0 #t)))
 			       (if (not (= audio-fd -1))
 				   (begin
 				     (do ((i 1 (+ i 1)))
@@ -2872,7 +2872,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 					    (mus-audio-close audio-fd)))
 				       (do ((k 0 (+ k 1)))
 					   ((= k len))
-					 (sound-data-set! data 0 k (ssb-expand)))
+					 (vector-set! data 0 k (ssb-expand)))
 				       (mus-audio-write audio-fd data len)))))))))))))
   (XtManageChild ssb-dialog))
 
@@ -2963,7 +2963,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 					  (audio-fd (car audio-info))
 					  (outchans (cadr audio-info))
 					  (len (caddr audio-info))
-					  (data (make-sound-data outchans len)))
+					  (data (make-vector (list outchans len) 0.0 #t)))
 				     (if (not (= audio-fd -1))
 					 (begin
 					   (set! running #t)
@@ -2974,7 +2974,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 						  (mus-audio-close audio-fd)))
 					     (do ((k 0 (+ k 1)))
 						 ((= k len))
-					       (sound-data-set! data 0 k (v)))
+					       (vector-set! data 0 k (v)))
 					     (mus-audio-write audio-fd data len)))))))))))))
   (XtManageChild audit-dialog))
 

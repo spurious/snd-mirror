@@ -15,14 +15,6 @@
 
 (provide 'snd-play.scm)
 
-
-(define* (samples->sound-data (beg 0) num snd chn obj pos (sd-chan 0))
-  (float-vector->sound-data 
-   (channel->float-vector beg num snd chn pos) 
-   (or obj (make-sound-data 1 (or num (frames snd chn))))
-   sd-chan))
-
-
 (define* (open-play-output out-chans out-srate out-format out-bufsize)
   ;; returns (list audio-fd chans frames)
   (let* ((outchans (or out-chans 1))
@@ -49,7 +41,7 @@
 
 
 (define* (play-sound func)
-  "(play-sound func) plays the currently selected sound, calling func on each data buffer, if func exists"
+  "(play-sound func) plays the currently selected sound, calling func on each data buffer, if func exists (mono only)"
   (if (not (null? (sounds)))
       (let* ((filechans (chans))
 	     (audio-info (open-play-output filechans (srate) #f 256))
@@ -57,29 +49,16 @@
 	     (outchans (cadr audio-info))
 	     (pframes (caddr audio-info)))
 	(if (not (= audio-fd -1))
-	    (let ((len (frames))
-		  (data (make-sound-data outchans pframes)))  ; the data buffer passed to the function (func above), then to mus-audio-write
+	    (let ((len (frames)))
 	      (do ((beg 0 (+ beg pframes)))
 		  ((> beg len))
-		(if (and (> outchans 1) (> filechans 1))
-		    (do ((k 0 (+ 1 k)))
-			((= k (min outchans filechans)))
-		      (samples->sound-data beg pframes #f k data current-edit-position k))
-		    (samples->sound-data beg pframes #f 0 data))
-		(if func
-		    (func data))
-		(mus-audio-write audio-fd data pframes))
+		(mus-audio-write audio-fd (make-shared-vector (func (channel->float-vector beg pframes)) (list 1 pframes)) pframes))
 	      (mus-audio-close audio-fd))
 	    (snd-print ";could not open dac")))
       (snd-print ";no sounds open")))
 
 #|
-(play-sound 
- (lambda (data)
-   (let ((len (length data)))
-     (do ((i 0 (+ i 1)))
-	 ((= i len))
-       (sound-data-set! data 0 i (* 2.0 (sound-data-ref data 0 i)))))))
+(play-sound (lambda (data) (float-vector-scale! data 2.0) data))
 |#
 
 ;;; this could also be done with a function argument to the play function -- get a
@@ -136,8 +115,6 @@
 	 (pos2 (mark-sample m2))
 	 (beg (min pos1 pos2))
 	 (end (max pos1 pos2))
-	 (all-data (samples->sound-data)) ; for simplicity, just grab all the data
-	 (audio-data (make-sound-data 1 bufsize))
 	 (bytes (* bufsize 2)) ; mus-audio-write handles the translation to short (and takes frames, not bytes as 3rd arg)
 	 (audio-fd (mus-audio-open-output 0 (srate) 1 mus-lshort bytes))
 	 (stop-looping #f))
@@ -148,19 +125,14 @@
 	      (stop-looping
 	       (mus-audio-close audio-fd)
 	       (unbind-key #\space 0))
-	    (do ((i 0 (+ i 1)))
-		((= i bufsize) 
-		 (begin 
-		   (set! i 0) 
-		   (mus-audio-write audio-fd audio-data bufsize)))
-	      (sound-data-set! audio-data 0 i (sound-data-ref all-data 0 beg))
-	      (set! beg (+ 1 beg))
-	      (if (= beg end)
-		  (begin
-		    (set! pos1 (mark-sample m1)) ; get current mark positions (can change while looping)
-		    (set! pos2 (mark-sample m2))
-		    (set! beg (min pos1 pos2))
-		    (set! end (max pos1 pos2))))))))))
+	    (mus-audio-write (make-shared-vector (channel->float-vector beg bufsize) (list 1 bufsize)) bufsize)
+	    (set! beg (+ beg bufsize))
+	    (if (>= beg end)
+		(begin
+		  (set! pos1 (mark-sample m1)) ; get current mark positions (can change while looping)
+		  (set! pos2 (mark-sample m2))
+		  (set! beg (min pos1 pos2))
+		  (set! end (max pos1 pos2)))))))))
 
 ;;; m1 and m2 are marks
 ;;; (loop-between-marks (caaar (marks)) (cadaar (marks)) 512)
@@ -175,107 +147,6 @@
 
 (define stop-dac stop-playing)
 
-
-
-;;; -------- "vector synthesis"
-;;;
-;;; this idea (and the weird name) from linux-audio-development mailing list discussion
-;;;   apparently some commercial synths (or software?) provide this
-
-(define (vector-synthesis driver files read-even-when-not-playing)
-
-  "(vector-synthesis driver files read-even-when-not-playing) uses 'driver', a 
-function of two args (the number of files, and the number of samples between calls) to decide which file to play.  If 
-'read-even-when-not-playing' is #t (default is #f), the input files are constantly 
-read, even if not playing.  'files' is a list of files to be played."
-  
-  (let ((files-len (length files)))
-    (if (> files-len 0)
-	(let* ((bufsize 256)
-	       (srate (srate (car files)))
-	       (chans (apply max (map channels files)))
-	       (data (make-sound-data chans bufsize))
-	       (readers (map make-file->frame files))
-	       (locs (make-vector files-len 0))
-	       (pframes (make-vector files-len 0))
-	       (current-file 0)
-	       (reading #t)
-	       (out-port (mus-audio-open-output 0 srate chans mus-lshort (* bufsize 2))))
-	  (if (< out-port 0)
-	      (format #t "can't open audio port! ~A" out-port)
-	      (begin
-		(do ((i 0 (+ i 1)))
-		    ((= i files-len))
-		  (set! (pframes i) (frames (files i))))
-		(catch #t
-		       (lambda ()
-			 (while reading
-				(let ((next-file (driver files-len bufsize)))
-				  (if (not (= next-file current-file))
-				      (let ((ramp-down 1.0)
-					    (ramp (/ 1.0 bufsize))
-					    (current (readers current-file))
-					    (current-loc (locs current-file))
-					    (next (readers next-file))
-					    (next-loc (locs next-file))
-					    (up (make-frame chans))
-					    (down (make-frame chans)))
-					(do ((i 0 (+ i 1)))
-					    ((= i bufsize))
-					  (file->frame next (+ next-loc i) up)
-					  (file->frame current (+ current-loc i) down)
-					  (do ((j 0 (+ 1 j)))
-					      ((= j chans))
-					    (sound-data-set! data j i 
-							     (+ (* ramp-down (frame-ref down j))
-								(* (- 1.0 ramp-down) (frame-ref up j)))))
-					  (set! ramp-down (- ramp-down ramp)))
-					(if read-even-when-not-playing
-					    (do ((i 0 (+ i 1)))
-						((= i files-len))
-					      (set! (locs i) (+ (locs i) bufsize)))
-					    (begin
-					      (set! (locs current-file) (+ (locs current-file) bufsize))
-					      (set! (locs next-file) (+ (locs next-file) bufsize))))
-					(set! current-file next-file))
-				      (let ((current (readers current-file))
-					    (current-loc (locs current-file))
-					    (on (make-frame chans)))
-					(do ((i 0 (+ i 1)))
-					    ((= i bufsize))
-					  (file->frame current (+ current-loc i) on)
-					  (do ((k 0 (+ 1 k)))
-					      ((= k chans))
-					    (sound-data-set! data k i (frame-ref on k))))
-					(if read-even-when-not-playing
-					    (do ((i 0 (+ i 1)))
-						((= i files-len))
-					      (set! (locs i) (+ (locs i) bufsize)))
-					    (set! (locs current-file) (+ (locs current-file) bufsize)))))
-				  (mus-audio-write out-port data bufsize)
-				  (set! reading (letrec ((any-data-left 
-							  (lambda (f)
-							    (if (= f files-len)
-								#f
-								(or (< (locs f) (pframes f))
-								    (any-data-left (+ 1 f)))))))
-						  (any-data-left 0))))))
-		       (lambda args (begin (snd-print (format #f "error ~A" args)) (car args))))
-		(mus-audio-close out-port)))))))
-
-#|
-(vector-synthesis (let ((ctr 0) (file 0)) 
-		    (lambda (files bufsize)
-		      (if (> ctr 4)
-			  (begin
-			    (set! file (+ 1 file))
-			    (set! ctr 0)
-			    (if (>= file files)
-				(set! file 0)))
-			  (set! ctr (+ ctr 1)))
-		      file))
-		  (list "oboe.snd" "pistol.snd") #t)
-|#
 
 
 ;;; play-with-amps -- play channels with individually settable amps

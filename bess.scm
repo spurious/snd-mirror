@@ -225,10 +225,9 @@
     (mus-oss-set-buffers 4 12) ; a no-op except in OSS/Linux
     (let* ((bufsize 256)
 	   (srate 22050)
-	   (chans 1)
-	   (data (make-sound-data chans bufsize))
+	   (data (make-float-vector (list 0 bufsize) 0.0 #t))
 	   (proc #f)
-	   (port (mus-audio-open-output mus-audio-default srate chans mus-lshort (* bufsize 2))))
+	   (port (mus-audio-open-output mus-audio-default srate 1 mus-lshort (* bufsize 2))))
       (if (< port 0) 
 	  (format #t "can't open DAC!"))
 
@@ -248,14 +247,12 @@
 		  (lambda (ignored-arg)
 		    (do ((i 0 (+ 1 i)))
 			((= i bufsize))
-		      (sound-data-set! 
-		       data 0 i
-		       (* amplitude playing
-			  (oscil carosc 
-				 (+ (hz->radians frequency)
-				    (* index 
-				       (oscil modosc 
-					      (hz->radians (* ratio frequency)))))))))
+		      (float-vector-set! data i (* amplitude playing
+						   (oscil carosc 
+							  (+ (hz->radians frequency)
+							     (* index 
+								(oscil modosc 
+								       (hz->radians (* ratio frequency)))))))))
 		    (mus-audio-write port data bufsize)
 		    #f))))
     ))
