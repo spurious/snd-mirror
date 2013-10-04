@@ -367,6 +367,7 @@ s7_Int *s7_int_vector_elements(s7_pointer vec);
 s7_Double *s7_float_vector_elements(s7_pointer vec);
 bool s7_is_float_vector(s7_pointer p);                                    
 bool s7_is_int_vector(s7_pointer p);                                      
+s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x);
 
 s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_Int index);                            /* (vector-ref vec index) */
 s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer a);              /* (vector-set! vec index a) */

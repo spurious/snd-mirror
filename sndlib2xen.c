@@ -128,27 +128,24 @@ static void sound_data_free(sound_data *sd)
 
 #else
 
-/* in s7, sound-data is float-vector, so a sound-data object is an s7_pointer to an s7 vector
+/* in s7, sound-data is float-vector, so a sound-data* is an s7_pointer to an s7 vector
  */
 
-int mus_sound_data_chans(sound_data *sd)
+int mus_sound_data_chans(sound_data *p)
 {
-  s7_pointer p = (s7_pointer)sd;
   return((int)((s7_vector_dimensions(p))[0]));
 }
 
-mus_long_t mus_sound_data_length(sound_data *sd)
+mus_long_t mus_sound_data_length(sound_data *p)
 {
-  s7_pointer p = (s7_pointer)sd;
-  return((mus_long_t)(s7_vector_length(p) / mus_sound_data_chans(sd)));
+  return(s7_vector_dimensions(p)[1]);
 }
 
-static mus_float_t *mus_sound_data_channel_data(sound_data *sd, int chan)
+static mus_float_t *mus_sound_data_channel_data(sound_data *p, int chan)
 {
-  s7_pointer p = (s7_pointer)sd;
   if (chan == 0)
     return((mus_float_t *)(s7_float_vector_elements(p)));
-  return((mus_float_t *)((s7_Double *)(s7_float_vector_elements(p) + chan * (s7_vector_length(p) / mus_sound_data_chans(sd)))));
+  return((mus_float_t *)((s7_Double *)(s7_float_vector_elements(p) + chan * mus_sound_data_length(p))));
 }
 #endif
 
@@ -1907,7 +1904,7 @@ static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
   return(val);
 }
 
-
+#if (!HAVE_SCHEME)
 static void sound_data_scale(sound_data *sd, mus_float_t scaler)
 {
   int chans, chn;
@@ -1933,6 +1930,7 @@ static void sound_data_scale(sound_data *sd, mus_float_t scaler)
 	  }
     }
 }
+#endif
 
 
 static XEN g_sound_data_scaleB(XEN sdobj, XEN scl)
@@ -1940,10 +1938,15 @@ static XEN g_sound_data_scaleB(XEN sdobj, XEN scl)
   #define H_sound_data_scaleB "(" S_sound_data_scaleB " sd scl): scales (multiplies) sound-data sd's data by scl"
 
   XEN_ASSERT_TYPE(SOUND_DATA_P(sdobj), sdobj, 1, S_sound_data_scaleB, "a sound-data object");
+
+#if HAVE_SCHEME
+  return(s7_float_vector_scale(s7, sdobj, scl));
+#else
   XEN_ASSERT_TYPE(XEN_NUMBER_P(scl), scl, 2, S_sound_data_scaleB, "a number");
 
   sound_data_scale(XEN_TO_SOUND_DATA(sdobj), XEN_TO_C_DOUBLE(scl));
   return(sdobj);
+#endif
 }
 
 
@@ -2420,11 +2423,11 @@ XEN_NARGIFY_2(g_sound_data_multiplyB_w, g_sound_data_multiplyB)
 XEN_NARGIFY_2(g_sound_data_multiply_w, g_sound_data_multiply)
 XEN_NARGIFY_1(g_sound_data_reverseB_w, g_sound_data_reverseB)
 #endif
+XEN_NARGIFY_2(g_sound_data_scaleB_w, g_sound_data_scaleB)
 XEN_NARGIFY_3(g_sound_data_ref_w, g_sound_data_ref)
 XEN_NARGIFY_4(g_sound_data_set_w, g_sound_data_set)
 XEN_NARGIFY_1(g_sound_data_p_w, g_sound_data_p)
 XEN_NARGIFY_1(g_sound_data_maxamp_w, g_sound_data_maxamp)
-XEN_NARGIFY_2(g_sound_data_scaleB_w, g_sound_data_scaleB)
 XEN_ARGIFY_3(g_sound_data_to_vct_w, g_sound_data_to_vct)
 XEN_ARGIFY_3(g_vct_to_sound_data_w, g_vct_to_sound_data)
 XEN_NARGIFY_1(g_mus_sound_samples_w, g_mus_sound_samples)
@@ -2901,10 +2904,13 @@ void mus_sndlib_xen_initialize(void)
 				   S_setB S_mus_sound_data_format, g_mus_sound_set_data_format_w, 1, 0, 2, 0);
 
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_scaleB,        g_sound_data_scaleB_w,          2, 0, 0, H_sound_data_scaleB);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_p,             g_sound_data_p_w,               1, 0, 0, H_sound_data_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_maxamp,        g_sound_data_maxamp_w,          1, 0, 0, H_sound_data_maxamp);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_setB,          g_sound_data_set_w,             4, 0, 0, H_sound_data_setB);
+  XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_scaleB,        g_sound_data_scaleB_w,          2, 0, 0, H_sound_data_scaleB);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_data_ref, g_sound_data_ref_w, H_sound_data_ref,
+				   S_setB S_sound_data_ref, g_sound_data_set_w,  3, 0, 4, 0);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_to_vct,        g_sound_data_to_vct_w,          1, 2, 0, H_sound_data_to_vct);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_to_sound_data,        g_vct_to_sound_data_w,          1, 2, 0, H_vct_to_sound_data);
@@ -2926,7 +2932,7 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_chans,         g_sound_data_chans_w,           1, 0, 0, H_sound_data_chans);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_length,        g_sound_data_length_w,          1, 0, 0, H_sound_data_length);
 
-  /* not in scheme: */
+  /* not (yet) in scheme: */
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_offsetB,       g_sound_data_offsetB_w,         2, 0, 0, H_sound_data_offsetB);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_addB,          g_sound_data_addB_w,            2, 0, 0, H_sound_data_addB);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_data_add,           g_sound_data_add_w,             2, 0, 0, H_sound_data_add);
@@ -2982,9 +2988,6 @@ void mus_sndlib_xen_initialize(void)
 				   S_setB S_mus_clipping, g_mus_set_clipping_w, 0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_clipping, g_mus_file_clipping_w, H_mus_file_clipping,
 				   S_setB S_mus_file_clipping, g_mus_file_set_clipping_w, 1, 0, 2, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_data_ref, g_sound_data_ref_w, H_sound_data_ref,
-				   S_setB S_sound_data_ref, g_sound_data_set_w,  3, 0, 4, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_maxamp, g_mus_sound_maxamp_w, H_mus_sound_maxamp,
 				   S_setB S_mus_sound_maxamp, g_mus_sound_set_maxamp_w, 1, 0, 2, 0);

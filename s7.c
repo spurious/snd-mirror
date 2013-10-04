@@ -5593,19 +5593,6 @@ static s7_pointer g_environment_to_list(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if 0
-static s7_pointer g_environment_function(s7_scheme *sc, s7_pointer args)
-{
-  /* an experiment -- maybe we can func info in the stacktrace */
-  s7_pointer e;
-  e = car(args);
-  if (is_function_env(e))
-    return(environment_function(e));
-  return(sc->F);
-}
-#endif
-
-
 s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 {
   s7_pointer x, y;
@@ -28973,8 +28960,39 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
   left = len - 8;
   i = 0;
 
-  if (is_int_vector(vec))
+  switch (type(vec))
     {
+    case T_FLOAT_VECTOR:
+      if (!is_real(obj))
+	s7_wrong_type_arg_error(sc, "(float) vector-fill!", 2, obj, "a real");
+      else
+	{
+	  s7_Double x;
+	  x = s7_number_to_real(sc, obj);
+	  if (x == 0.0)
+	    memset((void *)float_vector_elements(vec), 0, len * sizeof(s7_Double));
+	  else
+	    {
+	      s7_Double *orig;
+	      orig = float_vector_elements(vec);
+	      while (i <= left)
+		{
+		  orig[i++] = x;
+		  orig[i++] = x;
+		  orig[i++] = x;
+		  orig[i++] = x;
+		  orig[i++] = x;
+		  orig[i++] = x;
+		  orig[i++] = x;
+		  orig[i++] = x;
+		}
+	      for (; i< len; i++)
+		orig[i] = x;
+	    }
+	}
+      break;
+
+    case T_INT_VECTOR:
       if (!is_integer(obj))
 	s7_wrong_type_arg_error(sc, "(int) vector-fill!", 2, obj, "an integer");
       else
@@ -29002,57 +29020,26 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 		orig[i] = k;
 	    }
 	}
-    }
-  else
-    {
-      if (is_float_vector(vec))
-	{
-	  if (!is_real(obj))
-	    s7_wrong_type_arg_error(sc, "(float) vector-fill!", 2, obj, "a real");
-	  else
-	    {
-	      s7_Double x;
-	      x = s7_number_to_real(sc, obj);
-	      if (x == 0.0)
-		memset((void *)float_vector_elements(vec), 0, len * sizeof(s7_Double));
-	      else
-		{
-		  s7_Double *orig;
-		  orig = float_vector_elements(vec);
-		  while (i <= left)
-		    {
-		      orig[i++] = x;
-		      orig[i++] = x;
-		      orig[i++] = x;
-		      orig[i++] = x;
-		      orig[i++] = x;
-		      orig[i++] = x;
-		      orig[i++] = x;
-		      orig[i++] = x;
-		    }
-		  for (; i< len; i++)
-		    orig[i] = x;
-		}
-	    }
-	}
-      else
-	{
-	  s7_pointer *orig;
-	  orig = vector_elements(vec);
-	  while (i <= left)
-	    {
-	      orig[i++] = obj;
-	      orig[i++] = obj;
-	      orig[i++] = obj;
-	      orig[i++] = obj;
-	      orig[i++] = obj;
-	      orig[i++] = obj;
-	      orig[i++] = obj;
-	      orig[i++] = obj;
-	    }
-	  for (; i< len; i++)
-	    orig[i] = obj;
-	}
+      break;
+
+    default:
+      {
+	s7_pointer *orig;
+	orig = vector_elements(vec);
+	while (i <= left)
+	  {
+	    orig[i++] = obj;
+	    orig[i++] = obj;
+	    orig[i++] = obj;
+	    orig[i++] = obj;
+	    orig[i++] = obj;
+	    orig[i++] = obj;
+	    orig[i++] = obj;
+	    orig[i++] = obj;
+	  }
+	for (; i< len; i++)
+	  orig[i] = obj;
+      }
     }
 }
 
@@ -29100,9 +29087,13 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 		{
 		  s7_Int k;
 		  k = s7_integer(fill);
-		  /* PERHAPS: unroll this loop? */
-		  for (i = start; i < end; i++)
-		    int_vector_element(x, i) = k;
+		  if (k == 0)
+		    memset((void *)(int_vector_elements(x) + start), 0, (end - start) * sizeof(s7_Int));
+		  else
+		    {
+		      for (i = start; i < end; i++)
+			int_vector_element(x, i) = k;
+		    }
 		}
 	    }
 	  else
@@ -29115,8 +29106,13 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 		    {
 		      s7_Double y;
 		      y = s7_number_to_real(sc, fill);
-		      for (i = start; i < end; i++)
-			float_vector_element(x, i) = y;
+		      if (y == 0.0)
+			memset((void *)(float_vector_elements(x) + start), 0, (end - start) * sizeof(s7_Double));
+		      else
+			{
+			  for (i = start; i < end; i++)
+			    float_vector_element(x, i) = y;
+			}
 		    }
 		}
 	    }
@@ -29313,7 +29309,6 @@ s7_pointer s7_vector_ref_n(s7_scheme *sc, s7_pointer vector, int indices, ...)
     }
   return(s7_wrong_number_of_args_error(sc, "s7_vector_ref_n: wrong number of indices: ~A", s7_make_integer(sc, indices)));
 }
-
 
 
 s7_pointer s7_vector_set_n(s7_scheme *sc, s7_pointer vector, s7_pointer value, int indices, ...)
@@ -29557,8 +29552,6 @@ a vector that points to the same elements as the original-vector but with differ
   /* (let ((v1 #2d((1 2 3) (4 5 6)))) (let ((v2 (make-shared-vector v1 '(6)))) v2)) -> #(1 2 3 4 5 6)
    * (let ((v1 #(1 2 3 4 5 6))) (let ((v2 (make-shared-vector v1 '(3 2)))) v2)) -> #2D((1 2) (3 4) (5 6))
    * this is most useful in generic functions -- they can still use (v n) as the accessor.
-   *
-   * do we want an offset from the origin also?
    */
   s7_pointer orig, dims, y, x;
   s7_vdims_t *v;
@@ -30385,6 +30378,60 @@ s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
   return(new_vect);
 }
 
+
+s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x)
+{
+  s7_Int len;
+  s7_Double scl;
+  s7_Double *d;
+
+  if (!s7_is_real(x))
+    return(s7_wrong_type_arg_error(sc, "float-vector-scale", 0, x, "a real number")); 
+  scl = s7_number_to_real(sc, x);
+  if (scl == 1.0) return(v);
+
+  len = vector_length(v);
+  if (len == 0) return(v);
+  d = float_vector_elements(v);
+
+  if (scl == 0.0)
+    memset((void *)d, 0, len * sizeof(s7_Double));
+  else
+    {
+      s7_Int i, lim4;
+      lim4 = len - 4;
+      i = 0;
+      while (i <= lim4)
+	{
+	  d[i++] *= scl;
+	  d[i++] *= scl;
+	  d[i++] *= scl;
+	  d[i++] *= scl;
+	}
+      for (; i < len; i++) 
+	d[i] *= scl;
+    }
+  return(v);
+}
+
+/* need float_vector_set_direct_looped[s7_function_set_looped=c_function_looped] (both vct/sound-data) -- does this require float-vector-set!?
+ *       there's vector_set_ssc_looped which can handle float-vectors (see vector_set_chooser)
+ *   then at lease sound-data-set! and ref can be float-vector-set! and ref, and remove chooser stuff from sndlib2xen.c
+ *   Also need float-vector-maxamps -- then I think all the sound-data stuff can be removed in the s7 case
+ *   Also float-vector-scale here would replace both the other cases.
+ *   is vct|sound-data-offset actually useful?
+ *   or vector-scale? Are there standard names? 
+ *   gsl uses gsl_vector_scale|add_constant|add(vectors) and sub/mul/div|minmax and minmax_index|max|min, set_zero|all all unoptimized
+ * so...
+ *   vector-scale -- replaces vct|sound_data cases
+ *   vector-peak (abs min/max) and vector-max (here use (v n) to access the nth inner vector -- subvector via vector-ref), vector-max-index
+ *     but subvector allocates -- need a simpler way (make-shared also allocates) -- start/end points?
+ *   vector-add|subtract|multiply
+ *   vector-sum? (dot-product)
+ *
+ * or is it better to use vector*|+|-? vector- is not a good name!
+ * the vector-add cases could take any number of args but what if not all the same type?
+ */
 
 
 
@@ -42034,18 +42081,6 @@ static s7_pointer all_x_c_is_eq_s2q(s7_scheme *sc, s7_pointer arg)
   return(make_boolean(sc, slot_value(next_slot(slots)) == cadr(caddr(arg))));
 }
 
-#if 0
-static s7_pointer all_x_c_if_sq_qq(s7_scheme *sc, s7_pointer arg)
-{
-  s7_pointer slots, eq_expr;
-  slots = environment_slots(sc->envir);
-  eq_expr = cadr(arg);
-  if (slot_symbol(slots) != cadr(eq_expr))
-    slots = next_slot(slots);
-  return((slot_value(slots) == cadr(caddr(eq_expr))) ? cadr(caddr(arg)) : cadr(cadddr(arg)));
-}
-#endif
-
 static s7_pointer all_x_c_opcq(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer largs;
@@ -46497,22 +46532,7 @@ static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1,
       switch (syntax_opcode(car(expr)))
 	{
 	case OP_IF:
-#if 0
-	  for (p = cdr(expr); is_pair(p); p = cdr(p))
-	    if (is_pair(car(p)))
-	      substitute_arg_refs(sc, p, sym1, sym2);
-	  if ((is_pair(cdddr(expr))) && 
-	      (is_annotated(cadddr(expr))) &&
-	      (fcdr(cdddr(expr)) == (s7_pointer)all_x_c_c) &&
-	      (c_call(cadddr(expr)) == (s7_function)g_if_all_x_qq) &&
-	      (fcdr(cdr(cadddr(expr))) == (s7_pointer)all_x_c_is_eq_s2q))
-	    {
-	      /* an experiment in combining these guys -- it was not a big win
-	       */
-	      set_fcdr(cdddr(expr), (s7_pointer)all_x_c_if_sq_qq);
-	    }
-	  break;
-#endif
+	  /* an experiment in combining various all_x* was not a big win */
 
 	case OP_OR:
 	case OP_AND:
@@ -46586,7 +46606,7 @@ static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1,
 static void optimize_safe_closure_arg_refs(s7_scheme *sc, s7_pointer func, int argn)
 {
   /* we can replace all_x_c_ss (etc) with specializations that do not need to look up
-   *   the function args: all_x_c_s1s2 (sc->envir slots will be in the any order!
+   *   the function args: all_x_c_s1s2 (sc->envir slots will be in the any order!)
    *
    * 1-arg: no order problem
    * 2-arg: s1s2 as above, s1c, s2c? etc -- everything splits
@@ -67738,13 +67758,6 @@ s7_scheme *s7_init(void)
 
   if (strcmp(opt_names[OPT_MAX_DEFINED], "opt_max_defined") != 0)
     fprintf(stderr, "opt_max_defined opt_names: %s\n", opt_names[OPT_MAX_DEFINED]);
-#if 0
-  {
-    int k;
-    for (k = 0; k < OP_MAX_DEFINED; k++)
-      fprintf(stderr, "%s: %s\n", op_names[k], real_op_names[k]);
-  }
-#endif
 #else
   if ((!opt_names[0]) || (!real_op_names[0])) fprintf(stderr, "right"); /* this is just to make a compiler warning go away */
 #endif
@@ -67915,13 +67928,15 @@ int main(int argc, char **argv)
  * we need integer_length everywhere! These fixups are ignored by the optimized cases.
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
  * add empty? (or nil? or generic null? or zero-length? typeq? (null? c-pointer) -- C null? prime?
- * other often-used libraries: glib/gio/gobject/gmodule ncurses? GL/GLU? pcre? tecla? readline? asound? sndlib-for-s7?
+ * other often-used libraries: glib/gio/gobject/gmodule ncurses? GL/GLU? pcre? readline? asound? sndlib-for-s7?
  * TODO: (env env) in clm should be an error
  * checkpoint?
  * doc/test the lib*.scm files.
  * can gf_parse or equivalent handle pure math function bodies in s7? -- a vector of parse trees indexed by arg type?
  * xen.h argify* -> something that defines everything needed at the definition point, then somehow collect for init
  *   need to replace all the s7_apply_n* stuff, internalize all the arg nums and help strings (type checks? defaults?) etc
+ * need to finish the vct/sound-data -> float-vector stuff
+ * someday all the simple Snd variables should be variables (not pws)
  */
 
 

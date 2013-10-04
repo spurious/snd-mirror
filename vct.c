@@ -217,8 +217,8 @@ static char *mus_vct_to_string(vct *v)
 
 bool mus_vct_p(XEN obj) 
 {
-  return((s7_is_float_vector(obj)) &&
-	 (s7_vector_rank(obj) == 1));
+  return(s7_is_float_vector(obj));
+  /* (s7_vector_rank(obj) == 1) */
 }
 #endif
 
@@ -276,13 +276,6 @@ static XEN g_vct_to_readable_string(XEN obj)
   return(result);
 }
 
-static XEN g_vct_p(XEN obj) 
-{
-  #define H_vct_p "(" S_vct_p " obj): is obj a vct"
-  return(C_TO_XEN_BOOLEAN(mus_vct_p(obj)));
-}
-
-
 bool mus_vct_equalp(vct *v1, vct *v2)
 {
   if (v1 == v2) return(true);
@@ -294,6 +287,12 @@ bool mus_vct_equalp(vct *v1, vct *v2)
 
 
 #if (!HAVE_SCHEME)
+
+static XEN g_vct_p(XEN obj) 
+{
+  #define H_vct_p "(" S_vct_p " obj): is obj a vct"
+  return(C_TO_XEN_BOOLEAN(mus_vct_p(obj)));
+}
 
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, mus_vct_to_string)
 
@@ -1508,6 +1507,11 @@ static XEN g_vct_subtract(XEN obj1, XEN obj2)
 static XEN g_vct_scale(XEN obj1, XEN obj2)
 {
   #define H_vct_scaleB "(" S_vct_scaleB " v val): scale each element of v by val: v[i] *= val, returns v"
+
+#if HAVE_SCHEME
+  XEN_ASSERT_TYPE(s7_is_float_vector(obj1), obj1, 1, "float-vector-scale!", "a float-vector");
+  return(s7_float_vector_scale(s7, obj1, obj2));
+#else
   mus_long_t i;
   vct *v1;
   mus_float_t scl;
@@ -1542,7 +1546,9 @@ static XEN g_vct_scale(XEN obj1, XEN obj2)
 	}
     }
   return(obj1);
+#endif
 }
+
 
 
 static XEN g_vct_offset(XEN obj1, XEN obj2)
@@ -2235,8 +2241,8 @@ vct( 0.5 0.3 0.1 ) .g => #<vct[len=3]: 0.500 0.300 0.100>"
   XEN_NARGIFY_1(g_list_to_vct_w, xen_list_to_vct)
   XEN_NARGIFY_1(g_vector_to_vct_w, g_vector_to_vct)
   XEN_NARGIFY_1(g_vct_to_vector_w, g_vct_to_vector)
+  XEN_NARGIFY_1(g_vct_p_w, g_vct_p)
 #endif
-XEN_NARGIFY_1(g_vct_p_w, g_vct_p)
 XEN_NARGIFY_2(g_vct_ref_w, g_vct_ref)
 XEN_NARGIFY_3(g_vct_set_w, g_vct_set)
 XEN_NARGIFY_2(g_vct_multiply_w, g_vct_multiply)
@@ -2319,9 +2325,7 @@ void mus_vct_init(void)
   rb_define_method(vct_tag, "last=",     XEN_PROCEDURE_CAST rb_set_vct_last, 1);
 #endif
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_vct_p,             g_vct_p_w,         1, 0, 0, H_vct_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_multiplyB,     g_vct_multiply_w,  2, 0, 0, H_vct_multiplyB);
-  XEN_DEFINE_SAFE_PROCEDURE(S_vct_scaleB,        g_vct_scale_w,     2, 0, 0, H_vct_scaleB);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_addB,          g_vct_add_w,       2, 1, 0, H_vct_addB);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_subtractB,     g_vct_subtract_w,  2, 0, 0, H_vct_subtractB);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_offsetB,       g_vct_offset_w,    2, 0, 0, H_vct_offsetB);
@@ -2342,8 +2346,10 @@ void mus_vct_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_plus,          g_vct_plus_w,      2, 0, 0, H_vct_plus);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_max,           g_vct_max_w,       1, 0, 0, H_vct_max);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_min,           g_vct_min_w,       1, 0, 0, H_vct_min);
+  XEN_DEFINE_SAFE_PROCEDURE(S_vct_scaleB,        g_vct_scale_w,     2, 0, 0, H_vct_scaleB);
 
 #if (!HAVE_SCHEME)
+  XEN_DEFINE_SAFE_PROCEDURE(S_vct_p,             g_vct_p_w,         1, 0, 0, H_vct_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_fillB,         g_vct_fill_w,      2, 0, 0, H_vct_fillB);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_copy,          g_vct_copy_w,      1, 0, 0, H_vct_copy);
   XEN_DEFINE_PROCEDURE(S_vct,                    g_vct_w,           0, 0, 1, H_vct);
@@ -2367,8 +2373,8 @@ void mus_vct_init(void)
   s7_eval_c_string(s7, "(define make-vct make-float-vector)");
   s7_eval_c_string(s7, "(define (vector->vct v) (copy v (make-vector (length v) 0.0 #t)))");
   s7_eval_c_string(s7, "(define (vct->vector v) (copy v (make-vector (length v) 0.0)))");
+  s7_eval_c_string(s7, "(define vct? float-vector?)");
 
-  s7_eval_c_string(s7, "(define float-vector? " S_vct_p ")");
   s7_eval_c_string(s7, "(define float-vector-multiply! " S_vct_multiplyB ")");
   s7_eval_c_string(s7, "(define float-vector-scale! " S_vct_scaleB ")");
   s7_eval_c_string(s7, "(define float-vector-add! " S_vct_addB ")");

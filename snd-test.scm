@@ -4,31 +4,31 @@
 ;;;  test 1: defaults                           [991]
 ;;;  test 2: headers                            [1202]
 ;;;  test 3: variables                          [1517]
-;;;  test 4: sndlib                             [2089]
-;;;  test 5: simple overall checks              [4498]
-;;;  test 6: float-vectors                      [9261]
-;;;  test 7: colors                             [9570]
-;;;  test 8: clm                                [10089]
-;;;  test 9: mix                                [21789]
-;;;  test 10: marks                             [23578]
-;;;  test 11: dialogs                           [24537]
-;;;  test 12: extensions                        [24708]
-;;;  test 13: menus, edit lists, hooks, etc     [24974]
-;;;  test 14: all together now                  [26349]
-;;;  test 15: chan-local vars                   [27227]
-;;;  test 16: regularized funcs                 [28985]
-;;;  test 17: dialogs and graphics              [32596]
-;;;  test 18: save and restore                  [32707]
-;;;  test 19: transforms                        [34321]
-;;;  test 20: new stuff                         [36436]
-;;;  test 21: optimizer                         [38447]
-;;;  test 22: with-sound                        [38971]
-;;;  test 23: X/Xt/Xm                           [41933]
-;;;  test 24: GL                                [45615]
-;;;  test 25: errors                            [45739]
-;;;  test 26: s7                                [47293]
-;;;  test all done                              [47359]
-;;;  test the end                               [47542]
+;;;  test 4: sndlib                             [2086]
+;;;  test 5: simple overall checks              [4495]
+;;;  test 6: float-vectors                      [9258]
+;;;  test 7: colors                             [9552]
+;;;  test 8: clm                                [10071]
+;;;  test 9: mix                                [21759]
+;;;  test 10: marks                             [23548]
+;;;  test 11: dialogs                           [24507]
+;;;  test 12: extensions                        [24678]
+;;;  test 13: menus, edit lists, hooks, etc     [24944]
+;;;  test 14: all together now                  [26319]
+;;;  test 15: chan-local vars                   [27197]
+;;;  test 16: regularized funcs                 [28955]
+;;;  test 17: dialogs and graphics              [32566]
+;;;  test 18: save and restore                  [32677]
+;;;  test 19: transforms                        [34291]
+;;;  test 20: new stuff                         [36406]
+;;;  test 21: optimizer                         [38326]
+;;;  test 22: with-sound                        [38850]
+;;;  test 23: X/Xt/Xm                           [41812]
+;;;  test 24: GL                                [45494]
+;;;  test 25: errors                            [45618]
+;;;  test 26: s7                                [47161]
+;;;  test all done                              [47227]
+;;;  test the end                               [47410]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -3005,15 +3005,6 @@
 	  (if (fneq (sdata 0 0) .2) (snd-display #__line__ ";2 mus-sound-seek: ~A?" (sdata 0 0)))
 	  (mus-sound-close-input fd))
 
-	(let ((sd (make-sound-data 2 10)))
-	  (float-vector->sound-data (make-float-vector 10 .25) sd 0)  
-	  (float-vector->sound-data (make-float-vector 10 .5) sd 1)
-	  (sound-data-scale! sd 2.0)
-	  (if (not (vequal (sound-data->float-vector sd 0) (make-float-vector 10 .5)))
-	      (snd-display #__line__ ";sound-data-scale! chan 0: ~A" (sound-data->float-vector sd 0)))
-	  (if (not (vequal (sound-data->float-vector sd 1) (make-float-vector 10 1.0)))
-	      (snd-display #__line__ ";sound-data-scale! chan 1: ~A" (sound-data->float-vector sd 1))))
-	
 	(let ((sd (make-sound-data 2 10)))
 	  (fill! sd 2.0)
 	  (if (not (vequal (sound-data->float-vector sd 0) (make-float-vector 10 2.0)))
@@ -46125,7 +46116,7 @@ EDITS: 1
 					     (n float-vector-3 arg))
 					   (lambda args (car args)))))
 				    (if (not (eq? tag 'wrong-type-arg))
-					(snd-display #__line__ ";float-vector 2 wrong-type-arg ~A: ~A" n tag))))
+					(snd-display #__line__ ";float-vector arg 2 (scaler) wrong-type-arg ~A: ~A ~A" n arg tag))))
 				(list float-vector-add! float-vector-subtract! float-vector-multiply! float-vector-ref float-vector-scale!)))
 		    (list (make-vector 1) "hiho" 0+i (list 1 0) #(0 1) delay-32))
 	  

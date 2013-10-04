@@ -235,13 +235,7 @@
 			 (let ((pk (float-vector-peak output-1)))
 			   (if (> pk 0.0)
 			       (float-vector-scale! output-1 (/ scaled-to pk))))
-			 (float-vector-scale! output-1 scaled-by))
-		     (if (sound-data? output-1)
-			 (if scaled-to
-			     (let ((pk (sound-data-peak output-1)))
-			       (if (> pk 0.0)
-				   (sound-data-scale! output-1 (/ scaled-to pk))))
-			     (sound-data-scale! output-1 scaled-by))))))
+			 (float-vector-scale! output-1 scaled-by)))))
 
 	 (if (and *clm-player* play output-to-file)
 	     (*clm-player* output-1)))

@@ -2180,11 +2180,11 @@ XEN g_mus_channels(XEN gen)
   if (gn)
     return(C_TO_XEN_INT(mus_channels(gn->gen)));
 
-  if (MUS_VCT_P(gen))
-    return(C_TO_XEN_INT(1));
-
   if (sound_data_p(gen))
     return(C_TO_XEN_INT(mus_sound_data_chans(XEN_TO_SOUND_DATA(gen))));
+
+  if (MUS_VCT_P(gen))
+    return(C_TO_XEN_INT(1));
 
 #if HAVE_SCHEME
   if (s7_is_open_environment(gen)) 
@@ -2209,11 +2209,11 @@ XEN g_mus_length(XEN gen)
   if (gn)
     return(C_TO_XEN_LONG_LONG(mus_length(gn->gen)));
 
-  if (MUS_VCT_P(gen))
-    return(C_TO_XEN_INT(mus_vct_length(XEN_TO_VCT(gen))));
-
   if (sound_data_p(gen))
     return(C_TO_XEN_INT(mus_sound_data_length(XEN_TO_SOUND_DATA(gen))));
+
+  if (MUS_VCT_P(gen))
+    return(C_TO_XEN_INT(mus_vct_length(XEN_TO_VCT(gen))));
 
 #if HAVE_SCHEME
   if (s7_is_open_environment(gen)) 
@@ -6916,6 +6916,9 @@ static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
       return(C_TO_XEN_DOUBLE(mus_in_any(pos, in_chan, (mus_any *)XEN_TO_MUS_ANY(inp))));
     }
 
+  if (sound_data_p(inp))
+    return(C_TO_XEN_DOUBLE(mus_sound_data_ref(XEN_TO_SOUND_DATA(inp), in_chan, pos)));
+
   if (MUS_VCT_P(inp))
     {
       vct *v;
@@ -6926,9 +6929,6 @@ static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
 	return(C_TO_XEN_DOUBLE(vdata[pos]));
       return(C_TO_XEN_DOUBLE(0.0));
     }
-
-  if (sound_data_p(inp))
-    return(C_TO_XEN_DOUBLE(mus_sound_data_ref(XEN_TO_SOUND_DATA(inp), in_chan, pos)));
 
   if (XEN_VECTOR_P(inp))
     {
@@ -6979,6 +6979,10 @@ static XEN fallback_out_any_2(XEN outp, mus_long_t pos, mus_float_t inv, int chn
     }
 
   /* adds to existing -- these have to precede procedure check since vcts/sound-data objects are applicable */
+  if (sound_data_p(outp))
+    return(C_TO_XEN_DOUBLE(mus_sound_data_set(XEN_TO_SOUND_DATA(outp), chn, pos, 
+					      mus_sound_data_ref(XEN_TO_SOUND_DATA(outp), chn, pos) + inv)));
+
   if (MUS_VCT_P(outp))
     {
       if (chn == 0)
@@ -6992,10 +6996,6 @@ static XEN fallback_out_any_2(XEN outp, mus_long_t pos, mus_float_t inv, int chn
 	}
       return(XEN_ZERO);
     }
-
-  if (sound_data_p(outp))
-    return(C_TO_XEN_DOUBLE(mus_sound_data_set(XEN_TO_SOUND_DATA(outp), chn, pos, 
-					      mus_sound_data_ref(XEN_TO_SOUND_DATA(outp), chn, pos) + inv)));
 
   if (XEN_VECTOR_P(outp))
     {
@@ -7074,17 +7074,17 @@ static s7_pointer g_clm_output_set(s7_scheme *sc, s7_pointer args)
   else
     {
       clm_output_gen = NULL;
-      if (MUS_VCT_P(new_output))
+      if (sound_data_p(new_output))
 	{
-	  out_any_2 = out_any_2_to_vct;
-	  clm_output_vct = xen_to_vct(new_output);
+	  out_any_2 = out_any_2_to_sound_data;
+	  clm_output_sd = XEN_TO_SOUND_DATA(new_output);
 	}
       else
 	{
-	  if (sound_data_p(new_output))
+	  if (MUS_VCT_P(new_output))
 	    {
-	      out_any_2 = out_any_2_to_sound_data;
-	      clm_output_sd = XEN_TO_SOUND_DATA(new_output);
+	      out_any_2 = out_any_2_to_vct;
+	      clm_output_vct = xen_to_vct(new_output);
 	    }
 	  else
 	    {
@@ -7161,17 +7161,17 @@ static s7_pointer g_clm_reverb_set(s7_scheme *sc, s7_pointer args)
     }
   else
     {
-      if (MUS_VCT_P(new_input))
+      if (sound_data_p(new_input))
 	{
-	  in_any_2 = in_any_2_to_vct;
-	  clm_input_vct = xen_to_vct(new_input);
+	  in_any_2 = in_any_2_to_sound_data;
+	  clm_input_sd = XEN_TO_SOUND_DATA(new_input);
 	}
       else
 	{
-	  if (sound_data_p(new_input))
+	  if (MUS_VCT_P(new_input))
 	    {
-	      in_any_2 = in_any_2_to_sound_data;
-	      clm_input_sd = XEN_TO_SOUND_DATA(new_input);
+	      in_any_2 = in_any_2_to_vct;
+	      clm_input_vct = xen_to_vct(new_input);
 	    }
 	  else
 	    {
@@ -7738,20 +7738,20 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 
   if (outfr)
     {
-      if (MUS_VCT_P(output))
+      if (sound_data_p(output))
+	mus_sound_data_add_frame(XEN_TO_SOUND_DATA(output), pos, mus_data(outfr));
+      else
 	{
-	  vct *v;
-	  mus_float_t *vdata;
-	  v = xen_to_vct(output);
-	  vdata = mus_vct_data(v);
-	  if (pos < mus_vct_length(v))
-	    vdata[pos] += mus_frame_ref(outfr, 0);
-	}
-      else 
-	{
-	  if (sound_data_p(output))
-	    mus_sound_data_add_frame(XEN_TO_SOUND_DATA(output), pos, mus_data(outfr));
-	  else
+	  if (MUS_VCT_P(output))
+	    {
+	      vct *v;
+	      mus_float_t *vdata;
+	      v = xen_to_vct(output);
+	      vdata = mus_vct_data(v);
+	      if (pos < mus_vct_length(v))
+		vdata[pos] += mus_frame_ref(outfr, 0);
+	    }
+	  else 
 	    {
 	      if ((XEN_VECTOR_P(output)) &&
 		  (pos < XEN_VECTOR_LENGTH(output)))
@@ -7787,20 +7787,20 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
       (XEN_BOUND_P(ms->vcts[G_LOCSIG_REVOUT])))
     {
       reverb = ms->vcts[G_LOCSIG_REVOUT];
-      if (MUS_VCT_P(reverb))
+      if (sound_data_p(reverb))
+	mus_sound_data_add_frame(XEN_TO_SOUND_DATA(reverb), pos, mus_data(revfr));
+      else
 	{
-	  vct *v;
-	  mus_float_t *vdata;
-	  v = xen_to_vct(reverb);
-	  vdata = mus_vct_data(v);
-	  if (pos < mus_vct_length(v))
-	    vdata[pos] += mus_frame_ref(revfr, 0);
-	}
-      else 
-	{
-	  if (sound_data_p(reverb))
-	    mus_sound_data_add_frame(XEN_TO_SOUND_DATA(reverb), pos, mus_data(revfr));
-	  else
+	  if (MUS_VCT_P(reverb))
+	    {
+	      vct *v;
+	      mus_float_t *vdata;
+	      v = xen_to_vct(reverb);
+	      vdata = mus_vct_data(v);
+	      if (pos < mus_vct_length(v))
+		vdata[pos] += mus_frame_ref(revfr, 0);
+	    }
+	  else 
 	    {
 	      if ((XEN_VECTOR_P(reverb)) &&
 		  (pos < XEN_VECTOR_LENGTH(reverb)))
@@ -7947,16 +7947,16 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
     }
   else
     {
-      if (MUS_VCT_P(keys3))
-	ov = keys3;
+      if (sound_data_p(keys3))
+	{
+	  ov = keys3;
+	  if (out_chans < 0) 
+	    out_chans = mus_sound_data_chans(XEN_TO_SOUND_DATA(ov));
+	}
       else
 	{
-	  if (sound_data_p(keys3))
-	    {
-	      ov = keys3;
-	      if (out_chans < 0) 
-		out_chans = mus_sound_data_chans(XEN_TO_SOUND_DATA(ov));
-	    }
+	  if (MUS_VCT_P(keys3))
+	    ov = keys3;
 	  else XEN_ASSERT_TYPE(XEN_KEYWORD_P(keys[3]) || XEN_FALSE_P(keys[3]), keys[3], orig_arg[3], S_make_locsig, "an output gen, vct, vector, or a sound-data object");
 	}
     }
@@ -7970,18 +7970,18 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
     }
   else
     {
-      if (MUS_VCT_P(keys4))
+      if (sound_data_p(keys4))
 	{
 	  rv = keys4;
-	  rev_chans = 1;
+	  if (rev_chans < 0)
+	    rev_chans = mus_sound_data_chans(XEN_TO_SOUND_DATA(rv));
 	}
       else
 	{
-	  if (sound_data_p(keys4))
+	  if (MUS_VCT_P(keys4))
 	    {
 	      rv = keys4;
-	      if (rev_chans < 0)
-		rev_chans = mus_sound_data_chans(XEN_TO_SOUND_DATA(rv));
+	      rev_chans = 1;
 	    }
 	  else XEN_ASSERT_TYPE(XEN_KEYWORD_P(keys[4]) || XEN_FALSE_P(keys[4]), keys[4], orig_arg[4], S_make_locsig, "a reverb output generator");
 	}

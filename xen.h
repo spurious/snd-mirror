@@ -1110,7 +1110,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define C_TO_XEN_LONG_LONG(Arg)                    s7_make_integer(s7, Arg)
 #define XEN_TO_C_LONG_LONG(Arg)                    s7_integer(Arg)
 
-#define XEN_NUMBER_P(Arg)                          s7_is_real(Arg) /* !! throughout xen, we're assuming no complex number! -- s7_is_number(Arg) */
+#define XEN_NUMBER_P(Arg)                          s7_is_real(Arg)
 #define XEN_EXACT_P(Arg)                           s7_is_exact(Arg)
 
 #define XEN_DOUBLE_P(Arg)                          s7_is_real(Arg)
