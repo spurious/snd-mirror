@@ -105,15 +105,7 @@
 ;;; frame-readers
 ;;;
 
-(defgenerator (frame-sampler 
-	       :methods (list
-			 (cons 'object->string
-			       (lambda* (g readable)
-				 (string-append "#<frame-reader "
-						(object->string (g 'snd)) " "
-						(object->string (g 'frm)) " "
-						(object->string (g 'samplers)) ">")))))
-  snd chns frm samplers)
+(defgenerator frame-sampler snd chns frm samplers)
 
 (define* (make-frame-reader (beg 0) snd dir edpos)
   "(make-frame-reader beg snd dir edpos) returns a frame reader, basically a sampler that reads all channels on each call"

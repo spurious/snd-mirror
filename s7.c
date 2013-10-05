@@ -30416,11 +30416,7 @@ s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x)
 
 /* need float_vector_set_direct_looped[s7_function_set_looped=c_function_looped] (both vct/sound-data) -- does this require float-vector-set!?
  *       there's vector_set_ssc_looped which can handle float-vectors (see vector_set_chooser)
- *   then at lease sound-data-set! and ref can be float-vector-set! and ref, and remove chooser stuff from sndlib2xen.c
- *   Also need float-vector-maxamps -- then I think all the sound-data stuff can be removed in the s7 case
  *   Also float-vector-scale here would replace both the other cases.
- *   is vct|sound-data-offset actually useful?
- *   or vector-scale? Are there standard names? 
  *   gsl uses gsl_vector_scale|add_constant|add(vectors) and sub/mul/div|minmax and minmax_index|max|min, set_zero|all all unoptimized
  * so...
  *   vector-scale -- replaces vct|sound_data cases
@@ -30428,9 +30424,15 @@ s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x)
  *     but subvector allocates -- need a simpler way (make-shared also allocates) -- start/end points?
  *   vector-add|subtract|multiply
  *   vector-sum? (dot-product)
- *
  * or is it better to use vector*|+|-? vector- is not a good name!
  * the vector-add cases could take any number of args but what if not all the same type?
+ *
+ * what was the problem with mixer/frames?
+ *   1) in gc, data array might be owned by someone else (use elements_allocated as in make_shared_vector)
+ *   2) current scheme code assumes they repond to mus-channels etc -- add special code for this? 
+ *   3) clm.c assumes mus_frame|mixer everywhere -- need parallel float* cases but that gets messy, typedef mus_frame s7_cell? (mus_mix was the killer)
+ *   4) if frame is float-vector, how to distinguish in channels (say), (chans vct)=1 but (chans frame)=len
+ *        perhaps mus-channels vs channels?  kinda kludgy. add vector methods?
  */
 
 
@@ -30693,6 +30695,9 @@ If its first argument is a list, the list is copied (despite the '!')."
 	
 	/* currently we have to make the ordinary vector here even if not compare_func
 	 *   because the sorter uses vector_element to access sort args (see SORT_DATA in eval).
+	 *   PERHAPS: use a getter/setter?  (might be better in alloc terms in the current form)
+	 *     also if we used get/set, we could support c_objects (strings?)
+	 * macro in eval is SORT_DATA(k) then s7_vector_to_list if pair at start (sort4)
 	 */
 	len = vector_length(data);
 	vec = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
@@ -32431,7 +32436,7 @@ static s7_pointer closure_name(s7_scheme *sc, s7_pointer closure)
   if (is_pair(sc->cur_code))
     return(sc->cur_code);
 
-  return(caar(closure)); /* desperation -- this is the parameter list */
+  return(closure); /* desperation -- the parameter list (caar here) will cause endless confusion in OP_APPLY errors! */
 }
 
 /* (define* (hi (a 1) (b 2)) a) (hi :b 1 2) */
@@ -36416,7 +36421,6 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 
   cur_code = sc->cur_code;
   slot_set_value(sc->error_code, cur_code);
-  /* sc->cur_code = sc->F; */
 
   /* (let ((x 32)) (define (h1 a) (* a "hi")) (define (h2 b) (+ b (h1 b))) (h2 1)) */
 
@@ -48642,7 +48646,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op) 
 {
-  sc->cur_code = sc->F;
+  /* sc->cur_code = sc->F; */
   sc->op = first_op;
   
   /* this procedure can be entered recursively (via s7_call for example), so it's no place for a setjmp
@@ -56991,6 +56995,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				  list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, closure_name(sc, sc->code), sc->cur_code)));
 		/* now that args are being reused as slots, the error message can't use sc->args, 
 		 *  so fallback on sc->cur_code in this section.
+		 *  But that can be #f, and closure_name can be confusing in this context, so we need a better error message!
 		 */
 
 		sym = car(x);

@@ -8989,9 +8989,6 @@ mus_float_t mus_pulsed_env_unmodulated(mus_any *g)
 
 /* frame = vector, mixer = (square) matrix, but "vector" is in use already, and "matrix" sounds too techy */
 
-/* someday frames and vcts should be combined, and mixers/sound-data
- */
-
 typedef struct {
   mus_any_class *core;
   int chans;
