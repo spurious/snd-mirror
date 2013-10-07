@@ -1017,7 +1017,7 @@ end points.  (This is also "just-good-enough" software).
 (define (fix-clip clip-beg-1 clip-end-1)
   (if (&gt; clip-end-1 clip-beg-1)
       (let* ((dur (+ 1 (- clip-end-1 clip-beg-1)))
-	     (samps (<a class=quiet href="extsnd.html#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> (- clip-beg-1 4) (+ dur 9)))
+	     (samps (channel-&gt;float-vector (- clip-beg-1 4) (+ dur 9)))
 	     (clip-beg 3)
 	     (clip-end (+ dur 4)))
 	(let ((samp0 (samps clip-beg))
@@ -1058,7 +1058,7 @@ end points.  (This is also "just-good-enough" software).
 		     (angle incr (+ angle incr)))
 		    ((= i clip-end))
 		  (set! (samps i) (- -1.0 (* amp (sin angle))))))
-	    (<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> samps (- clip-beg-1 4))))
+	    (float-vector-&gt;channel samps (- clip-beg-1 4))))
 	#t) ; return values so I can tell when I hit a 1-sample section during testing
       #f))
 
@@ -2013,7 +2013,7 @@ fundamental is below 300 Hz;
 'highest-bin' sets how many fft bins we search for spectral peaks;
 'max-peaks' sets how many peaks we track (at a maximum) through the sound;
 'printit', if set to #t, causes the peak envelopes to be printied;
-'attack' is an optional vct containing the attack portion of the new sound.
+'attack' is an optional float-vector containing the attack portion of the new sound.
 </p>
 
 <pre class="indented">
@@ -2872,7 +2872,7 @@ then displays the results in the "lisp graph" area; this needs a lot of work to 
 </pre>
 <p>scentroid is Brett Battey's CLM scentroid instrument, translated to Snd/Scheme.
 To paraphrase Brett:
-scentroid returns (in a vct) the continuous spectral centroid envelope of a sound.
+scentroid returns (in a float-vector) the continuous spectral centroid envelope of a sound.
 The spectral centroid is the "center of gravity" of the spectrum, and it
 has a rough correlation to our sense of "brightness" of a sound. 
 'db-floor' sets a lower limit on which frames are included in the analysis.
@@ -2957,8 +2957,8 @@ lambda: &lt;{ x }&gt; pi random ; #f #f rotate-phase \ randomizes phases
 </p>
 
 <pre class="indented">
-&gt; (define d0 (make-vct 8))
-#&lt;unspecified&gt;
+&gt; (define d0 (make-vector 8 0.0 #t))
+d0
 ;; and similarly for d1 and d2 ...
 &gt; (set! (d0 2) 1.0)
 1.0
@@ -2968,9 +2968,9 @@ lambda: &lt;{ x }&gt; pi random ; #f #f rotate-phase \ randomizes phases
 ;; Ruby: z_transform(d0, 8, exp(Complex(0.0, (2.0 / 8) * PI)))
 #(1.0  0.0+1.0i  -1.0  0.0-1.0i  1.0  0.0+1.0i  -1.0  0.0-1.0i)
 &gt; (mus-fft d1 d2 8)
-#&lt;vct[len=8]: 1.000 0.000 -1.000 -0.000 1.000 0.000 -1.000 -0.000&gt;
+#(1.0 0.0 -1.0 -0.0 1.0 0.0 -1.0 -0.0)
 &gt; d2
-#&lt;vct[len=8]: 0.000 1.000 0.000 -1.000 0.000 1.000 0.000 -1.000&gt;
+#(0.0 1.0 0.0 -1.0 0.0 1.0 0.0 -1.0)
 </pre>
 
 <p>which is a complicated way of showing that if 'z' is e^2*pi*i/n, you get a fourier transform.
@@ -3136,7 +3136,7 @@ For more info on this filter, See "Numerical Recipes in C".
 
 <p>spectrum-&gt;coeffs is a
 version of Snd's very simple spectrum-&gt;coefficients procedure ("frequency sampling").
-It returns the FIR filter coefficients given the filter 'order' and desired 'spectrum' (a vct).
+It returns the FIR filter coefficients given the filter 'order' and desired 'spectrum' (a float-vector).
 An example of its use is fltit-1.
 </p>
 
@@ -3189,7 +3189,7 @@ to return a biquad filter section.
 
 <p>cascade-&gt;canonical 
 converts cascade coefficients to canonical form (the form used by CLM's <a href="sndclm.html#filter">filter</a> generator).
-'coeffs' is a list of filter coefficients; the function returns a vct, ready for
+'coeffs' is a list of filter coefficients; the function returns a float-vector, ready for
 <a href="sndclm.html#make-filter">make-filter</a>.
 </p>
 <div class="spacer"></div>
@@ -3296,7 +3296,7 @@ given the index 'a', and harmonic coefficients 'coeffs' (the 0th element is DC a
 <em class=def id="flattenpartials">flatten-partials</em> partials (tries 32)
 </pre>
 
-<p>flatten-partials takes a list or vct of partial numbers and amplitudes, as passed to <a href="sndclm.html#make-polywave">make-polywave</a>,
+<p>flatten-partials takes a list or float-vector of partial numbers and amplitudes, as passed to <a href="sndclm.html#make-polywave">make-polywave</a>,
 and tries to find an equivalent set of amplitudes that produces a less spikey waveform.  The difference is primarily one of loudness until
 you have a lot of partials.
 </p>
@@ -3526,7 +3526,7 @@ produced by each harmonic.  'pairs' controls how many bands are used to split th
 <em class=def id="lpccoeffs">lpc-coeffs</em> data n m
 </pre>
 
-<p>lpc-coeffs returns 'm' LPC coeffients (in a vector) given 'n' data points in the vct 'data'.
+<p>lpc-coeffs returns 'm' LPC coeffients (in a vector) given 'n' data points in the float-vector 'data'.
 </p>
 <div class="spacer"></div>
 
@@ -3537,13 +3537,13 @@ produced by each harmonic.  'pairs' controls how many bands are used to split th
 </pre>
 
 <p>lpc-predict takes the output of lpc-coeffs ('coeffs') and the length thereof ('m'),
-'n' data points 'data', and produces 'nf' new data points (in a vct) as its prediction.
+'n' data points 'data', and produces 'nf' new data points (in a float-vector) as its prediction.
 If 'clipped' is #t, the new data is assumed to be outside -1.0 to 1.0.
 </p>
 
 <pre class="indented">
 &gt; (lpc-predict (float-vector 0 1 2 3 4 5 6 7) 8 (lpc-coeffs (float-vector 0 1 2 3 4 5 6 7) 8 4) 4 2)
-#&lt;vct[len=2]: 7.906 8.557&gt;
+#(7.906 8.557)
 </pre>
 
 <div class="spacer"></div>
@@ -3671,11 +3671,11 @@ parameters refer to channel numbers.
 <pre class="indented">
 <em class=def id="channelpolynomial">channel-polynomial</em> coeffs snd chn
 <em class=def id="spectralpolynomial">spectral-polynomial</em> coeffs snd chn
-<em class=def id="vctpolynomial">vct-polynomial</em> v coeffs
+<em class=def id="vctpolynomial">float-vector-polynomial</em> v coeffs
 </pre>
 
-<p>vct-polynomial returns the evaluation of the polynomial (given its coefficients) over an entire
-vct, each element being treated as "x".  
+<p>float-vector-polynomial returns the evaluation of the polynomial (given its coefficients) over an entire
+float-vector, each element being treated as "x".  
 channel-polynomial performs the same operation over
 a sound channel.  
 spectral-polynomial is similar, but operates in the frequency domain (each
@@ -3683,9 +3683,9 @@ multiply being a convolution).
 </p>
 
 <pre class="indented">
-&gt; (vct-polynomial (vct 0.0 2.0) (vct 1.0 2.0)) ; x*2 + 1
-#&lt;vct[len=2]: 1.000 5.000&gt;
-&gt; (channel-polynomial (vct 0.0 1.0 1.0 1.0)) ; x*x*x + x*x + x
+&gt; (float-vector-polynomial (float-vector 0.0 2.0) (float-vector 1.0 2.0)) ; x*2 + 1
+#(1.0 5.0)
+&gt; (channel-polynomial (float-vector 0.0 1.0 1.0 1.0)) ; x*x*x + x*x + x
 </pre>
 
 <p>The "constant" (0-th coefficient) term in spectral polynomial is treated as a dither amount (that is,
@@ -3719,9 +3719,9 @@ then
 
 <pre class="indented">
 (let* ((size 128)
-       (x0 (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))	   
-       (x1 (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))	   
-       (x2 (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size)))
+       (x0 (make-vector size 0.0 #t))	   
+       (x1 (make-vector size 0.0 #t))	   
+       (x2 (make-vector size 0.0 #t)))
   (do ((i 0 (+ 1 i)))
       ((= i 12))
     (let ((val (sin (/ (* 2 pi i) 12.0))))
@@ -3751,7 +3751,7 @@ a CLM env structure passed to the <a href="sndclm.html#env">env</a> generator.
 In an envelope,
 the x axis extent
 is arbitrary, though it's simplest to use 0.0 to 1.0.
-(In this file, envelopes are assumed to be flat lists, not vcts or lists of lists).
+(In this file, envelopes are assumed to be flat lists, not float-vectors or lists of lists).
 </p>
 
 
@@ -4250,11 +4250,11 @@ actually represents.  You can, of course, turn off the normalization:
 </pre>
 
 <p>fft-smoother uses fft filtering to
-smooth a portion of a sound, returning a vct with the smoothed data.  'cutoff' sets where we starting zeroing out high frequencies.
+smooth a portion of a sound, returning a float-vector with the smoothed data.  'cutoff' sets where we starting zeroing out high frequencies.
 </p>
 
 <pre class="indented">
-Scheme: (<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (fft-smoother .1 (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) 400 0 0) (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) 400)
+Scheme: (float-vector-&gt;channel (fft-smoother .1 (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) 400 0 0) (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) 400)
 Ruby:   vct2channel(fft_smoother(0.1, cursor, 400, 0, 0), cursor, 400)
 </pre>
 
@@ -4503,7 +4503,7 @@ is at 1.0, no filtering takes place.
 </p>
 
 <pre class="indented">
-Scheme: (osc-formants .99 (vct 400.0 800.0 1200.0) (vct 80.0 80.0 120.0) (vct 4.0 2.0 3.0))
+Scheme: (osc-formants .99 (float-vector 400.0 800.0 1200.0) (float-vector 80.0 80.0 120.0) (float-vector 4.0 2.0 3.0))
 Ruby:   osc_formants(0.99, vct(400, 800, 1200), vct(80, 80, 120), vct(4, 2, 3))
 </pre>
 
@@ -5503,9 +5503,9 @@ directories, returning a text file with segment start and end times, and segment
 <em class=def id="windowsamples">window-samples</em> snd chn
 </pre>
 
-<p>window-samples returns (in a vct) the samples
+<p>window-samples returns (in a float-vector) the samples
 displayed in the current window for the given channel.
-This is just a trivial wrapper for <a href="extsnd.html#channeltovct">channel-&gt;vct</a>.
+This is just a trivial wrapper for <a href="extsnd.html#channeltovct">channel-&gt;float-vector</a>.
 </p>
 <div class="spacer"></div>
 
@@ -5874,7 +5874,7 @@ the ramp.
 
 <pre class="indented">
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2))
-(<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (cross-fade 0 1.5 1.0 0 1 0.5 .5 0 1.0 256 2))
+(float-vector-&gt;channel (cross-fade 0 1.5 1.0 0 1 0.5 .5 0 1.0 256 2))
 </pre>
 
 <p>
@@ -5898,7 +5898,7 @@ and a suitably noisy original, strange pitches emerge and submerge.  'fsize' is 
 
 <pre class="indented">
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (dissolve-fade 0 1 1.0 "oboe.snd" "trumpet.snd" 256 2 0 128))
-(<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (dissolve-fade 0 2 1 0 1 1024 2 2 #f))
+(float-vector-&gt;channel (dissolve-fade 0 2 1 0 1 1024 2 2 #f))
 </pre>
 
 
@@ -5911,12 +5911,12 @@ and a suitably noisy original, strange pitches emerge and submerge.  'fsize' is 
 <p>This file implements a bunch of functions using frames and float-vectors.
 </p>
 
-<!-- file->vct -->
+<!-- file->float-vector -->
 <pre class="indented">
-<em class=def id="filetovct">file-&gt;vct</em> file
+<em class=def id="filetovct">file-&gt;float-vector</em> file
 </pre>
 
-<p>file-&gt;vct returns the data of the file 'file' (channel 0 anyway) in a vct.
+<p>file-&gt;float-vector returns the data of the file 'file' (channel 0 anyway) in a float-vector.
 </p>
 <div class="spacer"></div>
 
@@ -5955,13 +5955,13 @@ and a suitably noisy original, strange pitches emerge and submerge.  'fsize' is 
 <div class="spacer"></div>
 
 
-<!-- frame->vct -->
+<!-- frame->float-vector -->
 <pre class="indented">
-<em class=def id="frametovct">frame-&gt;vct</em> frame vct
+<em class=def id="frametovct">frame-&gt;float-vector</em> frame fv
 </pre>
 
-<p>frame-&gt;vct places the contents of its frame argument in its vct argument, or in a newly created vct
-if the vct argument is omitted.
+<p>frame-&gt;float-vector places the contents of its frame argument in its fv argument, or in a newly created float-vector
+if the fv argument is omitted.
 </p>
 <div class="spacer"></div>
 
@@ -5976,13 +5976,13 @@ if the vct argument is omitted.
 <div class="spacer"></div>
 
 
-<!-- insert-vct -->
+<!-- insert-float-vector -->
 <pre class="indented">
-<em class=def id="insertvct">insert-vct</em> v beg dur snd chn edpos
+<em class=def id="insertvct">insert-float-vector</em> data beg dur snd chn edpos
 </pre>
 
-<p>insert-vct inserts the vct data into sound snd at beg.  It is just a wrapper
-for <a href="extsnd.html#insertsamples">insert-samples</a> that puts the vct argument first.
+<p>insert-float-vector inserts the float-vector data into sound snd at beg.  It is just a wrapper
+for <a href="extsnd.html#insertsamples">insert-samples</a> that puts the float-vector argument first.
 </p>
 <div class="spacer"></div>
 
@@ -6071,22 +6071,22 @@ same sample in all channels.
 <div class="spacer"></div>
 
 
-<!-- vct->file -->
+<!-- float-vector->file -->
 <pre class="indented">
-<em class=def id="vcttofile">vct-&gt;file</em> vct file (srate 44100) (comment "")
+<em class=def id="vcttofile">float-vector-&gt;file</em> data file (srate 44100) (comment "")
 </pre>
 
-<p>vct-&gt;file places the contents of its vct argument in the newly created (mono) sound file 'file'.
+<p>float-vector-&gt;file places the contents of its data argument in the newly created (mono) sound file 'file'.
 </p>
 <div class="spacer"></div>
 
 
-<!-- vct->frame -->
+<!-- float-vector->frame -->
 <pre class="indented">
-<em class=def id="vcttoframe">vct-&gt;frame</em> vct frame
+<em class=def id="vcttoframe">float-vector-&gt;frame</em> data frame
 </pre>
 
-<p>vct-&gt;frame places the contents of its vct argument in its frame argument, or in a newly created frame
+<p>float-vector-&gt;frame places the contents of its data argument in its frame argument, or in a newly created frame
 if the frame argument is omitted.
 </p>
 <div class="spacer"></div>
@@ -7313,11 +7313,11 @@ mix-sound mixes 'file' (all chans) into the currently selected sound at 'start'.
 <div class="spacer"></div>
 
 
-<!-- mix->vct -->
+<!-- mix->float-vector -->
 <pre class="indented">
-<em class=def id="mixtovct">mix-&gt;vct</em> mix
+<em class=def id="mixtovct">mix-&gt;float-vector</em> mix
 </pre>
-mix-&gt;vct returns a mix's samples in a vct.
+mix-&gt;float-vector returns a mix's samples in a float-vector.
 <div class="spacer"></div>
 
 
@@ -7397,12 +7397,12 @@ pan-mix-selection is similar to pan-mix above, but mixes the current selection, 
 <div class="spacer"></div>
 
 
-<!-- pan-mix-vct -->
+<!-- pan-mix-float-vector -->
 <pre class="indented">
-<em class=def id="panmixvct">pan-mix-vct</em> vct beg env snd
+<em class=def id="panmixvct">pan-mix-float-vector</em> data beg env snd
 </pre>
-pan-mix-vct is similar to pan-mix above, but mixes a vct, rather than a file.
-The vct data represents one channel of sound.
+pan-mix-float-vector is similar to pan-mix above, but mixes a float-vector, rather than a file.
+The argument 'data' represents one channel of sound.
 To sync all the panned mixes together:
 
 <pre class="indented">
@@ -7410,7 +7410,7 @@ To sync all the panned mixes together:
   (for-each
     (lambda (id)
      (set! (<a class=quiet href="extsnd.html#mixsync" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixsync_tip)">mix-sync</a> id) new-sync))
-   (<em class=red>pan-mix-vct</em> (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 10 .5) 100 '(0 0 1 1))))
+   (<em class=red>pan-mix-float-vector</em> (make-vector 10 0.5 #t) 100 '(0 0 1 1))))
 </pre>
 
 <div class="spacer"></div>
@@ -8055,7 +8055,7 @@ We could also use poly-roots in poly.scm:
 <pre class="indented">
   &gt; (map (lambda (y) 
           (+ (sin y) (sin (* 4 y)))) 
-        (map acos (poly-roots (vct 4 1 -32 0 32)))) ; 4 + cos(x) - 32cos^2(x) + 32cos^4(x)
+        (map acos (poly-roots (float-vector 4 1 -32 0 32)))) ; 4 + cos(x) - 32cos^2(x) + 32cos^4(x)
   (... 1.928208224151313892413267491649096952858E0 ...)
 </pre>
 
@@ -8071,7 +8071,7 @@ it can be compared to the equivalent search using poly-roots in poly.scm:
   (1.966832009581999989057660894590273760791E0 ...)
   (map (lambda (y) 
          (+ (sin y) (sin (* 6 y)))) 
-       (map acos (poly-roots (vct -6 1 108 0 -288 0 192)))) ; n*Tn + cos(x)
+       (map acos (poly-roots (float-vector -6 1 108 0 -288 0 192)))) ; n*Tn + cos(x)
   (1.966832009581999989057661205729776550611E0 ...)
 </pre>
 
@@ -8707,7 +8707,7 @@ to a good candidate, but that seems like asking for trouble.
 	(close-sound old)))
   
 (let ((ns (new-sound "test.snd" :channels 5))
-      (data (make-vct dur)))
+      (data (make-vector dur 0.0 #t)))
 
   (let ((phases (make-vector 8 0.0))
 	(correct 6.1442))
@@ -8719,8 +8719,8 @@ to a good candidate, but that seems like asking for trouble.
 	((> n 512))
 
       (let* ((size (expt 2 (ceiling (/ (log (* 8 n)) (log 2)))))
-	     (fft-rl (make-vct size))
-	     (fft-im (make-vct size))
+	     (fft-rl (make-vector size 0.0 #t))
+	     (fft-im (make-vector size 0.0 #t))
 	     (pi2 (/ pi 2)))
 	
 	(do ((m 0 (+ m 1)))
@@ -8743,7 +8743,7 @@ to a good candidate, but that seems like asking for trouble.
 		(set! k (+ k 1))
 		(set! step-ctr (- step-ctr step)))))
 
-	(vct->channel data 0 dur ns chan)))
+	(float-vector->channel data 0 dur ns chan)))
 
     (let ((len 8)
 	  (incr (/ (* 2 pi) dur)))
@@ -8756,7 +8756,7 @@ to a good candidate, but that seems like asking for trouble.
 	      ((= k len))
 	    (set! val (+ val (sin (+ (* j x) (* pi (phases k)))))))
 	  (set! (data i) val)))
-      (vct->channel data 0 dur ns 4))
+      (float-vector->channel data 0 dur ns 4))
 
     (set! (selected-graph-color) (make-color 1 1 1))
     (set! (selected-data-color) (make-color 0 0 0))
@@ -8813,8 +8813,8 @@ minimum, maximum, and average peaks.  The graph is logarithmic (that is we show
 (define (get-peak choice n cur-phases)
   (let* ((fft-mult 128)
 	 (size (get-fft-size choice n fft-mult))
-	 (fft-rl (make-vct size))
-	 (fft-im (make-vct size))
+	 (fft-rl (make-vector size 0.0 #t))
+	 (fft-im (make-vector size 0.0 #t))
 	 (nc (if (eq? choice :all) 0
 		 (if (eq? choice :odd) 1
 		     (if (eq? choice :even) 2 3)))))
@@ -8829,9 +8829,9 @@ minimum, maximum, and average peaks.  The graph is logarithmic (that is we show
 		     (if (= nc 1) (+ 1 (* m 2))
 			 (if (= nc 2) (max 1 (* m 2))
 			     (vector-ref primes m))))))
-	(vct-set! fft-rl bin (cos phi))
-	(vct-set! fft-im bin (sin phi))))
-    (vct-peak (mus-fft fft-rl fft-im size -1))))
+	(float-vector-set! fft-rl bin (cos phi))
+	(float-vector-set! fft-im bin (sin phi))))
+    (float-vector-peak (mus-fft fft-rl fft-im size -1))))
 
 
 (let ((tries 100)
@@ -9015,7 +9015,7 @@ the search each time from the new best point, slowly reducing the search radius 
 	  (if (&lt; pk cur-best)
 	      (begin
 		(set! cur-best pk)
-		(set! phases (vct-&gt;vector new-phases)))))))
+		(set! phases (float-vector-&gt;vector new-phases)))))))
     (list cur-best phases)))
 </pre>
 
@@ -9764,8 +9764,8 @@ The following doubles each sample in channel 0 during playback:
 <div class="header" id="polydoc">poly</div>
 
 <p>This file contains various functions related to the CLM polynomial function.  A polynomial here
-is a vct or a vector (for complex coefficients) holding the polynomial coefficients from lowest
-to highest (i.e. the constant is vct[0], x+2 is (float-vector 2 1), etc).
+is a vector (for complex coefficients) holding the polynomial coefficients from lowest
+to highest (i.e. the constant is (v 0), x+2 is (float-vector 2 1), etc).
 </p>
 
 <!-- main-index |polydoc:polynomial operations -->
@@ -9798,12 +9798,12 @@ convolution the infinitely slow way is poly*:
 </p>
 
 <pre class="indented">
-(<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (poly* (<a class=quiet href="extsnd.html#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> 0 (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)) (float-vector 2.0))) ; no, this is not serious
+(float-vector-&gt;channel (poly* (channel-&gt;float-vector 0 (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)) (float-vector 2.0))) ; no, this is not serious
 </pre>
 
 
 <div class="seealso">
-see also: &nbsp; <a href="sndclm.html#polynomial">polynomial</a> &nbsp; <a href="#mixerdoc" onmouseout="UnTip()" onmouseover="Tip('linear algebra stuff')">mixer</a> &nbsp; <a href="extsnd.html#Vcts" onmouseout="UnTip()" onmouseover="Tip('array processing')">vcts</a>
+see also: &nbsp; <a href="sndclm.html#polynomial">polynomial</a> &nbsp; <a href="#mixerdoc" onmouseout="UnTip()" onmouseover="Tip('linear algebra stuff')">mixer</a> &nbsp;
 </div>
 
 
@@ -9893,8 +9893,8 @@ pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 				    (let ((N (length v)))
 				      (do ((i 0 (+ 1 i)))
 					  ((= i N))
-					(if (&lt; (vct-ref (phase-vocoder-amp-increments v) i) gate)
-					    (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> (phase-vocoder-amp-increments v) i 0.0)))
+					(if (&lt; ((phase-vocoder-amp-increments v) i) gate)
+					    (set! ((phase-vocoder-amp-increments v) i) 0.0)))
 				      #t))
 				  #f)) ;no change to synthesis
 	  (reader (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0)))
@@ -10012,7 +10012,7 @@ ramp-dur to set how long the cross-fade ramps are.
 </p>
 
 <pre class="indented">
-(filter-selection-and-smooth .01 (vct .25 .5 .5 .5 .25))
+(filter-selection-and-smooth .01 (float-vector .25 .5 .5 .5 .25))
 </pre>
 
 <div class="spacer"></div>
@@ -11186,7 +11186,7 @@ in fmv.scm, the simpler one being:
 					  :scaler amp 
 					  :length dur)))
 			 (lambda () (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> e)))))
-	  (data (<a class=quiet href="extsnd.html#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> beg dur)))
+	  (data (channel-&gt;float-vector beg dur)))
       (do ((i 0 (+ 1 i)))
 	  ((= i dur))
 	(set! (data i) (+ (data i)
@@ -11196,7 +11196,7 @@ in fmv.scm, the simpler one being:
 
 <p>Here we are setting up an fm-violin generator (via make-fm-violin), then
 calling it 'dur' times, mixing its output into the current data (this could
-also use mix-vct and so on).  The generator is called via (v).
+also use mix-float-vector and so on).  The generator is called via (v).
 As can be seen here, each envelope is treated as a function called on each sample
 very much like the "as-needed" input in src or granulate; the envelopes could actually be any
 arbitrary function you like (see test-v1 in fmv.scm which uses an oscillator as one of
@@ -11979,7 +11979,7 @@ we want to hear an arpeggio from the fm-violin:
 
 
 <p>
-with-sound opens an output object, either a sound file, a vct, or a vector: (*output*), and
+with-sound opens an output object, either a sound file, or a vector: (*output*), and
 optionally a reverb output object: *reverb*.  Each instrument uses <a href="sndclm.html#out-any">out-any</a> to add its sounds to the
 *output* results.  with-sound next sets up a variety of variables describing the current
 output, and establishes an environment where various problems can be handled nicely (in Scheme,
@@ -12196,11 +12196,11 @@ To continue adding notes to an existing file, set 'continue-old-file':
 <p id="definstrument">
 The arguments passed to the notehook function are the current instrument name (a string) and all its
 arguments.  definstrument implements the notehook feature. 
-The "output" argument can be a vct, or a vector as well as a filename:
+The "output" argument can be a vector as well as a filename:
 </p>
 
 <pre class="indented">
-(with-sound (:output (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 44100)) (fm-violin 0 1 440 .1))
+(with-sound (:output (make-vector 44100 0.0 #t)) (fm-violin 0 1 440 .1))
 </pre>
 
 
@@ -12514,15 +12514,15 @@ an upward ramp and a downward ramp, then zips them together:
 
 <pre class="indented">
 (define (ramp-test)
-  (let ((data (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 10000)))
+  (let ((data (make-vector 10000 0.0 #t)))
     (<a class=quiet href="extsnd.html#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "new-0.snd")
     (do ((i 0 (+ 1 i))) ((= i 10000)) 
       (set! (data i) (* i .0001)))
-    (<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> data 0 10000 0)
+    (float-vector-&gt;channel data 0 10000 0)
     (<a class=quiet href="extsnd.html#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "new-1.snd")
     (do ((i 0 (+ 1 i))) ((= i 10000)) 
       (set! (data i) (- 1.0 (* i .0001))))
-    (<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> data 0 10000 1)
+    (float-vector-&gt;channel data 0 10000 1)
     (let* ((dur (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
 	   (zp (<em class=red>make-zipper</em> (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :length dur)
 			    0.05

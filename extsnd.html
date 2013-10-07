@@ -402,8 +402,8 @@ extension language, that initializes Snd to use whatever items you chose.
 
 <p>Snd is organized as a list of sounds, each with a list of channels,
 each channel containing lists of edits, marks, mixes, etc.
-There are other objects such as colors, vcts (an optimization
-of vectors), and regions; the currently active region is
+There are other objects such as colors, 
+and regions; the currently active region is
 called the selection.  I originally presented all the
 functions and variables in an enormous alphabetical
 list, but that finally became unmanageable.  In the following
@@ -1151,15 +1151,15 @@ the initial graph display the next time you open that sound.
 <em class=def id="printlength">print-length</em> (default: 12)
 </pre>
 
-<p>For objects such as vcts, print-length sets the number of elements printed.
+<p>For objects such as float-vectors, print-length sets the number of elements printed.
 In s7, this also sets *vector-print-length*.
 </p>
 
 <pre class="indented">
 &gt; (set! (print-length) 3)
 3
-&gt; (make-vct 10 .1)
-#&lt;vct[len=10]: 0.100 0.100 0.100 ...&gt;
+&gt; (make-vector 10 .1 #t)
+#(0.1 0.1 0.1 ...)
 </pre>
 <div class="spacer"></div>
 
@@ -1586,7 +1586,7 @@ samplers, regions, and players, all of which should be compared with equal?, not
 <p id="genericchannels">channels handles strings (<a href="#mussoundchans">mus-sound-chans</a>), 
 <a href="#regionchans">region-chans</a>, 
 the current selection (<a href="#selectionchans">selection-chans</a>),
-<a href="#sounddatachans">sound-data-chans</a>, <a href="sndclm.html#genericfunctions">mus-channels</a>,
+<a href="sndclm.html#genericfunctions">mus-channels</a>,
 <a href="#sndmixes">mixes</a>, <a href="#Vcts">vcts</a>, and vectors (always 1 channel), and 
 <a href="#sndsounds">sounds</a> (as objects or as integers).
 </p>
@@ -1600,7 +1600,7 @@ the current selection (<a href="#selectionchans">selection-chans</a>),
 </pre>
 
 <p id="genericcopy">copy returns a copy of its argument.
-It works with strings, lists, vectors, hash tables, vcts, frames, mixers, sounds, the current selection, mixes, marks,
+It works with strings, lists, vectors, hash tables, float-vectors, frames, mixers, sounds, the current selection, mixes, marks,
 bignums, and the non-gmp random state objects.
 </p>
 <div class="spacer"></div>
@@ -1626,7 +1626,7 @@ as well as handling mixes, regions, samplers, and the regular sound-oriented <a 
 </pre>
 
 <p id="genericfill">fill! fills obj with val (s7 only).
-fill! works with strings, vectors, hash-tables, vcts, lists, sounds, the selection, 
+fill! works with strings, vectors, hash-tables, float-vectors, lists, sounds, the selection, 
 frames, and mixers.
 </p>
 <div class="spacer"></div>
@@ -1645,7 +1645,6 @@ treats the string as a sound file name and returns <a href="#mussoundframes">mus
 <a href="#mussoundframes">mus-sound-frames</a>, <a href="sndclm.html#genericfunctions">mus-length</a>, 
 <a href="#mixlength">mix-length</a>, 
 <a href="#regionframes">region-frames</a>, <a href="#selectionframes">selection-frames</a>,
-<a href="#vctlength">vct-length</a>, <a href="#sounddatalength">sound-data-length</a>,
 and the regular <a href="#frames">frames</a> function that handles sound objects and integers as sound indices.
 </p>
 <div class="spacer"></div>
@@ -1658,8 +1657,8 @@ and the regular <a href="#frames">frames</a> function that handles sound objects
 </pre>
 
 <p id="genericlength">length handles list length, string-length, vector-length, <a href="s7.html#hashtablesize">hash-table-size</a>,
-<a href="#vctlength">vct-length</a>, <a href="#frames">frames</a> (sound length), <a href="#colormapsize">colormap-size</a>,
-<a href="sndclm.html#genericfunctions">mus-length</a> (generators), <a href="#sounddatalength">sound-data-length</a>, 
+<a href="#frames">frames</a> (sound length), <a href="#colormapsize">colormap-size</a>,
+<a href="sndclm.html#genericfunctions">mus-length</a> (generators),
 <a href="#mixlength">mix-length</a>, <a href="#transformsize">transform-size</a>,
 <a href="#selectionframes">selection-frames</a>,
 and <a href="#regionframes">region-frames</a>.
@@ -1676,8 +1675,7 @@ and <a href="#regionframes">region-frames</a>.
 <p id="genericmaxamp">maxamp can handle a sound (via the regular <a href="#maxamp">maxamp</a> function),
 string (treated as a sound file name, <a href="#mussoundmaxamp">mus-sound-maxamp</a>),
 generator (maxamp of the mus-data vct, if any),
-sound-data (<a href="#sounddatamaxamp">sound-data-maxamp</a>),
-vct (<a href="#vctpeak">vct-peak</a>),
+float-vector,
 region (<a href="#regionmaxamp">region-maxamp</a>),
 the current selection (<a href="#selectionmaxamp">selection-maxamp</a>),
 vector, list, or mix object.
@@ -1977,7 +1975,7 @@ program (a filename).  See <a href="sndscm.html#wssavestate">ws-save-state</a> i
   (if (and (<a class=quiet href="#transformgraphp" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphp_tip)">transform-graph?</a>) 
            (= (<a class=quiet href="#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphtype_tip)">transform-graph-type</a>) <a class=quiet href="#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphtype_tip)">graph-once</a>))
       (<a class=quiet href="#statusreport" onmouseout="UnTip()" onmouseover="Tip(extsnd_statusreport_tip)">status-report</a> 
-        (number-&gt;string (/ (* 2 (<a class=quiet href="#vctpeak" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctpeak_tip)">vct-peak</a> (<a class=quiet href="#transformtovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformtovct_tip)">transform-&gt;vct</a> snd chn))) 
+        (number-&gt;string (/ (* 2 (maxamp (transform-&gt;float-vector snd chn)))
                            (<a class=quiet href="#transformsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformsize_tip)">transform-size</a> snd chn))))))
 
 (hook-push <em class=red>after-transform-hook</em> 
@@ -2608,7 +2606,7 @@ in mix.scm for a fancier version):
         (exact-&gt;inexact (/ (<a class=quiet href="#mixposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixposition_tip)">mix-position</a> (hook 'id)) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))))))
 </pre>
 
-<p>A neat example is to set up an empty sound with a 1.0 in sample 0, mix in a vct containing one element of 0.5, then set
+<p>A neat example is to set up an empty sound with a 1.0 in sample 0, mix in a float-vector containing one element of 0.5, then set
 up this mix-drag-hook:
 </p>
 
@@ -3383,7 +3381,7 @@ marks, and mixes.  The sound data itself is accessed through
 a variety of structures and functions, each aimed at a particular
 kind of use.  The accessors from lowest level up are:
 samplers (one sample at a time iterators) and frame-readers (a "frame" is a multichannel sample),
-channel-at-a-time blocks (vcts, map-channel, etc), multichannel blocks (map-sound, etc),
+channel-at-a-time blocks (float-vectors, map-channel, etc), multichannel blocks (map-sound, etc),
 a few historical leftovers that follow the "sync" field (scale-to, etc), and finally
 the top-level operations such as save-sound-as (these are used in the File menu, etc).
 In the following sections, I'll start with the lowest level and work upwards, more or less.
@@ -3438,11 +3436,11 @@ which can sometimes require that it open, read, and close a sound file.
 The result is that sample can bring your code
 to a grinding halt.  There are two alternatives, leaving aside the scanning
 and mapping functions mentioned below.  One involves keeping the buffer of
-data around explicitly (<a class=quiet href="#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a>), and the other involves the
+data around explicitly (channel-&gt;float-vector), and the other involves the
 use of a special object known as a sampler.  The sampler
 returns the next sample in its sound each time it is called; this kind
 of access is sometimes called an "enumerator" (Ruby) or perhaps "iterator" (Gtk+).
-The buffer approach (<a class=quiet href="#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> in <a href="grfsnd.html#expsrc">expsrc</a>)
+The buffer approach (channel-&gt;float-vector in <a href="grfsnd.html#expsrc">expsrc</a>)
 is better if you're jumping around in the data, the sample-by-sample approach if you're treating
 the data as a sequence of samples.
 To get a sampler,
@@ -3502,7 +3500,7 @@ demands on memory.
 </pre>
 
 <p>make-mix-sampler creates a mix-sampler reading 'mix' starting (in the mix input) at 'beg'.
-See <a href="sndscm.html#mixtovct">mix-&gt;vct</a> in mix.scm.
+See <a href="sndscm.html#mixtovct">mix-&gt;float-vector</a> in mix.scm.
 </p>
 <div class="spacer"></div>
 
@@ -3636,17 +3634,17 @@ in the Scheme, Ruby, and Forth files.
 </p>
 
 <pre class="indented">
-(define* (region-&gt;vct reg (chn 0))
+(define* (region-&gt;float-vector reg (chn 0))
   (if (<a class=quiet href="#regionok" onmouseout="UnTip()" onmouseover="Tip(extsnd_regionok_tip)">region?</a> reg)
       (if (&lt; chn (channels reg))
 	  (let* ((reader (<em class=red>make-region-sampler</em> 0 reg chn))
 		 (len (<a class=quiet href="#regionframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_regionframes_tip)">region-frames</a> reg))
-		 (data (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> len)))
+		 (data (make-vector len 0.0 #t)))
 	    (do ((i 0 (+ 1 i)))
 		((= i len) data)
 	      (set! (data i) (<em class=red>reader</em>))))
-	  (error 'no-such-channel (list "region-&gt;vct" reg chn)))
-      (error 'no-such-region (list "region-&gt;vct" reg))))
+	  (error 'no-such-channel (list "region-&gt;float-vector" reg chn)))
+      (error 'no-such-region (list "region-&gt;float-vector" reg))))
 </pre>
 <div class="spacer"></div>
 
@@ -3768,7 +3766,7 @@ If *reverb* is a snd-&gt;sample generator, for example,
 
 <div class="header" id="Vcts">Vcts</div>
 
-<p>This is slightly obsolete: in s7, vct is just a synonym for float-vector.
+<p>This is obsolete: in s7, vct is just a synonym for float-vector.
 </p>
 
 <p>
@@ -3777,46 +3775,12 @@ By defining a new vector type, named vct, and providing a package
 of old-style array-processing calls upon that type, we can speed up many
 operations by a factor of about 3 &mdash; enough of a difference to warrant
 the added complexity.  
-<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> creates a new vct object.  It is freed by the
+make-vct creates a new vct object.  It is freed by the
 garbage collector when it can't be referenced any further.  To get 
-an element of a vct, use <a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a>; similarly <a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a>
+an element of a vct, use vct-ref; similarly vct-set!
 sets an element.  (vct's are applicable objects, so vct-ref can always be omitted, and set! can replace vct-set!).
-Once created, a vct can be passed to a variety of built-in
-functions:
 </p>
 
-
-<table><tr><td>
-<div class="scheme">
-<pre class="indented">
-(define hi (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 100))
-(<a class=quiet href="#vctfill" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctfill_tip)">vct-fill!</a> hi 3.14)
-(<a class=quiet href="#vctscale" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctscale_tip)">vct-scale!</a> hi -1.0)
-
-</pre>
-</div>
-</td><td>
-<div class="ruby">
-<pre class="indented">
-hi = make_vct(100)
-vct_fill!(hi, 3.14)
-vct_scale!(hi, -1.0)
-
-</pre>
-</div>
-</td><td>
-<div class="forth">
-<pre class="indented">
-variable hi
-100 0.0 make-vct hi !
-hi @ 3.14 vct-fill!
-hi @ -1.0 vct-scale!
-</pre>
-</div>
-</td></tr></table>
-
-
-<p>Now our vct 'hi' has 100 -3.14's. </p>
 
 <!--  VCT TABLE  -->
 
@@ -3830,13 +3794,6 @@ hi @ -1.0 vct-scale!
 
 <p>return a new vct with elements of list 'lst' (equivalent to the <a href="#vct">vct</a> function).
 </p>
-
-<pre class="indented">
-&gt; (list-&gt;vct (list 0.1 0.2 0.3))
-#&lt;vct[len=3]: 0.100 0.200 0.300&gt;
-&gt; (vct 0.1 0.2 0.3)
-#&lt;vct[len=3]: 0.100 0.200 0.300&gt;
-</pre>
 <div class="spacer"></div>
 
 
@@ -3847,21 +3804,6 @@ hi @ -1.0 vct-scale!
 
 <p>make-vct creates a vct of size 'len'.
 </p>
-
-<pre class="indented">
-&gt; (make-vct 3 0.1)
-#&lt;vct[len=3]: 0.100 0.100 0.100&gt;
-</pre>
-<div class="spacer"></div>
-
-
-<!-- sound-date->vct -->
-<pre class="indented">
-<em class=emdef>sound-data-&gt;vct</em> sdobj (chan 0) (v #f)
-</pre>
-
-<p>sound-data-&gt;vct places the sound-data data in a vct, returning 'v' (if given) or a new vct.
-</p>
 <div class="spacer"></div>
 
 
@@ -3870,8 +3812,7 @@ hi @ -1.0 vct-scale!
 <em class=def id="vct">vct</em> :rest args
 </pre>
 
-<p>vct is equivalent to list-&gt;vct with 'args' as the list: <code>(vct 1 2 3)</code>
-is the same as <code>(<a class=quiet href="#listtovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_listtovct_tip)">list-&gt;vct</a> '(1 2 3))</code>.
+<p>vct is equivalent to list-&gt;vct with 'args' as the list.
 </p>
 <div class="spacer"></div>
 
@@ -3891,18 +3832,8 @@ is the same as <code>(<a class=quiet href="#listtovct" onmouseout="UnTip()" onmo
 <em class=def id="vctadd">vct-add!</em> v1 v2 (off 0)
 </pre>
 
-<p>vct-add! performs element-wise add: v1[i + off] += v2[i], returning 'v1'.  To protect the
-original vct, use vct-copy: <code>(vct-add! (vct-vopy v1) v2)</code>.
+<p>vct-add! performs element-wise add: v1[i + off] += v2[i], returning 'v1'.
 </p>
-
-<pre class="indented">
-&gt; (define v1 (vct .1 .2 .3))
-#&lt;unspecified&gt;
-&gt; (vct-add! v1 (vct .3 .2 .1))
-#&lt;vct[len=3]: 0.400 0.400 0.400&gt;
-:v1
-#&lt;vct[len=3]: 0.400 0.400 0.400&gt;
-</pre>
 <div class="spacer"></div>
 
 
@@ -3922,7 +3853,6 @@ original vct, use vct-copy: <code>(vct-add! (vct-vopy v1) v2)</code>.
 copy file: in Scheme: copy-file, in Ruby: File.copy or File.syscopy<br>
 copy string: in Forth: string-copy<br>
 copy list: in Forth: list-copy or copy-tree<br>
-copy vct: <a href="#vctcopy">vct-copy</a>, <a href="#vcttovector">vct-&gt;vector</a>, <a href="sndscm.html#vcttoframe">vct-&gt;frame</a><br>
 copy mix: <a href="sndscm.html#mixtovct">mix-&gt;vct</a><br>
 copy sampler: <a href="#copysampler">copy-sampler</a><br>
 copy (clone) current sound edit state: <a href="#clonesoundas">clone-sound-as</a><br>
@@ -3931,7 +3861,6 @@ copy selection data: <a href="#selection2vct">selection-&gt;vct</a> or <a href="
 copy region data: <a href="#regiontovct">region-&gt;vct</a>, <a href="#regiontovct">region-&gt;vct</a>, <a href="#saveregion">save-region</a>
 copy transform data: <a href="#transformtovct">transform-&gt;vct</a><br>
 copy a frame: <a href="sndscm.html#framecopy">frame-copy</a>, <a href="sndscm.html#frametovct">frame-&gt;vct</a><br>
-copy vector: <a href="#vectortovct">vector-&gt;vct</a><br>
 </small></blockquote>
 </td></tr></TABLE>
 <div class="spacer"></div>
@@ -3985,26 +3914,6 @@ copy vector: <a href="#vectortovct">vector-&gt;vct</a><br>
 <p>vct-move moves a block of values within a vct:  v[new++] = v[old++], or
 if 'backwards' is #t: v[new--] = v[old--].  It returns 'v'.
 </p>
-
-<pre class="indented">
-&gt; (define v1 (vct 1 2 3 4 5 6 7 8 9 10))
-#&lt;unspecified&gt;
-&gt; (vct-move! v1 0 5)
-#&lt;vct[len=10]: 6.000 7.000 8.000 9.000 10.000 6.000 7.000 8.000 9.000 10.000&gt;
-</pre>
-
-<p>We can use vct-move! to maintain a sliding window on a sound:
-</p>
-
-<pre class="indented">
-    (<a class=quiet href="#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a>
-      (let* ((size 100)
-	     (samps (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size)))
-        (lambda (y)
-         (<em class=red>vct-move!</em> samps 0 1)
-         (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> samps (- size 1) y)
-         ...)))
-</pre>
 <div class="spacer"></div>
 
 
@@ -4045,11 +3954,6 @@ if 'backwards' is #t: v[new--] = v[old--].  It returns 'v'.
 
 <p>vct-ref returns the element 'pos' in 'v': v[pos].
 </p>
-
-<pre class="indented">
-&gt; (vct-ref (vct .1 .2 .3) 1)
-0.200000002980232
-</pre>
 <div class="spacer"></div>
 
 
@@ -4103,13 +4007,6 @@ In Scheme, this is the same as (set! (v pos) val).
 <p>vct-subseq returns a new vct (or 'nv' if given) with the elements of 'v' between 'start' and 'end' inclusive.  'end' defaults
 to the end of 'v'.
 </p>
-
-<pre class="indented">
-&gt; (define v1 (vct 1 2 3 4 5 6 7 8 9 10))
-#&lt;unspecified&gt;
-&gt; (vct-subseq v1 3 6)
-#&lt;vct[len=4]: 4.000 5.000 6.000 7.000&gt;
-</pre>
 <div class="spacer"></div>
 
 
@@ -4118,10 +4015,8 @@ to the end of 'v'.
 <em class=def id="vctplus">vct+</em> obj1 obj2
 </pre>
 
-<p>vct+ combines <a class=quiet href="#vctadd" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctadd_tip)">vct-add!</a> and <a class=quiet href="#vctoffset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctoffset_tip)">vct-offset!</a>, 
+<p>vct+ combines vct-add! and vct-offset!, 
 depending on the type of its arguments.
-<code>(vct+ v 1.0)</code> or <code>(vct+ 1.0 v)</code> is the same as 
-<code>(vct-offset! v 1.0)</code>, and <code>(vct+ v1 v2)</code> is the same as <code>(vct-add! v1 v2)</code>.
 </p>
 <div class="spacer"></div>
 
@@ -4131,10 +4026,8 @@ depending on the type of its arguments.
 <em class=def id="vcttimes">vct*</em> obj1 obj2
 </pre>
 
-<p>vct* combines <a class=quiet href="#vctmultiply" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctmultiply_tip)">vct-multiply!</a> and <a class=quiet href="#vctscale" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctscale_tip)">vct-scale!</a>, 
+<p>vct* combines vct-multiply! and vct-scale!, 
 depending on the type of its arguments.
-<code>(vct* v 2.0)</code> or <code>(vct* 2.0 v)</code> is the same as <code>(vct-scale! v 2.0)</code>, and 
-<code>(vct* v1 v2)</code> is the same as <code>(vct-multiply! v1 v2)</code>.
 </p>
 <div class="spacer"></div>
 
@@ -4146,15 +4039,6 @@ depending on the type of its arguments.
 
 <p>vct-&gt;channel sets the samples from 'beg' to 'beg' + 'dur' from the values in 'v'.
 This changes (edits) the channel, so 'origin' provides a way to name the edit (for the edit history list and whatnot).
-Since with-sound can write its output to a vct, we can use it with vct-&gt;channel to paste in an fm-violin note as
-an edit:
-</p>
-
-<pre class="indented">
-(vct-&gt;channel (<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:output (make-vct 44100)) (<a class=quiet href="sndscm.html#fmviolin" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> 0 1 440 .1)))
-</pre>
-
-<p>To add such a note to whatever is already present, use <a href="#mixvct">mix-vct</a>.
 </p>
 <div class="spacer"></div>
 
@@ -4165,30 +4049,6 @@ an edit:
 </pre>
 
 <p>vct-&gt;list returns a list with elements of 'v'.
-</p>
-
-<pre class="indented">
-;; Scheme:
-&gt; (vct-&gt;list (list-&gt;vct (list 0.1 0.2 0.3)))
-(0.1 0.2 0.3)
-
-;; Ruby:
-:vct2list(list2vct([0.1, 0.2, 0.3]))
-[0.100000001490116, 0.200000002980232, 0.300000011920929]
-
-;; Forth:
-snd&gt; '( 0.1 0.2 0.3 ) list-&gt;vct vct-&gt;list
-'( 0.1 0.2 0.3 )
-</pre>
-<div class="spacer"></div>
-
-
-<!-- vct->sound-data -->
-<pre class="indented">
-<em class=emdef>vct-&gt;sound-data</em> v sd (chan 0)
-</pre>
-
-<p>vct-&gt;sound-data places the data in vct 'v' in the sound-data object 'sd', returning sd.
 </p>
 <div class="spacer"></div>
 
@@ -4201,13 +4061,6 @@ snd&gt; '( 0.1 0.2 0.3 ) list-&gt;vct vct-&gt;list
 <p>vct-&gt;string returns a Scheme-readable string describing 'v'.  The standard way of displaying a vct
 uses "#&lt;vct...&gt;" which is not useful if you want to read the string later as a piece of Scheme code.
 </p>
-
-<pre class="indented">
-&gt; (define v1 (make-vct 3 0.1))
-    prints v1 as #&lt;vct[len=3]: 0.100 0.100 0.100&gt;
-&gt; (vct-&gt;string v1)
-"(vct 0.100 0.100 0.100)"
-</pre>
 <div class="spacer"></div>
 
 
@@ -4230,47 +4083,8 @@ uses "#&lt;vct...&gt;" which is not useful if you want to read the string later 
 </p>
 <div class="spacer"></div>
 
-<p>Many of the functions described below can take a vct as an argument; 
-there are also several functions that create and fill vcts with data:
-</p>
 
-<pre class="indented">
-<a href="#regiontovct">region-&gt;vct</a>              region samples to vct
-<a href="#transformtovct">transform-&gt;vct</a>           fft data to vct
-<a href="#channeltovct">channel-&gt;vct</a>             channel samples to vct
-<a href="sndscm.html#mixtovct">mix-&gt;vct</a>                 mix samples to vct
-<a href="#vectortovct">vector-&gt;vct</a>              vector data to vct (assumed to be floats)
-<a href="#selection2vct">selection-&gt;vct</a>           selected samples to vct
-<a href="sndscm.html#filetovct">file-&gt;vct</a>                file data to vct
-<a href="sndscm.html#frametovct">frame-&gt;vct</a>               frame data to vct
-<a href="sndscm.html#vcttoframe">vct-&gt;frame</a>               vct data to frame
-</pre>
-
-<p>We could combine some of these vct functions to implement Horner's rule
-(the <a href="sndclm.html#polynomial">polynomial</a> generator) over an entire
-channel:
-</p>
-
-<pre class="indented">
-(define (vct-polynomial v coeffs)
-  (let* ((v-len (<em class=red>length</em> v))
-	 (num-coeffs (<em class=red>length</em> coeffs))
-	 (new-v (<em class=red>make-vct</em> v-len (coeffs (- num-coeffs 1)))))
-    (do ((i (- num-coeffs 2) (- i 1)))
-	((&lt; i 0))
-      (<em class=red>vct-offset!</em> (<em class=red>vct-multiply!</em> new-v v) (coeffs i)))
-    new-v))
-
-(define* (channel-polynomial coeffs snd chn)
-  (let ((len (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn)))
-    (<em class=red>vct-&gt;channel</em> (vct-polynomial (<em class=red>channel-&gt;vct</em> 0 len snd chn) coeffs) 0 len snd chn)))
-
-;;; (channel-polynomial (<em class=red>vct</em> 0.0 .5)) = x*.5
-;;; (channel-polynomial (<em class=red>vct</em> 0.0 1.0 1.0 1.0)) = x*x*x + x*x + x
-</pre>
-
-<p>In some cases (s7, Ruby) it's possible to access a vct's
-elements with the syntax (v index), equivalent to (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> v index).
+<p>
 In Ruby, vcts partake in the Enumerable and Comparable classes, and have a variety of
 additional methods: map, each, &lt;=&gt;, etc.  See vct.c and the Ruby documentation for a complete list.
 </p>
@@ -4313,13 +4127,6 @@ In s7, sound-data is just a synonym for float-vector, and the functions below ar
 
 <p>make-sound-data returns a new sound-data object with 'chans' arrays, each with 'frames' elements.
 </p>
-
-<pre class="indented">
-&gt; (make-sound-data 2 5)
-#&lt;sound-data[chans=2, length=5]:
-    (0.000 0.000 0.000 0.000 0.000)
-    (0.000 0.000 0.000 0.000 0.000)&gt;
-</pre>
 <div class="spacer"></div>
 
 
@@ -4330,23 +4137,6 @@ In s7, sound-data is just a synonym for float-vector, and the functions below ar
 
 <p>sound-data-add! adds the contents of sd2 into sd1 and returns sd1.
 </p>
-
-<pre class="indented">
-&gt; (define sd1 (make-sound-data 2 5))
-#&lt;unspecified&gt;
-&gt; (do ((chn 0 (+ 1 chn))) ((= chn 2)) 
-    (do ((i 0 (+ 1 i))) ((= i 5)) 
-      (sound-data-set! sd1 chn i (+ i (* 5 chn)))))
-#&lt;unspecified&gt;
-&gt; sd1
-#&lt;sound-data[chans=2, length=5]:
-    (0.000 1.000 2.000 3.000 4.000)
-    (5.000 6.000 7.000 8.000 9.000)&gt;
-&gt; (sound-data-add! (sound-data-fill! (make-sound-data 2 5) .25) sd1)
-#&lt;sound-data[chans=2, length=5]:
-    (0.250 1.250 2.250 3.250 4.250)
-    (5.250 6.250 7.250 8.250 9.250)&gt;
-</pre>
 <div class="spacer"></div>
 
 
@@ -4397,17 +4187,6 @@ In s7, sound-data is just a synonym for float-vector, and the functions below ar
 
 <p>sound-data-maxamp returns a list of maxamps (one for each channel) of the data in sd.
 </p>
-
-<pre class="indented">
-&gt; sd1
-#&lt;sound-data[chans=2, length=5]:
-    (0.000 1.000 2.000 3.000 4.000)
-    (5.000 6.000 7.000 8.000 9.000)&gt;
-&gt; (sound-data-maxamp sd1)
-(4.0 9.0)
-&gt; (sound-data-peak sd1)
-9.0
-</pre>
 <div class="spacer"></div>
 
 
@@ -4448,11 +4227,6 @@ In s7, sound-data is just a synonym for float-vector, and the functions below ar
 
 <p>sound-data-ref returns (as a float) the sample in channel chan at location frame.  In s7 you can omit the "sound-data-ref":
 </p>
-
-<pre class="indented">
-&gt; (let ((sd (make-sound-data 1 1))) (sd 0 0))
-0.0
-</pre>
 <div class="spacer"></div>
 
 
@@ -4463,17 +4237,6 @@ In s7, sound-data is just a synonym for float-vector, and the functions below ar
 
 <p>sound-data-reverse! reverses the elements of each channel of sd and returns sd.
 </p>
-
-<pre class="indented">
-&gt; sd1
-#&lt;sound-data[chans=2, length=5]:
-    (0.000 1.000 2.000 3.000 4.000)
-    (5.000 6.000 7.000 8.000 9.000)&gt;
-&gt; (sound-data-reverse! sd1)
-#&lt;sound-data[chans=2, length=5]:
-    (4.000 3.000 2.000 1.000 0.000)
-    (9.000 8.000 7.000 6.000 5.000)&gt;
-</pre>
 <div class="spacer"></div>
 
 
@@ -4493,13 +4256,7 @@ In s7, sound-data is just a synonym for float-vector, and the functions below ar
 </pre>
 
 <p>sound-data-set! sets sd's sample at 'frame' in channel 'chan' to val.
-In s7 you can use generalized set:
 </p>
-
-<pre class="indented">
-&gt; (let ((sd (make-sound-data 1 1))) (set! (sd 0 0) 1.0) (sd 0 0))
-1.0
-</pre>
 <div class="spacer"></div>
 
 
@@ -4532,34 +4289,6 @@ In s7 you can use generalized set:
 </p>
 <div class="spacer"></div>
 
-
-<!-- sound-data->vct -->
-<pre class="indented">
-<em class=def id="sounddatatovct">sound-data-&gt;vct</em> sd chan v
-</pre>
-
-<p>sound-data-&gt;vct copies sound-data sd's channel 'chan' data into vct v.
-</p>
-
-<pre class="indented">
-&gt; sd1
-#&lt;sound-data[chans=2, length=5]:
-    (4.000 3.000 2.000 1.000 0.000)
-    (9.000 8.000 7.000 6.000 5.000)&gt;
-&gt; (sound-data-&gt;vct sd1 1)
-#&lt;vct[len=5]: 9.000 8.000 7.000 6.000 5.000&gt;
-</pre>
-<div class="spacer"></div>
-
-
-<!-- vct->sound-data -->
-<pre class="indented">
-<em class=def id="vcttosounddata">vct-&gt;sound-data</em> v sd chan
-</pre>
-
-<p>vct-&gt;sound-data copies vct v's data into sound-data sd's channel chan.
-</p>
-<div class="spacer"></div>
 
 
 
@@ -4651,20 +4380,6 @@ on a good day.
 <p>mus-audio-close closes the audio port 'line' ('line' comes from either <a href="#musaudioopeninput">mus-audio-open-input</a>
 or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
 </p>
-
-<pre class="indented">
-(let ((audio-fd (<a class=quiet href="#musaudioopenoutput" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioopenoutput_tip)">mus-audio-open-output</a> mus-audio-default 22050 1 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslshort_tip)">mus-lshort</a> 1024))
-      ;; open DAC at srate 22050, 1 channel, 1024 bytes per buffer
-      (osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 440.0))                       ; make a sine wave at 440 Hz
-      (data (<a class=quiet href="#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> 1 512)))                ; output buffer (1 chan, 512 samples)
-  (do ((beg 0 (+ beg 512)))                           ; fill a buffer at a time
-      ((&gt; beg 22050))                                 ;   stop playing after 1 second
-    (do ((i 0 (+ 1 i)))                                ; write each sample of the sinusoid
-	((= i 512))                                   ;   until this buffer is full
-      (<a class=quiet href="#sounddataset" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddataset_tip)">sound-data-set!</a> data 0 i (* .1 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))))  ;   .1 amp
-    (<a class=quiet href="#musaudiowrite" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudiowrite_tip)">mus-audio-write</a> audio-fd data 512))              ; send a buffer to the DAC
-  (<em class=red>mus-audio-close</em> audio-fd))                         ; close the DAC
-</pre>
 <div class="spacer"></div>
 
 
@@ -4693,7 +4408,7 @@ or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
 <em class=def id="musaudioread">mus-audio-read</em> line sd frames ; obsolete
 </pre>
 
-<p>mus-audio-read reads 'frames' frames of data into the sound-data object 'sd' from the audio input port 'line'.  
+<p>mus-audio-read reads 'frames' frames of data into the float-vector 'sd' from the audio input port 'line'.  
 </p>
 <div class="spacer"></div>
 
@@ -4703,22 +4418,9 @@ or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
 <em class=def id="musaudiowrite">mus-audio-write</em> line sd frames (start 0) ; obsolete
 </pre>
 
-<p>mus-audio-write writes 'frames' frames of data from the sound-data object 'sd' to the audio output port 'line'.
-If 'start' is given, it sets where to start reading in the sound-data buffers.
+<p>mus-audio-write writes 'frames' frames of data from the float-vector 'sd' to the audio output port 'line'.
+If 'start' is given, it sets where to start reading in the float-vector buffers.
 </p>
-
-<pre class="indented">
-(let ((sd (make-sound-data 1 44100)))
-  (with-sound (:output sd)
-    (fm-violin 0 1 440 .1)
-    (fm-violin .5 .1 660 .1))
-
-  (let ((audio-fd (mus-audio-open-output mus-audio-default 44100 1 mus-lfloat (* 4 1024))))
-    (do ((i 0 (+ i 1024)))
-	((&gt;= i 44100))
-      (mus-audio-write audio-fd sd 1024 i))
-    (mus-audio-close audio-fd)))
-</pre>
 <div class="spacer"></div>
 
 
@@ -4924,20 +4626,7 @@ whose header claims it has 43 channels, but we know it only has 2:
 <p>This closes the sound file referred to by 'fd'; 'fd' is an integer returned by <a href="#mussoundopeninput">mus-sound-open-input</a>.
 These mus-sound-* file functions refer to a direct path to read and write sound files.  Any such operation is beneath the
 notice, so to speak, of Snd.  
-This function reads the first 32 samples of a file, returning the 30th in channel 0:
 </p>
-
-<pre class="indented">
-(define read-sample-30 
-  (lambda (file)
-    (let* ((fd (<a class=quiet href="#mussoundopeninput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundopeninput_tip)">mus-sound-open-input</a> file))
-	   (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> (channels file))
-	   (data (<a class=quiet href="#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> chans 32)))
-      (<a class=quiet href="#mussoundread" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundread_tip)">mus-sound-read</a> fd 0 31 chans data)
-      (let ((val (<a class=quiet href="#sounddataref" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddataref_tip)">sound-data-ref</a> data 0 29)))
-	(<em class=red>mus-sound-close-input</em> fd)
-	val))))
-</pre>
 <div class="spacer"></div>
 
 
@@ -5194,7 +4883,7 @@ for use with <a href="#mussoundwrite">mus-sound-write</a> and <a href="#mussound
 <em class=def id="mussoundread">mus-sound-read</em> fd beg end chans sd
 </pre>
 
-<p>mus-sound-read reads data from the sound file 'fd', loading the sound-data object 'sd' from 'beg'
+<p>mus-sound-read reads data from the sound file 'fd', loading the float-vector 'sd' from 'beg'
 to 'end'. 
 </p>
 <div class="spacer"></div>
@@ -5270,7 +4959,7 @@ to 'end'.
 <em class=def id="mussoundwrite">mus-sound-write</em> fd beg end chans sd
 </pre>
 
-<p>mus-sound-write writes data from the sound-data object 'sd' to the sound file 'fd'.
+<p>mus-sound-write writes data from the float-vector 'sd' to the sound file 'fd'.
 </p>
 <div class="spacer"></div>
 
@@ -6228,21 +5917,6 @@ If 'with-mix-tags' is #f (the default is #t), the data is
 mixed without creating any mix tags.
 mix-vct returns the id of the new mix, or -1 (a simple mix, no tag).
 </p>
-
-<pre class="indented">
-&gt; (channel-&gt;vct 1000 3)               ; what are these 3 samples before the mix?
-#&lt;vct[len=3]: -0.065 -0.059 -0.060&gt;
-&gt; (define mx (mix-vct (vct .1 .2 .3) 1000)) ; add these 3 values
-#&lt;mix 3&gt;
-&gt; (channel-&gt;vct 1000 3)               ; now we hope they were added...
-#&lt;vct[len=3]: 0.035 0.141 0.240&gt;
-&gt; (mix-position mx)                    ; and the new mix starts at 1000
-1000
-&gt; (length mx)                          ; and its length is 3 samples
-3
-&gt; (mix-vct (with-sound (:output (make-vct 44100)) (fm-violin 0 1 440 .1)))
-#&lt;mix 4&gt;
-</pre>
 <div class="spacer"></div>
 
 
@@ -8076,11 +7750,11 @@ CLM filtering to a sound.  See also <a href="#clmchannel">clm-channel</a>.
 
 <pre class="indented">
 (<em class=red>filter-sound</em> '(0 1 1 0) 1024)                             ; FIR filter given frequency response
-(<em class=red>filter-sound</em> (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> .1 .2 .3 .3 .2 .1) 6)                   ; FIR filter given actual coefficients
-(<em class=red>filter-sound</em> (<a class=quiet href="sndclm.html#make-fir-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_fir_filter_tip)">make-fir-filter</a> 6 (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> .1 .2 .3 .3 .2 .1))) ; CLM FIR filter
+(<em class=red>filter-sound</em> (float-vector .1 .2 .3 .3 .2 .1) 6)                   ; FIR filter given actual coefficients
+(<em class=red>filter-sound</em> (<a class=quiet href="sndclm.html#make-fir-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_fir_filter_tip)">make-fir-filter</a> 6 (float-vector .1 .2 .3 .3 .2 .1))) ; CLM FIR filter
 (<em class=red>filter-sound</em> (<a class=quiet href="sndclm.html#make-delay" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_delay_tip)">make-delay</a> 120))                            ; CLM delay (same as insert-silence)
 (<em class=red>filter-sound</em> (<a class=quiet href="sndclm.html#make-formant" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_formant_tip)">make-formant</a> 1200 .99))                     ; CLM formant
-(<em class=red>filter-sound</em> (<a class=quiet href="sndclm.html#make-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_filter_tip)">make-filter</a> 2 (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 1 -1) (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 -0.99)))    ; remove DC
+(<em class=red>filter-sound</em> (<a class=quiet href="sndclm.html#make-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_filter_tip)">make-filter</a> 2 (float-vector 1 -1) (float-vector 0 -0.99)))    ; remove DC
 </pre>
 
 <p>If you want to use the cascade filter structure, rather than the canonical
@@ -8089,7 +7763,7 @@ form of CLM's filter generator:
 
 <pre class="indented">
 (define (<a class=quiet href="sndscm.html#makebiquad" onmouseout="UnTip()" onmouseover="Tip(sndscm_makebiquad_tip)">make-biquad</a> a0 a1 a2 b1 b2)
-  (<a class=quiet href="sndclm.html#make-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_filter_tip)">make-filter</a> 3 (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> a0 a1 a2) (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0.0 b1 b2)))
+  (<a class=quiet href="sndclm.html#make-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_filter_tip)">make-filter</a> 3 (float-vector a0 a1 a2) (float-vector 0.0 b1 b2)))
 </pre>
 
 <p>If you have coefficients for the cascade form, but have no scruples about using 
@@ -8268,7 +7942,7 @@ associated with channel 'chn' in 'snd'.
 </p>
 
 <pre class="indented">
-(graph (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 .1 .2 .3 .4 .3 .2 .1 0) "roof")
+(graph (float-vector 0 .1 .2 .3 .4 .3 .2 .1 0) "roof")
 </pre>
 
 <p id="xdisplayenergy">The current slider values can be read from <a href="#xpositionslider">x-position-slider</a>, 
@@ -8289,10 +7963,10 @@ the lisp-graph-hook, where the redisplay is automatic.
     (let* ((ls (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>))
            (rs (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>))
 	   (datal (<a class=quiet href="#makegraphdata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makegraphdata_tip)">make-graph-data</a> snd chn))
-	   (data (if (<a class=quiet href="#vctp" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctp_tip)">vct?</a> datal) datal (cadr datal)))
+	   (data (if (float-vector? datal) datal (cadr datal)))
            (sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd))
 	   (y-max (<a class=quiet href="#yzoomslider" onmouseout="UnTip()" onmouseover="Tip(extsnd_yzoomslider_tip)">y-zoom-slider</a> snd chn)))
-      (<a class=quiet href="#vctmultiply" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctmultiply_tip)">vct-multiply!</a> data data)
+      (float-vector-multiply! data data)
       (<em class=red>graph</em> data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f))))
 
 (hook-push <a href="#lispgraphhook">lisp-graph-hook</a> (lambda (hook) (display-energy (hook 'snd) (hook 'chn))))
@@ -8429,7 +8103,7 @@ The regularized version of this is:
   (insert-samples beg dur data snd chn edpos))
 </pre>
 
-<p>To insert a block of samples of a given value: (insert-samples beg dur (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> dur val))
+<p>To insert a block of samples of a given value: (insert-samples beg dur (make-vector dur val #t))
 If 'data' is a file, it is not deleted by Snd unless 'auto-delete' is #t. 
 </p>
 <div class="separator"></div>
@@ -8747,7 +8421,7 @@ whether it's a good idea &mdash; you may end up with unclosed files and so on).
 <p>If the editing action is not mapping something over the current sound, it is
 safest to write a temp file with the new data, then pass that to set-samples
 with the 'trunc' argument set to #t.  This way you don't assume the new sound
-will fit in memory (as in using <a class=quiet href="#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> for example).
+will fit in memory (as in using float-vector-&gt;channel for example).
 Use <a href="#sndtempnam">snd-tempnam</a> to get a temporary filename that reflects the current
 temp-dir setting.  The env-sound-interp function in <a href="sndscm.html#envsoundinterp">examp.scm</a>
 is an example of this. 
@@ -8802,8 +8476,6 @@ Used with set!, it is equivalent to <a class=quiet href="#scaleto" onmouseout="U
 Sound file maxamp: <a href="extsnd.html#mussoundmaxamp">mus-sound-maxamp</a><br>
 Region maxamp: <a href="extsnd.html#regionmaxamp">region-maxamp</a><br>
 Selection maxamp: <a href="extsnd.html#selectionmaxamp">selection-maxamp</a><br>
-Sound data object maxamp: <a href="extsnd.html#sounddatamaxamp">sound-data-maxamp</a><br>
-Vct maxamp: <a href="extsnd.html#vctpeak">vct-peak</a><br>
 To set the y axis bounds to reflect the channel's maxamp: <a href="extsnd.html#ybounds">y-bounds</a><br>
 Mix maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
 maxamp locations: <a href="extsnd.html#maxampposition">maxamp-position</a>, <a href="extsnd.html#regionmaxampposition">region-maxamp-position</a>, <a href="extsnd.html#selectionmaxampposition">selection-maxamp-position</a>
@@ -9424,12 +9096,12 @@ reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotati
 (define* (silly-reverse snd)
   (let* ((len (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd 0))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
-	 (rl (<a class=quiet href="#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> 0 fsize snd 0))
-	 (im (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> fsize)))
+	 (rl (channel-&gt;float-vector 0 fsize snd 0))
+	 (im (make-vector fsize 0.0 #t)))
     (<a class=quiet href="sndclm.html#fft" onmouseout="UnTip()" onmouseover="Tip(sndclm_fft_tip)">mus-fft</a> rl im fsize)
     (<a class=quiet href="sndclm.html#fft" onmouseout="UnTip()" onmouseover="Tip(sndclm_fft_tip)">mus-fft</a> rl im fsize)
-    (<a class=quiet href="#vctscale" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctscale_tip)">vct-scale!</a> rl (/ 1.0 fsize))
-    (<a class=quiet href="#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (<a class=quiet href="#vctsubseq" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctsubseq_tip)">vct-subseq</a> rl (- fsize len) fsize) 0 len snd 0)))
+    (float-vector-scale! rl (/ 1.0 fsize))
+    (float-vector-&gt;channel (float-vector-subseq rl (- fsize len) fsize) 0 len snd 0)))
 </pre>
 <div class="separator"></div>
 
@@ -9638,13 +9310,13 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (<a class=quiet href="#envsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_envsound_tip)">env-sound</a> '(0 2 1 2))
 (<a class=quiet href="#envchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_envchannel_tip)">env-channel</a> (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 1 1 1) :scaler 2.0 :length (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)))
 (<a class=quiet href="#clmchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_clmchannel_tip)">clm-channel</a> (<a class=quiet href="sndclm.html#make-one-zero" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_one_zero_tip)">make-one-zero</a> :a0 2.0 :a1 0.0))
-(<a class=quiet href="#filterchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterchannel_tip)">filter-channel</a> (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 2.0) 1)
-(<a class=quiet href="#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (<a class=quiet href="#vctscale" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctscale_tip)">vct-scale!</a> (<a class=quiet href="#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a>) 2.0) 0)
+(<a class=quiet href="#filterchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterchannel_tip)">filter-channel</a> (float-vector 2.0) 1)
+(float-vector-&gt;channel (float-vector-scale! (channel-&gt;float-vector) 2.0) 0)
 (begin (<a class=quiet href="#selectall" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectall_tip)">select-all</a>) (<a class=quiet href="#mixselection" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixselection_tip)">mix-selection</a> 0))
 (begin (<a class=quiet href="#selectall" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectall_tip)">select-all</a>) (<a class=quiet href="#scaleselectionby" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleselectionby_tip)">scale-selection-by</a> 2.0))
 (begin (<a class=quiet href="#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> "temp.snd") (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> "temp.snd" 0) (delete-file "temp.snd"))
 
-(let ((flt (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 8)))
+(let ((flt (make-vector 8 0.0 #t)))
   (set! (flt 0) 2.0)
   (let ((cnv (<a class=quiet href="sndclm.html#make-convolve" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_convolve_tip)">make-convolve</a> :filter flt))
 	(sf (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0)))
@@ -9653,17 +9325,17 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
        (<a class=quiet href="sndclm.html#convolve" onmouseout="UnTip()" onmouseover="Tip(sndclm_convolve_tip)">convolve</a> cnv (lambda (dir) 
                        (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> sf)))))))
 
-(<a class=quiet href="#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (<a class=quiet href="sndscm.html#polydoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_poly_times_tip)">poly*</a> (<a class=quiet href="#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> 0 (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)) (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 2.0))) ; poly.scm (sound = polynomial coeffs)
+(float-vector-&gt;channel (<a class=quiet href="sndscm.html#polydoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_poly_times_tip)">poly*</a> (channel-&gt;float-vector 0 (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)) (float-vector 2.0))) ; poly.scm (sound = polynomial coeffs)
 
 (let* ((len (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
        (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
-       (rl (<a class=quiet href="#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> 0 fsize))
-       (im (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> fsize)))
+       (rl (channel-&gt;float-vector 0 fsize))
+       (im (make-vector fsize 0.0 #t)))
   (<a class=quiet href="sndclm.html#fft" onmouseout="UnTip()" onmouseover="Tip(sndclm_fft_tip)">mus-fft</a> rl im fsize)
   (<a class=quiet href="sndclm.html#fft" onmouseout="UnTip()" onmouseover="Tip(sndclm_fft_tip)">mus-fft</a> rl im fsize)
   (<a class=quiet href="sndclm.html#fft" onmouseout="UnTip()" onmouseover="Tip(sndclm_fft_tip)">mus-fft</a> rl im fsize)
   (<a class=quiet href="sndclm.html#fft" onmouseout="UnTip()" onmouseover="Tip(sndclm_fft_tip)">mus-fft</a> rl im fsize)
-  (<a class=quiet href="#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (<a class=quiet href="#vctscale" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctscale_tip)">vct-scale!</a> rl (/ 2.0 (* fsize fsize))) 0 len))
+  (float-vector-&gt;channel (float-vector-scale! rl (/ 2.0 (* fsize fsize))) 0 len))
 
 (do ((i 0 (+ 1 i)))
     ((= i (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)))
@@ -9828,9 +9500,6 @@ file; 'auto-delete' set to #t asks Snd to handle cleanup).
 </p>
 
 <p>The form (set! (<a class=quiet href="#samples" onmouseout="UnTip()" onmouseover="Tip(extsnd_samples_tip)">samples</a> samp samps 'snd chn trunc edname infile-chan edpos auto-delete') data) can also be used.
-'env-sound-interp' in examp.scm has an example of the file version, using
-sound-data objects and mus-sound-write to create a temporary file, but
-it's probably simpler to use <a href="sndscm.html#withsound">with-sound</a> (see also linear-src-channel in dsp.scm):
 </p>
 
 <pre class="indented">
@@ -9998,7 +9667,7 @@ the end points:
 <pre class="indented">
 (define (smoother y0 y1 num)
    "go sinusoidally from y0 to y1 over num samps"
-   (let ((v (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> (+ 1 num))) 
+   (let ((v (make-vector (+ 1 num) 0.0 #t)) 
 	 (angle (if (&gt; y1 y0) pi 0.0)) 
 	 (off (* .5 (+ y0 y1))) 
 	 (scale (* 0.5 (abs (- y1 y0)))))
@@ -12000,7 +11669,7 @@ Here's an example that displays a histogram of the current values in 16 bins:
 <pre class="indented">
 (<em class=red>add-transform</em> "histogram" "bins" 0.0 1.0 
   (lambda (len fd)
-    (let ((v (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> len))
+    (let ((v (make-vector len 0.0 #t))
           (steps (/ len 16))
           (step (/ 1.0 len)))
       (do ((i 0 (+ 1 i))) 
@@ -12018,7 +11687,7 @@ Here's an example that displays a histogram of the current values in 16 bins:
 <pre class="indented">
 (<em class=red>add-transform</em> "Hankel" "Hankel" 0.0 1.0
    (lambda (n rd)
-      (let ((v (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> n)))
+      (let ((v (make-vector n 0.0 #t)))
          (do ((i 0 (+ 1 i))) ((= i n)) (set! (v i) (rd)))
          (gsl-dht n v 1.0 1.0)
          v)))
@@ -14486,9 +14155,9 @@ of FractInt's royal colormap):
 <pre class="indented">
 (add-colormap "purple" 
   (lambda (size) 
-    (let ((r (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
-	  (g (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
-	  (b (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
+    (let ((r (make-vector size 0.0 #t))
+	  (g (make-vector size 0.0 #t))
+	  (b (make-vector size 0.0 #t))
 	  (incr (/ 256.0 size))
 	  (er (list 0 60 60 116 128 252 192 252 256 60))
 	  (eg (list 0 0  64 0   128 252 192 252 256 0))
@@ -14504,9 +14173,9 @@ of FractInt's royal colormap):
 ;;; another amusing colormap from FractInt:
 (add-colormap "cos" 
   (lambda (size) 
-    (let ((r (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
-	  (g (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
-	  (b (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
+    (let ((r (make-vector size 0.0 #t))
+	  (g (make-vector size 0.0 #t))
+	  (b (make-vector size 0.0 #t))
 	  (incr (/ 3.14159 size)))
       (do ((i 0 (+ 1 i))
 	   (x 0.0 (+ x incr)))
@@ -14964,7 +14633,7 @@ The result can be used in the lisp graph:
     "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
     (let ((datal (<em class=red>make-graph-data</em> snd chn)))
       (if datal
-          (let* ((data (if (<a class=quiet href="#vctp" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctp_tip)">vct?</a> datal) datal (cadr datal)))
+          (let* ((data (if (float-vector? datal) datal (cadr datal)))
                  (len (length data))
                  (sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd)))
             (define (dB val)

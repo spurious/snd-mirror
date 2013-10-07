@@ -10901,16 +10901,14 @@ static s7_pointer g_indirect_move_sound_3(s7_scheme *sc, s7_pointer args)
 #define GEN_DIRECT_1 6
 #define GEN_DIRECT_2 7
 #define GEN_DIRECT_3 8
-#define GEN_DIRECT_4 9 
-#define GEN_DIRECT_CHECKER 10
-#define GEN_DIRECT_FIXUP 11
+#define GEN_DIRECT_CHECKER 9
+#define GEN_DIRECT_FIXUP 10
 
-#define NUM_CHOICES 12
+#define NUM_CHOICES 11
 
 
 #define s7_cell_s1_to_real(g) s7_number_to_real((s7_scheme *)(g->gen1), s7_cell_slot_value(g->s1))
 #define s7_cell_s2_to_real(g) s7_number_to_real((s7_scheme *)(g->gen1), s7_cell_slot_value(g->s2))
-#define s7_cell_s3_to_real(g) s7_number_to_real((s7_scheme *)(g->gen1), s7_cell_slot_value(g->s3))
 
 enum {GF_NONE, GF_G, GF_S, GF_X, GF_RX};
 

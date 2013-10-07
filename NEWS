@@ -1,25 +1,7 @@
-Snd 14.0
+Snd 14.1:
 
-added --with-readline to the configure script
+mostly bug fixes.
 
-in s7: make-shared-vector, homogenous int and float vectors
-         sound-data and vct (the types) are now just synonyms for vector
-         (this is step 3 of the guile->s7 plan from 2008)
-         dac-hook data is now a list of float vectors
+checked: gtk 3.9.16, 3.10.0, sbcl 1.1.12.
 
-       ~W in format, :readable as third arg of object->string
-         write.scm: pretty-print, checkpoint (removed pretty-print.scm).
-
-       WITH_MAIN compiler flag to include a main program in s7.c (a REPL).
-
-       libc.scm (bindings to most of libc)
-       libgsl.scm (bindings for some of GSL)
-
-       reader-expand and reader-cond -- read-time choices (#+ analogs)
-
-removed oscope.scm and sound-data->sound-data
-removed kmenu.scm (obsolete)
-
-Checked: gtk 3.9.12|14, sbcl 1.1.11
-
-Thanks!:  Rick Taube, James Hearon
+Thanks!: Mike Scholz.

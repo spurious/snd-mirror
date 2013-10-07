@@ -118,13 +118,38 @@ echo ' '
 make allclean
 rm -f snd
 rm -f config.cache
-./configure --quiet CC=/home/bil/test/llvm-3.1.src/build/Release+Asserts/bin/clang CFLAGS="-Wall" 
+./configure --quiet CC=/home/bil/test/llvm-3.1.src/build/Release+Asserts/bin/clang CFLAGS="-Wall" LDFLAGS="-Wl,-export-dynamic"
 make
 ./snd --version
 ./snd -l snd-test
 echo ' '
 echo ' '
 echo ' -------------------------------- that was clang? -------------------------------- '
+echo ' '
+echo ' '
+
+
+echo ' -------------------------------- with-gtk -------------------------------- '
+make allclean
+rm -f snd
+rm -f config.cache
+./configure --quiet CFLAGS="-Wall" --with-gtk --disable-deprecated
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was snd-test --with-gtk -------------------------------- '
+echo ' '
+echo ' '
+
+echo ' -------------------------------- valgrind --with-gtk takes forever! -------------------------------- '
+valgrind ./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was valgrind --with-gtk -------------------------------- '
 echo ' '
 echo ' '
 
@@ -175,31 +200,6 @@ valgrind ./snd -l snd-test
 echo ' '
 echo ' '
 echo ' -------------------------------- that was valgrind at-random -------------------------------- '
-echo ' '
-echo ' '
-
-
-echo ' -------------------------------- with-gtk -------------------------------- '
-make allclean
-rm -f snd
-rm -f config.cache
-./configure --quiet CFLAGS="-Wall" --with-gtk --disable-deprecated
-make
-echo ' '
-echo ' '
-./snd --version
-./snd -l snd-test
-echo ' '
-echo ' '
-echo ' -------------------------------- that was snd-test --with-gtk -------------------------------- '
-echo ' '
-echo ' '
-
-echo ' -------------------------------- valgrind --with-gtk takes forever! -------------------------------- '
-valgrind ./snd -l snd-test
-echo ' '
-echo ' '
-echo ' -------------------------------- that was valgrind --with-gtk -------------------------------- '
 echo ' '
 echo ' '
 

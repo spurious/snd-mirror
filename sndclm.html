@@ -1915,7 +1915,7 @@ polyshape uses a prebuilt sum of Chebyshev polynomials,
 whereas polywave uses the underlying Chebyshev recursion.  
 polywave is stable and noise-free even with high partial numbers (I've tried it with 16384 harmonics).
 The "partials" argument to the make function can
-be either a list or a vct.
+be either a list or a float-vector ("vct" in Ruby and Forth).
 The "type" or "kind" argument determines which kind of Chebyshev polynomial
 is used internally:  mus-chebyshev-first-kind (Tn) which produces a sum of cosines,
 or mus-chebyshev-second-kind (Un), which produces a sum of sines.
@@ -1974,20 +1974,20 @@ A&S 22.3.15
 -->
 
 
-<p>normalize-partials takes the list or vct of partial number and amplitudes, and
-returns a vct with the amplitudes normalized so that their magnitudes add to 1.0. 
+<p>normalize-partials takes the list or float-vector of partial number and amplitudes, and
+returns a float-vector with the amplitudes normalized so that their magnitudes add to 1.0. 
 </p>
 
 <pre class="indented">
 &gt; (normalize-partials '(1 1 3 2 6 1))
-#&lt;vct[len=6]: 1.000 0.250 3.000 0.500 6.000 0.250&gt;
-&gt; (normalize-partials (vct 1 .1 2 .1 3 -.2))
-#&lt;vct[len=6]: 1.000 0.250 2.000 0.250 3.000 -0.500&gt;
+#(1.0 0.25 3.0 0.5 6.0 0.25);
+&gt; (normalize-partials (float-vector 1 .1 2 .1 3 -.2))
+#(1.0 0.25 2.0 0.25 3.0 -0.5)
 </pre>
 
 <p>
 partials-&gt;polynomial
-takes a list or vct of partial numbers and amplitudes
+takes a list or float-vector of partial numbers and amplitudes
 and returns the Chebyshev polynomial coefficients that 
 produce that spectrum.  These coefficients can be passed to
 polyshape (the coeffs argument), or used directly by <a href="#polynomial">polynomial</a> (there are examples of both below).
@@ -1995,22 +1995,22 @@ polyshape (the coeffs argument), or used directly by <a href="#polynomial">polyn
 
 <pre class="indented">
 &gt; (partials-&gt;polynomial '(1 1 3 2 6 1))
-#&lt;vct[len=7]: -1.000 -5.000 18.000 8.000 -48.000 0.000 32.000&gt;
+#(-1.0 -5.0 18.0 8.0 -48.0 0.0 32.0)
 &gt; (partials-&gt;polynomial '(1 1 3 2 6 1) mus-chebyshev-second-kind)
-#&lt;vct[len=7]: -1.000 6.000 8.000 -32.000 0.000 32.000 0.000&gt;
-&gt; (partials-&gt;polynomial (vct 1 .1 2 .1 3 -.2))
-#&lt;vct[len=4]: -0.100 0.700 0.200 -0.800&gt;
+#(-1.0 6.0 8.0 -32.0 0.0 32.0 0.0)
+&gt; (partials-&gt;polynomial (float-vector 1 .1 2 .1 3 -.2))
+#(-0.1 0.7 0.2 -0.8)
 </pre>
 
 <p>mus-chebyshev-tu-sum and friends perform the same function as partials-&gt;polynomial, but
 use the much more stable and accurate underlying recursion (see below for a long-winded
 explanation).  They are the innards of the polywave and <a href="#polyoid">polyoid</a> generators.
 The arguments are "x" (normally a phase), and one or two
-vcts of component amplitudes.  
+float-vectors of component amplitudes.  
 These functions makes it easy to do additive synthesis
 with any number of harmonics (I've tried 16384), each with arbitrary
 initial-phase and amplitude, and each harmonic independently changeable 
-in phase and amplitude at run-time by setting a vct value.
+in phase and amplitude at run-time by setting a float-vector value.
 </p>
 
 <pre class="indented">
@@ -2059,8 +2059,8 @@ in phase and amplitude at run-time by setting a vct value.
 
 
 <p>See animals.scm for many more examples along these lines.
-normalize-partials makes sure that the component amplitudes (magnitudes) add to 1.0.  Its argument can be either a list or vct,
-but it always returns a vct.
+normalize-partials makes sure that the component amplitudes (magnitudes) add to 1.0.  Its argument can be either a list or float-vector,
+but it always returns a float-vector.
 The <a href="sndscm.html#fmviolin">fm-violin</a> uses polyshape for the multiple FM section in some cases.
 The <a href="sndscm.html#pqw">pqw</a> and <a href="sndscm.html#pqwvox">pqwvox</a> instruments use
 both kinds of Chebyshev polynomials to produce single side-band spectra.
@@ -2598,7 +2598,7 @@ is at its maximum:
 <!-- this works: (make-waveshape 100.0 :partials '(1 1) :size 2)
      because the initial "polynomial" is a straight line: 
        :(mus-data (make-waveshape 100.0 :partials '(1 1) :size 2))
-       #<vct[len=2]: -1.000 1.000>
+       #(-1.000 1.000)
      and we use array-interp to drive it with a sinusoid, so x=x!
 -->
 
@@ -3414,7 +3414,7 @@ getting waveforms and results like these:
 				 (set! (g 'arr) (make-vector n 0.0))
 				 (do ((i 0 (+ 1 i)))
 				     ((= i n))
-				   (if (vct? phases)
+				   (if (float-vector? phases)
 				       (set! ((g 'arr) i) (make-oscil (* frq (+ 1 i)) (phases i)))
 				       (set! ((g 'arr) i) (make-oscil (* frq (+ 1 i)) (random (* 2 pi)))))))
 			       g))
@@ -3451,14 +3451,14 @@ getting waveforms and results like these:
 	    ))
 	(snd-display ";~A ~A ~A" (cadr arg) (caddr arg) mx)))
     (list
-     (list 0.0 1    1.0    (vct 0))
-     (list 2.0 2    0.881 (vct 0 0))
-     (list 4.0 4    0.5184 (vct 1.295 0.248 0.304 2.785))
-     (list 6.0 8    0.393  (vct 4.515 1.780 4.259 1.771 1.166 0.254 1.419 2.735))
-     (list 8.0 16   0.302  (vct 0.432 2.086 2.763 2.344 2.811 3.409 1.836 6.173 3.770 2.339 6.158 1.530 6.132 3.006 4.967 0.859))
-     (list 10.0 32  0.266  (vct 6.208 4.197 3.109 1.718 5.050 1.317 4.334 3.778 4.936 0.069 3.025 2.115 5.060 1.286 3.499 5.191 1.822 5.985 4.384 1.394 3.453 2.579 3.031 3.255 3.834 2.621 1.390 0.717 0.409 3.370 6.042 6.052))
-     (list 12.0 64  0.2124 (vct 4.913 5.507 5.262 1.926 4.819 3.794 0.355 1.178 4.959 1.012 3.433 2.855 2.191 4.792 3.740 1.865 5.196 1.078 4.139 5.518 3.053 3.958 3.131 6.260 2.157 4.279 2.352 4.314 1.102 5.967 3.551 2.439 5.456 4.833 5.213 3.523 3.263 2.810 0.433 0.639 2.554 3.469 2.682 4.765 0.125 3.824 1.137 6.166 0.019 2.240 4.406 4.734 5.451 6.230 4.943 4.160 3.577 5.086 2.444 0.900 1.952 2.234 4.794 3.424))
-     (list 14.0 128 0.16121 (vct 1.531 4.987 1.847 0.632 6.101 4.309 0.517 1.910 4.921 4.949 6.040 5.611 2.831 5.338 0.891 5.388 0.599 2.677 6.248 5.592 1.977 1.794 3.572 2.638 1.903 3.083 2.412 6.125 3.799 5.619 5.949 1.241 3.044 5.395 5.865 4.846 4.899 2.267 4.537 3.979 1.783 3.826 1.325 5.278 5.799 4.977 2.066 3.029 1.036 4.606 1.691 6.079 4.957 6.138 2.603 1.111 1.335 1.765 5.767 2.730 0.702 1.122 1.628 1.848 0.712 2.338 5.099 6.249 2.009 3.379 1.653 4.831 2.245 1.831 1.113 5.462 5.533 2.944 4.376 4.734 3.285 4.361 1.015 2.100 5.022 3.269 0.796 0.317 5.244 2.613 4.609 3.415 4.454 0.228 2.025 0.216 1.785 3.599 3.207 5.019 3.591 5.138 4.333 3.005 6.208 5.296 0.763 3.741 3.446 3.962 0.204 1.715 4.054 2.402 1.455 1.842 4.637 4.427 0.536 2.700 4.289 3.066 0.574 6.106 1.472 5.793 4.294 2.287)))))
+     (list 0.0 1    1.0    (float-vector 0))
+     (list 2.0 2    0.881 (float-vector 0 0))
+     (list 4.0 4    0.5184 (float-vector 1.295 0.248 0.304 2.785))
+     (list 6.0 8    0.393  (float-vector 4.515 1.780 4.259 1.771 1.166 0.254 1.419 2.735))
+     (list 8.0 16   0.302  (float-vector 0.432 2.086 2.763 2.344 2.811 3.409 1.836 6.173 3.770 2.339 6.158 1.530 6.132 3.006 4.967 0.859))
+     (list 10.0 32  0.266  (float-vector 6.208 4.197 3.109 1.718 5.050 1.317 4.334 3.778 4.936 0.069 3.025 2.115 5.060 1.286 3.499 5.191 1.822 5.985 4.384 1.394 3.453 2.579 3.031 3.255 3.834 2.621 1.390 0.717 0.409 3.370 6.042 6.052))
+     (list 12.0 64  0.2124 (float-vector 4.913 5.507 5.262 1.926 4.819 3.794 0.355 1.178 4.959 1.012 3.433 2.855 2.191 4.792 3.740 1.865 5.196 1.078 4.139 5.518 3.053 3.958 3.131 6.260 2.157 4.279 2.352 4.314 1.102 5.967 3.551 2.439 5.456 4.833 5.213 3.523 3.263 2.810 0.433 0.639 2.554 3.469 2.682 4.765 0.125 3.824 1.137 6.166 0.019 2.240 4.406 4.734 5.451 6.230 4.943 4.160 3.577 5.086 2.444 0.900 1.952 2.234 4.794 3.424))
+     (list 14.0 128 0.16121 (float-vector 1.531 4.987 1.847 0.632 6.101 4.309 0.517 1.910 4.921 4.949 6.040 5.611 2.831 5.338 0.891 5.388 0.599 2.677 6.248 5.592 1.977 1.794 3.572 2.638 1.903 3.083 2.412 6.125 3.799 5.619 5.949 1.241 3.044 5.395 5.865 4.846 4.899 2.267 4.537 3.979 1.783 3.826 1.325 5.278 5.799 4.977 2.066 3.029 1.036 4.606 1.691 6.079 4.957 6.138 2.603 1.111 1.335 1.765 5.767 2.730 0.702 1.122 1.628 1.848 0.712 2.338 5.099 6.249 2.009 3.379 1.653 4.831 2.245 1.831 1.113 5.462 5.533 2.944 4.376 4.734 3.285 4.361 1.015 2.100 5.022 3.269 0.796 0.317 5.244 2.613 4.609 3.415 4.454 0.228 2.025 0.216 1.785 3.599 3.207 5.019 3.591 5.138 4.333 3.005 6.208 5.296 0.763 3.741 3.446 3.962 0.204 1.715 4.054 2.402 1.455 1.842 4.637 4.427 0.536 2.700 4.289 3.066 0.574 6.106 1.472 5.793 4.294 2.287)))))
 -->
 
 
@@ -4540,7 +4540,7 @@ Here is a FOF instrument based loosely on fof.c of Perry Cook and the article
 </pre>
 
 
-<p>The wave-trains's wave is a vct accessible via mus-data.  The "fm" argument affects the frequency of
+<p>The wave-trains's wave is a float-vector accessible via mus-data.  The "fm" argument affects the frequency of
 repetition.  Here is a wave-train instrument that increasingly filters its grain (the word "now", for example) 
 while increasing the repetition rate.  We're also using a pulse train as a sort of internal click track,
 using the same frequency envelope as the wave-train, so we have some idea when to refilter the grain.
@@ -4619,8 +4619,8 @@ trigger, and mus-reset to restart an envelope.
 <tr><td class="inner"><em class=gen>mus-frequency</em></td><td class="inner">frequency in Hz</td></tr>
 <tr><td class="inner"><em class=gen>mus-phase</em></td><td class="inner">phase in radians</td></tr>
 <tr><td class="inner"><em class=gen>mus-scaler</em></td><td class="inner">amplitude arg used in make-&lt;gen&gt;</td></tr>
-<tr><td class="inner"><em class=gen>mus-length</em></td><td class="inner">distribution table (vct) length</td></tr>
-<tr><td class="inner"><em class=gen>mus-data</em></td><td class="inner">distribution table (vct), if any</td></tr>
+<tr><td class="inner"><em class=gen>mus-length</em></td><td class="inner">distribution table (float-vector) length</td></tr>
+<tr><td class="inner"><em class=gen>mus-data</em></td><td class="inner">distribution table (float-vector), if any</td></tr>
 <tr><td class="inner"><em class=gen>mus-increment</em></td><td class="inner">frequency in radians per sample</td></tr>
 </table>
 
@@ -4791,9 +4791,9 @@ do perfectly well:
 (let ((ind (<a class=quiet href="extsnd.html#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "test.snd")))
   (do ((n 1 (+ n 1)))
       ((= n 12))
-    (let* ((bins (vector-&gt;vct (add-rands n)))
+    (let* ((bins (vector-&gt;float-vector (add-rands n)))
 	   (pk (maxamp bins)))
-      (<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (<a class=quiet href="extsnd.html#vctscale" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctscale_tip)">vct-scale!</a> bins (/ 1.0 pk)))
+      (float-vector-&gt;channel (float-vector-scale! bins (/ 1.0 pk)))
       (set! (<a class=quiet href="extsnd.html#xaxislabel" onmouseout="UnTip()" onmouseover="Tip(extsnd_xaxislabel_tip)">x-axis-label</a>) (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "n: ~D" n))
       (<a class=quiet href="extsnd.html#updatetimegraph" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatetimegraph_tip)">update-time-graph</a>))))
 </pre>
@@ -4814,7 +4814,7 @@ the y axis sets the relative weight of the corresponding x axis value.
 So, the default is <code>'(-1 1 1 1)</code> which says "output numbers between -1 and 1,
 each number having the same chance of being chosen".
 An envelope of <code>'(0 1 1 0)</code> outputs values between 0 and 1, denser toward 0.
-If you already have the distribution table (a vct, the result of <code>(inverse-integrate envelope)</code> for example),
+If you already have the distribution table (a float-vector, the result of <code>(inverse-integrate envelope)</code> for example),
 you can pass it through the "distribution" argument.  Here is gaussian noise
 using the "envelope" argument:
 </p>
@@ -4834,7 +4834,7 @@ using the "envelope" argument:
 (<em class=red>make-rand</em> :envelope (gaussian-envelope 1.0))
 </pre>
 
-<p>If you want a particular set of values, it's simplest to fill a vct with those values,
+<p>If you want a particular set of values, it's simplest to fill a float-vector with those values,
 then use random as the index into the array.  Say we want 0.0, 0.5, and 1.0 at random,
 but 0.5 should happen three times as often as either of the others:
 </p>
@@ -5462,8 +5462,8 @@ explicit do loop:
 </pre>
 
 <p>make-formant-bank takes a vector of formant generators as its first argument.  Its optional second argument
-is a vct of gains (amplitudes) to scale each formant's contribution to the sum.  Similarly, formant-bank's
-second argument is either a real number or a vct.  If a vct, each element is treated as the input to the
+is a float-vector of gains (amplitudes) to scale each formant's contribution to the sum.  Similarly, formant-bank's
+second argument is either a real number or a float-vector.  If a float-vector, each element is treated as the input to the
 corresponding formant in the bank.
 </p>
 
@@ -5556,7 +5556,7 @@ The filter generator might be defined:
 <div class="scheme">
 <pre class="indented">
 (with-sound (:play #t)
-  (let ((flt (make-iir-filter 3 (vct 0.0 -1.978 0.998)))
+  (let ((flt (make-iir-filter 3 (float-vector 0.0 -1.978 0.998)))
 	(ran1 (make-rand 10000.0 0.002)))
     (do ((i 0 (+ 1 i)))
 	((= i 44100))
@@ -5609,7 +5609,7 @@ A biquad section can be implemented as:
 
 <pre class="indented">
 (define (make-biquad a0 a1 a2 b1 b2) 
-  (make-filter 3 (vct 0.0 b1 b2)))
+  (make-filter 3 (float-vector 0.0 b1 b2)))
 </pre>
 
 <p>
@@ -5635,7 +5635,7 @@ The Hilbert transform can be implemented with an fir-filter:
 (define hilbert-transform <em class=red>fir-filter</em>)
 </pre>
 
-<p>make-fir-coeffs translates a frequency response envelope (actually, evenly spaced points in a vct) into the corresponding FIR filter coefficients.
+<p>make-fir-coeffs translates a frequency response envelope (actually, evenly spaced points in a float-vector) into the corresponding FIR filter coefficients.
 The order of the filter determines how close you
 get to the envelope. 
 </p>
@@ -5682,7 +5682,7 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 <pre class="indented">
 <em class=def id="make-delay">make-delay</em> 
       size                  ; delay length
-      initial-contents      ; delay line's initial values (a vct or a list)
+      initial-contents      ; delay line's initial values (a float-vector or a list)
       (initial-element 0.0) ; delay line's initial element
       max-size              ; maximum delay size in case the delay changes 
       type                  ; interpolation type
@@ -5814,7 +5814,7 @@ To access the delay line contents as a sliding window on the input data, use:
 
 <pre class="indented">
 (define (delay-ref dly loc)
-  (vct-ref (mus-data dly) (modulo (+ loc (<em class=red>mus-location</em> dly)) (mus-length dly))))
+  (float-vector-ref (mus-data dly) (modulo (+ loc (<em class=red>mus-location</em> dly)) (mus-length dly))))
 </pre>
 
 <p>
@@ -6651,7 +6651,7 @@ envelope so that the result has a given duration, use <a href="sndscm.html#srcfi
 <tr><td class="inner"><em class=gen>mus-length</em></td><td class="inner">fft size used in the convolution</td></tr>
 </table>
 
-<p>The convolve generator convolves its input with the impulse response "filter" (a vct).
+<p>The convolve generator convolves its input with the impulse response "filter" (a float-vector).
 "input" and "input-function" are functions of one argument that are
 called whenever convolve needs input.
 </p>
@@ -6664,7 +6664,7 @@ called whenever convolve needs input.
 (with-sound (:play #t :statistics #t)
   (let ((cnv (make-convolve 
               (make-readin "pistol.snd")
-              (file-&gt;vct "oboe.snd")))) ; file-&gt;vct is in examp.scm
+              (file-&gt;float-vector "oboe.snd")))) ; file-&gt;float-vector is in examp.scm
     (do ((i 0 (+ 1 i)))
 	((= i 88200))
       (outa i (* 0.25 (convolve cnv))))))
@@ -6839,7 +6839,7 @@ but convolve uses an FFT internally, rather than a laborious dot-product.
 <tr><td class="inner"><em class=gen>mus-scaler</em></td><td class="inner">grain amp (scaler)</td></tr>
 <tr><td class="inner"><em class=gen>mus-increment</em></td><td class="inner">expansion</td></tr>
 <tr><td class="inner"><em class=gen>mus-length</em></td><td class="inner">grain length (samples)</td></tr>
-<tr><td class="inner"><em class=gen>mus-data</em></td><td class="inner">grain samples (a vct)</td></tr>
+<tr><td class="inner"><em class=gen>mus-data</em></td><td class="inner">grain samples (a float-vector)</td></tr>
 <tr><td class="inner"><em class=gen>mus-location</em></td><td class="inner">granulate's local random number seed</td></tr>
 </table>
 
@@ -7233,7 +7233,7 @@ lambda: ( -- )
 <em class=emdef>phase-vocoder-phase-increments</em> gen
 </pre>
 
-<p>These are arrays (vcts) containing the spectral data the phase-vocoder uses to
+<p>These are arrays (float-vectors) containing the spectral data the phase-vocoder uses to
 reconstruct the sound.  See clm23.scm for examples,
 in particular pvoc-e that
 specifies all of the functions with their default values (that is, it explicitly passes
@@ -7251,15 +7251,15 @@ In the next example we use all these special functions to resynthesize down an o
 	     #f ; no change to analysis method
 	     #f ; no change to spectrum
 	     (lambda (gen) ; resynthesis function
-	       (vct-add! (phase-vocoder-amps gen) (phase-vocoder-amp-increments gen))
-	       (vct-add! (phase-vocoder-phase-increments gen) (phase-vocoder-freqs gen))
-	       (vct-add! (phase-vocoder-phases gen) (phase-vocoder-phase-increments gen))
+	       (float-vector-add! (phase-vocoder-amps gen) (phase-vocoder-amp-increments gen))
+	       (float-vector-add! (phase-vocoder-phase-increments gen) (phase-vocoder-freqs gen))
+	       (float-vector-add! (phase-vocoder-phases gen) (phase-vocoder-phase-increments gen))
 	       (let ((sum 0.0)
 		     (n (length (phase-vocoder-amps gen))))
 		 (do ((k 0 (+ 1 k)))
 		     ((= k n))
-		   (set! sum (+ sum (* (vct-ref (phase-vocoder-amps gen) k)
-				       (sin (* 0.5 (vct-ref (phase-vocoder-phases gen) k)))))))
+		   (set! sum (+ sum (* (float-vector-ref (phase-vocoder-amps gen) k)
+				       (sin (* 0.5 (float-vector-ref (phase-vocoder-phases gen) k)))))))
 		 sum)))))
     (do ((i 0 (+ 1 i)))
         ((= i 44100))
@@ -7450,7 +7450,7 @@ sound data input and output.
 <tr><td colspan=2 class="methodtitle">frame and mixer methods</td></tr>
 <tr><td class="inner"><em class=gen>mus-channels</em></td><td class="inner">number of channels accommodated</td></tr>
 <tr><td class="inner"><em class=gen>mus-length</em></td><td class="inner">same as mus-channels</td></tr>
-<tr><td class="inner"><em class=gen>mus-data</em></td><td class="inner">frame data (vct)</td></tr>
+<tr><td class="inner"><em class=gen>mus-data</em></td><td class="inner">frame data (float-vector)</td></tr>
 </table>
 
 <p>
@@ -7498,7 +7498,7 @@ In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_mult
 &gt; (mus-length m1)
 3
 &gt; (mus-data f1)
-#&lt;vct[len=3]: 1.000 0.500 0.100&gt;
+#(1.0 0.5 0.1)
 &gt; (frame-set! f1 1 -.5) ; same as (set! (f1 1) -.5)
 -0.5
 &gt;f1
@@ -7544,10 +7544,10 @@ writes out the new "sound":
 	(set! (samps samp) (<em class=red>mixer-ref</em> mx i j))
 	(set! samp (+ samp 1))))
 
-    (vct-&gt;channel samps 0 (* size size) nsnd)))
+    (float-vector-&gt;channel samps 0 (* size size) nsnd)))
 </pre>
 
-<p>In s7, mixers and frames are "applicable objects", like vcts, so mixer-ref and frame-ref are
+<p>In s7, mixers and frames are "applicable objects", like float-vectors, so mixer-ref and frame-ref are
 unnecessary, and mixer-set! and frame-set! can be replaced with set!:
 </p>
 
@@ -7565,9 +7565,9 @@ unnecessary, and mixer-set! and frame-set! can be replaced with set!:
 
 <div class="innerheader" id="filetosampledoc">sound IO</div>
 
-<p>Sound file IO is based on a set of file readers and writers that deal either in samples, frames, or vcts.
+<p>Sound file IO is based on a set of file readers and writers that deal either in samples, frames, or float-vectors.
 The six functions are file-&gt;sample, sample-&gt;file, file-&gt;frame, frame-&gt;file, array-&gt;file, and file-&gt;array.
-The name "array" is used here, rather than "vct" for historical reasons (the CL version of CLM predates
+The name "array" is used here, rather than "float-vector" for historical reasons (the CL version of CLM predates
 Snd by many years).
 These functions are then packaged up in more convenient forms as in-any, out-any, locsig, readin, etc.
 Within with-sound, the variable *output* is bound to the with-sound output file via a sample-&gt;file
@@ -7915,8 +7915,6 @@ use its :output argument:
 <pre class="indented">
 (with-sound (<em class=red>:output</em> (make-vector 44100 0.0 #t)) ; this sets *output*, the default output location
    (<a class=quiet href="sndscm.html#vdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> 0 1 440 .1))
-
-;; returns #&lt;vct[len=44100]: 0.000 0.000 0.000 ...&gt;
 </pre>
 
 
@@ -7992,9 +7990,9 @@ use its :output argument:
 
 <table class="method">
 <tr><td colspan=2 class="methodtitle">locsig methods</td></tr>
-<tr><td class="inner"><em class=gen>mus-data</em></td><td class="inner">output scalers (a vct)</td></tr>
+<tr><td class="inner"><em class=gen>mus-data</em></td><td class="inner">output scalers (a float-vector)</td></tr>
 <tr><td class="inner"><em class=gen>mus-xcoeff</em></td><td class="inner">reverb scaler</td></tr>
-<tr><td class="inner"><em class=gen>mus-xcoeffs</em></td><td class="inner">reverb scalers (a vct)</td></tr>
+<tr><td class="inner"><em class=gen>mus-xcoeffs</em></td><td class="inner">reverb scalers (a float-vector)</td></tr>
 <tr><td class="inner"><em class=gen>mus-channels</em></td><td class="inner">output channels</td></tr>
 <tr><td class="inner"><em class=gen>mus-length</em></td><td class="inner">output channels</td></tr>
 </table>
@@ -8212,7 +8210,7 @@ The generic functions are:
 <table class="method">
 <tr><td><em class=def id="mus-channel">mus-channel</em></td><td>channel being read/written</td></tr>
 <tr><td><em class=def id="mus-channels">mus-channels</em></td><td>channels open</td></tr>
-<tr><td><em class=def id="mus-data">mus-data</em></td><td>vct of data</td></tr>
+<tr><td><em class=def id="mus-data">mus-data</em></td><td>float-vector of data</td></tr>
 <tr><td><em class=def id="mus-describe">mus-describe</em></td><td>description of current state</td></tr>
 <tr><td><em class=def id="mus-feedback">mus-feedback</em></td><td>feedback coefficient</td></tr>
 <tr><td><em class=def id="mus-feedforward">mus-feedforward</em></td><td>feedforward coefficient</td></tr>
@@ -8233,9 +8231,9 @@ The generic functions are:
 <tr><td><em class=def id="mus-scaler">mus-scaler</em></td><td>scaler, normally on an amplitude</td></tr>
 <tr><td><em class=def id="mus-width">mus-width</em></td><td>width of interpolation tables, etc</td></tr>
 <tr><td><em class=def id="mus-xcoeff">mus-xcoeff</em></td><td>x (input) coefficient</td></tr>
-<tr><td><em class=def id="mus-xcoeffs">mus-xcoeffs</em></td><td>vct of x (input) coefficients</td></tr>
+<tr><td><em class=def id="mus-xcoeffs">mus-xcoeffs</em></td><td>float-vector of x (input) coefficients</td></tr>
 <tr><td><em class=def id="mus-ycoeff">mus-ycoeff</em></td><td>y (output, feedback) coefficient</td></tr>
-<tr><td><em class=def id="mus-ycoeffs">mus-ycoeffs</em></td><td>vct of y (feedback) coefficients</td></tr>
+<tr><td><em class=def id="mus-ycoeffs">mus-ycoeffs</em></td><td>float-vector of y (feedback) coefficients</td></tr>
 </table>
 
 <p>Many of these are settable:
@@ -8359,9 +8357,9 @@ frequency and the spacing between successive sidebands).
 a sum of sinusoids each with arbitrary amplitude and initial-phase.
 noid is a wrapper for polyoid that sets up n equal amplitude components, a generalization
 of <a href="#ncosdoc">ncos and nsin</a>.
-noid's phase argument can be a vct, <code>'min-peak</code>, <code>'max-peak</code>, or omitted (#f).
+noid's phase argument can be a float-vector, <code>'min-peak</code>, <code>'max-peak</code>, or omitted (#f).
 If omitted, the phases are set to random numbers between 0 and 2 pi; if
-a vct, the vct's values are used as the phases; if 'max-peak, all phases are set
+a float-vector, the float-vector's values are used as the phases; if 'max-peak, all phases are set
 to pi/2 (ncos essentially &mdash; use <code>(make-vector n 0.0 #t)</code> to get nsin);
 and if 'min-peak, the minimum peak amplitude phases in <a href="sndscm.html#peakphasesdoc">peak-phases.scm</a> are used.
 In the 'min-peak and 'max-peak cases, noid's output is normalized to fall between -1.0 and 1.0.
@@ -9711,7 +9709,7 @@ We could mimic the fft display window in the "lisp graph" via:
   (do ((i 0 (+ i 1)))
       ((= i 10000))
     (<em class=red>moving-fft</em> ft)
-    (vct-subseq (mus-xcoeffs ft) 0 255 data)
+    (float-vector-subseq (mus-xcoeffs ft) 0 255 data)
     (graph data "fft" 0.0 11025.0 0.0 0.1 0 0 #t)))
 </pre>
 <div class="separator"></div>
@@ -10008,7 +10006,7 @@ There are many examples in generators.scm.
 <tr><td><em class=def id="secondstosamples">seconds-&gt;samples</em><code> secs</code></td><td>convert seconds to samples (using mus-srate): secs * srate</td></tr>
 <tr><td><em class=def id="degreestoradians">degrees-&gt;radians</em><code> degs</code></td><td>convert degrees to radians: (degs * 2 * pi) / 360</td></tr>
 <tr><td><em class=def id="radianstodegrees">radians-&gt;degrees</em><code> rads</code></td><td>convert radians to degrees: (rads * 360) / (2 * pi)</td></tr>
-<tr><td><em class=def id="clear-array">clear-array</em><code> arr</code></td><td>set all values in arr (a vct) to 0.0</td></tr>
+<tr><td><em class=def id="clear-array">clear-array</em><code> arr</code></td><td>set all values in arr (a float-vector) to 0.0</td></tr>
 <tr><td><em class=def id="mussrate">mus-srate</em></td><td>sampling rate in with-sound</td></tr>
 </table>
 
@@ -10060,15 +10058,15 @@ an increment of a phase variable.
 <em class=def id="musfloatequalfudgefactor">mus-float-equal-fudge-factor</em>
 </pre>
 
-<p>This function sets how far apart generator vct elements can be and still be considered equal in equal?
+<p>This function sets how far apart generator float-vector elements can be and still be considered equal in equal?
 </p>
 
 <pre class="indented">
 &gt; (mus-float-equal-fudge-factor)
 1.0e-7
-&gt; (define v1 (vct .1 .1 .101))
+&gt; (define v1 (float-vector .1 .1 .101))
 #&lt;unspecified&gt;
-&gt; (define v2 (vct .1 .1 .1))
+&gt; (define v2 (float-vector .1 .1 .1))
 #&lt;unspecified&gt;
 &gt; (equal? v1 v2)
 #f
@@ -10117,14 +10115,14 @@ This function determines how many mixer elements are printed by mus-describe.
 
 <p>The polynomial function evaluates a polynomial, defined by giving its coefficients,
 at the point "x".
-"coeffs" is a vector or vct of coefficients where
+"coeffs" is a vector of coefficients where
 coeffs[0] is the constant term, and so on. 
 </p>
 
 <pre class="indented">
-&gt; (polynomial (vct 0.0 1.0) 2.0) ; x
+&gt; (polynomial (float-vector 0.0 1.0) 2.0) ; x
 2.0
-&gt; (polynomial (vct 1.0 2.0 3.0) 2.0) ; 3x*x + 2x + 1
+&gt; (polynomial (float-vector 1.0 2.0 3.0) 2.0) ; 3x*x + 2x + 1
 17.0
 </pre>
 
@@ -10376,7 +10374,7 @@ only difference is that mus-fft includes the fft length as an argument, whereas
   (<em class=red>mus-fft</em> rdata idata fsize -1)
   
   (array-&gt;file "test.snd" 
-	       (vct-scale! rdata (/ 1.0 fsize)) 
+	       (float-vector-scale! rdata (/ 1.0 fsize)) 
 	       len 
 	       (srate "oboe.snd") 
 	       1)
@@ -10405,8 +10403,8 @@ sinc-window
 
 <p>rectangular-&gt;polar and polar-&gt;rectangular change how we view the FFT data: in polar or rectangular coordinates.
 rectangular-&gt;magnitudes is the same as rectangular-&gt;polar, but only calculates the magnitudes.
-multiply-arrays does an element-wise multiply of two vcts.
-autocorrelate performs an (in place) autocorrelation of 'data' (a vct).  See <a href="#moving-pitch">moving-pitch</a> in generators.scm, 
+multiply-arrays does an element-wise multiply of two float-vectors.
+autocorrelate performs an (in place) autocorrelation of 'data' (a float-vector).  See <a href="#moving-pitch">moving-pitch</a> in generators.scm, 
 or <a href="sndscm.html#rubberdoc">rubber.scm</a>.
 correlate performs an in-place cross-correlation of data1 and data2 (see, for example, <a href="sndscm.html#snddiffdoc">snddiff</a>).
 </p>

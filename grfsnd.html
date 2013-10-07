@@ -179,7 +179,7 @@ related documentation: &nbsp;
   <li><a href="extsnd.html#sndobjects">Snd's objects</a>
     <ul>
     <li><a href="extsnd.html#samplers" onmouseout="UnTip()" onmouseover="Tip('sound data iterators', WIDTH, 200)">Samplers</a>
-    <li><a href="extsnd.html#Vcts" onmouseout="UnTip()" onmouseover="Tip('real arrays', WIDTH, 100)">Vcts</a>
+    <li><a href="extsnd.html#Vcts" onmouseout="UnTip()" onmouseover="Tip('float-vectors', WIDTH, 100)">Vcts</a>
     <li><a href="extsnd.html#sndsounddata" onmouseout="UnTip()" onmouseover="Tip('arrays of vcts for multichannel data')">Sound-data</a>
     <li><a href="extsnd.html#extsndlib" onmouseout="UnTip()" onmouseover="Tip('the underlying library that handles sound data and files')">Sndlib</a>
     <li><a href="extsnd.html#sndmarks" onmouseout="UnTip()" onmouseover="Tip('location markers in sound data')">Marks</a>
@@ -1000,12 +1000,12 @@ these declarations in ~/.snd:
 
 <pre class="indented">
 (define data-size 1024)
-(define data (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> data-size))
+(define data (make-vector data-size 0.0 #t))
 
 (define (run-gen func)        ; func is a function of no arguments (a "thunk")
   (do ((i 0 (+ 1 i))) 
       ((= i data-size))
-    (set! (data i) (func))) ; fill data vct with output of 'func'
+    (set! (data i) (func))) ; fill data float-vector with output of 'func'
   (<a class=quiet href="extsnd.html#graph" onmouseout="UnTip()" onmouseover="Tip(extsnd_graph_tip)">graph</a> data))               ; display data as a graph
 
 (define (run-fft func)
@@ -1183,7 +1183,7 @@ an oscil or a sawtooth-wave:
 	   (sr (<a class=quiet href="sndclm.html#make-src" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_src_tip)">make-src</a> :srate rate))
 	   (vsize 1024)
 	   (vbeg 0)
-	   (v (<a class=quiet href="extsnd.html#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> 0 vsize))
+	   (v (channel-&gt;float-vector 0 vsize))
 	   (inctr 0))
       (lambda (inval)
         (<a class=quiet href="sndclm.html#src" onmouseout="UnTip()" onmouseover="Tip(sndclm_src_tip)">src</a> sr 0.0
@@ -1196,7 +1196,7 @@ an oscil or a sawtooth-wave:
 		      (begin
 			(set! vbeg (+ vbeg inctr))
 			(set! inctr 0)
-			(<a class=quiet href="extsnd.html#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> vbeg vsize 0 0 v)))
+			(channel-&gt;float-vector vbeg vsize 0 0 v)))
 		  val)))))))))
 
 </pre>
@@ -2005,7 +2005,7 @@ The s7 initialization file is ~/.snd_s7.
 <em class=emdef>ladspa-activate</em> descriptor handle
 <em class=emdef>ladspa-deactivate</em> descriptor handle
 <em class=emdef>ladspa-cleanup</em> descriptor handle
-<em class=emdef>ladspa-connect-port</em> descriptor handle port vct
+<em class=emdef>ladspa-connect-port</em> descriptor handle port float-vector
 <em class=emdef>ladspa-run</em> descriptor handle count
 <em class=emdef>ladspa-run-adding</em> descriptor handle count
 <em class=emdef>ladspa-set-run-adding-gain</em> descriptor handle gain
@@ -2318,14 +2318,6 @@ at configuration time, and use the <a href="extsnd.html#glgraphtops">gl-graph-&g
 <p>If the GSL library is available, the following functions are imported into Snd:
 </p>
 
-
-
-<!-- gsl-dht -->
-<div class="bluish"><em class=emdef>gsl-dht</em> <code>size data nu xmax</code></div>
-<p>
-gsl-dht performs the Hankel transform of "data", a vct.  See <a href="extsnd.html#addtransform">add-transform</a>
-for an example.
-</p>
 
 
 <!-- gsl-eigenvectors -->

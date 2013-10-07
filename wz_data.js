@@ -13,7 +13,7 @@ var extsnd_addtransform_tip = "<code>(add-transform name x-label low high func)<
                               " add the transform func to the transform lists;<br>" +
                               " func should be a function of two arguments, <br>" +
                               " the length of the transform and a sampler to get the data, <br>" +
-                              " and should return a vct containing the transform results. <br>" +
+                              " and should return a float-vector containing the transform results. <br>" +
                               " name is the transform's name, x-label is its x-axis label, <br>" +
                               " and the relevant returned data to be displayed goes from low to high (normally 0.0 to 1.0)";
 
@@ -92,8 +92,6 @@ var extsnd_channels_tip = "<code>(channels snd)</code>: how many channels snd ha
 var extsnd_channelstyle_tip = "<code>(channel-style snd)</code>: how multichannel sounds lay out the channels.<br>" +
                               " The default is channels-combined; other values are channels-separate and channels-superimposed.<br>" +
                               " As a global (if the 'snd' arg is omitted), it is the default setting for each sound's 'unite' button.";
-
-var extsnd_channeltovct_tip = "<code>(channel-&gt;vct beg dur snd chn edpos)</code>: return a vct with the specified samples.";
 
 var extsnd_channelwidgets_tip = "<code>(channel-widgets snd chn)</code>: a list of widgets: ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)edhist)";
 
@@ -199,7 +197,7 @@ var extsnd_fillrectangle_tip = "<code>(fill-rectangle x0 y0 width height snd chn
 
 var extsnd_filterchannel_tip = "<code>(filter-channel env order beg dur snd chn edpos (truncate #t) origin)</code>:<br>" +
                                " applies an FIR filter to snd's channel chn.<br>" +
-                               " 'env' is the frequency response envelope, or a vct with the coefficients.";
+                               " 'env' is the frequency response envelope, or a float-vector with the coefficients.";
 
 var extsnd_filterselection_tip = "<code>(filter-selection filter order (truncate #t))</code>:<br>" +
                                  " apply filter to selection.<br>" +
@@ -208,7 +206,7 @@ var extsnd_filterselection_tip = "<code>(filter-selection filter order (truncate
 var extsnd_filtersound_tip = "<code>(filter-sound filter order snd chn edpos origin)</code>:<br>" +
                              " applies FIR filter to snd's channel chn.<br>" +
                              " 'filter' is either the frequency response envelope,<br>" +
-                             " a CLM filter, or a vct with the actual coefficients";
+                             " a CLM filter, or a float-vector with the actual coefficients";
 
 var extsnd_focuswidget_tip = "<code>(focus-widget widget)</code>: cause widget to receive input focus";
 
@@ -218,7 +216,7 @@ var extsnd_freesampler_tip = "<code>(free-sampler reader)</code>: free a sampler
 
 var extsnd_graph_tip = "<code>(graph data xlabel (x0 0.0) (x1 1.0) y0 y1 snd chn (force-display #t) show-axes)</code>:<br>" +
                        " displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1;<br>" +
-                       " 'data' can be a list or a vct. If 'data' is a list of numbers, it is treated as an envelope.";
+                       " 'data' can be a list or a float-vector. If 'data' is a list of numbers, it is treated as an envelope.";
 
 var extsnd_graphhook_tip = "<code>graph-hook (snd chn y0 y1)</code>: called each time a graph is about to be updated. <br>" +
                            "If it returns #t, the display is not updated.";
@@ -267,8 +265,6 @@ var extsnd_listenerfont_tip = "<code>(listener-font)</code>: font used by the li
 
 var extsnd_listenerprompt_tip = "<code>(listener-prompt)</code>: the current lisp listener prompt character ('&gt;') ";
 
-var extsnd_listtovct_tip = "<code>(list-&gt;vct lst)</code>: returns a new vct filled with elements of list lst";
-
 var extsnd_mainwidgets_tip = "<code>(main-widgets)</code>: top level widgets<br>" +
                              " <code>(list (0)main-app (1)main-shell (2)main-pane<br>" +
                              " (3)sound-pane (4)listener-pane (5)notebook-outer-pane)</code>";
@@ -276,7 +272,7 @@ var extsnd_mainwidgets_tip = "<code>(main-widgets)</code>: top level widgets<br>
 var extsnd_makecolor_tip = "<code>(make-color r g b)</code>: return a color object with the indicated rgb values";
 
 var extsnd_makegraphdata_tip = "<code>(make-graph-data snd chn edpos low high)</code>:<br>" +
-                               " return either a vct (if the graph has one trace), or a list of two vcts<br>" +
+                               " return either a float-vector (if the graph has one trace), or a list of two float-vectors<br>" +
                                " (the two sides of the envelope graph).<br>" +
                                " 'edpos' defaults to the current-edit-position,<br>" +
                                " 'low' defaults to the current window left sample, and<br>" +
@@ -291,13 +287,6 @@ var extsnd_makesampler_tip = "<code>(make-sampler (start-samp 0) snd chn (dir 1)
                                   " going in direction dir (1 = forward, -1 = backward),<br>" +
                                   " reading the version of the data indicated by edpos which defaults to the current version.<br>" +
                                   " snd can be a filename, or a sound index number.";
-
-var extsnd_makesounddata_tip = "<code>(make-sound-data chans frames)</code>: return a new sound-data object<br>" +
-                               " with 'chans' channels, each having 'frames' samples";
-
-var extsnd_makevct_tip = "<code>(make-vct len (initial-element 0))</code>: <br>" +
-                         " returns a new vct of length len filled with initial-element:<br>" +
-                         "<code>  (define v (make-vct 32 1.0))</code>";
 
 var extsnd_mapchannel_tip = "<code>(map-channel func (start 0) (dur len) snd chn edpos edname)</code>:<br>" +
                             " apply func to samples in current channel;<br>" +
@@ -349,16 +338,6 @@ var extsnd_mixsyncmax_tip = "<code>(mix-sync-max)</code>: max mix sync value see
 
 var extsnd_mixtagy_tip = "<code>(mix-tag-y id)</code>: height of mix's tag";
 
-var extsnd_musaudioclose_tip = "<code>(mus-audio-close line)</code>: close the audio hardware line";
-
-var extsnd_musaudioopenoutput_tip = "<code>(mus-audio-open-output device srate chans format bytes)</code>:<br>" +
-                                    " open the audio device ready for output at the given srate and so on;<br>" +
-                                    " return the audio line number:<br>" +
-                                    "<code>  (mus-audio-open-output mus-audio-default 22050 1 mus-lshort 256)</code>";
-
-var extsnd_musaudiowrite_tip = "<code>(mus-audio-write line sdata frames)</code>:<br>" +
-                               " write frames of data (channels * frames = samples) to the audio line from sound-data sdata.";
-
 var extsnd_musbfloat_tip = "<code>mus-bfloat</code> data is big-endian float";
 
 var extsnd_musbshort_tip = "<code>mus-bshort</code> data is big-endian signed 16-bit integer";
@@ -377,8 +356,6 @@ var extsnd_musosssetbuffers_tip = "<code>(mus-oss-set-buffers num size)</code>: 
                                   " This reduces the on-card buffering, but may introduce clicks.";
 
 var extsnd_mussoundchans_tip = "<code>(mus-sound-chans filename)</code>: channels of data in sound file";
-
-var extsnd_mussoundcloseinput_tip = "<code>(mus-sound-close-input fd)</code>: close (low-level) file fd that was opened by mus-sound-open-input.";
 
 var extsnd_mussoundcomment_tip = "<code>(mus-sound-comment filename)</code>: comment (a string) found in sound file's header";
 
@@ -401,9 +378,6 @@ var extsnd_mussoundmaxampexists_tip = "<code>(mus-sound-maxamp-exists? filename)
 
 var extsnd_mussoundopeninput_tip = "<code>(mus-sound-open-input filename)</code>: open filename for (low-level) sound input,<br>" +
                                    " return file descriptor (an integer)";
-
-var extsnd_mussoundread_tip = "<code>(mus-sound-read fd beg end chans sdata)</code>: read sound data from file fd,<br>" +
-                              " filling sound-data sdata's buffers starting at beg (buffer location), going to end";
 
 var extsnd_mussoundsamples_tip = "<code>(mus-sound-samples filename)</code>: samples (frames * channels) in sound file";
 
@@ -492,7 +466,7 @@ var extsnd_sample_tip = "<code>(sample samp snd chn edpos)</code>:<br>" +
 var extsnd_sampleratendQ_tip = "<code>(sampler-at-end? obj)</code>: #t if sampler has reached the end of its data";
 
 var extsnd_samples_tip = "<code>(samples (start-samp 0) (samps len) snd chn edpos)</code>:<br>" +
-                         " return a vct containing snd channel chn's samples starting a start-samp for samps samples;<br>" +
+                         " return a float-vector containing snd channel chn's samples starting a start-samp for samps samples;<br>" +
                          " edpos is the edit history position to read (defaults to current position).";
 
 var extsnd_savedir_tip = "<code>(save-dir)</code>: name of directory for saved state data (or #f=null)";
@@ -518,7 +492,7 @@ var extsnd_savestatehook_tip = "<code>save-state-hook (temp-filename)</code>: ca
                                " saved state batch, and a way to rename or redirect those files.";
 
 var extsnd_scaleby_tip = "<code>(scale-by scalers snd chn)</code>: scale snd by scalers (following sync);<br>" +
-                         " scalers can be a float or a vct/list of floats";
+                         " scalers can be a float or a float-vector/list of floats";
 
 var extsnd_scalechannel_tip = "<code>(scale-channel scaler (beg 0) (dur len) snd chn edpos)</code>:<br>" +
                               " scale samples in the given sound/channel between beg and beg + num by scaler.";
@@ -526,7 +500,7 @@ var extsnd_scalechannel_tip = "<code>(scale-channel scaler (beg 0) (dur len) snd
 var extsnd_scaleselectionby_tip = "<code>(scale-selection-by scalers)</code>: scale selected portion by scalers";
 
 var extsnd_scaleto_tip = "<code>(scale-to (norms 1.0) snd chn)</code>: normalize snd to norms (following sync);<br>" +
-                         " norms can be a float or a vct/list of floats";
+                         " norms can be a float or a float-vector/list of floats";
 
 var extsnd_scanchannel_tip = "<code>(scan-channel func (start 0) (dur len) snd chn edpos)</code>:<br>" +
                              " apply func to samples in current channel (or the specified channel).<br>" +
@@ -568,7 +542,7 @@ var extsnd_selectionok_tip = "<code>(selection?)</code>: #t if selection is curr
 var extsnd_selectionposition_tip = "<code>(selection-position snd chn)</code>: selection start samp";
 
 var extsnd_setsamples_tip = "<code>(set-samples start-samp samps data snd chn truncate edname (infile-chan 0) edpos auto-delete)</code>:<br>" +
-                            " set snd's channel chn's samples starting at start-samp for samps from data (a vct, vector, or string (filename));<br>" +
+                            " set snd's channel chn's samples starting at start-samp for samps from data (a vector or string (filename));<br>" +
                             " start-samp can be beyond current data end;<br>" +
                             " if truncate is #t and start-samp is 0, the end of the file is set to match the new data's end.";
 
@@ -580,7 +554,6 @@ var extsnd_showlistener_tip = "<code>(show-listener (open #t))</code>: if 'open'
 var extsnd_showtransformpeaks_tip = "<code>(show-transform-peaks snd chn)</code>: #t if fft display should include peak list";
 
 var extsnd_sndhelp_tip = "<code>(snd-help (arg 'snd-help) (formatted #t))</code>: return the documentation associated with its argument.<br>" +
-                         "<code> (snd-help 'make-vct)</code> for example, prints out a brief description of make-vct.<br>" +
                          " The argument can be a string, symbol, or in some cases, the object itself.<br>" +
                          " In the help descriptions, optional arguments are in parens with the default value (if any) as the 2nd entry.<br>" +
                          " A ':' as the start of the argument name marks a CLM-style optional keyword argument. <br>" +
@@ -592,17 +565,9 @@ var extsnd_sndprint_tip = "<code>(snd-print str)</code>: display str in the list
 
 var extsnd_sndspectrum_tip = "<code>(snd-spectrum data (window rectangular-window) (len data-len)<br>" +
                              " (linear #t) (beta 0.0) in-place (normalized #t))</code>:<br>" +
-                             " magnitude spectrum of data (a vct), in data if in-place, using fft-window win and fft length len.";
+                             " magnitude spectrum of data (a float-vector), in data if in-place, using fft-window win and fft length len.";
 
 var extsnd_sndtempnam_tip = "<code>(snd-tempnam)</code>: return a new temp file name using temp-dir.";
-
-var extsnd_sounddataref_tip = "<code>(sound-data-ref sd chan i)</code>: sample in channel chan at location i of sound-data sd:<br>" +
-                              " sd[chan][i]";
-
-var extsnd_sounddataset_tip = "<code>(sound-data-set! sd chan i val)</code>: set sound-data sd's i-th element in channel chan to val:<br>" +
-                              " sd[chan][i] = val";
-
-var extsnd_sounddata_times_tip = "<code>(sound-data* val1 val2)</code>: multiply val1 by val2 (either or both can be a sound-data object).";
 
 var extsnd_soundfilep_tip = "<code>(sound-file? name)</code>: #t if name has a known sound file extension";
 
@@ -665,9 +630,6 @@ var extsnd_transformgraphtype_tip = "<code>(transform-graph-type snd chn)</code>
 
 var extsnd_transformsize_tip = "<code>(transform-size snd chn)</code>: current fft size (512)";
 
-var extsnd_transformtovct_tip = "<code>(transform-&gt;vct snd chn obj)</code>: return a vct (obj if it's passed),<br>" +
-                                " with the current transform data from snd's channel chn";
-
 var extsnd_undo_tip = "<code>(undo (count 1) snd chn)</code>: undo 'count' edits in snd's channel chn";
 
 var extsnd_updatesound_tip = "<code>(update-sound snd)</code>: update snd (re-read it from the disk after flushing pending edits)";
@@ -675,44 +637,6 @@ var extsnd_updatesound_tip = "<code>(update-sound snd)</code>: update snd (re-re
 var extsnd_updatetimegraph_tip = "<code>(update-time-graph snd chn)</code>: redraw snd channel chn's graphs";
 
 var extsnd_updatetransformgraph_tip = "<code>(update-transform-graph snd chn)</code>: redraw snd channel chn's fft display";
-
-var extsnd_vct_tip = "<code>(vct :rest args)</code>: returns a new vct with args as contents; same as list-&gt;vct: (vct 1 2 3)";
-
-var extsnd_vctadd_tip = "<code>(vct-add! v1 v2 (offset 0))</code>: element-wise add of vcts v1 and v2: v1[i + offset] += v2[i], returns v1";
-
-var extsnd_vctcopy_tip = "<code>(vct-copy v)</code>: returns a copy of vct v";
-
-var extsnd_vctfill_tip = "<code>(vct-fill! v val)</code>: set each element of v to val: v[i] = val, returns v";
-
-var extsnd_vctmove_tip = "<code>(vct-move! obj new old backwards)</code>: moves vct obj data from old to new:<br>" +
-                         " v[new++] = v[old++], or v[new--] = v[old--] if backwards is #f.";
-
-var extsnd_vctmultiply_tip = "<code>(vct-multiply! v1 v2)</code>: element-wise multiply of vcts v1 and v2:<br>" +
-                             " v1[i] *= v2[i], returns v1";
-
-var extsnd_vctoffset_tip = "<code>(vct-offset! v val)</code>: add val to each element of v:<br>" +
-                           " v[i] += val, returns v";
-
-var extsnd_vctp_tip = "<code>(vct? obj)</code>: is obj a vct";
-
-var extsnd_vctpeak_tip = "<code>(vct-peak v)</code>: max of abs of elements of v";
-
-var extsnd_vctref_tip = "<code>(vct-ref v n)</code>: element n of vct v, v[n]";
-
-var extsnd_vctreverse_tip = "<code>(vct-reverse! vct len)</code>: in-place reversal of vct contents";
-
-var extsnd_vctscale_tip = "<code>(vct-scale! v val)</code>: scale each element of v by val:<br>" +
-                          " v[i] *= val, returns v";
-
-var extsnd_vctset_tip = "<code>(vct-set! v n val)</code>: sets element of vct v to val, v[n] = val";
-
-var extsnd_vctsubseq_tip = "<code>(vct-subseq v start end vnew)</code>: v[start..end],<br>" +
-                           " placed in vnew if given or new vct";
-
-var extsnd_vcttochannel_tip = "<code>(vct-&gt;channel vct (beg 0) (dur len) snd chn edpos origin)</code>:<br>" +
-                              " set snd's channel chn's samples starting at beg for dur samps from vct data";
-
-var extsnd_vcttosounddata_tip = "<code>(vct-&gt;sound-data v sd chan)</code>: copies vct v's data into sound-data sd's channel chan";
 
 var extsnd_widgetposition_tip = "<code>(widget-position wid)</code>: widget's position, (list x y), in pixels";
 
@@ -762,19 +686,19 @@ var sndclm_delay_tip = "<code>(delay gen (val 0.0) (pm 0.0))</code>: delay val<b
                        " If pm is greater than 0.0, the max-size argument used to create gen<br>" +
                        " should have accommodated its maximum value.";
 
-var sndclm_dot_product_tip = "<code>(dot-product v1 v2 size)</code>: sum of (vcts) v1[i] * v2[i] (also named scalar product)";
+var sndclm_dot_product_tip = "<code>(dot-product v1 v2 size)</code>: sum of (float-vectors) v1[i] * v2[i] (also named scalar product)";
 
 var sndclm_env_tip = "<code>(env gen)</code>: next sample from envelope generator";
 
 var sndclm_fft_tip = "<code>(mus-fft rl im len (dir 1))</code>:<br>" +
-                     " return the fft of vcts rl and im which contain <br>" +
+                     " return the fft of float-vectors rl and im which contain <br>" +
                      " the real and imaginary parts of the data;<br>" +
                      " len should be a power of 2,<br>" +
                      " dir = 1 for fft, -1 for inverse-fft";
 
 var sndclm_filetoarray_tip = "<code>(file-&gt;array filename chan start samples data)</code>:<br>" +
                              " read the sound file 'filename' placing samples from channel 'chan'<br>" +
-                             " into the vct 'data' starting in the file at frame 'start'<br>" +
+                             " into the float-vector 'data' starting in the file at frame 'start'<br>" +
                              " and reading 'samples' samples altogether.";
 
 var sndclm_filetosample_tip = "<code>(file-&gt;sample obj frame chan)</code>: sample value in sound file read by 'obj' in channel chan at frame";
@@ -800,7 +724,7 @@ var sndclm_locsig_tip = "<code>(locsig gen loc val)</code>: add 'val' to the out
 var sndclm_make_comb_tip = "<code>(make-comb :scaler :size :initial-contents (:initial-element 0.0) :max-size (:type mus-interp-linear))</code>:<br>" +
                            " return a new comb filter (a delay line with a scaler on the feedback) of size elements.<br>" +
                            " If the comb length will be changing at run-time, max-size sets its maximum length.<br>" +
-                           " initial-contents can be either a list or a vct.";
+                           " initial-contents can be either a list or a float-vector.";
 
 var sndclm_contrast_enhancement_tip = "<code>(contrast-enhancement input (fm-index 1.0))</code><br>" +
                            " phase-modulates its input.";
@@ -813,11 +737,11 @@ var sndclm_make_delay_tip = "<code>(make-delay :size :initial-contents (:initial
                             " If the delay length will be changing at run-time, max-size sets its maximum length,<br>" +
                             " so <code>(make-delay len :max-size (+ len 10))</code> provides 10 extra elements of delay<br>" +
                             " for subsequent phasing or flanging.<br>" +
-                            " initial-contents can be either a list or a vct.";
+                            " initial-contents can be either a list or a float-vector.";
 
 var sndclm_make_env_tip = "<code>(make-env :envelope (:scaler 1.0) :duration (:offset 0.0) (:base 1.0) :end :length)</code>:<br>" +
                           " return a new envelope generator.<br>" +
-                          " 'envelope' is a list or vct of break-point pairs. To create the envelope,<br>" +
+                          " 'envelope' is a list or float-vector of break-point pairs. To create the envelope,<br>" +
                           " these points are offset by 'offset', scaled by 'scaler', and mapped over the time interval<br>" +
                           " defined by either 'duration' (seconds) or 'length' (samples).<br>" +
                           " If 'base' is 1.0, the connecting segments are linear, if 0.0 you get a step function,<br>" +
@@ -827,9 +751,9 @@ var sndclm_make_filetosample_tip = "<code>(make-file-&gt;sample filename buffer-
                                    " return an input generator reading 'filename' (a sound file)";
 
 var sndclm_make_filter_tip = "<code>(make-filter :order :xcoeffs :ycoeffs)</code>:<br>" +
-                             " return a new direct form FIR/IIR filter, coeff args are vcts";
+                             " return a new direct form FIR/IIR filter, coeff args are float-vectors";
 
-var sndclm_make_fir_filter_tip = "<code>(make-fir-filter :order :xcoeffs)</code>: return a new FIR filter, xcoeffs a vct";
+var sndclm_make_fir_filter_tip = "<code>(make-fir-filter :order :xcoeffs)</code>: return a new FIR filter, xcoeffs a float-vector";
 
 var sndclm_make_formant_tip = "<code>(make-formant :frequency :radius)</code>:<br>" +
                               " return a new formant generator (a resonator).<br>" +
@@ -860,7 +784,7 @@ var sndclm_make_locsig_tip = "<code>(make-locsig (:degree 0.0) (:distance 1.0) (
                              " return a new generator for signal placement in n channels.  Channel 0 corresponds to 0 degrees.";
 
 var sndclm_make_moving_average_tip = "<code>(make-moving-average :size :initial-contents (:initial-element 0.0))</code>:<br>" +
-                                     " return a new moving_average generator. initial-contents can be either a list or a vct.";
+                                     " return a new moving_average generator. initial-contents can be either a list or a float-vector.";
 
 var sndclm_moving_max_tip = "<code>(moving-max gen y)</code>: return moving window max given input 'y'.<br>" +
                            " moving-max is a specialization of the delay generator that produces<br>" +
@@ -931,7 +855,7 @@ var sndclm_moving_average_tip = "<code>(moving-average gen (val 0.0))</code>: mo
 
 var sndclm_mus_close_tip = "<code>(mus-close gen)</code>: close the IO stream managed by 'gen' (a sample-&gt;file generator, for example)";
 
-var sndclm_mus_data_tip = "<code>(mus-data gen)</code>: gen's internal data (a vct)";
+var sndclm_mus_data_tip = "<code>(mus-data gen)</code>: gen's internal data (a float-vector)";
 
 var sndclm_mus_frequency_tip = "<code>(mus-frequency gen)</code>: gen's frequency (Hz)";
 
@@ -1115,18 +1039,8 @@ var sndscm_sound_let_tip = "sound-let is a form of let* that creates temporary s
                        " to :output with a unique name generated internally, and all other variables are taken from<br>" +
                        " the overall (enclosing) with-sound.  The rest of the list is the body of the associated with-sound.";
 
-var sndscm_sounddatatosound_tip = "<code>(sound-data-&gt;sound sd beg dur snd)</code>: place the contents of<br>" +
-                                  " its sound-data argument 'sd' into the sound 'snd' starting at 'beg' and going for 'dur' frames.<br>" +
-                                  " 'dur' defaults to the sound-data object's length.";
-
 var sndscm_soundinterp_tip = "<code>(sound-interp reader loc)</code>: the sound-interp interpolating reader<br>" +
                              " reads a channel at an arbitary location, interpolating between samples if necessary.";
-
-var sndscm_soundtosounddata_tip = "<code>(sound-&gt;sound-data beg dur snd)</code>:<br>" +
-                                  " return a sound-data object containing the contents of the sound 'snd'<br>" +
-                                  " starting from beg for dur frames.<br>" +
-                                  " <code>  (sound-data-&gt;sound (sound-data* (sound-&gt;sound-data) 2.0))</code><br>" +
-                                  " is yet another way to scale a sound by 2.0.";
 
 var sndscm_syncdmixes_tip = "<code>(syncd-mixes sync)</code>:  returns a list of all mixes whose mix-sync field is set to 'sync'.";
 
@@ -1139,7 +1053,7 @@ var sndscm_tosample_tip = "<code>(-&gt;sample time)</code> returns a sample numb
 
 var sndscm_volterrafilter_tip = "<code>(volterra-filter flt x)</code>: pass 'x' through the Volterra (non-linear) filter 'flt'.";
 
-var sndscm_windowsamples_tip = "<code>(window-samples snd chn)</code>: returns (in a vct) the samples<br>" +
+var sndscm_windowsamples_tip = "<code>(window-samples snd chn)</code>: returns (in a float-vector) the samples<br>" +
                                " displayed in the current graph window for the given channel.";
 
 var sndscm_withtempsound_tip = "with-temp-sound is like sound-let (it sets up a temporary output<br>" +
@@ -1241,7 +1155,7 @@ var extensions_doc_tip = "channel and sound property lists, several enveloping f
 
 var fade_doc_tip = "sound mixing using envelopes in the frequency domain";
 
-var frame_doc_tip = "various frame, vct, and sound-data functions";
+var frame_doc_tip = "various frame and vector functions";
 
 var freeverb_doc_tip = "a reverberator along the lines of nrev, but with more options.";
 
@@ -1348,8 +1262,4 @@ var scheme_format_tip = "<code>(format destination control-string :rest args)</c
                         "The output depends on 'control-string' which can contain characters preceded by tilde.<br>" +
                         "These are replaced with other strings based on the character and the associated argument in 'args'.<br>" +
                         "The main tilde cases are ~% = add a newline, ~A = add some readable description of its argument<br>" +
-                        "~D = treat its arg as an integer, ~F = treat arg as float, ~S = treat arg as string.<br><br>" +
-                        "<code>(format #f \"A: ~A, D: ~D, F: ~F~%\" (make-vct 2 3.14) 32 1.5)</code><br><br>" +
-                        "produces:<br><br>" +
-                        "<code>\"A: #&lt;vct[len=2]: 3.140 3.140&gt;, D: 32, F: 1.5<br>" +
-                        "\"</code>.";
+                        "~D = treat its arg as an integer, ~F = treat arg as float, ~S = treat arg as string.<br><br>";

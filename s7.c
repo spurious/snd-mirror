@@ -36666,6 +36666,18 @@ static s7_pointer eval_error_no_arg(s7_scheme *sc, const char *errmsg)
 }
 
 
+static s7_pointer eval_type_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
+{
+  return(s7_error(sc, sc->WRONG_TYPE_ARG, list_2(sc, make_protected_string(sc, errmsg), obj)));
+}
+
+
+static s7_pointer eval_range_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
+{
+  return(s7_error(sc, sc->OUT_OF_RANGE, list_2(sc, make_protected_string(sc, errmsg), obj)));
+}
+
+
 static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
 {
   /* reader errors happen before the evaluator gets involved, so forms such as:
@@ -48860,7 +48872,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    SORT_CALLS++;
 	    if (SORT_CALLS > SORT_STOP)
-	      eval_error(sc, "sort! is caught in an infinite loop, comparison: ~S", SORT_LESSP);
+	      eval_range_error(sc, "sort! is caught in an infinite loop, comparison: ~S", SORT_LESSP);
 	  }
 	j = 2 * k;
 	SORT_J = j;
@@ -49303,7 +49315,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else push_stack(sc, OP_ASSOC_IF1, sc->args, sc->code);
 
       if (!is_pair(car(ecdr(sc->args))))     /* (assoc 1 '((2 . 2) 3) =) -- we access caaadr below */
-	eval_error(sc, "assoc: second arg is not an alist: ~S", sc->args);
+	eval_type_error(sc, "assoc: second arg is not an alist: ~S", sc->args);
       /* not sure about this -- we could simply skip the entry both here and in g_assoc
        *   (assoc 1 '((2 . 2) 3)) -> #f
        *   (assoc 1 '((2 . 2) 3) =) -> error currently
@@ -49966,7 +49978,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    s7_pointer slot;
 			    slot = find_symbol(sc, settee);
 			    if (!is_slot(slot)) 
-			      eval_error(sc, "set! ~A: unbound variable", settee);
+			      eval_type_error(sc, "set! ~A: unbound variable", settee);
 			    if ((car(val) == sc->VECTOR_REF) &&
 				(s7_list_length(sc, val) == 3) &&
 				(caddr(val) == caaar(code)) &&
@@ -57690,12 +57702,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_Int index;
 		if (!is_integer(arg))
-		  eval_error(sc, "vector-set!: index must be an integer: ~S", sc->code);
+		  eval_type_error(sc, "vector-set!: index must be an integer: ~S", sc->code);
 		index = integer(arg);
 		if (index < 0)
-		  eval_error(sc, "vector-set!: index must not be negative: ~S", sc->code);
+		  eval_range_error(sc, "vector-set!: index must not be negative: ~S", sc->code);
 		if (index >= vector_length(obj))
-		  eval_error(sc, "vector-set!: index must be less than vector length: ~S", sc->code);
+		  eval_range_error(sc, "vector-set!: index must be less than vector length: ~S", sc->code);
 		vector_setter(obj)(sc, obj, index, value);
 		sc->value = value;
 	      }
@@ -57712,12 +57724,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      s7_Int index;
 	      if (!is_integer(arg))
-		eval_error(sc, "string-set!: index must be an integer: ~S", sc->code);
+		eval_type_error(sc, "string-set!: index must be an integer: ~S", sc->code);
 	      index = integer(arg);
 	      if (index < 0)
-		eval_error(sc, "string-set!: index must not be negative: ~S", sc->code);
+		eval_range_error(sc, "string-set!: index must not be negative: ~S", sc->code);
 	      if (index >= string_length(obj))
-		eval_error(sc, "string-set!: index must be less than string length: ~S", sc->code);
+		eval_range_error(sc, "string-set!: index must be less than string length: ~S", sc->code);
 	      if (s7_is_character(value))
 		{
 		  string_value(obj)[index] = (char)s7_character(value);
@@ -57731,11 +57743,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      int ic;
 		      ic = s7_integer(value);
 		      if ((ic < 0) || (ic > 255))
-			eval_error(sc, "string-set!: value must be a character: ~S", sc->code);
+			eval_type_error(sc, "string-set!: value must be a character: ~S", sc->code);
 		      string_value(obj)[index] = (char)ic;
 		      sc->value = value;
 		    }
-		  else eval_error(sc, "string-set!: value must be a character: ~S", sc->code);
+		  else eval_type_error(sc, "string-set!: value must be a character: ~S", sc->code);
 		}
 	    }
 #endif
@@ -57987,7 +57999,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  slot_set_value(sc->y, c_call(cadr(sc->code))(sc, fcdr(sc->code)));
 	  IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sc->y); 
 	}
-      eval_error(sc, "set! ~A: unbound variable", sc->code);
+      eval_type_error(sc, "set! ~A: unbound variable", sc->code);
 
 
     case OP_INCREMENT_C_TEMP:
@@ -58006,7 +58018,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto START; /* almost never op_begin1 here */
 	  }
       }
-      eval_error(sc, "set! ~A: unbound variable", sc->code);
+      eval_type_error(sc, "set! ~A: unbound variable", sc->code);
       
 
 
@@ -58043,7 +58055,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sym); 
 	  }
       }
-      eval_error(sc, "set! ~A: unbound variable", sc->code);
+      eval_type_error(sc, "set! ~A: unbound variable", sc->code);
 
 
     case OP_INCREMENT_SS:
@@ -58056,7 +58068,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  slot_set_value(sc->y, c_call(cadr(sc->code))(sc, sc->T2_1));
 	  IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sc->y);
 	}
-      eval_error(sc, "set! ~A: unbound variable", sc->code);
+      eval_type_error(sc, "set! ~A: unbound variable", sc->code);
 
 
     case OP_INCREMENT_SSS:
@@ -58081,7 +58093,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sc->y);
 	}
-      eval_error(sc, "set! ~A: unbound variable", sc->code);
+      eval_type_error(sc, "set! ~A: unbound variable", sc->code);
 
 
       /* --------------- */
@@ -58098,7 +58110,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    slot_set_value(sym, c_call(cadr(code))(sc, sc->T3_1));
 	    IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sym); 
 	  }
-	eval_error(sc, "set! ~A: unbound variable", sc->code);
+	eval_type_error(sc, "set! ~A: unbound variable", sc->code);
       }
 
 
@@ -58132,7 +58144,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  slot_set_value(sc->y, sc->value); 
 	  IF_BEGIN_POP_STACK(sc); 
 	}
-      eval_error(sc, "set! ~A: unbound variable", sc->code);
+      eval_type_error(sc, "set! ~A: unbound variable", sc->code);
 
       
       /* --------------- */
@@ -58178,7 +58190,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  slot_set_value(sc->y, ((s7_function)fcdr(cdr(sc->code)))(sc, cadr(sc->code)));
 	  IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sc->y); 
 	}
-      eval_error(sc, "set! ~A: unbound variable", sc->code);
+      eval_type_error(sc, "set! ~A: unbound variable", sc->code);
 
 
       /* --------------- */
@@ -58197,7 +58209,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto START; 
 	  }
       }
-      eval_error(sc, "set! ~A: unbound variable", sc->code);
+      eval_type_error(sc, "set! ~A: unbound variable", sc->code);
 
       
     case OP_INCREMENT_SZ:
@@ -58210,7 +58222,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->code = fcdr(sc->code); /* caddr(cadr(sc->code)); */
 	    goto OPT_EVAL;
 	  }
-	eval_error(sc, "set! ~A: unbound variable", sc->code);
+	eval_type_error(sc, "set! ~A: unbound variable", sc->code);
       }
 
     case OP_INCREMENT_SZ_1:
@@ -58232,7 +58244,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    slot_set_value(sym, finder(sc, cadr(sc->code)));
 	    IF_BEGIN_POP_STACK_ELSE_SET_VALUE(sc, sym);
 	  }
-	eval_error(sc, "set! ~A: unbound variable", sc->code);
+	eval_type_error(sc, "set! ~A: unbound variable", sc->code);
       }
       
 
@@ -58441,7 +58453,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (is_symbol(index))
 		      index = finder(sc, index);
 		    if (!s7_is_integer(index))
-		      eval_error(sc, "vector-set!: index must be an integer: ~S", sc->code);
+		      eval_type_error(sc, "vector-set!: index must be an integer: ~S", sc->code);
 		    ind = s7_integer(index);
 		    if ((ind < 0) ||
 			(ind >= vector_length(sc->x)))
@@ -58504,7 +58516,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (is_symbol(index))
 		      index = finder(sc, index);
 		    if (!s7_is_integer(index))
-		      eval_error(sc, "string-set!: index must be an integer: ~S", sc->code);
+		      eval_type_error(sc, "string-set!: index must be an integer: ~S", sc->code);
 		    ind = s7_integer(index);
 		    if ((ind < 0) ||
 			(ind >= string_length(sc->x)))
@@ -58529,13 +58541,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				int ic;
 				ic = s7_integer(val);
 				if ((ic < 0) || (ic > 255))
-				  eval_error(sc, "string-set!: value must be a character: ~S", sc->code);
+				  eval_type_error(sc, "string-set!: value must be a character: ~S", sc->code);
 				string_value(sc->x)[ind] = (char)ic;
 				sc->value = val;
 				goto START;
 			      }
 			  }
-			eval_error(sc, "string-set!: value must be a character: ~S", sc->code);
+			eval_type_error(sc, "string-set!: value must be a character: ~S", sc->code);
 		      }
 		    push_op_stack(sc, sc->String_Set);
 		    sc->args = list_2(sc, index, sc->x);
@@ -58859,7 +58871,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  slot_set_value(sc->y, sc->value); 
 	  goto START;
 	}
-      eval_error(sc, "set! ~A: unbound variable", sc->code);
+      eval_type_error(sc, "set! ~A: unbound variable", sc->code); 
 
 
       /* --------------- */
@@ -61264,7 +61276,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    s7_pointer p;
 	    if (!is_environment(e))
-	      eval_error(sc, "with-environment takes an environment argument: ~A", e);
+	      eval_type_error(sc, "with-environment takes an environment argument: ~A", e);
 	    environment_id(e) = ++environment_number;
 	    sc->envir = e;
 	    for (p = environment_slots(e); is_slot(p); p = next_slot(p))
@@ -61299,7 +61311,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (!is_pair(sc->code))
 	    {
 	      if (!is_environment(sc->value))            /* (with-environment e abs) */
-		eval_error(sc, "with-environment takes an environment argument: ~A", sc->value);
+		eval_type_error(sc, "with-environment takes an environment argument: ~A", sc->value);
 	      if (is_symbol(sc->code))
 		sc->value = s7_symbol_local_value(sc, sc->code, sc->value);
 	      else sc->value = sc->code;
@@ -61321,7 +61333,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer e;
 	e = sc->value;
 	if (!is_environment(e))                    /* (with-environment . "hi") */
-	  eval_error(sc, "with-environment takes an environment argument: ~A", e);
+	  eval_type_error(sc, "with-environment takes an environment argument: ~A", e);
 	if (e == sc->global_env)
 	  sc->envir = sc->NIL;                             /* (with-environment (global-environment) ...) */
 	else 
@@ -67913,6 +67925,7 @@ int main(int argc, char **argv)
 /* in Linux:    gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lreadline -lncurses -lrt -ldl -lm -Wl,-export-dynamic
  * in *BSD:     gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lreadline -lncurses -lm -Wl,-export-dynamic
  * in OSX:      gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lreadline -lncurses -lm
+ * if clang, add  LDFLAGS="-Wl,-export-dynamic"
  */
 #endif
 
@@ -67938,7 +67951,7 @@ int main(int argc, char **argv)
  * TODO: (env env) in clm should be an error
  * checkpoint?
  * doc/test the lib*.scm files.
- * need to finish the vct/sound-data -> float-vector stuff
+ * need to finish the vct/sound-data -> float-vector stuff (I think only the C side remains)
  * someday all the simple Snd variables should be variables (not pws)
  * TODO: actually run the new snd-motif/gtk/play code! 
  */

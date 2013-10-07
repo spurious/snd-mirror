@@ -44,7 +44,7 @@ MUS_EXPORT XEN g_mus_data(XEN gen);
 #if HAVE_SCHEME
 typedef struct gf {
   void *gen, *g1, *g2, *g3, *g4, *g5; /* gf's -- freed */
-  void *gen1, *gen2, *gen3, *gen4; /* mus_any's -- not touched */
+  void *gen1, *gen2, *gen3; /* mus_any's -- not touched */
   mus_float_t (*func_1)(void *p);
   mus_float_t (*fn_1)(void *p);
   mus_float_t (*func_2)(void *p, mus_float_t x);
@@ -60,7 +60,6 @@ typedef struct gf {
   double *rx1, *rx2, *rx3;
   s7_pointer s1, s2, s3;
   mus_long_t i1;
-  mus_long_t *ri1;
   struct gf *nxt;
 } gf;
 

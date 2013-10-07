@@ -5493,7 +5493,7 @@ Better ideas are always welcome!
 <div class="indented">
 
 <p>Schemes vary in their treatment of ().  s7 considers it a constant that evaluates to itself,
-so you rarely need to quote it.  <code>(eq? () '())</code> is #t.
+so you don't need to quote it.  <code>(eq? () '())</code> is #t.
 This is consistent with, for example,
 <code>(eq? #f '#f)</code> which is also #t.
 The standard says "the empty list is a special object of its own type", so surely either choice is
