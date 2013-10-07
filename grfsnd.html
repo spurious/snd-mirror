@@ -2164,51 +2164,6 @@ than one input is required, the first argument to apply-ladspa should be a list 
     (append (list name maker copy) data)))
 </pre>
 
-<p>Here's a function that processes a channel of data through a plugin, sending the 
-data directly to the DAC:
-</p>
-
-<pre class="indented">
-(define* (ladspa-it library label :rest plugin-parameters)
-  ;; (ladspa-it "cmt" "delay_5s" .3 .5)
-  (init-ladspa)
-  (let* ((descriptor (ladspa-descriptor library label))
-	 (handle (ladspa-instantiate descriptor (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))
-	 (block-size 256)
-	 (in-block (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> block-size))
-	 (out-block (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> block-size))
-	 (len (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
-	 (data (<a class=quiet href="extsnd.html#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> 1 block-size))
-	 (audio-port (<a class=quiet href="extsnd.html#musaudioopenoutput" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioopenoutput_tip)">mus-audio-open-output</a> mus-audio-default (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) 1 <a class=quiet href="extsnd.html#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslshort_tip)">mus-lshort</a> (* block-size 2))))
-  (dynamic-wind
-   (lambda ()
-     (let ((count 0))
-       (for-each 
-	(lambda (port)
-	  (if (not (= (logand port LADSPA_PORT_CONTROL) 0))
-	      (let ((parameter (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 1 (car plugin-parameters))))
-		(set! plugin-parameters (cdr plugin-parameters))
-		(ladspa-connect-port descriptor handle count parameter))
-	      (if (not (= (logand port LADSPA_PORT_INPUT) 0))
-		  (ladspa-connect-port descriptor handle count in-block)
-		  (ladspa-connect-port descriptor handle count out-block)))
-	  (set! count (+ 1 count)))
-	(.PortDescriptors descriptor))))
-   (lambda ()
-     (ladspa-activate descriptor handle)
-     (do ((i 0 (+ i block-size)))
-	 ((&gt;= i len))
-       (<a class=quiet href="extsnd.html#vctsubseq" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctsubseq_tip)">vct-subseq</a> (<a class=quiet href="extsnd.html#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> i block-size) 0 block-size in-block)
-       (ladspa-run descriptor handle block-size)
-       (<a class=quiet href="extsnd.html#vcttosounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttosounddata_tip)">vct-&gt;sound-data</a> out-block data 0)
-       (<a class=quiet href="extsnd.html#musaudiowrite" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudiowrite_tip)">mus-audio-write</a> audio-port data block-size)))
-   (lambda ()
-     (ladspa-deactivate descriptor handle)
-     (<a class=quiet href="extsnd.html#musaudioclose" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioclose_tip)">mus-audio-close</a> audio-port)
-     (ladspa-cleanup descriptor handle)))))
-</pre>
-
-
 
 
 <!-- INDEX sndandalsa:Alsa -->

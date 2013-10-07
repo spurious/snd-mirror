@@ -29462,9 +29462,9 @@ static s7_pointer g_float_vector(s7_scheme *sc, s7_pointer args)
   vec = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR);
   for (x = args, i = 0; is_pair(x); x = cdr(x), i++) 
     {
-      if (is_real(car(x)))
+      if (s7_is_real(car(x))) /* bignum is ok here */
 	float_vector_element(vec, i) = s7_number_to_real(sc, car(x));
-      else return(simple_wrong_type_argument(sc, sc->FLOAT_VECTOR, args, T_REAL));
+      else return(simple_wrong_type_argument(sc, sc->FLOAT_VECTOR, car(x), T_REAL));
     }
   return(vec);
 }
@@ -30379,6 +30379,7 @@ s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
 }
 
 
+/* an experiment */
 s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x)
 {
   s7_Int len;
@@ -30433,6 +30434,7 @@ s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x)
  *   3) clm.c assumes mus_frame|mixer everywhere -- need parallel float* cases but that gets messy, typedef mus_frame s7_cell? (mus_mix was the killer)
  *   4) if frame is float-vector, how to distinguish in channels (say), (chans vct)=1 but (chans frame)=len
  *        perhaps mus-channels vs channels?  kinda kludgy. add vector methods?
+ *        change all the channels(frames) to length!  still have channels(mixer)
  */
 
 
@@ -30695,9 +30697,8 @@ If its first argument is a list, the list is copied (despite the '!')."
 	
 	/* currently we have to make the ordinary vector here even if not compare_func
 	 *   because the sorter uses vector_element to access sort args (see SORT_DATA in eval).
-	 *   PERHAPS: use a getter/setter?  (might be better in alloc terms in the current form)
-	 *     also if we used get/set, we could support c_objects (strings?)
-	 * macro in eval is SORT_DATA(k) then s7_vector_to_list if pair at start (sort4)
+	 *   This is probably better than passing down getter/setter (fewer allocations).
+	 *   get/set macro in eval is SORT_DATA(k) then s7_vector_to_list if pair at start (sort4)
 	 */
 	len = vector_length(data);
 	vec = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
@@ -67932,16 +67933,14 @@ int main(int argc, char **argv)
 /* use new generic_ff in methods opt case 
  * we need integer_length everywhere! These fixups are ignored by the optimized cases.
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
- * add empty? (or nil? or generic null? or zero-length? typeq? (null? c-pointer) -- C null? prime?
+ * add zero-length? typeq? 
  * other often-used libraries: glib/gio/gobject/gmodule ncurses? GL/GLU? pcre? readline? asound? sndlib-for-s7?
  * TODO: (env env) in clm should be an error
  * checkpoint?
  * doc/test the lib*.scm files.
- * can gf_parse or equivalent handle pure math function bodies in s7? -- a vector of parse trees indexed by arg type?
- * xen.h argify* -> something that defines everything needed at the definition point, then somehow collect for init
- *   need to replace all the s7_apply_n* stuff, internalize all the arg nums and help strings (type checks? defaults?) etc
  * need to finish the vct/sound-data -> float-vector stuff
  * someday all the simple Snd variables should be variables (not pws)
+ * TODO: actually run the new snd-motif/gtk/play code! 
  */
 
 

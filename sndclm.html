@@ -345,7 +345,7 @@ related documentation: &nbsp;
 <tr><td colspan=4><div class="contentscenter"><a href="#otherfunctions">Other Functions</a></div></td></tr>
 
   <tr><td class="ic"><a href="#autocorrelate">autocorrelate</a></td><td class="ic">autocorrelation</td>
-      <td class="ic"><a href="#dot-product">dot-product</a></td><td class="ic">vct dot (scalar) product</td></tr>
+      <td class="ic"><a href="#dot-product">dot-product</a></td><td class="ic">dot (scalar) product</td></tr>
   <tr><td class="ic"><a href="#amplitude-modulate">amplitude-modulate</a></td><td class="ic">sig1 * (car + sig2)</td>
       <td class="ic"><a href="#fft">fft</a></td><td class="ic">Fourier transform</td></tr>
   <tr><td class="ic"><a href="#array-interp">array-interp</a></td><td class="ic">array interpolation</td>
@@ -962,7 +962,7 @@ are times when nothing but a ton of oscils will do:
 
 <pre class="indented">
 ...
-(amps (make-vct 10607))
+(amps (make-float-vector 10607))
 (angle 0.0)
 (freq (hz-&gt;radians 1.0))
 ...
@@ -1004,7 +1004,7 @@ are times when nothing but a ton of oscils will do:
 	(vib (make-rand-interp 50 (hz->radians .01)))
 	(ampf (make-env '(0 0 1 1 10 1 11 0) :duration dur :scaler .1))
 	(samps (seconds->samples dur))
-	(amps (make-vct 10607))
+	(amps (make-float-vector 10607))
 	(angle 0.0)
 	(freq (hz->radians 1.0)))
 
@@ -1073,7 +1073,7 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 
 <pre class="indented">
 <em class=def id="make-env">make-env</em> 
-      envelope      ; list, vector, or vct of x,y break-point pairs
+      envelope      ; list or float-vector of x,y break-point pairs
       (scaler 1.0)  ; scaler on every y value (before offset is added)
       duration      ; duration in seconds
       (offset 0.0)  ; value added to every y value
@@ -1106,8 +1106,8 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 </table>
 
 
-<p>An envelope is a list or vct of break point pairs: <code>'(0 0  100 1)</code>  is
-a ramp from 0 to 1 over an x-axis excursion from 0 to 100, as is <code>(<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 0 100 1)</code>.  
+<p>An envelope is a list or float-vector of break point pairs: <code>'(0 0  100 1)</code>  is
+a ramp from 0 to 1 over an x-axis excursion from 0 to 100, as is <code>(float-vector 0 0 100 1)</code>.  
 This data is passed
 to make-env along with the scaler (multiplier)
 applied to the y axis, the offset added to every y value,
@@ -1481,7 +1481,7 @@ step envelope in pitch: <a href="#rxyk!cos">brassy</a> in generators.scm
 <em class=def id="make-table-lookup">make-table-lookup</em> 
         (frequency *clm-default-frequency*) ; table repetition rate in Hz
         (initial-phase 0.0)                 ; starting point in radians (pi = mid-table)
-        wave                                ; a vct containing the signal
+        wave                                ; a float-vector containing the signal
         (size *clm-table-size*)             ; table size if wave not specified
         (type mus-interp-linear)            ; interpolation type
 
@@ -1495,7 +1495,7 @@ step envelope in pitch: <a href="#rxyk!cos">brassy</a> in generators.scm
 <tr><td colspan=2 class="methodtitle">table-lookup methods</td></tr>
 <tr><td class="inner"><em class=gen>mus-frequency</em></td><td class="inner">frequency in Hz</td></tr>
 <tr><td class="inner"><em class=gen>mus-phase</em></td><td class="inner">phase in radians</td></tr>
-<tr><td class="inner"><em class=gen>mus-data</em></td><td class="inner">wave vct</td></tr>
+<tr><td class="inner"><em class=gen>mus-data</em></td><td class="inner">wave float-vector</td></tr>
 <tr><td class="inner"><em class=gen>mus-length</em></td><td class="inner">wave size (no set!)</td></tr>
 <tr><td class="inner"><em class=gen>mus-interp-type</em></td><td class="inner">interpolation choice (no set!)</td></tr>
 <tr><td class="inner"><em class=gen>mus-increment</em></td><td class="inner">table increment per sample</td></tr>
@@ -1576,17 +1576,17 @@ various such waveforms:
 </p>
 
 <pre class="indented">
-<em class=def id="partialstowave">partials-&gt;wave</em> synth-data wave-vct (norm #t)
-<em class=def id="phase-partialstowave">phase-partials-&gt;wave</em> synth-data wave-vct (norm #t)
+<em class=def id="partialstowave">partials-&gt;wave</em> synth-data wave (norm #t)
+<em class=def id="phase-partialstowave">phase-partials-&gt;wave</em> synth-data wave (norm #t)
 </pre>
 
-<p>The "synth-data" argument is a list or vct of (partial amp) pairs: '(1 .5  2 .25)
+<p>The "synth-data" argument is a list or float-vector of (partial amp) pairs: '(1 .5  2 .25)
 gives a combination of a sine wave at the carrier (partial = 1) at amplitude .5, and
 another at the first harmonic (partial = 2) at amplitude .25.  The partial amplitudes are
 normalized to sum to a total amplitude of 1.0 unless the argument "norm"
 is #f.  If the initial phases matter (they almost never do), you can use
-phase-partials-&gt;wave; in this case the synth-data is a list or vct of (partial amp phase) triples with phases in radians.
-If "wave-vct" is not passed, these functions return a new vct.
+phase-partials-&gt;wave; in this case the synth-data is a list or float-vector of (partial amp phase) triples with phases in radians.
+If "wave" is not passed, these functions return a new float-vector.
 </p>
 
 <pre class="indented">
@@ -1611,7 +1611,7 @@ based on some previously chosen loop positions:
         (let* ((loop-start (car loop-data))
                (loop-end (cadr loop-data))
                (loop-length (+ 1 (- loop-end loop-start)))
-               (sound-section (<a class=quiet href="#filetoarray" onmouseout="UnTip()" onmouseover="Tip(sndclm_filetoarray_tip)">file-&gt;array</a> sound 0 loop-start loop-length (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> loop-length)))
+               (sound-section (<a class=quiet href="#filetoarray" onmouseout="UnTip()" onmouseover="Tip(sndclm_filetoarray_tip)">file-&gt;array</a> sound 0 loop-start loop-length (make-vector loop-length 0.0 #t)))
                (original-loop-duration (/ loop-length (srate sound)))
                (tbl (<em class=red>make-table-lookup</em> :frequency (/ freq original-loop-duration) :wave sound-section)))
                ;; "freq" here is how fast we read (transpose) the sound &mdash; 1.0 returns the original
@@ -1632,7 +1632,7 @@ modulation deviation in samples:
          (end (+ beg (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur)))
          (table-length (<a class=quiet href="extsnd.html#mussoundframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframes_tip)">mus-sound-frames</a> file))
          (tab (<em class=red>make-table-lookup</em> :frequency (/ read-speed (<a class=quiet href="extsnd.html#mussoundduration" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundduration_tip)">mus-sound-duration</a> file)) 
-                                 :wave (<a class=quiet href="#filetoarray" onmouseout="UnTip()" onmouseover="Tip(sndclm_filetoarray_tip)">file-&gt;array</a> file 0 0 table-length (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> table-length))))
+                                 :wave (<a class=quiet href="#filetoarray" onmouseout="UnTip()" onmouseover="Tip(sndclm_filetoarray_tip)">file-&gt;array</a> file 0 0 table-length (make-vector table-length 0.0 #t))))
          (osc (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> modulator-freq))
          (index (/ (* (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> modulator-freq) 2 pi index-in-samples) table-length)))
    (do ((i beg (+ 1 i)))
@@ -1661,7 +1661,7 @@ the table-relative phase, returning a squared-off sine-wave:
 
 <!--
 (with-sound (:srate 1000000 :channels 2) 
-  (let ((gen1 (make-table-lookup 100.0 :wave (partials->wave '(1 1) (make-vct 100)) :type mus-interp-none))
+  (let ((gen1 (make-table-lookup 100.0 :wave (partials->wave '(1 1) (make-vector 100 0.0 #t)) :type mus-interp-none))
         (sine (make-oscil 100.0)))
        (do ((i 0 (+ 1 i))) 
            ((= i 1000000))
@@ -1701,7 +1701,7 @@ reduces the original problem by a factor of n * L:
 
 <!--
 (with-sound (:srate 1000000 :channels 2) 
-  (let ((gen1 (make-table-lookup 100.0 :wave (partials->wave '(1 1) (make-vct 100)) :type mus-interp-linear))
+  (let ((gen1 (make-table-lookup 100.0 :wave (partials->wave '(1 1) (make-vector 100 0.0 #t)) :type mus-interp-linear))
 	(sine (make-oscil 100.0)))
        (do ((i 0 (+ 1 i))) 
 	   ((= i 1000000))
@@ -1753,10 +1753,10 @@ If you're trying to produce a sum of sinusoids, use polywave &mdash; it makes a 
 (with-sound (:channels 4 :clipped #f :statistics #t)
   (let* ((pitch 1000.0)
 	 (size 64)
-	 (tbl1 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vct size)) size mus-interp-none))
-	 (tbl2 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vct size)) size mus-interp-linear))
-	 (tbl3 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vct size)) size mus-interp-lagrange))
-	 (tbl4 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vct size)) size mus-interp-hermite)))
+	 (tbl1 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vector size 0.0 #t)) size mus-interp-none))
+	 (tbl2 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vector size 0.0 #t)) size mus-interp-linear))
+	 (tbl3 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vector size 0.0 #t)) size mus-interp-lagrange))
+	 (tbl4 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vector size 0.0 #t)) size mus-interp-hermite)))
        (do ((i 0 (+ 1 i)))
 	   ((= i 100000))
 	 (outa i (table-lookup tbl1))
@@ -1767,7 +1767,7 @@ If you're trying to produce a sum of sinusoids, use polywave &mdash; it makes a 
 (with-sound (:channels 5 :clipped #f :statistics #t)
   (let* ((pitch 2.0)
 	 (size 64)
-	 (wave (let ((v (make-vct size 0.0)))
+	 (wave (let ((v (make-vector size 0.0 0.0 #t)))
 		 (set! (v (/ size 2)) 1.0)
 		 v))
 	 (tbl1 (make-table-lookup pitch 0.0 wave size mus-interp-none))
@@ -2044,7 +2044,7 @@ in phase and amplitude at run-time by setting a vct value.
 
 <pre class="indented">
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:clipped #f :statistics #t :play #t :scaled-to .5)
-  (let ((gen (<em class=red>make-polywave</em> 200 (let ((harms (make-vct (* 5 2)))) ; 5 harmonics, 2 numbers for each
+  (let ((gen (<em class=red>make-polywave</em> 200 (let ((harms (make-vector (* 5 2) 0.0 #t))) ; 5 harmonics, 2 numbers for each
 				   (do ((k 1 (+ k 3))
 					(i 0 (+ i 2)))
 				       ((= i (* 5 2)))
@@ -2251,7 +2251,7 @@ changing spectra is to interpolate between two or more sets of coefficients.
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
   (let* ((dur 1.0)
 	 (samps (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur))
-	 (coeffs (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0.0 0.5 0.25 0.125 0.125))
+	 (coeffs (float-vector 0.0 0.5 0.25 0.125 0.125))
 	 (x 0.0)
 	 (incr (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> 100.0))
 	 (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 10 1 11 0) :duration dur :scaler .5))
@@ -2286,13 +2286,13 @@ energy appears in lower harmonics even if they are not included in the index=1.0
 </p>
 
 <pre class="indented">
-&gt; (cheby-hka 3 0.25 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 0 0 0 1.0 1.0))
+&gt; (cheby-hka 3 0.25 (float-vector 0 0 0 0 1.0 1.0))
 -0.0732421875
-&gt; (cheby-hka 2 0.25 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 0 0 0 1.0 1.0))
+&gt; (cheby-hka 2 0.25 (float-vector 0 0 0 0 1.0 1.0))
 -0.234375
-&gt; (cheby-hka 1 0.25 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 0 0 0 1.0 1.0))
+&gt; (cheby-hka 1 0.25 (float-vector 0 0 0 0 1.0 1.0))
 1.025390625
-&gt; (cheby-hka 0 0.25 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 0 0 0 1.0 1.0))
+&gt; (cheby-hka 0 0.25 (float-vector 0 0 0 0 1.0 1.0))
 1.5234375
 </pre>
 
@@ -2383,7 +2383,7 @@ we get sum and difference tones, much as in complex FM:
 <hr>
 <pre class="indented">
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
-  (let ((pcoeffs (<em class=red>partials-&gt;polynomial</em> (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 5 1)))
+  (let ((pcoeffs (<em class=red>partials-&gt;polynomial</em> (float-vector 5 1)))
 	(gen1 (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 100.0))
 	(gen2 (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 2000.0)))
     (do ((i 0 (+ 1 i)))
@@ -2895,10 +2895,10 @@ we can truncate its spectrum at the desired number of harmonics:
       (or (and (&lt; n 128)
 	       (not B)
 	       (previous-results n))
-	  (let* ((coeffs (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> (* 2 n)))
+	  (let* ((coeffs (make-vector (* 2 n) 0.0 #t))
 		 (size (expt 2 12))
-		 (rl (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
-		 (im (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
+		 (rl (make-vector size 0.0 #t))
+		 (im (make-vector size 0.0 #t))
 		 (incr (/ (* 2 pi) size))
 		 (index (or B (max 1 (floor (/ n 2))))))
 	    (do ((i 0 (+ 1 i))
@@ -4426,7 +4426,7 @@ make-wave-train-with-env (defined in generators.scm) returns a new wave-train ge
 <pre class="indented">
 (with-sound (:play #t)
   (let ((gen (make-wave-train 440.0
-               :wave (let ((v (make-vct 64)) 
+               :wave (let ((v (make-vector 64 0.0 #t)) 
                            (g (make-ncos 400 10)))
                        (set! (mus-phase g) (* -0.5 pi))
                        (do ((i 0 (+ 1 i))) 
@@ -4484,7 +4484,7 @@ lambda: ( -- )
 
 <!--
 (with-sound (:clipped #f :statistics #t :scaled-to .5 :play #t)
-  (let ((gen (make-wave-train 300.0 :wave (let ((v (make-vct 64)) 
+  (let ((gen (make-wave-train 300.0 :wave (let ((v (make-vector 64 0.0 #t)) 
                                                 (g (make-sum-of-cosines 10 400 (* -0.5 pi)))) 
                                             (do ((i 0 (+ 1 i))) 
                                                 ((= i 64)) 
@@ -4515,7 +4515,7 @@ Here is a FOF instrument based loosely on fof.c of Perry Cook and the article
          (vibr (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 6))
          (vibenv (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> (or ve (list 0 1 100 1)) :scaler vib :duration dur))
          (win-freq (/ (* 2 pi) foflen))
-         (foftab (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> foflen))
+         (foftab (make-vector foflen 0.0 #t))
          (wt0 (<em class=red>make-wave-train</em> :wave foftab :frequency frq)))
     (do ((i 0 (+ 1 i)))
         ((= i foflen))
@@ -4559,7 +4559,7 @@ using the same frequency envelope as the wave-train, so we have some idea when t
          (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 1 1 0) :scaler .7 :offset .3 :duration duration :base 3.0))
          (grain (<em class=red>mus-data</em> grains)))
     (<a class=quiet href="#filetoarray" onmouseout="UnTip()" onmouseover="Tip(sndclm_filetoarray_tip)">file-&gt;array</a> grain-file 0 0 grain-size grain)
-    (let ((original-grain (<a class=quiet href="extsnd.html#vctcopy" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctcopy_tip)">vct-copy</a> grain)))
+    (let ((original-grain (copy grain)))
       (do ((i beg (+ 1 i)))
           ((= i end))
         (let ((gliss (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf)))
@@ -4792,7 +4792,7 @@ do perfectly well:
   (do ((n 1 (+ n 1)))
       ((= n 12))
     (let* ((bins (vector-&gt;vct (add-rands n)))
-	   (pk (<a class=quiet href="extsnd.html#vctpeak" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctpeak_tip)">vct-peak</a> bins)))
+	   (pk (maxamp bins)))
       (<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (<a class=quiet href="extsnd.html#vctscale" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctscale_tip)">vct-scale!</a> bins (/ 1.0 pk)))
       (set! (<a class=quiet href="extsnd.html#xaxislabel" onmouseout="UnTip()" onmouseover="Tip(extsnd_xaxislabel_tip)">x-axis-label</a>) (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "n: ~D" n))
       (<a class=quiet href="extsnd.html#updatetimegraph" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatetimegraph_tip)">update-time-graph</a>))))
@@ -4840,7 +4840,7 @@ but 0.5 should happen three times as often as either of the others:
 </p>
 
 <pre class="indented">
-(let ((vals (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0.0 0.5 0.5 0.5 1.0)))
+(let ((vals (float-vector 0.0 0.5 0.5 0.5 1.0)))
   (do ((i 0 (+ 1 i)))
       ((= i 10))
     (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #t ";~A " (vals (floor (random 5.0))))))
@@ -5619,7 +5619,7 @@ The Hilbert transform can be implemented with an fir-filter:
 <pre class="indented">
 (define* (make-hilbert-transform (len 30))
   (let* ((arrlen (+ 1 (* 2 len)))
-         (arr (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> arrlen))
+         (arr (make-vector arrlen 0.0 #t))
          (lim (if (even? len) len (+ 1 len))))
     (do ((i (- len) (+ 1 i)))
         ((= i lim))
@@ -5651,7 +5651,7 @@ bandstop filter: <a href="sndscm.html#makebandstop">make-bandstop</a> in dsp.scm
 Butterworth, Chebyshev, Bessel, Elliptic filters: <a href="sndscm.html#analogfilterdoc">analog-filter.scm</a><br>
 Hilbert transform: <a href="sndscm.html#makehilberttransform">make-hilbert-transform</a> in dsp.scm<br>
 differentiator: <a href="sndscm.html#makedifferentiator">make-differentiator</a> in dsp.scm<br>
-block DC: dc-block in prc95.scm or (make-filter 2 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 1 -1) (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 -0.99))<br>
+block DC: dc-block in prc95.scm or (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.99))<br>
 hum elimination: <a href="sndscm.html#IIRfilters">eliminate-hum</a> and <a href="sndscm.html#notchchannel">notch-channel</a> in dsp.scm<br>
 hiss elimination: <a href="sndscm.html#notchoutrumbleandhiss">notch-out-rumble-and-hiss</a><br>
 smoothing filters: <a href="#moving-average">moving-average</a>, <a href="#weighted-moving-average">weighted-moving-average</a>, exponentially-weighted-moving-average<br>
@@ -6776,7 +6776,7 @@ lambda: ( -- )
        (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<em class=red>convolve</em> ff)))))
 
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
-  (convins 0 2 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 1.0 0.5 0.25 0.125) "oboe.snd")) ; same as fir-filter with those coeffs
+  (convins 0 2 (float-vector 1.0 0.5 0.25 0.125) "oboe.snd")) ; same as fir-filter with those coeffs
 </pre>
 
 <p>convolve-files handles a very common special case: convolve
@@ -7078,7 +7078,7 @@ In the following example, we use the edit function to reverse every other grain:
                                            (set! forward #f)
                                            (begin
                                              (set! forward #t)
-                                             (<a class=quiet href="extsnd.html#vctreverse" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctreverse_tip)">vct-reverse!</a> grain len)))
+                                             (reverse! grain)))
                                        len))))
         (rd (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0)))
     (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y) (<em class=red>granulate</em> grn (lambda (dir) (rd)))))))
@@ -7536,7 +7536,7 @@ writes out the new "sound":
 
   (let ((nsnd (new-sound "test.snd" :srate 22050))
 	(samp 0)
-	(samps (make-vct (* size size))))
+	(samps (make-vector (* size size) 0.0 #t)))
     (do ((i 0 (+ i 1)))
 	((= i size))
       (do ((j 0 (+ j 1)))
@@ -7838,7 +7838,7 @@ readin and <a href="#env">env</a>:
 <p>These are the "generic" input and output functions.
 out-any adds its "data" argument (a sound sample) into the "output" object at sample
 position "loc".  
-The "output" argument can be a vct, a vector, or a sound-data object, as well as the more usual frame-&gt;file object.
+The "output" argument can be a vector as well as the more usual frame-&gt;file object.
 or any output-capable CLM generator.
 In with-sound, the current output is *output* and the reverb output is *reverb*.
 outa is the same as out-any with a channel of 0.  It is not an error to try to write to a channel that doesn't exist;
@@ -7847,7 +7847,7 @@ the function just returns.
 
 <p>in-any returns the sample at position "loc" in
 "input".  ina is the same as in-any with a channel of 0.
-As in out-any and friends, the "input" argument can be a file-&gt;frame object, a vct, a vector, or a sound-data object.
+As in out-any and friends, the "input" argument can be a file-&gt;frame object, or a vector.
 </p>
 
 <table>
@@ -7908,12 +7908,12 @@ lambda: ( -- )
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (simple-ina 0 1 .5 "oboe.snd"))
 </pre>
 
-<p>To write from <a href="sndscm.html#wsdoc">with-sound</a> to a vct or sound-data object, rather than a file,
+<p>To write from <a href="sndscm.html#wsdoc">with-sound</a> to a vector, rather than a file,
 use its :output argument:
 </p>
 
 <pre class="indented">
-(with-sound (<em class=red>:output</em> (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 44100)) ; this sets *output*, the default output location
+(with-sound (<em class=red>:output</em> (make-vector 44100 0.0 #t)) ; this sets *output*, the default output location
    (<a class=quiet href="sndscm.html#vdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> 0 1 440 .1))
 
 ;; returns #&lt;vct[len=44100]: 0.000 0.000 0.000 ...&gt;
@@ -7943,7 +7943,7 @@ use its :output argument:
 
 <pre class="indented">
 (let ((input (<a class=quiet href="#make-readin" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_readin_tip)">make-readin</a> "oboe.snd" :start 1000)))
-  (with-sound (:output (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 10))
+  (with-sound (:output (make-vector 10 0.0 #t))
     (do ((i 0 (+ 1 i)))
 	((= i 10))
       (<em class=red>outa</em> i (<em class=red>ina</em> i (lambda (loc chn)
@@ -7951,13 +7951,13 @@ use its :output argument:
 </pre>
 
 <pre class="indented">
-(let ((outv (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 10)))
+(let ((outv (make-vector 10 0.0 #t)))
   (with-sound ()
      (do ((i 0 (+ 1 i)))
          ((= i 10))
       (outa i (* i .1) (lambda (loc val chan)
 	 	         (set! (outv loc) val)))))
-  outv) ; this is equivalent to using :output (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 10) as a with-sound argument
+  outv) ; this is equivalent to using :output (make-vector 10 0.0 #t) as a with-sound argument
 </pre>
 
 
@@ -8012,7 +8012,7 @@ be greater than or equal to 1.0.
 The mus-interp-sinusoidal
 case uses sin and cos to set the respective channel amplitudes (this is reported to
 help with the "hole-in-the-middle" problem).
-The "output" argument can be a vct or a sound-data object, as well as a frame-&gt;file generator.
+The "output" argument can be a vector as well as a frame-&gt;file generator.
 </p>
 
 
@@ -8362,7 +8362,7 @@ of <a href="#ncosdoc">ncos and nsin</a>.
 noid's phase argument can be a vct, <code>'min-peak</code>, <code>'max-peak</code>, or omitted (#f).
 If omitted, the phases are set to random numbers between 0 and 2 pi; if
 a vct, the vct's values are used as the phases; if 'max-peak, all phases are set
-to pi/2 (ncos essentially &mdash; use <code>(make-vct n 0.0)</code> to get nsin);
+to pi/2 (ncos essentially &mdash; use <code>(make-vector n 0.0 #t)</code> to get nsin);
 and if 'min-peak, the minimum peak amplitude phases in <a href="sndscm.html#peakphasesdoc">peak-phases.scm</a> are used.
 In the 'min-peak and 'max-peak cases, noid's output is normalized to fall between -1.0 and 1.0.
 polyoid-env is an extension of polyoid that takes envelopes to control the amplitude and phase of each
@@ -8378,7 +8378,7 @@ harmonic.
     (with-sound (:clipped #f :output (string-append "test-noid-" (number->string i) ".snd"))
       (let ((samps 44100)
             (gen (make-noid 100.0 32 (if (= i 0) 'max-peak
-                                         (if (= i 1) (make-vct 32 0.0)
+                                         (if (= i 1) (make-vector 32 0.0 #t)
                                 	     (if (= i 2) #f
 						 'min-peak))))))
 	(do ((i 0 (+ 1 i)))
@@ -9706,7 +9706,7 @@ We could mimic the fft display window in the "lisp graph" via:
 <pre class="indented">
 (let* ((rd (make-readin "oboe.snd"))
        (ft (<em class=red>make-moving-fft</em> rd))
-       (data (make-vct 256)))
+       (data (make-vector 256 0.0 #t)))
   (set! (lisp-graph?) #t)
   (do ((i 0 (+ i 1)))
       ((= i 10000))
@@ -10151,7 +10151,7 @@ generator, among others.  Here's array-interp as a "compander":
 </p>
 
 <pre class="indented">
-(define compand-table (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> -1.0 -0.96 -0.90 -0.82 -0.72 -0.60 -0.45 -0.25 
+(define compand-table (float-vector -1.0 -0.96 -0.90 -0.82 -0.72 -0.60 -0.45 -0.25 
                             0.0 0.25 0.45 0.60 0.72 0.82 0.90 0.96 1.0))
 
 (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a>
@@ -10172,20 +10172,20 @@ We could define our own FIR filter using dot-product:
 
 <pre class="indented">
 (define (make-fr-filter coeffs)
-  (list coeffs (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> (length coeffs))))
+  (list coeffs (make-vector (length coeffs) 0.0 #t)))
 
 (define (fr-filter flt x)
   (let* ((coeffs (car flt))
 	 (xs (cadr flt))
 	 (xlen (length xs)))
-    (<a class=quiet href="extsnd.html#vctmove" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctmove_tip)">vct-move!</a> xs (- xlen 1) (- xlen 2) #t)
+    (float-vector-move! xs (- xlen 1) (- xlen 2) #t)
     (set! (xs 0) x)
     (<em class=red>dot-product</em> coeffs xs xlen)))
 </pre>
 
 
 <p>
-edot-product returns the complex dot-product of the "data" argument (a vct or a vector) with <code>(exp (* freq i))</code>.
+edot-product returns the complex dot-product of the "data" argument (a vector) with <code>(exp (* freq i))</code>.
 Here, "i" goes from 0 to data's size - 1.
 "freq" and the elements of "data" can be complex, as can the return value.  See <a href="sndscm.html#stretchsoundviadft">stretch-sound-via-dft</a>
 for an example.
@@ -10359,8 +10359,8 @@ only difference is that mus-fft includes the fft length as an argument, whereas
 <pre class="indented">
 (let* ((len (mus-sound-frames "oboe.snd"))
        (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
-       (rdata (make-vct fsize))
-       (idata (make-vct fsize))
+       (rdata (make-vector fsize 0.0 #t))
+       (idata (make-vector fsize 0.0 #t))
        (cutoff (round (/ fsize 10)))
        (fsize2 (/ fsize 2)))
   (file-&gt;array "oboe.snd" 0 0 len rdata)

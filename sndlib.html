@@ -896,7 +896,7 @@ or, at run time, use s7's loader and s7_init_sndlib:
   mus-sound-close-input (fd)               close sound file
   mus-sound-close-output (fd bytes)        close sound file and update its length indication, if any
   mus-sound-read (fd beg end chans sdata)  read data from sound file fd loading the data array from beg to end
-                                           sdata is a sound-data object that should be able to accommodate the read
+                                           sdata is a float-vector that should be able to accommodate the read
   mus-sound-write (fd beg end chans sdata) write data to sound file fd
   mus-sound-seek-frame (fd frame)          move to frame in sound file fd
   mus-file-clipping (fd)                   whether output is clipped in file 'fd'
@@ -906,20 +906,11 @@ or, at run time, use s7's loader and s7_init_sndlib:
                                            open audio port device ready for output with the indicated attributes
   mus-audio-open-input (device srate chans format bufsize)
                                            open audio port device ready for input with the indicated attributes
-  mus-audio-write (line sdata frames)      write frames of data from sound-data object sdata to port line
-  mus-audio-read (line sdata frames)       read frames of data into sound-data object sdata from port line
+  mus-audio-write (line sdata frames)      write frames of data from float-vector sdata to port line
+  mus-audio-read (line sdata frames)       read frames of data into float-vector sdata from port line
   mus-audio-close (line)                   close audio port line
 
   mus-oss-set-buffers (num size)           in Linux (OSS) sets the number and size of the OSS "fragments"
-
-  make-sound-data (chans, frames)      return a sound-data object with chans arrays, each of length frames
-  sound-data-ref (obj chan frame)      return (as a float) the sample in channel chan at location frame
-  sound-data-set! (obj chan frame val) set obj's sample at frame in chan to (the float) val
-  sound-data? (obj)                    #t if obj is of type sound-data
-  sound-data-length (obj)              length of each channel of data in obj
-  sound-data-chans (obj)               number of channels of data in obj
-  sound-data-&gt;vct (sdobj chan vobj)    place sound-data channel data in vct 
-  vct-&gt;sound-data (vobj sdobj chan)    place vct data in sound-data
 
 ;;; this function prints header information
 (define info
@@ -933,18 +924,6 @@ or, at run time, use s7's loader and s7_init_sndlib:
      ", len: " (number-&gt;string
                 (/ (<a class=quiet href="extsnd.html#mussoundsamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsamples_tip)">mus-sound-samples</a> file)
                    (* (<a class=quiet href="extsnd.html#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> file) (<a class=quiet href="extsnd.html#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file)))))))
-
-;;; this function reads the first 32 samples of a file, returning the 30th in channel 0
-(define read-sample-30 
-  (lambda (file)
-    (let* ((fd (<a class=quiet href="extsnd.html#mussoundopeninput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundopeninput_tip)">mus-sound-open-input</a> file))
-	   (<a class=quiet href="extsnd.html#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> (<a class=quiet href="extsnd.html#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> file))
-	   (data (<a class=quiet href="extsnd.html#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> chans 32)))
-      (<a class=quiet href="extsnd.html#mussoundread" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundread_tip)">mus-sound-read</a> fd 0 31 chans data)
-      ;; we could use sound-data-&gt;vct here to return all the samples
-      (let ((val (<a class=quiet href="extsnd.html#sounddataref" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddataref_tip)">sound-data-ref</a> data 0 29)))
-	(<a class=quiet href="extsnd.html#mussoundcloseinput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundcloseinput_tip)">mus-sound-close-input</a> fd)
-	val))))
 </pre>
 
 

@@ -3033,7 +3033,7 @@ Say we previously filtered a sound via
 </p>
 
 <pre class="indented">
-(<a class=quiet href="extsnd.html#filterchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterchannel_tip)">filter-channel</a> (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> .5 .25 .125))
+(<a class=quiet href="extsnd.html#filterchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterchannel_tip)">filter-channel</a> (float-vector .5 .25 .125))
 </pre>
 
 <p>and our mouse is broken so we can't use the Undo menu, and we've forgotten that
@@ -3041,7 +3041,7 @@ we could type (undo).  Nothing daunted, we use:
 </p>
 
 <pre class="indented">
-(<a class=quiet href="extsnd.html#filterchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterchannel_tip)">filter-channel</a> (invert-filter (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> .5 .25 .125)))
+(<a class=quiet href="extsnd.html#filterchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterchannel_tip)">filter-channel</a> (invert-filter (float-vector .5 .25 .125)))
 </pre>
 
 <p>There are a million gotchas here.  The primary one is that the inverse filter
@@ -3141,7 +3141,7 @@ An example of its use is fltit-1.
 </p>
 
 <pre class="indented">
-(<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (fltit-1 10 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 1.0 0 0 0 0 0 0 1.0 0)))
+(<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (fltit-1 10 (float-vector 0 1.0 0 0 0 0 0 0 1.0 0)))
 </pre>
 
 <div class="spacer"></div>
@@ -3162,7 +3162,7 @@ The 'acoeffs' apply to the linear terms, and the 'bcoeffs' to the quadratic.
 </p>
 
 <pre class="indented">
-(let ((flt (make-volterra-filter (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> .5 .1) (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> .3 .2 .1))))
+(let ((flt (make-volterra-filter (float-vector .5 .1) (float-vector .3 .2 .1))))
   (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (x) (volterra-filter flt x))))
 </pre>
 
@@ -3284,7 +3284,7 @@ given the index 'a', and harmonic coefficients 'coeffs' (the 0th element is DC a
     (do ((i 0 (+ 1 i)))
         ((= i 88200))
       (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<a class=quiet href="sndclm.html#polyshape" onmouseout="UnTip()" onmouseover="Tip(sndclm_polyshape_tip)">polyshape</a> gen 0.25))))))
-(<em class=red>cheby-hka</em> 1 0.25 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 .5 .25 .125 .125)) ; returns first partial (fundamental) amplitude
+(<em class=red>cheby-hka</em> 1 0.25 (float-vector 0 .5 .25 .125 .125)) ; returns first partial (fundamental) amplitude
 </pre>
 
 <div class="spacer"></div>
@@ -3542,7 +3542,7 @@ If 'clipped' is #t, the new data is assumed to be outside -1.0 to 1.0.
 </p>
 
 <pre class="indented">
-&gt; (lpc-predict (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 1 2 3 4 5 6 7) 8 (lpc-coeffs (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 1 2 3 4 5 6 7) 8 4) 4 2)
+&gt; (lpc-predict (float-vector 0 1 2 3 4 5 6 7) 8 (lpc-coeffs (float-vector 0 1 2 3 4 5 6 7) 8 4) 4 2)
 #&lt;vct[len=2]: 7.906 8.557&gt;
 </pre>
 
@@ -9765,7 +9765,7 @@ The following doubles each sample in channel 0 during playback:
 
 <p>This file contains various functions related to the CLM polynomial function.  A polynomial here
 is a vct or a vector (for complex coefficients) holding the polynomial coefficients from lowest
-to highest (i.e. the constant is vct[0], x+2 is (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 2 1), etc).
+to highest (i.e. the constant is vct[0], x+2 is (float-vector 2 1), etc).
 </p>
 
 <!-- main-index |polydoc:polynomial operations -->
@@ -9798,7 +9798,7 @@ convolution the infinitely slow way is poly*:
 </p>
 
 <pre class="indented">
-(<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (poly* (<a class=quiet href="extsnd.html#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> 0 (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)) (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 2.0))) ; no, this is not serious
+(<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (poly* (<a class=quiet href="extsnd.html#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> 0 (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)) (float-vector 2.0))) ; no, this is not serious
 </pre>
 
 

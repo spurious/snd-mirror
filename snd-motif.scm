@@ -2548,7 +2548,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	((graph)
 	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane 
 					     (list XmNpaneMinimum 100)))
-		(snd (make-variable-graph form (string-append variable-name ": time") 2048 (mus-srate))))
+		(snd (make-variable-graph form (string-append variable-name ": time") 2048 (floor (mus-srate)))))
 	   (list (sound->integer snd) (channel-data snd 0))))
 	((spectrum)
 	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane
