@@ -7755,30 +7755,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 	    {
 	      if ((XEN_VECTOR_P(output)) &&
 		  (pos < XEN_VECTOR_LENGTH(output)))
-		{
-		  int rank;
-		  rank = XEN_VECTOR_RANK(output);
-		  if (rank == 1)
-		    XEN_VECTOR_SET(output, pos, C_TO_XEN_DOUBLE(XEN_TO_C_DOUBLE(XEN_VECTOR_REF(output, pos)) + mus_frame_ref(outfr, 0)));
-#if HAVE_SCHEME
-		  else
-		    {
-		      int i, index;
-		      s7_pointer *elements;
-		      s7_Int *offsets;
-
-		      elements = s7_vector_elements(output);
-		      offsets = s7_vector_offsets(output);
-
-		      for (i = 0; i < rank; i++)
-			{
-			  /* v[i, pos] in each dimension */
-			  index = i * offsets[0] + pos * offsets[1];
-			  elements[index] = s7_make_real(s7, XEN_TO_C_DOUBLE(elements[index]) + mus_frame_ref(outfr, i));
-			}
-		    }
-#endif
-		}
+		XEN_VECTOR_SET(output, pos, C_TO_XEN_DOUBLE(XEN_TO_C_DOUBLE(XEN_VECTOR_REF(output, pos)) + mus_frame_ref(outfr, 0)));
 	    }
 	}
     }

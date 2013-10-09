@@ -10,7 +10,6 @@
  *   vct *xen_to_vct(XEN arg)                   given XEN arg, return vct
  *   void mus_vct_set_print_length(int val)     set vct print length (default 10) (also mus_vct_print_length)
  *
- * Scheme side:
  *   (make-vct len (filler 0.0))      make new vct
  *   (vct? obj)                       is obj a vct
  *   (vct-ref v index)                return v[index]
@@ -210,15 +209,6 @@ static char *mus_vct_to_string(vct *v)
     }
   strcat(buf, ">");
   return(buf);
-}
-
-
-#else /* HAVE_SCHEME */
-
-bool mus_vct_p(XEN obj) 
-{
-  return(s7_is_float_vector(obj));
-  /* (s7_vector_rank(obj) == 1) */
 }
 #endif
 
@@ -432,6 +422,12 @@ static XEN g_vct_copy(XEN obj)
 }
 
 #else /* HAVE_SCHEME */
+
+bool mus_vct_p(XEN obj) 
+{
+  return(s7_is_float_vector(obj));
+  /* (s7_vector_rank(obj) == 1) */
+}
 
 vct *mus_vct_make(mus_long_t len)
 {
@@ -1762,15 +1758,6 @@ XEN xen_list_to_vct(XEN lst)
 }
 
 
-#if (!HAVE_SCHEME)
-static XEN g_vct(XEN args) 
-{
-  #define H_vct "(" S_vct " args...): returns a new vct with args as contents; same as " S_list_to_vct ": (vct 1 2 3)"
-  return(xen_list_to_vct(args));
-}
-#endif
-
-
 XEN mus_array_to_list(mus_float_t *arr, mus_long_t i, mus_long_t len)
 {
   if (i < (len - 1))
@@ -1782,6 +1769,13 @@ XEN mus_array_to_list(mus_float_t *arr, mus_long_t i, mus_long_t len)
 
 
 #if (!HAVE_SCHEME)
+static XEN g_vct(XEN args) 
+{
+  #define H_vct "(" S_vct " args...): returns a new vct with args as contents; same as " S_list_to_vct ": (vct 1 2 3)"
+  return(xen_list_to_vct(args));
+}
+
+
 static XEN g_vct_to_list(XEN vobj)
 {
   #define H_vct_to_list "(" S_vct_to_list " v): returns a new list with elements of vct v"
@@ -1851,6 +1845,35 @@ static XEN g_vct_to_vector(XEN vobj)
 
   return(new_vect);
 }
+
+
+static XEN g_vct_reverse(XEN vobj, XEN size)
+{
+  #define H_vct_reverse "(" S_vct_reverse " vct len): in-place reversal of vct contents"
+  vct *v;
+  mus_float_t *d;
+  mus_long_t i, j, len = -1;
+
+  XEN_ASSERT_TYPE(mus_vct_p(vobj), vobj, 1, S_vct_reverse, "a vct");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(size), size, 2, S_vct_reverse, "an integer");
+
+  v = XEN_TO_VCT(vobj);
+  if (XEN_LONG_LONG_P(size))
+    len = XEN_TO_C_LONG_LONG(size);
+  if ((len <= 0) || (len > mus_vct_length(v)))
+    len = mus_vct_length(v);
+  if (len == 1) return(vobj);
+  d = mus_vct_data(v);
+
+  for (i = 0, j = len - 1; i < j; i++, j--)
+    {
+      mus_float_t temp;
+      temp = d[i];
+      d[i] = d[j];
+      d[j] = temp;
+    }
+  return(vobj);
+}
 #endif
 
 
@@ -1902,37 +1925,6 @@ static XEN g_vct_min(XEN vobj)
     }
   return(C_TO_XEN_DOUBLE(mx));
 }
-
-
-#if (!HAVE_SCHEME)
-static XEN g_vct_reverse(XEN vobj, XEN size)
-{
-  #define H_vct_reverse "(" S_vct_reverse " vct len): in-place reversal of vct contents"
-  vct *v;
-  mus_float_t *d;
-  mus_long_t i, j, len = -1;
-
-  XEN_ASSERT_TYPE(mus_vct_p(vobj), vobj, 1, S_vct_reverse, "a vct");
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(size), size, 2, S_vct_reverse, "an integer");
-
-  v = XEN_TO_VCT(vobj);
-  if (XEN_LONG_LONG_P(size))
-    len = XEN_TO_C_LONG_LONG(size);
-  if ((len <= 0) || (len > mus_vct_length(v)))
-    len = mus_vct_length(v);
-  if (len == 1) return(vobj);
-  d = mus_vct_data(v);
-
-  for (i = 0, j = len - 1; i < j; i++, j--)
-    {
-      mus_float_t temp;
-      temp = d[i];
-      d[i] = d[j];
-      d[j] = temp;
-    }
-  return(vobj);
-}
-#endif
 
 
 static XEN g_vct_times(XEN obj1, XEN obj2)

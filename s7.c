@@ -709,7 +709,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_VECTOR_C, HOP_VECTOR_C, OP_VECTOR_S, HOP_VECTOR_S, OP_VECTOR_opCq, HOP_VECTOR_opCq, 
       OP_STRING_C, HOP_STRING_C, OP_STRING_S, HOP_STRING_S, OP_STRING_opCq, HOP_STRING_opCq, 
       OP_C_OBJECT, HOP_C_OBJECT, OP_C_OBJECT_C, HOP_C_OBJECT_C, OP_C_OBJECT_S, HOP_C_OBJECT_S, 
-        OP_C_OBJECT_opCq, HOP_C_OBJECT_opCq, OP_C_OBJECT_SS, HOP_C_OBJECT_SS, 
+        OP_C_OBJECT_opCq, HOP_C_OBJECT_opCq, OP_C_OBJECT_SS, HOP_C_OBJECT_SS, OP_C_OBJECT_CC, HOP_C_OBJECT_CC, 
       OP_PAIR_C, HOP_PAIR_C, OP_PAIR_S, HOP_PAIR_S, OP_PAIR_opCq, HOP_PAIR_opCq, 
       OP_HASH_TABLE_C, HOP_HASH_TABLE_C, OP_HASH_TABLE_S, HOP_HASH_TABLE_S, 
       OP_ENVIRONMENT_S, HOP_ENVIRONMENT_S, OP_ENVIRONMENT_Q, HOP_ENVIRONMENT_Q, 
@@ -814,7 +814,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "vector_c", "h_vector_c", "vector_s", "h_vector_s", "vector_opcq", "h_vector_opcq", 
       "string_c", "h_string_c", "string_s", "h_string_s", "string_opcq", "h_string_opcq", 
       "c_object", "h_c_object", "c_object_c", "h_c_object_c", "c_object_s", "h_c_object_s", 
-      "c_object_opcq", "h_c_object_opcq", "c_object_ss", "h_c_object_ss", 
+      "c_object_opcq", "h_c_object_opcq", "c_object_ss", "h_c_object_ss", "c_object_cc", "h_c_object_cc", 
       "pair_c", "h_pair_c", "pair_s", "h_pair_s", "pair_opcq", "h_pair_opcq", 
       "hash_table_c", "h_hash_table_c", "hash_table_s", "h_hash_table_s", 
       "environment_s", "h_environment_s", "environment_q", "h_environment_q", 
@@ -41360,8 +41360,6 @@ static s7_pointer g_if_s_direct(s7_scheme *sc, s7_pointer args)
   return(c_call(car(p))(sc, sc->T1_1));
 }
 
-/* cond_all_x_all_x happens very rarely, similarly let_all_x_all_x and case_all_x
- */
 
 
 
@@ -52760,6 +52758,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      /* all of this code could be boiled down to a few tables
 	       */
+	      #define UNPRINT 0
 	    case OP_UNKNOWN:
 	    case HOP_UNKNOWN:
 	      {
@@ -52793,6 +52792,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    break;
 		    
 		  default:
+		    if (UNPRINT) fprintf(stderr, "un: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 		    break;
 		  }
 		break;
@@ -52817,6 +52817,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    break;
 		    
 		  default:
+		    if (UNPRINT) fprintf(stderr, "un_q: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 		    break;
 		  }
 		break;
@@ -52908,7 +52909,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    set_opt_and_goto_opt_eval(code, f, OP_GOTO_S);
 		    
 		  default:
-		    /* fprintf(stderr, "un_s: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));  */
+		    if (UNPRINT) fprintf(stderr, "un_s: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); 
 		    break;
 		  }
 		break;
@@ -52966,7 +52967,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			/* no need for t_environment here because its argument can't be a constant ?? (e +) can happen though it's an error
 			 */
 		      default:
-			/* fprintf(stderr, "un_c: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
+			if (UNPRINT) fprintf(stderr, "un_c: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -53035,7 +53036,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			set_opt_and_goto_opt_eval(code, f, OP_C_OBJECT_SS);
 
 		      default:
-			/* fprintf(stderr, "un_ss: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
+			if (UNPRINT) fprintf(stderr, "un_ss: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); 
 			break;
 		      }
 		  }
@@ -53083,7 +53084,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto OPT_EVAL;
 			
 		      default:
-			/* fprintf(stderr, "un_sc: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
+			if (UNPRINT) fprintf(stderr, "un_sc: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); 
+			/* vector */
 			break;
 		      }
 		  }
@@ -53123,7 +53125,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto OPT_EVAL;
 			
 		      default:
-			/* fprintf(stderr, "un_cs: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
+			/* vector */
+			if (UNPRINT) fprintf(stderr, "un_cs: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); 
 			break;
 		      }
 		  }
@@ -53145,6 +53148,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    set_c_function(code, f);
 		    goto OPT_EVAL;
 		  }
+		
+		if (is_c_object(f))
+		  {
+		    set_opt_and_goto_opt_eval(code, f, OP_C_OBJECT_CC);
+		  }
+
+		if (UNPRINT) fprintf(stderr, "un_cc: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); 
+		/* pair/vector */
 	      }
 	      break;
 	      
@@ -53201,7 +53212,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto OPT_EVAL;
 			
 		      default:
-			/* fprintf(stderr, "un_sss: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
+			if (UNPRINT) fprintf(stderr, "un_sss: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -53243,7 +53254,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto OPT_EVAL;
 			
 		      default:
-			/* fprintf(stderr, "un_all_s: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
+			if (UNPRINT) fprintf(stderr, "un_all_s: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -53338,7 +53349,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto OPT_EVAL;
 
 		      default:
-			/* fprintf(stderr, "un_all_x: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
+			/* pair */
+			if (UNPRINT) fprintf(stderr, "un_all_x: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -53406,7 +53418,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			break;
 			
 		      default:
-			/* fprintf(stderr, "un_opcq: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
+			if (UNPRINT) fprintf(stderr, "un_opcq: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -53463,9 +53475,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    goto OPT_EVAL;
 			  }
 			break;
+
+			/* goto opsq happens in make-index and lint */
 			
 		      default:
-			/* fprintf(stderr, "un_opsq: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
+			if (UNPRINT) fprintf(stderr, "un_opsq: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -53520,7 +53534,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			break;
 			
 		      default:
-			/* fprintf(stderr, "un_opsq_s: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
+			if (UNPRINT) fprintf(stderr, "un_opsq_s: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -53561,7 +53575,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			break;
 			
 		      default:
-			/* fprintf(stderr, "un_s_opsq: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
+			if (UNPRINT) fprintf(stderr, "un_s_opsq: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -53615,7 +53629,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			break;
 			
 		      default:
-			/* fprintf(stderr, "un_s_opssq: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
+			if (UNPRINT) fprintf(stderr, "un_s_opssq: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -53666,7 +53680,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			break;
 			
 		      default:
-			/* fprintf(stderr, "un_opssq_s: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
+			if (UNPRINT) fprintf(stderr, "un_opssq_s: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -53747,7 +53761,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			break;
 			
 		      default:
-			/* fprintf(stderr, "un_opsq_opsq: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
+			if (UNPRINT) fprintf(stderr, "un_opsq_opsq: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -54072,7 +54086,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case OP_C_OBJECT_SS:
 	    case HOP_C_OBJECT_SS:
 	      {
-		/* perhaps also c_object_ref_2 and direct case? */
+		/* perhaps also c_object_ref_2 and direct case? object_cc happens in (m 0 1) where m=mixer
+		 */
 		s7_pointer c, ind;
 		c = find_symbol_or_bust(sc, car(code));
 		if (!is_c_object(c))
@@ -54082,6 +54097,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T2_2) = find_symbol_or_bust(sc, caddr(code));
 		car(sc->T2_1) = ind;
 		sc->value = (*(c_object_ref(c)))(sc, c, sc->T2_1);
+		goto START;
+	      }
+
+	    case OP_C_OBJECT_CC:
+	    case HOP_C_OBJECT_CC:
+	      {
+		s7_pointer c;
+		c = find_symbol_or_bust(sc, car(code));
+		if (!is_c_object(c))
+		  break;
+		sc->value = (*(c_object_ref(c)))(sc, c, cdr(code));
 		goto START;
 	      }
 	      
@@ -67925,7 +67951,7 @@ int main(int argc, char **argv)
 /* in Linux:    gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lreadline -lncurses -lrt -ldl -lm -Wl,-export-dynamic
  * in *BSD:     gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lreadline -lncurses -lm -Wl,-export-dynamic
  * in OSX:      gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lreadline -lncurses -lm
- * if clang, add  LDFLAGS="-Wl,-export-dynamic"
+ *   (clang also needs LDFLAGS="-Wl,-export-dynamic" in Linux)
  */
 #endif
 
@@ -67947,13 +67973,11 @@ int main(int argc, char **argv)
  * we need integer_length everywhere! These fixups are ignored by the optimized cases.
  * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
  * add zero-length? typeq? 
- * other often-used libraries: glib/gio/gobject/gmodule ncurses? GL/GLU? pcre? readline? asound? sndlib-for-s7?
  * TODO: (env env) in clm should be an error
  * checkpoint?
  * doc/test the lib*.scm files.
- * need to finish the vct/sound-data -> float-vector stuff (I think only the C side remains)
  * someday all the simple Snd variables should be variables (not pws)
- * TODO: actually run the new snd-motif/gtk/play code! 
+ * vector_set_ssa_looped? (or as unknown case?)
  */
 
 
