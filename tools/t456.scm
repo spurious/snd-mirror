@@ -8,9 +8,10 @@
       (exit)))
 
 (define data-file #f) ;(open-output-file "output-of-t455"))
+(define max-args 3)
 
 (define constants (list #f #t () #\a (/ 1 most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i
-			"hi455" :hi hi: 'hi (list 1) (list 1 2) (cons 1 2) '() (list (list 1 2)) (list (list 1)) (list ()) #() 
+			"hi455" :key hi: 'hi (list 1) (list 1 2) (cons 1 2) '() (list (list 1 2)) (list (list 1)) (list ()) #() 
 			1/0+i 0+0/0i 0+1/0i 1+0/0i 0/0+0i 0/0+0/0i 1+1/0i 0/0+i cons ''2 
 			1+i 1+1e10i 1e15+1e15i 0+1e18i 1e18 (integer->char 255) (string (integer->char 255)) 1e308 
 			most-positive-fixnum most-negative-fixnum (- most-positive-fixnum 1) (+ most-negative-fixnum 1)
@@ -25,11 +26,11 @@
 			(make-vector '(2 3) "hi") #("hiho" "hi" "hoho") (make-shared-vector (make-vector '(2 3) 1 #t) '(6))
 			(make-shared-vector (make-shared-vector (make-vector '(2 3) 1.0 #t) '(6)) '(2 2))
 			(vector-ref #2d((#(1 2 3)) (#(3 4 5))) 0 0)
-			(c-pointer 0)
+			(c-pointer 0) :readable :else
 			))
 
 (define low 0)
-(define arglists (vector (make-list 1) (make-list 2) (make-list 3) (make-list 4)))
+(define arglists (vector (make-list 1) (make-list 2) (make-list 3) (make-list 4) (make-list 5)))
 
 (define (autotest func args args-now args-left)
   ;; args-left is at least 1, args-now starts at 0, args starts at ()
@@ -83,7 +84,7 @@
 	       (let ((argn (and (procedure? f) (arity f))))
 		 (if argn
 		     (let ((bottom (car argn))
-			   (top (min (cdr argn) 3))
+			   (top (min (cdr argn) max-args))
 			   (strname (symbol->string sym)))
 		       (if (not (or (member (strname 0) '(#\{ #\[ #\())
 				    (member strname '("exit" "emergency-exit" "abort" "unoptimize" "autotest" "delete-file" "system" "set-cdr!" "stacktrace"

@@ -1693,6 +1693,7 @@ static int t_optimized = T_OPTIMIZED;
 /* pair in question has line/file info added during read, or the environment has function placement info
  */
 
+
 #define T_OVERLAY                     (1 << (TYPE_BITS + 12))
 #define set_overlay(p)                typeflag(p) |= T_OVERLAY
 #define is_overlaid(p)                ((typeflag(p) & T_OVERLAY) != 0)
@@ -15584,8 +15585,7 @@ static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 	    }
 	  if ((integer(x) < S7_LONG_MAX) && 
 	      (integer(x) > S7_LONG_MIN) && 
-	      (denominator(y) < S7_LONG_MAX) && 
-	      (denominator(y) > S7_LONG_MIN))
+	      (denominator(y) < S7_LONG_MAX))
 	    {
 	      if ((integer(x) * denominator(y)) >= numerator(y)) goto NOT_LESS;
 	    }
@@ -15626,9 +15626,8 @@ static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 	      goto INTEGER_LESS;
 	    }
 	  if ((integer(y) < S7_LONG_MAX) && 
-	      (integer(y) > S7_LONG_MIN) && 
-	      (denominator(x) < S7_LONG_MAX) && 
-	      (denominator(x) > S7_LONG_MIN))
+	      (integer(y) > S7_LONG_MIN) &&
+	      (denominator(x) < S7_LONG_MAX))
 	    {
 	      if (numerator(x) >= (integer(y) * denominator(x))) goto NOT_LESS;
 	    }
@@ -15793,8 +15792,7 @@ static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
 	    }
 	  if ((integer(x) < S7_LONG_MAX) && 
 	      (integer(x) > S7_LONG_MIN) && 
-	      (denominator(y) < S7_LONG_MAX) && 
-	      (denominator(y) > S7_LONG_MIN))
+	      (denominator(y) < S7_LONG_MAX))
 	    {
 	      if ((integer(x) * denominator(y)) > numerator(y)) goto NOT_LEQ;
 	    }
@@ -15836,8 +15834,7 @@ static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
 	    }
 	  if ((integer(y) < S7_LONG_MAX) && 
 	      (integer(y) > S7_LONG_MIN) && 
-	      (denominator(x) < S7_LONG_MAX) && 
-	      (denominator(x) > S7_LONG_MIN))
+	      (denominator(x) < S7_LONG_MAX))
 	    {
 	      if (numerator(x) > (integer(y) * denominator(x))) goto NOT_LEQ;
 	    }
@@ -15989,8 +15986,7 @@ static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
 	    }
 	  if ((integer(x) < S7_LONG_MAX) && 
 	      (integer(x) > S7_LONG_MIN) && 
-	      (denominator(y) < S7_LONG_MAX) && 
-	      (denominator(y) > S7_LONG_MIN))
+	      (denominator(y) < S7_LONG_MAX))
 	    {
 	      if ((integer(x) * denominator(y)) <= numerator(y)) goto NOT_GREATER;
 	    }
@@ -16032,8 +16028,7 @@ static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
 	    }
 	  if ((integer(y) < S7_LONG_MAX) && 
 	      (integer(y) > S7_LONG_MIN) && 
-	      (denominator(x) < S7_LONG_MAX) && 
-	      (denominator(x) > S7_LONG_MIN))
+	      (denominator(x) < S7_LONG_MAX))
 	    {
 	      if (numerator(x) <= (integer(y) * denominator(x))) goto NOT_GREATER;
 	    }
@@ -16198,8 +16193,7 @@ static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
 	    }
 	  if ((integer(x) < S7_LONG_MAX) && 
 	      (integer(x) > S7_LONG_MIN) && 
-	      (denominator(y) < S7_LONG_MAX) && 
-	      (denominator(y) > S7_LONG_MIN))
+	      (denominator(y) < S7_LONG_MAX))
 	    {
 	      if ((integer(x) * denominator(y)) < numerator(y)) goto NOT_GEQ;
 	    }
@@ -16241,8 +16235,7 @@ static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
 	    }
 	  if ((integer(y) < S7_LONG_MAX) && 
 	      (integer(y) > S7_LONG_MIN) && 
-	      (denominator(x) < S7_LONG_MAX) && 
-	      (denominator(x) > S7_LONG_MIN))
+	      (denominator(x) < S7_LONG_MAX))
 	    {
 	      if (numerator(x) < (integer(y) * denominator(x))) goto NOT_GEQ;
 	    }
@@ -16396,8 +16389,7 @@ static s7_pointer g_less_s_ic(s7_scheme *sc, s7_pointer args)
 	return(sc->F);
       if ((y < S7_LONG_MAX) && 
 	  (y > S7_LONG_MIN) && 
-	  (denominator(x) < S7_LONG_MAX) && 
-	  (denominator(x) > S7_LONG_MIN))
+	  (denominator(x) < S7_LONG_MAX))
 	return(make_boolean(sc, (numerator(x) < (y * denominator(x)))));
       return(make_boolean(sc, fraction(x) < y));
       break;
@@ -16563,8 +16555,7 @@ static s7_pointer g_leq_s_ic(s7_scheme *sc, s7_pointer args)
 	return(sc->F);
       if ((y < S7_LONG_MAX) && 
 	  (y > S7_LONG_MIN) && 
-	  (denominator(x) < S7_LONG_MAX) && 
-	  (denominator(x) > S7_LONG_MIN))
+	  (denominator(x) < S7_LONG_MAX))
 	return(make_boolean(sc, (numerator(x) <= (y * denominator(x)))));
       return(make_boolean(sc, fraction(x) <= y));
       break;
@@ -16666,8 +16657,7 @@ static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
     case T_RATIO:  
       if ((y < S7_LONG_MAX) && 
 	  (y > S7_LONG_MIN) && 
-	  (denominator(x) < S7_LONG_MAX) && 
-	  (denominator(x) > S7_LONG_MIN))
+	  (denominator(x) < S7_LONG_MAX))
 	return(make_boolean(sc, (numerator(x) > (y * denominator(x)))));
       return(make_boolean(sc, fraction(x) > y));
       break;
@@ -16704,8 +16694,7 @@ static s7_pointer g_greater_s_fc(s7_scheme *sc, s7_pointer args)
       /* (> 9223372036854775807/9223372036854775806 1.0) */
       if ((y < S7_LONG_MAX) && 
 	  (y > S7_LONG_MIN) && 
-	  (denominator(x) < S7_LONG_MAX) && 
-	  (denominator(x) > S7_LONG_MIN))
+	  (denominator(x) < S7_LONG_MAX))
 	return(make_boolean(sc, (numerator(x) > (y * denominator(x)))));
       return(make_boolean(sc, fraction(x) > y));
       break;
@@ -16902,8 +16891,7 @@ static s7_pointer g_geq_s_ic(s7_scheme *sc, s7_pointer args)
 	return(sc->T);
       if ((y < S7_LONG_MAX) && 
 	  (y > S7_LONG_MIN) && 
-	  (denominator(x) < S7_LONG_MAX) && 
-	  (denominator(x) > S7_LONG_MIN))
+	  (denominator(x) < S7_LONG_MAX))
 	return(make_boolean(sc, (numerator(x) >= (y * denominator(x)))));
       return(make_boolean(sc, fraction(x) >= y));
       break;
@@ -30435,6 +30423,9 @@ s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x)
  *   4) if frame is float-vector, how to distinguish in channels (say), (chans vct)=1 but (chans frame)=len
  *        perhaps mus-channels vs channels?  kinda kludgy. add vector methods?
  *        change all the channels(frames) to length!  still have channels(mixer)
+ *   chans(1-dim float-vector)->length
+ *   chans(2-dim) -> outer dim
+ *   this will affect vcts, but no-one should be asking for chans(vct) anyway!
  */
 
 
@@ -40853,6 +40844,10 @@ static s7_pointer geq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	    }
 	  return(geq_s_ic);
 	}
+      /*
+      if (type(caddr(expr)) == T_REAL)
+	return(geq_s_fc);
+      */
       /* fprintf(stderr, ">=2: %s\n", DISPLAY_80(expr)); */
       return(geq_2);
     }
@@ -62437,11 +62432,11 @@ static s7_Int big_integer_to_s7_Int(mpz_t n)
 
 static mpq_t *s7_Ints_to_mpq(s7_Int num, s7_Int den)
 {
+  /* den here always comes from denominator(x) so it is not negative */
   mpq_t *n;
   n = (mpq_t *)malloc(sizeof(mpq_t));
   mpq_init(*n);
-  if ((num <= S7_LONG_MAX) && (num >= S7_LONG_MIN) &&
-      (den <= S7_LONG_MAX) && (den >= S7_LONG_MIN))
+  if ((num <= S7_LONG_MAX) && (num >= S7_LONG_MIN) && (den <= S7_LONG_MAX))
     mpq_set_si(*n, (long int)num, (long int)den);
   else
     {
@@ -62479,6 +62474,7 @@ static mpc_t *s7_Doubles_to_mpc(s7_Double rl, s7_Double im)
 
 static s7_pointer s7_ratio_to_big_ratio(s7_scheme *sc, s7_Int num, s7_Int den)
 {
+  /* den here always comes from denominator(x) or some positive constant so it is not negative */
   s7_pointer x;
 
   NEW_CELL(sc, x);
@@ -62486,8 +62482,7 @@ static s7_pointer s7_ratio_to_big_ratio(s7_scheme *sc, s7_Int num, s7_Int den)
   add_bigratio(sc, x);
   mpq_init(big_ratio(x));
 
-  if ((num <= S7_LONG_MAX) && (num >= S7_LONG_MIN) &&
-      (den <= S7_LONG_MAX) && (den >= S7_LONG_MIN))
+  if ((num <= S7_LONG_MAX) && (num >= S7_LONG_MIN) && (den <= S7_LONG_MAX))
     mpq_set_si(big_ratio(x), (long int)num, (long int)den);
   else
     {
@@ -67787,7 +67782,7 @@ s7_scheme *s7_init(void)
   s7_define_constant(sc, "*error-hook*", sc->error_hook);
   
   /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
-  /* 64 bit machine: size: 48, max op: 320 [size 72 if gmp] */
+  /* 64 bit machine: size: 48, max op: 321 [size 72 if gmp] */
 
 #if DEBUGGING
   if (strcmp(op_names[OP_DEFINE_BACRO_STAR], "define-bacro*") != 0)

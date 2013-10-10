@@ -1299,6 +1299,9 @@ static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
 static XEN g_frame_set(XEN uf1, XEN uchan, XEN val);
 static XEN g_mixer_set(XEN uf1, XEN in, XEN out, XEN val);
 
+
+/* these are for mus_xen_tag, so need not handle float-vectors */
+
 static XEN mus_xen_apply(s7_scheme *sc, XEN gen, XEN args)
 {
   mus_float_t arg1, arg2;
