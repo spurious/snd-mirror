@@ -707,10 +707,6 @@ var sndclm_fir_filter_tip = "<code>(fir-filter gen (input 0.0))</code>: next sam
 
 var sndclm_formant_tip = "<code>(formant gen (input 0.0) freq-in-radians)</code>: next sample from resonator generator";
 
-var sndclm_frame_times_tip = "<code>(frame* f1 f2 outf)</code>: multiply f1 and f2 (elementwise)<br>" +
-                             " returning outf; if outf is not given, a new frame is created.<br>" +
-                             " outf[i] = f1[i] * f2[i].";
-
 var sndclm_granulate_tip = "<code>(granulate gen input-func edit-func)</code>: next sample from granular synthesis generator";
 
 var sndclm_hztoradians_tip = "<code>(hz-&gt;radians hz)</code>: convert frequency in Hz to radians per sample: hz * 2 * pi / srate";
@@ -759,11 +755,6 @@ var sndclm_make_formant_tip = "<code>(make-formant :frequency :radius)</code>:<b
                               " return a new formant generator (a resonator).<br>" +
                               " radius sets the pole radius (in terms of the 'unit circle').<br>" +
                               " frequency sets the resonance center frequency (Hz).";
-
-var sndclm_make_frame_tip = "<code>(make-frame chans val0 val1 ...)</code>:<br>" +
-                            " return a new frame object with chans samples,<br>" +
-                            " each sample set from the trailing arguments (defaulting to 0.0):<br>" +
-                            "<code>  (make-frame 2 .1 .2)</code>";
 
 var sndclm_make_granulate_tip = "<code>(make-granulate :input (:expansion 1.0) (:length .15) (:scaler .6) (:hop .05)<br>" +
                                 "       (:ramp .4) (:jitter 1.0) :max-size :edit)</code>:<br>" +
@@ -975,11 +966,6 @@ var sndscm_makebutter_tip = "various 2nd order Butterworth filters in dsp.scm.";
 
 var sndscm_makedifferentiator_tip = "<code>(make-differentiator length)</code> returns a differentiating filter.";
 
-var sndscm_makeframereader_tip = "<code>(make-frame-reader start snd dir pos)</code>: creates a frame-reader<br>" +
-                                 " reading the sound 'snd' starting at frame 'start'<br>" +
-                                 " with initial read direction 'dir' (1=forward, -1=backward).<br>" +
-                                 " 'pos' is the edit history position to read (it defaults to current position).";
-
 var sndscm_makehighpass_tip = "<code>(make-highpass fc length)</code> returns a highpass filter.";
 
 var sndscm_makehilberttransform_tip = "<code>(make-hilbert-transform length)</code> returns a Hilbert transformer.";
@@ -1155,8 +1141,6 @@ var extensions_doc_tip = "channel and sound property lists, several enveloping f
 
 var fade_doc_tip = "sound mixing using envelopes in the frequency domain";
 
-var frame_doc_tip = "various frame and vector functions";
-
 var freeverb_doc_tip = "a reverberator along the lines of nrev, but with more options.";
 
 var generators_doc_tip = "about 80 generators related to sums of sinusoids<br>" +
@@ -1189,9 +1173,6 @@ var menus_doc_tip = "Menu additions for things like crop, trim, fft notch filter
 
 var mix_doc_tip = "mix-property, silence-all-mixes, mix-sound, save-mix, snap-mix-to-beat<br>" +
                   " and many functions acting on lists of mixes";
-
-var mixer_doc_tip = "mixers and frames treated as matrices and vectors: <br>" +
-                    " matrix determinant, transpose, invert, solve, mixer-poly, etc";
 
 var moog_doc_tip = "Moog's four pole lowpass (24db/Oct) filter as a clm generator,<br>" +
                    " variable resonance, \"that warm, analog sound\".";

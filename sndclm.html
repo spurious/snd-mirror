@@ -7405,6 +7405,7 @@ would be tricky to get time-varying indices.  In this instrument we sweep "r" wi
 <div class="innerheader" id="framedoc">frames and mixers</div>
 
 <p>
+This section (frames and mixers) is now obsolete in scheme; use float-vectors instead.
 There are two special data types in CLM: frames and mixers.
 A frame is an array that represents
 a multichannel sample (that is, in a stereo file, at time 0.0, there
@@ -7462,9 +7463,7 @@ matrix multiply, and so on.
 The form <code>(frame-&gt;frame frame mixer frame)</code> multiplies a row vector (the first frame)
 by a matrix (the mixer), whereas <code>(frame-&gt;frame mixer frame frame)</code> multiplies
 a matrix by a column vector.
-See <a href="sndscm.html#framedoc">frame.scm</a> for many more
-frame-related functions, <a href="sndscm.html#mixerdoc">mixer.scm</a> for mixer functions,
-and fullmix in clm-ins.scm for an extended example.
+See fullmix in clm-ins.scm for an extended example.
 In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_multiply.
 </p>
 
@@ -7515,49 +7514,8 @@ In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_mult
 
 <p>make-mixer! (with the exclamation point) overrides an internal size check.  Since the size
 is interpreted normally as the number of channels, make-mixer (without the trailing "!") imposes a maximum size that is pretty
-low (128 when last checked).  If you're using mixers as honest matrices, you'll often want large
-mixers.  Here's a curious example that takes the "wavogram" view of a sound (as a sequence
-of equal length traces), loads it into a mixer, inverts the mixer (via matrix inversion, <a href="sndscm.html#invertmatrix">invert-matrix</a>), then
-writes out the new "sound":
+low (128 when last checked). 
 </p>
-
-<pre class="indented">
-(let* ((snd (open-sound "oboe.snd"))
-       (size 225) ; 225 * 225 is about the size of oboe.snd
-       (mx (<em class=red>make-mixer!</em> size))
-       (rd (make-sampler 0)))
-  (do ((i 0 (+ i 1)))
-      ((= i size))
-    (do ((j 0 (+ j 1)))
-	((= j size))
-      (<em class=red>mixer-set!</em> mx i j (rd))))
-
-  (invert-matrix mx)
-
-  (let ((nsnd (new-sound "test.snd" :srate 22050))
-	(samp 0)
-	(samps (make-vector (* size size) 0.0 #t)))
-    (do ((i 0 (+ i 1)))
-	((= i size))
-      (do ((j 0 (+ j 1)))
-	  ((= j size))
-	(set! (samps samp) (<em class=red>mixer-ref</em> mx i j))
-	(set! samp (+ samp 1))))
-
-    (float-vector-&gt;channel samps 0 (* size size) nsnd)))
-</pre>
-
-<p>In s7, mixers and frames are "applicable objects", like float-vectors, so mixer-ref and frame-ref are
-unnecessary, and mixer-set! and frame-set! can be replaced with set!:
-</p>
-
-<pre class="indented">
-&gt; (let ((fr (frame .1 .2)))
-   (set! (fr 1) .3)
-   (fr 1))
-0.3
-</pre>
-
 
 
 

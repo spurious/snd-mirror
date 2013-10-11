@@ -8987,7 +8987,7 @@ mus_float_t mus_pulsed_env_unmodulated(mus_any *g)
 
 /* ---------------- frame ---------------- */
 
-/* frame = vector, mixer = (square) matrix, but "vector" is in use already, and "matrix" sounds too techy */
+/* frame = vector, mixer = (square) matrix */
 
 typedef struct {
   mus_any_class *core;
@@ -11048,6 +11048,58 @@ mus_any *mus_continue_frame_to_file(const char *filename)
   gen = (rdout *)mus_continue_sample_to_file(filename);
   if (gen) gen->core = &FRAME_TO_FILE_CLASS;
   return((mus_any *)gen);
+}
+
+
+mus_float_t mus_vector_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *vals, int chans)
+{
+  rdout *gen = (rdout *)ptr;
+  int i;
+  
+  if (chans == 1)
+    return(mus_outa_to_file(ptr, samp, vals[0]));
+
+  if (chans > gen->chans) 
+    chans = gen->chans;
+  for (i = 0; i < chans; i++) 
+    mus_out_any_to_file(ptr, samp, i, vals[i]);
+
+  return(vals[0]);
+}
+
+mus_float_t *mus_vector_mix(int chans, mus_float_t *data, mus_float_t *mix, mus_float_t *result)
+{
+  /* data * mix -> result (matrix multiply) */
+  int i, j, ji;
+
+  memset((void *)result, 0, chans * sizeof(mus_float_t));
+  for (i = 0; i < chans; i++)
+    for (j = 0, ji = i; j < chans; j++, ji += chans)
+      result[i] += (data[j] * mix[ji]);
+
+  return(result);
+}
+
+mus_float_t *mus_file_to_vector(mus_any *ptr, mus_long_t samp, mus_float_t *vals, int chans)
+{
+  rdin *gen = (rdin *)ptr;
+  int i;
+
+  if ((samp <= gen->data_end) &&
+      (samp >= gen->data_start) &&
+      (chans <= gen->chans))
+    {
+      mus_long_t pos;
+      pos = samp - gen->data_start;
+      for (i = 0; i < chans; i++) 
+	vals[i] = gen->ibufs[i][pos];
+    }
+  else
+    {
+      for (i = 0; i < chans; i++) 
+	vals[i] = mus_in_any_from_file(ptr, samp, i);
+    }
+  return(vals);
 }
 
 

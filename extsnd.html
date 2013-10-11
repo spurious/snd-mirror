@@ -467,9 +467,6 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#fadedoc">fade</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(fade_doc_tip)">frequency-domain cross-fades</td></tr>
 
-<tr><td><a href="sndscm.html#framedoc">frame</a></td>
-    <td onmouseout="UnTip()" onmouseover="Tip(frame_doc_tip)">frames, float-vectors</td></tr>
-
 <tr><td><a href="sndscm.html#freeverbdoc">freeverb</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(freeverb_doc_tip)">a reverb</td></tr>
 
@@ -511,9 +508,6 @@ Extensions to Snd can be found in:
 
 <tr><td><a href="sndscm.html#mixdoc">mix</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(mix_doc_tip)">functions related to mixes</td></tr>
-
-<tr><td><a href="sndscm.html#mixerdoc">mixer</a></td>
-    <td onmouseout="UnTip()" onmouseover="Tip(mixer_doc_tip)">functions related to linear algebra</td></tr>
 
 <tr><td><a href="sndscm.html#moogdoc">moog</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(moog_doc_tip)">Moog filter</td></tr>
@@ -3461,10 +3455,6 @@ and <a class=quiet href="#readmixsample" onmouseout="UnTip()" onmouseover="Tip(e
 the output).
 </p>
 
-<p>Multichannel iterations can be handled via <a href="sndscm.html#framereaders">frame-readers</a>.  These are currently
-implemented in frame.scm.
-</p>
-
 
 <!--  SAMPLER TABLE  -->
 <div class="spacer"></div>
@@ -3860,7 +3850,6 @@ copy channel data: <a href="#channeltovct">channel-&gt;vct</a>, or <a href="#sav
 copy selection data: <a href="#selection2vct">selection-&gt;vct</a> or <a href="#saveselection">save-selection</a><br>
 copy region data: <a href="#regiontovct">region-&gt;vct</a>, <a href="#regiontovct">region-&gt;vct</a>, <a href="#saveregion">save-region</a><br>
 copy transform data: <a href="#transformtovct">transform-&gt;vct</a><br>
-copy a frame: <a href="sndscm.html#framecopy">frame-copy</a>, <a href="sndscm.html#frametovct">frame-&gt;vct</a><br>
 </small></blockquote>
 </td></tr></TABLE>
 <div class="spacer"></div>
@@ -5969,7 +5958,6 @@ mix channel: see <a href="sndscm.html#mixchannel">mix-channel</a> in extensions.
 mix region: <a href="extsnd.html#mixregion">mix-region</a><br>
 mix selection: <a href="extsnd.html#mixselection">mix-selection</a><br>
 mix vct: <a href="extsnd.html#mixvct">mix-vct</a><br>
-mix a frame: <a href="sndscm.html#mixframe">mix-frame</a><br>
 enveloped mix: see <a href="sndscm.html#envelopedmix">enveloped-mix</a> in extensions.scm<br>
 read mix samples: <a href="extsnd.html#makemixsampler">make-mix-sampler</a><br>
 mix data maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
@@ -6294,8 +6282,6 @@ All about regions: <a href="snd.html#regions">regions</a><br>
 The region dialog: <a href="snd.html#regionbrowser">region browser</a><br>
 Region rms amp: <a href="sndscm.html#regionrms">region-rms</a><br>
 region-play-list and region-play-sequence in examp.scm<br>
-<a href="sndscm.html#regiontoframe">region-&gt;frame</a><br>
-<a href="sndscm.html#makeregionframereader">make-region-frame-reader</a><br>
 </small></blockquote>
 </td></tr></TABLE>
 
@@ -7860,7 +7846,6 @@ Default search procedure: <a href="extsnd.html#searchprocedure">search-procedure
 The Find dialog: <a href="snd.html#editoperations">Find</a> or <a href="extsnd.html#finddialog">find-dialog</a><br>
 find silence: <a href="extsnd.html#mapsilence">map-silence</a>, scramble-channel in examp.scm<br>
 find any difference between two chans: <a href="sndscm.html#channelsequal">channels-equal</a><br>
-search a multichannel sound: <a href="sndscm.html#scansound">scan-sound</a><br>
 find a widget: find-child in snd-motif.scm<br>
 add C-s and C-r to the listener key bindings: add-find-to-listener in snd-motif.scm<br>
 Scheme find: find-if<br>
@@ -8078,10 +8063,9 @@ insert some portion of a channel: <a href="sndscm.html#insertchannel">insert-cha
 insert a silence: <a href="extsnd.html#padchannel">pad-channel</a>, <a href="extsnd.html#insertsilence">insert-silence</a>, <a href="sndscm.html#padsound">pad-sound</a><br>
 insert a region: <a href="extsnd.html#insertregion">insert-region</a><br>
 insert the selection: <a href="extsnd.html#insertselection">insert-selection</a><br>
-insert a vct of samples: <a href="extsnd.html#insertsamples">insert-samples</a>, <a href="sndscm.html#insertvct">insert-vct</a><br>
+insert a vct of samples: <a href="extsnd.html#insertsamples">insert-samples</a><br>
 insert a sound: <a href="extsnd.html#insertsound">insert-sound</a><br>
 append a sound and silence: <a href="extsnd.html#appendsound">append-sound</a><br>
-insert a frame: <a href="sndscm.html#insertframe">insert-frame</a><br>
 </small></blockquote>
 </td></tr></TABLE>
 <div class="separator"></div>
@@ -8651,10 +8635,6 @@ To insert a block of arbitrary-valued samples:
   (<em class=red>pad-channel</em> beg dur snd chn edpos) ; insert 'dur' samples
   (map-channel (lambda (y) value) beg dur snd chn))
 </pre>
-
-<p>
-The multichannel version is <a href="sndscm.html#padsound">pad-sound</a> in frame.scm.
-</p>
 <div class="separator"></div>
 
 
@@ -9075,7 +9055,6 @@ reverse order of channels: <a href="extsnd.html#reversechannels">reverse-channel
 reverse a list: reverse and reverse!<br>
 reverse a string: in Ruby: reverse<br>
 reverse vct: <a href="extsnd.html#vctreverse">vct-reverse!</a><br>
-reverse a frame: <a href="sndscm.html#framereverse">frame-reverse</a><br>
 </small></blockquote>
 </td></tr></TABLE>
 <div class="separator"></div>
@@ -9297,7 +9276,6 @@ is scaled (it defaults to the currently selected channel).  <code>(scale-by 2.0)
 
 <p>scale-channel 
 scales (changes the amplitude) of a sound by 'scl'.
-The multichannel version is <a href="sndscm.html#scalesound">scale-sound</a> in frame.scm.
 <a href="sndscm.html#channelpolynomial">channel-polynomial</a> is a generalization of the idea.
 There are approximately a bazillion ways to scale samples in Snd; here's a potpourri of increasingly silly choices:
 </p>

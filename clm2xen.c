@@ -7542,6 +7542,61 @@ handled by the output generator 'obj' at frame 'samp'"
 }
 
 
+#if HAVE_SCHEME
+#define S_float_vector_to_file "float-vector->file"
+
+static XEN g_float_vector_to_file(XEN obj, XEN samp, XEN val)
+{
+  #define H_float_vector_to_file "(" S_float_vector_to_file " obj samp val): add float-vector 'val' to the output stream \
+handled by the output generator 'obj' at frame 'samp'"
+  mus_xen *gn;
+
+  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(obj, mus_xen_tag);
+  XEN_ASSERT_TYPE(((gn) && (mus_output_p(gn->gen))), obj, 1, S_float_vector_to_file, "an output generator");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(samp), samp, 2, S_float_vector_to_file, "an integer");
+  XEN_ASSERT_TYPE(s7_is_float_vector(val), val, 3, S_float_vector_to_file, "a float-vector");
+
+  mus_vector_to_file(gn->gen, XEN_TO_C_LONG_LONG(samp), (mus_float_t *)s7_float_vector_elements(val), s7_vector_length(val));
+  return(val);
+}
+
+
+#define S_float_vector_mix "float-vector-mix"
+
+static XEN g_float_vector_mix(XEN vec, XEN mat, XEN outvec)
+{
+  #define H_float_vector_mix "(" S_float_vector_mix " vector matrix output-vector): matrix multiply returning output-vector."
+  int chans;
+
+  XEN_ASSERT_TYPE(s7_is_float_vector(vec), vec, 1, S_float_vector_mix, "a float-vector");
+  XEN_ASSERT_TYPE(s7_is_float_vector(mat), mat, 2, S_float_vector_mix, "a float-vector");
+  XEN_ASSERT_TYPE(s7_is_float_vector(outvec), outvec, 3, S_float_vector_mix, "a float-vector");
+
+  chans = s7_vector_length(vec);
+  if (chans > s7_vector_length(outvec))
+    chans = s7_vector_length(outvec);
+  if (chans > s7_vector_dimensions(mat)[0])
+    chans = s7_vector_dimensions(mat)[0];
+  if (chans > 0)
+    mus_vector_mix(chans, (mus_float_t *)s7_float_vector_elements(vec), (mus_float_t *)s7_float_vector_elements(mat), (mus_float_t *)s7_float_vector_elements(outvec));
+  return(outvec);
+}
+
+
+#define S_file_to_float_vector "file->float-vector"
+
+static XEN g_file_to_float_vector(XEN obj, XEN samp, XEN val)
+{
+  #define H_file_to_float_vector "(" S_file_to_float_vector " obj samp outf): vector of samples at 'samp' in sound file read by 'obj'"
+  
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_input_p(XEN_TO_MUS_ANY(obj))), obj, 1, S_file_to_float_vector, "an input generator");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(samp), samp, 2, S_file_to_float_vector, "an integer");
+  XEN_ASSERT_TYPE(s7_is_float_vector(val), val, 3, S_file_to_float_vector, "a float-vector");
+
+  mus_file_to_vector(XEN_TO_MUS_ANY(obj), XEN_TO_C_LONG_LONG(samp), s7_float_vector_elements(val), s7_vector_length(val));
+  return(val);
+}
+#endif
 
 
 
@@ -9380,8 +9435,6 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #define caddr(E)  s7_caddr(E)
 #define cadddr(E) s7_cadddr(E)
 #define cddr(E)   s7_cddr(E)
-#define cdddr(E)  s7_cdddr(E)
-#define cadar(E)  s7_cadar(E)
 #define cdar(E)   s7_cdar(E)
 #define cdaddr(E) s7_cdaddr(E)
 #define cdadr(E)  s7_cdadr(E)
@@ -10261,8 +10314,6 @@ static s7_pointer g_fm_violin_4(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer frame_set_three;
-
 #if (!WITH_GMP)
 static s7_pointer out_bank_looped, out_bank_three;
 static s7_pointer g_out_bank_looped(s7_scheme *sc, s7_pointer args)
@@ -10329,72 +10380,6 @@ static s7_pointer g_out_bank_looped(s7_scheme *sc, s7_pointer args)
   return(NULL);
 }
 
-static s7_pointer frame_set_looped;
-static s7_pointer g_frame_set_looped(s7_scheme *sc, s7_pointer args)
-{
-  s7_Int pos, end;
-  s7_pointer stepper, val, index_slot, locsym, obj;
-  s7_Int *step, *stop;
-  mus_any *f;
-  mus_float_t *data;
-  gf *gf1;
-  
-  /* fprintf(stderr, "args: %s\n", DISPLAY(args)); */
-
-  obj = cadr(args); /* (0 f i (...)) */
-  if (!s7_is_symbol(obj)) 
-    return(NULL);
-
-  GET_GENERATOR_CADR(args, frame, f);
-  if (f)
-    {
-      stepper = car(args);
-      locsym = caddr(args);
-      if (!s7_is_symbol(locsym))
-	return(NULL);
-      index_slot = s7_slot(sc, locsym);
-      if (s7_cell_slot_value(index_slot) != stepper)
-	return(NULL);
-      
-      step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-      stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
-      pos = (*step);
-      end = (*stop);
-
-      if ((pos < 0) ||
-	  (end > mus_length(f)))
-	XEN_OUT_OF_RANGE_ERROR("frame-set!", 2, caddr(args), "index out of range");
-
-      data = mus_data(f);
-
-      val = cadddr(args);
-      if (s7_is_real(val))
-	{
-	  double x;
-	  x = s7_number_to_real(sc, val);
-	  for (; pos < end; pos++) 
-	    data[pos] = x;
-	  (*step) = end;
-	  return(args);
-	}
-
-      /* ---------------------------------------- */
-      gf1 = find_gf(sc, val);
-      if (gf1)
-	{
-	  for (; pos < end; pos++)
-	    {
-	      (*step) = pos;
-	      data[pos] = gf1->func(gf1);
-	    }
-	  (*step) = end;
-	  gf_free(gf1);
-	  return(args);
-	}
-      /* ---------------------------------------- */
-    }
-  return(NULL);
-}
 
 static s7_pointer fm_violin_4_looped;
 static s7_pointer g_fm_violin_4_looped(s7_scheme *sc, s7_pointer u_args)
@@ -15451,14 +15436,6 @@ static s7_pointer clm_abs_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
   return((*initial_abs_chooser)(sc, f, args, expr));
 }
 
-static s7_pointer frame_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if (args == 3)
-    return(frame_set_three);
-  return(f);
-}
-
-
 static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   /* fprintf(stderr, "oscil: %s\n", DISPLAY(expr)); */
@@ -18447,6 +18424,11 @@ XEN_NARGIFY_2(g_sample_to_file_add_w, g_sample_to_file_add)
 XEN_NARGIFY_1(g_frame_to_file_p_w, g_frame_to_file_p)
 XEN_NARGIFY_3(g_frame_to_file_w, g_frame_to_file)
 XEN_ARGIFY_5(g_make_frame_to_file_w, g_make_frame_to_file)
+#if HAVE_SCHEME
+  XEN_NARGIFY_3(g_float_vector_to_file_w, g_float_vector_to_file)
+  XEN_NARGIFY_3(g_file_to_float_vector_w, g_file_to_float_vector)
+  XEN_NARGIFY_3(g_float_vector_mix_w, g_float_vector_mix)
+#endif
 XEN_NARGIFY_1(g_input_p_w, g_input_p)
 XEN_NARGIFY_1(g_output_p_w, g_output_p)
 XEN_NARGIFY_3(g_in_any_w, g_in_any)
@@ -19006,6 +18988,13 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_file_p,      g_frame_to_file_p_w,       1, 0, 0, H_frame_to_file_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_file,        g_frame_to_file_w,         3, 0, 0, H_frame_to_file);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_frame_to_file,   g_make_frame_to_file_w,    1, 4, 0, H_make_frame_to_file);
+#if HAVE_SCHEME
+  XEN_DEFINE_SAFE_PROCEDURE(S_float_vector_to_file, g_float_vector_to_file_w,  3, 0, 0, H_float_vector_to_file);
+  XEN_DEFINE_SAFE_PROCEDURE(S_file_to_float_vector, g_file_to_float_vector_w,  3, 0, 0, H_file_to_float_vector);
+  XEN_DEFINE_SAFE_PROCEDURE(S_float_vector_mix,     g_float_vector_mix_w,      3, 0, 0, H_float_vector_mix);
+  s7_eval_c_string(s7, "(define make-float-vector->file make-frame->file)");
+  s7_eval_c_string(s7, "(define make-file->float-vector make-file->frame)");
+#endif
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_input_p,          g_input_p_w,               1, 0, 0, H_mus_input_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_output_p,         g_output_p_w,              1, 0, 0, H_mus_output_p);
   XEN_DEFINE_REAL_PROCEDURE(S_in_any,               g_in_any_w,                3, 0, 0, H_in_any);
@@ -19104,25 +19093,14 @@ static void mus_xen_init(void)
 #if HAVE_SCHEME
   init_choosers(s7);
 
-  {
-    s7_pointer f;
-    f = s7_name_to_value(s7, "frame-set!");
-    s7_function_set_chooser(s7, f, frame_set_chooser);
-
-    frame_set_three = s7_make_function(s7, "frame-set!", g_frame_set_w, 3, 0, false, "frame-set! optimization");
 #if (!WITH_GMP)
-    frame_set_looped = s7_make_function(s7, "frame-set!", g_frame_set_looped, 3, 0, false, "frame-set! optimization");
-    s7_function_set_class(frame_set_looped, f);
-    s7_function_set_looped(frame_set_three, frame_set_looped);
+  locsig_3 = s7_make_function(s7, "locsig", g_locsig_w, 3, 0, false, "locsig optimization");
+  s7_function_set_let_looped(locsig_3, locsig_let_looped);
 
-    locsig_3 = s7_make_function(s7, "locsig", g_locsig_w, 3, 0, false, "locsig optimization");
-    s7_function_set_let_looped(locsig_3, locsig_let_looped);
-
-    out_bank_three = s7_make_function(s7, "out-bank", g_out_bank_w, 3, 0, false, "out-bank optimization");
-    out_bank_looped = s7_make_function(s7, "out-bank", g_out_bank_looped, 3, 0, false, "out-bank optimization");
-    s7_function_set_looped(out_bank_three, out_bank_looped);
+  out_bank_three = s7_make_function(s7, "out-bank", g_out_bank_w, 3, 0, false, "out-bank optimization");
+  out_bank_looped = s7_make_function(s7, "out-bank", g_out_bank_looped, 3, 0, false, "out-bank optimization");
+  s7_function_set_looped(out_bank_three, out_bank_looped);
 #endif
-  }
 #endif
 
 

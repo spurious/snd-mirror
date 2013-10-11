@@ -4,31 +4,31 @@
 ;;;  test 1: defaults                           [991]
 ;;;  test 2: headers                            [1202]
 ;;;  test 3: variables                          [1517]
-;;;  test 4: sndlib                             [2086]
-;;;  test 5: simple overall checks              [4445]
-;;;  test 6: float-vectors                      [9208]
-;;;  test 7: colors                             [9502]
-;;;  test 8: clm                                [10021]
-;;;  test 9: mix                                [21703]
-;;;  test 10: marks                             [23492]
-;;;  test 11: dialogs                           [24451]
-;;;  test 12: extensions                        [24622]
-;;;  test 13: menus, edit lists, hooks, etc     [24888]
-;;;  test 14: all together now                  [26261]
-;;;  test 15: chan-local vars                   [27139]
-;;;  test 16: regularized funcs                 [28897]
-;;;  test 17: dialogs and graphics              [32508]
-;;;  test 18: save and restore                  [32619]
-;;;  test 19: transforms                        [34235]
-;;;  test 20: new stuff                         [36350]
-;;;  test 21: optimizer                         [37872]
-;;;  test 22: with-sound                        [38396]
-;;;  test 23: X/Xt/Xm                           [41343]
-;;;  test 24: GL                                [45025]
-;;;  test 25: errors                            [45149]
-;;;  test 26: s7                                [46690]
-;;;  test all done                              [46756]
-;;;  test the end                               [46939]
+;;;  test 4: sndlib                             [2082]
+;;;  test 5: simple overall checks              [4441]
+;;;  test 6: float-vectors                      [9204]
+;;;  test 7: colors                             [9498]
+;;;  test 8: clm                                [10017]
+;;;  test 9: mix                                [20970]
+;;;  test 10: marks                             [22759]
+;;;  test 11: dialogs                           [23718]
+;;;  test 12: extensions                        [23889]
+;;;  test 13: menus, edit lists, hooks, etc     [24155]
+;;;  test 14: all together now                  [25529]
+;;;  test 15: chan-local vars                   [26407]
+;;;  test 16: regularized funcs                 [28165]
+;;;  test 17: dialogs and graphics              [31776]
+;;;  test 18: save and restore                  [31887]
+;;;  test 19: transforms                        [33503]
+;;;  test 20: new stuff                         [35618]
+;;;  test 21: optimizer                         [36873]
+;;;  test 22: with-sound                        [37397]
+;;;  test 23: X/Xt/Xm                           [40344]
+;;;  test 24: GL                                [44026]
+;;;  test 25: errors                            [44150]
+;;;  test 26: s7                                [45684]
+;;;  test all done                              [45750]
+;;;  test the end                               [45933]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -1899,10 +1899,7 @@
 		       'comb-bank 'comb-bank? 'all-pass-bank 'all-pass-bank? 'filtered-comb-bank 'filtered-comb-bank?
 		       'make-comb-bank 'make-all-pass-bank 'make-filtered-comb-bank
 		       'fourier-transform
-		       'frame 'frame* 'frame+ 'frame->file 'frame->file?
-		       'frame->frame 'frame->list 'frame->sample 'frame-ref 'frame-set!
-		       'frame? 'frames 'free-player
-		       'free-sampler 'gaussian-window 'gc-off 'gc-on
+		       'free-player 'free-sampler 'gaussian-window 'gc-off 'gc-on
 		       ;'gl-graph->ps 'glSpectrogram 
 		       'goto-listener-end 'granulate 'granulate?
 		       'graph 'graph->ps 'graph-as-sonogram 'graph-as-spectrogram 'graph-as-wavogram
@@ -1926,8 +1923,8 @@
 		       'make-asymmetric-fm 'make-moving-average 'make-moving-max 'make-bezier 'make-color 'make-comb 'make-filtered-comb
 		       'make-convolve 'make-delay 'make-env 'make-fft-window 'make-file->frame
 		       'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter 'make-formant 'make-firmant 'make-formant-bank
-		       'make-frame 'make-frame->file 'make-granulate 'make-graph-data 'make-iir-filter
-		       'make-locsig 'make-mix-sampler 'make-mixer 'make-move-sound 'make-notch 'make-one-pole 'make-one-pole-all-pass
+		       'make-granulate 'make-graph-data 'make-iir-filter
+		       'make-locsig 'make-mix-sampler 'make-move-sound 'make-notch 'make-one-pole 'make-one-pole-all-pass
 		       'make-one-zero 'make-oscil 'make-phase-vocoder 'make-player 'make-polyshape 'make-polywave
 		       'make-pulse-train 'make-rand 'make-rand-interp 'make-readin
 		       'make-region 'make-region-sampler 'make-sample->file 'make-sampler 'make-sawtooth-wave
@@ -1946,8 +1943,7 @@
 		       'mix-name 'mix-position 'mix-properties 'mix-property 'mix-region 'mix-release-hook 'mix-sync 'mix-sync-max
 		       'mix-sampler? 'mix-selection 'mix-speed 'mix-tag-height
 		       'mix-tag-width 'mix-tag-y
-		       'mix-float-vector 'mix-waveform-height 'mix? 'mixer 'mixer*
-		       'mixer+ 'mixer-ref 'mixer-set! 'mixer?
+		       'mix-float-vector 'mix-waveform-height 'mix?
 		       'mixes 'mouse-click-hook 'mouse-drag-hook 'mouse-enter-graph-hook
 		       'mouse-enter-label-hook 'mouse-enter-listener-hook 'mouse-enter-text-hook 'mouse-leave-graph-hook 'mouse-leave-label-hook
 		       'mouse-leave-listener-hook 'mouse-leave-text-hook 'mouse-press-hook 'move-locsig 'move-sound 'move-sound? 
@@ -10021,8 +10017,6 @@ EDITS: 2
 ;;; ---------------- test 8: clm ----------------
 
 (if (not (provided? 'snd-moog.scm)) (load "moog.scm"))
-(if (not (provided? 'snd-mixer.scm)) (load "mixer.scm"))
-(if (not (provided? 'snd-frame.scm)) (load "frame.scm"))
 (if (not (provided? 'snd-poly.scm)) (load "poly.scm"))
 (if (not (provided? 'snd-analog-filter.scm)) (if (defined? 'gsl-roots) (load "analog-filter.scm")))
 (if (not (provided? 'snd-bird.scm)) (load "bird.scm"))
@@ -11487,8 +11481,7 @@ EDITS: 2
   (define (test-gen-equal g0 g1 g2)
     ;; g0 = g1 at start != g2
     
-    (let ((g3 g0)
-	  (gad (make-frame 2)))
+    (let ((g3 g0))
       (if (not (eq? g0 g3))
 	  (snd-display #__line__ ";let ~A not eq? ~A ~A" (mus-name g0) g0 g3))
       (if (eq? g0 g1)
@@ -11497,8 +11490,6 @@ EDITS: 2
 	  (snd-display #__line__ ";~A not equal? ~A ~A" (mus-name g0) g0 g1))
       (if (equal? g0 g2)
 	  (snd-display #__line__ ";~A equal? ~A ~A" (mus-name g0) g0 g2))
-      (if (equal? g0 gad)
-	  (snd-display #__line__ ";~A equal frame? ~A ~A" (mus-name g0) g0 gad))
       (g0)
       (g3)
       (g3)
@@ -11542,27 +11533,6 @@ EDITS: 2
     (if (and (fneq (mus-phase gen) -2.0)
 	     (fneq (mus-phase gen) (- (* 2 pi) 2.0)))
 	(snd-display #__line__ ";phase: ~A freq: ~A" (mus-phase gen) (mus-frequency gen))))
-  
-  ;; ----------------
-  ;; from mixer.scm (commented out)
-  (define (frame-cross m1 m2)
-    (if (or (not (= (mus-length m1) 3))
-	    (not (= (mus-length m2) 3)))
-	(snd-print "cross product only in 3 dimensions")
-	(make-frame 3 
-		    (- (* (m1 1) (m2 2)) 
-		       (* (m1 2) (m2 1)))
-		    (- (* (m1 2) (m2 0)) 
-		       (* (m1 0) (m2 2)))
-		    (- (* (m1 0) (m2 1)) 
-		       (* (m1 1) (m2 0))))))
-  
-  ;; ----------------
-  (define (frame-normalize f)
-    (let ((mag (sqrt (dot-product (mus-data f) (mus-data f)))))
-      (if (> mag 0.0)
-	  (frame* f (/ 1.0 mag))
-	  f)))
   
   ;; ----------------
   (define* (agc (ramp-speed .001) (window-size 512))
@@ -15053,677 +15023,6 @@ EDITS: 2
 		    (let ((f2 (make-firmant 1200.0 0.9))) (firmant f2 1.0) f2)
 		    (let ((f3 (make-firmant 1200.0 0.5))) (firmant f3 1.0) f3))
     
-    
-    (let ((gen (make-mixer 2 .5 .25 .125 1.0))
-	  (fr0 (make-frame 2 1.0 1.0))
-	  (fr1 (make-frame 2 0.0 0.0)))
-      (print-and-check gen 
-		       "mixer"
-		       "mixer chans: 2, [
- 0.500 0.250
- 0.125 1.000
-]")
-      
-      (let ((ap (mus-array-print-length))
-	    (mx (make-mixer 8)))
-	(set! (mus-array-print-length) 4)
-	(do ((i 0 (+ i 1)))
-	    ((= i 8))
-	  (do ((j 0 (+ j 1)))
-	      ((= j 8))
-	    (set! (mx i j) (+ j (* i 8)))))
-	(print-and-check mx
-			 "mixer"
-			 "mixer chans: 8, [
- 0.000 1.000 2.000 3.000...
- 8.000 9.000 10.000 11.000...
- 16.000 17.000 18.000 19.000...
- 24.000 25.000 26.000 27.000...
-]")
-	(set! (mus-array-print-length) 12)
-	(print-and-check mx
-			 "mixer"
-			 "mixer chans: 8, [
- 0.000 1.000 2.000 3.000 4.000 5.000 6.000 7.000
- 8.000 9.000 10.000 11.000 12.000 13.000 14.000 15.000
- 16.000 17.000 18.000 19.000 20.000 21.000 22.000 23.000
- 24.000 25.000 26.000 27.000 28.000 29.000 30.000 31.000
- 32.000 33.000 34.000 35.000 36.000 37.000 38.000 39.000
- 40.000 41.000 42.000 43.000 44.000 45.000 46.000 47.000
- 48.000 49.000 50.000 51.000 52.000 53.000 54.000 55.000
- 56.000 57.000 58.000 59.000 60.000 61.000 62.000 63.000
-]")
-	(set! (mus-array-print-length) ap))
-      (print-and-check fr0 
-		       "frame"
-		       "frame[2]: [1.000 1.000]")
-      (if (not (frame? fr0)) (snd-display #__line__ ";~A not a frame?" fr0))
-      (if (not (mixer? gen)) (snd-display #__line__ ";~A not a mixer?" gen))
-      (if (equal? fr0 fr1) (snd-display #__line__ ";frame=? ~A ~A?" fr0 fr1))
-      (if (not (= (mus-channels fr0) 2)) (snd-display #__line__ ";frame channels: ~D?" (mus-channels fr0)))
-      (if (not (= (mus-length fr1) 2)) (snd-display #__line__ ";frame length: ~D?" (mus-length fr0)))
-      (if (not (= (mus-channels gen) 2)) (snd-display #__line__ ";mixer channels: ~D?" (mus-channels gen)))
-      (frame->frame fr0 gen fr1)
-      (if (or (fneq (fr0 0) 1.0)
-	      (fneq (fr1 1) 1.25)
-	      (fneq (gen 0 0) .5))
-	  (snd-display #__line__ ";fr0: ~A" fr0))
-      (set! (fr1 0) 1.0)
-      (let ((fr3 (frame+ fr0 fr1))
-	    (fr4 (frame* fr0 fr1))
-	    (fr5 (sample->frame fr1 .5)))
-	(if (or (fneq (fr3 0) 2.0)
-		(fneq (fr4 0) 1.0))
-	    (snd-display #__line__ ";fr+*: ~A ~A" fr3 fr4))
-	(if (fneq (fr5 0) .5) 
-	    (snd-display #__line__ ";sample->frame: ~A?" (fr5 0)))
-	(sample->frame fr1 .5 fr5)
-	(if (fneq (fr5 0) .5) 
-	    (snd-display #__line__ ";repeat sample->frame: ~A?" (fr5 0))))
-      (let ((fr3 (make-frame 2))
-	    (fr4 (make-frame 4)))
-	(set! (fr3 0) 1.0)
-	(set! (fr4 0) 0.5)
-	(set! (fr4 2) 1.0)
-	(if (not (feql (frame->list (frame+ fr3 fr4)) (list 1.5 0.0)))
-	    (snd-display #__line__ ";frame+ unequal chans: ~A?" (frame+ fr3 fr4)))
-	(mus-reset fr3)
-	(if (fneq (fr3 0) 0.0) (snd-display #__line__ ";reset frame: ~A" fr3)))
-      (let ((fr3 (make-frame 2))
-	    (fr4 (make-frame 4)))
-	(set! (fr3 0) 1.0)
-	(set! (fr4 0) 0.5)
-	(set! (fr4 2) 1.0)
-	(if (not (feql (frame->list (frame* fr3 fr4)) (list 0.5 0.0)))
-	    (snd-display #__line__ ";frame* unequal chans: ~A?" (frame* fr3 fr4))))
-      (let* ((mx1 (make-mixer 2 1.0 0.0 0.0 1.0))
-	     (mx2 (mixer* gen mx1))
-	     (fr4 (make-frame 2 1.0 1.0))
-	     (fr5 (make-frame 2 1.0 1.0))
-	     (val (frame->sample mx1 fr1)))
-	(if (fneq val 1.0) (snd-display #__line__ ";frame->sample: ~A?" val))
-	(if (fneq (frame->sample fr5 fr4) 2.0) (snd-display #__line__ ";frame->sample ~A" (frame->sample fr5 fr4)))
-	(if (not (equal? (frame->list fr1) (list 1.0 1.25))) (snd-display #__line__ ";frame->list: ~A?" (frame->list fr1)))
-	(if (or (fneq (mx2 0 1) .25) (fneq (mx2 1 0) .125)) (snd-display #__line__ ";mixer*: ~A?" mx2))
-	(if (not (equal? mx2 gen)) (snd-display #__line__ ";mixer=? ~A ~A?" gen mx2))
-	(if (equal? mx2 mx1) (snd-display #__line__ ";mixeris not? ~A ~A?" mx1 mx2))
-	;; mus-data doesn't apply from scheme level here
-					;(if (not (float-vector? (mus-data fr4))) (snd-display #__line__ ";mus-data frame: ~A" (mus-data fr4)))
-					;(if (not (float-vector? (mus-data mx1))) (snd-display #__line__ ";mus-data mixer: ~A" (mus-data mx1)))
-	(set! (mx2 0 0) 2.0)
-	(if (fneq (mx2 0 0) 2.0) (snd-display #__line__ ";mixer-set: ~A?" mx2))
-	(set! fr0 (sample->frame mx2 1.0))
-	(if (or (fneq (fr0 0) 2.0) (fneq (fr0 1) .25)) (snd-display #__line__ ";sample->frame: ~A?" fr0))
-	(let ((tag (catch #t (lambda () (mixer* fr4 fr5)) (lambda args (car args)))))
-	  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";mixer* of 2 frames: ~A" tag)))
-	(let ((frout (make-frame 2)))
-	  (sample->frame mx2 1.0 frout)
-	  (if (not (equal? frout fr0)) (snd-display #__line__ ";sample->frame via frout: ~A ~A?" frout fr0)))))
-    
-    (let ((fr1 (make-frame 2 .1 .2)))
-      (let ((val (frame+ fr1 1.0)))
-	(if (or (fneq (val 0) 1.1)
-		(fneq (val 1) 1.2))
-	    (snd-display #__line__ ";8 frame-offset: ~A" val)))
-      (let ((val (frame+ 1.0 fr1)))
-	(if (or (fneq (val 0) 1.1)
-		(fneq (val 1) 1.2))
-	    (snd-display #__line__ ";8 frame-offset a: ~A" val)))
-      (let ((val (frame* fr1 2.0)))
-	(if (or (fneq (val 0) 0.2)
-		(fneq (val 1) 0.4))
-	    (snd-display #__line__ ";8 frame-scale: ~A" val)))
-      (let ((val (frame* 2.0 fr1)))
-	(if (or (fneq (val 0) 0.2)
-		(fneq (val 1) 0.4))
-	    (snd-display #__line__ ";8 frame-scale a: ~A" val)))
-      (let ((val (frame-copy fr1)))
-	(if (or (fneq (val 0) 0.1)
-		(fneq (val 1) 0.2))
-	    (snd-display #__line__ ";8 frame-copy a: ~A" val))))
-    
-    (let ((fr (make-frame! 3))
-	  (fr1 (make-frame 3)))
-      (if (not (equal? fr fr1)) (snd-display #__line__ ";make-frame!: ~A ~A" fr fr1)))
-    (let ((fr (make-frame! 3 .1 .2 .3))
-	  (fr1 (make-frame 3 .1 .2 .3)))
-      (if (not (equal? fr fr1)) (snd-display #__line__ ";make-frame! (args): ~A ~A" fr fr1)))
-    
-    (let ((fr (frame .1 .2 .3)))
-      (let ((fr1 (copy fr)))
-	(if (not (equal? fr fr1)) (snd-display #__line__ ";copy frame: ~A ~A" fr fr1)))
-      (fill! fr 0.0)
-      (if (not (equal? fr (frame 0.0 0.0 0.0)))
-	  (snd-display #__line__ ";fill! frame 0.0: ~A" fr)))
-    
-    
-    (let* ((mx1 (make-mixer 2 1 2 3 4))
-	   (mx2 (mixer* mx1 2.0)))
-      (if (not (equal? mx2 (make-mixer 2 2 4 6 8)))
-	  (snd-display #__line__ ";8 mixer* 2: ~A" mx2))
-      (set! mx2 (mixer* 2.0 mx1))
-      (if (not (equal? mx2 (make-mixer 2 2 4 6 8)))
-	  (snd-display #__line__ ";8 mixer* 2a: ~A" mx2))
-      (set! mx2 (mixer+ 2.0 mx1))
-      (if (not (equal? mx2 (make-mixer 2 3 4 5 6)))
-	  (snd-display #__line__ ";8 mixer-offset 2: ~A" mx2))
-      (set! mx2 (mixer+ mx1 2.0))
-      (if (not (equal? mx2 (make-mixer 2 3 4 5 6)))
-	  (snd-display #__line__ ";8 mixer-offset 2a: ~A" mx2)))
-    
-    (let ((mx1 (make-scalar-mixer 2 2.0))
-	  (mx2 (make-mixer 2 .1 .2 .3 .4)))
-      (let ((nmx (mixer+ mx1 mx2)))
-	(if (or (fneq (mx1 0 0) 2.0)
-		(fneq (mx1 0 1) 0.0)
-		(fneq (mx1 1 0) 0.0)
-		(fneq (mx1 1 1) 2.0))
-	    (snd-display #__line__ ";make-scalar-mixer 2: ~A" mx1))
-	(if (or (fneq (mx2 0 0) .1)
-		(fneq (mx2 0 1) .2)
-		(fneq (mx2 1 0) .3)
-		(fneq (mx2 1 1) .4))
-	    (snd-display #__line__ ";make-mixer .1 .2 .3 .4: ~A" mx2))
-	(if (or (fneq (nmx 0 0) 2.1)
-		(fneq (nmx 0 1) 0.2)
-		(fneq (nmx 1 0) 0.3)
-		(fneq (nmx 1 1) 2.4))
-	    (snd-display #__line__ ";mixer add ~A ~A: ~A" mx1 mx2 nmx))
-	(set! mx1 (mixer* mx1 .5))
-	(if (or (fneq (mx1 0 0) 1.0)
-		(fneq (mx1 0 1) 0.0)
-		(fneq (mx1 1 0) 0.0)
-		(fneq (mx1 1 1) 1.0))
-	    (snd-display #__line__ ";make-scale (identity): ~A" mx1)))
-      (mus-reset mx1)
-      (if (fneq (mx1 0 0) 0.0) (snd-display #__line__ ";reset mixer: ~A" mx1)))
-    
-    (let ((mx (mixer .1 .2 .3 .4)))
-      (let ((mx1 (copy mx)))
-	(if (not (equal? mx mx1)) (snd-display #__line__ ";mixer copy not equal? ~A ~A" mx mx1)))
-      (fill! mx 0.1)
-      (if (not (equal? mx (mixer .1 .1 .1 .1))) 
-	  (snd-display #__line__ ";fill! mixer: ~A" mx)))
-    
-    (let ((var (catch #t (lambda () (make-mixer 2 0.0 0.0 0.0 0.0 0.0)) (lambda args args))))
-      (if (not (eq? (car var) 'mus-error))
-	  (snd-display #__line__ ";make-mixer extra args: ~A" var)))
-    (let ((var (catch #t (lambda () (let ((fr1 (make-frame 2 1.0 0.0))) (frame->sample (make-oscil) fr1))) (lambda args args))))
-      (if (not (eq? (car var) 'mus-error))
-	  (snd-display #__line__ ";frame->sample bad arg: ~A" var)))
-    (let* ((hi (make-mixer 1 1))
-	   (tag (catch #t (lambda () (mixer-set! hi 1 1 1.0)) (lambda args (car args)))))
-      (if (not (eq? tag 'mus-error)) (snd-display #__line__ ";mixer-set! 1 1 of 0: ~A (~A)" tag hi)))
-    (let* ((hi (make-mixer 1 1))
-	   (tag (catch #t (lambda () (set! (hi 1 1) 1.0)) (lambda args (car args)))))
-      (if (not (eq? tag 'mus-error)) (snd-display #__line__ ";set! mixer-ref 1 1 of 0: ~A (~A)" tag hi)))
-    (let* ((hi (make-mixer 1))
-	   (tag (catch #t (lambda () (mixer-set! hi 1 0 1.0)) (lambda args (car args)))))
-      (if (not (eq? tag 'mus-error)) (snd-display #__line__ ";mixer-set! 1 0 of 0: ~A (~A)" tag hi)))
-    (let* ((hi (make-mixer 1))
-	   (tag (catch #t (lambda () (mixer-set! hi 0 1 1.0)) (lambda args (car args)))))
-      (if (not (eq? tag 'mus-error)) (snd-display #__line__ ";mixer-set! 0 1 of 0: ~A (~A)" tag hi)))
-    (let* ((hi (make-frame 1))
-	   (tag (catch #t (lambda () (frame-set! hi 1 1.0)) (lambda args (car args)))))
-      (if (not (eq? tag 'mus-error)) (snd-display #__line__ ";frame-set! 1 of 0: ~A (~A)" tag hi)))
-    (let* ((hi (make-frame 1))
-	   (tag (catch #t (lambda () (set! (hi 1) 1.0)) (lambda args (car args)))))
-      (if (not (eq? tag 'mus-error)) (snd-display #__line__ ";set! frame-ref 1 of 0: ~A (~A)" tag hi)))
-    (let ((tag (catch #t (lambda () (make-frame 0)) (lambda args (car args)))))
-      (if (not (eq? tag 'out-of-range)) (snd-display #__line__ ";make-frame 0: ~A" tag)))
-    (let ((tag (catch #t (lambda () (make-mixer 0)) (lambda args (car args)))))
-      (if (not (eq? tag 'out-of-range)) (snd-display #__line__ ";make-mixer 0: ~A" tag)))
-    
-    (let ((fr1 (make-frame 1 1))
-	  (fr2 (make-frame 2 1 2))
-	  (fr4 (make-frame 4 1 2 3 4)) 
-	  (fr8 (make-frame 8 1 2 3 4 5 6 7 8))
-	  (mx1 (make-mixer 1 5))
-	  (mx1id (make-mixer 1 1))
-	  (mx2 (make-mixer 2 1 2 3 4))
-	  (mx2id (make-mixer 2 1 0 0 1))
-	  (mx4 (make-mixer 4))
-	  (mx4id (make-mixer 4))
-	  (mx8 (make-mixer 8))
-	  (mx8id (make-mixer 8)))
-      (do ((i 0 (+ i 1)))
-	  ((= i 4))
-	(set! (mx4id i i) 1)
-	(set! (mx4 0 i) 1))
-      (do ((i 0 (+ i 1)))
-	  ((= i 8))
-	(set! (mx8id i i) 1)
-	(set! (mx8 i 0) 1))
-      (if (not (equal? (frame->frame fr1 mx1id) (make-frame 1 1))) (snd-display #__line__ ";frame->frame 1 id: ~A?"            (frame->frame fr1 mx1id)))
-      (if (not (equal? (frame->frame fr1 mx1) (make-frame 1 5))) (snd-display #__line__ ";frame->frame 1: ~A?"                 (frame->frame fr1 mx1)))  
-      (if (not (equal? (frame->frame fr1 mx2id) (make-frame 2 1 0))) (snd-display #__line__ ";frame->frame 2 1 id: ~A?"        (frame->frame fr1 mx2id)))  
-      (if (not (equal? (frame->frame fr1 mx2) (make-frame 2 1 2))) (snd-display #__line__ ";frame->frame 2 1: ~A?"             (frame->frame fr1 mx2)))  
-      (if (not (equal? (frame->frame fr1 mx4) (make-frame 4 1 1 1 1))) (snd-display #__line__ ";frame->frame 4 1: ~A?"         (frame->frame fr1 mx4)))  
-      (if (not (equal? (frame->frame fr1 mx8) (make-frame 8 1 0 0 0 0 0 0 0))) (snd-display #__line__ ";frame->frame 8 1: ~A?" (frame->frame fr1 mx8))) 
-      (if (not (equal? (frame->frame fr2 mx1) (make-frame 1 5))) (snd-display #__line__ ";frame->frame 1 2: ~A?"               (frame->frame fr2 mx1)))   
-      (if (not (equal? (frame->frame fr2 mx2id) (make-frame 2 1 2))) (snd-display #__line__ ";frame->frame 2id 2: ~A?"         (frame->frame fr2 mx2id)))  
-      (if (not (equal? (frame->frame fr2 mx2) (make-frame 2 7 10))) (snd-display #__line__ ";frame->frame 2 2: ~A?"            (frame->frame fr2 mx2)))  
-      (if (not (equal? (frame->frame fr2 mx4id) (make-frame 4 1 2 0 0))) (snd-display #__line__ ";frame->frame 4id 2: ~A?"     (frame->frame fr2 mx4id)))  
-      (if (not (equal? (frame->frame fr2 mx8id) (make-frame 8 1 2 0 0 0 0 0 0))) (snd-display #__line__ ";frame->frame 8id 2: ~A?" (frame->frame fr2 mx8id)))  
-      (if (not (equal? (frame->frame fr2 mx4) (make-frame 4 1 1 1 1))) (snd-display #__line__ ";frame->frame 4 2: ~A?"         (frame->frame fr2 mx4)))  
-      (if (not (equal? (frame->frame fr2 mx8) (make-frame 8 3 0 0 0 0 0 0 0))) (snd-display #__line__ ";frame->frame 8 2: ~A?" (frame->frame fr2 mx8))) 
-      (if (not (equal? (frame->frame fr4 mx1) (make-frame 1 5))) (snd-display #__line__ ";frame->frame 1 4: ~A?"               (frame->frame fr4 mx1))) 
-      (if (not (equal? (frame->frame fr8 mx1) (make-frame 1 5))) (snd-display #__line__ ";frame->frame 1 8: ~A?"               (frame->frame fr8 mx1))) 
-      (if (not (equal? (frame->frame fr2 mx8id) (make-frame 8 1 2 0 0 0 0 0 0))) (snd-display #__line__ ";frame->frame 8id 2: ~A?" (frame->frame fr2 mx8id)))
-      (if (not (equal? (frame->frame fr2 mx4id) (make-frame 4 1 2 0 0))) (snd-display #__line__ ";frame->frame 4id 2: ~A?"     (frame->frame fr2 mx4id)))  
-      (if (not (equal? (frame->frame fr4 mx8) (make-frame 8 10 0 0 0 0 0 0 0))) (snd-display #__line__ ";frame->frame 8 4: ~A?" (frame->frame fr4 mx8))) 
-      (if (not (equal? (frame->frame fr4 mx4) (make-frame 4 1 1 1 1))) (snd-display #__line__ ";frame->frame 4 4: ~A?"         (frame->frame fr4 mx4))))
-    
-    (let ((fr1 (make-frame 2))
-	  (fr2 (make-frame 2))
-	  (mx1 (make-mixer 2))
-	  (mx2 (make-mixer 2)))
-      (set! (fr1 0) .1)
-      (let ((fradd (frame+ fr1 fr1 fr2)))
-	(if (not (equal? fr2 fradd)) (snd-display #__line__ ";frame+ with res frame: ~A ~A" fr2 fradd))
-	(if (not (equal? fr2 (make-frame 2 0.2 0.0))) (snd-display #__line__ ";frame+ res: ~A" fr2))
-	(set! fradd (frame* fr1 fr1 fr2))
-	(if (not (equal? fr2 fradd)) (snd-display #__line__ ";frame* with res frame: ~A ~A" fr2 fradd))
-	(if (or (fneq (fr2 0) .01) (fneq (fr2 1) 0.0)) (snd-display #__line__ ";frame* res: ~A" fr2)))
-      (set! (mx1 0 0) .1)
-      (let ((mxadd (mixer* mx1 mx1 mx2)))
-	(if (not (equal? mx2 mxadd)) (snd-display #__line__ ";mixer* with res frame: ~A ~A" mx2 mxadd))
-	(if (fneq (mx2 0 0) .01) (snd-display #__line__ ";mixer* res: ~A" mx2))))
-    
-    
-    (let ((fr1 (frame .1 .2))
-	  (fr2 (make-frame 2 .1 .2)))
-      (if (not (equal? fr1 fr2))
-	  (snd-display #__line__ ";frame...: ~A ~A" fr1 fr2)))
-    
-    (let ((fr1 (frame .1)))
-      (if (fneq (fr1 0) .1) (snd-display #__line__ ";frame gen ref (.1): ~A" (fr1 0)))
-      (set! (fr1 0) .2)
-      (if (fneq (fr1 0) .2) (snd-display #__line__ ";frame gen ref (.2): ~A" (fr1 0)))
-      (if (not (equal? fr1 (frame .2)))
-	  (snd-display #__line__ ";frame gen set! (.2): ~A" fr1)))
-    
-    (let ((fr1 (frame .1 .2 .3 .4)))
-      (set! (fr1 2) (+ (fr1 1) (fr1 2)))
-      (if (fneq (fr1 2) .5) (snd-display #__line__ ";frame gen ref/set (.5): ~A" (fr1 2))))
-    
-    (let ((fr1 (frame)))
-      (if (or (not (frame? fr1))
-	      (not (equal? fr1 (make-frame 1 0.0))))
-	  (snd-display #__line__ ";frame no args: ~A" fr1))
-      (set! (fr1 0) .5)
-      (if (fneq (fr1 0) .5) (snd-display #__line__ ";frame ref/set no args: ~A" (fr1 0))))
-    
-    (let ((fr1 (make-frame 2 .1)))
-      (if (not (equal? fr1 (frame .1 0.0)))
-	  (snd-display #__line__ ";make-frame missing arg: ~A" fr1)))
-    
-    
-    (let ((mx (mixer .1 .2 .3 .4)))
-      (if (fneq (mx 0 0) .1) (snd-display #__line__ ";mixer gen ref (.1): ~A" (mx 0 0)))
-      (if (not (equal? mx (make-mixer 2 .1 .2 .3 .4))) (snd-display #__line__ ";mixer...: ~A" mx))
-      (set! (mx 0 0) .5)
-      (if (fneq (mx 0 0) .5) (snd-display #__line__ ";mixer gen set (.5): ~A" (mx 0 0)))
-      (if (not (equal? mx (make-mixer 2 .5 .2 .3 .4))) (snd-display #__line__ ";mixer... (after set): ~A" mx))
-      (if (fneq (mx 1 0) .3) (snd-display #__line__ ";mixer gen ref (.3): ~A" (mx 1 0)))
-      (set! (mx 0 1) .5)
-      (if (fneq (mx 0 1) .5) (snd-display #__line__ ";mixer (0 1) gen set (.5): ~A" (mx 0 1)))
-      (if (not (equal? mx (make-mixer 2 .5 .5 .3 .4))) (snd-display #__line__ ";mixer... (after set 1): ~A" mx)))
-    
-    (let ((mx (mixer .1)))
-      (if (not (equal? mx (make-mixer 1 .1))) (snd-display #__line__ ";mixer .1: ~A" mx))
-      (if (fneq (mx 0 0) .1) (snd-display #__line__ ";mixer (1) gen ref (.1): ~A" (mx 0 0)))  
-      (set! (mx 0 0) .5)
-      (if (fneq (mx 0 0) .5) (snd-display #__line__ ";mixer (1) gen set (.5): ~A" (mx 0 0))))
-    
-    (let ((mx (mixer .1 .2 .3)))
-      (if (not (equal? mx (make-mixer 2 .1 .2 .3 0.0))) (snd-display #__line__ ";mixer .1 .2 .3: ~A" mx))
-      (set! (mx 1 1) .5)
-      (if (fneq (mx 1 1) .5) (snd-display #__line__ ";mixer (1 1) gen set (.5): ~A" (mx 1 1))))
-    
-    (let ((mx (mixer)))
-      (if (not (equal? mx (make-mixer 1 0.0))) (snd-display #__line__ ";(mixer): ~A" mx)))
-    
-    
-    (for-each 
-     (lambda (chans)
-       (let ((m1 (make-mixer chans)))
-	 (if (or (not (= (mus-channels m1) chans))
-		 (not (= (mus-length m1) chans)))
-	     (snd-display #__line__ ";mixer ~A chans but: ~A ~A" chans (mus-channels m1) (mus-length m1)))
-	 (do ((i 0 (+ i 1)))
-	     ((= i chans))
-	   (do ((j 0 (+ j 1)))
-	       ((= j chans))
-	     (set! (m1 i j) (+ (* i .01) (* j .1)))))
-	 (do ((i 0 (+ i 1)))
-	     ((= i chans))
-	   (do ((j 0 (+ j 1)))
-	       ((= j chans))
-	     (if (fneq (m1 i j) (+ (* i .01) (* j .1)))
-		 (snd-display #__line__ ";mixer[~A ~A] = ~A (~A)?" i j (m1 i j) (+ (* i .01) (* j .1))))))
-	 (let ((mempty (make-mixer chans))
-	       (midentity (make-mixer chans))
-	       (mpick (make-mixer chans)))
-	   (do ((i 0 (+ i 1)))
-	       ((= i chans))
-	     (set! (midentity i i) 1.0))
-	   (set! (mpick (- chans 1) (- chans 1)) 1.0)
-	   (let ((mzero (mixer* m1 mempty))
-		 (msame (mixer* m1 midentity))
-		 (mone (mixer* m1 mpick)))
-	     (do ((i 0 (+ i 1)))
-		 ((= i chans))
-	       (do ((j 0 (+ j 1)))
-		   ((= j chans))
-		 (if (fneq (mzero i j) 0.0) (snd-display #__line__ ";mzero ~A ~A = ~A?" i j (mzero i j)))
-		 (if (fneq (m1 i j) (msame i j)) (snd-display #__line__ ";msame ~A ~A?" (msame i j) (m1 i j)))
-		 (if (and (fneq (mone i j) 0.0)
-			  (not (= i (- chans 1)))
-			  (not (= j (- chans 1))))
-		     (snd-display #__line__ ";mone ~A ~A = ~A?" i j (mone i j)))))))))
-     (list 1 2 4 8))
-    
-    (let ((mx (make-mixer 4 4)))
-      (let ((tag (catch #t (lambda () (set! (mus-length mx) 2)) (lambda args (car args)))))
-	(if (not (eq? tag 'mus-error)) (snd-display #__line__ ";set mixer-length: ~A ~A" tag (mus-length mx)))))
-    
-    (letrec ((mixer-equal? (lambda (m1 m2) 
-			     ;; this is less demanding than the built-in function
-			     (let ((len (mus-length m1))
-				   (happy #t))
-			       (and (= len (mus-length m2))
-				    (do ((i 0 (+ i 1)))
-					((or (not happy) (= i len)) 
-					 happy)
-				      (do ((j 0 (+ j 1)))
-					  ((or (not happy) (= j len)))
-					(if (> (abs (- (m1 i j) (m2 i j))) .001)
-					    (set! happy #f))))))))
-					;	     (mixer-normal? (lambda (mx)
-					;			      (mixer-equal? (mixer* mx (mixer-transpose mx)) 
-					; conjugate transpose (hermitian) if complex
-					;					    (mixer* (mixer-transpose mx) mx))))
-					;	     (mixer-orthogonal? (lambda (mx)
-					;				  (mixer-equal? (mixer-transpose mx) 
-					;						(mixer-inverse mx))))
-					;	     (mixer-unitary? (lambda (mx) (mixer-orthogonal? mx))) ; reals
-	     (mixer-symmetric? (lambda (m1) (mixer-equal? m1 (mixer-transpose m1))))
-					;	     (mixer-hermitian? (lambda (mx) (mixer-symmetric? mx))) ; assuming reals	   
-	     (frame-equal? (lambda (f1 f2)
-			     (let ((len (mus-length f1))
-				   (happy #t))
-			       (and (= len (mus-length f2))
-				    (do ((i 0 (+ i 1)))
-					((or (not happy) (= i len))
-					 happy)
-				      (if (> (abs (- (f1 i) (f2 i))) .001)
-					  (set! happy #f)))))))
-	     (slow-mixer-inverse (lambda (mx)
-				   (let ((n (mus-length mx))
-					 (det (mixer-determinant mx)))
-				     (if (not (= det 0.0))
-					 (let ((nmx (make-zero-mixer n)))
-					   (do ((i 0 (+ i 1)))
-					       ((= i n))
-					     (do ((j 0 (+ j 1)))
-						 ((= j n))
-					       (set! (nmx j i) (* (if (odd? (+ i j)) -1 1) 
-								      (/ (mixer-determinant (sub-matrix mx i j)) 
-									 det)))))
-					   nmx)
-					 #f))))
-	     (slow-mixer-solve (lambda (A b) ; Ax=b where A is mixer and b is frame, returns frame
-				 (if (= (mus-length A) 1)
-				     (if (not (= (A 0 0) 0.0))
-					 (make-frame 1 (/ (b 0) (A 0 0)))
-					 #f)
-				     (let ((imx (slow-mixer-inverse A)))
-				       (if (mixer? imx) ; else determinant = 0
-					   (frame->frame imx b)
-					   #f)))))
-					;	     (make-random-frame (lambda (size)
-					;				  (let ((fr (make-frame size)))
-					;				    (do ((i 0 (+ i 1)))
-					;					((= i size))
-					;				      (set! (fr i) (- 1.0 (random 2.0))))
-					;				    fr)))
-	     (make-random-mixer (lambda (size)
-				  (let ((mx (make-mixer size)))
-				    (do ((i 0 (+ i 1)))
-					((= i size))
-				      (do ((j 0 (+ j 1)))
-					  ((= j size))
-					(set! (mx i j) (mus-random 1.0))))
-				    mx)))
-	     )
-      (if (fneq (mixer-determinant (make-mixer 2 1 2 3 4)) -2.0)
-	  (snd-display #__line__ ";mixer-determinant -2: ~A" (mixer-determinant (make-mixer 2 1 2 3 4))))
-      (if (fneq (mixer-determinant (make-mixer 3 1 2 3 4 5 6 7 8 9)) 0.0)
-	  (snd-display #__line__ ";mixer-determinant 0: ~A" (mixer-determinant (make-mixer 3 1 2 3 4 5 6 7 8 9))))
-      (if (fneq (mixer-determinant (make-mixer 4 1 2 3 4 8 7 6 5 1 8 2 7 3 6 4 5)) -144.0) ; Eves Elementary Matrix Theory
-	  (snd-display #__line__ ";mixer-determinant -144: ~A" (mixer-determinant (make-mixer 4 1 2 3 4 8 7 6 5 1 8 2 7 3 6 4 5))))
-      (if (fneq (mixer-determinant (make-mixer 5  2 3 5 7 11  13 17 19 23 29  31 37 41 43 47  53 59 61 67 71  73 79 83 89 97)) -4656.0)
-	  (snd-display #__line__ ";mixer-determinant -4656: ~A" (mixer-determinant (make-mixer 5  2 3 5 7 11  13 17 19 23 29  31 37 41 43 47  
-											       53 59 61 67 71  73 79 83 89 97))))
-      (if (fneq (mixer-determinant (make-mixer 6  2 3 5 7 11 13   17 19 23 29 31 37  41 43 47 53 59 61  67 71 73 79 83 89  
-					       97 101 103 107 109 113  127 131 137 139 149 151)) -14304.0)
-	  (snd-display #__line__ ";mixer-determinant -14304: ~A" 
-		       (mixer-determinant (make-mixer 6  2 3 5 7 11 13   17 19 23 29 31 37  41 43 47 53 59 61  67 71 73 79 83 89  
-						      97 101 103 107 109 113  127 131 137 139 149 151))))
-      (if (not (mixer-equal? (mixer-transpose (make-mixer 2 1 2 3 4)) 
-			     (make-mixer 2 1.000 3.000 2.000 4.000)))
-	  (snd-display #__line__ ";mixer-transpose 1: ~A" (mixer-transpose (make-mixer 2 1 2 3 4))))
-      (if (not (mixer-equal? (mixer-transpose (make-mixer 3 1 2 3 4 5 6 7 8 9)) 
-			     (make-mixer 3 1.000 4.000 7.000 2.000 5.000 8.000 3.000 6.000 9.000)))
-	  (snd-display #__line__ ";mixer-transpose 2: ~A" (mixer-transpose (make-mixer 3 1 2 3 4 5 6 7 8 9))))
-      (if (not (mixer-equal? (mixer* (make-mixer 2 1 0 0 1) (make-mixer 2 2 0 0 2)) 
-			     (make-mixer 2 2.000 0.000 0.000 2.000)))
-	  (snd-display #__line__ ";mixer* 1: ~A" (mixer* (make-mixer 2 1 0 0 1) (make-mixer 2 2 0 0 2))))
-      (if (not (mixer-equal? (mixer* (make-mixer 3 2 3 5 7 11 13 19 23 29) (make-mixer 3 41 43 47 53 59 61 67 71 73))
-			     (make-mixer 3 576.000 618.000 642.000 1741.000 1873.000 1949.000 3941.000 4233.000 4413.000)))
-	  (snd-display #__line__ ";mixer* 2: ~A" (mixer* (make-mixer 3 2 3 5 7 11 13 19 23 29) (make-mixer 3 41 43 47 53 59 61 67 71 73))))
-      (if (not (mixer-equal? (slow-mixer-inverse (make-mixer 2 1 0 0 1)) 
-			     (make-mixer 2 1.000 0.000 0.000 1.000)))
-	  (snd-display #__line__ ";slow-mixer-inverse 1: ~A" (slow-mixer-inverse (make-mixer 2 1 0 0 1))))
-      (if (not (mixer-equal? (slow-mixer-inverse (make-mixer 2 2 3 5 8))
-			     (make-mixer 2 8.000 -3.000 -5.000 2.000)))
-	  (snd-display #__line__ ";slow-mixer-inverse 2: ~A" (slow-mixer-inverse (make-mixer 2 2 3 5 8))))
-      (if (not (mixer-equal? (slow-mixer-inverse (make-mixer 3  2 3 5  7 11 13  17 19 23))
-			     (make-mixer 3 -0.077 -0.333 0.205 -0.769 0.500 -0.115 0.692 -0.167 -0.013)))
-	  (snd-display #__line__ ";slow-mixer-inverse 3: ~A" (slow-mixer-inverse (make-mixer 3 2 3 5 7 11 13 17 19 23))))
-      (if (not (mixer-equal? (slow-mixer-inverse (make-mixer 4 2 3 5 7  17 19 23 29 41 43 47 53 67 71 73 97))
-			     (make-mixer 4 -7.000 4.708 -1.042 -0.333 9.000 -6.396 1.396 0.500 
-					 -1.000 0.875 -0.042 -0.167 -1.000 0.771 -0.271 0.000)))
-	  (snd-display #__line__ ";slow-mixer-inverse 4: ~A" (slow-mixer-inverse (make-mixer 4 2 3 5 7  17 19 23 29 41 43 47 53 67 71 73 97))))
-      (if (not (mixer-equal? (slow-mixer-inverse (make-mixer 6  2 3 5 7 11 13   17 -19 23 29 31 37  41 43 47 53 59 61  
-							     67 71 73 79 83 89  97 101 103 107 109 113  127 131 137 139 149 151))
-			     (make-mixer 6 -1.355 0.020 -0.000 1.090 -1.153 0.333 0.092 -0.025 0.000 -0.042 0.070 -0.029 
-					 1.612 0.006 -0.250 -1.205 1.249 -0.264 0.079 0.002 0.250 -0.314 0.425 -0.241 
-					 -0.551 -0.011 0.250 0.200 -0.476 0.188 0.068 0.009 -0.250 0.306 -0.145 0.028)))
-	  (snd-display #__line__ ";slow-mixer-inverse 5: ~A" (slow-mixer-inverse (make-mixer 6  2 3 5 7 11 13   17 -19 23 29 31 37  41 43 47 53 59 61  
-											     67 71 73 79 83 89  97 101 103 107 109 113  127 131 137 139 149 151))))
-      (if (not (mixer-equal? (mixer* (make-mixer 2 2 3 5 8) (slow-mixer-inverse (make-mixer 2 2 3 5 8)))
-			     (make-scalar-mixer 2 1.0)))
-	  (snd-display #__line__ ";slow-mixer-inverse 6: ~A" (mixer* (make-mixer 2 2 3 5 8) (slow-mixer-inverse (make-mixer 2 2 3 5 8)))))
-      (if (not (mixer-equal? (mixer* (make-mixer 3 2 3 5 7 11 13 17 19 23) (slow-mixer-inverse (make-mixer 3 2 3 5 7 11 13 17 19 23)))
-			     (make-scalar-mixer 3 1.0)))
-	  (snd-display #__line__ ";slow-mixer-inverse 7: ~A" 
-		       (mixer* (make-mixer 3 2 3 5 7 11 13 17 19 23) (slow-mixer-inverse (make-mixer 3 2 3 5 7 11 13 17 19 23)))))
-      
-      (if (not (mixer-equal? (mixer-inverse (make-mixer 2 1 0 0 1)) 
-			     (make-mixer 2 1.000 0.000 0.000 1.000)))
-	  (snd-display #__line__ ";mixer-inverse 1: ~A" (mixer-inverse (make-mixer 2 1 0 0 1))))
-      (if (not (mixer-equal? (mixer-inverse (make-mixer 2 2 3 5 8))
-			     (make-mixer 2 8.000 -3.000 -5.000 2.000)))
-	  (snd-display #__line__ ";mixer-inverse 2: ~A" (mixer-inverse (make-mixer 2 2 3 5 8))))
-      (if (not (mixer-equal? (mixer-inverse (make-mixer 3  2 3 5  7 11 13  17 19 23))
-			     (make-mixer 3 -0.077 -0.333 0.205 -0.769 0.500 -0.115 0.692 -0.167 -0.013)))
-	  (snd-display #__line__ ";mixer-inverse 3: ~A" (mixer-inverse (make-mixer 3 2 3 5 7 11 13 17 19 23))))
-      (if (not (mixer-equal? (mixer-inverse (make-mixer 4 2 3 5 7  17 19 23 29 41 43 47 53 67 71 73 97))
-			     (make-mixer 4 -7.000 4.708 -1.042 -0.333 9.000 -6.396 1.396 0.500 
-					 -1.000 0.875 -0.042 -0.167 -1.000 0.771 -0.271 0.000)))
-	  (snd-display #__line__ ";mixer-inverse 4: ~A" (mixer-inverse (make-mixer 4 2 3 5 7  17 19 23 29 41 43 47 53 67 71 73 97))))
-      (if (not (mixer-equal? (mixer-inverse (make-mixer 6  2 3 5 7 11 13   17 -19 23 29 31 37  41 43 47 53 59 61  
-							67 71 73 79 83 89  97 101 103 107 109 113  127 131 137 139 149 151))
-			     (make-mixer 6 -1.355 0.020 -0.000 1.090 -1.153 0.333 0.092 -0.025 0.000 -0.042 0.070 -0.029 
-					 1.612 0.006 -0.250 -1.205 1.249 -0.264 0.079 0.002 0.250 -0.314 0.425 -0.241 
-					 -0.551 -0.011 0.250 0.200 -0.476 0.188 0.068 0.009 -0.250 0.306 -0.145 0.028)))
-	  (snd-display #__line__ ";mixer-inverse 5: ~A" (mixer-inverse (make-mixer 6  2 3 5 7 11 13   17 -19 23 29 31 37  41 43 47 53 59 61  
-										   67 71 73 79 83 89  97 101 103 107 109 113  127 131 137 139 149 151))))
-      (if (not (mixer-equal? (mixer* (make-mixer 2 2 3 5 8) (mixer-inverse (make-mixer 2 2 3 5 8)))
-			     (make-scalar-mixer 2 1.0)))
-	  (snd-display #__line__ ";mixer-inverse 6: ~A" (mixer* (make-mixer 2 2 3 5 8) (mixer-inverse (make-mixer 2 2 3 5 8)))))
-      (if (not (mixer-equal? (mixer* (make-mixer 3 2 3 5 7 11 13 17 19 23) (mixer-inverse (make-mixer 3 2 3 5 7 11 13 17 19 23)))
-			     (make-scalar-mixer 3 1.0)))
-	  (snd-display #__line__ ";mixer-inverse 7: ~A" 
-		       (mixer* (make-mixer 3 2 3 5 7 11 13 17 19 23) (mixer-inverse (make-mixer 3 2 3 5 7 11 13 17 19 23)))))
-      (if (invert-matrix (make-mixer 3 1 2 3 4 5 6 7 8 9))
-	  (snd-display #__line__ ";invert-matrix missed singular case? ~A" (invert-matrix (make-mixer 3 1 2 3 4 5 6 7 8 9))))
-      (if (fneq (mixer-trace (make-mixer 3 1 0 0 0 2 0 0 0 3)) 6.0)
-	  (snd-display #__line__ ";mixer-trace (6): ~A" (mixer-trace (make-mixer 3 1 0 0 0 2 0 0 0 3))))
-      
-      (if (not (mixer-diagonal? (make-scalar-mixer 2 2.0))) (snd-display #__line__ ";mixer-diagonal 1"))
-      (if (not (mixer-diagonal? (make-mixer 3 1 0 0 0 1 0 0 0 1))) (snd-display #__line__ ";mixer-diagonal 2"))
-      (if (mixer-diagonal? (make-mixer 3 1 0 0 0 1 1 0 0 1)) (snd-display #__line__ ";mixer-diagonal 3"))
-      (if (not (mixer-diagonal? (make-mixer 3 0 0 0 0 1 0 0 0 1))) (snd-display #__line__ ";mixer-diagonal 4"))
-      (if (not (mixer-symmetric? (make-mixer 3 0 0 0 0 1 0 0 0 1))) (snd-display #__line__ ";mixer-symmetric 1"))
-      (if (not (mixer-symmetric? (make-mixer 3 1 2 0 2 1 0 0 0 1))) (snd-display #__line__ ";mixer-symmetric 2"))
-      (if (mixer-symmetric? (make-mixer 3 1 2 0 2 1 0 0 2 1)) (snd-display #__line__ ";mixer-symmetric 3"))
-      (if (not (mixer-equal? (make-scalar-mixer 2 2.0) (make-mixer 2 2.0 0 0 2.0))) (snd-display #__line__ ";mixer-equal 1"))
-      (if (mixer-equal? (make-mixer 2 1 2 3 4) (make-mixer 3 1 2 3 4 5 6 7 8 9)) (snd-display #__line__ ";mixer-equal 2"))
-      (if (mixer-equal? (make-mixer 2 1 2 3 4) (make-mixer 2 1 2 3 5)) (snd-display #__line__ ";mixer-equal 3"))
-      (if (not (mixer-equal? (mixer-poly (make-mixer 2 1 0 0 1) 1.0 1.0) (make-mixer 2 2.0 0.0 0.0 2.0)))
-	  (snd-display #__line__ ";mixer-poly 1: ~A" (mixer-poly (make-mixer 2 1 0 0 1) 1.0 1.0)))
-      (if (not (mixer-equal? (mixer-poly (make-mixer 1 1) 1) (make-mixer 1 1.0)))
-	  (snd-display #__line__ ";mixer-poly 2: ~A" (mixer-poly (make-mixer 1 1) 1)))
-      (if (not (mixer-equal? (mixer-poly (make-mixer 2 1 0 0 1) 1 0 0) (make-mixer 2 1.0 0.0 0.0 1.0)))
-	  (snd-display #__line__ ";mixer-poly 2: ~A" (mixer-poly (make-mixer 2 1 0 0 1) 1 0 0)))
-      (if (not (mixer-equal? (mixer-poly (make-mixer 2 1 2 4 3) 1 0 0) (make-mixer 2 9.0 8.0 16.0 17.0)))
-	  (snd-display #__line__ ";mixer-poly 2: ~A" (mixer-poly (make-mixer 2 1 2 4 3) 1 0 0)))
-      (if (not (mixer-equal? (mixer-poly (make-mixer 2 1 2 4 3) 1 1 0) (make-mixer 2 10.0 10.0 20.0 20.0)))
-	  (snd-display #__line__ ";mixer-poly 2: ~A" (mixer-poly (make-mixer 2 1 2 4 3) 1 1 0)))
-      (if (not (mixer-equal? (mixer-poly (make-mixer 2 1 2 4 3) 1 1 2) (make-mixer 2 12.0 10.0 20.0 22.0)))
-	  (snd-display #__line__ ";mixer-poly 2: ~A" (mixer-poly (make-mixer 2 1 2 4 3) 1 1 2)))
-      (if (not (mixer-equal? (mixer-poly (make-mixer 2 1 2 4 3) 1 0 0 0) (make-mixer 2 41.0 42.0 84.0 83.0)))
-	  (snd-display #__line__ ";mixer-poly 2: ~A" (mixer-poly (make-mixer 2 1 2 4 3) 1 0 0 0)))
-      (if (not (mixer-equal? (mixer-poly (make-mixer 2 1 2 4 3) 1 0 1 0) (make-mixer 2 42.0 44.0 88.0 86.0)))
-	  (snd-display #__line__ ";mixer-poly 2: ~A" (mixer-poly (make-mixer 2 1 2 4 3) 1 0 1 0)))
-      
-      (let ((fr (slow-mixer-solve (make-mixer 2 1 0 0 2) (make-frame 2 2 3))))
-	(if (not (frame-equal? fr (make-frame 2 2.000 1.500))) (snd-display #__line__ ";slow-mixer-solve 1: ~A" fr)))
-      (let ((fr (slow-mixer-solve (make-mixer 2 1 1 0 1) (make-frame 2 2 3))))
-	(if (not (frame-equal? fr (make-frame 2 -1.000 3.000))) (snd-display #__line__ ";slow-mixer-solve 2: ~A" fr)))
-      (let ((fr (slow-mixer-solve (make-mixer 3 2 1 3 1 -1 0 1 1 2) (make-frame 3 1 1 1))))
-	(if fr (snd-display #__line__ ";slow-mixer-solve 3 (#f): ~A" fr)))
-      (let ((fr (slow-mixer-solve (make-mixer 3 2 1 3 1 -1 0 1 1 2) (make-frame 3 1 1 .333))))
-	(if fr (snd-display #__line__ ";slow-mixer-solve 4 (#f): ~A" fr)))
-      (let ((fr (slow-mixer-solve (make-mixer 3 2 1 3 1 -1 1 1 1 2) (make-frame 3 1 1 1))))
-	(if (not (frame-equal? fr (make-frame 3 -2.000 -1.000 2.000))) (snd-display #__line__ ";slow-mixer-solve 5: ~A" fr)))
-      (let ((fr (slow-mixer-solve (make-mixer 3 1 -1 -1 3 -3 2 2 -1 1) (make-frame 3 2 16 9))))
-	(if (not (frame-equal? fr (make-frame 3 3.000 -1.000 2.000))) (snd-display #__line__ ";slow-mixer-solve 6: ~A" fr)))
-      (let ((fr (slow-mixer-solve (make-mixer 3 1 1 1 2 3 1 1 -1 -2) (make-frame 3 3 5 -5))))
-	(if (not (frame-equal? fr (make-frame 3 0.000 1.000 2.000))) (snd-display #__line__ ";slow-mixer-solve 7: ~A" fr)))
-      (let ((fr (slow-mixer-solve (make-mixer 1 .5) (make-frame 1 2))))
-	(if (not (frame-equal? fr (make-frame 1 4.000))) (snd-display #__line__ ";slow-mixer-solve 8: ~A" fr)))
-      (let ((fr (slow-mixer-solve (make-mixer 4 2 0 0 0 0 3 0 0 0 0 4 0 0 0 0 5) (make-frame 4 1 1 1 1))))
-	(if (not (frame-equal? fr (make-frame 4 0.500 0.333 0.250 0.200))) (snd-display #__line__ ";slow-mixer-solve 9: ~A" fr)))
-      
-      (let ((fr (mixer-solve (make-mixer 2 1 0 0 2) (make-frame 2 2 3))))
-	(if (not (frame-equal? fr (make-frame 2 2.000 1.500))) (snd-display #__line__ ";mixer-solve 1: ~A" fr)))
-      (let ((fr (mixer-solve (make-mixer 2 1 1 0 1) (make-frame 2 2 3))))
-	(if (not (frame-equal? fr (make-frame 2 -1.000 3.000))) (snd-display #__line__ ";mixer-solve 2: ~A" fr)))
-      (let ((fr (mixer-solve (make-mixer 3 2 1 3 1 -1 0 1 1 2) (make-frame 3 1 1 1))))
-	(if fr (snd-display #__line__ ";mixer-solve 3 (#f): ~A" fr)))
-      (let ((fr (mixer-solve (make-mixer 3 2 1 3 1 -1 0 1 1 2) (make-frame 3 1 1 .333))))
-	(if fr (snd-display #__line__ ";mixer-solve 4 (#f): ~A" fr)))
-      (let ((fr (mixer-solve (make-mixer 3 2 1 3 1 -1 1 1 1 2) (make-frame 3 1 1 1))))
-	(if (not (frame-equal? fr (make-frame 3 -2.000 -1.000 2.000))) (snd-display #__line__ ";mixer-solve 5: ~A" fr)))
-      (let ((fr (mixer-solve (make-mixer 3 1 -1 -1 3 -3 2 2 -1 1) (make-frame 3 2 16 9))))
-	(if (not (frame-equal? fr (make-frame 3 3.000 -1.000 2.000))) (snd-display #__line__ ";mixer-solve 6: ~A" fr)))
-      (let ((fr (mixer-solve (make-mixer 3 1 1 1 2 3 1 1 -1 -2) (make-frame 3 3 5 -5))))
-	(if (not (frame-equal? fr (make-frame 3 0.000 1.000 2.000))) (snd-display #__line__ ";mixer-solve 7: ~A" fr)))
-      (let ((fr (mixer-solve (make-mixer 1 .5) (make-frame 1 2))))
-	(if (not (frame-equal? fr (make-frame 1 4.000))) (snd-display #__line__ ";mixer-solve 8: ~A" fr)))
-      (let ((fr (mixer-solve (make-mixer 4 2 0 0 0 0 3 0 0 0 0 4 0 0 0 0 5) (make-frame 4 1 1 1 1))))
-	(if (not (frame-equal? fr (make-frame 4 0.500 0.333 0.250 0.200))) (snd-display #__line__ ";mixer-solve 9: ~A" fr)))
-      
-      ;; try random input to mixer-inverse
-      (do ((k 2 (+ k 1)))
-	  ((= k 20))
-	(let* ((mx (make-random-mixer k))
-	       (imx (mixer-inverse (mixer-copy mx)))
-	       (mmx (mixer* mx imx)))
-	  (if (not (mixer-equal? mmx (make-scalar-mixer k 1.0)))
-	      (snd-display #__line__ ";mixer-inverse r~D: ~A * ~A -> ~A" k mx imx mmx))))
-      
-      (let ((fr (frame-reverse! (make-frame 2 .5 2.0))))
-	(if (not (frame-equal? fr (make-frame 2 2.0 0.5)))
-	    (snd-display #__line__ ";frame-reverse! 2: ~A" fr)))
-      (let ((fr (frame-reverse! (make-frame 3 .5 1.0 2.0))))
-	(if (not (frame-equal? fr (make-frame 3 2.0 1.0 0.5)))
-	    (snd-display #__line__ ";frame-reverse! 3: ~A" fr)))
-      
-      (let ((hi (make-mixer 3 10 5 1 1 20 5 1 3 7))
-	    (ho (make-mixer 3 10 5 2 1 3 2 1 3 2)))
-	;; these adapted from gsl linalg tests
-	(let ((val (mixer* hi ho)))
-	  (if (not (mixer-equal? val (make-mixer 3 106.000 68.000 32.000  35.000 80.000 52.000  20.000 35.000 22.000)))
-	      (snd-display #__line__ ";mixer* 3x3 1: ~A" val)))
-	
-	(let ((val (mixer* hi (mixer-transpose ho))))
-	  (if (not (mixer-equal? val (make-mixer 3  127.000 27.000 27.000  120.000 71.000 71.000  39.000 24.000 24.000)))
-	      (snd-display #__line__ ";mixer* 3x3 2: ~A" val)))
-	
-	(let ((val (mixer* (mixer-transpose hi) (mixer-transpose ho))))
-	  (if (not (mixer-equal? val (make-mixer 3 107.000 15.000 15.000  156.000 71.000 71.000  49.000 30.000 30.000)))
-	      (snd-display #__line__ ";mixer* 3x3 2: ~A" val))))
-      
-      ;; from Golub and van Loan:
-      (let ((val (mixer-solve (make-mixer 2 .001 1.0 1.0 2.0) (make-frame 2 1.0 3.0))))
-	(if (not (frame-equal? val (make-frame 2 1.002 0.999)))
-	    (snd-display #__line__ ";mixer-solve G1: ~A" val)))
-      (let ((val (mixer-solve (make-mixer 2 .0001 1.0 1.0 1.0) (make-frame 2 1.0 3.0))))
-	(if (not (frame-equal? val (make-frame 2 2.000 1.000)))
-	    (snd-display #__line__ ";mixer-solve G2: ~A" val)))
-      (let ((val (mixer-solve (make-mixer 2 .986 .579 .409 .237) (make-frame 2 .235 .107))))
-	(if (not (frame-equal? val (make-frame 2 2.000 -3.000)))
-	    (snd-display #__line__ ";mixer-solve G3: ~A" val)))
-      (let ((val (invert-matrix (make-mixer 3 2 -1 1  -1 1.0e-6 1.0e-6  1 1.0e-6 1.0e-6) (make-frame 3 (* 2 (+ 1 1.0e-6)) -1.0e-6 1.0e-6))))
-	(if (or (not val)
-		(not (frame-equal? (cadr val) (make-frame 3 0.000 -1.000 1.000))))
-	    (snd-display #__line__ ";mixer-solve G4: ~A" val)))
-      (let ((val (invert-matrix (make-mixer 3 2 -1 1  -1 1.0e-7 1.0e-7  1 1.0e-7 1.0e-7) (make-frame 3 (* 2 (+ 1 1.0e-7)) -1.0e-7 1.0e-7))))
-	(if (or (not val)
-		(not (frame-equal? (cadr val) (make-frame 3 0.000 -1.000 1.000))))
-	    (snd-display #__line__ ";mixer-solve G5: ~A" val)))
-      (let ((val (mixer-solve (make-mixer 3 1 4 7 2 5 8 3 6 10) (make-frame 3 1 1 1))))
-	(if (not (frame-equal? val (make-frame 3 -0.333 0.333 -0.000)))
-	    (snd-display #__line__ ";mixer-solve G6: ~A" val)))
-      (let ((val (mixer-solve (make-mixer 2 1 0 0 1.0e-6) (make-frame 2 1 1.0e-6))))
-	(if (not (frame-equal? val (make-frame 2 1.000 1.000)))
-	    (snd-display #__line__ ";mixer-solve G7: ~A" val)))
-      (let ((val (invert-matrix (make-mixer 2 1 0 0 1.0e-8) (make-frame 2 1 1.0e-8) 1.0e-10)))
-	(if (or (not val)
-		(not (frame-equal? (cadr val) (make-frame 2 1.000 1.000))))
-	    (snd-display #__line__ ";mixer-solve G8: ~A" val)))
-      (let ((val (invert-matrix (make-mixer 2 1 0 0 1.0e-12) (make-frame 2 1 1.0e-12) 1.0e-14)))
-	(if (or (not val) 
-		(not (frame-equal? (cadr val) (make-frame 2 1.000 1.000))))
-	    (snd-display #__line__ ";mixer-solve G9: ~A" val)))
-      (let ((val (mixer-solve (make-mixer 2 10 100000 1 1) (make-frame 2 100000 2))))
-	(if (not (frame-equal? val (make-frame 2 1.000 1.000)))
-	    (snd-display #__line__ ";mixer-solve G10: ~A" val)))
-      
-      (let ((val (frame-cross (make-frame 3 0 0 1) (make-frame 3 0 -1 0))))
-	(if (not (frame-equal? val (make-frame 3 1.000 0.000 0.000)))
-	    (snd-display #__line__ ";frame-cross: ~A" val)))
-      
-      (let ((val (frame-normalize (make-frame 3 4 3 0))))
-	(if (not (frame-equal? val (make-frame 3 0.800 0.600 0.000)))
-	    (snd-display #__line__ ";frame-normalize: ~A" val)))
-      )
-    
     (let ((gen (make-fft-window hamming-window 16)))
       (if (not (vequal gen (float-vector 0.080 0.115 0.215 0.364 0.540 0.716 0.865 1.000 1.000 0.865 0.716 0.540 0.364 0.215 0.115 0.080)))
 	  (snd-display #__line__ ";hamming window: ~A" gen)))
@@ -17865,34 +17164,7 @@ EDITS: 2
       (let ((mxs (maxamp vals)))
 	(if (fneq mxs 0.0666)
 	    (snd-display #__line__ ";locsig to sound-data fm-violin peak: ~A" mxs))))
-    
-    (let ((gen (make-frame->file "fmv1.snd" 2 mus-bshort mus-next)))
-      (print-and-check gen 
-		       "frame->file"
-		       "frame->file fmv1.snd")
-      (if (not (mus-output? gen)) (snd-display #__line__ ";~A not output?" gen))
-      (if (not (frame->file? gen)) (snd-display #__line__ ";~A not frame->file?" gen))
-      (if (not (= (mus-length gen) (mus-file-buffer-size))) (snd-display #__line__ ";frame->file length: ~A?" (mus-length gen)))
-      (if (not (string=? (mus-file-name gen) "fmv1.snd")) (snd-display #__line__ ";frame->file mus-file-name: ~A" (mus-file-name gen)))
-      (set! (mus-length gen) 4096)
-      (if (not (= (mus-length gen) 4096)) (snd-display #__line__ ";frame->file length (1): ~A?" (mus-length gen)))
-      (set! (mus-length gen) 8192)
-      (let ((fr0 (make-frame 2 0.0 0.0)))
-	(do ((i 0 (+ i 1)))
-	    ((= i 100))
-	  (set! (fr0 0) (* i .001))
-	  (set! (fr0 1) (* i .01))
-	  (frame->file gen i fr0)))
-      (mus-close gen))
-    (let* ((gen (make-file->frame "fmv1.snd" 1024))
-	   (val4 (file->frame gen 40))
-	   (frout (make-frame 2)))
-      (if (or (fneq (val4 0) .04) (fneq (val4 1) .4))
-	  (snd-display #__line__ ";frame->file output: ~A?" val4))
-      (file->frame gen 40 frout)
-      (if (not (equal? frout val4))
-	  (snd-display #__line__ ";frame->file output via frame: ~A ~A?" frout val4)))
-    
+        
     (let ((gen (make-sample->file "fmv2.snd" 4 mus-bshort mus-aifc)))
       (print-and-check gen 
 		       "sample->file"
@@ -20962,8 +20234,8 @@ EDITS: 2
 		  (gen-make-procs (list make-all-pass make-asymmetric-fm make-moving-average make-moving-max make-table-lookup make-triangle-wave
 					make-comb ;make-convolve
 					make-delay make-env make-fft-window
-					make-filter make-filtered-comb make-fir-filter make-formant make-frame ;make-granulate
-					make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
+					make-filter make-filtered-comb make-fir-filter make-formant
+					make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
 					make-pulse-train make-rand make-rand-interp make-sawtooth-wave make-polyshape make-polywave
 					make-square-wave ;make-src
 					make-two-pole make-two-zero make-wave-train
@@ -21205,14 +20477,7 @@ EDITS: 2
 	(if (fneq ((mus-ycoeffs g1) 1) .3) (snd-display #__line__ ";iir-filter float-vectorset: ~A ~A" (v1 1) ((mus-ycoeffs g1) 1)))
 	(float-vector-set! (mus-ycoeffs g1) 1 .5)
 	(if (fneq (v1 1) .5) (snd-display #__line__ ";iir-filter float-vectorref: ~A ~A" (v1 1) ((mus-ycoeffs g1) 1))))
-      
-      (let ((f1 (make-frame 2 .1 .2))
-	    (f2 (make-frame 2 .3 .5))
-	    (f3 (make-frame 2 0 0)))
-	(let ((f4 (frame+ f1 f2 f3)))
-	  (if (not (eq? f3 f4)) (snd-display #__line__ ";frame+ data not eq?: ~A ~A" f3 f4))
-	  (set! f4 (frame* f1 f2 f3))
-	  (if (not (eq? f3 f4)) (snd-display #__line__ ";frame* data not eq?: ~A ~A" f3 f4)))))
+      )
     
     (let ((tanh-1 (lambda (x)
 		    (+ x
@@ -37370,196 +36635,6 @@ EDITS: 1
 	  ))
 	(close-sound ind))
       
-      ;; frame.scm functions
-      
-      (let ((tag (catch #t (lambda () (frame-reverse! 32)) (lambda args (car args)))))
-	(if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";frame-reverse! bad arg: ~A" tag)))
-      
-      (let ((fr1 (make-frame 3 .1 .2 .3)))
-	(let ((val (frame-copy fr1)))
-	  (if (or (fneq (val 0) 0.1)
-		  (fneq (val 1) 0.2)
-		  (fneq (val 2) 0.3))
-	      (snd-display #__line__ ";frame-copy: ~A" val))
-	  (if (not (equal? val fr1)) (snd-display #__line__ ";frames not equal after copy?"))
-	  (set! (val 0) 0.0)
-	  (if (or (fneq (val 0) 0.0)
-		  (fneq (fr1 0) 0.1))
-	      (snd-display #__line__ ";set of copied frame: ~A ~A" fr1 val))
-	  (frame-reverse! val)
-	  (if (or (fneq (val 0) 0.3)
-		  (fneq (val 1) 0.2)
-		  (fneq (val 2) 0.0))
-	      (snd-display #__line__ ";frame-reverse: ~A" val))
-	  (if (equal? fr1 val) (snd-display #__line__ ";these frames are equal??: ~A ~A" fr1 val))))
-      
-      
-      (let ((tag (catch #t (lambda () (float-vector->frame 32)) (lambda args (car args)))))
-	(if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";float-vector->frame bad arg: ~A" tag)))
-      (let ((tag (catch #t (lambda () (frame->float-vector 32)) (lambda args (car args)))))
-	(if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";frame->float-vector bad arg: ~A" tag)))
-      
-      (let ((fr1 (make-frame 4 .1 .2 .3 .4))
-	    (vc1 (float-vector .1 .2 .3 .4)))
-	(let ((fr2 (float-vector->frame vc1))
-	      (vc2 (frame->float-vector fr1)))
-	  (if (not (equal? vc1 vc2)) (snd-display #__line__ ";frame->float-vector: ~A ~A" vc1 vc2))
-	  (if (not (equal? fr1 fr2)) (snd-display #__line__ ";float-vector->frame: ~A ~A" fr1 fr2))
-	  (set! (vc2 0) 0.0)
-	  (set! (fr2 0) 0.0)
-	  (if (equal? vc1 vc2) (snd-display #__line__ ";frame->float-vector + change: ~A ~A" vc1 vc2))
-	  (if (equal? fr1 fr2) (snd-display #__line__ ";float-vector->frame + change: ~A ~A" fr1 fr2))
-	  (let ((vc3 (make-float-vector 10))
-		(fr3 (make-frame 10)))
-	    (let ((vc4 (frame->float-vector fr1 vc3))
-		  (fr4 (float-vector->frame vc1 fr3)))
-	      (if (not (equal? vc3 vc4)) (snd-display #__line__ ";frame->float-vector + v: ~A ~A" vc3 vc4))
-	      (if (not (equal? fr3 fr4)) (snd-display #__line__ ";float-vector->frame + fr: ~A ~A" fr3 fr4))
-	      (if (not (vequal vc3 (float-vector .1 .2 .3 .4 0 0 0 0 0 0))) 
-		  (snd-display #__line__ ";frame->float-vector results: ~A -> ~A" fr1 vc3))
-	      (if (not (equal? fr3 (make-frame 10 .1 .2 .3 .4 0 0 0 0 0 0)))
-		  (snd-display #__line__ ";float-vector->frame results: ~A -> ~A" vc1 fr3))))))
-      
-      (let ((index (new-sound "test.snd" mus-next mus-bfloat 22050 2 "frame->sound test" 100)))
-	(set! (sample 4 index 0) 0.5)
-	(set! (sample 4 index 1) 0.25)
-	(set! (sample 6 index 1) 1.0)
-	(let ((fr1 (sound->frame 1))
-	      (fr4 (sound->frame 4 index))
-	      (fr6 (sound->frame 6 index)))
-	  (if (not (equal? fr1 (make-frame 2 0.0 0.0))) (snd-display #__line__ ";sound->frame 1: ~A" fr1))
-	  (if (not (equal? fr4 (make-frame 2 0.5 0.25))) (snd-display #__line__ ";sound->frame 4: ~A" fr4))
-	  (if (not (equal? fr6 (make-frame 2 0.0 1.0))) (snd-display #__line__ ";sound->frame 6: ~A" fr6))
-	  (frame->sound fr4 8 index)
-	  (frame->sound fr1 4)
-	  (frame->sound fr6 0 index)
-	  (let ((fr0 (sound->frame 0))
-		(fr41 (sound->frame 4 index))
-		(fr8 (sound->frame 8 index)))
-	    (if (not (equal? fr0 fr6)) (snd-display #__line__ ";sound->frame 0: ~A" fr0))
-	    (if (not (equal? fr41 fr1)) (snd-display #__line__ ";sound->frame 41: ~A" fr41))
-	    (if (not (equal? fr8 fr4)) (snd-display #__line__ ";sound->frame 8: ~A" fr8))))
-	(set! (sample 40 index 0) 0.5)
-	(set! (sample 40 index 1) 0.3)
-	(set! (sample 41 index 0) 0.7)
-	(let ((reg (make-region 40 50 index #t)))
-	  (let ((fr0 (region->frame reg 0))
-		(fr1 (region->frame reg 1))
-		(fr4 (region->frame reg 4)))
-	    (if (not (equal? fr0 (make-frame 2 0.5 0.3))) (snd-display #__line__ ";region->frame 0: ~A" fr0))
-	    (if (not (equal? fr1 (make-frame 2 0.7 0.0))) (snd-display #__line__ ";region->frame 1: ~A" fr1))
-	    (if (not (equal? fr4 (make-frame 2 0.0 0.0))) (snd-display #__line__ ";region->frame 4: ~A" fr4))))      
-	(close-sound index))
-      
-      (let ((index (new-sound "test.snd" mus-next mus-bfloat 22050 1 "frame->sound test" 100)))
-	(set! (sample 4 index 0) 0.5)
-	(let ((fr1 (sound->frame 1))
-	      (fr4 (sound->frame 4 index)))
-	  (if (not (equal? fr1 (make-frame 1 0.0))) (snd-display #__line__ ";sound->frame 1 1: ~A" fr1))
-	  (if (not (equal? fr4 (make-frame 1 0.5))) (snd-display #__line__ ";sound->frame 1 4: ~A" fr4))
-	  (frame->sound (make-frame 4 .1 .2 .3 .4) 8 index)
-	  (let ((fr8 (sound->frame 8 index)))
-	    (if (not (equal? fr8 (make-frame 1 .1))) (snd-display #__line__ ";sound->frame 1 8: ~A" fr8))))
-	(close-sound index))
-      
-      (for-each
-       (lambda (file)
-	 (let ((index (open-sound file)))
-	   (let ((fd (make-frame-reader 10000)))
-	     (if (not (frame-reader? fd)) (snd-display #__line__ ";~A: frame-reader?: ~A" file fd))
-	     (if (> (frames index) 10000)
-		 (begin
-		   (if (frame-reader-at-end? fd) (snd-display #__line__ ";~A: frame-reader-at-end?: ~A" file fd))
-		   (if (not (= (frame-reader-position fd) 10000)) 
-		       (snd-display #__line__ ";~A: frame-reader: position: ~A ~A" fd (frame-reader-position fd) file)))
-		 (begin
-		   (if (not (frame-reader-at-end? fd)) (snd-display #__line__ ";~A: not frame-reader-at-end?: ~A" file fd))
-		   (if (= (frame-reader-position fd) 10000)
-		       (snd-display #__line__ ";~A: frame-reader: position but frames: ~A ~A ~A" file fd (frame-reader-position fd) (frames index)))))
-	     (if (not (equal? (frame-reader-home fd) index)) 
-		 (snd-display #__line__ ";~A: frame-reader: home: ~A ~A ~A" file fd (frame-reader-home fd) index))
-	     (if (not (= (frame-reader-chans fd) (chans index))) 
-		 (snd-display #__line__ ";frame-reader-chans: ~A ~A" (frame-reader-chans fd) (chans index)))
-
-	     (let ((fr0 (frame-copy (read-frame fd)))
-		   (fr1 (frame-copy (next-frame fd)))
-		   (fr2 (frame-copy (previous-frame fd))))
-	       (if (not (equal? fr0 (sound->frame 10000 index)))
-		   (snd-display #__line__ ";~A: frame reader 10000: ~A ~A" file fr0 (sound->frame 10000 index)))
-	       (if (not (equal? fr1 (sound->frame 10001 index)))
-		   (snd-display #__line__ ";~A: frame reader 10001: ~A ~A" file fr1 (sound->frame 10001 index)))
-	       (if (not (equal? fr2 (sound->frame 10001 index)))
-		   (snd-display #__line__ ";~A: frame reader 10001 prev: ~A ~A" file fr2 (sound->frame 10001 index))))
-	     (free-frame-reader fd))
-	   (close-sound index)))
-       (list "oboe.snd" "4.aiff" "2.snd" "2a.snd")) ; 2a=eof
-      
-      (for-each
-       (lambda (file)
-	 (let ((index (open-sound file)))
-	   (let ((fd (make-sampler 10000)))
-	     (if (not (sampler? fd)) (snd-display #__line__ ";~A: sampler?: ~A" file fd))
-	     (if (> (frames index) 10000)
-		 (begin
-		   (if (sampler-at-end? fd) (snd-display #__line__ ";~A: sampler-at-end?: ~A" file fd))
-		   (if (not (= (sampler-position fd) 10000)) 
-		       (snd-display #__line__ ";~A: sampler: position: ~A" fd (sampler-position fd))))
-		 (begin
-		   (if (not (sampler-at-end? fd)) (snd-display #__line__ ";~A: not sampler-at-end?: ~A" file fd))
-		   (if (= (sampler-position fd) 10000)
-		       (snd-display #__line__ ";~A: sampler: position but samples: ~A ~A ~A" file fd (sampler-position fd) (frames index)))))
-	     (if (not (equal? (sampler-home fd) (list index 0)))
-		 (snd-display #__line__ ";~A: sampler: home: ~A ~A ~A" file fd (sampler-home fd) index))
-	     (let ((fr0 (read-sample fd))
-		   (fr1 (next-sample fd))
-		   (fr2 (previous-sample fd)))
-	       (if (fneq fr0 (sample 10000 index))
-		   (snd-display #__line__ ";~A: sample reader 10000: ~A ~A" file fr0 (sample 10000 index)))
-	       (if (fneq fr1 (sample 10001 index))
-		   (snd-display #__line__ ";~A: sample reader 10001: ~A ~A" file fr1 (sample 10001 index)))
-	       (if (fneq fr2 (sample 10001 index))
-		   (snd-display #__line__ ";~A: sample reader 10001 prev: ~A ~A" file fr2 (sample 10001 index))))
-	     (free-sampler fd))
-	   (close-sound index)))
-       (list "oboe.snd" "4.aiff" "2.snd" "2a.snd" "z.snd")) ; 2a=eof
-      
-      (let ((old-create (selection-creates-region)))
-	(set! (selection-creates-region) #t)
-	(for-each
-	 (lambda (file)
-	   (let ((index (open-sound file)))
-	     (set! (selected-sound) index)
-	     (set! (sync index) 1) ; select-all follows sync field
-	     (let* ((reg (select-all))
-		    (fd (make-region-frame-reader reg 10000)))
-	       (if (not (frame-reader? fd)) (snd-display #__line__ ";~A: region frame-reader?: ~A" file fd))
-	       (if (> (frames index) 10000)
-		   (begin
-		     (if (frame-reader-at-end? fd) (snd-display #__line__ ";~A: region frame-reader-at-end?: ~A" file fd))
-		     (if (not (= (frame-reader-position fd) 10000)) 
-			 (snd-display #__line__ ";~A: region frame-reader: position: ~A ~A" fd (frame-reader-position fd) file)))
-		   (begin
-		     (if (not (frame-reader-at-end? fd)) (snd-display #__line__ ";~A: not region frame-reader-at-end?: ~A" file fd))
-		     (if (= (frame-reader-position fd) 10000)
-			 (snd-display #__line__ ";~A: region frame-reader: position but frames: ~A ~A ~A" file fd (frame-reader-position fd) (frames index)))))
-	       (if (not (equal? (frame-reader-home fd) reg)) 
-		   (snd-display #__line__ ";~A: region frame-reader: home: ~A ~A ~A" file fd (frame-reader-home fd) reg))
-	       (if (not (= (frame-reader-chans fd) (region-chans reg)))
-		   (snd-display #__line__ ";region frame-reader-chans: ~A ~A" (frame-reader-chans fd) (region-chans reg)))
-	       (let ((fr0 (frame-copy (read-frame fd)))
-		     (fr1 (frame-copy (next-frame fd)))
-		     (fr2 (frame-copy (previous-frame fd))))
-		 (if (not (equal? fr0 (sound->frame 10000 index)))
-		     (snd-display #__line__ ";~A: region frame reader 10000: ~A ~A" file fr0 (sound->frame 10000 index)))
-		 (if (not (equal? fr1 (sound->frame 10001 index)))
-		     (snd-display #__line__ ";~A: region frame reader 10001: ~A ~A" file fr1 (sound->frame 10001 index)))
-		 (if (not (equal? fr2 (sound->frame 10001 index)))
-		     (snd-display #__line__ ";~A: region frame reader 10001 prev: ~A ~A" file fr2 (sound->frame 10001 index))))
-	       (free-frame-reader fd))
-	     (close-sound index)))
-	 (list "oboe.snd" "4.aiff" "2.snd" "2a.snd")) ; 2a=eof
-	(set! (selection-creates-region) old-create))
-      
       (let ((ind1 (open-sound "1a.snd"))
 	    (data1 (file->float-vector "1a.snd"))
 	    (ind2 (open-sound "2a.snd"))
@@ -37606,24 +36681,6 @@ EDITS: 1
 	
 	(let ((tag (catch #t (lambda () (insert-frame 32)) (lambda args (car args)))))
 	  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";insert-frame bad arg: ~A" tag)))
-	
-	(insert-frame (make-frame 1 .3))
-	(if (not (= (frames ind) 17)) (snd-display #__line__ ";insert-frame len: ~A" (frames ind)))
-	(let ((vals (channel->float-vector 0 #f ind 0)))
-	  (if (not (vequal vals (float-vector .3 1.5 1 1 .1 .1 .1 .1 .1 1 1 1 1 1 1 1 1)))
-	      (snd-display #__line__ ";insert-frame vals: ~A" vals)))
-	
-	(insert-frame (make-frame 1 .4) 20 ind)
-	(if (not (= (frames ind) 21)) (snd-display #__line__ ";insert-frame 1 len: ~A" (frames ind)))
-	(let ((vals (channel->float-vector 0 #f ind 0)))
-	  (if (not (vequal vals (float-vector .3 1.5 1 1 .1 .1 .1 .1 .1 1 1 1 1 1 1 1 1 0 0 0 .4)))
-	      (snd-display #__line__ ";insert-frame 1 vals: ~A" vals)))
-	
-	(insert-frame (make-frame 1 .2) 10)
-	(if (not (= (frames ind) 22)) (snd-display #__line__ ";insert-frame 2 len: ~A" (frames ind)))
-	(let ((vals (channel->float-vector 0 #f ind 0)))
-	  (if (not (vequal vals (float-vector .3 1.5 1 1 .1 .1 .1 .1 .1 1 .2 1 1 1 1 1 1 1 0 0 0 .4)))
-	      (snd-display #__line__ ";insert-frame 2 vals: ~A" vals)))
 	(close-sound ind))
       
       (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 4 "insert-* tests" 5)))
@@ -37657,32 +36714,6 @@ EDITS: 1
 	(if (not (vequal (channel->float-vector 0 7 ind 3) (float-vector .7 .7 .7 .7 .7 0 0)))
 	    (snd-display #__line__ ";4chn insert-float-vector 1 3: ~A" (channel->float-vector 0 7 ind 3)))
 	
-	(insert-frame (make-frame 4 1.5 1.6 1.7 1.8))
-	(if (not (= (frames ind 0) 8)) (snd-display #__line__ ";4chn insert-frame (0) len: ~A" (frames ind 0)))
-	(if (not (= (frames ind 1) 6)) (snd-display #__line__ ";4chn insert-frame (1) len: ~A" (frames ind 1)))
-	(if (not (= (frames ind 2) 8)) (snd-display #__line__ ";4chn insert-frame (2) len: ~A" (frames ind 2)))
-	(if (not (vequal (channel->float-vector 0 8 ind 0) (float-vector 1.5 .2 .2 .4 .4 .4 .4 .4)))
-	    (snd-display #__line__ ";4chn insert-frame 0: ~A" (channel->float-vector 0 8 ind 0)))
-	(if (not (vequal (channel->float-vector 0 8 ind 1) (float-vector 1.6 .5 .5 .5 .5 .5 0 0)))
-	    (snd-display #__line__ ";4chn insert-frame 1: ~A" (channel->float-vector 0 8 ind 1)))
-	(if (not (vequal (channel->float-vector 0 8 ind 2) (float-vector 1.7 .6 .6 .1 .1 .6 .6 .6)))
-	    (snd-display #__line__ ";4chn insert-frame 2: ~A" (channel->float-vector 0 8 ind 2)))
-	(if (not (vequal (channel->float-vector 0 8 ind 3) (float-vector 1.8 .7 .7 .7 .7 .7 0 0)))
-	    (snd-display #__line__ ";4chn insert-frame 3: ~A" (channel->float-vector 0 8 ind 3)))
-	
-	(insert-frame (make-frame 4 1.5 1.6 1.7 1.8) 10 ind)
-	(if (not (= (frames ind 0) 11)) (snd-display #__line__ ";4chn insert-frame (0 0) len: ~A" (frames ind 0)))
-	(if (not (= (frames ind 1) 11)) (snd-display #__line__ ";4chn insert-frame (0 1) len: ~A" (frames ind 1)))
-	(if (not (= (frames ind 2) 11)) (snd-display #__line__ ";4chn insert-frame (0 2) len: ~A" (frames ind 2)))
-	(if (not (vequal (channel->float-vector 0 11 ind 0) (float-vector 1.5 .2 .2 .4 .4 .4 .4 .4 0 0 1.5)))
-	    (snd-display #__line__ ";4chn insert-frame 0 0: ~A" (channel->float-vector 0 11 ind 0)))
-	(if (not (vequal (channel->float-vector 0 11 ind 1) (float-vector 1.6 .5 .5 .5 .5 .5 0 0 0 0 1.6)))
-	    (snd-display #__line__ ";4chn insert-frame 0 1: ~A" (channel->float-vector 0 11 ind 1)))
-	(if (not (vequal (channel->float-vector 0 11 ind 2) (float-vector 1.7 .6 .6 .1 .1 .6 .6 .6 0 0 1.7)))
-	    (snd-display #__line__ ";4chn insert-frame 0 2: ~A" (channel->float-vector 0 11 ind 2)))
-	(if (not (vequal (channel->float-vector 0 11 ind 3) (float-vector 1.8 .7 .7 .7 .7 .7 0 0 0 0 1.8)))
-	    (snd-display #__line__ ";4chn insert-frame 0 3: ~A" (channel->float-vector 0 11 ind 3)))
-	
 	(revert-sound ind)
 	(map-channel (lambda (y) 0.4) 0 5 ind 0)
 	(map-channel (lambda (y) 0.5) 0 5 ind 1)
@@ -37697,18 +36728,6 @@ EDITS: 1
 	(let ((tag (catch #t (lambda () (mix-frame 32)) (lambda args (car args)))))
 	  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";mix-frame bad arg: ~A" tag)))
 	
-	(mix-frame (make-frame 1 .3))
-	(if (not (= (frames ind) 5)) (snd-display #__line__ ";mix-frame len: ~A" (frames ind)))
-	(let ((vals (channel->float-vector 0 #f ind 0)))
-	  (if (not (vequal vals (float-vector 1.3 1 1 1 1)))
-	      (snd-display #__line__ ";mix-frame vals: ~A" vals)))
-	
-	(mix-frame (make-frame 1 .4) 8 ind)
-	(if (not (= (frames ind) 9)) (snd-display #__line__ ";mix-frame 1 len: ~A" (frames ind)))
-	(let ((vals (channel->float-vector 0 #f ind 0)))
-	  (if (not (vequal vals (float-vector 1.3 1 1 1 1 0 0 0 .4)))
-	      (snd-display #__line__ ";mix-frame 1 vals: ~A" vals)))
-	
 	(close-sound ind))
       
       (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 4 "mix-* tests" 5)))
@@ -37716,27 +36735,6 @@ EDITS: 1
 	(map-channel (lambda (y) 0.5) 0 5 ind 1)
 	(map-channel (lambda (y) 0.6) 0 5 ind 2)
 	(map-channel (lambda (y) 0.7) 0 5 ind 3)
-	
-	(mix-frame (make-frame 4 1 2 3 4))
-	(if (not (vequal (channel->float-vector 0 #f ind 0) (float-vector 1.4 .4 .4 .4 .4)))
-	    (snd-display #__line__ ";4chn mix-frame 0: ~A" (channel->float-vector 0 #f ind 0)))
-	(if (not (vequal (channel->float-vector 0 #f ind 1) (float-vector 2.5 .5 .5 .5 .5)))
-	    (snd-display #__line__ ";4chn mix-frame 1: ~A" (channel->float-vector 0 #f ind 1)))
-	(if (not (vequal (channel->float-vector 0 #f ind 2) (float-vector 3.6 .6 .6 .6 .6)))
-	    (snd-display #__line__ ";4chn mix-frame 2: ~A" (channel->float-vector 0 #f ind 2)))
-	(if (not (vequal (channel->float-vector 0 #f ind 3) (float-vector 4.7 .7 .7 .7 .7)))
-	    (snd-display #__line__ ";4chn mix-frame 3: ~A" (channel->float-vector 0 #f ind 3)))
-	
-	(mix-frame (make-frame 4 1 2 3 4) 8)
-	
-	(if (not (vequal (channel->float-vector 0 #f ind 0) (float-vector 1.4 .4 .4 .4 .4 0 0 0 1)))
-	    (snd-display #__line__ ";4chn mix-frame 0 0: ~A" (channel->float-vector 0 #f ind 0)))
-	(if (not (vequal (channel->float-vector 0 #f ind 1) (float-vector 2.5 .5 .5 .5 .5 0 0 0 2)))
-	    (snd-display #__line__ ";4chn mix-frame 0 1: ~A" (channel->float-vector 0 #f ind 1)))
-	(if (not (vequal (channel->float-vector 0 #f ind 2) (float-vector 3.6 .6 .6 .6 .6 0 0 0 3)))
-	    (snd-display #__line__ ";4chn mix-frame 0 2: ~A" (channel->float-vector 0 #f ind 2)))
-	(if (not (vequal (channel->float-vector 0 #f ind 3) (float-vector 4.7 .7 .7 .7 .7 0 0 0 4)))
-	    (snd-display #__line__ ";4chn mix-frame 0 3: ~A" (channel->float-vector 0 #f ind 3)))
 	
 	(revert-sound ind)
 	(map-channel (lambda (y) 0.4) 0 5 ind 0)
@@ -39635,7 +38633,6 @@ EDITS: 1
 	      (simple-flt 6.25 .2 440.0 .1)
 	      (simple-fir 6.5 .2 440.0 .1)
 	      (simple-iir 6.5 .2 440.0 .3)
-	      (simple-f 6.75 .2 440.0 .1)
 	      (simple-ran 7.0 .2 440.0 .1)
 	      (simple-ri 7.25 .2 440.0 .1)
 	      (simple-env 7.5 .2 440.0 .1)
@@ -39701,7 +38698,6 @@ EDITS: 1
 	      (sample-pvoc1 3.5 .45 1 512 "oboe.snd")
 	      (sample-pvoc2 4.0 .45 1 512 "oboe.snd")
 	      (sample-pvoc3 4.5 .001 1 512 "oboe.snd")
-	      (sample-mxf 5 .2 440 .1)
 	      (sample-osc 5.25 .2 440 .1)
 	      (if all-args (sample-ardcl 5.5 .2 440 .1))
 	      (sample-strs 5.75 .2 440)
@@ -45352,16 +44348,15 @@ EDITS: 1
 		     delay delay? dot-product env env-interp env? file->array file->frame file->frame?  file->sample
 		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant-bank? formant? frame* frame+ firmant firmant?
 		     comb-bank make-comb-bank comb-bank? all-pass-bank make-all-pass-bank all-pass-bank? filtered-comb-bank make-filtered-comb-bank filtered-comb-bank?
-		     frame->file frame->file? frame->frame frame->list frame->sample frame-ref frame-set! frame?
 		     granulate granulate? hz->radians iir-filter iir-filter? linear->db locsig ; in-any ina inb 
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
 		     make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
-		     make-file->sample make-filter make-fir-filter make-formant make-firmant frame make-frame make-frame->file make-granulate
-		     make-iir-filter make-locsig move-locsig make-mixer make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
+		     make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame->file make-granulate
+		     make-iir-filter make-locsig move-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 		     make-nrxysin make-nrxycos make-square-wave make-src make-ncos make-rxyk!cos make-rxyk!sin 
 		     make-nsin make-ssb-am make-table-lookup make-triangle-wave
-		     make-two-pole make-two-zero make-wave-train mixer mixer* mixer-ref mixer-set! mixer? mixer+
+		     make-two-pole make-two-zero make-wave-train
 		     move-sound make-move-sound move-sound? mus-float-equal-fudge-factor
 		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape polyshape polyshape? make-polywave polywave polywave?
 		     mus-close mus-data mus-feedback mus-feedforward mus-fft mus-frequency
@@ -45456,8 +44451,8 @@ EDITS: 1
 	     (make-procs (list
 			  make-all-pass make-asymmetric-fm make-snd->sample make-moving-average make-moving-max
 			  make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
-			  make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame make-frame->file make-granulate
-			  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
+			  make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame->file make-granulate
+			  make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
 			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 			  make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave 
 			  make-src make-ncos make-nsin make-table-lookup make-triangle-wave
@@ -45513,7 +44508,7 @@ EDITS: 1
 			(set! float-vector-3 (make-polyshape :frequency 300 :partials '(1 1 2 1)))
 			(set! car-main (make-oscil))
 			(set! cadr-main (vector 1 2 3))
-			(set! a-hook (make-frame 2 .2 .1)))
+			(set! a-hook (float-vector .2 .1)))
 		      (if (= test-28 4)
 			  (begin
 			    (set! delay-32 (make-filter 3 (float-vector 3 1 2 3) (float-vector 3 1 2 3)))
@@ -45775,9 +44770,9 @@ EDITS: 1
 			    (snd-display #__line__ ";clm-1 ~A: ~A" n tag))))
 		    (list all-pass array-interp asymmetric-fm comb filtered-comb contrast-enhancement convolution convolve moving-average moving-max
 			  convolve-files delay dot-product env-interp file->frame file->sample snd->sample filter fir-filter formant firmant
-			  formant-bank frame* frame+ frame->frame frame-ref frame->sample granulate iir-filter ina
+			  formant-bank granulate iir-filter ina
 			  inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-comb make-filtered-comb
-			  make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-firmant make-frame make-granulate
+			  make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-firmant make-granulate
 			  make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil make-phase-vocoder
 			  make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-moving-average make-moving-max
 			  make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave make-src make-ncos 
@@ -46179,7 +45174,6 @@ EDITS: 1
 		(check-error-tag 'no-such-channel (lambda () (make-sampler 0 "oboe.snd" -1)))
 		(check-error-tag 'bad-arity (lambda () (bind-key (char->integer #\p) 0 (lambda (a b) (play-often (max 1 a))))))
 		(check-error-tag 'bad-arity (lambda () (set! (zoom-focus-style) (lambda (a) 0))))
-		(check-error-tag 'wrong-type-arg (lambda () (mus-mix "oboe.snd" "pistol.snd" 0 12 0 (make-mixer 1 1.0) "a string")))
 		(check-error-tag 'bad-header (lambda () (mus-mix "oboe.snd" (string-append sf-dir "bad_chans.aifc"))))
 		(check-error-tag 'mus-error (lambda () (mus-mix "oboe.snd" (string-append sf-dir "bad_length.aifc"))))
 		(check-error-tag 'bad-header (lambda () (mus-mix (string-append sf-dir "bad_chans.aifc") "oboe.snd")))
@@ -46398,7 +45392,6 @@ EDITS: 1
 		  (check-error-tag 'out-of-range (lambda () (set! (reverb-control-length-bounds ind) (list .1 .01))))
 		  (check-error-tag 'out-of-range (lambda () (set! (reverb-control-scale-bounds ind) (list .1 .01))))
 		  (check-error-tag 'wrong-type-arg (lambda () (scale-by #f)))
-		  (check-error-tag 'wrong-type-arg (lambda () (scale-by (make-mixer 2 .1 .1 .2 .2))))
 		  (check-error-tag 'wrong-type-arg (lambda () (src-sound 3.0 1.0 #t)))
 		  (check-error-tag 'wrong-type-arg (lambda () (src-sound 3.0 1.0 ind #t)))
 		  (check-error-tag 'no-such-edit (lambda () (display-edits ind 0 123)))
@@ -46459,10 +45452,6 @@ EDITS: 1
 		(check-error-tag 'mus-error (lambda () (let ((hi (make-oscil))) (set! (mus-offset hi) 1))))
 		(check-error-tag 'out-of-range (lambda () (make-locsig :channels (expt 2 30))))
 		(check-error-tag 'out-of-range (lambda () (make-src :width 3000)))
-		(check-error-tag 'out-of-range (lambda () (make-frame -1)))
-		(check-error-tag 'mus-error (lambda () (let ((hi (make-frame 2 .1 .2))) (hi 3))))
-		(check-error-tag 'out-of-range (lambda () (make-scalar-mixer 0 .1)))
-		(check-error-tag 'mus-error (lambda () (let ((m (make-mixer 2))) (m 3 4))))
 		(check-error-tag 'bad-arity (lambda () (add-colormap "baddy" (lambda () #f))))
 		(check-error-tag 'bad-arity (lambda () (add-colormap "baddy" (lambda (a b c) #f))))
 					;		(check-error-tag 'out-of-range (lambda () (make-phase-vocoder :fft-size (expt 2 30))))

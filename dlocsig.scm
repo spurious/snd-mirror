@@ -248,7 +248,7 @@
 	  (else (has-duplicates? (cdr lst)))))
   
   (define (invert3x3 mat) ; invert a 3x3 matrix using cofactors
-    (let ((m (make-mixer 3))
+    (let ((m (make-vector (list 3 3) 0.0 #t))
 	  (det 0.0)
 	  (invdet 0.0))
       (do ((i 0 (+ i 1)))
@@ -280,7 +280,7 @@
 	    mat))))
   
   (define (invert2x2 mat) ; invert a 2x2 matrix
-    (let ((m (make-mixer 2))
+    (let ((m (make-vector (list 2 2) 0.0 #t))
 	  (det (- (* (mat 0 0) (mat 1 1))
 		  (* (mat 1 0) (mat 0 1)))))
       (if (<= (abs det) 1e-06)
@@ -407,7 +407,7 @@
 					      (coords n))
 					    group))
 			     (matrix (if (= size 3)
-					 (let ((m (make-mixer 3)))
+					 (let ((m (make-vector (list 3 3) 0.0 #t)))
 					   (do ((i 0 (+ i 1)))
 					       ((= i 3))
 					     (do ((j 0 (+ j 1)))
@@ -415,7 +415,7 @@
 					       (set! (m i j) ((vertices i) j))))
 					   (invert3x3 m))
 					 (if (= size 2)
-					     (let ((m (make-mixer 2)))
+					     (let ((m (make-vector (list 2 2) 0.0 #t)))
 					       (do ((i 0 (+ i 1)))
 						   ((= i 2))
 						 (do ((j 0 (+ j 1)))
@@ -2275,7 +2275,7 @@
       (let ((zero-coord 1.0e-10)
 	    (zero-gain 1.0e-10)
 	    (size (group-size group))
-	    (mat (group-matrix group))) ; returns mixer
+	    (mat (group-matrix group))) ; returns float-vector
 	(if (and (< (abs x) zero-coord)
 		 (< (abs y) zero-coord)
 		 (< (abs z) zero-coord))

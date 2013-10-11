@@ -30377,7 +30377,6 @@ s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x)
 
 /* need float_vector_set_direct_looped[s7_function_set_looped=c_function_looped] (both vct/sound-data) -- does this require float-vector-set!?
  *       there's vector_set_ssc_looped which can handle float-vectors (see vector_set_chooser)
- *   Also float-vector-scale here would replace both the other cases.
  *   gsl uses gsl_vector_scale|add_constant|add(vectors) and sub/mul/div|minmax and minmax_index|max|min, set_zero|all all unoptimized
  * so...
  *   vector-scale -- replaces vct|sound_data cases
@@ -30385,20 +30384,29 @@ s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x)
  *     but subvector allocates -- need a simpler way (make-shared also allocates) -- start/end points?
  *   vector-add|subtract|multiply
  *   vector-sum? (dot-product)
- * or is it better to use vector*|+|-? vector- is not a good name!
- * the vector-add cases could take any number of args but what if not all the same type?
  *
- * what was the problem with mixer/frames?
- *   1) in gc, data array might be owned by someone else (use elements_allocated as in make_shared_vector)
- *   2) current scheme code assumes they repond to mus-channels etc -- add special code for this? 
- *   3) clm.c assumes mus_frame|mixer everywhere -- need parallel float* cases but that gets messy, typedef mus_frame s7_cell? (mus_mix was the killer)
- *   4) if frame is float-vector, how to distinguish in channels (say), (chans vct)=1 but (chans frame)=len
- *        perhaps mus-channels vs channels?  kinda kludgy. add vector methods?
- *        change all the channels(frames) to length!  still have channels(mixer)
- *   chans(1-dim float-vector)->length
- *   chans(2-dim) -> outer dim
- *   this will affect vcts, but no-one should be asking for chans(vct) anyway!
+ *   TODO: snd-test and doc new stuff
+ *         rewrite mus_mix or mus_mix_vectors?
+ *         combine all the float-vector stuff here including the opts
+ *         [snd-test.scm expandn.scm clm-ins.scm[expandn and fullmix] extensions.scm[mus-mix] fullmix.scm]
  */
+
+/*
+  (let ((m (make-vector '(2 2) 0.0 #t))
+	(f (float-vector 0 0))
+	(o (float-vector 0 0))
+	(w (make-float-vector->file "test.snd" 2)))
+    (for-each close-sound (sounds))
+    (set! (m 0 0) 1.0)
+    (set! (m 1 1) 0.5)
+    (do ((i 0 (+ i 1)))
+	((= i 100))
+      (set! (f 0) (* i .01))
+      (set! (f 1) (* i -.01))
+      (float-vector->file w i (float-vector-mix f m o)))
+    (mus-close w)
+    (open-sound "test.snd"))
+*/
 
 
 

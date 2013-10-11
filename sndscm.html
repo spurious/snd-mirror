@@ -237,9 +237,6 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
 <tr><td><a href="#fadedoc">fade</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(fade_doc_tip)">frequency-domain cross-fades</td></tr>
 
-<tr><td><a href="#framedoc">frame</a></td>
-    <td onmouseout="UnTip()" onmouseover="Tip(frame_doc_tip)">frames, float-vectors</td></tr>
-
 <tr><td><a href="#freeverbdoc">freeverb</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(freeverb_doc_tip)">a reverb</td></tr>
 
@@ -281,9 +278,6 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
 
 <tr><td><a href="#mixdoc">mix</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(mix_doc_tip)">functions related to mixes</td></tr>
-
-<tr><td><a href="#mixerdoc">mixer</a></td>
-    <td onmouseout="UnTip()" onmouseover="Tip(mixer_doc_tip)">functions related to linear algebra</td></tr>
 
 <tr><td><a href="#moogdoc">moog</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(moog_doc_tip)">Moog filter</td></tr>
@@ -3120,8 +3114,7 @@ perhaps it could be useful in noise reduction.
     (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y) (savitzky-golay-filter flt y)))))
 </pre>
 
-<p>This filter uses <a href="#mixer-solve">mixer-solve</a> from mixer.scm, so you need
-to load that file as well as dsp.scm.
+<p>
 For more info on this filter, See "Numerical Recipes in C".
 </p>
 <div class="spacer"></div>
@@ -5327,7 +5320,6 @@ For example, type C-s (in the graph), then in the status area:
 (find-pitch 600), and if the function finds some place in the sound
 where 600 Hz seems to be the basic pitch, it moves the cursor there and
 reports the time in the status area text window.
-See also the multichannel case: <a href="#simultaneouszerocrossing">simultaneous-zero-crossing</a> in frame.scm.
 </p>
 <div class="spacer"></div>
 
@@ -5900,344 +5892,6 @@ and a suitably noisy original, strange pitches emerge and submerge.  'fsize' is 
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (dissolve-fade 0 1 1.0 "oboe.snd" "trumpet.snd" 256 2 0 128))
 (float-vector-&gt;channel (dissolve-fade 0 2 1 0 1 1024 2 2 #f))
 </pre>
-
-
-
-
-<!--  FILE: frame  -->
-
-<div class="header" id="framedoc">frame</div>
-
-<p>This file implements a bunch of functions using frames and float-vectors.
-</p>
-
-<!-- file->float-vector -->
-<pre class="indented">
-<em class=def id="filetovct">file-&gt;float-vector</em> file
-</pre>
-
-<p>file-&gt;float-vector returns the data of the file 'file' (channel 0 anyway) in a float-vector.
-</p>
-<div class="spacer"></div>
-
-
-<!-- frame-copy -->
-<pre class="indented">
-<em class=def id="framecopy">frame-copy</em> frame
-</pre>
-<p>frame-copy returns a copy of its argument.
-</p>
-<div class="spacer"></div>
-
-
-<!-- frame-reverse! -->
-<pre class="indented">
-<em class=def id="framereverse">frame-reverse!</em> frame
-</pre>
-
-<p>frame-reverse! reverses the entries in the given frame.
-</p>
-
-<pre class="indented">
-&gt; (frame-reverse (make-frame 2 .1 .2))
-#&lt;frame[2]: [0.200 0.100]&gt;
-</pre>
-
-<div class="spacer"></div>
-
-
-<!-- frame->sound -->
-<pre class="indented">
-<em class=def id="frametosound">frame-&gt;sound</em> fr pos snd
-</pre>
-<p>frame-&gt;sound places the contents of frame fr into sound snd at position pos.
-</p>
-<div class="spacer"></div>
-
-
-<!-- frame->float-vector -->
-<pre class="indented">
-<em class=def id="frametovct">frame-&gt;float-vector</em> frame fv
-</pre>
-
-<p>frame-&gt;float-vector places the contents of its frame argument in its fv argument, or in a newly created float-vector
-if the fv argument is omitted.
-</p>
-<div class="spacer"></div>
-
-
-<!-- insert-frame -->
-<pre class="indented">
-<em class=def id="insertframe">insert-frame</em> fr beg snd edpos
-</pre>
-
-<p>insert-frame inserts the frame of samples into sound snd (one sample in each channel) at beg.
-</p>
-<div class="spacer"></div>
-
-
-<!-- insert-float-vector -->
-<pre class="indented">
-<em class=def id="insertvct">insert-float-vector</em> data beg dur snd chn edpos
-</pre>
-
-<p>insert-float-vector inserts the float-vector data into sound snd at beg.  It is just a wrapper
-for <a href="extsnd.html#insertsamples">insert-samples</a> that puts the float-vector argument first.
-</p>
-<div class="spacer"></div>
-
-
-<!-- map-sound -->
-<pre class="indented">
-<em class=def id="mapsound">map-sound</em> func beg dur snd
-</pre>
-
-<p>map-sound is a version of <a href="extsnd.html#mapchannel">map-channel</a> that passes func a frame on each call, rather than a sample.
-</p>
-
-<pre class="indented">
-(map-sound (lambda (fr) (<a class=quiet href="sndclm.html#frame*" onmouseout="UnTip()" onmouseover="Tip(sndclm_frame_times_tip)">frame*</a> fr 2.0)))
-</pre>
-
-<p>is another way to scale a sound by 2.0.
-</p>
-<div class="spacer"></div>
-
-
-<!-- mix-frame -->
-<pre class="indented">
-<em class=def id="mixframe">mix-frame</em> fr beg snd
-</pre>
-
-<p>mix-frame mixes the frame (fr) of samples into sound snd (one sample in each channel) at beg.
-</p>
-<div class="spacer"></div>
-
-
-<!-- region->frame -->
-<pre class="indented">
-<em class=def id="regiontoframe">region-&gt;frame</em> reg pos
-</pre>
-
-<p>region-&gt;frame returns a frame containing the contents of the region ref at position pos.
-</p>
-<div class="spacer"></div>
-
-
-<!-- scan-sound -->
-<pre class="indented">
-<em class=def id="scansound">scan-sound</em> func beg dur snd with-sync
-</pre>
-
-<p>scan-sound is a version of <a href="extsnd.html#scanchannel">scan-channel</a> that passes func a frame on each call, rather than a sample.
-If 'with-sync' is #t, the frame read includes all channels currently sync'd to the sound 'snd'.
-</p>
-
-<pre class="indented">
-(define* (simultaneous-zero-crossing (beg 0) dur snd)
-  (let ((last-fr (<a class=quiet href="sndclm.html#make-frame" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_frame_tip)">make-frame</a> (<a class=quiet href="extsnd.html#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd))))
-    (<em class=red>scan-sound</em> (lambda (fr)
-		  (let ((result #t))
-		    (do ((chn 0 (+ 1 chn)))
-			((= chn (channels fr)))
-		      (set! result (and result 
-                                        (&lt; (* (fr chn) (last-fr chn)) 0.0)))
-		      (set! (last-fr chn) (fr chn)))
-		    result))
-		beg dur snd)))
-</pre>
-
-<div class="spacer"></div>
-
-
-<!-- simultaneous-zero-crossing -->
-<pre class="indented">
-<em class=def id="simultaneouszerocrossing">simultaneous-zero-crossing</em> (beg 0) dur snd
-</pre>
-
-<p>simultaneous-zero-crossing looks through all channels of the sound 'snd' for a zero crossing that happens on the
-same sample in all channels.
-</p>
-<div class="spacer"></div>
-
-
-<!-- sound->frame -->
-<pre class="indented">
-<em class=def id="soundtoframe">sound-&gt;frame</em> pos snd
-</pre>
-
-<p>sound-&gt;frame returns a frame containing the contents of the sound snd at position pos.
-</p>
-<div class="spacer"></div>
-
-
-<!-- float-vector->file -->
-<pre class="indented">
-<em class=def id="vcttofile">float-vector-&gt;file</em> data file (srate 44100) (comment "")
-</pre>
-
-<p>float-vector-&gt;file places the contents of its data argument in the newly created (mono) sound file 'file'.
-</p>
-<div class="spacer"></div>
-
-
-<!-- float-vector->frame -->
-<pre class="indented">
-<em class=def id="vcttoframe">float-vector-&gt;frame</em> data frame
-</pre>
-
-<p>float-vector-&gt;frame places the contents of its data argument in its frame argument, or in a newly created frame
-if the frame argument is omitted.
-</p>
-<div class="spacer"></div>
-
-
-
-<p id="framereaders">To read sound data as an array of frames, there is a set of functions that are parallel
-to the sampler functions, but which deal in frames.  I will probably move these to C
-once the dust settles.
-</p>
-
-<!-- copy-frame-reader -->
-<pre class="indented">
-<em class=def id="copyframereader">copy-frame-reader</em> obj
-</pre>
-<p>copy-frame-reader returns a copy of the frame-reader 'obj'.
-</p>
-
-<div class="spacer"></div>
-
-<!-- frame-reader-at-end? -->
-<pre class="indented">
-<em class=def id="framereaderatendQ">frame-reader-at-end?</em> obj
-</pre>
-<p>frame-reader-at-end? returns #t if the frame-reader 'obj' is at the end of the sound.
-</p>
-
-<div class="spacer"></div>
-
-<!-- frame-reader-chans -->
-<pre class="indented">
-<em class=def id="framereaderchans">frame-reader-chans</em> obj
-</pre>
-
-<p>frame-reader-chans returns the number of channels read by the frame-reader 'obj'.
-</p>
-
-<div class="spacer"></div>
-
-<!-- frame-reader-home -->
-<pre class="indented">
-<em class=def id="framereaderhome">frame-reader-home</em> obj
-</pre>
-
-<p>frame-reader-home returns the sound associated with the frame-reader 'obj'.
-</p>
-
-<div class="spacer"></div>
-
-<!-- frame-reader-position -->
-<pre class="indented">
-<em class=def id="framereaderposition">frame-reader-position</em> obj
-</pre>
-
-<p>frame-reader-position returns the current (frame-wise) location of the frame-reader 'obj'.
-</p>
-
-<div class="spacer"></div>
-
-<!-- frame-reader? -->
-<pre class="indented">
-<em class=def id="framereaderQ">frame-reader?</em> obj
-</pre>
-
-<p>frame-reader? returns #t if 'obj' is a frame-reader.
-</p>
-
-<div class="spacer"></div>
-
-<!-- free-frame-reader -->
-<pre class="indented">
-<em class=def id="freeframereader">free-frame-reader</em> obj
-</pre>
-
-<p>free-frame-reader releases the frame-reader 'obj'.
-</p>
-
-<div class="spacer"></div>
-
-<!-- make-frame-reader -->
-<pre class="indented">
-<em class=def id="makeframereader">make-frame-reader</em> start snd dir pos
-</pre>
-
-<p>make-frame-reader creates a frame-reader reading the sound 'snd'
-starting at frame 'start' with initial read direction 'dir' 
-(1=forward, -1=backward).  'pos' is the edit history position to read 
-(it defaults to current position).
-</p>
-
-<div class="spacer"></div>
-
-<!-- make-region-frame-reader -->
-<pre class="indented">
-<em class=def id="makeregionframereader">make-region-frame-reader</em> reg start dir
-</pre>
-
-<p>make-region-frame-reader creates a frame-reader reading region 'reg'.
-</p>
-
-<div class="spacer"></div>
-
-<!-- make-selection-frame-reader -->
-<pre class="indented">
-<em class=def id="makeselectionframereader">make-selection-frame-reader</em> start
-</pre>
-
-<p>make-selection-frame-reader returns a frame reader that reads all channels of the current selection.
-</p>
-
-<div class="spacer"></div>
-
-<!-- make-sync-frame-reader -->
-<pre class="indented">
-<em class=def id="makesyncframereader">make-sync-frame-reader</em> start snd dir edpos
-</pre>
-
-<p>make-sync-frame-reader returns a frame reader that reads all channels sync'd to the sound 'snd'.
-</p>
-
-<div class="spacer"></div>
-
-<!-- next-frame -->
-<pre class="indented">
-<em class=def id="nextframe">next-frame</em> obj
-</pre>
-
-<p>next-frame returns the next frame (reading forward) read by the frame-reader 'obj'.
-</p>
-
-<div class="spacer"></div>
-
-<!-- previous-frame -->
-<pre class="indented">
-<em class=def id="previousframe">previous-frame</em> obj
-</pre>
-
-<p>previous-frame returns the previous frame in the stream read by the frame-reader 'obj'.
-</p>
-
-<div class="spacer"></div>
-
-<!-- read-frame -->
-<pre class="indented">
-<em class=def id="readframe">read-frame</em> obj
-</pre>
-
-<p>read-frame returns the next frame (reading in the direction set by <a class=quiet href="#makeframereader" onmouseout="UnTip()" onmouseover="Tip(sndscm_makeframereader_tip)">make-frame-reader</a>) 
-from the frame-reader 'obj'.
-</p>
-
 
 
 
@@ -7527,92 +7181,6 @@ transpose-mixes sets the speed of mix in 'mix-list' to cause a transposition by 
 see also: &nbsp; <a href="extsnd.html#sndmixes">Mixes</a> &nbsp; <a href="snd.html#mixingfiles">View:Mix</a> &nbsp; <a href="#mixchannel">mix-channel</a> &nbsp; <a href="#fadedoc">dissolve-fade</a> &nbsp; <a href="#musmix">mus-mix</a>
 </div>
 
-
-
-<!-- INDEX mixerdoc:Matrices -->
-
-<!--  FILE: mixer  -->
-
-<div class="header" id="mixerdoc">mixer</div>
-
-<!-- main-index |mixerdoc:mixer as matrix -->
-
-<p>mixer.scm has functions related to mixers and frames (linear algebra).  There are some
-others in the relevant section of snd-test. (In Ruby, see mix.rb).
-</p>
-
-<pre class="indented">
-<em class=emdef>make-zero-mixer</em> size
-<em class=emdef>mixer-diagonal?</em> mixer
-<em class=def id="mixer-transpose">mixer-transpose</em> mixer
-<em class=def id="mixer-determinant">mixer-determinant</em> mixer
-<em class=emdef>mixer-trace</em> mixer
-<em class=def id="mixer-poly">mixer-poly</em> mixer coeffs
-<em class=def id="mixer-inverse">mixer-inverse</em> mixer
-<em class=def id="mixer-solve">mixer-solve</em> mixer frame
-<em class=def id="mixercopy">mixer-copy</em> mixer
-<em class=def id="invertmatrix">invert-matrix</em> mixer (b #f) (zero 1e-7)
-</pre>
-
-<p>
-mixer-solve is probably the most useful of these functions. 
-If passed a mixer representing the coefficients of a set of simultaneous
-linear equations, and a frame representing the values thereof, it
-returns (in the original frame) the values of the independent
-variables, and (in the original mixer) the inverse of the matrix
-of coefficients.  
-</p>
-
-<pre class="indented">
-&gt; (mixer-inverse (make-mixer 2  2.0 0.0  0.0 1.4))
-#&lt;mixer: chans: 2, vals: [
- 0.500 0.000
- 0.000 0.714
-]&gt;
-&gt; (mixer-solve (make-mixer 2 1.0 1.0 2.0 1.0) (make-frame 2 4.0 5.0))
-#&lt;frame[2]: [1.000 3.000]&gt;
-;; that is, x+y=4, 2x+y=5, so x=1, y=3
-</pre>
-
-<p>
-The rest should be obvious &mdash; these are mostly
-treating mixers as square matrices, and frames as row or column
-vectors, then performing the usual tricks upon them.  There are
-more such functions in snd-test.
-</p>
-
-<pre class="indented">
-&gt; (mixer-determinant (make-mixer 2 1.0 0.0 2.0 1.0))
-1.0
-&gt; (mixer-trace (make-mixer 2 1.0 0.0 2.0 1.5))
-2.5
-&gt; (mixer-transpose (make-mixer 2 1.0 0.0 2.0 1.5))
-#&lt;mixer: chans: 2, vals: [
- 1.000 2.000
- 0.000 1.500
-]&gt;
-&gt; (mixer-diagonal? (make-mixer 2 1.0 0.0 2.0 1.5))
-#f
-&gt; (mixer-poly (make-mixer 2  1.0 0.0 0.0 1.0)  0.5 2.0)
-#&lt;mixer: chans: 2, vals: [
- 2.500 0.000
- 0.000 2.500
-]&gt;
-</pre>
-
-<p>mixer-poly treats its mixer argument as the variable in a polynomial.
-The rest of the arguments are the polynomial coefficients starting with the constant term,
-so the example above computes 
-</p>
-
-<pre class="indented">
-2.0 * M + 0.5 * I
-</pre>
-
-
-<div class="seealso">
-see also: &nbsp; <a href="sndclm.html#polynomial">polynomial</a> &nbsp; <a href="#polydoc" onmouseout="UnTip()" onmouseover="Tip('polynomial stuff')">poly</a> &nbsp; <a href="sndclm.html#framedoc" onmouseout="UnTip()" onmouseover="Tip('frames and mixers in CLM')">mixers</a>
-</div>
 
 
 
@@ -9803,7 +9371,7 @@ convolution the infinitely slow way is poly*:
 
 
 <div class="seealso">
-see also: &nbsp; <a href="sndclm.html#polynomial">polynomial</a> &nbsp; <a href="#mixerdoc" onmouseout="UnTip()" onmouseover="Tip('linear algebra stuff')">mixer</a> &nbsp;
+see also: &nbsp; <a href="sndclm.html#polynomial">polynomial</a> &nbsp; 
 </div>
 
 
@@ -10171,13 +9739,14 @@ see also: &nbsp; <a href="#fofins" onmouseout="UnTip()" onmouseover="Tip('FOF sy
 
 
 
-<!--  FILE: snd11|12  -->
+<!--  FILE: snd11|12|13  -->
 
 <div class="header" id="sndolddoc">snd11|12</div>
 
 <p>These files contain several procedures
 that were removed from or renamed in earlier versions of Snd (in Ruby, look in extensions.rb).  
-snd11.scm, for example, has the old sine-summation, make-sum-of-cosines, and make-sum-of-sines generators.
+snd11.scm, for example, has the old sine-summation, make-sum-of-cosines, and make-sum-of-sines generators,
+and snd13.scm has the obsolete frame and mixer functions.
 </p>
 
 

@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 15
-#define MUS_DATE "5-Sep-13"
+#define MUS_REVISION 16
+#define MUS_DATE "11-Oct-13"
 
 /* isn't mus_env_interp backwards? */
 
@@ -478,6 +478,10 @@ MUS_EXPORT mus_any *mus_make_frame_to_file_with_comment(const char *filename, in
 #define mus_make_frame_to_file(Filename, Chans, OutFormat, OutType) mus_make_frame_to_file_with_comment(Filename, Chans, OutFormat, OutType, NULL)
 MUS_EXPORT mus_any *mus_continue_frame_to_file(const char *filename);
 
+MUS_EXPORT mus_float_t mus_vector_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *vals, int chans);
+MUS_EXPORT mus_float_t *mus_vector_mix(int chans, mus_float_t *data, mus_float_t *mix, mus_float_t *result);
+MUS_EXPORT mus_float_t *mus_file_to_vector(mus_any *ptr, mus_long_t samp, mus_float_t *vals, int chans);
+
 MUS_EXPORT void mus_locsig(mus_any *ptr, mus_long_t loc, mus_float_t val);
 MUS_EXPORT mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t reverb, int chans, mus_any *output, int rev_chans, mus_any *revput, mus_interp_t type);
 MUS_EXPORT bool mus_locsig_p(mus_any *ptr);
@@ -594,6 +598,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 11-Oct:     mus_vector_to_file, mus_vector_mix.
  * 19-Apr:     rxyk!cos and rxyk!sin from generators.scm.
  * 11-Apr:     mus_tap_p as a better name for mus_delay_line_p.
  * 27-Mar:     comb-bank, all-pass-bank, filtered-comb-bank, pulsed-env, oscil-bank.

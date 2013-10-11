@@ -6,13 +6,6 @@
 ;;;   make-selection
 ;;;   filter-selection-and-smooth
 ;;;   with-temporary-selection
-;;;
-;;;
-;;; see also make-selection-frame-reader (frame.scm)
-;;;          selection-rms (examp.scm)
-;;;          fit-selection-between-marks (marks.scm)
-;;;          define-selection-via-marks (marks.scm)
-;;;          pan-mix-selection (mix.scm)
 
 (provide 'snd-selection.scm)
 
