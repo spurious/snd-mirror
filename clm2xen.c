@@ -93,34 +93,7 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 
 
 #if HAVE_SCHEME
-#ifndef _MSC_VER
-static size_t c_object_value_location, c_object_type_location, cell_type_location;
-static int c_object_built_in_type;
-
-#if (SIZEOF_VOID_P == 4)
-  #define C_OBJECT_VALUE_LOCATION 12
-#else
-  #define C_OBJECT_VALUE_LOCATION 16
-#endif
-#define C_OBJECT_TYPE_LOCATION 8
-#define CELL_TYPE_LOCATION 0
-#define C_OBJECT_BUILT_IN_TYPE 17
-
-static void *imported_s7_object_value_checked(s7_pointer obj, int type)
-{
-  #define imported_is_c_object(p) ((unsigned char)(*((unsigned char *)((unsigned char *)(p) + CELL_TYPE_LOCATION))) == (unsigned char)C_OBJECT_BUILT_IN_TYPE)
-  #define imported_is_c_object_type(p, type) ((int)(*((int *)((unsigned char *)(p) + C_OBJECT_TYPE_LOCATION))) == (int)type)
-  #define imported_c_object_value(p) ((void *)(*((unsigned char **)((unsigned char *)(p) + C_OBJECT_VALUE_LOCATION))))
-
-  if ((imported_is_c_object(obj)) &&
-      (imported_is_c_object_type(obj, type)))
-    return(imported_c_object_value(obj));
-  return(NULL);
-}
-
-#else
 #define imported_s7_object_value_checked(Obj, Typ) s7_object_value_checked(Obj, Typ)
-#endif
 
 #define DISPLAY_80(Expr) s7_object_to_c_string(s7, Expr)
 #define XEN_OBJECT_REF_CHECKED(Obj, Type) imported_s7_object_value_checked(Obj, Type)
@@ -9473,17 +9446,8 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
   else {Val = NULL; XEN_ASSERT_TYPE(false, gp, 1, "gen-lookup", "a generator");} \
   } while (0)
 
-#ifndef _MSC_VER
-#define XEN_S7_NUMBER_LOCATION 8
-#define XEN_S7_DENOMINATOR_LOCATION 16
-#if (SIZEOF_VOID_P == 4)
-  #define XEN_S7_SLOT_VALUE_LOCATION 12
-#else
-  #define XEN_S7_SLOT_VALUE_LOCATION 16
-#endif
-#else
+
 static int XEN_S7_NUMBER_LOCATION, XEN_S7_DENOMINATOR_LOCATION, XEN_S7_SLOT_VALUE_LOCATION;
-#endif
 
 #define s7_cell_slot_value(p) (s7_pointer)(*((s7_pointer *)((unsigned char *)(p) + XEN_S7_SLOT_VALUE_LOCATION)))
 
@@ -19205,26 +19169,9 @@ void Init_sndlib(void)
   mus_xen_init();
 
 #if HAVE_SCHEME
-#ifndef _MSC_VER
-  if (s7_slot_value_offset(s7) != XEN_S7_SLOT_VALUE_LOCATION) 
-    fprintf(stderr, "clm slot-value location: %d %d\n", (int)s7_slot_value_offset(s7), XEN_S7_SLOT_VALUE_LOCATION);
-
-  c_object_value_location = s7_c_object_value_offset(s7);
-  if (c_object_value_location != C_OBJECT_VALUE_LOCATION) fprintf(stderr, "value location: %ld %d\n", (long int)c_object_value_location, C_OBJECT_VALUE_LOCATION);
-  c_object_type_location = s7_c_object_type_offset(s7);
-  if (c_object_type_location != C_OBJECT_TYPE_LOCATION) fprintf(stderr, "object type location: %ld %d\n", (long int)c_object_type_location, C_OBJECT_TYPE_LOCATION);
-  cell_type_location = s7_type_offset(s7);
-  if (cell_type_location != CELL_TYPE_LOCATION) fprintf(stderr, "cell type location: %ld %d\n", (long int)cell_type_location, CELL_TYPE_LOCATION);
-  c_object_built_in_type = s7_c_object_built_in_type(s7);
-  if (c_object_built_in_type != C_OBJECT_BUILT_IN_TYPE) fprintf(stderr, "object type: %d %d\n", c_object_built_in_type, C_OBJECT_BUILT_IN_TYPE);
-
-  if (xen_s7_number_location != XEN_S7_NUMBER_LOCATION) fprintf(stderr, "number location: %ld %d\n", (long int)xen_s7_number_location, XEN_S7_NUMBER_LOCATION);
-  if (xen_s7_denominator_location != XEN_S7_DENOMINATOR_LOCATION) fprintf(stderr, "denominator location: %ld %d\n", (long int)xen_s7_denominator_location, XEN_S7_DENOMINATOR_LOCATION);
-#else
   XEN_S7_SLOT_VALUE_LOCATION = s7_slot_value_offset(s7); /* set in xen.c */
   XEN_S7_NUMBER_LOCATION = xen_s7_number_location;
   XEN_S7_DENOMINATOR_LOCATION = xen_s7_denominator_location;
-#endif
 
   init_choices();
 #endif

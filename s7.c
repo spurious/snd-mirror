@@ -5934,30 +5934,6 @@ size_t s7_denominator_offset(s7_scheme *sc)
 }
 
 
-size_t s7_type_offset(s7_scheme *sc)
-{
-  return(offsetof(s7_cell, tf.type_field));
-}
-
-
-size_t s7_c_object_type_offset(s7_scheme *sc)
-{
-  return(offsetof(s7_cell, object.c_obj.type));
-}
-
-
-size_t s7_c_object_value_offset(s7_scheme *sc)
-{
-  return(offsetof(s7_cell, object.c_obj.value));
-}
-
-
-int s7_c_object_built_in_type(s7_scheme *sc)
-{
-  return(T_C_OBJECT);
-}
-
-
 s7_pointer s7_cadar_value(s7_scheme *sc, s7_pointer lst)
 {
   return(finder(sc, cadar(lst)));
@@ -6427,11 +6403,12 @@ static s7_pointer g_c_pointer(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- continuations and gotos -------------------------------- */
 
-bool s7_is_continuation(s7_pointer p)    
+#if 0
+static bool s7_is_continuation(s7_pointer p)    
 { 
   return(is_continuation(p));
 }
-
+#endif
 
 static s7_pointer g_is_continuation(s7_scheme *sc, s7_pointer args)
 {
@@ -7362,18 +7339,6 @@ bool s7_is_complex(s7_pointer p)
 #else
   return(is_number(p));
 #endif
-}
-
-
-bool s7_is_exact(s7_pointer p)
-{
-  return(s7_is_rational(p));
-}
-
-
-bool s7_is_inexact(s7_pointer p)
-{
-  return(!s7_is_rational(p));
 }
 
 
@@ -16387,9 +16352,7 @@ static s7_pointer g_less_s_ic(s7_scheme *sc, s7_pointer args)
 	return(sc->T);
       if ((y <= 0) && (numerator(x) > 0))
 	return(sc->F);
-      if ((y < S7_LONG_MAX) && 
-	  (y > S7_LONG_MIN) && 
-	  (denominator(x) < S7_LONG_MAX))
+      if (denominator(x) < S7_LONG_MAX)
 	return(make_boolean(sc, (numerator(x) < (y * denominator(x)))));
       return(make_boolean(sc, fraction(x) < y));
       break;
@@ -16553,9 +16516,7 @@ static s7_pointer g_leq_s_ic(s7_scheme *sc, s7_pointer args)
 	return(sc->T);
       if ((y <= 0) && (numerator(x) > 0))
 	return(sc->F);
-      if ((y < S7_LONG_MAX) && 
-	  (y > S7_LONG_MIN) && 
-	  (denominator(x) < S7_LONG_MAX))
+      if (denominator(x) < S7_LONG_MAX)
 	return(make_boolean(sc, (numerator(x) <= (y * denominator(x)))));
       return(make_boolean(sc, fraction(x) <= y));
       break;
@@ -16647,7 +16608,7 @@ static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   
   x = car(args);
-  y = s7_integer(cadr(args));
+  y = integer(cadr(args));
   switch (type(x))
     {
     case T_INTEGER:
@@ -16655,9 +16616,7 @@ static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
       break;
       
     case T_RATIO:  
-      if ((y < S7_LONG_MAX) && 
-	  (y > S7_LONG_MIN) && 
-	  (denominator(x) < S7_LONG_MAX))
+      if (denominator(x) < S7_LONG_MAX) /* y has already been checked for range */
 	return(make_boolean(sc, (numerator(x) > (y * denominator(x)))));
       return(make_boolean(sc, fraction(x) > y));
       break;
@@ -16679,7 +16638,7 @@ static s7_pointer g_greater_s_fc(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  y = s7_real(cadr(args));
+  y = real(cadr(args));
 
   if (type(x) == T_REAL)
     return(make_boolean(sc, real(x) > y));
@@ -16692,9 +16651,7 @@ static s7_pointer g_greater_s_fc(s7_scheme *sc, s7_pointer args)
       
     case T_RATIO:  
       /* (> 9223372036854775807/9223372036854775806 1.0) */
-      if ((y < S7_LONG_MAX) && 
-	  (y > S7_LONG_MIN) && 
-	  (denominator(x) < S7_LONG_MAX))
+      if (denominator(x) < S7_LONG_MAX) /* y range check was handled in greater_chooser */
 	return(make_boolean(sc, (numerator(x) > (y * denominator(x)))));
       return(make_boolean(sc, fraction(x) > y));
       break;
@@ -16709,7 +16666,6 @@ static s7_pointer g_greater_s_fc(s7_scheme *sc, s7_pointer args)
     }
   return(sc->T);
 }
-
 
 static s7_pointer greater_2;
 static s7_pointer g_greater_2(s7_scheme *sc, s7_pointer args)
@@ -16861,6 +16817,21 @@ static s7_pointer g_geq_2(s7_scheme *sc, s7_pointer args)
 
   return(sc->T);
 }
+
+static s7_pointer geq_s_fc;
+static s7_pointer g_geq_s_fc(s7_scheme *sc, s7_pointer args)
+{
+  s7_Double y;
+  s7_pointer x;
+
+  x = car(args);
+  y = real(cadr(args));
+
+  if (type(x) == T_REAL)
+    return(make_boolean(sc, real(x) >= y));
+  return(g_geq_2(sc, args));
+}
+
 
 static s7_pointer geq_length_ic;
 static s7_pointer g_geq_length_ic(s7_scheme *sc, s7_pointer args)
@@ -26222,6 +26193,7 @@ s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q)
 
 s7_pointer s7_apply_1(s7_scheme *sc, s7_pointer args, s7_pointer (*f1)(s7_pointer a1))
 {
+  /* not currently used */
   return(f1(car(args)));
 }
 
@@ -32727,7 +32699,7 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 
   /* this is slightly dangerous -- the C function might call a hook for example.
    *   an unsafe procedure-with-setter might be defined via
-   *   s7_define_c_function followed by s7_procedure_set_setter.
+   *   s7_define_c_function followed by s7_procedure_set_setter (currently not exported).
    */
 
   s7_define(sc, sc->NIL, make_symbol(sc, name), get_func);
@@ -32758,8 +32730,8 @@ s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj)
   return(closure_setter(obj));
 }
 
-
-s7_pointer s7_procedure_set_setter(s7_scheme *sc, s7_pointer obj, s7_pointer setter)
+#if 0
+static s7_pointer s7_procedure_set_setter(s7_scheme *sc, s7_pointer obj, s7_pointer setter)
 {
   /* setter can be #f to clear an old setting */
   if (is_c_function(obj))
@@ -32772,7 +32744,7 @@ s7_pointer s7_procedure_set_setter(s7_scheme *sc, s7_pointer obj, s7_pointer set
   else closure_setter(obj) = setter;
   return(setter);
 }
-
+#endif
 
 static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
 {
@@ -36588,7 +36560,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	    }
 	}
       
-      /* if (s7_is_continuation(type))
+      /* if (is_continuation(type))
        *   go into repl here with access to continuation?  Or expect *error-handler* to deal with it?
        */
       sc->value = type;
@@ -38227,7 +38199,8 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
+#if 0
+static s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
 {
   int i;
   va_list ap;
@@ -38247,6 +38220,7 @@ s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
 
   return(g_values(sc, safe_reverse_in_place(sc, p)));
 }
+#endif
 
 
 
@@ -40776,7 +40750,9 @@ static s7_pointer less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 {
   if (args == 2)
     {
-      if (s7_is_integer(caddr(expr)))
+      s7_pointer arg2;
+      arg2 = caddr(expr);
+      if (is_integer(arg2))
 	{
 	  if ((is_optimized(cadr(expr))) &&
 	      (optimize_data(cadr(expr)) == HOP_SAFE_C_S))
@@ -40789,9 +40765,12 @@ static s7_pointer less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 		  return(less_length_ic);
 		}
 	    }
-	  if (integer(caddr(expr)) == 0)
+	  if (integer(arg2) == 0)
 	    return(less_s0);
-	  return(less_s_ic);
+
+	  if ((integer(arg2) < S7_LONG_MAX) &&
+	      (integer(arg2) > S7_LONG_MIN))
+	    return(less_s_ic);
 	}
       return(less_2);
     }
@@ -40803,7 +40782,11 @@ static s7_pointer leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 {
   if (args == 2)
     {
-      if (s7_is_integer(caddr(expr)))
+      s7_pointer arg2;
+      arg2 = caddr(expr);
+      if ((is_integer(arg2)) &&
+	  (integer(arg2) < S7_LONG_MAX) &&
+	  (integer(arg2) > S7_LONG_MIN))
 	return(leq_s_ic);
       return(leq_2);
     }
@@ -40815,9 +40798,15 @@ static s7_pointer greater_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 {
   if (args == 2)
     {
-      if (s7_is_integer(caddr(expr)))
+      s7_pointer arg2;
+      arg2 = caddr(expr);
+      if ((is_integer(arg2)) &&
+	  (integer(arg2) < S7_LONG_MAX) &&
+	  (integer(arg2) > S7_LONG_MIN))
 	return(greater_s_ic);
-      if (type(caddr(expr)) == T_REAL)
+      if ((type(arg2) == T_REAL) &&
+	  (real(arg2) < S7_LONG_MAX) &&
+	  (real(arg2) > S7_LONG_MIN))
 	return(greater_s_fc);
       return(greater_2);
     }
@@ -40829,7 +40818,9 @@ static s7_pointer geq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 {
   if (args == 2)
     {
-      if (s7_is_integer(caddr(expr)))
+      s7_pointer arg2;
+      arg2 = caddr(expr);
+      if (is_integer(arg2))
 	{
 	  if ((is_optimized(cadr(expr))) &&
 	      (optimize_data(cadr(expr)) == HOP_SAFE_C_S))
@@ -40842,12 +40833,15 @@ static s7_pointer geq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 		  return(geq_length_ic);
 		}
 	    }
-	  return(geq_s_ic);
+	  if ((integer(arg2) < S7_LONG_MAX) &&
+	      (integer(arg2) > S7_LONG_MIN))
+	    return(geq_s_ic);
 	}
-      /*
-      if (type(caddr(expr)) == T_REAL)
+      if ((type(arg2) == T_REAL) &&
+	  (real(arg2) < S7_LONG_MAX) &&
+	  (real(arg2) > S7_LONG_MIN))
 	return(geq_s_fc);
-      */
+
       /* fprintf(stderr, ">=2: %s\n", DISPLAY_80(expr)); */
       return(geq_2);
     }
@@ -41533,6 +41527,7 @@ static void init_choosers(s7_scheme *sc)
   f = set_function_chooser(sc, sc->GEQ, geq_chooser);
 
   geq_s_ic = make_function_with_class(sc, f, ">=", g_geq_s_ic, 2, 0, false, ">= optimization");
+  geq_s_fc = make_function_with_class(sc, f, ">=", g_geq_s_fc, 2, 0, false, ">= optimization");
   geq_2 = make_function_with_class(sc, f, ">=", g_geq_2, 2, 0, false, ">= optimization");
   geq_length_ic = make_function_with_class(sc, f, ">=", g_geq_length_ic, 2, 0, false, ">= optimization");
 

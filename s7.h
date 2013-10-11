@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.0"
-#define S7_DATE "2-Sep-13"
+#define S7_VERSION "3.1"
+#define S7_DATE "11-Oct-13"
 
 
 typedef long long int s7_Int;
@@ -311,9 +311,6 @@ s7_pointer s7_make_character(s7_scheme *sc, unsigned int c);                 /* 
 
 
 bool s7_is_number(s7_pointer p);                                             /* (number? p) */
-bool s7_is_exact(s7_pointer p);                                              /* (exact? p) */
-bool s7_is_inexact(s7_pointer p);                                            /* (inexact? p) */
-
 bool s7_is_integer(s7_pointer p);                                            /* (integer? p) */
 s7_Int s7_integer(s7_pointer p);                                             /* Scheme integer -> C int (long long int probably) */
 s7_pointer s7_make_integer(s7_scheme *sc, s7_Int num);                       /* C long long int -> Scheme integer */
@@ -381,8 +378,8 @@ s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *da
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill);       /* (make-vector len fill) */
 
 void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj);                   /* (vector-fill! vec obj) */
-s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect);                         /* (vector->list vect) */
 s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect);
+s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect);                         /* (vector->list vec) */
 
 s7_Int s7_vector_print_length(s7_scheme *sc);                                         /* value of *vector-print-length* */
 s7_Int s7_set_vector_print_length(s7_scheme *sc, s7_Int new_len);
@@ -469,17 +466,7 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc);              /* (
 const char *s7_help(s7_scheme *sc, s7_pointer obj);                         /* (help obj) */
 s7_pointer s7_unoptimize(s7_scheme *sc, s7_pointer code);                   /* (unoptimize obj) */
 
-bool s7_is_continuation(s7_pointer p);                                      /* (continuation? p) */
 s7_pointer s7_make_continuation(s7_scheme *sc);                             /* call/cc... (see example below) */
-
-s7_pointer s7_values(s7_scheme *sc, int num_values, ...);                   /* (values ...) */
-
-  /* for example:
-   *      return(s7_values(sc, 3, s7_make_integer(sc, 1), s7_make_integer(sc, 2), s7_make_integer(sc, 3)));
-   * now call this "v" and:
-   * (+ 1 (v) 2) => 9
-   */
-
 bool s7_is_syntax(s7_pointer p);
 bool s7_is_symbol(s7_pointer p);                                            /* (symbol? p) */
 const char *s7_symbol_name(s7_pointer p);                                   /* (symbol->string p) -- don't free the string */
@@ -593,12 +580,6 @@ size_t s7_number_offset(s7_scheme *sc);
 size_t s7_denominator_offset(s7_scheme *sc);
 size_t s7_slot_value_offset(s7_scheme *sc);
 
-int s7_c_object_built_in_type(s7_scheme *sc);
-size_t s7_c_object_value_offset(s7_scheme *sc);
-size_t s7_c_object_type_offset(s7_scheme *sc);
-size_t s7_type_offset(s7_scheme *sc);
-  /* these are for experimental optimization choices */
-
 typedef struct {
   void (*ex_vf)(void *p); 
   void (*ex_free)(void *p); 
@@ -701,7 +682,6 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 					 int set_req_args, int set_opt_args,
 					 const char *documentation);
 s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj);
-s7_pointer s7_procedure_set_setter(s7_scheme *sc, s7_pointer obj, s7_pointer setter);
 
 
 int s7_new_type(const char *name, 
@@ -861,9 +841,9 @@ bool s7_is_valid_pointer(s7_pointer arg);
  *    call-with-output-file call-with-output-string catch ceiling char->integer char-alphabetic? 
  *    char-ci<=? char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? 
  *    char-numeric? char-position char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<? 
- *    char=? char>=? char>? cosh dynamic-wind environment? eof-object? eval even? 
- *    exact->inexact exp expt fill! floor for-each gcd hash-table hash-table-size 
- *    hook inexact->exact infinite? initial-environment integer->char integer-decode-float 
+ *    char=? char>=? char>? continuation? cosh dynamic-wind environment? eof-object? eval even? 
+ *    exact? exact->inexact exp expt fill! floor for-each gcd hash-table hash-table-size 
+ *    hook inexact->exact inexact? infinite? initial-environment integer->char integer-decode-float 
  *    integer-length keyword->symbol lcm length list->string list->vector list-tail log logand 
  *    logior lognot logxor logbit? magnitude make-hash-table-iterator make-list make-polar
  *    make-rectangular map max memv min modulo nan? negative? not odd? port-closed? 
@@ -871,7 +851,7 @@ bool s7_is_valid_pointer(s7_pointer arg);
  *    sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 
  *    string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-position string-ref 
  *    string-set! string<=? string<? string=? string>=? string>? substring symbol symbol->keyword 
- *    symbol-table tan tanh truncate vector vector->list with-input-from-file 
+ *    symbol-table tan tanh truncate values vector vector->list with-input-from-file 
  *    with-input-from-string with-output-to-file with-output-to-string write-byte zero?
  *
  * and these variables: *safety* *#readers* *error-hook* *unbound-variable-hook*

@@ -10,17 +10,18 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 18
-#define XEN_VERSION "3.18"
+#define XEN_MINOR_VERSION 19
+#define XEN_VERSION "3.19"
 
 /* HISTORY:
  *
+ *  11-Oct:    removed XEN_EXACT_P.
  *  23-Sep:    removed *_OR_ELSE, XEN_ARG_*, and OFF_T* macros; added XEN_ARGIFY* to the Forth section.
  *  7-Jul-13:  removed int64 stuff (it was not used anywhere). Made various Ruby changes (NUM2ULL etc).
  *  -------- 
  *  5-Nov:     minor s7-related changes.
  *  9-July:    XEN_VECTOR_ELEMENTS and XEN_VECTOR_COPY.
- *  4-June:    XEN_PROVIDE as synonym for XEN_YES_WE_HAVE.
+ *  4-June:    XEN_PROVIDE
  *  8-May:     added description arg to XEN_DEFINE_SIMPLE_HOOK and XEN_DEFINE_HOOK, only used in scheme.
  *  12-Jan-12: added reverse argument to s7 version of XEN_MAKE_OBJECT_TYPE.
  *  --------
@@ -77,7 +78,6 @@
  *  28-Mar-06: Forth support thanks to Mike Scholz.
  *  --------
  *  7-Nov-05:  xen_rb_defined_p (Mike Scholz).
- *  24-Oct-05: XEN_LOAD_FILE_WITH_PATH.
  *  16-Sep-05: removed some debugging extras that caused confusion on 64-bit machines.
  *  12-Aug-05: include guile setter procedure names for better error reporting.
  *  14-Jun-05: XEN_DEFINE (XEN value, not assumed to be int as in XEN_DEFINE_CONSTANT).
@@ -127,7 +127,6 @@
  *  29-Jul-02: SCM_WRITABLE_VELTS for current CVS Guile
  *  28-May-02: off_t equivalents in Ruby 1.7
  *  6-May-02:  off_t (long long) macros.
- *  29-Apr-02: XEN_EXACT_P
  *  2-Jan-02:  removed TIMING and MCHECK debugging stuff, VARIABLE_REF -> XEN_VARIABLE_REF
  *  --------
  *  22-Sep-01: removed (redundant) UNSIGNED_LONG macros -- use ULONG instead
@@ -225,8 +224,6 @@
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = XEN_LIST_LENGTH(Arg)) >= 0)
 #define XEN_LIST_LENGTH(Arg)            xen_rb_list_length(Arg)
 #define XEN_EQ_P(a, b)                  ((a) == (b))
-#define XEN_EQV_P(a, b)                 ((a) == (b))
-#define XEN_EQUAL_P(a, b)               ((a) == (b))
 #define XEN_LIST_1(a)                   rb_ary_new3(1, a)
 #define XEN_LIST_2(a, b)                rb_ary_new3(2, a, b) 
 #define XEN_LIST_3(a, b, c)             rb_ary_new3(3, a, b, c) 
@@ -255,7 +252,7 @@
 #define XEN_TO_C_COMPLEX(a)             0.0
 
 #define XEN_ULONG_P(Arg1)               XEN_INTEGER_P(Arg1)
-#define XEN_EXACT_P(Arg1)               XEN_INTEGER_P(Arg1)
+#define XEN_WRAPPED_C_POINTER_P(Arg1)   XEN_INTEGER_P(Arg1)
 #define C_TO_XEN_INT(a)                 INT2NUM(a)
 #define XEN_TO_C_ULONG(a)               NUM2ULONG(a)
 #ifdef ULONG2NUM
@@ -304,12 +301,9 @@
 #define C_TO_XEN_CHAR(Arg)              rb_str_new((char *)(&(Arg)), 1)
 
 #define XEN_NAME_AS_C_STRING_TO_VALUE(a) xen_rb_gv_get(a)
-#define C_STRING_TO_XEN_FORM(Str)       XEN_EVAL_C_STRING(Str)
-#define XEN_EVAL_FORM(Form)             ((XEN)Form)
 #define XEN_EVAL_C_STRING(Arg)          xen_rb_eval_string_with_error(Arg)
 #define XEN_TO_STRING(Obj)              xen_rb_obj_as_string(Obj)
 #define XEN_LOAD_FILE(a)                xen_rb_load_file_with_error(C_TO_XEN_STRING(a))
-#define XEN_LOAD_FILE_WITH_PATH(a)      xen_rb_load_file_with_error(C_TO_XEN_STRING(a))
 #define XEN_LOAD_PATH                   XEN_NAME_AS_C_STRING_TO_VALUE("$LOAD_PATH")
 #define XEN_ADD_TO_LOAD_PATH(Path)      xen_rb_add_to_load_path(Path)
 
@@ -339,7 +333,6 @@
 #define XEN_SYMBOL_P(Arg)               SYMBOL_P(Arg)
 #define XEN_SYMBOL_TO_C_STRING(a)       ((char *)rb_id2name(SYM2ID(a)))
 #define C_STRING_TO_XEN_SYMBOL(a)       ID2SYM(rb_intern(a))
-#define XEN_STRING_TO_SYMBOL(Str)       C_STRING_TO_XEN_SYMBOL(XEN_TO_C_STRING(Str))
 #define XEN_SYMBOL_TO_STRING(Sym)       C_TO_XEN_STRING(XEN_SYMBOL_TO_C_STRING(Sym))
 #define XEN_DOCUMENTATION_SYMBOL        C_STRING_TO_XEN_SYMBOL("documentation")
 #define XEN_OBJECT_HELP(Name)           rb_documentation(Name)
@@ -408,7 +401,6 @@
   #define XEN_VALUE_ARG_PROCEDURE_CAST
 #endif
 
-#define XEN_PROCEDURE_SOURCE(Func)       Func
 #define XEN_ARITY(Func)                  rb_funcall(Func, rb_intern("arity"), 0)
 #define XEN_REQUIRED_ARGS(Func)          xen_rb_required_args(XEN_ARITY(Func))
 #define XEN_REQUIRED_ARGS_OK(Func, Args) (xen_rb_required_args(XEN_ARITY(Func)) == Args)
@@ -444,7 +436,6 @@
 #define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) rb_funcall(Func, rb_intern("call"), 5, Arg1, Arg2, Arg3, Arg4, Arg5)
 #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) rb_funcall(Func, rb_intern("call"), 6, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)
 #define XEN_APPLY(Func, Args, Caller)              xen_rb_apply(Func, Args)
-#define XEN_APPLY_ARG_LIST_END          Qnil
 #define XEN_CALL_0_NO_CATCH(Func)                   xen_rb_funcall_0(Func)
 #define XEN_CALL_1_NO_CATCH(Func, Arg1)             rb_funcall(Func, rb_intern("call"), 1, Arg1)
 #define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)       rb_funcall(Func, rb_intern("call"), 2, Arg1, Arg2)
@@ -454,7 +445,6 @@
 /* ---- keywords, etc ---- */
 #define XEN_KEYWORD_EQ_P(k1, k2)        ((k1) == (k2))
 #define XEN_MAKE_KEYWORD(Arg)           xen_rb_make_keyword(Arg)
-#define XEN_YES_WE_HAVE(a)              rb_provide(a)
 #define XEN_PROVIDE(a)                  rb_provide(a)
 #define XEN_PROTECT_FROM_GC(Var)        rb_gc_register_address(&(Var))
 #define XEN_UNPROTECT_FROM_GC(Var)      rb_gc_unregister_address(&(Var))
@@ -734,7 +724,6 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_DOCUMENTATION_SYMBOL        FTH_DOCUMENTATION_SYMBOL
 
 #define XEN_DEFINED_P(name)             fth_defined_p((char *)name)
-#define XEN_YES_WE_HAVE(feature)        fth_add_feature(feature)
 #define XEN_PROVIDE(feature)            fth_add_feature(feature)
 
 /* === Boolean, Bound, Equal === */
@@ -745,15 +734,12 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_TO_C_BOOLEAN(a)             FTH_TO_BOOL(a)
 
 #define XEN_BOUND_P(Arg)                FTH_BOUND_P(Arg)
-
 #define XEN_EQ_P(a, b)                  ((a) == (b))
-#define XEN_EQV_P(a, b)                 XEN_EQ_P(a, b)
-#define XEN_EQUAL_P(a, b)               fth_object_equal_p(a, b)
 
 /* === Number === */
 #define XEN_ZERO                        FTH_ZERO
 #define XEN_NUMBER_P(Arg)               FTH_NUMBER_P(Arg)
-#define XEN_EXACT_P(Arg)                FTH_EXACT_P(Arg)
+#define XEN_WRAPPED_C_POINTER_P(Arg)    FTH_EXACT_P(Arg)
 
 #define XEN_INTEGER_P(Arg)              FTH_INTEGER_P(Arg)
 #define C_TO_XEN_INT(a)                 fth_make_int(a)
@@ -824,10 +810,7 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_KEYWORD_EQ_P(K1, K2)        XEN_EQ_P(K1, K2)
 
 #define XEN_EVAL_C_STRING(arg)          fth_eval(arg) 
-#define XEN_EVAL_FORM(Form)             XEN_EVAL_C_STRING(XEN_TO_C_STRING(Form))
-#define C_STRING_TO_XEN_FORM(str)       XEN_EVAL_C_STRING(str)
 #define XEN_LOAD_FILE(a)                fth_load_file(a)
-#define XEN_LOAD_FILE_WITH_PATH(a)      fth_load_file(a)
 #define XEN_LOAD_PATH                   XEN_NAME_AS_C_STRING_TO_VALUE("*load-path*")
 #define XEN_ADD_TO_LOAD_PATH(Path)      fth_add_load_path(Path)
 
@@ -886,8 +869,6 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_PROCEDURE_P(Arg)            FTH_PROC_P(Arg)
 #define XEN_PROCEDURE_NAME(Func)        C_TO_XEN_STRING(fth_proc_name(Func))
 #define XEN_PROCEDURE_HELP(Name)        fth_documentation_ref(Name)
-#define XEN_PROCEDURE_SOURCE_HELP(Name) XEN_PROCEDURE_HELP(Name)
-#define XEN_PROCEDURE_SOURCE(Func)      fth_proc_source_ref(Func)
 #define XEN_ARITY(Func)                 INT_TO_FIX(XEN_REQUIRED_ARGS(Func))
 #define XEN_REQUIRED_ARGS(Func)         fth_proc_arity(Func)
 #define XEN_REQUIRED_ARGS_OK(Func, args) (XEN_REQUIRED_ARGS(Func) == (args))
@@ -903,7 +884,6 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) \
   fth_proc_call(Func, Caller, 6, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)
 #define XEN_APPLY(Func, Args, Caller)               fth_proc_apply(Func, Args, Caller)
-#define XEN_APPLY_ARG_LIST_END                      XEN_EMPTY_LIST
 #define XEN_CALL_0_NO_CATCH(Func)                   XEN_CALL_0(Func, NULL)
 #define XEN_CALL_1_NO_CATCH(Func, Arg1)             XEN_CALL_1(Func, Arg1, NULL)
 #define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)       XEN_CALL_2(Func, Arg1, Arg2, NULL)
@@ -1046,10 +1026,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_BOUND_P(Arg)                           ((Arg) != xen_undefined)
 #define XEN_EMPTY_LIST                             xen_nil
 #define XEN_UNDEFINED                              xen_undefined
-
 #define XEN_EQ_P(Arg1, Arg2)                       s7_is_eq(Arg1, Arg2)
-#define XEN_EQV_P(Arg1, Arg2)                      s7_is_eqv(Arg1, Arg2)
-#define XEN_EQUAL_P(Arg1, Arg2)                    s7_is_equal(s7, Arg1, Arg2)
 
 #define XEN_CONS_P(Arg)                            s7_cons_p(Arg)
 #define XEN_CONS(Arg1, Arg2)                       s7_cons(s7, Arg1, Arg2)
@@ -1111,7 +1088,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_TO_C_LONG_LONG(Arg)                    s7_integer(Arg)
 
 #define XEN_NUMBER_P(Arg)                          s7_is_real(Arg)
-#define XEN_EXACT_P(Arg)                           s7_is_exact(Arg)
+#define XEN_WRAPPED_C_POINTER_P(Arg)               s7_is_c_pointer(Arg)
 
 #define XEN_DOUBLE_P(Arg)                          s7_is_real(Arg)
 #define XEN_TO_C_DOUBLE(Arg)                       ((double)s7_number_to_real(s7, Arg))
@@ -1136,9 +1113,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_RATIO_P(Arg)                           s7_is_ratio(Arg)
 #define XEN_MAKE_RATIO(Num, Den)                   s7_make_ratio(s7, XEN_TO_C_INT(Num), XEN_TO_C_INT(Den))
 
-#define C_STRING_TO_XEN_FORM(Str)                  s7_eval_c_string(s7, Str)
 #define XEN_EVAL_C_STRING(Arg)                     s7_eval_c_string(s7, Arg)
-#define XEN_EVAL_FORM(Form)                        s7_eval_form(s7, Form, s7_current_environment(s7))
 #define XEN_TO_STRING(Obj)                         s7_object_to_string(s7, Obj, false)
 
 #define XEN_SYMBOL_TO_C_STRING(Arg)                s7_symbol_name(Arg)
@@ -1166,10 +1141,8 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_MAKE_KEYWORD(Arg)                      s7_make_keyword(s7, Arg)
 
 #define XEN_PROCEDURE_P(Arg)                       s7_is_procedure(Arg)
-#define XEN_PROCEDURE_SOURCE(Func)                 s7_procedure_source(s7, Func)
 
 #define XEN_LOAD_FILE(File)                        s7_load(s7, File)
-#define XEN_LOAD_FILE_WITH_PATH(File)              s7_load(s7, File)
 #define XEN_LOAD_PATH                              s7_load_path(s7)
 #define XEN_ADD_TO_LOAD_PATH(Path)                 s7_add_to_load_path(s7, Path)
 
@@ -1177,7 +1150,6 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_ERROR(Type, Info)                      s7_error(s7, Type, Info)
 #define XEN_THROW(Type, Info)                      s7_error(s7, Type, Info)
 
-#define XEN_YES_WE_HAVE(Feature)                   s7_provide(s7, Feature)
 #define XEN_PROVIDE(Feature)                       s7_provide(s7, Feature)
 #define XEN_PROTECT_FROM_GC(Arg)                   s7_gc_protect(s7, Arg)
 
@@ -1234,7 +1206,6 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller)        s7_call_with_location(s7, Func, XEN_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5), Caller, __FILE__, __LINE__)
 #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller)  s7_call_with_location(s7, Func, XEN_LIST_6(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6), Caller, __FILE__, __LINE__)
 #define XEN_APPLY(Func, Args, Caller)                                 s7_call_with_location(s7, Func, Args, Caller, __FILE__, __LINE__)
-#define XEN_APPLY_ARG_LIST_END                                        XEN_EMPTY_LIST
 
 #define XEN_CALL_0_NO_CATCH(Func)                                     s7_call_with_location(s7, Func, XEN_EMPTY_LIST, __func__, __FILE__, __LINE__)
 #define XEN_CALL_1_NO_CATCH(Func, Arg1)                               s7_call_with_location(s7, Func, XEN_LIST_1(Arg1), __func__, __FILE__, __LINE__)
@@ -1323,8 +1294,6 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define XEN_EMPTY_LIST 0
 #define XEN_UNDEFINED 0
 #define XEN_EQ_P(a, b) 0
-#define XEN_EQV_P(a, b) 0
-#define XEN_EQUAL_P(a, b) 0
 #define XEN_CONS_P(Arg) 0
 #define XEN_CONS(Arg1, Arg2) 0
 #define XEN_CONS_2(Arg1, Arg2, Arg3) 0
@@ -1377,14 +1346,11 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define XEN_ULONG_LONG_P(Arg) 0 
 #define XEN_TO_C_ULONG_LONG(Arg) 0 
 #define C_TO_XEN_ULONG_LONG(Arg) 0 
-#define XEN_EXACT_P(Arg) 0
-#define C_STRING_TO_XEN_FORM(Str) 0
-#define XEN_EVAL_FORM(Form) 0
+#define XEN_WRAPPED_C_POINTER_P(Arg) 0
 #define XEN_EVAL_C_STRING(Arg) 0
 #define XEN_SYMBOL_TO_C_STRING(a) "(not a symbol)"
 #define XEN_TO_STRING(Obj) "(unknown)"
 #define XEN_PROCEDURE_P(Arg) 0
-#define XEN_PROCEDURE_SOURCE(Func) 0
 
 #define XEN_ARGIFY_1(OutName, InName) static int OutName(void) {return(-1);}
 #define XEN_ARGIFY_2(OutName, InName) static int OutName(void) {return(-2);}
@@ -1432,7 +1398,6 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) 0
 #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) 0
 #define XEN_APPLY(Func, Args, Caller) 0
-#define XEN_APPLY_ARG_LIST_END 0
 #define XEN_CALL_0_NO_CATCH(Func) 0
 #define XEN_CALL_1_NO_CATCH(Func, Arg1) 0
 #define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2) 0
@@ -1473,13 +1438,11 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define XEN_KEYWORD_P(Obj) 0
 #define XEN_KEYWORD_EQ_P(k1, k2) 0
 #define XEN_MAKE_KEYWORD(Arg) 0
-#define XEN_YES_WE_HAVE(Feature)
 #define XEN_PROVIDE(Feature)
 #define XEN_DOCUMENTATION_SYMBOL 0
 #define XEN_OBJECT_HELP(Name) 0
 #define XEN_PROTECT_FROM_GC(a) 0
 #define XEN_LOAD_FILE(a) 0
-#define XEN_LOAD_FILE_WITH_PATH(a) 0
 #define XEN_LOAD_PATH XEN_FALSE
 #define XEN_ADD_TO_LOAD_PATH(Path) XEN_FALSE
 #define XEN_ERROR_TYPE(Typ) XEN_FALSE
@@ -1562,9 +1525,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #if HAVE_SCHEME
   #define XEN_WRAP_C_POINTER(a)           s7_make_c_pointer(s7, (void *)(a))
   #define XEN_UNWRAP_C_POINTER(a)         s7_c_pointer(a)
-  #define XEN_WRAPPED_C_POINTER_P(a)      s7_is_c_pointer(a)
 #else
-
   #if (SIZEOF_VOID_P == 4) 
     #define XEN_WRAP_C_POINTER(a)         ((XEN)(C_TO_XEN_ULONG((unsigned int)a))) 
     #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG(a) 
@@ -1572,8 +1533,6 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
     #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_ULONG_LONG((unsigned long long int)(a)) 
     #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG_LONG(a) 
   #endif
-
-  #define XEN_WRAPPED_C_POINTER_P(a)      XEN_EXACT_P(a)
 #endif
 
 #ifdef __cplusplus

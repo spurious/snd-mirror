@@ -533,20 +533,6 @@ static XEN g_vct_ref(XEN obj, XEN pos)
 #define cdadr(E)  s7_cdadr(E)
 #define cadddr(E) s7_cadddr(E)
 
-#ifndef _MSC_VER
-static size_t c_object_value_location, c_object_type_location, cell_type_location;
-static int c_object_built_in_type;
-
-#if (SIZEOF_VOID_P == 4)
-  #define C_OBJECT_VALUE_LOCATION 12
-#else
-  #define C_OBJECT_VALUE_LOCATION 16
-#endif
-#define C_OBJECT_TYPE_LOCATION 8
-#define CELL_TYPE_LOCATION 0
-#define C_OBJECT_BUILT_IN_TYPE 17
-#endif
-
 static s7_pointer vct_ref_two;
 static s7_pointer g_vct_ref_two(s7_scheme *sc, s7_pointer args)
 {
@@ -625,16 +611,7 @@ static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
 }
 
 
-#ifndef _MSC_VER
-#define VCT_NUMBER_LOCATION 8
-#if (SIZEOF_VOID_P == 4)
-  #define VCT_SLOT_VALUE_LOCATION 12
-#else
-  #define VCT_SLOT_VALUE_LOCATION 16
-#endif
-#else
 static int VCT_NUMBER_LOCATION, VCT_SLOT_VALUE_LOCATION;
-#endif
 
 #if (!WITH_GMP)
 #define s7_cell_integer(p) (s7_Int)(*((s7_Int *)((unsigned char *)(p) + VCT_NUMBER_LOCATION)))
@@ -2386,13 +2363,8 @@ void mus_vct_init(void)
 
   {
     s7_pointer f;
-#ifndef _MSC_VER
-    if (s7_number_offset(s7) != VCT_NUMBER_LOCATION) fprintf(stderr, "vct number location: %d %d\n", (int)s7_number_offset(s7), VCT_NUMBER_LOCATION);
-    if (s7_slot_value_offset(s7) != VCT_SLOT_VALUE_LOCATION) fprintf(stderr, "vct slot-value location: %d %d\n", (int)s7_slot_value_offset(s7), VCT_SLOT_VALUE_LOCATION);
-#else
     VCT_NUMBER_LOCATION = s7_number_offset(s7);
     VCT_SLOT_VALUE_LOCATION = s7_slot_value_offset(s7);
-#endif
 
     /* vct-ref */
     f = s7_name_to_value(s7, "vct-ref");
@@ -2454,17 +2426,5 @@ void mus_vct_init(void)
   env_symbol = s7_make_symbol(s7, "env");
   vct_ref_symbol = s7_make_symbol(s7, "vct-ref");
 #endif
-
-#ifndef _MSC_VER
-  c_object_value_location = s7_c_object_value_offset(s7);
-  if (c_object_value_location != C_OBJECT_VALUE_LOCATION) fprintf(stderr, "value location: %ld %d\n", (long int)c_object_value_location, C_OBJECT_VALUE_LOCATION);
-  c_object_type_location = s7_c_object_type_offset(s7);
-  if (c_object_type_location != C_OBJECT_TYPE_LOCATION) fprintf(stderr, "object type location: %ld %d\n", (long int)c_object_type_location, C_OBJECT_TYPE_LOCATION);
-  cell_type_location = s7_type_offset(s7);
-  if (cell_type_location != CELL_TYPE_LOCATION) fprintf(stderr, "cell type location: %ld %d\n", (long int)cell_type_location, CELL_TYPE_LOCATION);
-  c_object_built_in_type = s7_c_object_built_in_type(s7);
-  if (c_object_built_in_type != C_OBJECT_BUILT_IN_TYPE) fprintf(stderr, "object type: %d %d\n", c_object_built_in_type, C_OBJECT_BUILT_IN_TYPE);
-#endif
-
 #endif
 }

@@ -44,11 +44,6 @@ static s7_pointer my_read(s7_scheme *sc, s7_read_t peek, s7_pointer port)
   return(s7_make_character(sc, '0'));
 }
 
-static s7_pointer test_values(s7_scheme *sc, s7_pointer args)
-{
-  return(s7_values(sc, 3, s7_make_integer(sc, 1), s7_make_integer(sc, 2), s7_make_integer(sc, 3)));
-}
-
 
 static bool tested_begin_hook = false;
 static void test_begin_hook(s7_scheme *sc, bool *val)
@@ -531,12 +526,6 @@ int main(int argc, char **argv)
   if (!s7_is_number(p))
     {fprintf(stderr, "%d: %s is not complex?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
-  if (!s7_is_exact(p))
-    {fprintf(stderr, "%d: %s is not exact?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
-
-  if (s7_is_inexact(p))
-    {fprintf(stderr, "%d: %s is inexact?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
-
   if (s7_integer(p) != 123)
     {fprintf(stderr, "%d: %s is not 123?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
@@ -606,12 +595,6 @@ int main(int argc, char **argv)
 
   if (!s7_is_number(p))
     {fprintf(stderr, "%d: %s is not complex?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
-
-  if (s7_is_exact(p))
-    {fprintf(stderr, "%d: %s is exact?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
-
-  if (!s7_is_inexact(p))
-    {fprintf(stderr, "%d: %s is not inexact?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
   if (s7_real(p) != 1.5)
     {fprintf(stderr, "%d: %s is not 1.5?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
@@ -1464,13 +1447,6 @@ int main(int argc, char **argv)
     s7_gc_unprotect_at(sc, gc_loc);
   }
   
-
-  s7_define_function(sc, "test-values", test_values, 0, 0, false, "test values");
-  p = s7_eval_c_string(sc, "(+ 1 (test-values) 2)");
-  if ((!s7_is_integer(p)) ||
-      (s7_integer(p) != 9))
-    {fprintf(stderr, "values: %s\n", s1 = TO_STR(p)); free(s1);}
-
   {                            
     s7_pointer old_port;
     const char *errmsg = NULL;

@@ -742,7 +742,7 @@ int main(int argc, char **argv)
       qsort((void *)qs, names_ctr, sizeof(qdata *), greater_compare);
       for (i = 0; i < names_ctr; i++)
 	{
-	  bool menu_case = false, file_case = false, nonogui_case = false, static_case = false, x_case = true;
+	  bool menu_case, file_case, nonogui_case, static_case, x_case = true, ffitest_case;
 	  int menu_count = 0, file_count = 0, rec_count = 0, x_count = 0;
 	  int nfiles;
 	  nfiles = 0;
@@ -771,10 +771,28 @@ int main(int argc, char **argv)
 		      (strncmp(qs[i]->name, "in_set_", 7) != 0))
 		    fprintf(FD, " (not void but result not used?)");
 		}
+	      if (qs[i]->calls == 0)
+		{
+		  char buf1[512], buf2[512];
+		  snprintf(buf1, 512, "fgrep -q %s xen.h", qs[i]->name);
+		  snprintf(buf2, 512, "fgrep -q %s s7.html", qs[i]->name);
+		  if (system((const char *)buf1) == 0) 
+		    {
+		      if (system((const char *)buf2) == 0) 
+			fprintf(FD, " (used in xen.h and s7.html)");
+		      else fprintf(FD, " (used in xen.h)");
+		    }
+		  else
+		    {
+		      if (system((const char *)buf2) == 0)
+			fprintf(FD, " (used in s7.html)");
+		    }
+		}
 		  
 	      menu_case = (strcmp(qs[i]->hname, "snd-menu.h") != 0);
 	      file_case = (strcmp(qs[i]->hname, "snd-file.h") != 0);
 	      static_case = ((qs[i]->def != NULL) && (qs[i]->calls > 0));
+	      ffitest_case = ((qs[i]->def != NULL) && (qs[i]->calls > 0));
 
 	      menu_count  = 0;
 	      file_count = 0;
@@ -802,6 +820,10 @@ int main(int argc, char **argv)
 		{
 		  if ((counts[qs[i]->i]) && (counts[qs[i]->i][j] > 0))
 		    {
+		      if ((ffitest_case) &&
+			  (strcmp(files[j], "ffitest.c") != 0))
+			ffitest_case = false;
+
 		      if (menu_case)
 			{
 			  if ((strcmp(files[j], "snd-menu.c") != 0) &&
@@ -852,6 +874,16 @@ int main(int argc, char **argv)
 		      fprintf(FD,"\n    %s: %d", files[j], counts[qs[i]->i][j]);
 		      nfiles++;
 		    }
+		}
+
+	      if (ffitest_case)
+		{
+		  char buf1[512], buf2[512];
+		  snprintf(buf1, 512, "fgrep -q %s xen.h", qs[i]->name);
+		  snprintf(buf2, 512, "fgrep -q %s s7.html", qs[i]->name);
+		  if ((system((const char *)buf1) != 0) &&
+		      (system((const char *)buf2) != 0))
+		    fprintf(FD, "\njust ffitest!");
 		}
 
 	      if ((menu_case) && 
