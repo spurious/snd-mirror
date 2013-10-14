@@ -75,7 +75,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 				      "")
 				  "tmp.snd"))
 	 (tmpfil (mus-sound-open-output tmp-name 22050 1 mus-bshort mus-next ""))
-	 (mx (make-mixer 1 1.0))
+	 (mx (make-vector (list 1 1) 1.0 #t))
 	 (envs (make-vector 1))
 	 (inenvs (make-vector 1)))
     (mus-sound-close-output tmpfil 0)

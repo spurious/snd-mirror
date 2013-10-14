@@ -38,7 +38,7 @@
 ;;; View: Files dialog chooses which sound is displayed
 ;;; remove-clicks
 ;;; searching examples (zero+, next-peak, find-pitch)
-;;; file->float-vector and a sort of cue-list, I think, and region-play-list, region-play-sequence
+;;; file->floats and a sort of cue-list, I think, and region-play-list, region-play-sequence
 ;;; explode-sf2 -- turn soundfont file into a bunch of files of the form sample-name.aif
 ;;; open-next-file-in-directory -- middle button click closes current file and opens next
 ;;; chain-dsps
@@ -1748,10 +1748,10 @@ In most cases, this will be slightly offset from the true beginning of the note"
 	 rtn))))
 
 
-;;; -------- file->float-vector and a sort of cue-list, I think
+;;; -------- file->floats and a sort of cue-list, I think
 
-(define (file->float-vector file)
-  "(file->float-vector file) returns a float-vector with file's data"
+(define (file->floats file)
+  "(file->floats file) returns a float-vector with file's data"
   (let* ((len (frames file))
 	 (reader (make-sampler 0 file))
 	 (data (make-float-vector len)))
@@ -1775,7 +1775,7 @@ starting at the cursor in the currently selected channel: (add-notes '((\"oboe.s
 		 (beg (+ start (floor (* (srate snd) offset)))))
 	    (if (and (number? amp)
 		     (not (= amp 1.0)))
-		(mix-float-vector (float-vector-scale! (file->float-vector file) amp) beg snd chn #f "add-notes")
+		(mix-float-vector (float-vector-scale! (file->floats file) amp) beg snd chn #f "add-notes")
 		(mix file beg 0 snd chn #f))))
 	notes))
      (format #f "add-notes '~S" notes))))

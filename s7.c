@@ -30385,10 +30385,8 @@ s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x)
  *   vector-add|subtract|multiply
  *   vector-sum? (dot-product)
  *
- *   TODO: snd-test and doc new stuff
- *         rewrite mus_mix or mus_mix_vectors?
+ *   TODO: snd-test and doc new stuff (including mix args etc)
  *         combine all the float-vector stuff here including the opts
- *         [snd-test.scm expandn.scm clm-ins.scm[expandn and fullmix] extensions.scm[mus-mix] fullmix.scm]
  */
 
 /*

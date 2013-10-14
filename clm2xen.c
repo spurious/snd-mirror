@@ -1475,6 +1475,11 @@ static XEN g_mus_reset(XEN gen)
       return(gen);
     }
 #if HAVE_SCHEME
+  if (s7_is_float_vector(gen))
+    {
+      s7_float_vector_scale(s7, gen, xen_zero);
+      return(gen);
+    }
   if (s7_is_open_environment(gen)) 
     { 
       s7_pointer func; 
@@ -5035,10 +5040,11 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
 
   int i, in_chans, out_chans;
   mus_long_t st, nd;
-  mus_any *s_env = NULL, *mix, *rev_mix = NULL, *ostr, *rstr = NULL;
+  mus_any *s_env = NULL, *mix = NULL, *rev_mix = NULL, *ostr, *rstr = NULL;
   mus_any **mix_envs, **mix_srcs, **mix_rds;
   mus_xen *gn;
   XEN ve;
+  bool need_mx_free = false, need_revmx_free = false;
 
   XEN_ASSERT_TYPE(XEN_VECTOR_P(file), file, 1, S_mus_mix_with_envs, "a vector of readin generators");
   in_chans = XEN_VECTOR_LENGTH(file);
@@ -5049,17 +5055,22 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
   st = XEN_TO_C_INT(beg);
   nd = st + XEN_TO_C_INT(dur);
 
-  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(mx, mus_xen_tag);
-  if (!gn) XEN_ASSERT_TYPE(false, mx, 4, S_mus_mix_with_envs, "a mixer");
-  mix = gn->gen;
-  XEN_ASSERT_TYPE(mus_mixer_p(mix), mx, 4, S_mus_mix_with_envs, "a mixer");
-
-  if (!XEN_FALSE_P(revmx))
+  if (!XEN_VECTOR_P(mx))
     {
-      gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(revmx, mus_xen_tag);
-      if (!gn) XEN_ASSERT_TYPE(false, mx, 5, S_mus_mix_with_envs, "a mixer");
-      rev_mix = gn->gen;
-      XEN_ASSERT_TYPE(mus_mixer_p(rev_mix), revmx, 5, S_mus_mix_with_envs, "a mixer");
+      gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(mx, mus_xen_tag);
+      if (!gn) XEN_ASSERT_TYPE(false, mx, 4, S_mus_mix_with_envs, "a mixer");
+      mix = gn->gen;
+      XEN_ASSERT_TYPE(mus_mixer_p(mix), mx, 4, S_mus_mix_with_envs, "a mixer");
+    }
+  if (!XEN_VECTOR_P(revmx))
+    {
+      if (!XEN_FALSE_P(revmx))
+	{
+	  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(revmx, mus_xen_tag);
+	  if (!gn) XEN_ASSERT_TYPE(false, mx, 5, S_mus_mix_with_envs, "a mixer");
+	  rev_mix = gn->gen;
+	  XEN_ASSERT_TYPE(mus_mixer_p(rev_mix), revmx, 5, S_mus_mix_with_envs, "a mixer");
+	}
     }
 
   if (!XEN_FALSE_P(srcenv))
@@ -5092,6 +5103,33 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
     XEN_ASSERT_TYPE(XEN_VECTOR_P(envs), envs, 6, S_mus_mix_with_envs, "a vector of env generators");
   if (!XEN_FALSE_P(srcs))
     XEN_ASSERT_TYPE(XEN_VECTOR_P(srcs), srcs, 7, S_mus_mix_with_envs, "a vector of src generators");
+
+#if HAVE_SCHEME
+  if (XEN_VECTOR_P(mx))
+    {
+      int j, k, chans;
+      s7_Double *vals;
+      chans = s7_vector_dimensions(mx)[0];
+      vals = s7_float_vector_elements(mx);
+      mix = mus_make_empty_mixer(chans);
+      for (i = 0, k = 0; i < chans; i++)
+	for (j = 0; j < chans; j++, k++)
+	  mus_mixer_set(mix, i, j, (mus_float_t)(vals[k]));
+      need_mx_free = true;
+    }
+  if (XEN_VECTOR_P(revmx))
+    {
+      int j, k, chans;
+      s7_Double *vals;
+      chans = s7_vector_dimensions(revmx)[0];
+      vals = s7_float_vector_elements(revmx);
+      rev_mix = mus_make_empty_mixer(chans);
+      for (i = 0, k = 0; i < chans; i++)
+	for (j = 0; j < chans; j++, k++)
+	  mus_mixer_set(rev_mix, i, j, (mus_float_t)(vals[k]));
+      need_revmx_free = true;
+    }
+#endif
 
   mix_rds = (mus_any **)calloc(in_chans, sizeof(mus_any *));
   mix_srcs = (mus_any **)calloc(in_chans, sizeof(mus_any *));
@@ -5196,6 +5234,9 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
     mus_free(out_frame);
     if (rev_frame) mus_free(rev_frame);
   }
+
+  if (need_mx_free) mus_free(mix);
+  if (need_revmx_free) mus_free(rev_mix);
   
   free(mix_rds);
   free(mix_srcs);
@@ -9174,11 +9215,12 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ost), ost, 3, S_mus_mix, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(olen), olen, 4, S_mus_mix, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ist), ist, 5, S_mus_mix, "an integer");
-  XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(mx)) || (XEN_FALSE_P(mx)) || ((MUS_XEN_P(mx)) && (mus_mixer_p(XEN_TO_MUS_ANY(mx)))), mx, 6, S_mus_mix, "a mixer");
+  XEN_ASSERT_TYPE((XEN_VECTOR_P(mx)) || (XEN_NOT_BOUND_P(mx)) || (XEN_FALSE_P(mx)) || ((MUS_XEN_P(mx)) && (mus_mixer_p(XEN_TO_MUS_ANY(mx)))), mx, 6, S_mus_mix, "a mixer");
   XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(envs)) || (XEN_FALSE_P(envs)) || (XEN_VECTOR_P(envs)), envs, 7, S_mus_mix, "an env gen or vector of envs");
   if (XEN_BOUND_P(ost)) ostart = XEN_TO_C_LONG_LONG(ost);
   if (XEN_BOUND_P(ist)) istart = XEN_TO_C_LONG_LONG(ist);
-  if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) mx1 = (mus_any *)XEN_TO_MUS_ANY(mx);
+  if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) 
+    mx1 = (mus_any *)XEN_TO_MUS_ANY(mx);
   if (XEN_STRING_P(out)) 
     {
       const char *tmp_outf = NULL;
@@ -9284,8 +9326,26 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 	    }
 	}
     }
+
+
   {
     char *outfile = NULL, *infile = NULL;
+#if HAVE_SCHEME
+    bool need_free = false;
+    if (s7_is_float_vector(mx))
+      {
+	int j, k, chans;
+	s7_Double *vals;
+	chans = s7_vector_dimensions(mx)[0];
+	vals = s7_float_vector_elements(mx);
+	mx1 = mus_make_empty_mixer(chans);
+	for (i = 0, k = 0; i < chans; i++)
+	  for (j = 0; j < chans; j++, k++)
+	    mus_mixer_set(mx1, i, j, (mus_float_t)(vals[k]));
+	need_free = true;
+      }
+#endif
+
     if (XEN_STRING_P(out)) outfile = mus_strdup(XEN_TO_C_STRING(out));
     if (XEN_STRING_P(in)) infile = mus_strdup(XEN_TO_C_STRING(in));
 
@@ -9310,6 +9370,9 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
       }
     if (infile) free(infile);
     if (outfile) free(outfile);
+#if HAVE_SCHEME
+    if (need_free) mus_free(mx1);
+#endif
   }
   return(XEN_TRUE);
 }
@@ -9474,7 +9537,7 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
   gn = (mus_xen *)imported_s7_object_value_checked(gp, mus_xen_tag); \
   if (gn) \
     Val = gn->gen;							\
-  else {Val = NULL; XEN_ASSERT_TYPE(false, gp, 1, "gen-lookup", "a generator");} \
+  else {Val = NULL; XEN_ASSERT_TYPE(false, gp, 1, #Type " lookup", "a generator");} \
   } while (0)
 
 #define GET_GENERATOR_CADR(Obj, Type, Val) \
@@ -9485,7 +9548,7 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
   gn = (mus_xen *)imported_s7_object_value_checked(gp, mus_xen_tag); \
   if (gn) \
     Val = gn->gen;							\
-  else {Val = NULL; XEN_ASSERT_TYPE(false, gp, 1, "gen-lookup", "a generator");} \
+  else {Val = NULL; XEN_ASSERT_TYPE(false, gp, 1, #Type " lookup", "a generator");} \
   } while (0)
 
 #define GET_GENERATOR_CADAR(Obj, Type, Val) \
@@ -9496,7 +9559,7 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
   gn = (mus_xen *)imported_s7_object_value_checked(gp, mus_xen_tag); \
   if (gn) \
     Val = gn->gen;							\
-  else {Val = NULL; XEN_ASSERT_TYPE(false, gp, 1, "gen-lookup", "a generator");} \
+  else {Val = NULL; XEN_ASSERT_TYPE(false, gp, 1, #Type " lookup", "a generator");} \
   } while (0)
 
 
@@ -18994,6 +19057,9 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_float_vector_mix,     g_float_vector_mix_w,      3, 0, 0, H_float_vector_mix);
   s7_eval_c_string(s7, "(define make-float-vector->file make-frame->file)");
   s7_eval_c_string(s7, "(define make-file->float-vector make-file->frame)");
+  s7_eval_c_string(s7, "(define file->float-vector? file->frame?)");
+  s7_eval_c_string(s7, "(define float-vector->file? frame->file?)");
+  s7_eval_c_string(s7, "(define continue-float-vector->file continue-frame->file)");
 #endif
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_input_p,          g_input_p_w,               1, 0, 0, H_mus_input_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_output_p,         g_output_p_w,              1, 0, 0, H_mus_output_p);

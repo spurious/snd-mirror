@@ -23,21 +23,26 @@
 	(inloc (floor (* (or inbeg 0.0) (mus-sound-srate in-file)))))
     
     (let ((samps (seconds->samples dur))
-	  (mx (if matrix
-		  (make-mixer (max in-chans out-chans))
-		  (make-scalar-mixer (max in-chans out-chans) 1.0)))
+	  (mx (let ((ochans (max in-chans out-chans)))
+		(if matrix
+		    (make-vector (list ochans ochans) 0.0 #t)
+		    (let ((v (make-vector (list ochans ochans) 0.0 #t)))
+		      (do ((i 0 (+ i 1)))
+			  ((= i ochans))
+			(set! (v i i) 1.0))
+		      v))))
 	  (rev-mx (if (and *reverb* reverb-amount (> reverb-amount 0.0))
-		      (let ((rmx (make-mixer in-chans)))
+		      (let ((rmx (make-vector (list in-chans in-chans) 0.0 #t)))
 			(do ((i 0 (+ i 1)))
 			    ((= i in-chans))
-			  (mixer-set! rmx i 0 reverb-amount)) ; 0->assume 1 chan reverb stream, I think
+			  (set! (rmx i 0) reverb-amount)) ; 0->assume 1 chan reverb stream, I think
 			rmx)
 		      #f))
 	  
 	  (file (if (or (not srate) 
 			(and (number? srate) 
 			     (= srate 1.0)))
-		    (make-file->frame in-file)
+		    (make-file->float-vector in-file)
 		    (let ((vect (make-vector in-chans #f)))
 		      (do ((i 0 (+ i 1)))
 			  ((= i in-chans))
@@ -60,7 +65,7 @@
 		      (let ((outn (list-ref inlist outp)))
 			(if outn
 			    (if (number? outn)
-				(mixer-set! mx inp outp outn)
+				(set! (mx inp outp) outn)
 				(if (or (env? outn)
 					(list? outn))
 				    (begin
@@ -73,7 +78,7 @@
 		(do ((inp 0 (+ inp 1))) ; matrix is a number in this case (a global scaler)
 		    ((= inp in-chans))
 		  (if (< inp out-chans)
-		      (mixer-set! mx inp inp matrix))))))
+		      (set! (mx inp inp) matrix))))))
       
       (if (or (not srate)
 	      (and (number? srate)

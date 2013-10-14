@@ -1,34 +1,34 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [529]
-;;;  test 1: defaults                           [991]
-;;;  test 2: headers                            [1202]
-;;;  test 3: variables                          [1517]
-;;;  test 4: sndlib                             [2082]
-;;;  test 5: simple overall checks              [4441]
-;;;  test 6: float-vectors                      [9204]
-;;;  test 7: colors                             [9498]
-;;;  test 8: clm                                [10017]
-;;;  test 9: mix                                [20970]
-;;;  test 10: marks                             [22759]
-;;;  test 11: dialogs                           [23718]
-;;;  test 12: extensions                        [23889]
-;;;  test 13: menus, edit lists, hooks, etc     [24155]
-;;;  test 14: all together now                  [25529]
-;;;  test 15: chan-local vars                   [26407]
-;;;  test 16: regularized funcs                 [28165]
-;;;  test 17: dialogs and graphics              [31776]
-;;;  test 18: save and restore                  [31887]
-;;;  test 19: transforms                        [33503]
-;;;  test 20: new stuff                         [35618]
-;;;  test 21: optimizer                         [36873]
-;;;  test 22: with-sound                        [37397]
-;;;  test 23: X/Xt/Xm                           [40344]
-;;;  test 24: GL                                [44026]
-;;;  test 25: errors                            [44150]
-;;;  test 26: s7                                [45684]
-;;;  test all done                              [45750]
-;;;  test the end                               [45933]
+;;;  test 0: constants                          [547]
+;;;  test 1: defaults                           [1009]
+;;;  test 2: headers                            [1220]
+;;;  test 3: variables                          [1535]
+;;;  test 4: sndlib                             [2100]
+;;;  test 5: simple overall checks              [4459]
+;;;  test 6: float-vectors                      [9222]
+;;;  test 7: colors                             [9516]
+;;;  test 8: clm                                [10035]
+;;;  test 9: mix                                [20993]
+;;;  test 10: marks                             [22782]
+;;;  test 11: dialogs                           [23741]
+;;;  test 12: extensions                        [23912]
+;;;  test 13: menus, edit lists, hooks, etc     [24178]
+;;;  test 14: all together now                  [25552]
+;;;  test 15: chan-local vars                   [26430]
+;;;  test 16: regularized funcs                 [28188]
+;;;  test 17: dialogs and graphics              [31799]
+;;;  test 18: save and restore                  [31910]
+;;;  test 19: transforms                        [33532]
+;;;  test 20: new stuff                         [35647]
+;;;  test 21: optimizer                         [36853]
+;;;  test 22: with-sound                        [37377]
+;;;  test 23: X/Xt/Xm                           [40322]
+;;;  test 24: GL                                [44004]
+;;;  test 25: errors                            [44128]
+;;;  test 26: s7                                [45662]
+;;;  test all done                              [45728]
+;;;  test the end                               [45911]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -484,6 +484,24 @@
 	    (do ((i 0 (+ i 1)))
 		((= i (channels snd)))
 	      (scale-channel (/ norm mx) beg dur snd i))))))
+
+(define (file->floats file)
+  (let* ((len (frames file))
+	 (reader (make-sampler 0 file))
+	 (data (make-float-vector len)))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (set! (data i) (next-sample reader)))
+    (free-sampler reader)
+    data))
+
+(define* (floats->file v file (srate 22050) (comment ""))
+  (if (float-vector? v)
+      (let ((fd (mus-sound-open-output file srate 1 #f mus-riff comment)))
+	(mus-sound-write fd 0 (- (length v) 1) 1 (make-shared-vector v (list 1 (length v))))
+	(mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length v)))
+	file)
+      (error 'wrong-type-arg "file->floats: ~A" v)))
 
 
 (if (and (> (length (script-args)) 0)
@@ -1860,7 +1878,7 @@
 		       'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted 'color-scale
 		       'color? 'colormap 'colormap-name 'colormap-ref 'colormap-size
 		       'colormap? 'comb 'comb? 'combined-data-color 'comment 'connes-window
-		       'continue-frame->file 'continue-sample->file 'contrast-control 'contrast-control-amp 'contrast-control-bounds
+		       'continue-float-vector->file 'continue-sample->file 'contrast-control 'contrast-control-amp 'contrast-control-bounds
 		       'contrast-control? 'contrast-enhancement 'controls->channel 'convolution 'convolve
 		       'convolve-files 'convolve-selection-with 'convolve-with 'convolve? 'copy-context
 		       'copy-sampler 'current-edit-position
@@ -1888,7 +1906,7 @@
 		       'expand-control 'expand-control-bounds 'expand-control-hop 'expand-control-jitter 'expand-control-length
 		       'expand-control-ramp 'expand-control? 'exponential-window 'fft 'fft-log-frequency
 		       'fft-log-magnitude 'fft-window 'fft-window-alpha 'fft-window-beta 'fft-with-phases 'file->array
-		       'file->frame 'file->frame? 'file->sample 'file->sample? 'file->string
+		       'file->float-vector 'file->float-vector? 'file->sample 'file->sample? 'file->string
 		       'file-name 'file-write-date 'fill-polygon 'fill-rectangle 'filter
 		       'filtered-comb 'filtered-comb?
 		       'filter-channel 'filter-control-coeffs 'filter-control-envelope 'filter-control-in-dB 'filter-control-in-hz
@@ -1921,14 +1939,14 @@
 		       'locsig-ref 'locsig-reverb-ref 'locsig-reverb-set! 'locsig-set! 'locsig-type
 		       'locsig? 'log-freq-start 'main-menu 'main-widgets 'make-all-pass
 		       'make-asymmetric-fm 'make-moving-average 'make-moving-max 'make-bezier 'make-color 'make-comb 'make-filtered-comb
-		       'make-convolve 'make-delay 'make-env 'make-fft-window 'make-file->frame
+		       'make-convolve 'make-delay 'make-env 'make-fft-window 'make-file->float-vector
 		       'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter 'make-formant 'make-firmant 'make-formant-bank
 		       'make-granulate 'make-graph-data 'make-iir-filter
 		       'make-locsig 'make-mix-sampler 'make-move-sound 'make-notch 'make-one-pole 'make-one-pole-all-pass
 		       'make-one-zero 'make-oscil 'make-phase-vocoder 'make-player 'make-polyshape 'make-polywave
 		       'make-pulse-train 'make-rand 'make-rand-interp 'make-readin
 		       'make-region 'make-region-sampler 'make-sample->file 'make-sampler 'make-sawtooth-wave
-		       'make-scalar-mixer 'make-nrxysin 'make-nrxycos 'make-rxyk!cos 'make-rxyk!sin 
+		       'make-nrxysin 'make-nrxycos 'make-rxyk!cos 'make-rxyk!sin 
 		       'make-snd->sample 'make-square-wave
 		       'make-src 'make-ssb-am 'make-ncos 'make-nsin 'make-table-lookup
 		       'make-triangle-wave 'make-two-pole 'make-two-zero
@@ -15913,10 +15931,10 @@ EDITS: 2
       (let ((old-clip (clipping)))
 	(set! (clipping) #t)
 	(save-sound-as "tst.snd")
-	(let ((fvals (file->float-vector "tst.snd")) ; in frame.scm
+	(let ((fvals (file->floats "tst.snd")) ; in frame.scm
 	      (vals (channel->float-vector)))
 	  (if (not (vequal vals fvals))
-	      (snd-display #__line__ ";file->float-vector: ~A ~A" vals fvals)))
+	      (snd-display #__line__ ";file->floats: ~A ~A" vals fvals)))
 	(mus-sound-forget "tst.snd")
 	(delete-file "tst.snd")
 	(set! (clipping) old-clip))
@@ -16933,19 +16951,20 @@ EDITS: 2
       (if (not (= (mus-location gen) 1499)) (snd-display #__line__ ";snd->sample location (2): ~A" (mus-location gen)))
       (close-sound ind))
     
-    (let ((gen (make-file->frame "oboe.snd"))
-	  (v0 (make-float-vector 10)))
+    (let ((gen (make-file->float-vector "oboe.snd"))
+	  (v0 (make-float-vector 10))
+	  (g1 (float-vector 0.0)))
       (print-and-check gen 
-		       "file->frame"
-		       "file->frame oboe.snd")
+		       "file->float-vector"
+		       "file->float-vector oboe.snd")
       (if (not (mus-input? gen)) (snd-display #__line__ ";~A not input?" gen))
-      (if (not (= (mus-length gen) 50828)) (snd-display #__line__ ";file->frame length: ~A?" (mus-length gen)))
-      (if (not (string=? (mus-file-name gen) "oboe.snd")) (snd-display #__line__ ";file->frame mus-file-name: ~A" (mus-file-name gen)))
+      (if (not (= (mus-length gen) 50828)) (snd-display #__line__ ";file->float-vector length: ~A?" (mus-length gen)))
+      (if (not (string=? (mus-file-name gen) "oboe.snd")) (snd-display #__line__ ";file->float-vector mus-file-name: ~A" (mus-file-name gen)))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
-	(float-vector-set! v0 i ((file->frame gen (+ 1490 i)) 0)))
-      (if (not (file->frame? gen)) (snd-display #__line__ ";~A not file->frame?" gen))
-      (if (or (fneq (v0 1) -0.009) (fneq (v0 7) .029)) (snd-display #__line__ ";file->frame output: ~A" v0)))
+	(float-vector-set! v0 i ((file->float-vector gen (+ 1490 i) g1) 0)))
+      (if (not (file->float-vector? gen)) (snd-display #__line__ ";~A not file->float-vector?" gen))
+      (if (or (fneq (v0 1) -0.009) (fneq (v0 7) .029)) (snd-display #__line__ ";file->float-vector output: ~A" v0)))
     
     (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
     (if (file-exists? "fmv1.snd") (delete-file "fmv1.snd"))
@@ -17261,60 +17280,61 @@ EDITS: 2
       (delete-file "fmv.snd")
       (mus-sound-forget "fmv.snd"))
     
-    (let ((sf (make-frame->file "fmv.snd" 2 mus-lfloat mus-riff "this is a comment")))
+    (let ((sf (make-float-vector->file "fmv.snd" 2 mus-lfloat mus-riff "this is a comment")))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
-	(frame->file sf i (make-frame 2 (* i .1) (* i .01))))
+	(float-vector->file sf i (float-vector (* i .1) (* i .01))))
       (mus-close sf)
       (if (not (= (mus-sound-chans "fmv.snd") 2)) 
-	  (snd-display #__line__ ";frame->file chans: ~A" (mus-sound-chans "fmv.snd")))
+	  (snd-display #__line__ ";float-vector->file chans: ~A" (mus-sound-chans "fmv.snd")))
       (if (not (= (mus-sound-frames "fmv.snd") 10)) 
-	  (snd-display #__line__ ";frame->file frames: ~A" (mus-sound-frames "fmv.snd")))
+	  (snd-display #__line__ ";float-vector->file frames: ~A" (mus-sound-frames "fmv.snd")))
       (if (not (= (mus-sound-samples "fmv.snd") 20)) 
-	  (snd-display #__line__ ";frame->file samples: ~A" (mus-sound-samples "fmv.snd")))
+	  (snd-display #__line__ ";float-vector->file samples: ~A" (mus-sound-samples "fmv.snd")))
       (if (not (= (mus-sound-header-type "fmv.snd") mus-riff)) 
-	  (snd-display #__line__ ";frame->file type: ~A" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
+	  (snd-display #__line__ ";float-vector->file type: ~A" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
       (if (not (= (mus-sound-data-format "fmv.snd") mus-lfloat)) 
-	  (snd-display #__line__ ";frame->file format: ~A" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
+	  (snd-display #__line__ ";float-vector->file format: ~A" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
       (if (not (string=? (mus-sound-comment "fmv.snd") "this is a comment"))
-	  (snd-display #__line__ ";frame->file comment: ~A" (mus-sound-comment "fmv.snd")))
-      (let ((rd (make-file->frame "fmv.snd"))
+	  (snd-display #__line__ ";float-vector->file comment: ~A" (mus-sound-comment "fmv.snd")))
+      (let ((rd (make-file->float-vector "fmv.snd"))
+	    (f0 (float-vector 0.0 0.0))
 	    (happy #t))
 	(do ((i 0 (+ i 1)))
 	    ((or (not happy) (= i 10)))
-	  (let ((f0 (file->frame rd i)))
-	    (if (or (not (= (mus-length f0) 2))
-		    (fneq (f0 0) (* i .1))
-		    (fneq (f0 1) (* i .01)))
-		(begin
-		  (snd-display #__line__ ";frame->file->frame at ~A: ~A" i f0)
-		  (set! happy #f)))))
+	  (file->float-vector rd i f0)
+	  (if (or (not (= (mus-length f0) 2))
+		  (fneq (f0 0) (* i .1))
+		  (fneq (f0 1) (* i .01)))
+	      (begin
+		(snd-display #__line__ ";float-vector->file->float-vector at ~A: ~A" i f0)
+		(set! happy #f))))
 	(mus-close rd))
-      (set! sf (continue-frame->file "fmv.snd"))
+      (set! sf (continue-float-vector->file "fmv.snd"))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
-	(frame->file sf (+ i 5) (make-frame 2 (* i -.02) (* i -.01))))
+	(float-vector->file sf (+ i 5) (float-vector (* i -.02) (* i -.01))))
       (mus-close sf)
       (mus-sound-forget "fmv.snd")
       (if (not (= (mus-sound-chans "fmv.snd") 2)) 
-	  (snd-display #__line__ ";continue-frame->file chans: ~A" (mus-sound-chans "fmv.snd")))
+	  (snd-display #__line__ ";continue-float-vector->file chans: ~A" (mus-sound-chans "fmv.snd")))
       (if (not (= (mus-sound-frames "fmv.snd") 15)) 
-	  (snd-display #__line__ ";continue-frame->file frames: ~A" (mus-sound-frames "fmv.snd")))
+	  (snd-display #__line__ ";continue-float-vector->file frames: ~A" (mus-sound-frames "fmv.snd")))
       (if (not (= (mus-sound-samples "fmv.snd") 30)) 
-	  (snd-display #__line__ ";continue-frame->file samples: ~A" (mus-sound-samples "fmv.snd")))
+	  (snd-display #__line__ ";continue-float-vector->file samples: ~A" (mus-sound-samples "fmv.snd")))
       (if (not (= (mus-sound-header-type "fmv.snd") mus-riff)) 
-	  (snd-display #__line__ ";continue-frame->file type: ~A" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
+	  (snd-display #__line__ ";continue-float-vector->file type: ~A" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
       (if (not (= (mus-sound-data-format "fmv.snd") mus-lfloat)) 
-	  (snd-display #__line__ ";continue-frame->file format: ~A" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
+	  (snd-display #__line__ ";continue-float-vector->file format: ~A" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
       (if (not (string=? (mus-sound-comment "fmv.snd") "this is a comment"))
-	  (snd-display #__line__ ";continue-frame->file comment: ~A" (mus-sound-comment "fmv.snd")))
+	  (snd-display #__line__ ";continue-float-vector->file comment: ~A" (mus-sound-comment "fmv.snd")))
       (let ((ind (open-sound "fmv.snd")))
 	(let ((c0 (channel->float-vector 0 15 ind 0))
 	      (c1 (channel->float-vector 0 15 ind 1)))
 	  (if (not (vequal c0 (float-vector 0.0 0.1 0.2 0.3 0.4 0.5 0.58 0.66 0.74 0.82 -0.1 -0.12 -0.14 -0.16 -0.18)))
-	      (snd-display #__line__ ";continue-frame->file (0): ~A" c0))
+	      (snd-display #__line__ ";continue-float-vector->file (0): ~A" c0))
 	  (if (not (vequal c1 (float-vector 0.0 0.01 0.02 0.03 0.04 0.05 0.05 0.05 0.05 0.05 -0.05 -0.06 -0.07 -0.08 -0.09)))
-	      (snd-display #__line__ ";continue-frame->file (1): ~A" c1)))
+	      (snd-display #__line__ ";continue-float-vector->file (1): ~A" c1)))
 	(close-sound ind))
       (delete-file "fmv.snd")
       (mus-sound-forget "fmv.snd"))
@@ -17810,8 +17830,8 @@ EDITS: 2
 	 (close-sound ind)))
      (list mus-caff mus-aifc mus-next mus-riff mus-rf64))
     
-    (let* ((gen (make-frame->file "fmv4.snd" 2 mus-bshort mus-next))
-	   (rev (make-frame->file "fmv4.reverb" 1 mus-bshort mus-next))
+    (let* ((gen (make-float-vector->file "fmv4.snd" 2 mus-bshort mus-next))
+	   (rev (make-float-vector->file "fmv4.reverb" 1 mus-bshort mus-next))
 	   (lc (make-locsig 60.0 :reverb .1 :channels 2 :output gen :revout rev)))
       (do ((i 0 (+ i 1)))
 	  ((= i 100))
@@ -17830,8 +17850,8 @@ EDITS: 2
 	(if (fneq (v2 0) .1) (snd-display #__line__ ";locsig reverb: ~A?" v2))
 	(if (fneq (* 2 (v0 0)) (v1 0)) (snd-display #__line__ ";locsig direct: ~A ~A?" (v0 0) (v1 0)))))
     
-    (let* ((gen (make-frame->file "fmv4.snd" 4 mus-bshort mus-next))
-	   (rev (make-frame->file "fmv4.reverb" 4 mus-bshort mus-next))
+    (let* ((gen (make-float-vector->file "fmv4.snd" 4 mus-bshort mus-next))
+	   (rev (make-float-vector->file "fmv4.reverb" 4 mus-bshort mus-next))
 	   (lc (make-locsig 60.0 :reverb .1 :channels 4 :distance 4.0 :output gen :revout rev)))
       (print-and-check lc
 		       "locsig"
@@ -17958,7 +17978,7 @@ EDITS: 2
        
        (if (file-exists? "test.reverb") (delete-file "test.reverb"))
        (let ((revfile (if (> rev-chans 0)
-			  (make-frame->file "test.reverb" rev-chans mus-bshort mus-next)
+			  (make-float-vector->file "test.reverb" rev-chans mus-bshort mus-next)
 			  #f))
 	     (happy #t))
 	 (for-each
@@ -18142,9 +18162,9 @@ EDITS: 2
 	  (snd-display #__line__ ";locsig(4)->sd chan 3 (0.5): ~A" (outp 3))))
 
     (set! (mus-array-print-length) 8)
-    (let* ((outf1 (make-frame->file "fmv.snd" 1 mus-bshort mus-next))
-	   (outf4 (make-frame->file "fmv1.snd" 4 mus-bshort mus-next))
-	   (revf (make-frame->file "fmv2.snd" 1 mus-bshort mus-next))
+    (let* ((outf1 (make-float-vector->file "fmv.snd" 1 mus-bshort mus-next))
+	   (outf4 (make-float-vector->file "fmv1.snd" 4 mus-bshort mus-next))
+	   (revf (make-float-vector->file "fmv2.snd" 1 mus-bshort mus-next))
 	   (start 0)
 	   (end 1000)
 	   (dur 1.0)
@@ -19468,11 +19488,16 @@ EDITS: 2
 	  (make-mix-input (lambda (name i)
 			    (if (or (= i 0) (= i 2))
 				name
-				(make-file->frame name)))))
+				(make-file->float-vector name)))))
       (define (mus-mix-1 outf . args)
 	(apply mus-mix outf args)	
 	(if (not (string? outf))
 	    (mus-close outf)))
+
+      (define (fv2 . args)
+	(make-shared-vector 
+	 (apply float-vector (cdr args))
+	 (list (car args) (car args))))
       
       (do ((k 0 (+ k 1)))
 	  ((= k 4))
@@ -19499,7 +19524,7 @@ EDITS: 2
 		  (begin
 		    (snd-display #__line__ ";~D mus-mix(1->1): ~A?" k v0)
 		    (set! happy #f)))))
-	  (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 3 9 0 (make-mixer 2 0.3 0.0 0.7 0.0))
+	  (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 3 9 0 (fv2 2 0.3 0.0 0.7 0.0))
 	  (file->array "fmv.snd" 0 0 12 v0)
 	  (if (or (fneq (v0 0) .1) (fneq (v0 3) .33) (fneq (v0 9) .19)) (snd-display #__line__ ";~D mus-mix(2->1): ~A?" k v0))
 	  (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv3.snd" k))
@@ -19510,10 +19535,10 @@ EDITS: 2
 		(vf1 (make-vector 1)))
 	    (set! (vf 0) vf1)
 	    (set! (vf1 0) e0)
-	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv1.snd" k) 0 12 0 (make-mixer 1 1.0) vf)
+	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv1.snd" k) 0 12 0 (fv2 1 1.0) vf)
 	    (file->array "fmv.snd" 0 0 12 v0)
 	    (if (or (fneq (v0 0) .4) (fneq (v0 3) .360) (fneq (v0 9) .28)) (snd-display #__line__ ";~D mus-mix(env): ~A?" k v0))
-	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf)) 
+	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 0 12 0 (fv2 2 1.0 1.0 1.0 1.0) vf)) 
 	  ;; clm2xen should protect us here
 	  (let ((vf (make-vector 2))
 		(vf1 (make-vector 2))
@@ -19522,11 +19547,11 @@ EDITS: 2
 	    (set! (vf 1) vf2)
 	    (set! (vf1 0) (make-env '(0 0 1 1) :length 10))
 	    (set! (vf2 1) (make-env '(0 0 1 1) :length 10))
-	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf)
+	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 0 12 0 (fv2 2 1.0 1.0 1.0 1.0) vf)
 	    (let ((tag (catch #t
 			 (lambda ()
 			   (set! (vf 0) (make-oscil))
-			   (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf))
+			   (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 0 12 0 (fv2 2 1.0 1.0 1.0 1.0) vf))
 			 (lambda args (car args)))))
 	      (if (not (eq? tag 'bad-type))
 		  (snd-display #__line__ ";~D mix w oscil-vect: ~A" k tag)))
@@ -19536,7 +19561,7 @@ EDITS: 2
 			 (lambda ()
 			   (set! (vf1 0) (make-oscil))
 			   (set! (vf2 1) 0+i)
-			   (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf))
+			   (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 0 12 0 (fv2 2 1.0 1.0 1.0 1.0) vf))
 			 (lambda args (car args)))))
 	      (if (not (eq? tag 'bad-type))
 		  (snd-display #__line__ ";~D mix w oscil-env: ~A" k tag))))
@@ -19546,7 +19571,7 @@ EDITS: 2
 	  (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv1.snd" k))
 	  (file->array "fmv.snd" 0 0 3 v0) ; chan 0 start 0 len 3
 	  (if (or (fneq (v0 0) .1) (fneq (v0 2) .18)) (snd-display #__line__ ";~D mus-mix(1->4): ~A?" k v0))
-	  (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k)  0 3 0 (make-mixer 2 0.3 0.0 0.7 0.0))
+	  (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k)  0 3 0 (fv2 2 0.3 0.0 0.7 0.0))
 	  (file->array "fmv.snd" 0 0 3 v0)
 	  (if (or (fneq (v0 0) .3) (fneq (v0 2) .38)) (snd-display #__line__ ";~D mus-mix(2->4): ~A?" k v0))
 	  (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv3.snd" k) 0 2 0)
@@ -19558,14 +19583,14 @@ EDITS: 2
 	      (len (mus-sound-frames "oboe.snd")))
 	  (array->file "fmv.snd" v0 12 22050 1)
 	  (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "oboe.snd" k))
-	  (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "oboe.snd" k) 0 len 0 (make-mixer 1 0.5))
+	  (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "oboe.snd" k) 0 len 0 (fv2 1 0.5))
 	  (let ((egen (make-vector 1))
 		(outv (make-vector 1)))
 	    (set! (outv 0) egen)
 	    (set! (egen 0) (make-env :envelope '(0 0 1 1) :length len))
 	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "oboe.snd" k) 0 len 0 #f outv)
 	    (set! (egen 0) (make-env :envelope '(0 1 1 0) :length len))
-	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "oboe.snd" k) 0 len 0 (make-mixer 1 1.0) outv))
+	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "oboe.snd" k) 0 len 0 (fv2 1 1.0) outv))
 	  (let ((ind-oboe (open-sound "oboe.snd"))
 		(ind-mix (open-sound "fmv.snd")))
 	    (if (not (vequal (channel->float-vector 1000 10 ind-oboe)
@@ -19582,7 +19607,7 @@ EDITS: 2
 	    (if (not (= (mus-sound-chans "fmv.snd") 2))
 		(snd-display #__line__ ";~D array->file chans? ~A" k (mus-sound-chans "fmv.snd")))
 	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "2.snd" k))
-	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "2.snd" k) 0 len 0 (make-mixer 2 0.5 0.0 0.0 0.5))
+	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "2.snd" k) 0 len 0 (fv2 2 0.5 0.0 0.0 0.5))
 	    (let ((egen0 (make-vector 2))
 		  (egen1 (make-vector 2))
 		  (outv (make-vector 2)))
@@ -19979,8 +20004,8 @@ EDITS: 2
 		       make-comb (lambda () (make-convolve :filter (float-vector 0 1 2))) make-delay (lambda () (make-env '(0 1 1 0) :length 10))
 		       (lambda () (make-filter :xcoeffs (float-vector 0 1 2))) (lambda () (make-fir-filter :xcoeffs (float-vector 0 1 2))) 
 		       (lambda () (make-filtered-comb :filter (make-one-zero .5 .5)))
-		       make-formant (lambda () (make-frame 3)) make-granulate
-		       (lambda () (make-iir-filter :xcoeffs (float-vector 0 1 2))) make-locsig (lambda () (make-mixer 3 3)) 
+		       make-formant make-granulate
+		       (lambda () (make-iir-filter :xcoeffs (float-vector 0 1 2))) make-locsig 
 		       make-notch make-one-pole (lambda () (make-one-pole-all-pass 1 .5)) make-one-zero make-oscil 
 		       make-pulse-train make-rand make-rand-interp make-sawtooth-wave
 		       make-square-wave make-src make-table-lookup make-triangle-wave
@@ -19989,32 +20014,32 @@ EDITS: 2
 		       (lambda () (make-filter :xcoeffs (float-vector 1 2 3) :ycoeffs (float-vector 0 1 2)))))
 	  (gen-procs (list all-pass asymmetric-fm moving-average moving-max
 			   comb convolve delay env 
-			   filter fir-filter filtered-comb formant (lambda (gen ind) (gen ind)) granulate
-			   iir-filter (lambda (gen a) (locsig gen 0 a)) (lambda (gen a) (gen a 0)) notch one-pole one-pole-all-pass one-zero oscil 
+			   filter fir-filter filtered-comb formant granulate
+			   iir-filter (lambda (gen a) (locsig gen 0 a)) notch one-pole one-pole-all-pass one-zero oscil 
 			   pulse-train rand rand-interp sawtooth-wave
 			   square-wave (lambda (gen a) (src gen 0.0 a)) table-lookup triangle-wave
 			   two-pole two-zero wave-train polyshape phase-vocoder ssb-am
 			   filter filter))
 	  (ques-procs (list all-pass? asymmetric-fm? moving-average? moving-max?
 			    comb? convolve? delay? env? 
-			    filter? fir-filter? filtered-comb? formant? frame? granulate?
-			    iir-filter? locsig? mixer? notch? one-pole? one-pole-all-pass? one-zero? oscil? 
+			    filter? fir-filter? filtered-comb? formant? granulate?
+			    iir-filter? locsig? notch? one-pole? one-pole-all-pass? one-zero? oscil? 
 			    pulse-train? rand? rand-interp? sawtooth-wave?
 			    square-wave? src? table-lookup? triangle-wave?
 			    two-pole? two-zero? wave-train? polyshape? phase-vocoder? ssb-am?
 			    filter? filter?))
 	  (func-names (list 'all-pass 'asymmetric-fm 'moving-average 'moving-max
 			    'comb 'convolve 'delay 'env 
-			    'filter-x 'fir-filter 'filtered-comb 'formant 'frame 'granulate
-			    'iir-filter 'locsig 'mixer 'notch 'one-pole 'one-pole-all-pass 'one-zero 'oscil
+			    'filter-x 'fir-filter 'filtered-comb 'formant 'granulate
+			    'iir-filter 'locsig 'notch 'one-pole 'one-pole-all-pass 'one-zero 'oscil
 			    'pulse-train 'rand 'rand-interp 'sawtooth-wave
 			    'square-wave 'src 'table-lookup 'triangle-wave
 			    'two-pole 'two-zero 'wave-train 'polyshape 'phase-vocoder 'ssb-am
 			    'filter-y 'filter-xy))
 	  (gen-args (list 0.0 0.0 1.0 1.0
 			  0.0 (lambda (dir) 0.0) 0.0 #f
-			  0.0 0.0 0.0 0.0 0 (lambda (dir) 0.0)
-			  0.0 0.0 0 0.0 0.0 0.0 0.0 0.0
+			  0.0 0.0 0.0 0.0 (lambda (dir) 0.0)
+			  0.0 0.0 0.0 0.0 0.0 0.0 0.0
 			  0.0 0.0 0.0 0.0
 			  0.0 (lambda (dir) 0.0) 0.0 0.0
 			  0.0 0.0 0.0 0.0 (lambda (dir) 0.0) 0.0
@@ -23355,7 +23380,7 @@ EDITS: 2
 	      (if (not (null? current-marks))
 		  (let ((id (current-marks (random (- (length current-marks) 1)))))
 		    (if (not (equal? id (find-mark (mark-sample id)))) 
-			(snd-display #__line__ ";two marks at ~A? ~A" (mark-sample id) (map mark-sample current-marks)))
+			(snd-display #__line__ ";~A: two marks at ~A? ~A" i (mark-sample id) (map mark-sample current-marks)))
 		    (if (find-mark "not-a-name") (snd-display #__line__ ";find-bogus-mark: ~A" (find-mark "not-a-name")))))
 	      
 	      (case (random 15)
@@ -23881,8 +23906,11 @@ EDITS: 2
 		    (snd-display #__line__ ";vf selected files set: ~A" (view-files-selected-files dialog)))
 		(hide-widget dialog)
 		)))
-	
+	(dismiss-all-dialogs)
 	)))
+
+
+
 
 ;;; ---------------- test 12: extensions ----------------
 
@@ -31879,7 +31907,9 @@ EDITS: 1
 	      (snd-display #__line__ ";set channel-envelope: ~A?" (channel-envelope nind 0)))
 	  (close-sound nind)
 	  (stop-enveloping))
-	)))
+	))
+  (reset-all-hooks)
+  )
 
 
 ;;; ---------------- test 18: save and restore ----------------
@@ -31891,6 +31921,12 @@ EDITS: 1
 
 (define* (make-v-mix snd chn)
   (mix-float-vector (float-vector .1 .2 .3) 100 snd chn #t "mix-float-vector (float-vector .1 .2 .3)"))
+
+(define* (insert-float-vector v (beg 0) dur snd chn edpos)
+  (if (not (float-vector? v))
+      (error 'wrong-type-arg "insert-float-vector: ~A" v)
+      (let ((len (or dur (length v))))
+	(insert-samples beg len v snd chn edpos #f (format #f "insert-float-vector ~A ~A ~A" (float-vector->string v) beg dur)))))
 
 (define (snd_test_18)
   
@@ -35621,7 +35657,6 @@ EDITS: 1
 (if (not (provided? 'snd-clean.scm)) (load "clean.scm"))
 (if (not (provided? 'snd-snddiff.scm)) (load "snddiff.scm"))
 
-
 (define (snd_test_20)
   
   (define* (add-comment sample comment snd1 chn1)
@@ -36636,29 +36671,29 @@ EDITS: 1
 	(close-sound ind))
       
       (let ((ind1 (open-sound "1a.snd"))
-	    (data1 (file->float-vector "1a.snd"))
+	    (data1 (file->floats "1a.snd"))
 	    (ind2 (open-sound "2a.snd"))
-	    (data2 (file->float-vector "2a.snd")))
+	    (data2 (file->floats "2a.snd")))
 	(if (not (equal? data1 (channel->float-vector 0 #f ind1 0)))
-	    (snd-display #__line__ ";file->float-vector 1a.snd"))
+	    (snd-display #__line__ ";file->floats 1a.snd"))
 	(if (not (equal? data2 (channel->float-vector 0 #f ind2 0)))
-	    (snd-display #__line__ ";file->float-vector 2a.snd"))
-	(float-vector->file data1 "tmp.snd")
+	    (snd-display #__line__ ";file->floats 2a.snd"))
+	(floats->file data1 "tmp.snd")
 	(let ((ind3 (open-sound "tmp.snd")))
 	  (if (not (equal? data1 (channel->float-vector 0 #f ind3 0)))
-	      (snd-display #__line__ ";float-vector->file 1a"))
+	      (snd-display #__line__ ";floats->file 1a"))
 	  (close-sound ind3))
 	(mus-sound-forget "tmp.snd")
-	(float-vector->file data2 "tmp.snd" 44100 "this is a comment")
+	(floats->file data2 "tmp.snd" 44100 "this is a comment")
 	(let ((ind3 (open-sound "tmp.snd")))
 	  (if (not (string=? (comment ind3) "this is a comment"))
-	      (snd-display #__line__ ";float-vector->file comment: ~A" (comment ind3)))
+	      (snd-display #__line__ ";floats->file comment: ~A" (comment ind3)))
 	  (if (not (= (srate ind3) 44100))
-	      (snd-display #__line__ ";float-vector->file srate: ~A" (srate ind3)))
+	      (snd-display #__line__ ";floats->file srate: ~A" (srate ind3)))
 	  (close-sound ind3))
 	(mus-sound-forget "tmp.snd")
-	(let ((tag (catch #t (lambda () (float-vector->file 32 "tmp.snd")) (lambda args (car args)))))
-	  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";float-vector->file bad arg: ~A" tag))))
+	(let ((tag (catch #t (lambda () (floats->file 32 "tmp.snd")) (lambda args (car args)))))
+	  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";floats->file bad arg: ~A" tag))))
       
       (for-each close-sound (sounds))
 
@@ -36678,9 +36713,6 @@ EDITS: 1
 	(let ((vals (channel->float-vector 0 #f ind 0)))
 	  (if (not (vequal vals (float-vector 1.5 1 1 .1 .1 .1 .1 .1 1 1 1 1 1 1 1 1)))
 	      (snd-display #__line__ ";insert-float-vector 1 vals: ~A" vals)))
-	
-	(let ((tag (catch #t (lambda () (insert-frame 32)) (lambda args (car args)))))
-	  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";insert-frame bad arg: ~A" tag)))
 	(close-sound ind))
       
       (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 4 "insert-* tests" 5)))
@@ -36721,14 +36753,6 @@ EDITS: 1
 	(map-channel (lambda (y) 0.7) 0 5 ind 3)
 	
 	(close-sound ind))
-
-      (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "mix-frame tests" 5)))
-	(map-channel (lambda (y) 1.0) 0 5 ind 0)
-	
-	(let ((tag (catch #t (lambda () (mix-frame 32)) (lambda args (car args)))))
-	  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";mix-frame bad arg: ~A" tag)))
-	
-	(close-sound ind))
       
       (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 4 "mix-* tests" 5)))
 	(map-channel (lambda (y) 0.4) 0 5 ind 0)
@@ -36742,43 +36766,6 @@ EDITS: 1
 	(map-channel (lambda (y) 0.6) 0 5 ind 2)
 	(map-channel (lambda (y) 0.7) 0 5 ind 3)
 	
-	(close-sound ind))
-      
-      (let ((ind (open-sound "oboe.snd")))
-	(let ((val (scan-sound 
-		    (lambda (fr)
-		      (> (fr 0) .1)))))
-	  (if (not (equal? val (list #t 4423)))
-	      (snd-display #__line__ ";scan-sound oboe: ~A" val)))
-	
-	(let ((mx (maxamp)))
-	  (map-sound
-	   (lambda (fr)
-	     (frame* fr 2.0)))
-	  (if (fneq (maxamp) (* 2 mx)) (snd-display #__line__ ";map-sound max: ~A ~A" mx (maxamp)))
-	  (if (not (= (edit-position ind 0) 1)) (snd-display #__line__ ";map-sound edpos: ~A" (edit-position ind 0))))
-	(close-sound ind))
-      
-;      (mus-sound-forget "4.aiff")
-      (let ((ind (open-sound "4.aiff")))
-	(if (not (= (chans ind) 4)) (snd-display #__line__ ";chans 4.aiff: ~A" (chans ind)))
-	(let ((val (scan-sound 
-		    (lambda (fr)
-		      (> (fr 3) .1)))))
-	  (if (not (equal? val (list #t 21244)))
-	      (snd-display #__line__ ";4 scan-sound: ~A" val)))
-	
-	(let ((mx (maxamp ind #t)))
-	  (map-sound
-	   (lambda (fr)
-	     (frame* fr 2.0))
-	   800000 #f ind)
-	  (do ((chn 0 (+ chn 1)))
-	      ((= chn 4))
-	    (if (fneq (maxamp ind chn) (* 2 (mx chn)))
-		(snd-display #__line__ ";4:~D map-sound max: ~A ~A" chn mx (maxamp ind chn)))
-	    (if (not (= (edit-position ind chn) 1)) 
-		(snd-display #__line__ ";4:~D map-sound edpos: ~A" chn (edit-position ind chn)))))
 	(close-sound ind))
       
       ;; tests from clean.scm
@@ -37750,6 +37737,8 @@ EDITS: 1
   
   (do ((clmtest 0 (+ 1 clmtest))) ((= clmtest tests)) 
     (log-mem clmtest)
+
+;    (set! *clm-notehook* (lambda args (display args) (newline)))
 
     ;; check clm output for bad zero case
     (for-each
@@ -44345,13 +44334,13 @@ EDITS: 1
 		     all-pass all-pass? amplitude-modulate
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm?
 		     clear-array comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
-		     delay delay? dot-product env env-interp env? file->array file->frame file->frame?  file->sample
+		     delay delay? dot-product env env-interp env? file->array file->float-vector file->float-vector?  file->sample
 		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant-bank? formant? frame* frame+ firmant firmant?
 		     comb-bank make-comb-bank comb-bank? all-pass-bank make-all-pass-bank all-pass-bank? filtered-comb-bank make-filtered-comb-bank filtered-comb-bank?
 		     granulate granulate? hz->radians iir-filter iir-filter? linear->db locsig ; in-any ina inb 
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
-		     make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
-		     make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame->file make-granulate
+		     make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->float-vector
+		     make-file->sample make-filter make-fir-filter make-formant make-firmant make-float-vector->file make-granulate
 		     make-iir-filter make-locsig move-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 		     make-nrxysin make-nrxycos make-square-wave make-src make-ncos make-rxyk!cos make-rxyk!sin 
@@ -44377,7 +44366,7 @@ EDITS: 1
 		     reverse-channel seconds->samples samples->seconds
 		     smooth-channel float-vector->channel channel->float-vector src-channel scale-channel ramp-channel pad-channel normalize-channel
 		     cursor-position clear-listener mus-sound-prune mus-sound-forget xramp-channel
-		     snd->sample snd->sample? make-snd->sample make-scalar-mixer
+		     snd->sample snd->sample? make-snd->sample 
 		     
 		     beats-per-minute beats-per-measure channel-amp-envs convolve-files filter-control-coeffs 
 		     locsig-type make-phase-vocoder 
@@ -44450,14 +44439,14 @@ EDITS: 1
 	     
 	     (make-procs (list
 			  make-all-pass make-asymmetric-fm make-snd->sample make-moving-average make-moving-max
-			  make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
-			  make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame->file make-granulate
+			  make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->float-vector
+			  make-file->sample make-filter make-fir-filter make-formant make-firmant make-float-vector->file make-granulate
 			  make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
 			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 			  make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave 
 			  make-src make-ncos make-nsin make-table-lookup make-triangle-wave
 			  make-two-pole make-two-zero make-wave-train make-phase-vocoder make-ssb-am make-polyshape make-polywave
-			  make-color make-player make-region make-scalar-mixer
+			  make-color make-player make-region 
 			  ))
 	     
 	     (keyargs
@@ -44525,7 +44514,7 @@ EDITS: 1
 				(set! vector-0 (make-vector 1))
 				(set! car-main (make-moving-average 3))
 				(set! cadr-main (make-oscil 440))
-				(set! a-hook (make-mixer 2 .1 .2 .1 .2))
+				(set! a-hook (make-shared-vector (float-vector .1 .2 .1 .2) (list 2 2)))
 				))))))
 	  
 	  (for-each (lambda (n)
@@ -44674,8 +44663,8 @@ EDITS: 1
 					   (lambda args (car args)))))
 				    (if tag
 					(snd-display #__line__ ";?proc ~A: ~A" n tag))))
-				(list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frame? file->sample? snd->sample?
-				      filter? fir-filter? formant? formant-bank? firmant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
+				(list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->float-vector? file->sample? snd->sample?
+				      filter? fir-filter? formant? formant-bank? firmant? float-vector->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
 				      mus-output? notch? one-pole? one-pole-all-pass? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 				      sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
 				      square-wave? src? ncos? nsin? tap? table-lookup? 
@@ -44692,8 +44681,8 @@ EDITS: 1
 			       (lambda args (car args)))))
 			(if tag
 			    (snd-display #__line__ ";oscil?proc ~A: ~A" n tag))))
-		    (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frame? file->sample? snd->sample?
-			  filter? fir-filter? formant? formant-bank? firmant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
+		    (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->float-vector? file->sample? snd->sample?
+			  filter? fir-filter? formant? formant-bank? firmant? float-vector->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
 			  mus-output? notch? one-pole? one-pole-all-pass? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 			  sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
 			  square-wave? src? ncos? nsin? tap? table-lookup? 
@@ -44738,7 +44727,7 @@ EDITS: 1
 				(list all-pass asymmetric-fm clear-array comb filtered-comb convolve db->linear moving-average moving-max
 				      degrees->radians delay env formant firmant frame->list granulate hz->radians linear->db
 				      make-all-pass make-asymmetric-fm make-comb make-filtered-comb make-convolve make-delay make-env
-				      make-file->frame make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame
+				      make-file->float-vector make-file->sample make-filter make-fir-filter make-formant make-firmant 
 				      make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero
 				      make-oscil make-pulse-train make-rand make-rand-interp make-readin
 				      make-sawtooth-wave make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave make-src 
@@ -44769,7 +44758,7 @@ EDITS: 1
 				     (eq? tag 'mus-error)))
 			    (snd-display #__line__ ";clm-1 ~A: ~A" n tag))))
 		    (list all-pass array-interp asymmetric-fm comb filtered-comb contrast-enhancement convolution convolve moving-average moving-max
-			  convolve-files delay dot-product env-interp file->frame file->sample snd->sample filter fir-filter formant firmant
+			  convolve-files delay dot-product env-interp file->sample snd->sample filter fir-filter formant firmant
 			  formant-bank granulate iir-filter ina
 			  inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-comb make-filtered-comb
 			  make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-firmant make-granulate
@@ -45199,8 +45188,8 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (make-readin "oboe.snd" :size -1)))
 		(check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" 0)))
 		(check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" -1)))
-		(check-error-tag 'out-of-range (lambda () (make-file->frame "oboe.snd" 0)))
-		(check-error-tag 'out-of-range (lambda () (make-file->frame "oboe.snd" -1)))
+		(check-error-tag 'out-of-range (lambda () (make-file->float-vector "oboe.snd" 0)))
+		(check-error-tag 'out-of-range (lambda () (make-file->float-vector "oboe.snd" -1)))
 		(check-error-tag 'out-of-range (lambda () (set! (default-output-data-format) -1)))
 		(check-error-tag 'out-of-range (lambda () (set! (default-output-header-type) mus-soundfont)))
 		(check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_location.nist"))))

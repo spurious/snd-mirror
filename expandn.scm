@@ -42,23 +42,35 @@
 		(rev-chans (if *reverb* (channels *reverb*) 0)))
 	    
 	    (let ((update-rate 100)
+		  (ochans (max in-chans out-chans))
 		  (max-seg-len (if (list? seglen) (max-envelope seglen) seglen))
 		  (rampdata (if (list? ramp) ramp (list 0 ramp 1 ramp)))
 		  (start (floor (* input-start (mus-sound-srate fnam))))
 		  (max-in-hop (/ max-out-hop min-exp-amt))
 		  (rev-mx (if (and *reverb* reverb (> reverb 0.0))
-			      (let ((rmx (make-mixer (max out-chans rev-chans))))
+			      (let* ((rchans (max out-chans rev-chans))
+				     (rmx (make-vector (list rchans rchans) 0.0 #t)))
 				(do ((i 0 (+ i 1)))
-				    ((= i (max out-chans rev-chans)))
-				  (mixer-set! rmx (modulo i out-chans) (modulo i rev-chans) reverb))
+				    ((= i rchans))
+				  (set! (rmx i i reverb)))
 				rmx)
 			      #f)))
 	      
-	      (let ((mx (if matrix
-			    (make-mixer (max in-chans out-chans))
-			    (make-scalar-mixer (max in-chans out-chans) 1.0)))
+	      (let ((mx (let ((v (make-vector (list ochans ochans) 0.0 #t)))
+			  (if (pair? matrix)
+			      (let ((mat-in (min ochans (length matrix)))
+				    (mat-out (min ochans (length (car matrix)))))
+				(do ((inp 0 (+ inp 1)))
+				    ((= inp mat-in))
+				  (do ((outp 0 (+ outp 1)))
+				      ((= outp mat-out))
+				    (set! (v inp outp) (matrix inp outp)))))
+			      (do ((i 0 (+ i 1)))
+				  ((= i ochans))
+				(set! (v i i) 1.0)))
+			  v))
 		    
-		    (revframe (if rev-mx (make-frame (max out-chans rev-chans)) #f))
+		    (revvals (if rev-mx (make-vector (max out-chans rev-chans) 0.0 #t) #f))
 		    (update-envs (or (list? expand)
 				     (list? seglen)
 				     (list? ramp)
@@ -85,8 +97,8 @@
 		    (max-len (ceiling (* (mus-srate)
 					 (+ (max max-out-hop max-in-hop)
 					    max-seg-len))))
-		    (inframe (make-frame in-chans))
-		    (outframe (make-frame out-chans)))
+		    (invals (make-vector ochans 0.0 #t))
+		    (outvals (make-vector ochans 0.0 #t)))
 		
 		(if (or minramp-bug maxramp-bug)
 		    (error 'out-of-range (list expand 
@@ -105,16 +117,6 @@
 							  :hop (if (list? hop) (cadr hop) hop)
 							  :length (if (list? seglen) (cadr seglen) seglen)
 							  :scaler segment-scaler)))
-		(if matrix
-		    (begin
-		      (do ((inp 0 (+ inp 1)))
-			  ((= inp in-chans))
-			(let ((inlist (list-ref matrix inp)))
-			  (do ((outp 0 (+ outp 1)))
-			      ((= outp out-chans))
-			    (let ((outn (list-ref inlist outp)))
-			      (mixer-set! mx inp outp outn)))))))
-		
 		;; split out 1 and 2 chan input 
 		(if (= in-chans 1)
 		    (let ((ingen (vector-ref ex-array 0))
@@ -130,10 +132,10 @@
 			       (not matrix)
 			       (not rev-mx))
 
-			  (let ((file-end (seconds->samples (+ (* 2 seglen) 
-							       (* (mus-sound-duration fnam) 
-								  (/ (mus-sound-srate fnam) (mus-srate))
-								  (/ expand srate))))))
+			  (let ((file-end (+ beg (seconds->samples (+ (* 2 seglen) 
+								      (* (mus-sound-duration fnam) 
+									 (/ (mus-sound-srate fnam) (mus-srate))
+									 (/ expand srate)))))))
 			    (if (> end file-end)
 				(set! end file-end))
 			  
@@ -204,15 +206,15 @@
 			      
 			      (if (= next-samp ex-samp)
 				  ;; output actual samples
-				  (frame-set! inframe 0 sample-0)
+				  (set! (invals 0) sample-0)
 				  ;; output interpolated samples
-				  (frame-set! inframe 0 (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0)))))
+				  (set! (invals 0) (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0)))))
 			      
 			      ;; output mixed result
-			      (frame->file *output* i (frame->frame inframe mx outframe))
+			      (float-vector->file *output* i (float-vector-mix invals mx outvals))
 			      ;; if reverb is turned on, output to the reverb streams
 			      (if rev-mx
-				  (frame->file *reverb* i (frame->frame outframe rev-mx revframe)))))))
+				  (float-vector->file *reverb* i (float-vector-mix outvals rev-mx revvals)))))))
 		    
 		    (if (= in-chans 2)
 			(let ((sample-0-0 0.0)
@@ -273,18 +275,18 @@
 			      (if (= next-samp ex-samp)
 				  ;; output actual samples
 				  (begin
-				    (frame-set! inframe 0 sample-0-0)
-				    (frame-set! inframe 1 sample-0-1))
+				    (set! (invals 0) sample-0-0)
+				    (set! (invals 1) sample-0-1))
 				  (begin
 				    ;; output interpolated samples
-				    (frame-set! inframe 0 (+ sample-0-0 (* (- next-samp ex-samp) (- sample-1-0 sample-0-0))))
-				    (frame-set! inframe 1 (+ sample-0-1 (* (- next-samp ex-samp) (- sample-1-1 sample-0-1))))))
+				    (set! (invals 0) (+ sample-0-0 (* (- next-samp ex-samp) (- sample-1-0 sample-0-0))))
+				    (set! (invals 1) (+ sample-0-1 (* (- next-samp ex-samp) (- sample-1-1 sample-0-1))))))
 			      
 			      ;; output mixed result
-			      (frame->file *output* i (frame->frame inframe mx outframe))
+			      (float-vector->file *output* i (float-vector-mix invals mx outvals))
 			      ;; if reverb is turned on, output to the reverb streams
 			      (if rev-mx
-				  (frame->file *reverb* i (frame->frame outframe rev-mx revframe))))))
+				  (float-vector->file *reverb* i (float-vector-mix outvals rev-mx revvals))))))
 			
 			(let ((samples-0 (make-vector in-chans 0.0))
 			      (samples-1 (make-vector in-chans 0.0)))
@@ -339,18 +341,17 @@
 				  ;; output actual samples
 				  (do ((ix 0 (+ ix 1)))
 				      ((= ix in-chans))
-				    (frame-set! inframe ix (vector-ref samples-0 ix)))
+				    (set! (invals ix) (vector-ref samples-0 ix)))
 				  ;; output interpolated samples
 				  (do ((ix 0 (+ ix 1)))
 				      ((= ix in-chans))
 				    (let ((v0 (vector-ref samples-0 ix))
 					  (v1 (vector-ref samples-1 ix)))
-				      (frame-set! inframe ix (+ v0 (* (- next-samp ex-samp)
-								      (- v1 v0)))))))
+				      (set! (invals ix) (+ v0 (* (- next-samp ex-samp) (- v1 v0)))))))
 			      ;; output mixed result
-			      (frame->file *output* i (frame->frame inframe mx outframe))
+			      (float-vector->file *output* i (float-vector-mix invals mx outvals))
 			      ;; if reverb is turned on, output to the reverb streams
 			      (if rev-mx
-				  (frame->file *reverb* i (frame->frame outframe rev-mx revframe)))))))))))))))
+				  (float-vector->file *reverb* i (float-vector-mix outvals rev-mx revvals)))))))))))))))
 
 ;;; (with-sound () (expandn 0 1 "oboe.snd" 1 :expand 4))

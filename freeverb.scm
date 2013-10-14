@@ -98,20 +98,15 @@
 
 	(do ((c 0 (+ 1 c)))
 	    ((= c in-chans))
-	  (set! (predelays c) (make-delay :size (round (* *clm-srate*
-							  (if (or (vector? predelay) (list? predelay))
-							      (predelay c)
-							      predelay))))))
+	  (set! (predelays c) (make-delay :size (round (* *clm-srate* (if (number? predelay) predelay (predelay c)))))))
+
 	(do ((c 0 (+ 1 c)))
 	    ((= c out-chans))
 	  (do ((i 0 (+ i 1)))
 	      ((= i numcombs))
 	    (let* ((tuning (combtuning i))
 		   (len (floor (* srate-scale tuning)))
-		   (dmp (* scale-damping
-			   (if (or (vector? damping) (list? damping))
-			       (damping i)
-			       damping))))
+		   (dmp (* scale-damping (if (number? damping) damping (damping i)))))
 	      (if (odd? c)
 		  (set! len (+ len (floor (* srate-scale stereo-spread)))))
 	      (set! (fcombs (+ (* c numcombs) i))

@@ -508,7 +508,7 @@ read, even if not playing.  'files' is a list of files to be played."
 			      v)))))
 
 
-(define (file->float-vector file)
+(define (old-file->float-vector file)
   "(file->float-vector file) returns a float-vector with file's data (channel 0)"
   (let* ((len (frames file))
 	 (reader (make-sampler 0 file))
@@ -519,10 +519,10 @@ read, even if not playing.  'files' is a list of files to be played."
     (free-sampler reader)
     data))
 
-(define file->vct file->float-vector)
+(define file->vct old-file->float-vector)
 
 
-(define* (float-vector->file v file (srate 22050) (comment ""))
+(define* (old-float-vector->file v file (srate 22050) (comment ""))
   "(float-vector->file v file srate comment) writes the data in float-vector v to the specified sound file"
   (if (float-vector? v)
       (let ((fd (mus-sound-open-output file srate 1 #f mus-riff comment)))
@@ -531,7 +531,7 @@ read, even if not playing.  'files' is a list of files to be played."
 	file)
       (error 'wrong-type-arg "file->float-vector: ~A" v)))
 
-(define vct->file float-vector->file)
+(define vct->file old-float-vector->file)
 
 
 (define* (insert-float-vector v (beg 0) dur snd chn edpos)

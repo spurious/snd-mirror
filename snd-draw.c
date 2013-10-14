@@ -1765,7 +1765,7 @@ static XEN g_color_to_list(XEN obj)
 static XEN g_make_color(XEN r, XEN g, XEN b, XEN alpha)
 {
   /* alpha is ignored in Motif */
-  #define H_make_color "(" S_make_color " r g b): return a color object with the indicated rgb values"
+  #define H_make_color "(" S_make_color " r g b alpha): return a color object with the indicated rgb values"
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
