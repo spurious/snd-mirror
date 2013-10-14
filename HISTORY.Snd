@@ -1,5 +1,6 @@
 Snd change log
 
+ 15-Oct:    Snd 14.1.
  11-Oct:    removed frame.scm and mixer.scm: frames and mixers are obsolete in the scheme version of Snd.
  11-Sep:    Snd 14.0.  Homogenous vectors, write readably, libc.scm, libgsl.scm.
  5-Sep:     removed kmenu.scm and oscope.scm.

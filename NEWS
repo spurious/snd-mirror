@@ -1,7 +1,8 @@
 Snd 14.1:
 
-mostly bug fixes.
+removed frame.scm and mixer.scm (frames and mixers have been replaced
+  by float-vectors in s7-clm).
 
-checked: gtk 3.9.16, 3.10.0, sbcl 1.1.12.
+checked: gtk 3.9.16, 3.10.0|1, sbcl 1.1.12.
 
 Thanks!: Mike Scholz.

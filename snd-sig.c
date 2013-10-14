@@ -3288,7 +3288,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
   XEN res = XEN_FALSE;
 #if HAVE_SCHEME
   bool use_apply = false;
-  s7_pointer arg_list;
+  s7_pointer arg_list = NULL;
 #endif
 
   sp = cp->sound;
@@ -3315,7 +3315,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 #if HAVE_SCHEME
 
       int gc_loc;
-      s7_pointer source, arg, body = NULL, e, slot;
+      s7_pointer source, arg, body = NULL, e = NULL, slot = NULL;
       s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
       mus_long_t local_samps;
       

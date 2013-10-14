@@ -70,15 +70,6 @@ echo ' -------------------------------- that was snd-test --with-gmp -----------
 echo ' '
 echo ' '
 
-gcc s7.c -o repl -DWITH_MAIN -I. -g -O2 -lreadline -lncurses -lrt -lgmp -lmpfr -lmpc -ldl -lm -Wl,-export-dynamic
-./repl tools/t456.scm
-echo ' '
-echo ' '
-echo ' -------------------------------- that was s7/gmp t456 -------------------------------- '
-echo ' '
-echo ' '
-
-
 valgrind ./snd -l snd-test
 echo ' '
 echo ' '
@@ -95,7 +86,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -l snd-test 25
+./snd -l snd-test 23
 ./snd -l snd-test
 make clmclean
 make sndinfo
@@ -104,7 +95,7 @@ make sndplay
 ./sndplay oboe.snd
 echo ' '
 echo ' '
-echo ' -------------------------------- that was motif? and test 25 -------------------------------- '
+echo ' -------------------------------- that was motif? and test 23 -------------------------------- '
 echo ' '
 echo ' '
 
@@ -284,14 +275,6 @@ echo ' '
 echo ' '
 echo ' '
 echo ' -------------------------------- that was snd-test full mult no-gui -------------------------------- '
-echo ' '
-echo ' '
-
-valgrind ./snd -l snd-test
-
-echo ' '
-echo ' '
-echo ' -------------------------------- that was valgrind full mult no-gui -------------------------------- '
 echo ' '
 echo ' '
 
