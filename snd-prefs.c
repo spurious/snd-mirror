@@ -430,11 +430,11 @@ static void save_just_sounds(prefs_info *prf, FILE *ignore) {rts_just_sounds = j
 
 /* ---------------- verbose-cursor ---------------- */
 
-static bool rts_verbose_cursor = DEFAULT_VERBOSE_CURSOR;
-static void reflect_verbose_cursor(prefs_info *prf) {SET_TOGGLE(prf->toggle, verbose_cursor(ss));}
-static void verbose_cursor_toggle(prefs_info *prf) {set_verbose_cursor(GET_TOGGLE(prf->toggle));}
-static void revert_verbose_cursor(prefs_info *prf) {set_verbose_cursor(rts_verbose_cursor);}
-static void save_verbose_cursor(prefs_info *prf, FILE *ignore) {rts_verbose_cursor = verbose_cursor(ss);}
+static bool rts_with_verbose_cursor = DEFAULT_WITH_VERBOSE_CURSOR;
+static void reflect_with_verbose_cursor(prefs_info *prf) {SET_TOGGLE(prf->toggle, with_verbose_cursor(ss));}
+static void with_verbose_cursor_toggle(prefs_info *prf) {set_with_verbose_cursor(GET_TOGGLE(prf->toggle));}
+static void revert_with_verbose_cursor(prefs_info *prf) {set_with_verbose_cursor(rts_with_verbose_cursor);}
+static void save_with_verbose_cursor(prefs_info *prf, FILE *ignore) {rts_with_verbose_cursor = with_verbose_cursor(ss);}
 
 
 /* ---------------- graphs-horizontal ---------------- */
@@ -4475,7 +4475,7 @@ static const char *help_default_output_data_format(prefs_info *prf)
   when a new sound is opened.  ");
 }
 
-static const char *help_verbose_cursor(prefs_info *prf) 
+static const char *help_with_verbose_cursor(prefs_info *prf) 
 {
   return("\
   If this is set, the cursor's position and the underlying  \n\

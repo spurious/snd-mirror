@@ -184,7 +184,7 @@ static void view_filled_callback(GtkWidget *w, gpointer info) {set_graph_style(G
 static void view_dots_and_lines_callback(GtkWidget *w, gpointer info) {set_graph_style(GRAPH_DOTS_AND_LINES);}
 static void view_lollipops_callback(GtkWidget *w, gpointer info) {set_graph_style(GRAPH_LOLLIPOPS);}
 static void view_zero_callback(GtkWidget *w, gpointer info) {set_show_y_zero((!(show_y_zero(ss))));}
-static void view_cursor_callback(GtkWidget *w, gpointer info) {set_verbose_cursor((!(verbose_cursor(ss))));}
+static void view_cursor_callback(GtkWidget *w, gpointer info) {set_with_verbose_cursor((!(with_verbose_cursor(ss))));}
 static void view_controls_callback(GtkWidget *w, gpointer info) {set_show_controls(!in_show_controls(ss));}
 
 #if HAVE_EXTENSION_LANGUAGE

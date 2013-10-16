@@ -2717,6 +2717,12 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 }
 
 
+void update_sound_label(snd_info *sp)
+{
+  if (HAS_WIDGETS(sp))
+    set_button_label(NAME_LABEL(sp), shortname_indexed(sp));  
+}
+
 void snd_info_cleanup(snd_info *sp)
 {
   if (HAS_WIDGETS(sp))

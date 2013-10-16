@@ -360,6 +360,7 @@ void g_init_gxsnd(void);
 void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color);
 void reflect_sound_selection(snd_info *sp);
 void make_controls_dialog(void);
+void update_sound_label(snd_info *sp);
 
 
 /* -------- snd-xfile.c -------- */

@@ -6244,16 +6244,17 @@ void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer va
 }
 
 
-void s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value)
+s7_pointer s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value)
 {
   s7_pointer sym;
 
   sym = make_symbol(sc, name);
   s7_define(sc, sc->NIL, sym, value);
+  return(sym);
 }
 
 
-void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
+s7_pointer s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
 {
   s7_pointer x, sym;
   
@@ -6261,6 +6262,7 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
   s7_define(sc, sc->NIL, sym, value);
   x = global_slot(sym);
   set_immutable(slot_symbol(x));
+  return(sym);
 }
 
 /* (define (func a) (let ((cvar (+ a 1))) cvar))
@@ -49887,8 +49889,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	sc->code = cddr(code);
 
-	/* see tmp8 */
-
 	if ((is_null(cdr(sc->code))) &&
 	    (is_pair(car(sc->code))))
 	  {
@@ -66297,6 +66297,7 @@ s7_scheme *s7_init(void)
 {
   int i;
   s7_scheme *sc;
+  s7_pointer sym;
 
   finder = find_symbol_or_bust;
 
@@ -67365,16 +67366,12 @@ s7_scheme *s7_init(void)
                               s7_define_function(sc,      "abort",                   g_abort,                  0, 0, false, "drop into gdb I hope");
 #endif
 
-  {
-    s7_pointer sym;
-    sym = s7_define_function(sc,                      "(c-object set)",            g_internal_object_set,      1, 0, true,  "internal object setter redirection");
-    sc->Object_Set = s7_symbol_value(sc, sym);
-  }
+  sym = s7_define_function(sc,                      "(c-object set)",            g_internal_object_set,      1, 0, true,  "internal object setter redirection");
+  sc->Object_Set = s7_symbol_value(sc, sym);
 
 
   /* -------- *gc-stats* -------- */
-  s7_define_variable(sc, "*gc-stats*", sc->F);
-  sc->GC_STATS = s7_make_symbol(sc, "*gc-stats*");
+  sc->GC_STATS = s7_define_variable(sc, "*gc-stats*", sc->F);
   s7_symbol_set_access(sc, sc->GC_STATS,
 		       list_3(sc, 
 			      sc->F, 
@@ -67382,8 +67379,7 @@ s7_scheme *s7_init(void)
 			      s7_make_function(sc, "(bind *gc-stats*)", g_gc_stats_set, 2, 0, false, "called if *gc-stats* is bound")));
 
   /* -------- *features* -------- */
-  s7_define_variable(sc, "*features*", sc->NIL);
-  sc->S7_FEATURES = s7_make_symbol(sc, "*features*");
+  sc->S7_FEATURES = s7_define_variable(sc, "*features*", sc->NIL);
   s7_symbol_set_access(sc, sc->S7_FEATURES,
 		       list_3(sc, 
 			      sc->F, 
@@ -67391,9 +67387,9 @@ s7_scheme *s7_init(void)
 			      s7_make_function(sc, "(bind *features*)", g_features_set, 2, 0, false, "called if *features* is bound")));
 
   /* -------- *vector-print-length* -------- */
-  s7_define_variable(sc, "*vector-print-length*", small_int(8));
-  sc->vector_print_length = global_slot(make_symbol(sc, "*vector-print-length*"));
-  s7_symbol_set_access(sc, s7_make_symbol(sc, "*vector-print-length*"), 
+  sym = s7_define_variable(sc, "*vector-print-length*", small_int(8));
+  sc->vector_print_length = global_slot(sym);
+  s7_symbol_set_access(sc, sym, 
 		       list_3(sc, 
 			      sc->F, 
 			      s7_make_function(sc, "(set *vector-print-length*)", g_vector_print_length_set, 2, 0, false, 
@@ -67401,8 +67397,8 @@ s7_scheme *s7_init(void)
 			      sc->F));
 
   /* -------- *safety* -------- */
-  s7_define_variable(sc, "*safety*", small_int(sc->safety));
-  s7_symbol_set_access(sc, s7_make_symbol(sc, "*safety*"), 
+  sym = s7_define_variable(sc, "*safety*", small_int(sc->safety));
+  s7_symbol_set_access(sc, sym, 
 		       list_3(sc, 
 			      sc->F, 
 			      s7_make_function(sc, "(set *safety*)", g_safety_set, 2, 0, false, "called if *safety* is set"), 
@@ -67410,8 +67406,7 @@ s7_scheme *s7_init(void)
 
 
   /* -------- *load-path* -------- */
-  s7_define_variable(sc, "*load-path*", sc->NIL);
-  sc->LOAD_PATH = s7_make_symbol(sc, "*load-path*");
+  sc->LOAD_PATH = s7_define_variable(sc, "*load-path*", sc->NIL);
   s7_symbol_set_access(sc, sc->LOAD_PATH,
 		       list_3(sc, 
 			      sc->F, 
@@ -67422,14 +67417,14 @@ s7_scheme *s7_init(void)
    * this pretends to be a hash-table or environment, but it's actually a function
    */
   sc->AUTOLOADER = s7_define_function(sc, "*autoload*", g_autoloader, 1, 0, false, H_autoloader);
-  s7_define_variable(sc, "*libraries*", sc->NIL);
-  sc->libraries = global_slot(make_symbol(sc, "*libraries*"));
+  sym = s7_define_variable(sc, "*libraries*", sc->NIL);
+  sc->libraries = global_slot(sym);
   
 
   /* -------- *#readers* -------- */
-  s7_define_variable(sc, "*#readers*", sc->NIL);
-  sc->sharp_readers = global_slot(make_symbol(sc, "*#readers*"));
-  s7_symbol_set_access(sc, s7_make_symbol(sc, "*#readers*"), 
+  sym = s7_define_variable(sc, "*#readers*", sc->NIL);
+  sc->sharp_readers = global_slot(sym);
+  s7_symbol_set_access(sc, sym, 
 		       list_3(sc, 
 			      sc->F, 
 			      s7_make_function(sc, "(set *#readers*)", g_sharp_readers_set, 2, 0, false, "called if *#readers* is set"), 
@@ -67973,7 +67968,16 @@ int main(int argc, char **argv)
  * checkpoint?
  * doc/test the lib*.scm files.
  * someday all the simple Snd variables should be variables (not pws)
+ *   perhaps parallel definition of *var* with accessors? 
+ *   set *var* ... -> (begin (set! (var) ...) (var)), same for let?
+ *   s7_symbol_set_access sym funcs (clm2xen) -- tricky because the variable needs to be set alongside the functional value
+ *     so the underlying function needs to set the variable itself (else loop)
+ *     see snd-main.c show_indices (there are about 200 such cases)
+ *     other cases: sndlib2xen/clm2xen defaults
+ *     I assume the accessors are gc-protected
+ *     does xen.h choose the [*] set name? -- no, above 32701 make-pws -- need extension here
  * vector_set_ssa_looped? (or as unknown case?)
+ * 49890 safe_do all_x cases?
  */
 
 

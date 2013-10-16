@@ -2061,6 +2061,11 @@ void set_sound_pane_file_label(snd_info *sp, const char *str)
     }
 }
 
+void update_sound_label(snd_info *sp)
+{
+  if (HAS_WIDGETS(sp))
+    gtk_label_set_text(GTK_LABEL(NAME_BUTTON(sp)), shortname_indexed(sp));
+}
 
 void snd_info_cleanup(snd_info *sp)
 {

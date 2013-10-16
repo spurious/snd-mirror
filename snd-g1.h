@@ -411,7 +411,7 @@ void progress_report(chan_info *cp, mus_float_t pct);
 void g_init_gxsnd(void);
 void reflect_sound_selection(snd_info *sp);
 void make_controls_dialog(void);
-
+void update_sound_label(snd_info *sp);
 
 GtkWidget *snd_entry_new(GtkWidget *container, GtkWidget *prev, snd_entry_bg_t with_white_background);
 GtkWidget *snd_entry_new_with_size(GtkWidget *container, int size);

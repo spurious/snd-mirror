@@ -1652,7 +1652,7 @@ static void copy_chan_info(chan_info *ncp, chan_info *ocp)
   ncp->zero_pad = ocp->zero_pad;
   ncp->x_axis_style = ocp->x_axis_style;
   ncp->wavelet_type = ocp->wavelet_type;
-  ncp->verbose_cursor = ocp->verbose_cursor;
+  ncp->with_verbose_cursor = ocp->with_verbose_cursor;
   ncp->max_transform_peaks = ocp->max_transform_peaks;
   ncp->show_transform_peaks = ocp->show_transform_peaks;
   ncp->show_axes = ocp->show_axes;
@@ -3466,7 +3466,7 @@ Other writable headers include " S_mus_aiff ", " S_mus_riff ", " S_mus_ircam ", 
 
   typ = XEN_TO_C_INT(val);
   if (mus_header_writable(typ, -2))
-    set_default_output_header_type(typ); 
+    {set_default_output_header_type(typ);}
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_header_type, 1, val, "unwritable header type");
   return(C_TO_XEN_INT(default_output_header_type(ss)));
 }
@@ -3485,7 +3485,7 @@ are available, but not all are compatible with all header types"
 
   format = XEN_TO_C_INT(val);
   if (mus_data_format_p(format))
-    set_default_output_data_format(format); 
+    {set_default_output_data_format(format);}
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_data_format, 1, val, "unknown data format");
   return(C_TO_XEN_INT(default_output_data_format(ss)));
 }

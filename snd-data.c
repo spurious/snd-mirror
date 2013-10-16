@@ -65,7 +65,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->max_transform_peaks = max_transform_peaks(ss);
   cp->show_transform_peaks = show_transform_peaks(ss);
   cp->zero_pad = zero_pad(ss);
-  cp->verbose_cursor = verbose_cursor(ss);
+  cp->with_verbose_cursor = with_verbose_cursor(ss);
   cp->fft_log_frequency = fft_log_frequency(ss);
   cp->fft_log_magnitude = fft_log_magnitude(ss);
   cp->fft_with_phases = fft_with_phases(ss);

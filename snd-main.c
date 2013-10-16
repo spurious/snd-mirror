@@ -467,7 +467,7 @@ static void save_options(FILE *fd)
   if (fneq(auto_update_interval(ss), DEFAULT_AUTO_UPDATE_INTERVAL)) pss_sf(fd, S_auto_update_interval, auto_update_interval(ss));
   if (fneq(cursor_update_interval(ss), DEFAULT_CURSOR_UPDATE_INTERVAL)) pss_sf(fd, S_cursor_update_interval, cursor_update_interval(ss));
   if (cursor_location_offset(ss) != DEFAULT_CURSOR_LOCATION_OFFSET) pss_sd(fd, S_cursor_location_offset, cursor_location_offset(ss));
-  if (verbose_cursor(ss) != DEFAULT_VERBOSE_CURSOR) pss_ss(fd, S_with_verbose_cursor, b2s(verbose_cursor(ss)));
+  if (with_verbose_cursor(ss) != DEFAULT_WITH_VERBOSE_CURSOR) pss_ss(fd, S_with_verbose_cursor, b2s(with_verbose_cursor(ss)));
   if (with_inset_graph(ss) != DEFAULT_WITH_INSET_GRAPH) pss_ss(fd, S_with_inset_graph, b2s(with_inset_graph(ss)));
   if (with_interrupts(ss) != DEFAULT_WITH_INTERRUPTS) pss_ss(fd, S_with_interrupts, b2s(with_interrupts(ss)));
   if (with_smpte_label(ss) != DEFAULT_WITH_SMPTE_LABEL) pss_ss(fd, S_with_smpte_label, b2s(with_smpte_label(ss)));
@@ -1075,7 +1075,7 @@ void save_sound_state(snd_info *sp, void *ptr)
       if (cp->fft_log_frequency != fft_log_frequency(ss)) pcp_ss(fd, S_fft_log_frequency, b2s(cp->fft_log_frequency), chan);
       if (cp->fft_log_magnitude != fft_log_magnitude(ss)) pcp_ss(fd, S_fft_log_magnitude, b2s(cp->fft_log_magnitude), chan);
       if (cp->fft_with_phases != fft_with_phases(ss)) pcp_ss(fd, S_fft_with_phases, b2s(cp->fft_with_phases), chan);
-      if (cp->verbose_cursor != verbose_cursor(ss)) pcp_ss(fd, S_with_verbose_cursor, b2s(cp->verbose_cursor), chan);
+      if (cp->with_verbose_cursor != with_verbose_cursor(ss)) pcp_ss(fd, S_with_verbose_cursor, b2s(cp->with_verbose_cursor), chan);
       if (cp->zero_pad != zero_pad(ss)) pcp_sd(fd, S_zero_pad, cp->zero_pad, chan);
       if (cp->wavelet_type != wavelet_type(ss)) pcp_sd(fd, S_wavelet_type, cp->wavelet_type, chan);
       if (fneq(cp->min_dB, min_dB(ss))) pcp_sf(fd, S_min_dB, cp->min_dB, chan);
@@ -1678,8 +1678,8 @@ static XEN g_set_ladspa_dir(XEN val)
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, 1, S_setB S_ladspa_dir, "a string or " PROC_FALSE "=default (null)"); 
   if (ladspa_dir(ss)) free(ladspa_dir(ss));
   if (XEN_FALSE_P(val))
-    set_ladspa_dir(mus_strdup(DEFAULT_LADSPA_DIR));
-  else set_ladspa_dir(mus_strdup(XEN_TO_C_STRING(val)));
+    {set_ladspa_dir(mus_strdup(DEFAULT_LADSPA_DIR));}
+  else {set_ladspa_dir(mus_strdup(XEN_TO_C_STRING(val)));}
   return(C_TO_XEN_STRING(ladspa_dir(ss)));
 }
 
@@ -1878,7 +1878,7 @@ static XEN g_set_play_arrow_size(XEN size)
 
   arrow_size = XEN_TO_C_INT(size);
   if (arrow_size >= 0)
-    set_play_arrow_size(arrow_size);
+    {set_play_arrow_size(arrow_size);}
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_play_arrow_size, 1, size, "must be >= 0");
 
   for_each_chan(update_graph);
@@ -2137,14 +2137,9 @@ static XEN g_set_show_indices(XEN val)
   #define H_show_indices "(" S_show_indices "): " PROC_TRUE " if sound name should be preceded by its index in the sound display."
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, 1, S_setB S_show_indices, "a boolean");
   set_show_indices(XEN_TO_C_BOOLEAN(val));
+  for_each_sound(update_sound_label);
   return(C_TO_XEN_BOOLEAN(show_indices(ss)));
 }
-
-
-static XEN g_trap_segfault(void) {return(XEN_FALSE);}
-static XEN g_set_trap_segfault(XEN val) {return(XEN_FALSE);}
-/* obsolete */
-
 
 static XEN g_with_relative_panes(void) {return(C_TO_XEN_BOOLEAN(with_relative_panes(ss)));}
 
@@ -2298,8 +2293,6 @@ XEN_NARGIFY_0(g_print_length_w, g_print_length)
 XEN_NARGIFY_1(g_set_print_length_w, g_set_print_length)
 XEN_NARGIFY_0(g_show_indices_w, g_show_indices)
 XEN_NARGIFY_1(g_set_show_indices_w, g_set_show_indices)
-XEN_NARGIFY_0(g_trap_segfault_w, g_trap_segfault)
-XEN_NARGIFY_1(g_set_trap_segfault_w, g_set_trap_segfault)
 XEN_NARGIFY_0(g_with_relative_panes_w, g_with_relative_panes)
 XEN_NARGIFY_1(g_set_with_relative_panes_w, g_set_with_relative_panes)
 XEN_NARGIFY_0(g_with_background_processes_w, g_with_background_processes)
@@ -2416,10 +2409,6 @@ the hook functions return " PROC_TRUE ", the save state process opens the file '
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_indices, g_show_indices_w, H_show_indices,
 				   S_setB S_show_indices, g_set_show_indices_w,  0, 0, 1, 0);
-
-  #define S_trap_segfault "trap-segfault"
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_trap_segfault, g_trap_segfault_w, "obsolete",
-				   S_setB S_trap_segfault, g_set_trap_segfault_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_relative_panes, g_with_relative_panes_w, H_with_relative_panes,
 				   S_setB S_with_relative_panes, g_set_with_relative_panes_w,  0, 0, 1, 0);

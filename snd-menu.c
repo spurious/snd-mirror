@@ -97,7 +97,7 @@ void view_menu_update(void)
   set_menu_label(view_zero_menu, (show_y_zero(ss)) ? "Hide Y = 0" : "Show Y = 0");
 
   /* verbose cursor label */
-  set_menu_label(view_cursor_menu, (verbose_cursor(ss)) ? "Silent cursor" : "Verbose cursor");
+  set_menu_label(view_cursor_menu, (with_verbose_cursor(ss)) ? "Silent cursor" : "Verbose cursor");
 
 #if HAVE_EXTENSION_LANGUAGE
   /* inset graph label */

@@ -1662,7 +1662,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
 	  if (cp->printing)
 	    ps_reset_color();
 	}
-      if ((cp->verbose_cursor) && 
+      if ((cp->with_verbose_cursor) && 
 	  (cp->cursor_on) &&
 	  (CURSOR(cp) >= ap->losamp) && 
 	  (CURSOR(cp) <= ap->hisamp))
@@ -1815,7 +1815,7 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
 #endif
   if (cp->show_y_zero) display_y_zero(cp);
       
-  if ((cp->verbose_cursor) && 
+  if ((cp->with_verbose_cursor) && 
       (cp->cursor_on) &&
       (CURSOR(cp) >= beg) && 
       (CURSOR(cp) <= end))
@@ -4542,7 +4542,7 @@ void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
       snd_info *sp;
 
       sp = cp->sound;
-      if (cp->verbose_cursor)
+      if (cp->with_verbose_cursor)
 	show_cursor_info(cp); 
 
       if (redisplay != CURSOR_IN_VIEW)
@@ -4649,12 +4649,12 @@ void cursor_moveto_without_verbosity(chan_info *cp, mus_long_t samp)
 {
   bool old_verbose;
   int old_sync;
-  old_verbose = cp->verbose_cursor;
+  old_verbose = cp->with_verbose_cursor;
   old_sync = cp->sound->sync;
-  cp->verbose_cursor = false;
+  cp->with_verbose_cursor = false;
   cp->sound->sync = 0;
   cursor_moveto(cp, samp);
-  cp->verbose_cursor = old_verbose;
+  cp->with_verbose_cursor = old_verbose;
   cp->sound->sync = old_sync;
 }
 
@@ -5876,7 +5876,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
       break;
       
     case CLICK_FFT_MAIN:
-      if (cp->verbose_cursor)
+      if (cp->with_verbose_cursor)
 	{
 	  char *str;
 	  str = describe_fft_point(cp, x, y);
@@ -6398,7 +6398,7 @@ void draw_inset_line_cursor(chan_info *cp, graphics_context *ax)
 typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GRAPH_LISP_P, CP_AP_LOSAMP, CP_AP_HISAMP, CP_SQUELCH_UPDATE,
 	      CP_EDIT_CTR, CP_CURSOR_STYLE, CP_EDIT_HOOK, CP_UNDO_HOOK, CP_AFTER_EDIT_HOOK,
 	      CP_SHOW_Y_ZERO, CP_SHOW_MARKS, CP_TIME_GRAPH_TYPE, CP_WAVO_HOP, CP_WAVO_TRACE, CP_MAX_TRANSFORM_PEAKS, 
-	      CP_SHOW_TRANSFORM_PEAKS, CP_ZERO_PAD, CP_VERBOSE_CURSOR, CP_FFT_LOG_FREQUENCY, CP_FFT_LOG_MAGNITUDE,
+	      CP_SHOW_TRANSFORM_PEAKS, CP_ZERO_PAD, CP_WITH_VERBOSE_CURSOR, CP_FFT_LOG_FREQUENCY, CP_FFT_LOG_MAGNITUDE,
 	      CP_WAVELET_TYPE, CP_SPECTRO_HOP, CP_TRANSFORM_SIZE, CP_TRANSFORM_GRAPH_TYPE, CP_FFT_WINDOW, CP_TRANSFORM_TYPE,
 	      CP_TRANSFORM_NORMALIZATION, CP_SHOW_MIX_WAVEFORMS, CP_TIME_GRAPH_STYLE, CP_LISP_GRAPH_STYLE, CP_TRANSFORM_GRAPH_STYLE, CP_DOT_SIZE,
 	      CP_SHOW_AXES, CP_GRAPHS_HORIZONTAL, CP_CURSOR_SIZE, CP_CURSOR_POSITION,
@@ -6514,12 +6514,12 @@ static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_ZERO_PAD:                return(C_TO_XEN_INT(cp->zero_pad));                                 break;
 	    case CP_WAVELET_TYPE:            return(C_TO_XEN_INT(cp->wavelet_type));                             break;
 	    case CP_SHOW_TRANSFORM_PEAKS:    return(C_TO_XEN_BOOLEAN(cp->show_transform_peaks));                 break;
-	    case CP_VERBOSE_CURSOR:          return(C_TO_XEN_BOOLEAN(cp->verbose_cursor));                       break;
+	    case CP_WITH_VERBOSE_CURSOR:     return(C_TO_XEN_BOOLEAN(cp->with_verbose_cursor));                  break;
 	    case CP_FFT_LOG_FREQUENCY:       return(C_TO_XEN_BOOLEAN(cp->fft_log_frequency));                    break;
 	    case CP_FFT_LOG_MAGNITUDE:       return(C_TO_XEN_BOOLEAN(cp->fft_log_magnitude));                    break;
 	    case CP_FFT_WITH_PHASES:         return(C_TO_XEN_BOOLEAN(cp->fft_with_phases));                      break;
 	    case CP_SPECTRO_HOP:             return(C_TO_XEN_INT(cp->spectro_hop));                              break;
-	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_LONG_LONG(cp->transform_size));                       break;
+	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_LONG_LONG(cp->transform_size));                     break;
 	    case CP_TRANSFORM_GRAPH_TYPE:    return(C_TO_XEN_INT((int)(cp->transform_graph_type)));              break;
 	    case CP_FFT_WINDOW:              return(C_TO_XEN_INT((int)(cp->fft_window)));                        break;
 	    case CP_TRANSFORM_TYPE:          return(C_INT_TO_XEN_TRANSFORM(cp->transform_type));                 break;
@@ -6898,9 +6898,9 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
       return(C_TO_XEN_BOOLEAN(cp->show_transform_peaks));
       break;
 
-    case CP_VERBOSE_CURSOR:
-      cp->verbose_cursor = XEN_TO_C_BOOLEAN(on); 
-      return(C_TO_XEN_BOOLEAN(cp->verbose_cursor));
+    case CP_WITH_VERBOSE_CURSOR:
+      cp->with_verbose_cursor = XEN_TO_C_BOOLEAN(on); 
+      return(C_TO_XEN_BOOLEAN(cp->with_verbose_cursor));
       break;
 
     case CP_FFT_LOG_FREQUENCY:
@@ -8337,37 +8337,37 @@ WITH_THREE_SETTER_ARGS(g_set_show_mix_waveforms_reversed, g_set_show_mix_wavefor
 
 
 
-static XEN g_verbose_cursor(XEN snd, XEN chn)
+static XEN g_with_verbose_cursor(XEN snd, XEN chn)
 {
-  #define H_verbose_cursor "(" S_with_verbose_cursor " :optional snd chn): " PROC_TRUE " if the cursor's position and so on is displayed in the status area"
+  #define H_with_verbose_cursor "(" S_with_verbose_cursor " :optional snd chn): " PROC_TRUE " if the cursor's position and so on is displayed in the status area"
   if (XEN_BOUND_P(snd))
-    return(channel_get(snd, chn, CP_VERBOSE_CURSOR, S_with_verbose_cursor));
-  return(C_TO_XEN_BOOLEAN(verbose_cursor(ss)));
+    return(channel_get(snd, chn, CP_WITH_VERBOSE_CURSOR, S_with_verbose_cursor));
+  return(C_TO_XEN_BOOLEAN(with_verbose_cursor(ss)));
 }
 
-static void chans_verbose_cursor(chan_info *cp, bool value)
+static void chans_with_verbose_cursor(chan_info *cp, bool value)
 {
-  cp->verbose_cursor = value;
+  cp->with_verbose_cursor = value;
   update_graph(cp);
 }
 
-void set_verbose_cursor(bool val)
+void set_with_verbose_cursor(bool val)
 {
-  in_set_verbose_cursor(val);
+  in_set_with_verbose_cursor(val);
   if (val == 0) for_each_sound(clear_status_area);
-  for_each_chan_with_bool(chans_verbose_cursor, val);
+  for_each_chan_with_bool(chans_with_verbose_cursor, val);
 }
 
-static XEN g_set_verbose_cursor(XEN on, XEN snd, XEN chn)
+static XEN g_set_with_verbose_cursor(XEN on, XEN snd, XEN chn)
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_with_verbose_cursor, "a boolean");
   if (XEN_BOUND_P(snd))
-    return(channel_set(snd, chn, on, CP_VERBOSE_CURSOR, S_setB S_with_verbose_cursor));
-  set_verbose_cursor(XEN_TO_C_BOOLEAN(on));
-  return(C_TO_XEN_BOOLEAN(verbose_cursor(ss)));
+    return(channel_set(snd, chn, on, CP_WITH_VERBOSE_CURSOR, S_setB S_with_verbose_cursor));
+  set_with_verbose_cursor(XEN_TO_C_BOOLEAN(on));
+  return(C_TO_XEN_BOOLEAN(with_verbose_cursor(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_verbose_cursor_reversed, g_set_verbose_cursor)
+WITH_THREE_SETTER_ARGS(g_set_with_verbose_cursor_reversed, g_set_with_verbose_cursor)
 
 
 
@@ -9720,8 +9720,8 @@ XEN_ARGIFY_2(g_show_transform_peaks_w, g_show_transform_peaks)
 XEN_ARGIFY_3(g_set_show_transform_peaks_w, g_set_show_transform_peaks)
 XEN_ARGIFY_2(g_zero_pad_w, g_zero_pad)
 XEN_ARGIFY_3(g_set_zero_pad_w, g_set_zero_pad)
-XEN_ARGIFY_2(g_verbose_cursor_w, g_verbose_cursor)
-XEN_ARGIFY_3(g_set_verbose_cursor_w, g_set_verbose_cursor)
+XEN_ARGIFY_2(g_with_verbose_cursor_w, g_with_verbose_cursor)
+XEN_ARGIFY_3(g_set_with_verbose_cursor_w, g_set_with_verbose_cursor)
 XEN_ARGIFY_2(g_fft_log_frequency_w, g_fft_log_frequency)
 XEN_ARGIFY_3(g_set_fft_log_frequency_w, g_set_fft_log_frequency)
 XEN_ARGIFY_2(g_fft_log_magnitude_w, g_fft_log_magnitude)
@@ -9937,8 +9937,8 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_zero_pad, g_zero_pad_w, H_zero_pad,
 					    S_setB S_zero_pad, g_set_zero_pad_w, g_set_zero_pad_reversed, 0, 2, 1, 2);
   
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_with_verbose_cursor, g_verbose_cursor_w, H_verbose_cursor,
-					    S_setB S_with_verbose_cursor, g_set_verbose_cursor_w, g_set_verbose_cursor_reversed, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_with_verbose_cursor, g_with_verbose_cursor_w, H_with_verbose_cursor,
+					    S_setB S_with_verbose_cursor, g_set_with_verbose_cursor_w, g_set_with_verbose_cursor_reversed, 0, 2, 1, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_fft_log_frequency, g_fft_log_frequency_w, H_fft_log_frequency,
 					    S_setB S_fft_log_frequency, g_set_fft_log_frequency_w, g_set_fft_log_frequency_reversed, 0, 2, 1, 2);

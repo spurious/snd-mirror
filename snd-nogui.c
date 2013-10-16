@@ -231,6 +231,7 @@ void post_fft_popup_menu(void *ev) {}
 void post_selection_popup_menu(void *ev) {}
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows) {}
 widget_t make_preferences_dialog(void) {return(NULL_WIDGET);}
+void update_sound_label(snd_info *sp) {}
 
 void auto_update_restart(void) {}
 

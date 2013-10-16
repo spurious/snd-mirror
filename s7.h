@@ -524,8 +524,8 @@ bool s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 
 void s7_define(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value);
 bool s7_is_defined(s7_scheme *sc, const char *name);
-void s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value);
-void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value);
+s7_pointer s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value);
+s7_pointer s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value);
 bool s7_is_constant(s7_pointer p);
 
   /* These three functions add a symbol and its binding to either the top-level environment

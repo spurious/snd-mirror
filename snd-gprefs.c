@@ -2045,10 +2045,10 @@ widget_t make_preferences_dialog(void)
     make_inner_label("  cursor options", dpy_box);
 
     prf = prefs_row_with_toggle("report cursor location as it moves", S_with_verbose_cursor,
-				rts_verbose_cursor = verbose_cursor(ss), 
+				rts_with_verbose_cursor = with_verbose_cursor(ss), 
 				dpy_box,
-				verbose_cursor_toggle);
-    remember_pref(prf, reflect_verbose_cursor, save_verbose_cursor, help_verbose_cursor, NULL, revert_verbose_cursor);
+				with_verbose_cursor_toggle);
+    remember_pref(prf, reflect_with_verbose_cursor, save_with_verbose_cursor, help_with_verbose_cursor, NULL, revert_with_verbose_cursor);
 
     make_inter_variable_separator(dpy_box);
     {

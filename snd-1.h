@@ -310,7 +310,7 @@ typedef struct chan_info {
   mus_float_t spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle;
   mus_float_t spectrum_end, spectrum_start;
   mus_float_t lin_dB, min_dB, fft_window_alpha, fft_window_beta, beats_per_minute, grid_density;
-  bool show_y_zero, show_marks, verbose_cursor;
+  bool show_y_zero, show_marks, with_verbose_cursor;
   with_grid_t show_grid;
   int wavo_hop, wavo_trace, zero_pad, wavelet_type, max_transform_peaks, beats_per_measure;
   x_axis_style_t x_axis_style;
@@ -444,6 +444,7 @@ typedef struct snd_state {
   int init_window_width, init_window_height;
   int init_window_x, init_window_y;
   bool graph_hook_active, lisp_graph_hook_active;
+
   bool Show_Transform_Peaks, Show_Y_Zero, Show_Marks;
   with_grid_t Show_Grid;
   bool Fft_Log_Frequency, Fft_Log_Magnitude, Fft_With_Phases;
@@ -454,7 +455,7 @@ typedef struct snd_state {
   char *Eps_File, *Temp_Dir, *Save_Dir, *Ladspa_Dir, *Peak_Env_Dir;
   char *Listener_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
   char *orig_listener_font, *orig_axis_label_font, *orig_axis_numbers_font, *orig_tiny_font, *orig_peaks_font, *orig_bold_peaks_font;
-  bool Verbose_Cursor, With_Inset_Graph, With_Pointer_Focus, With_Smpte_Label, With_Interrupts;
+  bool With_Verbose_Cursor, With_Inset_Graph, With_Pointer_Focus, With_Smpte_Label, With_Interrupts;
   int Enved_Filter_Order;
   mus_float_t Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size, Log_Freq_Start;
   mus_float_t Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle;
@@ -480,7 +481,7 @@ typedef struct snd_state {
   bool Auto_Resize, Auto_Update;
   int Max_Regions, Max_Transform_Peaks;
   int Audio_Output_Device, Audio_Input_Device;
-  bool Show_Backtrace, With_GL, With_Relative_Panes;
+  bool With_GL, With_Relative_Panes;
   int Print_Length, Dac_Size, View_Files_Sort;
   bool Dac_Combines_Channels, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
@@ -506,13 +507,78 @@ typedef struct snd_state {
   mus_float_t Min_dB;
   bool Show_Controls;
   tracking_cursor_t With_Tracking_Cursor;
+  char *HTML_Dir, *HTML_Program, *Open_File_Dialog_Directory;
+
+#if HAVE_SCHEME
+  s7_pointer show_transform_peaks_symbol, show_y_zero_symbol, show_marks_symbol,
+    show_grid_symbol,
+    fft_log_frequency_symbol, fft_log_magnitude_symbol, fft_with_phases_symbol,
+    channel_style_symbol,
+    sync_style_symbol,
+    show_axes_symbol,
+    eps_file_symbol, temp_dir_symbol, save_dir_symbol, ladspa_dir_symbol, peak_env_dir_symbol,
+    listener_font_symbol, axis_label_font_symbol, axis_numbers_font_symbol, tiny_font_symbol, peaks_font_symbol, bold_peaks_font_symbol,
+    with_verbose_cursor_symbol, with_inset_graph_symbol, with_pointer_focus_symbol, with_smpte_label_symbol, with_interrupts_symbol,
+    enved_filter_order_symbol,
+    eps_left_margin_symbol, eps_bottom_margin_symbol, eps_size_symbol, log_freq_start_symbol,
+    spectro_x_scale_symbol, spectro_y_scale_symbol, spectro_z_scale_symbol, spectro_z_angle_symbol, spectro_x_angle_symbol, spectro_y_angle_symbol,
+    spectrum_end_symbol, spectrum_start_symbol,
+    default_output_header_type_symbol, default_output_data_format_symbol, default_output_chans_symbol, default_output_srate_symbol,
+    spectro_hop_symbol, color_map_symbol, color_map_size_symbol, wavelet_type_symbol, transform_type_symbol,
+    dot_size_symbol,
+    zero_pad_symbol, wavo_hop_symbol, wavo_trace_symbol,
+    transform_size_symbol,
+    fft_window_symbol,
+    transform_graph_type_symbol, time_graph_type_symbol,
+    ask_before_overwrite_symbol, ask_about_unsaved_edits_symbol, show_full_duration_symbol, show_full_range_symbol, remember_sound_state_symbol,
+    save_as_dialog_src_symbol, save_as_dialog_auto_comment_symbol, with_toolbar_symbol, with_tooltips_symbol, with_menu_icons_symbol,
+    fft_window_alpha_symbol, fft_window_beta_symbol, grid_density_symbol, initial_beg_symbol, initial_dur_symbol,
+    color_scale_symbol, color_cutoff_symbol, beats_per_minute_symbol,
+    color_inverted_symbol, show_mix_waveforms_symbol,
+    mix_waveform_height_symbol, beats_per_measure_symbol,
+    transform_normalization_symbol,
+    sinc_width_symbol,
+    x_axis_style_symbol,
+    zoom_focus_style_symbol,
+    graph_style_symbol, region_graph_style_symbol,
+    auto_resize_symbol, auto_update_symbol,
+    max_regions_symbol, max_transform_peaks_symbol,
+    audio_output_device_symbol, audio_input_device_symbol,
+    with_gl_symbol, with_relative_panes_symbol,
+    print_length_symbol, dac_size_symbol, view_files_sort_symbol,
+    dac_combines_channels_symbol, show_selection_transform_symbol, with_mix_tags_symbol, selection_creates_region_symbol,
+    save_state_file_symbol, listener_prompt_symbol,
+    enved_base_symbol, enved_power_symbol, auto_update_interval_symbol,
+    enved_wave_p_symbol, graphs_horizontal_symbol, with_background_processes_symbol, with_file_monitor_symbol,
+    enved_style_symbol,
+    graph_cursor_symbol, mix_tag_width_symbol, mix_tag_height_symbol, mark_tag_height_symbol, mark_tag_width_symbol,
+    enved_target_symbol,
+    clipping_symbol, show_indices_symbol, just_sounds_symbol,
+    cursor_size_symbol,
+    cursor_style_symbol, tracking_cursor_style_symbol,
+    filter_control_in_db_symbol, filter_control_in_hz_symbol, show_sonogram_cursor_symbol,
+    speed_control_tones_symbol,
+    speed_control_style_symbol,
+    expand_control_length_symbol, expand_control_ramp_symbol, expand_control_hop_symbol, expand_control_jitter_symbol,
+    contrast_control_amp_symbol,
+    reverb_control_feedback_symbol, reverb_control_lowpass_symbol,
+    reverb_control_decay_symbol, cursor_update_interval_symbol,
+    contrast_control_min_symbol, contrast_control_max_symbol, expand_control_min_symbol, expand_control_max_symbol, speed_control_min_symbol, speed_control_max_symbol,
+    amp_control_min_symbol, amp_control_max_symbol, reverb_control_scale_min_symbol, reverb_control_scale_max_symbol,
+    reverb_control_length_min_symbol, reverb_control_length_max_symbol,
+    filter_control_order_symbol, cursor_location_offset_symbol, play_arrow_size_symbol,
+    min_db_symbol,
+    show_controls_symbol,
+    with_tracking_cursor_symbol,
+    html_dir_symbol, html_program_symbol, open_file_dialog_directory_symbol;
+#endif
+
   bool tracking;
   XEN cursor_proc;
   int cursor_proc_loc, listener_prompt_length;
   XEN zoom_focus_proc;
   int zoom_focus_proc_loc;
   mus_float_t lin_dB;
-  char *HTML_Dir, *HTML_Program, *Open_File_Dialog_Directory;
   char *io_error_info;
   int deferred_regions;
   open_requestor_t open_requestor;
@@ -1420,7 +1486,7 @@ graphics_context *cursor_context(chan_info *cp);
 void calculate_fft(chan_info *cp);
 void set_min_db(mus_float_t db);
 void set_x_axis_style(x_axis_style_t val);
-void set_verbose_cursor(bool val);
+void set_with_verbose_cursor(bool val);
 void set_graph_style(graph_style_t val);
 void set_show_marks(bool val);
 void set_show_y_zero(bool val);

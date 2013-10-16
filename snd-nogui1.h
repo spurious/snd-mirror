@@ -221,7 +221,7 @@ void start_progress_report(chan_info *cp);
 void finish_progress_report(chan_info *cp);
 void progress_report(chan_info *cp, mus_float_t pct);
 void reflect_sound_selection(snd_info *sp);
-
+void update_sound_label(snd_info *sp);
 
 /* -------- snd-xfile.c -------- */
 

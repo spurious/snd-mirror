@@ -96,7 +96,7 @@ static void prepare_env_edit(env *new_env)
 {
   prepare_enved_edit(new_env);
   if (new_env->base == 1.0)
-    set_enved_style(ENVELOPE_LINEAR);
+    {set_enved_style(ENVELOPE_LINEAR);}
   else
     {
       set_enved_base(new_env->base);
@@ -772,8 +772,8 @@ static void make_base_label(mus_float_t bval)
     {
       active_env->base = enved_base(ss);
       if (active_env->base == 1.0)
-	set_enved_style(ENVELOPE_LINEAR);
-      else set_enved_style(ENVELOPE_EXPONENTIAL);
+	{set_enved_style(ENVELOPE_LINEAR);}
+      else {set_enved_style(ENVELOPE_EXPONENTIAL);}
       env_redisplay();
     }
 }
@@ -1480,8 +1480,8 @@ void set_enved_filter_order(int order)
   if ((order > 0) && (order < 2000))
     {
       if (order & 1) 
-	in_set_enved_filter_order(order + 1);
-      else in_set_enved_filter_order(order);
+	{in_set_enved_filter_order(order + 1);}
+      else {in_set_enved_filter_order(order);}
       if (enved_dialog)
 	{
 	  widget_int_to_text(orderL, enved_filter_order(ss));
