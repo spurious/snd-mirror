@@ -641,24 +641,30 @@ overall window stick to one size.  The Snd variable associated
 with this is "auto-resize"; it can be accessed as:
 </p>
 <pre class="indented">
-  Scheme: (auto-resize)
+  Scheme: *auto-resize* or (auto-resize)
   Ruby:   auto_resize()
   Forth:  auto-resize
 </pre>
 <p>and set via:</p>
 <pre class="indented">
-  Scheme: (set! (auto-resize) #f)
+  Scheme: (set! *auto-resize* #f) or (set! (auto-resize) #f)
   Ruby:   set_auto_resize(false)
   Forth:  #f set-auto-resize
 </pre>
 <p>
-For lousy historical reasons, the variables are presented as a special kind of function, rather than as bare variables.
-The statement (set! (auto-resize) #f) can be placed in your ~/.snd initialization file
+I originally wanted a variable like auto-resize to look like a variable in source files, but 
+in those bygone days (1996), that was not possible:  I had to use a dumb "procedure-with-setter" instead.
+So you'd sigh and access auto-resize by calling it as a function: <code>(set! (auto-resize) #t)</code>.
+Now in s7, the same thing is also named *auto-resize*, but it's finally a variable,
+so you can use <code>(set! *auto-resize* #t)</code>.  The documentation of course
+is out of date, and mostly uses the old form.  In any case,
+the statement (set! *auto-resize* #f) can be placed in your ~/.snd initialization file
 to make it the default setting for your version of Snd, or placed
 in a separate file of Scheme code and loaded at any time via the load
 function. </p>
 
-<p>The variables affecting Snd's overall behavior are:
+<p>The functions affecting Snd's overall behavior are given below; in s7 there is
+also the variable of the same name, but with "*" around it: *auto-resize*.
 </p>
 
 <div class="spacer"></div>

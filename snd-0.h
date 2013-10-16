@@ -1252,7 +1252,7 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define show_grid(ss) ss->Show_Grid
 #if HAVE_SCHEME
-  #define in_set_show_grid(a) {ss->Show_Grid = a; s7_symbol_set_value(s7, ss->show_grid_symbol, s7_make_integer(s7, a));}
+  #define in_set_show_grid(a) {ss->Show_Grid = a; s7_symbol_set_value(s7, ss->show_grid_symbol, s7_make_boolean(s7, a));}
 #else
   #define in_set_show_grid(a) ss->Show_Grid = a
 #endif

@@ -1,34 +1,34 @@
 ;;; Snd tests
 ;;;
 ;;;  test 0: constants                          [547]
-;;;  test 1: defaults                           [1009]
-;;;  test 2: headers                            [1220]
-;;;  test 3: variables                          [1535]
-;;;  test 4: sndlib                             [2100]
-;;;  test 5: simple overall checks              [4459]
-;;;  test 6: float-vectors                      [9222]
-;;;  test 7: colors                             [9516]
-;;;  test 8: clm                                [10035]
-;;;  test 9: mix                                [20993]
-;;;  test 10: marks                             [22782]
-;;;  test 11: dialogs                           [23741]
-;;;  test 12: extensions                        [23912]
-;;;  test 13: menus, edit lists, hooks, etc     [24178]
-;;;  test 14: all together now                  [25552]
-;;;  test 15: chan-local vars                   [26430]
-;;;  test 16: regularized funcs                 [28188]
-;;;  test 17: dialogs and graphics              [31799]
-;;;  test 18: save and restore                  [31910]
-;;;  test 19: transforms                        [33532]
-;;;  test 20: new stuff                         [35647]
-;;;  test 21: optimizer                         [36853]
-;;;  test 22: with-sound                        [37377]
-;;;  test 23: X/Xt/Xm                           [40322]
-;;;  test 24: GL                                [44004]
-;;;  test 25: errors                            [44128]
-;;;  test 26: s7                                [45662]
-;;;  test all done                              [45728]
-;;;  test the end                               [45911]
+;;;  test 1: defaults                           [1253]
+;;;  test 2: headers                            [1616]
+;;;  test 3: variables                          [1931]
+;;;  test 4: sndlib                             [2497]
+;;;  test 5: simple overall checks              [4856]
+;;;  test 6: float-vectors                      [9619]
+;;;  test 7: colors                             [9913]
+;;;  test 8: clm                                [10432]
+;;;  test 9: mix                                [21390]
+;;;  test 10: marks                             [23179]
+;;;  test 11: dialogs                           [24138]
+;;;  test 12: extensions                        [24312]
+;;;  test 13: menus, edit lists, hooks, etc     [24578]
+;;;  test 14: all together now                  [25952]
+;;;  test 15: chan-local vars                   [26830]
+;;;  test 16: regularized funcs                 [28588]
+;;;  test 17: dialogs and graphics              [32199]
+;;;  test 18: save and restore                  [32312]
+;;;  test 19: transforms                        [33934]
+;;;  test 20: new stuff                         [36049]
+;;;  test 21: optimizer                         [37255]
+;;;  test 22: with-sound                        [37779]
+;;;  test 23: X/Xt/Xm                           [40725]
+;;;  test 24: GL                                [44407]
+;;;  test 25: errors                            [44531]
+;;;  test 26: s7                                [46065]
+;;;  test all done                              [46131]
+;;;  test the end                               [46314]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -1453,6 +1453,158 @@
       'zoom-focus-style (zoom-focus-style) 2 
       ))
     (if *snd-opened-sound* (snd-display #__line__ ";*snd-opened-sound*: ~A" *snd-opened-sound*))
+
+    (let ((s (open-sound "oboe.snd")))
+    (letrec ((test-vars
+	      (lambda (lst)
+		(if (not (null? lst))
+		    (let* ((args (car lst))
+			   (name (args 0))
+			   (getfnc (args 1))
+			   (setfnc (lambda (val) (set! (getfnc) val)))
+			   (initval (args 2))
+			   (newval (args 3))
+			   (star-name (args 4)))
+		      (setfnc newval)
+		      (let ((nowval (symbol->value star-name)))
+			(if (and (not (equal? newval nowval))
+				 (or (not (list? newval))
+				     (not (feql newval nowval))))
+			    (if (and (number? newval) (not (rational? newval)))
+				(if (> (abs (- newval nowval)) .01)
+				    (snd-display #__line__ ";~A is not ~A (~A)" star-name newval nowval))
+				(snd-display #__line__ ";~A is not ~A (~A)" star-name newval nowval)))
+			(eval `(set! ,star-name ,initval))
+			(if (not (morally-equal? (getfnc) initval))
+			    (snd-display #__line__ ";* ~A is not ~A" name initval))
+			(eval `(set! ,star-name ,newval))
+			(let ((nowval (getfnc)))
+			  (if (and (not (equal? newval nowval))
+				   (or (not (list? newval))
+				       (not (feql newval nowval))))
+			      (if (and (number? newval) (not (rational? newval)))
+				  (if (> (abs (- newval nowval)) .01)
+				      (snd-display #__line__ ";set! ~A is not ~A (~A)" star-name newval nowval))
+				  (snd-display #__line__ ";set! ~A is not ~A (~A)" star-name newval nowval)))
+			  (setfnc initval))
+			(test-vars (cdr lst))))))))
+      (test-vars 
+       (list
+	(list 'ask-about-unsaved-edits ask-about-unsaved-edits #f #t '*ask-about-unsaved-edits*)
+	(list 'ask-before-overwrite ask-before-overwrite #f #t '*ask-before-overwrite*)
+	(list 'audio-input-device audio-input-device 0 1 '*audio-input-device*)
+	(list 'audio-output-device audio-output-device 0 1 '*audio-output-device*)
+	(list 'auto-resize auto-resize #t #f '*auto-resize*)
+	(list 'auto-update auto-update #f #t '*auto-update*)
+	(list 'channel-style channel-style 0 1 '*channel-style*)
+	(list 'color-cutoff color-cutoff 0.003 0.01 '*color-cutoff*)
+	(list 'color-inverted color-inverted #t #f '*color-inverted*)
+	(list 'color-scale color-scale 1.0 0.5 '*color-scale*)
+	(list 'contrast-control-amp contrast-control-amp 1.0 0.5 '*contrast-control-amp*)
+	(list 'auto-update-interval auto-update-interval 60.0 120.0 '*auto-update-interval*)
+	(list 'cursor-update-interval cursor-update-interval 0.05 0.10 '*cursor-update-interval*)
+	(list 'cursor-location-offset cursor-location-offset 0 32768 '*cursor-location-offset*)
+	(list 'with-tracking-cursor with-tracking-cursor #f #t '*with-tracking-cursor*)
+	(list 'cursor-size cursor-size 15 30 '*cursor-size*)
+	(list 'cursor-style cursor-style cursor-cross cursor-line '*cursor-style*)
+	(list 'tracking-cursor-style tracking-cursor-style cursor-line cursor-cross '*tracking-cursor-style*)
+	(list 'dac-combines-channels dac-combines-channels #t #f '*dac-combines-channels*)
+	(list 'dac-size dac-size 256 512 '*dac-size*)
+	(list 'clipping clipping #f #t '*clipping*)
+	(list 'default-output-chans default-output-chans 1 2 '*default-output-chans*)
+	(list 'default-output-data-format default-output-data-format 1 1 '*default-output-data-format*)
+	(list 'default-output-srate default-output-srate 22050 44100 '*default-output-srate*)
+	(list 'default-output-header-type default-output-header-type mus-next mus-aifc '*default-output-header-type*)
+	(list 'dot-size dot-size 1 4 '*dot-size*)
+	(list 'enved-base enved-base 1.0  1.5 '*enved-base*)
+	(list 'enved-style enved-style envelope-linear envelope-exponential '*enved-style*)
+	(list 'enved-power enved-power 3.0 3.5 '*enved-power*)
+	(list 'enved-target enved-target 0 1 '*enved-target*)
+	(list 'enved-wave? enved-wave? #f #t '*enved-wave?*)
+	(list 'eps-file eps-file "snd.eps" "snd-1.eps" '*eps-file*)
+	(list 'eps-left-margin eps-left-margin 0.0 72.0 '*eps-left-margin*)
+	(list 'eps-size eps-size 1.0 2.0 '*eps-size*)
+	(list 'eps-bottom-margin eps-bottom-margin 0.0 36.0 '*eps-bottom-margin*)
+	(list 'expand-control-hop expand-control-hop 0.05 0.1 '*expand-control-hop*)
+	(list 'expand-control-jitter expand-control-jitter 0.1 0.2 '*expand-control-jitter*)
+	(list 'expand-control-length expand-control-length 0.15 0.2 '*expand-control-length*)
+	(list 'expand-control-ramp expand-control-ramp 0.4 0.2 '*expand-control-ramp*)
+	(list 'fft-window-alpha fft-window-alpha 0.0  1.0 '*fft-window-alpha*)
+	(list 'fft-window-beta fft-window-beta 0.0  0.5 '*fft-window-beta*)
+	(list 'fft-log-frequency fft-log-frequency #f #t '*fft-log-frequency*)
+	(list 'fft-log-magnitude fft-log-magnitude #f #t '*fft-log-magnitude*)
+	(list 'fft-with-phases fft-with-phases #f #t '*fft-with-phases*)
+	(list 'transform-size transform-size 512 1024 '*transform-size*)
+	(list 'transform-graph-type transform-graph-type graph-once graph-as-sonogram '*transform-graph-type*)
+	(list 'fft-window fft-window 6 5 '*fft-window*)
+	(list 'filter-control-in-dB filter-control-in-dB #f #t '*filter-control-in-dB*)
+	(list 'enved-filter-order enved-filter-order 40 20 '*enved-filter-order*)
+	(list 'filter-control-in-hz filter-control-in-hz #f #t '*filter-control-in-hz*)
+	(list 'filter-control-order filter-control-order 20 40 '*filter-control-order*)
+	(list 'graph-cursor graph-cursor 34 32 '*graph-cursor*)
+	(list 'graph-style graph-style 0 1 '*graph-style*)
+	(list 'initial-beg initial-beg 0.0 1.0 '*initial-beg*)
+	(list 'initial-dur initial-dur 0.1 1.0 '*initial-dur*)
+	(list 'just-sounds just-sounds #f #t '*just-sounds*)
+	(list 'listener-prompt listener-prompt ">" ":" '*listener-prompt*)
+	(list 'max-transform-peaks max-transform-peaks 100 10 '*max-transform-peaks*)
+	(list 'max-regions max-regions 16 6 '*max-regions*)
+	(list 'min-dB min-dB -60.0 -90.0 '*min-dB*)
+	(list 'log-freq-start log-freq-start 32.0 10.0 '*log-freq-start*)
+	(list 'mix-waveform-height mix-waveform-height 20 40 '*mix-waveform-height*)
+	(list 'mix-tag-height mix-tag-height 14 20 '*mix-tag-height*)
+	(list 'mix-tag-width mix-tag-width 6 20 '*mix-tag-width*)
+	(list 'mark-tag-height mark-tag-height 4 20 '*mark-tag-height*)
+	(list 'mark-tag-width mark-tag-width 10 20 '*mark-tag-width*)
+	(list 'selection-creates-region selection-creates-region #t #f '*selection-creates-region*)
+	(list 'transform-normalization transform-normalization normalize-by-channel dont-normalize '*transform-normalization*)
+	(list 'play-arrow-size play-arrow-size 10 16 '*play-arrow-size*)
+	(list 'print-length print-length 12 16 '*print-length*)
+	(list 'region-graph-style region-graph-style graph-lines graph-lollipops '*region-graph-style*)
+	(list 'reverb-control-decay reverb-control-decay 1.0 2.0 '*reverb-control-decay*)
+	(list 'reverb-control-feedback reverb-control-feedback 1.09 1.6 '*reverb-control-feedback*)
+	(list 'reverb-control-lowpass reverb-control-lowpass 0.7 0.9 '*reverb-control-lowpass*)
+	(list 'show-axes show-axes 1 0 '*show-axes*)
+	(list 'show-full-duration show-full-duration #f #t '*show-full-duration*)
+	(list 'show-full-range show-full-range #f #t '*show-full-range*)
+	(list 'show-transform-peaks show-transform-peaks #f #t '*show-transform-peaks*)
+	(list 'show-indices show-indices #f #t '*show-indices*)
+	(list 'show-marks show-marks #t #f '*show-marks*)
+	(list 'show-mix-waveforms show-mix-waveforms #t #f '*show-mix-waveforms*)
+	(list 'show-selection-transform show-selection-transform #f #t '*show-selection-transform*)
+	(list 'show-y-zero show-y-zero #f #t '*show-y-zero*)
+	(list 'show-grid show-grid #f #t '*show-grid*)
+	(list 'grid-density grid-density 1.0 0.5 '*grid-density*)
+	(list 'show-sonogram-cursor show-sonogram-cursor #f #t '*show-sonogram-cursor*)
+	(list 'sinc-width sinc-width 10 40 '*sinc-width*)
+	(list 'spectrum-end spectrum-end 1.0 0.7 '*spectrum-end*)
+	(list 'spectro-hop spectro-hop 4 10 '*spectro-hop*)
+	(list 'spectrum-start spectrum-start 0.0 0.1 '*spectrum-start*)
+	(list 'spectro-x-angle spectro-x-angle (if (provided? 'gl) 300.0 90.0) 60.0 '*spectro-x-angle*)
+	(list 'spectro-x-scale spectro-x-scale (if (provided? 'gl) 1.5 1.0) 2.0 '*spectro-x-scale*)
+	(list 'spectro-y-angle spectro-y-angle (if (provided? 'gl) 320.0 0.0) 60.0 '*spectro-y-angle*)
+	(list 'spectro-y-scale spectro-y-scale 1.0 2.0 '*spectro-y-scale*)
+	(list 'spectro-z-angle spectro-z-angle (if (provided? 'gl) 0.0 358.0) 60.0 '*spectro-z-angle*)
+	(list 'spectro-z-scale spectro-z-scale (if (provided? 'gl) 1.0 0.1) 0.2 '*spectro-z-scale*)
+	(list 'speed-control-style speed-control-style 0 1 '*speed-control-style*)
+	(list 'speed-control-tones speed-control-tones 12 18 '*speed-control-tones*)
+	(list 'sync-style sync-style sync-by-sound sync-all '*sync-style*)
+	(list 'tiny-font tiny-font (if (provided? 'snd-gtk) "Sans 8" "6x12") (if (provided? 'snd-gtk) "Monospace 10" "9x15") '*tiny-font*)
+	(list 'with-verbose-cursor with-verbose-cursor #f #t '*with-verbose-cursor*)
+	(list 'wavelet-type wavelet-type 0 1 '*wavelet-type*)
+	(list 'time-graph-type time-graph-type graph-once graph-as-wavogram '*time-graph-type*)
+	(list 'wavo-hop wavo-hop 3 6 '*wavo-hop*)
+	(list 'wavo-trace wavo-trace 64 128 '*wavo-trace*)
+	(list 'with-mix-tags with-mix-tags #t #f '*with-mix-tags*)
+	(list 'with-relative-panes with-relative-panes #t #f '*with-relative-panes*)
+	(list 'with-gl with-gl (provided? 'gl) #f '*with-gl*)
+	(list 'x-axis-style x-axis-style 0 1 '*x-axis-style*)
+	(list 'beats-per-minute beats-per-minute 30.0 120.0 '*beats-per-minute*)
+	(list 'beats-per-measure beats-per-measure 1 120 '*beats-per-measure*)
+	(list 'zero-pad zero-pad 0 1 '*zero-pad*)
+	(list 'zoom-focus-style zoom-focus-style 2 1 '*zoom-focus-style*))))
+    (close-sound s))
+
     (set! (ask-about-unsaved-edits) #f)
     (set! (remember-sound-state) #f)
     ))
@@ -1979,6 +2131,7 @@
 	(list 'beats-per-measure beats-per-measure 1 120)
 	(list 'zero-pad zero-pad 0 1)
 	(list 'zoom-focus-style zoom-focus-style 2 1))))
+
     (set! (ask-about-unsaved-edits) #f)    
     (letrec ((test-bad-args
 	      (lambda (lst)

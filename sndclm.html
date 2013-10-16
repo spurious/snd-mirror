@@ -7467,56 +7467,6 @@ See fullmix in clm-ins.scm for an extended example.
 In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_multiply.
 </p>
 
-<pre class="indented">
-&gt; (define f1 (make-frame 3 1.0 0.5 0.1))
-#&lt;unspecified&gt;
-&gt;f1
-#&lt;frame[3]: [1.000 0.500 0.100]&gt;
-&gt; (frame-ref f1 2)
-0.100000001490116
-&gt; (frame* f1 2.0)
-#&lt;frame[3]: [2.000 1.000 0.200]&gt;
-&gt; (define f2 (make-frame 3 0.0 1.0 0.0))
-#&lt;unspecified&gt;
-&gt; (frame+ f1 f2)
-#&lt;frame[3]: [1.000 1.500 0.100]&gt;
-&gt; (frame-&gt;sample f1 f2) ; dot-product in this case
-0.5
-&gt; (define m1 (make-mixer 3 1 0 0  0 1 0  0 0 2))
-#&lt;unspecified&gt;
-&gt;m1
-#&lt;mixer: chans: 3, [
- 1.000 0.000 0.000
- 0.000 1.000 0.000
- 0.000 0.000 2.000
-]&gt;
-&gt; (mixer-ref m1 2 2)
-2.0
-&gt; (frame-&gt;frame m1 f1)
-#&lt;frame[3]: [1.000 0.500 0.200]&gt;
-&gt; (mus-length m1)
-3
-&gt; (mus-data f1)
-#(1.0 0.5 0.1)
-&gt; (frame-set! f1 1 -.5) ; same as (set! (f1 1) -.5)
--0.5
-&gt;f1
-#&lt;frame[3]: [1.000 -0.500 0.100]&gt;
-&gt; (mixer-set! m1 0 1 0.5) ; same as (set! (m1 0 1) 0.5)
-0.5
-&gt;m1
-#&lt;mixer: chans: 3, [
- 1.000 0.500 0.000
- 0.000 1.000 0.000
- 0.000 0.000 2.000
-]&gt;
-</pre>
-
-<p>make-mixer! (with the exclamation point) overrides an internal size check.  Since the size
-is interpreted normally as the number of channels, make-mixer (without the trailing "!") imposes a maximum size that is pretty
-low (128 when last checked). 
-</p>
-
 
 
 <!--  FILE->SAMPLE  -->
@@ -7571,14 +7521,14 @@ object.
   ;; swap channels of stereo file
   (let ((input (make-file-&gt;frame "stereo.snd"))
 	(len (mus-sound-frames "stereo.snd"))
-	(frame (make-frame 2)))
+	(frame (make-vector 2 0.0 #t)))
     (do ((i 0 (+ 1 i)))
 	((= i len))
-      (file-&gt;frame input i frame)
+      (file-&gt;float-vector input i frame)
       (let ((val (frame 0)))
 	(set! (frame 0) (frame 1))
 	(set! (frame 1) val))
-      (frame-&gt;file *output* i frame))))
+      (float-vector-&gt;file *output* i frame))))
 </pre>
 </div>
 </td>
@@ -7652,27 +7602,6 @@ This is normally done for you by with-sound, but if you have your own
 output streams,
 and you forget to call mus-close, the GC will eventually do it for you.
 </p>
-
-<p>Here's a function to convert a sound file to some other header or data type using file-&gt;frame and frame-&gt;file:
-</p>
-
-<pre class="indented">
-(define* (convert-soundfile in-file out-file header data)
-  (with-sound (:output (or out-file "test.snd")
-	       :header-type (or header (mus-sound-header-type in-file))
-	       :data-format (or data (mus-sound-data-format in-file))
-	       :channels (mus-sound-chans in-file) 
-	       :srate (mus-sound-srate in-file))
-    (let ((r (<em class=red>make-file-&gt;frame</em> in-file))
-	  (len (mus-sound-frames in-file))
-	  (outf (make-frame (mus-sound-chans in-file))))
-      (do ((i 0 (+ i 1)))
-          ((= i len))
-	(<em class=red>file-&gt;frame</em> r i outf)
-	(<em class=red>frame-&gt;file</em> *output* i outf)))))
-
-(convert-soundfile "oboe.snd" "test.snd" mus-aifc mus-bfloat)
-</pre>
 
 
 
@@ -10044,21 +9973,6 @@ an increment of a phase variable.
 <p>
 This function determines how many mixer elements are printed by mus-describe.
 </p>
-
-<pre class="indented">
-&gt; (mus-array-print-length)
-8
-&gt; (define m1 (make-mixer 12))
-#&lt;unspecified&gt;
-&gt; (set! (mus-array-print-length) 3)
-8 ; set! returns the old value
-&gt;m1
-#&lt;mixer chans: 12, [
- 0.000 0.000 0.000...
- 0.000 0.000 0.000...
- 0.000 0.000 0.000...
-]&gt;
-</pre>
 
 
 

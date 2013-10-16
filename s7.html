@@ -267,17 +267,17 @@ most-positive-fixnum and most-negative-fixnum.
 s7 can be built with multiprecision support 
 for all types,  using the gmp, mpfr, and mpc libraries (set WITH_GMP to 1 in s7.c).  
 If multiprecision arithmetic is
-enabled, the following functions are included: bignum, bignum?, and bignum-precision.
-<em class=def id="bignumprecision">bignum-precision</em>, which defaults to 128, sets the number of bits each float takes.
-pi automatically reflects the current bignum-precision:
+enabled, the following functions are included: bignum, and bignum?, and the variable *bignum-precision*.
+<em class=def id="bignumprecision">*bignum-precision*</em>, defaults to 128; it sets the number of bits each float takes.
+pi automatically reflects the current *bignum-precision*:
 </p>
 
 <pre class="indented">
 &gt; pi
 3.141592653589793238462643383279502884195E0
-&gt; (bignum-precision)
+&gt; *bignum-precision*
 128
-&gt; (set! (bignum-precision) 256)
+&gt; (set! *bignum-precision* 256)
 256
 &gt; pi
 3.141592653589793238462643383279502884197169399375105820974944592307816406286198E0
@@ -302,7 +302,7 @@ Its argument is a string representing the desired number:
 <div class="indented">
 
 <p>In the non-gmp case, if s7 is built using doubles (s7_Double in s7.h), the float "epsilon" is
-around (expt 2 -53), or about 1e-16.  In the gmp case, it is around (expt 2 (- (bignum-precision))).
+around (expt 2 -53), or about 1e-16.  In the gmp case, it is around (expt 2 (- *bignum-precision*)).
 So in the default case (precision = 128), using gmp:
 </p>
 
@@ -324,13 +324,13 @@ So in the default case (precision = 128), using gmp:
 </pre>
 
 <p>In the gmp case, integers and ratios are limited only by the size of memory,
-but reals are limited by bignum-precision.  This means, for example, that
+but reals are limited by *bignum-precision*.  This means, for example, that
 </p>
 
 <pre class="indented">
-&gt; (floor 1e56) ; bignum-precision is 128
+&gt; (floor 1e56) ; *bignum-precision* is 128
 99999999999999999999999999999999999999927942405962072064
-&gt; (set! (bignum-precision) 256)
+&gt; (set! *bignum-precision* 256)
 256
 &gt; (floor 1e56)
 100000000000000000000000000000000000000000000000000000000

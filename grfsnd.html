@@ -312,7 +312,7 @@ show just sound files.  We make ~/.snd and put in it:</p>
 Scheme:
     (set! (<a class=quiet href="extsnd.html#windowwidth" onmouseout="UnTip()" onmouseover="Tip(extsnd_windowwidth_tip)">window-width</a>) 800)
     (set! (<a class=quiet href="extsnd.html#windowheight" onmouseout="UnTip()" onmouseover="Tip(extsnd_windowheight_tip)">window-height</a>) 500)
-    (set! (<a class=quiet href="extsnd.html#justsounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_justsounds_tip)">just-sounds</a>) #t)
+    (set! *just-sounds* #t)
     (<a class=quiet href="extsnd.html#defineenvelope" onmouseout="UnTip()" onmouseover="Tip(extsnd_defineenvelope_tip)">define-envelope</a> env1 '(0 0 1 1 2 0))
 
 Ruby:
@@ -371,15 +371,15 @@ Here's a more elaborate initialization file (~/.snd_s7):
 
 (if (provided? '<a class=quiet href="#sndmotiffeature">snd-motif</a>)          ;Motif and Gtk use different font naming conventions
     (begin
-      (set! (<a class=quiet href="extsnd.html#listenerfont" onmouseout="UnTip()" onmouseover="Tip(extsnd_listenerfont_tip)">listener-font</a>) "9x15")
-      (set! (<a class=quiet href="extsnd.html#axislabelfont" onmouseout="UnTip()" onmouseover="Tip(extsnd_axislabelfont_tip)">axis-label-font</a>) "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
-      (set! (<a class=quiet href="extsnd.html#axisnumbersfont" onmouseout="UnTip()" onmouseover="Tip(extsnd_axisnumbersfont_tip)">axis-numbers-font</a>) "9x15"))
+      (set! *listener-font* "9x15")
+      (set! *axis-label-font* "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
+      (set! *axis-numbers-font* "9x15"))
     (begin
-      (set! (<a class=quiet href="extsnd.html#listenerfont" onmouseout="UnTip()" onmouseover="Tip(extsnd_listenerfont_tip)">listener-font</a>) "Sans 10")
-      (set! (<a class=quiet href="extsnd.html#axislabelfont" onmouseout="UnTip()" onmouseover="Tip(extsnd_axislabelfont_tip)">axis-label-font</a>) "Times Medium 14")
-      (set! (<a class=quiet href="extsnd.html#axisnumbersfont" onmouseout="UnTip()" onmouseover="Tip(extsnd_axisnumbersfont_tip)">axis-numbers-font</a>) "Sans 10")))
+      (set! *listener-font* "Sans 10")
+      (set! *axis-label-font* "Times Medium 14")
+      (set! *axis-numbers-font* "Sans 10")))
 
-(set! (<a class=quiet href="extsnd.html#listenerprompt" onmouseout="UnTip()" onmouseover="Tip(extsnd_listenerprompt_tip)">listener-prompt</a>) ":")        ;change listener prompt from the default "&gt;" to ":"
+(set! *listener-prompt* ":")        ;change listener prompt from the default "&gt;" to ":"
 (set! (<a class=quiet href="extsnd.html#showlistener" onmouseout="UnTip()" onmouseover="Tip(extsnd_showlistener_tip)">show-listener</a>) #t)           ;include the listener window initially
 
 (define beige (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0.96 0.96 0.86))
@@ -387,15 +387,15 @@ Here's a more elaborate initialization file (~/.snd_s7):
 (set! (<a class=quiet href="extsnd.html#selectedgraphcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedgraphcolor_tip)">selected-graph-color</a>) beige) ;selected graph background is beige
 (set! (<a class=quiet href="extsnd.html#selecteddatacolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selecteddatacolor_tip)">selected-data-color</a>) blue)   ;selected graph data is blue
 
-(set! (<a class=quiet href="extsnd.html#savedir" onmouseout="UnTip()" onmouseover="Tip(extsnd_savedir_tip)">save-dir</a>) "/zap/snd")        ;save-state files are placed in /zap/snd
-(set! (<a class=quiet href="extsnd.html#tempdir" onmouseout="UnTip()" onmouseover="Tip(extsnd_tempdir_tip)">temp-dir</a>) "/zap/tmp")        ;temp files are placed in /zap/tmp
-(set! (peak-env-dir) "~/peaks")
+(set! *save-dir* "/zap/snd")        ;save-state files are placed in /zap/snd
+(set! *temp-dir* "/zap/tmp")        ;temp files are placed in /zap/tmp
+(set! *peak-env-dir* "~/peaks")
 
 (load "hooks.scm")
 (load "extensions.scm")
 
-(set! (with-inset-graph) #t)        ;display an overview of the current window in the upper right
-(set! (with-pointer-focus) #t)      ;automatically focus on (activate) the widget under the mouse
+(set! *with-inset-graph* #t)        ;display an overview of the current window in the upper right
+(set! *with-pointer-focus* #t)      ;automatically focus on (activate) the widget under the mouse
 
 (hook-push <a class=quiet href="extsnd.html#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a>          ;if sound has many chans, use just one pane for all
   (lambda (hook)
@@ -403,7 +403,7 @@ Here's a more elaborate initialization file (~/.snd_s7):
       (if (&gt; (<a class=quiet href="extsnd.html#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd) 4)
           (set! (<a class=quiet href="extsnd.html#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channel-style</a> snd) <a class=quiet href="extsnd.html#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channels-combined</a>)))))
 
-(set! (<a class=quiet href="extsnd.html#selectioncreatesregion" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectioncreatesregion_tip)">selection-creates-region</a>) #f) ;turn off automatic region creation
+(set! *selection-creates-region* #f) ;turn off automatic region creation
 </pre>
 
 
@@ -2323,25 +2323,9 @@ at configuration time, and use the <a href="extsnd.html#glgraphtops">gl-graph-&g
 <!-- gsl-eigenvectors -->
 <div class="bluish"><em class=emdef>gsl-eigenvectors</em> <code>matrix</code></div>
 <p>
-gsl-eigenvectors returns the eigenvalues and corresponding eigenvectors of "matrix", a mixer.
-</p>
-
-<pre class="indented">
-&gt; (gsl-eigenvectors (make-mixer 4  -1.0 1.0 -1.0 1.0
-                               -8.0 4.0 -2.0 1.0
-                               27.0 9.0 3.0 1.0
-                               64.0 16.0 4.0 1.0))
-(#(-6.41391102627093 5.54555349890946 5.54555349890946 2.32280402845201) 
-#(#(-0.0998821746683654 -0.111251309674367 0.292500673281302 0.94450518972065) 
-  #(-0.0434869537653505 0.0642376994169207 -0.515252756143484 -0.840592191366022) 
-  #(-0.0434869537653505 0.0642376994169207 -0.515252756143484 -0.840592191366022) 
-  #(-0.144932944248023 0.356601443087312 0.91936884368837 0.0811836295983152)))
-</pre>
-
-<p>
+gsl-eigenvectors returns the eigenvalues and corresponding eigenvectors of "matrix", a float-vector (mixer).
 The value returned is a list of two elements.  The first is a vector containing
 the eigenvalues, the second is a vector containing the corresponding eigenvectors (as vectors).
-See make-dpss-window in snd-test.scm (the corresponding C code is in clm.c).
 </p>
 
 

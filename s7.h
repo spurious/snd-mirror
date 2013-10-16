@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.1"
-#define S7_DATE "11-Oct-13"
+#define S7_VERSION "3.2"
+#define S7_DATE "17-Oct-13"
 
 
 typedef long long int s7_Int;
@@ -204,7 +204,6 @@ void s7_gc_unprotect_at(s7_scheme *sc, int loc);
 s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc);
 s7_pointer s7_gc_on(s7_scheme *sc, bool on);
 void s7_gc_stats(s7_scheme *sc, bool on);
-void s7_remove_from_heap(s7_scheme *sc, s7_pointer x);
 
   /* any s7_pointer object held in C (as a local variable for example) needs to be
    *   protected from garbage collection if there is any chance the GC may run without
@@ -865,6 +864,7 @@ bool s7_is_valid_pointer(s7_pointer arg);
  * 
  *        s7 changes
  *		
+ * 17-Oct:    bignum-precision (procedure-with-setter) is now an integer variable named *bignum-precision*.
  * 28-Aug:    s7_int|float_vector_elements (homogenous vectors), libc.scm.
  * 16-Aug:    ~W directive in format, make-shared-vector.
  * 23-Jul:    s7_autoload_set_names, libm.scm, libdl.scm, libgdbm.scm, r7rs.scm, s7libtest.scm, gdb-s7.scm.

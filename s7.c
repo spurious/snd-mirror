@@ -4083,7 +4083,7 @@ static s7_cell *alloc_pointer(void)
 }
 
 
-void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
+static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 {
   int loc;
   s7_pointer p;
@@ -4097,8 +4097,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
    *    a quoted (constant) list, then uses list-set! to change an element of it,
    *    then a GC happens, and the new element is GC'd because no one in the heap
    *    points to it, then we call the function again, and it tries to access
-   *    that element.  I wonder if removal should be on a switch, so the user can
-   *    choose a "safety" level.
+   *    that element. 
    *
    *    (define (bad-idea)
    *      (let ((lst '(1 2 3))) ; or #(1 2 3) and vector-ref|set
@@ -65934,30 +65933,26 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_bignum_precision(s7_scheme *sc, s7_pointer args)
-{
-  #define H_bignum_precision "(bignum-precision) returns the number of bits used for floats and complex numbers. It can be set."
-  return(make_integer(sc, (int)mpfr_get_default_prec()));
-}
-
-
 static s7_pointer g_set_bignum_precision(s7_scheme *sc, s7_pointer args)
 {
   mp_prec_t bits;
   s7_Int precision;
+  s7_pointer prec;
 
-  if (!s7_is_integer(car(args)))
-    return(simple_wrong_type_argument(sc, sc->BIGNUM_PRECISION, car(args), T_INTEGER));
+  prec = cadr(args);
+  if (!s7_is_integer(prec))
+    return(simple_wrong_type_argument(sc, sc->BIGNUM_PRECISION, prec, T_INTEGER));
 
-  precision = s7_integer(car(args));
-  if (precision <= 1)                   /* (set! (bignum-precision) 1) causes mpfr to segfault! (also 0 and -1) */
-    return(s7_out_of_range_error(sc, "set! bignum-precision", 0, car(args), "has to be greater than 1"));    
+  precision = s7_integer(prec);
+  if (precision <= 1)                   /* (set! *bignum-precision* 1) causes mpfr to segfault! (also 0 and -1) */
+    return(s7_out_of_range_error(sc, "set! *bignum-precision*", 0, prec, "has to be greater than 1"));    
 
   bits = (mp_prec_t)precision;
   mpfr_set_default_prec(bits);
   mpc_set_default_precision(bits);
   s7_symbol_set_value(sc, sc->PI, big_pi(sc));
-  return(car(args));
+
+  return(prec);
 }
 
 
@@ -66256,9 +66251,14 @@ static void s7_gmp_init(s7_scheme *sc)
 
   sc->BIGNUM =          s7_define_function(sc, "bignum",              g_bignum,             1, 1, false, H_bignum);
   s7_define_function(sc,                       "bignum?",             g_is_bignum,          1, 0, false, H_is_bignum);
-  s7_define_function_with_setter(sc,           "bignum-precision",    g_bignum_precision, g_set_bignum_precision, 0, 0, H_bignum_precision);
 
-  sc->BIGNUM_PRECISION = make_symbol(sc, "set-bignum-precision");
+  sc->BIGNUM_PRECISION = s7_define_variable(sc, "*bignum-precision*", small_int(DEFAULT_BIGNUM_PRECISION));
+  s7_symbol_set_access(sc, sc->BIGNUM_PRECISION,
+		       list_3(sc, 
+			      sc->F, 
+			      s7_make_function(sc, "(set *bignum-precision*)", g_set_bignum_precision, 2, 0, false, "called if *bignum-precision* is set"), 
+			      s7_make_function(sc, "(bind *bignum-precision*)", g_set_bignum_precision, 2, 0, false, "called if *bignum-precision* is bound")));
+
   add_max = (1 << (s7_int_bits - 1));
   mpfr_set_default_prec((mp_prec_t)DEFAULT_BIGNUM_PRECISION); 
   mpc_set_default_precision((mp_prec_t)DEFAULT_BIGNUM_PRECISION);
@@ -67967,17 +67967,10 @@ int main(int argc, char **argv)
  * TODO: (env env) in clm should be an error
  * checkpoint?
  * doc/test the lib*.scm files.
- * someday all the simple Snd variables should be variables (not pws)
- *   perhaps parallel definition of *var* with accessors? 
- *   set *var* ... -> (begin (set! (var) ...) (var)), same for let?
- *   s7_symbol_set_access sym funcs (clm2xen) -- tricky because the variable needs to be set alongside the functional value
- *     so the underlying function needs to set the variable itself (else loop)
- *     see snd-main.c show_indices (there are about 200 such cases)
- *     other cases: sndlib2xen/clm2xen defaults
- *     I assume the accessors are gc-protected
- *     does xen.h choose the [*] set name? -- no, above 32701 make-pws -- need extension here
  * vector_set_ssa_looped? (or as unknown case?)
  * 49890 safe_do all_x cases?
+ * pws: enved-clip? selected-graph|data* listener-color|colorized
+ *      rest of scm changes
  */
 
 

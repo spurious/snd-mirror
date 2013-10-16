@@ -246,8 +246,6 @@ var extsnd_insertsound_tip = "<code>(insert-sound file (beg 0) (file-chan 0) snd
                              "<code>  (insert-sound \"oboe.snd\" 1000)</code><br>" +
                              " inserts all of oboe.snd starting at sample 1000.";
 
-var extsnd_justsounds_tip = "<code>(just-sounds)</code>: the 'just sounds' choice in the file chooser dialog";
-
 var extsnd_keyboard_no_action_tip = "<code>keyboard-no-action</code> is one of the <code>bind-key</a> function<br>" +
                                     "return values.  It indicates that Snd should not update the graphs.";
 
@@ -262,8 +260,6 @@ var extsnd_lispgraphhook_tip = "<code>lisp-graph-hook (snd chn)</code>: called j
                                " that function is called rather than the standard graph routine.";
 
 var extsnd_listenerfont_tip = "<code>(listener-font)</code>: font used by the lisp listener";
-
-var extsnd_listenerprompt_tip = "<code>(listener-prompt)</code>: the current lisp listener prompt character ('&gt;') ";
 
 var extsnd_mainwidgets_tip = "<code>(main-widgets)</code>: top level widgets<br>" +
                              " <code>(list (0)main-app (1)main-shell (2)main-pane<br>" +
@@ -528,11 +524,6 @@ var extsnd_selectedgraphcolor_tip = "<code>(selected-graph-color)</code>: backgr
 
 var extsnd_selectedsound_tip = "<code>(selected-sound)</code>: index of currently selected sound (or #f if none)";
 
-var extsnd_selectioncreatesregion_tip = "<code>(selection-creates-region)</code>: #t if a region should be created each time a selection is made.<br>" +
-                                        " The default is currently #t, but that may change.<br>" +
-                                        " If you're dealing with large selections, and have no need of regions (saved selections),<br>" +
-                                        " you can speed up many operations by setting this flag to #f";
-
 var extsnd_selectionframes_tip = "<code>(selection-frames snd chn)</code>: selection length";
 
 var extsnd_selectionmember_tip = "<code>(selection-member? snd chn)</code>: #t if snd's channel chn is a member of the current selection";
@@ -612,8 +603,6 @@ var extsnd_stopplayingselectionhook_tip = "<code>stop-playing-selection-hook ()<
 
 var extsnd_sync_tip = "<code>(sync snd)</code>: snd's sync value (0 = no sync).<br>" +
                       "  Some editing operations are applied to all sounds sharing the sync value of the selected sound.";
-
-var extsnd_tempdir_tip = "<code>(temp-dir)</code>: name of directory for temp files (or #f=null)";
 
 var extsnd_time_graph_tip = "<code>time-graph<code> is the constant associated with the time domain graph<br>" +
                             "The other two graphs are <code>transform-graph</code> and <code>lisp-graph</code>";
