@@ -34,6 +34,7 @@
 #define TINY_FONT(a) 0
 #define AXIS_NUMBERS_FONT(a) 0
 #define PEAKS_FONT(a) 0
+#define DEFAULT_GRAPH_CURSOR 0
 
 #define idle_t int
 #define idle_func_t int

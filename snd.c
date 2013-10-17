@@ -657,10 +657,8 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->enved_style_symbol = s7_define_variable(s7, "*" S_enved_style "*", s7_make_integer(s7, DEFAULT_ENVED_STYLE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_style "*) (list #f (lambda (s v) (set! (" S_enved_style ") v)) #f))");
 
-#if (!USE_NO_GUI)
   ss->graph_cursor_symbol = s7_define_variable(s7, "*" S_graph_cursor "*", s7_make_integer(s7, DEFAULT_GRAPH_CURSOR));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_graph_cursor "*) (list #f (lambda (s v) (set! (" S_graph_cursor ") v)) #f))");
-#endif
 
   ss->mix_tag_width_symbol = s7_define_variable(s7, "*" S_mix_tag_width "*", s7_make_integer(s7, DEFAULT_MIX_TAG_WIDTH));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_mix_tag_width "*) (list #f (lambda (s v) (set! (" S_mix_tag_width ") v)) #f))");

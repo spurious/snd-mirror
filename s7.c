@@ -7987,9 +7987,6 @@ s7_Double s7_real(s7_pointer p)
 #if (!WITH_GMP)
 static s7_Complex s7_complex(s7_pointer p)
 {
-  /* TODO: with-gmp case for big_complex
-   *   and do we need to export the s7_Complex type?  This is all for cload.
-   */
   return(s7_real_part(p) + s7_imag_part(p) * _Complex_I);
 }
 
@@ -67957,20 +67954,13 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9    9|   7.4
  * lat        229|    63   52   47   42   40   34   31   29|    29
  * t502        90|    43   39   36   29   23   20   14   14|  14.7
- * calls         |   275  207  175  115   89   71   53   53|    55
+ * calls         |   275  207  175  115   89   71   53   53|    54
  */
 
-/* use new generic_ff in methods opt case 
- * we need integer_length everywhere! These fixups are ignored by the optimized cases.
- * currently I think the unsafe closure* ops are hardly ever called (~0 for thunk/s/sx, a few all_x and goto*
- * add zero-length? typeq? 
- * TODO: (env env) in clm should be an error
- * checkpoint?
+/* use new generic_ff in methods opt case (i.e. fallback to main func if special cases not enough)
+ * (env env) in clm should be an error
  * doc/test the lib*.scm files.
- * vector_set_ssa_looped? (or as unknown case?)
- * 49890 safe_do all_x cases?
- * pws: enved-clip? selected-graph|data* listener-color|colorized
- *      rest of scm changes
+ * vector_set_ssa_looped? (or as unknown case: 49890 safe_do all_x cases?)
  */
 
 

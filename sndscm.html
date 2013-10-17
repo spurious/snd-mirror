@@ -6698,8 +6698,7 @@ use the filter (banks tuned to different sets of frequencies, etc).
 <!-- main-index |menusdoc:menus, optional -->
 
 <p>The files described in this section either add new top-level menus to Snd, or
-modify existing ones.  Most were written by Dave Phillips; see his tutorial for
-pictures and a more complete discussion.
+modify existing ones.  Most were written by Dave Phillips.
 </p>
 
 
@@ -8510,8 +8509,8 @@ I can't see any pattern in the lists of ideal quadrants.
 </p>
 
 <p>
-The corresponding odd harmonics version is (pi+pi/n)*i*i, or slightly better (pi+pi/n)*i*i - i/10.
-These do better as n increases, but I don't think they reach n^.5.  If n=4000000,
+The corresponding even harmonics version is (-pi/n)*(i+1)*(i+1) - (i+1)*pi/2.
+These sorts of formulas do better as n increases, but I don't think they reach n^.5.  If n=4000000,
 the peak is at 2408.9 (n^.512). 
 A linear equation in "i" here is simply phase offset in the sum of sines formula mentioned
 earlier, so given an initial phase of x*i, as x goes from 0 to pi/2, the peak goes from .7245*n to n.
@@ -8519,24 +8518,18 @@ Another good variant is (pi*i*i)/n using cos rather than sin.
 </p>
 
 
-<p>I haven't found any functions that get all the way to the square root. 
-I now think (after much staring at graphs) that
-the minima are tiny cracks in a huge N-dimensional
-block of stuff that is all nearly the same.  The n=5 graph above shows 
-that the floor is getting flat, and this becomes more noticeable as n increases.
-Here's an attempt to display this aspect of the peak values.  In the next graph,
+<p>I haven't found any functions that get all the way to the square root. In the next graph,
 the y axis is the peak value with n=100, the x axis is the number of tests, and we've
 sorted the tests by peak.  Each test is centered around a known excellent minimum
 peak, and the separate curves are showing the peaks when the initial phases can vary
 around that best value by pi/4, then pi/8 etc.  It's hard to read at first, but
 take the black top curve.  This is what you'd get if you randomly sampled a hypercube whose side length is pi/2 centered on that minimum.
 Nearly all the values are between 18 (100^.63) and 23 (100^.68).  
-Each successive curves divides the space we sample by 2 in all 100 dimensions,
+Each successive curve divides the space we sample by 2 in all 100 dimensions,
 so by the time we get to the bottom curve, we've reduced our search space by
 a factor of 2^800 (we're down to .006 on a side), and we still don't see the actual minimum
 even once in 50000 tries!  
 Imagine trying to set up a grid to catch this point.
-So, brute force and random flailing fail.
 </p>
 
 <img class="indented" src="pix/8way.png" alt="histogram of 100 reduced 8 times">

@@ -496,22 +496,22 @@ static s7_pointer g_set_prompt_tag(s7_scheme *sc, s7_pointer args)
 */
 
 
-static void glistener_s7_init(glistener *g1)
+static void glistener_init(glistener *g1)
 {
-  s7_define_function(s7, "listener-append-text", g_append_text, 2, 0, false, "(listener-append-text g txt)");
-  s7_define_function(s7, "listener-insert-text", g_insert_text, 2, 0, false, "(listener-insert-text g txt)");
+  s7_define_function(s7, "listener-append-text",     g_append_text,     2, 0, false, "(listener-append-text g txt)");
+  s7_define_function(s7, "listener-insert-text",     g_insert_text,     2, 0, false, "(listener-insert-text g txt)");
   s7_define_function(s7, "listener-cursor-position", g_cursor_position, 1, 0, false, "(listener-cursor-position g)");
   s7_define_function(s7, "listener-set-cursor-position", g_set_cursor_position, 2, 0, false, "(listener-set-cursor-position g pos)");
-  s7_define_function(s7, "listener-text", g_text, 3, 0, false, "(listener-text g start end)");
-  s7_define_function(s7, "listener-append-prompt", g_append_prompt, 1, 0, false, "(listener-append-prompt g)");
+  s7_define_function(s7, "listener-text",            g_text,            3, 0, false, "(listener-text g start end)");
+  s7_define_function(s7, "listener-append-prompt",   g_append_prompt,   1, 0, false, "(listener-append-prompt g)");
   s7_define_function(s7, "listener-prompt-position", g_prompt_position, 1, 0, false, "(listener-prompt-position g)");
-  s7_define_function(s7, "listener-set-prompt", g_set_prompt, 2, 0, false, "(listener-set-prompt g str)");
-  s7_define_function(s7, "listener-set-prompt-tag", g_set_prompt_tag, 2, 0, false, "(listener-set-prompt-tag g tag)");
-  s7_define_function(s7, "listener-evaluate", g_evaluate, 1, 0, false, "(listener-evaluate g)");
-  s7_define_function(s7, "listener-complete", g_complete, 1, 0, false, "(listener-complete g)");
-  s7_define_function(s7, "listener-scroll", g_scroll_to_end, 1, 0, false, "(listener-scroll g)");
-  s7_define_function(s7, "listener-clear", g_clear, 1, 0, false, "(listener-clear g)");
-  s7_define_function(s7, "listener-text-widget", g_text_widget, 1, 0, false, "(listener-text-widget g)");
+  s7_define_function(s7, "listener-set-prompt",      g_set_prompt,      2, 0, false, "(listener-set-prompt g str)");
+  s7_define_function(s7, "listener-set-prompt-tag",  g_set_prompt_tag,  2, 0, false, "(listener-set-prompt-tag g tag)");
+  s7_define_function(s7, "listener-evaluate",        g_evaluate,        1, 0, false, "(listener-evaluate g)");
+  s7_define_function(s7, "listener-complete",        g_complete,        1, 0, false, "(listener-complete g)");
+  s7_define_function(s7, "listener-scroll",          g_scroll_to_end,   1, 0, false, "(listener-scroll g)");
+  s7_define_function(s7, "listener-clear",           g_clear,           1, 0, false, "(listener-clear g)");
+  s7_define_function(s7, "listener-text-widget",     g_text_widget,     1, 0, false, "(listener-text-widget g)");
   s7_define_variable(s7, "*listener*", wrap_glistener(g1));
 }
 #endif
@@ -588,7 +588,7 @@ static void make_listener_widget(int height)
       glistener_set_completer(ss->listener, completer);
       if (listener_colorizing)
 	glistener_set_colorizer(ss->listener, colorizer);
-      glistener_s7_init(ss->listener);
+      glistener_init(ss->listener);
 #endif
 #if HAVE_FORTH || HAVE_RUBY
       glistener_is_schemish(ss->listener, false);

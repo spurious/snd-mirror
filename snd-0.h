@@ -276,8 +276,6 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define DEFAULT_FILTER_CONTROL_P false
 #define DEFAULT_REVERB_CONTROL_P false
 
-/* TODO: for all globals set in snd.c, add scheme case here as in show-indices
- */
 
 #define filter_control_in_dB(ss) ss->Filter_Control_In_Db
 #if HAVE_SCHEME
