@@ -13,17 +13,15 @@
 (define *clm-reverb* #f)
 (define *clm-reverb-channels* 1)
 (define *clm-reverb-data* ())
-(define *clm-table-size* 512)
-(define *clm-file-buffer-size* 65536)
 (define *clm-locsig-type* mus-interp-linear)
 (define *clm-clipped* #t)
 (define *clm-array-print-length* 12)
 (define *clm-player* #f) 
 (define *clm-notehook* #f)
 (define *clm-with-sound-depth* 0) ; for CM, not otherwise used
-(define *clm-default-frequency* 0.0)
 (define *clm-delete-reverb* #f)   ; should with-sound clean up reverb stream
 
+(set! *clm-file-buffer-size* 65536)
 
 (define (times->samples beg dur) 
   "(times->samples beg dur) converts beg and (+ beg dur) to samples, returning both in a list"
@@ -105,9 +103,6 @@
      (lambda () 
        (set! *clm-verbose* verbose)
        (set! *clm-notehook* notehook)
-       (set! (clm-table-size) *clm-table-size*)
-       (set! (clm-default-frequency) *clm-default-frequency*)
-       (set! (mus-file-buffer-size) *clm-file-buffer-size*)
        (set! (locsig-type) *clm-locsig-type*)
        (set! (mus-array-print-length) *clm-array-print-length*)
        (if (equal? clipped 'unset)

@@ -7508,7 +7508,7 @@ object.
 <em class=def id="mus-close">mus-close</em> obj
 <em class=def id="*output*">*output*</em>
 <em class=def id="*reverb*">*reverb*</em>
-<em class=def id="musfilebuffersize">mus-file-buffer-size</em>
+<em class=def id="musfilebuffersize">mus-file-buffer-size</em> (also known as *clm-file-buffer-size*)
 </pre>
 
 
@@ -7581,7 +7581,7 @@ from a file, and file-&gt;frame reads a frame.
 continue-frame-&gt;file and continue-sample-&gt;file reopen an existing file to continue adding sound data to it.
 mus-output? returns #t is its argument is some sort of file writing generator, and mus-input? returns #t if its 
 argument is a file reader.  file-&gt;frame returns a new frame unless you pass it an "outf" argument (a frame).
-In make-file-&gt;sample and make-file-&gt;frame, the buffer-size defaults to <a href="#musfilebuffersize">mus-file-buffer-size</a>.
+In make-file-&gt;sample and make-file-&gt;frame, the buffer-size defaults to *clm-file-buffer-size*.
 There are many examples of these functions in snd-test.scm, clm-ins.scm, and clm23.scm.
 Here is one that uses file-&gt;sample to mix in a sound file (there are a zillion other ways to do this):
 </p>
@@ -7631,7 +7631,7 @@ current read location and channel number for you.
 Its "file" argument is the input file's name.
 "start" is the frame at which to start reading the input file. 
 "channel" is which channel to read (0-based).
-"size" is the read buffer size in samples.  It defaults to <a href="#musfilebuffersize">mus-file-buffer-size</a>.
+"size" is the read buffer size in samples.  It defaults to *clm-file-buffer-size*.
 </p>
 
 <table>
@@ -9942,14 +9942,14 @@ an increment of a phase variable.
 
 
 <pre class="indented">
-<em class=def id="musfloatequalfudgefactor">mus-float-equal-fudge-factor</em>
+<em class=def id="musfloatequalfudgefactor">mus-float-equal-fudge-factor</em> (also known as *mus-float-equal-fudge-factor*)
 </pre>
 
 <p>This function sets how far apart generator float-vector elements can be and still be considered equal in equal?
 </p>
 
 <pre class="indented">
-&gt; (mus-float-equal-fudge-factor)
+&gt; *mus-float-equal-fudge-factor*
 1.0e-7
 &gt; (define v1 (float-vector .1 .1 .101))
 #&lt;unspecified&gt;
@@ -9957,7 +9957,7 @@ an increment of a phase variable.
 #&lt;unspecified&gt;
 &gt; (equal? v1 v2)
 #f
-&gt; (set! (mus-float-equal-fudge-factor) .01)
+&gt; (set! *mus-float-equal-fudge-factor* .01)
 1.0e-7 ; set! returns the previous value
 &gt; (equal? v1 v2)
 #t
@@ -9967,11 +9967,11 @@ an increment of a phase variable.
 <div class="separator"></div>
 
 <pre class="indented">
-<em class=def id="musarrayprintlength">mus-array-print-length</em>
+<em class=def id="musarrayprintlength">mus-array-print-length</em> (also known as *mus-array-print-length*)
 </pre>
 
 <p>
-This function determines how many mixer elements are printed by mus-describe.
+This function determines how many mixer (float-vector) elements are printed by mus-describe.
 </p>
 
 

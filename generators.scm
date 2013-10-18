@@ -4671,7 +4671,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;;--------------------------------------------------------------------------------
 
 (define* (make-table-lookup-with-env frequency pulse-env size)
-  (let* ((len (or size (clm-table-size)))
+  (let* ((len (or size *clm-table-size*))
 	 (ve (make-float-vector len))
 	 (e (make-env pulse-env :length len)))
     (do ((i 0 (+ i 1)))
@@ -4680,7 +4680,7 @@ index 10 (so 10/2 is the bes-jn arg):
     (make-table-lookup frequency 0.0 ve len)))
 
 (define* (make-wave-train-with-env frequency pulse-env size)
-  (let* ((len (or size (clm-table-size)))
+  (let* ((len (or size *clm-table-size*))
 	 (ve (make-float-vector len))
 	 (e (make-env pulse-env :length len)))
     (do ((i 0 (+ i 1)))

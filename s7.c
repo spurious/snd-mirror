@@ -42377,7 +42377,10 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 {
   int op2;
   op2 = op_no_hop(e2);
-  /* fprintf(stderr, "    %s %s\n", opt_names[optimize_data(e2)], DISPLAY_80(e2)); */
+
+  /* e_c_pp case (1) is slightly different from the others: e2 is not a part of e1
+   */
+  /* fprintf(stderr, "%d %s\n", op1, opt_names[optimize_data(e2)]); */
 
   switch (op1)
     {
@@ -66939,7 +66942,8 @@ s7_scheme *s7_init(void)
   
   sc->OUTER_ENVIRONMENT =     s7_define_safe_function(sc, "outer-environment",       g_outer_environment,      1, 0, false, H_outer_environment);
                               s7_define_safe_function(sc, "global-environment",      g_global_environment,     0, 0, false, H_global_environment);
-                              s7_define_function(sc,      "current-environment",     g_current_environment,    0, 0, false, H_current_environment);
+                              s7_define_safe_function(sc, "current-environment",     g_current_environment,    0, 0, false, H_current_environment);
+			      /* why was this unsafe? */
                               s7_define_constant_function(sc, "initial-environment", g_initial_environment,    0, 0, false, H_initial_environment);
   sc->AUGMENT_ENVIRONMENT =   s7_define_function(sc,      "augment-environment",     g_augment_environment,    1, 0, true,  H_augment_environment);
   sc->AUGMENT_ENVIRONMENTB =  s7_define_function(sc,      "augment-environment!",    g_augment_environment_direct, 1, 0, true, H_augment_environment_direct);
@@ -67961,6 +67965,7 @@ int main(int argc, char **argv)
  * (env env) in clm should be an error
  * doc/test the lib*.scm files.
  * vector_set_ssa_looped? (or as unknown case: 49890 safe_do all_x cases?)
+ * TODO: pws->global: mus-srate? print-length?
  */
 
 

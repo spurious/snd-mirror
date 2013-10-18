@@ -2350,11 +2350,19 @@ static XEN g_mus_max_malloc(void)
   return(C_TO_XEN_LONG_LONG(mus_max_malloc()));
 }
 
+#if HAVE_SCHEME
+  static s7_pointer mus_max_malloc_symbol;
+#endif
 
 static XEN g_mus_set_max_malloc(XEN val)
 {
+  mus_long_t size;
   XEN_ASSERT_TYPE(XEN_LONG_LONG_P(val), val, 1, S_setB S_mus_max_malloc, "an integer");
-  return(C_TO_XEN_LONG_LONG(mus_set_max_malloc(XEN_TO_C_LONG_LONG(val))));
+  size = XEN_TO_C_LONG_LONG(val);
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, mus_max_malloc_symbol, s7_make_integer(s7, size));
+#endif
+  return(C_TO_XEN_LONG_LONG(mus_set_max_malloc(size)));
 }
 
 
@@ -2366,11 +2374,22 @@ static XEN g_mus_max_table_size(void)
 }
 
 
+#if HAVE_SCHEME
+  static s7_pointer mus_max_table_size_symbol;
+#endif
+
 static XEN g_mus_set_max_table_size(XEN val)
 {
+  mus_long_t size;
   XEN_ASSERT_TYPE(XEN_LONG_LONG_P(val), val, 1, S_setB S_mus_max_table_size, "an integer");
-  return(C_TO_XEN_LONG_LONG(mus_set_max_table_size(XEN_TO_C_LONG_LONG(val))));
+  size = XEN_TO_C_LONG_LONG(val);
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, mus_max_table_size_symbol, s7_make_integer(s7, size));
+#endif
+  return(C_TO_XEN_LONG_LONG(mus_set_max_table_size(size)));
 }
+
+
 
 
 #if __APPLE__
@@ -2701,6 +2720,14 @@ void mus_sndlib_xen_initialize(void)
 				   S_setB S_mus_max_malloc, g_mus_set_max_malloc_w, 0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_max_table_size, g_mus_max_table_size_w, H_mus_max_table_size,
 				   S_setB S_mus_max_table_size, g_mus_set_max_table_size_w, 0, 0, 1, 0);
+
+#if HAVE_SCHEME
+  mus_max_table_size_symbol = s7_define_variable(s7, "*" S_mus_max_table_size "*", s7_make_integer(s7, MUS_MAX_TABLE_SIZE_DEFAULT));
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mus_max_table_size "*) (list #f (lambda (s v) (set! (" S_mus_max_table_size ") v)) #f))");
+
+  mus_max_malloc_symbol = s7_define_variable(s7, "*" S_mus_max_malloc "*", s7_make_integer(s7, MUS_MAX_MALLOC_DEFAULT));
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mus_max_malloc "*) (list #f (lambda (s v) (set! (" S_mus_max_malloc ") v)) #f))");
+#endif
 
 #if HAVE_OSS
   XEN_DEFINE_PROCEDURE(S_mus_audio_reinitialize,   g_mus_audio_reinitialize_w, 0, 0, 0,  H_mus_audio_reinitialize);

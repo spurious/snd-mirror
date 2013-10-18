@@ -413,6 +413,9 @@ static void init_keywords(void)
 /* ---------------- *clm-table-size* ---------------- */
 
 static mus_long_t clm_table_size = MUS_CLM_DEFAULT_TABLE_SIZE;
+#if HAVE_SCHEME
+  static s7_pointer clm_table_size_symbol;
+#endif
 
 mus_long_t clm_default_table_size_c(void) {return(clm_table_size);}
 
@@ -428,6 +431,9 @@ static XEN g_set_clm_table_size(XEN val)
       (size > mus_max_table_size()))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_clm_table_size, 1, val, "invalid size (see mus-max-table-size)");
   clm_table_size = size;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, clm_table_size_symbol, s7_make_integer(s7, clm_table_size));
+#endif
   return(C_TO_XEN_LONG_LONG(clm_table_size));
 }
 
@@ -435,6 +441,9 @@ static XEN g_set_clm_table_size(XEN val)
 /* ---------------- *clm-default-frequency* ---------------- */
 
 static double clm_default_frequency = MUS_CLM_DEFAULT_FREQUENCY;
+#if HAVE_SCHEME
+  static s7_pointer clm_default_frequency_symbol;
+#endif
 
 double clm_default_frequency_c(void) {return(clm_default_frequency);}
 
@@ -445,8 +454,13 @@ static XEN g_set_clm_default_frequency(XEN val)
   #define H_clm_default_frequency "(" S_clm_default_frequency "): the default frequency for most generators (0.0)"
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(val), val, 1, S_setB S_clm_default_frequency, "a number");
   clm_default_frequency = XEN_TO_C_DOUBLE(val);
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, clm_default_frequency_symbol, s7_make_real(s7, clm_default_frequency));
+#endif
   return(val);
 }
+
+
 
 
 /* ---------------- AM and simple stuff ---------------- */
@@ -473,6 +487,10 @@ static XEN g_mus_file_buffer_size(void)
 }
 
 
+#if HAVE_SCHEME
+  static s7_pointer mus_file_buffer_size_symbol;
+#endif
+
 static XEN g_mus_set_file_buffer_size(XEN val)
 {
   mus_long_t len;
@@ -481,6 +499,9 @@ static XEN g_mus_set_file_buffer_size(XEN val)
   if (len <= 0) 
     XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_file_buffer_size, 1, val, "must be > 0");
   mus_set_file_buffer_size(len);
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, mus_file_buffer_size_symbol, s7_make_integer(s7, len));
+#endif
   return(val);
 }
 
@@ -18684,6 +18705,17 @@ static void mus_xen_init(void)
 				   S_setB S_clm_table_size, g_set_clm_table_size_w, 0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_clm_default_frequency, g_clm_default_frequency_w, H_clm_default_frequency,
 				   S_setB S_clm_default_frequency, g_set_clm_default_frequency_w, 0, 0, 1, 0);
+
+#if HAVE_SCHEME
+  clm_default_frequency_symbol = s7_define_variable(s7, "*" S_clm_default_frequency "*", s7_make_real(s7, MUS_CLM_DEFAULT_FREQUENCY));
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_clm_default_frequency "*) (list #f (lambda (s v) (set! (" S_clm_default_frequency ") v)) #f))");
+
+  clm_table_size_symbol = s7_define_variable(s7, "*" S_clm_table_size "*", s7_make_integer(s7, MUS_CLM_DEFAULT_TABLE_SIZE));
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_clm_table_size "*) (list #f (lambda (s v) (set! (" S_clm_table_size ") v)) #f))");
+
+  mus_file_buffer_size_symbol = s7_define_variable(s7, "*clm-file-buffer-size*", s7_make_integer(s7, MUS_DEFAULT_FILE_BUFFER_SIZE));
+  s7_eval_c_string(s7, "(set! (symbol-access '*clm-file-buffer-size*) (list #f (lambda (s v) (set! (" S_mus_file_buffer_size ") v)) #f))");
+#endif
 
   XEN_DEFINE_REAL_PROCEDURE(S_radians_to_hz,        g_radians_to_hz_w,        1, 0, 0, H_radians_to_hz);
   XEN_DEFINE_REAL_PROCEDURE(S_hz_to_radians,        g_hz_to_radians_w,        1, 0, 0, H_hz_to_radians);

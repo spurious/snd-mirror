@@ -262,24 +262,24 @@ static void save_a_color(FILE *Fp, color_info *default_color, color_info *curren
 
 void save_colors(FILE *Fp)
 {
-  save_a_color(Fp, BASIC_COLOR, ss->basic_color, S_basic_color);
-  save_a_color(Fp, CURSOR_COLOR, ss->cursor_color, S_cursor_color);
-  save_a_color(Fp, DATA_COLOR, ss->data_color, S_data_color);
+  save_a_color(Fp, BASIC_COLOR,         ss->basic_color,         S_basic_color);
+  save_a_color(Fp, CURSOR_COLOR,        ss->cursor_color,        S_cursor_color);
+  save_a_color(Fp, DATA_COLOR,          ss->data_color,          S_data_color);
   save_a_color(Fp, SELECTED_DATA_COLOR, ss->selected_data_color, S_selected_data_color);
-  save_a_color(Fp, HIGHLIGHT_COLOR, ss->highlight_color, S_highlight_color);
-  save_a_color(Fp, POSITION_COLOR, ss->position_color, S_position_color);
-  save_a_color(Fp, ZOOM_COLOR, ss->zoom_color, S_zoom_color);
-  save_a_color(Fp, SELECTION_COLOR, ss->selection_color, S_selection_color);
-  save_a_color(Fp, MIX_COLOR, ss->mix_color, S_mix_color);
+  save_a_color(Fp, HIGHLIGHT_COLOR,     ss->highlight_color,     S_highlight_color);
+  save_a_color(Fp, POSITION_COLOR,      ss->position_color,      S_position_color);
+  save_a_color(Fp, ZOOM_COLOR,          ss->zoom_color,          S_zoom_color);
+  save_a_color(Fp, SELECTION_COLOR,     ss->selection_color,     S_selection_color);
+  save_a_color(Fp, MIX_COLOR,           ss->mix_color,           S_mix_color);
   save_a_color(Fp, ENVED_WAVEFORM_COLOR, ss->enved_waveform_color, S_enved_waveform_color);
   save_a_color(Fp, FILTER_CONTROL_WAVEFORM_COLOR, ss->filter_control_waveform_color, S_filter_control_waveform_color);
-  save_a_color(Fp, LISTENER_COLOR, ss->listener_color, S_listener_color);
+  save_a_color(Fp, LISTENER_COLOR,      ss->listener_color,      S_listener_color);
   save_a_color(Fp, LISTENER_TEXT_COLOR, ss->listener_text_color, S_listener_text_color);
-  save_a_color(Fp, GRAPH_COLOR, ss->graph_color, S_graph_color);
+  save_a_color(Fp, GRAPH_COLOR,         ss->graph_color,         S_graph_color);
   save_a_color(Fp, SELECTED_GRAPH_COLOR, ss->selected_graph_color, S_selected_graph_color);
-  save_a_color(Fp, MARK_COLOR, ss->mark_color, S_mark_color);
-  save_a_color(Fp, SASH_COLOR, ss->sash_color, S_sash_color);
-  save_a_color(Fp, TEXT_FOCUS_COLOR, ss->text_focus_color, S_text_focus_color);
+  save_a_color(Fp, MARK_COLOR,          ss->mark_color,          S_mark_color);
+  save_a_color(Fp, SASH_COLOR,          ss->sash_color,          S_sash_color);
+  save_a_color(Fp, TEXT_FOCUS_COLOR,    ss->text_focus_color,    S_text_focus_color);
 }
 
 

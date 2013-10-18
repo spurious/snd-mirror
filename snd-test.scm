@@ -535,8 +535,8 @@
 	  (if (not (provided? 'snd-snd-gtk.scm)) (load "snd-gtk.scm")))))
 
 
-(define default-file-buffer-size (mus-file-buffer-size))
-;(set! (mus-file-buffer-size) default-file-buffer-size)
+(define default-file-buffer-size *clm-file-buffer-size*)
+;(set! *clm-file-buffer-size* default-file-buffer-size)
 
 (if (not (defined? 'pi)) 
     (snd-display #__line__ ";pi is not defined!")
@@ -910,8 +910,12 @@
 	(snd-display #__line__ ";with-file-monitor set default: ~A" (with-file-monitor)))
     (if (not (equal? (clm-table-size) 512)) 
 	(snd-display #__line__ ";clm-table-size set default: ~A" (clm-table-size)))
+    (if (not (equal? *clm-table-size* 512)) 
+	(snd-display #__line__ ";*clm-table-size*: ~A" *clm-table-size*))
     (if (fneq (clm-default-frequency) 0.0)
 	(snd-display #__line__ ";clm-default-frequency set default: ~A" (clm-default-frequency)))
+    (if (fneq *clm-default-frequency* 0.0)
+	(snd-display #__line__ ";*clm-default-frequency*: ~A" *clm-default-frequency*))
     (if (not (equal? (with-verbose-cursor)  #f)) 
 	(snd-display #__line__ ";with-verbose-cursor set default: ~A" (with-verbose-cursor)))
     (if (not (equal? (with-inset-graph)  #f))
@@ -1156,10 +1160,6 @@
 	(snd-display #__line__ ";* transform-type set default: ~A" *transform-type*))
     (if (not (equal? *with-file-monitor*  #t)) 
 	(snd-display #__line__ ";* with-file-monitor set default: ~A" *with-file-monitor*))
-    (if (not (equal? *clm-table-size* 512)) 
-	(snd-display #__line__ ";* clm-table-size set default: ~A" *clm-table-size*))
-    (if (fneq *clm-default-frequency* 0.0)
-	(snd-display #__line__ ";* clm-default-frequency set default: ~A" *clm-default-frequency*))
     (if (not (equal? *with-verbose-cursor*  #f)) 
 	(snd-display #__line__ ";* with-verbose-cursor set default: ~A" *with-verbose-cursor*))
     (if (not (equal? *with-inset-graph*  #f))
@@ -1221,17 +1221,17 @@
     
     (if (> most-positive-fixnum (expt 2 36))
 	(begin
-	  (let ((old-max-malloc (mus-max-malloc)))
-	    (set! (mus-max-malloc) (expt 2 36))
+	  (let ((old-max-malloc *mus-max-malloc*))
+	    (set! *mus-max-malloc* (expt 2 36))
 	    (if (not (= (mus-max-malloc) (expt 2 36)))
-		(snd-display #__line__ ";mus-max-malloc as bignum: ~A" (mus-max-malloc)))
-	    (set! (mus-max-malloc) old-max-malloc))
+		(snd-display #__line__ ";mus-max-malloc as bignum: ~A" *mus-max-malloc*))
+	    (set! *mus-max-malloc* old-max-malloc))
 	  
-	  (let ((old-max-table-size (mus-max-table-size)))
-	    (set! (mus-max-table-size) (expt 2 36))
+	  (let ((old-max-table-size *mus-max-table-size*))
+	    (set! *mus-max-table-size* (expt 2 36))
 	    (if (not (= (mus-max-table-size) (expt 2 36)))
-		(snd-display #__line__ ";mus-max-table-size as bignum: ~A" (mus-max-table-size)))
-	    (set! (mus-max-table-size) old-max-table-size))))
+		(snd-display #__line__ ";mus-max-table-size as bignum: ~A" *mus-max-table-size*))
+	    (set! *mus-max-table-size* old-max-table-size))))
     
     (if (not (provided? 'snd-gtk))
 	(for-each
@@ -1302,7 +1302,7 @@
       'beats-per-minute (beats-per-minute) 60.0
       'channel-style (channel-style) 1
       'clipping (clipping) #f 
-      'clm-table-size (clm-table-size) 512
+      'clm-table-size *clm-table-size* 512
       'clm-default-frequency (clm-default-frequency) 0.0
       'color-cutoff (color-cutoff) 0.003 
       'color-inverted (color-inverted) #t
@@ -1379,9 +1379,9 @@
       'mix-tag-height (mix-tag-height) 14
       'mix-tag-width (mix-tag-width) 6
       'mix-waveform-height (mix-waveform-height) 20 
-      'mus-array-print-length (mus-array-print-length) 8
+      'mus-array-print-length *mus-array-print-length* 8
       'mus-clipping (mus-clipping) #f
-      'mus-float-equal-fudge-factor (mus-float-equal-fudge-factor) .0000001
+      'mus-float-equal-fudge-factor *mus-float-equal-fudge-factor* .0000001
       'play-arrow-size (play-arrow-size) 10
       'print-length (print-length) 12 
       'read-only (without-errors (read-only)) 'no-such-sound
@@ -11717,7 +11717,7 @@ EDITS: 2
 					;	    (snd-display #__line__ ";poly-roots n(1): ~A from ~A ~A ~A" 
 					;			 vals 
 					;			 (poly-reduce (poly* (float-vector 1 1) (poly* (poly* (float-vector 2 1) (float-vector -3 1)) (poly* (float-vector -1 1) (float-vector -2 1)))))
-					;			 (mus-float-equal-fudge-factor) 
+					;			 *mus-float-equal-fudge-factor* 
 					;			 poly-roots-epsilon)))
       
 					;      (let ((vals (poly-roots (poly-reduce (poly* (float-vector 1 1) (poly* (poly* (float-vector 2 1) (float-vector -3 1)) (poly* (float-vector 8 1) (float-vector -9 1))))))))
@@ -12410,29 +12410,29 @@ EDITS: 2
 	  (secs (samples->seconds 22050)))
       (if (not (= samps 22050)) (snd-display #__line__ ";seconds->samples: ~A" samps))
       (if (fneq secs 1.0) (snd-display #__line__ ";samples->seconds: ~A" secs)))
-    (set! (mus-file-buffer-size) default-file-buffer-size)
-    (let ((var (catch #t (lambda () (set! (mus-file-buffer-size) #f)) (lambda args args))))
+    (set! *clm-file-buffer-size* default-file-buffer-size)
+    (let ((var (catch #t (lambda () (set! *clm-file-buffer-size* #f)) (lambda args args))))
       (if (not (eq? (car var) 'wrong-type-arg))
 	  (snd-display #__line__ ";mus-file-buffer-size bad size: ~A" var)))
-    (set! (mus-file-buffer-size) 128)
-    (if (not (= (mus-file-buffer-size) 128)) (snd-display #__line__ ";mus-file-buffer-size: ~D?" (mus-file-buffer-size)))
-    (set! (mus-file-buffer-size) default-file-buffer-size)
+    (set! *clm-file-buffer-size* 128)
+    (if (not (= *clm-file-buffer-size* 128)) (snd-display #__line__ ";mus-file-buffer-size: ~D?" *clm-file-buffer-size*))
+    (set! *clm-file-buffer-size* default-file-buffer-size)
     
-    (if (and (not (= (mus-array-print-length) 8)) 
-	     (not (= (mus-array-print-length) 12))
-	     (not (= (mus-array-print-length) 32)))
-	(snd-display #__line__ ";mus-array-print-length: ~D?" (mus-array-print-length)))
-    (set! (mus-array-print-length) 32)
-    (if (not (= (mus-array-print-length) 32)) (snd-display #__line__ ";set mus-array-print-length: ~D?" (mus-array-print-length)))
-    (set! (mus-array-print-length) 8)
+    (if (and (not (= *mus-array-print-length* 8)) 
+	     (not (= *mus-array-print-length* 12))
+	     (not (= *mus-array-print-length* 32)))
+	(snd-display #__line__ ";mus-array-print-length: ~D?" *mus-array-print-length*))
+    (set! *mus-array-print-length* 32)
+    (if (not (= *mus-array-print-length* 32)) (snd-display #__line__ ";set mus-array-print-length: ~D?" *mus-array-print-length*))
+    (set! *mus-array-print-length* 8)
     
-    (let ((fudge (mus-float-equal-fudge-factor)))
-      (if (> (abs (- (mus-float-equal-fudge-factor) 0.0000001)) 0.00000001)
-	  (snd-display #__line__ ";mus-float-equal-fudge-factor: ~A?" (mus-float-equal-fudge-factor)))
-      (set! (mus-float-equal-fudge-factor) .1)
-      (if (fneq (mus-float-equal-fudge-factor) .1) 
-	  (snd-display #__line__ ";set mus-float-equal-fudge-factor: ~A?" (mus-float-equal-fudge-factor)))
-      (set! (mus-float-equal-fudge-factor) fudge))
+    (let ((fudge *mus-float-equal-fudge-factor*))
+      (if (> (abs (- *mus-float-equal-fudge-factor* 0.0000001)) 0.00000001)
+	  (snd-display #__line__ ";mus-float-equal-fudge-factor: ~A?" *mus-float-equal-fudge-factor*))
+      (set! *mus-float-equal-fudge-factor* .1)
+      (if (fneq *mus-float-equal-fudge-factor* .1) 
+	  (snd-display #__line__ ";set mus-float-equal-fudge-factor: ~A?" *mus-float-equal-fudge-factor*))
+      (set! *mus-float-equal-fudge-factor* fudge))
     
     (if (fneq (mus-srate) 22050.0) (snd-display #__line__ ";mus-srate: ~F?" (mus-srate)))
     (if (fneq (hz->radians 1.0) 2.84951704088598e-4) (snd-display #__line__ ";hz->radians: ~F?" (hz->radians 1.0)))
@@ -17373,7 +17373,7 @@ EDITS: 2
 		       "sample->file fmv.snd")
       (if (not (mus-output? gen)) (snd-display #__line__ ";~A not output?" gen))
       (if (not (sample->file? gen)) (snd-display #__line__ ";~A not sample->file?" gen))
-      (if (not (= (mus-length gen) (mus-file-buffer-size))) (snd-display #__line__ ";sample->file length: ~A?" (mus-length gen)))
+      (if (not (= (mus-length gen) *clm-file-buffer-size*)) (snd-display #__line__ ";sample->file length: ~A?" (mus-length gen)))
       (let ((genx gen))
 	(if (not (equal? genx gen)) (snd-display #__line__ ";sample->file equal? ~A ~A" genx gen)))
       (if (not (string=? (mus-file-name gen) "fmv.snd")) (snd-display #__line__ ";sample->file mus-file-name: ~A" (mus-file-name gen)))
@@ -18558,7 +18558,7 @@ EDITS: 2
       (if (not (vequal (outp 3) (make-float-vector 10 0.0)))
 	  (snd-display #__line__ ";locsig(4)->sd chan 3 (0.5): ~A" (outp 3))))
 
-    (set! (mus-array-print-length) 8)
+    (set! *mus-array-print-length* 8)
     (let* ((outf1 (make-float-vector->file "fmv.snd" 1 mus-bshort mus-next))
 	   (outf4 (make-float-vector->file "fmv1.snd" 4 mus-bshort mus-next))
 	   (revf (make-float-vector->file "fmv2.snd" 1 mus-bshort mus-next))
@@ -18860,7 +18860,7 @@ EDITS: 2
 	  (v0 (make-float-vector 1000))
 	  (gen1 (make-granulate :expansion 2.0))
 	  (v1 (make-float-vector 1000))
-	  (rd1b (make-readin :file "oboe.snd" :channel 0 :start 4000 :direction 1 :size (mus-file-buffer-size))))
+	  (rd1b (make-readin :file "oboe.snd" :channel 0 :start 4000 :direction 1 :size *clm-file-buffer-size*)))
       (print-and-check gen 
 		       "granulate"
 		       "granulate expansion: 2.000 (551/1102), scaler: 0.600, length: 0.150 secs (3308 samps), ramp: 0.060")
@@ -32632,26 +32632,26 @@ EDITS: 1
       (set! (x-axis-label ind 0 time-graph) "time-x")
       (set! (y-axis-label ind 0 time-graph) "amp-y")
       (let ((old-srate (mus-srate))
-	    (old-file-buffer-size (mus-file-buffer-size))
-	    (old-array-print-length (mus-array-print-length))
-	    (old-clm-table-size (clm-table-size)))
+	    (old-file-buffer-size *clm-file-buffer-size*)
+	    (old-array-print-length *mus-array-print-length*)
+	    (old-clm-table-size *clm-table-size*))
 	(set! (mus-srate) 48000)
-	(set! (mus-array-print-length) 24)
-	(set! (mus-file-buffer-size) 4096)
-	(set! (clm-table-size) 256)
+	(set! *mus-array-print-length* 24)
+	(set! *clm-file-buffer-size* 4096)
+	(set! *clm-table-size* 256)
 	(if (file-exists? "s61.scm") (delete-file "s61.scm"))
 	(save-state "s61.scm")
 	(close-sound ind)
 	(for-each forget-region (regions))
 	(load (string-append cwd "s61.scm"))
 	(if (fneq (mus-srate) 48000.0) (snd-display #__line__ ";save/restore mus-srate: ~A" (mus-srate)))
-	(if (not (= (mus-file-buffer-size) 4096)) (snd-display #__line__ ";save/restore mus-file-buffer-size: ~A" (mus-file-buffer-size)))
-	(if (not (= (mus-array-print-length) 24)) (snd-display #__line__ ";save/restore mus-array-print-length: ~A" (mus-array-print-length)))
-	(if (not (= (clm-table-size) 256)) (snd-display #__line__ ";save/restore clm-table-size: ~A" (clm-table-size)))
+	(if (not (= *clm-file-buffer-size* 4096)) (snd-display #__line__ ";save/restore mus-file-buffer-size: ~A" *clm-file-buffer-size*))
+	(if (not (= *mus-array-print-length* 24)) (snd-display #__line__ ";save/restore mus-array-print-length: ~A" *mus-array-print-length*))
+	(if (not (= *clm-table-size* 256)) (snd-display #__line__ ";save/restore clm-table-size: ~A" *clm-table-size*))
 	(set! (mus-srate) old-srate)
-	(set! (mus-array-print-length) old-array-print-length)
-	(set! (mus-file-buffer-size) old-file-buffer-size)
-	(set! (clm-table-size) old-clm-table-size))
+	(set! *mus-array-print-length* old-array-print-length)
+	(set! *clm-file-buffer-size* old-file-buffer-size)
+	(set! *clm-table-size* old-clm-table-size))
       (set! (save-dir) old-save-dir)
       (set! ind (find-sound "oboe.snd"))
       (if (not (= (show-axes ind 0) show-no-axes)) (snd-display #__line__ ";save show-no-axes: ~A" (show-axes ind 0)))
@@ -37268,7 +37268,7 @@ EDITS: 1
 	  (call-with-output-file "try-test.scm"
 	    (lambda (p)
 	      (format p "(if (not (provided? 'snd-ws.scm)) (load \"ws.scm\"))~%~%")
-	      (format p "(set! (mus-float-equal-fudge-factor) 1e-4)~%")
+	      (format p "(set! *mus-float-equal-fudge-factor* 1e-4)~%")
 	      (format p "(let ()~%")
 	      (format p "  (define v-1 (make-float-vector 100 .25)) (do ((i 0 (+ i 1))) ((= i 100)) (float-vector-set! v-1 i (* i .01)))~%~%")
 	      (format p "  (define v0 (make-float-vector 10))~%")
@@ -39135,9 +39135,9 @@ EDITS: 1
       (let ((tsize 0)
 	    (arrp 0))
 	(set! file (with-sound (:data-format mus-bfloat :header-type mus-next)
-			       (set! mx (mus-file-buffer-size))
-			       (set! tsize (clm-table-size))
-			       (set! arrp (mus-array-print-length))
+			       (set! mx *clm-file-buffer-size*)
+			       (set! tsize *clm-table-size*)
+			       (set! arrp *mus-array-print-length*)
 			       (fm-violin 0 .1 440 .1)))
 	(set! ind (find-sound file))
 	(if (not (= mx (* 1024 1024))) (snd-display #__line__ ";*clm-file-buffer-size*: ~A" mx))
@@ -45610,7 +45610,7 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (mus-sound-close-input 0)))
 		(check-error-tag 'out-of-range (lambda () (mus-sound-close-input 1)))
 		(check-error-tag 'out-of-range (lambda () (mus-sound-close-input 2)))
-		(check-error-tag 'out-of-range (lambda () (set! (mus-array-print-length) -1)))
+		(check-error-tag 'out-of-range (lambda () (set! *mus-array-print-length* -1)))
 		(check-error-tag 'out-of-range (lambda () (set! (print-length) -1)))
 		(check-error-tag 'out-of-range (lambda () (set! (play-arrow-size) -1)))
 		(check-error-tag 'out-of-range (lambda () (set! (enved-style) 12)))
@@ -46053,7 +46053,7 @@ EDITS: 1
 	    (set! (mus-srate) 22050)
 	    (set! *clm-srate* 22050)
 	    (set! (print-length) 12)
-	    (set! (mus-array-print-length) 12)
+	    (set! *mus-array-print-length* 12)
 	    (set! (sound-file-extensions) exts)
 	    (set! car-main #f)
 	    (set! cadr-main #f)
