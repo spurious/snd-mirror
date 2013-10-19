@@ -25,7 +25,8 @@
 
 ;;; Code:
 
-(define *clm-srate* 22050)
+(set! *clm-srate* 22050)
+
 (define *clm-data-format* mus-lfloat)
 (define *clm-rt-bufsize* 1024)
 (define *output* #f)			;holds fd from (mus-audio-open-output)
@@ -39,7 +40,7 @@
 (define sliderback "lightsteelblue")
 (define background "lightsteelblue1")
 
-;(define (seconds->samples secs) (round (* secs (mus-srate))))
+;(define (seconds->samples secs) (round (* secs *clm-srate*)))
 
 ;; called by XtAppAddWorkProc
 (define (rt-send->dac func)
@@ -104,7 +105,6 @@
       (set! (vbegs i) (+ 1 (floor (random 3.0)))))
     (set! *clm-srate* srate)
     (set! *clm-rt-bufsize* bufsize)
-    (set! (mus-srate) srate)
     (set! *output* (mus-audio-open-output mus-audio-default srate 1 data-format (* bufsize 2)))
     (lambda ()
       (if (> len 1)
@@ -197,7 +197,6 @@
       (set! (amps i) (floor (+ 1 (* 8 (rbell (random 1.0)))))) i)
     (set! *clm-srate* srate)
     (set! *clm-rt-bufsize* bufsize)
-    (set! (mus-srate) srate)
     (set! *output* (mus-audio-open-output mus-audio-default srate 1 data-format (* bufsize 2)))
     (lambda ()
       (if (> len 1)

@@ -2,7 +2,8 @@
 
 (provide 'sndlib-ws.scm)
 
-(define *clm-srate* 44100)
+(set! *clm-srate* 44100)
+
 (define *clm-file-name* "test.snd")
 (define *clm-channels* 1)
 (define *clm-data-format* mus-lfloat)
@@ -80,7 +81,7 @@
 			    (notehook *clm-notehook*)               ; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
 			    (ignore-output #f))
   "with-sound-helper is the business portion of the with-sound macro"
-  (let* ((old-srate (mus-srate))
+  (let* ((old-srate *clm-srate*)
 	 (old-*output* *output*)
 	 (old-*reverb* *reverb*)
 	 (old-notehook *clm-notehook*)
@@ -111,7 +112,7 @@
 	       (set! (mus-clipping) #f)
 	       (set! (mus-clipping) *clm-clipped*))
 	   (set! (mus-clipping) clipped))
-       (set! (mus-srate) srate))
+       (set! *clm-srate* srate))
 
      (lambda ()
        (if output-to-file
@@ -119,7 +120,7 @@
 	     (if continue-old-file
 		 (begin
 		   (set! *output* (continue-sample->file output-1))
-		   (set! (mus-srate) (mus-sound-srate output-1)))
+		   (set! *clm-srate* (mus-sound-srate output-1)))
 		 (begin
 		   (if (file-exists? output-1) 
 		       (delete-file output-1))
@@ -192,7 +193,7 @@
 			   (let ((lst (mus-sound-maxamp output-1)))
 			     (do ((i 0 (+ i 2)))
 				 ((>= i (length lst)))
-			       (list-set! lst i (/ (list-ref lst i) (mus-srate))))
+			       (list-set! lst i (/ (list-ref lst i) *clm-srate*)))
 			     lst)
 			   (if (float-vector? output-1)
 			       (list (float-vector-peak output-1))
@@ -239,7 +240,7 @@
 	     (if (mus-output? *output*)
 		 (mus-close *output*))
 	     (set! *output* old-*output*)))
-       (set! (mus-srate) old-srate)))))
+       (set! *clm-srate* old-srate)))))
 
 
 (defmacro with-sound (args . body)
@@ -312,16 +313,16 @@
 	  (scaled-by #f))
   "(init-with-sound . args) is the first half of with-sound; it sets up the CLM output choices, reverb, etc. Use \
 finish-with-sound to complete the process."
-  (let ((old-srate (mus-srate))
+  (let ((old-srate *clm-srate*)
 	(start (if statistics (get-internal-real-time)))
 	(output-to-file (string? output))
 	(reverb-to-file (and reverb (string? revfile))))
-    (set! (mus-srate) srate)
+    (set! *clm-srate* srate)
     (if output-to-file
 	(if continue-old-file
 	    (begin
 	      (set! *output* (continue-sample->file output))
-	      (set! (mus-srate) (mus-sound-srate output)))
+	      (set! *clm-srate* (mus-sound-srate output)))
 	    (begin
 	      (if (file-exists? output) 
 		  (delete-file output))
@@ -386,7 +387,7 @@ finish-with-sound to complete the process."
 	(if (mus-output? *output*)
 	    (mus-close *output*))
 
-	(set! (mus-srate) old-srate)
+	(set! *clm-srate* old-srate)
 	output)
       (throw 'wrong-type-arg
 	     (list "finish-with-sound" wsd))))
@@ -440,7 +441,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 (define (->sample beg)
   "(->sample time-in-seconds) -> time-in-samples"
-  (round (* (if (not (null? (sounds))) (srate) (mus-srate)) beg)))
+  (round (* (if (not (null? (sounds))) (srate) *clm-srate*) beg)))
 
 
 ;;; -------- defgenerator --------

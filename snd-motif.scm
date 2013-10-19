@@ -727,7 +727,7 @@
 	(float-vector-add! x1 x0))))
   
   (if (< (window-height) 520) (set! (window-height) 520))
-  (set! (mus-srate) 22050.0)
+  (set! *clm-srate* 22050.0)
   
   (let* ((mass 1.0)
 	 (xspring 0.1)
@@ -2548,12 +2548,12 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	((graph)
 	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane 
 					     (list XmNpaneMinimum 100)))
-		(snd (make-variable-graph form (string-append variable-name ": time") 2048 (floor (mus-srate)))))
+		(snd (make-variable-graph form (string-append variable-name ": time") 2048 (floor *clm-srate*))))
 	   (list (sound->integer snd) (channel-data snd 0))))
 	((spectrum)
 	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane
 					     (list XmNpaneMinimum 100)))
-		(snd (make-variable-graph form variable-name 2048 (floor (mus-srate)))))
+		(snd (make-variable-graph form variable-name 2048 (floor *clm-srate*))))
 	   (set! (time-graph? snd 0) #f)
 	   (set! (transform-graph? snd 0) #t)
 	   (set! (x-axis-label snd 0 transform-graph) (string-append variable-name ": frequency"))
@@ -2909,7 +2909,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	(XmStringFree xhelp)
 	(XmStringFree xdismiss)
 	(XmStringFree titlestr)
-	(set! (mus-srate) 44100)
+	(set! *clm-srate* 44100)
 	
 	(let* ((frequency 440.0)
 	       (amplitude 0.1)

@@ -128,7 +128,7 @@
 		  (unaCordaGain-table default-unaCordaGain-table))
   
   ;; converts t60 values to suitable :rate values for expseg
-  (define (In-t60 t60) (- 1.0 (expt 0.001 (/ 1.0 t60 (mus-srate)))))
+  (define (In-t60 t60) (- 1.0 (expt 0.001 (/ 1.0 t60 *clm-srate*))))
   
   (define (make-one-pole-one-zero a0 a1 b1)
     (list (make-one-zero a0 a1)
@@ -181,7 +181,7 @@
       (list len-int (get-allpass-coef len-frac wT))))
   
   (define (tune-piano frequency stiffnessCoefficient numAllpasses b0 b1 a1)
-    (let* ((wT (/ (* frequency two-pi) (mus-srate)))
+    (let* ((wT (/ (* frequency two-pi) *clm-srate*))
 	   (len (/ (+ two-pi
 		      (* numAllpasses
 			 (apPhase stiffnessCoefficient wT))
@@ -228,9 +228,9 @@
     
     (let((end (+ beg dur (seconds->samples release-time-margin)))
 	 (release-time (+ beg dur))
-	 (wT (/ (* two-pi freq) (mus-srate)))
+	 (wT (/ (* two-pi freq) *clm-srate*))
 	 ;;strike position comb filter delay length
-	 (agraffe-len (/ (* (mus-srate) strikePosition) freq))
+	 (agraffe-len (/ (* *clm-srate* strikePosition) freq))
 	 (singleStringDecayRate (* singleStringDecayRateFactor singleStringDecayRate-1)))
       
       (let (;;initialize soundboard impulse response elements

@@ -819,7 +819,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	       (float-vector 0.0 b1 b2)))
 
 (define* (make-iir-low-pass-2 fc din) ; din=(sqrt 2.0) for example (suggested range 0.2.. 10)
-  (let* ((theta (/ (* 2 pi fc) (mus-srate)))
+  (let* ((theta (/ (* 2 pi fc) *clm-srate*))
 	 (d (or din (sqrt 2.0)))
 	 (beta (* 0.5 (/ (- 1.0 (* (/ d 2) (sin theta)))
 			 (+ 1.0 (* (/ d 2) (sin theta))))))
@@ -830,7 +830,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		 (float-vector 0.0 (* -2.0 gamma) (* 2.0 beta)))))
 
 (define* (make-iir-high-pass-2 fc din)
-  (let* ((theta (/ (* 2 pi fc) (mus-srate)))
+  (let* ((theta (/ (* 2 pi fc) *clm-srate*))
 	 (d (or din (sqrt 2.0)))
 	 (beta (* 0.5 (/ (- 1.0 (* (/ d 2) (sin theta)))
 			 (+ 1.0 (* (/ d 2) (sin theta))))))
@@ -841,7 +841,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		 (float-vector 0.0 (* -2.0 gamma) (* 2.0 beta)))))
 
 (define (make-iir-band-pass-2 f1 f2)
-  (let* ((theta (/ (* 2 pi (sqrt (* f1 f2))) (mus-srate)))
+  (let* ((theta (/ (* 2 pi (sqrt (* f1 f2))) *clm-srate*))
 	 (Q (/ (sqrt (* f1 f2)) (- f2 f1)))
 	 (t2 (tan (/ theta (* 2 Q))))
 	 (beta (* 0.5 (/ (- 1.0 t2)
@@ -853,7 +853,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		 (float-vector 0.0 (* -2.0 gamma) (* 2.0 beta)))))
 
 (define (make-iir-band-stop-2 f1 f2)
-  (let* ((theta (/ (* 2 pi (sqrt (* f1 f2))) (mus-srate)))
+  (let* ((theta (/ (* 2 pi (sqrt (* f1 f2))) *clm-srate*))
 	 (Q (/ (sqrt (* f1 f2)) (- f2 f1)))
 	 (t2 (tan (/ theta (* 2 Q))))
 	 (beta (* 0.5 (/ (- 1.0 t2)
@@ -885,7 +885,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define (make-peaking-2 f1 f2 m)
   ;; bandpass, m is gain at center of peak
   ;; use map-channel with this one (not clm-channel or filter)
-  (let* ((theta (/ (* 2 pi (sqrt (* f1 f2))) (mus-srate)))
+  (let* ((theta (/ (* 2 pi (sqrt (* f1 f2))) *clm-srate*))
 	 (Q (/ (sqrt (* f1 f2)) (- f2 f1)))
 	 (t2 (* (/ 4.0 (+ m 1)) (tan (/ theta (* 2 Q)))))
 	 (beta (* 0.5 (/ (- 1.0 t2)
@@ -933,7 +933,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   "(make-butter-lp M fc) returns a butterworth low-pass filter; its order is 'M' * 2, 'fc' is the cutoff frequency in Hz"
   (let* ((xcoeffs ())
 	 (ycoeffs ())
-	 (theta (/ (* 2 pi fc) (mus-srate)))
+	 (theta (/ (* 2 pi fc) *clm-srate*))
 	 (st (sin theta))
 	 (ct (cos theta)))
     (do ((k 1 (+ k 1)))
@@ -953,7 +953,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   "(make-butter-hp M fc) returns a butterworth high-pass filter; its order is 'M' * 2, 'fc' is the cutoff frequency in Hz"
   (let* ((xcoeffs ())
 	 (ycoeffs ())
-	 (theta (/ (* 2 pi fc) (mus-srate)))
+	 (theta (/ (* 2 pi fc) *clm-srate*))
 	 (st (sin theta))
 	 (ct (cos theta)))
     (do ((k 1 (+ k 1)))
@@ -975,7 +975,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (ycoeffs ())
 	 (f0 (sqrt (* f1 f2)))
 	 (Q (/ f0 (- f2 f1)))
-	 (theta0 (/ (* 2 pi f0) (mus-srate)))
+	 (theta0 (/ (* 2 pi f0) *clm-srate*))
 	 (de (/ (* 2 (tan (/ theta0 (* 2 Q)))) (sin theta0)))
 	 (de2 (/ de 2))
 	 (tn0 (tan (* theta0 0.5))))
@@ -1014,7 +1014,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (ycoeffs ())
 	 (f0 (sqrt (* f1 f2)))
 	 (Q (/ f0 (- f2 f1)))
-	 (theta0 (/ (* 2 pi f0) (mus-srate)))
+	 (theta0 (/ (* 2 pi f0) *clm-srate*))
 	 (de (/ (* 2 (tan (/ theta0 (* 2 Q)))) (sin theta0)))
 	 (de2 (/ de 2))
 	 (ct (cos theta0))

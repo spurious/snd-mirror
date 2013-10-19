@@ -12,16 +12,16 @@
   ;; lp-coeff controls the strength of the low pass filter inserted in the feedback loop
   ;; output-scale can be used to boost the reverb output
 
-  (let ((dly-len (if (= (mus-srate) 44100.0)
+  (let ((dly-len (if (= *clm-srate* 44100.0)
 		     (vector 2467 2753 3217 3533 3877 4127 599 197 67 101 97 73 67 53 37)
-		     (if (= (mus-srate) 22050.0)
+		     (if (= *clm-srate* 22050.0)
 			 (vector 1237 1381 1607 1777 1949 2063 307 97 31 53 47 37 31 29 17)
 			 #f)))
 	(chan2 (> (channels *output*) 1))
 	(chan4 (= (channels *output*) 4)))
 	
     (if (not dly-len)
-	(let ((srscale (/ (mus-srate) 25641)))
+	(let ((srscale (/ *clm-srate* 25641)))
 	  (define (prime? val)
 	    (or (= val 2)
 		(and (odd? val)
@@ -40,7 +40,7 @@
 	      (if (even? val) (set! val (+ val 1)))
 	      (set! (dly-len i) (next-prime val))))))
 
-    (let ((len (+ (floor (mus-srate)) (frames *reverb*)))
+    (let ((len (+ (floor *clm-srate*) (frames *reverb*)))
 	   (comb1 (make-comb (* .822 reverb-factor) (dly-len 0)))
 	   (comb2 (make-comb (* .802 reverb-factor) (dly-len 1)))
 	   (comb3 (make-comb (* .773 reverb-factor) (dly-len 2)))

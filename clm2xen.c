@@ -1,10 +1,5 @@
 /* tie CLM module into Scheme, Ruby, or Forth */
 
-/*     
- *  we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
- *    perhaps a mus module, giving mus:sound-srate in xen, mus:sound-srate in clm, mus_sound_srate in C?
- */
-
 /* if the optimizer stops working inexplicably, look for any symbols used before this that
  *    might shadow a generator name; one such case was (make-hook 'env...) in snd-env.c
  */
@@ -577,7 +572,9 @@ static XEN g_samples_to_seconds(XEN val)
 }
 
 
-/* can't use a variable *srate* directly here because the set! side would not communicate the change to C */
+#if HAVE_SCHEME
+  static s7_pointer clm_srate_symbol;
+#endif
 
 static XEN g_mus_srate(void) 
 {
@@ -594,9 +591,16 @@ static XEN g_mus_set_srate(XEN val)
   if (sr <= 0.0) 
     XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_srate, 1, val, "must be > 0.0");
   mus_set_srate(sr);
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, clm_srate_symbol, s7_make_real(s7, sr));
+#endif
   return(val);
 }
 
+
+#if HAVE_SCHEME
+  static s7_pointer mus_float_equal_fudge_factor_symbol;
+#endif
 
 static XEN g_mus_float_equal_fudge_factor(void) 
 {
@@ -607,11 +611,20 @@ static XEN g_mus_float_equal_fudge_factor(void)
 
 static XEN g_mus_set_float_equal_fudge_factor(XEN val) 
 {
+  mus_float_t factor;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, 1, S_setB S_mus_float_equal_fudge_factor, "a number");
-  mus_set_float_equal_fudge_factor(XEN_TO_C_DOUBLE(val));
+  factor = XEN_TO_C_DOUBLE(val);
+  mus_set_float_equal_fudge_factor(factor);
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, mus_float_equal_fudge_factor_symbol, s7_make_real(s7, factor));
+#endif
   return(val);
 }
 
+
+#if HAVE_SCHEME
+  static s7_pointer mus_array_print_length_symbol;
+#endif
 
 static XEN g_mus_array_print_length(void) 
 {
@@ -629,6 +642,9 @@ static XEN g_mus_set_array_print_length(XEN val)
   if (len < 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_array_print_length, 1, val, "must be >= 0");
   mus_set_array_print_length(len);
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, mus_array_print_length_symbol, s7_make_integer(s7, len));
+#endif
   return(val);
 }
 
@@ -18707,6 +18723,9 @@ static void mus_xen_init(void)
 				   S_setB S_clm_default_frequency, g_set_clm_default_frequency_w, 0, 0, 1, 0);
 
 #if HAVE_SCHEME
+  clm_srate_symbol = s7_define_variable(s7, "*clm-srate*", s7_make_real(s7, MUS_DEFAULT_SAMPLING_RATE));
+  s7_eval_c_string(s7, "(set! (symbol-access '*clm-srate*) (list #f (lambda (s v) (set! (mus-srate) v)) #f))");
+
   clm_default_frequency_symbol = s7_define_variable(s7, "*" S_clm_default_frequency "*", s7_make_real(s7, MUS_CLM_DEFAULT_FREQUENCY));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_clm_default_frequency "*) (list #f (lambda (s v) (set! (" S_clm_default_frequency ") v)) #f))");
 
@@ -18715,6 +18734,12 @@ static void mus_xen_init(void)
 
   mus_file_buffer_size_symbol = s7_define_variable(s7, "*clm-file-buffer-size*", s7_make_integer(s7, MUS_DEFAULT_FILE_BUFFER_SIZE));
   s7_eval_c_string(s7, "(set! (symbol-access '*clm-file-buffer-size*) (list #f (lambda (s v) (set! (" S_mus_file_buffer_size ") v)) #f))");
+
+  mus_float_equal_fudge_factor_symbol = s7_define_variable(s7, "*" S_mus_float_equal_fudge_factor "*", s7_make_real(s7, 0.0000001)); /* clm.c */
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mus_float_equal_fudge_factor "*) (list #f (lambda (s v) (set! (" S_mus_float_equal_fudge_factor ") v)) #f))");
+
+  mus_array_print_length_symbol = s7_define_variable(s7, "*" S_mus_array_print_length "*", s7_make_integer(s7, MUS_DEFAULT_ARRAY_PRINT_LENGTH));
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mus_array_print_length "*) (list #f (lambda (s v) (set! (" S_mus_array_print_length ") v)) #f))");
 #endif
 
   XEN_DEFINE_REAL_PROCEDURE(S_radians_to_hz,        g_radians_to_hz_w,        1, 0, 0, H_radians_to_hz);

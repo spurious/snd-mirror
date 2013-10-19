@@ -848,8 +848,6 @@ var sndclm_mus_offset_tip = "<code>(mus-offset gen)</code>: gen's offset";
 var sndclm_mus_scaler_tip = "<code>(mus-scaler gen)</code>: gen's scaler, if any.<br>" +
                             "  This is often an amplitude adjustment of some sort.";
 
-var sndclm_mussrate_tip = "<code>(mus-srate)</code>: current sampling rate";
-
 var sndclm_ncos_tip = "<code>(ncos gen (fm 0.0))</code>: get the next sample from 'gen', an ncos generator";
 
 var sndclm_oscil_tip = "<code>(oscil gen (fm 0.0) (pm 0.0))</code>:<br>" +

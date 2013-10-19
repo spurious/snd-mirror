@@ -1468,7 +1468,7 @@
 ;; this uses rkoddssb below
 
 (definstrument (stringy beg dur freq amp)
-  (let ((n (floor (/ (mus-srate) (* 3 freq)))))
+  (let ((n (floor (/ *clm-srate* (* 3 freq)))))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
 	  (r (expt .001 (/ n))))
@@ -1773,7 +1773,7 @@
   (with-environment gen
     (let* ((x (radians->hz (+ frequency fm))) ; undo the earlier hz->radians
 	   (y (* x ratio))
-	   (topk (/ 1.0 (floor (/ (- (/ (mus-srate) 3) x) y))))
+	   (topk (/ 1.0 (floor (/ (- (/ *clm-srate* 3) x) y))))
 	   (maxr (expt cutoff topk)))
       (if (>= r 0.0)
 	  (min r maxr)
@@ -2859,7 +2859,7 @@
 |#
 
 (definstrument (glassy beg dur freq amp)
-  (let* ((n (floor (/ (mus-srate) (* 3 freq))))
+  (let* ((n (floor (/ *clm-srate* (* 3 freq))))
 	 (r (expt .001 (/ n))))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -4902,7 +4902,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (g 'rands) (make-vector n))
 				 (do ((i 0 (+ i 1)))
 				     ((= i n))
-				   (set! ((g 'rands) i) (make-rand :frequency (/ (mus-srate) (expt 2 i))))
+				   (set! ((g 'rands) i) (make-rand :frequency (/ *clm-srate* (expt 2 i))))
 				   (set! (mus-phase ((g 'rands) i)) (random pi))))
 			       g))
   (n 1) (rands #f))
@@ -5078,7 +5078,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (green-noise-interp
 	       :make-wrapper (lambda (g)
 			       (set! (g 'sum) (* 0.5 (+ (g 'low) (g 'high))))
-			       (set! (g 'dv) (/ 1.0 (ceiling (/ (mus-srate) (max 1.0 (g 'frequency))))))
+			       (set! (g 'dv) (/ 1.0 (ceiling (/ *clm-srate* (max 1.0 (g 'frequency))))))
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       (set! (g 'incr) (* (mus-random (g 'amplitude)) dv))
 			       (set! (g 'two-pi) (* 2.0 pi))
@@ -6123,8 +6123,8 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (g 'im) (make-float-vector n))
 				 (set! (g 'dly) (make-delay n))
 				 (set! (g 'rms) (make-moving-rms n))
-				 (set! (g 'hop) (floor (/ (mus-srate) (g 'rfreq))))
-				 (set! (g 'binwidth) (/ (mus-srate) n))
+				 (set! (g 'hop) (floor (/ *clm-srate* (g 'rfreq))))
+				 (set! (g 'binwidth) (/ *clm-srate* n))
 				 g)))
   (dbfloor -40.0) (rfreq 100.0) 
   (size 4096) (hop 1024) (outctr 0)
@@ -6163,8 +6163,8 @@ index 10 (so 10/2 is the bes-jn arg):
 #|
 (let* ((snd (open-sound "oboe.snd"))
        (cur-srate (srate snd))
-       (old-srate (mus-srate)))
-  (set! (mus-srate) cur-srate)
+       (old-srate *clm-srate*))
+  (set! *clm-srate* cur-srate)
   
   (let ((scn (make-moving-scentroid -40.0 100.0 128))
 	(vals (scentroid "oboe.snd" 0.0 1.1 -40.0 100.0 128))
@@ -6185,7 +6185,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	      (begin
 		(format #t "[~A ~A]~%" val (vals k))
 		(set! k (+ k 1)))))))
-    (set! (mus-srate) old-srate)))
+    (set! *clm-srate* old-srate)))
 |#
 
 
@@ -6275,7 +6275,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		     (logla (log (/ (max la .0000001) peak) 10))
 		     (logra (log (/ (max ra .0000001) peak) 10)))
 		(set! val
-		      (/ (mus-srate)
+		      (/ *clm-srate*
 			 (+ peak-loc (/ (* 0.5 (- logla logra))
 					(+ logla logra)))))))))
     val))
@@ -6283,8 +6283,8 @@ index 10 (so 10/2 is the bes-jn arg):
 #|
 (let* ((rd (make-readin "oboe.snd"))
        (cur-srate (srate "oboe.snd"))
-       (old-srate (mus-srate)))
-  (set! (mus-srate) cur-srate)
+       (old-srate *clm-srate*))
+  (set! *clm-srate* cur-srate)
   (let* ((scn (make-moving-pitch rd))
 	 (last-pitch 0.0)
 	 (pitch 0.0))
@@ -6294,7 +6294,7 @@ index 10 (so 10/2 is the bes-jn arg):
       (set! pitch (moving-pitch scn))
       (if (not (= last-pitch pitch))
 	  (format #t "~A: ~A~%" (* 1.0 (/ i cur-srate)) pitch))))
-  (set! (mus-srate) old-srate))
+  (set! *clm-srate* old-srate))
 |#
 
 

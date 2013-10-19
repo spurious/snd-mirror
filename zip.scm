@@ -11,7 +11,7 @@
     (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
     (if (not (provided? 'sndlib-ws.scm)) (load "sndlib-ws.scm")))
 
-(define (safe-srate) (if (not (null? (sounds))) (srate) (mus-srate)))
+(define (safe-srate) (if (not (null? (sounds))) (srate) *clm-srate*))
 
 
 (defgenerator zdata

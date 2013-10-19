@@ -14,7 +14,7 @@
 	(comb2 (make-comb 0.733 4999))
 	(comb3 (make-comb 0.715 5399))
 	(comb4 (make-comb 0.697 5801))
-	(decay-dur (mus-srate))
+	(decay-dur *clm-srate*)
 	(chns (channels *output*))
 	(file-dur (frames *reverb*)))
 
@@ -28,7 +28,7 @@
 
       (if (or amp-env low-pass)
 	  (let ((flt (if low-pass (make-fir-filter 3 (float-vector 0.25 0.5 0.25)) #f))
-		(envA (make-env :envelope (or amp-env '(0 1 1 1)) :scaler volume :duration (/ len (mus-srate)))))
+		(envA (make-env :envelope (or amp-env '(0 1 1 1)) :scaler volume :duration (/ len *clm-srate*))))
 	    (if low-pass
 		(do ((i 0 (+ i 1)))
 		    ((= i len))

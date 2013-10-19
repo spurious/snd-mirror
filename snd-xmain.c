@@ -649,6 +649,27 @@ void snd_doit(int argc, char **argv)
   ss->grid_color = get_in_between_color(ss->data_color, ss->graph_color);
   ss->selected_grid_color = get_in_between_color(ss->selected_data_color, ss->selected_graph_color);
 
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->highlight_color_symbol,      XEN_WRAP_PIXEL(ss->highlight_color));
+  s7_symbol_set_value(s7, ss->basic_color_symbol,          XEN_WRAP_PIXEL(ss->basic_color));
+  s7_symbol_set_value(s7, ss->position_color_symbol,       XEN_WRAP_PIXEL(ss->position_color));
+  s7_symbol_set_value(s7, ss->zoom_color_symbol,           XEN_WRAP_PIXEL(ss->zoom_color));
+  s7_symbol_set_value(s7, ss->cursor_color_symbol,         XEN_WRAP_PIXEL(ss->cursor_color));
+  s7_symbol_set_value(s7, ss->selection_color_symbol,      XEN_WRAP_PIXEL(ss->selection_color));
+  s7_symbol_set_value(s7, ss->mix_color_symbol,            XEN_WRAP_PIXEL(ss->mix_color));
+  s7_symbol_set_value(s7, ss->enved_waveform_color_symbol, XEN_WRAP_PIXEL(ss->enved_waveform_color));
+  s7_symbol_set_value(s7, ss->filter_control_waveform_color_symbol, XEN_WRAP_PIXEL(ss->filter_control_waveform_color));
+  s7_symbol_set_value(s7, ss->listener_color_symbol,       XEN_WRAP_PIXEL(ss->listener_color));
+  s7_symbol_set_value(s7, ss->listener_text_color_symbol,  XEN_WRAP_PIXEL(ss->listener_text_color));
+  s7_symbol_set_value(s7, ss->graph_color_symbol,          XEN_WRAP_PIXEL(ss->graph_color));
+  s7_symbol_set_value(s7, ss->selected_graph_color_symbol, XEN_WRAP_PIXEL(ss->selected_graph_color));
+  s7_symbol_set_value(s7, ss->data_color_symbol,           XEN_WRAP_PIXEL(ss->data_color));
+  s7_symbol_set_value(s7, ss->selected_data_color_symbol,  XEN_WRAP_PIXEL(ss->selected_data_color));
+  s7_symbol_set_value(s7, ss->mark_color_symbol,           XEN_WRAP_PIXEL(ss->mark_color));
+  s7_symbol_set_value(s7, ss->sash_color_symbol,           XEN_WRAP_PIXEL(ss->sash_color));
+  s7_symbol_set_value(s7, ss->text_focus_color_symbol,     XEN_WRAP_PIXEL(ss->text_focus_color));
+#endif
+
   ss->axis_color_set = false;
 
   ss->orig_data_color = ss->data_color;

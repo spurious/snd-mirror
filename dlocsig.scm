@@ -2216,9 +2216,9 @@
 		  (else (loop1 (cdr l1) 
 			       result))))))
     
-    (define (dist->samples d) (round (* d (/ (mus-srate) dlocsig-speed-of-sound))))
+    (define (dist->samples d) (round (* d (/ *clm-srate* dlocsig-speed-of-sound))))
     ;; (define (dist->seconds d) (/ d dlocsig-speed-of-sound))
-    (define (time->samples time) (round (* time (mus-srate))))
+    (define (time->samples time) (round (* time *clm-srate*)))
     
     (define (transition-point-3 vert-a vert-b xa ya za xb yb zb) 
       (define (cross v1 v2)

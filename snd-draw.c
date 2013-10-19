@@ -3,26 +3,6 @@
 
 #if (!USE_NO_GUI)
 
-#if USE_MOTIF
-  #define XEN_WRAP_PIXEL(Value)        XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Pixel"), C_TO_XEN_INT((int)Value))
-                                       /* not ulong here! -- messes up the equal? check */
-  #define XEN_UNWRAP_PIXEL(Value)      (unsigned long)XEN_TO_C_INT(XEN_CADR(Value))
-  #define XEN_PIXEL_P(Value)           (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                                         (strcmp("Pixel", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
-#endif
-
-#if USE_GTK
-  #define XEN_WRAP_PIXEL(Value)    XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("color_t"), XEN_WRAP_C_POINTER((unsigned long)Value))
-  #define XEN_UNWRAP_PIXEL(Value)  (color_t)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value)))
-  #define XEN_PIXEL_P(Value)       (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                                    (strcmp("color_t", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
-#endif
-
-/* unfortunately, we can't just make PIXEL into a C type here -- it is called
- *   XM_PIXEL in xm.c and in that context, it assumes the layout given above.
- */
-
-
 /* our "current path" */
 static point_t points[POINT_BUFFER_SIZE];
 static point_t points1[POINT_BUFFER_SIZE];

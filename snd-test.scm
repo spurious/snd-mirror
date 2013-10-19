@@ -390,7 +390,7 @@
       (/ a b)))
 
 (define timings (make-vector (+ total-tests 1) 0))
-(define default-srate (mus-srate))
+(define default-srate *clm-srate*)
 
 (snd-display #__line__ ";;~A" (snd-version))
 (if (not (defined? 'before-test-hook)) (define before-test-hook (make-hook 'n)))
@@ -398,7 +398,7 @@
 (set! (hook-functions before-test-hook) ())
 (hook-push before-test-hook (lambda (hook)
 			      (let ((n (hook 'n)))
-				(set! (mus-srate) default-srate)
+				(set! *clm-srate* default-srate)
 				(dismiss-all-dialogs)
 				(set! (clipping) #f)
 				(set! (mus-clipping) #f) ; this cost me a morning of confusion!
@@ -11022,11 +11022,11 @@ EDITS: 2
 	     (k 1 (+ k 1)))
 	    ((= i 16))
 	  (let ((local (make-butterworth-lowpass i cutoff))
-		(dsp (make-butter-lp k (* (mus-srate) cutoff))))
+		(dsp (make-butter-lp k (* *clm-srate* cutoff))))
 	    (if (not (filter-equal? local dsp))
 		(snd-display #__line__ ";butterworth lowpass ~A ~A ~A" cutoff local dsp)))
 	  (let ((local (make-butterworth-highpass i cutoff))
-		(dsp (make-butter-hp k (* (mus-srate) cutoff))))
+		(dsp (make-butter-hp k (* *clm-srate* cutoff))))
 	    (if (not (filter-equal? local dsp))
 		(snd-display #__line__ ";butterworth highpass ~A ~A ~A" cutoff local dsp)))))
       
@@ -11832,7 +11832,7 @@ EDITS: 2
   ;; ----------------
   (define (freq-sweep dur)
     (let ((phase 0.0)
-	  (incr (/ pi (* dur 1.05 (mus-srate))))
+	  (incr (/ pi (* dur 1.05 *clm-srate*)))
 	  (len (frames)))
       (let ((data (make-float-vector len)))
 	(do ((i 0 (+ i 1))
@@ -12405,7 +12405,7 @@ EDITS: 2
     (if (mus-generator? 321) (snd-display #__line__ ";123 is a gen?"))
     (if (mus-generator? (list 321)) (snd-display #__line__ ";(123) is a gen?"))
     (if (mus-generator? (list 'hi 321)) (snd-display #__line__ ";(hi 123) is a gen?"))
-    (set! (mus-srate) 22050)
+    (set! *clm-srate* 22050)
     (let ((samps (seconds->samples 1.0))
 	  (secs (samples->seconds 22050)))
       (if (not (= samps 22050)) (snd-display #__line__ ";seconds->samples: ~A" samps))
@@ -12434,7 +12434,7 @@ EDITS: 2
 	  (snd-display #__line__ ";set mus-float-equal-fudge-factor: ~A?" *mus-float-equal-fudge-factor*))
       (set! *mus-float-equal-fudge-factor* fudge))
     
-    (if (fneq (mus-srate) 22050.0) (snd-display #__line__ ";mus-srate: ~F?" (mus-srate)))
+    (if (fneq *clm-srate* 22050.0) (snd-display #__line__ ";mus-srate: ~F?" *clm-srate*))
     (if (fneq (hz->radians 1.0) 2.84951704088598e-4) (snd-display #__line__ ";hz->radians: ~F?" (hz->radians 1.0)))
     (if (fneq (radians->hz 2.84951704088598e-4) 1.0) (snd-display #__line__ ";radians->hz: ~F?" (radians->hz 2.84951704088598e-4)))
     (if (fneq (radians->degrees 1.0) 57.2957801818848) (snd-display #__line__ ";radians->degrees: ~F?" (radians->degrees 1.0)))
@@ -14587,7 +14587,7 @@ EDITS: 2
     
     (let ((gen (make-asymmetric-fm 40.0 0.0 1.0 0.1))
 	  (gen1 (make-asyfm :frequency 40.0 :ratio .1 :index 2.0))
-	  (incr (/ (* 2 pi 40.0) (mus-srate)))
+	  (incr (/ (* 2 pi 40.0) *clm-srate*))
 	  (r 1.0)
 	  (ratio 0.1)
 	  (index 2.0))
@@ -15205,8 +15205,8 @@ EDITS: 2
     (test-gen-equal (make-square-wave 440.0) (make-square-wave 440.0) (make-square-wave 440.0 1.0 1.0))
     (test-gen-equal (make-square-wave 440.0) (make-square-wave 440.0) (make-square-wave 440.0 0.5))
     
-    (let ((old-srate (mus-srate)))
-      (set! (mus-srate) 500.0)
+    (let ((old-srate *clm-srate*))
+      (set! *clm-srate* 500.0)
       (let ((gen (make-square-wave 100.0 -0.5 (* pi 0.5)))
 	    (v0 (make-float-vector 20)))
 	(do ((i 0 (+ i 1)))
@@ -15214,7 +15214,7 @@ EDITS: 2
 	  (float-vector-set! v0 i (gen)))
 	(if (not (vequal v0 (float-vector -0.5 -0.5 0.0 0.0 -0.5 -0.5 -0.5 0.0 0.0 -0.5 -0.5 -0.5 0.0 0.0 -0.5 -0.5 -0.5 0.0 0.0 -0.5)))
 	    (snd-display #__line__ ";square-wave -.5: ~A " v0)))
-      (set! (mus-srate) old-srate))
+      (set! *clm-srate* old-srate))
     
     (let ((gen (make-triangle-wave 440.0))
 	  (gen1 (make-triangle-wave 440.0 1.0 pi))
@@ -15275,8 +15275,8 @@ EDITS: 2
     (test-gen-equal (make-pulse-train 440.0) (make-pulse-train 440.0) (make-pulse-train 440.0 1.0 1.0))
     (test-gen-equal (make-pulse-train 440.0) (make-pulse-train 440.0) (make-pulse-train 440.0 0.5))
     
-    (let ((old-srate (mus-srate)))
-      (set! (mus-srate) 500.0)
+    (let ((old-srate *clm-srate*))
+      (set! *clm-srate* 500.0)
       (let ((gen (make-pulse-train 100.0 -0.5 (* pi 0.5)))
 	    (v0 (make-float-vector 20)))
 	(do ((i 0 (+ i 1)))
@@ -15284,7 +15284,7 @@ EDITS: 2
 	  (float-vector-set! v0 i (gen)))
 	(if (not (vequal v0 (float-vector  0.0 0.0 0.0 0.0 -0.5 0.0 0.0 0.0 0.0 -0.5 0.0 0.0 0.0 0.0 -0.5 0.0 0.0 0.0 0.0 -0.5)))
 	    (snd-display #__line__ ";pulse-train -.5: ~A " v0)))
-      (set! (mus-srate) old-srate))
+      (set! *clm-srate* old-srate))
     
     
     (let ((gen (make-two-pole 1200.0 .1)))
@@ -16840,10 +16840,10 @@ EDITS: 2
 		(snd-display #__line__ ";polywaver (1 1) .5 index ~A: ~A ~A" i val1 val2)
 		(set! happy #f))))))
     
-    (let ((old-srate (mus-srate))
+    (let ((old-srate *clm-srate*)
 	  (v0 (make-float-vector 44100))
 	  (v1 (make-float-vector 44100)))
-      (set! (mus-srate) 44100)
+      (set! *clm-srate* 44100)
       (for-each
        (lambda (k)
 	 (let ((gen (make-polywave 100.0 (list 1 0.5 k 0.5)))
@@ -16998,7 +16998,7 @@ EDITS: 2
 			  (begin
 			    (set! happy #f)
 			    (snd-display #__line__ ";polywave set mus-data at ~A: ~A ~A" i val1 val2))))))))))
-      (set! (mus-srate) old-srate))
+      (set! *clm-srate* old-srate))
     
     (let ((var (catch #t (lambda () (make-polywave 440.0 3.14)) (lambda args args))))
       (if (not (eq? (car var) 'wrong-type-arg))
@@ -19273,8 +19273,8 @@ EDITS: 2
 	     result)))
 	(let ((mx (maxamp)))
 	  (if (fneq mx 0.06) (snd-display #__line__ ";granf 1 max: ~A" mx)))
-	(if (> (abs (- (mus-hop gen) (* .001 (mus-srate)))) 1)
-	    (snd-display #__line__ ";granf 1 hop: ~A ~A, ~A ~A" (mus-hop gen) (abs (- (mus-hop gen) (* .001 (srate)))) (srate) (mus-srate)))
+	(if (> (abs (- (mus-hop gen) (* .001 *clm-srate*))) 1)
+	    (snd-display #__line__ ";granf 1 hop: ~A ~A, ~A ~A" (mus-hop gen) (abs (- (mus-hop gen) (* .001 (srate)))) (srate) *clm-srate*))
 	(if (not (vequal (channel->float-vector 0 30) 
 			 (float-vector 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 
 			      0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
@@ -19295,7 +19295,7 @@ EDITS: 2
 	     result)))
 	(let ((mx (maxamp)))
 	  (if (fneq mx 0.06) (snd-display #__line__ ";granf 2 max: ~A" mx)))
-	(if (> (abs (- (mus-hop gen) (* .001 (mus-srate)))) 1)
+	(if (> (abs (- (mus-hop gen) (* .001 *clm-srate*))) 1)
 	    (snd-display #__line__ ";granf 2 hop: ~A" (mus-hop gen)))
 	(if (not (vequal (channel->float-vector 0 30) 
 			 (float-vector 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 
@@ -20626,11 +20626,9 @@ EDITS: 2
 	       (list make-table-lookup)
 	       (list table-lookup)))
 	    
-	    (let ((old-srate (mus-srate))
-		  (old-clm-srate *clm-srate*))
+	    (let ((old-clm-srate *clm-srate*))
 	      (for-each
 	       (lambda (n)
-		 (set! (mus-srate) n)
 		 (set! *clm-srate* n)
 		 (for-each 
 		  (lambda (g name)
@@ -20644,8 +20642,6 @@ EDITS: 2
 			'triangle-wave 'square-wave 'pusle-train 'sawtooth-wave
 			'rand 'rand-interp)))
 	       (list 100 1))
-	      
-	      (set! (mus-srate) old-srate)
 	      (set! *clm-srate* old-clm-srate))
 	    
 	    (let ((random-args (list 
@@ -21143,6 +21139,7 @@ EDITS: 2
 	  (if (not (morally-equal? x0 x1))
 	      (snd-display #__line__ ";(formant 440.0 .5) + (formant 1000.0 .2) + (formant 34.0 .1) ~A, formant: ~A, bank: ~A" i x0 x1)))))
 
+    (set! *clm-srate* 44100)
     (if (file-exists? "jcrev-ip.snd")
 	(begin
 	  (with-sound (:reverb jc-reverb) (outa 0 .1) (outa 0 .5 *reverb*))
@@ -21368,8 +21365,8 @@ EDITS: 2
 		(format #t ";one-pole-all-pass (1) ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
       )
 
-    (let ((old-srate (mus-srate)))
-      (set! (mus-srate) 44100)
+    (let ((old-srate *clm-srate*))
+      (set! *clm-srate* 44100)
       (let ((pe (make-pulsed-env '(0 0 1 1 2 0) .0004 2205))
 	    (v (make-float-vector 100)))
 	(do ((i 0 (+ i 1)))
@@ -21381,7 +21378,7 @@ EDITS: 2
 				0.000 0.125 0.250 0.375 0.500 0.625 0.750 0.875 1.000 0.875 0.750 0.625 0.500 0.375 0.250 0.125 0.000 0.000 0.000 0.000 
 				0.000 0.125 0.250 0.375 0.500 0.625 0.750 0.875 1.000 0.875 0.750 0.625 0.500 0.375 0.250 0.125 0.000 0.000 0.000 0.000)))
 	    (snd-display #__line__ ";pulsed-env: ~A" v)))
-      (set! (mus-srate) old-srate))
+      (set! *clm-srate* old-srate))
     
     ))
 
@@ -21500,7 +21497,7 @@ EDITS: 2
 	   )
       
       (define (mix-fmsimp beg dur freq amp ampfunc freqfunc rat1 indx1 rat2 indx2 ignored)
-	(let ((freq1 (if (> freq (/ (mus-srate) 8)) (/ freq 8) freq))
+	(let ((freq1 (if (> freq (/ *clm-srate* 8)) (/ freq 8) freq))
 	       (amp1 (* amp .175)))
 	  (let ((id (car (mix (with-temp-sound () 
 					       (fm-violin 0 dur freq1 amp1
@@ -27223,8 +27220,8 @@ EDITS: 2
 	      (close-sound obi)
 	      )
 	    
-	    (let ((old-srate (mus-srate)))
-	      (set! (mus-srate) 22050)
+	    (let ((old-srate *clm-srate*))
+	      (set! *clm-srate* 22050)
 	      (let ((ind (new-sound "test.snd" :size 20)))
 		(if (< (print-length) 20) (set! (print-length) 20))
 		(offset-channel 1.0)
@@ -27266,7 +27263,7 @@ EDITS: 2
 		  (if (not (= vals 11))
 		      (snd-display #__line__ ";search-for-click: ~A" vals)))
 		(close-sound ind))
-	      (set! (mus-srate) old-srate))
+	      (set! *clm-srate* old-srate))
 	    
 	    (let ((ind1 (new-sound :size 20 :comment "new-sound for sound-via-sound"))
 		  (ind2 (new-sound :size 20 :comment "2nd new-sound for sound-via-sound")))
@@ -27693,7 +27690,7 @@ EDITS: 2
 		(undo 3))
 	      (close-sound ind))
 	    
-	    (set! (mus-srate) 22050)
+	    (set! *clm-srate* 22050)
 	    (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "src-* tests" 10000))
 		  (osc (make-oscil 500)))
 	      
@@ -32631,11 +32628,11 @@ EDITS: 1
       (set! (contrast-control-bounds ind) (list 0.0 2.5))
       (set! (x-axis-label ind 0 time-graph) "time-x")
       (set! (y-axis-label ind 0 time-graph) "amp-y")
-      (let ((old-srate (mus-srate))
+      (let ((old-srate *clm-srate*)
 	    (old-file-buffer-size *clm-file-buffer-size*)
 	    (old-array-print-length *mus-array-print-length*)
 	    (old-clm-table-size *clm-table-size*))
-	(set! (mus-srate) 48000)
+	(set! *clm-srate* 48000)
 	(set! *mus-array-print-length* 24)
 	(set! *clm-file-buffer-size* 4096)
 	(set! *clm-table-size* 256)
@@ -32644,11 +32641,11 @@ EDITS: 1
 	(close-sound ind)
 	(for-each forget-region (regions))
 	(load (string-append cwd "s61.scm"))
-	(if (fneq (mus-srate) 48000.0) (snd-display #__line__ ";save/restore mus-srate: ~A" (mus-srate)))
+	(if (fneq *clm-srate* 48000.0) (snd-display #__line__ ";save/restore mus-srate: ~A" *clm-srate*))
 	(if (not (= *clm-file-buffer-size* 4096)) (snd-display #__line__ ";save/restore mus-file-buffer-size: ~A" *clm-file-buffer-size*))
 	(if (not (= *mus-array-print-length* 24)) (snd-display #__line__ ";save/restore mus-array-print-length: ~A" *mus-array-print-length*))
 	(if (not (= *clm-table-size* 256)) (snd-display #__line__ ";save/restore clm-table-size: ~A" *clm-table-size*))
-	(set! (mus-srate) old-srate)
+	(set! *clm-srate* old-srate)
 	(set! *mus-array-print-length* old-array-print-length)
 	(set! *clm-file-buffer-size* old-file-buffer-size)
 	(set! *clm-table-size* old-clm-table-size))
@@ -36249,9 +36246,9 @@ EDITS: 1
 	(if (not (= (pe 'current-env) 0)) (snd-display #__line__ ";power-env seg: ~A" (pe 'current-env)))
 	)
       
-      (let ((old-srate (mus-srate)))
+      (let ((old-srate *clm-srate*))
 	(set! (print-length) (max (print-length) 48))
-	(set! (mus-srate) 22050)
+	(set! *clm-srate* 22050)
 	(let ((ind (new-sound :size 33 :srate 22050)))
 	  (map-channel (lambda (y) 1.0))
 	  (let ((pe (make-power-env '(0 0 32.0  1 1 0.0312  2 0 1) :duration (/ 34.0 22050.0))))
@@ -36288,7 +36285,7 @@ EDITS: 1
 	  (let ((name (file-name ind)))
 	    (close-sound ind)
 	    (if (file-exists? name) (delete-file name))))
-	(set! (mus-srate) old-srate))
+	(set! *clm-srate* old-srate))
       
       (let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 :size 50)))
 	(set! (sample 3) 1.0)
@@ -37870,8 +37867,8 @@ EDITS: 1
     (let ((grn (make-green-noise-interp :frequency noise-freq :amplitude noise-max-step :high (* 0.5 noise-width) :low (* -0.5 noise-width)))
 	  (osc (make-oscil freq))
 	  (e (make-env amp-env :scaler amp :duration dur))
-	  (beg (floor (* start (mus-srate))))
-	  (end (floor (* (+ start dur) (mus-srate)))))
+	  (beg (floor (* start *clm-srate*)))
+	  (end (floor (* (+ start dur) *clm-srate*))))
       (do ((i beg (+ i 1)))
 	  ((= i end))
 	(outa i (* (env e) 
@@ -37927,7 +37924,7 @@ EDITS: 1
       (dynamic-wind
 	  (lambda ()
 	    (set! *output* (continue-sample->file output))
-	    (set! (mus-srate) (srate snd))
+	    (set! *clm-srate* (srate snd))
 	    (set! *reverb* (make-file->sample revout)))
 	  (lambda ()
 	    (apply reverb reverb-data))
@@ -37946,8 +37943,8 @@ EDITS: 1
   
   (define (fir+comb beg dur freq amp size)
     (let ((dly (make-comb :scaler .9 :size size)))
-      (let ((start (floor (* (mus-srate) beg)))
-	    (end (floor (* (mus-srate) (+ beg dur))))
+      (let ((start (floor (* *clm-srate* beg)))
+	    (end (floor (* *clm-srate* (+ beg dur))))
 	    (flt (make-fir-filter :order size :xcoeffs (mus-data dly))) 
 	    (r (make-rand freq)))
 	(do ((i start (+ i 1))) 
@@ -37991,7 +37988,7 @@ EDITS: 1
   (define (mix-move-sound start-time file path)
     (let* ((duration (mus-sound-duration file))
 	   (rd (make-sampler 0 file))
-	   (start (round (* (mus-srate) start-time)))
+	   (start (round (* *clm-srate* start-time)))
 	   (tmp-sound (with-temp-sound (:channels 4 :srate (mus-sound-srate file))
 				       (let* ((vals (make-dlocsig :start-time 0
 								  :duration duration
@@ -38028,7 +38025,7 @@ EDITS: 1
 	  (comb32 (make-comb 0.715 5399))
 	  (comb42 (make-comb 0.697 5801))
 	  (outdel12 (make-delay (seconds->samples .01)))
-	  (len (floor (+ (frames *reverb*) (mus-srate)))))
+	  (len (floor (+ (frames *reverb*) *clm-srate*))))
 
       (let ((combs1 (make-comb-bank (vector comb11 comb21 comb31 comb41)))
 	    (combs2 (make-comb-bank (vector comb12 comb22 comb32 comb42)))
@@ -38168,7 +38165,7 @@ EDITS: 1
 	(if (fneq mx .05) (snd-display #__line__ ";with-sound max (1): ~A" (maxamp)))
 	(if (or (not (= (srate ind) 22050)) 
 		(not (= (mus-sound-srate "test1.snd") 22050))) 
-	    (snd-display #__line__ ";with-sound srate (1): ~A (~A, ~A)" (srate ind) (mus-srate) (mus-sound-srate "test1.snd")))
+	    (snd-display #__line__ ";with-sound srate (1): ~A (~A, ~A)" (srate ind) *clm-srate* (mus-sound-srate "test1.snd")))
 	(if (not (= (frames ind) 2205)) (snd-display #__line__ ";with-sound frames (1): ~A" (frames ind)))
 	(if (or (not (= (chans ind) 2))
 		(not (= (mus-sound-chans "test1.snd") 2)))
@@ -38180,7 +38177,7 @@ EDITS: 1
     (let ((ind (find-sound "test1.snd")))
       (if (or (not (= (srate ind) 48000))
 	      (not (= (mus-sound-srate "test1.snd") 48000)))
-	  (snd-display #__line__ ";with-sound srate (48000, r): ~A (~A, ~A)" (srate ind) (mus-srate) (mus-sound-srate "test1.snd")))
+	  (snd-display #__line__ ";with-sound srate (48000, r): ~A (~A, ~A)" (srate ind) *clm-srate* (mus-sound-srate "test1.snd")))
       (if (not (= (header-type ind) mus-riff)) (snd-display #__line__ ";with-sound type (~A, r): ~A" mus-riff (header-type ind)))
       (if (not (= (chans ind) 2)) (snd-display #__line__ ";with-sound chans (2, r): ~A" (chans ind)))
       (close-sound ind)
@@ -38190,7 +38187,7 @@ EDITS: 1
     (let ((ind (find-sound "test1.snd")))
       (if (or (not (= (srate ind) 48000))
 	      (not (= (mus-sound-srate "test1.snd") 48000)))
-	  (snd-display #__line__ ";with-sound srate (48000, r): ~A (~A, ~A)" (srate ind) (mus-srate) (mus-sound-srate "test1.snd")))
+	  (snd-display #__line__ ";with-sound srate (48000, r): ~A (~A, ~A)" (srate ind) *clm-srate* (mus-sound-srate "test1.snd")))
       (if (not (= (header-type ind) mus-rf64)) (snd-display #__line__ ";with-sound type (~A, r): ~A" mus-rf64 (header-type ind)))
       (if (not (= (chans ind) 2)) (snd-display #__line__ ";with-sound chans (2, r): ~A" (chans ind)))
       (close-sound ind)
@@ -38200,7 +38197,7 @@ EDITS: 1
     (let ((ind (find-sound "test1.snd")))
       (if (or (not (= (srate ind) 48000))
 	      (not (= (mus-sound-srate "test1.snd") 48000)))
-	  (snd-display #__line__ ";with-sound mus-caff srate (48000, r): ~A (~A, ~A)" (srate ind) (mus-srate) (mus-sound-srate "test1.snd")))
+	  (snd-display #__line__ ";with-sound mus-caff srate (48000, r): ~A (~A, ~A)" (srate ind) *clm-srate* (mus-sound-srate "test1.snd")))
       (if (not (= (header-type ind) mus-caff)) (snd-display #__line__ ";with-sound type (~A, r): ~A" mus-caff (header-type ind)))
       (if (not (= (chans ind) 2)) (snd-display #__line__ ";with-sound mus-caff chans (2, r): ~A" (chans ind)))
       (close-sound ind)
@@ -38209,7 +38206,7 @@ EDITS: 1
     (with-sound (:srate 8000 :channels 3 :header-type mus-next :output "test1.snd") (fm-violin 0 .1 440 .1))
     (let ((ind (find-sound "test1.snd")))
       (if (not (= (srate ind) 8000)) (snd-display #__line__ ";with-sound srate (8000, s): ~A (~A, ~A)" 
-						  (srate ind) (mus-srate) (mus-sound-srate "test1.snd")))
+						  (srate ind) *clm-srate* (mus-sound-srate "test1.snd")))
       (if (not (= (header-type ind) mus-next)) (snd-display #__line__ ";with-sound type (~A, s): ~A" mus-next (header-type ind)))
       (if (not (= (chans ind) 3)) (snd-display #__line__ ";with-sound chans (3, s): ~A" (chans ind)))
       (close-sound ind)
@@ -38218,7 +38215,7 @@ EDITS: 1
     (with-sound (:srate 96000 :channels 4 :header-type mus-aifc :output "test1.snd") (fm-violin 0 .1 440 .1))
     (let ((ind (find-sound "test1.snd")))
       (if (not (= (srate ind) 96000)) (snd-display #__line__ ";with-sound srate (96000, t): ~A (~A, ~A)" 
-						   (srate ind) (mus-srate) (mus-sound-srate "test1.snd")))
+						   (srate ind) *clm-srate* (mus-sound-srate "test1.snd")))
       (if (not (= (header-type ind) mus-aifc)) (snd-display #__line__ ";with-sound type (~A, t): ~A" mus-aifc (header-type ind)))
       (if (not (= (chans ind) 4)) (snd-display #__line__ ";with-sound chans (4, t): ~A" (chans ind)))
       (close-sound ind)
@@ -38227,7 +38224,7 @@ EDITS: 1
     (with-sound (:srate 22050 :channels 1 :header-type mus-raw :output "test1.snd") (fm-violin 0 .1 440 .1))
     (let ((ind (find-sound "test1.snd")))
       (if (not (= (srate ind) 22050)) (snd-display #__line__ ";with-sound srate (22050, u): ~A (~A, ~A)" 
-						   (srate ind) (mus-srate) (mus-sound-srate "test1.snd")))
+						   (srate ind) *clm-srate* (mus-sound-srate "test1.snd")))
       (if (not (= (header-type ind) mus-raw)) (snd-display #__line__ ";with-sound type (~A, u): ~A" mus-raw (header-type ind)))
       (if (not (= (chans ind) 1)) (snd-display #__line__ ";with-sound chans (1, u): ~A" (chans ind)))
       (close-sound ind)
@@ -38371,7 +38368,6 @@ EDITS: 1
 	    (format #t ";g1-method: ~A~%" ((g 'g1-method) g)))))
 
     (if (file-exists? "test.snd") (delete-file "test.snd"))
-    (set! (mus-srate) 22050)
     (set! *clm-srate* 22050)
     (set! (default-output-srate) 22050)
     (let ((outer (with-sound () 
@@ -38381,8 +38377,8 @@ EDITS: 1
 	  (snd-display #__line__ ";with-sound returns: ~A" outer))
       (let ((ind (find-sound outer)))
 	(if (or (not (sound? ind))
-		(> (- (frames ind) (floor (* (mus-srate) .1))) 1))
-	    (snd-display #__line__ ";sound-let: ~A ~A" (frames ind) (floor (* (mus-srate) .1))))
+		(> (- (frames ind) (floor (* *clm-srate* .1))) 1))
+	    (snd-display #__line__ ";sound-let: ~A ~A" (frames ind) (floor (* *clm-srate* .1))))
 	(close-sound ind)))
     
     (if (file-exists? "test.snd") (delete-file "test.snd"))
@@ -38396,8 +38392,8 @@ EDITS: 1
 	  (snd-display #__line__ ";with-sound (2) returns: ~A" outer))
       (let ((ind (find-sound outer)))
 	(if (or (not (sound? ind))
-		(> (- (frames ind) (+ 100 (floor (* (mus-srate) .1)))) 1))
-	    (snd-display #__line__ ";sound-let (2): ~A ~A" (frames ind) (+ 100 (floor (* (mus-srate) .1)))))
+		(> (- (frames ind) (+ 100 (floor (* *clm-srate* .1)))) 1))
+	    (snd-display #__line__ ";sound-let (2): ~A ~A" (frames ind) (+ 100 (floor (* *clm-srate* .1)))))
 	(if (file-exists? "temp.snd")
 	    (snd-display #__line__ ";sound-let explicit output exists?"))
 	(close-sound ind)))
@@ -38444,7 +38440,7 @@ EDITS: 1
       (close-sound ind)
       (delete-file "test1.snd"))
 
-    (set! (mus-srate) 22050)
+    (set! *clm-srate* 22050)
     (set! (default-output-srate) 22050)
     
     (let ((fmt1 '(0 1200 100 1000))
@@ -38963,7 +38959,7 @@ EDITS: 1
 		     (ind1 (open-sound "now.snd"))
 		     (zp (make-zipper (make-env '(0 0 1 1) :length 22050)
 				      0.05
-				      (make-env (list 0 (* (mus-srate) 0.05)) :length 22050)))
+				      (make-env (list 0 (* *clm-srate* 0.05)) :length 22050)))
 		     (reader0 (make-sampler 0 ind 0))
 		     (reader1 (make-sampler 0 ind1 0)))
 		 (do ((i 0 (+ i 1))) ((= i 22050)) (outa i (zipper zp reader0 reader1)))
@@ -40513,14 +40509,14 @@ EDITS: 1
   
   (let ((rd (make-readin "1a.snd"))
 	(cur-srate (mus-sound-srate "1a.snd"))
-	(old-srate (mus-srate)))
-    (set! (mus-srate) cur-srate)
+	(old-srate *clm-srate*))
+    (set! *clm-srate* cur-srate)
     (let* ((scn (make-moving-pitch rd))
 	   (pitch (moving-pitch scn)))
       (if (or (> pitch 443.0)
 	      (< pitch 439.0))
 	  (snd-display #__line__ ";moving-pitch 1a: ~A" pitch)))
-    (set! (mus-srate) old-srate))
+    (set! *clm-srate* old-srate))
   
   (let ((val (make-vector 3))
 	(frq 0.0))
@@ -40693,7 +40689,7 @@ EDITS: 1
     (if (not happy)
 	(snd-display #__line__ ";run-with-fm-and-pm unhappy")))
   
-  (set! (mus-srate) 44100)
+  (set! *clm-srate* 44100)
   (let ((gen (make-oscil 123.0)))
     (set! (mus-name gen) "oscil123")
     (if (not (string=? (mus-name gen) "oscil123")) (snd-display #__line__ ";set mus-name oscil123: ~A" (mus-name gen)))
@@ -45811,8 +45807,8 @@ EDITS: 1
 		(check-error-tag 'bad-header (lambda () (make-readin (string-append sf-dir "bad_chans.snd"))))
 		(check-error-tag 'mus-error (lambda () (make-iir-filter 30 (make-float-vector 3))))
 		(check-error-tag 'out-of-range (lambda () (make-wave-train :size (expt 2 30))))
-		(check-error-tag 'out-of-range (lambda () (set! (mus-srate) 0.0)))
-		(check-error-tag 'out-of-range (lambda () (set! (mus-srate) -1000)))
+		(check-error-tag 'out-of-range (lambda () (set! *clm-srate* 0.0)))
+		(check-error-tag 'out-of-range (lambda () (set! *clm-srate* -1000)))
 		(check-error-tag 'out-of-range (lambda () (dot-product (make-float-vector 3) (make-float-vector 3) -1)))
 		(check-error-tag 'out-of-range (lambda () (multiply-arrays (make-float-vector 3) (make-float-vector 3) -1)))
 		(check-error-tag 'out-of-range (lambda () (make-delay 3 :initial-element 0.0 :initial-contents (float-vector .1 .2 .3))))
@@ -46050,7 +46046,6 @@ EDITS: 1
 	    (set! color-95 #f)
 	    (set! vector-0 #f)
 	    (set! float-vector-3 #f)
-	    (set! (mus-srate) 22050)
 	    (set! *clm-srate* 22050)
 	    (set! (print-length) 12)
 	    (set! *mus-array-print-length* 12)

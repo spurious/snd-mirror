@@ -178,7 +178,7 @@
 ;;     (set! (data i) (make-fm-noise len 500)))
 ;;   (if snd
 ;;       (close-sound snd))
-;;   (set! snd (new-sound outfile mus-next mus-bshort (mus-srate) chns))
+;;   (set! snd (new-sound outfile mus-next mus-bshort *clm-srate* chns))
 ;;   (do ((i 0 (+ i 1)))
 ;;       ((= i chns))
 ;;     (mix-float-vector (float-vector-scale! (copy data) (locsig-ref loc i)) beg snd i #f))

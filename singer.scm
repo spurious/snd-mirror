@@ -108,7 +108,7 @@
 	      (noselength-1 (- noselength 1))
 	      (noselength-2 (- noselength 2))
 	      (nose-ring-time 1000)	; naso pharynx response decay time
-	      (table-size-over-sampling-rate (/ table-size (mus-srate)))
+	      (table-size-over-sampling-rate (/ table-size *clm-srate*))
 	      (dgain (- 1.0 dpole))
 	      (tong-hump-gain (- 1.0 tong-hump-pole))
 	      (tong-tip-gain (- 1.0 tong-tip-pole))

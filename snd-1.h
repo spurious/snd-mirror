@@ -711,6 +711,15 @@ typedef struct snd_state {
   int requestor_dialog;
   bool axis_color_set;
   int bounds_cursor, graph_cursor, play_cursor, loop_play_cursor, yaxis_cursor;
+#else
+#if HAVE_SCHEME
+  s7_pointer data_color_symbol, selected_data_color_symbol, mark_color_symbol, graph_color_symbol, 
+    selected_graph_color_symbol, listener_color_symbol, listener_text_color_symbol,
+    basic_color_symbol, selection_color_symbol, zoom_color_symbol, position_color_symbol, 
+    highlight_color_symbol, enved_waveform_color_symbol, cursor_color_symbol,
+    text_focus_color_symbol, filter_control_waveform_color_symbol, mix_color_symbol, 
+    sash_color_symbol, axis_color_symbol;
+#endif
 #endif
 
 } snd_state;

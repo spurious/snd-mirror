@@ -113,7 +113,7 @@
 	     (throw 'with-sound-interrupt (format #f "with-mix file (arg 2) is ~A?~%;" ,ur-chkpt-file))
 	     (if (not (number? beg-1))
 		 (throw 'with-sound-interrupt (format #f "with-mix begin time (arg 3) for ~S = ~A?~%;" chkpt-file beg-1))
-		 (let ((beg (round (* (mus-srate) beg-1))))
+		 (let ((beg (round (* *clm-srate* beg-1))))
 		   (if (null? ',body)
 		       (mus-mix *output* chkpt-file beg)
 		       (let* ((call-str (object->string ',body))

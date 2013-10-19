@@ -4511,7 +4511,7 @@ Here is a FOF instrument based loosely on fof.c of Perry Cook and the article
          (frq0 (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> f0))
          (frq1 (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> f1))
          (frq2 (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> f2))
-         (foflen (if (= (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>) 22050) 100 200))
+         (foflen (if (= *clm-srate* 22050) 100 200))
          (vibr (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 6))
          (vibenv (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> (or ve (list 0 1 100 1)) :scaler vib :duration dur))
          (win-freq (/ (* 2 pi) foflen))
@@ -4776,7 +4776,7 @@ do perfectly well:
 	(rands (make-vector n #f)))
     (do ((i 0 (+ 1 i)))
 	((= i n))
-      (set! (rands i) (<em class=red>make-rand</em> :frequency (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>) :amplitude (/ 100 n)))
+      (set! (rands i) (<em class=red>make-rand</em> :frequency *clm-srate* :amplitude (/ 100 n)))
       (rand (rands i)))
     (do ((i 0 (+ 1 i)))
 	((= i 100000))
@@ -4864,7 +4864,7 @@ than the preceding:
   (let ((rans (make-vector n)))
     (do ((i 0 (+ 1 i))) 
         ((= i n) rans)
-      (set! (rans i) (<em class=red>make-rand</em> :frequency (/ (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>) (expt 2 i)))))))
+      (set! (rans i) (<em class=red>make-rand</em> :frequency (/ *clm-srate* (expt 2 i)))))))
 
 (define (1f-noise rans)
   (let ((val 0.0) 
@@ -5434,7 +5434,7 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
 	  (do ((i 0 (+ i 1))
 	       (curfrq frq (+ curfrq frq)))
 	      ((= i num-formants))
-	    (if (&lt; (* 2 curfrq) (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>))
+	    (if (&lt; (* 2 curfrq) *clm-srate*)
 	        (set! (<em class=red>mus-frequency</em> (frms i)) curfrq))))))))
 
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
@@ -5944,11 +5944,11 @@ lambda: ( -- )
 7.0 * size / (1.0 - scaler) samples, so to get a decay of feedback-dur seconds,
 </p>
 <pre class="indented">
-    (make-comb :size size :scaler (- 1.0 (/ (* 7.0 size) (* feedback-dur (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>)))))
+    (make-comb :size size :scaler (- 1.0 (/ (* 7.0 size) (* feedback-dur *clm-srate*))))
 </pre>
 
 <p>The peak gain is 1.0 / (1.0 - (abs scaler)).  The peaks (or valleys in notch's case) are evenly spaced
-at (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>) / size. The height (or depth) thereof is determined by scaler &mdash;
+at *clm-srate* / size. The height (or depth) thereof is determined by scaler &mdash;
 the closer to 1.0 it is, the more pronounced the dips or peaks.
 See Julius Smith's "An Introduction to Digital Filter Theory" in
 Strawn "Digital Audio Signal Processing", or Smith's "Music Applications of
@@ -6200,7 +6200,7 @@ old analog tapes &mdash; the reverb slightly precedes the direct signal:
          (comb3 (make-comb 0.715 5399))
          (comb4 (make-comb 0.697 5801))
          (file-dur (mus-sound-frames file))
-         (decay-dur (mus-srate))
+         (decay-dur *clm-srate*)
          (len (floor (+ decay-dur file-dur)))
          (rd (make-readin file)) ; the direct signal (via sound-let below)
          (d (make-delay dly))    ; this delays the direct signal
@@ -7042,8 +7042,8 @@ on the result:
 <pre class="indented">
 (define-macro (gran-any beg dur expansion . body)
   `(<em class=red>sound-let</em> ((tmp () ,@body))
-     (let* ((start (floor (* (mus-srate) ,beg)))
-	    (end (+ start (* (mus-srate) ,dur)))
+     (let* ((start (floor (* *clm-srate* ,beg)))
+	    (end (+ start (* *clm-srate* ,dur)))
 	    (rd (make-readin tmp))
 	    (gran (<em class=red>make-granulate</em> :input rd :expansion ,expansion)))
        (do ((i start (+ i 1)))
@@ -9640,8 +9640,8 @@ via mus-data.
 <pre class="indented">
 (let ((rd (make-readin "oboe.snd"))
       (cur-srate (srate "oboe.snd"))
-      (old-srate (mus-srate)))
-  (set! (mus-srate) cur-srate)
+      (old-srate *clm-srate*))
+  (set! *clm-srate* cur-srate)
   (let ((scn (<em class=red>make-moving-pitch</em> rd))
 	(last-pitch 0.0)
 	(pitch 0.0))
@@ -9651,7 +9651,7 @@ via mus-data.
       (set! pitch (<em class=red>moving-pitch</em> scn))
       (if (not (= last-pitch pitch))
 	  (format #t "~A: ~A~%" (* 1.0 (/ i cur-srate)) pitch))))
-  (set! (mus-srate) old-srate))
+  (set! *clm-srate* old-srate))
 </pre>
 <div class="separator"></div>
 
@@ -9702,7 +9702,7 @@ hopefully unobtrusively.  Here is an example, including a stereo reverb:
 	 (outdel12 (make-delay (seconds-&gt;samples .01)))
 						       
 	 (file-dur (frames *reverb*))
-	 (decay-dur (mus-srate))
+	 (decay-dur *clm-srate*)
 	 (len (floor (+ decay-dur file-dur))))
     
     (do ((i 0 (+ 1 i)))
@@ -9884,17 +9884,17 @@ There are many examples in generators.scm.
 </p>
 
 <table class="method">
-<tr><td><em class=def id="hztoradians">hz-&gt;radians</em><code> freq</code></td><td>convert freq to radians per sample (using mus-srate): (freq * 2 * pi) / srate</td></tr>
-<tr><td><em class=def id="radianstohz">radians-&gt;hz</em><code> rads</code></td><td>convert rads to Hz (using mus-srate): (rads * srate) / (2 * pi)</td></tr>
+<tr><td><em class=def id="hztoradians">hz-&gt;radians</em><code> freq</code></td><td>convert freq to radians per sample (using *clm-srate*): (freq * 2 * pi) / srate</td></tr>
+<tr><td><em class=def id="radianstohz">radians-&gt;hz</em><code> rads</code></td><td>convert rads to Hz (using *clm-srate*): (rads * srate) / (2 * pi)</td></tr>
 <tr><td><em class=def id="dbtolinear">db-&gt;linear</em><code> dB</code></td><td>convert dB to linear value: 10^(dB/20)</td></tr>
 <tr><td><em class=def id="lineartodb">linear-&gt;db</em><code> val</code></td><td>convert val to dB: 20 * log(x) / log(10)</td></tr>
 <tr><td><em class=def id="timestosamples">times-&gt;samples</em><code> start duration</code></td><td>convert start and duration from seconds to samples (beg+dur in latter case)</td></tr>
-<tr><td><em class=def id="samplestoseconds">samples-&gt;seconds</em><code> samps</code></td><td>convert samples to seconds (using mus-srate): samps / srate</td></tr>
-<tr><td><em class=def id="secondstosamples">seconds-&gt;samples</em><code> secs</code></td><td>convert seconds to samples (using mus-srate): secs * srate</td></tr>
+<tr><td><em class=def id="samplestoseconds">samples-&gt;seconds</em><code> samps</code></td><td>convert samples to seconds (using *clm-srate*): samps / srate</td></tr>
+<tr><td><em class=def id="secondstosamples">seconds-&gt;samples</em><code> secs</code></td><td>convert seconds to samples (using *clm-srate*): secs * srate</td></tr>
 <tr><td><em class=def id="degreestoradians">degrees-&gt;radians</em><code> degs</code></td><td>convert degrees to radians: (degs * 2 * pi) / 360</td></tr>
 <tr><td><em class=def id="radianstodegrees">radians-&gt;degrees</em><code> rads</code></td><td>convert radians to degrees: (rads * 360) / (2 * pi)</td></tr>
 <tr><td><em class=def id="clear-array">clear-array</em><code> arr</code></td><td>set all values in arr (a float-vector) to 0.0</td></tr>
-<tr><td><em class=def id="mussrate">mus-srate</em></td><td>sampling rate in with-sound</td></tr>
+<tr><td><em class=def id="mussrate">mus-srate</em></td><td>sampling rate in with-sound (better known as *clm-srate*)</td></tr>
 </table>
 
 <p>
@@ -9913,7 +9913,7 @@ an increment of a phase variable.
 </p></blockquote>
 
 <pre class="indented">
-&gt; (mus-srate)
+&gt; *clm-srate*
 44100.0
 
 &gt; (hz-&gt;radians 440.0)

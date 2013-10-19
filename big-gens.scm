@@ -6,10 +6,10 @@
 ;;; -------- conversions --------
 
 (define (big-hz->radians hz)
-  (/ (* hz 2 pi) (mus-srate)))
+  (/ (* hz 2 pi) *clm-srate*))
 
 (define (big-radians->hz rad)
-  (/ (* rad (mus-srate)) (* 2 pi)))
+  (/ (* rad *clm-srate*) (* 2 pi)))
 
 (define (big-db->linear x)
   (expt 10.0 (/ x 20.0)))
@@ -24,10 +24,10 @@
   (/ (* rad 180) pi))
 
 (define (big-seconds->samples secs)
-  (round (* secs (mus-srate))))
+  (round (* secs *clm-srate*)))
 
 (define (big-samples->seconds samps)
-  (/ samps (mus-srate)))
+  (/ samps *clm-srate*))
 
 (define (big-rectangular->polar rl im)
   (let ((len (length rl)))
@@ -241,7 +241,7 @@
       (if (not (g 'wave))
 	  (set! (g 'wave) (make-vector (g 'size) 0.0))
 	  (set! (g 'size) (length (g 'wave))))
-      (set! (g 'frequency) (/ (* (g 'frequency) (g 'size)) (mus-srate)))
+      (set! (g 'frequency) (/ (* (g 'frequency) (g 'size)) *clm-srate*))
       (set! (g 'angle) (/ (* (g 'angle) (g 'size)) (* 2 pi)))
       g))
   (frequency *clm-default-frequency*) 

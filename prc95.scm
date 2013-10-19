@@ -75,8 +75,8 @@
   ;; (with-sound () (plucky 0 .3 440 .2 1.0))
 
   (let* ((lowestfreq 100.0)
-	 (len (+ 1 (floor (/ (mus-srate) lowestfreq)))))
-    (let ((delayline (make-delayl len (- (/ (mus-srate) freq) 0.5)))
+	 (len (+ 1 (floor (/ *clm-srate* lowestfreq)))))
+    (let ((delayline (make-delayl len (- (/ *clm-srate* freq) 0.5)))
 	  (filt (make-onezero))
 	  (start (seconds->samples beg))
 	  (end (seconds->samples (+ beg dur)))
@@ -95,11 +95,11 @@
   ;; (with-sound () (bowstr 0 .3 220 .2 1.0))
 
   (let* ((lowestfreq 100.0)
-	 (len (+ 1 (floor (/ (mus-srate) lowestfreq)))))
+	 (len (+ 1 (floor (/ *clm-srate* lowestfreq)))))
     (let ((ratio 0.8317)
 	  (rate .001)
 	  (bowing #t)
-	  (temp (- (/ (mus-srate) frq) 4.0)))
+	  (temp (- (/ *clm-srate* frq) 4.0)))
       (let ((neckdelay (make-delayl len (* temp ratio)))
 	    (bridgedelay (make-delayl (floor (/ len 2)) (* temp (- 1.0 ratio))))
 	    (bowtab (make-bowtable :slope 3.0))
@@ -151,11 +151,11 @@
 (definstrument (brass beg dur freq amplitude maxa)
   ;; does this work at all?
   (let* ((lowestfreq 100.0)
-	 (len (+ 1 (floor (/ (mus-srate) lowestfreq)))))
+	 (len (+ 1 (floor (/ *clm-srate* lowestfreq)))))
     (let ((blowing #t)
 	  (rate .001)
 	  (breathpressure 0.0))  ; 0.1 ?
-      (let ((delayline (make-delayl len (+ 1.0 (/ (mus-srate) freq))))
+      (let ((delayline (make-delayl len (+ 1.0 (/ *clm-srate* freq))))
 	    (lipfilter (make-formant freq))
 	    (dcblocker (make-dc-block))
 	    (maxpressure maxa)
@@ -190,11 +190,11 @@
   ;; (with-sound () (clarinet 0 .3 440 .2 1.0))
 
   (let* ((lowestfreq 100.0)
-	 (len (+ 1 (floor (/ (mus-srate) lowestfreq)))))
+	 (len (+ 1 (floor (/ *clm-srate* lowestfreq)))))
     (let ((blowing #t)
 	  (breathpressure 0.0) ; 0.1 ?
 	  (rate .001))
-      (let ((delayline (make-delayl len (- (* 0.5 (/ (mus-srate) freq)) 1.0)))
+      (let ((delayline (make-delayl len (- (* 0.5 (/ *clm-srate* freq)) 1.0)))
 	    (rtable (make-reed :offset 0.7 :slope -0.3))
 	    (filt (make-onezero))
 	    (maxpressure maxa)
@@ -231,7 +231,7 @@
   ;; (with-sound () (flute 0 .3 440 .2 1.0))
   
   (let* ((lowestfreq 100.0)
-	 (len (+ 1 (floor (/ (mus-srate) lowestfreq)))))
+	 (len (+ 1 (floor (/ *clm-srate* lowestfreq)))))
     (let ((jetrefl 0.6)
 	  (endrefl 0.6)
 	  (sinphase 0.0)
@@ -239,7 +239,7 @@
 	  (rate .0005)
 	  (breathpressure 0.0) ; 0.1 ?
 	  (ratio 0.8)
-	  (temp (- (/ (mus-srate) freq) 5.0)))
+	  (temp (- (/ *clm-srate* freq) 5.0)))
       (let ((jetdelay (make-delayl (floor (/ len 2)) (* temp (- 1.0 ratio))))
 	    (boredelay (make-delayl len (* ratio temp)))
 	    (filt (make-onep))

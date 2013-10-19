@@ -88,7 +88,7 @@
 	(fill! x1 0.0)
 	(float-vector-add! x1 x0))))
   
-  (set! (mus-srate) 22050.0)
+  (set! *clm-srate* 22050.0)
   
   (let* ((mass 1.0)
 	 (xspring 0.1)
@@ -852,10 +852,10 @@
 	   (gtk_box_pack_start (GTK_BOX pane) label #f #f 2)
 	   (make-level-meter pane width height)))
 	((graph)
-	 (let ((snd (make-variable-graph pane (string-append variable-name ": time") 2048 (mus-srate))))
+	 (let ((snd (make-variable-graph pane (string-append variable-name ": time") 2048 *clm-srate*)))
 	   (list (sound->integer snd) (channel-data snd 0))))
 	((spectrum)
-	 (let ((snd (make-variable-graph pane variable-name 2048 (mus-srate))))
+	 (let ((snd (make-variable-graph pane variable-name 2048 *clm-srate*)))
 	   (set! (time-graph? snd 0) #f)
 	   (set! (transform-graph? snd 0) #t)
 	   (set! (x-axis-label snd 0 transform-graph) (string-append variable-name ": frequency"))

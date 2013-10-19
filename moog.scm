@@ -81,7 +81,7 @@
   "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz,
 'Q' sets the resonance: 0 = no resonance, 1: oscillates at 'frequency'"
 
-  (let ((frq (envelope-interp (/ frequency (* (mus-srate) 0.5)) moog-freqtable)))
+  (let ((frq (envelope-interp (/ frequency (* *clm-srate* 0.5)) moog-freqtable)))
     (make-moog :freq frequency 
 	       :Q Q 
 	       :s (make-float-vector 4) 
@@ -96,7 +96,7 @@
      "(moog-frequency gen) accesses the cutoff frequency of the Moog filter 'gen'"
      (gen 'freq))
    (lambda (gen frq)
-     (let ((fr (envelope-interp (/ frq (* (mus-srate) 0.5)) moog-freqtable)))
+     (let ((fr (envelope-interp (/ frq (* *clm-srate* 0.5)) moog-freqtable)))
        (set! (gen 'freq) frq)
        (set! (gen 'fc) fr)
        (set! (gen 'gain) (* (gen 'Q) (array-interp moog-gaintable (+ 99.0 (* fr 99.0)))))))))

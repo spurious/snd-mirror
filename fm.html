@@ -895,7 +895,7 @@ real and imaginary parts &mdash; unexplored territory!
 	 (cr-incr (hz->radians freq))
 	 (md-incr (hz->radians (* freq mc-ratio)))
 	 (md 0.0) ; (* 0.5 (+ pi md-incr)))
-         (fm-index (/ (* 2 pi index mc-ratio freq) (mus-srate)))) ; hz->radians with complex arg and result
+         (fm-index (/ (* 2 pi index mc-ratio freq) *clm-srate*))) ; hz->radians with complex arg and result
     (do ((i start (+ i 1)))
 	((= i end))
       (outa i (* amp (real-part (sin cr)))) ; or magnitude in place of real-part

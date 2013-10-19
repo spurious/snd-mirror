@@ -62,9 +62,9 @@
     (set! yy1 yy2)
     (set! out yy1)))
 
-(define pi2s (/ (* 2.0 pi) (mus-srate)))
-(define i2s (/ 2.0 (mus-srate)))
-(define tper (/ 1.0 (mus-srate)))
+(define pi2s (/ (* 2.0 pi) *clm-srate*))
+(define i2s (/ 2.0 *clm-srate*))
+(define tper (/ 1.0 *clm-srate*))
 
 (define (set-coeffs b famp ffreq fdecay)
   (let ((centerfreq (* ffreq pi2s)))
@@ -120,7 +120,7 @@ the desired phase.
    (numf  9)   9 filters
    (numf 12)  12 filters
    (numf 13)  13 filters"
-  (let ((beg (floor (* beg (mus-srate))))
+  (let ((beg (floor (* beg *clm-srate*)))
 	(dur (mus-sound-frames file)))
     (let ((formfil (make-mvm))
 	  (end (+ beg dur))

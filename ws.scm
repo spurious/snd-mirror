@@ -4,7 +4,8 @@
 
 ;;; -------- with-sound defaults --------
 
-(define *clm-srate*             (default-output-srate))
+(set! *clm-srate* (default-output-srate))
+
 (define *clm-file-name*         "test.snd")
 (define *clm-channels*          (default-output-chans))
 (define *clm-data-format*       (default-output-data-format))
@@ -97,7 +98,7 @@
 			    (scaled-by #f)
 			    (ignore-output #f))
   "with-sound-helper is the business portion of the with-sound macro"
-  (let ((old-srate (mus-srate))
+  (let ((old-srate *clm-srate*)
 	(old-*output* *output*)
 	(old-*reverb* *reverb*)
 	(old-notehook *clm-notehook*)
@@ -127,7 +128,7 @@
 	       (set! (mus-clipping) #f)
 	       (set! (mus-clipping) *clm-clipped*))
 	   (set! (mus-clipping) clipped))
-       (set! (mus-srate) srate))
+       (set! *clm-srate* srate))
 
      (lambda ()
        (if output-to-file
@@ -135,7 +136,7 @@
 	     (if continue-old-file
 		 (begin
 		   (set! *output* (continue-sample->file output-1))
-		   (set! (mus-srate) (mus-sound-srate output-1)) ; "srate" arg shadows the generic func
+		   (set! *clm-srate* (mus-sound-srate output-1)) ; "srate" arg shadows the generic func
 		   (let ((ind (find-sound output-1)))
 		     (if (sound? ind)
 			 (close-sound ind))))
@@ -225,7 +226,7 @@
 		 (if cur 
 		     (set! snd-output (update-sound cur))
 		     (if (= header-type mus-raw)
-			 (set! snd-output (open-raw-sound output-1 channels srate data-format))
+			 (set! snd-output (open-raw-sound output-1 channels (floor srate) data-format))
 			 ;; open-sound here would either ask for raw settings or use possibly irrelevant defaults
 			 (set! snd-output (open-sound output-1))))
 		 (set! (sync snd-output) #t)))
@@ -251,7 +252,7 @@
 				(let ((lst (mus-sound-maxamp output-1)))
 				  (do ((i 0 (+ i 2)))
 				      ((>= i (length lst)))
-				    (set! (lst i) (/ (lst i) (mus-srate))))
+				    (set! (lst i) (/ (lst i) *clm-srate*)))
 				  lst))
 			    (if (vector? output-1)
 				(list (maxamp output-1))
@@ -316,7 +317,7 @@
 	     (if (mus-output? *output*)
 		 (mus-close *output*))
 	     (set! *output* old-*output*)))
-       (set! (mus-srate) old-srate)))))
+       (set! *clm-srate* old-srate)))))
 
 
 (define-macro (with-sound args . body)
@@ -569,16 +570,16 @@
 	  (scaled-by #f))
   "(init-with-sound . args) is the first half of with-sound; it sets up the CLM output choices, reverb, etc. Use \
 finish-with-sound to complete the process."
-  (let ((old-srate (mus-srate))
+  (let ((old-srate *clm-srate*)
 	(start (if statistics (get-internal-real-time)))
 	(output-to-file (string? output))
 	(reverb-to-file (and reverb (string? revfile))))
-    (set! (mus-srate) srate)
+    (set! *clm-srate* srate)
     (if output-to-file
 	(if continue-old-file
 	    (begin
 	      (set! *output* (continue-sample->file output))
-	      (set! (mus-srate) (mus-sound-srate output))
+	      (set! *clm-srate* (mus-sound-srate output))
 	      (let ((ind (find-sound output)))
 		(if (sound? ind)
 		    (close-sound ind))))
@@ -666,7 +667,7 @@ finish-with-sound to complete the process."
 		       (save-sound snd-output)))
 	      (if play (*default-player* snd-output))
 	      (update-time-graph snd-output)))
-	(set! (mus-srate) old-srate)
+	(set! *clm-srate* old-srate)
 	output)
       (error 'wrong-type-arg
 	     (list "finish-with-sound" wsd))))
@@ -752,7 +753,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 (define (->sample beg)
   "(->sample time-in-seconds) -> time-in-samples"
-  (round (* (if (not (null? (sounds))) (srate) (mus-srate)) beg)))
+  (round (* (if (not (null? (sounds))) (srate) *clm-srate*) beg)))
 
 
 
@@ -822,9 +823,9 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 (define (clm-display-globals)
 
-  (format #f ";CLM globals:~%;  *clm-srate*: ~A (default: ~A, mus-srate: ~A)~%;  *clm-file-name*: ~A~%;  *clm-channels: ~A (default: ~A)~%;  *clm-data-format*: ~A (default: ~A)~%;  *clm-header-type*: ~A (default: ~A)~%;  *clm-reverb-channels*: ~A, *clm-reverb-data*: ~A~%;  *clm-table-size*: ~A~%;  *clm-file-buffer-size*: ~A~%;  *clm-locsig-type*: ~A~%;  *clm-array-print-length*: ~A (~A)~%;  *clm-notehook*: ~A~%;  *clm-default-frequency*: ~A~%;  *clm-clipped*: ~A, mus-clipping: ~A~%~%"
+  (format #f ";CLM globals:~%;  *clm-srate*: ~A (default: ~A)~%;  *clm-file-name*: ~A~%;  *clm-channels: ~A (default: ~A)~%;  *clm-data-format*: ~A (default: ~A)~%;  *clm-header-type*: ~A (default: ~A)~%;  *clm-reverb-channels*: ~A, *clm-reverb-data*: ~A~%;  *clm-table-size*: ~A~%;  *clm-file-buffer-size*: ~A~%;  *clm-locsig-type*: ~A~%;  *clm-array-print-length*: ~A (~A)~%;  *clm-notehook*: ~A~%;  *clm-default-frequency*: ~A~%;  *clm-clipped*: ~A, mus-clipping: ~A~%~%"
 
-	  *clm-srate* (default-output-srate) (mus-srate)
+	  *clm-srate* (default-output-srate)
 	  *clm-file-name*
 	  *clm-channels* (default-output-chans)
 	  (mus-data-format->string *clm-data-format*) (mus-data-format->string (default-output-data-format))

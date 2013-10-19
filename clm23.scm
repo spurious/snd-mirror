@@ -8,7 +8,7 @@
 
 
 ;;; definstrument -> define* (+ change open paren placement)
-;;; *srate* -> (mus-srate)
+;;; *srate* -> *clm-srate*
 ;;; run loop ... -> (do...)
 ;;; aref -> [float-vector-ref or vector-ref use implicit indexing]
 ;;; setf -> set!
@@ -431,7 +431,7 @@
 
 (define* (simple-fof beg dur frq amp vib f0 a0 f1 a1 f2 a2 ve ae)
   " (simple-fof beg dur frq amp vib f0 a0 f1 a1 f2 a2 ve ae) test instrument for FOF"
-  (let ((foflen (if (= (mus-srate) 22050) 100 200)))
+  (let ((foflen (if (= *clm-srate* 22050) 100 200)))
     (let ((start (seconds->samples beg))
 	  (end (seconds->samples (+ beg dur)))
 	  (ampf (make-env :envelope (or ae (list 0 0 25 1 75 1 100 0)) :scaler amp :duration dur))
@@ -1966,11 +1966,11 @@
       (outa i (triangle-wave carrier (triangle-wave modulator))))))
 
 (define* (sndclmdoc-make-sinc-train (frequency 440.0) (width #f))
-  (let ((range (or width (* pi (- (* 2 (floor (/ (mus-srate) (* 2.2 frequency)))) 1)))))
+  (let ((range (or width (* pi (- (* 2 (floor (/ *clm-srate* (* 2.2 frequency)))) 1)))))
     ;; 2.2 leaves a bit of space before srate/2, (* 3 pi) is the minimum width, normally
     (list (- (* range 0.5))
 	  range
-	  (/ (* range frequency) (mus-srate)))))
+	  (/ (* range frequency) *clm-srate*))))
 
 (define* (sndclmdoc-sinc-train gen (fm 0.0))
   (let ((ang (car gen))
@@ -2049,7 +2049,7 @@
 |#
 
 (definstrument (sndclmdoc-fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 ve ae)
-  (let ((foflen (if (= (mus-srate) 22050) 100 200)))
+  (let ((foflen (if (= *clm-srate* 22050) 100 200)))
     (let ((foftab (make-float-vector foflen)))
       (let ((start (seconds->samples beg))
 	    (end (seconds->samples (+ beg dur)))
@@ -2283,7 +2283,7 @@
   (let ((frms (make-vector num-formants))
 	(beg (seconds->samples start))
 	(dur (frames file))
-	(sr2 (* 0.5 (mus-srate))))
+	(sr2 (* 0.5 *clm-srate*)))
     (let ((end (+ beg dur))
 	  (rd (make-readin file))
 	  (menv (make-env move-env :length dur))

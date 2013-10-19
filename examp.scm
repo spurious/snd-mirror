@@ -1252,8 +1252,8 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	 (radius (- 1.0 (/ r fftsize)))
 	 (bin (/ (srate) fftsize))
 	 (formants (make-vector freq-inc))
-	 (old-srate (mus-srate)))
-    (set! (mus-srate) (srate))
+	 (old-srate *clm-srate*))
+    (set! *clm-srate* (srate))
     ;; if mus-srate is 44.1k and srate is 48k, make-formant thinks we're trying to go past srate/2
     ;;    and in any case it's setting its formants incorrectly for the actual output srate
 
@@ -1261,7 +1261,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	((= i freq-inc))
       (set! (formants i) (make-formant (* i bin) radius)))
     (set! formants (make-formant-bank formants spectr))
-    (set! (mus-srate) old-srate)
+    (set! *clm-srate* old-srate)
 
     (lambda (inval)
       (if (= ctr freq-inc)

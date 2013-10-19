@@ -24,7 +24,7 @@
 	  (stop 0)
 	  (h20 (hz->radians 20.0))
 	  (sndamp (/ amp 16384.0))
-	  (srate4 (floor (/ (mus-srate) 4)))
+	  (srate4 (floor (/ *clm-srate* 4)))
 	  (gain (/ (* (log num-beans 4.0) 40) num-beans))
 	  (tz (make-two-pole 1.0 (* -2.0 shell-reso (cos (hz->radians shell-freq))) (* shell-reso shell-reso))) 
 	  (oz (make-one-zero 1.0 -1.0))
@@ -78,7 +78,7 @@
 	  (h20 (hz->radians 20.0))
 	  (stop 0)
 	  (sndamp (/ amp (* 16384.0 resn)))
-	  (srate4 (floor (/ (mus-srate) 4)))
+	  (srate4 (floor (/ *clm-srate* 4)))
 	  (gain (/ (* (log num-beans 4) 40) num-beans))
 	  (oz (make-one-zero (/ amp (* resn 16384.0)) (/ amp (* resn 16384.0)))))
 

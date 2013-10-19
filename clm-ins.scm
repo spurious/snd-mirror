@@ -34,7 +34,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
       (list tmpInt (/ (- (sin o) (sin (* o pc))) (sin (+ o (* o pc)))))))
   
   (define (tuneIt f s1)
-    (let ((p (/ (mus-srate) f))	;period as float
+    (let ((p (/ *clm-srate* f))	;period as float
 	  (s (if (= s1 0.0) 0.5 s1))
 	  (o (hz->radians f)))
       (let ((vals (getOptimumC s o p))
@@ -184,7 +184,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 (definstrument (fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 (ae '(0 0 25 1 75 1 100 0)) ve)
   "(fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 (ampenv '(0 0 25 1 75 1 100 0)) vibenv) produces FOF 
 synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
-  (let ((foflen (if (= (mus-srate) 22050) 100 200)))
+  (let ((foflen (if (= *clm-srate* 22050) 100 200)))
     (let ((start (seconds->samples beg))
 	  (end (seconds->samples (+ beg dur)))
 	  (ampf (make-env ae :scaler amp :duration dur))
@@ -427,7 +427,7 @@ vocal sounds using phase quadrature waveshaping"
 is a physical model of a flute:
   (stereo-flute 0 1 440 .55 :flow-envelope '(0 0 1 1 2 1 3 0))"
 
-  (let ((period-samples (floor (/ (mus-srate) freq))))
+  (let ((period-samples (floor (/ *clm-srate* freq))))
     (let ((embouchure-samples (floor (* embouchure-size period-samples))))
       (let ((current-excitation 0.0)
 	    (current-difference 0.0)
@@ -449,7 +449,7 @@ is a physical model of a flute:
 			     :duration (- dur decay)))
 	    (periodic-vibrato (make-oscil vib-rate))
 	    (random-vibrato (make-rand-interp :frequency ran-rate :amplitude ran-amount))
-	    (breath (make-rand :frequency (/ (mus-srate) 2) :amplitude noise))
+	    (breath (make-rand :frequency (/ *clm-srate* 2) :amplitude noise))
 	    
 	    
 	    (embouchure (make-delay embouchure-samples :initial-element 0.0))
@@ -927,7 +927,7 @@ is a physical model of a flute:
 	val
 	(next-prime (+ val 2))))
        
-  (let ((srscale (/ (mus-srate) 25641))
+  (let ((srscale (/ *clm-srate* 25641))
 	(dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19))
 	(chan2 (> (channels *output*) 1))
 	(chan4 (= (channels *output*) 4)))
@@ -938,7 +938,7 @@ is a physical model of a flute:
 	(if (even? val) (set! val (+ val 1)))
 	(set! (dly-len i) (next-prime val))))
 
-    (let ((len (+ (floor (mus-srate)) (frames *reverb*)))
+    (let ((len (+ (floor *clm-srate*) (frames *reverb*)))
 	   (comb1 (make-comb (* .822 reverb-factor) (dly-len 0)))
 	   (comb2 (make-comb (* .802 reverb-factor) (dly-len 1)))
 	   (comb3 (make-comb (* .773 reverb-factor) (dly-len 2)))
@@ -1088,7 +1088,7 @@ is a physical model of a flute:
 	(comb4 (make-comb 0.697 11597))
 	(outdel1 (make-delay (seconds->samples .013)))
 	(outdel2 (make-delay (seconds->samples .011)))
-	(len (floor (+ (* decay (mus-srate)) (length *reverb*)))))
+	(len (floor (+ (* decay *clm-srate*) (length *reverb*)))))
     (let ((filts (vector outdel1 outdel2))
 	  (combs (make-comb-bank (vector comb1 comb2 comb3 comb4)))
 	  (allpasses (make-all-pass-bank (vector allpass1 allpass2 allpass3))))
@@ -1098,7 +1098,7 @@ is a physical model of a flute:
 
 
 (definstrument (gran-synth start-time duration audio-freq grain-dur grain-interval amp)
-  (let ((grain-size (ceiling (* (max grain-dur grain-interval) (mus-srate)))))
+  (let ((grain-size (ceiling (* (max grain-dur grain-interval) *clm-srate*))))
     (let ((beg (seconds->samples start-time))
 	  (end (seconds->samples (+ start-time duration)))
 	  (grain-env (make-env '(0 0 25 1 75 1 100 0) :duration grain-dur))
@@ -1831,7 +1831,7 @@ is a physical model of a flute:
 	    
 	    (ihifreq (hz->radians ifreq))
 	    (fftscale (/ 1.0 (* fftsize-1 .42323))) ;integrate Blackman-Harris window = .42323*window width and shift by fftsize-1
-	    (fft-mag (/ (mus-srate) fftsize-1))
+	    (fft-mag (/ *clm-srate* fftsize-1))
 	    (furthest-away-accepted .1)
 	    (filptr 0)
 	    (filend 0)
@@ -2105,7 +2105,7 @@ is a physical model of a flute:
 	      (lenenv (make-env (if (list? seglen) 
 				    (or seglen (list 0 .15 1 .15)) 
 				    (list 0 seglen 1 seglen))
-				:scaler (mus-srate) :duration dur))
+				:scaler *clm-srate* :duration dur))
 	      (scaler-amp (if (> max-seg-len .15) (/ (* 0.6 .15) max-seg-len) 0.6))
 	      (srenv  (make-env (if (list? sr) 
 				    (or sr (list 0 1 1 1)) 
@@ -2377,12 +2377,12 @@ nil doesnt print anything, which will speed up a bit the process.
 	  (win (make-fft-window blackman2-window fftsize))
 	  (k 0)
 	  (amp 0.0)
-	  (incr (/ (* amp-scaler 4) (mus-srate)))
+	  (incr (/ (* amp-scaler 4) *clm-srate*))
 	  (beg (seconds->samples start))
 	  (end (seconds->samples (+ start dur)))
 	  (file (make-file->sample infile))
 	  (radius (- 1.0 (/ r fftsize)))
-	  (bin (/ (mus-srate) fftsize))
+	  (bin (/ *clm-srate* fftsize))
 	  (fs (make-vector freq-inc))
 	  (samp 0)
 	  (fdrc 0.0))
@@ -2520,7 +2520,7 @@ mjkoskin@sci.fi
 
 (define* (make-rmsgain (hp 10.0))
   "(make-rmsgain (hp 10.0)) makes an RMS gain generator"
-  (let* ((b (- 2.0 (cos (* hp (/ (* 2.0 pi) (mus-srate))))))
+  (let* ((b (- 2.0 (cos (* hp (/ (* 2.0 pi) *clm-srate*)))))
 	 (c2 (- b (sqrt (- (* b b) 1.0))))
 	 (c1 (- 1.0 c2)))
     (make-rmsg :c1 c1 :c2 c2)))

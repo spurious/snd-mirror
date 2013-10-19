@@ -94,7 +94,7 @@
 		    (ampenv (make-env amp-env :duration duration :scaler amplitude))
 		    (ex-array (make-vector in-chans #f))
 		    
-		    (max-len (ceiling (* (mus-srate)
+		    (max-len (ceiling (* *clm-srate*
 					 (+ (max max-out-hop max-in-hop)
 					    max-seg-len))))
 		    (invals (make-vector ochans 0.0 #t))
@@ -134,7 +134,7 @@
 
 			  (let ((file-end (+ beg (seconds->samples (+ (* 2 seglen) 
 								      (* (mus-sound-duration fnam) 
-									 (/ (mus-sound-srate fnam) (mus-srate))
+									 (/ (mus-sound-srate fnam) *clm-srate*)
 									 (/ expand srate)))))))
 			    (if (> end file-end)
 				(set! end file-end))
@@ -177,7 +177,7 @@
 				  (begin
 				    (set! update-ctr (+ update-ctr 1))
 				    (if (>= update-ctr update-rate)
-					(let ((sl (floor (* (env lenenv) (mus-srate)))))
+					(let ((sl (floor (* (env lenenv) *clm-srate*))))
 					  (set! update-ctr 0)
 					  (set! (mus-length ingen) sl)
 					  (set! (mus-ramp ingen) (floor (* sl (env rampenv))))
@@ -240,7 +240,7 @@
 					      (segl (env lenenv))                ;current segment length
 					      (rmpl (env rampenv))               ;current ramp length (0 to .5)
 					      (hp (env hopenv)))                 ;current hop size
-					  (let* ((sl (floor (* segl (mus-srate))))
+					  (let* ((sl (floor (* segl *clm-srate*)))
 						 (rl (floor (* rmpl sl))))
 					    (set! update-ctr 0)
 					    (set! (mus-length ingen0) sl)
@@ -304,7 +304,7 @@
 					      (segl (env lenenv))                ;current segment length
 					      (rmpl (env rampenv))               ;current ramp length (0 to .5)
 					      (hp (env hopenv)))                 ;current hop size
-					  (let* ((sl (floor (* segl (mus-srate))))
+					  (let* ((sl (floor (* segl *clm-srate*)))
 						 (rl (floor (* rmpl sl))))
 					    (set! update-ctr 0)
 					    (do ((ix 0 (+ ix 1)))

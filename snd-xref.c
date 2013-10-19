@@ -17,7 +17,7 @@ static const char *help_names[HELP_NAMES_SIZE] = {
  "axis-color", "axis-info", "axis-label-font", "axis-numbers-font", "background-gradient", "bad-header-hook",
  "bagpipe", "basic-color", "beats-per-measure", "beats-per-minute", "before-close-hook", "before-exit-hook",
  "before-save-as-hook", "before-save-state-hook", "before-transform-hook", "bes-j0", "bess", "bess?",
- "bessel filters", "bigbird", "bignum", "bignum-precision", "bignum?", "binary files",
+ "bessel filters", "bigbird", "bignum", "*bignum-precision*", "bignum?", "binary files",
  "bind-key", "bird", "blackman", "blackman4-env-channel", "blackman?", "bold-peaks-font",
  "break", "brown-noise", "brown-noise?", "butterworth filters", "c-define", "c-g?",
  "call-with-exit", "canter", "cascade->canonical", "catch", "cellon", "chain-dsps",
@@ -288,7 +288,7 @@ static const char *help_names[HELP_NAMES_SIZE] = {
  "axis_color", "axis_info", "axis_label_font", "axis_numbers_font", "background_gradient", "bad_header_hook",
  "bagpipe", "basic_color", "beats_per_measure", "beats_per_minute", "before_close_hook", "before_exit_hook",
  "before_save_as_hook", "before_save_state_hook", "before_transform_hook", "bes_j0", "bess", "bess?",
- "bessel_filters", "bigbird", "bignum", "bignum_precision", "bignum?", "binary_files",
+ "bessel_filters", "bigbird", "bignum", "_bignum_precision_", "bignum?", "binary_files",
  "bind_key", "bird", "blackman", "blackman4_env_channel", "blackman?", "bold_peaks_font",
  "break", "brown_noise", "brown_noise?", "butterworth_filters", "c_define", "c_g?",
  "call_with_exit", "canter", "cascade2canonical", "catch", "cellon", "chain_dsps",
@@ -1698,7 +1698,6 @@ static const char *Colors_xrefs[] = {
   "colors in rxvt: red-text et al in examp.scm",
   "flashing colors: flash-selected-data in examp.scm",
   "openGL: snd-gl.scm, {Snd and OpenGL}",
-  "fancy widget backgrounds: new-backgrounds.scm in the tutorial",
   "color hook: {color-hook}",
   "Snd graphics contexts: {snd-gcs}",
   NULL};
@@ -1715,7 +1714,6 @@ static const char *Colors_urls[] = {
   NULL,
   NULL,
   "grfsnd.html#sndandgl",
-  NULL,
   "extsnd.html#colorhook",
   "extsnd.html#sndgcs",
   NULL};

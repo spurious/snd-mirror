@@ -22,7 +22,7 @@
 	(bank-samps (seconds->samples bank-dur))
 	(fs1 (make-vector fs)))
 
-    (let ((bin (/ (mus-srate) (* 2 fs)))
+    (let ((bin (/ *clm-srate* (* 2 fs)))
 	  (radius (- 1.0 (/ fwidth (* 2 fs)))))
       (do ((k 0 (+ k 1)))
 	  ((= k fs))
@@ -162,7 +162,7 @@
 	(ramp-inc (/ 1.0 1024.0)))
     (let ((end (+ start (seconds->samples dur)))
 	  (spectr (make-vector freq-inc #f))
-	  (trigger (floor (/ (* dur (mus-srate)) freq-inc)))
+	  (trigger (floor (/ (* dur *clm-srate*) freq-inc)))
 	  (fs (make-vector freq-inc #f))
 	  (amps (make-float-vector freq-inc amp))
 	  (ctr 0)
@@ -173,7 +173,7 @@
 	  (ramp-ctr 0))
     
       (if (not (number? hi)) (set! hi freq-inc))
-      (let ((bin (floor (/ (mus-srate) fsize)))
+      (let ((bin (floor (/ *clm-srate* fsize)))
 	    (radius (- 1.0 (/ r fsize)))) 
 	(do ((k lo (+ k 1)))
 	    ((= k hi))
