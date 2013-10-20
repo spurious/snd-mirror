@@ -1390,7 +1390,6 @@ void color_filter_waveform(color_info *color)
 {
   int i;
   gc_set_foreground(ss->fltenv_data_gc, color);
-  ss->filter_control_waveform_color = color;
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;

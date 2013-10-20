@@ -148,7 +148,7 @@
 				       XmNdialogTitle         titlestr
 				       XmNresizePolicy        XmRESIZE_GROW
 				       XmNnoResize            #f
-				       XmNbackground          (basic-color)
+				       XmNbackground          *basic-color*
 				       XmNtransient           #f))))
 	      (for-each
 	       (lambda (button color)
@@ -157,7 +157,7 @@
 		   (list XmNarmColor   (selection-color)
 			 XmNbackground color)))
 	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
-	       (list (highlight-color) (highlight-color) (highlight-color)))
+	       (list *highlight-color* *highlight-color* *highlight-color*))
     
 	      (XtAddCallback new-dialog XmNcancelCallback 
 			      (lambda (w c i) (XtUnmanageChild w)))
@@ -191,13 +191,13 @@
 					   XmNbottomAttachment    XmATTACH_WIDGET
 					   XmNbottomWidget        (XmMessageBoxGetChild rename-dialog XmDIALOG_SEPARATOR)
 					   XmNorientation         XmVERTICAL
-					   XmNbackground          (basic-color))))
+					   XmNbackground          *basic-color*)))
 		     (label (XtCreateManagedWidget "new name:" xmLabelWidgetClass mainform
 				     (list XmNleftAttachment      XmATTACH_FORM
 					   XmNrightAttachment     XmATTACH_NONE
 					   XmNtopAttachment       XmATTACH_FORM
 					   XmNbottomAttachment    XmATTACH_FORM
-					   XmNbackground          (basic-color)))))
+					   XmNbackground          *basic-color*))))
 		(set! rename-text 
 		      (XtCreateManagedWidget "newname" xmTextFieldWidgetClass mainform
 				     (list XmNleftAttachment      XmATTACH_WIDGET
@@ -205,14 +205,14 @@
 					   XmNrightAttachment     XmATTACH_FORM
 					   XmNtopAttachment       XmATTACH_FORM
 					   XmNbottomAttachment    XmATTACH_FORM
-					   XmNbackground          (basic-color))))
+					   XmNbackground          *basic-color*)))
 		(XtAddEventHandler rename-text EnterWindowMask #f
 				    (lambda (w context ev flag)
 				      (XmProcessTraversal w XmTRAVERSE_CURRENT)
 				      (XtSetValues w (list XmNbackground (white-pixel)))))
 		(XtAddEventHandler rename-text LeaveWindowMask #f
 				    (lambda (w context ev flag)
-				      (XtSetValues w (list XmNbackground (basic-color))))))))
+				      (XtSetValues w (list XmNbackground *basic-color*)))))))
 	(if (not (XtIsManaged rename-dialog))
 	    (XtManageChild rename-dialog)
 	    (raise-dialog rename-dialog)))

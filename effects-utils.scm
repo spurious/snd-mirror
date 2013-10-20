@@ -77,16 +77,16 @@
 			     XmNdialogTitle         titlestr
 			     XmNresizePolicy        XmRESIZE_GROW
 			     XmNnoResize            #f
-			     XmNbackground          (basic-color)
+			     XmNbackground          *basic-color*
 			     XmNtransient           #f))))
     (for-each
      (lambda (button color)
        (XtVaSetValues
 	 (XmMessageBoxGetChild new-dialog button)
-	 (list XmNarmColor   (selection-color)
+	 (list XmNarmColor   *selection-color*
 	       XmNbackground color)))
      (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
-     (list (highlight-color) (highlight-color) (highlight-color)))
+     (list *highlight-color* *highlight-color* *highlight-color*))
     
     (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i) (XtUnmanageChild new-dialog)))
     (XtAddCallback new-dialog XmNhelpCallback help-callback)  ; "Help"
@@ -95,9 +95,9 @@
     (if reset-callback
 	;; add a Reset button
 	(let ((reset-button (XtCreateManagedWidget "Reset" xmPushButtonWidgetClass new-dialog
-			      (list XmNbackground (highlight-color)
+			      (list XmNbackground *highlight-color*
 				    XmNforeground (BlackPixelOfScreen (current-screen))
-				    XmNarmColor   (selection-color)))))
+				    XmNarmColor   *selection-color*))))
 	  (XtAddCallback reset-button XmNactivateCallback reset-callback)))
 
     (XmStringFree xhelp)
@@ -157,7 +157,7 @@
 (define (create-log-scale-widget parent title low initial high callback scale)
   "(create-log-scale-widget parent title low initial high callback scale) returns a log scale widget"
   (let ((label (XtCreateManagedWidget (format #f "~,2F" initial) xmLabelWidgetClass parent
-				       (list XmNbackground          (basic-color))))
+				       (list XmNbackground          *basic-color*)))
 	(scale (XtCreateManagedWidget "scale" xmScaleWidgetClass parent
                   (list XmNorientation   XmHORIZONTAL
 			XmNshowValue     #f
@@ -166,7 +166,7 @@
 			XmNvalue         (floor (scale-log->linear low initial high))
 			XmNdecimalPoints 0
 			XmNtitleString   title
-			XmNbackground    (basic-color)))))
+			XmNbackground    *basic-color*))))
     (XtAddCallback scale XmNvalueChangedCallback
 		    (lambda (widget context info)
 		      (change-label label (scale-log-label low (.value info) high))))
@@ -198,7 +198,7 @@
 (define (create-semi-scale-widget parent title initial callback)
   "(create-semi-scale-widget parent title initial callback) returns a semitone scale widget"
   (let ((label (XtCreateManagedWidget (format #f "semitones: ~D" (ratio->semitones initial)) xmLabelWidgetClass parent
-				      (list XmNbackground          (basic-color))))
+				      (list XmNbackground          *basic-color*)))
 	(scale (XtCreateManagedWidget "scale" xmScaleWidgetClass parent
                   (list XmNorientation   XmHORIZONTAL
 			XmNshowValue     #f
@@ -207,7 +207,7 @@
 			XmNvalue         (+ semi-range (ratio->semitones initial))
 			XmNdecimalPoints 0
 			XmNtitleString   title
-			XmNbackground    (basic-color)))))
+			XmNbackground    *basic-color*))))
     (XtAddCallback scale XmNvalueChangedCallback
 		    (lambda (widget context info)
 		      (change-label label (semi-scale-label (.value info)))))
@@ -225,11 +225,11 @@ and returns a list of widgets (for reset callbacks)"
                         XmNtopAttachment       XmATTACH_FORM
                         XmNbottomAttachment    XmATTACH_WIDGET
                         XmNbottomWidget        (XmMessageBoxGetChild dialog XmDIALOG_SEPARATOR)
-                        XmNbackground          (highlight-color))))
+                        XmNbackground          *highlight-color*)))
          (mainform (XtCreateManagedWidget "formd" xmRowColumnWidgetClass mainfrm
                   (list XmNleftAttachment      XmATTACH_FORM
                         XmNrightAttachment     XmATTACH_FORM
-                        XmNbackground          (highlight-color)
+                        XmNbackground          *highlight-color*
                         XmNorientation         XmVERTICAL))))
     (map
      (lambda (slider-data)
@@ -253,7 +253,7 @@ and returns a list of widgets (for reset callbacks)"
 				      XmNtitleString   title
 				      XmNleftAttachment XmATTACH_FORM
 				      XmNrightAttachment XmATTACH_FORM
-				      XmNbackground    (basic-color))))))
+				      XmNbackground    *basic-color*)))))
 	 (XmStringFree title)
 	 (XtAddCallback new-slider XmNvalueChangedCallback func)
 	 new-slider))

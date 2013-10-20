@@ -607,6 +607,9 @@ void goto_listener(void)
 void color_listener(color_info *pix)
 {
   ss->listener_color = pix;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->listener_color_symbol, XEN_WRAP_PIXEL(pix));
+#endif
 #if (!HAVE_GTK_3)
   glistener_set_background_color(ss->listener, rgb_to_gdk_color(ss->listener_color));
 #else
@@ -618,6 +621,9 @@ void color_listener(color_info *pix)
 void color_listener_text(color_info *pix)
 {
   ss->listener_text_color = pix;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->listener_text_color_symbol, XEN_WRAP_PIXEL(pix));
+#endif
 #if (!HAVE_GTK_3)
   glistener_set_text_color(ss->listener, rgb_to_gdk_color(ss->listener_text_color));
 #else

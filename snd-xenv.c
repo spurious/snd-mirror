@@ -1520,7 +1520,6 @@ void enved_reflect_selection(bool on)
 
 void color_enved_waveform(Pixel pix)
 {
-  ss->enved_waveform_color = pix;
   if (enved_dialog)
     {
       XSetForeground(MAIN_DISPLAY(ss), ggc, pix);

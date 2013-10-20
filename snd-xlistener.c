@@ -2197,6 +2197,9 @@ void goto_listener(void)
 void color_listener(Pixel pix)
 {
   ss->listener_color = pix;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->listener_color_symbol, XEN_WRAP_PIXEL(pix));
+#endif
   if (listener_text)
     XmChangeColor(listener_text, pix);
 }
@@ -2205,6 +2208,9 @@ void color_listener(Pixel pix)
 void color_listener_text(Pixel pix)
 {
   ss->listener_text_color = pix;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->listener_text_color_symbol, XEN_WRAP_PIXEL(pix));
+#endif
   if (listener_text)
     XtVaSetValues(listener_text, XmNforeground, pix, NULL);
 }

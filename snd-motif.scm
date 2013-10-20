@@ -128,8 +128,8 @@
    (lambda (n)
      (if (XtIsWidget n)
 	 (if (XmIsScrollBar n)
-	     (XmChangeColor n (position-color))
-	     (XmChangeColor n (basic-color)))))))
+	     (XmChangeColor n *position-color*)
+	     (XmChangeColor n *basic-color*))))))
 
 (define (host-name)
   "(host-name) -> name of current machine"
@@ -360,8 +360,8 @@
 
 ;(add-channel-pane "new-pane" 
 ;		  xmDrawingAreaWidgetClass 
-;		  (list XmNbackground (graph-color)
-;			XmNforeground (data-color)))
+;		  (list XmNbackground *graph-color*
+;			XmNforeground *data-color*))
 
 (define (remove-menu-bar-menu which)
   "(remove-menu-bar-menu which) removes a top-level menu; 'which' can be 0: top-level-menu-bar, 1: file-menu, \
@@ -381,22 +381,22 @@
 						    XmNbottomAttachment XmATTACH_NONE
 						    XmNtopAttachment    XmATTACH_WIDGET
 						    XmNtopWidget        menu-bar
-						    XmNbackground       (highlight-color))))
+						    XmNbackground       *highlight-color*)))
 	   (sep (XtCreateManagedWidget "sep" xmSeparatorWidgetClass main-pane
 				              (list XmNleftAttachment    XmATTACH_FORM
 						    XmNrightAttachment  XmATTACH_FORM
 						    XmNbottomAttachment XmATTACH_NONE
 						    XmNtopAttachment    XmATTACH_WIDGET
 						    XmNtopWidget        second-row
-						    XmNbackground       (highlight-color)
+						    XmNbackground       *highlight-color*
 						    XmNorientation      XmHORIZONTAL
 						    XmNseparatorType    XmSHADOW_ETCHED_OUT))))
       (XtVaSetValues sound-pane (list XmNtopAttachment XmATTACH_WIDGET
 				      XmNtopWidget sep
-				      XmNbackground       (highlight-color)))
+				      XmNbackground       *highlight-color*))
       (XtManageChild sound-pane)
       (XtCreateManagedWidget "a name" xmPushButtonWidgetClass second-row
-			     (list XmNbackground       (highlight-color))))))
+			     (list XmNbackground       *highlight-color*)))))
 |#
 
 ;;; -------- disable control panel --------
@@ -450,7 +450,7 @@
 		      XmNdialogTitle         titlestr
 		      XmNresizePolicy        XmRESIZE_GROW
 	              XmNnoResize            #f
-		      XmNbackground          (basic-color)
+		      XmNbackground          *basic-color*
 		      XmNwidth               400
 		      XmNtransient           #f) ))
 	(XtAddCallback fmv-dialog 
@@ -524,17 +524,17 @@
 						 XmNtopAttachment       XmATTACH_FORM
 						 XmNbottomAttachment    XmATTACH_WIDGET
 						 XmNbottomWidget        (XmMessageBoxGetChild fmv-dialog XmDIALOG_SEPARATOR)
-						 XmNbackground          (basic-color)
+						 XmNbackground          *basic-color*
 						 XmNorientation         XmVERTICAL)))
 		   (button 
 		    (XtCreateManagedWidget "play" xmToggleButtonWidgetClass mainform
-					   (list XmNbackground  (basic-color))))
+					   (list XmNbackground  *basic-color*)))
 		   (ampstr (XmStringCreate "amp" XmFONTLIST_DEFAULT_TAG))
 		   (amp-scale
 		    (XtCreateManagedWidget "amp" xmScaleWidgetClass mainform
 					   (list XmNorientation XmHORIZONTAL
 						 XmNshowValue   #t
-						 XmNbackground  (basic-color)
+						 XmNbackground  *basic-color*
 						 XmNvalue       (floor (* amplitude 100))
 						 XmNmaximum     100
 						 XmNtitleString ampstr
@@ -544,7 +544,7 @@
 		    (XtCreateManagedWidget "freq" xmScaleWidgetClass mainform
 					   (list XmNorientation XmHORIZONTAL
 						 XmNshowValue   #t
-						 XmNbackground  (basic-color)
+						 XmNbackground  *basic-color*
 						 XmNvalue       (floor frequency)
 						 XmNmaximum     1000
 						 XmNtitleString freqstr
@@ -554,7 +554,7 @@
 		    (XtCreateManagedWidget "index" xmScaleWidgetClass mainform
 					   (list XmNorientation XmHORIZONTAL
 						 XmNshowValue   #t
-						 XmNbackground  (basic-color)
+						 XmNbackground  *basic-color*
 						 XmNvalue       (floor (* 10 fm-index))
 						 XmNmaximum     100
 						 XmNtitleString indexstr
@@ -564,7 +564,7 @@
 		    (XtCreateManagedWidget "noise" xmScaleWidgetClass mainform
 					   (list XmNorientation XmHORIZONTAL
 						 XmNshowValue   #t
-						 XmNbackground  (basic-color)
+						 XmNbackground  *basic-color*
 						 XmNvalue       (floor (* 100 noise-amount))
 						 XmNmaximum     100
 						 XmNtitleString noisestr
@@ -633,7 +633,7 @@
   "(make-pixmap w strs) creates a pixmap using the X/Xpm string-based pixmap description"
   (if (defined? 'XpmAttributes)
       (let* ((attr (XpmAttributes))
-	     (symb (XpmColorSymbol "basiccolor" #f (basic-color)))
+	     (symb (XpmColorSymbol "basiccolor" #f *basic-color*))
 	     (dpy (XtDisplay widget))
 	     (win (XtWindow widget))
 	     (scr (DefaultScreen dpy))
@@ -745,10 +745,10 @@
 	 
 	 ;; now set up a paned window in the main Snd window with controllers on the left and the graph on the right
 	 (scan-outer (add-main-pane "Scanned Synthesis" xmFormWidgetClass
-				    (list XmNbackground (basic-color)
+				    (list XmNbackground *basic-color*
 					  XmNpaneMinimum 520)))
 	 (scan-row (XtCreateManagedWidget "row" xmRowColumnWidgetClass scan-outer
-					  (list XmNbackground       (basic-color)
+					  (list XmNbackground       *basic-color*
 						XmNorientation      XmVERTICAL
 						XmNleftAttachment   XmATTACH_FORM
 						XmNtopAttachment    XmATTACH_FORM
@@ -758,8 +758,8 @@
 	 
 	 ;; the graph
 	 (scan-pane (XtCreateManagedWidget "draw" xmDrawingAreaWidgetClass scan-outer
-					   (list XmNbackground       (graph-color)
-						 XmNforeground       (data-color)
+					   (list XmNbackground       *graph-color*
+						 XmNforeground       *data-color*
 						 XmNleftAttachment   XmATTACH_WIDGET
 						 XmNleftWidget       scan-row
 						 XmNtopAttachment    XmATTACH_FORM
@@ -768,14 +768,14 @@
 	 
 	 ;; the controllers
 	 (scan-start (XtCreateManagedWidget "Start" xmPushButtonWidgetClass scan-row
-					    (list XmNbackground (basic-color)
-						  XmNarmColor   (selection-color))))
+					    (list XmNbackground *basic-color*
+						  XmNarmColor   *selection-color*)))
 	 (scan-continue (XtCreateManagedWidget "Continue" xmPushButtonWidgetClass scan-row
-					       (list XmNbackground (basic-color)
-						     XmNarmColor   (selection-color))))
+					       (list XmNbackground *basic-color*
+						     XmNarmColor   *selection-color*)))
 	 (scan-stop (XtCreateManagedWidget "Stop" xmPushButtonWidgetClass scan-row
-					   (list XmNbackground (basic-color)
-						 XmNarmColor   (selection-color))))
+					   (list XmNbackground *basic-color*
+						 XmNarmColor   *selection-color*)))
 	 (size 128)
 	 (tbl (make-table-lookup :size size))
 	 (gx0 (mus-data tbl))
@@ -855,7 +855,7 @@
      (lambda (data)
        (let* ((title (XmStringCreate (car data) XmFONTLIST_DEFAULT_TAG))
 	      (button (XtCreateManagedWidget (car data) xmScaleWidgetClass scan-row
-					     (list XmNbackground    (basic-color)
+					     (list XmNbackground    *basic-color*
 						   XmNorientation   XmHORIZONTAL
 						   XmNshowValue     #t
 						   XmNminimum       (data 1)
@@ -871,15 +871,15 @@
 	   (list "damping" 0 100 0 4 (lambda (val) (set! damp (/ val 10000.0))))))
     
     (let* ((scan-size (XtCreateManagedWidget "srow" xmFormWidgetClass scan-row
-					     (list  XmNbackground (basic-color))))
+					     (list  XmNbackground *basic-color*)))
 	   (scan-label (XtCreateManagedWidget "Size:" xmLabelWidgetClass scan-size
-					      (list XmNbackground       (basic-color)
+					      (list XmNbackground       *basic-color*
 						    XmNleftAttachment   XmATTACH_FORM
 						    XmNtopAttachment    XmATTACH_FORM
 						    XmNbottomAttachment XmATTACH_FORM
 						    XmNrightAttachment  XmATTACH_NONE)))
 	   (scan-text (XtCreateManagedWidget "stext" xmTextFieldWidgetClass scan-size
-					     (list XmNbackground       (basic-color)
+					     (list XmNbackground       *basic-color*
 						   XmNvalue            (number->string size)
 						   XmNleftAttachment   XmATTACH_WIDGET
 						   XmNleftWidget       scan-label
@@ -887,11 +887,11 @@
 						   XmNbottomAttachment XmATTACH_FORM
 						   XmNrightAttachment  XmATTACH_FORM)))
 	   (play-button (XtCreateManagedWidget "play" xmToggleButtonWidgetClass scan-row
-					       (list XmNbackground  (basic-color)
-						     XmNselectColor (selection-color))))
+					       (list XmNbackground  *basic-color*
+						     XmNselectColor *selection-color*)))
 	   (freq-str (XmStringCreate "frequency" XmFONTLIST_DEFAULT_TAG))
 	   (freq-scale (XtCreateManagedWidget "frequency" xmScaleWidgetClass scan-row
-					      (list XmNbackground    (basic-color)
+					      (list XmNbackground    *basic-color*
 						    XmNorientation   XmHORIZONTAL
 						    XmNshowValue     #t
 						    XmNminimum       20
@@ -901,7 +901,7 @@
 						    XmNtitleString   freq-str)))
 	   (amp-str (XmStringCreate "amplitude" XmFONTLIST_DEFAULT_TAG))
 	   (amp-scale (XtCreateManagedWidget "amplitude" xmScaleWidgetClass scan-row
-					     (list XmNbackground    (basic-color)
+					     (list XmNbackground    *basic-color*
 						   XmNorientation   XmHORIZONTAL
 						   XmNshowValue     #t
 						   XmNminimum       0
@@ -918,7 +918,7 @@
 			   (XtSetValues w (list XmNbackground (white-pixel)))))
       (XtAddEventHandler scan-text LeaveWindowMask #f
 			 (lambda (w context ev flag)
-			   (XtSetValues w (list XmNbackground (basic-color)))))
+			   (XtSetValues w (list XmNbackground *basic-color*))))
       (XtAddCallback scan-text XmNactivateCallback 
 		     (lambda (w c i)
 		       (stop-synthesis)
@@ -1044,18 +1044,18 @@
       (deactivate-mark-list snd chn)
       (if (not (Widget? (mark-list snd chn)))
 	  (let* ((mark-box (add-channel-pane snd chn "mark-box" xmFormWidgetClass
-			          (list XmNbackground       (basic-color)
+			          (list XmNbackground       *basic-color*
 				        XmNorientation      XmVERTICAL
 				        XmNpaneMinimum      100
 				        XmNbottomAttachment XmATTACH_FORM)))
 		 (mark-label (XtCreateManagedWidget "Marks" xmLabelWidgetClass mark-box
-			          (list XmNbackground       (highlight-color)
+			          (list XmNbackground       *highlight-color*
 				        XmNleftAttachment   XmATTACH_FORM
 				        XmNrightAttachment  XmATTACH_FORM
 				        XmNalignment        XmALIGNMENT_CENTER
 				        XmNtopAttachment    XmATTACH_FORM)))
 		 (mark-scroller (XtCreateManagedWidget "mark-scroller" xmScrolledWindowWidgetClass mark-box
-			          (list XmNbackground       (basic-color)
+			          (list XmNbackground       *basic-color*
 				        XmNscrollingPolicy  XmAUTOMATIC
 				        XmNscrollBarDisplayPolicy XmSTATIC
 				        XmNleftAttachment   XmATTACH_FORM
@@ -1078,13 +1078,13 @@
 	      (do ((i current-mark-list-length (+ i 1)))
 		  ((= i (length new-marks)))
 		(let ((tf (XtCreateWidget "field" xmTextFieldWidgetClass lst
-					   (list XmNbackground (basic-color)))))
+					   (list XmNbackground *basic-color*))))
 		  (XtAddCallback tf XmNfocusCallback
 				 (lambda (w c i)
 				   (XtSetValues w (list XmNbackground (white-pixel)))))
 		  (XtAddCallback tf XmNlosingFocusCallback
 				 (lambda (w c i)
-				   (XtSetValues w (list XmNbackground (basic-color)))))
+				   (XtSetValues w (list XmNbackground *basic-color*))))
 		  (XtAddCallback tf XmNactivateCallback
 				 (lambda (w c i)
 				   (let* ((id (integer->mark (cadr (XtGetValues w (list XmNuserData 0)))))
@@ -1097,7 +1097,7 @@
 					 (if (mark? id)
 					     (set! (mark-sample id) samp))
 					 (delete-mark id))
-				     (XtSetValues w (list XmNbackground (basic-color))))))))))
+				     (XtSetValues w (list XmNbackground *basic-color*)))))))))
 
 	(set! (mark-list-length snd chn) (length new-marks))
 	(let ((lst (mark-list snd chn)))
@@ -1195,7 +1195,7 @@
 		 	 (let ((new-dialog (XmCreateFileSelectionDialog 
 					     (cadr (main-widgets)) 
 					     title
-					     (list XmNbackground (basic-color)))))
+					     (list XmNbackground *basic-color*))))
 			   (XtAddCallback new-dialog XmNhelpCallback
 					    (lambda (w c i)
 					      (let ((lst (find-dialog-widget w file-selector-dialogs)))
@@ -1219,11 +1219,11 @@
 			  (XtSetValues (XmFileSelectionBoxGetChild new-dialog XmDIALOG_LIST) 
 					(list XmNbackground (white-pixel)))
 			  (XtSetValues (XtNameToWidget new-dialog "Cancel")
-					(list XmNarmColor (selection-color)))
+					(list XmNarmColor *selection-color*))
 			  (XtSetValues (XtNameToWidget new-dialog "Help")
-					(list XmNarmColor (selection-color)))
+					(list XmNarmColor *selection-color*))
 			  (XtSetValues (XtNameToWidget new-dialog "OK")
-					(list XmNarmColor (selection-color)))
+					(list XmNarmColor *selection-color*))
 			  new-dialog))))
 	(if (not help)
 	    (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_HELP_BUTTON))
@@ -1261,7 +1261,7 @@
       (let* ((pix (XCreatePixmap dpy win 16 16 (screen-depth)))
 	     (pixwin (list 'Window (cadr pix)))) ; C-style cast to Window for X graphics procedures
 	(set! (clock-pixmaps i) pix)
-	(XSetForeground dpy dgc (basic-color))
+	(XSetForeground dpy dgc *basic-color*)
 	(XFillRectangle dpy pixwin dgc 0 0 16 16)
 	(XSetForeground dpy dgc (white-pixel))
 	(XFillArc dpy pixwin dgc 1 1 14 14 0 (* 64 360))
@@ -1270,8 +1270,8 @@
 	(XDrawLine dpy pixwin dgc 8 8
 		   (+ 8 (round (* 7 (sin (* i (/ 3.1416 6.0))))))
 		   (- 8 (round (* 7 (cos (* i (/ 3.1416 6.0)))))))))
-    (XSetBackground dpy dgc (graph-color))
-    (XSetForeground dpy dgc (data-color))
+    (XSetBackground dpy dgc *graph-color*)
+    (XSetForeground dpy dgc *data-color*)
     (lambda (snd hour)
       (if hour
 	  (XtSetValues ((sound-widgets snd) 8)
@@ -1323,8 +1323,8 @@
   (let*  ((gv (XGCValues))
 	  (shell ((main-widgets) 1))
 	  (button-fontstruct (XLoadQueryFont (XtDisplay shell) (or (listener-font) "9x15"))))
-    (set! (.foreground gv) (data-color))
-    (set! (.background gv) (basic-color))
+    (set! (.foreground gv) *data-color*)
+    (set! (.background gv) *basic-color*)
     (set! (.font gv) (.fid button-fontstruct))
     (let ((gc (XCreateGC (XtDisplay shell) 
 			 (XtWindow shell) 
@@ -1382,13 +1382,13 @@
 	       (pix (XCreatePixmap dpy win width height (screen-depth)))
 	       (str (XmStringCreateLocalized filename))
 	       (data (list gc filename #f (channel-amp-envs filename 0 width peak-func))))
-	  (XSetForeground dpy gc (basic-color))
+	  (XSetForeground dpy gc *basic-color*)
 	  (XFillRectangle dpy (cast-to-window pix) gc 0 0 width height)
-	  (XSetForeground dpy gc (data-color))
+	  (XSetForeground dpy gc *data-color*)
 	  (make-sound-button-pixmap dpy (cast-to-window pix) data width height)
 	  (let ((icon (XtCreateManagedWidget filename xmIconGadgetClass parent
-			(append (list XmNbackground      (basic-color)
-				      XmNforeground      (data-color)
+			(append (list XmNbackground      *basic-color*
+				      XmNforeground      *data-color*
 				      XmNlabelString     str
 				      XmNlargeIconPixmap pix
 				      XmNsmallIconPixmap pix)
@@ -1435,7 +1435,7 @@
    "sounds"
    (XtCreateManagedWidget "scrolled-window" xmScrolledWindowWidgetClass ((main-widgets) 3)
 			  (list XmNscrollBarDisplayPolicy XmAS_NEEDED
-				XmNbackground             (basic-color)
+				XmNbackground             *basic-color*
 				XmNvisualPolicy           XmVARIABLE
 				XmNscrollingPolicy        XmAUTOMATIC))
    (lambda (file) 
@@ -1658,7 +1658,7 @@
 	 (width (floor (/ (cadr (XtGetValues parent (list XmNwidth 0))) n)))
 	 (meters (XtCreateManagedWidget "meters" xmFormWidgetClass parent
 	 	   (list XmNpositionIndex 0  ; top pane
-			 XmNbackground    (basic-color)
+			 XmNbackground    *basic-color*
 			 XmNfractionBase  (* n 10)
 			 XmNpaneMinimum   height)))
 	 (meter-list ()))
@@ -1814,7 +1814,7 @@
 		  (XtUnmanageChild status-area)
 		  (XtVaSetValues status-area (list XmNrightAttachment XmATTACH_NONE))
 		  (let ((new-label (XtCreateManagedWidget "space:" xmLabelWidgetClass name-form 
-							  (list XmNbackground      (basic-color)
+							  (list XmNbackground      *basic-color*
 								XmNleftAttachment  XmATTACH_NONE
 								XmNlabelString     str
 								XmNrightAttachment XmATTACH_WIDGET
@@ -1892,7 +1892,7 @@
   (define (make-amp-control snd chan parent)
     (let* ((s1 (XmStringCreateLocalized "amp:"))
 	   (label (XtCreateManagedWidget (label-name chan) xmPushButtonWidgetClass parent
-					  (list XmNbackground       (basic-color)
+					  (list XmNbackground       *basic-color*
 						XmNalignment        XmALIGNMENT_BEGINNING
 						XmNtopAttachment    XmATTACH_FORM
 						XmNbottomAttachment XmATTACH_NONE
@@ -1906,7 +1906,7 @@
 						XmNfillOnArm        #f)))
 	   (s2 (XmStringCreateLocalized "1.000 "))
 	   (number (XtCreateManagedWidget (number-name chan) xmLabelWidgetClass parent
-					   (list XmNbackground       (basic-color)
+					   (list XmNbackground       *basic-color*
 						 XmNalignment        XmALIGNMENT_BEGINNING
 						 XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
 						 XmNtopWidget        label
@@ -1919,7 +1919,7 @@
 						 XmNmarginRight      3
 						 XmNrecomputeSize    #f)))
 	   (scroll (XtCreateManagedWidget (scroller-name chan) xmScrollBarWidgetClass parent
-					   (list XmNbackground       (position-color)
+					   (list XmNbackground       *position-color*
 						 XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
 						 XmNtopWidget        label
 						 XmNbottomAttachment XmATTACH_NONE
@@ -2074,16 +2074,16 @@
 				       XmNdialogTitle         titlestr
 				       XmNresizePolicy        XmRESIZE_GROW
 				       XmNnoResize            #f
-				       XmNbackground          (basic-color)
+				       XmNbackground          *basic-color*
 				       XmNtransient           #f))))
 	      (for-each
 	       (lambda (button color)
 		 (XtVaSetValues
 		   (XmMessageBoxGetChild new-dialog button)
-		   (list XmNarmColor   (selection-color)
+		   (list XmNarmColor   *selection-color*
 			 XmNbackground color)))
 	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
-	       (list (highlight-color) (highlight-color) (highlight-color)))
+	       (list *highlight-color* *highlight-color* *highlight-color*))
     
 	      (XtAddCallback new-dialog XmNcancelCallback 
 			     (lambda (w c i) (XtUnmanageChild w)))
@@ -2119,13 +2119,13 @@
 					   XmNbottomAttachment XmATTACH_WIDGET
 					   XmNbottomWidget     (XmMessageBoxGetChild rename-dialog XmDIALOG_SEPARATOR)
 					   XmNorientation      XmVERTICAL
-					   XmNbackground       (basic-color))))
+					   XmNbackground       *basic-color*)))
 		     (label (XtCreateManagedWidget "new name:" xmLabelWidgetClass mainform
 				     (list XmNleftAttachment   XmATTACH_FORM
 					   XmNrightAttachment  XmATTACH_NONE
 					   XmNtopAttachment    XmATTACH_FORM
 					   XmNbottomAttachment XmATTACH_FORM
-					   XmNbackground       (basic-color)))))
+					   XmNbackground       *basic-color*))))
 		(set! rename-text 
 		      (XtCreateManagedWidget "newname" xmTextFieldWidgetClass mainform
 				     (list XmNleftAttachment   XmATTACH_WIDGET
@@ -2133,14 +2133,14 @@
 					   XmNrightAttachment  XmATTACH_FORM
 					   XmNtopAttachment    XmATTACH_FORM
 					   XmNbottomAttachment XmATTACH_FORM
-					   XmNbackground       (basic-color))))
+					   XmNbackground       *basic-color*)))
 		(XtAddEventHandler rename-text EnterWindowMask #f
 				   (lambda (w context ev flag)
 				     (XmProcessTraversal w XmTRAVERSE_CURRENT)
 				     (XtSetValues w (list XmNbackground (white-pixel)))))
 		(XtAddEventHandler rename-text LeaveWindowMask #f
 				   (lambda (w context ev flag)
-				     (XtSetValues w (list XmNbackground (basic-color))))))))
+				     (XtSetValues w (list XmNbackground *basic-color*)))))))
 	(if (not (XtIsManaged rename-dialog))
 	    (XtManageChild rename-dialog)
 	    (raise-dialog rename-dialog)))
@@ -2184,12 +2184,12 @@
 	(selected-mark-gc ((snd-gcs) 10))
 	(dpy (XtDisplay (cadr (main-widgets))))
 	(original-mark-color (list 'Pixel (logxor (cadr (mark-color)) 
-						  (cadr (graph-color)))))
+						  (cadr *graph-color*))))
 	(original-selected-mark-color (list 'Pixel (logxor (cadr (mark-color)) 
-							   (cadr (selected-graph-color)))))
-	(new-mark-color (list 'Pixel (logxor (cadr (graph-color)) 
+							   (cadr *selected-graph-color*))))
+	(new-mark-color (list 'Pixel (logxor (cadr *graph-color*) 
 					     (cadr (get-color new-color)))))
-	(new-selected-mark-color (list 'Pixel (logxor (cadr (selected-graph-color))
+	(new-selected-mark-color (list 'Pixel (logxor (cadr *selected-graph-color*)
 						      (cadr (get-color new-color))))))
     (if (not (null? (hook-functions draw-mark-hook)))
 	(set! (hook-functions draw-mark-hook) ()))
@@ -2253,7 +2253,7 @@
 					   xmLabelWidgetClass 
 					   tooltip-shell
 					   (list XmNrecomputeSize #t
-					         XmNbackground (highlight-color)))))
+					         XmNbackground *highlight-color*))))
 				  (change-label tooltip-label tip))
 			      (let ((loc (XtTranslateCoords widget (.x ev) (.y ev))))
 				(XtVaSetValues tooltip-shell (list XmNx (car loc) XmNy (cadr loc))))
@@ -2343,14 +2343,14 @@
 							XmNresizePolicy        XmRESIZE_GROW
 							XmNnoResize            #f
 							XmNtransient           #f
-							XmNbackground          (basic-color))))
+							XmNbackground          *basic-color*)))
 	      (for-each
 	       (lambda (button color)
 		 (XtVaSetValues (XmMessageBoxGetChild dialog button)
-				(list XmNarmColor   (selection-color)
+				(list XmNarmColor   *selection-color*
 				      XmNbackground color)))
 	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
-	       (list (highlight-color) (highlight-color) (highlight-color)))
+	       (list *highlight-color* *highlight-color* *highlight-color*))
 	      (XtAddCallback dialog XmNcancelCallback (lambda (w context info) (XtUnmanageChild dialog)))
 	      (XtAddCallback dialog XmNhelpCallback (lambda (w context info) (help-dialog "Find" "no help yet")))
 	      (XtAddCallback dialog XmNokCallback (lambda (w context info)
@@ -2383,11 +2383,11 @@
 							   XmNtopAttachment       XmATTACH_FORM
 							   XmNbottomAttachment    XmATTACH_WIDGET
 							   XmNbottomWidget        (XmMessageBoxGetChild dialog XmDIALOG_SEPARATOR)
-							   XmNbackground          (basic-color))))
+							   XmNbackground          *basic-color*)))
 	      (XtAddCallback find-text XmNfocusCallback 
 			     (lambda (w c i)
 			       (XtVaSetValues w (list XmNbackground (WhitePixelOfScreen (DefaultScreenOfDisplay (XtDisplay shell)))))))
-	      (XtAddCallback find-text XmNlosingFocusCallback (lambda (w c i) (XtSetValues w (list XmNbackground (basic-color)))))
+	      (XtAddCallback find-text XmNlosingFocusCallback (lambda (w c i) (XtSetValues w (list XmNbackground *basic-color*))))
 	      (XtAddCallback find-text XmNvalueChangedCallback (lambda (w c i) (set! find-new #t)))))
 	(XtManageChild dialog))
 
@@ -2436,13 +2436,13 @@
   (let ((notebook ((main-widgets) 3)))
     (if (XmIsNotebook notebook)
 	(let ((text (XtCreateManagedWidget "notebook-text" xmTextFieldWidgetClass notebook
-	              (list XmNbackground (basic-color)))))
+	              (list XmNbackground *basic-color*))))
 	  (XtAddCallback text XmNfocusCallback
 			 (lambda (w c i)
 			   (XtSetValues w (list XmNbackground (white-pixel)))))
 	  (XtAddCallback text XmNlosingFocusCallback
 			 (lambda (w c i)
-			   (XtSetValues w (list XmNbackground (basic-color)))))
+			   (XtSetValues w (list XmNbackground *basic-color*))))
 	  text)
 	#f)))
 	  
@@ -2467,11 +2467,11 @@
 					XmNtransient           #f
 					XmNheight              400
 					XmNwidth               400
-					XmNbackground          (basic-color))))
+					XmNbackground          *basic-color*)))
     
     (XtVaSetValues (XmMessageBoxGetChild variables-dialog XmDIALOG_OK_BUTTON)
-		   (list XmNarmColor   (selection-color)
-			 XmNbackground (highlight-color)))
+		   (list XmNarmColor   *selection-color*
+			 XmNbackground *highlight-color*))
     (XtAddCallback variables-dialog 
 		   XmNokCallback (lambda (w context info)
 				   (XtUnmanageChild variables-dialog)))
@@ -2485,7 +2485,7 @@
 				       XmNtopAttachment       XmATTACH_FORM
 				       XmNbottomAttachment    XmATTACH_WIDGET
 				       XmNbottomWidget        (XmMessageBoxGetChild variables-dialog XmDIALOG_SEPARATOR)
-				       XmNbackground          (basic-color)
+				       XmNbackground          *basic-color*
 				       XmNframeBackground     (zoom-color)
 				       XmNbindingWidth        14)))
     (XtManageChild variables-dialog)
@@ -2502,11 +2502,11 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	       (simple-cases (XtCreateManagedWidget page-name xmRowColumnWidgetClass panes
 						    (list XmNorientation XmVERTICAL
 							  XmNpaneMinimum 30
-							  XmNbackground  (basic-color)))))
+							  XmNbackground  *basic-color*))))
 	  (set! page-info (cons page-name (list panes simple-cases)))
 	  (XtCreateManagedWidget page-name xmPushButtonWidgetClass variables-notebook
 				 (list XmNnotebookChildType XmMAJOR_TAB
-				       XmNbackground        (basic-color)))
+				       XmNbackground        *basic-color*))
 	  (set! variables-pages (cons page-info variables-pages))))
     (let ((row-pane (caddr page-info))
 	  (pane (cadr page-info))
@@ -2516,9 +2516,9 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	 ;; add a horizontal pair: label text
 	 (let ((row (XtCreateManagedWidget (string-append variable-name "-row") xmRowColumnWidgetClass row-pane
 					    (list XmNorientation XmHORIZONTAL
-						  XmNbackground  (basic-color)))))
+						  XmNbackground  *basic-color*))))
 	   (XtCreateManagedWidget var-label xmLabelWidgetClass row
-				  (list XmNbackground  (basic-color)))
+				  (list XmNbackground  *basic-color*))
 	   (XtCreateManagedWidget (string-append variable-name "-value") xmTextFieldWidgetClass row
 				  (list XmNeditable #f
 					XmNresizeWidth #t
@@ -2527,7 +2527,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	 ;; scale bar with red "thermometer"
 	 (let* ((title (XmStringCreate var-label XmFONTLIST_DEFAULT_TAG))
 		(scl (XtCreateManagedWidget variable-name xmScaleWidgetClass row-pane
-					    (list XmNbackground  (basic-color)
+					    (list XmNbackground  *basic-color*
 						  XmNslidingMode XmTHERMOMETER
 						  XmNminimum (floor (* 100 (car range)))
 						  XmNmaximum (floor (* 100 (cadr range)))
@@ -2543,7 +2543,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	 (let ((height 70)
 	       (width 210))
 	   (XtCreateManagedWidget var-label xmLabelWidgetClass row-pane
-				  (list XmNbackground  (basic-color)))
+				  (list XmNbackground  *basic-color*))
 	   (make-level-meter row-pane width height () #f)))
 	((graph)
 	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane 
@@ -2637,7 +2637,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	      (XtUnmanageChild play-button)
 	      (let* ((name-form (XtParent status-area)) ; "snd-name-form"
 		     (new-minmax (XtCreateManagedWidget "." xmPushButtonWidgetClass name-form 
-							(list XmNbackground      (basic-color)
+							(list XmNbackground      *basic-color*
 							      XmNrightAttachment XmATTACH_FORM
 							      XmNtopAttachment   XmATTACH_FORM
 							      XmNmarginWidth 2
@@ -2668,7 +2668,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 				     ((= i (channels c)))
 				   (XtManageChild ((channel-widgets c i) 10)))
 				 (if (mv 4) (set! (show-controls c) #t))
-				 (XmChangeColor new-minmax (basic-color))
+				 (XmChangeColor new-minmax *basic-color*)
 				 (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum prev-size XmNpaneMinimum (- prev-size 1)))
 				 (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum 1000 XmNpaneMinimum 1))))
 			   (set! (mv 2) (not maxed))))))
@@ -2726,7 +2726,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 		      XmNdialogTitle         titlestr
 		      XmNresizePolicy        XmRESIZE_GROW
 	              XmNnoResize            #f
-		      XmNbackground          (basic-color)
+		      XmNbackground          *basic-color*
 		      XmNwidth               400
 		      XmNtransient           #f) ))
 	(XtAddCallback ssb-dialog 
@@ -2784,17 +2784,17 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 					   XmNtopAttachment       XmATTACH_FORM
 					   XmNbottomAttachment    XmATTACH_WIDGET
 					   XmNbottomWidget        (XmMessageBoxGetChild ssb-dialog XmDIALOG_SEPARATOR)
-					   XmNbackground          (basic-color)
+					   XmNbackground          *basic-color*
 					   XmNorientation         XmVERTICAL)))
 	     (button 
 	      (XtCreateManagedWidget "play" xmToggleButtonWidgetClass mainform
-				     (list XmNbackground  (basic-color))))
+				     (list XmNbackground  *basic-color*)))
 	     (freqstr (XmStringCreate "original freq" XmFONTLIST_DEFAULT_TAG))
 	     (freq-scale
 	      (XtCreateManagedWidget "frq" xmScaleWidgetClass mainform
 				     (list XmNorientation XmHORIZONTAL
 					   XmNshowValue   #t
-					   XmNbackground  (basic-color)
+					   XmNbackground  *basic-color*
 					   XmNvalue       (floor old-freq)
 					   XmNmaximum     1000
 					   XmNtitleString freqstr
@@ -2804,7 +2804,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	      (XtCreateManagedWidget "nfrq" xmScaleWidgetClass mainform
 				     (list XmNorientation XmHORIZONTAL
 					   XmNshowValue   #t
-					   XmNbackground  (basic-color)
+					   XmNbackground  *basic-color*
 					   XmNvalue       (floor new-freq)
 					   XmNmaximum     1000
 					   XmNtitleString ratiostr
@@ -2814,7 +2814,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	      (XtCreateManagedWidget "order" xmScaleWidgetClass mainform
 				     (list XmNorientation XmHORIZONTAL
 					   XmNshowValue   #t
-					   XmNbackground  (basic-color)
+					   XmNbackground  *basic-color*
 					   XmNvalue       hilbert-order
 					   XmNmaximum     100
 					   XmNtitleString orderstr
@@ -2824,7 +2824,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	      (XtCreateManagedWidget "pairs" xmScaleWidgetClass mainform
 				     (list XmNorientation XmHORIZONTAL
 					   XmNshowValue   #t
-					   XmNbackground  (basic-color)
+					   XmNbackground  *basic-color*
 					   XmNvalue       ssb-pairs
 					   XmNmaximum     100
 					   XmNtitleString pairsstr
@@ -2898,7 +2898,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 		      XmNdialogTitle         titlestr
 		      XmNresizePolicy        XmRESIZE_GROW
 	              XmNnoResize            #f
-		      XmNbackground          (basic-color)
+		      XmNbackground          *basic-color*
 		      XmNwidth               400
 		      XmNtransient           #f) ))
 	(XtAddCallback audit-dialog 
@@ -2924,17 +2924,17 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 						 XmNtopAttachment       XmATTACH_FORM
 						 XmNbottomAttachment    XmATTACH_WIDGET
 						 XmNbottomWidget        (XmMessageBoxGetChild audit-dialog XmDIALOG_SEPARATOR)
-						 XmNbackground          (basic-color)
+						 XmNbackground          *basic-color*
 						 XmNorientation         XmVERTICAL)))
 		   (button 
 		    (XtCreateManagedWidget "play" xmToggleButtonWidgetClass mainform
-					   (list XmNbackground  (basic-color))))
+					   (list XmNbackground  *basic-color*)))
 		   (ampstr (XmStringCreate "amp" XmFONTLIST_DEFAULT_TAG))
 		   (amp-scale
 		    (XtCreateManagedWidget "amp" xmScaleWidgetClass mainform
 					   (list XmNorientation XmHORIZONTAL
 						 XmNshowValue   #t
-						 XmNbackground  (basic-color)
+						 XmNbackground  *basic-color*
 						 XmNvalue       (floor (* amplitude 100))
 						 XmNmaximum     100
 						 XmNtitleString ampstr
@@ -2944,7 +2944,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 		    (XtCreateManagedWidget "freq" xmScaleWidgetClass mainform
 					   (list XmNorientation XmHORIZONTAL
 						 XmNshowValue   #t
-						 XmNbackground  (basic-color)
+						 XmNbackground  *basic-color*
 						 XmNvalue       (floor frequency)
 						 XmNmaximum     20000
 						 XmNtitleString freqstr

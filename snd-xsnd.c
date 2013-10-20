@@ -2792,7 +2792,6 @@ void color_filter_waveform(Pixel color)
 {
   int i;
   XSetForeground(MAIN_DISPLAY(ss), ss->fltenv_data_gc, color);
-  ss->filter_control_waveform_color = color;
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;

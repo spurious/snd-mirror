@@ -283,8 +283,8 @@ snd -e '(<a class=quiet href="extsnd.html#addsoundfileextension" onmouseout="UnT
 
 <pre>
 snd oboe.snd
-(set! (<a class=quiet href="extsnd.html#selecteddatacolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selecteddatacolor_tip)">selected-data-color</a>) (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 1 1 1))
-(set! (<a class=quiet href="extsnd.html#selectedgraphcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedgraphcolor_tip)">selected-graph-color</a>) (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0 0 0))
+(set! *selected-data-color* (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 1 1 1))
+(set! *selected-graph-color* (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0 0 0))
 (set! (<a class=quiet href="extsnd.html#graphshorizontal" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphshorizontal_tip)">graphs-horizontal</a>) #f)
 (set! (<a class=quiet href="extsnd.html#transformgraphp" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphp_tip)">transform-graph?</a>) #t)
 (set! (<a class=quiet href="extsnd.html#showtransformpeaks" onmouseout="UnTip()" onmouseover="Tip(extsnd_showtransformpeaks_tip)">show-transform-peaks</a>) #t)
@@ -384,8 +384,8 @@ Here's a more elaborate initialization file (~/.snd_s7):
 
 (define beige (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0.96 0.96 0.86))
 (define blue (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0 0 1))
-(set! (<a class=quiet href="extsnd.html#selectedgraphcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedgraphcolor_tip)">selected-graph-color</a>) beige) ;selected graph background is beige
-(set! (<a class=quiet href="extsnd.html#selecteddatacolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selecteddatacolor_tip)">selected-data-color</a>) blue)   ;selected graph data is blue
+(set! *selected-graph-color* beige) ;selected graph background is beige
+(set! *selected-data-color* blue)   ;selected graph data is blue
 
 (set! *save-dir* "/zap/snd")        ;save-state files are placed in /zap/snd
 (set! *temp-dir* "/zap/tmp")        ;temp files are placed in /zap/tmp

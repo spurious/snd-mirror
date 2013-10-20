@@ -407,6 +407,9 @@ gc_t *gc_new(void)
 void color_cursor(color_info *color)
 {
   ss->cursor_color = color;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->cursor_color_symbol, XEN_WRAP_PIXEL(color));
+#endif
   gc_set_colors(ss->cursor_gc, color, ss->graph_color);
   gc_set_colors(ss->selected_cursor_gc, color, ss->selected_graph_color);
 }
@@ -415,6 +418,9 @@ void color_cursor(color_info *color)
 void color_marks(color_info *color)
 {
   ss->mark_color = color;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->mark_color_symbol, XEN_WRAP_PIXEL(color));
+#endif
   gc_set_colors(ss->mark_gc, color, ss->graph_color);
   gc_set_colors(ss->selected_mark_gc, color, ss->selected_graph_color);
 }
@@ -423,6 +429,9 @@ void color_marks(color_info *color)
 void color_selection(color_info *color)
 {
   ss->selection_color = color;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->selection_color_symbol, XEN_WRAP_PIXEL(color));
+#endif
   gc_set_colors(ss->selection_gc, color, ss->graph_color);
   gc_set_colors(ss->selected_selection_gc, color, ss->selected_graph_color);
 }
@@ -430,7 +439,6 @@ void color_selection(color_info *color)
 
 void color_graph(color_info *color)
 {
-  ss->graph_color = color;
   gc_set_background(ss->basic_gc, color);
   gc_set_foreground(ss->erase_gc, color);
   gc_set_colors(ss->selection_gc, ss->selection_color, color);
@@ -441,7 +449,6 @@ void color_graph(color_info *color)
 
 void color_selected_graph(color_info *color)
 {
-  ss->selected_graph_color = color;
   gc_set_background(ss->selected_basic_gc, color);
   gc_set_foreground(ss->selected_erase_gc, color);
   gc_set_colors(ss->selected_selection_gc, ss->selection_color, color);
@@ -452,7 +459,6 @@ void color_selected_graph(color_info *color)
 
 void color_data(color_info *color)
 {
-  ss->data_color = color;
   gc_set_foreground(ss->basic_gc, color);
   gc_set_background(ss->erase_gc, color);
 }
@@ -460,7 +466,6 @@ void color_data(color_info *color)
 
 void color_selected_data(color_info *color)
 {
-  ss->selected_data_color = color;
   gc_set_foreground(ss->selected_basic_gc, color);
   gc_set_background(ss->selected_erase_gc, color);
 }
@@ -469,6 +474,9 @@ void color_selected_data(color_info *color)
 void set_mix_color(color_info *color)
 {
   ss->mix_color = color;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->mix_color_symbol, XEN_WRAP_PIXEL(color));
+#endif
   gc_set_foreground(ss->mix_gc, color);
 }
 

@@ -503,7 +503,7 @@ read an ASCII sound file"
       "(flash-selected-data millisecs) causes the selected data to flash red and green"
       (if (selected-sound)
 	  (begin
-	    (set! (selected-data-color) (if data-red? green red))
+	    (set! *selected-data-color* (if data-red? green red))
 	    (set! data-red? (not data-red?))
 	    (in interval (lambda () (flash-selected-data interval))))))))
 

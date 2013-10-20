@@ -373,7 +373,10 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->peak_env_dir_symbol = s7_define_variable(s7, "*" S_peak_env_dir "*", s7_make_string(s7, DEFAULT_PEAK_ENV_DIR));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_peak_env_dir "*) (list #f (lambda (s v) (set! (" S_peak_env_dir ") v)) #f))");
 
-#if USE_GTK
+#if USE_MOTIF
+  #define DEFAULT_LISTENER_FONT "9x15"
+#endif
+#if (!USE_NO_GUI)
   ss->listener_font_symbol = s7_define_variable(s7, "*" S_listener_font "*", s7_make_string(s7, DEFAULT_LISTENER_FONT));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_listener_font "*) (list #f (lambda (s v) (set! (" S_listener_font ") v)) #f))");
 #endif

@@ -364,6 +364,9 @@ void check_for_event(void)
 void color_cursor(Pixel color)
 {
   ss->cursor_color = color;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->cursor_color_symbol, XEN_WRAP_PIXEL(color));
+#endif
   XSetForeground(MAIN_DISPLAY(ss), ss->cursor_gc, (Pixel)(XOR(color, ss->graph_color)));
   XSetForeground(MAIN_DISPLAY(ss), ss->selected_cursor_gc, (Pixel)(XOR(color, ss->selected_graph_color)));
 }
@@ -372,6 +375,9 @@ void color_cursor(Pixel color)
 void color_marks(Pixel color)
 {
   ss->mark_color = color;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->mark_color_symbol, XEN_WRAP_PIXEL(color));
+#endif
   XSetForeground(MAIN_DISPLAY(ss), ss->mark_gc, (Pixel)(XOR(color, ss->graph_color)));
   XSetForeground(MAIN_DISPLAY(ss), ss->selected_mark_gc, (Pixel)(XOR(color, ss->selected_graph_color)));
 }
@@ -380,6 +386,9 @@ void color_marks(Pixel color)
 void color_selection(Pixel color)
 {
   ss->selection_color = color;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->selection_color_symbol, XEN_WRAP_PIXEL(color));
+#endif
   XSetForeground(MAIN_DISPLAY(ss), ss->selection_gc, (Pixel)(XOR(color, ss->graph_color)));
   XSetForeground(MAIN_DISPLAY(ss), ss->selected_selection_gc, (Pixel)(XOR(color, ss->selected_graph_color)));
 }
@@ -389,7 +398,6 @@ void color_graph(Pixel color)
 {
   Display *dpy;
   dpy = MAIN_DISPLAY(ss);
-  ss->graph_color = color;
   XSetBackground(dpy, ss->basic_gc, color);
   XSetForeground(dpy, ss->erase_gc, color);
   XSetForeground(dpy, ss->selection_gc, (Pixel)(XOR(ss->selection_color, color)));
@@ -402,7 +410,6 @@ void color_selected_graph(Pixel color)
 {
   Display *dpy;
   dpy = MAIN_DISPLAY(ss);
-  ss->selected_graph_color = color;
   XSetBackground(dpy, ss->selected_basic_gc, color);
   XSetForeground(dpy, ss->selected_erase_gc, color);
   XSetForeground(dpy, ss->selected_selection_gc, (Pixel)(XOR(ss->selection_color, color)));
@@ -415,7 +422,6 @@ void color_data(Pixel color)
 {
   Display *dpy;
   dpy = MAIN_DISPLAY(ss);
-  ss->data_color = color;
   XSetForeground(dpy, ss->basic_gc, color);
   XSetBackground(dpy, ss->erase_gc, color);
 }
@@ -425,7 +431,6 @@ void color_selected_data(Pixel color)
 {
   Display *dpy;
   dpy = MAIN_DISPLAY(ss);
-  ss->selected_data_color = color;
   XSetForeground(dpy, ss->selected_basic_gc, color);
   XSetBackground(dpy, ss->selected_erase_gc, color);
 }
@@ -439,10 +444,12 @@ void recolor_graph(chan_info *cp, bool selected)
 
 void set_mix_color(Pixel color)
 {
-  /* called only from g_set_mix_color -- docs imply it changes existing colors */
   Display *dpy;
   dpy = MAIN_DISPLAY(ss);
   ss->mix_color = color;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->mix_color_symbol, XEN_WRAP_PIXEL(color));
+#endif
   XSetForeground(dpy, ss->mix_gc, color);
   
 }

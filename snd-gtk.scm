@@ -156,7 +156,7 @@
 	       (> ay1 ay0))
 	  (let ((diff (* 0.05 (- ay1 ay0))) ; assuming -10 to 10 
 		(xincr (/ (- ax1 ax0) size))
-		(bg-color (color->list (basic-color))))
+		(bg-color (color->list *basic-color*)))
 	    (cairo_set_source_rgb cr (car bg-color) (cadr bg-color) (caddr bg-color))
 	    (if pts1
 		(cairo-draw-lines cr pts1 size)
@@ -485,7 +485,7 @@
   (lambda (snd hour)
     (let* ((window ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window ((sound-widgets snd) 8))))
 	   (cr (gdk_cairo_create window))
-	   (bg (color->list (basic-color))))
+	   (bg (color->list *basic-color*)))
       (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg))
       (cairo_rectangle cr 0 0 16 16) ; icon bg
       (cairo_fill cr)
@@ -507,7 +507,7 @@
 (define (snd-happy-face snd progress)
   (let* ((window ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window ((sound-widgets snd) 8))))
 	 (cr (gdk_cairo_create window))
-	 (bg (color->list (basic-color)))
+	 (bg (color->list *basic-color*))
 	 (fc (list 1.0 progress 0.0)))
 
     ;; overall background

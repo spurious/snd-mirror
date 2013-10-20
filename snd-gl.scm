@@ -332,7 +332,7 @@
 	  ;; display each element in the complex plane rotated to stack along the x axis
 	  (glNewList gl-list GL_COMPILE)
 	    (glBegin GL_LINES)
-	    (apply glColor3f (color->list (data-color)))
+	    (apply glColor3f (color->list *data-color*))
 	    (do ((i 0 (+ 1 i)))
 		((= i 256))
 	      (glVertex3f (/ i 256.0) 0.0 0.0)
@@ -358,11 +358,11 @@
       (lambda ()
 	(if (not drawer)
 	    (let ((outer (add-main-pane "Waterfall" xmFormWidgetClass
-					(list XmNbackground (basic-color)
+					(list XmNbackground *basic-color*
 					      XmNpaneMinimum 320))))
 	      (set! drawer (XtCreateManagedWidget "draw" xmDrawingAreaWidgetClass outer
-						  (list XmNbackground       (graph-color)
-							XmNforeground       (data-color)
+						  (list XmNbackground       *graph-color*
+							XmNforeground       *data-color*
 							XmNleftAttachment   XmATTACH_FORM
 							XmNtopAttachment    XmATTACH_FORM
 							XmNbottomAttachment XmATTACH_FORM

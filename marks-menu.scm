@@ -251,14 +251,14 @@
                                       XmNrightAttachment     XmATTACH_FORM
 				      XmNtopAttachment       XmATTACH_FORM
                                       XmNbottomAttachment    XmATTACH_FORM
-                                      XmNbackground          (basic-color))))
+                                      XmNbackground          *basic-color*)))
                          (lab (XtCreateManagedWidget "Buffer size" xmLabelWidgetClass frm
                                    (list XmNleftAttachment      XmATTACH_FORM
                                          XmNrightAttachment     XmATTACH_NONE
                                          XmNtopAttachment       XmATTACH_FORM
                                          XmNbottomAttachment    XmATTACH_FORM
                                          XmNlabelString         s1
-                                         XmNbackground          (basic-color))))
+                                         XmNbackground          *basic-color*)))
                          (buffer-labels (map (lambda (n) (XmStringCreateLocalized n)) (list "64" "128" "256" "512" "1024" "2048" "4096")))
                          (combo (XtCreateManagedWidget "buffersize" xmComboBoxWidgetClass frm
                                    (list XmNleftAttachment      XmATTACH_WIDGET
@@ -269,7 +269,7 @@
                                          XmNitems               buffer-labels
                                          XmNitemCount           (length buffer-labels)
                                          XmNcomboBoxType        XmDROP_DOWN_COMBO_BOX
-                                         XmNbackground          (basic-color)))))
+                                         XmNbackground          *basic-color*))))
                     (set! loop-between-marks-default-buffer-widget combo)
                     (for-each (lambda (n) (XmStringFree n)) buffer-labels)
                     (XmStringFree s1)
@@ -291,7 +291,7 @@
                                       XmNrightAttachment     XmATTACH_FORM
                                       XmNtopAttachment       XmATTACH_FORM
                                       XmNbottomAttachment    XmATTACH_FORM
-                                      XmNbackground          (basic-color))))
+                                      XmNbackground          *basic-color*)))
                          (rc (XtCreateManagedWidget "rc" xmRowColumnWidgetClass frm
                                    (list XmNorientation XmHORIZONTAL
                                          XmNradioBehavior #t
@@ -302,7 +302,7 @@
                                          XmNrightAttachment     XmATTACH_FORM
                                          XmNtopAttachment       XmATTACH_FORM
                                          XmNbottomAttachment    XmATTACH_NONE
-                                         XmNbackground          (basic-color)))))
+                                         XmNbackground          *basic-color*))))
 		    (XtCreateManagedWidget "Buffer size" xmLabelWidgetClass frm
                                    (list XmNleftAttachment      XmATTACH_FORM
                                          XmNrightAttachment     XmATTACH_FORM
@@ -311,12 +311,12 @@
                                          XmNbottomAttachment    XmATTACH_FORM
                                          XmNlabelString         s1
                                          XmNalignment           XmALIGNMENT_BEGINNING
-                                         XmNbackground          (basic-color)))
+                                         XmNbackground          *basic-color*))
                     (for-each
 
                     (lambda (size)
                        (let ((button (XtCreateManagedWidget (format #f "~D" size) xmToggleButtonWidgetClass rc
-                                        (list XmNbackground           (basic-color)
+                                        (list XmNbackground           *basic-color*
                                               XmNvalueChangedCallback (list (lambda (w c i) (if (.set i) (set! loop-between-marks-buffer-size c))) size)
                                               XmNset                  (= size loop-between-marks-buffer-size)))))
                          (if (= size loop-between-marks-buffer-size)
@@ -670,7 +670,7 @@ using the granulate generator to fix up the selection duration (this still is no
 						  XmNdialogTitle         titlestr
 						  XmNresizePolicy        XmRESIZE_GROW
 						  XmNnoResize            #f
-						  XmNbackground          (basic-color)
+						  XmNbackground          *basic-color*
 						  XmNtransient           #f)))
 	      (XtAddCallback loop-dialog
 			     XmNcancelCallback (lambda (w context info)
@@ -692,7 +692,7 @@ using the granulate generator to fix up the selection duration (this still is no
 						   XmNtopAttachment       XmATTACH_FORM
 						   XmNbottomAttachment    XmATTACH_WIDGET
 						   XmNbottomWidget        (XmMessageBoxGetChild loop-dialog XmDIALOG_SEPARATOR)
-						   XmNbackground          (basic-color))))
+						   XmNbackground          *basic-color*)))
 		     (leftform
 		      (XtCreateManagedWidget "lform" xmFormWidgetClass mainform
 					     (list XmNleftAttachment      XmATTACH_FORM
@@ -700,7 +700,7 @@ using the granulate generator to fix up the selection duration (this still is no
 						   XmNrightPosition       50
 						   XmNtopAttachment       XmATTACH_FORM
 						   XmNbottomAttachment    XmATTACH_FORM
-						   XmNbackground          (basic-color))))
+						   XmNbackground          *basic-color*)))
 		     (rightform
 		      (XtCreateManagedWidget "rform" xmFormWidgetClass mainform
 					     (list XmNleftAttachment      XmATTACH_WIDGET
@@ -708,7 +708,7 @@ using the granulate generator to fix up the selection duration (this still is no
 						   XmNrightAttachment     XmATTACH_FORM
 						   XmNtopAttachment       XmATTACH_FORM
 						   XmNbottomAttachment    XmATTACH_FORM
-						   XmNbackground          (basic-color)))))
+						   XmNbackground          *basic-color*))))
 		(for-each
 		 (lambda (parent top-label offset)
 		   (let* ((main-label (XtCreateManagedWidget top-label xmLabelWidgetClass parent
@@ -733,7 +733,7 @@ using the granulate generator to fix up the selection duration (this still is no
 			  (top-form (XtCreateManagedWidget "tform" xmFormWidgetClass top-frame ()))
 			  (left-column (XtCreateManagedWidget "lcol" xmRowColumnWidgetClass top-form
 							      (list XmNorientation         XmVERTICAL
-								    XmNbackground          (position-color)
+								    XmNbackground          *position-color*
 								    XmNleftAttachment      XmATTACH_FORM
 								    XmNrightAttachment     XmATTACH_POSITION
 								    XmNrightPosition       40
@@ -748,7 +748,7 @@ using the granulate generator to fix up the selection duration (this still is no
 								   XmNbottomAttachment    XmATTACH_FORM)))
 			  (right-column (XtCreateManagedWidget "lcol" xmRowColumnWidgetClass top-form
 							       (list XmNorientation         XmVERTICAL
-								     XmNbackground          (position-color)
+								     XmNbackground          *position-color*
 								     XmNleftAttachment      XmATTACH_WIDGET
 								     XmNleftWidget          mid-column
 								     XmNrightAttachment     XmATTACH_FORM
@@ -756,30 +756,30 @@ using the granulate generator to fix up the selection duration (this still is no
 								     XmNbottomAttachment    XmATTACH_FORM)))
 			  (rowlefttop (XtCreateManagedWidget "r1"  xmRowColumnWidgetClass left-column
 							     (list XmNorientation         XmHORIZONTAL
-								   XmNbackground          (position-color)
+								   XmNbackground          *position-color*
 								   XmNspacing             0)))
 			  (leftrange (XtCreateManagedWidget "range" xmPushButtonWidgetClass left-column ()))
 			  (rowleftbottom (XtCreateManagedWidget "r1" xmRowColumnWidgetClass left-column
 								(list XmNorientation         XmHORIZONTAL
-								      XmNbackground          (position-color)
+								      XmNbackground          *position-color*
 								      XmNspacing             0)))
 			  (rowrighttop (XtCreateManagedWidget "r1" xmRowColumnWidgetClass right-column
 							      (list XmNorientation         XmHORIZONTAL
-								    XmNbackground          (position-color)
+								    XmNbackground          *position-color*
 								    XmNspacing             0)))
 			  (rowrightmid (XtCreateManagedWidget "r1" xmRowColumnWidgetClass right-column
 							      (list XmNorientation         XmHORIZONTAL
-								    XmNbackground          (position-color))))
+								    XmNbackground          *position-color*)))
 			  (rightsep (XtCreateManagedWidget "rsep"  xmSeparatorWidgetClass rowrightmid
 							   (list XmNseparatorType       XmNO_LINE
 								 XmNorientation         XmVERTICAL
-								 XmNbackground          (position-color)
+								 XmNbackground          *position-color*
 								 XmNwidth               20)))
 			  (rightlock (XtCreateManagedWidget "lock" xmToggleButtonWidgetClass rowrightmid ()))
 			  
 			  (rowrightbottom (XtCreateManagedWidget "r1" xmRowColumnWidgetClass right-column
 								 (list XmNorientation         XmHORIZONTAL
-								       XmNbackground          (position-color)
+								       XmNbackground          *position-color*
 								       XmNspacing             0)))
 			  (midlab1 (XtCreateManagedWidget "0.000" xmLabelWidgetClass mid-column
 							  (list    XmNleftAttachment      XmATTACH_FORM
@@ -911,7 +911,7 @@ using the granulate generator to fix up the selection duration (this still is no
 			  (not (XmIsRowColumn n))
 			  (not (XmIsSeparator n)))
 		     (begin
-		       (XmChangeColor n (basic-color))
+		       (XmChangeColor n *basic-color*)
 		       (if (XmIsToggleButton n)
 			   (XtVaSetValues n (list XmNselectColor
 						  (let* ((col (XColor))

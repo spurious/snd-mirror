@@ -10007,8 +10007,8 @@ EDITS: 2
 		 
 		 (let ((ind (open-sound "oboe.snd")))
 		   (set! (selected-data-color) light-green)
-		   (set! (data-color) blue)
-		   (set! (selected-graph-color) black)
+		   (set! *data-color* blue)
+		   (set! *selected-graph-color* black)
 		   (let ((red (make-color-with-catch 1.0 0.0 0.0)))
 		     (set! (foreground-color ind 0 cursor-context) red)
 		     (let ((col (foreground-color ind 0 cursor-context)))
@@ -10026,10 +10026,10 @@ EDITS: 2
 		     (let ((col (foreground-color ind)))
 		       (if (not (feql (color->list col) (color->list black)))
 			   (snd-display #__line__ ";set foreground-color with ind (black): ~A ~A" (color->list col) (color->list black)))))
-		   (set! (selected-graph-color) (make-color-with-catch 0.96 0.96 0.86))
-		   (set! (data-color) black)
+		   (set! *selected-graph-color* (make-color-with-catch 0.96 0.96 0.86))
+		   (set! *data-color* black)
 		   (set! (selected-data-color) blue)
-		   (set! (graph-color) white)
+		   (set! *graph-color* white)
 		   (close-sound ind)))
 	       (lambda args args))
 	
@@ -21683,7 +21683,7 @@ EDITS: 2
 		(if (not (= (mix-length id) 3)) (snd-display #__line__ ";mix v at 0 length: ~A" (mix-length id)))
 		(if (not (equal? (mix-name id) #f)) (snd-display #__line__ ";mix v at 0 name: ~A" (mix-name id)))
 		(if (not (equal? (mix-properties id) ())) (snd-display #__line__ ";mix v at 0 properties: ~A" (mix-properties id)))
-		(if (not (equal? (mix-color id) (mix-color))) (snd-display #__line__ ";mix v at 0 color: ~A" (mix-color id)))
+		(if (not (equal? (mix-color id) *mix-color*)) (snd-display #__line__ ";mix v at 0 color: ~A" (mix-color id)))
 		(if (not (= (mix-tag-y id) 0)) (snd-display #__line__ ";mix v at 0 tag-y: ~A" (mix-tag-y id)))
 		(let ((sf (make-mix-sampler id))
 		      (data (make-float-vector 10)))
@@ -21726,7 +21726,7 @@ EDITS: 2
 	      (if (not (= (mix-length id) 50828)) (snd-display #__line__ ";mix oboe at 0 length: ~A" (mix-length id)))
 	      (if (not (equal? (mix-name id) #f)) (snd-display #__line__ ";mix oboe at 0 name: ~A" (mix-name id)))
 	      (if (not (equal? (mix-properties id) ())) (snd-display #__line__ ";mix oboe at 0 properties: ~A" (mix-properties id)))
-	      (if (not (equal? (mix-color id) (mix-color))) (snd-display #__line__ ";mix oboe at 0 color: ~A" (mix-color id)))
+	      (if (not (equal? (mix-color id) *mix-color*)) (snd-display #__line__ ";mix oboe at 0 color: ~A" (mix-color id)))
 	      (if (not (= (mix-tag-y id) 0)) (snd-display #__line__ ";mix oboe at 0 tag-y: ~A" (mix-tag-y id)))
 	      
 	      (if (fneq (maxamp ind 0) .14724) (snd-display #__line__ ";mix oboe maxamp: ~A" (maxamp ind 0)))
@@ -22184,16 +22184,16 @@ EDITS: 2
 	    (close-sound ind))
 	  
 	  (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "color-mix tests" 300))
-		(old-color (mix-color)))
-	    (set! (mix-color) (make-color-with-catch 1 1 0))
+		(old-color *mix-color*))
+	    (set! *mix-color* (make-color-with-catch 1 1 0))
 	    (let ((mix1 (mix-float-vector (make-float-vector 10 .5) 10)))
-	      (if (or (and (not (equal? (color->list (mix-color)) (list 1.0 1.0 0.0)))
-			   (not (equal? (color->list (mix-color)) (list 1.0 1.0 0.0 1.0))))
+	      (if (or (and (not (equal? (color->list *mix-color*) (list 1.0 1.0 0.0)))
+			   (not (equal? (color->list *mix-color*) (list 1.0 1.0 0.0 1.0))))
 		      (and (not (equal? (color->list (mix-color mix1)) (list 1.0 1.0 0.0)))
 			   (not (equal? (color->list (mix-color mix1)) (list 1.0 1.0 0.0 1.0)))))
 		  (snd-display #__line__ ";set mix-color: ~A ~A ~A ~A" 
-			       (color->list (mix-color)) (color->list (mix-color mix1)) (list 1.0 1.0 0.0) (color->list old-color)))
-	      (set! (mix-color) old-color)
+			       (color->list *mix-color*) (color->list (mix-color mix1)) (list 1.0 1.0 0.0) (color->list old-color)))
+	      (set! *mix-color* old-color)
 	      (save-mix mix1 "test1.snd")
 	      (let ((ind1 (open-sound "test1.snd")))
 		(if (not (= (frames ind1) (mix-length mix1))) (snd-display #__line__ ";save-mix frames: ~A ~A" (mix-length mix1) (frames ind1)))
@@ -32270,7 +32270,7 @@ EDITS: 1
 	    (graph (list (float-vector 0 1 2) (float-vector 3 2 1) (float-vector 1 2 3) (float-vector 1 1 1) (float-vector 0 1 0) (float-vector 3 1 2)))
 	    (update-lisp-graph)
 	    (hook-push lisp-graph-hook (lambda (hook)
-					 (set! (hook 'result) (list (basic-color) (zoom-color) (data-color) (selected-data-color) (mix-color)))))
+					 (set! (hook 'result) (list *basic-color* (zoom-color) *data-color* (selected-data-color) *mix-color*))))
 	    (graph (list (float-vector 0 1 2) (float-vector 3 2 1) (float-vector 1 2 3) (float-vector 1 1 1) (float-vector 0 1 0) (float-vector 3 1 2)))
 	    (update-lisp-graph)
 	    (set! (hook-functions lisp-graph-hook) ())
@@ -36181,7 +36181,7 @@ EDITS: 1
 		(update-time-graph)
 		(catch #t (lambda () (show-greeting ind1 0)) (lambda args args))
 		(update-time-graph)
-		(color-samples (highlight-color) 0 100 ind1 0)
+		(color-samples *highlight-color* 0 100 ind1 0)
 		(update-time-graph)
 		(power-env-channel (make-power-env '(0 0 .325  1 1 32.0 2 0 32.0) :duration 2.0))
 		(update-time-graph)
@@ -41254,7 +41254,7 @@ EDITS: 1
 	    (XRotateBuffers dpy 1)
 	    (XSetWindowBorderWidth dpy win 10)
 	    (XSetWindowBorder dpy win (black-pixel))
-	    (XSetWindowBackground dpy win (basic-color))
+	    (XSetWindowBackground dpy win *basic-color*)
 	    (let* ((vis (XGetVisualInfo dpy 0 (list 'XVisualInfo 0)))
 		   (depth (.depth (car vis))))
 	      (XSetWindowBorderPixmap dpy win (XCreatePixmap dpy win 10 10 depth))
@@ -41447,7 +41447,7 @@ EDITS: 1
 		
 		(let* ((dpy (XtDisplay (cadr (main-widgets))))
 		       (win (XtWindow (cadr (main-widgets))))
-		       (attr (XSetWindowAttributes #f (basic-color) #f (highlight-color)))
+		       (attr (XSetWindowAttributes #f *basic-color* #f *highlight-color*))
 		       (newwin (XCreateWindow dpy win 10 10 100 100 3 
 					      CopyFromParent InputOutput (list 'Visual CopyFromParent)
 					      (logior CWBackPixel CWBorderPixel)
@@ -41464,9 +41464,9 @@ EDITS: 1
 		  (if (not (= (cadr (.cursor attr)) 0)) (snd-display #__line__ ";cursor: ~A" (.cursor attr)))
 		  (if (not (Window? newwin)) (snd-display #__line__ ";XCreateWindow: ~A" newwin))
 		  (if (not (= (.bit_gravity attr) 0)) (snd-display #__line__ ";bit_gravity: ~A" (.bit_gravity attr)))
-		  (XChangeWindowAttributes dpy newwin CWBackPixel (XSetWindowAttributes #f (basic-color)))
+		  (XChangeWindowAttributes dpy newwin CWBackPixel (XSetWindowAttributes #f *basic-color*))
 		  (XDestroyWindow dpy newwin)
-		  (set! newwin (XCreateSimpleWindow dpy win 10 10 100 100 3 (basic-color) (highlight-color)))
+		  (set! newwin (XCreateSimpleWindow dpy win 10 10 100 100 3 *basic-color* *highlight-color*))
 		  (XDestroyWindow dpy newwin))
 		
 		(XSetRegion dpy sgc (XPolygonRegion (list (XPoint 0 0) (XPoint 10 0) (XPoint 10 10) (XPoint 0 10)) 4 WindingRule))
@@ -41477,7 +41477,7 @@ EDITS: 1
 			(XSetTile dpy sgc pix)
 			(XSetStipple dpy sgc (XCreateBitmapFromData dpy wn right-arrow 16 12))
 			(XSetClipMask dpy sgc None)
-			(XSetState dpy sgc (basic-color) (mark-color) GXcopy 0)
+			(XSetState dpy sgc *basic-color* (mark-color) GXcopy 0)
 			(XSetPlaneMask dpy sgc 0)
 			(XSetDashes dpy sgc 0 '(3 4 3 1))
 			(XSetClipRectangles dpy sgc 0 0 (list (XRectangle 0 0 10 10) (XRectangle 10 10 100 100)) 2 Unsorted)
@@ -41655,8 +41655,8 @@ EDITS: 1
 	    (set! (.flags c) DoRed)
 	    (if (not (= (.flags c) DoRed)) (snd-display #__line__ ";Xcolor flags: ~A" (.flags c)))
 	    (if (not (= (.pad c) 0)) (snd-display #__line__ ";pad: ~A" (.pad c)))
-	    (set! (.pixel c) (basic-color))
-	    (if (not (equal? (.pixel c) (basic-color))) (snd-display #__line__ ";Xcolor pixel: ~A" (.pixel c))))
+	    (set! (.pixel c) *basic-color*)
+	    (if (not (equal? (.pixel c) *basic-color*)) (snd-display #__line__ ";Xcolor pixel: ~A" (.pixel c))))
 	  
 	  (let ((obj (XTextItem "hiho" 4 3 (list 'Font 1))))
 	    (if (not (XTextItem? obj)) (snd-display #__line__ ";XTextItem -> ~A" obj))
@@ -42141,8 +42141,8 @@ EDITS: 1
 			  (snd-display #__line__ ";set current-font with ind/0: ~A ~A" old-font (current-font ind 0)))
 		      (set! (current-font) old-font))
 		    
-		    (set! (.foreground gv) (data-color))
-		    (set! (.background gv) (basic-color))
+		    (set! (.foreground gv) *data-color*)
+		    (set! (.background gv) *basic-color*)
 		    (set! (.function gv) GXcopy)
 		    (let ((sgc (XtAllocateGC grf1
 					      (XDefaultDepth dpy scrn) 
@@ -42331,7 +42331,7 @@ EDITS: 1
 	      (if (not (= (.bitmap_unit newimage) 32)) (snd-display #__line__ ";bitmap_unit: ~A" (.bitmap_unit newimage)))
 					;		 (if (not (= (.obdata newimage) 0)) (snd-display #__line__ ";obdata: ~A" (.obdata newimage)))
 	      (if (not (= (.xoffset newimage) 0)) (snd-display #__line__ ";xoffset: ~A" (.xoffset newimage)))
-	      (XPutPixel before 1 1 (basic-color))
+	      (XPutPixel before 1 1 *basic-color*)
 	      (XGetPixel before 1 1)
 	      (XPutImage dpy (list 'Window (cadr rotpix)) sgc before 0 0 0 0 10 10)
 	      (XAddPixel before 1)
@@ -42342,7 +42342,7 @@ EDITS: 1
 		  (let ((i11 (XGetImage dpy (list 'Window (cadr pix)) 0 0 10 10 AllPlanes XYPixmap))
 			(attr (XpmAttributes))
 			(vals (XtGetValues (cadr (main-widgets)) (list XmNcolormap 0 XmNdepth 0)))
-			(sym (XpmColorSymbol "basiccolor" #f (basic-color))))
+			(sym (XpmColorSymbol "basiccolor" #f *basic-color*)))
 		    (if (not (string=? (.name sym) "basiccolor")) (snd-display #__line__ ";.name colorsymbol: ~A" (.name sym)))
 		    (set! (.name sym) "hiho")
 		    (if (not (string=? (.name sym) "hiho")) (snd-display #__line__ ";set .name colorsymbol: ~A" (.name sym)))
@@ -42350,7 +42350,7 @@ EDITS: 1
 		    (if (not (equal? vis (.visual attr))) (snd-display #__line__ ";visual xpm attr: ~A" (.visual attr)))
 		    (if (not (list? (.colorsymbols attr))) (snd-display #__line__ ";.colorsymbols attr: ~A" (.colorsymbols attr)))
 		    (set! (.colorsymbols attr) (list sym))
-		    (set! (.pixel sym) (basic-color))
+		    (set! (.pixel sym) *basic-color*)
 		    (set! (.numsymbols attr) 1)
 		    (if (not (equal? 1 (.numsymbols attr))) (snd-display #__line__ ";numsymbols xpm attr: ~A" (.numsymbols attr)))
 		    (set! (.depth attr) (vals 3))
@@ -42406,7 +42406,7 @@ EDITS: 1
 		      (XpmWriteFileFromPixmap dpy "test.xpm" pixmap pixmap1 #f)
 		      (XpmCreateDataFromPixmap dpy pixmap pixmap1 #f)
 		      (let ((status (XpmReadFileToXpmImage "bullet.xpm"))
-			     (symb (XpmColorSymbol "Foreground" "green" (basic-color)))
+			     (symb (XpmColorSymbol "Foreground" "green" *basic-color*))
 			     (attr (XpmAttributes)))
 			(if (not (XpmImage? status))
 			    (snd-display #__line__ "; XpmError ReadFileToXpmImage: ~A ~A" symb (XpmGetErrorString status)))
@@ -42586,7 +42586,7 @@ EDITS: 1
 						   XmNmatchBehavior        XmQUICK_NAVIGATE
 						   XmNprimaryOwnership     XmOWN_NEVER
 						   XmNscrollBarDisplayPolicy XmAS_NEEDED
-						   XmNselectColor          (basic-color)
+						   XmNselectColor          *basic-color*
 						   XmNselectedPositions    (list 0 1)
 						   XmNselectionMode        XmNORMAL_MODE
 						   XmNselectionPolicy      XmBROWSE_SELECT))))
@@ -43181,7 +43181,7 @@ EDITS: 1
 		 ;(old-v (cadr (XtVaGetValues scr (list XmNverticalFontUnit 0))))
 		 )
 	    (if (not (XmIsScreen scr)) (snd-display #__line__ ";XmIsScreen: ~A" scr))
-	    (let ((colors (XmGetColors screen cmap (basic-color))))
+	    (let ((colors (XmGetColors screen cmap *basic-color*)))
 	      (if (not (Pixel? (car colors)))
 		  (snd-display #__line__ ";colors: ~A " colors))
 	      (let ((color-proc (lambda (bg)
@@ -43334,7 +43334,7 @@ EDITS: 1
 					     XmNdialogTitle         titlestr
 					     XmNresizePolicy        XmRESIZE_GROW
 					     XmNnoResize            #f
-					     XmNbackground          (basic-color)
+					     XmNbackground          *basic-color*
 					     XmNtransient           #f))))
 		     (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i) (XtUnmanageChild w)))
 		     (XtAddCallback new-dialog XmNhelpCallback (lambda (w c i) (help-dialog "Fonts" "no help yet")))
@@ -43352,7 +43352,7 @@ EDITS: 1
 								   XmNtopAttachment    XmATTACH_FORM
 								   XmNbottomAttachment XmATTACH_WIDGET
 								   XmNbottomWidget     (XmMessageBoxGetChild new-dialog XmDIALOG_SEPARATOR)
-								   XmNbackground       (basic-color))))
+								   XmNbackground       *basic-color*)))
 			    (fnts (make-dialog mainform)))
 		       (XtManageChild fnts)
 		       (if (not colors-dialog)
@@ -43361,7 +43361,7 @@ EDITS: 1
 		 (list 
 		  (lambda (mainform)
 		    (XmCreateFontSelector mainform "Fonts" 
-					  (list XmNbackground (basic-color)
+					  (list XmNbackground *basic-color*
 						XmNcurrentFont "-*-times-bold-r-*-*-14-140-*-*-*-*-*-*"
 						XmNleftAttachment   XmATTACH_FORM
 						XmNrightAttachment  XmATTACH_FORM
@@ -43370,7 +43370,7 @@ EDITS: 1
 		  
 		  (lambda (mainform)
 		    (XmCreateColorSelector mainform "Colors" 
-					   (list XmNbackground (basic-color)
+					   (list XmNbackground *basic-color*
 						 XmNleftAttachment   XmATTACH_FORM
 						 XmNrightAttachment  XmATTACH_FORM
 						 XmNtopAttachment    XmATTACH_FORM
@@ -43391,7 +43391,7 @@ EDITS: 1
 				    XmNdialogTitle         titlestr
 				    XmNresizePolicy        XmRESIZE_GROW
 				    XmNnoResize            #f
-				    XmNbackground          (basic-color)
+				    XmNbackground          *basic-color*
 				    XmNtransient           #f))))
 	    (XmStringFree xhelp)
 	    (XmStringFree xok)
@@ -43403,7 +43403,7 @@ EDITS: 1
 							  XmNtopAttachment    XmATTACH_FORM
 							  XmNbottomAttachment XmATTACH_WIDGET
 							  XmNbottomWidget     (XmMessageBoxGetChild new-dialog XmDIALOG_SEPARATOR)
-							  XmNbackground       (basic-color))))
+							  XmNbackground       *basic-color*)))
 		   (fnts 
 		    (if (defined? 'XmIsColumn)
 			(let* ((w1 (XmCreateColumn mainform "column" ()))
@@ -43913,7 +43913,7 @@ EDITS: 1
 		  (snd-display #__line__ ";XShapeQueryVersion: ~A" vals))
 	      (if (XShapeOffsetShape dpy win 0 0 0) (snd-display #__line__ ";XShapeOffsetShape?"))
 	      
-	      (let* ((attr (XSetWindowAttributes #f (basic-color) #f (highlight-color)))
+	      (let* ((attr (XSetWindowAttributes #f *basic-color* #f *highlight-color*))
 		     (newwin (XCreateWindow dpy win 10 10 100 100 3 
 					    CopyFromParent InputOutput (list 'Visual CopyFromParent)
 					    (logior CWBackPixel CWBorderPixel)

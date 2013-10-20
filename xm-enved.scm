@@ -159,9 +159,9 @@
   (if (provided? 'snd-motif)
       (begin
 	(if (not (member XmNbackground args))
-	    (set! args (append args (list XmNbackground (graph-color)))))
+	    (set! args (append args (list XmNbackground *graph-color*))))
 	(if (not (member XmNforeground args))
-	    (set! args (append args (list XmNforeground (data-color)))))
+	    (set! args (append args (list XmNforeground *data-color*))))
 	(let* ((drawer (XtCreateManagedWidget name xmDrawingAreaWidgetClass parent args))
 	       (gc (car (snd-gcs)))
 	       (x0 (car axis-bounds))

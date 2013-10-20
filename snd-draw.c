@@ -1305,6 +1305,9 @@ void set_highlight_color(color_t color)
   old_color = ss->highlight_color;
 #endif
   ss->highlight_color = color; 
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->highlight_color_symbol, XEN_WRAP_PIXEL(color));
+#endif
 #if USE_MOTIF
   map_over_children_with_color(MAIN_SHELL(ss), highlight_recolor_everything, old_color);
 #endif
@@ -1345,6 +1348,9 @@ static XEN g_mark_color(void)
 void set_zoom_color(color_t color)
 {
   ss->zoom_color = color; 
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->zoom_color_symbol, XEN_WRAP_PIXEL(color));
+#endif
   color_chan_components(ss->zoom_color, COLOR_ZOOM);
 }
 
@@ -1367,6 +1373,9 @@ static XEN g_zoom_color(void)
 void set_position_color(color_t color)
 {
   ss->position_color = color; 
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->position_color_symbol, XEN_WRAP_PIXEL(color));
+#endif
   color_chan_components(ss->position_color, COLOR_POSITION);
 }
 
@@ -1419,6 +1428,10 @@ static XEN g_listener_text_color(void)
 static XEN g_set_enved_waveform_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_enved_waveform_color, "a color"); 
+  ss->enved_waveform_color = XEN_UNWRAP_PIXEL(color);
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->enved_waveform_color_symbol, color);
+#endif
   color_enved_waveform(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
@@ -1434,6 +1447,10 @@ static XEN g_enved_waveform_color(void)
 static XEN g_set_filter_control_waveform_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_filter_control_waveform_color, "a color");
+  ss->filter_control_waveform_color = XEN_UNWRAP_PIXEL(color);
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->filter_control_waveform_color_symbol, color);
+#endif
   color_filter_waveform(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
@@ -1466,6 +1483,9 @@ static XEN g_set_text_focus_color(XEN color)
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_text_focus_color, "a color"); 
   ss->text_focus_color = XEN_UNWRAP_PIXEL(color);
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->text_focus_color_symbol, color);
+#endif
   return(color);
 }
 
@@ -1481,6 +1501,9 @@ static XEN g_set_sash_color(XEN color)
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_sash_color, "a color"); 
   ss->sash_color = XEN_UNWRAP_PIXEL(color);
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->sash_color_symbol, color);
+#endif
   return(color);
 }
 
@@ -1501,6 +1524,10 @@ static XEN g_data_color(void)
 
 void set_data_color(color_t color)
 {
+  ss->data_color = color;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->data_color_symbol, XEN_WRAP_PIXEL(color));
+#endif
   color_data(color);
   ss->grid_color = get_in_between_color(ss->data_color, ss->graph_color);
   for_each_chan(update_graph);
@@ -1518,6 +1545,10 @@ static XEN g_set_data_color(XEN color)
 void set_selected_data_color(color_t color)
 {
   chan_info *cp;
+  ss->selected_data_color = color;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->selected_data_color_symbol, XEN_WRAP_PIXEL(color));
+#endif
   color_selected_data(color);
   ss->selected_grid_color = get_in_between_color(ss->selected_data_color, ss->selected_graph_color);
   cp = selected_channel();
@@ -1543,6 +1574,10 @@ static XEN g_selected_data_color(void)
 void set_graph_color(color_t color)
 {
   color_graph(color);
+  ss->graph_color = color;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->graph_color_symbol, XEN_WRAP_PIXEL(color));
+#endif
   color_unselected_graphs(color);
   ss->grid_color = get_in_between_color(ss->data_color, ss->graph_color);
 }
@@ -1566,6 +1601,10 @@ static XEN g_graph_color(void)
 void set_selected_graph_color(color_t color)
 {
   chan_info *cp;
+  ss->selected_graph_color = color;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->selected_graph_color_symbol, XEN_WRAP_PIXEL(color));
+#endif
   color_selected_graph(color);
   ss->selected_grid_color = get_in_between_color(ss->selected_data_color, ss->selected_graph_color);
   cp = selected_channel();
@@ -1600,6 +1639,9 @@ static XEN g_set_axis_color(XEN color)
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, 1, S_setB S_axis_color, "a color");
   ss->axis_color = XEN_UNWRAP_PIXEL(color);
   ss->axis_color_set = true;
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->axis_color_symbol, color);
+#endif
   for_each_chan(update_graph);
   return(color);
 }
@@ -1781,6 +1823,9 @@ void set_basic_color(color_t color)
 #if USE_MOTIF
   color_t old_color;
   old_color = ss->basic_color;
+#endif
+#if HAVE_SCHEME
+  s7_symbol_set_value(s7, ss->basic_color_symbol, XEN_WRAP_PIXEL(color));
 #endif
   ss->basic_color = color; 
 #if USE_MOTIF
