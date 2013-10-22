@@ -379,6 +379,8 @@ void snd_set_global_defaults(bool need_cleanup)
 #if (!USE_NO_GUI)
   ss->listener_font_symbol = s7_define_variable(s7, "*" S_listener_font "*", s7_make_string(s7, DEFAULT_LISTENER_FONT));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_listener_font "*) (list #f (lambda (s v) (set! (" S_listener_font ") v)) #f))");
+#else
+  ss->listener_font_symbol = s7_define_variable(s7, "*" S_listener_font "*", s7_make_boolean(s7, s7_f(s7)));
 #endif
 
   ss->axis_label_font_symbol = s7_define_variable(s7, "*" S_axis_label_font "*", s7_make_string(s7, DEFAULT_AXIS_LABEL_FONT));
@@ -765,62 +767,45 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->open_file_dialog_directory_symbol = s7_define_variable(s7, "*" S_open_file_dialog_directory "*", s7_make_string(s7, ss->Open_File_Dialog_Directory));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_open_file_dialog_directory "*) (list #f (lambda (s v) (set! (" S_open_file_dialog_directory ") v)) #f))");
 
-#if (!USE_NO_GUI)
   ss->data_color_symbol           = s7_define_variable(s7, "*" S_data_color "*",           s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_data_color "*) (list #f (lambda (s v) (set! (" S_data_color ") v)) #f))");
-
   ss->selected_data_color_symbol  = s7_define_variable(s7, "*" S_selected_data_color "*",  s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_selected_data_color "*) (list #f (lambda (s v) (set! (" S_selected_data_color ") v)) #f))");
-
   ss->mark_color_symbol           = s7_define_variable(s7, "*" S_mark_color "*",           s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mark_color "*) (list #f (lambda (s v) (set! (" S_mark_color ") v)) #f))");
-
   ss->graph_color_symbol          = s7_define_variable(s7, "*" S_graph_color "*",          s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_graph_color "*) (list #f (lambda (s v) (set! (" S_graph_color ") v)) #f))");
-
   ss->selected_graph_color_symbol = s7_define_variable(s7, "*" S_selected_graph_color "*", s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_selected_graph_color "*) (list #f (lambda (s v) (set! (" S_selected_graph_color ") v)) #f))");
-
   ss->listener_color_symbol       = s7_define_variable(s7, "*" S_listener_color "*",       s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_listener_color "*) (list #f (lambda (s v) (set! (" S_listener_color ") v)) #f))");
-
   ss->listener_text_color_symbol  = s7_define_variable(s7, "*" S_listener_text_color "*",  s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_listener_text_color "*) (list #f (lambda (s v) (set! (" S_listener_text_color ") v)) #f))");
-
   ss->basic_color_symbol          = s7_define_variable(s7, "*" S_basic_color "*",          s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_basic_color "*) (list #f (lambda (s v) (set! (" S_basic_color ") v)) #f))");
-
   ss->selection_color_symbol      = s7_define_variable(s7, "*" S_selection_color "*",      s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_selection_color "*) (list #f (lambda (s v) (set! (" S_selection_color ") v)) #f))");
-
   ss->zoom_color_symbol           = s7_define_variable(s7, "*" S_zoom_color "*",           s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_zoom_color "*) (list #f (lambda (s v) (set! (" S_zoom_color ") v)) #f))");
-
   ss->position_color_symbol       = s7_define_variable(s7, "*" S_position_color "*",       s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_position_color "*) (list #f (lambda (s v) (set! (" S_position_color ") v)) #f))");
-
   ss->highlight_color_symbol      = s7_define_variable(s7, "*" S_highlight_color "*",      s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_highlight_color "*) (list #f (lambda (s v) (set! (" S_highlight_color ") v)) #f))");
-
   ss->enved_waveform_color_symbol = s7_define_variable(s7, "*" S_enved_waveform_color "*", s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_waveform_color "*) (list #f (lambda (s v) (set! (" S_enved_waveform_color ") v)) #f))");
-
   ss->cursor_color_symbol         = s7_define_variable(s7, "*" S_cursor_color "*",         s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_cursor_color "*) (list #f (lambda (s v) (set! (" S_cursor_color ") v)) #f))");
-
   ss->text_focus_color_symbol     = s7_define_variable(s7, "*" S_text_focus_color "*",     s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_text_focus_color "*) (list #f (lambda (s v) (set! (" S_text_focus_color ") v)) #f))");
-
   ss->filter_control_waveform_color_symbol = s7_define_variable(s7, "*" S_filter_control_waveform_color "*", s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_filter_control_waveform_color "*) (list #f (lambda (s v) (set! (" S_filter_control_waveform_color ") v)) #f))");
-
   ss->mix_color_symbol            = s7_define_variable(s7, "*" S_mix_color "*",            s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mix_color "*) (list #f (lambda (s v) (set! (" S_mix_color ") v)) #f))");
-
   ss->sash_color_symbol           = s7_define_variable(s7, "*" S_sash_color "*",           s7_f(s7));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_sash_color "*) (list #f (lambda (s v) (set! (" S_sash_color ") v)) #f))");
-
   ss->axis_color_symbol           = s7_define_variable(s7, "*" S_axis_color "*",           s7_f(s7));
+
+#if (!USE_NO_GUI)
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_data_color "*) (list #f (lambda (s v) (set! (" S_data_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_selected_data_color "*) (list #f (lambda (s v) (set! (" S_selected_data_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mark_color "*) (list #f (lambda (s v) (set! (" S_mark_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_graph_color "*) (list #f (lambda (s v) (set! (" S_graph_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_selected_graph_color "*) (list #f (lambda (s v) (set! (" S_selected_graph_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_listener_color "*) (list #f (lambda (s v) (set! (" S_listener_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_listener_text_color "*) (list #f (lambda (s v) (set! (" S_listener_text_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_basic_color "*) (list #f (lambda (s v) (set! (" S_basic_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_selection_color "*) (list #f (lambda (s v) (set! (" S_selection_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_zoom_color "*) (list #f (lambda (s v) (set! (" S_zoom_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_position_color "*) (list #f (lambda (s v) (set! (" S_position_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_highlight_color "*) (list #f (lambda (s v) (set! (" S_highlight_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_waveform_color "*) (list #f (lambda (s v) (set! (" S_enved_waveform_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_cursor_color "*) (list #f (lambda (s v) (set! (" S_cursor_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_text_focus_color "*) (list #f (lambda (s v) (set! (" S_text_focus_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_filter_control_waveform_color "*) (list #f (lambda (s v) (set! (" S_filter_control_waveform_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mix_color "*) (list #f (lambda (s v) (set! (" S_mix_color ") v)) #f))");
+  s7_eval_c_string(s7, "(set! (symbol-access '*" S_sash_color "*) (list #f (lambda (s v) (set! (" S_sash_color ") v)) #f))");
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_axis_color "*) (list #f (lambda (s v) (set! (" S_axis_color ") v)) #f))");
 #endif
 #endif

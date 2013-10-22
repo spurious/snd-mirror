@@ -23250,10 +23250,6 @@ bool s7_is_valid(s7_scheme *sc, s7_pointer arg)
   if (!arg) return(false);
   /* we might also check that (arg & 0x7) == 0, but see unaligned access above */
 
-  /* this trap does not behave correctly in gdb because gdb notices the segfault 
-   *   and the gdb-s7.scm pipe hangs awaiting kbd input.
-   */
-
 #if TRAP_SEGFAULT
   if (sigsetjmp(senv, 1) == 0)
     {
@@ -67955,7 +67951,6 @@ int main(int argc, char **argv)
  * (env env) in clm should be an error
  * doc/test the lib*.scm files.
  * vector_set_ssa_looped? (or as unknown case: 49890 safe_do all_x cases?)
- * remove quick.html?
  */
 
 

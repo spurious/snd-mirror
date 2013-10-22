@@ -867,7 +867,7 @@ bool s7_is_valid_pointer(s7_pointer arg);
  * 17-Oct:    bignum-precision (procedure-with-setter) is now an integer variable named *bignum-precision*.
  * 28-Aug:    s7_int|float_vector_elements (homogenous vectors), libc.scm.
  * 16-Aug:    ~W directive in format, make-shared-vector.
- * 23-Jul:    s7_autoload_set_names, libm.scm, libdl.scm, libgdbm.scm, r7rs.scm, s7libtest.scm, gdb-s7.scm.
+ * 23-Jul:    s7_autoload_set_names, libm.scm, libdl.scm, libgdbm.scm, r7rs.scm, s7libtest.scm.
  * 21-Jul:    s7_is_valid (replaces deprecated s7_is_valid_pointer).
  * 24-Jun:    some bool-related changes for Windows Visual C++, including change to s7_begin_hook.
  * 3-June:    s7_autoload.

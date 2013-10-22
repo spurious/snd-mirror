@@ -1435,12 +1435,11 @@
     ))
 
 
-(make-index-1 '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "sndclm.html" "fm.html" "quick.html" "s7.html")
+(make-index-1 '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "sndclm.html" "fm.html" "s7.html")
 	      "test.html" 5 '("AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") #t #t)
 
 
-(html-check '("sndlib.html" "snd.html" "extsnd.html" "grfsnd.html" "sndclm.html"
-	      "sndscm.html" "fm.html" "quick.html" "s7.html" "index.html"))
+(html-check '("sndlib.html" "snd.html" "extsnd.html" "grfsnd.html" "sndclm.html" "sndscm.html" "fm.html" "s7.html" "index.html"))
 
 
 (s7-version)
