@@ -2005,7 +2005,6 @@
 (hey " *     19-Jul:    XG_FIELD_PRE for change from using vertical-bar (reserved in R5RS)~%")
 (hey " *     2-Jun:     removed deprecated and broken stuff~%")
 (hey " *     12-Mar:    support for GtkDestroyNotify callbacks~%")
-(hey " *     25-Feb:    dialog example in libxm.html~%")
 (hey " *                Ruby support via xg-ruby.c~%")
 (hey " *     21-Feb:    #f=NULL throughout, gdk-pixbuf, GTypes.~%")
 (hey " *     11-Feb-02: initial version.~%")

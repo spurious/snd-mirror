@@ -94,7 +94,7 @@
 		    ;; now use xdotool to make sure the presumed s7 pointer is actually one, then get its value
 		    (let ((name-start pos))
 		      (do ((i name-start (- i 1)))
-			  ((or (char=? (line i) #\space) ; TODO: fix this! 
+			  ((or (char=? (line i) #\space) ; fix this! 
 			       (= i 0))
 			   (set! name-start (+ i 1))))
 		      (let ((name (substring line name-start pos)))

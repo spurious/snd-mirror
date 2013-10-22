@@ -129,7 +129,6 @@ related documentation: &nbsp;
 <a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html &nbsp;</a>
 <a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html &nbsp;</a>
 <a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html &nbsp;</a>
-<a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html &nbsp;</a>
 <a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
 <a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a>
 </div>
@@ -150,7 +149,6 @@ related documentation: &nbsp;
   <ul>
   <li><a href="#emacssnd" onmouseout="UnTip()" onmouseover="Tip('Use Emacs as the listener')">Snd as an Emacs subjob</a>
   <li><a href="#dynamic" onmouseout="UnTip()" onmouseover="Tip('Load your own C code into Snd')">Dynamically loaded modules</a>
-  <li><a href="#sndaswidget" onmouseout="UnTip()" onmouseover="Tip('Embed Snd in some other program')">Snd as a Widget</a>
   <li><a href="#sndwithclm" onmouseout="UnTip()" onmouseover="Tip('CLM is built into Snd')">Snd and CLM</a>
   <li><a href="#sndwithcm" onmouseout="UnTip()" onmouseover="Tip('CM is Rick Taube\'s composition environment')">Snd and Common Music</a>
   <li><a href="#sndwithmotif" onmouseout="UnTip()" onmouseover="Tip('Motif extensions from xm.c')">Snd and Motif</a>
@@ -955,37 +953,6 @@ calls it init_ex, we add it to the loader's environment as follows:
 
 <p>See cload.scm for a much more friendly approach.
 </p>
-
-
-
-<div class="innerheader" id="sndaswidget">Snd as a widget</div>
-
-<p>To include the entire Snd editor as a widget in some other program,
-first compile it with -DSND_AS_WIDGET. Then load it into your program,
-using the procedure <b>snd_as_widget</b> to fire it up.  See
-saw.c included with Snd.
-</p>
-
-<pre class="indented">
-void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn)
-</pre>
-
-
-<p>starts up the Snd editor in the widget 'parent', passing the outer Snd
-form widget the arguments 'caller_args' and 'caller_argn'.  The
-enclosing application context is 'app'.  'parent' needs to
-be realized at the time of the call, since Snd uses it to set up graphics
-contexts and so on.  'argc' and 'argv' can be passed to
-simulate a shell invocation of Snd.  Remember that in this case, the
-first string argument is expected to be the application name, and is
-ignored by Snd.
-In Gtk, the arguments are different, but the basic idea is the same:
-</p>
-
-<pre class="indented">
-GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_func)(const char *msg))
-</pre>
-
 
 
 
@@ -2489,7 +2456,6 @@ related documentation: &nbsp;
 <a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html &nbsp;</a>
 <a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html &nbsp;</a>
 <a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html &nbsp;</a>
-<a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html &nbsp;</a>
 <a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
 <a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a>
 </div>

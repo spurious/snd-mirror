@@ -14,7 +14,7 @@
  * (MINISCM)
  * (MINISCM) This is a revised and modified version by Akira KIDA.
  * (MINISCM)	current version is 0.85k4 (15 May 1994)
- *
+ * --------------------------------------------------------------------------------
  *
  * apparently tinyScheme is under the BSD license, so I guess s7 is too. 
  * Here is Snd's verbiage which can apply here:
@@ -26,9 +26,8 @@
  *     follow the licensing terms described here.
  *
  * followed by the usual all-caps shouting about liability.
+ *
  * --------------------------------------------------------------------------------
- *
- *
  *
  * s7, Bill Schottstaedt, Aug-08
  *
@@ -38,10 +37,8 @@
  *        ratios and complex numbers (and ints are 64-bit by default)
  *          optional multiprecision arithmetic for all numeric types and functions
  *        generalized set!, procedure-setter, applicable objects
- *        defmacro and define-macro
- *        define*, lambda*, named let*
- *        keywords, hash tables, block comments
- *        format
+ *        define-macro, define*, lambda*, named let*
+ *        keywords, hash tables, block comments, format
  *        error handling using error and catch
  *        no invidious distinction between built-in and "foreign"
  *        lists, strings, vectors, hash-tables, and environments are (set-)applicable objects
@@ -2063,15 +2060,7 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 
 #define symbol_set_local(Symbol, Id, Slot) do {local_slot(Symbol) = Slot; symbol_id(Symbol) = Id;} while (0)
 /* set slot before id in case Slot is an expression that tries to find the current Symbol slot (using its old Id obviously) */
-
-/* I think symbol_id is set only here 
-   symbol_accessor can be moved to the name(string) cell (negligible cost, say 10 at most)
-   this leaves s7_pointer e alongside ksym.
-   If set in parallel in symbol_set_local (say 40 as probable cost in calls, maybe 80),
-   it could be checked first in find_symbol_or_bust, so we just check pointers not fields thereof
-   could this speed up the lookup? (if direct is twice as fast, this saves about 500)
-   this could be done step by step...
- */
+/* I think symbol_id is set only here */
 
 #define is_slot(p)                    (type(p) == T_SLOT)
 #define slot_value(p)                 (p)->object.slt.val
@@ -30382,9 +30371,6 @@ s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x)
  *     but subvector allocates -- need a simpler way (make-shared also allocates) -- start/end points?
  *   vector-add|subtract|multiply
  *   vector-sum? (dot-product)
- *
- *   TODO: snd-test and doc new stuff (including mix args etc)
- *         combine all the float-vector stuff here including the opts
  */
 
 /*
@@ -49617,9 +49603,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			 */
 
 			if (((syntax_opcode(car(sc->code)) == OP_LET) ||
-			     (syntax_opcode(car(sc->code)) == OP_LET_STAR)) &&
+			     (syntax_opcode(car(sc->code)) == OP_LET_STAR)) && 
 			    (is_null(cdddr(sc->code))))
 			  {
+			    /* if (syntax_opcode(car(sc->code)) == OP_LET_STAR) fprintf(stderr, "%s\n", DISPLAY(sc->code)); */
+
 			    /* it's a let of some sort, and one-line body */
 			    if ((is_optimized(caddr(sc->code))) &&
 				(c_function_let_looped(ecdr(caddr(sc->code)))))
@@ -49649,6 +49637,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    car(sc->T3_1) = slot_value(sc->args);
 				    car(sc->T3_2) = sc->code;
 				    car(sc->T3_3) = next_environment(old_e);
+				    /* let_looped is let*_looped in fact -- should we pass old_e itself here if OP_LET?
+				     *   or add another arg telling c_function_let_looped where to get its locals?
+				     */
 				    result = f(sc, sc->T3_1);
 				    sc->envir = old_e;
 
@@ -63005,8 +62996,6 @@ static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
       return(string_to_big_real(sc, string_value(car(args)), (is_pair(cdr(args))) ? s7_integer(cadr(args)) : 10));
 
     case T_COMPLEX:
-      /* PERHAPS: read complex via gmp, (rationalize (real-part (bignum "0.1+i")) 0) -> 3602879701896397/36028797018963968
-       */
       return(promote_number(sc, T_BIG_COMPLEX, p));
 
     default:
@@ -64864,6 +64853,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
    *
    * PERHAPS: gmp number reader used if gmp -- could this be the trailing zeros problem?  (why is the non-gmp case ok?)
    *          also the bignum function is faking it.
+   *          (rationalize (real-part (bignum "0.1+i")) 0) -> 3602879701896397/36028797018963968
    *
    * a confusing case:
    *      > (rationalize 5925563891587147521650777143.74135805596e05)
@@ -67951,7 +67941,7 @@ int main(int argc, char **argv)
 /* -------------------------------------------------------------------------------- */
 
 /*
- * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7|  14.1
+ * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7|  14.2
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989 3997|  4220
  * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725
  * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995
@@ -67965,6 +67955,7 @@ int main(int argc, char **argv)
  * (env env) in clm should be an error
  * doc/test the lib*.scm files.
  * vector_set_ssa_looped? (or as unknown case: 49890 safe_do all_x cases?)
+ * remove quick.html?
  */
 
 

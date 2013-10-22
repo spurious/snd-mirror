@@ -12234,7 +12234,6 @@ gf *find_gf(s7_scheme *sc, s7_pointer expr)
 
 gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
-  /* no, this isn't what you think */
   s7_pointer *choices;
   s7_pointer op;
 
@@ -19284,6 +19283,3 @@ void s7_init_sndlib(s7_scheme *sc)
   Init_sndlib();
 }
 #endif
-
-/* TODO: check the let/let* distinction in let_looped
- */

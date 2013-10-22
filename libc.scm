@@ -1595,6 +1595,4 @@
 *libc*
 
 
-;;; TODO: all the help strings! and tests of course
-
 

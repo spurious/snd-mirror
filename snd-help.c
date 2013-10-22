@@ -75,11 +75,10 @@ static const char *main_snd_xrefs[16] = {
   "{Forth}: extension language",
   "{s7}: extension language",
   "{Emacs}: Snd as Emacs subjob",
-  "{Libxm}: graphics module",
   "{Sndlib}: underlying sound support library",
   "{Scripting}: Snd with no GUI",
-  "{Motif}: Motif extensions via Libxm",
-  "{Gtk}: Gtk extensions via Libxm",
+  "{Motif}: Motif extensions",
+  "{Gtk}: Gtk extensions",
   "{Ladspa}: plugins",
   "{Multiprecision arithmetic}: libgmp and friends",
   NULL
@@ -93,7 +92,6 @@ static const char *main_snd_xref_urls[16] = {
   "grfsnd.html#sndandforth",
   "grfsnd.html#sndands7",
   "grfsnd.html#emacssnd",
-  "libxm.html#xm",
   "sndlib.html#introduction",
   "grfsnd.html#sndwithnogui",
   "grfsnd.html#sndwithmotif",
@@ -2802,11 +2800,11 @@ static void window_size_help(void)
 
 #include "snd-xref.c"
 
-#define NUM_TOPICS 38
+#define NUM_TOPICS 37
 static const char *topic_names[NUM_TOPICS] = {
   "Hook", "Vct", "Sample reader", "Mark", "Mix", "Region", "Edit list", "Transform", "Error",
   "Color", "Font", "Graphic", "Widget", "Emacs",
-  "CLM", "Instrument", "CM", "CMN", "Libxm", "Sndlib", 
+  "CLM", "Instrument", "CM", "CMN", "Sndlib", 
   "Motif", "Gtk", "Script", "Ruby", "s7", "LADSPA", "OpenGL", "Gdb", "Control panel",
   "X resources", "Invocation flags", "Initialization file", "Customization",
   "Window Size", "Color", "Random Number", "Wavogram",
@@ -2819,7 +2817,7 @@ static const char *topic_urls[NUM_TOPICS] = {
   "extsnd.html#snderrors", "extsnd.html#colors", "extsnd.html#fonts", "extsnd.html#sndgraphics", 
   "extsnd.html#sndwidgets", "grfsnd.html#emacssnd", "grfsnd.html#sndwithclm", 
   "grfsnd.html#sndinstruments", "grfsnd.html#sndwithcm", "sndscm.html#musglyphs", 
-  "libxm.html#xm", "sndlib.html#introduction", "grfsnd.html#sndwithmotif", 
+  "sndlib.html#introduction", "grfsnd.html#sndwithmotif", 
   "grfsnd.html#sndwithgtk", "grfsnd.html#sndwithnogui", "grfsnd.html#sndandruby", "grfsnd.html#sndands7", 
   "grfsnd.html#sndandladspa", 
   "grfsnd.html#sndandgl", "grfsnd.html#sndandgdb", "extsnd.html#customcontrols",

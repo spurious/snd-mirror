@@ -9086,7 +9086,7 @@ involved in (dynamically) linking C entities into s7.
 </p>
 
 <pre class="indented">
-(<em class=def id="definecfunction">c-define</em> c-info (prefix "") (headers ()) (cflags "") (ldflags ""))
+(<em class=def id="definecfunction">c-define</em> c-info (prefix "") (headers ()) (cflags "") (ldflags "") output-name)
 </pre>
 
 <p>For example, <code>(c-define '(double j0 (double)) "m" "math.h")</code>
@@ -9101,7 +9101,11 @@ passing it a double argument and getting a double result (a real in s7).
 </p>
 
 <p><em>cflags</em> are any special C compiler flags that are needed ("-I." in particular), and
-<em>ldflags</em> is the similar case for the loader.
+<em>ldflags</em> is the similar case for the loader.  <em>output-name</em> is the name of the
+output C file and associated library.  It defaults to "temp-s7-output" followed by a number.
+In libm.scm, it is set to "libm_s7" to protect it across cload calls.  If cload finds an
+up-to-date output C file and shared library, it simply loads the library, rather than
+going through all the trouble of writing and compling it.
 </p>
 
 <p><em>c-info</em> is a list that describes the C entities that you want to load into s7.

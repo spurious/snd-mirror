@@ -1440,8 +1440,7 @@
 
 
 (html-check '("sndlib.html" "snd.html" "extsnd.html" "grfsnd.html" "sndclm.html"
-	      "sndscm.html" "fm.html" "quick.html" "s7.html"
-	      "xen.html" "libxm.html" "index.html"))
+	      "sndscm.html" "fm.html" "quick.html" "s7.html" "index.html"))
 
 
 (s7-version)

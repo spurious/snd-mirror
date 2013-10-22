@@ -136,8 +136,3 @@ static s7_pointer g_modf(s7_scheme *sc, s7_pointer args)
 *libm*
 ;; the loader will return *libm*
 
-
-#|
-TODO: help strings (also for libdl and libgdbm)
-complex cases aren't handled in cload I think
-|#
