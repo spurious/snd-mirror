@@ -67951,6 +67951,10 @@ int main(int argc, char **argv)
  * (env env) in clm should be an error
  * doc/test the lib*.scm files.
  * vector_set_ssa_looped? (or as unknown case: 49890 safe_do all_x cases?)
+ * can't we handle defmacro as:
+ *  (define-macro (defmacro name args . body) `(define-macro ,(cons name args) ,@body))
+ * ->list: object_to_list, ->string: object->string, ->vector? 
+ * object-environment is not a good name (elsewhere object means any scheme thing -- make it generic?)
  */
 
 
