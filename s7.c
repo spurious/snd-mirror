@@ -732,6 +732,8 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_ZZA, HOP_SAFE_C_ZZA, OP_SAFE_C_ZAZ, HOP_SAFE_C_ZAZ, OP_SAFE_C_AZZ, HOP_SAFE_C_AZZ, 
       OP_SAFE_C_ZZZ, HOP_SAFE_C_ZZZ, OP_SAFE_C_ZZZZ, HOP_SAFE_C_ZZZZ,
       OP_SAFE_C_SSP, HOP_SAFE_C_SSP,
+
+      OP_SAFE_C_opVSq_S, HOP_SAFE_C_opVSq_S, OP_SAFE_C_opVSq_opVSq, HOP_SAFE_C_opVSq_opVSq, 
       
       OPT_MAX_DEFINED
 };
@@ -837,6 +839,8 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_zza", "h_safe_c_zza", "safe_c_zaz", "h_safe_c_zaz", "safe_c_azz", "h_safe_c_azz", 
       "safe_c_zzz", "h_safe_c_zzz", "safe_c_zzzz", "h_safe_c_zzzz",
       "safe_c_ssp", "h_safe_c_ssp",
+
+      "safe_c_opvsq_s", "h_safe_c_opvsq_s", "safe_c_opvsq_opvsq", "h_safe_c_opvsq_opvsq", 
       
       "opt_max_defined"
   };
@@ -2112,10 +2116,10 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {syntax_
 #define vector_dimensions(p)          ((p)->object.vector.dim_info->dims)
 #define vector_offset(p, i)           ((p)->object.vector.dim_info->offsets[i])
 #define vector_offsets(p)             ((p)->object.vector.dim_info->offsets)
-#define vector_is_multidimensional(p) ((p)->object.vector.dim_info)
 #define vector_dimension_info(p)      ((p)->object.vector.dim_info)
 #define shared_vector(p)              ((p)->object.vector.dim_info->original)
 #define vector_rank(p)                ((vector_dimension_info(p)) ? vector_ndims(p) : 1)
+#define vector_has_dimensional_info(p) (vector_dimension_info(p))
 #define vector_elements_allocated(p)  ((p)->object.vector.dim_info->elements_allocated)
 #define vector_dimensions_allocated(p) ((p)->object.vector.dim_info->dimensions_allocated)
 
@@ -2528,8 +2532,8 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 0
-#if 0
+#if 1
+#if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
 static void clear_counts(void) {int i; for (i = 0; i < NUM_COUNTS; i++) counts[i] = 0;}
@@ -2556,11 +2560,8 @@ static void report_counts(s7_scheme *sc)
 	}
       if (mx > 0)
 	{
-	  /*
 	  if (mx > total/100) 
 	    fprintf(stderr, "%s: %d (%f)\n", opt_names[mxi], mx, 100.0*mx/(float)total);
-	  */
-	  fprintf(stderr, "%d: %d\n", mxi, mx);
 	  counts[mxi] = 0;
 	}
       else happy = false;
@@ -3547,7 +3548,7 @@ static void mark_vector(s7_pointer p)
        *    so that we only free once (or remove_from_heap once).
        */
 
-      if ((vector_is_multidimensional(p)) &&
+      if ((vector_has_dimensional_info(p)) &&
 	  (s7_is_vector(shared_vector(p))))
 	mark_vector(shared_vector(p));
       mark_vector_1(p, vector_length(p));
@@ -3558,7 +3559,7 @@ static void mark_int_or_float_vector(s7_pointer p)
 {
   if (!is_marked(p)) 
     {
-      if ((vector_is_multidimensional(p)) &&
+      if ((vector_has_dimensional_info(p)) &&
 	  (s7_is_vector(shared_vector(p))))
 	mark_int_or_float_vector(shared_vector(p));
       set_mark(p);
@@ -4130,7 +4131,7 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 	(*sc->free_heap_top++) = sc->heap[loc];
 	heap_location(sc->heap[loc]) = loc;
 
-	if ((!vector_is_multidimensional(x)) ||
+	if ((!vector_has_dimensional_info(x)) ||
 	    (shared_vector(x) == sc->F))
 	  {
 	    for (i = 0; i < vector_length(x); i++)
@@ -23716,7 +23717,7 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
   len = vector_length(vect);
   if (len == 0)
     {
-      if (vector_is_multidimensional(vect))
+      if (vector_rank(vect) > 1)
 	{
 	  plen = snprintf(buf, 32, "#%dD()", vector_ndims(vect));
 	  port_write_string(port)(sc, buf, plen, port);
@@ -23739,7 +23740,7 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
       plen = s7_vector_print_length(sc);
       if (plen <= 0)
 	{
-	  if (vector_is_multidimensional(vect))
+	  if (vector_rank(vect) > 1)
 	    {
 	      plen = snprintf(buf, 32, "#%dD(...)", vector_ndims(vect));
 	      port_write_string(port)(sc, buf, plen, port);
@@ -23758,7 +23759,7 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
   if (use_write == USE_READABLE_WRITE)
     {
       port_write_string(port)(sc, "(let (({v} (make-vector ", 24, port);
-      if (vector_is_multidimensional(vect))
+      if (vector_rank(vect) > 1)
 	{
 	  unsigned int dim;
 	  port_write_string(port)(sc, "'(", 2, port);
@@ -23796,7 +23797,7 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	  port_write_string(port)(sc, buf, plen, port);
 	}
 
-      if (vector_is_multidimensional(vect))
+      if (vector_rank(vect) > 1)
 	{
 	  bool last = false;
 	  multivector_to_port(sc, vect, port, len, 0, 0, vector_ndims(vect), &last, use_write, to_file, ci);
@@ -23832,7 +23833,7 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
     }
   else
     {
-      if (vector_is_multidimensional(vect))
+      if (vector_rank(vect) > 1)
 	{
 	  bool last = false;
 	  if (vector_ndims(vect) > 1)
@@ -29570,7 +29571,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
   if (vector_length(vect) == 0)
     return(out_of_range(sc, sc->VECTOR_REF, small_int(1), vect, "this vector has no elements, so vector-ref is hopeless"));
 
-  if (vector_is_multidimensional(vect))
+  if (vector_rank(vect) > 1)
     {
       unsigned int i;
       s7_pointer x;
@@ -29658,7 +29659,7 @@ static s7_pointer g_vector_ref_ic(s7_scheme *sc, s7_pointer args)
   if (index >= vector_length(vec))
     return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), "should be less than vector length"));
 
-  if (vector_is_multidimensional(vec))
+  if (vector_rank(vec) > 1)
     return(make_shared_vector(sc, vec, 1, index));
 
   return(vector_getter(vec)(sc,vec, index));
@@ -29685,7 +29686,7 @@ static s7_pointer g_vector_ref_gs(s7_scheme *sc, s7_pointer args)
       (index >= vector_length(vec)))
     return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), "should be between 0 and the vector length"));
 
-  if (vector_is_multidimensional(vec))
+  if (vector_rank(vec) > 1)
     return(make_shared_vector(sc, vec, 1, index));
 
   return(vector_getter(vec)(sc, vec, index));
@@ -29712,7 +29713,7 @@ static s7_pointer g_vector_ref_ggs(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec2, T_VECTOR));
     }
 
-  if (vector_is_multidimensional(vec2))
+  if (vector_rank(vec2) > 1)
     return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec2, T_VECTOR));
 
   x = finder(sc, caddr(cadr(args)));
@@ -29731,7 +29732,7 @@ static s7_pointer g_vector_ref_ggs(s7_scheme *sc, s7_pointer args)
       (index >= vector_length(vec1)))
     return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), "should be between 0 and the vector length"));
 
-  if (vector_is_multidimensional(vec1))
+  if (vector_rank(vec1) > 1)
     return(make_shared_vector(sc, vec1, 1, index));
 
   return(vector_getter(vec1)(sc, vec1, index));
@@ -29759,7 +29760,7 @@ static s7_pointer g_vector_ref_add1(s7_scheme *sc, s7_pointer args)
       (index >= vector_length(vec)))
     return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), "should be between 0 and the vector length"));
 
-  if (vector_is_multidimensional(vec))
+  if (vector_rank(vec) > 1)
     return(make_shared_vector(sc, vec, 1, index));
 
   if (func != sc->UNDEFINED)
@@ -29779,7 +29780,7 @@ static s7_pointer g_vector_ref_2(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, vec, sc->VECTOR_REF, args); /* should be ok because we go to g_vector_ref below */
       return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec, T_VECTOR));
     }
-  if (vector_is_multidimensional(vec))
+  if (vector_rank(vec) > 1)
     return(g_vector_ref(sc, args));
   
   ind = cadr(args);
@@ -29812,7 +29813,7 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
   if (vector_length(vec) == 0)
     return(out_of_range(sc, sc->VECTOR_SET, small_int(1), vec, "this vector has no elements, so vector-set! is hopeless"));
   
-  if (vector_is_multidimensional(vec))
+  if (vector_rank(vec) > 1)
     {
       unsigned int i;
       s7_pointer x;
@@ -29874,7 +29875,7 @@ static s7_pointer g_vector_set_ic(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, vec, sc->VECTOR_SET, list_3(sc, vec, cadr(args), finder(sc, caddr(args)))); /* the list_3 happens only if we find the method */
       return(wrong_type_argument(sc, sc->VECTOR_SET, small_int(1), vec, T_VECTOR));
     }
-  if (vector_is_multidimensional(vec))
+  if (vector_rank(vec) > 1)
     return(g_vector_set(sc, list_3(sc, vec, cadr(args), finder(sc, caddr(args)))));
 
   index = s7_integer(cadr(args));
@@ -29898,7 +29899,7 @@ static s7_pointer g_vector_set_vref(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, vec, sc->VECTOR_SET, list_3(sc, vec, cadr(args), finder(sc, caddr(args)))); /* the list_3 happens only if we find the method */
       return(wrong_type_argument(sc, sc->VECTOR_SET, small_int(1), vec, T_VECTOR));
     }
-  if (vector_is_multidimensional(vec))
+  if (vector_rank(vec) > 1)
     return(g_vector_set(sc, list_3(sc, vec, cadr(args), finder(sc, caddr(args)))));
 
   val = finder(sc, cadr(args));
@@ -29931,7 +29932,7 @@ static s7_pointer g_vector_set_3(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, vec, sc->VECTOR_SET, args);
       return(wrong_type_argument(sc, sc->VECTOR_SET, small_int(1), vec, T_VECTOR));
     }
-  if (vector_is_multidimensional(vec))
+  if (vector_rank(vec) > 1)
     return(g_vector_set(sc, args));
   
   ind = cadr(args);
@@ -29965,7 +29966,7 @@ static s7_pointer g_vector_set_ssc_looped(s7_scheme *sc, s7_pointer args)
   /* incoming args: (0 vect i #f) */
   vec = finder(sc, cadr(args));
   if ((!s7_is_vector(vec)) ||
-      (vector_is_multidimensional(vec)))
+      (vector_rank(vec) > 1))
     return(NULL);
 
   stepper = car(args);
@@ -30163,7 +30164,7 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
       return(simple_wrong_type_argument(sc, sc->VECTOR_DIMENSIONS, x, T_VECTOR));
     }
 
-  if (vector_is_multidimensional(x))
+  if (vector_rank(x) > 1)
     {
       int i;
       sc->w = sc->NIL;
@@ -30294,7 +30295,7 @@ s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
   len = vector_length(old_vect);
   if (is_int_vector(old_vect))
     {
-      if (vector_is_multidimensional(old_vect))
+      if (vector_rank(old_vect) > 1)
 	new_vect = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, old_vect)), small_int(0), sc->T));
       else new_vect = make_vector_1(sc, len, NOT_FILLED, T_INT_VECTOR);
       memcpy((void *)(int_vector_elements(new_vect)), (void *)(int_vector_elements(old_vect)), len * sizeof(s7_Int));
@@ -30303,14 +30304,14 @@ s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
     {
       if (is_float_vector(old_vect))
 	{
-	  if (vector_is_multidimensional(old_vect))
+	  if (vector_rank(old_vect) > 1)
 	    new_vect = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, old_vect)), real_zero, sc->T));
 	  else new_vect = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR);
 	  memcpy((void *)(float_vector_elements(new_vect)), (void *)(float_vector_elements(old_vect)), len * sizeof(s7_Double));
 	}
       else
 	{
-	  if (vector_is_multidimensional(old_vect))
+	  if (vector_rank(old_vect) > 1)
 	    new_vect = g_make_vector(sc, list_1(sc, g_vector_dimensions(sc, list_1(sc, old_vect))));
 	  else new_vect = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
 
@@ -33739,9 +33740,9 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
 	if (len != vector_length(y)) return(false);
 
 	/* there's one special case: shared vectors can have 1 dimension but include the dimension info */
-	if (vector_is_multidimensional(x))
+	if (vector_has_dimensional_info(x))
 	  x_dims = vector_ndims(x);
-	if (vector_is_multidimensional(y))
+	if (vector_has_dimensional_info(y))
 	  y_dims = vector_ndims(y);
 	    
 	if (x_dims != y_dims)
@@ -34062,9 +34063,9 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
 	if (len != vector_length(y)) return(false);
 	if (len == 0) return(true);
 
-	if (vector_is_multidimensional(x))
+	if (vector_has_dimensional_info(x))
 	  x_dims = vector_ndims(x);
-	if (vector_is_multidimensional(y))
+	if (vector_has_dimensional_info(y))
 	  y_dims = vector_ndims(y);
 	    
 	if (x_dims != y_dims)
@@ -34882,7 +34883,7 @@ also accepts a string or vector argument."
       {
 	s7_Int i, j, len;
 	len = vector_length(p);
-	if (vector_is_multidimensional(p))
+	if (vector_rank(p) > 1)
 	  np = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, p)), small_int(0), sc->T));
 	else np = make_vector_1(sc, len, NOT_FILLED, T_INT_VECTOR);
 	if (len > 0)
@@ -34895,7 +34896,7 @@ also accepts a string or vector argument."
       {
 	s7_Int i, j, len;
 	len = vector_length(p);
-	if (vector_is_multidimensional(p))
+	if (vector_rank(p) > 1)
 	  np = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, p)), real_zero, sc->T));
 	else np = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR);
 	if (len > 0)
@@ -34908,7 +34909,7 @@ also accepts a string or vector argument."
       {
 	s7_Int i, j, len;
 	len = vector_length(p);
-	if (vector_is_multidimensional(p))
+	if (vector_rank(p) > 1)
 	  np = g_make_vector(sc, list_1(sc, g_vector_dimensions(sc, list_1(sc, p))));
 	else np = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
 	if (len > 0)
@@ -43359,6 +43360,15 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		  set_unsafe(car_x);
 		  set_optimize_data(car_x, hop + ((is_symbol(cadar_x)) ? OP_SAFE_C_SP : OP_SAFE_C_PS));
 		  choose_c_function(sc, car_x, func, 2);
+
+		  if (is_symbol(caddar_x))
+		    {
+		      /* optimize_data(cadar_x) is unknown_s|c|opcq for singer */
+		      /* fprintf(stderr, "%s: %s\n", DISPLAY(cadar_x), opt_names[optimize_data(cadar_x)]); */
+		      if (optimize_data(cadar_x) == HOP_UNKNOWN_S)
+			set_optimize_data(car_x, hop + OP_SAFE_C_opVSq_S);
+		    }
+
 		  return(false);
 		}
 	    }
@@ -43408,6 +43418,11 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		  set_unsafely_optimized(car_x);
 		  set_optimize_data(car_x, hop + OP_SAFE_C_PP); /* unP case? */
 		  choose_c_function(sc, car_x, func, 2);
+
+		  if ((optimize_data(cadar_x) == HOP_UNKNOWN_S) &&
+		      (optimize_data(caddar_x) == HOP_UNKNOWN_S))
+		    set_optimize_data(car_x, hop + OP_SAFE_C_opVSq_opVSq);
+
 		  return(false);
 		}
 	      else
@@ -51314,6 +51329,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  code = sc->code;
 	  sc->cur_code = code;
 	  /* fprintf(stderr, "opt eval: %s %s %s\n", opt_names[optimize_op(code)], DISPLAY_80(code), describe_type_bits(sc, car(code))); */
+	  /* tick(optimize_op(code)); */
 
 	  switch (optimize_op(code))
 	    {
@@ -52817,6 +52833,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  case T_INT_VECTOR:
 		  case T_FLOAT_VECTOR:
 		  case T_VECTOR:
+		    /* fprintf(stderr, "vs: %s\n", DISPLAY(code)); */
 		    set_opt_and_goto_opt_eval(code, f, OP_VECTOR_S);
 		    
 		  case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
@@ -53750,6 +53767,108 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      break;
 
+	      
+	    case OP_SAFE_C_opVSq_S:
+	      if (!c_function_is_ok(sc, code))
+		break;
+
+	    case HOP_SAFE_C_opVSq_S:
+	      {
+		s7_pointer f;
+		f = find_symbol_or_bust(sc, car(cadr(code)));
+		if ((s7_is_vector(f)) &&
+		    (vector_rank(f) == 1))
+		  {
+		    /* f is a vector, we have (op (f s1) s2)
+		     *   get s1 and check int/bounds -> val1
+		     *   get s2 -> val2
+		     *   c_call(op...)
+		     */
+		    s7_pointer ind;
+		    ind = find_symbol_or_bust(sc, cadr(cadr(code)));
+		    if (s7_is_integer(ind))
+		      {
+			s7_Int index;
+			index = s7_integer(ind);
+			if ((index < vector_length(f)) &&
+			    (index >= 0))
+			  {
+			    car(sc->T2_2) = finder(sc, caddr(code));
+			    car(sc->T2_1) = vector_getter(f)(sc, f, index);
+			    sc->value = c_call(code)(sc, sc->T2_1);
+			    goto START; 
+			  }
+		      }
+		  }
+
+		/* fallback on unknown_s */
+		/* fprintf(stderr, "fallback vs: %s\n", DISPLAY(code)); */
+		set_optimize_data(code, (optimize_data(code) & 1) + OP_SAFE_C_PS);
+		goto OPT_EVAL;
+	      }
+
+
+	    case OP_SAFE_C_opVSq_opVSq:
+	      if (!c_function_is_ok(sc, code))
+		break;
+
+	    case HOP_SAFE_C_opVSq_opVSq:
+	      {
+		s7_pointer f1, arg1;
+		arg1 = cadr(code);
+		f1 = find_symbol_or_bust(sc, car(arg1));
+		if ((s7_is_vector(f1)) &&
+		    (vector_rank(f1) == 1))
+		  {
+		    s7_pointer f2, arg2;
+		    arg2 = caddr(code);
+		    f2 = find_symbol_or_bust(sc, car(arg2));
+		    if ((s7_is_vector(f2)) &&
+			(vector_rank(f2) == 1))
+		      {
+			s7_pointer ind;
+			ind = find_symbol_or_bust(sc, cadr(arg1));
+			if (s7_is_integer(ind))
+			  {
+			    s7_Int index1;
+			    index1 = s7_integer(ind);
+			    if ((index1 < vector_length(f1)) &&
+				(index1 >= 0))
+			      {
+				s7_Int index2;
+				if (cadr(arg1) == cadr(arg2))
+				  index2 = index1;
+				else
+				  {
+				    ind = find_symbol_or_bust(sc, cadr(arg2));
+				    if (!s7_is_integer(ind))
+				      {
+					set_optimize_data(code, (optimize_data(code) & 1) + OP_SAFE_C_PP);
+					goto OPT_EVAL;
+				      }
+				    index2 = s7_integer(ind);
+				    if ((index2 >= vector_length(f2)) ||
+					(index2 < 0))
+				      {
+					set_optimize_data(code, (optimize_data(code) & 1) + OP_SAFE_C_PP);
+					goto OPT_EVAL;
+				      }
+				  }
+
+				car(sc->T2_1) = vector_getter(f1)(sc, f1, index1);
+				car(sc->T2_2) = vector_getter(f2)(sc, f2, index2);
+				sc->value = c_call(code)(sc, sc->T2_1);
+				goto START; 
+			      }
+			  }
+		      }
+		  }
+		/* fallback on unknown_s */
+		set_optimize_data(code, (optimize_data(code) & 1) + OP_SAFE_C_PP);
+		goto OPT_EVAL;
+	      }
+
+
 
 	      /* -------------------------------------------------------------------------------- */
 	    case OP_VECTOR_C:
@@ -53765,7 +53884,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (!s7_is_vector(v))
 		  break;
 		
-		if (!vector_is_multidimensional(v))
+		if (vector_rank(v) == 1)
 		  {
 		    s7_Int index;
 		    index = s7_integer(cadr(code));
@@ -53796,7 +53915,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		x = c_call(cadr(code))(sc, cdadr(code));
 		if (s7_is_integer(x))
 		  {
-		    if (!vector_is_multidimensional(v))
+		    if (vector_rank(v) == 1)
 		      {
 			s7_Int index;
 			index = s7_integer(x);
@@ -53826,7 +53945,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    (!s7_is_integer(ind)))
 		  break;
 		
-		if (!vector_is_multidimensional(v))
+		if (vector_rank(v) == 1)
 		  {
 		    s7_Int index;
 		    index = s7_integer(ind);
@@ -57151,7 +57270,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  if ((is_null(cdr(sc->args))) &&       
 	      (s7_is_integer(car(sc->args))) &&
-	      (!vector_is_multidimensional(sc->code)))
+	      (vector_rank(sc->code) == 1))
 	    {
 	      s7_Int index;
 	      index = s7_integer(car(sc->args));
@@ -57699,7 +57818,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    car(sc->T3_3) = value;
 	    sc->value = g_vector_set(sc, sc->T3_1);
 #else
-	    if (vector_is_multidimensional(obj))
+	    if (vector_rank(obj) > 1)
 	      {
 		car(sc->T3_1) = obj;
 		car(sc->T3_2) = arg;
@@ -58444,7 +58563,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (is_null(cdr(settee)))
 		  s7_wrong_number_of_args_error(sc, "no index for vector-set!: ~S", sc->code);
 		if ((!is_null(cddr(settee))) ||
-		    (vector_is_multidimensional(sc->x)))
+		    (vector_rank(sc->x) > 1))
 		  {
 		    /* multi-index case -- use slow version */
 		    push_op_stack(sc, sc->Vector_Set);
@@ -67955,6 +68074,12 @@ int main(int argc, char **argv)
  *  (define-macro (defmacro name args . body) `(define-macro ,(cons name args) ,@body))
  * ->list: object_to_list, ->string: object->string, ->vector? 
  * object-environment is not a good name (elsewhere object means any scheme thing -- make it generic?)
+ *
+ * (op (v i) s) where v is unknown: can this be collapsed to (op r1 r2) in 2 steps? safe_c_ps -> vector_s -> eval_args_p_3? 43352
+ *   safe_c_opusq_s or c_s_opusq where we notice unknown_s are 43352
+ *   look at "v" -- if easy case, change opt to safe_c_vs_s which checks and backs out to safe_c_ps is trouble (or no opt at all)
+ *   so after 1st case opusq_s -> vs_s+check, and this requires no jump
+ *   and if float_vector, can we find a direct call? OP_SAFE_C_opUSq_S OP_SAFE_C_op F|I|V|O|L|B Sq_S -- for 1st try, just VS and back out 
  */
 
 
