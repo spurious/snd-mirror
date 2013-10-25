@@ -35,7 +35,7 @@
 
 (define *definstrument-hook* #f) ; for CM
 
-(defmacro definstrument (args . body)
+(define-macro (definstrument args . body)
   (let* ((name (car args))
 	 (targs (cdr args))
 	 (utargs (let ((arg-names ()))
@@ -243,14 +243,14 @@
        (set! *clm-srate* old-srate)))))
 
 
-(defmacro with-sound (args . body)
+(define-macro (with-sound args . body)
   `(with-sound-helper (lambda () ,@body) ,@args))
 
 
 
 ;;; -------- with-temp-sound --------
 
-(defmacro with-temp-sound (args . body)
+(define-macro (with-temp-sound args . body)
   `(let ((old-file-name *clm-file-name*))
      ;; with-sound but using tempnam for output (can be over-ridden by explicit :output)
      (dynamic-wind
@@ -274,7 +274,7 @@
 ;;;
 ;;; (with-sound () (sound-let ((a () (fm-violin 0 .1 440 .1))) (mus-mix "test.snd" a)))
 
-(defmacro sound-let (snds . body) 
+(define-macro (sound-let snds . body) 
   `(let ((temp-files ()))
      (begin
        (let ((val (let ,(map (lambda (arg) 

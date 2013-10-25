@@ -247,7 +247,7 @@
            (list)))))
 
 #|
-(defmacro defanimal (args . body)
+(define-macro (defanimal args . body)
   (let ((name (car args))
 	(targs (cdr args)))
   `(begin

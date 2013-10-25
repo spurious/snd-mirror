@@ -1903,7 +1903,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_EVAL_C_STRING("(define load-from-path load)");
   XEN_EVAL_C_STRING("(define (1+ x) \"add 1 to arg\" (+ x 1))");
   XEN_EVAL_C_STRING("(define (1- x) \"subtract 1 from arg\" (- x 1))");
-  XEN_EVAL_C_STRING("(defmacro while (whether . body) `(do () ((not ,whether)) ,@body))");
+  XEN_EVAL_C_STRING("(define-macro (while whether . body) `(do () ((not ,whether)) ,@body))");
   XEN_EVAL_C_STRING("(define (identity x) \"return arg\" x)");
 
   return(s7);

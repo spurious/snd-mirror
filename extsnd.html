@@ -12348,7 +12348,7 @@ There are many examples in new-effects.scm.
 </p>
 
 <pre class="indented">
-(defmacro with-snd-help (form)
+(define-macro (with-snd-help form)
   ;; if an error occurs while evaluating form, try to start the help dialog with some relevant help
   `(catch #t 
 	  (lambda ()
@@ -13874,7 +13874,7 @@ run rough-shod over any error with:
 </p>
 
 <pre class="indented">
-(defmacro without-errors (func)
+(define-macro (without-errors func)
   `(catch #t 
 	  (lambda ()
 	    ,func)

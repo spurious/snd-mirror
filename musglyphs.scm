@@ -141,11 +141,11 @@
     (free-cairo cr)))
 
 (define old-defvar defvar)
-(defmacro defvar (name value) `(define ,name ,value))
+(define-macro (defvar name value) `(define ,name ,value))
 
 (define-macro (setf a b) `(set! ,a ,b))
 
-(defmacro defun (name ignored-args . body)
+(define-macro (defun name ignored-args . body)
   ;; in cmn-glyphs every defun has two args, the "score" and an optional "style"
   `(define ,name (lambda args 
 		   ((lambda (score style) ; needed by the procedure body
@@ -162,7 +162,7 @@
 		    #f #f))))
 
 (define t #t)
-(defmacro in-package (name) #f)
+(define-macro (in-package name) #f)
 (define (music-font score) #f)
 (define g-mustext (lambda args #f))
 (define (output-type score) #f)
@@ -183,7 +183,7 @@
 ;	 (apply (setter sound-comment) (list snd val))))))
 
 ;(load "loop.scm") ; Rick's loop implementation (cm/src/loop.scm)
-(defmacro progn args `(begin ,@args))
+(define progn begin)
 
 (load "cmn-glyphs.lisp")
 

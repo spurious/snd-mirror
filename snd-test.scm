@@ -248,7 +248,7 @@
 (define (real-time) (exact->inexact (/ (get-internal-real-time) internal-time-units-per-second)))
 (define (hundred n) (round (* 100 n)))
 (define times ())
-(defmacro time (a) 
+(define-macro (time a) 
   `(let ((start (real-time))) 
      ,a 
      (let ((val (hundred (- (real-time) start))))
@@ -443,7 +443,7 @@
 (define (log-mem tst) 
   (if (> tests 1) (begin (snd-display #__line__ ";test ~D:~D " test-number (+ 1 tst)) )))
 
-(defmacro without-errors (func)
+(define-macro (without-errors func)
   `(catch #t ; but this also squelches syntax errors!
 	  (lambda ()
 	    ,func)
@@ -44526,7 +44526,7 @@ EDITS: 1
 
 ;;; ---------------- test 25: errors ----------------
 
-(defmacro simple-time (a) 
+(define-macro (simple-time a) 
   `(let ((start (get-internal-real-time))) 
      ,a 
      (- (get-internal-real-time) start)))

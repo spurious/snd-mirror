@@ -90,7 +90,6 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #if HAVE_SCHEME
 #define imported_s7_object_value_checked(Obj, Typ) s7_object_value_checked(Obj, Typ)
 
-#define DISPLAY_80(Expr) s7_object_to_c_string(s7, Expr)
 #define XEN_OBJECT_REF_CHECKED(Obj, Type) imported_s7_object_value_checked(Obj, Type)
 #define XEN_NULL NULL
 

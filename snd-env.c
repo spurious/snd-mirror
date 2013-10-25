@@ -1835,8 +1835,8 @@ void g_init_env(void)
 
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE(S_define_envelope "-1", g_define_envelope_w, 2, 1, 0, H_define_envelope);
-  XEN_EVAL_C_STRING("(defmacro define-envelope (a . b) `(define-envelope-1 ',a ,@b))");
-  XEN_EVAL_C_STRING("(defmacro defvar (a b) `(define-envelope-1 ',a ,b))");
+  XEN_EVAL_C_STRING("(define-macro (define-envelope a . b) `(define-envelope-1 ',a ,@b))");
+  XEN_EVAL_C_STRING("(define-macro (defvar a b) `(define-envelope-1 ',a ,b))");
   /* macro used here to ensure that "ampf" in (defvar ampf '(0 0 1 1)) is not evaluated */
 #else
   XEN_DEFINE_PROCEDURE(S_define_envelope, g_define_envelope_w, 2, 1, 0, H_define_envelope);

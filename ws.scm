@@ -41,7 +41,7 @@
 (define *definstrument-hook* #f) ; for CM
 
 
-(defmacro definstrument (args . body)
+(define-macro (definstrument args . body)
   (let* ((name (car args))
 	 (targs (cdr args))
 	 (utargs (let ((arg-names ()))
@@ -326,7 +326,7 @@
 
 ;;; -------- with-full-sound --------
 
-(defmacro with-full-sound (args . body)
+(define-macro (with-full-sound args . body)
   ;; with-sound but display full sound in Snd window
   `(let ((snd (with-sound-helper (lambda () ,@body) ,@args)))
      (set! (x-bounds *snd-opened-sound*) (list 0.0 (/ (frames *snd-opened-sound*) (srate *snd-opened-sound*))))
@@ -339,7 +339,7 @@
 
 ;;; -------- with-temp-sound --------
 
-(defmacro with-temp-sound (args . body)
+(define-macro (with-temp-sound args . body)
   `(let ((old-file-name *clm-file-name*)
 	 (old-to-snd *to-snd*))
      ;; with-sound but using tempnam for output (can be over-ridden by explicit :output) and does not open result in Snd
@@ -377,7 +377,7 @@
 		    (< id (+ (car info) (caddr info)))))
 	     all-info)))
 
-(defmacro with-mixed-sound (args . body)
+(define-macro (with-mixed-sound args . body)
   `(let* ((output (with-sound-helper (lambda () #f) ,@args :to-snd #t)) ; pick up args for output
 	  (outsnd (find-sound output)))
 
@@ -487,7 +487,7 @@
 
 ;;; -------- with-marked-sound --------
 
-(defmacro with-marked-sound (args . body)
+(define-macro (with-marked-sound args . body)
   `(let ((old-notehook *clm-notehook*)
 	 (mark-list ()))
      (dynamic-wind
@@ -523,7 +523,7 @@
 ;;;
 ;;; (with-sound () (sound-let ((a () (fm-violin 0 .1 440 .1))) (mus-mix "test.snd" a)))
 
-(defmacro sound-let (snds . body) 
+(define-macro (sound-let snds . body) 
   `(let ((temp-files ())
 	 (old-hook-list (hook-functions new-sound-hook))) ; save old new-sound-hook (nested sound-lets etc)
      (set! (hook-functions new-sound-hook)
@@ -901,5 +901,5 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	  (mus-close *output*)
 	  (set! *output* old-output)))))
 
-(defmacro with-simple-sound (args . body)
+(define-macro (with-simple-sound args . body)
   `(with-simple-sound-helper (lambda () ,@body) ,@args))

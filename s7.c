@@ -379,7 +379,7 @@ enum {OP_NO_OP,
       OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN1, OP_IF, OP_IF1, OP_SET, OP_SET1, OP_SET2,
       OP_LET, OP_LET1, OP_LET_STAR, OP_LET_STAR1, OP_LET_STAR2,
       OP_LETREC, OP_LETREC1, OP_COND, OP_COND1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
-      OP_AND, OP_AND1, OP_OR, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR,
+      OP_AND, OP_AND1, OP_OR, OP_OR1, 
       OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
       OP_CASE, OP_CASE1, OP_READ_LIST, OP_READ_NEXT, OP_READ_DOT, OP_READ_QUOTE, 
       OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_APPLY_VALUES,
@@ -408,7 +408,7 @@ enum {OP_NO_OP,
       OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE,
       OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_COND_UNCHECKED,
       OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, OP_DEFINE_FUNCHECKED,
-      OP_DEFINE_WITH_ACCESSOR, OP_DEFMACRO_WITH_ACCESSOR, OP_DEFINE_MACRO_WITH_ACCESSOR,
+      OP_DEFINE_WITH_ACCESSOR, OP_DEFINE_MACRO_WITH_ACCESSOR,
       OP_LET_NO_VARS, OP_NAMED_LET, OP_NAMED_LET_NO_VARS, OP_NAMED_LET_STAR,
       OP_CASE_SIMPLE, OP_CASE_SIMPLER, OP_CASE_SIMPLER_1, OP_CASE_SIMPLER_SS,
       OP_CASE_SIMPLEST, OP_CASE_SIMPLEST_SS, OP_CASE_SIMPLEST_ELSE, OP_CASE_SIMPLEST_ELSE_C,
@@ -481,7 +481,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "define", "define", "begin", "begin", "if", "if", "set!", "set!", "set!", 
    "let", "let", "let*", "let*", "let*",
    "letrec", "letrec", "cond", "cond", "cond", "cond",
-   "and", "and", "or", "or", "defmacro", "defmacro*",
+   "and", "and", "or", "or", 
    "define-macro", "define-macro*", "define-expansion",
    "case", "case", "read-list", "read-list", "read-dot", "read-quote", 
    "read-quasiquote", "read-quasiquote-vector", "read-unquote", "read-apply-values",
@@ -505,7 +505,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "let*", "letrec", "cond",
    "lambda*", "do", "define", "define*", "define",
-   "define", "defmacro", "define-macro",
+   "define", "define-macro",
    "let", "let", "let", "let*",
    "case", "case", "case", "case",
    "case", "case", "case", "case", 
@@ -561,7 +561,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_DEFINE", "OP_DEFINE1", "OP_BEGIN", "OP_BEGIN1", "OP_IF", "OP_IF1", "OP_SET", "OP_SET1", "OP_SET2",
   "OP_LET", "OP_LET1", "OP_LET_STAR", "OP_LET_STAR1", "OP_LET_STAR2", 
   "OP_LETREC", "OP_LETREC1", "OP_COND", "OP_COND1", "OP_COND_SIMPLE", "OP_COND1_SIMPLE",
-  "OP_AND", "OP_AND1", "OP_OR", "OP_OR1", "OP_DEFMACRO", "OP_DEFMACRO_STAR",
+  "OP_AND", "OP_AND1", "OP_OR", "OP_OR1", 
   "OP_DEFINE_MACRO", "OP_DEFINE_MACRO_STAR", "OP_DEFINE_EXPANSION",
   "OP_CASE", "OP_CASE1", "OP_READ_LIST", "OP_READ_NEXT", "OP_READ_DOT", "OP_READ_QUOTE", 
   "OP_READ_QUASIQUOTE", "OP_READ_QUASIQUOTE_VECTOR", "OP_READ_UNQUOTE", "OP_READ_APPLY_VALUES",
@@ -590,7 +590,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SET_PAIR_C", "OP_SET_PAIR_C_P", "OP_SET_PAIR_C_P_1", "OP_SET_SAFE",
   "OP_LET_STAR_UNCHECKED", "OP_LETREC_UNCHECKED", "OP_COND_UNCHECKED",
   "OP_LAMBDA_STAR_UNCHECKED", "OP_DO_UNCHECKED", "OP_DEFINE_UNCHECKED", "OP_DEFINE_STAR_UNCHECKED", "OP_DEFINE_FUNCHECKED",
-  "OP_DEFINE_WITH_ACCESSOR", "OP_DEFMACRO_WITH_ACCESSOR", "OP_DEFINE_MACRO_WITH_ACCESSOR",
+  "OP_DEFINE_WITH_ACCESSOR", "OP_DEFINE_MACRO_WITH_ACCESSOR",
   "OP_LET_NO_VARS", "OP_NAMED_LET", "OP_NAMED_LET_NO_VARS", "OP_NAMED_LET_STAR",
   "OP_CASE_SIMPLE", "OP_CASE_SIMPLER", "OP_CASE_SIMPLER_1", "OP_CASE_SIMPLER_SS",
   "OP_CASE_SIMPLEST", "OP_CASE_SIMPLEST_SS", "OP_CASE_SIMPLEST_ELSE", "OP_CASE_SIMPLEST_ELSE_C",
@@ -32307,12 +32307,6 @@ shorthand for (define func (lambda args ...))");
 	case OP_DEFINE_CONSTANT:
 	  return("(define-constant var val) defines var to be a constant (it can't be set or bound), with the value val.");
 
-	case OP_DEFMACRO:
-	  return("(defmacro mac (args) ...) defines mac to be a macro.");
-
-	case OP_DEFMACRO_STAR:
-	  return("(defmacro* mac (args) ...) defines mac to be a macro with optional/keyword arguments.");
-
 	case OP_DEFINE_MACRO:
 	  return("(define-macro (mac args) ...) defines mac to be a macro.");
 
@@ -33147,8 +33141,6 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 	  return(s7_cons(sc, small_int(2), s7_make_integer(sc, MAX_ARITY)));
 
 	case OP_DO:
-	case OP_DEFMACRO:
-	case OP_DEFMACRO_STAR:
 	  return(s7_cons(sc, small_int(3), s7_make_integer(sc, MAX_ARITY)));
 
 	default:
@@ -33301,8 +33293,6 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
 	  return(args > 1);
 
 	case OP_DO:
-	case OP_DEFMACRO:
-	case OP_DEFMACRO_STAR:
 	  return(args > 2);
 
 	default:
@@ -38656,14 +38646,14 @@ static token_t read_comma(s7_scheme *sc, s7_pointer pt)
   int c;
   /* here we probably should check for symbol names that start with "@":
      
-     :(defmacro hi (@foo) `(+ ,@foo 1))
+     :(define-macro (hi @foo) `(+ ,@foo 1))
      hi
      :(hi 2)
      ;foo: unbound variable
 	 
      but
 
-     :(defmacro hi (.foo) `(+ ,.foo 1))
+     :(define-macro (hi .foo) `(+ ,.foo 1))
      hi
      :(hi 2)
      3
@@ -48301,50 +48291,6 @@ static s7_pointer check_do(s7_scheme *sc)
 }
 
 
-static s7_pointer check_defmacro(s7_scheme *sc)
-{
-  s7_pointer x, y, z;
-  if (!is_pair(sc->code))                                               /* (defmacro . 1) */
-    return(eval_error_with_name(sc, "~A name missing (stray dot?): ~A", sc->code));
-  
-  x = car(sc->code);
-  if (!is_symbol(x))                                             /* (defmacro) or (defmacro 1 ...) */
-    return(eval_error_with_name(sc, "~A name: ~S is not a symbol?", x));     
-  
-  if (is_immutable(x))
-    return(eval_error_with_name(sc, "~A: ~S is immutable", x)); /* (defmacro pi (a) `(+ ,a 1)) */
-  
-  z = cdr(sc->code);
-  if (!is_pair(z))                                                  /* (defmacro a) */
-    return(eval_error_with_name(sc, "~A ~A, but no args or body?", sc->code));
-  
-  y = car(z);            /* the arglist */
-  if ((!s7_is_list(sc, y)) &&
-      (!is_symbol(y)))
-    return(s7_error(sc, sc->SYNTAX_ERROR,                               /* (defmacro mac "hi" ...) */
-		    list_3(sc, make_protected_string(sc, "defmacro ~A argument list is ~S?"), x, y)));
-  
-  for ( ; is_pair(y); y = cdr(y))
-    if ((!is_symbol(car(y))) &&
-	(sc->op == OP_DEFMACRO))
-      return(s7_error(sc, sc->SYNTAX_ERROR,                             /* (defmacro mac (1) ...) */
-		      list_3(sc, make_protected_string(sc, "defmacro ~A argument name is not a symbol: ~S"), x, y)));
-  
-  /* other parameter error checks are handled by lambda/lambda* (see OP_LAMBDA above) at macro expansion time */
-  
-  if (!is_pair(cdr(z)))
-    {
-      if (is_null(cdr(z)))                                             /* (defmacro hi ()) */
-	return(eval_error_with_name(sc, "~A ~A has no body?", x));
-      return(eval_error_with_name(sc, "~A ~A has stray dot?", x));
-    }
-
-  optimize_lambda(sc, sc->op == OP_DEFMACRO, x, cdar(sc->code), cdr(sc->code));
-
-  return(sc->code);
-}
-
-
 static s7_pointer check_define_macro(s7_scheme *sc)
 {
   s7_pointer x;
@@ -57089,7 +57035,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	BACRO:
 	  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
 	  
-	  /* (defmacro hi (a b) `(+ ,a ,b)) */
+	  /* (define-macro (hi a b) `(+ ,a ,b)) */
 	  /*   -> code: #<macro>, args: ((hi 2 3)), closure args: (defmac-9) */
 	  /*   then back again: code: #<closure>, args: (2 3), closure args: (a b) */
 	  
@@ -60791,61 +60737,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
       /* --------------- */
-    case OP_DEFMACRO:
-    case OP_DEFMACRO_STAR:
-      /* defmacro(*) could be defined in terms of define-macro(*), but I guess this gives us better error messages */
-      check_defmacro(sc);
-
-      if (symbol_has_accessor(car(sc->code)))
-	{
-	  sc->value = bind_accessed_symbol(sc, OP_DEFMACRO_WITH_ACCESSOR, car(sc->code), sc->code);
-	  if (sc->value == sc->NO_VALUE)
-	    goto APPLY;
-	  sc->code = sc->value;
-	}
-
-    DEFMACRO2:
-      sc->x = car(sc->code);
-      sc->z = cdr(sc->code);
-      sc->y = s7_gensym(sc, "defmac");
-      /* (defmacro hi (a b) `(+ ,a ,b)) becomes:
-       *   sc->x: hi
-       *   code: (lambda (defmac-21) 
-       *               (apply (lambda (a b) 
-       *                        (cons (quote +) (cons a (cons b (quote ()))))) 
-       *                      (cdr defmac-21)))
-       * the (cdr defmac...) is an unfortunate historical accident that is now very tricky to fix.
-       */
-      NEW_CELL_NO_CHECK(sc, sc->value);
-      closure_args(sc->value) = list_1(sc, sc->y);
-      closure_body(sc->value) = list_1(sc, 
-				       cons(sc, 
-					    sc->Apply,
-					    cons(sc, 
-						 cons(sc, 
-						      (sc->op == OP_DEFMACRO_STAR) ? sc->LAMBDA_STAR : sc->LAMBDA,
-						      sc->z),
-						 list_1(sc, list_2(sc, sc->CDR, sc->y)))));
-      closure_environment(sc->value) = sc->envir;
-      closure_setter(sc->value) = sc->F;
-      closure_arity(sc->value) = CLOSURE_ARITY_NOT_SET;
-      sc->capture_env_counter++;
-      sc->code = sc->x;
-      sc->y = sc->NIL;
-      sc->z = sc->NIL;
-      goto MACRO;
-
-
-      /* --------------- */
-    case OP_DEFMACRO_WITH_ACCESSOR:
-      if (sc->value == sc->ERROR) /* backwards compatibility... */
-	return(s7_error(sc, sc->ERROR,
-			list_3(sc, make_protected_string(sc, "can't defmacro ~S to ~S"), car(sc->args), cadr(sc->args))));
-      sc->code = sc->value;
-      goto DEFMACRO2;
-
-
-      /* --------------- */
     case OP_DEFINE_MACRO_WITH_ACCESSOR:
       if (sc->value == sc->ERROR) /* backwards compatibility... */
 	return(s7_error(sc, sc->ERROR,
@@ -60869,10 +60760,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto APPLY;
 	  sc->code = sc->value;
 	}
-
-      /* (define-macro (hi a) `(+ ,a 1))
-       *   in this case we want cadr, not caddr of defmacro
-       */
 
     DEFINE_MACRO2:
       sc->x = caar(sc->code);
@@ -60904,7 +60791,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->y = sc->NIL;
       sc->z = sc->NIL;
 
-    MACRO:
       /* symbol? macro name has already been checked */
       /* find name in environment, and define it */
       sc->x = find_local_symbol(sc, sc->envir, sc->code); 
@@ -61617,7 +61503,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  /* read-time macro expansion
 	   *
-	   *   (defmacro hi (a) (format #t "hi...") `(+ ,a 1))
+	   *   (define-macro (hi a) (format #t "hi...") `(+ ,a 1))
 	   *   (define (ho b) (+ 1 (hi b)))
 	   *
 	   * here sc->value is: (ho b), (hi b), (+ 1 (hi b)), (define (ho b) (+ 1 (hi b)))
@@ -66789,9 +66675,6 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "define",            OP_DEFINE);
   assign_syntax(sc, "define*",           OP_DEFINE_STAR);
   assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT);  /* unsetabble and unrebindable */
-
-  assign_syntax(sc, "defmacro",          OP_DEFMACRO);         /* CL-style macro syntax */
-  assign_syntax(sc, "defmacro*",         OP_DEFMACRO_STAR);
   assign_syntax(sc, "define-macro",      OP_DEFINE_MACRO);     /* Scheme-style macro syntax */
   assign_syntax(sc, "define-macro*",     OP_DEFINE_MACRO_STAR); 
   assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION); /* read-time (immediate) macro expansion */
@@ -67758,6 +67641,10 @@ s7_scheme *s7_init(void)
    *               (duplicate-car-memq (cdr lst)))))
    */
 
+  
+  s7_eval_c_string(sc, "(define-macro (defmacro name args . body) `(define-macro ,(cons name args) ,@body))");
+  s7_eval_c_string(sc, "(define-macro (defmacro* name args . body) `(define-macro* ,(cons name args) ,@body))");
+
 
   /* call-with-values is almost a no-op in this context 
    */
@@ -68070,16 +67957,8 @@ int main(int argc, char **argv)
  * (env env) in clm should be an error
  * doc/test the lib*.scm files.
  * vector_set_ssa_looped? (or as unknown case: 49890 safe_do all_x cases?)
- * can't we handle defmacro as:
- *  (define-macro (defmacro name args . body) `(define-macro ,(cons name args) ,@body))
  * ->list: object_to_list, ->string: object->string, ->vector? 
  * object-environment is not a good name (elsewhere object means any scheme thing -- make it generic?)
- *
- * (op (v i) s) where v is unknown: can this be collapsed to (op r1 r2) in 2 steps? safe_c_ps -> vector_s -> eval_args_p_3? 43352
- *   safe_c_opusq_s or c_s_opusq where we notice unknown_s are 43352
- *   look at "v" -- if easy case, change opt to safe_c_vs_s which checks and backs out to safe_c_ps is trouble (or no opt at all)
- *   so after 1st case opusq_s -> vs_s+check, and this requires no jump
- *   and if float_vector, can we find a direct call? OP_SAFE_C_opUSq_S OP_SAFE_C_op F|I|V|O|L|B Sq_S -- for 1st try, just VS and back out 
  */
 
 

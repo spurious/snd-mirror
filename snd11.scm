@@ -104,7 +104,7 @@
 	     (ok (substring file (+ 1 i) len))))
        default))))
 
-(defmacro with-mix (options ur-chkpt-file ur-beg . body)
+(define-macro (with-mix options ur-chkpt-file ur-beg . body)
   `(let ((chkpt-file ,ur-chkpt-file)
 	 (beg-1 ,ur-beg))
      (if (not (list? ',options))

@@ -938,7 +938,7 @@ giving the new symbol name's prefix.
 </p>
 
 <pre class="indented">
-(defmacro pop! (sym)
+(define-macro (pop! sym)
   (let ((v (<em class=red>gensym</em>)))
     `(let ((,v (car ,sym)))
        (set! ,sym (cdr ,sym))
@@ -1518,7 +1518,7 @@ f
 </p>
 
 <pre class="indented">
-(defmacro once-only (names . body)
+(define-macro (once-only names . body)
   (let ((gensyms (map (lambda (n) (gensym)) names)))
     `(let (,@(map (lambda (g) (list g '(gensym))) gensyms))
        `(let (,,@(map (lambda (g n) (list list g n)) gensyms names))
@@ -1527,7 +1527,7 @@ f
 </pre>
 
 <!-- this was:
-(defmacro once-only (names . body)
+(define-macro (once-only names . body)
   (let ((gensyms (map (lambda (n) (gensym)) names)))
     `(let (,@(map (lambda (g) `(,g (gensym))) gensyms))
        `(let (,,@(map (lambda (g n) ``(,,g ,,n)) gensyms names))

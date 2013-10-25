@@ -11720,7 +11720,7 @@ use with-full-sound:
 
 
 <pre class="indented">
-(defmacro with-full-sound (args . body)
+(define-macro (with-full-sound args . body)
   `(let ((snd (with-sound-helper (lambda () ,@body) ,@args)))
      (set! (<a class=quiet href="extsnd.html#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a> *snd-opened-sound*) (list 0.0 (/ (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> *snd-opened-sound*) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> *snd-opened-sound*))))
      snd))

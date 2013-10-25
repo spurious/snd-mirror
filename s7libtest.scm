@@ -15,7 +15,7 @@
     (if (not (equal? result oexp))
 	(format #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) otst result oexp))))
 
-(defmacro test (tst expected) ;(display tst) (newline)
+(define-macro (test tst expected) ;(display tst) (newline)
   `(ok? ',tst (lambda () ,tst) ,expected))
 
 (define (op-error op result expected)
@@ -152,7 +152,7 @@
 			 'error))))
      (number-ok? otst result oexp)))
 
-(defmacro num-test (tst expected) ;(display tst) (newline)
+(define-macro (num-test tst expected) ;(display tst) (newline)
   `(nok? ',tst  (lambda () ,tst) ,expected))
 
 

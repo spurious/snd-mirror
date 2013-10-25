@@ -199,7 +199,7 @@
   "(cis a) returns e^(ia)"
   (exp (* 0.0+1.0i a)))
 
-(defmacro when (test . forms)
+(define-macro (when test . forms)
   `(if ,test (begin ,@forms)))
 
 (define (third a) 
