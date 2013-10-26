@@ -9599,9 +9599,9 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
   } while (0)
 
 
-static int XEN_S7_NUMBER_LOCATION, XEN_S7_DENOMINATOR_LOCATION, XEN_S7_SLOT_VALUE_LOCATION;
+static int xen_s7_slot_value_location;
 
-#define s7_cell_slot_value(p) (s7_pointer)(*((s7_pointer *)((unsigned char *)(p) + XEN_S7_SLOT_VALUE_LOCATION)))
+#define s7_cell_slot_value(p) (s7_pointer)(*((s7_pointer *)((unsigned char *)(p) + xen_s7_slot_value_location)))
 
 #define GET_NUMBER(Obj, Caller, Val) Val = s7_car_value(s7, Obj)
 #define GET_REAL(Obj, Caller, Val) Val = s7_number_to_real(sc, s7_car_value(s7, Obj))
@@ -9610,8 +9610,8 @@ static int XEN_S7_NUMBER_LOCATION, XEN_S7_DENOMINATOR_LOCATION, XEN_S7_SLOT_VALU
   #define s7_cell_real s7_real
   #define GET_INTEGER(Obj, Caller, Val) Val = s7_integer(s7_car_value(s7, Obj))
 #else
-  #define s7_cell_integer(p) (s7_Int)(*((s7_Int *)((unsigned char *)(p) + XEN_S7_NUMBER_LOCATION)))
-  #define s7_cell_real(p) (s7_Double)(*((s7_Double *)((unsigned char *)(p) + XEN_S7_NUMBER_LOCATION)))
+  #define s7_cell_integer(p) (s7_Int)(*((s7_Int *)((unsigned char *)(p) + xen_s7_number_location)))
+  #define s7_cell_real(p) (s7_Double)(*((s7_Double *)((unsigned char *)(p) + xen_s7_number_location)))
   #define GET_INTEGER(Obj, Caller, Val) Val = s7_cell_integer(s7_car_value(s7, Obj))
 #endif
 
@@ -10444,8 +10444,8 @@ static s7_pointer g_out_bank_looped(s7_scheme *sc, s7_pointer args)
   if (s7_cell_slot_value(index_slot) != stepper)
     return(NULL);
   
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
   
@@ -10518,8 +10518,8 @@ static s7_pointer g_fm_violin_4_looped(s7_scheme *sc, s7_pointer u_args)
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -10637,8 +10637,8 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -12616,8 +12616,8 @@ static s7_pointer g_indirect_placer_3_looped(s7_scheme *sc, s7_pointer args, voi
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -12697,8 +12697,8 @@ static s7_pointer g_placer_let_looped(s7_scheme *sc, s7_pointer args, void (*mov
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -12882,8 +12882,8 @@ static s7_pointer g_jc_reverb_out_looped(s7_scheme *sc, s7_pointer args)
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -13050,8 +13050,8 @@ static s7_pointer g_nrev_out_looped(s7_scheme *sc, s7_pointer args)
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -13193,8 +13193,8 @@ static s7_pointer g_direct_two_pole_2_looped(s7_scheme *sc, s7_pointer args)
   /* args: (0 flt (next-sample reader)) so cadr is not a counter */
 
   stepper = car(args);
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -13485,8 +13485,8 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -13556,8 +13556,8 @@ static s7_pointer g_indirect_outa_two_let_looped(s7_scheme *sc, s7_pointer args)
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -13703,8 +13703,8 @@ static s7_pointer out_looped(s7_scheme *sc, s7_pointer args, int out_chan)
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION)); 
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location)); 
   pos = (*step);
   end = (*stop);
 
@@ -13784,8 +13784,8 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -13938,8 +13938,8 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION)); 
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location)); 
   pos = (*step);
   end = (*stop);
 
@@ -14017,8 +14017,8 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -14321,8 +14321,8 @@ static s7_pointer g_outa_env_polywave_env_looped(s7_scheme *sc, s7_pointer args)
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION)); 
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location)); 
   pos = (*step);
   end = (*stop);
 
@@ -14364,8 +14364,8 @@ static s7_pointer g_outa_env_polywave_env_ri_looped(s7_scheme *sc, s7_pointer ar
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION)); 
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location)); 
   pos = (*step);
   end = (*stop);
 
@@ -14409,8 +14409,8 @@ static s7_pointer g_outa_env_oscil_env_looped(s7_scheme *sc, s7_pointer args)
   if (s7_cell_slot_value(callee) != stepper)
     return(NULL);
 
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -15034,8 +15034,8 @@ static s7_pointer g_sample_to_file_four_looped(s7_scheme *sc, s7_pointer args)
   /* args: (0 rdout k 0 (readin rdin)) */
 
   stepper = car(args);
-  step = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_NUMBER_LOCATION));
-  stop = ((s7_Int *)((unsigned char *)(stepper) + XEN_S7_DENOMINATOR_LOCATION));
+  step = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_number_location));
+  stop = ((s7_Int *)((unsigned char *)(stepper) + xen_s7_denominator_location));
   pos = (*step);
   end = (*stop);
 
@@ -19268,9 +19268,12 @@ void Init_sndlib(void)
   mus_xen_init();
 
 #if HAVE_SCHEME
-  XEN_S7_SLOT_VALUE_LOCATION = s7_slot_value_offset(s7); /* set in xen.c */
-  XEN_S7_NUMBER_LOCATION = xen_s7_number_location;
-  XEN_S7_DENOMINATOR_LOCATION = xen_s7_denominator_location;
+  xen_s7_slot_value_location = s7_slot_value_offset(s7);
+
+  if (sizeof(mus_float_t) != sizeof(s7_Double))
+    fprintf(stderr, "in s7-clm, s7_Double must match mus_float_t.  Currently s7_Double has %d bytes, but mus_float_t has %d\n", 
+	    (int)sizeof(s7_Double), 
+	    (int)sizeof(mus_float_t));
 
   init_choices();
 #endif

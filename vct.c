@@ -533,56 +533,6 @@ static XEN g_vct_ref(XEN obj, XEN pos)
 #define cdadr(E)  s7_cdadr(E)
 #define cadddr(E) s7_cadddr(E)
 
-static s7_pointer vct_ref_two;
-static s7_pointer g_vct_ref_two(s7_scheme *sc, s7_pointer args)
-{
-  vct *v;
-  v = (vct *)car(args);
-  if (v)
-    {
-      mus_long_t loc;
-      loc = s7_number_to_integer(sc, cadr(args));
-      if ((loc < 0) || (loc >= mus_vct_length(v)))
-	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, cadr(args), "index out of range");
-      return(s7_make_real(sc, mus_vct_data(v)[loc]));
-    }
-  XEN_ASSERT_TYPE(false, s7_car_value(sc, args), 1, "vct-ref", "a vct");
-  return(s7_f(sc));
-}
-
-static s7_pointer vct_ref_ss;
-static s7_pointer g_vct_ref_ss(s7_scheme *sc, s7_pointer args)
-{
-  vct *v;
-  v = (vct *)s7_car_value(sc, args);
-  if (v)
-    {
-      mus_long_t loc;
-      loc = s7_number_to_integer(sc, s7_cadr_value(sc, args));
-      if ((loc < 0) || (loc>= mus_vct_length(v)))
-	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, cadr(args), "index out of range");
-      return(s7_make_real(sc, mus_vct_data(v)[loc]));
-    }
-  XEN_ASSERT_TYPE(false, s7_car_value(sc, args), 1, "vct-ref", "a vct");
-  return(s7_f(sc));
-}
-
-
-static s7_pointer vct_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if (args == 2)
-    {
-      if ((s7_is_symbol(cadr(expr))) &&
-	  (s7_is_symbol(caddr(expr))))
-	{
-	  s7_function_choice_set_direct(sc, expr);
-	  return(vct_ref_ss);
-	}
-      return(vct_ref_two);
-    }
-  return(f);
-}
-
 
 static s7_pointer vct_set_three;
 static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
@@ -755,29 +705,8 @@ static s7_pointer g_vct_set_temp(s7_scheme *sc, s7_pointer args)
   return(s7_f(sc));
 }
 
-static s7_pointer vct_set_ssf;
-static s7_pointer g_vct_set_ssf(s7_scheme *sc, s7_pointer args)
-{
-  vct *v;
-  v = (vct *)s7_car_value(sc, args);
-  if (v)
-    {
-      mus_long_t loc;
-      mus_float_t *d;
 
-      loc = s7_number_to_integer(sc, s7_cadr_value(sc, args));
-      if ((loc < 0) || (loc>= mus_vct_length(v)))
-	XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, cadr(args), "index out of range");
-
-      d = mus_vct_data(v);
-      d[loc] = s7_cell_real(caddr(args));
-      return(caddr(args));
-    }
-  XEN_ASSERT_TYPE(false, s7_car_value(sc, args), 1, "vct-set!", "a vct");
-  return(s7_f(sc));
-}
-
-static s7_pointer multiply_symbol, vct_ref_symbol, vector_ref_symbol, env_symbol;
+static s7_pointer multiply_symbol, vector_ref_symbol, env_symbol;
 
 
 static s7_pointer vct_set_direct_looped;
@@ -890,12 +819,12 @@ static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 static mus_float_t wrapped_vct_ref(void *p)
 {
   gf *g = (gf *)p;
-  vct *v;
+  s7_pointer v;
   s7_Int k;
-  v = (vct *)(g->gen);
+  v = g->gen;
   k = s7_cell_integer(s7_cell_slot_value(g->s1));
-  if ((k >= 0) && (k < mus_vct_length(v)))
-    return(mus_vct_data(v)[k]);
+  if ((k >= 0) && (k < s7_vector_length(v)))
+    return(s7_float_vector_elements(v)[k]);
   return(0.0);
 }
 
@@ -908,12 +837,11 @@ static gf *fixup_vct_ref(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
       (s7_is_symbol(caddr(expr))))
     {
       obj = s7_cadr_value(sc, expr);
-      if ((s7_is_object(obj)) &&
-	  (mus_vct_p(obj)))
+      if (s7_is_float_vector(obj))
 	{
 	  g = gf_alloc();
 	  g->func = wrapped_vct_ref;
-	  g->gen = s7_object_value(obj);
+	  g->gen = obj;
 	  g->s1 = s7_slot(sc, caddr(expr));
 	  return(g);
 	}
@@ -1314,12 +1242,6 @@ static s7_pointer vct_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	      if (s7_function_returns_temp(sc, arg3))
 		return(vct_set_temp);
 	      return(vct_set_direct);
-	    }
-	  if ((s7_is_real(arg3)) &&
-	      (!s7_is_rational(arg3)))
-	    {
-	      s7_function_choice_set_direct(sc, expr);
-	      return(vct_set_ssf);
 	    }
 	}
 #endif
@@ -2368,15 +2290,6 @@ void mus_vct_init(void)
 
     /* vct-ref */
     f = s7_name_to_value(s7, "vct-ref");
-    s7_function_set_chooser(s7, f, vct_ref_chooser);
-
-    vct_ref_two = s7_make_function(s7, "vct-ref", g_vct_ref_two, 2, 0, false, "vct-ref optimization");
-    s7_function_set_class(vct_ref_two, f);
-    s7_function_set_returns_temp(vct_ref_two);
-
-    vct_ref_ss = s7_make_function(s7, "vct-ref", g_vct_ref_ss, 2, 0, false, "vct-ref optimization");
-    s7_function_set_class(vct_ref_ss, f);
-    s7_function_set_returns_temp(vct_ref_ss);
 #if (!WITH_GMP)
     store_gf_fixup(s7, f, fixup_vct_ref);
 #endif
@@ -2402,21 +2315,17 @@ void mus_vct_init(void)
     s7_function_set_class(vct_set_direct, f);
     vct_set_temp = s7_make_function(s7, "vct-set!", g_vct_set_temp, 3, 0, false, "vct-set! optimization");
     s7_function_set_class(vct_set_temp, f);
-    vct_set_ssf = s7_make_function(s7, "vct-set!", g_vct_set_ssf, 3, 0, false, "vct-set! optimization");
-    s7_function_set_class(vct_set_ssf, f);
 
     vct_set_direct_looped = s7_make_function(s7, "vct-set!", g_vct_set_direct_looped, 3, 0, false, "vct-set! optimization");
     s7_function_set_class(vct_set_direct_looped, f);
     s7_function_set_looped(vct_set_direct, vct_set_direct_looped);
     s7_function_set_looped(vct_set_temp, vct_set_direct_looped);
-    s7_function_set_looped(vct_set_ssf, vct_set_direct_looped);
     s7_function_set_looped(vct_set_three, vct_set_direct_looped);
 
     vct_set_let_looped = s7_make_function(s7, "vct-set!", g_vct_set_let_looped, 3, 0, false, "vct-set! optimization");
     s7_function_set_class(vct_set_let_looped, f);
     s7_function_set_let_looped(vct_set_direct, vct_set_let_looped);
     s7_function_set_let_looped(vct_set_temp, vct_set_let_looped);
-    s7_function_set_let_looped(vct_set_ssf, vct_set_let_looped);
     s7_function_set_let_looped(vct_set_three, vct_set_let_looped);
 #endif
   }
@@ -2424,7 +2333,6 @@ void mus_vct_init(void)
   multiply_symbol = s7_make_symbol(s7, "*");
   vector_ref_symbol = s7_make_symbol(s7, "vector-ref");
   env_symbol = s7_make_symbol(s7, "env");
-  vct_ref_symbol = s7_make_symbol(s7, "vct-ref");
 #endif
 #endif
 }

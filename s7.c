@@ -67949,7 +67949,7 @@ int main(int argc, char **argv)
  * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995
  * t455|6     265|    89   55   31   14   14    9    9    9|   7.4
  * lat        229|    63   52   47   42   40   34   31   29|    29
- * t502        90|    43   39   36   29   23   20   14   14|  14.7
+ * t502        90|    43   39   36   29   23   20   14   14|  14.5
  * calls         |   275  207  175  115   89   71   53   53|    54
  */
 
@@ -67958,7 +67958,7 @@ int main(int argc, char **argv)
  * doc/test the lib*.scm files.
  * vector_set_ssa_looped? (or as unknown case: 49890 safe_do all_x cases?)
  * ->list: object_to_list, ->string: object->string, ->vector? 
- * object-environment is not a good name (elsewhere object means any scheme thing -- make it generic?)
+ * object-environment is not a good name (elsewhere object means any scheme thing)
  */
 
 
