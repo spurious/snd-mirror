@@ -140,7 +140,7 @@
 		  macro? magnitude make-hash-table make-hash-table-iterator make-hook make-keyword make-list make-polar make-procedure-with-setter 
 		  make-random-state make-rectangular make-string make-vector map max member memq memv min modulo morally-equal?
 		  nan? negative? not null? number->string number? numerator 
-		  object-environment object->string odd? open-environment? or outer-environment output-port? 
+		  object->string odd? open-environment? or outer-environment output-port? 
 		  pair? pair-line-number port-closed? port-filename port-line-number positive? procedure-arity procedure-documentation procedure-environment 
 		  procedure-name procedure-setter procedure-source procedure-with-setter? procedure? provided? 
 		  quasiquote quote quotient 
@@ -289,7 +289,7 @@
 			   (cons 'number->string +string+)
 			   (cons 'number? +boolean+)
 			   (cons 'numerator +integer+)
-			   (cons 'object-environment +environment+)
+;			   (cons 'object-environment +environment+)
 			   (cons 'object->string +string+)
 			   (cons 'odd? +boolean+)
 			   (cons 'open-environment +environment+)

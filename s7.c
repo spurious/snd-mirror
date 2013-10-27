@@ -733,7 +733,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_ZZZ, HOP_SAFE_C_ZZZ, OP_SAFE_C_ZZZZ, HOP_SAFE_C_ZZZZ,
       OP_SAFE_C_SSP, HOP_SAFE_C_SSP,
 
-      OP_SAFE_C_opVSq_S, HOP_SAFE_C_opVSq_S, OP_SAFE_C_opVSq_opVSq, HOP_SAFE_C_opVSq_opVSq, 
+      OP_SAFE_C_opVSq_S, HOP_SAFE_C_opVSq_S, OP_SAFE_C_S_opVSq, HOP_SAFE_C_S_opVSq, OP_SAFE_C_opVSq_opVSq, HOP_SAFE_C_opVSq_opVSq, 
       
       OPT_MAX_DEFINED
 };
@@ -840,7 +840,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_zzz", "h_safe_c_zzz", "safe_c_zzzz", "h_safe_c_zzzz",
       "safe_c_ssp", "h_safe_c_ssp",
 
-      "safe_c_opvsq_s", "h_safe_c_opvsq_s", "safe_c_opvsq_opvsq", "h_safe_c_opvsq_opvsq", 
+      "safe_c_opvsq_s", "h_safe_c_opvsq_s", "safe_c_s_opvsq", "h_safe_c_s_opvsq", "safe_c_opvsq_opvsq", "h_safe_c_opvsq_opvsq", 
       
       "opt_max_defined"
   };
@@ -1282,7 +1282,7 @@ struct s7_scheme {
   s7_pointer LIST, LISTP, LIST_TO_STRING, LIST_TO_VECTOR, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBITP, LOGIOR, LOGNOT, LOGXOR;
   s7_pointer MACROP, MAGNITUDE, MAKE_BYTEVECTOR, MAKE_HASH_TABLE, MAKE_HASH_TABLE_ITERATOR, MAKE_KEYWORD, MAKE_LIST, MAKE_POLAR, MAKE_RANDOM_STATE;
   s7_pointer MAKE_RECTANGULAR, MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, MORALLY_EQUALP, NANP, NEGATIVEP, NEWLINE;
-  s7_pointer NOT, NULLP, NUMBERP, NUMBER_TO_STRING, NUMERATOR, OBJECT_ENVIRONMENT, OBJECT_TO_STRING, ODDP, OPEN_ENVIRONMENT, OPEN_ENVIRONMENTP, OPEN_INPUT_FILE;
+  s7_pointer NOT, NULLP, NUMBERP, NUMBER_TO_STRING, NUMERATOR, /* OBJECT_ENVIRONMENT, */ OBJECT_TO_STRING, ODDP, OPEN_ENVIRONMENT, OPEN_ENVIRONMENTP, OPEN_INPUT_FILE;
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTER_ENVIRONMENT, OUTPUT_PORTP, PAIRP, PAIR_LINE_NUMBER, PEEK_CHAR;
   s7_pointer PORT_CLOSEDP, PORT_FILE, PORT_FILENAME, PORT_LINE_NUMBER;
   s7_pointer POSITIVEP, PROCEDUREP, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, PROCEDURE_ENVIRONMENT, PROCEDURE_NAME, PROCEDURE_SOURCE, PROVIDE;
@@ -5444,7 +5444,7 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
 	    s7_make_slot(sc, new_e, car(p), cdr(p));
 	  else append_environment(sc, new_e, p);
 	  /* env as arg for common case: 
-	   *   (with-environment (augment-environment (current-environment) (object-environment obj)) ...)
+	   *   (with-environment (augment-environment (current-environment) (c-object-environment obj)) ...)
 	   * to bring in all of obj's fields/methods but keep access to the surrounding context.
 	   * But chaining is not safe or even unambiguous, and this form will not work if obj's fields
 	   *  are being set -- we've made a new slot!  Not sure how to handle this.
@@ -32608,7 +32608,7 @@ s7_pointer s7_object_set_environment(s7_pointer obj, s7_pointer e)
   return(e);
 }
 
-
+#if 0
 static s7_pointer g_object_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_object_environment "(object-environment obj) returns the environment associated with obj."
@@ -32618,7 +32618,7 @@ static s7_pointer g_object_environment(s7_scheme *sc, s7_pointer args)
     return(simple_wrong_type_argument_with_type(sc, sc->OBJECT_ENVIRONMENT, obj, make_protected_string(sc, "a c object (created by s7_make_object)")));
   return(c_object_environment(obj));
 }
-
+#endif
 
 static s7_pointer object_length(s7_scheme *sc, s7_pointer obj)
 {
@@ -43353,10 +43353,13 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 
 		  if (is_symbol(caddar_x))
 		    {
-		      /* optimize_data(cadar_x) is unknown_s|c|opcq for singer */
-		      /* fprintf(stderr, "%s: %s\n", DISPLAY(cadar_x), opt_names[optimize_data(cadar_x)]); */
 		      if (optimize_data(cadar_x) == HOP_UNKNOWN_S)
 			set_optimize_data(car_x, hop + OP_SAFE_C_opVSq_S);
+		    }
+		  else
+		    {
+		      if (optimize_data(caddar_x) == HOP_UNKNOWN_S)
+			set_optimize_data(car_x, hop + OP_SAFE_C_S_opVSq);
 		    }
 
 		  return(false);
@@ -53750,6 +53753,39 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* fallback on unknown_s */
 		/* fprintf(stderr, "fallback vs: %s\n", DISPLAY(code)); */
 		set_optimize_data(code, (optimize_data(code) & 1) + OP_SAFE_C_PS);
+		goto OPT_EVAL;
+	      }
+
+
+	    case OP_SAFE_C_S_opVSq:
+	      if (!c_function_is_ok(sc, code))
+		break;
+
+	    case HOP_SAFE_C_S_opVSq:
+	      {
+		s7_pointer f, arg2;
+		arg2 = caddr(code);
+		f = find_symbol_or_bust(sc, car(arg2));
+		if ((s7_is_vector(f)) &&
+		    (vector_rank(f) == 1))
+		  {
+		    s7_pointer ind;
+		    ind = find_symbol_or_bust(sc, cadr(arg2));
+		    if (s7_is_integer(ind))
+		      {
+			s7_Int index;
+			index = s7_integer(ind);
+			if ((index < vector_length(f)) &&
+			    (index >= 0))
+			  {
+			    car(sc->T2_1) = finder(sc, cadr(code));
+			    car(sc->T2_2) = vector_getter(f)(sc, f, index);
+			    sc->value = c_call(code)(sc, sc->T2_1);
+			    goto START; 
+			  }
+		      }
+		  }
+		set_optimize_data(code, (optimize_data(code) & 1) + OP_SAFE_C_SP);
 		goto OPT_EVAL;
 	      }
 
@@ -66941,7 +66977,7 @@ s7_scheme *s7_init(void)
                               s7_define_safe_function(sc, "error-environment",       g_error_environment,      0, 0, false, H_error_environment);
   sc->OPEN_ENVIRONMENT =      s7_define_safe_function(sc, "open-environment",        g_open_environment,       1, 0, false, H_open_environment);
   sc->OPEN_ENVIRONMENTP =     s7_define_safe_function(sc, "open-environment?",       g_is_open_environment,    1, 0, false, H_is_open_environment);
-  sc->OBJECT_ENVIRONMENT =    s7_define_safe_function(sc, "object-environment",      g_object_environment,     1, 0, false, H_object_environment);
+  /* sc->OBJECT_ENVIRONMENT = s7_define_safe_function(sc, "object-environment",      g_object_environment,     1, 0, false, H_object_environment); */
   sc->ENVIRONMENT_REF =       s7_define_safe_function(sc, "environment-ref",         g_environment_ref,        2, 0, false, H_environment_ref);
   sc->ENVIRONMENT_SET =       s7_define_safe_function(sc, "environment-set!",        g_environment_set,        3, 0, false, H_environment_set);
 
@@ -67956,9 +67992,8 @@ int main(int argc, char **argv)
 /* use new generic_ff in methods opt case (i.e. fallback to main func if special cases not enough)
  * (env env) in clm should be an error
  * doc/test the lib*.scm files.
- * vector_set_ssa_looped? (or as unknown case: 49890 safe_do all_x cases?)
+ * vector_set_[s]ssa_looped? (or as unknown case: 49890 safe_do all_x cases?) (vector-set! sdata i j (mus-random 1.0)) in snd-test
  * ->list: object_to_list, ->string: object->string, ->vector? 
- * object-environment is not a good name (elsewhere object means any scheme thing)
  */
 
 
