@@ -720,7 +720,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
 
       OP_SAFE_C_P, HOP_SAFE_C_P, OP_SAFE_C_PP, HOP_SAFE_C_PP,
       OP_SAFE_C_opSq_P, HOP_SAFE_C_opSq_P, 
-      OP_SAFE_C_SP, HOP_SAFE_C_SP, OP_SAFE_C_CP, HOP_SAFE_C_CP, OP_SAFE_C_QP, HOP_SAFE_C_QP, 
+      OP_SAFE_C_SP, HOP_SAFE_C_SP, OP_SAFE_C_CP, HOP_SAFE_C_CP, OP_SAFE_C_QP, HOP_SAFE_C_QP, OP_SAFE_C_AP, HOP_SAFE_C_AP, 
       OP_SAFE_C_PS, HOP_SAFE_C_PS, OP_SAFE_C_PC, HOP_SAFE_C_PC, OP_SAFE_C_PQ, HOP_SAFE_C_PQ,
       
       OP_SAFE_C_Z, HOP_SAFE_C_Z, OP_SAFE_C_ZZ, HOP_SAFE_C_ZZ, OP_SAFE_C_SZ, HOP_SAFE_C_SZ, OP_SAFE_C_ZS, HOP_SAFE_C_ZS, 
@@ -827,7 +827,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
 
       "safe_c_p", "h_safe_c_p", "safe_c_pp", "h_safe_c_pp",
       "safe_c_opsq_p", "h_safe_c_opsq_p", 
-      "safe_c_sp", "h_safe_c_sp", "safe_c_cp", "h_safe_c_cp", "safe_c_qp", "h_safe_c_qp", 
+      "safe_c_sp", "h_safe_c_sp", "safe_c_cp", "h_safe_c_cp", "safe_c_qp", "h_safe_c_qp", "safe_c_ap", "h_safe_c_ap", 
       "safe_c_ps", "h_safe_c_ps", "safe_c_pc", "h_safe_c_pc", "safe_c_pq", "h_safe_c_pq",
       
       "safe_c_z", "h_safe_c_z", "safe_c_zz", "h_safe_c_zz", "safe_c_sz", "h_safe_c_sz", "safe_c_zs", "h_safe_c_zs", 
@@ -43409,7 +43409,12 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 	      if (quotes == 0) 
 		{
 		  set_unsafely_optimized(car_x);
-		  set_optimize_data(car_x, hop + OP_SAFE_C_PP); /* unP case? */
+		  if (is_all_x_safe(sc, cadar_x))
+		    {
+		      set_optimize_data(car_x, hop + OP_SAFE_C_AP);
+		      annotate_arg(sc, cdr(car_x));
+		    }
+		  else set_optimize_data(car_x, hop + OP_SAFE_C_PP);
 		  choose_c_function(sc, car_x, func, 2);
 
 		  if ((optimize_data(cadar_x) == HOP_UNKNOWN_S) &&
@@ -43758,6 +43763,7 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
       set_arglist_length(car_x, small_int(3));
     }
 
+  /* aap is not better than ssp */
   if ((pairs == 1) &&
       (bad_pairs == 1) &&
       (symbols == 2) &&
@@ -43772,9 +43778,7 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
       return(false);
     }
 
-  /* bad pairs 1 here and others all_x_safe (i.e. safe_c_aap etc) in old/apa-s7.c --
-   *   works, costs 140 lines of code, gains only about 40 in calls/502, 30 in lg, nothing elsewhere.
-   */
+
   /* (define (hi) (catch #t (lambda () 1) (lambda args 2))) 
    *   first arg list must be (), second a symbol
    */
@@ -54998,6 +55002,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_SAFE_C_SP:
 	      push_stack(sc, OP_EVAL_ARGS_P_2, finder(sc, cadr(code)), code);
+	      sc->code = caddr(code);
+	      if (is_optimized(sc->code))
+		goto OPT_EVAL;
+	      goto EVAL;  
+	      
+	      
+	    case OP_SAFE_C_AP:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      
+	    case HOP_SAFE_C_AP:
+	      push_stack(sc, OP_EVAL_ARGS_P_2, ((s7_function)fcdr(cdr(code)))(sc, cadr(code)), code);
 	      sc->code = caddr(code);
 	      if (is_optimized(sc->code))
 		goto OPT_EVAL;
@@ -67992,7 +68008,6 @@ int main(int argc, char **argv)
 /* use new generic_ff in methods opt case (i.e. fallback to main func if special cases not enough)
  * (env env) in clm should be an error
  * doc/test the lib*.scm files.
- * vector_set_[s]ssa_looped? (or as unknown case: 49890 safe_do all_x cases?) (vector-set! sdata i j (mus-random 1.0)) in snd-test
  * ->list: object_to_list, ->string: object->string, ->vector? 
  */
 

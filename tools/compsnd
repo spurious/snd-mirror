@@ -199,7 +199,7 @@ rm -f config.cache
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --without-gui --with-gmp                              ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --without-gui --with-gmp CFLAGS="-Wall"
+./configure --quiet --without-gui --with-gmp --with-ladspa CFLAGS="-Wall"
 make
 echo ' '
 echo ' '
@@ -213,9 +213,9 @@ rm -f config.cache
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 -without-gui --without-ladspa --without-readline      ----  '
+echo ' ----                 -without-gui --with-ladspa --without-readline      ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --without-gui --without-ladspa --without-readline
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --without-gui --with-ladspa --without-readline
 make
 echo ' '
 echo ' '
@@ -584,7 +584,7 @@ rm -f config.cache
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                g++                                                      --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-motif CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet --with-motif --with-ladspa CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-s7 'snd-motif 'snd-ladspa 'sndlib"

@@ -1191,7 +1191,7 @@ static XEN g_ladspa_connect_port(XEN desc, XEN ptr, XEN port, XEN data)
   if (descriptor->connect_port) 
     descriptor->connect_port(XEN_TO_C_Ladspa_Handle(ptr),
 			     XEN_TO_C_ULONG(port),
-			     double_to_float(samples->data, samples->length)
+			     double_to_float(mus_vct_data(samples), mus_vct_length(samples))
 			     );
   return(XEN_FALSE);
 }
