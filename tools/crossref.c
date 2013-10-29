@@ -752,7 +752,7 @@ int main(int argc, char **argv)
 	      (qs[i]->name[0] == '_') ||
 	      ((qs[i]->name[strlen(qs[i]->name) - 2] == '_') &&
 	       ((qs[i]->name[strlen(qs[i]->name) - 1] == 't') || 
-		(qs[i]->name[strlen(qs[i]->name) - 1] == 'H'))))
+		(qs[i]->name[strlen(qs[i]->name) - 1] == 'H')))) /* SND_0_H etc */
 	    {
 	    }
 	  else

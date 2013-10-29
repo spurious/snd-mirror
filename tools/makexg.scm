@@ -106,13 +106,13 @@
 (define ints-3.10 ())
 (define strings-3.10 ())
 
-(define funcs-gtk2 ())
-(define casts-gtk2 ())
-(define checks-gtk2 ())
-(define names-gtk2 ())
-(define types-gtk2 ())
-(define ints-gtk2 ())
-(define ulongs-gtk2 ())
+(define funcs-3.12 ())
+(define casts-3.12 ())
+(define checks-3.12 ())
+(define names-3.12 ())
+(define types-3.12 ())
+(define ints-3.12 ())
+(define strings-3.12 ())
 
 (define cairo-funcs ())
 (define cairo-png-funcs ())
@@ -265,7 +265,7 @@
 	"cairo_surface_type_t" "cairo_pattern_type_t" "cairo_font_type_t" "cairo_bool_t"
 	"cairo_region_overlap_t" "cairo_device_type_t"
 
-	"glong"
+	"glong" 
 	))
 
 (define (cadr-str data)
@@ -469,7 +469,7 @@
 				((g-3.6)      (set! types-3.6 (cons type types-3.6)))
 				((g-3.8)      (set! types-3.8 (cons type types-3.8)))
 				((g-3.10)     (set! types-3.10 (cons type types-3.10)))
-				((gtk2)       (set! types-gtk2 (cons type types-gtk2)))
+				((g-3.12)     (set! types-3.12 (cons type types-3.12)))
 				((cairo)      (set! cairo-types (cons type cairo-types)))
 				((cairo-810)  (set! cairo-types-810 (cons type cairo-types-810)))
 				((cairo-912)  (set! cairo-types-912 (cons type cairo-types-912)))
@@ -1054,173 +1054,82 @@
 (define (CFNC-23-PA data min-len max-len types)
   (CFNC data 'etc (list min-len max-len types)))
 
-(define* (CFNC-2.14 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-2.14: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types))
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-2.14 (cons type types-2.14))))
-	  (let ((strs (parse-args args 'g-2.14)))
-	    (if spec
-		(set! funcs-2.14 (cons (list name type strs args spec) funcs-2.14))
-		(set! funcs-2.14 (cons (list name type strs args) funcs-2.14)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
+(define-macro (make-fnc vname)
+  (let* ((cfnc-name (string-append "CFNC-" vname))
+	 (cfnc (string->symbol cfnc-name))
+	 (g-fnc (string->symbol (string-append "g-" vname)))
+	 (types (string->symbol (string-append "types-" vname)))
+	 (funcs (string->symbol (string-append "funcs-" vname)))
+	 (strfnc (string->symbol (string-append "CSTR-" vname)))
+	 (strings (string->symbol (string-append "strings-" vname)))
+	 (names (string->symbol (string-append "names-" vname)))
+	 (intfnc (string->symbol (string-append "CINT-" vname)))
+	 (ints (string->symbol (string-append "ints-" vname)))
+	 (castfnc (string->symbol (string-append "CCAST-" vname)))
+	 (casts (string->symbol (string-append "casts-" vname)))
+	 (chkfnc (string->symbol (string-append "CCHK-" vname)))
+	 (checks (string->symbol (string-append "checks-" vname)))
+	 )
+    `(begin
+       (define* (,cfnc data spec)         ; CFNC-2.12
+	 (let ((name (cadr-str data))
+	       (args (caddr-str data)))
+	   (if (assoc name names)
+	       (format #t "~A: ~A ~A~%" ',cfnc name data)
+	       (let ((type (car-str data)))
+		 (if (not (member type all-types))
+		     (begin
+		       (set! all-types (cons type all-types))
+		       (set! ,types (cons type ,types))))
+		 (let ((strs (parse-args args ',g-fnc)))
+		   (if spec
+		       (set! ,funcs (cons (list name type strs args spec) ,funcs))
+		       (set! ,funcs (cons (list name type strs args) ,funcs)))
+		   (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-2.16 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-2.16: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types))
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-2.16 (cons type types-2.16))))
-	  (let ((strs (parse-args args 'g-2.16)))
-	    (if spec
-		(set! funcs-2.16 (cons (list name type strs args spec) funcs-2.16))
-		(set! funcs-2.16 (cons (list name type strs args) funcs-2.16)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
+       (define (,strfnc name)            ; CSTR-2.12
+	 (if (assoc name ,names)
+	     (format #t "~A ~A~%" name ',strfnc)
+	     (begin
+	       (set! ,strings (cons name ,strings))
+	       (set! ,names (cons (cons name 'string) ,names)))))
 
-(define* (CFNC-2.18 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-2.18: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types))
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-2.18 (cons type types-2.18))))
-	  (let ((strs (parse-args args 'g-2.18)))
-	    (if spec
-		(set! funcs-2.18 (cons (list name type strs args spec) funcs-2.18))
-		(set! funcs-2.18 (cons (list name type strs args) funcs-2.18)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
+       (define* (,intfnc name type)      ; CINT-2.12
+	 (save-declared-type type)
+	 (if (assoc name names)
+	     (format #t "~A ~A~%" name ',intfnc)
+	     (begin
+	       (set! ,ints (cons name ,ints))
+	       (set! names (cons (cons name 'int) names)))))
 
-(define* (CFNC-2.20 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-2.20: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types))
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-2.20 (cons type types-2.20))))
-	  (let ((strs (parse-args args 'g-2.20)))
-	    (if spec
-		(set! funcs-2.20 (cons (list name type strs args spec) funcs-2.20))
-		(set! funcs-2.20 (cons (list name type strs args) funcs-2.20)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
+       (define (,castfnc name type)      ; CCAST-2.12
+	 (if (assoc name names)
+	     (format #t "~A ~A~%" name ',castfnc)
+	     (begin
+	       (set! ,casts (cons (list name type) ,casts))
+	       (set! names (cons (cons name 'def) names)))))
 
-(define* (CFNC-3.0 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-					;    (if (assoc name names)
-					;	(no-way "CFNC-3.0: ~A~%" (list name data))
-					; this does not apply because gtk2-only funcs may be on the list
-    (let ((type (car-str data)))
-      (if (not (member type all-types))
-	  (begin
-	    (set! all-types (cons type all-types))
-	    (set! types-3.0 (cons type types-3.0))))
-      (let ((strs (parse-args args 'g-3.0)))
-	(if spec
-	    (set! funcs-3.0 (cons (list name type strs args spec) funcs-3.0))
-	    (set! funcs-3.0 (cons (list name type strs args) funcs-3.0)))
-	(set! names (cons (cons name (func-type strs)) names))))))
+       (define (,chkfnc name type)       ; CCHK-2.12
+	 (if (assoc name names)
+	     (format #t "~A ~A~%" name ',chkfnc)
+	     (begin
+	       (set! ,checks (cons (list name type) ,checks))
+	       (set! names (cons (cons name 'def) names)))))
+       )))
 
-(define* (CFNC-3.2 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (let ((type (car-str data)))
-      (if (not (member type all-types))
-	  (begin
-	    (set! all-types (cons type all-types))
-	    (set! types-3.2 (cons type types-3.2))))
-      (let ((strs (parse-args args 'g-3.2)))
-	(if spec
-	    (set! funcs-3.2 (cons (list name type strs args spec) funcs-3.2))
-	    (set! funcs-3.2 (cons (list name type strs args) funcs-3.2)))
-	(set! names (cons (cons name (func-type strs)) names))))))
 
-(define* (CFNC-3.4 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (let ((type (car-str data)))
-      (if (not (member type all-types))
-	  (begin
-	    (set! all-types (cons type all-types))
-	    (set! types-3.4 (cons type types-3.4))))
-      (let ((strs (parse-args args 'g-3.4)))
-	(if spec
-	    (set! funcs-3.4 (cons (list name type strs args spec) funcs-3.4))
-	    (set! funcs-3.4 (cons (list name type strs args) funcs-3.4)))
-	(set! names (cons (cons name (func-type strs)) names))))))
+(make-fnc "2.14")
+(make-fnc "2.16")
+(make-fnc "2.18")
+(make-fnc "2.20")
+(make-fnc "3.0") 
+(make-fnc "3.2")
+(make-fnc "3.4")
+(make-fnc "3.6")
+(make-fnc "3.8")
+(make-fnc "3.10")
+(make-fnc "3.12")
 
-(define* (CFNC-3.6 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (let ((type (car-str data)))
-      (if (not (member type all-types))
-	  (begin
-	    (set! all-types (cons type all-types))
-	    (set! types-3.6 (cons type types-3.6))))
-      (let ((strs (parse-args args 'g-3.6)))
-	(if spec
-	    (set! funcs-3.6 (cons (list name type strs args spec) funcs-3.6))
-	    (set! funcs-3.6 (cons (list name type strs args) funcs-3.6)))
-	(set! names (cons (cons name (func-type strs)) names))))))
-
-(define* (CFNC-3.8 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (let ((type (car-str data)))
-      (if (not (member type all-types))
-	  (begin
-	    (set! all-types (cons type all-types))
-	    (set! types-3.8 (cons type types-3.8))))
-      (let ((strs (parse-args args 'g-3.8)))
-	(if spec
-	    (set! funcs-3.8 (cons (list name type strs args spec) funcs-3.8))
-	    (set! funcs-3.8 (cons (list name type strs args) funcs-3.8)))
-	(set! names (cons (cons name (func-type strs)) names))))))
-
-(define* (CFNC-3.10 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (let ((type (car-str data)))
-      (if (not (member type all-types))
-	  (begin
-	    (set! all-types (cons type all-types))
-	    (set! types-3.10 (cons type types-3.10))))
-      (let ((strs (parse-args args 'g-3.10)))
-	(if spec
-	    (set! funcs-3.10 (cons (list name type strs args spec) funcs-3.10))
-	    (set! funcs-3.10 (cons (list name type strs args) funcs-3.10)))
-	(set! names (cons (cons name (func-type strs)) names))))))
-
-(define* (CFNC-gtk2 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-					;    (if (assoc name names)
-					;	(no-way "CFNC-gtk2: ~A~%" (list name data))
-					; this does not apply because gtk3 funcs may be on the list
-    (let ((type (car-str data)))
-      (if (not (member type all-types))
-	  (begin
-	    (set! all-types (cons type all-types))
-	    (set! types-gtk2 (cons type types-gtk2))))
-      (let ((strs (parse-args args 'gtk2)))
-	(if spec
-	    (set! funcs-gtk2 (cons (list name type strs args spec) funcs-gtk2))
-	    (set! funcs-gtk2 (cons (list name type strs args) funcs-gtk2)))
-	(set! names (cons (cons name (func-type strs)) names))))))
 
 
 (define* (CAIRO-FUNC data spec)
@@ -1334,62 +1243,6 @@
 	(set! strings (cons name strings))
 	(set! names (cons (cons name 'string) names)))))
 
-(define (CSTR-2.14 name)
-  (if (assoc name names-2.14)
-      (no-way "~A CSTR-2.14~%" name)
-      (begin
-	(set! strings-2.14 (cons name strings-2.14))
-	(set! names-2.14 (cons (cons name 'string) names-2.14)))))
-
-(define (CSTR-2.16 name)
-  (if (assoc name names-2.16)
-      (no-way "~A CSTR-2.16~%" name)
-      (begin
-	(set! strings-2.16 (cons name strings-2.16))
-	(set! names-2.16 (cons (cons name 'string) names-2.16)))))
-
-(define (CSTR-3.0 name)
-  (if (assoc name names-3.0)
-      (no-way "~A CSTR-3.0~%" name)
-      (begin
-	(set! strings-3.0 (cons name strings-3.0))
-	(set! names-3.0 (cons (cons name 'string) names-3.0)))))
-
-(define (CSTR-3.2 name)
-  (if (assoc name names-3.2)
-      (no-way "~A CSTR-3.2~%" name)
-      (begin
-	(set! strings-3.2 (cons name strings-3.2))
-	(set! names-3.2 (cons (cons name 'string) names-3.2)))))
-
-(define (CSTR-3.4 name)
-  (if (assoc name names-3.4)
-      (no-way "~A CSTR-3.4~%" name)
-      (begin
-	(set! strings-3.4 (cons name strings-3.4))
-	(set! names-3.4 (cons (cons name 'string) names-3.4)))))
-
-(define (CSTR-3.6 name)
-  (if (assoc name names-3.6)
-      (no-way "~A CSTR-3.6~%" name)
-      (begin
-	(set! strings-3.6 (cons name strings-3.6))
-	(set! names-3.6 (cons (cons name 'string) names-3.6)))))
-
-(define (CSTR-3.8 name)
-  (if (assoc name names-3.8)
-      (no-way "~A CSTR-3.8~%" name)
-      (begin
-	(set! strings-3.8 (cons name strings-3.8))
-	(set! names-3.8 (cons (cons name 'string) names-3.8)))))
-
-(define (CSTR-3.10 name)
-  (if (assoc name names-3.10)
-      (no-way "~A CSTR-3.10~%" name)
-      (begin
-	(set! strings-3.10 (cons name strings-3.10))
-	(set! names-3.10 (cons (cons name 'string) names-3.10)))))
-
 
 (define (CDBL name)
   (if (assoc name names)
@@ -1410,14 +1263,6 @@
       (no-way "~A CLNG~%" name)
       (begin
 	(set! ulongs (cons (list name type spec-name) ulongs))
-	(set! names (cons (cons name 'ulong) names)))))
-
-(define* (CLNG-gtk2 name type spec-name)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CLNG-gtk2~%" name)
-      (begin
-	(set! ulongs-gtk2 (cons (list name type spec-name) ulongs-gtk2))
 	(set! names (cons (cons name 'ulong) names)))))
 
 (define* (CLNG-2.14 name type spec-name)
@@ -1444,85 +1289,6 @@
 	(set! ints (cons name ints))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-2.14 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-2.14~%" name)
-      (begin
-	(set! ints-2.14 (cons name ints-2.14))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-2.16 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-2.16~%" name)
-      (begin
-	(set! ints-2.16 (cons name ints-2.16))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-2.18 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-2.18~%" name)
-      (begin
-	(set! ints-2.18 (cons name ints-2.18))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-3.0 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-3.0~%" name)
-      (begin
-	(set! ints-3.0 (cons name ints-3.0))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-3.2 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-3.2~%" name)
-      (begin
-	(set! ints-3.2 (cons name ints-3.2))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-3.4 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-3.4~%" name)
-      (begin
-	(set! ints-3.4 (cons name ints-3.4))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-3.6 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-3.6~%" name)
-      (begin
-	(set! ints-3.6 (cons name ints-3.6))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-3.8 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-3.8~%" name)
-      (begin
-	(set! ints-3.8 (cons name ints-3.8))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-3.10 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-3.10~%" name)
-      (begin
-	(set! ints-3.10 (cons name ints-3.10))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-gtk2 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-gtk2~%" name)
-      (begin
-	(set! ints-gtk2 (cons name ints-gtk2))
-	(set! names (cons (cons name 'int) names)))))
 
 (define* (CAIRO-INT name type)
   (save-declared-type type)
@@ -1565,75 +1331,6 @@
 	(set! casts (cons (list name type) casts))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCAST-2.14 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-2.14~%" name)
-      (begin
-	(set! casts-2.14 (cons (list name type) casts-2.14))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-2.18 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-2.18~%" name)
-      (begin
-	(set! casts-2.18 (cons (list name type) casts-2.18))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-2.20 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-2.20~%" name)
-      (begin
-	(set! casts-2.20 (cons (list name type) casts-2.20))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-3.0 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-3.0~%" name)
-      (begin
-	(set! casts-3.0 (cons (list name type) casts-3.0))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-3.2 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-3.2~%" name)
-      (begin
-	(set! casts-3.2 (cons (list name type) casts-3.2))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-3.4 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-3.4~%" name)
-      (begin
-	(set! casts-3.4 (cons (list name type) casts-3.4))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-3.6 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-3.6~%" name)
-      (begin
-	(set! casts-3.6 (cons (list name type) casts-3.6))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-3.8 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-3.8~%" name)
-      (begin
-	(set! casts-3.8 (cons (list name type) casts-3.8))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-3.10 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-3.10~%" name)
-      (begin
-	(set! casts-3.10 (cons (list name type) casts-3.10))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-gtk2 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-gtk2~%" name)
-      (begin
-	(set! casts-gtk2 (cons (list name type) casts-gtk2))
-	(set! names (cons (cons name 'def) names)))))
 
 (define (CCHK name type)
   (if (assoc name names)
@@ -1642,75 +1339,6 @@
 	(set! checks (cons (list name type) checks))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCHK-2.14 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-2.14~%" name)
-      (begin
-	(set! checks-2.14 (cons (list name type) checks-2.14))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-2.18 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-2.18~%" name)
-      (begin
-	(set! checks-2.18 (cons (list name type) checks-2.18))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-2.20 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-2.20~%" name)
-      (begin
-	(set! checks-2.20 (cons (list name type) checks-2.20))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-3.0 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-3.0~%" name)
-      (begin
-	(set! checks-3.0 (cons (list name type) checks-3.0))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-3.2 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-3.2~%" name)
-      (begin
-	(set! checks-3.2 (cons (list name type) checks-3.2))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-3.4 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-3.4~%" name)
-      (begin
-	(set! checks-3.4 (cons (list name type) checks-3.4))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-3.6 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-3.6~%" name)
-      (begin
-	(set! checks-3.6 (cons (list name type) checks-3.6))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-3.8 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-3.8~%" name)
-      (begin
-	(set! checks-3.8 (cons (list name type) checks-3.8))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-3.10 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-3.10~%" name)
-      (begin
-	(set! checks-3.10 (cons (list name type) checks-3.10))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-gtk2 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-gtk2~%" name)
-      (begin
-	(set! checks-gtk2 (cons (list name type) checks-gtk2))
-	(set! names (cons (cons name 'def) names)))))
 
 (define (STRUCT data)
   (let ((name (car-str data)) ; struct name (type)
@@ -1834,11 +1462,10 @@
   (thunk)
   (dpy "#endif~%~%"))
 
-(define (with-gtk2 dpy thunk)
-  (dpy "#if (!HAVE_GTK_3)~%")
+(define (with-3.12 dpy thunk)
+  (dpy "#if GTK_CHECK_VERSION(3, 12, 0)~%~%")
   (thunk)
   (dpy "#endif~%~%"))
-  
 
 (define (with-cairo dpy thunk)
   (thunk)
@@ -1861,43 +1488,43 @@
 
 
 (define all-ntypes (list types-2.14 types-2.16 types-2.18 types-2.20 
-			types-3.0 types-3.2 types-3.4 types-3.6 types-3.8 types-3.10 types-gtk2
+			types-3.0 types-3.2 types-3.4 types-3.6 types-3.8 types-3.10 types-3.12
 			cairo-types cairo-types-810 cairo-types-912))
 (define all-ntype-withs (list with-2.14 with-2.16 with-2.18 with-2.20 
-			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-gtk2
+			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12
 			     with-cairo with-cairo-810 with-cairo-912))
 
 (define all-funcs (list funcs-2.14 funcs-2.16 funcs-2.18 funcs-2.20 
-			funcs-3.0 funcs-3.2 funcs-3.4 funcs-3.6 funcs-3.8 funcs-3.10 funcs-gtk2
+			funcs-3.0 funcs-3.2 funcs-3.4 funcs-3.6 funcs-3.8 funcs-3.10 funcs-3.12
 			cairo-funcs cairo-png-funcs cairo-funcs-810 cairo-funcs-912))
 (define all-func-withs (list with-2.14 with-2.16 with-2.18 with-2.20 
-			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-gtk2
+			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12
 			     with-cairo with-cairo-png with-cairo-810 with-cairo-912))
 
 (define all-ints (list ints-2.14 ints-2.16 ints-2.18  
-		       ints-3.0 ints-3.2 ints-3.4 ints-3.6 ints-3.8 ints-3.10 ints-gtk2
+		       ints-3.0 ints-3.2 ints-3.4 ints-3.6 ints-3.8 ints-3.10 ints-3.12
 		       cairo-ints cairo-ints-810 cairo-ints-912))
 (define all-int-withs (list with-2.14 with-2.16 with-2.18 
-			    with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-gtk2
+			    with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12
 			    with-cairo with-cairo-810 with-cairo-912))
 
 (define all-casts (list casts-2.14 casts-2.16 casts-2.18 casts-2.20 
-			casts-3.0 casts-3.2 casts-3.4 casts-3.6 casts-3.8 casts-3.10 casts-gtk2))
+			casts-3.0 casts-3.2 casts-3.4 casts-3.6 casts-3.8 casts-3.10 casts-3.12))
 (define all-cast-withs (list with-2.14 with-2.16 with-2.18 with-2.20 
-			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-gtk2))
+			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12))
 
 (define all-checks (list checks-2.14 checks-2.16 checks-2.18 checks-2.20 
-			 checks-3.0 checks-3.2 checks-3.4 checks-3.6 checks-3.8 checks-3.10 checks-gtk2))
+			 checks-3.0 checks-3.2 checks-3.4 checks-3.6 checks-3.8 checks-3.10 checks-3.12))
 (define all-check-withs (list with-2.14 with-2.16 with-2.18 with-2.20 
-			      with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-gtk2))
+			      with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12))
 
 (define all-strings (list strings-2.14 strings-2.16 
-			  strings-3.0 strings-3.2 strings-3.4 strings-3.6 strings-3.8 strings-3.10 cairo-strings-912))
+			  strings-3.0 strings-3.2 strings-3.4 strings-3.6 strings-3.8 strings-3.10 strings-3.12 cairo-strings-912))
 (define all-string-withs (list with-2.14 with-2.16 
-			       with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-cairo-912))
+			       with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12 with-cairo-912))
 
-(define all-ulongs (list ulongs-2.14 ulongs-2.16 ulongs-2.18 ulongs-gtk2))
-(define all-ulong-withs (list with-2.14 with-2.16 with-2.18 with-gtk2))
+(define all-ulongs (list ulongs-2.14 ulongs-2.16 ulongs-2.18))
+(define all-ulong-withs (list with-2.14 with-2.16 with-2.18))
 
 
 
