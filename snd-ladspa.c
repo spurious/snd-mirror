@@ -20,7 +20,6 @@
  *           added code to handle 0-input plugins ("analog osc" in swh for example).
  * 21-Sep-03 added plugin help menu item.
  * 1-Aug-03  added direct struct readers for LADSPA_Descriptor
- * 6-Jan-03  use free, not free.
  * 21-Nov-02 better checks for C-g interrupt.
  * 2-May-02  use mus_long_t for sample number.
  * 14-Dec-01 various C++ cleanups.

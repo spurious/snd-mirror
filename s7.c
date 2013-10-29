@@ -718,6 +718,8 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_UNKNOWN_S_opSq, HOP_UNKNOWN_S_opSq, OP_UNKNOWN_S_opSSq, HOP_UNKNOWN_S_opSSq, OP_UNKNOWN_opSSq_S, HOP_UNKNOWN_opSSq_S, 
       OP_UNKNOWN_opCq, HOP_UNKNOWN_opCq, 
 
+      OP_SAFE_C_opVSq_S, HOP_SAFE_C_opVSq_S, OP_SAFE_C_S_opVSq, HOP_SAFE_C_S_opVSq, OP_SAFE_C_opVSq_opVSq, HOP_SAFE_C_opVSq_opVSq, 
+      
       OP_SAFE_C_P, HOP_SAFE_C_P, OP_SAFE_C_PP, HOP_SAFE_C_PP,
       OP_SAFE_C_opSq_P, HOP_SAFE_C_opSq_P, 
       OP_SAFE_C_SP, HOP_SAFE_C_SP, OP_SAFE_C_CP, HOP_SAFE_C_CP, OP_SAFE_C_QP, HOP_SAFE_C_QP, OP_SAFE_C_AP, HOP_SAFE_C_AP, 
@@ -733,8 +735,6 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_ZZZ, HOP_SAFE_C_ZZZ, OP_SAFE_C_ZZZZ, HOP_SAFE_C_ZZZZ,
       OP_SAFE_C_SSP, HOP_SAFE_C_SSP,
 
-      OP_SAFE_C_opVSq_S, HOP_SAFE_C_opVSq_S, OP_SAFE_C_S_opVSq, HOP_SAFE_C_S_opVSq, OP_SAFE_C_opVSq_opVSq, HOP_SAFE_C_opVSq_opVSq, 
-      
       OPT_MAX_DEFINED
 };
 
@@ -825,6 +825,8 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "unknown_s_opsq", "h_unknown_s_opsq", "unknown_s_opssq", "h_unknown_s_opssq", "unknown_opssq_s", "h_unknown_opssq_s", 
       "unknown_opcq", "h_unknown_opcq", 
 
+      "safe_c_opvsq_s", "h_safe_c_opvsq_s", "safe_c_s_opvsq", "h_safe_c_s_opvsq", "safe_c_opvsq_opvsq", "h_safe_c_opvsq_opvsq", 
+      
       "safe_c_p", "h_safe_c_p", "safe_c_pp", "h_safe_c_pp",
       "safe_c_opsq_p", "h_safe_c_opsq_p", 
       "safe_c_sp", "h_safe_c_sp", "safe_c_cp", "h_safe_c_cp", "safe_c_qp", "h_safe_c_qp", "safe_c_ap", "h_safe_c_ap", 
@@ -840,8 +842,6 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_zzz", "h_safe_c_zzz", "safe_c_zzzz", "h_safe_c_zzzz",
       "safe_c_ssp", "h_safe_c_ssp",
 
-      "safe_c_opvsq_s", "h_safe_c_opvsq_s", "safe_c_s_opvsq", "h_safe_c_s_opvsq", "safe_c_opvsq_opvsq", "h_safe_c_opvsq_opvsq", 
-      
       "opt_max_defined"
   };
 
@@ -68004,11 +68004,3 @@ int main(int argc, char **argv)
  * t502        90|    43   39   36   29   23   20   14   14|  14.5
  * calls         |   275  207  175  115   89   71   53   53|    54
  */
-
-/* use new generic_ff in methods opt case (i.e. fallback to main func if special cases not enough)
- * (env env) in clm should be an error
- * doc/test the lib*.scm files.
- * ->list: object_to_list, ->string: object->string, ->vector? 
- */
-
-

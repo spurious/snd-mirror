@@ -2,6 +2,8 @@
 
 /* if the optimizer stops working inexplicably, look for any symbols used before this that
  *    might shadow a generator name; one such case was (make-hook 'env...) in snd-env.c
+ *
+ * (env env) is accepted by the optimizer in error
  */
 
 #include <mus-config.h>
@@ -51,10 +53,10 @@
 
 struct mus_xen {
   mus_any *gen;
-  int type; /* currently only oscil/formant type checks */
   int nvcts;
   XEN *vcts; /* one for each accessible mus_float_t array (wrapped up here in a vct) */
 #if HAVE_SCHEME
+  int type; /* currently only oscil/formant type checks */
   gf *g;
 #endif
 };
@@ -4257,7 +4259,9 @@ static XEN g_make_frm(bool formant_case, const char *caller, XEN arg1, XEN arg2,
 	{
 	  mus_xen *gn;
 	  gn = mus_any_to_mus_xen(ge);
+#if HAVE_SCHEME
 	  gn->type = FORMANT_TAG;
+#endif
 	  return(mus_xen_to_object(gn));
 	}
     }
