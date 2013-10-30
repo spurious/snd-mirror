@@ -14051,6 +14051,7 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_multiply_2(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
+  /* clm2xen opt fallback */
   car(sc->T2_1) = x;
   car(sc->T2_2) = y;
   return(g_multiply_2(sc, sc->T2_1));
@@ -68003,4 +68004,7 @@ int main(int argc, char **argv)
  * lat        229|    63   52   47   42   40   34   31   29|    29
  * t502        90|    43   39   36   29   23   20   14   14|  14.5
  * calls         |   275  207  175  115   89   71   53   53|    54
+ */
+
+/* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))
  */

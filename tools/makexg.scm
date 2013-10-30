@@ -25,110 +25,10 @@
 (define struct-fields ())
 (define settable-struct-fields ())
 
-(define funcs-2.14 ())
-(define strings-2.14 ())
-(define ints-2.14 ())
-(define names-2.14 ())
-(define types-2.14 ())
-(define casts-2.14 ())
-(define checks-2.14 ())
 (define ulongs-2.14 ())
-
-(define funcs-2.16 ())
-(define strings-2.16 ())
-(define ints-2.16 ())
-(define names-2.16 ())
-(define types-2.16 ())
-(define casts-2.16 ())
-(define checks-2.16 ())
 (define ulongs-2.16 ())
-
-(define funcs-2.18 ())
-(define ints-2.18 ())
-(define names-2.18 ())
-(define types-2.18 ())
-(define casts-2.18 ())
-(define checks-2.18 ())
 (define ulongs-2.18 ())
-
-(define funcs-2.20 ())
-(define casts-2.20 ())
-(define checks-2.20 ())
-(define names-2.20 ())
-(define types-2.20 ())
-
-(define funcs-3.0 ())
-(define casts-3.0 ())
-(define checks-3.0 ())
-(define names-3.0 ())
-(define types-3.0 ())
-(define ints-3.0 ())
-(define strings-3.0 ())
 (define make-structs-3.0 ()) ; these have a xg-specific make function
-
-(define funcs-3.2 ())
-(define casts-3.2 ())
-(define checks-3.2 ())
-(define names-3.2 ())
-(define types-3.2 ())
-(define ints-3.2 ())
-(define strings-3.2 ())
-
-(define funcs-3.4 ())
-(define casts-3.4 ())
-(define checks-3.4 ())
-(define names-3.4 ())
-(define types-3.4 ())
-(define ints-3.4 ())
-(define strings-3.4 ())
-
-(define funcs-3.6 ())
-(define casts-3.6 ())
-(define checks-3.6 ())
-(define names-3.6 ())
-(define types-3.6 ())
-(define ints-3.6 ())
-(define strings-3.6 ())
-
-(define funcs-3.8 ())
-(define casts-3.8 ())
-(define checks-3.8 ())
-(define names-3.8 ())
-(define types-3.8 ())
-(define ints-3.8 ())
-(define strings-3.8 ())
-
-(define funcs-3.10 ())
-(define casts-3.10 ())
-(define checks-3.10 ())
-(define names-3.10 ())
-(define types-3.10 ())
-(define ints-3.10 ())
-(define strings-3.10 ())
-
-(define funcs-3.12 ())
-(define casts-3.12 ())
-(define checks-3.12 ())
-(define names-3.12 ())
-(define types-3.12 ())
-(define ints-3.12 ())
-(define strings-3.12 ())
-
-(define cairo-funcs ())
-(define cairo-png-funcs ())
-(define cairo-ints ())
-(define cairo-types ())
-
-(define cairo-funcs-810 ())
-(define cairo-ints-810 ())
-(define cairo-types-810 ())
-
-(define cairo-funcs-912 ())
-(define cairo-ints-912 ())
-(define cairo-types-912 ())
-(define cairo-strings-912 ())
-(define cairo-names-912 ())
-
 
 (define all-types ())
 
@@ -1071,6 +971,14 @@
 	 (checks (string->symbol (string-append "checks-" vname)))
 	 )
     `(begin
+       (define ,funcs ())
+       (define ,strings ())
+       (define ,ints ())
+       (define ,names ())
+       (define ,types ())
+       (define ,casts ())
+       (define ,checks ())
+
        (define* (,cfnc data spec)         ; CFNC-2.12
 	 (let ((name (cadr-str data))
 	       (args (caddr-str data)))
@@ -1131,6 +1039,21 @@
 (make-fnc "3.12")
 
 
+
+(define cairo-funcs ())
+(define cairo-png-funcs ())
+(define cairo-ints ())
+(define cairo-types ())
+
+(define cairo-funcs-810 ())
+(define cairo-ints-810 ())
+(define cairo-types-810 ())
+
+(define cairo-funcs-912 ())
+(define cairo-ints-912 ())
+(define cairo-types-912 ())
+(define cairo-strings-912 ())
+(define cairo-names-912 ())
 
 (define* (CAIRO-FUNC data spec)
   (let ((name (cadr-str data))

@@ -4,7 +4,6 @@
 ;;; (xe-envelope editor) -> current envelope (settable)
 
 (provide 'snd-xm-enved.scm)
-(define with-gtk2 (provided? 'gtk2))
 (define with-gtk3 (provided? 'gtk3))
 
 (if (provided? 'snd-motif)
@@ -367,7 +366,7 @@
 			    (set! ly cy)))))
 		    (let ((lx #f)
 			  (ly #f)
-			  (cr (gdk_cairo_create ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) wn)))
+			  (cr (gdk_cairo_create ((if with-gtk3 GDK_WINDOW GDK_DRAWABLE) wn)))
 			  (size (widget-size (GTK_WIDGET widget))))
 		      
 		      (cairo_push_group cr)
