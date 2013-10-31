@@ -155,11 +155,6 @@
  *   23-Jul-01: use lists rather than vectors.
  */
 
-#if UNDEF_USE_SND
-  #undef USE_SND
-  #define USE_SND 0
-#endif
-
 #if HAVE_EXTENSION_LANGUAGE
 
   #include <Xm/XmAll.h>

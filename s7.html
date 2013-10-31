@@ -9236,4 +9236,9 @@ circular func (implicit set!):
 (letrec* ((b (lambda () (a)))
 	  (a (lambda () (b))))
   (a))
+
+(letrec ((b (lambda () (a)))
+	 (a (lambda () (b))))
+  (a))
 -->
+

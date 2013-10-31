@@ -1,6 +1,6 @@
 #!/bin/csh -f
 
-echo ' -------------------------------- without-gui -------------------------------- '
+echo ' -------------------------------- without-gui --with-ladspa -------------------------------- '
 rm -f snd
 rm -f config.cache
 ./configure --quiet CFLAGS="-Wall" --without-gui

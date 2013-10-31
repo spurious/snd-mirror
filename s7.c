@@ -4299,6 +4299,8 @@ static void increase_stack_size(s7_scheme *sc)
 
   loc = s7_stack_top(sc);
   new_size = sc->stack_size * 2;
+  /* how can we trap infinite recursions?  Is a warning in order here?
+   */
 
   vector_elements(sc->stack) = (s7_pointer *)realloc(vector_elements(sc->stack), new_size * sizeof(s7_pointer));
   for (i = sc->stack_size; i < new_size; i++)
@@ -23155,6 +23157,15 @@ static const char *c_closure_name(s7_scheme *sc, s7_pointer closure, int *nlen)
 {
   s7_pointer x;
   x = find_closure(sc, closure, closure_environment(closure));
+
+  /* this can be confusing!  In some cases, the function is in its environment, and in other very similar-looking cases it isn't:
+   * (let ((a (lambda () 1))) a)
+   * #<lambda ()>
+   * (letrec ((a (lambda () 1))) a)
+   * a
+   * (let () (define (a) 1) a)
+   * a
+   */
 
   if (is_symbol(x))
     {
@@ -51299,6 +51310,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      
 	    case HOP_THUNK:
+	      CHECK_STACK_SIZE(sc); 
+	      /* this recursion check is consistent with the other unsafe closure calls, but we're probably in big trouble:
+	       *   (letrec ((a (lambda () (cons 1 (b)))) (b (lambda () (a)))) (b))
+	       * unfortunately the alternative is a segfault when we wander off the end of the stack.
+	       */
 	      NEW_FRAME(sc, closure_environment(ecdr(code)), sc->envir);
 	      sc->code = closure_body(ecdr(code));
 	      goto BEGIN;

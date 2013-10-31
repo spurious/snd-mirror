@@ -1505,7 +1505,7 @@
 ;;; 2.91.6 (CLNG "GDK_TYPE_PIXBUF_ANIMATION_ITER")
 (CCAST "GDK_PIXBUF_ANIMATION_ITER(object)" "GdkPixbufAnimationIter*")
 (CCHK "GDK_IS_PIXBUF_ANIMATION_ITER(object)" "GdkPixbufAnimationIter*")
-(CLNG "GDK_PIXBUF_ERROR")
+;;; (CLNG "GDK_PIXBUF_ERROR")
 (CINT "GDK_PIXBUF_ERROR_CORRUPT_IMAGE" "GdkPixbufError")
 (CINT "GDK_PIXBUF_ERROR_INSUFFICIENT_MEMORY" "GdkPixbufError")
 (CINT "GDK_PIXBUF_ERROR_BAD_OPTION" "GdkPixbufError")
@@ -5700,8 +5700,8 @@
 (CINT "PANGO_SCRIPT_OLD_PERSIAN" "PangoScript")
 (CINT "PANGO_SCRIPT_KHAROSHTHI" "PangoScript")
 
-(CLNG "PANGO_TYPE_ITEM")
-(CLNG "PANGO_TYPE_LAYOUT_LINE")
+;;; (CLNG "PANGO_TYPE_ITEM")
+;;; (CLNG "PANGO_TYPE_LAYOUT_LINE")
 
 ;; 11.2: + double pango_matrix_get_font_scale_factor (PangoMatrix *matrix);
 
@@ -7124,7 +7124,7 @@
 
 ;;; 2.17.4
 
-(CLNG-2.18 "GTK_ENTRY_BUFFER_MAX_SIZE")
+(CINT-2.18 "GTK_ENTRY_BUFFER_MAX_SIZE") ; maxushort in gtk_entry_buffer.h (gint)
 ;;; 2.91.6 (CLNG-2.18 "GTK_TYPE_ENTRY_BUFFER")
 (CCAST-2.18 "GTK_ENTRY_BUFFER(obj)" "GtkEntryBuffer*")
 (CCHK-2.18 "GTK_IS_ENTRY_BUFFER(obj)" "GtkEntryBuffer*")

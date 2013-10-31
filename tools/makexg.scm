@@ -11,24 +11,12 @@
 (define names ())
 (define types ())
 (define ints ())
-(define ulongs ())
 (define dbls ())
 (define funcs ())
 (define casts ())
 (define checks ())
 (define atoms ())
 (define strings ())
-
-(define structs ())
-(define make-structs ()) ; these have a xg-specific make function
-(define cairo-make-structs ())
-(define struct-fields ())
-(define settable-struct-fields ())
-
-(define ulongs-2.14 ())
-(define ulongs-2.16 ())
-(define ulongs-2.18 ())
-(define make-structs-3.0 ()) ; these have a xg-specific make function
 
 (define all-types ())
 
@@ -933,26 +921,6 @@
 (define (no-way str arg)
   (format #t str arg))
 
-(define* (CFNC data spec spec-data) ; 'const -> const for arg cast, 'etc for ... args, 'free -> must free C val before return
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "~A CFNC~%" name)
-	(let ((type (car-str data)))
-	  (if (not (member type all-types)) (set! all-types (cons type all-types)))
-	  (if (not (member type types))
-	      (set! types (cons type types)))
-	  (let ((strs (parse-args args 'ok)))
-	    (if spec
-		(set! funcs (cons (list name type strs args spec spec-data) funcs))
-		(set! funcs (cons (list name type strs args) funcs)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
-(define (CFNC-PA data min-len max-len types)
-  (CFNC data 'etc (list min-len max-len types)))
-
-(define (CFNC-23-PA data min-len max-len types)
-  (CFNC data 'etc (list min-len max-len types)))
 
 (define-macro (make-fnc vname)
   (let* ((cfnc-name (string-append "CFNC-" vname))
@@ -969,6 +937,7 @@
 	 (casts (string->symbol (string-append "casts-" vname)))
 	 (chkfnc (string->symbol (string-append "CCHK-" vname)))
 	 (checks (string->symbol (string-append "checks-" vname)))
+	 (withfnc (string->symbol (string-append "with-" vname)))
 	 )
     `(begin
        (define ,funcs ())
@@ -1023,6 +992,12 @@
 	     (begin
 	       (set! ,checks (cons (list name type) ,checks))
 	       (set! names (cons (cons name 'def) names)))))
+
+       (define (,withfnc dpy thunk)      ; with-2.12
+	 (dpy (string-append "#if GTK_CHECK_VERSION(" (substring ,vname 0 1) ", " (substring ,vname 2) ", 0)~%"))
+	 (thunk)
+	 (dpy "#endif~%~%"))
+       
        )))
 
 
@@ -1038,6 +1013,12 @@
 (make-fnc "3.10")
 (make-fnc "3.12")
 
+(define structs ())
+(define make-structs ()) ; these have a xg-specific make function
+(define cairo-make-structs ())
+(define struct-fields ())
+(define settable-struct-fields ())
+(define make-structs-3.0 ()) ; these have a xg-specific make function
 
 
 (define cairo-funcs ())
@@ -1054,6 +1035,27 @@
 (define cairo-types-912 ())
 (define cairo-strings-912 ())
 (define cairo-names-912 ())
+
+(define* (CFNC data spec spec-data) ; 'const -> const for arg cast, 'etc for ... args, 'free -> must free C val before return
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "~A CFNC~%" name)
+	(let ((type (car-str data)))
+	  (if (not (member type all-types)) (set! all-types (cons type all-types)))
+	  (if (not (member type types))
+	      (set! types (cons type types)))
+	  (let ((strs (parse-args args 'ok)))
+	    (if spec
+		(set! funcs (cons (list name type strs args spec spec-data) funcs))
+		(set! funcs (cons (list name type strs args) funcs)))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
+(define (CFNC-PA data min-len max-len types)
+  (CFNC data 'etc (list min-len max-len types)))
+
+(define (CFNC-23-PA data min-len max-len types)
+  (CFNC data 'etc (list min-len max-len types)))
 
 (define* (CAIRO-FUNC data spec)
   (let ((name (cadr-str data))
@@ -1179,30 +1181,6 @@
   (if (and type
 	   (not (member type declared-types)))
       (set! declared-types (cons type declared-types))))
-
-(define* (CLNG name type spec-name)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CLNG~%" name)
-      (begin
-	(set! ulongs (cons (list name type spec-name) ulongs))
-	(set! names (cons (cons name 'ulong) names)))))
-
-(define* (CLNG-2.14 name type spec-name)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CLNG-2.14~%" name)
-      (begin
-	(set! ulongs-2.14 (cons (list name type spec-name) ulongs-2.14))
-	(set! names (cons (cons name 'ulong) names)))))
-
-(define* (CLNG-2.18 name type spec-name)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CLNG-2.18~%" name)
-      (begin
-	(set! ulongs-2.18 (cons (list name type spec-name) ulongs-2.18))
-	(set! names (cons (cons name 'ulong) names)))))
 
 (define* (CINT name type)
   (save-declared-type type)
@@ -1334,62 +1312,6 @@
 	 (set! listable-types (cons type listable-types)))))
  types)
 
-
-(define (with-2.14 dpy thunk)
-  (dpy "#if GTK_CHECK_VERSION(2, 14, 0)~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-2.16 dpy thunk)
-  (dpy "#if GTK_CHECK_VERSION(2, 16, 0)~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-2.18 dpy thunk)
-  (dpy "#if GTK_CHECK_VERSION(2, 18, 0)~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-2.20 dpy thunk)
-  (dpy "#if GTK_CHECK_VERSION(2, 20, 0)~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-3.0 dpy thunk)
-  (dpy "#if GTK_CHECK_VERSION(3, 0, 0)~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-3.2 dpy thunk)
-  (dpy "#if GTK_CHECK_VERSION(3, 2, 0)~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-3.4 dpy thunk)
-  (dpy "#if GTK_CHECK_VERSION(3, 4, 0)~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-3.6 dpy thunk)
-  (dpy "#if GTK_CHECK_VERSION(3, 6, 0)~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-3.8 dpy thunk)
-  (dpy "#if GTK_CHECK_VERSION(3, 8, 0)~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-3.10 dpy thunk)
-  (dpy "#if GTK_CHECK_VERSION(3, 10, 0)~%~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-3.12 dpy thunk)
-  (dpy "#if GTK_CHECK_VERSION(3, 12, 0)~%~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
 (define (with-cairo dpy thunk)
   (thunk)
   )
@@ -1445,9 +1367,6 @@
 			  strings-3.0 strings-3.2 strings-3.4 strings-3.6 strings-3.8 strings-3.10 strings-3.12 cairo-strings-912))
 (define all-string-withs (list with-2.14 with-2.16 
 			       with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12 with-cairo-912))
-
-(define all-ulongs (list ulongs-2.14 ulongs-2.16 ulongs-2.18))
-(define all-ulong-withs (list with-2.14 with-2.16 with-2.18))
 
 
 
@@ -1512,7 +1431,7 @@
 (hey " *     1-Sep:     s7 support.~%")
 (hey " *     8-Jul-08:  started removing all struct accessors (for Gtk 3).~%")
 (hey " *     --------~%")
-(hey " *     9-Mar:     removed all *_get_type functions (nearly 3.0!).~%")
+(hey " *     9-Mar:     removed all *_get_type functions (nearly 300!).~%")
 (hey " *     5-Mar-07:  cairo and more gtkprint.~%")
 (hey " *     --------~%")
 (hey " *     26-Aug:    removed --with-x11, WITH_GTK_AND_X11, xg-x11.h.~%")
@@ -1572,7 +1491,7 @@
 
 (hey "#if HAVE_EXTENSION_LANGUAGE~%~%")
 
-(hey "#if UNDEF_USE_SND~%  #undef USE_SND~%  #define USE_SND 0~%#endif~%~%")
+;(hey "#if UNDEF_USE_SND~%  #undef USE_SND~%  #define USE_SND 0~%#endif~%~%")
 
 (hey "#include <string.h>~%")
 (hey "#include <stdlib.h>~%~%")
@@ -1856,26 +1775,6 @@
 (hey "  return(i);~%")
 (hey "}~%")
 (hey "~%")
-(hey "#if 0~%")
-(hey "static void xm_unprotect_idler(guint id)~%")
-(hey "{~%")
-(hey "  int i;~%")
-(hey "  XEN cur, idler;~%")
-(hey "  for (i = 0; i < xm_protected_size; i++)~%")
-(hey "    {~%")
-(hey "      cur = XEN_VECTOR_REF(xm_protected, i);~%")
-(hey "      if ((XEN_LIST_P(cur)) && (XEN_LIST_LENGTH(cur) == 3) && (XEN_LIST_P(XEN_CADDR(cur))))~%")
-(hey "        {~%")
-(hey "          idler = XEN_CADDR(cur);~%")
-(hey "          if ((XEN_CAR(idler) == xg_idler_symbol) &&~%")
-(hey "              (id == (guint)(XEN_TO_C_INT(XEN_CADR(idler)))))~%")
-(hey "            {~%")
-(hey "              velts[i] = XEN_FALSE;~%")
-(hey "              last_xm_unprotect = i;~%")
-(hey "              return;~%")
-(hey "            }}}~%")
-(hey "}~%")
-(hey "#endif~%")
 (hey "static void xm_unprotect_at(int ind)~%")
 (hey "{~%")
 (hey "  XEN_VECTOR_SET(xm_protected, ind, XEN_FALSE);~%")
@@ -2195,9 +2094,7 @@
 				  (begin
 				    (if (member name idlers)
 					(begin
-					  (if (string=? name "gtk_idle_remove")
-					      (hey "  xm_unprotect_idler(XEN_TO_C_guint(~A));~%" (cadr (car args)))
-					      (hey "  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(~A)));~%" (cadr (car args))))
+					  (hey "  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(~A)));~%" (cadr (car args)))
 					  (set! idlers (remove-if (lambda (x) (string=? x name)) idlers))))
 				  (hey-on "  return(C_TO_XEN_~A(" (no-stars return-type)))))
 			  (hey-on "    result = C_TO_XEN_~A(" (no-stars return-type)))
@@ -2360,9 +2257,7 @@
 			      ;; refargs = 0
 			      (begin
 				(if (member name idlers)
-				    (if (string=? name "gtk_idle_remove")
-					(hey "  xm_unprotect_idler(XEN_TO_C_guint(~A));~%" (cadr (car args)))
-					(hey "  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(~A)));~%" (cadr (car args)))))
+				    (hey "  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(~A)));~%" (cadr (car args))))
 				(if (string=? return-type "void")
 				    (hey "  return(XEN_FALSE);~%")))))))
 		  (begin ; 'lambda (see line 1846)
@@ -2454,6 +2349,7 @@
        (check-func hey (lambda () 
 			 (for-each make-check (reverse check-list))))))
  all-checks all-check-withs)
+
 
 (hey "~%~%/* ---------------------------------------- special functions ---------------------------------------- */~%~%")
 
@@ -3024,10 +2920,8 @@
 (hey "{~%")
 (hey "#if HAVE_SCHEME~%")
 (hey "  #define DEFINE_INTEGER(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))~%")
-(hey "  #define DEFINE_ULONG(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))~%")
 (hey "#else~%")
 (hey "  #define DEFINE_INTEGER(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))~%")
-(hey "  #define DEFINE_ULONG(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))~%")
 (hey "#endif~%")
 (hey "~%")
 (hey "#if !GLIB_CHECK_VERSION(2,35,0)~%")
@@ -3047,23 +2941,6 @@
 				    (hey "  DEFINE_INTEGER(~A);~%" val)) 
 				  (reverse ints-list))))))
  all-ints all-int-withs)
-
-
-(for-each 
- (lambda (vals)
-   (let ((val (car vals)))
-     (hey "  DEFINE_ULONG(~A);~%" val)))
- (reverse ulongs))
-
-(for-each
- (lambda (ulongs-list with-ulongs)
-   (if (not (null? ulongs-list))
-       (with-ulongs hey (lambda () 
-			  (for-each (lambda (vals) 
-				      (let ((val (car vals))) 
-					(hey "  DEFINE_ULONG(~A);~%" val))) 
-				    (reverse ulongs-list))))))
- all-ulongs all-ulong-withs)
 
 (hey "}~%~%")
 

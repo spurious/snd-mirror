@@ -38,7 +38,7 @@
  *     1-Sep:     s7 support.
  *     8-Jul-08:  started removing all struct accessors (for Gtk 3).
  *     --------
- *     9-Mar:     removed all *_get_type functions (nearly 3.0!).
+ *     9-Mar:     removed all *_get_type functions (nearly 300!).
  *     5-Mar-07:  cairo and more gtkprint.
  *     --------
  *     26-Aug:    removed --with-x11, WITH_GTK_AND_X11, xg-x11.h.
@@ -97,11 +97,6 @@
 #endif
 
 #if HAVE_EXTENSION_LANGUAGE
-
-#if UNDEF_USE_SND
-  #undef USE_SND
-  #define USE_SND 0
-#endif
 
 #include <string.h>
 #include <stdlib.h>
@@ -895,7 +890,6 @@ XM_TYPE(GdkFullscreenMode, GdkFullscreenMode)
 #endif
 
 #if GTK_CHECK_VERSION(3, 10, 0)
-
 XM_TYPE_PTR(GdkDisplayManager_, GdkDisplayManager*)
 XM_TYPE(GtkBaselinePosition, GtkBaselinePosition)
 XM_TYPE(GtkRequisition, GtkRequisition)
@@ -920,7 +914,6 @@ XM_TYPE(GdkScreen, GdkScreen)
 #endif
 
 #if GTK_CHECK_VERSION(3, 12, 0)
-
 XM_TYPE_PTR(GtkFlowBoxChild_, GtkFlowBoxChild*)
 XM_TYPE_PTR(GtkFlowBox_, GtkFlowBox*)
 #endif
@@ -1058,26 +1051,6 @@ static int xm_protect(XEN obj)
   return(i);
 }
 
-#if 0
-static void xm_unprotect_idler(guint id)
-{
-  int i;
-  XEN cur, idler;
-  for (i = 0; i < xm_protected_size; i++)
-    {
-      cur = XEN_VECTOR_REF(xm_protected, i);
-      if ((XEN_LIST_P(cur)) && (XEN_LIST_LENGTH(cur) == 3) && (XEN_LIST_P(XEN_CADDR(cur))))
-        {
-          idler = XEN_CADDR(cur);
-          if ((XEN_CAR(idler) == xg_idler_symbol) &&
-              (id == (guint)(XEN_TO_C_INT(XEN_CADR(idler)))))
-            {
-              velts[i] = XEN_FALSE;
-              last_xm_unprotect = i;
-              return;
-            }}}
-}
-#endif
 static void xm_unprotect_at(int ind)
 {
   XEN_VECTOR_SET(xm_protected, ind, XEN_FALSE);
@@ -29698,7 +29671,6 @@ static XEN gxg_pango_font_map_changed(XEN fontmap)
 #endif
 
 #if GTK_CHECK_VERSION(3, 10, 0)
-
 static XEN gxg_gdk_display_manager_peek(void)
 {
   #define H_gdk_display_manager_peek "GdkDisplayManager* gdk_display_manager_peek( void)"
@@ -30906,7 +30878,6 @@ static XEN gxg_gdk_event_get_window(XEN event)
 #endif
 
 #if GTK_CHECK_VERSION(3, 12, 0)
-
 static XEN gxg_gtk_flow_box_child_new(void)
 {
   #define H_gtk_flow_box_child_new "GtkWidget* gtk_flow_box_child_new( void)"
@@ -33762,7 +33733,6 @@ static XEN gxg_GTK_LEVEL_BAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST
 #endif
 
 #if GTK_CHECK_VERSION(3, 10, 0)
-
 static XEN gxg_GTK_PLACES_SIDEBAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(xg_GtkPlacesSidebar__symbol, XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_STACK_SWITCHER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(xg_GtkStackSwitcher__symbol, XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_STACK(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(xg_GtkStack__symbol, XEN_CADR(obj)) : XEN_FALSE);}
@@ -33774,7 +33744,6 @@ static XEN gxg_GTK_SEARCH_BAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIS
 #endif
 
 #if GTK_CHECK_VERSION(3, 12, 0)
-
 static XEN gxg_GTK_FLOW_BOX(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(xg_GtkFlowBox__symbol, XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_FLOW_BOX_CHILD(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(xg_GtkFlowBoxChild__symbol, XEN_CADR(obj)) : XEN_FALSE);}
 #endif
@@ -33956,7 +33925,6 @@ static XEN gxg_GTK_IS_LEVEL_BAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT
 #endif
 
 #if GTK_CHECK_VERSION(3, 10, 0)
-
 static XEN gxg_GTK_IS_PLACES_SIDEBAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_PLACES_SIDEBAR((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_STACK_SWITCHER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_STACK_SWITCHER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_STACK(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_STACK((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -33968,7 +33936,6 @@ static XEN gxg_GTK_IS_SEARCH_BAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJEC
 #endif
 
 #if GTK_CHECK_VERSION(3, 12, 0)
-
 static XEN gxg_GTK_IS_FLOW_BOX(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_FLOW_BOX((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_FLOW_BOX_CHILD(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_FLOW_BOX_CHILD((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
@@ -37467,7 +37434,6 @@ XEN_NARGIFY_1(gxg_pango_font_map_changed_w, gxg_pango_font_map_changed)
 #endif
 
 #if GTK_CHECK_VERSION(3, 10, 0)
-
 XEN_NARGIFY_0(gxg_gdk_display_manager_peek_w, gxg_gdk_display_manager_peek)
 XEN_NARGIFY_1(gxg_gdk_set_allowed_backends_w, gxg_gdk_set_allowed_backends)
 XEN_NARGIFY_2(gxg_gtk_box_set_baseline_position_w, gxg_gtk_box_set_baseline_position)
@@ -37604,7 +37570,6 @@ XEN_NARGIFY_1(gxg_gdk_event_get_window_w, gxg_gdk_event_get_window)
 #endif
 
 #if GTK_CHECK_VERSION(3, 12, 0)
-
 XEN_NARGIFY_0(gxg_gtk_flow_box_child_new_w, gxg_gtk_flow_box_child_new)
 XEN_NARGIFY_1(gxg_gtk_flow_box_child_get_index_w, gxg_gtk_flow_box_child_get_index)
 XEN_NARGIFY_1(gxg_gtk_flow_box_child_is_selected_w, gxg_gtk_flow_box_child_is_selected)
@@ -38109,7 +38074,6 @@ XEN_NARGIFY_1(gxg_GTK_LEVEL_BAR_w, gxg_GTK_LEVEL_BAR)
 #endif
 
 #if GTK_CHECK_VERSION(3, 10, 0)
-
 XEN_NARGIFY_1(gxg_GTK_PLACES_SIDEBAR_w, gxg_GTK_PLACES_SIDEBAR)
 XEN_NARGIFY_1(gxg_GTK_STACK_SWITCHER_w, gxg_GTK_STACK_SWITCHER)
 XEN_NARGIFY_1(gxg_GTK_STACK_w, gxg_GTK_STACK)
@@ -38121,7 +38085,6 @@ XEN_NARGIFY_1(gxg_GTK_SEARCH_BAR_w, gxg_GTK_SEARCH_BAR)
 #endif
 
 #if GTK_CHECK_VERSION(3, 12, 0)
-
 XEN_NARGIFY_1(gxg_GTK_FLOW_BOX_w, gxg_GTK_FLOW_BOX)
 XEN_NARGIFY_1(gxg_GTK_FLOW_BOX_CHILD_w, gxg_GTK_FLOW_BOX_CHILD)
 #endif
@@ -38303,7 +38266,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_LEVEL_BAR_w, gxg_GTK_IS_LEVEL_BAR)
 #endif
 
 #if GTK_CHECK_VERSION(3, 10, 0)
-
 XEN_NARGIFY_1(gxg_GTK_IS_PLACES_SIDEBAR_w, gxg_GTK_IS_PLACES_SIDEBAR)
 XEN_NARGIFY_1(gxg_GTK_IS_STACK_SWITCHER_w, gxg_GTK_IS_STACK_SWITCHER)
 XEN_NARGIFY_1(gxg_GTK_IS_STACK_w, gxg_GTK_IS_STACK)
@@ -38315,7 +38277,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_SEARCH_BAR_w, gxg_GTK_IS_SEARCH_BAR)
 #endif
 
 #if GTK_CHECK_VERSION(3, 12, 0)
-
 XEN_NARGIFY_1(gxg_GTK_IS_FLOW_BOX_w, gxg_GTK_IS_FLOW_BOX)
 XEN_NARGIFY_1(gxg_GTK_IS_FLOW_BOX_CHILD_w, gxg_GTK_IS_FLOW_BOX_CHILD)
 #endif
@@ -41435,7 +41396,6 @@ static void define_functions(void)
 #endif
 
 #if GTK_CHECK_VERSION(3, 10, 0)
-
   XG_DEFINE_PROCEDURE(gdk_display_manager_peek, gxg_gdk_display_manager_peek_w, 0, 0, 0, H_gdk_display_manager_peek);
   XG_DEFINE_PROCEDURE(gdk_set_allowed_backends, gxg_gdk_set_allowed_backends_w, 1, 0, 0, H_gdk_set_allowed_backends);
   XG_DEFINE_PROCEDURE(gtk_box_set_baseline_position, gxg_gtk_box_set_baseline_position_w, 2, 0, 0, H_gtk_box_set_baseline_position);
@@ -41572,7 +41532,6 @@ static void define_functions(void)
 #endif
 
 #if GTK_CHECK_VERSION(3, 12, 0)
-
   XG_DEFINE_PROCEDURE(gtk_flow_box_child_new, gxg_gtk_flow_box_child_new_w, 0, 0, 0, H_gtk_flow_box_child_new);
   XG_DEFINE_PROCEDURE(gtk_flow_box_child_get_index, gxg_gtk_flow_box_child_get_index_w, 1, 0, 0, H_gtk_flow_box_child_get_index);
   XG_DEFINE_PROCEDURE(gtk_flow_box_child_is_selected, gxg_gtk_flow_box_child_is_selected_w, 1, 0, 0, H_gtk_flow_box_child_is_selected);
@@ -42068,7 +42027,6 @@ static void define_functions(void)
 #endif
 
 #if GTK_CHECK_VERSION(3, 10, 0)
-
   XG_DEFINE_PROCEDURE(GTK_PLACES_SIDEBAR, gxg_GTK_PLACES_SIDEBAR_w, 1, 0, 0, "(GTK_PLACES_SIDEBAR obj) casts obj to GTK_PLACES_SIDEBAR");
   XG_DEFINE_PROCEDURE(GTK_STACK_SWITCHER, gxg_GTK_STACK_SWITCHER_w, 1, 0, 0, "(GTK_STACK_SWITCHER obj) casts obj to GTK_STACK_SWITCHER");
   XG_DEFINE_PROCEDURE(GTK_STACK, gxg_GTK_STACK_w, 1, 0, 0, "(GTK_STACK obj) casts obj to GTK_STACK");
@@ -42080,7 +42038,6 @@ static void define_functions(void)
 #endif
 
 #if GTK_CHECK_VERSION(3, 12, 0)
-
   XG_DEFINE_PROCEDURE(GTK_FLOW_BOX, gxg_GTK_FLOW_BOX_w, 1, 0, 0, "(GTK_FLOW_BOX obj) casts obj to GTK_FLOW_BOX");
   XG_DEFINE_PROCEDURE(GTK_FLOW_BOX_CHILD, gxg_GTK_FLOW_BOX_CHILD_w, 1, 0, 0, "(GTK_FLOW_BOX_CHILD obj) casts obj to GTK_FLOW_BOX_CHILD");
 #endif
@@ -42271,7 +42228,6 @@ static void define_functions(void)
 #endif
 
 #if GTK_CHECK_VERSION(3, 10, 0)
-
   XG_DEFINE_PROCEDURE(GTK_IS_PLACES_SIDEBAR, gxg_GTK_IS_PLACES_SIDEBAR_w, 1, 0, 0, "(GTK_IS_PLACES_SIDEBAR obj): " PROC_TRUE " if obj is a GTK_IS_PLACES_SIDEBAR");
   XG_DEFINE_PROCEDURE(GTK_IS_STACK_SWITCHER, gxg_GTK_IS_STACK_SWITCHER_w, 1, 0, 0, "(GTK_IS_STACK_SWITCHER obj): " PROC_TRUE " if obj is a GTK_IS_STACK_SWITCHER");
   XG_DEFINE_PROCEDURE(GTK_IS_STACK, gxg_GTK_IS_STACK_w, 1, 0, 0, "(GTK_IS_STACK obj): " PROC_TRUE " if obj is a GTK_IS_STACK");
@@ -42283,7 +42239,6 @@ static void define_functions(void)
 #endif
 
 #if GTK_CHECK_VERSION(3, 12, 0)
-
   XG_DEFINE_PROCEDURE(GTK_IS_FLOW_BOX, gxg_GTK_IS_FLOW_BOX_w, 1, 0, 0, "(GTK_IS_FLOW_BOX obj): " PROC_TRUE " if obj is a GTK_IS_FLOW_BOX");
   XG_DEFINE_PROCEDURE(GTK_IS_FLOW_BOX_CHILD, gxg_GTK_IS_FLOW_BOX_CHILD_w, 1, 0, 0, "(GTK_IS_FLOW_BOX_CHILD obj): " PROC_TRUE " if obj is a GTK_IS_FLOW_BOX_CHILD");
 #endif
@@ -42308,10 +42263,8 @@ static void define_integers(void)
 {
 #if HAVE_SCHEME
   #define DEFINE_INTEGER(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))
-  #define DEFINE_ULONG(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))
 #else
   #define DEFINE_INTEGER(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))
-  #define DEFINE_ULONG(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))
 #endif
 
 #if !GLIB_CHECK_VERSION(2,35,0)
@@ -43108,6 +43061,7 @@ static void define_integers(void)
   DEFINE_INTEGER(PANGO_WEIGHT_BOOK);
   DEFINE_INTEGER(PANGO_WEIGHT_MEDIUM);
   DEFINE_INTEGER(GDK_WINDOW_OFFSCREEN);
+  DEFINE_INTEGER(GTK_ENTRY_BUFFER_MAX_SIZE);
 #endif
 
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -43457,7 +43411,6 @@ static void define_integers(void)
 #endif
 
 #if GTK_CHECK_VERSION(3, 10, 0)
-
   DEFINE_INTEGER(GTK_ALIGN_BASELINE);
   DEFINE_INTEGER(GTK_BASELINE_POSITION_TOP);
   DEFINE_INTEGER(GTK_BASELINE_POSITION_CENTER);
@@ -43481,7 +43434,6 @@ static void define_integers(void)
 #endif
 
 #if GTK_CHECK_VERSION(3, 12, 0)
-
   DEFINE_INTEGER(GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
   DEFINE_INTEGER(GTK_STACK_TRANSITION_TYPE_SLIDE_UP_DOWN);
   DEFINE_INTEGER(GTK_STACK_TRANSITION_TYPE_OVER_UP);
@@ -43646,13 +43598,6 @@ static void define_integers(void)
   DEFINE_INTEGER(CAIRO_SURFACE_TYPE_TEE);
   DEFINE_INTEGER(CAIRO_SURFACE_TYPE_XML);
   DEFINE_INTEGER(CAIRO_SURFACE_TYPE_SKIA);
-#endif
-
-  DEFINE_ULONG(GDK_PIXBUF_ERROR);
-  DEFINE_ULONG(PANGO_TYPE_ITEM);
-  DEFINE_ULONG(PANGO_TYPE_LAYOUT_LINE);
-#if GTK_CHECK_VERSION(2, 18, 0)
-  DEFINE_ULONG(GTK_ENTRY_BUFFER_MAX_SIZE);
 #endif
 
 }
@@ -44287,7 +44232,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("29-Oct-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("30-Oct-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
