@@ -713,13 +713,13 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->speed_control_style_symbol = s7_define_variable(s7, "*" S_speed_control_style "*", s7_make_integer(s7, DEFAULT_SPEED_CONTROL_STYLE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_speed_control_style "*) (list #f (lambda (s v) (set! (" S_speed_control_style ") v)) #f))");
 
-  ss->expand_control_length_symbol = s7_define_variable(s7, "*" S_expand_control_length "*", s7_make_integer(s7, DEFAULT_EXPAND_CONTROL_LENGTH));
+  ss->expand_control_length_symbol = s7_define_variable(s7, "*" S_expand_control_length "*", s7_make_real(s7, DEFAULT_EXPAND_CONTROL_LENGTH));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_expand_control_length "*) (list #f (lambda (s v) (set! (" S_expand_control_length ") v)) #f))");
 
   ss->expand_control_ramp_symbol = s7_define_variable(s7, "*" S_expand_control_ramp "*", s7_make_real(s7, DEFAULT_EXPAND_CONTROL_RAMP));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_expand_control_ramp "*) (list #f (lambda (s v) (set! (" S_expand_control_ramp ") v)) #f))");
 
-  ss->expand_control_hop_symbol = s7_define_variable(s7, "*" S_expand_control_hop "*", s7_make_integer(s7, DEFAULT_EXPAND_CONTROL_HOP));
+  ss->expand_control_hop_symbol = s7_define_variable(s7, "*" S_expand_control_hop "*", s7_make_real(s7, DEFAULT_EXPAND_CONTROL_HOP));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_expand_control_hop "*) (list #f (lambda (s v) (set! (" S_expand_control_hop ") v)) #f))");
 
   ss->expand_control_jitter_symbol = s7_define_variable(s7, "*" S_expand_control_jitter "*", s7_make_real(s7, DEFAULT_EXPAND_CONTROL_JITTER));

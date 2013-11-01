@@ -1175,7 +1175,7 @@ struct s7_scheme {
   s7_pointer *op_stack, *op_stack_now, *op_stack_end;
   unsigned int op_stack_size;
 
-  s7_pointer stacktrace_env;
+  s7_pointer stacktrace_env, maximum_stack_size;
 
   s7_cell **heap, **free_heap, **free_heap_top, **free_heap_trigger, **previous_free_heap_top;
   unsigned int heap_size;
@@ -4293,16 +4293,36 @@ static void stack_reset(s7_scheme *sc)
 } 
 
 
+static s7_pointer g_maximum_stack_size_set(s7_scheme *sc, s7_pointer args)
+{
+  if (s7_is_integer(cadr(args)))
+    {
+      s7_Int len;
+      len = s7_integer(cadr(args));
+      if (len >= INITIAL_STACK_SIZE)
+	return(cadr(args));
+    }
+  return(sc->ERROR);
+}
+
+
 static void increase_stack_size(s7_scheme *sc)
 {
-  int i, new_size, loc;
+  unsigned int i, new_size, loc;  /* long long ints?? sc->stack_size also is an unsigned int */
 
   loc = s7_stack_top(sc);
   new_size = sc->stack_size * 2;
   /* how can we trap infinite recursions?  Is a warning in order here?
+   *   I think I'll add *maximum-stack-size* 
+   *   size currently reaches 8192 in s7test
    */
+  if (new_size > integer(slot_value(sc->maximum_stack_size)))
+    s7_error(sc, s7_make_symbol(sc, "stack-too-big"), list_1(sc, make_protected_string(sc, "stack has grown past *maximum-stack-size*")));
 
   vector_elements(sc->stack) = (s7_pointer *)realloc(vector_elements(sc->stack), new_size * sizeof(s7_pointer));
+  if (vector_elements(sc->stack) == NULL)
+    s7_error(sc, s7_make_symbol(sc, "stack-too-big"), list_1(sc, make_protected_string(sc, "no room to expand stack?")));
+
   for (i = sc->stack_size; i < new_size; i++)
     vector_element(sc->stack, i) = sc->NIL;
   vector_length(sc->stack) = new_size;
@@ -45801,6 +45821,8 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	  if (is_not_null(x))               /* (let* ((a 1) . b) a) */
 	    return(eval_error(sc, "let* var list improper?: ~A", x));
 	}
+
+      /* currently (let* ((a 1) (a (+ a 1))) a) is 2, not an error! */
       set_local(z);
     }
 
@@ -45951,7 +45973,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 
 static s7_pointer check_letrec(s7_scheme *sc)
 {
-  s7_pointer x;
+  s7_pointer x, y;
   if ((!is_pair(sc->code)) ||                 /* (letrec . 1) */
       (!is_pair(cdr(sc->code))) ||            /* (letrec) */
       (!s7_is_list(sc, car(sc->code))))       /* (letrec 1 ...) */
@@ -45959,27 +45981,34 @@ static s7_pointer check_letrec(s7_scheme *sc)
   
   for (x = car(sc->code); is_not_null(x); x = cdr(x))
     {
+      s7_pointer carx;
       if (!is_pair(x))                        /* (letrec ((a 1) . 2) ...) */
 	return(eval_error(sc, "improper list of letrec variables? ~A", sc->code));
       
-      if ((!is_pair(car(x))) ||               /* (letrec (1 2) #t) */
-	  (!(is_symbol(caar(x)))))
-	return(eval_error(sc, "bad variable ~S in letrec", car(x)));
+      carx = car(x);
+      if ((!is_pair(carx)) ||                 /* (letrec (1 2) #t) */
+	  (!(is_symbol(car(carx)))))
+	return(eval_error(sc, "bad variable ~S in letrec", carx));
       
-      if (is_immutable(caar(x)))
+      if (is_immutable(car(carx)))
 	return(s7_error(sc, sc->WRONG_TYPE_ARG,
 			list_2(sc, make_protected_string(sc, "can't bind an immutable object: ~S"), x)));
 
-      if (!is_pair(cdar(x)))                  /* (letrec ((x . 1))...) */
+      if (!is_pair(cdr(carx)))                /* (letrec ((x . 1))...) */
 	{
-	  if (is_null(cdar(x)))               /* (letrec ((x)) x) -- perhaps this is legal? */
-	    return(eval_error(sc, "letrec variable declaration has no value?: ~A", car(x)));
-	  return(eval_error(sc, "letrec variable declaration is not a proper list?: ~A", car(x)));
+	  if (is_null(cdr(carx)))             /* (letrec ((x)) x) -- perhaps this is legal? */
+	    return(eval_error(sc, "letrec variable declaration has no value?: ~A", carx));
+	  return(eval_error(sc, "letrec variable declaration is not a proper list?: ~A", carx));
 	}
-      if (is_not_null(cddar(x)))              /* (letrec ((x 1 2 3)) ...) */
-	return(eval_error(sc, "letrec variable declaration has more than one value?: ~A", car(x)));
+      if (is_not_null(cddr(carx)))            /* (letrec ((x 1 2 3)) ...) */
+	return(eval_error(sc, "letrec variable declaration has more than one value?: ~A", carx));
 
-      set_local(caar(x));
+      /* check for name collisions -- not sure this is required by Scheme */
+      for (y = car(sc->code); y != x; y = cdr(y))
+	if (car(carx) == caar(y))
+	  return(eval_error(sc, "duplicate identifier in letrec: ~A", carx));
+
+      set_local(car(carx));
     }
 
   if ((is_overlaid(sc->code)) &&
@@ -67450,8 +67479,16 @@ s7_scheme *s7_init(void)
   s7_symbol_set_access(sc, sym, 
 		       list_3(sc, 
 			      sc->F, 
-			      s7_make_function(sc, "(set *vector-print-length*)", g_vector_print_length_set, 2, 0, false, 
-					       "called if *vector-print-length* is set"), 
+			      s7_make_function(sc, "(set *vector-print-length*)", g_vector_print_length_set, 2, 0, false, "called if *vector-print-length* is set"), 
+			      sc->F));
+
+  /* -------- *maximum-stack-size* -------- */
+  sym = s7_define_variable(sc, "*maximum-stack-size*", s7_make_integer(sc, (1 << 30)));
+  sc->maximum_stack_size = global_slot(sym);
+  s7_symbol_set_access(sc, sym, 
+		       list_3(sc, 
+			      sc->F, 
+			      s7_make_function(sc, "(set *maximum-stack-size*)", g_maximum_stack_size_set, 2, 0, false, "called if *maximum-stack-size* is set"), 
 			      sc->F));
 
   /* -------- *safety* -------- */
@@ -67507,10 +67544,10 @@ s7_scheme *s7_init(void)
   s7_define_constant(sc, "*stacktrace*", sc->stacktrace_env);
 
   /* sigh... I don't like these! */
-  s7_define_variable(sc, "nan.0", real_NaN);
-  s7_define_variable(sc, "-nan.0", real_NaN);
-  s7_define_variable(sc, "inf.0", make_permanent_real(INFINITY));
-  s7_define_variable(sc, "-inf.0", make_permanent_real(-INFINITY));
+  s7_define_constant(sc, "nan.0", real_NaN);
+  s7_define_constant(sc, "-nan.0", real_NaN);
+  s7_define_constant(sc, "inf.0", make_permanent_real(INFINITY));
+  s7_define_constant(sc, "-inf.0", make_permanent_real(-INFINITY));
 
 				
   /* *features* */
@@ -68024,3 +68061,5 @@ int main(int argc, char **argv)
 
 /* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))
  */
+
+

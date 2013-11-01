@@ -4626,6 +4626,9 @@ To evaluate the error handler in the environment of the error:
 	     (cons 'args args))    ; add the error handler args
 	    (list args x y)))))    ; we have access to 'y'
 </pre>
+
+<p>To limit the maximum size of the stack, set *maximum-stack-size*.
+</p>
 </div>
 
 
@@ -5410,7 +5413,7 @@ This should be named define-reader-macro.
 <li>for-each and map accept different length arguments; the operation stops when any argument reaches its end.
 <li>for-each and map accept any applicable object as the first argument, and any sequence as a trailing argument.
 <li>letrec*, but without conviction.
-<li>set! and *-set! return the new value, not #&lt;unspecified&gt;.
+<li>set! and *-set! return the new value (modulo symbol-access), not #&lt;unspecified&gt;.
 <li>port-closed?
 <li>current-input-port, current-output-port, and current-error-port have setters
 <li>the default IO ports are named *stdin*, *stdout*, and *stderr*.
@@ -5483,6 +5486,31 @@ In the latter cases, if the macro returns (values), nothing is placed in the out
 <p>
 Better ideas are always welcome!
 </p>
+
+<p>Here are the built-in s7 variables:
+</p>
+<ul>
+<li>*bignum-precision*
+<li>*gc-stats*
+<li>*features*
+<li>*vector-print-length*
+<li>*maximum-stack-size*
+<li>*safety*
+<li>*load-path*
+<li>*autoload*
+<li>*#readers*
+</ul>
+
+<p>And the built-in constants:
+</p>
+<ul>
+<li>pi
+<li>*stdin* *stdout* *stderr*
+<li>*stacktrace*
+<li>nan.0 -nan.0 inf.0 -inf.0
+<li>most-positive-fixnum most-negative-fixnum
+<li>*unbound-variable-hook* *load-hook* *error-hook*
+</ul>
 </div>
 
 
