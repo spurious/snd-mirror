@@ -2034,8 +2034,9 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define character_name_length(p)      (p)->object.chr.length
 
 #define optimize_data(p)              (p)->object.cons.dat.d.data
-/* static unsigned short optimize_data(s7_pointer p) {if (!is_optimized(p)) abort(); return(p->object.cons.dat.d.data);}  */
+/* static unsigned short optimize_data(s7_pointer p) {if (!is_optimized(p)) abort(); return(p->object.cons.dat.d.data);} */
 /* #define set_optimize_data(P, X)    do {(P)->object.cons.dat.d.data = (X); (P)->object.cons.dat.d.data_index = (X);} while (0) */
+
 #define optimize_data_match(P, Q)     ((is_optimized(P)) && ((optimize_data(P) & 0xfffe) == Q))
 #define optimize_data_index(p)        (p)->object.cons.dat.d.data_index
 #define is_hopping(P)                 ((optimize_data(P) & 0x1) == 1)
@@ -24685,6 +24686,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       if (use_write == USE_READABLE_WRITE)
 	write_macro_readably(sc, obj, port);
       else port_write_string(port)(sc, "#<macro>", 8, port);
+      /* so letrec* (for example) is displayed as #<macro> -- not ideal! */
       break;
 
     case T_BACRO:
@@ -30625,7 +30627,7 @@ If its first argument is a list, the list is copied (despite the '!')."
 	    {
 	      int orig_data;
 	      orig_data = optimize_data(expr);
-	      optimize_data(expr) |= 1;
+	      set_optimize_data(expr, optimize_data(expr) | 1);
 	      sort_f = end_dox_eval(sc, expr);
 	      if (sort_f)
 		{
@@ -30635,7 +30637,7 @@ If its first argument is a list, the list is copied (despite the '!')."
 		  sort_func = dox_compare;
 		  compare_args = expr;
 		}
-	      optimize_data(expr) = orig_data;
+	      set_optimize_data(expr, orig_data);
 	    }
 	}
     }
@@ -43385,12 +43387,16 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 
 		  if (is_symbol(caddar_x))
 		    {
-		      if (optimize_data(cadar_x) == HOP_UNKNOWN_S)
+		      if ((is_optimized(cadar_x)) &&
+			  (is_symbol(car(cadar_x))) && /* this is *really* tricky but sc->QQ_List is the bad case (i.e. function itself can be car) */
+			  (optimize_data(cadar_x) == HOP_UNKNOWN_S))
 			set_optimize_data(car_x, hop + OP_SAFE_C_opVSq_S);
 		    }
 		  else
 		    {
-		      if (optimize_data(caddar_x) == HOP_UNKNOWN_S)
+		      if ((is_optimized(caddar_x)) &&
+			  (is_symbol(car(caddar_x))) &&
+			  (optimize_data(caddar_x) == HOP_UNKNOWN_S))
 			set_optimize_data(car_x, hop + OP_SAFE_C_S_opVSq);
 		    }
 
@@ -43449,7 +43455,11 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		  else set_optimize_data(car_x, hop + OP_SAFE_C_PP);
 		  choose_c_function(sc, car_x, func, 2);
 
-		  if ((optimize_data(cadar_x) == HOP_UNKNOWN_S) &&
+		  if ((is_optimized(cadar_x)) &&
+		      (is_symbol(car(cadar_x))) &&
+		      (optimize_data(cadar_x) == HOP_UNKNOWN_S) &&
+		      (is_optimized(caddar_x)) &&
+		      (is_symbol(car(caddar_x))) &&
 		      (optimize_data(caddar_x) == HOP_UNKNOWN_S))
 		    set_optimize_data(car_x, hop + OP_SAFE_C_opVSq_opVSq);
 
@@ -68060,6 +68070,8 @@ int main(int argc, char **argv)
  */
 
 /* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))
+ * *begin-hook*?
+ * letrec* built-in (not macro)
  */
 
 

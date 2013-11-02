@@ -8,17 +8,18 @@
       (exit)))
 
 (define data-file #f) ;(open-output-file "output-of-t455"))
-(define max-args 3)
+(define max-args 2)
 
 (define constants (list #f #t () #\a (/ 1 most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i
 			"hi455" :key hi: 'hi (list 1) (list 1 2) (cons 1 2) '() (list (list 1 2)) (list (list 1)) (list ()) #() 
 			1/0+i 0+0/0i 0+1/0i 1+0/0i 0/0+0i 0/0+0/0i 1+1/0i 0/0+i cons ''2 
 			1+i 1+1e10i 1e15+1e15i 0+1e18i 1e18 (integer->char 255) (string (integer->char 255)) 1e308 
 			most-positive-fixnum most-negative-fixnum (- most-positive-fixnum 1) (+ most-negative-fixnum 1)
-			-1 0 0.0 1 1.5 1.0+1.0i 3/4 #\null -63 (make-hash-table) (hash-table '(a . 2) '(b .3))
-			'((1 2) (3 4)) '((1 (2)) (((3) 4))) '(()) "" (list #(1) "1") '(1 2 . 3)
-			#(1 2) (vector 1 '(3)) (let ((x 3)) (lambda (y) (+ x y))) abs (lambda args args) (lambda* ((a 3) (b 2)) (+ a b))
-			(augment-environment '() (cons 'a 1)) (current-environment) (global-environment)
+			-1 0 0.0 1 1.5 1.0-1.0i 3/4 #\null -63 (make-hash-table) (hash-table '(a . 2) '(b .3))
+			'((1 2) (3 4)) '((1 (2)) (((3) 4))) "" (list #(1) "1") '(1 2 . 3)
+			#(1 2) (vector 1 '(3)) (let ((x 3)) (lambda (y) (+ x y))) abs 
+			(lambda args args) (lambda* ((a 3) (b 2)) (+ a b)) (lambda () 3)
+			(augment-environment () (cons 'a 1)) (current-environment) (global-environment)
 			*load-hook*  *error-hook* (make-random-state 123) *vector-print-length* *gc-stats*
 			quasiquote macroexpand cond-expand begin let (c-pointer 0) pi (call-with-exit (lambda (goto) goto))
 			(string #\a #\null #\b) #2d((1 2) (3 4))
@@ -26,7 +27,8 @@
 			(make-vector '(2 3) "hi") #("hiho" "hi" "hoho") (make-shared-vector (make-vector '(2 3) 1 #t) '(6))
 			(make-shared-vector (make-shared-vector (make-vector '(2 3) 1.0 #t) '(6)) '(2 2))
 			(vector-ref #2d((#(1 2 3)) (#(3 4 5))) 0 0)
-			(c-pointer 0) :readable :else
+			(c-pointer 0) :readable :else 
+			(bytevector 0 1 2) 
 			))
 
 (define low 0)
