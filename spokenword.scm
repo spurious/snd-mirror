@@ -137,55 +137,9 @@
           (play (max 0 (- out-position preview-length)) #f #f #f out-position #f play-next))
       (play (selected-sound) (cursor) (+ (cursor) preview-length)))))
 
-; Copied from examp.scm
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define* (if-cursor-follows-play-it-stays-where-play-stopped (enable #t))
-  ; call with #t or no args to enable this, with #f to disable
+(set! *with-tracking-cursor* :track-and-stay)
 
-  (let ()
-    (define current-cursor
-      (make-procedure-with-setter
-       (lambda (snd chn) (channel-property 'cursor snd chn))
-       (lambda (snd chn val) (set! (channel-property 'cursor snd chn) val))))
-    
-    (define original-cursor
-      (make-procedure-with-setter
-       (lambda (snd chn) (channel-property 'original-cursor snd chn))
-       (lambda (snd chn val) (set! (channel-property 'original-cursor snd chn) val))))
-    
-    (define (local-dac-func hook)
-      (for-each
-       (lambda (snd)
-   (do ((i 0 (+ i 1)))
-       ((= i (channels snd)))
-     (if (not (= (cursor snd i) (original-cursor snd i)))
-         (set! (current-cursor snd i) (cursor snd i)))))
-       (sounds)))
-    
-    (define (local-start-playing-func hook)
-      (let ((snd (hook 'snd)))
-	(do ((i 0 (+ i 1)))
-	    ((= i (channels snd)))
-	  (set! (original-cursor snd i) (cursor snd i))
-	  (set! (current-cursor snd i) (cursor snd i)))))
-    
-    (define (local-stop-playing-func hook)
-      (let ((snd (hook 'snd)))
-	(set! (cursor snd #t) (current-cursor snd 0))))
-    
-    (if enable
-  (begin
-    (hook-push dac-hook local-dac-func)
-    (hook-push start-playing-hook local-start-playing-func)
-    (hook-push stop-playing-hook local-stop-playing-func))
-  (begin
-    (hook-remove dac-hook local-dac-func)
-    (hook-remove start-playing-hook local-start-playing-func)
-    (hook-remove stop-playing-hook local-stop-playing-func)))))
-
-; Default to if-cursor-follows-play-it-stays-where-play-stopped #t.
-(if-cursor-follows-play-it-stays-where-play-stopped)
 
 ; Key bindings
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

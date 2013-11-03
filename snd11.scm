@@ -343,11 +343,5 @@ but not anymore.
 
 (define clear-selection unselect-all)
 
-
-
-(define cursor-follows-play (make-procedure-with-setter
-			     (lambda (snd)
-			       (with-tracking-cursor))
-			     (lambda (snd val)
-			       (set! (with-tracking-cursor) val))))
+(define cursor-follows-play with-tracking-cursor)
 

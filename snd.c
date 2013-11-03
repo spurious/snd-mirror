@@ -755,7 +755,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->show_controls_symbol = s7_define_variable(s7, "*" S_show_controls "*", s7_make_boolean(s7, DEFAULT_SHOW_CONTROLS));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_controls "*) (list #f (lambda (s v) (set! (" S_show_controls ") v)) #f))");
 
-  ss->with_tracking_cursor_symbol = s7_define_variable(s7, "*" S_with_tracking_cursor "*", s7_make_boolean(s7, DEFAULT_WITH_TRACKING_CURSOR));
+  ss->with_tracking_cursor_symbol = s7_define_variable(s7, "*" S_with_tracking_cursor "*", s7_make_integer(s7, (int)DEFAULT_WITH_TRACKING_CURSOR));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_tracking_cursor "*) (list #f (lambda (s v) (set! (" S_with_tracking_cursor ") v)) #f))");
 
   ss->html_dir_symbol = s7_define_variable(s7, "*" S_html_dir "*", s7_make_string(s7, DEFAULT_HTML_DIR));

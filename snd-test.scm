@@ -1504,7 +1504,7 @@
 	(list 'auto-update-interval auto-update-interval 60.0 120.0 '*auto-update-interval*)
 	(list 'cursor-update-interval cursor-update-interval 0.05 0.10 '*cursor-update-interval*)
 	(list 'cursor-location-offset cursor-location-offset 0 32768 '*cursor-location-offset*)
-	(list 'with-tracking-cursor with-tracking-cursor #f #t '*with-tracking-cursor*)
+	(list 'with-tracking-cursor with-tracking-cursor #f 1 '*with-tracking-cursor*)
 	(list 'cursor-size cursor-size 15 30 '*cursor-size*)
 	(list 'cursor-style cursor-style cursor-cross cursor-line '*cursor-style*)
 	(list 'tracking-cursor-style tracking-cursor-style cursor-line cursor-cross '*tracking-cursor-style*)

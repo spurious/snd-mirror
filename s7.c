@@ -68072,6 +68072,8 @@ int main(int argc, char **argv)
 /* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))
  * *begin-hook*?
  * letrec* built-in (not macro)
+ *
+ * check multisound/channel tracking cases
  */
 
 

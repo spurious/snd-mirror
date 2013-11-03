@@ -5063,6 +5063,7 @@ void check_cursor_shape(chan_info *cp, int x, int y)
     case CLICK_MARK_PLAY:
       if (cp->current_cursor != ss->play_cursor)
 	{
+	  cp->original_cursor = CURSOR(cp);
 	  cp->current_cursor = ss->play_cursor;
 	  GUI_SET_CURSOR(channel_graph(cp), ss->play_cursor);
 	}

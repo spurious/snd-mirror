@@ -42,7 +42,6 @@
 ;;; explode-sf2 -- turn soundfont file into a bunch of files of the form sample-name.aif
 ;;; open-next-file-in-directory -- middle button click closes current file and opens next
 ;;; chain-dsps
-;;; cursor-follows-play and stays where it was when the play ended
 ;;; scramble-channels -- reorder chans
 ;;; scramble-channel -- randomly reorder segments within a sound
 ;;; reverse-by-blocks and reverse-within-blocks -- reorder or reverse blocks within a channel
@@ -1960,54 +1959,6 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 						      (osc2 (* 2 val)))))))
 |#
 
-
-;;; -------- cursor-follows-play and stays where it was when the play ended
-
-(if (not (provided? 'snd-hooks.scm)) (load "hooks.scm"))
-
-(define* (if-cursor-follows-play-it-stays-where-play-stopped (enable #t))
-  ;; call with #t or no args to enable this, with #f to disable
-
-  (let ()
-    (define current-cursor
-      (make-procedure-with-setter
-       (lambda (snd chn) (channel-property 'cursor snd chn))
-       (lambda (snd chn val) (set! (channel-property 'cursor snd chn) val))))
-    
-    (define original-cursor
-      (make-procedure-with-setter
-       (lambda (snd chn) (channel-property 'original-cursor snd chn))
-       (lambda (snd chn val) (set! (channel-property 'original-cursor snd chn) val))))
-    
-    (define (local-dac-func hook)
-      (for-each
-       (lambda (snd)
-	 (do ((i 0 (+ i 1)))
-	     ((= i (channels snd)))
-	   (if (not (= (cursor snd i) (original-cursor snd i)))
-	       (set! (current-cursor snd i) (cursor snd i)))))
-       (sounds)))
-    
-    (define (local-start-playing-func hook)
-      (let ((snd (hook 'snd)))
-	(do ((i 0 (+ i 1)))
-	    ((= i (channels snd)))
-	  (set! (original-cursor snd i) (cursor snd i))
-	  (set! (current-cursor snd i) (cursor snd i)))))
-    
-    (define (local-stop-playing-func hook)
-      (let ((snd (hook 'snd)))
-	(set! (cursor snd #t) (current-cursor snd 0))))
-    
-    (if enable
-	(begin
-	  (hook-push dac-hook local-dac-func)
-	  (hook-push start-playing-hook local-start-playing-func)
-	  (hook-push stop-playing-hook local-stop-playing-func))
-	(begin
-	  (hook-remove dac-hook local-dac-func)
-	  (hook-remove start-playing-hook local-start-playing-func)
-	  (hook-remove stop-playing-hook local-stop-playing-func)))))
 
 
 ;;; amplitude-modulate-channel could be (lambda (y data forward) (* y 0.5 (+ 1.0 (sin angle))) etc ...)

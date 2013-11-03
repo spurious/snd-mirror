@@ -582,8 +582,7 @@ static void save_options(FILE *fd)
   if (filter_control_order(ss) != DEFAULT_FILTER_CONTROL_ORDER) pss_sd(fd, S_filter_control_order, filter_control_order(ss));
   if (filter_control_in_dB(ss) != DEFAULT_FILTER_CONTROL_IN_DB) pss_ss(fd, S_filter_control_in_dB, b2s(filter_control_in_dB(ss)));
   if (filter_control_in_hz(ss) != DEFAULT_FILTER_CONTROL_IN_HZ) pss_ss(fd, S_filter_control_in_hz, b2s(filter_control_in_hz(ss)));
-  if (with_tracking_cursor(ss) != DEFAULT_WITH_TRACKING_CURSOR)
-    pss_ss(fd, S_with_tracking_cursor, b2s((bool)(with_tracking_cursor(ss)))); /* a boolean from the user's point of view */
+  if (with_tracking_cursor(ss) != DEFAULT_WITH_TRACKING_CURSOR) pss_sd(fd, S_with_tracking_cursor, (int)with_tracking_cursor(ss));
   if (in_show_controls(ss) != DEFAULT_SHOW_CONTROLS) pss_ss(fd, S_show_controls, b2s(in_show_controls(ss)));
 
   save_colors(fd);

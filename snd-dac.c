@@ -639,17 +639,19 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
     {
       if (sp->playing > 0) sp->playing--;
       if (sp->playing == 0) sp_stopping = true;
-      if (sp_stopping)
+
+      if ((sp_stopping) &&
+	  (ss->tracking) &&
+	  (with_tracking_cursor(ss) != TRACK_AND_STAY) &&
+	  (sp->inuse == SOUND_NORMAL) && 
+	  (sp->index >= 0))
 	{
-	  if ((sp->inuse == SOUND_NORMAL) && (ss->tracking) && (sp->index >= 0))
-	    {
-	      int i;
-	      for (i = 0; i < sp->nchans; i++)
-		cursor_moveto_with_window(sp->chans[i], 
-					  sp->chans[i]->original_cursor, 
-					  sp->chans[i]->original_left_sample, 
-					  sp->chans[i]->original_window_size);
-	    }
+	  int i;
+	  for (i = 0; i < sp->nchans; i++)
+	    cursor_moveto_with_window(sp->chans[i], 
+				      sp->chans[i]->original_cursor, 
+				      sp->chans[i]->original_left_sample, 
+				      sp->chans[i]->original_window_size);
 	}
       /* if ctrl-click play, c-t, c-q -> this flag is still set from aborted previous play, so clear at c-t (or c-g) */
     }
@@ -1008,7 +1010,7 @@ static void start_dac(int srate, int channels, play_process_t background, mus_fl
   /* look for channel folding cases etc */
   /* channels = how many output audio chans we have; dac_combines_channels sets whether to wrap or muffle chans outside this limit */
 
-  if (with_tracking_cursor(ss))
+  if (with_tracking_cursor(ss) != DONT_TRACK)
     ss->tracking = true;
 
   for (i = 0; i <= max_active_slot; i++)
@@ -3349,14 +3351,47 @@ static XEN g_set_cursor_location_offset(XEN val)
 static XEN g_with_tracking_cursor(void) 
 {
   #define H_with_tracking_cursor "("  S_with_tracking_cursor "): " PROC_TRUE " if cursor always moves along in waveform display as sound is played"
-  return(C_TO_XEN_BOOLEAN(with_tracking_cursor(ss) == ALWAYS_TRACK));
+  if (with_tracking_cursor(ss) == DONT_TRACK)
+    return(XEN_FALSE);
+  if (with_tracking_cursor(ss) == TRACK_AND_RETURN)
+    return(XEN_TRUE);
+  return(XEN_MAKE_KEYWORD("track-and-stay"));
 }
 
 static XEN g_set_with_tracking_cursor(XEN on) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, 1, S_setB S_with_tracking_cursor, "a boolean");
-  set_with_tracking_cursor(ss, (XEN_TO_C_BOOLEAN(on)) ? ALWAYS_TRACK : TRACK_IF_ASKED);
-  return(C_TO_XEN_BOOLEAN(with_tracking_cursor(ss) == ALWAYS_TRACK));
+  if (XEN_BOOLEAN_P(on)) /* for backwards compatibility */
+    {
+      {set_with_tracking_cursor(ss, (XEN_TO_C_BOOLEAN(on)) ? TRACK_AND_RETURN : DONT_TRACK);}
+      return(on);
+    }
+
+  if (XEN_INTEGER_P(on))
+    {
+      int val;
+      val = XEN_TO_C_INT(on);
+      if (val == 2) 
+	{set_with_tracking_cursor(ss, TRACK_AND_STAY);}
+      else {set_with_tracking_cursor(ss, ((val == 1) ? TRACK_AND_RETURN : DONT_TRACK));}
+      return(C_TO_XEN_INT((int)with_tracking_cursor(ss)));
+    }
+
+  if (XEN_KEYWORD_P(on))
+    {
+      if (XEN_KEYWORD_EQ_P(on, XEN_MAKE_KEYWORD("track-and-return")))
+	{
+	  {set_with_tracking_cursor(ss, TRACK_AND_RETURN);}
+	  return(on);
+	}
+      if (XEN_KEYWORD_EQ_P(on, XEN_MAKE_KEYWORD("track-and-stay")))
+	{
+	  {set_with_tracking_cursor(ss, TRACK_AND_STAY);}
+	  return(on);
+	}
+    }
+
+  XEN_ASSERT_TYPE(false, on, 1, S_setB S_with_tracking_cursor, "a boolean, :track-and-return, or :track-and-stay");
+  return(on);
 }
 
 

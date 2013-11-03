@@ -112,16 +112,6 @@
 #
 #  chain_dsps(start, dur, *dsps)
 #
-#  module Cursor_follows_play
-#   local_dac_func(data)
-#   local_start_playing_func(snd)
-#   local_stop_playing_func(snd)
-#   current_cursor(snd, chn)
-#   set_current_cursor(val, snd, chn)
-#   original_cursor(snd, chn)
-#   set_original_cursor(val, snd, chn)
-#  if_cursor_follows_play_it_stays_where_play_stopped(enable)
-#
 #  scramble_channels(*new_order)
 #  scramble_channel(silence)
 #
@@ -1994,60 +1984,6 @@ turns the currently selected soundfont file into a bunch of files of the form sa
                 end)
   end
 =end
-
-  # cursor-follows-play and stays where it was when the play ended
-
-  module Cursor_follows_play
-    def local_dac_func(data)
-      Snd.sounds.each do |snd|
-        channels(snd).times do |chn|
-          if cursor(snd, chn) != original_cursor(snd, chn)
-            set_current_cursor(cursor(snd, chn), snd, chn)
-          end
-        end
-      end
-    end
-
-    def local_start_playing_func(snd)
-      channels(snd).times do |chn|
-        set_original_cursor(cursor(snd, chn), snd, chn)
-        set_current_cursor(cursor(snd, chn), snd, chn)
-      end
-    end
-
-    def local_stop_playing_func(snd)
-      set_cursor(current_cursor(snd, 0), snd, true)
-    end
-
-    def current_cursor(snd, chn)
-      channel_property(:cursor, snd, chn)
-    end
-
-    def set_current_cursor(val, snd, chn)
-      set_channel_property(:cursor, val, snd, chn)
-    end
-
-    def original_cursor(snd, chn)
-      channel_property(:original_cursor, snd, chn)
-    end
-
-    def set_original_cursor(val, snd, chn)
-      set_channel_property(:original_cursor, val, snd, chn)
-    end
-  end
-
-  def if_cursor_follows_play_it_stays_where_play_stopped(enable = true)
-    include Cursor_follows_play
-    if enable
-      $dac_hook.add_hook!("cursor") do |data| local_dac_func(data) end
-      $start_playing_hook.add_hook!("cursor") do |snd| local_start_playing_func(snd) end
-      $stop_playing_hook.add_hook!("cursor") do |snd| local_stop_playing_func(snd) end
-    else
-      $dac_hook.remove_hook!("cursor")
-      $start_playing_hook.remove_hook!("cursor")
-      $stop_playing_hook.remove_hook!("cursor")
-    end
-  end
   
   # re-order channels
 

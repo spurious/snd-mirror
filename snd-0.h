@@ -218,7 +218,7 @@ typedef enum {FILE_READ_WRITE, FILE_READ_ONLY} read_only_t;
 #define NO_LIST -1
 
 typedef enum {READ_FORWARD, READ_BACKWARD} read_direction_t;
-typedef enum {TRACK_IF_ASKED, ALWAYS_TRACK} tracking_cursor_t;
+typedef enum {DONT_TRACK, TRACK_AND_RETURN, TRACK_AND_STAY} tracking_cursor_t;
 typedef enum {DONT_UPDATE_DISPLAY, UPDATE_DISPLAY} cut_selection_regraph_t;
 typedef enum {IGNORE_CACHE, REMOVE_FROM_CACHE} cache_remove_t;
 typedef enum {FFT_UNCHANGED, FFT_CHANGED, FFT_CHANGE_LOCKED} fft_change_t;
@@ -439,11 +439,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_tracking_cursor(ss) ss->With_Tracking_Cursor
 #if HAVE_SCHEME
-  #define set_with_tracking_cursor(ss, val) {ss->With_Tracking_Cursor = val; s7_symbol_set_value(s7, ss->with_tracking_cursor_symbol, s7_make_boolean(s7, val));}
+#define set_with_tracking_cursor(ss, val) {ss->With_Tracking_Cursor = val; s7_symbol_set_value(s7, ss->with_tracking_cursor_symbol, s7_make_integer(s7, (int)val));}
 #else
   #define set_with_tracking_cursor(ss, val) ss->With_Tracking_Cursor = val
 #endif
-#define DEFAULT_WITH_TRACKING_CURSOR TRACK_IF_ASKED
+#define DEFAULT_WITH_TRACKING_CURSOR DONT_TRACK
 
 #define just_sounds(ss) ss->Just_Sounds
 #if HAVE_SCHEME

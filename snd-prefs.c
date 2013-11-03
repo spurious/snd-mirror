@@ -2465,7 +2465,7 @@ static void save_with_tracking_cursor(prefs_info *prf, FILE *ignore)
 
 static void reflect_with_tracking_cursor(prefs_info *prf) 
 {
-  SET_TOGGLE(prf->toggle, with_tracking_cursor(ss));
+  SET_TOGGLE(prf->toggle, (with_tracking_cursor(ss) != DONT_TRACK));
   int_to_textfield(prf->rtxt, cursor_location_offset(ss));
   float_to_textfield(prf->text, cursor_update_interval(ss));
 }
@@ -2473,7 +2473,7 @@ static void reflect_with_tracking_cursor(prefs_info *prf)
 
 static void with_tracking_cursor_toggle(prefs_info *prf)
 {
-  set_with_tracking_cursor(ss, (GET_TOGGLE(prf->toggle)) ? ALWAYS_TRACK : TRACK_IF_ASKED);
+  set_with_tracking_cursor(ss, (GET_TOGGLE(prf->toggle)) ? TRACK_AND_RETURN : DONT_TRACK);
 }
 
 

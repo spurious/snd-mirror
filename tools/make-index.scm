@@ -589,7 +589,6 @@
     (list 'defgenerator "generators.scm")
     
     (list 'channel-sync "extensions.scm")
-    (list 'cursor-follows-play "snd11.scm")
     (list 'xe-envelope "xm-enved.scm")
     (list '*clm-srate* "ws.scm")
     (list '*clm-file-name* "ws.scm")

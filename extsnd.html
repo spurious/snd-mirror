@@ -1507,7 +1507,9 @@ in the upper left corner of the graph (see the picture above under add-mark-pane
 
 <p id="trackingcursors">This is #t if the cursor always follows along in the sound during playback.  If it is #f, 
 you get the tracking cursor displayed only when you ask for it (via control-click of the
-play button, for example).
+play button, for example).  At the end of the play, the default is to return to the original (starting)
+cursor position.  If you want the cursor to stay where it is, set with-tracking-cursor to :track-and-stay
+(#t = :track-and-return).
 </p>
 
 <p>
@@ -1528,7 +1530,7 @@ apparent progress (if playing forwards).
 play from the current cursor position with a tracking cursor:  <a href="#pfc">pfc</a><br>
 display tracking cursor as a full height vertical line: <a href="#trackingcursorstyle">tracking-cursor-style</a><br>
 track play once: control-click 'play'. (You can add a mark at the current tracking cursor location during the play with C-m)<br>
-leave the cursor at the final position after tracking play: if-cursor-follows-play-it-stays-where-play-stopped in examp.scm<br>
+leave the cursor at the final position after tracking play: (set! *with-tracking-cursor* :track-and-stay)<br>
 tracking cursor accuracy: <a href="#cursorlocationoffset">cursor-location-offset</a><br>
 tracking cursor updating: <a href="#cursorupdateinterval">cursor-update-interval</a><br>
 </small></blockquote>
@@ -7247,24 +7249,13 @@ Display data about sample under cursor: <a href="extsnd.html#withverbosecursor">
 play from the current cursor position with a tracking cursor:  <a href="extsnd.html#pfc">pfc</a><br>
 display tracking cursor as a full height vertical line: <a href="extsnd.html#trackingcursorstyle">tracking-cursor-style</a><br>
 track play once: control-click 'play'. (You can add a mark at the current tracking cursor location during the play with C-m)<br>
-leave the cursor at the final position after tracking play: if-cursor-follows-play-it-stays-where-play-stopped in examp.scm<br>
+leave the cursor at the final position after tracking play: (set! *with-tracking-cursor* :track-and-stay)<br>
 tracking cursor accuracy: <a href="extsnd.html#cursorlocationoffset">cursor-location-offset</a><br>
 tracking cursor updating: <a href="extsnd.html#cursorupdateinterval">cursor-update-interval</a><br>
 </small></blockquote>
 </td></tr></TABLE>
 <div class="separator"></div>
 
-
-
-<!-- cursor-follows-play -->
-<pre class="indented">
-<em class=def id="cursorfollowsplay">cursor-follows-play</em> snd
-</pre>
-
-<p>This is #t if the cursor is following along in the sound as it plays.  The new name of this variable
-is <a href="#withtrackingcursor">with-tracking-cursor</a>.
-</p>
-<div class="separator"></div>
 
 
 <!-- cursor-position -->
