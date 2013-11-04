@@ -669,7 +669,6 @@ static bool extended_mode = false;
 void control_g(snd_info *sp)
 {
   ss->C_g_typed = true;
-
   number_ctr = 0; 
   counting = false; 
   dot_seen = false; 
@@ -678,6 +677,7 @@ void control_g(snd_info *sp)
   defining_macro = false;
   clear_stdin();
   redirect_everything_to(NULL, NULL);
+  if (sp) clear_status_area(sp); /* do this before stop_playing! */
 
   if ((ss->checking_explicitly) || 
       (play_in_progress())) 
@@ -686,12 +686,10 @@ void control_g(snd_info *sp)
   /*   but, as in other such cases, it leaves this flag set so all subsequent uses of it need to clear it first */
 
   stop_playing_all_sounds(PLAY_C_G); /* several scm files assume hooks called upon C-g -- could be region play, etc */
-
   if (sp)
     {
       if (sp->applying) stop_applying(sp);
       for_each_sound_chan(sp, stop_fft_in_progress);
-      clear_status_area(sp);
     }
 }
 

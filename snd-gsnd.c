@@ -411,7 +411,7 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   if (sp->playing) 
     stop_playing_sound_no_toggle(sp, PLAY_BUTTON_UNSET);
 
-  ss->tracking = ((with_tracking_cursor(ss)) ||
+  ss->tracking = ((with_tracking_cursor(ss) != DONT_TRACK) ||
 		  ((on) && (last_play_state & (snd_ControlMask | snd_MetaMask))));
 
   cp = any_selected_channel(sp);

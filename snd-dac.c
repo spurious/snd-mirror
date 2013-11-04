@@ -633,6 +633,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 {
   snd_info *sp = NULL;
   bool sp_stopping = false;
+
   if ((dp == NULL) || (play_list == NULL)) return;
   sp = dp->sp;
   if ((sp) && (sp->inuse != SOUND_IDLE))
@@ -642,16 +643,40 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 
       if ((sp_stopping) &&
 	  (ss->tracking) &&
-	  (with_tracking_cursor(ss) != TRACK_AND_STAY) &&
 	  (sp->inuse == SOUND_NORMAL) && 
 	  (sp->index >= 0))
 	{
 	  int i;
 	  for (i = 0; i < sp->nchans; i++)
-	    cursor_moveto_with_window(sp->chans[i], 
-				      sp->chans[i]->original_cursor, 
-				      sp->chans[i]->original_left_sample, 
-				      sp->chans[i]->original_window_size);
+	    {
+	      chan_info *cp;
+	      cp = sp->chans[i];
+	      if (with_tracking_cursor(ss) == TRACK_AND_STAY)
+		{
+		  if (dp->cur_srate > 0.0)
+		    {
+		      mus_long_t samp;
+		      samp = current_location(dp->chn_fd) + ((snd_dacp) ? snd_dacp->frames : 0);
+		      if (dp->selection)
+			{
+			  if (samp > selection_end(cp))
+			    samp = selection_end(cp);
+			}
+		      else
+			{
+			  if (samp > CURRENT_SAMPLES(cp))
+			    samp = CURRENT_SAMPLES(cp);
+			}
+		      CURSOR(cp) = samp - 1;
+		    }
+		  cp->original_left_sample = CURSOR(cp) - (cp->original_window_size / 2);
+		  if (cp->original_left_sample < 0)
+		    cp->original_left_sample = 0;
+		}
+	      else CURSOR(cp) = cp->original_cursor;
+	      cursor_moveto_with_window(cp, CURSOR(cp), cp->original_left_sample, cp->original_window_size);
+	      update_graph(cp); 
+	    }
 	}
       /* if ctrl-click play, c-t, c-q -> this flag is still set from aborted previous play, so clear at c-t (or c-g) */
     }
@@ -1064,7 +1089,7 @@ static void start_dac(int srate, int channels, play_process_t background, mus_fl
 }
 
 
-/*  pos = to_c_edit_position(cp, edpos, caller, arg_pos); */
+/* pos = to_c_edit_position(cp, edpos, caller, arg_pos); */
 
 static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, mus_long_t start, mus_long_t end, int pos, int out_chan)
 {
@@ -1110,7 +1135,8 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, mus_long_
       if (sp) 
 	{
 	  sp->playing++;
-	  if ((ss->tracking) && (!(IS_PLAYER_SOUND(sp))))
+	  if ((ss->tracking) && 
+	      (!(IS_PLAYER_SOUND(sp))))
 	    {
 	      cp->original_cursor = CURSOR(cp);
 	      if (cp->axis)

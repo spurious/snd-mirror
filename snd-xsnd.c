@@ -943,7 +943,7 @@ static void play_button_callback(Widget w, XtPointer context, XtPointer info)
   if (sp->playing) 
     stop_playing_sound(sp, PLAY_BUTTON_UNSET);
 
-  ss->tracking = ((with_tracking_cursor(ss)) ||
+  ss->tracking = ((with_tracking_cursor(ss) != DONT_TRACK) ||
 		  ((cb->set) && 
 		   (ev->state & (snd_ControlMask | snd_MetaMask))));
 
