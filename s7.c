@@ -68074,6 +68074,7 @@ int main(int argc, char **argv)
  * letrec* built-in (not macro)
  *
  * check multisound/channel tracking cases
+ * gchar* et al in xg should accept NULL (via (c-pointer 0))
  */
 
 

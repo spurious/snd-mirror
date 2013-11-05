@@ -5384,8 +5384,8 @@ void graph_button_press_callback(chan_info *cp, void *ev, int x, int y, int key_
    *   in snd-xchn (post_popup), but I think that only applies to the
    *   separate windows case.
    * presumably in gtk we could remove that check, land here, get our graph context
-   *   from within_graph, the choose the right popup menu if button == POPUP_BUTTON
-   * perhaps in Motif, we couls not enable the popup menu in snd-xmenu, calling it
+   *   from within_graph, then choose the right popup menu if button == POPUP_BUTTON
+   * perhaps in Motif, we could not enable the popup menu in snd-xmenu, calling it
    *   explicitly as in gtk?
    */
 

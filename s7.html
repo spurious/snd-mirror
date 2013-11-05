@@ -8973,7 +8973,7 @@ assuming we have the usual Scheme-to-C linkages (see snd-glistener.c):
 (listener-set-prompt-tag *listener* ; ideally this too would be a setter
   (gtk_text_buffer_create_tag 
     (GTK_TEXT_BUFFER (gtk_text_view_get_buffer (GTK_TEXT_VIEW (listener-text-widget *listener*))))
-    #f (list "weight" PANGO_WEIGHT_BOLD "foreground" "red")))
+    "" (list "weight" PANGO_WEIGHT_BOLD "foreground" "red")))
 </pre>
 </div>
 
