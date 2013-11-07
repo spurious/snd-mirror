@@ -4,7 +4,7 @@
 
 (if (provided? 'snd)
     (begin
-      (format *stderr* "this won't work in Snd!~%")
+      (format *stderr* "this won't work in Snd!~%") ; see t705.scm
       (exit)))
 
 (define data-file #f) ;(open-output-file "output-of-t455"))

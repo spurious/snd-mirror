@@ -821,7 +821,7 @@ static mus_float_t wrapped_vct_ref(void *p)
   gf *g = (gf *)p;
   s7_pointer v;
   s7_Int k;
-  v = g->gen;
+  v = (s7_pointer)(g->gen);
   k = s7_cell_integer(s7_cell_slot_value(g->s1));
   if ((k >= 0) && (k < s7_vector_length(v)))
     return(s7_float_vector_elements(v)[k]);

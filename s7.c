@@ -36863,7 +36863,7 @@ static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 	      len = s7_list_length(sc, car(p));
 	      if (((s7_is_eq(caar(p), s7_make_symbol(sc, "if"))) &&
 		   (len > 4)) ||
-		  /* extreme care is needed -- we can't risk autoloading the very same file we're complaining about! 
+		  /* some care is needed -- we can't risk autoloading the very same file we're complaining about! 
 		   *   so don't use unprotected SYMBOL_TO_VALUE or finder
 		   */
 		  ((s7_is_defined(sc, symbol_name(caar(p)))) &&
@@ -67760,6 +67760,8 @@ s7_scheme *s7_init(void)
   
   s7_eval_c_string(sc, "(define-macro (defmacro name args . body) `(define-macro ,(cons name args) ,@body))");
   s7_eval_c_string(sc, "(define-macro (defmacro* name args . body) `(define-macro* ,(cons name args) ,@body))");
+  s7_eval_c_string(sc, "(define-macro (when test . forms) `(if ,test (begin ,@forms)))");         /* or `(cond (,test ,@forms))     */
+  s7_eval_c_string(sc, "(define-macro (unless test . forms) `(if (not ,test) (begin ,@forms)))"); /*    `(or ,test (begin ,@forms)) */
 
 
   /* call-with-values is almost a no-op in this context 
@@ -68071,10 +68073,11 @@ int main(int argc, char **argv)
 
 /* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))
  * *begin-hook*?
- * letrec* built-in (not macro)
+ * letrec* built-in (not macro), perhaps also when and unless
  *
  * check multisound/channel tracking cases
- * gchar* et al in xg should accept NULL (via (c-pointer 0))
+ * gchar* et al in xg should accept NULL (via (c-pointer 0)) [uses XEN_TO_C_STRING in xen.h which currently just calls s7_string]
+ * remove-duplicates could use the collected bit (also set intersection/difference)
  */
 
 

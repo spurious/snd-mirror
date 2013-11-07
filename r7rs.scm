@@ -137,10 +137,6 @@
 ;; I prefer (define-expansion (comment . stuff) (reader-cond (#t (values))))
 
 
-(define-macro (when test . forms) `(if ,test (begin ,@forms)))         ; or `(cond (,test ,@forms))
-(define-macro (unless test . forms) `(if (not ,test) (begin ,@forms))) ;    `(or ,test (begin ,@forms))
-
-
 (define-macro (define-values vars . body)
   `(apply begin (map (lambda (var val) `(define ,var ,val)) ',vars (list (begin ,@body)))))
 
