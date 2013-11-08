@@ -651,31 +651,35 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 	    {
 	      chan_info *cp;
 	      cp = sp->chans[i];
-	      if (with_tracking_cursor(ss) == TRACK_AND_STAY)
+	      if ((cp == dp->cp) ||
+		  (sp->sync != 0))        /* don't move the cursor in a channel that isn't playing */
 		{
-		  if (dp->cur_srate > 0.0)
+		  if (with_tracking_cursor(ss) == TRACK_AND_STAY)
 		    {
-		      mus_long_t samp;
-		      samp = current_location(dp->chn_fd) + ((snd_dacp) ? snd_dacp->frames : 0);
-		      if (dp->selection)
+		      if (dp->cur_srate > 0.0)
 			{
-			  if (samp > selection_end(cp))
-			    samp = selection_end(cp);
+			  mus_long_t samp;
+			  samp = current_location(dp->chn_fd) + ((snd_dacp) ? snd_dacp->frames : 0);
+			  if (dp->selection)
+			    {
+			      if (samp > selection_end(cp))
+				samp = selection_end(cp);
+			    }
+			  else
+			    {
+			      if (samp > CURRENT_SAMPLES(cp))
+				samp = CURRENT_SAMPLES(cp);
+			    }
+			  CURSOR(cp) = samp - 1;
 			}
-		      else
-			{
-			  if (samp > CURRENT_SAMPLES(cp))
-			    samp = CURRENT_SAMPLES(cp);
-			}
-		      CURSOR(cp) = samp - 1;
+		      cp->original_left_sample = CURSOR(cp) - (cp->original_window_size / 2);
+		      if (cp->original_left_sample < 0)
+			cp->original_left_sample = 0;
 		    }
-		  cp->original_left_sample = CURSOR(cp) - (cp->original_window_size / 2);
-		  if (cp->original_left_sample < 0)
-		    cp->original_left_sample = 0;
+		  else CURSOR(cp) = cp->original_cursor;
+		  cursor_moveto_with_window(cp, CURSOR(cp), cp->original_left_sample, cp->original_window_size);
+		  update_graph(cp); 
 		}
-	      else CURSOR(cp) = cp->original_cursor;
-	      cursor_moveto_with_window(cp, CURSOR(cp), cp->original_left_sample, cp->original_window_size);
-	      update_graph(cp); 
 	    }
 	}
       /* if ctrl-click play, c-t, c-q -> this flag is still set from aborted previous play, so clear at c-t (or c-g) */

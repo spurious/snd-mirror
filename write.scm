@@ -310,7 +310,7 @@
 		      (not (memq sym '(i st p file 
 					 
 					 ;; s7
-					 multiple-value-bind letrec* *load-path* macroexpand *safety*
+					 multiple-value-bind letrec* *load-path* macroexpand *safety* *maximum-stack-size*
 					 *#readers* *vector-print-length* *gc-stats* multiple-value-set! cond-expand
 					 *features* call-with-values
 

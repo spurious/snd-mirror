@@ -31265,12 +31265,12 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
 		   *    but circles can sneak in!  lists (etc) are dangerous keys:
 		   *
 		   (let ((ht (make-hash-table))
-		   (lst1 (list 1 2))
-		   (lst2 (list 1 2)))
-		   (set! (ht lst1) 32)
-		   (let ((start (ht lst2)))
-		   (set! (lst1 0) 3)
-		   (list start (ht lst2))))
+		         (lst1 (list 1 2))
+		         (lst2 (list 1 2)))
+		     (set! (ht lst1) 32)
+		     (let ((start (ht lst2)))
+		       (set! (lst1 0) 3)
+		       (list start (ht lst2))))
 		   (32 #f)
 		   *
 		   * but this applies to all such variables, even strings.  Do other schemes copy the key?
@@ -68075,9 +68075,11 @@ int main(int argc, char **argv)
  * *begin-hook*?
  * letrec* built-in (not macro), perhaps also when and unless
  *
- * check multisound/channel tracking cases
  * gchar* et al in xg should accept NULL (via (c-pointer 0)) [uses XEN_TO_C_STRING in xen.h which currently just calls s7_string]
  * remove-duplicates could use the collected bit (also set intersection/difference)
+ * loop in C or scheme (as do-loop wrapper)
+ * pretty-print?
+ * in help strings (and dialog), can help code examples be monospace?
  */
 
 

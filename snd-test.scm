@@ -38303,6 +38303,16 @@ EDITS: 1
 	  (snd-display #__line__ ";with-sound make-oscil maxamp: ~A" (maxamp ind)))
       (close-sound ind))
     
+    (let ((old-srate *clm-srate*))
+      (with-sound ()
+	(if (not (= old-srate *clm-srate*))
+	    (format #t ";srates: ~A ~A~%" old-srate, *clm-srate*))
+	(with-sound (:srate 12345)
+	  (if (not (= *clm-srate* 12345))
+	      (format #t ";clm-srate: ~A (12345)~%" *clm-srate*)))
+	(if (not (= old-srate *clm-srate*))
+	    (format #t ";returned srates: ~A ~A~%" old-srate, *clm-srate*))))
+    (for-each close-sound (sounds))
     
     (if (file-exists? "ii.scm")
 	(begin

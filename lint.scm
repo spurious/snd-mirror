@@ -597,9 +597,10 @@
 		       (lambda (op)
 			 (set! (h op) #t))
 		       '(quote if begin let let* letrec cond case or and do set! 
-			       with-environment lambda lambda* define defvar define-envelope
-			       define* defmacro defmacro* define-macro define-macro* 
-			       define-bacro define-bacro* define-constant))
+			       with-environment with-baffle
+			       lambda lambda* define define* defvar define-envelope
+			       define-macro define-macro* define-bacro define-bacro* 
+			       define-constant))
 		      h))
 	  
 	  (format-control-char (let ((chars (make-vector 256 #f)))
@@ -1398,7 +1399,7 @@
 	
 	;;   I first tried a table of rules, but the code was unreadable, so
 	;;   here I'll split out each case by hand.
-	;; This is not an agressive simplification.
+	;; This is not an aggressive simplification.
 	
 	;; this returns a form, possibly the original simplified
 	(let ((complex-result? (lambda (op) (memq op '(+ * - / 
@@ -1957,6 +1958,7 @@
 					(truncated-list->string form))))))))
 	  
 	  ;; what about (* 2.0 (random 1.0)) and the like?
+	  ;;   this is trickier than it appears: (* 2.0 (random 3)) etc
 
 	  ((/)
 	   (if (not (null? (cdr form)))
@@ -1992,6 +1994,7 @@
 			    name form (cadr form))))
 	  
 	  ((string-append)
+	   ;; also (string-append . constants)? and (string-append)->""
 	   (if (not (= line-number last-simplify-boolean-line-number))
 	       (let ((args (remove-all "" (splice-if (lambda (x) (eq? x 'string-append)) (cdr form)))))
 		 (if (null? args)
@@ -2049,6 +2052,7 @@
 			      name form (cadadr form)))))
 	  
 	  ((append)
+	   ;; also (append . constants)? and (append)->()
 	   (if (= (length form) 2)
 	       (lint-format "~A could be ~A" 
 			    name form (cadr form))))
@@ -3168,6 +3172,9 @@
 					  ())))
 			   (report-usage name 'variable head vars)))
 		     env)
+
+		    ;; with-baffle is not a special case, I guess
+
 		    
 		    ;; ---------------- everything else ----------------		  
 		    (else
