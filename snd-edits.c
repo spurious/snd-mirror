@@ -8955,9 +8955,16 @@ XEN_ARGIFY_8(g_change_samples_with_origin_w, g_change_samples_with_origin)
 XEN_ARGIFY_8(g_insert_samples_with_origin_w, g_insert_samples_with_origin)
 XEN_ARGIFY_6(g_override_samples_with_origin_w, g_override_samples_with_origin)
 XEN_ARGIFY_4(g_sample_w, g_sample)
+#if HAVE_SCHEME
+#define g_set_sample_w g_set_sample_reversed
+#define g_set_samples_w g_set_samples_reversed
+XEN_ARGIFY_5(orig_g_set_sample_w, g_set_sample)
+XEN_ARGIFY_10(orig_g_set_samples_w, g_set_samples)
+#else
 XEN_ARGIFY_5(g_set_sample_w, g_set_sample)
-XEN_ARGIFY_5(g_samples_w, g_samples)
 XEN_ARGIFY_10(g_set_samples_w, g_set_samples)
+#endif
+XEN_ARGIFY_5(g_samples_w, g_samples)
 XEN_NARGIFY_1(g_snd_to_sample_p_w, g_snd_to_sample_p)
 XEN_ARGIFY_3(g_snd_to_sample_w, g_snd_to_sample)
 XEN_ARGIFY_1(g_make_snd_to_sample_w, g_make_snd_to_sample)
@@ -9044,14 +9051,13 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin,   g_insert_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
   XEN_DEFINE_PROCEDURE(S_override_samples_with_origin, g_override_samples_with_origin_w, 5, 1, 0, "internal function used in save-state");
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sample,  g_sample_w, H_sample,
-					    S_setB S_sample, g_set_sample_w, g_set_sample_reversed, 0, 4, 1, 4);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sample,  g_sample_w,  H_sample,  S_setB S_sample,  g_set_sample_w,  0, 4, 1, 4);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_samples, g_samples_w, H_samples, S_setB S_samples, g_set_samples_w, 0, 5, 3, 7);
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_samples, g_samples_w, H_samples,
-					    S_setB S_samples, g_set_samples_w, g_set_samples_reversed, 0, 5, 3, 7);
-
-  XEN_DEFINE_PROCEDURE("set-sample",                   g_set_sample_w,                   2, 3, 0, H_sample);   /* for edit-list->function */
-  XEN_DEFINE_PROCEDURE("set-samples",                  g_set_samples_w,                  3, 7, 0, H_set_samples);
+#if HAVE_SCHEME
+  XEN_DEFINE_PROCEDURE("set-sample",                   orig_g_set_sample_w,              2, 3, 0, H_sample);   /* for edit-list->function */
+  XEN_DEFINE_PROCEDURE("set-samples",                  orig_g_set_samples_w,             3, 7, 0, H_set_samples);
+#endif
 
   XEN_DEFINE_PROCEDURE(S_snd_to_sample_p,              g_snd_to_sample_p_w,              1, 0, 0, H_snd_to_sample_p);
   XEN_DEFINE_PROCEDURE(S_make_snd_to_sample,           g_make_snd_to_sample_w,           0, 1, 0, H_make_snd_to_sample);

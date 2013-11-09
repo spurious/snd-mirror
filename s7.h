@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.2"
-#define S7_DATE "17-Oct-13"
+#define S7_VERSION "3.3"
+#define S7_DATE "9-Nov-13"
 
 
 typedef long long int s7_Int;
@@ -502,6 +502,8 @@ s7_pointer s7_symbol_table_find_name(s7_scheme *sc, const char *name);
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val);
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env);
+char *s7_symbol_documentation(s7_scheme *sc, s7_pointer sym);
+char *s7_symbol_set_documentation(s7_scheme *sc, s7_pointer sym, const char *new_doc);
 bool s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data);
 bool s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer value, void *data), void *data);
   
@@ -525,6 +527,7 @@ void s7_define(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer valu
 bool s7_is_defined(s7_scheme *sc, const char *name);
 s7_pointer s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value);
 s7_pointer s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value);
+s7_pointer s7_define_constant_with_documentation(s7_scheme *sc, const char *name, s7_pointer value, const char *help);
 bool s7_is_constant(s7_pointer p);
 
   /* These three functions add a symbol and its binding to either the top-level environment
@@ -864,6 +867,7 @@ bool s7_is_valid_pointer(s7_pointer arg);
  * 
  *        s7 changes
  *		
+ * 8-Nov:     s7_symbol_documentation, s7_define_constant_with_documentation.
  * 17-Oct:    bignum-precision (procedure-with-setter) is now an integer variable named *bignum-precision*.
  * 28-Aug:    s7_int|float_vector_elements (homogenous vectors), libc.scm.
  * 16-Aug:    ~W directive in format, make-shared-vector.

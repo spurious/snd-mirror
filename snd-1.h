@@ -14,9 +14,9 @@
     if (!((XEN_INTEGER_P(Chn)) || (XEN_FALSE_P(Chn)) || (XEN_NOT_BOUND_P(Chn)))) \
       XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset + 1, Chn, "an integer (0-based channel number) or " PROC_FALSE);
 
-/* these macros fix up argument order for setter procs in Scheme: (set! (proc a b) c) */
-/*    snd-edits has a 5 and a 10 case */
+
 #if HAVE_SCHEME
+/* these macros fix up argument order for setter procs in Scheme: (set! (proc a b) c) */
 
 #define WITH_TWO_SETTER_ARGS(name_reversed, name)	   \
   static s7_pointer name_reversed(s7_scheme *sc, s7_pointer args)   \
@@ -53,7 +53,6 @@
 
 #else
 
-/* 10 case in snd-edits for set-samples and a 5 case for set-sample */
 #define WITH_TWO_SETTER_ARGS(name_reversed, name)
 #define WITH_THREE_SETTER_ARGS(name_reversed, name)
 #define WITH_FOUR_SETTER_ARGS(name_reversed, name)

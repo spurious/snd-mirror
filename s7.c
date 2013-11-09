@@ -1050,6 +1050,7 @@ typedef struct s7_cell {
 
       /* extra data for symbols which always have a string name field (hash field is also used specially by symbols) */
       s7_pointer initial_slot;
+      char *documentation;
     } string;
     
     struct {                      /* symbols */
@@ -1818,6 +1819,10 @@ static int t_optimized = T_OPTIMIZED;
 #define set_function_env(p)           typeflag(p) |= T_FUNCTION_ENV
 /* this marks a closure environment */
 
+#define T_DOCUMENTED                  T_GENSYM
+#define is_documented(p)              ((typeflag(p) & T_DOCUMENTED) != 0)
+#define set_documented(p)             typeflag(p) |= T_DOCUMENTED
+
 
 #define T_HAS_METHODS                 (1 << (TYPE_BITS + 22))
 #define has_methods(p)                ((typeflag(p) & T_HAS_METHODS) != 0)
@@ -2062,6 +2067,9 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 #define initial_slot(p)               (symbol_name_cell(p))->object.string.initial_slot
 #define local_slot(p)                 (p)->object.sym.local_slot
 #define keyword_symbol(p)             (p)->object.sym.ext.ksym
+#define symbol_help(p)                (symbol_name_cell(p))->object.string.documentation
+#define symbol_has_help(p)            (is_documented(symbol_name_cell(p)))
+#define symbol_set_has_help(p)        set_documented(symbol_name_cell(p))
 
 #define symbol_set_local(Symbol, Id, Slot) do {local_slot(Symbol) = Slot; symbol_id(Symbol) = Id;} while (0)
 /* set slot before id in case Slot is an expression that tries to find the current Symbol slot (using its old Id obviously) */
@@ -6283,6 +6291,35 @@ s7_pointer s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
  * ;can't bind an immutable object: cvar
  */
 
+s7_pointer s7_define_constant_with_documentation(s7_scheme *sc, const char *name, s7_pointer value, const char *help)
+{
+  s7_pointer sym;
+  sym = s7_define_constant(sc, name, value);
+  symbol_set_has_help(sym);
+  symbol_help(sym) = copy_string(help);
+  return(value);
+}
+
+
+char *s7_symbol_documentation(s7_scheme *sc, s7_pointer sym)
+{
+  if ((is_symbol(sym)) &&
+      (symbol_has_help(sym)))
+    return(symbol_help(sym));
+  return(NULL);
+}
+
+
+char *s7_symbol_set_documentation(s7_scheme *sc, s7_pointer sym, const char *new_doc)
+{
+  if ((is_symbol(sym)) &&
+      (symbol_has_help(sym)) &&
+      (symbol_help(sym)))
+    free(symbol_help(sym));
+  symbol_set_has_help(sym);
+  symbol_help(sym) = copy_string(new_doc);
+  return(symbol_help(sym));
+}
 
 
 
@@ -68072,14 +68109,21 @@ int main(int argc, char **argv)
  */
 
 /* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))
- * *begin-hook*?
+ *
+ * *begin-hook*? (this will be confusing!)
  * letrec* built-in (not macro), perhaps also when and unless
  *
  * gchar* et al in xg should accept NULL (via (c-pointer 0)) [uses XEN_TO_C_STRING in xen.h which currently just calls s7_string]
  * remove-duplicates could use the collected bit (also set intersection/difference)
  * loop in C or scheme (as do-loop wrapper)
  * pretty-print?
+ *
  * in help strings (and dialog), can help code examples be monospace?
+ *   also need doc for vars/hooks (help as macro for (help *maximum-stack-size*) etc?)
+ *   also scheme-defined help, for vars built-in help if global_slot?
+ *   (set! (help name) ...)?
+ *   also share help between pws/var but switch names locally
+ *   add docs here and throughout [check hooks too]
  */
 
 

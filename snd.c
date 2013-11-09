@@ -330,6 +330,7 @@ void snd_set_global_defaults(bool need_cleanup)
 #if HAVE_SCHEME
   ss->show_transform_peaks_symbol = s7_define_variable(s7, "*" S_show_transform_peaks "*", s7_make_boolean(s7, DEFAULT_SHOW_TRANSFORM_PEAKS));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_transform_peaks "*) (list #f (lambda (s v) (set! (" S_show_transform_peaks ") v)) #f))");
+  s7_symbol_set_documentation(s7, ss->show_transform_peaks_symbol, "*" S_show_transform_peaks "* determines whether fft displays include a peak list");
 
   ss->show_y_zero_symbol = s7_define_variable(s7, "*" S_show_y_zero "*", s7_make_boolean(s7, DEFAULT_SHOW_Y_ZERO));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_y_zero "*) (list #f (lambda (s v) (set! (" S_show_y_zero ") v)) #f))");

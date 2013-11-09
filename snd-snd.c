@@ -5747,79 +5747,43 @@ XEN_VARGIFY(g_save_sound_as_w, g_save_sound_as)
 XEN_ARGIFY_4(g_apply_controls_w, g_apply_controls)
 XEN_ARGIFY_6(g_controls_to_channel_w, g_controls_to_channel)
 XEN_ARGIFY_1(g_filter_control_envelope_w, g_filter_control_envelope)
-XEN_ARGIFY_2(g_set_filter_control_envelope_w, g_set_filter_control_envelope)
 XEN_ARGIFY_1(g_show_controls_w, g_show_controls)
-XEN_ARGIFY_2(g_set_show_controls_w, g_set_show_controls)
 XEN_ARGIFY_1(g_sync_w, g_sync)
-XEN_ARGIFY_2(g_set_sync_w, g_set_sync)
 XEN_NARGIFY_0(g_sync_max_w, g_sync_max)
 XEN_ARGIFY_1(g_sound_properties_w, g_sound_properties)
-XEN_ARGIFY_2(g_set_sound_properties_w, g_set_sound_properties)
 XEN_ARGIFY_2(g_sound_property_w, g_sound_property)
-XEN_ARGIFY_3(g_set_sound_property_w, g_set_sound_property)
 XEN_ARGIFY_1(g_channel_style_w, g_channel_style)
-XEN_ARGIFY_2(g_set_channel_style_w, g_set_channel_style)
 XEN_ARGIFY_1(g_read_only_w, g_read_only)
-XEN_ARGIFY_2(g_set_read_only_w, g_set_read_only)
 XEN_ARGIFY_1(g_expand_control_p_w, g_expand_control_p)
-XEN_ARGIFY_2(g_set_expand_control_p_w, g_set_expand_control_p)
 XEN_ARGIFY_1(g_contrast_control_p_w, g_contrast_control_p)
-XEN_ARGIFY_2(g_set_contrast_control_p_w, g_set_contrast_control_p)
 XEN_ARGIFY_1(g_reverb_control_p_w, g_reverb_control_p)
-XEN_ARGIFY_2(g_set_reverb_control_p_w, g_set_reverb_control_p)
 XEN_ARGIFY_1(g_filter_control_p_w, g_filter_control_p)
-XEN_ARGIFY_2(g_set_filter_control_p_w, g_set_filter_control_p)
 XEN_ARGIFY_1(g_filter_control_in_dB_w, g_filter_control_in_dB)
-XEN_ARGIFY_2(g_set_filter_control_in_dB_w, g_set_filter_control_in_dB)
 XEN_ARGIFY_1(g_filter_control_in_hz_w, g_filter_control_in_hz)
-XEN_ARGIFY_2(g_set_filter_control_in_hz_w, g_set_filter_control_in_hz)
 XEN_ARGIFY_1(g_filter_control_coeffs_w, g_filter_control_coeffs)
 XEN_ARGIFY_1(g_filter_control_order_w, g_filter_control_order)
-XEN_ARGIFY_2(g_set_filter_control_order_w, g_set_filter_control_order)
 XEN_ARGIFY_1(g_contrast_control_w, g_contrast_control)
-XEN_ARGIFY_2(g_set_contrast_control_w, g_set_contrast_control)
 XEN_ARGIFY_1(g_contrast_control_bounds_w, g_contrast_control_bounds)
-XEN_ARGIFY_2(g_set_contrast_control_bounds_w, g_set_contrast_control_bounds)
 XEN_ARGIFY_1(g_contrast_control_amp_w, g_contrast_control_amp)
-XEN_ARGIFY_2(g_set_contrast_control_amp_w, g_set_contrast_control_amp)
 XEN_ARGIFY_1(g_expand_control_w, g_expand_control)
-XEN_ARGIFY_2(g_set_expand_control_w, g_set_expand_control)
 XEN_ARGIFY_1(g_expand_control_bounds_w, g_expand_control_bounds)
-XEN_ARGIFY_2(g_set_expand_control_bounds_w, g_set_expand_control_bounds)
 XEN_ARGIFY_1(g_expand_control_length_w, g_expand_control_length)
-XEN_ARGIFY_2(g_set_expand_control_length_w, g_set_expand_control_length)
 XEN_ARGIFY_1(g_expand_control_ramp_w, g_expand_control_ramp)
-XEN_ARGIFY_2(g_set_expand_control_ramp_w, g_set_expand_control_ramp)
 XEN_ARGIFY_1(g_expand_control_hop_w, g_expand_control_hop)
-XEN_ARGIFY_2(g_set_expand_control_hop_w, g_set_expand_control_hop)
 XEN_ARGIFY_1(g_expand_control_jitter_w, g_expand_control_jitter)
-XEN_ARGIFY_2(g_set_expand_control_jitter_w, g_set_expand_control_jitter)
 XEN_ARGIFY_1(g_speed_control_w, g_speed_control)
-XEN_ARGIFY_2(g_set_speed_control_w, g_set_speed_control)
 XEN_ARGIFY_1(g_speed_control_bounds_w, g_speed_control_bounds)
-XEN_ARGIFY_2(g_set_speed_control_bounds_w, g_set_speed_control_bounds)
 XEN_ARGIFY_1(g_reverb_control_length_w, g_reverb_control_length)
-XEN_ARGIFY_2(g_set_reverb_control_length_w, g_set_reverb_control_length)
 XEN_ARGIFY_1(g_reverb_control_length_bounds_w, g_reverb_control_length_bounds)
-XEN_ARGIFY_2(g_set_reverb_control_length_bounds_w, g_set_reverb_control_length_bounds)
 XEN_ARGIFY_1(g_reverb_control_scale_w, g_reverb_control_scale)
-XEN_ARGIFY_2(g_set_reverb_control_scale_w, g_set_reverb_control_scale)
 XEN_ARGIFY_1(g_reverb_control_scale_bounds_w, g_reverb_control_scale_bounds)
-XEN_ARGIFY_2(g_set_reverb_control_scale_bounds_w, g_set_reverb_control_scale_bounds)
 XEN_ARGIFY_1(g_reverb_control_feedback_w, g_reverb_control_feedback)
-XEN_ARGIFY_2(g_set_reverb_control_feedback_w, g_set_reverb_control_feedback)
 XEN_ARGIFY_1(g_reverb_control_lowpass_w, g_reverb_control_lowpass)
-XEN_ARGIFY_2(g_set_reverb_control_lowpass_w, g_set_reverb_control_lowpass)
 XEN_ARGIFY_2(g_amp_control_w, g_amp_control)
-XEN_ARGIFY_3(g_set_amp_control_w, g_set_amp_control)
 XEN_ARGIFY_1(g_amp_control_bounds_w, g_amp_control_bounds)
-XEN_ARGIFY_2(g_set_amp_control_bounds_w, g_set_amp_control_bounds)
 XEN_ARGIFY_1(g_reverb_control_decay_w, g_reverb_control_decay)
-XEN_ARGIFY_2(g_set_reverb_control_decay_w, g_set_reverb_control_decay)
 XEN_ARGIFY_1(g_speed_control_style_w, g_speed_control_style)
-XEN_ARGIFY_2(g_set_speed_control_style_w, g_set_speed_control_style)
 XEN_ARGIFY_1(g_speed_control_tones_w, g_speed_control_tones)
-XEN_ARGIFY_2(g_set_speed_control_tones_w, g_set_speed_control_tones)
 XEN_ARGIFY_5(g_channel_amp_envs_w, g_channel_amp_envs);
 XEN_ARGIFY_2(g_start_progress_report_w, g_start_progress_report)
 XEN_ARGIFY_2(g_finish_progress_report_w, g_finish_progress_report)
@@ -5828,6 +5792,81 @@ XEN_NARGIFY_0(g_sounds_w, g_sounds)
 XEN_NARGIFY_1(g_integer_to_sound_w, g_integer_to_sound)
 XEN_NARGIFY_1(g_sound_to_integer_w, g_sound_to_integer)
 XEN_ARGIFY_2(g_status_report_w, g_status_report)
+#if HAVE_SCHEME
+#define g_set_filter_control_envelope_w g_set_filter_control_envelope_reversed
+#define g_set_read_only_w g_set_read_only_reversed
+#define g_set_sound_properties_w g_set_sound_properties_reversed
+#define g_set_sound_property_w g_set_sound_property_reversed
+#define g_set_sync_w g_set_sync_reversed
+#define g_set_channel_style_w g_set_channel_style_reversed
+#define g_set_show_controls_w g_set_show_controls_reversed
+#define g_set_expand_control_p_w g_set_expand_control_p_reversed
+#define g_set_contrast_control_p_w g_set_contrast_control_p_reversed
+#define g_set_reverb_control_p_w g_set_reverb_control_p_reversed
+#define g_set_filter_control_p_w g_set_filter_control_p_reversed
+#define g_set_filter_control_in_dB_w g_set_filter_control_in_dB_reversed
+#define g_set_filter_control_in_hz_w g_set_filter_control_in_hz_reversed
+#define g_set_filter_control_order_w g_set_filter_control_order_reversed
+#define g_set_contrast_control_w g_set_contrast_control_reversed
+#define g_set_contrast_control_bounds_w g_set_contrast_control_bounds_reversed
+#define g_set_contrast_control_amp_w g_set_contrast_control_amp_reversed
+#define g_set_expand_control_w g_set_expand_control_reversed
+#define g_set_expand_control_bounds_w g_set_expand_control_bounds_reversed
+#define g_set_expand_control_length_w g_set_expand_control_length_reversed
+#define g_set_expand_control_ramp_w g_set_expand_control_ramp_reversed
+#define g_set_expand_control_hop_w g_set_expand_control_hop_reversed
+#define g_set_expand_control_jitter_w g_set_expand_control_jitter_reversed
+#define g_set_speed_control_w g_set_speed_control_reversed
+#define g_set_speed_control_bounds_w g_set_speed_control_bounds_reversed
+#define g_set_reverb_control_length_w g_set_reverb_control_length_reversed
+#define g_set_reverb_control_length_bounds_w g_set_reverb_control_length_bounds_reversed
+#define g_set_reverb_control_scale_w g_set_reverb_control_scale_reversed
+#define g_set_reverb_control_scale_bounds_w g_set_reverb_control_scale_bounds_reversed
+#define g_set_reverb_control_feedback_w g_set_reverb_control_feedback_reversed
+#define g_set_reverb_control_lowpass_w g_set_reverb_control_lowpass_reversed
+#define g_set_amp_control_w g_set_amp_control_reversed
+#define g_set_amp_control_bounds_w g_set_amp_control_bounds_reversed
+#define g_set_reverb_control_decay_w g_set_reverb_control_decay_reversed
+#define g_set_speed_control_style_w g_set_speed_control_style_reversed
+#define g_set_speed_control_tones_w g_set_speed_control_tones_reversed
+#else
+XEN_ARGIFY_2(g_set_filter_control_envelope_w, g_set_filter_control_envelope)
+XEN_ARGIFY_2(g_set_read_only_w, g_set_read_only)
+XEN_ARGIFY_2(g_set_sound_properties_w, g_set_sound_properties)
+XEN_ARGIFY_3(g_set_sound_property_w, g_set_sound_property)
+XEN_ARGIFY_2(g_set_sync_w, g_set_sync)
+XEN_ARGIFY_2(g_set_channel_style_w, g_set_channel_style)
+XEN_ARGIFY_2(g_set_show_controls_w, g_set_show_controls)
+XEN_ARGIFY_2(g_set_expand_control_p_w, g_set_expand_control_p)
+XEN_ARGIFY_2(g_set_contrast_control_p_w, g_set_contrast_control_p)
+XEN_ARGIFY_2(g_set_reverb_control_p_w, g_set_reverb_control_p)
+XEN_ARGIFY_2(g_set_filter_control_p_w, g_set_filter_control_p)
+XEN_ARGIFY_2(g_set_filter_control_in_dB_w, g_set_filter_control_in_dB)
+XEN_ARGIFY_2(g_set_filter_control_in_hz_w, g_set_filter_control_in_hz)
+XEN_ARGIFY_2(g_set_filter_control_order_w, g_set_filter_control_order)
+XEN_ARGIFY_2(g_set_contrast_control_w, g_set_contrast_control)
+XEN_ARGIFY_2(g_set_contrast_control_bounds_w, g_set_contrast_control_bounds)
+XEN_ARGIFY_2(g_set_contrast_control_amp_w, g_set_contrast_control_amp)
+XEN_ARGIFY_2(g_set_expand_control_w, g_set_expand_control)
+XEN_ARGIFY_2(g_set_expand_control_bounds_w, g_set_expand_control_bounds)
+XEN_ARGIFY_2(g_set_expand_control_length_w, g_set_expand_control_length)
+XEN_ARGIFY_2(g_set_expand_control_ramp_w, g_set_expand_control_ramp)
+XEN_ARGIFY_2(g_set_expand_control_hop_w, g_set_expand_control_hop)
+XEN_ARGIFY_2(g_set_expand_control_jitter_w, g_set_expand_control_jitter)
+XEN_ARGIFY_2(g_set_speed_control_w, g_set_speed_control)
+XEN_ARGIFY_2(g_set_speed_control_bounds_w, g_set_speed_control_bounds)
+XEN_ARGIFY_2(g_set_reverb_control_length_w, g_set_reverb_control_length)
+XEN_ARGIFY_2(g_set_reverb_control_length_bounds_w, g_set_reverb_control_length_bounds)
+XEN_ARGIFY_2(g_set_reverb_control_scale_w, g_set_reverb_control_scale)
+XEN_ARGIFY_2(g_set_reverb_control_scale_bounds_w, g_set_reverb_control_scale_bounds)
+XEN_ARGIFY_2(g_set_reverb_control_feedback_w, g_set_reverb_control_feedback)
+XEN_ARGIFY_2(g_set_reverb_control_lowpass_w, g_set_reverb_control_lowpass)
+XEN_ARGIFY_3(g_set_amp_control_w, g_set_amp_control)
+XEN_ARGIFY_2(g_set_amp_control_bounds_w, g_set_amp_control_bounds)
+XEN_ARGIFY_2(g_set_reverb_control_decay_w, g_set_reverb_control_decay)
+XEN_ARGIFY_2(g_set_speed_control_style_w, g_set_speed_control_style)
+XEN_ARGIFY_2(g_set_speed_control_tones_w, g_set_speed_control_tones)
+#endif
 
 void g_init_snd(void)
 {
@@ -5894,120 +5933,43 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   XEN_DEFINE_PROCEDURE(S_save_sound_as,          g_save_sound_as_w,           0, 0, 1, H_save_sound_as);
   XEN_DEFINE_PROCEDURE(S_apply_controls,         g_apply_controls_w,          0, 4, 0, H_apply_controls);
   XEN_DEFINE_PROCEDURE(S_controls_to_channel,    g_controls_to_channel_w,     0, 6, 0, H_controls_to_channel);
+  XEN_DEFINE_PROCEDURE(S_sync_max,               g_sync_max_w,                0, 0, 0, H_sync_max);
+  XEN_DEFINE_PROCEDURE(S_filter_control_coeffs,  g_filter_control_coeffs_w,   0, 1, 0, H_filter_control_coeffs);
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_envelope, g_filter_control_envelope_w, H_filter_control_envelope,
-					    S_setB S_filter_control_envelope, g_set_filter_control_envelope_w, g_set_filter_control_envelope_reversed, 
-					    0, 1, 1, 1);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_controls, g_show_controls_w, H_show_controls,
-					    S_setB S_show_controls, g_set_show_controls_w, g_set_show_controls_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sync, g_sync_w, H_sync,
-					    S_setB S_sync, g_set_sync_w, g_set_sync_reversed, 0, 1, 1, 1);
-  XEN_DEFINE_PROCEDURE(S_sync_max, g_sync_max_w, 0, 0, 0, H_sync_max);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sound_properties, g_sound_properties_w, H_sound_properties,
-					    S_setB S_sound_properties, g_set_sound_properties_w, g_set_sound_properties_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sound_property, g_sound_property_w, H_sound_property,
-					    S_setB S_sound_property, g_set_sound_property_w, g_set_sound_property_reversed, 1, 1, 2, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_channel_style, g_channel_style_w, H_channel_style,
-					    S_setB S_channel_style, g_set_channel_style_w, g_set_channel_style_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_read_only, g_read_only_w, H_read_only,
-					    S_setB S_read_only, g_set_read_only_w, g_set_read_only_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control_p, g_expand_control_p_w, H_expand_control_p,
-					    S_setB S_expand_control_p, g_set_expand_control_p_w, g_set_expand_control_p_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_contrast_control_p, g_contrast_control_p_w, H_contrast_control_p,
-					    S_setB S_contrast_control_p, g_set_contrast_control_p_w, g_set_contrast_control_p_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_p, g_reverb_control_p_w, H_reverb_control_p,
-					    S_setB S_reverb_control_p, g_set_reverb_control_p_w, g_set_reverb_control_p_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_p, g_filter_control_p_w, H_filter_control_p,
-					    S_setB S_filter_control_p, g_set_filter_control_p_w, g_set_filter_control_p_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_in_dB, g_filter_control_in_dB_w, H_filter_control_in_dB,
-					    S_setB S_filter_control_in_dB, g_set_filter_control_in_dB_w, g_set_filter_control_in_dB_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_in_hz, g_filter_control_in_hz_w, H_filter_control_in_hz,
-					    S_setB S_filter_control_in_hz, g_set_filter_control_in_hz_w, g_set_filter_control_in_hz_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE(S_filter_control_coeffs, g_filter_control_coeffs_w, 0, 1, 0, H_filter_control_coeffs);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_order, g_filter_control_order_w, H_filter_control_order,
-					    S_setB S_filter_control_order, g_set_filter_control_order_w, g_set_filter_control_order_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_contrast_control, g_contrast_control_w, H_contrast_control,
-					    S_setB S_contrast_control, g_set_contrast_control_w, g_set_contrast_control_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_contrast_control_bounds, g_contrast_control_bounds_w, H_contrast_control_bounds,
-					    S_setB S_contrast_control_bounds, g_set_contrast_control_bounds_w, g_set_contrast_control_bounds_reversed, 
-					    0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_contrast_control_amp, g_contrast_control_amp_w, H_contrast_control_amp,
-					    S_setB S_contrast_control_amp, g_set_contrast_control_amp_w, g_set_contrast_control_amp_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control, g_expand_control_w, H_expand_control,
-					    S_setB S_expand_control, g_set_expand_control_w, g_set_expand_control_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control_bounds, g_expand_control_bounds_w, H_expand_control_bounds,
-					    S_setB S_expand_control_bounds, g_set_expand_control_bounds_w, g_set_expand_control_bounds_reversed, 
-					    0, 1, 1, 1);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control_length, g_expand_control_length_w, H_expand_control_length,
-					    S_setB S_expand_control_length, g_set_expand_control_length_w, g_set_expand_control_length_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control_ramp, g_expand_control_ramp_w, H_expand_control_ramp,
-					    S_setB S_expand_control_ramp, g_set_expand_control_ramp_w, g_set_expand_control_ramp_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control_hop, g_expand_control_hop_w, H_expand_control_hop,
-					    S_setB S_expand_control_hop, g_set_expand_control_hop_w, g_set_expand_control_hop_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control_jitter, g_expand_control_jitter_w, H_expand_control_jitter,
-					    S_setB S_expand_control_jitter, g_set_expand_control_jitter_w, g_set_expand_control_jitter_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_speed_control, g_speed_control_w, H_speed_control,
-					    S_setB S_speed_control, g_set_speed_control_w, g_set_speed_control_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_speed_control_bounds, g_speed_control_bounds_w, H_speed_control_bounds,
-					    S_setB S_speed_control_bounds, g_set_speed_control_bounds_w, g_set_speed_control_bounds_reversed, 
-					    0, 1, 1, 1);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_length, g_reverb_control_length_w, H_reverb_control_length,
-					    S_setB S_reverb_control_length, g_set_reverb_control_length_w, g_set_reverb_control_length_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_length_bounds, g_reverb_control_length_bounds_w, H_reverb_control_length_bounds,
-					    S_setB S_reverb_control_length_bounds, g_set_reverb_control_length_bounds_w, 
-					    g_set_reverb_control_length_bounds_reversed, 0, 1, 1, 1);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_scale, g_reverb_control_scale_w, H_reverb_control_scale,
-					    S_setB S_reverb_control_scale, g_set_reverb_control_scale_w, g_set_reverb_control_scale_reversed, 0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_scale_bounds, g_reverb_control_scale_bounds_w, H_reverb_control_scale_bounds,
-					    S_setB S_reverb_control_scale_bounds, g_set_reverb_control_scale_bounds_w, 
-					    g_set_reverb_control_scale_bounds_reversed, 0, 1, 1, 1);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_feedback, g_reverb_control_feedback_w, H_reverb_control_feedback,
-					    S_setB S_reverb_control_feedback, g_set_reverb_control_feedback_w, g_set_reverb_control_feedback_reversed, 
-					    0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_lowpass, g_reverb_control_lowpass_w, H_reverb_control_lowpass,
-					    S_setB S_reverb_control_lowpass, g_set_reverb_control_lowpass_w, g_set_reverb_control_lowpass_reversed, 
-					    0, 1, 1, 1);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_amp_control, g_amp_control_w, H_amp_control,
-					    S_setB S_amp_control, g_set_amp_control_w, g_set_amp_control_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_amp_control_bounds, g_amp_control_bounds_w, H_amp_control_bounds,
-					    S_setB S_amp_control_bounds, g_set_amp_control_bounds_w, g_set_amp_control_bounds_reversed, 
-					    0, 1, 1, 1);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_decay, g_reverb_control_decay_w, H_reverb_control_decay,
-					    S_setB S_reverb_control_decay, g_set_reverb_control_decay_w, g_set_reverb_control_decay_reversed, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_envelope, g_filter_control_envelope_w, H_filter_control_envelope, S_setB S_filter_control_envelope, g_set_filter_control_envelope_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_controls, g_show_controls_w, H_show_controls, S_setB S_show_controls, g_set_show_controls_w, 0, 1, 1, 1);  
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sync, g_sync_w, H_sync, S_setB S_sync, g_set_sync_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_properties, g_sound_properties_w, H_sound_properties, S_setB S_sound_properties, g_set_sound_properties_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_property, g_sound_property_w, H_sound_property, S_setB S_sound_property, g_set_sound_property_w, 1, 1, 2, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_channel_style, g_channel_style_w, H_channel_style, S_setB S_channel_style, g_set_channel_style_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_read_only, g_read_only_w, H_read_only, S_setB S_read_only, g_set_read_only_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_expand_control_p, g_expand_control_p_w, H_expand_control_p, S_setB S_expand_control_p, g_set_expand_control_p_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_contrast_control_p, g_contrast_control_p_w, H_contrast_control_p, S_setB S_contrast_control_p, g_set_contrast_control_p_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_reverb_control_p, g_reverb_control_p_w, H_reverb_control_p, S_setB S_reverb_control_p, g_set_reverb_control_p_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_p, g_filter_control_p_w, H_filter_control_p, S_setB S_filter_control_p, g_set_filter_control_p_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_in_dB, g_filter_control_in_dB_w, H_filter_control_in_dB, S_setB S_filter_control_in_dB, g_set_filter_control_in_dB_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_in_hz, g_filter_control_in_hz_w, H_filter_control_in_hz, S_setB S_filter_control_in_hz, g_set_filter_control_in_hz_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_order, g_filter_control_order_w, H_filter_control_order, S_setB S_filter_control_order, g_set_filter_control_order_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_contrast_control, g_contrast_control_w, H_contrast_control, S_setB S_contrast_control, g_set_contrast_control_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_contrast_control_bounds, g_contrast_control_bounds_w, H_contrast_control_bounds, S_setB S_contrast_control_bounds, g_set_contrast_control_bounds_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_contrast_control_amp, g_contrast_control_amp_w, H_contrast_control_amp, S_setB S_contrast_control_amp, g_set_contrast_control_amp_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_expand_control, g_expand_control_w, H_expand_control, S_setB S_expand_control, g_set_expand_control_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_expand_control_bounds, g_expand_control_bounds_w, H_expand_control_bounds, S_setB S_expand_control_bounds, g_set_expand_control_bounds_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_expand_control_length, g_expand_control_length_w, H_expand_control_length, S_setB S_expand_control_length, g_set_expand_control_length_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_expand_control_ramp, g_expand_control_ramp_w, H_expand_control_ramp, S_setB S_expand_control_ramp, g_set_expand_control_ramp_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_expand_control_hop, g_expand_control_hop_w, H_expand_control_hop, S_setB S_expand_control_hop, g_set_expand_control_hop_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_expand_control_jitter, g_expand_control_jitter_w, H_expand_control_jitter, S_setB S_expand_control_jitter, g_set_expand_control_jitter_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_speed_control, g_speed_control_w, H_speed_control, S_setB S_speed_control, g_set_speed_control_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_speed_control_bounds, g_speed_control_bounds_w, H_speed_control_bounds, S_setB S_speed_control_bounds, g_set_speed_control_bounds_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_reverb_control_length, g_reverb_control_length_w, H_reverb_control_length, S_setB S_reverb_control_length, g_set_reverb_control_length_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_reverb_control_length_bounds, g_reverb_control_length_bounds_w, H_reverb_control_length_bounds, S_setB S_reverb_control_length_bounds, g_set_reverb_control_length_bounds_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_reverb_control_scale, g_reverb_control_scale_w, H_reverb_control_scale, S_setB S_reverb_control_scale, g_set_reverb_control_scale_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_reverb_control_scale_bounds, g_reverb_control_scale_bounds_w, H_reverb_control_scale_bounds, S_setB S_reverb_control_scale_bounds, g_set_reverb_control_scale_bounds_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_reverb_control_feedback, g_reverb_control_feedback_w, H_reverb_control_feedback, S_setB S_reverb_control_feedback, g_set_reverb_control_feedback_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_reverb_control_lowpass, g_reverb_control_lowpass_w, H_reverb_control_lowpass, S_setB S_reverb_control_lowpass, g_set_reverb_control_lowpass_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_amp_control, g_amp_control_w, H_amp_control, S_setB S_amp_control, g_set_amp_control_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_amp_control_bounds, g_amp_control_bounds_w, H_amp_control_bounds, S_setB S_amp_control_bounds, g_set_amp_control_bounds_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_reverb_control_decay, g_reverb_control_decay_w, H_reverb_control_decay, S_setB S_reverb_control_decay, g_set_reverb_control_decay_w, 0, 1, 1, 1);
   
   #define H_speed_control_as_float "The value for " S_speed_control_style " that interprets the speed slider as a float"
   #define H_speed_control_as_ratio "The value for " S_speed_control_style " that interprets the speed slider as a just-intonation ratio"
@@ -6017,19 +5979,11 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   XEN_DEFINE_CONSTANT(S_speed_control_as_ratio,        SPEED_CONTROL_AS_RATIO,    H_speed_control_as_ratio);
   XEN_DEFINE_CONSTANT(S_speed_control_as_semitone,     SPEED_CONTROL_AS_SEMITONE, H_speed_control_as_semitone);
   
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_speed_control_style, g_speed_control_style_w, H_speed_control_style,
-					    S_setB S_speed_control_style, g_set_speed_control_style_w, g_set_speed_control_style_reversed, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_speed_control_style, g_speed_control_style_w, H_speed_control_style, S_setB S_speed_control_style, g_set_speed_control_style_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_speed_control_tones, g_speed_control_tones_w, H_speed_control_tones, S_setB S_speed_control_tones, g_set_speed_control_tones_w, 0, 1, 1, 1);
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_speed_control_tones, g_speed_control_tones_w, H_speed_control_tones,
-					    S_setB S_speed_control_tones, g_set_speed_control_tones_w, g_set_speed_control_tones_reversed, 0, 1, 1, 1);
-
-  XEN_DEFINE_PROCEDURE(S_channel_amp_envs,         g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs);
-
+  XEN_DEFINE_PROCEDURE(S_channel_amp_envs,              g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs);
   XEN_DEFINE_SAFE_PROCEDURE(S_sounds,                   g_sounds_w,                   0, 0, 0, H_sounds);
-
   XEN_DEFINE_SAFE_PROCEDURE(S_integer_to_sound,         g_integer_to_sound_w,         1, 0, 0, H_integer_to_sound);
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_to_integer,         g_sound_to_integer_w,         1, 0, 0, H_sound_to_integer);
 }
-
-/* TODO: remove apply-controls
- */

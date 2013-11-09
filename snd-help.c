@@ -3587,7 +3587,7 @@ and its value is returned."
 	  }
 	else
 	  {
-	    str = (char *)xen_s7_constant_help(subject);
+	    str = s7_symbol_documentation(s7, s7_make_symbol(s7, subject));
 	  }
       }
   }

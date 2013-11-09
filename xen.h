@@ -10,11 +10,12 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 19
-#define XEN_VERSION "3.19"
+#define XEN_MINOR_VERSION 20
+#define XEN_VERSION "3.20"
 
 /* HISTORY:
  *
+ *  9-Nov:     removed XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER.
  *  11-Oct:    removed XEN_EXACT_P.
  *  23-Sep:    removed *_OR_ELSE, XEN_ARG_*, and OFF_T* macros; added XEN_ARGIFY* to the Forth section.
  *  7-Jul-13:  removed int64 stuff (it was not used anywhere). Made various Ruby changes (NUM2ULL etc).
@@ -419,12 +420,6 @@
       XEN_DEFINE_PROCEDURE(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
       XEN_DEFINE_PROCEDURE(Set_Name, XEN_PROCEDURE_CAST Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
    } while (0)
-
-#define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
-  do { \
-      XEN_DEFINE_PROCEDURE(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
-      XEN_DEFINE_PROCEDURE(Set_Name, XEN_PROCEDURE_CAST Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
-    } while (0)
 
 #define XEN_DEFINE_SAFE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
 
@@ -914,9 +909,6 @@ XEN xen_assoc(XEN key, XEN alist);
     XEN_DEFINE_PROCEDURE(Set_Name, XEN_PROCEDURE_CAST Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
   } while (0)
 
-#define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
-
 #define XEN_DEFINE_SAFE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
 
 /* === Object === */
@@ -1190,10 +1182,6 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   s7_make_procedure_with_setter(s7, Get_Name, Get_Func, Get_Req, Get_Opt, Set_Func, Set_Req, Set_Opt, Get_Help)
 
-#define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
-  s7_make_procedure_with_setter(s7, Get_Name, Get_Func, Get_Req, Get_Opt, Rev_Func, Set_Req, Set_Opt, Get_Help); \
-  xen_s7_ignore(Set_Func)
-
 #define XEN_ARITY(Func)                                               s7_procedure_arity(s7, Func)
 #define XEN_REQUIRED_ARGS(Func)                                       XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func)))
 #define XEN_REQUIRED_ARGS_OK(Func, Args)                              s7_is_aritable(s7, Func, Args) /* (XEN_REQUIRED_ARGS(Func) == Args) */
@@ -1214,11 +1202,11 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_APPLY_NO_CATCH(Func, Args)                                s7_call_with_location(s7, Func, Args, __func__, __FILE__, __LINE__)
 typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *data);
 
-#define XEN_DEFINE_CONSTANT(Name, Value, Help)                        xen_s7_define_constant(s7, Name, s7_make_integer(s7, Value), Help)
+#define XEN_DEFINE_CONSTANT(Name, Value, Help)                        s7_define_constant_with_documentation(s7, Name, s7_make_integer(s7, Value), Help)
 #define XEN_DEFINE(Name, Value)                                       s7_define_variable(s7, Name, Value)
 #define XEN_DEFINED_P(Name)                                           s7_is_defined(s7, Name)
 
-#define XEN_DEFINE_VARIABLE(Name, Var, Value)                         Var = xen_define_variable(Name, Value)
+#define XEN_DEFINE_VARIABLE(Name, Var, Value)                         Var = s7_define_variable(s7, Name, Value)
 #define XEN_VARIABLE_SET(Var, Val)                                    s7_symbol_set_value(s7, Var, Val)
 #define XEN_VARIABLE_REF(Var)                                         s7_symbol_value(s7, Var)
 #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a)                           s7_make_symbol(s7, a)
@@ -1236,7 +1224,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_OBJECT_TYPE_P(Obj, Tag)                                   (s7_object_type(Obj) == Tag)
 
 #define XEN_HOOK_P(Arg)                                               ((Arg) != XEN_FALSE)
-#define XEN_DEFINE_HOOK(Name, Descr, Arity, Help)                     xen_s7_define_hook(Name, s7_eval_c_string(s7, Descr))
+#define XEN_DEFINE_HOOK(Name, Descr, Arity, Help)                     s7_define_constant_with_documentation(s7, Name, s7_eval_c_string(s7, Descr), Help)
 /* "simple hooks are for channel-local hooks (unnamed, accessed through the channel) */
 #define XEN_DEFINE_SIMPLE_HOOK(Descr, Arity)                          s7_eval_c_string(s7, Descr)
 #define XEN_HOOKED(Hook)                                              s7_is_pair(s7_hook_functions(s7, Hook))
@@ -1248,14 +1236,8 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 extern "C" {
 #endif
 
-XEN xen_define_variable(const char *name, XEN value);
-XEN xen_s7_define_hook(const char *name, XEN value);
-void xen_s7_ignore(s7_function func); /* squelch compiler warnings */
-const char *xen_s7_object_help(XEN sym);
 s7_scheme *s7_xen_initialize(s7_scheme *sc);
 void xen_s7_set_repl_prompt(const char *new_prompt);
-void xen_s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value, const char *help);
-const char *xen_s7_constant_help(const char *name);
 XEN xen_set_assoc(s7_scheme *sc, s7_pointer key, s7_pointer val, s7_pointer alist);
 XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 
@@ -1380,9 +1362,6 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
   xen_no_ext_lang_check_args(Name, Func(), ReqArg, OptArg, RstArg)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
-  {xen_no_ext_lang_check_args(Get_Name, Get_Func(), Get_Req, Get_Opt, 0); xen_no_ext_lang_check_args(Set_Name, Set_Func(), Set_Req, Set_Opt, 0);}
-
-#define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   {xen_no_ext_lang_check_args(Get_Name, Get_Func(), Get_Req, Get_Opt, 0); xen_no_ext_lang_check_args(Set_Name, Set_Func(), Set_Req, Set_Opt, 0);}
 
 #define XEN_DEFINE_SAFE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)

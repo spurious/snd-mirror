@@ -1810,11 +1810,8 @@ static XEN g_unselect_all(void)
 
 
 XEN_ARGIFY_2(g_selection_position_w, g_selection_position)
-XEN_ARGIFY_3(g_set_selection_position_w, g_set_selection_position)
 XEN_ARGIFY_2(g_selection_frames_w, g_selection_frames)
-XEN_ARGIFY_3(g_set_selection_frames_w, g_set_selection_frames)
 XEN_ARGIFY_2(g_selection_member_w, g_selection_member)
-XEN_ARGIFY_3(g_set_selection_member_w, g_set_selection_member)
 XEN_NARGIFY_0(g_selection_w, g_selection)
 XEN_ARGIFY_1(g_selection_p_w, g_selection_p)
 XEN_NARGIFY_0(g_selection_chans_w, g_selection_chans)
@@ -1829,23 +1826,24 @@ XEN_ARGIFY_2(g_select_all_w, g_select_all)
 XEN_VARGIFY(g_save_selection_w, g_save_selection)
 XEN_NARGIFY_0(g_show_selection_w, g_show_selection)
 XEN_NARGIFY_0(g_unselect_all_w, g_unselect_all)
+#if HAVE_SCHEME
+#define g_set_selection_position_w g_set_selection_position_reversed
+#define g_set_selection_frames_w g_set_selection_frames_reversed
+#define g_set_selection_member_w g_set_selection_member_reversed
+#else
+XEN_ARGIFY_3(g_set_selection_position_w, g_set_selection_position)
+XEN_ARGIFY_3(g_set_selection_frames_w, g_set_selection_frames)
+XEN_ARGIFY_3(g_set_selection_member_w, g_set_selection_member)
+#endif
 
 void g_init_selection(void)
 {
   init_selection_keywords();
   init_xen_selection();
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_selection_position, g_selection_position_w, H_selection_position,
-					    S_setB S_selection_position, g_set_selection_position_w, g_set_selection_position_reversed,
-					    0, 2, 1, 2);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_selection_frames, g_selection_frames_w, H_selection_frames,
-					    S_setB S_selection_frames, g_set_selection_frames_w, g_set_selection_frames_reversed,
-					    0, 2, 1, 2);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_selection_member, g_selection_member_w, H_selection_member,
-					    S_setB S_selection_member, g_set_selection_member_w, g_set_selection_member_reversed,
-					    0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_position, g_selection_position_w, H_selection_position, S_setB S_selection_position, g_set_selection_position_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_frames, g_selection_frames_w, H_selection_frames, S_setB S_selection_frames, g_set_selection_frames_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_member, g_selection_member_w, H_selection_member, S_setB S_selection_member, g_set_selection_member_w, 0, 2, 1, 2);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_selection,        g_selection_w,        0, 0, 0, H_selection);
   XEN_DEFINE_SAFE_PROCEDURE(S_selection_p,      g_selection_p_w,      0, 1, 0, H_selection_p);

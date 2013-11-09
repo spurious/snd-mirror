@@ -7717,8 +7717,7 @@ static XEN g_edit_hook(XEN snd, XEN chn_n)
   #endif
 
   #define H_edit_hook "(" S_edit_hook " :optional snd chn): snd's channel chn's " S_edit_hook ". \
-This is a channel-specific hook variable; the hook procedures are thunks -- they should take no \
-arguments. " S_edit_hook " is called just before any attempt to edit the channel's data; if it returns " PROC_TRUE ", \
+This is a channel-specific hook variable; " S_edit_hook " is called just before any attempt to edit the channel's data; if it returns " PROC_TRUE ", \
 the edit is aborted. \n  " edit_hook_example
 
   return(channel_get(snd, chn_n, CP_EDIT_HOOK, S_edit_hook));
@@ -7738,8 +7737,7 @@ static XEN g_after_edit_hook(XEN snd, XEN chn_n)
   #endif
 
   #define H_after_edit_hook "(" S_after_edit_hook " :optional snd chn): snd's channel chn's " S_after_edit_hook ". \
-This is a channel-specific hook variable; the hook procedures are thunks -- they should take no \
-arguments. " S_after_edit_hook " is called after an edit, but before " S_after_graph_hook ". \n  " after_edit_hook_example
+This is a channel-specific hook variable; " S_after_edit_hook " is called after an edit, but before " S_after_graph_hook ". \n  " after_edit_hook_example
 
   return(channel_get(snd, chn_n, CP_AFTER_EDIT_HOOK, S_after_edit_hook));
 }
@@ -7748,8 +7746,7 @@ arguments. " S_after_edit_hook " is called after an edit, but before " S_after_g
 static XEN g_undo_hook(XEN snd, XEN chn_n) 
 {
   #define H_undo_hook "(" S_undo_hook " :optional snd chn): snd's channel chn's " S_undo_hook ". \
-This is a channel-specific hook variable; the hook procedures are thunks -- they should take no \
-arguments. " S_undo_hook " is called just after any undo, redo, or revert that affects the channel."
+This is a channel-specific hook variable; " S_undo_hook " is called just after any undo, redo, or revert that affects the channel."
 
   return(channel_get(snd, chn_n, CP_UNDO_HOOK, S_undo_hook));
 }
@@ -9656,137 +9653,72 @@ XEN_ARGIFY_2(g_edit_hook_w, g_edit_hook)
 XEN_ARGIFY_2(g_after_edit_hook_w, g_after_edit_hook)
 XEN_ARGIFY_2(g_undo_hook_w, g_undo_hook)
 XEN_ARGIFY_2(g_ap_sx_w, g_ap_sx)
-XEN_ARGIFY_3(g_set_ap_sx_w, g_set_ap_sx)
 XEN_ARGIFY_2(g_ap_sy_w, g_ap_sy)
-XEN_ARGIFY_3(g_set_ap_sy_w, g_set_ap_sy)
 XEN_ARGIFY_2(g_ap_zx_w, g_ap_zx)
-XEN_ARGIFY_3(g_set_ap_zx_w, g_set_ap_zx)
 XEN_ARGIFY_2(g_ap_zy_w, g_ap_zy)
-XEN_ARGIFY_3(g_set_ap_zy_w, g_set_ap_zy)
 XEN_ARGIFY_3(g_frames_w, g_frames)
-XEN_ARGIFY_3(g_set_frames_w, g_set_frames)
 XEN_ARGIFY_3(g_maxamp_position_w, g_maxamp_position)
 XEN_ARGIFY_3(g_maxamp_w, g_maxamp)
-XEN_ARGIFY_3(g_set_maxamp_w, g_set_maxamp)
 XEN_ARGIFY_2(g_cursor_position_w, g_cursor_position)
 XEN_ARGIFY_2(g_edit_position_w, g_edit_position)
-XEN_ARGIFY_3(g_set_edit_position_w, g_set_edit_position)
 XEN_ARGIFY_2(g_transform_graph_p_w, g_transform_graph_p)
-XEN_ARGIFY_3(g_set_transform_graph_p_w, g_set_transform_graph_p)
 XEN_ARGIFY_2(g_time_graph_p_w, g_time_graph_p)
-XEN_ARGIFY_3(g_set_time_graph_p_w, g_set_time_graph_p)
 XEN_ARGIFY_2(g_lisp_graph_p_w, g_lisp_graph_p)
-XEN_ARGIFY_3(g_set_lisp_graph_p_w, g_set_lisp_graph_p)
 XEN_ARGIFY_2(g_squelch_update_w, g_squelch_update)
-XEN_ARGIFY_3(g_set_squelch_update_w, g_set_squelch_update)
 XEN_ARGIFY_3(g_cursor_w, g_cursor)
-XEN_ARGIFY_4(g_set_cursor_w, g_set_cursor)
 XEN_ARGIFY_2(g_cursor_style_w, g_cursor_style)
-XEN_ARGIFY_3(g_set_cursor_style_w, g_set_cursor_style)
 XEN_ARGIFY_2(g_tracking_cursor_style_w, g_tracking_cursor_style)
-XEN_ARGIFY_3(g_set_tracking_cursor_style_w, g_set_tracking_cursor_style)
 XEN_ARGIFY_2(g_cursor_size_w, g_cursor_size)
-XEN_ARGIFY_3(g_set_cursor_size_w, g_set_cursor_size)
 XEN_ARGIFY_2(g_left_sample_w, g_left_sample)
-XEN_ARGIFY_3(g_set_left_sample_w, g_set_left_sample)
 XEN_ARGIFY_2(g_right_sample_w, g_right_sample)
-XEN_ARGIFY_3(g_set_right_sample_w, g_set_right_sample)
 XEN_ARGIFY_2(g_channel_properties_w, g_channel_properties)
-XEN_ARGIFY_3(g_set_channel_properties_w, g_set_channel_properties)
 XEN_ARGIFY_3(g_channel_property_w, g_channel_property)
-XEN_ARGIFY_4(g_set_channel_property_w, g_set_channel_property)
 XEN_ARGIFY_3(g_edit_properties_w, g_edit_properties)
-XEN_ARGIFY_4(g_set_edit_properties_w, g_set_edit_properties)
 XEN_ARGIFY_4(g_edit_property_w, g_edit_property)
-XEN_ARGIFY_5(g_set_edit_property_w, g_set_edit_property)
 XEN_ARGIFY_2(g_max_transform_peaks_w, g_max_transform_peaks)
-XEN_ARGIFY_3(g_set_max_transform_peaks_w, g_set_max_transform_peaks)
 XEN_ARGIFY_2(g_show_y_zero_w, g_show_y_zero)
-XEN_ARGIFY_3(g_set_show_y_zero_w, g_set_show_y_zero)
 XEN_ARGIFY_2(g_show_grid_w, g_show_grid)
-XEN_ARGIFY_3(g_set_show_grid_w, g_set_show_grid)
 XEN_ARGIFY_2(g_grid_density_w, g_grid_density)
-XEN_ARGIFY_3(g_set_grid_density_w, g_set_grid_density)
 XEN_ARGIFY_2(g_show_sonogram_cursor_w, g_show_sonogram_cursor)
-XEN_ARGIFY_3(g_set_show_sonogram_cursor_w, g_set_show_sonogram_cursor)
 XEN_ARGIFY_2(g_show_marks_w, g_show_marks)
-XEN_ARGIFY_3(g_set_show_marks_w, g_set_show_marks)
 XEN_ARGIFY_2(g_time_graph_type_w, g_time_graph_type)
-XEN_ARGIFY_3(g_set_time_graph_type_w, g_set_time_graph_type)
 XEN_ARGIFY_2(g_wavo_hop_w, g_wavo_hop)
-XEN_ARGIFY_3(g_set_wavo_hop_w, g_set_wavo_hop)
 XEN_ARGIFY_2(g_wavo_trace_w, g_wavo_trace)
-XEN_ARGIFY_3(g_set_wavo_trace_w, g_set_wavo_trace)
 XEN_ARGIFY_2(g_show_transform_peaks_w, g_show_transform_peaks)
-XEN_ARGIFY_3(g_set_show_transform_peaks_w, g_set_show_transform_peaks)
 XEN_ARGIFY_2(g_zero_pad_w, g_zero_pad)
-XEN_ARGIFY_3(g_set_zero_pad_w, g_set_zero_pad)
 XEN_ARGIFY_2(g_with_verbose_cursor_w, g_with_verbose_cursor)
-XEN_ARGIFY_3(g_set_with_verbose_cursor_w, g_set_with_verbose_cursor)
 XEN_ARGIFY_2(g_fft_log_frequency_w, g_fft_log_frequency)
-XEN_ARGIFY_3(g_set_fft_log_frequency_w, g_set_fft_log_frequency)
 XEN_ARGIFY_2(g_fft_log_magnitude_w, g_fft_log_magnitude)
-XEN_ARGIFY_3(g_set_fft_log_magnitude_w, g_set_fft_log_magnitude)
 XEN_ARGIFY_2(g_fft_with_phases_w, g_fft_with_phases)
-XEN_ARGIFY_3(g_set_fft_with_phases_w, g_set_fft_with_phases)
 XEN_ARGIFY_2(g_min_dB_w, g_min_dB)
-XEN_ARGIFY_3(g_set_min_dB_w, g_set_min_dB)
 XEN_ARGIFY_2(g_wavelet_type_w, g_wavelet_type)
-XEN_ARGIFY_3(g_set_wavelet_type_w, g_set_wavelet_type)
 XEN_ARGIFY_2(g_spectrum_end_w, g_spectrum_end)
-XEN_ARGIFY_3(g_set_spectrum_end_w, g_set_spectrum_end)
 XEN_ARGIFY_2(g_spectrum_start_w, g_spectrum_start)
-XEN_ARGIFY_3(g_set_spectrum_start_w, g_set_spectrum_start)
 XEN_ARGIFY_2(g_spectro_x_angle_w, g_spectro_x_angle)
-XEN_ARGIFY_3(g_set_spectro_x_angle_w, g_set_spectro_x_angle)
 XEN_ARGIFY_2(g_spectro_x_scale_w, g_spectro_x_scale)
-XEN_ARGIFY_3(g_set_spectro_x_scale_w, g_set_spectro_x_scale)
 XEN_ARGIFY_2(g_spectro_y_angle_w, g_spectro_y_angle)
-XEN_ARGIFY_3(g_set_spectro_y_angle_w, g_set_spectro_y_angle)
 XEN_ARGIFY_2(g_spectro_y_scale_w, g_spectro_y_scale)
-XEN_ARGIFY_3(g_set_spectro_y_scale_w, g_set_spectro_y_scale)
 XEN_ARGIFY_2(g_spectro_z_angle_w, g_spectro_z_angle)
-XEN_ARGIFY_3(g_set_spectro_z_angle_w, g_set_spectro_z_angle)
 XEN_ARGIFY_2(g_spectro_z_scale_w, g_spectro_z_scale)
-XEN_ARGIFY_3(g_set_spectro_z_scale_w, g_set_spectro_z_scale)
 XEN_ARGIFY_2(g_fft_window_alpha_w, g_fft_window_alpha)
-XEN_ARGIFY_3(g_set_fft_window_alpha_w, g_set_fft_window_alpha)
 XEN_ARGIFY_2(g_fft_window_beta_w, g_fft_window_beta)
-XEN_ARGIFY_3(g_set_fft_window_beta_w, g_set_fft_window_beta)
 XEN_ARGIFY_2(g_spectro_hop_w, g_spectro_hop)
-XEN_ARGIFY_3(g_set_spectro_hop_w, g_set_spectro_hop)
 XEN_ARGIFY_2(g_transform_size_w, g_transform_size)
-XEN_ARGIFY_3(g_set_transform_size_w, g_set_transform_size)
 XEN_ARGIFY_2(g_transform_graph_type_w, g_transform_graph_type)
-XEN_ARGIFY_3(g_set_transform_graph_type_w, g_set_transform_graph_type)
 XEN_ARGIFY_2(g_fft_window_w, g_fft_window)
-XEN_ARGIFY_3(g_set_fft_window_w, g_set_fft_window)
 XEN_ARGIFY_2(g_transform_type_w, g_transform_type)
-XEN_ARGIFY_3(g_set_transform_type_w, g_set_transform_type)
 XEN_ARGIFY_2(g_transform_normalization_w, g_transform_normalization)
-XEN_ARGIFY_3(g_set_transform_normalization_w, g_set_transform_normalization)
 XEN_ARGIFY_2(g_show_mix_waveforms_w, g_show_mix_waveforms)
-XEN_ARGIFY_3(g_set_show_mix_waveforms_w, g_set_show_mix_waveforms)
 XEN_ARGIFY_2(g_graph_style_w, g_graph_style)
-XEN_ARGIFY_3(g_set_graph_style_w, g_set_graph_style)
 XEN_ARGIFY_2(g_time_graph_style_w, g_time_graph_style)
-XEN_ARGIFY_3(g_set_time_graph_style_w, g_set_time_graph_style)
 XEN_ARGIFY_2(g_lisp_graph_style_w, g_lisp_graph_style)
-XEN_ARGIFY_3(g_set_lisp_graph_style_w, g_set_lisp_graph_style)
 XEN_ARGIFY_2(g_transform_graph_style_w, g_transform_graph_style)
-XEN_ARGIFY_3(g_set_transform_graph_style_w, g_set_transform_graph_style)
 XEN_ARGIFY_2(g_dot_size_w, g_dot_size)
-XEN_ARGIFY_3(g_set_dot_size_w, g_set_dot_size)
 XEN_ARGIFY_2(g_x_axis_style_w, g_x_axis_style)
-XEN_ARGIFY_3(g_set_x_axis_style_w, g_set_x_axis_style)
 XEN_ARGIFY_2(g_beats_per_measure_w, g_beats_per_measure)
-XEN_ARGIFY_3(g_set_beats_per_measure_w, g_set_beats_per_measure)
 XEN_ARGIFY_2(g_beats_per_minute_w, g_beats_per_minute)
-XEN_ARGIFY_3(g_set_beats_per_minute_w, g_set_beats_per_minute)
 XEN_ARGIFY_2(g_show_axes_w, g_show_axes)
-XEN_ARGIFY_3(g_set_show_axes_w, g_set_show_axes)
 XEN_ARGIFY_2(g_graphs_horizontal_w, g_graphs_horizontal)
-XEN_ARGIFY_3(g_set_graphs_horizontal_w, g_set_graphs_horizontal)
 XEN_ARGIFY_2(g_update_time_graph_w, g_update_time_graph)
 XEN_ARGIFY_2(g_update_lisp_graph_w, g_update_lisp_graph)
 XEN_ARGIFY_2(g_update_transform_graph_w, g_update_transform_graph)
@@ -9796,6 +9728,139 @@ XEN_NARGIFY_0(g_sync_style_w, g_sync_style)
 XEN_NARGIFY_1(g_set_sync_style_w, g_set_sync_style)
 XEN_NARGIFY_0(g_with_gl_w, g_with_gl)
 XEN_NARGIFY_1(g_set_with_gl_w, g_set_with_gl)
+#if HAVE_SCHEME
+#define g_set_ap_sx_w g_set_ap_sx_reversed
+#define g_set_ap_sy_w g_set_ap_sy_reversed
+#define g_set_ap_zx_w g_set_ap_zx_reversed
+#define g_set_ap_zy_w g_set_ap_zy_reversed
+#define g_set_frames_w g_set_frames_reversed
+#define g_set_maxamp_w g_set_maxamp_reversed
+#define g_set_edit_position_w g_set_edit_position_reversed
+#define g_set_transform_graph_p_w g_set_transform_graph_p_reversed
+#define g_set_time_graph_p_w g_set_time_graph_p_reversed
+#define g_set_lisp_graph_p_w g_set_lisp_graph_p_reversed
+#define g_set_squelch_update_w g_set_squelch_update_reversed
+#define g_set_cursor_w g_set_cursor_reversed
+#define g_set_cursor_style_w g_set_cursor_style_reversed
+#define g_set_tracking_cursor_style_w g_set_tracking_cursor_style_reversed
+#define g_set_cursor_size_w g_set_cursor_size_reversed
+#define g_set_left_sample_w g_set_left_sample_reversed
+#define g_set_right_sample_w g_set_right_sample_reversed
+#define g_set_channel_properties_w g_set_channel_properties_reversed
+#define g_set_channel_property_w g_set_channel_property_reversed
+#define g_set_edit_properties_w g_set_edit_properties_reversed
+#define g_set_edit_property_w g_set_edit_property_reversed
+#define g_set_max_transform_peaks_w g_set_max_transform_peaks_reversed
+#define g_set_show_y_zero_w g_set_show_y_zero_reversed
+#define g_set_show_grid_w g_set_show_grid_reversed
+#define g_set_grid_density_w g_set_grid_density_reversed
+#define g_set_show_sonogram_cursor_w g_set_show_sonogram_cursor_reversed
+#define g_set_show_marks_w g_set_show_marks_reversed
+#define g_set_time_graph_type_w g_set_time_graph_type_reversed
+#define g_set_wavo_hop_w g_set_wavo_hop_reversed
+#define g_set_wavo_trace_w g_set_wavo_trace_reversed
+#define g_set_show_transform_peaks_w g_set_show_transform_peaks_reversed
+#define g_set_zero_pad_w g_set_zero_pad_reversed
+#define g_set_with_verbose_cursor_w g_set_with_verbose_cursor_reversed
+#define g_set_fft_log_frequency_w g_set_fft_log_frequency_reversed
+#define g_set_fft_log_magnitude_w g_set_fft_log_magnitude_reversed
+#define g_set_fft_with_phases_w g_set_fft_with_phases_reversed
+#define g_set_min_dB_w g_set_min_dB_reversed
+#define g_set_wavelet_type_w g_set_wavelet_type_reversed
+#define g_set_spectrum_end_w g_set_spectrum_end_reversed
+#define g_set_spectrum_start_w g_set_spectrum_start_reversed
+#define g_set_spectro_x_angle_w g_set_spectro_x_angle_reversed
+#define g_set_spectro_x_scale_w g_set_spectro_x_scale_reversed
+#define g_set_spectro_y_angle_w g_set_spectro_y_angle_reversed
+#define g_set_spectro_y_scale_w g_set_spectro_y_scale_reversed
+#define g_set_spectro_z_angle_w g_set_spectro_z_angle_reversed
+#define g_set_spectro_z_scale_w g_set_spectro_z_scale_reversed
+#define g_set_fft_window_alpha_w g_set_fft_window_alpha_reversed
+#define g_set_fft_window_beta_w g_set_fft_window_beta_reversed
+#define g_set_spectro_hop_w g_set_spectro_hop_reversed
+#define g_set_transform_size_w g_set_transform_size_reversed
+#define g_set_transform_graph_type_w g_set_transform_graph_type_reversed
+#define g_set_fft_window_w g_set_fft_window_reversed
+#define g_set_transform_type_w g_set_transform_type_reversed
+#define g_set_transform_normalization_w g_set_transform_normalization_reversed
+#define g_set_show_mix_waveforms_w g_set_show_mix_waveforms_reversed
+#define g_set_graph_style_w g_set_graph_style_reversed
+#define g_set_time_graph_style_w g_set_time_graph_style_reversed
+#define g_set_lisp_graph_style_w g_set_lisp_graph_style_reversed
+#define g_set_transform_graph_style_w g_set_transform_graph_style_reversed
+#define g_set_dot_size_w g_set_dot_size_reversed
+#define g_set_x_axis_style_w g_set_x_axis_style_reversed
+#define g_set_beats_per_measure_w g_set_beats_per_measure_reversed
+#define g_set_show_axes_w g_set_show_axes_reversed
+#define g_set_beats_per_minute_w g_set_beats_per_minute_reversed
+#define g_set_graphs_horizontal_w g_set_graphs_horizontal_reversed
+#else
+XEN_ARGIFY_3(g_set_ap_sx_w, g_set_ap_sx)
+XEN_ARGIFY_3(g_set_ap_sy_w, g_set_ap_sy)
+XEN_ARGIFY_3(g_set_ap_zx_w, g_set_ap_zx)
+XEN_ARGIFY_3(g_set_ap_zy_w, g_set_ap_zy)
+XEN_ARGIFY_3(g_set_frames_w, g_set_frames)
+XEN_ARGIFY_3(g_set_maxamp_w, g_set_maxamp)
+XEN_ARGIFY_3(g_set_edit_position_w, g_set_edit_position)
+XEN_ARGIFY_3(g_set_transform_graph_p_w, g_set_transform_graph_p)
+XEN_ARGIFY_3(g_set_time_graph_p_w, g_set_time_graph_p)
+XEN_ARGIFY_3(g_set_lisp_graph_p_w, g_set_lisp_graph_p)
+XEN_ARGIFY_3(g_set_squelch_update_w, g_set_squelch_update)
+XEN_ARGIFY_4(g_set_cursor_w, g_set_cursor)
+XEN_ARGIFY_3(g_set_cursor_style_w, g_set_cursor_style)
+XEN_ARGIFY_3(g_set_tracking_cursor_style_w, g_set_tracking_cursor_style)
+XEN_ARGIFY_3(g_set_cursor_size_w, g_set_cursor_size)
+XEN_ARGIFY_3(g_set_left_sample_w, g_set_left_sample)
+XEN_ARGIFY_3(g_set_right_sample_w, g_set_right_sample)
+XEN_ARGIFY_3(g_set_channel_properties_w, g_set_channel_properties)
+XEN_ARGIFY_4(g_set_channel_property_w, g_set_channel_property)
+XEN_ARGIFY_4(g_set_edit_properties_w, g_set_edit_properties)
+XEN_ARGIFY_5(g_set_edit_property_w, g_set_edit_property)
+XEN_ARGIFY_3(g_set_max_transform_peaks_w, g_set_max_transform_peaks)
+XEN_ARGIFY_3(g_set_show_y_zero_w, g_set_show_y_zero)
+XEN_ARGIFY_3(g_set_show_grid_w, g_set_show_grid)
+XEN_ARGIFY_3(g_set_grid_density_w, g_set_grid_density)
+XEN_ARGIFY_3(g_set_show_sonogram_cursor_w, g_set_show_sonogram_cursor)
+XEN_ARGIFY_3(g_set_show_marks_w, g_set_show_marks)
+XEN_ARGIFY_3(g_set_time_graph_type_w, g_set_time_graph_type)
+XEN_ARGIFY_3(g_set_wavo_hop_w, g_set_wavo_hop)
+XEN_ARGIFY_3(g_set_wavo_trace_w, g_set_wavo_trace)
+XEN_ARGIFY_3(g_set_show_transform_peaks_w, g_set_show_transform_peaks)
+XEN_ARGIFY_3(g_set_zero_pad_w, g_set_zero_pad)
+XEN_ARGIFY_3(g_set_with_verbose_cursor_w, g_set_with_verbose_cursor)
+XEN_ARGIFY_3(g_set_fft_log_frequency_w, g_set_fft_log_frequency)
+XEN_ARGIFY_3(g_set_fft_log_magnitude_w, g_set_fft_log_magnitude)
+XEN_ARGIFY_3(g_set_fft_with_phases_w, g_set_fft_with_phases)
+XEN_ARGIFY_3(g_set_min_dB_w, g_set_min_dB)
+XEN_ARGIFY_3(g_set_wavelet_type_w, g_set_wavelet_type)
+XEN_ARGIFY_3(g_set_spectrum_end_w, g_set_spectrum_end)
+XEN_ARGIFY_3(g_set_spectrum_start_w, g_set_spectrum_start)
+XEN_ARGIFY_3(g_set_spectro_x_angle_w, g_set_spectro_x_angle)
+XEN_ARGIFY_3(g_set_spectro_x_scale_w, g_set_spectro_x_scale)
+XEN_ARGIFY_3(g_set_spectro_y_angle_w, g_set_spectro_y_angle)
+XEN_ARGIFY_3(g_set_spectro_y_scale_w, g_set_spectro_y_scale)
+XEN_ARGIFY_3(g_set_spectro_z_angle_w, g_set_spectro_z_angle)
+XEN_ARGIFY_3(g_set_spectro_z_scale_w, g_set_spectro_z_scale)
+XEN_ARGIFY_3(g_set_fft_window_alpha_w, g_set_fft_window_alpha)
+XEN_ARGIFY_3(g_set_fft_window_beta_w, g_set_fft_window_beta)
+XEN_ARGIFY_3(g_set_spectro_hop_w, g_set_spectro_hop)
+XEN_ARGIFY_3(g_set_transform_size_w, g_set_transform_size)
+XEN_ARGIFY_3(g_set_transform_graph_type_w, g_set_transform_graph_type)
+XEN_ARGIFY_3(g_set_fft_window_w, g_set_fft_window)
+XEN_ARGIFY_3(g_set_transform_type_w, g_set_transform_type)
+XEN_ARGIFY_3(g_set_transform_normalization_w, g_set_transform_normalization)
+XEN_ARGIFY_3(g_set_show_mix_waveforms_w, g_set_show_mix_waveforms)
+XEN_ARGIFY_3(g_set_graph_style_w, g_set_graph_style)
+XEN_ARGIFY_3(g_set_time_graph_style_w, g_set_time_graph_style)
+XEN_ARGIFY_3(g_set_lisp_graph_style_w, g_set_lisp_graph_style)
+XEN_ARGIFY_3(g_set_transform_graph_style_w, g_set_transform_graph_style)
+XEN_ARGIFY_3(g_set_dot_size_w, g_set_dot_size)
+XEN_ARGIFY_3(g_set_x_axis_style_w, g_set_x_axis_style)
+XEN_ARGIFY_3(g_set_beats_per_measure_w, g_set_beats_per_measure)
+XEN_ARGIFY_3(g_set_show_axes_w, g_set_show_axes)
+XEN_ARGIFY_3(g_set_beats_per_minute_w, g_set_beats_per_minute)
+XEN_ARGIFY_3(g_set_graphs_horizontal_w, g_set_graphs_horizontal)
+#endif
 #if HAVE_GL
   XEN_NARGIFY_9(g_gl_spectrogram_w, g_gl_spectrogram)
 #endif
@@ -9819,32 +9884,18 @@ void g_init_chn(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_update_lisp_graph,       g_update_lisp_graph_w,      0, 2, 0, H_update_lisp_graph);
   XEN_DEFINE_SAFE_PROCEDURE(S_update_transform_graph,  g_update_transform_graph_w, 0, 2, 0, H_update_transform_graph);
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_position_slider, g_ap_sx_w, H_x_position_slider,
-					    S_setB S_x_position_slider, g_set_ap_sx_w, g_set_ap_sx_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_y_position_slider, g_ap_sy_w, H_y_position_slider,
-					    S_setB S_y_position_slider, g_set_ap_sy_w, g_set_ap_sy_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_zoom_slider, g_ap_zx_w, H_x_zoom_slider,
-					    S_setB S_x_zoom_slider, g_set_ap_zx_w, g_set_ap_zx_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_y_zoom_slider, g_ap_zy_w, H_y_zoom_slider,
-					    S_setB S_y_zoom_slider, g_set_ap_zy_w, g_set_ap_zy_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_frames, g_frames_w, H_frames,
-					    S_setB S_frames, g_set_frames_w, g_set_frames_reversed, 0, 3, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_maxamp, g_maxamp_w, H_maxamp,
-					    S_setB S_maxamp, g_set_maxamp_w, g_set_maxamp_reversed, 0, 3, 1, 2);
-  
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_x_position_slider, g_ap_sx_w, H_x_position_slider, S_setB S_x_position_slider, g_set_ap_sx_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_y_position_slider, g_ap_sy_w, H_y_position_slider, S_setB S_y_position_slider, g_set_ap_sy_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_x_zoom_slider, g_ap_zx_w, H_x_zoom_slider, S_setB S_x_zoom_slider, g_set_ap_zx_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_y_zoom_slider, g_ap_zy_w, H_y_zoom_slider, S_setB S_y_zoom_slider, g_set_ap_zy_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_frames, g_frames_w, H_frames, S_setB S_frames, g_set_frames_w, 0, 3, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_maxamp, g_maxamp_w, H_maxamp, S_setB S_maxamp, g_set_maxamp_w, 0, 3, 1, 2);
+
   XEN_DEFINE_SAFE_PROCEDURE(S_maxamp_position,   g_maxamp_position_w, 0, 3, 0,   H_maxamp_position);
   XEN_DEFINE_SAFE_PROCEDURE(S_cursor_position,   g_cursor_position_w, 0, 2, 0,   H_cursor_position);
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_edit_position, g_edit_position_w, H_edit_position,
-					    S_setB S_edit_position, g_set_edit_position_w, g_set_edit_position_reversed, 0, 2, 1, 2);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_transform_graph_p, g_transform_graph_p_w, H_transform_graph_p,
-					    S_setB S_transform_graph_p, g_set_transform_graph_p_w, g_set_transform_graph_p_reversed, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_edit_position, g_edit_position_w, H_edit_position, S_setB S_edit_position, g_set_edit_position_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_transform_graph_p, g_transform_graph_p_w, H_transform_graph_p, S_setB S_transform_graph_p, g_set_transform_graph_p_w, 0, 2, 1, 2);
 
   #define H_graph_once "The value for the various graph-type variables that displays the standard waveform"
   #define H_graph_as_wavogram "The value for " S_time_graph_type " to make a spectrogram-like form of the time-domain data"
@@ -9860,17 +9911,10 @@ void g_init_chn(void)
   XEN_DEFINE_CONSTANT(S_graph_as_spectrogram, GRAPH_AS_SPECTROGRAM, H_graph_as_spectrogram);
   /* XEN_DEFINE_CONSTANT(S_graph_as_complex,     GRAPH_AS_COMPLEX,     H_graph_as_complex); */
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_time_graph_p, g_time_graph_p_w, H_time_graph_p,
-					    S_setB S_time_graph_p, g_set_time_graph_p_w, g_set_time_graph_p_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_lisp_graph_p, g_lisp_graph_p_w, H_lisp_graph_p,
-					    S_setB S_lisp_graph_p, g_set_lisp_graph_p_w, g_set_lisp_graph_p_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_squelch_update, g_squelch_update_w, H_squelch_update,
-					    S_setB S_squelch_update, g_set_squelch_update_w, g_set_squelch_update_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_cursor, g_cursor_w, H_cursor,
-					    S_setB S_cursor, g_set_cursor_w, g_set_cursor_reversed, 0, 3, 1, 3);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_time_graph_p, g_time_graph_p_w, H_time_graph_p, S_setB S_time_graph_p, g_set_time_graph_p_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_lisp_graph_p, g_lisp_graph_p_w, H_lisp_graph_p, S_setB S_lisp_graph_p, g_set_lisp_graph_p_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_squelch_update, g_squelch_update_w, H_squelch_update, S_setB S_squelch_update, g_set_squelch_update_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_cursor, g_cursor_w, H_cursor, S_setB S_cursor, g_set_cursor_w, 0, 3, 1, 3);
   
   #define H_cursor_cross "The value for " S_cursor_style " that causes is to be a cross (the default)"
   #define H_cursor_line "The value for " S_cursor_style " that causes is to be a full vertical line"
@@ -9878,134 +9922,49 @@ void g_init_chn(void)
   XEN_DEFINE_CONSTANT(S_cursor_cross,          CURSOR_CROSS, H_cursor_cross);
   XEN_DEFINE_CONSTANT(S_cursor_line,           CURSOR_LINE,  H_cursor_line);
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_cursor_style, g_cursor_style_w, H_cursor_style,
-					    S_setB S_cursor_style, g_set_cursor_style_w, g_set_cursor_style_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_tracking_cursor_style, g_tracking_cursor_style_w, H_tracking_cursor_style,
-					    S_setB S_tracking_cursor_style, g_set_tracking_cursor_style_w, g_set_tracking_cursor_style_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_cursor_size, g_cursor_size_w, H_cursor_size,
-					    S_setB S_cursor_size, g_set_cursor_size_w, g_set_cursor_size_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_left_sample, g_left_sample_w, H_left_sample,
-					    S_setB S_left_sample, g_set_left_sample_w, g_set_left_sample_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_right_sample, g_right_sample_w, H_right_sample,
-					    S_setB S_right_sample, g_set_right_sample_w, g_set_right_sample_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_channel_properties, g_channel_properties_w, H_channel_properties,
-					    S_setB S_channel_properties, g_set_channel_properties_w, g_set_channel_properties_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_channel_property, g_channel_property_w, H_channel_property,
-					    S_setB S_channel_property, g_set_channel_property_w, g_set_channel_property_reversed, 1, 2, 2, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_edit_properties, g_edit_properties_w, H_edit_properties,
-					    S_setB S_edit_properties, g_set_edit_properties_w, g_set_edit_properties_reversed, 0, 3, 1, 3);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_edit_property, g_edit_property_w, H_edit_property,
-					    S_setB S_edit_property, g_set_edit_property_w, g_set_edit_property_reversed, 1, 3, 2, 3);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_max_transform_peaks, g_max_transform_peaks_w, H_max_transform_peaks,
-					    S_setB S_max_transform_peaks, g_set_max_transform_peaks_w, g_set_max_transform_peaks_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_y_zero, g_show_y_zero_w, H_show_y_zero,
-					    S_setB S_show_y_zero, g_set_show_y_zero_w, g_set_show_y_zero_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_grid, g_show_grid_w, H_show_grid,
-					    S_setB S_show_grid, g_set_show_grid_w, g_set_show_grid_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_grid_density, g_grid_density_w, H_grid_density,
-					    S_setB S_grid_density, g_set_grid_density_w, g_set_grid_density_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_sonogram_cursor, g_show_sonogram_cursor_w, H_show_sonogram_cursor,
-					    S_setB S_show_sonogram_cursor, g_set_show_sonogram_cursor_w, g_set_show_sonogram_cursor_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_marks, g_show_marks_w, H_show_marks,
-					    S_setB S_show_marks, g_set_show_marks_w, g_set_show_marks_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_time_graph_type, g_time_graph_type_w, H_time_graph_type,
-					    S_setB S_time_graph_type, g_set_time_graph_type_w, g_set_time_graph_type_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_wavo_hop, g_wavo_hop_w, H_wavo_hop,
-					    S_setB S_wavo_hop, g_set_wavo_hop_w, g_set_wavo_hop_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_wavo_trace, g_wavo_trace_w, H_wavo_trace,
-					    S_setB S_wavo_trace, g_set_wavo_trace_w, g_set_wavo_trace_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_transform_peaks, g_show_transform_peaks_w, H_show_transform_peaks,
-					    S_setB S_show_transform_peaks, g_set_show_transform_peaks_w, g_set_show_transform_peaks_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_zero_pad, g_zero_pad_w, H_zero_pad,
-					    S_setB S_zero_pad, g_set_zero_pad_w, g_set_zero_pad_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_with_verbose_cursor, g_with_verbose_cursor_w, H_with_verbose_cursor,
-					    S_setB S_with_verbose_cursor, g_set_with_verbose_cursor_w, g_set_with_verbose_cursor_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_fft_log_frequency, g_fft_log_frequency_w, H_fft_log_frequency,
-					    S_setB S_fft_log_frequency, g_set_fft_log_frequency_w, g_set_fft_log_frequency_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_fft_log_magnitude, g_fft_log_magnitude_w, H_fft_log_magnitude,
-					    S_setB S_fft_log_magnitude, g_set_fft_log_magnitude_w, g_set_fft_log_magnitude_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_fft_with_phases, g_fft_with_phases_w, H_fft_with_phases,
-					    S_setB S_fft_with_phases, g_set_fft_with_phases_w, g_set_fft_with_phases_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_min_dB, g_min_dB_w, H_min_dB,
-					    S_setB S_min_dB, g_set_min_dB_w, g_set_min_dB_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_wavelet_type, g_wavelet_type_w, H_wavelet_type,
-					    S_setB S_wavelet_type, g_set_wavelet_type_w, g_set_wavelet_type_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectrum_end, g_spectrum_end_w, H_spectrum_end,
-					    S_setB S_spectrum_end, g_set_spectrum_end_w, g_set_spectrum_end_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectrum_start, g_spectrum_start_w, H_spectrum_start,
-					    S_setB S_spectrum_start, g_set_spectrum_start_w, g_set_spectrum_start_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_x_angle, g_spectro_x_angle_w, H_spectro_x_angle,
-					    S_setB S_spectro_x_angle, g_set_spectro_x_angle_w, g_set_spectro_x_angle_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_x_scale, g_spectro_x_scale_w, H_spectro_x_scale,
-					    S_setB S_spectro_x_scale, g_set_spectro_x_scale_w, g_set_spectro_x_scale_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_y_angle, g_spectro_y_angle_w, H_spectro_y_angle,
-					    S_setB S_spectro_y_angle, g_set_spectro_y_angle_w, g_set_spectro_y_angle_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_y_scale, g_spectro_y_scale_w, H_spectro_y_scale,
-					    S_setB S_spectro_y_scale, g_set_spectro_y_scale_w, g_set_spectro_y_scale_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_z_angle, g_spectro_z_angle_w, H_spectro_z_angle,
-					    S_setB S_spectro_z_angle, g_set_spectro_z_angle_w, g_set_spectro_z_angle_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_z_scale, g_spectro_z_scale_w, H_spectro_z_scale,
-					    S_setB S_spectro_z_scale, g_set_spectro_z_scale_w, g_set_spectro_z_scale_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_fft_window_beta, g_fft_window_beta_w, H_fft_window_beta,
-					    S_setB S_fft_window_beta, g_set_fft_window_beta_w, g_set_fft_window_beta_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_fft_window_alpha, g_fft_window_alpha_w, H_fft_window_alpha,
-					    S_setB S_fft_window_alpha, g_set_fft_window_alpha_w, g_set_fft_window_alpha_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_hop, g_spectro_hop_w, H_spectro_hop,
-					    S_setB S_spectro_hop, g_set_spectro_hop_w, g_set_spectro_hop_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_transform_size, g_transform_size_w, H_transform_size,
-					    S_setB S_transform_size, g_set_transform_size_w, g_set_transform_size_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_transform_graph_type, g_transform_graph_type_w, H_transform_graph_type,
-					    S_setB S_transform_graph_type, g_set_transform_graph_type_w, g_set_transform_graph_type_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_fft_window, g_fft_window_w, H_fft_window,
-					    S_setB S_fft_window, g_set_fft_window_w, g_set_fft_window_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_transform_type, g_transform_type_w, H_transform_type,
-					    S_setB S_transform_type, g_set_transform_type_w, g_set_transform_type_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_transform_normalization, g_transform_normalization_w, H_transform_normalization,
-					    S_setB S_transform_normalization, g_set_transform_normalization_w, g_set_transform_normalization_reversed, 0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_mix_waveforms, g_show_mix_waveforms_w, H_show_mix_waveforms,
-					    S_setB S_show_mix_waveforms, g_set_show_mix_waveforms_w, g_set_show_mix_waveforms_reversed, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_cursor_style, g_cursor_style_w, H_cursor_style, S_setB S_cursor_style, g_set_cursor_style_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_tracking_cursor_style, g_tracking_cursor_style_w, H_tracking_cursor_style, S_setB S_tracking_cursor_style, g_set_tracking_cursor_style_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_cursor_size, g_cursor_size_w, H_cursor_size, S_setB S_cursor_size, g_set_cursor_size_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_left_sample, g_left_sample_w, H_left_sample, S_setB S_left_sample, g_set_left_sample_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_right_sample, g_right_sample_w, H_right_sample, S_setB S_right_sample, g_set_right_sample_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_channel_properties, g_channel_properties_w, H_channel_properties, S_setB S_channel_properties, g_set_channel_properties_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_channel_property, g_channel_property_w, H_channel_property, S_setB S_channel_property, g_set_channel_property_w, 1, 2, 2, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_edit_properties, g_edit_properties_w, H_edit_properties, S_setB S_edit_properties, g_set_edit_properties_w, 0, 3, 1, 3);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_edit_property, g_edit_property_w, H_edit_property, S_setB S_edit_property, g_set_edit_property_w, 1, 3, 2, 3);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_transform_peaks, g_max_transform_peaks_w, H_max_transform_peaks, S_setB S_max_transform_peaks, g_set_max_transform_peaks_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_y_zero, g_show_y_zero_w, H_show_y_zero, S_setB S_show_y_zero, g_set_show_y_zero_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_grid, g_show_grid_w, H_show_grid, S_setB S_show_grid, g_set_show_grid_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_grid_density, g_grid_density_w, H_grid_density, S_setB S_grid_density, g_set_grid_density_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_sonogram_cursor, g_show_sonogram_cursor_w, H_show_sonogram_cursor, S_setB S_show_sonogram_cursor, g_set_show_sonogram_cursor_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_marks, g_show_marks_w, H_show_marks, S_setB S_show_marks, g_set_show_marks_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_time_graph_type, g_time_graph_type_w, H_time_graph_type, S_setB S_time_graph_type, g_set_time_graph_type_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_wavo_hop, g_wavo_hop_w, H_wavo_hop, S_setB S_wavo_hop, g_set_wavo_hop_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_wavo_trace, g_wavo_trace_w, H_wavo_trace, S_setB S_wavo_trace, g_set_wavo_trace_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_transform_peaks, g_show_transform_peaks_w, H_show_transform_peaks, S_setB S_show_transform_peaks, g_set_show_transform_peaks_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_zero_pad, g_zero_pad_w, H_zero_pad, S_setB S_zero_pad, g_set_zero_pad_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_verbose_cursor, g_with_verbose_cursor_w, H_with_verbose_cursor, S_setB S_with_verbose_cursor, g_set_with_verbose_cursor_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_fft_log_frequency, g_fft_log_frequency_w, H_fft_log_frequency, S_setB S_fft_log_frequency, g_set_fft_log_frequency_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_fft_log_magnitude, g_fft_log_magnitude_w, H_fft_log_magnitude, S_setB S_fft_log_magnitude, g_set_fft_log_magnitude_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_fft_with_phases, g_fft_with_phases_w, H_fft_with_phases, S_setB S_fft_with_phases, g_set_fft_with_phases_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_min_dB, g_min_dB_w, H_min_dB, S_setB S_min_dB, g_set_min_dB_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_wavelet_type, g_wavelet_type_w, H_wavelet_type, S_setB S_wavelet_type, g_set_wavelet_type_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_spectrum_end, g_spectrum_end_w, H_spectrum_end, S_setB S_spectrum_end, g_set_spectrum_end_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_spectrum_start, g_spectrum_start_w, H_spectrum_start, S_setB S_spectrum_start, g_set_spectrum_start_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_spectro_x_angle, g_spectro_x_angle_w, H_spectro_x_angle, S_setB S_spectro_x_angle, g_set_spectro_x_angle_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_spectro_x_scale, g_spectro_x_scale_w, H_spectro_x_scale, S_setB S_spectro_x_scale, g_set_spectro_x_scale_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_spectro_y_angle, g_spectro_y_angle_w, H_spectro_y_angle, S_setB S_spectro_y_angle, g_set_spectro_y_angle_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_spectro_y_scale, g_spectro_y_scale_w, H_spectro_y_scale, S_setB S_spectro_y_scale, g_set_spectro_y_scale_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_spectro_z_angle, g_spectro_z_angle_w, H_spectro_z_angle, S_setB S_spectro_z_angle, g_set_spectro_z_angle_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_spectro_z_scale, g_spectro_z_scale_w, H_spectro_z_scale, S_setB S_spectro_z_scale, g_set_spectro_z_scale_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_fft_window_beta, g_fft_window_beta_w, H_fft_window_beta, S_setB S_fft_window_beta, g_set_fft_window_beta_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_fft_window_alpha, g_fft_window_alpha_w, H_fft_window_alpha, S_setB S_fft_window_alpha, g_set_fft_window_alpha_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_spectro_hop, g_spectro_hop_w, H_spectro_hop, S_setB S_spectro_hop, g_set_spectro_hop_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_transform_size, g_transform_size_w, H_transform_size, S_setB S_transform_size, g_set_transform_size_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_transform_graph_type, g_transform_graph_type_w, H_transform_graph_type, S_setB S_transform_graph_type, g_set_transform_graph_type_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_fft_window, g_fft_window_w, H_fft_window, S_setB S_fft_window, g_set_fft_window_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_transform_type, g_transform_type_w, H_transform_type, S_setB S_transform_type, g_set_transform_type_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_transform_normalization, g_transform_normalization_w, H_transform_normalization, S_setB S_transform_normalization, g_set_transform_normalization_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_mix_waveforms, g_show_mix_waveforms_w, H_show_mix_waveforms, S_setB S_show_mix_waveforms, g_set_show_mix_waveforms_w, 0, 2, 1, 2);
   
   /* should these be named "graph-with-lines" etc? */
   #define H_graph_lines "The value for " S_graph_style " that causes graphs to use line-segments"
@@ -10020,23 +9979,11 @@ void g_init_chn(void)
   XEN_DEFINE_CONSTANT(S_graph_dots_and_lines,  GRAPH_DOTS_AND_LINES, H_graph_dots_and_lines);
   XEN_DEFINE_CONSTANT(S_graph_lollipops,       GRAPH_LOLLIPOPS,      H_graph_lollipops);
   
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_time_graph_style, g_time_graph_style_w, H_time_graph_style,
-					    S_setB S_time_graph_style, g_set_time_graph_style_w, g_set_time_graph_style_reversed,
-					    1, 1, 1, 2);
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_lisp_graph_style, g_lisp_graph_style_w, H_lisp_graph_style,
-					    S_setB S_lisp_graph_style, g_set_lisp_graph_style_w, g_set_lisp_graph_style_reversed,
-					    1, 1, 1, 2);
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_transform_graph_style, g_transform_graph_style_w, H_transform_graph_style,
-					    S_setB S_transform_graph_style, g_set_transform_graph_style_w, g_set_transform_graph_style_reversed,
-					    1, 1, 1, 2);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_graph_style, g_graph_style_w, H_graph_style,
-					    S_setB S_graph_style, g_set_graph_style_w, g_set_graph_style_reversed,
-					    0, 2, 1, 2);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_dot_size, g_dot_size_w, H_dot_size,
-					    S_setB S_dot_size, g_set_dot_size_w, g_set_dot_size_reversed,
-					    0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_time_graph_style, g_time_graph_style_w, H_time_graph_style, S_setB S_time_graph_style, g_set_time_graph_style_w, 1, 1, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_lisp_graph_style, g_lisp_graph_style_w, H_lisp_graph_style, S_setB S_lisp_graph_style, g_set_lisp_graph_style_w, 1, 1, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_transform_graph_style, g_transform_graph_style_w, H_transform_graph_style, S_setB S_transform_graph_style, g_set_transform_graph_style_w, 1, 1, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_style, g_graph_style_w, H_graph_style, S_setB S_graph_style, g_set_graph_style_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dot_size, g_dot_size_w, H_dot_size, S_setB S_dot_size, g_set_dot_size_w, 0, 2, 1, 2);
 
   #define H_x_axis_in_seconds    "The value for " S_x_axis_style " that displays the x axis using seconds"
   #define H_x_axis_in_samples    "The value for " S_x_axis_style " that displays the x axis using sample numbers"
@@ -10052,15 +9999,9 @@ void g_init_chn(void)
   XEN_DEFINE_CONSTANT(S_x_axis_as_percentage,  X_AXIS_AS_PERCENTAGE, H_x_axis_as_percentage);
   XEN_DEFINE_CONSTANT(S_x_axis_as_clock,       X_AXIS_AS_CLOCK,      H_x_axis_as_clock);
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_axis_style, g_x_axis_style_w, H_x_axis_style,
-					    S_setB S_x_axis_style, g_set_x_axis_style_w, g_set_x_axis_style_reversed,
-					    0, 2, 1, 2);
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_beats_per_minute, g_beats_per_minute_w, H_beats_per_minute,
-					    S_setB S_beats_per_minute, g_set_beats_per_minute_w, g_set_beats_per_minute_reversed,
-					    0, 2, 1, 2);
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_beats_per_measure, g_beats_per_measure_w, H_beats_per_measure,
-					    S_setB S_beats_per_measure, g_set_beats_per_measure_w, g_set_beats_per_measure_reversed,
-					    0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_x_axis_style, g_x_axis_style_w, H_x_axis_style, S_setB S_x_axis_style, g_set_x_axis_style_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_beats_per_minute, g_beats_per_minute_w, H_beats_per_minute, S_setB S_beats_per_minute, g_set_beats_per_minute_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_beats_per_measure, g_beats_per_measure_w, H_beats_per_measure, S_setB S_beats_per_measure, g_set_beats_per_measure_w, 0, 2, 1, 2);
 
   #define H_show_all_axes "The value for " S_show_axes " that causes both the x and y axes to be displayed"
   #define H_show_all_axes_unlabelled "The value for " S_show_axes " that causes both the x and y axes to be displayed, but without any label"
@@ -10076,11 +10017,8 @@ void g_init_chn(void)
   XEN_DEFINE_CONSTANT(S_show_x_axis_unlabelled,  SHOW_X_AXIS_UNLABELLED,   H_show_x_axis_unlabelled);
   XEN_DEFINE_CONSTANT(S_show_bare_x_axis,        SHOW_BARE_X_AXIS,         H_show_bare_x_axis);
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_axes, g_show_axes_w, H_show_axes,
-					    S_setB S_show_axes, g_set_show_axes_w, g_set_show_axes_reversed, 0, 2, 1, 2);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_graphs_horizontal, g_graphs_horizontal_w, H_graphs_horizontal,
-					    S_setB S_graphs_horizontal, g_set_graphs_horizontal_w, g_set_graphs_horizontal_reversed, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_axes, g_show_axes_w, H_show_axes, S_setB S_show_axes, g_set_show_axes_w, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graphs_horizontal, g_graphs_horizontal_w, H_graphs_horizontal, S_setB S_graphs_horizontal, g_set_graphs_horizontal_w, 0, 2, 1, 2);
 
   #define H_zoom_focus_left "The value for " S_zoom_focus_style " that causes zooming to maintain the left edge steady"
   #define H_zoom_focus_right "The value for " S_zoom_focus_style " that causes zooming to maintain the right edge steady"
@@ -10092,10 +10030,8 @@ void g_init_chn(void)
   XEN_DEFINE_CONSTANT(S_zoom_focus_active,     ZOOM_FOCUS_ACTIVE, H_zoom_focus_active);
   XEN_DEFINE_CONSTANT(S_zoom_focus_middle,     ZOOM_FOCUS_MIDDLE, H_zoom_focus_middle);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_zoom_focus_style, g_zoom_focus_style_w, H_zoom_focus_style,
-				   S_setB S_zoom_focus_style, g_set_zoom_focus_style_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_gl, g_with_gl_w, H_with_gl,
-				   S_setB S_with_gl, g_set_with_gl_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_zoom_focus_style, g_zoom_focus_style_w, H_zoom_focus_style, S_setB S_zoom_focus_style, g_set_zoom_focus_style_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_gl, g_with_gl_w, H_with_gl, S_setB S_with_gl, g_set_with_gl_w,  0, 0, 1, 0);
 
   #define H_sync_none     "The " S_sync_style " choice that leaves every sound and channel unsync'd at the start"
   #define H_sync_all      "The " S_sync_style " choice that syncs together every sound and channel at the start"
@@ -10105,8 +10041,7 @@ void g_init_chn(void)
   XEN_DEFINE_CONSTANT(S_sync_all,      SYNC_ALL,      H_sync_all);
   XEN_DEFINE_CONSTANT(S_sync_by_sound, SYNC_BY_SOUND, H_sync_by_sound);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sync_style, g_sync_style_w, H_sync_style,
-				   S_setB S_sync_style, g_set_sync_style_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sync_style, g_sync_style_w, H_sync_style, S_setB S_sync_style, g_set_sync_style_w,  0, 0, 1, 0);
 
 #if HAVE_GL
   XEN_DEFINE_SAFE_PROCEDURE(S_glSpectrogram, g_gl_spectrogram_w, 9, 0, 0, H_glSpectrogram);

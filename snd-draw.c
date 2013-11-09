@@ -1923,9 +1923,7 @@ XEN_ARGIFY_7(g_draw_string_w, g_draw_string)
 XEN_ARGIFY_9(g_fill_rectangle_w, g_fill_rectangle)
 XEN_ARGIFY_5(g_fill_polygon_w, g_fill_polygon)
 XEN_ARGIFY_3(g_foreground_color_w, g_foreground_color)
-XEN_ARGIFY_4(g_set_foreground_color_w, g_set_foreground_color)
 XEN_ARGIFY_3(g_current_font_w, g_current_font)
-XEN_ARGIFY_4(g_set_current_font_w, g_set_current_font)
 XEN_NARGIFY_0(g_main_widgets_w, g_main_widgets)
 XEN_NARGIFY_0(g_dialog_widgets_w, g_dialog_widgets)
 XEN_NARGIFY_1(g_widget_size_w, g_widget_size)
@@ -1986,9 +1984,19 @@ XEN_NARGIFY_1(g_color_p_w, g_color_p)
 XEN_ARGIFY_4(g_make_color_w, g_make_color)
 XEN_NARGIFY_1(g_color_to_list_w, g_color_to_list)
 XEN_ARGIFY_1(g_mix_color_w, g_mix_color)
-XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
 XEN_NARGIFY_2(g_combined_data_color_w, g_combined_data_color)
+
+#if HAVE_SCHEME
+#define g_set_current_font_w g_set_current_font_reversed
+#define g_set_foreground_color_w g_set_foreground_color_reversed
+#define g_set_mix_color_w g_set_mix_color_reversed
+#define g_set_combined_data_color_w g_set_combined_data_color_reversed
+#else
+XEN_ARGIFY_4(g_set_current_font_w, g_set_current_font)
+XEN_ARGIFY_4(g_set_foreground_color_w, g_set_foreground_color)
+XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
 XEN_NARGIFY_3(g_set_combined_data_color_w, g_set_combined_data_color)
+#endif
 
 void g_init_draw(void)
 {
@@ -2015,81 +2023,31 @@ void g_init_draw(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_make_graph_data,  g_make_graph_data_w, 0, 5, 0, H_make_graph_data);
   XEN_DEFINE_SAFE_PROCEDURE(S_graph_data,       g_graph_data_w,     1, 7, 0,  H_graph_data);
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_foreground_color, g_foreground_color_w, H_foreground_color,
-					    S_setB S_foreground_color, g_set_foreground_color_w, g_set_foreground_color_reversed, 0, 3, 1, 3);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_current_font, g_current_font_w, H_current_font,
-					    S_setB S_current_font, g_set_current_font_w, g_set_current_font_reversed, 0, 3, 1, 3);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_size, g_widget_size_w, H_widget_size,
-				   S_setB S_widget_size, g_set_widget_size_w,  1, 0, 2, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_position, g_widget_position_w, H_widget_position,
-				   S_setB S_widget_position, g_set_widget_position_w,  1, 0, 2, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_text, g_widget_text_w, H_widget_text,
-				   S_setB S_widget_text, g_set_widget_text_w,  1, 0, 2, 0);
-
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_color, g_selection_color_w, H_selection_color,
-				   S_setB S_selection_color, g_set_selection_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_zoom_color, g_zoom_color_w, H_zoom_color,
-				   S_setB S_zoom_color, g_set_zoom_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_position_color, g_position_color_w, H_position_color,
-				   S_setB S_position_color, g_set_position_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_color, g_mark_color_w, H_mark_color,
-				   S_setB S_mark_color, g_set_mark_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_color, g_listener_color_w, H_listener_color,
-				   S_setB S_listener_color, g_set_listener_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_text_color, g_listener_text_color_w, H_listener_text_color,
-				   S_setB S_listener_text_color, g_set_listener_text_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_waveform_color, g_enved_waveform_color_w, H_enved_waveform_color,
-				   S_setB S_enved_waveform_color, g_set_enved_waveform_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_waveform_color, g_filter_control_waveform_color_w, H_filter_control_waveform_color,
-				   S_setB S_filter_control_waveform_color, g_set_filter_control_waveform_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_highlight_color, g_highlight_color_w, H_highlight_color,
-				   S_setB S_highlight_color, g_set_highlight_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_cursor_color, g_cursor_color_w, H_cursor_color,
-				   S_setB S_cursor_color, g_set_cursor_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_text_focus_color, g_text_focus_color_w, H_text_focus_color,
-				   S_setB S_text_focus_color, g_set_text_focus_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sash_color, g_sash_color_w, H_sash_color,
-				   S_setB S_sash_color, g_set_sash_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_data_color, g_data_color_w, H_data_color,
-				   S_setB S_data_color, g_set_data_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_color, g_graph_color_w, H_graph_color,
-				   S_setB S_graph_color, g_set_graph_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_graph_color, g_selected_graph_color_w, H_selected_graph_color,
-				   S_setB S_selected_graph_color, g_set_selected_graph_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_data_color, g_selected_data_color_w, H_selected_data_color,
-				   S_setB S_selected_data_color, g_set_selected_data_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_axis_color, g_axis_color_w, H_axis_color,
-				   S_setB S_axis_color, g_set_axis_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_basic_color, g_basic_color_w, H_basic_color,
-				   S_setB S_basic_color, g_set_basic_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_mix_color, g_mix_color_w, H_mix_color,
-					    S_setB S_mix_color, g_set_mix_color_w, g_set_mix_color_reversed, 0, 1, 1, 1);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_combined_data_color, g_combined_data_color_w, H_combined_data_color,
-					    S_setB S_combined_data_color, g_set_combined_data_color_w, g_set_combined_data_color_reversed, 2, 0, 3, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_foreground_color, g_foreground_color_w, H_foreground_color, S_setB S_foreground_color, g_set_foreground_color_w, 0, 3, 1, 3);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_current_font, g_current_font_w, H_current_font, S_setB S_current_font, g_set_current_font_w, 0, 3, 1, 3);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_size, g_widget_size_w, H_widget_size, S_setB S_widget_size, g_set_widget_size_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_position, g_widget_position_w, H_widget_position, S_setB S_widget_position, g_set_widget_position_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_text, g_widget_text_w, H_widget_text, S_setB S_widget_text, g_set_widget_text_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_color, g_selection_color_w, H_selection_color, S_setB S_selection_color, g_set_selection_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_zoom_color, g_zoom_color_w, H_zoom_color, S_setB S_zoom_color, g_set_zoom_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_position_color, g_position_color_w, H_position_color, S_setB S_position_color, g_set_position_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_color, g_mark_color_w, H_mark_color, S_setB S_mark_color, g_set_mark_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_color, g_listener_color_w, H_listener_color, S_setB S_listener_color, g_set_listener_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_text_color, g_listener_text_color_w, H_listener_text_color, S_setB S_listener_text_color, g_set_listener_text_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_waveform_color, g_enved_waveform_color_w, H_enved_waveform_color, S_setB S_enved_waveform_color, g_set_enved_waveform_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_waveform_color, g_filter_control_waveform_color_w, H_filter_control_waveform_color, S_setB S_filter_control_waveform_color, g_set_filter_control_waveform_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_highlight_color, g_highlight_color_w, H_highlight_color, S_setB S_highlight_color, g_set_highlight_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_cursor_color, g_cursor_color_w, H_cursor_color, S_setB S_cursor_color, g_set_cursor_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_text_focus_color, g_text_focus_color_w, H_text_focus_color, S_setB S_text_focus_color, g_set_text_focus_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sash_color, g_sash_color_w, H_sash_color, S_setB S_sash_color, g_set_sash_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_data_color, g_data_color_w, H_data_color, S_setB S_data_color, g_set_data_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_color, g_graph_color_w, H_graph_color, S_setB S_graph_color, g_set_graph_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_graph_color, g_selected_graph_color_w, H_selected_graph_color, S_setB S_selected_graph_color, g_set_selected_graph_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_data_color, g_selected_data_color_w, H_selected_data_color, S_setB S_selected_data_color, g_set_selected_data_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_axis_color, g_axis_color_w, H_axis_color, S_setB S_axis_color, g_set_axis_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_basic_color, g_basic_color_w, H_basic_color, S_setB S_basic_color, g_set_basic_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_color, g_mix_color_w, H_mix_color, S_setB S_mix_color, g_set_mix_color_w, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_combined_data_color, g_combined_data_color_w, H_combined_data_color, S_setB S_combined_data_color, g_set_combined_data_color_w, 2, 0, 3, 0);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_color_p,       g_color_p_w,        1, 0, 0, H_color_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_color,    g_make_color_w,     3, 1, 0, H_make_color);
