@@ -2724,9 +2724,11 @@ void mus_sndlib_xen_initialize(void)
 #if HAVE_SCHEME
   mus_max_table_size_symbol = s7_define_variable(s7, "*" S_mus_max_table_size "*", s7_make_integer(s7, MUS_MAX_TABLE_SIZE_DEFAULT));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_mus_max_table_size "*) (list #f (lambda (s v) (set! (" S_mus_max_table_size ") v)) #f))");
+  s7_symbol_set_documentation(s7, mus_max_table_size_symbol, "*mus-max-table-size*: maximum table size.");
 
   mus_max_malloc_symbol = s7_define_variable(s7, "*" S_mus_max_malloc "*", s7_make_integer(s7, MUS_MAX_MALLOC_DEFAULT));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_mus_max_malloc "*) (list #f (lambda (s v) (set! (" S_mus_max_malloc ") v)) #f))");
+  s7_symbol_set_documentation(s7, mus_max_malloc_symbol, "*mus-max-malloc*: maximum number of bytes we will try to malloc.");
 #endif
 
 #if HAVE_OSS

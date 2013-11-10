@@ -18730,18 +18730,22 @@ static void mus_xen_init(void)
 
   clm_default_frequency_symbol = s7_define_variable(s7, "*" S_clm_default_frequency "*", s7_make_real(s7, MUS_CLM_DEFAULT_FREQUENCY));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_clm_default_frequency "*) (list #f (lambda (s v) (set! (" S_clm_default_frequency ") v)) #f))");
+  s7_symbol_set_documentation(s7, clm_default_frequency_symbol, "*clm-default-frequency*: the default frequency for most generators (0.0)");
 
   clm_table_size_symbol = s7_define_variable(s7, "*" S_clm_table_size "*", s7_make_integer(s7, MUS_CLM_DEFAULT_TABLE_SIZE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_clm_table_size "*) (list #f (lambda (s v) (set! (" S_clm_table_size ") v)) #f))");
+  s7_symbol_set_documentation(s7, clm_table_size_symbol, "*clm-table-size*: the default table size for most generators (512)");
 
   mus_file_buffer_size_symbol = s7_define_variable(s7, "*clm-file-buffer-size*", s7_make_integer(s7, MUS_DEFAULT_FILE_BUFFER_SIZE));
   s7_eval_c_string(s7, "(set! (symbol-access '*clm-file-buffer-size*) (list #f (lambda (s v) (set! (" S_mus_file_buffer_size ") v)) #f))");
 
   mus_float_equal_fudge_factor_symbol = s7_define_variable(s7, "*" S_mus_float_equal_fudge_factor "*", s7_make_real(s7, 0.0000001)); /* clm.c */
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_mus_float_equal_fudge_factor "*) (list #f (lambda (s v) (set! (" S_mus_float_equal_fudge_factor ") v)) #f))");
+  s7_symbol_set_documentation(s7, mus_float_equal_fudge_factor_symbol, "*mus-float-equal-fudge-factor*: floating point equality fudge factor");
 
   mus_array_print_length_symbol = s7_define_variable(s7, "*" S_mus_array_print_length "*", s7_make_integer(s7, MUS_DEFAULT_ARRAY_PRINT_LENGTH));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_mus_array_print_length "*) (list #f (lambda (s v) (set! (" S_mus_array_print_length ") v)) #f))");
+  s7_symbol_set_documentation(s7, mus_array_print_length_symbol, "*mus-array-print-length*: current clm array print length (default is 8).");
 #endif
 
   XEN_DEFINE_REAL_PROCEDURE(S_radians_to_hz,        g_radians_to_hz_w,        1, 0, 0, H_radians_to_hz);

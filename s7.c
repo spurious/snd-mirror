@@ -32410,6 +32410,8 @@ shorthand for (define func (lambda args ...))");
   if (is_symbol(obj))
     {
       /* here look for name */
+      if (s7_symbol_documentation(sc, obj))
+	return(s7_symbol_documentation(sc, obj));
       obj = s7_symbol_value(sc, obj);
     }
   
@@ -32418,9 +32420,6 @@ shorthand for (define func (lambda args ...))");
 
   /* if is string, apropos? (can scan symbol table)
    */
-  /* here keep a table as in xen.c? need s7_help and s7_set_help in C + maybe s7_define_constant_with_documentation
-   */
-
   return(NULL);
 }
 
@@ -67915,15 +67914,15 @@ s7_scheme *s7_init(void)
   
   /* -------- *unbound-variable-hook* -------- */
   sc->unbound_variable_hook = s7_eval_c_string(sc, "(make-hook 'variable)");
-  s7_define_constant(sc, "*unbound-variable-hook*", sc->unbound_variable_hook); 
+  s7_define_constant_with_documentation(sc, "*unbound-variable-hook*", sc->unbound_variable_hook, "*unbound-variable-hook* functions are called when an unbound variable is encountered, passed (hook 'variable).");
   
   /* -------- *load-hook* -------- */
   sc->load_hook = s7_eval_c_string(sc, "(make-hook 'name)");
-  s7_define_constant(sc, "*load-hook*", sc->load_hook);
+  s7_define_constant_with_documentation(sc, "*load-hook*", sc->load_hook, "*load-hook* functions are invoked by load, passing the to-be-loaded filename as (hook 'name)");
 
   /* -------- *error-hook* -------- */
   sc->error_hook = s7_eval_c_string(sc, "(make-hook 'type 'data)");
-  s7_define_constant(sc, "*error-hook*", sc->error_hook);
+  s7_define_constant_with_documentation(sc, "*error-hook*", sc->error_hook, "*error-hook* functions are called in the error handler, passed (hook 'type) and (hook 'data).");
   
   /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
   /* 64 bit machine: size: 48, max op: 321 [size 72 if gmp] */
@@ -68121,9 +68120,9 @@ int main(int argc, char **argv)
  * in help strings (and dialog), can help code examples be monospace?
  *   also need doc for vars/hooks (help as macro for (help *maximum-stack-size*) etc?)
  *   also scheme-defined help, for vars built-in help if global_slot?
- *   (set! (help name) ...)?
- *   also share help between pws/var but switch names locally
- *   add docs here and throughout [check hooks too]
+ *     i.e. (set! (help name) ...)?
+ *   why is snd help for error-hook "args: (type data)"?
+ *   if gensym has help string, need to free it in gc sweep
  */
 
 
