@@ -1493,11 +1493,6 @@ void xen_repl(int argc, char **argv)
 }
 
 
-void xen_s7_ignore(s7_function func) /* squelch compiler warnings */
-{
-}
-
-
 void xen_gc_mark(XEN val)
 {
   s7_mark_object(val);

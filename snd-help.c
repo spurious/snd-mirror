@@ -3533,6 +3533,7 @@ and its value is returned."
 	if (XEN_SYMBOL_P(text))
 	  {
 	    subject = (char *)XEN_SYMBOL_TO_C_STRING(text);
+	    str = (char *)s7_help(s7, text);
 	    sym = s7_symbol_value(s7, text);
 	  }
 	else
@@ -3541,7 +3542,7 @@ and its value is returned."
 	  }
       }
 
-    str = (char *)s7_help(s7, sym);
+    if (!str) str = (char *)s7_help(s7, sym);
 
     if ((str == NULL) ||
 	(mus_strlen(str) == 0))

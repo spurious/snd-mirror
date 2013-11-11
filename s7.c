@@ -3023,6 +3023,12 @@ static void sweep(s7_scheme *sc)
 	    {
 	      remove_from_symbol_table(sc, s1); /* this uses symbol_name_cell data */
 	      free(symbol_name(s1));
+	      if ((is_documented(s1)) &&
+		  (symbol_help(s1)))
+		{
+		  free(symbol_help(s1));
+		  symbol_help(s1) = NULL;
+		}
 	      free(symbol_name_cell(s1));
 	    }
 	  else sc->gensyms[j++] = s1;
@@ -6270,6 +6276,16 @@ s7_pointer s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value)
 
   sym = make_symbol(sc, name);
   s7_define(sc, sc->NIL, sym, value);
+  return(sym);
+}
+
+
+s7_pointer s7_define_variable_with_documentation(s7_scheme *sc, const char *name, s7_pointer value, const char *help)
+{
+  s7_pointer sym;
+  sym = s7_define_variable(sc, name, value);
+  symbol_set_has_help(sym);
+  symbol_help(sym) = copy_string(help);
   return(sym);
 }
 
@@ -32242,10 +32258,19 @@ void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, c
 
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 {
-  static char *arglist = NULL;
+  static char *arglist = NULL, *help = NULL;
   #define ARGLIST_SIZE 512
+
   if (is_symbol(x))
-    x = s7_symbol_value(sc, x); /* this is needed by Snd */
+    {
+      if (symbol_has_help(x))
+	{
+	  if (is_global(x))
+	    return(symbol_help(x));
+	  help = symbol_help(x);
+	}
+      x = s7_symbol_value(sc, x); /* this is needed by Snd */
+    }
 
   if ((s7_is_function(x)) ||
       (is_c_macro(x)))
@@ -32258,6 +32283,8 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 
       if (is_string(car(closure_body(x))))
 	return(string_value(car(closure_body(x))));
+
+      if (help) return(help);
 
       if (!arglist)
 	arglist = (char *)calloc(ARGLIST_SIZE, sizeof(char));
@@ -32284,7 +32311,7 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 	return(string_value(caddr(cadr(p))));
     }
 
-  return(""); /* not NULL here so that (string=? "" (procedure-documentation no-doc-func)) -> #t */
+  return(help);
 }
 
 
@@ -32295,8 +32322,12 @@ static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 
   p = car(args);
   if (is_symbol(p))
-    p = s7_symbol_value(sc, p);
-
+    {
+      if ((symbol_has_help(p)) &&
+	  (is_global(p)))
+	return(s7_make_string(sc, symbol_help(p)));
+      p = s7_symbol_value(sc, p);
+    }
   if ((!is_procedure(p)) &&
       (!s7_is_macro(sc, p)))
     return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_DOCUMENTATION, car(args), A_PROCEDURE));
@@ -67504,7 +67535,7 @@ s7_scheme *s7_init(void)
 
 
   /* -------- *gc-stats* -------- */
-  sc->GC_STATS = s7_define_variable(sc, "*gc-stats*", sc->F);
+  sc->GC_STATS = s7_define_variable_with_documentation(sc, "*gc-stats*", sc->F, "if *gc-stats* is #t, the garbage collector prints various stats on each call");
   s7_symbol_set_access(sc, sc->GC_STATS,
 		       list_3(sc, 
 			      sc->F, 
@@ -67529,7 +67560,7 @@ s7_scheme *s7_init(void)
 			      sc->F));
 
   /* -------- *maximum-stack-size* -------- */
-  sym = s7_define_variable(sc, "*maximum-stack-size*", s7_make_integer(sc, (1 << 30)));
+  sym = s7_define_variable_with_documentation(sc, "*maximum-stack-size*", s7_make_integer(sc, (1 << 30)), "*maximum-stack-size* sets the maximum stack depth");
   sc->maximum_stack_size = global_slot(sym);
   s7_symbol_set_access(sc, sym, 
 		       list_3(sc, 
@@ -67547,7 +67578,7 @@ s7_scheme *s7_init(void)
 
 
   /* -------- *load-path* -------- */
-  sc->LOAD_PATH = s7_define_variable(sc, "*load-path*", sc->NIL);
+  sc->LOAD_PATH = s7_define_variable_with_documentation(sc, "*load-path*", sc->NIL, "*load-path* is a list of directories (strings) that the load function searches if it is passed an incomplete file name");
   s7_symbol_set_access(sc, sc->LOAD_PATH,
 		       list_3(sc, 
 			      sc->F, 
@@ -68109,20 +68140,11 @@ int main(int argc, char **argv)
 
 /* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))
  *
- * *begin-hook*? (this will be confusing!)
  * letrec* built-in (not macro), perhaps also when and unless
- *
  * gchar* et al in xg should accept NULL (via (c-pointer 0)) [uses XEN_TO_C_STRING in xen.h which currently just calls s7_string]
  * remove-duplicates could use the collected bit (also set intersection/difference)
  * loop in C or scheme (as do-loop wrapper)
  * pretty-print?
- *
- * in help strings (and dialog), can help code examples be monospace?
- *   also need doc for vars/hooks (help as macro for (help *maximum-stack-size*) etc?)
- *   also scheme-defined help, for vars built-in help if global_slot?
- *     i.e. (set! (help name) ...)?
- *   why is snd help for error-hook "args: (type data)"?
- *   if gensym has help string, need to free it in gc sweep
  */
 
 
