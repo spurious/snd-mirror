@@ -2549,7 +2549,6 @@ void g_xen_initialize(void)
   g_init_gxlistener();
   g_init_gxchn();
   g_init_draw();
-  g_init_gxdrop();
   g_init_gxregion();
   g_init_gxsnd();
   g_init_gxfind();

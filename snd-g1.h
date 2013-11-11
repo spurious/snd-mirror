@@ -141,16 +141,6 @@ void post_fft_popup_menu(void *ev);
 
 
 
-/* -------- snd-gdrop.c -------- */
-
-void add_drag_and_drop(GtkWidget *w, 
-		       void (*drop_watcher)(GtkWidget *w, const char *message, int x, int y, void *data), 
-		       void (*drag_watcher)(GtkWidget *w, const char *message, int x, int y, drag_style_t dtype, void *data), 
-		       void *context);
-void g_init_gxdrop(void);
-
-
-
 /* -------- snd-gregion.c -------- */
 
 int update_region_browser(bool grf_too);
@@ -494,6 +484,11 @@ void changed_file_dialog(snd_info *sp);
 void reflect_save_as_src(bool val);
 void reflect_save_as_auto_comment(bool val);
 void reflect_save_as_sound_selection(const char *sound_name);
+void add_drag_and_drop(GtkWidget *w, 
+		       void (*drop_watcher)(GtkWidget *w, const char *message, int x, int y, void *data), 
+		       void (*drag_watcher)(GtkWidget *w, const char *message, int x, int y, drag_style_t dtype, void *data), 
+		       void *context);
+void g_init_gxdrop(void);
 
 
 

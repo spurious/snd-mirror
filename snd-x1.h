@@ -139,15 +139,6 @@ void reflect_log_freq_start_in_transform_dialog(void);
 void reflect_min_db_in_transform_dialog(void);
 
 
-/* -------- snd-xdrop.c -------- */
-
-void add_drag_and_drop(Widget w, 
-		       void (*drop_watcher)(Widget w, const char *message, Position x, Position y, void *data), 
-		       void (*drag_watcher)(Widget w, const char *message, Position x, Position y, drag_style_t dtype, void *data), 
-		       void *context);
-void g_init_gxdrop(void);
-
-
 
 /* -------- snd-xregion.c -------- */
 
@@ -410,6 +401,10 @@ void unpost_unsaved_edits_if_any(snd_info *sp);
 void reflect_save_as_src(bool val);
 void reflect_save_as_auto_comment(bool val);
 void reflect_save_as_sound_selection(const char *sound_name);
+void add_drag_and_drop(Widget w, 
+		       void (*drop_watcher)(Widget w, const char *message, Position x, Position y, void *data), 
+		       void (*drag_watcher)(Widget w, const char *message, Position x, Position y, drag_style_t dtype, void *data), 
+		       void *context);
 
 
 

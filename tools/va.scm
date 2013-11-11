@@ -42,7 +42,7 @@
 		   (format #t "~A[~A]: ~A~%" file count line)
 		   (set! va-state 'before)))))))))
  (list "snd-xutils.c" "snd-xhelp.c" "snd-xfind.c" "snd-xmenu.c" "snd-xdraw.c" "snd-xlistener.c" "snd-xchn.c" 
-       "snd-xsnd.c" "snd-xregion.c" "snd-xdrop.c" "snd-xmain.c" "snd-xmix.c" "snd-xenv.c"
+       "snd-xsnd.c" "snd-xregion.c" "snd-xmain.c" "snd-xmix.c" "snd-xenv.c"
        "snd-gxbitmaps.c" "snd-gxcolormaps.c" "snd-xfft.c" "snd-xprint.c" "snd-xfile.c" "snd-xen.c" 
        "snd-data.c" "snd-draw.c" "snd-xprefs.c"))
 

@@ -68142,7 +68142,7 @@ int main(int argc, char **argv)
  *
  * letrec* built-in (not macro), perhaps also when and unless
  * gchar* et al in xg should accept NULL (via (c-pointer 0)) [uses XEN_TO_C_STRING in xen.h which currently just calls s7_string]
- * remove-duplicates could use the collected bit (also set intersection/difference)
+ * remove-duplicates could use the collected bit (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
  * pretty-print?
  */

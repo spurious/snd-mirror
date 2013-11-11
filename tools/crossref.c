@@ -308,7 +308,7 @@ int main(int argc, char **argv)
   add_file("snd-xsnd.c");
   add_file("snd-xregion.c");
   add_file("snd-xref.c");
-  add_file("snd-xdrop.c");
+  /*  add_file("snd-xdrop.c"); */
   add_file("snd-xmain.c");
   add_file("snd-xmix.c");
   add_file("snd-xenv.c");
@@ -327,7 +327,7 @@ int main(int argc, char **argv)
   add_file("snd-gchn.c");
   add_file("snd-gsnd.c");
   add_file("snd-gregion.c");
-  add_file("snd-gdrop.c");
+  /* add_file("snd-gdrop.c"); */
   add_file("snd-gmain.c");
   add_file("snd-gmix.c");
   add_file("snd-genv.c");
