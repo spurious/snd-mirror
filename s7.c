@@ -642,6 +642,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, OP_SAFE_CONS_SS, HOP_SAFE_CONS_SS,
       OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS, 
       OP_SAFE_C_Q, HOP_SAFE_C_Q, OP_SAFE_C_SQ, HOP_SAFE_C_SQ, OP_SAFE_C_QS, HOP_SAFE_C_QS, OP_SAFE_C_QQ, HOP_SAFE_C_QQ, 
+      OP_SAFE_C_CQ, HOP_SAFE_C_CQ, OP_SAFE_C_QC, HOP_SAFE_C_QC, 
       OP_SAFE_C_SSS, HOP_SAFE_C_SSS, OP_SAFE_C_SCS, HOP_SAFE_C_SCS, OP_SAFE_C_SSC, HOP_SAFE_C_SSC, OP_SAFE_C_CSS, HOP_SAFE_C_CSS,
       OP_SAFE_C_ALL_S, HOP_SAFE_C_ALL_S, OP_SAFE_C_ALL_X, HOP_SAFE_C_ALL_X, OP_SAFE_C_SSA, HOP_SAFE_C_SSA, OP_SAFE_C_CSA, HOP_SAFE_C_CSA,
       OP_SAFE_C_A, HOP_SAFE_C_A, OP_SAFE_C_AA, HOP_SAFE_C_AA, OP_SAFE_C_AAA, HOP_SAFE_C_AAA, OP_SAFE_C_AAAA, HOP_SAFE_C_AAAA, 
@@ -750,6 +751,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_c", "h_safe_c_c", "safe_c_s", "h_safe_c_s", "safe_cons_ss", "h_safe_cons_ss",
       "safe_c_ss", "h_safe_c_ss", "safe_c_sc", "h_safe_c_sc", "safe_c_cs", "h_safe_c_cs", 
       "safe_c_q", "h_safe_c_q", "safe_c_sq", "h_safe_c_sq", "safe_c_qs", "h_safe_c_qs", "safe_c_qq", "h_safe_c_qq", 
+      "safe_c_cq", "h_safe_c_cq", "safe_c_qc", "h_safe_c_qc", 
       "safe_c_sss", "h_safe_c_sss", "safe_c_scs", "h_safe_c_scs", "safe_c_ssc", "h_safe_c_ssc", "safe_c_css", "h_safe_c_css",
       "safe_c_all_s", "h_safe_c_all_s", "safe_c_all_x", "h_safe_c_all_x", "safe_c_ssa", "h_safe_c_ssa", "safe_c_csa", "h_safe_c_csa",
       "safe_c_a", "h_safe_c_a", "safe_c_aa", "h_safe_c_aa", "safe_c_aaa", "h_safe_c_aaa", "safe_c_aaaa", "h_safe_c_aaaa", 
@@ -847,22 +849,11 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
 
 #define opt_name(E) ((is_optimized(E)) ? opt_names[optimize_data(E)] : "unopt")
 
-
 #define NUM_CHARS 256
-
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, 
 	      TOKEN_VECTOR, TOKEN_BYTEVECTOR} token_t;
-
-#if 0
-#define NUM_TOKENS 13
-static const char *token_names[NUM_TOKENS] = {
-  "token_eof", "token_left_paren", "token_right_paren", "token_dot", "token_atom", "token_quote", "token_double_quote", 
-  "token_back_quote", "token_comma", "token_at_mark", "token_sharp_const", 
-  "token_vector", "token_bytevector"};
-#endif
-
 
 typedef enum {FILE_PORT, STRING_PORT, FUNCTION_PORT} port_type_t;
 
@@ -8388,10 +8379,6 @@ static void s7_Int_to_string(char *p, s7_Int n, int radix, int width)
       start = width - len - 1;
       end += start;
       memset((void *)p, (int)' ', start);
-      /*
-      for (i = 0; i < start; i++) 
-	p[i] = ' ';
-      */
     }
 
   if (sign)
@@ -31780,13 +31767,6 @@ static s7_pointer fallback_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
   return(f);
 }
 
-#if 0
-unsigned int s7_function_class(s7_pointer f)
-{
-  /* not currently used */
-  return(c_function_class(f));
-}
-#endif
 
 void s7_function_set_class(s7_pointer f, s7_pointer base_f)
 {
@@ -40319,11 +40299,6 @@ static s7_pointer modulo_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 static s7_pointer abs_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   s7_pointer arg;
-  /* (abs (- v1 v2))
-   * (abs (- (car vals) 0.5))
-   * (abs (- nval (vector-ref vals i)))
-   */
-
   arg = cadr(expr);
   if ((is_pair(arg)) &&
       (is_optimized(arg)))
@@ -40337,21 +40312,6 @@ static s7_pointer abs_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
     }
   return(f);
 }
-
-#if 0
-static s7_pointer magnitude_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  s7_pointer arg;
-  /* (magnitude (- new 0.0))              h_safe_c_sc
-   * (magnitude (- val 3.0))
-   * (magnitude (- rval sval))            h_safe_c_ss
-   * (magnitude (- (mus-scaler gen) 0.1)) h_safe_c_opsq_c
-   * (magnitude (- (v0 1) 0.1)            h_safe_c_pc  
-   * (magnitude (- (maxamp) 0.107))       h_safe_c_opcq_c
-   */
-  return(f);
-}
-#endif
 #endif
 
 
@@ -43335,6 +43295,16 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 			    {
 			      set_optimized(car_x);
 			      set_optimize_data(car_x, hop + ((car(cadar_x) == sc->QUOTE) ? OP_SAFE_C_QZ : OP_SAFE_C_ZQ));
+			      choose_c_function(sc, car_x, func, 2);
+			    }
+			  else
+			    {
+			      /* Q must be 1, symbols = 0, pairs = 1 (the quote), so this must be CQ or QC?
+			       */
+			      set_optimized(car_x);
+			      if (is_pair(cadar_x))
+				set_optimize_data(car_x, hop + OP_SAFE_C_QC);
+			      else set_optimize_data(car_x, hop + OP_SAFE_C_CQ);
 			      choose_c_function(sc, car_x, func, 2);
 			    }
 			}
@@ -47811,6 +47781,18 @@ static s7_pointer end_dox_c_ss(s7_scheme *sc, s7_pointer code)
   return(c_call(code)(sc, sc->T2_1));
 }
 
+static s7_pointer end_dox_equal_ss(s7_scheme *sc, s7_pointer code)
+{
+  s7_pointer x, y;
+  x = slot_value(environment_dox1(sc->envir));
+  y = slot_value(environment_dox2(sc->envir));
+  if ((is_integer(x)) && (is_integer(y)))
+    return(make_boolean(sc, integer(x) == integer(y)));
+  car(sc->T2_1) = x;
+  car(sc->T2_2) = y;
+  return(g_equal_2(sc, sc->T2_1));
+}
+
 static s7_pointer end_dox_c_qs(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer args;
@@ -47964,9 +47946,13 @@ static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code)
 	return(end_dox_is_eof);
       return(end_dox_c_s);
 
+    case HOP_SAFE_C_SS:        
+      if (fcdr(code) == (s7_pointer)g_equal_2)
+	return(end_dox_equal_ss);
+      return(end_dox_c_ss);
+
     case HOP_SAFE_C_SC:        return(end_dox_c_sc);
     case HOP_SAFE_C_CS:        return(end_dox_c_cs);
-    case HOP_SAFE_C_SS:        return(end_dox_c_ss);
     case HOP_SAFE_C_QS:        return(end_dox_c_qs);
     case HOP_SAFE_C_S_opCq:    return(end_dox_c_s_opcq);
     case HOP_SAFE_C_opSq_S:    return(end_dox_c_opsq_s);
@@ -48652,10 +48638,11 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
    *   ((list (lambda args (car args))) 0 "hi" 0)
    *   should this return #\h or "hi"??
    *   currently it is "hi" which is consistent with
-   *  ((lambda args (car args))"hi" 0)
+   *  ((lambda args (car args)) "hi" 0)
    * but...
-   * ((lambda (arg) arg) "hi" 0)
+   *   ((lambda (arg) arg) "hi" 0)
    * is currently an error (too many arguments)
+   * it should be (((lambda (arg) arg) "hi") 0) -> #\h
    */
   
   switch (type(obj))
@@ -54487,6 +54474,36 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      
 	      
+	    case OP_SAFE_C_CQ:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      
+	    case HOP_SAFE_C_CQ:
+	      {
+		s7_pointer args;
+		args = cdr(code);
+		car(sc->T2_1) = car(args);
+		car(sc->T2_2) = cadr(cadr(args));
+		sc->value = c_call(code)(sc, sc->T2_1);
+		goto START;
+	      }
+	      
+	      
+	    case OP_SAFE_C_QC:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      
+	    case HOP_SAFE_C_QC:
+	      {
+		s7_pointer args;
+		args = cdr(code);
+		car(sc->T2_1) = cadr(car(args));
+		car(sc->T2_2) = cadr(args);
+		sc->value = c_call(code)(sc, sc->T2_1);
+		goto START;
+	      }
+
+
 	    case OP_SAFE_C_Z:
 	      if (!c_function_is_ok(sc, code))
 		break;
@@ -68144,7 +68161,5 @@ int main(int argc, char **argv)
  * gchar* et al in xg should accept NULL (via (c-pointer 0)) [uses XEN_TO_C_STRING in xen.h which currently just calls s7_string]
  * remove-duplicates could use the collected bit (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
- * pretty-print?
+ * cmn->scm+gtk?
  */
-
-

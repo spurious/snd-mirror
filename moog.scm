@@ -9,8 +9,6 @@
 ;;;
 ;;; translated to Snd scheme function by Bill,
 ;;;   changed 21-Sep-10 to use defgenerator
-;;;   changed 17-Apr-05 to use def-clm-struct (for the optimizer's benefit)
-;;;   changed 11-Jul-06 to use array-interp
 
 (provide 'snd-moog.scm)
 

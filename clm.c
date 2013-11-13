@@ -10665,13 +10665,43 @@ mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_flo
 	memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_float_t));
       gen->data_start = samp;
       gen->data_end = samp + clm_file_buffer_size - 1;
-      gen->obufs[chan][samp - gen->data_start] += val;
+      gen->obufs[chan][0] += val;
       gen->out_end = samp; /* this resets the current notion of where in the buffer the new data ends */
     }
 
   if (samp > gen->out_end) 
     gen->out_end = samp;
   return(val);
+}
+
+
+static void mus_out_chans_to_file(rdout *gen, mus_long_t samp, int chans, mus_float_t *vals)
+{
+  int i;
+  if ((samp <= gen->data_end) &&
+      (samp >= gen->data_start))
+    {
+      mus_long_t pos;
+      pos = samp - gen->data_start;
+      for (i = 0; i < chans; i++)
+	gen->obufs[i][pos] += vals[i];
+    }
+  else
+    {
+      int j;
+      if (samp < 0) return;
+      flush_buffers(gen);
+      for (j = 0; j < gen->chans; j++)
+	memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_float_t));
+      gen->data_start = samp;
+      gen->data_end = samp + clm_file_buffer_size - 1;
+      for (i = 0; i < chans; i++)
+	gen->obufs[i][0] += vals[i];
+      gen->out_end = samp; /* this resets the current notion of where in the buffer the new data ends */
+    }
+
+  if (samp > gen->out_end) 
+    gen->out_end = samp;
 }
 
 
@@ -10696,7 +10726,7 @@ static mus_float_t mus_outa_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
 	memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_float_t));
       gen->data_start = samp;
       gen->data_end = samp + clm_file_buffer_size - 1;
-      gen->obuf0[samp - gen->data_start] += val;
+      gen->obuf0[0] += val;
       gen->out_end = samp; /* this resets the current notion of where in the buffer the new data ends */
     }
 
@@ -10727,7 +10757,7 @@ static mus_float_t mus_outb_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
 	memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_float_t));
       gen->data_start = samp;
       gen->data_end = samp + clm_file_buffer_size - 1;
-      gen->obuf1[samp - gen->data_start] += val;
+      gen->obuf1[0] += val;
       gen->out_end = samp; /* this resets the current notion of where in the buffer the new data ends */
     }
 
@@ -10928,7 +10958,7 @@ mus_float_t mus_safe_out_any_to_file(mus_long_t samp, mus_float_t val, int chan,
 	memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_float_t));
       gen->data_start = samp;
       gen->data_end = samp + clm_file_buffer_size - 1;
-      gen->obufs[chan][samp - gen->data_start] += val;
+      gen->obufs[chan][0] += val;
       gen->out_end = samp; /* this resets the current notion of where in the buffer the new data ends */
     }
   return(val);
@@ -11029,12 +11059,11 @@ mus_any *mus_frame_to_file(mus_any *ptr, mus_long_t samp, mus_any *udata)
 	    }
 	  else
 	    {
-	      int i, chans;
+	      int chans;
 	      chans = data->chans;
 	      if (gen->chans < chans) 
 		chans = gen->chans;
-	      for (i = 0; i < chans; i++) 
-		mus_out_any_to_file(ptr, samp, i, data->vals[i]);
+	      mus_out_chans_to_file(gen, samp, chans, data->vals);
 	    }
 	}
     }
@@ -11054,15 +11083,13 @@ mus_any *mus_continue_frame_to_file(const char *filename)
 mus_float_t mus_vector_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *vals, int chans)
 {
   rdout *gen = (rdout *)ptr;
-  int i;
   
   if (chans == 1)
     return(mus_outa_to_file(ptr, samp, vals[0]));
 
   if (chans > gen->chans) 
     chans = gen->chans;
-  for (i = 0; i < chans; i++) 
-    mus_out_any_to_file(ptr, samp, i, vals[i]);
+  mus_out_chans_to_file(gen, samp, chans, vals);
 
   return(vals[0]);
 }
