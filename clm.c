@@ -12571,7 +12571,7 @@ mus_float_t mus_src_20(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
 {
   sr *srp = (sr *)srptr;
   mus_float_t sum;
-  int lim, i, loc;
+  int lim, lim2, i, loc;
   int stop;
 
   lim = srp->lim; /* 2 * width so it's even */
@@ -12616,39 +12616,30 @@ mus_float_t mus_src_20(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
 	}
     }
 
-#if 0
   stop = loc;
-  for (i = 0; loc < lim; loc += 2, i++)
-    sum += srp->data[loc] * srp->coeffs[i];
-  for (loc = 0; loc < stop; loc += 2, i++)
-    sum += srp->data[loc] * srp->coeffs[i];
-#endif
-  {
-    int lim2;
-    stop = loc;
-    lim2 = lim - 4;
-    i = 0;
-    while (loc <= lim2)
-      {
-	sum += (srp->data[loc] * srp->coeffs[i++]);
-	loc += 2;
-	sum += (srp->data[loc] * srp->coeffs[i++]);
-	loc += 2;
-      }
-    if (loc < lim)
+  lim2 = lim - 4;
+  i = 0;
+  while (loc <= lim2)
+    {
       sum += (srp->data[loc] * srp->coeffs[i++]);
-    lim2 = stop - 4;
-    loc = 0;
-    while (loc <= lim2)
-      {
-	sum += (srp->data[loc] * srp->coeffs[i++]);
-	loc += 2;
-	sum += (srp->data[loc] * srp->coeffs[i++]);
-	loc += 2;
-      }
-    if (loc < stop)
-      sum += (srp->data[loc] * srp->coeffs[i]);
-  }
+      loc += 2;
+      sum += (srp->data[loc] * srp->coeffs[i++]);
+      loc += 2;
+    }
+  if (loc < lim)
+    sum += (srp->data[loc] * srp->coeffs[i++]);
+  lim2 = stop - 4;
+  loc = 0;
+  while (loc <= lim2)
+    {
+      sum += (srp->data[loc] * srp->coeffs[i++]);
+      loc += 2;
+      sum += (srp->data[loc] * srp->coeffs[i++]);
+      loc += 2;
+    }
+  if (loc < stop)
+    sum += (srp->data[loc] * srp->coeffs[i]);
+
   return(sum * 0.5);
 }
 
@@ -12657,7 +12648,7 @@ mus_float_t mus_src_05(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
 {
   sr *srp = (sr *)srptr;
   mus_float_t sum;
-  int lim, i, loc, stop;
+  int lim, lim2, i, loc, stop;
 
   lim = srp->lim; 
   loc = srp->start;
@@ -12697,37 +12688,26 @@ mus_float_t mus_src_05(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
 	}
     }
 
-#if 0
   stop = loc;
-  for (sum = 0.0, i = 0; loc < lim; loc++, i++)
+  lim2 = lim - 2;
+  i = 0;
+  sum = 0.0;
+  while (loc <= lim2)
+    {
+      sum += (srp->data[loc++] * srp->coeffs[i++]);
+      sum += (srp->data[loc++] * srp->coeffs[i++]);
+    }
+  if (loc < lim)
+    sum += (srp->data[loc] * srp->coeffs[i++]);
+  lim2 = stop - 2;
+  loc = 0;
+  while (loc <= lim2)
+    {
+      sum += (srp->data[loc++] * srp->coeffs[i++]);
+      sum += (srp->data[loc++] * srp->coeffs[i++]);
+    }
+  if (loc < stop)
     sum += (srp->data[loc] * srp->coeffs[i]);
-  for (loc = 0; loc < stop; loc++, i++)
-    sum += (srp->data[loc] * srp->coeffs[i]);
-#endif
-
-  {
-    int lim2;
-    stop = loc;
-    lim2 = lim - 2;
-    i = 0;
-    sum = 0.0;
-    while (loc <= lim2)
-      {
-	sum += (srp->data[loc++] * srp->coeffs[i++]);
-	sum += (srp->data[loc++] * srp->coeffs[i++]);
-      }
-    if (loc < lim)
-      sum += (srp->data[loc] * srp->coeffs[i++]);
-    lim2 = stop - 2;
-    loc = 0;
-    while (loc <= lim2)
-      {
-	sum += (srp->data[loc++] * srp->coeffs[i++]);
-	sum += (srp->data[loc++] * srp->coeffs[i++]);
-      }
-    if (loc < stop)
-      sum += (srp->data[loc] * srp->coeffs[i]);
-  }
 
   srp->x += 0.5;
   return(sum);

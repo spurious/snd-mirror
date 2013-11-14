@@ -11540,20 +11540,6 @@ static gf *fixup_subtract(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 }
 
 
-/* if markplay, wrong play button responds?
- * (/ a b) perhaps (- ...) one arg case
- * frame-ref|frame->frame|frame->sample
- * exact->inexact? exp/expt
- * vector-ref as gen arg?
- * direct if? (if ... 0 1) -- no associated c_function -- if_direct and friends! -- moving-average case below is if_all_x
- * multi-statement loops
- * back combine more cases
- * could indirect_outa_2_temp and others use gf on the 1st call, then vector to that?
- *   how to gc the gf struct? and where to find the locals end point?
- *   indirect_outa_2_temp in all_x_c_c, hop_safe_c_c
- *   all vars could be treated as slots -- how to update? try the multistatement stuff first.
- */
-
 static mus_float_t gf_add_2(void *p)            {gf *g = (gf *)p; return(g->f1(g->gen1) + g->f2(g->gen2));}
 static mus_float_t gf_multiply_2(void *p)       {gf *g = (gf *)p; return(g->f1(g->gen1) * g->f2(g->gen2));}
 static mus_float_t gf_add_g1_g2(void *p)        {gf *g = (gf *)p; return(g->f1(g->g1) + g->f2(g->g2));}
@@ -13273,7 +13259,7 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
   s7_Double x;
   /* 9-Apr
 [100000: (granulate exA)]? -- was unsafe
-88200: (formant-bank fs inputs)
+88200: (formant-bank fs inputs) -- fade.scm
 [88200: (* amp (oscil g))]
 88200: (* (env ampf) (wave-train grains gliss)) -- when? clm23 (if in loop)
 81365: (* pulse-amp (env pulse-ampf) (+ (* (env low-ampf) (polywave gp frq2)) (polywave gen1 (env frqf)))) -- if in loop

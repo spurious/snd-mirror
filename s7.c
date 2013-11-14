@@ -402,8 +402,8 @@ enum {OP_NO_OP,
       OP_QUOTE_UNCHECKED, OP_LAMBDA_UNCHECKED, OP_LET_UNCHECKED, OP_CASE_UNCHECKED, 
       OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_Z, OP_SET_SYMBOL_ALL_X,
       OP_SET_SYMBOL_SAFE_S, OP_SET_SYMBOL_SAFE_C, 
-      OP_SET_SYMBOL_SAFE_SS, OP_SET_SYMBOL_SAFE_SSS, OP_SET_SYMBOL_SAFE_opSSq_S,
-      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_A, OP_SET_PAIR_P, 
+      OP_SET_SYMBOL_SAFE_SS, OP_SET_SYMBOL_SAFE_SSS, 
+      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_A, OP_SET_PAIR_P, OP_SET_PAIR_ZA,
       OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_ENV_S, OP_SET_ENV_ALL_X,
       OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE,
       OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_COND_UNCHECKED,
@@ -584,8 +584,8 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_QUOTE_UNCHECKED", "OP_LAMBDA_UNCHECKED", "OP_LET_UNCHECKED", "OP_CASE_UNCHECKED", 
   "OP_SET_UNCHECKED", "OP_SET_SYMBOL_C", "OP_SET_SYMBOL_S", "OP_SET_SYMBOL_Q", "OP_SET_SYMBOL_P", "OP_SET_SYMBOL_Z", "OP_SET_SYMBOL_ALL_X",
   "OP_SET_SYMBOL_SAFE_S", "OP_SET_SYMBOL_SAFE_C", 
-  "OP_SET_SYMBOL_SAFE_SS", "OP_SET_SYMBOL_SAFE_SSS", "OP_SET_SYMBOL_SAFE_opSSq_S", 
-  "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_Z", "OP_SET_PAIR_A", "OP_SET_PAIR_P", 
+  "OP_SET_SYMBOL_SAFE_SS", "OP_SET_SYMBOL_SAFE_SSS",
+  "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_Z", "OP_SET_PAIR_A", "OP_SET_PAIR_P", "OP_SET_PAIR_ZA",
   "OP_SET_PAIR_P_1", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", "OP_SET_ENV_S", "OP_SET_ENV_ALL_X",
   "OP_SET_PAIR_C", "OP_SET_PAIR_C_P", "OP_SET_PAIR_C_P_1", "OP_SET_SAFE",
   "OP_LET_STAR_UNCHECKED", "OP_LETREC_UNCHECKED", "OP_COND_UNCHECKED",
@@ -1312,9 +1312,9 @@ struct s7_scheme {
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_ENV_UNCHECKED, WITH_ENV_S;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_ALL_X;
-  s7_pointer SET_SYMBOL_SAFE_S, SET_SYMBOL_SAFE_SS, SET_SYMBOL_SAFE_SSS, SET_SYMBOL_SAFE_opSSq_S;
+  s7_pointer SET_SYMBOL_SAFE_S, SET_SYMBOL_SAFE_SS, SET_SYMBOL_SAFE_SSS;
   s7_pointer SET_SYMBOL_SAFE_C;
-  s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_A, SET_PAIR_P, SET_PWS, SET_ENV_S, SET_ENV_ALL_X, SET_PAIR_C, SET_PAIR_C_P;
+  s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_A, SET_PAIR_ZA, SET_PAIR_P, SET_PWS, SET_ENV_S, SET_ENV_ALL_X, SET_PAIR_C, SET_PAIR_C_P;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED;
   s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLER_1, CASE_SIMPLER_SS;
   s7_pointer CASE_SIMPLEST, CASE_SIMPLEST_SS, CASE_SIMPLEST_ELSE, CASE_SIMPLEST_ELSE_C;
@@ -2561,7 +2561,7 @@ static void report_counts(s7_scheme *sc)
       if (mx > 0)
 	{
 	  if (mx > total/100) 
-	    fprintf(stderr, "%s: %d (%f)\n", opt_names[mxi], mx, 100.0*mx/(float)total);
+	    fprintf(stderr, "%s: %d (%f)\n", real_op_names[mxi], mx, 100.0*mx/(float)total);
 	  counts[mxi] = 0;
 	}
       else happy = false;
@@ -46904,11 +46904,12 @@ static s7_pointer check_set(s7_scheme *sc)
 				  if (is_all_x_safe(sc, value))
 				    {
 				      s7_pointer obj;
+				      annotate_arg(sc, cdr(sc->code));
+				      set_syntax_op(sc->code, sc->SET_PAIR_ZA);
 				      obj = finder(sc, car(inner));
 				      if ((is_c_function(obj)) &&
 					  (is_c_function(c_function_setter(obj))))
 					{
-					  annotate_arg(sc, cdr(sc->code));
 					  set_syntax_op(sc->code, sc->SET_PAIR_A);
 					}
 				    }
@@ -46997,6 +46998,9 @@ static s7_pointer check_set(s7_scheme *sc)
 				{
 				  set_syntax_op(sc->code, sc->SET_SYMBOL_Z);
 
+				  /* TODO: use all_x here as in set_pair_za -- or rather why is the all_x case below missed? 
+				   *   set_symbol_safe_ss|s can also go?
+				   */
 				  if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_C)
 				    {
 				      if ((car(sc->code) == cadr(cadr(sc->code))) &&
@@ -47038,37 +47042,29 @@ static s7_pointer check_set(s7_scheme *sc)
 					    }
 					  else
 					    {
-					      if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_opSSq_S)
+					      if (is_all_x_safe(sc, cadr(sc->code)))
 						{
-						  set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_opSSq_S);
-						  set_fcdr(sc->code, cdadr(sc->code));
+						  set_syntax_op(sc->code, sc->SET_SYMBOL_ALL_X);
+						  annotate_arg(sc, cdr(sc->code));
 						}
-					      else
+					      
+					      /* look for increments.  The other two common cases are
+					       *   s_opssq and s_opsq: 210832: (+ num (* x1 x2)), 96774: (+ ampsum (abs samp0))
+					       */
+					      if (car(sc->code) == cadr(cadr(sc->code)))
 						{
-						  if (is_all_x_safe(sc, cadr(sc->code)))
+						  if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_S_opCq)
 						    {
-						      set_syntax_op(sc->code, sc->SET_SYMBOL_ALL_X);
-						      annotate_arg(sc, cdr(sc->code));
+						      /* (define (hi) (let ((x 0)) (set! x (+ x (abs -1))) x)) */
+						      set_syntax_op(sc->code, sc->INCREMENT_S_opCq); 
+						      set_fcdr(sc->code, cdadr(sc->code));
 						    }
-						  
-						  /* look for increments.  The other two common cases are
-						   *   s_opssq and s_opsq: 210832: (+ num (* x1 x2)), 96774: (+ ampsum (abs samp0))
-						   */
-						  if (car(sc->code) == cadr(cadr(sc->code)))
+						  else 
 						    {
-						      if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_S_opCq)
+						      if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_SZ)
 							{
-							  /* (define (hi) (let ((x 0)) (set! x (+ x (abs -1))) x)) */
-							  set_syntax_op(sc->code, sc->INCREMENT_S_opCq); 
-							  set_fcdr(sc->code, cdadr(sc->code));
-							}
-						      else 
-							{
-							  if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_SZ)
-							    {
-							      set_syntax_op(sc->code, sc->INCREMENT_SZ);
-							      set_fcdr(sc->code, caddr(cadr(sc->code)));
-							    }
+							  set_syntax_op(sc->code, sc->INCREMENT_SZ);
+							  set_fcdr(sc->code, caddr(cadr(sc->code)));
 							}
 						    }
 						}
@@ -54316,6 +54312,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_SAFE_C_C:
 	      sc->value = c_call(code)(sc, cdr(code)); /* this includes all safe calls where all args are constants */
+	      /*
+[OP_SET_PAIR_P_1: 1251896 (22.592352)]
+OP_EVAL_DONE: 988348 (17.836231)
+OP_BEGIN1: 813060 (14.672894)
+OP_LET_STAR1: 402537 (7.264387)
+OP_SAFE_DO_STEP: 351723 (6.347372)
+OP_DOTIMES_STEP_P: 240573 (4.341503)
+OP_EVAL_ARGS4: 177987 (3.212044)
+OP_IF_PPX: 172666 (3.116018)
+OP_EVAL_ARGS5: 148282 (2.675972)
+OP_SIMPLE_DO_STEP_A: 147754 (2.666444)
+OP_SAFE_C_PP_2: 146765 (2.648596)
+OP_DOX_STEP: 135664 (2.448262)
+	       */
 	      goto START;
 
 	      
@@ -54351,6 +54361,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T2_2) = finder(sc, cadr(args));
 		car(sc->T2_1) = val;
 		sc->value = c_call(code)(sc, sc->T2_1);
+	      /*
+OP_LET_STAR1: 658807 (40.828801)
+OP_BEGIN1: 283861 (17.591957)
+OP_EVAL_DONE: 176460 (10.935904)
+[OP_SET_PAIR_P_1: 90410 (5.603055)]
+OP_LET1: 75475 (4.677476)
+	       */
 		goto START; 
 	      }
 	      
@@ -54831,6 +54848,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_SAFE_C_A:
 	      /* biggies here are all_x_c_opsq_s (90722x)
 	       *                  all_x_c_opcq_s (139739x)
+	       * (scarcely any set here)
 	       */
 	      car(sc->A1_1) = ((s7_function)fcdr(cdr(code)))(sc, cadr(code));
 	      sc->value = c_call(code)(sc, sc->A1_1);
@@ -54845,6 +54863,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      car(sc->A2_1) = ((s7_function)fcdr(cdr(code)))(sc, cadr(code));
 	      car(sc->A2_2) = ((s7_function)fcdr(cddr(code)))(sc, caddr(code));
 	      sc->value = c_call(code)(sc, sc->A2_1);
+	      /* op_set_safe from set_symbol_z?
+	       */
 	      goto START;
 
 
@@ -57886,6 +57906,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto SET_PAIR_P_3;
 
 
+      case OP_SET_PAIR_ZA:
+	/* unknown setter pair, but value is easy */
+	sc->value = ((s7_function)fcdr(cdr(sc->code)))(sc, cadr(sc->code)); 
+	/* fall through */
+
+
 	/* --------------- */
       case OP_SET_PAIR_P_1:
 	/* car(sc->code) is a pair, caar(code) is the object with a setter, it has one (safe) argument, and one safe value to set
@@ -58285,26 +58311,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       eval_type_error(sc, "set! ~A: unbound variable", sc->code);
       
-
-
-      /* --------------- */
-    case OP_SET_SYMBOL_SAFE_opSSq_S:
-      {
-	s7_pointer val, arg, inner, sym;
-	sym = car(sc->code);
-	arg = cadr(sc->code);
-	inner = cadr(arg);
-	val = finder(sc, cadr(inner));
-	car(sc->T2_2) = finder(sc, caddr(inner));
-	car(sc->T2_1) = val;
-	val = c_call(inner)(sc, sc->T2_1);
-	car(sc->T2_2) = finder(sc, caddr(arg));
-	car(sc->T2_1) = val;
-	sc->value = c_call(arg)(sc, sc->T2_1);
-	sc->code = sym;
-	goto SET_SAFE;
-      }
-
 
       /* --------------- */
     case OP_SET_SYMBOL_SAFE_SS:
@@ -66903,7 +66909,6 @@ s7_scheme *s7_init(void)
   sc->SET_SYMBOL_SAFE_S =     assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_SAFE_S);  
   sc->SET_SYMBOL_SAFE_SS =    assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_SAFE_SS);  
   sc->SET_SYMBOL_SAFE_SSS =   assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_SAFE_SSS);  
-  sc->SET_SYMBOL_SAFE_opSSq_S = assign_internal_syntax(sc, "set!",  OP_SET_SYMBOL_SAFE_opSSq_S);  
   sc->SET_SYMBOL_SAFE_C =     assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_SAFE_C);  
   sc->SET_SYMBOL_P =          assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_P);  
   sc->SET_SYMBOL_Z =          assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_Z);  
@@ -66931,6 +66936,7 @@ s7_scheme *s7_init(void)
   sc->SET_PAIR_P =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_P);
   sc->SET_PAIR_Z =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_Z);
   sc->SET_PAIR_A =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_A);
+  sc->SET_PAIR_ZA =           assign_internal_syntax(sc, "set!",    OP_SET_PAIR_ZA);
   sc->SET_ENV_S =             assign_internal_syntax(sc, "set!",    OP_SET_ENV_S);
   sc->SET_ENV_ALL_X =         assign_internal_syntax(sc, "set!",    OP_SET_ENV_ALL_X);
   sc->SET_PAIR_C =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_C);

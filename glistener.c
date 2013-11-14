@@ -643,10 +643,18 @@ bool glistener_write(glistener *g, FILE *fp)
   str = gtk_text_buffer_get_text(g->buffer, &start, &end, true);
   if (str)
     {
-      fwrite((void *)str, sizeof(char), strlen(str), fp);
-      g_free(str);
+      size_t bytes;
+      bytes = strlen(str);
+      if (bytes > 0)
+	{
+	  if (fwrite((void *)str, sizeof(char), bytes, fp) != bytes)
+	    {
+	      g_free(str);
+	      return(false);
+	    }
+	  g_free(str);
+	}
     }
-
   return(true);
 }
 
