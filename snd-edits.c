@@ -9007,10 +9007,10 @@ void g_init_edits(void)
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_sampler,           g_make_sampler_w,           0, 5, 0, H_make_sampler);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_region_sampler,    g_make_region_sampler_w,    1, 3, 0, H_make_region_sampler);
-  XEN_DEFINE_DIRECT_PROCEDURE(S_read_sample,            g_read_sample_w,            1, 0, 0, H_read_sample);
+  XEN_DEFINE_DIRECT_PROCEDURE(S_read_sample,          g_read_sample_w,            1, 0, 0, H_read_sample);
   XEN_DEFINE_SAFE_PROCEDURE(S_read_region_sample,     g_read_sample_w,            1, 0, 0, H_read_sample);
-  XEN_DEFINE_DIRECT_PROCEDURE(S_next_sample,            g_next_sample_w,            1, 0, 0, H_next_sample);
-  XEN_DEFINE_DIRECT_PROCEDURE(S_previous_sample,        g_previous_sample_w,        1, 0, 0, H_previous_sample);
+  XEN_DEFINE_DIRECT_PROCEDURE(S_next_sample,          g_next_sample_w,            1, 0, 0, H_next_sample);
+  XEN_DEFINE_DIRECT_PROCEDURE(S_previous_sample,      g_previous_sample_w,        1, 0, 0, H_previous_sample);
   XEN_DEFINE_SAFE_PROCEDURE(S_free_sampler,           g_free_sampler_w,           1, 0, 0, H_free_sampler);
   XEN_DEFINE_SAFE_PROCEDURE(S_sampler_home,           g_sampler_home_w,           1, 0, 0, H_sampler_home);
   XEN_DEFINE_SAFE_PROCEDURE(S_sampler_p,              g_sampler_p_w,              1, 0, 0, H_sampler_p);
