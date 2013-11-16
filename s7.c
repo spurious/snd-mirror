@@ -639,7 +639,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
 typedef enum{E_C_P, E_C_PP, E_C_CP, E_C_SP, E_C_PC, E_C_PS} combine_op_t;
 
 enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
-      OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, OP_SAFE_CONS_SS, HOP_SAFE_CONS_SS,
+      OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, 
       OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS, 
       OP_SAFE_C_Q, HOP_SAFE_C_Q, OP_SAFE_C_SQ, HOP_SAFE_C_SQ, OP_SAFE_C_QS, HOP_SAFE_C_QS, OP_SAFE_C_QQ, HOP_SAFE_C_QQ, 
       OP_SAFE_C_CQ, HOP_SAFE_C_CQ, OP_SAFE_C_QC, HOP_SAFE_C_QC, 
@@ -748,7 +748,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
 static const char *opt_names[OPT_MAX_DEFINED + 1] =
   {  
       "not_an_op", "h_not_an_op",
-      "safe_c_c", "h_safe_c_c", "safe_c_s", "h_safe_c_s", "safe_cons_ss", "h_safe_cons_ss",
+      "safe_c_c", "h_safe_c_c", "safe_c_s", "h_safe_c_s", 
       "safe_c_ss", "h_safe_c_ss", "safe_c_sc", "h_safe_c_sc", "safe_c_cs", "h_safe_c_cs", 
       "safe_c_q", "h_safe_c_q", "safe_c_sq", "h_safe_c_sq", "safe_c_qs", "h_safe_c_qs", "safe_c_qq", "h_safe_c_qq", 
       "safe_c_cq", "h_safe_c_cq", "safe_c_qc", "h_safe_c_qc", 
@@ -1795,11 +1795,6 @@ static int t_optimized = T_OPTIMIZED;
 #define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
 #define set_has_print_name(p)         typeflag(p) |= T_PRINT_NAME
 
-#define T_IMMEDIATE                   T_PRINT_NAME
-#define is_immediate(p)               ((typeflag(p) & T_IMMEDIATE) != 0)
-#define set_immediate(p)              typeflag(p) |= T_IMMEDIATE
-/* this marks a one-line safe_c_c callable closure body
- */
 
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define set_copy_args(p)              typeflag(p) |= T_COPY_ARGS
@@ -2065,7 +2060,6 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define is_hopping(P)                 ((optimize_data(P) & 0x1) == 1)
 #define op_no_hop(P)                  (optimize_data(P) & 0xfffe)
 static void set_optimize_data(s7_pointer p, unsigned short op) {p->object.cons.dat.d.data = op; optimize_data_index(p) = op;} 
-static void set_optimize_op(s7_pointer p, unsigned short op) {optimize_data_index(p) = op;}
 #define clear_optimize_data(P)        set_optimize_data(P, 0)
 static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_data_index(p) |= 1;}
 #define optimize_op(p)                optimize_data_index(p)
@@ -2559,7 +2553,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 0
+#if 1
 #if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -2587,8 +2581,8 @@ static void report_counts(s7_scheme *sc)
 	}
       if (mx > 0)
 	{
-	  if (mx > total/100) 
-	    fprintf(stderr, "%s: %d (%f)\n", real_op_names[mxi], mx, 100.0*mx/(float)total);
+	  /* if (mx > total/100) */
+	    fprintf(stderr, "%s: %d (%f)\n", opt_names[mxi], mx, 100.0*mx/(float)total);
 	  counts[mxi] = 0;
 	}
       else happy = false;
@@ -43011,11 +43005,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 	      else
 		{
 		  if (symbols == 2)
-		    {
-		      set_optimize_data(car_x, hop + OP_SAFE_C_SS); /* these two symbols are almost never the same, (sqrt (+ (* x x) (* y y))) */
-		      if (c_function_call(func) == g_cons)
-			set_optimize_op(car_x, hop + OP_SAFE_CONS_SS);
-		    }
+		    set_optimize_data(car_x, hop + OP_SAFE_C_SS); /* these two symbols are almost never the same, (sqrt (+ (* x x) (* y y))) */
 		  else set_optimize_data(car_x, hop + ((is_symbol(cadar_x)) ? OP_SAFE_C_SC : OP_SAFE_C_CS));
 		}
 	      set_optimized(car_x);
@@ -51443,7 +51433,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  code = sc->code;
 	  sc->cur_code = code;
 	  /* fprintf(stderr, "opt eval: %s %s %s\n", opt_names[optimize_op(code)], DISPLAY_80(code), describe_type_bits(sc, car(code))); */
-	  /* tick(optimize_op(code)); */
+	  /*
+vector_s: 6503658 (9.399096)
+h_safe_c_c: 4266407 (6.165818)
+h_safe_c_sqs: 2752982 (3.978614)
+h_safe_c_ss: 1489622 (2.152804)
+h_safe_c_aaa: 1487034 (2.149064)
+h_safe_c_sss: 1326872 (1.917597)
+h_safe_c_opssq_opssq: 1055687 (1.525680)
+h_safe_c_s_opaaq: 1021823 (1.476740)
+h_safe_c_aa: 1010171 (1.459901)
+h_safe_c_opscq: 620320 (0.890573)
+h_safe_c_opssq: 618180 (0.887500)
+h_safe_c_c_opssq: 574513 (0.824809)
+h_safe_c_s_opcq: 497211 (0.713829)
+	   */
 
 	  switch (optimize_op(code))
 	    {
@@ -51728,11 +51732,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 		sc->envir = old_frame_with_two_slots(sc, closure_environment(ecdr(code)), p1, p2);
 		sc->code = car(closure_body(ecdr(code)));
-		if (is_immediate(sc->code))
-		  {
-		    sc->value = c_call(sc->code)(sc, cdr(sc->code));
-		    goto START;
-		  }
 		goto EVAL;
 	      }
 
@@ -51758,11 +51757,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		sc->envir = old_frame_with_two_slots(sc, closure_environment(ecdr(code)), p1, p2);
 		sc->code = car(closure_body(ecdr(code)));
-		if (is_immediate(sc->code))
-		  {
-		    sc->value = c_call(sc->code)(sc, cdr(sc->code));
-		    goto START;
-		  }
 		goto EVAL;
 	      }
 	      
@@ -53826,10 +53820,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    if ((is_null(cdr(closure_body(f)))) &&
 				(!arglist_has_accessed_symbol(closure_args(f))))
 			      {
-				if ((is_optimized(car(closure_body(f)))) &&
-				    (optimize_data(car(closure_body(f))) == HOP_SAFE_C_C))
-				  set_immediate(car(closure_body(f)));
-
 				if (is_safe_closure(f))
 				  {
 				    if ((is_safely_optimized(cadr(code))) &&
@@ -54445,23 +54435,6 @@ OP_LET1: 75475 (4.677476)
 	      }
 	      
 
-	    case OP_SAFE_CONS_SS:
-	      if (!c_function_is_ok(sc, code))
-		break;
-	      
-	    case HOP_SAFE_CONS_SS:
-	      {
-		s7_pointer x, args;
-		args = cdr(code);
-		NEW_CELL(sc, x);
-		car(x) = finder(sc, car(args));
-		cdr(x) = finder(sc, cadr(args));
-		set_type(x, T_PAIR | T_SAFE_PROCEDURE);
-		sc->value = x;
-		goto START; 
-	      }
-	      
-	      
 	    case OP_SAFE_C_ALL_S:
 	      if (!c_function_is_ok(sc, code))
 		break;
@@ -54919,10 +54892,6 @@ OP_LET1: 75475 (4.677476)
 		break;
 	      
 	    case HOP_SAFE_C_A:
-	      /* biggies here are all_x_c_opsq_s (90722x)
-	       *                  all_x_c_opcq_s (139739x)
-	       * (scarcely any set here)
-	       */
 	      car(sc->A1_1) = ((s7_function)fcdr(cdr(code)))(sc, cadr(code));
 	      sc->value = c_call(code)(sc, sc->A1_1);
 	      goto START;
@@ -58523,6 +58492,16 @@ OP_LET1: 75475 (4.677476)
       /* ([set!] sum (+ sum n)) */
       push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
       sc->code = cadr(sc->code);
+      /*
+h_safe_c_sp: 1329855 (26.452216)
+h_safe_c_cz: 826669 (16.443317)
+h_safe_c_s_opaaq: 659657 (13.121272)
+h_safe_c_p: 410158 (8.158474)
+vector_s: 255520 (5.082562)
+h_safe_c_aaa: 238153 (4.737114)
+h_safe_c_sz: 155069 (3.084486)
+h_safe_c_aa: 125602 (2.498356)
+       */
       goto OPT_EVAL;
 
 
