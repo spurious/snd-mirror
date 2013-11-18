@@ -438,7 +438,7 @@ enum {OP_NO_OP,
       OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_1_MV, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_2_MV, 
       OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_3_MV, OP_EVAL_ARGS_P_4_MV, 
       OP_EVAL_ARGS_SSP_1, OP_EVAL_ARGS_SSP_MV, 
-      OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CDR, OP_SET_CONS, 
+      OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CONS, 
       OP_INCREMENT_SS, OP_INCREMENT_SSS, OP_INCREMENT_S_opCq, OP_INCREMENT_SZ, OP_INCREMENT_C_TEMP,
       OP_LET_O, OP_LET_O1, OP_LET_R, OP_LET_ALL_R, OP_LET_C_D, OP_LET_O_P, OP_LET_Z_P, OP_LET_O2, OP_LET_O_O, OP_LET_Z_O, OP_LET_O3, 
       OP_LET_R_P, OP_LET_CAR_P,
@@ -536,7 +536,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "eval_args_p_1", "eval_args_p_1_mv", "eval_args_p_2", "eval_args_p_2_mv", 
    "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv", 
    "eval_args_ssp_1", "eval_args_ssp_mv", 
-   "increment_1", "decrement_1", "set_cdr", "set_cons", 
+   "increment_1", "decrement_1", "set_cons", 
    "increment_ss", "increment_sss", "increment_s_opcq", "increment_sz", "increment_c_temp",
    "let", "let", "let", "let", "let", "let", "let", "let", "let", "let", "let", 
    "let", "let", 
@@ -620,7 +620,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_EVAL_ARGS_P_1", "OP_EVAL_ARGS_P_1_MV", "OP_EVAL_ARGS_P_2", "OP_EVAL_ARGS_P_2_MV", 
   "OP_EVAL_ARGS_P_3", "OP_EVAL_ARGS_P_4", "OP_EVAL_ARGS_P_3_MV", "OP_EVAL_ARGS_P_4_MV", 
   "OP_EVAL_ARGS_SSP_1", "OP_EVAL_ARGS_SSP_MV", 
-  "OP_INCREMENT_1", "OP_DECREMENT_1", "OP_SET_CDR", "OP_SET_CONS", 
+  "OP_INCREMENT_1", "OP_DECREMENT_1", "OP_SET_CONS", 
   "OP_INCREMENT_SS", "OP_INCREMENT_SSS", "OP_INCREMENT_S_opCq", "OP_INCREMENT_SZ", "OP_INCREMENT_C_TEMP",
   "OP_LET_O", "OP_LET_O1", "OP_LET_R", "OP_LET_ALL_R", "OP_LET_C_D", "OP_LET_O_P", "OP_LET_Z_P", "OP_LET_O2", "OP_LET_O_O", "OP_LET_Z_O", "OP_LET_O3", 
   "OP_LET_R_P", "OP_LET_CAR_P",
@@ -2582,7 +2582,7 @@ static void report_counts(s7_scheme *sc)
       if (mx > 0)
 	{
 	  /* if (mx > total/100) */
-	    fprintf(stderr, "%s: %d (%f)\n", opt_names[mxi], mx, 100.0*mx/(float)total);
+	    fprintf(stderr, "%s: %d (%f)\n", real_op_names[mxi], mx, 100.0*mx/(float)total);
 	  counts[mxi] = 0;
 	}
       else happy = false;
@@ -43486,17 +43486,18 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		      set_optimize_data(car_x, hop + OP_SAFE_C_AP);
 		      annotate_arg(sc, cdr(car_x));
 		    }
-		  else set_optimize_data(car_x, hop + OP_SAFE_C_PP);
+		  else 
+		    {
+		      set_optimize_data(car_x, hop + OP_SAFE_C_PP);
+		      if ((is_optimized(cadar_x)) &&
+			  (is_symbol(car(cadar_x))) &&
+			  (optimize_data(cadar_x) == HOP_UNKNOWN_S) &&
+			  (is_optimized(caddar_x)) &&
+			  (is_symbol(car(caddar_x))) &&
+			  (optimize_data(caddar_x) == HOP_UNKNOWN_S))
+			set_optimize_data(car_x, hop + OP_SAFE_C_opVSq_opVSq);
+		    }
 		  choose_c_function(sc, car_x, func, 2);
-
-		  if ((is_optimized(cadar_x)) &&
-		      (is_symbol(car(cadar_x))) &&
-		      (optimize_data(cadar_x) == HOP_UNKNOWN_S) &&
-		      (is_optimized(caddar_x)) &&
-		      (is_symbol(car(caddar_x))) &&
-		      (optimize_data(caddar_x) == HOP_UNKNOWN_S))
-		    set_optimize_data(car_x, hop + OP_SAFE_C_opVSq_opVSq);
-
 		  return(false);
 		}
 	      else
@@ -44968,10 +44969,17 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	  if (is_pair(cadr(x)))
 	    return(false);
 
-	  /* here args aren't imported, nor is func -- with-environment sets up a sealed evaluation!
+	  /* here args and func are trouble only if (with-environment e[ = (current-environment)] ...)
+	   *   or some such subterfuge -- are we protected by unknown op -> false?
+	   *   OP_BEGIN above has if (!body_is_safe(sc, func, args, cdr(x), at_end, bad_set))
 	   */
 	  if (!body_is_safe(sc, sc->F, sc->NIL, cddr(x), at_end, bad_set))
 	    return(false);
+#if 0
+	  if ((!direct_memq(cadr(x), args)) &&
+	      (!body_is_safe(sc, func, args, cddr(x), at_end, bad_set)))
+	    return(false);
+#endif
 	  break;
 
 
@@ -47113,12 +47121,6 @@ static s7_pointer check_set(s7_scheme *sc)
 					}
 				    }
 				}
-			      else
-				{
-				  if ((car(sc->code) == cadr(cadr(sc->code))) &&
-				      (caadr(sc->code) == sc->CDR))
-				    set_syntax_op(sc->code, sc->SET_CDR);
-				}
 			    }
 			}
 		    }
@@ -48749,6 +48751,44 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
    */
 
  START_WITHOUT_POP_STACK:
+  /*
+OP_EVAL_ARGS_P_2: 6171783 (4.038495)
+OP_BEGIN1: 5845664 (3.825100)
+OP_SAFE_C_SZ_1: 5154179 (3.372628)
+OP_SET_SAFE: 5152855 (3.371761)
+OP_SET_SYMBOL_Z: 5028486 (3.290381)
+OP_SET_PAIR_P_1: 4753213 (3.110256)
+OP_SAFE_DO_STEP: 4607246 (3.014743)
+OP_EVAL_DONE: 4163793 (2.724570)
+OP_LET_STAR1: 3776305 (2.471018)
+OP_LET_opCq: 3742788 (2.449086)
+OP_SIMPLE_DO_STEP_A: 3698000 (2.419780)
+OP_DOTIMES_STEP_P: 3673177 (2.403537)
+OP_SAFE_C_PP_1: 3638765 (2.381019)
+OP_SAFE_C_PP_2: 3638764 (2.381019)
+OP_SAFE_IF_CC_P: 3183826 (2.083331)
+OP_LET_O3: 2977276 (1.948175)
+OP_SET_PAIR_P: 2809013 (1.838073)
+OP_BEGIN: 2748066 (1.798192)
+OP_WITH_ENV_S: 2640766 (1.727980)
+OP_LET_Z_P: 2629991 (1.720930)
+OP_FOR_EACH_SIMPLER: 2601287 (1.702147)
+OP_SET_SYMBOL_SAFE_SS: 2468752 (1.615423)
+OP_SET_PAIR: 2401825 (1.571630)
+OP_EVAL_ARGS_P_1: 2165969 (1.417298)
+OP_SAFE_C_ZZ_2: 2088669 (1.366717)
+OP_SET_PAIR_Z: 1944200 (1.272184)
+OP_SET_UNCHECKED: 1877639 (1.228630)
+OP_LET_ALL_X: 1873787 (1.226109)
+OP_INCREMENT_1: 1851436 (1.211484)
+OP_SET_SYMBOL_SAFE_C: 1794205 (1.174035)
+OP_APPLY: 1727765 (1.130560)
+OP_INCREMENT_SSS: 1710034 (1.118958)
+
+OP_SAFE_IF_CSQ_P: 6 (0.000004)
+OP_SAFE_IF_IS_SYMBOL_P: 30 (0.000020)
+
+   */
   switch (sc->op) 
     {
       /* --------------- */
@@ -51447,6 +51487,25 @@ h_safe_c_opscq: 620320 (0.890573)
 h_safe_c_opssq: 618180 (0.887500)
 h_safe_c_c_opssq: 574513 (0.824809)
 h_safe_c_s_opcq: 497211 (0.713829)
+
+OP_SET_SYMBOL_Z: 10476462 (15.169923)
+OP_SIMPLE_DO_STEP_A: 6875373 (9.955544)
+OP_SAFE_C_PP_1: 5606428 (8.118111)
+OP_SET_PAIR_Z: 4308850 (6.239217)
+OP_LET_STAR1: 3577477 (5.180189)
+OP_LET_Z_P: 2820784 (4.084497)
+OP_SET_PAIR_P: 2607277 (3.775339)
+OP_SAFE_C_ZZ_1: 2500647 (3.620938)
+OP_LET_STAR_ALL_X: 2031594 (2.941749)
+OP_BEGIN1: 2011031 (2.911974)
+OP_DOX_STEP: 1840980 (2.665740)
+OP_INCREMENT_SSS: 1768100 (2.560210)
+OP_IF_Z_P: 1337713 (1.937009)
+OP_LET1: 1216966 (1.762168)
+OP_LET_O: 1197431 (1.733881)
+OP_INCREMENT_SZ: 1104662 (1.599551)
+OP_EVAL_ARGS4: 1075028 (1.556641)
+OP_EVAL: 1065372 (1.542659)
 	   */
 
 	  switch (optimize_op(code))
@@ -58275,28 +58334,6 @@ OP_LET1: 75475 (4.677476)
 	      default:
 		break;
 	      }
-	  }
-	push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
-	sc->code = cadr(sc->code);
-	goto EVAL; 
-      }
-
-      
-      /* --------------- */
-    case OP_SET_CDR:
-      {
-	/* ([set!] nvals (cdr nvals)) */
-	s7_pointer y;
-	y = find_symbol(sc, car(sc->code));
-	if (is_slot(y))
-	  {
-	    s7_pointer val;	    
-	    val = slot_value(y);
-	    if (!is_pair(val))
-	      sc->value = g_cdr(sc, list_1(sc, val));   /* possible method? */
-	    else sc->value = cdr(val);                  /* set! returns the value */
-	    slot_set_value(y, sc->value);
-	    IF_BEGIN_POP_STACK(sc);
 	  }
 	push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
 	sc->code = cadr(sc->code);
@@ -67062,7 +67099,6 @@ s7_scheme *s7_init(void)
   sc->INCREMENT_SZ =          assign_internal_syntax(sc, "set!",    OP_INCREMENT_SZ);  
   sc->INCREMENT_C_TEMP =      assign_internal_syntax(sc, "set!",    OP_INCREMENT_C_TEMP);  
   sc->DECREMENT_1 =           assign_internal_syntax(sc, "set!",    OP_DECREMENT_1);  
-  sc->SET_CDR =               assign_internal_syntax(sc, "set!",    OP_SET_CDR);
   sc->SET_CONS =              assign_internal_syntax(sc, "set!",    OP_SET_CONS);
   sc->DOTIMES_P =             assign_internal_syntax(sc, "do",      OP_DOTIMES_P);
   sc->SIMPLE_DO =             assign_internal_syntax(sc, "do",      OP_SIMPLE_DO);
@@ -67684,7 +67720,7 @@ s7_scheme *s7_init(void)
 				g_set_symbol_table_is_locked, 1, 0, 
 				H_symbol_table_is_locked);
 
-  s7_define_safe_function(sc, "*stack-top*", g_stack_top, 0, 0, false, "current stack top");
+  s7_define_safe_function(sc, "-s7-stack-top-", g_stack_top, 0, 0, false, "current stack top");
   sc->STACKTRACE = s7_define_safe_function(sc, "stacktrace", g_stacktrace, 0, 5, false, H_stacktrace);
   sc->stacktrace_env = s7_augment_environment(sc, sc->global_env, 
 					      s7_list(sc, 5, 
@@ -68220,4 +68256,7 @@ int main(int argc, char **argv)
  * remove-duplicates could use the collected bit (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
+ *
+ * set_symbol|pair_unknown_s... (from and to _p)
+ * set as all_x immediate
  */
