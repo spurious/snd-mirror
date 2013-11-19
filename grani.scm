@@ -337,7 +337,7 @@
 		      (grain-density 10.0)
 		      (grain-density-spread 0.0)
 		      (reverb-amount 0.01)
-		      (reverse #f)
+		      (reversed #f) ; change this from "reverse" 18-Nov-13
 		      (where-to 0)
 		      (where-bins #f) ; a float-vector, not a list
 		      (grain-distance 1.0)
@@ -448,7 +448,7 @@
 	(if (<= where-bins-len 1)
 	    (set! where-bins #f))
 
-	(if reverse (set! (mus-increment in-file-reader) -1.0))
+	(if reversed (set! (mus-increment in-file-reader) -1.0))
 	(do () 
 	    ((not happy))
 	  ;;

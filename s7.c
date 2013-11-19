@@ -403,7 +403,8 @@ enum {OP_NO_OP,
       OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_Z, OP_SET_SYMBOL_ALL_X,
       OP_SET_SYMBOL_SAFE_S, OP_SET_SYMBOL_SAFE_C, 
       OP_SET_SYMBOL_SAFE_SS, OP_SET_SYMBOL_SAFE_SSS, 
-      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_A, OP_SET_PAIR_P, OP_SET_PAIR_ZA,
+      OP_SET_SYMBOL_UNKNOWN_S,
+      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_A, OP_SET_PAIR_P, OP_SET_PAIR_ZA, OP_SET_PAIR_UNKNOWN_S,
       OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_ENV_S, OP_SET_ENV_ALL_X,
       OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE,
       OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_COND_UNCHECKED,
@@ -500,8 +501,8 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "member", "assoc", "member", "assoc",
    
    "quote", "lambda", "let", "case", 
-   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
-   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
+   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
+   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "let*", "letrec", "cond",
    "lambda*", "do", "define", "define*", "define",
@@ -585,7 +586,8 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SET_UNCHECKED", "OP_SET_SYMBOL_C", "OP_SET_SYMBOL_S", "OP_SET_SYMBOL_Q", "OP_SET_SYMBOL_P", "OP_SET_SYMBOL_Z", "OP_SET_SYMBOL_ALL_X",
   "OP_SET_SYMBOL_SAFE_S", "OP_SET_SYMBOL_SAFE_C", 
   "OP_SET_SYMBOL_SAFE_SS", "OP_SET_SYMBOL_SAFE_SSS",
-  "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_Z", "OP_SET_PAIR_A", "OP_SET_PAIR_P", "OP_SET_PAIR_ZA",
+  "OP_SET_SYMBOL_UNKNOWN_S",
+  "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_Z", "OP_SET_PAIR_A", "OP_SET_PAIR_P", "OP_SET_PAIR_ZA", "OP_SET_PAIR_UNKNOWN_S",
   "OP_SET_PAIR_P_1", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", "OP_SET_ENV_S", "OP_SET_ENV_ALL_X",
   "OP_SET_PAIR_C", "OP_SET_PAIR_C_P", "OP_SET_PAIR_C_P_1", "OP_SET_SAFE",
   "OP_LET_STAR_UNCHECKED", "OP_LETREC_UNCHECKED", "OP_COND_UNCHECKED",
@@ -1312,8 +1314,8 @@ struct s7_scheme {
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_ENV_UNCHECKED, WITH_ENV_S;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_ALL_X;
-  s7_pointer SET_SYMBOL_SAFE_S, SET_SYMBOL_SAFE_SS, SET_SYMBOL_SAFE_SSS;
-  s7_pointer SET_SYMBOL_SAFE_C;
+  s7_pointer SET_SYMBOL_SAFE_S, SET_SYMBOL_SAFE_SS, SET_SYMBOL_SAFE_SSS, SET_SYMBOL_UNKNOWN_S;
+  s7_pointer SET_SYMBOL_SAFE_C, SET_PAIR_UNKNOWN_S;
   s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_A, SET_PAIR_ZA, SET_PAIR_P, SET_PWS, SET_ENV_S, SET_ENV_ALL_X, SET_PAIR_C, SET_PAIR_C_P;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED;
   s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLER_1, CASE_SIMPLER_SS;
@@ -2553,7 +2555,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 1
+#if 0
 #if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -46908,7 +46910,7 @@ static s7_pointer check_set(s7_scheme *sc)
 			    {
 			      set_syntax_op(sc->code, sc->SET_PAIR_P);
 			      /* splice_in_values protects us here from values */
-			      if (is_h_optimized(value))
+			      if (is_h_optimized(value)) /* this excludes h_unknown_s etc */
 				{
 				  set_syntax_op(sc->code, sc->SET_PAIR_Z);
 				  if (is_all_x_safe(sc, value))
@@ -46924,6 +46926,16 @@ static s7_pointer check_set(s7_scheme *sc)
 					}
 				    }
 				}
+			      if (optimize_data(value) == HOP_UNKNOWN_S)
+				{
+				  set_syntax_op(sc->code, sc->SET_PAIR_UNKNOWN_S);
+				}
+
+			      /* else if (is_optimized(value)) fprintf(stderr, "%s %s\n", opt_names[optimize_data(value)], DISPLAY(sc->code)); */
+			      /* here we can get h_unknown_s      (set! (current-peak-freqs new-place) (peak-freqs k))
+			       *                 h_safe_c_opvsq_s (set! (sines k) (* (sines k) one-over-two-pi))
+			       *                 h_unknown_opsq   (set! (str loc) (digit->char (random radix)))
+			       */
 			    }
 			}
 		      else
@@ -46963,18 +46975,22 @@ static s7_pointer check_set(s7_scheme *sc)
       
       if (is_symbol(car(sc->code)))
 	{
-	  if ((!symbol_has_accessor(car(sc->code))) &&
-	      (!is_syntactic(car(sc->code))))
+	  s7_pointer settee, value;
+	  settee = car(sc->code);
+	  value = cadr(sc->code);
+
+	  if ((!symbol_has_accessor(settee)) &&
+	      (!is_syntactic(settee)))
 	    {
-	      if (is_symbol(cadr(sc->code)))
+	      if (is_symbol(value))
 		set_syntax_op(sc->code, sc->SET_SYMBOL_S);
 	      else
 		{
-		  if (!is_pair(cadr(sc->code)))
+		  if (!is_pair(value))
 		    set_syntax_op(sc->code, sc->SET_SYMBOL_C);
 		  else
 		    {
-		      if (car(cadr(sc->code)) == sc->QUOTE)
+		      if (car(value) == sc->QUOTE)
 			set_syntax_op(sc->code, sc->SET_SYMBOL_Q);
 		      else
 			{
@@ -46993,66 +47009,81 @@ static s7_pointer check_set(s7_scheme *sc)
 			   */
 			  set_syntax_op(sc->code, sc->SET_SYMBOL_P);
 			  /*
-			    if ((is_pair(cadr(sc->code))) &&
-			    (is_optimized(cadr(sc->code))))
-			      fprintf(stderr, "setp: %s %s\n", DISPLAY_80(cadr(sc->code)), opt_name(cadr(sc->code)));
+			    if ((is_pair(value)) &&
+			    (is_optimized(value)))
+			      fprintf(stderr, "setp: %s %s\n", DISPLAY_80(value), opt_name(value));
 			  */
-			  if (is_h_safe_c_s(cadr(sc->code)))
+			  if (is_h_safe_c_s(value))
 			    {
 			      set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_S);
-			      set_fcdr(sc->code, cadr(cadr(sc->code)));
+			      set_fcdr(sc->code, cadr(value));
 			    }
 			  else
 			    {
-			      if (is_optimized(cadr(sc->code)))
+			      if (is_optimized(value))
 				{
 				  set_syntax_op(sc->code, sc->SET_SYMBOL_Z);
 
 				  /* TODO: use all_x here as in set_pair_za -- or rather why is the all_x case below missed? 
 				   *   set_symbol_safe_ss|s can also go?
 				   */
-				  if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_C)
+				  
+				  /* lots of h_unknown* cases here
+				     if ((is_unknown_op(optimize_data(value))) && (is_hopping(value)))
+				     or (optimize_data(value) == H_UNKNOWN_S)...
+				   */
+				  /*
+				  if ((!is_h_optimized(value)) &&
+				      (is_optimized(value)))
+				    fprintf(stderr, "%s %s\n", opt_names[optimize_data(value)], DISPLAY(sc->code));
+				  */
+				  if (optimize_data(value) == HOP_UNKNOWN_S)
 				    {
-				      if ((car(sc->code) == cadr(cadr(sc->code))) &&
-					  (caadr(sc->code) == sc->ADD) &&
-					  (is_null(cdddr(cadr(sc->code)))) &&
-					  (is_optimized(caddr(cadr(sc->code)))) &&
-					  (optimize_data(caddr(cadr(sc->code))) == HOP_SAFE_C_C) && /* paranoia... */
-					  (s7_function_returns_temp(sc, caddr(cadr(sc->code)))))
+				      set_syntax_op(sc->code, sc->SET_SYMBOL_UNKNOWN_S);
+				    }
+
+				  if (optimize_data(value) == HOP_SAFE_C_C)
+				    {
+				      if ((settee == cadr(value)) &&
+					  (car(value) == sc->ADD) &&
+					  (is_null(cdddr(value))) &&
+					  (is_optimized(caddr(value))) &&
+					  (optimize_data(caddr(value)) == HOP_SAFE_C_C) && /* paranoia... */
+					  (s7_function_returns_temp(sc, caddr(value))))
 					{
 					  set_syntax_op(sc->code, sc->INCREMENT_C_TEMP);
-					  set_fcdr(sc->code, caddr(cadr(sc->code)));
+					  set_fcdr(sc->code, caddr(value));
 					}
 				      else
 					{
 					  set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_C);
 					  /* ecdr here points back? */
-					  set_fcdr(sc->code, cdr(cadr(sc->code)));
+					  set_fcdr(sc->code, cdr(value));
 					}
 				    }
 				  else
 				    {
 				      /* most of these special cases probably don't matter -- should use the all_x case below instead */
-				      if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_SS)
+				      if (optimize_data(value) == HOP_SAFE_C_SS)
 					{
-					  if (car(sc->code) == cadr(cadr(sc->code)))
+					  if (settee == cadr(value))
 					    set_syntax_op(sc->code, sc->INCREMENT_SS);
 					  else set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_SS);
-					  set_fcdr(sc->code, cdr(cadr(sc->code)));
+					  set_fcdr(sc->code, cdr(value));
 					}
 				      else
 					{
-					  if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_SSS)
+					  if (optimize_data(value) == HOP_SAFE_C_SSS)
 					    {
-					      if ((car(sc->code) == cadr(cadr(sc->code))) &&
-						  (car(cadr(sc->code)) == sc->ADD))
+					      if ((settee == cadr(value)) &&
+						  (car(value) == sc->ADD))
 						set_syntax_op(sc->code, sc->INCREMENT_SSS);
 					      else set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_SSS);
-					      set_fcdr(sc->code, cdr(cadr(sc->code)));
+					      set_fcdr(sc->code, cdr(value));
 					    }
 					  else
 					    {
-					      if (is_all_x_safe(sc, cadr(sc->code)))
+					      if (is_all_x_safe(sc, value))
 						{
 						  set_syntax_op(sc->code, sc->SET_SYMBOL_ALL_X);
 						  annotate_arg(sc, cdr(sc->code));
@@ -47061,20 +47092,20 @@ static s7_pointer check_set(s7_scheme *sc)
 					      /* look for increments.  The other two common cases are
 					       *   s_opssq and s_opsq: 210832: (+ num (* x1 x2)), 96774: (+ ampsum (abs samp0))
 					       */
-					      if (car(sc->code) == cadr(cadr(sc->code)))
+					      if (settee == cadr(value))
 						{
-						  if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_S_opCq)
+						  if (optimize_data(value) == HOP_SAFE_C_S_opCq)
 						    {
 						      /* (define (hi) (let ((x 0)) (set! x (+ x (abs -1))) x)) */
 						      set_syntax_op(sc->code, sc->INCREMENT_S_opCq); 
-						      set_fcdr(sc->code, cdadr(sc->code));
+						      set_fcdr(sc->code, cdr(value));
 						    }
 						  else 
 						    {
-						      if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_SZ)
+						      if (optimize_data(value) == HOP_SAFE_C_SZ)
 							{
 							  set_syntax_op(sc->code, sc->INCREMENT_SZ);
-							  set_fcdr(sc->code, caddr(cadr(sc->code)));
+							  set_fcdr(sc->code, caddr(value));
 							}
 						    }
 						}
@@ -47084,39 +47115,39 @@ static s7_pointer check_set(s7_scheme *sc)
 				}
 			    }
 			  
-			  if ((is_h_optimized(cadr(sc->code))) &&
-			      (!is_unsafe(cadr(sc->code))) &&
-			      (is_not_null(cdr(cadr(sc->code)))))               /* (set! x (y)) */
+			  if ((is_h_optimized(value)) &&
+			      (!is_unsafe(value)) &&
+			      (is_not_null(cdr(value))))               /* (set! x (y)) */
 			    {
-			      if (is_not_null(cddr(cadr(sc->code))))
+			      if (is_not_null(cddr(value)))
 				{
-				  if ((caddr(cadr(sc->code)) == small_int(1)) &&
-				      (cadr(cadr(sc->code)) == car(sc->code)))
+				  if ((caddr(value) == small_int(1)) &&
+				      (cadr(value) == settee))
 				    {
-				      if ((ecdr(cadr(sc->code)) == add_s1) ||
-					  (ecdr(cadr(sc->code)) == add_cs1))
+				      if ((ecdr(value) == add_s1) ||
+					  (ecdr(value) == add_cs1))
 					set_syntax_op(sc->code, sc->INCREMENT_1);
 				      else 
 					{
-					  if ((ecdr(cadr(sc->code)) == subtract_s1) ||
-					      (ecdr(cadr(sc->code)) == subtract_cs1))
+					  if ((ecdr(value) == subtract_s1) ||
+					      (ecdr(value) == subtract_cs1))
 					    set_syntax_op(sc->code, sc->DECREMENT_1);
 					}
 				    }
 				  else
 				    {
-				      if ((cadr(cadr(sc->code)) == small_int(1)) &&
-					  (caddr(cadr(sc->code)) == car(sc->code)) &&
-					  (ecdr(cadr(sc->code)) == add_1s))
+				      if ((cadr(value) == small_int(1)) &&
+					  (caddr(value) == settee) &&
+					  (ecdr(value) == add_1s))
 					set_syntax_op(sc->code, sc->INCREMENT_1);
 				      else
 					{
-					  if ((car(sc->code) == caddr(cadr(sc->code))) &&
-					      (is_symbol(cadr(cadr(sc->code)))) &&
+					  if ((settee == caddr(value)) &&
+					      (is_symbol(cadr(value))) &&
 					      (caadr(sc->code) == sc->CONS))
 					    {
 					      set_syntax_op(sc->code, sc->SET_CONS);
-					      set_fcdr(sc->code, cadr(cadr(sc->code)));
+					      set_fcdr(sc->code, cadr(value));
 					    }
 					}
 				    }
@@ -57903,6 +57934,43 @@ OP_LET1: 75475 (4.677476)
       
       
       /* -------------------------------- SET! -------------------------------- */
+
+    case OP_SET_PAIR_UNKNOWN_S:
+      /* look for (set! (fv1 s1) (fv2 s2)) with no complications.  If not that case, drop into SET_PAIR_P
+       */
+      {
+	s7_pointer f1, f2, settee, value, ind1, ind2;
+	settee = car(sc->code);
+	value = cadr(sc->code);
+	f1 = find_symbol_or_bust(sc, car(settee));
+	ind1 = find_symbol_or_bust(sc, cadr(settee));
+	f2 = find_symbol_or_bust(sc, car(value));
+	ind2 = find_symbol_or_bust(sc, cadr(value));
+	if ((type(f1) == T_FLOAT_VECTOR) &&
+	    (type(f2) == T_FLOAT_VECTOR) &&
+	    (type(ind1) == T_INTEGER) &&
+	    (type(ind2) == T_INTEGER) &&
+	    (vector_rank(f1) == 1) &&
+	    (vector_rank(f2) == 1))
+	  {
+	    s7_Int index1, index2;
+	    index1 = s7_integer(ind1);
+	    index2 = s7_integer(ind2);
+	    if ((index1 < vector_length(f1)) && (index1 >= 0))
+	      {
+		if ((index2 < vector_length(f2)) && (index2 >= 0))
+		  {
+		    float_vector_element(f1, index1) = float_vector_element(f2, index2);
+		    IF_BEGIN_POP_STACK(sc); 
+		  }
+		else out_of_range(sc, sc->VECTOR_REF, small_int(1), cadr(value), "between 0 and vector length");
+	      }
+	    else out_of_range(sc, sc->VECTOR_REF, small_int(1), cadr(settee), "between 0 and vector length");
+	  }
+	set_syntax_op(sc->code, sc->SET_PAIR_P);
+	/* fall through */
+      }
+      
       
     case OP_SET_PAIR_P:
       /* ([set!] (car a) (cadr a)) */
@@ -58522,7 +58590,38 @@ OP_LET1: 75475 (4.677476)
       /* possible optimization: if types match, and "P" part is direct, we could
        *   just set the current slot, and free the direct value.
        */
-      
+
+
+      /* --------------- */
+    case OP_SET_SYMBOL_UNKNOWN_S:
+      {
+	s7_pointer f, value, ind;
+	value = cadr(sc->code);
+	f = find_symbol_or_bust(sc, car(value));
+	ind = find_symbol_or_bust(sc, cadr(value));
+	if ((type(f) == T_FLOAT_VECTOR) &&
+	    (type(ind) == T_INTEGER) &&
+	    (vector_rank(f) == 1))
+	  {
+	    s7_Int index;
+	    index = s7_integer(ind);
+	    if ((index < vector_length(f)) &&
+		(index >= 0))
+	      {
+		sc->y = find_symbol(sc, car(sc->code));
+		if (is_slot(sc->y)) 
+		  {
+		    slot_set_value(sc->y, float_vector_getter(sc, f, index));
+		    IF_BEGIN_POP_STACK(sc); 
+		  }
+		eval_type_error(sc, "set! ~A: unbound variable", car(sc->code));
+	      }
+	    else out_of_range(sc, sc->VECTOR_REF, small_int(1), cadr(value), "between 0 and vector length");
+	  }
+	set_syntax_op(sc->code, sc->SET_SYMBOL_Z);
+	/* fall through */
+      }
+
 
       /* --------------- */
     case OP_SET_SYMBOL_Z:
@@ -67001,6 +67100,7 @@ s7_scheme *s7_init(void)
   sc->SET_SYMBOL_SAFE_C =     assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_SAFE_C);  
   sc->SET_SYMBOL_P =          assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_P);  
   sc->SET_SYMBOL_Z =          assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_Z);  
+  sc->SET_SYMBOL_UNKNOWN_S =  assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_UNKNOWN_S);  
   sc->SET_SYMBOL_ALL_X =      assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_ALL_X);  
   sc->CASE_UNCHECKED =        assign_internal_syntax(sc, "case",    OP_CASE_UNCHECKED);  
   sc->CASE_SIMPLE =           assign_internal_syntax(sc, "case",    OP_CASE_SIMPLE);  
@@ -67024,6 +67124,7 @@ s7_scheme *s7_init(void)
   sc->SET_PAIR =              assign_internal_syntax(sc, "set!",    OP_SET_PAIR);
   sc->SET_PAIR_P =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_P);
   sc->SET_PAIR_Z =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_Z);
+  sc->SET_PAIR_UNKNOWN_S =    assign_internal_syntax(sc, "set!",    OP_SET_PAIR_UNKNOWN_S);
   sc->SET_PAIR_A =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_A);
   sc->SET_PAIR_ZA =           assign_internal_syntax(sc, "set!",    OP_SET_PAIR_ZA);
   sc->SET_ENV_S =             assign_internal_syntax(sc, "set!",    OP_SET_ENV_S);
@@ -68256,7 +68357,21 @@ int main(int argc, char **argv)
  * remove-duplicates could use the collected bit (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
- *
- * set_symbol|pair_unknown_s... (from and to _p)
- * set as all_x immediate
  */
+
+/* 
+(define (found a b)
+  (do ((lst b (cdr lst)))
+      ((or (null? lst) (eq? a (car lst))) 
+       (and (pair? lst) lst))))
+(define (found a b) 
+  (if (null? b) #f 
+      (if (eq? a (car b)) b 
+          (found a (cdr b)))))
+(define (found a b) 
+  (let loop ((lst b)) 
+    (and (pair? lst) 
+         (if (eq? a (car lst)) 
+             lst 
+             (loop (cdr lst))))))
+*/
