@@ -57,6 +57,8 @@
 
 * now how to get at the sidebar and remove "recently used"? or change the row-colors in gtk3?
 * no way that I can find...
+* in 3.12 they've added gtk_places_sidebar_set_local_only, but it's not clear how to get at this thing
+*   and it probably isn't what we want anyway.
 */
 
 

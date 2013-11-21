@@ -26631,38 +26631,6 @@ static XEN gxg_gtk_widget_set_valign(XEN widget, XEN align)
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_widget_get_margin_left(XEN widget)
-{
-  #define H_gtk_widget_get_margin_left "gint gtk_widget_get_margin_left(GtkWidget* widget)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_margin_left", "GtkWidget*");
-  return(C_TO_XEN_gint(gtk_widget_get_margin_left(XEN_TO_C_GtkWidget_(widget))));
-}
-
-static XEN gxg_gtk_widget_set_margin_left(XEN widget, XEN margin)
-{
-  #define H_gtk_widget_set_margin_left "void gtk_widget_set_margin_left(GtkWidget* widget, gint margin)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_margin_left", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gint_P(margin), margin, 2, "gtk_widget_set_margin_left", "gint");
-  gtk_widget_set_margin_left(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gint(margin));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_widget_get_margin_right(XEN widget)
-{
-  #define H_gtk_widget_get_margin_right "gint gtk_widget_get_margin_right(GtkWidget* widget)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_margin_right", "GtkWidget*");
-  return(C_TO_XEN_gint(gtk_widget_get_margin_right(XEN_TO_C_GtkWidget_(widget))));
-}
-
-static XEN gxg_gtk_widget_set_margin_right(XEN widget, XEN margin)
-{
-  #define H_gtk_widget_set_margin_right "void gtk_widget_set_margin_right(GtkWidget* widget, gint margin)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_margin_right", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gint_P(margin), margin, 2, "gtk_widget_set_margin_right", "gint");
-  gtk_widget_set_margin_right(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gint(margin));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_widget_get_margin_top(XEN widget)
 {
   #define H_gtk_widget_get_margin_top "gint gtk_widget_get_margin_top(GtkWidget* widget)"
@@ -31118,6 +31086,96 @@ static XEN gxg_gtk_flow_box_invalidate_sort(XEN box)
   #define H_gtk_flow_box_invalidate_sort "void gtk_flow_box_invalidate_sort(GtkFlowBox* box)"
   XEN_ASSERT_TYPE(XEN_GtkFlowBox__P(box), box, 1, "gtk_flow_box_invalidate_sort", "GtkFlowBox*");
   gtk_flow_box_invalidate_sort(XEN_TO_C_GtkFlowBox_(box));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_set_event_compression(XEN window, XEN event_compression)
+{
+  #define H_gdk_window_set_event_compression "void gdk_window_set_event_compression(GdkWindow* window, \
+gboolean event_compression)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_event_compression", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(event_compression), event_compression, 2, "gdk_window_set_event_compression", "gboolean");
+  gdk_window_set_event_compression(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gboolean(event_compression));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_get_event_compression(XEN window)
+{
+  #define H_gdk_window_get_event_compression "gboolean gdk_window_get_event_compression(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_event_compression", "GdkWindow*");
+  return(C_TO_XEN_gboolean(gdk_window_get_event_compression(XEN_TO_C_GdkWindow_(window))));
+}
+
+static XEN gxg_gtk_header_bar_get_show_fallback_app_menu(XEN bar)
+{
+  #define H_gtk_header_bar_get_show_fallback_app_menu "gboolean gtk_header_bar_get_show_fallback_app_menu(GtkHeaderBar* bar)"
+  XEN_ASSERT_TYPE(XEN_GtkHeaderBar__P(bar), bar, 1, "gtk_header_bar_get_show_fallback_app_menu", "GtkHeaderBar*");
+  return(C_TO_XEN_gboolean(gtk_header_bar_get_show_fallback_app_menu(XEN_TO_C_GtkHeaderBar_(bar))));
+}
+
+static XEN gxg_gtk_header_bar_set_show_fallback_app_menu(XEN bar, XEN setting)
+{
+  #define H_gtk_header_bar_set_show_fallback_app_menu "void gtk_header_bar_set_show_fallback_app_menu(GtkHeaderBar* bar, \
+gboolean setting)"
+  XEN_ASSERT_TYPE(XEN_GtkHeaderBar__P(bar), bar, 1, "gtk_header_bar_set_show_fallback_app_menu", "GtkHeaderBar*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(setting), setting, 2, "gtk_header_bar_set_show_fallback_app_menu", "gboolean");
+  gtk_header_bar_set_show_fallback_app_menu(XEN_TO_C_GtkHeaderBar_(bar), XEN_TO_C_gboolean(setting));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_places_sidebar_set_local_only(XEN sidebar, XEN local_only)
+{
+  #define H_gtk_places_sidebar_set_local_only "void gtk_places_sidebar_set_local_only(GtkPlacesSidebar* sidebar, \
+gboolean local_only)"
+  XEN_ASSERT_TYPE(XEN_GtkPlacesSidebar__P(sidebar), sidebar, 1, "gtk_places_sidebar_set_local_only", "GtkPlacesSidebar*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(local_only), local_only, 2, "gtk_places_sidebar_set_local_only", "gboolean");
+  gtk_places_sidebar_set_local_only(XEN_TO_C_GtkPlacesSidebar_(sidebar), XEN_TO_C_gboolean(local_only));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_places_sidebar_get_local_only(XEN sidebar)
+{
+  #define H_gtk_places_sidebar_get_local_only "gboolean gtk_places_sidebar_get_local_only(GtkPlacesSidebar* sidebar)"
+  XEN_ASSERT_TYPE(XEN_GtkPlacesSidebar__P(sidebar), sidebar, 1, "gtk_places_sidebar_get_local_only", "GtkPlacesSidebar*");
+  return(C_TO_XEN_gboolean(gtk_places_sidebar_get_local_only(XEN_TO_C_GtkPlacesSidebar_(sidebar))));
+}
+
+static XEN gxg_gtk_stack_get_transition_running(XEN stack)
+{
+  #define H_gtk_stack_get_transition_running "gboolean gtk_stack_get_transition_running(GtkStack* stack)"
+  XEN_ASSERT_TYPE(XEN_GtkStack__P(stack), stack, 1, "gtk_stack_get_transition_running", "GtkStack*");
+  return(C_TO_XEN_gboolean(gtk_stack_get_transition_running(XEN_TO_C_GtkStack_(stack))));
+}
+
+static XEN gxg_gtk_widget_get_margin_start(XEN widget)
+{
+  #define H_gtk_widget_get_margin_start "gint gtk_widget_get_margin_start(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_margin_start", "GtkWidget*");
+  return(C_TO_XEN_gint(gtk_widget_get_margin_start(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_set_margin_start(XEN widget, XEN margin)
+{
+  #define H_gtk_widget_set_margin_start "void gtk_widget_set_margin_start(GtkWidget* widget, gint margin)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_margin_start", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gint_P(margin), margin, 2, "gtk_widget_set_margin_start", "gint");
+  gtk_widget_set_margin_start(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gint(margin));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_get_margin_end(XEN widget)
+{
+  #define H_gtk_widget_get_margin_end "gint gtk_widget_get_margin_end(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_margin_end", "GtkWidget*");
+  return(C_TO_XEN_gint(gtk_widget_get_margin_end(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_set_margin_end(XEN widget, XEN margin)
+{
+  #define H_gtk_widget_set_margin_end "void gtk_widget_set_margin_end(GtkWidget* widget, gint margin)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_margin_end", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gint_P(margin), margin, 2, "gtk_widget_set_margin_end", "gint");
+  gtk_widget_set_margin_end(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gint(margin));
   return(XEN_FALSE);
 }
 
@@ -37073,10 +37131,6 @@ XEN_NARGIFY_1(gxg_gtk_widget_get_halign_w, gxg_gtk_widget_get_halign)
 XEN_NARGIFY_2(gxg_gtk_widget_set_halign_w, gxg_gtk_widget_set_halign)
 XEN_NARGIFY_1(gxg_gtk_widget_get_valign_w, gxg_gtk_widget_get_valign)
 XEN_NARGIFY_2(gxg_gtk_widget_set_valign_w, gxg_gtk_widget_set_valign)
-XEN_NARGIFY_1(gxg_gtk_widget_get_margin_left_w, gxg_gtk_widget_get_margin_left)
-XEN_NARGIFY_2(gxg_gtk_widget_set_margin_left_w, gxg_gtk_widget_set_margin_left)
-XEN_NARGIFY_1(gxg_gtk_widget_get_margin_right_w, gxg_gtk_widget_get_margin_right)
-XEN_NARGIFY_2(gxg_gtk_widget_set_margin_right_w, gxg_gtk_widget_set_margin_right)
 XEN_NARGIFY_1(gxg_gtk_widget_get_margin_top_w, gxg_gtk_widget_get_margin_top)
 XEN_NARGIFY_2(gxg_gtk_widget_set_margin_top_w, gxg_gtk_widget_set_margin_top)
 XEN_NARGIFY_1(gxg_gtk_widget_get_margin_bottom_w, gxg_gtk_widget_get_margin_bottom)
@@ -37600,6 +37654,17 @@ XEN_NARGIFY_2(gxg_gtk_flow_box_set_hadjustment_w, gxg_gtk_flow_box_set_hadjustme
 XEN_NARGIFY_2(gxg_gtk_flow_box_set_vadjustment_w, gxg_gtk_flow_box_set_vadjustment)
 XEN_NARGIFY_1(gxg_gtk_flow_box_invalidate_filter_w, gxg_gtk_flow_box_invalidate_filter)
 XEN_NARGIFY_1(gxg_gtk_flow_box_invalidate_sort_w, gxg_gtk_flow_box_invalidate_sort)
+XEN_NARGIFY_2(gxg_gdk_window_set_event_compression_w, gxg_gdk_window_set_event_compression)
+XEN_NARGIFY_1(gxg_gdk_window_get_event_compression_w, gxg_gdk_window_get_event_compression)
+XEN_NARGIFY_1(gxg_gtk_header_bar_get_show_fallback_app_menu_w, gxg_gtk_header_bar_get_show_fallback_app_menu)
+XEN_NARGIFY_2(gxg_gtk_header_bar_set_show_fallback_app_menu_w, gxg_gtk_header_bar_set_show_fallback_app_menu)
+XEN_NARGIFY_2(gxg_gtk_places_sidebar_set_local_only_w, gxg_gtk_places_sidebar_set_local_only)
+XEN_NARGIFY_1(gxg_gtk_places_sidebar_get_local_only_w, gxg_gtk_places_sidebar_get_local_only)
+XEN_NARGIFY_1(gxg_gtk_stack_get_transition_running_w, gxg_gtk_stack_get_transition_running)
+XEN_NARGIFY_1(gxg_gtk_widget_get_margin_start_w, gxg_gtk_widget_get_margin_start)
+XEN_NARGIFY_2(gxg_gtk_widget_set_margin_start_w, gxg_gtk_widget_set_margin_start)
+XEN_NARGIFY_1(gxg_gtk_widget_get_margin_end_w, gxg_gtk_widget_get_margin_end)
+XEN_NARGIFY_2(gxg_gtk_widget_set_margin_end_w, gxg_gtk_widget_set_margin_end)
 #endif
 
 XEN_NARGIFY_1(gxg_cairo_create_w, gxg_cairo_create)
@@ -41035,10 +41100,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_set_halign, gxg_gtk_widget_set_halign_w, 2, 0, 0, H_gtk_widget_set_halign);
   XG_DEFINE_PROCEDURE(gtk_widget_get_valign, gxg_gtk_widget_get_valign_w, 1, 0, 0, H_gtk_widget_get_valign);
   XG_DEFINE_PROCEDURE(gtk_widget_set_valign, gxg_gtk_widget_set_valign_w, 2, 0, 0, H_gtk_widget_set_valign);
-  XG_DEFINE_PROCEDURE(gtk_widget_get_margin_left, gxg_gtk_widget_get_margin_left_w, 1, 0, 0, H_gtk_widget_get_margin_left);
-  XG_DEFINE_PROCEDURE(gtk_widget_set_margin_left, gxg_gtk_widget_set_margin_left_w, 2, 0, 0, H_gtk_widget_set_margin_left);
-  XG_DEFINE_PROCEDURE(gtk_widget_get_margin_right, gxg_gtk_widget_get_margin_right_w, 1, 0, 0, H_gtk_widget_get_margin_right);
-  XG_DEFINE_PROCEDURE(gtk_widget_set_margin_right, gxg_gtk_widget_set_margin_right_w, 2, 0, 0, H_gtk_widget_set_margin_right);
   XG_DEFINE_PROCEDURE(gtk_widget_get_margin_top, gxg_gtk_widget_get_margin_top_w, 1, 0, 0, H_gtk_widget_get_margin_top);
   XG_DEFINE_PROCEDURE(gtk_widget_set_margin_top, gxg_gtk_widget_set_margin_top_w, 2, 0, 0, H_gtk_widget_set_margin_top);
   XG_DEFINE_PROCEDURE(gtk_widget_get_margin_bottom, gxg_gtk_widget_get_margin_bottom_w, 1, 0, 0, H_gtk_widget_get_margin_bottom);
@@ -41562,6 +41623,17 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_flow_box_set_vadjustment, gxg_gtk_flow_box_set_vadjustment_w, 2, 0, 0, H_gtk_flow_box_set_vadjustment);
   XG_DEFINE_PROCEDURE(gtk_flow_box_invalidate_filter, gxg_gtk_flow_box_invalidate_filter_w, 1, 0, 0, H_gtk_flow_box_invalidate_filter);
   XG_DEFINE_PROCEDURE(gtk_flow_box_invalidate_sort, gxg_gtk_flow_box_invalidate_sort_w, 1, 0, 0, H_gtk_flow_box_invalidate_sort);
+  XG_DEFINE_PROCEDURE(gdk_window_set_event_compression, gxg_gdk_window_set_event_compression_w, 2, 0, 0, H_gdk_window_set_event_compression);
+  XG_DEFINE_PROCEDURE(gdk_window_get_event_compression, gxg_gdk_window_get_event_compression_w, 1, 0, 0, H_gdk_window_get_event_compression);
+  XG_DEFINE_PROCEDURE(gtk_header_bar_get_show_fallback_app_menu, gxg_gtk_header_bar_get_show_fallback_app_menu_w, 1, 0, 0, H_gtk_header_bar_get_show_fallback_app_menu);
+  XG_DEFINE_PROCEDURE(gtk_header_bar_set_show_fallback_app_menu, gxg_gtk_header_bar_set_show_fallback_app_menu_w, 2, 0, 0, H_gtk_header_bar_set_show_fallback_app_menu);
+  XG_DEFINE_PROCEDURE(gtk_places_sidebar_set_local_only, gxg_gtk_places_sidebar_set_local_only_w, 2, 0, 0, H_gtk_places_sidebar_set_local_only);
+  XG_DEFINE_PROCEDURE(gtk_places_sidebar_get_local_only, gxg_gtk_places_sidebar_get_local_only_w, 1, 0, 0, H_gtk_places_sidebar_get_local_only);
+  XG_DEFINE_PROCEDURE(gtk_stack_get_transition_running, gxg_gtk_stack_get_transition_running_w, 1, 0, 0, H_gtk_stack_get_transition_running);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_margin_start, gxg_gtk_widget_get_margin_start_w, 1, 0, 0, H_gtk_widget_get_margin_start);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_margin_start, gxg_gtk_widget_set_margin_start_w, 2, 0, 0, H_gtk_widget_set_margin_start);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_margin_end, gxg_gtk_widget_get_margin_end_w, 1, 0, 0, H_gtk_widget_get_margin_end);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_margin_end, gxg_gtk_widget_set_margin_end_w, 2, 0, 0, H_gtk_widget_set_margin_end);
 #endif
 
   XG_DEFINE_PROCEDURE(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
@@ -42417,7 +42489,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_GRAB_BROKEN);
   DEFINE_INTEGER(GDK_EXPOSURE_MASK);
   DEFINE_INTEGER(GDK_POINTER_MOTION_MASK);
-  DEFINE_INTEGER(GDK_POINTER_MOTION_HINT_MASK);
   DEFINE_INTEGER(GDK_BUTTON_MOTION_MASK);
   DEFINE_INTEGER(GDK_BUTTON1_MOTION_MASK);
   DEFINE_INTEGER(GDK_BUTTON2_MOTION_MASK);
@@ -43445,6 +43516,9 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_STACK_TRANSITION_TYPE_UNDER_LEFT);
   DEFINE_INTEGER(GTK_STACK_TRANSITION_TYPE_UNDER_RIGHT);
   DEFINE_INTEGER(GTK_STACK_TRANSITION_TYPE_OVER_UP_DOWN);
+  DEFINE_INTEGER(GDK_EVENT_FLUSHED);
+  DEFINE_INTEGER(GTK_STATE_FLAG_LINK);
+  DEFINE_INTEGER(GTK_STATE_FLAG_VISITED);
 #endif
 
   DEFINE_INTEGER(CAIRO_STATUS_SUCCESS);
@@ -44232,7 +44306,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("30-Oct-13"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("19-Nov-13"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

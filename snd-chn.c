@@ -822,27 +822,65 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
       (graphed == WITH_GRAPH))
     {
       mus_float_t ymax;
-      ymax = channel_maxamp(cp, 0);
-      if (ymax > 1.0)
+      if ((sp->channel_style == CHANNELS_COMBINED) &&
+	  (sp->nchans > 1))
 	{
-	  axis_info *ap;
-	  ap = cp->axis;
-	  ap->ymin = -ymax;
-	  ap->ymax = ymax;
-	  ap->y_ambit = 2 * ap->ymax;
-	  ap->y0 = ap->ymin;
-	  ap->y1 = ap->ymax;
-	  ap->zy = 1.0;
-	  ap->sy = 0.0;
-	  resize_sy_and_zy(cp);
-	  apply_y_axis_change(cp);
+	  if (cp->chan == sp->nchans - 1)
+	    {
+	      int i;
+	      mus_float_t local_max;
+	      ymax = 0.0;
+	      for (i = 0; i < sp->nchans; i++)
+		{
+		  local_max = channel_maxamp(sp->chans[i], 0);
+		  if (local_max > ymax)
+		    ymax = local_max;
+		}
+	      if (ymax > 1.0)
+		{
+		  for (i = 0; i < sp->nchans; i++)
+		    {
+		      axis_info *ap;
+		      chan_info *ncp;
+		      ncp = sp->chans[i];
+		      ap = ncp->axis;
+		      ap->ymin = -ymax;
+		      ap->ymax = ymax;
+		      ap->y_ambit = 2 * ap->ymax;
+		      ap->y0 = ap->ymin;
+		      ap->y1 = ap->ymax;
+		      ap->zy = 1.0;
+		      ap->sy = 0.0;
+		      resize_sy_and_zy(ncp);
+		      apply_y_axis_change(ncp);
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  ymax = channel_maxamp(cp, 0);
+	  if (ymax > 1.0)
+	    {
+	      axis_info *ap;
+	      ap = cp->axis;
+	      ap->ymin = -ymax;
+	      ap->ymax = ymax;
+	      ap->y_ambit = 2 * ap->ymax;
+	      ap->y0 = ap->ymin;
+	      ap->y1 = ap->ymax;
+	      ap->zy = 1.0;
+	      ap->sy = 0.0;
+	      resize_sy_and_zy(cp);
+	      apply_y_axis_change(cp);
+	    }
 	}
     }
   else
     {
       if ((CURRENT_SAMPLES(cp) > PEAK_ENV_CUTOFF) &&
 	  (cp->edits[0]->peak_env == NULL) &&              /* perhaps created at initial graph time */
-	  (cp->sound->short_filename != NULL))             /* region browser jumped in too soon during autotest */
+	  (sp->short_filename != NULL))                    /* region browser jumped in too soon during autotest */
 	start_peak_env(cp);
     }
 #endif

@@ -8009,7 +8009,6 @@ Here is an example of move-locsig:
       (<em class=red>move-locsig</em> loc (* 1.0 i) 1.0))))
 </pre>
 
-
 <table>
 <tr>
 <td><img class="indented" src="pix/circle.png" alt="move-locsig example"></td>
@@ -8018,6 +8017,36 @@ Here is an example of move-locsig:
 <td class="center">linear interp</td>
 <td class="center">sinusoidal interp</td>
 </tr></table>
+
+<p>The interaction of outa, locsig, and *reverb* seems to be causing confusion, so here are some
+simple examples:
+</p>
+
+<pre class="indented">
+(load "nrev.scm")
+
+(define (simp start end freq amp)
+  (let ((os (make-oscil freq)))
+    (do ((i start (+ 1 i))) 
+        ((= i end))
+      (let ((output (* amp (oscil os))))
+	(outa i output)
+	(if *reverb* (outa i (* output .1) *reverb*))))))
+
+; (with-sound () (simp 0 44100 440 .1))            ; no reverb
+; (with-sound (:reverb nrev) (simp 0 44100 440 .1)); reverb
+
+
+(define (locsimp start end freq amp)
+  (let ((os (make-oscil freq))
+	(loc (make-locsig :reverb .1)))
+    (do ((i start (+ 1 i))) 
+        ((= i end))
+      (locsig loc i (* amp (oscil os))))))
+
+; (with-sound () (locsimp 0 44100 440 .1))            ; no reverb
+; (with-sound (:reverb nrev) (locsimp 0 44100 440 .1)); reverb
+</pre>
 
 
 

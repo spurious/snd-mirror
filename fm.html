@@ -588,6 +588,26 @@ the peak values given above)
 </tr>
 </table>
 
+<!-- in code:
+(let ((amps (make-vector 20 0.0))
+      (freq (hz->radians 100)))
+  (vector-set! amps 10 (bes-jn 0 1.0))
+  (do ((i 1 (+ i 1)))
+      ((= i 5))
+    (vector-set! amps (- 10 i) (bes-jn (- i) 1.0))
+    (vector-set! amps (+ 10 i) (bes-jn i 1.0)))
+
+  (with-sound (:channels 2)
+    (do ((i 0 (+ i 1))
+	 (x 0.0 (+ x freq)))
+	((= i 44100))
+      (let ((y 0.0))
+	(do ((j 5 (+ j 1)))
+	    ((= j 16))
+	  (set! y (+ y (* (amps j) (sin (* x j))))))
+	(outa i y)
+	(outb i (sin (+ (* x 10) (sin x))))))))
+-->
 
 <p>There is a rule of thumb, Mr Carson's rule, about the overall bandwidth of the resultant spectrum (it 
 follows from our description of the Bessel functions): Roughly speaking, there are fm-index+1 
@@ -619,13 +639,21 @@ FM waveform (index: 3.0) vs sum of cosines with the same (relative) component am
 </td></tr>
 </table>
 
-<p>I think FM gives the minimum peak amplitude that its
-components could have produced, given any set of initial phases.  From one point of view (looking at FM as changing the phase passed to 
+<p>
+I think FM gives the minimum peak amplitude that its
+components could have produced, given any set of initial phases.
+From one point of view (looking at FM as changing the phase passed to 
 the sin function), it's obvious that the output waveform should be this well behaved, but looking at it from its components,
 it strikes me as a minor miracle that there is a set of amplitudes (courtesy of the Bessel functions) that fits together so perfectly.
 Here is an attempt to graph
 the 15 main components, with their sum in black:
 </p>
+
+<!-- the min peak attribute is surprising because it means FM is a worst case;
+  yet searches so far have come up empty!
+  and oddly there seem to be bazillions of cases at 1.0 -- symmetry?
+  (accidentally deleted the data, but see t738.scm to recompute it)
+-->
 
 <img src="pix/fmadd.png" alt="fm components">
 <br>

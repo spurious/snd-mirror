@@ -57937,6 +57937,8 @@ OP_LET1: 75475 (4.677476)
 
     case OP_SET_PAIR_UNKNOWN_S:
       /* look for (set! (fv1 s1) (fv2 s2)) with no complications.  If not that case, drop into SET_PAIR_P
+       *
+       * PERHAPS: use type==type and assign direct
        */
       {
 	s7_pointer f1, f2, settee, value, ind1, ind2;
@@ -68351,12 +68353,17 @@ int main(int argc, char **argv)
  */
 
 /* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))
- * all_x in snd-sig?
+ * all_x in snd-sig? all_x_c_aa|a?
  * letrec* built-in (not macro), perhaps also when and unless
  * gchar* et al in xg should accept NULL (via (c-pointer 0)) [uses XEN_TO_C_STRING in xen.h which currently just calls s7_string]
  * remove-duplicates could use the collected bit (also set intersection/difference, if eq)
  * loop in C or scheme (as do-loop wrapper)
  * cmn->scm+gtk?
+ * divide main cases? divide_2?
+ * check apply mac/bac (there's an extra eval -- see t737.scm -- surely this is not a problem!)
+ * ash 1/-1 and divide 2 [or ash_si where i is known to be in bounds and int, also (ash 1 s) happens]
+ * fft code wants set_pair_c_[s_]opvsq[_s] (fv->fv) [need direct case if real]
+ * could the fm case be tracked into all 1's?
  */
 
 /* 

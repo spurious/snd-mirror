@@ -391,7 +391,7 @@
 ;;; these may be out 2.90.1
 (CINT "GDK_EXPOSURE_MASK" "GdkEventMask")
 (CINT "GDK_POINTER_MOTION_MASK" "GdkEventMask")
-(CINT "GDK_POINTER_MOTION_HINT_MASK" "GdkEventMask")
+;;; 3.12 (CINT "GDK_POINTER_MOTION_HINT_MASK" "GdkEventMask")
 (CINT "GDK_BUTTON_MOTION_MASK" "GdkEventMask")
 (CINT "GDK_BUTTON1_MOTION_MASK" "GdkEventMask")
 (CINT "GDK_BUTTON2_MOTION_MASK" "GdkEventMask")
@@ -7647,10 +7647,10 @@
 (CFNC-3.0 "void gtk_widget_set_halign GtkWidget* widget GtkAlign align")
 (CFNC-3.0 "GtkAlign gtk_widget_get_valign GtkWidget* widget")
 (CFNC-3.0 "void gtk_widget_set_valign GtkWidget* widget GtkAlign align")
-(CFNC-3.0 "gint gtk_widget_get_margin_left GtkWidget* widget")
-(CFNC-3.0 "void gtk_widget_set_margin_left GtkWidget* widget gint margin")
-(CFNC-3.0 "gint gtk_widget_get_margin_right GtkWidget* widget")
-(CFNC-3.0 "void gtk_widget_set_margin_right GtkWidget* widget gint margin")
+;;; 3.12 (CFNC-3.0 "gint gtk_widget_get_margin_left GtkWidget* widget")
+;;; 3.12 (CFNC-3.0 "void gtk_widget_set_margin_left GtkWidget* widget gint margin")
+;;; 3.12 (CFNC-3.0 "gint gtk_widget_get_margin_right GtkWidget* widget")
+;;; 3.12 (CFNC-3.0 "void gtk_widget_set_margin_right GtkWidget* widget gint margin")
 (CFNC-3.0 "gint gtk_widget_get_margin_top GtkWidget* widget")
 (CFNC-3.0 "void gtk_widget_set_margin_top GtkWidget* widget gint margin")
 (CFNC-3.0 "gint gtk_widget_get_margin_bottom GtkWidget* widget")
@@ -8796,6 +8796,23 @@
 ;void gtk_flow_box_set_sort_func GtkFlowBox* box GtkFlowBoxSortFunc sort_func gpointer user_data GDestroyNotify destroy)
 ;void gtk_flow_box_set_filter_func GtkFlowBox* box GtkFlowBoxFilterFunc filter_func gpointer user_data GDestroyNotify destroy)
 
+
+;;; 3.11.2
+(CINT-3.12 "GDK_EVENT_FLUSHED" "GdkEventFlags")
+(CINT-3.12 "GTK_STATE_FLAG_LINK" "GtkStateFlags")
+(CINT-3.12 "GTK_STATE_FLAG_VISITED" "GtkStateFlags")
+
+(CFNC-3.12 "void gdk_window_set_event_compression GdkWindow* window gboolean event_compression")
+(CFNC-3.12 "gboolean gdk_window_get_event_compression GdkWindow* window")
+(CFNC-3.12 "gboolean gtk_header_bar_get_show_fallback_app_menu GtkHeaderBar* bar")
+(CFNC-3.12 "void gtk_header_bar_set_show_fallback_app_menu GtkHeaderBar* bar gboolean setting")
+(CFNC-3.12 "void gtk_places_sidebar_set_local_only GtkPlacesSidebar* sidebar gboolean local_only")
+(CFNC-3.12 "gboolean gtk_places_sidebar_get_local_only GtkPlacesSidebar* sidebar")
+(CFNC-3.12 "gboolean gtk_stack_get_transition_running GtkStack* stack")
+(CFNC-3.12 "gint gtk_widget_get_margin_start GtkWidget* widget")
+(CFNC-3.12 "void gtk_widget_set_margin_start GtkWidget* widget gint margin")
+(CFNC-3.12 "gint gtk_widget_get_margin_end GtkWidget* widget")
+(CFNC-3.12 "void gtk_widget_set_margin_end GtkWidget* widget gint margin")
 
 
 

@@ -1,7 +1,7 @@
 #!/bin/csh -f
 
-set gtkolddir = /home/bil/test/gtk+-3.10.2
-set gtknewdir = /home/bil/test/gtk+-3.11.0
+set gtkolddir = /home/bil/test/gtk+-3.11.0
+set gtknewdir = /home/bil/test/gtk+-3.11.2
 set pangoolddir = /home/bil/test/pango-1.36.0
 set pangonewdir = /home/bil/test/pango-1.36.0
 set glibolddir = /home/bil/test/glib-2.38.1

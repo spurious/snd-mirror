@@ -1,8 +1,17 @@
-Snd 14.1:
+Snd 14.2:
 
-removed frame.scm and mixer.scm (frames and mixers have been replaced
-  by float-vectors in s7-clm).
+added *show-indices* etc (the old procedure-with-setter globals 
+  can now be accessed as normal variables -- there are about
+  200 of them).
 
-checked: gtk 3.9.16, 3.10.0|1, sbcl 1.1.12.
+with-tracking-cursor changed again! (added :track-and-stay to
+  make the cursor stay where the play stops).
 
-Thanks!: Mike Scholz.
+removed (obsolete) trap-segfault.
+
+s7: bignum-precision is now a variable: *bignum-precision*.
+    added *maximum-stack-size* to catch infinite recursion.
+
+checked: gtk 3.10.2|11.0|2, OSX 10.9, sbcl 1.1.13
+
+Thanks!: Ray Rashif, Robert Komar
