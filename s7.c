@@ -46926,7 +46926,8 @@ static s7_pointer check_set(s7_scheme *sc)
 					}
 				    }
 				}
-			      if (optimize_data(value) == HOP_UNKNOWN_S)
+			      if ((is_optimized(value)) &&
+				  (optimize_data(value) == HOP_UNKNOWN_S))
 				{
 				  set_syntax_op(sc->code, sc->SET_PAIR_UNKNOWN_S);
 				}
