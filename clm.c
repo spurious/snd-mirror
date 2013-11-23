@@ -6771,8 +6771,7 @@ mus_any *mus_make_formant(mus_float_t frequency, mus_float_t radius)
 typedef struct {
   mus_any_class *core;
   int size;
-  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps;
-  mus_any **gens;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps, *rr, *fdbk, *gain;
 } frm_bank;
 
 
@@ -6787,7 +6786,9 @@ static int free_formant_bank(mus_any *ptr)
       if (f->y0) {free(f->y0); f->y0 = NULL;}
       if (f->y1) {free(f->y1); f->y1 = NULL;}
       if (f->y2) {free(f->y2); f->y2 = NULL;}
-      if (f->gens) {free(f->gens); f->gens = NULL;}
+      if (f->rr) {free(f->rr); f->rr = NULL;}
+      if (f->fdbk) {free(f->fdbk); f->fdbk = NULL;}
+      if (f->gain) {free(f->gain); f->gain = NULL;}
       free(ptr); 
     }
   return(0);
@@ -6824,16 +6825,17 @@ static bool formant_bank_equalp(mus_any *p1, mus_any *p2)
 {
   frm_bank *f1 = (frm_bank *)p1;
   frm_bank *f2 = (frm_bank *)p2;
+#if 0
   int i, size;
-
+#endif
   if (f1 == f2) return(true);
   if (f1->size != f2->size) return(false);
+#if 0
   size = f1->size;
-
   for (i = 0; i < size; i++)
     if (!frm_equalp(f1->gens[i], f2->gens[i]))
       return(false);
-  
+#endif  
   /* now check the locals... */
   return(true);
 }
@@ -6844,9 +6846,7 @@ static char *describe_formant_bank(mus_any *ptr)
   frm_bank *gen = (frm_bank *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
-  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s size: %d",
-	       mus_name(ptr),
-	       gen->size);
+  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s size: %d", mus_name(ptr), gen->size);
   return(describe_buffer);
 }
 
@@ -6856,8 +6856,7 @@ mus_float_t mus_formant_bank(mus_any *fbank, mus_float_t inval)
   frm_bank *bank = (frm_bank *)fbank;
   int i, size4;
   mus_float_t sum = 0.0;
-  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps;
-  frm **gens;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps, *rr, *fdbk, *gain;
 
   x0 = bank->x0;
   x1 = bank->x1;
@@ -6865,39 +6864,41 @@ mus_float_t mus_formant_bank(mus_any *fbank, mus_float_t inval)
   y0 = bank->y0;
   y1 = bank->y1;
   y2 = bank->y2;
-  gens = (frm **)(bank->gens);
+  rr = bank->rr;
+  fdbk = bank->fdbk;
+  gain = bank->gain;
   amps = bank->amps;
   size4 = bank->size - 4;
-  i = 0;
 
+  i = 0;
   if (amps)
     {
       while (i <= size4)
 	{
-	  x0[i] = gens[i]->gain * inval;
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval;
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += amps[i] * y0[i];
 	  i++;
 
-	  x0[i] = gens[i]->gain * inval;
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval;
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += amps[i] * y0[i];
 	  i++;
 
-	  x0[i] = gens[i]->gain * inval;
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval;
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += amps[i] * y0[i];
 	  i++;
 
-	  x0[i] = gens[i]->gain * inval;
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval;
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += amps[i] * y0[i];
 	  i++;
 	}
       for (; i < bank->size; i++)
 	{
-	  x0[i] = gens[i]->gain * inval;
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval;
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += amps[i] * y0[i];
 	}
     }
@@ -6905,30 +6906,30 @@ mus_float_t mus_formant_bank(mus_any *fbank, mus_float_t inval)
     {
       while (i <= size4)
 	{
-	  x0[i] = gens[i]->gain * inval;
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval;
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += y0[i];
 	  i++;
 
-	  x0[i] = gens[i]->gain * inval;
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval;
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += y0[i];
 	  i++;
 
-	  x0[i] = gens[i]->gain * inval;
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval;
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += y0[i];
 	  i++;
 
-	  x0[i] = gens[i]->gain * inval;
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval;
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += y0[i];
 	  i++;
 	}
       for (; i < bank->size; i++)
 	{
-	  x0[i] = gens[i]->gain * inval;
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval;
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += y0[i];
 	}
     }
@@ -6949,8 +6950,7 @@ mus_float_t mus_formant_bank_with_inputs(mus_any *fbank, mus_float_t *inval)
   frm_bank *bank = (frm_bank *)fbank;
   int i, size4;
   mus_float_t sum = 0.0;
-  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps;
-  frm **gens;
+  mus_float_t *x0, *x1, *x2, *y0, *y1, *y2, *amps, *rr, *fdbk, *gain;
 
   x0 = bank->x0;
   x1 = bank->x1;
@@ -6958,39 +6958,41 @@ mus_float_t mus_formant_bank_with_inputs(mus_any *fbank, mus_float_t *inval)
   y0 = bank->y0;
   y1 = bank->y1;
   y2 = bank->y2;
-  gens = (frm **)(bank->gens);	
+  rr = bank->rr;
+  fdbk = bank->fdbk;
+  gain = bank->gain;
   amps = bank->amps;
   size4 = bank->size - 4;
-  i = 0;
 
+  i = 0;
   if (amps)
     {
       while (i <= size4)
 	{
-	  x0[i] = gens[i]->gain * inval[i];
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval[i];
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += amps[i] * y0[i];
 	  i++;
 
-	  x0[i] = gens[i]->gain * inval[i];
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval[i];
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += amps[i] * y0[i];
 	  i++;
 
-	  x0[i] = gens[i]->gain * inval[i];
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval[i];
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += amps[i] * y0[i];
 	  i++;
 
-	  x0[i] = gens[i]->gain * inval[i];
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval[i];
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += amps[i] * y0[i];
 	  i++;
 	}
       for (; i < bank->size; i++)
 	{
-	  x0[i] = gens[i]->gain * inval[i];
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval[i];
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += amps[i] * y0[i];
 	}
     }
@@ -6998,30 +7000,30 @@ mus_float_t mus_formant_bank_with_inputs(mus_any *fbank, mus_float_t *inval)
     {
       while (i <= size4)
 	{
-	  x0[i] = gens[i]->gain * inval[i];
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval[i];
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += y0[i];
 	  i++;
 
-	  x0[i] = gens[i]->gain * inval[i];
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval[i];
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += y0[i];
 	  i++;
 
-	  x0[i] = gens[i]->gain * inval[i];
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval[i];
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += y0[i];
 	  i++;
 
-	  x0[i] = gens[i]->gain * inval[i];
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval[i];
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += y0[i];
 	  i++;
 	}
       for (; i < bank->size; i++)
 	{
-	  x0[i] = gens[i]->gain * inval[i];
-	  y0[i] = x0[i] - x2[i] + (gens[i]->fdbk * y1[i]) - (gens[i]->rr * y2[i]);
+	  x0[i] = gain[i] * inval[i];
+	  y0[i] = x0[i] - x2[i] + (fdbk[i] * y1[i]) - (rr[i] * y2[i]);
 	  sum += y0[i];
 	}
     }
@@ -7071,10 +7073,6 @@ mus_any *mus_make_formant_bank(int size, mus_any **formants, mus_float_t *amps)
   gen->core = &FORMANT_BANK_CLASS;
   gen->size = size;
 
-  gen->gens = (mus_any **)malloc(size * sizeof(mus_any *));
-  for (i = 0; i < size; i++)
-    gen->gens[i] = formants[i];
-
   gen->x0 = (mus_float_t *)calloc(size, sizeof(mus_float_t));
   gen->x1 = (mus_float_t *)calloc(size, sizeof(mus_float_t));
   gen->x2 = (mus_float_t *)calloc(size, sizeof(mus_float_t));
@@ -7083,6 +7081,18 @@ mus_any *mus_make_formant_bank(int size, mus_any **formants, mus_float_t *amps)
   gen->y2 = (mus_float_t *)calloc(size, sizeof(mus_float_t));
   gen->amps = amps;
 
+  gen->rr = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+  gen->fdbk = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+  gen->gain = (mus_float_t *)calloc(size, sizeof(mus_float_t));
+  
+  for (i = 0; i < size; i++)
+    {
+      frm *g;
+      g = (frm *)formants[i];
+      gen->rr[i] = g->rr;
+      gen->fdbk[i] = g->fdbk;
+      gen->gain[i] = g->gain;
+    }
   return((mus_any *)gen);
 }
 
@@ -12513,6 +12523,7 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
       mid = loc - (xs / xi) + 1;
       if (mid > lim) mid -= lim;
 
+      /* pulling out these srp's makes no difference according to valgrind */
       if (loc > mid)
 	{
 	  for (; loc < lim; loc++, xs += xi)
@@ -14831,46 +14842,68 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
   if (pv_synthesize) 
     return((*pv_synthesize)(pv->closure));
 
-  N4 = N2 - 4;
-  i = 0;
-  while (i <= N4)
-    {
-      pv->phaseinc[i] += pv->freqs[i];
-      pv->phases[i] += pv->phaseinc[i];
-      pv->amps[i] += pv->ampinc[i];
-      if (pv->amps[i] != 0.0)
-	sum += (pv->amps[i] * sin(pv->phases[i])); 
-      i++;
+  {
+    mus_float_t *pinc, *frq, *ph, *amp, *panc;
+    pinc = pv->phaseinc;
+    frq = pv->freqs;
+    ph = pv->phases;
+    amp = pv->amps;
+    panc = pv->ampinc;
 
-      pv->phaseinc[i] += pv->freqs[i];
-      pv->phases[i] += pv->phaseinc[i];
-      pv->amps[i] += pv->ampinc[i];
-      if (pv->amps[i] != 0.0)
-	sum += (pv->amps[i] * sin(pv->phases[i])); 
-      i++;
+    N4 = N2 - 4;
+    i = 0;
+    /* splitting this loop in 2 saves far more than the extra bounds check and increments cost */
+    while (i <= N4)
+      {
+	pinc[i] += frq[i];
+	ph[i] += pinc[i];
+	i++;
+	
+	pinc[i] += frq[i];
+	ph[i] += pinc[i];
+	i++;
+	
+	pinc[i] += frq[i];
+	ph[i] += pinc[i];
+	i++;
+	
+	pinc[i] += frq[i];
+	ph[i] += pinc[i];
+	i++;
+      }
+    i = 0;
+    while (i <= N4)
+      {
+	amp[i] += panc[i];
+	if (amp[i] != 0.0)
+	  sum += (amp[i] * sin(ph[i])); 
+	i++;
+	
+	amp[i] += panc[i];
+	if (amp[i] != 0.0)
+	  sum += (amp[i] * sin(ph[i])); 
+	i++;
+	
+	amp[i] += panc[i];
+	if (amp[i] != 0.0)
+	  sum += (amp[i] * sin(ph[i])); 
+	i++;
+	
+	amp[i] += panc[i];
+	if (amp[i] != 0.0)
+	  sum += (amp[i] * sin(ph[i])); 
+	i++;
+      }
 
-      pv->phaseinc[i] += pv->freqs[i];
-      pv->phases[i] += pv->phaseinc[i];
-      pv->amps[i] += pv->ampinc[i];
-      if (pv->amps[i] != 0.0)
-	sum += (pv->amps[i] * sin(pv->phases[i])); 
-      i++;
-
-      pv->phaseinc[i] += pv->freqs[i];
-      pv->phases[i] += pv->phaseinc[i];
-      pv->amps[i] += pv->ampinc[i];
-      if (pv->amps[i] != 0.0)
-	sum += (pv->amps[i] * sin(pv->phases[i])); 
-      i++;
-    }
-  for (; i < N2; i++)
-    {
-      pv->phaseinc[i] += pv->freqs[i];
-      pv->phases[i] += pv->phaseinc[i];
-      pv->amps[i] += pv->ampinc[i];
-      if (pv->amps[i] != 0.0)
-	sum += (pv->amps[i] * sin(pv->phases[i])); 
-    }
+    for (; i < N2; i++)
+      {
+	pinc[i] += frq[i];
+	ph[i] += pinc[i];
+	amp[i] += panc[i];
+	if (amp[i] != 0.0)
+	  sum += (amp[i] * sin(ph[i])); 
+      }
+  }
   return(sum);
 }
     
@@ -14920,11 +14953,6 @@ typedef struct {
 #endif
 } ssbam;
 
-/*
-total: 3971173
-84: 3969073
-204: 2100
-*/
 
 bool mus_ssb_am_p(mus_any *ptr) 
 {

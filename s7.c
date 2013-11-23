@@ -14020,7 +14020,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 
 
 static s7_pointer multiply_2, multiply_fs, multiply_sf, multiply_is, multiply_si;
-static s7_pointer multiply_2_temp, multiply_3_temp, multiply_1_any, multiply_s_temp, multiply_temp_s, multiply_s_direct, multiply_pi_direct;
+static s7_pointer multiply_2_temp, multiply_3_temp, multiply_1_any, multiply_s_temp, multiply_temp_s, multiply_s_direct;
 static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, y;
@@ -14274,14 +14274,6 @@ static s7_pointer g_multiply_s_direct(s7_scheme *sc, s7_pointer args)
     return(s7_remake_real(sc, arg2, real(arg1) * real(arg2)));
   
   return(g_m_s_t(sc, arg1, arg2, args));
-}
-
-
-static s7_pointer g_multiply_pi_direct(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer arg2;
-  arg2 = c_call(cadr(args))(sc, cdadr(args));
-  return(s7_remake_real(sc, arg2, M_PI * real(arg2)));
 }
 
 
@@ -21410,6 +21402,7 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
 		break;
 	      }
 	  }
+
 	if (is_null(result))
 	  {
 	    if (sc->symbol_table_is_locked)
@@ -21420,6 +21413,14 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
 		symbol_hash(result) = location; /* was loc */
 	      }
 	  }
+	/* tried catching sc->PI here and returning real_pi => read-time lookup,
+	 *   but it's not faster in actual code (as opposed to timing tests), and
+	 *   requires tricky checks in OP_READ_QUOTE and QUASIQUOTE so that, for example,
+	 *   (defined? 'pi) is not an error.  Most pi's occur in (* pi 2) or (/ pi 2) etc
+	 *   so perhaps we could predefine 2*pi and pi/2 or some such names? Adding an
+	 *   opt * as multiply_pi_direct for (* pi n) got no hits.  I think sc->PI is
+	 *   not currently used.
+	 */
       }
       break;
     }
@@ -40563,8 +40564,6 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  (s7_function_returns_temp(sc, arg2)))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
-	  if (arg1 == sc->PI)
-	    return(multiply_pi_direct);
 	  return(multiply_s_direct);
 	}
 
@@ -41496,7 +41495,6 @@ static void init_choosers(s7_scheme *sc)
   multiply_s_temp = make_temp_function_with_class(sc, f, "*", g_multiply_s_temp, 2, 0, false, "* optimization");
   multiply_temp_s = make_temp_function_with_class(sc, f, "*", g_multiply_temp_s, 2, 0, false, "* optimization");
   multiply_s_direct = make_temp_function_with_class(sc, f, "*", g_multiply_s_direct, 2, 0, false, "* optimization");
-  multiply_pi_direct = make_temp_function_with_class(sc, f, "*", g_multiply_pi_direct, 2, 0, false, "* optimization");
 
   multiply_is = make_function_with_class(sc, f, "*", g_multiply_is, 2, 0, false, "* optimization");
   multiply_si = make_function_with_class(sc, f, "*", g_multiply_si, 2, 0, false, "* optimization");
@@ -50416,7 +50414,10 @@ OP_SAFE_IF_IS_SYMBOL_P: 30 (0.000020)
 	  }
 
 	if (sc->op == OP_SIMPLE_DO_A)
+	  {
+	    /* fprintf(stderr, "%s\n", DISPLAY(code)); */
 	  push_stack(sc, OP_SIMPLE_DO_STEP_A, sc->args, code);
+	  }
 	else push_stack(sc, OP_SIMPLE_DO_STEP, sc->args, code);
 
 	sc->code = fcdr(code);
@@ -68354,6 +68355,8 @@ int main(int argc, char **argv)
  */
 
 /* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))
+ *   for cos et al, if arg is multiply_2 et al, this could be directed to multiply_2_rc (not rational) which would return a temp
+ *   this gains very little (old/cos-s7.c)
  * all_x in snd-sig? all_x_c_aa|a?
  * letrec* built-in (not macro), perhaps also when and unless
  * gchar* et al in xg should accept NULL (via (c-pointer 0)) [uses XEN_TO_C_STRING in xen.h which currently just calls s7_string]
@@ -68365,6 +68368,8 @@ int main(int argc, char **argv)
  * ash 1/-1 and divide 2 [or ash_si where i is known to be in bounds and int, also (ash 1 s) happens]
  * fft code wants set_pair_c_[s_]opvsq[_s] (fv->fv) [need direct case if real]
  * could the fm case be tracked into all 1's?
+ * with-environment* gen (syms) body -- if sqs+with-env_s -> sqs_with_env_s or pop and jump ca 35? or in lambda opt -- save 2 push/pop+lookup+type
+ *  other closures could also be direct -- as if an op, not a call
  */
 
 /* 
