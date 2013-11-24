@@ -1274,7 +1274,7 @@ struct s7_scheme {
   s7_pointer HASH_TABLEP, HASH_TABLE_ITERATORP, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_SIZE, HELP, IMAG_PART, INEXACTP, INEXACT_TO_EXACT;
   s7_pointer INFINITEP, INPUT_PORTP, INTEGERP, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, KEYWORDP, KEYWORD_TO_SYMBOL, LCM, LENGTH;
   s7_pointer LIST, LISTP, LIST_TO_STRING, LIST_TO_VECTOR, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBITP, LOGIOR, LOGNOT, LOGXOR;
-  s7_pointer MACROP, MAGNITUDE, MAKE_BYTEVECTOR, MAKE_HASH_TABLE, MAKE_HASH_TABLE_ITERATOR, MAKE_KEYWORD, MAKE_LIST, MAKE_POLAR, MAKE_RANDOM_STATE;
+  s7_pointer MACROP, MAGNITUDE, MAKE_BYTEVECTOR, MAKE_FLOAT_VECTOR, MAKE_HASH_TABLE, MAKE_HASH_TABLE_ITERATOR, MAKE_KEYWORD, MAKE_LIST, MAKE_POLAR, MAKE_RANDOM_STATE;
   s7_pointer MAKE_RECTANGULAR, MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, MORALLY_EQUALP, NANP, NEGATIVEP, NEWLINE;
   s7_pointer NOT, NULLP, NUMBERP, NUMBER_TO_STRING, NUMERATOR, /* OBJECT_ENVIRONMENT, */ OBJECT_TO_STRING, ODDP, OPEN_ENVIRONMENT, OPEN_ENVIRONMENTP, OPEN_INPUT_FILE;
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTER_ENVIRONMENT, OUTPUT_PORTP, PAIRP, PAIR_LINE_NUMBER, PEEK_CHAR;
@@ -28934,6 +28934,7 @@ s7_pointer s7_make_float_vector(s7_scheme *sc, s7_Int len, int dims, s7_Int *dim
   return(p);
 }
 
+
 s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *data, int dims, s7_Int *dim_info)
 {
   /* this wraps up a C-allocated/freed double array as an s7 vector.
@@ -30231,6 +30232,13 @@ or a real, the vector can only hold numbers of that type (s7_Int or s7_Double)."
     }
 
   return(vec);
+}
+
+
+static s7_pointer g_make_float_vector(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_float_vector "(make-float-vector len (init 0.0)) returns a float-vector."
+  return(g_make_vector(sc, list_3(sc, car(args), (is_null(cdr(args))) ? real_zero : cadr(args), sc->T)));
 }
 
 
@@ -42756,12 +42764,29 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		      if (closure_star_arity_to_int(sc, func) == 2)
 			{
 			  s7_pointer defarg2;
+
 			  defarg2 = cadr(closure_args(func));
-			  /* fprintf(stderr, "look for s0: %s %s\n", DISPLAY(func), DISPLAY(defarg2)); */
 			  if ((is_pair(defarg2)) &&
 			      (is_real(cadr(defarg2))) &&
 			      (real(cadr(defarg2)) == 0.0))
-			    set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_STAR_S0);
+			    {
+			      /* this is an optimization aimed at generators.  So we might as well go all out... */
+			      s7_pointer body;
+			      body = closure_body(func);
+			      if ((s7_list_length(sc, body) == 2) &&
+				  (caar(body) == sc->ENVIRONMENT_SET) &&
+				  (is_optimized(car(body))) &&
+				  (optimize_data(car(body)) == HOP_SAFE_C_SQS))
+				{
+				  if ((caadr(body) == make_symbol(sc, "with-environment")) && /* TODO */
+				      (is_symbol(cadr(cadr(body)))) &&
+				      (cadr(cadr(body)) == car(closure_args(func))) &&
+				      (cadddr(car(body)) == caadr(closure_args(func))))
+				    {
+				      set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_STAR_S0);
+				    }
+				}
+			    }
 			}
 		    }
 		  else set_optimize_data(car_x, hop + OP_CLOSURE_STAR_S);
@@ -52234,12 +52259,54 @@ OP_EVAL: 1065372 (1.542659)
 		}
 	      
 	    case HOP_SAFE_CLOSURE_STAR_S0:
+#if 0
 	      sc->envir = old_frame_with_two_slots(sc, closure_environment(ecdr(code)), finder(sc, cadr(code)), real_zero);
 	      sc->code = closure_body(ecdr(code));
 	      if (is_pair(cdr(sc->code)))
 		push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
 	      sc->code = car(sc->code);
 	      goto EVAL;
+#endif
+	      /* here we know we have (environment-set! arg1 'name arg2) (with-env arg1 ...) as the safe closure body.
+	       *   since no errors can come from the 1st, there's no need for the procedure env.
+	       *   so do the set and with-env by hand, leaving with the env body.
+	       */
+	      {
+		s7_pointer e, arg2, body;
+
+		e = finder(sc, cadr(code)); /* S of S0 above */
+		if (e == sc->global_env)
+		  sc->envir = sc->NIL;
+		else 
+		  {
+		    if (!is_environment(e))
+		      eval_type_error(sc, "with-environment takes an environment argument: ~A", e);
+		    sc->envir = e;
+		  }
+
+		body = closure_body(ecdr(code));
+		arg2 = cadr(cadr(car(body)));
+		
+		if (e != sc->global_env)
+		  {
+		    s7_pointer p;
+		    environment_id(e) = ++environment_number;
+		    for (p = environment_slots(e); is_slot(p); p = next_slot(p))
+		      {
+			s7_pointer sym;
+			sym = slot_symbol(p);
+			symbol_set_local(sym, environment_number, p);
+			if (sym == arg2)
+			  slot_set_value(p, real_zero);
+		      }
+		  }
+		
+		body = cddr(cadr(body));
+		if (is_pair(cdr(body)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(body));
+		sc->code = car(body);
+		goto EVAL;
+	      }
 	      
 	      
 	    case OP_SAFE_CLOSURE_STAR_S:
@@ -67645,6 +67712,7 @@ s7_scheme *s7_init(void)
   sc->VECTORP =               s7_define_safe_function(sc, "vector?",                 g_is_vector,              1, 0, false, H_is_vector);
   sc->FLOAT_VECTORP =         s7_define_safe_function(sc, "float-vector?",           g_is_float_vector,        1, 0, false, H_is_float_vector);
   sc->FLOAT_VECTOR =          s7_define_safe_function(sc, "float-vector",            g_float_vector,           0, 0, true,  H_float_vector);
+  sc->MAKE_FLOAT_VECTOR =     s7_define_safe_function(sc, "make-float-vector",       g_make_float_vector,      1, 1, false, H_make_float_vector);
   sc->VECTOR_APPEND =         s7_define_safe_function(sc, "vector-append",           g_vector_append,          0, 0, true,  H_vector_append);
   sc->VECTOR_FILL =           s7_define_safe_function(sc, "vector-fill!",            g_vector_fill,            2, 2, false, H_vector_fill);
   sc->VECTOR_LENGTH =         s7_define_safe_function(sc, "vector-length",           g_vector_length,          1, 0, false, H_vector_length);
@@ -68370,6 +68438,8 @@ int main(int argc, char **argv)
  * could the fm case be tracked into all 1's?
  * with-environment* gen (syms) body -- if sqs+with-env_s -> sqs_with_env_s or pop and jump ca 35? or in lambda opt -- save 2 push/pop+lookup+type
  *  other closures could also be direct -- as if an op, not a call
+ *  test s0 cases explicitly, and check ss/sc -- is there something easy in reach? [env as sym, sym == arg2]
+ * test (s7test) make-float-vector
  */
 
 /* 

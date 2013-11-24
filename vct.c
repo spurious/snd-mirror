@@ -2260,7 +2260,6 @@ void mus_vct_init(void)
   s7_eval_c_string(s7, "(define vct-reverse! reverse!)");  /* slight difference: no optional length arg (use make-shared-vector) */
   s7_eval_c_string(s7, "(define vct->list vector->list)");
   s7_eval_c_string(s7, "(define (list->vct x) (apply float-vector x))");
-  s7_eval_c_string(s7, "(define* (make-float-vector len (init 0.0)) (make-vector len init #t))");
   s7_eval_c_string(s7, "(define make-vct make-float-vector)");
   s7_eval_c_string(s7, "(define (vector->vct v) (copy v (make-vector (length v) 0.0 #t)))");
   s7_eval_c_string(s7, "(define (vct->vector v) (copy v (make-vector (length v) 0.0)))");
