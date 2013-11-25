@@ -42639,6 +42639,27 @@ static void annotate_arg(s7_scheme *sc, s7_pointer arg)
 
 static s7_pointer check_or(s7_scheme *sc);
 
+static void opt_generator(s7_scheme *sc, s7_pointer func, s7_pointer car_x, int hop)
+{
+  /* this is an optimization aimed at generators.  So we might as well go all out... */
+  s7_pointer body;
+  body = closure_body(func);
+  if ((s7_list_length(sc, body) == 2) &&
+      (caar(body) == sc->ENVIRONMENT_SET) &&
+      (is_optimized(car(body))) &&
+      (optimize_data(car(body)) == HOP_SAFE_C_SQS))
+    {
+      if ((caadr(body) == make_symbol(sc, "with-environment")) &&
+	  (is_symbol(cadr(cadr(body)))) &&
+	  (cadr(cadr(body)) == car(closure_args(func))) &&
+	  (cadddr(car(body)) == caadr(closure_args(func))))
+	{
+	  set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_STAR_S0);
+	}
+    }
+}
+
+
 static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer func, int hop, int pairs, int symbols, int quotes, int bad_pairs)
 {
   bool func_is_safe, func_is_c_function, func_is_closure;
@@ -42764,29 +42785,11 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		      if (closure_star_arity_to_int(sc, func) == 2)
 			{
 			  s7_pointer defarg2;
-
 			  defarg2 = cadr(closure_args(func));
 			  if ((is_pair(defarg2)) &&
 			      (is_real(cadr(defarg2))) &&
 			      (real(cadr(defarg2)) == 0.0))
-			    {
-			      /* this is an optimization aimed at generators.  So we might as well go all out... */
-			      s7_pointer body;
-			      body = closure_body(func);
-			      if ((s7_list_length(sc, body) == 2) &&
-				  (caar(body) == sc->ENVIRONMENT_SET) &&
-				  (is_optimized(car(body))) &&
-				  (optimize_data(car(body)) == HOP_SAFE_C_SQS))
-				{
-				  if ((caadr(body) == make_symbol(sc, "with-environment")) && /* TODO */
-				      (is_symbol(cadr(cadr(body)))) &&
-				      (cadr(cadr(body)) == car(closure_args(func))) &&
-				      (cadddr(car(body)) == caadr(closure_args(func))))
-				    {
-				      set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_STAR_S0);
-				    }
-				}
-			    }
+			    opt_generator(sc, func, car_x, hop);
 			}
 		    }
 		  else set_optimize_data(car_x, hop + OP_CLOSURE_STAR_S);
@@ -43095,7 +43098,16 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		  set_unsafely_optimized(car_x);
 		  if (symbols == 2)
 		    set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SX));
-		  else set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_SC : OP_CLOSURE_STAR_SX));
+		  else 
+		    {
+		      if (is_safe_closure(func))
+			{
+			  set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_STAR_SC);
+			  if (caddar_x == real_zero)
+			    opt_generator(sc, func, car_x, hop);
+			}
+		      else set_optimize_data(car_x, hop + OP_CLOSURE_STAR_SX);
+		    }
 		  set_ecdr(car_x, func);
 		  set_fcdr(car_x, caddar_x);
 		  return(false); 
@@ -47047,11 +47059,6 @@ static s7_pointer check_set(s7_scheme *sc)
 			      if (is_optimized(value))
 				{
 				  set_syntax_op(sc->code, sc->SET_SYMBOL_Z);
-
-				  /* TODO: use all_x here as in set_pair_za -- or rather why is the all_x case below missed? 
-				   *   set_symbol_safe_ss|s can also go?
-				   */
-				  
 				  /* lots of h_unknown* cases here
 				     if ((is_unknown_op(optimize_data(value))) && (is_hopping(value)))
 				     or (optimize_data(value) == H_UNKNOWN_S)...
@@ -52259,14 +52266,6 @@ OP_EVAL: 1065372 (1.542659)
 		}
 	      
 	    case HOP_SAFE_CLOSURE_STAR_S0:
-#if 0
-	      sc->envir = old_frame_with_two_slots(sc, closure_environment(ecdr(code)), finder(sc, cadr(code)), real_zero);
-	      sc->code = closure_body(ecdr(code));
-	      if (is_pair(cdr(sc->code)))
-		push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
-	      sc->code = car(sc->code);
-	      goto EVAL;
-#endif
 	      /* here we know we have (environment-set! arg1 'name arg2) (with-env arg1 ...) as the safe closure body.
 	       *   since no errors can come from the 1st, there's no need for the procedure env.
 	       *   so do the set and with-env by hand, leaving with the env body.
@@ -52274,7 +52273,7 @@ OP_EVAL: 1065372 (1.542659)
 	      {
 		s7_pointer e, arg2, body;
 
-		e = finder(sc, cadr(code)); /* S of S0 above */
+		e = finder(sc, cadr(code));                      /* S of S0 above */
 		if (e == sc->global_env)
 		  sc->envir = sc->NIL;
 		else 
@@ -52285,7 +52284,7 @@ OP_EVAL: 1065372 (1.542659)
 		  }
 
 		body = closure_body(ecdr(code));
-		arg2 = cadr(cadr(car(body)));
+		arg2 = cadr(caddr(car(body)));                   /* car(body): (environment-set! gen 'fm fm) for example */
 		
 		if (e != sc->global_env)
 		  {
@@ -68438,7 +68437,6 @@ int main(int argc, char **argv)
  * could the fm case be tracked into all 1's?
  * with-environment* gen (syms) body -- if sqs+with-env_s -> sqs_with_env_s or pop and jump ca 35? or in lambda opt -- save 2 push/pop+lookup+type
  *  other closures could also be direct -- as if an op, not a call
- *  test s0 cases explicitly, and check ss/sc -- is there something easy in reach? [env as sym, sym == arg2]
  * test (s7test) make-float-vector
  */
 
