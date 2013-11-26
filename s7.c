@@ -23823,8 +23823,8 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
       return;
     }
   
-  if ((!to_file) &&
-      (use_write != USE_READABLE_WRITE))
+  if ((use_write != USE_READABLE_WRITE) &&
+      ((!to_file) || (port == sc->standard_output) || (port == sc->standard_error)))
     {
       /* if to_file we ignore *vector-print-length* so a subsequent read will be ok
        *
@@ -31990,6 +31990,8 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 {
   if (is_c_function(fnc))
     return(c_function_call(fnc)(sc, args));
+
+  /* everything here appears to be a sampler */
 
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
   sc->args = args;
@@ -52296,10 +52298,9 @@ OP_EVAL: 1065372 (1.542659)
 			sym = slot_symbol(p);
 			symbol_set_local(sym, environment_number, p);
 			if (sym == arg2)
-			  slot_set_value(p, real_zero);
+			  slot_set_value(p, real_zero); /* PERHAPS: if this doesn't happen -- error? (currently environment-set! does not throw one) */
 		      }
 		  }
-		
 		body = cddr(cadr(body));
 		if (is_pair(cdr(body)))
 		  push_stack_no_args(sc, OP_BEGIN1, cdr(body));
@@ -68411,14 +68412,14 @@ int main(int argc, char **argv)
 /* -------------------------------------------------------------------------------- */
 
 /*
- * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7|  14.2
+ * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7|  14.2 14.3
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989 3997|  4220
  * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725
  * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995
  * t455|6     265|    89   55   31   14   14    9    9    9|   7.4
  * lat        229|    63   52   47   42   40   34   31   29|    29
  * t502        90|    43   39   36   29   23   20   14   14|  14.5
- * calls         |   275  207  175  115   89   71   53   53|    54
+ * calls         |   275  207  175  115   89   71   53   53|    54 53.7
  */
 
 /* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))
@@ -68438,6 +68439,8 @@ int main(int argc, char **argv)
  * with-environment* gen (syms) body -- if sqs+with-env_s -> sqs_with_env_s or pop and jump ca 35? or in lambda opt -- save 2 push/pop+lookup+type
  *  other closures could also be direct -- as if an op, not a call
  * test (s7test) make-float-vector
+ * TODO: non-vector print out no len check if no-gui/stdout?
+ * TODO: doc/test read-sample-with-direction, and look for other cases (dir=1, set dir, etc)
  */
 
 /* 

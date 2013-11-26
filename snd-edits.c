@@ -7086,6 +7086,14 @@ static mus_float_t read_sample_direct(void *p)
 {
   return(read_sample((snd_fd *)p));
 }
+
+mus_float_t read_sample_with_direction(void *p, int dir);
+mus_float_t read_sample_with_direction(void *p, int dir)
+{
+  if (dir > 0)
+    return(protected_next_sample((snd_fd *)p));
+  return(protected_previous_sample((snd_fd *)p));
+}
 #endif
 
 static XEN g_read_sample(XEN obj)
@@ -7097,6 +7105,21 @@ static XEN g_read_sample(XEN obj)
     return(C_TO_XEN_DOUBLE(read_sample(xen_mix_to_snd_fd(obj))));
 
   XEN_ASSERT_TYPE(false, obj, 1, S_read_sample, "a sampler");
+  return(C_TO_XEN_DOUBLE(0.0));
+}
+
+#define S_read_sample_with_direction "read-sample-with-direction"
+
+static XEN g_read_sample_with_direction(XEN obj, XEN dir)
+{
+  #define H_read_sample_with_direction "(" S_read_sample_with_direction " reader dir): read sample from reader following dir (next/previous choice)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(dir), dir, 1, S_read_sample_with_direction, "an integer");
+  if (SAMPLER_P(obj))
+    return(C_TO_XEN_DOUBLE(read_sample_with_direction((void *)XEN_OBJECT_REF(obj), XEN_TO_C_INT(dir))));
+  if (mix_sampler_p(obj))
+    return(C_TO_XEN_DOUBLE(read_sample_with_direction((void *)xen_mix_to_snd_fd(obj), XEN_TO_C_INT(dir))));
+
+  XEN_ASSERT_TYPE(false, obj, 1, S_read_sample_with_direction, "a sampler");
   return(C_TO_XEN_DOUBLE(0.0));
 }
 
@@ -8927,6 +8950,7 @@ XEN_ARGIFY_5(g_make_sampler_w, g_make_sampler)
 XEN_ARGIFY_4(g_make_region_sampler_w, g_make_region_sampler)
 XEN_NARGIFY_1(g_next_sample_w, g_next_sample)
 XEN_NARGIFY_1(g_read_sample_w, g_read_sample)
+XEN_NARGIFY_2(g_read_sample_with_direction_w, g_read_sample_with_direction)
 XEN_NARGIFY_1(g_previous_sample_w, g_previous_sample)
 XEN_NARGIFY_1(g_free_sampler_w, g_free_sampler)
 XEN_NARGIFY_1(g_sampler_home_w, g_sampler_home)
@@ -9008,6 +9032,7 @@ void g_init_edits(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_make_sampler,           g_make_sampler_w,           0, 5, 0, H_make_sampler);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_region_sampler,    g_make_region_sampler_w,    1, 3, 0, H_make_region_sampler);
   XEN_DEFINE_DIRECT_PROCEDURE(S_read_sample,          g_read_sample_w,            1, 0, 0, H_read_sample);
+  XEN_DEFINE_DIRECT_PROCEDURE(S_read_sample_with_direction, g_read_sample_with_direction_w, 2, 0, 0, H_read_sample_with_direction);
   XEN_DEFINE_SAFE_PROCEDURE(S_read_region_sample,     g_read_sample_w,            1, 0, 0, H_read_sample);
   XEN_DEFINE_DIRECT_PROCEDURE(S_next_sample,          g_next_sample_w,            1, 0, 0, H_next_sample);
   XEN_DEFINE_DIRECT_PROCEDURE(S_previous_sample,      g_previous_sample_w,        1, 0, 0, H_previous_sample);
@@ -9111,6 +9136,10 @@ keep track of which files are in a given saved state batch, and a way to rename 
     s7_function_set_returns_temp(read_sample_s);
     store_choices(s7, read_sample_s, (s7_pointer)read_sample_direct, NULL, NULL, (s7_pointer)sampler_p);
     store_choices(s7, f, (s7_pointer)read_sample_direct, NULL, NULL, (s7_pointer)sampler_p);
+
+    /* read-sample-with-direction */
+    f = s7_name_to_value(s7, "read-sample-with-direction");
+    store_choices(s7, f, NULL, (s7_pointer)read_sample_with_direction, NULL, (s7_pointer)sampler_p);
   }
 #endif
 

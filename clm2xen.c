@@ -8378,12 +8378,6 @@ static mus_float_t as_needed_input_f1(void *ptr, int direction)
   g = gn->g;
   return(g->func(g));
 }
-
-static mus_float_t as_needed_input_cs(void *ptr, int direction)
-{
-  mus_xen *gn = (mus_xen *)ptr; /* this is an src gen (for example) */
-  return(s7_call_direct_to_real_and_free(s7, gn->vcts[MUS_INPUT_DATA]));
-}
 #endif
 
 
@@ -8405,6 +8399,19 @@ static mus_float_t as_needed_input_readin(void *ptr, int direction)
 #endif
 }
 
+#if USE_SND && HAVE_SCHEME
+static mus_float_t as_needed_input_sampler(void *ptr, int direction)
+{
+  return(read_sample((snd_fd *)(((mus_xen *)ptr)->vcts[MUS_INPUT_DATA])));
+}
+
+mus_float_t read_sample_with_direction(void *p, int dir);
+static mus_float_t as_needed_input_sampler_with_direction(void *ptr, int direction)
+{
+  return(read_sample_with_direction((snd_fd *)(((mus_xen *)ptr)->vcts[MUS_INPUT_DATA]), direction));
+}
+#endif
+
 
 static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended for "as-needed" input funcs */
 {
@@ -8424,8 +8431,11 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
   mus_xen *gn = (mus_xen *)ptr;
   if (gn)
     {
-      if ((XEN_BOUND_P(gn->vcts[MUS_INPUT_FUNCTION])) && 
-	  (XEN_PROCEDURE_P(gn->vcts[MUS_INPUT_FUNCTION])))
+      XEN in_obj;
+      in_obj = gn->vcts[MUS_INPUT_FUNCTION];
+
+      if ((XEN_BOUND_P(in_obj)) && 
+	  (XEN_PROCEDURE_P(in_obj)))
 	{
 #if HAVE_SCHEME
 	  mus_float_t result;
@@ -8433,7 +8443,7 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
 	  if (MUS_XEN_P(gn->vcts[MUS_SELF_WRAPPER]))
 	    {
 	      s7_pointer source, arg, body, res;
-	      source = s7_procedure_source(s7, gn->vcts[MUS_INPUT_FUNCTION]);
+	      source = s7_procedure_source(s7, in_obj);
 	      if (s7_is_pair(source))
 		{
 		  body = s7_cddar(source);
@@ -8449,6 +8459,14 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
 		      arg = s7_caadar(source);
 		      if (s7_is_pair(res))
 			{
+			  if ((arg == s7_caddr(res)) &&
+			      (s7_car(res) == s7_make_symbol(s7, "read-sample-with-direction")))
+			    {
+			      /* TODO: need sampler check here and original read-sample-with-direction */
+			      gn->vcts[MUS_INPUT_DATA] = (XEN)xen_to_sampler(s7_symbol_local_value(s7, s7_cadr(res), s7_cdr(source)));
+			      mus_generator_set_feeder(gn->gen, as_needed_input_sampler_with_direction);
+			      return(read_sample_with_direction((snd_fd *)(gn->vcts[MUS_INPUT_DATA]), direction));
+			    }
 			  if (!s7_tree_memq(s7, arg, res))
 			    {
 			      gf *g;
@@ -8463,23 +8481,32 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
 				  mus_generator_set_feeder(gn->gen, as_needed_input_f1);
 				  return(g->func(g));
 				}
-			      if (s7_function_choice_is_direct_to_real(s7, res))
-				{
-				  gn->vcts[MUS_INPUT_DATA] = res;
-				  mus_generator_set_feeder(gn->gen, as_needed_input_cs);
-				  return(s7_call_direct_to_real_and_free(s7, res));
-				}
 			    }
 			}
 		    }
 		}
 	    }
+
+#if USE_SND
+	  /* check for a sampler (snd-edits.c) */
+	  if (sampler_p(in_obj))
+	    {
+	      /* fprintf(stderr, "use sampler direct\n"); */
+	      gn->vcts[MUS_INPUT_DATA] = (XEN)xen_to_sampler(in_obj);
+	      mus_generator_set_feeder(gn->gen, as_needed_input_sampler);
+	      return(read_sample(xen_to_sampler(in_obj)));
+	    }
+#endif	  
+
 	  s7_set_car(as_needed_arglist, (direction == 1) ? xen_one : xen_minus_one);
 	  result = XEN_TO_C_DOUBLE(s7_call_with_location(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist, __func__, __FILE__, __LINE__));
 
-	  gn->vcts[MUS_INPUT_DATA] = XEN_TRUE;
-	  mus_generator_set_feeder(gn->gen, as_needed_input_any);
-
+	  if (MUS_XEN_P(gn->vcts[MUS_SELF_WRAPPER]))
+	    {
+	      /* probably not safe -- we need one more check that the function in the closure (see above) has not be reset */
+	      gn->vcts[MUS_INPUT_DATA] = XEN_TRUE;
+	      mus_generator_set_feeder(gn->gen, as_needed_input_any);
+	    }
 	  return(result);
 #else
 	  return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], (direction == 1) ? xen_one : xen_minus_one)));
@@ -8593,6 +8620,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
+
     if (MUS_XEN_P(in_obj))
       {
 	mus_any *p;
