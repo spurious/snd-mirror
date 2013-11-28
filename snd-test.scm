@@ -8159,6 +8159,33 @@ EDITS: 5
 	  (set! (sinc-width) sw)
 	  (close-sound index))
 	
+	(let ((ind (new-sound :size 100)))
+	  (for-each
+	   (lambda (sr)
+	     (revert-sound ind)
+	     (set! (sample 50) .5)
+	     (set! (sample 51) -.5)
+	     (src-channel sr)
+	     (let ((v1 (channel->vct)))
+	       (revert-sound ind)
+	       (set! (sample 50) .5)
+	       (set! (sample 51) -.5)
+	       (src-channel (+ sr .00001))
+	       (let ((v2 (channel->vct)))
+		 (let ((sum 0.0)
+		       (len (min (length v1) (length v2)))
+		       (mx 0.0))
+		   (do ((i 0 (+ i 1)))
+		       ((= i len))
+		     (let ((diff (abs (- (v1 i) (v2 i)))))
+		       (set! sum (+ sum diff))
+		       (if (> diff mx) (set! mx diff))))
+		   (if (or (> sum .01) ; depends on sinc-width I think
+			   (> mx .002))
+		       (snd-display #__line__ ";src-channel ~A: diff: ~A ~A~%" sr sum mx))))))
+	   (list 0.5 0.75 1.0 1.5 2.0))
+	  (close-sound ind))
+
 	(if (< (max-regions) 8) (set! (max-regions) 8))
 	(let* ((ind (open-sound "oboe.snd"))
 	       (rid0 (make-region 2000 2020 ind 0))
@@ -39993,6 +40020,39 @@ EDITS: 1
     (if (not (sound? snd)) (snd-display #__line__ ";nssb ~A" snd))
     (if (fneq (maxamp snd) 0.3) (snd-display #__line__ ";nssb max: ~A" (maxamp snd))))
   
+  (let ()
+    (define (test-nssb-0)
+      (let ((g1 (make-nssb 10.0 1.0 10))
+	    (g2 (make-nssb 10.0 1.0 10)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 10))
+	  (let ((v1 (nssb g1 1.0))
+		(v2 (nssb g2 1.0)))
+	    (if (> (abs (- v1 v2)) 1e-6)
+		(snd-display #__line__ ";nssb ~D (0): ~A ~A" i v1 v2)))
+	  (let ((v1 (nssb g1 0.0))
+		(v2 (nssb g2)))
+	    (if (> (abs (- v1 v2)) 1e-6)
+		(snd-display #__line__ ";nssb ~D (1): ~A ~A" i v1 v2))))))
+    
+    (test-nssb-0)
+    (test-nssb-0)
+    
+    (define (test-nssb-1)
+      (let ((g1 (make-nssb 10.0 1.0 1.0)))
+	(nssb g1 1.0)
+	(if (not (= (g1 'fm) 1.0)) (snd-display #__line__ ";nssb 1: ~A" (g1 'fm)))
+	(nssb g1 0.0)
+	(if (not (= (g1 'fm) 0.0)) (snd-display #__line__ ";nssb 2: ~A" (g1 'fm)))
+	(nssb g1 1.0)
+	(if (not (= (g1 'fm) 1.0)) (snd-display #__line__ ";nssb 3: ~A" (g1 'fm)))
+	(nssb g1)
+	(if (not (= (g1 'fm) 0.0)) (snd-display #__line__ ";nssb 4: ~A" (g1 'fm)))
+	))
+    
+    (test-nssb-1)
+    (test-nssb-1))
+
   (let* ((res (with-sound (:clipped #f)
 			  (let ((gen (make-nrssb 2000.0 0.05 3 0.5)))
 			     (do ((i 0 (+ i 1)))
@@ -44690,7 +44750,7 @@ EDITS: 1
 		     transform-normalization open-file-dialog-directory open-raw-sound open-sound previous-sample
 		     peaks player? players play-arrow-size
 		     position-color position->x position->y 
-		     print-length progress-report read-only
+		     print-length progress-report read-only read-sample-with-direction
 		     redo region-chans view-regions-dialog region-home 
 		     region-graph-style region-frames region-position region-maxamp region-maxamp-position remember-sound-state
 		     selection-maxamp selection-maxamp-position region-sample region->float-vector 
@@ -46432,6 +46492,31 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
+25-Nov-13:
+53,732,514,142
+6,687,811,527  s7.c:eval [/home/bil/gtk-snd/snd]
+6,500,914,167  ???:sin [/lib64/libm-2.12.so]
+2,501,134,784  ???:cos [/lib64/libm-2.12.so]
+2,416,827,893  clm.c:mus_src [/home/bil/gtk-snd/snd]
+2,280,386,522  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
+1,417,170,736  s7.c:gc [/home/bil/gtk-snd/snd]
+1,197,124,930  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+1,119,535,897  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+  911,248,552  clm.c:fir_8 [/home/bil/gtk-snd/snd]
+  907,717,563  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
+  885,250,720  ???:t2_32 [/home/bil/gtk-snd/snd]
+  877,841,154  clm.c:mus_formant_bank [/home/bil/gtk-snd/snd]
+  782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
+  710,561,239  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  693,360,038  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
+  616,598,228  io.c:mus_write_1 [/home/bil/gtk-snd/snd]
+  509,914,466  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
+  504,797,746  clm.c:mus_src_05 [/home/bil/gtk-snd/snd]
+  474,516,000  clm.c:mus_formant_bank_with_inputs [/home/bil/gtk-snd/snd]
+  465,869,828  clm.c:mus_src_20 [/home/bil/gtk-snd/snd]
+  449,626,156  ???:n1_64 [/home/bil/gtk-snd/snd]
+  446,218,353  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
+
 |#
 
 

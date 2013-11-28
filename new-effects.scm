@@ -2190,11 +2190,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
   "(effects-fp srf osamp osfrq beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
   (let* ((os (make-oscil osfrq))
 	 (sf (make-sampler beg))
-	 (sr (make-src :srate srf 
-		       :input (lambda (dir)
-				(if (> dir 0)
-				    (next-sample sf)
-				    (previous-sample sf)))))
+	 (sr (make-src :srate srf :input (lambda (dir) (read-sample-with-direction sf dir))))
 	 (len (or dur (frames snd chn)))
 	 (out-data (make-float-vector len)))
     (do ((i 0 (+ i 1)))

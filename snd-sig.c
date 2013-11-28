@@ -800,7 +800,15 @@ static mus_float_t src_input_as_needed(void *arg, int direction)
 }
 
 
-static src_state *make_src(mus_float_t srate, snd_fd *sf)
+static mus_float_t src_input_as_needed_unchanged(void *arg, int direction) 
+{
+  src_state *sr = (src_state *)arg;
+  sr->sample++;
+  return(read_sample(sr->sf));
+}
+
+
+static src_state *make_src(mus_float_t srate, snd_fd *sf, bool src_change)
 {
   src_state *sr;
   if ((sinc_width(ss) > MUS_MAX_CLM_SINC_WIDTH) ||
@@ -810,7 +818,9 @@ static src_state *make_src(mus_float_t srate, snd_fd *sf)
   sr = (src_state *)calloc(1, sizeof(src_state));
   sr->sf = sf;
   if (srate >= 0.0) sr->dir = 1; else sr->dir = -1;          /* if env on src, this will be 0.0 even if env vals are < 0.0 */
-  sr->gen = mus_make_src(&src_input_as_needed, srate, sinc_width(ss), (void *)sr);
+  if (src_change)
+    sr->gen = mus_make_src(&src_input_as_needed, srate, sinc_width(ss), (void *)sr);
+  else sr->gen = mus_make_src(&src_input_as_needed_unchanged, srate, sinc_width(ss), (void *)sr);
   mus_set_increment(sr->gen, srate);
   sr->sample = 0;
   return(sr);
@@ -869,7 +879,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
   sp = cp->sound;
   if (!(editable_p(cp))) return(NULL); /* edit hook result perhaps */
 
-  sr = make_src(ratio, sf);  /* ratio is 0.0 if egen because the envelope is the srate, but it's passed as the "sr-change" arg */
+  sr = make_src(ratio, sf, egen);  /* ratio is 0.0 if egen because the envelope is the srate, but it's passed as the "sr-change" arg */
   if ((egen) &&
       (mus_phase(egen) < 0.0))
     sr->dir = -1;
@@ -938,7 +948,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 	{
 	  for (k = 0; sr->sample < dur; k++) /* sr->sample tracks input location -- produce output until input exhausted */
 	    {
-	      idata[j] = ((mus_src(sr->gen, 0.0, &src_input_as_needed)));
+	      idata[j] = ((mus_src(sr->gen, 0.0, &src_input_as_needed_unchanged)));
 	      j++;
 	      if (j == MAX_BUFFER_SIZE)
 		{

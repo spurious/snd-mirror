@@ -116,5 +116,5 @@
       A)))
 
 
-;;; (define gen (make-moog-filter 500.0 .1))
-;;; (map-channel (lambda (y) (moog-filter gen y)))
+;;; (let ((gen (make-moog-filter 500.0 .1))) (map-channel (lambda (y) (moog-filter gen y))))
+

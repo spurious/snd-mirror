@@ -4135,7 +4135,7 @@ Here'a an example that adds trace and local variable info for debugging:
 &gt; (define (hi a) (let ((b 12)) (+ b a)))
 hi
 &gt; (procedure-annotate hi)
-#&lt;(lambda (a)&gt;
+#&lt;lambda (a)&gt;
 &gt; (let ((x 32)) (+ 1 (hi x)))
 45
 ;; printing: 

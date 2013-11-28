@@ -1300,7 +1300,7 @@ struct s7_scheme {
   /* these are the associated functions, not symbols */
   s7_pointer Vector_Set, String_Set, List_Set, Hash_Table_Set, Environment_Set; /* Cons (see the setter stuff at the end) */
 
-  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND, BAFFLE;
+  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND, BAFFLE, WITH_ENVIRONMENT;
   s7_pointer SET, QQ_List, QQ_Apply_Values, QQ_Append, Multivector;
   s7_pointer Apply, Vector;
   s7_pointer WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO, WTA1, WTA2, WTA3, WTA4, WTA5;
@@ -23453,27 +23453,30 @@ static void add_shared_ref(shared_info *ci, s7_pointer x, int ref_x)
   ci->refs[ci->top++] = ref_x;
 }
 
-static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top);
+static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top, bool stop_at_print_length);
 static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key);
 static s7_pointer hash_eq_func(s7_scheme *sc, s7_pointer table, s7_pointer key);
 
-static void collect_vector_info(s7_scheme *sc, shared_info *ci, s7_pointer top)
+static void collect_vector_info(s7_scheme *sc, shared_info *ci, s7_pointer top, bool stop_at_print_length)
 {
   int i, plen;
 
-  plen = s7_vector_print_length(sc); /* all stringification follows the print length */
-  if (plen > vector_length(top))
-    plen = vector_length(top);
-  
+  if (stop_at_print_length)
+    {
+      plen = s7_vector_print_length(sc); 
+      if (plen > vector_length(top))
+	plen = vector_length(top);
+    }
+  else plen = vector_length(top);
+
   for (i = 0; i < plen; i++)
     if (has_structure(vector_element(top, i)))
-      collect_shared_info(sc, ci, vector_element(top, i));
+      collect_shared_info(sc, ci, vector_element(top, i), stop_at_print_length);
 }
 
 
-static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top)
+static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top, bool stop_at_print_length)
 {
-  /* this only pertains to printing */
   int i;
   /* look for top in current list.
    * 
@@ -23514,13 +23517,13 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 	{
 	case T_PAIR:
 	  if (has_structure(car(top)))
-	    collect_shared_info(sc, ci, car(top));
+	    collect_shared_info(sc, ci, car(top), stop_at_print_length);
 	  if (has_structure(cdr(top)))
-	    collect_shared_info(sc, ci, cdr(top));
+	    collect_shared_info(sc, ci, cdr(top), stop_at_print_length);
 	  break;
 	  
 	case T_VECTOR:
-	  collect_vector_info(sc, ci, top);
+	  collect_vector_info(sc, ci, top, stop_at_print_length);
 	  break;
 	  
 	case T_HASH_TABLE:
@@ -23543,9 +23546,9 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 		  /* x is a cons, if hash_table_function(top) != hash_equal, we know car is ok */
 		  if ((!keys_safe) &&
 		      (has_structure(car(x))))
-		    collect_shared_info(sc, ci, car(x));
+		    collect_shared_info(sc, ci, car(x), stop_at_print_length);
 		  if (has_structure(cdr(x)))
-		    collect_shared_info(sc, ci, cdr(x));
+		    collect_shared_info(sc, ci, cdr(x), stop_at_print_length);
 		}
 	      s7_gc_unprotect_at(sc, gc_iter);
 	    }
@@ -23553,18 +23556,18 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 
 	case T_SLOT:
 	  if (has_structure(slot_value(top)))
-	    collect_shared_info(sc, ci, slot_value(top));
+	    collect_shared_info(sc, ci, slot_value(top), stop_at_print_length);
 	  break;
 
 	case T_ENVIRONMENT:
 	  if (top == sc->global_env)
-	    collect_vector_info(sc, ci, top);
+	    collect_vector_info(sc, ci, top, stop_at_print_length);
 	  else
 	    {
 	      s7_pointer p;
 	      for (p = environment_slots(top); is_slot(p); p = next_slot(p))
 		if (has_structure(slot_value(p)))
-		  collect_shared_info(sc, ci, slot_value(p));
+		  collect_shared_info(sc, ci, slot_value(p), stop_at_print_length);
 	    }
 	  break;
 	}	  
@@ -23596,7 +23599,7 @@ static shared_info *new_shared_info(s7_scheme *sc)
 }
 
 
-static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
+static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top, bool stop_at_print_length)
 {
   shared_info *ci;
   int i, refs;
@@ -23649,7 +23652,7 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
   ci = new_shared_info(sc);
 
   /* collect all pointers associated with top */
-  collect_shared_info(sc, ci, top);
+  collect_shared_info(sc, ci, top, stop_at_print_length);
 
   {
     int i;
@@ -24198,7 +24201,7 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
     }
 
   if ((use_write != USE_READABLE_WRITE) &&
-      (!to_file))
+      ((!to_file) || (port == sc->standard_output) || (port == sc->standard_error)))
     {
       int plen;
       plen = s7_vector_print_length(sc);
@@ -24990,7 +24993,7 @@ static s7_pointer write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer por
   if (has_structure(obj))
     {
       if (obj != sc->global_env)
-	ci = make_shared_info(sc, obj);
+	ci = make_shared_info(sc, obj, use_write != USE_READABLE_WRITE);
       if ((ci) &&
 	  (use_write == USE_READABLE_WRITE))
 	{
@@ -25018,7 +25021,7 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t 
   if (has_structure(obj))
     {
       if (obj != sc->global_env)
-	ci = make_shared_info(sc, obj);
+	ci = make_shared_info(sc, obj, use_write != USE_READABLE_WRITE);
       if ((ci) &&
 	  (use_write == USE_READABLE_WRITE))
 	{
@@ -25079,6 +25082,8 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
 	}
     }
   else port = sc->output_port;
+  /* hmmm: shouldn't (newline #t) be the same as (format #t "~%")?
+   */
   
   s7_newline(sc, port);
   return(sc->UNSPECIFIED);
@@ -25658,7 +25663,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 			(obj != sc->global_env))
 		      {
 			shared_info *ci = NULL;
-			ci = make_shared_info(sc, obj);
+			ci = make_shared_info(sc, obj, choice != USE_READABLE_WRITE);
 			if ((ci) &&
 			    (choice == USE_READABLE_WRITE))
 			  {
@@ -36942,7 +36947,7 @@ static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 	      int len;
 	      
 	      len = s7_list_length(sc, car(p));
-	      if (((s7_is_eq(caar(p), s7_make_symbol(sc, "if"))) &&
+	      if (((caar(p) == s7_make_symbol(sc, "if")) &&
 		   (len > 4)) ||
 		  /* some care is needed -- we can't risk autoloading the very same file we're complaining about! 
 		   *   so don't use unprotected SYMBOL_TO_VALUE or finder
@@ -36950,7 +36955,7 @@ static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 		  ((s7_is_defined(sc, symbol_name(caar(p)))) &&
 		   (s7_is_procedure(SYMBOL_TO_VALUE(sc, caar(p)))) &&
 		   (!s7_is_aritable(sc, SYMBOL_TO_VALUE(sc, caar(p)), len))) ||
-		  ((s7_is_eq(caar(p), s7_make_symbol(sc, "define"))) &&
+		  ((caar(p) == s7_make_symbol(sc, "define")) &&
 		   (is_pair(cdr(p))) &&
 		   (is_symbol(cadr(p))) &&
 		   (len > 3)))
@@ -37146,6 +37151,13 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 {
   #define H_apply "(apply func ...) applies func to the rest of the arguments"
 
+  /* can apply always be replaced with apply values?
+   *   (apply + '(1 2 3)) is the same as (+ (apply values '(1 2 3)))
+   * not if apply* in disguise, I think:
+   *   (apply + 1 2 ()) -> 3
+   *   (apply + 1 2 (apply values ())) -> error
+   */
+
   sc->code = car(args);
   if (is_null(cdr(args)))
     sc->args = sc->NIL;
@@ -37163,7 +37175,10 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 			    list_2(sc, 
 				   make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
 				   args)));
-	  cdr(q) = car(p);                       
+	  cdr(q) = car(p);   
+	  /* this would work: if (is_c_function(sc->code)) return(c_function_call(sc->code)(sc, cdr(args)));
+	   *   but it omits the arg number check 
+	   */
 	  push_stack(sc, OP_APPLY, cdr(args), sc->code);
 	  return(sc->NIL);
 	}
@@ -37207,6 +37222,10 @@ s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
 
 s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form, s7_pointer e)
 {
+  /* nothing here is easy to optimize:
+      101756: (let ((env-val (env amp-env))) (set! (mus-xcoeff flt 0) env-val) (set!...
+      etc
+  */
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
   sc->code = form;
   if ((e != sc->global_env) &&
@@ -42651,7 +42670,7 @@ static void opt_generator(s7_scheme *sc, s7_pointer func, s7_pointer car_x, int 
       (is_optimized(car(body))) &&
       (optimize_data(car(body)) == HOP_SAFE_C_SQS))
     {
-      if ((caadr(body) == make_symbol(sc, "with-environment")) &&
+      if ((caadr(body) == sc->WITH_ENVIRONMENT) &&
 	  (is_symbol(cadr(cadr(body)))) &&
 	  (cadr(cadr(body)) == car(closure_args(func))) &&
 	  (cadddr(car(body)) == caadr(closure_args(func))))
@@ -45191,7 +45210,7 @@ static s7_pointer g_unoptimize(s7_scheme *sc, s7_pointer args)
   s7_pointer code;
   code = car(args);
 
-  if (make_shared_info(sc, code) != NULL)                      /* if not null, we found a cycle */
+  if (make_shared_info(sc, code, false) != NULL)                /* if not null, we found a cycle */
     return(wrong_type_argument_with_type(sc, sc->UNOPTIMIZE, small_int(1), code, A_PROPER_LIST));
 
   return(s7_unoptimize(sc, tree_copy(sc, code)));
@@ -67284,9 +67303,10 @@ s7_scheme *s7_init(void)
   sc->SAFE_DO =               assign_internal_syntax(sc, "do",      OP_SAFE_DO);
   sc->DOX =                   assign_internal_syntax(sc, "do",      OP_DOX);
 
-  sc->LAMBDA =      make_symbol(sc, "lambda");
-  sc->LAMBDA_STAR = make_symbol(sc, "lambda*");
-  sc->QUOTE =       make_symbol(sc, "quote");
+  sc->LAMBDA =           make_symbol(sc, "lambda");
+  sc->LAMBDA_STAR =      make_symbol(sc, "lambda*");
+  sc->QUOTE =            make_symbol(sc, "quote");
+  sc->WITH_ENVIRONMENT = make_symbol(sc, "with-environment");
 
 #if WITH_IMMUTABLE_UNQUOTE
   /* unquote has no value, so it has to be the symbol for quasiquote */
@@ -68414,11 +68434,11 @@ int main(int argc, char **argv)
 /*
  * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7|  14.2 14.3
  * bench    42736|  8752 8051 7725 6515 5194 4364 3989 3997|  4220
- * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725
+ * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725 1659
  * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995
  * t455|6     265|    89   55   31   14   14    9    9    9|   7.4
  * lat        229|    63   52   47   42   40   34   31   29|    29
- * t502        90|    43   39   36   29   23   20   14   14|  14.5
+ * t502        90|    43   39   36   29   23   20   14   14|  14.5 
  * calls         |   275  207  175  115   89   71   53   53|    54 53.7
  */
 
@@ -68436,11 +68456,13 @@ int main(int argc, char **argv)
  * ash 1/-1 and divide 2 [or ash_si where i is known to be in bounds and int, also (ash 1 s) happens]
  * fft code wants set_pair_c_[s_]opvsq[_s] (fv->fv) [need direct case if real]
  * could the fm case be tracked into all 1's?
- * with-environment* gen (syms) body -- if sqs+with-env_s -> sqs_with_env_s or pop and jump ca 35? or in lambda opt -- save 2 push/pop+lookup+type
- *  other closures could also be direct -- as if an op, not a call
- * test (s7test) make-float-vector
- * TODO: non-vector print out no len check if no-gui/stdout?
- * TODO: doc/test read-sample-with-direction, and look for other cases (dir=1, set dir, etc)
+ * other closures could also be direct -- as if an op, not a call -- but which is worth the code?
+ *  or perhaps use dox-env slots instead of arg lookups?
+ * TODO: snd-test read-sample-with-direction
+ * TODO: safe_sz|zs (etc) should be sa|as if possible but does this affect others?  (see zz->all_x -- this could be done in the combiner I think)
+ *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc
+ *   then multiply chooser sees (* s (g_oscil_two...)) and should somehow to this without the intervening make_real
+ *   next level up is (+ (*...) (*...))
  */
 
 /* 

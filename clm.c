@@ -12213,13 +12213,14 @@ typedef struct {
 } sr;
 
 
-#define SRC_SINC_DENSITY 1000
+#define SRC_SINC_DENSITY 2000
 #define SRC_SINC_WIDTH 10
+#define SRC_SINC_WINDOW_SIZE 8000
 
 static mus_float_t **sinc_tables = NULL;
 static int *sinc_widths = NULL;
 static int sincs = 0;
-static mus_float_t *sinc = NULL;
+static mus_float_t *sinc = NULL, *sinc_window = NULL;
 static int sinc_size = 0;
 
 void mus_clear_sinc_tables(void)
@@ -12232,6 +12233,9 @@ void mus_clear_sinc_tables(void)
 	  free(sinc_tables[i]);
       free(sinc_tables);
       sinc_tables = NULL;
+      
+      free(sinc_window);
+      sinc_window = NULL;
       free(sinc_widths);
       sinc_widths = NULL;
       sincs = 0;
@@ -12239,7 +12243,7 @@ void mus_clear_sinc_tables(void)
 }
 
 
-static mus_float_t *init_sinc_table(int width)
+static int init_sinc_table(int width)
 {
   int i, size, padded_size, loc;
   mus_float_t win_freq, win_phase;
@@ -12267,10 +12271,16 @@ static mus_float_t *init_sinc_table(int width)
 
   for (i = 0; i < sincs; i++)
     if (sinc_widths[i] == width)
-      return(sinc_tables[i]);
+      return(i);
 
   if (sincs == 0)
     {
+      mus_float_t ph, incr;
+      incr = M_PI / SRC_SINC_WINDOW_SIZE;
+      sinc_window = (mus_float_t *)calloc(SRC_SINC_WINDOW_SIZE + 16, sizeof(mus_float_t));
+      for (i = 0, ph = 0.0; i < SRC_SINC_WINDOW_SIZE; i++, ph += incr) 
+	sinc_window[i] = 1.0 + cos(ph);
+
       sinc_tables = (mus_float_t **)calloc(8, sizeof(mus_float_t *));
       sinc_widths = (int *)calloc(8, sizeof(int));
       sincs = 8;
@@ -12302,15 +12312,20 @@ static mus_float_t *init_sinc_table(int width)
   sinc_widths[loc] = width;
   size = width * SRC_SINC_DENSITY;
   padded_size = size + 4;
-  win_freq = M_PI / (mus_float_t)size;
+  win_freq = (mus_float_t)SRC_SINC_WINDOW_SIZE / (mus_float_t)size;
 
-  sinc_tables[loc] = (mus_float_t *)calloc(padded_size, sizeof(mus_float_t));
-  sinc_tables[loc][0] = 1.0;
+  sinc_tables[loc] = (mus_float_t *)calloc(padded_size * 2, sizeof(mus_float_t));
+  sinc_tables[loc][0 + padded_size] = 1.0;
 
   for (i = 1, win_phase = win_freq; i < padded_size; i++, win_phase += win_freq)
-    sinc_tables[loc][i] = sinc[i] * (1.0 + cos(win_phase));
+    {
+      mus_float_t val;
+      val = sinc[i] * sinc_window[(int)win_phase];
+      sinc_tables[loc][padded_size + i] = val;
+      sinc_tables[loc][padded_size - i] = val;
+    }
 
-  return(sinc_tables[loc]);
+  return(loc);
 }
 
 
@@ -12403,6 +12418,9 @@ static mus_any_class SRC_CLASS = {
 
 mus_any *mus_make_src_with_init(mus_float_t (*input)(void *arg, int direction), mus_float_t srate, int width, void *closure, void (*init)(void *p, mus_any *g))
 {
+  /* besides 1, 2, .5, other common cases: 1.5, 3
+   */
+
   if (fabs(srate) > MUS_MAX_CLM_SRC)
     mus_error(MUS_ARG_OUT_OF_RANGE, S_make_src " srate arg invalid: %f", srate);
   else
@@ -12412,12 +12430,15 @@ mus_any *mus_make_src_with_init(mus_float_t (*input)(void *arg, int direction), 
       else
 	{
 	  sr *srp;
-	  int wid;
+	  int wid, loc;
 
 	  if (width <= 0) width = SRC_SINC_WIDTH;
 	  if (width < (int)(fabs(srate) * 2))
 	    wid = (int)(ceil(fabs(srate)) * 2); 
 	  else wid = width;
+	  if ((srate == 2.0) &&
+	      ((wid & 1) != 0))
+	    wid++;
 
 	  srp = (sr *)calloc(1, sizeof(sr));
 	  srp->core = &SRC_CLASS;
@@ -12431,7 +12452,8 @@ mus_any *mus_make_src_with_init(mus_float_t (*input)(void *arg, int direction), 
 	  srp->len = wid * SRC_SINC_DENSITY;
 	  srp->width_1 = 1.0 - wid;
 	  srp->data = (mus_float_t *)calloc(srp->lim + 1, sizeof(mus_float_t));
-	  srp->sinc_table = init_sinc_table(wid);
+	  loc = init_sinc_table(wid);
+	  srp->sinc_table = sinc_tables[loc];
 	  srp->coeffs = NULL;
 
 	  if (init)
@@ -12460,7 +12482,7 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
 {
   sr *srp = (sr *)srptr;
   mus_float_t sum = 0.0, x, zf, srx, factor;
-  int lim, i, loc, xi, xs, mid, stop;
+  int lim, i, loc, xi, xs, stop;
   bool int_ok = false;
 
   lim = srp->lim;
@@ -12489,7 +12511,7 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
 	  srp->data[loc++] = srp->feeder(srp->closure, dir);
 	  if (loc == lim) loc = 0;
 	}
-      srp->start = loc; /* next time araound we start here */
+      srp->start = loc; /* next time around we start here */
     }
 
   /* now loc = beginning of data */
@@ -12518,55 +12540,29 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
   if (int_ok)
     {
       /* unrolled is slower here */
+      int sinc_loc, sinc_incr;
 
       xs = (int)(zf * (srp->width_1 - srp->x));
-      mid = loc - (xs / xi) + 1;
-      if (mid > lim) mid -= lim;
+      sinc_loc = xs + srp->width * SRC_SINC_DENSITY + 4;
+      sinc_incr = xi;
 
-      /* pulling out these srp's makes no difference according to valgrind */
-      if (loc > mid)
-	{
-	  for (; loc < lim; loc++, xs += xi)
-	    sum += (srp->data[loc] * srp->sinc_table[-xs]);
-	  for (loc = 0; loc < mid; loc++, xs += xi)
-	    sum += (srp->data[loc] * srp->sinc_table[-xs]);
-	  for (; loc < stop; loc++, xs += xi)
-	    sum += (srp->data[loc] * srp->sinc_table[xs]);
-	}
-      else
-	{
-	  for (; loc < mid; loc++, xs += xi)
-	    sum += (srp->data[loc] * srp->sinc_table[-xs]);
-	  for (; loc < lim; loc++, xs += xi)
-	    sum += (srp->data[loc] * srp->sinc_table[xs]);
-	  for (loc = 0; loc < stop; loc++, xs += xi)
-	    sum += (srp->data[loc] * srp->sinc_table[xs]);
-	}
+      for (; loc < lim; loc++, sinc_loc += sinc_incr)
+	sum += (srp->data[loc] * srp->sinc_table[sinc_loc]);
+      for (loc = 0; loc < stop; loc++, sinc_loc += sinc_incr)
+	sum += (srp->data[loc] * srp->sinc_table[sinc_loc]);
     }
   else
     {
-      x = zf * (srp->width_1 - srp->x);
-      mid = loc - (x / zf) + 1;
-      if (mid > lim) mid -= lim;
+      mus_float_t sinc_loc, sinc_incr;
 
-      if (loc > mid)
-	{
-	  for (; loc < lim; loc++, x += zf)
-	    sum += (srp->data[loc] * srp->sinc_table[(int)(-x)]);
-	  for (loc = 0; loc < mid; loc++, x += zf)
-	    sum += (srp->data[loc] * srp->sinc_table[(int)(-x)]);
-	  for (; loc < stop; loc++, x += zf)
-	    sum += (srp->data[loc] * srp->sinc_table[(int)x]);
-	}
-      else
-	{
-	  for (; loc < mid; loc++, x += zf)
-	    sum += (srp->data[loc] * srp->sinc_table[(int)(-x)]);
-	  for (; loc < lim; loc++, x += zf)
-	    sum += (srp->data[loc] * srp->sinc_table[(int)x]);
-	  for (loc = 0; loc < stop; loc++, x += zf)
-	    sum += (srp->data[loc] * srp->sinc_table[(int)x]);
-	}
+      x = zf * (srp->width_1 - srp->x);
+      sinc_loc = x + srp->width * SRC_SINC_DENSITY + 4;
+      sinc_incr = zf;
+
+      for (; loc < lim; loc++, sinc_loc += sinc_incr)
+	sum += (srp->data[loc] * srp->sinc_table[(int)sinc_loc]);
+      for (loc = 0; loc < stop; loc++, sinc_loc += sinc_incr)
+	sum += (srp->data[loc] * srp->sinc_table[(int)sinc_loc]);
     }
 
   srp->x += srx;
@@ -12601,7 +12597,7 @@ mus_float_t mus_src_20(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
       srp->start = loc;
       i = srp->start + srp->width - 1;
       if (i >= lim) i -= lim;
-      sum = srp->data[i];
+      sum = srp->data[i]; 
 
       if (srp->start == lim)
 	srp->start = 0;
@@ -12615,16 +12611,12 @@ mus_float_t mus_src_20(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
       sum = srp->data[srp->width - 1];
 
       srp->coeffs = (mus_float_t *)malloc(lim * sizeof(mus_float_t));
-      xs = (int)((SRC_SINC_DENSITY / 2) * (1 - srp->width));
-      xi = SRC_SINC_DENSITY;
+      if ((srp->width & 1) != 0)
+	xs = (int)((2 + srp->width) * (SRC_SINC_DENSITY / 2)) + 4; /* Humph -- looks like crap -- maybe if odd width use the real one above, or insist on even width */
+      else xs = (int)((1 + srp->width) * (SRC_SINC_DENSITY / 2)) + 4;
+      xi = SRC_SINC_DENSITY; /* skip a location (coeff=0.0) */
       for (i = 0; i < srp->width; i++, xs += xi)
-	{
-	  /* sinc_table is srp->width * SRC_SINC_DENSITY + 4 in length 
-	   */
-	  if (xs < 0)
-	    srp->coeffs[i] = srp->sinc_table[-xs];
-	  else srp->coeffs[i] = srp->sinc_table[xs];
-	}
+	srp->coeffs[i] = srp->sinc_table[xs];
     }
 
   stop = loc;
@@ -12685,15 +12677,12 @@ mus_float_t mus_src_05(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
 	  /* first sample */
 	  int xs, xi;
 	  srp->coeffs = (mus_float_t *)malloc(lim * sizeof(mus_float_t));
-	  xs = (int)(SRC_SINC_DENSITY * (0.5 - srp->width)); 
+
+	  xs = (SRC_SINC_DENSITY / 2) + 4;
 	  xi = SRC_SINC_DENSITY;
 	  for (i = 0; i < lim; i++, xs += xi)
-	    {
-	      if (xs < 0)
-		srp->coeffs[i] = srp->sinc_table[-xs];
-	      else srp->coeffs[i] = srp->sinc_table[xs];
-	    }
-	  
+	    srp->coeffs[i] = srp->sinc_table[xs];
+
 	  srp->x = 0.5;
 	  return(srp->data[srp->width - 1]);
 	}
