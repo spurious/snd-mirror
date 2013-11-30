@@ -196,6 +196,7 @@
 #define S_mus_channels               "mus-channels"
 #define S_mus_chebyshev_first_kind   "mus-chebyshev-first-kind"
 #define S_mus_chebyshev_second_kind  "mus-chebyshev-second-kind"
+#define S_mus_chebyshev_both_kinds   "mus-chebyshev-both-kinds"
 #define S_mus_chebyshev_t_sum        "mus-chebyshev-t-sum"
 #define S_mus_chebyshev_tu_sum       "mus-chebyshev-tu-sum"
 #define S_mus_chebyshev_u_sum        "mus-chebyshev-u-sum"

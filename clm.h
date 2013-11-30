@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 16
-#define MUS_DATE "11-Oct-13"
+#define MUS_REVISION 17
+#define MUS_DATE "29-Nov-13"
 
 /* isn't mus_env_interp backwards? */
 
@@ -47,7 +47,7 @@ typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PAR
 	      MUS_NUM_FFT_WINDOWS} mus_fft_window_t;
 
 typedef enum {MUS_SPECTRUM_IN_DB, MUS_SPECTRUM_NORMALIZED, MUS_SPECTRUM_RAW} mus_spectrum_t;
-typedef enum {MUS_CHEBYSHEV_EITHER_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV_SECOND_KIND} mus_polynomial_t;
+typedef enum {MUS_CHEBYSHEV_EITHER_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV_SECOND_KIND, MUS_CHEBYSHEV_BOTH_KINDS} mus_polynomial_t;
 
 #define MUS_MAX_CLM_SINC_WIDTH 65536
 #define MUS_MAX_CLM_SRC 65536.0
@@ -378,6 +378,7 @@ MUS_EXPORT mus_float_t mus_polyshape_unmodulated(mus_any *ptr, mus_float_t index
 MUS_EXPORT bool mus_polyshape_p(mus_any *ptr);
 
 MUS_EXPORT mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, int cheby_choice);
+MUS_EXPORT mus_any *mus_make_polywave_tu(mus_float_t frequency, mus_float_t *tcoeffs, mus_float_t *ucoeffs, int n);
 MUS_EXPORT bool mus_polywave_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_polywave_unmodulated(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_polywave(mus_any *ptr, mus_float_t fm);
@@ -598,6 +599,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 29-Nov:     mus_make_polywave_tu.
  * 11-Oct:     mus_vector_to_file, mus_vector_mix.
  * 19-Apr:     rxyk!cos and rxyk!sin from generators.scm.
  * 11-Apr:     mus_tap_p as a better name for mus_delay_line_p.

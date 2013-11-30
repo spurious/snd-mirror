@@ -46492,31 +46492,29 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   444,970,752  io.c:mus_write_1 [/home/bil/snd-14/snd]
   428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-14/snd]
  
-25-Nov-13:
-53,732,514,142
-6,687,811,527  s7.c:eval [/home/bil/gtk-snd/snd]
-6,500,914,167  ???:sin [/lib64/libm-2.12.so]
-2,501,134,784  ???:cos [/lib64/libm-2.12.so]
-2,416,827,893  clm.c:mus_src [/home/bil/gtk-snd/snd]
-2,280,386,522  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
-1,417,170,736  s7.c:gc [/home/bil/gtk-snd/snd]
-1,197,124,930  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-1,119,535,897  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+29-Nov-13:
+53,079,290,791
+6,515,918,002  ???:sin [/lib64/libm-2.12.so]
+6,510,754,591  s7.c:eval [/home/bil/gtk-snd/snd]
+2,452,645,842  clm.c:mus_src [/home/bil/gtk-snd/snd]
+2,434,247,803  ???:cos [/lib64/libm-2.12.so]
+2,239,789,149  s7.c:find_symbol_or_bust [/home/bil/gtk-snd/snd]
+1,402,005,049  s7.c:gc [/home/bil/gtk-snd/snd]
+1,148,507,174  s7.c:eval'2 [/home/bil/gtk-snd/snd]
+1,119,510,322  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
+  938,357,621  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
   911,248,552  clm.c:fir_8 [/home/bil/gtk-snd/snd]
-  907,717,563  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  885,250,720  ???:t2_32 [/home/bil/gtk-snd/snd]
+  899,283,768  ???:t2_32 [/home/bil/gtk-snd/snd]
   877,841,154  clm.c:mus_formant_bank [/home/bil/gtk-snd/snd]
-  782,153,720  ???:t2_64 [/home/bil/gtk-snd/snd]
-  710,561,239  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
+  781,643,274  ???:t2_64 [/home/bil/gtk-snd/snd]
+  743,890,413  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
   693,360,038  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
-  616,598,228  io.c:mus_write_1 [/home/bil/gtk-snd/snd]
-  509,914,466  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
-  504,797,746  clm.c:mus_src_05 [/home/bil/gtk-snd/snd]
+  615,386,775  io.c:mus_write_1 [/home/bil/gtk-snd/snd]
+  502,160,057  s7.c:s7_make_real [/home/bil/gtk-snd/snd]
   474,516,000  clm.c:mus_formant_bank_with_inputs [/home/bil/gtk-snd/snd]
-  465,869,828  clm.c:mus_src_20 [/home/bil/gtk-snd/snd]
-  449,626,156  ???:n1_64 [/home/bil/gtk-snd/snd]
+  454,205,360  ???:n1_64 [/home/bil/gtk-snd/snd]
   446,218,353  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-
+ 
 |#
 
 

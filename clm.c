@@ -3021,7 +3021,7 @@ mus_float_t *mus_normalize_partials(int num_partials, mus_float_t *partials)
 typedef struct {
   mus_any_class *core;
   double phase, freq;
-  mus_float_t *coeffs;
+  mus_float_t *coeffs, *ucoeffs;
   int n, cheby_choice;
   mus_float_t index;
   mus_float_t (*polyw)(mus_any *ptr, mus_float_t fm);
@@ -3073,7 +3073,14 @@ static mus_long_t pw_n(mus_any *ptr) {return(((pw *)ptr)->n);}
 static mus_long_t pw_set_n(mus_any *ptr, mus_long_t val) {((pw *)ptr)->n = (int)val; return(val);}
 
 static mus_float_t *pw_data(mus_any *ptr) {return(((pw *)ptr)->coeffs);}
+static mus_float_t *pw_udata(mus_any *ptr) {return(((pw *)ptr)->ucoeffs);}
 static mus_float_t *pw_set_data(mus_any *ptr, mus_float_t *val) {((pw *)ptr)->coeffs = val; return(val);}
+
+static mus_float_t pw_xcoeff(mus_any *ptr, int index) {return(((pw *)ptr)->coeffs[index]);}
+static mus_float_t pw_set_xcoeff(mus_any *ptr, int index, mus_float_t val) {((pw *)ptr)->coeffs[index] = val; return(val);}
+
+static mus_float_t pw_ycoeff(mus_any *ptr, int index) {return(((pw *)ptr)->ucoeffs[index]);}
+static mus_float_t pw_set_ycoeff(mus_any *ptr, int index, mus_float_t val) {((pw *)ptr)->ucoeffs[index] = val; return(val);}
 
 static mus_float_t pw_index(mus_any *ptr) {return(((pw *)ptr)->index);}
 static mus_float_t pw_set_index(mus_any *ptr, mus_float_t val) {((pw *)ptr)->index = val; return(val);}
@@ -3524,6 +3531,16 @@ static mus_float_t polyw_second_5(mus_any *ptr, mus_float_t fm)
 }
 
 
+static mus_float_t polyw_third(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  mus_float_t ph;
+  ph = gen->phase;
+  gen->phase += (gen->freq + fm);
+  return(mus_chebyshev_tu_sum(ph, gen->n, gen->coeffs, gen->ucoeffs));
+}
+
+
 mus_float_t mus_polywave(mus_any *ptr, mus_float_t fm)
 {
   /* changed to use recursion, rather than polynomial in x, 25-May-08
@@ -3592,10 +3609,13 @@ static mus_any_class POLYWAVE_CLASS = {
   &run_polywave,
   MUS_NOT_SPECIAL, 
   NULL, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0,  
+  &pw_xcoeff, &pw_set_xcoeff,
+  0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0,
   &pw_choice,
-  0, 0, 0, 0, 0,
+  &pw_ycoeff, &pw_set_ycoeff,
+  &pw_data, &pw_udata, 0, 
   &pw_reset,
   0
 };
@@ -3687,6 +3707,23 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
 	}
       else gen->polyw = polyw_second;
     }
+  return((mus_any *)gen);
+}
+
+
+mus_any *mus_make_polywave_tu(mus_float_t frequency, mus_float_t *tcoeffs, mus_float_t *ucoeffs, int n)
+{
+  pw *gen;
+  gen = (pw *)calloc(1, sizeof(pw));
+  gen->core = &POLYWAVE_CLASS;
+  gen->phase = 0.0; /* cos used in cheby funcs above */
+  gen->freq = mus_hz_to_radians(frequency);
+  gen->coeffs = tcoeffs;
+  gen->ucoeffs = ucoeffs;
+  gen->n = n;
+  gen->index = 1.0;
+  gen->cheby_choice = MUS_CHEBYSHEV_BOTH_KINDS;
+  gen->polyw = polyw_third;
   return((mus_any *)gen);
 }
 

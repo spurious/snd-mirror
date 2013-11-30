@@ -5398,6 +5398,9 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;;
 ;;; polyoid -- Tn + Un to get arbitrary initial-phases
 
+#|
+;;; old form, now replaced by built-in code (clm.c)
+
 (defgenerator (polyoid
 	       :make-wrapper (lambda (g)
 			       (let* ((lst (g 'partial-amps-and-phases))
@@ -5448,6 +5451,32 @@ index 10 (so 10/2 is the bes-jn arg):
     (let ((x angle))
       (set! angle (+ angle fm frequency))
       (mus-chebyshev-tu-sum x tn un))))
+|#
+
+(define polyoid polywave)
+(define (polyoid? g) (and (polywave? g) (= (mus-channel g) mus-chebyshev-both-kinds)))
+(define polyoid-tn mus-xcoeffs)
+(define polyoid-un mus-ycoeffs)
+
+(define* (make-polyoid (frequency *clm-default-frequency*) partial-amps-and-phases)
+  (let* ((lst partial-amps-and-phases)
+	 (len (length lst))
+	 (topk (let ((n 0))
+		 (do ((i 0 (+ i 3)))
+		     ((>= i len))
+		   (set! n (max n (floor (lst i)))))
+		 n))
+	 (sin-amps (make-float-vector (+ topk 1) 0.0))
+	 (cos-amps (make-float-vector (+ topk 1) 0.0)))
+    (do ((j 0 (+ j 3)))
+	((>= j len))
+      (let ((n (floor (lst j)))
+	    (amp (lst (+ j 1)))
+	    (phase (lst (+ j 2))))
+	(if (> n 0)                                   ; constant only applies to cos side
+	    (set! (sin-amps n) (* amp (cos phase))))
+	(set! (cos-amps n) (* amp (sin phase)))))
+    (make-polywave frequency :xcoeffs cos-amps :ycoeffs sin-amps)))
 
 
 (define (polyoid-env gen fm amps phases)

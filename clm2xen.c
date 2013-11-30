@@ -2033,8 +2033,13 @@ static XEN g_mus_xcoeffs(XEN gen)
   ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
   if (ms) 
     {
-      if ((ms->vcts) && (ms->nvcts > G_FILTER_XCOEFFS))
-	return(ms->vcts[G_FILTER_XCOEFFS]); 
+      if (ms->vcts)
+	{
+	  if (mus_polywave_p(XEN_TO_MUS_ANY(gen)))
+	    return(ms->vcts[0]);
+	  if (ms->nvcts > G_FILTER_XCOEFFS)
+	    return(ms->vcts[G_FILTER_XCOEFFS]); 
+	}
       /* no wrapper -- locsig/ssb-am, all smpflts have xcoeffs, latter have ycoeffs, but how to get array size? */
       return(XEN_FALSE);
     }
@@ -2059,8 +2064,13 @@ static XEN g_mus_ycoeffs(XEN gen)
   ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
   if (ms) 
     {
-      if ((ms->vcts) && (ms->nvcts > G_FILTER_YCOEFFS))
-	return(ms->vcts[G_FILTER_YCOEFFS]); 
+      if (ms->vcts)
+	{
+	  if ((mus_polywave_p(XEN_TO_MUS_ANY(gen))) && (ms->nvcts == 2))
+	    return(ms->vcts[1]);
+	  if (ms->nvcts > G_FILTER_YCOEFFS)
+	    return(ms->vcts[G_FILTER_YCOEFFS]);
+	}
       return(XEN_FALSE);
     }
 #if HAVE_SCHEME
@@ -5981,25 +5991,28 @@ static XEN g_polywave_p(XEN obj)
 
 static XEN g_make_polywave(XEN arglist)
 {
-  #define H_make_polywave "(" S_make_polywave " (frequency *clm-default-frequency*) (partials '(1 1)) (type " S_mus_chebyshev_first_kind ")): \
+  #define H_make_polywave "(" S_make_polywave " (frequency *clm-default-frequency*) (partials '(1 1)) (type " S_mus_chebyshev_first_kind " xcoeffs ycoeffs): \
 return a new polynomial-based waveshaping generator.  (" S_make_polywave " :partials (vct 1 1.0)) is the same in effect as " S_make_oscil "."
 
   mus_any *ge;
   XEN args[MAX_ARGLIST_LEN]; 
   int arglist_len;
-  XEN keys[3];
-  int orig_arg[3] = {0, 0, 0};
+  XEN keys[5];
+  int orig_arg[5] = {0, 0, 0, 0, 0};
   int i, type, vals, n = 0, npartials = 0;
-  XEN orig_v = XEN_FALSE;
+  XEN orig_x = XEN_FALSE, orig_y = XEN_FALSE;
   mus_float_t freq; 
-  mus_float_t *coeffs = NULL, *partials = NULL;
+  mus_float_t *xcoeffs = NULL, *ycoeffs = NULL, *partials = NULL;
   mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND;
+  int error = NO_PROBLEM_IN_LIST;
 
   freq = clm_default_frequency;
 
   keys[0] = kw_frequency;
   keys[1] = kw_partials;
   keys[2] = kw_type;
+  keys[3] = kw_x_coeffs;
+  keys[4] = kw_y_coeffs;
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
@@ -6008,7 +6021,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
 
-  vals = mus_optkey_unscramble(S_make_polywave, 3, keys, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_polywave, 5, keys, args, orig_arg);
   if (vals > 0)
     {
       freq = mus_optkey_to_float(keys[0], S_make_polywave, orig_arg[0], freq);
@@ -6017,13 +6030,12 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 
       type = mus_optkey_to_int(keys[2], S_make_polywave, orig_arg[2], (int)kind);
       if ((type >= MUS_CHEBYSHEV_EITHER_KIND) && 
-	  (type <= MUS_CHEBYSHEV_SECOND_KIND))
+	  (type <= MUS_CHEBYSHEV_BOTH_KINDS))
 	kind = (mus_polynomial_t)type;
       else XEN_OUT_OF_RANGE_ERROR(S_make_polywave, orig_arg[2], keys[2], "unknown Chebyshev polynomial kind");
 
-      if (!(XEN_KEYWORD_P(keys[1])))
+      if (!(XEN_KEYWORD_P(keys[1]))) /* partials were supplied */
 	{
-	  int error = NO_PROBLEM_IN_LIST;
 	  if (MUS_VCT_P(keys[1]))
 	    partials = mus_vct_to_partials(XEN_TO_VCT(keys[1]), &npartials, &error);
 	  else
@@ -6036,33 +6048,56 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 		  partials = list_to_partials(keys[1], &npartials, &error);
 		}
 	    }
-	  if (partials == NULL)
+	  if (partials == NULL) /* here if null, something went wrong in the translation functions */
 	    XEN_ERROR(NO_DATA, 
 		      XEN_LIST_3(C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
 				 C_TO_XEN_STRING(S_make_polywave), 
 				 keys[1]));
 
-	  coeffs = partials;
+	  xcoeffs = partials;
 	  n = npartials;
-	  /* coeffs = partials here, so don't delete */ 
+	  orig_x = xen_make_vct(n, xcoeffs);
+	  /* xcoeffs = partials here, so don't delete */ 
 	}
+
+      if (!(XEN_KEYWORD_P(keys[3])))
+        {
+	  XEN_ASSERT_TYPE(MUS_VCT_P(keys[3]), keys[3], orig_arg[3], S_make_polywave, "a vct");
+	  orig_x = XEN_TO_VCT(keys[3]);
+	  n = mus_vct_length(orig_x);
+	  xcoeffs = mus_vct_data(orig_x);
+        }
+      
+      if (!(XEN_KEYWORD_P(keys[4])))
+	{
+	  XEN_ASSERT_TYPE(MUS_VCT_P(keys[4]), keys[4], orig_arg[4], S_make_polywave, "a vct");
+	  orig_y = XEN_TO_VCT(keys[4]);
+	  n = mus_vct_length(orig_y);
+	  ycoeffs = mus_vct_data(orig_y);
+	}
+      /* TODO: various error checks, doc new args, test gc etc */
     }
 
-  if (!coeffs)
+  if (!xcoeffs)
     {
       /* clm.html says '(1 1) is the default but table-lookup is 0? */
       mus_float_t *data;
       data = (mus_float_t *)calloc(2, sizeof(mus_float_t));
       data[0] = 0.0;
       data[1] = 1.0;
-      coeffs = data;
+      xcoeffs = data;
       n = 2; 
+      orig_x = xen_make_vct(n, xcoeffs);
     }
-  orig_v = xen_make_vct(n, coeffs);
-  /* n is usually 5 (fm-violin) */
 
-  ge = mus_make_polywave(freq, coeffs, n, kind);
-  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
+
+  if (ycoeffs)
+    {
+      ge = mus_make_polywave_tu(freq, xcoeffs, ycoeffs, n);
+      if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_two_vcts(ge, orig_x, orig_y)));
+    }
+  ge = mus_make_polywave(freq, xcoeffs, n, kind);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_x)));
   return(XEN_FALSE);
 }
 
@@ -18842,6 +18877,7 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_CONSTANT(S_mus_chebyshev_first_kind,  MUS_CHEBYSHEV_FIRST_KIND,  "Chebyshev polynomial of first kind, for " S_partials_to_polynomial);
   XEN_DEFINE_CONSTANT(S_mus_chebyshev_second_kind, MUS_CHEBYSHEV_SECOND_KIND, "Chebyshev polynomial of second kind, for " S_partials_to_polynomial);
+  XEN_DEFINE_CONSTANT(S_mus_chebyshev_both_kinds,  MUS_CHEBYSHEV_BOTH_KINDS,  "use both Chebyshev polynomials in polywave");
 
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_describe,       g_mus_describe_w,  1, 0, 0,  H_mus_describe);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_file_name, g_mus_file_name_w, 1, 0, 0,  H_mus_file_name);

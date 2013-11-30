@@ -430,7 +430,7 @@ enum {OP_NO_OP,
       OP_SIMPLE_DO_A, OP_SIMPLE_DO_STEP_A,
       OP_SAFE_IF_Z_Z_1, OP_SAFE_IF_CC_X_P, OP_SAFE_IF_CC_P_P, 
       OP_SAFE_IF_CS_P_P, OP_SAFE_IF_CS_X_P, OP_SAFE_IF_IS_NULL_S_P, OP_SAFE_IF_CC_P, OP_SAFE_IF_CS_P, OP_SAFE_IF_CS_P_X, OP_SAFE_IF_IS_NULL_Q_P,
-      OP_SAFE_IF_CSS_X_P, OP_SAFE_IF_CSC_X_P, OP_SAFE_IF_CSC_X_O_A,
+      OP_SAFE_IF_CSS_X_P, OP_SAFE_IF_CSC_X_P, OP_SAFE_IF_CSC_X_O_A, OP_SAFE_IF_CSC_X_T,
       OP_SAFE_IF_CSQ_P, OP_SAFE_IF_CSQ_P_P, OP_SAFE_IF_CSS_P, OP_SAFE_IF_CSS_P_P, OP_SAFE_IF_CSC_P, OP_SAFE_IF_CSC_P_P, 
       OP_SAFE_IF_IS_PAIR_P, OP_SAFE_IF_IS_PAIR_P_X, OP_SAFE_IF_IS_PAIR_P_P, OP_SAFE_IF_C_SS_P,
       OP_SAFE_IF_IS_SYMBOL_P, OP_SAFE_IF_IS_SYMBOL_P_P, 
@@ -527,7 +527,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "do", "do", "do", "do", "do",
    "do", "do", "do",
    "do", "do", "do",
-   "if", "if", "if", 
+   "if", "if", "if", "if",
    "if", "if", "if", "if", "if", "if",
    "if", "if", "if",
    "if", "if", "if", "if", "if", "if", "if",
@@ -613,7 +613,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SIMPLE_DO_A", "OP_SIMPLE_DO_STEP_A",
   "OP_SAFE_IF_Z_Z_1", "OP_SAFE_IF_CC_X_P", "OP_SAFE_IF_CC_P_P", 
   "OP_SAFE_IF_CS_P_P", "OP_SAFE_IF_CS_X_P", "OP_SAFE_IF_IS_NULL_S_P", "OP_SAFE_IF_CC_P", "OP_SAFE_IF_CS_P", "OP_SAFE_IF_CS_P_X", "OP_SAFE_IF_IS_NULL_Q_P",
-  "OP_SAFE_IF_CSS_X_P", "OP_SAFE_IF_CSC_X_P", "OP_SAFE_IF_CSC_X_O_A",
+  "OP_SAFE_IF_CSS_X_P", "OP_SAFE_IF_CSC_X_P", "OP_SAFE_IF_CSC_X_O_A", "OP_SAFE_IF_CSC_X_T",
   "OP_SAFE_IF_CSQ_P", "OP_SAFE_IF_CSQ_P_P", "OP_SAFE_IF_CSS_P", "OP_SAFE_IF_CSS_P_P", "OP_SAFE_IF_CSC_P", "OP_SAFE_IF_CSC_P_P", 
   "OP_SAFE_IF_IS_PAIR_P", "OP_SAFE_IF_IS_PAIR_P_X", "OP_SAFE_IF_IS_PAIR_P_P", "OP_SAFE_IF_C_SS_P", 
   "OP_SAFE_IF_IS_SYMBOL_P", "OP_SAFE_IF_IS_SYMBOL_P_P", 
@@ -666,7 +666,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_opSSq_S, HOP_SAFE_C_opSSq_S, OP_SAFE_C_opSCq_S, HOP_SAFE_C_opSCq_S, OP_SAFE_C_opCSq_S, HOP_SAFE_C_opCSq_S,
       OP_SAFE_C_opSCq_C, HOP_SAFE_C_opSCq_C, OP_SAFE_C_opCq_opSSq, HOP_SAFE_C_opCq_opSSq, 
       OP_SAFE_C_S_op_opSSq_Sq, HOP_SAFE_C_S_op_opSSq_Sq, OP_SAFE_C_S_op_S_opSSqq, HOP_SAFE_C_S_op_S_opSSqq, 
-      OP_SAFE_C_op_opSSq_q_C, HOP_SAFE_C_op_opSSq_q_C,
+      OP_SAFE_C_op_opSSq_q_C, HOP_SAFE_C_op_opSSq_q_C, OP_SAFE_C_S_op_opSSq_opSSqq, HOP_SAFE_C_S_op_opSSq_opSSqq, 
       
       OP_THUNK, HOP_THUNK, 
       OP_CLOSURE_S, HOP_CLOSURE_S, OP_CLOSURE_Sp, HOP_CLOSURE_Sp, OP_CLOSURE_C, HOP_CLOSURE_C, OP_CLOSURE_Q, HOP_CLOSURE_Q, 
@@ -775,7 +775,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_opssq_s", "h_safe_c_opssq_s", "safe_c_opscq_s", "h_safe_c_opscq_s", "safe_c_opcsq_s", "h_safe_c_opcsq_s",
       "safe_c_opscq_c", "h_safe_c_opscq_c", "safe_c_opcq_opssq", "h_safe_c_opcq_opssq",
       "safe_c_s_op_opssq_sq", "h_safe_c_s_op_opssq_sq", "safe_c_s_op_s_opssqq", "h_safe_c_s_op_s_opssqq", 
-      "safe_c_op_opssq_q_c", "h_safe_c_op_opssq_q_c",
+      "safe_c_op_opssq_q_c", "h_safe_c_op_opssq_q_c", "safe_c_s_op_opssq_opssqq", "h_safe_c_s_op_opssq_opssqq", 
       
       "thunk", "h_thunk", 
       "closure_s", "h_closure_s", "closure_sp", "h_closure_sp", "closure_c", "h_closure_c", "closure_q", "h_closure_q", 
@@ -1329,7 +1329,7 @@ struct s7_scheme {
   s7_pointer COND_ALL_X;
   s7_pointer SAFE_IF_Z_Z, SAFE_IF_CC_X_P, SAFE_IF_CC_P_P;
   s7_pointer SAFE_IF_CS_P_P, SAFE_IF_CS_X_P, SAFE_IF_IS_NULL_S_P, SAFE_IF_CC_P, SAFE_IF_CS_P, SAFE_IF_CS_P_X, SAFE_IF_IS_NULL_Q_P;
-  s7_pointer SAFE_IF_CSS_X_P, SAFE_IF_CSC_X_P, SAFE_IF_CSC_X_O_A;
+  s7_pointer SAFE_IF_CSS_X_P, SAFE_IF_CSC_X_P, SAFE_IF_CSC_X_O_A, SAFE_IF_CSC_X_T;
   s7_pointer SAFE_IF_CSQ_P, SAFE_IF_CSQ_P_P, SAFE_IF_CSS_P, SAFE_IF_CSS_P_P, SAFE_IF_CSC_P, SAFE_IF_CSC_P_P;
   s7_pointer SAFE_IF_IS_PAIR_P, SAFE_IF_IS_PAIR_P_X, SAFE_IF_IS_PAIR_P_P, SAFE_IF_C_SS_P;
   s7_pointer SAFE_IF_IS_SYMBOL_P, SAFE_IF_IS_SYMBOL_P_P;
@@ -1344,6 +1344,7 @@ struct s7_scheme {
   s7_pointer autoload_table, libraries;
   const char ***autoload_names;
   int *autoload_names_sizes;
+  bool *autoloaded_already;
   int autoload_names_loc, autoload_names_top;
 
   unsigned int port_heap_size, port_heap_loc;
@@ -22770,6 +22771,7 @@ void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
     {
       sc->autoload_names = (const char ***)calloc(INITIAL_AUTOLOAD_NAMES_SIZE, sizeof(const char **));
       sc->autoload_names_sizes = (int *)calloc(INITIAL_AUTOLOAD_NAMES_SIZE, sizeof(int));
+      sc->autoloaded_already = (bool *)calloc(INITIAL_AUTOLOAD_NAMES_SIZE, sizeof(bool));
       sc->autoload_names_top = INITIAL_AUTOLOAD_NAMES_SIZE;
       sc->autoload_names_loc = 0;
     }
@@ -22781,21 +22783,24 @@ void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
 	  sc->autoload_names_top *= 2;
 	  sc->autoload_names = (const char ***)realloc(sc->autoload_names, sc->autoload_names_top);
 	  sc->autoload_names_sizes = (int *)realloc(sc->autoload_names_sizes, sc->autoload_names_top);
+	  sc->autoloaded_already = (bool *)realloc(sc->autoloaded_already, sc->autoload_names_top);
 	  for (i = sc->autoload_names_loc; i < sc->autoload_names_top; i++)
 	    {
 	      sc->autoload_names[i] = NULL;
 	      sc->autoload_names_sizes[i] = 0;
+	      sc->autoloaded_already[i] = false;
 	    }
 	}
     }
      
   sc->autoload_names[sc->autoload_names_loc] = names;
   sc->autoload_names_sizes[sc->autoload_names_loc] = size;
+  sc->autoloaded_already[sc->autoload_names_loc] = false;
   sc->autoload_names_loc++;
 }
 
 
-static const char *find_autoload_name(s7_scheme *sc, s7_pointer symbol)
+static const char *find_autoload_name(s7_scheme *sc, s7_pointer symbol, bool *already_loaded)
 {
   int l = 0, u, pos = -1, comp, lib, libs;
   const char *name, *this_name;
@@ -22817,8 +22822,11 @@ static const char *find_autoload_name(s7_scheme *sc, s7_pointer symbol)
 	  comp = strcmp(this_name, name);
 	  if (comp == 0)
 	    {
-	      /* fprintf(stderr, "found %s in %s\n", name,  sc->autoload_names[pos * 2 + 1]); */
-	      return(names[pos * 2 + 1]);
+	      int loc;
+	      loc = pos * 2 + 1;
+	      *already_loaded = sc->autoloaded_already[loc];
+	      sc->autoloaded_already[loc] = true;
+	      return(names[loc]);
 	    }
 	  if (comp < 0) 
 	    l = pos + 1;
@@ -22888,7 +22896,8 @@ static s7_pointer g_autoloader(s7_scheme *sc, s7_pointer args)
   if (sc->autoload_names)
     {
       const char *file;
-      file = find_autoload_name(sc, sym);
+      bool loaded = false;
+      file = find_autoload_name(sc, sym, &loaded);
       if (file)
 	return(s7_make_string(sc, file));
     }
@@ -39245,11 +39254,15 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       if (sc->autoload_names)
 	{
 	  const char *file;
-	  file = find_autoload_name(sc, sym);
-	  if (file)
+	  bool loaded = false;
+	  file = find_autoload_name(sc, sym, &loaded);
+	  if ((file) && (!loaded))
 	    {
 	      s7_pointer e;
 	      /* if we've already loaded this file, we can get the library (e) from a table [(file lib) ...]
+	       * here it was possible to get caught in a loop:
+	       *   change file, reload, unbound var seen, check autoload, it says "load file"... (where file does not get added to *libraries*)
+	       *   so the "loaded" arg tries to catch such cases
 	       */
 	      e = loaded_library(sc, file);
 	      if (!is_environment(e))
@@ -42510,6 +42523,9 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_S_opSSq:
 	  return(OP_SAFE_C_S_op_S_opSSqq);
 
+	case OP_SAFE_C_opSSq_opSSq:
+	  return(OP_SAFE_C_S_op_opSSq_opSSqq);
+
 	case OP_SAFE_C_SZ:
 	  return(OP_SAFE_C_S_opSZq);
 
@@ -45086,6 +45102,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 		  /* we still miss a few cases, and need more unknown optimizations, or set them here
 		   *   (let () (define (hi1 a) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1)) 2)
 		   */
+		  /* fprintf(stderr, "tc call %s\n", DISPLAY(x)); */
 		  return(true);
 		}
 	      return(false);
@@ -51560,13 +51577,13 @@ OP_SAFE_IF_IS_SYMBOL_P: 30 (0.000020)
 	  sc->cur_code = code;
 	  /* fprintf(stderr, "opt eval: %s %s %s\n", opt_names[optimize_op(code)], DISPLAY_80(code), describe_type_bits(sc, car(code))); */
 	  /*
-vector_s: 6503658 (9.399096)
+vector_s: 6503658 (9.399096) -- partly wrapped now (1/4)
 h_safe_c_c: 4266407 (6.165818)
-h_safe_c_sqs: 2752982 (3.978614)
+[h_safe_c_sqs: 2752982 (3.978614)] -- gen opt 2/3
 h_safe_c_ss: 1489622 (2.152804)
-h_safe_c_aaa: 1487034 (2.149064)
-h_safe_c_sss: 1326872 (1.917597)
-h_safe_c_opssq_opssq: 1055687 (1.525680)
+h_safe_c_aaa: 1487034 (2.149064) -- + * locsig-set!
+[h_safe_c_sss: 1326872 (1.917597)] -- polyoid gen
+[h_safe_c_opssq_opssq: 1055687 (1.525680)]
 h_safe_c_s_opaaq: 1021823 (1.476740)
 h_safe_c_aa: 1010171 (1.459901)
 h_safe_c_opscq: 620320 (0.890573)
@@ -53696,7 +53713,10 @@ OP_EVAL: 1065372 (1.542659)
 			if (closure_arity_to_int(sc, f) == 1)
 			  {
 			    if (is_safe_closure(f))
-			      set_optimize_data(code, OP_SAFE_CLOSURE_opCq);
+			      {
+				/* fprintf(stderr, "unknown set\n"); */
+				set_optimize_data(code, OP_SAFE_CLOSURE_opCq);
+			      }
 			    else set_optimize_data(code, OP_CLOSURE_opCq);
 			    if ((is_global(car(code))) &&
 				(is_hopping(cadr(code))))
@@ -55764,6 +55784,37 @@ OP_LET1: 75475 (4.677476)
 	      }
 	      
 	      
+	    case OP_SAFE_C_S_op_opSSq_opSSqq:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      if (!c_function_is_ok(sc, caddr(code)))
+		break;
+	      
+	    case HOP_SAFE_C_S_op_opSSq_opSSqq:
+	      {
+		/* (* s (f3 (f1 a b) (f2 c d))) */
+		s7_pointer args, f1, op1, op2;
+
+		args = caddr(code);                            
+		op1 = cadr(args);
+		op2 = caddr(args);
+
+		car(sc->T2_1) = finder(sc, cadr(op1));
+		car(sc->T2_2) = finder(sc, caddr(op1));		   
+		f1 = c_call(op1)(sc, sc->T2_1);
+
+		car(sc->T2_1) = finder(sc, cadr(op2));
+		car(sc->T2_2) = finder(sc, caddr(op2));			   
+		car(sc->T2_2) = c_call(op2)(sc, sc->T2_1);
+
+		car(sc->T2_1) = f1;
+		car(sc->T2_2) = c_call(args)(sc, sc->T2_1);
+		car(sc->T2_1) = finder(sc, cadr(code));        
+		sc->value = c_call(code)(sc, sc->T2_1);        
+		goto START;
+	      }
+	      
+
 	    case OP_SAFE_C_opSCq_S:
 	      if (!c_function_is_ok(sc, code))
 		break;
@@ -59822,6 +59873,32 @@ h_safe_c_aa: 125602 (2.498356)
 	  }
 	sc->code = caddr(code);
 	goto EVAL; 
+      }
+      
+
+      /* --------------- */
+    case OP_SAFE_IF_CSC_X_T: /* maybe OP_SAFE_IF_A_X_W, then A_W_X, then maybe A_W_A etc -- less constrained */
+      {
+	/* assuming tc + s=arg + tc expr callable safe_c, set up before jumping here by original safe proc call
+	 *   can dox_end stuff save us the symbol lookups?
+	 */
+	s7_pointer code, slot, arg;
+	code = sc->code;
+	slot = environment_slots(sc->envir);
+	arg = cadr(caddr(code));
+	while (true)
+	  {
+	    car(sc->T2_1) = slot_value(slot);
+	    car(sc->T2_2) = fcdr(code); /* pre */
+	    if (is_true(sc, c_call(car(code))(sc, sc->T2_1))) /* pre */
+	      {
+		sc->value = cadr(code);
+		if (is_symbol(sc->value))
+		  sc->value = finder(sc, sc->value);
+		goto START;
+	      }
+	    slot_value(slot) = c_call(arg)(sc, cdr(arg)); /* pre */
+	  }
       }
       
 
@@ -66948,6 +67025,7 @@ s7_scheme *s7_init(void)
   sc->autoload_table = sc->NIL;
   sc->autoload_names = NULL;
   sc->autoload_names_sizes = NULL;
+  sc->autoloaded_already = NULL;
   sc->autoload_names_loc = 0;
 
   sc->port_heap_size = 0;
@@ -67259,6 +67337,7 @@ s7_scheme *s7_init(void)
   sc->SAFE_IF_CSS_X_P =       assign_internal_syntax(sc, "if",      OP_SAFE_IF_CSS_X_P);
   sc->SAFE_IF_CSC_X_O_A =     assign_internal_syntax(sc, "if",      OP_SAFE_IF_CSC_X_O_A);
   sc->SAFE_IF_CSC_X_P =       assign_internal_syntax(sc, "if",      OP_SAFE_IF_CSC_X_P);
+  sc->SAFE_IF_CSC_X_T =       assign_internal_syntax(sc, "if",      OP_SAFE_IF_CSC_X_T);
   sc->SAFE_IF_CSQ_P =         assign_internal_syntax(sc, "if",      OP_SAFE_IF_CSQ_P);    
   sc->SAFE_IF_CSQ_P_P =       assign_internal_syntax(sc, "if",      OP_SAFE_IF_CSQ_P_P);    
   sc->SAFE_IF_CSS_P =         assign_internal_syntax(sc, "if",      OP_SAFE_IF_CSS_P);    
@@ -68439,7 +68518,7 @@ int main(int argc, char **argv)
  * t455|6     265|    89   55   31   14   14    9    9    9|   7.4
  * lat        229|    63   52   47   42   40   34   31   29|    29
  * t502        90|    43   39   36   29   23   20   14   14|  14.5 
- * calls         |   275  207  175  115   89   71   53   53|    54 53.7
+ * calls         |   275  207  175  115   89   71   53   53|    54 53.1
  */
 
 /* (cos|sin (* s s)) (+ (* s s) s)? and (+ s (* s s)) (set! s (* s s))
