@@ -1798,6 +1798,10 @@ static int t_optimized = T_OPTIMIZED;
 #define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
 #define set_has_print_name(p)         typeflag(p) |= T_PRINT_NAME
 
+#define T_TAIL_CALL                   T_PRINT_NAME
+#define is_tail_call(p)               ((typeflag(p) & T_TAIL_CALL) != 0)
+#define set_tail_call(p)              typeflag(p) |= T_TAIL_CALL
+
 
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define set_copy_args(p)              typeflag(p) |= T_COPY_ARGS
@@ -45103,6 +45107,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 		   *   (let () (define (hi1 a) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1)) 2)
 		   */
 		  /* fprintf(stderr, "tc call %s\n", DISPLAY(x)); */
+		  set_tail_call(x);
 		  return(true);
 		}
 	      return(false);
@@ -53712,17 +53717,40 @@ OP_EVAL: 1065372 (1.542659)
 			if (has_methods(f)) break;
 			if (closure_arity_to_int(sc, f) == 1)
 			  {
-			    if (is_safe_closure(f))
-			      {
-				/* fprintf(stderr, "unknown set\n"); */
-				set_optimize_data(code, OP_SAFE_CLOSURE_opCq);
-			      }
-			    else set_optimize_data(code, OP_CLOSURE_opCq);
 			    if ((is_global(car(code))) &&
 				(is_hopping(cadr(code))))
 			      set_hopping(code);
 			    set_ecdr(code, f);
 			    set_fcdr(code, cadr(code));
+
+			    if (is_safe_closure(f))
+			      {
+				/* fprintf(stderr, "unknown set\n"); */
+				if (is_tail_call(code))
+				  {
+				    /* an experiment -- check for the very special IF_SCS_X_P case where we are at P
+				     */
+				    s7_pointer body;
+				    body = closure_body(f);
+				    if ((is_null(cdr(body))) &&             /* it's one (safe) form */
+					(typesflag(car(body)) == SYNTACTIC_PAIR) &&
+					((opcode_t)lifted_op(car(body)) == OP_SAFE_IF_CSC_X_P) &&
+					(car(code) == car(cadddr(car(body)))))
+				      {
+					/* fprintf(stderr, "tc case: %s\n", DISPLAY(body)); */
+					lifted_op(car(body)) = OP_SAFE_IF_CSC_X_T;
+				      }
+				  }
+				set_optimize_data(code, OP_SAFE_CLOSURE_opCq);
+			      }
+			    else set_optimize_data(code, OP_CLOSURE_opCq);
+#if 0
+			    if ((is_global(car(code))) &&
+				(is_hopping(cadr(code))))
+			      set_hopping(code);
+			    set_ecdr(code, f);
+			    set_fcdr(code, cadr(code));
+#endif
 			    goto OPT_EVAL;
 			  }
 			break;

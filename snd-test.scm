@@ -18820,7 +18820,7 @@ EDITS: 2
 	  (rd1a (make-readin "oboe.snd" 0 2000)))
       (print-and-check gen 
 		       "src"
-		       "src width: 10, x: 0.000, incr: 2.000, sinc table len: 10000")
+		       "src width: 10, x: 0.000, incr: 2.000, sinc table len: 20000")
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(float-vector-set! v0 i (src gen 0.0 (lambda (dir) (readin rd)))))
