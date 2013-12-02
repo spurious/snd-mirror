@@ -3041,6 +3041,8 @@ static char *snd_finder(const char *name, bool got_help)
   snd_remove(tempfile, IGNORE_CACHE);
   free(tempfile);
 
+  /* TODO: if name is autoloadable, use the autoload file name? */
+
   if (url)
     {
       if (fgrep)

@@ -1344,7 +1344,7 @@ struct s7_scheme {
   s7_pointer autoload_table, libraries;
   const char ***autoload_names;
   int *autoload_names_sizes;
-  bool *autoloaded_already;
+  bool **autoloaded_already;
   int autoload_names_loc, autoload_names_top;
 
   unsigned int port_heap_size, port_heap_loc;
@@ -1778,7 +1778,7 @@ static int t_optimized = T_OPTIMIZED;
 #define T_ONE_LINER                   (1 << (TYPE_BITS + 18))
 #define is_one_liner(p)               ((typeflag(p) & T_ONE_LINER) != 0)
 #define set_one_liner(p)              typeflag(p) |= T_ONE_LINER
-/* this comes and goes...
+/* this comes and goes... (currently used in the no-hop closure checker)
  */
 
 #define T_MUTABLE                     T_ONE_LINER
@@ -2560,7 +2560,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 0
+#if 1
 #if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -2589,7 +2589,7 @@ static void report_counts(s7_scheme *sc)
       if (mx > 0)
 	{
 	  /* if (mx > total/100) */
-	    fprintf(stderr, "%s: %d (%f)\n", real_op_names[mxi], mx, 100.0*mx/(float)total);
+	    fprintf(stderr, "%s: %d (%f)\n", opt_names[mxi], mx, 100.0*mx/(float)total);
 	  counts[mxi] = 0;
 	}
       else happy = false;
@@ -22775,7 +22775,7 @@ void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
     {
       sc->autoload_names = (const char ***)calloc(INITIAL_AUTOLOAD_NAMES_SIZE, sizeof(const char **));
       sc->autoload_names_sizes = (int *)calloc(INITIAL_AUTOLOAD_NAMES_SIZE, sizeof(int));
-      sc->autoloaded_already = (bool *)calloc(INITIAL_AUTOLOAD_NAMES_SIZE, sizeof(bool));
+      sc->autoloaded_already = (bool **)calloc(INITIAL_AUTOLOAD_NAMES_SIZE, sizeof(bool *));
       sc->autoload_names_top = INITIAL_AUTOLOAD_NAMES_SIZE;
       sc->autoload_names_loc = 0;
     }
@@ -22785,21 +22785,21 @@ void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
 	{
 	  int i;
 	  sc->autoload_names_top *= 2;
-	  sc->autoload_names = (const char ***)realloc(sc->autoload_names, sc->autoload_names_top);
-	  sc->autoload_names_sizes = (int *)realloc(sc->autoload_names_sizes, sc->autoload_names_top);
-	  sc->autoloaded_already = (bool *)realloc(sc->autoloaded_already, sc->autoload_names_top);
+	  sc->autoload_names = (const char ***)realloc(sc->autoload_names, sc->autoload_names_top * sizeof(const char *));
+	  sc->autoload_names_sizes = (int *)realloc(sc->autoload_names_sizes, sc->autoload_names_top * sizeof(int));
+	  sc->autoloaded_already = (bool **)realloc(sc->autoloaded_already, sc->autoload_names_top * sizeof(bool *));
 	  for (i = sc->autoload_names_loc; i < sc->autoload_names_top; i++)
 	    {
 	      sc->autoload_names[i] = NULL;
 	      sc->autoload_names_sizes[i] = 0;
-	      sc->autoloaded_already[i] = false;
+	      sc->autoloaded_already[i] = NULL;
 	    }
 	}
     }
      
   sc->autoload_names[sc->autoload_names_loc] = names;
   sc->autoload_names_sizes[sc->autoload_names_loc] = size;
-  sc->autoloaded_already[sc->autoload_names_loc] = false;
+  sc->autoloaded_already[sc->autoload_names_loc] = (bool *)calloc(size, sizeof(bool));
   sc->autoload_names_loc++;
 }
 
@@ -22828,8 +22828,8 @@ static const char *find_autoload_name(s7_scheme *sc, s7_pointer symbol, bool *al
 	    {
 	      int loc;
 	      loc = pos * 2 + 1;
-	      *already_loaded = sc->autoloaded_already[loc];
-	      sc->autoloaded_already[loc] = true;
+	      *already_loaded = sc->autoloaded_already[lib][loc];
+	      sc->autoloaded_already[lib][loc] = true;
 	      return(names[loc]);
 	    }
 	  if (comp < 0) 
@@ -41375,18 +41375,23 @@ static s7_pointer g_and_all_x(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer if_all_x;
-static s7_pointer g_if_all_x(s7_scheme *sc, s7_pointer args)
+static s7_pointer if_all_x1;
+static s7_pointer g_if_all_x1(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p;
   if (is_true(sc, ((s7_function)fcdr(args))(sc, car(args))))
     p = cdr(args);
-  else 
-    {
-      p = cddr(args);
-      if (is_null(p))
-	return(sc->UNSPECIFIED);
-    }
+  else return(sc->UNSPECIFIED);
+  return(((s7_function)fcdr(p))(sc, car(p)));
+}
+
+static s7_pointer if_all_x2;
+static s7_pointer g_if_all_x2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer p;
+  if (is_true(sc, ((s7_function)fcdr(args))(sc, car(args))))
+    p = cdr(args);
+  else p = cddr(args);
   return(((s7_function)fcdr(p))(sc, car(p)));
 }
 
@@ -41966,7 +41971,8 @@ static void init_choosers(s7_scheme *sc)
 
   or_all_x = s7_make_function(sc, "or", g_or_all_x, 0, 0, true, "or optimization");
   and_all_x = s7_make_function(sc, "and", g_and_all_x, 0, 0, true, "and optimization");
-  if_all_x = s7_make_function(sc, "if", g_if_all_x, 2, 1, false, "if optimization");
+  if_all_x1 = s7_make_function(sc, "if", g_if_all_x1, 2, 0, false, "if optimization");
+  if_all_x2 = s7_make_function(sc, "if", g_if_all_x2, 3, 0, false, "if optimization");
   if_all_x_qq = s7_make_function(sc, "if", g_if_all_x_qq, 3, 0, false, "if optimization");
   if_all_x_qa = s7_make_function(sc, "if", g_if_all_x_qa, 3, 0, false, "if optimization");
 
@@ -44474,7 +44480,12 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 				set_c_function(car_x, if_all_x_qq);
 			      else set_c_function(car_x, if_all_x_qa);
 			    }
-			  else set_c_function(car_x, if_all_x);
+			  else 
+			    {
+			      if (is_null(cdddr(car_x)))
+				set_c_function(car_x, if_all_x1);
+			      else set_c_function(car_x, if_all_x2);
+			    }
 			}
 		      /* fprintf(stderr, "  -> %s\n", opt_name(car_x)); */
 		    }
@@ -45103,9 +45114,6 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	      /* fprintf(stderr, "%d %d %d\n", at_end, is_null(p), *bad_set); */
 	      if ((at_end) && (is_null(p) && (!*bad_set)))
 		{
-		  /* we still miss a few cases, and need more unknown optimizations, or set them here
-		   *   (let () (define (hi1 a) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1)) 2)
-		   */
 		  /* fprintf(stderr, "tc call %s\n", DISPLAY(x)); */
 		  set_tail_call(x);
 		  return(true);
@@ -51588,7 +51596,7 @@ h_safe_c_c: 4266407 (6.165818)
 h_safe_c_ss: 1489622 (2.152804)
 h_safe_c_aaa: 1487034 (2.149064) -- + * locsig-set!
 [h_safe_c_sss: 1326872 (1.917597)] -- polyoid gen
-[h_safe_c_opssq_opssq: 1055687 (1.525680)]
+[h_safe_c_opssq_opssq: 1055687 (1.525680)] -- embedded now
 h_safe_c_s_opaaq: 1021823 (1.476740)
 h_safe_c_aa: 1010171 (1.459901)
 h_safe_c_opscq: 620320 (0.890573)
@@ -53717,18 +53725,15 @@ OP_EVAL: 1065372 (1.542659)
 			if (has_methods(f)) break;
 			if (closure_arity_to_int(sc, f) == 1)
 			  {
-			    if ((is_global(car(code))) &&
-				(is_hopping(cadr(code))))
-			      set_hopping(code);
-			    set_ecdr(code, f);
-			    set_fcdr(code, cadr(code));
-
 			    if (is_safe_closure(f))
 			      {
 				/* fprintf(stderr, "unknown set\n"); */
 				if (is_tail_call(code))
 				  {
 				    /* an experiment -- check for the very special IF_SCS_X_P case where we are at P
+				     *  if this is called 1000000 times, we save 50M in valgrind -- not enough to make
+				     *  more than (say) 5% difference in any real code.  (A factor of 2 overall in a
+				     *  bare timing test).  So... too much code for the gain.
 				     */
 				    s7_pointer body;
 				    body = closure_body(f);
@@ -53744,13 +53749,12 @@ OP_EVAL: 1065372 (1.542659)
 				set_optimize_data(code, OP_SAFE_CLOSURE_opCq);
 			      }
 			    else set_optimize_data(code, OP_CLOSURE_opCq);
-#if 0
+
 			    if ((is_global(car(code))) &&
 				(is_hopping(cadr(code))))
 			      set_hopping(code);
 			    set_ecdr(code, f);
 			    set_fcdr(code, cadr(code));
-#endif
 			    goto OPT_EVAL;
 			  }
 			break;
@@ -54049,19 +54053,19 @@ OP_EVAL: 1065372 (1.542659)
 				if (is_safe_closure(f))
 				  {
 				    if ((is_safely_optimized(cadr(code))) &&
-					(is_safely_optimized(caddr(code))) &&
-					(c_call(cadr(code)) == g_car) &&
-					(c_call(caddr(code)) == g_car) &&
-					(symbol_id(sc->CAR) == 0))
-				      set_optimize_data(code, OP_SAFE_CLOSURE_CAR_CAR);
-				    else
+					(is_safely_optimized(caddr(code))))
 				      {
-					if ((is_safely_optimized(cadr(code))) &&
-					    (is_safely_optimized(caddr(code))) &&
-					    (c_call(cadr(code)) == g_cdr) &&
-					    (c_call(caddr(code)) == g_cdr) &&
-					    (symbol_id(sc->CDR) == 0))
-					  set_optimize_data(code, OP_SAFE_CLOSURE_CDR_CDR);
+					if ((c_call(cadr(code)) == g_car) &&
+					    (c_call(caddr(code)) == g_car) &&
+					    (symbol_id(sc->CAR) == 0))
+					  set_optimize_data(code, OP_SAFE_CLOSURE_CAR_CAR);
+					else
+					  {
+					    if ((c_call(cadr(code)) == g_cdr) &&
+						(c_call(caddr(code)) == g_cdr) &&
+						(symbol_id(sc->CDR) == 0))
+					      set_optimize_data(code, OP_SAFE_CLOSURE_CDR_CDR);
+					  }
 				      }
 				  }
 			      }
@@ -56671,6 +56675,9 @@ OP_LET1: 75475 (4.677476)
 
 	  /* see sss_apply_s7 for code to catch (f x y) here and set up optimizer code for it --
 	   *   this cuts the trailer traffic in half in snd-test, but the savings is minimal (40).
+	   *
+	   * if (is_tail_call(sc->code)) 
+	   *   fprintf(stderr, "trailer: %s %s\n", (is_optimized(sc->code)) ? opt_names[optimize_data(sc->code)] : "unopt", DISPLAY(sc->code));
 	   */
 	  clear_optimized(code);
 	  clear_optimize_data(code);
@@ -68540,12 +68547,12 @@ int main(int argc, char **argv)
 
 /*
  * timing    12.x|  13.0 13.1 13.2 13.3 13.4 13.5 13.6 13.7|  14.2 14.3
- * bench    42736|  8752 8051 7725 6515 5194 4364 3989 3997|  4220
- * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725 1659
- * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995
- * t455|6     265|    89   55   31   14   14    9    9    9|   7.4
- * lat        229|    63   52   47   42   40   34   31   29|    29
- * t502        90|    43   39   36   29   23   20   14   14|  14.5 
+ * bench    42736|  8752 8051 7725 6515 5194 4364 3989 3997|  4220 4157
+ * index    44300|  3291 3005 2742 2078 1643 1435 1363 1365|  1725 1377
+ * s7test    1721|  1358 1297 1244  977  961  957  960  943|   995  986
+ * t455|6     265|    89   55   31   14   14    9    9    9|   7.4  7.7
+ * lat        229|    63   52   47   42   40   34   31   29|    29 29.4
+ * t502        90|    43   39   36   29   23   20   14   14|  14.5 14.5
  * calls         |   275  207  175  115   89   71   53   53|    54 53.1
  */
 
@@ -68562,9 +68569,6 @@ int main(int argc, char **argv)
  * check apply mac/bac (there's an extra eval -- see t737.scm -- surely this is not a problem!)
  * ash 1/-1 and divide 2 [or ash_si where i is known to be in bounds and int, also (ash 1 s) happens]
  * fft code wants set_pair_c_[s_]opvsq[_s] (fv->fv) [need direct case if real]
- * could the fm case be tracked into all 1's?
- * other closures could also be direct -- as if an op, not a call -- but which is worth the code?
- *  or perhaps use dox-env slots instead of arg lookups?
  * TODO: snd-test read-sample-with-direction
  * TODO: safe_sz|zs (etc) should be sa|as if possible but does this affect others?  (see zz->all_x -- this could be done in the combiner I think)
  *   all these z cases need to be checked for z->a, then is sa all_x safe? or ssa etc

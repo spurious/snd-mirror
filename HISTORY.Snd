@@ -1,5 +1,7 @@
 Snd change log
 
+2013 ----------------------------------------------------------------
+
  22-Nov:    Snd 14.2.
  15-Oct:    Snd 14.1.
  11-Oct:    removed frame.scm and mixer.scm: frames and mixers are obsolete in the scheme version of Snd.

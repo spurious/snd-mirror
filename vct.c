@@ -599,7 +599,6 @@ static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
 {
   s7_Int pos, end;
   s7_pointer stepper, vc, vec, vecind, val, callee;
-  s7_pointer *vec_el;
   s7_Int *step, *stop;
   s7_Double x;
   vct *v;
@@ -631,25 +630,53 @@ static s7_pointer g_vct_set_vector_ref_looped(s7_scheme *sc, s7_pointer args)
       if ((pos < 0) ||
 	  (end > s7_vector_length(vec)))
 	XEN_OUT_OF_RANGE_ERROR("vector-ref", 2, caddr(caddr(args)), "index out of range");   
-      vec_el = s7_vector_elements(vec);
 
-      dist = end - 4;
-      while (pos < dist)
+      if (s7_is_int_vector(vec))
 	{
-	  d[s7_cell_integer(vec_el[pos])] = x;
-	  pos++;
-	  d[s7_cell_integer(vec_el[pos])] = x;
-	  pos++;
-	  d[s7_cell_integer(vec_el[pos])] = x;
-	  pos++;
-	  d[s7_cell_integer(vec_el[pos])] = x;
-	  pos++;
+	  mus_long_t *ints;
+	  ints = s7_int_vector_elements(vec);
+	  
+	  dist = end - 4;
+	  while (pos < dist)
+	    {
+	      d[ints[pos]] = x;
+	      pos++;
+	      d[ints[pos]] = x;
+	      pos++;
+	      d[ints[pos]] = x;
+	      pos++;
+	      d[ints[pos]] = x;
+	      pos++;
+	    }
+	  for (; pos < end; pos++)
+	    d[ints[pos]] = x;
+	  
+	  (*step) = end;
+	  return(args);
 	}
-      for (; pos < end; pos++)
-	d[s7_cell_integer(vec_el[pos])] = x;
-
-      (*step) = end;
-      return(args);
+      else
+	{
+	  s7_pointer *vec_el;
+	  vec_el = s7_vector_elements(vec);
+	  
+	  dist = end - 4;
+	  while (pos < dist)
+	    {
+	      d[s7_cell_integer(vec_el[pos])] = x;
+	      pos++;
+	      d[s7_cell_integer(vec_el[pos])] = x;
+	      pos++;
+	      d[s7_cell_integer(vec_el[pos])] = x;
+	      pos++;
+	      d[s7_cell_integer(vec_el[pos])] = x;
+	      pos++;
+	    }
+	  for (; pos < end; pos++)
+	    d[s7_cell_integer(vec_el[pos])] = x;
+	  
+	  (*step) = end;
+	  return(args);
+	}
     }
   XEN_ASSERT_TYPE(false, s7_cadr_value(sc, args), 1, "vct-set!", "a vct");
   return(s7_f(sc));
