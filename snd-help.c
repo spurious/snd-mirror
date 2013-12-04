@@ -1383,11 +1383,7 @@ static void show_key_help(int key, int state, bool cx, char *help)
       char cbuf[256];
       make_key_name(cbuf, 256, key, state, cx);
       snprintf(buf, 1024, "\n%s: %s", cbuf, help);
-#if USE_GTK
-      snd_help_append_monospace(buf);
-#else
       snd_help_append(buf);
-#endif
       free(help);
     }
 }

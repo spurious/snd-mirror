@@ -6005,6 +6005,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
   mus_float_t *xcoeffs = NULL, *ycoeffs = NULL, *partials = NULL;
   mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND;
   int error = NO_PROBLEM_IN_LIST;
+  vct *v;
 
   freq = clm_default_frequency;
 
@@ -6063,17 +6064,19 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
       if (!(XEN_KEYWORD_P(keys[3])))
         {
 	  XEN_ASSERT_TYPE(MUS_VCT_P(keys[3]), keys[3], orig_arg[3], S_make_polywave, "a vct");
-	  orig_x = XEN_TO_VCT(keys[3]);
-	  n = mus_vct_length(orig_x);
-	  xcoeffs = mus_vct_data(orig_x);
+	  orig_x = keys[3];
+	  v = XEN_TO_VCT(orig_x);
+	  n = mus_vct_length(v);
+	  xcoeffs = mus_vct_data(v);
         }
       
       if (!(XEN_KEYWORD_P(keys[4])))
 	{
 	  XEN_ASSERT_TYPE(MUS_VCT_P(keys[4]), keys[4], orig_arg[4], S_make_polywave, "a vct");
-	  orig_y = XEN_TO_VCT(keys[4]);
-	  n = mus_vct_length(orig_y);
-	  ycoeffs = mus_vct_data(orig_y);
+	  orig_y = keys[4];
+	  v = XEN_TO_VCT(orig_y);
+	  n = mus_vct_length(v);
+	  ycoeffs = mus_vct_data(v);
 	}
       /* TODO: various error checks, doc new args, test gc etc */
     }

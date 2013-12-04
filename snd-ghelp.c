@@ -327,21 +327,6 @@ void snd_help_append(const char *text)
 }
 
 
-static GtkTextTag *monospace_tag = NULL;
-
-void snd_help_append_monospace(const char *text)
-{
-  GtkTextIter pos;
-  GtkTextBuffer *buf;
-  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text));
-
-  if (!monospace_tag)
-    monospace_tag = gtk_text_buffer_create_tag(buf, NULL, "family", "monospace", "size", 11 * PANGO_SCALE, NULL);
-  gtk_text_buffer_get_end_iter(buf, &pos);
-  gtk_text_buffer_insert_with_tags_by_name(buf, &pos, text, -1, "monospace", NULL);
-}
-
-
 void snd_help_back_to_top(void)
 {
   if (help_text)

@@ -7086,6 +7086,8 @@ static mus_float_t read_sample_direct(void *p)
 {
   return(read_sample((snd_fd *)p));
 }
+#endif
+
 
 mus_float_t read_sample_with_direction(void *p, int dir);
 mus_float_t read_sample_with_direction(void *p, int dir)
@@ -7094,7 +7096,7 @@ mus_float_t read_sample_with_direction(void *p, int dir)
     return(protected_next_sample((snd_fd *)p));
   return(protected_previous_sample((snd_fd *)p));
 }
-#endif
+
 
 static XEN g_read_sample(XEN obj)
 {

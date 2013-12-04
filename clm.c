@@ -3915,6 +3915,7 @@ static mus_float_t mus_wave_train_any(mus_any *ptr, mus_float_t fm)
       mus_long_t i;
       mus_float_t *wave, *out_data; 
       mus_long_t wave_size;
+
       wave = gen->wave;
       wave_size = gen->wave_size;
       out_data = gen->out_data;
@@ -3929,9 +3930,40 @@ static mus_float_t mus_wave_train_any(mus_any *ptr, mus_float_t fm)
       else mus_clear_array(out_data, gen->out_data_size);
       if (gen->interp_type == MUS_INTERP_LINEAR)
 	{
-	  for (i = 0; i < wave_size; i++)
+	  /* gen->phase doesn't change, and i is an int, so we can precalculate the fractional part, etc
+	   */
+	  mus_float_t phase, frac_part;
+	  mus_long_t int_part;
+	  
+	  phase = gen->phase;
+	  if ((phase < 0.0) || (phase > wave_size))
 	    {
-	      out_data[i] += mus_array_interp(wave, gen->phase + i, wave_size);
+	      phase = fmod((double)phase, (double)wave_size);
+	      if (phase < 0.0) phase += wave_size;
+	    }
+
+	  int_part = (mus_long_t)floor(phase);
+	  frac_part = phase - int_part;
+	  if (int_part == wave_size) int_part = 0;
+
+	  if (frac_part == 0.0)
+	    {
+	      mus_long_t p;
+	      for (i = 0, p = int_part; i < wave_size; i++, p++)
+		{
+		  if (p == wave_size) p = 0;
+		  out_data[i] += wave[p];
+		}
+	    }
+	  else
+	    {
+	      mus_long_t p, p1;
+	      for (i = 0, p = int_part, p1 = int_part + 1; i < wave_size; i++, p1++)
+		{
+		  if (p1 == wave_size) p1 = 0;
+		  out_data[i] += (wave[p] + frac_part * (wave[p1] - wave[p]));
+		  p = p1;
+		}
 	    }
 	}
       else

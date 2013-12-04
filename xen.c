@@ -466,7 +466,7 @@ static XEN xen_rb_rep(XEN ig)
   char **buffer = NULL;
   buffer = (char **)calloc(1, sizeof(char *));
   buffer[0] = (char *)calloc(size, sizeof(char));
-  fprintf(stdout, rb_prompt);
+  fprintf(stdout, "%s", rb_prompt);
   fgets(buffer[0], size, stdin);
   val = xen_rb_eval_string_with_error(buffer[0]);
   str = XEN_AS_STRING(val);
