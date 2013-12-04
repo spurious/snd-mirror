@@ -1789,7 +1789,7 @@ and replaces it with the spectrum given in coeffs"
 	      ((= i pairs))
 	    (let* ((sig (bandpass (vector-ref bands i) (float-vector-ref indata k)))
 		   (mx (moving-max (vector-ref peaks i) sig)))
-	      (set! sum (+ sum (* mx (polynomial pcoeffs (* sig (moving-average (vector-ref avgs i) (/ (max mx 0.01))))))))))
+	      (set! sum (+ sum (* mx (polynomial pcoeffs (* sig (moving-average (vector-ref avgs i) (/ (max 0.01 mx))))))))))
 	  (filter flt sum)))
 
       (do ((pair 0 (+ pair 1)))
@@ -1802,7 +1802,7 @@ and replaces it with the spectrum given in coeffs"
 	      ((= k len))
 	    (let* ((sig (bandpass bp (float-vector-ref indata k)))
 		   (mx (moving-max pk sig)))
-	      (float-vector-set! adder k (* mx (polynomial pcoeffs (* sig (moving-average avg (/ (max mx 0.01)))))))))
+	      (float-vector-set! adder k (* mx (polynomial pcoeffs (* sig (moving-average avg (/ (max 0.01 mx)))))))))
 	  (float-vector-add! summer adder)))
 
       (do ((k startup (+ k 1)))

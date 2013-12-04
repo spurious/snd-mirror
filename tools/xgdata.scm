@@ -1868,7 +1868,7 @@
 ;;; (CFNC-gtk2 "void gtk_drag_source_set_icon GtkWidget* widget GdkColormap* colormap GdkPixmap* pixmap GdkBitmap* mask")
 (CFNC "void gtk_drag_source_set_icon_pixbuf GtkWidget* widget GdkPixbuf* pixbuf")
 ;;; 3.9.8 (CFNC "void gtk_drag_source_set_icon_stock GtkWidget* widget gchar* stock_id")
-(CFNC "GdkDragContext* gtk_drag_begin GtkWidget* widget GtkTargetList* targets GdkDragAction actions gint button GdkEvent* event")
+;;; (CFNC "GdkDragContext* gtk_drag_begin GtkWidget* widget GtkTargetList* targets GdkDragAction actions gint button GdkEvent* event")
 (CFNC "void gtk_drag_set_icon_widget GdkDragContext* context GtkWidget* widget gint hot_x gint hot_y")
 ;;; (CFNC-gtk2 "void gtk_drag_set_icon_pixmap GdkDragContext* context GdkColormap* colormap GdkPixmap* pixmap GdkBitmap* mask gint hot_x gint hot_y")
 (CFNC "void gtk_drag_set_icon_pixbuf GdkDragContext* context GdkPixbuf* pixbuf gint hot_x gint hot_y")
@@ -2318,11 +2318,11 @@
 ;;;;(CFNC "GType gtk_im_context_simple_get_type void")
 (CFNC "GtkIMContext* gtk_im_context_simple_new void")
 (CFNC "void gtk_im_context_simple_add_table GtkIMContextSimple* context_simple guint16* data gint max_seq_len gint n_seqs")
-(CCAST "GTK_IM_MULTICONTEXT(obj)" "GtkIMMulticontext*")
-(CCHK "GTK_IS_IM_MULTICONTEXT(obj)" "GtkIMMulticontext*")
+;;; (CCAST "GTK_IM_MULTICONTEXT(obj)" "GtkIMMulticontext*")
+;;; (CCHK "GTK_IS_IM_MULTICONTEXT(obj)" "GtkIMMulticontext*")
 ;;;;(CFNC "GType gtk_im_multicontext_get_type void")
-(CFNC "GtkIMContext* gtk_im_multicontext_new void")
-(CFNC "void gtk_im_multicontext_append_menuitems GtkIMMulticontext* context GtkMenuShell* menushell")
+;;; (CFNC "GtkIMContext* gtk_im_multicontext_new void")
+;;; 3.11 (CFNC "void gtk_im_multicontext_append_menuitems GtkIMMulticontext* context GtkMenuShell* menushell")
 ;;; (CCAST "GTK_INPUT_DIALOG(obj)" "GtkInputDialog*")
 ;;; (CCHK "GTK_IS_INPUT_DIALOG(obj)" "GtkInputDialog*")
 ;;;;(CFNC "GType gtk_input_dialog_get_type void")
@@ -3802,7 +3802,7 @@
 (CFNC "void gtk_widget_grab_default GtkWidget* widget")
 (CFNC "void gtk_widget_set_name GtkWidget* widget gchar* name")
 (CFNC "gchar* gtk_widget_get_name GtkWidget* widget")
-(CFNC "void gtk_widget_set_state GtkWidget* widget GtkStateType state")
+;;; (CFNC "void gtk_widget_set_state GtkWidget* widget GtkStateType state")
 (CFNC "void gtk_widget_set_sensitive GtkWidget* widget gboolean sensitive")
 (CFNC "void gtk_widget_set_app_paintable GtkWidget* widget gboolean app_paintable")
 (CFNC "void gtk_widget_set_double_buffered GtkWidget* widget gboolean double_buffered")
@@ -3947,7 +3947,7 @@
 (CFNC "void gtk_window_move GtkWindow* window gint x gint y")
 (CFNC "void gtk_window_get_position GtkWindow* window gint* [root_x] gint* [root_y]")
 (CFNC "gboolean gtk_window_parse_geometry GtkWindow* window gchar* geometry")
-(CFNC "void gtk_window_reshow_with_initial_size GtkWindow* window")
+;;; (CFNC "void gtk_window_reshow_with_initial_size GtkWindow* window")
 
 ;;; (CFNC-gtk2 "void gtk_window_remove_embedded_xid GtkWindow* window guint xid")
 ;;; (CFNC-gtk2 "void gtk_window_add_embedded_xid GtkWindow* window guint xid")
@@ -4908,7 +4908,7 @@
 ;;; (CFNC "GtkToolItem* gtk_radio_tool_button_new_from_widget GtkWidget* group") 
 ;;; changed 2.3.1
 (CFNC "GtkToolItem* gtk_radio_tool_button_new_from_widget GtkRadioToolButton* group") 
-(CFNC "GtkToolItem* gtk_radio_tool_button_new_with_stock_from_widget GtkRadioToolButton* group gchar* stock_id") 
+;;; (CFNC "GtkToolItem* gtk_radio_tool_button_new_with_stock_from_widget GtkRadioToolButton* group gchar* stock_id") 
 ;;; arg1 type changed 2.3.2
 (CFNC "GSList* gtk_radio_tool_button_get_group GtkRadioToolButton* button") 
 (CFNC "void gtk_radio_tool_button_set_group GtkRadioToolButton* button GSList* @group")
@@ -5035,8 +5035,8 @@
 (CFNC "gchar* gtk_tool_button_get_label GtkToolButton* button") 
 (CFNC "void gtk_tool_button_set_use_underline GtkToolButton* button gboolean use_underline") 
 (CFNC "gboolean gtk_tool_button_get_use_underline GtkToolButton* button") 
-(CFNC "void gtk_tool_button_set_stock_id GtkToolButton* button gchar* stock_id") 
-(CFNC "gchar* gtk_tool_button_get_stock_id GtkToolButton* button") 
+;;; (CFNC "void gtk_tool_button_set_stock_id GtkToolButton* button gchar* stock_id") 
+;;; (CFNC "gchar* gtk_tool_button_get_stock_id GtkToolButton* button") 
 (CFNC "void gtk_tool_button_set_icon_widget GtkToolButton* button GtkWidget* @icon_widget") 
 (CFNC "GtkWidget* gtk_tool_button_get_icon_widget GtkToolButton* button") 
 (CFNC "void gtk_tool_button_set_label_widget GtkToolButton* button GtkWidget* @label_widget") 
@@ -5994,11 +5994,11 @@
 (CFNC "GtkStatusIcon* gtk_status_icon_new_from_icon_name gchar* icon_name")
 (CFNC "void gtk_status_icon_set_from_pixbuf GtkStatusIcon* status_icon GdkPixbuf* pixbuf")
 (CFNC "void gtk_status_icon_set_from_file GtkStatusIcon* status_icon gchar* filename")
-(CFNC "void gtk_status_icon_set_from_stock GtkStatusIcon* status_icon gchar* stock_id")
+;;; (CFNC "void gtk_status_icon_set_from_stock GtkStatusIcon* status_icon gchar* stock_id")
 (CFNC "void gtk_status_icon_set_from_icon_name GtkStatusIcon* status_icon gchar* icon_name")
 (CFNC "GtkImageType gtk_status_icon_get_storage_type GtkStatusIcon* status_icon")
 (CFNC "GdkPixbuf* gtk_status_icon_get_pixbuf GtkStatusIcon* status_icon")
-(CFNC "gchar* gtk_status_icon_get_stock GtkStatusIcon* status_icon") ; 'const
+;;; (CFNC "gchar* gtk_status_icon_get_stock GtkStatusIcon* status_icon") ; 'const
 (CFNC "gchar* gtk_status_icon_get_icon_name GtkStatusIcon* status_icon") ; 'const
 (CFNC "gint gtk_status_icon_get_size GtkStatusIcon* status_icon")
 ;;; out 2.15.0 (CFNC "void gtk_status_icon_set_tooltip GtkStatusIcon* status_icon gchar* tooltip_text")
@@ -7167,7 +7167,7 @@
 (CFNC-2.18 "void gtk_widget_set_can_default GtkWidget* widget gboolean can_default")
 (CFNC-2.18 "gboolean gtk_widget_get_can_default GtkWidget* widget")
 (CFNC-2.18 "gboolean gtk_widget_has_default GtkWidget* widget")
-(CFNC-2.18 "GtkStateType gtk_widget_get_state GtkWidget* widget")
+;;; (CFNC-2.18 "GtkStateType gtk_widget_get_state GtkWidget* widget")
 (CFNC-2.18 "gboolean gtk_widget_get_sensitive GtkWidget* widget")
 (CFNC-2.18 "gboolean gtk_widget_is_sensitive GtkWidget* widget")
 (CFNC-2.18 "void gtk_widget_set_has_window GtkWidget* widget gboolean has_window")
@@ -7824,13 +7824,13 @@
 
 ;; message dialog depends completely on va lists
 
-(CCAST-3.0 "GTK_ACTIVATABLE" "GtkActivatable*")
-(CCHK-3.0 "GTK_IS_ACTIVATABLE" "GtkActivatable*")
+;;; (CCAST-3.0 "GTK_ACTIVATABLE" "GtkActivatable*")
+;;; (CCHK-3.0 "GTK_IS_ACTIVATABLE" "GtkActivatable*")
 ;;; (CFNC-3.0 "void gtk_activatable_sync_action_properties GtkActivatable* activatable GtkAction* action")
 ;;; (CFNC-3.0 "void gtk_activatable_set_related_action GtkActivatable* activatable GtkAction* action")
 ;;; (CFNC-3.0 "GtkAction* gtk_activatable_get_related_action GtkActivatable* activatable")
-(CFNC-3.0 "void gtk_activatable_set_use_action_appearance GtkActivatable* activatable gboolean use_appearance")
-(CFNC-3.0 "gboolean gtk_activatable_get_use_action_appearance GtkActivatable* activatable")
+;;; (CFNC-3.0 "void gtk_activatable_set_use_action_appearance GtkActivatable* activatable gboolean use_appearance")
+;;; (CFNC-3.0 "gboolean gtk_activatable_get_use_action_appearance GtkActivatable* activatable")
 
 (CINT-3.0 "GTK_TARGET_SAME_APP" "GtkTargetFlags")
 (CINT-3.0 "GTK_TARGET_SAME_WIDGET" "GtkTargetFlags")
@@ -7972,8 +7972,8 @@
 
 (CFNC-3.0 "void gtk_assistant_commit GtkAssistant* assistant")
 
-(CFNC-3.0 "char* gtk_im_multicontext_get_context_id GtkIMMulticontext* context" 'const-return)
-(CFNC-3.0 "void gtk_im_multicontext_set_context_id GtkIMMulticontext* context char* context_id" 'const)
+;;; (CFNC-3.0 "char* gtk_im_multicontext_get_context_id GtkIMMulticontext* context" 'const-return)
+;;; (CFNC-3.0 "void gtk_im_multicontext_set_context_id GtkIMMulticontext* context char* context_id" 'const)
 
 (CINT-3.0 "GTK_FILE_CHOOSER_ERROR" "GtkFileChooserError")
 (CINT-3.0 "GTK_FILE_CHOOSER_ERROR_NONEXISTENT" "GtkFileChooserError")
@@ -8518,7 +8518,7 @@
 
 ;;; 3.9.0: lots of changes!  here we go...
 
-(CFNC-3.10 "GdkDisplayManager* gdk_display_manager_peek void")
+;;; (CFNC-3.10 "GdkDisplayManager* gdk_display_manager_peek void")
 (CFNC-3.10 "void gdk_set_allowed_backends gchar* backends" 'const)
 (CFNC-3.10 "void gtk_box_set_baseline_position GtkBox* box GtkBaselinePosition position")
 (CFNC-3.10 "GtkBaselinePosition gtk_box_get_baseline_position GtkBox* box")
@@ -8530,15 +8530,16 @@
 (CFNC-3.10 "gint gtk_grid_get_baseline_row GtkGrid* grid")
 (CFNC-3.10 "void gtk_widget_size_allocate_with_baseline GtkWidget* widget GtkAllocation* allocation gint baseline")
 (CFNC-3.10 "void gtk_widget_get_preferred_height_and_baseline_for_width GtkWidget* widget gint width gint* [minimum_height] gint* [natural_height] gint* [minimum_baseline] gint* [natural_baseline]")
-(CFNC-3.10 "void gtk_widget_get_preferred_size_and_baseline GtkWidget* widget GtkRequisition* [minimum_size] GtkRequisition* [natural_size] gint* [minimum_baseline] gint* [natural_baseline]")
+;;; (CFNC-3.10 "void gtk_widget_get_preferred_size_and_baseline GtkWidget* widget GtkRequisition* minimum_size GtkRequisition* natural_size gint* [minimum_baseline] gint* [natural_baseline]")
 (CFNC-3.10 "int gtk_widget_get_allocated_baseline GtkWidget* widget")
 (CFNC-3.10 "GtkAlign gtk_widget_get_valign_with_baseline GtkWidget* widget")
 (CFNC-3.10 "void gtk_widget_init_template GtkWidget* widget")
-(CFNC-3.10 "GObject* gtk_widget_get_automated_child GtkWidget* widget GType widget_type gchar* name" 'const)
+;;; (CFNC-3.10 "GObject* gtk_widget_get_automated_child GtkWidget* widget GType widget_type gchar* name" 'const)
+;;; GObject* is apparently the problem here
 (CFNC-3.10 "void gtk_widget_class_set_template GtkWidgetClass* widget_class GBytes* template_bytes")
 (CFNC-3.10 "void gtk_widget_class_set_template_from_resource GtkWidgetClass* widget_class gchar* resource_name" 'const)
-(CFNC-3.10 "void gtk_widget_class_declare_callback GtkWidgetClass* widget_class gchar* callback_name GCallback callback_symbol" 'const)
-(CFNC-3.10 "void gtk_widget_class_automate_child GtkWidgetClass* widget_class gchar* name gboolean internal_child gssize struct_offset" 'const)
+;;; (CFNC-3.10 "void gtk_widget_class_declare_callback GtkWidgetClass* widget_class gchar* callback_name GCallback callback_symbol" 'const)
+;;; (CFNC-3.10 "void gtk_widget_class_automate_child GtkWidgetClass* widget_class gchar* name gboolean internal_child gssize struct_offset" 'const)
 (CFNC-3.10 "void gtk_window_set_titlebar GtkWindow* window GtkWidget* titlebar")
 (CFNC-3.10 "GtkWidget* gtk_places_sidebar_new void")
 (CFNC-3.10 "GtkPlacesOpenFlags gtk_places_sidebar_get_open_flags GtkPlacesSidebar* sidebar")
@@ -8563,7 +8564,7 @@
 (CFNC-3.10 "GtkWidget* gtk_stack_get_visible_child GtkStack* stack")
 (CFNC-3.10 "void gtk_stack_set_visible_child_name GtkStack* stack gchar* name" 'const)
 (CFNC-3.10 "gchar* gtk_stack_get_visible_child_name GtkStack* stack")
-(CFNC-3.10 "void gtk_stack_set_visible_child_full GtkStack* stack gchar* name" 'const)
+(CFNC-3.10 "void gtk_stack_set_visible_child_full GtkStack* stack gchar* name GtkStackTransitionType transition" 'const)
 (CFNC-3.10 "void gtk_stack_set_homogeneous GtkStack* stack gboolean homogeneous")
 (CFNC-3.10 "gboolean gtk_stack_get_homogeneous GtkStack* stack")
 (CFNC-3.10 "void gtk_stack_set_transition_duration GtkStack* stack guint duration")
@@ -8691,7 +8692,7 @@
 
 ;;; 3.9.8:
 (CFNC-3.10 "cairo_surface_t* gdk_cairo_surface_create_from_pixbuf GdkPixbuf* pixbuf int scale GdkWindow* for_window")
-(CFNC-3.10 "void gdk_device_get_position_double GdkDevice* device GdkScreen* [screen] gdouble* [x] gdouble* [y]")
+(CFNC-3.10 "void gdk_device_get_position_double GdkDevice* device GdkScreen** [screen] gdouble* [x] gdouble* [y]")
 (CFNC-3.10 "GdkWindow* gdk_device_get_window_at_position_double GdkDevice* device gdouble* [win_x] gdouble* [win_y]")
 (CFNC-3.10 "gint gdk_screen_get_monitor_scale_factor GdkScreen* screen gint monitor_num")
 (CFNC-3.10 "gint gdk_window_get_scale_factor GdkWindow* window")

@@ -7106,6 +7106,9 @@ static mus_xen *clm_output_gn = NULL;
 static mus_any *clm_output_gen = NULL;
 static vct *clm_output_vct;
 static sound_data *clm_output_sd;
+static s7_Double *clm_output_sd_data;
+static mus_long_t clm_output_sd_offset;
+static int clm_output_sd_chans;
 
 static XEN out_any_2_to_mus_xen(mus_long_t pos, mus_float_t inv, int chn, const char *caller)
 {
@@ -7133,7 +7136,16 @@ static XEN out_any_2_to_vct(mus_long_t pos, mus_float_t inv, int chn, const char
 
 static XEN out_any_2_to_sound_data(mus_long_t pos, mus_float_t inv, int chn, const char *caller)
 {
-  mus_sound_data_set(clm_output_sd, chn, pos, mus_sound_data_ref(clm_output_sd, chn, pos) + inv);
+  if (pos < clm_output_sd_offset)
+    {
+      if (chn == 0)
+	clm_output_sd_data[pos] += inv;
+      else
+	{
+	  if (chn < clm_output_sd_chans)
+	    clm_output_sd_data[chn * clm_output_sd_offset + pos] += inv;
+	}
+    }
   return(xen_zero);
 }
 
@@ -7170,6 +7182,11 @@ static s7_pointer g_clm_output_set(s7_scheme *sc, s7_pointer args)
 	{
 	  out_any_2 = out_any_2_to_sound_data;
 	  clm_output_sd = XEN_TO_SOUND_DATA(new_output);
+#if HAVE_SCHEME
+	  clm_output_sd_data = s7_float_vector_elements(clm_output_sd);
+	  clm_output_sd_chans = mus_sound_data_chans(clm_output_sd);
+	  clm_output_sd_offset = mus_sound_data_length(clm_output_sd);
+#endif
 	}
       else
 	{

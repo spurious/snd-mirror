@@ -37,14 +37,15 @@
 (define (autotest func args args-now args-left)
   ;; args-left is at least 1, args-now starts at 0, args starts at ()
   ;(format *stderr* "~A: ~D ~D (~D ~D): ~A~%" func (length args) args-now low args-left args)
+    
   (call-with-exit
    (lambda (quit)
      (if (>= args-now low)
 	 (catch #t 
 	   (lambda () 
-	     (let ((val (apply func args)))
-	       (if (and val data-file)
-		   (format data-file "(~S~{ ~S~}) -> ~S~%" func args val))))
+	     (cond ((apply func args) => (lambda (val) 
+					   (if data-file 
+					       (format data-file "(~S~{ ~S~}) -> ~S~%" func args val))))))
 	   (lambda any
 	     (if (or (eq? (car any) 'wrong-type-arg)
 		     (not (memq func (list map for-each /))))
@@ -60,11 +61,11 @@
 		(catch #t 
 		  (lambda () 
 		    (set-car! p c)
-		    (let ((val (apply func c-args)))
-		      (if (and val data-file)
-			  (format data-file "(~S~{ ~S~}) -> ~S~%" func c-args val))))
-		(lambda any 'error)))
-	    constants)
+		    (cond ((apply func c-args) => (lambda (val)
+						    (if data-file 
+							(format data-file "(~S~{ ~S~}) -> ~S~%" func c-args val))))))
+		  (lambda any 'error)))
+	      constants)
 	   
 	   (for-each
 	    (lambda (c)

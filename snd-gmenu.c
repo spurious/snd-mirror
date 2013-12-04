@@ -313,12 +313,17 @@ static void menu_drag_watcher(GtkWidget *w, const char *str, int x, int y, drag_
 static GtkWidget *add_menu_item(GtkWidget *menu, const char *label, const char *icon, GCallback callback)
 {
   GtkWidget *w;
+#if GTK_CHECK_VERSION(3, 10, 0)
+  w = gtk_menu_item_new_with_label(label);
+  gtk_menu_shell_append(GTK_MENU_SHELL(menu), w);
+#else
   if (icon)
     w = gtk_image_menu_item_new_with_label(label);
   else w = gtk_menu_item_new_with_label(label);
   gtk_menu_shell_append(GTK_MENU_SHELL(menu), w);
   if (icon)
     gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(w), image_new_with_icon(icon, GTK_ICON_SIZE_MENU));
+#endif
   if (callback)
     SG_SIGNAL_CONNECT(w, "activate", callback, NULL);
   gtk_widget_show(w);
